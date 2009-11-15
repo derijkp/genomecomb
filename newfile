@@ -1,0 +1,34 @@
+	foreach {chr size} {
+	        7 158821424
+	        8 146274826
+	        9 140273252
+	        10 135374737
+	        11 134452384
+	        12 132349534
+	        13 114142980
+	        14 106368585
+	        15 100338915
+	        16 88827254 
+	        17 78774742
+	        18 76117153
+	        19 63811651
+	        20 62435964
+	        21 46944323
+	        X 154913754
+	        Y 57772954 
+	} {
+		puts $chr
+		set cnvout [glob MAP_hits-$chr-vs-MAP_hits-$chr.log2-*.cnv]
+		set cnvout [file root $cnvout]
+		set f [open "| R --vanilla --slave >@ stdout" w]
+		puts $f "suppressMessages(library(cnv))"
+		puts $f "data<-read.delim(\"$cnvout.cnv\")"
+		puts $f "sink(file=\"$cnvout.result\")"
+		puts $f "cnv.print(data)"
+		puts $f "sink()" 
+		puts $f "sink(file=\"$cnvout.summary\")"
+		puts $f "cnv.summary(data)"
+		puts $f "sink()"
+		catch {close $f} result
+		puts $result
+	}

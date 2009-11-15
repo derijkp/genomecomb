@@ -1,0 +1,120 @@
+#!/bin/sh
+# the next line restarts using wish \
+exec tclsh "$0" ${1+"$@"}
+
+# see where we are, add the lib dir in the original location to auto_path, load extension
+set script [file normalize [info script]]
+set scriptname [file tail $script]
+while 1 {
+	if {[catch {set script [file normalize [file readlink $script]]}]} break
+}
+
+set appdir [file dir $script]
+lappend auto_path $appdir/lib
+package require Extral
+
+# generic help on no args
+if {[llength $argv] < 1} {
+puts {Use
+cg sortgene gene_file sorted_gene_file
+cg var2annot variation_file sorted_gene_file output_file
+}
+exit 1
+}
+
+set action [list_shift argv]
+switch $action {
+	sortgene {
+		if {[llength $argv] != 2} {
+			puts stderr "format is: $scriptname $action gene_file sorted_gene_file"
+			exit 1
+		}
+		foreach {gene_file sorted_gene_file} $argv break
+		exec head -12 $gene_file > $sorted_gene_file
+		exec tail +13 $gene_file | sort -nk2 >> $sorted_gene_file
+	}
+	var2annot {
+		if {[llength $argv] != 3} {
+			puts stderr "format is: $scriptname $action variation_file sorted_gene_file output_file"
+			exit 1
+		}
+		foreach {file genefile outfile} $argv break
+		var2annotvar $file $genefile $outfile
+	}
+	compare_annot {
+		if {[llength $argv] != 7} {
+			puts stderr "format is: $scriptname $action id1 annot_varfile1 region_file1 id2 annot_varfile2 region_file2 output_prefix"
+			exit 1
+		}
+		foreach {id1 file1 regfile1 id2 file2 regfile2 output_prefix} $argv break
+		compare_annot $id1 $file1 $regfile1 $id2 $file2 $regfile2 $output_prefix
+		file delete -force ${output_prefix}summary.tsv
+		puts "Making summaries"
+		file delete -force ${output_prefix}summary.tsv
+		comstats ${output_prefix}summary.tsv ${output_prefix}diff.tsv
+		comstats ${output_prefix}summary.tsv ${output_prefix}mismatch.tsv
+		comstats ${output_prefix}summary.tsv ${output_prefix}same.tsv
+		comstats ${output_prefix}summary.tsv ${output_prefix}uniqueseq.tsv
+	}
+	compare_summary {
+		if {[llength $argv] != 1} {
+			puts stderr "format is: $scriptname $action output_prefix"
+			exit 1
+		}
+		foreach {output_prefix} $argv break
+		file delete -force ${output_prefix}summary.tsv
+		comstats ${output_prefix}summary.tsv ${output_prefix}diff.tsv
+		comstats ${output_prefix}summary.tsv ${output_prefix}mismatch.tsv
+		comstats ${output_prefix}summary.tsv ${output_prefix}same.tsv
+		comstats ${output_prefix}summary.tsv ${output_prefix}uniqueseq.tsv
+	}
+	cg2cnv {
+		if {[llength $argv] != 2} {
+			puts stderr "format is: $scriptname $action dir outdir"
+			exit 1
+		}
+		foreach {dir outdir} $argv break
+		cg2cnv $dir $outdir
+	}
+	cnv-seq {
+		if {[llength $argv] != 3} {
+			puts stderr "format is: $scriptname $action refdir testdir outdir"
+			exit 1
+		}
+		foreach {ref test outdir} $argv break
+		cnvseq $ref $test $outdir
+	}
+	map2sv {
+		if {[llength $argv] < 2} {
+			puts stderr "format is: $scriptname $action file ... out_prefix"
+			exit 1
+		}
+		set prefix [list_pop argv]
+		map2sv $argv $prefix
+	}
+	sv2db {
+		if {[llength $argv] < 1} {
+			puts stderr "format is: $scriptname $action file ..."
+			exit 1
+		}
+		sv2db $argv
+	}
+	svdbinfo {
+		if {[llength $argv] < 1} {
+			puts stderr "format is: $scriptname $action file ..."
+			exit 1
+		}
+		foreach dbfile $argv {
+			puts $dbfile
+			svdbinfo $dbfile
+		}
+	}
+	covered {
+		if {[llength $argv] != 1} {
+			puts stderr "format is: $scriptname region_file"
+			exit 1
+		}
+		foreach {regfile} $argv break
+		covered $regfile
+	}
+}
