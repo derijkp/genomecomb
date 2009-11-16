@@ -27,7 +27,7 @@ proc sequenced {r1 cur2} {
 		if {$rchr > $chr} break
 		if {$rchr == $chr} {
 			if {$rstart > $pos} break
-			if {($rchr == $chr) && ($pos <= $rend) && ($pos >= $rstart)} {
+			if {($rchr == $chr) && ($pos < $rend) && ($pos >= $rstart)} {
 				set cache($r1) $line
 				return 1
 			}
@@ -52,6 +52,7 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 output_prefix} {
 	set outmmfile ${output_prefix}mismatch.tsv
 	set outsamefile ${output_prefix}same.tsv
 	set outuniqfile ${output_prefix}uniqueseq.tsv
+	set outfiltered ${output_prefix}filtered.tsv
 	set f1 [open $file1]
 	set header [split [gets $f1] \t]
 	set annotvarfiels {locus chromosome begin end type alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef}
@@ -67,7 +68,7 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 output_prefix} {
 	}
 	if {$regfile1 ne ""} {
 		set r1 [opencgifile $regfile1 header]
-		if {[split $header \t] ne "chromosome begin end ploidy type"} {
+		if {[lrange $header 0 2] ne "chromosome begin end"} {
 			puts stderr "header error in region_file1 $file1"
 			exit 1
 		}
@@ -78,7 +79,7 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 output_prefix} {
 	}
 	if {$regfile2 ne ""} {
 		set r2 [opencgifile $regfile2 header]
-		if {[split $header \t] ne "chromosome begin end ploidy type"} {
+		if {[lrange $header 0 2] ne "chromosome begin end"} {
 			puts stderr "header error in region_file2 $file2"
 			exit 1
 		}
@@ -92,6 +93,7 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 output_prefix} {
 	set osame [open $outsamefile w]
 	set omm [open $outmmfile w]
 	set oseq [open $outuniqfile w]
+	set ofilter [open $outfiltered w]
 	
 	set cur1 [readonevar $f1]
 	set cur2 [readonevar $f2]
@@ -101,39 +103,56 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 output_prefix} {
 		if {![expr {$num % 100000}]} {puts $num}
 		set d [comparepos $cur1 $cur2]
 		if {$d == 0} {
-			set type [list_remove [split [lindex $cur1 4] _] ref-consistent ref-inconsistent]
-			lset cur1 4 $type
-			set type [list_remove [split [lindex $cur2 4] _] ref-consistent ref-inconsistent]
-			lset cur2 4 $type
-			if {([lrange $cur1 1 4] eq [lrange $cur2 1 4]) && (
-				([list_sub $cur1 {5 6}] eq [list_sub $cur2 {5 6}])
-				|| ([list_sub $cur1 {6 5}] eq [list_sub $cur2 {5 6}])
-				)} {
-				puts $osame $id1,$id2\t[join $cur1 \t]
+			set s1 [sequenced $r1 $cur1]
+			set s2 [sequenced $r2 $cur2]
+			if {!$s1 || !$s2} {
+				puts $ofilter $id1\t[join $cur1 \t]
+				puts $ofilter $id2\t[join $cur2 \t]
 			} else {
-				puts $omm $id1,$id2\t[join $cur1 \t]\t[join $cur2 \t]
+				set type [list_remove [split [lindex $cur1 4] _] ref-consistent ref-inconsistent =]
+				lset cur1 4 $type
+				set type [list_remove [split [lindex $cur2 4] _] ref-consistent ref-inconsistent =]
+				lset cur2 4 $type
+				if {([lrange $cur1 1 4] eq [lrange $cur2 1 4]) && (
+					([list_sub $cur1 {5 6}] eq [list_sub $cur2 {5 6}])
+					|| ([list_sub $cur1 {6 5}] eq [list_sub $cur2 {5 6}])
+					)} {
+					puts $osame $id1,$id2\t[join $cur1 \t]
+				} else {
+					puts $omm $id1,$id2\t[join $cur1 \t]\t[join $cur2 \t]
+				}
 			}
 			set cur1 [readonevar $f1]
 			set cur2 [readonevar $f2]
 			continue
 		} elseif {$d < 0} {
 			while {[comparepos $cur1 $cur2] < 0} {
-				set s [sequenced $r2 $cur1]
-				if {$s} {
-					puts $o $id1\t[join $cur1 \t]
+				set s [sequenced $r1 $cur1]
+				if {!$s} {
+					puts $ofilter $id1\t[join $cur1 \t]
 				} else {
-					puts $oseq $id1\t[join $cur1 \t]
+					set s [sequenced $r2 $cur1]
+					if {$s} {
+						puts $o $id1\t[join $cur1 \t]
+					} else {
+						puts $oseq $id1\t[join $cur1 \t]
+					}
 				}
 				set cur1 [readonevar $f1]
 			}
 			continue
 		} else {
 			while {[comparepos $cur1 $cur2] > 0} {
-				set s [sequenced $r1 $cur2]
-				if {$s} {
-					puts $o $id2\t[join $cur2 \t]
+				set s [sequenced $r2 $cur2]
+				if {!$s} {
+					puts $ofilter $id2\t[join $cur2 \t]
 				} else {
-					puts $oseq $id2\t[join $cur2 \t]
+					set s [sequenced $r1 $cur2]
+					if {$s} {
+						puts $o $id2\t[join $cur2 \t]
+					} else {
+						puts $oseq $id2\t[join $cur2 \t]
+					}
 				}
 				set cur2 [readonevar $f2]
 			}
@@ -143,6 +162,7 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 output_prefix} {
 	close $o
 	close $osame
 	close $oseq
+	close $ofilter
 	close $f1
 	close $f2
 }
@@ -153,14 +173,11 @@ cd /complgen/
 
 set file1 /complgen/GS00102/annotvar-GS000000078-ASM.tsv
 set file2 /complgen/GS00103/annotvar-GS000000079-ASM.tsv
-set regfile1 /complgen/GS00102/reg-GS000000078-ASM.tsv
-set regfile2 /complgen/GS00103/reg-GS000000079-ASM.tsv
-set outfile /complgen/diff.tsv
-set outsamefile /complgen/same.tsv
-set outmmfile /complgen/missmatch.tsv
-set outuniqfile /complgen/uniqueseq.tsv
-set id1 1
-set id2 2
+set id1 78
+set id2 79
+set regfile1 /complgen/GS00102/filteredreg-GS000000078-ASM.tsv
+set regfile2 /complgen/GS00103/filteredreg-GS000000079-ASM.tsv
+set output_prefix /complgen/compartest/78vs79_
 
 lappend auto_path ~/dev/completegenomics/lib
 package require Extral

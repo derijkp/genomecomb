@@ -38,15 +38,36 @@ proc comstats {ofile file} {
 		set xref [lindex $line 10]
 		set score1 [lindex $line 8]
 		set score2 [lindex $line 9]
+		if {[llength $line] > 25} {
+			set type2 [lindex $line 29]
+			set a12 [lindex $line 30]
+			set a22 [lindex $line 31]
+			set oloc2 [lindex $line 39]
+			set oeffect2 [lindex $line 42]
+			set xref2 [lindex $line 34]
+			set score12 [lindex $line 32]
+			set score22 [lindex $line 33]
+		} else {
+			set type2 $type
+			set a12 $a1
+			set a22 $a2
+			set oloc2 $oloc
+			set oeffect2 $oeffect
+			set xref2 $xref
+			set score12 $score1
+			set score22 $score2
+		}
 		if {[regexp dbsnp $xref]} {set dbsnp 1} else {set dbsnp 0}
+		if {[regexp dbsnp $xref2]} {set dbsnp2 1} else {set dbsnp2 0}
 		set filter 0
-		if {![regexp {ref-inconsistent} $type]} {
+		if {![regexp {ref-inconsistent} $type] && ![regexp {ref-inconsistent} $type2]} {
 			set filter 1
-			if {![regexp {ref-consistent} $type]} {
+			if {![regexp {ref-consistent} $type] && ![regexp {ref-consistent} $type2]} {
 				set filter 2
-				if {![regexp {\?} $a1$a2] && ![regexp {N} $a1$a2]} {
+				if {![regexp {\?} $a1$a2] && ![regexp {N} $a1$a2] && ![regexp {\?} $a12$a22] && ![regexp {N} $a12$a22]} {
 					set filter 3
-					if {([isint $score1] && ($score1 >= 60)) && ([isint $score2] && ($score2 >= 60))} {
+					if {([isint $score1] && ($score1 >= 60)) && ([isint $score2] && ($score2 >= 60))
+						&&([isint $score12] && ($score12 >= 60)) && ([isint $score22] && ($score22 >= 60))} {
 						set filter 4
 					}
 				}
@@ -70,6 +91,10 @@ proc comstats {ofile file} {
 				set effect $temp
 				break
 			}
+			if {[regexp $temp $oeffect2]} {
+				set effect $temp
+				break
+			}
 		}
 		set neffect [get trans($effect) 0]
 		set code $filter,$snp,$dbsnp,$loc,$effect,$id
@@ -82,7 +107,9 @@ proc comstats {ofile file} {
 #			lappend filtered [list_concat $neffect $line]
 #		}
 		if {($filter == 4) && ([inlist {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE MISSENSE} $effect])
-			&& !$dbsnp && [regexp 79 $id] && ($type ne "delins")} {
+			&& (!$dbsnp || !$dbsnp2)
+			&& [regexp 79 $id] 
+			&& ($type ne "delins") && ($type2 ne "delins")} {
 			lappend filtered [list_concat $neffect $line]
 		}
 
@@ -146,6 +173,12 @@ proc comstats {ofile file} {
 	}
 	close $o
 	set o [open [file root $file]-filtered.tsv w]
+	set len [llength [lindex $filtered 0]]
+	set header {locus chromosome begin end type alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef}
+	if {$len > 26} {
+		set header [list_concat $header id2 $header]
+	}	
+	puts $o effect\tid\t[join $header \t]
 	foreach line [lsort -integer -index 0 -decreasing $filtered] {
 		puts $o [join $line \t]
 	}
@@ -160,8 +193,8 @@ if 0 {
 lappend auto_path ~/dev/completegenomics/lib
 package require Extral
 
-cd /complgen/
-set file uniqueseq.tsv
+cd /complgen/compar
+set file 78vs79_mismatch.tsv
 set ofile summary.tsv
 catch {file delete summary.tsv}
 comstats summary.tsv diff.tsv

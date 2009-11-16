@@ -10,13 +10,28 @@ proc opencgifile {file headerVar} {
 		set line [gets $f]
 		if {[string length $line] && [string index $line 0] ne "#"} break
 	}
-	set header [string range $line 1 end]
+	if {[string index $line 0] eq ">"} {
+		set header [string range $line 1 end]
+	} else {
+		set header $line
+	}
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {[llength $line]} break
 	}
 	set cache($f) $line
 	return $f
+}
+
+proc cggets {f} {
+	global cache
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {[llength $line]} break
+	}
+	set result $cache($f)
+	set cache($f) $line
+	return $result
 }
 
 proc assert {check message} {

@@ -29,15 +29,3 @@ proc chrsize chr {
 	}
 	return $chrsize($chr)
 }
-
-covered region_file {
-	
-}
-
-if 0 {
-	lappend auto_path /home/peter/dev/completegenomics/lib
-	package require Extral
-	set regfile /media/passport/complgen/GS00102/reg-GS000000078-ASM.tsv
-	set f [opencgifile $regfile header]
-	
-}

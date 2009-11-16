@@ -111,10 +111,18 @@ switch $action {
 	}
 	covered {
 		if {[llength $argv] != 1} {
-			puts stderr "format is: $scriptname region_file"
+			puts stderr "format is: $scriptname $action region_file"
 			exit 1
 		}
 		foreach {regfile} $argv break
 		covered $regfile
+	}
+	filterreg {
+		if {[llength $argv] != 2} {
+			puts stderr "format is: $scriptname $action region_file variation_file"
+			exit 1
+		}
+		foreach {regfile varfile} $argv break
+		filterreg $regfile $varfile
 	}
 }
