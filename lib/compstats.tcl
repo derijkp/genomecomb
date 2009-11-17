@@ -112,8 +112,6 @@ proc comstats {ofile file} {
 			&& ($type ne "delins") && ($type2 ne "delins")} {
 			lappend filtered [list_concat $neffect $line]
 		}
-
-		incr all
 	}
 	close $f
 	set idlist [array names ida]
