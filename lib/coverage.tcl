@@ -113,6 +113,48 @@ proc filterreg {regfile varfile} {
 	close $v
 }
 
+proc gapsrefcons {varfile} {
+	global cache
+	set v [open "| grep ref- $varfile"]
+	unset -nocomplain cache($v); unset -nocomplain cache($v,r);
+	unset -nocomplain a
+	set num 0
+	while 1 {
+		incr num
+		if {![expr $num%100000]} {puts stderr $num}
+		set vline [filtervarget $v]
+		if {![llength $vline]} break
+		foreach {vchr vstart vend} $vline break
+		set len [expr {$vend-$vstart}]
+		if {![info exists a($vchr,$len)]} {
+			set a($vchr,$len) 1
+		} else {
+			incr a($vchr,$len)
+		}
+	}
+	close $v
+	unset -nocomplain tota
+	set o stdout
+	set names [lsort -dictionary [array names a]]
+	foreach name $names {
+		foreach {chr len} [split $name ,] break
+		puts $o $chr\t$len\t$a($name)
+		if {![info exists tota($len)]} {
+			set tota($len) 1
+		} else {
+			incr tota($len) $a($name)
+		}
+	}
+	set names [lsort -dictionary [array names tota]]
+	set tot 0
+	foreach len $names {
+		puts $o total\t$len\t$tota($len)
+		incr tot $tota($len)
+	}
+	puts $o all\tall\t$tot
+	puts $o all\tallnonull\t[expr {$tot-$tota(0)}]
+}
+
 if 0 {
 
 while {![eof $v]} {

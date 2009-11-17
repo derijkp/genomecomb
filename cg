@@ -125,4 +125,16 @@ switch $action {
 		foreach {regfile varfile} $argv break
 		filterreg $regfile $varfile
 	}
+	gapsrefcons {
+		if {[llength $argv] != 1} {
+			puts stderr "format is: $scriptname $action variation_file"
+			exit 1
+		}
+		foreach {varfile} $argv break
+		gapsrefcons $varfile
+	}
+	default {
+		puts stderr "unkown option $action"
+		exit 1
+	}
 }
