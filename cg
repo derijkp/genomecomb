@@ -134,16 +134,16 @@ switch $action {
 		gapsrefcons $varfile
 	}
 	makeprimers {
-		if {[llength $argv] != 4} {
-			puts stderr "format is: $scriptname $action regionfile archive size db"
+		if {[llength $argv] != 5} {
+			puts stderr "format is: $scriptname $action regionfile archive size db threads"
 			puts stderr "regionfile has to have the columns chromosome, begin, end; must be sorted by chromosome, then begin"
 			puts stderr "archive is may2009 for cgi, empty for latest"
 			puts stderr "size is the maximum amplicon size"
 			puts stderr "db a blastable database of the human genome, right build, names are chromosomes"
 			exit 1
 		}
-		foreach {regionfile archive size db} $argv break
-		makeprimers $regionfile $archive $size $db
+		foreach {regionfile archive size db threads} $argv break
+		makeprimers $regionfile $archive $size $db $threads
 	}
 	default {
 		puts stderr "unkown option $action"
