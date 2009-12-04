@@ -366,6 +366,10 @@ proc makeprimers_numhits {aVar lp rp size cstart cend} {
 }
 
 proc ucsc_epcr {p1 p2} {
+	global cachedir
+	if {[file exists $cachedir/$p1-$p2.epcr]} {
+		return [file_read $cachedir/$p1-$p2.epcr]
+	}
 	package require http
 	set h [http::geturl "http://genome.ucsc.edu/cgi-bin/hgPcr?hgsid=147397568&org=Human&db=hg18&wp_target=genome&wp_f=$p1&wp_r=$p2&Submit=submit&wp_size=4000&wp_perfect=15&wp_good=15&boolshad.wp_flipReverse=0"]
 	set data [http::data $h]
@@ -377,6 +381,7 @@ proc ucsc_epcr {p1 p2} {
 		regsub -all \n $seq {} seq
 		lappend result [list $chr $start $end [expr {$end-$start+1}] $seq]
 	}
+	file_write $cachedir/$p1-$p2.epcr $result
 	return $result
 }
 
