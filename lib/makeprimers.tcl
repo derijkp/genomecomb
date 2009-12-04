@@ -3,7 +3,11 @@ catch {package require dbi}
 package require dbi_sqlite3
 setlog {}
 
+set temperature 65
+set extraseq 1000
+set prefmargin 30
 if {![info exists threads]} {set threads 1}
+
 set temp 100
 foreach rtype {
 	partrepeat,low repeat,low 3repeat,low completerepeat,low
@@ -127,21 +131,25 @@ proc makeprimers_annotate {line shift} {
 			if {$cfstart < 0} {set cfstart 0}
 			set cfend [expr {$fend-$start}]
 			if {$cfend >= $len} {set cfend [expr {$len-1}]}
-			if {($cfend >= [expr {$len-1}]) && ($cfstart <= 1)} {
+			set pct [expr {double($cfend+$cfstart)/$len}]
+			if {($pct > 0.8) && ($repeatname eq "dust") || ([string range $repeatname 0 2] eq "Alu")} {
 				set repeatloc completerepeat
-				if {($repeatname eq "dust") || ([string range $repeatname 0 2] eq "Alu")} {
-					set score 100000
-				}
-			} elseif {($cfend >= [expr {$len-1}]) && ($cfstart <= [expr {$len-6}])} {
-				set repeatloc 3repeat
-			} elseif {[expr {double($len - ($cfend - $cfstart))/$len}] > 0.6} {
-				set repeatloc partrepeat
+				set rcode completerepeat,multi
+				set score 100000
 			} else {
-				set repeatloc repeat
-			}
-			if {$rscore($repeatloc,$repeattype) > $score} {
-				set score $rscore($repeatloc,$repeattype)
-				set rcode $repeatloc,$repeattype
+				if {$pct > 0.9} {
+					set repeatloc completerepeat
+				} elseif {($cfend >= [expr {$len-1}]) && ($cfstart <= [expr {$len-6}])} {
+					set repeatloc 3repeat
+				} elseif {[expr {double($len - ($cfend - $cfstart))/$len}] > 0.6} {
+					set repeatloc partrepeat
+				} else {
+					set repeatloc repeat
+				}
+				if {$rscore($repeatloc,$repeattype) > $score} {
+					set score $rscore($repeatloc,$repeattype)
+					set rcode $repeatloc,$repeattype
+				}
 			}
 			lappend itemfts [list repeat $cfstart $cfend $repeatloc,$repeattype $repeatname]
 		}
@@ -192,30 +200,32 @@ proc makeprimers_blast {name left right {db /data/db/blast/build36} {numl {}} {n
 	} else {
 		set list [list_concat [lrange $left 0 $numl] [lrange $right 0 $numr]]
 	}
-	if {[file exists $cachedir/$name.hitsa]} {
-		array set a [split [file_read $cachedir/$name.hitsa] \n]
-	}
 	set o [open $cachedir/$name.fas w]
-	set num 0
+	set new {}
 	foreach line $list {
 		set pseq [lindex $line 1]
-		if {[info exists a($pseq-)]} continue
-		set score [lindex $line 6]
-		# if {$score == 100000} continue
 		set pseq [string toupper $pseq]
-		set a($pseq-) {}
-		set a($pseq+) {}
-		puts $o ">$pseq\n$pseq"
-		incr num
+		if {[info exists a($pseq-)]} continue
+		if {![catch {hits get [list hits $pseq+] hits} hits]} {
+			set a($pseq+) $hits
+			set a($pseq-) [hits get [list hits $pseq-] hits]
+		} else {
+			set score [lindex $line 6]
+			# if {$score == 100000} continue
+			set a($pseq-) {}
+			set a($pseq+) {}
+			puts $o ">$pseq\n$pseq"
+			lappend new $pseq
+		}
 	}
 	close $o
-	if {$num} {
-		puts stderr "blast $num"
+	if {[llength $new]} {
+		puts stderr "blast [llength $new]"
 		if {![file exists $db.nin] || ![file exists $db.nsq] || ![file exists $db.nhr]} {
 			error "blast database $db not found"
 		}
-		exec blastall -p blastn -d $db -i $cachedir/$name.fas -o $cachedir/$name.blast -W 7 -m 7 -F F -U T -v 5000 -b 5000 -e 1 -B 10000 -a $threads
-		set tb [open $cachedir/$name.tabblast w]
+		exec blastall -p blastn -d $db -i $cachedir/$name.fas -o $cachedir/$name.blast -W 7 -m 7 -F F -U T -b 1000000000 -e 1 -B 10000 -a $threads
+		set tb [open $cachedir/$name.tabblast a]
 		set f [open $cachedir/$name.blast]
 		blast_parse -cmd {invoke dict {
 			global a tb
@@ -225,26 +235,38 @@ proc makeprimers_blast {name left right {db /data/db/blast/build36} {numl {}} {n
 			set start [dict get $dict start]
 			set end [dict get $dict end]
 			set identities [dict get $dict identities]
-			set chr [dict get $dict hit_def]
-			if {$chr eq "No definition line found"} {
+			set def [dict get $dict hit_def]
+			if {$def eq "No definition line found"} {
+				set chr [dict get $dict hit_acc]
+			} elseif {$def ne ""} {
+				if {[catch {regexp {chromosome ([^ ,]+)} $def temp chr}]} {
+					set chr $def
+				}
+			} else {
 				set chr [dict get $dict hit_acc]
 			}
 			set hstart [dict get $dict hit_start]
 			set hend [dict get $dict hit_end]
 			set use 0
+			set ulen [expr {$end-$start+1}]
 			if {$end != $len} {
 				set use 1
-			} elseif {[expr {$len-$identities}] > 3} {
+			} elseif {[expr {$ulen-$identities}] > 3} {
 				set use 2
+			} elseif {$ulen < 16} {
+				set use 3
 			}
-			if {!$use && ([llength [get a($query$dir) ""]] < 5000)} {
-				lappend a($query$dir) [list $chr $hstart $hend]
+			if {[llength [get a($query$dir) ""]] < 5000} {
+				lappend a($query$dir) [list $chr $hstart $hend $start $end $identities $use]
 			}
 			set line [list $query $use $len $start $end $dir $chr $hstart $hend $identities]
 			puts $tb [join $line \t]
 		}} $f
 		close $tb
-		file_write $cachedir/$name.hitsa [join [array get a] \n]
+		foreach pseq $new {
+			hits set [list hits $pseq+] hits $a($pseq+)
+			hits set [list hits $pseq-] hits $a($pseq-)
+		}
 	}
 	set result {}
 	foreach list [list $left $right] strand {+ -} {
@@ -261,6 +283,7 @@ proc makeprimers_blast {name left right {db /data/db/blast/build36} {numl {}} {n
 			set num [expr {$numf+$numr}]
 			if {$num >= 5000} {
 				set score 100000
+				set code completerepeat,multi
 			} elseif {$num > 100} {
 				if {$score < $rscore(completerepeat,multi)} {
 					set score [expr {$rscore(completerepeat,multi) + $num}]
@@ -294,6 +317,10 @@ proc makeprimers_numhits {aVar lp rp size cstart cend} {
 	upvar $aVar a
 	foreach {temp fseq fs fe} $lp break
 	foreach {temp rseq rs re} $rp break
+	# set impstart [expr {$fe+30}]
+	# set impend [expr {$rs-30}]
+	set impstart $fe
+	set impend $rs
 	set esize [expr {$rs-$fe}]
 	set fseq [string toupper $fseq]
 	set rseq [string toupper $rseq]
@@ -305,17 +332,18 @@ proc makeprimers_numhits {aVar lp rp size cstart cend} {
 	if {([llength $flist] >= 10) && ([llength $rlist] >= 1000)} {
 		return 100000
 	}
-	if {([llength $flist] >= 1000) || ([llength $rlist] >= 10)} {
+	if {([llength $flist] >= 1000) && ([llength $rlist] >= 10)} {
 		return 100000
 	}
 	set diffs {}
+	# I know this can be done a lot more efficient, no time for it
 	list_foreach {fchr fstart fend} $flist {
 		list_foreach {rchr rstart rend} $rlist {
 			if {$fchr ne $rchr} continue
 			if {$fstart > $rend} continue
 			set asize [expr {$rstart-$fend}]
 			if {$asize < $esize} {
-				if {($fend < $rs) && ($rstart > $fe)} {
+				if {($fend < $impend) && ($rstart > $impstart)} {
 					if {($fend < $cend) || ($rstart > $cstart)} {
 						return 999999
 					}
@@ -335,6 +363,86 @@ proc makeprimers_numhits {aVar lp rp size cstart cend} {
 		return 1.5
 	}
 	return $num
+}
+
+proc makeprimers_check {filename} {
+	# set filename /complgen/compar/primers.tsv
+package require Tclx
+signal -restart error SIGINT
+	set f [open $filename]
+	set line [gets $f]
+	while {![eof $f]} {
+		set line [gets $f]
+		if {![llength $line]} break
+		if {[regexp {no primers} $line]} continue
+		set e [dict get [lindex [split $line \t] 0] pairhits]
+		set reg [string range [lindex [split $line \t] 1] 0 end-1]
+		set p1 [lindex [split $line \t] 2]
+		set line [gets $f]
+		set p2 [lindex [split $line \t] 2]
+		set hits [ucsc_epcr $p1 $p2]
+		set poss {}
+		foreach hit $hits {
+			lappend poss [join [lrange $hit 0 2] -]
+		}
+		puts "$reg\t$e\t[llength $hits]\t[join $poss ,]"
+	}
+	close $f
+}
+
+proc makeprimers_loadprev {} {
+	global cachedir
+	cd $cachedir
+	dbi_sqlite3 hits
+	if {![file exists $cachedir/hits.sqlite]} {
+		hits create $cachedir/hits.sqlite
+		hits open $cachedir/hits.sqlite
+		hits exec {create table hits (id text,hits text)}
+	} else {
+		hits open $cachedir/hits.sqlite
+	}
+	set files [lsort -dictionary [glob *.blast]]
+	foreach file $files {
+		puts $file
+		unset -nocomplain a
+		set f [open $file]
+		set ::num 1
+		catch {blast_parse -cmd {invoke dict {
+			global a num
+			if {![expr {$num%10000}]} {puts stderr $num}
+			incr num
+			if {[dict get $dict dir] == 1} {set dir +} else {set dir -}
+			set query [dict get $dict query_name]
+			set len [string length $query]
+			set start [dict get $dict start]
+			set end [dict get $dict end]
+			set identities [dict get $dict identities]
+			set chr [dict get $dict hit_def]
+			if {$chr eq "No definition line found"} {
+				set chr [dict get $dict hit_acc]
+			}
+			set hstart [dict get $dict hit_start]
+			set hend [dict get $dict hit_end]
+			set use 0
+			set ulen [expr {$end-$start+1}]
+			if {$end != $len} {
+				set use 1
+			} elseif {[expr {$ulen-$identities}] > 3} {
+				set use 2
+			} elseif {$ulen < 16} {
+				set use 3
+			}
+			if {![info exists a($query-)]} {set a($query-) {}}
+			if {![info exists a($query+)]} {set a($query+) {}}
+			if {[llength [get a($query$dir) ""]] < 5000} {
+				lappend a($query$dir) [list $chr $hstart $hend $start $end $identities $use]
+			}
+		}} $f}
+		catch {close $f}
+		foreach n [array names a] {
+			hits set [list hits $n] hits $a($n)
+		}
+	}
 }
 
 proc makeprimers_filterseq {fseq ftype} {
@@ -379,8 +487,8 @@ proc makeprimers_filterseq {fseq ftype} {
 	return $fseq
 }
 
-proc makeprimers_region {name size ssize temperature archive db extraseq} {
-	global cachedir a
+proc makeprimers_region {name size prefsize temperature archive db extraseq} {
+	global cachedir a prefmargin
 	unset -nocomplain a
 	foreach {cchr cstart cend} [split $name -] break
 	set emblfile $cachedir/$name.embl
@@ -405,10 +513,10 @@ proc makeprimers_region {name size ssize temperature archive db extraseq} {
 #			set e [dict get $floc end]
 #			if {($s >= $eend)||($e <= $estart)} continue
 #			if {$e > $eend} {
-#				set eend [min $e [expr {$estart + $ssize}]]
+#				set eend [min $e [expr {$estart + $prefsize}]]
 #			}
 #			if {$s < $estart} {
-#				set estart [max $s [expr {$eend - $ssize}]]
+#				set estart [max $s [expr {$eend - $prefsize}]]
 #			}
 #		}
 #	}
@@ -434,7 +542,7 @@ proc makeprimers_region {name size ssize temperature archive db extraseq} {
 			db set [list ft $id] type dbsnp name [dict get [lindex $ft end] db_xref] chromosome $cchr start $start end $end
 			incr id
 		} elseif {$type eq "repeat_region"} {
-			db set [list ft $id] type repeat name [dict get [lindex $ft end] note] chromosome $cchr start $start end $end
+			db set [list ft $id] type repeat name [lindex [dict get [lindex $ft end] note] 0] chromosome $cchr start $start end $end
 			incr id
 		}
 	}
@@ -454,9 +562,6 @@ proc makeprimers_region {name size ssize temperature archive db extraseq} {
 		if {[lindex $left end 6] != 100000} break
 		list_pop left
 	}
-	#set leftclean [list_sub $fleft [list_find [list_subindex $fleft 15] clean]]
-	#set leftother [list_sub $fleft -exclude [list_find [list_subindex $fleft 15] clean]]
-	#set left [list_concat [lsort -real -index 12 $leftclean] [lsort -real -index 6 $leftother]]
 	set fright {}
 	foreach line $right {
 		set line [makeprimers_annotate $line [expr {$cstart-$extraseq}]]
@@ -468,52 +573,92 @@ proc makeprimers_region {name size ssize temperature archive db extraseq} {
 		if {[lindex $right end 6] != 100000} break
 		list_pop right
 	}
-	#set rightclean [list_sub $fright [list_find [list_subindex $fright 15] clean]]
-	#set rightother [list_sub $fright -exclude [list_find [list_subindex $fright 15] clean]]
-	#set right [list_concat [lsort -real -index 12 $rightclean] [lsort -real -index 6 $rightother]]
 	if {$numl < 5} {set numl 5}
 	if {$numr < 5} {set numr 5}
-	foreach {left right} [makeprimers_blast $name $left $right $db {} {}] break
+	# join [list_subindex $left 1] \n
+	foreach {left right} [makeprimers_blast $name $left $right $db $numl $numr] break
+	set left [lsort -real -index 6 $left]
+	set right [lsort -real -index 6 $right]
+	set numl [llength [list_find [list_subindex $left 15] clean]]
+	set num2 [llength [list_find [list_subindex $right 15] clean]]
+	if {$numl < 5} {set numl 5}
+	if {$numr < 5} {set numr 5}
 	# make pairs
 	set bestscore 1000000
 	set besthits 1000000
+	set bestnum 1000000
+	set bestdbsnp 1000000
 	set bestsizediff $size
+	set bestmargin 0
 	set bestpair {}
 	set go 1
 	set doleft [lrange $left 0 $numl]
 	set doright [lrange $right 0 $numr]
 	while 1 {
+		set num 1
 		foreach lp $doleft {
 			set lseq [lindex $lp 1]
+			set tstart [lindex $lp 3]
+			set lnum [lindex $lp end-3]
 			if {![info exists a($lseq+)]} break
 			foreach rp $doright {
+				if {![expr {$num%1000}]} {puts stderr $num}
+				incr num
 				set asize [expr {[lindex $rp 3]-[lindex $lp 2]}]
 				if {$asize >= $size} continue
 				# puts stderr "[lindex $lp 2]-[lindex $rp 3] ($asize)"
 				set rseq [lindex $rp 1]
 				if {![info exists a($rseq+)]} break
 				if {[makeprimers_dimers $lseq $rseq]} continue
+				# check if this one is better
+				# numhits
 				set numhits [makeprimers_numhits a $lp $rp $size $cstart $cend]
+				if {$numhits == 0} {error "must find one hit\n$lp\n$rp"}
+				set tend [lindex $rp 2]
+				set margin [min [expr {$tend-$cend}] [expr {$cstart-$tstart}] $prefmargin]
 				set score [expr {[lindex $lp 6]+[lindex $rp 6]}]
-				set sizediff [expr {$size - $asize}]
-				if {($numhits < $besthits)
-					|| (($numhits == $besthits) && ($score < $bestscore))
-					|| (($numhits == $besthits) && ($score == $bestscore) && ($sizediff < $bestsizediff))
-				} {
-					set bestpair [list $lp $rp $score $numhits $sizediff]
-					set besthits $numhits
-					set bestscore $score
-					set bestsizediff $sizediff
+				set sizediff [expr {abs ($prefsize - $asize)}]
+				set rnum [lindex $rp end-3]
+				if {![isint $lnum]} {set lnum 100000}
+				if {![isint $rnum]} {set rnum 100000}
+				set tnum [expr {$rnum+$lnum}]
+				set dbsnp [llength [list_find [list_subindex [lindex $lp end] 0] dbsnp]]
+				incr dbsnp [llength [list_find [list_subindex [lindex $rp end] 0] dbsnp]]
+				if {$numhits > $besthits} continue
+				if {$numhits == $besthits} {
+					if {$dbsnp > $bestdbsnp} continue
+					if {$dbsnp == $bestdbsnp} {
+						if {$margin < $bestmargin} continue
+						if {$margin == $bestmargin} {
+							if {$margin == $bestmargin} {
+								# size
+								if {$tnum > $bestnum} continue
+								if {$tnum == $bestnum} {
+									if {$sizediff > $bestsizediff} continue
+									if {$sizediff == $bestsizediff} {
+										# score
+										if {$score > $bestscore} continue
+									}
+								}
+							}
+						}
+					}
 				}
+				# This one is better
+				set bestpair [list $lp $rp $score $numhits $sizediff]
+				set besthits $numhits
+				set bestscore $score
+				set bestsizediff $sizediff
+				set bestmargin $margin
+				set bestnum $tnum
+				set bestdbsnp $dbsnp
 			}
-			if {[llength $bestpair] && ($numhits == 1)} break
 		}
 		if {[llength $bestpair] && ($numhits == 1)} break
 		if {!$go} break
-		puts stderr "blast all"
 		set doleft $left
 		set doright $right
-		# foreach {left right} [makeprimers_blast $name $left $right $db {} {}] break
+		foreach {left right} [makeprimers_blast $name $left $right $db {} {}] break
 		incr go -1
 	}
 	# foreach {lp rp} $bestpair break
@@ -521,16 +666,59 @@ proc makeprimers_region {name size ssize temperature archive db extraseq} {
 	return $bestpair
 }
 
-proc makeprimers {filteredfile {archive may2009} size {db /data/db/blast/build36} numthreads} {
-	global cachedir threads
-	set temperature 65
-	set extraseq 1000
+# archive may2009
+# db /data/db/blast/build36
+proc makeprimers {regionsfile archive size prefsize db numthreads {o stdout}} {
+	global cachedir threads temperature extraseq
+	set cachedir [pwd]/cache 
 	set threads $numthreads
-	set o stdout
-	puts $o [join {remark label sequence modification scale purification project pair species chromosome cyto target contig pos temperature mg} \t]
-	set cachedir [pwd]/cache
 	file mkdir $cachedir
-	set wiggleroom 100
+	catch {e destroy}
+	EmblFile new e
+	dbi_sqlite3 hits
+	if {![file exists $cachedir/hits.sqlite]} {
+		hits create $cachedir/hits.sqlite
+		hits open $cachedir/hits.sqlite
+		hits exec {create table hits (id text,hits text)}
+	} else {
+		hits open $cachedir/hits.sqlite
+	}
+
+	puts $o [join {remark label sequence modification scale purification project pair species chromosome cyto target contig pos temperature mg} \t]
+	set regionlist [split [string trim [file_read $regionsfile]] \n]
+	list_shift regionlist
+	foreach region $regionlist {
+		foreach {cchr cstart cend} $region break
+		set name [join $region -]
+		puts stderr $name
+		set bestpair [makeprimers_region $name $size $prefsize $temperature $archive $db $extraseq]
+		if {[llength $bestpair] < 2} {
+			puts $o "no primers\t$name"
+		} else {
+			foreach {lp rp score numhits sizediff} $bestpair break
+			set astart [lindex $lp 3]
+			set aend [lindex $rp 2]
+			set asize [expr {$aend-$astart+1}]
+			set margins [expr {$cstart-$astart}]
+			lappend margins [expr {$aend-$cend}]
+			foreach p [list $lp $rp] d {f r} m $margins {
+				set seq [lindex $p 1]
+				set start [lindex $p 2]
+				set ptemp [lindex $p 9]
+				set num [lindex $p end-3]
+				set code [lindex $p end-1]
+				set info [lindex $p end]
+				set comment "pairhits $numhits asize $asize hits $num m $m"
+				if {$info ne ""} {lappend comment fts $info}
+				puts $o $comment\t${name}$d\t$seq\t\t\t\t\t1\tHs\t$cchr\t\t\t\t$start\t$ptemp
+			}
+		}
+		flush $o
+	}
+}
+
+proc makeprimers_makeregions {filteredfile size {o stdout}} {
+	global cachedir threads temperature extraseq
 	set f [open $filteredfile]
 	set line [gets $f]
 	set chrpos [lsearch $line chromosome]
@@ -541,51 +729,32 @@ proc makeprimers {filteredfile {archive may2009} size {db /data/db/blast/build36
 	set endpos [lsearch $line end]
 	set line [gets $f]
 	set cchr [lindex $line $chrpos]
-	set cstart [expr {[lindex $line $beginpos] - 50}]
-	set cend [expr {[lindex $line $endpos] + 50}]
-	set ssize [expr {$size - $wiggleroom}]
-	set next [expr {$cstart + $ssize}]
-	catch {e destroy}
-	EmblFile new e
+	set cstart [expr {[lindex $line $beginpos] - 20}]
+	set cend [expr {[lindex $line $endpos] + 20}]
+	set next [expr {$cstart + $size}]
+	puts $o chromosome\tstart\tend
 	while {![eof $f]} {
 		while {![eof $f]} {
 			set line [gets $f]
 			if {![llength $line]} continue
 			set chr [lindex $line $chrpos]
-			set fstart [expr {[lindex $line $beginpos] - 50}]
-			set fend [expr {[lindex $line $endpos] + 50}]
+			set fstart [expr {[lindex $line $beginpos] - 20}]
+			set fend [expr {[lindex $line $endpos] + 20}]
 			if {($chr eq $cchr) && ($fend < $next)} {
 				set cend $fend
 			} else {
 				break
 			}
 		}
-		set name $cchr-$cstart-$cend
-		puts stderr $name
-		set bestpair [makeprimers_region $name $size $ssize $temperature $archive $db $extraseq]
-		if {[llength $bestpair] < 2} {
-			puts $o "no primers\t$name"
-		} else {
-			foreach {lp rp score numhits sizediff} $bestpair break
-			foreach p [list $lp $rp] d {f r} {
-				set seq [lindex $p 1]
-				set start [lindex $p 2]
-				set ptemp [lindex $p 9]
-				set num [lindex $p end-3]
-				set code [lindex $p end-1]
-				set info [lindex $p end]
-				set comment "pairhits $numhits hits $num"
-				if {$info ne ""} {lappend comment fts $info}
-				puts $o $comment\t${name}$d\t$seq\t\t\t\t\t1\tHs\t$cchr\t\t\t\t$start\t$ptemp
-			}
-		}
-		flush $o
+		puts $o $cchr\t$cstart\t$cend
 		set cchr $chr
 		set cstart $fstart
 		set cend $fend
-		set next [expr {$cstart + $ssize}]
+		set next [expr {$cstart + $size}]
 	}
 }
+
+
 
 if 0 {
 
@@ -594,34 +763,53 @@ package require Tclx
 signal -restart error SIGINT
 package require Extral
 cd /complgen/compar
+setlog {}
 
 	set filteredfile /complgen/compar/78vs79_sel.tsv
+	set regionsfile /complgen/compar/78vs79_regions.tsv
 	set archive may2009
-	set size 600
 	set o stdout
-	set cachedir [pwd]/cache
+	set cachedir [pwd]/cache.test
 	set db /data/db/blast/build36
-	set blastnum 50
-	set threads 1
+
+set o [open /complgen/compar/primers.tsv w]
+makeprimers $filteredfile $archive $size $db 1 $o
+close $o
 
 cd /mnt/extra/CompleteGenomics/refseq
 ~/bin/blast/formatdb -i BUILD.36.1.REFSEQ.FA -p F -n build36 -l formatdb.log
 
-775 1349 GTGCTGGATTTGCGGGATGT TGGTCTGCATACAAAGTGCACAA none
+1-12842376-12842477   1       4       1-12842205-12842761,1-12776721-12777277,1-13542954-13543510,1-13322099-13322655
+2-240504278-240504382   5       1       2-240503934-240504519
+7-45085117-45085218     999999  4       7-45084890-45084943,7-45084890-45084982...
+pairhits 1.5 hits ?	7-45085147-45085173f	GACGCCAGAGGGCAGTGAAG					1	Hs	7				45084693	65
+pairhits 1.5 hits ?	7-45085147-45085173r	CCGCCTTCTGATATCTCACCAC					1	Hs	7				45085208	65
+pairhits 1 hits ? fts repeat	7-155377964-155377990f	GTGGAAGTGGTGGTGGTGAAGA					1	Hs	7				155377889	65
+pairhits 1 hits ? fts repeat	7-155377964-155377990r	TTCAAGCTCTCCTGGATGCTCA					1	Hs	7				155378467	65
 
-5-23562903-23562929f
-TCTACGTCTGCAGGGAGTGTGG CCCTGTGTGTGTCCTCTGGTGT
+set name 7-45085117-45085218
 
-set name 1-12842376-12842477
-set bestpair [makeprimers_region $name $size $ssize $temperature $archive $db $extraseq]
 
-set p1 GTGCTGGATTTGCGGGATGT
-set p2 TGGTCTGCATACAAAGTGCACAATC
-set p1 TCTGAGCCTCTCCCTTACTTTACCC
-set p2 CTGTTCCAGGTGCCCACTGA
+set name 5-721271-721372
+
+ucsc_epcr TGCGGACAAGCACACAGAGA CCATCTGCACTTCCCTGACG
+
+set name 11-134110690-134110770
+set name 2-895865-895906
+set name 6-44549936-44549977
+foreach {cchr cstart cend} [split $name -] break
+set bestpair [makeprimers_region $name $size $prefsize $temperature $archive $db $extraseq]
+
+set p1 GACGCCAGAGGGCAGTGAAG
+set p2 CCGCCTTCTGATATCTCACCAC
 set pos [lsearch [list_subindex $left 1] $p1]
 set lp [lindex $left $pos]
 set pos [lsearch [list_subindex $right 1] $p2]
 set rp [lindex $right $pos]
+
+cd /complgen/compar
+cg makeregions 78vs79_sel.tsv 400 > 78vs79_regions2.tsv
+cg makeprimers 78vs79_regions.tsv may2009 600 500 /data/db/blast/build36 1 > primers.tsv
+cg makeprimers 78vs79_regions.tsv may2009 600 400 /data/db/blast/build36 1 > primers400.tsv
 
 }
