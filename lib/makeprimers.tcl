@@ -365,6 +365,21 @@ proc makeprimers_numhits {aVar lp rp size cstart cend} {
 	return $num
 }
 
+proc ucsc_epcr {p1 p2} {
+	package require http
+	set h [http::geturl "http://genome.ucsc.edu/cgi-bin/hgPcr?hgsid=147397568&org=Human&db=hg18&wp_target=genome&wp_f=$p1&wp_r=$p2&Submit=submit&wp_size=4000&wp_perfect=15&wp_good=15&boolshad.wp_flipReverse=0"]
+	set data [http::data $h]
+	http::cleanup $h
+	regexp {<PRE>(.*)</PRE>} $data temp pre
+	set result {}
+	set list [regexp -inline -all {>chr([^:]+):([0-9]+)[+-]([0-9]+)[^\n]*\n([A-Za-z\n]+)} $pre]
+	foreach {temp chr start end seq} $list {
+		regsub -all \n $seq {} seq
+		lappend result [list $chr $start $end [expr {$end-$start+1}] $seq]
+	}
+	return $result
+}
+
 proc makeprimers_check {filename} {
 	# set filename /complgen/compar/primers.tsv
 package require Tclx
@@ -683,7 +698,6 @@ proc makeprimers {regionsfile archive size prefsize db numthreads {o stdout}} {
 	} else {
 		hits open $cachedir/hits.sqlite
 	}
-
 	puts $o [join {remark label sequence modification scale purification project pair species chromosome cyto target contig pos temperature mg} \t]
 	set regionlist [split [string trim [file_read $regionsfile]] \n]
 	list_shift regionlist
@@ -701,6 +715,9 @@ proc makeprimers {regionsfile archive size prefsize db numthreads {o stdout}} {
 			set asize [expr {$aend-$astart+1}]
 			set margins [expr {$cstart-$astart}]
 			lappend margins [expr {$aend-$cend}]
+			if {[catch {
+				set ucschits [llength [ucsc_epcr [lindex $lp 1] [lindex $rp 1]]]
+			}]} {set ucschits ?}
 			foreach p [list $lp $rp] d {f r} m $margins {
 				set seq [lindex $p 1]
 				set start [lindex $p 2]
@@ -708,7 +725,7 @@ proc makeprimers {regionsfile archive size prefsize db numthreads {o stdout}} {
 				set num [lindex $p end-3]
 				set code [lindex $p end-1]
 				set info [lindex $p end]
-				set comment "pairhits $numhits asize $asize hits $num m $m"
+				set comment "pairhits $numhits ucschits $ucschits asize $asize hits $num m $m"
 				if {$info ne ""} {lappend comment fts $info}
 				puts $o $comment\t${name}$d\t$seq\t\t\t\t\t1\tHs\t$cchr\t\t\t\t$start\t$ptemp
 			}
