@@ -154,6 +154,12 @@ switch $action {
 		foreach {regionfile archive maxsize prefsize db threads} $argv break
 		makeprimers $regionfile $archive $maxsize $prefsize $db $threads
 	}
+	graph {
+		package require Tk
+		set object .g
+		graphwidget .g
+		pack .g -fill both -expand yes
+	}
 	default {
 		puts stderr "unkown option $action"
 		exit 1
