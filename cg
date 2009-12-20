@@ -33,6 +33,27 @@ switch $action {
 		exec head -12 $gene_file > $sorted_gene_file
 		exec tail +13 $gene_file | sort -nk2 >> $sorted_gene_file
 	}
+	sortvar {
+		if {[llength $argv] != 2} {
+			puts stderr "format is: $scriptname $action var_file sorted_var_file"
+			exit 1
+		}
+		foreach {var_file sorted_var_file} $argv break
+		set f [opencgifile $var_file header numlines]
+		close $f
+		file_write $sorted_var_file [join $header \t]\n
+		incr numlines
+		file mkdir tmp
+		exec distr2chr tmp/d$var_file 2 < $var_file
+		set files [lsort -dictionary [glob tmp/d$var_file-\[0-9\]*]]
+		eval exec cat $files > $sorted_var_file
+		set chr X
+		exec sort -nk4 tmp/d$var_file-$chr >> $sorted_var_file
+		exec cat tmp/d$var_file-Y >> $sorted_var_file
+		exec cat tmp/d$var_file-M >> $sorted_var_file
+		set files [lsort -dictionary [glob tmp/d$var_file-*]]
+		foreach file $files {file delete $file}
+	}
 	var2annot {
 		if {[llength $argv] != 3} {
 			puts stderr "format is: $scriptname $action variation_file sorted_gene_file output_file"
