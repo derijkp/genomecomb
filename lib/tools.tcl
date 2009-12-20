@@ -1,4 +1,8 @@
-proc opencgifile {file headerVar} {
+proc opencgifile {file headerVar {numlinesVar {}}} {
+	if {$numlinesVar ne ""} {
+		upvar $numlinesVar numlines
+	}
+	set numlines 0
 	global cache
 	upvar $headerVar header
 	if {[file extension $file] eq ".gz"} {
@@ -8,6 +12,7 @@ proc opencgifile {file headerVar} {
 	}
 	while {![eof $f]} {
 		set line [gets $f]
+		incr numlines
 		if {[string length $line] && [string index $line 0] ne "#"} break
 	}
 	if {[string index $line 0] eq ">"} {
@@ -17,14 +22,17 @@ proc opencgifile {file headerVar} {
 	}
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
+		incr numlines
 		if {[llength $line]} break
 	}
 	set cache($f) $line
+	incr numlines -1
 	return $f
 }
 
 proc cggets {f} {
 	global cache
+	set line {}
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {[llength $line]} break
