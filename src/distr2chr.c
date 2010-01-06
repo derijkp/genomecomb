@@ -16,7 +16,7 @@ int chromosomenum(char *chromosome) {
 		return 25;
 	} else {
 		i = atoi(chromosome);
-		if (i < 0 || i > 25) {
+		if (i < 0 || i > 22) {
 			fprintf(stderr,"wrong chromosome");
 			exit(EXIT_FAILURE);
 		}
@@ -26,17 +26,20 @@ int chromosomenum(char *chromosome) {
 
 int main(int argc, char *argv[]) {
 	FILE *o[26];
-	char *line = NULL;
+	char *line = NULL,*linepos = NULL;
 	size_t len = 0;
 	ssize_t read;
 	char chromosome[10];
-	int i,nchr;
-	if (argc != 2) {
-		fprintf(stderr,"Format is: distr2chr output_pre");
+	int i,nchr,col = 0,count;
+	if ((argc != 2)&&(argc != 3)) {
+		fprintf(stderr,"Format is: distr2chr output_pre ?col?");
 		exit(EXIT_FAILURE);
 	}
+	if (argc == 3) {
+		col = atoi(argv[2]);
+	}
 	line = malloc(strlen(argv[1])+5);
-	for (i=1 ; i < 23 ; i++) {
+	for (i=0 ; i < 23 ; i++) {
 		sprintf(line,"%s-%d",argv[1],i);
 		o[i] = fopen64(line,"a");
 	}
@@ -47,7 +50,24 @@ int main(int argc, char *argv[]) {
 	sprintf(line,"%s-M",argv[1]);
 	o[i++] = fopen64(line,"a");
 	while ((read = getline(&line, &len, stdin)) != -1) {
-		sscanf(line,"%s\t",chromosome);
+		if (col == 0) {
+			sscanf(line,"%s\t",chromosome);
+		} else {
+			linepos = line;
+			count = col;
+			while (*linepos && count) {
+				if (*linepos == '\t') {
+					count--;
+				}
+				linepos++;
+			}
+			if (*linepos) {
+				sscanf(linepos,"%s\t",chromosome);
+			} else {
+				chromosome[0] = '0';
+				chromosome[1] = '\0';
+			}
+		}
 		nchr = chromosomenum(chromosome);
 		fprintf(o[nchr],"%s", line);
 	}
