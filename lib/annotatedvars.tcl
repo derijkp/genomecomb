@@ -43,11 +43,9 @@ proc readonevar f {
 		set line1 [list_shift cache($f,rov)]
 		set line2 [list_shift cache($f,rov)]
 		if {![llength $cache($f,rov)]} {unset cache($f,rov)}
-		foreach {locus haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef} $line1 break
-		foreach {locus2 haplotype2 chromosome2 begin2 end2 varType2 reference2 alleleSeq2 totalScore2 hapLink2 xRef2} $line2 break
-		set type [list_remdup [list $varType $varType2]]
-		set result [list $locus $chromosome $begin $end [join $type _] $alleleSeq [get alleleSeq2 ""] $totalScore [get totalScore2 ""] $xRef]
-		return $result
+	} else {
+		set line1 {}
+		set line2 {}
 	}
 	while {![eof $f]} {
 		while {![eof $f]} {
@@ -68,7 +66,7 @@ proc readonevar f {
 			foreach lpos $poss {
 				set line1 [lindex $list $lpos]
 				set pos [lindex $line1 3]
-				set type2 ref-consistent
+				set type2 unknown
 				foreach line [list_sub $list -exclude $lpos] {
 					set spos [lindex $line 3]
 					set epos [lindex $line 3]
@@ -81,10 +79,9 @@ proc readonevar f {
 				lset line2 5 $type2
 				lset line2 7 [lindex $line1 6]
 				lset line2 8 {}
-				set type [list [lindex $line1 5] [lindex $line2 5]]
-				set type [list_remdup $type]
 				lappend rlist $line1 $line2
 			}
+			set rlist [lsort -integer -index 3 $rlist]
 			set line1 [list_shift rlist]
 			set line2 [list_shift rlist]
 			if {[llength $rlist]} {
@@ -92,14 +89,21 @@ proc readonevar f {
 			}
 		}
 		if {![llength $line1]} continue
-		foreach {locus haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef} $line1 break
-		foreach {locus2 haplotype2 chromosome2 begin2 end2 varType2 reference2 alleleSeq2 totalScore2 hapLink2 xRef2} $line2 break
-		if {$type ne ""} {
-			set result [list $locus $chromosome $begin $end [join $type _] $alleleSeq [get alleleSeq2 ""] $totalScore [get totalScore2 ""] $xRef]
-			return $result
-		}
+		break
 	}
-	return {}
+	if {![llength $line1]} {
+		return {}
+	}
+	foreach {locus haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef} $line1 break
+	foreach {locus2 haplotype2 chromosome2 begin2 end2 varType2 reference2 alleleSeq2 totalScore2 hapLink2 xRef2} $line2 break
+	set type [list [get varType unkown] [get varType2 unknown]]
+	set type [list_remdup [list_remove $type = ref-consistent = ref-inconsistent unknown]]
+	if {$type ne ""} {
+		set result [list $locus $chromosome $begin $end [join $type _] $alleleSeq [get alleleSeq2 ""] $totalScore [get totalScore2 ""] $xRef]
+		return $result
+	} else {
+		return {}
+	}
 }
 
 proc readonegene f {
@@ -139,7 +143,7 @@ proc var2annotvar {file genefile outfile} {
 	set num 0
 	while {![eof $f1]} {
 		incr num
-		if {![expr {$num%10000}]} {puts $num}
+		if {![expr {$num%100000}]} {puts stderr $num}
 		set flocus [lindex $cur 0]
 		set glocus [lindex $curgene 0]
 		while {![eof $g] && [isint $glocus] && ($glocus < $flocus)} {
@@ -183,23 +187,26 @@ diff temp1 temp2
 if 0 {
 	lappend auto_path ~/dev/completegenomics/lib
 	package require Extral
+package require Tclx
+signal -restart error SIGINT
+	cd /media/passport/complgen
 
 	#test
 	head -9 GS00102/var-GS000000078-ASM.tsv > var-test.tsv
 	tail -401 GS00102/var-GS000000078-ASM.tsv >> var-test.tsv
 
-	set file /complgen/var-test.tsv
-	set genefile /complgen/sgene-test.tsv
-	set outfile /complgen/annotvar-test.tsv
+	set file var-test.tsv
+	set genefile sgene-test.tsv
+	set outfile annotvar-test.tsv
 	var2annot $file $genefile $outfile
 
-	set file /complgen/GS00102/var-GS000000078-ASM.tsv
-	set genefile /complgen/GS00102/sgene-GS000000078-ASM.tsv
-	set outfile /complgen/GS00102/annotvar-GS000000078-ASM.tsv
+	set file GS00102/var-GS000000078-ASM.tsv
+	set genefile GS00102/sgene-GS000000078-ASM.tsv
+	set outfile GS00102/annotvar-GS000000078-ASM.tsv
 	var2annot $file $genefile $outfile
 
-	set file /complgen/GS00103/var-GS000000079-ASM.tsv
-	set genefile /complgen/GS00103/sgene-GS000000079-ASM.tsv
-	set outfile /complgen/GS00103/annotvar-GS000000079-ASM.tsv
+	set file GS00103/var-GS000000079-ASM.tsv
+	set genefile GS00103/sgene-GS000000079-ASM.tsv
+	set outfile GS00103/annotvar-GS000000079-ASM.tsv
 	var2annot $file $genefile $outfile
 }

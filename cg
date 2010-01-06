@@ -27,6 +27,7 @@ switch $action {
 	sortgene {
 		if {[llength $argv] != 2} {
 			puts stderr "format is: $scriptname $action gene_file sorted_gene_file"
+			puts stderr " - sorts the CG gene file"
 			exit 1
 		}
 		foreach {gene_file sorted_gene_file} $argv break
@@ -36,6 +37,7 @@ switch $action {
 	sortvar {
 		if {[llength $argv] != 2} {
 			puts stderr "format is: $scriptname $action var_file sorted_var_file"
+			puts stderr " - sorts the CG variations file"
 			exit 1
 		}
 		foreach {var_file sorted_var_file} $argv break
@@ -57,6 +59,7 @@ switch $action {
 	var2annot {
 		if {[llength $argv] != 3} {
 			puts stderr "format is: $scriptname $action variation_file sorted_gene_file output_file"
+			puts stderr " - makes a new variation file, where the gene information is included"
 			exit 1
 		}
 		foreach {file genefile outfile} $argv break
@@ -64,30 +67,33 @@ switch $action {
 	}
 	compare_annot {
 		if {[llength $argv] != 7} {
-			puts stderr "format is: $scriptname $action id1 annot_varfile1 region_file1 id2 annot_varfile2 region_file2 output_prefix"
+			puts stderr "format is: $scriptname $action id1 annot_varfile1 region_file1 id2 annot_varfile2 region_file2 outfile"
 			exit 1
 		}
-		foreach {id1 file1 regfile1 id2 file2 regfile2 output_prefix} $argv break
-		compare_annot $id1 $file1 $regfile1 $id2 $file2 $regfile2 $output_prefix
-		file delete -force ${output_prefix}summary.tsv
-		puts "Making summaries"
-		file delete -force ${output_prefix}summary.tsv
-		comstats ${output_prefix}summary.tsv ${output_prefix}diff.tsv
-		comstats ${output_prefix}summary.tsv ${output_prefix}mismatch.tsv
-		comstats ${output_prefix}summary.tsv ${output_prefix}same.tsv
-		comstats ${output_prefix}summary.tsv ${output_prefix}uniqueseq.tsv
+		foreach {id1 file1 regfile1 id2 file2 regfile2 outfile} $argv break
+		compare_annot $id1 $file1 $regfile1 $id2 $file2 $regfile2 $outfile
 	}
-	compare_summary {
-		if {[llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action output_prefix"
+	annot_compare_region {
+		if {[llength $argv] != 5} {
+			puts stderr "format is: $scriptname $action compar_file reg_file field tvalue fvalue"
 			exit 1
 		}
-		foreach {output_prefix} $argv break
-		file delete -force ${output_prefix}summary.tsv
-		comstats ${output_prefix}summary.tsv ${output_prefix}diff.tsv
-		comstats ${output_prefix}summary.tsv ${output_prefix}mismatch.tsv
-		comstats ${output_prefix}summary.tsv ${output_prefix}same.tsv
-		comstats ${output_prefix}summary.tsv ${output_prefix}uniqueseq.tsv
+		foreach {compar_file reg_file field tvalue fvalue} $argv break
+		annot_compare_region $compar_file $reg_file $field $tvalue $fvalue
+	}
+	compare_pvt {
+		if {[llength $argv] != 0} {
+			puts stderr "format is: $scriptname $action"
+			exit 1
+		}
+		pvtcomstats
+	}
+	compare_pvtsummary {
+		if {[llength $argv] != 0} {
+			puts stderr "format is: $scriptname $action"
+			exit 1
+		}
+		comstats
 	}
 	cg2cnv {
 		if {[llength $argv] != 2} {
@@ -156,6 +162,16 @@ switch $action {
 		foreach {region_file1 region_file2} $argv break
 		regsubtract $region_file1 $region_file2
 	}
+	regjoin {
+		if {([llength $argv] != 1) && ([llength $argv] != 2)} {
+			puts stderr "format is: $scriptname $action region_file1 ?region_file2?"
+			puts stderr "outputs joined regions from region_file1 and (optionally) region_file2."
+			puts stderr "Both files must be sorted."
+			exit 1
+		}
+		foreach {region_file1 region_file2} $argv break
+		regjoin $region_file1 $region_file2
+	}
 	reghisto {
 		if {[llength $argv] != 1} {
 			puts stderr "format is: $scriptname $action region_file"
@@ -191,6 +207,15 @@ switch $action {
 		set object .g
 		graphwidget .g
 		pack .g -fill both -expand yes
+	}
+	ucsc2region {
+		if {[llength $argv] != 1} {
+			puts stderr "format is: $scriptname $action ucsc_file"
+			puts stderr "convert ucsc tab file to regionfile for further use in filtering"
+			exit 1
+		}
+		foreach {ucsc_file} $argv break
+		ucsc2region $ucsc_file
 	}
 	tosqlite {
 		if {[llength $argv] != 3} {

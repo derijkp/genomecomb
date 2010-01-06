@@ -1,192 +1,179 @@
-proc count {var filters snps dbsnps locs effects ids} {
-	upvar $var a
-	set result 0
-	foreach filter $filters {
-		foreach snp $snps {
-			foreach dbsnp $dbsnps {
-				foreach loc $locs {
-					foreach effect $effects {
-						foreach id $ids {
-							set code $filter,$snp,$dbsnp,$loc,$effect,$id
-							incr result [get a($code) 0]
-						}
-					}
-				}
+proc pvtcomstats {} {
+	set f stdin
+	# set f [open $compar_file]
+	unset -nocomplain a
+	set header [split [gets $f] \t]
+	set fields {compar sample chromosome type dbsnp ns lowscore loc effect refcons trf str rp sd sc}
+	set poss [list_cor $header $fields]
+	set nf [list_find $poss -1]
+	if {[llength $nf]} {
+		set fields [list_sub $fields -exclude $nf]
+		set poss [list_sub $poss -exclude $nf]
+	}
+	set num 0
+	while {![eof $f]} {
+		incr num
+		if {![expr {$num%100000}]} {puts stderr $num}
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		set line [list_sub $line $poss]
+		if {![info exists a($line)]} {
+			set a($line) 1
+		} else {
+			incr a($line)
+		}
+	}
+	set o stdout
+	puts $o [join $fields \t]\tnum
+	set list [lsort -dict [array names a]]
+	foreach line $list {
+		puts $o [join $line \t]\t$a($line)
+	}
+}
+
+proc comstats_filter {slist cfilter} {
+	global header
+	if {![llength $cfilter]} {
+		return $slist
+	}
+	set fields [list_unmerge $cfilter 1 values]
+	set poss [list_cor $header $fields]
+	set result {}
+	foreach line $slist {
+		set add 1
+		foreach lval [list_sub $line $poss] val $values {
+			if {![inlist $val $lval] && ($val ne $lval)} {
+				set add 0
+				break
 			}
+		}
+		if {$add} {
+			lappend result $line
 		}
 	}
 	return $result
 }
 
-proc comstats {ofile file} {
+proc count {var slist {cfilter {}}} {
+	upvar $var a
+	if {[llength $cfilter]} {
+		set slist [comstats_filter $slist $cfilter]
+	}
+	set result 0
+	foreach line $slist {
+		incr result [get a($line) 0]
+	}
+	return $result
+}
+
+proc comstats {} {
+	global header
+	set f stdin
+	# set f [open $file]
+	unset -nocomplain a
+	set header [split [gets $f] \t]
+	set num 0
+	while {![eof $f]} {
+		incr num
+		if {![expr {$num%100000}]} {puts stderr $num}
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		set num [list_pop line]
+		set a($line) $num
+	}
+	set o stdout
 	array set trans {
 		COMPATIBLE 1 MISSENSE 2 DELETE 3 INSERT 4 DELETE+ 5 INSERT+ 6 NONSTOP 7 NONSENSE 8 FRAMESHIFT 9
 	}
-	unset -nocomplain a
-	set filtered {}
-	set f [open $file]
-	while {![eof $f]} {
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		set id [lindex $line 0]
-		set ida($id) 1
-		set type [lindex $line 5]
-		set a1 [lindex $line 6]
-		set a2 [lindex $line 7]
-		set oloc [lindex $line 15]
-		set oeffect [lindex $line 18]
-		set xref [lindex $line 10]
-		set score1 [lindex $line 8]
-		set score2 [lindex $line 9]
-		if {[llength $line] > 25} {
-			set type2 [lindex $line 29]
-			set a12 [lindex $line 30]
-			set a22 [lindex $line 31]
-			set oloc2 [lindex $line 39]
-			set oeffect2 [lindex $line 42]
-			set xref2 [lindex $line 34]
-			set score12 [lindex $line 32]
-			set score22 [lindex $line 33]
-		} else {
-			set type2 $type
-			set a12 $a1
-			set a22 $a2
-			set oloc2 $oloc
-			set oeffect2 $oeffect
-			set xref2 $xref
-			set score12 $score1
-			set score22 $score2
-		}
-		if {[regexp dbsnp $xref]} {set dbsnp 1} else {set dbsnp 0}
-		if {[regexp dbsnp $xref2]} {set dbsnp2 1} else {set dbsnp2 0}
-		set filter 0
-		if {![regexp {ref-inconsistent} $type] && ![regexp {ref-inconsistent} $type2]} {
-			set filter 1
-			if {![regexp {ref-consistent} $type] && ![regexp {ref-consistent} $type2]} {
-				set filter 2
-				if {![regexp {\?} $a1$a2] && ![regexp {N} $a1$a2] && ![regexp {\?} $a12$a22] && ![regexp {N} $a12$a22]} {
-					set filter 3
-					if {([isint $score1] && ($score1 >= 60)) && ([isint $score2] && ($score2 >= 60))
-						&&([isint $score12] && ($score12 >= 60)) && ([isint $score22] && ($score22 >= 60))} {
-						set filter 4
-					}
-				}
-			}
-		}
-		if {$type eq "snp"} {
-			set snp 1
-		} else {
-			set snp 0
-		}
-		set loc ""
-		foreach temp {EXON UTR BEGIN END INTRON} {
-			if {[regexp $temp $oloc]} {
-				set loc $temp
-				break
-			}
-		}
-		set effect OTHER
-		foreach temp {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE MISSENSE COMPATIBLE UNDEFINED} {
-			if {[regexp $temp $oeffect]} {
-				set effect $temp
-				break
-			}
-			if {[regexp $temp $oeffect2]} {
-				set effect $temp
-				break
-			}
-		}
-		set neffect [get trans($effect) 0]
-		set code $filter,$snp,$dbsnp,$loc,$effect,$id
-		if {![info exists a($code)]} {
-			set a($code) 1
-		} else {
-			incr a($code)
-		}
-#		if {($filter == 4) && ($loc eq "EXON") && !$dbsnp} {
-#			lappend filtered [list_concat $neffect $line]
-#		}
-		if {($filter == 4) && ([inlist {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE MISSENSE} $effect])
-			&& (!$dbsnp || !$dbsnp2)
-			&& [regexp 79 $id] 
-			&& ($type ne "delins") && ($type2 ne "delins")} {
-			lappend filtered [list_concat $neffect $line]
-		}
-	}
-	close $f
-	set idlist [array names ida]
+	set pos [lsearch $header sample]
+	# set idlist [list_remdup [list_subindex [array names a] $pos]]
+	set idlist [list_remdup [split [list_remdup [list_subindex [array names a] $pos]] " ,"]]
 	set filterlist {0 1 2 3}
 	set loclist {EXON UTR BEGIN END INTRON OTHER ""}
 	set effectlist {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE MISSENSE COMPATIBLE UNDEFINED OTHER}
-	set o [open $ofile a]
-	puts $o "\n------------------------- $file -------------------------"
-	set checkall 0
-	foreach name [array names a] {incr checkall $a($name)}
-	puts $checkall
+	# set o [open $ofile a]
+	set o stdout
+	set alllist [array names a]
 	foreach {title filters} {
-		nofilter {0 1 2 3 4}
-		"filter 1 (removed ref-inconsistent)" {1 2 3 4}
-		"filter 2 (removed ref-inconsistent and ref-consistent)" {2 3 4}
-		"filter 3 (removed ref-inconsistent and ref-consistent and ?/N in alleles)" {3 4}
-		"filter 4 (removed ref-inconsistent and ref-consistent and ?/N in alleles and scores < 60)" {4}
+		nofilter {}
+		"filter 1 (removed ref-(in)consistent)" {refcons ""}
+		"filter 3 (removed ref-(in)consistent, ?/N)" {refcons "" ns ""}
+		"filter 4 (removed ref-(in)consistent, ?/N,  scores < 60)" {refcons "" ns "" lowscore ""}
+		"filter 5 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats)" {refcons "" ns "" lowscore "" trf ""}
+		"filter 6 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str)" {refcons "" ns "" lowscore "" trf "" str ""}
+		"filter 7 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats)" {refcons "" ns "" lowscore "" trf "" str "" rp ""}
+		"filter 8 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats, segdup)" {refcons "" ns "" lowscore "" trf "" str "" rp "" sd ""}
+		"filter 9 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" lowscore "" trf "" str "" rp "" sd "" sc ""}
 	} {
-		puts $o "\n ----- $file: $title -----"
-		set all [count a $filters {0 1} {0 1} $loclist $effectlist $idlist]
-		puts $o "total:\t$all"
-		set snps [count a $filters 1 {0 1} $loclist $effectlist $idlist]
-		puts $o "snps:\t$snps ([expr {$all-$snps}] other)"
-		puts $o "\nloc\ttotal\tnew\tdbsnp\t\t[join $idlist \t]"
-		foreach l $loclist {
-			set temp1 [count a $filters {0 1} 0 $l $effectlist $idlist]
-			set temp2 [count a $filters {0 1} 1 $l $effectlist $idlist]
-			set oline "$l:\t[expr {$temp1+$temp2}]\t${temp1}\t${temp2}\t"
-			foreach id $idlist {
-				append oline \t[count a $filters {0 1} {0 1} $l $effectlist $id]
+		puts stderr "===== $title ====="
+		puts $o "\n ==================== $title ===================="
+		set flist [comstats_filter $alllist $filters]
+		foreach compar {df mm sm} {
+			puts stderr $compar
+			puts $o "\n---------- $compar: $title ----------"
+			set list [comstats_filter $flist [list compar $compar]]
+			set checkall 0
+			foreach name $list {incr checkall $a($name)}
+			puts $checkall
+			set all [count a $list]
+			puts $o "total:\t$all"
+			set snps [count a $list {type snp}]
+			puts $o "snps:\t$snps ([expr {$all-$snps}] other)"
+			if {$compar eq "df"} {
+				set idlistheader \t\t[join $idlist \t]
+			} else {
+				set idlistheader ""
+			}
+			puts $o "\nloc\ttotal\tnew\tdbsnp$idlistheader"
+			foreach l $loclist {
+				set temp1 [count a $list [list dbsnp "" loc $l]]
+				set temp2 [count a $list [list dbsnp dbsnp loc $l]]
+				set oline "$l:\t[expr {$temp1+$temp2}]\t${temp1}\t${temp2}\t"
+				if {$compar eq "df"} {
+					foreach id $idlist {
+						append oline \t[count a $list [list loc $l sample $id]]
+					}
+				}
+				puts $o $oline
+			}
+			set temp "\neffect\ttotal\tnew\tdbsnp\t"
+			if {$compar eq "df"} {
+				foreach id $idlist {
+					append temp \t$id\t$id\(dbsnp\)
+				}
+			}
+			puts $o $temp
+			foreach e $effectlist {
+				set temp1 [count a $list [list dbsnp "" loc EXON effect $e]]
+				set temp2 [count a $list [list dbsnp dbsnp loc EXON effect $e]]
+				set oline "$e\t[expr {$temp1+$temp2}]\t$temp1\t$temp2\t"
+				if {$compar eq "df"} {
+					foreach id $idlist {
+						append oline \t[count a $list [list dbsnp "" loc EXON effect $e sample $id]]
+						append oline \t[count a $list [list dbsnp "" loc EXON effect $e sample $id]]
+					}
+				}
+				puts $o $oline
+			}
+			set temp1 [count a $list [list dbsnp "" loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE}]]
+			set temp2 [count a $list [list dbsnp dbsnp loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE}]]
+			set oline "*BAD*\t[expr {$temp1+$temp2}]\t$temp1\t$temp2\t"
+			if {$compar eq "df"} {
+				foreach id $idlist {
+					append oline \t[count a $filters [list dbsnp "" loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE} sample $id]]
+					append oline \t[count a $filters [list dbsnp dbsnp loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE} sample $id]]
+				}
 			}
 			puts $o $oline
 		}
-		set temp "\neffect\ttotal\tnew\tdbsnp\t"
-		foreach id $idlist {
-			append temp \t$id\t$id\(dbsnp\)
-		}
-		puts $o $temp
-		foreach e $effectlist {
-			set temp1 [count a $filters {0 1} 0 EXON $e $idlist]
-			set temp2 [count a $filters {0 1} 1 EXON $e $idlist]
-			set oline "$e\t[expr {$temp1+$temp2}]\t$temp1\t$temp2\t"
-			foreach id $idlist {
-				append oline \t[count a $filters {0 1} 0 EXON $e $id]
-				append oline \t[count a $filters {0 1} 1 EXON $e $id]
-			}
-			puts $o $oline
-		}
-		set temp1 [count a $filters {0 1} 0 EXON {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE} $idlist]
-		set temp2 [count a $filters {0 1} 1 EXON {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE} $idlist]
-		set oline "*BAD*\t[expr {$temp1+$temp2}]\t$temp1\t$temp2\t"
-		foreach id $idlist {
-			append oline \t[count a $filters {0 1} 0 EXON {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE} $id]
-			append oline \t[count a $filters {0 1} 1 EXON {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE} $id]
-		}
-		puts $o $oline
 	}
-	close $o
-	set o [open [file root $file]-filtered.tsv w]
-	set len [llength [lindex $filtered 0]]
-	set header {locus chromosome begin end type alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef}
-	if {$len > 26} {
-		set header [list_concat $header id2 $header]
-	}	
-	puts $o effect\tid\t[join $header \t]
-	foreach line [lsort -integer -index 0 -decreasing $filtered] {
-		puts $o [join $line \t]
-	}
-	close $o
 }
 
 if 0 {
 
 
-
+set compar_file compar/78vs79_compar-filter-rna.tsv
+set pvtfile 
 
 lappend auto_path ~/dev/completegenomics/lib
 package require Extral
@@ -198,5 +185,7 @@ catch {file delete summary.tsv}
 comstats summary.tsv diff.tsv
 comstats summary.tsv same.tsv
 comstats summary.tsv uniqueseq.tsv
+
+set file compar/78vs79_compar_pvt.tsv
 
 }

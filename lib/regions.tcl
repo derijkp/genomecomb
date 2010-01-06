@@ -173,6 +173,77 @@ proc reghisto {regfile} {
 	puts $o all\tallnonull\t[expr {$tot-$tota(0)}]
 }
 
+proc regjoin {regfile1 regfile2} {
+	global cache
+
+	catch {close $f1}; catch {close $f2}
+	set f1 [open $regfile1]
+	set poss1 [open_region $f1]
+	set num 0
+	set line1 [gets $f1]
+	foreach {chr start end} [list_sub $line1 $poss1] break
+	set nchr [chr2num $chr]
+	set line1 [gets $f1]
+	foreach {chr1 start1 end1} [list_sub $line1 $poss1] break
+	set nchr1 [chr2num $chr1]
+	if {$regfile2 ne ""} {
+		set f2 [open $regfile2]
+		set poss2 [open_region $f2]
+		set line2 [gets $f2]
+		foreach {chr2 start2 end2} [list_sub $line2 $poss2] break
+		set nchr2 [chr2num $chr2]
+	} else {
+		set nchr2 -1
+	}
+	puts "chromosome\tbegin\tend"
+	while 1 {
+		incr num
+		if {![expr $num%100000]} {puts stderr $num}
+		# putsvars nchr1 start1 end1 nchr2 start2 end2
+		if {($nchr1 == -1) && ($nchr2 == -1)} break
+		if {($nchr2 == -1) || ($nchr1 < $nchr2) || (($nchr1 == $nchr2) && ($start1 < $start2))} {
+			foreach {ntchr tchr tstart tend} [list $nchr1 $chr1 $start1 $end1] break
+			while {![eof $f1]} {
+				set line1 [split [gets $f1] \t]
+				if {[llength $line1]} break
+			}
+			if {[llength $line1]} {
+				foreach {chr1 start1 end1} [list_sub $line1 $poss1] break
+				set nchr1 [chr2num $chr1]
+				set line1 {}
+			} else {
+				set nchr1 -1
+			}
+		} else {
+			foreach {ntchr tchr tstart tend} [list $nchr2 $chr2 $start2 $end2] break
+			while {![eof $f1]} {
+				set line2 [split [gets $f2] \t]
+				if {[llength $line1]} break
+			}
+			if {[llength $line2]} {
+				foreach {chr2 start2 end2} [list_sub $line2 $poss2] break
+				set nchr2 [chr2num $chr2]
+				set line2 {}
+			} else {
+				set nchr2 -1
+			}
+		}
+		if {($ntchr > $nchr) || ($tstart > $end)} {
+			puts $chr\t$start\t$end
+			foreach {nchr chr start end} [list $ntchr $tchr $tstart $tend] break
+		} elseif {$tend > $end} {
+			set end $tend
+			#puts "---->$chr:$start-$end"
+		}
+		#puts "$chr1:$start1-$end1"
+	}
+	puts $chr\t$start\t$end
+	close $f1
+	if {$regfile2 ne ""} {
+		close $f2
+	}
+}
+
 if 0 {
 
 while {![eof $v]} {
@@ -188,6 +259,9 @@ signal -restart error SIGINT
 	lappend auto_path /home/peter/dev/completegenomics/lib
 	package require Extral
 
+	set regfile1 /data/db/_data_db_ucsc-selfchain.tsv
+	set regfile2 {}
+
 	set regfile /home/peter/dev/completegenomics/test/testreg.tsv
 	set varfile /home/peter/dev/completegenomics/test/testvar.tsv
 	set regfile /media/passport/complgen/GS00102/reg-GS000000078-ASM.tsv
@@ -202,6 +276,5 @@ filtervarget $v
 	set regfile1 reg-GS000000078-ASM.tsv
 	set regfile2 reg-refcons-GS000000078-ASM.tsv
 	
-
 }
 
