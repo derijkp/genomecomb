@@ -646,6 +646,11 @@ proc makeprimers_region {name size prefsize temperature archive db extraseq} {
 				incr dbsnp [llength [list_find [list_subindex [lindex $rp end] 0] dbsnp]]
 				if {$numhits > $besthits} continue
 				if {$numhits == $besthits} {
+#					if {$numhits == 1} {
+#						puts "check ucsc"
+#						set ucschits [llength [ucsc_epcr [lindex $lp 1] [lindex $rp 1]]]
+#						if {$ucschits > $besthits} continue
+#					}
 					if {$dbsnp > $bestdbsnp} continue
 					if {$dbsnp == $bestdbsnp} {
 						if {$margin < $bestmargin} continue
@@ -793,6 +798,8 @@ setlog {}
 	set o stdout
 	set cachedir [pwd]/cache.test
 	set db /data/db/blast/build36
+	set size 600
+	set prefsize 500
 
 set o [open /complgen/compar/primers.tsv w]
 makeprimers $filteredfile $archive $size $db 1 $o
@@ -815,10 +822,14 @@ set name 7-45085117-45085218
 set name 5-721271-721372
 
 ucsc_epcr TGCGGACAAGCACACAGAGA CCATCTGCACTTCCCTGACG
+set p1 CCAGATTTCTGCCACAGTCAGC
+set p2 GGCGGTGATATCGGCCATT
 
 set name 11-134110690-134110770
 set name 2-895865-895906
 set name 6-44549936-44549977
+set name 21-46303757-46303798
+set name 1-12842406-12842447
 foreach {cchr cstart cend} [split $name -] break
 set bestpair [makeprimers_region $name $size $prefsize $temperature $archive $db $extraseq]
 
@@ -830,7 +841,7 @@ set pos [lsearch [list_subindex $right 1] $p2]
 set rp [lindex $right $pos]
 
 cd /complgen/compar
-cg makeregions 78vs79_sel.tsv 400 > 78vs79_regions2.tsv
+cg makeregions 78vs79_sel.tsv 400 > 78vs79_regions.tsv
 cg makeprimers 78vs79_regions.tsv may2009 600 500 /data/db/blast/build36 1 > primers.tsv
 cg makeprimers 78vs79_regions.tsv may2009 600 400 /data/db/blast/build36 1 > primers400.tsv
 
