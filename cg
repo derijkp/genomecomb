@@ -192,6 +192,58 @@ switch $action {
 		graphwidget .g
 		pack .g -fill both -expand yes
 	}
+	tosqlite {
+		if {[llength $argv] != 3} {
+			puts stderr "format is: $scriptname $action dbfile table tsvfile"
+			exit 1
+		}
+		foreach {dbfile table tsvfile} $argv break
+		set f [open $tsvfile]
+		set header [split [gets $f] \t]
+		set line [split [gets $f] \t]
+		close $f
+		set sql ""
+		foreach field $header v $line {
+			if {[isint $v]} {
+				set type integer
+			} elseif {[isdouble $v]} {
+				set type real
+			} else {
+				set type text
+			}
+			lappend sql "\"$field\" $type"
+		}
+		set sql "create table $table ([join $sql ,])"
+		set tempfile [tempfile]
+		set f [open $tempfile w]
+		puts $f	"$sql;"
+		puts $f	".separator \\t"
+		puts $f	".import \"$tsvfile\" $table"
+		close $f
+		exec sqlite3 $dbfile < $tempfile
+	}
+	select {
+		if {([llength $argv] < 1) || ([llength $argv] > 3)} {
+			puts stderr "format is: $scriptname $action query ?fields? ?sortfields?"
+			puts stderr " - select lines in tab separated file"
+			exit 1
+		}
+		foreach {query fields sortfields} $argv break
+		set error [catch {tsv_select $query $fields $sortfields} result]
+		if {$error} {
+			puts stderr $result
+			exit 1
+		}
+	}
+	sort {
+		if {([llength $argv] < 1) || ([llength $argv] > 2)} {
+			puts stderr "format is: $scriptname $action file fields"
+			puts stderr " - sort tab separated file"
+			exit 1
+		}
+		foreach {filename fields} $argv break
+		tsv_sort $filename $fields
+	}
 	default {
 		puts stderr "unkown option $action"
 		exit 1
