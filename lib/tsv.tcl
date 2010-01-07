@@ -12,10 +12,10 @@ proc tsv_select {query {qfields {}} {sortfields {}}} {
 		set qposs [list_cor $header $header]
 		puts $line
 	}
-	list_unmerge [regexp -all -inline {[$]([a-zA-z]+)} $query] 1 fields
+	list_unmerge [regexp -all -inline {[$]([a-zA-z0-9]+)} $query] 1 fields
 	foreach field [list_remdup $fields] {
 		set pos [lsearch $header $field]
-		if {$pos == -1} {error "field $field not present"}
+		if {$pos == -1} {error "field \"$field\" not present"}
 		incr pos
 		regsub -all \\\$${field}(\[^A-Za-z\]) $query \$$pos\\1 query
 	}

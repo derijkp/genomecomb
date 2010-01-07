@@ -1,5 +1,46 @@
 package require Extral
 
+proc open_region {f} {
+	set header2 [gets $f]
+	if {[string index $header2 0] eq "#"} {
+		set header2 [string range $header2 1 end]
+	}
+	set tests {
+		{chromosome begin end}
+		{chrom chromStart chromEnd}
+		{genoName genoStart genoEnd}
+		{genoName genoStart genoEnd}
+		{tName tStart tEnd}
+	}
+	foreach test $tests {
+		set poss2 [list_cor $header2 $test]
+		if {[lsearch $poss2 -1] == -1} {
+			return $poss2
+		}
+	}
+	while {![eof $f]} {
+		set header2 [gets $f]
+		if {[string length $header2] && [string index $header2 0] ne "#"} break
+	}
+	if {[string index $header2 0] eq ">"} {
+		set header2 [string range $header2 1 end]
+	}
+	set poss2 [list_cor $header2 {chromosome begin end}]
+	if {[lsearch $poss2 -1] == -1} {
+		return $poss2
+	}
+	error "not a region file"
+}
+
+proc get_region {f poss} {
+	set result [list_sub [split [gets $f] \t] $poss]
+#	set chr [lindex $result 0]
+#	if {![isint $chr]} {
+#		lset result 0 [chr2num $chr]
+#	}
+#	return $result
+}
+
 # get data from channel, but use cache etc to keep the results together and in order
 proc filtervarget {v} {
 	global cache
@@ -82,23 +123,17 @@ proc refconsregions {varfile} {
 
 proc regsubtract {regfile1 regfile2} {
 	global cache
-
-	array set trans {X 90 Y 91 M 92}
-	set f1 [opencgifile $regfile1 header]
-	if {[lrange [split $header \t] 0 2] ne "chromosome begin end"} {
-		error "header error in $regfile"
-	}
-	set f2 [opencgifile $regfile2 header]
-	if {[lrange [split $header \t] 0 2] ne "chromosome begin end"} {
-		error "header error in $regfile"
-	}
+	set f1 [open $regfile1]
+	set poss1 [open_region $f1]
+	set f2 [open $regfile2]
+	set poss2 [open_region $f2]
 	set num 0
-	set line1 [cggets $f1]
+	set line1 [get_region $f1 $poss1]
 	foreach {chr1 start1 end1} $line1 break
-	set nchr1 [get trans($chr1) $chr1]
-	set line2 [cggets $f2]
+	set nchr1 [chr2num $chr1]
+	set line2 [get_region $f2 $poss2]
 	foreach {chr2 start2 end2} $line2 break
-	set nchr2 [get trans($chr2) $chr2]
+	set nchr2 [chr2num $chr2]
 	puts "chromosome\tbegin\tend"
 	while 1 {
 		incr num
@@ -114,22 +149,21 @@ proc regsubtract {regfile1 regfile2} {
 			} elseif {$end2 >= $start1} {
 				set start1 $end2
 			}
-			set line2 [cggets $f2]
+			set line2 [get_region $f2 $poss2]
 			if {![llength $line2]} break
 			foreach {chr2 start2 end2} $line2 break
-			set nchr2 [get trans($chr2) $chr2]
+			set nchr2 [chr2num $chr2]
 		}
 		if {$end1 > $start1} {
 			puts $chr1\t$start1\t$end1
 		}
-		set line1 [cggets $f1]
+		set line1 [get_region $f1 $poss1]
 		if {![llength $line1]} break
 		foreach {chr1 start1 end1} $line1 break
-		set nchr1 [get trans($chr1) $chr1]
+		set nchr1 [chr2num $chr1]
 	}
 	close $f1
 	close $f2
-
 }
 
 proc reghisto {regfile} {

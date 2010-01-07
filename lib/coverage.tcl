@@ -1,16 +1,14 @@
 package require Extral
 
 proc covered regfile {
-	set f [opencgifile $regfile header]
-	if {[lrange [split $header \t] 0 2] ne "chromosome begin end"} {
-		error "header error in $regfile"
-	}
+	set f [open $regfile]
+	set poss [open_region $f]
 	set num 0
 	unset -nocomplain a
 	while {![eof $f]} {
 		incr num
 		if {![expr $num%100000]} {puts stderr $num}
-		set line [cggets $f]
+		set line [get_region $f $poss]
 		foreach {chr start end} $line break
 		if {[info exists a($chr)]} {
 			set a($chr) [expr {$a($chr) + $end - $start}]

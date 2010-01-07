@@ -256,40 +256,6 @@ proc chr2num {chr} {
 	return $nchr
 }
 
-proc open_region {f} {
-	set header2 [gets $f]
-	regsub ^# $header2 {} header2
-	set poss2 [list_cor $header2 {chromosome begin end}]
-	if {[lsearch $poss2 -1] == -1} {
-		return $poss2
-	}
-	set poss2 [list_cor $header2 {chrom chromStart chromEnd}]
-	if {[lsearch $poss2 -1] == -1} {
-		return $poss2
-	}
-	set poss2 [list_cor $header2 {genoName genoStart genoEnd}]
-	if {[lsearch $poss2 -1] == -1} {
-		return $poss2
-	}
-	set poss2 [list_cor $header2 {genoName genoStart genoEnd}]
-	if {[lsearch $poss2 -1] == -1} {
-		return $poss2
-	}
-	set poss2 [list_cor $header2 {tName tStart tEnd}]
-	if {[lsearch $poss2 -1] == -1} {
-		return $poss2
-	}
-	while {![eof $f]} {
-		set header2 [gets $f]
-		if {[string length $header2] && [string index $header2 0] ne "#"} break
-	}
-	set poss2 [list_cor $header2 {chromosome begin end}]
-	if {[lsearch $poss2 -1] == -1} {
-		return $poss2
-	}
-	error "not a region file"
-}
-
 proc annot_compare_region {compar_file reg_file field tvalue fvalue} {
 	set f1 [open $compar_file]
 	set header1 [gets $f1]

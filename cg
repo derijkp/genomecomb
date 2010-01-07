@@ -147,7 +147,7 @@ switch $action {
 	refconsregions {
 		if {[llength $argv] != 1} {
 			puts stderr "format is: $scriptname $action variation_file"
-			puts stderr "outputs regions annotated as ref-(in)consistent from variation file"
+			puts stderr " - outputs regions annotated as ref-(in)consistent from variation file"
 			exit 1
 		}
 		foreach {varfile} $argv break
@@ -156,7 +156,7 @@ switch $action {
 	regsubtract {
 		if {[llength $argv] != 2} {
 			puts stderr "format is: $scriptname $action region_file1 region_file2"
-			puts stderr "outputs regions region_file1 from which the regions in region_file2 are removed"
+			puts stderr " - outputs regions region_file1 from which the regions in region_file2 are removed"
 			exit 1
 		}
 		foreach {region_file1 region_file2} $argv break
