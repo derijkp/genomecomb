@@ -86,14 +86,14 @@ switch $action {
 			puts stderr "format is: $scriptname $action"
 			exit 1
 		}
-		pvtcomstats
+		compare_pvt
 	}
 	compare_pvtsummary {
 		if {[llength $argv] != 0} {
 			puts stderr "format is: $scriptname $action"
 			exit 1
 		}
-		comstats
+		compare_pvtsummary
 	}
 	cg2cnv {
 		if {[llength $argv] != 2} {
