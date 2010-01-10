@@ -207,6 +207,9 @@ switch $action {
 		set object .g
 		graphwidget .g
 		pack .g -fill both -expand yes
+		foreach file $argv {
+			.g open $file
+		}
 	}
 	ucsc2region {
 		if {[llength $argv] != 1} {
