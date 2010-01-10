@@ -47,6 +47,35 @@ proc tsv_sort {filename fields} {
 	eval exec $command
 }
 
+proc file_rootgz {filename} {
+	if {[file extension $filename] eq ".gz"} {
+		return [file root [file root $filename]]
+	} else {
+		file root [file root $filename]
+	}
+}
+
+proc tsv_open {f} {
+	set keep 0
+	while {![eof $f]} {
+		set line [gets $f]
+		if {[string index $line 0] eq "#"} continue
+		if {![string length $line]} continue
+		break
+		set keep [tell $f]
+		set header $line
+	}
+	if {[string index $line 0] eq ">"} {
+		return [split [string range $line 1 end] \t]
+	} elseif {[string index $header 0] eq "#"} {
+		seek $f $keep
+		return [split [string range $header 1 end] \t]
+	} else {
+		seek $f $keep
+		return [split $header \t]
+	}
+}
+
 if 0 {
 	lappend auto_path ~/dev/completegenomics/lib
 	package require Tclx
