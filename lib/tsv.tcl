@@ -67,7 +67,9 @@ proc tsv_open {f} {
 	}
 	if {[string index $line 0] eq ">"} {
 		return [split [string range $line 1 end] \t]
-	} elseif {[string index $header 0] eq "#"} {
+	}
+	if {![info exists header]} {set header $line}
+	if {[string index $header 0] eq "#"} {
 		seek $f $keep
 		return [split [string range $header 1 end] \t]
 	} else {
