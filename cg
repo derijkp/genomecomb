@@ -257,6 +257,7 @@ switch $action {
 			exit 1
 		}
 		foreach {query fields sortfields} $argv break
+		if {[regexp {[^=]=[^=]} $query]} {puts stderr "you used = instead of == in query"; exit 1}
 		set error [catch {tsv_select $query $fields $sortfields} result]
 		if {$error} {
 			puts stderr $result
