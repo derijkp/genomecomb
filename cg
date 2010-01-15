@@ -153,6 +153,15 @@ switch $action {
 		foreach {varfile} $argv break
 		refconsregions $varfile
 	}
+	clusterregions {
+		if {[llength $argv] != 0} {
+			puts stderr "format is: $scriptname $action"
+			puts stderr " - outputs regions with clusters of variations"
+			puts stderr " - input is an annotated variations file"
+			exit 1
+		}
+		clusters
+	}
 	regsubtract {
 		if {[llength $argv] != 2} {
 			puts stderr "format is: $scriptname $action region_file1 region_file2"

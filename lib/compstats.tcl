@@ -3,7 +3,7 @@ proc compare_pvt {} {
 	# set f [open $compar_file]
 	unset -nocomplain a
 	set header [split [gets $f] \t]
-	set fields {compar sample chromosome type dbsnp ns lowscore loc effect refcons trf str rp sd sc a100 a70 b20 b30}
+	set fields {compar sample chromosome type dbsnp ns lowscore loc effect refcons cluster trf str rp sd sc a100 a70 b20 b30}
 	set poss [list_cor $header $fields]
 	set nf [list_find $poss -1]
 	if {[llength $nf]} {
@@ -107,6 +107,7 @@ proc compare_pvtsummary {} {
 		"filter 9 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" lowscore "" trf "" str "" rp "" sd "" sc ""}
 		"filter 9b (removed ref-(in)consistent, ?/N, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" a100 "" b20 "" trf "" str "" rp "" sd "" sc ""}
 		"filter 10 (removed ref-(in)consistent, ?/N, scores < 60, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" lowscore "" a100 "" b20 "" trf "" str "" rp "" sd "" sc ""}
+		"filter 11 (removed ref-(in)consistent, ?/N, scores < 60, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained, cluster)" {refcons "" ns "" lowscore "" a100 "" b20 "" trf "" str "" rp "" sd "" sc "" cluster ""}
 	} {
 		puts stderr "===== $title ====="
 		puts $o "\n ==================== $title ===================="
@@ -187,7 +188,7 @@ proc compare_selectivity {o table} {
 	puts $o "sm\t[format %0.0f $smtotal]"
 	foreach {sfield svalue} {
 		type snp dbsnp dbsnp ns n? lowscore ls 
-		refcons rc trf trf str str rp rp sd sd sc sc 
+		refcons rc trf trf str str rp rp sd sd sc sc cluster cl
 		a100 a100 a70 a70 b20 b20 b30 b30
 	} {
 		set list [comstats_filter $dflist [list $sfield $svalue]]
