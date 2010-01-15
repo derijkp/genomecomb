@@ -1,37 +1,85 @@
 proc tsv_select {query {qfields {}} {sortfields {}}} {
 	set f stdin
-	set line [gets $f]
-	set pos [tell $f]
-	seek $f $pos
-	if {[string index $line 0] eq "#"} {set line [string range $line 1 end]}
-	set header [split $line \t]
-	if {[llength $qfields]} {
-		set qposs [list_cor $header $qfields]
-		puts [join $qfields \t]
-	} else {
-		set qposs [list_cor $header $header]
-		puts $line
-	}
-	list_unmerge [regexp -all -inline {[$]([a-zA-z0-9]+)} $query] 1 fields
-	foreach field [list_remdup $fields] {
-		set pos [lsearch $header $field]
-		if {$pos == -1} {error "field \"$field\" not present"}
-		incr pos
-		regsub -all \\\$${field}(\[^A-Za-z\]) $query \$$pos\\1 query
-	}
-	set awk {BEGIN {FS="\t" ; OFS="\t"} }
-	append awk $query
-	set qposs [lmath_calc $qposs + 1]
-	append awk " \{print $[join $qposs ,$]\}"
-	if {![llength $sortfields]} {
-		exec awk $awk <@ stdin >@ stdout
-	} else {
-		set poss [list_cor $header $sortfields]
-		if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $sortfields [list_find $poss -1]] ,] not found"}
+	set header [tsv_open $f]
+	set keep [tell $f]
+	set awk ""
+	set sort ""
+	set cut ""
+	if {[llength $sortfields]} {
+		set poss [list_cor $qfields $sortfields]
+		if {[lsearch $poss -1] != -1} {
+			set poss [list_cor $header $sortfields]
+			if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $sortfields [list_find $poss -1]] ,] not found"}
+			if {$qfields ne ""} {
+				set qposs [list_cor $header $qfields]
+				set qposs [lmath_calc $qposs + 1]
+				set cut "cut -d \\t -f [join $qposs ,]"
+			}
+		}
 		set poss [lmath_calc $poss + 1]
 		set sort "gnusort8 -t \\t -V -k[join $poss " -k"]"
-		eval exec [list awk $awk] | $sort <@ stdin >@ stdout
 	}
+	if {$query ne ""} {
+		list_unmerge [regexp -all -inline {[$]([a-zA-z0-9]+)} $query] 1 fields
+		foreach field [list_remdup $fields] {
+			set pos [lsearch $header $field]
+			if {$pos == -1} {error "field \"$field\" not present"}
+			incr pos
+			regsub -all \\\$${field}(\[^A-Za-z\]) $query \$$pos\\1 query
+		}
+		set awk {BEGIN {FS="\t" ; OFS="\t"} }
+		append awk $query
+		if {($qfields ne "") && ($cut eq "")} {
+			set qposs [list_cor $header $qfields]
+		} else {
+			set qposs [list_cor $header $header]
+		}
+			set qposs [lmath_calc $qposs + 1]
+			append awk " \{print $[join $qposs ,$]\}"
+	} elseif {($qfields ne "") && ($cut eq "")} {
+		set qposs [list_cor $header $qfields]
+		set qposs [lmath_calc $qposs + 1]
+		set cut "cut -d \\t -f [join $qposs ,]"
+	}
+	set pipe {}
+	if {$awk ne ""} {
+		lappend pipe [list awk $awk]
+	}
+	if {$sort ne ""} {
+		lappend pipe $sort
+	}
+	if {$cut ne ""} {
+		lappend pipe $cut
+	}
+	puts stderr pipe:[join $pipe " | "]
+	if {$qfields ne ""} {puts [join $qfields \t]} else {puts [join $header \t]}
+	seek $f $keep
+	if {![llength $pipe]} {
+		fcopy stdin stdout
+	} else {
+		eval exec [join $pipe " | "] <@ stdin >@ stdout
+	}
+}
+
+if 0 {
+	lappend auto_path ~/dev/completegenomics/lib
+	package require Tclx
+	signal -restart error SIGINT
+	package require Extral
+	set f [open GS102/ASM/var-GS000000078-ASM.tsv]
+	set query "\$begin < 2000"
+	set qfields "chromosome begin end"
+	set sortfields "haplotype"
+	set sortfields "chromosome begin"
+
+cg select -q '' < GS102/ASM/var-GS000000078-ASM.tsv | less
+cg select -f 'haplotype chromosome begin' < GS102/ASM/var-GS000000078-ASM.tsv | less
+cg select -q '$begin < 2000' < GS102/ASM/var-GS000000078-ASM.tsv | less
+
+cg select -q '$begin < 2000' < GS102/ASM/var-GS000000078-ASM.tsv > /tmp/test1
+cg select -q '$begin < 2000' -f 'chromosome begin end' -s 'chromosome begin' < GS102/ASM/var-GS000000078-ASM.tsv > /tmp/test2
+cg select -q '$begin < 2000' -f 'chromosome begin end' -s 'haplotype' < GS102/ASM/var-GS000000078-ASM.tsv > /tmp/test3
+
 }
 
 proc tsv_sort {filename fields} {

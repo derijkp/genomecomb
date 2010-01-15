@@ -266,13 +266,23 @@ switch $action {
 		exec sqlite3 $dbfile < $tempfile
 	}
 	select {
-		if {([llength $argv] < 1) || ([llength $argv] > 3)} {
-			puts stderr "format is: $scriptname $action query ?fields? ?sortfields?"
-			puts stderr " - select lines in tab separated file"
-			exit 1
+		set query {}; set fields {}; set sortfields {}
+		foreach {key value} $argv {
+			switch -- $key {
+				-q {
+					set query $value
+					if {[regexp {[^=]=[^=]} $query]} {puts stderr "you used = instead of == in query"; exit 1}
+				}
+				-f {set fields $value}
+				-s {set sortfields $value}
+				default {
+					puts stderr "unkown option $key"
+					puts stderr "format is: $scriptname $action ?-q query? ?-f fields? ?-s sortfields?"
+					puts stderr " - select lines and columns in tab separated file, and sorts the result"
+					exit 1
+				}
+			}
 		}
-		foreach {query fields sortfields} $argv break
-		if {[regexp {[^=]=[^=]} $query]} {puts stderr "you used = instead of == in query"; exit 1}
 		set error [catch {tsv_select $query $fields $sortfields} result]
 		if {$error} {
 			puts stderr $result
