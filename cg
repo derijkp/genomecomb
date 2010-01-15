@@ -216,8 +216,14 @@ switch $action {
 		set object .g
 		graphwidget .g
 		pack .g -fill both -expand yes
+		if {[lindex $argv 0] eq "region"} {
+			list_shift argv
+			set region 1
+		} else {
+			set region 0
+		}
 		foreach file $argv {
-			.g open $file
+			.g open $file $region
 		}
 	}
 	ucsc2region {

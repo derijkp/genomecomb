@@ -11,11 +11,11 @@ graphwidget method init {args} {
 	scrollbar $object.scy -orient vertical
 	scrollbar $object.scx -orient horizontal
 	frame $object.b
-	grid $object.g $object.scy -sticky nwse
-	grid $object.scx -sticky nwse
-	grid $object.b -sticky nwse -row 0 -column 2 -rowspan 2
+	grid $object.b -sticky nwse -row 0 -columnspan 2
+	grid $object.g $object.scy -row 1 -sticky nwse
+	grid $object.scx -row 2 -sticky nwse
 	grid columnconfigure $object 0 -weight 1
-	grid rowconfigure $object 0 -weight 1
+	grid rowconfigure $object 1 -weight 1
 	# link graph --> scrollbars
 	$object.g axis configure x -scrollcommand [list $object.scx set]
 	$object.g axis configure y -scrollcommand [list $object.scy set]
@@ -51,13 +51,13 @@ graphwidget method init {args} {
 	}
 	bind $object.g <Configure> [list $object _fillregion]
 	button $object.b.open -text "Open" -command [list $object open]
-	pack $object.b.open -side top -fill y
+	pack $object.b.open -side left
 	button $object.b.clear -text "Clear" -command [list $object clear]
-	pack $object.b.clear -side top -fill y
+	pack $object.b.clear -side left
 	foreach type {xmin xmax ymin ymax} {destroy $object.b.$type
-		Classy::NumEntry $object.b.$type -width 10 -label $type -orient vertical \
+		Classy::NumEntry $object.b.$type -width 10 -label $type -orient horizontal \
 			-textvariable [privatevar $object region($type)] -command [list $object redraw]
-		pack $object.b.$type -side top -fill y
+		pack $object.b.$type -side left
 	}
 	$object clear
 }
@@ -113,45 +113,90 @@ graphwidget method gradientstyle {basecolor} {
 	return $style
 }
 
-graphwidget method open {{file {}}} {
+graphwidget method open {{file {}} {region 0}} {
 	private $object xmin xmax ymin ymax xv yv wv data colors
+	global graphd
 	if {$file eq ""} {set file [Classy::selectfile]}
 	set name [file root [file tail $file]]
 	set f [open $file]
-	set line [split [gets $f] \t]
-	if {[isint [lindex $line 0]]} {
-		set header {}
-		foreach el [list_fill [llength $line] 1 1] {
-			lappend header c$el
-		}
-	} else {
-		set header $line
-		set line [split [gets $f] \t]
+	set header [tsv_open $f]
+	set graphd(header) $header
+	lappend graphd(header) {}
+	set graphd(region) 0
+	set graphd(do) 0
+	set graphd(nan) -50
+	foreach {graphd(xfield) graphd(yfield) graphd(wfield)} $graphd(header) break
+	if {[lsearch $header begin] != -1} {
+		set graphd(xfield) begin
+		set graphd(region) 1
+	} elseif {[lsearch $header start] != -1} {
+		set graphd(xfield) start
+		set graphd(region) 1
+	}
+	if {[lsearch $header end] != -1} {
+		set graphd(yfield) end
+		set graphd(region) 1
+	}
+	if {$graphd(region) == 1} {
+		set graphd(wfield) ""
+	}
+	Classy::Dialog $object.open -title "Open file $file"
+	$object.open option select "X" graphd(xfield) graphd(header)
+	$object.open option select "Y" graphd(yfield) graphd(header)
+	$object.open option select "Weight" graphd(wfield) graphd(header)
+	$object.open option check "Regions" graphd(region) ""
+	$object.open option entry "Nan" graphd(nan)
+	$object.open add do Do {set graphd(do) 1} default
+	tkwait window $object.open
+	if {!$graphd(do)} return
+	set region $graphd(region)
+	set elements [list $graphd(xfield) $graphd(yfield) $graphd(wfield)]
+	set poss {}
+	foreach el $elements {
+		lappend poss [lsearch $header $el]
 	}
 	set vnum [llength $data(entries)]
-	foreach field $header {
+	if {$region} {
+		set elements [list range y $graphd(wfield)]
+	}
+	foreach field [list_remove $elements {}] {
 		vector create ::$object.$vnum.$field
 	}
 	set basecolor [lindex {gray blue yellow green orange red violet} $vnum]
 	lappend data(entries) $name
 	set data($name,header) $header
-	while {![eof $f]} {
-		if {[llength $line]} {
-			foreach v $line field $header {
-				if {[string is int $v]} {
-					::$object.$vnum.$field append $v
+	set data($name,elements) $elements
+	if {$region} {
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			if {![llength $line]} continue
+			foreach {begin end} [list_sub $line $poss] break
+			::$object.$vnum.region append $end
+			::$object.$vnum.region append $begin
+			::$object.$vnum.y append 0
+			::$object.$vnum.y append 0
+		}
+		set graphd(xfield) region
+		set graphd(yfield) y
+	} else {
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			if {![llength $line]} continue
+			foreach el $elements p $poss v [list_sub $line $poss] {
+				if {$p == -1} continue
+				if {[isdouble $v]} {
+					::$object.$vnum.$el append $v
 				} else {
-					::$object.$vnum.$field append 0
+					::$object.$vnum.$el append $graphd(nan)
 				}
 			}
 		}
-		set line [split [gets $f] \t]
 	}
 	close $f
-	set xv ::$object.$vnum.[lindex $header 0]
-	set yv ::$object.$vnum.[lindex $header 1]
-	if {[llength $header] == 3} {
-		set wv ::$object.$vnum.[lindex $header 2]
+	set xv ::$object.$vnum.$graphd(xfield)
+	set yv ::$object.$vnum.$graphd(yfield)
+	if {$graphd(wfield) ne ""} {
+		set wv ::$object.$vnum.$graphd(wfield)
 	}
 	if {[get ${xv}(min)] < $xmin} {
 		set xmin [get ${xv}(min)]
@@ -174,6 +219,9 @@ graphwidget method open {{file {}}} {
 	$object.g element configure $name -linewidth 0 -fill $color -outlinewidth 1 -pixels 1 -symbol circle
 	$object.g element configure $name -linewidth 0 -outline $color -outlinewidth 1 -pixels 2 -symbol plus \
 		-styles $style
+	if {$region} {
+		$object.g element configure $name -linewidth 5 -trace decreasing
+	}
 	set data($name,color) $color
 	event generate $object.g <Configure>
 	$object.g legend bind $name <1> [list $object elconf $name]
@@ -350,7 +398,7 @@ graphwidget method reconf {args} {
 	set data($name,color) [get conf(color) gray]
 	set style [$object gradientstyle $data($name,color)]
 	set color [get colors($data($name,color)-0) $data($name,color)]
-	$object.g element configure $name -linewidth $conf(linewidth) -fill $color -outline $color \
+	$object.g element configure $name -linewidth $conf(linewidth) -fill $color -outline $color -color $color \
 		-outlinewidth 1 -pixels 2 -symbol $conf(symbol) \
 		-styles $style
 	event generate $object.g <Configure>
