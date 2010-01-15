@@ -1,9 +1,12 @@
 package require Extral
 
-proc open_region {f} {
-	set header2 [gets $f]
-	if {[string index $header2 0] eq "#"} {
-		set header2 [string range $header2 1 end]
+proc open_region {f {headerVar {}}} {
+	if {[string length $headerVar]} {
+		upvar $headerVar header
+	}
+	set header [gets $f]
+	if {[string index $header 0] eq "#"} {
+		set header [string range $header 1 end]
 	}
 	set tests {
 		{chromosome begin end}
@@ -11,21 +14,22 @@ proc open_region {f} {
 		{genoName genoStart genoEnd}
 		{genoName genoStart genoEnd}
 		{tName tStart tEnd}
+		{chr begin end}
 	}
 	foreach test $tests {
-		set poss2 [list_cor $header2 $test]
+		set poss2 [list_cor $header $test]
 		if {[lsearch $poss2 -1] == -1} {
 			return $poss2
 		}
 	}
 	while {![eof $f]} {
-		set header2 [gets $f]
-		if {[string length $header2] && [string index $header2 0] ne "#"} break
+		set header [gets $f]
+		if {[string length $header] && [string index $header 0] ne "#"} break
 	}
-	if {[string index $header2 0] eq ">"} {
-		set header2 [string range $header2 1 end]
+	if {[string index $header 0] eq ">"} {
+		set header [string range $header 1 end]
 	}
-	set poss2 [list_cor $header2 {chromosome begin end}]
+	set poss2 [list_cor $header {chromosome begin end}]
 	if {[lsearch $poss2 -1] == -1} {
 		return $poss2
 	}
