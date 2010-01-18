@@ -37,7 +37,7 @@ proc joinvarlines list {
 	lset line 4 [lindex $list end 4]
 }
 
-proc readonevar f {
+proc var2annotvar_readonevar f {
 	global cache list
 	if {[info exists cache($f,rov)]} {
 		set line1 [list_shift cache($f,rov)]
@@ -138,7 +138,7 @@ proc var2annotvar {file genefile outfile} {
 	}
 	set o [open $outfile w]
 	puts $o [join {locus chromosome begin end type alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef} \t]
-	set cur [readonevar $f1]
+	set cur [var2annotvar_readonevar $f1]
 	set curgene [readonegene $g]
 	set num 0
 	while {![eof $f1]} {
@@ -155,7 +155,7 @@ proc var2annotvar {file genefile outfile} {
 		} else {
 			puts $o [join $cur \t]
 		}
-		set cur [readonevar $f1]
+		set cur [var2annotvar_readonevar $f1]
 	}
 	close $o
 	close $g

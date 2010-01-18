@@ -17,7 +17,11 @@ proc tsv_select {query {qfields {}} {sortfields {}}} {
 			}
 		}
 		set poss [lmath_calc $poss + 1]
-		set sort "gnusort8 -t \\t -V -k[join $poss " -k"]"
+		set keys {}
+		foreach pos $poss {
+			lappend keys $pos,$pos
+		}
+		set sort "gnusort8 -t \\t -V -s -k[join $keys " -k"]"
 	}
 	if {$query ne ""} {
 		list_unmerge [regexp -all -inline {[$]([a-zA-z0-9]+)} $query] 1 fields
@@ -91,7 +95,7 @@ proc tsv_sort {filename fields} {
 	if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $fields [list_find $poss -1]] ,] not found"}
 	set poss [lmath_calc $poss + 1]
 	puts [join $header \t]
-	set command "tail +2 [list $filename] | gnusort8 -t \\t -V -k[join $poss " -k"] >@ stdout"
+	set command "tail +2 [list $filename] | gnusort8 -t \\t -V -s -k[join $poss " -k"] >@ stdout"
 	eval exec $command
 }
 
@@ -107,17 +111,17 @@ proc tsv_open {f} {
 	set keep 0
 	while {![eof $f]} {
 		set line [gets $f]
-		if {[string index $line 0] eq "#"} continue
 		if {![string length $line]} continue
-		break
+		if {[string index $line 0] ne "#"} break
 		set keep [tell $f]
 		set header $line
 	}
 	if {[string index $line 0] eq ">"} {
 		return [split [string range $line 1 end] \t]
 	}
-	if {![info exists header]} {set header $line}
-	if {[string index $header 0] eq "#"} {
+	if {![info exists header]} {
+		return [split $line \t]
+	} elseif {[string index $header 0] eq "#"} {
 		seek $f $keep
 		return [split [string range $header 1 end] \t]
 	} else {
@@ -133,7 +137,8 @@ if 0 {
 	package require Extral
 	cd /complgen/compar
 
-	set filename /data/db/_data_db_ucsc-exapted_repeats.tsv
+	set filename /data/db/ucsc_ori/_data_db_ucsc-exapted_repeats.tsv
+	set f [open $filename]
 	set fields {chrom chromStart chromEnd}
 
 	# set f [open /complgen/compar/78vs79_compar-filter-sc.tsv]

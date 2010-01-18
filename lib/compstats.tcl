@@ -3,7 +3,7 @@ proc compare_pvt {} {
 	# set f [open $compar_file]
 	unset -nocomplain a
 	set header [split [gets $f] \t]
-	set fields {compar sample chromosome type dbsnp ns lowscore loc effect refcons cluster trf str rp sd sc a100 a70 b20 b30}
+	set fields {compar sample chromosome type dbsnp ns lowscore loc effect refcons cluster trf str repeat segdup selfchain a100 a70 b20 b30}
 	set poss [list_cor $header $fields]
 	set nf [list_find $poss -1]
 	if {[llength $nf]} {
@@ -102,12 +102,12 @@ proc compare_pvtsummary {} {
 		"filter 5 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats)" {refcons "" ns "" lowscore "" trf ""}
 		"filter 5b (removed ref-(in)consistent, ?/N, coverage between 20 and 100, tandem repeats)" {refcons "" ns "" a100 "" b20 "" trf ""}
 		"filter 6 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str)" {refcons "" ns "" lowscore "" trf "" str ""}
-		"filter 7 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats)" {refcons "" ns "" lowscore "" trf "" str "" rp ""}
-		"filter 8 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats, segdup)" {refcons "" ns "" lowscore "" trf "" str "" rp "" sd ""}
-		"filter 9 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" lowscore "" trf "" str "" rp "" sd "" sc ""}
-		"filter 9b (removed ref-(in)consistent, ?/N, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" a100 "" b20 "" trf "" str "" rp "" sd "" sc ""}
-		"filter 10 (removed ref-(in)consistent, ?/N, scores < 60, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" lowscore "" a100 "" b20 "" trf "" str "" rp "" sd "" sc ""}
-		"filter 11 (removed ref-(in)consistent, ?/N, scores < 60, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained, cluster)" {refcons "" ns "" lowscore "" a100 "" b20 "" trf "" str "" rp "" sd "" sc "" cluster ""}
+		"filter 7 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats)" {refcons "" ns "" lowscore "" trf "" str "" repeat ""}
+		"filter 8 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats, segdup)" {refcons "" ns "" lowscore "" trf "" str "" repeat "" segdup ""}
+		"filter 9 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" lowscore "" trf "" str "" repeat "" segdup "" selfchain ""}
+		"filter 9b (removed ref-(in)consistent, ?/N, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" a100 "" b20 "" trf "" str "" repeat "" segdup "" selfchain ""}
+		"filter 10 (removed ref-(in)consistent, ?/N, scores < 60, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" lowscore "" a100 "" b20 "" trf "" str "" repeat "" segdup "" selfchain ""}
+		"filter 11 (removed ref-(in)consistent, ?/N, scores < 60, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained, cluster)" {refcons "" ns "" lowscore "" a100 "" b20 "" trf "" str "" repeat "" segdup "" selfchain "" cluster ""}
 	} {
 		puts stderr "===== $title ====="
 		puts $o "\n ==================== $title ===================="
@@ -119,9 +119,11 @@ proc compare_pvtsummary {} {
 			set checkall [format %0.0f [lmath_sum [list_subindex $list $end]]]
 			puts $checkall
 			set all [count $list]
+			set allnew [count $list {dbsnp ""}]
 			puts $o "total:\t$all"
 			set snps [count $list {type snp}]
-			puts $o "snps:\t$snps ([expr {$all-$snps}] other)"
+			set snpsnew [count $list {type snp dbsnp ""}]
+			puts $o "snps:\t$snps ([expr {$all-$snps}] other)\tnewsnps\t$snpsnew ([expr {$allnew-$snpsnew}] other)"
 			if {$compar eq "df"} {
 				set idlistheader \t\t[join $idlist \t]
 			} else {
@@ -182,13 +184,19 @@ proc compare_selectivity {o table} {
 	set dftotal [lmath_sum [list_subindex $dflist $end]]
 	set mmtotal [lmath_sum [list_subindex $mmlist $end]]
 	set smtotal [lmath_sum [list_subindex $smlist $end]]
+	set newdflist [comstats_filter $dflist [list dbsnp ""]]
+	set newmmlist [comstats_filter $mmlist [list dbsnp ""]]
+	set newsmlist [comstats_filter $smlist [list dbsnp ""]]
+	set newdftotal [lmath_sum [list_subindex $newdflist $end]]
+	set newmmtotal [lmath_sum [list_subindex $newmmlist $end]]
+	set newsmtotal [lmath_sum [list_subindex $newsmlist $end]]
 	puts $o "---------- total ----------"
-	puts $o "df\t[format %0.0f $dftotal]"
-	puts $o "mm\t[format %0.0f $mmtotal]"
-	puts $o "sm\t[format %0.0f $smtotal]"
+	puts $o "df\t[format %0.0f $dftotal]\tnewdf\t[format %0.0f $newdftotal]"
+	puts $o "mm\t[format %0.0f $mmtotal]\tnewmm\t[format %0.0f $newmmtotal]"
+	puts $o "sm\t[format %0.0f $smtotal]\tnewsm\t[format %0.0f $newsmtotal]"
 	foreach {sfield svalue} {
 		type snp dbsnp dbsnp ns n? lowscore ls 
-		refcons rc trf trf str str rp rp sd sd sc sc cluster cl
+		refcons rc trf trf str str repeat rp segdup sd selfchain sc cluster cl
 		a100 a100 a70 a70 b20 b20 b30 b30
 	} {
 		set list [comstats_filter $dflist [list $sfield $svalue]]
@@ -197,12 +205,18 @@ proc compare_selectivity {o table} {
 		set mmselnum [lmath_sum [list_subindex $list $end]]
 		set list [comstats_filter $smlist [list $sfield $svalue]]
 		set smselnum [lmath_sum [list_subindex $list $end]]
+		#new
+		set list [comstats_filter $newdflist [list $sfield $svalue]]
+		set newdfselnum [lmath_sum [list_subindex $list $end]]
+		set list [comstats_filter $newmmlist [list $sfield $svalue]]
+		set newmmselnum [lmath_sum [list_subindex $list $end]]
+		set list [comstats_filter $newsmlist [list $sfield $svalue]]
+		set newsmselnum [lmath_sum [list_subindex $list $end]]
 		puts $o "---------- $sfield == $svalue ----------"
-		puts $o "df\t[format %0.0f $dfselnum]\t[format %.2f [expr {100.0*$dfselnum/$dftotal}]]"
-		puts $o "mm\t[format %0.0f $mmselnum]\t[format %.2f [expr {100.0*$mmselnum/$mmtotal}]]"
-		puts $o "sm\t[format %0.0f $smselnum]\t[format %.2f [expr {100.0*$smselnum/$smtotal}]]"
+		puts $o "df\t[format %0.0f $dfselnum]\t[format %.2f [expr {100.0*$dfselnum/$dftotal}]]\tnewdf\t[format %0.0f $newdfselnum]\t[format %.2f [expr {100.0*$newdfselnum/$newdftotal}]]"
+		puts $o "mm\t[format %0.0f $mmselnum]\t[format %.2f [expr {100.0*$mmselnum/$mmtotal}]]\tnewmm\t[format %0.0f $newmmselnum]\t[format %.2f [expr {100.0*$newmmselnum/$newmmtotal}]]"
+		puts $o "sm\t[format %0.0f $smselnum]\t[format %.2f [expr {100.0*$smselnum/$smtotal}]]\tnewsm\t[format %0.0f $newsmselnum]\t[format %.2f [expr {100.0*$newsmselnum/$newsmtotal}]]"
 	}
-
 }
 
 if 0 {
@@ -220,5 +234,6 @@ set ofile summary.tsv
 catch {file delete summary.tsv}
 
 set file compar/78vs79_compar_pvt.tsv
+set file compar_GS102_GS103/pvtcompar_GS102_GS103.tsv
 
 }

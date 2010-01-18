@@ -1,5 +1,6 @@
 proc comparepos {cur1 cur2} {
-	array set trans {X 100 Y 101 M 102}
+	if {![llength $cur1]} {error "cur1 empty"}
+	if {![llength $cur2]} {error "cur2 empty"}
 	set chr1 [lindex $cur1 1]
 	set chr2 [lindex $cur2 1]
 	if {$chr1 eq $chr2} {
@@ -7,23 +8,22 @@ proc comparepos {cur1 cur2} {
 		set pos2 [lindex $cur2 2]
 		return [expr {$pos1-$pos2}]
 	} else {
-		set chr1 [get trans($chr1) $chr1]
-		set chr2 [get trans($chr2) $chr2]
+		set chr1 [chr2num $chr1]
+		set chr2 [chr2num $chr2]
 		return [expr {$chr1-$chr2}]
 	}
 }
 
 proc sequenced {r1 cur2} {
 	if {$r1 eq 1} {return 1}
-	array set trans {X 100 Y 101 M 102}
 	global cache
 	set chr [lindex $cur2 1]
-	set chr [get trans($chr) $chr]
+	set chr [chr2num $chr]
 	set pos [lindex $cur2 2]
 	set line $cache($r1)
 	while {[llength $line]} {
 		foreach {rchr rstart rend} $line break
-		set rchr [get trans($rchr) $rchr]
+		set rchr [chr2num $rchr]
 		if {$rchr > $chr} break
 		if {$rchr == $chr} {
 			if {$rstart > $pos} break
@@ -36,14 +36,6 @@ proc sequenced {r1 cur2} {
 	}
 	set cache($r1) $line
 	return 0
-}
-
-proc readonevar {f} {
-	while {![eof $f]} {
-		set line [split [gets $f] \t]
-		if {[llength $line]} break
-	}
-	return $line
 }
 
 array set compare_annot_join_trans {
@@ -128,6 +120,15 @@ proc compare_annot_join {compar sample cur1 cur2} {
 	return [join $result \t]
 }
 
+proc compare_annot_getline {f} {
+	set cur1 {}
+	while {![eof $f]} {
+		set cur1 [split [gets $f] \t]
+		if {[llength $cur1]} break
+	}
+	return $cur1
+}
+
 proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 	global cache
 	set f1 [open $file1]
@@ -176,8 +177,8 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 		xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef
 		xRef2 geneId2 mrnaAcc2 proteinAcc2 orientation2 exonCategory2 exon2 codingRegionKnown2 aaCategory2 nucleotidePos2 proteinPos2 aaAnnot2 aaCall2 aaRef2
 	} \t]
-	set cur1 [readonevar $f1]
-	set cur2 [readonevar $f2]
+	set cur1 [split [gets $f1] \t]
+	set cur2 [split [gets $f2] \t]
 	set num 1
 	while {![eof $f1] || ![eof $f2]} {
 		incr num
@@ -202,9 +203,8 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 					puts $o [compare_annot_join mm $id1,$id2 $cur1 $cur2]
 				}
 			}
-			set cur1 [readonevar $f1]
-			set cur2 [readonevar $f2]
-			continue
+			set cur1 [compare_annot_getline $f1]
+			set cur2 [compare_annot_getline $f2]
 		} elseif {$d < 0} {
 			while {[comparepos $cur1 $cur2] < 0} {
 				set s [sequenced $r1 $cur1]
@@ -218,9 +218,10 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 						puts $o [compare_annot_join un $id1 $cur1 {}]
 					}
 				}
-				set cur1 [readonevar $f1]
+				if {[eof $f1]} break
+				set cur1 [compare_annot_getline $f1]
+				if {[llength $cur1]} break
 			}
-			continue
 		} else {
 			while {[comparepos $cur1 $cur2] > 0} {
 				set s [sequenced $r2 $cur2]
@@ -234,7 +235,9 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 						puts $o [compare_annot_join un $id2 $cur2 {}]
 					}
 				}
-				set cur2 [readonevar $f2]
+				if {[eof $f2]} break
+				set cur2 [compare_annot_getline $f2]
+				if {[llength $cur2]} break
 			}
 		}
 	}
@@ -249,8 +252,9 @@ proc lset_always {varName pos value} {
 	}
 }
 
-array set chrtrans {X 90 Y 91 M 92}
+array set chrtrans {M 95 X 96 Y 97}
 proc chr2num {chr} {
+	if {[isint $chr]} {return $chr}
 	regsub ^chr $chr {} chr
 	set nchr [get ::chrtrans($chr) $chr]
 	return $nchr
