@@ -1,6 +1,8 @@
+# < 0 if cur1 < cur2
+# > 0 if cur1 > cur2
 proc comparepos {cur1 cur2} {
-	if {![llength $cur1]} {error "cur1 empty"}
-	if {![llength $cur2]} {error "cur2 empty"}
+	if {![llength $cur1]} {return 1}
+	if {![llength $cur2]} {return -1}
 	set chr1 [lindex $cur1 1]
 	set chr2 [lindex $cur2 1]
 	if {$chr1 eq $chr2} {

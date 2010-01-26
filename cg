@@ -29,7 +29,7 @@ switch $action {
 			puts stderr "format is: $scriptname $action sampledir ?force?"
 			puts stderr " - processes (sorting annotating, etc.) one sample directory."
 			puts stderr " - By default, only files that are not present already will be created."
-			puts stderr " -When force is givven as a parameter, everything will be recalculated and overwritten."
+			puts stderr " -When force is given as a parameter, everything will be recalculated and overwritten."
 			exit 1
 		}
 		foreach {dir force} $argv break

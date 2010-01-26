@@ -117,8 +117,9 @@ proc process_compare {dir1 dir2 dbdir resultsdir {force 0}} {
 			continue
 		}
 		cg annot_compare_region temp.tsv $regfile $field $value "" > tempfiltered.tsv
-		file delete temp.tsv
-		file rename tempfiltered.tsv temp.tsv
+		if {[file exists tempfiltered.tsv]} {
+			file rename -force tempfiltered.tsv temp.tsv
+		}
 	}
 	file rename temp.tsv fcompar_${name1}_${name2}.tsv
 	cg compare_pvt < fcompar_${name1}_${name2}.tsv > pvtcompar_${name1}_${name2}.tsv
@@ -127,6 +128,8 @@ proc process_compare {dir1 dir2 dbdir resultsdir {force 0}} {
 }
 
 if 0 {
+	set basedir /media/passport/complgen
+	set basedir /complgen
 	lappend auto_path ~/dev/completegenomics/lib
 	package require Tclx
 	signal -restart error SIGINT
@@ -135,6 +138,8 @@ if 0 {
 	set dir1 /media/passport/complgen/GS102
 	set dir2 /media/passport/complgen/GS103
 	set dbdir /data/db
-	set resultsdir /media/passport/complgen/compar_GS102_GS103
+	set resultsdir $basedir/compar_GS102_GS103
 	set force 0
+	set name1 [file tail $dir1]
+	set name2 [file tail $dir2]
 }
