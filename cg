@@ -136,6 +136,14 @@ switch $action {
 			svdbinfo $dbfile
 		}
 	}
+	sv_2dhisto {
+		if {[llength $argv] != 1} {
+			puts stderr "format is: $scriptname $action svdbfile"
+			exit 1
+		}
+		foreach {dbfile} $argv break
+		sv_2dhisto $dbfile
+	}
 	covered {
 		if {[llength $argv] != 1} {
 			puts stderr "format is: $scriptname $action region_file"
