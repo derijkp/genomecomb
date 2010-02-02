@@ -49,16 +49,21 @@ graphwidget method init {args} {
 		}
 		break
 	}
-	bind $object.g <Configure> [list $object _fillregion]
+	bind $object.g <Configure> [subst {$object _fillregion; Classy::todo $object _setvars}]
 	button $object.b.open -text "Open" -command [list $object open]
 	pack $object.b.open -side left
 	button $object.b.clear -text "Clear" -command [list $object clear]
 	pack $object.b.clear -side left
-	foreach type {xmin xmax ymin ymax} {destroy $object.b.$type
+	Classy::Entry $object.b.xrange -width 20 -label xrange -orient horizontal \
+		-textvariable [privatevar $object region(xrange)] -command [list $object redraw]
+	pack $object.b.xrange -side left
+	foreach type {xrangeextra ymin ymax} {destroy $object.b.$type
 		Classy::NumEntry $object.b.$type -width 10 -label $type -orient horizontal \
 			-textvariable [privatevar $object region($type)] -command [list $object redraw]
 		pack $object.b.$type -side left
 	}
+	$object.b.xrange configure -width 20
+	$object.b.xrangeextra configure -width 5
 	$object clear
 }
 
@@ -282,9 +287,34 @@ if {[tk windowingsystem] eq "x11"} {
 graphwidget method redraw {args} {
 	private $object region
 	set w $object.g
-	$w axis configure x -min $region(xmin) -max $region(xmax)
+	set xmin ""
+	set xmax ""
+	foreach {xmin xmax} [list_remove [split $region(xrange) {\t -,}] {}] break
+	if {[isdouble $region(xrangeextra)]} {
+		set xmin [expr {$xmin - $region(xrangeextra)}]
+		set xmax [expr {$xmax + $region(xrangeextra)}]
+	}
+	$w axis configure x -min $xmin -max $xmax
 	$w axis configure y -min $region(ymin) -max $region(ymax)
 	event generate $object.g <Configure>
+}
+
+graphwidget method _setvars {} {
+	private $object region
+	set w $object.g
+	set xmin ""
+	set xmax ""
+	foreach {xmin xmax} [list_remove [split $region(xrange) {\t -,}] {}] break
+	if {[isdouble $region(xrangeextra)]} {
+		set xmin [expr {$xmin - $region(xrangeextra)}]
+		set xmax [expr {$xmax + $region(xrangeextra)}]
+	}
+	set xmin [format %.0f [$w axis cget x -min]]
+	set xmax [format %.0f [$w axis cget x -max]]
+	if {![isdouble $region(xrangeextra)]} {set region(xrangeextra) 0}
+	set region(xrange) [expr {$xmin + $region(xrangeextra)}]-[expr {$xmax - $region(xrangeextra)}]
+	set region(ymin) [format %.0f [$w axis cget y -min]]
+	set region(ymax) [format %.0f [$w axis cget y -max]]
 }
 
 graphwidget method _fillregion {args} {
@@ -319,13 +349,14 @@ graphwidget method zoomx {{factor 2}} {
 	}
 	$w axis configure x -min $min
 	$w axis configure x -max $max
+	set range(xmin) $min
+	set range(xmax) $max
 	event generate $object.g <Configure>
 }
 
 graphwidget method zoomy {{factor 2}} {
-	private $object ymin ymax
+	private $object ymin ymax range
 	set w $object.g
-putsvars w ymin ymax factor
 	set min [$w axis cget y -min]
 	set max [$w axis cget y -max]
 	if {$min eq ""} {set min $ymin}
@@ -343,6 +374,8 @@ putsvars w ymin ymax factor
 	}
 	$w axis configure y -min $min
 	$w axis configure y -max $max
+	set range(ymin) $min
+	set range(ymax) $max
 	event generate $object.g <Configure>
 }
 
