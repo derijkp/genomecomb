@@ -24,14 +24,7 @@ graphwidget method init {args} {
 	$object.scy configure -command [list $object.g axis view y]
 	$object.g grid configure -hide no
 	Rbc_ZoomStack $object.g
-	foreach num {90 80 70 60 50 40 30} {
-		$object.g pen create gray$num -fill gray$num -outline gray$num -outlinewidth 1 -pixels 2 -symbol plus
-	}
-	if 0 {
-		foreach num {90 80 70 60 50 40 30} {
-			$object.g pen configure gray$num -fill gray$num -outline gray$num -outlinewidth 1 -pixels 2 -symbol plus
-		}
-	}
+	set style [$object gradientstyle blue]
 	bind $object.g <MouseWheel> {
 		if {%D < 0} {
 			[winfo parent %W] zoomy 1.05
@@ -167,7 +160,7 @@ graphwidget method open {{file {}} {region 0}} {
 	foreach field [list_remove $elements {}] {
 		vector create ::$object.$vnum.$field
 	}
-	set basecolor [lindex {gray blue yellow green orange red violet} $vnum]
+	set basecolor [lindex {blue red gray orange yellow green violet} $vnum]
 	lappend data(entries) $name
 	set data($name,header) $header
 	set data($name,elements) $elements
@@ -289,8 +282,12 @@ graphwidget method redraw {args} {
 	set w $object.g
 	set xmin ""
 	set xmax ""
+	if {![isdouble $region(xrangeextra)]} {set region(xrangeextra) 0}
 	foreach {xmin xmax} [list_remove [split $region(xrange) {\t -,}] {}] break
-	if {[isdouble $region(xrangeextra)]} {
+	if {[isdouble $xmin] && ![isdouble $xmax]} {
+		set xmax [expr {$xmin+1}]
+	}
+	if {[isdouble $xmin] && [isdouble $xmax] && [isdouble $region(xrangeextra)]} {
 		set xmin [expr {$xmin - $region(xrangeextra)}]
 		set xmax [expr {$xmax + $region(xrangeextra)}]
 	}
@@ -302,19 +299,20 @@ graphwidget method redraw {args} {
 graphwidget method _setvars {} {
 	private $object region
 	set w $object.g
-	set xmin ""
-	set xmax ""
-	foreach {xmin xmax} [list_remove [split $region(xrange) {\t -,}] {}] break
-	if {[isdouble $region(xrangeextra)]} {
-		set xmin [expr {$xmin - $region(xrangeextra)}]
-		set xmax [expr {$xmax + $region(xrangeextra)}]
-	}
-	set xmin [format %.0f [$w axis cget x -min]]
-	set xmax [format %.0f [$w axis cget x -max]]
+	set xmin [$w axis cget x -min]
+	set xmax [$w axis cget x -max]
 	if {![isdouble $region(xrangeextra)]} {set region(xrangeextra) 0}
-	set region(xrange) [expr {$xmin + $region(xrangeextra)}]-[expr {$xmax - $region(xrangeextra)}]
-	set region(ymin) [format %.0f [$w axis cget y -min]]
-	set region(ymax) [format %.0f [$w axis cget y -max]]
+	if {[isdouble $xmin] && [isdouble $xmax]} {
+		set xmin [format %.0f $xmin]
+		set xmax [format %.0f $xmax]
+		set region(xrange) [expr {$xmin + $region(xrangeextra)}]-[expr {$xmax - $region(xrangeextra)}]
+	}
+	set ymin [$w axis cget y -min]
+	set ymax [$w axis cget y -max]
+	catch {set ymin [format %.0f $ymin]}
+	catch {set ymax [format %.0f $ymax]}
+	set region(ymin) $ymin
+	set region(ymax) $ymax
 }
 
 graphwidget method _fillregion {args} {
