@@ -17,10 +17,11 @@ graphwidget method init {args} {
 	grid columnconfigure $object 0 -weight 1
 	grid rowconfigure $object 1 -weight 1
 	# link graph --> scrollbars
-	$object.g axis configure x -scrollcommand [list $object.scx set]
-	$object.g axis configure y -scrollcommand [list $object.scy set]
+	$object.g axis configure x -scrollcommand [list $object.scx set] -min 0 -max 1
+	$object.g axis configure x -scrollcommand [list $object xset] -min 0 -max 1
+	$object.g axis configure y -scrollcommand [list $object.scy set] -min 0 -max 1
 	# link scrollbars --> graph
-	$object.scx configure -command [list $object.g axis view x]
+	$object.scx configure -command [list $object xview]
 	$object.scy configure -command [list $object.g axis view y]
 	$object.g grid configure -hide no
 	Rbc_ZoomStack $object.g
@@ -42,8 +43,7 @@ graphwidget method init {args} {
 		}
 		break
 	}
-	bind $object.g <Configure> [subst {$object _fillregion; Classy::todo $object _setvars}]
-	button $object.b.open -text "Open" -command [list $object open]
+	button $object.b.open -text "Open" -command [list $object opendialog]
 	pack $object.b.open -side left
 	button $object.b.clear -text "Clear" -command [list $object clear]
 	pack $object.b.clear -side left
@@ -55,12 +55,45 @@ graphwidget method init {args} {
 			-textvariable [privatevar $object region($type)] -command [list $object redraw]
 		pack $object.b.$type -side left
 	}
+	Classy::ProgressWidget $object.progress
+	grid $object.progress -sticky nwse -columnspan 2
+	Classy::Progress display $object.progress
 	$object.b.xrange configure -width 20
 	$object.b.xrangeextra configure -width 5
 	$object clear
+	vector create ::$object.ends.x
+	vector create ::$object.ends.y
+	::$object.ends.x set {0 1}
+	::$object.ends.y set {0 0}
+	$object.g element create legend -xdata ::$object.ends.x -ydata ::$object.ends.y -symbol none -linewidth 0
+	Classy::todo $object start
 }
 
 graphwidget chainoptions {$object.g}
+
+catch {PushZoom}
+rename PushZoom ori.PushZoom
+
+proc PushZoom {graph} {
+	ori.PushZoom $graph
+	[winfo parent $graph] _fillregion
+	[winfo parent $graph] _setvars
+}
+
+catch {PopZoom}
+rename PopZoom ori.PopZoom
+
+proc PopZoom {graph} {
+	ori.PopZoom $graph
+	[winfo parent $graph] _fillregion
+	[winfo parent $graph] _setvars
+}
+
+graphwidget method start {} {
+	private $object region
+	array set region {xrange {0 20000} xrangeextra 1000 ymin -2 ymax 600}
+	$object redraw
+}
 
 graphwidget method clear {} {
 	private $object xmin xmax ymin ymax data
@@ -111,11 +144,9 @@ graphwidget method gradientstyle {basecolor} {
 	return $style
 }
 
-graphwidget method open {{file {}} {region 0}} {
-	private $object xmin xmax ymin ymax xv yv wv data colors
+graphwidget method opendialog {{file {}}} {
 	global graphd
 	if {$file eq ""} {set file [Classy::selectfile]}
-	set name [file root [file tail $file]]
 	set f [open $file]
 	set header [tsv_open $f]
 	set graphd(header) $header
@@ -130,6 +161,11 @@ graphwidget method open {{file {}} {region 0}} {
 	} elseif {[lsearch $header start] != -1} {
 		set graphd(xfield) start
 		set graphd(region) 1
+	} elseif {[lsearch $header end1] != -1} {
+		set graphd(xfield) end1
+		set graphd(yfield) dist
+		set graphd(region) 0
+		set graphd(wfield) "weight1"
 	}
 	if {[lsearch $header end] != -1} {
 		set graphd(yfield) end
@@ -144,85 +180,156 @@ graphwidget method open {{file {}} {region 0}} {
 	$object.open option select "Weight" graphd(wfield) graphd(header)
 	$object.open option check "Regions" graphd(region) ""
 	$object.open option entry "Nan" graphd(nan)
-	$object.open add do Do {set graphd(do) 1} default
-	tkwait window $object.open
-	if {!$graphd(do)} return
-	set region $graphd(region)
-	set elements [list $graphd(xfield) $graphd(yfield) $graphd(wfield)]
+	$object.open add do Do [list $object open $file ::graphd] default
+}
+
+proc graphwidget_next {f xpos next {shift 100000}} {
+	# do a ~ binary search to get at next faster
+	set start [tell $f]
+	while 1 {
+		seek $f $shift current
+		gets $f
+		set line [split [gets $f] \t]
+		set x [lindex $line $xpos]
+		if {![isdouble $x] || ($x >= $next)} {
+			seek $f $start
+			set shift [expr {$shift / 2}]
+			if {$shift < 1000} break
+		}
+		set start [tell $f]
+	}
+	while {![eof $f]} {
+		set fpos [tell $f]
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		set x [lindex $line $xpos]
+		if {$x >= $next} break
+	}
+	return $fpos
+}
+
+graphwidget method _configureevent {} {
+	event generate $object.g <Configure>
+}
+
+graphwidget method open {file settingsVar} {
+	private $object xv yv wv data colors
+	upvar $settingsVar graphd
+	set showregion $graphd(region)
+	set vnum [llength $data(entries)]
+	if {$showregion} {
+		foreach field {y region i} {
+			vector create ::$object.$vnum.$field
+		}
+		set elements [list range y $graphd(wfield)]
+	} else {
+		foreach field {x y w i} {
+			vector create ::$object.$vnum.$field
+		}
+		set elements [list $graphd(xfield) $graphd(yfield) $graphd(wfield)]
+	}
+	set name [file root [file tail $file]]
+	set f [open $file]
+	set header [tsv_open $f]
 	set poss {}
 	foreach el $elements {
 		lappend poss [lsearch $header $el]
 	}
-	set vnum [llength $data(entries)]
-	if {$region} {
-		set elements [list range y $graphd(wfield)]
-	}
-	foreach field [list_remove $elements {}] {
-		vector create ::$object.$vnum.$field
-	}
+	set xpos [lindex $poss 0]
+	set ypos [lindex $poss 1]
 	set basecolor [lindex {blue red gray orange yellow green violet} $vnum]
 	lappend data(entries) $name
+	set data($name,vnum) $vnum
+	set data($name,lstart) 0
+	set data($name,lend) 0
+	set data($name,file) [file normalize $file]
 	set data($name,header) $header
 	set data($name,elements) $elements
-	if {$region} {
+	set data($name,region) $graphd(region)
+	set data($name,nan) $graphd(nan)
+	set data($name,poss) $poss
+	# create index
+	set indexname $file.$graphd(xfield)_index
+	set indexed 1
+	set index ::$object.$vnum.i
+	if {![file exists $indexname]} {
+		set fstart [tell $f]
+		set fpos $fstart
+		set line [split [gets $f] \t]
+		set xmin [lindex $line $xpos]
+		set xmax $xmin
+		set ymin [lindex $line $ypos]
+		set ymax $ymin
+		set findex [expr {$xmin-$xmin%10000}]
+		set prev $findex
+		set next [expr {$prev + 10000}]
+		::$index set [list $fpos]
+		Classy::Progress start [file size $file] "Making index"
 		while {![eof $f]} {
-			set line [split [gets $f] \t]
-			if {![llength $line]} continue
-			foreach {begin end} [list_sub $line $poss] break
-			::$object.$vnum.region append $end
-			::$object.$vnum.region append $begin
-			::$object.$vnum.y append 0
-			::$object.$vnum.y append 0
+			set fpos [graphwidget_next $f $xpos $next]
+			::$index append $fpos
+			incr prev 10000
+			incr next 10000
+			Classy::Progress set [tell $f]
+			if {![expr $next%100000]} {puts stderr $next}
 		}
-		set graphd(xfield) region
-		set graphd(yfield) y
+		Classy::Progress stop
+		set o [open $indexname w]
+		puts $o 10000
+		puts $o $findex
+		puts $o $xmin
+		puts $o $xmax
+		puts $o $ymin
+		puts $o $ymax
+		puts $o [join [::$index range 0 end] \n]
+		close $o
+		set data($name,step) 10000
+		set data($name,findex) $findex
+		set data($name,fstart) $fstart
+		set data($name,xmin) $xmin
+		set data($name,xmax) $xmax
+		set data($name,ymin) $ymin
+		set data($name,ymax) $ymax
+		set data($name,fx) [expr {$xmin-$xmin%10000}]
 	} else {
-		while {![eof $f]} {
-			set line [split [gets $f] \t]
-			if {![llength $line]} continue
-			foreach el $elements p $poss v [list_sub $line $poss] {
-				if {$p == -1} continue
-				if {[isdouble $v]} {
-					::$object.$vnum.$el append $v
-				} else {
-					::$object.$vnum.$el append $graphd(nan)
-				}
-			}
-		}
+		set o [open $indexname]
+		set data($name,step) [gets $o]
+		set data($name,findex) [gets $o]
+		set xmin [gets $o]
+		set data($name,xmin) $xmin
+		set data($name,xmax) [gets $o]
+		set data($name,ymin) [gets $o]
+		set data($name,ymax) [gets $o]
+		set data($name,fx) [expr {$data($name,xmin)-$xmin%10000}]
+		set temp [split [string trim [read $o]] \n]
+		::$index set $temp
+		close $o
 	}
+	set amin [::$object.ends.x index 0]
+	set amax [::$object.ends.x index 1]
+	if {$data($name,xmin) < $amin} {set amin $data($name,xmin)}
+	if {$data($name,xmax) > $amax} {set amax $data($name,xmax)}
+	::$object.ends.x set [list $amin $amax]
+	::$object.ends.y set {0 0}
+	set data($name,indexed) $indexed
 	close $f
-	set xv ::$object.$vnum.$graphd(xfield)
-	set yv ::$object.$vnum.$graphd(yfield)
-	if {$graphd(wfield) ne ""} {
-		set wv ::$object.$vnum.$graphd(wfield)
-	}
-	if {[get ${xv}(min)] < $xmin} {
-		set xmin [get ${xv}(min)]
-	}
-	if {[get ${xv}(max)] > $xmax} {
-		set xmax [get ${xv}(max)]
-	}
-	if {[get ${yv}(min)] < $ymin} {
-		set ymin [get ${yv}(min)]
-	}
-	if {[get ${yv}(max)] > $ymax} {
-		set ymax [get ${yv}(max)]
-	}
+	set xv ::$object.$vnum.x
+	set yv ::$object.$vnum.y
+	set wv ::$object.$vnum.w
 	$object.g element create $name -xdata ::$xv -ydata ::$yv -symbol none
-	if {[llength $header] == 3} {
-		$object.g element configure $name -weights ::$wv
-	}
+	$object.g element configure $name -weights ::$wv
 	set style [$object gradientstyle $basecolor]
 	set color [get colors(${basecolor}0) $basecolor]
 	$object.g element configure $name -linewidth 0 -fill $color -outlinewidth 1 -pixels 1 -symbol circle
 	$object.g element configure $name -linewidth 0 -outline $color -outlinewidth 1 -pixels 2 -symbol plus \
 		-styles $style
-	if {$region} {
+	if {$showregion} {
 		$object.g element configure $name -linewidth 5 -trace decreasing
 	}
 	set data($name,color) $color
-	event generate $object.g <Configure>
 	$object.g legend bind $name <1> [list $object elconf $name]
+	$object reload
+	Classy::todo $object _configureevent
 }
 
 proc ::tk::MouseWheel {wFired X Y D {shifted 0}} {
@@ -277,9 +384,8 @@ if {[tk windowingsystem] eq "x11"} {
     bind all <Shift-5> [list ::tk::MouseWheel %W %X %Y -120 1]
 }
 
-graphwidget method redraw {args} {
+graphwidget method _xrange {args} {
 	private $object region
-	set w $object.g
 	set xmin ""
 	set xmax ""
 	if {![isdouble $region(xrangeextra)]} {set region(xrangeextra) 0}
@@ -291,20 +397,31 @@ graphwidget method redraw {args} {
 		set xmin [expr {$xmin - $region(xrangeextra)}]
 		set xmax [expr {$xmax + $region(xrangeextra)}]
 	}
-	$w axis configure x -min $xmin -max $xmax
+puts _xrange($xmin-$xmax)
+	set region(xmin) [expr {round($xmin)}]
+	set region(xmax) [expr {round($xmax)}]
+}
+
+graphwidget method redraw {args} {
+	private $object region
+	set w $object.g
+	$object _xrange
+	$w axis configure x -min $region(xmin) -max $region(xmax)
 	$w axis configure y -min $region(ymin) -max $region(ymax)
-	event generate $object.g <Configure>
+	$object reload
+	Classy::todo $object _configureevent
 }
 
 graphwidget method _setvars {} {
 	private $object region
 	set w $object.g
-	set xmin [$w axis cget x -min]
-	set xmax [$w axis cget x -max]
+	set xmin [expr {round([$w axis cget x -min])}]
+	set xmax [expr {round([$w axis cget x -max])}]
+puts _setvars($xmin-$xmax)
 	if {![isdouble $region(xrangeextra)]} {set region(xrangeextra) 0}
 	if {[isdouble $xmin] && [isdouble $xmax]} {
-		set xmin [format %.0f $xmin]
-		set xmax [format %.0f $xmax]
+		set region(xmin) $xmin
+		set region(xmax) $xmax
 		set region(xrange) [expr {$xmin + $region(xrangeextra)}]-[expr {$xmax - $region(xrangeextra)}]
 	}
 	set ymin [$w axis cget y -min]
@@ -349,7 +466,7 @@ graphwidget method zoomx {{factor 2}} {
 	$w axis configure x -max $max
 	set range(xmin) $min
 	set range(xmax) $max
-	event generate $object.g <Configure>
+	Classy::todo $object _configureevent
 }
 
 graphwidget method zoomy {{factor 2}} {
@@ -374,7 +491,7 @@ graphwidget method zoomy {{factor 2}} {
 	$w axis configure y -max $max
 	set range(ymin) $min
 	set range(ymax) $max
-	event generate $object.g <Configure>
+	Classy::todo $object _configureevent
 }
 
 proc gradient {rgb factor {window .}} {
@@ -432,7 +549,7 @@ graphwidget method reconf {args} {
 	$object.g element configure $name -linewidth $conf(linewidth) -fill $color -outline $color -color $color \
 		-outlinewidth 1 -pixels 2 -symbol $conf(symbol) \
 		-styles $style
-	event generate $object.g <Configure>
+	Classy::todo $object _configureevent
 }
 
 graphwidget method confcurrent {args} {
@@ -461,17 +578,176 @@ graphwidget method elconf {name} {
 		-command "$object reconf"
 	$object.conf option numentry "Y shift" [privatevar $object conf(yshift)] \
 		-command "$object shift \[getprivate $object conf(entry)\]"
+	$object.conf option button "Remove" \
+		"$object delelement \[getprivate $object conf(entry)\]"
+}
+
+graphwidget method delelement {name} {
+	private $object data
+	set vnum $data($name,vnum)
+	foreach field {x y w region i} {
+		catch {vector destroy ::$object.$vnum.$field}
+	}
+	$object.g element	delete $name
+	set list [array names data $name,*]
+	foreach el $list {
+		unset data($el)
+	}
+	set data(entries) [list_remove $data(entries) $name]
+}
+
+graphwidget method loadregion {name} {
+	private $object region data
+	set start $region(xmin)
+	set end $region(xmax)
+	set start [expr {round([$object.g axis cget x -min])}]
+	set end [expr {round([$object.g axis cget x -max])}]
+	if {($start >= $data($name,lstart)) && ($end <= $data($name,lend))} return
+	incr start -5000
+	incr end 5000
+	set start [expr {round($start)-round($start)%10000}]
+	if {$start < $data($name,findex)} {set start $data($name,findex)}
+puts "load $start $end $data($name,lstart) $data($name,lend)"
+	if {![info exists data($name,vnum)]} return
+	set vnum $data($name,vnum)
+	set poss $data($name,poss)
+	set index ::$object.$vnum.i
+	if {$data($name,region)} {
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			if {![llength $line]} continue
+			foreach {begin end} [list_sub $line $poss] break
+			::$object.$vnum.region append $end
+			::$object.$vnum.region append $begin
+			::$object.$vnum.y append 0
+			::$object.$vnum.y append 0
+		}
+		set graphd(xfield) region
+		set graphd(yfield) y
+	} else {
+		foreach el {x y w} v [list $data($name,xmin) 0 0] {
+			::$object.$vnum.$el set {}
+		}
+		set xpos [lindex $poss 0]
+		set data($name,lstart) 0
+		set data($name,lend) 0
+		set f [open $data($name,file)]
+		set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
+		seek $f $fpos
+		set pnext [expr {$start+1000}]
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			if {![llength $line]} continue
+			set x [lindex $line $xpos]
+			if {$x > $pnext} {
+				update
+				if {[get region(cancel) 0]} return
+				incr pnext 2000
+			}
+			if {$x > $end} break
+			foreach el {x y w} p $poss v [list_sub $line $poss] {
+				if {$p == -1} continue
+				if {[isdouble $v]} {
+					::$object.$vnum.$el append $v
+				} else {
+					::$object.$vnum.$el append $data($name,nan)
+				}
+			}
+		}
+		set data($name,lstart) $start
+		set data($name,lend) $end
+	}
+}
+
+graphwidget method reload {} {
+	private $object data region
+	Classy::canceltodo $object reload
+	set region(cancel) 1
+	update
+	unset -nocomplain region(cancel)
+	catch {
+		foreach name $data(entries) {
+			$object loadregion $name
+		}
+	}
+	Classy::canceltodo $object reload
+}
+
+graphwidget method xset {args} {
+	private $object pxv
+	if {[get pxv ""] ne $args} {
+puts "xset $args"
+		$object.scx configure -command {}
+		$object.scx set {*}$args
+		$object.scx configure -command [list $object xview]
+		set pxv $args
+	}
+}
+
+graphwidget method xview {args} {
+puts "[info level] xview $args"
+	private $object data region
+	Classy::canceltodo $object reload
+	Classy::canceltodo $object _configureevent
+	set w $object.g
+	set amin [::$object.ends.x index 0]
+	set amax [::$object.ends.x index 1]
+	set xmin [expr {round([$w axis cget x -min])}]
+	set xmax [expr {round([$w axis cget x -max])}]
+	set cursize [expr {$xmax-$xmin}]
+	set first [lindex $args 0]
+	switch $first {
+		"" {
+			set cursx [expr {}]]
+			return [$w axis view x]
+		}
+		moveto {
+			set fraction [lindex $args 1]
+			set xmin [expr {$amin + $fraction*($amax-$amin+1)}]
+		}
+		scroll {
+			set number [lindex $args 1]
+			set what [lindex $args 2]
+			if {$what eq "pages"} {
+				set xmin [expr {$xmin+$number*$cursize - ($cursize/10)}]
+			} else {
+				set xmin [expr {$xmin+$number*($cursize/10)}]
+			}
+		}
+	}
+	set xmax [expr {$xmin+$cursize}]
+	$w axis configure x -min $xmin -max $xmax
+	Classy::canceltodo $object reload
+	Classy::todo $object reload
+	Classy::todo $object _configureevent
 }
 
 if 0 {
 
+#	package require Tclx
+#	signal -restart error SIGINT
 lappend auto_path /home/peter/bin/tcl
 lappend auto_path /home/peter/dev/completegenomics/lib
-
+cd /media/passport/complgen/sv
 set object .g
-
 	package require Tk
 	graphwidget .g
 	pack .g -fill both -expand yes
+.g opendialog /media/passport/complgen/sv/sv78-20-pairs.tsv
+
+
+set file sv79-20-pairs.tsv
+set file sv78-20-pairs.tsv
+catch {close $f}
+catch {close $o}
+
+$object xview scroll 1 pages
+
+$object reload
+$object.scx configure -command [list $object xview]
+$object.scx configure -command {}
+
+$object.g axis configure x -scrollcommand [list $object xset]
+$object.g axis configure x -scrollcommand {}
 
 }
