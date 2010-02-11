@@ -20,7 +20,10 @@ proc map2sv {files prefix} {
 	exec touch [file dir prefix]/map2sv_FINISHED
 	foreach file [glob $prefix-*] {
 		puts $file
-		exec sort -nk 4 $file > ${file}s
+		set f [open ${file}-paired.tsv w]
+		puts $f [join {chr1 bin strand1 start1 end1 weight1 numl type chr2 strand2start2 end2 weight2 numr dist num fnum side} \t]
+		close $f
+		exec sort -nk 5 $file >> ${file}-paired.tsv
 	}
 }
 

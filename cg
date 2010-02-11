@@ -279,7 +279,7 @@ switch $action {
 			switch -- $key {
 				-q {
 					set query $value
-					if {[regexp {[^=]=[^=]} $query]} {puts stderr "you used = instead of == in query"; exit 1}
+					if {[regexp {[^=!><]=[^=]} $query]} {puts stderr "you used = instead of == in query"; exit 1}
 				}
 				-f {set fields $value}
 				-s {set sortfields $value}

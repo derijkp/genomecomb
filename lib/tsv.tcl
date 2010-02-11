@@ -38,8 +38,8 @@ proc tsv_select {query {qfields {}} {sortfields {}}} {
 		} else {
 			set qposs [list_cor $header $header]
 		}
-			set qposs [lmath_calc $qposs + 1]
-			append awk " \{print $[join $qposs ,$]\}"
+		set qposs [lmath_calc $qposs + 1]
+		append awk " \{print $[join $qposs ,$]\}"
 	} elseif {($qfields ne "") && ($cut eq "")} {
 		set qposs [list_cor $header $qfields]
 		set qposs [lmath_calc $qposs + 1]
@@ -57,7 +57,7 @@ proc tsv_select {query {qfields {}} {sortfields {}}} {
 	}
 	puts stderr pipe:[join $pipe " | "]
 	if {$qfields ne ""} {puts [join $qfields \t]} else {puts [join $header \t]}
-	seek $f $keep
+	# seek $f $keep
 	if {![llength $pipe]} {
 		fcopy stdin stdout
 	} else {
