@@ -97,7 +97,7 @@ graphwidget method start {} {
 
 graphwidget method clear {} {
 	private $object xmin xmax ymin ymax data
-	foreach el [$object.g element names] {
+	foreach el [list_remove [$object.g element names] legend] {
 		$object.g element	delete $el
 	}
 	foreach v [vector names $object.*] {
@@ -558,6 +558,10 @@ graphwidget method confcurrent {args} {
 	set conf(symbol) [$object.g element cget $name -symbol]
 	set conf(linewidth) [$object.g element cget $name -linewidth]
 	set conf(color) $data($name,color)
+	set conf(fields) $data($name,header)
+	lappend conf(fields) ""
+	set conf(Y) [lindex $data($name,elements) 1]
+	set conf(W) [lindex $data($name,elements) 2]
 }
 
 graphwidget method elconf {name} {
@@ -578,8 +582,25 @@ graphwidget method elconf {name} {
 		-command "$object reconf"
 	$object.conf option numentry "Y shift" [privatevar $object conf(yshift)] \
 		-command "$object shift \[getprivate $object conf(entry)\]"
+	$object.conf option select "Y" [privatevar $object conf(Y)] [privatevar $object conf(fields)] \
+		-command "$object changefields Y"
+	$object.conf option select "Weight" [privatevar $object conf(W)] [privatevar $object conf(fields)] \
+		-command "$object changefields W"
 	$object.conf option button "Remove" \
 		"$object delelement \[getprivate $object conf(entry)\]"
+}
+
+graphwidget method changefields {what args} {
+	private $object data conf
+	set name $conf(entry)
+	set header $data($name,header)
+	lset data($name,elements) 1 $conf(Y)
+	lset data($name,elements) 2 $conf(W)
+	lset data($name,poss) 1 [lsearch $header $conf(Y)]
+	lset data($name,poss) 2 [lsearch $header $conf(W)]
+	set data($name,lstart) 0
+	set data($name,lend) 0
+	$object redraw
 }
 
 graphwidget method delelement {name} {
@@ -717,6 +738,7 @@ puts "[info level] xview $args"
 	}
 	set xmax [expr {$xmin+$cursize}]
 	$w axis configure x -min $xmin -max $xmax
+	$object _setvars
 	Classy::canceltodo $object reload
 	Classy::todo $object reload
 	Classy::todo $object _configureevent
@@ -733,7 +755,9 @@ set object .g
 	package require Tk
 	graphwidget .g
 	pack .g -fill both -expand yes
-.g opendialog /media/passport/complgen/sv/sv78-20-pairs.tsv
+set file /media/passport/complgen/sv/sv78-20-pairs.tsv
+set file /complgen/sv/sv78-20-pairs.tsv
+.g opendialog $file
 
 
 set file sv79-20-pairs.tsv
