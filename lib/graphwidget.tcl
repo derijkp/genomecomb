@@ -8,6 +8,7 @@ Widget subclass graphwidget
 graphwidget method init {args} {
 	super init frame
 	graph $object.g
+	bind $object.g <<PasteSelection>> "$object paste; break"
 	scrollbar $object.scy -orient vertical
 	scrollbar $object.scx -orient horizontal
 	frame $object.b
@@ -49,6 +50,7 @@ graphwidget method init {args} {
 	pack $object.b.clear -side left
 	Classy::Entry $object.b.xrange -width 20 -label xrange -orient horizontal \
 		-textvariable [privatevar $object region(xrange)] -command [list $object redraw]
+	bind $object.b.xrange <<PasteSelection>> "$object paste; break"
 	pack $object.b.xrange -side left
 	foreach type {xrangeextra ymin ymax} {destroy $object.b.$type
 		Classy::NumEntry $object.b.$type -width 10 -label $type -orient horizontal \
@@ -87,6 +89,12 @@ proc PopZoom {graph} {
 	ori.PopZoom $graph
 	[winfo parent $graph] _fillregion
 	[winfo parent $graph] _setvars
+}
+
+graphwidget method paste {} {
+	private $object region
+	set region(xrange) [::tk::GetSelection $object PRIMARY]
+	$object redraw
 }
 
 graphwidget method start {} {
