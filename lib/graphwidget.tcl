@@ -685,6 +685,10 @@ puts "load $start $end $data($name,lstart) $data($name,lend)"
 		}
 		set data($name,lstart) $start
 		set data($name,lend) $end
+		if {[get data($name,shift) 0] != 0} {
+			set yv [$object.g element cget $name -ydata]
+			$yv expr {$yv + $data($name,shift)}
+		}
 	}
 }
 
@@ -763,8 +767,8 @@ set object .g
 	package require Tk
 	graphwidget .g
 	pack .g -fill both -expand yes
-set file /media/passport/complgen/sv/sv78-20-pairs.tsv
-set file /complgen/sv/sv78-20-pairs.tsv
+set file /complgen/sv/sv79-20-pairs.tsv
+set file /media/passport/complgen/sv/sv79-20-pairs.tsv
 .g opendialog $file
 
 
