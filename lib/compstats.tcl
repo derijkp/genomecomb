@@ -94,22 +94,29 @@ proc compare_pvtsummary {} {
 	set effectlist {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE MISSENSE COMPATIBLE UNDEFINED OTHER}
 	# set o [open $ofile a]
 	set o stdout
-	foreach {title filters} {
+	set filterlist {
 		nofilter {}
 		"filter 1 (removed ref-(in)consistent)" {refcons ""}
-		"filter 3 (removed ref-(in)consistent, ?/N)" {refcons "" ns ""}
-		"filter 4 (removed ref-(in)consistent, ?/N,  scores < 60)" {refcons "" ns "" lowscore ""}
-		"filter 5 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats)" {refcons "" ns "" lowscore "" trf ""}
-		"filter 5b (removed ref-(in)consistent, ?/N, coverage between 20 and 100, tandem repeats)" {refcons "" ns "" a100 "" b20 "" trf ""}
-		"filter 6 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str)" {refcons "" ns "" lowscore "" trf "" str ""}
-		"filter 7 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats)" {refcons "" ns "" lowscore "" trf "" str "" repeat ""}
-		"filter 8 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats, segdup)" {refcons "" ns "" lowscore "" trf "" str "" repeat "" segdup ""}
-		"filter 9 (removed ref-(in)consistent, ?/N, scores < 60, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" lowscore "" trf "" str "" repeat "" segdup "" selfchain ""}
-		"filter 9b (removed ref-(in)consistent, ?/N, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" a100 "" b20 "" trf "" str "" repeat "" segdup "" selfchain ""}
-		"filter 10 (removed ref-(in)consistent, ?/N, scores < 60, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained)" {refcons "" ns "" lowscore "" a100 "" b20 "" trf "" str "" repeat "" segdup "" selfchain ""}
-		"filter 11 (removed ref-(in)consistent, ?/N, scores < 60, coverage between 20 and 100, tandem repeats, str, repeats, segdup, self chained, cluster)" {refcons "" ns "" lowscore "" a100 "" b20 "" trf "" str "" repeat "" segdup "" selfchain "" cluster ""}
-		"filter 12 (removed ref-(in)consistent, ?/N, scores < 60, coverage between 20 and 100, tandem repeats, str, segdup, cluster)" {refcons "" ns "" lowscore "" a100 "" b20 "" trf "" str "" segdup "" cluster ""}
+	}
+	set ctitle {removed ref-(in)consistent}
+	set cfilter {refcons ""}
+	foreach {name q} {
+		{?/N} {ns ""}
+		{scores < 60} {lowscore ""}
+		cluster {cluster ""}
+		{tandem repeats} {trf ""}
+		microsatelite {str ""}
+		{coverage between 20 and 100} {a100 "" b20 ""}
+		segdup {segdup ""}
+		selfchain {selfchain ""}
+		repeat {repeat ""}
 	} {
+		append ctitle ", $name"
+		eval lappend cfilter $q
+		lappend filterlist $ctitle $cfilter
+	}
+
+	foreach {title filters} $filterlist {
 		puts stderr "===== $title ====="
 		puts $o "\n ==================== $title ===================="
 		set flist [comstats_filter $table $filters]
@@ -172,6 +179,7 @@ proc compare_pvtsummary {} {
 			}
 			puts $o $oline
 		}
+		flush $o
 	}
 }
 
@@ -223,18 +231,12 @@ proc compare_selectivity {o table} {
 if 0 {
 
 
-set compar_file compar/78vs79_compar-filter-rna.tsv
-set pvtfile 
-
+package require Tclx
+signal -restart error SIGINT
 lappend auto_path ~/dev/completegenomics/lib
 package require Extral
 
-cd /complgen/compar
-set file 78vs79_mismatch.tsv
-set ofile summary.tsv
-catch {file delete summary.tsv}
-
-set file compar/78vs79_compar_pvt.tsv
-set file compar_GS102_GS103/pvtcompar_GS102_GS103.tsv
-
+cd /complgen/compar_GS102_GS103
+set file pvtcompar_GS102_GS103.tsv
+set ofile summarycompar2_GS102_GS103.tsv
 }
