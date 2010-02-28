@@ -127,6 +127,8 @@ proc refconsregions {varfile} {
 
 proc regsubtract {regfile1 regfile2} {
 	global cache
+	# catch {close $f1}
+	# catch {close $f2}
 	set f1 [open $regfile1]
 	set poss1 [open_region $f1]
 	set f2 [open $regfile2]
@@ -140,31 +142,49 @@ proc regsubtract {regfile1 regfile2} {
 	set nchr2 [chr2num $chr2]
 	puts "chromosome\tbegin\tend"
 	while 1 {
+		# puts "$chr1:$start1-$end1 $chr2:$start2-$end2"
 		incr num
 		if {![expr $num%100000]} {puts stderr $num}
-		while 1 {
-			# putsvars chr1 chr2 start1 end1 start2 end2
-			if {$nchr2 > $nchr1} break
-			if {$start2 >= $end1} break
-			if {$start2 == $end2} {
-			} elseif {$start2 > $start1} {
-				puts $chr1\t$start1\t$start2
-				set start1 $end2
-			} elseif {$end2 >= $start1} {
-				set start1 $end2
-			}
+		if {($nchr2 < $nchr1) || (($nchr2 == $nchr1) && ($end2 <= $start1))} {
 			set line2 [get_region $f2 $poss2]
-			if {![llength $line2]} break
+			if {![llength $line2] && [eof $f2]}  {
+				puts $chr1\t$start1\t$end1
+				break
+			}
 			foreach {chr2 start2 end2} $line2 break
 			set nchr2 [chr2num $chr2]
-		}
-		if {$end1 > $start1} {
+		} elseif {($nchr1 < $nchr2) || (($nchr1 == $nchr2) && ($end1 <= $start2))} {
 			puts $chr1\t$start1\t$end1
+			set line1 [get_region $f1 $poss1]
+			if {![llength $line1] && [eof $f1]} break
+			foreach {chr1 start1 end1} $line1 break
+			set nchr1 [chr2num $chr1]
+		} else {
+			if {$start2 > $start1} {
+				puts $chr1\t$start1\t$start2
+			}
+			if {$end2 >= $end1} {
+				set line1 [get_region $f1 $poss1]
+				if {![llength $line1] && [eof $f1]} break
+				foreach {chr1 start1 end1} $line1 break
+				set nchr1 [chr2num $chr1]
+			} else {
+				set start1 $end2
+				set line2 [get_region $f2 $poss2]
+				if {![llength $line2] && [eof $f2]}  {
+					puts $chr1\t$start1\t$end1
+					break
+				}
+				foreach {chr2 start2 end2} $line2 break
+				set nchr2 [chr2num $chr2]
+			}
 		}
+	}
+	while {![eof $f1]} {
 		set line1 [get_region $f1 $poss1]
-		if {![llength $line1]} break
-		foreach {chr1 start1 end1} $line1 break
-		set nchr1 [chr2num $chr1]
+		if {[llength $line1]} {
+			puts [join $line1 \t]
+		}
 	}
 	close $f1
 	close $f2
@@ -310,9 +330,22 @@ close $v;unset cache($v);unset cache($v,r);
 	set v [open "| grep ref- $varfile"]
 filtervarget $v
 
-	cd /media/passport/complgen/GS00102
+	cd /complgen/compar_GS102_GS103
 	set regfile1 reg-GS000000078-ASM.tsv
 	set regfile2 reg-refcons-GS000000078-ASM.tsv
 	
+	set regfile1 /complgen/compar_GS102_GS103/GS102_GS103_regcommon-rc.tsv
+	set regfile2 /data/db/regdb-repeatmasker.tsv
+
+set name1 GS102
+set name2 GS103
+	set regfile1 ../${name2}/sreg-${name2}.tsv
+	set regfile2 temp.tsv
+
+cg regsubtract temp1 temp2 > temp3
+tail -2000 GS102_GS103_regcommon-rc.tsv > temp1
+tail -2000 GS102_GS103_regcommon-rc-repeat.tsv > temp2
+kdiff3 temp1 temp2
+
 }
 
