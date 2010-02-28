@@ -8,7 +8,7 @@ Widget subclass graphwidget
 graphwidget method init {args} {
 	super init frame
 	graph $object.g
-	bind $object.g <<PasteSelection>> "$object paste; break"
+	bind $object.g <2> "$object paste; break"
 	scrollbar $object.scy -orient vertical
 	scrollbar $object.scx -orient horizontal
 	frame $object.b
@@ -50,7 +50,7 @@ graphwidget method init {args} {
 	pack $object.b.clear -side left
 	Classy::Entry $object.b.xrange -width 20 -label xrange -orient horizontal \
 		-textvariable [privatevar $object region(xrange)] -command [list $object redraw]
-	bind $object.b.xrange <<PasteSelection>> "$object paste; break"
+	bind $object.b.xrange <3> "$object paste; break"
 	pack $object.b.xrange -side left
 	foreach type {xrangeextra ymin ymax} {destroy $object.b.$type
 		Classy::NumEntry $object.b.$type -width 10 -label $type -orient horizontal \
@@ -334,7 +334,8 @@ graphwidget method _xrange {args} {
 	set xmin ""
 	set xmax ""
 	if {![isdouble $region(xrangeextra)]} {set region(xrangeextra) 0}
-	foreach {xmin xmax} [list_remove [split $region(xrange) {\t -,}] {}] break
+	set temp [regexp -inline -all {[0-9.]+} $region(xrange)]
+	foreach {xmin xmax} $temp break
 	if {[isdouble $xmin] && ![isdouble $xmax]} {
 		set xmax [expr {$xmin+1}]
 	}
@@ -342,7 +343,6 @@ graphwidget method _xrange {args} {
 		set xmin [expr {$xmin - $region(xrangeextra)}]
 		set xmax [expr {$xmax + $region(xrangeextra)}]
 	}
-puts _xrange($xmin-$xmax)
 	set region(xmin) [expr {round($xmin)}]
 	set region(xmax) [expr {round($xmax)}]
 }
