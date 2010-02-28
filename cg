@@ -126,23 +126,24 @@ switch $action {
 		}
 		sv2db $argv
 	}
-	svdbinfo {
+	svinfo {
 		if {[llength $argv] < 1} {
 			puts stderr "format is: $scriptname $action file ..."
 			exit 1
 		}
-		foreach dbfile $argv {
-			puts $dbfile
-			svdbinfo $dbfile
+		foreach pairfile $argv {
+			puts $pairfile
+			svinfo $pairfile
 		}
 	}
-	sv_2dhisto {
+	svfind {
 		if {[llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action svdbfile"
+			puts stderr "format is: $scriptname $action pairedfile"
 			exit 1
 		}
-		foreach {dbfile} $argv break
-		sv_2dhisto $dbfile
+		foreach pairfile $argv break
+		puts $pairfile
+		svfind $pairfile
 	}
 	covered {
 		if {[llength $argv] != 1} {
@@ -272,6 +273,16 @@ switch $action {
 		puts $f	".import \"$tsvfile\" $table"
 		close $f
 		exec sqlite3 $dbfile < $tempfile
+	}
+	tsv_index {
+		if {[llength $argv] < 2} {
+			puts stderr "format is: $scriptname $action field tsvfile ..."
+			exit 1
+		}
+		set field [list_shift argv]
+		foreach tsvfile $argv {
+			tsv_index $tsvfile $field
+		}
 	}
 	select {
 		set query {}; set fields {}; set sortfields {}

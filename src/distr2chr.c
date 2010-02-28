@@ -17,7 +17,7 @@ int chromosomenum(char *chromosome) {
 	} else {
 		i = atoi(chromosome);
 		if (i < 0 || i > 22) {
-			fprintf(stderr,"wrong chromosome");
+			fprintf(stderr,"wrong chromosome %s",chromosome);
 			exit(EXIT_FAILURE);
 		}
 		return i;
