@@ -57,7 +57,7 @@ proc tsv_select {query {qfields {}} {sortfields {}}} {
 	}
 	puts stderr pipe:[join $pipe " | "]
 	if {$qfields ne ""} {puts [join $qfields \t]} else {puts [join $header \t]}
-	# seek $f $keep
+	seek $f $keep
 	if {![llength $pipe]} {
 		fcopy stdin stdout
 	} else {
@@ -145,4 +145,80 @@ if 0 {
 	set f [open /complgen/compar/78vs79_compar_pvt.tsv]
 	set query {compar df sample "|79 78,79" refcons "" ns "" lowscore "" trf "" str "" rp "" sd "" sc "" dbsnp "" loc EXON}
 
+}
+
+proc tsv_next {f xpos next {shift 100000}} {
+	# do a ~ binary search to get at next faster
+	set start [tell $f]
+	while 1 {
+		seek $f $shift current
+		gets $f
+		set line [split [gets $f] \t]
+		set x [lindex $line $xpos]
+		if {![isdouble $x] || ($x >= $next)} {
+			seek $f $start
+			set shift [expr {$shift / 2}]
+			if {$shift < 1000} break
+		}
+		set start [tell $f]
+	}
+	while {![eof $f]} {
+		set fpos [tell $f]
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		set x [lindex $line $xpos]
+		if {$x >= $next} break
+	}
+	if {![eof $f]} {
+		return $fpos
+	} else {
+		return $x
+	}
+}
+
+proc tsv_index {file xfield} {
+	set f [open $file]
+	set header [tsv_open $f]
+	set xpos [lsearch $header $xfield]
+	if {$xpos == -1} {error "field $xfield not present in file $file"}
+	set indexname $file.${xfield}_index
+	set fstart [tell $f]
+	set fpos $fstart
+	set line [split [gets $f] \t]
+	set xmin [lindex $line $xpos]
+	set findex [expr {$xmin-$xmin%10000}]
+	set prev $findex
+	set next [expr {$prev + 10000}]
+	set index [list $fpos]
+	catch {Classy::Progress start [file size $file] "Making index"}
+	while {![eof $f]} {
+		set fpos [tsv_next $f $xpos $next]
+		if {[eof $f]} {
+			set xmax $fpos
+			break
+		}
+		lappend index $fpos
+		incr prev 10000
+		incr next 10000
+		catch {Classy::Progress set [tell $f]}
+		if {![expr $next%100000]} {puts stderr $next}
+	}
+	catch {Classy::Progress stop}
+	close $f
+	set size [file size $file]
+	set f [open $file]
+	seek $f [expr {$size-5000}] start
+	gets $f
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		set xmax [lindex $line $xpos]
+	}
+	set o [open $indexname w]
+	puts $o 10000
+	puts $o $findex
+	puts $o $xmin
+	puts $o $xmax
+	puts $o [join $index \n]
+	close $o
 }

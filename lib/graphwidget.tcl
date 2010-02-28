@@ -191,31 +191,6 @@ graphwidget method opendialog {{file {}}} {
 	$object.open add do Do [list $object open $file ::graphd] default
 }
 
-proc graphwidget_next {f xpos next {shift 100000}} {
-	# do a ~ binary search to get at next faster
-	set start [tell $f]
-	while 1 {
-		seek $f $shift current
-		gets $f
-		set line [split [gets $f] \t]
-		set x [lindex $line $xpos]
-		if {![isdouble $x] || ($x >= $next)} {
-			seek $f $start
-			set shift [expr {$shift / 2}]
-			if {$shift < 1000} break
-		}
-		set start [tell $f]
-	}
-	while {![eof $f]} {
-		set fpos [tell $f]
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		set x [lindex $line $xpos]
-		if {$x >= $next} break
-	}
-	return $fpos
-}
-
 graphwidget method _configureevent {} {
 	event generate $object.g <Configure>
 }
@@ -261,58 +236,20 @@ graphwidget method open {file settingsVar} {
 	set indexed 1
 	set index ::$object.$vnum.i
 	if {![file exists $indexname]} {
-		set fstart [tell $f]
-		set fpos $fstart
-		set line [split [gets $f] \t]
-		set xmin [lindex $line $xpos]
-		set xmax $xmin
-		set ymin [lindex $line $ypos]
-		set ymax $ymin
-		set findex [expr {$xmin-$xmin%10000}]
-		set prev $findex
-		set next [expr {$prev + 10000}]
-		::$index set [list $fpos]
-		Classy::Progress start [file size $file] "Making index"
-		while {![eof $f]} {
-			set fpos [graphwidget_next $f $xpos $next]
-			::$index append $fpos
-			incr prev 10000
-			incr next 10000
-			Classy::Progress set [tell $f]
-			if {![expr $next%100000]} {puts stderr $next}
-		}
-		Classy::Progress stop
-		set o [open $indexname w]
-		puts $o 10000
-		puts $o $findex
-		puts $o $xmin
-		puts $o $xmax
-		puts $o $ymin
-		puts $o $ymax
-		puts $o [join [::$index range 0 end] \n]
-		close $o
-		set data($name,step) 10000
-		set data($name,findex) $findex
-		set data($name,fstart) $fstart
-		set data($name,xmin) $xmin
-		set data($name,xmax) $xmax
-		set data($name,ymin) $ymin
-		set data($name,ymax) $ymax
-		set data($name,fx) [expr {$xmin-$xmin%10000}]
-	} else {
-		set o [open $indexname]
-		set data($name,step) [gets $o]
-		set data($name,findex) [gets $o]
-		set xmin [gets $o]
-		set data($name,xmin) $xmin
-		set data($name,xmax) [gets $o]
-		set data($name,ymin) [gets $o]
-		set data($name,ymax) [gets $o]
-		set data($name,fx) [expr {$data($name,xmin)-$xmin%10000}]
-		set temp [split [string trim [read $o]] \n]
-		::$index set $temp
-		close $o
+		tsv_index $file $graphd(xfield)
 	}
+	# read index
+	set o [open $indexname]
+	set data($name,step) [gets $o]
+	set data($name,findex) [gets $o]
+	set xmin [gets $o]
+	set data($name,xmin) $xmin
+	set data($name,xmax) [gets $o]
+	set data($name,fx) [expr {$data($name,xmin)-$xmin%10000}]
+	set temp [split [string trim [read $o]] \n]
+	::$index set $temp
+	close $o
+	#
 	set amin [::$object.ends.x index 0]
 	set amax [::$object.ends.x index 1]
 	if {$data($name,xmin) < $amin} {set amin $data($name,xmin)}
@@ -763,12 +700,12 @@ if 0 {
 lappend auto_path /home/peter/bin/tcl
 lappend auto_path /home/peter/dev/completegenomics/lib
 cd /media/passport/complgen/sv
+cd /complgen/sv
 set object .g
 	package require Tk
 	graphwidget .g
 	pack .g -fill both -expand yes
-set file /complgen/sv/sv79-20-pairs.tsv
-set file /media/passport/complgen/sv/sv79-20-pairs.tsv
+set file sv79-20-pairs.tsv
 .g opendialog $file
 
 
