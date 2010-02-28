@@ -48,6 +48,8 @@ graphwidget method init {args} {
 	pack $object.b.open -side left
 	button $object.b.clear -text "Clear" -command [list $object clear]
 	pack $object.b.clear -side left
+	button $object.b.print -text "Print" -command [list $object print]
+	pack $object.b.print -side left
 	Classy::Entry $object.b.xrange -width 20 -label xrange -orient horizontal \
 		-textvariable [privatevar $object region(xrange)] -command [list $object redraw]
 	bind $object.b.xrange <3> "$object paste; break"
@@ -691,6 +693,22 @@ puts "[info level] xview $args"
 	Classy::canceltodo $object reload
 	Classy::todo $object reload
 	Classy::todo $object _configureevent
+}
+
+graphwidget method print {args} {
+	global printdialog
+	private $object region
+	if {![llength $args]} {
+		destroy $object.ps
+		set file $region(xrange)
+		Classy::Dialog $object.ps -title "Print to postscript"
+		$object.ps option file "Filename" printdialog(file)
+		$object.ps add print "Print" "[list $object] print \$printdialog(file)" default
+		$object.ps persistent remove  print
+	}
+	foreach {file} $args break
+	$object.g postscript configure -landscape yes -maxpect yes
+	$object.g postscript output $file
 }
 
 if 0 {
