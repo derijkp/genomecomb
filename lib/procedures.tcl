@@ -39,6 +39,14 @@ proc process_sample {dir {force 0}} {
 		puts stderr "Find cluster regions for svar-$name.tsv"
 		cg clusterregions < annotvar-$name.tsv > reg_cluster-$name.tsv
 	}
+	if {$force || ![file exists reg_ns-$name.tsv]} {
+		puts stderr "Find regions with N's for svar-$name.tsv"
+		cg select -f {chromosome begin end} -q {$alleleSeq1 ~ /[N?]/ || $alleleSeq2 ~ /[N?]/} < annotvar-$name.tsv > reg_ns-$name.tsv
+	}
+	if {$force || ![file exists reg_lowscore-$name.tsv]} {
+		puts stderr "Find regions with lowscores for svar-$name.tsv"
+		cg select -f {chromosome begin end} -q {$totalScore1 < 60 || $totalScore2 < 60} < annotvar-$name.tsv > reg_lowscore-$name.tsv
+	}
 	# coverage
 	if {$force || ![file exists reg-$name.covered]} {
 		puts stderr "Coverage of sequenced regions"
@@ -48,6 +56,16 @@ proc process_sample {dir {force 0}} {
 		puts stderr "Coverage of refcons region"
 		cg regsubtract sreg-$name.tsv reg_refcons-$name.tsv > filteredrefcons-$name.tsv
 		cg covered filteredrefcons-$name.tsv > filteredrefcons-$name.covered
+	}
+	if {$force || ![file exists filteredns-$name.covered]} {
+		puts stderr "Coverage of ns region"
+		cg regsubtract sreg-$name.tsv reg_ns-$name.tsv > filteredns-$name.tsv
+		cg covered filteredns-$name.tsv > filteredns-$name.covered
+	}
+	if {$force || ![file exists filteredlowscore-$name.covered]} {
+		puts stderr "Coverage of lowscore region"
+		cg regsubtract sreg-$name.tsv reg_lowscore-$name.tsv > filteredlowscore-$name.tsv
+		cg covered filteredlowscore-$name.tsv > filteredlowscore-$name.covered
 	}
 	if {$force || ![file exists histo-refcons-$name.tsv]} {
 		cg reghisto reg_refcons-$name.tsv > histo-refcons-$name.tsv
@@ -92,20 +110,20 @@ proc process_compare {dir1 dir2 dbdir resultsdir {force 0}} {
 	lappend todo [list cluster cl $dir2/reg_cluster-$name2.tsv]
 	lappend todo [list trf trf $dbdir/regdb-simple_repeats.tsv]
 	lappend todo [list str str $dbdir/regdb-microsatelite.tsv]
-	lappend todo [list repeat rp $dbdir/regdb-repeatmasker.tsv]
 	lappend todo [list segdup sd $dbdir/regdb-segdups.tsv]
-	lappend todo [list rna rna $dbdir/regdb-rnagenes.tsv]
 	lappend todo [list selfchain sc $dbdir/regdb-selfchain.tsv]
+	lappend todo [list repeat rp $dbdir/regdb-repeatmasker.tsv]
 	lappend todo [list a100 a100 $dir1/ASM/REF/above100coverage.regions]
 	lappend todo [list a100 a100 $dir2/ASM/REF/above100coverage.regions]
+	lappend todo [list b20 b20 $dir1/ASM/REF/below20coverage.regions]
+	lappend todo [list b20 b20 $dir2/ASM/REF/below20coverage.regions]
 	lappend todo [list a70 a70 $dir1/ASM/REF/above70coverage.regions]
 	lappend todo [list a70 a70 $dir2/ASM/REF/above70coverage.regions]
 	lappend todo [list b30 b30 $dir1/ASM/REF/below30coverage.regions]
 	lappend todo [list b30 b30 $dir2/ASM/REF/below30coverage.regions]
-	lappend todo [list b20 b20 $dir1/ASM/REF/below20coverage.regions]
-	lappend todo [list b20 b20 $dir2/ASM/REF/below20coverage.regions]
 	lappend todo [list b15 b15 $dir1/ASM/REF/below15coverage.regions]
 	lappend todo [list b15 b15 $dir2/ASM/REF/below15coverage.regions]
+	lappend todo [list rna rna $dbdir/regdb-rnagenes.tsv]
 	lappend todo [list checked checked checked_${name1}_${name2}.tsv]
 	list_foreach {field value regfile} $todo {
 		if {![file exists $regfile]} {

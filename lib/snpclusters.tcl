@@ -4,7 +4,7 @@ proc clusters_distgraph {} {
 
 	set poss [open_region $f]
 	set num 0
-	puts $o "chromosome\tbegin\tdistance"
+	puts $o "begin\tdistance"
 	foreach {pchr pbegin pend} [get_region $f $poss] break
 	set pnchr [chr2num $pchr]
 			while {![eof $f]} {
@@ -15,7 +15,7 @@ proc clusters_distgraph {} {
 				set pnchr [chr2num $pchr]
 				if {$pnchr == 6} break
 			}
-			seek $f 97574037
+			# seek $f 97574037
 	while {![eof $f]} {
 		incr num
 		if {![expr $num%100000]} {puts stderr $num}
@@ -52,7 +52,6 @@ proc clusters {} {
 	set checking 0
 	set numtotal 0
 	set numsmall 0
-	set ppercent 0
 	set match 2
 	set mismatch -5
 	set maxp 0
@@ -163,7 +162,6 @@ proc clusters {} {
 		set checking 0
 		set numtotal 0
 		set numsmall 0
-		set ppercent 0
 		set maxp 0
 	}
 }
@@ -174,13 +172,13 @@ package require Tclx
 signal -restart error SIGINT
 	lappend auto_path /home/peter/dev/completegenomics/lib
 	package require Extral
-cd /media/passport/complgen/
-	set annotvarfile GS00103/annotvar-79-6
-	set annotvarfile GS00103/annotvar-GS000000079-ASM.tsv
+cd /complgen/
+	set annotvarfile GS103/annotvar-79-6
+	set annotvarfile GS103/annotvar-GS103.tsv
 	catch {close $f}
 	catch {close $o}
 	set f [open $annotvarfile]
-	set o [open GS00103/clusters-GS000000079.tsv w]
+	set o [open GS103/clusters-GS103.tsv w]
 
 set count 10
 while {![eof $f] && [incr count -1]} {
