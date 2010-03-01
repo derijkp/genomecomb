@@ -64,11 +64,11 @@ graphwidget method init {args} {
 	Classy::Progress display $object.progress
 	$object.b.xrange configure -width 20
 	$object.b.xrangeextra configure -width 5
-	$object clear
 	vector create ::$object.ends.x
 	vector create ::$object.ends.y
 	::$object.ends.x set {0 1}
 	::$object.ends.y set {0 0}
+	$object clear
 	$object.g element create legend -xdata ::$object.ends.x -ydata ::$object.ends.y -symbol none -linewidth 0
 	Classy::todo $object start
 }
@@ -116,6 +116,10 @@ graphwidget method clear {} {
 	unset -nocomplain data
 	lassign {0 0 0 0} xmin xmax ymin ymax
 	set data(entries) {}
+	::$object.ends.x set {0 1}
+	::$object.ends.y set {0 0}
+	$object.scx set 0 1
+	event generate $object.g <Configure>
 }
 
 graphwidget method gradientstyle {basecolor} {
@@ -157,8 +161,9 @@ graphwidget method gradientstyle {basecolor} {
 graphwidget method opendialog {{file {}}} {
 	global graphd
 	if {$file eq ""} {set file [Classy::selectfile]}
-	set f [open $file]
+	set f [rzopen $file]
 	set header [tsv_open $f]
+	set graphd(file) [file normalize $file]
 	set graphd(header) $header
 	lappend graphd(header) {}
 	set graphd(region) 0
@@ -213,8 +218,14 @@ graphwidget method open {file settingsVar} {
 		}
 		set elements [list $graphd(xfield) $graphd(yfield) $graphd(wfield)]
 	}
-	set name [file root [file tail $file]]
-	set f [open $file]
+	if {[inlist {.rz} [file extension $file]]} {
+		set indexname [file root $file].$graphd(xfield)_index
+		set name [file root [file root [file tail $file]]]
+	} else {
+		set indexname $file.$graphd(xfield)_index
+		set name [file root [file tail $file]]
+	}
+	set f [rzopen $file]
 	set header [tsv_open $f]
 	set poss {}
 	foreach el $elements {
@@ -234,7 +245,6 @@ graphwidget method open {file settingsVar} {
 	set data($name,nan) $graphd(nan)
 	set data($name,poss) $poss
 	# create index
-	set indexname $file.$graphd(xfield)_index
 	set indexed 1
 	set index ::$object.$vnum.i
 	if {![file exists $indexname]} {
@@ -252,14 +262,20 @@ graphwidget method open {file settingsVar} {
 	::$index set $temp
 	close $o
 	#
-	set amin [::$object.ends.x index 0]
-	set amax [::$object.ends.x index 1]
-	if {$data($name,xmin) < $amin} {set amin $data($name,xmin)}
-	if {$data($name,xmax) > $amax} {set amax $data($name,xmax)}
+	set list [array names data *,xmin]
+	set amin $data([lindex $list 0])
+	foreach n $list {
+		if {$data($n) < $amin} {set amin $data($n)}
+	}
+	set list [array names data *,xmax]
+	set amax $data([lindex $list 0])
+	foreach n [array names data *,xmax] {
+		if {$data($n) > $amin} {set amax $data($n)}
+	}
 	::$object.ends.x set [list $amin $amax]
 	::$object.ends.y set {0 0}
 	set data($name,indexed) $indexed
-	close $f
+	catch {close $f}
 	set xv ::$object.$vnum.x
 	set yv ::$object.$vnum.y
 	set wv ::$object.$vnum.w
@@ -580,6 +596,7 @@ puts "load $start $end $data($name,lstart) $data($name,lend)"
 	set vnum $data($name,vnum)
 	set poss $data($name,poss)
 	set index ::$object.$vnum.i
+	$object.progress configure -message "Loading $name"
 	if {$data($name,region)} {
 		while {![eof $f]} {
 			set line [split [gets $f] \t]
@@ -596,18 +613,20 @@ puts "load $start $end $data($name,lstart) $data($name,lend)"
 		foreach el {x y w} v [list $data($name,xmin) 0 0] {
 			::$object.$vnum.$el set {}
 		}
+		update
 		set xpos [lindex $poss 0]
 		set data($name,lstart) 0
 		set data($name,lend) 0
-		set f [open $data($name,file)]
 		set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
-		seek $f $fpos
-		set pnext [expr {$start+1000}]
+		set f [rzopen $data($name,file) $fpos]
+		set pnext [expr {$start+500}]
+		set tot [expr {$end-$start}]
 		while {![eof $f]} {
 			set line [split [gets $f] \t]
 			if {![llength $line]} continue
 			set x [lindex $line $xpos]
 			if {$x > $pnext} {
+				$object.progress configure -message "Loading $name [format %.1f [expr {100*($x-$start)/$tot}]]%"
 				update
 				if {[get region(cancel) 0]} return
 				incr pnext 2000
@@ -629,6 +648,7 @@ puts "load $start $end $data($name,lstart) $data($name,lend)"
 			$yv expr {$yv + $data($name,shift)}
 		}
 	}
+	$object.progress configure -message "Finished loading $name"
 }
 
 graphwidget method reload {} {
@@ -640,6 +660,7 @@ graphwidget method reload {} {
 	catch {
 		foreach name $data(entries) {
 			$object loadregion $name
+			puts "$name loaded"
 		}
 	}
 	Classy::canceltodo $object reload
@@ -704,7 +725,7 @@ graphwidget method print {args} {
 		Classy::Dialog $object.ps -title "Print to postscript"
 		$object.ps option file "Filename" printdialog(file)
 		$object.ps add print "Print" "[list $object] print \$printdialog(file)" default
-		$object.ps persistent remove  print
+		$object.ps persistent remove print
 	}
 	foreach {file} $args break
 	$object.g postscript configure -landscape yes -maxpect yes
@@ -713,17 +734,17 @@ graphwidget method print {args} {
 
 if 0 {
 
-#	package require Tclx
-#	signal -restart error SIGINT
+	package require Tclx
+	signal -restart error SIGINT
 lappend auto_path /home/peter/bin/tcl
 lappend auto_path /home/peter/dev/completegenomics/lib
-cd /media/passport/complgen/sv
 cd /complgen/sv
 set object .g
 	package require Tk
 	graphwidget .g
 	pack .g -fill both -expand yes
 set file sv79-20-pairs.tsv
+set file /complgen/sv/GS103/GS103-9-paired.tsv.rz
 .g opendialog $file
 
 

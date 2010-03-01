@@ -146,3 +146,19 @@ proc min {args} {
 proc opensqlite3 {dbfile query} {
 	set f [open "| sqlite3 -separator \"\t\" $dbfile \"$query\""]
 }
+
+proc rzopen {file {pos -1}} {
+	if {[inlist {.rz} [file extension $file]]} {
+		if {$pos == -1} {
+			set f [open "| razip -d -c $file"]
+		} else {
+			set f [open "| razip -d -c -b $pos $file"]
+		}
+	} else {
+		set f [open $file]
+		if {$pos != -1} {
+			seek $f $pos
+		}
+	}
+	return $f
+}

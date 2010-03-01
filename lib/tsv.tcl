@@ -177,11 +177,18 @@ proc tsv_next {f xpos next {shift 100000}} {
 }
 
 proc tsv_index {file xfield} {
-	set f [open $file]
+	if {[inlist {.rz} [file extension $file]]} {
+		set indexname [file root $file].${xfield}_index
+		set tempfile [tempfile]
+		exec razip -d -c $file > $tempfile
+		set f [open $tempfile]
+	} else {
+		set indexname $file.${xfield}_index
+		set f [open $file]
+	}
 	set header [tsv_open $f]
 	set xpos [lsearch $header $xfield]
 	if {$xpos == -1} {error "field $xfield not present in file $file"}
-	set indexname $file.${xfield}_index
 	set fstart [tell $f]
 	set fpos $fstart
 	set line [split [gets $f] \t]
