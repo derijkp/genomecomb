@@ -145,6 +145,14 @@ switch $action {
 		puts $pairfile
 		svfind $pairfile
 	}
+	svcompare {
+		if {[llength $argv] != 2} {
+			puts stderr "format is: $scriptname $action svfile1 svfile2"
+			exit 1
+		}
+		foreach {svfile1 svfile2} $argv break
+		svcompare $svfile1 $svfile2
+	}
 	covered {
 		if {[llength $argv] != 1} {
 			puts stderr "format is: $scriptname $action region_file"

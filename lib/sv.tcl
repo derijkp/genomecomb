@@ -1141,3 +1141,94 @@ catch {close $f}
 	close $f
 
 }
+
+if 0 {
+	cd /complgen/sv
+	set svfile1 GS102/GS102-20-paired-sv.tsv
+	set svfile2 GS103/GS103-20-paired-sv.tsv
+	set outfile svcompar_GS102_GS103/svcompar_GS102_GS103-20.tsv
+}
+
+proc svcompare {svfile1 svfile2} {
+
+	catch {close $f1}
+	catch {close $f2}
+	catch {close $o}
+	set tempfile [tempfile]
+	set o [open $tempfile w]
+	set name1 [lindex [split [file tail $svfile1] -] 0]
+	set name2 [lindex [split [file tail $svfile2] -] 0]
+	set f1 [open $svfile1]
+	set f2 [open $svfile2]
+	set header1 [split [gets $f1] \t]
+	set header2 [split [gets $f2] \t]
+	puts $o match\tsample\t[join $header1 \t]
+	set poss1 [list_cor $header1 {patchstart pos type size zyg}]
+	set poss2 [list_cor $header2 {patchstart pos type size zyg}]
+	set list2 {}
+	set line2 [split [gets $f2] \t]
+	while {![eof $f1]} {
+		set line1 [split [gets $f1] \t]
+		if {![llength $line1]} continue
+		foreach {start1 pos1 type1 size1 zyg1} [list_sub $line1 $poss1] break
+		set min [expr {$start1 - 200}]
+		set mstart1 [expr {$start1 - 10}]
+		set mpos1 [expr {$pos1 + 10}]
+		set sizediff [max [expr {round(0.1*$size1)}] 20]
+		set minsize1 [expr {$size1 - $sizediff}]
+		set maxsize1 [expr {$size1 + $sizediff}]
+		set found 0
+		foreach tline2 $list2 {
+			foreach {start2 pos2 type2 size2 zyg2} [list_sub $tline2 $poss2] break
+			if {$pos2 < $min} {
+				puts $o df\t$name2\t[join $tline2 \t]
+				set list2 [list_remove $list2 $tline2]
+				flush $o
+			} elseif {($type2 eq $type1) && ($zyg2 eq $zyg1) && ($pos2 >= $mstart1) && ($pos2 < $mpos1) && ($size2 >= $minsize1) && ($size2 < $maxsize1)} {
+				puts $o sm\t$name1,$name2\t[join $line1 \t]\t[join $tline2 \t]
+				set found 1
+				set list2 [list_remove $list2 $tline2]
+			}
+		}
+		while {![eof $f2] && !$found} {
+			if {![llength $line2]} {
+				set line2 [split [gets $f2] \t]
+				continue
+			}
+			foreach {start2 pos2 type2 size2 zyg2} [list_sub $line2 $poss2] break
+			if {$pos2 < $min} {
+				puts $o df\t$name2\t[join $line2 \t]
+				flush $o
+			} elseif {$pos2 < $mstart1} {
+			} elseif {$start2 >= $mpos1} {
+				break
+			} elseif {($type2 eq $type1) && ($zyg2 eq $zyg1) && ($size2 >= $minsize1) && ($size2 < $maxsize1)} {
+				puts $o sm\t$name1,$name2\t[join $line1 \t]\t[join $line2 \t]
+				set found 1
+			} else {
+				lappend list2 $line2
+			}
+			set line2 [split [gets $f2] \t]
+		}
+		if {!$found} {
+			puts $o df\t$name1\t[join $line1 \t]
+		}
+	}
+	foreach tline2 $list2 {
+		puts $o df\t$name2\t[join $tline2 \t]
+	}
+	while {![eof $f2]} {
+		if {![llength $line2]} {
+			set line2 [split [gets $f2] \t]
+			continue
+		}
+		puts $o df\t$name2\t[join $line2 \t]
+		set line2 [split [gets $f2] \t]
+	}
+	flush $o
+	close $f1
+	close $f2
+	close $o
+	cg select -s pos < $tempfile >@ stdout
+
+}
