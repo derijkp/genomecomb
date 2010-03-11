@@ -137,13 +137,13 @@ switch $action {
 		}
 	}
 	svfind {
-		if {[llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action pairedfile"
+		if {[llength $argv] != 2} {
+			puts stderr "format is: $scriptname $action pairedfile trffile"
 			exit 1
 		}
-		foreach pairfile $argv break
+		foreach {pairfile trffile} $argv break
 		puts $pairfile
-		svfind $pairfile
+		svfind $pairfile $trffile
 	}
 	svcompare {
 		if {[llength $argv] != 2} {

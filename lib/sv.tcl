@@ -416,20 +416,22 @@ proc table2tsv {table} {
 
 proc svtools_loadindex {file xfield} {
 	global svi
-	set f [open $file]
+	set f [rzopen $file]
 	set svi(header) [tsv_open $f]
-	close $f
+	catch {close $f}
 	set svi(xfield) $xfield
 	set svi(xfieldpos) [lsearch $svi(header) $xfield]
-	set indexname $file.${xfield}_index
+	if {[inlist {.rz} [file extension $file]]} {
+		set indexname [file root $file].${xfield}_index
+	} else {
+		set indexname $file.${xfield}_index
+	}
 	set o [open $indexname]
 	set svi(step) [gets $o]
 	set svi(findex) [gets $o]
 	set xmin [gets $o]
 	set svi(xmin) $xmin
 	set svi(xmax) [gets $o]
-	set svi(ymin) [gets $o]
-	set svi(ymax) [gets $o]
 	set svi(fx) [expr {$svi(xmin)-$xmin%10000}]
 	set temp [split [string trim [read $o]] \n]
 	set svi(index) $temp
@@ -506,55 +508,6 @@ proc pf {list} {
 	return $temp
 }
 
-#proc histo_maxima {histo step {min 3}} {
-#	global infoa
-#	set distpos $infoa(distpos)
-#	set result {}
-#	while 1 {
-#		if {![llength $histo]} break
-#		set hs [list_subindex $histo 1]
-#		set averagefilter {0.1 0.2 0.4 0.2 0.1}
-#		set hs [lmath_filter $hs $averagefilter]
-#		set hs [lmath_filter $hs $averagefilter]
-#		set maxpos [maxpos $hs]
-#		set ph [lindex $hs $maxpos]
-#		if {$ph < $min} break
-#		set peak [lindex $hs $maxpos]
-#		set poss {}
-#		set elements {}
-#		set pos $maxpos
-#		lappend poss $pos
-#		lappend elements {*}[lindex $histo $pos 2]
-#		while {$pos > 0} {
-#			incr pos -1
-#			set h [lindex $hs $pos]
-#			if {($h > $ph) || ($h <= 1)} {
-#				break
-#			}
-#			lappend poss $pos
-#			lappend elements {*}[lindex $histo $pos 2]
-#			set ph $h
-#		}
-#		set pos $maxpos
-#		set ph [lindex $hs $maxpos]
-#		set len [llength $histo]
-#		while {$pos < $len} {
-#			incr pos
-#			set h [lindex $hs $pos]
-#			if {($h > $ph) || ($h < $min)} {
-#				break
-#			}
-#			lappend poss $pos
-#			lappend elements {*}[lindex $histo $pos 2]
-#			set ph $h
-#		}
-#		set gapsize [lmath_average [list_subindex $elements $distpos]]
-#		lappend result [list $gapsize [llength $elements] $elements]
-#		set histo [list_sub $histo -exclude $poss]
-#	}
-#	return $result
-#}
-
 proc histo_maxima {histo step {min 3}} {
 	global infoa
 	set distpos $infoa(distpos)
@@ -565,7 +518,8 @@ proc histo_maxima {histo step {min 3}} {
 		if {[llength $hs] > 5} {
 			set averagefilter {0.1 0.2 0.4 0.2 0.1}
 			set hs [lmath_filter $hs $averagefilter]
-			set hs [lmath_filter $hs $averagefilter]
+#			set hs [lmath_filter $hs $averagefilter]
+#			set hs [lmath_filter $hs $averagefilter]
 		}
 		# join [pf $hs] \n
 		set maxpos [maxpos $hs]
@@ -619,64 +573,6 @@ proc histo_maxima {histo step {min 3}} {
 	}
 	return $result
 }
-
-#proc histo_maxima {histo step {min 3}} {
-#	global infoa
-#	set distpos $infoa(distpos)
-#	set result {}
-#	while 1 {
-#		if {![llength $histo]} break
-#		set hs [list_subindex $histo 1]
-#		set averagefilter {0.1 0.2 0.4 0.2 0.1}
-#		set hs [lmath_filter $hs $averagefilter]
-#		set hs [lmath_filter $hs $averagefilter]
-#		# join [pf $hs] \n
-#		set maxpos [maxpos $hs]
-#		set ph [lindex $hs $maxpos]
-#		if {$ph < $min} break
-#		set peak [lindex $hs $maxpos]
-#		set poss {}
-#		set elements {}
-#		set pos $maxpos
-#		set minpos [expr {$pos-1}]
-#		set minh $peak
-#		while {$pos > 0} {
-#			incr pos -1
-#			set h [lindex $hs $pos]
-#			if {$h < $minh} {
-#				set minpos $pos
-#				set minh $h
-#			} elseif {$h > [expr {$minh+0.4}]} {
-#				break
-#			}
-#		}
-#		set start $minpos
-#		set pos $maxpos
-#		set minpos [expr {$pos-1}]
-#		set minh $peak
-#		set len [llength $histo]
-#		while {$pos < $len} {
-#			incr pos
-#			set h [lindex $hs $pos]
-#			if {$h < $minh} {
-#				set minpos $pos
-#				set minh $h
-#			} elseif {$h > [expr {$minh+0.4}]} {
-#				break
-#			}
-#		}
-#		set end $minpos
-#		set elements [list_concat {*}[list_subindex [lrange $histo $start $end] 2]]
-#		set list [list_concat {*}[list_subindex [lrange $histo [expr {$maxpos-1}]  [expr {$maxpos+1}]] 2]]
-#		if {![llength $list]} break
-#		set gapsize [lmath_average [list_subindex $list $distpos]]
-#		lappend result [list $gapsize [llength $elements] $elements]
-#		incr start -1
-#		incr end
-#		set histo [list_concat [lrange $histo 0 $start] [lrange $histo $end end]]
-#	}
-#	return $result
-#}
 
 proc maxpos {vector} {
 	set maxval [lmath_max $vector]
@@ -733,7 +629,7 @@ proc cluster_fts {data} {
 		set pos $startpos
 		while {$pos >= 0} {
 			set diff [lindex $ds $pos]
-			if {$diff < $maxdist} {incr score $match} else {incr score $mismatch}
+			if {$diff < $maxdist} {incr score $match} else {set score [expr {$score + ($diff/$maxdist)*$mismatch}]}
 			if {$score >= $maxscore} {
 				set maxscore $score
 				set maxpos $pos
@@ -751,7 +647,7 @@ proc cluster_fts {data} {
 		set maxscore $score
 		set pos $startpos
 		foreach diff [lrange $ds $pos end] {
-			if {$diff < $maxdist} {incr score $match} else {incr score $mismatch}
+			if {$diff < $maxdist} {incr score $match} else {set score [expr {$score + ($diff/$maxdist)*$mismatch}]}
 			if {$score >= $maxscore} {
 				set maxscore $score
 				set maxpos $pos
@@ -780,7 +676,8 @@ proc svwindow_check {plist pclist prlist list clist rlist start windowsize} {
 	set weight1pos $infoa(weight1pos)
 	set weight2pos $infoa(weight2pos)
 	set chr1pos $infoa(chr1pos)
-	set clustmin 8
+	set trfpos $infoa(trfpos)
+	set clustmin 10
 	set step 5
 	set chr [lindex [lindex $list 0] $chr1pos]
 	set result {}
@@ -792,8 +689,8 @@ proc svwindow_check {plist pclist prlist list clist rlist start windowsize} {
 		# make histogram
 		set step $infoa(step)
 		set mode $infoa(mode)
-		set table [lsort -integer -index $distpos $table]
-		set histo [extract_histo $table $distpos $step]
+		set dtable [lsort -integer -index $distpos $table]
+		set histo [extract_histo $dtable $distpos $step]
 		# join [list_subindex $histo {0 1}] \n
 		set gapsizehisto [histo_maxima $histo $step 1]
 		# list_subindex $gapsizehisto {0 1}
@@ -819,75 +716,120 @@ proc svwindow_check {plist pclist prlist list clist rlist start windowsize} {
 			} else {
 				set lmode $mode
 			}
-			array set qtrans {1 poor 2 poor 3 average 4  average 5 good 6 excellent}
+			array set qtrans {1 bad 2 poor 3 average 4  average 5 good 6 excellent}
 			list_foreach {len num data} $gapsizehisto {
 				if {[llength $data] < 10} continue
 				set data [lsort -integer -index $end1pos $data]
 				foreach list [cluster_fts $data] {
 					if {[llength $list] < $clustmin} continue
-					set start [lindex $list 0 2]
-					set end [lindex $list end 2]
-					if {($end >= $minadd) && ($end < $maxadd)} {
-						# test heterozygosity
-						set hlist {}
-						foreach line $table {
-							set pos [lindex $line 2]
-							if {($pos >= $start) && ($pos <= $end)} {
-								lappend hlist $line
-							}
+					set cstart [lindex $list 0 2]
+					set cend [lindex $list end 2]
+					set patchsize [expr {$cend-$cstart+1}]
+					if {($cend < $minadd) || ($cend >= $maxadd)} continue
+					# test heterozygosity (and check if len exists)
+					# ---------------------------------------------
+					set hlist {}
+					foreach line $table {
+						set pos [lindex $line 2]
+						if {($pos >= $cstart) && ($pos <= $cend)} {
+							lappend hlist $line
 						}
-						set histo [extract_histo $hlist $distpos 5]
-						set maxima [histo_maxima $histo $step]
-						if {[llength $maxima] > 1} {set zyg het} else {set zyg hom}
-						# add to result
-						set gapsize [expr {round( [lmath_average [list_subindex $list $distpos]] )}]
-						set diff [expr {$gapsize - $lmode}]
-						if {$diff > 0} {
-							set type del
-						} else {
-							set type ins
-							set diff [expr {-$diff}]
-						}
-						set num [llength $list]
-						set patchsize [expr {$end-$start+1}]
-						set weight1 [lmath_average [list_subindex $list $weight1pos]]
-						set weight2 [lmath_average [list_subindex $list $weight2pos]]
-						set weight [expr {round ([min $weight1 $weight2])}]
-						set quality unk
-						set score 3
-						if {$patchsize > 1000} {
-							incr score -2
-						} elseif {$type eq "del"} {
-							if {($patchsize < 500) && ($patchsize > 200)} {
-								incr score
-							} elseif {$patchsize < 10} {
-								incr score -2
-							} elseif {$patchsize < 100} {
-								incr score -1
-							}
-						} else {
-							if {$patchsize < 500} {
-								incr score
-							}
-						}
-						if {$num >= 50} {
-							incr score
-						} elseif {$num < 16} {
-							incr score -1
-						}
-						if {$weight >= 30} {
-							incr score
-						} elseif {$weight < 5} {
-							incr score -1
-						}
-						if {($type eq "ins") && ($score > 4) && ($diff < 100)} {set score 4}
-						if {$score <= 0} {
-							set quality artefact
-						} else {
-							set quality $qtrans($score)
-						}
-						lappend result [list $chr $start $end $type [expr {round($diff)}] $zyg $gapsize $quality $num $weight $patchsize]
 					}
+					set histo [extract_histo $hlist $distpos 5]
+					# join [list_subindex $histo {0 1}] \n
+					set maxima [histo_maxima $histo $step 1]
+					# join [list_subindex $maxima {0 1}] \n
+					set lenexists 0
+					list_foreach el $maxima {
+						set diff [expr {abs($el-$len)}]
+						if {($diff < 20) || ([expr {$diff/$len}] < 0.5)} {
+							set lenexists 1
+							break
+						}
+					}
+					if {!$lenexists} continue
+					if {[llength $maxima] > 1} {set zyg het} else {set zyg hom}
+					# quality
+					# -------
+					set gapsize [expr {round( [lmath_average [list_subindex $list $distpos]] )}]
+					set diff [expr {$gapsize - $lmode}]
+					if {$diff > 0} {
+						set type del
+					} else {
+						set type ins
+						set diff [expr {-$diff}]
+					}
+					set num [llength $list]
+					set weight1 [lmath_average [list_subindex $list $weight1pos]]
+					set weight2 [lmath_average [list_subindex $list $weight2pos]]
+					set weight [expr {round ([min $weight1 $weight2])}]
+					set quality unk
+					set score 3
+					if {$patchsize > 1000} {
+						incr score -2
+					} elseif {$type eq "del"} {
+						if {($patchsize < 500) && ($patchsize > 200)} {
+							incr score
+						} elseif {$patchsize < 30} {
+							incr score -2
+						} elseif {$patchsize < 100} {
+							incr score -1
+						}
+					} else {
+						if {$patchsize < 500} {
+							incr score
+						}
+					}
+					if {$num >= 50} {
+						incr score
+					} elseif {$num < 16} {
+						incr score -1
+					}
+					if {$weight >= 30} {
+						incr score
+					} elseif {$weight < 10} {
+						incr score -1
+					} elseif {$weight < 5} {
+						incr score -2
+					} elseif {$weight < 2} {
+						if {$score > 2} {set score 2}
+					}
+					if {($type eq "ins") && ($score > 4) && ($diff < 100)} {set score 4}
+					if {($weight < 2) && ($num <= 20)} {set score 1}
+					if {$score <= 0} {
+						set quality artefact
+					} else {
+						set quality $qtrans($score)
+					}
+					# test trf
+					# --------
+					set numnontrf [llength [list_find -exact [list_subindex $list $trfpos] 0]]
+					if {$numnontrf < $clustmin} {
+						set quality trfartefact
+					} elseif {$numnontrf < [expr {0.2*$num}]} {
+						set quality trfbad
+					} elseif {$numnontrf < [expr {0.4*$num}]} {
+						set quality trfpoor
+					}
+					# smallins
+					# -------
+					if {($type eq "ins") && ($diff < 100)} {
+						if {$zyg eq "hom"} {
+							set type msmins
+						} else {
+							set type hsmins
+						}
+					}
+					if {($type eq "del") && ($diff < 50)} {
+						if {$zyg eq "hom"} {
+							set type msmdel
+						} else {
+							set type hsmdel
+						}
+					}
+					# add to result
+					# -------------
+					lappend result [list $chr $cstart $cend $type [expr {round($diff)}] $zyg $gapsize $quality $num $numnontrf $weight $patchsize]
 				}
 			}
 		}
@@ -900,26 +842,26 @@ proc svwindow_check {plist pclist prlist list clist rlist start windowsize} {
 		foreach rtable $srtables {
 			if {[llength $rtable] < $clustmin} continue
 			set size [expr {[lindex $rtable 0 $distpos]-$mode}]
-			set start [lindex $rtable 0 $end1pos]
-			set end [lindex $rtable end $end1pos]
-			if {($end >= $minadd) && ($end < $maxadd)} {
+			set cstart [lindex $rtable 0 $end1pos]
+			set cend [lindex $rtable end $end1pos]
+			if {($cend >= $minadd) && ($cend < $maxadd)} {
 				set num [llength $rtable]
 				# test heterozygosity
 				set list {}
 				foreach line $table {
 					set pos [lindex $line $end1pos]
-					if {($pos >= $start) && ($pos < $end)} {
+					if {($pos >= $cstart) && ($pos < $cend)} {
 						lappend list $line
 					}
 				}
 				if {[llength $list] > [expr {$num*0.4}]} {set zyg het} else {set zyg hom}
 				# add to result
-				set patchsize [expr {$end-$start+1}]
+				set patchsize [expr {$cend-$cstart+1}]
 				set weight1 [lmath_average [list_subindex $rtable $weight1pos]]
 				set weight2 [lmath_average [list_subindex $rtable $weight2pos]]
 				set weight [expr {round ([min $weight1 $weight2])}]
 				set quality unk
-				lappend result [list $chr $start $end inv $size $zyg {} $quality $num $weight $patchsize]
+				lappend result [list $chr $cstart $cend inv $size $zyg {} $quality $num $weight $patchsize]
 			}
 		}
 	}
@@ -941,27 +883,27 @@ proc svwindow_check {plist pclist prlist list clist rlist start windowsize} {
 			foreach rtable $srtables {
 				if {[llength $rtable] < $clustmin} continue
 				set size [expr {[lindex $rtable 0 $distpos]-$mode}]
-				set start [lindex $rtable 0 $end1pos]
-				set end [lindex $rtable end $end1pos]
-				if {($end >= $minadd) && ($end < $maxadd)} {
+				set cstart [lindex $rtable 0 $end1pos]
+				set cend [lindex $rtable end $end1pos]
+				if {($cend >= $minadd) && ($cend < $maxadd)} {
 					set num [llength $rtable]
 					# test heterozygosity
 					set list {}
 					foreach line $table {
 						set pos [lindex $line $end1pos]
-						if {($pos >= $start) && ($pos < $end)} {
+						if {($pos >= $cstart) && ($pos < $cend)} {
 							lappend list $line
 						}
 					}
 					if {[llength $list] > [expr {$num*0.4}]} {set zyg het} else {set zyg hom}
 					# add to result
-					set patchsize [expr {$end-$start+1}]
+					set patchsize [expr {$cend-$cstart+1}]
 					set weight1 [lmath_average [list_subindex $rtable $weight1pos]]
 					set weight2 [lmath_average [list_subindex $rtable $weight2pos]]
 					set weight [expr {round ([min $weight1 $weight2])}]
 					set quality unk
 					set pos2 [lindex $rtable 0 $start2pos]
-					lappend result [list $chr $start $end trans $pos2 $zyg $chr2 $quality $num $weight $patchsize]
+					lappend result [list $chr $cstart $cend trans $pos2 $zyg $chr2 $quality $num $weight $patchsize]
 				}
 			}
 		}
@@ -971,67 +913,6 @@ proc svwindow_check {plist pclist prlist list clist rlist start windowsize} {
 
 if 0 {
 
-+	234720	234953	ins	183	het	192	unk	25	18	234
-+	638102	638211	del	114	hom	499	unk	18	30	110
-20	692840	693150	ins	113	het	267	average	43	23	311
-+	877931	878262	del?	105	het	491	unk	174	25	332
-20	1000814	1001155	ins	113	het	260	excellent	70	33	342
--	1280545	1280586	ins->del	109	hom	275	unk	17	0	42
-20	2308401	2308613	ins	202	hom	179	good	102	19	213
-20	5627828	5628204	ins	132	hom	227	excellent	268	31	377
-+	8421934	8422482	del?	179	het	554	unk	88	20	549
-+	8956554	8956894	del	751	het	1126	unk	37	84	341
-20	9867983	9868156	ins	175	het	187	average	51	0	174
-+	11229323	11229523	ins	128	hom	247	unk	34	26	201
-20	15382946	15383298	del	167	het	541	good	109	24	353
-20	30362486	30362903	del	301	hom	679	good	156	16	418
-20	32940463	32940851	del	135	hom	509	good	117	30	389
-20	33084944	33085327	del	320	hom	691	good	171	22	384
-20	35248663	35248997	del	305	hom	664	good	108	19	335
-20	35423204	35423684	del	98	het	492	good	130	24	481
-20	3667518	3668004	ins	179	hom	214	average	19	1	487
-20	37400380	37400802	del	83	hom	460	good	229	27	423
-20	37770676	37771059	del	142	hom	507	good	234	31	384
-...
-20	41758585	41758746	ins	321	het	47	excellent	103	79	162
-20	48308184	48308467	ins+art	166	het	202	good	245	20	284
-20	48350667	48351081	del	99	het	481	good	192	27	415
-
-diff?
-20	2307736	2307848	del	681	het	1066	good	67	80	113
-20	2307741	2307795	del	77	het	462	average	38	82	55
-
-+	1078510	1078639	del	163	het	536	-artefact	34	0	130
-+	20171711	20172010	del	301	het	679	-artefact	46	0	300
-+	18539179	18539971	inv	4286		het	19
--	42738858	42739088	inv	6345		het	66
-+	42742522	42742720	inv	2629		het	58
-+	45956479	45957998	inv?	231764		het	39
-+	45957066	45957998	inv?	608820		het	17
--	46276260	46277148	inv	371321		het	15
-20	2371560	2371761	artefact	339	het	27	average	340	0	202
-
--	6297072	6297106	trans?	45393570	het	14	unk	31	52	35
-
-877850 878250 mz del
-2795806 2795849 del 70
-2750996 2751023 del 3265 rs67081956 (chr20:2751148-2754409)
-2811674 2811695 del 315 rs36106480
-5628026 5628090 ins 150 rs10523854 (chr20:5628106-5628105)
-19009036 19009390 del 315 rs34277434 (chr20:19009431-19009743)
-42738819 42742720 invr (6000+)
-45930733 46069420 invr (609234)
-59556854-59556919 ins 50
-1230000 1230500 inv
-2371677 2371759 inv
-9117147 9117210 inv?
-17587642-17587695 inv
-59337728 59337896 inv
-62188938-62188979 ? diff 78-79
-62280292-62280339 ? diff?
-62190086-62190134 inversie (+ del?)
-20	9313616	9313698	del	197	hom	579	artefact	12	0	83
-
 package require Tclx
 signal -restart error SIGINT
 lappend auto_path ~/dev/completegenomics/lib
@@ -1039,24 +920,31 @@ package require Extral
 cd /complgen/sv
 
 set pairfile sv70-20-pairs.tsv
+set pairfile GS103/GS103-20-paired.tsv.rz
 set pairfile sv78-20-pairs.tsv
-set pairfile GS103-19-paired.tsv
 set pairfile sv79-20-pairs.tsv
+set trffile /data/db/regdb-simple_repeats.tsv
 
 }
 
-proc svfind {pairfile} {
+proc svfind {pairfile trffile} {
 
-set outfile [file root $pairfile]-sv.tsv
-set windowsize 1000
-set lognum [expr {1000000 - 100000%$windowsize}]
-
-catch {close $o}
-catch {close $f}
-#svtools_loadindex $pairfile end1
+	catch {close $trf}
+	catch {close $o}
+	catch {close $f}
+	if {[inlist {.rz} [file extension $pairfile]]} {
+		set bpairfile [file root $pairfile]
+	} else {
+		set bpairfile $pairfile
+	}
+	set outfile [file root $bpairfile]-sv.tsv
+#set outfile test-sv.tsv
+	set windowsize 1000
+	set lognum [expr {1000000 - 100000%$windowsize}]
+svtools_loadindex $pairfile end1
 	global infoa
 	set dir [file dir [file normalize $outfile]]
-	set f [open $pairfile.numinfo]
+	set f [open $bpairfile.numinfo]
 	tsv_open $f
 	array set infoa [split [string trim [read $f]] \n\t]
 	close $f
@@ -1066,8 +954,8 @@ catch {close $f}
 	set mode $infoa(mode)
 	set infoa(hmode) [expr {$infoa(mode)-$infoa(mode)%$infoa(step)}]
 	set infoa(hremove) [list_fill 5 [expr {$infoa(hmode)-2*$infoa(step)}] $infoa(step)]
-	set f [open $pairfile]
-	set header [tsv_open $f]
+	set f [rzopen $pairfile]
+	set header [gets $f]
 	set iheader {chr1 start1 end1 weight1 numl chr2 start2 end2 weight2 numr type dist}
 	set poss [list_cor $header $iheader]
 	array set infoa [list \
@@ -1079,15 +967,20 @@ catch {close $f}
 		weight2pos [lsearch $iheader weight2] \
 		chr2pos [lsearch $iheader chr2] \
 		start2pos [lsearch $iheader start2] \
+		trfpos [llength $iheader] \
 	]
+	set infoa(pairposs) [list $infoa(typepos) [lsearch $iheader start1] $infoa(end1pos) [lsearch $iheader start2] [lsearch $iheader end2]]
+	set pairposs $infoa(pairposs)
 	set end1pos $infoa(end1pos)
 	set typepos $infoa(typepos)
-#svtools_aprgoto $f 692000
+#svtools_aprgoto $f 2811000
 	set o [open $outfile w]
-	puts $o [join {chr patchstart pos type size zyg gapsize/chr2 quality numreads weight patchsize} \t]
+	puts $o [join {chr patchstart pos type size zyg gapsize/chr2 quality numreads numnontrf weight patchsize} \t]
 	set list {}
 	set clist {}
 	set rlist {}
+	set pclist {}
+	set prlist {}
 	unset -nocomplain plist
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
@@ -1096,14 +989,61 @@ catch {close $f}
 		if {[isint $start]} break
 	}
 	set start [expr {$start-$start%$windowsize}]
+	set pstart [expr {$start-$windowsize}]
 	set end [expr {$start + $windowsize -1}]
+	set chr [lindex $line $infoa(chr1pos)]
+	# prepare trf data
+	set trf [open $trffile]
+	set trfposs [open_region $trf]
+	set trflist {}
+seek $trf 10914705 start
+set trfline [get_region $trf $trfposs]
+	while {![eof $trf]} {
+		set trfline [get_region $trf $trfposs]
+		foreach {trfchr trfstart trfend} $trfline break
+		set trfchr [chr2num $trfchr]
+		if {$trfchr >= $chr} break
+	}
+	# go over file and find sv
 	while {![eof $f]} {
 		if {![expr $start % $lognum]} {puts stderr $start}
+		# load trf regions
+		set temp {}
+		list_foreach {trfchr trfstart trfend} $trflist {
+			set trfchr [chr2num $trfchr]
+			if {($trfchr == $chr) && ($trfend >= $start) && ($trfstart < $end)} {
+				lappend temp [list $trfchr $trfstart $trfend]
+			}
+		}
+		set trflist $temp
+		while {![eof $trf]} {
+			foreach {trfchr trfstart trfend} $trfline break
+			set trfchr [chr2num $trfchr]
+			if {$trfchr > $chr} break
+			if {$trfstart > $end} break
+			set trflen [expr {$trfend-$trfstart}]
+			if {($trfchr == $chr) && ($trfend >= $pstart) && ($trflen > 30)} {
+				incr trfstart -6
+				incr trfend +6
+				lappend trflist [list $trfchr $trfstart $trfend]
+			}
+			set trfline [get_region $trf $trfposs]
+		}
+		# load pairs
 		while {![eof $f]} {
 			if {[llength $line]} {
-				set type [lindex $line $typepos]
-				set refpos [lindex $line $end1pos]
+				foreach {type start1 refpos start2 end2} [list_sub $line $pairposs] break
 				if {$refpos >= $end} break
+				set intrf 0
+				list_foreach {trfchr trfstart trfend} $trflist {
+					if {($start1 >= $trfstart) && ($refpos <= $trfend)} {
+						set intrf 1
+					}
+					if {($start2 >= $trfstart) && ($end2 <= $trfend)} {
+						set intrf 1
+					}
+				}
+				lappend line $intrf
 				if {$type eq "c"} {
 					lappend clist $line
 				} elseif {$type eq "r"} {
@@ -1120,6 +1060,9 @@ catch {close $f}
 		}
 		if {[info exists plist]} {
 #error STOPPED
+#if {$start == 173000} {error STOPPED}
+			# check for sv
+#puts $pstart-$end:\n[join $trflist \n]
 			set result [svwindow_check $plist $pclist $prlist $list $clist $rlist $start $windowsize]
 #if {[llength $result]} {error STOPPED}
 			foreach l $result {
@@ -1127,6 +1070,7 @@ catch {close $f}
 			}
 			flush $o
 		}
+		set pstart $start
 		set plist $list
 		set pclist $clist
 		set prlist $rlist
@@ -1137,6 +1081,7 @@ catch {close $f}
 		incr end $windowsize
 	}
 
+	close $trf
 	close $o
 	close $f
 
@@ -1184,7 +1129,9 @@ proc svcompare {svfile1 svfile2} {
 				puts $o df\t$name2\t[join $tline2 \t]
 				set list2 [list_remove $list2 $tline2]
 				flush $o
-			} elseif {($type2 eq $type1) && ($zyg2 eq $zyg1) && ($pos2 >= $mstart1) && ($pos2 < $mpos1) && ($size2 >= $minsize1) && ($size2 < $maxsize1)} {
+			} elseif {($type2 eq $type1) && ($zyg2 eq $zyg1)
+					&& ($pos2 >= $mstart1) && ($pos2 < $mpos1)
+					&& ($size2 >= $minsize1) && ($size2 < $maxsize1)} {
 				puts $o sm\t$name1,$name2\t[join $line1 \t]\t[join $tline2 \t]
 				set found 1
 				set list2 [list_remove $list2 $tline2]
@@ -1232,3 +1179,4 @@ proc svcompare {svfile1 svfile2} {
 	cg select -s pos < $tempfile >@ stdout
 
 }
+
