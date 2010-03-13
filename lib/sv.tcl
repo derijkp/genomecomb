@@ -980,6 +980,9 @@ if 0 {
 	set svfile1 GS102/GS102-20-paired-sv.tsv
 	set svfile2 GS103/GS103-20-paired-sv.tsv
 	set outfile svcompar_GS102_GS103/svcompar_GS102_GS103-20.tsv
+	set svfile1 sv79-20-pairs-sv.tsv
+	set svfile2 sv78-20-pairs-sv.tsv
+	set outfile svcompar_sv78_sv79-20.tsv
 }
 
 proc svcompare {svfile1 svfile2} {
@@ -1007,7 +1010,7 @@ proc svcompare {svfile1 svfile2} {
 		set min [expr {$start1 - 200}]
 		set mstart1 [expr {$start1 - 10}]
 		set mpos1 [expr {$pos1 + 10}]
-		set sizediff [max [expr {round(0.1*$size1)}] 20]
+		set sizediff [max [expr {round(0.1*$size1)}] 30]
 		set minsize1 [expr {$size1 - $sizediff}]
 		set maxsize1 [expr {$size1 + $sizediff}]
 		set found 0
@@ -1017,10 +1020,11 @@ proc svcompare {svfile1 svfile2} {
 				puts $o df\t$name2\t[join $tline2 \t]
 				set list2 [list_remove $list2 $tline2]
 				flush $o
-			} elseif {($type2 eq $type1) && ($zyg2 eq $zyg1)
+			} elseif {($type2 eq $type1)
 					&& ($pos2 >= $mstart1) && ($pos2 < $mpos1)
 					&& ($size2 >= $minsize1) && ($size2 < $maxsize1)} {
-				puts $o sm\t$name1,$name2\t[join $line1 \t]\t[join $tline2 \t]
+				if {($zyg2 eq $zyg1)} {set s sm} else {set s mm}
+				puts $o $s\t$name1,$name2\t[join $line1 \t]\t[join $tline2 \t]
 				set found 1
 				set list2 [list_remove $list2 $tline2]
 			}
@@ -1037,8 +1041,9 @@ proc svcompare {svfile1 svfile2} {
 			} elseif {$pos2 < $mstart1} {
 			} elseif {$start2 >= $mpos1} {
 				break
-			} elseif {($type2 eq $type1) && ($zyg2 eq $zyg1) && ($size2 >= $minsize1) && ($size2 < $maxsize1)} {
-				puts $o sm\t$name1,$name2\t[join $line1 \t]\t[join $line2 \t]
+			} elseif {($type2 eq $type1) && ($size2 >= $minsize1) && ($size2 < $maxsize1)} {
+				if {($zyg2 eq $zyg1)} {set s sm} else {set s mm}
+				puts $o $s\t$name1,$name2\t[join $line1 \t]\t[join $line2 \t]
 				set found 1
 			} else {
 				lappend list2 $line2
