@@ -51,12 +51,12 @@ graphwidget method init {args} {
 	button $object.b.print -text "Print" -command [list $object print]
 	pack $object.b.print -side left
 	Classy::Entry $object.b.xrange -width 20 -label xrange -orient horizontal \
-		-textvariable [privatevar $object region(xrange)] -command [list $object redraw]
+		-textvariable [privatevar $object region(xrange)] -command [list Classy::todo $object redraw]
 	bind $object.b.xrange <3> "$object paste; break"
 	pack $object.b.xrange -side left
 	foreach type {xrangeextra ymin ymax} {destroy $object.b.$type
 		Classy::NumEntry $object.b.$type -width 10 -label $type -orient horizontal \
-			-textvariable [privatevar $object region($type)] -command [list $object redraw]
+			-textvariable [privatevar $object region($type)] -command [list Classy::todo $object redraw]
 		pack $object.b.$type -side left
 	}
 	Classy::ProgressWidget $object.progress
@@ -96,13 +96,13 @@ proc PopZoom {graph} {
 graphwidget method paste {} {
 	private $object region
 	set region(xrange) [::tk::GetSelection $object PRIMARY]
-	$object redraw
+	Classy::todo $object redraw
 }
 
 graphwidget method start {} {
 	private $object region
-	array set region {xrange {0 20000} xrangeextra 1000 ymin -2 ymax 600}
-	$object redraw
+	array set region {xrange {1000 9000} xrangeextra 1000 ymin -2 ymax 600}
+	Classy::todo $object redraw
 }
 
 graphwidget method clear {} {
@@ -195,11 +195,15 @@ graphwidget method opendialog {{file {}}} {
 	$object.open option select "Weight" graphd(wfield) graphd(header)
 	$object.open option check "Regions" graphd(region) ""
 	$object.open option entry "Nan" graphd(nan)
+	$object.open option entry "Chromosome" graphd(chr)
 	$object.open add do Do [list $object open $file ::graphd] default
 }
 
 graphwidget method _configureevent {} {
+	private $object data region
 	event generate $object.g <Configure>
+	set region(status) ""
+	set region(cancel) 0
 }
 
 graphwidget method open {file settingsVar} {
@@ -207,17 +211,10 @@ graphwidget method open {file settingsVar} {
 	upvar $settingsVar graphd
 	set showregion $graphd(region)
 	set vnum [llength $data(entries)]
-	if {$showregion} {
-		foreach field {y region i} {
-			vector create ::$object.$vnum.$field
-		}
-		set elements [list range y $graphd(wfield)]
-	} else {
-		foreach field {x y w i} {
-			vector create ::$object.$vnum.$field
-		}
-		set elements [list $graphd(xfield) $graphd(yfield) $graphd(wfield)]
+	foreach field {x y w i} {
+		vector create ::$object.$vnum.$field
 	}
+	set elements [list $graphd(xfield) $graphd(yfield) $graphd(wfield)]
 	if {[inlist {.rz} [file extension $file]]} {
 		set indexname [file root $file].$graphd(xfield)_index
 		set name [file root [file root [file tail $file]]]
@@ -235,6 +232,7 @@ graphwidget method open {file settingsVar} {
 	set ypos [lindex $poss 1]
 	set basecolor [lindex {blue red gray orange yellow green violet} $vnum]
 	lappend data(entries) $name
+	set data($name,chr) $graphd(chr)
 	set data($name,vnum) $vnum
 	set data($name,lstart) 0
 	set data($name,lend) 0
@@ -245,36 +243,40 @@ graphwidget method open {file settingsVar} {
 	set data($name,nan) $graphd(nan)
 	set data($name,poss) $poss
 	# create index
-	set indexed 1
-	set index ::$object.$vnum.i
-	if {![file exists $indexname]} {
-		tsv_index $file $graphd(xfield)
+	if {$graphd(region)} {
+		$object loadregtype $f $name
+	} else {
+		set indexed 1
+		set index ::$object.$vnum.i
+		if {![file exists $indexname]} {
+			tsv_index $file $graphd(xfield)
+		}
+		# read index
+		set o [open $indexname]
+		set data($name,step) [gets $o]
+		set data($name,findex) [gets $o]
+		set xmin [gets $o]
+		set data($name,xmin) $xmin
+		set data($name,xmax) [gets $o]
+		set data($name,fx) [expr {$data($name,xmin)-$xmin%10000}]
+		set temp [split [string trim [read $o]] \n]
+		::$index set $temp
+		close $o
+		#
+		set list [array names data *,xmin]
+		set amin $data([lindex $list 0])
+		foreach n $list {
+			if {$data($n) < $amin} {set amin $data($n)}
+		}
+		set list [array names data *,xmax]
+		set amax $data([lindex $list 0])
+		foreach n [array names data *,xmax] {
+			if {$data($n) > $amin} {set amax $data($n)}
+		}
+		::$object.ends.x set [list $amin $amax]
+		::$object.ends.y set {0 0}
+		set data($name,indexed) $indexed
 	}
-	# read index
-	set o [open $indexname]
-	set data($name,step) [gets $o]
-	set data($name,findex) [gets $o]
-	set xmin [gets $o]
-	set data($name,xmin) $xmin
-	set data($name,xmax) [gets $o]
-	set data($name,fx) [expr {$data($name,xmin)-$xmin%10000}]
-	set temp [split [string trim [read $o]] \n]
-	::$index set $temp
-	close $o
-	#
-	set list [array names data *,xmin]
-	set amin $data([lindex $list 0])
-	foreach n $list {
-		if {$data($n) < $amin} {set amin $data($n)}
-	}
-	set list [array names data *,xmax]
-	set amax $data([lindex $list 0])
-	foreach n [array names data *,xmax] {
-		if {$data($n) > $amin} {set amax $data($n)}
-	}
-	::$object.ends.x set [list $amin $amax]
-	::$object.ends.y set {0 0}
-	set data($name,indexed) $indexed
 	catch {close $f}
 	set xv ::$object.$vnum.x
 	set yv ::$object.$vnum.y
@@ -287,11 +289,11 @@ graphwidget method open {file settingsVar} {
 	$object.g element configure $name -linewidth 0 -outline $color -outlinewidth 1 -pixels 2 -symbol plus \
 		-styles $style
 	if {$showregion} {
-		$object.g element configure $name -linewidth 5 -trace decreasing
+		$object.g element configure $name -linewidth 10 -trace decreasing
 	}
 	set data($name,color) $color
 	$object.g legend bind $name <1> [list $object elconf $name]
-	$object reload
+	Classy::todo $object reload
 	Classy::todo $object _configureevent
 }
 
@@ -363,16 +365,28 @@ graphwidget method _xrange {args} {
 	}
 	set region(xmin) [expr {round($xmin)}]
 	set region(xmax) [expr {round($xmax)}]
+	if {[llength $temp] > 2} {
+		set y [lindex $temp 2]
+		if {$y < 3000} {
+			set region(ymin) -1
+			set region(ymax) [expr {$y+500}]
+		} else {
+			set region(ymin) [expr {$y-500}]
+			set region(ymax) [expr {$y+500}]
+		}
+	}
+	set region(xrange) $xmin-$xmax
 }
 
 graphwidget method redraw {args} {
+puts ----------redraw----------
 	private $object region
 	set w $object.g
+	Classy::canceltodo $object redraw
 	$object _xrange
 	$w axis configure x -min $region(xmin) -max $region(xmax)
 	$w axis configure y -min $region(ymin) -max $region(ymax)
-	$object reload
-	Classy::todo $object _configureevent
+	Classy::todo $object reload
 }
 
 graphwidget method _setvars {} {
@@ -563,7 +577,7 @@ graphwidget method changefields {what args} {
 	lset data($name,poss) 2 [lsearch $header $conf(W)]
 	set data($name,lstart) 0
 	set data($name,lend) 0
-	$object redraw
+	Classy::todo $object redraw
 }
 
 graphwidget method delelement {name} {
@@ -582,6 +596,7 @@ graphwidget method delelement {name} {
 
 graphwidget method loadregion {name} {
 	private $object region data
+	if {[get region(cancel) 0]} return
 	set start $region(xmin)
 	set end $region(xmax)
 	set start [expr {round([$object.g axis cget x -min])}]
@@ -614,21 +629,31 @@ puts "load $start $end $data($name,lstart) $data($name,lend)"
 			::$object.$vnum.$el set {}
 		}
 		update
+		if {[get region(cancel) 0]} {
+			$object.progress configure -message "Loading $name canceled"
+			puts "Loading $name canceled"
+			return
+		}
 		set xpos [lindex $poss 0]
 		set data($name,lstart) 0
 		set data($name,lend) 0
 		set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
 		set f [rzopen $data($name,file) $fpos]
-		set pnext [expr {$start+500}]
+		set pnext [expr {$start+200}]
 		set tot [expr {$end-$start}]
 		while {![eof $f]} {
 			set line [split [gets $f] \t]
 			if {![llength $line]} continue
 			set x [lindex $line $xpos]
 			if {$x > $pnext} {
-				$object.progress configure -message "Loading $name [format %.1f [expr {100*($x-$start)/$tot}]]%"
 				update
-				if {[get region(cancel) 0]} return
+				$object.progress configure -message "Loading $name [format %.1f [expr {100*($x-$start)/$tot}]]% ([get region(cancel) 0])"
+				puts "$x [format %.1f [expr {100*($x-$start)/$tot}]]%"
+				if {[get region(cancel) 0]} {
+					$object.progress configure -message "Loading $name canceled"
+					puts "Loading $name canceled"
+					return
+				}
 				incr pnext 2000
 			}
 			if {$x > $end} break
@@ -641,6 +666,7 @@ puts "load $start $end $data($name,lstart) $data($name,lend)"
 				}
 			}
 		}
+		catch {close $f}
 		set data($name,lstart) $start
 		set data($name,lend) $end
 		if {[get data($name,shift) 0] != 0} {
@@ -648,28 +674,68 @@ puts "load $start $end $data($name,lstart) $data($name,lend)"
 			$yv expr {$yv + $data($name,shift)}
 		}
 	}
+	puts "Finished loading $name"
+	$object.progress configure -message "Finished loading $name"
+}
+
+graphwidget method loadregtype {f name} {
+	private $object region data
+	if {![info exists data($name,vnum)]} return
+	set vnum $data($name,vnum)
+	set poss $data($name,poss)
+	set chr $data($name,chr)
+	set chrpos [lsearch $data($name,header) chromosome]
+	list_pop poss
+	lappend poss $chrpos
+	set index ::$object.$vnum.i
+	::$object.$vnum.x set {}
+	::$object.$vnum.y set {}
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		foreach {begin endw cchr} [list_sub $line $poss] break
+		if {$cchr ne $chr} continue
+		::$object.$vnum.x append $endw
+		::$object.$vnum.x append $begin
+		::$object.$vnum.y append 1
+		::$object.$vnum.y append 1
+	}
+	update
 	$object.progress configure -message "Finished loading $name"
 }
 
 graphwidget method reload {} {
 	private $object data region
-	Classy::canceltodo $object reload
-	set region(cancel) 1
-	update
+	if {[get region(status) ""] eq "loading"} {
+		set region(cancel) 1
+		return
+	}
+	set region(status) "loading"
 	unset -nocomplain region(cancel)
 	catch {
 		foreach name $data(entries) {
+			if {$data($name,region)} continue
 			$object loadregion $name
+			if {[get region(cancel) 0]} {
+				puts "Loading canceled"
+				set region(cancel) 0
+				set region(status) ""
+				puts "Loading $name canceled"
+				Classy::todo $object reload
+				return
+				break
+			}
+			if {[get region(cancel) 0]} break
 			puts "$name loaded"
 		}
 	}
-	Classy::canceltodo $object reload
+	Classy::todo $object _configureevent
+	set region(status) "finished"
 }
 
 graphwidget method xset {args} {
 	private $object pxv
 	if {[get pxv ""] ne $args} {
-puts "xset $args"
 		$object.scx configure -command {}
 		$object.scx set {*}$args
 		$object.scx configure -command [list $object xview]
@@ -678,10 +744,7 @@ puts "xset $args"
 }
 
 graphwidget method xview {args} {
-puts "[info level] xview $args"
 	private $object data region
-	Classy::canceltodo $object reload
-	Classy::canceltodo $object _configureevent
 	set w $object.g
 	set amin [::$object.ends.x index 0]
 	set amax [::$object.ends.x index 1]
@@ -711,9 +774,7 @@ puts "[info level] xview $args"
 	set xmax [expr {$xmin+$cursize}]
 	$w axis configure x -min $xmin -max $xmax
 	$object _setvars
-	Classy::canceltodo $object reload
 	Classy::todo $object reload
-	Classy::todo $object _configureevent
 }
 
 graphwidget method print {args} {
@@ -746,6 +807,12 @@ set object .g
 set file sv79-20-pairs.tsv
 set file /complgen/sv/GS103/GS103-9-paired.tsv.rz
 .g opendialog $file
+
+
+.g clear
+set chr 20
+.g open /complgen/sv/GS103/GS103-$chr-paired.tsv.rz ::graphd
+.g open /complgen/sv/GS102/GS102-$chr-paired.tsv.rz ::graphd
 
 
 set file sv79-20-pairs.tsv
