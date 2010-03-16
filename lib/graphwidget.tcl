@@ -50,6 +50,8 @@ graphwidget method init {args} {
 	pack $object.b.clear -side left
 	button $object.b.print -text "Print" -command [list $object print]
 	pack $object.b.print -side left
+	button $object.b.check -text "Check" -command [list $object checkfile]
+	pack $object.b.check -side left
 	Classy::Entry $object.b.xrange -width 20 -label xrange -orient horizontal \
 		-textvariable [privatevar $object region(xrange)] -command [list Classy::todo $object redraw]
 	bind $object.b.xrange <3> "$object paste; break"
@@ -791,6 +793,111 @@ graphwidget method print {args} {
 	foreach {file} $args break
 	$object.g postscript configure -landscape yes -maxpect yes
 	$object.g postscript output $file
+}
+
+graphwidget method checkbrowse {args} {
+	private $object checkw region
+	set table $checkw.editor
+	upvar #0 [$table cget -variable] checkdata
+	set row [$table index active row]
+	$table selection clear
+	$table selection set $row,0 $row,[$table cget -cols]
+	set header [lindex $checkdata 0]
+	set line [lindex $checkdata $row]
+	set poss [list_cor $header {patchstart pos size}]
+	set cur [list_sub $line $poss]
+	set region(xrange) $cur
+	Classy::todo $object redraw
+}
+
+graphwidget method checkset {value} {
+	private $object checkw region
+	set table $checkw.editor
+	upvar #0 [$table cget -variable] checkdata
+	set row [$table index active row]
+	set header [lindex $checkdata 0]
+	set line [lindex $checkdata $row]
+	set pos [lsearch $header check]
+	switch $value {
+		d {set value diff}
+		u {set value uncert}
+		n {set value noind}
+		b {set value both}
+		a {set value artefact}
+		s {set value same}
+		p {set value pdip}
+		2 {set value double}
+		default {error "unknown value"}
+	}
+	lset checkdata $row $pos $value
+	incr row
+ 	$table see $row,1
+	$table activate $row,1
+}
+
+graphwidget method checkfile {} {
+	private $object checkw
+	set file [Classy::selectfile]
+
+	# set file /complgen/sv/svcompar_sv78_sv79-20.tsv
+	# set file /complgen/sv/svcompar_GS103_GS102-9.tsv
+	private $object checkw
+	catch {destroy $checkw}
+	set checkw [tableedit]
+	set table $checkw.editor
+	$table load $file
+	upvar #0 [$table cget -variable] checkdata
+	set header [lindex $checkdata 0]
+	set chpos [lsearch $header check]
+	if {$chpos == -1} {
+		set size 0
+		set temp {}
+		foreach line $checkdata {
+			lappend temp [linsert $line 1 {}]
+			set size [max $size [llength $line]]
+		}
+		incr size
+		lset temp 0 1 check
+		# sort
+		set header [list_shift temp]
+		set temp [lsort -index [lsearch $header quality] -integer -decreasing $temp]
+		set poss [list_find -regexp $temp pdip]
+		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
+		set poss [list_find -regexp $temp small]
+		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
+		set scorepos [lsearch $header quality]
+		incr scorepos
+		set scores [list_subindex $temp $scorepos]
+		set poss [list_concat [list_find -regexp $scores 0] [list_find -regexp $scores 1]]
+		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
+		set poss [list_find -regexp $temp trfbad]
+		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
+		set poss [list_find -regexp $temp trfartefact]
+		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
+		set poss [list_find -regexp $temp trans]
+		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
+		set poss [list_find -regexp $temp inv]
+		set temp [list_concat [list_sub $temp $poss] [list_sub $temp -exclude $poss]]
+		list_unshift temp $header
+		# set checkdata
+		set checkdata $temp
+		set header [lindex $checkdata 0]
+		$table autosize
+		$table configure -browsecommand "[list $object] checkbrowse" -cols [llength $header]
+	} else {
+		$table configure -browsecommand "[list $object] checkbrowse"
+	}
+	$table configure -titlerows 1 -labels $header
+	$table configure -labelcommand [list $table sort]
+	bind $table <d> "[list $object] checkset %K; break"
+	bind $table <u> "[list $object] checkset %K; break"
+	bind $table <n> "[list $object] checkset %K; break"
+	bind $table <b> "[list $object] checkset %K; break"
+	bind $table <a> "[list $object] checkset %K; break"
+	bind $table <s> "[list $object] checkset %K; break"
+	bind $table <p> "[list $object] checkset %K; break"
+	bind $table <KeyPress-2> "[list $object] checkset %K; break"
+
 }
 
 if 0 {
