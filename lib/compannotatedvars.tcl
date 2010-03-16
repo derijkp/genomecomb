@@ -266,6 +266,12 @@ proc annot_compare_region {compar_file reg_file field tvalue fvalue} {
 	set f1 [open $compar_file]
 	set header1 [gets $f1]
 	set poss1 [list_cor $header1 {chromosome begin end}]
+	if {[lsearch $poss1 -1] != -1} {
+		set poss1 [list_cor $header1 {chr patchstart pos}]
+	}
+	if {[lsearch $poss1 -1] != -1} {
+		error "Wrong header"
+	}
 	set f2 [open $reg_file]
 	set poss2 [open_region $f2]
 	set num 0
@@ -375,5 +381,11 @@ unset -nocomplain cache
 set f [open compar/78vs79_compar.tsv]
 set line [split [gets $f] \t]
 llength $line
+
+set compar_file sv/GS103/GS103-20-paired-sv.tsv
+set reg_file /data/db/_data_db_ucsc-simple_repeats.tsv
+set field trf
+set tvalue trf
+set fvalue ""
 
 }
