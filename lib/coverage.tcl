@@ -7,7 +7,7 @@ proc covered regfile {
 	unset -nocomplain a
 	while {![eof $f]} {
 		incr num
-		if {![expr $num%100000]} {puts stderr $num}
+		if {![expr $num%100000]} {putslog $num}
 		set line [get_region $f $poss]
 		if {![llength $line]} continue
 		foreach {chr start end} $line break

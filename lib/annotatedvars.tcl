@@ -143,7 +143,7 @@ proc var2annotvar {file genefile outfile} {
 	set num 0
 	while {![eof $f1]} {
 		incr num
-		if {![expr {$num%100000}]} {puts stderr $num}
+		if {![expr {$num%100000}]} {putslog $num}
 		set flocus [lindex $cur 0]
 		set glocus [lindex $curgene 0]
 		while {![eof $g] && [isint $glocus] && ($glocus < $flocus)} {

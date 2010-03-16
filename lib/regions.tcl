@@ -90,7 +90,7 @@ proc filtervarget {v} {
 
 proc refconsregions {varfile} {
 	global cache
-	puts stderr "getting ref-(in)consistent regions from $varfile"
+	putslog "getting ref-(in)consistent regions from $varfile"
 	set v [open "| grep ref- $varfile"]
 	unset -nocomplain cache($v); unset -nocomplain cache($v,r);
 	set vline [filtervarget $v]
@@ -105,7 +105,7 @@ proc refconsregions {varfile} {
 	set num 0
 	while 1 {
 		incr num
-		if {![expr $num%100000]} {puts stderr $num}
+		if {![expr $num%100000]} {putslog $num}
 		set vline [filtervarget $v]
 		if {![llength $vline]} break
 		foreach {vchr vstart vend} $vline break
@@ -144,7 +144,7 @@ proc regsubtract {regfile1 regfile2} {
 	while 1 {
 		# puts "$chr1:$start1-$end1 $chr2:$start2-$end2"
 		incr num
-		if {![expr $num%100000]} {puts stderr $num}
+		if {![expr $num%100000]} {putslog $num}
 		if {($nchr2 < $nchr1) || (($nchr2 == $nchr1) && ($end2 <= $start1))} {
 			set line2 [get_region $f2 $poss2]
 			if {![llength $line2] && [eof $f2]}  {
@@ -197,7 +197,7 @@ proc reghisto {regfile} {
 	set num 0
 	while 1 {
 		incr num
-		if {![expr $num%100000]} {puts stderr $num}
+		if {![expr $num%100000]} {putslog $num}
 		set vline [cggets $v]
 		if {![llength $vline]} break
 		foreach {vchr vstart vend} $vline break
@@ -256,7 +256,7 @@ proc regjoin {regfile1 regfile2} {
 	puts "chromosome\tbegin\tend"
 	while 1 {
 		incr num
-		if {![expr $num%100000]} {puts stderr $num}
+		if {![expr $num%100000]} {putslog $num}
 		# putsvars nchr1 start1 end1 nchr2 start2 end2
 		if {($nchr1 == -1) && ($nchr2 == -1)} break
 		if {($nchr2 == -1) || ($nchr1 < $nchr2) || (($nchr1 == $nchr2) && ($start1 < $start2))} {

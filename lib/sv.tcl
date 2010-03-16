@@ -93,6 +93,7 @@ proc svinfo {pairfile} {
 	puts $o min\t$min
 	puts $o max\t$max
 	close $o
+	putslog "finished $pairfile.numinfo"
 }
 
 proc svhisto {pairfile} {
@@ -103,7 +104,7 @@ proc svhisto {pairfile} {
 	set num 1
 	while {![eof $f]} {
 		incr num
-		if {![expr $num%1000000]} {puts stderr $num}
+		if {![expr $num%1000000]} {putslog $num}
 		set dist [lindex [split [gets $f] \t] $distpos]
 		if {![info exists a($dist)]} {
 			set a($dist) 1
@@ -1016,6 +1017,7 @@ set outfile test-sv.tsv
 	close $trf
 	close $o
 	close $f
+	putslog "finished $outfile"
 
 }
 
@@ -1123,6 +1125,7 @@ proc svcompare {svfile1 svfile2} {
 	set chr [lindex [split [file tail $svfile1] -] 1]
 	set outfile svcompar_[lindex [split [file tail $svfile1] -] 0]_[lindex [split [file tail $svfile2] -] 0]-$chr.tsv
 	cg select -s pos < $tempfile > $outfile
+	putslog "finished $outfile"
 
 }
 

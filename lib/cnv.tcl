@@ -4,7 +4,7 @@ proc map2besthits {file outfile} {
 	set num 1
 	while {![eof $f]} {
 		incr num
-		if {![expr {$num % 100000}]} {puts $num}
+		if {![expr {$num % 100000}]} {putslog $num}
 		set list [readcgimap $f]
 		foreach {flags chr start end strand side} [lindex $list 0] break
 		puts $o $chr\t[expr {($start+$end)/2}]

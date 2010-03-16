@@ -1,6 +1,6 @@
 
 proc cg {args} {
-	puts "cg $args"
+	# puts "cg $args"
 	eval exec cg $args 2>@ stderr
 }
 

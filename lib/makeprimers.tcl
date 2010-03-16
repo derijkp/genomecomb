@@ -198,11 +198,11 @@ proc cindex_searchgenome {db pseq {add 0}} {
 	global cindex_genome maxnum
 	if {![info exists cindex_genome]} {
 		set cindex_genome {}
-		puts stderr "loading genome database"
+		putslog "loading genome database"
 		foreach file [lsort -dict [glob $db/*]] {
 			set file [file root $file]
 			set chr [lindex [split $file -] end]
-			puts stderr "loading chr $chr"
+			putslog "loading chr $chr"
 			dict set cindex_genome $chr [cindex load $file]
 		}
 	}
@@ -235,7 +235,7 @@ proc makeprimers_cindex {name left right {db /data/db/build36-ssa}} {
 		set a($pseq+) {}
 		lappend new $pseq
 	}
-	puts stderr "search [llength $new]"
+	putslog "search [llength $new]"
 	foreach pseq $new {
 		puts -nonewline stderr .
 		set prelen [expr {[string length $pseq]-14}]
@@ -255,7 +255,7 @@ proc makeprimers_cindex {name left right {db /data/db/build36-ssa}} {
 			set a(${pseq}-) [list $maxnum {}]
 		}
 	}
-	puts stderr ""
+	putslog ""
 	set result {}
 	foreach list [list $left $right] strand {+ -} {
 		set temp {}
@@ -577,11 +577,11 @@ proc makeprimers_region {name maxsize prefsize temperature archive db extraseq} 
 		set lnum [lindex $lp end-3]
 		if {![info exists a($lseq+)]} {puts "$lseq+ not found"; continue}
 		foreach rp $right {
-			if {![expr {$num%1000}]} {puts stderr $num}
+			if {![expr {$num%1000}]} {putslog $num}
 			incr num
 			set asize [expr {[lindex $rp 3]-[lindex $lp 2]}]
 			if {$asize >= $maxsize} continue
-			# puts stderr "[lindex $lp 2]-[lindex $rp 3] ($asize)"
+			# putslog "[lindex $lp 2]-[lindex $rp 3] ($asize)"
 			set rseq [lindex $rp 1]
 			if {![info exists a($rseq+)]} {puts "$rseq+ not found"; continue}
 			if {[makeprimers_dimers $lseq $rseq]} continue
@@ -649,7 +649,7 @@ proc makeprimers {regionsfile archive maxsize prefsize db numthreads {o stdout}}
 	foreach region $regionlist {
 		foreach {cchr cstart cend} $region break
 		set name [join $region -]
-		puts stderr $name
+		putslog $name
 		set bestpair [makeprimers_region $name $maxsize $prefsize $temperature $archive $db $extraseq]
 		if {[llength $bestpair] == 1} {
 			puts $o "$bestpair\t$name"

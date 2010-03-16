@@ -132,7 +132,7 @@ switch $action {
 			exit 1
 		}
 		foreach pairfile $argv {
-			puts $pairfile
+			putslog $pairfile
 			svinfo $pairfile
 		}
 	}
@@ -142,7 +142,7 @@ switch $action {
 			exit 1
 		}
 		foreach {pairfile trffile} $argv break
-		puts $pairfile
+		putslog $pairfile
 		svfind $pairfile $trffile
 	}
 	svcompare {

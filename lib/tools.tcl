@@ -162,3 +162,12 @@ proc rzopen {file {pos -1}} {
 	}
 	return $f
 }
+
+proc putslog {args} {
+}
+
+proc putslog {args} {
+	foreach message $args {
+		puts stderr $message
+	}
+}

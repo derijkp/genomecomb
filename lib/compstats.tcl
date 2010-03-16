@@ -13,7 +13,7 @@ proc compare_pvt {} {
 	set num 0
 	while {![eof $f]} {
 		incr num
-		if {![expr {$num%100000}]} {puts stderr $num}
+		if {![expr {$num%100000}]} {putslog $num}
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		set line [list_sub $line $poss]
@@ -73,7 +73,7 @@ proc compare_pvtsummary {} {
 	set table {}
 	while {![eof $f]} {
 		incr num
-		if {![expr {$num%100000}]} {puts stderr $num}
+		if {![expr {$num%100000}]} {putslog $num}
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		lappend table $line
@@ -117,11 +117,11 @@ proc compare_pvtsummary {} {
 	}
 
 	foreach {title filters} $filterlist {
-		puts stderr "===== $title ====="
+		putslog "===== $title ====="
 		puts $o "\n ==================== $title ===================="
 		set flist [comstats_filter $table $filters]
 		foreach compar {df mm sm} {
-			puts stderr $compar
+			putslog $compar
 			puts $o "\n---------- $compar: $title ----------"
 			set list [comstats_filter $flist [list compar $compar]]
 			set checkall [format %0.0f [lmath_sum [list_subindex $list $end]]]

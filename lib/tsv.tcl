@@ -55,7 +55,7 @@ proc tsv_select {query {qfields {}} {sortfields {}}} {
 	if {$cut ne ""} {
 		lappend pipe $cut
 	}
-	puts stderr pipe:[join $pipe " | "]
+	putslog pipe:[join $pipe " | "]
 	if {$qfields ne ""} {puts [join $qfields \t]} else {puts [join $header \t]}
 	seek $f $keep
 	if {![llength $pipe]} {
@@ -208,7 +208,7 @@ proc tsv_index {file xfield} {
 		incr prev 10000
 		incr next 10000
 		catch {Classy::Progress set [tell $f]}
-		if {![expr $next%100000]} {puts stderr $next}
+		if {![expr $next%100000]} {putslog $next}
 	}
 	catch {Classy::Progress stop}
 	close $f

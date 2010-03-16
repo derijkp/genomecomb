@@ -184,7 +184,7 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 	set num 1
 	while {![eof $f1] || ![eof $f2]} {
 		incr num
-		if {![expr {$num % 100000}]} {puts stderr $num}
+		if {![expr {$num % 100000}]} {putslog $num}
 		set d [comparepos $cur1 $cur2]
 		if {$d == 0} {
 			set s1 [sequenced $r1 $cur1]
@@ -289,7 +289,7 @@ proc annot_compare_region {compar_file reg_file field tvalue fvalue} {
 	puts $o [join $header1 \t]
 	while 1 {
 		incr num
-		if {![expr $num%100000]} {puts stderr $num}
+		if {![expr $num%100000]} {putslog $num}
 		set cur $fvalue
 		while 1 {
 			# putsvars chr1 chr2 start1 end1 start2 end2
