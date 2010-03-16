@@ -20,10 +20,10 @@ graphwidget method init {args} {
 	# link graph --> scrollbars
 	$object.g axis configure x -scrollcommand [list $object.scx set] -min 0 -max 1
 	$object.g axis configure x -scrollcommand [list $object xset] -min 0 -max 1
-	$object.g axis configure y -scrollcommand [list $object.scy set] -min 0 -max 1
+	$object.g axis configure y -scrollcommand [list $object yset] -min 0 -max 1
 	# link scrollbars --> graph
 	$object.scx configure -command [list $object xview]
-	$object.scy configure -command [list $object.g axis view y]
+	$object.scy configure -command [list $object yview]
 	$object.g grid configure -hide no
 	Rbc_ZoomStack $object.g
 	set style [$object gradientstyle blue]
@@ -434,13 +434,13 @@ graphwidget method zoomx {{factor 2}} {
 	set extra [expr {($newwidth - ($max-$min))/2}]
 	set min [expr {$min-$extra}]
 	set max [expr {$max+$extra}]
-	if {$min < $xmin} {
-		set min $xmin
-		set max [expr {$min+$newwidth}]
-	}
-	if {$max > $xmax} {
-		set max $xmax
-	}
+#	if {$min < $xmin} {
+#		set min $xmin
+#		set max [expr {$min+$newwidth}]
+#	}
+#	if {$max > $xmax} {
+#		set max $xmax
+#	}
 	$w axis configure x -min $min
 	$w axis configure x -max $max
 	set range(xmin) $min
@@ -459,13 +459,13 @@ graphwidget method zoomy {{factor 2}} {
 	set extra [expr {($newheight - ($max-$min))/2}]
 	set min [expr {$min-$extra}]
 	set max [expr {$max+$extra}]
-	if {$min < $ymin} {
-		set min $ymin
-		set max [expr {$min+$newheight}]
-	}
-	if {$max > $ymax} {
-		set max $ymax
-	}
+#	if {$min < $ymin} {
+#		set min $ymin
+#		set max [expr {$min+$newheight}]
+#	}
+#	if {$max > $ymax} {
+#		set max $ymax
+#	}
 	$w axis configure y -min $min
 	$w axis configure y -max $max
 	set range(ymin) $min
@@ -715,7 +715,11 @@ graphwidget method reload {} {
 	set region(status) "loading"
 	unset -nocomplain region(cancel)
 	catch {
+		set miny 0
+		set maxy 0
 		foreach name $data(entries) {
+			set vnum $data($name,vnum)
+			set index ::$object.$vnum.y
 			if {$data($name,region)} continue
 			$object loadregion $name
 			if {[get region(cancel) 0]} {
@@ -728,8 +732,13 @@ graphwidget method reload {} {
 				break
 			}
 			if {[get region(cancel) 0]} break
+			set y [vector expr max($index)]
+			if {$y > $maxy} {set maxy $y}
+			set y [vector expr min($index)]
+			if {$y < $miny} {set miny $y}
 			puts "$name loaded"
 		}
+		::$object.ends.y set [list $miny $maxy]
 	}
 	Classy::todo $object _configureevent
 	set region(status) "finished"
@@ -775,6 +784,52 @@ graphwidget method xview {args} {
 	}
 	set xmax [expr {$xmin+$cursize}]
 	$w axis configure x -min $xmin -max $xmax
+	$object _setvars
+	Classy::todo $object reload
+}
+
+graphwidget method yset {args} {
+	private $object pyv
+	if {[get pyv ""] ne $args} {
+		$object.scy configure -command {}
+		$object.scy set {*}$args
+		$object.scy configure -command [list $object yview]
+		set pyv $args
+	}
+}
+
+graphwidget method yview {args} {
+	private $object data region
+	set w $object.g
+	set amin [::$object.ends.y index 0]
+	set amax [::$object.ends.y index 1]
+	set ymin [expr {round([$w axis cget y -min])}]
+	set ymax [expr {round([$w axis cget y -max])}]
+	set cursize [expr {$ymax-$ymin}]
+	set first [lindex $args 0]
+	switch $first {
+		"" {
+			set cursy [expr {}]]
+			return [$w axis view y]
+		}
+		moveto {
+			set fraction [lindex $args 1]
+			set ymin [expr {$amax - $fraction*($amax-$amin+1)}]
+		}
+		scroll {
+			set number [lindex $args 1]
+			set what [lindex $args 2]
+			if {$what eq "pages"} {
+				set ymin [expr {$ymin - $number*$cursize + ($cursize/10)}]
+			} else {
+				set ymin [expr {$ymin - $number*($cursize/10)}]
+			}
+		}
+	}
+	if {$ymin < $amin} {set ymin $amin}
+	if {$ymin > $amax} {set ymin $amax}
+	set ymax [expr {$ymin+$cursize}]
+	$w axis configure y -min $ymin -max $ymax
 	$object _setvars
 	Classy::todo $object reload
 }
