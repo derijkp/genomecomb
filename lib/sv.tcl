@@ -236,11 +236,10 @@ proc maxpos {vector} {
 	set maxpos [lsearch $vector $maxval]
 }
 
-proc cluster_fts {data {checkpos {}}} {
+proc cluster_fts {data {checkpos {}} {maxdist 15}} {
 	global infoa
 	set checknum 20
 	set cutoffdist 100
-	set maxdist 15
 	set match 3
 	set mismatch -5
 	set mismatchlong -1
@@ -249,7 +248,10 @@ proc cluster_fts {data {checkpos {}}} {
 		set checkpos $infoa(end1pos)
 	}
 	while 1 {
-		if {[llength $data] < 10} break
+		if {[llength $data] <= 8} break
+		if {[llength $data] <= $checknum} {
+			set checknum 5
+		}
 		set xs [list_subindex $data $checkpos]
 		set ds [lmath_calc [lrange $xs 1 end] - [lrange $xs 0 end-1]]
 		# search for region with highest number of smalldists
@@ -421,7 +423,12 @@ proc kde_distcluster {dtable} {
 			|| (($num < 20) && ($plen < 100))
 			|| ($plen < 50)
 		} {
-			set elements [list_concat {*}[list_subindex $part 2]]
+			set elements [list_subindex $part 2]
+			if {[llength $elements] <= 1} {
+				set elements [lindex $elements 0]
+			} else {
+				set elements [list_concat {*}$elements]
+			}
 			if {[llength $elements] < 8} continue
 			lappend clusters [list [lmath_average [list_subindex $elements $distpos]] [llength $elements] $elements]
 			continue
@@ -545,9 +552,9 @@ proc svwindow_checkinv {resultVar table rtable minadd maxadd} {
 	set step 5
 	set chr [lindex [lindex $table 0] $chr1pos]
 	set rtable [lsort -integer -index $distpos $rtable]
-	set lists [cluster_fts $rtable $distpos]
+	set lists [cluster_fts $rtable $distpos 40]
 	foreach list $lists {
-		# join [lsort -integer -index 2 $rtable] \n
+		# join [lsort -integer -index 2 $list] \n
 		set list [lsort -integer -index $end1pos $list]
 		set srtables [cluster_fts $list]
 		foreach rtable $srtables {
@@ -571,16 +578,42 @@ proc svwindow_checkinv {resultVar table rtable minadd maxadd} {
 				set weight1 [lmath_average [list_subindex $rtable $weight1pos]]
 				set weight2 [lmath_average [list_subindex $rtable $weight2pos]]
 				set weight [expr {round ([min $weight1 $weight2])}]
-				if {$weight == 0} {
-					set quality 1
-				} elseif {$weight < 6} {
-					set quality 4
-				} elseif {$weight < 20} {
-					set quality 6
+				if {$patchsize > 1000} {
+					set score 0
+				} elseif {$weight == 0} {
+					if {$num < 10} {set score 0} else {set score 2}
 				} else {
-					set quality 9
+					set score 0
+					set psdiff [expr {abs($patchsize-$mode)}]
+					if {$patchsize < $mode} {
+						if {$psdiff < 100} {
+							incr score 3
+						} elseif {$psdiff < 200} {
+							incr score 2
+						} elseif {$psdiff < 300} {
+							incr score 1
+						}
+					} else {
+						if {$psdiff < 40} {
+							incr score 3
+						} elseif {$psdiff < 100} {
+							incr score 2
+						}
+					}
+					if {$num >= 50} {
+						incr score 3
+					} elseif {$num > 20} {
+						incr score 1
+					}
+					if {$weight >= 30} {
+						incr score 4
+					} elseif {$weight > 20} {
+						incr score 3
+					} elseif {$weight > 5} {
+						incr score 1
+					}
 				}
-				lappend result [list $chr $cstart $cend inv $size $zyg {} {} $quality $num {} $weight $patchsize]
+				lappend result [list $chr $cstart $cend inv $size $zyg {} {} $score $num {} $weight $patchsize]
 			}
 		}
 	}
@@ -634,7 +667,7 @@ proc svwindow_checktrans {resultVar table ctable minadd maxadd} {
 				set quality 7
 				set pos2 [lindex $rtable 0 $start2pos]
 				if {$weight == 0} {
-					set quality 1
+					set quality 2
 				} elseif {$weight < 6} {
 					set quality 4
 				} elseif {$weight < 20} {
@@ -864,7 +897,6 @@ proc svfind {pairfile trffile} {
 		set bpairfile $pairfile
 	}
 	set outfile [file root $bpairfile]-sv.tsv
-#check
 	set windowsize 1000
 	set lognum [expr {1000000 - 100000%$windowsize}]
 	global infoa
@@ -898,9 +930,11 @@ proc svfind {pairfile trffile} {
 	set end1pos $infoa(end1pos)
 	set typepos $infoa(typepos)
 #check
-set outfile test-sv.tsv
+#set outfile test-sv.tsv
 #lassign {42807000 42809000} dbgstart dbgstop
 #lassign {106855000 106857000} dbgstart dbgstop
+#lassign {66514000 66518000} dbgstart dbgstop
+#lassign {42738000 42739000} dbgstart dbgstop
 #close $f
 #svtools_aprgoto $pairfile $dbgstart
 	set dir [file dir [file normalize $outfile]]
