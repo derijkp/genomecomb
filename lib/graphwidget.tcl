@@ -905,6 +905,7 @@ graphwidget method checkfile {} {
 	set header [lindex $checkdata 0]
 	set chpos [lsearch $header check]
 	if {$chpos == -1} {
+		set end1pos [lsearch $header pos]
 		set size 0
 		set temp {}
 		foreach line $checkdata {
@@ -913,35 +914,40 @@ graphwidget method checkfile {} {
 		}
 		incr size
 		lset temp 0 1 check
-		# sort
-		set header [list_shift temp]
-		set temp [lsort -index [lsearch $header quality] -integer -decreasing $temp]
-		set poss [list_find -regexp $temp pdip]
-		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
-		set poss [list_find -regexp $temp small]
-		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
-		set scorepos [lsearch $header quality]
-		incr scorepos
-		set scores [list_subindex $temp $scorepos]
-		set poss [list_concat [list_find -regexp $scores 0] [list_find -regexp $scores 1]]
-		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
-		set poss [list_find -regexp $temp trfbad]
-		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
-		set poss [list_find -regexp $temp trfartefact]
-		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
-		set poss [list_find -regexp $temp trans]
-		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
-		set poss [list_find -regexp $temp inv]
-		set temp [list_concat [list_sub $temp $poss] [list_sub $temp -exclude $poss]]
-		list_unshift temp $header
-		# set checkdata
 		set checkdata $temp
-		set header [lindex $checkdata 0]
 		$table autosize
 		$table configure -browsecommand "[list $object] checkbrowse" -cols [llength $header]
 	} else {
 		$table configure -browsecommand "[list $object] checkbrowse"
 	}
+	# sort
+	set temp $checkdata
+	set header [list_shift temp]
+	# score
+	set scorepos [lsearch $header quality]
+	set scores [list_subindex $temp $scorepos]
+	set poss [list_concat [list_find -exact $scores 1] [list_find -exact $scores 0]]
+	set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
+	# problems
+	set problemspos [lsearch $header problems]
+	foreach problem {pdip small trfbad trfartefact} {
+		set problems [list_subindex $temp $problemspos]
+		set poss [list_find -regexp $problems $problem]
+		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
+	}
+	# types
+	set typespos [lsearch $header type]
+	set types [list_subindex $temp $typespos]
+	set poss [list_find -exact $types trans]
+	set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
+	set types [list_subindex $temp $typespos]
+	set poss [list_find -exact $types inv]
+	set temp [list_concat [lsort -integer -index $end1pos [list_sub $temp $poss]] [list_sub $temp -exclude $poss]]
+	list_unshift temp $header
+	# set checkdata
+	set checkdata $temp
+	set header [lindex $checkdata 0]
+	#
 	$table configure -titlerows 1 -labels $header
 	$table configure -labelcommand [list $table sort]
 	bind $table <d> "[list $object] checkset %K; break"
