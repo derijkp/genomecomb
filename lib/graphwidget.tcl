@@ -52,6 +52,8 @@ graphwidget method init {args} {
 	pack $object.b.print -side left
 	button $object.b.check -text "Check" -command [list $object checkfile]
 	pack $object.b.check -side left
+	button $object.b.cmd -text "Cmd" -command {Classy::cmd}
+	pack $object.b.cmd -side left
 	Classy::Entry $object.b.xrange -width 20 -label xrange -orient horizontal \
 		-textvariable [privatevar $object region(xrange)] -command [list Classy::todo $object redraw]
 	bind $object.b.xrange <3> "$object paste; break"
@@ -912,8 +914,8 @@ graphwidget method checkfile {} {
 	upvar #0 [$table cget -variable] checkdata
 	set header [lindex $checkdata 0]
 	set chpos [lsearch $header check]
+	set end1pos [lsearch $header pos]
 	if {$chpos == -1} {
-		set end1pos [lsearch $header pos]
 		set size 0
 		set temp {}
 		foreach line $checkdata {
