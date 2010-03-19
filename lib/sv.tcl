@@ -87,7 +87,7 @@ proc svinfo {pairfile} {
 		incr num [get a($min) 0]
 		incr num [get a($max) 0]
 	}
-	set o [open $pairfile.numinfo w]
+	set o [open [file_rmrz $pairfile].numinfo w]
 	puts $o key\tvalue
 	puts $o mode\t$mode
 	puts $o min\t$min
@@ -97,9 +97,9 @@ proc svinfo {pairfile} {
 }
 
 proc svhisto {pairfile} {
-	set out [file root $pairfile].disthisto
-	set f [open $pairfile]
-	set header [tsv_open $f]
+	set out [file root [file_rmrz $pairfile]].disthisto
+	set f [rzopen $pairfile]
+	set header [gets $f]
 	set distpos [lsearch $header dist]
 	set num 1
 	while {![eof $f]} {
@@ -143,7 +143,7 @@ proc table2tsv {table} {
 	return $result
 }
 
-proc list_maxima {list {min 0}} {
+proc sv_maxima {list {min 0}} {
 	set maxima {}
 	set pos -1
 	set maxnum 0
@@ -161,6 +161,7 @@ proc list_maxima {list {min 0}} {
 					lappend maxima [list $maxpos $maxnum]
 				}
 				set rise 0
+				set minpos $pos
 				set minnum $num
 			}
 		} else {
@@ -169,14 +170,62 @@ proc list_maxima {list {min 0}} {
 				set minpos $pos
 				set cutoff [expr {$minnum + 0.01}]
 			} elseif {$num > $cutoff} {
-				# lappend minima [list $minpos $minnum]
+				lappend minima [list $minpos $minnum]
 				set rise 1
+				set maxpos $pos
 				set maxnum $num
 			}
 		}
 		incr pos
 	}
-	return $maxima
+	if {[llength $maxima] == 1} {
+		set line [lindex $maxima 0]
+		lappend line [lindex $line 0]
+		return [list $line]
+	}
+	# join out close together peaks of similar height (artefacts)
+	set result {}
+	set pos -1
+	set prev [lindex $maxima 0]
+	foreach line [lrange $maxima 1 end] {
+		incr pos
+		if {![llength $prev]} {
+			set prev $line
+			continue
+		}
+		foreach {p1 h1} $prev break
+		foreach {p2 h2} $line break
+		set diff [expr {$p2-$p1}]
+		set hdiff [expr {abs($h2-$h1)}]
+		if {($diff < 30) && ($hdiff < 5)} {
+			set mh 0
+			list_foreach {pos h} $minima {
+				if {($pos >= $p1) && ($pos <= $p2)} {
+					set mh $h
+					break
+				}
+			}
+			set mdiff [expr {max($h2,$h1)-$mh}]
+			if {$mdiff < 5} {
+				lappend prev $p2
+				lappend result $prev
+				set prev {}
+			} else {
+				lappend prev $p1
+				lappend result $prev
+				set prev $line
+			}
+		} else {
+			lappend prev $p1
+			lappend result $prev
+			set prev $line
+		}
+	}
+	if {[llength $prev]} {
+		lappend prev [lindex $prev 0]
+		lappend result $prev
+	}
+	return $result
 }
 
 proc svtools_loadindex {file xfield} {
@@ -248,7 +297,7 @@ proc cluster_fts {data {checkpos {}} {maxdist 15}} {
 		set checkpos $infoa(end1pos)
 	}
 	while 1 {
-		if {[llength $data] <= 8} break
+		if {[llength $data] <= 7} break
 		if {[llength $data] <= $checknum} {
 			set checknum 5
 		}
@@ -396,7 +445,9 @@ proc kde_distcluster {dtable} {
 			set tot [lmath_sum [list_subindex $part 1]]
 			set s [lindex $part 0 0]
 			set e [lindex $part end 0]
-			lappend list [list $s $e $tot $part]
+			if {$tot > 7} {
+				lappend list [list $s $e $tot $part]
+			}
 			set part {}
 			set num 1
 			set prev $v
@@ -406,13 +457,19 @@ proc kde_distcluster {dtable} {
 	set tot [lmath_sum [list_subindex $part 1]]
 	set s [lindex $part 0 0]
 	set e [lindex $part end 0]
-	lappend list [list $s $e $tot $part]
+	if {$tot > 7} {
+		lappend list [list $s $e $tot $part]
+	}
 	# find clusters
 	set clusters {}
-	# gausian kernel, bandwidth = 10
-	# set kernel {0.0060 0.0079 0.0104 0.0136 0.0175 0.0224 0.0283 0.0355 0.0440 0.0540 0.0656 0.0790 0.0940 0.1109 0.1295 0.1497 0.1714 0.1942 0.2179 0.2420 0.2661 0.2897 0.3123 0.3332 0.3521 0.3683 0.3814 0.3910 0.3970 0.3989 0.3970 0.3910 0.3814 0.3683 0.3521 0.3332 0.3123 0.2897 0.2661 0.2420 0.2179 0.1942 0.1714 0.1497 0.1295 0.1109 0.0940 0.0790 0.0656 0.0540 0.0440 0.0355 0.0283 0.0224 0.0175 0.0136 0.0104 0.0079 0.0060}
 	# gausian kernel, bandwidth = 7
 	set kernel {0.0100 0.0146 0.0209 0.0293 0.0402 0.0540 0.0711 0.0918 0.1161 0.1438 0.1746 0.2076 0.2420 0.2763 0.3091 0.3388 0.3639 0.3830 0.3949 0.3989 0.3949 0.3830 0.3639 0.3388 0.3091 0.2763 0.2420 0.2076 0.1746 0.1438 0.1161 0.0918 0.0711 0.0540 0.0402 0.0293 0.0209 0.0146 0.0100}
+	# gausian kernel, bandwidth = 8
+	# set kernel {0.0238 0.0317 0.0417 0.0540 0.0688 0.0863 0.1065 0.1295 0.1550 0.1826 0.2119 0.2420 0.2721 0.3011 0.3282 0.3521 0.3719 0.3867 0.3958 0.3989 0.3958 0.3867 0.3719 0.3521 0.3282 0.3011 0.2721 0.2420 0.2119 0.1826 0.1550 0.1295 0.1065 0.0863 0.0688 0.0540 0.0417 0.0317 0.0238}
+	# gausian kernel, bandwidth = 9
+	# set kernel {0.0262 0.0338 0.0430 0.0540 0.0670 0.0822 0.0995 0.1190 0.1406 0.1640 0.1890 0.2152 0.2420 0.2687 0.2948 0.3194 0.3419 0.3614 0.3774 0.3892 0.3965 0.3989 0.3965 0.3892 0.3774 0.3614 0.3419 0.3194 0.2948 0.2687 0.2420 0.2152 0.1890 0.1640 0.1406 0.1190 0.0995 0.0822 0.0670 0.0540 0.0430 0.0338 0.0262}
+	# gausian kernel, bandwidth = 10
+	# set kernel {0.0060 0.0079 0.0104 0.0136 0.0175 0.0224 0.0283 0.0355 0.0440 0.0540 0.0656 0.0790 0.0940 0.1109 0.1295 0.1497 0.1714 0.1942 0.2179 0.2420 0.2661 0.2897 0.3123 0.3332 0.3521 0.3683 0.3814 0.3910 0.3970 0.3989 0.3970 0.3910 0.3814 0.3683 0.3521 0.3332 0.3123 0.2897 0.2661 0.2420 0.2179 0.1942 0.1714 0.1497 0.1295 0.1109 0.0940 0.0790 0.0656 0.0540 0.0440 0.0355 0.0283 0.0224 0.0175 0.0136 0.0104 0.0079 0.0060}
 	set ke [llength $kernel]
 	# join [list_subindex $list {0 1 2}] \n
 	list_foreach {s e num part} $list {
@@ -444,11 +501,11 @@ proc kde_distcluster {dtable} {
 		}
 		# convolving with the filter over this is the same as doing the discrete kde
 		set data [lmath_filter $data $kernel]
-		set maxima [list_maxima $data 3]
+		set maxima [sv_maxima $data 3]
 		set end 0
-		list_foreach {maxpos ph} $maxima {
+		list_foreach {maxpos1 ph maxpos2} $maxima {
 			set peak $ph
-			set pos $maxpos
+			set pos $maxpos1
 			set minpos [expr {$pos-1}]
 			set minh $peak
 			set stop [max [expr {$pos-50}] 0 $end]
@@ -464,7 +521,7 @@ proc kde_distcluster {dtable} {
 				}
 			}
 			set start $minpos
-			set pos $maxpos
+			set pos $maxpos2
 			set minpos [expr {$pos-1}]
 			set minh $peak
 			set len [llength $data]
@@ -509,22 +566,15 @@ if 0 {
 	puts [list set kernel [list_concat [list_reverse [lrange $hkernel 1 end]] $hkernel]]
 	# gausian kernel
 	proc gauss u {expr {(1/sqrt(2*acos(-1)))*exp(-0.5*$u*$u)}}
-	set scale 20; set size 20; set h 9; set hkernel {} ; set max [gauss 0]; for {set i 0} {$i < $size} {incr i} {set u [expr {$i/double($h)}]; lappend hkernel [expr {round($scale*[gauss $u]/$max)}]} ; puts [list_concat [list_reverse [lrange $hkernel 1 end]] $hkernel]
-	#
-	proc gauss u {expr {(1/sqrt(2*acos(-1)))*exp(-0.5*$u*$u)}}
-	set size 15
-	set h 6
+	set size 22
+	set bw 9
 	set hkernel {}
 	for {set i 0} {$i < $size} {incr i} {
-		set u [expr {$i/double($h)}]
+		set u [expr {$i/double($bw)}]
 		lappend hkernel [format %.4f [gauss $u]]
 	}
 	puts [list set kernel [list_concat [list_reverse [lrange $hkernel 1 end]] $hkernel]]
 
-	set kernel {4 11 16 19 20 19 16 11 50 49 48 45 41 36 30 23 15 5}
-	set kernel {1 1 2 3 4 6 8 10 12 15 17 18 20 20 20 18 17 15 12 10 8 6 4 3 2 1 1}
-	set kernel {1 1 2 2 3 3 4 5 6 6 8 9 10 11 12 13 15 16 17 18 18 19 20 20 20 20 20 19 18 18 17 16 15 13 12 11 10 9 8 6 6 5 4 3 3 2 2 1 1}
-	set kernel {1 2 2 3 3 4 5 6 8 9 11 12 14 15 16 18 19 19 20 20 20 19 19 18 16 15 14 12 11 9 8 6 5 4 3 3 2 2 1}
 }
 
 proc r {data} {
@@ -538,9 +588,9 @@ proc r {data} {
 	return "c([join $temp ,])"
 }
 
-proc svwindow_checkinv {resultVar table rtable minadd maxadd} {
+proc svwindow_checkinv {table rtable minadd maxadd} {
 	global infoa
-	upvar $resultVar result
+	set result {}
 	set distpos $infoa(distpos)
 	set end1pos $infoa(end1pos)
 	set mode $infoa(mode)
@@ -548,15 +598,17 @@ proc svwindow_checkinv {resultVar table rtable minadd maxadd} {
 	set weight2pos $infoa(weight2pos)
 	set chr1pos $infoa(chr1pos)
 	set trfpos $infoa(trfpos)
-	set clustmin 10
+	set clustmin 6
 	set step 5
 	set chr [lindex [lindex $table 0] $chr1pos]
 	set rtable [lsort -integer -index $distpos $rtable]
 	set lists [cluster_fts $rtable $distpos 40]
+	# llength [lindex $lists 0]
 	foreach list $lists {
 		# join [lsort -integer -index 2 $list] \n
 		set list [lsort -integer -index $end1pos $list]
-		set srtables [cluster_fts $list]
+		set srtables [cluster_fts $list $end1pos 30]
+		# llength [lindex $srtables 0]
 		foreach rtable $srtables {
 			if {[llength $rtable] < $clustmin} continue
 			set size [expr {[lindex $rtable 0 $distpos]-$mode}]
@@ -617,11 +669,11 @@ proc svwindow_checkinv {resultVar table rtable minadd maxadd} {
 			}
 		}
 	}
+	return $result
 }
 
-proc svwindow_checktrans {resultVar table ctable minadd maxadd} {
+proc svwindow_checktrans {table ctable minadd maxadd} {
 	global infoa
-	upvar $resultVar result
 	set distpos $infoa(distpos)
 	set end1pos $infoa(end1pos)
 	set mode $infoa(mode)
@@ -638,6 +690,7 @@ proc svwindow_checktrans {resultVar table ctable minadd maxadd} {
 		set chr2 [lindex $line $chr2pos]
 		lappend a($chr2) $line
 	}
+	set result {}
 	foreach chr2 [array names a] {
 		set rtable $a($chr2)
 		if {[llength $rtable] < 5} continue
@@ -666,24 +719,38 @@ proc svwindow_checktrans {resultVar table ctable minadd maxadd} {
 				set weight [expr {round ([min $weight1 $weight2])}]
 				set quality 7
 				set pos2 [lindex $rtable 0 $start2pos]
-				if {$weight == 0} {
+				if {$weight > 20} {
+					set quality 5
+				} elseif {$weight > 5} {
+					set quality 3
+				} elseif {$weight > 0} {
 					set quality 2
-				} elseif {$weight < 6} {
-					set quality 4
-				} elseif {$weight < 20} {
-					set quality 6
 				} else {
-					set quality 9
+					set quality 1
+				}
+				if {$num > 100} {
+					incr quality 4
+				} elseif {$num > 50} {
+					incr quality 2
 				}
 				lappend result [list $chr $cstart $cend trans $pos2 $zyg {} $chr2 $quality $num {} $weight $patchsize]
 			}
 		}
 	}
+	if {[llength [list_remdup [list_subindex $result 7]]] > 1} {
+		set pos 0
+		foreach line $result {
+			lset result $pos 6 many
+			lset result $pos 8 0
+			incr pos
+		}
+	}
+	return $result
 }
 
-proc svwindow_checkindels {resultVar table minadd maxadd} {
+proc svwindow_checkindels {table minadd maxadd} {
 	global infoa
-	upvar $resultVar result
+	set result {}
 	set distpos $infoa(distpos)
 	set end1pos $infoa(end1pos)
 	set weight1pos $infoa(weight1pos)
@@ -772,16 +839,28 @@ proc svwindow_checkindels {resultVar table minadd maxadd} {
 			set weight1 [lmath_average [list_subindex $list $weight1pos]]
 			set weight2 [lmath_average [list_subindex $list $weight2pos]]
 			set weight [expr {round ([min $weight1 $weight2])}]
+			if {$type eq "del"} {
+				set psdiff [expr {abs($patchsize-$mode)}]
+			} else {
+				set psdiff [expr {abs($patchsize+$diff-$mode)}]
+			}
 			if {$patchsize > 800} {
 				set score 0
-			} elseif {$weight == 0} {
-				if {$num < 20} {set score 0} else {set score 1}
 			} else {
 				set score 0
-				if {$type eq "del"} {
-					set psdiff [expr {abs($patchsize-$mode)}]
-				} else {
-					set psdiff [expr {abs($patchsize+$diff-$mode)}]
+				if {$num >= 50} {
+					incr score 4
+				} elseif {$num > 20} {
+					incr score 1
+				}
+				if {$weight >= 30} {
+					incr score 3
+				} elseif {$weight > 20} {
+					incr score 2
+				} elseif {$weight > 5} {
+					incr score 1
+				} elseif {$weight == 0} {
+					incr score -1
 				}
 				if {$patchsize < $mode} {
 					if {$psdiff < 100} {
@@ -797,18 +876,6 @@ proc svwindow_checkindels {resultVar table minadd maxadd} {
 					} elseif {$psdiff < 100} {
 						incr score 2
 					}
-				}
-				if {$num >= 50} {
-					incr score 4
-				} elseif {$num > 20} {
-					incr score 1
-				}
-				if {$weight >= 30} {
-					incr score 3
-				} elseif {$weight > 20} {
-					incr score 2
-				} elseif {$weight > 5} {
-					incr score 1
 				}
 			}
 			# test trf
@@ -841,6 +908,7 @@ proc svwindow_checkindels {resultVar table minadd maxadd} {
 			lappend result [list $chr $cstart $cend $type [expr {round($diff)}] $zyg $problems $gapsize $score $num $numnontrf $weight $patchsize]
 		}
 	}
+	return $result
 }
 
 proc svloadtrf {trf chr pstart start end trfposs trflistVar trflineVar} {
@@ -882,6 +950,7 @@ set pairfile GS103/GS103-20-paired.tsv.rz
 set pairfile sv78-20-pairs.tsv
 set pairfile sv79-20-pairs.tsv
 set pairfile GS102/GS102-9-paired.tsv.rz
+set pairfile GS103/GS103-9-paired.tsv.rz
 set trffile /data/db/regdb-simple_repeats.tsv
 
 }
@@ -891,11 +960,7 @@ proc svfind {pairfile trffile} {
 	catch {close $trf}
 	catch {close $o}
 	catch {close $f}
-	if {[inlist {.rz} [file extension $pairfile]]} {
-		set bpairfile [file root $pairfile]
-	} else {
-		set bpairfile $pairfile
-	}
+	set bpairfile [file_rmrz $pairfile]
 	set outfile [file root $bpairfile]-sv.tsv
 	set windowsize 1000
 	set lognum [expr {1000000 - 100000%$windowsize}]
@@ -930,13 +995,13 @@ proc svfind {pairfile trffile} {
 	set end1pos $infoa(end1pos)
 	set typepos $infoa(typepos)
 #check
-#set outfile test-sv.tsv
-#lassign {42807000 42809000} dbgstart dbgstop
-#lassign {106855000 106857000} dbgstart dbgstop
-#lassign {66514000 66518000} dbgstart dbgstop
-#lassign {42738000 42739000} dbgstart dbgstop
-#close $f
-#svtools_aprgoto $pairfile $dbgstart
+set outfile test-sv.tsv
+lassign {189000 190000} dbgstart dbgstop
+lassign {25766000	25767000} dbgstart dbgstop
+lassign {18276000	18277000} dbgstart dbgstop
+lassign {1034000 1035000} dbgstart dbgstop
+close $f
+svtools_aprgoto $pairfile $dbgstart
 	set dir [file dir [file normalize $outfile]]
 	set o [open $outfile w]
 	puts $o [join {chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize} \t]
@@ -1018,20 +1083,24 @@ proc svfind {pairfile trffile} {
 			# check for insertions and deletions
 			set table [list_concat $plist $list]
 			if {[llength $table] >= 20} {
-				svwindow_checkindels result $table $minadd $maxadd
+				set temp [svwindow_checkindels $table $minadd $maxadd]
+				lappend result {*}$temp
 			}
 #check
-#if {$start >= $dbgstop} {error STOPPED}
+if {$start >= $dbgstop} {error STOPPED}
 			# check for inversions
-			if {[expr {[llength $prlist] + [llength $rlist]}] > 10} {
+			if {[expr {[llength $prlist] + [llength $rlist]}] > 7} {
 				set rtable [list_concat $prlist $rlist]
-				svwindow_checkinv result $table $rtable $minadd $maxadd
+				set temp [svwindow_checkinv $table $rtable $minadd $maxadd]
+				lappend result {*}$temp
 			}
 			# check for translocations
-			if {[expr {[llength $pclist] + [llength $clist]}] > 10} {
+			if {[expr {[llength $pclist] + [llength $clist]}] > 7} {
 				set ctable [list_concat $pclist $clist]
-				svwindow_checktrans result $table $ctable $minadd $maxadd
+				set temp [svwindow_checktrans $table $ctable $minadd $maxadd]
+				lappend result {*}$temp
 			}
+			set result [lsort -integer -index $end1pos $result]
 			foreach l $result {
 				puts $o [join $l \t]
 			}
