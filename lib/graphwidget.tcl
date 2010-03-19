@@ -153,10 +153,10 @@ graphwidget method gradientstyle {basecolor} {
 		}
 	}
 	set style {}
-	lappend style [list $basecolor-80 0 10]
+	lappend style [list $basecolor-80 -1000000000 10]
 	lappend style [list $basecolor-60 11 20]
 	lappend style [list $basecolor-40 21 30]
-	lappend style [list $basecolor-0 31 10000000]
+	lappend style [list $basecolor-0 31 1000000000]
 	return $style
 }
 
@@ -565,6 +565,8 @@ graphwidget method elconf {name} {
 		-command "$object changefields Y"
 	$object.conf option select "Weight" [privatevar $object conf(W)] [privatevar $object conf(fields)] \
 		-command "$object changefields W"
+	$object.conf option string "Trans" [privatevar $object conf(trans)] \
+		-command "$object changefields W"
 	$object.conf option button "Remove" \
 		"$object delelement \[getprivate $object conf(entry)\]"
 }
@@ -579,6 +581,7 @@ graphwidget method changefields {what args} {
 	lset data($name,poss) 2 [lsearch $header $conf(W)]
 	set data($name,lstart) 0
 	set data($name,lend) 0
+	set data($name,trans) $conf(trans)
 	Classy::todo $object redraw
 }
 
@@ -598,6 +601,7 @@ graphwidget method delelement {name} {
 
 graphwidget method loadregion {name} {
 	private $object region data
+	array set trans [get data($name,trans) ""]
 	if {[get region(cancel) 0]} return
 	set start $region(xmin)
 	set end $region(xmax)
@@ -661,6 +665,7 @@ puts "load $start $end $data($name,lstart) $data($name,lend)"
 			if {$x > $end} break
 			foreach el {x y w} p $poss v [list_sub $line $poss] {
 				if {$p == -1} continue
+				if {[info exists trans($v)]} {set v $trans($v)}
 				if {[isdouble $v]} {
 					::$object.$vnum.$el append $v
 				} else {
@@ -714,7 +719,7 @@ graphwidget method reload {} {
 	}
 	set region(status) "loading"
 	unset -nocomplain region(cancel)
-	catch {
+	set error [catch {
 		set miny 0
 		set maxy 0
 		foreach name $data(entries) {
@@ -739,6 +744,9 @@ graphwidget method reload {} {
 			puts "$name loaded"
 		}
 		::$object.ends.y set [list $miny $maxy]
+	} e]
+	if {$error} {
+		puts ERROR:$e
 	}
 	Classy::todo $object _configureevent
 	set region(status) "finished"
@@ -926,7 +934,7 @@ graphwidget method checkfile {} {
 	# score
 	set scorepos [lsearch $header quality]
 	set scores [list_subindex $temp $scorepos]
-	set poss [list_concat [list_find -exact $scores 1] [list_find -exact $scores 0]]
+	set poss [list_concat [list_find -exact $scores 1] [list_find -exact $scores 0] [list_find -exact $scores -1]]
 	set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
 	# problems
 	set problemspos [lsearch $header problems]
