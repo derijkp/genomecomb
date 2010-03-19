@@ -163,6 +163,22 @@ proc rzopen {file {pos -1}} {
 	return $f
 }
 
+proc file_rmrz filename {
+	if {[inlist {.rz} [file extension $filename]]} {
+		return [file root $filename]
+	} else {
+		return $filename
+	}
+}
+
+proc overlap {start1 end1 start2 end2} {
+	if {$start2 >= $end1} {return 0}
+	if {$end2 < $start1} {return 0}
+	if {$start2 > $start1} {set start1 $start2}
+	if {$end2 < $end1} {set end1 $end2}
+	expr {$end1-$start1}
+}
+
 proc putslog {args} {
 }
 

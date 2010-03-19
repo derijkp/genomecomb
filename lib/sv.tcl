@@ -1128,6 +1128,9 @@ if 0 {
 	cd /complgen/sv
 	set svfile1 GS102/GS102-20-paired-sv.tsv
 	set svfile2 GS103/GS103-20-paired-sv.tsv
+	set svfile2 GS102/GS102-9-paired-sv.tsv
+	set svfile1 GS103/GS103-9-paired-sv.tsv
+	set outfile svcompar_test.tsv
 	set outfile svcompar_GS102_GS103/svcompar_GS102_GS103-20.tsv
 	set svfile1 sv79-20-pairs-sv.tsv
 	set svfile2 sv78-20-pairs-sv.tsv
@@ -1146,69 +1149,110 @@ proc svcompare {svfile1 svfile2} {
 	set f1 [open $svfile1]
 	set f2 [open $svfile2]
 	set header1 [split [gets $f1] \t]
+	set end1pos [lsearch $header1 pos]
 	set header2 [split [gets $f2] \t]
 	set header [list_concat match sample $header1]
 	foreach f $header2 {lappend header ${f}-2}
 	puts $o [join $header \t]
 	set poss1 [list_cor $header1 {patchstart pos type size zyg}]
 	set poss2 [list_cor $header2 {patchstart pos type size zyg}]
+	set list1 {}
 	set list2 {}
+	set line1 [split [gets $f1] \t]
+	foreach {liststart1 listend1} [list_sub $line1 $poss1] break
 	set line2 [split [gets $f2] \t]
 	while {![eof $f1]} {
-		set line1 [split [gets $f1] \t]
-		if {![llength $line1]} continue
-		set missing [expr {13 - [llength $line1]}]
-		if {$missing} {
-			while {$missing} {lappend line1 {}; incr missing -1}
+		while {![eof $f1]} {
+			if {[llength $line1]} {
+				foreach {start1 pos1 type1 size1 zyg1} [list_sub $line1 $poss1] break
+#if {$pos1 == 6715816} {error STOPPED}
+				if {$start1 > $listend1} break
+				lappend list1 $line1
+				if {$start1 < $liststart1} {set liststart1 $start1}
+				set listend1 $pos1
+			}
+			set line1 [split [gets $f1] \t]
+			set missing [expr {13 - [llength $line1]}]
+			if {$missing} {
+				while {$missing} {lappend line1 {}; incr missing -1}
+			}
 		}
-		foreach {start1 pos1 type1 size1 zyg1} [list_sub $line1 $poss1] break
-		set min [expr {$start1 - 200}]
-		set mstart1 [expr {$start1 - 10}]
-		set mpos1 [expr {$pos1 + 10}]
-		set sizediff [max [expr {round(0.1*$size1)}] 30]
-		set minsize1 [expr {$size1 - $sizediff}]
-		set maxsize1 [expr {$size1 + $sizediff}]
-		set found 0
+		if {![llength $list1]} break
 		foreach tline2 $list2 {
 			foreach {start2 pos2 type2 size2 zyg2} [list_sub $tline2 $poss2] break
-			if {$pos2 < $min} {
+			if {$pos2 < $liststart1} {
 				puts $o df\t$name2\t[join $tline2 \t]
 				set list2 [list_remove $list2 $tline2]
 				flush $o
-			} elseif {($type2 eq $type1)
-					&& ($pos2 >= $mstart1) && ($pos2 < $mpos1)
-					&& ($size2 >= $minsize1) && ($size2 < $maxsize1)} {
-				if {($zyg2 eq $zyg1)} {set s sm} else {set s mm}
-				puts $o $s\t$name1,$name2\t[join $line1 \t]\t[join $tline2 \t]
-				set found 1
-				set list2 [list_remove $list2 $tline2]
 			}
 		}
-		while {![eof $f2] && !$found} {
-			if {![llength $line2]} {
-				set line2 [split [gets $f2] \t]
-				continue
-			}
-			foreach {start2 pos2 type2 size2 zyg2} [list_sub $line2 $poss2] break
-			if {$pos2 < $min} {
-				puts $o df\t$name2\t[join $line2 \t]
-				flush $o
-			} elseif {$pos2 < $mstart1} {
-			} elseif {$start2 >= $mpos1} {
-				break
-			} elseif {($type2 eq $type1) && ($size2 >= $minsize1) && ($size2 < $maxsize1)} {
-				if {($zyg2 eq $zyg1)} {set s sm} else {set s mm}
-				puts $o $s\t$name1,$name2\t[join $line1 \t]\t[join $line2 \t]
-				set found 1
-			} else {
-				lappend list2 $line2
+		while {![eof $f2]} {
+			if {[llength $line2]} {
+				foreach {start2 pos2} [list_sub $line2 $poss2] break
+				if {$start2 >= $listend1} break
+				if {$pos2 >= $liststart1} {
+					lappend list2 $line2
+				} else {
+					puts $o df\t$name2\t[join $line2 \t]
+				}
 			}
 			set line2 [split [gets $f2] \t]
 		}
-		if {!$found} {
-			puts $o df\t$name1\t[join $line1 \t]
+		unset -nocomplain a
+		if {[llength $list2]} {
+			# check lists
+			set matrix {}
+			set pos1 -1
+			# puts [join $list1 \n]\n\n[join $list2 \n]
+			foreach l1 $list1 {
+				incr pos1
+				foreach {start1 end1 type1 size1 zyg1} [list_sub $l1 $poss1] break
+				set pos2 -1
+				foreach l2 $list2 {
+					incr pos2
+					foreach {start2 end2 type2 size2 zyg2} [list_sub $l2 $poss2] break
+					if {$type2 ne $type1} continue
+					set diff [expr {abs($size2-$size1)}]
+					set sizediff [min [max [expr {round(0.1*$size1)}] 30] 400]
+					set overlap [expr {[overlap $start1 $end1 $start2 $end2]/min(double($end1-$start1+1),double($end2-$start2+1))}]
+					set dist [expr {abs($end2 - $end1)}]
+					#puts "$pos1\t$pos2\t$type1\t$type2\t$diff\t$overlap\t$dist"
+					if {($diff < $sizediff) && (
+						($overlap > 0.5) || (($overlap > 0) && ($dist < 60))
+					)} {
+						if {($zyg2 eq $zyg1)} {set s sm} else {set s mm}
+						lappend matrix [list $pos1 $pos2 $diff $overlap $dist $s]
+					}
+				}
+			}
+			set matrix [lsort -integer -index 2 $matrix]
+			list_foreach {pos1 pos2 diff overlap dist s} $matrix {
+				if {[info exists a(1,$pos1)]} continue
+				if {[info exists a(2,$pos2)]} continue
+				set l1 [lindex $list1 $pos1]
+				set l2 [lindex $list2 $pos2]
+				puts $o $s\t$name1,$name2\t[join $l1 \t]\t[join $l2 \t]
+				set a(1,$pos1) 1
+				set a(2,$pos2) 1
+			}
+			set poss {}
+			foreach n [array names a 2,*] {
+				lappend poss [lindex [split $n ,] end]
+			}
+			set list2 [list_sub $list2 -exclude $poss]
 		}
+		# next block
+		set pos -1
+		foreach l1 $list1 {
+			incr pos
+			if {[info exists a(1,$pos)]} continue
+			puts $o df\t$name1\t[join $l1 \t]
+		}
+		set list1 {}
+		foreach {liststart1 listend1} [list_sub $line1 $poss1] break
 	}
+
+
 	foreach tline2 $list2 {
 		puts $o df\t$name2\t[join $tline2 \t]
 	}
@@ -1231,4 +1275,3 @@ proc svcompare {svfile1 svfile2} {
 	putslog "finished $outfile"
 
 }
-
