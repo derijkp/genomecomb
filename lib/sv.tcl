@@ -285,13 +285,26 @@ proc maxpos {vector} {
 	set maxpos [lsearch $vector $maxval]
 }
 
-proc cluster_fts {data {checkpos {}} {maxdist 15}} {
+proc svdiffscore {diff} {
+	if {$diff < 10} {
+		return 2
+	} elseif {$diff < 15} {
+		return 1
+	} elseif {$diff > 100} {
+		return -1000
+	} else {
+		return [expr {-($diff-10)/10}]
+	}
+}
+
+proc cluster_fts {data {checkpos {}} {maxdist 20}} {
 	global infoa
 	set checknum 20
-	set cutoffdist 100
+	set cutoffdist 150
 	set match 3
 	set mismatch -5
 	set mismatchlong -1
+	set maxdist2 [expr {2*$maxdist}]
 	set result {}
 	if {$checkpos eq ""} {
 		set checkpos $infoa(end1pos)
@@ -341,13 +354,8 @@ proc cluster_fts {data {checkpos {}} {maxdist 15}} {
 		set pos $startpos
 		while {$pos >= 0} {
 			set diff [lindex $ds $pos]
-			if {$diff < $maxdist} {
-				incr score $match
-			} elseif {$diff > $cutoffdist} {
-				break
-			} else {
-				set score [expr {$score + $mismatch + int($diff/$maxdist-1)*$mismatchlong}]
-			}
+			if {$diff > $cutoffdist} break
+			incr score [svdiffscore $diff]
 			if {$score >= $maxscore} {
 				set maxscore $score
 				set maxpos $pos
@@ -364,14 +372,10 @@ proc cluster_fts {data {checkpos {}} {maxdist 15}} {
 		set limit $mismatch
 		set maxscore $score
 		set pos $startpos
-		foreach diff [lrange $ds $pos end] {
-			if {$diff < $maxdist} {
-				incr score $match
-			} elseif {$diff > $cutoffdist} {
-				break
-			} else {
-				set score [expr {$score + $mismatch + int($diff/$maxdist-1)*$mismatchlong}]
-			}
+		set range [lrange $ds $pos end]
+		foreach diff $range {
+			if {$diff > $cutoffdist} break
+			incr score [svdiffscore $diff]
 			if {$score >= $maxscore} {
 				set maxscore $score
 				set maxpos $pos
@@ -382,6 +386,7 @@ proc cluster_fts {data {checkpos {}} {maxdist 15}} {
 			if {$score <= $limit} break
 			incr pos
 		}
+		incr maxpos
 		set rend $maxpos
 		# region found
 		set list [lrange $data $rstart $rend]
@@ -796,6 +801,7 @@ proc svwindow_checkindels {table minadd maxadd} {
 		if {[llength $data] < 10} continue
 		set data [lsort -integer -index $end1pos $data]
 		# cluster by position
+		# llength [cluster_fts $data]
 		foreach list [cluster_fts $data] {
 			if {[llength $list] < $clustmin} continue
 			set cstart [lindex $list 0 2]
@@ -995,13 +1001,10 @@ proc svfind {pairfile trffile} {
 	set end1pos $infoa(end1pos)
 	set typepos $infoa(typepos)
 #check
-set outfile test-sv.tsv
-lassign {189000 190000} dbgstart dbgstop
-lassign {25766000	25767000} dbgstart dbgstop
-lassign {18276000	18277000} dbgstart dbgstop
-lassign {1034000 1035000} dbgstart dbgstop
-close $f
-svtools_aprgoto $pairfile $dbgstart
+#set outfile test-sv.tsv
+#lassign {15592000	15593000} dbgstart dbgstop
+#close $f
+#svtools_aprgoto $pairfile $dbgstart
 	set dir [file dir [file normalize $outfile]]
 	set o [open $outfile w]
 	puts $o [join {chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize} \t]
@@ -1087,7 +1090,7 @@ svtools_aprgoto $pairfile $dbgstart
 				lappend result {*}$temp
 			}
 #check
-if {$start >= $dbgstop} {error STOPPED}
+#if {$start >= $dbgstop} {error STOPPED}
 			# check for inversions
 			if {[expr {[llength $prlist] + [llength $rlist]}] > 7} {
 				set rtable [list_concat $prlist $rlist]
@@ -1128,8 +1131,8 @@ if 0 {
 	cd /complgen/sv
 	set svfile1 GS102/GS102-20-paired-sv.tsv
 	set svfile2 GS103/GS103-20-paired-sv.tsv
-	set svfile2 GS102/GS102-9-paired-sv.tsv
 	set svfile1 GS103/GS103-9-paired-sv.tsv
+	set svfile2 GS102/GS102-9-paired-sv.tsv
 	set outfile svcompar_test.tsv
 	set outfile svcompar_GS102_GS103/svcompar_GS102_GS103-20.tsv
 	set svfile1 sv79-20-pairs-sv.tsv
@@ -1165,7 +1168,7 @@ proc svcompare {svfile1 svfile2} {
 		while {![eof $f1]} {
 			if {[llength $line1]} {
 				foreach {start1 pos1 type1 size1 zyg1} [list_sub $line1 $poss1] break
-#if {$pos1 == 6715816} {error STOPPED}
+#if {$pos1 == 135614960} {error STOPPED}
 				if {$start1 > $listend1} break
 				lappend list1 $line1
 				if {$start1 < $liststart1} {set liststart1 $start1}
