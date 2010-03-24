@@ -1,4 +1,11 @@
 
+proc oformat {value {num 2}} {
+	if {[catch {format %0.${num}f $value} result]} {
+		return $value
+	}
+	return $result
+}
+
 proc getmategap {libfile} {
 	set f [opencgifile $libfile header]
 	while {![eof $f]} {
@@ -398,7 +405,7 @@ proc cluster_fts {data {checkpos {}} {maxdist 20}} {
 	return $result
 }
 
-proc kde {list} {
+proc rkde {list} {
 	# set list [list_subindex $table 11]
 	set tempfile [tempfile]
 	set outfile [tempfile]
@@ -420,6 +427,33 @@ proc kde {list} {
 	close $r
 	list_shift c
 	return [list_subindex $c {1 2}]
+}
+
+proc kde {list} {
+	set list [lsort -real $list]
+	set s [lindex $list 0 0]
+	set e [lindex $list end 0]
+	# gausian kernel, bandwidth = 9
+	set kernel {0.0262 0.0338 0.0430 0.0540 0.0670 0.0822 0.0995 0.1190 0.1406 0.1640 0.1890 0.2152 0.2420 0.2687 0.2948 0.3194 0.3419 0.3614 0.3774 0.3892 0.3965 0.3989 0.3965 0.3892 0.3774 0.3614 0.3419 0.3194 0.2948 0.2687 0.2420 0.2152 0.1890 0.1640 0.1406 0.1190 0.0995 0.0822 0.0670 0.0540 0.0430 0.0338 0.0262}
+	set ke [llength $kernel]
+	# join [list_subindex $list {0 1 2}] \n
+	set plen [expr {$e-$s}]
+	set len [expr {$plen+2*$ke}]
+	set data [list_fill $len 0]
+	set prev [lindex $list 0]
+	set num 0
+	list_foreach p $list {
+		if {$p != $prev} {
+			set prev $p
+			set p [expr {$p-$s+$ke}]
+			lset data $p $num
+			set num 0
+		}
+		incr num
+	}
+	# convolving with the filter over this is the same as doing the discrete kde
+	set data [lmath_filter $data $kernel]
+	draw $data $s
 }
 
 proc kde_distcluster {dtable} {
@@ -593,6 +627,75 @@ proc r {data} {
 	return "c([join $temp ,])"
 }
 
+proc linreg {xs ys} {
+	if {[llength $xs] < 2} {
+		return [list Nan Nan Nan]
+	}
+	set xm [lmath_average $xs]
+	set ym [lmath_average $ys]
+	set dx [lmath_calc $xs - $xm]
+	set dy [lmath_calc $ys - $ym]
+	set xsum [lmath_sum [lmath_calc $dx * $dy]]
+	set ysum [lmath_sum [lmath_calc $dx * $dx]]
+	if {$ysum != 0} {
+		set b [expr {$xsum/$ysum}]
+	} else {
+		return [list Nan Nan Nan]
+	}
+	set a [expr {$ym - $b * $xm}]
+	set eys [lmath_calc $a + [lmath_calc $xs * $b]]
+	set res [lmath_calc $eys - $ys]
+	set s 0.0
+	foreach r $res {
+		set s [expr {$s + $r*$r}]
+	}
+	if {$s != 0} {
+		set sd [expr {sqrt($s/([llength $xs]-2))}]
+	} else {
+		set sd 0.0
+	}
+	return [list $a $b $sd]
+}
+
+proc svscore {mode type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} {
+	set psdiff [expr {abs($opsdiff)}]
+	if {$patchsize > 800} {
+		set score 0
+	} else {
+		set score 0
+		if {$num >= 50} {
+			incr score 4
+		} elseif {$num > 20} {
+			incr score 1
+		}
+		if {$weight >= 30} {
+			incr score 3
+		} elseif {$weight > 20} {
+			incr score 2
+		} elseif {$weight > 5} {
+			incr score 1
+		} elseif {$weight == 0} {
+			incr score -1
+		}
+		if {$patchsize < $mode} {
+			if {$psdiff < 100} {
+				incr score 3
+			} elseif {$psdiff < 150} {
+				incr score 2
+			} elseif {$psdiff < 250} {
+				incr score 1
+			}
+		} else {
+			if {$psdiff < 40} {
+				incr score 3
+			} elseif {$psdiff < 100} {
+				incr score 2
+			}
+		}
+	}
+	return $score
+}
+
 proc svwindow_checkinv {table rtable minadd maxadd} {
 	global infoa
 	set result {}
@@ -619,59 +722,65 @@ proc svwindow_checkinv {table rtable minadd maxadd} {
 			set size [expr {[lindex $rtable 0 $distpos]-$mode}]
 			set cstart [lindex $rtable 0 $end1pos]
 			set cend [lindex $rtable end $end1pos]
-			if {($cend >= $minadd) && ($cend < $maxadd)} {
-				set num [llength $rtable]
-				# test heterozygosity
-				set list {}
-				foreach line $table {
-					set pos [lindex $line $end1pos]
-					if {($pos >= $cstart) && ($pos < $cend)} {
-						lappend list $line
-					}
+			set patchsize [expr {$cend-$cstart+1}]
+			if {$patchsize <= 1} continue
+			if {($cend >= $minadd) && ($cend < $maxadd)} continue
+			set num [llength $rtable]
+			# test heterozygosity
+			set list {}
+			foreach line $table {
+				set pos [lindex $line $end1pos]
+				if {($pos >= $cstart) && ($pos < $cend)} {
+					lappend list $line
 				}
-				if {[llength $list] > [expr {$num*0.4}]} {set zyg het} else {set zyg hom}
-				# add to result
-				set patchsize [expr {$cend-$cstart+1}]
-				set weight1 [lmath_average [list_subindex $rtable $weight1pos]]
-				set weight2 [lmath_average [list_subindex $rtable $weight2pos]]
-				set weight [expr {round ([min $weight1 $weight2])}]
-				if {$patchsize > 1000} {
-					set score 0
-				} elseif {$weight == 0} {
-					if {$num < 10} {set score 0} else {set score 2}
-				} else {
-					set score 0
-					set psdiff [expr {abs($patchsize-$mode)}]
-					if {$patchsize < $mode} {
-						if {$psdiff < 100} {
-							incr score 3
-						} elseif {$psdiff < 200} {
-							incr score 2
-						} elseif {$psdiff < 300} {
-							incr score 1
-						}
-					} else {
-						if {$psdiff < 40} {
-							incr score 3
-						} elseif {$psdiff < 100} {
-							incr score 2
-						}
-					}
-					if {$num >= 50} {
-						incr score 3
-					} elseif {$num > 20} {
-						incr score 1
-					}
-					if {$weight >= 30} {
-						incr score 4
-					} elseif {$weight > 20} {
-						incr score 3
-					} elseif {$weight > 5} {
-						incr score 1
-					}
-				}
-				lappend result [list $chr $cstart $cend inv $size $zyg {} {} $score $num {} $weight $patchsize]
 			}
+			set totnum [llength $list]
+			if {[llength $list] > [expr {$num*0.4}]} {set zyg het} else {set zyg hom}
+			# add to result
+			set weight1 [lmath_average [list_subindex $rtable $weight1pos]]
+			set weight2 [lmath_average [list_subindex $rtable $weight2pos]]
+			set weight [expr {round ([min $weight1 $weight2])}]
+			set opsdiff [expr {$patchsize-$mode}]
+			set psdiff [expr {abs($opsdiff)}]
+			if {$patchsize > 1000} {
+				set score 0
+			} elseif {$weight == 0} {
+				if {$num < 10} {set score 0} else {set score 2}
+			} else {
+				set score 0
+				if {$patchsize < $mode} {
+					if {$psdiff < 100} {
+						incr score 3
+					} elseif {$psdiff < 200} {
+						incr score 2
+					} elseif {$psdiff < 300} {
+						incr score 1
+					}
+				} else {
+					if {$psdiff < 40} {
+						incr score 3
+					} elseif {$psdiff < 100} {
+						incr score 2
+					}
+				}
+				if {$num >= 50} {
+					incr score 3
+				} elseif {$num > 20} {
+					incr score 1
+				}
+				if {$weight >= 30} {
+					incr score 4
+				} elseif {$weight > 20} {
+					incr score 3
+				} elseif {$weight > 5} {
+					incr score 1
+				}
+			}
+			# linreg
+			# ------
+			foreach {a b sd} [linreg [list_subindex $rtable $end1pos] [list_subindex $rtable $distpos]] break
+			set b [oformat $b]; set sd [oformat $sd]
+			lappend result [list $chr $cstart $cend inv $size $zyg {} {} $score $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff 0]]
 		}
 	}
 	return $result
@@ -693,20 +802,30 @@ proc svwindow_checktrans {table ctable minadd maxadd} {
 	unset -nocomplain a
 	foreach line $ctable {
 		set chr2 [lindex $line $chr2pos]
+		set dist [expr {[lindex $line $start2pos] - [lindex $line $end1pos]}]
+		lset line $distpos $dist
 		lappend a($chr2) $line
 	}
 	set result {}
 	foreach chr2 [array names a] {
 		set rtable $a($chr2)
-		if {[llength $rtable] < 5} continue
-		# join [lsort -integer -index 2 $rtable] \n
-		set srtables [cluster_fts $rtable]
-		foreach rtable $srtables {
-			if {[llength $rtable] < $clustmin} continue
-			set size [expr {[lindex $rtable 0 $distpos]-$mode}]
-			set cstart [lindex $rtable 0 $end1pos]
-			set cend [lindex $rtable end $end1pos]
-			if {($cend >= $minadd) && ($cend < $maxadd)} {
+		set rtable [lsort -integer -index $distpos $rtable]
+		set lists [cluster_fts $rtable $distpos 40]
+		foreach rtable $lists {
+			if {[llength $rtable] < 5} continue
+			set rtable [lsort -integer -index $end1pos $rtable]
+			# join [lsort -integer -index 2 $rtable] \n
+			set srtables [cluster_fts $rtable]
+			foreach rtable $srtables {
+				if {[llength $rtable] < $clustmin} continue
+				set size [expr {[lindex $rtable 0 $distpos]-$mode}]
+				set cstart [lindex $rtable 0 $end1pos]
+				set cend [lindex $rtable end $end1pos]
+				set patchsize [expr {$cend-$cstart+1}]
+				if {$patchsize <= 1} continue
+				set opsdiff [expr {$patchsize-$mode}]
+				set psdiff [expr {abs($opsdiff)}]
+				if {($cend >= $minadd) && ($cend < $maxadd)} continue
 				set num [llength $rtable]
 				# test heterozygosity
 				set list {}
@@ -716,9 +835,9 @@ proc svwindow_checktrans {table ctable minadd maxadd} {
 						lappend list $line
 					}
 				}
+				set totnum [llength $list]
 				if {[llength $list] > [expr {$num*0.4}]} {set zyg het} else {set zyg hom}
 				# add to result
-				set patchsize [expr {$cend-$cstart+1}]
 				set weight1 [lmath_average [list_subindex $rtable $weight1pos]]
 				set weight2 [lmath_average [list_subindex $rtable $weight2pos]]
 				set weight [expr {round ([min $weight1 $weight2])}]
@@ -738,7 +857,13 @@ proc svwindow_checktrans {table ctable minadd maxadd} {
 				} elseif {$num > 50} {
 					incr quality 2
 				}
-				lappend result [list $chr $cstart $cend trans $pos2 $zyg {} $chr2 $quality $num {} $weight $patchsize]
+				# linreg
+				# ------
+				set xs [list_subindex $rtable $end1pos]
+				set ys [lmath_calc [list_subindex $rtable $start2pos] - [list_subindex $rtable $end1pos]]
+				foreach {temp b sd} [linreg $xs $ys] break
+				set b [oformat $b]; set sd [oformat $sd]
+				lappend result [list $chr $cstart $cend trans $pos2 $zyg {} $chr2 $quality $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff]]
 			}
 		}
 	}
@@ -807,6 +932,7 @@ proc svwindow_checkindels {table minadd maxadd} {
 			set cstart [lindex $list 0 2]
 			set cend [lindex $list end 2]
 			set patchsize [expr {$cend-$cstart+1}]
+			if {$patchsize <= 1} continue
 			if {($cend < $minadd) || ($cend >= $maxadd)} continue
 			set gapsize [expr {round( [lmath_average [list_subindex $list $distpos]] )}]
 			set problems {}
@@ -819,6 +945,7 @@ proc svwindow_checkindels {table minadd maxadd} {
 					lappend hlist $line
 				}
 			}
+			set totnum [llength $hlist]
 			set hlist [lsort -integer -index $distpos $hlist]
 			set maxima [kde_distcluster $hlist]
 			# join [list_subindex $maxima {0 1}] \n
@@ -846,44 +973,11 @@ proc svwindow_checkindels {table minadd maxadd} {
 			set weight2 [lmath_average [list_subindex $list $weight2pos]]
 			set weight [expr {round ([min $weight1 $weight2])}]
 			if {$type eq "del"} {
-				set psdiff [expr {abs($patchsize-$mode)}]
+				set opsdiff [expr {$patchsize-$mode}]
 			} else {
-				set psdiff [expr {abs($patchsize+$diff-$mode)}]
+				set opsdiff [expr {$patchsize+$diff-$mode}]
 			}
-			if {$patchsize > 800} {
-				set score 0
-			} else {
-				set score 0
-				if {$num >= 50} {
-					incr score 4
-				} elseif {$num > 20} {
-					incr score 1
-				}
-				if {$weight >= 30} {
-					incr score 3
-				} elseif {$weight > 20} {
-					incr score 2
-				} elseif {$weight > 5} {
-					incr score 1
-				} elseif {$weight == 0} {
-					incr score -1
-				}
-				if {$patchsize < $mode} {
-					if {$psdiff < 100} {
-						incr score 3
-					} elseif {$psdiff < 150} {
-						incr score 2
-					} elseif {$psdiff < 200} {
-						incr score 1
-					}
-				} else {
-					if {$psdiff < 40} {
-						incr score 3
-					} elseif {$psdiff < 100} {
-						incr score 2
-					}
-				}
-			}
+			set psdiff [expr {abs($opsdiff)}]
 			# test trf
 			# --------
 			set numnontrf [llength [list_find -exact [list_subindex $list $trfpos] 0]]
@@ -909,9 +1003,28 @@ proc svwindow_checkindels {table minadd maxadd} {
 					lappend problems pdip
 				}
 			}
+			# linreg
+			# ------
+			set xs [list_subindex $list $end1pos]
+			set ys [list_subindex $list $distpos]
+			set mid [expr {([lindex $xs end]+[lindex $xs 0])/2}]
+			set midpos 0
+			foreach x $xs {
+				if {$x >= $mid} break
+				incr midpos
+			}
+			set xs1 [lrange $xs 0 $midpos]
+			set ys1 [lrange $ys 0 $midpos]
+			foreach {a b1 sd1} [linreg $xs1 $ys1] break
+			set b1 [oformat $b1]; set sd1 [oformat $sd1]
+			set xs2 [lrange $xs $midpos end]
+			set ys2 [lrange $ys $midpos end]
+			foreach {a b2 sd2} [linreg $xs2 $ys2] break
+			set b2 [oformat $b2]; set sd2 [oformat $sd2]
+			set score [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff]
 			# add to result
 			# -------------
-			lappend result [list $chr $cstart $cend $type [expr {round($diff)}] $zyg $problems $gapsize $score $num $numnontrf $weight $patchsize]
+			lappend result [list $chr $cstart $cend $type [expr {round($diff)}] $zyg $problems $gapsize $score $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum [oformat $opsdiff 0]]
 		}
 	}
 	return $result
@@ -941,6 +1054,46 @@ proc svloadtrf {trf chr pstart start end trfposs trflistVar trflineVar} {
 		}
 		set trfline [get_region $trf $trfposs]
 	}
+}
+
+proc sv_evaluate {file} {
+
+	set file /complgen/sv/workGS103-9-paired-sv.tsv
+	set f [open $file]
+	set header [gets $f]
+	set checkpos [lsearch $header check]
+	set scorepos [lsearch $header quality]
+	unset -nocomplain a
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		set check [lindex $line $checkpos]
+		if {$check eq ""} continue
+		set score [lindex $line $scorepos]
+		set error [catch {dict get $a($check) $score} num]
+		if {$error} {
+			if {![info exists a($check)]} {
+				set a($check) [dict create $score 1]
+			} else {
+				dict set a($check) $score 1
+			}
+		} else {
+			incr num
+			dict set a($check) $score $num
+		}
+	}
+	close $f
+	set header {check 0 1 2 3 4 5 6 7 8 9 10}
+	set table [join $header \t]
+	foreach check [array names a] {
+		set line [list $check]
+		foreach num [lrange $header 1 end] {
+			if {[catch {dict get $a($check) $num} value]} {set value 0}
+			lappend line $value
+		}
+		append table \n[join $line \t]
+	}
+	set w [edit]
+	$w.editor set $table
 }
 
 if 0 {
@@ -1002,12 +1155,12 @@ proc svfind {pairfile trffile} {
 	set typepos $infoa(typepos)
 #check
 #set outfile test-sv.tsv
-#lassign {15592000	15593000} dbgstart dbgstop
+#lassign {416000	417000} dbgstart dbgstop
 #close $f
 #svtools_aprgoto $pairfile $dbgstart
 	set dir [file dir [file normalize $outfile]]
 	set o [open $outfile w]
-	puts $o [join {chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize} \t]
+	puts $o [join {chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff} \t]
 	set list {}
 	set clist {}
 	set rlist {}
@@ -1128,9 +1281,13 @@ proc svfind {pairfile trffile} {
 }
 
 if 0 {
+
+package require Tclx
+signal -restart error SIGINT
+lappend auto_path ~/dev/completegenomics/lib
+package require Extral
+cd /complgen/sv
 	cd /complgen/sv
-	set svfile1 GS102/GS102-20-paired-sv.tsv
-	set svfile2 GS103/GS103-20-paired-sv.tsv
 	set svfile1 GS103/GS103-9-paired-sv.tsv
 	set svfile2 GS102/GS102-9-paired-sv.tsv
 	set outfile svcompar_test.tsv
@@ -1138,6 +1295,9 @@ if 0 {
 	set svfile1 sv79-20-pairs-sv.tsv
 	set svfile2 sv78-20-pairs-sv.tsv
 	set outfile svcompar_sv78_sv79-20.tsv
+	set svfile1 GS103/GS103-9-paired-sv.tsv
+	set svfile2 oldGS103-9-paired-sv.tsv
+
 }
 
 proc svcompare {svfile1 svfile2} {
@@ -1152,6 +1312,7 @@ proc svcompare {svfile1 svfile2} {
 	set f1 [open $svfile1]
 	set f2 [open $svfile2]
 	set header1 [split [gets $f1] \t]
+	set len [llength $header1]
 	set end1pos [lsearch $header1 pos]
 	set header2 [split [gets $f2] \t]
 	set header [list_concat match sample $header1]
@@ -1175,7 +1336,7 @@ proc svcompare {svfile1 svfile2} {
 				set listend1 $pos1
 			}
 			set line1 [split [gets $f1] \t]
-			set missing [expr {13 - [llength $line1]}]
+			set missing [max [expr {$len - [llength $line1]}] 0]
 			if {$missing} {
 				while {$missing} {lappend line1 {}; incr missing -1}
 			}
