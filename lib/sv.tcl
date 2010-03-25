@@ -94,7 +94,7 @@ proc svinfo {pairfile} {
 		incr num [get a($min) 0]
 		incr num [get a($max) 0]
 	}
-	set o [open [file_rmrz $pairfile].numinfo w]
+	set o [open [rzroot $pairfile].numinfo w]
 	puts $o key\tvalue
 	puts $o mode\t$mode
 	puts $o min\t$min
@@ -104,7 +104,7 @@ proc svinfo {pairfile} {
 }
 
 proc svhisto {pairfile} {
-	set out [file root [file_rmrz $pairfile]].disthisto
+	set out [file root [rzroot $pairfile]].disthisto
 	set f [rzopen $pairfile]
 	set header [gets $f]
 	set distpos [lsearch $header dist]

@@ -9,6 +9,7 @@ graphwidget method init {args} {
 	super init frame
 	graph $object.g
 	bind $object.g <2> "$object paste; break"
+	bind $object.g <Control-1> "[list $object point %x %y]; break"
 	scrollbar $object.scy -orient vertical
 	scrollbar $object.scx -orient horizontal
 	frame $object.b
@@ -74,6 +75,7 @@ graphwidget method init {args} {
 	::$object.ends.y set {0 0}
 	$object clear
 	$object.g element create legend -xdata ::$object.ends.x -ydata ::$object.ends.y -symbol none -linewidth 0
+	bindtags $object.g [list_concat [list $object.g] [list_remove [bindtags $object.g] $object.g]]
 	Classy::todo $object start
 }
 
@@ -219,13 +221,8 @@ graphwidget method open {file settingsVar} {
 		vector create ::$object.$vnum.$field
 	}
 	set elements [list $graphd(xfield) $graphd(yfield) $graphd(wfield)]
-	if {[inlist {.rz} [file extension $file]]} {
-		set indexname [file root $file].$graphd(xfield)_index
-		set name [file root [file root [file tail $file]]]
-	} else {
-		set indexname $file.$graphd(xfield)_index
-		set name [file root [file tail $file]]
-	}
+	set indexname [rzroot $file].$graphd(xfield)_index
+	set name [file root [file tail [rzroot $file]]]
 	set f [rzopen $file]
 	set header [tsv_open $f]
 	set poss {}
@@ -248,7 +245,7 @@ graphwidget method open {file settingsVar} {
 	set data($name,poss) $poss
 	# create index
 	if {$graphd(region)} {
-		$object loadregtype $f $name
+		$object loadregtype $file $f $name
 	} else {
 		set indexed 1
 		set index ::$object.$vnum.i
@@ -527,6 +524,7 @@ graphwidget method reconf {args} {
 	set data($name,color) [get conf(color) gray]
 	set style [$object gradientstyle $data($name,color)]
 	set color [get colors($data($name,color)-0) $data($name,color)]
+putsvars name color
 	$object.g element configure $name -linewidth $conf(linewidth) -fill $color -outline $color -color $color \
 		-outlinewidth 1 -pixels 2 -symbol $conf(symbol) \
 		-styles $style
@@ -646,6 +644,7 @@ puts "load $start $end $data($name,lstart) $data($name,lend)"
 		set data($name,lstart) 0
 		set data($name,lend) 0
 		set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
+		set data($name,fpos) $fpos
 		set f [rzopen $data($name,file) $fpos]
 		set pnext [expr {$start+200}]
 		set tot [expr {$end-$start}]
@@ -687,13 +686,14 @@ puts "load $start $end $data($name,lstart) $data($name,lend)"
 	$object.progress configure -message "Finished loading $name"
 }
 
-graphwidget method loadregtype {f name} {
+graphwidget method loadregtype {file f name} {
 	private $object region data
 	if {![info exists data($name,vnum)]} return
 	set vnum $data($name,vnum)
 	set poss $data($name,poss)
 	set chr $data($name,chr)
 	set chrpos [lsearch $data($name,header) chromosome]
+	chrindexseek $file $f $chr
 	list_pop poss
 	lappend poss $chrpos
 	set index ::$object.$vnum.i
@@ -703,7 +703,7 @@ graphwidget method loadregtype {f name} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		foreach {begin endw cchr} [list_sub $line $poss] break
-		if {$cchr ne $chr} continue
+		if {$cchr ne $chr} break
 		::$object.$vnum.x append $endw
 		::$object.$vnum.x append $begin
 		::$object.$vnum.y append 1
@@ -885,6 +885,7 @@ graphwidget method checkset {value} {
 	set pos [lsearch $header check]
 	switch $value {
 		d {set value diff}
+		m {set value mdiff}
 		u {set value uncert}
 		n {set value noind}
 		b {set value both}
@@ -960,15 +961,39 @@ graphwidget method checkfile {} {
 	#
 	$table configure -titlerows 1 -labels $header
 	$table configure -labelcommand [list $table sort]
-	bind $table <d> "[list $object] checkset %K; break"
-	bind $table <u> "[list $object] checkset %K; break"
-	bind $table <n> "[list $object] checkset %K; break"
-	bind $table <b> "[list $object] checkset %K; break"
-	bind $table <a> "[list $object] checkset %K; break"
-	bind $table <s> "[list $object] checkset %K; break"
-	bind $table <p> "[list $object] checkset %K; break"
-	bind $table <KeyPress-2> "[list $object] checkset %K; break"
+	foreach key {d m u n b a s p 2} {
+		bind $table <KeyPress-$key> "[list $object] checkset %K; break"
+	}
+}
 
+graphwidget method point {x y} {
+	private $object data points ptable
+	puts $x,$y
+	$object.g element closest $x $y pd
+	set name $pd(name)
+	set index $pd(index)
+	set f [rzopen $data($name,file) $data($name,fpos)]
+	incr index
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		incr index -1
+		if {!$index} break
+	}
+	catch {close $f}
+	if {![winfo exists [get ptable]]} {
+		unset -nocomplain points
+		set ptable [tableedit]
+	}
+	if {![info exists points] || [llength $points] <= 1} {
+		set header $data($name,header)
+		list_unshift header sample
+		set points [list $header]
+	}
+	list_unshift line $name
+	lappend points $line
+	$ptable.editor configure -variable [privatevar $object points]
+	$ptable.editor autosize
 }
 
 if 0 {

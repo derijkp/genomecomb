@@ -163,7 +163,7 @@ proc rzopen {file {pos -1}} {
 	return $f
 }
 
-proc file_rmrz filename {
+proc rzroot filename {
 	if {[inlist {.rz} [file extension $filename]]} {
 		return [file root $filename]
 	} else {
@@ -185,5 +185,36 @@ proc putslog {args} {
 proc putslog {args} {
 	foreach message $args {
 		puts stderr $message
+	}
+}
+
+proc chrindexseek {file f chr} {
+	set indexfile [rzroot $file].chrindex
+	if {![file exists $indexfile]} {
+		set tf [rzopen $file]
+		set header [gets $tf]
+		set chrpos [lsearch $header chromosome]
+		set prevchr {}
+		set list {}
+		set o [open $indexfile w]
+		while {![eof $tf]} {
+			set pos [tell $tf]
+			set line [gets $tf]
+			set chr [lindex $line $chrpos]
+			if {$chr ne $prevchr} {
+				puts $o $chr\t$pos
+				set prevchr $chr
+			}
+		}
+		close $tf
+		close $o
+	}
+	set trfchrpos [split [string trim [file_read $indexfile]] \n\t]
+	if {[dict exists $trfchrpos chr$chr]} {
+		set fpos [dict get $trfchrpos chr$chr]
+		seek $f $fpos start
+	} else {
+		set fpos [dict get $trfchrpos $chr]
+		seek $f $fpos start
 	}
 }
