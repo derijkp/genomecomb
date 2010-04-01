@@ -242,11 +242,7 @@ proc svtools_loadindex {file xfield} {
 	catch {close $f}
 	set svi(xfield) $xfield
 	set svi(xfieldpos) [lsearch $svi(header) $xfield]
-	if {[inlist {.rz} [file extension $file]]} {
-		set indexname [file root $file].${xfield}_index
-	} else {
-		set indexname $file.${xfield}_index
-	}
+	set indexname [rzroot $file].${xfield}_index
 	set o [open $indexname]
 	set svi(step) [gets $o]
 	set svi(findex) [gets $o]
@@ -273,6 +269,7 @@ proc svtools_aprgoto {pairfile start} {
 		set pos [lindex [split $line \t] $xfieldpos]
 		if {$pos > $start} break
 	}
+	return $f
 }
 
 proc e {table} {
@@ -1104,13 +1101,15 @@ lappend auto_path ~/dev/completegenomics/lib
 package require Extral
 cd /complgen/sv
 
+set trffile /data/db/regdb-simple_repeats.tsv
 set pairfile sv70-20-pairs.tsv
 set pairfile GS103/GS103-20-paired.tsv.rz
 set pairfile sv78-20-pairs.tsv
 set pairfile sv79-20-pairs.tsv
 set pairfile GS102/GS102-9-paired.tsv.rz
 set pairfile GS103/GS103-9-paired.tsv.rz
-set trffile /data/db/regdb-simple_repeats.tsv
+set pairfile GS102/GS102-20-paired.tsv.rz
+set pairfile GS103/GS103-20-paired.tsv.rz
 
 }
 
@@ -1119,7 +1118,7 @@ proc svfind {pairfile trffile} {
 	catch {close $trf}
 	catch {close $o}
 	catch {close $f}
-	set bpairfile [file_rmrz $pairfile]
+	set bpairfile [rzroot $pairfile]
 	set outfile [file root $bpairfile]-sv.tsv
 	set windowsize 1000
 	set lognum [expr {1000000 - 100000%$windowsize}]
@@ -1155,9 +1154,9 @@ proc svfind {pairfile trffile} {
 	set typepos $infoa(typepos)
 #check
 #set outfile test-sv.tsv
-#lassign {416000	417000} dbgstart dbgstop
-#close $f
-#svtools_aprgoto $pairfile $dbgstart
+#lassign {61775000	61779000} dbgstart dbgstop
+#catch {close $f}
+#set f [svtools_aprgoto $pairfile $dbgstart]
 	set dir [file dir [file normalize $outfile]]
 	set o [open $outfile w]
 	puts $o [join {chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff} \t]
@@ -1181,16 +1180,7 @@ proc svfind {pairfile trffile} {
 	set trf [open $trffile]
 	set trfposs [open_region $trf]
 	set trflist {}
-	if {[file exists $trffile.chr_index]} {
-		set trfchrpos [split [string trim [file_read $trffile.chr_index]] \n\t]
-		if {[dict exists $trfchrpos chr$chr]} {
-			set fpos [dict get $trfchrpos chr$chr]
-			seek $trf $fpos start
-		} else {
-			set fpos [dict get $trfchrpos $chr]
-			seek $trf $fpos start
-		}
-	}
+	chrindexseek $trffile $trf $chr
 	while {![eof $trf]} {
 		set trfline [get_region $trf $trfposs]
 		foreach {trfchr trfstart trfend} $trfline break
