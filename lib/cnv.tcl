@@ -83,6 +83,80 @@ proc cnvseq {ref test outdir} {
 	}
 }
 
+proc cnvmedian {} {
+
+# raw sata
+	set outfile [file_rootgz $filename].cov
+	set f [open "| zless $filename"]
+	set o [open $outfile w]
+	puts $o "pos\tcoverage"
+	set header [tsv_open $f]
+	set num 0
+	while {![eof $f]} {
+		incr num
+		if {$num > 1000000} break
+		if {![expr {$num%100000}]} {putslog $num}
+		set line [split [gets $f] \t]
+		puts $o [lindex $line 0]\t[lindex $line 2]
+	}
+	close $o
+	close $f	
+
+# code
+package require Tclx
+signal -restart error SIGINT
+lappend auto_path ~/dev/completegenomics/lib
+package require Extral
+cd /complgen
+cd /media/passport/complgen
+set filename GS00102/coverageRefScore-20-GS000000078-ASM.tsv.gz
+set filename GS00103/coverageRefScore-20-GS000000079-ASM.tsv.gz
+set outfile [file_rootgz $filename].med
+set windowsize 5000
+catch {close $o}
+catch {close $f}
+	set f [open "| zless $filename"]
+	set o [open $outfile w]
+	puts $o "offset\tmedcoverage"
+	set header [tsv_open $f]
+	set list {}
+	unset -nocomplain plist
+	set line [split [gets $f] \t]
+	set start [lindex $line 0]
+	set start [expr {$start-$start%$windowsize}]
+	set end [expr {$start + $windowsize -1}]
+	set list [list [lindex $line 2]]
+	set num 0
+	while {![eof $f]} {
+		incr num
+		if {![expr {$num%100000}]} {putslog $num}
+		while {![eof $f]} {
+			if {![llength $line]} continue
+			set refpos [lindex $line 0]
+			if {$refpos >= $end} break
+			lappend list [list [lindex $line 2]]
+			set line [split [gets $f] \t]
+		}
+		if {[info exists plist]} {
+			set temp [list_concat $plist $list]
+			if {[llength $temp] > $windowsize} {
+				set temp [lsort -integer $temp]
+				set v [lindex $temp [expr {[llength $temp]/2}]]
+				if {![isint $v]} {set v 0}
+				puts $o $start\t$v
+			}
+		}
+		set plist $list
+		set list {}
+		incr start $windowsize
+		incr end $windowsize
+	}
+
+	close $o
+	close $f
+
+}
+
 if 0 {
 
 eval cg2cnv $argv
