@@ -45,7 +45,7 @@ proc draw {list {start 0} {step 0} {highlights {}} {maxmax 0} {highlightnames {}
 		$w create line $pos $max $pos [expr {round(-$lh*0.3)}] -fill gray
 		$w create text $pos [expr {round(-$lh*0.4)}] -anchor n -text [expr {$start+$pos}]
 	}
-	foreach pos {50 100 500 1000 2000} {
+	foreach pos {3 50 100 500 1000 2000} {
 		$w create line 0 $pos $len $pos
 		$w create text 1 $pos -anchor sw -text $pos
 	}
