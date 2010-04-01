@@ -654,41 +654,83 @@ proc linreg {xs ys} {
 	return [list $a $b $sd]
 }
 
-proc svscore {mode type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} {
+proc svscore {mode type size zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} {
 	set psdiff [expr {abs($opsdiff)}]
+	set score 0
 	if {$patchsize > 800} {
 		set score 0
-	} else {
-		set score 0
-		if {$num >= 50} {
-			incr score 4
-		} elseif {$num > 20} {
-			incr score 1
-		}
-		if {$weight >= 30} {
-			incr score 3
-		} elseif {$weight > 20} {
-			incr score 2
-		} elseif {$weight > 5} {
-			incr score 1
-		} elseif {$weight == 0} {
-			incr score -1
-		}
-		if {$patchsize < $mode} {
-			if {$psdiff < 100} {
-				incr score 3
-			} elseif {$psdiff < 150} {
-				incr score 2
-			} elseif {$psdiff < 250} {
+	} elseif {$type eq "del"} {
+		if {$size <= 50} {
+			set score 0
+		} else {
+			if {$num >= 50} {
+				incr score 4
+			} elseif {$num > 20} {
 				incr score 1
 			}
-		} else {
-			if {$psdiff < 40} {
+			if {$weight >= 30} {
 				incr score 3
-			} elseif {$psdiff < 100} {
+			} elseif {$weight > 20} {
 				incr score 2
+			} elseif {$weight > 5} {
+				incr score 1
+			} elseif {$weight == 0} {
+				incr score -1
+			}
+			if {$patchsize < $mode} {
+				if {$psdiff < 100} {
+					incr score 3
+				} elseif {$psdiff < 150} {
+					incr score 2
+				} elseif {$psdiff < 250} {
+					incr score 1
+				}
+			} else {
+				if {$psdiff < 40} {
+					incr score 3
+				} elseif {$psdiff < 100} {
+					incr score 2
+				}
 			}
 		}
+	} elseif {$type eq "ins"} {
+		if {$size <= 70} {
+			set score 0
+		} elseif {($size <= 115) && ($b1 < -0.1) && ($b2 > 0.1)} {
+			set score 1
+		} else {
+			if {$num >= 50} {
+				incr score 4
+			} elseif {$num > 20} {
+				incr score 1
+			}
+			if {$weight >= 30} {
+				incr score 3
+			} elseif {$weight > 20} {
+				incr score 2
+			} elseif {$weight > 5} {
+				incr score 1
+			} elseif {$weight == 0} {
+				incr score -1
+			}
+			if {$patchsize < $mode} {
+				if {$psdiff < 100} {
+					incr score 3
+				} elseif {$psdiff < 150} {
+					incr score 2
+				} elseif {$psdiff < 250} {
+					incr score 1
+				}
+			} else {
+				if {$psdiff < 40} {
+					incr score 3
+				} elseif {$psdiff < 100} {
+					incr score 2
+				}
+			}
+		}
+	} else {
+		set score 0
 	}
 	return $score
 }
@@ -956,6 +998,24 @@ proc svwindow_checkindels {table minadd maxadd} {
 			}
 			if {!$lenexists} continue
 			if {[llength $maxima] > 1} {set zyg het} else {set zyg hom}
+			# linreg
+			# ------
+			set xs [list_subindex $list $end1pos]
+			set ys [list_subindex $list $distpos]
+			set mid [expr {([lindex $xs end]+[lindex $xs 0])/2}]
+			set midpos 0
+			foreach x $xs {
+				if {$x >= $mid} break
+				incr midpos
+			}
+			set xs1 [lrange $xs 0 $midpos]
+			set ys1 [lrange $ys 0 $midpos]
+			foreach {a b1 sd1} [linreg $xs1 $ys1] break
+			set b1 [oformat $b1]; set sd1 [oformat $sd1]
+			set xs2 [lrange $xs $midpos end]
+			set ys2 [lrange $ys $midpos end]
+			foreach {a b2 sd2} [linreg $xs2 $ys2] break
+			set b2 [oformat $b2]; set sd2 [oformat $sd2]
 			# quality
 			# -------
 			set diff [expr {$gapsize - $lmode}]
@@ -987,37 +1047,18 @@ proc svwindow_checkindels {table minadd maxadd} {
 			}
 			# smallins
 			# -------
-			if {$diff < 50} {
+			if {($diff <= 50) || (($type eq "ins") && ($diff <= 70))} {
 				if {$zyg eq "hom"} {
 					lappend problems msmall
 				} else {
 					lappend problems hsmall
 				}
-			} elseif {($type eq "ins") && ($diff < 80)} {
-				if {$zyg eq "hom"} {
-					lappend problems pdip
-				} else {
+			} elseif {($type eq "ins") && ($diff <= 115)} {
+				if {($b1 < -0.1) && ($b2 > 0.1)} {
 					lappend problems pdip
 				}
 			}
-			# linreg
-			# ------
-			set xs [list_subindex $list $end1pos]
-			set ys [list_subindex $list $distpos]
-			set mid [expr {([lindex $xs end]+[lindex $xs 0])/2}]
-			set midpos 0
-			foreach x $xs {
-				if {$x >= $mid} break
-				incr midpos
-			}
-			set xs1 [lrange $xs 0 $midpos]
-			set ys1 [lrange $ys 0 $midpos]
-			foreach {a b1 sd1} [linreg $xs1 $ys1] break
-			set b1 [oformat $b1]; set sd1 [oformat $sd1]
-			set xs2 [lrange $xs $midpos end]
-			set ys2 [lrange $ys $midpos end]
-			foreach {a b2 sd2} [linreg $xs2 $ys2] break
-			set b2 [oformat $b2]; set sd2 [oformat $sd2]
+			# score
 			set score [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff]
 			# add to result
 			# -------------
@@ -1053,9 +1094,45 @@ proc svloadtrf {trf chr pstart start end trfposs trflistVar trflineVar} {
 	}
 }
 
+proc sv_rescore {file} {
+
+	set file /complgen/sv/workGS103-9-paired-sv.tsv
+	set ofile /complgen/sv/rworkGS103-9-paired-sv.tsv
+	catch {close $f} ; catch {close $o}
+	set f [open $file]
+	set o [open $ofile w]
+	set header [gets $f]
+	puts $o $header
+	set cor [list_cor $header {quality type size zyg problems gapsize/chr2 numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff}]
+	set scorepos [lsearch $header quality]
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		foreach {score type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} [list_sub $line $cor] break
+		if {$type eq "del"} {
+			set mode [expr {$gapsize-$diff}]
+			break
+		}
+	}
+	seek $f 0
+	gets $f
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		foreach {score type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} [list_sub $line $cor] break
+		set nscore [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff]
+		lset line $scorepos $nscore
+		puts $o [join $line \t]
+	}
+	close $f
+	close $o
+sv_evaluate $ofile
+
+}
+
 proc sv_evaluate {file} {
 
 	set file /complgen/sv/workGS103-9-paired-sv.tsv
+	set file /complgen/sv/rworkGS103-9-paired-sv.tsv
 	set f [open $file]
 	set header [gets $f]
 	set checkpos [lsearch $header check]
@@ -1091,6 +1168,7 @@ proc sv_evaluate {file} {
 	}
 	set w [edit]
 	$w.editor set $table
+
 }
 
 if 0 {
