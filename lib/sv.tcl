@@ -656,12 +656,75 @@ proc linreg {xs ys} {
 
 proc svscore {mode type size zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} {
 	set psdiff [expr {abs($opsdiff)}]
-	set score 0
 	if {$patchsize > 800} {
 		set score 0
-	} elseif {$type eq "del"} {
-		if {$size <= 50} {
+	} elseif {$type eq "inv"} {
+		set score 0
+		if {$patchsize > 1000} {
 			set score 0
+		} elseif {$weight == 0} {
+			if {$num < 10} {set score 0} else {set score 2}
+		} else {
+			set score 0
+			if {$patchsize < $mode} {
+				if {$psdiff < 100} {
+					incr score 3
+				} elseif {$psdiff < 200} {
+					incr score 2
+				} elseif {$psdiff < 300} {
+					incr score 1
+				}
+			} else {
+				if {$psdiff < 40} {
+					incr score 3
+				} elseif {$psdiff < 100} {
+					incr score 2
+				}
+			}
+			if {$num >= 50} {
+				incr score 3
+			} elseif {$num > 20} {
+				incr score 1
+			}
+			if {$weight >= 30} {
+				incr score 4
+			} elseif {$weight > 20} {
+				incr score 3
+			} elseif {$weight > 5} {
+				incr score 1
+			}
+		}
+		return $score
+	} elseif {$type eq "trans"} {
+		set score 7
+		if {$weight > 20} {
+			set score 5
+		} elseif {$weight > 5} {
+			set score 3
+		} elseif {$weight > 0} {
+			set score 2
+		} else {
+			set score 1
+		}
+		if {$num > 100} {
+			incr score 4
+		} elseif {$num > 50} {
+			incr score 2
+		}
+		if {[inlist $problems many]} {set score 0}
+		return $score
+	} elseif {$type eq "del"} {
+		set score 0
+		if {$size <= 10} {
+			set score 0
+		} elseif {$size > 400} {
+			if {($num >= 20) && ($weight >= 10)} {
+				set score 10
+			} elseif {($num >= 10) && ($weight > 0)} {
+				set score 9
+			} else {
+				set score 7
+			}
 		} else {
 			if {$num >= 50} {
 				incr score 4
@@ -694,11 +757,12 @@ proc svscore {mode type size zyg problems gapsize num numnontrf weight patchsize
 			}
 		}
 	} elseif {$type eq "ins"} {
-		if {$size <= 70} {
+		if {$size <= 10} {
 			set score 0
-		} elseif {($size <= 115) && ($b1 < -0.1) && ($b2 > 0.1)} {
+		} elseif {($size <= 115) && ($b1 < -0.2) && ($b2 > 0.2)} {
 			set score 1
 		} else {
+			set score 0
 			if {$num >= 50} {
 				incr score 4
 			} elseif {$num > 20} {
@@ -732,6 +796,28 @@ proc svscore {mode type size zyg problems gapsize num numnontrf weight patchsize
 	} else {
 		set score 0
 	}
+	if {$score > 4} {
+		if {$patchsize > 500} {
+			set score 4
+		}
+	}
+	if {$score > 3} {
+		if {$size <= 30} {
+			set score 3
+		}
+	}
+	if {[inlist $problems trfartefact]} {
+		set score 0
+	} elseif {[inlist $problems trfbad] && ($score > 1)}  {
+		set score 1
+	}
+#	if {$score > 5} {
+#		if {($sd1 ne "Nan") && (abs($sd1) > 0.15)} {
+#			set score 5
+#		} elseif {($sd2 ne "Nan") && (abs($sd2) > 0.15)} {
+#			set score 5
+#		}
+#	}
 	return $score
 }
 
@@ -781,44 +867,11 @@ proc svwindow_checkinv {table rtable minadd maxadd} {
 			set weight [expr {round ([min $weight1 $weight2])}]
 			set opsdiff [expr {$patchsize-$mode}]
 			set psdiff [expr {abs($opsdiff)}]
-			if {$patchsize > 1000} {
-				set score 0
-			} elseif {$weight == 0} {
-				if {$num < 10} {set score 0} else {set score 2}
-			} else {
-				set score 0
-				if {$patchsize < $mode} {
-					if {$psdiff < 100} {
-						incr score 3
-					} elseif {$psdiff < 200} {
-						incr score 2
-					} elseif {$psdiff < 300} {
-						incr score 1
-					}
-				} else {
-					if {$psdiff < 40} {
-						incr score 3
-					} elseif {$psdiff < 100} {
-						incr score 2
-					}
-				}
-				if {$num >= 50} {
-					incr score 3
-				} elseif {$num > 20} {
-					incr score 1
-				}
-				if {$weight >= 30} {
-					incr score 4
-				} elseif {$weight > 20} {
-					incr score 3
-				} elseif {$weight > 5} {
-					incr score 1
-				}
-			}
 			# linreg
 			# ------
 			foreach {a b sd} [linreg [list_subindex $rtable $end1pos] [list_subindex $rtable $distpos]] break
 			set b [oformat $b]; set sd [oformat $sd]
+			set score [svscore $mode inv $size $zyg {} {} $num $num $weight $patchsize $b $sd {} {} $totnum $opsdiff]
 			lappend result [list $chr $cstart $cend inv $size $zyg {} {} $score $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff 0]]
 		}
 	}
@@ -880,29 +933,15 @@ proc svwindow_checktrans {table ctable minadd maxadd} {
 				set weight1 [lmath_average [list_subindex $rtable $weight1pos]]
 				set weight2 [lmath_average [list_subindex $rtable $weight2pos]]
 				set weight [expr {round ([min $weight1 $weight2])}]
-				set quality 7
 				set pos2 [lindex $rtable 0 $start2pos]
-				if {$weight > 20} {
-					set quality 5
-				} elseif {$weight > 5} {
-					set quality 3
-				} elseif {$weight > 0} {
-					set quality 2
-				} else {
-					set quality 1
-				}
-				if {$num > 100} {
-					incr quality 4
-				} elseif {$num > 50} {
-					incr quality 2
-				}
 				# linreg
 				# ------
 				set xs [list_subindex $rtable $end1pos]
 				set ys [lmath_calc [list_subindex $rtable $start2pos] - [list_subindex $rtable $end1pos]]
 				foreach {temp b sd} [linreg $xs $ys] break
 				set b [oformat $b]; set sd [oformat $sd]
-				lappend result [list $chr $cstart $cend trans $pos2 $zyg {} $chr2 $quality $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff]]
+				set score [svscore $mode trans $pos2 $zyg {} {} $num $num $weight $patchsize $b $sd {} {} $totnum $opsdiff]
+				lappend result [list $chr $cstart $cend trans $pos2 $zyg {} $chr2 $score $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff]]
 			}
 		}
 	}
@@ -1094,10 +1133,11 @@ proc svloadtrf {trf chr pstart start end trfposs trflistVar trflineVar} {
 	}
 }
 
-proc sv_rescore {file} {
+proc svrescore {file} {
 
-	set file /complgen/sv/workGS103-9-paired-sv.tsv
-	set ofile /complgen/sv/rworkGS103-9-paired-sv.tsv
+	# set file /complgen/sv/workGS103-9-paired-sv.tsv
+	set ofile [file dir $file]/rs_[file tail $file]
+	file delete -force $ofile
 	catch {close $f} ; catch {close $o}
 	set f [open $file]
 	set o [open $ofile w]
@@ -1125,7 +1165,8 @@ proc sv_rescore {file} {
 	}
 	close $f
 	close $o
-sv_evaluate $ofile
+	putslog "finished $ofile"
+#sv_evaluate $ofile
 
 }
 

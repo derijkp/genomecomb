@@ -153,6 +153,14 @@ switch $action {
 		foreach {svfile1 svfile2} $argv break
 		svcompare $svfile1 $svfile2
 	}
+	svrescore {
+		if {[llength $argv] != 1} {
+			puts stderr "format is: $scriptname $action svfile"
+			exit 1
+		}
+		foreach {svfile} $argv break
+		svrescore $svfile
+	}
 	covered {
 		if {[llength $argv] != 1} {
 			puts stderr "format is: $scriptname $action region_file"
