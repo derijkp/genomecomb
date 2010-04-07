@@ -612,7 +612,7 @@ graphwidget method loadregion {name} {
 	incr end 5000
 	set start [expr {round($start)-round($start)%10000}]
 	if {$start < $data($name,findex)} {set start $data($name,findex)}
-puts "load $start $end $data($name,lstart) $data($name,lend)"
+puts "load $name $start $end $data($name,lstart) $data($name,lend)"
 	if {![info exists data($name,vnum)]} return
 	set vnum $data($name,vnum)
 	set poss $data($name,poss)
@@ -893,6 +893,9 @@ graphwidget method checkset {value} {
 		s {set value same}
 		p {set value pdip}
 		2 {set value double}
+		t {set value true}
+		f {set value false}
+		l {set value likely}
 		default {error "unknown value"}
 	}
 	lset checkdata $row $pos $value
@@ -961,7 +964,7 @@ graphwidget method checkfile {} {
 	#
 	$table configure -titlerows 1 -labels $header
 	$table configure -labelcommand [list $table sort]
-	foreach key {d m u n b a s p 2} {
+	foreach key {d m u n b a s p 2 t f l} {
 		bind $table <KeyPress-$key> "[list $object] checkset %K; break"
 	}
 }
