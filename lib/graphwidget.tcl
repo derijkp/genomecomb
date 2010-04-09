@@ -169,6 +169,7 @@ graphwidget method opendialog {{file {}}} {
 	if {$file eq ""} {set file [Classy::selectfile]}
 	set f [rzopen $file]
 	set header [tsv_open $f]
+	close $f
 	set graphd(file) [file normalize $file]
 	set graphd(header) $header
 	lappend graphd(header) {}
@@ -619,17 +620,17 @@ puts "load $name $start $end $data($name,lstart) $data($name,lend)"
 	set index ::$object.$vnum.i
 	$object.progress configure -message "Loading $name"
 	if {$data($name,region)} {
-		while {![eof $f]} {
-			set line [split [gets $f] \t]
-			if {![llength $line]} continue
-			foreach {begin end} [list_sub $line $poss] break
-			::$object.$vnum.region append $end
-			::$object.$vnum.region append $begin
-			::$object.$vnum.y append 0
-			::$object.$vnum.y append 0
-		}
-		set graphd(xfield) region
-		set graphd(yfield) y
+#		while {![eof $f]} {
+#			set line [split [gets $f] \t]
+#			if {![llength $line]} continue
+#			foreach {begin end} [list_sub $line $poss] break
+#			::$object.$vnum.region append $end
+#			::$object.$vnum.region append $begin
+#			::$object.$vnum.y append 0
+#			::$object.$vnum.y append 0
+#		}
+#		set graphd(xfield) region
+#		set graphd(yfield) y
 	} else {
 		foreach el {x y w} v [list $data($name,xmin) 0 0] {
 			::$object.$vnum.$el set {}
