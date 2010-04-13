@@ -2,7 +2,7 @@ proc t {} {
 	global threads
 	set num 0
 	foreach thread $threads {
-		puts "*$num* [list_subindex $thread {0 1 2}]"
+		puts "*$num* [list_subindex $thread {0 1 2 4 5}]"
 		incr num
 	}
 }
@@ -601,6 +601,7 @@ proc sv_addtothreads {threads start maxima table} {
 	set distpos $infoa(distpos)
 	set mode $infoa(mode)
 	# if empty region, reset main thread
+	set numthreads [llength $threads]
 	set mpos [lindex $threads 0 end 0]
 	set lpos $mpos
 	foreach thread $threads {
@@ -610,20 +611,25 @@ proc sv_addtothreads {threads start maxima table} {
 	if {[expr $start-$lpos] >= 200} {
 		set prevmains [expr {$mode-50}]
 		set prevmaine [expr {$mode+50}]
-		set temp [list $start $prevmains $prevmaine {}]
+		set temp [list $start $prevmains $prevmaine {} $numthreads]
 		set threads [sv_threadadd $threads 0 $temp]
 	}
 	# put possibly matching threads and maxima in list
 	set matchlist {}
 	set mpos -1
 	set maxlist {}
+	set totnum [llength $table]
+	set usednum 0
 	foreach l $maxima {
 		incr mpos
 		foreach {ds de} $l break
 		set  part {}
 		foreach line $table {
 			set dist [lindex $line $distpos]
-			if {($dist >= $ds) && ($dist <= $de)} {lappend part $line}
+			if {($dist >= $ds) && ($dist <= $de)} {
+				incr usednum
+				lappend part $line
+			}
 		}
 		lappend maxlist [list $start $ds $de $part]
 		set pos -1
@@ -641,9 +647,11 @@ proc sv_addtothreads {threads start maxima table} {
 	# sort matchlist, and use best matches
 	set matchlist [lsort -index 2 -integer -decreasing $matchlist]
 	unset -nocomplain a
+	set exnum [expr {$totnum-$usednum}]
 	list_foreach {mpos pos} $matchlist {
 		if {[info exists a(m,$mpos)] || [info exists a(p,$pos)]} continue
 		set line [lindex $maxlist $mpos]
+		lappend line $numthreads $exnum
 		set threads [sv_threadadd $threads $pos $line]
 		set a(m,$mpos) 1
 		set a(p,$pos) 1
@@ -652,6 +660,7 @@ proc sv_addtothreads {threads start maxima table} {
 	foreach line $maxlist {
 		incr mpos
 		if {[info exists a(m,$mpos)]} continue
+		lappend line $numthreads $exnum
 		lappend threads [list $line]
 	}
 	return $threads
@@ -724,6 +733,8 @@ proc sv_checkthreads {threads start mode resultVar} {
 			set patchsize [expr {$cend-$cstart+1}]
 			set gapsize [expr {round( [lmath_average [list_subindex $parts $distpos]] )}]
 			set totnum [llength $parts]
+			set exnum [lmath_average [list_subindex $thread 5]]
+			set tnum [lmath_average [list_subindex $thread 4]]
 			set problems {}
 			# test heterozygosity (and check if len exists)
 			# ---------------------------------------------
@@ -798,10 +809,10 @@ proc sv_checkthreads {threads start mode resultVar} {
 				}
 			}
 			# score
-			set score [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff]
+			set score [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff $tnum $exnum]
 			# add to result
 			# -------------
-			lappend result [list $chr $cstart $cend $type [expr {round($diff)}] $zyg $problems $gapsize $score $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum [oformat $opsdiff 0]]
+			lappend result [list $chr $cstart $cend $type [expr {round($diff)}] $zyg $problems $gapsize $score $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum [oformat $opsdiff 0] $tnum $exnum]
 		} else {
 			lappend resultthreads $thread
 		}
@@ -1010,7 +1021,7 @@ proc linreg {xs ys} {
 	return [list $a $b $sd]
 }
 
-proc svscore {mode type size zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} {
+proc svscore {mode type size zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff tnum exnum} {
 	set psdiff [expr {abs($opsdiff)}]
 	set maxpatch [expr {1.8*$mode}]
 	set hmode [expr {$mode/2}]
@@ -1164,11 +1175,17 @@ proc svscore {mode type size zyg problems gapsize num numnontrf weight patchsize
 		if {$patchsize > 500} {
 			set score 4
 		}
+		if {$exnum > 10} {set score 4}
 	}
 	if {$score > 3} {
 		if {$size <= 30} {
 			set score 3
 		}
+		if {$tnum > 3} {set score 3}
+	}
+	if {$score > 2} {
+		if {$tnum > 4} {set score 2}
+		if {$exnum > 20} {set score 2}
 	}
 	if {[inlist $problems trfartefact]} {
 		set score 0
@@ -1254,7 +1271,7 @@ proc svwindow_checkinv {table rtable} {
 			# ------
 			foreach {a b sd} [linreg [list_subindex $group $end1pos] [list_subindex $group $distpos]] break
 			set b [oformat $b]; set sd [oformat $sd]
-			set score [svscore $mode inv $size $zyg {} {} $num $num $weight $patchsize $b $sd {} {} $totnum $opsdiff]
+			set score [svscore $mode inv $size $zyg {} {} $num $num $weight $patchsize $b $sd {} {} $totnum $opsdiff {} {}]
 			lappend result [list $chr $cstart $cend inv $size $zyg {} {} $score $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff 0]]
 		}
 		
@@ -1323,7 +1340,7 @@ proc svwindow_checktrans {table ctable} {
 				set ys [lmath_calc [list_subindex $rtable $start2pos] - [list_subindex $rtable $end1pos]]
 				foreach {temp b sd} [linreg $xs $ys] break
 				set b [oformat $b]; set sd [oformat $sd]
-				set score [svscore $mode trans $pos2 $zyg {} {} $num $num $weight $patchsize $b $sd {} {} $totnum $opsdiff]
+				set score [svscore $mode trans $pos2 $zyg {} {} $num $num $weight $patchsize $b $sd {} {} $totnum $opsdiff {} {}]
 				lappend result [list $chr $cstart $cend trans $pos2 $zyg {} $chr2 $score $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff]]
 			}
 		}
@@ -1367,14 +1384,14 @@ proc svloadtrf {trf chr pstart start end trfposs trflistVar trflineVar} {
 
 if 0 {
 
-	set header {match check sample chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff chr-2 patchstart-2 pos-2 type-2 size-2 zyg-2 problems-2 gapsize/chr2-2 quality-2 numreads-2 numnontrf-2 weight-2 patchsize-2 slope1-2 sd1-2 slope2-2 sd2-2 totnum-2 psdiff-2}
-	set cor [list_cor $header {quality type size zyg problems gapsize/chr2 numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff}]
+	set header {match check sample chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum chr-2 patchstart-2 pos-2 type-2 size-2 zyg-2 problems-2 gapsize/chr2-2 quality-2 numreads-2 numnontrf-2 weight-2 patchsize-2 slope1-2 sd1-2 slope2-2 sd2-2 totnum-2 psdiff-2 threads-2 exnum-2}
+	set cor [list_cor $header {quality type size zyg problems gapsize/chr2 numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum}]
 	set mode $infoa(mode)
 
 	set line [split $line \t]
 
-	foreach {score type size zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum psdiff} [list_sub $line $cor] break
-	set nscore [svscore $mode $type $size $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $psdiff]
+	foreach {score type size zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum psdiff tnum exnum} [list_sub $line $cor] break
+	set nscore [svscore $mode $type $size $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $psdiff $tnum $exnum]
 
 	set file /complgen/sv/workGS103-9-paired-sv.tsv
 
@@ -1389,11 +1406,11 @@ proc svrescore {file} {
 	set o [open $ofile w]
 	set header [gets $f]
 	puts $o $header
-	set cor [list_cor $header {quality type size zyg problems gapsize/chr2 numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff}]
+	set cor [list_cor $header {quality type size zyg problems gapsize/chr2 numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum}]
 	set scorepos [lsearch $header quality]
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
-		foreach {score type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} [list_sub $line $cor] break
+		foreach {score type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff tnum exnum} [list_sub $line $cor] break
 		if {$type eq "del"} {
 			set mode [expr {$gapsize-$diff}]
 			break
@@ -1404,8 +1421,8 @@ proc svrescore {file} {
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
-		foreach {score type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} [list_sub $line $cor] break
-		set nscore [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff]
+		foreach {score type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff tnum exnum} [list_sub $line $cor] break
+		set nscore [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff $tnum $exnum]
 		lset line $scorepos $nscore
 		puts $o [join $line \t]
 	}
@@ -1416,15 +1433,15 @@ proc svrescore {file} {
 
 }
 
-proc sv_evaluate {file} {
+proc sv_evaluate {file {field check}} {
 
-	set file /complgen/sv/workGS103-9-paired-sv.tsv
-	set file /complgen/sv/rworkGS103-9-paired-sv.tsv
-	set file /complgen/sv/refGS103-20-paired-sv.tsv
-	set file /complgen/sv/rs_refGS103-20-paired-sv.tsv
+#	set file /complgen/sv/workGS103-9-paired-sv.tsv
+#	set file /complgen/sv/rworkGS103-9-paired-sv.tsv
+#	set file /complgen/sv/refGS103-20-paired-sv.tsv
+#	set file /complgen/sv/rs_refGS103-20-paired-sv.tsv
 	set f [open $file]
 	set header [gets $f]
-	set checkpos [lsearch $header check]
+	set checkpos [lsearch $header $field]
 	set scorepos [lsearch $header quality]
 	unset -nocomplain a
 	while {![eof $f]} {
@@ -1541,15 +1558,15 @@ proc svfind {pairfile trffile} {
 #lassign {130225 130432} dbgstart dbgstop
 #1923266 1924086 del     4
 #20	false	2749175	2749337	del	51	hom		424	4	12	12	36	163	-0.12	0.00	0.00	0.00	12	-212
-lassign {2371413	2371532} dbgstart dbgstop
-lassign {3052000	3053200} dbgstart dbgstop
+#lassign {3045000	3053200} dbgstart dbgstop
+lassign {62160000	62167700} dbgstart dbgstop
 catch {close $f}
 set f [svtools_aprgoto $pairfile $dbgstart]
 set outfile test-sv.tsv
 #check
 	set dir [file dir [file normalize $outfile]]
 	set o [open $outfile w]
-	puts $o [join {chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff} \t]
+	puts $o [join {chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum} \t]
 	set list {}
 	set mainrtable {}
 	set rtable {}
@@ -1629,10 +1646,11 @@ set outfile test-sv.tsv
 			set table [list_concat $plist $list]
 			set dists [list_subindex $table $distpos]
 			set maxima [kde_maxima $dists]
-			set onum [llength $maxima]
-			if {$onum < 4} {
-				set threads [sv_addtothreads $threads $start $maxima $table]
-			}
+			set threads [sv_addtothreads $threads $start $maxima $table]
+#			set onum [llength $maxima]
+#			if {$onum < 4} {
+#				set threads [sv_addtothreads $threads $start $maxima $table]
+#			}
 #check
 if {$start >= $dbgstop} {error STOPPED}
 			set temp {}
