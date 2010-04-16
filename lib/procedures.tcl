@@ -130,10 +130,6 @@ proc process_compare {dir1 dir2 dbdir resultsdir {force 0}} {
 			puts stderr "$field: $regfile does not exists"
 			continue
 		}
-		if {!$force && [process_compare_checkfield temp.tsv $field]} {
-			puts stderr "skipping $field: already present"
-			continue
-		}
 		cg annot_compare_region temp.tsv $regfile $field $value "" > tempfiltered.tsv
 		if {[file exists tempfiltered.tsv]} {
 			file rename -force tempfiltered.tsv temp.tsv
