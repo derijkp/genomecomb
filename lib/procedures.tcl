@@ -15,15 +15,15 @@ proc process_sample {dir dbdir {force 0}} {
 	# sort files
 	if {$force || ![file exists svar-$name.tsv]} {
 		puts stderr "Sort var file ($varfile)"
-		cg select -s "chromosome begin" < $varfile > svar-$name.tsv
+		cg select -s "chromosome begin end" < $varfile > svar-$name.tsv
 	}
 	if {$force || ![file exists sgene-$name.tsv]} {
 		puts stderr "Sort gene file ($genefile)"
-		cg select -s "chromosome begin" < $genefile > sgene-$name.tsv
+		cg select -s "chromosome begin end" < $genefile > sgene-$name.tsv
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {
 		puts stderr "Sort region file ($regfile)"
-		cg select -s "chromosome begin" < $regfile > sreg-$name.tsv
+		cg select -s "chromosome begin end" < $regfile > sreg-$name.tsv
 	}
 	# annotated vars file
 	if {$force || ![file exists annotvar-$name.tsv]} {
