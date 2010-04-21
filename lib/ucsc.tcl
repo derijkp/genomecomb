@@ -6,7 +6,7 @@ proc ucsc2region {ucsc_file} {
 	set poss [list_cor $header {chrom chromStart chromEnd name}]
 	puts [join [list chromosome start end name] \t]
 	while {![eof $f]} {
-		set line [split [gets $f] \t]
+		set line [getnotempty $f]
 		foreach {chrom chromStart chromEnd name} [list_sub $line $poss] break
 		puts [join [list $chrom $chromStart $chromEnd $name] \t]
 	}

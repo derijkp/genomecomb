@@ -11,7 +11,7 @@ proc ucsc2annotvar {file outfile} {
 	set o [open $outfile w]
 	puts $o [join {locus chromosome begin end type alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef} \t]
 	while {![eof $f]} {
-		set line [split [gets $f] \t]
+		set line [getnotempty $f]
 		foreach {bin chrom chromStart chromEnd name alleleCount alleleFreq alleleScores} $line break
 		set alleles [split $name /]
 		foreach {a1 a2} $alleles break

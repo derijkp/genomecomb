@@ -24,12 +24,12 @@ proc tsv_select {query {qfields {}} {sortfields {}}} {
 		set sort "gnusort8 -t \\t -V -s -k[join $keys " -k"]"
 	}
 	if {$query ne ""} {
-		list_unmerge [regexp -all -inline {[$]([a-zA-z0-9]+)} $query] 1 fields
+		list_unmerge [regexp -all -inline {[$]([a-zA-z0-9_-]+)} $query] 1 fields
 		foreach field [list_remdup $fields] {
 			set pos [lsearch $header $field]
 			if {$pos == -1} {error "field \"$field\" not present"}
 			incr pos
-			regsub -all \\\$${field}(\[^A-Za-z\]) $query \$$pos\\1 query
+			regsub -all \\\$${field}(\[^A-Za-z_-\]) $query \$$pos\\1 query
 		}
 		set awk {BEGIN {FS="\t" ; OFS="\t"} }
 		append awk $query
@@ -153,7 +153,7 @@ proc tsv_next {f xpos next {shift 100000}} {
 	while 1 {
 		seek $f $shift current
 		gets $f
-		set line [split [gets $f] \t]
+		set line [getnotempty $f]
 		set x [lindex $line $xpos]
 		if {![isdouble $x] || ($x >= $next)} {
 			seek $f $start
@@ -174,6 +174,31 @@ proc tsv_next {f xpos next {shift 100000}} {
 	} else {
 		return $x
 	}
+}
+
+proc tsv_nextline {f xpos next {shift 100000}} {
+	# do a ~ binary search to get at next faster
+	set start [tell $f]
+	while 1 {
+		seek $f $shift current
+		gets $f
+		set line [getnotempty $f]
+		set x [lindex $line $xpos]
+		if {![isdouble $x] || ($x >= $next)} {
+			seek $f $start
+			set shift [expr {$shift / 2}]
+			if {$shift < 1000} break
+		}
+		set start [tell $f]
+	}
+	while {![eof $f]} {
+		set fpos [tell $f]
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		set x [lindex $line $xpos]
+		if {$x >= $next} break
+	}
+	return $line
 }
 
 proc tsv_index {file xfield} {

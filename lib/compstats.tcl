@@ -3,8 +3,19 @@ proc compare_pvt {} {
 	# set f [open $compar_file]
 	unset -nocomplain a
 	set header [split [gets $f] \t]
-	set fields {compar sample chromosome type dbsnp ns lowscore loc effect refcons cluster trf str repeat segdup selfchain a100 a70 b15 b20 b30}
+	set fields {compar sample chromosome type trf str repeat segdup selfchain}
 	set poss [list_cor $header $fields]
+	set ufields {
+		type xRef
+		alleleSeq1-1 alleleSeq2-1 alleleSeq1-2 alleleSeq2-2
+		totalScore1-1 totalScore2-1 totalScore1-2 totalScore2-2
+		refscore-1 coverage-1 refcons-1 cluster-1
+		refscore-2 coverage-2 refcons-2 cluster-2
+		exonCategory aaCategory
+	}
+	set uposs [list_cor $header $ufields]
+
+	# set fields {compar sample chromosome type dbsnp ns lowscore loc effect refcons cluster trf str repeat segdup selfchain a100 a70 b15 b20 b30}
 	set nf [list_find $poss -1]
 	if {[llength $nf]} {
 		set fields [list_sub $fields -exclude $nf]
@@ -16,7 +27,44 @@ proc compare_pvt {} {
 		if {![expr {$num%100000}]} {putslog $num}
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
+		foreach $ufields [list_sub $line $uposs] break
 		set line [list_sub $line $poss]
+		# dbsnp
+		if {[regexp dbsnp $xRef]} {set dbsnp dbsnp} else {set dbsnp {}}
+		# ns
+		set alleles [list ${alleleSeq1-1} ${alleleSeq2-1} ${alleleSeq1-2} ${alleleSeq2-2}]
+		if {[regexp {[N?]} $alleles]} {set ns ns} else {set ns ""}
+		# lowscore
+		set scores [list_remove [list ${totalScore1-1} ${totalScore2-1} ${totalScore1-2} ${totalScore2-2}] {} -]
+		set minscore [lmath_min $scores]
+		if {$minscore < 60} {set lowscore ls} else {set lowscore ""}
+		# loc
+		set loc ""
+		foreach temp {EXON UTR BEGIN END INTRON} {
+			if {[regexp $temp $exonCategory]} {
+				set loc $temp
+				break
+			}
+		}
+		# effect
+		set effect OTHER
+		foreach temp {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE MISSENSE COMPATIBLE UNDEFINED} {
+			if {[regexp $temp $aaCategory]} {
+				set effect $temp
+				break
+			}
+		}
+		set refcons [lindex [list_remove [list ${refcons-1} ${refcons-2}] {} -] 0]
+		set cluster [lindex [list_remove [list ${cluster-1} ${cluster-2}] {} -] 0]
+		set coverages [lsort -integer [list_remove [list ${coverage-1} ${coverage-2}] {} -]]
+		set mincov [lindex $coverages 0]
+		set maxcov [lindex $coverages end]
+		if {$mincov < 15} {set b15 b15} else {set b15 {}}
+		if {$mincov < 20} {set b20 b20} else {set b20 {}}
+		if {$mincov < 30} {set b30 b30} else {set b30 {}}
+		if {$maxcov > 70} {set a70 a70} else {set a70 {}}
+		if {$maxcov > 100} {set a100 a100} else {set a100 {}}
+		lappend line $dbsnp $ns $lowscore $loc $effect $refcons $cluster $a100 $a70 $b15 $b20 $b30
 		if {![info exists a($line)]} {
 			set a($line) 1
 		} else {
@@ -24,7 +72,10 @@ proc compare_pvt {} {
 		}
 	}
 	set o stdout
-	puts $o [join $fields \t]\tnum
+	# set o [open pvtcompar_${name1}_${name2}.tsv w]
+	set oheader $fields
+	lappend oheader dbsnp ns lowscore loc effect refcons cluster a100 a70 b15 b20 b30 tnum
+	puts $o [join $oheader \t]
 	set list [lsort -dict [array names a]]
 	foreach line $list {
 		puts $o [join $line \t]\t$a($line)
@@ -204,7 +255,7 @@ proc compare_selectivity {o table} {
 	puts $o "mm\t[format %0.0f $mmtotal]\tnewmm\t[format %0.0f $newmmtotal]"
 	puts $o "sm\t[format %0.0f $smtotal]\tnewsm\t[format %0.0f $newsmtotal]"
 	foreach {sfield svalue} {
-		type snp dbsnp dbsnp ns n? lowscore ls 
+		type snp dbsnp dbsnp ns ns lowscore ls 
 		refcons rc trf trf str str repeat rp segdup sd selfchain sc cluster cl
 		a100 a100 a70 a70 b15 b15 b20 b20 b30 b30
 	} {
@@ -236,6 +287,7 @@ signal -restart error SIGINT
 lappend auto_path ~/dev/completegenomics/lib
 package require Extral
 
+set compar_file /complgen/testcompar_GS102_GS103/compar_GS102_GS103.tsv
 cd /complgen/compar_GS102_GS103
 set file pvtcompar_GS102_GS103.tsv
 set ofile summarycompar2_GS102_GS103.tsv

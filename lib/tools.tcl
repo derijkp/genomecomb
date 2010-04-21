@@ -74,6 +74,15 @@ proc cggets {f} {
 	return $result
 }
 
+proc getnotempty {f} {
+	set line {}
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {[llength $line]} break
+	}
+	return $line
+}
+
 proc assert {check message} {
 	if {![uplevel expr $check]} {
 		error $message

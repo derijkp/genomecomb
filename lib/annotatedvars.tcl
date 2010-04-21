@@ -122,6 +122,50 @@ proc readonegene f {
 	return $result
 }
 
+if 0 {
+	set source temp.tsv
+	set dest tempfiltered.tsv
+
+	set dir /complgen/GS102
+	set source testannotvar.tsv
+	set dest ftestannotvar.tsv
+}
+
+proc annot_coverage {dir source dest} {
+
+	catch {close $o} ; catch {close $f} ; catch {close $fc}
+	set f [open $source]
+	set o [open $dest w]
+	set header [split [gets $f] \t]
+	set len [llength $header]
+	set ipos [lsearch $header totalScore2]
+	incr ipos
+	puts $o [join [linsert $header $ipos refscore coverage] \t]
+	set poss [list_cor $header {chromosome begin end}]
+	annot_coverage_init $dir
+	set num 0
+	while {![eof $f]} {
+		incr num
+		if {![expr {$num%10000}]} {putslog $num}
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		if {[llength $line] < $len} {
+			lappend line {*}[list_fill [expr {$len-[llength $line]}] {}]
+		} elseif {[llength $line] > $len} {
+			set line [lrange $line 0 [expr {$len-1}]]
+		}
+		foreach {refscore coverage} {{} {}} break
+		foreach {chr begin end} [list_sub $line $poss] break
+		foreach {refscore coverage} [annot_coverage_get $dir $chr $begin] break
+		set line [linsert $line $ipos $refscore $coverage]
+		puts $o [join $line \t]
+	}
+	annot_coverage_close $dir
+
+	close $o
+	close $f
+}
+
 proc var2annotvar {file genefile outfile} {
 	global cache
 	catch {close $f1}
