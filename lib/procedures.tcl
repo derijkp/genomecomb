@@ -15,11 +15,11 @@ proc process_sample {dir dbdir {force 0}} {
 	# sort files
 	if {$force || ![file exists svar-$name.tsv]} {
 		puts stderr "Sort var file ($varfile)"
-		cg select -s "chromosome begin end" < $varfile > svar-$name.tsv
+		cg select -s "chromosome begin end varType" < $varfile > svar-$name.tsv
 	}
 	if {$force || ![file exists sgene-$name.tsv]} {
 		puts stderr "Sort gene file ($genefile)"
-		cg select -s "chromosome begin end" < $genefile > sgene-$name.tsv
+		cg select -s "chromosome begin end varType" < $genefile > sgene-$name.tsv
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {
 		puts stderr "Sort region file ($regfile)"

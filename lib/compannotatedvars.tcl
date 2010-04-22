@@ -3,24 +3,30 @@
 proc comparepos {comp1 comp2} {
 	if {![llength $comp1]} {return 1}
 	if {![llength $comp2]} {return -1}
-	foreach {chr1 pos1} $comp1 break
-	foreach {chr2 pos2} $comp2 break
-	if {$chr1 eq $chr2} {
-		return [expr {$pos1-$pos2}]
-	} else {
+	foreach {chr1 pos1 end1 type1} $comp1 break
+	foreach {chr2 pos2 end2 type2} $comp2 break
+	if {$chr1 ne $chr2} {
 		set chr1 [chr2num $chr1]
 		set chr2 [chr2num $chr2]
 		return [expr {$chr1-$chr2}]
+	} elseif {$pos1 != $pos2} {
+		return [expr {$pos1-$pos2}]
+	} elseif {$end1 != $end2} {
+		return [expr {$end1-$end2}]
+	} elseif {$type1 ne $type2} {
+		if {$type1 < $type2} {return -1} else {return 1}
+	} else {
+		return 0
 	}
 }
 
-proc sequenced {r1 comp2} {
-	if {$r1 eq 1} {return 1}
+proc sequenced {r comp2} {
+	if {$r eq 1} {return 1}
 	global cache
-	if {[llength $comp2] != 2} {return 0}
+	if {[llength $comp2] != 4} {return 0}
 	foreach {chr pos} $comp2 break
 	set chr [chr2num $chr]
-	set line $cache($r1)
+	set line $cache($r)
 	while {[llength $line]} {
 		foreach {rchr rstart rend} $line break
 		set rchr [chr2num $rchr]
@@ -28,13 +34,13 @@ proc sequenced {r1 comp2} {
 		if {$rchr == $chr} {
 			if {$rstart > $pos} break
 			if {($rchr == $chr) && ($pos < $rend) && ($pos >= $rstart)} {
-				set cache($r1) $line
+				set cache($r) $line
 				return 1
 			}
 		}
-		set line [gets $r1]
+		set line [gets $r]
 	}
-	set cache($r1) $line
+	set cache($r) $line
 	return 0
 }
 
@@ -374,10 +380,21 @@ package require Extral
 package require Tclx
 signal -restart error SIGINT
 
+set file1 GS102/fannotvar-GS102.tsv
+set file2 GS103/fannotvar-GS103.tsv
+set id1 GS102
+set id2 GS103
+set regfile1 GS102/sreg-GS102.tsv
+set regfile2 GS103/sreg-GS103.tsv
+set outfile /complgen/testcompar_GS102_GS103/compar_GS102_GS103.tsv
+
+compare_annot $id1 $file1 $regfile1 $id2 $file2 $regfile2 $outfile
+
 set compar_file /complgen/testcompar_GS102_GS103/compar_GS102_GS103.tsv
 cd [file dir $compar_file]
 set dir1 /complgen/GS102
 set dir2 /complgen/GS103
+
 reannot_compare $compar_file $dir1 $dir2 atemp
 
 set compar_file compar/78vs79_compar.tsv
