@@ -1,5 +1,7 @@
 proc tsv_select {query {qfields {}} {sortfields {}}} {
 	set f stdin
+	fconfigure $f -buffering none
+	fconfigure stdout -buffering none
 	set header [tsv_open $f]
 	set keep [tell $f]
 	set awk ""
@@ -55,13 +57,13 @@ proc tsv_select {query {qfields {}} {sortfields {}}} {
 	if {$cut ne ""} {
 		lappend pipe $cut
 	}
-	putslog pipe:[join $pipe " | "]
-	if {$qfields ne ""} {puts [join $qfields \t]} else {puts [join $header \t]}
-	seek $f $keep
+#	putslog pipe:[join $pipe " | "]
+	if {$qfields ne ""} {puts stdout [join $qfields \t]} else {puts stdout [join $header \t]}
 	if {![llength $pipe]} {
 		fcopy stdin stdout
 	} else {
-		eval exec [join $pipe " | "] <@ stdin >@ stdout
+		set o [open "|\ [join $pipe " | "]\ >@\ stdout" w]
+		fcopy stdin $o
 	}
 }
 

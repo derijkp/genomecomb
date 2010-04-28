@@ -310,10 +310,17 @@ switch $action {
 				}
 				-f {set fields $value}
 				-s {set sortfields $value}
+				-h {
+					set header [tsv_open stdin]
+					puts stdout $header
+					exit 1
+				}
 				default {
 					puts stderr "unkown option $key"
 					puts stderr "format is: $scriptname $action ?-q query? ?-f fields? ?-s sortfields?"
 					puts stderr " - select lines and columns in tab separated file, and sorts the result"
+					puts stderr "or format is: $scriptname $action -h"
+					puts stderr " - return header fields in file"
 					exit 1
 				}
 			}
