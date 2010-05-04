@@ -163,6 +163,12 @@ proc rzopen {file {pos -1}} {
 		} else {
 			set f [open "| razip -d -c -b $pos $file"]
 		}
+	} elseif {[inlist {.gz} [file extension $file]]} {
+		if {$pos == -1} {
+			set f [open "| zcat $file"]
+		} else {
+			error "positioning not supported in gz files"
+		}
 	} else {
 		set f [open $file]
 		if {$pos != -1} {
@@ -173,7 +179,7 @@ proc rzopen {file {pos -1}} {
 }
 
 proc rzroot filename {
-	if {[inlist {.rz} [file extension $filename]]} {
+	if {[inlist {.rz .gz} [file extension $filename]]} {
 		return [file root $filename]
 	} else {
 		return $filename

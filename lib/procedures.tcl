@@ -15,43 +15,48 @@ proc process_sample {dir dbdir {force 0}} {
 	# sort files
 	if {$force || ![file exists svar-$name.tsv]} {
 		puts stderr "Sort var file ($varfile)"
-		cg select -s "chromosome begin end varType" < $varfile > svar-$name.tsv
+		cg select -s "chromosome begin end varType" < $varfile > temp.tsv
+		file rename temp.tsv svar-$name.tsv
 	}
 	if {$force || ![file exists sgene-$name.tsv]} {
 		puts stderr "Sort gene file ($genefile)"
-		cg select -s "chromosome begin end varType" < $genefile > sgene-$name.tsv
+		cg select -s "chromosome begin end varType" < $genefile > temp.tsv
+		file rename temp.tsv sgene-$name.tsv
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {
 		puts stderr "Sort region file ($regfile)"
-		cg select -s "chromosome begin end" < $regfile > sreg-$name.tsv
+		cg select -s "chromosome begin end" < $regfile > temp.tsv
+		file rename temp.tsv sreg-$name.tsv
 	}
 	# annotated vars file
 	if {$force || ![file exists annotvar-$name.tsv]} {
 		puts stderr "Create annotated varfile annotvar-$name.tsv"
-		cg var2annot svar-$name.tsv sgene-$name.tsv annotvar-$name.tsv
+		cg var2annot svar-$name.tsv sgene-$name.tsv temp.tsv
+		file rename temp.tsv annotvar-$name.tsv
 	}
 	# sample specific filters
 	if {$force || ![file exists reg_refcons-$name.tsv]} {
 		puts stderr "Find refcons regions for var-$name.tsv"
-		cg refconsregions svar-$name.tsv > reg_refcons-$name.tsv
+		cg refconsregions svar-$name.tsv > temp.tsv
+		file rename temp.tsv reg_refcons-$name.tsv
 	}
 	if {$force || ![file exists reg_cluster-$name.tsv]} {
 		puts stderr "Find cluster regions for svar-$name.tsv"
-		cg clusterregions < annotvar-$name.tsv > reg_cluster-$name.tsv
+		cg clusterregions < annotvar-$name.tsv > temp.tsv
+		file rename temp.tsv reg_cluster-$name.tsv
 	}
 	if {$force || ![file exists reg_ns-$name.tsv]} {
 		puts stderr "Find regions with N's for svar-$name.tsv"
-		cg select -f {chromosome begin end} -q {$alleleSeq1 ~ /[N?]/ || $alleleSeq2 ~ /[N?]/} < annotvar-$name.tsv > reg_ns-$name.tsv
+		cg select -f {chromosome begin end} -q {$alleleSeq1 ~ /[N?]/ || $alleleSeq2 ~ /[N?]/} < annotvar-$name.tsv > temp.tsv
+		file rename temp.tsv reg_ns-$name.tsv
 	}
 	if {$force || ![file exists reg_lowscore-$name.tsv]} {
 		puts stderr "Find regions with lowscores for svar-$name.tsv"
-		cg select -f {chromosome begin end} -q {$totalScore1 < 60 || $totalScore2 < 60} < annotvar-$name.tsv > reg_lowscore-$name.tsv
+		cg select -f {chromosome begin end} -q {$totalScore1 < 60 || $totalScore2 < 60} < annotvar-$name.tsv > temp.tsv
+		file rename temp.tsv reg_lowscore-$name.tsv
 	}
 	if {$force || ![file exists fannotvar-$name.tsv]} {
 		# add filterdata to annotvar
-		file copy -force annotvar-$name.tsv temp.tsv
-		annot_coverage $dir temp.tsv ftemp.tsv
-		file copy -force ftemp.tsv temp.tsv
 		set todo {}
 		lappend todo [list refcons rc $dir/reg_refcons-$name.tsv]
 		lappend todo [list cluster cl $dir/reg_cluster-$name.tsv]
@@ -66,46 +71,45 @@ proc process_sample {dir dbdir {force 0}} {
 			if {$value eq ""} {set value checked}
 			lappend todo [list checked $value $file]
 		}
-		list_foreach {field value regfile} $todo {
-			if {![file exists $regfile]} {
-				puts stderr "$field: $regfile does not exists"
-				continue
-			}
-			puts "Annotating $field $value"
-			cg annot_compare_region temp.tsv $regfile $field $value "" > tempfiltered.tsv
-			if {[file exists tempfiltered.tsv]} {
-				file rename -force tempfiltered.tsv temp.tsv
-			}
-		}
-		file rename temp.tsv fannotvar-$name.tsv
+		annot_annotvar annotvar-$name.tsv fannotvar-$name.tsv $todo $dir
 	}
 	# coverage
 	if {$force || ![file exists reg-$name.covered]} {
 		puts stderr "Coverage of sequenced regions"
-		cg covered sreg-$name.tsv > reg-$name.covered
+		cg covered sreg-$name.tsv > temp.tsv
+		file rename temp.tsv reg-$name.covered
 	}
 	if {$force || ![file exists filteredrefcons-$name.covered]} {
 		puts stderr "Coverage of refcons region"
-		cg regsubtract sreg-$name.tsv reg_refcons-$name.tsv > filteredrefcons-$name.tsv
-		cg covered filteredrefcons-$name.tsv > filteredrefcons-$name.covered
+		cg regsubtract sreg-$name.tsv reg_refcons-$name.tsv > temp.tsv
+		file rename temp.tsv filteredrefcons-$name.tsv
+		cg covered filteredrefcons-$name.tsv > temp.tsv
+		file rename temp.tsv filteredrefcons-$name.covered
 	}
 	if {$force || ![file exists filteredns-$name.covered]} {
 		puts stderr "Coverage of ns region"
-		cg regsubtract sreg-$name.tsv reg_ns-$name.tsv > filteredns-$name.tsv
-		cg covered filteredns-$name.tsv > filteredns-$name.covered
+		cg regsubtract sreg-$name.tsv reg_ns-$name.tsv > temp.tsv
+		file rename temp.tsv filteredns-$name.tsv
+		cg covered filteredns-$name.tsv > temp.tsv
+		file rename temp.tsv filteredns-$name.covered
 	}
 	if {$force || ![file exists filteredlowscore-$name.covered]} {
 		puts stderr "Coverage of lowscore region"
-		cg regsubtract sreg-$name.tsv reg_lowscore-$name.tsv > filteredlowscore-$name.tsv
-		cg covered filteredlowscore-$name.tsv > filteredlowscore-$name.covered
+		cg regsubtract sreg-$name.tsv reg_lowscore-$name.tsv > temp.tsv
+		file rename temp.tsv filteredlowscore-$name.tsv
+		cg covered filteredlowscore-$name.tsv > temp.tsv
+		file rename temp.tsv filteredlowscore-$name.covered
 	}
 	if {$force || ![file exists histo-refcons-$name.tsv]} {
-		cg reghisto reg_refcons-$name.tsv > histo-refcons-$name.tsv
+		cg reghisto reg_refcons-$name.tsv > temp.tsv
+		file rename temp.tsv histo-refcons-$name.tsv
 	}
 	if {$force || ![file exists filteredcluster-$name.covered]} {
 		puts stderr "Coverage of clusters region"
-		cg regsubtract sreg-$name.tsv reg_cluster-$name.tsv > filteredcluster-$name.tsv
-		cg covered filteredcluster-$name.tsv > filteredcluster-$name.covered
+		cg regsubtract sreg-$name.tsv reg_cluster-$name.tsv > temp.tsv
+		file rename temp.tsv filteredcluster-$name.tsv
+		cg covered filteredcluster-$name.tsv > temp.tsv
+		file rename temp.tsv filteredcluster-$name.covered
 	}
 	cd $keepdir
 }
@@ -134,20 +138,23 @@ proc process_compare {dir1 dir2 dbdir resultsdir {force 0}} {
 		reannot_compare compar_${name1}_${name2}.tsv $dir1 $dir2 fcompar_${name1}_${name2}.tsv
 	}
 	if {$force || ![file exists pvtcompar_${name1}_${name2}.tsv]} {
-		cg compare_pvt < fcompar_${name1}_${name2}.tsv > pvtcompar_${name1}_${name2}.tsv
-		cg compare_pvtsummary < pvtcompar_${name1}_${name2}.tsv > summarycompar_${name1}_${name2}.tsv
+		cg compare_pvt < fcompar_${name1}_${name2}.tsv > temp.tsv
+		file rename temp.tsv pvtcompar_${name1}_${name2}.tsv
+		cg compare_pvtsummary < pvtcompar_${name1}_${name2}.tsv > temp.tsv
+		file rename temp.tsv summarycompar_${name1}_${name2}.tsv
 	}
 	cd $keepdir
 }
 
 if 0 {
 
-	set basedir /media/passport/complgen
-	set basedir /complgen
 	lappend auto_path ~/dev/completegenomics/lib
 	package require Tclx
 	signal -restart error SIGINT
 	package require Extral
+
+	set basedir /media/passport/complgen
+	set basedir /complgen
 	set dir1 $basedir/GS102
 	set dir2 $basedir/GS103
 	set dbdir /data/db
@@ -159,7 +166,7 @@ if 0 {
 	set file2 $dir2/fannotvar-$name2.tsv
 	set regfile1 $dir1/sreg-$name1.tsv
 	set regfile2 $dir2/sreg-$name2.tsv
-	set outfile compar_${name1}_${name2}.tsv
+	set outfile $resultsdir/compar_${name1}_${name2}.tsv
 	file mkdir $resultsdir
 	cd $resultsdir
 

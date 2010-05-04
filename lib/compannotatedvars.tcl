@@ -20,30 +20,6 @@ proc comparepos {comp1 comp2} {
 	}
 }
 
-proc sequenced {r comp2} {
-	if {$r eq 1} {return 1}
-	global cache
-	if {[llength $comp2] != 4} {return 0}
-	foreach {chr pos} $comp2 break
-	set chr [chr2num $chr]
-	set line $cache($r)
-	while {[llength $line]} {
-		foreach {rchr rstart rend} $line break
-		set rchr [chr2num $rchr]
-		if {$rchr > $chr} break
-		if {$rchr == $chr} {
-			if {$rstart > $pos} break
-			if {($rchr == $chr) && ($pos < $rend) && ($pos >= $rstart)} {
-				set cache($r) $line
-				return 1
-			}
-		}
-		set line [gets $r]
-	}
-	set cache($r) $line
-	return 0
-}
-
 array set compare_annot_join_trans {
 	COMPATIBLE 1 MISSENSE 2 DELETE 3 INSERT 4 DELETE+ 5 INSERT+ 6 NONSTOP 7 NONSENSE 8 FRAMESHIFT 9
 }
@@ -94,7 +70,7 @@ proc compare_annot_getline {f} {
 proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2
 
-	catch {close $f1}; catch {close $f2}; catch {close $r1}; catch {close $r2}; catch {close $o}
+	catch {close $f1}; catch {close $f2}; catch {annot_region_close $regfile1}; catch {annot_region_close $regfile2}; catch {close $o}
 	set comparfields {chromosome begin end type}
 	set mergefields {xRef trf str segdup selfchain repeat rna checked geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef effect neffect}
 	set allelefields {alleleSeq1 alleleSeq2}
@@ -122,29 +98,17 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 	set mergeposs2 [list_remove [list_cor $header2 $mergefields] -1]
 	set dummy2 [list_fill [llength $header2] -]
 	if {$regfile1 ne ""} {
-		set r1 [opencgifile $regfile1 header]
-		if {[lrange $header 0 2] ne "chromosome begin end"} {
-			puts stderr "header error in region_file1 $file1"
-			exit 1
-		}
-		set cache($r1) [split [gets $r1] \t]
+		annot_region_init $regfile1
 	} else {
 		puts "no region file for file1"
-		set r1 1
 	}
 	if {$regfile2 ne ""} {
-		set r2 [opencgifile $regfile2 header]
-		if {[lrange $header 0 2] ne "chromosome begin end"} {
-			puts stderr "header error in region_file2 $file2"
-			exit 1
-		}
-		set cache($r2) [split [gets $r2] \t]
+		annot_region_init $regfile2
 	} else {
 		puts "no region file for file2"
-		set r2 1
 	}
 	# start
-	set o [open $outfile w]
+	set o [open $outfile.temp w]
 	# make output header
 	set oheader [list_concat {compar sample} $comparfields]
 	set restfields1 [list_lremove [list_lremove $header1 $mergefields] $comparfields]
@@ -169,10 +133,11 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 		if {![expr {$num % 100000}]} {putslog $num}
 		set d [comparepos $comp1 $comp2]
 		if {$d == 0} {
-			set s1 [sequenced $r1 $comp1]
-			set s2 [sequenced $r2 $comp2]
+			set s1 [annot_region_in $regfile1 {*}[lrange $comp1 0 2]]
+			set s2 [annot_region_in $regfile2 {*}[lrange $comp2 0 2]]
 			if {!$s1 || !$s2} {
-				puts $o [compare_annot_join fl $id1,$id2 $cur1 $cur2]
+				error "variant \"$cur1\" and \"$cur2\" not sequenced"
+				# puts $o [compare_annot_join fl $id1,$id2 $cur1 $cur2]
 			} else {
 				#set type [list_remove [split [lindex $cur1 4] _] ref-consistent ref-inconsistent =]
 				#lset cur1 4 $type
@@ -193,11 +158,12 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 			set comp2 [list_sub $cur2 $comparposs2]
 		} elseif {$d < 0} {
 			while {[comparepos $comp1 $comp2] < 0} {
-				set s [sequenced $r1 $comp1]
+				set s [annot_region_in $regfile1 {*}[lrange $comp1 0 2]]
 				if {!$s} {
+					error "variant1 \"$cur1\" not sequenced"
 					puts $o [compare_annot_join fl $id1 $cur1 -]
 				} else {
-					set s [sequenced $r2 $comp1]
+					set s [annot_region_in $regfile2 {*}[lrange $comp1 0 2]]
 					if {$s} {
 						puts $o [compare_annot_join df $id1 $cur1 {}]
 					} else {
@@ -207,15 +173,16 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 				if {[eof $f1]} break
 				set cur1 [compare_annot_getline $f1]
 				set comp1 [list_sub $cur1 $comparposs1]
-				if {[llength $cur1]} break
+				if {![llength $cur1]} break
 			}
 		} else {
 			while {[comparepos $comp1 $comp2] > 0} {
-				set s [sequenced $r2 $comp2]
+				set s [annot_region_in $regfile2 {*}[lrange $comp2 0 2]]
 				if {!$s} {
+					error "variant2 \"$cur2\" not sequenced"
 					puts $o [compare_annot_join fl $id2 - $cur2]
 				} else {
-					set s [sequenced $r1 $comp2]
+					set s [annot_region_in $regfile1 {*}[lrange $comp2 0 2]]
 					if {$s} {
 						puts $o [compare_annot_join df $id2 {} $cur2]
 					} else {
@@ -225,12 +192,15 @@ proc compare_annot {id1 file1 regfile1 id2 file2 regfile2 outfile} {
 				if {[eof $f2]} break
 				set cur2 [compare_annot_getline $f2]
 				set comp2 [list_sub $cur2 $comparposs2]
-				if {[llength $cur2]} break
+				if {![llength $cur2]} break
 			}
 		}
 	}
 
-	close $f1; close $f2; close $r1; close $r2; close $o
+	annot_region_close $regfile1
+	annot_region_close $regfile2
+	close $f1; close $f2; close $o
+	file rename $outfile.temp $outfile
 }
 
 proc lset_always {varName pos value} {
@@ -333,7 +303,7 @@ proc reannot_compare {compar_file dir1 dir2 outfile} {
 	}
 	annot_coverage_init $dir1
 	annot_coverage_init $dir2
-	set o [open $outfile w]
+	set o [open $outfile.temp w]
 	set poss [list_cor $header {chromosome begin end refscore-1 coverage-1 refscore-2 coverage-2}]
 	foreach {var p}  {r1pos 3 c1pos 4 r2pos 5 c2pos 6} {
 		set $var [lindex $poss $p]
@@ -371,75 +341,39 @@ proc reannot_compare {compar_file dir1 dir2 outfile} {
 	}
 	annot_coverage_close $dir1
 	annot_coverage_close $dir2
+	file rename $outfile.temp $outfile
 }
 
 if 0 {
 
-lappend auto_path ~/dev/completegenomics/lib
-package require Extral
-package require Tclx
-signal -restart error SIGINT
-
-set file1 GS102/fannotvar-GS102.tsv
-set file2 GS103/fannotvar-GS103.tsv
-set id1 GS102
-set id2 GS103
-set regfile1 GS102/sreg-GS102.tsv
-set regfile2 GS103/sreg-GS103.tsv
-set outfile /complgen/testcompar_GS102_GS103/compar_GS102_GS103.tsv
-
-compare_annot $id1 $file1 $regfile1 $id2 $file2 $regfile2 $outfile
-
-set compar_file /complgen/testcompar_GS102_GS103/compar_GS102_GS103.tsv
-cd [file dir $compar_file]
-set dir1 /complgen/GS102
-set dir2 /complgen/GS103
-
-reannot_compare $compar_file $dir1 $dir2 atemp
-
-set compar_file compar/78vs79_compar.tsv
-set reg_file GS00102/reg-refcons-GS000000078-ASM.tsv
-set field refcons
-set tvalue rc
-set fvalue ""
-
-set compar_file compar/78vs79_compar.tsv
-set reg_file GS00103/reg-refcons-GS000000079-ASM.tsv
-set field refcons
-set tvalue rc
-set fvalue ""
-set poss1 {3 4 5}
-set poss2 {0 1 2}
-
-set compar_file compar/78vs79_compar-filter-rc2.tsv
-set reg_file /data/db/_data_db_ucsc-simple_repeats.tsv
-set field trf
-set tvalue trf
-set fvalue ""
-
-
-set o [open compar/test w]
-
-cd /complgen/
-cd /media/passport/complgen
-
-set file1 GS00102/annotvar-GS000000078-ASM.tsv
-set file2 GS00103/annotvar-GS000000079-ASM.tsv
-set id1 78
-set id2 79
-set regfile1 GS00102/reg-GS000000078-ASM.tsv
-set regfile2 GS00103/reg-GS000000079-ASM.tsv
-set outfile compar/78vs79_compar.tsv
-
-catch {close $f1}
-catch {close $f2}
-catch {close $r1}
-catch {close $r2}
-catch {close $o}
-unset -nocomplain cache
-
-set f [open compar/78vs79_compar.tsv]
-set line [split [gets $f] \t]
-llength $line
-
+	lappend auto_path ~/dev/completegenomics/lib
+	lappend auto_path ~/bin/complgen/apps/cg/lib
+	package require Extral
+	package require Tclx
+	signal -restart error SIGINT
+	
+	set basedir /media/passport/complgen
+	set basedir /complgen
+	set dbdir /complgen/refseq
+	set dir1 $basedir/GS101A01
+	set dir2 $basedir/GS101A02
+	set resultsdir $basedir/testcompar_GS101A01_GS101A02
+	set force 0
+	set name1 [file tail $dir1]
+	set id1 $name1
+	set id2 $name2
+	set name2 [file tail $dir2]
+	set file1 $dir1/fannotvar-$name1.tsv
+	set file2 $dir2/fannotvar-$name2.tsv
+	set regfile1 $dir1/sreg-$name1.tsv
+	set regfile2 $dir2/sreg-$name2.tsv
+	set outfile $resultsdir/compar_${name1}_${name2}.tsv
+	file mkdir $resultsdir
+	cd $resultsdir
+	
+	
+	compare_annot $id1 $file1 $regfile1 $id2 $file2 $regfile2 $outfile
+	
+	reannot_compare $compar_file $dir1 $dir2 atemp
+	
 }

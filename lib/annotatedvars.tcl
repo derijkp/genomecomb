@@ -77,7 +77,9 @@ proc var2annotvar_readonevar f {
 						set line2 {}
 						foreach templine [list_remove $keeplist $line1] {
 							foreach {begin end} [lrange $templine 3 4] break
-							if {[overlap [lindex $comp1 0] [lindex $comp1 2] $begin $end]} {
+							foreach {b1 e1} $comp1 break
+							set overlap [overlap $b1 $e1 $begin $end]
+							if {$overlap} {
 								set line2 $templine
 								break
 							}
@@ -161,8 +163,8 @@ proc annot_coverage {dir source dest} {
 		} elseif {[llength $line] > $len} {
 			set line [lrange $line 0 [expr {$len-1}]]
 		}
-		foreach {refscore coverage} {{} {}} break
 		foreach {chr begin end} [list_sub $line $poss] break
+		foreach {refscore coverage} {{} {}} break
 		foreach {refscore coverage} [annot_coverage_get $dir $chr $begin] break
 		set line [linsert $line $ipos $refscore $coverage]
 		puts $o [join $line \t]
@@ -172,6 +174,91 @@ proc annot_coverage {dir source dest} {
 	close $o
 	close $f
 }
+
+if 0 {
+	set name GS102
+	set dbdir /data/db
+	set source /complgen/$name/annotvar-$name.tsv
+	set outfile /complgen/$name/fannotvar-$name.tsv
+	set dir1 /complgen/$name
+	set todo {}
+	lappend todo [list refcons rc $dir/reg_refcons-$name.tsv]
+	lappend todo [list cluster cl $dir/reg_cluster-$name.tsv]
+	lappend todo [list trf trf $dbdir/regdb-simple_repeats.tsv]
+	lappend todo [list str str $dbdir/regdb-microsatelite.tsv]
+	lappend todo [list segdup sd $dbdir/regdb-segdups.tsv]
+	lappend todo [list selfchain sc $dbdir/regdb-selfchain.tsv]
+	lappend todo [list repeat rp $dbdir/regdb-repeatmasker.tsv]
+	lappend todo [list rna rna $dbdir/regdb-rnagenes.tsv]
+}
+
+# todo list of lists: field value regfile
+proc annot_annotvar {source outfile todo {dir {}}} {
+	puts "annotating $source -> $outfile"
+
+	catch {close $f} ; catch {close $o}
+	set f [open $source]
+	set header [split [gets $f] \t]
+	if {$dir ne ""} {
+		annot_coverage_init $dir
+		set ipos [lsearch $header totalScore2]
+		incr ipos
+		set header [linsert $header $ipos refscore coverage]
+		set addref 1
+	} else {
+		set addref 0
+	}
+	set extra {}
+	set lpos 0
+	set wtodo $todo
+	list_foreach {field value regfile} $wtodo {
+		puts "Init $regfile"
+		set pos [lsearch $header $field]
+		if {$pos == -1} {
+			lappend header $field
+			set pos [lsearch $header $field]
+			lappend extra {}
+		}
+		lset wtodo $lpos 0 $pos 
+		annot_region_init $regfile
+		incr lpos
+	}
+	set o [open $outfile.temp w]
+	set poss [list_cor $header {chromosome begin end}]
+	puts $o [join $header \t]
+	set num 0
+	while {![eof $f]} {
+		incr num
+		if {![expr $num%10000]} {putslog $num}
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		foreach {chr begin end} [list_sub $line $poss] break
+		if {$addref} {
+			# refscore
+			foreach {refscore coverage} {{} {}} break
+			foreach {refscore coverage} [annot_coverage_get $dir $chr $begin] break
+			set line [linsert $line $ipos $refscore $coverage]
+		}
+		# regions
+		lappend line {*}$extra
+		list_foreach {field value regfile} $wtodo {
+			if {[lindex $line $field] == "-"} continue
+			# if {[lindex $line $field] != ""} continue
+			set r [annot_region_get $regfile $chr $begin $end]
+			if {$r} {lset line $field $value}
+		}
+		puts $o [join $line \t]
+	}
+	if {$addref} {annot_coverage_close $dir}
+	close $o
+	close $f
+	list_foreach {field value regfile} $wtodo {
+		annot_region_close $regfile
+	}
+	file rename $outfile.temp $outfile
+
+}
+
 
 proc chrcomp {chr1 chr2} {
 	if {$chr1 eq $chr2} {return 0}
@@ -266,10 +353,6 @@ signal -restart error SIGINT
 	set base /media/passport/complgen
 	set base /complgen
 	cd $base
-
-	#test
-	head -9 GS00102/var-GS000000078-ASM.tsv > var-test.tsv
-	tail -401 GS00102/var-GS000000078-ASM.tsv >> var-test.tsv
 
 	set file var-test.tsv
 	set genefile sgene-test.tsv

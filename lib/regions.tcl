@@ -135,9 +135,11 @@ proc regsubtract {regfile1 regfile2} {
 	set poss2 [open_region $f2]
 	set num 0
 	set line1 [get_region $f1 $poss1]
+	foreach {chr1 start1 end1} {{} {} {}} break
 	foreach {chr1 start1 end1} $line1 break
 	set nchr1 [chr2num $chr1]
 	set line2 [get_region $f2 $poss2]
+	foreach {chr2 start2 end2} {{} {} {}} break
 	foreach {chr2 start2 end2} $line2 break
 	set nchr2 [chr2num $chr2]
 	puts "chromosome\tbegin\tend"
