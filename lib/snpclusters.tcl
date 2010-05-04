@@ -45,10 +45,11 @@ proc clusters {} {
 	set checknum 20
 	set schecknum [expr {$checknum-1}]
 	set maxdiff 150
+	set breakdiff 10000
 	#
 	foreach {chr begin end} [get_region $f $poss] break
 	foreach {pchr pbegin pend} [list $chr $begin $end] break
-	set keep [list [list $pbegin 10000 0]]
+	set keep [list [list $pbegin 5000 0]]
 	set checking 0
 	set numtotal 0
 	set numsmall 0
@@ -100,7 +101,7 @@ proc clusters {} {
 					set maxpos $rend
 					set limit [expr {round($maxscore/4)}] 
 				}
-				if {$score <= $limit} {
+				if {($score <= $limit) || ($diff > $breakdiff)} {
 					set rend $maxpos
 					set size [expr {$rend-$rstart+1}]
 					if {$size > 20} {
@@ -132,6 +133,7 @@ proc clusters {} {
 				set maxpos $pos
 				while {$pos >= 0} {
 					set diff [lindex $keep $pos 1]
+					if {$diff > $breakdiff} break
 					if {$diff < $maxdiff} {incr score $match} else {incr score $mismatch}
 					if {$score >= $maxscore} {
 						set maxscore $score
