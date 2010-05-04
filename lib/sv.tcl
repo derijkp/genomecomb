@@ -744,7 +744,7 @@ proc sv_checkthreads {threads start mode resultVar} {
 			if {[llength $common] <= 1} {
 				set zyg hom
 			} else {
-				set commonp [expr {round([llength $common])/[llength $tposs]}]
+				set commonp [expr {double([llength $common])/[llength $tposs]}]
 				if {$commonp < 0.35} {set zyg hom} else {set zyg het}
 			}
 			# linreg
@@ -1410,6 +1410,7 @@ proc svrescore {file} {
 	set scorepos [lsearch $header quality]
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
+		if {![llength $line]} continue
 		foreach {score type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff tnum exnum} [list_sub $line $cor] break
 		if {$type eq "del"} {
 			set mode [expr {$gapsize-$diff}]
@@ -1443,9 +1444,13 @@ proc sv_evaluate {file {field check}} {
 	set header [gets $f]
 	set checkpos [lsearch $header $field]
 	set scorepos [lsearch $header quality]
+	set problemspos [lsearch $header problems]
 	unset -nocomplain a
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		set problems [lindex $line $problemspos]
+		if {[inlist $problems msmall]} continue
 		set check [lindex $line $checkpos]
 		if {$check eq ""} continue
 		set score [lindex $line $scorepos]
@@ -1559,14 +1564,14 @@ proc svfind {pairfile trffile} {
 #1923266 1924086 del     4
 #20	false	2749175	2749337	del	51	hom		424	4	12	12	36	163	-0.12	0.00	0.00	0.00	12	-212
 #lassign {3045000	3053200} dbgstart dbgstop
-lassign {62160000	62167700} dbgstart dbgstop
-catch {close $f}
-set f [svtools_aprgoto $pairfile $dbgstart]
-set outfile test-sv.tsv
+#lassign {100	8650} dbgstart dbgstop
+#catch {close $f}
+#set f [svtools_aprgoto $pairfile $dbgstart]
+#set outfile test-sv.tsv
 #check
 	set dir [file dir [file normalize $outfile]]
 	set o [open $outfile w]
-	puts $o [join {chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum} \t]
+	puts $o [join {check chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum} \t]
 	set list {}
 	set mainrtable {}
 	set rtable {}
@@ -1579,6 +1584,7 @@ set outfile test-sv.tsv
 	unset -nocomplain plist
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
+		if {![llength $line]} continue
 		set line [list_sub $line $poss]
 		set start [lindex $line $end1pos]
 		if {[isint $start]} break
@@ -1634,7 +1640,7 @@ set outfile test-sv.tsv
 					lappend list $line
 				}
 			}
-			set line [split [gets $f] \t]
+			set line [getnotempty $f]
 			set line [list_sub $line $poss]
 		}
 		if {[info exists plist] && ([llength $plist] < 1000)} {
@@ -1652,7 +1658,7 @@ set outfile test-sv.tsv
 #				set threads [sv_addtothreads $threads $start $maxima $table]
 #			}
 #check
-if {$start >= $dbgstop} {error STOPPED}
+#if {$start >= $dbgstop} {error STOPPED}
 			set temp {}
 			set threads [sv_checkthreads $threads $start $mode temp]
 #if {[llength $temp]} {error STOP}
@@ -1681,7 +1687,7 @@ if {$start >= $dbgstop} {error STOPPED}
 			}
 			set result [lsort -integer -index $end1pos $result]
 			foreach l $result {
-				puts $o [join $l \t]
+				puts $o \t[join $l \t]
 			}
 			flush $o
 		}
