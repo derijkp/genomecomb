@@ -169,7 +169,7 @@ graphwidget method opendialog {{file {}}} {
 	if {$file eq ""} {set file [Classy::selectfile]}
 	set f [rzopen $file]
 	set header [tsv_open $f]
-	close $f
+	catch {close $f}
 	set graphd(file) [file normalize $file]
 	set graphd(header) $header
 	lappend graphd(header) {}
@@ -936,29 +936,31 @@ graphwidget method checkfile {} {
 		$table configure -browsecommand "[list $object] checkbrowse"
 	}
 	# sort
-	set temp $checkdata
-	set header [list_shift temp]
-	# score
-	set scorepos [lsearch $header quality]
-	set scores [list_subindex $temp $scorepos]
-	set poss [list_concat [list_find -exact $scores 1] [list_find -exact $scores 0] [list_find -exact $scores -1]]
-	set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
-	# problems
-	set problemspos [lsearch $header problems]
-	foreach problem {pdip small trfbad trfartefact} {
-		set problems [list_subindex $temp $problemspos]
-		set poss [list_find -regexp $problems $problem]
-		set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
+	set header [lindex $checkdata 0]
+	set cor [list_cor $header {type quality problems size match}]
+	set temp [list $header]
+	set endtemp {}
+	set matchpos [lindex $cor end]
+	foreach line [lsort -index $matchpos [lrange $checkdata 1 end]] {
+		foreach {type quality problems size match} [list_sub $line $cor] break
+		set move 0
+		if {($quality <= 3) || ($type eq "trans") \
+			|| ([llength [list_common {msmall trfbad trfartefact} $problems]]) \
+			|| (($type eq "ins") && ($size > 250))
+		} {
+			set move 1
+		} elseif {$type eq "trans"} {
+			set move 1
+		} elseif {$match eq "db"} {
+			set move 1
+		}
+		if {$move} {
+			lappend endtemp $line
+		} else {
+			lappend temp $line
+		}
 	}
-	# types
-	set typespos [lsearch $header type]
-	set types [list_subindex $temp $typespos]
-	set poss [list_find -exact $types trans]
-	set temp [list_concat [list_sub $temp -exclude $poss] [list_sub $temp $poss]]
-	set types [list_subindex $temp $typespos]
-	set poss [list_find -exact $types inv]
-	set temp [list_concat [lsort -integer -index $end1pos [list_sub $temp $poss]] [list_sub $temp -exclude $poss]]
-	list_unshift temp $header
+	lappend temp {*}$endtemp
 	# set checkdata
 	set checkdata $temp
 	set header [lindex $checkdata 0]
