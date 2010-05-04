@@ -87,8 +87,15 @@ proc var2annotvar_readonevar f {
 							set vartype [lindex $line2 5]
 							if {($vartype eq "del") || ($vartype eq "delins")} {
 								lset line2 7 -
-							} else {
+							} elseif {($vartype eq "=") || ($vartype eq "ref-consistent")} {
 								lset line2 7 $reference
+							} elseif {$vartype eq "ref-inconsistent"} {
+								lset line2 7 N
+							} else {
+								set temp [string range [lindex $line2 7] [expr {$begin-$b1}] [expr {$end-$e1}]]
+								if {[string length $temp] == [expr {$end-$begin}]} {
+									lset line2 7 $temp
+								}
 							}
 							lset line2 5 [lindex $line1 5]
 						}
