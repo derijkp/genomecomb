@@ -348,6 +348,16 @@ switch $action {
 		foreach {filename fields} $argv break
 		tsv_sort $filename $fields
 	}
+	scoredist {
+		if {[llength $argv] < 1} {
+			puts stderr "format is: $scriptname $action compar_file ..."
+			puts stderr " - calculates distribution of different scores"
+			exit 1
+		}
+		foreach {filename} $argv {
+			scoredist $filename
+		}
+	}
 	default {
 		puts stderr "unkown option $action"
 		exit 1
