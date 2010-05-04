@@ -41,18 +41,26 @@ switch $action {
 		process_sample $dir $dbdir $force
 	}
 	process_compare {
-		if {([llength $argv] < 4) || ([llength $argv] > 5)} {
-			puts stderr "format is: $scriptname $action sampledir1 sampledir2 dbdir resultsdir ?force?"
-			puts stderr " - compare 2 (prepared) sample directories."
-			puts stderr " - By default, only files that are not present already will be created."
-			puts stderr " -When force is givven as a parameter, everything will be recalculated and overwritten."
-			exit 1
-		}
-		foreach {dir1 dir2 dbdir resultsdir force} $argv break
-		switch $force {
-			force {set force 1}
-			"" {set force 0}
-			default {error "unrecognized option $force"}
+		if {[llength $argv] == 2} {
+			set force 0
+			foreach {dbdir resultsdir} $argv break
+			foreach {dir1 dir2} [lrange [split $resultsdir _] end-1 end] break
+			set dir1 [file dir $resultsdir]/$dir1
+			set dir2 [file dir $resultsdir]/$dir2
+		} else {
+			if {([llength $argv] < 4) || ([llength $argv] > 5)} {
+				puts stderr "format is: $scriptname $action sampledir1 sampledir2 dbdir resultsdir ?force?"
+				puts stderr " - compare 2 (prepared) sample directories."
+				puts stderr " - By default, only files that are not present already will be created."
+				puts stderr " -When force is givven as a parameter, everything will be recalculated and overwritten."
+				exit 1
+			}
+			foreach {dir1 dir2 dbdir resultsdir force} $argv break
+			switch $force {
+				force {set force 1}
+				"" {set force 0}
+				default {error "unrecognized option $force"}
+			}
 		}
 		process_compare $dir1 $dir2 $dbdir $resultsdir $force
 	}
