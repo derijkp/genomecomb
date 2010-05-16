@@ -124,7 +124,13 @@ proc var2annotvar_readonevar f {
 	set type [list [get varType unkown] [get varType2 unknown]]
 	set type [list_remdup [list_remove $type = ref-consistent = ref-inconsistent unknown]]
 	if {$type ne ""} {
-		set result [list $locus $chromosome $begin $end [join $type _] $alleleSeq [get alleleSeq2 $reference] $totalScore [get totalScore2 ""] $xRef]
+		set alleleSeq2 [get alleleSeq2 $reference]
+		set totalScore2 [get totalScore2 ""]
+		if {$alleleSeq2 < $alleleSeq} {
+			set temp $alleleSeq ; set alleleSeq $alleleSeq2 ; set alleleSeq2 $temp
+			set temp $totalScore ; set totalScore $totalScore2 ; set totalScore2 $temp
+		}
+		set result [list $locus $chromosome $begin $end [join $type _] $reference $alleleSeq $alleleSeq2 $totalScore $totalScore2 $xRef]
 		return $result
 	} else {
 		return {}
@@ -303,7 +309,7 @@ proc var2annotvar {file genefile outfile} {
 		error "header error in $genefile"
 	}
 	set o [open $outfile w]
-	puts $o [join {locus chromosome begin end type alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef} \t]
+	puts $o [join {locus chromosome begin end type reference alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef} \t]
 	set cur [var2annotvar_readonevar $f1]
 	set curgene [readgeneset $g]
 	set gchr [lindex $curgene 0 3]
