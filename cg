@@ -40,6 +40,22 @@ switch $action {
 		}
 		process_sample $dir $dbdir $force
 	}
+	process_rtgsample {
+		if {([llength $argv] < 2) || ([llength $argv] > 3)} {
+			puts stderr "format is: $scriptname $action sampledir dbdir ?force?"
+			puts stderr " - processes (sorting annotating, etc.) one rtg sample directory."
+			puts stderr " - By default, only files that are not present already will be created."
+			puts stderr " -When force is given as a parameter, everything will be recalculated and overwritten."
+			exit 1
+		}
+		foreach {dir dbdir force} $argv break
+		switch $force {
+			force {set force 1}
+			"" {set force 0}
+			default {error "unrecognized option $force"}
+		}
+		process_rtgsample $dir $dbdir $force
+	}
 	process_compare {
 		if {[llength $argv] == 2} {
 			set force 0
