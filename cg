@@ -113,11 +113,12 @@ switch $action {
 		compare_pvt
 	}
 	compare_pvtsummary {
-		if {[llength $argv] != 0} {
-			puts stderr "format is: $scriptname $action"
+		if {[llength $argv] != 0 && [llength $argv] != 1} {
+			puts stderr "format is: $scriptname $action ?table?"
 			exit 1
 		}
-		compare_pvtsummary
+		if {[lindex $argv end] eq "table"} {set type 2} else {set type 1}
+		compare_pvtsummary $type
 	}
 	cg2cnv {
 		if {[llength $argv] != 2} {

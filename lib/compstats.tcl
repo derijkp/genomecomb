@@ -115,10 +115,13 @@ proc count {slist {cfilter {}}} {
 	return $result
 }
 
-proc compare_pvtsummary {} {
-	global header
-	set f stdin
-	# set f [open $file]
+proc compare_loadtable {file headerVar} {
+	upvar $headerVar header
+	if {$file ne "stdin"} {
+		set f [open $file]
+	} else {
+		set f stdin
+	}
 	set header [split [gets $f] \t]
 	set num 0
 	set table {}
@@ -129,20 +132,111 @@ proc compare_pvtsummary {} {
 		if {![llength $line]} continue
 		lappend table $line
 	}
+	if {$file ne "stdin"} {
+		close $f
+	}
+	return $table
+}
+
+proc compare_pvtsummary_out1 {o title header flist} {
+	set loclist {EXON UTR BEGIN END INTRON OTHER ""}
+	set effectlist {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE MISSENSE COMPATIBLE UNDEFINED OTHER}
+	set pos [lsearch $header sample]
+	set idlist [list_remdup [split [list_remdup [list_subindex $flist $pos]] " ,"]]
 	set len [llength $header]
 	set end [expr {$len-1}]
+	puts $o "\n ==================== $title ===================="
+	foreach compar {df mm sm} {
+		putslog $compar
+		puts $o "\n---------- $compar: $title ----------"
+		set list [comstats_filter $flist [list compar $compar]]
+		set checkall [format %0.0f [lmath_sum [list_subindex $list $end]]]
+		puts $checkall
+		set all [count $list]
+		set allnew [count $list {dbsnp ""}]
+		puts $o "total:\t$all"
+		set snps [count $list {type snp}]
+		set snpsnew [count $list {type snp dbsnp ""}]
+		puts $o "snps:\t$snps ([expr {$all-$snps}] other)\tnewsnps\t$snpsnew ([expr {$allnew-$snpsnew}] other)"
+		if {$compar eq "df"} {
+			set idlistheader \t\t[join $idlist \t]
+		} else {
+			set idlistheader ""
+		}
+		puts $o "\nloc\ttotal\tnew\tdbsnp$idlistheader"
+		foreach l $loclist {
+			set temp1 [count $list [list dbsnp "" loc $l]]
+			set temp2 [count $list [list dbsnp dbsnp loc $l]]
+			set oline "$l:\t[expr {$temp1+$temp2}]\t${temp1}\t${temp2}\t"
+			if {$compar eq "df"} {
+				foreach id $idlist {
+					append oline \t[count $list [list loc $l sample $id]]
+				}
+			}
+			puts $o $oline
+		}
+		set temp "\neffect\ttotal\tnew\tdbsnp\t"
+		if {$compar eq "df"} {
+			foreach id $idlist {
+				append temp \t$id\t$id\(dbsnp\)
+			}
+		}
+		puts $o $temp
+		foreach e $effectlist {
+			set temp1 [count $list [list dbsnp "" loc EXON effect $e]]
+			set temp2 [count $list [list dbsnp dbsnp loc EXON effect $e]]
+			set oline "$e\t[expr {$temp1+$temp2}]\t$temp1\t$temp2\t"
+			if {$compar eq "df"} {
+				foreach id $idlist {
+					append oline \t[count $list [list dbsnp "" loc EXON effect $e sample $id]]
+					append oline \t[count $list [list dbsnp dbsnp loc EXON effect $e sample $id]]
+				}
+			}
+			puts $o $oline
+		}
+		set temp1 [count $list [list dbsnp "" loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE}]]
+		set temp2 [count $list [list dbsnp dbsnp loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE}]]
+		set oline "*BAD*\t[expr {$temp1+$temp2}]\t$temp1\t$temp2\t"
+		if {$compar eq "df"} {
+			foreach id $idlist {
+				append oline \t[count $list [list dbsnp "" loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE} sample $id]]
+				append oline \t[count $list [list dbsnp dbsnp loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE} sample $id]]
+			}
+		}
+		puts $o $oline
+	}
+}
+
+proc compare_pvtsummary_out2 {o title header flist} {
+	set len [llength $header]
+	set end [expr {$len-1}]
+	foreach compar {df mm sm un} {
+		set list [comstats_filter $flist [list compar $compar]]
+		set checkall [format %0.0f [lmath_sum [list_subindex $list $end]]]
+		set all [count $list]
+		set allnew [count $list {dbsnp ""}]
+		set snps [count $list {type snp}]
+		set indels [expr {$all-$snps}]
+		set snpsnew [count $list {type snp dbsnp ""}]
+		lappend oline $all $allnew $snps $indels $snpsnew
+	}
+	puts $o $title\t[join $oline \t]
+}
+
+proc compare_pvtsummary {{type 1}} {
+	global header
+	set file stdin
+	# set f [open $file]
+	set table [compare_loadtable $file header]
 	set o stdout
 	# selectivity
-	compare_selectivity $o $table
+	if {$type == 1} {
+		compare_selectivity $o $table
+	}
 	# filters
 	array set trans {
 		COMPATIBLE 1 MISSENSE 2 DELETE 3 INSERT 4 DELETE+ 5 INSERT+ 6 NONSTOP 7 NONSENSE 8 FRAMESHIFT 9
 	}
-	set pos [lsearch $header sample]
-	set idlist [list_remdup [split [list_remdup [list_subindex $table $pos]] " ,"]]
-	set filterlist {0 1 2 3}
-	set loclist {EXON UTR BEGIN END INTRON OTHER ""}
-	set effectlist {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE MISSENSE COMPATIBLE UNDEFINED OTHER}
 	# set o [open $ofile a]
 	set o stdout
 	set filterlist {
@@ -167,69 +261,17 @@ proc compare_pvtsummary {} {
 		lappend filterlist $ctitle $cfilter
 	}
 
+	if {$type == 2} {
+		set wheader filter
+		foreach compar {df mm sm un} {
+			lappend wheader ${compar}-all ${compar}-allnew ${compar}-snps ${compar}-indels ${compar}-snpsnew
+		}
+		puts $o [join $wheader \t]
+	}
 	foreach {title filters} $filterlist {
 		putslog "===== $title ====="
-		puts $o "\n ==================== $title ===================="
 		set flist [comstats_filter $table $filters]
-		foreach compar {df mm sm} {
-			putslog $compar
-			puts $o "\n---------- $compar: $title ----------"
-			set list [comstats_filter $flist [list compar $compar]]
-			set checkall [format %0.0f [lmath_sum [list_subindex $list $end]]]
-			puts $checkall
-			set all [count $list]
-			set allnew [count $list {dbsnp ""}]
-			puts $o "total:\t$all"
-			set snps [count $list {type snp}]
-			set snpsnew [count $list {type snp dbsnp ""}]
-			puts $o "snps:\t$snps ([expr {$all-$snps}] other)\tnewsnps\t$snpsnew ([expr {$allnew-$snpsnew}] other)"
-			if {$compar eq "df"} {
-				set idlistheader \t\t[join $idlist \t]
-			} else {
-				set idlistheader ""
-			}
-			puts $o "\nloc\ttotal\tnew\tdbsnp$idlistheader"
-			foreach l $loclist {
-				set temp1 [count $list [list dbsnp "" loc $l]]
-				set temp2 [count $list [list dbsnp dbsnp loc $l]]
-				set oline "$l:\t[expr {$temp1+$temp2}]\t${temp1}\t${temp2}\t"
-				if {$compar eq "df"} {
-					foreach id $idlist {
-						append oline \t[count $list [list loc $l sample $id]]
-					}
-				}
-				puts $o $oline
-			}
-			set temp "\neffect\ttotal\tnew\tdbsnp\t"
-			if {$compar eq "df"} {
-				foreach id $idlist {
-					append temp \t$id\t$id\(dbsnp\)
-				}
-			}
-			puts $o $temp
-			foreach e $effectlist {
-				set temp1 [count $list [list dbsnp "" loc EXON effect $e]]
-				set temp2 [count $list [list dbsnp dbsnp loc EXON effect $e]]
-				set oline "$e\t[expr {$temp1+$temp2}]\t$temp1\t$temp2\t"
-				if {$compar eq "df"} {
-					foreach id $idlist {
-						append oline \t[count $list [list dbsnp "" loc EXON effect $e sample $id]]
-						append oline \t[count $list [list dbsnp "" loc EXON effect $e sample $id]]
-					}
-				}
-				puts $o $oline
-			}
-			set temp1 [count $list [list dbsnp "" loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE}]]
-			set temp2 [count $list [list dbsnp dbsnp loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE}]]
-			set oline "*BAD*\t[expr {$temp1+$temp2}]\t$temp1\t$temp2\t"
-			if {$compar eq "df"} {
-				foreach id $idlist {
-					append oline \t[count $filters [list dbsnp "" loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE} sample $id]]
-					append oline \t[count $filters [list dbsnp dbsnp loc EXON effect {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE} sample $id]]
-				}
-			}
-			puts $o $oline
-		}
+		compare_pvtsummary_out$type $o $title $header $flist
 		flush $o
 	}
 }
