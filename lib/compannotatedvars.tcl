@@ -294,8 +294,17 @@ proc reannot_compare {compar_file dir1 dir2 outfile} {
 	set f [open $compar_file]
 	set header [split [gets $f] \t]
 	set todo {}
-	lappend todo [list [lsearch $header refcons-1] rc $dir1/reg_refcons-$name1.tsv]
-	lappend todo [list [lsearch $header refcons-2] rc $dir2/reg_refcons-$name2.tsv]
+	set userc 1
+	if {[file exists $dir1/reg_refcons-$name1.tsv]} {
+		lappend todo [list [lsearch $header refcons-1] rc $dir1/reg_refcons-$name1.tsv]
+	} else {
+		set userc 0
+	}
+	if {[file exists $dir2/reg_refcons-$name2.tsv]} {
+		lappend todo [list [lsearch $header refcons-2] rc $dir2/reg_refcons-$name2.tsv]
+	} else {
+		set userc 0
+	}
 	lappend todo [list [lsearch $header cluster-1] cl $dir1/reg_cluster-$name1.tsv]
 	lappend todo [list [lsearch $header cluster-2] cl $dir2/reg_cluster-$name2.tsv]
 	list_foreach {field value regfile} $todo {
@@ -316,15 +325,17 @@ proc reannot_compare {compar_file dir1 dir2 outfile} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		foreach {chr begin end r1 c1 r2 c2} [list_sub $line $poss] break
-		if {$r1 eq ""} {
-			foreach {r c} [annot_coverage_get $dir1 $chr $begin] break
-			lset line $r1pos $r
-			lset line $c1pos $c
-		}
-		if {$r2 eq ""} {
-			foreach {r c} [annot_coverage_get $dir2 $chr $begin] break
-			lset line $r2pos $r
-			lset line $c2pos $c
+		if {$userc} {
+			if {$r1 eq ""} {
+				foreach {r c} [annot_coverage_get $dir1 $chr $begin] break
+				lset line $r1pos $r
+				lset line $c1pos $c
+			}
+			if {$r2 eq ""} {
+				foreach {r c} [annot_coverage_get $dir2 $chr $begin] break
+				lset line $r2pos $r
+				lset line $c2pos $c
+			}
 		}
 		list_foreach {field value regfile} $todo {
 			if {[lindex $line $field] == "-"} continue
@@ -339,8 +350,10 @@ proc reannot_compare {compar_file dir1 dir2 outfile} {
 	list_foreach {field value regfile} $todo {
 		annot_region_close $regfile
 	}
-	annot_coverage_close $dir1
-	annot_coverage_close $dir2
+	if {$userc} {
+		annot_coverage_close $dir1
+		annot_coverage_close $dir2
+	}
 	file rename $outfile.temp $outfile
 }
 
