@@ -146,8 +146,74 @@ proc process_compare {dir1 dir2 dbdir resultsdir {force 0}} {
 	cd $keepdir
 }
 
+proc process_compare_coverage {dir1 dir2 dbdir resultsdir {force 0}} {
+	cd $resultsdir
+	# region files
+	set dir1 [file normalize $dir1]
+	set dir2 [file normalize $dir2]
+	set name1 [file tail $dir1]
+	set name2 [file tail $dir2]
+	set target ${name1}_${name2}_regcommon.tsv.covered
+	if {$force || ![file exists $target]} {
+		cg regsubtract $dir1/sreg-${name1}.tsv $dir2/sreg-${name2}.tsv > temp.tsv
+		cg regsubtract $dir1/sreg-${name1}.tsv temp.tsv > ${name1}_${name2}_regcommon.tsv
+		cg covered ${name1}_${name2}_regcommon.tsv > $target
+	}
+	# region from each sample
+	set todo {}
+	lappend todo [list refcons $dir1/reg_refcons-${name1}.tsv $dir2/reg_refcons-${name2}.tsv]
+	lappend todo [list ns $dir1/reg_ns-${name1}.tsv $dir2/reg_ns-${name2}.tsv]
+	lappend todo [list lowscore $dir1/reg_lowscore-${name1}.tsv $dir2/reg_lowscore-${name2}.tsv]
+	lappend todo [list cluster $dir1/reg_cluster-${name1}.tsv $dir2/reg_cluster-${name2}.tsv]
+	lappend todo [list trf $dbdir/regdb-simple_repeats.tsv {}]
+	lappend todo [list str $dbdir/regdb-microsatelite.tsv {}]
+	lappend todo [list b20 $dir1/ASM/REF/below20coverage.regions $dir2/ASM/REF/below20coverage.regions]
+	lappend todo [list a100 $dir1/ASM/REF/above100coverage.regions $dir2/ASM/REF/above100coverage.regions]
+	lappend todo [list segdup $dbdir/regdb-segdups.tsv {}]
+	lappend todo [list selfchain $dbdir/regdb-selfchain.tsv {}]
+	lappend todo [list repeat $dbdir/regdb-repeatmasker.tsv {}]
+	list_foreach {dbname rfile1 rfile2} $todo {
+		set target ${name1}_${name2}_regcommon-$dbname.tsv.covered
+		if {$force || ![file exists $target]} {
+			puts "Making $target"
+			cg regsubtract ${name1}_${name2}_regcommon.tsv $rfile1 > temp.tsv
+			if {$rfile2 ne ""} {
+				file rename -force temp.tsv temp-old.tsv
+				cg regsubtract temp-old.tsv $rfile2 > temp.tsv
+			}
+			file rename -force temp.tsv ${name1}_${name2}_regcommon-$dbname.tsv
+			cg covered ${name1}_${name2}_regcommon-$dbname.tsv > temp.covered
+			file rename -force temp.covered $target
+		} else {
+			puts "$target already there"
+		}
+	}
+	# subsequent subtractions (filters)
+	set newname ${name1}_${name2}_regcommon-rc
+	set todo [lrange $todo 1 end]
+	list_foreach {dbname rfile1 rfile2} $todo {
+		set oldname $newname
+		set newname $oldname-$dbname
+		set target $newname.tsv.covered
+		if {$force || ![file exists $target]} {
+			puts "Making $target"
+			cg regsubtract $oldname.tsv  $rfile1 > temp.tsv
+			if {$rfile2 ne ""} {
+				file rename -force temp.tsv temp-old.tsv
+				cg regsubtract temp-old.tsv $rfile2 > temp.tsv
+			}
+			file rename -force temp.tsv $newname.tsv
+			cg covered $newname.tsv > temp.covered
+			file rename -force temp.covered $target
+		} else {
+			puts "$target already there"
+		}
+	}
+}
+
 if 0 {
 
+	lappend auto_path /complgen/bin/complgen/apps/cg/lib
 	lappend auto_path ~/dev/completegenomics/lib
 	package require Tclx
 	signal -restart error SIGINT
@@ -157,8 +223,8 @@ if 0 {
 	set basedir /complgen
 	set dir1 $basedir/GS102
 	set dir2 $basedir/GS103
-	set dbdir /data/db
-	set resultsdir $basedir/testcompar_GS102_GS103
+	set dbdir /complgen/refseq
+	set resultsdir $basedir/compar_GS102_GS103
 	set force 0
 	set name1 [file tail $dir1]
 	set name2 [file tail $dir2]
