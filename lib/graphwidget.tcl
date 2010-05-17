@@ -740,10 +740,12 @@ graphwidget method reload {} {
 				break
 			}
 			if {[get region(cancel) 0]} break
-			set y [vector expr max($index)]
-			if {$y > $maxy} {set maxy $y}
-			set y [vector expr min($index)]
-			if {$y < $miny} {set miny $y}
+			if {![catch {set y [vector expr max($index)]}]} {
+				if {$y > $maxy} {set maxy $y}
+			}
+			if {![catch {set y [vector expr min($index)]}]} {
+				if {$y < $miny} {set miny $y}
+			}
 			puts "$name loaded"
 		}
 		::$object.ends.y set [list $miny $maxy]
