@@ -96,7 +96,7 @@ proc cnvmedian {} {
 		incr num
 		if {$num > 1000000} break
 		if {![expr {$num%100000}]} {putslog $num}
-		set line [split [gets $f] \t]
+		set line [getnotempty $f]
 		puts $o [lindex $line 0]\t[lindex $line 2]
 	}
 	close $o
@@ -121,7 +121,7 @@ catch {close $f}
 	set header [tsv_open $f]
 	set list {}
 	unset -nocomplain plist
-	set line [split [gets $f] \t]
+	set line [getnotempty $f]
 	set start [lindex $line 0]
 	set start [expr {$start-$start%$windowsize}]
 	set end [expr {$start + $windowsize -1}]
