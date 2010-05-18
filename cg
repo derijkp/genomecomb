@@ -104,6 +104,15 @@ switch $action {
 		}
 		process_compare_coverage $dir1 $dir2 $dbdir $resultsdir $force
 	}
+	process_indexcompress {
+		if {[llength $argv] != 1} {
+			puts stderr "format is: $scriptname $action file"
+			puts stderr " - makes index, and compresses to razip"
+			exit 1
+		}
+		foreach {file} $argv break
+		process_indexcompress $file
+	}
 	var2annot {
 		if {[llength $argv] != 3} {
 			puts stderr "format is: $scriptname $action variation_file sorted_gene_file output_file"
