@@ -24,6 +24,24 @@ exit 1
 
 set action [list_shift argv]
 switch $action {
+	multicompar {
+		if {([llength $argv] < 1)} {
+			puts stderr "format is: $scriptname $action compar_file ?dir? ..."
+			puts stderr " - adds new sample dir(s) to compar_file"
+			puts stderr " - the sample dir(s) should be one directory below compar_file"
+			puts stderr " - sample names will be the names of the sample dir(s)"
+			puts stderr " - if no dirs are given, missing annotations will be checked and added"
+			exit 1
+		}
+		foreach {compar_file} $argv break
+		set dirs [lrange $argv 1 end]
+		foreach dir $dirs {
+			putslog "Adding $dir"
+			multicompar $compar_file $dir
+		}
+		putslog "Reannotating $compar_file"
+		multicompar_reannot $compar_file
+	}
 	process_sample {
 		if {([llength $argv] < 2) || ([llength $argv] > 3)} {
 			puts stderr "format is: $scriptname $action sampledir dbdir ?force?"
