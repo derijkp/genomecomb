@@ -233,3 +233,60 @@ proc chrindexseek {file f chr} {
 		seek $f $fpos start
 	}
 }
+
+proc binsearch {table index value} {
+	set begin 0
+	set end [llength $table]
+	while 1 {
+		set mid [expr {($begin+$end)/2}]
+		if {$mid == $begin} break
+		set v [lindex $table $mid $index]
+		if {$value < $v} {
+			set end $mid
+		} elseif {$value > $v} {
+			set begin $mid
+		} else {
+			break
+		}
+	}
+	return $mid
+}
+
+proc ifcatch {command varName args} {
+	upvar $varName result
+	set error [uplevel [list catch $command $varName]]
+	if {!$error} {
+		return $result
+	}
+	set switchlist [list_pop args]
+	if {[lindex $switchlist end-1] ne "default"} {
+		lappend switchlist default "error [list $result]"
+	}
+	uplevel switch $args [list $result $switchlist]
+}
+
+if 0 {
+
+	ifcatch {error test} result {
+		test1 {puts ERRORtest1}
+		test2 {puts ERRORtest2}
+		default {puts ERRORdefault}
+	}
+
+	ifcatch {error test2} result {
+		test1 {puts ERRORtest1}
+		test2 {puts ERRORtest2}
+	}
+
+	ifcatch {error test} result {
+		test1 {puts ERRORtest1}
+		test2 {puts ERRORtest2}
+	}
+
+	ifcatch {set a 1} result {
+		test1 {puts ERRORtest1}
+		test2 {puts ERRORtest2}
+	}
+
+}
+

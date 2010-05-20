@@ -91,6 +91,7 @@ cg select -q '$begin < 2000' -f 'chromosome begin end' -s 'haplotype' < GS102/AS
 proc tsv_sort {filename fields} {
 	set f [open $filename]
 	set line [gets $f]
+	close $f
 	if {[string index $line 0] eq "#"} {set line [string range $line 1 end]}
 	set header [split $line \t]
 	set poss [list_cor $header $fields]
@@ -103,6 +104,8 @@ proc tsv_sort {filename fields} {
 
 proc file_rootgz {filename} {
 	if {[file extension $filename] eq ".gz"} {
+		return [file root [file root $filename]]
+	} elseif {[file extension $filename] eq ".rz"} {
 		return [file root [file root $filename]]
 	} else {
 		file root [file root $filename]
@@ -248,6 +251,7 @@ proc tsv_index {file xfield} {
 		if {![llength $line]} continue
 		set xmax [lindex $line $xpos]
 	}
+	close $f
 	set o [open $indexname w]
 	puts $o 10000
 	puts $o $findex
@@ -255,4 +259,132 @@ proc tsv_index {file xfield} {
 	puts $o $xmax
 	puts $o [join $index \n]
 	close $o
+}
+
+proc tsv_index_open {file field {uncompress 0}} {
+	global cache
+	set file [file normalize $file]
+	if {[info exists cache(tsv_index,$file,$field,step)]} return
+	set ext [file extension $file]
+	if {$ext eq ".gz"} {set uncompress 1}
+	set root [rzroot $file]
+	set workfile $file
+	set uncompressed 0
+	set remove 0
+	if {[inlist {.rz .gz} $ext]} {
+		if {$uncompress} {
+			set workfile $root
+			puts "temporarily uncompressing $file"
+			catch {exec gunzip -c $file > $workfile}
+			set uncompressed 1
+			set remove 1
+		}
+	} else {
+		set uncompressed 1
+	}
+	set indexname $root.${field}_index
+	if {![file exists $indexname]} {
+		tsv_index $file $field
+	}
+	set o [open $indexname]
+	set cache(tsv_index,$file,$field,step) [gets $o]
+	set cache(tsv_index,$file,$field,findex) [gets $o]
+	set xmin [gets $o]
+	set cache(tsv_index,$file,$field,xmin) $xmin
+	set cache(tsv_index,$file,$field,xmax) [gets $o]
+	set cache(tsv_index,$file,$field,fx) [expr {$xmin-$xmin%10000}]
+	set cache(tsv_index,$file,$field,index) [split [string trim [read $o]] \n]
+	set cache(tsv_index,$file,$field,workfile) $workfile
+	set cache(tsv_index,$file,$field,uncompressed) $uncompressed
+	set cache(tsv_index,$file,$field,remove) $remove
+	close $o
+	set f [rzopen $workfile]
+	set cache(tsv_index,$file,header) [tsv_open $f]
+	if {$uncompressed} {
+		set cache(tsv_index,$file,$field,channel) $f
+	} else {
+		catch {close $f}
+	}
+}
+
+proc tsv_index_close {file field} {
+	global cache
+	set file [file normalize $file]
+	if {$cache(tsv_index,$file,$field,remove) && ($cache(tsv_index,$file,$field,workfile) ne $file)} {
+		close $cache(tsv_index,$file,$field,channel)
+		# puts "remove $cache(tsv_index,$file,$field,workfile)"
+		file remove $cache(tsv_index,$file,$field,workfile)
+	}
+	set indexname [rzroot $file].${field}_index
+	unset -nocomplain cache(tsv_index,$file,$field,step)
+	unset -nocomplain cache(tsv_index,$file,$field,findex)
+	unset -nocomplain cache(tsv_index,$file,$field,xmin)
+	unset -nocomplain cache(tsv_index,$file,$field,xmax)
+	unset -nocomplain cache(tsv_index,$file,$field,fx)
+	unset -nocomplain cache(tsv_index,$file,$field,index)
+	unset -nocomplain cache(tsv_index,$file,$field,workfile)
+	unset -nocomplain cache(tsv_index,$file,$field,uncompressed)
+	unset -nocomplain cache(tsv_index,$file,$field,remove)
+	unset -nocomplain cache(tsv_index,$file,$field,channel)
+	unset -nocomplain cache(tsv_index,$file,header)
+}
+
+proc tsv_index_apprstop {file field} {
+	global cache
+	set uncompressed $cache(tsv_index,$file,$field,uncompressed)
+	if {!$uncompressed} {
+		catch {close $f}
+	}
+}
+
+proc tsv_index_apprgoto {file field pos} {
+	global cache
+	set file [file normalize $file]
+	set index $cache(tsv_index,$file,$field,index)
+	set step $cache(tsv_index,$file,$field,step)
+	set start [expr {round($pos)-round($pos)%$step}]
+	set indexpos [expr {($start-$cache(tsv_index,$file,$field,findex))/$step}]
+	if {$indexpos < 0} {set indexpos 0}
+	if {$indexpos >= [llength $index]} {set indexpos end}
+	set fpos [expr {round([lindex $index $indexpos])}]
+	set uncompressed $cache(tsv_index,$file,$field,uncompressed)
+	if {$uncompressed} {
+		set f $cache(tsv_index,$file,$field,channel)
+		seek $f $fpos
+	} else {
+		set f [rzopen $file $fpos]
+	}
+	return $f
+}
+
+proc tsv_index_get {file field pos} {
+	global cache
+	set file [file normalize $file]
+	set header $cache(tsv_index,$file,header)
+	set fieldpos [lsearch $header $field]
+	set uncompressed $cache(tsv_index,$file,$field,uncompressed)
+	set f [tsv_index_apprgoto $file $field $pos]
+	if {$uncompressed} {
+		set line [tsv_nextline $f $fieldpos $pos]
+	} else {
+		set line {}
+		while 1 {
+			# read in mem in chunks
+			# do a ~ binary search to get at target faster
+			set chunk [read $f 20480]
+			append chunk [gets $f]
+			if {![string length $chunk]} break
+			set table [split $chunk \n]
+			set temp [lindex $table end $fieldpos]
+			if {$temp < $pos} continue
+			if {$temp == $pos} break
+			set ipos [binsearch $table $fieldpos $pos]
+			set line [lindex $table $ipos]
+			break
+		}
+	}
+	tsv_index_apprstop $file $field
+	set temp [lindex $line $fieldpos]
+	if {$temp != $pos} {error "$pos not found in $file,$field"}
+	return $line
 }

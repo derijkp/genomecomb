@@ -87,38 +87,30 @@ proc annot_region_close {regfile} {
 
 proc annot_coverage_init {dir} {
 	global annot
-	catch {annot_region_close $dir}
-	set annot(cov,$dir) {-1 {} 0 {}}
+	catch {annot_coverage_close $dir}
+	set annot(cov,$dir) {-1 {} 0}
 }
 
 proc annot_coverage_get {dir chr begin} {
 	global annot
-	foreach {curchr fc rem chrfile} $annot(cov,$dir) break
+	foreach {curchr chrfile present} [get annot(cov,$dir) {{} {} 0}] break
 	if {$chr ne $curchr} {
-		catch {close $fc}
-		if {$rem && [file extension $chrfile] ne ".gz"} {file delete $chrfile}
-		set chrfile [glob -nocomplain $dir/ASM/REF/coverageRefScore-$chr-*-ASM.tsv]
-		if {![llength $chrfile]} {
-			set chrfile [glob -nocomplain $dir/ASM/REF/coverageRefScore-$chr-*-ASM.tsv.gz]
-			if {![llength $chrfile]} {error "$dir/ASM/REF/coverageRefScore-$chr-*-ASM.tsv(.gz) not found"}
-			puts "temporarily uncompressing $chrfile"
-			exec gunzip -c $chrfile > [file root $chrfile]
-			set chrfile [glob -nocomplain $dir/ASM/REF/coverageRefScore-$chr-*-ASM.tsv]
-			lset annot(cov,$dir) 2 1
+		if {[llength $chrfile]} {
+			tsv_index_close $chrfile offset
+		}
+		set chrfile [lindex [glob -nocomplain $dir/ASM/REF/coverageRefScore-$chr-*-ASM.tsv $dir/ASM/REF/coverageRefScore-$chr-*-ASM.tsv.rz $dir/ASM/REF/coverageRefScore-$chr-*-ASM.tsv.gz] 0]
+		if {[llength $chrfile]} {
+			tsv_index_open $chrfile offset 1
+			set present 1
 		} else {
-			lset annot(cov,$dir) 2 0
+			set present 0
 		}
-		set chrfile [lindex $chrfile 0]
-		lset annot(cov,$dir) 3 $chrfile
-		set fc [open $chrfile]
-		lset annot(cov,$dir) 1 $fc
-		while {![eof $fc]} {
-			set cline [split [gets $fc] \t]
-			if {[string index $cline 0] eq ">"} break
-		}
-		lset annot(cov,$dir) 0 $chr
+		set annot(cov,$dir) [list $chr $chrfile $present]
 	}
-	set cline [tsv_nextline $fc 0 $begin]
+	if {!$present} {return {? ?}}
+	ifcatch {tsv_index_get $chrfile offset $begin} cline -regexp {
+		"not found in" {set cline {? ? ?}}
+	}
 	foreach {refscore coverage} {{} {}} break
 	foreach {offset refscore coverage} $cline break
 	return [list $refscore $coverage]
@@ -126,7 +118,9 @@ proc annot_coverage_get {dir chr begin} {
 
 proc annot_coverage_close {dir} {
 	global annot
-	foreach {curchr fc rem chrfile} $annot(cov,$dir) break
-	catch {close $fc}
+	foreach {curchr chrfile present} [get annot(cov,$dir) {{} {} 0}] break
+	if {[llength $chrfile]} {
+		tsv_index_close $chrfile offset
+	}
 	unset annot(cov,$dir)
 }
