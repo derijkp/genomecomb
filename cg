@@ -378,6 +378,12 @@ switch $action {
 	}
 	select {
 		set query {}; set fields {}; set sortfields {}
+		if {[expr {[llength $argv]%2}]} {
+			set filename [list_pop argv]
+			set f [rzopen $filename]
+		} else {
+			set f stdin
+		}
 		foreach {key value} $argv {
 			switch -- $key {
 				-q {
@@ -393,7 +399,7 @@ switch $action {
 				}
 				default {
 					puts stderr "unkown option $key"
-					puts stderr "format is: $scriptname $action ?-q query? ?-f fields? ?-s sortfields?"
+					puts stderr "format is: $scriptname $action ?-q query? ?-f fields? ?-s sortfields? ?filename?"
 					puts stderr " - select lines and columns in tab separated file, and sorts the result"
 					puts stderr "or format is: $scriptname $action -h"
 					puts stderr " - return header fields in file"
@@ -401,7 +407,8 @@ switch $action {
 				}
 			}
 		}
-		set error [catch {tsv_select $query $fields $sortfields} result]
+		set error [catch {tsv_select $query $fields $sortfields $f} result]
+		if {$f ne "stdin"} {catch {close $f}}
 		if {$error} {
 			puts stderr $result
 			exit 1
