@@ -62,6 +62,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {f stdin}} {
 	} else {
 		set o [open "|\ [join $pipe " | "]\ >@\ stdout" w]
 		fcopy $f $o
+		close $o
 	}
 }
 
