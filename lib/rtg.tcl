@@ -1,43 +1,57 @@
 proc rtg2annotvar {file {outfile {}}} {
 	if {$outfile eq ""} {
-		set outfile [file dir $file]/annotvar-[file root [rzroot [file tail $file]]].tsv
+		set outfile [file dir $file]/annotvar-[file tail [file dir $file]].tsv
 	}
 	catch {close $f}; catch {close $o}
 	set f [rzopen $file]
 	set o [open $outfile.temp w]
-	puts $o [join {chromosome begin end type alleleSeq1 alleleSeq2 posterior coverage correction support_statistics reference} \t]
+	puts $o [join {chromosome begin end type alleleSeq1 alleleSeq2 posterior coverage correction numA numC numG numT percA percC percG percT reference} \t]
 	while {![eof $f]} {
 		set line [gets $f]
 		if {[string index $line 0] ne "#"} break
 		set header $line
 	}
-	set header [split [string range $header 1 end] \t]
+	if {![info exists header]} {
+		set header {name position type reference prediction posterior coverage correction support_statistics}
+		set line [split $line \t]
+	} else {
+		set header [split [string range $header 1 end] \t]
+	}
 	if {$header ne "name position type reference prediction posterior coverage correction support_statistics"} {
-		error "$file is not a correct rtg file"
+		error "header=$header\n$file is not a correct rtg file"
 	}
 	set line [split $line \t]
 	set num 0
 	while 1 {
 		incr num
 		if {![expr $num%100000]} {putslog $num}
+		foreach {name position het reference prediction posterior coverage correction} $line break
+		if {[inlist {e o} $het]} {
+			unset -nocomplain stats
+			foreach {b n p} [lrange $line 8 end] {
+				set stats($b,n) $n
+				set stats($b,p) $p
+			}
+			regsub ^chr $name {} chromosome
+			set alleles [lrange [split $prediction :] 0 1]
+			if {[llength $alleles] == 1} {lappend alleles [lindex $alleles 0]}
+			set begin [expr {$position-1}]
+			set end $position
+			set temp {}
+			foreach base {A C G T} {
+				lappend temp [get stats($base,n) 0]
+			}
+			foreach base {A C G T} {
+				lappend temp [get stats($base,p) 0.0]
+			}
+			puts $o "$chromosome\t$begin\t$end\tsnp\t[join $alleles \t]\t$posterior\t$coverage\t$correction\t[join $temp \t]\t$reference"
+		}
 		if {[eof $f]} break
 		set line [split [gets $f] \t]
-		foreach {name position het reference prediction posterior coverage correction support_statistics} $line break
-		regsub ^chr $name {} chromosome
-		set alleles [split $prediction :]
-		if {[llength $alleles] == 1} {lappend alleles [lindex $alleles 0]}
-		set begin $position
-		set end [expr {$position+1}]
-		puts $o "$chromosome\t$begin\t$end\tsnp\t[join $alleles \t]\t$posterior\t$coverage\t$correction\t$support_statistics\t$reference"
 	}
 	close $o
 	close $f
-	file rename $outfile.temp $outfile
-}
-
-if 0 {
-	set file /complgen/rtg/GS00102-D06.snps.gz
-	set dir /complgen/rtg/rtgGS102/
+	file rename -force $outfile.temp $outfile
 }
 
 proc process_rtgsample {dir dbdir {force 0}} {
@@ -46,19 +60,22 @@ proc process_rtgsample {dir dbdir {force 0}} {
 	cd $dir
 	puts stderr "Processing sample $dir"
 	set name [file tail $dir]
-	set varfile [lindex [glob *snps*] 0]
+	set varfile [lindex [glob $dir/ori/*unfiltered.snp*] 0]
 	# annotated vars file
 	if {$force || ![file exists annotvar-$name.tsv]} {
-		puts stderr "Create annotated varfile annotvar-$name.tsv"
-		rtg2annotvar $varfile temp.tsv
-		cg select -s "chromosome begin" < temp.tsv > stemp.tsv
-		file rename -force stemp.tsv annotvar-$name.tsv
+		puts stderr "Create annotated varfile annotvar-$name.tsv from $varfile"
+		if {$force || ![file exists unsorted.tsv]} {
+			rtg2annotvar $varfile unsorted.tsv
+		}
+		puts stderr "Sorting"
+		cg select -s "chromosome begin end" unsorted.tsv > temp.tsv
+		file rename -force temp.tsv annotvar-$name.tsv
 	}
 	# sample specific filters
 	if {$force || ![file exists reg_cluster-$name.tsv]} {
 		puts stderr "Find cluster regions for annotvar-$name.tsv"
 		cg clusterregions < annotvar-$name.tsv > temp.tsv
-		file rename temp.tsv reg_cluster-$name.tsv
+		file rename -force temp.tsv reg_cluster-$name.tsv
 	}
 	if {$force || ![file exists fannotvar-$name.tsv]} {
 		# add filterdata to annotvar
@@ -89,5 +106,17 @@ proc process_rtgsample {dir dbdir {force 0}} {
 		close $o
 	}
 	cd $keepdir
+}
+
+if 0 {
+
+	lappend auto_path ~/dev/completegenomics/lib
+	package require Extral
+package require Tclx
+signal -restart error SIGINT
+	set dbdir /complgen/refseq
+	set file /complgen/rtg102/GS00102-DNA-D06-unfiltered.snps.gz
+	set dir [file dir $file]
+
 }
 
