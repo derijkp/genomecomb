@@ -358,13 +358,14 @@ switch $action {
 			lappend sql "\"$field\" $type"
 		}
 		set sql "create table $table ([join $sql ,])"
-		set tempfile [tempfile]
-		set f [open $tempfile w]
-		puts $f	"$sql;"
-		puts $f	".separator \\t"
-		puts $f	".import \"$tsvfile\" $table"
-		close $f
-		exec sqlite3 $dbfile < $tempfile
+		package require dbi
+		package require dbi_sqlite3
+		dbi_sqlite3 db
+		db create $dbfile
+		db open $dbfile
+		db exec $sql
+		db import abort compar $tsvfile \t {}
+		db close
 	}
 	tsv_index {
 		if {[llength $argv] < 2} {
