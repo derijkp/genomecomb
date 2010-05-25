@@ -163,7 +163,9 @@ proc process_indexcompress {file} {
 		tsv_index $file $field
 	}
 	putslog "Compressing $file"
-	exec razip $file
+	exec razip -c $file > $file.rz.temp
+	file rename -force $file.rz.temp $file.rz
+	file delete $file
 }
 
 proc process_compare_coverage {dir1 dir2 dbdir resultsdir {force 0}} {
