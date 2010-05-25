@@ -98,7 +98,7 @@ proc annot_coverage_get {dir chr begin} {
 		if {[llength $chrfile]} {
 			tsv_index_close $chrfile offset
 		}
-		set chrfile [lindex [glob -nocomplain $dir/ASM/REF/coverageRefScore-$chr-*-ASM.tsv $dir/ASM/REF/coverageRefScore-$chr-*-ASM.tsv.rz $dir/ASM/REF/coverageRefScore-$chr-*-ASM.tsv.gz] 0]
+		set chrfile [lindex [glob -nocomplain $dir/coverage/coverageRefScore-$chr-*-ASM.tsv $dir/coverage/coverageRefScore-$chr-*-ASM.tsv.rz $dir/coverage/coverageRefScore-$chr-*-ASM.tsv.gz] 0]
 		if {[llength $chrfile]} {
 			tsv_index_open $chrfile offset 1
 			set present 1

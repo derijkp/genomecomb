@@ -73,6 +73,25 @@ proc process_sample {dir dbdir {force 0}} {
 		}
 		annot_annotvar annotvar-$name.tsv fannotvar-$name.tsv $todo $dir
 	}
+	# sort coverage files
+	foreach {chr} {M X Y 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22}  {
+		set resultfile coverage/coverageRefScore-$chr-$name.tsv
+		if {$force || (![file exists $resultfile] && ![file exists $resultfile.rz])} {
+			file mkdir coverage
+			set oricov [lindex [glob -nocomplain ASM/REF/coverageRefScore-$chr-*-ASM.tsv ASM/REF/coverageRefScore-$chr-*-ASM.tsv.gz ASM/REF/coverageRefScore-$chr-*-ASM.tsv.rz] 0]
+			if {[file exists $oricov]} {
+				putslog "Sorting to create $resultfile"
+				cg select -s offset $oricov coverage/temp.tsv
+				file rename -force coverage/temp.tsv $resultfile
+			}
+		}
+		if {$force || ![file exists $resultfile.offset_index]} {
+			if {[file exists $resultfile]} {
+				putslog "Creating index $resultfile.offset_index"
+				process_indexcompress $resultfile
+			}
+		}
+	}
 	# coverage
 	if {$force || ![file exists reg-$name.covered]} {
 		puts stderr "Coverage of sequenced regions"
@@ -86,17 +105,21 @@ proc process_sample {dir dbdir {force 0}} {
 		cg covered filteredrefcons-$name.tsv > temp.tsv
 		file rename temp.tsv filteredrefcons-$name.covered
 	}
-	if {$force || ![file exists filteredns-$name.covered]} {
+	if {$force || ![file exists filteredns-$name.tsv]} {
 		puts stderr "Coverage of ns region"
 		cg regsubtract sreg-$name.tsv reg_ns-$name.tsv > temp.tsv
 		file rename temp.tsv filteredns-$name.tsv
+	}
+	if {$force || ![file exists filteredns-$name.covered]} {
 		cg covered filteredns-$name.tsv > temp.tsv
 		file rename temp.tsv filteredns-$name.covered
 	}
-	if {$force || ![file exists filteredlowscore-$name.covered]} {
+	if {$force || ![file exists filteredlowscore-$name.tsv]} {
 		puts stderr "Coverage of lowscore region"
 		cg regsubtract sreg-$name.tsv reg_lowscore-$name.tsv > temp.tsv
 		file rename temp.tsv filteredlowscore-$name.tsv
+	}
+	if {$force || ![file exists filteredlowscore-$name.covered]} {
 		cg covered filteredlowscore-$name.tsv > temp.tsv
 		file rename temp.tsv filteredlowscore-$name.covered
 	}
@@ -104,10 +127,12 @@ proc process_sample {dir dbdir {force 0}} {
 		cg reghisto reg_refcons-$name.tsv > temp.tsv
 		file rename temp.tsv histo-refcons-$name.tsv
 	}
-	if {$force || ![file exists filteredcluster-$name.covered]} {
+	if {$force || ![file exists filteredcluster-$name.tsv]} {
 		puts stderr "Coverage of clusters region"
 		cg regsubtract sreg-$name.tsv reg_cluster-$name.tsv > temp.tsv
 		file rename temp.tsv filteredcluster-$name.tsv
+	}
+	if {$force || ![file exists filteredcluster-$name.covered]} {
 		cg covered filteredcluster-$name.tsv > temp.tsv
 		file rename temp.tsv filteredcluster-$name.covered
 	}
@@ -261,3 +286,4 @@ if 0 {
 	annot_compare_coverage compar_GS102_GS103.tsv $dir1 $dir2 ftemp.tsv
 
 }
+
