@@ -199,17 +199,19 @@ proc multicompar_reannot {compar_file} {
 		annot_coverage_close $basedir/$sample
 		annot_region_close $samplea(regionfile,$sample)
 	}
+	file rename -force $compar_file $compar_file.old
 	file rename $compar_file.temp $compar_file
 }
 
 if 0 {
 
 	lappend auto_path ~/dev/completegenomics/lib
-	lappend auto_path ~/bin/complgen/apps/cg/lib
+	lappend auto_path /complgen/bin/complgen/apps/cg/lib
 	package require Extral
 	package require Tclx
 	signal -restart error SIGINT
-	
+set compar_file /complgen/multicompar/compar-X.tsv
+
 	set basedir /media/passport/complgen
 	set basedir /complgen
 	set dbdir /complgen/refseq
