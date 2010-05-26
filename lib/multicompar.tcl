@@ -116,7 +116,7 @@ proc multicompar {file1 dir} {
 	file rename $file1.temp $file1
 }
 
-proc multicompar_reannot {compar_file} {
+proc multicompar_reannot {compar_file {force 0}} {
 	set compar_file [file normalize $compar_file]
 	set basedir [file dir [file dir $compar_file]]
 	catch {close $f}; catch {close $o}
@@ -167,19 +167,23 @@ proc multicompar_reannot {compar_file} {
 		set reference [lindex $line $referencepos]
 		foreach {chr begin end} [list_sub $line $poss] break
 		foreach sample $samples {
-			if {[lindex $line $samplea(a1,$sample)] ne "?"} continue
-			if {([lindex $line $samplea(rpos,$sample)] eq "?") || ([lindex $line $samplea(cpos,$sample)] eq "?")} {
+			if {!$force && ([lindex $line $samplea(a1,$sample)] ne "?")} continue
+			if {$force || ([lindex $line $samplea(rpos,$sample)] eq "?") || ([lindex $line $samplea(cpos,$sample)] eq "?")} {
 				foreach {r c} [annot_coverage_get $basedir/$sample $chr $begin] break
 				lset line $samplea(rpos,$sample) $r
 				lset line $samplea(cpos,$sample) $c
 			}
 			list_foreach {field value regfile} $samplea(todo,$sample) {
 				if {[lindex $line $field] == "-"} continue
-				if {[lindex $line $field] != "?"} continue
+				if {!$force && [lindex $line $field] != "?"} continue
 				set r [annot_region_get $regfile $chr $begin $end]
 				if {$r} {lset line $field $value} else {lset line $field {}}
 			}
-			set r [annot_region_get $samplea(regionfile,$sample) $chr $begin $end]
+			if {$force} {
+				if {![inlist [list $reference - ?] [lindex $line $samplea(a1,$sample)]]} continue
+				if {![inlist [list $reference - ?] [lindex $line $samplea(a2,$sample)]]} continue
+			}
+			set r [annot_region_in $samplea(regionfile,$sample) $chr $begin $end]
 			if {$r} {
 				lset line $samplea(a1,$sample) $reference
 				lset line $samplea(a2,$sample) $reference
@@ -210,7 +214,7 @@ if 0 {
 	package require Extral
 	package require Tclx
 	signal -restart error SIGINT
-set compar_file /complgen/multicompar/compar-X.tsv
+set compar_file /complgen/multicompar/compar.tsv
 
 	set basedir /media/passport/complgen
 	set basedir /complgen
@@ -224,6 +228,12 @@ multicompar $file1 $dir
 multicompar $file1 $dir
 	set dir /complgen/GS101A02
 multicompar $file1 $dir
+
+foreach name {rtg102 rtg103 rtg100 rtg101A01 rtg101A02} {
+	set dir /complgen/$name
+	puts $dir
+	multicompar $file1 $dir
+}
 
 	set compar_file /complgen/multicompar/compar.tsv
 
