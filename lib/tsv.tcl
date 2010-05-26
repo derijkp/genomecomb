@@ -55,10 +55,29 @@ proc tsv_select_un {header ids} {
 	set temp "(([join $temp1 " || " ]) && ([join $temp2 " || "]))"
 }
 
+proc tsv_select_expandfields {header qfields qpossVar} {
+	upvar $qpossVar qposs
+	if {[string first * $qfields] != -1} {
+		set qposs {}
+		foreach field $qfields {
+			set poss [list_find -glob $header $field]
+			lappend qposs {*}$poss
+		}
+		set result [list_sub $header $qposs]
+		set qposs [lmath_calc $qposs + 1]
+		return $result
+	} else {
+		set qposs [list_cor $header $qfields]
+		set qposs [lmath_calc $qposs + 1]
+		return $qfields
+	}
+}
+
 proc tsv_select {query {qfields {}} {sortfields {}} {f stdin} {out stdout}} {
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	set header [tsv_open $f]
+	set qfields [tsv_select_expandfields $header $qfields qposs]
 	set awk ""
 	set sort ""
 	set cut ""
@@ -68,8 +87,6 @@ proc tsv_select {query {qfields {}} {sortfields {}} {f stdin} {out stdout}} {
 			set poss [list_cor $header $sortfields]
 			if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $sortfields [list_find $poss -1]] ,] not found"}
 			if {$qfields ne ""} {
-				set qposs [list_cor $header $qfields]
-				set qposs [lmath_calc $qposs + 1]
 				set cut "cut -d \\t -f [join $qposs ,]"
 			}
 		}
@@ -128,8 +145,6 @@ proc tsv_select {query {qfields {}} {sortfields {}} {f stdin} {out stdout}} {
 		set qposs [lmath_calc $qposs + 1]
 		append awk " \{print $[join $qposs ,$]\}"
 	} elseif {($qfields ne "") && ($cut eq "")} {
-		set qposs [list_cor $header $qfields]
-		set qposs [lmath_calc $qposs + 1]
 		set cut "cut -d \\t -f [join $qposs ,]"
 	}
 	set pipe {}
