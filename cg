@@ -30,7 +30,7 @@ switch $action {
 			puts stderr " - adds new sample dir(s) to compar_file"
 			puts stderr " - the sample dir(s) should be one directory below compar_file"
 			puts stderr " - sample names will be the names of the sample dir(s)"
-			puts stderr " - if no dirs are given, missing annotations will be checked and added"
+			puts stderr " - missing annotations must be checked and added afterwards using multicompar_reannot"
 			exit 1
 		}
 		foreach {compar_file} $argv break
@@ -39,8 +39,22 @@ switch $action {
 			putslog "Adding $dir"
 			multicompar $compar_file $dir
 		}
+	}
+	multicompar_reannot {
+		if {([llength $argv] != 1) && ([llength $argv] != 2)} {
+			puts stderr "format is: $scriptname $action compar_file ?force?"
+			puts stderr " - reannotate multicompar file"
+			puts stderr " - unless the force option is used, only unfilled (?) cells will be updated"
+			exit 1
+		}
+		foreach {compar_file force} $argv break
+		switch $force {
+			force {set force 1}
+			"" {set force 0}
+			default {error "unrecognized option $force"}
+		}
 		putslog "Reannotating $compar_file"
-		multicompar_reannot $compar_file
+		multicompar_reannot $compar_file $force
 	}
 	process_sample {
 		if {([llength $argv] < 2) || ([llength $argv] > 3)} {
