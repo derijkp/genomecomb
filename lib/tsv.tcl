@@ -1,6 +1,63 @@
-proc tsv_select {query {qfields {}} {sortfields {}} {f stdin}} {
+proc tsv_select_idtopos {header id fields} {
+	set poss [list_cor $header $fields]
+	if {[inlist $poss -1]} {error "sample $id not present"}
+	return [lmath_calc $poss + 1]
+}
+
+proc tsv_select_sm {header ids} {
+	set id1 [list_pop ids]
+	foreach {a11 a21 ref} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 reference]] break
+	set temp [list "((\$$a11 != \"-\")||(\$$a21 != \"-\")) && (\$$a11 != \$$ref || \$$a21 != \$$ref)"]
+	foreach id $ids {
+		foreach {a12 a22} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id alleleSeq2-$id]] break
+		lappend temp "((\$$a11 == \$$a12 && \$$a21 == \$$a22) || (\$$a11 == \$$a22 && \$$a21 == \$$a12))"
+	}
+	set temp "([join $temp " && "])"
+}
+
+proc tsv_select_df {header ids} {
+	set temp1 {}
+	set temp2 {}
+	foreach id $ids {
+		foreach {a1 a2 ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id reference]] break
+		lappend temp1 "((\$$a1 != \"-\" && \$$a1 != \$$ref) || (\$$a2 != \"-\" && \$$a2 != \$$ref))"
+		lappend temp2 "(\$$a1 == \$$ref && \$$a2 == \$$ref)"
+	}
+	set temp "(([join $temp1 " || " ]) && ([join $temp2 " || "]))"
+}
+
+proc tsv_select_mm {header ids} {
+	set temp1 {}
+	set temp2 {}
+	set list {}
+	foreach id $ids {
+		foreach {a1 a2 ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id reference]] break
+		lappend list [list $a1 $a2]
+	}
+	while {[llength $list]} {
+		foreach {a1 a2} [list_pop list] break
+		lappend temp1 "((\$$a1 != \"-\" && \$$a1 != \$$ref) || (\$$a2 != \"-\" && \$$a2 != \$$ref))"
+		list_foreach {a12 a22} $list {
+			lappend temp2 "\$$a1 != \$$a12 || \$$a2 != \$$a22"
+		}
+	}
+	set temp "(([join $temp1 " && " ]) && ([join $temp2 " || "]))"
+}
+
+proc tsv_select_un {header ids} {
+	set temp1 {}
+	set temp2 {}
+	foreach id $ids {
+		foreach {a1 a2 ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id reference]] break
+		lappend temp1 "(\$$a1 != \"-\" && (\$$a1 != \$$ref || \$$a2 != \$$ref))"
+		lappend temp2 "\$$a1 == \"-\""
+	}
+	set temp "(([join $temp1 " || " ]) && ([join $temp2 " || "]))"
+}
+
+proc tsv_select {query {qfields {}} {sortfields {}} {f stdin} {out stdout}} {
 	fconfigure $f -buffering none
-	fconfigure stdout -buffering none
+	fconfigure $out -buffering none
 	set header [tsv_open $f]
 	set awk ""
 	set sort ""
@@ -24,12 +81,42 @@ proc tsv_select {query {qfields {}} {sortfields {}} {f stdin}} {
 		set sort "gnusort8 -t \\t -V -s -k[join $keys " -k"]"
 	}
 	if {$query ne ""} {
-		list_unmerge [regexp -all -inline {[$]([a-zA-z0-9_-]+)} $query] 1 fields
-		foreach field [list_remdup $fields] {
-			set pos [lsearch $header $field]
-			if {$pos == -1} {error "field \"$field\" not present"}
-			incr pos
-			regsub -all \\\$${field}(\[^A-Za-z_-\]) $query \$$pos\\1 query
+		set indices [list_unmerge [regexp -all -indices -inline {[$]([a-zA-z0-9_(),-]+)} $query]]
+		set indices [list_reverse $indices]
+		list_foreach {start end} $indices {
+			set field [string range $query [expr {$start+1}] $end]
+			if {[regexp {^(.*)\((.*)\)$} $field temp func args]} {
+				switch $func {
+					sm {
+						set ids [split $args ,]
+						set temp [tsv_select_sm $header $ids]
+						set query [string_replace $query $start $end $temp]
+					}
+					df {
+						set ids [split $args ,]
+						set temp [tsv_select_df $header $ids]
+						set query [string_replace $query $start $end $temp]
+					}
+					mm {
+						set ids [split $args ,]
+						set temp [tsv_select_mm $header $ids]
+						set query [string_replace $query $start $end $temp]
+					}
+					un {
+						set ids [split $args ,]
+						set temp [tsv_select_un $header $ids]
+						set query [string_replace $query $start $end $temp]
+					}
+					default {
+						error "Unkown function $func"
+					}
+				}
+			} else {
+				set pos [lsearch $header $field]
+				if {$pos == -1} {error "field \"$field\" not present"}
+				incr pos
+				set query [string_replace $query $start $end \$$pos]
+			}
 		}
 		set awk {BEGIN {FS="\t" ; OFS="\t"} }
 		append awk $query
@@ -55,12 +142,12 @@ proc tsv_select {query {qfields {}} {sortfields {}} {f stdin}} {
 	if {$cut ne ""} {
 		lappend pipe $cut
 	}
-#	putslog pipe:[join $pipe " | "]
-	if {$qfields ne ""} {puts stdout [join $qfields \t]} else {puts stdout [join $header \t]}
+	# putslog pipe:[join $pipe " | "]
+	if {$qfields ne ""} {puts $out [join $qfields \t]} else {puts $out [join $header \t]}
 	if {![llength $pipe]} {
-		fcopy $f stdout
+		fcopy $f $out
 	} else {
-		set o [open "|\ [join $pipe " | "]\ >@\ stdout" w]
+		set o [open "|\ [join $pipe " | "]\ >@\ $out" w]
 		fcopy $f $o
 		close $o
 	}
@@ -237,7 +324,7 @@ proc tsv_index {file xfield} {
 		incr prev 10000
 		incr next 10000
 		catch {Classy::Progress set [tell $f]}
-		if {![expr $next%100000]} {putslog $next}
+		if {![expr $next%1000000]} {putslog $next}
 	}
 	catch {Classy::Progress stop}
 	close $f
@@ -296,7 +383,13 @@ proc tsv_index_open {file field {uncompress 0}} {
 	set cache(tsv_index,$file,$field,workfile) $workfile
 	set cache(tsv_index,$file,$field,uncompressed) $uncompressed
 	set cache(tsv_index,$file,$field,remove) $remove
-	close $o
+	close $o	lappend auto_path ~/dev/completegenomics/lib
+	lappend auto_path /complgen/bin/complgen/apps/cg/lib
+	package require Extral
+	package require Tclx
+	signal -restart error SIGINT
+set compar_file /complgen/multicompar/compar-X.tsv
+
 	set f [rzopen $workfile]
 	set cache(tsv_index,$file,header) [tsv_open $f]
 	if {$uncompressed} {
