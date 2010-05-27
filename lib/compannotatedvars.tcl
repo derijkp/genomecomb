@@ -1,8 +1,8 @@
 # < 0 if comp1 < comp2
 # > 0 if comp1 > comp2
 proc comparepos {comp1 comp2} {
-	if {![llength $comp1]} {return 1}
-	if {![llength $comp2]} {return -1}
+	if {![isint [lindex $comp1 1]]} {return 1}
+	if {![isint [lindex $comp2 1]]} {return -1}
 	foreach {chr1 pos1 end1 type1} $comp1 break
 	foreach {chr2 pos2 end2 type2} $comp2 break
 	if {$chr1 ne $chr2} {
