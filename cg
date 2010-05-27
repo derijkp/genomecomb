@@ -33,11 +33,22 @@ switch $action {
 			puts stderr " - missing annotations must be checked and added afterwards using multicompar_reannot"
 			exit 1
 		}
+		if {[lindex $argv 0] eq "-reannot"} {
+			putslog "Also reannot"
+			set reannot 1
+			set argv [lrange $argv 1 end]
+		} else {
+			set reannot 0
+		}
 		foreach {compar_file} $argv break
 		set dirs [lrange $argv 1 end]
 		foreach dir $dirs {
 			putslog "Adding $dir"
 			multicompar $compar_file $dir
+		}
+		if {$reannot} {
+			putslog "Reannotating $compar_file"
+			multicompar_reannot $compar_file
 		}
 	}
 	multicompar_reannot {
