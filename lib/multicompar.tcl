@@ -9,7 +9,7 @@ proc multicompar_annot_join {cur1 cur2} {
 		} else {
 			set cur1 [list_change $dummy1 {- {}}]
 		}
-		set sequenced 1
+		set sequenced v
 	} elseif {[inlist {{} -} $cur2]} {
 		set region [list_sub $cur1 $comparposs1]
 		set merge [list_sub $cur1 $mergeposs1]
@@ -25,7 +25,7 @@ proc multicompar_annot_join {cur1 cur2} {
 		foreach el1 [list_sub $cur1 $mergeposs1] el2 [list_sub $cur2 $mergeposs2] {
 			lappend merge [list_union $el1 $el2]
 		}
-		set sequenced 1
+		set sequenced v
 	}
 	set result $region
 	lappend result {*}[list_sub $cur1 $restposs1]
@@ -207,25 +207,27 @@ proc multicompar_reannot {compar_file {force 0}} {
 					lset line $samplea(rpos,$sample) $r
 					lset line $samplea(cpos,$sample) $c
 				}
-				if {$force} {
-					if {![inlist [list $reference - ?] [lindex $line $samplea(a1,$sample)]]} continue
-					if {![inlist [list $reference - ?] [lindex $line $samplea(a2,$sample)]]} continue
-				}
-				set r [annot_region_in $samplea(regionfile,$sample) $chr $begin $end]
-				lset line $samplea(seq,$sample) $r
-				if {$r} {
-					lset line $samplea(a1,$sample) $reference
-					lset line $samplea(a2,$sample) $reference
-				} else {
-					lset line $samplea(a1,$sample) -
-					lset line $samplea(a2,$sample) -
+				set seq [lindex $line $samplea(seq,$sample)]
+				if {$seq eq "?"} {
+					set r [annot_region_in $samplea(regionfile,$sample) $chr $begin $end]
+					set a1 [inlist [list - ?] [lindex $line $samplea(a1,$sample)]]
+					set a2 [inlist [list - ?] [lindex $line $samplea(a2,$sample)]]
+					if {$r} {
+						lset line $samplea(seq,$sample) r
+						if {$a1} {lset line $samplea(a1,$sample) $reference}
+						if {$a2} {lset line $samplea(a2,$sample) $reference}
+					} else {
+						lset line $samplea(seq,$sample) u
+						if {$a1} {lset line $samplea(a1,$sample) -}
+						if {$a2} {lset line $samplea(a2,$sample) -}
+					}
 				}
 			} else {
 				set sub [list_sub $line $samplea(rtgposs,$sample)]
 				if {!$force && ![inlist [list_sub $line $samplea(rtgposs,$sample)] ?]} continue
 				set rtgdata [lrange [annot_rtg_get $basedir/$sample $chr $begin] 4 end-1]
 				if {[llength $rtgdata] < [llength $samplea(rtgposs,$sample)]} {
-					lset line $samplea(seq,$sample) 0
+					lset line $samplea(seq,$sample) u
 					foreach pos $samplea(rtgposs,$sample) v $rtgdata {
 						if {$pos == -1} continue
 						lset line $pos -
@@ -233,9 +235,9 @@ proc multicompar_reannot {compar_file {force 0}} {
 				} else {
 					set coverage [lindex $rtgdata 7]
 					if {$coverage < 10} {
-						lset line $samplea(seq,$sample) 0
+						lset line $samplea(seq,$sample) u
 					} else {
-						lset line $samplea(seq,$sample) 1
+						lset line $samplea(seq,$sample) r
 					}
 					foreach pos $samplea(rtgposs,$sample) v $rtgdata {
 						if {$pos == -1} continue
@@ -265,6 +267,57 @@ proc multicompar_reannot {compar_file {force 0}} {
 }
 
 if 0 {
+
+proc multicompar_change_sequenced {} {
+
+	catch {close $f}; catch {close $o}
+	set f [open compar8-old.tsv]
+	set o [open compar8.tsv w]
+	set header [split [gets $f] \t]
+	set samples {}
+	foreach field $header {
+		set temp [split $field -]
+		if {[llength $temp] == 2} {
+			set sample [lindex $temp 1]
+			list_addnew samples $sample
+		}
+	}
+	set refpos [lsearch $header reference]
+	foreach sample $samples {
+		set samplea(a1,$sample) [lsearch $header alleleSeq1-$sample]
+		set samplea(a2,$sample) [lsearch $header alleleSeq2-$sample]
+		set samplea(seq,$sample) [lsearch $header sequenced-$sample]
+	}
+	set num 0
+	puts $o [join $header \t]
+	while {![eof $f]} {
+		incr num
+		if {![expr $num%10000]} {putslog $num}
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		set ref [lindex $line $refpos]
+		foreach sample $samples {
+			set seq [lindex $line $samplea(seq,$sample)]
+			if {$seq == 0} {
+				set seq u
+			} else {
+				set a1 [lindex $line $samplea(a1,$sample)]
+				set a2 [lindex $line $samplea(a2,$sample)]
+				if {$a1 ne $ref || $a2 ne $ref} {
+					set seq v
+				} else {
+					set seq r
+				}
+			}
+			lset line $samplea(seq,$sample) $seq
+		}
+		puts $o [join $line \t]
+	}
+
+	close $f
+	close $o
+
+}
 
 	lappend auto_path ~/dev/completegenomics/lib
 	lappend auto_path /complgen/bin/complgen/apps/cg/lib

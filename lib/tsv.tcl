@@ -6,11 +6,11 @@ proc tsv_select_idtopos {header id fields} {
 
 proc tsv_select_sm {header ids} {
 	set id1 [list_pop ids]
-	foreach {a11 a21 ref} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 reference]] break
-	set temp [list "((\$$a11 != \"-\")||(\$$a21 != \"-\")) && (\$$a11 != \$$ref || \$$a21 != \$$ref)"]
+	foreach {a11 a21 sequenced ref} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 sequenced-$id1 reference]] break
+	set temp [list "(\$$sequenced == \"v\")"]
 	foreach id $ids {
-		foreach {a12 a22} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id alleleSeq2-$id]] break
-		lappend temp "((\$$a11 == \$$a12 && \$$a21 == \$$a22) || (\$$a11 == \$$a22 && \$$a21 == \$$a12))"
+		foreach {a12 a22 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
+		lappend temp "(\$$sequenced == \"v\")"  "((\$$a11 == \$$a12 && \$$a21 == \$$a22) || (\$$a11 == \$$a22 && \$$a21 == \$$a12))"
 	}
 	set temp "([join $temp " && "])"
 }
@@ -18,41 +18,45 @@ proc tsv_select_sm {header ids} {
 proc tsv_select_df {header ids} {
 	set temp1 {}
 	set temp2 {}
+	set seqlist {}
 	foreach id $ids {
-		foreach {a1 a2 ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id reference]] break
-		lappend temp1 "((\$$a1 != \"-\" && \$$a1 != \$$ref) || (\$$a2 != \"-\" && \$$a2 != \$$ref))"
-		lappend temp2 "(\$$a1 == \$$ref && \$$a2 == \$$ref)"
+		foreach {a1 a2 sequenced ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id reference]] break
+		lappend seqlist "(\$$sequenced != \"u\")"
+		lappend temp1 "(\$$sequenced == \"v\")"
+		lappend temp2 "(\$$sequenced == \"r\")"
 	}
-	set temp "(([join $temp1 " || " ]) && ([join $temp2 " || "]))"
+	set temp "(([join $seqlist " && " ]) && ([join $temp1 " || " ]) && ([join $temp2 " || "]))"
 }
 
 proc tsv_select_mm {header ids} {
 	set temp1 {}
 	set temp2 {}
 	set list {}
+	set seqlist {}
 	foreach id $ids {
-		foreach {a1 a2 ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id reference]] break
+		foreach {a1 a2 sequenced ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id reference]] break
+		lappend seqlist "(\$$sequenced == \"v\")"
 		lappend list [list $a1 $a2]
 	}
 	while {[llength $list]} {
 		foreach {a1 a2} [list_pop list] break
-		lappend temp1 "((\$$a1 != \"-\" && \$$a1 != \$$ref) || (\$$a2 != \"-\" && \$$a2 != \$$ref))"
+		lappend temp1 "((\$$a1 != \$$ref) || (\$$a2 != \$$ref))"
 		list_foreach {a12 a22} $list {
 			lappend temp2 "\$$a1 != \$$a12 || \$$a2 != \$$a22"
 		}
 	}
-	set temp "(([join $temp1 " && " ]) && ([join $temp2 " || "]))"
+	set temp "(([join $seqlist " && " ]) && ([join $temp1 " && " ]) && ([join $temp2 " || "]))"
 }
 
 proc tsv_select_un {header ids} {
 	set temp1 {}
 	set temp2 {}
 	foreach id $ids {
-		foreach {a1 a2 ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id reference]] break
-		lappend temp1 "(\$$a1 != \"-\" && (\$$a1 != \$$ref || \$$a2 != \$$ref))"
-		lappend temp2 "\$$a1 == \"-\""
+		foreach {a1 a2 sequenced ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id reference]] break
+		lappend temp1 "(\$$sequenced == \"v\")"
+		lappend temp2 "(\$$sequenced == \"u\")"
 	}
-	set temp "(([join $temp1 " || " ]) && ([join $temp2 " || "]))"
+	set temp "(([join $temp2 " || "]) && ([join $temp1 " || " ]))"
 }
 
 proc tsv_select_expandfields {header qfields qpossVar} {
@@ -107,27 +111,24 @@ proc tsv_select {query {qfields {}} {sortfields {}} {f stdin} {out stdout}} {
 					sm {
 						set ids [split $args ,]
 						set temp [tsv_select_sm $header $ids]
-						set query [string_replace $query $start $end $temp]
 					}
 					df {
 						set ids [split $args ,]
 						set temp [tsv_select_df $header $ids]
-						set query [string_replace $query $start $end $temp]
 					}
 					mm {
 						set ids [split $args ,]
 						set temp [tsv_select_mm $header $ids]
-						set query [string_replace $query $start $end $temp]
 					}
 					un {
 						set ids [split $args ,]
 						set temp [tsv_select_un $header $ids]
-						set query [string_replace $query $start $end $temp]
 					}
 					default {
 						error "Unkown function $func"
 					}
 				}
+				set query [string_replace $query $start $end $temp]
 			} else {
 				set pos [lsearch $header $field]
 				if {$pos == -1} {error "field \"$field\" not present"}
@@ -157,7 +158,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {f stdin} {out stdout}} {
 	if {$cut ne ""} {
 		lappend pipe $cut
 	}
-	# putslog pipe:[join $pipe " | "]
+	 putslog pipe:[join $pipe " | "]
 	if {$qfields ne ""} {puts $out [join $qfields \t]} else {puts $out [join $header \t]}
 	if {![llength $pipe]} {
 		fcopy $f $out
