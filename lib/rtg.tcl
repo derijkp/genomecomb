@@ -5,7 +5,7 @@ proc rtg2annotvar {file {outfile {}}} {
 	catch {close $f}; catch {close $o}
 	set f [rzopen $file]
 	set o [open $outfile.temp w]
-	puts $o [join {chromosome begin end type alleleSeq1 alleleSeq2 posterior coverage correction numA numC numG numT percA percC percG percT reference} \t]
+	puts $o [join {chromosome begin end type alleleSeq1 alleleSeq2 posterior coverage correction numA numC numG numT percA percC percG percT nonidentityposterior reference} \t]
 	while {![eof $f]} {
 		set line [gets $f]
 		if {[string index $line 0] ne "#"} break
@@ -20,31 +20,16 @@ proc rtg2annotvar {file {outfile {}}} {
 	if {$header ne "name position type reference prediction posterior coverage correction support_statistics"} {
 		error "header=$header\n$file is not a correct rtg file"
 	}
+	set poss [list_cor $header {name chromosome position type reference prediction posterior coverage correction nonidentity-posterior support_statistics}]
 	set line [split $line \t]
 	set num 0
 	while 1 {
 		incr num
 		if {![expr $num%100000]} {putslog $num}
-		foreach {name position het reference prediction posterior coverage correction} $line break
+		foreach {name position het} $line break
 		if {[inlist {e o} $het]} {
-			unset -nocomplain stats
-			foreach {b n p} [lrange $line 8 end] {
-				set stats($b,n) $n
-				set stats($b,p) $p
-			}
-			regsub ^chr $name {} chromosome
-			set alleles [lrange [split $prediction :] 0 1]
-			if {[llength $alleles] == 1} {lappend alleles [lindex $alleles 0]}
-			set begin [expr {$position-1}]
-			set end $position
-			set temp {}
-			foreach base {A C G T} {
-				lappend temp [get stats($base,n) 0]
-			}
-			foreach base {A C G T} {
-				lappend temp [get stats($base,p) 0.0]
-			}
-			puts $o "$chromosome\t$begin\t$end\tsnp\t[join $alleles \t]\t$posterior\t$coverage\t$correction\t[join $temp \t]\t$reference"
+			set temp [rtg_line $line $poss]
+			puts $o [join $temp \t]
 		}
 		if {[eof $f]} break
 		set line [split [gets $f] \t]
@@ -52,6 +37,31 @@ proc rtg2annotvar {file {outfile {}}} {
 	close $o
 	close $f
 	file rename -force $outfile.temp $outfile
+}
+
+proc rtg_line {cline poss} {
+	set line [list_sub $cline $poss]
+	set support [lrange $cline [lindex $poss end] end]
+	foreach {name chromosome position type reference prediction posterior coverage correction nonidentityposterior} $line break
+	if {[inlist {e o} $type]} {set type snp}
+	unset -nocomplain stats
+	foreach {b n p} $support {
+		set stats($b,n) $n
+		set stats($b,p) $p
+	}
+	regsub ^chr $name {} chromosome
+	set alleles [lrange [split $prediction :] 0 1]
+	if {[llength $alleles] == 1} {lappend alleles [lindex $alleles 0]}
+	set begin [expr {$position-1}]
+	set end $position
+	set temp {}
+	foreach base {A C G T} {
+		lappend temp [get stats($base,n) 0]
+	}
+	foreach base {A C G T} {
+		lappend temp [get stats($base,p) 0.0]
+	}
+	return [list $chromosome $begin $end $type {*}$alleles $posterior $coverage $correction {*}$temp $nonidentityposterior $reference]
 }
 
 proc process_rtgsample {dir dbdir {force 0}} {
@@ -106,6 +116,49 @@ proc process_rtgsample {dir dbdir {force 0}} {
 		close $o
 	}
 	cd $keepdir
+}
+
+proc annot_rtg_init {dir} {
+	global annot
+	catch {annot_rtg_close $dir}
+	set annot(cov,$dir) {-1 {} 0 {}}
+}
+
+proc annot_rtg_get {dir chr begin} {
+	global annot
+	foreach {curchr chrfile present poss} [get annot(cov,$dir) {{} {} 0}] break
+	if {$chr ne $curchr} {
+		if {[llength $chrfile]} {
+			tsv_index_close $chrfile position
+		}
+		set chrfile [lindex [glob -nocomplain $dir/allpos/chr${chr}_snps.txt $dir/allpos/chr${chr}_snps.txt.rz $dir/allpos/chr${chr}_snps.txt.gz] 0]
+		if {[llength $chrfile]} {
+			tsv_index_open $chrfile position 1
+			set present 1
+		} else {
+			set present 0
+		}
+		set header [tsv_index_header $chrfile]
+		set poss [list_cor $header {name chromosome position type reference prediction posterior coverage correction nonidentity-posterior support_statistics}]
+		set annot(cov,$dir) [list $chr $chrfile $present $poss]
+	}
+	if {!$present} {return {? ? ? ? ? ? ? ? ? ? ? ? ? ?}}
+	ifcatch {tsv_index_get $chrfile position [expr {$begin+1}]} cline -regexp {
+		"not found in" {
+			set cline {}
+		}
+	}
+	if {![llength $cline]} {return {}}
+	return [rtg_line $cline $poss]
+}
+
+proc annot_rtg_close {dir} {
+	global annot
+	foreach {curchr chrfile present} [get annot(cov,$dir) {{} {} 0}] break
+	if {[llength $chrfile]} {
+		tsv_index_close $chrfile position
+	}
+	unset annot(cov,$dir)
 }
 
 if 0 {
