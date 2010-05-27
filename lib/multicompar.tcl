@@ -9,6 +9,7 @@ proc multicompar_annot_join {cur1 cur2} {
 		} else {
 			set cur1 [list_change $dummy1 {- {}}]
 		}
+		set sequenced 1
 	} elseif {[inlist {{} -} $cur2]} {
 		set region [list_sub $cur1 $comparposs1]
 		set merge [list_sub $cur1 $mergeposs1]
@@ -17,16 +18,19 @@ proc multicompar_annot_join {cur1 cur2} {
 		} else {
 			set cur2 [list_change $dummy2 {- {}}]
 		}
+		set sequenced ?
 	} else {
 		set region [list_sub $cur1 $comparposs1]
 		set merge {}
 		foreach el1 [list_sub $cur1 $mergeposs1] el2 [list_sub $cur2 $mergeposs2] {
 			lappend merge [list_union $el1 $el2]
 		}
+		set sequenced 1
 	}
 	set result $region
 	lappend result {*}[list_sub $cur1 $restposs1]
 	lappend result {*}[list_sub $cur2 $restposs2]
+	lappend result $sequenced
 	lappend result {*}$merge
 	return [join $result \t]
 }
@@ -76,6 +80,7 @@ proc multicompar {file1 dir} {
 	foreach field $restfields2 {
 		lappend oheader ${field}-$name
 	}
+	lappend oheader sequenced-$name
 	set oheader [list_concat $oheader $mergefields]
 	puts $o [join $oheader \t]
 	set cur1 [split [gets $f1] \t]
