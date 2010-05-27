@@ -35,7 +35,7 @@ proc multicompar_annot_join {cur1 cur2} {
 	return [join $result \t]
 }
 
-proc multicompar {file1 dir} {
+proc multicompar {compar_file dir} {
 	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2
 
 	catch {close $f1}; catch {close $f2}; catch {close $o}
@@ -45,17 +45,17 @@ proc multicompar {file1 dir} {
 	#
 	set name [file tail $dir]
 	set file2 $dir/fannotvar-$name.tsv
-	if {![file exists $file1]} {
-		file_write $file1 [join {chromosome begin end type} \t]
+	if {![file exists $compar_file]} {
+		file_write $compar_file [join {chromosome begin end type} \t]
 	}
-	set f1 [open $file1]
+	set f1 [open $compar_file]
 	set header1 [split [gets $f1] \t]
 	if {[inlist $header1 alleleSeq1-$name]} {
-		error "$name already present in $file1"
+		error "$name already present in $compar_file"
 	}
 	set comparposs1 [list_cor $header1 $comparfields]
 	if {([lsearch $comparposs1 -1] != -1)} {
-		puts stderr "header error in comparfile $file1"
+		puts stderr "header error in comparfile $compar_file"
 		exit 1
 	}
 	set mergeposs1 [list_remove [list_cor $header1 $mergefields] -1]
@@ -64,13 +64,13 @@ proc multicompar {file1 dir} {
 	set header2 [split [gets $f2] \t]
 	set comparposs2 [list_cor $header2 $comparfields]
 	if {([lsearch $comparposs2 -1] != -1)} {
-		puts stderr "header error in fannot_varfile2 $file1"
+		puts stderr "header error in fannot_varfile2 $compar_file"
 		exit 1
 	}
 	set mergeposs2 [list_remove [list_cor $header2 $mergefields] -1]
 	set dummy2 [list_fill [llength $header2] ?]
 	# start
-	set o [open $file1.temp w]
+	set o [open $compar_file.temp w]
 	# make output header
 	set restfields1 [list_lremove [list_lremove $header1 $mergefields] $comparfields]
 	set restposs1 [list_cor $header1 $restfields1]
@@ -105,6 +105,8 @@ proc multicompar {file1 dir} {
 				set cur1 [compare_annot_getline $f1]
 				set comp1 [list_sub $cur1 $comparposs1]
 				if {![llength $cur1]} break
+				incr num
+				if {![expr {$num % 100000}]} {putslog $num}
 			}
 		} else {
 			while {[comparepos $comp1 $comp2] > 0} {
@@ -113,12 +115,14 @@ proc multicompar {file1 dir} {
 				set cur2 [compare_annot_getline $f2]
 				set comp2 [list_sub $cur2 $comparposs2]
 				if {![llength $cur2]} break
+				incr num
+				if {![expr {$num % 100000}]} {putslog $num}
 			}
 		}
 	}
 	close $f1; close $f2; close $o
-	file rename -force $file1 $file1.old
-	file rename $file1.temp $file1
+	file rename -force $compar_file $compar_file.old
+	file rename $compar_file.temp $compar_file
 }
 
 proc multicompar_reannot {compar_file {force 0}} {
@@ -220,19 +224,19 @@ if 0 {
 	package require Tclx
 	signal -restart error SIGINT
 set compar_file /complgen/multicompar/compar.tsv
+set compar_file /complgen/multicompar/compar-part.tsv
 
 	set basedir /media/passport/complgen
 	set basedir /complgen
 	set dbdir /complgen/refseq
-	set file1 /complgen/multicompar/compar.tsv
 	set dir /complgen/GS102
 	set dir /complgen/GS103
 	set dir /complgen/GS100
-multicompar $file1 $dir
+multicompar $compar_file $dir
 	set dir /complgen/GS101A01
-multicompar $file1 $dir
+multicompar $compar_file $dir
 	set dir /complgen/GS101A02
-multicompar $file1 $dir
+multicompar $compar_file $dir
 
 foreach name {rtg102 rtg103 rtg100 rtg101A01 rtg101A02} {
 	set dir /complgen/$name
