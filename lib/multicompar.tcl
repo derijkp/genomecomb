@@ -126,6 +126,7 @@ proc multicompar {compar_file dir} {
 }
 
 proc multicompar_reannot {compar_file {force 0}} {
+
 	set compar_file [file normalize $compar_file]
 	set basedir [file dir [file dir $compar_file]]
 	catch {close $f}; catch {close $o}
@@ -150,7 +151,26 @@ proc multicompar_reannot {compar_file {force 0}} {
 		set samplea(a2,$sample) [lsearch $header alleleSeq2-$sample]
 		set samplea(rpos,$sample) [lsearch $header refscore-$sample]
 		set samplea(cpos,$sample) [lsearch $header coverage-$sample]
+		set samplea(seq,$sample) [lsearch $header sequenced-$sample]
 		set samplea(regionfile,$sample) $basedir/$sample/sreg-$sample.tsv
+		if {[file exists $basedir/$sample/allpos]} {
+			set samplea(type,$sample) rtg
+			annot_rtg_init $basedir/$sample
+			set samplea(rtgposs,$sample) {}
+			foreach field {
+				alleleSeq1 alleleSeq2 posterior coverage correction
+				numA numC numG numT percA percC percG percT nonidentityposterior
+			} {
+				lappend samplea(rtgposs,$sample) [lsearch $header ${field}-$sample]
+			}
+		} elseif {[file exists $samplea(regionfile,$sample)]} {
+			set samplea(type,$sample) cg
+			annot_coverage_init $basedir/$sample
+			annot_region_init $samplea(regionfile,$sample)
+		} else {
+			error "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found in $basedir/$sample: not properly processed sample"
+		}
+		set samplea(todo,$sample) {}
 		if {[inlist $samplea(fields,$sample) refcons]} {
 			lappend samplea(todo,$sample) [list [lsearch $header refcons-$sample] rc $basedir/$sample/reg_refcons-$sample.tsv]
 		}
@@ -160,8 +180,6 @@ proc multicompar_reannot {compar_file {force 0}} {
 		list_foreach {field value regfile} $samplea(todo,$sample) {
 			annot_region_init $regfile
 		}
-		annot_coverage_init $basedir/$sample
-		annot_region_init $samplea(regionfile,$sample)
 	}
 	# start processing
 	set o [open $compar_file.temp w]
@@ -177,40 +195,70 @@ proc multicompar_reannot {compar_file {force 0}} {
 		foreach {chr begin end} [list_sub $line $poss] break
 		foreach sample $samples {
 			if {!$force && ([lindex $line $samplea(a1,$sample)] ne "?")} continue
-			if {$force || ([lindex $line $samplea(rpos,$sample)] eq "?") || ([lindex $line $samplea(cpos,$sample)] eq "?")} {
-				foreach {r c} [annot_coverage_get $basedir/$sample $chr $begin] break
-				lset line $samplea(rpos,$sample) $r
-				lset line $samplea(cpos,$sample) $c
-			}
 			list_foreach {field value regfile} $samplea(todo,$sample) {
 				if {[lindex $line $field] == "-"} continue
 				if {!$force && [lindex $line $field] != "?"} continue
 				set r [annot_region_get $regfile $chr $begin $end]
 				if {$r} {lset line $field $value} else {lset line $field {}}
 			}
-			if {$force} {
-				if {![inlist [list $reference - ?] [lindex $line $samplea(a1,$sample)]]} continue
-				if {![inlist [list $reference - ?] [lindex $line $samplea(a2,$sample)]]} continue
-			}
-			set r [annot_region_in $samplea(regionfile,$sample) $chr $begin $end]
-			if {$r} {
-				lset line $samplea(a1,$sample) $reference
-				lset line $samplea(a2,$sample) $reference
+			if {$samplea(type,$sample) eq "cg"} {
+				if {$force || ([lindex $line $samplea(rpos,$sample)] eq "?") || ([lindex $line $samplea(cpos,$sample)] eq "?")} {
+					foreach {r c} [annot_coverage_get $basedir/$sample $chr $begin] break
+					lset line $samplea(rpos,$sample) $r
+					lset line $samplea(cpos,$sample) $c
+				}
+				if {$force} {
+					if {![inlist [list $reference - ?] [lindex $line $samplea(a1,$sample)]]} continue
+					if {![inlist [list $reference - ?] [lindex $line $samplea(a2,$sample)]]} continue
+				}
+				set r [annot_region_in $samplea(regionfile,$sample) $chr $begin $end]
+				lset line $samplea(seq,$sample) $r
+				if {$r} {
+					lset line $samplea(a1,$sample) $reference
+					lset line $samplea(a2,$sample) $reference
+				} else {
+					lset line $samplea(a1,$sample) -
+					lset line $samplea(a2,$sample) -
+				}
 			} else {
-				lset line $samplea(a1,$sample) -
-				lset line $samplea(a2,$sample) -
+				set sub [list_sub $line $samplea(rtgposs,$sample)]
+				if {!$force && ![inlist [list_sub $line $samplea(rtgposs,$sample)] ?]} continue
+				set rtgdata [lrange [annot_rtg_get $basedir/$sample $chr $begin] 4 end-1]
+				if {[llength $rtgdata] < [llength $samplea(rtgposs,$sample)]} {
+					lset line $samplea(seq,$sample) 0
+					foreach pos $samplea(rtgposs,$sample) v $rtgdata {
+						if {$pos == -1} continue
+						lset line $pos -
+					}
+				} else {
+					set coverage [lindex $rtgdata 7]
+					if {$coverage < 10} {
+						lset line $samplea(seq,$sample) 0
+					} else {
+						lset line $samplea(seq,$sample) 1
+					}
+					foreach pos $samplea(rtgposs,$sample) v $rtgdata {
+						if {$pos == -1} continue
+						lset line $pos $v
+					}
+				}
 			}
 		}
 		puts $o [join $line \t]
 	}
+
 	close $o
 	close $f
 	foreach sample $samples {
 		list_foreach {field value regfile} $samplea(todo,$sample) {
 			annot_region_close $regfile
 		}
-		annot_coverage_close $basedir/$sample
-		annot_region_close $samplea(regionfile,$sample)
+		if {$samplea(type,$sample) eq "cg"} {
+			annot_coverage_close $basedir/$sample
+			annot_region_close $samplea(regionfile,$sample)
+		} else {
+			annot_rtg_close $basedir/$sample
+		}
 	}
 	file rename -force $compar_file $compar_file.old
 	file rename $compar_file.temp $compar_file
