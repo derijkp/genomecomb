@@ -362,6 +362,12 @@ proc tsv_index {file xfield} {
 	close $o
 }
 
+proc tsv_index_header {file} {
+	global cache
+	set file [file normalize $file]
+	return $cache(tsv_index,$file,header)
+}
+
 proc tsv_index_open {file field {uncompress 0}} {
 	global cache
 	set file [file normalize $file]
@@ -385,7 +391,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 	}
 	set indexname $root.${field}_index
 	if {![file exists $indexname]} {
-		tsv_index $file $field
+		tsv_index $workfile $field
 	}
 	set o [open $indexname]
 	set cache(tsv_index,$file,$field,step) [gets $o]
@@ -398,13 +404,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 	set cache(tsv_index,$file,$field,workfile) $workfile
 	set cache(tsv_index,$file,$field,uncompressed) $uncompressed
 	set cache(tsv_index,$file,$field,remove) $remove
-	close $o	lappend auto_path ~/dev/completegenomics/lib
-	lappend auto_path /complgen/bin/complgen/apps/cg/lib
-	package require Extral
-	package require Tclx
-	signal -restart error SIGINT
-set compar_file /complgen/multicompar/compar-X.tsv
-
+	close $o
 	set f [rzopen $workfile]
 	set cache(tsv_index,$file,header) [tsv_open $f]
 	if {$uncompressed} {
@@ -417,10 +417,10 @@ set compar_file /complgen/multicompar/compar-X.tsv
 proc tsv_index_close {file field} {
 	global cache
 	set file [file normalize $file]
-	if {$cache(tsv_index,$file,$field,remove) && ($cache(tsv_index,$file,$field,workfile) ne $file)} {
+	if {[info exists cache(tsv_index,$file,$field,workfile)] && [get cache(tsv_index,$file,$field,remove) 0] && ($cache(tsv_index,$file,$field,workfile) ne $file)} {
 		close $cache(tsv_index,$file,$field,channel)
 		# puts "remove $cache(tsv_index,$file,$field,workfile)"
-		file remove $cache(tsv_index,$file,$field,workfile)
+		file delete $cache(tsv_index,$file,$field,workfile)
 	}
 	set indexname [rzroot $file].${field}_index
 	unset -nocomplain cache(tsv_index,$file,$field,step)
@@ -469,7 +469,7 @@ proc tsv_index_get {file field pos} {
 	set file [file normalize $file]
 	set header $cache(tsv_index,$file,header)
 	set fieldpos [lsearch $header $field]
-	set uncompressed $cache(tsv_index,$file,$field,uncompressed)
+	set uncompressed [get cache(tsv_index,$file,$field,uncompressed) 0]
 	set f [tsv_index_apprgoto $file $field $pos]
 	if {$uncompressed} {
 		set line [tsv_nextline $f $fieldpos $pos]
