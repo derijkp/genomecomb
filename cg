@@ -464,12 +464,12 @@ switch $action {
 	}
 	scoredist {
 		if {[llength $argv] < 1} {
-			puts stderr "format is: $scriptname $action compar_file ..."
+			puts stderr "format is: $scriptname $action compar_file sample1 sample2"
 			puts stderr " - calculates distribution of different scores"
 			exit 1
 		}
-		foreach {filename} $argv {
-			scoredist $filename
+		foreach {filename sample1 sample2} $argv {
+			scoredist $filename $sample1 $sample2
 		}
 	}
 	default {

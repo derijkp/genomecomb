@@ -12,44 +12,81 @@ proc scoredist_incrset {var compar} {
 
 array set compara {sm 0 df 1 mm 2 un 3 sm-new 4 df-new 5 mm-new 6 un-new 7}
 
-proc scoredist file {
+proc scoredist {file sample1 sample2} {
 	global compara scorea refa cova mcova
 
 	catch {close $f}
 	set f [rzopen $file]
 	set header [split [gets $f] \t]
-	set scoreposs [list_cor $header {totalScore1-1 totalScore2-1 totalScore1-2 totalScore2-2}]
-	set refscoreposs [list_cor $header {refscore-1 refscore-2}]
-	set coverageposs [list_cor $header {coverage-1 coverage-2}]
-	set comparpos [lsearch $header compar]
+#	set comparpos [lsearch $header compar]
+	set possa(score) [list_cor $header [list totalScore1-$sample1 totalScore2-$sample1 totalScore1-$sample2 totalScore2-$sample2]]
+	foreach field {refscore coverage posterior alleleSeq1 alleleSeq2 sequenced refcons} {
+		set possa($field) [list_cor $header [list $field-$sample1 $field-$sample2]]
+	}
+	set alleleposs [list_merge $possa(alleleSeq1) $possa(alleleSeq2)]
+	set alleleposs1 [lrange $alleleposs 0 1]
+	set alleleposs2 [lrange $alleleposs 2 3]
+	set alleleposs2 [lrange $alleleposs 2 3]
 	set dbsnppos [lsearch $header xRef]
-	unset -nocomplain scorea
-	unset -nocomplain refa
-	unset -nocomplain cova
-	unset -nocomplain mcova
+	unset -nocomplain sa
 	set num 0
 	while {![eof $f]} {
 		incr num
 		if {![expr {$num%10000}]} {puts $num}
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
-		set score [lmath_min [list_remove [list_sub $line $scoreposs] {} -]]
-		set compar [lindex $line $comparpos]
-		set refscore [lmath_max [list_remove [list_sub $line $refscoreposs] {} -]]
-		set coverage [lmath_min [list_remove [list_sub $line $coverageposs] {} -]]
-		set mcoverage [lmath_max [list_remove [list_sub $line $coverageposs] {} -]]
-		scoredist_incrset scorea($score) $compar
-		scoredist_incrset refa($refscore) $compar
-		scoredist_incrset cova($coverage) $compar
-		scoredist_incrset mcova($mcoverage) $compar
-		if {![regexp dbsnp [lindex $line $dbsnppos]]} {
-			scoredist_incrset scorea($score) ${compar}-new
-			scoredist_incrset refa($refscore) ${compar}-new
-			scoredist_incrset cova($coverage) ${compar}-new
-			scoredist_incrset mcova($mcoverage) ${compar}-new
+		set sequenced [list_sub $line $possa(sequenced)]
+		if {[lsearch $sequenced v] == -1} continue
+		if {[lsearch $sequenced u] != -1} {
+			set compar un
+		} else {
+			foreach {s1 s2} [lsort $sequenced] break
+			if {$s1 eq "v"} {
+				set alleles1 [list_sub $line $alleleposs1]
+				set alleles2 [list_sub $line $alleleposs2]
+				if {[lsort $alleles1] eq [lsort $alleles2]} {
+					set compar sm
+				} else {
+					set compar mm
+				}
+			} else {
+				set compar df
+			}
+		}
+		if {![regexp dbsnp [lindex $line $dbsnppos]]} {set new 1} else {set new 0}
+		foreach {field take} {score min refscore max coverage min posterior min} {
+			set list [list_sub $line $possa($field)]
+			if {![llength [list_remove $list {}]]} continue
+			if {$take eq "max"} {
+				set score [max {*}$list]
+			} else {
+				set score [min {*}$list]
+			}
+			scoredist_incrset sa($field,$score) $compar
+			if {$new} {
+				scoredist_incrset sa($field,$score) ${compar}-new
+			}
+			set pos [lsearch $list $score]
+			if {$field eq "score"} {
+				if {$pos < 2} {set sample $sample1} else {set sample $sample2}
+			} else {
+				if {$pos < 1} {set sample $sample1} else {set sample $sample2}
+			}
+			scoredist_incrset sa($field-$sample,$score) $compar
+			if {$new} {
+				scoredist_incrset sa($field-$sample,$score) ${compar}-new
+			}
+			set rc [list_sub $line $possa(refcons)]
+			if {![inlist $rc rc]} {
+				scoredist_incrset sa(${field}-rc,$score) $compar
+				if {$new} {
+					scoredist_incrset sa(${field}-rc,$score) ${compar}-new
+				}
+			}
 		}
 	}
 	close $f
+
 #	# totals
 #	set totals {0 0 0 0 0 0 0 0}
 #	foreach score [array names scorea] {
@@ -63,20 +100,34 @@ proc scoredist file {
 #	set totals [linsert $totals 3 [expr {[lindex $totals 1]+[lindex $totals 2]}]]
 #	set totals [linsert $totals 5 {}]
 #	set totals [linsert $totals 9 [expr {[lindex $totals 7]+[lindex $totals 8]}]]
-
-	foreach {head name var} {
-		score scoredist scorea
-		refscore refscoredist refa
-		coverage coveragedist cova
-		maxcoverage maxcoveragedist mcova
-	} {
-		upvar #0 $var a
-		set ofile [file join [file dir $file] $name-[file tail [file root [rzroot $file]]].tsv]
+	foreach {field name} [list \
+		score scoredist \
+		refscore refscoredist \
+		coverage coveragedist \
+		posterior posteriordist \
+		score-rc scoredist-rc \
+		refscore-rc refscoredist-rc \
+		coverage-rc coveragedist-rc \
+		posterior-rc posteriordist-rc \
+		score-$sample1 scoredist-$sample1 \
+		refscore-$sample1 refscoredist-$sample1 \
+		coverage-$sample1 coveragedist-$sample1 \
+		posterior-$sample1 posteriordist-$sample1 \
+		score-$sample2 scoredist-$sample2 \
+		refscore-$sample2 refscoredist-$sample2 \
+		coverage-$sample2 coveragedist-$sample2 \
+		posterior-$sample2 posteriordist-$sample2 \
+	] {
+		set base [file tail [file root [rzroot $file]]]
+		set ofile [file join [file dir $file] $name-$base-$sample1-$sample2.tsv]
+		set names [array names sa $field,*]
+		regsub -all $field, $names {} scores
+		set scores [lsort -real [list_remove $scores {} - ?]]
+		if {![llength $scores]} continue
 		set o [open $ofile w]
-		puts $o [join [list $head sm df mm df+mm un {} sm-new df-new mm-new df+mm-new un-new] \t]
-		set scores [lsort -integer [list_remove [array names a] {}]]
+		puts $o [join [list $field sm df mm df+mm un {} sm-new df-new mm-new df+mm-new un-new] \t]
 		foreach score $scores {
-			set line $a($score)
+			set line $sa($field,$score)
 			if {![llength $line]} continue
 			set line [linsert $line 3 [expr {[lindex $line 1]+[lindex $line 2]}]]
 			set line [linsert $line 5 {}]
@@ -103,6 +154,12 @@ if 0 {
 	package require Extral
 	package require Tclx
 	signal -restart error SIGINT
+	set file /complgen/multicompar/compar.tsv
+	set sample1 GS102
+	set sample2 GS103
+
+	set sample1 rtg102
+	set sample2 rtg103
 	
 	set files [glob /complgen/compar_*/fcompar_*.tsv.gz]
 	foreach file $files {
