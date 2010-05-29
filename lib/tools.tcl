@@ -145,11 +145,11 @@ proc histogram {list aVar} {
 }
 
 proc max {args} {
-	lmath_max $args
+	lmath_max [list_remove $args {} - ?]
 }
 
 proc min {args} {
-	lmath_min $args
+	lmath_min [list_remove $args {} - ?]
 }
 
 proc opensqlite3 {dbfile query} {
