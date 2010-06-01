@@ -182,11 +182,13 @@ switch $action {
 		annot_compare_region $compar_file $reg_file $field $tvalue $fvalue
 	}
 	compare_pvt {
-		if {[llength $argv] != 0} {
-			puts stderr "format is: $scriptname $action"
+		if {[llength $argv] != 2} {
+			puts stderr "format is: $scriptname $action sample1 sample2"
+			puts stderr " - calculates distribution of different scores"
 			exit 1
 		}
-		compare_pvt
+		foreach {sample1 sample2} $argv break
+		compare_pvt $sample1 $sample2
 	}
 	compare_pvtsummary {
 		if {[llength $argv] != 0 && [llength $argv] != 1} {
@@ -383,7 +385,7 @@ switch $action {
 			lappend sql "\"$field\" $type"
 		}
 		set sql "create table $table ([join $sql ,])"
-		package require dbi
+		catch {package require dbi}
 		package require dbi_sqlite3
 		dbi_sqlite3 db
 		db create $dbfile
@@ -463,7 +465,7 @@ switch $action {
 		tsv_sort $filename $fields
 	}
 	scoredist {
-		if {[llength $argv] < 1} {
+		if {[llength $argv] != 3} {
 			puts stderr "format is: $scriptname $action compar_file sample1 sample2"
 			puts stderr " - calculates distribution of different scores"
 			exit 1

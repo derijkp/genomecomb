@@ -1,22 +1,25 @@
-proc compare_pvt {} {
+proc compare_pvt {sample1 sample2} {
 	set f stdin
-	# set f [open $compar_file]
+	# catch {close $f}; set f [rzopen $compar_file]
 	unset -nocomplain a
 	set header [split [gets $f] \t]
 	set fields {compar sample chromosome type trf str repeat segdup selfchain}
 	set poss [list_cor $header $fields]
 	set ufields {
-		type xRef
+		type xRef sequenced-1 sequenced-2
 		alleleSeq1-1 alleleSeq2-1 alleleSeq1-2 alleleSeq2-2
 		totalScore1-1 totalScore2-1 totalScore1-2 totalScore2-2
 		refscore-1 coverage-1 refcons-1 cluster-1
 		refscore-2 coverage-2 refcons-2 cluster-2
+		posterior-1 posterior-2
 		exonCategory aaCategory
 	}
-	set uposs [list_cor $header $ufields]
+	set searchfields [string_change $ufields [list -1 -$sample1 -2 -$sample2]]
+	set ufields [string_change $ufields [list -1 1 -2 2]]
+	set uposs [list_cor $header $searchfields]
 
 	# set fields {compar sample chromosome type dbsnp ns lowscore loc effect refcons cluster trf str repeat segdup selfchain a100 a70 b15 b20 b30}
-	set nf [list_find $poss -1]
+	set nf [list_remove [list_find $poss -1] 0 1]
 	if {[llength $nf]} {
 		set fields [list_sub $fields -exclude $nf]
 		set poss [list_sub $poss -exclude $nf]
@@ -29,15 +32,32 @@ proc compare_pvt {} {
 		if {![llength $line]} continue
 		foreach $ufields [list_sub $line $uposs] break
 		set line [list_sub $line $poss]
+		# get compar
+		if {$sequenced1 ne "v" && $sequenced2 ne "v"} continue
+		set compar [mcompar $sequenced1 $sequenced2 $alleleSeq11 $alleleSeq21 $alleleSeq12 $alleleSeq22]
+		set samples {}
+		if {$sequenced1 eq "v"} {lappend samples $sample1}
+		if {$sequenced2 eq "v"} {lappend samples $sample2}
+		lset line 0 $compar
+		lset line 1 [join $samples ,]
 		# dbsnp
 		if {[regexp dbsnp $xRef]} {set dbsnp dbsnp} else {set dbsnp {}}
 		# ns
-		set alleles [list ${alleleSeq1-1} ${alleleSeq2-1} ${alleleSeq1-2} ${alleleSeq2-2}]
+		set alleles [list $alleleSeq11 $alleleSeq21 $alleleSeq12 $alleleSeq22]
 		if {[regexp {[N?]} $alleles]} {set ns ns} else {set ns ""}
 		# lowscore
-		set scores [list_remove [list ${totalScore1-1} ${totalScore2-1} ${totalScore1-2} ${totalScore2-2}] {} -]
-		set minscore [lmath_min $scores]
-		if {$minscore < 60} {set lowscore ls} else {set lowscore ""}
+		set minscore [min $totalScore11 $totalScore21 $totalScore12 $totalScore22]
+		if {[isint $minscore]} {
+			if {$minscore < 60} {set lowscore ls} else {set lowscore ""}
+		} else {
+			# lowpost
+			set minpost [min $posterior1 $posterior2]
+			if {[isint $minpost]} {
+				if {$minpost < 4} {set lowscore ls} else {set lowscore ""}
+			} else {
+				set lowscore ""
+			}
+		}
 		# loc
 		set loc ""
 		foreach temp {EXON UTR BEGIN END INTRON} {
@@ -54,17 +74,14 @@ proc compare_pvt {} {
 				break
 			}
 		}
-		set refcons [lindex [list_remove [list ${refcons-1} ${refcons-2}] {} -] 0]
-		set cluster [lindex [list_remove [list ${cluster-1} ${cluster-2}] {} -] 0]
-		set coverages [lsort -integer [list_remove [list ${coverage-1} ${coverage-2}] {} -]]
+		set refcons [lindex [list_remove [list $refcons1 $refcons2] {} - ?] 0]
+		set cluster [lindex [list_remove [list $cluster1 $cluster2] {} - ?] 0]
+		set coverages [lsort -integer [list_remove [list $coverage1 $coverage2] {} - ?]]
 		set mincov [lindex $coverages 0]
 		set maxcov [lindex $coverages end]
-		if {$mincov < 15} {set b15 b15} else {set b15 {}}
 		if {$mincov < 20} {set b20 b20} else {set b20 {}}
-		if {$mincov < 30} {set b30 b30} else {set b30 {}}
-		if {$maxcov > 70} {set a70 a70} else {set a70 {}}
 		if {$maxcov > 100} {set a100 a100} else {set a100 {}}
-		lappend line $dbsnp $ns $lowscore $loc $effect $refcons $cluster $a100 $a70 $b15 $b20 $b30
+		lappend line $dbsnp $ns $lowscore $loc $effect $refcons $cluster $a100 $b20
 		if {![info exists a($line)]} {
 			set a($line) 1
 		} else {
@@ -72,9 +89,9 @@ proc compare_pvt {} {
 		}
 	}
 	set o stdout
-	# set o [open pvtcompar_${name1}_${name2}.tsv w]
+	# set o [open pvtcompar_${sample1}_${sample2}.tsv w]
 	set oheader $fields
-	lappend oheader dbsnp ns lowscore loc effect refcons cluster a100 a70 b15 b20 b30 tnum
+	lappend oheader dbsnp ns lowscore loc effect refcons cluster a100 b20 tnum
 	puts $o [join $oheader \t]
 	set list [lsort -dict [array names a]]
 	foreach line $list {
@@ -118,7 +135,7 @@ proc count {slist {cfilter {}}} {
 proc compare_loadtable {file headerVar} {
 	upvar $headerVar header
 	if {$file ne "stdin"} {
-		set f [open $file]
+		set f [rzopen $file]
 	} else {
 		set f stdin
 	}
@@ -226,9 +243,9 @@ proc compare_pvtsummary_out2 {o title header flist} {
 proc compare_pvtsummary {{type 1}} {
 	global header
 	set file stdin
-	# set f [open $file]
-	set table [compare_loadtable $file header]
 	set o stdout
+	# set o [open /complgen/multicompar/summary_GS102_GS103.tsv w]
+	set table [compare_loadtable $file header]
 	# selectivity
 	if {$type == 1} {
 		compare_selectivity $o $table
@@ -247,7 +264,7 @@ proc compare_pvtsummary {{type 1}} {
 	set cfilter {refcons ""}
 	foreach {name q} {
 		{?/N} {ns ""}
-		{scores < 60} {lowscore ""}
+		{low scores (< 60 for cg, posterior < 4 for rtg)} {lowscore ""}
 		cluster {cluster ""}
 		{tandem repeats} {trf ""}
 		microsatelite {str ""}
@@ -299,7 +316,7 @@ proc compare_selectivity {o table} {
 	foreach {sfield svalue} {
 		type snp dbsnp dbsnp ns ns lowscore ls 
 		refcons rc trf trf str str repeat rp segdup sd selfchain sc cluster cl
-		a100 a100 a70 a70 b15 b15 b20 b20 b30 b30
+		a100 a100 b20 b20
 	} {
 		set list [comstats_filter $dflist [list $sfield $svalue]]
 		set dfselnum [lmath_sum [list_subindex $list $end]]
@@ -322,6 +339,9 @@ proc compare_selectivity {o table} {
 }
 
 if 0 {
+}
+
+if 0 {
 
 
 package require Tclx
@@ -329,7 +349,11 @@ signal -restart error SIGINT
 lappend auto_path ~/dev/completegenomics/lib
 package require Extral
 
-set compar_file /complgen/testcompar_GS102_GS103/compar_GS102_GS103.tsv
+set compar_file /complgen/multicompar/compar.tsv.rz
+set file /complgen/multicompar/pvtcompar_GS102_GS103.tsv
+set sample1 GS102
+set sample2 GS103
+
 cd /complgen/compar_GS102_GS103
 set file pvtcompar_GS102_GS103.tsv
 set ofile summarycompar2_GS102_GS103.tsv

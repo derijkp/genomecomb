@@ -271,8 +271,8 @@ if 0 {
 proc multicompar_change_sequenced {} {
 
 	catch {close $f}; catch {close $o}
-	set f [open compar8-old.tsv]
-	set o [open compar8.tsv w]
+	set f [open compar-old.tsv]
+	set o [open compar.tsv w]
 	set header [split [gets $f] \t]
 	set samples {}
 	foreach field $header {

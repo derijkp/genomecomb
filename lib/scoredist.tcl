@@ -12,6 +12,23 @@ proc scoredist_incrset {var compar} {
 
 array set compara {sm 0 df 1 mm 2 un 3 sm-new 4 df-new 5 mm-new 6 un-new 7}
 
+proc mcompar {sequenced1 sequenced2 allele11 allele21 allele12 allele22} {
+	if {$sequenced1 ne "v" && $sequenced2 ne "v"} {return i}
+	if {$sequenced1 eq "u" || $sequenced2 eq "u"} {return u}
+	foreach {s1 s2} [lsort [list $sequenced1 $sequenced2]] break
+	if {$s1 eq "v"} {
+		set alleles1 [lsort [list $allele11 $allele21]]
+		set alleles2 [lsort [list $allele12 $allele22]]
+		if {$alleles1 eq $alleles2} {
+			return sm
+		} else {
+			return mm
+		}
+	} else {
+		return df
+	}
+}
+
 proc scoredist {file sample1 sample2} {
 	global compara scorea refa cova mcova
 
@@ -37,22 +54,7 @@ proc scoredist {file sample1 sample2} {
 		if {![llength $line]} continue
 		set sequenced [list_sub $line $possa(sequenced)]
 		if {[lsearch $sequenced v] == -1} continue
-		if {[lsearch $sequenced u] != -1} {
-			set compar un
-		} else {
-			foreach {s1 s2} [lsort $sequenced] break
-			if {$s1 eq "v"} {
-				set alleles1 [list_sub $line $alleleposs1]
-				set alleles2 [list_sub $line $alleleposs2]
-				if {[lsort $alleles1] eq [lsort $alleles2]} {
-					set compar sm
-				} else {
-					set compar mm
-				}
-			} else {
-				set compar df
-			}
-		}
+		set compar [mcompar {*}$sequenced {*}[list_sub $line $alleleposs1] {*}[list_sub $line $alleleposs2]]
 		if {![regexp dbsnp [lindex $line $dbsnppos]]} {set new 1} else {set new 0}
 		foreach {field take} {score min refscore max coverage min posterior min} {
 			set list [list_sub $line $possa($field)]
