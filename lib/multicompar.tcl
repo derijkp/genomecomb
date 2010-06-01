@@ -268,57 +268,6 @@ proc multicompar_reannot {compar_file {force 0}} {
 
 if 0 {
 
-proc multicompar_change_sequenced {} {
-
-	catch {close $f}; catch {close $o}
-	set f [open compar-old.tsv]
-	set o [open compar.tsv w]
-	set header [split [gets $f] \t]
-	set samples {}
-	foreach field $header {
-		set temp [split $field -]
-		if {[llength $temp] == 2} {
-			set sample [lindex $temp 1]
-			list_addnew samples $sample
-		}
-	}
-	set refpos [lsearch $header reference]
-	foreach sample $samples {
-		set samplea(a1,$sample) [lsearch $header alleleSeq1-$sample]
-		set samplea(a2,$sample) [lsearch $header alleleSeq2-$sample]
-		set samplea(seq,$sample) [lsearch $header sequenced-$sample]
-	}
-	set num 0
-	puts $o [join $header \t]
-	while {![eof $f]} {
-		incr num
-		if {![expr $num%10000]} {putslog $num}
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		set ref [lindex $line $refpos]
-		foreach sample $samples {
-			set seq [lindex $line $samplea(seq,$sample)]
-			if {$seq == 0} {
-				set seq u
-			} else {
-				set a1 [lindex $line $samplea(a1,$sample)]
-				set a2 [lindex $line $samplea(a2,$sample)]
-				if {$a1 ne $ref || $a2 ne $ref} {
-					set seq v
-				} else {
-					set seq r
-				}
-			}
-			lset line $samplea(seq,$sample) $seq
-		}
-		puts $o [join $line \t]
-	}
-
-	close $f
-	close $o
-
-}
-
 	lappend auto_path ~/dev/completegenomics/lib
 	lappend auto_path /complgen/bin/complgen/apps/cg/lib
 	package require Extral
@@ -326,25 +275,12 @@ proc multicompar_change_sequenced {} {
 	signal -restart error SIGINT
 set compar_file /complgen/multicompar/compar.tsv
 set compar_file /complgen/multicompar/compar-part.tsv
+	set compar_file /complgen/multicompar/compar.tsv.rz
 
 	set basedir /media/passport/complgen
 	set basedir /complgen
 	set dbdir /complgen/refseq
-	set dir /complgen/GS102
 	set dir /complgen/GS103
-	set dir /complgen/GS100
 multicompar $compar_file $dir
-	set dir /complgen/GS101A01
-multicompar $compar_file $dir
-	set dir /complgen/GS101A02
-multicompar $compar_file $dir
-
-foreach name {rtg102 rtg103 rtg100 rtg101A01 rtg101A02} {
-	set dir /complgen/$name
-	puts $dir
-	multicompar $file1 $dir
-}
-
-	set compar_file /complgen/multicompar/compar.tsv
 
 }
