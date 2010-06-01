@@ -104,17 +104,6 @@ proc process_rtgsample {dir dbdir {force 0}} {
 		}
 		annot_annotvar annotvar-$name.tsv fannotvar-$name.tsv $todo
 	}
-	# fake region file
-	if {$force || ![file exists sreg-$name.tsv]} {
-		set chrs [list_fill 22 1 1]
-		lappend chrs M X Y
-		set o [open sreg-$name.tsv w]
-		puts $o	[join {chromosome begin end} \t]
-		foreach chr $chrs {
-			puts $o $chr\t1\t1000000000
-		}
-		close $o
-	}
 	cd $keepdir
 }
 
