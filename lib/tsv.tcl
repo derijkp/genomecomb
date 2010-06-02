@@ -86,14 +86,8 @@ proc tsv_select {query {qfields {}} {sortfields {}} {f stdin} {out stdout}} {
 	set sort ""
 	set cut ""
 	if {[llength $sortfields]} {
-		set poss [list_cor $qfields $sortfields]
-		if {[lsearch $poss -1] != -1} {
-			set poss [list_cor $header $sortfields]
-			if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $sortfields [list_find $poss -1]] ,] not found"}
-			if {$qfields ne ""} {
-				set cut "cut -d \\t -f [join $qposs ,]"
-			}
-		}
+		set poss [list_cor $header $sortfields]
+		if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $sortfields [list_find $poss -1]] ,] not found"}
 		set poss [lmath_calc $poss + 1]
 		set keys {}
 		foreach pos $poss {
@@ -101,64 +95,61 @@ proc tsv_select {query {qfields {}} {sortfields {}} {f stdin} {out stdout}} {
 		}
 		set sort "gnusort8 -t \\t -V -s -k[join $keys " -k"]"
 	}
-	if {$query ne ""} {
-		set indices [list_unmerge [regexp -all -indices -inline {[$]([a-zA-z0-9_(),-]+)} $query]]
-		set indices [list_reverse $indices]
-		list_foreach {start end} $indices {
-			set field [string range $query [expr {$start+1}] $end]
-			if {[regexp {^(.*)\((.*)\)$} $field temp func args]} {
-				switch $func {
-					sm {
-						set ids [split $args ,]
-						set temp [tsv_select_sm $header $ids]
-					}
-					df {
-						set ids [split $args ,]
-						set temp [tsv_select_df $header $ids]
-					}
-					mm {
-						set ids [split $args ,]
-						set temp [tsv_select_mm $header $ids]
-					}
-					un {
-						set ids [split $args ,]
-						set temp [tsv_select_un $header $ids]
-					}
-					default {
-						error "Unkown function $func"
-					}
-				}
-				set query [string_replace $query $start $end $temp]
-			} else {
-				set pos [lsearch $header $field]
-				if {$pos == -1} {error "field \"$field\" not present"}
-				incr pos
-				set query [string_replace $query $start $end \$$pos]
-			}
-		}
+	if {($query ne "") || ($qfields ne "")} {
 		set awk {BEGIN {FS="\t" ; OFS="\t"} }
-		append awk $query
-		if {($qfields ne "") && ($cut eq "")} {
+		if {$query ne ""} {
+			set indices [list_unmerge [regexp -all -indices -inline {[$]([a-zA-z0-9_(),-]+)} $query]]
+			set indices [list_reverse $indices]
+			list_foreach {start end} $indices {
+				set field [string range $query [expr {$start+1}] $end]
+				if {[regexp {^(.*)\((.*)\)$} $field temp func args]} {
+					switch $func {
+						sm {
+							set ids [split $args ,]
+							set temp [tsv_select_sm $header $ids]
+						}
+						df {
+							set ids [split $args ,]
+							set temp [tsv_select_df $header $ids]
+						}
+						mm {
+							set ids [split $args ,]
+							set temp [tsv_select_mm $header $ids]
+						}
+						un {
+							set ids [split $args ,]
+							set temp [tsv_select_un $header $ids]
+						}
+						default {
+							error "Unkown function $func"
+						}
+					}
+					set query [string_replace $query $start $end $temp]
+				} else {
+					set pos [lsearch $header $field]
+					if {$pos == -1} {error "field \"$field\" not present"}
+					incr pos
+					set query [string_replace $query $start $end \$$pos]
+				}
+			}
+			append awk $query
+		}
+		if {($qfields ne "")} {
 			set qposs [list_cor $header $qfields]
 		} else {
 			set qposs [list_cor $header $header]
 		}
 		set qposs [lmath_calc $qposs + 1]
 		append awk " \{print $[join $qposs ,$]\}"
-	} elseif {($qfields ne "") && ($cut eq "")} {
-		set cut "cut -d \\t -f [join $qposs ,]"
 	}
 	set pipe {}
-	if {$awk ne ""} {
-		lappend pipe [list awk $awk]
-	}
 	if {$sort ne ""} {
 		lappend pipe $sort
 	}
-	if {$cut ne ""} {
-		lappend pipe $cut
+	if {$awk ne ""} {
+		lappend pipe [list awk $awk]
 	}
-	 putslog pipe:[join $pipe " | "]
+	# putslog pipe:[join $pipe " | "]
 	if {$qfields ne ""} {puts $out [join $qfields \t]} else {puts $out [join $header \t]}
 	if {![llength $pipe]} {
 		fcopy $f $out
