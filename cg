@@ -184,11 +184,21 @@ switch $action {
 	compare_pvt {
 		if {[llength $argv] != 2} {
 			puts stderr "format is: $scriptname $action sample1 sample2"
-			puts stderr " - calculates distribution of different scores"
+			puts stderr " - returns pvt file with numbers per class of variant"
+			puts stderr " - from multicopmar files"
 			exit 1
 		}
 		foreach {sample1 sample2} $argv break
 		compare_pvt $sample1 $sample2
+	}
+	compare_mpvt {
+		if {[llength $argv] < 2} {
+			puts stderr "format is: $scriptname $action sample1 sample2 ..."
+			puts stderr " - returns mpvt file with numbers per class of variant"
+			puts stderr " - from multicopmar files"
+			exit 1
+		}
+		compare_mpvt {*}$argv
 	}
 	compare_pvtsummary {
 		if {[llength $argv] != 0 && [llength $argv] != 1} {

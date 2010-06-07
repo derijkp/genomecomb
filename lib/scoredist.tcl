@@ -13,8 +13,8 @@ proc scoredist_incrset {var compar} {
 array set compara {sm 0 df 1 mm 2 un 3 sm-new 4 df-new 5 mm-new 6 un-new 7}
 
 proc mcompar {sequenced1 sequenced2 allele11 allele21 allele12 allele22} {
+	if {$sequenced1 eq "u" || $sequenced2 eq "u"} {return un}
 	if {$sequenced1 ne "v" && $sequenced2 ne "v"} {return i}
-	if {$sequenced1 eq "u" || $sequenced2 eq "u"} {return u}
 	foreach {s1 s2} [lsort [list $sequenced1 $sequenced2]] break
 	if {$s1 eq "v"} {
 		set alleles1 [lsort [list $allele11 $allele21]]
