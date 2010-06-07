@@ -15,6 +15,17 @@ proc tsv_select_sm {header ids} {
 	set temp "([join $temp " && "])"
 }
 
+proc tsv_select_same {header ids} {
+	set id1 [list_pop ids]
+	foreach {a11 a21 sequenced ref} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 sequenced-$id1 reference]] break
+	set temp {}
+	foreach id $ids {
+		foreach {a12 a22 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
+		lappend temp "((\$$a11 == \$$a12 && \$$a21 == \$$a22) || (\$$a11 == \$$a22 && \$$a21 == \$$a12))"
+	}
+	set temp "([join $temp " && "])"
+}
+
 proc tsv_select_df {header ids} {
 	set temp1 {}
 	set temp2 {}
@@ -107,6 +118,10 @@ proc tsv_select {query {qfields {}} {sortfields {}} {f stdin} {out stdout}} {
 						sm {
 							set ids [split $args ,]
 							set temp [tsv_select_sm $header $ids]
+						}
+						same {
+							set ids [split $args ,]
+							set temp [tsv_select_same $header $ids]
 						}
 						df {
 							set ids [split $args ,]
