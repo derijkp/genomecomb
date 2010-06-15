@@ -154,6 +154,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {f stdin} {out stdout}} {
 		} else {
 			set qposs [list_cor $header $header]
 		}
+		if {[inlist $qposs -1]} {
+			error "fields [join [list_sub $qfields [list_find $qposs -1]] ", "] not found in file"
+		}
 		set qposs [lmath_calc $qposs + 1]
 		append awk " \{print $[join $qposs ,$]\}"
 	}
