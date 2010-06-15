@@ -28,6 +28,25 @@ proc process_sample {dir dbdir {force 0}} {
 		cg select -s "chromosome begin end" < $regfile > temp.tsv
 		file rename temp.tsv sreg-$name.tsv
 	}
+	# sort coverage files
+	foreach {chr} {M X Y 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22}  {
+		set resultfile coverage/coverageRefScore-$chr-$name.tsv
+		if {$force || (![file exists $resultfile] && ![file exists $resultfile.rz])} {
+			file mkdir coverage
+			set oricov [lindex [glob -nocomplain ASM/REF/coverageRefScore-$chr-*-ASM.tsv ASM/REF/coverageRefScore-$chr-*-ASM.tsv.gz ASM/REF/coverageRefScore-$chr-*-ASM.tsv.rz] 0]
+			if {[file exists $oricov]} {
+				putslog "Sorting to create $resultfile"
+				cg select -s offset $oricov coverage/temp.tsv
+				file rename -force coverage/temp.tsv $resultfile
+			}
+		}
+		if {$force || ![file exists $resultfile.offset_index]} {
+			if {[file exists $resultfile]} {
+				putslog "Creating index $resultfile.offset_index"
+				process_indexcompress $resultfile
+			}
+		}
+	}
 	# annotated vars file
 	if {$force || ![file exists annotvar-$name.tsv]} {
 		puts stderr "Create annotated varfile annotvar-$name.tsv"
@@ -72,25 +91,6 @@ proc process_sample {dir dbdir {force 0}} {
 			lappend todo [list checked $value $file]
 		}
 		annot_annotvar annotvar-$name.tsv fannotvar-$name.tsv $todo $dir
-	}
-	# sort coverage files
-	foreach {chr} {M X Y 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22}  {
-		set resultfile coverage/coverageRefScore-$chr-$name.tsv
-		if {$force || (![file exists $resultfile] && ![file exists $resultfile.rz])} {
-			file mkdir coverage
-			set oricov [lindex [glob -nocomplain ASM/REF/coverageRefScore-$chr-*-ASM.tsv ASM/REF/coverageRefScore-$chr-*-ASM.tsv.gz ASM/REF/coverageRefScore-$chr-*-ASM.tsv.rz] 0]
-			if {[file exists $oricov]} {
-				putslog "Sorting to create $resultfile"
-				cg select -s offset $oricov coverage/temp.tsv
-				file rename -force coverage/temp.tsv $resultfile
-			}
-		}
-		if {$force || ![file exists $resultfile.offset_index]} {
-			if {[file exists $resultfile]} {
-				putslog "Creating index $resultfile.offset_index"
-				process_indexcompress $resultfile
-			}
-		}
 	}
 	# coverage
 	if {$force || ![file exists reg-$name.covered]} {
