@@ -1,162 +1,22 @@
-proc compare_mpvt {args} {
+proc compare_pvt {} {
 	set f stdin
-	set samples $args
-
-	# set samples {GS102 GS103 rtg102 rtg103}
-	# catch {close $f}; set f [rzopen $compar_file]
+	# set f [open $compar_file]
 	unset -nocomplain a
 	set header [split [gets $f] \t]
-	set fields {type trf str repeat segdup selfchain checked}
-	set poss [list_cor $header $fields]
-	set ufields {type xRef exonCategory aaCategory}
-	set uposs [list_cor $header $ufields]
-	unset -nocomplain possa
-	foreach field {
-		sequenced alleleSeq1 alleleSeq2 totalScore1 totalScore2
-		refscore coverage refcons cluster posterior
-	} {
-		foreach sample $samples {
-			set possa($field,$sample) [lsearch $header ${field}-$sample]
-		}
-	}
-	foreach sample $samples {
-		set possa(alleles,$sample) $possa(alleleSeq1,$sample)
-		lappend possa(alleles,$sample) $possa(alleleSeq2,$sample)
-		set possa(score,$sample) $possa(totalScore1,$sample)
-		lappend possa(scores,$sample) $possa(totalScore2,$sample)
-		lappend possa(sequenced) $possa(sequenced,$sample)
-	}
-	# make header
-	set pos 1
-	foreach s1 [lrange $samples 0 end-1] {
-		foreach s2 [lrange $samples $pos end] {
-			lappend oheader compar_${s1}_${s2}
-		}
-		incr pos
-	}
-	lappend oheader {*}$fields
-	lappend oheader dbsnp loc effect
-	foreach sample $samples {
-		foreach field {ns lowscore refcons cluster coverage sequenced} {
-			lappend oheader ${field}-$sample
-		}
-	}
-	lappend oheader tnum
-	set num 0
-	while {![eof $f]} {
-		incr num
-		if {![expr {$num%100000}]} {putslog $num}
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		foreach $ufields [list_sub $line $uposs] break
-		set result {}
-		# do comparisons
-		set sequenced [list_sub $line $possa(sequenced)]
-		if {![inlist $sequenced v]} continue
-		set pos 1
-		foreach s1 [lrange $samples 0 end-1] seq1 [lrange $sequenced 0 end-1] {
-			foreach s2 [lrange $samples $pos end] seq2 [lrange $sequenced $pos end] {
-				set alleles1 [list_sub $line $possa(alleles,$s1)]
-				set alleles2 [list_sub $line $possa(alleles,$s2)]
-				set compar [mcompar $seq1 $seq2 {*}$alleles1 {*}$alleles2]
-				lappend result $compar
-			}
-			incr pos
-		}
-		# add data to result
-		lappend result {*}[list_sub $line $poss]
-		# dbsnp
-		if {[regexp dbsnp $xRef]} {set dbsnp dbsnp} else {set dbsnp {}}
-		lappend result $dbsnp
-		# loc
-		set loc ""
-		foreach temp {EXON UTR BEGIN END INTRON} {
-			if {[regexp $temp $exonCategory]} {
-				set loc $temp
-				break
-			}
-		}
-		lappend result $loc
-		# effect
-		set effect OTHER
-		foreach temp {FRAMESHIFT NONSENSE NONSTOP INSERT+ DELETE+ INSERT DELETE MISSENSE COMPATIBLE UNDEFINED} {
-			if {[regexp $temp $aaCategory]} {
-				set effect $temp
-				break
-			}
-		}
-		lappend result $effect
-		# per sample
-		foreach sample $samples {
-			# ns
-			set alleles [list_sub $line $possa(alleles,$sample)]
-			if {[regexp {[N?]} $alleles]} {set ns ns} else {set ns ""}
-			# lowscore
-			set scores [list_sub $line $possa(scores,$sample)]
-			set minscore [min {*}$scores]
-			if {[isint $minscore]} {
-				if {$minscore < 60} {set lowscore ls} else {set lowscore ""}
-			} else {
-				# lowpost
-				set minpost [lindex $line $possa(posterior,$sample)]
-				if {[isdouble $minpost]} {
-					if {$minpost < 4} {set lowscore ls} else {set lowscore ""}
-				} else {
-					set lowscore ""
-				}
-			}
-			set refcons [lindex $line $possa(refcons,$sample)]
-			set cluster [lindex $line $possa(cluster,$sample)]
-			set coverage [lindex $line $possa(coverage,$sample)]
-			if {![isint $coverage]} {
-				set coverage {}
-			} elseif {$coverage < 20} {
-				set coverage l
-			} elseif {$coverage > 100} {
-				set coverage h
-			} else {
-				set coverage n
-			}
-			set sequenced [lindex $line $possa(sequenced,$sample)]
-			lappend result $ns $lowscore $refcons $cluster $coverage $sequenced
-		}
-		if {![info exists a($result)]} {
-			set a($result) 1
-		} else {
-			incr a($result)
-		}
-	}
-	set o stdout
-	# set o [open pvtcompar_[join $samples _].tsv w]
-	puts $o [join $oheader \t]
-	set list [lsort -dict [array names a]]
-	foreach line $list {
-		puts $o [join $line \t]\t$a($line)
-	}
-}
-
-proc compare_pvt {sample1 sample2} {
-	set f stdin
-	# catch {close $f}; set f [rzopen $compar_file]
-	unset -nocomplain a
-	set header [split [gets $f] \t]
-	set fields {compar sample type trf str repeat segdup selfchain}
+	set fields {compar sample chromosome type trf str repeat segdup selfchain}
 	set poss [list_cor $header $fields]
 	set ufields {
-		type xRef sequenced-1 sequenced-2
+		type xRef
 		alleleSeq1-1 alleleSeq2-1 alleleSeq1-2 alleleSeq2-2
 		totalScore1-1 totalScore2-1 totalScore1-2 totalScore2-2
 		refscore-1 coverage-1 refcons-1 cluster-1
 		refscore-2 coverage-2 refcons-2 cluster-2
-		posterior-1 posterior-2
 		exonCategory aaCategory
 	}
-	set searchfields [string_change $ufields [list -1 -$sample1 -2 -$sample2]]
-	set ufields [string_change $ufields [list -1 1 -2 2]]
-	set uposs [list_cor $header $searchfields]
+	set uposs [list_cor $header $ufields]
 
 	# set fields {compar sample chromosome type dbsnp ns lowscore loc effect refcons cluster trf str repeat segdup selfchain a100 a70 b15 b20 b30}
-	set nf [list_remove [list_find $poss -1] 0 1]
+	set nf [list_find $poss -1]
 	if {[llength $nf]} {
 		set fields [list_sub $fields -exclude $nf]
 		set poss [list_sub $poss -exclude $nf]
@@ -169,32 +29,15 @@ proc compare_pvt {sample1 sample2} {
 		if {![llength $line]} continue
 		foreach $ufields [list_sub $line $uposs] break
 		set line [list_sub $line $poss]
-		# get compar
-		if {$sequenced1 ne "v" && $sequenced2 ne "v"} continue
-		set compar [mcompar $sequenced1 $sequenced2 $alleleSeq11 $alleleSeq21 $alleleSeq12 $alleleSeq22]
-		set samples {}
-		if {$sequenced1 eq "v"} {lappend samples $sample1}
-		if {$sequenced2 eq "v"} {lappend samples $sample2}
-		lset line 0 $compar
-		lset line 1 [join $samples ,]
 		# dbsnp
 		if {[regexp dbsnp $xRef]} {set dbsnp dbsnp} else {set dbsnp {}}
 		# ns
-		set alleles [list $alleleSeq11 $alleleSeq21 $alleleSeq12 $alleleSeq22]
+		set alleles [list ${alleleSeq1-1} ${alleleSeq2-1} ${alleleSeq1-2} ${alleleSeq2-2}]
 		if {[regexp {[N?]} $alleles]} {set ns ns} else {set ns ""}
 		# lowscore
-		set minscore [min $totalScore11 $totalScore21 $totalScore12 $totalScore22]
-		if {[isint $minscore]} {
-			if {$minscore < 60} {set lowscore ls} else {set lowscore ""}
-		} else {
-			# lowpost
-			set minpost [min $posterior1 $posterior2]
-			if {[isint $minpost]} {
-				if {$minpost < 4} {set lowscore ls} else {set lowscore ""}
-			} else {
-				set lowscore ""
-			}
-		}
+		set scores [list_remove [list ${totalScore1-1} ${totalScore2-1} ${totalScore1-2} ${totalScore2-2}] {} - ?]
+		set minscore [lmath_min $scores]
+		if {$minscore < 60} {set lowscore ls} else {set lowscore ""}
 		# loc
 		set loc ""
 		foreach temp {EXON UTR BEGIN END INTRON} {
@@ -211,14 +54,17 @@ proc compare_pvt {sample1 sample2} {
 				break
 			}
 		}
-		set refcons [lindex [list_remove [list $refcons1 $refcons2] {} - ?] 0]
-		set cluster [lindex [list_remove [list $cluster1 $cluster2] {} - ?] 0]
-		set coverages [lsort -integer [list_remove [list $coverage1 $coverage2] {} - ?]]
+		set refcons [lindex [list_remove [list ${refcons-1} ${refcons-2}] {} - ?] 0]
+		set cluster [lindex [list_remove [list ${cluster-1} ${cluster-2}] {} - ?] 0]
+		set coverages [lsort -integer [list_remove [list ${coverage-1} ${coverage-2}] {} - ?]]
 		set mincov [lindex $coverages 0]
 		set maxcov [lindex $coverages end]
+		if {$mincov < 15} {set b15 b15} else {set b15 {}}
 		if {$mincov < 20} {set b20 b20} else {set b20 {}}
+		if {$mincov < 30} {set b30 b30} else {set b30 {}}
+		if {$maxcov > 70} {set a70 a70} else {set a70 {}}
 		if {$maxcov > 100} {set a100 a100} else {set a100 {}}
-		lappend line $dbsnp $ns $lowscore $loc $effect $refcons $cluster $a100 $b20
+		lappend line $dbsnp $ns $lowscore $loc $effect $refcons $cluster $a100 $a70 $b15 $b20 $b30
 		if {![info exists a($line)]} {
 			set a($line) 1
 		} else {
@@ -226,9 +72,9 @@ proc compare_pvt {sample1 sample2} {
 		}
 	}
 	set o stdout
-	# set o [open pvtcompar_${sample1}_${sample2}.tsv w]
+	# set o [open pvtcompar_${name1}_${name2}.tsv w]
 	set oheader $fields
-	lappend oheader dbsnp ns lowscore loc effect refcons cluster a100 b20 tnum
+	lappend oheader dbsnp ns lowscore loc effect refcons cluster a100 a70 b15 b20 b30 tnum
 	puts $o [join $oheader \t]
 	set list [lsort -dict [array names a]]
 	foreach line $list {

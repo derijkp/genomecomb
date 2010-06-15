@@ -95,14 +95,15 @@ proc annot_coverage_get {dir chr begin} {
 	global annot
 	foreach {curchr chrfile present} [get annot(cov,$dir) {{} {} 0}] break
 	if {$chr ne $curchr} {
-		if {[llength $chrfile]} {
+		if {[string length $chrfile]} {
 			tsv_index_close $chrfile offset
 		}
-		set chrfile [lindex [glob -nocomplain $dir/coverage/coverageRefScore-$chr-*-ASM.tsv $dir/coverage/coverageRefScore-$chr-*-ASM.tsv.rz $dir/coverage/coverageRefScore-$chr-*-ASM.tsv.gz] 0]
+		set chrfile [lindex [glob -nocomplain $dir/coverage/coverageRefScore-$chr-*.tsv $dir/coverage/coverageRefScore-$chr-*.tsv.rz $dir/coverage/coverageRefScore-$chr-*.tsv.gz] 0]
 		if {[llength $chrfile]} {
 			tsv_index_open $chrfile offset 1
 			set present 1
 		} else {
+			error "coverageRefScore file not found ($dir/coverage/coverageRefScore-$chr-*.tsv)"
 			set present 0
 		}
 		set annot(cov,$dir) [list $chr $chrfile $present]

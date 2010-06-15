@@ -58,7 +58,7 @@ proc multicompar {compar_file dir} {
 		puts stderr "header error in comparfile $compar_file"
 		exit 1
 	}
-	set mergeposs1 [list_remove [list_cor $header1 $mergefields] -1]
+	set mergeposs1 [list_cor $header1 $mergefields]
 	set dummy1 [list_fill [llength $header1] ?]
 	set f2 [open $file2]
 	set header2 [split [gets $f2] \t]
@@ -67,7 +67,7 @@ proc multicompar {compar_file dir} {
 		puts stderr "header error in fannot_varfile2 $compar_file"
 		exit 1
 	}
-	set mergeposs2 [list_remove [list_cor $header2 $mergefields] -1]
+	set mergeposs2 [list_cor $header2 $mergefields]
 	set dummy2 [list_fill [llength $header2] ?]
 	# start
 	set o [open $compar_file.temp w]
@@ -121,7 +121,7 @@ proc multicompar {compar_file dir} {
 		}
 	}
 	close $f1; close $f2; close $o
-	file rename -force $compar_file $compar_file.old
+	catch {file rename -force $compar_file $compar_file.old}
 	file rename $compar_file.temp $compar_file
 }
 
@@ -130,7 +130,7 @@ proc multicompar_reannot {compar_file {force 0}} {
 	set compar_file [file normalize $compar_file]
 	set basedir [file dir [file dir $compar_file]]
 	catch {close $f}; catch {close $o}
-	set f [open $compar_file]
+	set f [rzopen $compar_file]
 	set header [split [gets $f] \t]
 	set pos -1
 	unset -nocomplain samplea
@@ -194,7 +194,7 @@ proc multicompar_reannot {compar_file {force 0}} {
 		set reference [lindex $line $referencepos]
 		foreach {chr begin end} [list_sub $line $poss] break
 		foreach sample $samples {
-			if {!$force && ([lindex $line $samplea(a1,$sample)] ne "?")} continue
+			#if {!$force && ([lindex $line $samplea(a1,$sample)] ne "?")} continue
 			list_foreach {field value regfile} $samplea(todo,$sample) {
 				if {[lindex $line $field] == "-"} continue
 				if {!$force && [lindex $line $field] != "?"} continue

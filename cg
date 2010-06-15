@@ -103,6 +103,7 @@ switch $action {
 		if {[llength $argv] == 2} {
 			set force 0
 			foreach {dbdir resultsdir} $argv break
+			set resultsdir [file normalize $resultsdir]
 			foreach {dir1 dir2} [lrange [split $resultsdir _] end-1 end] break
 			set dir1 [file dir $resultsdir]/$dir1
 			set dir2 [file dir $resultsdir]/$dir2
@@ -127,6 +128,8 @@ switch $action {
 		if {[llength $argv] == 2} {
 			set force 0
 			foreach {dbdir resultsdir} $argv break
+			set dbdir [file normalize $dbdir]
+			set resultsdir [file normalize $resultsdir]
 			foreach {dir1 dir2} [lrange [split $resultsdir _] end-1 end] break
 			set dir1 [file dir $resultsdir]/$dir1
 			set dir2 [file dir $resultsdir]/$dir2
@@ -182,14 +185,19 @@ switch $action {
 		annot_compare_region $compar_file $reg_file $field $tvalue $fvalue
 	}
 	compare_pvt {
-		if {[llength $argv] != 2} {
-			puts stderr "format is: $scriptname $action sample1 sample2"
-			puts stderr " - returns pvt file with numbers per class of variant"
-			puts stderr " - from multicopmar files"
+		if {[llength $argv] != 0} {
+			puts stderr "format is: $scriptname $action"
 			exit 1
 		}
-		foreach {sample1 sample2} $argv break
-		compare_pvt $sample1 $sample2
+		compare_pvt
+	}
+	compare_pvtsummary {
+		if {[llength $argv] != 0 && [llength $argv] != 1} {
+			puts stderr "format is: $scriptname $action ?table?"
+			exit 1
+		}
+		if {[lindex $argv end] eq "table"} {set type 2} else {set type 1}
+		compare_pvtsummary $type
 	}
 	compare_mpvt {
 		if {[llength $argv] < 2} {
@@ -200,13 +208,12 @@ switch $action {
 		}
 		compare_mpvt {*}$argv
 	}
-	compare_pvtsummary {
-		if {[llength $argv] != 0 && [llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action ?table?"
+	mpvt_summary {
+		if {[llength $argv] != 5} {
+			puts stderr "format is: $scriptname $action mpvtfile sample1 sample2 rtgsample1 rtgsample2"
 			exit 1
 		}
-		if {[lindex $argv end] eq "table"} {set type 2} else {set type 1}
-		compare_pvtsummary $type
+		mpvt_summary {*}$argv
 	}
 	cg2cnv {
 		if {[llength $argv] != 2} {
@@ -426,7 +433,13 @@ switch $action {
 				-f {set fields $value}
 				-s {set sortfields $value}
 				-h {
-					set header [tsv_open stdin]
+					if {$value eq ""} {
+						set header [tsv_open stdin]
+					} else {
+						set f [open $value]
+						set header [tsv_open $f]
+						close $f
+					}
 					puts stdout $header
 					exit 1
 				}
