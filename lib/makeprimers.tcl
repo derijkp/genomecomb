@@ -642,6 +642,7 @@ proc makeprimers {regionsfile archive maxsize prefsize db numthreads {o stdout}}
 	set threads $numthreads
 	file mkdir $cachedir
 	catch {e destroy}
+	catch {rename e {}}
 	EmblFile new e
 	puts $o [join {remark label sequence modification scale purification project pair species chromosome cyto target contig pos temperature mg} \t]
 	set regionlist [split [string trim [file_read $regionsfile]] \n]
@@ -726,6 +727,7 @@ if 0 {
 	package require Extral
 	cd /complgen/compar_GS102_GS103
 	set regionsfile /complgen/compar_GS102_GS103/regionscompar_GS102_GS103-sel.tsv
+	set regionsfile sel3_compar_GS102_GS103_regions.tsv
 	set archive may2009
 	set o stdout
 	set cachedir [pwd]/cache
