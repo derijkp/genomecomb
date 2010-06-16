@@ -90,7 +90,6 @@ proc compare_mpvt {args} {
 		}
 		lappend result $effect
 		# per sample
-#if {[lindex $line 1] == 871780} {error STOPPED}
 		foreach sample $samples {
 			# ns
 			set alleles [list_sub $line $possa(alleles,$sample)]
@@ -129,9 +128,7 @@ proc compare_mpvt {args} {
 		} else {
 			incr a($result)
 		}
-#puts $o [join [lrange $line 0 2] \t]\t[join $result \t]
 	}
-#close $o
 	set o stdout
 	# set o [open pvtcompar_[join $samples _].tsv w]
 	puts $o [join $oheader \t]
@@ -189,6 +186,7 @@ proc mpvt_comparinfo {{label {}} query totals} {
 
 proc mpvt_comparinfoperc {num tot} {
 	if {![isdouble $num]} {return {}}
+	if {$tot == 0} {return ""}
 	format %.2f [expr {100.0*$num/$tot}]
 }
 
@@ -217,8 +215,8 @@ proc mpvt_comparinfo {{label {}} query totals} {
 	set diffs [expr {$a(df)+$a(mm)}]
 	set pdiffs [mpvt_comparinfoperc $diffs [expr {$a(df,tot)+$a(mm,tot)}]]
 	lappend result $diffs [format %.2f $pdiffs]
-	set psm [expr {100.0*$a(sm)/$a(sm,tot)}]
-	if {$psm != 0} {
+	if {$a(sm,tot) != 0} {
+		set psm [expr {100.0*$a(sm)/$a(sm,tot)}]
 		lappend result [format %.2f [expr {$pdiffs/$psm}]]
 	} else {
 		lappend result #
