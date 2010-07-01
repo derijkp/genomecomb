@@ -133,63 +133,8 @@ proc regsubtract {regfile1 regfile2} {
 	set poss1 [open_region $f1]
 	set f2 [open $regfile2]
 	set poss2 [open_region $f2]
-	set num 0
-	set line1 [get_region $f1 $poss1]
-	foreach {chr1 start1 end1} {{} {} {}} break
-	foreach {chr1 start1 end1} $line1 break
-	set nchr1 [chr2num $chr1]
-	set line2 [get_region $f2 $poss2]
-	foreach {chr2 start2 end2} {{} {} {}} break
-	foreach {chr2 start2 end2} $line2 break
-	set nchr2 [chr2num $chr2]
-	puts "chromosome\tbegin\tend"
-	while 1 {
-		# puts "$chr1:$start1-$end1 $chr2:$start2-$end2"
-		incr num
-		if {![expr $num%100000]} {putslog $num}
-		if {($nchr2 < $nchr1) || (($nchr2 == $nchr1) && ($end2 <= $start1))} {
-			set line2 [get_region $f2 $poss2]
-			if {![isint [lindex $line2 2]] && [eof $f2]}  {
-				puts $chr1\t$start1\t$end1
-				break
-			}
-			foreach {chr2 start2 end2} $line2 break
-			set nchr2 [chr2num $chr2]
-		} elseif {($nchr1 < $nchr2) || (($nchr1 == $nchr2) && ($end1 <= $start2))} {
-			puts $chr1\t$start1\t$end1
-			set line1 [get_region $f1 $poss1]
-			if {![isint [lindex $line1 2]] && [eof $f1]} break
-			foreach {chr1 start1 end1} $line1 break
-			set nchr1 [chr2num $chr1]
-		} else {
-			if {$start2 > $start1} {
-				puts $chr1\t$start1\t$start2
-			}
-			if {$end2 >= $end1} {
-				set line1 [get_region $f1 $poss1]
-				if {![isint [lindex $line1 2]] && [eof $f1]} break
-				foreach {chr1 start1 end1} $line1 break
-				set nchr1 [chr2num $chr1]
-			} else {
-				set start1 $end2
-				set line2 [get_region $f2 $poss2]
-				if {![isint [lindex $line2 2]] && [eof $f2]}  {
-					puts $chr1\t$start1\t$end1
-					break
-				}
-				foreach {chr2 start2 end2} $line2 break
-				set nchr2 [chr2num $chr2]
-			}
-		}
-	}
-	while {![eof $f1]} {
-		set line1 [get_region $f1 $poss1]
-		if {[isint [lindex $line1 2]]} {
-			puts [join $line1 \t]
-		}
-	}
-	close $f1
-	close $f2
+	close $f1; close $f2
+	exec reg_subtract $regfile1 {*}$poss1 $regfile2 {*}$poss2 >@ stdout 2>@ stderr
 }
 
 proc reghisto {regfile} {

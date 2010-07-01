@@ -11,6 +11,7 @@ while 1 {
 
 set appdir [file dir $script]
 lappend auto_path $appdir/lib
+append env(PATH) :$appdir/bin
 package require Extral
 
 # generic help on no args
