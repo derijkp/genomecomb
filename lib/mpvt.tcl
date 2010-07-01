@@ -1,9 +1,12 @@
-proc compare_mpvt {args} {
-	set f stdin
-	set samples $args
+if 0 {
+set multicomparfile /complgen/multicompar/compar.tsv
+set mpvtfile /complgen/multicompar/mpvt_GS102_GS103_rtg102_rtg103.tsv
+}
 
-	# set samples {GS102 GS103 rtg102 rtg103}
-	# catch {close $f}; set f [rzopen $compar_file]
+proc compare_mpvt {multicomparfile mpvtfile} {
+	catch {close $f}
+	set f [rzopen $multicomparfile]
+	set samples [lrange [split [file root [file tail $mpvtfile]] _] 1 end]
 	unset -nocomplain a
 	set header [split [gets $f] \t]
 	set fields {type trf str repeat segdup selfchain checked}
@@ -129,8 +132,7 @@ proc compare_mpvt {args} {
 			incr a($result)
 		}
 	}
-	set o stdout
-	# set o [open pvtcompar_[join $samples _].tsv w]
+	set o [open $mpvtfile w]
 	puts $o [join $oheader \t]
 	set list [lsort -dict [array names a]]
 	foreach line $list {
@@ -227,13 +229,17 @@ proc mpvt_comparinfo {{label {}} query totals} {
 	puts $o [join $result \t]
 }
 
-proc mpvt_summary {mpvtfile sample1 sample2 rtgsample1 rtgsample2} {
+proc mpvt_summary {mpvtfile mpvtsummaryfile} {
 	global filters mpvt
 
+	set samples [lrange [split [file root [file tail $mpvtsummaryfile]] _] 1 end]
+	if {[llength $samples] != 4} {
+		error "file $mpvtsummaryfile does not contain four samples (in the form prefix_sample1_sample2_rtgsample1_rtgsample2)"
+	}
+	foreach {sample1 sample2 rtgsample1 rtgsample2} $samples break
 	set mpvt(file) $mpvtfile
-	set outfile [file dir $mpvtfile]/mvpt_summary_${sample1}_${sample2}_${rtgsample1}_$rtgsample2.tsv
 	catch {close $o}
-	set o [open $outfile w]
+	set o [open $mpvtsummaryfile w]
 	set mpvt(o) $o
 	set changelist [list @SAMPLE1@ $sample1 @SAMPLE2@ $sample2 @RTGSAMPLE1@ $rtgsample1 @RTGSAMPLE2@ $rtgsample2]
 	set mpvt(changelist) $changelist
