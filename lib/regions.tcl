@@ -149,7 +149,7 @@ proc regsubtract {regfile1 regfile2} {
 		if {![expr $num%100000]} {putslog $num}
 		if {($nchr2 < $nchr1) || (($nchr2 == $nchr1) && ($end2 <= $start1))} {
 			set line2 [get_region $f2 $poss2]
-			if {![llength $line2] && [eof $f2]}  {
+			if {![isint [lindex $line2 2]] && [eof $f2]}  {
 				puts $chr1\t$start1\t$end1
 				break
 			}
@@ -158,7 +158,7 @@ proc regsubtract {regfile1 regfile2} {
 		} elseif {($nchr1 < $nchr2) || (($nchr1 == $nchr2) && ($end1 <= $start2))} {
 			puts $chr1\t$start1\t$end1
 			set line1 [get_region $f1 $poss1]
-			if {![llength $line1] && [eof $f1]} break
+			if {![isint [lindex $line1 2]] && [eof $f1]} break
 			foreach {chr1 start1 end1} $line1 break
 			set nchr1 [chr2num $chr1]
 		} else {
@@ -167,13 +167,13 @@ proc regsubtract {regfile1 regfile2} {
 			}
 			if {$end2 >= $end1} {
 				set line1 [get_region $f1 $poss1]
-				if {![llength $line1] && [eof $f1]} break
+				if {![isint [lindex $line1 2]] && [eof $f1]} break
 				foreach {chr1 start1 end1} $line1 break
 				set nchr1 [chr2num $chr1]
 			} else {
 				set start1 $end2
 				set line2 [get_region $f2 $poss2]
-				if {![llength $line2] && [eof $f2]}  {
+				if {![isint [lindex $line2 2]] && [eof $f2]}  {
 					puts $chr1\t$start1\t$end1
 					break
 				}
@@ -184,7 +184,7 @@ proc regsubtract {regfile1 regfile2} {
 	}
 	while {![eof $f1]} {
 		set line1 [get_region $f1 $poss1]
-		if {[llength $line1]} {
+		if {[isint [lindex $line1 2]]} {
 			puts [join $line1 \t]
 		}
 	}

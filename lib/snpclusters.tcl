@@ -20,7 +20,7 @@ proc clusters_distgraph {} {
 		incr num
 		if {![expr $num%100000]} {puts stderr $num}
 		set line [get_region $f $poss]
-		if {![llength $line]} continue
+		if {![isint [lindex $line 2]]} continue
 		foreach {chr begin end} $line break
 		set nchr [chr2num $chr]
 		if {$nchr == $pnchr} {
