@@ -17,4 +17,28 @@ test regsubtract {basic} {
 2-100
 3-1000} error
 
+test covered {basic} {
+	exec cg covered reg1.tsv
+} {chromosome	bases
+1	20
+2	130
+3	200
+
+total	350
+1-10
+2-100
+3-1000} error
+
+test covered {basic} {
+	exec cg covered reg2.tsv
+} {chromosome	bases
+1	20
+2	220
+3	100
+
+total	340
+1-15
+2-150
+3-1000} error
+
 testsummarize

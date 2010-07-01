@@ -1,7 +1,7 @@
 #CFLAGS=-Wall -g
 CFLAGS=-Wall -O2
 
-all: ../bin/map2besthit ../bin/distr2chr ../bin/map2sv ../bin/addcols ../bin/reg_subtract
+all: ../bin/map2besthit ../bin/distr2chr ../bin/map2sv ../bin/addcols ../bin/reg_subtract ../bin/covered
 
 clean:
 	rm ../bin/*
@@ -20,3 +20,6 @@ clean:
 
 ../bin/reg_subtract: reg_subtract.c
 	gcc reg_subtract.c $(CFLAGS) -o ../bin/reg_subtract
+
+../bin/covered: covered.c
+	gcc covered.c $(CFLAGS) -o ../bin/covered
