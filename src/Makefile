@@ -1,7 +1,7 @@
-#CFLAGS=-Wall -g
-CFLAGS=-Wall -O2
+CFLAGS=-Wall -g
+#CFLAGS=-Wall -O2
 
-all: ../bin/map2besthit ../bin/distr2chr ../bin/map2sv ../bin/addcols ../bin/reg_subtract ../bin/covered
+all: ../bin/map2besthit ../bin/distr2chr ../bin/map2sv ../bin/addcols ../bin/reg_subtract ../bin/covered ../bin/getregions
 
 clean:
 	rm ../bin/*
@@ -23,3 +23,6 @@ clean:
 
 ../bin/covered: covered.c
 	gcc covered.c $(CFLAGS) -o ../bin/covered
+
+../bin/getregions: getregions.c
+	gcc getregions.c $(CFLAGS) -o ../bin/getregions

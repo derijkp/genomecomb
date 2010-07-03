@@ -104,6 +104,31 @@ proc process_rtgsample {dir dbdir {force 0}} {
 		}
 		annot_annotvar annotvar-$name.tsv fannotvar-$name.tsv $todo
 	}
+	if {$force || ![file exists sreg-$name.tsv]} {
+		puts stderr "Make region file sreg-$name.tsv"
+		set files [lsort -dict [glob allpos/chr*_snps.txt*]]
+		file delete temp.tsv
+		set f [open temp.tsv w]
+		puts $f "chromosome\tbegin\tend"
+		close $f
+		foreach file $files {
+			set chr [lindex [split [file tail $file] _] 0]
+			puts stderr "Processing $file"
+			set f [rzopen $file]
+			while {![eof $f]} {
+				set line [gets $f]
+				if {[string index $line 0] ne "#"} break
+				set header $line
+			}
+			catch {close $f}
+			set header [string range $header 1 end]
+			set poscol [lsearch $header position]
+			set coveragecol [lsearch $header coverage]
+			if {[inlist {.rz .gz} [file extension $file]]} {set cat zcat} else {set cat cat}
+			exec $cat $file | getregions $chr $poscol $coveragecol 9 1 -1 >> temp.tsv
+		}
+		file rename -force temp.tsv sreg-$name.tsv
+	}
 	cd $keepdir
 }
 
@@ -162,3 +187,45 @@ signal -restart error SIGINT
 
 }
 
+if 0 {
+	set cgdir /complgen/GS102
+	set comparfile /complgen/multicompar/compar.tsv
+	set rtgdir /complgen/rtg102
+	submit.tcl cg rtgregions /complgen/GS102 /complgen/multicompar/compar.tsv /complgen/rtg102
+	submit.tcl cg rtgregions /complgen/GS103 /complgen/multicompar/compar.tsv /complgen/rtg103
+	submit.tcl cg rtgregions /complgen/GS100 /complgen/multicompar/compar.tsv /complgen/rtg100
+	submit.tcl cg rtgregions /complgen/GS101A01 /complgen/multicompar/compar.tsv /complgen/rtg101A01
+	submit.tcl cg rtgregions /complgen/GS101A02 /complgen/multicompar/compar.tsv /complgen/rtg101A02
+}
+
+proc rtgregions {cgdir comparfile rtgdir} {
+	set cgsample [file tail $cgdir]
+	set rtgsample [file tail $rtgdir]
+	if {![file exists $cgdir/reg_rtgnotsame-$cgsample.tsv]} {
+		puts stderr "$cgdir/reg_rtgnotsame-$cgsample.tsv"
+		cg select -f {chromosome begin end} -q "!\$same($cgsample,$rtgsample)" $comparfile $cgdir/temp.tsv
+		file rename -force $cgdir/temp.tsv $cgdir/reg_rtgnotsame-$cgsample.tsv
+	}
+	if {![file exists $cgdir/reg_posrtg-$cgsample.tsv]} {
+		puts stderr "$cgdir/reg_posrtg-$cgsample.tsv"
+		cg regsubtract $rtgdir/sreg-$rtgsample.tsv $cgdir/reg_rtgnotsame-$cgsample.tsv > $cgdir/temp.tsv
+		file rename -force $cgdir/temp.tsv $cgdir/reg_posrtg-$cgsample.tsv
+	}
+	# make filter for cg by removing good poss in rtg
+	if {![file exists $cgdir/reg_rtg-$cgsample.tsv]} {
+		puts stderr "$cgdir/reg_rtg-$cgsample.tsv"
+		cg regsubtract $cgdir/sreg-$cgsample.tsv $cgdir/reg_posrtg-$cgsample.tsv > $cgdir/temp.tsv
+		file rename -force $cgdir/temp.tsv $cgdir/reg_rtg-$cgsample.tsv
+	}
+	# how much remains after filter
+	if {![file exists $cgdir/filteredrtg-$cgsample.tsv]} {
+		puts stderr "$cgdir/filteredrtg-$cgsample.tsv"
+		cg regsubtract $cgdir/sreg-$cgsample.tsv $cgdir/reg_rtg-$cgsample.tsv > $cgdir/temp.tsv
+		file rename -force $cgdir/temp.tsv $cgdir/filteredrtg-$cgsample.tsv
+	}
+	if {![file exists $cgdir/filteredrtg-$cgsample.covered]} {
+		puts stderr "$cgdir/filteredrtg-$cgsample.covered"
+		cg covered $cgdir/filteredrtg-$cgsample.tsv > $cgdir/temp.tsv
+		file rename $cgdir/temp.tsv $cgdir/filteredrtg-$cgsample.covered
+	}
+}
