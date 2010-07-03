@@ -32,7 +32,7 @@ foreach job $jobs {
 }
 
 set name [join $argv .]
-regsub / $name __ nfile
+regsub -all / $name __ name
 set tasknum {}
 if {[info exists ra([list $name $tasknum])]} {
 	puts "Job $name.$tasknum is running, skipping"
