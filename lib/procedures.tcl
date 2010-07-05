@@ -7,6 +7,7 @@ proc cg {args} {
 proc process_sample {dir dbdir {force 0}} {
 	set keepdir [pwd]
 	cd $dir
+	set chromosomes {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
 	puts stderr "Processing sample $dir"
 	set name [file tail $dir]
 	set varfile [lindex [glob ASM/var-*-ASM.tsv] 0]
@@ -29,7 +30,7 @@ proc process_sample {dir dbdir {force 0}} {
 		file rename temp.tsv sreg-$name.tsv
 	}
 	# sort coverage files
-	foreach {chr} {M X Y 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22}  {
+	foreach {chr} $chromosomes  {
 		set resultfile coverage/coverageRefScore-$chr-$name.tsv
 		if {$force || (![file exists $resultfile] && ![file exists $resultfile.rz])} {
 			file mkdir coverage
@@ -136,6 +137,70 @@ proc process_sample {dir dbdir {force 0}} {
 		cg covered filteredcluster-$name.tsv > temp.tsv
 		file rename temp.tsv filteredcluster-$name.covered
 	}
+	if {$force || ![file exists reg_below20-$name.tsv]} {
+		puts stderr "Make region file reg_below20-$name.tsv"
+		file delete temp.tsv
+		set f [open temp.tsv w]
+		puts $f "chromosome\tbegin\tend"
+		close $f
+		foreach {chr} $chromosomes  {
+			set file [lindex [glob coverage/coverageRefScore-$chr-$name.tsv coverage/coverageRefScore-$chr-$name.tsv.rz coverage/coverageRefScore-$chr-$name.tsv.gz] 0]
+			puts stderr "Processing $file"
+			set f [rzopen $file]
+			while {![eof $f]} {
+				set header [gets $f]
+				if {[string index $header 0] ne "#"} break
+			}
+			catch {close $f}
+			set poscol [lsearch $header offset]
+			set coveragecol [lsearch $header coverage]
+			if {[inlist {.rz .gz} [file extension $file]]} {set cat zcat} else {set cat cat}
+			set error [catch {
+				exec $cat $file | getregions $chr $poscol $coveragecol 20 0 0 >> temp.tsv
+			} errmessage]
+			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
+				error $errmessage
+			}
+		}
+		file rename -force temp.tsv reg_below20-$name.tsv
+	}
+	if {$force || ![file exists reg_below20-$name.covered]} {
+		puts stderr "Make reg_below20-$name.covered"
+		cg covered reg_below20-$name.tsv > temp.tsv
+		file rename temp.tsv reg_below20-$name.covered
+	}
+	if {$force || ![file exists reg_above100-$name.tsv]} {
+		puts stderr "Make region file reg_above100-$name.tsv"
+		file delete temp.tsv
+		set f [open temp.tsv w]
+		puts $f "chromosome\tbegin\tend"
+		close $f
+		foreach {chr} $chromosomes  {
+			set file [lindex [glob coverage/coverageRefScore-$chr-$name.tsv coverage/coverageRefScore-$chr-$name.tsv.rz coverage/coverageRefScore-$chr-$name.tsv.gz] 0]
+			puts stderr "Processing $file"
+			set f [rzopen $file]
+			while {![eof $f]} {
+				set header [gets $f]
+				if {[string index $header 0] ne "#"} break
+			}
+			catch {close $f}
+			set poscol [lsearch $header offset]
+			set coveragecol [lsearch $header coverage]
+			if {[inlist {.rz .gz} [file extension $file]]} {set cat zcat} else {set cat cat}
+			set error [catch {
+				exec $cat $file | getregions $chr $poscol $coveragecol 100 1 0 >> temp.tsv
+			} errmessage]
+			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
+				error $errmessage
+			}
+		}
+		file rename -force temp.tsv reg_above100-$name.tsv
+	}
+	if {$force || ![file exists reg_above100-$name.covered]} {
+		puts stderr "Make reg_above100-$name.covered"
+		cg covered reg_above100-$name.tsv > temp.tsv
+		file rename temp.tsv reg_above100-$name.covered
+	}
 	cd $keepdir
 }
 
@@ -184,6 +249,8 @@ proc process_indexcompress {file} {
 		if {$fpos != -1} break
 	}
 	if {$fpos == -1} {error "no column offset, end1 in file $file"}
+	if {([gets $f] eq "") && [eof $f]} return
+	close $f
 	if {![file exists $file.${field}_index]} {
 		tsv_index $file $field
 	}
