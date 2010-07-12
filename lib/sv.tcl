@@ -27,14 +27,17 @@ proc getmategap {libfile} {
 proc map2sv {files prefix} {
 	global appdir
 	set num 0
-	foreach file $files {
-		puts $file
-		exec zcat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $prefix
-		incr num
+	if {![info exists ${prefix}_map2sv_FINISHED]} {
+		foreach file $files {
+			puts $file
+			exec zcat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $prefix
+			incr num
+		}
+		exec touch ${prefix}_map2sv_FINISHED
 	}
-	exec touch ${prefix}_map2sv_FINISHED
 	set files [glob $prefix-*]
 	foreach file $files {
+		if {[file extension $file] eq ".tsv"} continue
 		puts $file
 		set f [open ${file}-paired.tsv w]
 		puts $f [join {chr1 bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
@@ -81,6 +84,7 @@ proc sv2db {files} {
 }
 
 proc svinfo {pairfile} {
+	puts "svinfo on file $pairfile"
 	svhisto $pairfile
 	set list [list_remove [split [file_read [file root $pairfile].disthisto] \n] {}]
 	list_shift list
@@ -88,6 +92,7 @@ proc svinfo {pairfile} {
 	set total [lmath_sum [list_subindex $list 1]]
 	set list [lsort -integer -index 1 $list]
 	set mode [lindex $list end 0]
+	if {$mode eq ""} return
 	if {$mode == -1} {
 		set mode [lindex $list end-1 0]
 	}
