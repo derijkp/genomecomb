@@ -324,6 +324,7 @@ proc process_compare_coverage {dir1 dir2 dbdir resultsdir {force 0}} {
 			puts "$target already there"
 		}
 	}
+	exec grep total *.covered > summary_genomecoverage_${name1}_${name2}.tsv
 }
 
 if 0 {
