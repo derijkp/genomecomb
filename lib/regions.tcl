@@ -45,84 +45,18 @@ proc get_region {f poss} {
 #	return $result
 }
 
-# get data from channel, but use cache etc to keep the results together and in order
-proc filtervarget {v} {
-	global cache
-	if {[llength [get cache($v,r) ""]]} {
-		return [list_shift cache($v,r)]
-	}
-	if {![info exists cache($v)]} {
-		set temp [gets $v]
-		set vline [split $temp \t]
-	} else {
-		set vline $cache($v)
-	}
-	if {![llength $vline]} {return ""}
-	set curid [lindex $vline 0]
-	set todo {}
-	while 1 {
-		set id [lindex $vline 0]
-		if {$id != $curid} {
-			set cache($v) $vline
-			break
-		}
-		lappend todo $vline
-		if {[eof $v]} break
-		set vline [split [gets $v] \t]
-	}
-	set todo [lsort -integer -index 3 $todo]
-	set result [list [list_sub [list_shift todo] {2 3 4}]]
-	foreach {temp cstart cend} [lindex $result 0] break
-	list_foreach {temp temp chr start end} $todo {
-		if {$end <= $cend} {
-		} elseif {$start <= $cend} {
-			lset result end 2 $end
-			set cend $end
-		} else {
-			lappend result [list $chr $start $end]
-			set cstart $start
-			set cend $end
-		}
-	}
-	set cache($v,r) $result
-	return [list_shift cache($v,r)]
+proc refconsregions {varfile} {
+	putslog "getting ref-(in)consistent regions from $varfile"
+	cg select -q {$varType == "ref-consistent" || $varType == "ref-inconsistent" || $varType == "no-call-rc" || $varType == "no-call-ri"} $varfile rctemp.tsv
+	cg regjoin rctemp.tsv >@stdout
+	file delete rctemp.tsv
 }
 
-proc refconsregions {varfile} {
-	global cache
-	putslog "getting ref-(in)consistent regions from $varfile"
-	set v [open "| grep ref- $varfile"]
-	unset -nocomplain cache($v); unset -nocomplain cache($v,r);
-	set vline [filtervarget $v]
-	set num 0
-	puts "chromosome\tbegin\tend"
-	flush stdout
-	if {![llength $vline]} {
-		close $v
-		return
-	}
-	foreach {curvchr curvstart curvend} $vline break
-	set num 0
-	while 1 {
-		incr num
-		if {![expr $num%100000]} {putslog $num}
-		set vline [filtervarget $v]
-		if {![llength $vline]} break
-		foreach {vchr vstart vend} $vline break
-		if {($vchr == $curvchr) && ($vstart <  $curvstart)} {
-			error "This should not happen: not sorted"
-		}
-		if {($vchr == $curvchr) && ($vstart <=  $curvend)} {
-			set curvend $vend
-			continue
-		}
-		puts $curvchr\t$curvstart\t$curvend
-		set curvchr $vchr
-		set curvstart $vstart
-		set curvend $vend
-	}
-	puts $curvchr\t$curvstart\t$curvend
-	close $v
+proc nocallregions {varfile outfile} {
+	putslog "getting partial no-call regions from $varfile"
+	cg select -q {$varType == "no-call" && $allele != "all"} $varfile nctemp.tsv
+	cg regjoin nctemp.tsv > $outfile
+	file delete nctemp.tsv
 }
 
 proc regsubtract {regfile1 regfile2} {
@@ -275,7 +209,6 @@ refconsregions $varfile
 
 close $v;unset cache($v);unset cache($v,r);
 	set v [open "| grep ref- $varfile"]
-filtervarget $v
 
 	cd /complgen/compar_GS102_GS103
 	set regfile1 reg-GS000000078-ASM.tsv

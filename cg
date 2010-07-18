@@ -11,7 +11,7 @@ while 1 {
 
 set appdir [file dir $script]
 lappend auto_path $appdir/lib
-append env(PATH) :$appdir/bin
+append env(PATH) :$appdir/bin:[file dir [file dir $appdir]]/bin
 package require Extral
 
 # generic help on no args
@@ -70,19 +70,19 @@ switch $action {
 	}
 	process_sample {
 		if {([llength $argv] < 2) || ([llength $argv] > 3)} {
-			puts stderr "format is: $scriptname $action sampledir dbdir ?force?"
+			puts stderr "format is: $scriptname $action sampledir destdir dbdir ?force?"
 			puts stderr " - processes (sorting annotating, etc.) one sample directory."
 			puts stderr " - By default, only files that are not present already will be created."
 			puts stderr " -When force is given as a parameter, everything will be recalculated and overwritten."
 			exit 1
 		}
-		foreach {dir dbdir force} $argv break
+		foreach {dir destdir dbdir force} $argv break
 		switch $force {
 			force {set force 1}
 			"" {set force 0}
 			default {error "unrecognized option $force"}
 		}
-		process_sample $dir $dbdir $force
+		process_sample $dir $destdir $dbdir $force
 	}
 	process_rtgsample {
 		if {([llength $argv] < 2) || ([llength $argv] > 3)} {

@@ -6,17 +6,20 @@ proc assert {check message} {
 
 proc readlocus {f {pos 0}} {
 	global cache
+	set cor1 [get cache(cor1) ""]
 	set line $cache($f)
 	set locus [lindex $line $pos]
 	set list [list $line]
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
+		if {[llength $cor1]} {set line [list_sub $line $cor1]}
 		if {![llength $line]} continue
 		if {[lindex $line $pos] eq $locus} {
 			lappend list $line
 		} else {
 			while {![eof $f] && ![llength $line]} {
 				set line [split [gets $f] \t]
+				if {[llength $cor1]} {set line [list_sub $line $cor1]}
 			}
 			set cache($f) $line
 			break
@@ -49,7 +52,8 @@ proc var2annotvar_readonevar f {
 		while {![eof $f]} {
 			while {![eof $f]} {
 				set list [readlocus $f]
-				set type [list_remdup [list_remove [list_subindex $list 5] = ref-consistent]]
+				set types [list_subindex $list 5]
+				set type [list_remdup [list_remove $types = ref-consistent no-call-rc ref no-ref no-call no-ref PAR-called-in-X]]
 				if {$type ne ""} break
 			}
 			if {$type eq ""} {return {}}
@@ -59,8 +63,7 @@ proc var2annotvar_readonevar f {
 			} else {
 				set list [lsort -integer -index 3 [lsort -integer -index 4 $list]]
 				set keeplist $list
-				set types [list_subindex $list 5]
-				set poss [list_find -regexp $types {snp|ins|del|delins}]
+				set poss [list_find -regexp $types {snp|ins|del|delins|sub}]
 				set list [list_sub $list $poss]
 				set rlist {}
 				set line1 [list_shift list]
@@ -89,9 +92,9 @@ proc var2annotvar_readonevar f {
 							set vartype [lindex $line2 5]
 							if {($vartype eq "del") || ($vartype eq "delins")} {
 								lset line2 7 -
-							} elseif {($vartype eq "=") || ($vartype eq "ref-consistent")} {
+							} elseif {($vartype eq "=") || ([inlist {ref-consistent no-call-rc} $vartype])} {
 								lset line2 7 $reference
-							} elseif {$vartype eq "ref-inconsistent"} {
+							} elseif {[inlist {ref-inconsistent no-call-ri} $vartype]} {
 								lset line2 7 N
 							} else {
 								set temp [string range [lindex $line2 7] [expr {$begin-$b1}] [expr {$end-$e1}]]
@@ -122,7 +125,7 @@ proc var2annotvar_readonevar f {
 	foreach {locus haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef} $line1 break
 	foreach {locus2 haplotype2 chromosome2 begin2 end2 varType2 reference2 alleleSeq2 totalScore2 hapLink2 xRef2} $line2 break
 	set type [list [get varType unkown] [get varType2 unknown]]
-	set type [list_remdup [list_remove $type = ref-consistent = ref-inconsistent unknown]]
+	set type [list_remdup [list_remove $type = ref-consistent no-call-rc ref-inconsistent no-call-ri ref no-ref no-call no-ref PAR-called-in-X unknown]]
 	if {$type ne ""} {
 		set alleleSeq2 [get alleleSeq2 $reference]
 		set totalScore2 [get totalScore2 ""]
@@ -279,8 +282,9 @@ proc readgeneset {g} {
 	set list [list $line]
 	while {![eof $g]} {
 		set line [split [gets $g] \t]
+		foreach {nchr nbegin} [list_sub $line {3 4}] break
 		if {![llength $line]} continue
-		if {[lindex $line 3] eq $chr && [lindex $line 4] eq $begin} {
+		if {$nchr eq $chr && $nbegin eq $begin} {
 			lappend list $line
 		} else {
 			while {![eof $g] && ![llength $line]} {
@@ -301,21 +305,37 @@ proc var2annotvar {file genefile outfile} {
 	catch {close $o}
 	unset -nocomplain cache
 	set f1 [opencgifile $file header]
-	if {[split $header \t] ne "locus haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef"} {
+	set header1 [split $header \t]
+	if {$header1 eq "locus haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef"} {
+		set cgv1 1.4
+		set cache(cor1) {}
+	} elseif {$header1 eq "locus ploidy allele chromosome begin end varType reference alleleSeq totalScore hapLink xRef"} {
+		set cgv1 1.8
+		set cache(cor1) {0 2 3 4 5 6 7 8 9 10 11}
+		set cache($f1) [list_sub $cache($f1) $cache(cor1)]
+	} else {
 		error "header error in $file"
 	}
 	set g [opencgifile $genefile header]
-	if {[split $header \t] ne "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
+	set header2 [split $header \t]
+	if {$header2 eq    "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
+		set cgv2 1.4
+	} elseif {$header2 eq "index locus allele chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex codingRegionKnown impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence"} {
+		set cgv2 1.8
+		set remheader2 [lrange $header2 10 end]
+	} else {
 		error "header error in $genefile"
 	}
 	set o [open $outfile w]
-	puts $o [join {locus chromosome begin end type reference alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef} \t]
+	set newheader {locus chromosome begin end type reference alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef}
+	lappend newheader {*}$remheader2
+	puts $o [join $newheader \t]
 	set cur [var2annotvar_readonevar $f1]
 	set curgene [readgeneset $g]
 	set gchr [lindex $curgene 0 3]
 	set gbegin [lindex $curgene 0 4]
 	set num 0
-	set empty [list_fill 13 {}]
+	set empty [list_fill [llength $remheader2] {}]
 	while {![eof $f1]} {
 		set fchr [lindex $cur 1]
 		set fbegin [lindex $cur 2]

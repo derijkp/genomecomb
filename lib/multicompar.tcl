@@ -40,7 +40,7 @@ proc multicompar {compar_file dir} {
 
 	catch {close $f1}; catch {close $f2}; catch {close $o}
 	set comparfields {chromosome begin end type}
-	set mergefields {reference xRef trf str segdup selfchain repeat rna checked geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef effect neffect}
+	set posiblemergefields {reference xRef trf str segdup selfchain repeat rna checked geneId mrnaAcc proteinAcc symbol orientation component componentIndex exonCategory exon codingRegionKnown impact aaCategory nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence aaAnnot aaCall aaRef effect neffect}
 	set allelefields {alleleSeq1 alleleSeq2}
 	#
 	set name [file tail $dir]
@@ -58,7 +58,6 @@ proc multicompar {compar_file dir} {
 		puts stderr "header error in comparfile $compar_file"
 		exit 1
 	}
-	set mergeposs1 [list_cor $header1 $mergefields]
 	set dummy1 [list_fill [llength $header1] ?]
 	set f2 [open $file2]
 	set header2 [split [gets $f2] \t]
@@ -67,6 +66,8 @@ proc multicompar {compar_file dir} {
 		puts stderr "header error in fannot_varfile2 $compar_file"
 		exit 1
 	}
+	set mergefields [list_common $header2 $posiblemergefields]
+	set mergeposs1 [list_cor $header1 $mergefields]
 	set mergeposs2 [list_cor $header2 $mergefields]
 	set dummy2 [list_fill [llength $header2] ?]
 	# start
@@ -128,7 +129,7 @@ proc multicompar {compar_file dir} {
 proc multicompar_reannot {compar_file {force 0}} {
 
 	set compar_file [file normalize $compar_file]
-	set basedir [file dir [file dir $compar_file]]
+	set basedir [file dir $compar_file]
 	catch {close $f}; catch {close $o}
 	set f [rzopen $compar_file]
 	set header [split [gets $f] \t]
@@ -152,10 +153,17 @@ proc multicompar_reannot {compar_file {force 0}} {
 		set samplea(rpos,$sample) [lsearch $header refscore-$sample]
 		set samplea(cpos,$sample) [lsearch $header coverage-$sample]
 		set samplea(seq,$sample) [lsearch $header sequenced-$sample]
-		set samplea(regionfile,$sample) $basedir/$sample/sreg-$sample.tsv
-		if {[file exists $basedir/$sample/allpos]} {
+		if {[file exists $basedir/$sample/fannotvar-$sample.tsv]} {
+			set samplea(dir,$sample) $basedir/$sample
+		} elseif {[file exists [file dir $basedir]/$sample/fannotvar-$sample.tsv]} {
+			set samplea(dir,$sample) [file dir $basedir]/$sample
+		} else {
+			error "sample dir for $sample not found"
+		}
+		set samplea(regionfile,$sample) $samplea(dir,$sample)/sreg-$sample.tsv
+		if {[file exists $samplea(dir,$sample)/allpos]} {
 			set samplea(type,$sample) rtg
-			annot_rtg_init $basedir/$sample
+			annot_rtg_init $samplea(dir,$sample)
 			set samplea(rtgposs,$sample) {}
 			foreach field {
 				alleleSeq1 alleleSeq2 posterior coverage correction
@@ -165,17 +173,20 @@ proc multicompar_reannot {compar_file {force 0}} {
 			}
 		} elseif {[file exists $samplea(regionfile,$sample)]} {
 			set samplea(type,$sample) cg
-			annot_coverage_init $basedir/$sample
+			annot_coverage_init $samplea(dir,$sample)
 			annot_region_init $samplea(regionfile,$sample)
 		} else {
-			error "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found in $basedir/$sample: not properly processed sample"
+			error "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found in $samplea(dir,$sample): not properly processed sample"
 		}
 		set samplea(todo,$sample) {}
 		if {[inlist $samplea(fields,$sample) refcons]} {
-			lappend samplea(todo,$sample) [list [lsearch $header refcons-$sample] rc $basedir/$sample/reg_refcons-$sample.tsv]
+			lappend samplea(todo,$sample) [list [lsearch $header refcons-$sample] rc $samplea(dir,$sample)/reg_refcons-$sample.tsv]
+		}
+		if {[inlist $samplea(fields,$sample) nocall]} {
+			lappend samplea(todo,$sample) [list [lsearch $header nocall-$sample] rc $samplea(dir,$sample)/reg_nocall-$sample.tsv]
 		}
 		if {[inlist $samplea(fields,$sample) cluster]} {
-			lappend samplea(todo,$sample) [list [lsearch $header cluster-$sample] cl $basedir/$sample/reg_cluster-$sample.tsv]
+			lappend samplea(todo,$sample) [list [lsearch $header cluster-$sample] cl $samplea(dir,$sample)/reg_cluster-$sample.tsv]
 		}
 		list_foreach {field value regfile} $samplea(todo,$sample) {
 			annot_region_init $regfile
@@ -203,7 +214,7 @@ proc multicompar_reannot {compar_file {force 0}} {
 			}
 			if {$samplea(type,$sample) eq "cg"} {
 				if {$force || ([lindex $line $samplea(rpos,$sample)] eq "?") || ([lindex $line $samplea(cpos,$sample)] eq "?")} {
-					foreach {r c} [annot_coverage_get $basedir/$sample $chr $begin] break
+					foreach {r c} [annot_coverage_get $samplea(dir,$sample) $chr $begin] break
 					lset line $samplea(rpos,$sample) $r
 					lset line $samplea(cpos,$sample) $c
 				}
@@ -225,7 +236,7 @@ proc multicompar_reannot {compar_file {force 0}} {
 			} else {
 				set sub [list_sub $line $samplea(rtgposs,$sample)]
 				if {!$force && ![inlist [list_sub $line $samplea(rtgposs,$sample)] ?]} continue
-				set rtgdata [lrange [annot_rtg_get $basedir/$sample $chr $begin] 4 end-1]
+				set rtgdata [lrange [annot_rtg_get $samplea(dir,$sample) $chr $begin] 4 end-1]
 				if {[llength $rtgdata] < [llength $samplea(rtgposs,$sample)]} {
 					lset line $samplea(seq,$sample) u
 					foreach pos $samplea(rtgposs,$sample) v $rtgdata {
@@ -256,10 +267,10 @@ proc multicompar_reannot {compar_file {force 0}} {
 			annot_region_close $regfile
 		}
 		if {$samplea(type,$sample) eq "cg"} {
-			annot_coverage_close $basedir/$sample
+			annot_coverage_close $samplea(dir,$sample)
 			annot_region_close $samplea(regionfile,$sample)
 		} else {
-			annot_rtg_close $basedir/$sample
+			annot_rtg_close $samplea(dir,$sample)
 		}
 	}
 	file rename -force $compar_file $compar_file.old
@@ -270,9 +281,13 @@ if 0 {
 
 	lappend auto_path ~/dev/completegenomics/lib
 	lappend auto_path /complgen/bin/complgen/apps/cg/lib
+	lappend auto_path ~/bin/complgen/apps/cg/lib
 	package require Extral
 	package require Tclx
 	signal -restart error SIGINT
+set compar_file ftld_compar-ftld_e_d5945-ftld_f_d6846-ftld_g_d6843.tsv
+set dir ftld_e_d5945
+
 set compar_file /complgen/multicompar/compar.tsv
 set compar_file /complgen/multicompar/compar-part.tsv
 	set compar_file /complgen/multicompar/compar.tsv.rz

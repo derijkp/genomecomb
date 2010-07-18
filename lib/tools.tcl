@@ -169,6 +169,12 @@ proc rzopen {file {pos -1}} {
 		} else {
 			error "positioning not supported in gz files"
 		}
+	} elseif {[inlist {.bz2} [file extension $file]]} {
+		if {$pos == -1} {
+			set f [open "| bzcat $file"]
+		} else {
+			error "positioning not supported in gz files"
+		}
 	} else {
 		set f [open $file]
 		if {$pos != -1} {
