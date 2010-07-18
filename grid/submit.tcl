@@ -5,11 +5,29 @@ exec tclsh "$0" "$@"
 set basedir [file normalize [pwd]]
 puts $basedir
 
-if {[lindex $argv 0] eq "-deps"} {
-	set dep [lindex $argv 1]
-	set argv [lrange $argv 2 end]
-} else {
-	set dep {}
+set options {}
+set pos 0
+foreach {opt value} $argv {
+	switch -- $opt {
+		-deps {
+			lappend options -hold_jid $value
+			incr pos 2
+		}
+		-host {
+			lappend options -l hostname=$value
+			incr pos 2
+		}
+		-- {
+			incr pos 1
+			break
+		}
+		default {
+			break
+		}
+	}
+}
+if {$pos} {
+	set argv [lrange $argv $pos end]
 }
 
 catch {exec qstat -xml} jobxml
@@ -39,10 +57,7 @@ if {[info exists ra([list $name $tasknum])]} {
 	continue
 }
 puts "Submitting $name"
-file mkdir sge
-if {$dep eq ""} {
-	eval {exec qsub -N j$name -q all.q -o sge/ -e sge/} [file normalize ~/bin/repeater.sh] $argv
-} else {
-	eval {exec qsub -hold_jid $dep -N j$name -q all.q -o sge/ -e sge/} [file normalize ~/bin/repeater.sh] $argv
-}
+file mkdir osge
+file mkdir esge
+eval {exec qsub -N j$name -q all.q -o osge/ -e esge/} $options [file normalize ~/bin/repeater.sh] $argv
 
