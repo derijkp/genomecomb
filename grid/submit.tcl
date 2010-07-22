@@ -3,7 +3,7 @@
 exec tclsh "$0" "$@"
 
 set basedir [file normalize [pwd]]
-puts $basedir
+#puts $basedir
 
 set options {}
 set pos 0
@@ -51,13 +51,16 @@ foreach job $jobs {
 
 set name [join $argv .]
 regsub -all / $name __ name
+if {[string length $name] > 200} {
+	set name [string range $name 0 100]....[string range $name end-100 end]
+}
 set tasknum {}
 if {[info exists ra([list $name $tasknum])]} {
 	puts "Job $name.$tasknum is running, skipping"
 	continue
 }
-puts "Submitting $name"
 file mkdir osge
 file mkdir esge
-eval {exec qsub -N j$name -q all.q -o osge/ -e esge/} $options [file normalize ~/bin/repeater.sh] $argv
+set jnum [eval {exec qsub -N j$name -q all.q -o osge -e esge} $options [file normalize ~/bin/repeater.sh] $argv]
+puts "$jnum $name"
 
