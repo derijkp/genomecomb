@@ -12,9 +12,9 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	set name [file tail $destdir]
 	set chromosomes {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
 	puts stderr "Processing sample $dir"
-	set varfile [lindex [glob $dir/ASM/var-*-ASM.tsv*] 0]
-	set genefile [lindex [glob $dir/ASM/gene-*-ASM.tsv*] 0]
-	set regfile [lindex [glob -nocomplain $dir/ASM/reg-*-ASM.tsv*] 0]
+	set varfile [lindex [glob $dir/ASM/var-*-ASM*.tsv*] 0]
+	set genefile [lindex [glob $dir/ASM/gene-*-ASM*.tsv*] 0]
+	set regfile [lindex [glob -nocomplain $dir/ASM/reg-*-ASM*.tsv*] 0]
 	set f [rzopen $varfile]
 	set info {}
 	while {![eof $f]} {
@@ -59,10 +59,10 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		set resultfile coverage/coverageRefScore-$chr-$name.tsv
 		if {$force || (![file exists $resultfile] && ![file exists $resultfile.rz])} {
 			set oricov [lindex [glob -nocomplain \
-				coverage/coverageRefScore-$chr-*-ASM.tsv \
-				coverage/coverageRefScore-chr$chr-*-ASM.tsv \
-				coverage/coverageRefScore-$chr-*-ASM.tsv.* \
-				coverage/coverageRefScore-chr$chr-*-ASM.tsv.*] 0]
+				coverage/coverageRefScore-$chr-*-ASM*.tsv \
+				coverage/coverageRefScore-chr$chr-*-ASM*.tsv \
+				coverage/coverageRefScore-$chr-*-ASM*.tsv.* \
+				coverage/coverageRefScore-chr$chr-*-ASM*.tsv.*] 0]
 			if {[file exists $oricov]} {
 				putslog "Sorting to create $resultfile"
 				cg select -s offset $oricov coverage/temp.tsv
