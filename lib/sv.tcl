@@ -27,13 +27,19 @@ proc getmategap {libfile} {
 proc map2sv {files prefix} {
 	global appdir
 	set num 0
+	file mkdir [file dir $prefix]
 	if {![info exists ${prefix}_map2sv_FINISHED]} {
 		foreach file $files {
 			puts $file
-			exec zcat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $prefix
+			switch [file extension $file] {
+				.rz - .gz {set cat zcat}
+				.bz2 {set cat bzcat}
+				default {set cat cat}
+			}
+			exec $cat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $prefix
 			incr num
 		}
-		exec touch ${prefix}_map2sv_FINISHED
+		exec touch ${prefix}_map2sv_distr_FINISHED
 	}
 	set files [glob $prefix-*]
 	foreach file $files {
@@ -45,6 +51,7 @@ proc map2sv {files prefix} {
 		exec sort -nk 5 $file >> ${file}-paired.tsv
 		file delete $file
 	}
+	exec touch ${prefix}_map2sv_sort_FINISHED
 }
 
 proc sv2db {files} {

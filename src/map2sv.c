@@ -3,9 +3,13 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int chromosomenum(char *chromosome) {
 	int i;
+	if (*chromosome == 'c') {
+		chromosome += 3;
+	}
 	if (*chromosome == 'X') {
 		return 23;
 	} else if (*chromosome == 'Y') {
