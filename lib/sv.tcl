@@ -28,7 +28,7 @@ proc map2sv {files prefix} {
 	global appdir
 	set num 0
 	file mkdir [file dir $prefix]
-	if {![info exists ${prefix}_map2sv_FINISHED]} {
+	if {![file exists ${prefix}_map2sv_distr_FINISHED]} {
 		foreach file $files {
 			puts $file
 			switch [file extension $file] {
@@ -48,7 +48,7 @@ proc map2sv {files prefix} {
 		set f [open ${file}-paired.tsv w]
 		puts $f [join {chr1 bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
 		close $f
-		exec sort -nk 5 $file >> ${file}-paired.tsv
+		exec gnusort8 -t \t -n -s -k5 $file >> ${file}-paired.tsv
 		file delete $file
 	}
 	exec touch ${prefix}_map2sv_sort_FINISHED
