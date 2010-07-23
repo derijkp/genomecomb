@@ -236,7 +236,8 @@ proc multicompar_reannot {compar_file {force 0}} {
 			} else {
 				set sub [list_sub $line $samplea(rtgposs,$sample)]
 				if {!$force && ![inlist [list_sub $line $samplea(rtgposs,$sample)] ?]} continue
-				set rtgdata [lrange [annot_rtg_get $samplea(dir,$sample) $chr $begin] 4 end-1]
+				set temp [annot_rtg_get $samplea(dir,$sample) $chr $begin]
+				set rtgdata [lrange $temp 4 end-1]
 				if {[llength $rtgdata] < [llength $samplea(rtgposs,$sample)]} {
 					lset line $samplea(seq,$sample) u
 					foreach pos $samplea(rtgposs,$sample) v $rtgdata {
@@ -244,7 +245,7 @@ proc multicompar_reannot {compar_file {force 0}} {
 						lset line $pos -
 					}
 				} else {
-					set coverage [lindex $rtgdata 7]
+					set coverage [lindex $rtgdata 3]
 					if {$coverage < 10} {
 						lset line $samplea(seq,$sample) u
 					} else {
