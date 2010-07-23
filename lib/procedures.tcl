@@ -59,10 +59,10 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		set resultfile coverage/coverageRefScore-$chr-$name.tsv
 		if {$force || (![file exists $resultfile] && ![file exists $resultfile.rz])} {
 			set oricov [lindex [glob -nocomplain \
-				coverage/coverageRefScore-$chr-*-ASM*.tsv \
-				coverage/coverageRefScore-chr$chr-*-ASM*.tsv \
-				coverage/coverageRefScore-$chr-*-ASM*.tsv.* \
-				coverage/coverageRefScore-chr$chr-*-ASM*.tsv.*] 0]
+				$dir/ASM/REF/coverageRefScore-$chr-*-ASM*.tsv \
+				$dir/ASM/REF/coverageRefScore-chr$chr-*-ASM*.tsv \
+				$dir/ASM/REF/coverageRefScore-$chr-*-ASM*.tsv.* \
+				$dir/ASM/REF/coverageRefScore-chr$chr-*-ASM*.tsv.*] 0]
 			if {[file exists $oricov]} {
 				putslog "Sorting to create $resultfile"
 				cg select -s offset $oricov coverage/temp.tsv
