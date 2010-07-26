@@ -39,6 +39,17 @@ proc ensembl_getregion {chr start end args} {
 	return $data
 }
 
+proc ncbi_getgene {id} {
+	if {$id eq ""} {return ""}
+	set h [http::geturl http://www.ncbi.nlm.nih.gov/gene/?term=$id]
+	set data [http::data $h]
+	http::cleanup $h
+	regexp {<title>([^<>]+)</title>} $data temp descr
+	set descr [string trim $descr]
+}
+
+
+
 if 0 {
 	http://www.ensembl.org/Homo_sapiens/Location/Export?output=embl;r=10:1000000-1001000;strand=1;param=similarity;param=repeat;param=genscan;param=contig;param=variation;param=marker;param=gene;param=vegagene;param=estgene;_format=Text
 	wget http://may2009.archive.ensembl.org/Homo_sapiens/Location/Export?output=embl;r=1:100000-110000;strand=1;time=1258453242.93979;st=similarity;st=repeat;st=genscan;st=contig;st=variation;st=marker;st=gene;st=vegagene;st=estgene;_format=Text

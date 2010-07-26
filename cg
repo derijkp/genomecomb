@@ -515,6 +515,24 @@ switch $action {
 			scoredist $filename $sample1 $sample2
 		}
 	}
+	addgeneinfo {
+		if {[llength $argv] != 1} {
+			puts stderr "format is: $scriptname $action file"
+			puts stderr " - add gene description"
+			exit 1
+		}
+		foreach {filename} $argv break
+		set f [open $filename]
+		set line [split [gets $f] \t]
+		set idpos [lsearch $line geneId]
+		puts [join $line \t]\tgenedescr
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			set id [lindex $line $idpos]
+			set descr [ncbi_getgene $id]
+			puts [join $line \t]\t$descr
+		}
+	}
 	default {
 		puts stderr "unkown option $action"
 		exit 1
