@@ -273,7 +273,7 @@ switch $action {
 		}
 	}
 	svfind {
-		if {[llength $argv] != 2} {
+		if {[llength $argv] < 2} {
 			puts stderr "format is: $scriptname $action pairedfile ... trffile"
 			exit 1
 		}
