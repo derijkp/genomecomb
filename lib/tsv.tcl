@@ -394,7 +394,8 @@ proc tsv_index_open {file field {uncompress 0}} {
 		if {$uncompress} {
 			set workfile $root
 			puts "temporarily uncompressing $file"
-			catch {exec gunzip -c $file > $workfile}
+			exec gunzip -c $file > $workfile.temp
+			file rename $workfile.temp $workfile
 			set uncompressed 1
 			set remove 1
 		}
