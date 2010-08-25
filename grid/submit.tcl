@@ -5,6 +5,11 @@ exec tclsh "$0" "$@"
 set basedir [file normalize [pwd]]
 #puts $basedir
 
+if {![llength $argv]} {
+	puts stderr "use\nsubmit.tcl ?-deps jobids? ?-host hostname? ?--? command ..."
+	exit 1
+}
+
 set options {}
 set pos 0
 foreach {opt value} $argv {
@@ -61,6 +66,6 @@ if {[info exists ra([list $name $tasknum])]} {
 }
 file mkdir osge
 file mkdir esge
-set jnum [eval {exec qsub -N j$name -q all.q -o osge -e esge} $options [file normalize ~/bin/repeater.sh] $argv]
+set jnum [eval {exec qsub -N j$name -q all.q -o osge -e esge} $options [file normalize ~/bin/repeater.sh] [file normalize [pwd]] $argv]
 puts "$jnum $name"
 

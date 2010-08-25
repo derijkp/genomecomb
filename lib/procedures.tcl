@@ -6,7 +6,9 @@ proc cg {args} {
 
 proc process_sample {dir destdir dbdir {force 0}} {
 	set keepdir [pwd]
+	set dir [file normalize $dir]
 	set destdir [file normalize $destdir]
+	set dbdir [file normalize $dbdir]
 	file mkdir $destdir
 	cd $destdir
 	set name [file tail $destdir]
