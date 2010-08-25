@@ -93,8 +93,13 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	}
 	if {$force || ![file exists reg_nocall-$name.tsv]} {
 		puts stderr "Find partial no-call regions for var-$name.tsv"
-		nocallregions svar-$name.tsv temp.tsv
-		file rename -force temp.tsv reg_nocall-$name.tsv
+		if {[catch {
+			nocallregions svar-$name.tsv temp.tsv
+		}]} {
+			puts stderr "Could not make reg_nocall-$name.tsv (old version files ?)"
+		} else {
+			file rename -force temp.tsv reg_nocall-$name.tsv
+		}
 	}
 	if {$force || ![file exists reg_cluster-$name.tsv]} {
 		puts stderr "Find cluster regions for svar-$name.tsv"
