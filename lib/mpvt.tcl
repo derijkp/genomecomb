@@ -116,6 +116,8 @@ proc compare_mpvt {multicomparfile mpvtfile} {
 			set coverage [lindex $line $possa(coverage,$sample)]
 			if {![isint $coverage]} {
 				set coverage {}
+			} elseif {$coverage < 10} {
+				set coverage vl
 			} elseif {$coverage < 20} {
 				set coverage l
 			} elseif {$coverage > 100} {
@@ -251,6 +253,7 @@ proc mpvt_summary {mpvtfile mpvtsummaryfile} {
 		trf {$trf == ""}
 		str {$str == ""}
 		coverage {$coverage-@SAMPLE1@ == "n" && $coverage-@SAMPLE2@ == "n"}
+		coverage10 {($coverage-@SAMPLE1@ == "l" || $coverage-@SAMPLE1@ == "n") && ($coverage-@SAMPLE2@ == "l" || $coverage-@SAMPLE2@ == "n")}
 		segdup {$segdup == ""}
 		selfchain {$selfchain == ""}
 		repeat {$repeat == ""}
