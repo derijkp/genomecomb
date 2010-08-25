@@ -436,6 +436,7 @@ switch $action {
 		}
 		set field [list_shift argv]
 		foreach tsvfile $argv {
+			putslog "Indexing $tsvfile"
 			tsv_index $tsvfile $field
 		}
 	}
