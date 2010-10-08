@@ -339,36 +339,42 @@ proc process_indexcompress {file} {
 }
 
 proc process_compare_coverage {dir1 dir2 dbdir resultsdir {force 0}} {
-	cd $resultsdir
-	# region files
 	set dir1 [file normalize $dir1]
 	set dir2 [file normalize $dir2]
+	set dbdir [file normalize $dbdir]
+	file mkdir $resultsdir
+	cd $resultsdir
+	# region files
 	set name1 [file tail $dir1]
 	set name2 [file tail $dir2]
 	set target ${name1}_${name2}_regcommon.tsv.covered
 	if {$force || ![file exists $target]} {
+		putslog "Making $target"
 		cg regsubtract $dir1/sreg-${name1}.tsv $dir2/sreg-${name2}.tsv > temp.tsv
 		cg regsubtract $dir1/sreg-${name1}.tsv temp.tsv > ${name1}_${name2}_regcommon.tsv
 		cg covered ${name1}_${name2}_regcommon.tsv > $target
 	}
 	# region from each sample
-	set todo {}
-	lappend todo [list refcons $dir1/reg_refcons-${name1}.tsv $dir2/reg_refcons-${name2}.tsv]
-	lappend todo [list ns $dir1/reg_ns-${name1}.tsv $dir2/reg_ns-${name2}.tsv]
-	lappend todo [list str $dbdir/regdb-microsatelite.tsv {}]
-	lappend todo [list trf $dbdir/regdb-simple_repeats.tsv {}]
-	lappend todo [list cluster $dir1/reg_cluster-${name1}.tsv $dir2/reg_cluster-${name2}.tsv]
-	lappend todo [list rtg $dir1/reg_rtg-${name1}.tsv $dir2/reg_rtg-${name2}.tsv]
-	lappend todo [list segdup $dbdir/regdb-segdups.tsv {}]
-	lappend todo [list b20 $dir1/ASM/REF/below20coverage.regions $dir2/ASM/REF/below20coverage.regions]
-	lappend todo [list a100 $dir1/ASM/REF/above100coverage.regions $dir2/ASM/REF/above100coverage.regions]
-	lappend todo [list lowscore $dir1/reg_lowscore-${name1}.tsv $dir2/reg_lowscore-${name2}.tsv]
-	lappend todo [list selfchain $dbdir/regdb-selfchain.tsv {}]
-	lappend todo [list repeat $dbdir/regdb-repeatmasker.tsv {}]
-	list_foreach {dbname rfile1 rfile2} $todo {
+	set filters {}
+	lappend filters refcons [list $dir1/reg_refcons-${name1}.tsv $dir2/reg_refcons-${name2}.tsv]
+	lappend filters ns [list $dir1/reg_ns-${name1}.tsv $dir2/reg_ns-${name2}.tsv]
+	lappend filters str [list $dbdir/regdb-microsatelite.tsv {}]
+	lappend filters trf [list $dbdir/regdb-simple_repeats.tsv {}]
+	lappend filters cluster [list $dir1/reg_cluster-${name1}.tsv $dir2/reg_cluster-${name2}.tsv]
+	lappend filters rtg [list $dir1/reg_rtg-${name1}.tsv $dir2/reg_rtg-${name2}.tsv]
+	lappend filters segdup [list $dbdir/regdb-segdups.tsv {}]
+	lappend filters b10 [list $dir1/reg_below10-${name1}.tsv $dir2/reg_below10-${name2}.tsv]
+	lappend filters b20 [list $dir1/reg_below20-${name1}.tsv $dir2/reg_below20-${name2}.tsv]
+	lappend filters a100 [list $dir1/reg_above100-${name1}.tsv $dir2/reg_above100-${name2}.tsv]
+	lappend filters lowscore [list $dir1/reg_lowscore-${name1}.tsv $dir2/reg_lowscore-${name2}.tsv]
+	lappend filters selfchain [list $dbdir/regdb-selfchain.tsv {}]
+	lappend filters repeat [list $dbdir/regdb-repeatmasker.tsv {}]
+	set todo [list_unmerge $filters]
+	foreach dbname $todo {
+		foreach {rfile1 rfile2} [dict get $filters $dbname] break
 		set target ${name1}_${name2}_regcommon-$dbname.tsv.covered
 		if {$force || ![file exists $target]} {
-			puts "Making $target"
+			putslog "Making $target"
 			cg regsubtract ${name1}_${name2}_regcommon.tsv $rfile1 > temp.tsv
 			if {$rfile2 ne ""} {
 				file rename -force temp.tsv temp-old.tsv
@@ -378,28 +384,43 @@ proc process_compare_coverage {dir1 dir2 dbdir resultsdir {force 0}} {
 			cg covered ${name1}_${name2}_regcommon-$dbname.tsv > temp.covered
 			file rename -force temp.covered $target
 		} else {
-			puts "$target already there"
+			putslog "$target already there"
 		}
 	}
 	# subsequent subtractions (filters)
-	set newname ${name1}_${name2}_regcommon-refcons
-	set todo [lrange $todo 1 end]
-	list_foreach {dbname rfile1 rfile2} $todo {
-		set oldname $newname
-		set newname $oldname-$dbname
-		set target $newname.tsv.covered
-		if {$force || ![file exists $target]} {
-			puts "Making $target"
-			cg regsubtract $oldname.tsv  $rfile1 > temp.tsv
-			if {$rfile2 ne ""} {
-				file rename -force temp.tsv temp-old.tsv
-				cg regsubtract temp-old.tsv $rfile2 > temp.tsv
+	set orders {
+		{ns trf str cluster rtg segdup b20 a100 lowscore selfchain repeat}
+		{ns trf str cluster rtg segdup b10 a100 lowscore selfchain repeat}
+		{ns trf str segdup cluster lowscore b20 a100 rtg}
+		{ns trf str segdup cluster lowscore b10 a100 rtg}
+		{ns trf str segdup cluster lowscore rtg}
+		{ns b20 a100 cluster lowscore trf str segdup rtg}
+		{ns b10 a100 cluster lowscore trf str segdup rtg}
+		{ns cluster lowscore trf str segdup rtg}
+		{ns b20 a100 lowscore cluster trf str segdup rtg}
+		{ns b10 a100 lowscore cluster trf str segdup rtg}
+		{ns lowscore cluster trf str segdup rtg}
+	}
+	foreach order $orders {
+		set newname ${name1}_${name2}_regcommon-refcons
+		foreach dbname $order {
+			foreach {rfile1 rfile2} [dict get $filters $dbname] break
+			set oldname $newname
+			set newname $oldname-$dbname
+			set target $newname.tsv.covered
+			if {$force || ![file exists $target]} {
+				putslog "Making $target"
+				cg regsubtract $oldname.tsv  $rfile1 > temp.tsv
+				if {$rfile2 ne ""} {
+					file rename -force temp.tsv temp-old.tsv
+					cg regsubtract temp-old.tsv $rfile2 > temp.tsv
+				}
+				file rename -force temp.tsv $newname.tsv
+				cg covered $newname.tsv > temp.covered
+				file rename -force temp.covered $target
+			} else {
+				putslog "$target already there"
 			}
-			file rename -force temp.tsv $newname.tsv
-			cg covered $newname.tsv > temp.covered
-			file rename -force temp.covered $target
-		} else {
-			puts "$target already there"
 		}
 	}
 	exec grep total *.covered > summary_genomecoverage_${name1}_${name2}.tsv

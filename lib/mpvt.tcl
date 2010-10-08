@@ -294,7 +294,7 @@ proc mpvt_summary {mpvtfile mpvtsummaryfile} {
 	
 	foreach {fname} {
 		refcons lowscore cluster trf str
-		coverage segdup selfchain repeat rtg
+		coverage coverage10 segdup selfchain repeat rtg
 	} {
 		set query [subst {
 			\$compar_@SAMPLE1@_@SAMPLE2@ == COMPAR && \$type == "snp"
@@ -343,6 +343,32 @@ proc mpvt_summary {mpvtfile mpvtsummaryfile} {
 	foreach {fname} {
 		str trf cluster rtg coverage lowscore 
 		segdup selfchain repeat
+	} {
+		set name " - $fname"
+		append query " && $filters($fname)"
+		mpvt_comparinfo $name $query $totalsbasic
+	}
+	
+	puts $o "\n-------------------- ${sample1}_${sample2} filters - paper order coverage10 --------------------\n"
+	puts $o $oheader
+	
+	set query {$compar_@SAMPLE1@_@SAMPLE2@ == COMPAR && $refcons-@SAMPLE1@ == "" && $refcons-@SAMPLE2@ == "" && $type == "snp"}
+	mpvt_comparinfo "total - refcons" $query $totalsbasic
+	foreach {fname} {
+		coverage10 lowscore cluster str trf segdup rtg 
+	} {
+		set name " - $fname"
+		append query " && $filters($fname)"
+		mpvt_comparinfo $name $query $totalsbasic
+	}
+	
+	puts $o "\n-------------------- ${sample1}_${sample2} filters - paper order coverage20 --------------------\n"
+	puts $o $oheader
+	
+	set query {$compar_@SAMPLE1@_@SAMPLE2@ == COMPAR && $refcons-@SAMPLE1@ == "" && $refcons-@SAMPLE2@ == "" && $type == "snp"}
+	mpvt_comparinfo "total - refcons" $query $totalsbasic
+	foreach {fname} {
+		coverage lowscore cluster str trf segdup rtg 
 	} {
 		set name " - $fname"
 		append query " && $filters($fname)"
