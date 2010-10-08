@@ -30,10 +30,10 @@ proc svcompare {svfile1 svfile2} {
 	set name1 [lindex [split [file tail $svfile1] -] 0]
 	set name2 [lindex [split [file tail $svfile2] -] 0]
 	set tempfile1 [tempfile]
-	cg select -s patchstart < $svfile1 > $tempfile1
+	cg select -s "chr patchstart" < $svfile1 > $tempfile1
 	set f1 [open $tempfile1]
 	set tempfile2 [tempfile]
-	cg select -s patchstart < $svfile2 > $tempfile2
+	cg select -s "chr patchstart" < $svfile2 > $tempfile2
 	set f2 [open $tempfile2]
 	set header1 [split [gets $f1] \t]
 	set len [llength $header1]
