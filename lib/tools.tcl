@@ -271,6 +271,20 @@ proc ifcatch {command varName args} {
 	uplevel switch $args [list $result $switchlist]
 }
 
+proc gunzip {file args} {
+	if {[llength $args]} {
+		set error [catch {exec gunzip -S [file ext $file] -c $file > [lindex $args 0]} result]
+	} else {
+		set error [catch {exec gunzip -S [file ext $file] $file} result]
+	}
+	if $error {
+		if {![regexp "decompression OK, trailing garbage ignored" $result]} {
+			error $result
+		}
+	}
+	return $result
+}
+
 if 0 {
 
 	ifcatch {error test} result {

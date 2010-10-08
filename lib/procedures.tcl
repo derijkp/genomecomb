@@ -317,7 +317,7 @@ proc process_compare {dir1 dir2 dbdir resultsdir {force 0}} {
 proc process_indexcompress {file} {
 	set ext [file extension $file]
 	if {$ext eq ".gz"} {
-		exec gunzip $file
+		gunzip $file
 		set file [file root $file]
 	}
 	set f [open $file]
