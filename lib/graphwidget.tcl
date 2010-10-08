@@ -57,7 +57,8 @@ graphwidget method init {args} {
 	pack $object.b.cmd -side left
 	Classy::Entry $object.b.xrange -width 20 -label xrange -orient horizontal \
 		-textvariable [privatevar $object region(xrange)] -command [list Classy::todo $object redraw]
-	bind $object.b.xrange <3> "$object paste; break"
+	bind $object.b.xrange <3> "$object paste"
+	bind $object.b.xrange <1> "$object.b.xrange selection from 0; $object.b.xrange selection to end; tk::EntryButton1 %W %x; break"
 	pack $object.b.xrange -side left
 	foreach type {xrangeextra ymin ymax} {destroy $object.b.$type
 		Classy::NumEntry $object.b.$type -width 10 -label $type -orient horizontal \
