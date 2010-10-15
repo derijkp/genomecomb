@@ -452,8 +452,19 @@ switch $action {
 			tsv_index $tsvfile $field
 		}
 	}
+	tsv_align {
+		if {[llength $argv] < 6} {
+			puts stderr "format is: $scriptname $action file1 file2 joinfields1 joinfields2 postfix1 postfix2 ?method?"
+			exit 1
+		}
+		foreach {file1 file2 joinfields1 joinfields2 postfix1 postfix2 method} $argv break
+		if {$method eq ""} {set method match}
+		switch $method {
+			match {tsv_align $file1 $file2 $joinfields1 $joinfields2 $postfix1 $postfix2}
+		}
+	}
 	select {
-		set query {}; set fields {}; set sortfields {}
+		set query {}; set fields {}; set sortfields {}; set newheader {}
 		set pos 0
 		foreach {key value} $argv {
 			switch -- $key {
@@ -462,6 +473,7 @@ switch $action {
 					if {[regexp {[^=!><]=[^=]} $query]} {puts stderr "you used = instead of == in query"; exit 1}
 				}
 				-f {set fields $value}
+				-nh {set newheader $value}
 				-s {set sortfields $value}
 				-h {
 					if {$value eq ""} {
@@ -475,8 +487,7 @@ switch $action {
 					exit 1
 				}
 				--help {
-					puts "unkown option $key"
-					puts "format is: $scriptname $action ?-q query? ?-f fields? ?-s sortfields? ?infile? ?outfile?"
+					puts "format is: $scriptname $action ?-q query? ?-f fields? ?-s sortfields? ?-nh newheader? ?infile? ?outfile?"
 					puts " - select lines and columns in tab separated file, and sorts the result"
 					puts "or format is: $scriptname $action -h"
 					puts " - return header fields in file"
@@ -501,7 +512,7 @@ switch $action {
 		} else {
 			set o stdout
 		}
-		set error [catch {tsv_select $query $fields $sortfields $f $o} result]
+		set error [catch {tsv_select $query $fields $sortfields $newheader $f $o} result]
 		if {$f ne "stdin"} {catch {close $f}}
 		if {$o ne "stdout"} {catch {close $o}}
 		if {$error} {
@@ -545,6 +556,30 @@ switch $action {
 			set descr [ncbi_getgene $id]
 			puts [join $line \t]\t$descr
 		}
+	}
+	getembl {
+		if {[llength $argv] < 2 && [llength $argv] > 3} {
+			puts stderr "format is: $scriptname $action regionsfile archive ?extraseq?"
+			puts stderr " - get emblfiles"
+			exit 1
+		}
+		foreach {regionsfile archive extraseq} $argv break
+		if {![isint $extraseq]} {set extraseq 50000}
+		set list [file_read $regionsfile]
+		set regions [split $list \n]
+		list_shift regions
+		list_foreach {cchr cstart cend} $regions {
+			set cchr [string range $cchr 3 end]
+			set filename $cchr-[expr {$cstart-$extraseq}]-[expr {$cend+$extraseq}].embl
+			if {[file exists $filename]} {
+				puts "$filename already done"
+				continue
+			}
+			puts $cchr:$cstart-$cend
+			set embl [ensembl_getregion $cchr [expr {$cstart-$extraseq}] [expr {$cend+$extraseq}] -archive $archive]
+			file_write $filename $embl
+		}
+		
 	}
 	default {
 		puts stderr "unkown option $action"
