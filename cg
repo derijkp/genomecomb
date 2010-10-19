@@ -484,7 +484,7 @@ switch $action {
 						close $f
 					}
 					puts stdout $header
-					exit 1
+					exit 0
 				}
 				--help {
 					puts "format is: $scriptname $action ?-q query? ?-f fields? ?-s sortfields? ?-nh newheader? ?infile? ?outfile?"
