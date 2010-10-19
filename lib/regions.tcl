@@ -156,9 +156,9 @@ proc regjoin {regfile1 regfile2} {
 			}
 		} else {
 			foreach {ntchr tchr tstart tend} [list $nchr2 $chr2 $start2 $end2] break
-			while {![eof $f1]} {
+			while {![eof $f2]} {
 				set line2 [split [gets $f2] \t]
-				if {[llength $line1]} break
+				if {[llength $line2]} break
 			}
 			if {[llength $line2]} {
 				foreach {chr2 start2 end2} [list_sub $line2 $poss2] break
