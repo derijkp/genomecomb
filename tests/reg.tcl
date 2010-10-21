@@ -62,6 +62,44 @@ test getregions {shift} {
 chr1	24	26
 chr1	27	30}
 
+test regjoin {basic} {
+	exec cg regjoin reg1.tsv reg2.tsv 2> /dev/null
+} {chromosome	begin	end
+1	10	25
+1	45	60
+2	100	200
+2	300	500
+3	1000	1100
+3	2000	2100}
+
+test regjoin {basic} {
+	exec cg regjoin reg1.tsv reg3.tsv 2> /dev/null
+} {chromosome	begin	end
+1	5	8
+1	10	25
+1	45	60
+1	70	80
+2	90	250
+2	300	500
+3	100	250
+3	1000	2100
+3	2500	2600}
+
+test regjoin {self} {
+	exec cg regjoin reg3.tsv 2> /dev/null
+} {chromosome	begin	end
+1	5	8
+1	10	18
+1	19	25
+1	45	50
+1	70	80
+2	90	100
+2	200	250
+2	300	500
+3	100	250
+3	1000	2000
+3	2500	2600}
+
 set ::env(PATH) $keeppath
 
 testsummarize
