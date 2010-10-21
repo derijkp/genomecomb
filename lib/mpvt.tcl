@@ -47,6 +47,7 @@ proc compare_mpvt {multicomparfile mpvtfile} {
 	}
 	lappend oheader tnum
 #set o [open /complgen/multicompar/test.tsv w]
+#puts $o "[join $header \t]"
 #puts $o "chromosome\tbegin\tend\t[join $oheader \t]"
 	set num 0
 	while {![eof $f]} {
@@ -58,14 +59,16 @@ proc compare_mpvt {multicomparfile mpvtfile} {
 		set result {}
 		# do comparisons
 		set sequenced [list_sub $line $possa(sequenced)]
-		if {![inlist $sequenced v]} continue
+		# if {![inlist $sequenced v]} continue
 		set pos 1
+#set keepcompar 0
 		foreach s1 [lrange $samples 0 end-1] seq1 [lrange $sequenced 0 end-1] {
 			foreach s2 [lrange $samples $pos end] seq2 [lrange $sequenced $pos end] {
 				set alleles1 [list_sub $line $possa(alleles,$s1)]
 				set alleles2 [list_sub $line $possa(alleles,$s2)]
 				set compar [mcompar $seq1 $seq2 {*}$alleles1 {*}$alleles2]
 				lappend result $compar
+#if {$s1 eq "GS102" && $s2 eq "rtg102"} {set keepcompar $compar}
 			}
 			incr pos
 		}
@@ -98,9 +101,9 @@ proc compare_mpvt {multicomparfile mpvtfile} {
 			set alleles [list_sub $line $possa(alleles,$sample)]
 			if {[regexp {[N?]} $alleles]} {set ns ns} else {set ns ""}
 			# lowscore
-			set scores [list_sub $line $possa(scores,$sample)]
-			set minscore [min {*}$scores]
-			if {[isdouble $minscore]} {
+			if {[llength $possa(scores,$sample)] == 2} {
+				set scores [list_sub $line $possa(scores,$sample)]
+				set minscore [lindex [lsort -dict $scores] 0]
 				if {$minscore < 60} {set lowscore ls} else {set lowscore ""}
 			} else {
 				# lowpost
@@ -115,7 +118,7 @@ proc compare_mpvt {multicomparfile mpvtfile} {
 			set cluster [lindex $line $possa(cluster,$sample)]
 			set coverage [lindex $line $possa(coverage,$sample)]
 			if {![isint $coverage]} {
-				set coverage {}
+				set coverage vl
 			} elseif {$coverage < 10} {
 				set coverage vl
 			} elseif {$coverage < 20} {
@@ -128,12 +131,16 @@ proc compare_mpvt {multicomparfile mpvtfile} {
 			set sequenced [lindex $line $possa(sequenced,$sample)]
 			lappend result $ns $lowscore $refcons $cluster $coverage $sequenced
 		}
+#if {$keepcompar eq "sm" || $keepcompar eq "i"} {
+#	puts $o [join $line \t]
+#}
 		if {![info exists a($result)]} {
 			set a($result) 1
 		} else {
 			incr a($result)
 		}
 	}
+#close $o
 	set o [open $mpvtfile w]
 	puts $o [join $oheader \t]
 	set list [lsort -dict [array names a]]
@@ -221,7 +228,11 @@ proc mpvt_comparinfo {{label {}} query totals} {
 	lappend result $diffs [format %.2f $pdiffs]
 	if {$a(sm,tot) != 0} {
 		set psm [expr {100.0*$a(sm)/$a(sm,tot)}]
-		lappend result [format %.2f [expr {$pdiffs/$psm}]]
+		if {$psm == 0} {
+			lappend result #
+		} else {
+			lappend result [format %.2f [expr {$pdiffs/$psm}]]
+		}
 	} else {
 		lappend result #
 	}
