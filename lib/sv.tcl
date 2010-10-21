@@ -1524,6 +1524,10 @@ proc svfind {pairfile trffile} {
 	catch {close $f}
 	set bpairfile [rzroot $pairfile]
 	set outfile [file root $bpairfile]-sv.tsv
+	if {[file exists $outfile]} {
+		putslog "$outfile exists: skipping"
+		return
+	}
 	set windowsize 50
 	set lognum [expr {1000000 - 100000%$windowsize}]
 	global infoa
@@ -1583,7 +1587,7 @@ proc svfind {pairfile trffile} {
 #set outfile test-sv.tsv
 #check
 	set dir [file dir [file normalize $outfile]]
-	set o [open $outfile w]
+	set o [open $outfile.temp w]
 	puts $o [join {check chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum} \t]
 	set list {}
 	set mainrtable {}
@@ -1718,6 +1722,7 @@ proc svfind {pairfile trffile} {
 	close $trf
 	close $o
 	catch {close $f}
+	file rename $outfile.temp $outfile
 	putslog "finished $outfile"
 
 }
