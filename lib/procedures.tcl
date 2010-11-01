@@ -128,6 +128,8 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		lappend todo [list selfchain sc $dbdir/regdb-selfchain.tsv]
 		lappend todo [list repeat rp $dbdir/regdb-repeatmasker.tsv]
 		lappend todo [list rna rna $dbdir/regdb-rnagenes.tsv]
+		lappend todo [list more5pct m5 $dbdir/regdb-1000genomesmore5pct.tsv]
+		lappend todo [list more1pct m1 $dbdir/regdb-1000genomesmore1pct.tsv]
 		foreach file [lsort -dictionary [glob -nocomplain $dbdir/checked*.tsv]] {
 			set value [lindex [split [file root [file tail $file]] _] 1]
 			if {$value eq ""} {set value checked}
