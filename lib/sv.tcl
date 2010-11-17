@@ -26,6 +26,9 @@ proc getmategap {libfile} {
 
 proc map2sv {files prefix} {
 	global appdir
+	if {[llength $files] == 1 && [file isdir [lindex $files 0]]} {
+		set files [glob [lindex $files 0]/MAP/*/mapping_*.tsv.bz2]
+	}
 	set num 0
 	file mkdir [file dir $prefix]
 	if {![file exists ${prefix}_map2sv_distr_FINISHED]} {
