@@ -744,8 +744,11 @@ proc sv_checkthreads {threads start mode resultVar} {
 			if {[llength $parts] < 7} continue
 			set parts [lsort -index 2 -integer $parts]
 			set chr [lindex $parts 0 0]
-			set cstart [lindex $parts 0 2]
-			set cend [lindex $parts end 2]
+			set cstart [lmath_min [list_subindex $parts 1]]
+			set cend [lmath_max [list_subindex $parts 2]]
+			set chr2 [lindex $parts 0 5]
+			set start2 [lmath_min [list_subindex $parts 6]]
+			set end2 [lmath_max [list_subindex $parts 7]]
 			set patchsize [expr {$cend-$cstart+1}]
 			set gapsize [expr {round( [lmath_average [list_subindex $parts $distpos]] )}]
 			set totnum [llength $parts]
@@ -828,7 +831,7 @@ proc sv_checkthreads {threads start mode resultVar} {
 			set score [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff $tnum $exnum]
 			# add to result
 			# -------------
-			lappend result [list $chr $cstart $cend $type [expr {round($diff)}] $zyg $problems $gapsize $score $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum [oformat $opsdiff 0] $tnum $exnum]
+			lappend result [list $chr $cstart $cend $type [expr {round($diff)}] $zyg $problems $chr2 $start2 $end2 $gapsize $score $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum [oformat $opsdiff 0] $tnum $exnum]
 		} else {
 			lappend resultthreads $thread
 		}
@@ -1222,7 +1225,10 @@ proc svwindow_checkinv {table rtable} {
 	global infoa
 	set result {}
 	set distpos $infoa(distpos)
+	set start1pos $infoa(start1pos)
 	set end1pos $infoa(end1pos)
+	set start2pos $infoa(start2pos)
+	set end2pos $infoa(end2pos)
 	set mode $infoa(mode)
 	set weight1pos $infoa(weight1pos)
 	set weight2pos $infoa(weight2pos)
@@ -1262,10 +1268,14 @@ proc svwindow_checkinv {table rtable} {
 		foreach group $groups {
 			if {[llength $group] < $clustmin} continue
 			set size [expr {[lindex $group 0 $distpos]-$mode}]
+			set cstart [lmath_min [list_subindex $group $start1pos]]
+			set cend [lmath_max [list_subindex $group $end1pos]]
 			set cstart [lindex $group 0 $end1pos]
 			set cend [lindex $group end $end1pos]
 			set patchsize [expr {$cend-$cstart+1}]
 			if {$patchsize <= 1} continue
+			set start2 [lmath_min [list_subindex $group $start2pos]]
+			set end2 [lmath_max [list_subindex $group $end2pos]]
 			set num [llength $group]
 			# test heterozygosity
 			set list {}
@@ -1288,7 +1298,7 @@ proc svwindow_checkinv {table rtable} {
 			foreach {a b sd} [linreg [list_subindex $group $end1pos] [list_subindex $group $distpos]] break
 			set b [oformat $b]; set sd [oformat $sd]
 			set score [svscore $mode inv $size $zyg {} {} $num $num $weight $patchsize $b $sd {} {} $totnum $opsdiff {} {}]
-			lappend result [list $chr $cstart $cend inv $size $zyg {} {} $score $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff 0]]
+			lappend result [list $chr $cstart $cend inv $size $zyg {} $chr $start2 $end2 {} $score $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff 0] {} {}]
 		}
 		
 	}
@@ -1298,7 +1308,10 @@ proc svwindow_checkinv {table rtable} {
 proc svwindow_checktrans {table ctable} {
 	global infoa
 	set distpos $infoa(distpos)
+	set start1pos $infoa(start1pos)
 	set end1pos $infoa(end1pos)
+	set start2pos $infoa(start2pos)
+	set end2pos $infoa(end2pos)
 	set mode $infoa(mode)
 	set weight1pos $infoa(weight1pos)
 	set weight2pos $infoa(weight2pos)
@@ -1328,10 +1341,12 @@ proc svwindow_checktrans {table ctable} {
 			foreach rtable $srtables {
 				if {[llength $rtable] < $clustmin} continue
 				set size [expr {[lindex $rtable 0 $distpos]-$mode}]
-				set cstart [lindex $rtable 0 $end1pos]
-				set cend [lindex $rtable end $end1pos]
+				set cstart [lmath_min [list_subindex $rtable $start1pos]]
+				set cend [lmath_max [list_subindex $rtable $end1pos]]
 				set patchsize [expr {$cend-$cstart+1}]
 				if {$patchsize <= 1} continue
+				set start2 [lmath_min [list_subindex $rtable $start2pos]]
+				set end2 [lmath_max [list_subindex $rtable $end2pos]]
 				set opsdiff [expr {$patchsize-$mode}]
 				set psdiff [expr {abs($opsdiff)}]
 				set num [llength $rtable]
@@ -1357,7 +1372,7 @@ proc svwindow_checktrans {table ctable} {
 				foreach {temp b sd} [linreg $xs $ys] break
 				set b [oformat $b]; set sd [oformat $sd]
 				set score [svscore $mode trans $pos2 $zyg {} {} $num $num $weight $patchsize $b $sd {} {} $totnum $opsdiff {} {}]
-				lappend result [list $chr $cstart $cend trans $pos2 $zyg {} $chr2 $score $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff]]
+				lappend result [list $chr $cstart $cend trans $pos2 $zyg {} $chr2 $start2 $end2 {} $score $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff] {} {}]
 			}
 		}
 	}
@@ -1507,8 +1522,10 @@ package require Extral
 cd /complgen/sv
 
 set trffile /data/db/regdb-simple_repeats.tsv
-set pairfile sv70-20-pairs.tsv	foreach {score type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} [list_sub $line $cor] break
-	set nscore [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff]
+set pairfile sv70-20-pairs.tsv
+
+foreach {score type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} [list_sub $line $cor] break
+set nscore [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff]
 
 set pairfile GS103/GS103-20-paired.tsv.rz
 set pairfile sv78-20-pairs.tsv
@@ -1522,11 +1539,12 @@ set pairfile GS103/GS103-20-paired.tsv.rz
 
 proc svfind {pairfile trffile} {
 
+	set bpairfile [rzroot $pairfile]
+	set outfile [file root $bpairfile]-sv.tsv
+
 	catch {close $trf}
 	catch {close $o}
 	catch {close $f}
-	set bpairfile [rzroot $pairfile]
-	set outfile [file root $bpairfile]-sv.tsv
 	if {[file exists $outfile]} {
 		putslog "$outfile exists: skipping"
 		return
@@ -1549,7 +1567,10 @@ proc svfind {pairfile trffile} {
 	set iheader {chr1 start1 end1 weight1 numl chr2 start2 end2 weight2 numr type dist}
 	set poss [list_cor $header $iheader]
 	array set infoa [list \
+		start1pos [lsearch $iheader start1] \
 		end1pos [lsearch $iheader end1] \
+		start2pos [lsearch $iheader start2] \
+		end2pos [lsearch $iheader end2] \
 		typepos [lsearch $iheader type] \
 		chr1pos [lsearch $iheader chr1] \
 		distpos [lsearch $iheader dist] \
@@ -1591,7 +1612,7 @@ proc svfind {pairfile trffile} {
 #check
 	set dir [file dir [file normalize $outfile]]
 	set o [open $outfile.temp w]
-	puts $o [join {check chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum} \t]
+	puts $o [join {check chr1 start1 end1 type size zyg problems chr2 start2 end2 gapsize quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum} \t]
 	set list {}
 	set mainrtable {}
 	set rtable {}
@@ -1690,7 +1711,9 @@ proc svfind {pairfile trffile} {
 				set rlastpos $start
 			} elseif {[llength $rtable] && ([expr {$start-$rlastpos}] > 50)} {
 				set temp [svwindow_checkinv $mainrtable $rtable]
-				lappend result {*}$temp
+				if {[llength $temp]} {
+					lappend result {*}$temp
+				}
 				set mainrtable {}
 				set rtable {}
 			}
