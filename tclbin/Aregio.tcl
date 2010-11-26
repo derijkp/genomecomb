@@ -22,7 +22,7 @@ if {[llength $argv] < 4} {
 	exit 1
 }
 puts "Preparing input...."
-set outpath [file dirname [lindex $argv 0]]/temp
+set outpath [file dirname [lindex $argv 0]]/temp_[file tail [file rootname [lindex $argv 0]]]
 set path [lindex $argv 2]
 
 set tmp [tempfile get]
