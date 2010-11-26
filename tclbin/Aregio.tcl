@@ -17,11 +17,13 @@ package require Extral
 
 
 
-if {[llength $argv] < 2} {
-	puts "Format is: filename, outputfilename, directory (eg '/home/user'), completegenomics directory (eg '/home/user/dev/completegenomics') "
+if {[llength $argv] < 4} {
+	puts "Format is: filename, outputfilename, completegenomics directory (eg '/home/user/dev/completegenomics'), database1 (eg /home/user/Databases/hg18_clean/tRNAs.tsv) ?db2 db3.... db? "
 	exit 1
 }
 puts "Preparing input...."
+set outpath [file dirname [lindex $argv 0]]/temp
+set path [lindex $argv 2]
 
 set tmp [tempfile get]
 if {[catch "exec ./prepareInput.tcl [lindex $argv 0] $tmp" errmsg]} {
@@ -29,10 +31,9 @@ if {[catch "exec ./prepareInput.tcl [lindex $argv 0] $tmp" errmsg]} {
 	exit 1
 }
 
-set dirpath [lindex $argv 2]
-set path [lindex $argv 3]
-if {[catch {exec cg select -h [lindex $argv 0]} headers]} {
-	puts "error getting header from [lindex $argv 0] - $headers"
+
+if {[catch {exec cg select -h $tmp} headers]} {
+	puts "error getting header from $tmp - $headers"
 	exit 1	
 }
 
@@ -50,31 +51,19 @@ foreach head $headers {
 }
 
 
-set db "${dirpath}/Databases/hg18_clean/phastConsElements44way.tsv \
-	${dirpath}/Databases/hg18_clean/tfbsConsSites.tsv \
-	${dirpath}/Databases/hg18_clean/omimGene.tsv \
-	${dirpath}/Databases/hg18_clean/rnaGene.tsv \
-	${dirpath}/Databases/hg18_clean/tRNAs.tsv \
-	${dirpath}/Databases/hg18_clean/oreganno.tsv \
-	${dirpath}/Databases/hg18_clean/targetScanS.tsv \
-	${dirpath}/Databases/hg18_clean/evofold.tsv \
-	${dirpath}/Databases/hg18_clean/CEU.tsv \
-	${dirpath}/Databases/hg18_clean/CHB+JPT.tsv \
-	${dirpath}/Databases/hg18_clean/YRI.tsv \
-	${dirpath}/Databases/hg18_clean/hsa.tsv \
-"
-
-
+set i 3
 set input_c ""
-foreach file $db {
-	if {[catch {exec cg select -h $file} headers]} {
-		puts "error getting header from $file - $headers"
+
+while { $i < $argc} {
+	puts "Examening database [lindex $argv $i]....."
+	if {[catch {exec cg select -h [lindex $argv $i]} headers]} {
+		puts "error getting header from [lindex $argv $i] - $headers"
 		exit 1	
 	}
 	set column 0
 	#Not all files have the following columns, 
 	#this way we can leave the colums out at the end without an error.
-	set name_column 100					
+	set name_column 100			        		
 	set score_column 100
 	set allel_column 100
 
@@ -90,7 +79,8 @@ foreach file $db {
 		}
 		incr column
 	}
-lappend input_c $file $chrom_column $begin_column $end_column $name_column $score_column $allel_column 
+	lappend input_c [lindex $argv $i] $chrom_column $begin_column $end_column $name_column $score_column $allel_column 
+	incr i
 }
 
 
@@ -98,47 +88,38 @@ lappend input_c $file $chrom_column $begin_column $end_column $name_column $scor
 
 
 puts "Running reg_analyze.c ....."
-puts "This may take a while......."
-puts "Log_file will be written at $path/temp/log_Aregio.txt.... "
+puts "This may take a while......"
+puts "The log file will be written at [file dirname [lindex $argv 0]]/log_Aregio.txt.... "
 
-exec $path/bin/reg_analyze $tmp $input_chrom_column $input_begin_column $input_end_column  {*}$input_c >& $path/temp/log_Aregio.txt
+
+if {![file isdirectory $outpath]} {
+	file mkdir "$outpath"
+	set k 100
+}
+exec $path/bin/reg_analyze $outpath/ $tmp $input_chrom_column $input_begin_column $input_end_column  {*}$input_c >& [file dirname [lindex $argv 0]]/log_Aregio.txt
 
 puts "Done running reg_analyze.c!"
 puts "Pasting the output files together to one annotation file....."
+	
 
-
-if {[catch {exec paste [lindex $argv 0] $path/temp/phastConsElements44way.tsv \
-	$path/temp/tfbsConsSites.tsv \
-	$path/temp/omimGene.tsv \
-	$path/temp/rnaGene.tsv \
-	$path/temp/tRNAs.tsv \
-	$path/temp/oreganno.tsv \
-	$path/temp/targetScanS.tsv \
-	$path/temp/evofold.tsv \
-	$path/temp/CEU.tsv \
-	$path/temp/CHB+JPT.tsv \
-	$path/temp/YRI.tsv \
-	$path/temp/hsa.tsv \
-	[lindex [split [lindex $argv 0] .] 0]_annovar.temp \
- 	> [lindex $argv 1] } errmsg]} {
+# Paste all files in directory /temp/
+if {[catch {exec paste [lindex $argv 0]  [glob -nocomplain -directory $outpath *.tsv]	> [lindex $argv 1] } errmsg]} {
 	puts "Something went wrong while creating output file - $errmsg"
 }
 
 
 
-file delete -force   $path/temp/phastConsElements44way.tsv \
-	$path/temp/tfbsConsSites.tsv \
-	$path/temp/omimGene.tsv \
-	$path/temp/rnaGene.tsv \
-	$path/temp/tRNAs.tsv \
-	$path/temp/oreganno.tsv \
-	$path/temp/targetScanS.tsv \
-	$path/temp/evofold.tsv \
-	$path/temp/CEU.tsv \
-	$path/temp/CHB+JPT.tsv \
-	$path/temp/YRI.tsv \
-	$path/temp/hsa.tsv \
-	[lindex [split [lindex $argv 0] .] 0]_annovar.temp
+# delete all dbfiles in directory /temp/ to prevent another pasting
+# and delete directory if he didn't exist before this script
+if {[info exists k]} {
+	file delete -force $outpath/
+} else {
+	set i 3
+	while { $i < $argc} {
+		file delete -force $outpath/[file tail [lindex $argv $i]] 
+		incr i
+	}
+}
 
 tempfile clean
 exit 0

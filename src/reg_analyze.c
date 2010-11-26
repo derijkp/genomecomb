@@ -7,22 +7,22 @@
 #include <string.h>
 
 void perror(const char *s);
-void annotate (char *in, int in_chrom, int in_begin, int in_end, char *db, int chrom, int begin, int end, int name, int score, int allel_freq);
+void annotate (char *out1, char *in, int in_chrom, int in_begin, int in_end, char *db, int chrom, int begin, int end, int name, int score, int allel_freq);
 char** split (char *str[], char delims[], int NUM);
 void makeLine(FILE *output, int name, int score, int allel_freq, char *name_annot, char * score_annot, char * allel_annot);
 void freeMemoryArr (char ** dArray, int NUM);
 
-
+ 
 
 int main (int argc, char *argv[]) {
 	
-	if ((argc < 5)) {
-		perror("Format is: fileName, chrom_column, begin_column, end_column, databaseColumnList");
+	if ((argc < 7)) {
+		perror("Format is: directory inputfile, fileName, chrom_column, begin_column, end_column, databaseColumnList");
 		exit(EXIT_FAILURE);
 	}
-	int input_chrom_column = atoi(argv[2]);
-	int input_begin_column = atoi(argv[3]);
-	int input_end_column = atoi(argv[4]);
+	int input_chrom_column = atoi(argv[3]);
+	int input_begin_column = atoi(argv[4]);
+	int input_end_column = atoi(argv[5]);
 	char *dbfile[20];
 	int chrom[20];
 	int begin[20];
@@ -32,7 +32,7 @@ int main (int argc, char *argv[]) {
  	int allel_freq[20];
 
 	//assigning the column data to variables
-	int i = 5;
+	int i = 6;
 	int k = 0;
 	while (i < argc-1) {
 		if (argv[i][0] == '/') {
@@ -67,14 +67,14 @@ int main (int argc, char *argv[]) {
 		// Vergelijk file met huidige db
 		printf("Running input against %s ..... \n",dbfile[i]);
 		fflush(stdout);
-		annotate (argv[1], input_chrom_column, input_begin_column, input_end_column, dbfile[i], chrom[i], begin[i], end[i], name[i], score[i], allel_freq[i]);
+		annotate (argv[1], argv[2], input_chrom_column, input_begin_column, input_end_column, dbfile[i], chrom[i], begin[i], end[i], name[i], score[i], allel_freq[i]);
 		i++;
 	}
 
 	exit(EXIT_SUCCESS);
 }
 
-void annotate (char *in, int in_chrom, int in_begin, int in_end, char *db, int chrom_col, int begin, int end, int name, int score, int allel_freq) {
+void annotate (char *out1, char *in, int in_chrom, int in_begin, int in_end, char *db, int chrom_col, int begin, int end, int name, int score, int allel_freq) {
 	FILE *input;
 	input = fopen64(in, "r+");
 	if (input == NULL) {
@@ -105,7 +105,6 @@ void annotate (char *in, int in_chrom, int in_begin, int in_end, char *db, int c
 	int chrom_db;	
 	int chrom;
 	FILE *output_id;
-	char *out1 = NULL;
 	char *out2 = NULL;
 	char **line_arr = 0;
 	char *annot_col_1 = NULL;
@@ -128,7 +127,6 @@ void annotate (char *in, int in_chrom, int in_begin, int in_end, char *db, int c
 	int NUM_arr = strlen(db);
 	line_arr = split(&db, "./", NUM_arr);
 	char *name_db = line_arr[4];
-	out1 = "../temp/";
 	out2 = ".tsv";
 	char *outfile = malloc(strlen(out1) + strlen(out2) + strlen(name_db) + 3);
 	
@@ -137,6 +135,7 @@ void annotate (char *in, int in_chrom, int in_begin, int in_end, char *db, int c
 		strcat(outfile, name_db);
 		strcat(outfile, out2);
 	} 
+
 	output_id = fopen64(outfile, "w");
 	if (output_id == NULL) {
 		perror ("Error opening outputfile");
@@ -160,6 +159,7 @@ void annotate (char *in, int in_chrom, int in_begin, int in_end, char *db, int c
 	freeMemoryArr(line_arr, NUM_arr);
 	free(header_1);
 	free(header_2);
+	free(header_3);
 
 	//reading first real line from both input file as db_file
 	int l = 1;
@@ -233,7 +233,6 @@ void annotate (char *in, int in_chrom, int in_begin, int in_end, char *db, int c
 			l++;
 			loop = 1;
 			freeMemoryArr(column, NUM_in);
-			continue;
 		} else if (chrom > chrom_db) {
 			free(db_line);
 			db_line = NULL;
@@ -242,43 +241,39 @@ void annotate (char *in, int in_chrom, int in_begin, int in_end, char *db, int c
 			k++;
 			loop = 2;
 			freeMemoryArr(db_column, NUM_db);
-			continue;
 		} else {
-			//You can proceed to the following annotate loop and check the chromosome locations
-		}
-
-		// Annotate
-		if (snp < end_db) {
-			if (snp < begin_db)		{
-				makeLine(output_id, name, score, allel_freq, "", "", "");
-				free(line);
-				line = NULL;
-				nbytes = 0;
-				bytes_read = getline (&line, &nbytes, input);
-				l++;
-				loop = 1;
-				freeMemoryArr(column, NUM_in);
+			// Annotate
+			if (snp < end_db) {
+				if (snp < begin_db)		{
+					makeLine(output_id, name, score, allel_freq, "", "", "");
+					free(line);
+					line = NULL;
+					nbytes = 0;
+					bytes_read = getline (&line, &nbytes, input);
+					l++;
+					loop = 1;
+					freeMemoryArr(column, NUM_in);
+				} else {
+					//annoteer
+					makeLine(output_id, name, score, allel_freq, db_column[name], db_column[score], db_column[allel_freq]);
+					free(line);
+					line = NULL;
+					nbytes = 0;
+					bytes_read = getline (&line, &nbytes, input);
+					l++;
+					loop = 1;
+					freeMemoryArr(column, NUM_in);
+				}
 			} else {
-				//annoteer
-				makeLine(output_id, name, score, allel_freq, db_column[name], db_column[score], db_column[allel_freq]);
-				free(line);
-				line = NULL;
-				nbytes = 0;
-				bytes_read = getline (&line, &nbytes, input);
-				l++;
-				loop = 1;
-				freeMemoryArr(column, NUM_in);
+				free(db_line);
+				db_line = NULL;
+				nbytes_db = 0;
+				bytes_read_db = getline (&db_line, &nbytes_db, db_input);
+				k++;
+				loop = 2;
+				freeMemoryArr(db_column, NUM_db);
 			}
-		} else {
-			free(db_line);
-			db_line = NULL;
-			nbytes_db = 0;
-			bytes_read_db = getline (&db_line, &nbytes_db, db_input);
-			k++;
-			loop = 2;
-			freeMemoryArr(db_column, NUM_db);
 		}
-	
 	}
 
 	if (loop == 2) {

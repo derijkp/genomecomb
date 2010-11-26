@@ -16,7 +16,20 @@ package require Extral
 
 
 if {[llength $argv] < 2} {
-	puts "Format is: filename, annovar directory (eg '/home/user/Downloads/annovar') "
+	puts "Format is: filename, annovar directory (eg '/home/user/Downloads/annovar') ?-makeFile?"
+	exit 1
+}
+# default setting is not making an output annotationfile
+# -makeFile setting is making an output annotationfile
+
+if {[lindex $argv 2] == "-makeFile"} {
+	puts "Annotation file will be created."
+} elseif {[lindex $argv 2] == "" } {
+	puts "No annotation file will be created."
+	puts "You can paste the output file in your command line to the input annotationfile."
+} else {
+	puts "Please use -makeLine if you wish to create an annotation file"
+	puts "Otherwise use only 2 arguments"
 	exit 1
 }
 
@@ -231,13 +244,6 @@ puts "this may take a while......"
 if {[catch "exec $path/annotate_variation.pl -filter -zerostart -dbtype avsift $temp $path/humandb/" errmsg]} {
 	puts "annovar succeeded"
 }
-# temp file bekijken TEST
-if {[catch "exec cp $temp /home/annelies/avsift_input " errmsg]} {
-	puts "Copy annotated info to file failed - $errmsg"
-}
-if {[catch "exec cp $temp.hg18_avsift_dropped /home/annelies/avsift_dropped " errmsg]} {
-	puts "Copy annotated info to file failed - $errmsg"
-}
 
 # data retrieval 
 puts "retrieving data from annovar files....."
@@ -288,23 +294,29 @@ close $fileid
 close $fileid_old
 close $fileid_out
 
-# temp file bekijken TEST
-
-if {[catch "exec cp $temp.annot /home/annelies/avsift_annot " errmsg]} {
-	puts "Copy annotated info to file failed - $errmsg"
-}
-
-
 ######################################
 #
 # Pasting it all together
 #
 ######################################
 
-puts "pasting files to a temporary output file -> [lindex [split [lindex $argv 0] .] 0]_annovar.temp"
-if {[catch "exec paste $temp.annot.knownGene $temp.annot.ensGene $temp.annot > [lindex [split [lindex $argv 0] .] 0]_annovar.temp" errmsg]} {		
-	puts "Pasting annotated info to inputfile failed - $errmsg"
+#depending on whether -makeFile is the 3th argument
+
+if {[lindex $argv 2] == "-makeFile"} {
+	puts "pasting files to the input annotation file -> [lindex [split [lindex $argv 0] .] 0]_annot_annovar.tsv"
+	if {[catch "exec paste [lindex $argv 0] $temp.annot.knownGene $temp.annot.ensGene $temp.annot > [lindex [split [lindex $argv 0] .] 0]_annot_annovar.tsv" errmsg]} {		
+		puts "Pasting annotated info to inputfile failed - $errmsg"
+	}
+} elseif {[lindex $argv 2] == "" } {
+	puts "pasting files to a temporary output file -> [lindex [split [lindex $argv 0] .] 0]_annovar.temp"
+	if {[catch "exec paste $temp.annot.knownGene $temp.annot.ensGene $temp.annot > [lindex [split [lindex $argv 0] .] 0]_annovar.temp" errmsg]} {		
+		puts "Pasting annotated info to temporary outputfile failed - $errmsg"
+	}
+	puts "You can later paste the file to the annotation file. "	
 }
+
+
+
 
 tempfile clean
 return 0
