@@ -590,7 +590,14 @@ switch $action {
 		
 	}
 	default {
-		puts stderr "unkown option $action"
-		exit 1
+		set args $argv
+		unset -nocomplain argv
+		if {[auto_load cg_$action]} {
+			set ::base "cg $action"
+			cg_$action {*}$args
+		} else {
+			puts stderr "unkown option $action"
+			exit 1
+		}
 	}
 }
