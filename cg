@@ -100,6 +100,22 @@ switch $action {
 		}
 		process_rtgsample $dir $dbdir $force
 	}
+	process_sv {
+		if {([llength $argv] < 2) || ([llength $argv] > 3)} {
+			puts stderr "format is: $scriptname $action sampledir destdir dbdir ?force?"
+			puts stderr " - processes sv for one sample directory."
+			puts stderr " - By default, only files that are not present already will be created."
+			puts stderr " -When force is given as a parameter, everything will be recalculated and overwritten."
+			exit 1
+		}
+		foreach {dir destdir dbdir force} $argv break
+		switch $force {
+			force {set force 1}
+			"" {set force 0}
+			default {error "unrecognized option $force"}
+		}
+		process_sv $dir $destdir $dbdir $force
+	}
 	rtgregions {
 		if {[llength $argv] != 3} {
 			puts stderr "format is: $scriptname $action cgdir comparfile rtgdir"
@@ -457,7 +473,7 @@ switch $action {
 		set field [list_shift argv]
 		foreach tsvfile $argv {
 			putslog "Indexing $tsvfile"
-			tsv_index $tsvfile $field
+			tsv_index $field $tsvfile
 		}
 	}
 	tsv_align {

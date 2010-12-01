@@ -20,14 +20,18 @@ cd /complgen/sv
 
 }
 
-proc svmulticompar_groupdists {dlist} {
+proc svmulticompar_groupdists {dlist type} {
 	set curdist [lindex $dlist 0 5]
 	set result {}
 	set newlist {}
+	set mindiff 35
+	if {$type eq "inv"} {
+		set mindiff 400
+	}
 	foreach line $dlist {
 		set d [lindex $line 5]
 		set diff [expr {abs($d-$curdist)}]
-		set sizediff [min [max [expr {round(0.1*$curdist)}] 35] 2000]
+		set sizediff [min [max [expr {round(0.25*$curdist)}] $mindiff] 8000]
 		if {$diff > $sizediff} {
 			lappend result $newlist
 			set curdist [lindex $line 5]
@@ -44,20 +48,20 @@ proc svmulticompar_groupdists {dlist} {
 
 proc svmulticompar_groupcompatible {plist} {
 	set plist [lsort -integer -index 3 $plist]
+	set curstart1 [lindex $plist 0 2]
 	set curend1 [lindex $plist 0 3]
-	set curstart2 [lindex $plist 0 9]
 	set result {}
 	set newlist {}
 	foreach line $plist {
+		set start1 [lindex $line 2]
 		set end1 [lindex $line 3]
-		set start2 [lindex $line 9]
-		if {[overlap $end1 $start2 $curend1 $curstart2] > 1} {
+		if {[overlap $start1 $end1 $curstart1 $curend1] > 1} {
 			lappend newlist $line
 		} else {
 			lappend result $newlist
 			set newlist {}
+			set curstart1 $start1
 			set curend1 $end1
-			set curstart2 $start2
 		}
 	}
 	if {[llength $newlist]} {
@@ -69,18 +73,16 @@ proc svmulticompar_groupcompatible {plist} {
 proc svmulticompar_compar {line1 line2} {
 	if {![llength $line1]} {return -1}
 	if {![llength $line2]} {return 1}
-	foreach {src chr1 start1} $line1 break
-	foreach {src chr2 start2} $line2 break
+	foreach {src chr1 start1 end1} $line1 break
+	foreach {src chr2 start2 end2} $line2 break
 	if {$chr1 ne $chr2} {
 		set nchr1 [chr2num $chr1]
 		set nchr2 [chr2num $chr2]
 		return [expr {$nchr2 - $nchr1}]
 	}
-	set end1 [lindex $line1 9]
-	set end2 [lindex $line2 9]
-	if {$end2 < $start1} {
+	if {[expr {$end2+20}] < $start1} {
 		return -1
-	} elseif {$end1 < $start2} {
+	} elseif {[expr {$end1+20}] < $start2} {
 		return 1
 	} else {
 		return 0
@@ -88,6 +90,7 @@ proc svmulticompar_compar {line1 line2} {
 }
 
 proc svmulticompar_getline {f poss {type 1}} {
+	global cchr cpos
 	while 1 {
 		set line [split [gets $f] \t]
 		if {[llength $line]} break
@@ -100,27 +103,40 @@ proc svmulticompar_getline {f poss {type 1}} {
 		lset cur 7 $endpos
 		lset cur 8 [expr {$endpos+400}]
 	}
+	if {[lindex $cur 0] ne $cchr} {
+		putslog "Starting chromsome [lindex $cur 0]"
+		set cchr [lindex $cur 0]
+		set cpos 1000000
+	}
+	if {[lindex $cur 2] > $cpos} {
+		putslog $cpos
+		incr cpos 1000000
+	}
 	list_concat $type $cur $line
 }
 
 proc svmulticompar_write {o id group poss2 dummy1 dummy2 {ddummy1 {}} {ddummy2 {}}} {
-#		set start1 [lmath_max [list_subindex $group 2]]
-#		set end1 [lmath_max [list_subindex $group 3]]
-#		set size [expr {round([lmath_average [list_subindex $group 5]])}]
-#		set start2 [lmath_max [list_subindex $group 8]]
-#		set end2 [lmath_max [list_subindex $group 9]]
 	unset -nocomplain todo
+	set todo(1) {}; set todo(2) {}
 	foreach line $group {
 		lappend todo([lindex $line 0]) $line
 	}
-	if {![info exists todo(1)] || ![info exists todo(2)]} {
+	if {![llength $todo(1)] || ![llength $todo(2)]} {
 		set udummy1 $dummy1; set udummy2 $dummy2
 	} else {
 		set udummy1 $ddummy1; set udummy2 $ddummy2
 	}
-	set max [max [llength [get todo(1) ""]] [llength [get todo(2) ""]]]
+	set max [max [llength $todo(1)] [llength $todo(2)]]
 	if {$max > 1} {append id -$max}
-	foreach l1 [get todo(1) ""] l2 [get todo(2) ""] {
+	if {[llength $todo(1)]} {
+		set count [lindex $todo(1) 0 11]
+	} else {
+		set count 0
+	}
+	if {[llength $todo(2)]} {
+		incr count
+	}
+	foreach l1 $todo(1) l2 $todo(2) {
 		if {[llength $l2]} {
 			set oline2 [lrange $l2 10 end]
 			set cur2 [list_sub $oline2 $poss2]
@@ -131,45 +147,102 @@ proc svmulticompar_write {o id group poss2 dummy1 dummy2 {ddummy1 {}} {ddummy2 {
 			set oline1 [lrange $l1 10 end]
 		} else {
 			set oline1 $udummy1
-			set oline1 [lreplace $oline1 1 9 {*}$cur2]
+			set oline1 [lreplace $oline1 2 10 {*}$cur2]
 		}
 		lset oline1 0 $id
+		lset oline1 1 $count
 		puts $o [join [list_concat $oline1 $oline2] \t]
 	}
 }
 
+#proc svmulticompar_getlist {f1 poss1 len1 line1Var f2 poss2 len2 line2Var} {
+#	upvar $line1Var line1
+#	upvar $line2Var line2
+#	set list {}
+#	set compar [svmulticompar_compar $line1 $line2]
+#	if {$compar >= 0} {
+#		set listchr [lindex $line1 1]	
+#		set liststart [lindex $line1 2]
+#		set listend [lindex $line1 9]
+#	} elseif {$compar < 0} {
+#		set listchr [lindex $line2 1]	
+#		set liststart [lindex $line2 2]
+#		set listend [lindex $line2 9]
+#	}
+#	while {![eof $f1] || ![eof $f2]} {
+#		set match 0
+#		if {[llength $line1]} {
+#			set listchr1 [lindex $line1 1]
+#			set liststart1 [lindex $line1 2]
+#			if {($listchr1 == $listchr) && ($liststart1 < $listend)} {
+#				lappend list $line1
+#				if {[lindex $line1 9] > $listend} {
+#					set listend [lindex $line1 9]
+#				}
+#				set line1 [svmulticompar_getline $f1 $poss1 1]
+#				set match 1
+#			}
+#		}
+#		if {[llength $line2]} {
+#			set listchr2 [lindex $line2 1]
+#			set liststart2 [lindex $line2 2]
+#			if {($listchr2 == $listchr) && ($liststart2 < $listend)} {
+#				lappend list $line2
+#				if {[lindex $line1 9] > $listend} {
+#					set listend [lindex $line2 9]
+#				}
+#				set line2 [svmulticompar_getline $f2 $poss2 2]
+#				set match 2
+#			}
+#		}
+#		if {!$match} break
+#	}
+#	return $list
+#}
+
 proc svmulticompar_getlist {f1 poss1 len1 line1Var f2 poss2 len2 line2Var} {
+	# lines have the following format: {src chr1 start1 end1 type size zyg chr2 start2 end2}
+# puts [join [list_subindex [list $line1 $line2] {0 1 2 3 4 5}] \n]
 	upvar $line1Var line1
 	upvar $line2Var line2
+	set start1pos 2
+	set end1pos 3
 	set list {}
 	set compar [svmulticompar_compar $line1 $line2]
 	if {$compar >= 0} {
 		set listchr [lindex $line1 1]	
-		set liststart [lindex $line1 2]
-		set listend [lindex $line1 9]
+		set liststart [lindex $line1 $start1pos]
+		set listend [expr {[lindex $line1 $end1pos]+20}]
 	} elseif {$compar < 0} {
 		set listchr [lindex $line2 1]	
-		set liststart [lindex $line2 2]
-		set listend [lindex $line2 9]
+		set liststart [lindex $line2 $start1pos]
+		set listend [expr {[lindex $line2 $end1pos]+20}]
 	}
 	while {![eof $f1] || ![eof $f2]} {
 		set match 0
+#putsvars listchr liststart listend line1 line2
 		if {[llength $line1]} {
 			set listchr1 [lindex $line1 1]
-			set liststart1 [lindex $line1 2]
+			set liststart1 [lindex $line1 $start1pos]
 			if {($listchr1 == $listchr) && ($liststart1 < $listend)} {
 				lappend list $line1
-				set listend [lindex $line1 9]
+				set temp [expr {[lindex $line1 $end1pos]+20}]
+				if {$temp > $listend} {
+					set listend $temp
+				}
 				set line1 [svmulticompar_getline $f1 $poss1 1]
 				set match 1
 			}
 		}
 		if {[llength $line2]} {
 			set listchr2 [lindex $line2 1]
-			set liststart2 [lindex $line2 2]
+			set liststart2 [lindex $line2 $start1pos]
 			if {($listchr2 == $listchr) && ($liststart2 < $listend)} {
 				lappend list $line2
-				set listend [lindex $line2 9]
+				set temp [expr {[lindex $line2 $end1pos]+20}]
+				if {$temp > $listend} {
+					set listend $temp
+				}
 				set line2 [svmulticompar_getline $f2 $poss2 2]
 				set match 2
 			}
@@ -184,11 +257,12 @@ proc svmulticompar {svfile1 svfile2} {
 	set locfields {chr1 start1 end1 type size zyg chr2 start2 end2}
 	if {![file exists $svfile1]} {
 		set o [open $svfile1 w]
-		puts $o id\t[join $locfields \t]
+		puts $o id\tcount\t[join $locfields \t]
 		close $o
 	}
 
 	catch {close $f1}; catch {close $f2}; catch {close $o}; catch {file delete $tempfile2}
+#file copy -force comparsvcg.tsv.old comparsvcg.tsv
 	set o [open $svfile1.temp w]
 	#
 	# open compar file
@@ -203,7 +277,7 @@ proc svmulticompar {svfile1 svfile2} {
 	set name [file root [file tail $svfile2]]
 	set name [lindex [split $name -] end]
 	set tempfile2 [tempfile]
-	cg select -s "chr1 end1" < $svfile2 > $tempfile2
+	cg select -s "chr1 start1" < $svfile2 > $tempfile2
 	set f2 [open $tempfile2]
 	set header2 [split [gets $f2] \t]
 	set len2 [llength $header2]
@@ -217,17 +291,21 @@ proc svmulticompar {svfile1 svfile2} {
 	puts $o [join $header \t]
 	#
 	# go over files
+	set ::cchr {}
+	set ::cpos 0
 	set line1 [svmulticompar_getline $f1 $poss1 1]
 	set line2 [svmulticompar_getline $f2 $poss2 2]
-
 	set did 1
 	while {![eof $f1] || ![eof $f2]} {
 		set list [svmulticompar_getlist $f1 $poss1 $len1 line1 $f2 $poss2 $len2 line2]
+#puts ----
+#puts [join [list_subindex $list {0 1 2 3 4 5}] \n]
+#if {[lsearch [list_subindex $list 3] 67759423] != -1} {error STOPPED}
 #if {[lindex $list 0 4] eq "trans"} {error STOP}
 #puts [join $list \n]\n\n
 # join $list \n\n
 		if {[llength $list] == 1} {
-			svmulticompar_write $o $did $list $poss2 $dummy1 $dummy2
+			svmulticompar_write $o $did $list $poss2 $dummy1 $dummy2 $ddummy1 $ddummy2
 			incr did
 			continue
 		}
@@ -244,20 +322,21 @@ proc svmulticompar {svfile1 svfile2} {
 				lappend list $todo($type)
 				continue
 			}
-			set plists [svmulticompar_groupdists $todo($type)]
-			foreach plist $plists {
-				set clists [svmulticompar_groupdists $plist]
-				foreach clist $clists {
-					lappend list $clist
-				}
-			}
+			set plists [svmulticompar_groupdists $todo($type) $type]
+			lappend list {*}$plists
+#			foreach plist $plists {
+#				set plist [lsort -integer -index 3 $plist]
+#				set clists [svmulticompar_groupcompatible $plist]
+#				foreach clist $clists {
+#					lappend list $clist
+#				}
+#			}
 		}
 		foreach group $list {
+#puts [join [list_subindex $group {0 1 2 3 4 5}] \n]
 			svmulticompar_write $o $did $group $poss2 $dummy1 $dummy2 $ddummy1 $ddummy2
 			incr did
-		}		
-
-
+		}
 	}
 
 
@@ -267,7 +346,51 @@ proc svmulticompar {svfile1 svfile2} {
 	close $f2
 	file delete $tempfile2
 	file rename -force $svfile1 $svfile1.old
-	cg select -s {chr1 end1} $svfile1.temp $svfile1
+	cg select -s {chr1 start1} $svfile1.temp $svfile1
 	putslog "finished adding $name to $svfile1"
+
+}
+
+
+
+if 0 {
+	# convert old
+	set base GS103
+	cd /complgen/sv/$base
+	set file $base-sv.tsv
+	catch {close $o}; catch {close $f}
+	set o [open $file w]
+	set h {check chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum}
+	set h {check chr1 start1 end1 type size zyg problems chr2 start2 end2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum}
+	puts $o [join $h \t]
+	foreach chr {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X} {
+		set f [open $base-$chr-paired-sv.tsv]
+		gets $f
+		while {![eof $f]} {
+			set line [split [gets $f ] \t]
+			if {![llength $line]} continue
+			set type [lindex $line 4]
+			if {$type eq "trans"} {
+				set chr2 [lindex $line 8]
+				set start2 0
+				set end2 0
+			} elseif {$type eq "inv"} {
+				set chr2 [lindex $line 1]
+				set start2 [expr {[lindex $line 3]+abs([lindex $line 5])}]
+				set end2 [expr {$start2+abs([lindex $line 13])}]
+			} else {
+				set chr2 [lindex $line 1]
+				set start2 [expr {[lindex $line 3]+abs([lindex $line 8])}]
+				set end2 [expr {$start2+abs([lindex $line 13])}]
+			}
+			lset line 1 chr$chr
+			set line [lreplace $line 8 8 chr$chr2 $start2 $end2]
+			puts $o [join $line \t]
+		}
+		close $f
+	}
+	close $o
+	cg select -q {$type != "ins" && !($type == "del" && $size < 250)} $file msv-a$base.tsv
+	file rename msv-a$base.tsv /complgen/1.8/svcg/msv-a$base.tsv
 
 }

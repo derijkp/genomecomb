@@ -44,16 +44,19 @@ proc map2sv {files prefix} {
 		}
 		exec touch ${prefix}_map2sv_distr_FINISHED
 	}
-	set files [glob $prefix-*]
-	foreach file $files {
-		file mkdir [file dir $file]/tmp
-		if {[file extension $file] eq ".tsv"} continue
-		puts $file
-		set f [open ${file}-paired.tsv w]
-		puts $f [join {chr1 bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
-		close $f
-		exec gnusort8 -t \t -n -s -k5 -T [file dir $file]/tmp $file >> ${file}-paired.tsv
-		file delete $file
+	if {![file exists ${prefix}_map2sv_sort_FINISHED]} {
+		set files [glob $prefix-*]
+		foreach file $files {
+			file mkdir [file dir $file]/tmp
+			if {[file extension $file] eq ".tsv"} continue
+			if {[file extension $file] eq ".rz"} continue
+			puts $file
+			set f [open ${file}-paired.tsv w]
+			puts $f [join {chr1 bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
+			close $f
+			exec gnusort8 -t \t -n -s -k5 -T [file dir $file]/tmp $file >> ${file}-paired.tsv
+			file delete $file
+		}
 	}
 	exec touch ${prefix}_map2sv_sort_FINISHED
 }
@@ -97,7 +100,7 @@ proc sv2db {files} {
 proc svinfo {pairfile} {
 	puts "svinfo on file $pairfile"
 	svhisto $pairfile
-	set list [list_remove [split [file_read [file root $pairfile].disthisto] \n] {}]
+	set list [list_remove [split [file_read [file root [rzroot $pairfile]].disthisto] \n] {}]
 	list_shift list
 	list_pop list
 	set total [lmath_sum [list_subindex $list 1]]
@@ -118,12 +121,13 @@ proc svinfo {pairfile} {
 		incr num [get a($min) 0]
 		incr num [get a($max) 0]
 	}
-	set o [open [rzroot $pairfile].numinfo w]
+	set o [open [rzroot $pairfile].numinfo.temp w]
 	puts $o key\tvalue
 	puts $o mode\t$mode
 	puts $o min\t$min
 	puts $o max\t$max
 	close $o
+	file rename [rzroot $pairfile].numinfo.temp [rzroot $pairfile].numinfo
 	putslog "finished $pairfile.numinfo"
 }
 
@@ -1752,3 +1756,4 @@ proc svfind {pairfile trffile} {
 	putslog "finished $outfile"
 
 }
+

@@ -332,7 +332,7 @@ proc process_indexcompress {file} {
 	if {([gets $f] eq "") && [eof $f]} return
 	close $f
 	if {![file exists $file.${field}_index]} {
-		tsv_index $file $field
+		tsv_index $field $file
 	}
 	putslog "Compressing $file"
 	exec razip -c $file > $file.rz.temp

@@ -252,7 +252,7 @@ graphwidget method open {file settingsVar} {
 		set indexed 1
 		set index ::$object.$vnum.i
 		if {![file exists $indexname]} {
-			tsv_index $file $graphd(xfield)
+			tsv_index $graphd(xfield) $file
 		}
 		# read index
 		set o [open $indexname]

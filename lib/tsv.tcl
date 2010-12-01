@@ -329,7 +329,7 @@ proc tsv_nextline {f xpos next {shift 100000}} {
 	return $line
 }
 
-proc tsv_index {file xfield} {
+proc tsv_index {xfield file} {
 	if {[inlist {.rz} [file extension $file]]} {
 		set indexname [file root $file].${xfield}_index
 		set tempfile [tempfile]
@@ -375,13 +375,14 @@ proc tsv_index {file xfield} {
 		set xmax [lindex $line $xpos]
 	}
 	close $f
-	set o [open $indexname w]
+	set o [open $indexname.temp w]
 	puts $o 10000
 	puts $o $findex
 	puts $o $xmin
 	puts $o $xmax
 	puts $o [join $index \n]
 	close $o
+	file rename $indexname.temp $indexname
 }
 
 proc tsv_index_header {file} {
@@ -414,7 +415,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 	}
 	set indexname $root.${field}_index
 	if {![file exists $indexname]} {
-		tsv_index $workfile $field
+		tsv_index $field $workfile
 	}
 	set o [open $indexname]
 	set cache(tsv_index,$file,$field,step) [gets $o]
