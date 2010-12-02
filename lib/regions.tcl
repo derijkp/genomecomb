@@ -55,7 +55,12 @@ proc refconsregions {varfile} {
 
 proc nocallregions {varfile outfile} {
 	putslog "getting partial no-call regions from $varfile"
-	cg select -q {$varType == "no-call" && $allele != "all"} $varfile nctemp.tsv
+	set h [cg select -h $varfile]
+	if {[inlist $h allele]} {
+		cg select -q {$varType == "no-call" && $allele != "all"} $varfile nctemp.tsv
+	} else {
+		cg select -q {$varType == "no-call" && $haplotype != "all"} $varfile nctemp.tsv
+	}
 	cg regjoin nctemp.tsv > $outfile
 	file delete nctemp.tsv
 }

@@ -14,9 +14,12 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	set name [file tail $destdir]
 	set chromosomes {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
 	puts stderr "Processing sample $dir"
-	set varfile [lindex [glob $dir/ASM/var-*-ASM*.tsv*] 0]
-	set genefile [lindex [glob $dir/ASM/gene-*-ASM*.tsv*] 0]
-	set regfile [lindex [glob -nocomplain $dir/ASM/reg-*-ASM*.tsv*] 0]
+	set varfile [glob $dir/ASM/var-*-ASM*.tsv*]
+	if {[llength $varfile] != 1} {error "could not identify varfile"}
+	set genefile [list_lremove [glob $dir/ASM/gene-*-ASM*.tsv*] [glob $dir/ASM/gene-var-summary-*-ASM*.tsv*]]
+	if {[llength $genefile] != 1} {error "could not identify genefile"}
+	set regfile [glob -nocomplain $dir/ASM/reg-*-ASM*.tsv*]
+	if {[llength $varfile] > 1} {error "could not identify varfile"}
 	set f [rzopen $varfile]
 	set info {}
 	while {![eof $f]} {
@@ -41,7 +44,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	}
 	if {$force || ![file exists sgene-$name.tsv]} {
 		puts stderr "Sort gene file ($genefile)"
-		cg select -s "chromosome begin end varType" $genefile temp.tsv
+		cg select -s "chromosome begin end" $genefile temp.tsv
 		file rename -force temp.tsv sgene-$name.tsv
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {

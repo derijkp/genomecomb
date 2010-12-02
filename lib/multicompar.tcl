@@ -40,7 +40,7 @@ proc multicompar {compar_file dir} {
 
 	catch {close $f1}; catch {close $f2}; catch {close $o}
 	set comparfields {chromosome begin end type}
-	set posiblemergefields {reference xRef trf str segdup selfchain repeat rna checked geneId mrnaAcc proteinAcc symbol orientation component componentIndex exonCategory exon codingRegionKnown impact aaCategory nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence aaAnnot aaCall aaRef effect neffect}
+	set nonmergefields {chromosome begin end type locus alleleSeq1 alleleSeq2 totalScore1 totalScore2 refscore coverage refcons nocall cluster}
 	set allelefields {alleleSeq1 alleleSeq2}
 	#
 	set name [file tail $dir]
@@ -66,7 +66,7 @@ proc multicompar {compar_file dir} {
 		puts stderr "header error in fannot_varfile2 $compar_file"
 		exit 1
 	}
-	set mergefields [list_common $header2 $posiblemergefields]
+	set mergefields [list_lremove $header2 $nonmergefields]
 	set mergeposs1 [list_cor $header1 $mergefields]
 	set mergeposs2 [list_cor $header2 $mergefields]
 	set dummy2 [list_fill [llength $header2] ?]

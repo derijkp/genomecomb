@@ -309,6 +309,10 @@ proc var2annotvar {file genefile outfile} {
 	if {$header1 eq "locus haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef"} {
 		set cgv1 1.4
 		set cache(cor1) {}
+	} elseif {$header1 eq "locus ploidy haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef"} {
+		set cgv1 1.7
+		set cache(cor1) {0 2 3 4 5 6 7 8 9 10 11}
+		set cache($f1) [list_sub $cache($f1) $cache(cor1)]
 	} elseif {$header1 eq "locus ploidy allele chromosome begin end varType reference alleleSeq totalScore hapLink xRef"} {
 		set cgv1 1.8
 		set cache(cor1) {0 2 3 4 5 6 7 8 9 10 11}
@@ -318,10 +322,16 @@ proc var2annotvar {file genefile outfile} {
 	}
 	set g [opencgifile $genefile header]
 	set header2 [split $header \t]
-	if {$header2 eq    "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
+	set remheader2 {}
+	if {$header2 eq "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
 		set cgv2 1.4
+	} elseif {$header2 eq "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
+		set cgv2 1.7
 	} elseif {$header2 eq "index locus allele chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex codingRegionKnown impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence"} {
 		set cgv2 1.8
+		set remheader2 [lrange $header2 10 end]
+	} elseif {$header2 eq "index locus allele chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam"} {
+		set cgv2 1.9
 		set remheader2 [lrange $header2 10 end]
 	} else {
 		error "header error in $genefile"
