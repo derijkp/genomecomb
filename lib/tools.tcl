@@ -232,10 +232,11 @@ proc chrindexseek {file f chr} {
 	}
 	set trfchrpos [split [string trim [file_read $indexfile]] \n\t]
 	if {[dict exists $trfchrpos chr$chr]} {
-		set fpos [dict get $trfchrpos chr$chr]
-		seek $f $fpos start
+		set chr chr$chr
+	}
+	if {[catch {set fpos [dict get $trfchrpos $chr]}]} {
+		seek $f 0 end
 	} else {
-		set fpos [dict get $trfchrpos $chr]
 		seek $f $fpos start
 	}
 }
