@@ -72,6 +72,16 @@ proc tsv_select_un {header ids} {
 	set temp "(([join $temp2 " || "]) && ([join $temp1 " || " ]))"
 }
 
+proc tsv_select_count {header ids} {
+	set test [list_pop ids]
+	set temp {}
+	foreach id $ids {
+		lappend temp "($id $test)"
+	}
+	return "([join $temp " + "])"
+}
+# cg select -q 'count($alleleSeq1,$alleleSeq2, == "G") == 1' annotvar.tsv
+
 proc tsv_select_expandfields {header qfields qpossVar} {
 	upvar $qpossVar qposs
 	if {[string first * $qfields] != -1} {
@@ -109,13 +119,23 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 		set sort "gnusort8 -t \\t -V -s -k[join $keys " -k"]"
 	}
 	if {($query ne "") || ($qfields ne "")} {
-		set awk {BEGIN {FS="\t" ; OFS="\t"} }
+		set awk {BEGIN {FS="\t" ; OFS="\t" ;}}
 		if {$query ne ""} {
-			set indices [list_unmerge [regexp -all -indices -inline {[$]([a-zA-z0-9_(),-]+)} $query]]
+			set indices [list_unmerge [regexp -all -indices -inline {[$]([a-zA-z0-9_-]+)} $query]]
 			set indices [list_reverse $indices]
 			list_foreach {start end} $indices {
 				set field [string range $query [expr {$start+1}] $end]
-				if {[regexp {^(.*)\((.*)\)$} $field temp func args]} {
+				set pos [lsearch $header $field]
+				if {$pos == -1} {error "field \"$field\" not present"}
+				incr pos
+				set query [string_replace $query $start $end \$$pos]
+			}
+
+			set indices [list_unmerge [regexp -all -indices -inline {([a-zA-z0-9_]+)\([^)]+\)} $query]]
+			set indices [list_reverse $indices]
+			list_foreach {start end} $indices {
+				set full [string range $query [expr {$start}] $end]
+				if {[regexp {^(.*)\((.*)\)$} $full temp func args]} {
 					switch $func {
 						sm {
 							set ids [split $args ,]
@@ -137,8 +157,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 							set ids [split $args ,]
 							set temp [tsv_select_un $header $ids]
 						}
-						default {
-							error "Unkown function $func"
+						count {
+							set ids [split $args ,]
+							set temp [tsv_select_count $header $ids]
 						}
 					}
 					set query [string_replace $query $start $end $temp]
@@ -166,6 +187,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	if {$sort ne ""} {
 		lappend pipe $sort
 	}
+	# puts stderr ----------\n$awk\n----------
 	if {$awk ne ""} {
 		lappend pipe [list awk $awk]
 	}
@@ -195,6 +217,10 @@ if 0 {
 	package require Tclx
 	signal -restart error SIGINT
 	package require Extral
+	cg select -h /complgen/multicompar/compar.tsv
+	cg select -q 'same(GS102,GS103)' -f 'chromosome begin end reference type alleleSeq1-GS102 alleleSeq2-GS102 alleleSeq1-GS103 alleleSeq2-GS103' /complgen/multicompar/compar.tsv | less
+	cg select -q 'count($coverage-GS102,$coverage-GS103,>20) == 2' -f 'chromosome begin end reference type alleleSeq1-GS102 alleleSeq2-GS102 alleleSeq1-GS103 alleleSeq2-GS103' /complgen/multicompar/compar.tsv | less
+
 	set f [open GS102/ASM/var-GS000000078-ASM.tsv]
 	set query "\$begin < 2000"
 	set qfields "chromosome begin end"
