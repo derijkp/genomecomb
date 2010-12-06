@@ -25,24 +25,16 @@ puts "Preparing input...."
 set outpath [file dirname [lindex $argv 0]]/temp_[file tail [file rootname [lindex $argv 0]]]
 set path [lindex $argv 2]
 
-set tmp [tempfile get]
-if {[catch "exec ./prepareInput.tcl [lindex $argv 0] $tmp" errmsg]} {
-	puts "could not execute prepareInput.tcl - $errmsg"
-	exit 1
-}
-
-
-if {[catch {exec cg select -h $tmp} headers]} {
-	puts "error getting header from $tmp - $headers"
+if {[catch {exec cg select -h [lindex $argv 0]} headers]} {
+	puts "error getting header from [lindex $argv 0] - $headers"
 	exit 1	
 }
 
-
-set column 0
+set column 1
 foreach head $headers {
 	switch -glob $head {
-		*chr* {set input_chrom_column $column}
-		*CHR* {set input_chrom_column $column }
+		chr* {set input_chrom_column $column}
+		CHR* {set input_chrom_column $column }
 		*begin* {set input_begin_column $column}
 		*end* {set input_end_column $column}
 	
@@ -50,6 +42,12 @@ foreach head $headers {
 	incr column
 }
 
+set tmp [tempfile get]
+if {[catch "exec ./prepareInput.tcl [lindex $argv 0] $tmp $input_chrom_column $input_begin_column $input_end_column" errmsg]} {
+	puts "could not execute prepareInput.tcl - $errmsg"
+	exit 1
+}
+# you get a file with header 'chromosome begin end'
 
 set i 3
 set input_c ""
@@ -96,14 +94,14 @@ if {![file isdirectory $outpath]} {
 	file mkdir "$outpath"
 	set k 100
 }
-exec $path/bin/reg_analyze $outpath/ $tmp $input_chrom_column $input_begin_column $input_end_column  {*}$input_c >& [file dirname [lindex $argv 0]]/log_Aregio.txt
+exec $path/bin/reg_analyze $outpath/ $tmp 0 1 2  {*}$input_c >& [file dirname [lindex $argv 0]]/log_Aregio.txt
 
 puts "Done running reg_analyze.c!"
 puts "Pasting the output files together to one annotation file....."
 	
 
 # Paste all files in directory /temp/
-if {[catch {exec paste [lindex $argv 0]  [glob -nocomplain -directory $outpath *.tsv]	> [lindex $argv 1] } errmsg]} {
+if {[catch {exec paste [lindex $argv 0]  {*}[glob -nocomplain -directory $outpath *.tsv]	> [lindex $argv 1] } errmsg]} {
 	puts "Something went wrong while creating output file - $errmsg"
 }
 

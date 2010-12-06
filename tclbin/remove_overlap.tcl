@@ -25,6 +25,9 @@ if {[llength $argv] < 2} {
 set path [lindex $argv 0]
 set build [lindex $argv 1]
 set contents [glob -nocomplain -directory ${path}/Databases/${build} *.tsv]
+if {![file isdirectory ${path}/Databases/${build}_clean]} {
+	file mkdir "${path}/Databases/${build}_clean"
+}
 foreach file $contents {
 
 	puts "Sorting $file ....."
