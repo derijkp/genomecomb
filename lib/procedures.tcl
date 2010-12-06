@@ -16,7 +16,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	puts stderr "Processing sample $dir"
 	set varfile [glob $dir/ASM/var-*-ASM*.tsv*]
 	if {[llength $varfile] != 1} {error "could not identify varfile"}
-	set genefile [list_lremove [glob $dir/ASM/gene-*-ASM*.tsv*] [glob $dir/ASM/gene-var-summary-*-ASM*.tsv*]]
+	set genefile [list_lremove [glob $dir/ASM/gene-*-ASM*.tsv*] [glob -nocomplain $dir/ASM/gene-var-summary-*-ASM*.tsv*]]
 	if {[llength $genefile] != 1} {error "could not identify genefile"}
 	set regfile [glob -nocomplain $dir/ASM/reg-*-ASM*.tsv*]
 	if {[llength $varfile] > 1} {error "could not identify varfile"}
