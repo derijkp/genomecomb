@@ -8,7 +8,7 @@ package require Extral
 ##############################################################
 # 
 #  This is a script that sorts the input file on chromEnd,
-#  replaces resp. chrom X,Y,M with 23, 24, 25.
+#  replaces resp. chrom X,Y,M with 24, 25, 23.
 #  removes possible random chromosome regions
 #  and only selects the first few necessery columns
 #
@@ -17,7 +17,7 @@ package require Extral
 ##############################################################
 
 if {[llength $argv] < 2} {
-	puts "Format is: filename, output filename "
+	puts "Format is: filename, output filename, chromColumnNumber, BeginColumnNumber, EndColumnNumber "
 	exit 1
 }
 #[file rootname [lindex $argv 0]]_prepared.tsv
@@ -25,7 +25,7 @@ if {[llength $argv] < 2} {
 set temp [tempfile get]
 set temp2 [tempfile get]
 
-if {[catch "exec cut -f2-4 [lindex $argv 0] > $temp" errmsg]} {
+if {[catch "exec cut -f[lindex $argv 2],[lindex $argv 3],[lindex $argv 4] [lindex $argv 0] > $temp" errmsg]} {
 	puts "could not select first columns from inputfile - $errmsg"
 	return 1
 }
@@ -41,7 +41,7 @@ if {[catch "open $temp2 a+" fileid_temp]} {
 }
 
 set in [gets $fileid]
-set headers [split $in "\t"]
+set headers {chromosome begin end}
 puts $fileid_temp [join $headers \t]
 
 
@@ -53,13 +53,13 @@ while {![eof $fileid]} {
 	if {![regexp "_" [lindex $line 0]]} {
 		set char [regexp -inline -- {[0-9]+|X|Y|M} [lindex $line 0]]	
 		if {$char == "X"} {
-			set char 23
-		}
-		if {$char == "Y"} {
 			set char 24
 		}
-		if {$char == "M"} {
+		if {$char == "Y"} {
 			set char 25
+		}
+		if {$char == "M"} {
+			set char 23
 		}
 		set line [lreplace $line 0 0 $char]
 		puts $fileid_temp [join $line \t]

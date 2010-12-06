@@ -8,7 +8,7 @@ package require Extral
 ##############################################################
 # 
 #  This is a script that sorts a given database on chromEnd,
-#  replaces resp. chrom X,Y,M with 23, 24, 25.
+#  replaces resp. chrom X,Y,M with 24, 25, 23.
 #  and removes possible random chromosome regions
 #
 #  Written by Annelies Cassiers
@@ -25,6 +25,9 @@ if {[llength $argv] < 2} {
 set path [lindex $argv 0]
 set build [lindex $argv 1]
 set contents [glob -nocomplain -directory ${path}/Databases/s_${build} *.tsv]
+if {![file isdirectory ${path}/Databases/${build}_clean]} {
+	file mkdir "${path}/Databases/${build}_clean"
+}
 foreach file $contents {
 	
 	puts "Sorting $file......."
@@ -61,13 +64,13 @@ foreach file $contents {
 		if {![regexp "_" [lindex $line $chrom]]} {
 			set char [regexp -inline -- {[0-9]+|X|Y|M} [lindex $line $chrom]]	
 			if {$char == "X"} {
-				set char 23
-			}
-			if {$char == "Y"} {
 				set char 24
 			}
-			if {$char == "M"} {
+			if {$char == "Y"} {
 				set char 25
+			}
+			if {$char == "M"} {
+				set char 23
 			}
 			set line [lreplace $line $chrom $chrom $char]
 			puts $fileid_temp [join $line \t]
