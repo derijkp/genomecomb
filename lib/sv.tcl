@@ -147,7 +147,8 @@ proc svhisto {pairfile} {
  			incr a($dist)
 		}
 	}
-	unset a()
+	unset -nocmplain a()
+	unset -nocmplain a(-)
 	set f [open $out w]
 	puts $f "dist\tnumber"
 	set total 0
