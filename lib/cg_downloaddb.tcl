@@ -20,18 +20,18 @@ if 0 {
 	signal -restart error SIGINT
 	lappend auto_path /home/peter/dev/completegenomics/lib
 	package require Extral
-	cd /complgen/refseq/hg18test
-	set path /complgen/refseq/hg18test
+	cd /complgen/refseq/hg18
+	set path /complgen/refseq/hg18
 	set build hg18
 	set dbname tRNAs
 	set dbname simpleRepeat
 	set dbname rmsk
 	set dbname cytoBand
 
-cg downloaddb /complgen/refseq/hg18test hg18 simpleRepeat microsat rmsk genomicSuperDups chainSelf
-cg downloaddb /complgen/refseq/hg18test hg18 omimGene phastConsElements44way oreganno rnaGene tRNAs tfbsConsSites targetScanS evofold
-cg downloaddb /complgen/refseq/hg18test hg18 cytoBand dgv gwasCatalog phastConsElements28wayPlacMammal phastConsElements28way snp130 wgRna
-cg downloaddb /complgen/refseq/hg18test hg18 mirbase
+cg downloaddb /complgen/refseq/hg18 hg18 simpleRepeat microsat rmsk genomicSuperDups chainSelf
+cg downloaddb /complgen/refseq/hg18 hg18 omimGene phastConsElements44way oreganno rnaGene tRNAs tfbsConsSites targetScanS evofold
+cg downloaddb /complgen/refseq/hg18 hg18 cytoBand dgv gwasCatalog phastConsElements28wayPlacMammal phastConsElements28way snp130 wgRna
+cg downloaddb /complgen/refseq/hg18 hg18 mirbase
 
 }
 
@@ -228,6 +228,8 @@ proc cg_downloaddb {args} {
 	foreach dbname $dbnames {
 		if {$dbname eq "mirbase"} {
 			downloaddb_mirbase $path $build
+		} elseif {$dbname eq "1000g"} {
+			downloaddb_1000g $path $build
 		} else {
 			downloaddb $path $build $dbname
 		}
