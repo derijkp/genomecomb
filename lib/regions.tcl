@@ -10,6 +10,7 @@ proc open_region {f {headerVar {}}} {
 	}
 	set tests {
 		{chromosome begin end}
+		{chrom start end}
 		{chrom chromStart chromEnd}
 		{genoName genoStart genoEnd}
 		{genoName genoStart genoEnd}
