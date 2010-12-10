@@ -20,7 +20,7 @@ proc downloaddb_1000g {path build} {
 	set tempdir $path/tmp/$build
 	set populations {CEU CHB+JPT YRI}
 	foreach pop $populations {
-		set resultfile $path/1000g_$pop.tsv
+		set resultfile $path/reg_${build}_1000g$pop.tsv
 		if {[file exists $resultfile]} {
 			puts "$resultfile exists: skipping"
 			continue
@@ -37,7 +37,7 @@ proc downloaddb_1000g {path build} {
 		puts "Changing format"
 		catch {close $f} ; catch {close $o}
 		set f [rzopen $tempdir/$pop.SRP000031.2010_03.sites.vcf.gz]
-		set o [open $tempdir/1000g_$pop.tsv w]
+		set o [open $tempdir/reg_${build}_1000g$pop.tsv w]
 		while {![eof $f]} {
 			set line [gets $f]
 			if {[string index $line 0] ne "#"} break
@@ -63,7 +63,7 @@ proc downloaddb_1000g {path build} {
 		close $o
 		close $f
 		puts "Sorting $resultfile"
-		cg select -s {chrom start end} $tempdir/1000g_$pop.tsv $resultfile.temp
+		cg select -s {chrom start end} $tempdir/reg_${build}_1000g$pop.tsv $resultfile.temp
 		file rename $resultfile.temp $resultfile
 	}
 }
