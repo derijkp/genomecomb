@@ -42,6 +42,7 @@ proc joinvarlines list {
 
 proc var2annotvar_readonevar f {
 	global cache list
+	# join $cache($f,rov) \n
 	if {[info exists cache($f,rov)]} {
 		set line1 [list_shift cache($f,rov)]
 		set line2 [list_shift cache($f,rov)]
@@ -82,7 +83,7 @@ proc var2annotvar_readonevar f {
 							foreach {begin end} [lrange $templine 3 4] break
 							foreach {b1 e1} $comp1 break
 							set overlap [overlap $b1 $e1 $begin $end]
-							if {$overlap} {
+							if {$overlap > 0} {
 								set line2 $templine
 								break
 							}
