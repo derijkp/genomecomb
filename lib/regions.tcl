@@ -17,6 +17,7 @@ proc open_region {f {headerVar {}}} {
 		{tName tStart tEnd}
 		{chr begin end}
 		{chromosome start end}
+		{chrom txStart txEnd}
 	}
 	foreach test $tests {
 		set poss2 [list_cor $header $test]

@@ -187,6 +187,7 @@ proc downloaddb {path build dbname} {
 	set header [list_change $header {
 		chromStart start chromEnd end
 		genoName chrom genoStart start genoEnd end
+		txStart start txEnd end
 		tName chrom tStart start tEnd end
 		repName name swScore score
 	}]
