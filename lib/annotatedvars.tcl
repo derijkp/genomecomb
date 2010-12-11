@@ -345,13 +345,13 @@ proc var2annotvar {file genefile outfile} {
 	set curgene [readgeneset $g]
 	set gchr [lindex $curgene 0 3]
 	set gbegin [lindex $curgene 0 4]
-	set num 0
 	set empty [list_fill [llength $remheader2] {}]
+	set next 100000; set num 0
 	while {![eof $f1]} {
 		set fchr [lindex $cur 1]
 		set fbegin [lindex $cur 2]
 		incr num
-		if {![expr {$num%100000}]} {putslog $num}
+		if {$num >= $next} {putslog $num; incr next 100000}
 		while {![eof $g]} {
 			set chrcomp [chrcomp $gchr $fchr]
 			if {$chrcomp > 0} break
@@ -371,7 +371,28 @@ proc var2annotvar {file genefile outfile} {
 				}
 			}
 		}
-		puts $o [join $cur \t]\t[join $annot \t]
+		if {[lindex $cur 4] eq "sub" && [string length [lindex $cur 5]] <= 3} {
+			foreach {bin chr start end type ref a1 a2 s1 s2 info} $cur break
+			set len [string length $ref]
+			if {$a1 eq "?"} {
+				set a1 [string_fill ? $len]
+			}
+			if {$a2 eq "?"} {
+				set a2 [string_fill ? $len]
+			}
+			if {[string length $a1] != $len ||[string length $a2] != $len} {
+				puts $o [join $cur \t]\t[join $annot \t]
+			} else {
+				string_foreach r $ref e1 $a1 e2 $a2 {
+					if {$r ne $e1 || $r ne $e2} {
+						puts $o [join [list $bin $chr $start [expr {$start+1}] snp $r $e1 $e2 $s1 $s2 $info] \t]\t[join $annot \t]
+					}
+					incr start
+				}
+			}
+		} else {
+			puts $o [join $cur \t]\t[join $annot \t]
+		}
 		set cur [var2annotvar_readonevar $f1]
 	}
 
@@ -404,5 +425,12 @@ signal -restart error SIGINT
 	set file GS103/svar-GS103.tsv
 	set genefile GS103/sgene-GS103.tsv
 	set outfile GS103/annotvar-GS103.tsv
+	var2annotvar $file $genefile $outfile
+
+	cd /home/complgen/projects/dlb1/dlb_d_d388
+	set file svar-dlb_d_d388.tsv
+	set genefile sgene-dlb_d_d388.tsv
+	set outfile annotvar-dlb_d_d388.tsv
+
 	var2annotvar $file $genefile $outfile
 }
