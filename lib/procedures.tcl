@@ -13,42 +13,41 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	cd $destdir
 	set name [file tail $destdir]
 	set chromosomes {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
-	puts stderr "Processing sample $dir"
-	set varfile [glob $dir/ASM/var-*-ASM*.tsv*]
-	if {[llength $varfile] != 1} {error "could not identify varfile"}
-	set genefile [list_lremove [glob $dir/ASM/gene-*-ASM*.tsv*] [glob -nocomplain $dir/ASM/gene-var-summary-*-ASM*.tsv*]]
-	if {[llength $genefile] != 1} {error "could not identify genefile"}
-	set regfile [glob -nocomplain $dir/ASM/reg-*-ASM*.tsv*]
-	if {[llength $varfile] > 1} {error "could not identify varfile"}
-	set f [rzopen $varfile]
-	set info {}
-	while {![eof $f]} {
-		set line [gets $f]
-		if {[string index $line 0] ne "#"} break
-		lappend info $line
-	}
-	catch {close $f}
-	if {[file exists $destdir/info.txt]} {
-		set test [split [file_read $destdir/info.txt] \n]
-		if {$info ne $test} {
-			error "$destdir already has info.txt that differs from data in the source $dir"
-		}
-	}
-	file_write $destdir/info.txt [join $info \n]
-	
+	puts stderr "Processing sample $dir -> $destdir"
 	# sort files
-	if {$force || ![file exists svar-$name.tsv]} {
+	if {$force || ![file exists svar-$name.tsv] || ![file exists $destdir/info.txt]} {
+		set varfile [glob $dir/ASM/var-*-ASM*.tsv*]
+		if {[llength $varfile] != 1} {error "could not identify varfile"}
+		if {[llength $varfile] > 1} {error "could not identify varfile"}
+		set f [rzopen $varfile]
+		set info {}
+		while {![eof $f]} {
+			set line [gets $f]
+			if {[string index $line 0] ne "#"} break
+			lappend info $line
+		}
+		catch {close $f}
+		if {[file exists $destdir/info.txt]} {
+			set test [split [file_read $destdir/info.txt] \n]
+			if {$info ne $test} {
+				error "$destdir already has info.txt that differs from data in the source $dir"
+			}
+		}
+		file_write $destdir/info.txt [join $info \n]
 		puts stderr "Sort var file ($varfile)"
 		cg select -s "chromosome begin end varType" $varfile temp.tsv
 		file rename -force temp.tsv svar-$name.tsv
 	}
 	if {$force || ![file exists sgene-$name.tsv]} {
+		set genefile [list_lremove [glob $dir/ASM/gene-*-ASM*.tsv*] [glob -nocomplain $dir/ASM/gene-var-summary-*-ASM*.tsv*]]
+		if {[llength $genefile] != 1} {error "could not identify genefile"}
 		puts stderr "Sort gene file ($genefile)"
 		cg select -s "chromosome begin end" $genefile temp.tsv
 		file rename -force temp.tsv sgene-$name.tsv
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {
 		puts stderr "Sort region file ($regfile)"
+		set regfile [glob -nocomplain $dir/ASM/reg-*-ASM*.tsv*]
 		if {[file exists $regfile]} {
 			cg select -s "chromosome begin end" $regfile temp.tsv
 			file rename -force temp.tsv sreg-$name.tsv
@@ -439,10 +438,13 @@ if 0 {
 	signal -restart error SIGINT
 	package require Extral
 
+78638
+
 	set dbdir /complgen/refseq
-	set basedir /complgen
-	set dir $basedir/GS00227-DNA_D01
-	set destdir $basedir/d388
+	set basedir /complgen/projects/dlb1
+	set dir $basedir/NNN
+	set destdir $basedir/dlb_d_d388
+	set force 0
 
 	set dir1 $basedir/GS102
 	set dir2 $basedir/GS103
