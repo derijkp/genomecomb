@@ -92,7 +92,7 @@ proc var2annotvar_readonevar f {
 							# only change things in line2 that are actually used
 							set vartype [lindex $line2 5]
 							if {($vartype eq "del") || ($vartype eq "delins")} {
-								lset line2 7 -
+								lset line2 7 {}
 							} elseif {($vartype eq "=") || ([inlist {ref-consistent no-call-rc} $vartype])} {
 								lset line2 7 $reference
 							} elseif {[inlist {ref-inconsistent no-call-ri} $vartype]} {
@@ -134,6 +134,8 @@ proc var2annotvar_readonevar f {
 			set temp $alleleSeq ; set alleleSeq $alleleSeq2 ; set alleleSeq2 $temp
 			set temp $totalScore ; set totalScore $totalScore2 ; set totalScore2 $temp
 		}
+		if {$alleleSeq eq "?"} {set alleleSeq -}
+		if {$alleleSeq2 eq "?"} {set alleleSeq2 -}
 		set result [list $locus $chromosome $begin $end [join $type _] $reference $alleleSeq $alleleSeq2 $totalScore $totalScore2 $xRef]
 		return $result
 	} else {
