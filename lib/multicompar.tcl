@@ -1,5 +1,5 @@
 proc multicompar_annot_join {cur1 cur2} {
-	global comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2
+	global comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 allelepos2
 	global compare_annot_join_trans
 	if {[inlist {{} -} $cur1]} {
 		set region [list_sub $cur2 $comparposs2]
@@ -27,7 +27,27 @@ proc multicompar_annot_join {cur1 cur2} {
 		}
 		set sequenced v
 	}
+	if {$refpos1 == -1} {
+		if {$refpos2 == -1} {
+			set ref ?
+		} else {
+			set ref [lindex $cur2 $refpos2]
+		}
+	} else {
+		set ref [lindex $cur1 $refpos1]
+		if {$ref eq "?"} {
+			if {$refpos2 != -1} {set ref [lindex $cur2 $refpos2]}
+		}
+	}
+	set alt [split [lindex $cur1 $altpos1] ,]
+	if {($altpos1 != -1) && ![llength $alt]} {set alt {{}}}
+	lappend alt {*}[list_sub $cur2 $allelepos2]
+	set alt [list_remdup $alt]
+	set alt [list_remove $alt $ref ? - N]
+	if {[llength $alt] > 1} {set alt [list_remove $alt N]}
 	set result $region
+	lappend result $ref
+	lappend result [join $alt ,]
 	lappend result {*}[list_sub $cur1 $restposs1]
 	lappend result {*}[list_sub $cur2 $restposs2]
 	lappend result $sequenced
@@ -36,11 +56,11 @@ proc multicompar_annot_join {cur1 cur2} {
 }
 
 proc multicompar {compar_file dir} {
-	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2
+	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 allelepos2
 
 	catch {close $f1}; catch {close $f2}; catch {close $o}
 	set comparfields {chromosome begin end type}
-	set nonmergefields {chromosome begin end type locus alleleSeq1 alleleSeq2 totalScore1 totalScore2 refscore coverage refcons nocall cluster}
+	set nonmergefields {chromosome begin end type alt ref reference alt locus alleleSeq1 alleleSeq2 totalScore1 totalScore2 refscore coverage refcons nocall cluster}
 	set allelefields {alleleSeq1 alleleSeq2}
 	#
 	set name [file tail $dir]
@@ -69,29 +89,37 @@ proc multicompar {compar_file dir} {
 	set mergefields [list_lremove $header2 $nonmergefields]
 	set mergeposs1 [list_cor $header1 $mergefields]
 	set mergeposs2 [list_cor $header2 $mergefields]
+	set refpos1 [lsearch $header1 reference]
+	if {$refpos1 == -1} {set refpos1 [lsearch $header1 ref]}
+	set refpos2 [lsearch $header2 reference]
+	if {$refpos2 == -1} {set refpos2 [lsearch $header2 ref]}
 	set dummy2 [list_fill [llength $header2] ?]
-	# start
-	set o [open $compar_file.temp w]
+	set altpos1 [lsearch $header1 alt]
+	set allelepos2 [list_cor $header2 {alleleSeq1 alleleSeq2}]
 	# make output header
 	set restfields1 [list_lremove [list_lremove $header1 $mergefields] $comparfields]
+	set restfields1 [list_remove $restfields1 ref reference alt]
 	set restposs1 [list_cor $header1 $restfields1]
-	set oheader [list_concat $comparfields $restfields1]
+	set oheader [list_concat $comparfields ref alt $restfields1]
 	set restfields2 [list_lremove [list_lremove $header2 $mergefields] $comparfields]
+	set restfields2 [list_remove $restfields2 ref reference alt]
 	set restposs2 [list_cor $header2 $restfields2]
 	foreach field $restfields2 {
 		lappend oheader ${field}-$name
 	}
 	lappend oheader sequenced-$name
 	set oheader [list_concat $oheader $mergefields]
+	# start
+	set o [open $compar_file.temp w]
 	puts $o [join $oheader \t]
 	set cur1 [split [gets $f1] \t]
 	set comp1 [list_sub $cur1 $comparposs1]
 	set cur2 [split [gets $f2] \t]
 	set comp2 [list_sub $cur2 $comparposs2]
-	set num 1
+	set num 1; set next 100000
 	while {![eof $f1] || ![eof $f2]} {
 		incr num
-		if {![expr {$num % 100000}]} {putslog $num}
+		if {$num > $next} {putslog $num ; incr next 100000}
 		set d [comparepos $comp1 $comp2]
 		if {$d == 0} {
 			puts $o [multicompar_annot_join $cur1 $cur2]
@@ -121,6 +149,7 @@ proc multicompar {compar_file dir} {
 			}
 		}
 	}
+
 	close $f1; close $f2; close $o
 	catch {file rename -force $compar_file $compar_file.old}
 	file rename $compar_file.temp $compar_file
@@ -286,8 +315,11 @@ if 0 {
 	package require Extral
 	package require Tclx
 	signal -restart error SIGINT
-set compar_file ftld_compar-ftld_e_d5945-ftld_f_d6846-ftld_g_d6843.tsv
-set dir ftld_e_d5945
+
+cd /complgen/projects/dlb1
+set compar_file tempcompar.tsv
+set dir dlb_a_d390
+set dir dlb_d_d388
 
 set compar_file /complgen/multicompar/compar.tsv
 set compar_file /complgen/multicompar/compar-part.tsv
