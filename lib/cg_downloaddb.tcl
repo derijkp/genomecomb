@@ -231,6 +231,8 @@ proc cg_downloaddb {args} {
 			downloaddb_mirbase $path $build
 		} elseif {$dbname eq "1000g"} {
 			downloaddb_1000g $path $build
+		} elseif {[regexp {snp.*} $dbname]} {
+			downloaddb_dbsnp $path $build $dbname
 		} else {
 			downloaddb $path $build $dbname
 		}
