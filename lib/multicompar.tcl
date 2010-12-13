@@ -176,6 +176,7 @@ proc multicompar_reannot {compar_file {force 0}} {
 		}
 	}
 	set referencepos [lsearch $header reference]
+	if {$referencepos == -1} {set referencepos [lsearch $header ref]}
 	foreach sample $samples {
 		set samplea(a1,$sample) [lsearch $header alleleSeq1-$sample]
 		set samplea(a2,$sample) [lsearch $header alleleSeq2-$sample]
