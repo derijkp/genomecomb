@@ -91,6 +91,11 @@ proc cg_annotate {args} {
 	set afiles {}
 	foreach dbfile $dbfiles {
 		set name [lindex [split [file root [file tail $dbfile]] _] end]
+		if {$name eq "annovar"} {
+			annovar $file $file.${name}_annot $dbfile
+			lappend afiles $file.${name}_annot
+			continue
+		}
 		if {[file exists $file.${name}_annot]} {
 			puts stderr "$file.${name}_annot exists: skipping scan"
 			continue
