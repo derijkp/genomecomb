@@ -9,6 +9,7 @@ if 0 {
 	lappend auto_path /home/peter/dev/completegenomics/lib
 	append env(PATH) :/home/peter/dev/completegenomics/bin
 	package require Extral
+
 	cd /complgen/projects/dlb1
 	set file dlb_compar.tsv
 	set resultfile compar.tsv.temp
@@ -37,6 +38,20 @@ cg select -q '$type == "snp" && $repeat != "" && $rmsk == ""' -f 'chromosome beg
 
 	cg annotate dlb_compar.tsv acompar.tsv /complgen/refseq/hg18/reg_hg18_*.tsv
 
+cd /complgen/projects/dlb1
+set file dlb_compar.tsv
+set resultfile compar.tsv.temp
+set args /complgen/refseq/hg18/reg_hg18_simpleRepeat.tsv
+set dbfile /complgen/refseq/hg18/reg_hg18_simpleRepeat.tsv
+set dbposs {0 1 2}
+set poss {0 1 2}
+set dataposs {4 -1}
+
+export PATH=$PATH:/home/peter/dev/completegenomics/bin
+
+	reg_annot dlb_compar.tsv 0 1 2 /complgen/refseq/hg18/reg_hg18_simpleRepeat.tsv 0 1 2  4 -1 > temp.tsv
+
+cg annotate test_compar.tsv antest_compar.tsv /complgen/refseq/hg18/var_hg18_snp130.tsv
 
 }
 
@@ -80,9 +95,52 @@ proc annotate {file dbfile annotfile {outfields {name score freq}}} {
 
 }
 
+proc annotatevar {file dbfile annotfile {outfields {name score freq}}} {
+
+	set name [lindex [split [file root [file tail $dbfile]] _] end]
+	catch {close $f}
+	set f [open $file]
+	set poss [open_region $f header]
+	close $f
+	set fields [list_sub $header $poss]
+	if {[inlist $poss -1]} {
+		error "Cannot annotate $file: wrong fields"
+	}
+	set type1pos [lsearch $header type]
+	set alt1pos [lsearch $header alt]
+	set f [open $dbfile]
+	set dbposs [open_region $f dbheader]
+	close $f
+	set type2pos [lsearch $dbheader type]
+	set alt2pos [lsearch $dbheader alt]
+	set dataposs [list_cor $dbheader $outfields]
+	set temp [list_find $dataposs -1]
+	set nh [list_sub $outfields -exclude $temp]
+	set dataposs [list_sub $dataposs -exclude $temp]
+	if {[llength $nh] == 0} {
+		set dataposs {-1 -1}
+		set newh $name
+	} elseif {[llength $nh] == 1} {
+		lappend dataposs -1
+		set newh $name
+	} else {
+		set dataposs [lrange $dataposs 0 1]
+		set newh {}
+		foreach key [lrange $nh 0 1] {
+			lappend newh ${name}_$key
+		}
+	}
+	set o [open $annotfile.temp w]
+	puts $o [join $newh \t]
+	close $o
+	exec var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp 2>@ stderr
+	file rename $annotfile.temp $annotfile
+
+}
+
 proc cg_annotate {args} {
-	if {([llength $args] < 2)} {
-		puts stderr "format is: $::base variantfile resultfile ?dbfile? ..."
+	if {([llength $args] < 3)} {
+		puts stderr "format is: $::base variantfile resultfile dbfile ..."
 		puts stderr " - adds new columns with annotation to variantfile"
 		exit 1
 	}
@@ -91,28 +149,35 @@ proc cg_annotate {args} {
 	set afiles {}
 	foreach dbfile $dbfiles {
 		set name [lindex [split [file root [file tail $dbfile]] _] end]
+		set dbtype [lindex [split [file tail $dbfile] _] 0]
 		if {$name eq "annovar"} {
 			annovar $file $file.${name}_annot $dbfile
 			lappend afiles $file.${name}_annot
-			continue
+		} elseif {$dbtype eq "var"} {
+			switch -glob $name {
+				snp130 {set outfields name}
+				default {set outfields {name freq score}}
+			}
+			annotatevar $file $dbfile $file.${name}_annot $outfields
+			lappend afiles $file.${name}_annot
+		} else {
+			if {[file exists $file.${name}_annot]} {
+				puts stderr "$file.${name}_annot exists: skipping scan"
+				continue
+			}
+			puts stderr "Adding $dbfile"
+			switch -glob $name {
+				1000g* {set outfields freq}
+				rmsk {set outfields name}
+				evofold {set outfields score}
+				rnaGene {set outfields name}
+				simpleRepeat {set outfields score}
+				tRNAs {set outfields name}
+				default {set outfields {name freq score}}
+			}
+			annotate $file $dbfile $file.${name}_annot $outfields
+			lappend afiles $file.${name}_annot
 		}
-		if {[file exists $file.${name}_annot]} {
-			puts stderr "$file.${name}_annot exists: skipping scan"
-			continue
-		}
-		puts stderr "Adding $dbfile"
-		switch -glob $name {
-			1000g* {set outfields freq}
-			rmsk {set outfields name}
-			evofold {set outfields score}
-			rnaGene {set outfields name}
-			simpleRepeat {set outfields score}
-			snp130 {set outfields name}
-			tRNAs {set outfields name}
-			default {set outfields {name freq score}}
-		}
-		annotate $file $dbfile $file.${name}_annot $outfields
-		lappend afiles $file.${name}_annot
 	}
 	exec paste $file {*}$afiles > $resultfile
 	file delete {*}$afiles

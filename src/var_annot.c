@@ -63,39 +63,45 @@ int main(int argc, char *argv[]) {
 	FILE *f1,*f2;
 	char **result1=NULL,**result2=NULL;
 	size_t len1=0,len2=0;
-	char *line1 = NULL,*line2 = NULL,*data1 = NULL,*data2 = NULL;
+	char *line1 = NULL,*line2 = NULL;
 	char chromosome1[10],chromosome2[10];
-	int chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,data1pos,data2pos,max1,max2;
-	int nchr1=0,start1,end1,nchr2=0,start2,end2;
-	int error2,curchr=0,nextpos=0;
-	if ((argc != 11)) {
-		fprintf(stderr,"Format is: reg_annot file1 chrpos1 startpos1 endpos1 file2 chrpos2 startpos2 endpos2 data1pos data2pos");
+	int chr1pos,start1pos,end1pos,type1pos,alt1pos,data1pos,max1;
+	int chr2pos,start2pos,end2pos,type2pos,alt2pos,data2pos,max2;
+	int nchr1=0,start1,end1;
+	int nchr2=0,start2,end2;
+	int error2,curchr=0,nextpos=0,sametype;
+	if ((argc != 15)) {
+		fprintf(stderr,"Format is: reg_annot file1 chrpos1 startpos1 endpos1 type1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos alt2pos data1pos data2pos");
 		exit(EXIT_FAILURE);
 	}
 	f1 = fopen64(argv[1],"r");
 	chr1pos = atoi(argv[2]);
 	start1pos = atoi(argv[3]);
 	end1pos = atoi(argv[4]);
-	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
-	result1 = (char **)malloc(max1*sizeof(char *));
-	f2 = fopen64(argv[5],"r");
-	chr2pos = atoi(argv[6]);
-	start2pos = atoi(argv[7]);
-	end2pos = atoi(argv[8]);
-	data1pos = atoi(argv[9]);
-	data2pos = atoi(argv[10]);
+	type1pos = atoi(argv[5]);
+	alt1pos = atoi(argv[6]);
+	max1 = chr1pos;
+	if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
+	if (type1pos > max1) {max1 = type1pos;} ; if (alt1pos > max1) {max1 = alt1pos;} ;
+	result1 = (char **)malloc((max1+1)*sizeof(char *));
+	f2 = fopen64(argv[7],"r");
+	chr2pos = atoi(argv[8]);
+	start2pos = atoi(argv[9]);
+	end2pos = atoi(argv[10]);
+	type2pos = atoi(argv[11]);
+	alt2pos = atoi(argv[12]);
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
+	if (type2pos > max2) {max2 = type2pos;} ; if (alt2pos > max2) {max2 = alt2pos;} ;
+	data1pos = atoi(argv[13]);
+	data2pos = atoi(argv[14]);
 	if (data1pos > max2) {max2 = data1pos;} ; if (data2pos > max2) {max2 = data2pos;} ;
-	max2+=1;
-	result2 = (char **)malloc(max2*sizeof(char *));
+	result2 = (char **)malloc((max2+1)*sizeof(char *));
 	getline(&line1, &len1, f1);
 	getline(&line2, &len2, f2);
 	error2 = get_tab(&line2,&len2,f2,max2,result2);
 	sscanf(result2[chr2pos],"%s\t",chromosome2);
 	sscanf(result2[start2pos],"%d",&start2);
 	sscanf(result2[end2pos],"%d",&end2);
-	data1 = result2[data1pos];
-	data2 = result2[data2pos];
 	nchr2 = chromosomenum(chromosome2);
 	while (!get_tab(&line1,&len1,f1,max1,result1)) {
 		sscanf(result1[chr1pos],"%s\t",chromosome1);
@@ -115,29 +121,37 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 			fflush(stderr);
 			nextpos += 50000000;
 		}
-		while (!error2 && ((nchr2 < nchr1) || ((nchr2 == nchr1) && (end2 <= start1)))) {
+		while (!error2) {
+			sametype = 0;
+			if (nchr2 == nchr1) {
+				if (start2 == start1) {
+					if (end2 == end1) {
+						if (strcmp(result2[type2pos], result1[type1pos]) == 0) {
+							sametype = 1; break;
+						}
+					} else if (end2 > end1) break; 
+				} else if (start2 > start1) break;
+			} else if (nchr2 > nchr1) break;
 			error2 = get_tab(&line2,&len2,f2,max2,result2);
 			if (error2)  {break;}
 			sscanf(result2[chr2pos],"%s\t",chromosome2);
 			sscanf(result2[start2pos],"%d",&start2);
 			sscanf(result2[end2pos],"%d",&end2);
-			data1 = result2[data1pos];
-			data2 = result2[data2pos];
 			nchr2 = chromosomenum(chromosome2);
 		}
-		if (error2 || (nchr1 < nchr2) || ((nchr1 == nchr2) && (end1 <= start2))) {
+		if (error2 || (nchr1 != nchr2) || (start2 != start1) || (end2 != end1) || !sametype) {
 			if (data2pos == -1) {
-				fprintf(stdout,"\n");
+				fprintf(stdout,"-\n");
 			} else {
-				fprintf(stdout,"\t\n");
+				fprintf(stdout,"-\t-\n");
 			}
 		} else {
 			if (data1pos == -1) {
 				fprintf(stdout,"1\n");
 			} else if (data2pos == -1) {
-				fprintf(stdout,"%s\n", data1);
+				fprintf(stdout,"%s\n", result2[data1pos]);
 			} else {
-				fprintf(stdout,"%s\t%s\n", data1, data2);
+				fprintf(stdout,"%s\t%s\n", result2[data1pos], result2[data2pos]);
 			}
 		}
 	}

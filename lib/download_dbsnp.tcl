@@ -36,7 +36,7 @@ proc downloaddb_dbsnp_convline {line} {
 	}
 	set len [llength $observed]
 	set name [list_fill $len $name]
-	list $chr $begin $end $type $ref [join $observed ,] [join $name ,]
+	list $chr $begin $end $type $ref $observed $name
 }
 
 proc downloaddb_dbsnp {path build dbname} {
@@ -60,25 +60,39 @@ proc downloaddb_dbsnp {path build dbname} {
 	set pline [list_sub [split [gets $f] \t] $poss]
 	set pline [downloaddb_dbsnp_convline $pline]
 	set num 0 ; set next 100000
-	while {![eof $f]} {
+	while 1 {
 		incr num; if {$num >= $next} {puts $num; incr next 100000}
 		set line [split [gets $f] \t]
 		set line [list_sub $line $poss]
 		set line [downloaddb_dbsnp_convline $line]
 		if {[lrange $pline 0 3] eq [lrange $line 0 3]} {
 			foreach {alt name} [list_sub $pline {5 6}] break
-			append alt ,[lindex $line 5]
-			append name ,[lindex $line 6]
+			lappend alt {*}[lindex $line 5]
+			lappend name {*}[lindex $line 6]
 			lset pline 5 $alt
 			lset pline 6 $name
 		} else {
+			unset -nocomplain a
+			foreach {alts names} [list_sub $pline {5 6}] break
+			foreach alt $alts name $names {
+				lappend a($alt) $name
+			}
+			set alts {}
+			set names {}
+			foreach alt [lsort [array names a]] {
+				lappend alts $alt
+				lappend names [join $a($alt) \;]
+			}
+			lset pline 5 [join $alts ,]
+			lset pline 6 [join $names ,]
 			puts $o [join $pline \t]
 			set pline $line
 		}
+		if {[eof $f]} break
 	}
 	close $f ; close $o
 	puts "Sorting $filename"
-	cg select -f {chrom start end type} $filename.temp $filename.temp2
+	cg select -s {chrom start end type} $filename.temp $filename.temp2
 	file rename $filename.temp2 $filename
 	file delete $filename.temp
 }

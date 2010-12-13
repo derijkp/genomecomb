@@ -20,7 +20,7 @@ proc downloaddb_1000g {path build} {
 	set tempdir $path/tmp/$build
 	set populations {CEU CHB+JPT YRI}
 	foreach pop $populations {
-		set resultfile $path/reg_${build}_1000g$pop.tsv
+		set resultfile $path/var_${build}_1000g$pop.tsv
 		if {[file exists $resultfile]} {
 			puts "$resultfile exists: skipping"
 			continue
@@ -63,7 +63,7 @@ proc downloaddb_1000g {path build} {
 		close $o
 		close $f
 		puts "Sorting $resultfile"
-		cg select -s {chrom start end} $tempdir/reg_${build}_1000g$pop.tsv $resultfile.temp
+		cg select -s {chrom start end} $tempdir/var_${build}_1000g$pop.tsv $resultfile.temp
 		file rename $resultfile.temp $resultfile
 	}
 }
