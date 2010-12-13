@@ -29,44 +29,27 @@ int chromosomenum(char *chromosome) {
 	}
 }
 
-/*static char *line;*/
-/*static size_t len;*/
-
-int get_region(
+int get_tab(
 	char **line,size_t *len,
-	FILE *f1, int chr1pos, int start1pos, int end1pos, int max1, char *chromosome1, int *start1, int *end1,
-	int data1pos, int data2pos, char**data1, char **data2
+	FILE *f1, int max, char **result
 ) {
-	char *linepos = NULL,*scanpos = NULL;
+	char *linepos = NULL;
 	ssize_t read;
 	int count;
 	while ((read = getline(line, len, f1)) != -1) {
 		linepos = *line;
 		count = 0;
-		while (*linepos && (count <= max1)) {
-			if (*linepos == '\t' || (linepos == *line)) {
-				if (*linepos == '\t') {
-					scanpos = linepos+1;
-					*linepos = '\0';
-				} else {
-					scanpos = linepos;
-				}
-				if (count == chr1pos) {
-					sscanf(scanpos,"%s\t",chromosome1);
-				} else if (count == start1pos) {
-					sscanf(scanpos,"%d",start1);
-				} else if (count == end1pos) {
-					sscanf(scanpos,"%d",end1);
-				} else if (count == data1pos) {
-					*data1 = scanpos;
-				} else if (count == data2pos) {
-					*data2 = scanpos;
-				}
+		result[count] = linepos;
+		while (*linepos && (count <= max)) {
+			if (*linepos == '\0') break;
+			if (*linepos == '\t') {
 				count++;
+				result[count] = linepos+1;
+				*linepos = '\0';
 			}
 			linepos++;
 		}
-		if (count > max1) break;
+		if (count > max) break;
 	}
 	if (read == -1) {return 1;}
 	return 0;
@@ -74,6 +57,7 @@ int get_region(
 
 int main(int argc, char *argv[]) {
 	FILE *f1,*f2;
+	char **result1=NULL,**result2=NULL;
 	size_t len1=0,len2=0;
 	char *line1 = NULL,*line2 = NULL,*data1 = NULL,*data2 = NULL;
 	char chromosome1[10],chromosome2[10];
@@ -89,6 +73,7 @@ int main(int argc, char *argv[]) {
 	start1pos = atoi(argv[3]);
 	end1pos = atoi(argv[4]);
 	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
+	result1 = (char **)malloc(max1*sizeof(char *));
 	f2 = fopen64(argv[5],"r");
 	chr2pos = atoi(argv[6]);
 	start2pos = atoi(argv[7]);
@@ -98,11 +83,20 @@ int main(int argc, char *argv[]) {
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 	if (data1pos > max2) {max2 = data1pos;} ; if (data2pos > max2) {max2 = data2pos;} ;
 	max2+=1;
-	getline(&line1, &len1, f2);
+	result2 = (char **)malloc(max2*sizeof(char *));
 	getline(&line1, &len1, f1);
-	error2 = get_region(&line2,&len2,f2,chr2pos,start2pos,end2pos,max2,chromosome2,&start2,&end2,data1pos,data2pos,&data1,&data2);
+	getline(&line2, &len2, f2);
+	error2 = get_tab(&line2,&len2,f2,max2,result2);
+	sscanf(result2[chr2pos],"%s\t",chromosome2);
+	sscanf(result2[start2pos],"%d",&start2);
+	sscanf(result2[end2pos],"%d",&end2);
+	data1 = result2[data1pos];
+	data2 = result2[data2pos];
 	nchr2 = chromosomenum(chromosome2);
-	while (!get_region(&line1,&len1,f1,chr1pos,start1pos,end1pos,max1,chromosome1,&start1,&end1,-1,-1,NULL,NULL)) {
+	while (!get_tab(&line1,&len1,f1,max1,result1)) {
+		sscanf(result1[chr1pos],"%s\t",chromosome1);
+		sscanf(result1[start1pos],"%d",&start1);
+		sscanf(result1[end1pos],"%d",&end1);
 /*
 fprintf(stdout,"----- %d\t%s\t%d\t%d\n",1,chromosome1,start1,end1);
 fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
@@ -118,8 +112,13 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 			nextpos += 50000000;
 		}
 		while (!error2 && ((nchr2 < nchr1) || ((nchr2 == nchr1) && (end2 <= start1)))) {
-			error2 = get_region(&line2,&len2,f2,chr2pos,start2pos,end2pos,max2,chromosome2,&start2,&end2,data1pos,data2pos,&data1,&data2);
+			error2 = get_tab(&line2,&len2,f2,max2,result2);
 			if (error2)  {break;}
+			sscanf(result2[chr2pos],"%s\t",chromosome2);
+			sscanf(result2[start2pos],"%d",&start2);
+			sscanf(result2[end2pos],"%d",&end2);
+			data1 = result2[data1pos];
+			data2 = result2[data2pos];
 			nchr2 = chromosomenum(chromosome2);
 		}
 		if (error2 || (nchr1 < nchr2) || ((nchr1 == nchr2) && (end1 <= start2))) {
@@ -142,5 +141,7 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 	fclose(f2);
 	if (line1) {free(line1);}
 	if (line1) {free(line2);}
+	if (result1) {free(result1);}
+	if (result2) {free(result2);}
 	exit(EXIT_SUCCESS);
 }
