@@ -7,7 +7,7 @@ if 0 {
 package require BioTcl
 
 proc downloaddb_dbsnp_convline {line} {
-	foreach {chr begin end class ref observed name} $line break
+	foreach {chr begin end class ref observed name freq} $line break
 	set observed [split $observed /]
 	set rp [lsearch $observed $ref]
 	if {$rp == -1} {
@@ -36,7 +36,7 @@ proc downloaddb_dbsnp_convline {line} {
 	}
 	set len [llength $observed]
 	set name [list_fill $len $name]
-	list $chr $begin $end $type $ref $observed $name
+	list $chr $begin $end $type $ref $observed $name $freq
 }
 
 proc downloaddb_dbsnp {path build dbname} {
@@ -55,8 +55,8 @@ proc downloaddb_dbsnp {path build dbname} {
 	set f [open $ufilename]
 	set o [open $filename.temp w]
 	set header [split [gets $f] \t]
-	set poss [list_cor $header {chrom start end class refNCBI observed name}]
-	puts $o [join {chrom start end type ref alt name} \t]
+	set poss [list_cor $header {chrom start end class refNCBI observed name avHet}]
+	puts $o [join {chrom start end type ref alt name freq} \t]
 	set pline [list_sub [split [gets $f] \t] $poss]
 	set pline [downloaddb_dbsnp_convline $pline]
 	set num 0 ; set next 100000
