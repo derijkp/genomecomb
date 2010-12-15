@@ -46,10 +46,10 @@ int get_tab(
 				*linepos = '\0';
 				break;
 			} else if (*linepos == '\t') {
+				*linepos = '\0';
 				count++;
 				if (count > max) break;
 				result[count] = linepos+1;
-				*linepos = '\0';
 			}
 			linepos++;
 		}
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 	start1pos = atoi(argv[3]);
 	end1pos = atoi(argv[4]);
 	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
-	result1 = (char **)malloc(max1*sizeof(char *));
+	result1 = (char **)malloc((max1+1)*sizeof(char *));
 	f2 = fopen64(argv[5],"r");
 	chr2pos = atoi(argv[6]);
 	start2pos = atoi(argv[7]);
@@ -86,8 +86,7 @@ int main(int argc, char *argv[]) {
 	data2pos = atoi(argv[10]);
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 	if (data1pos > max2) {max2 = data1pos;} ; if (data2pos > max2) {max2 = data2pos;} ;
-	max2+=1;
-	result2 = (char **)malloc(max2*sizeof(char *));
+	result2 = (char **)malloc((max2+1)*sizeof(char *));
 	getline(&line1, &len1, f1);
 	getline(&line2, &len2, f2);
 	error2 = get_tab(&line2,&len2,f2,max2,result2);
