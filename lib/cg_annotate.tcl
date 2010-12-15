@@ -36,7 +36,7 @@ cg select -q '$type == "snp" && $repeat != "" && $rmsk == ""' -f 'chromosome beg
 
 	cg annotate part.tsv apart.tsv /complgen/refseq/hg18/reg_*phastCons*
 
-	cg annotate dlb_compar.tsv acompar.tsv /complgen/refseq/hg18/reg_hg18_*.tsv
+	cg annotate dlb_compar.tsv annotdlbcompar.tsv /complgen/refseq/hg18
 
 cd /complgen/projects/dlb1
 set file dlb_compar.tsv
@@ -110,12 +110,24 @@ proc annotatevar {file dbfile annotfile {outfields {name score freq}}} {
 		error "Cannot annotate $file: wrong fields"
 	}
 	set type1pos [lsearch $header type]
+	if {$type1pos == -1} {
+		error "$file has no type field"
+	}
 	set alt1pos [lsearch $header alt]
+	if {$alt1pos == -1} {
+		error "$file has no alt field"
+	}
 	set f [open $dbfile]
 	set dbposs [open_region $f dbheader]
 	close $f
 	set type2pos [lsearch $dbheader type]
+	if {$type2pos == -1} {
+		error "$dbfile has no type field"
+	}
 	set alt2pos [lsearch $dbheader alt]
+	if {$alt2pos == -1} {
+		error "$dbfile has no alt field"
+	}
 	set dataposs [list_cor $dbheader $outfields]
 	set temp [list_find $dataposs -1]
 	set nh [list_sub $outfields -exclude $temp]
@@ -138,7 +150,7 @@ proc annotatevar {file dbfile annotfile {outfields {name score freq}}} {
 	close $o
 	# puts [list var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs]
 	exec var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp 2>@ stderr
-	file rename $annotfile.temp $annotfile
+	file rename -force $annotfile.temp $annotfile
 
 }
 
@@ -150,9 +162,31 @@ proc cg_annotate {args} {
 	}
 	foreach {file resultfile} $args break
 	set dbfiles [lrange $args 2 end]
+	if {[file isdir [lindex $dbfiles 0]]} {
+		set dbfiles [list_concat [glob -nocomplain [lindex $dbfiles 0]/var_*.tsv [lindex $dbfiles 0]/reg_*.tsv] [lrange $dbfiles 1 end]]
+	}
+	set names {}
+	foreach dbfile $dbfiles {
+		lappend names [lindex [split [file root [file tail $dbfile]] _] end]
+	}
+	set f [open $file]
+	set poss [open_region $f header]
+	close $f
+	set common [list_common $header $names]
+	if {[llength $common]} {
+		puts "Fields [join $common ,] already in file: skipping"
+		foreach name $common {
+			set skip($name) 1
+		}
+	}
 	set afiles {}
 	foreach dbfile $dbfiles {
 		set name [lindex [split [file root [file tail $dbfile]] _] end]
+		if {[info exists skip($name)]} {
+			puts "Skipping $dbfile: $name already in file"
+			continue
+		}
+		puts stderr "Adding $dbfile"
 		set dbtype [lindex [split [file tail $dbfile] _] 0]
 		if {$name eq "annovar"} {
 			annovar $file $file.${name}_annot $dbfile
