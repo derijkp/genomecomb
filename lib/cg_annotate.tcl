@@ -51,7 +51,10 @@ export PATH=$PATH:/home/peter/dev/completegenomics/bin
 
 	reg_annot dlb_compar.tsv 0 1 2 /complgen/refseq/hg18/reg_hg18_simpleRepeat.tsv 0 1 2  4 -1 > temp.tsv
 
+cd /complgen/projects/test
 cg annotate test_compar.tsv antest_compar.tsv /complgen/refseq/hg18/var_hg18_snp130.tsv
+
+cg select -f 'chromosome begin end type ref alt snp130_name snp130_freq' antest_compar.tsv
 
 }
 
@@ -133,6 +136,7 @@ proc annotatevar {file dbfile annotfile {outfields {name score freq}}} {
 	set o [open $annotfile.temp w]
 	puts $o [join $newh \t]
 	close $o
+	# puts [list var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs]
 	exec var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp 2>@ stderr
 	file rename $annotfile.temp $annotfile
 
@@ -154,10 +158,7 @@ proc cg_annotate {args} {
 			annovar $file $file.${name}_annot $dbfile
 			lappend afiles $file.${name}_annot
 		} elseif {$dbtype eq "var"} {
-			switch -glob $name {
-				snp130 {set outfields name}
-				default {set outfields {name freq score}}
-			}
+			set outfields {name freq score}
 			annotatevar $file $dbfile $file.${name}_annot $outfields
 			lappend afiles $file.${name}_annot
 		} else {

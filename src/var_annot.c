@@ -46,10 +46,10 @@ int get_tab(
 				*linepos = '\0';
 				break;
 			} else if (*linepos == '\t') {
+				*linepos = '\0';
 				count++;
 				if (count > max) break;
 				result[count] = linepos+1;
-				*linepos = '\0';
 			}
 			linepos++;
 		}
@@ -57,6 +57,64 @@ int get_tab(
 	}
 	if (read == -1) {return 1;}
 	return 0;
+}
+
+void connectalt(
+	char *alt1, char *alt2, char *data
+) {
+	char *alt1keep,*alt2keep,*alt2move,*datakeep;
+	int alt2num,found,i,pre = 0;
+	alt1keep = alt1;
+	while (1) {
+		if (pre) {
+			fprintf(stdout,",");
+		} else {
+			pre = 1;
+		}
+		while (*alt1 != ',' && *alt1 != '\0') {
+			alt1++;
+		}
+		alt2keep = alt2;
+		alt2move = alt2;
+		alt2num = 0;
+		found = 0;
+		/*fprintf(stdout,"\n-----%.*s\n",alt1-alt1keep,alt1keep);*/
+		while (1) {
+			while (*alt2move != ',' && *alt2move != '\0') {
+				alt2move++;
+			}
+			if ((alt1-alt1keep == alt2move-alt2keep) && (strncmp(alt1keep,alt2keep,alt1-alt1keep) == 0)) {
+				found = 1;
+				datakeep = data;
+				while (alt2num) {
+					if (*datakeep == '\0') break;
+					if (*datakeep == ',') alt2num--;
+					datakeep++;
+				}
+				if (!alt2num) {
+					if (*datakeep == ',') datakeep++;
+					i = 0;
+					while (datakeep[i] != ',' && datakeep[i] != '\0') {i++;}
+					if (i == 0) {
+						fprintf(stdout,"-");
+					} else {
+						fprintf(stdout,"%.*s",i,datakeep);
+					}
+				}
+				break;
+			}
+			if (*alt2move == '\0') break;
+			alt2num++;
+			alt2move++;
+			alt2keep = alt2move;
+		}
+		if (!found) {
+			fprintf(stdout,"-");
+		}
+		if (*alt1 == '\0') break;
+		alt1++;
+		alt1keep = alt1;
+	}
 }
 
 int main(int argc, char *argv[]) {
@@ -149,9 +207,15 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 			if (data1pos == -1) {
 				fprintf(stdout,"1\n");
 			} else if (data2pos == -1) {
-				fprintf(stdout,"%s\n", result2[data1pos]);
+				connectalt(result1[alt1pos],result2[alt2pos],result2[data1pos]);
+				fprintf(stdout,"\n");
+				/*fprintf(stdout,"%s\n", result2[data1pos]);*/
 			} else {
-				fprintf(stdout,"%s\t%s\n", result2[data1pos], result2[data2pos]);
+				connectalt(result1[alt1pos],result2[alt2pos],result2[data1pos]);
+				fprintf(stdout,"\t");
+				connectalt(result1[alt1pos],result2[alt2pos],result2[data2pos]);
+				fprintf(stdout,"\n");
+				/* fprintf(stdout,"%s\t%s\n", result2[data1pos], result2[data2pos]); */
 			}
 		}
 	}

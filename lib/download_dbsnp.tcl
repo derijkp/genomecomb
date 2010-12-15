@@ -36,6 +36,7 @@ proc downloaddb_dbsnp_convline {line} {
 	}
 	set len [llength $observed]
 	set name [list_fill $len $name]
+	set freq [list_fill $len $freq]
 	list $chr $begin $end $type $ref $observed $name $freq
 }
 
@@ -66,25 +67,32 @@ proc downloaddb_dbsnp {path build dbname} {
 		set line [list_sub $line $poss]
 		set line [downloaddb_dbsnp_convline $line]
 		if {[lrange $pline 0 3] eq [lrange $line 0 3]} {
-			foreach {alt name} [list_sub $pline {5 6}] break
+			foreach {alt name freq} [list_sub $pline {5 6 7}] break
 			lappend alt {*}[lindex $line 5]
 			lappend name {*}[lindex $line 6]
+			lappend freq {*}[lindex $line 7]
 			lset pline 5 $alt
 			lset pline 6 $name
+			lset pline 7 $freq
 		} else {
 			unset -nocomplain a
-			foreach {alts names} [list_sub $pline {5 6}] break
-			foreach alt $alts name $names {
-				lappend a($alt) $name
+			foreach {alts names freqs} [list_sub $pline {5 6 7}] break
+			foreach alt $alts name $names freq $freqs {
+				lappend a($alt) [list $name $freq]
 			}
 			set alts {}
 			set names {}
+			set freqs {}
 			foreach alt [lsort [array names a]] {
 				lappend alts $alt
-				lappend names [join $a($alt) \;]
+				lappend names [join [list_subindex $a($alt) 0] \;]
+				set fr [list_remove [list_subindex $a($alt) 1] {}]
+				if {[llength $fr] > 1} {set fr [lmath_max $fr]}
+				lappend freqs $fr
 			}
 			lset pline 5 [join $alts ,]
 			lset pline 6 [join $names ,]
+			lset pline 7 [join $freqs ,]
 			puts $o [join $pline \t]
 			set pline $line
 		}
