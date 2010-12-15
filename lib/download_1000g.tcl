@@ -34,17 +34,26 @@ proc downloaddb_1000g {path build} {
 				exit 1
 			}
 		}
+#		if {![file exists $tempdir/$pop.SRP000031.2010_03.indels.sites.vcf.gz]} {
+#			puts "downloading $pop.SRP000031.2010_03.indels.sites.vcf.gz"
+#			catch {exec wget --tries=45 --directory-prefix=$tempdir/ ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/pilot_data/release/2010_03/pilot1/indels/$pop.SRP000031.2010_03.indels.sites.vcf.gz} errmsg
+#			if {![file exists $tempdir/$pop.SRP000031.2010_03.sites.vcf.gz]} {
+#				puts $errmsg
+#				exit 1
+#			}
+#		}
 		puts "Changing format"
 		catch {close $f} ; catch {close $o}
 		set f [rzopen $tempdir/$pop.SRP000031.2010_03.sites.vcf.gz]
-		set o [open $tempdir/reg_${build}_1000g$pop.tsv w]
+		set o [open $tempdir/var_${build}_1000g$pop.tsv w]
 		while {![eof $f]} {
 			set line [gets $f]
 			if {[string index $line 0] ne "#"} break
 		}
 		set line [split $line \t]
-		puts $o [join {chrom start end freq ref alt id} \t]
+		puts $o [join {chrom start end type freq ref alt id} \t]
 		set num 0; set next 100000
+		set type snp
 		while {![eof $f]} {
 			incr num; if {$num >= $next} {puts $num; incr next 100000}
 			if {![llength $line]} {
@@ -57,13 +66,13 @@ proc downloaddb_1000g {path build} {
 			regexp {AC=([0-9]+)} $temp t ac
 			regexp {AN=([0-9]+)} $temp t an
 			set freq [format %.3f [expr {$ac/double($an)}]]
-			puts $o "chr$chrom\t$start\t$end\t$freq\t$ref\t$alt\t$id"
+			puts $o "chr$chrom\t$start\t$end\t$type\t$freq\t$ref\t$alt\t$id"
 			set line [split [gets $f] \t]
 		}
 		close $o
 		close $f
 		puts "Sorting $resultfile"
-		cg select -s {chrom start end} $tempdir/var_${build}_1000g$pop.tsv $resultfile.temp
+		cg select -s {chrom start end type alt} $tempdir/var_${build}_1000g$pop.tsv $resultfile.temp
 		file rename $resultfile.temp $resultfile
 	}
 }
