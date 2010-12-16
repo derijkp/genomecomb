@@ -82,6 +82,16 @@ proc tsv_select_count {header ids} {
 }
 # cg select -q 'count($alleleSeq1,$alleleSeq2, == "G") == 1' annotvar.tsv
 
+proc tsv_select_oneof {header ids} {
+	set value [list_shift ids]
+	set temp {}
+	foreach id $ids {
+		lappend temp "$value == $id"
+	}
+	return "([join $temp " || "])"
+}
+# cg select -q 'oneof($alleleSeq1-dlb_a_d390,"G","C")' annottest_compar.tsv
+
 proc tsv_select_expandfields {header qfields qpossVar} {
 	upvar $qpossVar qposs
 	if {[string first * $qfields] != -1} {
@@ -119,18 +129,47 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 		set sort "gnusort8 -t \\t -V -s -k[join $keys " -k"]"
 	}
 	if {($query ne "") || ($qfields ne "")} {
-		set awk {BEGIN {FS="\t" ; OFS="\t" ;}}
+		set awk {
+			function min(list,def) {
+			        split(list,a,",");
+			        minv = a[1];
+			        for (i in a) {
+			                if (a[i] == "-") {a[i] = def}
+			                if (a[i] < minv) {minv = a[i]}
+			        }
+			        return minv
+			}
+			function max(list,def) {
+			        split(list,a,",");
+			        maxv = a[1];
+			        for (i in a) {
+			                if (a[i] == "-") {a[i] = def}
+			                if (a[i] > maxv) {maxv = a[i]}
+			        }
+			        return maxv
+			}
+		}
+		append awk {BEGIN {FS="\t" ; OFS="\t"}}
 		if {$query ne ""} {
-			set indices [list_unmerge [regexp -all -indices -inline {[$]([a-zA-z0-9_-]+)} $query]]
+			set indices [list_unmerge [regexp -all -indices -inline {[$]([*a-zA-z0-9_-]+)} $query]]
 			set indices [list_reverse $indices]
 			list_foreach {start end} $indices {
 				set field [string range $query [expr {$start+1}] $end]
-				set pos [lsearch $header $field]
-				if {$pos == -1} {error "field \"$field\" not present"}
-				incr pos
-				set query [string_replace $query $start $end \$$pos]
+				if {[string first * $field] == -1} {
+					set pos [lsearch $header $field]
+					if {$pos == -1} {error "field \"$field\" not present"}
+					incr pos
+					set query [string_replace $query $start $end \$$pos]
+				} else {
+					set temp [tsv_select_expandfields $header $field tposs]
+					if {![llength $temp]} {error "field \"$field\" not present"}
+					set new {}
+					foreach pos $tposs {
+						lappend new \$$pos
+					}
+					set query [string_replace $query $start $end [join $new ,]]
+				}
 			}
-
 			set indices [list_unmerge [regexp -all -indices -inline {([a-zA-z0-9_]+)\([^)]+\)} $query]]
 			set indices [list_reverse $indices]
 			list_foreach {start end} $indices {
@@ -161,6 +200,10 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 							set ids [split $args ,]
 							set temp [tsv_select_count $header $ids]
 						}
+						oneof {
+							set ids [split $args ,]
+							set temp [tsv_select_oneof $header $ids]
+						}
 					}
 					set query [string_replace $query $start $end $temp]
 				} else {
@@ -187,7 +230,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	if {$sort ne ""} {
 		lappend pipe $sort
 	}
-	# puts stderr ----------\n$awk\n----------
+	# putslog stderr ----------\n$awk\n----------
 	if {$awk ne ""} {
 		lappend pipe [list awk $awk]
 	}
