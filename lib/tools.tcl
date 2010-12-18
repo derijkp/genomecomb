@@ -286,6 +286,49 @@ proc gunzip {file args} {
 	return $result
 }
 
+#doc scratchdir title {
+#scratchdir
+#} shortdescr {
+# returns a directory in which temporary files can be stored. This directory is specific to one proces:
+# no other processes will (should) write in this directory. Subsequent calls to the function within one process
+# will allways be the same directory, The program has to take care not to overwrite its own files
+# Temporary files returned by tempfile are also in this directory (named like _Extral_temp_1.tmp)
+# The program should also not overwrite these
+# The temporary directory is deleted when the program exits by an atexit handler
+# 
+#}
+
+proc scratchdir {} {
+	global env
+	if {![info exists env(SCRATCHDIR)]} {
+		puts stderr "Could not find SCRATCHDIR, using tempdir"
+		return [tempdir]
+	}
+	if {![info exists ::Extral::scratchdir]} {
+		for {set i 0} {$i < 20} {incr i} {
+			set testdir [file join $env(SCRATCHDIR) scratchExtral.[pid]-[Extral::randstring 20]]
+			if {[file exists $testdir]} continue
+			if {[catch {
+				file mkdir $testdir
+				if {$::tcl_platform(platform) eq "unix"} {
+					file attributes $testdir -permissions 0700
+				}
+				set files [glob -nocomplain $testdir/*]
+				if {[llength $files]} {
+					error "Very fishy: there are files in the temporary directory I just created"
+				}
+				set ::Extral::scratchdir $testdir
+				set ::Extral::scratchnum 0
+			}]} continue
+			break
+		}
+	}
+	if {![info exists ::Extral::scratchdir]} {
+		error "couldn't create temporary directory in [file nativename $::Extral::scratch_dir]"
+	}
+	return $::Extral::scratchdir
+}
+
 if 0 {
 
 	ifcatch {error test} result {
