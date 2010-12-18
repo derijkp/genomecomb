@@ -40,6 +40,77 @@ proc joinvarlines list {
 	lset line 4 [lindex $list end 4]
 }
 
+proc var2annotvar_readonevar_merge {list} {
+	global cache
+	set list [lsort -integer -index 3 [lsort -integer -index 4 $list]]
+
+	set keeplist $list
+	# make "ali"
+	set firstpos [lindex $list 0 3]
+	set seq(1) {}; set seq(2) {}; set seq(1,i) {}; set seq(2,i) {}; set seq(1,q) {}; set seq(2,q) {}
+	list_foreach {bin hp chr start end type ref alt score} $list {
+		set len [expr {$end-$start}]
+		if {[regexp {\?} $alt]} {set alt ?}
+		if {$len > [string length $alt]} {
+			if {$alt eq "?"} {set r ?} else {set r -}
+			append alt [string_fill $r [expr {$len-[string length $alt]}]]
+		}
+		if {$len < [string length $alt]} {
+			lappend seq($hp,i) [expr {$end-$firstpos}] [string range $alt $len end]
+			set alt [string range $alt 0 [expr {$len-1}]]
+		}
+		if {[string length $alt]} {
+			set s [expr {$start-$firstpos}]
+			set e [expr {$end-1-$firstpos}]
+			set seq($hp) [string_replace $seq($hp) $s $e $alt]
+			if {[llength $seq($hp,q)] <= $e} {
+				lappend seq($hp,q) {*}[list_fill [expr {$e-[llength $seq($hp,q)]+1}] {}]
+			}
+			set seq($hp,q) [lreplace $seq($hp,q) $s $e {*}[list_fill [expr {$e-$s+1}] $score]]
+		}		
+	}
+
+	set types [list_subindex $list 5]
+
+	set poss [list_find -regexp $types {snp|ins|del|delins|sub}]
+	set wlist [list_sub $list $poss]
+	lappend wlist {}
+	set line1 [list_shift wlist]
+	foreach {bin1 hp1 chr1 begin1 end1 type1 ref1} $line1 break
+	set line2 {}
+	set rlist {}
+	while {[llength $wlist]} {
+		set line [list_shift wlist]
+		foreach {bin hp chr begin end type ref} $line break
+		if {$line ne "" && $chr eq $chr1 && $begin == $begin1 && $end == $end1} {
+			lappend rlist $line1 $line
+			set line1 [list_shift wlist]
+			foreach {bin1 hp1 chr1 begin1 end1 type1 ref1} $line1 break
+		} else {
+			if {$hp1 == 1} {set uhp 2} else {set uhp 1}
+			set line2 $line1
+			set s [expr {$begin1-$firstpos}]
+			set e [expr {$end1-$firstpos-1}]
+			set alt [string range $seq($uhp) $s $e]
+			foreach {iseq pos} [list_reverse $seq($uhp,i)] {
+				if {$pos >= $s && $pos < $e} {
+					set alt [string_replace $alt [expr {$pos-$s}] -1 $iseq]
+				}
+			}
+			regsub -all -- - $alt {} alt
+			if {[regexp {[?]} $alt]} {set alt ?}
+			lset line2 8 [lindex $seq($uhp,q) $s]
+			lset line2 9 {}
+			lset line2 7 $alt
+			lappend rlist $line1 $line2
+			set line1 $line
+			foreach {bin1 hp1 chr1 begin1 end1 type1 ref1} $line1 break
+		}
+		if {![llength $line1]} break
+	}
+	return $rlist
+}
+
 proc var2annotvar_readonevar f {
 	global cache list
 	# join $cache($f,rov) \n
@@ -57,64 +128,37 @@ proc var2annotvar_readonevar f {
 				set type [list_remdup [list_remove $types = ref-consistent no-call-rc ref no-ref no-call no-ref PAR-called-in-X]]
 				if {$type ne ""} break
 			}
-			if {$type eq ""} {return {}}
-			if {[llength $list] == 1} {
-				set line1 [lindex $list 0]
-				set line2 {}
-			} else {
-				set list [lsort -integer -index 3 [lsort -integer -index 4 $list]]
-				set keeplist $list
-				set poss [list_find -regexp $types {snp|ins|del|delins|sub}]
-				set list [list_sub $list $poss]
-				set rlist {}
-				set line1 [list_shift list]
-				set comp1 [lrange $line1 3 5]
-				while {[llength $list] || [llength $line1]} {
-					set line [list_shift list]
-					set comp [lrange $line 3 5]
-					if {$comp eq $comp1} {
-						lappend rlist $line1 $line
-						set line1 [list_shift list]
-						set comp1 [lrange $line1 3 5]
-					} else {
-						set reference [lindex $line1 6]
-						set line2 {}
-						foreach templine [list_remove $keeplist $line1] {
-							foreach {begin end} [lrange $templine 3 4] break
-							foreach {b1 e1} $comp1 break
-							set overlap [overlap $b1 $e1 $begin $end]
-							if {$overlap > 0} {
-								set line2 $templine
-								break
-							}
-						}
-						if {[llength $line2]} {
-							# only change things in line2 that are actually used
-							set vartype [lindex $line2 5]
-							if {($vartype eq "del") || ($vartype eq "delins")} {
-								lset line2 7 {}
-							} elseif {($vartype eq "=") || ([inlist {ref-consistent no-call-rc} $vartype])} {
-								lset line2 7 $reference
-							} elseif {[inlist {ref-inconsistent no-call-ri} $vartype]} {
-								lset line2 7 N
-							} else {
-								set temp [string range [lindex $line2 7] [expr {$begin-$b1}] [expr {$end-$e1}]]
-								if {[string length $temp] == [expr {$end-$begin}]} {
-									lset line2 7 $temp
+			if {[inlist $types sub]} {
+				set temp {}
+				foreach line $list {
+					if {[lindex $line 5] eq "sub" && [string length [lindex $line 6]] <= 3} {
+						foreach {bin al chr start end type ref alt s1 s2 s3} $line break
+						set len [string length $ref]
+						if {$len == [string length $alt]} {
+							string_foreach r $ref e $alt {
+								if {$r ne $e} {
+									lappend temp [list $bin $al $chr $start [expr {$start+1}] snp $r $e $s1 $s2 $s3]
+								} else {
+									lappend temp [list $bin $al $chr $start [expr {$start+1}] ref $r $r {} {} {}]
 								}
+								incr start
 							}
-							lset line2 5 [lindex $line1 5]
+						} else {
+							lappend temp $line
 						}
-						lappend rlist $line1 $line2
-						set line1 $line
-						set comp1 $comp
+					} else {
+						lappend temp $line
 					}
 				}
-				set line1 [list_shift rlist]
-				set line2 [list_shift rlist]
-				if {[llength $rlist]} {
-					set cache($f,rov) $rlist
-				}
+				set list $temp
+			}
+			if {$type eq ""} {return {}}
+#putsvars list
+			set rlist [var2annotvar_readonevar_merge $list]
+			set line1 [list_shift rlist]
+			set line2 [list_shift rlist]
+			if {[llength $rlist]} {
+				set cache($f,rov) $rlist
 			}
 			if {![llength $line1]} continue
 			break
@@ -126,7 +170,7 @@ proc var2annotvar_readonevar f {
 	foreach {locus haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef} $line1 break
 	foreach {locus2 haplotype2 chromosome2 begin2 end2 varType2 reference2 alleleSeq2 totalScore2 hapLink2 xRef2} $line2 break
 	set type [list [get varType unkown] [get varType2 unknown]]
-	set type [list_remdup [list_remove $type = ref-consistent no-call-rc ref-inconsistent no-call-ri ref no-ref no-call no-ref PAR-called-in-X unknown]]
+	set type [list_remdup [list_remove $type = ref-consistent no-call-rc ref-inconsistent ref no-ref no-call no-ref PAR-called-in-X unknown]]
 	if {$type ne ""} {
 		set alleleSeq2 [get alleleSeq2 $reference]
 		set totalScore2 [get totalScore2 ""]
@@ -373,29 +417,9 @@ proc var2annotvar {file genefile outfile} {
 				}
 			}
 		}
-		if {[lindex $cur 4] eq "sub" && [string length [lindex $cur 5]] <= 3} {
-			foreach {bin chr start end type ref a1 a2 s1 s2 info} $cur break
-			set len [string length $ref]
-			if {$a1 eq "?"} {
-				set a1 [string_fill ? $len]
-			}
-			if {$a2 eq "?"} {
-				set a2 [string_fill ? $len]
-			}
-			if {[string length $a1] != $len ||[string length $a2] != $len} {
-				puts $o [join $cur \t]\t[join $annot \t]
-			} else {
-				string_foreach r $ref e1 $a1 e2 $a2 {
-					if {$r ne $e1 || $r ne $e2} {
-						puts $o [join [list $bin $chr $start [expr {$start+1}] snp $r $e1 $e2 $s1 $s2 $info] \t]\t[join $annot \t]
-					}
-					incr start
-				}
-			}
-		} else {
-			puts $o [join $cur \t]\t[join $annot \t]
-		}
+		puts $o [join $cur \t]\t[join $annot \t]
 		set cur [var2annotvar_readonevar $f1]
+#if {[lindex $cur 0] == 19411} {error STOP}
 	}
 
 	close $o
@@ -413,6 +437,13 @@ signal -restart error SIGINT
 	set base /media/passport/complgen
 	set base /complgen
 	cd $base
+
+
+	cd /complgen/projects/ftld1/ftld_e_d5945
+	set file svar-ftld_e_d5945.tsv
+	set genefile sgene-ftld_e_d5945.tsv
+	set outfile annotvar-ftld_e_d5945.tsv
+	var2annotvar $file $genefile $outfile
 
 	set file var-test.tsv
 	set genefile sgene-test.tsv

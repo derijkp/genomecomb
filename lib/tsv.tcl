@@ -473,7 +473,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 	if {[inlist {.rz .gz} $ext]} {
 		if {$uncompress} {
 			set workfile [scratchdir]/[file tail $root]
-			puts "temporarily uncompressing $file to $workfile"
+			puts stderr "temporarily uncompressing $file to $workfile"
 			gunzip $file $workfile.temp
 			file rename $workfile.temp $workfile
 			set uncompressed 1
