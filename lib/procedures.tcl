@@ -46,12 +46,13 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		file rename -force temp.tsv sgene-$name.tsv
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {
-		puts stderr "Sort region file ($regfile)"
 		set regfile [glob -nocomplain $dir/ASM/reg-*-ASM*.tsv*]
 		if {[file exists $regfile]} {
+			puts stderr "Sort region file ($regfile)"
 			cg select -s "chromosome begin end" $regfile temp.tsv
 			file rename -force temp.tsv sreg-$name.tsv
 		} else {
+			puts stderr "Extract sreg-$name.tsv from svar-$name.tsv"
 			cg select -q {$varType != "no-call" && $varType != "no-ref"} -f "chromosome begin end" svar-$name.tsv temp.tsv
 			cg regjoin temp.tsv > temp2.tsv
 			file rename -force temp2.tsv sreg-$name.tsv
