@@ -43,13 +43,12 @@ proc multicompar_annot_join {cur1 cur2} {
 	if {($altpos1 != -1) && ![llength $alt]} {set alt {{}}}
 	lappend alt {*}[list_sub $cur2 $allelepos2]
 	set alt [list_remdup $alt]
-	set remove [list $ref ? - N]
+	set remove [list $ref ? - N @]
 	set type [lindex $region 3]
 	if {$type eq "snp"} {
 		lappend remove {}
 	}
 	set alt [list_lremove $alt $remove]
-	if {[llength $alt] > 1} {set alt [list_remove $alt N]}
 	set result $region
 	lappend result $ref
 	lappend result [join $alt ,]

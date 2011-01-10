@@ -48,9 +48,14 @@ proc var2annotvar_readonevar_merge {list} {
 	# make "ali"
 	set firstpos [lindex $list 0 3]
 	set seq(1) {}; set seq(2) {}; set seq(1,i) {}; set seq(2,i) {}; set seq(1,q) {}; set seq(2,q) {}
-	list_foreach {bin hp chr start end type ref alt score} $list {
+	list_foreach {bin hp chr start end type ref oalt score} $list {
 		set len [expr {$end-$start}]
-		if {[regexp {\?} $alt]} {set alt ?}
+		set alt $oalt
+		if {[regexp {\?} $alt]} {
+			set alt ?
+		} elseif {[string length $oalt] != [string length $ref]} {
+			regsub -all . $alt \@ alt
+		}
 		if {$len > [string length $alt]} {
 			if {$alt eq "?"} {set r ?} else {set r -}
 			append alt [string_fill $r [expr {$len-[string length $alt]}]]
@@ -99,6 +104,7 @@ proc var2annotvar_readonevar_merge {list} {
 			}
 			regsub -all -- - $alt {} alt
 			if {[regexp {[?]} $alt]} {set alt ?}
+			if {[regexp {@} $alt]} {set alt @}
 			lset line2 8 [lindex $seq($uhp,q) $s]
 			lset line2 9 {}
 			lset line2 7 $alt
