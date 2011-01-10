@@ -123,21 +123,21 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		# add filterdata to annotvar
 		set todo {}
 		lappend todo [list refcons rc reg_refcons-$name.tsv]
-		lappend todo [list nocall nc reg_nocall-$name.tsv]
+		# lappend todo [list nocall nc reg_nocall-$name.tsv]
 		lappend todo [list cluster cl reg_cluster-$name.tsv]
-		lappend todo [list trf trf $dbdir/regdb-simple_repeats.tsv]
-		lappend todo [list str str $dbdir/regdb-microsatelite.tsv]
-		lappend todo [list segdup sd $dbdir/regdb-segdups.tsv]
-		lappend todo [list selfchain sc $dbdir/regdb-selfchain.tsv]
-		lappend todo [list repeat rp $dbdir/regdb-repeatmasker.tsv]
-		lappend todo [list rna rna $dbdir/regdb-rnagenes.tsv]
-		lappend todo [list more5pct m5 $dbdir/regdb-1000genomesmore5pct.tsv]
-		lappend todo [list more1pct m1 $dbdir/regdb-1000genomesmore1pct.tsv]
-		foreach file [lsort -dictionary [glob -nocomplain $dbdir/checked*.tsv]] {
-			set value [lindex [split [file root [file tail $file]] _] 1]
-			if {$value eq ""} {set value checked}
-			lappend todo [list checked $value $file]
-		}
+		# lappend todo [list trf trf $dbdir/regdb-simple_repeats.tsv]
+		# lappend todo [list str str $dbdir/regdb-microsatelite.tsv]
+		# lappend todo [list segdup sd $dbdir/regdb-segdups.tsv]
+		# lappend todo [list selfchain sc $dbdir/regdb-selfchain.tsv]
+		# lappend todo [list repeat rp $dbdir/regdb-repeatmasker.tsv]
+		# lappend todo [list rna rna $dbdir/regdb-rnagenes.tsv]
+		# lappend todo [list more5pct m5 $dbdir/regdb-1000genomesmore5pct.tsv]
+		# lappend todo [list more1pct m1 $dbdir/regdb-1000genomesmore1pct.tsv]
+		# foreach file [lsort -dictionary [glob -nocomplain $dbdir/checked*.tsv]] {
+		# 	set value [lindex [split [file root [file tail $file]] _] 1]
+		# 	if {$value eq ""} {set value checked}
+		# 	lappend todo [list checked $value $file]
+		# }
 		annot_annotvar annotvar-$name.tsv fannotvar-$name.tsv $todo $destdir
 	}
 	# coverage
