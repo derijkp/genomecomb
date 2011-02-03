@@ -159,7 +159,7 @@ proc multicompar {compar_file dir} {
 	file rename $compar_file.temp $compar_file
 }
 
-proc multicompar_reannot {compar_file {force 0}} {
+proc multicompar_reannot {compar_file {force 0} {regonly 0}} {
 
 	set compar_file [file normalize $compar_file]
 	set basedir [file dir $compar_file]
@@ -207,7 +207,9 @@ proc multicompar_reannot {compar_file {force 0}} {
 			}
 		} elseif {[file exists $samplea(regionfile,$sample)]} {
 			set samplea(type,$sample) cg
-			annot_coverage_init $samplea(dir,$sample)
+			if {!$regonly} {
+				annot_coverage_init $samplea(dir,$sample)
+			}
 			annot_region_init $samplea(regionfile,$sample)
 		} else {
 			error "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found in $samplea(dir,$sample): not properly processed sample"
@@ -247,7 +249,7 @@ proc multicompar_reannot {compar_file {force 0}} {
 				if {$r} {lset line $field $value} else {lset line $field {}}
 			}
 			if {$samplea(type,$sample) eq "cg"} {
-				if {$force || ([lindex $line $samplea(rpos,$sample)] eq "?") || ([lindex $line $samplea(cpos,$sample)] eq "?")} {
+				if {!$regonly && ($force || ([lindex $line $samplea(rpos,$sample)] eq "?") || ([lindex $line $samplea(cpos,$sample)] eq "?"))} {
 					foreach {r c} [annot_coverage_get $samplea(dir,$sample) $chr $begin] break
 					lset line $samplea(rpos,$sample) $r
 					lset line $samplea(cpos,$sample) $c
@@ -302,7 +304,9 @@ proc multicompar_reannot {compar_file {force 0}} {
 			annot_region_close $regfile
 		}
 		if {$samplea(type,$sample) eq "cg"} {
-			annot_coverage_close $samplea(dir,$sample)
+			if {!$regonly} {
+				annot_coverage_close $samplea(dir,$sample)
+			}
 			annot_region_close $samplea(regionfile,$sample)
 		} else {
 			annot_rtg_close $samplea(dir,$sample)

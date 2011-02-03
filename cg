@@ -31,14 +31,20 @@ switch $action {
 		if {([llength $argv] < 1)} {
 			puts stderr "format is: $scriptname $action compar_file ?dir? ..."
 			puts stderr " - adds new sample dir(s) to compar_file"
-			puts stderr " - the sample dir(s) should be one directory below compar_file"
+			puts stderr " - the sample dir(s) should be one directory below compar_file (for reannot)"
 			puts stderr " - sample names will be the names of the sample dir(s)"
 			puts stderr " - missing annotations must be checked and added afterwards using multicompar_reannot"
 			exit 1
 		}
+		set regonly 0
 		if {[lindex $argv 0] eq "-reannot"} {
 			putslog "Also reannot"
 			set reannot 1
+			set argv [lrange $argv 1 end]
+		} elseif {[lindex $argv 0] eq "-reannotregonly"} {
+			putslog "Also reannot"
+			set reannot 1
+			set regonly 1
 			set argv [lrange $argv 1 end]
 		} else {
 			set reannot 0
@@ -51,24 +57,29 @@ switch $action {
 		}
 		if {$reannot} {
 			putslog "Reannotating $compar_file"
-			multicompar_reannot $compar_file
+			multicompar_reannot $compar_file 0 $regonly
 		}
 	}
 	multicompar_reannot {
 		if {([llength $argv] != 1) && ([llength $argv] != 2)} {
-			puts stderr "format is: $scriptname $action compar_file ?force?"
+			puts stderr "format is: $scriptname $action compar_file ?force? ?regonly?"
 			puts stderr " - reannotate multicompar file"
 			puts stderr " - unless the force option is used, only unfilled (?) cells will be updated"
+			puts stderr " - if the regonly option is used, only region data (sequenced) will be updated"
 			exit 1
 		}
-		foreach {compar_file force} $argv break
-		switch $force {
-			force {set force 1}
-			"" {set force 0}
-			default {error "unrecognized option $force"}
+		set compar_file [list_shift argv]
+		set force 0
+		set regonly 0
+		foreach option $argv {
+			switch $option {
+				force {set force 1}
+				regonly {set regonly 1}
+				default {error "unrecognized option $option"}
+			}
 		}
 		putslog "Reannotating $compar_file"
-		multicompar_reannot $compar_file $force
+		multicompar_reannot $compar_file $force $regonly
 	}
 	process_sample {
 		if {([llength $argv] < 2) || ([llength $argv] > 3)} {
@@ -410,7 +421,7 @@ switch $action {
 			puts stderr "archive is may2009 for cgi, empty for latest"
 			puts stderr "maxsize is the maximum amplicon size"
 			puts stderr "prefsize is the prefered amplicon size"
-			puts stderr "db a blastable database of the human genome, right build, names are chromosomes"
+			puts stderr "db is a searchable database (ssa) of the human genome (/complgen/refseq/hg18/build36-ssa)"
 			exit 1
 		}
 		foreach {regionfile archive maxsize prefsize db threads} $argv break
