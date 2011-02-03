@@ -93,6 +93,7 @@ proc annotate {file dbfile annotfile {outfields {name score freq}}} {
 	set o [open $annotfile.temp w]
 	puts $o [join $newh \t]
 	close $o
+	# puts [list reg_annot $file {*}$poss $dbfile {*}$dbposs {*}$dataposs]
 	exec reg_annot $file {*}$poss $dbfile {*}$dbposs {*}$dataposs >> $annotfile.temp 2>@ stderr
 	file rename $annotfile.temp $annotfile
 
@@ -169,6 +170,7 @@ proc cg_annotate {args} {
 	foreach dbfile $dbfiles {
 		lappend names [lindex [split [file root [file tail $dbfile]] _] end]
 	}
+	puts "Annotating $file"
 	set f [open $file]
 	set poss [open_region $f header]
 	close $f
@@ -189,13 +191,22 @@ proc cg_annotate {args} {
 		puts stderr "Adding $dbfile"
 		set dbtype [lindex [split [file tail $dbfile] _] 0]
 		if {$name eq "annovar"} {
-			annovar $file $file.${name}_annot $dbfile
 			lappend afiles $file.${name}_annot
+			if {[file exists $file.${name}_annot]} {
+				puts stderr "$file.${name}_annot exists: skipping scan"
+				continue
+			}
+			annovar $file $file.${name}_annot $dbfile
 		} elseif {$dbtype eq "var"} {
+			lappend afiles $file.${name}_annot
+			if {[file exists $file.${name}_annot]} {
+				puts stderr "$file.${name}_annot exists: skipping scan"
+				continue
+			}
 			set outfields {name freq score}
 			annotatevar $file $dbfile $file.${name}_annot $outfields
-			lappend afiles $file.${name}_annot
 		} else {
+			lappend afiles $file.${name}_annot
 			if {[file exists $file.${name}_annot]} {
 				puts stderr "$file.${name}_annot exists: skipping scan"
 				continue
@@ -211,7 +222,6 @@ proc cg_annotate {args} {
 				default {set outfields {name freq score}}
 			}
 			annotate $file $dbfile $file.${name}_annot $outfields
-			lappend afiles $file.${name}_annot
 		}
 	}
 	exec paste $file {*}$afiles > $resultfile
