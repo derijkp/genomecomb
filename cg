@@ -16,9 +16,11 @@ package require Extral
 
 # generic help on no args
 if {[llength $argv] < 1} {
-puts {Use
-cg sortgene gene_file sorted_gene_file
-cg var2annot variation_file sorted_gene_file output_file
+puts {No option given, format is:
+cg option ....
+possible options are: select, graph, annotate, multicompar, process_sample,
+covered, regsubtract, regjoin, regcommon, 
+makeregions, makeprimers, ...
 }
 exit 1
 }
