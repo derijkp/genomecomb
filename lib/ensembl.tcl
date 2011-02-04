@@ -2,6 +2,7 @@ package require http
 
 proc ensembl_getregion {chr start end args} {
 	regsub ^chr $chr {} chr
+	if {$chr eq "M"} {set chr MT}
 	set url www.ensembl.org
 	set species Homo_sapiens
 	set fts {repeat variation gene vegagene estgene}
