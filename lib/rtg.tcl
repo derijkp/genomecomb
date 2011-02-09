@@ -5,7 +5,7 @@ proc rtg2annotvar {file {outfile {}}} {
 	catch {close $f}; catch {close $o}
 	set f [rzopen $file]
 	set o [open $outfile.temp w]
-	puts $o [join {chromosome begin end type alleleSeq1 alleleSeq2 posterior coverage correction numA numC numG numT percA percC percG percT nonidentityposterior reference} \t]
+	puts $o [join {chromosome begin end type reference alleleSeq1 alleleSeq2 posterior coverage correction numA numC numG numT percA percC percG percT nonidentityposterior reference} \t]
 	while {![eof $f]} {
 		set line [gets $f]
 		if {[string index $line 0] ne "#"} break
@@ -25,11 +25,13 @@ proc rtg2annotvar {file {outfile {}}} {
 	set num 0
 	while 1 {
 		incr num
-		if {![expr $num%100000]} {putslog $num}
-		foreach {name position het} $line break
-		if {[inlist {e o} $het]} {
-			set temp [rtg_line $line $poss]
-			puts $o [join $temp \t]
+		if {[llength $line] > 3} {
+			if {![expr $num%100000]} {putslog $num}
+			foreach {name position het} $line break
+			if {[inlist {e o} $het]} {
+				set temp [rtg_line $line $poss]
+				puts $o [join $temp \t]
+			}
 		}
 		if {[eof $f]} break
 		set line [split [gets $f] \t]
@@ -61,7 +63,7 @@ proc rtg_line {cline poss} {
 	foreach base {A C G T} {
 		lappend temp [get stats($base,p) 0.0]
 	}
-	return [list $chromosome $begin $end $type {*}$alleles $posterior $coverage $correction {*}$temp $nonidentityposterior $reference]
+	return [list $chromosome $begin $end $type $reference {*}$alleles $posterior $coverage $correction {*}$temp $nonidentityposterior $reference]
 }
 
 proc process_rtgsample {dir dbdir {force 0}} {
@@ -91,12 +93,12 @@ proc process_rtgsample {dir dbdir {force 0}} {
 		# add filterdata to annotvar
 		set todo {}
 		lappend todo [list cluster cl reg_cluster-$name.tsv]
-		lappend todo [list trf trf $dbdir/regdb-simple_repeats.tsv]
-		lappend todo [list str str $dbdir/regdb-microsatelite.tsv]
-		lappend todo [list segdup sd $dbdir/regdb-segdups.tsv]
-		lappend todo [list selfchain sc $dbdir/regdb-selfchain.tsv]
-		lappend todo [list repeat rp $dbdir/regdb-repeatmasker.tsv]
-		lappend todo [list rna rna $dbdir/regdb-rnagenes.tsv]
+		# lappend todo [list trf trf $dbdir/regdb-simple_repeats.tsv]
+		# lappend todo [list str str $dbdir/regdb-microsatelite.tsv]
+		# lappend todo [list segdup sd $dbdir/regdb-segdups.tsv]
+		# lappend todo [list selfchain sc $dbdir/regdb-selfchain.tsv]
+		# lappend todo [list repeat rp $dbdir/regdb-repeatmasker.tsv]
+		# lappend todo [list rna rna $dbdir/regdb-rnagenes.tsv]
 		foreach file [lsort -dictionary [glob $dbdir/checked*.tsv]] {
 			set value [lindex [split [file root [file tail $file]] _] 1]
 			if {$value eq ""} {set value checked}
