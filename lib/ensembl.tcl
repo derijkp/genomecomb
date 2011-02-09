@@ -7,6 +7,7 @@ proc ensembl_getregion {chr start end args} {
 	set species Homo_sapiens
 	set fts {repeat variation gene vegagene estgene}
 	set field param
+	set output embl
 	foreach {key value} $args {
 		switch $key {
 			-archive {
@@ -23,19 +24,22 @@ proc ensembl_getregion {chr start end args} {
 			-fts {
 				set fts $value
 			}
+			-output {
+				set output $value
+			}
 			default {
 				error "unkown option $key"
 			}
 		}
 	}
-	set query [subst {output=embl;r=$chr:$start-$end;strand=1;_format=Text}]
+	set query [subst {output=$output;r=$chr:$start-$end;strand=1;genomic=soft_masked;_format=Text}]
 	foreach ft $fts {
 		append query \;$field=$ft
 	}
 	set h [http::geturl http://$url/$species/Location/Export?$query]
 	set data [http::data $h]
 	http::cleanup $h
-	if {[regexp ^> $data]} {
+	if {[regexp {^<.*Internal Server Error} $data]} {
 		error "error getting ensembl region $chr-$start-$end"
 	}
 	return $data

@@ -30,6 +30,9 @@ proc cg_makesequenom {args} {
 	catch {e destroy}
 	catch {rename e {}}
 	EmblFile new e
+	catch {f destroy}
+	catch {rename f {}}
+	FastaFile new f
 	#
 	catch {close $f}
 	set f [open $compar_file]
@@ -48,6 +51,7 @@ proc cg_makesequenom {args} {
 		foreach {chr start end ref alt} $sub break
 		regsub ^chr $chr {} chr
 		set name [join [list_sub $sub {0 1 2}] -]
+		set fastafile $cachedir/$name.fas
 		set emblfile $cachedir/$name.embl
 		set estart [expr {$start-$extraseq}]
 		if {$estart < 0} {set estart 0}
@@ -55,17 +59,28 @@ proc cg_makesequenom {args} {
 			set embl [ensembl_getregion $chr $estart [expr {$end+$extraseq-1}] -archive $archive]
 			file_write $emblfile $embl
 		}
+		if {![file exists $fastafile]} {
+			set fasta [ensembl_getregion $chr $estart [expr {$end+$extraseq-1}] -archive $archive -output fasta]
+			file_write $fastafile $fasta
+		}
+		f open $fastafile
+		if {![llength [f list]]} {
+			file delete $emblfile
+			file delete $fastafile
+			error "Could not download region for: $sub"
+		}
 		if {![llength [e open $emblfile]]} {
 			file delete $emblfile
 			error "Could not download region for: $sub"
 		}
+		set id [lindex [f list] 0]
+		set seq [f sequence 0]
 		set id [lindex [e list] 0]
-		set seq [e sequence 0]
 		set rstart [expr {$start-$estart+1}]
 		set rend [expr {$rstart+$end-$start-1}]
 		set test [string range $seq $rstart $rend]
-		if {$ref ne $test} {
-			error "ref in vars different from ref in genome for:\n$sub"
+		if {[string toupper $ref] ne [string toupper $test]} {
+			error "ref in vars ($ref) different from ref in genome ($test) for:\n$sub"
 		}
 		# mask repeats and snps
 		set fts [e features $id]
@@ -75,7 +90,7 @@ proc cg_makesequenom {args} {
 			set start [dict get $floc start]
 			if {[dict exists $floc complement]} {set complement 1} else {set complement 0}
 			set end [dict get $floc end]
-			if {$end < $start} continue
+			if {$end < $start} {set end $start}
 			if {[dict exists $floc acc]} continue
 			if {[inlist {repeat_region variation} $type]} {
 				set base [string range $seq $start $end]
