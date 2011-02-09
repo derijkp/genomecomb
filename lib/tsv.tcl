@@ -6,7 +6,7 @@ proc tsv_select_idtopos {header id fields} {
 
 proc tsv_select_sm {header ids} {
 	set id1 [list_pop ids]
-	foreach {a11 a21 sequenced ref} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 sequenced-$id1 reference]] break
+	foreach {a11 a21 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 sequenced-$id1]] break
 	set temp [list "(\$$sequenced == \"v\")"]
 	foreach id $ids {
 		foreach {a12 a22 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
@@ -17,7 +17,7 @@ proc tsv_select_sm {header ids} {
 
 proc tsv_select_same {header ids} {
 	set id1 [list_pop ids]
-	foreach {a11 a21 sequenced ref} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 sequenced-$id1 reference]] break
+	foreach {a11 a21 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 sequenced-$id1]] break
 	set seqlist [list "\$$sequenced != \"u\""]
 	set temp {}
 	foreach id $ids {
@@ -33,7 +33,7 @@ proc tsv_select_df {header ids} {
 	set temp2 {}
 	set seqlist {}
 	foreach id $ids {
-		foreach {a1 a2 sequenced ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id reference]] break
+		foreach {a1 a2 sequenced} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
 		lappend seqlist "(\$$sequenced != \"u\")"
 		lappend temp1 "(\$$sequenced == \"v\")"
 		lappend temp2 "(\$$sequenced == \"r\")"
@@ -47,10 +47,15 @@ proc tsv_select_mm {header ids} {
 	set list {}
 	set seqlist {}
 	foreach id $ids {
-		foreach {a1 a2 sequenced ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id reference]] break
+		foreach {a1 a2 sequenced} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
 		lappend seqlist "(\$$sequenced == \"v\")"
 		lappend list [list $a1 $a2]
 	}
+	set ref [lsearch $header reference]
+	if {$ref == -1} {
+		set ref [lsearch $header ref]
+	}
+	incr ref
 	while {[llength $list]} {
 		foreach {a1 a2} [list_pop list] break
 		lappend temp1 "((\$$a1 != \$$ref) || (\$$a2 != \$$ref))"
@@ -65,7 +70,7 @@ proc tsv_select_un {header ids} {
 	set temp1 {}
 	set temp2 {}
 	foreach id $ids {
-		foreach {a1 a2 sequenced ref} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id reference]] break
+		foreach {a1 a2 sequenced} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
 		lappend temp1 "(\$$sequenced == \"v\")"
 		lappend temp2 "(\$$sequenced == \"u\")"
 	}
