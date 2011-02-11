@@ -156,7 +156,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 		}
 		append awk {BEGIN {FS="\t" ; OFS="\t"}}
 		if {$query ne ""} {
-			set indices [list_unmerge [regexp -all -indices -inline {[$]([*a-zA-z0-9_-]+)} $query]]
+			set indices [list_unmerge [regexp -all -indices -inline {[$]([*a-zA-z0-9_.-]+)} $query]]
 			set indices [list_reverse $indices]
 			list_foreach {start end} $indices {
 				set field [string range $query [expr {$start+1}] $end]
