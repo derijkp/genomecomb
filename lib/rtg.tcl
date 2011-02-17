@@ -99,7 +99,7 @@ proc process_rtgsample {dir dbdir {force 0}} {
 		# lappend todo [list selfchain sc $dbdir/regdb-selfchain.tsv]
 		# lappend todo [list repeat rp $dbdir/regdb-repeatmasker.tsv]
 		# lappend todo [list rna rna $dbdir/regdb-rnagenes.tsv]
-		foreach file [lsort -dictionary [glob $dbdir/checked*.tsv]] {
+		foreach file [lsort -dictionary [glob -nocomplain $dbdir/checked*.tsv]] {
 			set value [lindex [split [file root [file tail $file]] _] 1]
 			if {$value eq ""} {set value checked}
 			lappend todo [list checked $value $file]
@@ -142,6 +142,7 @@ proc annot_rtg_init {dir} {
 
 proc annot_rtg_get {dir chr begin} {
 	global annot
+	regsub ^chr $chr {} chr
 	foreach {curchr chrfile present poss} [get annot(cov,$dir) {{} {} 0}] break
 	if {$chr ne $curchr} {
 		if {[llength $chrfile]} {
