@@ -99,8 +99,105 @@ proc annotate {file dbfile annotfile {outfields {name score freq}}} {
 
 }
 
-proc annotatevar {file dbfile annotfile {outfields {name score freq}}} {
+if 0 {
+	cd /complgen/tests/annot
+	set file regonly.tsv
+	set annotfile regonly.tsv.knownGene_annot
+	set dbfile /complgen/refseq/hg18/gene_hg18_knownGene.tsv
+	set outfields name
+}
 
+proc annotategene {file dbfile annotfile {outfields {name}}} {
+	global dbline
+
+	set name [lindex [split [file root [file tail $dbfile]] _] end]
+	catch {close $f}; catch {close $df}; catch {close $o};
+	set f [open $file]
+	set poss [open_region $f header]
+	set fields [list_sub $header $poss]
+	if {[inlist $poss -1]} {
+		error "Cannot annotate $file: wrong fields"
+	}
+	set type1pos [lsearch $header type]
+	set alt1pos [lsearch $header alt]
+	set df [open $dbfile]
+	set dbposs [open_region $df dbheader]
+	set dataposs [list_cor $dbheader $outfields]
+	set temp [list_find $dataposs -1]
+	set nh [list_sub $outfields -exclude $temp]
+	set dataposs [list_sub $dataposs -exclude $temp]
+	set empty [join [list_fill [llength $dataposs] ""] \t]
+	if {[llength $nh] == 0} {
+		error "outfields ($outfields) not found"
+	} elseif {[llength $nh] == 1} {
+		set newh $name
+	} else {
+		set newh {}
+		foreach key $nh {
+			lappend newh ${name}_$key
+		}
+	}
+	set o [open $annotfile.temp w]
+	puts $o [join $newh \t]
+	set dbline [split [gets $df] \t]
+	foreach {dbchr dbstart dbend} [list_sub $dbline $dbposs] break
+	set dbchr [chr2num $dbchr]
+	set dblist {}
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		set loc [list_sub $line $poss]
+		foreach {chr start end} $loc break
+		set chr [chr2num $chr]
+		# add all overlapping to dblist
+		while {![eof $df]} {
+			if {$dbchr > $chr} break
+			if {$dbchr == $chr} {
+				if {$dbstart >= $end} break
+			}
+			lappend dblist $dbline
+			set dbline [split [gets $df] \t]
+			foreach {dbchr dbstart dbend} [list_sub $dbline $dbposs] break
+			set dbchr [chr2num $dbchr]
+		}
+		# check for overlap, remove genes from dblist that are before current var
+		set num 0
+		set remove {}
+		set hitgenes ""
+		foreach gene $dblist {
+			foreach {dc ds de} [list_sub $gene $dbposs] break
+			set dc [chr2num $dc]
+			if {$dc < $chr} {
+				lappend remove $num
+			} elseif {$dc == $chr} {
+				if {$de <= $start} {
+					lappend remove $num
+				} elseif {$ds < $end} {
+					lappend hitgenes $gene
+				}
+			}
+			incr num
+		}
+		if {[llength $remove]} {
+			set dblist [list_sub $dblist -exclude $remove]
+		}
+		if {[llength $hitgenes]} {
+			set result {}
+			foreach p $dataposs {
+				lappend result [join [list_remdup [list_subindex $hitgenes $p]] ,]
+			}
+			set result [join $result \t]
+		} else {
+			set result $empty
+		}
+		puts $o $result
+	}
+
+	close $o; close $f;	close $df
+	file rename -force $annotfile.temp $annotfile
+
+}
+
+proc annotatevar {file dbfile annotfile {outfields {name score freq}}} {
 	set name [lindex [split [file root [file tail $dbfile]] _] end]
 	catch {close $f}
 	set f [open $file]
@@ -152,7 +249,6 @@ proc annotatevar {file dbfile annotfile {outfields {name score freq}}} {
 	# puts [list var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs]
 	exec var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp 2>@ stderr
 	file rename -force $annotfile.temp $annotfile
-
 }
 
 proc cg_annotate {args} {
@@ -197,6 +293,16 @@ proc cg_annotate {args} {
 				continue
 			}
 			annovar $file $file.${name}_annot $dbfile
+		} elseif {$dbtype eq "gene"} {
+			lappend afiles $file.${name}_annot
+			if {[file exists $file.${name}_annot]} {
+				puts stderr "$file.${name}_annot exists: skipping scan"
+				continue
+			}
+			switch -glob $name {
+				default {set outfields {name name2}}
+			}
+			annotategene $file $dbfile $file.${name}_annot $outfields
 		} elseif {$dbtype eq "var"} {
 			lappend afiles $file.${name}_annot
 			if {[file exists $file.${name}_annot]} {
