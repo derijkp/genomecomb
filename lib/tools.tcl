@@ -329,6 +329,25 @@ proc scratchdir {} {
 	return $::Extral::scratchdir
 }
 
+proc scratchfile {{action {get}} {type file}} {
+	switch $action {
+		get {
+			set scratchdir [scratchdir]
+			return [file join $scratchdir _Extral_scratch_[incr ::Extral::scratchnum].tmp]
+		}
+		clean {
+			set scratchdir [scratchdir]
+			catch {file delete -force $scratchdir}
+			unset ::Extral::scratchdir
+		}
+		cleanall {
+			catch {eval file delete -force [glob [file join $scratch_dir scratchExtral*]]}
+		}
+		default {
+			return -code error "bad option \"$action\": must be get, clean or cleanall"
+		}
+	}
+}
 if 0 {
 
 	ifcatch {error test} result {

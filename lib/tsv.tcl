@@ -404,13 +404,16 @@ proc tsv_nextline {f xpos next {shift 100000}} {
 }
 
 proc tsv_index {xfield file} {
+	set indexname [rzroot $file].${xfield}_index
 	if {[inlist {.rz} [file extension $file]]} {
-		set indexname [file root $file].${xfield}_index
 		set tempfile [tempfile]
 		exec razip -d -c $file > $tempfile
 		set f [open $tempfile]
+	} elseif {[inlist {.gz} [file extension $file]]} {
+		set tempfile [tempfile]
+		exec gunzip -c $file > $tempfile
+		set f [open $tempfile]
 	} else {
-		set indexname $file.${xfield}_index
 		set f [open $file]
 	}
 	set header [tsv_open $f]
@@ -457,6 +460,9 @@ proc tsv_index {xfield file} {
 	puts $o [join $index \n]
 	close $o
 	file rename $indexname.temp $indexname
+	if {[info exists tempfile]} {
+		file delete $tempfile
+	}
 }
 
 proc tsv_index_header {file} {
@@ -470,15 +476,17 @@ proc tsv_index_open {file field {uncompress 0}} {
 	set file [file normalize $file]
 	if {[info exists cache(tsv_index,$file,$field,step)]} return
 	set ext [file extension $file]
-	if {$ext eq ".gz"} {set uncompress 1}
+	if {$ext eq ".gz" || $ext eq ".rz"} {set uncompress 1}
 	set root [rzroot $file]
 	set workfile $file
 	set uncompressed 0
 	set remove 0
 	if {[inlist {.rz .gz} $ext]} {
 		if {$uncompress} {
-			set workfile [scratchdir]/[file tail $root]
+			set workfile [scratchfile]
 			puts stderr "temporarily uncompressing $file to $workfile"
+			file delete -force $workfile.temp
+			file delete -force $workfile
 			gunzip $file $workfile.temp
 			file rename $workfile.temp $workfile
 			set uncompressed 1
@@ -490,6 +498,9 @@ proc tsv_index_open {file field {uncompress 0}} {
 	set indexname $root.${field}_index
 	if {![file exists $indexname]} {
 		tsv_index $field $workfile
+		if {$workfile ne $file} {
+			file rename [rzroot $workfile].${field}_index $indexname
+		}
 	}
 	set o [open $indexname]
 	set cache(tsv_index,$file,$field,step) [gets $o]
