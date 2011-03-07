@@ -216,6 +216,7 @@ proc cg_project {args} {
 	# =====
 	if {[inlist $actions users]} {
 		cd $resultdir
+		exec chmod g-w {*}[glob /complgen/projects/*]
 		foreach user [get a(users) ""] {
 			puts "$project -> $user"
 			if {![file exists /home/MOLGEN/$user/complgen]} {
