@@ -1,0 +1,110 @@
+cd /complgen/projects/cmt71/compar
+cg select -h ../ftld1/compar/fannotftld1_compar.tsv
+cg select -h ../ftld1/compar/fannotftld1_compar.tsv | sed 's/ /\n/g' | grep allele
+
+cg select -f 'chromosome begin end type ref alt alleleSeq1-ftld_e_d5945 alleleSeq2-ftld_e_d5945 alleleSeq1-ftld_f_d6846 alleleSeq2-ftld_f_d6846 alleleSeq1-ftld_g_d6843 alleleSeq2-ftld_g_d6843 alleleSeq1-ftld_h_d7114 alleleSeq2-ftld_h_d7114' \
+	../ftld1/compar/fannotftld1_compar.tsv | less -S
+
+# how many of each refGene_type
+cg select -f refGene_type ../ftld1/compar/fannotftld1_compar.tsv | sort | uniq -c > refgenetypes.tsv
+less refgenetypes.tsv
+
+# extract exome
+cg select \
+	-q '$refGene_type ~/exonic|UTR/ || $knownGene_type ~/exonic|UTR/ || $ensGene_type ~/exonic|UTR/' \
+../ftld1/compar/fannotftld1_compar.tsv > exome.tsv
+wc exome.tsv
+
+# extract region
+cg select \
+	-q '$chromosome == "chr2" && $end > 20000000 && $begin < 34000000' \
+../ftld1/compar/fannotftld1_compar.tsv > chr2-20M-34M.tsv
+wc chr2-20M-34M.tsv
+
+# exome
+cg select \
+	-q '$refGene_type ~/exonic|UTR/ || $knownGene_type ~/exonic|UTR/ || $ensGene_type ~/exonic|UTR/' \
+chr2-20M-34M.tsv > regexome.tsv
+
+# show part
+cg select \
+	-f 'chromosome begin end type ref alt refGene_type refGene_name refGene_exonic_type refGene_exonic_effect' \
+regexome.tsv | less -S
+
+cg select \
+	-f 'chromosome begin end type ref alt refGene_type refGene_name ensGene_type ensGene_name' \
+regexome.tsv | less -S
+
+# variant in all 4
+cg select \
+	-q '$sequenced-ftld_e_d5945 == "v" && $sequenced-ftld_f_d6846 == "v" && $sequenced-ftld_g_d6843 == "v" && $sequenced-ftld_h_d7114 == "v"' \
+chr2-20M-34M.tsv > regshared.tsv
+
+# variant in all 4 using count
+cg select \
+	-q 'count($sequenced-*, == "v")  == 4' \
+chr2-20M-34M.tsv > regshared2.tsv
+diff regshared.tsv regshared2.tsv
+
+# select based on 1000g and exome
+cg select \
+	-q 'count($sequenced-*, == "v")  == 4 && min($1000gCEU,0) < 0.05 && ($refGene_type ~/exonic|UTR/ || $knownGene_type ~/exonic|UTR/ || $ensGene_type ~/exonic|UTR/)' \
+regshared.tsv > regsel.tsv
+
+# only 1000g
+cg select \
+	-q 'count($sequenced-*, == "v")  == 4 && min($1000gCEU,0) < 0.05' \
+regshared.tsv > regsel.tsv
+cg select -f 'chromosome begin end type ref alt snp130_name snp130_freq 1000gCEU' regsel.tsv | less -S -x 15
+
+# more filtering
+cg select \
+	-q ' \
+	count($sequenced-*, == "v")  == 4 \
+	&& $type == "snp" \
+	&& count($refcons-*, != "")  != 4 \
+	&& count($totalScore1-*,$totalScore2-*, >=60) == 4 \
+	&& count($coverage-*, <20) == 0 \
+	&& count($coverage-*, > 100) == 0 \
+	&& count($cluster-*, != "") == 0 \
+	&& $simpleRepeat == "" && $microsat == "" && $genomicSuperDups == "" \
+	&& min($1000gCEU,0) < 0.05 \
+	' \
+regshared.tsv > regsel.tsv
+wc regsel.tsv
+cg select -f 'chromosome begin end type ref alt coverage-* cluster-* simpleRepeat microsat genomicSuperDups' regsel.tsv | less -S -x 15
+
+cg select \
+	-q '
+	count($sequenced-*, == "v")  == 4 \
+	&& $type == "snp" \
+	&& count($refcons-*, != "")  != 4 \
+	&& count($totalScore1-*,$totalScore2-*, >=60) == 4 \
+	&& count($coverage-*, <20) == 0 \
+	&& count($coverage-*, > 100) == 0 \
+	&& count($cluster-*, != "") == 0 \
+	&& $simpleRepeat == "" && $microsat == "" && $genomicSuperDups == "" \
+	&& min($1000gCEU,0) < 0.05 \
+	' \
+../ftld1/compar/fannotftld1_compar.tsv > sel.tsv
+wc sel.tsv
+
+# how much region sequenced in all samples
+cg select -q 'count($sequenced-*, == 1) == 4' ../ftld1/compar/ftld1_reg.tsv > reg4.tsv
+cg covered reg4.tsv > reg4.covered
+
+# make sequencing primers
+cg makeregions regsel.tsv 200 > valreg.tsv
+cg makeprimers valreg.tsv may2009 600 500 /complgen/refseq/hg18/build36-ssa 1 > primers-valreg.tsv
+
+# find common gaps and annotate
+cg regsubtract /complgen/refseq/reg_hg18_completegenome.tsv ../NNN/compar/NNN_reg.tsv > commongaps.tsv
+cg annotate commongaps.tsv annotcommongaps.tsv /complgen/refseq/hg18/reg_*.tsv /complgen/refseq/hg18/gene_*.tsv
+
+# find genes which have a exonic variant in 3 or more samples
+# select variants with some serious effect on protein (CG annotation)
+cg select -q '$impact ~ /MISSENSE|DELETE|DISRUPT|FRAMESHIFT|INSERT|MISSTART|NONSTOP|NONSENSE/' filtered_compar.tsv temp
+# group on gene name (for CG annotation = symbol field)
+cg groupby symbol temp gtemp
+# find the genes
+cg select -q 'counthasone($sequenced-*, == "v") >= 3' gtemp result
