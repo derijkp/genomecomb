@@ -1,0 +1,14 @@
+== Format ==
+@BASE@ fields ?infile? ?outfile?
+
+== Description ==
+Groups lines in a tab separated file, 
+where the value in columns given by field are the same.
+Only subsequent lines with the same values in fields are grouped!
+Sort first if you are not sure that they are.
+Entries are concatenated using commas.
+
+== Arguments ==
+* fields: list of fields which should be the same for lines to be groups
+* infile: file to be scanned, if not given, uses stdin. File may be compressed.
+* outfile: write results to outfile, if not given, uses stdout
