@@ -1,3 +1,6 @@
+# the next line restarts using wish \
+exec tclsh "$0" ${1+"$@"}
+
 proc tsv_select_idtopos {header id fields} {
 	set poss [list_cor $header $fields]
 	if {[inlist $poss -1]} {error "sample $id not present"}
@@ -77,7 +80,7 @@ proc tsv_select_un {header ids} {
 	set temp "(([join $temp2 " || "]) && ([join $temp1 " || " ]))"
 }
 
-proc tsv_select_count {header ids} {
+proc tsv_select_count {ids} {
 	set test [list_pop ids]
 	set temp {}
 	foreach id $ids {
@@ -86,6 +89,76 @@ proc tsv_select_count {header ids} {
 	return "([join $temp " + "])"
 }
 # cg select -q 'count($alleleSeq1,$alleleSeq2, == "G") == 1' annotvar.tsv
+
+proc tsv_select_min {} {
+	upvar awkfunctions awkfunctions
+	append awkfunctions {
+		function min(list,def) {
+		        split(list,a,",");
+		        minv = a[1];
+		        for (i in a) {
+		                if (a[i] == "-") {a[i] = def}
+		                if (a[i] < minv) {minv = a[i]}
+		        }
+		        return minv
+		}
+	}
+}
+
+proc tsv_select_max {} {
+	upvar awkfunctions awkfunctions
+	append awkfunctions {
+		function max(list,def) {
+		        split(list,a,",");
+		        maxv = a[1];
+		        for (i in a) {
+		                if (a[i] == "-") {a[i] = def}
+		                if (a[i] > maxv) {maxv = a[i]}
+		        }
+		        return maxv
+		}
+	}
+}
+
+proc tsv_select_counthasone {ids} {
+	upvar awkfunctions awkfunctions
+	upvar tsv_funcnum tsv_funcnum
+	set test [list_pop ids]
+	append awkfunctions [subst -nocommands {
+		function tsvfunc${tsv_funcnum}(list) {
+		        split(list,a,",");
+		        for (i in a) {
+		                if (a[i] $test) {return 1}
+		        }
+		        return 0
+		}
+	}]
+	set temp {}
+	foreach id $ids {
+		lappend temp "tsvfunc${tsv_funcnum}($id)"
+	}
+	return "([join $temp " + "])"
+}
+
+proc tsv_select_counthasall {ids} {
+	upvar awkfunctions awkfunctions
+	upvar tsv_funcnum tsv_funcnum
+	set test [list_pop ids]
+	append awkfunctions [subst -nocommands {
+		function tsvfunc${tsv_funcnum}(list) {
+		        split(list,a,",");
+		        for (i in a) {
+		                if (!(a[i] $test)) {return 0}
+		        }
+		        return 1
+		}
+	}]
+	set temp {}
+	foreach id $ids {
+		lappend temp "tsvfunc${tsv_funcnum}($id)"
+	}
+	return "([join $temp " + "])"
+}
 
 proc tsv_select_oneof {header ids} {
 	set value [list_shift ids]
@@ -123,6 +196,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	set awk ""
 	set sort ""
 	set cut ""
+	set tsv_funcnum 1
 	if {[llength $sortfields]} {
 		set poss [list_cor $header $sortfields]
 		if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $sortfields [list_find $poss -1]] ,] not found"}
@@ -134,26 +208,8 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 		set sort "gnusort8 -t \\t -V -s -k[join $keys " -k"]"
 	}
 	if {($query ne "") || ($qfields ne "")} {
-		set awk {
-			function min(list,def) {
-			        split(list,a,",");
-			        minv = a[1];
-			        for (i in a) {
-			                if (a[i] == "-") {a[i] = def}
-			                if (a[i] < minv) {minv = a[i]}
-			        }
-			        return minv
-			}
-			function max(list,def) {
-			        split(list,a,",");
-			        maxv = a[1];
-			        for (i in a) {
-			                if (a[i] == "-") {a[i] = def}
-			                if (a[i] > maxv) {maxv = a[i]}
-			        }
-			        return maxv
-			}
-		}
+		set awk {}
+		set awkfunctions {}
 		append awk {BEGIN {FS="\t" ; OFS="\t"}}
 		if {$query ne ""} {
 			set indices [list_unmerge [regexp -all -indices -inline {[$]([*a-zA-z0-9_.-]+)} $query]]
@@ -203,11 +259,25 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 						}
 						count {
 							set ids [split $args ,]
-							set temp [tsv_select_count $header $ids]
+							set temp [tsv_select_count $ids]
+						}
+						counthasone {
+							set ids [split $args ,]
+							set temp [tsv_select_counthasone $ids]
+						}
+						counthasall {
+							set ids [split $args ,]
+							set temp [tsv_select_counthasall $ids]
 						}
 						oneof {
 							set ids [split $args ,]
 							set temp [tsv_select_oneof $header $ids]
+						}
+						min {
+							tsv_select_min
+						}
+						max {
+							tsv_select_max
 						}
 					}
 					set query [string_replace $query $start $end $temp]
@@ -236,6 +306,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 		lappend pipe $sort
 	}
 	# putslog stderr ----------\n$awk\n----------
+	set awk $awkfunctions\n$awk
 	if {$awk ne ""} {
 		lappend pipe [list awk $awk]
 	}
@@ -406,11 +477,11 @@ proc tsv_nextline {f xpos next {shift 100000}} {
 proc tsv_index {xfield file} {
 	set indexname [rzroot $file].${xfield}_index
 	if {[inlist {.rz} [file extension $file]]} {
-		set tempfile [tempfile]
+		set tempfile [scratchfile]
 		exec razip -d -c $file > $tempfile
 		set f [open $tempfile]
 	} elseif {[inlist {.gz} [file extension $file]]} {
-		set tempfile [tempfile]
+		set tempfile [scratchfile]
 		exec gunzip -c $file > $tempfile
 		set f [open $tempfile]
 	} else {
@@ -820,6 +891,88 @@ proc tsv_align {file1 file2 joinfields1 joinfields2 postfix1 postfix2} {
 		}
 	}
 	close $f1; close $f2
+}
+
+proc cg_select_help_short {} {
+set help [string_split [file_read $::appdir/lib/cg_select.help] \n\n]
+set help [join [list_sub $help {0 2 3}] \n\n]
+puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
+}
+
+proc cg_select_help {} {
+set help [file_read $::appdir/lib/cg_select.help]
+puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
+}
+
+proc cg_select {args} {
+	if {[llength $args] == 0} {
+		puts "Wrong number of arguments"
+		cg_select_help_short
+		puts "You can get more information about the command using the option --help"
+		exit
+	}
+	set query {}; set fields {}; set sortfields {}; set newheader {}
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-q {
+				set query $value
+				if {[regexp {[^=!><]=[^=]} $query]} {puts stderr "you used = instead of == in query"; exit 1}
+			}
+			-f {set fields $value}
+			-nh {set newheader $value}
+			-s {set sortfields $value}
+			-h {
+				if {$value eq ""} {
+					set header [tsv_open stdin]
+				} else {
+					set f [open $value]
+					set header [tsv_open $f]
+					close $f
+				}
+				puts stdout [join $header \n]
+				exit 0
+			}
+			--help {
+				cg_select_help
+				exit 0
+			}
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
+	if {[llength $args] > 0} {
+		set filename [lindex $args 0]
+		set f [rzopen $filename]
+	} else {
+		set f stdin
+	}
+	if {[llength $args] > 1} {
+		set outfile [lindex $args 1]
+		set o [open $outfile w]
+	} else {
+		set o stdout
+	}
+	set error [catch {tsv_select $query $fields $sortfields $newheader $f $o} result]
+	if {$f ne "stdin"} {catch {close $f}}
+	if {$o ne "stdout"} {catch {close $o}}
+	if {$error} {
+		puts stderr $result
+		exit 1
+	}
+}
+
+if {[info exists argv]} {
+	package require pkgtools
+	set appdir [file dir [pkgtools::startdir]]
+	lappend auto_path $appdir/lib
+	append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
+	package require Extral
+	set ::base [file tail [info script]]
+	cg_select {*}$argv
 }
 
 if 0 {

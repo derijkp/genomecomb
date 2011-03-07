@@ -1,0 +1,56 @@
+== Format ==
+@BASE@ ?options? ?infile? ?outfile?
+
+== Description ==
+Scans a tab separated file, and returns selected lines and columns, optionally sorted.
+The first line of the file should be a header containing the field names of each column.
+Lines starting with # are ignored (comment). If the files starts with comment lines,
+the last comment line will be used as a header (without the preceeding #)
+In the result, the header is included.
+
+== Arguments ==
+* infile: file to be scanned, if not given, uses stdin. File may be compressed.
+* outfile: write results to outfile, if not given, uses stdout
+
+== Options ==
+* -q query: only lines fullfilling conditions in query will be written to outfile (see further)
+* -f fields: only write given fields to result
+* -s sortfields: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
+* -nh newheader: replace header in output with fields given by this option
+* -h: return header fields in file
+
+== Query ==
+In queries, the value of a field for the line can be accessed using a $ followed by the name of the field.
+e.g.:
+$start > 10000
+will only return lines where the field start is larger than 10000. Queries support all operators
+and functions provided by awk.
+
+Some extra functions are available:
+
+=== fields that contain comma separated lists ===
+Some fields can contain multiple values in the form of a comma separated list. The following functions allow
+using this in queries
+
+* min($field, def): the minimum of the list of numbers in field, def is given for a - in the list
+* max($field, def): the maximum of the list of numbers in field, def is given for a - in the list
+
+=== multifield functions ===
+The following functions address multiple fields.
+
+* count($field1, $field2, ..., test): Counts the number of fields that fullfill the test (can be things like: ' == "A"' or '< 20')
+* counthasone($field1, $field2, ..., test): Counts the number of fields containing a commma separated lists for which one of the values fullfills the test
+* counthasall($field1, $field2, ..., test): Counts the number of fields containing a commma separated lists for which all of the values fullfill the test
+
+An asterix can be used to indicated several fields matching a pattern.
+As field names specific to a sample are made by appending with -samplename, something like
+count($sequenced-*, == "v")
+will give the number of samples for which a variant was found
+
+=== comparing samples ===
+
+* same(sample1,sample2, ...): same: all samples have the same genotype (does not have to be a variant) (all sequenced)
+* sm(sample1,sample2, ...): same: variant with the same genotype in all given samples (all sequenced)
+* df(sample1,sample2, ...): different: variant in some, reference in other (all sequenced)
+* mm(sample1,sample2, ...): mismatch; variant in all, but different genotypes (all sequenced)
+* un(sample1,sample2, ...): unsequenced in some samples, variant in one of the others
