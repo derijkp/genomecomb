@@ -5,6 +5,9 @@ exec tclsh "$0" ${1+"$@"}
 package require Extral
 
 proc cg_sh {args} {
+	if {[lsearch $args tk] != -1} {
+		package require TK
+	}
 	package require Tclx
 	signal -restart error SIGINT
 	if {[info commands "console"] == "console"} {
