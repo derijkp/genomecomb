@@ -115,10 +115,14 @@ proc multireg {compar_file file} {
 	file rename $compar_file.temp $compar_file	
 }
 
+proc cg_select_help {} {
+set help [file_read $::appdir/lib/cg_multireg.help]
+puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
+}
+
 proc cg_multireg {args} {
 	if {([llength $args] < 1)} {
-		puts stderr "format is: $::base compar_file ?file? ..."
-		puts stderr " - adds new sample region files to compar_file"
+		cg_select_help
 		exit 1
 	}
 	foreach {compar_file} $args break
@@ -135,6 +139,6 @@ if {[info exists argv]} {
 	lappend auto_path $appdir/lib
 	append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
 	package require Extral
-	set ::base $scriptname
+	set ::base [file tail [info script]]
 	cg_multireg {*}$argv
 }
