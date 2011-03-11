@@ -22,11 +22,11 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 		}
 		if {$force || ![file exists $root.tsv.numinfo]} {
 			puts "Info on $file"
-			cg svinfo $file $dbdir/regdb-simple_repeats.tsv
+			cg svinfo $file
 		}
 		if {$force || ![file exists $root-sv.tsv]} {
 			puts "svfind $file"
-			cg svfind $file $dbdir/regdb-simple_repeats.tsv
+			cg svfind $file $dbdir/reg_hg18_simpleRepeat.tsv
 		}
 		if {$force || [file extension $file] ne ".rz"} {
 			puts "razipping $file"

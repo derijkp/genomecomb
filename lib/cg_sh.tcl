@@ -17,7 +17,7 @@ proc cg_sh {args} {
 	}
 }
 
-if {[info exists argv]} {
+if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	set scriptname [info script]
 	package require pkgtools
 	set appdir [file dir [pkgtools::startdir]]

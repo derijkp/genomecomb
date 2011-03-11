@@ -334,7 +334,7 @@ proc cg_annotate {args} {
 	file delete {*}$afiles
 }
 
-if {[info exists argv]} {
+if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	package require pkgtools
 	set appdir [file dir [pkgtools::startdir]]
 	lappend auto_path $appdir/lib
