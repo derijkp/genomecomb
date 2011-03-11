@@ -128,8 +128,9 @@ proc svmulticompar_write {o id group poss2 dummy1 dummy2 {ddummy1 {}} {ddummy2 {
 	}
 	set max [max [llength $todo(1)] [llength $todo(2)]]
 	if {$max > 1} {append id -$max}
+	# count keeps track of how many matches we have for this sv
 	if {[llength $todo(1)]} {
-		set count [lindex $todo(1) 0 11]
+		set count [lindex $todo(1) 0 $::countpos]
 	} else {
 		set count 0
 	}
@@ -201,7 +202,7 @@ proc svmulticompar_write {o id group poss2 dummy1 dummy2 {ddummy1 {}} {ddummy2 {
 #}
 
 proc svmulticompar_getlist {f1 poss1 len1 line1Var f2 poss2 len2 line2Var} {
-	# lines have the following format: {src chr1 start1 end1 type size zyg chr2 start2 end2}
+	# lines have the following format: {src chr1 start1 end1 type size zyg chr2 start2 end2 ...}
 # puts [join [list_subindex [list $line1 $line2] {0 1 2 3 4 5}] \n]
 	upvar $line1Var line1
 	upvar $line2Var line2
@@ -253,8 +254,8 @@ proc svmulticompar_getlist {f1 poss1 len1 line1Var f2 poss2 len2 line2Var} {
 }
 
 proc svmulticompar {svfile1 svfile2} {
-
 	set locfields {chr1 start1 end1 type size zyg chr2 start2 end2}
+	set ::countpos [expr {[llength $locfields]+2}]
 	if {![file exists $svfile1]} {
 		set o [open $svfile1 w]
 		puts $o id\tcount\t[join $locfields \t]
@@ -262,7 +263,7 @@ proc svmulticompar {svfile1 svfile2} {
 	}
 
 	catch {close $f1}; catch {close $f2}; catch {close $o}; catch {file delete $tempfile2}
-#file copy -force comparsvcg.tsv.old comparsvcg.tsv
+	#file copy -force comparsvcg.tsv.old comparsvcg.tsv
 	set o [open $svfile1.temp w]
 	#
 	# open compar file
@@ -297,8 +298,11 @@ proc svmulticompar {svfile1 svfile2} {
 	set line2 [svmulticompar_getline $f2 $poss2 2]
 	set did 1
 	while {![eof $f1] || ![eof $f2]} {
+		# get overlapping lines from both files in the following format (locfields):
+		# {src chr1 start1 end1 type size zyg chr2 start2 end2 (complete line)}
 		set list [svmulticompar_getlist $f1 $poss1 $len1 line1 $f2 $poss2 $len2 line2]
 #puts ----
+#putsvars list
 #puts [join [list_subindex $list {0 1 2 3 4 5}] \n]
 #if {[lsearch [list_subindex $list 3] 67759423] != -1} {error STOPPED}
 #if {[lindex $list 0 4] eq "trans"} {error STOP}
@@ -351,6 +355,36 @@ proc svmulticompar {svfile1 svfile2} {
 
 }
 
+proc cg_svmulticompar_help {} {
+	set help [file_read $::appdir/lib/cg_svmulticompar.help]
+	puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
+}
+
+proc cg_svmulticompar {args} {
+	if {$args eq "--help"} {
+		cg_svmulticompar_help
+	} elseif {[llength $args] < 2} {
+		puts "Wrong number of arguments"
+		cg_svmulticompar_help
+		exit
+	}
+	foreach {compar_file} $args break
+	set dirs [lrange $args 1 end]
+	foreach dir $dirs {
+		putslog "Adding $dir"
+		svmulticompar $compar_file $dir
+	}
+}
+
+if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
+	package require pkgtools
+	set appdir [file dir [pkgtools::startdir]]
+	lappend auto_path $appdir/lib
+	append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
+	package require Extral
+	set ::base [file tail [info script]]
+	cg_svmulticompar {*}$argv
+}
 
 
 if 0 {

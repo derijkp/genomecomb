@@ -1,0 +1,11 @@
+== Format ==
+@BASE@ svmulticomparfile svfile ...
+
+== Description ==
+This command is used to create multi sv compar_files.
+These are tab separated files indicating structural variants present in one or more samples.
+
+== Arguments ==
+* svmulticomparfile: resultfile, will be created if it does not exist
+* svfile: file containing structural variants of new sample to be added
+More than one svfile can added in one command
