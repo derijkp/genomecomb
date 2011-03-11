@@ -194,6 +194,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	set header [tsv_open $f]
 	set qfields [tsv_select_expandfields $header $qfields qposs]
 	set awk ""
+	set awkfunctions {}
 	set sort ""
 	set cut ""
 	set tsv_funcnum 1
@@ -208,8 +209,6 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 		set sort "gnusort8 -t \\t -V -s -k[join $keys " -k"]"
 	}
 	if {($query ne "") || ($qfields ne "")} {
-		set awk {}
-		set awkfunctions {}
 		append awk {BEGIN {FS="\t" ; OFS="\t"}}
 		if {$query ne ""} {
 			set indices [list_unmerge [regexp -all -indices -inline {[$]([*a-zA-z0-9_.-]+)} $query]]
