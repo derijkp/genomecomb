@@ -306,7 +306,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	}
 	# putslog stderr ----------\n$awk\n----------
 	set awk $awkfunctions\n$awk
-	if {$awk ne ""} {
+	if {[string trim $awk] ne ""} {
 		lappend pipe [list awk $awk]
 	}
 	# putslog pipe:[join $pipe " | "]
