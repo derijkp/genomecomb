@@ -103,10 +103,10 @@ proc cg_project {args} {
 			file mkdir $name
 			if {$direct} {
 				puts "Processing $name"
-				exec cg process_sample $cgdir $name $refseqdir >@ stdout 2>@stderr
+				exec cg process_sample $cgdir $name $refseqdir/$build >@ stdout 2>@stderr
 			} else {
 				set host [lindex [file split $cgdir] 2]
-				set job [submit -host $host cg process_sample $cgdir $name $refseqdir]
+				set job [submit -host $host cg process_sample $cgdir $name $refseqdir/$build]
 				if {[isint $job]} {lappend jobs $job}
 			}
 			catch {file copy $cgdir/ASM/CNV $name} result
@@ -221,6 +221,7 @@ proc cg_project {args} {
 			puts "$project -> $user"
 			if {![file exists /home/MOLGEN/$user/complgen]} {
 				catch {file mkdir /home/MOLGEN/$user/complgen}
+				exec chown "$user.domain users" /home/MOLGEN/$user
 				exec chown "$user.domain users" /home/MOLGEN/$user/complgen
 			}
 			cd /home/MOLGEN/$user/complgen
