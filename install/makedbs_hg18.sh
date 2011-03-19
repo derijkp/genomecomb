@@ -33,9 +33,6 @@ mv ucsc_hg18_refGene.tsv gene_hg18_refGene.tsv
 mv ucsc_hg18_ensGene.tsv gene_hg18_ensGene.tsv
 mv ucsc_hg18_knownGene.tsv gene_hg18_knownGene.tsv
 
-
-
-
 ## annovar
 ## -------
 #cd /complgen/refseq/annovar
