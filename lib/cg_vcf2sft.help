@@ -1,0 +1,9 @@
+== Format ==
+@BASE@ vcf2sft ?infile? ?outfile?
+
+== Description ==
+Converts data in vcf format to sft (simple feature table) format
+
+== Arguments ==
+* infile: file to be converted, if not given, uses stdin. File may be compressed.
+* outfile: write results to outfile, if not given, uses stdout
