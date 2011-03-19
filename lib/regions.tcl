@@ -117,7 +117,7 @@ proc reghisto {regfile} {
 		incr tot $tota($len)
 	}
 	puts $o all\tall\t$tot
-	puts $o all\tallnonull\t[expr {$tot-$tota(0)}]
+	puts $o all\tallnonull\t[expr {$tot-[get tota(0) 0]}]
 }
 
 proc regjoin {regfile1 regfile2} {
