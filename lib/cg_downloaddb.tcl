@@ -218,7 +218,7 @@ proc downloaddb {path build dbname} {
 }
 
 proc cg_downloaddb {args} {
-	if {([llength $args] < 3)} {
+	if {([llength $args] < 2)} {
 		puts stderr "format is: $::base resultdir build database ?...?"
 		puts stderr " - downloads databases from ucsc and converts to region format"
 		exit 1
