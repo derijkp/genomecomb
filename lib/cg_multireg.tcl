@@ -115,14 +115,14 @@ proc multireg {compar_file file} {
 	file rename $compar_file.temp $compar_file	
 }
 
-proc cg_select_help {} {
+proc cg_multireg_help {} {
 set help [file_read $::appdir/lib/cg_multireg.help]
 puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
 }
 
 proc cg_multireg {args} {
 	if {([llength $args] < 1)} {
-		cg_select_help
+		cg_multireg_help
 		exit 1
 	}
 	foreach {compar_file} $args break
