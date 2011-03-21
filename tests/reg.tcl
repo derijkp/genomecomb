@@ -8,7 +8,7 @@ append ::env(PATH) :[file dir [file dir [file normalize [info script]]]]/bin
 putsvars ::env(PATH)
 
 test regsubtract {basic} {
-	exec cg regsubtract reg1.tsv reg2.tsv
+	exec cg regsubtract data/reg1.tsv data/reg2.tsv
 } {chromosome	begin	end
 1	10	15
 1	55	60
@@ -21,7 +21,7 @@ test regsubtract {basic} {
 3-1000} error
 
 test covered {basic} {
-	exec cg covered reg1.tsv
+	exec cg covered data/reg1.tsv
 } {chromosome	bases
 1	20
 2	130
@@ -33,7 +33,7 @@ total	350
 3-1000} error
 
 test covered {basic} {
-	exec cg covered reg2.tsv
+	exec cg covered data/reg2.tsv
 } {chromosome	bases
 1	20
 2	220
@@ -63,7 +63,7 @@ chr1	24	26
 chr1	27	30}
 
 test regjoin {basic} {
-	exec cg regjoin reg1.tsv reg2.tsv 2> /dev/null
+	exec cg regjoin data/reg1.tsv data/reg2.tsv 2> /dev/null
 } {chromosome	begin	end
 1	10	25
 1	45	60
@@ -73,7 +73,7 @@ test regjoin {basic} {
 3	2000	2100}
 
 test regjoin {basic} {
-	exec cg regjoin reg1.tsv reg3.tsv 2> /dev/null
+	exec cg regjoin data/reg1.tsv data/reg3.tsv 2> /dev/null
 } {chromosome	begin	end
 1	5	8
 1	10	25
@@ -86,7 +86,7 @@ test regjoin {basic} {
 3	2500	2600}
 
 test regjoin {self} {
-	exec cg regjoin reg3.tsv 2> /dev/null
+	exec cg regjoin data/reg3.tsv 2> /dev/null
 } {chromosome	begin	end
 1	5	8
 1	10	18
