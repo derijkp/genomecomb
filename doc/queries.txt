@@ -1,4 +1,6 @@
-cd /complgen/projects/cmt71/compar
+cd ~/complgen
+mkdir ftld1.work
+cd ftld1.work
 cg select -h ../ftld1/compar/fannotftld1_compar.tsv
 cg select -h ../ftld1/compar/fannotftld1_compar.tsv | sed 's/ /\n/g' | grep allele
 
@@ -101,8 +103,10 @@ cg makeprimers valreg.tsv may2009 600 500 /complgen/refseq/hg18/build36-ssa 1 > 
 cg regsubtract /complgen/refseq/reg_hg18_completegenome.tsv ../NNN/compar/NNN_reg.tsv > commongaps.tsv
 cg annotate commongaps.tsv annotcommongaps.tsv /complgen/refseq/hg18/reg_*.tsv /complgen/refseq/hg18/gene_*.tsv
 
-# find genes which have a exonic variant in 3 or more samples
+# find genes which have an interesting variant in 3 or more samples
 # select variants with some serious effect on protein (CG annotation)
+# (this actually needs more selection, as a large proportion of variants is
+# present in everything, and thus not interesting)
 cg select -q '$impact ~ /MISSENSE|DELETE|DISRUPT|FRAMESHIFT|INSERT|MISSTART|NONSTOP|NONSENSE/' filtered_compar.tsv temp
 # group on gene name (for CG annotation = symbol field)
 cg groupby symbol temp gtemp
