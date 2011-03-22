@@ -1,0 +1,36 @@
+== Format ==
+@BASE@ ?options? variantfile resultfile dbfile ...
+
+== Description ==
+Adds new columns with annotation to variantfile.
+Each dbfile will add 1 or more columns to the resultfile.
+different types of dbfiles are treated differently. The type is determined 
+based on the first part of the filename (before the first underscore).
+Each column will start with a base name (the part of the filename
+after the last underscore)
+
+== Arguments ==
+* variantfile: file in sft format with variant data
+* resultfile: resulting file in sft format with new columns added
+* dbfile: files (sft format) with features used for annotation
+
+== Options ==
+* -near dist: also annotate variants with the nearest feature in 
+the dbfile if it is closer than **dist** to it. A column name_dist will
+be added that contains the distance.
+
+== database types ==
+* var
+* gene
+* reg
+If a database filename does not start with one of these types, 
+it will be considered a reg database.
+
+== database parameters ==
+If a file dbfile.opt exists, it will be scanned for database parameters.
+It should be a tab separated list, where each line contains a key and a 
+value (separated by a tab)
+Possible keys are:
+* name: this will be the base for names of added columns (in stead of extracting it from the filename)
+* fields: These fields will be extracted from the database and added to the annotated file in stead 
+  of the defaults (one or more of name, name2, freq and score, depending on the type and name of the database)

@@ -59,9 +59,9 @@ cg select -f 'chromosome begin end type ref alt snp130_name snp130_freq' antest_
 }
 
 
-proc annotate {file dbfile annotfile {outfields {name score freq}}} {
+proc annotate {file dbfile name annotfile near {outfields {name score freq}}} {
 
-	set name [lindex [split [file root [file tail $dbfile]] _] end]
+putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 	catch {close $f}
 	set f [open $file]
 	set poss [open_region $f header]
@@ -79,22 +79,32 @@ proc annotate {file dbfile annotfile {outfields {name score freq}}} {
 	set dataposs [list_sub $dataposs -exclude $temp]
 	if {[llength $nh] == 0} {
 		set dataposs {-1 -1}
-		set newh $name
+		if {$near != -1} {
+			set newh ${name}_dist
+		} else {
+			set newh $name
+		}
 	} elseif {[llength $nh] == 1} {
 		lappend dataposs -1
 		set newh $name
+		if {$near != -1} {
+			lappend newh ${name}_dist
+		}
 	} else {
 		set dataposs [lrange $dataposs 0 1]
 		set newh {}
 		foreach key [lrange $nh 0 1] {
 			lappend newh ${name}_$key
 		}
+		if {$near != -1} {
+			lappend newh ${name}_dist
+		}
 	}
 	set o [open $annotfile.temp w]
 	puts $o [join $newh \t]
 	close $o
-	# puts [list reg_annot $file {*}$poss $dbfile {*}$dbposs {*}$dataposs]
-	exec reg_annot $file {*}$poss $dbfile {*}$dbposs {*}$dataposs >> $annotfile.temp 2>@ stderr
+	# puts [list reg_annot $file {*}$poss $dbfile {*}$dbposs {*}$dataposs $near]
+	exec reg_annot $file {*}$poss $dbfile {*}$dbposs {*}$dataposs $near >> $annotfile.temp 2>@ stderr
 	file rename $annotfile.temp $annotfile
 
 }
@@ -107,10 +117,9 @@ if 0 {
 	set outfields name
 }
 
-proc annotategene {file dbfile annotfile {outfields {name}}} {
+proc annotategene {file dbfile name annotfile {outfields {name}}} {
 	global dbline
 
-	set name [lindex [split [file root [file tail $dbfile]] _] end]
 	catch {close $f}; catch {close $df}; catch {close $o};
 	set f [open $file]
 	set poss [open_region $f header]
@@ -197,8 +206,7 @@ proc annotategene {file dbfile annotfile {outfields {name}}} {
 
 }
 
-proc annotatevar {file dbfile annotfile {outfields {name score freq}}} {
-	set name [lindex [split [file root [file tail $dbfile]] _] end]
+proc annotatevar {file dbfile name annotfile {outfields {name score freq}}} {
 	catch {close $f}
 	set f [open $file]
 	set poss [open_region $f header]
@@ -251,12 +259,30 @@ proc annotatevar {file dbfile annotfile {outfields {name score freq}}} {
 	file rename -force $annotfile.temp $annotfile
 }
 
+proc cg_annotate_help {} {
+	set help [file_read $::appdir/lib/cg_annotate.help]
+	puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
+}
+
 proc cg_annotate {args} {
 	if {([llength $args] < 3)} {
-		puts stderr "format is: $::base variantfile resultfile dbfile ..."
-		puts stderr " - adds new columns with annotation to variantfile"
+		cg_annotate_help
 		exit 1
 	}
+	set near -1
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-near {
+				set near $value
+			}
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
 	foreach {file resultfile} $args break
 	set dbfiles [lrange $args 2 end]
 	if {[file isdir [lindex $dbfiles 0]]} {
@@ -279,7 +305,13 @@ proc cg_annotate {args} {
 	}
 	set afiles {}
 	foreach dbfile $dbfiles {
-		set name [lindex [split [file root [file tail $dbfile]] _] end]
+		unset -nocomplain a
+		if {[file exists $dbfile.opt]} {array set a [file_read $dbfile.opt]}
+		if {[info exists a(name)]} {
+			set name $a(name)
+		} else {
+			set name [lindex [split [file root [file tail $dbfile]] _] end]
+		}
 		if {[info exists skip($name)]} {
 			puts "Skipping $dbfile: $name already in file"
 			continue
@@ -287,6 +319,7 @@ proc cg_annotate {args} {
 		puts stderr "Adding $dbfile"
 		set dbtype [lindex [split [file tail $dbfile] _] 0]
 		if {$name eq "annovar"} {
+			if {$near != -1} {error "-near option does not work with annovar dbfiles"}
 			lappend afiles $file.${name}_annot
 			if {[file exists $file.${name}_annot]} {
 				puts stderr "$file.${name}_annot exists: skipping scan"
@@ -294,23 +327,33 @@ proc cg_annotate {args} {
 			}
 			annovar $file $file.${name}_annot $dbfile
 		} elseif {$dbtype eq "gene"} {
+			if {$near != -1} {error "-near option does not work with gene dbfiles"}
 			lappend afiles $file.${name}_annot
 			if {[file exists $file.${name}_annot]} {
 				puts stderr "$file.${name}_annot exists: skipping scan"
 				continue
 			}
-			switch -glob $name {
-				default {set outfields {name name2}}
+			if {[info exists a(fields)]} {
+				set outfields $a(fields)
+			} else {
+				switch -glob $name {
+					default {set outfields {name name2}}
+				}
 			}
-			annotategene $file $dbfile $file.${name}_annot $outfields
+			annotategene $file $dbfile $name $file.${name}_annot $outfields
 		} elseif {$dbtype eq "var"} {
+			if {$near != -1} {error "-near option does not work with var dbfiles"}
 			lappend afiles $file.${name}_annot
 			if {[file exists $file.${name}_annot]} {
 				puts stderr "$file.${name}_annot exists: skipping scan"
 				continue
 			}
-			set outfields {name freq score}
-			annotatevar $file $dbfile $file.${name}_annot $outfields
+			if {[info exists a(fields)]} {
+				set outfields $a(fields)
+			} else {
+				set outfields {name freq score}
+			}
+			annotatevar $file $dbfile $name $file.${name}_annot $outfields
 		} else {
 			lappend afiles $file.${name}_annot
 			if {[file exists $file.${name}_annot]} {
@@ -318,16 +361,20 @@ proc cg_annotate {args} {
 				continue
 			}
 			puts stderr "Adding $dbfile"
-			switch -glob $name {
-				1000g* {set outfields freq}
-				rmsk {set outfields name}
-				evofold {set outfields score}
-				rnaGene {set outfields name}
-				simpleRepeat {set outfields score}
-				tRNAs {set outfields name}
-				default {set outfields {name freq score}}
+			if {[info exists a(fields)]} {
+				set outfields $a(fields)
+			} else {
+				switch -glob $name {
+					1000g* {set outfields freq}
+					rmsk {set outfields name}
+					evofold {set outfields score}
+					rnaGene {set outfields name}
+					simpleRepeat {set outfields score}
+					tRNAs {set outfields name}
+					default {set outfields {name freq score}}
+				}
 			}
-			annotate $file $dbfile $file.${name}_annot $outfields
+			annotate $file $dbfile $name $file.${name}_annot $near $outfields
 		}
 	}
 	exec paste $file {*}$afiles > $resultfile
