@@ -170,33 +170,135 @@ proc tsv_select_oneof {header ids} {
 }
 # cg select -q 'oneof($alleleSeq1-dlb_a_d390,"G","C")' annottest_compar.tsv
 
-proc tsv_select_expandfields {header qfields qpossVar} {
+proc tsv_select_expandfield {header field qpossVar} {
 	upvar $qpossVar qposs
-	if {[string first * $qfields] != -1} {
-		set qposs {}
-		foreach field $qfields {
-			set poss [list_find -glob $header $field]
-			lappend qposs {*}$poss
-		}
-		set result [list_sub $header $qposs]
-		set qposs [lmath_calc $qposs + 1]
-		return $result
-	} else {
-		set qposs [list_cor $header $qfields]
-		set qposs [lmath_calc $qposs + 1]
-		return $qfields
+	set qposs [list_find -glob $header $field]
+	if {![llength $qposs]} {
+		error "no fields matched \"$field\""
 	}
+	set result [list_sub $header $qposs]
+	set qposs [lmath_calc $qposs + 1]
+	return $result
+}
+
+proc tsv_select_expandfields {header qfields qpossVar awkfunctionsVar} {
+	upvar $qpossVar qposs
+	upvar $awkfunctionsVar awkfunctions
+	set qposs {}
+	set rfields {}
+	foreach field $qfields {
+		set pos [string first = $field]
+		if {$pos != -1} {
+			lappend rfields [string range $field 0 [expr {$pos-1}]]
+			set code [string range $field [expr {$pos+1}] end]
+			lappend qposs [tsv_select_expandcode $header $code awkfunctions]
+		} elseif {[string first * $field] != -1} {
+			lappend rfields {*}[tsv_select_expandfield $header $field poss]
+			foreach pos $poss {
+				lappend qposs \$$pos
+			}
+		} else {
+			set pos [lsearch $header $field]
+			if {$pos == -1} {
+				error "field \"$field\" not present"
+			}
+			lappend rfields $field
+			lappend qposs \$[expr {$pos+1}]
+		}
+	}
+	return $rfields
+}
+
+proc tsv_select_expandcode {header code awkfunctionsVar} {
+	upvar $awkfunctionsVar awkfunctions
+	set indices [list_unmerge [regexp -all -indices -inline {[$]([*a-zA-z0-9_.-]+)} $code]]
+	set indices [list_reverse $indices]
+	list_foreach {start end} $indices {
+		set field [string range $code [expr {$start+1}] $end]
+		if {[string first * $field] == -1} {
+			set pos [lsearch $header $field]
+			if {$pos == -1} {error "field \"$field\" not present"}
+			incr pos
+			set code [string_replace $code $start $end \$$pos]
+		} else {
+			set temp [tsv_select_expandfield $header $field tposs]
+			if {![llength $temp]} {error "field \"$field\" not present"}
+			set new {}
+			foreach pos $tposs {
+				lappend new \$$pos
+			}
+			set code [string_replace $code $start $end [join $new ,]]
+		}
+	}
+	set indices [list_unmerge [regexp -all -indices -inline {([a-zA-z0-9_]+)\([^)]+\)} $code]]
+	set indices [list_reverse $indices]
+	list_foreach {start end} $indices {
+		set full [string range $code [expr {$start}] $end]
+		if {[regexp {^(.*)\((.*)\)$} $full temp func args]} {
+			switch $func {
+				sm {
+					set ids [split $args ,]
+					set temp [tsv_select_sm $header $ids]
+				}
+				same {
+					set ids [split $args ,]
+					set temp [tsv_select_same $header $ids]
+				}
+				df {
+					set ids [split $args ,]
+					set temp [tsv_select_df $header $ids]
+				}
+				mm {
+					set ids [split $args ,]
+					set temp [tsv_select_mm $header $ids]
+				}
+				un {
+					set ids [split $args ,]
+					set temp [tsv_select_un $header $ids]
+				}
+				count {
+					set ids [split $args ,]
+					set temp [tsv_select_count $ids]
+				}
+				counthasone {
+					set ids [split $args ,]
+					set temp [tsv_select_counthasone $ids]
+				}
+				counthasall {
+					set ids [split $args ,]
+					set temp [tsv_select_counthasall $ids]
+				}
+				oneof {
+					set ids [split $args ,]
+					set temp [tsv_select_oneof $header $ids]
+				}
+				min {
+					tsv_select_min
+				}
+				max {
+					tsv_select_max
+				}
+			}
+			set code [string_replace $code $start $end $temp]
+		} else {
+			set pos [lsearch $header $field]
+			if {$pos == -1} {error "field \"$field\" not present"}
+			incr pos
+			set code [string_replace $code $start $end \$$pos]
+		}
+	}
+	return $code
 }
 
 proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {out stdout}} {
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	set header [tsv_open $f]
-	set qfields [tsv_select_expandfields $header $qfields qposs]
 	set awk ""
 	set awkfunctions {}
 	set sort ""
 	set cut ""
+	set qfields [tsv_select_expandfields $header $qfields qposs awkfunctions]
 	set tsv_funcnum 1
 	if {[llength $sortfields]} {
 		set poss [list_cor $header $sortfields]
@@ -211,94 +313,10 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	if {($query ne "") || ($qfields ne "")} {
 		append awk {BEGIN {FS="\t" ; OFS="\t"}}
 		if {$query ne ""} {
-			set indices [list_unmerge [regexp -all -indices -inline {[$]([*a-zA-z0-9_.-]+)} $query]]
-			set indices [list_reverse $indices]
-			list_foreach {start end} $indices {
-				set field [string range $query [expr {$start+1}] $end]
-				if {[string first * $field] == -1} {
-					set pos [lsearch $header $field]
-					if {$pos == -1} {error "field \"$field\" not present"}
-					incr pos
-					set query [string_replace $query $start $end \$$pos]
-				} else {
-					set temp [tsv_select_expandfields $header $field tposs]
-					if {![llength $temp]} {error "field \"$field\" not present"}
-					set new {}
-					foreach pos $tposs {
-						lappend new \$$pos
-					}
-					set query [string_replace $query $start $end [join $new ,]]
-				}
-			}
-			set indices [list_unmerge [regexp -all -indices -inline {([a-zA-z0-9_]+)\([^)]+\)} $query]]
-			set indices [list_reverse $indices]
-			list_foreach {start end} $indices {
-				set full [string range $query [expr {$start}] $end]
-				if {[regexp {^(.*)\((.*)\)$} $full temp func args]} {
-					switch $func {
-						sm {
-							set ids [split $args ,]
-							set temp [tsv_select_sm $header $ids]
-						}
-						same {
-							set ids [split $args ,]
-							set temp [tsv_select_same $header $ids]
-						}
-						df {
-							set ids [split $args ,]
-							set temp [tsv_select_df $header $ids]
-						}
-						mm {
-							set ids [split $args ,]
-							set temp [tsv_select_mm $header $ids]
-						}
-						un {
-							set ids [split $args ,]
-							set temp [tsv_select_un $header $ids]
-						}
-						count {
-							set ids [split $args ,]
-							set temp [tsv_select_count $ids]
-						}
-						counthasone {
-							set ids [split $args ,]
-							set temp [tsv_select_counthasone $ids]
-						}
-						counthasall {
-							set ids [split $args ,]
-							set temp [tsv_select_counthasall $ids]
-						}
-						oneof {
-							set ids [split $args ,]
-							set temp [tsv_select_oneof $header $ids]
-						}
-						min {
-							tsv_select_min
-						}
-						max {
-							tsv_select_max
-						}
-					}
-					set query [string_replace $query $start $end $temp]
-				} else {
-					set pos [lsearch $header $field]
-					if {$pos == -1} {error "field \"$field\" not present"}
-					incr pos
-					set query [string_replace $query $start $end \$$pos]
-				}
-			}
+			set query [tsv_select_expandcode $header $query awkfunctions]
 			append awk $query
 		}
-		if {($qfields ne "")} {
-			set qposs [list_cor $header $qfields]
-		} else {
-			set qposs [list_cor $header $header]
-		}
-		if {[inlist $qposs -1]} {
-			error "fields [join [list_sub $qfields [list_find $qposs -1]] ", "] not found in file"
-		}
-		set qposs [lmath_calc $qposs + 1]
-		append awk " \{print $[join $qposs ,$]\}"
+		append awk " \{print [join $qposs ,]\}"
 	}
 	set pipe {}
 	if {$sort ne ""} {
@@ -925,9 +943,9 @@ proc cg_select {args} {
 				if {$value eq ""} {
 					set header [tsv_open stdin]
 				} else {
-					set f [open $value]
+					set f [rzopen $value]
 					set header [tsv_open $f]
-					close $f
+					catch {close $f}
 				}
 				puts stdout [join $header \n]
 				exit 0

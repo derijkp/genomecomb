@@ -52,6 +52,24 @@ test select {-s -f -q} {
 2	a2
 4	a4}
 
+test select {-f *} {
+	exec cg select -f {chromosome begin end alleleSeq1-*} -q {$begin == 4000} data/vars1.sft
+} {chromosome	begin	end	alleleSeq1-sample1	alleleSeq1-sample2
+chr1	4000	4001	A	A
+chr2	4000	4001	G	G}
+
+test select {-f calculated} {
+	exec cg select -f {chromosome begin end {geno1=$alleleSeq1-sample1 "/" $alleleSeq2-sample1}} -q {$begin == 4000} data/vars1.sft
+} {chromosome	begin	end	geno1
+chr1	4000	4001	A/G
+chr2	4000	4001	G/G}
+
+test select {-f calculated functions} {
+	exec cg select -f {chromosome begin end {countG=count($alleleSeq*, == "G")}} -q {$begin == 4000} data/vars1.sft
+} {chromosome	begin	end	countG
+chr1	4000	4001	2
+chr2	4000	4001	4}
+
 
 
 testsummarize
