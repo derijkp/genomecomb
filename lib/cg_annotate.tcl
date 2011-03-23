@@ -374,7 +374,8 @@ proc cg_annotate {args} {
 					default {set outfields {name freq score}}
 				}
 			}
-			annotate $file $dbfile $name $file.${name}_annot $near $outfields
+			annotate $file $dbfile $name $file.${name}_annot.temp $near $outfields
+			file rename $file.${name}_annot.temp $file.${name}_annot
 		}
 	}
 	exec paste $file {*}$afiles > $resultfile
