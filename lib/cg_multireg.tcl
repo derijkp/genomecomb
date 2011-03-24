@@ -48,7 +48,6 @@ proc multireg {compar_file file} {
 	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2
 
 	set name [file root [file tail $file]]
-	regexp {[^-]+$} $name name
 	catch {close $f1}; catch {close $f2}; catch {close $o}
 	set f2 [open $file]
 	set poss2 [open_region $f2 h2]
@@ -57,7 +56,7 @@ proc multireg {compar_file file} {
 		incr num
 		if {![expr {$num % 100000}]} {putslog $num}
 		set o [open $compar_file w]
-		puts $o [join {chromosome begin end} \t]\tsequenced-$name
+		puts $o [join {chromosome begin end} \t]\t$name
 		while {![eof $f2]} {
 			set line [get_region $f2 $poss2]
 			if {![llength $line]} continue
@@ -68,11 +67,11 @@ proc multireg {compar_file file} {
 	}
 	set f1 [open $compar_file]
 	set poss1 [open_region $f1 h1]
-	if {[inlist $h1 sequenced-$name]} {
+	if {[inlist $h1 $name]} {
 		error "$name already present in $compar_file"
 	}
 	set o [open $compar_file.temp w]
-	puts $o [join $h1 \t]\tsequenced-$name
+	puts $o [join $h1 \t]\t$name
 	set dummy1 [list_fill [expr {[llength $h1]-3}] 0]
 	foreach {part1 chr1 nchr1 start1 end1} [multireg_next1 $f1 $poss1] break
 	foreach {chr2 nchr2 start2 end2} [multireg_next2 $f2 $poss2] break
