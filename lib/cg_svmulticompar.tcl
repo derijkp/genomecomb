@@ -104,7 +104,7 @@ proc svmulticompar_getline {f poss {type 1}} {
 		lset cur 8 [expr {$endpos+400}]
 	}
 	if {[lindex $cur 0] ne $cchr} {
-		putslog "Starting chromsome [lindex $cur 0]"
+		putslog "Starting chromosome [lindex $cur 0]"
 		set cchr [lindex $cur 0]
 		set cpos 1000000
 	}

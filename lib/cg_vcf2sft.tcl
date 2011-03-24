@@ -11,7 +11,7 @@ puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
 }
 
 proc cg_vcf2sft {args} {
-	if {([llength $args] < 1) || ([llength $args] > 2)} {
+	if {([llength $args] < 0) || ([llength $args] > 2)} {
 		puts "Wrong number of arguments"
 		cg_vcf2sft_help
 		exit 1
@@ -52,13 +52,12 @@ proc cg_vcf2sft {args} {
 		}
 	}
 	set samples [lrange $header 9 end]
-	set nheader {chromsome begin end type ref alt}
+	set nheader {chromosome begin end type ref alt}
 	lappend nheader quality filter
 	set formatfields {GT}
 	set headerfields {alleleSeq1 alleleSeq2 fased}
 	foreach temp $a(FORMAT) {
-		set d [split [string range $temp 1 end-1] ,=]
-		set id [dict get $d ID]
+		regexp {ID=([^,]+)} $temp temp id
 		if {[inlist {GT} $id]} continue
 		lappend formatfields $id
 		lappend headerfields [get conv_formata($id) $id]
@@ -76,7 +75,9 @@ proc cg_vcf2sft {args} {
 	set next 100000; set num 0
 	while {![eof $f]} {
 		if {$num >= $next} {putslog $num; incr next 100000}
-		set line [split [gets $f] \t]
+		set line [gets $f]
+		if {[string index $line 0] eq "#"} continue
+		set line [split $line \t]
 		if {![llength $line]} continue
 		foreach {chrom pos id ref alt qual filter info format} $line break
 		set format [split $format :]

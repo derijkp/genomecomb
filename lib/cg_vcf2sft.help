@@ -1,5 +1,5 @@
 == Format ==
-@BASE@ vcf2sft ?infile? ?outfile?
+@BASE@ ?infile? ?outfile?
 
 == Description ==
 Converts data in vcf format to sft (simple feature table) format
