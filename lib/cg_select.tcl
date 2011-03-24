@@ -958,6 +958,7 @@ proc cg_select {args} {
 				cg_select_help
 				exit 0
 			}
+			-- break
 			default {
 				break
 			}
