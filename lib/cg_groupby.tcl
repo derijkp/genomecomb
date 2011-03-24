@@ -17,6 +17,28 @@ puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
 }
 
 proc cg_groupby {args} {
+	set pos 0
+	set sumfields {}
+	foreach {key value} $args {
+		switch -- $key {
+			-sumfields {
+				set sumfields $value
+			}
+			-h - --help {
+				cg_groupby_help
+				exit 0
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	foreach field $sumfields {
+		set suma($field) 1
+	}
+	set args [lrange $args $pos end]
 	if {([llength $args] < 1)} {
 		puts "Wrong number of arguments"
 		cg_groupby_help
@@ -38,7 +60,16 @@ proc cg_groupby {args} {
 	}
 	set header [tsv_open $f]
 	set poss [list_cor $header $fields]
-	puts $o [join [list_concat $fields [list_sub $header -exclude $poss]] \t]
+	set afields [list_sub $header -exclude $poss]
+	puts $o [join [list_concat $fields $afields] \t]
+	set agregatefuncs {}
+	foreach field $afields {
+		if {[inlist $sumfields $field]} {
+			lappend agregatefuncs s
+		} else {
+			lappend agregatefuncs ,
+		}
+	}
 	set line [split [gets $f] \t]
 	set prev [list_sub $line $poss]
 	set grouped $line
@@ -55,8 +86,15 @@ proc cg_groupby {args} {
 			set prev $cur
 		} else {
 			set temp {}
-			foreach g $grouped v $line {
-				lappend temp $g,$v
+			foreach g $grouped v $line a $agregatefuncs {
+				switch $a {
+					s {
+						lappend temp [expr {$g + $v}]
+					}
+					default {
+						lappend temp $g,$v
+					}
+				}
 			}
 			set grouped $temp
 		}
