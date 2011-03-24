@@ -71,17 +71,16 @@ int main(int argc, char *argv[]) {
 	int chr1pos,start1pos,end1pos,max1;
 	int nchr1=0,start1,end1;
 	int error,curchr=0,nextpos=0;
-	if ((argc != 5)) {
-		fprintf(stderr,"Format is: covered file1 chrpos1 startpos1 endpos1");
+	if ((argc != 4)) {
+		fprintf(stderr,"Format is: covered chrpos1 startpos1 endpos1");
 		exit(EXIT_FAILURE);
 	}
-	f1 = fopen64(argv[1],"r");
-	chr1pos = atoi(argv[2]);
-	start1pos = atoi(argv[3]);
-	end1pos = atoi(argv[4]);
+	f1 = stdin;
+	chr1pos = atoi(argv[1]);
+	start1pos = atoi(argv[2]);
+	end1pos = atoi(argv[3]);
 	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
 	fprintf(stdout,"chromosome\tbases\n");
-	getline(&line, &len, f1);
 	while (1) {
 		error = get_region(f1,chr1pos,start1pos,end1pos,max1,chromosome1,&start1,&end1);
 		if (error) break;

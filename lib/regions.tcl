@@ -4,7 +4,7 @@ proc open_region {f {headerVar {}}} {
 	if {[string length $headerVar]} {
 		upvar $headerVar header
 	}
-	set header [gets $f]
+	set header [tsv_open $f]
 	if {[string index $header 0] eq "#"} {
 		set header [string range $header 1 end]
 	}
@@ -24,17 +24,6 @@ proc open_region {f {headerVar {}}} {
 		if {[lsearch $poss2 -1] == -1} {
 			return $poss2
 		}
-	}
-	while {![eof $f]} {
-		set header [gets $f]
-		if {[string length $header] && [string index $header 0] ne "#"} break
-	}
-	if {[string index $header 0] eq ">"} {
-		set header [string range $header 1 end]
-	}
-	set poss2 [list_cor $header {chromosome begin end}]
-	if {[lsearch $poss2 -1] == -1} {
-		return $poss2
 	}
 	error "not a region file"
 }

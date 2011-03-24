@@ -399,13 +399,17 @@ proc file_rootgz {filename} {
 
 proc tsv_open {f} {
 	set keep 0
+	set buffering [fconfigure $f -buffering]
+	fconfigure $f -buffering line
 	while {![eof $f]} {
 		set line [gets $f]
 		if {![string length $line]} continue
-		if {[string index $line 0] ne "#"} break
+		set fchar [string index $line 0]
+		if {$fchar ne "#"} break
 		set keep [tell $f]
 		set header $line
 	}
+	fconfigure $f -buffering $buffering
 	if {[string index $line 0] eq ">"} {
 		return [split [string range $line 1 end] \t]
 	}

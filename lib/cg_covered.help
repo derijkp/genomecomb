@@ -1,0 +1,9 @@
+== Format ==
+@BASE@ ?regfile?
+
+== Description ==
+This command returns the number of bases covered by
+the regions in a given region file.
+
+== Arguments ==
+* regfile: file containing regions. If not present, stdin will be used

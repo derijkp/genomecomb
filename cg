@@ -328,14 +328,6 @@ switch $action {
 		foreach {svfile} $argv break
 		svrescore $svfile
 	}
-	covered {
-		if {[llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action region_file"
-			exit 1
-		}
-		foreach {regfile} $argv break
-		covered $regfile
-	}
 	refconsregions {
 		if {[llength $argv] != 1} {
 			puts stderr "format is: $scriptname $action variation_file"
