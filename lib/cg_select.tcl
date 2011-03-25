@@ -90,14 +90,15 @@ proc tsv_select_count {ids} {
 }
 # cg select -q 'count($alleleSeq1,$alleleSeq2, == "G") == 1' annotvar.tsv
 
-proc tsv_select_min {} {
+proc tsv_select_lmin {} {
 	upvar awkfunctions awkfunctions
-	append awkfunctions {
-		function min(list,def) {
+	lappend awkfunctions {
+		function lmin(list,def) {
+			if (def == nill) {def = 999999999}
 		        split(list,a,",");
 		        minv = a[1];
 		        for (i in a) {
-		                if (a[i] == "-") {a[i] = def}
+		                if (a[i] != a[i]+0) {a[i] = def}
 		                if (a[i] < minv) {minv = a[i]}
 		        }
 		        return minv
@@ -105,14 +106,15 @@ proc tsv_select_min {} {
 	}
 }
 
-proc tsv_select_max {} {
+proc tsv_select_lmax {} {
 	upvar awkfunctions awkfunctions
-	append awkfunctions {
-		function max(list,def) {
+	lappend awkfunctions {
+		function lmax(list,def) {
+			if (def == nill) {def = -999999999}
 		        split(list,a,",");
 		        maxv = a[1];
 		        for (i in a) {
-		                if (a[i] == "-") {a[i] = def}
+		                if (a[i] != a[i]+0) {a[i] = def}
 		                if (a[i] > maxv) {maxv = a[i]}
 		        }
 		        return maxv
@@ -120,11 +122,69 @@ proc tsv_select_max {} {
 	}
 }
 
+proc tsv_select_min {num} {
+	incr num
+	set temp [list_fill $num 1 1]
+	set result [subst {
+		function min(a[join $temp ,a]) \{
+			if (a1 ~ /def=(.*)/) {
+				def = substr(a1,5)
+				if (a2 != a2 + 0) {a2 = def}
+				minv = a2
+			} else {
+				if (a1 != a1 + 0) {a1 = def}
+				def = 999999999
+				minv = a1
+			}
+	}]
+	foreach field [lrange $temp 1 end] {
+		append result [subst {
+			if (a$field == nill) {return minv}
+			if (a$field != a$field + 0) {a$field = def}
+			if (a$field < minv) {minv = a$field}
+		}]
+	}
+	append result [subst {
+			return minv
+		\}
+	}]
+	return $result
+}
+
+proc tsv_select_max {num} {
+	incr num
+	set temp [list_fill $num 1 1]
+	set result [subst {
+		function max(a[join $temp ,a]) \{
+			if (a1 ~ /def=(.*)/) {
+				def = substr(a1,5)
+				if (a2 != a2 + 0) {a2 = def}
+				maxv = a2
+			} else {
+				if (a1 != a1 + 0) {a1 = def}
+				def = -999999999
+				maxv = a1
+			}
+	}]
+	foreach field [lrange $temp 1 end] {
+		append result [subst {
+			if (a$field == nill) {return maxv}
+			if (a$field != a$field + 0) {a$field = def}
+			if (a$field > maxv) {maxv = a$field}
+		}]
+	}
+	append result [subst {
+			return maxv
+		\}
+	}]
+	return $result
+}
+
 proc tsv_select_counthasone {ids} {
 	upvar awkfunctions awkfunctions
 	upvar tsv_funcnum tsv_funcnum
 	set test [list_pop ids]
-	append awkfunctions [subst -nocommands {
+	lappend awkfunctions [subst -nocommands {
 		function tsvfunc${tsv_funcnum}(list) {
 		        split(list,a,",");
 		        for (i in a) {
@@ -144,7 +204,7 @@ proc tsv_select_counthasall {ids} {
 	upvar awkfunctions awkfunctions
 	upvar tsv_funcnum tsv_funcnum
 	set test [list_pop ids]
-	append awkfunctions [subst -nocommands {
+	lappend awkfunctions [subst -nocommands {
 		function tsvfunc${tsv_funcnum}(list) {
 		        split(list,a,",");
 		        for (i in a) {
@@ -272,11 +332,19 @@ proc tsv_select_expandcode {header code awkfunctionsVar} {
 					set ids [split $args ,]
 					set temp [tsv_select_oneof $header $ids]
 				}
+				lmin {
+					tsv_select_lmin
+				}
+				lmax {
+					tsv_select_lmax
+				}
 				min {
-					tsv_select_min
+					set num [regexp -all , $args]
+					if {$num > [lindex $awkfunctions 0]} {lset awkfunctions 0 $num}
 				}
 				max {
-					tsv_select_max
+					set num [regexp -all , $args]
+					if {$num > [lindex $awkfunctions 1]} {lset awkfunctions 1 $num}
 				}
 			}
 			set code [string_replace $code $start $end $temp]
@@ -295,7 +363,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	fconfigure $out -buffering none
 	set header [tsv_open $f]
 	set awk ""
-	set awkfunctions {}
+	set awkfunctions {0 0}
 	set sort ""
 	set cut ""
 	set qfields [tsv_select_expandfields $header $qfields qposs awkfunctions]
@@ -322,12 +390,16 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	if {$sort ne ""} {
 		lappend pipe $sort
 	}
-	# putslog stderr ----------\n$awk\n----------
-	set awk $awkfunctions\n$awk
+# putslog stderr ----------\n$awk\n----------
+	if {[lindex $awkfunctions 0]} {lappend awkfunctions [tsv_select_min [lindex $awkfunctions 0]]}
+	if {[lindex $awkfunctions 1]} {lappend awkfunctions [tsv_select_max [lindex $awkfunctions 1]]}
+	set awk [join [list_remdup [lrange $awkfunctions 2 end]] \n]\n$awk
 	if {[string trim $awk] ne ""} {
 		lappend pipe [list awk $awk]
 	}
-	# putslog pipe:[join $pipe " | "]
+#putslog -------------pipe-------------------
+#putslog pipe:[join $pipe " | "]
+#putslog ------------------------------------
 	if {$qfields ne ""} {
 		set nh $qfields
 	} else {
@@ -342,7 +414,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	if {![llength $pipe]} {
 		fcopy $f $out
 	} else {
-		set o [open "|\ [join $pipe " | "]\ >@\ $out" w]
+		set o [open "|\ [join $pipe " | "]\ >@\ $out 2>@\ stderr" w]
 		fcopy $f $o
 		close $o
 	}
@@ -401,11 +473,21 @@ proc tsv_open {f} {
 	set keep 0
 	set buffering [fconfigure $f -buffering]
 	fconfigure $f -buffering line
+	set vcf 0
+	set first 1
 	while {![eof $f]} {
 		set line [gets $f]
 		if {![string length $line]} continue
 		set fchar [string index $line 0]
 		if {$fchar ne "#"} break
+		if {$first} {
+			set fchar2 [string index $line 1]
+			if {$fchar2 eq "#"} {set vcf 1}
+		} elseif {$vcf} {
+			if {$fchar2 ne "#"} break
+		}
+		set first 0
+		
 		set keep [tell $f]
 		set header $line
 	}
@@ -740,107 +822,6 @@ proc tsv_align_compareoverlap {comp1 comp2} {
 	}
 }
 
-#proc tsv_align_overlap {file1 file2 joinfields1 joinfields2 postfix1 postfix2} {
-#	catch {close $f1}; catch {close $f2}
-#	set o stdout
-#	# open files
-#	set f1 [open $file1]
-#	set header1 [split [gets $f1] \t]
-#	set comparposs1 [list_cor $header1 $joinfields1]
-#	if {[inlist $comparposs1 -1]} {
-#		error "$file1 does not contain all joinfields"
-#	}
-#	set f2 [open $file2]
-#	set header2 [split [gets $f2] \t]
-#	set comparposs2 [list_cor $header2 $joinfields2]
-#	if {[inlist $comparposs2 -1]} {
-#		error "$file2 does not contain all joinfields"
-#	}
-#	#
-#	set dummy1 [list_fill [llength $header1] {}]
-#	set dummy2 [list_fill [llength $header2] {}]
-#	# start making output files
-#	# make output header
-#	set oheader {chromosome begin end type}
-#	foreach field $header1 {
-#		lappend oheader ${field}$postfix1
-#	}
-#	# make output header
-#	foreach field $header2 {
-#		lappend oheader ${field}$postfix2
-#	}
-#	puts $o [join $oheader \t]
-#	set cur1 [split [gets $f1] \t]
-#	set comp1 [list_sub $cur1 $comparposs1]
-#	set cur2 [split [gets $f2] \t]
-#	set comp2 [list_sub $cur2 $comparposs2]
-#	set prevcomp1 {}
-#	set prevcomp2 {}
-#	# go over the files
-#	set num 1
-#	while {![eof $f1] || ![eof $f2]} {
-#		incr num
-#		if {![expr {$num % 100000}]} {putslog $num}
-#		set d [tsv_align_compareoverlap $comp1 $comp2]
-#		if {$method ne "overlap"} {
-#			set prevcomp1 {} ; set prevcomp2 {} 
-#		} elseif {[lindex $prevcomp1 0] ne [lindex $comp1 0]} {
-#			set prevcomp1 {}
-#		} elseif {[lindex $prevcomp2 0] ne [lindex $comp2 0]} {
-#			set prevcomp2 {}
-#		}
-#		if {$d == 0} {
-#puts d
-#			set p1 [expr {max([lindex $comp1 1],[lindex $comp2 1])}]
-#			set p2 [expr {max([lindex $comp1 2],[lindex $comp2 2])}]
-#			puts $o [lindex $comp1 0]\t$p1\t$p2[lindex $comp1 3]\t[join $cur1 \t]\t[join $cur2 \t]
-#			set prevcomp1 $comp1
-#			set prevcomp2 $comp2
-#			set cur1 [compare_annot_getline $f1]
-#			set comp1 [list_sub $cur1 $comparposs1]
-#			set cur2 [compare_annot_getline $f2]
-#			set comp2 [list_sub $cur2 $comparposs2]
-#		} elseif {$d == -1} {
-#			while {[tsv_align_compareoverlap $comp1 $comp2 $method] == -1} {
-#puts d1
-#				if {$prevcomp2 ne "" && [overlap {*}[lrange $comp1 1 end] {*}[lrange $prevcomp2 1 end]] >=0} {
-#					set dummy [lreplace $dummy2 0 0 double]
-#				} else {
-#					set dummy $dummy2
-#				}
-#				puts $o [join $comp1 \t]\t[join $cur1 \t]\t[join $dummy \t]
-#				if {[eof $f1]} break
-#				set prevcomp1 $comp1
-#				set cur1 [compare_annot_getline $f1]
-#				set comp1 [list_sub $cur1 $comparposs1]
-#				if {![llength $cur1]} break
-#				incr num
-#				if {![expr {$num % 100000}]} {putslog $num}
-#			}
-#		} elseif {$d == -2} {
-#			while {[tsv_align_compareoverlap $comp1 $comp2 $method] == -2} {
-#puts d2
-#				if {$prevcomp1 ne "" && [overlap {*}[lrange $comp2 1 end] {*}[lrange $prevcomp1 1 end]] >=0} {
-#					set dummy [lreplace $dummy1 0 0 double]
-#				} else {
-#					set dummy $dummy1
-#				}
-#				puts $o [join $comp2 \t]\t[join $dummy \t]\t[join $cur2 \t]
-#				if {[eof $f2]} break
-#				set prevcomp2 $comp2
-#				set cur2 [compare_annot_getline $f2]
-#				set comp2 [list_sub $cur2 $comparposs2]
-#				if {![llength $cur2]} break
-#				incr num
-#				if {![expr {$num % 100000}]} {putslog $num}
-#			}
-#		} else {
-#			error "not yet"
-#		}
-#	}
-#	close $f1; close $f2
-#}
-
 proc tsv_align {file1 file2 joinfields1 joinfields2 postfix1 postfix2} {
 	catch {close $f1}; catch {close $f2}
 	set o stdout
@@ -966,6 +947,8 @@ proc cg_select {args} {
 		incr pos 2
 	}
 	set args [lrange $args $pos end]
+	regsub -all {\n#[^\n]*} $fields {} fields
+	regsub -all {\n#[^\n]*} $query {} query
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]
 		set f [rzopen $filename]

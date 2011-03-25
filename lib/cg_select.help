@@ -22,7 +22,8 @@ braces around the entire field=formula.
 * -s sortfields: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
 * -nh newheader: replace header in output with fields given by this option
 * -h: return header fields in file
-
+The query or field lines can contain more than one line (enclose in '').
+Lines starting with a # are comments
 
 == Query ==
 In queries, the value of a field for the line can be accessed using a $ followed by the name of the field.
@@ -33,12 +34,17 @@ and functions provided by awk.
 
 Some extra functions are available:
 
+=== Tools ===
+* min(a1,a2,...): returns the minimum of a1, a2, ... If one the args is not a number it will be replaced by 999999999
+* max(a1,a2,...): returns the maximum of a1, a2, ... If one the args is not a number it will be replaced by -999999999
+The default value for non-numeric arguments can be set e.g. to 1000 by giving def=1000 as the first argument
+
 === fields that contain comma separated lists ===
 Some fields can contain multiple values in the form of a comma separated list. The following functions allow
 using this in queries
 
-* min($field, def): the minimum of the list of numbers in field, def is given for a - in the list
-* max($field, def): the maximum of the list of numbers in field, def is given for a - in the list
+* lmin($field, def): the minimum of the list of numbers (comma separated) in field, def is given for a - in the list
+* lmax($field, def): the maximum of the list of numbers (comma separated) in field, def is given for a - in the list
 
 === multifield functions ===
 The following functions address multiple fields.
