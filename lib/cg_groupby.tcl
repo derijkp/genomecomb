@@ -35,9 +35,6 @@ proc cg_groupby {args} {
 		}
 		incr pos 2
 	}
-	foreach field $sumfields {
-		set suma($field) 1
-	}
 	set args [lrange $args $pos end]
 	if {([llength $args] < 1)} {
 		puts "Wrong number of arguments"
@@ -60,46 +57,13 @@ proc cg_groupby {args} {
 	}
 	set header [tsv_open $f]
 	set poss [list_cor $header $fields]
-	set afields [list_sub $header -exclude $poss]
-	puts $o [join [list_concat $fields $afields] \t]
-	set agregatefuncs {}
-	foreach field $afields {
-		if {[inlist $sumfields $field]} {
-			lappend agregatefuncs s
-		} else {
-			lappend agregatefuncs ,
-		}
-	}
-	set line [split [gets $f] \t]
-	set prev [list_sub $line $poss]
-	set grouped $line
-	set next 100000; set num 0
-	while {![eof $f]} {
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		incr num
-		if {$num >= $next} {putslog $num; incr next 100000}
-		set cur [list_sub $line $poss]
-		if {$cur != $prev} {
-			puts $o [join [list_concat $prev [list_sub $grouped -exclude $poss]] \t]
-			set grouped $line
-			set prev $cur
-		} else {
-			set temp {}
-			foreach g $grouped v $line a $agregatefuncs {
-				switch $a {
-					s {
-						lappend temp [expr {$g + $v}]
-					}
-					default {
-						lappend temp $g,$v
-					}
-				}
-			}
-			set grouped $temp
-		}
-	}
-	puts $o [join [list_concat $prev [list_sub $grouped -exclude $poss]] \t]
+	set sumposs [list_cor $header $sumfields]
+	set listfields [list_sub $header -exclude [list_concat $poss $sumposs]]
+	set listposs [list_cor $header $listfields]
+	puts $o [join [list_concat $fields $sumfields $listfields] \t]
+	set pipe [open "| [list groupby $poss $listposs $sumposs] >@ $o 2>@ stderr" w]
+	fcopy $f $pipe
+	close $pipe
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {close $f}}
 }

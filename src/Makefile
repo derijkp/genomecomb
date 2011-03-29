@@ -1,7 +1,7 @@
 CFLAGS=-Wall -g
 #CFLAGS=-Wall -O2
 
-all: ../bin/map2besthit ../bin/distr2chr ../bin/map2sv ../bin/addcols ../bin/reg_subtract ../bin/reg_join ../bin/covered ../bin/getregions ../bin/reg_annot ../bin/var_annot
+all: ../bin/map2besthit ../bin/distr2chr ../bin/map2sv ../bin/addcols ../bin/reg_subtract ../bin/reg_join ../bin/covered ../bin/getregions ../bin/reg_annot ../bin/var_annot ../bin/groupby
 
 clean:
 	rm ../bin/*
@@ -35,3 +35,6 @@ clean:
 
 ../bin/var_annot: var_annot.c
 	gcc var_annot.c $(CFLAGS) -o ../bin/var_annot
+
+../bin/groupby: groupby.c
+	gcc groupby.c $(CFLAGS) -o ../bin/groupby
