@@ -1,5 +1,5 @@
 chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	sequenced-sample2	regtest
-chr1	4000	4001	snp	G	A	G	G	1	v	G	G	0	v	reg1
+chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	reg1
 chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	reg1
 chr1	4099	5000	snp	C	T	T	T	47	v	T	T	35	v	reg1
 chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v	-	-	41	u	reg1

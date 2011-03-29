@@ -45,21 +45,18 @@ total	340
 3-1000} error
 
 test getregions {above} {
-	exec getregions < coverage.tsv chr1 0 1 10 1 0
-} {chromosome	begin	end
-chr1	25	27
+	exec getregions < data/coverage.tsv chr1 0 1 10 1 0
+} {chr1	25	27
 chr1	28	31}
 
 test getregions {below} {
-	exec getregions < coverage.tsv chr1 0 1 10 0 0
-} {chromosome	begin	end
-chr1	20	24
+	exec getregions < data/coverage.tsv chr1 0 1 10 0 0
+} {chr1	20	24
 chr1	27	28}
 
 test getregions {shift} {
-	exec getregions < coverage.tsv chr1 0 1 10 1 -1
-} {chromosome	begin	end
-chr1	24	26
+	exec getregions < data/coverage.tsv chr1 0 1 10 1 -1
+} {chr1	24	26
 chr1	27	30}
 
 test regjoin {basic} {
@@ -89,7 +86,7 @@ test regjoin {self} {
 	exec cg regjoin data/reg3.tsv 2> /dev/null
 } {chromosome	begin	end
 1	5	8
-1	10	18
+1	15	18
 1	19	25
 1	45	50
 1	70	80
@@ -97,7 +94,7 @@ test regjoin {self} {
 2	200	250
 2	300	500
 3	100	250
-3	1000	2000
+3	1100	2000
 3	2500	2600}
 
 set ::env(PATH) $keeppath
