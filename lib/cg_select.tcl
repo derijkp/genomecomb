@@ -414,9 +414,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	if {![llength $pipe]} {
 		fcopy $f $out
 	} else {
-		set o [open "|\ [join $pipe " | "]\ >@\ $out 2>@\ stderr" w]
-		fcopy $f $o
-		close $o
+		chanexec $f $out [join $pipe " | "]
 	}
 }
 

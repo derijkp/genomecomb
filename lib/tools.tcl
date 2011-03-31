@@ -348,6 +348,14 @@ proc scratchfile {{action {get}} {type file}} {
 		}
 	}
 }
+
+proc chanexec {in out pipe} {
+	set o [open "|\ $pipe\ >@\ $out 2>@\ stderr" w]
+	fcopy $in $o
+	if {$in ne "stdin"} {catch {close $in}}
+	if {$out ne "stdout"} {catch {close $out}}
+}
+
 if 0 {
 
 	ifcatch {error test} result {

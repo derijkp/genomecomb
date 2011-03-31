@@ -35,10 +35,7 @@ proc cg_covered args {
 		set f stdin
 	}
 	set poss [open_region $f]
-	set pipe "covered $poss"
-	set o [open "|\ $pipe\ >@\ stdout\ 2>@\ stderr" w]
-	fcopy $f $o
-	close $o
+	chanexec $f stdout "covered $poss"
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {

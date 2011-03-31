@@ -61,11 +61,7 @@ proc cg_groupby {args} {
 	set listfields [list_sub $header -exclude [list_concat $poss $sumposs]]
 	set listposs [list_cor $header $listfields]
 	puts $o [join [list_concat $fields $sumfields $listfields] \t]
-	set pipe [open "| [list groupby $poss $listposs $sumposs] >@ $o 2>@ stderr" w]
-	fcopy $f $pipe
-	close $pipe
-	if {$o ne "stdout"} {catch {close $o}}
-	if {$f ne "stdin"} {catch {close $f}}
+	chanexec $f $o [list groupby $poss $listposs $sumposs]
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
