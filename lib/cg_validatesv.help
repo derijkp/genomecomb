@@ -1,0 +1,13 @@
+== Format ==
+@BASE@ -f variationfile ?-r readDistance? ?-m minLengthSurroundingSequence? ?-e maxEValue? ?-o Outputfile?
+
+== Description ==
+This command returns the two best primerpairs for validating
+the breakpoints of a variation.
+
+== Arguments ==
+* -f: Inputfile with the variations (eg '/home/user/inversions.tsv'). This is a mandatory argument! 
+* -r: Distance between 2 reads in paired-end sequencing [default 360] 
+* -o: Outputfile for the primers which were found [default <inputfile>_primers.tsv]
+* -e: Max e-value when searching for repeats in primer sequence [default 5]
+* -m: Minimum length of sequence were primers must be found [default 100] 
