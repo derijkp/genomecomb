@@ -52,6 +52,16 @@ test select {-s -f -q} {
 2	a2
 4	a4}
 
+test select {-q multiple lines, tabs} {
+
+exec cg select -s num  -f "num mixed" -q {
+	$num <= 4
+	&& $text == "c"
+} data/table.tsv
+
+} {num	mixed
+2	a2}
+
 test select {-f *} {
 	exec cg select -f {chromosome begin end alleleSeq1-*} -q {$begin == 4000} data/vars1.sft
 } {chromosome	begin	end	alleleSeq1-sample1	alleleSeq1-sample2

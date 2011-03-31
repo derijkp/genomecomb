@@ -382,7 +382,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 		append awk {BEGIN {FS="\t" ; OFS="\t"}}
 		if {$query ne ""} {
 			set query [tsv_select_expandcode $header $query awkfunctions]
-			append awk $query
+			append awk " $query "
 		}
 		append awk " \{print [join $qposs ,]\}"
 	}
@@ -947,6 +947,9 @@ proc cg_select {args} {
 	set args [lrange $args $pos end]
 	regsub -all {\n#[^\n]*} $fields {} fields
 	regsub -all {\n#[^\n]*} $query {} query
+	regsub -all {\n|\t} $query { } query
+	set query [string trim $query]
+#puts stderr [list fields=$fields query=$query]
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]
 		set f [rzopen $filename]
