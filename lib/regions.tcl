@@ -29,7 +29,11 @@ proc open_region {f {headerVar {}}} {
 }
 
 proc get_region {f poss} {
-	set result [list_sub [split [gets $f] \t] $poss]
+	while 1 {
+		set line [split [gets $f] \t]
+		if {[llength $line]} break
+	}
+	set result [list_sub $line $poss]
 #	set chr [lindex $result 0]
 #	if {![isint $chr]} {
 #		lset result 0 [chr2num $chr]
