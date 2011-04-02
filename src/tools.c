@@ -24,14 +24,25 @@ void DStringInit(DString *dstring) {
 	dstring->string[0]='\0';
 }
 
+DString *DStringNew() {
+	DString *dstring = malloc(sizeof(DString));
+	DStringInit(dstring);
+	return dstring;
+}
+
 void DStringClear(DString *dstring) {
-	if (dstring->string != dstring->staticspace) {
+	if (dstring->string != dstring->staticspace && dstring->memsize != -1) {
 		free(dstring->string);
 		dstring->string = dstring->staticspace;
 	}
 	dstring->memsize = DSTRING_STATICLEN;
 	dstring->size = 0;
 	dstring->staticspace[0]='\0';
+}
+
+void DStringDestroy(DString *dstring) {
+	DStringClear(dstring);
+	free(dstring);
 }
 
 void DStringSetSize(DString *dstring, int size) {
@@ -80,6 +91,13 @@ void DStringAppend(DString *dstring, char *string) {
 	dstring->size = nsize;
 }
 
+void DStringAppendS(DString *dstring, char *string,int size) {
+	int nsize = dstring->size + size;
+	DStringSetSize(dstring,nsize);
+	strncpy(dstring->string+dstring->size,string,size+1);
+	dstring->size = nsize;
+}
+
 int DStringGetLine(DString *linePtr,	FILE *f1) {
 	char *cur = linePtr->string;
 	int c;
@@ -106,6 +124,68 @@ int DStringGetLine(DString *linePtr,	FILE *f1) {
 	}
 	*cur = '\0';
 	return size;
+}
+
+DString *DStringArrayNew(int size) {
+	DString *dstringarray;
+	int i;
+	dstringarray = (DString *)malloc((size+1)*sizeof(DString));
+	for (i = 0; i < size ; i++) {
+		DStringInit(dstringarray+i);
+	}
+	dstringarray[i].string=NULL;
+	return dstringarray;
+}
+
+void DStringArrayDestroy(DString *dstringarray) {
+	int i=0;
+	while (1) {
+		if (dstringarray[i].string == NULL) break;
+		DStringClear(dstringarray+i);
+		i++;
+	}
+	free(dstringarray);
+}
+
+int DStringGetTab(DString *line,	FILE *f1, int max, DString *result) {
+	char *linepos = NULL,*prevpos = NULL;
+	ssize_t read;
+	int count;
+	int c;
+	while ((read = DStringGetLine(line, f1)) != -1) {
+		prevpos = line->string;
+		linepos = line->string;
+		count = 0;
+		while (1) {
+			c = *linepos;
+			if (c == '\0') {
+				result[count].string = prevpos;
+				result[count].size = linepos-prevpos;
+				result[count].memsize = -1;
+				break;
+			} else if (c == '\n') {
+				*linepos = '\0';
+				result[count].string = prevpos;
+				result[count].size = linepos-prevpos;
+				result[count].memsize = -1;
+				break;
+			} else if (c == '\t') {
+				*linepos = '\0';
+				result[count].string = prevpos;
+				result[count].size = linepos-prevpos;
+				result[count].memsize = -1;
+				prevpos = linepos;
+				count++;
+				if (count > max) break;
+				prevpos = linepos+1;
+			}
+			if (c == '\0') break;
+			linepos++;
+		}
+		if (count >= max) break;
+	}
+	if (read == -1) {return 1;}
+	return 0;
 }
 
 int parse_pos(char *arg, int **rresult, int *rnum) {
@@ -179,7 +259,7 @@ NODPRINT("%s",linePtr->string)
 				count++;
 				scanpos = linepos+1;
 			}
-			if (linepos == '\0') break;
+			if (*linepos == '\0') break;
 			if (linepos == endpos) break;
 			linepos++;
 		}

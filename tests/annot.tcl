@@ -23,6 +23,11 @@ test reg_annot {near indels} {
 	exec diff data/temp.sft data/vars1-indels-expected.sft
 } {} 
 
+test var_annot {basic} {
+	exec cg annotate data/vars1.sft data/temp.sft data/var_annot.sft 2> /dev/null
+	exec diff data/temp.sft data/expected-vars1-var_annot.sft
+} {} 
+
 set ::env(PATH) $keeppath
 
 testsummarize

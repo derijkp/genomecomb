@@ -16,14 +16,20 @@ typedef struct DString {
 } DString;
 
 void DStringInit(DString *dstring);
+DString *DStringNew();
+void DStringDestroy(DString *dstring);
 void DStringClear(DString *dstring);
 void DStringSetSize(DString *dstring, int size);
 void DStringSet(DString *dstring, char *string);
 void DStringSetS(DString *dstring, char *string,int size);
 void DStringCopy(DString *dest, DString *src);
-
 void DStringAppend(DString *dstring, char *string);
+void DStringAppendS(DString *dstring, char *string,int size);
 ssize_t DStringGetLine(DString *dstring,	FILE *f1);
+
+DString *DStringArrayNew(int size);
+DString *DStringArrayDestroy(DString *dstringarray);
+int DStringGetTab(DString *line,	FILE *f1, int max, DString *result);
 
 int parse_pos(char *arg, int **rresult, int *rnum);
 int chromosomenum(char *chromosome);

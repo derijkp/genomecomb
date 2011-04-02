@@ -7,36 +7,6 @@
 #include <string.h>
 #include "tools.h"
 
-int get_tab(
-	char **line,size_t *len,
-	FILE *f1, int max, char **result
-) {
-	char *linepos = NULL;
-	ssize_t read;
-	int count;
-	while ((read = getline(line, len, f1)) != -1) {
-		linepos = *line;
-		count = 0;
-		result[count] = linepos;
-		while (*linepos) {
-			if (*linepos == '\0') break;
-			if (*linepos == '\n') {
-				*linepos = '\0';
-				break;
-			} else if (*linepos == '\t') {
-				*linepos = '\0';
-				count++;
-				if (count > max) break;
-				result[count] = linepos+1;
-			}
-			linepos++;
-		}
-		if (count >= max) break;
-	}
-	if (read == -1) {return 1;}
-	return 0;
-}
-
 void connectalt(
 	char *alt1, char *alt2, char *data
 ) {
@@ -97,10 +67,9 @@ void connectalt(
 
 int main(int argc, char *argv[]) {
 	FILE *f1,*f2;
-	char **result1=NULL,**result2=NULL;
-	size_t len1=0,len2=0;
-	char *line1 = NULL,*line2 = NULL;
-	char chromosome1[10],chromosome2[10];
+	DString *result1=NULL,*result2=NULL;
+	DString *line1 = NULL,*line2 = NULL;
+	char *chromosome1,*chromosome2;
 	int chr1pos,start1pos,end1pos,type1pos,alt1pos,data1pos,max1;
 	int chr2pos,start2pos,end2pos,type2pos,alt2pos,data2pos,max2;
 	int nchr1=0,start1,end1;
@@ -119,7 +88,8 @@ int main(int argc, char *argv[]) {
 	max1 = chr1pos;
 	if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
 	if (type1pos > max1) {max1 = type1pos;} ; if (alt1pos > max1) {max1 = alt1pos;} ;
-	result1 = (char **)malloc((max1+1)*sizeof(char *));
+	line1 = DStringNew(); line2=DStringNew();
+	result1 = DStringArrayNew(max1+1);
 	f2 = fopen64(argv[7],"r");
 	chr2pos = atoi(argv[8]);
 	start2pos = atoi(argv[9]);
@@ -131,23 +101,23 @@ int main(int argc, char *argv[]) {
 	data1pos = atoi(argv[13]);
 	data2pos = atoi(argv[14]);
 	if (data1pos > max2) {max2 = data1pos;} ; if (data2pos > max2) {max2 = data2pos;} ;
-	result2 = (char **)malloc((max2+1)*sizeof(char *));
-	getline(&line1, &len1, f1);
-	getline(&line2, &len2, f2);
-	error2 = get_tab(&line2,&len2,f2,max2,result2);
-	sscanf(result2[chr2pos],"%s\t",chromosome2);
-	sscanf(result2[start2pos],"%d",&start2);
-	sscanf(result2[end2pos],"%d",&end2);
+	result2 = DStringArrayNew(max2+1);
+	DStringGetLine(line1,f1);
+	DStringGetLine(line2,f2);
+	error2 = DStringGetTab(line2,f2,max2,result2);
+	chromosome2 = result2[chr2pos].string;
 	nchr2 = chromosomenum(chromosome2);
-	while (!get_tab(&line1,&len1,f1,max1,result1)) {
-		sscanf(result1[chr1pos],"%s\t",chromosome1);
-		sscanf(result1[start1pos],"%d",&start1);
-		sscanf(result1[end1pos],"%d",&end1);
+	sscanf(result2[start2pos].string,"%d",&start2);
+	sscanf(result2[end2pos].string,"%d",&end2);
+	while (!DStringGetTab(line1,f1,max1,result1)) {
+		chromosome1 = result1[chr1pos].string;
+		nchr1 = chromosomenum(chromosome1);
+		sscanf(result1[start1pos].string,"%d",&start1);
+		sscanf(result1[end1pos].string,"%d",&end1);
 /*
 fprintf(stdout,"----- %d\t%s\t%d\t%d\n",1,chromosome1,start1,end1);
 fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 */
-		nchr1 = chromosomenum(chromosome1);
 		if (nchr1 > curchr) {
 			curchr = nchr1;
 			nextpos = 0;
@@ -162,18 +132,18 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 			if (nchr2 == nchr1) {
 				if (start2 == start1) {
 					if (end2 == end1) {
-						if (strcmp(result2[type2pos], result1[type1pos]) == 0) {
+						if (strcmp(result2[type2pos].string, result1[type1pos].string) == 0) {
 							sametype = 1; break;
 						}
 					} else if (end2 > end1) break; 
 				} else if (start2 > start1) break;
 			} else if (nchr2 > nchr1) break;
-			error2 = get_tab(&line2,&len2,f2,max2,result2);
+			error2 = DStringGetTab(line2,f2,max2,result2);
 			if (error2)  {break;}
-			sscanf(result2[chr2pos],"%s\t",chromosome2);
-			sscanf(result2[start2pos],"%d",&start2);
-			sscanf(result2[end2pos],"%d",&end2);
+			chromosome2 = result2[chr2pos].string;
 			nchr2 = chromosomenum(chromosome2);
+			sscanf(result2[start2pos].string,"%d",&start2);
+			sscanf(result2[end2pos].string,"%d",&end2);
 		}
 		if (error2 || (nchr1 != nchr2) || (start2 != start1) || (end2 != end1) || !sametype) {
 			if (data2pos == -1) {
@@ -185,23 +155,23 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 			if (data1pos == -1) {
 				fprintf(stdout,"1\n");
 			} else if (data2pos == -1) {
-				connectalt(result1[alt1pos],result2[alt2pos],result2[data1pos]);
+				connectalt(result1[alt1pos].string,result2[alt2pos].string,result2[data1pos].string);
 				fprintf(stdout,"\n");
 				/*fprintf(stdout,"%s\n", result2[data1pos]);*/
 			} else {
-				connectalt(result1[alt1pos],result2[alt2pos],result2[data1pos]);
+				connectalt(result1[alt1pos].string,result2[alt2pos].string,result2[data1pos].string);
 				fprintf(stdout,"\t");
-				connectalt(result1[alt1pos],result2[alt2pos],result2[data2pos]);
+				connectalt(result1[alt1pos].string,result2[alt2pos].string,result2[data2pos].string);
 				fprintf(stdout,"\n");
-				/* fprintf(stdout,"%s\t%s\n", result2[data1pos], result2[data2pos]); */
+				/* fprintf(stdout,"%s\t%s\n", result2[data1pos].string, result2[data2pos].string); */
 			}
 		}
 	}
 	fclose(f1);
 	fclose(f2);
-	if (line1) {free(line1);}
-	if (line1) {free(line2);}
-	if (result1) {free(result1);}
-	if (result2) {free(result2);}
+	if (line1) {DStringDestroy(line1);}
+	if (line2) {DStringDestroy(line2);}
+	if (result1) {DStringArrayDestroy(result1);}
+	if (result2) {DStringArrayDestroy(result2);}
 	exit(EXIT_SUCCESS);
 }
