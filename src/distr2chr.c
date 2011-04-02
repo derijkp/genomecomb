@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 	o[i++] = fopen64(line,"a");
 	while ((read = getline(&line, &len, stdin)) != -1) {
 		if (col == 0) {
-			sscanf(line,"%s\t",chromosome);
+			sscanf(line,"%9s\t",chromosome);
 		} else {
 			linepos = line;
 			count = col;
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 				linepos++;
 			}
 			if (*linepos) {
-				sscanf(linepos,"%s\t",chromosome);
+				sscanf(linepos,"%9s\t",chromosome);
 			} else {
 				chromosome[0] = '0';
 				chromosome[1] = '\0';

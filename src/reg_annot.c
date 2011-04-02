@@ -72,14 +72,14 @@ int main(int argc, char *argv[]) {
 	getline(&line1, &len1, f1);
 	getline(&line2, &len2, f2);
 	error2 = get_tab(&line2,&len2,f2,max2,result2);
-	sscanf(result2[chr2pos],"%s\t",chromosome2);
+	sscanf(result2[chr2pos],"%9s\t",chromosome2);
 	sscanf(result2[start2pos],"%d",&start2);
 	sscanf(result2[end2pos],"%d",&end2);
 	if (data1pos != -1) {data1 = result2[data1pos];}
 	if (data2pos != -1) {data2 = result2[data2pos];}
 	nchr2 = chromosomenum(chromosome2);
 	while (!get_tab(&line1,&len1,f1,max1,result1)) {
-		sscanf(result1[chr1pos],"%s\t",chromosome1);
+		sscanf(result1[chr1pos],"%9s\t",chromosome1);
 		sscanf(result1[start1pos],"%d",&start1);
 		sscanf(result1[end1pos],"%d",&end1);
 /*
@@ -115,7 +115,7 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 				nchr2 = -1;
 				break;
 			}
-			sscanf(result2[chr2pos],"%s\t",chromosome2);
+			sscanf(result2[chr2pos],"%9s\t",chromosome2);
 			sscanf(result2[start2pos],"%d",&start2);
 			sscanf(result2[end2pos],"%d",&end2);
 			if (data1pos != -1) {data1 = result2[data1pos];}

@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 		if (line[0] == '>') break;
 	}
 	while ((read = getline(&line, &len, stdin)) != -1) {
-		sscanf(line,"%d\t%s\t%d\t%d\t%d\t%d\t%c\t%d",&flags,chromosome,&offsetInChr,&gap1,&gap2,&gap3,&weight,&mateRec);
+		sscanf(line,"%d\t%9s\t%d\t%d\t%d\t%d\t%c\t%d",&flags,chromosome,&offsetInChr,&gap1,&gap2,&gap3,&weight,&mateRec);
 		last = flags & 0x01;
 		side = flags & 0x02;
 		if (side) {numr++;} else {numl++;}
