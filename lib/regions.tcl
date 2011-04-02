@@ -32,6 +32,7 @@ proc get_region {f poss} {
 	while 1 {
 		set line [split [gets $f] \t]
 		if {[llength $line]} break
+		if {[eof $f]} break
 	}
 	set result [list_sub $line $poss]
 #	set chr [lindex $result 0]
