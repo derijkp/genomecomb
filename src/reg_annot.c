@@ -5,29 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-int chromosomenum(char *chromosome) {
-	int i;
-	if (strncmp(chromosome,"chr",3) == 0) {
-		chromosome += 3;
-	} else if (strncmp(chromosome,"CHR",3) == 0) {
-		chromosome += 3;
-	}
-	if (*chromosome == 'M') {
-		return 95;
-	} else if (*chromosome == 'X') {
-		return 96;
-	} else if (*chromosome == 'Y') {
-		return 97;
-	} else {
-		i = atoi(chromosome);
-		if (i < 0 || i > 22) {
-			fprintf(stderr,"wrong chromosome %s",chromosome);
-			exit(EXIT_FAILURE);
-		}
-		return i;
-	}
-}
+#include "tools.h"
 
 int get_tab(
 	char **line,size_t *len,

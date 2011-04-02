@@ -6,60 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
-#define DSTRING_STATICLEN 5
-
-typedef struct DString {
-	int memsize;
-	int size;
-	char *string;
-	char staticspace[DSTRING_STATICLEN];
-} DString;
-
-void DStringInit(DString *dstring) {
-	dstring->memsize = DSTRING_STATICLEN;
-	dstring->size = 0;
-	dstring->staticspace[0]='\0';
-	dstring->string = dstring->staticspace;
-}
-
-void DStringClear(DString *dstring) {
-	if (dstring->string != dstring->staticspace) {
-		free(dstring->string);
-		dstring->string = dstring->staticspace;
-	}
-	dstring->memsize = DSTRING_STATICLEN;
-	dstring->size = 0;
-	dstring->staticspace[0]='\0';
-}
-
-void DStringSetSize(DString *dstring, int size) {
-	size++;
-	if (dstring->memsize < size) {
-		if (dstring->string == dstring->staticspace) {
-			dstring->string = malloc(size);
-			strncpy(dstring->string,dstring->staticspace,dstring->size+1);
-		} else {
-			dstring->string = realloc(dstring->string,size);
-		}
-		dstring->memsize = size;
-	}
-}
-
-void DStringSet(DString *dstring, char *string) {
-	int size = strlen(string);
-	DStringSetSize(dstring,size);
-	strncpy(dstring->string,string,size+1);
-	dstring->size = size;
-}
-
-void DStringAppend(DString *dstring, char *string) {
-	int size = strlen(string);
-	int nsize = dstring->size + size;
-	DStringSetSize(dstring,nsize);
-	strncpy(dstring->string+dstring->size,string,size+1);
-	dstring->size = nsize;
-}
+#include "tools.h"
 
 int get_tab(
 	char **line,size_t *len,
@@ -88,31 +35,6 @@ int get_tab(
 		if (count >= max) break;
 	}
 	if (read == -1) {return 1;}
-	return 0;
-}
-
-int parse_pos(char *arg, int **rresult, int *rnum) {
-	char *pch;
-	int *result;
-	int num,memsize = 5;
-	result = (int *)malloc(memsize*sizeof(int));
-	pch = strtok (arg, " \t,-");
-	num = 0;
-	while (pch != NULL) {
-		result[num++] = atoi(pch);
-		if (num >= memsize) {
-			memsize += memsize;
-			result = (int *)realloc(result, memsize*sizeof(int));
-		}
-		pch = strtok (NULL, " \t,-");
-	}
-	*rnum = num;
-	*rresult = result;
-	return 0;
-}
-
-int dstrempty(char *string) {
-	string[4] = '\0';
 	return 0;
 }
 

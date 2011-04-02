@@ -5,27 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-int chromosomenum(char *chromosome) {
-	int i;
-	if (*chromosome == 'c') {
-		chromosome += 3;
-	}
-	if (*chromosome == 'X') {
-		return 23;
-	} else if (*chromosome == 'Y') {
-		return 24;
-	} else if (*chromosome == 'M') {
-		return 25;
-	} else {
-		i = atoi(chromosome);
-		if (i < 0 || i > 22) {
-			fprintf(stderr,"wrong chromosome %s",chromosome);
-			exit(EXIT_FAILURE);
-		}
-		return i;
-	}
-}
+#include "tools.h"
 
 int main(int argc, char *argv[]) {
 	FILE *o[26];

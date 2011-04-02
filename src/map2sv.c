@@ -4,27 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-int chromosomenum(char *chromosome) {
-	int i;
-	if (*chromosome == 'c') {
-		chromosome += 3;
-	}
-	if (*chromosome == 'X') {
-		return 23;
-	} else if (*chromosome == 'Y') {
-		return 24;
-	} else if (*chromosome == 'M') {
-		return 25;
-	} else {
-		i = atoi(chromosome);
-		if (i < 0 || i > 25) {
-			fprintf(stderr,"wrong chromosome %s",chromosome);
-			exit(EXIT_FAILURE);
-		}
-		return i;
-	}
-}
+#include "tools.h"
 
 int pos2bin(int start,int end) {
 	int pre = 4681;
