@@ -6,9 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdint.h>
 #include "tools.h"
 
-void output_resultline(FILE *f2,DString *result1,DString *listr,int *sumr,int *grouppos,int groupnum,int *listpos,int listnum,int *sumpos,int sumnum) {
+void output_resultline(FILE *f2,DString *result1,DString *listr,long long int *sumr,int *grouppos,int groupnum,int *listpos,int listnum,int *sumpos,int sumnum) {
 	char *sep = "";
 	int i;
 	if (groupnum) {
@@ -19,7 +20,7 @@ void output_resultline(FILE *f2,DString *result1,DString *listr,int *sumr,int *g
 	}
 	if (sumnum) {
 		for(i = 0 ; i < sumnum ; i++) {
-			fprintf(f2,"%s%d",sep,sumr[i]);
+			fprintf(f2,"%s%lld",sep,sumr[i]);
 			sep = "\t";
 		}
 	}
@@ -37,7 +38,7 @@ int main(int argc, char *argv[]) {
 	int *grouppos=NULL, *listpos=NULL, *sumpos=NULL;
 	int groupnum=0, listnum=0, sumnum=0;
 	DString *listr=NULL;
-	int *sumr=NULL;
+	long long int *sumr=NULL;
 	int *group1lens=NULL;
 	DString *line1 = NULL,*line2 = NULL,*templine = NULL;
 	DString *result1=NULL,*result2=NULL,*tempresult;
@@ -58,7 +59,7 @@ int main(int argc, char *argv[]) {
 	line1 = DStringNew(); line2=DStringNew();
 	result1 = DStringArrayNew(max+1);
 	result2 = DStringArrayNew(max+1);
-	sumr = (int *)malloc(sumnum*sizeof(int));
+	sumr = (long long int *)malloc(sumnum*sizeof(long long int));
 	listr = (DString *)malloc(listnum*sizeof(DString));
 	group1lens = (int *)malloc(groupnum*sizeof(int));
 	/* ----- initialise from first ----- */
@@ -72,7 +73,7 @@ int main(int argc, char *argv[]) {
 		DStringCopy(listr+i,result1+listpos[i]);
 	}
 	for(i = 0 ; i < sumnum ; i++) {
-		sumr[i] = atoi(result1[sumpos[i]].string);
+		sumr[i] = atoll(result1[sumpos[i]].string);
 	}
 	/* ----- loop ----- */
 	while (!DStringGetTab(line2,f1,max,result2)) {
@@ -117,7 +118,7 @@ int main(int argc, char *argv[]) {
 				DStringCopy(listr+i,result1+listpos[i]);
 			}
 			for(i = 0 ; i < sumnum ; i++) {
-				sumr[i] = atoi(result1[sumpos[i]].string);
+				sumr[i] = atoll(result1[sumpos[i]].string);
 			}
 		} else {
 			for(i = 0 ; i < listnum ; i++) {
@@ -125,7 +126,7 @@ int main(int argc, char *argv[]) {
 				DStringAppendS(listr+i,result2[listpos[i]].string,result2[listpos[i]].size);
 			}
 			for(i = 0 ; i < sumnum ; i++) {
-				sumr[i] += atoi(result2[sumpos[i]].string);
+				sumr[i] += atoll(result2[sumpos[i]].string);
 			}
 		}
 	}

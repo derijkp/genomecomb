@@ -94,13 +94,21 @@ test groupby {groupby} {
 u	1	u	u
 vx	2	u	u
 v	3,4,5	u,v,v	v,u,v
-u	6,7,8	v,v,xx	u,v,xx}
+u	6,7,4000000000	v,v,xx	u,v,xx}
 
 test groupby {groupby -sumfields} {
 	exec cg groupby -sumfields pos s2 < data/table2.tsv
 } {s2	pos	s1	s3
 u	6	u,vx,v	u,u,v
 v	22	v,v,u,u	u,v,u,v
-xx	8	u	xx}
+xx	4000000000	u	xx}
+
+test groupby {groupby -sumfields} {
+	exec cg groupby -sumfields pos s1 < data/table2.tsv
+} {s1	pos	s2	s3
+u	1	u	u
+vx	2	u	u
+v	12	u,v,v	v,u,v
+u	4000000013	v,v,xx	u,v,xx}
 
 testsummarize
