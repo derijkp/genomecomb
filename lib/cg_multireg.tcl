@@ -53,16 +53,11 @@ proc multireg {compar_file file} {
 	set poss2 [open_region $f2 h2]
 	set num 0
 	if {![file exists $compar_file]} {
-		incr num
-		if {![expr {$num % 100000}]} {putslog $num}
-		set o [open $compar_file w]
-		puts $o [join {chromosome begin end} \t]\t$name
-		while {![eof $f2]} {
-			set line [get_region $f2 $poss2]
-			if {![llength $line]} continue
-			puts $o [join $line \t]\t1
-		}
-		close $o
+		close $f2
+		set h2base [list_sub $h2 $poss2]
+		cg select \
+			-f "chromosome=\$[lindex $h2base 0] begin=\$[lindex $h2base 1] end=\$[lindex $h2base 2] $name=1" \
+			$file $compar_file
 		return
 	}
 	set f1 [open $compar_file]
@@ -73,43 +68,9 @@ proc multireg {compar_file file} {
 	set o [open $compar_file.temp w]
 	puts $o [join $h1 \t]\t$name
 	set dummy1 [list_fill [expr {[llength $h1]-3}] 0]
-	foreach {part1 chr1 nchr1 start1 end1} [multireg_next1 $f1 $poss1] break
-	foreach {chr2 nchr2 start2 end2} [multireg_next2 $f2 $poss2] break
-	while {![eof $f1] || ![eof $f2]} {
-		incr num
-		if {![expr {$num % 100000}]} {putslog $num}
-		if {($nchr2 < $nchr1) || ($nchr1 == $nchr2 && $end2 <= $start1)} {
-			puts $o $chr2\t$start2\t$end2\t[join $dummy1 \t]\t1
-			foreach {chr2 nchr2 start2 end2} [multireg_next2 $f2 $poss2] break
-		} elseif {($nchr1 < $nchr2) || ($nchr1 == $nchr2 && $end1 <= $start2)} {
-			puts $o $chr1\t$start1\t$end1\t[join $part1 \t]\t0
-			foreach {part1 chr1 nchr1 start1 end1} [multireg_next1 $f1 $poss1] break
-		} else {
-			if {$start1 < $start2} {
-				puts $o $chr1\t$start1\t$start2\t[join $part1 \t]\t0
-				set start1 $start2
-			}
-			if {$start2 < $start1} {
-				puts $o $chr1\t$start2\t$start1\t[join $dummy1 \t]\t1
-				set start2 $start1
-			}
-			if {$end2 < $end1} {
-				puts $o $chr1\t$start1\t$end2\t[join $part1 \t]\t1
-				set start1 $end2
-				foreach {chr2 nchr2 start2 end2} [multireg_next2 $f2 $poss2] break
-			} elseif {$end1 < $end2} {
-				puts $o $chr1\t$start1\t$end1\t[join $part1 \t]\t1
-				set start2 $end1
-				foreach {part1 chr1 nchr1 start1 end1} [multireg_next1 $f1 $poss1] break
-			} else {
-				puts $o $chr1\t$start1\t$end1\t[join $part1 \t]\t1
-				foreach {chr2 nchr2 start2 end2} [multireg_next2 $f2 $poss2] break
-				foreach {part1 chr1 nchr1 start1 end1} [multireg_next1 $f1 $poss1] break
-			}
-		}
-	}
-
-	close $f1; close $f2; close $o
+	close $o
+	# putslog "multireg $compar_file $poss1 $dummy1 $file $poss2 >> $compar_file.temp"
+	exec multireg $compar_file {*}$poss1 [join $dummy1 \t] $file {*}$poss2 >> $compar_file.temp 2>@stderr
 	catch {file rename -force $compar_file $compar_file.old}
 	file rename $compar_file.temp $compar_file	
 }
@@ -127,7 +88,7 @@ proc cg_multireg {args} {
 	foreach {compar_file} $args break
 	set files [lrange $args 1 end]
 	foreach file $files {
-		putslog "Adding $file"
+		putslog "Adding $file to $compar_file"
 		multireg $compar_file $file
 	}
 }

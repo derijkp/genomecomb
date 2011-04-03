@@ -4,8 +4,44 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 set keeppath $::env(PATH)
-append ::env(PATH) :[file dir [file dir [file normalize [info script]]]]/bin
+set script [info script] ; if {$script eq ""} {set script ./t}
+append ::env(PATH) :[file dir [file dir [file normalize $script]]]/bin
 putsvars ::env(PATH)
+
+test multireg {basic} {
+	file delete data/temp.tsv
+	exec cg multireg data/temp.tsv data/reg1.tsv data/reg2.tsv 2> /dev/null
+	exec diff data/temp.tsv data/expected-multireg-reg1-reg2.sft
+} {}
+
+test multireg {same} {
+	file delete data/temp.tsv
+	exec cg multireg data/temp.tsv data/reg1.tsv data/reg1b.tsv 2> /dev/null
+	exec diff data/temp.tsv data/expected-multireg-reg1-reg1b.sft
+} {}
+
+test multireg {add empty} {
+	file delete data/temp.tsv
+	exec cg multireg data/temp.tsv data/reg1b.tsv data/regempty.tsv 2> /dev/null
+	file_read data/temp.tsv
+} {chromosome	begin	end	reg1b	regempty
+1	10	20	1	0
+1	50	60	1	0
+}
+
+test multireg {add empty first} {
+	file delete data/temp.tsv
+	exec cg multireg data/temp.tsv data/regempty.tsv data/reg1b.tsv 2> /dev/null
+	file_read data/temp.tsv
+} {chromosome	begin	end	regempty	reg1b
+1	10	20	0	1
+1	50	60	0	1
+}
+
+test multireg {add fully empty} {
+	file delete data/temp.tsv
+	exec cg multireg data/temp.tsv data/reg1b.tsv data/empty.tsv
+} {not a region file} error regexp
 
 test regsubtract {basic} {
 	exec cg regsubtract data/reg1.tsv data/reg2.tsv

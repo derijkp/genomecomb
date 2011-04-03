@@ -18,7 +18,7 @@ typedef struct DString {
 } DString;
 
 void DStringInit(DString *dstring) {
-	dstring->memsize = DSTRING_STATICLEN;
+	dstring->memsize = DSTRING_STATICLEN-1;
 	dstring->size = 0;
 	dstring->string = dstring->staticspace;
 	dstring->string[0]='\0';
@@ -46,16 +46,20 @@ void DStringDestroy(DString *dstring) {
 }
 
 void DStringSetSize(DString *dstring, int size) {
+	int ssize = dstring->size;
+	if (ssize > size) {ssize = size;}
 	size++;
 	if (dstring->memsize < size) {
 		if (dstring->string == dstring->staticspace) {
 			dstring->string = malloc(size);
-			strncpy(dstring->string,dstring->staticspace,dstring->size+1);
+			strncpy(dstring->string,dstring->staticspace,ssize);
+			dstring->string[ssize] = '\0';
 		} else if (dstring->memsize == -1) {
 			char *temp;
 			temp = malloc(size);
-			strncpy(temp,dstring->string,dstring->size+1);
+			strncpy(temp,dstring->string,ssize);
 			dstring->string = temp;
+			dstring->string[ssize] = '\0';
 		} else {
 			dstring->string = realloc(dstring->string,size);
 		}
@@ -129,7 +133,7 @@ int DStringGetLine(DString *linePtr,	FILE *f1) {
 DString *DStringArrayNew(int size) {
 	DString *dstringarray;
 	int i;
-	dstringarray = (DString *)malloc((size+1)*sizeof(DString));
+	dstringarray = (DString *)malloc((size+2)*sizeof(DString));
 	for (i = 0; i < size ; i++) {
 		DStringInit(dstringarray+i);
 	}
@@ -150,7 +154,7 @@ void DStringArrayDestroy(DString *dstringarray) {
 int DStringGetTab(DString *line,	FILE *f1, int max, DString *result) {
 	char *linepos = NULL,*prevpos = NULL;
 	ssize_t read;
-	int count;
+	int count=0;
 	int c;
 	while ((read = DStringGetLine(line, f1)) != -1) {
 		prevpos = line->string;
@@ -162,12 +166,14 @@ int DStringGetTab(DString *line,	FILE *f1, int max, DString *result) {
 				result[count].string = prevpos;
 				result[count].size = linepos-prevpos;
 				result[count].memsize = -1;
+				count++;
 				break;
 			} else if (c == '\n') {
 				*linepos = '\0';
 				result[count].string = prevpos;
 				result[count].size = linepos-prevpos;
 				result[count].memsize = -1;
+				count++;
 				break;
 			} else if (c == '\t') {
 				*linepos = '\0';
@@ -183,6 +189,14 @@ int DStringGetTab(DString *line,	FILE *f1, int max, DString *result) {
 			linepos++;
 		}
 		if (count >= max) break;
+	}
+	if (count < max) {return 1;}
+	if (c == '\0') {
+		DStringSetS(result+count,"",0);
+	} else {
+		result[count].string = linepos+1;
+		result[count].size = (line->string+line->size) - linepos;
+		result[count].memsize = -1;
 	}
 	if (read == -1) {return 1;}
 	return 0;
