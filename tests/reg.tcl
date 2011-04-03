@@ -43,6 +43,18 @@ test multireg {add fully empty} {
 	exec cg multireg data/temp.tsv data/reg1b.tsv data/empty.tsv
 } {not a region file} error regexp
 
+test multireg {3 adds} {
+	file delete data/temp.tsv
+	exec cg multireg data/temp.tsv data/reg1.tsv data/reg1b.tsv data/reg2.tsv 2> /dev/null
+	exec diff data/temp.tsv data/expected-multireg-reg1-reg1b-reg2.sft
+} {}
+
+test multireg {different chromosome naming} {
+	file delete data/temp.tsv
+	exec cg multireg data/temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
+	exec diff data/temp.tsv data/expected-multireg-reg1-reg4.sft
+} {}
+
 test regsubtract {basic} {
 	exec cg regsubtract data/reg1.tsv data/reg2.tsv
 } {chromosome	begin	end
@@ -52,9 +64,14 @@ test regsubtract {basic} {
 2	160	170
 2	180	200
 3	2000	2100
+Y	1000	1010
+Y	1900	2000
 1-10
 2-100
-3-1000} error
+3-1000
+M-10
+X-100
+Y-1000} error
 
 test covered {basic} {
 	exec cg covered data/reg1.tsv
@@ -62,11 +79,17 @@ test covered {basic} {
 1	20
 2	130
 3	200
+M	10
+X	100
+Y	1000
 
-total	350
+total	1460
 1-10
 2-100
-3-1000} error
+3-1000
+M-10
+X-100
+Y-1000} error
 
 test covered {basic} {
 	exec cg covered data/reg2.tsv
@@ -74,11 +97,17 @@ test covered {basic} {
 1	20
 2	220
 3	100
+M	15
+X	110
+Y	890
 
-total	340
+total	1355
 1-15
 2-150
-3-1000} error
+3-1000
+M-10
+X-90
+Y-1010} error
 
 test getregions {above} {
 	exec getregions < data/coverage.tsv chr1 0 1 10 1 0
@@ -103,7 +132,10 @@ test regjoin {basic} {
 2	100	200
 2	300	500
 3	1000	1100
-3	2000	2100}
+3	2000	2100
+M	10	25
+X	90	200
+Y	1000	2000}
 
 test regjoin {basic} {
 	exec cg regjoin data/reg1.tsv data/reg3.tsv 2> /dev/null
@@ -116,7 +148,10 @@ test regjoin {basic} {
 2	300	500
 3	100	250
 3	1000	2100
-3	2500	2600}
+3	2500	2600
+M	10	20
+X	100	200
+Y	1000	2000}
 
 test regjoin {self} {
 	exec cg regjoin data/reg3.tsv 2> /dev/null

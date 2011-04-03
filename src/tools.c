@@ -9,6 +9,11 @@
 
 #define DSTRING_STATICLEN 5
 #define FINISHED 1000000
+#define NOCHROM 100000
+#define CHROMMAX 9000
+#define CHROMM 9095
+#define CHROMX 9096
+#define CHROMY 9097
 
 typedef struct DString {
 	int memsize;
@@ -230,19 +235,32 @@ int chromosomenum(char *chromosome) {
 		chromosome += 3;
 	}
 	if (*chromosome == 'M') {
-		return 95;
+		return CHROMM;
 	} else if (*chromosome == 'X') {
-		return 96;
+		return CHROMX;
 	} else if (*chromosome == 'Y') {
-		return 97;
+		return CHROMY;
 	} else {
 		i = atoi(chromosome);
-		if (i < 0 || i > 22) {
+		if (i > CHROMMAX) {
 			fprintf(stderr,"wrong chromosome %s",chromosome);
 			exit(EXIT_FAILURE);
 		}
 		return i;
 	}
+}
+
+char* num2chromosome(char *chromosome,int num) {
+	if (num == CHROMM) {
+		sprintf(chromosome,"M");
+	} else if (num == CHROMX) {
+		sprintf(chromosome,"X");
+	} else if (num == CHROMY) {
+		sprintf(chromosome,"Y");
+	} else {
+		sprintf(chromosome,"%d",num);
+	}
+	return chromosome;
 }
 
 int get_region(FILE *f1, DString *linePtr, int chr1pos, int start1pos, int end1pos, int max1, DString *chromosome1, int *nchr1, int *start1, int *end1) {

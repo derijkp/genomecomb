@@ -1,0 +1,11 @@
+test	chromosome	begin	end	test2
+t	chr1	15	25	t2
+t	chr1	45	55	t2
+t	chr2	150	160	t2
+t	chr2	170	180	t2
+t	chr2	300	400	t2
+t	chr2	400	500	t2
+t	chr3	1000	1100	t2
+t	chrM	10	25	t2
+t	chrX	90	200	t2
+t	chrY	1010	1900	t2

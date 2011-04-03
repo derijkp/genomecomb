@@ -33,7 +33,8 @@ int DStringGetTab(DString *line,	FILE *f1, int max, DString *result);
 
 int parse_pos(char *arg, int **rresult, int *rnum);
 int chromosomenum(char *chromosome);
+char* num2chromosome(char *chromosome,int num);
 
 #define FINISHED 1000000
-
+#define NOCHROM 100000
 int get_region(FILE *f1, DString *line, int chr1pos, int start1pos, int end1pos, int max1, DString *chromosome1, int *nchr1, int *start1, int *end1);

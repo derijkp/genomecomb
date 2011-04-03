@@ -5,3 +5,6 @@ chromosome	test	begin	end
 2	t	450	480
 3	t	1000	1100
 3	t	2000	2100
+M	t	10	20
+X	t	100	200
+Y	t	1000	2000
