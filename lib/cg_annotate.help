@@ -1,5 +1,11 @@
 == Format ==
-@BASE@ ?options? variantfile resultfile dbfile ...
+cg annotate ?options? variantfile resultfile dbfile ...
+
+== Category ==
+Annotation
+
+== Summary ==
+Annotate a variant file with region, gene or variant data
 
 == Description ==
 Adds new columns with annotation to variantfile.

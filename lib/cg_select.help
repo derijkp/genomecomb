@@ -1,5 +1,11 @@
 == Format ==
-@BASE@ ?options? ?infile? ?outfile?
+cg select ?options? ?infile? ?outfile?
+
+== Category ==
+Query
+
+== Summary ==
+Command for very flexible selection, sorting and conversion of tab separated files
 
 == Description ==
 Scans a tab separated file, and returns selected lines and columns, optionally sorted.

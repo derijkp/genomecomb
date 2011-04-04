@@ -1,5 +1,11 @@
 == Format ==
-@BASE@ svmulticomparfile svfile ...
+cg svmulticomparfile svfile ...
+
+== Category ==
+Structural
+
+== Summary ==
+Compare multiple structural variant files
 
 == Description ==
 This command is used to create multi sv compar_files.

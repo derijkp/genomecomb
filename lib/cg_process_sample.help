@@ -1,5 +1,5 @@
 == Format ==
-@BASE@ sampledir destdir dbdir ?force?
+cg process_sample sampledir destdir dbdir ?force?
 
 == Category ==
 Conversion

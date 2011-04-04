@@ -259,14 +259,9 @@ proc annotatevar {file dbfile name annotfile {outfields {name score freq}}} {
 	file rename -force $annotfile.temp $annotfile
 }
 
-proc cg_annotate_help {} {
-	set help [file_read $::appdir/lib/cg_annotate.help]
-	puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
-}
-
 proc cg_annotate {args} {
 	if {([llength $args] < 3)} {
-		cg_annotate_help
+		errorformat annotate
 		exit 1
 	}
 	set near -1

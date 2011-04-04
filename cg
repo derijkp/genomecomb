@@ -16,13 +16,9 @@ package require Extral
 
 # generic help on no args
 if {[llength $argv] < 1} {
-puts {No option given, format is:
-cg option ....
-possible options are: select, graph, annotate, multicompar, process_sample,
-covered, regsubtract, regjoin, regcommon, 
-makeregions, makeprimers, ...
-}
-exit 1
+	puts {No option given, format is:}
+	cg_help
+	exit 1
 }
 
 set action [list_shift argv]
@@ -533,10 +529,16 @@ switch $action {
 		set args $argv
 		unset -nocomplain argv
 		if {[auto_load cg_$action]} {
+			if {[llength $args] == 1 && [inlist {-h --help} $args]} {
+				help $action
+				exit 0
+			}
 			set ::base "cg $action"
 			cg_$action {*}$args
 		} else {
-			puts stderr "unkown option $action"
+			puts stderr "ERROR: unkown action $action"
+			puts stderr "must be one of: [join [help_actions] ", "], ..."
+			puts stderr "For more help use:\ncg help"
 			exit 1
 		}
 	}

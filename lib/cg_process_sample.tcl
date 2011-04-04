@@ -70,10 +70,10 @@ proc process_sample {dir destdir dbdir {force 0}} {
 				$dir/ASM/REF/coverageRefScore-chr$chr-*-ASM*.tsv.*] 0]
 			if {[file exists $oricov]} {
 				putslog "Creating $resultfile"
-				exec [gzcat $oricov] $oricov > coverage/temp.tsv
 				# todo: check if sorted correctly
+				# exec [gzcat $oricov] $oricov > coverage/temp.tsv
 				# putslog "Sorting to create $resultfile"
-				# cg select -s offset $oricov coverage/temp.tsv
+				cg select -s offset $oricov coverage/temp.tsv
 				file rename -force coverage/temp.tsv $resultfile
 			}
 		}
@@ -455,28 +455,9 @@ proc process_compare_coverage {dir1 dir2 dbdir resultsdir {force 0}} {
 	exec grep total *.covered > summary_genomecoverage_${name1}_${name2}.tsv
 }
 
-proc cg_process_sample_help {} {
-	set help [file_read $::appdir/lib/cg_process_sample.help]
-	puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
-}
-
 proc cg_process_sample {args} {
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-h - --help {
-				cg_process_sample_help
-				exit 0
-			}
-			default {
-				break
-			}
-		}
-		incr pos 2
-	}
-	if {$pos} {set args [lrange $args $pos end]}
 	if {([llength $args] < 3) || ([llength $args] > 4)} {
-		cg_process_sample_help
+		errorformat process_sample
 		exit 1
 	}
 	process_sample {*}$args

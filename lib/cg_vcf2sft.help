@@ -1,7 +1,10 @@
 == Format ==
-@BASE@ ?infile? ?outfile?
+cg vcf2sft ?infile? ?outfile?
 
-== Description ==
+== Category ==
+Conversion
+
+== Summary ==
 Converts data in vcf format to sft (simple feature table) format
 
 == Arguments ==

@@ -1,9 +1,15 @@
 == Format ==
-@BASE@ ?regfile?
+cg covered ?regfile?
+
+== Category ==
+Regions
+
+== Summary ==
+Find number of bases covered by regions in a region file
 
 == Description ==
-This command returns the number of bases covered by
-the regions in a given region file.
+A region file (any tab separated file with columns chromosome,begin,end) will be parsed,
+and the number of bases is returned per chromosome and for the total.
 
 == Arguments ==
 * regfile: file containing regions. If not present, stdin will be used

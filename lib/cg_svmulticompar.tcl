@@ -355,18 +355,11 @@ proc svmulticompar {svfile1 svfile2} {
 
 }
 
-proc cg_svmulticompar_help {} {
-	set help [file_read $::appdir/lib/cg_svmulticompar.help]
-	puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
-}
-
 proc cg_svmulticompar {args} {
-	if {$args eq "--help"} {
-		cg_svmulticompar_help
-	} elseif {[llength $args] < 2} {
+	if {[llength $args] < 2} {
 		puts "Wrong number of arguments"
-		cg_svmulticompar_help
-		exit
+		errorformat svmulticompar
+		exit 1
 	}
 	foreach {compar_file} $args break
 	set dirs [lrange $args 1 end]

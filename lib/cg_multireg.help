@@ -1,5 +1,11 @@
 == Format ==
-@BASE@ compar_file ?file? ...
+cg multireg compar_file ?file? ...
+
+== Category ==
+Regions
+
+== Summary ==
+Compare multiple regions files
 
 == Description ==
 This command is used to create multiregion compar_files.

@@ -5,15 +5,9 @@ exec tclsh "$0" ${1+"$@"}
 # todo:
 # genotype in haploid calls (Y chromosome)
 
-proc cg_vcf2sft_help {} {
-set help [file_read $::appdir/lib/cg_vcf2sft.help]
-puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
-}
-
 proc cg_vcf2sft {args} {
 	if {([llength $args] < 0) || ([llength $args] > 2)} {
-		puts "Wrong number of arguments"
-		cg_vcf2sft_help
+		errorformat vcf2sft
 		exit 1
 	}
 	if {[llength $args] > 0} {

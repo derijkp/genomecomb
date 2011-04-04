@@ -11,11 +11,6 @@ cg groupby s1 < ~/dev/completegenomics/tests/table2.tsv
 cg select -q '$symbol != ""' /complgen/projects/test/annottest_compar.tsv | cg groupby symbol > /complgen/projects/test/groupby_symbol_test_compar.tsv
 }
 
-proc cg_groupby_help {} {
-set help [file_read $::appdir/lib/cg_groupby.help]
-puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
-}
-
 proc cg_groupby {args} {
 	set pos 0
 	set sumfields {}
@@ -23,10 +18,6 @@ proc cg_groupby {args} {
 		switch -- $key {
 			-sumfields {
 				set sumfields $value
-			}
-			-h - --help {
-				cg_groupby_help
-				exit 0
 			}
 			-- break
 			default {
@@ -37,8 +28,7 @@ proc cg_groupby {args} {
 	}
 	set args [lrange $args $pos end]
 	if {([llength $args] < 1)} {
-		puts "Wrong number of arguments"
-		cg_groupby_help
+		errorformat groupby
 		exit 1
 	}
 	set fields [lindex $args 0]

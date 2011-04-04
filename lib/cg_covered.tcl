@@ -3,34 +3,14 @@ exec tclsh "$0" ${1+"$@"}
 
 package require Extral
 
-proc cg_covered_help {} {
-	set help [file_read $::appdir/lib/cg_covered.help]
-	puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
-}
-
 proc cg_covered args {
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-h - --help {
-				cg_covered_help
-				exit 0
-			}
-			default {
-				break
-			}
-		}
-		incr pos 2
-	}
-	if {$pos} {set args [lrange $args $pos end]}
 	if {[llength $args] > 1} {
-		puts "Wrong number of arguments"
-		cg_covered_help
+		errorformat covered
 		exit 1
 	}
 	if {[llength $args] > 0} {
 		set regfile [lindex $args 0]
-		set f [rzopen $regfile]
+		set f [gzopen $regfile]
 	} else {
 		set f stdin
 	}

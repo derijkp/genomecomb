@@ -1,8 +1,14 @@
 == Format ==
-@BASE@ ?options? fields ?infile? ?outfile?
+cg groupby ?options? fields ?infile? ?outfile?
+
+== Category ==
+Query
+
+== Summary ==
+Group lines in a tsv file, based on 1 or more identical fields
 
 == Description ==
-Groups lines in a tab separated file, where the value in in the givend fields are the same.
+Groups lines in a tab separated file, where the value in in the given fields are the same.
 By default, entries in data fields (= other than the ones on which the groups are made) are 
 concatenated using commas.
 Only subsequent lines with the same values in fields are grouped! Sort first if you 

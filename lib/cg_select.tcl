@@ -900,23 +900,10 @@ proc tsv_align {file1 file2 joinfields1 joinfields2 postfix1 postfix2} {
 	close $f1; close $f2
 }
 
-proc cg_select_help_short {} {
-set help [string_split [file_read $::appdir/lib/cg_select.help] \n\n]
-set help [join [list_sub $help {0 2 3}] \n\n]
-puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
-}
-
-proc cg_select_help {} {
-set help [file_read $::appdir/lib/cg_select.help]
-puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
-}
-
 proc cg_select {args} {
 	if {[llength $args] == 0} {
-		puts "Wrong number of arguments"
-		cg_select_help_short
-		puts "You can get more information about the command using the option --help"
-		exit
+		errorformat select
+		exit 1
 	}
 	set query {}; set fields {}; set sortfields {}; set newheader {}
 	set pos 0
@@ -938,10 +925,6 @@ proc cg_select {args} {
 					catch {close $f}
 				}
 				puts stdout [join $header \n]
-				exit 0
-			}
-			--help {
-				cg_select_help
 				exit 0
 			}
 			-- break
