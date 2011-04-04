@@ -3,10 +3,6 @@
 exec tclsh "$0" "$@"
 
 source tools.tcl
-set keeppath $::env(PATH)
-set script [info script] ; if {$script eq ""} {set script ./t}
-append ::env(PATH) :[file dir [file dir [file normalize $script]]]/bin
-putsvars ::env(PATH)
 
 test multireg {basic} {
 	file delete data/temp.tsv

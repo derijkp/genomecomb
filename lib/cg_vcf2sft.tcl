@@ -18,7 +18,7 @@ proc cg_vcf2sft {args} {
 	}
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]
-		set f [rzopen $filename]
+		set f [gzopen $filename]
 	} else {
 		set f stdin
 	}

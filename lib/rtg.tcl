@@ -3,7 +3,7 @@ proc rtg2annotvar {file {outfile {}}} {
 		set outfile [file dir $file]/annotvar-[file tail [file dir $file]].tsv
 	}
 	catch {close $f}; catch {close $o}
-	set f [rzopen $file]
+	set f [gzopen $file]
 	set o [open $outfile.temp w]
 	puts $o [join {chromosome begin end type reference alleleSeq1 alleleSeq2 posterior coverage correction numA numC numG numT percA percC percG percT nonidentityposterior reference} \t]
 	while {![eof $f]} {
@@ -66,13 +66,19 @@ proc rtg_line {cline poss} {
 	return [list $chromosome $begin $end $type $reference {*}$alleles $posterior $coverage $correction {*}$temp $nonidentityposterior $reference]
 }
 
-proc process_rtgsample {dir dbdir {force 0}} {
+proc process_rtgsample {dir destdir dbdir {force 0}} {
 	set keepdir [pwd]
 	set dir [file normalize $dir]
-	cd $dir
+	set destdir [file normalize $destdir]
+	set dbdir [file normalize $dbdir]
+	file mkdir $destdir
+	cd $destdir
 	puts stderr "Processing sample $dir"
-	set name [file tail $dir]
-	set varfile [lindex [glob $dir/ori/*unfiltered.snp*] 0]
+	set name [file tail $destdir]
+	set varfile [lindex [glob $dir/*snp*gz] 0]
+	if {![llength $varfile]} {
+		set varfile [lindex [glob $dir/*snp*] 0]
+	}
 	# annotated vars file
 	if {$force || ![file exists annotvar-$name.tsv]} {
 		puts stderr "Create annotated varfile annotvar-$name.tsv from $varfile"
@@ -106,30 +112,57 @@ proc process_rtgsample {dir dbdir {force 0}} {
 		}
 		annot_annotvar annotvar-$name.tsv fannotvar-$name.tsv $todo
 	}
+	puts stderr "Make allposs files"
+	set files [lsort -dict [glob $dir/allpos/chr*/*snps.txt*]]
+	file mkdir allpos
+	foreach file $files {
+		set comments {}
+		set f [gzopen $file]
+		set buffering [fconfigure $f -buffering]
+		fconfigure $f -buffering line
+		while {![eof $f]} {
+			set line [gets $f]
+			if {[string index $line 0] ne "#"} break
+			lappend comments $line
+			set header $line
+		}
+		fconfigure $f -buffering $buffering
+		set chr [lindex [split $line \t] 0]
+		set allposfile allpos/chr${chr}_snps.txt
+		if {$force || ![file exists $allposfile.gz]} {
+			puts stderr "Making file $allposfile"
+			set o [open $allposfile.temp w]
+			foreach l [lrange $comments 0 end-1] {
+				puts $o #$l
+			}
+			puts $o $header
+			puts $o $line
+			flush $o
+			fcopy $f $o
+			close $o
+			exec bgzip $allposfile.temp
+			file rename $allposfile.temp.gz $allposfile.gz
+		}
+	}
 	if {$force || ![file exists sreg-$name.tsv]} {
 		puts stderr "Make region file sreg-$name.tsv"
-		set files [lsort -dict [glob allpos/chr*_snps.txt*]]
-		file delete temp.tsv
-		set f [open temp.tsv w]
+		set files [lsort -dict [glob allpos/chr*/*snps.txt*]]
+		file delete sreg-$name.tsv.temp
+		set f [open sreg-$name.tsv.temp w]
 		puts $f "chromosome\tbegin\tend"
 		close $f
 		foreach file $files {
-			set chr [lindex [split [file tail $file] _] 0]
 			puts stderr "Processing $file"
-			set f [rzopen $file]
-			while {![eof $f]} {
-				set line [gets $f]
-				if {[string index $line 0] ne "#"} break
-				set header $line
-			}
+			set chr [lindex [split [file tail $file] _] 0]
+			set f [gzopen $file]
+			set header [tsv_open $f]
 			catch {close $f}
-			set header [string range $header 1 end]
 			set poscol [lsearch $header position]
 			set coveragecol [lsearch $header coverage]
-			if {[inlist {.rz .gz} [file extension $file]]} {set cat zcat} else {set cat cat}
-			exec $cat $file | getregions $chr $poscol $coveragecol 9 1 -1 >> temp.tsv
+			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
+			exec $cat $file | getregions $chr $poscol $coveragecol 9 1 -1 >> sreg-$name.tsv.temp
 		}
-		file rename -force temp.tsv sreg-$name.tsv
+		file rename -force sreg-$name.tsv.temp sreg-$name.tsv
 	}
 	cd $keepdir
 }
@@ -148,7 +181,7 @@ proc annot_rtg_get {dir chr begin} {
 		if {[llength $chrfile]} {
 			tsv_index_close $chrfile position
 		}
-		set chrfile [lindex [glob -nocomplain $dir/allpos/chr${chr}_snps.txt $dir/allpos/chr${chr}_snps.txt.rz $dir/allpos/chr${chr}_snps.txt.gz] 0]
+		set chrfile [gzfile $dir/allpos/chr${chr}_snps.txt]
 		if {[llength $chrfile]} {
 			tsv_index_open $chrfile position 1
 			set present 1

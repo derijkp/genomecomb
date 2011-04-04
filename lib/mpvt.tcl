@@ -5,7 +5,7 @@ set mpvtfile /complgen/multicompar/mpvt_GS102_GS103_rtg102_rtg103.tsv
 
 proc compare_mpvt {multicomparfile mpvtfile} {
 	catch {close $f}
-	set f [rzopen $multicomparfile]
+	set f [gzopen $multicomparfile]
 	set samples [lrange [split [file root [file tail $mpvtfile]] _] 1 end]
 	unset -nocomplain a
 	set header [split [gets $f] \t]

@@ -458,9 +458,12 @@ proc tsv_sort {filename fields} {
 }
 
 proc file_rootgz {filename} {
-	if {[file extension $filename] eq ".gz"} {
+	set ext [file extension $filename]
+	if {$ext eq ".gz"} {
 		return [file root [file root $filename]]
-	} elseif {[file extension $filename] eq ".rz"} {
+	} elseif {$ext eq ".rz"} {
+		return [file root [file root $filename]]
+	} elseif {$ext eq ".bgz"} {
 		return [file root [file root $filename]]
 	} else {
 		file root [file root $filename]
@@ -576,10 +579,14 @@ proc tsv_nextline {f xpos next {shift 100000}} {
 }
 
 proc tsv_index {xfield file} {
-	set indexname [rzroot $file].${xfield}_index
+	set indexname [gzroot $file].${xfield}_index
 	if {[inlist {.rz} [file extension $file]]} {
 		set tempfile [scratchfile]
 		exec razip -d -c $file > $tempfile
+		set f [open $tempfile]
+	} elseif {[inlist {.bgz} [file extension $file]]} {
+		set tempfile [scratchfile]
+		exec bgzip -d -c $file > $tempfile
 		set f [open $tempfile]
 	} elseif {[inlist {.gz} [file extension $file]]} {
 		set tempfile [scratchfile]
@@ -648,12 +655,12 @@ proc tsv_index_open {file field {uncompress 0}} {
 	set file [file normalize $file]
 	if {[info exists cache(tsv_index,$file,$field,step)]} return
 	set ext [file extension $file]
-	if {$ext eq ".gz" || $ext eq ".rz"} {set uncompress 1}
-	set root [rzroot $file]
+	if {$ext eq ".gz" || $ext eq ".rz" || $ext eq ".bgz"} {set uncompress 1}
+	set root [gzroot $file]
 	set workfile $file
 	set uncompressed 0
 	set remove 0
-	if {[inlist {.rz .gz} $ext]} {
+	if {[inlist {.rz .gz .bgz} $ext]} {
 		if {$uncompress} {
 			set workfile [scratchfile]
 			puts stderr "temporarily uncompressing $file to $workfile"
@@ -671,7 +678,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 	if {![file exists $indexname]} {
 		tsv_index $field $workfile
 		if {$workfile ne $file} {
-			file rename [rzroot $workfile].${field}_index $indexname
+			file rename [gzroot $workfile].${field}_index $indexname
 		}
 	}
 	set o [open $indexname]
@@ -686,7 +693,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 	set cache(tsv_index,$file,$field,uncompressed) $uncompressed
 	set cache(tsv_index,$file,$field,remove) $remove
 	close $o
-	set f [rzopen $workfile]
+	set f [gzopen $workfile]
 	set cache(tsv_index,$file,header) [tsv_open $f]
 	if {$uncompressed} {
 		set cache(tsv_index,$file,$field,channel) $f
@@ -703,7 +710,7 @@ proc tsv_index_close {file field} {
 		# puts "remove $cache(tsv_index,$file,$field,workfile)"
 		file delete $cache(tsv_index,$file,$field,workfile)
 	}
-	set indexname [rzroot $file].${field}_index
+	set indexname [gzroot $file].${field}_index
 	unset -nocomplain cache(tsv_index,$file,$field,step)
 	unset -nocomplain cache(tsv_index,$file,$field,findex)
 	unset -nocomplain cache(tsv_index,$file,$field,xmin)
@@ -740,7 +747,7 @@ proc tsv_index_apprgoto {file field pos} {
 		set f $cache(tsv_index,$file,$field,channel)
 		seek $f $fpos
 	} else {
-		set f [rzopen $file $fpos]
+		set f [gzopen $file $fpos]
 	}
 	return $f
 }
@@ -926,7 +933,7 @@ proc cg_select {args} {
 				if {$value eq ""} {
 					set header [tsv_open stdin]
 				} else {
-					set f [rzopen $value]
+					set f [gzopen $value]
 					set header [tsv_open $f]
 					catch {close $f}
 				}
@@ -952,7 +959,7 @@ proc cg_select {args} {
 #puts stderr [list fields=$fields query=$query]
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]
-		set f [rzopen $filename]
+		set f [gzopen $filename]
 	} else {
 		set f stdin
 	}

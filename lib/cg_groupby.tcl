@@ -45,7 +45,7 @@ proc cg_groupby {args} {
 	set args [lrange $args 1 end]
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]
-		set f [rzopen $filename]
+		set f [gzopen $filename]
 	} else {
 		set f stdin
 	}

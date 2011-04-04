@@ -168,7 +168,7 @@ graphwidget method gradientstyle {basecolor} {
 graphwidget method opendialog {{file {}}} {
 	global graphd
 	if {$file eq ""} {set file [Classy::selectfile]}
-	set f [rzopen $file]
+	set f [gzopen $file]
 	set header [tsv_open $f]
 	catch {close $f}
 	set graphd(file) [file normalize $file]
@@ -223,9 +223,9 @@ graphwidget method open {file settingsVar} {
 		vector create ::$object.$vnum.$field
 	}
 	set elements [list $graphd(xfield) $graphd(yfield) $graphd(wfield)]
-	set indexname [rzroot $file].$graphd(xfield)_index
-	set name [file root [file tail [rzroot $file]]]
-	set f [rzopen $file]
+	set indexname [gzroot $file].$graphd(xfield)_index
+	set name [file root [file tail [gzroot $file]]]
+	set f [gzopen $file]
 	set header [tsv_open $f]
 	set poss {}
 	foreach el $elements {
@@ -647,7 +647,7 @@ puts "load $name $start $end $data($name,lstart) $data($name,lend)"
 		set data($name,lend) 0
 		set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
 		set data($name,fpos) $fpos
-		set f [rzopen $data($name,file) $fpos]
+		set f [gzopen $data($name,file) $fpos]
 		set pnext [expr {$start+200}]
 		set tot [expr {$end-$start}]
 		while {![eof $f]} {
@@ -981,7 +981,7 @@ graphwidget method point {x y} {
 	$object.g element closest $x $y pd
 	set name $pd(name)
 	set index $pd(index)
-	set f [rzopen $data($name,file) $data($name,fpos)]
+	set f [gzopen $data($name,file) $data($name,fpos)]
 	incr index
 	while {![eof $f]} {
 		set line [split [gets $f] \t]

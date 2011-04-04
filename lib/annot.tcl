@@ -100,7 +100,7 @@ proc annot_coverage_get {dir chr begin} {
 			tsv_index_close $chrfile offset
 		}
 		regsub ^chr $chr {} nchr
-		set chrfile [lindex [glob -nocomplain $dir/coverage/coverageRefScore-$nchr-*.tsv $dir/coverage/coverageRefScore-$nchr-*.tsv.rz $dir/coverage/coverageRefScore-$nchr-*.tsv.gz] 0]
+		set chrfile [gzfile $dir/coverage/coverageRefScore-$nchr-*.tsv]
 		if {[llength $chrfile]} {
 			tsv_index_open $chrfile offset 1
 			set present 1

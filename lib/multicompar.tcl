@@ -164,7 +164,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0}} {
 	set compar_file [file normalize $compar_file]
 	set basedir [file dir $compar_file]
 	catch {close $f}; catch {close $o}
-	set f [rzopen $compar_file]
+	set f [gzopen $compar_file]
 	set header [split [gets $f] \t]
 	set pos -1
 	unset -nocomplain samplea

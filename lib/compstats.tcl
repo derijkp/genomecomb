@@ -118,7 +118,7 @@ proc count {slist {cfilter {}}} {
 proc compare_loadtable {file headerVar} {
 	upvar $headerVar header
 	if {$file ne "stdin"} {
-		set f [rzopen $file]
+		set f [gzopen $file]
 	} else {
 		set f stdin
 	}

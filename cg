@@ -193,7 +193,7 @@ switch $action {
 	process_indexcompress {
 		if {[llength $argv] != 1} {
 			puts stderr "format is: $scriptname $action file"
-			puts stderr " - makes index, and compresses to razip"
+			puts stderr " - makes index, and compresses to bgzip"
 			exit 1
 		}
 		foreach {file} $argv break

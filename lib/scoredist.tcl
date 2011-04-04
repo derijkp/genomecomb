@@ -41,7 +41,7 @@ proc scoredist {file sample1 sample2} {
 	global compara scorea refa cova mcova
 
 	catch {close $f}
-	set f [rzopen $file]
+	set f [gzopen $file]
 	set header [split [gets $f] \t]
 #	set comparpos [lsearch $header compar]
 	set possa(score) [list_cor $header [list totalScore1-$sample1 totalScore2-$sample1 totalScore1-$sample2 totalScore2-$sample2]]
@@ -128,7 +128,7 @@ proc scoredist {file sample1 sample2} {
 		coverage-$sample2 coveragedist-$sample2 \
 		posterior-$sample2 posteriordist-$sample2 \
 	] {
-		set base [file tail [file root [rzroot $file]]]
+		set base [file tail [file root [gzroot $file]]]
 		set ofile [file join [file dir $file] $name-$base-$sample1-$sample2.tsv]
 		set names [array names sa $field,*]
 		regsub -all $field, $names {} scores

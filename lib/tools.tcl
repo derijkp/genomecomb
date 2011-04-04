@@ -156,12 +156,18 @@ proc opensqlite3 {dbfile query} {
 	set f [open "| sqlite3 -separator \"\t\" $dbfile \"$query\""]
 }
 
-proc rzopen {file {pos -1}} {
+proc gzopen {file {pos -1}} {
 	if {[inlist {.rz} [file extension $file]]} {
 		if {$pos == -1} {
 			set f [open "| razip -d -c $file"]
 		} else {
 			set f [open "| razip -d -c -b $pos $file"]
+		}
+	} elseif {[inlist {.bgz} [file extension $file]]} {
+		if {$pos == -1} {
+			set f [open "| bgzip -d -c $file"]
+		} else {
+			set f [open "| bgzip -d -c -b $pos $file"]
 		}
 	} elseif {[inlist {.gz} [file extension $file]]} {
 		if {$pos == -1} {
@@ -184,12 +190,25 @@ proc rzopen {file {pos -1}} {
 	return $f
 }
 
-proc rzroot filename {
+proc gzroot filename {
 	if {[inlist {.rz .gz} [file extension $filename]]} {
 		return [file root $filename]
 	} else {
 		return $filename
 	}
+}
+
+proc gzfile {filename} {
+	set file [lindex [glob -nocomplain $filename $filename.rz $filename.bgz $filename.gz] 0]
+}
+
+proc gzcat {filename} {
+	switch [file extension $filename] {
+		.rz - .gz - .bgz {set cat zcat}
+		.bz2 {set cat bzcat}
+		default {set cat cat}
+	}
+	return $cat
 }
 
 proc overlap {start1 end1 start2 end2} {
@@ -210,9 +229,9 @@ proc putslog {args} {
 }
 
 proc chrindexseek {file f chr} {
-	set indexfile [rzroot $file].chrindex
+	set indexfile [gzroot $file].chrindex
 	if {![file exists $indexfile]} {
-		set tf [rzopen $file]
+		set tf [gzopen $file]
 		set header [gets $tf]
 		set chrpos [lsearch $header chromosome]
 		set prevchr {}
@@ -380,4 +399,3 @@ if 0 {
 	}
 
 }
-

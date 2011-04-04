@@ -14,7 +14,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 		set file $dir/sv/$name-$chr-paired.tsv
 		set root [file root $file]
 		if {$force || ![file exists $file]} {
-			set file $file.rz
+			set file $file.bgz
 		}
 		if {$force || ![file exists $root.tsv.end1_index]} {
 			puts "Indexing $file"
@@ -28,9 +28,9 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 			puts "svfind $file"
 			cg svfind $file $dbdir/reg_hg18_simpleRepeat.tsv
 		}
-		if {$force || [file extension $file] ne ".rz"} {
-			puts "razipping $file"
-			exec razip $file
+		if {$force || [file extension $file] ne ".bgz"} {
+			puts "bgzipping $file"
+			exec bgzip $file
 		}
 	}
 	puts stderr "Finished finding sv in $dir"

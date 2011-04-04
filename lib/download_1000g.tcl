@@ -44,7 +44,7 @@ proc downloaddb_1000g {path build} {
 #		}
 		puts "Changing format"
 		catch {close $f} ; catch {close $o}
-		set f [rzopen $tempdir/$pop.SRP000031.2010_03.sites.vcf.gz]
+		set f [gzopen $tempdir/$pop.SRP000031.2010_03.sites.vcf.gz]
 		set o [open $tempdir/var_${build}_1000g$pop.tsv w]
 		while {![eof $f]} {
 			set line [gets $f]

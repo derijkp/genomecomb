@@ -30,33 +30,37 @@ proc map2sv {files prefix} {
 		set files [glob [lindex $files 0]/MAP/*/mapping_*.tsv.bz2]
 	}
 	set num 0
-	file mkdir [file dir $prefix]
-	if {![file exists ${prefix}_map2sv_distr_FINISHED]} {
-		foreach file $files {
-			puts $file
-			switch [file extension $file] {
-				.rz - .gz {set cat zcat}
-				.bz2 {set cat bzcat}
-				default {set cat cat}
-			}
-			exec $cat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $prefix
-			incr num
-		}
-		exec touch ${prefix}_map2sv_distr_FINISHED
+	set rdir [file dir $prefix]
+	file mkdir $rdir
+	set scratchdir [scratchdir]
+	set rem [glob -nocomplain $scratchdir/*]
+	if {[llength $rem]} {
+		file delete {*}$rem
 	}
 	if {![file exists ${prefix}_map2sv_sort_FINISHED]} {
-		set files [glob $prefix-*]
+		set scratchprefix $scratchdir/[file tail $prefix]
 		foreach file $files {
+			puts $file
+			set cat [gzcat $file]
+			exec $cat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $scratchprefix
+			incr num
+		}
+		set files [glob $scratchprefix-*]
+		foreach file $files {
+			set tail [file tail $file]
+			set rfile $rdir/${tail}-paired.tsv
 			file mkdir [file dir $file]/tmp
 			if {[file extension $file] eq ".tsv"} continue
 			if {[file extension $file] eq ".rz"} continue
+			if {[file extension $file] eq ".bgz"} continue
 			puts $file
-			set f [open ${file}-paired.tsv w]
+			set f [open $rfile.temp w]
 			puts $f [join {chr1 bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
 			close $f
-			exec gnusort8 -t \t -n -s -k5 -T [file dir $file]/tmp $file >> ${file}-paired.tsv
-			file delete $file
+			exec gnusort8 -t \t -n -s -k5 -T [file dir $file]/tmp $file >> $rfile.temp
+			file rename $rfile.temp $rfile
 		}
+		file delete -force $scratchdir/tmp {*}$files
 	}
 	exec touch ${prefix}_map2sv_sort_FINISHED
 }
@@ -100,40 +104,68 @@ proc sv2db {files} {
 proc svinfo {pairfile} {
 	puts "svinfo on file $pairfile"
 	svhisto $pairfile
-	set list [list_remove [split [file_read [file root [rzroot $pairfile]].disthisto] \n] {}]
+	set list [list_remove [split [file_read [file root [gzroot $pairfile]].disthisto] \n] {}]
 	list_shift list
 	list_pop list
 	set total [lmath_sum [list_subindex $list 1]]
-	set list [lsort -integer -index 1 $list]
-	set mode [lindex $list end 0]
+	set slist [lsort -integer -index 1 $list]
+	set mode [lindex $slist end 0]
 	if {$mode eq ""} return
 	if {$mode == -1} {
 		set mode [lindex $list end-1 0]
 	}
-	array set a [list_concat $list]
-	set min $mode
-	set max $mode
-	set num $a($mode)
-	set minnum [expr {round(0.95*$total)}]
-	while {$num < $minnum} {
-		incr min -1
-		incr max
-		incr num [get a($min) 0]
-		incr num [get a($max) 0]
+	set minnum [expr {round(0.05*$total)}]
+	set min10num [expr {round(0.10*$total)}]
+	set min25num [expr {round(0.25*$total)}]
+	set curnum 0
+	set min 0
+	set min10 0
+	list_foreach {gapsize num} $list {
+		if {!$min && $curnum > $minnum} {
+			set min $gapsize
+		}
+		if {!$min10 && $curnum > $minnum} {
+			set min10 $gapsize
+		}
+		if {$curnum > $min25num} {
+			set min25 $gapsize
+			break
+		}
+		incr curnum $num
 	}
-	set o [open [rzroot $pairfile].numinfo.temp w]
+	set curnum 0
+	set max 0
+	set max10 0
+	list_foreach {gapsize num} [list_reverse $list] {
+		if {!$max && $curnum > $minnum} {
+			set max $gapsize
+		}
+		if {!$max10 && $curnum > $minnum} {
+			set max10 $gapsize
+		}
+		if {$curnum > $min25num} {
+			set max25 $gapsize
+			break
+		}
+		incr curnum $num
+	}
+	set o [open [gzroot $pairfile].numinfo.temp w]
 	puts $o key\tvalue
 	puts $o mode\t$mode
 	puts $o min\t$min
 	puts $o max\t$max
+	puts $o min10\t$min10
+	puts $o max10\t$max10
+	puts $o min25\t$min25
+	puts $o max25\t$max25
 	close $o
-	file rename [rzroot $pairfile].numinfo.temp [rzroot $pairfile].numinfo
+	file rename -force [gzroot $pairfile].numinfo.temp [gzroot $pairfile].numinfo
 	putslog "finished $pairfile.numinfo"
 }
 
 proc svhisto {pairfile} {
-	set out [file root [rzroot $pairfile]].disthisto
-	set f [rzopen $pairfile]
+	set out [file root [gzroot $pairfile]].disthisto
+	set f [gzopen $pairfile]
 	set header [gets $f]
 	set distpos [lsearch $header dist]
 	set num 1
@@ -147,9 +179,9 @@ proc svhisto {pairfile} {
  			incr a($dist)
 		}
 	}
-	unset -nocmplain a()
-	unset -nocmplain a(-)
-	set f [open $out w]
+	unset -nocomplain a()
+	unset -nocomplain a(-)
+	set f [open $out.temp w]
 	puts $f "dist\tnumber"
 	set total 0
 	foreach dist [lsort -integer [array names a]] {
@@ -158,6 +190,8 @@ proc svhisto {pairfile} {
 	}
 	puts $f $total
 	close $f
+	catch {file rename -force $out $out.old}
+	file rename $out.temp $out
 	# draw histo
 	set tempfile [tempfile]
 	file_write $tempfile [subst -nocommands {
@@ -166,7 +200,7 @@ proc svhisto {pairfile} {
 		set output "$out.png"
 		set ylabel "Number of reads"
 		set xlabel "distance between paired ends"
-		plot [200:500] "$out" using 1:2
+		plot [0:600] "$out" using 1:2
 	}]
 	catch {exec gnuplot $tempfile}
 }
@@ -266,12 +300,12 @@ proc sv_maxima {list {min 0}} {
 
 proc svtools_loadindex {file xfield} {
 	global svi
-	set f [rzopen $file]
+	set f [gzopen $file]
 	set svi(header) [tsv_open $f]
 	catch {close $f}
 	set svi(xfield) $xfield
 	set svi(xfieldpos) [lsearch $svi(header) $xfield]
-	set indexname [rzroot $file].${xfield}_index
+	set indexname [gzroot $file].${xfield}_index
 	set o [open $indexname]
 	set svi(step) [gets $o]
 	set svi(findex) [gets $o]
@@ -291,7 +325,7 @@ proc svtools_aprgoto {pairfile start} {
 	if {$start < $svi(findex)} {set start $svi(findex)}
 	set index $svi(index)
 	set fpos [expr {round([lindex $index [expr {($start-$svi(findex))/10000}]])}]
-	set f [rzopen $pairfile $fpos]
+	set f [gzopen $pairfile $fpos]
 	while {![eof $f]} {
 		set fpos [tell $f]
 		set line [gets $f]
@@ -455,12 +489,15 @@ proc rkde {list} {
 	return [list_subindex $c {1 2}]
 }
 
-proc kde {list} {
+proc kde {list {kernel {}}} {
 	set list [lsort -real $list]
 	set s [lindex $list 0 0]
 	set e [lindex $list end 0]
-	# gausian kernel, bandwidth = 10
-	set kernel {0.0060 0.0079 0.0104 0.0136 0.0175 0.0224 0.0283 0.0355 0.0440 0.0540 0.0656 0.0790 0.0940 0.1109 0.1295 0.1497 0.1714 0.1942 0.2179 0.2420 0.2661 0.2897 0.3123 0.3332 0.3521 0.3683 0.3814 0.3910 0.3970 0.3989 0.3970 0.3910 0.3814 0.3683 0.3521 0.3332 0.3123 0.2897 0.2661 0.2420 0.2179 0.1942 0.1714 0.1497 0.1295 0.1109 0.0940 0.0790 0.0656 0.0540 0.0440 0.0355 0.0283 0.0224 0.0175 0.0136 0.0104 0.0079 0.0060}
+	if {$kernel eq ""} {
+		# gausian kernel, bandwidth = 10
+		# set kernel {0.0060 0.0079 0.0104 0.0136 0.0175 0.0224 0.0283 0.0355 0.0440 0.0540 0.0656 0.0790 0.0940 0.1109 0.1295 0.1497 0.1714 0.1942 0.2179 0.2420 0.2661 0.2897 0.3123 0.3332 0.3521 0.3683 0.3814 0.3910 0.3970 0.3989 0.3970 0.3910 0.3814 0.3683 0.3521 0.3332 0.3123 0.2897 0.2661 0.2420 0.2179 0.1942 0.1714 0.1497 0.1295 0.1109 0.0940 0.0790 0.0656 0.0540 0.0440 0.0355 0.0283 0.0224 0.0175 0.0136 0.0104 0.0079 0.0060}
+		set kernel $::infoa(kernel)
+	}
 	set ke [llength $kernel]
 	# join [list_subindex $list {0 1 2}] \n
 	set plen [expr {$e-$s}]
@@ -558,7 +595,9 @@ proc kde_maxima {dists {maxsize 50} {min 1.5}} {
 			continue
 		}
 		foreach {s data} [kde $group] break
-		# draw $data $s
+set ::kdedata $data
+set ::kdes $s
+		draw $data $s
 		set maxima [lsort -real -index 1 -decreasing [listmaxima $data $min]]
 		if {![llength $maxima]} continue
 		set stopat [expr {max(1.5,0.2*[lindex $maxima 0 1])}]
@@ -977,6 +1016,17 @@ proc kde_distcluster {dtable} {
 
 	# join [list_subindex $clusters {0 1}] \n
 	return $clusters
+}
+
+proc gauss u {expr {(1/sqrt(2*acos(-1)))*exp(-0.5*$u*$u)}}
+proc makekernel {bw} {
+	set size [expr {$bw*2}]
+	set hkernel {}
+	for {set i 0} {$i < $size} {incr i} {
+		set u [expr {$i/double($bw)}]
+		lappend hkernel [format %.4f [gauss $u]]
+	}
+	set kernel [list_concat [list_reverse [lrange $hkernel 1 end]] $hkernel]
 }
 
 if 0 {
@@ -1526,8 +1576,8 @@ lappend auto_path ~/dev/completegenomics/lib
 package require Extral
 cd /complgen/sv
 
-set trffile /data/db/regdb-simple_repeats.tsv
-set pairfile sv70-20-pairs.tsv
+set trffile /complgen/refseq/hg18/reg_hg18_simpleRepeat.tsv
+set pairfile /complgen/projects/cmt71/cmt71_02_a/sv/cmt71_02_a-22-paired.tsv.rz
 
 foreach {score type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} [list_sub $line $cor] break
 set nscore [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff]
@@ -1544,17 +1594,18 @@ set pairfile GS103/GS103-20-paired.tsv.rz
 
 proc svfind {pairfile trffile} {
 
-	set bpairfile [rzroot $pairfile]
+	set bpairfile [gzroot $pairfile]
 	set outfile [file root $bpairfile]-sv.tsv
+	set windowsize 50
+	set maxpairs 10000
 
 	catch {close $trf}
 	catch {close $o}
 	catch {close $f}
-	if {[file exists $outfile]} {
-		putslog "$outfile exists: skipping"
-		return
-	}
-	set windowsize 50
+#	if {[file exists $outfile]} {
+#		putslog "$outfile exists: skipping"
+#		return
+#	}
 	set lognum [expr {1000000 - 100000%$windowsize}]
 	global infoa
 	set f [open $bpairfile.numinfo]
@@ -1567,7 +1618,8 @@ proc svfind {pairfile trffile} {
 	set mode $infoa(mode)
 	set infoa(hmode) [expr {$infoa(mode)-$infoa(mode)%$infoa(step)}]
 	set infoa(hremove) [list_fill 5 [expr {$infoa(hmode)-2*$infoa(step)}] $infoa(step)]
-	set f [rzopen $pairfile]
+	set infoa(kernel) [makekernel 50]
+	set f [gzopen $pairfile]
 	set header [gets $f]
 	set iheader {chr1 start1 end1 weight1 numl chr2 start2 end2 weight2 numr type dist}
 	set poss [list_cor $header $iheader]
@@ -1591,29 +1643,11 @@ proc svfind {pairfile trffile} {
 	set distpos $infoa(distpos)
 	set typepos $infoa(typepos)
 #check
-# het del
-#lassign {103708885 103709267} dbgstart dbgstop
-#lassign {27410621 27410869} dbgstart dbgstop
-## hom del
-#lassign {29994601 29994942} dbgstart dbgstop
-## hom ins (lastig)
-#lassign {137335560	137336381} dbgstart dbgstop
-## hom ins
-#lassign {32808000 32808950} dbgstart dbgstop
-## het ins
-#lassign {30951	31282} dbgstart dbgstop
-## pdip
-#lassign {1298503 1298909} dbgstart dbgstop
-#lassign {11241108 11241328} dbgstart dbgstop
-#lassign {35000 35350} dbgstart dbgstop
-#lassign {130225 130432} dbgstart dbgstop
-#1923266 1924086 del     4
-#20	false	2749175	2749337	del	51	hom		424	4	12	12	36	163	-0.12	0.00	0.00	0.00	12	-212
-#lassign {3045000	3053200} dbgstart dbgstop
-#lassign {100	8650} dbgstart dbgstop
-#catch {close $f}
-#set f [svtools_aprgoto $pairfile $dbgstart]
-#set outfile test-sv.tsv
+lassign {17950000 17951239} dbgstart dbgstop
+lassign {43675000 43678708} dbgstart dbgstop
+catch {close $f}
+set f [svtools_aprgoto $pairfile $dbgstart]
+set outfile test-sv.tsv
 #check
 	set dir [file dir [file normalize $outfile]]
 	set o [open $outfile.temp w]
@@ -1689,7 +1723,7 @@ proc svfind {pairfile trffile} {
 			set line [getnotempty $f]
 			set line [list_sub $line $poss]
 		}
-		if {[info exists plist] && ([llength $plist] < 1000)} {
+		if {[info exists plist] && ([llength $plist] < $maxpairs)} {
 			# check for sv
 			set result {}
 			set minadd [expr {$start - $windowsize/2}]
@@ -1698,13 +1732,14 @@ proc svfind {pairfile trffile} {
 			set table [list_concat $plist $list]
 			set dists [list_subindex $table $distpos]
 			set maxima [kde_maxima $dists]
+# draw $::kdedata $::kdes
 			set threads [sv_addtothreads $threads $start $maxima $table]
 #			set onum [llength $maxima]
 #			if {$onum < 4} {
 #				set threads [sv_addtothreads $threads $start $maxima $table]
 #			}
 #check
-#if {$start >= $dbgstop} {error STOPPED}
+if {$start >= $dbgstop} {error STOPPED}
 			set temp {}
 			set threads [sv_checkthreads $threads $start $mode temp]
 #if {[llength $temp]} {error STOP}
@@ -1753,6 +1788,8 @@ proc svfind {pairfile trffile} {
 	close $trf
 	close $o
 	catch {close $f}
+	catch {file delete $outfile.old}
+	catch {file rename $outfile $outfile.old}
 	file rename $outfile.temp $outfile
 	putslog "finished $outfile"
 
