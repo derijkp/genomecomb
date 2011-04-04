@@ -109,10 +109,6 @@ proc cg_project {args} {
 				set job [submit -host $host cg process_sample $cgdir $name $refseqdir/$build]
 				if {[isint $job]} {lappend jobs $job}
 			}
-			catch {file copy $cgdir/ASM/CNV $name} result
-			puts $result
-			catch {file copy $cgdir/ASM/SV $name} result
-			puts $result
 		}
 		lappend alljobs {*}$jobs
 	}
@@ -127,7 +123,12 @@ proc cg_project {args} {
 	
 	# multicompar
 	# ===========
-	if {[inlist $actions compar]} {
+	if {[inlist $actions compar] || [inlist $actions compar_regonly]} {
+		if {[inlist $actions compar_regonly]} {
+			set reannot -reannotregonly
+		} else {
+			set reannot -reannot
+		}
 		set names {}
 		foreach {cgdir name} $data {
 			lappend names $name
@@ -142,10 +143,10 @@ proc cg_project {args} {
 			file mkdir compar
 			if {$direct} {
 				puts "Multicompar: adding $name"
-				exec cg multicompar -reannot compar/${project}_compar.tsv {*}$names >@ stdout 2>@stderr
+				exec cg multicompar $reannot compar/${project}_compar.tsv {*}$names >@ stdout 2>@stderr
 				exec cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/annovar >@ stdout 2>@stderr
 			} else {
-				set cjob [submit -host lungo -deps [join $jobs ,] cg multicompar -reannot compar/${project}_compar.tsv {*}$names]
+				set cjob [submit -host lungo -deps [join $jobs ,] cg multicompar $reannot compar/${project}_compar.tsv {*}$names]
 		 		lappend alljobs $cjob
 				set ajob [submit -host lungo -deps $cjob cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/annovar]
 		 		lappend alljobs $ajob
@@ -204,9 +205,9 @@ proc cg_project {args} {
 			set files [glob -nocomplain $name/sv/*-paired.tsv]
 			if {[llength $files]} {
 				if {$direct} {
-					exec razip {*}$files >@ stdout 2>@stderr
+					exec bgzip {*}$files >@ stdout 2>@stderr
 				} else {
-					set job [submit -host $host -deps $alljobs razip {*}$files]
+					set job [submit -host $host -deps $alljobs bgzip {*}$files]
 				}
 			}
 		}

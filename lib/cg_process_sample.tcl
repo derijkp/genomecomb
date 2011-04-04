@@ -19,7 +19,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		set varfile [glob $dir/ASM/var-*-ASM*.tsv*]
 		if {[llength $varfile] != 1} {error "could not identify varfile"}
 		if {[llength $varfile] > 1} {error "could not identify varfile"}
-		set f [rzopen $varfile]
+		set f [gzopen $varfile]
 		set info {}
 		while {![eof $f]} {
 			set line [gets $f]
@@ -62,15 +62,18 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	file mkdir coverage
 	foreach {chr} $chromosomes  {
 		set resultfile coverage/coverageRefScore-$chr-$name.tsv
-		if {$force || (![file exists $resultfile] && ![file exists $resultfile.rz])} {
+		if {$force || ([gzfile $resultfile] eq "")} {
 			set oricov [lindex [glob -nocomplain \
 				$dir/ASM/REF/coverageRefScore-$chr-*-ASM*.tsv \
 				$dir/ASM/REF/coverageRefScore-chr$chr-*-ASM*.tsv \
 				$dir/ASM/REF/coverageRefScore-$chr-*-ASM*.tsv.* \
 				$dir/ASM/REF/coverageRefScore-chr$chr-*-ASM*.tsv.*] 0]
 			if {[file exists $oricov]} {
-				putslog "Sorting to create $resultfile"
-				cg select -s offset $oricov coverage/temp.tsv
+				putslog "Creating $resultfile"
+				exec [gzcat $oricov] $oricov > coverage/temp.tsv
+				# todo: check if sorted correctly
+				# putslog "Sorting to create $resultfile"
+				# cg select -s offset $oricov coverage/temp.tsv
 				file rename -force coverage/temp.tsv $resultfile
 			}
 		}
@@ -87,6 +90,19 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		# set file svar-$name.tsv; set genefile sgene-$name.tsv; set outfile temp.tsv
 		cg var2annot svar-$name.tsv sgene-$name.tsv temp.tsv
 		file rename -force temp.tsv annotvar-$name.tsv
+	}
+	# copy extra info
+	if {$force || ![file exists CNV]} {
+		catch {file copy $dir/ASM/CNV .} result
+		puts stderr $result
+	}
+	if {$force || ![file exists SV]} {
+		catch {file copy $dir/ASM/SV .} result
+		puts stderr $result
+	}
+	if {$force || ![file exists EVIDENCE]} {
+		catch {file copy $dir/ASM/EVIDENCE .} result
+		puts stderr $result
 	}
 	# sample specific filters
 	if {$force || ![file exists reg_refcons-$name.tsv]} {
@@ -191,10 +207,10 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		puts $f "chromosome\tbegin\tend"
 		close $f
 		foreach {chr} $chromosomes  {
-			set file [lindex [glob -nocomplain coverage/coverageRefScore-$chr-$name.tsv coverage/coverageRefScore-$chr-$name.tsv.rz coverage/coverageRefScore-$chr-$name.tsv.gz] 0]
+			set file [gzfile coverage/coverageRefScore-$chr-$name.tsv]
 			if {($file eq "" ) && ($chr eq "Y")} continue
 			puts stderr "Processing $file"
-			set f [rzopen $file]
+			set f [gzopen $file]
 			while {![eof $f]} {
 				set header [gets $f]
 				if {[string index $header 0] ne "#"} break
@@ -202,7 +218,13 @@ proc process_sample {dir destdir dbdir {force 0}} {
 			catch {close $f}
 			set poscol [lsearch $header offset]
 			set coveragecol [lsearch $header coverage]
-			if {[inlist {.rz .gz} [file extension $file]]} {set cat zcat} else {set cat cat}
+			if {$coveragecol == -1} {
+				set coveragecol [lsearch $header uniqueSequenceCoverage]
+			}
+			if {$coveragecol == -1} {
+				error "no coverage column found in $file"
+			}
+			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
 			set error [catch {
 				exec $cat $file | getregions $chr $poscol $coveragecol 20 0 0 >> temp.tsv
 			} errmessage]
@@ -224,10 +246,10 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		puts $f "chromosome\tbegin\tend"
 		close $f
 		foreach {chr} $chromosomes  {
-			set file [lindex [glob -nocomplain coverage/coverageRefScore-$chr-$name.tsv coverage/coverageRefScore-$chr-$name.tsv.rz coverage/coverageRefScore-$chr-$name.tsv.gz] 0]
+			set file [gzfile coverage/coverageRefScore-$chr-$name.tsv]
 			if {($file eq "" ) && ($chr eq "Y")} continue
 			puts stderr "Processing $file"
-			set f [rzopen $file]
+			set f [gzopen $file]
 			while {![eof $f]} {
 				set header [gets $f]
 				if {[string index $header 0] ne "#"} break
@@ -235,7 +257,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 			catch {close $f}
 			set poscol [lsearch $header offset]
 			set coveragecol [lsearch $header coverage]
-			if {[inlist {.rz .gz} [file extension $file]]} {set cat zcat} else {set cat cat}
+			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
 			set error [catch {
 				exec $cat $file | getregions $chr $poscol $coveragecol 10 0 0 >> temp.tsv
 			} errmessage]
@@ -257,10 +279,10 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		puts $f "chromosome\tbegin\tend"
 		close $f
 		foreach {chr} $chromosomes  {
-			set file [lindex [glob -nocomplain coverage/coverageRefScore-$chr-$name.tsv coverage/coverageRefScore-$chr-$name.tsv.rz coverage/coverageRefScore-$chr-$name.tsv.gz] 0]
+			set file [gzfile coverage/coverageRefScore-$chr-$name.tsv]
 			if {($file eq "" ) && ($chr eq "Y")} continue
 			puts stderr "Processing $file"
-			set f [rzopen $file]
+			set f [gzopen $file]
 			while {![eof $f]} {
 				set header [gets $f]
 				if {[string index $header 0] ne "#"} break
@@ -268,7 +290,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 			catch {close $f}
 			set poscol [lsearch $header offset]
 			set coveragecol [lsearch $header coverage]
-			if {[inlist {.rz .gz} [file extension $file]]} {set cat zcat} else {set cat cat}
+			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
 			set error [catch {
 				exec $cat $file | getregions $chr $poscol $coveragecol 100 1 0 >> temp.tsv
 			} errmessage]
@@ -325,7 +347,7 @@ proc process_indexcompress {file} {
 		gunzip $file
 		set file [file root $file]
 	}
-	set f [open $file]
+	set f [gzopen $file]
 	set header [tsv_open $f]
 	foreach field {offset end1} {
 		set fpos [lsearch $header $field]
@@ -338,9 +360,11 @@ proc process_indexcompress {file} {
 		tsv_index $field $file
 	}
 	putslog "Compressing $file"
-	exec razip -c $file > $file.rz.temp
-	file rename -force $file.rz.temp $file.rz
-	file delete $file
+	if {![inlist {.rz .bgz} $ext]} {
+		exec bgzip -c $file > $file.bgz.temp
+		file rename -force $file.bgz.temp $file.bgz
+		file delete $file
+	}
 }
 
 proc process_compare_coverage {dir1 dir2 dbdir resultsdir {force 0}} {
@@ -429,6 +453,33 @@ proc process_compare_coverage {dir1 dir2 dbdir resultsdir {force 0}} {
 		}
 	}
 	exec grep total *.covered > summary_genomecoverage_${name1}_${name2}.tsv
+}
+
+proc cg_process_sample_help {} {
+	set help [file_read $::appdir/lib/cg_process_sample.help]
+	puts [string_change $help [list @BASE@ [get ::base {[info source]}]]]
+}
+
+proc cg_process_sample {args} {
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-h - --help {
+				cg_process_sample_help
+				exit 0
+			}
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	if {$pos} {set args [lrange $args $pos end]}
+	if {([llength $args] < 3) || ([llength $args] > 4)} {
+		cg_process_sample_help
+		exit 1
+	}
+	process_sample {*}$args
 }
 
 if 0 {
