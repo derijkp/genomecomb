@@ -373,6 +373,7 @@ proc chanexec {in out pipe} {
 	fcopy $in $o
 	if {$in ne "stdin"} {catch {close $in}}
 	if {$out ne "stdout"} {catch {close $out}}
+	close $o
 }
 
 if 0 {
