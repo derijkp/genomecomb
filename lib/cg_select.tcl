@@ -376,7 +376,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 		foreach pos $poss {
 			lappend keys $pos,$pos
 		}
-		set sort "gnusort8 -t \\t -V -s -k[join $keys " -k"]"
+		set sort "gnusort8 -T \"[scratchdir]\" -t \\t -V -s -k[join $keys " -k"]"
 	}
 	if {($query ne "") || ($qfields ne "")} {
 		append awk {BEGIN {FS="\t" ; OFS="\t"}}
@@ -453,7 +453,7 @@ proc tsv_sort {filename fields} {
 	if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $fields [list_find $poss -1]] ,] not found"}
 	set poss [lmath_calc $poss + 1]
 	puts [join $header \t]
-	set command "tail +2 [list $filename] | gnusort8 -t \\t -V -s -k[join $poss " -k"] >@ stdout"
+	set command "tail +2 [list $filename] | gnusort8 -T \"[scratchdir]\" -t \\t -V -s -k[join $poss " -k"] >@ stdout"
 	eval exec $command
 }
 

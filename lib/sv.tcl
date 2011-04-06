@@ -57,7 +57,7 @@ proc map2sv {files prefix} {
 			set f [open $rfile.temp w]
 			puts $f [join {chr1 bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
 			close $f
-			exec gnusort8 -t \t -n -s -k5 -T [file dir $file]/tmp $file >> $rfile.temp
+			exec gnusort8 -T [scratchdir] -t \t -n -s -k5 -T [file dir $file]/tmp $file >> $rfile.temp
 			file rename $rfile.temp $rfile
 		}
 		file delete -force $scratchdir/tmp {*}$files
