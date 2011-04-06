@@ -378,8 +378,8 @@ proc process_indexcompress {file} {
 	}
 	putslog "Compressing $file"
 	if {![inlist {.rz .bgz} $ext]} {
-		exec bgzip -c $file > $file.bgz.temp
-		file rename -force $file.bgz.temp $file.bgz
+		exec bgzip -c $file > $file.gz.temp
+		file rename -force $file.gz.temp $file.gz
 		file delete $file
 	}
 }
