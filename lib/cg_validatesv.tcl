@@ -5,6 +5,10 @@ exec tclsh "$0" "$@"
 package require Extral
 package require dict
 package require cindex
+catch {package require dbi}
+package require dbi_sqlite3
+package require BioTcl
+#package require Tclx
 
 #######################################################
 # 
@@ -18,6 +22,19 @@ package require cindex
 set maxnum 1000
 set searchGenomeDB "/home/annelies/BigDisk/complgen/refseq/hg18/build36-ssa/"
 set MAX_SIZE 4000
+set archive may2009
+set extraseq 1000
+set cachedir [pwd]/cache
+file mkdir $cachedir
+
+set Temp 100
+foreach rtype {
+	partrepeat,low repeat,low 3repeat,low completerepeat,low
+	partrepeat,multi repeat,multi 3repeat,multi completerepeat,multi
+} {
+	set rscore($rtype) $Temp
+	incr Temp 100
+}
 
 proc cg_validatesv_getSeqRef {chr patch breakpoint read} {
 	set beginTarget [expr $breakpoint - 200]
@@ -202,12 +219,12 @@ proc cg_validatesv_runPrimer3 {list_seq ID ex_primer max_prim} {
 	return $primerDict
 }
 
-proc cg_validatesv_cindex_searchgenome {db pseq {add 0}} {
+proc cg_validatesv_cindex_searchgenome {DB pseq {add 0}} {
 	global cindex_genome maxnum
 	if {![info exists cindex_genome]} {
 		set cindex_genome {}
 		#puts "loading genome database" ; #TEST
-		foreach file [lsort -dict [glob $db/*]] {
+		foreach file [lsort -dict [glob $DB/*]] {
 			set file [file root $file]
 			set chr [lindex [split $file -] end]
 			#puts "loading chr $chr" ; #TEST
@@ -228,25 +245,38 @@ proc cg_validatesv_cindex_searchgenome {db pseq {add 0}} {
 	return [list $numresults $results]
 }
 
-proc cg_validatesv_runEPCR {primer1 primer2 size inv} {
+
+
+proc cg_validatesv_searchAmplicon {seq1 seq2 size} {
 	global searchGenomeDB
 	global MAX_SIZE
-	if {$inv != 1} {set size 0}
-	set seq2 [string range $primer2 [expr [string length $primer2] - 15] end]
-	set seq1 [string range $primer1 [expr [string length $primer1] - 15] end]
 	if {[catch "cg_validatesv_cindex_searchgenome $searchGenomeDB $seq2 " c_output2 ]} {error "found too many hits"}
 	if {[catch "cg_validatesv_cindex_searchgenome $searchGenomeDB $seq1 " c_output1 ]} {error "found too many hits"}
+	if {[lindex $c_output1 0] == 0} {error "Primer not found in genome"}
+	if {[lindex $c_output2 0] == 0} {error "Primer not found in genome"}
 	set hit 0	
 	set chr_col1 0
 	set chr_col2 0
+	set cchr 0
+	set cbegin1 0
+	set cend1 0
+	set cbegin2 0
+	set cend2 0
 	while {$chr_col1 < [llength [lindex $c_output1 1]] && $chr_col2 < [llength [lindex $c_output2 1]] } {
 		set chr1 [lindex [lindex $c_output1 1] $chr_col1]
 		set chr2 [lindex [lindex $c_output2 1] $chr_col2]
 		if {$chr1 == $chr2} {
 			foreach pos1 [lindex [lindex $c_output1 1] [expr $chr_col1 + 1]] {
 				foreach pos2 [lindex [lindex $c_output2 1] [expr $chr_col2 + 1]] {
-					if {[::tcl::mathfunc::abs [expr $pos1 - $pos2]] < [expr $size + $MAX_SIZE] } {incr hit}
-					if {$hit > 1} {error "found more then 1 amplicon"}
+					if {[::tcl::mathfunc::abs [expr $pos1 - $pos2]] < [expr $size + $MAX_SIZE] } {
+						incr hit 
+						if {$hit > 1} {error "found more then 1 amplicon"}
+						set cchr $chr1
+						set cbegin1 $pos1
+						set cend1 [expr $pos1 + 15]
+						set cbegin2 $pos2
+						set cend2 [expr $pos2 + 15]
+					}
 				}
 			}
 			set chr_col1 [expr $chr_col1 +2]
@@ -257,10 +287,208 @@ proc cg_validatesv_runEPCR {primer1 primer2 size inv} {
 			set chr_col1 [expr $chr_col1 +2]	
 		}
 	}
+	
+	return [list $hit $cchr $cbegin1 $cend1 $cbegin2 $cend2]
+
+
+}
+
+proc cg_validatesv_getRepScore {fts len start} {
+	global rscore 
+	#set rcode clean
+	set score 0
+	list_foreach {fstart fend name} $fts {
+		set repeatname [lindex $name 0 0]
+		if {$repeatname eq "trf"} {
+			set repeattype low
+		} else {
+			set repeattype multi
+		}
+		#set cfstart [expr {$fstart-$start}]
+		set cfstart [expr $fstart-$start]
+		if {$cfstart < 0} {set cfstart 0}
+		#set cfend [expr {$fend-$start}]
+		set cfend [expr $fend-$start]
+		if {$cfend >= $len} {set cfend [expr {$len-1}]}
+		set pct [expr {double($cfend+$cfstart)/$len}]
+		if {($pct > 0.8) && ($repeatname eq "dust") || ([string range $repeatname 0 2] eq "Alu")} {
+			set repeatloc completerepeat
+			#set rcode completerepeat,multi
+			set score 100000
+		} else {
+			if {$pct > 0.9} {
+				set repeatloc completerepeat
+			} elseif {($cfend >= [expr {$len-1}]) && ($cfstart <= [expr {$len-6}])} {
+				set repeatloc 3repeat
+			} elseif {[expr {double($len - ($cfend - $cfstart))/$len}] > 0.6} {
+				set repeatloc partrepeat
+			} else {
+				set repeatloc repeat
+			}
+			if {$rscore($repeatloc,$repeattype) > $score} {
+				set score $rscore($repeatloc,$repeattype)
+				#set rcode $repeatloc,$repeattype
+			}
+		}
+		#lappend itemfts [list repeat $cfstart $cfend $repeatloc,$repeattype $repeatname]
+	}
+	#set code $rcode
+
+
+	#puts "score: $score" ; #TEST
+	return $score
+}
+
+proc log args {
+	#puts "log: " ; #TEST
+	#puts $args ; #TEST
+	#puts  "" ; #TEST
+}
+
+proc cg_validatesv_repeatSearch {cchr cstart cend } {
+	global archive
+	global extraseq 
+	global cachedir a
+	unset -nocomplain a
+
+	# get ensembl data for region
+	# ---------------------------
+	set emblfile $cachedir/${cchr}_${cstart}.embl
+	if {![file exists $emblfile]} {
+		set embl [ensembl_getregion $cchr [expr {$cstart-$extraseq}] [expr {$cend+$extraseq}] -archive $archive]
+		file_write $emblfile $embl
+	}
+	catch {e destroy}
+	catch {rename e {}}
+	EmblFile new e
+	e open $emblfile
+
+	# store repeats from data in database
+	# -----------------------------------
+	catch {db destroy}
+	dbi_sqlite3 db
+	db open :memory:
+	db exec {create table ft (id integer primary key, type text, chromosome text, start integer, end integer, name text)}
+	set fts [e features 0]
+	set id 1
+	foreach ft $fts {
+		foreach {type loc descr} $ft break
+		set floc [lindex $loc 0]
+		set start [dict get $floc start]
+		if {[dict exists $floc complement]} {set complement 1} else {set complement 0}
+		set end [dict get $floc end]
+		if {$end < $start} continue
+		if {[dict exists $floc acc]} continue
+		set filter 0
+		if {$type eq "repeat_region"} {
+			db set [list ft $id] type repeat name [lindex [dict get [lindex $ft end] note] 0] chromosome $cchr start $start end $end
+			incr id
+		}
+	}
+	#puts [join [db exec {select * from ft}] \n]; #TEST
+	
+	# check whether primers falls into such repeat
+	# --------------------------------------------
+	set primstart $extraseq
+	set primend [expr $extraseq + ($cend - $cstart)]
+	set fts [db exec {
+		select start,end,name from ft
+		where start <= ? and end >= ? and type = 'repeat'
+	} $primend $primstart]
+	#puts $fts ; #TEST
+	return $fts
+
+}
+
+proc cg_validatesv_runEPCR {primer1 primer2 prod_size size inv} {
+	global PrimerPair
+	# if it is searching for the inverted primers,
+	# the reverse primer will be located at the other breakpoint
+	# so you have to incorporate the size of the inversion
+	if {$inv != 1} {
+		set size 0
+		set seq2 [seq_complement [string range [lindex $primer2 0] 0 14]]
+	} else {
+		set seq2 [string range [lindex $primer2 0] 0 14]
+	}
+	set seq1 [string range [lindex $primer1 0] [expr [string length [lindex $primer1 0]] - 15] end]
+	set len1 [string length [lindex $primer1 0]]
+	set len2 [string length [lindex $primer2 0]]
+	if {[catch "cg_validatesv_searchAmplicon $seq1 $seq2 $size" hits]} {error $hits}
+	if {[lindex $hits 0] < 1} {error "Found no amplicon"}
+
+	#getting position of hit 
+	set cchr [lindex $hits 1]
+	set cbegin1 [lindex $hits 2]
+	set cend1 [lindex $hits 3]
+	set cbegin2 [lindex $hits 4]
+	set cend2 [lindex $hits 5]
+
+	#check the complements
+	set seq1 [seq_complement $seq1]
+	set seq2 [seq_complement $seq2]
+	if {[catch "cg_validatesv_searchAmplicon $seq1 $seq2 $size" hits]} {error $hits}
+	if {[lindex $hits 0] == 1} {error "Found amplicon with primer complements"}
+
+	#check for repeats
+	if {$inv != 1} {
+		set prim_fts1 [cg_validatesv_repeatSearch $cchr $cbegin1 $cend1]
+		set prim_fts2 [cg_validatesv_repeatSearch $cchr $cbegin2 $cend2] 
+		#puts "fts1: $prim_fts1" ; #TEST
+		if {[llength $prim_fts1] && [llength $prim_fts2]} {
+			#if both primers fall into repeat, take the highest score 
+			#and compare that score to the score's of the other primer pairs
+			set rep_score1 [cg_validatesv_getRepScore $prim_fts1 $len1 $cbegin1]
+			set rep_score2 [cg_validatesv_getRepScore $prim_fts2 $len2 $cbegin2]
+			if {$rep_score1 > $rep_score2} {
+				set rep_score $rep_score1
+			} else {
+				set rep_score $rep_score2	
+			}
+			if {[info exists PrimerPair]} {
+				if {[lindex $PrimerPair end] > $rep_score } {
+					set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+				}
+			} else { 
+				set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+			}
+			#puts "PP: $PrimerPair" ; #TEST
+			return "repeat"
+		} elseif {[llength $prim_fts1]} {
+			set rep_score [cg_validatesv_getRepScore $prim_fts1 $len1 $cbegin1]
+			if {[info exists PrimerPair]} {
+				if {[lindex $PrimerPair end] > $rep_score } {
+					set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+				}
+			} else { 
+				set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+			}
+			#puts "PP: $PrimerPair" ; #TEST
+			return "repeat"
+		} elseif {[llength $prim_fts2]} {
+			set rep_score [cg_validatesv_getRepScore $prim_fts2 $len2 $cbegin2]
+			if {[info exists PrimerPair]} {
+				if {[lindex $PrimerPair end] > $rep_score } {
+					set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+				}
+			} else { 
+				set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+			}
+			#puts "PP: $PrimerPair" ; #TEST
+			return "repeat"
+		}
+		set PrimerPair [list $primer1 $primer2 $prod_size]	
+		#puts "PP_noRepeat: $PrimerPair" ; #TEST
+	}
+
 	return 0
 }
 
+
+
 proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL breakpointR READSIZE EVAL MIN} {	
+	global PrimerPair
+	unset -nocomplain PrimerPair
 	# get sequences around breakpoints
 	set list_seq(1) [cg_validatesv_getSeqRef $chr $patchSize $breakpointL $READSIZE]
 	set list_seq(3) [cg_validatesv_getSeqRef $chr $patchSize $breakpointR $READSIZE]
@@ -283,42 +511,79 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 
 	#try to get the best primer pairs for the inversion breakpoints
 	set primerDict1 [cg_validatesv_runPrimer3 $list_seq1_mask "leftRefSeq_${chr}_${patchstart}" "0" "40"]
-	#puts $primerDict1	;#TEST
+	#puts "PD1: $primerDict1"	;#TEST
 	set i 0
 	while {$i < [dict get $primerDict1 PRIMER_PAIR_NUM_RETURNED]} {
-		set primer1L [dict get $primerDict1 PRIMER_LEFT_${i}_SEQUENCE]
-		set primer1R [dict get $primerDict1 PRIMER_RIGHT_${i}_SEQUENCE]
-		#run ucsc_epcr on the 2 primers. There has to be 1 amplicon amplified
+		set primerLF [list [dict get $primerDict1 PRIMER_LEFT_${i}_SEQUENCE]	\
+			[dict get $primerDict1 PRIMER_LEFT_${i}_TM]  [dict get $primerDict1 PRIMER_LEFT_${i}_GC_PERCENT] ]
+		set primerLR [list [dict get $primerDict1 PRIMER_RIGHT_${i}_SEQUENCE] \
+			[dict get $primerDict1 PRIMER_RIGHT_${i}_TM]  [dict get $primerDict1 PRIMER_RIGHT_${i}_GC_PERCENT] ]
+		set prod_sizeL [dict get $primerDict1 PRIMER_PAIR_${i}_PRODUCT_SIZE]
+		#run ucsc_epcr on the 2 primers.
+		#There has to be 1 amplicon amplified
 		set inv 0
-		if {[catch "cg_validatesv_runEPCR $primer1L $primer1R $size $inv" out ]} {incr i; continue}
-		set primerDict2 [cg_validatesv_runPrimer3 $list_seq2_mask "leftInvSeq_${chr}_${patchstart}" $primer1L "20"]
+		if {[catch "cg_validatesv_runEPCR {$primerLF} {$primerLR} $prod_sizeL $size $inv" out ]} {
+			#puts "1: $out"; #TEST
+			incr i; continue
+		}
+		if { [expr $i + 1] == [dict get $primerDict1 PRIMER_PAIR_NUM_RETURNED]} {
+			set primerLF [lindex $PrimerPair 0] 
+			set primerLR [lindex $PrimerPair 1] 
+			set prod_sizeL [lindex $PrimerPair 2]
+		} elseif {$out == "repeat"} {
+			incr i; continue
+		} else {
+			set primerLF [lindex $PrimerPair 0] 
+			set primerLR [lindex $PrimerPair 1]
+			set prod_sizeL [lindex $PrimerPair 2]		
+		}
+		set primerDict2 [cg_validatesv_runPrimer3 $list_seq2_mask "leftInvSeq_${chr}_${patchstart}" [lindex $primerLF 0] "20"]
 		#puts "PD2: $primerDict2" ; #TEST
 		set j 0
 		while {$j < [dict get $primerDict2 PRIMER_RIGHT_NUM_RETURNED]} {
-			set primer2R [dict get $primerDict2 PRIMER_RIGHT_${j}_SEQUENCE]
+			set primerRF [list [dict get $primerDict2 PRIMER_RIGHT_${j}_SEQUENCE] \
+				[dict get $primerDict2 PRIMER_RIGHT_${j}_TM] [dict get $primerDict2 PRIMER_RIGHT_${j}_GC_PERCENT] ]
 			#run cindex_searchgenome on the 2 primers. There has to be 1 amplicon amplified
 			#these are the inverted primers so the size of the inversion has to be brought into account
+			set prod_size 0
 			set inv 1
-			if {[catch "cg_validatesv_runEPCR $primer1L $primer2R $size $inv" out ]} {incr j; continue}
-			set primerDict3 [cg_validatesv_runPrimer3 $list_seq3_mask "leftInvSeq_${chr}_${patchstart}" $primer2R "20"]
+			if {[catch "cg_validatesv_runEPCR {$primerLF} {$primerRF} $prod_size $size $inv" out ]} { incr j; continue}
+			set primerDict3 [cg_validatesv_runPrimer3 $list_seq3_mask "leftInvSeq_${chr}_${patchstart}" [lindex $primerRF 0] "20"]
 			#puts "PR3: $primerDict3" ; #TEST
 			set k 0
+			if {[llength $PrimerPair] > 3} {set repeatL 1}
+			unset -nocomplain PrimerPair
 			while {$k < [dict get $primerDict3 PRIMER_RIGHT_NUM_RETURNED]} {	
-				set primer3R [dict get $primerDict3 PRIMER_RIGHT_${k}_SEQUENCE]
+				set primerRR [list [dict get $primerDict3 PRIMER_RIGHT_${k}_SEQUENCE] \
+					[dict get $primerDict3 PRIMER_RIGHT_${k}_TM] [dict get $primerDict3 PRIMER_RIGHT_${k}_GC_PERCENT] ]
+				set prod_sizeR [dict get $primerDict2 PRIMER_PAIR_${j}_PRODUCT_SIZE]
 				#run epcr on the 2 primers. There has to be 1 amplicon amplified
 				set inv 0
-				if {[catch "cg_validatesv_runEPCR $primer2R $primer3R $size $inv" out ]} {incr k; continue}
+				if {[catch "cg_validatesv_runEPCR {$primerRF} {$primerRR} $prod_sizeR $size $inv" out ]} {incr k; continue}
+				if { [expr $k + 1] == [dict get $primerDict3 PRIMER_RIGHT_NUM_RETURNED]} {
+					set primerRF [lindex $PrimerPair 0]
+					set primerRR [lindex $PrimerPair 1]
+					set prod_sizeR [lindex $PrimerPair 2]
+				} elseif {$out == "repeat"} {
+					incr k; continue
+				} else {
+					set primerRF [lindex $PrimerPair 0] 
+					set primerRR [lindex $PrimerPair 1]
+					set prod_sizeR [lindex $PrimerPair 2]
+				}
 				#making output file of all the 4 primers and there info
-				set primL "primL [dict get $primerDict1 PRIMER_LEFT_${i}_SEQUENCE] [string length [dict get $primerDict1 PRIMER_LEFT_${i}_SEQUENCE]]  	
-					[dict get $primerDict1 PRIMER_LEFT_${i}_TM] [dict get $primerDict1 PRIMER_LEFT_${i}_GC_PERCENT] 
-					[dict get $primerDict1 PRIMER_RIGHT_${i}_SEQUENCE] [string length [dict get $primerDict1 PRIMER_RIGHT_${i}_SEQUENCE]]
-					[dict get $primerDict1 PRIMER_RIGHT_${i}_TM] [dict get $primerDict1 PRIMER_RIGHT_${i}_GC_PERCENT]
-					[dict get $primerDict1 PRIMER_PAIR_${i}_PRODUCT_SIZE] " 
-				set primR "primR [dict get $primerDict2 PRIMER_RIGHT_${j}_SEQUENCE] [string length [dict get $primerDict2 PRIMER_RIGHT_${j}_SEQUENCE]]  	
-					[dict get $primerDict2 PRIMER_RIGHT_${j}_TM] [dict get $primerDict2 PRIMER_RIGHT_${j}_GC_PERCENT] 
-					[dict get $primerDict3 PRIMER_RIGHT_${k}_SEQUENCE] [string length [dict get $primerDict3 PRIMER_RIGHT_${k}_SEQUENCE]]
-					[dict get $primerDict3 PRIMER_RIGHT_${k}_TM] [dict get $primerDict3 PRIMER_RIGHT_${k}_GC_PERCENT]
-					[dict get $primerDict2 PRIMER_PAIR_${j}_PRODUCT_SIZE] "
+				set primL "primL [lindex $primerLF 0] [string length [lindex $primerLF 0]] [lindex $primerLF 1]	[lindex $primerLF 2]
+					[lindex $primerLR 0] [string length [lindex $primerLR 0]] [lindex $primerLR 1] [lindex $primerLR 2] $prod_sizeL "
+				set primR "primR [lindex $primerRF 0] [string length [lindex $primerRF 0]] [lindex $primerRF 1]	[lindex $primerRF 2]
+					[lindex $primerRR 0] [string length [lindex $primerRR 0]] [lindex $primerRR 1] [lindex $primerRR 2] $prod_sizeR "
+				if {[llength $PrimerPair] > 3} {set repeatR 1 }
+				if {[info exists repeatL] && [info exists repeatR]} {
+					puts "WARNING: Both primerpairs are located in a repeat"
+				} elseif {[info exists repeatL]} {
+					puts "WARNING: Primerpair around left breakpoint is located in a repeat"
+				} elseif {[info exists repeatR]} {
+					puts "WARNING: Primerpair around right breakpoint is located in a repeat"
+				}
 				return [list $primL $primR]
 				incr k
 			}
@@ -335,8 +600,8 @@ proc cg_validatesv_help {} {
 }
 
 
-
 proc cg_validatesv args {
+
 	# set options
 	# -----------
 	set READSIZE 360
@@ -411,14 +676,18 @@ proc cg_validatesv args {
 		set primerPairs [cg_validatesv_getPrimerPairs $chr $patchSize $patchstart $size $breakpointL $breakpointR $READSIZE $EVAL $MIN]
 		if {$primerPairs == 1} {
 			puts "No primer pairs were found for this inversion"
+			puts " "
 			tempfile clean 
 			set in [gets $fileid]
 			incr inversion_count
-				continue
+			continue
+		} else {
+			puts "Primerpairs for ${chr}_${patchstart} are found!"
+			puts " "
 		}
 		foreach primer $primerPairs {
 			set line_out "$chr $patchstart [lindex $line $PATCHEND] $primer"
-				puts $fileid_out [join $line_out \t]
+			puts $fileid_out [join $line_out \t]
 	
 		}
 
@@ -426,11 +695,24 @@ proc cg_validatesv args {
 		set in [gets $fileid]
 		incr inversion_count
 	}
+
 	close $fileid
+	puts " ----------------------------------------------------------------------------------"
+	puts " \t \t \t Program is finished! "
+	puts " Output is written to: $file_out "
+	puts ""
+	puts " Please cite for use of Primer3: "
+	puts " Rozen S, Skaletsky H (2000) Primer3 on the WWW for general users and for biologist programmers. "
+	puts " In: Krawetz S, Misener S (eds) Bioinformatics Methods and Protocols: Methods in Molecular Biology. "
+	puts " Humana Press, Totowa, NJ, pp 365-386   "
+	puts " ----------------------------------------------------------------------------------"
+	puts ""
+
 	return 0
 
 
 }
+
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	package require pkgtools
 	set appdir [file dir [pkgtools::startdir]]
