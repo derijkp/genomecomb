@@ -8,7 +8,7 @@ package require cindex
 catch {package require dbi}
 package require dbi_sqlite3
 package require BioTcl
-#package require Tclx
+
 
 #######################################################
 # 
@@ -85,6 +85,7 @@ proc cg_validatesv_mask_seq {list_seq EVAL MIN} {
 	
 	set len_stretch {} ; #so user knows how much nucleotides are located in stretches
 	set hits [regexp -inline -indices -all {A{10,}|G{10,}|T{10,}|C{10,}} $seqL]
+	#try to avoid the stretches in the sequences were the primers will be found
 	foreach hit [lreverse $hits] {
 		if {[expr [string length $seqL] - [lindex $hit end]] < $MIN} {
 			lappend len_stretch [expr [lindex $hit end] - [lindex $hit 0] + 1]
@@ -131,7 +132,7 @@ proc cg_validatesv_mask_seq {list_seq EVAL MIN} {
 		exit 1
 	}
 
-	#scrape FASTAoutput
+	#run FASTA - output tclDict
 	if {[catch "exec FASTAwrap.tcl $tempL $tempR -t 1 -e $EVAL" FASTAwrap]} {
 		puts "something went wrong while FASTA'ing some files - $FASTAwrap"
 		exit 1
@@ -295,7 +296,6 @@ proc cg_validatesv_searchAmplicon {seq1 seq2 size} {
 
 proc cg_validatesv_getRepScore {fts len start} {
 	global rscore 
-	#set rcode clean
 	set score 0
 	list_foreach {fstart fend name} $fts {
 		set repeatname [lindex $name 0 0]
@@ -304,16 +304,13 @@ proc cg_validatesv_getRepScore {fts len start} {
 		} else {
 			set repeattype multi
 		}
-		#set cfstart [expr {$fstart-$start}]
 		set cfstart [expr $fstart-$start]
 		if {$cfstart < 0} {set cfstart 0}
-		#set cfend [expr {$fend-$start}]
 		set cfend [expr $fend-$start]
 		if {$cfend >= $len} {set cfend [expr {$len-1}]}
 		set pct [expr {double($cfend+$cfstart)/$len}]
 		if {($pct > 0.8) && ($repeatname eq "dust") || ([string range $repeatname 0 2] eq "Alu")} {
 			set repeatloc completerepeat
-			#set rcode completerepeat,multi
 			set score 100000
 		} else {
 			if {$pct > 0.9} {
@@ -327,12 +324,10 @@ proc cg_validatesv_getRepScore {fts len start} {
 			}
 			if {$rscore($repeatloc,$repeattype) > $score} {
 				set score $rscore($repeatloc,$repeattype)
-				#set rcode $repeatloc,$repeattype
 			}
 		}
-		#lappend itemfts [list repeat $cfstart $cfend $repeatloc,$repeattype $repeatname]
 	}
-	#set code $rcode
+	
 
 
 	#puts "score: $score" ; #TEST
@@ -436,15 +431,11 @@ proc cg_validatesv_runEPCR {primer1 primer2 prod_size size inv} {
 		set prim_fts2 [cg_validatesv_repeatSearch $cchr $cbegin2 $cend2] 
 		#puts "fts1: $prim_fts1" ; #TEST
 		if {[llength $prim_fts1] && [llength $prim_fts2]} {
-			#if both primers fall into repeat, take the highest score 
+			#if both primers fall into repeat, add both scores together 
 			#and compare that score to the score's of the other primer pairs
 			set rep_score1 [cg_validatesv_getRepScore $prim_fts1 $len1 $cbegin1]
 			set rep_score2 [cg_validatesv_getRepScore $prim_fts2 $len2 $cbegin2]
-			if {$rep_score1 > $rep_score2} {
-				set rep_score $rep_score1
-			} else {
-				set rep_score $rep_score2	
-			}
+			set rep_score [expr $rep_score2	+ $rep_score1]
 			if {[info exists PrimerPair]} {
 				if {[lindex $PrimerPair end] > $rep_score } {
 					set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
@@ -507,6 +498,7 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 		puts "\t \t \t \t \t \t right breakpoint: $len_stretch3"
 		#puts $list_seq1_mask ; #TEST
 	}
+	# make seq2 from seq1 and seq3
 	set list_seq2_mask [cg_validatesv_getSeqInv $list_seq1_mask $list_seq3_mask]
 
 	#try to get the best primer pairs for the inversion breakpoints
@@ -519,13 +511,13 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 		set primerLR [list [dict get $primerDict1 PRIMER_RIGHT_${i}_SEQUENCE] \
 			[dict get $primerDict1 PRIMER_RIGHT_${i}_TM]  [dict get $primerDict1 PRIMER_RIGHT_${i}_GC_PERCENT] ]
 		set prod_sizeL [dict get $primerDict1 PRIMER_PAIR_${i}_PRODUCT_SIZE]
-		#run ucsc_epcr on the 2 primers.
-		#There has to be 1 amplicon amplified
+		#run ucsc_epcr on the 2 primers. There has to be 1 amplicon amplified
 		set inv 0
 		if {[catch "cg_validatesv_runEPCR {$primerLF} {$primerLR} $prod_sizeL $size $inv" out ]} {
 			#puts "1: $out"; #TEST
 			incr i; continue
 		}
+		#picking the best primer
 		if { [expr $i + 1] == [dict get $primerDict1 PRIMER_PAIR_NUM_RETURNED]} {
 			set primerLF [lindex $PrimerPair 0] 
 			set primerLR [lindex $PrimerPair 1] 
@@ -551,7 +543,7 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 			set primerDict3 [cg_validatesv_runPrimer3 $list_seq3_mask "leftInvSeq_${chr}_${patchstart}" [lindex $primerRF 0] "20"]
 			#puts "PR3: $primerDict3" ; #TEST
 			set k 0
-			if {[llength $PrimerPair] > 3} {set repeatL 1}
+			if {[llength $PrimerPair] > 3} {set repeatL 1} ; #for later determination of location of repeats
 			unset -nocomplain PrimerPair
 			while {$k < [dict get $primerDict3 PRIMER_RIGHT_NUM_RETURNED]} {	
 				set primerRR [list [dict get $primerDict3 PRIMER_RIGHT_${k}_SEQUENCE] \
