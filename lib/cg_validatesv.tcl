@@ -548,7 +548,7 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 			while {$k < [dict get $primerDict3 PRIMER_RIGHT_NUM_RETURNED]} {	
 				set primerRR [list [dict get $primerDict3 PRIMER_RIGHT_${k}_SEQUENCE] \
 					[dict get $primerDict3 PRIMER_RIGHT_${k}_TM] [dict get $primerDict3 PRIMER_RIGHT_${k}_GC_PERCENT] ]
-				set prod_sizeR [dict get $primerDict2 PRIMER_PAIR_${j}_PRODUCT_SIZE]
+				set prod_sizeR [dict get $primerDict3 PRIMER_PAIR_${k}_PRODUCT_SIZE]
 				#run epcr on the 2 primers. There has to be 1 amplicon amplified
 				set inv 0
 				if {[catch "cg_validatesv_runEPCR {$primerRF} {$primerRR} $prod_sizeR $size $inv" out ]} {incr k; continue}
