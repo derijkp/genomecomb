@@ -34,10 +34,10 @@ int main(int argc, char *argv[]) {
 	end2pos = atoi(argv[8]);
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 	fprintf(stdout,"chromosome\tbegin\tend\n");
-	DStringGetLine(&line, f1);
+	skip_header(f1, &line);
 	get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&nchr1,&start1,&end1);
 	if (f2 != NULL) {
-		DStringGetLine(&line, f2);
+		skip_header(f2, &line);
 		get_region(f2,&line,chr2pos,start2pos,end2pos,max2,&chromosome2,&nchr2,&start2,&end2);
 	} else {
 		nchr2 = FINISHED;

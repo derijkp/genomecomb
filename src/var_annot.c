@@ -102,8 +102,8 @@ int main(int argc, char *argv[]) {
 	data2pos = atoi(argv[14]);
 	if (data1pos > max2) {max2 = data1pos;} ; if (data2pos > max2) {max2 = data2pos;} ;
 	result2 = DStringArrayNew(max2+1);
-	DStringGetLine(line1,f1);
-	DStringGetLine(line2,f2);
+	skip_header(f1,line1);
+	skip_header(f2,line2);
 	error2 = DStringGetTab(line2,f2,max2,result2);
 	chromosome2 = result2[chr2pos].string;
 	nchr2 = chromosomenum(chromosome2);

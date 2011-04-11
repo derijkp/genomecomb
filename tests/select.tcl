@@ -80,6 +80,26 @@ test select {-f calculated functions} {
 chr1	4000	4001	2
 chr2	4000	4001	4}
 
+test select {keep header info and format} {
+	exec cg select -s position data/rtgsnps.tsv temp.tsv
+	file delete temp
+	catch {exec diff temp.tsv data/rtgsnps.tsv > temp}
+	file_read temp
+} {3d2
+< 
+}
+
+test select {keep header info and format vcf} {
+	exec cg select -s POS data/test.vcf temp.tsv
+	file delete temp
+	catch {exec diff temp.tsv data/test.vcf > temp}
+	file_read temp
+} {18c18
+< #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003
+---
+> #CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+}
+
 # cannot sort on calculated fields (yet)
 #test select {-f calculated functions + sort} {
 #	exec cg select -f {chromosome begin end {countG=count($alleleSeq*, == "G")}} -q {$begin == 4000} -s countG [gzfile data/vars1.sft]

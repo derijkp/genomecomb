@@ -5,9 +5,9 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 test multireg {basic} {
-	file delete data/temp.tsv
-	exec cg multireg data/temp.tsv data/reg1.tsv data/reg2.tsv 2> /dev/null
-	exec diff data/temp.tsv data/expected-multireg-reg1-reg2.sft
+	file delete temp.tsv
+	exec cg multireg temp.tsv data/reg1.tsv data/reg2.tsv 2> /dev/null
+	exec diff temp.tsv data/expected-multireg-reg1-reg2.sft
 } {}
 
 test multireg {same} {

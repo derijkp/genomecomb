@@ -5,11 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static char *line = NULL;
-static size_t len;
+#include "tools.h"
+#include "debug.h"
 
 int main(int argc, char *argv[]) {
+	DString line;
 	char *chr, *linepos = NULL, *scanpos = NULL;
 	ssize_t read;
 	int poscol,valuecol,above,shift,maxcol,pos,value,cutoff;
@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"Format is: getregions chromosome poscol valuecol cutoff above shift");
 		exit(EXIT_FAILURE);
 	}
+	DStringInit(&line);
 	chr = argv[1];
 	poscol = atoi(argv[2]);
 	valuecol = atoi(argv[3]);
@@ -26,18 +27,16 @@ int main(int argc, char *argv[]) {
 	shift = atoi(argv[6]);
 	pos = 0 - shift;
 	maxcol = poscol ; if (valuecol > maxcol) {maxcol = valuecol;}
-	getline(&line, &len, stdin);
-	while ((read = getline(&line, &len, stdin)) != -1) {
-		if (line[0] == '\0') continue;
-		if (line[0] != '#' && line[0] != '>') break;
-	}
+	skip_header(stdin,&line);
+	DStringGetLine(&line, stdin);
 	begin = -1;
 	status = 0;
 	while (1) {
-		linepos = line;
+		linepos = line.string;
+NODPRINT("%s\n",linepos)
 		count = 0;
 		while (*linepos && (count <= maxcol)) {
-			if (*linepos == '\t' || (linepos == line)) {
+			if (*linepos == '\t' || (linepos == line.string)) {
 				if (*linepos == '\t') {
 					scanpos = linepos+1;
 				} else {
@@ -65,13 +64,11 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}
-		if ((read = getline(&line, &len, stdin)) == -1) break;
+		if ((read = DStringGetLine(&line, stdin)) == -1) break;
 	}
 	if (status) {
 		fprintf(stdout,"%s\t%d\t%d\n", chr, begin+shift, pos+1+shift);
 	}
-	if (line) {
-		free(line);
-	}
+	DStringClear(&line);
 	exit(EXIT_SUCCESS);
 }

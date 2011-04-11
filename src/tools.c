@@ -305,3 +305,14 @@ NODPRINT("%s",linePtr->string)
 		return 0;
 	}
 }
+
+void skip_header(FILE *f1, DString *linePtr) {
+	ssize_t read;
+	while ((read = DStringGetLine(linePtr, f1)) != -1) {
+		if (linePtr->string[0] == '\0') {
+			DStringGetLine(linePtr, f1);
+			break;
+		}
+		if (linePtr->string[0] != '#' && linePtr->string[0] != '>') break;
+	}
+}

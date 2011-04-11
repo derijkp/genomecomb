@@ -3,9 +3,6 @@
 exec tclsh "$0" "$@"
 
 source tools.tcl
-set keeppath $::env(PATH)
-append ::env(PATH) :[file dir [file dir [file normalize [info script]]]]/bin
-putsvars ::env(PATH)
 
 test reg_annot {basic} {
 	exec cg annotate data/vars1.sft data/temp.sft data/reg_annot.sft 2> /dev/null

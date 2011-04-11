@@ -61,8 +61,8 @@ NODPRINT("%d %d %d ""%s"" %d %d %d",chr1pos,start1pos,end1pos,nulldata,chr2pos,s
 	line1 = DStringNew(); line2=DStringNew();
 	result1 = DStringArrayNew(max1+2);
 	result2 = DStringArrayNew(max2+2);
-	DStringGetLine(line1,f1);
-	DStringGetLine(line2,f2);
+	skip_header(f1,line1);
+	skip_header(f2,line2);
 	error1 = multireg_next(f1,line1,chr1pos,start1pos,end1pos,max1,result1,&nchr1,&start1,&end1,&cur1);
 	error2 = multireg_next(f2,line2,chr2pos,start2pos,end2pos,max2,result2,&nchr2,&start2,&end2,NULL);
 	while (!error1 || !error2) {
