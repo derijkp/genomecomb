@@ -57,10 +57,11 @@ proc mcompar_samples {file} {
 }
 
 proc cg_project {args} {
+	set knownactions {samples compar compar_regonly sv clean users}
 	if {([llength $args] < 3)} {
 		puts stderr "format is: $::base project_file refseqdir action/option ..."
 		puts stderr " - processes project according to project file"
-		puts stderr " - actions: samples, compar, sv, clean, users"
+		puts stderr " - actions: [join $knownactions {, }]"
 		puts stderr " - options: direct"
 		exit 1
 	}
@@ -72,8 +73,8 @@ proc cg_project {args} {
 		set actions [list_remove $actions direct]
 		set direct 1
 	}
-	if {[llength [list_lremove $actions {samples compar sv clean users}]]} {
-		error "unkown action(s) [join [list_lremove $actions {samples compar sv clean users}] ,], must be one or more of: samples compar sv clean users"
+	if {[llength [list_lremove $actions $knownactions]]} {
+		error "unkown action(s) [join [list_lremove $actions $knownactions] ,], must be one or more of: samples compar sv clean users"
 	}
 	set projectfile [file normalize $projectfile]
 	if {[file isdir $projectfile]} {set projectfile [lindex [glob $projectfile/*.cgprj] 0]}
@@ -139,10 +140,11 @@ proc cg_project {args} {
 		} else {
 			set done {}
 		}
+		puts "Already done: [join $done {, }]"
 		if {[llength $names]} {
 			file mkdir compar
 			if {$direct} {
-				puts "Multicompar: adding $name"
+				puts "Multicompar: adding [join $names {, }]"
 				exec cg multicompar $reannot compar/${project}_compar.tsv {*}$names >@ stdout 2>@stderr
 				exec cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/annovar >@ stdout 2>@stderr
 			} else {
@@ -153,20 +155,26 @@ proc cg_project {args} {
 			}
 		}
 		# multireg
+		set done {}
 		if {[file exists compar/${project}_reg.tsv]} {
-			set done [mcompar_samples compar/${project}_reg.tsv]
-		} else {
-			set done {}
+			set list [cg select -h compar/${project}_reg.tsv]
+			set poss [list_find -glob $list sreg-*]
+			set done [list_sub $list $poss]
 		}
 		set files {}
+		set names {}
 		foreach {cgdir name} $data {
-			if {![inlist $done $name]} {
+			if {![inlist $done sreg-$name]} {
 				lappend files $name/sreg-$name.tsv
+				lappend names $name
 			}
+		}
+		if {[llength $done]} {
+			puts "Multireg already done: $done"
 		}
 		if {[llength $files]} {
 			if {$direct} {
-				puts "Multireg: adding $name"
+				puts "Multireg: adding $names"
 				exec cg multireg compar/${project}_reg.tsv {*}$files >@ stdout 2>@stderr
 			} else {
 				set crjob [submit -deps [join $jobs ,] cg multireg compar/${project}_reg.tsv {*}$files]
@@ -200,14 +208,33 @@ proc cg_project {args} {
 	if {[inlist $actions clean]} {
 		cd $resultdir
 		foreach {cgdir name} $data {
-			set host [lindex [file split $cgdir] 2]
+			puts "Cleanup $name"
+			# set host [lindex [file split $cgdir] 2]
+			# remove temp files
+			set files [glob -nocomplain $name/*.temp $name/*/*.temp $name/*/*/*.temp $name/*.old $name/*/*.old]
+			if {[llength $files]} {
+				puts "Deleting $files"
+				file delete {*}$files
+			}
+			# compress sample results
+			set files [glob -nocomplain $name/*.tsv $name/*/*.tsv $name/*/*/*.tsv]
+			foreach file $files {
+				puts "Compressing $file"
+				if {$direct} {
+					exec bgzip $file >@ stdout 2>@stderr
+				} else {
+					set job [submit -deps $alljobs bgzip $file]
+				}
+			}
+			# compress sv data
 			set dir [file dir $cgdir]
 			set files [glob -nocomplain $name/sv/*-paired.tsv]
-			if {[llength $files]} {
+			foreach file $files {
+				puts "Compressing $file"
 				if {$direct} {
-					exec bgzip {*}$files >@ stdout 2>@stderr
+					exec bgzip $file >@ stdout 2>@stderr
 				} else {
-					set job [submit -host $host -deps $alljobs bgzip {*}$files]
+					set job [submit -deps $alljobs bgzip $file]
 				}
 			}
 		}
