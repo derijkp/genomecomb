@@ -199,7 +199,11 @@ proc gzroot filename {
 }
 
 proc gzfile {filename} {
-	set file [lindex [glob -nocomplain $filename $filename.rz $filename.bgz $filename.gz] 0]
+	if {[catch {glob -nocomplain $filename $filename.rz $filename.bgz $filename.gz} list]} {
+		return $filename
+	} else {
+		return [lindex $list 0]
+	}
 }
 
 proc gzcat {filename} {

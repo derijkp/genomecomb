@@ -15,7 +15,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	set chromosomes {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
 	puts stderr "Processing sample $dir -> $destdir"
 	# sort files
-	if {$force || ![file exists svar-$name.tsv] || ![file exists $destdir/info.txt]} {
+	if {$force || ![file exists [gzfile svar-$name.tsv]] || ![file exists $destdir/info.txt]} {
 		set varfile [glob $dir/ASM/var-*-ASM*.tsv*]
 		if {[llength $varfile] != 1} {error "could not identify varfile"}
 		if {[llength $varfile] > 1} {error "could not identify varfile"}
@@ -38,14 +38,14 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		cg select -s "chromosome begin end varType" $varfile svar-$name.tsv.temp
 		file rename -force svar-$name.tsv.temp svar-$name.tsv
 	}
-	if {$force || ![file exists sgene-$name.tsv]} {
+	if {$force || ![file exists [gzfile sgene-$name.tsv]]} {
 		set genefile [list_lremove [glob $dir/ASM/gene-*-ASM*.tsv*] [glob -nocomplain $dir/ASM/gene-var-summary-*-ASM*.tsv*]]
 		if {[llength $genefile] != 1} {error "could not identify genefile"}
 		puts stderr "Sort gene file ($genefile)"
 		cg select -s "chromosome begin end" $genefile sgene-$name.tsv.temp
 		file rename -force sgene-$name.tsv.temp sgene-$name.tsv
 	}
-	if {$force || ![file exists sreg-$name.tsv]} {
+	if {$force || ![file exists [gzfile sreg-$name.tsv]]} {
 		set regfile [glob -nocomplain $dir/ASM/reg-*-ASM*.tsv*]
 		if {[file exists $regfile]} {
 			puts stderr "Sort region file ($regfile)"
@@ -85,7 +85,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		}
 	}
 	# annotated vars file
-	if {$force || ![file exists annotvar-$name.tsv]} {
+	if {$force || ![file exists [gzfile annotvar-$name.tsv]]} {
 		puts stderr "Create annotated varfile annotvar-$name.tsv"
 		# set file svar-$name.tsv; set genefile sgene-$name.tsv; set outfile temp.tsv
 		cg var2annot svar-$name.tsv sgene-$name.tsv annotvar-$name.tsv.temp
@@ -117,12 +117,12 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		puts stderr $result
 	}
 	# sample specific filters
-	if {$force || ![file exists reg_refcons-$name.tsv]} {
+	if {$force || ![file exists [gzfile reg_refcons-$name.tsv]]} {
 		puts stderr "Find refcons regions for var-$name.tsv"
 		cg refconsregions svar-$name.tsv > reg_refcons-$name.tsv.temp
 		file rename -force reg_refcons-$name.tsv.temp reg_refcons-$name.tsv
 	}
-	if {$force || ![file exists reg_nocall-$name.tsv]} {
+	if {$force || ![file exists [gzfile reg_nocall-$name.tsv]]} {
 		puts stderr "Find partial no-call regions for var-$name.tsv"
 		if {[catch {
 			nocallregions svar-$name.tsv reg_nocall-$name.tsv.temp
@@ -132,22 +132,22 @@ proc process_sample {dir destdir dbdir {force 0}} {
 			file rename -force reg_nocall-$name.tsv.temp reg_nocall-$name.tsv
 		}
 	}
-	if {$force || ![file exists reg_cluster-$name.tsv]} {
+	if {$force || ![file exists [gzfile reg_cluster-$name.tsv]]} {
 		puts stderr "Find cluster regions for annotvar-$name.tsv"
 		cg clusterregions < annotvar-$name.tsv > reg_cluster-$name.tsv.temp
 		file rename -force reg_cluster-$name.tsv.temp reg_cluster-$name.tsv
 	}
-	if {$force || ![file exists reg_ns-$name.tsv]} {
+	if {$force || ![file exists [gzfile reg_ns-$name.tsv]]} {
 		puts stderr "Find regions with N's for annotvar-$name.tsv"
 		cg select -f {chromosome begin end} -q {$alleleSeq1 ~ /[N?]/ || $alleleSeq2 ~ /[N?]/} < annotvar-$name.tsv > reg_ns-$name.tsv.temp
 		file rename -force reg_ns-$name.tsv.temp reg_ns-$name.tsv
 	}
-	if {$force || ![file exists reg_lowscore-$name.tsv]} {
+	if {$force || ![file exists [gzfile reg_lowscore-$name.tsv]]} {
 		puts stderr "Find regions with lowscores for annotvar-$name.tsv"
 		cg select -f {chromosome begin end} -q {$totalScore1 < 60 || $totalScore2 < 60} < annotvar-$name.tsv > reg_lowscore-$name.tsv.temp
 		file rename -force reg_lowscore-$name.tsv.temp reg_lowscore-$name.tsv
 	}
-	if {$force || ![file exists fannotvar-$name.tsv]} {
+	if {$force || ![file exists [gzfile fannotvar-$name.tsv]]} {
 		# add filterdata to annotvar
 		set todo {}
 		lappend todo [list refcons rc reg_refcons-$name.tsv]
@@ -181,7 +181,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		cg covered filteredrefcons-$name.tsv > filteredrefcons-$name.covered.temp
 		file rename -force filteredrefcons-$name.covered.temp filteredrefcons-$name.covered
 	}
-	if {$force || ![file exists filteredns-$name.tsv]} {
+	if {$force || ![file exists [gzfile filteredns-$name.tsv]]} {
 		puts stderr "Coverage of ns region"
 		cg regsubtract sreg-$name.tsv reg_ns-$name.tsv > filteredns-$name.tsv.temp
 		file rename -force filteredns-$name.tsv.temp filteredns-$name.tsv
@@ -191,7 +191,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		cg covered filteredns-$name.tsv > filteredns-$name.covered.temp
 		file rename -force filteredns-$name.covered.temp filteredns-$name.covered
 	}
-	if {$force || ![file exists filteredlowscore-$name.tsv]} {
+	if {$force || ![file exists [gzfile filteredlowscore-$name.tsv]]} {
 		puts stderr "Coverage of lowscore region"
 		cg regsubtract sreg-$name.tsv reg_lowscore-$name.tsv > filteredlowscore-$name.tsv.temp
 		file rename -force filteredlowscore-$name.tsv.temp filteredlowscore-$name.tsv
@@ -201,12 +201,12 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		cg covered filteredlowscore-$name.tsv > filteredlowscore-$name.covered.temp
 		file rename -force filteredlowscore-$name.covered.temp filteredlowscore-$name.covered
 	}
-	if {$force || ![file exists histo-refcons-$name.tsv]} {
+	if {$force || ![file exists [gzfile histo-refcons-$name.tsv]]} {
 		puts stderr "Making histo-refcons-$name.covered"
 		cg reghisto reg_refcons-$name.tsv > histo-refcons-$name.tsv.temp
 		file rename -force histo-refcons-$name.tsv.temp histo-refcons-$name.tsv
 	}
-	if {$force || ![file exists filteredcluster-$name.tsv]} {
+	if {$force || ![file exists [gzfile filteredcluster-$name.tsv]]} {
 		puts stderr "Coverage of clusters region"
 		cg regsubtract sreg-$name.tsv reg_cluster-$name.tsv > filteredcluster-$name.tsv.temp
 		file rename -force filteredcluster-$name.tsv.temp filteredcluster-$name.tsv
@@ -216,7 +216,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		cg covered filteredcluster-$name.tsv > filteredcluster-$name.covered.temp
 		file rename -force filteredcluster-$name.covered.temp filteredcluster-$name.covered
 	}
-	if {$force || ![file exists reg_below20-$name.tsv]} {
+	if {$force || ![file exists [gzfile reg_below20-$name.tsv]]} {
 		puts stderr "Make region file reg_below20-$name.tsv"
 		file delete -force temp.tsv
 		set f [open reg_below20-$name.tsv.temp w]
@@ -227,10 +227,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 			if {($file eq "" ) && ($chr eq "Y")} continue
 			puts stderr "Processing $file"
 			set f [gzopen $file]
-			while {![eof $f]} {
-				set header [gets $f]
-				if {[string index $header 0] ne "#"} break
-			}
+			set header [tsv_open $f]
 			catch {close $f}
 			set poscol [lsearch $header offset]
 			set coveragecol [lsearch $header coverage]
@@ -255,40 +252,40 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		cg covered reg_below20-$name.tsv > reg_below20-$name.covered.temp
 		file rename reg_below20-$name.covered.temp reg_below20-$name.covered
 	}
-	if {$force || ![file exists reg_below10-$name.tsv]} {
-		puts stderr "Make region file reg_below10-$name.tsv"
-		file delete reg_below10-$name.tsv.temp
-		set f [open reg_below10-$name.tsv.temp w]
-		puts $f "chromosome\tbegin\tend"
-		close $f
-		foreach {chr} $chromosomes  {
-			set file [gzfile coverage/coverageRefScore-$chr-$name.tsv]
-			if {($file eq "" ) && ($chr eq "Y")} continue
-			puts stderr "Processing $file"
-			set f [gzopen $file]
-			while {![eof $f]} {
-				set header [gets $f]
-				if {[string index $header 0] ne "#"} break
-			}
-			catch {close $f}
-			set poscol [lsearch $header offset]
-			set coveragecol [lsearch $header coverage]
-			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
-			set error [catch {
-				exec $cat $file | getregions $chr $poscol $coveragecol 10 0 0 >> reg_below10-$name.tsv.temp
-			} errmessage]
-			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
-				error $errmessage
-			}
-		}
-		file rename -force reg_below10-$name.tsv.temp reg_below10-$name.tsv
-	}
-	if {$force || ![file exists reg_below10-$name.covered]} {
-		puts stderr "Make reg_below10-$name.covered"
-		cg covered reg_below10-$name.tsv > reg_below10-$name.covered.temp
-		file rename reg_below10-$name.covered.temp reg_below10-$name.covered
-	}
-	if {$force || ![file exists reg_above100-$name.tsv]} {
+#	if {$force || ![file exists [gzfile reg_below10-$name.tsv]]} {
+#		puts stderr "Make region file reg_below10-$name.tsv"
+#		file delete reg_below10-$name.tsv.temp
+#		set f [open reg_below10-$name.tsv.temp w]
+#		puts $f "chromosome\tbegin\tend"
+#		close $f
+#		foreach {chr} $chromosomes  {
+#			set file [gzfile coverage/coverageRefScore-$chr-$name.tsv]
+#			if {($file eq "" ) && ($chr eq "Y")} continue
+#			puts stderr "Processing $file"
+#			set f [gzopen $file]
+#			while {![eof $f]} {
+#				set header [gets $f]
+#				if {[string index $header 0] ne "#"} break
+#			}
+#			catch {close $f}
+#			set poscol [lsearch $header offset]
+#			set coveragecol [lsearch $header coverage]
+#			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
+#			set error [catch {
+#				exec $cat $file | getregions $chr $poscol $coveragecol 10 0 0 >> reg_below10-$name.tsv.temp
+#			} errmessage]
+#			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
+#				error $errmessage
+#			}
+#		}
+#		file rename -force reg_below10-$name.tsv.temp reg_below10-$name.tsv
+#	}
+#	if {$force || ![file exists reg_below10-$name.covered]} {
+#		puts stderr "Make reg_below10-$name.covered"
+#		cg covered reg_below10-$name.tsv > reg_below10-$name.covered.temp
+#		file rename reg_below10-$name.covered.temp reg_below10-$name.covered
+#	}
+	if {$force || ![file exists [gzfile reg_above100-$name.tsv]]} {
 		puts stderr "Make region file reg_above100-$name.tsv"
 		file delete reg_above100-$name.tsv.temp
 		set f [open reg_above100-$name.tsv.temp w]
