@@ -1,0 +1,20 @@
+#Version v2.0-RC build 27737 (2010-05-06), SNP output v2.0
+#CL	snp -t /rtgshare/data/human/sdf/hg18 -o snps_GS00102-DNA-D06_m4_u4 --max-as-mated=4 --max-as-unmated=4 --max-ih=1 -m cg_errors --no-complex-calls /rtgshare3/users/richard/vib_20100324_GS00102-DNA-D06-hg18ref/map_GS000004945/mated.sam.gz /rtgshare3/users/richard/vib_20100324_GS00102-DNA-D06-hg18ref/map_GS000004945/unmated.sam.gz ...
+#name	position	type	reference	prediction	posterior	coverage	correction	support_statistics
+chr1	231	e	C	A:C	1.5	109	4.982	A	17	0.655	C	91	4.004	T	1	0.323
+chr1	3759	e	C	A:C	3.9	23	0.572	A	7	0.248	C	16	0.325
+chr1	4376	e	G	A:G	3.3	8	0.169	A	4	0.086	G	4	0.083
+chr1	4770	e	A	A:G	85.1	128	3.906	A	72	2.475	C	1	0.060	G	55	1.371
+chr1	4793	e	A	A:G	84.8	118	3.982	A	64	2.277	G	53	1.382	T	1	0.323
+chr1	5074	e	T	G:T	17.8	27	0.757	G	13	0.440	T	14	0.317
+chr1	5137	e	A	A:T	0.8	23	1.900	A	6	1.385	G	3	0.060	T	14	0.455
+chr1	5680	e	G	G:T	0.4	7	0.183	G	4	0.078	T	3	0.105
+chr1	5870	=	A	A	-0.1	4	0.112	A	1	0.026	C	1	0.041	T	2	0.045
+chr1	5966	e	T	G:T	21.0	28	0.758	G	15	0.314	T	13	0.443
+chr1	6161	e	C	C:T	0.8	43	1.907	A	2	0.242	C	32	1.409	G	2	0.085	T	7	0.171
+chr1	6434	e	G	A:G	1.5	9	0.442	A	4	0.324	G	5	0.117
+chr1	6837	x	CGGG	x	0.0	64	2.316	A	2	0.036	CG	1	0.027	CGG	3	0.060	CGGA	6	0.105	CGGA~	3	0.041	CGGG	16	0.332	CGG~	2	0.027	CGNG	1	0.261	CG~	1	0.019	G	5	0.450	GG	2	0.035	GGA	1	0.016	GGG	3	0.106	GGGG	2	0.372	TGGG	11	0.366	TGGG~	1	0.014	T~	2	0.029	i	2	0.020
+chr1	7248	e	G	A:G	3.1	29	0.760	A	7	0.297	G	22	0.463
+chr1	8709	e	A	A:C	5.6	15	1.162	A	9	1.010	C	6	0.151
+chr1	8744	=	G	G	0.3	9	0.271	A	3	0.149	G	6	0.122
+chr1	9112	e	G	A:G	2.7	21	1.400	A	5	0.104	C	2	0.464	G	14	0.832

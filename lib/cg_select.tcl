@@ -361,7 +361,7 @@ proc tsv_select_expandcode {header code awkfunctionsVar} {
 proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {out stdout}} {
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
-	set header [tsv_open $f]
+	set header [tsv_open $f keepheader]
 	set awk ""
 	set awkfunctions {0 0}
 	set sort ""
@@ -407,11 +407,15 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	}
 	if {[llength $newheader]} {
 		if {[llength $newheader] != [llength $nh]} {error "new header (-nh) of wrong length for query results"}
-		puts $out [join $newheader \t]
+		puts $out ${keepheader}[join $newheader \t]
 	} else	{
-		puts $out [join $nh \t]
+		puts $out ${keepheader}[join $nh \t]
 	}
 	if {![llength $pipe]} {
+		if {[info exists ::filebuffer($f)]} {
+			puts $o [lindex $::filebuffer($f) 0]
+			unset ::filebuffer($f)
+		}
 		fcopy $f $out
 	} else {
 		chanexec $f $out [join $pipe " | "]
@@ -470,39 +474,67 @@ proc file_rootgz {filename} {
 	}
 }
 
-proc tsv_open {f} {
+proc tsv_open {f {keepheaderVar {}}} {
+	if {$keepheaderVar ne ""} {
+		upvar $keepheaderVar keepheader
+	}
+	set keepheader {}
 	set keep 0
 	set buffering [fconfigure $f -buffering]
 	fconfigure $f -buffering line
 	set vcf 0
 	set first 1
+	set split 1
 	while {![eof $f]} {
 		set line [gets $f]
-		if {![string length $line]} continue
+		if {![string length $line]} {
+			lappend keepheader {}
+			set header [gets $f]
+			break
+		}
 		set fchar [string index $line 0]
-		if {$fchar ne "#"} break
+		if {$fchar eq ">"} {
+			set header $line
+			break
+		} elseif {$fchar ne "#"} {
+			if {[info exists header]} {
+				set header [list_pop keepheader]
+				lappend keepheader {}
+				set ::filebuffer($f) [list $line]
+			} else {
+				set header $line
+			}
+			break
+		}
 		if {$first} {
 			set fchar2 [string index $line 1]
 			if {$fchar2 eq "#"} {set vcf 1}
 		} elseif {$vcf} {
-			if {$fchar2 ne "#"} break
+			set fchar2 [string index $line 1]
+			if {$fchar2 ne "#"} {
+				set split 0
+				set header $line
+				break
+			}
 		}
 		set first 0
-		
+		lappend keepheader $line
 		set keep [tell $f]
 		set header $line
 	}
 	fconfigure $f -buffering $buffering
-	if {[string index $line 0] eq ">"} {
-		return [split [string range $line 1 end] \t]
-	}
-	if {![info exists header]} {
-		return [split $line \t]
-	} elseif {[string index $header 0] eq "#"} {
-		seek $f $keep
-		return [split [string range $header 1 end] \t]
+	set fchar [string index $header 0]
+	if {[inlist {# >} $fchar]} {
+		set keepheader [join $keepheader \n]\n$fchar
+		if {!$split} {
+			return [string range $header 1 end]
+		} else {
+			return [split [string range $header 1 end] \t]
+		}
 	} else {
-		seek $f $keep
+		if {[llength $keepheader]} {
+			set keepheader [join $keepheader \n]\n
+		}
 		return [split $header \t]
 	}
 }
