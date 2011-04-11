@@ -146,7 +146,7 @@ proc process_rtgsample {dir destdir dbdir {force 0}} {
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {
 		puts stderr "Make region file sreg-$name.tsv"
-		set files [lsort -dict [glob allpos/chr*/*snps.txt*]]
+		set files [lsort -dict [glob allpos/chr*snps.txt*]]
 		file delete sreg-$name.tsv.temp
 		set f [open sreg-$name.tsv.temp w]
 		puts $f "chromosome\tbegin\tend"
@@ -165,6 +165,14 @@ proc process_rtgsample {dir destdir dbdir {force 0}} {
 		file rename -force sreg-$name.tsv.temp sreg-$name.tsv
 	}
 	cd $keepdir
+}
+
+proc cg_process_rtgsample {args} {
+	if {([llength $args] < 3) || ([llength $args] > 4)} {
+		errorformat process_rtgsample
+		exit 1
+	}
+	process_rtgsample {*}$args
 }
 
 proc annot_rtg_init {dir} {
