@@ -11,44 +11,44 @@ test multireg {basic} {
 } {}
 
 test multireg {same} {
-	file delete data/temp.tsv
-	exec cg multireg data/temp.tsv data/reg1.tsv data/reg1b.tsv 2> /dev/null
-	exec diff data/temp.tsv data/expected-multireg-reg1-reg1b.sft
+	file delete temp.tsv
+	exec cg multireg temp.tsv data/reg1.tsv data/reg1b.tsv 2> /dev/null
+	exec diff temp.tsv data/expected-multireg-reg1-reg1b.sft
 } {}
 
 test multireg {add empty} {
-	file delete data/temp.tsv
-	exec cg multireg data/temp.tsv data/reg1b.tsv data/regempty.tsv 2> /dev/null
-	file_read data/temp.tsv
+	file delete temp.tsv
+	exec cg multireg temp.tsv data/reg1b.tsv data/regempty.tsv 2> /dev/null
+	file_read temp.tsv
 } {chromosome	begin	end	reg1b	regempty
 1	10	20	1	0
 1	50	60	1	0
 }
 
 test multireg {add empty first} {
-	file delete data/temp.tsv
-	exec cg multireg data/temp.tsv data/regempty.tsv data/reg1b.tsv 2> /dev/null
-	file_read data/temp.tsv
+	file delete temp.tsv
+	exec cg multireg temp.tsv data/regempty.tsv data/reg1b.tsv 2> /dev/null
+	file_read temp.tsv
 } {chromosome	begin	end	regempty	reg1b
 1	10	20	0	1
 1	50	60	0	1
 }
 
 test multireg {add fully empty} {
-	file delete data/temp.tsv
-	exec cg multireg data/temp.tsv data/reg1b.tsv data/empty.tsv
+	file delete temp.tsv
+	exec cg multireg temp.tsv data/reg1b.tsv data/empty.tsv
 } {not a region file} error regexp
 
 test multireg {3 adds} {
-	file delete data/temp.tsv
-	exec cg multireg data/temp.tsv data/reg1.tsv data/reg1b.tsv data/reg2.tsv 2> /dev/null
-	exec diff data/temp.tsv data/expected-multireg-reg1-reg1b-reg2.sft
+	file delete temp.tsv
+	exec cg multireg temp.tsv data/reg1.tsv data/reg1b.tsv data/reg2.tsv 2> /dev/null
+	exec diff temp.tsv data/expected-multireg-reg1-reg1b-reg2.sft
 } {}
 
 test multireg {different chromosome naming} {
-	file delete data/temp.tsv
-	exec cg multireg data/temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
-	exec diff data/temp.tsv data/expected-multireg-reg1-reg4.sft
+	file delete temp.tsv
+	exec cg multireg temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
+	exec diff temp.tsv data/expected-multireg-reg1-reg4.sft
 } {}
 
 test regsubtract {basic} {
@@ -168,5 +168,7 @@ test regjoin {self} {
 3	2500	2600}
 
 set ::env(PATH) $keeppath
+
+file delete -force temp.tsv temp.tsv.old
 
 testsummarize
