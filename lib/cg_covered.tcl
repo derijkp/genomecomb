@@ -25,5 +25,5 @@ if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
 	package require Extral
 	set ::base [file tail [info script]]
-	cg_select {*}$argv
+	cg_covered {*}$argv
 }
