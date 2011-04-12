@@ -27,6 +27,8 @@ set extraseq 1000
 set cachedir [pwd]/cache
 file mkdir $cachedir
 
+set log [open testlog.txt a] ; #TEST
+
 set Temp 100
 foreach rtype {
 	partrepeat,low repeat,low 3repeat,low completerepeat,low
@@ -36,23 +38,46 @@ foreach rtype {
 	incr Temp 100
 }
 
-proc cg_validatesv_getSeqRef {chr patch breakpoint read} {
-	set beginTarget [expr $breakpoint - 200]
-	set endTarget [expr $breakpoint + $read - $patch + 250]
+proc cg_validatesv_getSeqRef {chr patch breakpoint1 breakpoint2 read MIN} {
+	set beginTarget [expr $breakpoint1 - 200]
+	set endTarget [expr $breakpoint1 + $read - $patch + 250]
+
+	set beginL [expr $beginTarget - 400]
+	set endL [expr $beginTarget - 1] ;#otherwise there will be overlap
+
+	set beginR [expr $endTarget + 1] ;#otherwise there will be overlap
+	set endR [expr $endTarget + 400]
+
+	#check that primers will fall into inversion
+	if {$breakpoint1 < $breakpoint2} {
+		#we're dealing with left breakpoint
+		if {[expr $endTarget + $MIN] > $breakpoint2  } {
+			set endTarget [expr $breakpoint2 - $MIN]
+			set beginR [expr $endTarget + 1]
+			set endR $breakpoint2
+		} elseif {$endR > $breakpoint2 } {
+			set endR $breakpoint2
+		}
+
+	} else {
+		#dealing with right breakpoint
+		if {[expr $beginTarget - $MIN] < $breakpoint2 } {
+			set beginTarget [expr $breakpoint2 + $MIN]
+			set beginL $breakpoint2
+			set endL [expr $beginTarget - 1]
+		} elseif {$beginL < $breakpoint2 } {
+			set beginL $breakpoint2
+		}
+	}
+
 	if {[catch "exec FetchSequence.tcl $chr $beginTarget $endTarget" seqTarget]} {
 		puts "fetching sequences failed - $seqTarget"
 		exit 1
 	}
-	
-	set beginL [expr $beginTarget - 400]
-	set endL [expr $beginTarget - 1] ;#otherwise there will be overlap
 	if {[catch "exec FetchSequence.tcl $chr $beginL $endL" seqL]} {
 		puts "fetching sequences failed - $seqL"
 		exit 1
 	}
-
-	set beginR [expr $endTarget + 1] ;#otherwise there will be overlap
-	set endR [expr $endTarget + 400]
 	if {[catch "exec FetchSequence.tcl $chr $beginR $endR" seqR]} {
 		puts "fetching sequences failed - $seqR"
 		exit 1
@@ -76,6 +101,7 @@ proc cg_validatesv_getSeqInv {seq1 seq2} {
 
 
 proc cg_validatesv_mask_seq {list_seq EVAL MIN} {
+	global log ; #TEST
 	set seqTarget [lindex $list_seq 0]
 	set seqL [lindex $list_seq 1]
 	set seqR [lindex $list_seq 2]
@@ -127,31 +153,32 @@ proc cg_validatesv_mask_seq {list_seq EVAL MIN} {
 	close $fileid_outL
 	puts $fileid_outR ">SeqR \n $seqR"
 	close $fileid_outR
+
 	if {[catch "exec FASTAwrap.tcl $tempL $tempR" err]} {
 		puts "fetching sequences failed - $err"
 		exit 1
 	}
-
-	#run FASTA - output tclDict
+	
+	#run FASTA - output = tclDict
 	if {[catch "exec FASTAwrap.tcl $tempL $tempR -t 1 -e $EVAL" FASTAwrap]} {
 		puts "something went wrong while FASTA'ing some files - $FASTAwrap"
 		exit 1
 	}
 	set i 0
-	#puts $FASTAwrap ; #TEST
+	#puts $log $FASTAwrap ; #TEST
 	while {$i < [llength $FASTAwrap]} {
 		set FASTAdict [lindex $FASTAwrap $i]
 		if {[dict get $FASTAdict complement] == 0} {
 			#normal string replace
-			set seqL [string replace $seqL [dict get $FASTAdict hit_start] \
-				[dict get $FASTAdict hit_end] [string repeat N [dict get $FASTAdict overlap_length]]]
-			set seqR [string replace $seqR [dict get $FASTAdict query_start] \
-				[dict get $FASTAdict query_end] [string repeat N [dict get $FASTAdict overlap_length]]]	
+			set seqL [string replace $seqL [dict get $FASTAdict query_start] \
+				[dict get $FASTAdict query_end] [string repeat N [expr [dict get $FASTAdict query_end] - [dict get $FASTAdict query_start] ]]]
+			set seqR [string replace $seqR [dict get $FASTAdict hit_start] \
+				[dict get $FASTAdict hit_end] [string repeat N [expr [dict get $FASTAdict hit_end] - [dict get $FASTAdict hit_start] ]]]
 		} else {
-			set seqL [string replace $seqL [dict get $FASTAdict hit_start] \
-				[dict get $FASTAdict hit_end] [string repeat N [dict get $FASTAdict overlap_length]]]
-			set seqR [string replace $seqR [dict get $FASTAdict query_end] \
-				[dict get $FASTAdict query_start]  [string repeat N [dict get $FASTAdict overlap_length]]]
+			set seqL [string replace $seqL [dict get $FASTAdict query_end] \
+				[dict get $FASTAdict query_start] [string repeat N [expr [dict get $FASTAdict query_start] - [dict get $FASTAdict query_end] ]]]
+			set seqR [string replace $seqR [dict get $FASTAdict hit_start] \
+				[dict get $FASTAdict hit_end]  [string repeat N [expr [dict get $FASTAdict hit_end] - [dict get $FASTAdict hit_start] ]]]
 		}
 		incr i
 	}
@@ -396,8 +423,9 @@ proc cg_validatesv_repeatSearch {cchr cstart cend } {
 }
 
 proc cg_validatesv_runEPCR {primer1 primer2 prod_size size inv} {
-	global PrimerPair
-	# if it is searching for the inverted primers,
+	global PrimerPair 
+	global log ; #TEST
+ 	# if it is searching for the inverted primers,
 	# the reverse primer will be located at the other breakpoint
 	# so you have to incorporate the size of the inversion
 	if {$inv != 1} {
@@ -443,7 +471,7 @@ proc cg_validatesv_runEPCR {primer1 primer2 prod_size size inv} {
 			} else { 
 				set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
 			}
-			#puts "PP: $PrimerPair" ; #TEST
+			puts $log "PP: $PrimerPair" ; #TEST
 			return "repeat"
 		} elseif {[llength $prim_fts1]} {
 			set rep_score [cg_validatesv_getRepScore $prim_fts1 $len1 $cbegin1]
@@ -454,7 +482,7 @@ proc cg_validatesv_runEPCR {primer1 primer2 prod_size size inv} {
 			} else { 
 				set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
 			}
-			#puts "PP: $PrimerPair" ; #TEST
+			puts $log "PP: $PrimerPair" ; #TEST
 			return "repeat"
 		} elseif {[llength $prim_fts2]} {
 			set rep_score [cg_validatesv_getRepScore $prim_fts2 $len2 $cbegin2]
@@ -465,26 +493,115 @@ proc cg_validatesv_runEPCR {primer1 primer2 prod_size size inv} {
 			} else { 
 				set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
 			}
-			#puts "PP: $PrimerPair" ; #TEST
+			puts $log "PP: $PrimerPair" ; #TEST
 			return "repeat"
 		}
 		set PrimerPair [list $primer1 $primer2 $prod_size]	
-		#puts "PP_noRepeat: $PrimerPair" ; #TEST
+		puts $log "PP_noRepeat: $PrimerPair" ; #TEST
 	}
 
 	return 0
 }
 
+proc cg_validatesv_getSeq {chr breakpointL breakpointR} {
+	#getting sequences for small inversions
+	set beginTarget [expr $breakpointL - 200]
+	set endTarget [expr $breakpointR + 200]
+	if {[catch "exec FetchSequence.tcl $chr $beginTarget $endTarget" seqTarget]} {
+		puts "fetching sequences failed - $seqTarget"
+		exit 1
+	}
+	
+	set beginL [expr $beginTarget - 100]
+	set endL [expr $beginTarget - 1] ;#otherwise there will be overlap
+	if {[catch "exec FetchSequence.tcl $chr $beginL $endL" seqL]} {
+		puts "fetching sequences failed - $seqL"
+		exit 1
+	}
+
+	set beginR [expr $endTarget + 1] ;#otherwise there will be overlap
+	set endR [expr $endTarget + 200]
+	if {[catch "exec FetchSequence.tcl $chr $beginR $endR" seqR]} {
+		puts "fetching sequences failed - $seqR"
+		exit 1
+	}
+
+	return [list $seqTarget $seqL $seqR]
+}
+
+proc cg_validatesv_getOnePair {chr patchstart breakpointL breakpointR size EVAL MIN} {
+	global log ; #TEST
+	global PrimerPair
+	unset -nocomplain PrimerPair
+
+	puts $log "sequencing over the whole inversion...." ; #TEST
+	#get sequences over breakpoints
+	set list_seq [cg_validatesv_getSeq $chr $breakpointL $breakpointR]
+	
+	# mask repeats in flanking sequences 
+	set list [cg_validatesv_mask_seq $list_seq $EVAL $MIN]
+	set len_stretch [lindex $list end]
+	set list_seq_mask [lreplace $list end end] ; #deleting stretch info from list
+
+	if {[llength $len_stretch] > 0 } {
+		puts "WARNING: There will be mononucleotide stretches in the amplicons"
+		puts "Number nucleotides in such stretch: $len_stretch"
+		#puts $list_seq_mask ; #TEST
+	}
+
+	#try to get the best primer pairs for the inversion breakpoints
+	set primerDict [cg_validatesv_runPrimer3 $list_seq_mask "leftRefSeq_${chr}_${patchstart}" "0" "40"]
+	puts $log "PD: $primerDict"	;#TEST
+	set i 0
+	while {$i < [dict get $primerDict PRIMER_PAIR_NUM_RETURNED]} {
+		set primerF [list [dict get $primerDict PRIMER_LEFT_${i}_SEQUENCE]	\
+			[dict get $primerDict PRIMER_LEFT_${i}_TM]  [dict get $primerDict PRIMER_LEFT_${i}_GC_PERCENT] ]
+		set primerR [list [dict get $primerDict PRIMER_RIGHT_${i}_SEQUENCE] \
+			[dict get $primerDict PRIMER_RIGHT_${i}_TM]  [dict get $primerDict PRIMER_RIGHT_${i}_GC_PERCENT] ]
+		set prod_size [dict get $primerDict PRIMER_PAIR_${i}_PRODUCT_SIZE]
+		#run ucsc_epcr on the 2 primers. There has to be 1 amplicon amplified
+		set inv 0
+		if {[catch "cg_validatesv_runEPCR {$primerF} {$primerR} $prod_size $size $inv" out ]} {
+			#puts "1: $out"; #TEST
+			incr i; continue
+		}
+		#picking the primer with no repeat
+		if {$out != "repeat"} {set PP 1 ;  break}
+		incr i
+	}
+		
+	if {[info exists PrimerPair]} {
+		#picking the best primer
+		set primerF [lindex $PrimerPair 0] 
+		set primerR [lindex $PrimerPair 1]
+		set prod_size [lindex $PrimerPair 2]	
+		#making output file of all the 2 primers and there info
+		set prim "prim [lindex $primerF 0] [string length [lindex $primerF 0]] [lindex $primerF 1]	[lindex $primerF 2]
+			[lindex $primerR 0] [string length [lindex $primerR 0]] [lindex $primerR 1] [lindex $primerR 2] $prod_size "
+		if {[llength $PrimerPair] > 3} {set repeat 1 }
+		if {[info exists repeat] } {
+			puts "WARNING: Primerpair is located in a repeat"
+		}
+		return [list $prim]
+	}
+	
+	return 1
+
+
+}
 
 
 proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL breakpointR READSIZE EVAL MIN} {	
+	global log ; #TEST
 	global PrimerPair
 	unset -nocomplain PrimerPair
 	# get sequences around breakpoints
-	set list_seq(1) [cg_validatesv_getSeqRef $chr $patchSize $breakpointL $READSIZE]
-	set list_seq(3) [cg_validatesv_getSeqRef $chr $patchSize $breakpointR $READSIZE]
+	set list_seq(1) [cg_validatesv_getSeqRef $chr $patchSize $breakpointL $breakpointR $READSIZE $MIN]
+	set list_seq(3) [cg_validatesv_getSeqRef $chr $patchSize $breakpointR $breakpointL $READSIZE $MIN]
 	#puts "target: [lindex $list_seq1 0]"  ; #TEST
 
+	#puts $log "pre: [lindex $list_seq(3) 0][lindex $list_seq(3) 1][lindex $list_seq(3) 2]" ; #TEST
+	
 	# mask repeats in flanking sequences 
 	for {set x 1} {$x <= 3} {incr x} {
 		if { $x == 2 } {continue} ; #Getting seq 2 in different manner
@@ -492,6 +609,9 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 		set len_stretch${x} [lindex $list end]
 		set list_seq${x}_mask [lreplace $list end end] ; #deleting stretch info from list
 	}
+	#puts $log "post1: [lindex $list_seq1_mask 0] [lindex $list_seq1_mask 1] [lindex $list_seq1_mask 2]" ; #TEST
+	#puts $log "post3: [lindex $list_seq3_mask 0] [lindex $list_seq3_mask 1] [lindex $list_seq3_mask 2]" ; #TEST
+
 	if {[llength $len_stretch1] > 0 || [llength $len_stretch3] > 0 } {
 		puts "WARNING: There will be mononucleotide stretches in the amplicons"
 		puts "Number nucleotides in such stretch surrounding \t left breakpoint: $len_stretch1"
@@ -501,9 +621,11 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 	# make seq2 from seq1 and seq3
 	set list_seq2_mask [cg_validatesv_getSeqInv $list_seq1_mask $list_seq3_mask]
 
+	#puts $log "post2: [lindex $list_seq2_mask 0] [lindex $list_seq2_mask 1] [lindex $list_seq2_mask 2]" ; #TEST
+
 	#try to get the best primer pairs for the inversion breakpoints
 	set primerDict1 [cg_validatesv_runPrimer3 $list_seq1_mask "leftRefSeq_${chr}_${patchstart}" "0" "40"]
-	#puts "PD1: $primerDict1"	;#TEST
+	puts $log "PD1: $primerDict1"	;#TEST
 	set i 0
 	while {$i < [dict get $primerDict1 PRIMER_PAIR_NUM_RETURNED]} {
 		set primerLF [list [dict get $primerDict1 PRIMER_LEFT_${i}_SEQUENCE]	\
@@ -514,75 +636,76 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 		#run ucsc_epcr on the 2 primers. There has to be 1 amplicon amplified
 		set inv 0
 		if {[catch "cg_validatesv_runEPCR {$primerLF} {$primerLR} $prod_sizeL $size $inv" out ]} {
-			#puts "1: $out"; #TEST
+			#puts $log "1: $out"; #TEST
 			incr i; continue
 		}
-		#picking the best primer
-		if { [expr $i + 1] == [dict get $primerDict1 PRIMER_PAIR_NUM_RETURNED]} {
-			set primerLF [lindex $PrimerPair 0] 
-			set primerLR [lindex $PrimerPair 1] 
-			set prod_sizeL [lindex $PrimerPair 2]
-		} elseif {$out == "repeat"} {
-			incr i; continue
-		} else {
-			set primerLF [lindex $PrimerPair 0] 
-			set primerLR [lindex $PrimerPair 1]
-			set prod_sizeL [lindex $PrimerPair 2]		
-		}
-		set primerDict2 [cg_validatesv_runPrimer3 $list_seq2_mask "leftInvSeq_${chr}_${patchstart}" [lindex $primerLF 0] "20"]
-		#puts "PD2: $primerDict2" ; #TEST
-		set j 0
-		while {$j < [dict get $primerDict2 PRIMER_RIGHT_NUM_RETURNED]} {
-			set primerRF [list [dict get $primerDict2 PRIMER_RIGHT_${j}_SEQUENCE] \
-				[dict get $primerDict2 PRIMER_RIGHT_${j}_TM] [dict get $primerDict2 PRIMER_RIGHT_${j}_GC_PERCENT] ]
-			#run cindex_searchgenome on the 2 primers. There has to be 1 amplicon amplified
-			#these are the inverted primers so the size of the inversion has to be brought into account
-			set prod_size 0
-			set inv 1
-			if {[catch "cg_validatesv_runEPCR {$primerLF} {$primerRF} $prod_size $size $inv" out ]} { incr j; continue}
-			set primerDict3 [cg_validatesv_runPrimer3 $list_seq3_mask "leftInvSeq_${chr}_${patchstart}" [lindex $primerRF 0] "20"]
-			#puts "PR3: $primerDict3" ; #TEST
-			set k 0
-			if {[llength $PrimerPair] > 3} {set repeatL 1} ; #for later determination of location of repeats
-			unset -nocomplain PrimerPair
-			while {$k < [dict get $primerDict3 PRIMER_RIGHT_NUM_RETURNED]} {	
-				set primerRR [list [dict get $primerDict3 PRIMER_RIGHT_${k}_SEQUENCE] \
-					[dict get $primerDict3 PRIMER_RIGHT_${k}_TM] [dict get $primerDict3 PRIMER_RIGHT_${k}_GC_PERCENT] ]
-				set prod_sizeR [dict get $primerDict3 PRIMER_PAIR_${k}_PRODUCT_SIZE]
-				#run epcr on the 2 primers. There has to be 1 amplicon amplified
-				set inv 0
-				if {[catch "cg_validatesv_runEPCR {$primerRF} {$primerRR} $prod_sizeR $size $inv" out ]} {incr k; continue}
-				if { [expr $k + 1] == [dict get $primerDict3 PRIMER_RIGHT_NUM_RETURNED]} {
-					set primerRF [lindex $PrimerPair 0]
-					set primerRR [lindex $PrimerPair 1]
-					set prod_sizeR [lindex $PrimerPair 2]
-				} elseif {$out == "repeat"} {
-					incr k; continue
-				} else {
-					set primerRF [lindex $PrimerPair 0] 
-					set primerRR [lindex $PrimerPair 1]
-					set prod_sizeR [lindex $PrimerPair 2]
-				}
-				#making output file of all the 4 primers and there info
-				set primL "primL [lindex $primerLF 0] [string length [lindex $primerLF 0]] [lindex $primerLF 1]	[lindex $primerLF 2]
-					[lindex $primerLR 0] [string length [lindex $primerLR 0]] [lindex $primerLR 1] [lindex $primerLR 2] $prod_sizeL "
-				set primR "primR [lindex $primerRF 0] [string length [lindex $primerRF 0]] [lindex $primerRF 1]	[lindex $primerRF 2]
-					[lindex $primerRR 0] [string length [lindex $primerRR 0]] [lindex $primerRR 1] [lindex $primerRR 2] $prod_sizeR "
-				if {[llength $PrimerPair] > 3} {set repeatR 1 }
-				if {[info exists repeatL] && [info exists repeatR]} {
-					puts "WARNING: Both primerpairs are located in a repeat"
-				} elseif {[info exists repeatL]} {
-					puts "WARNING: Primerpair around left breakpoint is located in a repeat"
-				} elseif {[info exists repeatR]} {
-					puts "WARNING: Primerpair around right breakpoint is located in a repeat"
-				}
-				return [list $primL $primR]
-				incr k
-			}
-			incr j
-		}
+		#picking the primer with no repeat
+		if {$out != "repeat"} {set PP 1 ; break }
 		incr i
 	}
+	#picking the best primer
+	if {[info exists PrimerPair]} {
+		set primerLF [lindex $PrimerPair 0] 
+		set primerLR [lindex $PrimerPair 1] 
+		set prod_sizeL [lindex $PrimerPair 2]	
+	} else { 
+		return 1	
+	}
+	if {[llength $PrimerPair] > 3} {set repeatL 1} ; #for later determination of location of repeats
+	unset -nocomplain PrimerPair
+	unset -nocomplain PP
+	set primerDict2 [cg_validatesv_runPrimer3 $list_seq2_mask "leftInvSeq_${chr}_${patchstart}" [lindex $primerLF 0] "20"]
+	puts $log "PD2: $primerDict2" ; #TEST
+	set j 0
+	while {$j < [dict get $primerDict2 PRIMER_RIGHT_NUM_RETURNED]} {
+		set primerRF [list [dict get $primerDict2 PRIMER_RIGHT_${j}_SEQUENCE] \
+			[dict get $primerDict2 PRIMER_RIGHT_${j}_TM] [dict get $primerDict2 PRIMER_RIGHT_${j}_GC_PERCENT] ]
+		#run cindex_searchgenome on the 2 primers. There has to be 1 amplicon amplified
+		#these are the inverted primers so the size of the inversion has to be brought into account
+		set prod_size 0
+		set inv 1
+		if {[catch "cg_validatesv_runEPCR {$primerLF} {$primerRF} $prod_size $size $inv" out ]} {#puts $log "out3: $out"; incr j; continue}
+		set primerDict3 [cg_validatesv_runPrimer3 $list_seq3_mask "leftInvSeq_${chr}_${patchstart}" [lindex $primerRF 0] "20"]
+		puts $log "PR3: $primerDict3" ; #TEST
+		set k 0
+		
+		while {$k < [dict get $primerDict3 PRIMER_RIGHT_NUM_RETURNED]} {	
+			set primerRR [list [dict get $primerDict3 PRIMER_RIGHT_${k}_SEQUENCE] \
+				[dict get $primerDict3 PRIMER_RIGHT_${k}_TM] [dict get $primerDict3 PRIMER_RIGHT_${k}_GC_PERCENT] ]
+			set prod_sizeR [dict get $primerDict3 PRIMER_PAIR_${k}_PRODUCT_SIZE]
+			#run epcr on the 2 primers. There has to be 1 amplicon amplified
+			set inv 0
+			if {[catch "cg_validatesv_runEPCR {$primerRF} {$primerRR} $prod_sizeR $size $inv" out ]} {incr k; continue}
+			if {$out != "repeat"} {
+				set PP 1
+				break
+			}
+			incr k
+		}
+		if {[info exists PP]} { break } ; #when there is already a primerpair found, stop searching
+		incr j
+	}
+	if {[info exists PrimerPair]} {
+		set primerRF [lindex $PrimerPair 0]
+		#puts $log "primRF_j : $primerRF" ; #TEST
+		set primerRR [lindex $PrimerPair 1]
+		set prod_sizeR [lindex $PrimerPair 2]
+		#making output file of all the 4 primers and there info
+		set primL "primL [lindex $primerLF 0] [string length [lindex $primerLF 0]] [lindex $primerLF 1]	[lindex $primerLF 2]
+			[lindex $primerLR 0] [string length [lindex $primerLR 0]] [lindex $primerLR 1] [lindex $primerLR 2] $prod_sizeL "
+		set primR "primR [lindex $primerRF 0] [string length [lindex $primerRF 0]] [lindex $primerRF 1]	[lindex $primerRF 2]
+			[lindex $primerRR 0] [string length [lindex $primerRR 0]] [lindex $primerRR 1] [lindex $primerRR 2] $prod_sizeR "
+		if {[llength $PrimerPair] > 3} {set repeatR 1 }
+		if {[info exists repeatL] && [info exists repeatR]} {
+			puts "WARNING: Both primerpairs are located in a repeat"
+		} elseif {[info exists repeatL]} {
+			puts "WARNING: Primerpair around left breakpoint is located in a repeat"
+		} elseif {[info exists repeatR]} {
+			puts "WARNING: Primerpair around right breakpoint is located in a repeat"
+		}
+		return [list $primL $primR]
+	}
+	
 	return 1
 }
 
@@ -593,6 +716,7 @@ proc cg_validatesv_help {} {
 
 
 proc cg_validatesv args {
+	global log ; #TEST
 
 	# set options
 	# -----------
@@ -664,25 +788,26 @@ proc cg_validatesv args {
 		set patchstart [lindex $line $PATCHSTART]
 		puts "Analyzing inversion ${chr}_${patchstart} ..."
 		puts "The predicted size for this inversion is $size"
-
-		set primerPairs [cg_validatesv_getPrimerPairs $chr $patchSize $patchstart $size $breakpointL $breakpointR $READSIZE $EVAL $MIN]
+		
+		if {$size <= 400} {
+			puts "The inversion is small enough to sequence the whole thing at once."
+			set primerPairs [cg_validatesv_getOnePair $chr $patchstart $breakpointL $breakpointR $size $EVAL $MIN]
+		} else {
+			set primerPairs [cg_validatesv_getPrimerPairs $chr $patchSize $patchstart $size $breakpointL $breakpointR $READSIZE $EVAL $MIN]
+		}
 		if {$primerPairs == 1} {
 			puts "No primer pairs were found for this inversion"
 			puts " "
-			tempfile clean 
-			set in [gets $fileid]
-			incr inversion_count
-			continue
 		} else {
 			puts "Primerpairs for ${chr}_${patchstart} are found!"
 			puts " "
-		}
-		foreach primer $primerPairs {
-			set line_out "$chr $patchstart [lindex $line $PATCHEND] $primer"
-			puts $fileid_out [join $line_out \t]
-	
+			foreach primer $primerPairs {
+				set line_out "$chr $patchstart [lindex $line $PATCHEND] $primer"
+				puts $fileid_out [join $line_out \t]
+			}
 		}
 
+		
 		tempfile clean 
 		set in [gets $fileid]
 		incr inversion_count
@@ -699,7 +824,7 @@ proc cg_validatesv args {
 	puts " Humana Press, Totowa, NJ, pp 365-386   "
 	puts " ----------------------------------------------------------------------------------"
 	puts ""
-
+	close $log ; #TEST
 	return 0
 
 
