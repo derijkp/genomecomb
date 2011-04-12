@@ -108,17 +108,20 @@ Y-1010} error
 test getregions {above} {
 	exec getregions < data/coverage.tsv chr1 0 1 10 1 0
 } {chr1	25	27
-chr1	28	31}
+chr1	28	31
+chr1	40	42}
 
 test getregions {below} {
 	exec getregions < data/coverage.tsv chr1 0 1 10 0 0
 } {chr1	20	24
-chr1	27	28}
+chr1	27	28
+chr1	42	43}
 
 test getregions {shift} {
 	exec getregions < data/coverage.tsv chr1 0 1 10 1 -1
 } {chr1	24	26
-chr1	27	30}
+chr1	27	30
+chr1	39	41}
 
 test regjoin {basic} {
 	exec cg regjoin data/reg1.tsv data/reg2.tsv 2> /dev/null

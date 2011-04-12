@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
 	DString line;
 	char *chr, *linepos = NULL, *scanpos = NULL;
 	ssize_t read;
-	int poscol,valuecol,above,shift,maxcol,pos,value,cutoff;
+	int poscol,valuecol,above,shift,maxcol,pos,prev,value,cutoff,accept;
 	int status,begin=0,count;
 	if ((argc != 7)) {
 		fprintf(stderr,"Format is: getregions chromosome poscol valuecol cutoff above shift");
@@ -52,14 +52,23 @@ NODPRINT("%s\n",linepos)
 			linepos++;
 		}
 		if (count > maxcol) {
+			accept = ((above && (value > cutoff)) || (!above && (value < cutoff)));
 			if (status) {
-				if ((above && (value <= cutoff)) || (!above && (value >= cutoff))) {
-					fprintf(stdout,"%s\t%d\t%d\n", chr, begin+shift, pos+shift);
+				if ((prev != pos) || !accept) {
+					fprintf(stdout,"%s\t%d\t%d\n", chr, begin+shift, prev+shift);
 					status = 0;
+					if ((prev != pos) && accept) {
+						begin = pos;
+						prev = pos+1;
+						status = 1;
+					}
+				} else {
+					prev = pos+1;
 				}
 			} else {
-				if ((above && (value > cutoff)) || (!above && (value < cutoff))) {
+				if (accept) {
 					begin = pos;
+					prev = pos+1;
 					status = 1;
 				}
 			}
