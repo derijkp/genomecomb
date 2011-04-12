@@ -4,22 +4,27 @@ proc rtg2annotvar {file {outfile {}}} {
 	}
 	catch {close $f}; catch {close $o}
 	set f [gzopen $file]
-	set o [open $outfile.temp w]
-	puts $o [join {chromosome begin end type reference alleleSeq1 alleleSeq2 posterior coverage correction numA numC numG numT percA percC percG percT nonidentityposterior reference} \t]
+	set keepheader {}
 	while {![eof $f]} {
 		set line [gets $f]
 		if {[string index $line 0] ne "#"} break
-		set header $line
+		lappend keepheader $line
 	}
-	if {![info exists header]} {
+	if {![llength $keepheader]} {
 		set header {name position type reference prediction posterior coverage correction support_statistics}
 		set line [split $line \t]
 	} else {
+		set header [list_pop keepheader]
 		set header [split [string range $header 1 end] \t]
 	}
 	if {$header ne "name position type reference prediction posterior coverage correction support_statistics"} {
 		error "header=$header\n$file is not a correct rtg file"
 	}
+	set o [open $outfile.temp w]
+	if {[llength $keepheader]} {
+		puts $o [join $keepheader \n]
+	}
+	puts $o [join {chromosome begin end type reference alleleSeq1 alleleSeq2 posterior coverage correction numA numC numG numT percA percC percG percT nonidentityposterior reference} \t]
 	set poss [list_cor $header {name chromosome position type reference prediction posterior coverage correction nonidentity-posterior support_statistics}]
 	set line [split $line \t]
 	set num 0

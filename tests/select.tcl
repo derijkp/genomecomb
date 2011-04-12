@@ -80,13 +80,15 @@ test select {-f calculated functions} {
 chr1	4000	4001	2
 chr2	4000	4001	4}
 
-test select {keep header info and format} {
-	exec cg select -s position data/rtgsnps.tsv temp.tsv
+test select {keep header info and format rtg: -hc} {
+	exec cg select -hc 1 -s position data/rtgsnps.tsv temp.tsv
 	file delete temp
 	catch {exec diff temp.tsv data/rtgsnps.tsv > temp}
 	file_read temp
-} {3d2
-< 
+} {3c3
+< name	position	type	reference	prediction	posterior	coverage	correction	support_statistics
+---
+> #name	position	type	reference	prediction	posterior	coverage	correction	support_statistics
 }
 
 test select {keep header info and format vcf} {

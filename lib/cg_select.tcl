@@ -358,10 +358,13 @@ proc tsv_select_expandcode {header code awkfunctionsVar} {
 	return $code
 }
 
-proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {out stdout}} {
+proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {out stdout} {hc 0}} {
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	set header [tsv_open $f keepheader]
+	if {$hc} {
+		tsv_hcheader $f keepheader header
+	}
 	set awk ""
 	set awkfunctions {0 0}
 	set sort ""
@@ -413,7 +416,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	}
 	if {![llength $pipe]} {
 		if {[info exists ::filebuffer($f)]} {
-			puts $o [lindex $::filebuffer($f) 0]
+			foreach line $::filebuffer($in) {
+				puts $o $line
+			}
 			unset ::filebuffer($f)
 		}
 		fcopy $f $out
@@ -482,61 +487,60 @@ proc tsv_open {f {keepheaderVar {}}} {
 	set keep 0
 	set buffering [fconfigure $f -buffering]
 	fconfigure $f -buffering line
-	set vcf 0
-	set first 1
 	set split 1
+	set line [gets $f]
+	set fchar [string index $line 0]
+	set fchar2 [string index $line 1]
+	if {$fchar eq "#" && $fchar2 eq "#"} {
+		set vcf 1
+	} else {
+		set vcf 0
+	}
 	while {![eof $f]} {
-		set line [gets $f]
 		if {![string length $line]} {
 			lappend keepheader {}
-			set header [gets $f]
+			set line [gets $f]
 			break
 		}
 		set fchar [string index $line 0]
 		if {$fchar eq ">"} {
-			set header $line
 			break
 		} elseif {$fchar ne "#"} {
-			if {[info exists header]} {
-				set header [list_pop keepheader]
-				lappend keepheader {}
-				set ::filebuffer($f) [list $line]
-			} else {
-				set header $line
-			}
 			break
-		}
-		if {$first} {
-			set fchar2 [string index $line 1]
-			if {$fchar2 eq "#"} {set vcf 1}
 		} elseif {$vcf} {
 			set fchar2 [string index $line 1]
 			if {$fchar2 ne "#"} {
 				set split 0
-				set header $line
 				break
 			}
 		}
-		set first 0
 		lappend keepheader $line
-		set keep [tell $f]
-		set header $line
+		set line [gets $f]
 	}
 	fconfigure $f -buffering $buffering
-	set fchar [string index $header 0]
+	set fchar [string index $line 0]
 	if {[inlist {# >} $fchar]} {
 		set keepheader [join $keepheader \n]\n$fchar
 		if {!$split} {
-			return [string range $header 1 end]
+			return [string range $line 1 end]
 		} else {
-			return [split [string range $header 1 end] \t]
+			return [split [string range $line 1 end] \t]
 		}
 	} else {
 		if {[llength $keepheader]} {
 			set keepheader [join $keepheader \n]\n
 		}
-		return [split $header \t]
+		return [split $line \t]
 	}
+}
+
+proc tsv_hcheader {f keepheaderVar headerVar} {
+	upvar $keepheaderVar keepheader
+	upvar $headerVar header
+	set ::filebuffer($f) [list [join $header \t]]
+	set temp [split [string trimright $keepheader] \n]
+	set header [split [string range [list_pop temp] 1 end] \t]
+	set keepheader [join $temp \n]\n
 }
 
 if 0 {
@@ -937,7 +941,7 @@ proc cg_select {args} {
 		errorformat select
 		exit 1
 	}
-	set query {}; set fields {}; set sortfields {}; set newheader {}
+	set query {}; set fields {}; set sortfields {}; set newheader {}; set hc 0
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -947,6 +951,7 @@ proc cg_select {args} {
 			}
 			-f {set fields $value}
 			-nh {set newheader $value}
+			-hc {set hc 1}
 			-s {set sortfields $value}
 			-h {
 				if {$value eq ""} {
@@ -984,7 +989,7 @@ proc cg_select {args} {
 	} else {
 		set o stdout
 	}
-	set error [catch {tsv_select $query $fields $sortfields $newheader $f $o} result]
+	set error [catch {tsv_select $query $fields $sortfields $newheader $f $o $hc} result]
 	if {$f ne "stdin"} {catch {close $f}}
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$error} {

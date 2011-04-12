@@ -308,11 +308,29 @@ NODPRINT("%s",linePtr->string)
 
 void skip_header(FILE *f1, DString *linePtr) {
 	ssize_t read;
-	while ((read = DStringGetLine(linePtr, f1)) != -1) {
-		if (linePtr->string[0] == '\0') {
-			DStringGetLine(linePtr, f1);
-			break;
+	read = DStringGetLine(linePtr, f1);
+	if (read == -1) return;
+	if (linePtr->string[0] == '#' && linePtr->string[1] == '#') {
+		/* vcf style header */
+		while (read != -1) {
+			if (linePtr->string[0] == '\0') {
+				DStringGetLine(linePtr, f1);
+				break;
+			}
+			if (linePtr->string[0] != '#' || linePtr->string[1] != '#') {
+				break;
+			}
+			read = DStringGetLine(linePtr, f1);
 		}
-		if (linePtr->string[0] != '#' && linePtr->string[0] != '>') break;
+	} else {
+		while (read != -1) {
+			if (linePtr->string[0] == '\0') {
+				DStringGetLine(linePtr, f1);
+				break;
+			}
+			if (linePtr->string[0] != '#' && linePtr->string[0] != '>') break;
+			read = DStringGetLine(linePtr, f1);
+		}
 	}
+	NODPRINT("%s",linePtr->string)
 }

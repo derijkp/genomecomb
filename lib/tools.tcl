@@ -375,7 +375,9 @@ proc scratchfile {{action {get}} {type file}} {
 proc chanexec {in out pipe} {
 	set o [open "|\ $pipe\ >@\ $out 2>@\ stderr" w]
 	if {[info exists ::filebuffer($in)]} {
-		puts $o [lindex $::filebuffer($in) 0]
+		foreach line $::filebuffer($in) {
+			puts $o $line
+		}
 		unset ::filebuffer($in)
 	}
 	fcopy $in $o
