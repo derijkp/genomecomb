@@ -20,6 +20,7 @@ package require BioTcl
 #######################################################
 
 set maxnum 1000
+set max_amplicon 1000
 set searchGenomeDB "/home/annelies/BigDisk/complgen/refseq/hg18/build36-ssa/"
 set MAX_SIZE 4000
 set archive may2009
@@ -187,6 +188,7 @@ proc cg_validatesv_mask_seq {list_seq EVAL MIN} {
 }
 
 proc cg_validatesv_runPrimer3 {list_seq ID ex_primer max_prim} {
+	global max_amplicon
 	set target [lindex $list_seq 0]
 	set seqL [lindex $list_seq 1]
 	set seqR [lindex $list_seq 2]
@@ -211,7 +213,7 @@ proc cg_validatesv_runPrimer3 {list_seq ID ex_primer max_prim} {
 		puts $inid "PRIMER_MAX_SIZE=23"
 		puts $inid "PRIMER_OPT_TM=60"
 		puts $inid "PRIMER_MAX_NS_ACCEPTED=0"
-		puts $inid "PRIMER_PRODUCT_SIZE_RANGE=300-1000"
+		puts $inid "PRIMER_PRODUCT_SIZE_RANGE=300-$max_amplicon"
 		puts $inid "P3_FILE_FLAG=0" ; # if FLAG=1, extra output files will be created
 		puts $inid "=" 
 		close $inid
@@ -226,7 +228,7 @@ proc cg_validatesv_runPrimer3 {list_seq ID ex_primer max_prim} {
 		puts $inid "PRIMER_MAX_SIZE=23"
 		puts $inid "PRIMER_OPT_TM=60"
 		puts $inid "PRIMER_MAX_NS_ACCEPTED=0"		
-		puts $inid "PRIMER_PRODUCT_SIZE_RANGE=300-1000"
+		puts $inid "PRIMER_PRODUCT_SIZE_RANGE=300-$max_amplicon"
 		puts $inid "P3_FILE_FLAG=0"
 		puts $inid "="
 		close $inid
@@ -249,6 +251,7 @@ proc cg_validatesv_runPrimer3 {list_seq ID ex_primer max_prim} {
 
 proc cg_validatesv_cindex_searchgenome {DB pseq {add 0}} {
 	global cindex_genome maxnum
+	global log ; #TEST
 	if {![info exists cindex_genome]} {
 		set cindex_genome {}
 		#puts "loading genome database" ; #TEST
@@ -264,12 +267,14 @@ proc cg_validatesv_cindex_searchgenome {DB pseq {add 0}} {
 	dict for {chr cindex} $cindex_genome {
 		set temp [cindex locate $cindex $pseq $maxnum]
 		incr numresults [llength $temp]
+		puts $log "numresult: $numresults" ;#TEST
 		if {$numresults > $maxnum} {error "found $numresults"}
 		if {[llength $temp]} {
 			if {$add} {set temp [lmath_calc $temp + $add]}
 			dict set results $chr $temp
 		}
 	}
+	puts $log "end cindex" ;#TEST
 	return [list $numresults $results]
 }
 
@@ -280,8 +285,8 @@ proc cg_validatesv_searchAmplicon {seq1 seq2 size} {
 	global MAX_SIZE
 	if {[catch "cg_validatesv_cindex_searchgenome $searchGenomeDB $seq2 " c_output2 ]} {error "found too many hits"}
 	if {[catch "cg_validatesv_cindex_searchgenome $searchGenomeDB $seq1 " c_output1 ]} {error "found too many hits"}
-	if {[lindex $c_output1 0] == 0} {error "Primer not found in genome"}
-	if {[lindex $c_output2 0] == 0} {error "Primer not found in genome"}
+	if {[lindex $c_output1 0] == 0} {return 0}
+	if {[lindex $c_output2 0] == 0} {return 0}
 	set hit 0	
 	set chr_col1 0
 	set chr_col2 0
@@ -636,7 +641,7 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 		#run ucsc_epcr on the 2 primers. There has to be 1 amplicon amplified
 		set inv 0
 		if {[catch "cg_validatesv_runEPCR {$primerLF} {$primerLR} $prod_sizeL $size $inv" out ]} {
-			#puts $log "1: $out"; #TEST
+			puts $log "out1: $out"; #TEST
 			incr i; continue
 		}
 		#picking the primer with no repeat
@@ -664,7 +669,10 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 		#these are the inverted primers so the size of the inversion has to be brought into account
 		set prod_size 0
 		set inv 1
-		if {[catch "cg_validatesv_runEPCR {$primerLF} {$primerRF} $prod_size $size $inv" out ]} {#puts $log "out3: $out"; incr j; continue}
+		if {[catch "cg_validatesv_runEPCR {$primerLF} {$primerRF} $prod_size $size $inv" out ]} {
+			puts $log "out2: $out"
+			incr j; continue
+		}
 		set primerDict3 [cg_validatesv_runPrimer3 $list_seq3_mask "leftInvSeq_${chr}_${patchstart}" [lindex $primerRF 0] "20"]
 		puts $log "PR3: $primerDict3" ; #TEST
 		set k 0
@@ -675,7 +683,10 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 			set prod_sizeR [dict get $primerDict3 PRIMER_PAIR_${k}_PRODUCT_SIZE]
 			#run epcr on the 2 primers. There has to be 1 amplicon amplified
 			set inv 0
-			if {[catch "cg_validatesv_runEPCR {$primerRF} {$primerRR} $prod_sizeR $size $inv" out ]} {incr k; continue}
+			if {[catch "cg_validatesv_runEPCR {$primerRF} {$primerRR} $prod_sizeR $size $inv" out ]} {
+				puts $log "out3: $out"
+				incr k; continue
+			}
 			if {$out != "repeat"} {
 				set PP 1
 				break
@@ -717,6 +728,8 @@ proc cg_validatesv_help {} {
 
 proc cg_validatesv args {
 	global log ; #TEST
+	global maxnum
+	global max_amplicon
 
 	# set options
 	# -----------
@@ -779,6 +792,7 @@ proc cg_validatesv args {
 	set in [gets $fileid]
 	set inversion_count 1
 	while {![eof $fileid]} {
+		
 		set line [split $in "\t"]
 		set patchSize [expr [lindex $line $PATCHEND] - [lindex $line $PATCHSTART]]
 		set breakpointL [lindex $line $PATCHEND]
@@ -798,6 +812,35 @@ proc cg_validatesv args {
 		if {$primerPairs == 1} {
 			puts "No primer pairs were found for this inversion"
 			puts " "
+			# ask first for rerun scripts with other parameters
+			set okvar 0
+			while {!$okvar} {
+				if {![info exists again] } {
+					puts "Rerun this inversion with opportunity for larger amplicon (1200nt)? (Y/N)"
+					set LargerAmplicon [gets stdin]	
+					if {$LargerAmplicon eq {Y}} {
+						set okvar 1
+						set again 1
+						break
+					} elseif {$LargerAmplicon eq {N}} {
+						set okvar 1
+					} else {
+						puts "$LargerAmplicon is not a valid answer, use Y or N."
+					}
+				}
+				puts "Rerun this inversion but tolerate more primer hits in genome (still only 1 amplicon!)? (Y/N)"
+				set moreHits [gets stdin]
+				if {$moreHits eq {Y}} {
+					set okvar 1
+					set again 2
+				} elseif {$moreHits eq {N}} {
+					set okvar 1
+					set again 0	
+					puts "Ok, No primers are found for this inversion"				
+				} else {
+					puts "$moreHits is not a valid answer, use Y or N."
+				}				
+			}
 		} else {
 			puts "Primerpairs for ${chr}_${patchstart} are found!"
 			puts " "
@@ -805,11 +848,26 @@ proc cg_validatesv args {
 				set line_out "$chr $patchstart [lindex $line $PATCHEND] $primer"
 				puts $fileid_out [join $line_out \t]
 			}
+			unset -nocomplain again
 		}
-
+		#rerun this inversion
+		if {[info exists again] && $again == 1} {
+			tempfile clean
+			set max_amplicon 1200
+			continue
+		}
+		if {[info exists again] && $again == 2} {
+			tempfile clean
+			incr maxnum 5000
+			continue
+		}
 		
 		tempfile clean 
 		set in [gets $fileid]
+		#reset maxnum to original value
+		set max_amplicon 1000
+		set maxnum 1000
+		
 		incr inversion_count
 	}
 
