@@ -93,6 +93,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	}
 	# copy extra info
 	if {$force || ![file exists CNV]} {
+		puts stderr "Copying CNV"
 		file delete -force CNV.temp
 		catch {
 			file copy $dir/ASM/CNV CNV.temp
@@ -101,6 +102,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		puts stderr $result
 	}
 	if {$force || ![file exists SV]} {
+		puts stderr "Copying SV"
 		file delete -force SV.temp
 		catch {
 			file copy $dir/ASM/SV SV.temp
@@ -108,14 +110,15 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		} result
 		puts stderr $result
 	}
-	if {$force || ![file exists EVIDENCE]} {
-		file delete -force EVIDENCE.temp
-		catch {
-			file copy $dir/ASM/EVIDENCE .
-			file rename EVIDENCE.temp EVIDENCE
-		} result
-		puts stderr $result
-	}
+#	if {$force || ![file exists EVIDENCE]} {
+#		puts stderr "Copying EVIDENCE"
+#		file delete -force EVIDENCE.temp
+#		catch {
+#			file copy $dir/ASM/EVIDENCE .
+#			file rename EVIDENCE.temp EVIDENCE
+#		} result
+#		puts stderr $result
+#	}
 	# sample specific filters
 	if {$force || ![file exists [gzfile reg_refcons-$name.tsv]]} {
 		puts stderr "Find refcons regions for var-$name.tsv"
