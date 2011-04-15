@@ -21,6 +21,7 @@ package require BioTcl
 
 set maxnum 1000
 set max_amplicon 1000
+set prim_min 25 ; # the minimal distance between 2 masked sequences 'closest' to breakpoint
 set searchGenomeDB "/home/annelies/BigDisk/complgen/refseq/hg18/build36-ssa/"
 set MAX_SIZE 4000
 set archive may2009
@@ -100,43 +101,13 @@ proc cg_validatesv_getSeqInv {seq1 seq2} {
 	return [list $seqTarget $seqL $seqR]
 }
 
-
-proc cg_validatesv_mask_seq {list_seq EVAL MIN} {
+proc cg_validatesv_runFasta {list_seq EVAL} {
 	global log ; #TEST
 	set seqTarget [lindex $list_seq 0]
 	set seqL [lindex $list_seq 1]
 	set seqR [lindex $list_seq 2]
-	
-	# Search for homopolymer stretches
-	# --------------------------------
-	
-	set len_stretch {} ; #so user knows how much nucleotides are located in stretches
-	set hits [regexp -inline -indices -all {A{10,}|G{10,}|T{10,}|C{10,}} $seqL]
-	#try to avoid the stretches in the sequences were the primers will be found
-	foreach hit [lreverse $hits] {
-		if {[expr [string length $seqL] - [lindex $hit end]] < $MIN} {
-			lappend len_stretch [expr [lindex $hit end] - [lindex $hit 0] + 1]
-		} else {
-			set seqL [string range $seqL [lindex $hit end] end]
-			break
-		}
-	}
 
-	set hits [regexp -inline -indices -all {A{10,}|G{10,}|T{10,}|C{10,}} $seqR]
-	foreach hit $hits {
-		if {[lindex $hit 0] < $MIN} {
-			lappend len_stretch [expr [lindex $hit end] - [lindex $hit 0] + 1] 
-		} else {
-			set seqR [string range $seqR 0 [lindex $hit 0]]
-			break
-		}
-	}	
-	set hits [regexp -inline -indices -all {A{10,}|G{10,}|T{10,}|C{10,}} $seqTarget]
-	foreach hit $hits {
-		lappend len_stretch [expr [lindex $hit end] - [lindex $hit 0] + 1]
-	}
-
-
+	puts $log "$seqL$seqTarget$seqR" ; #TEST
 
 	# Mask similar sequences with FASTA
 	# ---------------------------------
@@ -155,10 +126,11 @@ proc cg_validatesv_mask_seq {list_seq EVAL MIN} {
 	puts $fileid_outR ">SeqR \n $seqR"
 	close $fileid_outR
 
-	if {[catch "exec FASTAwrap.tcl $tempL $tempR" err]} {
-		puts "fetching sequences failed - $err"
-		exit 1
-	}
+#	if {[catch "exec FASTAwrap.tcl $tempL $tempR" err]} {
+#		puts "fetching sequences failed - $err"
+#		exit 1
+#	}
+#	 puts $log $err ; #TEST
 	
 	#run FASTA - output = tclDict
 	if {[catch "exec FASTAwrap.tcl $tempL $tempR -t 1 -e $EVAL" FASTAwrap]} {
@@ -167,24 +139,104 @@ proc cg_validatesv_mask_seq {list_seq EVAL MIN} {
 	}
 	set i 0
 	#puts $log $FASTAwrap ; #TEST
+	#making distinction between masked and non-masked sequences
+	set seqL_mask $seqL
+	set seqR_mask $seqR
 	while {$i < [llength $FASTAwrap]} {
 		set FASTAdict [lindex $FASTAwrap $i]
 		if {[dict get $FASTAdict complement] == 0} {
 			#normal string replace
-			set seqL [string replace $seqL [dict get $FASTAdict query_start] \
-				[dict get $FASTAdict query_end] [string repeat N [expr [dict get $FASTAdict query_end] - [dict get $FASTAdict query_start] ]]]
-			set seqR [string replace $seqR [dict get $FASTAdict hit_start] \
-				[dict get $FASTAdict hit_end] [string repeat N [expr [dict get $FASTAdict hit_end] - [dict get $FASTAdict hit_start] ]]]
+			set seqL_mask [string replace $seqL_mask [expr [dict get $FASTAdict query_start] - 1] \
+				[expr [dict get $FASTAdict query_end] - 1] [string repeat N [expr [dict get $FASTAdict query_end] - [dict get $FASTAdict query_start] + 1 ]]]
+			set seqR_mask [string replace $seqR_mask [expr [dict get $FASTAdict hit_start] - 1] \
+				[dict get $FASTAdict hit_end] [string repeat N [expr [dict get $FASTAdict hit_end] - [dict get $FASTAdict hit_start] + 1 ]]]
 		} else {
-			set seqL [string replace $seqL [dict get $FASTAdict query_end] \
-				[dict get $FASTAdict query_start] [string repeat N [expr [dict get $FASTAdict query_start] - [dict get $FASTAdict query_end] ]]]
-			set seqR [string replace $seqR [dict get $FASTAdict hit_start] \
-				[dict get $FASTAdict hit_end]  [string repeat N [expr [dict get $FASTAdict hit_end] - [dict get $FASTAdict hit_start] ]]]
+			set seqL_mask [string replace $seqL_mask [ expr [dict get $FASTAdict query_end] - 1] \
+				[ expr [dict get $FASTAdict query_start] - 1] [string repeat N [expr [dict get $FASTAdict query_start] - [dict get $FASTAdict query_end] + 1 ]]]
+			set seqR_mask [string replace $seqR_mask [ expr [dict get $FASTAdict hit_start] - 1] \
+				[ expr [dict get $FASTAdict hit_end] - 1]  [string repeat N [expr [dict get $FASTAdict hit_end] - [dict get $FASTAdict hit_start] + 1 ]]]
 		}
 		incr i
 	}
 	
-	return [list $seqTarget $seqL $seqR $len_stretch]
+	return [list $seqTarget $seqL_mask $seqR_mask]
+
+}
+
+proc cg_validatesv_searchStretches {list_seq list_seq_mask MIN} {
+	global prim_min
+	global log ; #TEST
+	set seqTarget [lindex $list_seq 0]
+	set seqL [lindex $list_seq 1]
+	set seqR [lindex $list_seq 2]
+
+	set seqTarget_mask [lindex $list_seq_mask 0]
+	set seqL_mask [lindex $list_seq_mask 1]
+	set seqR_mask [lindex $list_seq_mask 2]
+
+	# Search for homopolymer stretches
+	# --------------------------------
+	
+	set len_stretch {} ; #so user knows how much nucleotides are located in stretches
+	set hits [regexp -inline -indices -all {A{10,}|G{10,}|T{10,}|C{10,}} $seqL]
+	#try to avoid the stretches in the sequences were the primers will be found
+	puts $log "hits: $hits" ; #TEST
+	if {![llength $hits]} {set found 1}
+
+	foreach hit [lreverse $hits] {
+		puts $log "aantal N: [regexp -all {N} [string range $seqL_mask [lindex $hit end] [string length $seqL]]]" ; #TEST
+		puts $log "aantal normale stretches groter dan 50bp: [regexp -all {[AGTC]{[expr $MIN/2],}} [string range $seqL_mask [lindex $hit end] [string length $seqL]]]" ; #TEST
+		if {[expr [string length $seqL] - [lindex $hit end] ] < $MIN && \
+			[regexp -all {[AGTC]{$prim_min,}} [string range $seqL_mask [lindex $hit end] [string length $seqL]]] == 0 } {
+			lappend len_stretch [expr [lindex $hit end] - [lindex $hit 0] + 1]
+		} else {
+			set seqL_mask [string range $seqL_mask [lindex $hit end] end]
+			set found 1
+			break
+		}
+	}
+
+	set hits [regexp -inline -indices -all {A{10,}|G{10,}|T{10,}|C{10,}} $seqR]
+	foreach hit $hits {
+		if {[lindex $hit 0] < $MIN && \
+			[regexp -all {[AGTC]{$prim_min,}} [string range $seqL_mask 0 [lindex $hit 0]]] == 0	} {
+			lappend len_stretch [expr [lindex $hit end] - [lindex $hit 0] + 1] 
+		} else {
+			set seqR_mask [string range $seqR_mask 0 [lindex $hit 0]]
+			set found 1
+			break
+		}
+	}
+
+	if {![info exists found]} {
+		puts "WARNING: When there are no primers found, the cause is probably the similarity of sequences adjacent to the breakpoint"
+	}
+	unset -nocomplain found 
+	
+	set hits [regexp -inline -indices -all {A{10,}|G{10,}|T{10,}|C{10,}} $seqTarget]
+	foreach hit $hits {
+		lappend len_stretch [expr [lindex $hit end] - [lindex $hit 0] + 1]
+	}
+
+	puts $log "$seqL_mask$seqTarget$seqR_mask" ; #TEST
+
+	
+	return [list $seqTarget $seqL_mask $seqR_mask $len_stretch]
+
+}
+
+
+proc cg_validatesv_mask_seq {list_seq EVAL MIN fasta} {
+	
+	if {$fasta == 1} {
+		set list_seq_mask [cg_validatesv_runFasta $list_seq $EVAL]
+	} else {
+		set list_seq_mask $list_seq
+	}
+	
+	set list_seq_new [cg_validatesv_searchStretches $list_seq $list_seq_mask $MIN]
+
+	return $list_seq_new
 }
 
 proc cg_validatesv_runPrimer3 {list_seq ID ex_primer max_prim} {
@@ -534,7 +586,7 @@ proc cg_validatesv_getSeq {chr breakpointL breakpointR} {
 	return [list $seqTarget $seqL $seqR]
 }
 
-proc cg_validatesv_getOnePair {chr patchstart breakpointL breakpointR size EVAL MIN} {
+proc cg_validatesv_getOnePair {chr patchstart breakpointL breakpointR size EVAL MIN fasta} {
 	global log ; #TEST
 	global PrimerPair
 	unset -nocomplain PrimerPair
@@ -544,7 +596,7 @@ proc cg_validatesv_getOnePair {chr patchstart breakpointL breakpointR size EVAL 
 	set list_seq [cg_validatesv_getSeq $chr $breakpointL $breakpointR]
 	
 	# mask repeats in flanking sequences 
-	set list [cg_validatesv_mask_seq $list_seq $EVAL $MIN]
+	set list [cg_validatesv_mask_seq $list_seq $EVAL $MIN $fasta]
 	set len_stretch [lindex $list end]
 	set list_seq_mask [lreplace $list end end] ; #deleting stretch info from list
 
@@ -596,7 +648,7 @@ proc cg_validatesv_getOnePair {chr patchstart breakpointL breakpointR size EVAL 
 }
 
 
-proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL breakpointR READSIZE EVAL MIN} {	
+proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL breakpointR READSIZE EVAL MIN fasta} {	
 	global log ; #TEST
 	global PrimerPair
 	unset -nocomplain PrimerPair
@@ -610,7 +662,7 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 	# mask repeats in flanking sequences 
 	for {set x 1} {$x <= 3} {incr x} {
 		if { $x == 2 } {continue} ; #Getting seq 2 in different manner
-		set list [cg_validatesv_mask_seq $list_seq($x) $EVAL $MIN]
+		set list [cg_validatesv_mask_seq $list_seq($x) $EVAL $MIN $fasta]
 		set len_stretch${x} [lindex $list end]
 		set list_seq${x}_mask [lreplace $list end end] ; #deleting stretch info from list
 	}
@@ -791,6 +843,7 @@ proc cg_validatesv args {
 	# ------------------------------------------
 	set in [gets $fileid]
 	set inversion_count 1
+	set fasta 1
 	while {![eof $fileid]} {
 		
 		set line [split $in "\t"]
@@ -805,9 +858,9 @@ proc cg_validatesv args {
 		
 		if {$size <= 400} {
 			puts "The inversion is small enough to sequence the whole thing at once."
-			set primerPairs [cg_validatesv_getOnePair $chr $patchstart $breakpointL $breakpointR $size $EVAL $MIN]
+			set primerPairs [cg_validatesv_getOnePair $chr $patchstart $breakpointL $breakpointR $size $EVAL $MIN $fasta]
 		} else {
-			set primerPairs [cg_validatesv_getPrimerPairs $chr $patchSize $patchstart $size $breakpointL $breakpointR $READSIZE $EVAL $MIN]
+			set primerPairs [cg_validatesv_getPrimerPairs $chr $patchSize $patchstart $size $breakpointL $breakpointR $READSIZE $EVAL $MIN $fasta]
 		}
 		if {$primerPairs == 1} {
 			puts "No primer pairs were found for this inversion"
@@ -815,12 +868,12 @@ proc cg_validatesv args {
 			# ask first for rerun scripts with other parameters
 			set okvar 0
 			while {!$okvar} {
-				if {![info exists again] } {
+				if {![info exists againLarge] } {
 					puts "Rerun this inversion with opportunity for larger amplicon (1200nt)? (Y/N)"
 					set LargerAmplicon [gets stdin]	
 					if {$LargerAmplicon eq {Y}} {
 						set okvar 1
-						set again 1
+						set againLarge 1
 						break
 					} elseif {$LargerAmplicon eq {N}} {
 						set okvar 1
@@ -828,14 +881,27 @@ proc cg_validatesv args {
 						puts "$LargerAmplicon is not a valid answer, use Y or N."
 					}
 				}
-				puts "Rerun this inversion but tolerate more primer hits in genome (still only 1 amplicon!)? (Y/N)"
+				if {![info exists againFasta]} {
+					puts "Rerun this inversion but don't mask with FASTA? (Y/N)"
+					set noFasta [gets stdin]
+					if {$noFasta eq {Y}} {
+						set okvar 1
+						set againFasta 1
+						break
+					} elseif {$noFasta eq {N}} {
+						set okvar 1				
+					} else {
+						puts "$noFasta is not a valid answer, use Y or N."
+					} 
+				}
+
+				puts "Rerun this inversion but tolerate more primer hits in genome (but still only 1 amplicon!)? (Y/N)"
 				set moreHits [gets stdin]
 				if {$moreHits eq {Y}} {
 					set okvar 1
-					set again 2
+					set againHits 1
 				} elseif {$moreHits eq {N}} {
-					set okvar 1
-					set again 0	
+					set okvar 1	
 					puts "Ok, No primers are found for this inversion"				
 				} else {
 					puts "$moreHits is not a valid answer, use Y or N."
@@ -848,15 +914,22 @@ proc cg_validatesv args {
 				set line_out "$chr $patchstart [lindex $line $PATCHEND] $primer"
 				puts $fileid_out [join $line_out \t]
 			}
-			unset -nocomplain again
+			unset -nocomplain againLarge
+			unset -nocomplain againFasta
+			unset -nocomplain againHits
 		}
 		#rerun this inversion
-		if {[info exists again] && $again == 1} {
+		if {[info exists againLarge]} {
 			tempfile clean
 			set max_amplicon 1200
 			continue
 		}
-		if {[info exists again] && $again == 2} {
+		if {[info exists againFasta]} {
+			tempfile clean
+			set fasta 0
+			continue
+		}
+		if {[info exists againHits]} {
 			tempfile clean
 			incr maxnum 5000
 			continue
@@ -864,9 +937,10 @@ proc cg_validatesv args {
 		
 		tempfile clean 
 		set in [gets $fileid]
-		#reset maxnum to original value
+		#reset original values for following inversion
 		set max_amplicon 1000
 		set maxnum 1000
+		set fasta 1
 		
 		incr inversion_count
 	}
