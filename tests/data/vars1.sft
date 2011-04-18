@@ -9,7 +9,7 @@ chr2	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v
 chr2	4099	5000	snp	C	T	T	T	47	v	T	T	35	v
 chr2	5000	5001	snp	G	C	G	C	54	v	G	G	52	r
 chr2	5000	5010	ins		AGCGTGGCAA	AGCGTGGCAA		32	v	-	-	41	u
-chr2	5005	5006	snp	G	C	G	C	54	v	G	G	52	r
-chr2	5010	5011	snp	G	C	G	C	54	v	G	G	52	r
+chr2	5005	5006	snp	G,A	C	G	C	54	v	G	A	52	v
+chr2	5010	5011	snp	G	C	G	C	54	v	C	G	52	v
 chr2	5011	5012	snp	G	C	G	C	54	v	G	G	52	r
 chr2	8000	8001	snp	G	C	G	C	54	v	G	G	52	r

@@ -7,18 +7,33 @@ proc tsv_select_idtopos {header id fields} {
 	return [lmath_calc $poss + 1]
 }
 
+proc tsv_select_f_samegeno {} {
+	upvar awkfunctions awkfunctions
+	lappend awkfunctions {
+		function samegeno(a11,a12,a21,a22) {
+			if ((a11 == a21) && (a12 == a22)) {return 1;}
+			if ((a11 == a22) && (a12 == a21)) {return 1;}
+			return 0;
+		}
+	}
+}
+
 proc tsv_select_sm {header ids} {
+	upvar awkfunctions awkfunctions
+	tsv_select_f_samegeno
 	set id1 [list_pop ids]
 	foreach {a11 a21 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 sequenced-$id1]] break
 	set temp [list "(\$$sequenced == \"v\")"]
 	foreach id $ids {
 		foreach {a12 a22 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
-		lappend temp "(\$$sequenced == \"v\")"  "((\$$a11 == \$$a12 && \$$a21 == \$$a22) || (\$$a11 == \$$a22 && \$$a21 == \$$a12))"
+		lappend temp "(\$$sequenced == \"v\")"  "samegeno(\$$a11,\$$a21,\$$a12,\$$a22)"
 	}
 	set temp "([join $temp " && "])"
 }
 
 proc tsv_select_same {header ids} {
+	upvar awkfunctions awkfunctions
+	tsv_select_f_samegeno
 	set id1 [list_pop ids]
 	foreach {a11 a21 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 sequenced-$id1]] break
 	set seqlist [list "\$$sequenced != \"u\""]
@@ -26,7 +41,7 @@ proc tsv_select_same {header ids} {
 	foreach id $ids {
 		lappend seqlist "\$$sequenced != \"u\""
 		foreach {a12 a22 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
-		lappend temp "((\$$a11 == \$$a12 && \$$a21 == \$$a22) || (\$$a11 == \$$a22 && \$$a21 == \$$a12))"
+		lappend temp "samegeno(\$$a11,\$$a21,\$$a12,\$$a22)"
 	}
 	set temp "([join $seqlist " && "] && [join $temp " && "])"
 }
@@ -45,6 +60,8 @@ proc tsv_select_df {header ids} {
 }
 
 proc tsv_select_mm {header ids} {
+	upvar awkfunctions awkfunctions
+	tsv_select_f_samegeno
 	set temp1 {}
 	set temp2 {}
 	set list {}
@@ -63,7 +80,7 @@ proc tsv_select_mm {header ids} {
 		foreach {a1 a2} [list_pop list] break
 		lappend temp1 "((\$$a1 != \$$ref) || (\$$a2 != \$$ref))"
 		list_foreach {a12 a22} $list {
-			lappend temp2 "\$$a1 != \$$a12 || \$$a2 != \$$a22"
+			lappend temp2 "!samegeno(\$$a1,\$$a2,\$$a12,\$$a22)"
 		}
 	}
 	set temp "(([join $seqlist " && " ]) && ([join $temp1 " && " ]) && ([join $temp2 " || "]))"
@@ -393,10 +410,10 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	if {$sort ne ""} {
 		lappend pipe $sort
 	}
-# putslog stderr ----------\n$awk\n----------
 	if {[lindex $awkfunctions 0]} {lappend awkfunctions [tsv_select_min [lindex $awkfunctions 0]]}
 	if {[lindex $awkfunctions 1]} {lappend awkfunctions [tsv_select_max [lindex $awkfunctions 1]]}
 	set awk [join [list_remdup [lrange $awkfunctions 2 end]] \n]\n$awk
+# putslog stderr ----------\n$awk\n----------
 	if {[string trim $awk] ne ""} {
 		lappend pipe [list awk $awk]
 	}
@@ -683,7 +700,7 @@ proc tsv_index {xfield file} {
 proc tsv_index_header {file} {
 	global cache
 	set file [file normalize $file]
-	return $cache(tsv_index,$file,header)
+	return [get cache(tsv_index,$file,header)]
 }
 
 proc tsv_index_open {file field {uncompress 0}} {
@@ -947,7 +964,7 @@ proc cg_select {args} {
 		switch -- $key {
 			-q {
 				set query $value
-				if {[regexp {[^=!><]=[^=]} $query]} {puts stderr "you used = instead of == in query"; exit 1}
+				if {[regexp {[^=!><]=[^=]} $query]} {puts stderr "you may have used = instead of == in query"}
 			}
 			-f {set fields $value}
 			-nh {set newheader $value}

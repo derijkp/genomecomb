@@ -132,4 +132,16 @@ vx	2	u	u
 v	12	u,v,v	v,u,v
 u	4000000013	v,v,xx	u,v,xx}
 
+test select {sm} {
+	split [exec cg select -f {chromosome begin} -q {sm(sample1,sample2)} < data/vars1.sft] \n
+} {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr2	4000} {chr2	4001} {chr2	4099} {chr2	5010}}
+
+test select {df} {
+	split [exec cg select -f {chromosome begin} -q {df(sample1,sample2)} < data/vars1.sft] \n
+} {{chromosome	begin} {chr1	5020} {chr2	5000} {chr2	5011} {chr2	8000}}
+
+test select {mm} {
+	split [exec cg select -f {chromosome begin} -q {mm(sample1,sample2)} < data/vars1.sft] \n
+} {{chromosome	begin} {chr2	5005}}
+
 testsummarize
