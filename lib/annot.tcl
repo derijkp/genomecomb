@@ -94,31 +94,34 @@ proc annot_coverage_init {dir} {
 proc annot_coverage_get {dir chr begin} {
 	global annot
 	set present 1
-	foreach {curchr chrfile present} [get annot(cov,$dir) {{} {} 0}] break
+	foreach {curchr chrfile present poss} [get annot(cov,$dir) {{} {} 0}] break
 	if {$chr ne $curchr} {
 		if {[string length $chrfile]} {
 			tsv_index_close $chrfile offset
 		}
 		regsub ^chr $chr {} nchr
-		set chrfile [gzfile $dir/coverage/coverageRefScore-$nchr-*.tsv]
-		if {[llength $chrfile]} {
+		set chrfile [gzfile $dir/coverage/coverageRefScore-$nchr-*.tsv $dir/coverage/coverage-$nchr-*.tsv]
+		if {[file exists $chrfile]} {
 			tsv_index_open $chrfile offset 1
 			set present 1
 		} elseif {[inlist {Y chrY} $chr]} {
 			set present 0
 		} else {
-			error "coverageRefScore file not found ($dir/coverage/coverageRefScore-$nchr-*.tsv)"
+			puts stderr "coverageRefScore file not found ($dir/coverage/coverage(RefScore)-$nchr-*.tsv)"
 			set present 0
 		}
-		set annot(cov,$dir) [list $chr $chrfile $present]
+		set header [tsv_index_header $chrfile]
+		set rpos [lsearch $header refScore]
+		set cpos [lsearch $header uniqueSequenceCoverage]
+		if {$cpos == -1} {set cpos [lsearch $header coverage]}
+		set poss [list $rpos $cpos]
+		set annot(cov,$dir) [list $chr $chrfile $present $poss]
 	}
 	if {!$present} {return {u u}}
 	ifcatch {tsv_index_get $chrfile offset $begin} cline -regexp {
 		"not found in" {set cline {u u u}}
 	}
-	foreach {refscore coverage} {{} {}} break
-	foreach {offset refscore coverage} $cline break
-	return [list $refscore $coverage]
+	return [list_sub $cline $poss]
 }
 
 proc annot_coverage_close {dir} {
