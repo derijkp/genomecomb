@@ -260,7 +260,7 @@ proc annot_annotvar {source outfile todo {dir {}}} {
 
 	catch {close $f} ; catch {close $o}
 	set f [open $source]
-	set header [split [gets $f] \t]
+	set header [tsv_open $f]
 	if {$dir ne ""} {
 		annot_coverage_init $dir
 		set ipos [lsearch $header totalScore2]
