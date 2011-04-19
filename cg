@@ -23,60 +23,6 @@ if {[llength $argv] < 1} {
 
 set action [list_shift argv]
 switch $action {
-	multicompar {
-		if {([llength $argv] < 1)} {
-			puts stderr "format is: $scriptname $action compar_file ?dir? ..."
-			puts stderr " - adds new sample dir(s) to compar_file"
-			puts stderr " - the sample dir(s) should be one directory below compar_file (for reannot)"
-			puts stderr " - sample names will be the names of the sample dir(s)"
-			puts stderr " - missing annotations must be checked and added afterwards using multicompar_reannot"
-			exit 1
-		}
-		set regonly 0
-		if {[lindex $argv 0] eq "-reannot"} {
-			putslog "Also reannot"
-			set reannot 1
-			set argv [lrange $argv 1 end]
-		} elseif {[lindex $argv 0] eq "-reannotregonly"} {
-			putslog "Also reannot"
-			set reannot 1
-			set regonly 1
-			set argv [lrange $argv 1 end]
-		} else {
-			set reannot 0
-		}
-		foreach {compar_file} $argv break
-		set dirs [lrange $argv 1 end]
-		foreach dir $dirs {
-			putslog "Adding $dir"
-			multicompar $compar_file $dir
-		}
-		if {$reannot} {
-			putslog "Reannotating $compar_file"
-			multicompar_reannot $compar_file 0 $regonly
-		}
-	}
-	multicompar_reannot {
-		if {([llength $argv] != 1) && ([llength $argv] != 2)} {
-			puts stderr "format is: $scriptname $action compar_file ?force? ?regonly?"
-			puts stderr " - reannotate multicompar file"
-			puts stderr " - unless the force option is used, only unfilled (?) cells will be updated"
-			puts stderr " - if the regonly option is used, only region data (sequenced) will be updated"
-			exit 1
-		}
-		set compar_file [list_shift argv]
-		set force 0
-		set regonly 0
-		foreach option $argv {
-			switch $option {
-				force {set force 1}
-				regonly {set regonly 1}
-				default {error "unrecognized option $option"}
-			}
-		}
-		putslog "Reannotating $compar_file"
-		multicompar_reannot $compar_file $force $regonly
-	}
 	process_sv {
 		if {([llength $argv] < 2) || ([llength $argv] > 3)} {
 			puts stderr "format is: $scriptname $action sampledir destdir dbdir ?force?"

@@ -5,9 +5,9 @@ proc comparepos {comp1 comp2} {
 	if {![isint [lindex $comp2 1]]} {return -1}
 	foreach {chr1 pos1 end1 type1} $comp1 break
 	foreach {chr2 pos2 end2 type2} $comp2 break
+	set chr1 [chr2num $chr1]
+	set chr2 [chr2num $chr2]
 	if {$chr1 ne $chr2} {
-		set chr1 [chr2num $chr1]
-		set chr2 [chr2num $chr2]
 		return [expr {$chr1-$chr2}]
 	} elseif {$pos1 != $pos2} {
 		return [expr {$pos1-$pos2}]
@@ -211,12 +211,19 @@ proc lset_always {varName pos value} {
 	}
 }
 
-array set chrtrans {M 95 X 96 Y 97}
+array set chrtrans {M 95 MT 95 X 96 Y 97}
 proc chr2num {chr} {
 	if {[isint $chr]} {return $chr}
 	regsub ^chr $chr {} chr
 	set nchr [get ::chrtrans($chr) $chr]
 	return $nchr
+}
+
+proc chr2clean {chr} {
+	if {[isint $chr]} {return $chr}
+	regsub ^chr $chr {} chr
+	if {$chr eq "MT"} {set chr M}
+	return $chr
 }
 
 proc annot_compare_region {compar_file reg_file field tvalue fvalue} {

@@ -64,7 +64,8 @@ proc multicompar {compar_file dir} {
 
 	catch {close $f1}; catch {close $f2}; catch {close $o}
 	set comparfields {chromosome begin end type}
-	set nonmergefields {chromosome begin end type alt ref reference alt locus alleleSeq1 alleleSeq2 totalScore1 totalScore2 refscore coverage refcons nocall cluster}
+	# set nonmergefields {chromosome begin end type alt ref reference locus alleleSeq1 alleleSeq2 totalScore1 totalScore2 refscore coverage refcons nocall cluster}
+	set mergefields {xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam}
 	set allelefields {alleleSeq1 alleleSeq2}
 	#
 	set name [file tail $dir]
@@ -73,7 +74,7 @@ proc multicompar {compar_file dir} {
 		file_write $compar_file [join {chromosome begin end type} \t]
 	}
 	set f1 [open $compar_file]
-	set header1 [split [gets $f1] \t]
+	set header1 [tsv_open $f1]
 	if {[inlist $header1 alleleSeq1-$name]} {
 		error "$name already present in $compar_file"
 	}
@@ -82,15 +83,18 @@ proc multicompar {compar_file dir} {
 		puts stderr "header error in comparfile $compar_file"
 		exit 1
 	}
+	set tp1 [lindex $comparposs1 0]
 	set dummy1 [list_fill [llength $header1] ?]
 	set f2 [open $file2]
-	set header2 [split [gets $f2] \t]
+	set header2 [tsv_open $f2]
 	set comparposs2 [list_cor $header2 $comparfields]
 	if {([lsearch $comparposs2 -1] != -1)} {
 		puts stderr "header error in fannot_varfile2 $compar_file"
 		exit 1
 	}
-	set mergefields [list_lremove $header2 $nonmergefields]
+	set tp2 [lindex $comparposs2 0]
+	# set mergefields [list_lremove $header2 $nonmergefields]
+	set nonmergefields [list_lremove $header2 $mergefields]
 	set mergeposs1 [list_cor $header1 $mergefields]
 	set mergeposs2 [list_cor $header2 $mergefields]
 	set refpos1 [lsearch $header1 reference]
@@ -117,8 +121,10 @@ proc multicompar {compar_file dir} {
 	set o [open $compar_file.temp w]
 	puts $o [join $oheader \t]
 	set cur1 [split [gets $f1] \t]
+	if {[llength $cur1]} {lset cur1 $tp1 [chr2clean [lindex $cur1 $tp1]]}
 	set comp1 [list_sub $cur1 $comparposs1]
 	set cur2 [split [gets $f2] \t]
+	if {[llength $cur2]} {lset cur2 $tp2 [chr2clean [lindex $cur2 $tp2]]}
 	set comp2 [list_sub $cur2 $comparposs2]
 	set num 1; set next 100000
 	while {![eof $f1] || ![eof $f2]} {
@@ -128,14 +134,17 @@ proc multicompar {compar_file dir} {
 		if {$d == 0} {
 			puts $o [multicompar_annot_join $cur1 $cur2]
 			set cur1 [compare_annot_getline $f1]
+			if {[llength $cur1]} {lset cur1 $tp1 [chr2clean [lindex $cur1 $tp1]]}
 			set comp1 [list_sub $cur1 $comparposs1]
 			set cur2 [compare_annot_getline $f2]
+			if {[llength $cur2]} {lset cur2 $tp2 [chr2clean [lindex $cur2 $tp2]]}
 			set comp2 [list_sub $cur2 $comparposs2]
 		} elseif {$d < 0} {
 			while {[comparepos $comp1 $comp2] < 0} {
 				puts $o [multicompar_annot_join $cur1 -]
 				if {[eof $f1]} break
 				set cur1 [compare_annot_getline $f1]
+				if {[llength $cur1]} {lset cur1 $tp1 [chr2clean [lindex $cur1 $tp1]]}
 				set comp1 [list_sub $cur1 $comparposs1]
 				if {![llength $cur1]} break
 				incr num
@@ -146,6 +155,7 @@ proc multicompar {compar_file dir} {
 				puts $o [multicompar_annot_join - $cur2]
 				if {[eof $f2]} break
 				set cur2 [compare_annot_getline $f2]
+				if {[llength $cur2]} {lset cur2 $tp2 [chr2clean [lindex $cur2 $tp2]]}
 				set comp2 [list_sub $cur2 $comparposs2]
 				if {![llength $cur2]} break
 				incr num
@@ -159,7 +169,7 @@ proc multicompar {compar_file dir} {
 	file rename $compar_file.temp $compar_file
 }
 
-proc multicompar_reannot {compar_file {force 0} {regonly 0}} {
+proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} {
 
 	set compar_file [file normalize $compar_file]
 	set basedir [file dir $compar_file]
@@ -212,7 +222,10 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0}} {
 			}
 			annot_region_init $samplea(regionfile,$sample)
 		} else {
-			error "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found in $samplea(dir,$sample): not properly processed sample"
+			if {!$skipincomplete} {
+				error "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found in $samplea(dir,$sample): not properly processed sample"
+			}
+			set samples [list_remove $samples $sample]
 		}
 		set samplea(todo,$sample) {}
 		if {[inlist $samplea(fields,$sample) refcons]} {
@@ -251,7 +264,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0}} {
 			if {$samplea(type,$sample) eq "cg"} {
 				if {!$regonly && ($force || ([lindex $line $samplea(rpos,$sample)] eq "?") || ([lindex $line $samplea(cpos,$sample)] eq "?"))} {
 					foreach {r c} [annot_coverage_get $samplea(dir,$sample) $chr $begin] break
-					lset line $samplea(rpos,$sample) $r
+					if {$samplea(rpos,$sample) != -1} {lset line $samplea(rpos,$sample) $r}
 					lset line $samplea(cpos,$sample) $c
 				}
 				set seq [lindex $line $samplea(seq,$sample)]
@@ -280,6 +293,8 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0}} {
 						if {$pos == -1} continue
 						lset line $pos -
 					}
+				} elseif {[llength $rtgdata] > [llength $samplea(rtgposs,$sample)]} {
+					error "error in rtg data\nsample=$sample\nline=$line"
 				} else {
 					set coverage [lindex $rtgdata 3]
 					if {$coverage < 10} {
@@ -314,6 +329,61 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0}} {
 	}
 	file rename -force $compar_file $compar_file.old
 	file rename $compar_file.temp $compar_file
+}
+
+proc cg_multicompar {args} {
+	if {([llength $args] < 1)} {
+		puts stderr "format is: $scriptname $action compar_file ?dir? ..."
+		puts stderr " - adds new sample dir(s) to compar_file"
+		puts stderr " - the sample dir(s) should be one directory below compar_file (for reannot)"
+		puts stderr " - sample names will be the names of the sample dir(s)"
+		puts stderr " - missing annotations must be checked and added afterwards using multicompar_reannot"
+		exit 1
+	}
+	set regonly 0
+	if {[lindex $args 0] eq "-reannot"} {
+		putslog "Also reannot"
+		set reannot 1
+		set args [lrange $args 1 end]
+	} elseif {[lindex $args 0] eq "-reannotregonly"} {
+		putslog "Also reannot"
+		set reannot 1
+		set regonly 1
+		set args [lrange $args 1 end]
+	} else {
+		set reannot 0
+	}
+	foreach {compar_file} $args break
+	set dirs [lrange $args 1 end]
+	foreach dir $dirs {
+		putslog "Adding $dir"
+		multicompar $compar_file $dir
+	}
+	if {$reannot} {
+		putslog "Reannotating $compar_file"
+		multicompar_reannot $compar_file 0 $regonly
+	}
+}
+
+proc cg_multicompar_reannot {args} {
+	if {([llength $args] != 1) && ([llength $args] != 2)} {
+		errorformat multicompar_reannot
+		exit 1
+	}
+	set compar_file [list_shift args]
+	set force 0
+	set regonly 0
+	set skipincomplete 0
+	foreach option $args {
+		switch $option {
+			force {set force 1}
+			regonly {set regonly 1}
+			skipincomplete {set skipincomplete 1}
+			default {error "unrecognized option $option"}
+		}
+	}
+	putslog "Reannotating $compar_file"
+	multicompar_reannot $compar_file $force $regonly $skipincomplete
 }
 
 if 0 {

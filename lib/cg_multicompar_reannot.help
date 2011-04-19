@@ -1,0 +1,19 @@
+== Format ==
+cg multicompar_reannot compar_file ?force? ?regonly? ?skipincomplete?
+
+== Category ==
+Compar
+
+== Summary ==
+Reannotate multicompar file
+
+== Description ==
+Complete coverage and sequenced information in a multicompar file. The sample directories 
+of samples in the multicompar file are expected to be available as sibs or one dir below the
+compar_file.
+
+== Arguments ==
+* compar_file: multicompar file
+* force: if present, all data will be updated, otherwise only unfilled (indicated with a ?) cells will be updated
+* regonly: if the regonly option is used, only region data (sequenced) will be updated
+* skipincomplete: go on even if data for some samples is not complete (skipping those samples)
