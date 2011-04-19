@@ -198,12 +198,23 @@ proc gzroot filename {
 	}
 }
 
-proc gzfile {filename} {
-	if {[catch {glob -nocomplain $filename $filename.rz $filename.bgz $filename.gz} list]} {
-		return $filename
-	} else {
-		return [lindex $list 0]
+proc gzfile {args} {
+	foreach filename $args {
+		if {![catch {glob $filename $filename.rz $filename.bgz $filename.gz} list]} {
+			return [lindex $list 0]
+		}
 	}
+	return [lindex $args 0]
+}
+
+proc gzfiles {args} {
+	set result {}
+	foreach filename $args {
+		if {![catch {glob $filename $filename.rz $filename.bgz $filename.gz} list]} {
+			lappend result {*}$list
+		}
+	}
+	return $result
 }
 
 proc gzcat {filename} {

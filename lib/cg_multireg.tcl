@@ -47,9 +47,9 @@ proc multireg_next2 {f2 poss2} {
 proc multireg {compar_file file} {
 	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2
 
-	set name [file root [file tail $file]]
+	set name [file root [file tail [gzfile $file]]]
 	catch {close $f1}; catch {close $f2}; catch {close $o}
-	set f2 [open $file]
+	set f2 [gzopen $file]
 	set poss2 [open_region $f2 h2]
 	set num 0
 	if {![file exists $compar_file]} {
