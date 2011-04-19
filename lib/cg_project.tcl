@@ -143,14 +143,25 @@ proc cg_project {args} {
 		puts "Already done: [join $done {, }]"
 		if {[llength $names]} {
 			file mkdir compar
+			catch {file delete [gzfile compar/annot${project}_compar.tsv]}
 			if {$direct} {
 				puts "Multicompar: adding [join $names {, }]"
 				exec cg multicompar $reannot compar/${project}_compar.tsv {*}$names >@ stdout 2>@stderr
-				exec cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/annovar >@ stdout 2>@stderr
 			} else {
 				set cjob [submit -host lungo -deps [join $jobs ,] cg multicompar $reannot compar/${project}_compar.tsv {*}$names]
 		 		lappend alljobs $cjob
-				set ajob [submit -host lungo -deps $cjob cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/annovar]
+			}
+		}
+		if {![file exists [gzfile compar/annot${project}_compar.tsv]]} {
+			if {$direct} {
+				puts "Multicompar: annotating compar/${project}_compar.tsv"
+				exec cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/annovar >@ stdout 2>@stderr
+			} else {
+				if {[info exists cjob]} {
+					set ajob [submit -host lungo -deps $cjob cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/annovar]
+				} else {
+					set ajob [submit -host lungo cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/annovar]
+				}
 		 		lappend alljobs $ajob
 			}
 		}
