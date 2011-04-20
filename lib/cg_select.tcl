@@ -375,7 +375,7 @@ proc tsv_select_expandcode {header code awkfunctionsVar} {
 	return $code
 }
 
-proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {out stdout} {hc 0}} {
+proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {out stdout} {hc 0} {inverse 0}} {
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	set header [tsv_open $f keepheader]
@@ -387,6 +387,11 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	set sort ""
 	set cut ""
 	set qfields [tsv_select_expandfields $header $qfields qposs awkfunctions]
+	if {$inverse} {
+		set qfields [list_lremove $header $qfields]
+		set qfields [tsv_select_expandfields $header $qfields qposs awkfunctions]
+	}
+
 	set tsv_funcnum 1
 	if {[llength $sortfields]} {
 		set poss [list_cor $header $sortfields]
@@ -958,7 +963,7 @@ proc cg_select {args} {
 		errorformat select
 		exit 1
 	}
-	set query {}; set fields {}; set sortfields {}; set newheader {}; set hc 0
+	set query {}; set fields {}; set sortfields {}; set newheader {}; set hc 0; set inverse 0
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -967,6 +972,10 @@ proc cg_select {args} {
 				if {[regexp {[^=!><]=[^=]} $query]} {puts stderr "you may have used = instead of == in query"}
 			}
 			-f {set fields $value}
+			-rf {
+				set fields $value
+				set inverse 1
+			}
 			-nh {set newheader $value}
 			-hc {set hc 1}
 			-s {set sortfields $value}
@@ -1006,7 +1015,7 @@ proc cg_select {args} {
 	} else {
 		set o stdout
 	}
-	set error [catch {tsv_select $query $fields $sortfields $newheader $f $o $hc} result]
+	set error [catch {tsv_select $query $fields $sortfields $newheader $f $o $hc $inverse} result]
 	if {$f ne "stdin"} {catch {close $f}}
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$error} {
