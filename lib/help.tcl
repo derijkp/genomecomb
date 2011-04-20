@@ -21,7 +21,7 @@ foreach file $files {
 }
 set categories [array names a]
 set pre {Conversion Annotation Query Regions Structural}
-set categories [list_concat [list_common $pre $categories] [list_remove $categories $pre]]
+set categories [list_concat [list_common $pre $categories] [list_lremove $categories $pre]]
 foreach category $categories {
 	puts " === $category ==="
 	puts [join $a($category) \n]\n
