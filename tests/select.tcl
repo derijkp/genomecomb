@@ -12,6 +12,14 @@ test select {-f} {
 2	c
 100	d}
 
+test select {-rf} {
+	exec cg select -rf "mixed other" data/table.tsv
+} {num	text
+4	a
+10	b
+2	c
+100	d}
+
 test select {-q} {
 	exec cg select -q {$num <= 4} data/table.tsv
 } {num	text	mixed	other
