@@ -161,7 +161,6 @@ proc cg_regcommon {args} {
 	cg regsubtract $region_file1 $tempfile >@ stdout
 }
 
-
 if 0 {
 
 while {![eof $v]} {
