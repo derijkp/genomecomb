@@ -281,7 +281,7 @@ proc cg_annotate {args} {
 	foreach {file resultfile} $args break
 	set dbfiles [lrange $args 2 end]
 	if {[file isdir [lindex $dbfiles 0]]} {
-		set dbfiles [list_concat [glob -nocomplain [lindex $dbfiles 0]/var_*.tsv [lindex $dbfiles 0]/reg_*.tsv] [lrange $dbfiles 1 end]]
+		set dbfiles [lsort -dict [list_concat [glob -nocomplain [lindex $dbfiles 0]/var_*.tsv [lindex $dbfiles 0]/reg_*.tsv] [lrange $dbfiles 1 end]]]
 	}
 	set names {}
 	foreach dbfile $dbfiles {
