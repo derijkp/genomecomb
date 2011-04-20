@@ -523,10 +523,10 @@ proc cg_validatesv_runEPCR {primer1 primer2 prod_size size inv} {
 			set rep_score [expr $rep_score2	+ $rep_score1]
 			if {[info exists PrimerPair]} {
 				if {[lindex $PrimerPair end] > $rep_score } {
-					set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+					set PrimerPair [list $primer1 $cbegin1 $primer2 $cbegin2 $prod_size $rep_score]
 				}
 			} else { 
-				set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+				set PrimerPair [list $primer1 $cbegin1 $primer2 $cbegin2 $prod_size $rep_score]
 			}
 			puts $log "PP: $PrimerPair" ; #TEST
 			return "repeat"
@@ -534,10 +534,10 @@ proc cg_validatesv_runEPCR {primer1 primer2 prod_size size inv} {
 			set rep_score [cg_validatesv_getRepScore $prim_fts1 $len1 $cbegin1]
 			if {[info exists PrimerPair]} {
 				if {[lindex $PrimerPair end] > $rep_score } {
-					set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+					set PrimerPair [list $primer1 $cbegin1 $primer2 $cbegin2 $prod_size $rep_score]
 				}
 			} else { 
-				set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+				set PrimerPair [list $primer1 $cbegin1 $primer2 $cbegin2 $prod_size $rep_score]
 			}
 			puts $log "PP: $PrimerPair" ; #TEST
 			return "repeat"
@@ -545,15 +545,15 @@ proc cg_validatesv_runEPCR {primer1 primer2 prod_size size inv} {
 			set rep_score [cg_validatesv_getRepScore $prim_fts2 $len2 $cbegin2]
 			if {[info exists PrimerPair]} {
 				if {[lindex $PrimerPair end] > $rep_score } {
-					set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+					set PrimerPair [list $primer1 $cbegin1 $primer2 $cbegin2 $prod_size $rep_score]
 				}
 			} else { 
-				set PrimerPair [list $primer1 $primer2 $prod_size $rep_score]
+				set PrimerPair [list $primer1 $cbegin1 $primer2 $cbegin2 $prod_size $rep_score]
 			}
 			puts $log "PP: $PrimerPair" ; #TEST
 			return "repeat"
 		}
-		set PrimerPair [list $primer1 $primer2 $prod_size]	
+		set PrimerPair [list $primer1 $cbegin1 $primer2 $cbegin2 $prod_size]	
 		puts $log "PP_noRepeat: $PrimerPair" ; #TEST
 	}
 
@@ -629,17 +629,20 @@ proc cg_validatesv_getOnePair {chr patchstart breakpointL breakpointR size EVAL 
 		
 	if {[info exists PrimerPair]} {
 		#picking the best primer
-		set primerF [lindex $PrimerPair 0] 
-		set primerR [lindex $PrimerPair 1]
-		set prod_size [lindex $PrimerPair 2]	
+		set primerF [lindex $PrimerPair 0]
+		set beginF [lindex $PrimerPair 1]
+		set primerR [lindex $PrimerPair 2]
+		set beginR [lindex $PrimerPair 3]
+		set prod_size [lindex $PrimerPair 4]
+		set label "inv_${chr}_[string range $patchstart 0 [expr [string length $patchstart] - 7]]"	
 		#making output file of all the 2 primers and there info
-		set prim "prim [lindex $primerF 0] [string length [lindex $primerF 0]] [lindex $primerF 1]	[lindex $primerF 2]
-			[lindex $primerR 0] [string length [lindex $primerR 0]] [lindex $primerR 1] [lindex $primerR 2] $prod_size "
-		if {[llength $PrimerPair] > 3} {set repeat 1 }
+		set primF "${label}_F [lindex $primerF 0] {} {} {} {pg} {1} {Hs} $chr {} {} {} $beginF [lindex $primerF 1]	{}"
+		set primR	"${label}_R [lindex $primerR 0] {} {} {} {pg} {1} {Hs} $chr {} {} {} $beginR [lindex $primerR 1] {} $prod_size "
+		if {[llength $PrimerPair] > 5} {set repeat 1 }
 		if {[info exists repeat] } {
 			puts "WARNING: Primerpair is located in a repeat"
 		}
-		return [list $prim]
+		return [list $primF $primR]
 	}
 	
 	return 1
@@ -702,13 +705,15 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 	}
 	#picking the best primer
 	if {[info exists PrimerPair]} {
-		set primerLF [lindex $PrimerPair 0] 
-		set primerLR [lindex $PrimerPair 1] 
-		set prod_sizeL [lindex $PrimerPair 2]	
+		set primerLF [lindex $PrimerPair 0]
+		set beginLF [lindex $PrimerPair 1]
+		set primerLR [lindex $PrimerPair 2]
+		set beginLR [lindex $PrimerPair 3]
+		set prod_sizeL [lindex $PrimerPair 4]	
 	} else { 
 		return 1	
 	}
-	if {[llength $PrimerPair] > 3} {set repeatL 1} ; #for later determination of location of repeats
+	if {[llength $PrimerPair] > 5} {set repeatL 1} ; #for later determination of location of repeats
 	unset -nocomplain PrimerPair
 	unset -nocomplain PP
 	set primerDict2 [cg_validatesv_runPrimer3 $list_seq2_mask "leftInvSeq_${chr}_${patchstart}" [lindex $primerLF 0] "20"]
@@ -750,15 +755,20 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 	}
 	if {[info exists PrimerPair]} {
 		set primerRF [lindex $PrimerPair 0]
+		set beginRF [lindex $PrimerPair 1]
+		set primerRR [lindex $PrimerPair 2]
+		set beginRR [lindex $PrimerPair 3]
+		set prod_sizeR [lindex $PrimerPair 4]	
+		set label "inv_${chr}_[string range $patchstart 0 [expr [string length $patchstart] - 7]]"
 		#puts $log "primRF_j : $primerRF" ; #TEST
-		set primerRR [lindex $PrimerPair 1]
-		set prod_sizeR [lindex $PrimerPair 2]
 		#making output file of all the 4 primers and there info
-		set primL "primL [lindex $primerLF 0] [string length [lindex $primerLF 0]] [lindex $primerLF 1]	[lindex $primerLF 2]
-			[lindex $primerLR 0] [string length [lindex $primerLR 0]] [lindex $primerLR 1] [lindex $primerLR 2] $prod_sizeL "
-		set primR "primR [lindex $primerRF 0] [string length [lindex $primerRF 0]] [lindex $primerRF 1]	[lindex $primerRF 2]
-			[lindex $primerRR 0] [string length [lindex $primerRR 0]] [lindex $primerRR 1] [lindex $primerRR 2] $prod_sizeR "
-		if {[llength $PrimerPair] > 3} {set repeatR 1 }
+
+		set primLF "${label}_LF [lindex $primerLF 0] {} {} {} {pg} {1} {Hs} $chr {} {} {} $beginLF [lindex $primerLF 1]	{} "
+		set primLR	"${label}_LR [lindex $primerLR 0] {} {} {} {pg} {1} {Hs} $chr {} {} {} $beginLR [lindex $primerLR 1] {} $prod_sizeL "
+		set primRF "${label}_RF [lindex $primerRF 0] {} {} {} {pg} {1} {Hs} $chr {} {} {} $beginRF [lindex $primerRF 1]	{}"
+		set primRR "${label}_RR [lindex $primerRR 0] {} {} {} {pg} {1} {Hs} $chr {} {} {} $beginRR [lindex $primerRR 1] {} $prod_sizeR "
+
+		if {[llength $PrimerPair] > 5} {set repeatR 1 }
 		if {[info exists repeatL] && [info exists repeatR]} {
 			puts "WARNING: Both primerpairs are located in a repeat"
 		} elseif {[info exists repeatL]} {
@@ -766,7 +776,7 @@ proc cg_validatesv_getPrimerPairs {chr patchSize patchstart size breakpointL bre
 		} elseif {[info exists repeatR]} {
 			puts "WARNING: Primerpair around right breakpoint is located in a repeat"
 		}
-		return [list $primL $primR]
+		return [list $primLF $primLR $primRF $primRR]
 	}
 	
 	return 1
@@ -836,7 +846,9 @@ proc cg_validatesv args {
 		puts "Could not open output file - $fileid_out"
 		exit 1
 	}
-	set line_out "chr patchStart patchEnd primer sequenceF sizePrimerF TmF GC-contentF sequenceR sizePrimerR TmR GC-contentR sizeAmplicon"
+	#new_output
+	set line_out "label sequence modification scale purification project pair species chromosome cyto target contig pos temperature mg size_amplicon "
+	#set line_out "chr patchStart patchEnd primer sequenceF sizePrimerF TmF GC-contentF sequenceR sizePrimerR TmR GC-contentR sizeAmplicon"
 	puts $fileid_out [join $line_out \t]
 
 	# Getting the primerpairs for each inversion
@@ -911,7 +923,9 @@ proc cg_validatesv args {
 			puts "Primerpairs for ${chr}_${patchstart} are found!"
 			puts " "
 			foreach primer $primerPairs {
-				set line_out "$chr $patchstart [lindex $line $PATCHEND] $primer"
+				#new output
+				#set line_out "$chr $patchstart [lindex $line $PATCHEND] $primer"
+				set line_out $primer
 				puts $fileid_out [join $line_out \t]
 			}
 			unset -nocomplain againLarge
