@@ -1,5 +1,5 @@
 == Format ==
-cg process_rtgsample sampledir destdir dbdir ?force?
+cg process_rtgsample sampledir destdir ?force?
 
 == Category ==
 Conversion
@@ -14,5 +14,4 @@ the adapted data into destdir. By default, only files that are not present alrea
 == Arguments ==
 * sampledir: data directory as it comes from Complete Genomics
 * destdir: data directory to be created, containing data in the cg format
-* dbdir: database directory with reference sequence, etc.
 * force: When force is given as a parameter, everything will be recalculated and overwritten."

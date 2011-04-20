@@ -24,7 +24,7 @@ proc rtg2annotvar {file {outfile {}}} {
 	if {[llength $keepheader]} {
 		puts $o [join $keepheader \n]
 	}
-	puts $o [join {chromosome begin end type reference alleleSeq1 alleleSeq2 posterior coverage correction numA numC numG numT percA percC percG percT nonidentityposterior reference} \t]
+	puts $o [join {chromosome begin end type reference alleleSeq1 alleleSeq2 posterior coverage correction numA numC numG numT percA percC percG percT nonidentityposterior} \t]
 	set poss [list_cor $header {name chromosome position type reference prediction posterior coverage correction nonidentity-posterior support_statistics}]
 	set line [split $line \t]
 	set num 0
@@ -50,7 +50,11 @@ proc rtg_line {cline poss} {
 	set line [list_sub $cline $poss]
 	set support [lrange $cline [lindex $poss end] end]
 	foreach {name chromosome position type reference prediction posterior coverage correction nonidentityposterior} $line break
-	if {[inlist {e o} $type]} {set type snp}
+	if {[inlist {e o} $type]} {
+		set type snp
+	} elseif {$type ne "="} {
+		return {}
+	}
 	unset -nocomplain stats
 	foreach {b n p} $support {
 		set stats($b,n) $n
@@ -68,31 +72,29 @@ proc rtg_line {cline poss} {
 	foreach base {A C G T} {
 		lappend temp [get stats($base,p) 0.0]
 	}
-	return [list $chromosome $begin $end $type $reference {*}$alleles $posterior $coverage $correction {*}$temp $nonidentityposterior $reference]
+	return [list $chromosome $begin $end $type $reference {*}$alleles $posterior $coverage $correction {*}$temp $nonidentityposterior]
 }
 
-proc process_rtgsample {dir destdir dbdir {force 0}} {
+proc process_rtgsample {dir destdir {force 0}} {
 	set keepdir [pwd]
 	set dir [file normalize $dir]
 	set destdir [file normalize $destdir]
-	set dbdir [file normalize $dbdir]
 	file mkdir $destdir
 	cd $destdir
 	puts stderr "Processing sample $dir"
 	set name [file tail $destdir]
-	set varfile [lindex [glob $dir/*snp*gz] 0]
-	if {![llength $varfile]} {
-		set varfile [lindex [glob $dir/*snp*] 0]
-	}
+	set varfile [gzfile $dir/*snp*.txt]
 	# annotated vars file
 	if {$force || ![file exists annotvar-$name.tsv]} {
 		puts stderr "Create annotated varfile annotvar-$name.tsv from $varfile"
-		if {$force || ![file exists unsorted.tsv]} {
-			rtg2annotvar $varfile unsorted.tsv
+		if {$force || ![file exists uannotvar-$name.tsv]} {
+			rtg2annotvar $varfile uannotvar-$name.tsv.temp
+			file rename uannotvar-$name.tsv.temp uannotvar-$name.tsv
 		}
 		puts stderr "Sorting"
-		cg select -s "chromosome begin end" unsorted.tsv > temp.tsv
-		file rename -force temp.tsv annotvar-$name.tsv
+		cg select -s "chromosome begin end" uannotvar-$name.tsv > annotvar-$name.tsv.temp
+		file delete uannotvar-$name.tsv
+		file rename -force annotvar-$name.tsv.temp annotvar-$name.tsv
 	}
 	# sample specific filters
 	if {$force || ![file exists reg_cluster-$name.tsv]} {
@@ -104,17 +106,6 @@ proc process_rtgsample {dir destdir dbdir {force 0}} {
 		# add filterdata to annotvar
 		set todo {}
 		lappend todo [list cluster cl reg_cluster-$name.tsv]
-		# lappend todo [list trf trf $dbdir/regdb-simple_repeats.tsv]
-		# lappend todo [list str str $dbdir/regdb-microsatelite.tsv]
-		# lappend todo [list segdup sd $dbdir/regdb-segdups.tsv]
-		# lappend todo [list selfchain sc $dbdir/regdb-selfchain.tsv]
-		# lappend todo [list repeat rp $dbdir/regdb-repeatmasker.tsv]
-		# lappend todo [list rna rna $dbdir/regdb-rnagenes.tsv]
-		foreach file [lsort -dictionary [glob -nocomplain $dbdir/checked*.tsv]] {
-			set value [lindex [split [file root [file tail $file]] _] 1]
-			if {$value eq ""} {set value checked}
-			lappend todo [list checked $value $file]
-		}
 		annot_annotvar annotvar-$name.tsv fannotvar-$name.tsv $todo
 	}
 	puts stderr "Make allposs files"
@@ -151,7 +142,7 @@ proc process_rtgsample {dir destdir dbdir {force 0}} {
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {
 		puts stderr "Make region file sreg-$name.tsv"
-		set files [lsort -dict [glob allpos/chr*snps.txt*]]
+		set files [lsort -dict [glob allpos/chr*snps.txt allpos/chr*snps.txt.gz]]
 		file delete sreg-$name.tsv.temp
 		set f [open sreg-$name.tsv.temp w]
 		puts $f "chromosome\tbegin\tend"
@@ -173,7 +164,7 @@ proc process_rtgsample {dir destdir dbdir {force 0}} {
 }
 
 proc cg_process_rtgsample {args} {
-	if {([llength $args] < 3) || ([llength $args] > 4)} {
+	if {([llength $args] < 2) || ([llength $args] > 3)} {
 		errorformat process_rtgsample
 		exit 1
 	}
@@ -195,14 +186,15 @@ proc annot_rtg_get {dir chr begin} {
 			tsv_index_close $chrfile position
 		}
 		set chrfile [gzfile $dir/allpos/chr${chr}_snps.txt]
-		if {[llength $chrfile]} {
+		if {[file exists $chrfile]} {
 			tsv_index_open $chrfile position 1
 			set present 1
+			set header [tsv_index_header $chrfile]
+			set poss [list_cor $header {name chromosome position type reference prediction posterior coverage correction nonidentity-posterior support_statistics}]
 		} else {
 			set present 0
+			set poss {}
 		}
-		set header [tsv_index_header $chrfile]
-		set poss [list_cor $header {name chromosome position type reference prediction posterior coverage correction nonidentity-posterior support_statistics}]
 		set annot(cov,$dir) [list $chr $chrfile $present $poss]
 	}
 	if {!$present} {return {? ? ? ? ? ? ? ? ? ? ? ? ? ?}}
@@ -248,11 +240,13 @@ if 0 {
 }
 
 proc rtgregions {cgdir comparfile rtgdir} {
+	set cgdir [file normalize $cgdir]
+	set rtgdir [file normalize $rtgdir]
 	set cgsample [file tail $cgdir]
 	set rtgsample [file tail $rtgdir]
 	if {![file exists $cgdir/reg_rtgnotsame-$cgsample.tsv]} {
 		puts stderr "$cgdir/reg_rtgnotsame-$cgsample.tsv"
-		cg select -f {chromosome begin end} -q "!\$same($cgsample,$rtgsample)" $comparfile $cgdir/temp.tsv
+		cg select -f {chromosome begin end} -q "!same($cgsample,$rtgsample)" $comparfile $cgdir/temp.tsv
 		file rename -force $cgdir/temp.tsv $cgdir/reg_rtgnotsame-$cgsample.tsv
 	}
 	if {![file exists $cgdir/reg_posrtg-$cgsample.tsv]} {
