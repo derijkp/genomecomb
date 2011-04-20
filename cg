@@ -256,37 +256,6 @@ switch $action {
 		}
 		clusters
 	}
-	regsubtract {
-		if {[llength $argv] != 2} {
-			puts stderr "format is: $scriptname $action region_file1 region_file2"
-			puts stderr " - outputs regions region_file1 from which the regions in region_file2 are removed"
-			exit 1
-		}
-		foreach {region_file1 region_file2} $argv break
-		regsubtract $region_file1 $region_file2
-	}
-	regjoin {
-		if {([llength $argv] != 1) && ([llength $argv] != 2)} {
-			puts stderr "format is: $scriptname $action region_file1 ?region_file2?"
-			puts stderr "outputs joined regions from region_file1 and (optionally) region_file2."
-			puts stderr "Both files must be sorted."
-			exit 1
-		}
-		foreach {region_file1 region_file2} $argv break
-		regjoin $region_file1 $region_file2
-	}
-	regcommon {
-		if {([llength $argv] != 1) && ([llength $argv] != 2)} {
-			puts stderr "format is: $scriptname $action region_file1 region_file2"
-			puts stderr "outputs lists regions common between region_file1 and region_file2."
-			puts stderr "Both files must be sorted and regjoined."
-			exit 1
-		}
-		foreach {region_file1 region_file2} $argv break
-		set tempfile [tempfile]
-		cg regsubtract $region_file1 $region_file2 > $tempfile
-		cg regsubtract $region_file1 $tempfile >@ stdout
-	}
 	reghisto {
 		if {[llength $argv] != 1} {
 			puts stderr "format is: $scriptname $action region_file"

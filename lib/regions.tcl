@@ -132,6 +132,36 @@ proc regjoin {regfile1 regfile2} {
 	exec reg_join $regfile1 {*}$poss1 $regfile2 {*}$poss2 >@ stdout 2>@ stderr
 }
 
+proc cg_regsubtract {args} {
+	if {[llength $args] != 2} {
+		errorformat regsubtract
+		exit 1
+	}
+	foreach {region_file1 region_file2} $args break
+	regsubtract $region_file1 $region_file2
+}
+
+proc cg_regjoin {args} {
+	if {([llength $args] != 1) && ([llength $args] != 2)} {
+		errorformat regjoin
+		exit 1
+	}
+	foreach {region_file1 region_file2} $args break
+	regjoin $region_file1 $region_file2
+}
+
+proc cg_regcommon {args} {
+	if {([llength $args] != 1) && ([llength $args] != 2)} {
+		errorformat regcommon
+		exit 1
+	}
+	foreach {region_file1 region_file2} $args break
+	set tempfile [tempfile]
+	cg regsubtract $region_file1 $region_file2 > $tempfile
+	cg regsubtract $region_file1 $tempfile >@ stdout
+}
+
+
 if 0 {
 
 while {![eof $v]} {

@@ -1,0 +1,18 @@
+== Format ==
+cg regsubtract region_file1 region_file2
+
+== Category ==
+Regions
+
+== Summary ==
+subtract regions in region_file2 from region_file1
+
+== Description ==
+Regions files are tab separated files that contain regions using the columns 
+chromosome, begin, end. Regions must be sorted.
+A new region files containing only regions present in region_file1 and not
+in region_file2 will be written to stdout.
+
+== Arguments ==
+* region_file1: original regions file
+* region_file2: regions file to subtracted
