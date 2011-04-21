@@ -246,29 +246,29 @@ proc rtgregions {cgdir comparfile rtgdir} {
 	set rtgsample [file tail $rtgdir]
 	if {![file exists $cgdir/reg_rtgnotsame-$cgsample.tsv]} {
 		puts stderr "$cgdir/reg_rtgnotsame-$cgsample.tsv"
-		cg select -f {chromosome begin end} -q "!same($cgsample,$rtgsample)" $comparfile $cgdir/temp.tsv
-		file rename -force $cgdir/temp.tsv $cgdir/reg_rtgnotsame-$cgsample.tsv
+		cg select -f {chromosome begin end} -q "!same($cgsample,$rtgsample)" $comparfile $cgdir/reg_rtgnotsame-$cgsample.tsv.temp
+		file rename -force $cgdir/reg_rtgnotsame-$cgsample.tsv.temp $cgdir/reg_rtgnotsame-$cgsample.tsv
 	}
 	if {![file exists $cgdir/reg_posrtg-$cgsample.tsv]} {
 		puts stderr "$cgdir/reg_posrtg-$cgsample.tsv"
-		cg regsubtract $rtgdir/sreg-$rtgsample.tsv $cgdir/reg_rtgnotsame-$cgsample.tsv > $cgdir/temp.tsv
-		file rename -force $cgdir/temp.tsv $cgdir/reg_posrtg-$cgsample.tsv
+		cg regsubtract $rtgdir/sreg-$rtgsample.tsv $cgdir/reg_rtgnotsame-$cgsample.tsv > $cgdir/reg_posrtg-$cgsample.tsv.temp
+		file rename -force $cgdir/reg_posrtg-$cgsample.tsv.temp $cgdir/reg_posrtg-$cgsample.tsv
 	}
 	# make filter for cg by removing good poss in rtg
 	if {![file exists $cgdir/reg_rtg-$cgsample.tsv]} {
 		puts stderr "$cgdir/reg_rtg-$cgsample.tsv"
-		cg regsubtract $cgdir/sreg-$cgsample.tsv $cgdir/reg_posrtg-$cgsample.tsv > $cgdir/temp.tsv
-		file rename -force $cgdir/temp.tsv $cgdir/reg_rtg-$cgsample.tsv
+		cg regsubtract $cgdir/sreg-$cgsample.tsv $cgdir/reg_posrtg-$cgsample.tsv > $cgdir/reg_rtg-$cgsample.tsv.temp
+		file rename -force $cgdir/reg_rtg-$cgsample.tsv.temp $cgdir/reg_rtg-$cgsample.tsv
 	}
 	# how much remains after filter
 	if {![file exists $cgdir/filteredrtg-$cgsample.tsv]} {
 		puts stderr "$cgdir/filteredrtg-$cgsample.tsv"
-		cg regsubtract $cgdir/sreg-$cgsample.tsv $cgdir/reg_rtg-$cgsample.tsv > $cgdir/temp.tsv
-		file rename -force $cgdir/temp.tsv $cgdir/filteredrtg-$cgsample.tsv
+		cg regsubtract $cgdir/sreg-$cgsample.tsv $cgdir/reg_rtg-$cgsample.tsv > $cgdir/filteredrtg-$cgsample.tsv.temp
+		file rename -force $cgdir/filteredrtg-$cgsample.tsv.temp $cgdir/filteredrtg-$cgsample.tsv
 	}
 	if {![file exists $cgdir/filteredrtg-$cgsample.covered]} {
 		puts stderr "$cgdir/filteredrtg-$cgsample.covered"
-		cg covered $cgdir/filteredrtg-$cgsample.tsv > $cgdir/temp.tsv
-		file rename $cgdir/temp.tsv $cgdir/filteredrtg-$cgsample.covered
+		cg covered $cgdir/filteredrtg-$cgsample.tsv > $cgdir/filteredrtg-$cgsample.covered.temp
+		file rename $cgdir/filteredrtg-$cgsample.covered.temp $cgdir/filteredrtg-$cgsample.covered
 	}
 }
