@@ -81,8 +81,16 @@ proc cg_multireg {args} {
 		exit 1
 	}
 	foreach {compar_file} $args break
+	set f [gzopen $compar_file]
+	set header [tsv_open $f]
+	close $f
 	set files [lrange $args 1 end]
 	foreach file $files {
+		set name [file root [file tail [gzfile $file]]]
+		if {[inlist $header $name]} {
+			putslog "*** Skipping $file: $name already in $compar_file ***"
+			continue
+		}
 		putslog "Adding $file to $compar_file"
 		multireg $compar_file $file
 	}
