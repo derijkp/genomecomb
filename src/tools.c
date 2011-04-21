@@ -111,12 +111,9 @@ int DStringGetLine(DString *linePtr,	FILE *f1) {
 	char *cur = linePtr->string;
 	int c;
 	ssize_t size = 0;
-	while (!feof(f1)) {
+	while (1) {
 		c = getc(f1);
-		if (c == EOF) {
-			if (size == 0) {return -1;}
-			break;
-		}
+		if ((c == EOF)&&(size == 0)) {return -1;}
 		if  (c == '\n') break;
 		if (linePtr->memsize <= size) {
 			linePtr->size = size;

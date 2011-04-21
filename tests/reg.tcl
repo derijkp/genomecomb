@@ -69,6 +69,13 @@ M-10
 X-100
 Y-1000} error
 
+test regsubtract {bugfix: hang on file2 longer} {
+	exec cg regsubtract data/reg1b.tsv data/reg4.tsv
+} {chromosome	begin	end
+1	10	15
+1	55	60
+1-10} error
+
 test covered {basic} {
 	exec cg covered data/reg1.tsv
 } {chromosome	bases
