@@ -234,12 +234,16 @@ proc overlap {start1 end1 start2 end2} {
 	expr {$end1-$start1}
 }
 
+proc timestamp {} {
+	clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"
+}
+
 proc putslog {args} {
 }
 
 proc putslog {args} {
 	foreach message $args {
-		puts stderr $message
+		puts stderr "[timestamp] $message"
 	}
 }
 
