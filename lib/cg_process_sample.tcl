@@ -62,7 +62,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	file mkdir coverage
 	foreach {chr} $chromosomes  {
 		set resultfile coverage/coverageRefScore-$chr-$name.tsv
-		if {$force || ([gzfile $resultfile] eq "")} {
+		if {$force || (![file exists [gzfile $resultfile]])} {
 			set oricov [lindex [glob -nocomplain \
 				$dir/ASM/REF/coverageRefScore-$chr-*-ASM*.tsv \
 				$dir/ASM/REF/coverageRefScore-chr$chr-*-ASM*.tsv \
@@ -221,105 +221,39 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	}
 	if {$force || ![file exists [gzfile reg_below20-$name.tsv]]} {
 		puts stderr "Make region file reg_below20-$name.tsv"
-		file delete -force temp.tsv
-		set f [open reg_below20-$name.tsv.temp w]
-		puts $f "chromosome\tbegin\tend"
-		close $f
-		foreach {chr} $chromosomes  {
-			set file [gzfile coverage/coverageRefScore-$chr-$name.tsv]
-			if {($file eq "" ) && ($chr eq "Y")} continue
-			puts stderr "Processing $file"
-			set f [gzopen $file]
-			set header [tsv_open $f]
-			catch {close $f}
-			set poscol [lsearch $header offset]
-			set coveragecol [lsearch $header coverage]
-			if {$coveragecol == -1} {
-				set coveragecol [lsearch $header uniqueSequenceCoverage]
-			}
-			if {$coveragecol == -1} {
-				error "no coverage column found in $file"
-			}
-			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
-			set error [catch {
-				exec $cat $file | getregions $chr $poscol $coveragecol 20 0 0 >> reg_below20-$name.tsv.temp
-			} errmessage]
-			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
-				error $errmessage
-			}
+		set files [gzfiles coverage/coverageRefScore-*.tsv]
+		if {[llength $files] < 24} {
+			putslog "WARNING: only [llength $files] coverage files found"
 		}
-		file rename -force reg_below20-$name.tsv.temp reg_below20-$name.tsv
+		file delete reg_below20-$name.tsv.temp
+		cg regextract -above 0 20 {*}$files > reg_below20-$name.tsv.temp
+		file rename reg_below20-$name.tsv.temp reg_below20-$name.tsv
 	}
 	if {$force || ![file exists reg_below20-$name.covered]} {
 		puts stderr "Make reg_below20-$name.covered"
-		cg covered reg_below20-$name.tsv > reg_below20-$name.covered.temp
-		file rename reg_below20-$name.covered.temp reg_below20-$name.covered
+		cg covered [gzfile reg_below20-$name.tsv] > reg_below20-$name.covered.temp
+		file rename -force reg_below20-$name.covered.temp reg_below20-$name.covered
 	}
-#	if {$force || ![file exists [gzfile reg_below10-$name.tsv]]} {
-#		puts stderr "Make region file reg_below10-$name.tsv"
-#		file delete reg_below10-$name.tsv.temp
-#		set f [open reg_below10-$name.tsv.temp w]
-#		puts $f "chromosome\tbegin\tend"
-#		close $f
-#		foreach {chr} $chromosomes  {
-#			set file [gzfile coverage/coverageRefScore-$chr-$name.tsv]
-#			if {($file eq "" ) && ($chr eq "Y")} continue
-#			puts stderr "Processing $file"
-#			set f [gzopen $file]
-#			while {![eof $f]} {
-#				set header [gets $f]
-#				if {[string index $header 0] ne "#"} break
-#			}
-#			catch {close $f}
-#			set poscol [lsearch $header offset]
-#			set coveragecol [lsearch $header coverage]
-#			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
-#			set error [catch {
-#				exec $cat $file | getregions $chr $poscol $coveragecol 10 0 0 >> reg_below10-$name.tsv.temp
-#			} errmessage]
-#			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
-#				error $errmessage
-#			}
-#		}
-#		file rename -force reg_below10-$name.tsv.temp reg_below10-$name.tsv
-#	}
-#	if {$force || ![file exists reg_below10-$name.covered]} {
-#		puts stderr "Make reg_below10-$name.covered"
-#		cg covered reg_below10-$name.tsv > reg_below10-$name.covered.temp
-#		file rename reg_below10-$name.covered.temp reg_below10-$name.covered
-#	}
+	if {$force || ![file exists reg_below20-$name.tsv.gz] || [file exists reg_below20-$name.tsv]} {
+		exec bgzip reg_below20-$name.tsv
+	}
 	if {$force || ![file exists [gzfile reg_above100-$name.tsv]]} {
 		puts stderr "Make region file reg_above100-$name.tsv"
-		file delete reg_above100-$name.tsv.temp
-		set f [open reg_above100-$name.tsv.temp w]
-		puts $f "chromosome\tbegin\tend"
-		close $f
-		foreach {chr} $chromosomes  {
-			set file [gzfile coverage/coverageRefScore-$chr-$name.tsv]
-			if {($file eq "" ) && ($chr eq "Y")} continue
-			puts stderr "Processing $file"
-			set f [gzopen $file]
-			while {![eof $f]} {
-				set header [gets $f]
-				if {[string index $header 0] ne "#"} break
-			}
-			catch {close $f}
-			set poscol [lsearch $header offset]
-			set coveragecol [lsearch $header coverage]
-			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
-			set error [catch {
-				exec $cat $file | getregions $chr $poscol $coveragecol 100 1 0 >> reg_above100-$name.tsv.temp
-			} errmessage]
-			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
-				error $errmessage
-			}
+		set files [gzfiles coverage/coverageRefScore-*.tsv]
+		if {[llength $files] < 24} {
+			putslog "WARNING: only [llength $files] coverage files found"
 		}
+		file delete reg_above100-$name.tsv.temp
+		cg regextract -above 1 100 {*}$files > reg_above100-$name.tsv.temp
 		file rename -force reg_above100-$name.tsv.temp reg_above100-$name.tsv
 	}
 	if {$force || ![file exists reg_above100-$name.covered]} {
 		puts stderr "Make reg_above100-$name.covered"
-		cg covered reg_above100-$name.tsv > reg_above100-$name.covered.temp
+		cg covered [gzfile reg_above100-$name.tsv] > reg_above100-$name.covered.temp
 		file rename reg_above100-$name.covered.temp reg_above100-$name.covered
+	}
+	if {$force || ![file exists reg_above100-$name.tsv.gz] || [file exists reg_above100-$name.tsv]} {
+		exec bgzip reg_above100-$name.tsv
 	}
 	file_write FINISHED ""
 	puts stderr "Finished $destdir"
