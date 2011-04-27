@@ -14,10 +14,14 @@ cg select -q '$symbol != ""' /complgen/projects/test/annottest_compar.tsv | cg g
 proc cg_groupby {args} {
 	set pos 0
 	set sumfields {}
+	set sorted 1
 	foreach {key value} $args {
 		switch -- $key {
 			-sumfields {
 				set sumfields $value
+			}
+			-sorted {
+				set sorted $value
 			}
 			-- break
 			default {
@@ -51,7 +55,45 @@ proc cg_groupby {args} {
 	set listfields [list_sub $header -exclude [list_concat $poss $sumposs]]
 	set listposs [list_cor $header $listfields]
 	puts $o [join [list_concat $fields $sumfields $listfields] \t]
-	chanexec $f $o [list groupby $poss $listposs $sumposs]
+	if {$sorted} {
+		chanexec $f $o [list groupby $poss $listposs $sumposs]
+	} else {
+		groupby_unsorted $f $o $poss $listposs $sumposs
+	}
+}
+
+proc groupby_unsorted {f o poss listposs sumposs} {
+	set next 1000000; set num 0
+	unset -nocomplain a
+	set start [list_concat [list_fill [llength $sumposs] 0] [list_fill [llength $listposs] {}]]
+	set prevsumposs [list_fill [llength $sumposs] 0 1]
+	set prevlistposs [list_fill [llength $listposs] [llength $sumposs] 1]
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		incr num
+		if {$num >= $next} {putslog $num; incr next 1000000}
+		set cur [list_sub $line $poss]
+		if {[info exists a($cur)]} {
+			set prev $a($cur)
+		} else {
+			set prev $start
+		}
+		set result {}
+		foreach p [list_sub $prev $prevsumposs] n [list_sub $line $sumposs] {
+			lappend result [expr {$p+$n}]
+		}
+		foreach p [list_sub $prev $prevlistposs] n [list_sub $line $listposs] {
+			if {$p eq ""} {set p $n} else {append p ,$n}
+			lappend result $p
+		}
+		set a($cur) $result
+	}
+	foreach cur [lsort -dict [array names a]] {
+		puts $o [join $cur \t]\t[join $a($cur) \t]
+	}
+	close $f
+	close $o
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {

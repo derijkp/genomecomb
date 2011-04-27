@@ -12,7 +12,9 @@ Groups lines in a tab separated file, where the value in in the given fields are
 By default, entries in data fields (= other than the ones on which the groups are made) are 
 concatenated using commas.
 Only subsequent lines with the same values in fields are grouped! Sort first if you 
-are not sure that they are.
+are not sure that they are. If the expected result is not too large to fit in memory, you 
+can use the  "-sorted 0" option to avoid sorting first: it wil group same values 
+regardless of the order, keeping the results in memory and writing them when finished.
 
 == Arguments ==
 * fields: list of fields which should be the same for lines to be groups
@@ -22,3 +24,5 @@ are not sure that they are.
 == Options ==
 * -sumfields: make the sum of all values in the given fields in stead of concatenating 
   them using commas. The values in the given fields should be numbers
+* -sorted: if 0, same values do not have to be consequitive, but potentially large amounts 
+  of memory may be needed (default is 1)

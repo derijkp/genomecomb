@@ -140,6 +140,27 @@ vx	2	u	u
 v	12	u,v,v	v,u,v
 u	4000000013	v,v,xx	u,v,xx}
 
+test groupby {groupby -sorted 0} {
+	exec cg groupby -sorted 0 s1 < data/table2.tsv
+} {s1	pos	s2	s3
+u	1,6,7,4000000000	u,v,v,xx	u,u,v,xx
+v	3,4,5	u,v,v	v,u,v
+vx	2	u	u}
+
+test groupby {groupby -sorted 0 -sumfields} {
+	exec cg groupby -sorted 0 -sumfields pos s2 < data/table2.tsv
+} {s2	pos	s1	s3
+u	6	u,vx,v	u,u,v
+v	22	v,v,u,u	u,v,u,v
+xx	4000000000	u	xx}
+
+test groupby {groupby -sorted 0 -sumfields} {
+	exec cg groupby -sorted 0 -sumfields pos s1 < data/table2.tsv
+} {s1	pos	s2	s3
+u	4000000014	u,v,v,xx	u,u,v,xx
+v	12	u,v,v	v,u,v
+vx	2	u	u}
+
 test select {sm} {
 	split [exec cg select -f {chromosome begin} -q {sm(sample1,sample2)} < data/vars1.sft] \n
 } {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr2	4000} {chr2	4001} {chr2	4099} {chr2	5010}}
