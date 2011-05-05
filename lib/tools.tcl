@@ -191,7 +191,7 @@ proc gzopen {file {pos -1}} {
 }
 
 proc gzroot filename {
-	if {[inlist {.rz .gz} [file extension $filename]]} {
+	if {[inlist {.rz .gz .bgz} [file extension $filename]]} {
 		return [file root $filename]
 	} else {
 		return $filename

@@ -86,7 +86,7 @@ proc cnvseq {ref test outdir} {
 proc cnvmedian {} {
 
 # raw sata
-	set outfile [file_rootgz $filename].cov
+	set outfile [gzroot $filename].cov
 	set f [open "| zless $filename"]
 	set o [open $outfile w]
 	puts $o "pos\tcoverage"
@@ -111,7 +111,7 @@ cd /complgen
 cd /media/passport/complgen
 set filename GS00102/coverageRefScore-20-GS000000078-ASM.tsv.gz
 set filename GS00103/coverageRefScore-20-GS000000079-ASM.tsv.gz
-set outfile [file_rootgz $filename].med
+set outfile [gzroot $filename].med
 set windowsize 5000
 catch {close $o}
 catch {close $f}
