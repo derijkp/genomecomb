@@ -1,5 +1,13 @@
 # region databases (ucsc)
 cd /complgen/refseq/hg18
+
+# download genome
+cg downloadgenome hg18 genome_hg18.ifas
+cg make_genomecindex genome_hg18.ifas
+mkdir extra
+mv reg_genome_hg18.tsv extra/reg_hg18_fullgenome.tsv
+
+
 cg downloaddb /complgen/refseq/hg18 hg18 simpleRepeat microsat rmsk genomicSuperDups chainSelf
 cg downloaddb /complgen/refseq/hg18 hg18 omimGene phastConsElements44way oreganno rnaGene tRNAs tfbsConsSites targetScanS evofold
 cg downloaddb /complgen/refseq/hg18 hg18 cytoBand dgv gwasCatalog kgXref phastConsElements28wayPlacMammal phastConsElements28way wgRna refLink vistaEnhancers gad
@@ -32,6 +40,13 @@ cg downloaddb /complgen/refseq/hg18 hg18 refGene ensGene knownGene genscan
 mv ucsc_hg18_refGene.tsv gene_hg18_refGene.tsv
 mv ucsc_hg18_ensGene.tsv gene_hg18_ensGene.tsv
 mv ucsc_hg18_knownGene.tsv gene_hg18_knownGene.tsv
+
+# homopolymer
+cd /complgen/refseq/hg18
+cg extracthomopolymers genome_hg18.ifas > reg_hg18_homopolymer.tsv.temp
+mv reg_hg18_homopolymer.tsv.temp reg_hg18_homopolymer.tsv
+
+
 
 ## annovar
 ## -------

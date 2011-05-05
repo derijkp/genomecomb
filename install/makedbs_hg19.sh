@@ -2,9 +2,16 @@ export dest=/complgen/refseq/hg19
 # download hg19
 # =============
 #
-# region databases (ucsc)
 mkdir $dest
 cd $dest
+
+# download genome
+cg downloadgenome hg19 genome_hg19.ifas
+cg make_genomecindex genome_hg19.ifas
+mkdir extra
+mv reg_genome_hg19.tsv extra/reg_hg19_fullgenome.tsv
+
+# region databases (ucsc)
 cg downloaddb $dest hg19 simpleRepeat microsat rmsk genomicSuperDups chainSelf
 cg downloaddb $dest hg19 omimGene oreganno tRNAs targetScanS evofold
 # cg downloaddb phastConsElements44way rnaGene tfbsConsSites kgXref phastConsElements28wayPlacMammal refLink phastConsElements28way
@@ -39,3 +46,8 @@ cg downloaddb $dest hg19 refGene ensGene knownGene genscan
 mv ucsc_hg19_refGene.tsv gene_hg19_refGene.tsv
 mv ucsc_hg19_ensGene.tsv gene_hg19_ensGene.tsv
 mv ucsc_hg19_knownGene.tsv gene_hg19_knownGene.tsv
+
+# homopolymer
+cd /complgen/refseq/hg19
+cg extracthomopolymers genome_hg19.ifas > reg_hg19_homopolymer.tsv.temp
+mv reg_hg19_homopolymer.tsv.temp reg_hg19_homopolymer.tsv
