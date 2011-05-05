@@ -155,12 +155,12 @@ proc cg_project {args} {
 		if {![file exists [gzfile compar/annot${project}_compar.tsv]]} {
 			if {$direct} {
 				puts "Multicompar: annotating compar/${project}_compar.tsv"
-				exec cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/annovar >@ stdout 2>@stderr
+				exec cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/$build/annovar >@ stdout 2>@stderr
 			} else {
 				if {[info exists cjob]} {
-					set ajob [submit -host lungo -deps $cjob cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/annovar]
+					set ajob [submit -host lungo -deps $cjob cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/$build/annovar]
 				} else {
-					set ajob [submit -host lungo cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/annovar]
+					set ajob [submit -host lungo cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/$build/annovar]
 				}
 		 		lappend alljobs $ajob
 			}
@@ -196,6 +196,8 @@ proc cg_project {args} {
 
 	# sv (our algorithm)
 	# ==================
+	if {[inlist $actions cgsv]} {
+	}
 	if {[inlist $actions sv]} {
 		cd $resultdir
 		set svjobs {}

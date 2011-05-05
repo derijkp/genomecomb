@@ -30,7 +30,7 @@ if 0 {
 
 
 
-proc annovar {file resultfile path} {
+proc annovar {file resultfile path {build hg18}} {
 
 	########################################
 	#
@@ -59,21 +59,22 @@ proc annovar {file resultfile path} {
 	}
 	set type [lsearch $header type]
 	set in [gets $fileid]
-	set allel_place [lsearch -all $header "alleleSeq*"]
-	set allel_count [llength $allel_place]
+	set allel_place [lsearch -all $header "alt"]
 	set next 1000000; set num 0
 	while {![eof $fileid]} {
 		incr num; if {$num >= $next} {puts $num; incr next 1000000}
 		set in [gets $fileid]
 		set line [split $in "\t"]
-		set alleles [list_sub $line $allel_place]
-		set use_allels [list_remove [list_remdup $alleles] - ?]
+		set use_allels [split [lindex $line $allel_place] ,]
 		set refallele [lindex $line $refpos]
 		foreach allele $use_allels {
 			if {$refallele ne $allele} {
 				if {$refallele eq ""} {set refallele -}
 				if {$allele eq ""} {set allele -}
-				puts $fileid_out [lindex $line $chrom]\t[lindex $line $begin]\t[lindex $line $end]\t$refallele\t$allele\t[lindex $line $type]
+				set b [lindex $line $begin]
+				set e [lindex $line $end]
+				if {$e == $b} {incr e}
+				puts $fileid_out [lindex $line $chrom]\t$b\t$e\t$refallele\t$allele\t[lindex $line $type]
 			} else {
 				#discard allele
 			}
@@ -87,12 +88,13 @@ proc annovar {file resultfile path} {
 	# Run Annovar
 	#
 	###########################################
-	foreach db {refGene knownGene ensGene} {
+	set dbs {refGene knownGene ensGene}
+	foreach db $dbs {
 
 		# annovar lopen
 		puts "Running annovar for $db database ....."
 		puts "this may take a while......"
-		catch {exec $path/annotate_variation.pl -geneanno -zerostart -dbtype $db $temp $path/humandb} errmsg
+		catch {exec $path/annotate_variation.pl --buildver $build -geneanno -zerostart -dbtype $db $temp $path/humandb} errmsg
 		if {[regexp Error $errmsg] || ![file exists $temp.variant_function]} {
 			error $errmsg
 		}
@@ -137,7 +139,11 @@ proc annovar {file resultfile path} {
 					if {[expr {$l%1000000}]==0} {	
 						puts "reading line $l"
 					}
-					if {[lindex $line1 $chromA] == [lindex $line_old $chrom] && [lindex $line1 $beginA] == [lindex $line_old $begin] && [lindex $line1 $endA] == [lindex $line_old $end] && [lindex $line1 $commentA] == [lindex $line_old $type]} {
+					set begin_old [lindex $line_old $begin]
+					set end_old [lindex $line_old $end]
+					set type_old [lindex $line_old $type]
+					if {$type_old eq "ins"} {incr end_old}
+					if {[lindex $line1 $chromA] == [lindex $line_old $chrom] && [lindex $line1 $beginA] == $begin_old && [lindex $line1 $endA] == $end_old && [lindex $line1 $commentA] == $type_old} {
 						set ntype [string map {" " "_"} [lindex $line1 $typeA]]
 						set nname [string map {" " "_"} [lindex $line1 $nameA]]
 						set newtype "$ntype"
@@ -175,7 +181,11 @@ proc annovar {file resultfile path} {
 					if {[expr {$l%1000000}]==0} {	
 						puts "reading line $l"
 					}
-					if {[lindex $line1 $chromA] == [lindex $line_old $chrom] && [lindex $line1 $beginA] == [lindex $line_old $begin] && [lindex $line1 $endA] == [lindex $line_old $end] && [lindex $line1 $commentA] == [lindex $line_old $type]} {
+					set begin_old [lindex $line_old $begin]
+					set end_old [lindex $line_old $end]
+					set type_old [lindex $line_old $type]
+					if {$type_old eq "ins"} {incr end_old}
+					if {[lindex $line1 $chromA] == [lindex $line_old $chrom] && [lindex $line1 $beginA] == $begin_old && [lindex $line1 $endA] == $end_old && [lindex $line1 $commentA] == $type_old} {
 						set ntype [string map {" " "_"} [lindex $line1 $typeA]]
 						set nname [string map {" " "_"} [lindex $line1 $nameA]]
 						set newtype "[lindex $line1 $nucA]:$ntype"
@@ -237,7 +247,7 @@ proc annovar {file resultfile path} {
 #	# annovar lopen
 #	puts "Running annovar for avsift database ....."
 #	puts "this may take a while......"
-#	catch {exec $path/annotate_variation.pl -filter -sift_threshold 0 -zerostart -dbtype avsift $temp $path/humandb} errmsg
+#	catch {exec $path/annotate_variation.pl --buildver $build -filter -sift_threshold 0 -zerostart -dbtype avsift $temp $path/humandb} errmsg
 #	if {![file exists $temp.hg18_avsift_dropped]} {
 #		puts "error getting sift data: $errmsg"
 #	}
