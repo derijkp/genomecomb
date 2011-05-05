@@ -81,9 +81,13 @@ proc cg_multireg {args} {
 		exit 1
 	}
 	foreach {compar_file} $args break
-	set f [gzopen $compar_file]
-	set header [tsv_open $f]
-	close $f
+	if {[file exists $compar_file]} {
+		set f [gzopen $compar_file]
+		set header [tsv_open $f]
+		close $f
+	} else {
+		set header {chromosome begin end}
+	}
 	set files [lrange $args 1 end]
 	foreach file $files {
 		set name [file root [file tail [gzfile $file]]]
