@@ -20,8 +20,13 @@ proc map2besthits {file outfile} {
 	close $f
 }
 
-proc cg2cnv {dir outdir} {
-	cd  $dir
+proc cg_cg2cnv {args} {
+	if {[llength $argv] != 2} {
+		puts stderr "format is: $scriptname $action dir outdir"
+		exit 1
+	}
+	foreach {dir outdir} $args break
+	cd $dir
 	file mkdir $outdir
 	set files [glob */mapping.tsv.gz]
 	set base [file tail [file root $dir]]_hits
@@ -32,7 +37,12 @@ proc cg2cnv {dir outdir} {
 	exec touch $outdir/FINISHED
 }
 
-proc cnvseq {ref test outdir} {
+proc cg_cnv-seq {args} {
+	if {[llength $argv] != 3} {
+		puts stderr "format is: $scriptname $action refdir testdir outdir"
+		exit 1
+	}
+	foreach {ref test outdir} $args break
 	set ref [file normalize $ref]
 	set test [file normalize $test]
 	file mkdir $outdir

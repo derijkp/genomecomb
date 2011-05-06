@@ -170,22 +170,6 @@ switch $action {
 		}
 		mpvt_summary {*}$argv
 	}
-	cg2cnv {
-		if {[llength $argv] != 2} {
-			puts stderr "format is: $scriptname $action dir outdir"
-			exit 1
-		}
-		foreach {dir outdir} $argv break
-		cg2cnv $dir $outdir
-	}
-	cnv-seq {
-		if {[llength $argv] != 3} {
-			puts stderr "format is: $scriptname $action refdir testdir outdir"
-			exit 1
-		}
-		foreach {ref test outdir} $argv break
-		cnvseq $ref $test $outdir
-	}
 	map2sv {
 		if {[llength $argv] < 2} {
 			puts stderr "format is: $scriptname $action file ... out_prefix"
