@@ -166,9 +166,11 @@ proc cg_project {args} {
 			}
 		}
 		# multireg
+		# --------
+		set resultfile compar/reg-${project}.tsv
 		set done {}
-		if {[file exists compar/${project}_reg.tsv]} {
-			set list [cg select -h compar/${project}_reg.tsv]
+		if {[file exists $resultfile]} {
+			set list [cg select -h $resultfile]
 			set poss [list_find -glob $list sreg-*]
 			set done [list_sub $list $poss]
 		}
@@ -186,9 +188,9 @@ proc cg_project {args} {
 		if {[llength $files]} {
 			if {$direct} {
 				puts "Multireg: adding $names"
-				exec cg multireg compar/${project}_reg.tsv {*}$files >@ stdout 2>@stderr
+				exec cg multireg $resultfile {*}$files >@ stdout 2>@stderr
 			} else {
-				set crjob [submit -deps [join $jobs ,] cg multireg compar/${project}_reg.tsv {*}$files]
+				set crjob [submit -deps [join $jobs ,] cg multireg $resultfile {*}$files]
 		 		lappend alljobs $crjob
 			}
 		}
