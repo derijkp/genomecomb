@@ -66,6 +66,9 @@ proc cg_project {args} {
 		exit 1
 	}
 	foreach {projectfile refseqdir} $args break
+	if {![file isdir $refseqdir]} {
+		error "$refseqdir directory does not exist"
+	}
 	set actions [lrange $args 2 end]
 	set pos [lsearch $actions direct]
 	set direct 0
@@ -168,6 +171,7 @@ proc cg_project {args} {
 		# multireg
 		# --------
 		set resultfile compar/reg-${project}.tsv
+		puts "Checking [file normalize $resultfile]"
 		set done {}
 		if {[file exists $resultfile]} {
 			set list [cg select -h $resultfile]
