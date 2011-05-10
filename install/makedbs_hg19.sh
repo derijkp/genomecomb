@@ -38,8 +38,8 @@ cg regjoin ucsc_hg19_genomicSuperDups.tsv > reg_hg19_genomicSuperDups.tsv
 
 # 1000 genomes
 #cg downloaddb $dest hg19 1000g
-# dbdnp
-cg downloaddb $dest hg19 snp131
+# dbsnp
+cg downloaddb $dest hg19 snp132
 
 # genes
 cg downloaddb $dest hg19 refGene ensGene knownGene genscan
