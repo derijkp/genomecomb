@@ -75,10 +75,36 @@ proc cg_genome_indexfasta {resultfile} {
 	close $f
 }
 
+proc genome_makefastaindex {fastafile} {
+	putslog "Making index for $fastafile"
+	set f [open $fastafile]
+	set oi [open $fastafile.index.temp w]
+	while {![eof $f]} {
+		set line [gets $f]
+		set name [string range $line 1 end]
+		if {![regexp {chromosome ([^ ,]+)[ ,]} $name temp chr]} {
+			if {![regexp {chr([^ ,]+)} $name temp chr]} {
+				set chr [lindex $name end]
+			}
+		}
+		set start [tell $f]
+		set seq [gets $f]
+		set seqlen [string length $seq]
+		putslog $name
+		puts $oi "$chr\t$start $seqlen"
+	}
+	close $oi
+	close $f
+	file rename -force $fastafile.index.temp $fastafile.index
+}
+
 proc genome_open {file} {
 	global genomefasta
 	set f [open $file]
 	set fastaindex {}
+	if {![file exists $file.index]} {
+		genome_makefastaindex $file
+	}
 	foreach {name data} [split [string trim [file_read $file.index]] \t\n] {
 		if {![regexp {chr([^ ,]+)} $name temp chr]} {set chr [lindex $name end]}
 		dict set fastaindex $chr $data
