@@ -1,0 +1,73 @@
+proc convcgsv {srcfile dstfile} {
+	catch {close $o} ; catch {close $f}
+	set f [gzopen $srcfile]
+	set header [tsv_open $f comment]
+	regexp {#FORMAT_VERSION[\t ]+([0-9.]+)} $comment temp version
+	if {$version > 1.3} {
+		set new 1
+		set poss [list_cor $header {Id LeftStrand LeftChr LeftPosition LeftLength TransitionLength RightStrand RightChr RightPosition RightLength Distance score scoreType}]
+	} else {
+		set new 0
+		set poss [list_cor $header {id	leftStrand	leftChr	leftPosition	leftLength transitionLength	rightStrand	rightChr	rightPosition	rightLength distance score scoreType}]
+	}
+	set nheader {chromosome begin end type id strand1 start1 end1 size strand2 chr2 start2 end2 score scoretype transitionLength}
+	lappend nheader {*}[list_sub $header -exclude $poss]
+	set o [open $dstfile w]
+	puts $o [join $nheader \t]
+	set last [expr {[llength $header]-1}]
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		set line [lrange $line 0 $last]
+		if {![llength $line]} continue
+		foreach {id strand1 chr1 start1 len1 transitionLength strand2 chr2 start2 len2 size score scoretype} [list_sub $line $poss] break
+		if {$id eq "W-2"} continue
+		set end1 [expr {$start1+$len1}]
+		set end2 [expr {$start2+$len2}]
+		if {![isint $size]} {
+			set size -1
+		}
+		if {$chr1 ne $chr2} {
+			set type trans
+		} elseif {$strand1 ne $strand2} {
+			set type inv
+			set size [expr {max($size,0)}]
+		} else {
+			set type del
+		}
+		if {$type eq "trans"} {
+			set s [expr {350-($end1-$start1)}]
+			if {$s < 10} {set s 10}
+			set end [expr {$end1+$s}]
+		} elseif {$type eq "inv"} {
+			set end [expr {$end1+$size}]
+		} else {
+			set end $start2
+		}
+		set result [list $chr1 $end1 $end $type $id $strand1 $start1 $end1 $size $strand2 $chr2 $start2 $end2 $score $scoretype $transitionLength]
+		set temp [list_sub $line -exclude $poss]
+		if {[llength $temp]} {
+			lappend result {*}$temp
+		}
+		puts $o [join $result \t]
+	}
+	close $o
+	close $f
+}
+
+proc cg_convcgsv {args} {
+	if {[llength $args] != 2} {
+		errorformat convcgsv
+		exit 1
+	}
+	foreach {srcfile dstfile} $args break
+	convcgsv $srcfile $dstfile.temp
+	file rename $dstfile.temp $dstfile
+}
+
+if 0 {
+	cd /complgen/projects/cmt71
+	set dir /XXX
+	set destdir /complgen/projects/cmt71/cmt71_02_a
+	set dbdir /complgen/refseq/hg18
+	set force 0
+}

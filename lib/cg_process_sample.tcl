@@ -110,6 +110,15 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		} result
 		puts stderr $result
 	}
+	set dstfile cgsv-$name.tsv
+	if {$force || ![file exists $dstfile]} {
+		puts stderr "Convert SV: making $dstfile"
+		set list [glob -nocomplain SV/allJunctionsBeta-*.tsv* SV/annotatedJunctionsAlpha-*.tsv*]
+		if {[llength $list]} {
+			set srcfile [lindex $list 0]
+			cg convcgsv $srcfile $dstfile
+		}
+	}
 #	if {$force || ![file exists EVIDENCE]} {
 #		puts stderr "Copying EVIDENCE"
 #		file delete -force EVIDENCE.temp

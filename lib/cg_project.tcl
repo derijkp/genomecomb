@@ -194,12 +194,55 @@ proc cg_project {args} {
 		 		lappend alljobs $crjob
 			}
 		}
+		# cgsv
+		# ----
+		set done {}
+		set resultfile cgsv-${project}.tsv
+		puts "Checking [file normalize compar/$resultfile]"
+		if {[file exists compar/$resultfile]} {
+			set list [cg select -h compar/$resultfile]
+			set poss [list_find -glob $list start1-*]
+			set done [list_sub $list $poss]
+			set done [list_regsub -all {^start1-} $done {}]
+		}
+		set files {}
+		set names {}
+		foreach {cgdir name} $data {
+			if {[file exists $name/cgsv-$name.tsv] && ![inlist $done $name]} {
+				lappend files $name/cgsv-$name.tsv
+				lappend names $name
+			}
+		}
+		if {[llength $done]} {
+			puts "Multireg already done: $done"
+		}
+		if {[llength $files]} {
+			if {$direct} {
+				puts "Multicgsv: adding $names"
+				exec cg svmulticompar compar/$resultfile {*}$files >@ stdout 2>@stderr
+			} else {
+				set cgsvjob [submit -deps [join $jobs ,] cg svmulticompar compar/$resultfile {*}$files]
+		 		lappend alljobs $cgsvjob
+			}
+		}
+		if {![file exists [gzfile compar/annot$resultfile]]} {
+			set cmd [list cg annotate compar/$resultfile compar/annot$resultfile {*}[glob -nocomplain $refseqdir/$build/reg_*.tsv $refseqdir/$build/gene_*.tsv]]
+			if {$direct} {
+				puts "Multicgsv: annotating compar/${project}_compar.tsv"
+				exec {*}$cmd >@ stdout 2>@stderr
+			} else {
+				if {[info exists cgsvjob]} {
+					set ajob [submit -host lungo -deps $cgsvjob {*}$cmd]
+				} else {
+					set ajob [submit -host lungo {*}$cmd]
+				}
+		 		lappend alljobs $ajob
+			}
+		}
 	}
 
 	# sv (our algorithm)
 	# ==================
-	if {[inlist $actions cgsv]} {
-	}
 	if {[inlist $actions sv]} {
 		cd $resultdir
 		set svjobs {}

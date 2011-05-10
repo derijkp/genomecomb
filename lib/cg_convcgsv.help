@@ -1,0 +1,12 @@
+== Format ==
+cg convcgsv srcfile dstfile
+
+== Category ==
+Convert
+
+== Summary ==
+Convert the Complete Genomics SV files to the cgtools format
+
+== Arguments ==
+* srcfile: Complete Genomics SV file
+* dstfile: resulting sft sv file
