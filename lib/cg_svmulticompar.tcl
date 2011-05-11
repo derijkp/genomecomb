@@ -336,11 +336,23 @@ proc cg_svmulticompar {args} {
 		errorformat svmulticompar
 		exit 1
 	}
+	set done {}
 	foreach {compar_file} $args break
-	set dirs [lrange $args 1 end]
-	foreach dir $dirs {
-		putslog "Adding $dir"
-		svmulticompar $compar_file $dir
+		if {[file exists $compar_file]} {
+			set list [cg select -h $compar_file]
+			set poss [list_find -glob $list start1-*]
+			set done [list_sub $list $poss]
+			set done [list_regsub -all {^start1-} $done {}]
+		}
+	set files [lrange $args 1 end]
+	foreach file $files {
+		set name [lindex [split [file tail [file root $file]] -] end]
+		if {[inlist $done $name]} {
+			putslog "Skipping $file: $name already present"
+		} else {
+			putslog "Adding $file"
+			svmulticompar $compar_file $file
+		}
 	}
 }
 

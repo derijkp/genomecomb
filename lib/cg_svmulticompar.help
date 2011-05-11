@@ -1,5 +1,5 @@
 == Format ==
-cg svmulticomparfile svfile ...
+cg svmulticompar file svfile ...
 
 == Category ==
 Structural
