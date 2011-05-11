@@ -19,12 +19,20 @@ proc submit {args} {
 		} elseif {$key eq "-deps"} {
 			set deps [lindex $args 1]
 			if {[llength $deps]} {
-				lappend submitargs -deps $deps
+				lappend submitargs -deps [join $deps ,]
 			}
+			set args [lrange  $args 2 end]
+		} elseif {$key eq "-direct"} {
+			set direct [lindex $args 1]
 			set args [lrange  $args 2 end]
 		} else {
 			break
 		}
+	}
+	if {$direct} {
+		puts "Processing: $args"
+		exec {*}$args >@ stdout 2>@stderr
+		return ""
 	}
 	puts "Submitting: $submitargs $args"
 	set error [catch {
@@ -105,14 +113,9 @@ proc cg_project {args} {
 		foreach {cgdir name} $data {
 			set dir [file dir $cgdir]
 			file mkdir $name
-			if {$direct} {
-				puts "Processing $name"
-				exec cg process_sample $cgdir $name $refseqdir/$build >@ stdout 2>@stderr
-			} else {
-				set host [lindex [file split $cgdir] 2]
-				set job [submit -host $host cg process_sample $cgdir $name $refseqdir/$build]
-				if {[isint $job]} {lappend jobs $job}
-			}
+			set host [lindex [file split $cgdir] 2]
+			set job [submit -direct $direct -host $host cg process_sample $cgdir $name $refseqdir/$build]
+			if {[isint $job]} {lappend jobs $job}
 		}
 		lappend alljobs {*}$jobs
 	}
@@ -147,26 +150,12 @@ proc cg_project {args} {
 		if {[llength $names]} {
 			file mkdir compar
 			catch {file delete [gzfile compar/annot${project}_compar.tsv]}
-			if {$direct} {
-				puts "Multicompar: adding [join $names {, }]"
-				exec cg multicompar $reannot compar/${project}_compar.tsv {*}$names >@ stdout 2>@stderr
-			} else {
-				set cjob [submit -host lungo -deps [join $jobs ,] cg multicompar $reannot compar/${project}_compar.tsv {*}$names]
-		 		lappend alljobs $cjob
-			}
+			set cjob [submit -drect $direct -host lungo -deps $jobs cg multicompar $reannot compar/${project}_compar.tsv {*}$names]
+			if {[isint $cjob]} {lappend alljobs $cjob}
 		}
 		if {![file exists [gzfile compar/annot${project}_compar.tsv]]} {
-			if {$direct} {
-				puts "Multicompar: annotating compar/${project}_compar.tsv"
-				exec cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/$build/annovar >@ stdout 2>@stderr
-			} else {
-				if {[info exists cjob]} {
-					set ajob [submit -host lungo -deps $cjob cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/$build/annovar]
-				} else {
-					set ajob [submit -host lungo cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/$build/annovar]
-				}
-		 		lappend alljobs $ajob
-			}
+			set ajob [submit -direct $direct -host lungo -deps [get cjob {}] cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/$build/annovar]
+	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
 		# multireg
 		# --------
@@ -190,19 +179,15 @@ proc cg_project {args} {
 			puts "Multireg already done: $done"
 		}
 		if {[llength $files]} {
-			if {$direct} {
-				puts "Multireg: adding $names"
-				exec cg multireg $resultfile {*}$files >@ stdout 2>@stderr
-			} else {
-				set crjob [submit -deps [join $jobs ,] cg multireg $resultfile {*}$files]
-		 		lappend alljobs $crjob
-			}
+			set crjob [submit -direct $direct -deps $jobs cg multireg $resultfile {*}$files]
+	 		if {[isint $crjob]} {lappend alljobs $crjob}
 		}
 		# cgsv
 		# ----
 		set done {}
 		set resultfile cgsv-${project}.tsv
 		puts "Checking [file normalize compar/$resultfile]"
+		set names {}
 		if {[file exists compar/$resultfile]} {
 			set list [cg select -h compar/$resultfile]
 			set poss [list_find -glob $list start1-*]
@@ -212,36 +197,22 @@ proc cg_project {args} {
 		set files {}
 		set names {}
 		foreach {cgdir name} $data {
-			if {[file exists $name/cgsv-$name.tsv] && ![inlist $done $name]} {
+			if {![inlist $done $name]} {
 				lappend files $name/cgsv-$name.tsv
 				lappend names $name
 			}
 		}
 		if {[llength $done]} {
-			puts "Multireg already done: $done"
+			puts "Multicgsv already present: $done"
 		}
 		if {[llength $files]} {
-			if {$direct} {
-				puts "Multicgsv: adding $names"
-				exec cg svmulticompar compar/$resultfile {*}$files >@ stdout 2>@stderr
-			} else {
-				set cgsvjob [submit -deps [join $jobs ,] cg svmulticompar compar/$resultfile {*}$files]
-		 		lappend alljobs $cgsvjob
-			}
+			set cgsvjob [submit -direct $direct -deps $jobs cg svmulticompar compar/$resultfile {*}$files]
+	 		if {[isint $cgsvjob]} {lappend alljobs $cgsvjob}
 		}
-		if {![file exists [gzfile compar/annot$resultfile]]} {
+		if {![file exists [gzfile compar/annot$resultfile]] || [llength $files]} {
 			set cmd [list cg annotate compar/$resultfile compar/annot$resultfile {*}[glob -nocomplain $refseqdir/$build/reg_*.tsv $refseqdir/$build/gene_*.tsv]]
-			if {$direct} {
-				puts "Multicgsv: annotating compar/${project}_compar.tsv"
-				exec {*}$cmd >@ stdout 2>@stderr
-			} else {
-				if {[info exists cgsvjob]} {
-					set ajob [submit -host lungo -deps $cgsvjob {*}$cmd]
-				} else {
-					set ajob [submit -host lungo {*}$cmd]
-				}
-		 		lappend alljobs $ajob
-			}
+			set ajob [submit -direct $direct -host lungo -deps [get cgsvjob {}] {*}$cmd]
+	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
 	}
 
@@ -252,14 +223,9 @@ proc cg_project {args} {
 		set svjobs {}
 		foreach {cgdir name} $data {
 			set dir [file dir $cgdir]
-			if {$direct} {
-				puts "sv: adding $name"
-				exec cg process_sv $cgdir $name $refseqdir >@ stdout 2>@stderr
-			} else {
-				set host [lindex [file split $cgdir] 2]
-				set job [submit -host $host cg process_sv $cgdir $name $refseqdir]
-				lappend svjobs $job
-			}
+			set host [lindex [file split $cgdir] 2]
+			set job [submit -direct $direct -host $host cg process_sv $cgdir $name $refseqdir]
+			if {[isint $job]} {lappend svjobs $job}
 		}
 		lappend alljobs {*}$svjobs
 		# qalter -u peter -p 1
@@ -282,22 +248,14 @@ proc cg_project {args} {
 			set files [glob -nocomplain $name/*.tsv $name/*/*.tsv $name/*/*/*.tsv]
 			foreach file $files {
 				puts "Compressing $file"
-				if {$direct} {
-					exec bgzip $file >@ stdout 2>@stderr
-				} else {
-					set job [submit -deps $alljobs bgzip $file]
-				}
+				set job [submit -direct $direct -deps $alljobs bgzip $file]
 			}
 			# compress sv data
 			set dir [file dir $cgdir]
 			set files [glob -nocomplain $name/sv/*-paired.tsv]
 			foreach file $files {
 				puts "Compressing $file"
-				if {$direct} {
-					exec bgzip $file >@ stdout 2>@stderr
-				} else {
-					set job [submit -deps $alljobs bgzip $file]
-				}
+				set job [submit -direct $direct -deps $alljobs bgzip $file]
 			}
 		}
 	}
