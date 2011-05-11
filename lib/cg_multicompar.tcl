@@ -366,11 +366,8 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 
 proc cg_multicompar {args} {
 	if {([llength $args] < 1)} {
-		puts stderr "format is: $scriptname $action compar_file ?dir? ..."
-		puts stderr " - adds new sample dir(s) to compar_file"
-		puts stderr " - the sample dir(s) should be one directory below compar_file (for reannot)"
-		puts stderr " - sample names will be the names of the sample dir(s)"
-		puts stderr " - missing annotations must be checked and added afterwards using multicompar_reannot"
+		puts "Wrong number of arguments"
+		errorformat svmulticompar
 		exit 1
 	}
 	set regonly 0
