@@ -29,6 +29,7 @@ braces around the entire field=formula.
 * -nh newheader: replace header in output with fields given by this option
 * -hc headerincomment: if 1, the last of the starting comment lines will be used for the header instead of the first non-comment line
 * -h: return header fields in file
+* -n: return sample names in file
 The query or field lines can contain more than one line (enclose in '').
 Lines starting with a # are comments
 

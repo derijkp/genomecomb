@@ -525,7 +525,8 @@ proc cg_select {args} {
 		switch -- $key {
 			-q {
 				set query $value
-				if {[regexp {[^=!><]=[^=]} $query]} {puts stderr "you may have used = instead of == in query"}
+				if {[regexp {[^=!><\\]=[^=]} $query]} {puts stderr "you may have used = instead of == in query"}
+				regsub -all {\\=} $query = query
 			}
 			-f {set fields $value}
 			-rf {
@@ -535,6 +536,24 @@ proc cg_select {args} {
 			-nh {set newheader $value}
 			-hc {set hc 1}
 			-s {set sortfields $value}
+			-n {
+				if {$value eq ""} {
+					set header [tsv_open stdin]
+				} else {
+					set f [gzopen $value]
+					set header [tsv_open $f]
+					catch {close $f}
+				}
+				set names {}
+				foreach col $header {
+					set split [split $col -]
+					if {[llength $split] > 1} {
+						lappend names [lindex $split end]
+					}
+				}
+				puts stdout [join [list_remdup $names] \n]
+				exit 0
+			}
 			-h {
 				if {$value eq ""} {
 					set header [tsv_open stdin]
