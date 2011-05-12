@@ -33,6 +33,6 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 			exec bgzip $file
 		}
 	}
-	puts stderr "Finished finding sv in $dir"
+	putslog "Finished finding sv in $dir"
 	cd $keepdir
 }

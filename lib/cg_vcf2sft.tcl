@@ -68,7 +68,7 @@ proc cg_vcf2sft {args} {
 	puts $o [join $nheader \t]
 	set next 100000; set num 0
 	while {![eof $f]} {
-		if {$num >= $next} {putslog $num; incr next 100000}
+		if {$num >= $next} {putsprogress $num; incr next 100000}
 		set line [gets $f]
 		if {[string index $line 0] eq "#"} continue
 		set line [split $line \t]

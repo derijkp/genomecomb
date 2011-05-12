@@ -9,7 +9,7 @@ proc clusters_distgraph {} {
 	set pnchr [chr2num $pchr]
 			while {![eof $f]} {
 				incr num
-				if {![expr $num%100000]} {puts stderr $num}
+				if {![expr $num%100000]} {putsprogres $num}
 				set line [get_region $f $poss]
 				foreach {pchr pbegin pend} $line break
 				set pnchr [chr2num $pchr]
@@ -18,7 +18,7 @@ proc clusters_distgraph {} {
 			# seek $f 97574037
 	while {![eof $f]} {
 		incr num
-		if {![expr $num%100000]} {puts stderr $num}
+		if {![expr $num%100000]} {putsprogres $num}
 		set line [get_region $f $poss]
 		if {![isint [lindex $line 2]]} continue
 		foreach {chr begin end} $line break
@@ -63,7 +63,7 @@ proc clusters {} {
 		while {![eof $f]} {
 			incr pos
 			incr num
-			if {![expr $num%100000]} {puts stderr "${num} ($chr:$begin)"}
+			if {![expr $num%100000]} {putsprogres "${num} ($chr:$begin)"}
 			foreach {chr begin end} [get_region $f $poss] break
 			if {$chr != $pchr} break
 			set diff [expr {$begin-$pbegin}]
@@ -78,7 +78,7 @@ proc clusters {} {
 		set score 0
 		while {![eof $f]} {
 			incr num
-			if {![expr $num%100000]} {puts stderr "${num} ($chr:$begin)"}
+			if {![expr $num%100000]} {putsprogres "${num} ($chr:$begin)"}
 			foreach {chr begin end} [get_region $f $poss] break
 			if {$chr == $pchr} {
 				set diff [expr {$begin-$pbegin}]
@@ -119,7 +119,7 @@ proc clusters {} {
 						set begin [lindex $keep $rstart 0]
 						set end [expr {[lindex $keep $rend 0]+1}]
 						puts $o $chr\t$begin\t$end\t[expr {$end - $begin + 1}]
-						# puts stderr $chr\t$begin\t$end\t[expr {$end - $begin + 1}]
+						# putslog $chr\t$begin\t$end\t[expr {$end - $begin + 1}]
 					}
 					set checking 0
 					set keep [lrange $keep end-$checknum end]

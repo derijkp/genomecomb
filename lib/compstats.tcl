@@ -24,7 +24,7 @@ proc compare_pvt {} {
 	set num 0
 	while {![eof $f]} {
 		incr num
-		if {![expr {$num%100000}]} {putslog $num}
+		if {![expr {$num%100000}]} {putsprogress $num}
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		foreach $ufields [list_sub $line $uposs] break
@@ -127,7 +127,7 @@ proc compare_loadtable {file headerVar} {
 	set table {}
 	while {![eof $f]} {
 		incr num
-		if {![expr {$num%100000}]} {putslog $num}
+		if {![expr {$num%100000}]} {putsprogress $num}
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		lappend table $line

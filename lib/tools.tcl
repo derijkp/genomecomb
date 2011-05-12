@@ -238,15 +238,6 @@ proc timestamp {} {
 	clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"
 }
 
-proc putslog {args} {
-}
-
-proc putslog {args} {
-	foreach message $args {
-		puts stderr "[timestamp] $message"
-	}
-}
-
 proc chrindexseek {file f chr} {
 	set indexfile [gzroot $file].chrindex
 	if {![file exists $indexfile]} {
@@ -339,7 +330,7 @@ proc gunzip {file args} {
 proc scratchdir {} {
 	global env
 	if {![info exists env(SCRATCHDIR)]} {
-		puts stderr "Could not find SCRATCHDIR, using tempdir"
+		putslog "Could not find SCRATCHDIR, using tempdir"
 		return [tempdir]
 	}
 	if {![info exists ::Extral::scratchdir]} {

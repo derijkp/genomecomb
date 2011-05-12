@@ -31,7 +31,7 @@ proc rtg2annotvar {file {outfile {}}} {
 	while 1 {
 		incr num
 		if {[llength $line] > 3} {
-			if {![expr $num%100000]} {putslog $num}
+			if {![expr $num%100000]} {putsprogress $num}
 			foreach {name position het} $line break
 			if {[inlist {e o} $het]} {
 				set temp [rtg_line $line $poss]
@@ -81,24 +81,24 @@ proc process_rtgsample {dir destdir {force 0}} {
 	set destdir [file normalize $destdir]
 	file mkdir $destdir
 	cd $destdir
-	puts stderr "Processing sample $dir"
+	putslog "Processing sample $dir"
 	set name [file tail $destdir]
 	set varfile [gzfile $dir/*snp*.txt]
 	# annotated vars file
 	if {$force || ![file exists annotvar-$name.tsv]} {
-		puts stderr "Create annotated varfile annotvar-$name.tsv from $varfile"
+		putslog "Create annotated varfile annotvar-$name.tsv from $varfile"
 		if {$force || ![file exists uannotvar-$name.tsv]} {
 			rtg2annotvar $varfile uannotvar-$name.tsv.temp
 			file rename uannotvar-$name.tsv.temp uannotvar-$name.tsv
 		}
-		puts stderr "Sorting"
+		putslog "Sorting"
 		cg select -s "chromosome begin end" uannotvar-$name.tsv > annotvar-$name.tsv.temp
 		file delete uannotvar-$name.tsv
 		file rename -force annotvar-$name.tsv.temp annotvar-$name.tsv
 	}
 	# sample specific filters
 	if {$force || ![file exists reg_cluster-$name.tsv]} {
-		puts stderr "Find cluster regions for annotvar-$name.tsv"
+		putslog "Find cluster regions for annotvar-$name.tsv"
 		cg clusterregions < annotvar-$name.tsv > temp.tsv
 		file rename -force temp.tsv reg_cluster-$name.tsv
 	}
@@ -108,7 +108,7 @@ proc process_rtgsample {dir destdir {force 0}} {
 		lappend todo [list cluster cl reg_cluster-$name.tsv]
 		annot_annotvar annotvar-$name.tsv fannotvar-$name.tsv $todo
 	}
-	puts stderr "Make allposs files"
+	putslog "Make allposs files"
 	set files [lsort -dict [glob $dir/allpos/chr*/*snps.txt*]]
 	file mkdir allpos
 	foreach file $files {
@@ -126,7 +126,7 @@ proc process_rtgsample {dir destdir {force 0}} {
 		set chr [lindex [split $line \t] 0]
 		set allposfile allpos/chr${chr}_snps.txt
 		if {$force || ![file exists $allposfile.gz]} {
-			puts stderr "Making file $allposfile"
+			putslog "Making file $allposfile"
 			set o [open $allposfile.temp w]
 			foreach l [lrange $comments 0 end-1] {
 				puts $o #$l
@@ -141,14 +141,14 @@ proc process_rtgsample {dir destdir {force 0}} {
 		}
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {
-		puts stderr "Make region file sreg-$name.tsv"
+		putslog "Make region file sreg-$name.tsv"
 		set files [lsort -dict [glob allpos/chr*snps.txt allpos/chr*snps.txt.gz]]
 		file delete sreg-$name.tsv.temp
 		set f [open sreg-$name.tsv.temp w]
 		puts $f "chromosome\tbegin\tend"
 		close $f
 		foreach file $files {
-			puts stderr "Processing $file"
+			putslog "Processing $file"
 			set chr [lindex [split [file tail $file] _] 0]
 			set f [gzopen $file]
 			set header [tsv_open $f]
@@ -245,29 +245,29 @@ proc rtgregions {cgdir comparfile rtgdir} {
 	set cgsample [file tail $cgdir]
 	set rtgsample [file tail $rtgdir]
 	if {![file exists $cgdir/reg_rtgnotsame-$cgsample.tsv]} {
-		puts stderr "$cgdir/reg_rtgnotsame-$cgsample.tsv"
+		putslog "$cgdir/reg_rtgnotsame-$cgsample.tsv"
 		cg select -f {chromosome begin end} -q "!same($cgsample,$rtgsample)" $comparfile $cgdir/reg_rtgnotsame-$cgsample.tsv.temp
 		file rename -force $cgdir/reg_rtgnotsame-$cgsample.tsv.temp $cgdir/reg_rtgnotsame-$cgsample.tsv
 	}
 	if {![file exists $cgdir/reg_posrtg-$cgsample.tsv]} {
-		puts stderr "$cgdir/reg_posrtg-$cgsample.tsv"
+		putslog "$cgdir/reg_posrtg-$cgsample.tsv"
 		cg regsubtract $rtgdir/sreg-$rtgsample.tsv $cgdir/reg_rtgnotsame-$cgsample.tsv > $cgdir/reg_posrtg-$cgsample.tsv.temp
 		file rename -force $cgdir/reg_posrtg-$cgsample.tsv.temp $cgdir/reg_posrtg-$cgsample.tsv
 	}
 	# make filter for cg by removing good poss in rtg
 	if {![file exists $cgdir/reg_rtg-$cgsample.tsv]} {
-		puts stderr "$cgdir/reg_rtg-$cgsample.tsv"
+		putslog "$cgdir/reg_rtg-$cgsample.tsv"
 		cg regsubtract $cgdir/sreg-$cgsample.tsv $cgdir/reg_posrtg-$cgsample.tsv > $cgdir/reg_rtg-$cgsample.tsv.temp
 		file rename -force $cgdir/reg_rtg-$cgsample.tsv.temp $cgdir/reg_rtg-$cgsample.tsv
 	}
 	# how much remains after filter
 	if {![file exists $cgdir/filteredrtg-$cgsample.tsv]} {
-		puts stderr "$cgdir/filteredrtg-$cgsample.tsv"
+		putslog "$cgdir/filteredrtg-$cgsample.tsv"
 		cg regsubtract $cgdir/sreg-$cgsample.tsv $cgdir/reg_rtg-$cgsample.tsv > $cgdir/filteredrtg-$cgsample.tsv.temp
 		file rename -force $cgdir/filteredrtg-$cgsample.tsv.temp $cgdir/filteredrtg-$cgsample.tsv
 	}
 	if {![file exists $cgdir/filteredrtg-$cgsample.covered]} {
-		puts stderr "$cgdir/filteredrtg-$cgsample.covered"
+		putslog "$cgdir/filteredrtg-$cgsample.covered"
 		cg covered $cgdir/filteredrtg-$cgsample.tsv > $cgdir/filteredrtg-$cgsample.covered.temp
 		file rename $cgdir/filteredrtg-$cgsample.covered.temp $cgdir/filteredrtg-$cgsample.covered
 	}

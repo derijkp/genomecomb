@@ -72,7 +72,7 @@ proc groupby_unsorted {f o poss listposs sumposs} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		incr num
-		if {$num >= $next} {putslog $num; incr next 1000000}
+		if {$num >= $next} {putsprogress $num; incr next 1000000}
 		set cur [list_sub $line $poss]
 		if {[info exists a($cur)]} {
 			set prev $a($cur)

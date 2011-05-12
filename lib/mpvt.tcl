@@ -52,7 +52,7 @@ proc compare_mpvt {multicomparfile mpvtfile} {
 	set num 0
 	while {![eof $f]} {
 		incr num
-		if {![expr {$num%100000}]} {putslog $num}
+		if {![expr {$num%100000}]} {putsprogress $num}
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		foreach $ufields [list_sub $line $uposs] break

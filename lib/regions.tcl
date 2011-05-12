@@ -81,7 +81,7 @@ proc reghisto {regfile} {
 	set num 0
 	while 1 {
 		incr num
-		if {![expr $num%100000]} {putslog $num}
+		if {![expr $num%100000]} {putsprogress $num}
 		set vline [cggets $v]
 		if {![llength $vline]} break
 		foreach {vchr vstart vend} $vline break

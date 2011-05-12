@@ -171,7 +171,7 @@ proc svhisto {pairfile} {
 	set num 1
 	while {![eof $f]} {
 		incr num
-		if {![expr $num%1000000]} {putslog $num}
+		if {![expr $num%1000000]} {putsprogress $num}
 		set dist [lindex [split [gets $f] \t] $distpos]
 		if {![info exists a($dist)]} {
 			set a($dist) 1

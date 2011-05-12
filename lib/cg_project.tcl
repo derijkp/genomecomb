@@ -8,6 +8,7 @@ proc submit {args} {
 	set host {}
 	set deps {}
 	set submitargs {}
+	set direct 0
 	while 1 {
 		set key [lindex $args 0]
 		if {$key eq "-host"} {
@@ -150,7 +151,7 @@ proc cg_project {args} {
 		if {[llength $names]} {
 			file mkdir compar
 			catch {file delete [gzfile compar/annot${project}_compar.tsv]}
-			set cjob [submit -drect $direct -host lungo -deps $jobs cg multicompar $reannot compar/${project}_compar.tsv {*}$names]
+			set cjob [submit -direct $direct -host lungo -deps $jobs cg multicompar $reannot compar/${project}_compar.tsv {*}$names]
 			if {[isint $cjob]} {lappend alljobs $cjob}
 		}
 		if {![file exists [gzfile compar/annot${project}_compar.tsv]]} {

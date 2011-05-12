@@ -4,7 +4,7 @@ proc map2besthits {file outfile} {
 	set num 1
 	while {![eof $f]} {
 		incr num
-		if {![expr {$num % 100000}]} {putslog $num}
+		if {![expr {$num % 100000}]} {putsprogress $num}
 		set list [readcgimap $f]
 		foreach {flags chr start end strand side} [lindex $list 0] break
 		puts $o $chr\t[expr {($start+$end)/2}]
@@ -105,7 +105,7 @@ proc cnvmedian {} {
 	while {![eof $f]} {
 		incr num
 		if {$num > 1000000} break
-		if {![expr {$num%100000}]} {putslog $num}
+		if {![expr {$num%100000}]} {putsprogress $num}
 		set line [getnotempty $f]
 		puts $o [lindex $line 0]\t[lindex $line 2]
 	}
@@ -139,7 +139,7 @@ catch {close $f}
 	set num 0
 	while {![eof $f]} {
 		incr num
-		if {![expr {$num%100000}]} {putslog $num}
+		if {![expr {$num%100000}]} {putsprogress $num}
 		while {![eof $f]} {
 			if {![llength $line]} continue
 			set refpos [lindex $line 0]

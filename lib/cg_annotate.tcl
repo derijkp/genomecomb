@@ -311,13 +311,13 @@ proc cg_annotate {args} {
 			puts "Skipping $dbfile: $name already in file"
 			continue
 		}
-		puts stderr "Adding $dbfile"
+		putslog "Adding $dbfile"
 		set dbtype [lindex [split [file tail $dbfile] _] 0]
 		if {$name eq "annovar"} {
 			if {$near != -1} {error "-near option does not work with annovar dbfiles"}
 			lappend afiles $file.${name}_annot
 			if {[file exists $file.${name}_annot]} {
-				puts stderr "$file.${name}_annot exists: skipping scan"
+				putslog "$file.${name}_annot exists: skipping scan"
 				continue
 			}
 			set build [lindex [file split $dbfile] end-1]
@@ -326,7 +326,7 @@ proc cg_annotate {args} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}
 			lappend afiles $file.${name}_annot
 			if {[file exists $file.${name}_annot]} {
-				puts stderr "$file.${name}_annot exists: skipping scan"
+				putslog "$file.${name}_annot exists: skipping scan"
 				continue
 			}
 			if {[info exists a(fields)]} {
@@ -341,7 +341,7 @@ proc cg_annotate {args} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
 			lappend afiles $file.${name}_annot
 			if {[file exists $file.${name}_annot]} {
-				puts stderr "$file.${name}_annot exists: skipping scan"
+				putslog "$file.${name}_annot exists: skipping scan"
 				continue
 			}
 			if {[info exists a(fields)]} {
@@ -353,10 +353,10 @@ proc cg_annotate {args} {
 		} else {
 			lappend afiles $file.${name}_annot
 			if {[file exists $file.${name}_annot]} {
-				puts stderr "$file.${name}_annot exists: skipping scan"
+				putslog "$file.${name}_annot exists: skipping scan"
 				continue
 			}
-			puts stderr "Adding $dbfile"
+			putslog "Adding $dbfile"
 			if {[info exists a(fields)]} {
 				set outfields $a(fields)
 			} else {

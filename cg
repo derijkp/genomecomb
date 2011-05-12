@@ -416,6 +416,14 @@ switch $action {
 				help $action
 				exit 0
 			}
+			while 1 {
+				if {[lindex $args 0] eq "--verbose"} {
+					logverbose [lindex $args 1]
+					set args [lrange $args 2 end]
+				} else {
+					break
+				}
+			}
 			set ::base "cg $action"
 			cg_$action {*}$args
 		} else {

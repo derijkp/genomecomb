@@ -577,7 +577,7 @@ proc makeprimers_region {name maxsize prefsize temperature archive db extraseq} 
 		set lnum [lindex $lp end-3]
 		if {![info exists a($lseq+)]} {puts "$lseq+ not found"; continue}
 		foreach rp $right {
-			if {![expr {$num%1000}]} {putslog $num}
+			if {![expr {$num%1000}]} {putsprogress $num}
 			incr num
 			set asize [expr {[lindex $rp 3]-[lindex $lp 2]}]
 			if {$asize >= $maxsize} continue

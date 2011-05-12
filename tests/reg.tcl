@@ -131,28 +131,25 @@ chr1	27	30
 chr1	39	41}
 
 test cg_regextract {above} {
-	exec cg regextract -qfields coverage -above 1 -shift 0 10 data/coverage-chr1.tsv
+	exec cg regextract --verbose 0 -qfields coverage -above 1 -shift 0 10 data/coverage-chr1.tsv
 } {chromosome	begin	end
 chr1	25	27
 chr1	28	31
-chr1	40	42
-Processing data/coverage-chr1.tsv} error
+chr1	40	42}
 
 test cg_regextract {below} {
-	exec cg regextract -qfields coverage -above 0 -shift 0 10 data/coverage-chr1.tsv
+	exec cg regextract --verbose 0 -qfields coverage -above 0 -shift 0 10 data/coverage-chr1.tsv
 } {chromosome	begin	end
 chr1	20	24
 chr1	27	28
-chr1	42	43
-Processing data/coverage-chr1.tsv} error
+chr1	42	43}
 
 test cg_regextract {shift} {
-	exec cg regextract -qfields coverage -above 1 -shift -1 10 data/coverage-chr1.tsv
+	exec cg regextract --verbose 0 -qfields coverage -above 1 -shift -1 10 data/coverage-chr1.tsv
 } {chromosome	begin	end
 chr1	24	26
 chr1	27	30
-chr1	39	41
-Processing data/coverage-chr1.tsv} error
+chr1	39	41}
 
 test regjoin {basic} {
 	exec cg regjoin data/reg1.tsv data/reg2.tsv 2> /dev/null

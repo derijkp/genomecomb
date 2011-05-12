@@ -217,7 +217,7 @@ proc annot_coverage {dir source dest} {
 	set num 0
 	while {![eof $f]} {
 		incr num
-		if {![expr {$num%10000}]} {putslog $num}
+		if {![expr {$num%10000}]} {putsprogress $num}
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		if {[llength $line] < $len} {
@@ -291,7 +291,7 @@ proc annot_annotvar {source outfile todo {dir {}}} {
 	set num 0
 	while {![eof $f]} {
 		incr num
-		if {![expr $num%10000]} {putslog $num}
+		if {![expr $num%10000]} {putsprogress $num}
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		foreach {chr begin end} [list_sub $line $poss] break
@@ -403,7 +403,7 @@ proc var2annotvar {file genefile outfile} {
 		set fchr [lindex $cur 1]
 		set fbegin [lindex $cur 2]
 		incr num
-		if {$num >= $next} {putslog $num; incr next 100000}
+		if {$num >= $next} {putsprogress $num; incr next 100000}
 		while {![eof $g]} {
 			set chrcomp [chrcomp $gchr $fchr]
 			if {$chrcomp > 0} break
