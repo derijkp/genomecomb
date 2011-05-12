@@ -58,6 +58,7 @@ proc cg_commonvars args {
 			incr next 10000000
 		}
 		set alleles [split [lindex $base end] ,]
+		if {![llength $alleles]} {set alleles [list {}]}
 		set genos [list_sub $line $gposs]
 		unset -nocomplain a
 		unset -nocomplain tota
