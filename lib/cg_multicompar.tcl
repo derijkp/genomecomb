@@ -96,10 +96,10 @@ proc multicompar {compar_file dir} {
 	#
 	if {[file isdir $dir]} {
 		set name [file tail $dir]
-		set file2 $dir/fannotvar-$name.tsv
+		set file2 [gzfile $dir/fannotvar-$name.tsv]
 	} else {
 		set name [lindex [split [file root [file tail [gzroot $dir]]] -] end]
-		set file2 $dir
+		set file2 [gzfile $dir]
 	}
 	if {![file exists $compar_file]} {
 		file_write $compar_file [join {chromosome begin end type} \t]
@@ -116,7 +116,7 @@ proc multicompar {compar_file dir} {
 	}
 	set tp1 [lindex $comparposs1 0]
 	set dummy1 [list_fill [llength $header1] ?]
-	set f2 [open $file2]
+	set f2 [gzopen $file2]
 	set header2 [tsv_open $f2]
 	set comparposs2 [list_cor $header2 $comparfields]
 	if {([lsearch $comparposs2 -1] != -1)} {
@@ -230,14 +230,14 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 		set samplea(rpos,$sample) [lsearch $header refscore-$sample]
 		set samplea(cpos,$sample) [lsearch $header coverage-$sample]
 		set samplea(seq,$sample) [lsearch $header sequenced-$sample]
-		if {[file exists $basedir/$sample/fannotvar-$sample.tsv]} {
+		if {[file exists [gzfile $basedir/$sample/fannotvar-$sample.tsv]]} {
 			set samplea(dir,$sample) $basedir/$sample
-		} elseif {[file exists [file dir $basedir]/$sample/fannotvar-$sample.tsv]} {
+		} elseif {[file exists [gzfile [file dir $basedir]/$sample/fannotvar-$sample.tsv]]} {
 			set samplea(dir,$sample) [file dir $basedir]/$sample
 		} else {
 			error "sample dir for $sample not found"
 		}
-		set samplea(regionfile,$sample) $samplea(dir,$sample)/sreg-$sample.tsv
+		set samplea(regionfile,$sample) [gzfile $samplea(dir,$sample)/sreg-$sample.tsv]
 		if {[file exists $samplea(dir,$sample)/allpos]} {
 			set samplea(type,$sample) rtg
 			annot_rtg_init $samplea(dir,$sample)

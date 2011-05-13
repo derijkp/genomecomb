@@ -1,9 +1,9 @@
 proc annot_region_init {regfile} {
 	global annot
 	catch {annot_region_close $regfile}
-	set fr [open $regfile]
-	set header [split [gets $fr] \t]
-	set poss [list_cor $header {chromosome begin end}]
+	set fr [gzopen [gzfile $regfile]]
+	set header [tsv_open $fr]
+	set poss [tsv_basicfields $header 3]
 	if {[lsearch $poss -1] != -1} {
 		set poss [list_cor $header {chr patchstart pos}]
 	}
