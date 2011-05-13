@@ -347,3 +347,18 @@ proc tsv_basicfields {header {num 6}} {
 	return $poss
 }
 
+proc cg_maketabix {args} {
+	foreach file $args {
+		putslog "making tabix for $file"
+		set ext [file extension $file]
+		if {$ext ne ".gz"} {
+			cg_bgzip $file
+			set file [gzroot $file].gz
+		}
+		set f [gzopen $file]
+		set header [tsv_open $f comment]
+		set skip [llength [split $comment \n]]
+		foreach {chrompos beginpos endpos} [lmath_calc [tsv_basicfields $header 3] + 1] break
+		exec tabix -s $chrompos -b $beginpos -e $endpos -0 -S $skip $file
+	}
+}
