@@ -130,7 +130,7 @@ proc genome_get {f chr start end} {
 
 proc cg_make_genomecindex {ifasfile} {
 	package require cindex
-	cd [file dir $ifasfile]
+	set ifasfile [file normalize $ifasfile]
 	set f [open $ifasfile]
 	set base [file root $ifasfile]
 	file mkdir $base.ssa
@@ -153,7 +153,7 @@ proc cg_make_genomecindex {ifasfile} {
 			set o [cindex create $seq]
 			puts "saving index $result"
 			cindex save $o $result.temp
-			file rename $result.temp $result
+			file rename $result.temp.ssa $result.ssa
 		}
 	}
 	close $f
