@@ -6,3 +6,4 @@ source select.tcl
 source reg.tcl
 source annot.tcl
 source tsv.tcl
+source val.tcl

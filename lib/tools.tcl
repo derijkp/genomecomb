@@ -192,6 +192,7 @@ proc cg_bgzip args {
 				putslog "bgzip $file"
 				exec bgzip -c $file > $file.gz.temp
 				file rename $file.gz.temp $file.gz
+				file delete $file
 			}
 		}
 	}

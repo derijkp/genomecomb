@@ -333,11 +333,26 @@ proc tsv_align_match {comp1 comp2} {
 
 proc tsv_basicfields {header {num 6}} {
 	set poss [list_cor $header {chromosome begin end type ref alt}]
-	if {[lindex $poss 4] == -1} {
-		lset poss 4 [lsearch $header reference]
-	}
-	if {[lindex $poss 5] == -1} {
-		lset poss 5 [lsearch $header alternative]
+	set nfposs [list_find $poss -1]
+	foreach nfpos $nfposs {
+		switch $nfpos {
+			0 {
+				set v [lsearch $header chrom]
+			}
+			1 {
+				set v [lsearch $header start]
+			}
+			4 {
+				set v [lsearch $header reference]
+			}
+			5 {
+				set v [lsearch $header alternative]
+			}
+			default {
+				continue
+			}
+		}
+		lset poss $nfpos $v
 	}
 	incr num -1
 	set poss [lrange $poss 0 $num]
@@ -349,14 +364,19 @@ proc tsv_basicfields {header {num 6}} {
 
 proc cg_maketabix {args} {
 	foreach file $args {
-		putslog "making tabix for $file"
 		set ext [file extension $file]
 		if {$ext ne ".gz"} {
 			cg_bgzip $file
 			set file [gzroot $file].gz
 		}
+		if {[file exists $file.tbi]} {
+			putslog "Skipping $file: $file.tbi exists"
+			continue
+		}
+		putslog "making tabix for $file"
 		set f [gzopen $file]
 		set header [tsv_open $f comment]
+		close $f
 		set skip [llength [split $comment \n]]
 		foreach {chrompos beginpos endpos} [lmath_calc [tsv_basicfields $header 3] + 1] break
 		exec tabix -s $chrompos -b $beginpos -e $endpos -0 -S $skip $file
