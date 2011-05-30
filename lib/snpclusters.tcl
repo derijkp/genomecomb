@@ -1,6 +1,12 @@
-proc clusters_distgraph {} {
-#	set f stdin
-#	set o stdout
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
+proc cg_clusters_distgraph {} {
+	set f stdin
+	set o stdout
 
 	set poss [open_region $f]
 	set num 0
@@ -9,7 +15,7 @@ proc clusters_distgraph {} {
 	set pnchr [chr2num $pchr]
 			while {![eof $f]} {
 				incr num
-				if {![expr $num%100000]} {putsprogres $num}
+				if {![expr $num%100000]} {putslog $num}
 				set line [get_region $f $poss]
 				foreach {pchr pbegin pend} $line break
 				set pnchr [chr2num $pchr]
@@ -18,7 +24,7 @@ proc clusters_distgraph {} {
 			# seek $f 97574037
 	while {![eof $f]} {
 		incr num
-		if {![expr $num%100000]} {putsprogres $num}
+		if {![expr $num%100000]} {putsprogress $num}
 		set line [get_region $f $poss]
 		if {![isint [lindex $line 2]]} continue
 		foreach {chr begin end} $line break
@@ -27,7 +33,7 @@ proc clusters_distgraph {} {
 			set dist [expr {$begin - $pbegin}]
 			puts $o $pbegin\t$dist
 		} else {
-error stopped
+			error "only one chromsome at the time"
 		}
 		foreach {pchr pnchr pbegin pend} [list $chr $nchr $begin $end] break
 	}
