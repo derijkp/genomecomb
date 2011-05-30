@@ -1,8 +1,7 @@
+= Regcommon =
+
 == Format ==
 cg regcommon region_file1 region_file2
-
-== Category ==
-Regions
 
 == Summary ==
 list regions common between region_file1 and region_file2
@@ -14,5 +13,8 @@ A new region files containing only regions present in both regions files
 will be written to stdout.
 
 == Arguments ==
-* region_file1: first regions file
-* region_file2: second regions file
+; **region_file1**: first regions file
+; **region_file2**: second regions file
+
+== Category ==
+Regions

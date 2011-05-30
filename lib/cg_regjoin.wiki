@@ -1,8 +1,7 @@
+= Regjoin =
+
 == Format ==
 cg regjoin region_file1 ?region_file2?
-
-== Category ==
-Regions
 
 == Summary ==
 join regions in 1 or 2 regionfiles
@@ -14,5 +13,8 @@ regjoin joins all overlapping or adjoined regions into
 one region. The resulting regions files is written to stdout.
 
 == Arguments ==
-* region_file1: regions file
-* region_file2: second regions file
+; **region_file1**: regions file
+; **region_file2**: second regions file
+
+== Category ==
+Regions

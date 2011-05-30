@@ -1,8 +1,7 @@
+= Multicompar =
+
 == Format ==
 cg multicompar ?options? multicomparfile sampledir ...
-
-== Category ==
-Compar
 
 == Summary ==
 Compare multiple variant files
@@ -10,16 +9,20 @@ Compare multiple variant files
 == Description ==
 This command is used to create multicompar files.
 These are tab separated files indicating variants present in one or more samples.
+
 * The sample names in the multicompar file will be the names of the sample dir(s).
 * The sample dir(s) should be one directory below compar_file (for reannot)
 * missing annotations must be checked and added afterwards using multicompar_reannot
 
 == Arguments ==
-* multicomparfile: resultfile, will be created if it does not exist
-* sampledir: 
-* varfile: file containing variants of new sample to be added
+; **multicomparfile**: resultfile, will be created if it does not exist
+; **sampledir**: 
+; **varfile**: file containing variants of new sample to be added
   More than one can added in one command
 
 == Options ==
-* -reannot: Also do reannotation (see cg multicompar_reannot)
-* -reannotregonly: Also do reannotation, but only region data (sequenced) will be updated
+; **-reannot**: Also do reannotation (see cg multicompar_reannot)
+; **-reannotregonly**: Also do reannotation, but only region data (sequenced) will be updated
+
+== Category ==
+Compare

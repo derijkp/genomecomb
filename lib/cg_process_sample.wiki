@@ -1,0 +1,20 @@
+= Process =
+
+== Format ==
+cg process_sample sampledir destdir dbdir ?force?
+
+== Summary ==
+Convert Complete Genomics data to cg format
+
+== Description ==
+processes (sorting annotating, etc.) one Complete Genomics sample directory, and writes
+the adapted data into destdir. By default, only files that are not present already will be created."
+
+== Arguments ==
+; **sampledir**: data directory as it comes from Complete Genomics
+; **destdir**: data directory to be created, containing data in the cg format
+; **dbdir**: database directory with reference sequence, etc.
+; **force**: When force is given as a parameter, everything will be recalculated and overwritten."
+
+== Category ==
+Conversion

@@ -1,0 +1,77 @@
+= Select =
+
+== Format ==
+cg select ?options? ?infile? ?outfile?
+
+== Summary ==
+Command for very flexible selection, sorting and conversion of tab separated files
+
+== Description ==
+Scans a tab separated file with header, and returns selected lines and columns, optionally sorted.
+The first line of the file is used as a header containing the field names of each column.
+The header line can be proceeded by comment lines that start with #. The comment lines
+will be included in the result. Other types of headers are supported (CGI style, vcf style)
+
+== Arguments ==
+; **infile**: file to be scanned, if not given, uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Options ==
+; **-q query**: only lines fullfilling conditions in query will be written to outfile (see further)
+; **-f fields**: only write given fields to result.
+An asterix can be used to indicated several fields matching a pattern.
+A field starting with fieldname=formula will add a field with the given fieldname. The value in 
+the column will be calculated using the given formula. If the formula is complex (includes spaces), add
+braces around the entire field=formula.
+; **-rf removefields**: write all, except given fields to result.
+; **-s sortfields**: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
+; **-nh newheader**: replace header in output with fields given by this option
+; **-hc headerincomment**: if 1, the last of the starting comment lines will be used for the header instead of the first non-comment line
+; **-h**: return header fields in file
+; **-n**: return sample names in file
+The query or field lines can contain more than one line (enclose in '').
+Lines starting with a # are comments
+
+== Query ==
+In queries, the value of a field for the line can be accessed using a $ followed by the name of the field.
+e.g.:
+$start > 10000
+will only return lines where the field start is larger than 10000. Queries support all operators
+and functions provided by awk.
+
+Some extra functions are available:
+
+=== Tools ===
+; **min(a1,a2,...)**: returns the minimum of a1, a2, ... If one the args is not a number it will be replaced by 999999999
+; **max(a1,a2,...)**: returns the maximum of a1, a2, ... If one the args is not a number it will be replaced by -999999999
+The default value for non-numeric arguments can be set e.g. to 1000 by giving def=1000 as the first argument
+
+=== fields that contain comma separated lists ===
+Some fields can contain multiple values in the form of a comma separated list. The following functions allow
+using this in queries
+
+; **lmin($field, def)**: the minimum of the list of numbers (comma separated) in field, def is given for a - in the list
+; **lmax($field, def)**: the maximum of the list of numbers (comma separated) in field, def is given for a - in the list
+
+=== multifield functions ===
+The following functions address multiple fields.
+
+; **count($field1, $field2, ..., test)**: Counts the number of fields that fullfill the test (can be things like: ' == "A"' or '< 20')
+; **counthasone($field1, $field2, ..., test)**: Counts the number of fields containing a commma separated lists for which one of the values fullfills the test
+; **counthasall($field1, $field2, ..., test)**: Counts the number of fields containing a commma separated lists for which all of the values fullfill the test
+
+An asterix can be used to indicated several fields matching a pattern.
+As field names specific to a sample are made by appending with -samplename, something like
+count($sequenced-*, == "v")
+will give the number of samples for which a variant was found
+
+=== comparing samples ===
+
+; **same(sample1,sample2, ...)**: same: all samples have the same genotype (does not have to be a variant) (all sequenced)
+; **sm(sample1,sample2, ...)**: same: variant with the same genotype in all given samples (all sequenced)
+; **df(sample1,sample2, ...)**: different: variant in some, reference in other (all sequenced)
+; **mm(sample1,sample2, ...)**: mismatch; variant in all, but different genotypes (all sequenced)
+; **un(sample1,sample2, ...)**: unsequenced in some samples, variant in one of the others
+
+== Category ==
+Query

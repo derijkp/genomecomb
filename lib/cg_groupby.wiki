@@ -1,8 +1,7 @@
+= Groupby =
+
 == Format ==
 cg groupby ?options? fields ?infile? ?outfile?
-
-== Category ==
-Query
 
 == Summary ==
 Group lines in a tsv file, based on 1 or more identical fields
@@ -17,12 +16,15 @@ can use the  "-sorted 0" option to avoid sorting first: it wil group same values
 regardless of the order, keeping the results in memory and writing them when finished.
 
 == Arguments ==
-* fields: list of fields which should be the same for lines to be groups
-* infile: file to be scanned, if not given, uses stdin. File may be compressed.
-* outfile: write results to outfile, if not given, uses stdout
+; **fields**: list of fields which should be the same for lines to be groups
+; **infile**: file to be scanned, if not given, uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
 
 == Options ==
-* -sumfields: make the sum of all values in the given fields in stead of concatenating 
+; **-sumfields**: make the sum of all values in the given fields in stead of concatenating 
   them using commas. The values in the given fields should be numbers
-* -sorted: if 0, same values do not have to be consequitive, but potentially large amounts 
+; **-sorted**: if 0, same values do not have to be consequitive, but potentially large amounts 
   of memory may be needed (default is 1)
+
+== Category ==
+Query

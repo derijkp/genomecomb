@@ -1,8 +1,7 @@
-== Format ==
-cg regextract ?options? cutoff file1 file2...
+= Regextract =
 
-== Category ==
-Regions
+== Format ==
+cg regextract ?options? cutoff file1 file2 ...
 
 == Summary ==
 Find regions above or below a given cutoff.
@@ -14,18 +13,21 @@ Chromosome name is taken from the filename by splitting on "-", and taking
 the second element.
 
 == Arguments ==
-* cutoff: regions file
-* file1: file containing position and value columns.
-* ...
+; **cutoff**: regions file
+; **file1**: file containing position and value columns.
+; **...**: other files
  
 == Options ==
-* -qfields: list (separated by spaces) of possible fieldnames to use as values
+; **-qfields**: list (separated by spaces) of possible fieldnames to use as values
             for the cutoff; The first in the list that is in the header will be used
             (default = "coverage uniqueSequenceCoverage")
-* -posfields: list (separated by spaces) of possible fieldnames to use as position;
+; **-posfields**: list (separated by spaces) of possible fieldnames to use as position;
               The first in the list that is in the header will be used
               (default = "offset pos position begin start")
-* -above: 1 if regions should contain values > given cutoff.
+; **-above**: 1 if regions should contain values > given cutoff.
           defaults to 0, meaning values should be < the cutoff.
-* -shift: change the position by the given amount, e.g. -1 to change from
+; **-shift**: change the position by the given amount, e.g. -1 to change from
           1-based to 0-based coordinates
+
+== Category ==
+Regions

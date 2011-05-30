@@ -1,11 +1,23 @@
-proc cg_help {} {
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
+proc cg_help {{item {}}} {
+if {$item ne ""} {
+	help $item
+	exit
+}
 global appdir
 puts {
+= Reference =
+
 == Format ==
 cg action ....
 
 == Actions == }
-set files [dirglob $appdir/lib/ cg_*.help]
+set files [dirglob $appdir/lib/ cg_*.wiki]
 unset -nocomplain a
 foreach file $files {
 	set action [string range [file root [file tail $file]] 3 end]
@@ -20,7 +32,7 @@ foreach file $files {
 	lappend a($category) $item
 }
 set categories [array names a]
-set pre {Conversion Annotation Query Regions Structural}
+set pre {Conversion Annotation Compare Query Regions Structural}
 set categories [list_concat [list_common $pre $categories] [list_lremove $categories $pre]]
 foreach category $categories {
 	puts " === $category ==="
@@ -33,13 +45,17 @@ puts { * select, graph, multicompar, regsubtract, regjoin, regcommon, makeregion
 }
 
 proc help {action} {
-	set help [file_read $::appdir/lib/cg_$action.help]
+	set help [file_read $::appdir/lib/cg_$action.wiki]
+	set cyan "\033\[1;36m"
+	set normal "\033\[0m"
+#	regsub -all {(^|\n)\; *([^:\n]+):} $help "\n${cyan}\\2$normal:" help
+	regsub -all {\*\*([^\n*]+)\*\*} $help "${cyan}\\1$normal" help
 	puts $help
 }
 
 proc help_actions {} {
 	global appdir
-	set files [lsort -dict [dirglob $appdir/lib/ cg_*.help]]
+	set files [lsort -dict [dirglob $appdir/lib/ cg_*.wiki]]
 	set list {}
 	foreach file $files {
 		set action [string range [file root [file tail $file]] 3 end]
@@ -56,7 +72,7 @@ proc errorformat {action} {
 }
 
 proc helpparts {action} {
-	set help [file_read $::appdir/lib/cg_$action.help]
+	set help [file_read $::appdir/lib/cg_$action.wiki]
 	regsub -all {[ \n\t]*== *([^=]+?) *==[ \n\t]*} $help {@@@@\1@@@@} help
 	set result [lrange [string_split $help @@@@] 1 end]
 	return $result

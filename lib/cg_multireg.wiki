@@ -1,8 +1,7 @@
+= Multireg =
+
 == Format ==
 cg multireg compar_file ?file? ...
-
-== Category ==
-Regions
 
 == Summary ==
 Compare multiple regions files
@@ -16,6 +15,9 @@ followed by columns containing 1 if the region
 is present in samplename and 0 if not.
 
 == Arguments ==
-* compar_file: file containing regions, and columns indicating the presence of the region
-* file: region files to be added the compar_file.
+; **compar_file**: file containing regions, and columns indicating the presence of the region
+; **file**: region files to be added the compar_file.
   The name of the column is name of the file added without extension
+
+== Category ==
+Regions
