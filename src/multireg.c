@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 	int nchr1=0,start1=-1,end1=-1,nchr2=0,start2=-1,end2=-1;
 	int error1,error2,curchr=0,nextpos=0;
 	if ((argc != 10)) {
-		fprintf(stderr,"Format is: reg_annot file1 chrpos1 startpos1 endpos1 nulldata file2 chrpos2 startpos2 endpos2\n");
+		fprintf(stderr,"Format is: multireg file1 chrpos1 startpos1 endpos1 nulldata file2 chrpos2 startpos2 endpos2\n");
 		exit(EXIT_FAILURE);
 	}
 	f1 = fopen64(argv[1],"r");
