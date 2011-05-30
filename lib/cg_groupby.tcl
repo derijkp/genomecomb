@@ -2,6 +2,12 @@
 # the next line restarts using wish \
 exec tclsh "$0" ${1+"$@"}
 
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
 if 0 {
 cd ~/dev/completegenomics/tests
 set file table2.tsv

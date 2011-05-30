@@ -1,3 +1,9 @@
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
 proc tsv_align_compareoverlap {comp1 comp2} {
 	foreach {chr1 p11 p12} $comp1 break
 	foreach {chr2 p21 p22} $comp2 break

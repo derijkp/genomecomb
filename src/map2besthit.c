@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+ * See the file "license.txt" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ */
+
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE

@@ -1,5 +1,12 @@
+#!/bin/sh
 # the next line restarts using wish \
 exec tclsh "$0" ${1+"$@"}
+
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
 
 proc tsv_select_idtopos {header id fields} {
 	set poss [list_cor $header $fields]

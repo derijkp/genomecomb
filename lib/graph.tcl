@@ -2,6 +2,12 @@
 # the next line restarts using tclsh \
 exec tclsh "$0" "$@"
 
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
 lappend auto_path /home/peter/bin/tcl
 lappend auto_path /home/peter/dev/completegenomics/lib
 

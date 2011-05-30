@@ -1,3 +1,9 @@
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
 proc convcgsv {srcfile dstfile} {
 	catch {close $o} ; catch {close $f}
 	set f [gzopen $srcfile]
@@ -62,12 +68,4 @@ proc cg_convcgsv {args} {
 	foreach {srcfile dstfile} $args break
 	convcgsv $srcfile $dstfile.temp
 	file rename $dstfile.temp $dstfile
-}
-
-if 0 {
-	cd /complgen/projects/cmt71
-	set dir /XXX
-	set destdir /complgen/projects/cmt71/cmt71_02_a
-	set dbdir /complgen/refseq/hg18
-	set force 0
 }

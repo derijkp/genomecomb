@@ -4,13 +4,13 @@ exec tclsh "$0" "$@"
 
 package require Extral
 
-
 ##############################################################
 # 
 #  This is a script that downloads a number of databases
 #  
-#  Written by Annelies Cassiers
-#  adapted and extended by Peter De Rijk
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# parts by Annelies Cassiers (VIB - University of Antwerp)
 #
 ##############################################################
 

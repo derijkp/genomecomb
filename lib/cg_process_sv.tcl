@@ -1,3 +1,9 @@
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
 proc process_sv {cgdir dir dbdir {force 0}} {
 	set keepdir [pwd]
 	set cgdir [file normalize $cgdir]

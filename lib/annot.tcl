@@ -1,3 +1,9 @@
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
 proc annot_region_init {regfile} {
 	global annot
 	catch {annot_region_close $regfile}

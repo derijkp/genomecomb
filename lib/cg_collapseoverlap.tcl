@@ -2,8 +2,13 @@
 # the next line restarts using tclsh \
 exec tclsh "$0" "$@"
 
-package require Extral
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
 
+package require Extral
 
 if 0 {
 
@@ -133,7 +138,7 @@ if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
 	package require Extral
 	set ::base $scriptname
-	cg_downloaddb {*}$argv
+	cg_collapseoverlap {*}$argv
 }
 
 

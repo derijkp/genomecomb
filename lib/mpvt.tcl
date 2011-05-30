@@ -1,3 +1,9 @@
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
 if 0 {
 set multicomparfile /complgen/multicompar/compar.tsv
 set mpvtfile /complgen/multicompar/mpvt_GS102_GS103_rtg102_rtg103.tsv

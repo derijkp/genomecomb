@@ -1,3 +1,9 @@
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
 # < 0 if comp1 < comp2
 # > 0 if comp1 > comp2
 proc comparepos {comp1 comp2} {
