@@ -402,7 +402,7 @@ proc cg_multicompar {args} {
 }
 
 proc cg_multicompar_reannot {args} {
-	if {([llength $args] != 1) && ([llength $args] != 2)} {
+	if {[llength $args] < 1} {
 		errorformat multicompar_reannot
 		exit 1
 	}
