@@ -26,7 +26,7 @@ if 0 {
 
 proc cg_makesequenom {args} {
 	set extraseq 124
-	set freql -1
+	set freql 0
 	set freqN 0.2
 	set pos 0
 	foreach {key value} $args {
@@ -94,22 +94,22 @@ proc cg_makesequenom {args} {
 		set list [lsort -dict -decreasing $list]
 		list_foreach {c s e type freq} $list {
 			set start [expr {$s-$estart}]
-			if {$freq eq "" && $freql != -1} continue
+			if {$freq eq ""} {set freq 0}
 			if {$freq <= $freql} continue
 			if {$type eq "ins"} {
-				set seq [string_replace $seq $start -1 N]
+				set end $start
 			} else {
 				set end [expr {$e-$estart-1}]
 				if {$end < $start} {set end $start}
-				if {$type eq "del" && [expr {$end-$start}] > 5} continue
-				if {$freq > $freqN} {
-					set seq [string_replace $seq $start $end N]
-				} else {
-					set base [string range $seq $start $end]
-					set base [string tolower $base]
-					set seq [string_replace $seq $start $end $base]
-				}
 			}
+			if {$type eq "del" && [expr {$end-$start}] > 5} continue
+			set base [string range $seq $start $end]
+			if {$freq > $freqN} {
+				regsub -all . $base N base
+			} else {
+				set base [string tolower $base]
+			}
+			set seq [string_replace $seq $start $end $base]
 		}
 		if {$ref eq ""} {set ref -}
 		if {$alt eq ""} {set alt -}
