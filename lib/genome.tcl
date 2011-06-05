@@ -165,3 +165,22 @@ proc cg_make_genomecindex {ifasfile} {
 	close $f
 }
 
+proc cg_genome_get {args} {
+	foreach {genome chr start end} $args break
+	if {[llength $args] == 4} {
+		set f [genome_open $genome]
+		puts [genome_get $f $chr $start $end]
+		close $f
+	} elseif {[llength $args] == 2} {
+		global genomefasta
+		set f [genome_open $genome]
+		set fastaindex $genomefasta($f)
+		foreach {gstart glen} [dict get $fastaindex $chr] break
+		seek $f $gstart
+		fcopy $f stdout -size $glen
+		close $f
+	} else {
+		error "format is: genome_get chromosome ?start end?"
+	}
+}
+
