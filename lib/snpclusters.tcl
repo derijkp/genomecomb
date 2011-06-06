@@ -69,7 +69,7 @@ proc clusters {} {
 		while {![eof $f]} {
 			incr pos
 			incr num
-			if {![expr $num%100000]} {putsprogres "${num} ($chr:$begin)"}
+			if {![expr $num%100000]} {putsprogress "${num} ($chr:$begin)"}
 			foreach {chr begin end} [get_region $f $poss] break
 			if {$chr != $pchr} break
 			set diff [expr {$begin-$pbegin}]
@@ -84,7 +84,7 @@ proc clusters {} {
 		set score 0
 		while {![eof $f]} {
 			incr num
-			if {![expr $num%100000]} {putsprogres "${num} ($chr:$begin)"}
+			if {![expr $num%100000]} {putsprogress "${num} ($chr:$begin)"}
 			foreach {chr begin end} [get_region $f $poss] break
 			if {$chr == $pchr} {
 				set diff [expr {$begin-$pbegin}]
