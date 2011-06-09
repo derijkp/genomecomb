@@ -164,6 +164,17 @@ proc scoredist {file sample1 sample2} {
 
 }
 
+proc cg_scoredist {args} {
+	if {[llength $args] != 3} {
+		puts stderr "format is: $scriptname $action compar_file sample1 sample2"
+		puts stderr " - calculates distribution of different scores"
+		exit 1
+	}
+	foreach {filename sample1 sample2} $args {
+		scoredist $filename $sample1 $sample2
+	}
+}
+
 if 0 {
 
 	lappend auto_path ~/dev/completegenomics/lib
