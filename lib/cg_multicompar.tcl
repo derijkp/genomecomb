@@ -108,14 +108,14 @@ proc multicompar {compar_file dir} {
 		set file2 [gzfile $dir]
 	}
 	if {![file exists $compar_file]} {
-		file_write $compar_file [join {chromosome begin end type} \t]
+		file_write $compar_file [join {chromosome begin end type ref alt} \t]
 	}
 	set f1 [open $compar_file]
 	set header1 [tsv_open $f1]
 	if {[inlist $header1 alleleSeq1-$name]} {
 		error "$name already present in $compar_file"
 	}
-	set comparposs1 [list_cor $header1 $comparfields]
+	set comparposs1 [tsv_basicfields $header1 4]
 	if {([lsearch $comparposs1 -1] != -1)} {
 		puts stderr "header error in comparfile $compar_file"
 		exit 1
@@ -124,7 +124,7 @@ proc multicompar {compar_file dir} {
 	set dummy1 [list_fill [llength $header1] ?]
 	set f2 [gzopen $file2]
 	set header2 [tsv_open $f2]
-	set comparposs2 [list_cor $header2 $comparfields]
+	set comparposs2 [tsv_basicfields $header2 4]
 	if {([lsearch $comparposs2 -1] != -1)} {
 		puts stderr "header error in fannot_varfile2 $compar_file"
 		exit 1
@@ -144,11 +144,11 @@ proc multicompar {compar_file dir} {
 	set listfields1 [list_find -glob $header1 l:*]
 	set listfields2 [list_find -glob $header2 l:*]
 	# make output header
-	set restfields1 [list_lremove [list_lremove $header1 $mergefields] $comparfields]
+	set restfields1 [list_lremove [list_sub $header1 -exclude $comparposs1] $mergefields]
 	set restfields1 [list_remove $restfields1 ref reference alt]
 	set restposs1 [list_cor $header1 $restfields1]
-	set oheader [list_concat $comparfields ref alt $restfields1]
-	set restfields2 [list_lremove [list_lremove $header2 $mergefields] $comparfields]
+	set oheader [list_concat {chromosome begin end type ref alt} $restfields1]
+	set restfields2 [list_lremove [list_sub $header2 -exclude $comparposs2] $mergefields]
 	set restfields2 [list_remove $restfields2 ref reference alt]
 	set restposs2 [list_cor $header2 $restfields2]
 	foreach field $restfields2 {
