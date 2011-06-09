@@ -481,20 +481,6 @@ cg select -q '$begin < 2000' -f 'chromosome begin end' -s 'haplotype' < GS102/AS
 
 }
 
-proc tsv_sort {filename fields} {
-	set f [open $filename]
-	set line [gets $f]
-	close $f
-	if {[string index $line 0] eq "#"} {set line [string range $line 1 end]}
-	set header [split $line \t]
-	set poss [list_cor $header $fields]
-	if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $fields [list_find $poss -1]] ,] not found"}
-	set poss [lmath_calc $poss + 1]
-	puts [join $header \t]
-	set command "tail +2 [list $filename] | gnusort8 -T \"[scratchdir]\" -t \\t -N -s -k[join $poss " -k"] >@ stdout"
-	eval exec $command
-}
-
 proc tsv_hcheader {f keepheaderVar headerVar} {
 	upvar $keepheaderVar keepheader
 	upvar $headerVar header

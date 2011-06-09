@@ -154,15 +154,6 @@ switch $action {
 			tsv_index $field $tsvfile
 		}
 	}
-	sort {
-		if {([llength $argv] < 1) || ([llength $argv] > 2)} {
-			puts stderr "format is: $scriptname $action file fields"
-			puts stderr " - sort tab separated file"
-			exit 1
-		}
-		foreach {filename fields} $argv break
-		tsv_sort $filename $fields
-	}
 	addgeneinfo {
 		if {[llength $argv] != 1} {
 			puts stderr "format is: $scriptname $action file"
