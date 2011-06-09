@@ -25,6 +25,11 @@ proc cg_updatevarfile {args} {
 	set poss [list_cor $header $nheader]
 	set poss [lreplace $poss 0 2 {*}$fposs]
 	set aposs [list_find -glob $nheader alleleSeq*]
+	if {[llength $aposs]} {
+		set doalt 1
+	} else {
+		set doalt 0
+	}
 	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]
 	puts $o [join $nheader \t]
 	set count 0
@@ -44,7 +49,7 @@ proc cg_updatevarfile {args} {
 		if {$doalt} {
 			set alleles [list_sub $line $aposs]
 			set alt [list_remove [list_remdup $alleles] - ? N $gref {}]
-			if {[llength $alt] == 0} {set alt ?}
+			if {([llength $alt] == 0) && ($type ne "del")} {set alt ?}
 			lset line 5 [join $alt ,]
 		}
 		puts $o [join $line \t]
