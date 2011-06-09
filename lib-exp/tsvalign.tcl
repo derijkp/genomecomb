@@ -102,6 +102,18 @@ proc tsv_align {file1 file2 joinfields1 joinfields2 postfix1 postfix2} {
 	close $f1; close $f2
 }
 
+proc cg_tsv_align {args} {
+	if {[llength $args] < 6} {
+		puts stderr "format is: $scriptname $action file1 file2 joinfields1 joinfields2 postfix1 postfix2 ?method?"
+		exit 1
+	}
+	foreach {file1 file2 joinfields1 joinfields2 postfix1 postfix2 method} $args break
+	if {$method eq ""} {set method match}
+	switch $method {
+		match {tsv_align $file1 $file2 $joinfields1 $joinfields2 $postfix1 $postfix2}
+	}
+}
+
 if 0 {
 
 set params {compar-cnvcg.tsv ogtregions.tsv "chr-GS102 begin-GS102 end-GS102" "chromosome begin end" "" "-ogt" overlap}

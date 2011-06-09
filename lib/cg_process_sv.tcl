@@ -42,3 +42,20 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 	putslog "Finished finding sv in $dir"
 	cd $keepdir
 }
+
+proc cg_process_sv {args} {
+	if {([llength $args] < 2) || ([llength $args] > 3)} {
+		puts stderr "format is: $scriptname $action sampledir destdir dbdir ?force?"
+		puts stderr " - processes sv for one sample directory."
+		puts stderr " - By default, only files that are not present already will be created."
+		puts stderr " -When force is given as a parameter, everything will be recalculated and overwritten."
+		exit 1
+	}
+	foreach {dir destdir dbdir force} $args break
+	switch $force {
+		force {set force 1}
+		"" {set force 0}
+		default {error "unrecognized option $force"}
+	}
+	process_sv $dir $destdir $dbdir $force
+}

@@ -1801,3 +1801,60 @@ if {$start >= $dbgstop} {error STOPPED}
 
 }
 
+proc cg_map2sv {args} {
+	if {[llength $args] < 2} {
+		puts stderr "format is: $scriptname $action file ... out_prefix"
+		exit 1
+	}
+	set prefix [list_pop args]
+	map2sv $args $prefix
+}
+
+proc cg_sv2db {args} {
+	if {[llength $args] < 1} {
+		puts stderr "format is: $scriptname $action file ..."
+		exit 1
+	}
+	sv2db $args
+}
+
+proc cg_svinfo {args} {
+	if {[llength $args] < 1} {
+		puts stderr "format is: $scriptname $action file ..."
+		exit 1
+	}
+	foreach pairfile $args {
+		putslog $pairfile
+		svinfo $pairfile
+	}
+}
+
+proc cg_svfind {args} {
+	if {[llength $args] < 2} {
+		puts stderr "format is: $scriptname $action pairedfile ... trffile"
+		exit 1
+	}
+	set trffile [list_pop args]
+	foreach {pairfile} $args {
+		putslog $pairfile
+		svfind $pairfile $trffile
+	}
+}
+
+proc cg_svcompare {args} {
+	if {[llength $args] != 2} {
+		puts stderr "format is: $scriptname $action svfile1 svfile2"
+		exit 1
+	}
+	foreach {svfile1 svfile2} $args break
+	svcompare $svfile1 $svfile2
+}
+
+proc cg_svrescore {args} {
+	if {[llength $args] != 1} {
+		puts stderr "format is: $scriptname $action svfile"
+		exit 1
+	}
+	foreach {svfile} $args break
+	svrescore $svfile
+}

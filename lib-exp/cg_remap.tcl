@@ -23,8 +23,8 @@ proc make_remap {file genome resultfile} {
 		foreach {temp destname deststart destsize deststrand temp destseq} $line1 break
 		set destend [expr {$deststart+$destsize}]
 		set line2 [gets $f]
-	set line1 [lrange $line1 0 end-1]
-	set line2 [lrange $line2 0 end-1]
+		set line1 [lrange $line1 0 end-1]
+		set line2 [lrange $line2 0 end-1]
 		foreach {temp name start size strand temp seq} $line2 break
 		set end [expr {$start+$size}]
 		set line [gets $f]

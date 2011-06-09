@@ -8,6 +8,8 @@ exec tclsh "$0" "$@"
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+if 0 {
+
 lappend auto_path /home/peter/bin/tcl
 lappend auto_path /home/peter/dev/completegenomics/lib
 
@@ -25,3 +27,20 @@ if {[llength [get argv ""]]} {
 }
 .g open $file
 
+}
+
+proc cg_graph {args} {
+	package require Tk
+	set object .g
+	graphwidget .g
+	pack .g -fill both -expand yes
+	if {[lindex $args 0] eq "region"} {
+		list_shift args
+		set region 1
+	} else {
+		set region 0
+	}
+	foreach file $args {
+		.g open $file $region
+	}
+}

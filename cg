@@ -16,7 +16,7 @@ while 1 {
 }
 
 set appdir [file dir $script]
-lappend auto_path $appdir/lib
+lappend auto_path $appdir/lib $appdir/lib-exp
 append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
 package require Extral
 
@@ -29,22 +29,6 @@ if {[llength $argv] < 1} {
 
 set action [list_shift argv]
 switch $action {
-	process_sv {
-		if {([llength $argv] < 2) || ([llength $argv] > 3)} {
-			puts stderr "format is: $scriptname $action sampledir destdir dbdir ?force?"
-			puts stderr " - processes sv for one sample directory."
-			puts stderr " - By default, only files that are not present already will be created."
-			puts stderr " -When force is given as a parameter, everything will be recalculated and overwritten."
-			exit 1
-		}
-		foreach {dir destdir dbdir force} $argv break
-		switch $force {
-			force {set force 1}
-			"" {set force 0}
-			default {error "unrecognized option $force"}
-		}
-		process_sv $dir $destdir $dbdir $force
-	}
 	rtgregions {
 		if {[llength $argv] != 3} {
 			puts stderr "format is: $scriptname $action cgdir comparfile rtgdir"
@@ -176,58 +160,6 @@ switch $action {
 		}
 		mpvt_summary {*}$argv
 	}
-	map2sv {
-		if {[llength $argv] < 2} {
-			puts stderr "format is: $scriptname $action file ... out_prefix"
-			exit 1
-		}
-		set prefix [list_pop argv]
-		map2sv $argv $prefix
-	}
-	sv2db {
-		if {[llength $argv] < 1} {
-			puts stderr "format is: $scriptname $action file ..."
-			exit 1
-		}
-		sv2db $argv
-	}
-	svinfo {
-		if {[llength $argv] < 1} {
-			puts stderr "format is: $scriptname $action file ..."
-			exit 1
-		}
-		foreach pairfile $argv {
-			putslog $pairfile
-			svinfo $pairfile
-		}
-	}
-	svfind {
-		if {[llength $argv] < 2} {
-			puts stderr "format is: $scriptname $action pairedfile ... trffile"
-			exit 1
-		}
-		set trffile [list_pop argv]
-		foreach {pairfile} $argv {
-			putslog $pairfile
-			svfind $pairfile $trffile
-		}
-	}
-	svcompare {
-		if {[llength $argv] != 2} {
-			puts stderr "format is: $scriptname $action svfile1 svfile2"
-			exit 1
-		}
-		foreach {svfile1 svfile2} $argv break
-		svcompare $svfile1 $svfile2
-	}
-	svrescore {
-		if {[llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action svfile"
-			exit 1
-		}
-		foreach {svfile} $argv break
-		svrescore $svfile
-	}
 	refconsregions {
 		if {[llength $argv] != 1} {
 			puts stderr "format is: $scriptname $action variation_file"
@@ -275,21 +207,6 @@ switch $action {
 		}
 		foreach {regionfile archive maxsize prefsize db threads} $argv break
 		makeprimers $regionfile $archive $maxsize $prefsize $db $threads
-	}
-	graph {
-		package require Tk
-		set object .g
-		graphwidget .g
-		pack .g -fill both -expand yes
-		if {[lindex $argv 0] eq "region"} {
-			list_shift argv
-			set region 1
-		} else {
-			set region 0
-		}
-		foreach file $argv {
-			.g open $file $region
-		}
 	}
 	ucsc2region {
 		if {[llength $argv] != 1} {
@@ -340,17 +257,6 @@ switch $action {
 		foreach tsvfile $argv {
 			putslog "Indexing $tsvfile"
 			tsv_index $field $tsvfile
-		}
-	}
-	tsv_align {
-		if {[llength $argv] < 6} {
-			puts stderr "format is: $scriptname $action file1 file2 joinfields1 joinfields2 postfix1 postfix2 ?method?"
-			exit 1
-		}
-		foreach {file1 file2 joinfields1 joinfields2 postfix1 postfix2 method} $argv break
-		if {$method eq ""} {set method match}
-		switch $method {
-			match {tsv_align $file1 $file2 $joinfields1 $joinfields2 $postfix1 $postfix2}
 		}
 	}
 	sort {
