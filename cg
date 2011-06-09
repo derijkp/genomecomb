@@ -37,59 +37,6 @@ switch $action {
 		foreach {cgdir comparfile rtgdir} $argv break
 		rtgregions $cgdir $comparfile $rtgdir
 	}
-	process_compare {
-		if {[llength $argv] == 2} {
-			set force 0
-			foreach {dbdir resultsdir} $argv break
-			set resultsdir [file normalize $resultsdir]
-			foreach {dir1 dir2} [lrange [split $resultsdir _] end-1 end] break
-			set dir1 [file dir $resultsdir]/$dir1
-			set dir2 [file dir $resultsdir]/$dir2
-		} else {
-			if {([llength $argv] < 4) || ([llength $argv] > 5)} {
-				puts stderr "format is: $scriptname $action sampledir1 sampledir2 dbdir resultsdir ?force?"
-				puts stderr " - compare 2 (prepared) sample directories."
-				puts stderr " - By default, only files that are not present already will be created."
-				puts stderr " -When force is given as a parameter, everything will be recalculated and overwritten."
-				exit 1
-			}
-			foreach {dir1 dir2 dbdir resultsdir force} $argv break
-			switch $force {
-				force {set force 1}
-				"" {set force 0}
-				default {error "unrecognized option $force"}
-			}
-		}
-		process_compare $dir1 $dir2 $dbdir $resultsdir $force
-	}
-	process_compare_coverage {
-		if {[llength $argv] == 2} {
-			set force 0
-			foreach {dbdir resultsdir} $argv break
-			set dbdir [file normalize $dbdir]
-			set resultsdir [file normalize $resultsdir]
-			foreach {dir1 dir2} [lrange [split $resultsdir _] end-1 end] break
-			set dir1 [file dir $resultsdir]/$dir1
-			set dir2 [file dir $resultsdir]/$dir2
-			set resultsdir $resultsdir/genomecoverage
-			file mkdir $resultsdir
-		} else {
-			if {([llength $argv] < 4) || ([llength $argv] > 5)} {
-				puts stderr "format is: $scriptname $action sampledir1 sampledir2 dbdir resultsdir ?force?"
-				puts stderr " - calculate coverages for 2 compared sample directories."
-				puts stderr " - By default, only files that are not present already will be created."
-				puts stderr " -When force is given as a parameter, everything will be recalculated and overwritten."
-				exit 1
-			}
-			foreach {dir1 dir2 dbdir resultsdir force} $argv break
-			switch $force {
-				force {set force 1}
-				"" {set force 0}
-				default {error "unrecognized option $force"}
-			}
-		}
-		process_compare_coverage $dir1 $dir2 $dbdir $resultsdir $force
-	}
 	process_indexcompress {
 		if {[llength $argv] != 1} {
 			puts stderr "format is: $scriptname $action file"
@@ -107,58 +54,6 @@ switch $action {
 		}
 		foreach {file genefile outfile} $argv break
 		var2annotvar $file $genefile $outfile
-	}
-	compare_annot {
-		if {[llength $argv] != 7} {
-			puts stderr "format is: $scriptname $action id1 annot_varfile1 region_file1 id2 annot_varfile2 region_file2 outfile"
-			exit 1
-		}
-		foreach {id1 file1 regfile1 id2 file2 regfile2 outfile} $argv break
-		compare_annot $id1 $file1 $regfile1 $id2 $file2 $regfile2 $outfile
-	}
-	annot_compare_region {
-		if {[llength $argv] != 5} {
-			puts stderr "format is: $scriptname $action compar_file reg_file field tvalue fvalue"
-			exit 1
-		}
-		foreach {compar_file reg_file field tvalue fvalue} $argv break
-		annot_compare_region $compar_file $reg_file $field $tvalue $fvalue
-	}
-	compare_pvt {
-		if {[llength $argv] != 0} {
-			puts stderr "format is: $scriptname $action"
-			exit 1
-		}
-		compare_pvt
-	}
-	compare_pvtsummary {
-		if {[llength $argv] != 0 && [llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action ?table?"
-			exit 1
-		}
-		if {[lindex $argv end] eq "table"} {set type 2} else {set type 1}
-		compare_pvtsummary $type
-	}
-	compare_mpvt {
-		if {[llength $argv] < 1} {
-			puts stderr "format is: $scriptname $action multicomparfile mpvtfile"
-			puts stderr " - returns mpvt file with numbers per class of variant"
-			puts stderr " - The samples used in the comparison are taken from the name"
-			puts stderr " - of the resulting mpvtfile that has the following pattern"
-			puts stderr " - prefix_sample1_sample2_....tsv"
-			exit 1
-		}
-		foreach {dbdir resultsdir} $argv break
-		compare_mpvt {*}$argv
-	}
-	mpvt_summary {
-		if {[llength $argv] != 2} {
-			puts stderr "format is: $scriptname $action mpvtfile prefix_sample1_sample2_rtgsample1_rtgsample2.tsv"
-			puts stderr " - Creates a summary file (last argument)"
-			puts stderr " - The name consists of a prefix followed by the samples to be compared (joined with _)"
-			exit 1
-		}
-		mpvt_summary {*}$argv
 	}
 	refconsregions {
 		if {[llength $argv] != 1} {

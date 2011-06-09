@@ -452,3 +452,26 @@ proc mpvt_summary {mpvtfile mpvtsummaryfile} {
 	
 	close $o
 }
+
+proc cg_compare_mpvt {args} {
+	if {[llength $args] < 1} {
+		puts stderr "format is: $scriptname $action multicomparfile mpvtfile"
+		puts stderr " - returns mpvt file with numbers per class of variant"
+		puts stderr " - The samples used in the comparison are taken from the name"
+		puts stderr " - of the resulting mpvtfile that has the following pattern"
+		puts stderr " - prefix_sample1_sample2_....tsv"
+		exit 1
+	}
+	foreach {dbdir resultsdir} $args break
+	compare_mpvt {*}$args
+}
+
+proc cg_mpvt_summary {args} {
+	if {[llength $args] != 2} {
+		puts stderr "format is: $scriptname $action mpvtfile prefix_sample1_sample2_rtgsample1_rtgsample2.tsv"
+		puts stderr " - Creates a summary file (last argument)"
+		puts stderr " - The name consists of a prefix followed by the samples to be compared (joined with _)"
+		exit 1
+	}
+	mpvt_summary {*}$args
+}

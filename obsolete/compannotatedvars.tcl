@@ -403,3 +403,72 @@ if 0 {
 	reannot_compare $compar_file $dir1 $dir2 atemp
 	
 }
+
+proc process_compare {dir1 dir2 dbdir resultsdir {force 0}} {
+	set dir1 [file normalize $dir1]
+	set dir2 [file normalize $dir2]
+	set keepdir [pwd]
+	file mkdir $resultsdir
+	cd $resultsdir
+	set name1 [file tail $dir1]
+	set name2 [file tail $dir2]
+	# compare
+	if {$force || (![file exists compar_${name1}_${name2}.tsv] && ![file exists fcompar_${name1}_${name2}.tsv])} {
+		putslog "comparing $name1 and $name2 (-> $resultsdir)"
+		cg compare_annot $name1 $dir1/fannotvar-$name1.tsv $dir1/sreg-$name1.tsv $name2 $dir2/fannotvar-$name2.tsv $dir2/sreg-$name2.tsv compar_${name1}_${name2}.tsv
+	}
+	if {$force || ![file exists fcompar_${name1}_${name2}.tsv]} {
+		reannot_compare compar_${name1}_${name2}.tsv $dir1 $dir2 fcompar_${name1}_${name2}.tsv
+	}
+	if {$force || ![file exists pvtcompar_${name1}_${name2}.tsv]} {
+		cg compare_pvt < fcompar_${name1}_${name2}.tsv > temp.tsv
+		file rename temp.tsv pvtcompar_${name1}_${name2}.tsv
+		cg compare_pvtsummary < pvtcompar_${name1}_${name2}.tsv > temp.tsv
+		file rename temp.tsv summarycompar_${name1}_${name2}.tsv
+	}
+	cd $keepdir
+}
+
+proc cg_process_compare {args} {
+	if {[llength $args] == 2} {
+		set force 0
+		foreach {dbdir resultsdir} $args break
+		set resultsdir [file normalize $resultsdir]
+		foreach {dir1 dir2} [lrange [split $resultsdir _] end-1 end] break
+		set dir1 [file dir $resultsdir]/$dir1
+		set dir2 [file dir $resultsdir]/$dir2
+	} else {
+		if {([llength $args] < 4) || ([llength $args] > 5)} {
+			puts stderr "format is: $scriptname $action sampledir1 sampledir2 dbdir resultsdir ?force?"
+			puts stderr " - compare 2 (prepared) sample directories."
+			puts stderr " - By default, only files that are not present already will be created."
+			puts stderr " -When force is given as a parameter, everything will be recalculated and overwritten."
+			exit 1
+		}
+		foreach {dir1 dir2 dbdir resultsdir force} $args break
+		switch $force {
+			force {set force 1}
+			"" {set force 0}
+			default {error "unrecognized option $force"}
+		}
+	}
+	process_compare $dir1 $dir2 $dbdir $resultsdir $force
+}
+
+proc cg_compare_annot {args} {
+	if {[llength $args] != 7} {
+		puts stderr "format is: $scriptname $action id1 annot_varfile1 region_file1 id2 annot_varfile2 region_file2 outfile"
+		exit 1
+	}
+	foreach {id1 file1 regfile1 id2 file2 regfile2 outfile} $args break
+	compare_annot $id1 $file1 $regfile1 $id2 $file2 $regfile2 $outfile
+}
+
+proc cg_annot_compare_region {args} {
+	if {[llength $args] != 5} {
+		puts stderr "format is: $scriptname $action compar_file reg_file field tvalue fvalue"
+		exit 1
+	}
+	foreach {compar_file reg_file field tvalue fvalue} $args break
+	annot_compare_region $compar_file $reg_file $field $tvalue $fvalue
+}

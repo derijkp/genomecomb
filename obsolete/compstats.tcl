@@ -347,3 +347,21 @@ cd /complgen/compar_GS102_GS103
 set file pvtcompar_GS102_GS103.tsv
 set ofile summarycompar2_GS102_GS103.tsv
 }
+
+proc cg_compare_pvt {args} {
+	if {[llength $args] != 0} {
+		puts stderr "format is: $scriptname $action"
+		exit 1
+	}
+	compare_pvt
+}
+
+proc cg_compare_pvtsummary {args} {
+	if {[llength $args] != 0 && [llength $args] != 1} {
+		puts stderr "format is: $scriptname $action ?table?"
+		exit 1
+	}
+	if {[lindex $args end] eq "table"} {set type 2} else {set type 1}
+	compare_pvtsummary $type
+}
+
