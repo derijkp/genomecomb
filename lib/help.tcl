@@ -24,6 +24,7 @@ foreach file $files {
 	set h [helpparts $action]
 	set category {}
 	catch {dict get $h Category} category
+	set category [string trim $category]
 	set descr {}
 	set item " * $action"
 	if {![catch {dict get $h Summary} summary]} {
@@ -44,8 +45,21 @@ puts { * select, graph, multicompar, regsubtract, regjoin, regcommon, makeregion
 }
 }
 
+proc help_get {action} {
+	if {[file exists $::appdir/lib/cg_$action.wiki]} {
+		set help [file_read $::appdir/lib/cg_$action.wiki]
+	} else {
+		puts stderr "Unknown help subject \"$action\""
+		puts stderr "Known subjects are"
+		puts stderr "Docs: [help_docs]"
+		puts stderr "Commands: [help_actions]"
+		puts stderr "Use without arguments for overview"
+		exit 1
+	}
+}
+
 proc help {action} {
-	set help [file_read $::appdir/lib/cg_$action.wiki]
+	set help [help_get $action]
 	set cyan "\033\[1;36m"
 	set normal "\033\[0m"
 #	regsub -all {(^|\n)\; *([^:\n]+):} $help "\n${cyan}\\2$normal:" help
@@ -55,10 +69,21 @@ proc help {action} {
 
 proc help_actions {} {
 	global appdir
-	set files [lsort -dict [dirglob $appdir/lib/ cg_*.wiki]]
+	set files [lsort -dict [list_concat [dirglob $appdir/lib/ cg_*.wiki] [dirglob $appdir/lib-exp/ cg_*.wiki]]]
 	set list {}
 	foreach file $files {
 		set action [string range [file root [file tail $file]] 3 end]
+		lappend list $action
+	}
+	return $list
+}
+
+proc help_docs {} {
+	global appdir
+	set files [lsort -dict [dirglob $appdir/docs/ *.wiki]]
+	set list {}
+	foreach file $files {
+		set action [string range [file root [file tail $file]] 0 end]
 		lappend list $action
 	}
 	return $list

@@ -1,0 +1,7 @@
+= Introduction =
+
+== GenomeComb ==
+You can find info on the separate commands in the [[reference]] section/
+
+== File formats ==
+== How to start ==

@@ -1,0 +1,43 @@
+
+= Reference =
+
+== Format ==
+cg action ....
+
+== Actions == 
+ === Conversion ===
+ * [[cg_process_rtgsample|process_rtgsample]]: Convert rtg data to cg format
+ * [[cg_process_sample|process_sample]]: Convert Complete Genomics data to cg format
+ * [[cg_vcf2sft|vcf2sft]]: Converts data in vcf format to sft (simple feature table) format
+
+ === Annotation ===
+ * [[cg_annotate|annotate]]: Annotate a variant file with region, gene or variant data
+
+ === Compare ===
+ * [[cg_multicompar|multicompar]]: Compare multiple variant files
+ * [[cg_multicompar_reannot|multicompar_reannot]]: Reannotate multicompar file
+
+ === Query ===
+ * [[cg_groupby|groupby]]: Group lines in a tsv file, based on 1 or more identical fields
+ * [[cg_select|select]]: Command for very flexible selection, sorting and conversion of tab separated files
+
+ === Regions ===
+ * [[cg_covered|covered]]: Find number of bases covered by regions in a region file
+ * [[cg_multireg|multireg]]: Compare multiple regions files
+ * [[cg_regcommon|regcommon]]: list regions common between region_file1 and region_file2
+ * [[cg_regextract|regextract]]: Find regions above or below a given cutoff.
+ * [[cg_regjoin|regjoin]]: join regions in 1 or 2 regionfiles
+ * [[cg_regsubtract|regsubtract]]: subtract regions in region_file2 from region_file1
+
+ === Structural ===
+ * [[cg_svmulticompar|svmulticompar]]: Compare multiple structural variant files
+
+ === Convert ===
+ * [[cg_convcgcnv|convcgcnv]]: Convert the Complete Genomics CNV files to the cg format
+ * [[cg_convcgsv|convcgsv]]: Convert the Complete Genomics SV files to the cg format
+
+ === Validation ===
+ * [[cg_makesequenom|makesequenom]]: Make input files for designing sequenom validation experiments
+
+ === Other ===
+ * select, graph, multicompar, regsubtract, regjoin, regcommon, makeregions, makeprimers, ...

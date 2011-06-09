@@ -1,0 +1,64 @@
+
+== Prepare samples ==
+
+Sort data, Convert variations and gene annotation information to one annotated variation file.
+* one variation (2 alleles) per line
+* including gene information for the variations that have it
+It also creates
+* region files such as the ref-(in)consistent regions and clusters of variations are located
+* some (genome) coverage data
+{{{
+cg process_sample originalsampledir sampledir dbdir ?force?
+}}}
+* originalsampledir: is a directory with the sample data as it comes from from CG,
+  nothing will be changed in this dir
+* sampledir: a directory with the sample data in genomecombs formats, that will 
+  be created if not present yet; if present, files not created yet will be added
+ (e.g. after stopped job)
+* dbdir: directory containing reference databases
+* ?force?: if the parameter force is given, the command will restart from the 
+  beginning, and redo every step. If not given, the command will only create 
+  files that do not exist yet.
+
+{{{
+cg process_rtgsample sampledir dbdir ?force?
+}}}
+does similar for RTG data. It expects two subdirs:
+* ori: dir containing original rtg variation file (pattern *unfiltered.snp*)
+* allpos: dir with files with info on full genome (pattern chr${chr}_snps.txt) 
+
+== Compare genomes ==
+Compare samples by making a file containing information of all samples in a wide 
+table (tab separated), where each line contains general variant info (position, type, 
+annotation, etc.), plus columns with variant info specific to each 
+sample (genotype, coverage, etc.).
+The latter have a column heading of the form info-samplename
+{{{
+mkdir resultsdir
+cg multicompar resultsdir/mcomparfile sampledir ... ...
+}}}
+* sampledir: processed (using process_sample) sample directories to be compared
+* resultsdir/mcomparfile: The sampledirs given will be added to this file. The sampledirs are expected to be one dir below the resultdir.
+
+Complete annotation info in multicompar file: Information that is not directly in the individual variant files, such as coverage for a sample where the variant was not called, is extracted from the full data files, and added to the multicompar file.
+{{{
+cg multicompar_reannot resultsdir/mcomparfile
+}}}
+* resultsdir/mcomparfile: The sampledirs given will be added to this file. The sampledirs are expected to be one dir below the resultdir.
+
+== Annotate comparison file ==
+Add (a lot of) annotations to the mcomparfile using:
+{{{
+cg annotate mcomparfile resultfile dbdir annovardir
+}}}
+* mcomparfile: variant file (can be from multicomparison, has to have alt field)
+* resultfile: new file that will be written: mcomparfile+ added columns with annotation
+* dbdir: directory containing reference databases and annotation files (.../hg18)
+* annovardir: directory containing annovar and needed databases
+
+== Select variants ==
+cg select can be used to easily query the resulting file.
+{{{
+cg select ?options? ?infile? ?outfile?
+}}}
+More info can be found in the help on [[cg_select|select]]
