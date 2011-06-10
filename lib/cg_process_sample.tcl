@@ -318,6 +318,17 @@ proc process_indexcompress {file} {
 	}
 }
 
+proc cg_process_indexcompress {args} {
+	global scriptname action
+	if {[llength $args] != 1} {
+		puts stderr "format is: $scriptname $action file"
+		puts stderr " - makes index, and compresses to bgzip"
+		exit 1
+	}
+	foreach {file} $args break
+	process_indexcompress $file
+}
+
 proc cg_process_sample {args} {
 	if {([llength $args] < 3) || ([llength $args] > 4)} {
 		errorformat process_sample

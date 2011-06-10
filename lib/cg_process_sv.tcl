@@ -44,6 +44,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 }
 
 proc cg_process_sv {args} {
+	global scriptname action
 	if {([llength $args] < 2) || ([llength $args] > 3)} {
 		puts stderr "format is: $scriptname $action sampledir destdir dbdir ?force?"
 		puts stderr " - processes sv for one sample directory."

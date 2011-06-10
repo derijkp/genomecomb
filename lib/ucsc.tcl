@@ -19,6 +19,17 @@ proc ucsc2region {ucsc_file} {
 	close $f
 }
 
+proc cg_ucsc2region {args} {
+	global scriptname action
+	if {[llength $args] != 1} {
+		puts stderr "format is: $scriptname $action ucsc_file"
+		puts stderr "convert ucsc tab file to regionfile for further use in filtering"
+		exit 1
+	}
+	foreach {ucsc_file} $args break
+	ucsc2region $ucsc_file
+}
+
 if 0 {
 # ------------------------------------------------------------------------------
 lappend auto_path ~/dev/completegenomics/lib

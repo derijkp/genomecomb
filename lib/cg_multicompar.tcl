@@ -6,7 +6,6 @@
 
 proc multicompar_annot_join {cur1 cur2} {
 	global comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 listfields1 listfields2
-	global compare_annot_join_trans
 	if {[inlist {{} -} $cur1]} {
 		set region [list_sub $cur2 $comparposs2]
 		set merge [list_sub $cur2 $mergeposs2]

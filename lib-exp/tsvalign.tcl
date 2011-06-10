@@ -103,6 +103,7 @@ proc tsv_align {file1 file2 joinfields1 joinfields2 postfix1 postfix2} {
 }
 
 proc cg_tsv_align {args} {
+	global scriptname action
 	if {[llength $args] < 6} {
 		puts stderr "format is: $scriptname $action file1 file2 joinfields1 joinfields2 postfix1 postfix2 ?method?"
 		exit 1

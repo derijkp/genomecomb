@@ -123,6 +123,17 @@ proc var2annotvar_readonevar_merge {list} {
 	return $rlist
 }
 
+proc cg_var2annot {args} {
+	global scriptname action
+	if {[llength $args] != 3} {
+		puts stderr "format is: $scriptname $action variation_file sorted_gene_file output_file"
+		puts stderr " - makes a new variation file, where the gene information is included"
+		exit 1
+	}
+	foreach {file genefile outfile} $args break
+	var2annotvar $file $genefile $outfile
+}
+
 proc var2annotvar_readonevar f {
 	global cache list
 	# join $cache($f,rov) \n

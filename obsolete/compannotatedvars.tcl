@@ -430,6 +430,7 @@ proc process_compare {dir1 dir2 dbdir resultsdir {force 0}} {
 }
 
 proc cg_process_compare {args} {
+	global scriptname action
 	if {[llength $args] == 2} {
 		set force 0
 		foreach {dbdir resultsdir} $args break
@@ -456,6 +457,7 @@ proc cg_process_compare {args} {
 }
 
 proc cg_compare_annot {args} {
+	global scriptname action
 	if {[llength $args] != 7} {
 		puts stderr "format is: $scriptname $action id1 annot_varfile1 region_file1 id2 annot_varfile2 region_file2 outfile"
 		exit 1
@@ -465,6 +467,7 @@ proc cg_compare_annot {args} {
 }
 
 proc cg_annot_compare_region {args} {
+	global scriptname action
 	if {[llength $args] != 5} {
 		puts stderr "format is: $scriptname $action compar_file reg_file field tvalue fvalue"
 		exit 1

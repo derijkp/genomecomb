@@ -349,6 +349,7 @@ set ofile summarycompar2_GS102_GS103.tsv
 }
 
 proc cg_compare_pvt {args} {
+	global scriptname action
 	if {[llength $args] != 0} {
 		puts stderr "format is: $scriptname $action"
 		exit 1
@@ -357,6 +358,7 @@ proc cg_compare_pvt {args} {
 }
 
 proc cg_compare_pvtsummary {args} {
+	global scriptname action
 	if {[llength $args] != 0 && [llength $args] != 1} {
 		puts stderr "format is: $scriptname $action ?table?"
 		exit 1

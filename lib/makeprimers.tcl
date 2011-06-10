@@ -640,8 +640,6 @@ proc makeprimers_region {name maxsize prefsize temperature archive db extraseq} 
 	return $bestpair
 }
 
-# archive may2009
-# db /data/db/blast/build36
 proc makeprimers {regionsfile archive maxsize prefsize db numthreads {o stdout}} {
 	global cachedir threads temperature extraseq
 	set cachedir [pwd]/cache 
@@ -689,6 +687,21 @@ proc makeprimers {regionsfile archive maxsize prefsize db numthreads {o stdout}}
 	}
 }
 
+proc cg_makeprimers {args} {
+	global scriptname action
+	if {[llength $args] != 6} {
+		puts stderr "format is: $scriptname $action regionfile archive maxsize prefsize db threads"
+		puts stderr "regionfile has to have the columns chromosome, begin, end; must be sorted by chromosome, then begin"
+		puts stderr "archive is may2009 for cgi, empty for latest"
+		puts stderr "maxsize is the maximum amplicon size"
+		puts stderr "prefsize is the prefered amplicon size"
+		puts stderr "db is a searchable database (ssa) of the human genome (/complgen/refseq/hg18/build36-ssa)"
+		exit 1
+	}
+	foreach {regionfile archive maxsize prefsize db threads} $args break
+	makeprimers $regionfile $archive $maxsize $prefsize $db $threads
+}
+
 proc makeprimers_makeregions {filteredfile maxsize {o stdout}} {
 	global cachedir threads temperature extraseq
 	set f [open $filteredfile]
@@ -726,73 +739,12 @@ proc makeprimers_makeregions {filteredfile maxsize {o stdout}} {
 	}
 }
 
-
-
-if 0 {
-
-	lappend auto_path ~/dev/completegenomics/lib
-	package require Extral
-	cd /complgen/compar_GS102_GS103
-	set regionsfile /complgen/compar_GS102_GS103/regionscompar_GS102_GS103-sel.tsv
-	set regionsfile sel3_compar_GS102_GS103_regions.tsv
-	set archive may2009
-	set o stdout
-	set cachedir [pwd]/cache
-	file mkdir $cachedir
-	catch {e destroy}
-	EmblFile new e
-	set db /data/db/blast/build36
-	set db /data/db/build36-ssa
-	set maxsize 600
-	set prefsize 500
-	set name 1-193263235-193263276
-	set name 12-47623154-47623195
-	set bestpair [makeprimers_region $name $maxsize $prefsize $temperature $archive $db $extraseq]
-
-	set o [open /complgen/compar_GS102_GS103/primers_GS102_GS103.tsv w]
-	makeprimers $regionsfile $archive $maxsize $prefsize $db 1 $o
-	close $o
-
-cd /mnt/extra/CompleteGenomics/refseq
-~/bin/blast/formatdb -i BUILD.36.1.REFSEQ.FA -p F -n build36 -l formatdb.log
-
-1-12842376-12842477   1       4       1-12842205-12842761,1-12776721-12777277,1-13542954-13543510,1-13322099-13322655
-2-240504278-240504382   5       1       2-240503934-240504519
-7-45085117-45085218     999999  4       7-45084890-45084943,7-45084890-45084982...
-pairhits 1.5 hits ?	7-45085147-45085173f	GACGCCAGAGGGCAGTGAAG					1	Hs	7				45084693	65
-pairhits 1.5 hits ?	7-45085147-45085173r	CCGCCTTCTGATATCTCACCAC					1	Hs	7				45085208	65
-pairhits 1 hits ? fts repeat	7-155377964-155377990f	GTGGAAGTGGTGGTGGTGAAGA					1	Hs	7				155377889	65
-pairhits 1 hits ? fts repeat	7-155377964-155377990r	TTCAAGCTCTCCTGGATGCTCA					1	Hs	7				155378467	65
-
-set name 7-45085117-45085218
-
-
-set name 5-721271-721372
-
-ucsc_epcr TGCGGACAAGCACACAGAGA CCATCTGCACTTCCCTGACG
-set p1 CCAGATTTCTGCCACAGTCAGC
-set p2 GGCGGTGATATCGGCCATT
-
-set name 11-134110690-134110770
-set name 2-895865-895906
-set name 6-44549936-44549977
-set name 21-46303757-46303798
-set name 1-12842406-12842447
-foreach {cchr cstart cend} [split $name -] break
-set bestpair [makeprimers_region $name $size $prefsize $temperature $archive $db $extraseq]
-
-set p1 GACGCCAGAGGGCAGTGAAG
-set p2 CCGCCTTCTGATATCTCACCAC
-set pos [lsearch [list_subindex $left 1] $p1]
-set lp [lindex $left $pos]
-set pos [lsearch [list_subindex $right 1] $p2]
-set rp [lindex $right $pos]
-
-cd /complgen/compar
-cg makeregions 78vs79_sel.tsv 400 > 78vs79_regions.tsv
-cg makeprimers 78vs79_regions.tsv may2009 600 500 /data/db/blast/build36 1 > primers.tsv
-cg makeprimers 78vs79_regions.tsv may2009 600 400 /data/db/blast/build36 1 > primers400.tsv
-
+proc cg_makeregions {args} {
+	global scriptname action
+	if {[llength $args] != 2} {
+		puts stderr "format is: $scriptname $action selvariationfile maxsize"
+		exit 1
+	}
+	foreach {selvariationfile maxsize} $args break
+	makeprimers_makeregions $selvariationfile $maxsize
 }
-
-

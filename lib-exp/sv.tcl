@@ -1802,6 +1802,7 @@ if {$start >= $dbgstop} {error STOPPED}
 }
 
 proc cg_map2sv {args} {
+	global scriptname action
 	if {[llength $args] < 2} {
 		puts stderr "format is: $scriptname $action file ... out_prefix"
 		exit 1
@@ -1811,6 +1812,7 @@ proc cg_map2sv {args} {
 }
 
 proc cg_sv2db {args} {
+	global scriptname action
 	if {[llength $args] < 1} {
 		puts stderr "format is: $scriptname $action file ..."
 		exit 1
@@ -1819,6 +1821,7 @@ proc cg_sv2db {args} {
 }
 
 proc cg_svinfo {args} {
+	global scriptname action
 	if {[llength $args] < 1} {
 		puts stderr "format is: $scriptname $action file ..."
 		exit 1
@@ -1830,6 +1833,7 @@ proc cg_svinfo {args} {
 }
 
 proc cg_svfind {args} {
+	global scriptname action
 	if {[llength $args] < 2} {
 		puts stderr "format is: $scriptname $action pairedfile ... trffile"
 		exit 1
@@ -1842,6 +1846,7 @@ proc cg_svfind {args} {
 }
 
 proc cg_svcompare {args} {
+	global scriptname action
 	if {[llength $args] != 2} {
 		puts stderr "format is: $scriptname $action svfile1 svfile2"
 		exit 1
@@ -1851,6 +1856,7 @@ proc cg_svcompare {args} {
 }
 
 proc cg_svrescore {args} {
+	global scriptname action
 	if {[llength $args] != 1} {
 		puts stderr "format is: $scriptname $action svfile"
 		exit 1

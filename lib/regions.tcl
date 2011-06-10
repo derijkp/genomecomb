@@ -55,6 +55,17 @@ proc refconsregions {varfile} {
 	file delete rctemp.tsv
 }
 
+proc cg_refconsregions {args} {
+	global scriptname action
+	if {[llength $args] != 1} {
+		puts stderr "format is: $scriptname $action variation_file"
+		puts stderr " - outputs regions annotated as ref-(in)consistent from variation file"
+		exit 1
+	}
+	foreach {varfile} $args break
+	refconsregions $varfile
+}
+
 proc nocallregions {varfile outfile} {
 	putslog "getting partial no-call regions from $varfile"
 	set h [cg select -h $varfile]
@@ -119,6 +130,17 @@ proc reghisto {regfile} {
 	}
 	puts $o all\tall\t$tot
 	puts $o all\tallnonull\t[expr {$tot-[get tota(0) 0]}]
+}
+
+proc cg_reghisto {args} {
+	global scriptname action
+	if {[llength $args] != 1} {
+		puts stderr "format is: $scriptname $action region_file"
+		puts stderr ""
+		exit 1
+	}
+	foreach {region_file} $args break
+	reghisto $region_file
 }
 
 proc regjoin {regfile1 regfile2} {

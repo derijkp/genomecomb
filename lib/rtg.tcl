@@ -278,3 +278,13 @@ proc rtgregions {cgdir comparfile rtgdir} {
 		file rename $cgdir/filteredrtg-$cgsample.covered.temp $cgdir/filteredrtg-$cgsample.covered
 	}
 }
+
+proc cg_rtgregions {args} {
+	global scriptname action
+	if {[llength $args] != 3} {
+		puts stderr "format is: $scriptname $action cgdir comparfile rtgdir"
+		exit 1
+	}
+	foreach {cgdir comparfile rtgdir} $args break
+	rtgregions $cgdir $comparfile $rtgdir
+}

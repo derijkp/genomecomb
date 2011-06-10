@@ -179,6 +179,19 @@ proc tsv_index {xfield file} {
 	}
 }
 
+proc cg_tsv_index {args} {
+	global scriptname action
+	if {[llength $args] < 2} {
+		puts stderr "format is: $scriptname $action field tsvfile ..."
+		exit 1
+	}
+	set field [list_shift args]
+	foreach tsvfile $args {
+		putslog "Indexing $tsvfile"
+		tsv_index $field $tsvfile
+	}
+}
+
 proc tsv_index_header {file} {
 	global cache
 	set file [file normalize $file]

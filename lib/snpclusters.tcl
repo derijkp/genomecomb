@@ -174,6 +174,17 @@ proc clusters {} {
 	}
 }
 
+proc cg_clusterregions {args} {
+	global scriptname action
+	if {[llength $args] != 0} {
+		puts stderr "format is: $scriptname $action"
+		puts stderr " - outputs regions with clusters of variations"
+		puts stderr " - input is an annotated variations file"
+		exit 1
+	}
+	clusters
+}
+
 if 0 {
 
 package require Tclx

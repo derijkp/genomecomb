@@ -17,7 +17,7 @@ while 1 {
 
 set appdir [file dir $script]
 lappend auto_path $appdir/lib $appdir/lib-exp
-append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
+set env(PATH) $appdir/bin:$appdir/extern:[file dir [file dir $appdir]]/bin:$env(PATH)
 package require Extral
 
 # generic help on no args
@@ -28,197 +28,26 @@ if {[llength $argv] < 1} {
 }
 
 set action [list_shift argv]
-switch $action {
-	rtgregions {
-		if {[llength $argv] != 3} {
-			puts stderr "format is: $scriptname $action cgdir comparfile rtgdir"
-			exit 1
-		}
-		foreach {cgdir comparfile rtgdir} $argv break
-		rtgregions $cgdir $comparfile $rtgdir
+set args $argv
+unset -nocomplain argv
+if {[auto_load cg_$action]} {
+	if {[llength $args] == 1 && [inlist {-h --help} $args]} {
+		help $action
+		exit 0
 	}
-	process_indexcompress {
-		if {[llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action file"
-			puts stderr " - makes index, and compresses to bgzip"
-			exit 1
-		}
-		foreach {file} $argv break
-		process_indexcompress $file
-	}
-	var2annot {
-		if {[llength $argv] != 3} {
-			puts stderr "format is: $scriptname $action variation_file sorted_gene_file output_file"
-			puts stderr " - makes a new variation file, where the gene information is included"
-			exit 1
-		}
-		foreach {file genefile outfile} $argv break
-		var2annotvar $file $genefile $outfile
-	}
-	refconsregions {
-		if {[llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action variation_file"
-			puts stderr " - outputs regions annotated as ref-(in)consistent from variation file"
-			exit 1
-		}
-		foreach {varfile} $argv break
-		refconsregions $varfile
-	}
-	clusterregions {
-		if {[llength $argv] != 0} {
-			puts stderr "format is: $scriptname $action"
-			puts stderr " - outputs regions with clusters of variations"
-			puts stderr " - input is an annotated variations file"
-			exit 1
-		}
-		clusters
-	}
-	reghisto {
-		if {[llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action region_file"
-			puts stderr ""
-			exit 1
-		}
-		foreach {region_file} $argv break
-		reghisto $region_file
-	}
-	makeregions {
-		if {[llength $argv] != 2} {
-			puts stderr "format is: $scriptname $action selvariationfile maxsize"
-			exit 1
-		}
-		foreach {selvariationfile maxsize} $argv break
-		makeprimers_makeregions $selvariationfile $maxsize
-	}
-	makeprimers {
-		if {[llength $argv] != 6} {
-			puts stderr "format is: $scriptname $action regionfile archive maxsize prefsize db threads"
-			puts stderr "regionfile has to have the columns chromosome, begin, end; must be sorted by chromosome, then begin"
-			puts stderr "archive is may2009 for cgi, empty for latest"
-			puts stderr "maxsize is the maximum amplicon size"
-			puts stderr "prefsize is the prefered amplicon size"
-			puts stderr "db is a searchable database (ssa) of the human genome (/complgen/refseq/hg18/build36-ssa)"
-			exit 1
-		}
-		foreach {regionfile archive maxsize prefsize db threads} $argv break
-		makeprimers $regionfile $archive $maxsize $prefsize $db $threads
-	}
-	ucsc2region {
-		if {[llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action ucsc_file"
-			puts stderr "convert ucsc tab file to regionfile for further use in filtering"
-			exit 1
-		}
-		foreach {ucsc_file} $argv break
-		ucsc2region $ucsc_file
-	}
-	tosqlite {
-		if {[llength $argv] != 3} {
-			puts stderr "format is: $scriptname $action dbfile table tsvfile"
-			exit 1
-		}
-		foreach {dbfile table tsvfile} $argv break
-		set f [open $tsvfile]
-		set header [split [gets $f] \t]
-		set line [split [gets $f] \t]
-		close $f
-		set sql ""
-		foreach field $header v $line {
-			if {[isint $v]} {
-				set type integer
-			} elseif {[isdouble $v]} {
-				set type real
-			} else {
-				set type text
-			}
-			lappend sql "\"$field\" $type"
-		}
-		set sql "create table $table ([join $sql ,])"
-		catch {package require dbi}
-		package require dbi_sqlite3
-		dbi_sqlite3 db
-		db create $dbfile
-		db open $dbfile
-		db exec $sql
-		db import abort compar $tsvfile \t {}
-		db close
-	}
-	tsv_index {
-		if {[llength $argv] < 2} {
-			puts stderr "format is: $scriptname $action field tsvfile ..."
-			exit 1
-		}
-		set field [list_shift argv]
-		foreach tsvfile $argv {
-			putslog "Indexing $tsvfile"
-			tsv_index $field $tsvfile
-		}
-	}
-	addgeneinfo {
-		if {[llength $argv] != 1} {
-			puts stderr "format is: $scriptname $action file"
-			puts stderr " - add gene description"
-			exit 1
-		}
-		foreach {filename} $argv break
-		set f [open $filename]
-		set line [split [gets $f] \t]
-		set idpos [lsearch $line geneId]
-		puts [join $line \t]\tgenedescr
-		while {![eof $f]} {
-			set line [split [gets $f] \t]
-			set id [lindex $line $idpos]
-			set descr [ncbi_getgene $id]
-			puts [join $line \t]\t$descr
-		}
-	}
-	getembl {
-		if {[llength $argv] < 2 && [llength $argv] > 3} {
-			puts stderr "format is: $scriptname $action regionsfile archive ?extraseq?"
-			puts stderr " - get emblfiles"
-			exit 1
-		}
-		foreach {regionsfile archive extraseq} $argv break
-		if {![isint $extraseq]} {set extraseq 50000}
-		set list [file_read $regionsfile]
-		set regions [split $list \n]
-		list_shift regions
-		list_foreach {cchr cstart cend} $regions {
-			set cchr [string range $cchr 3 end]
-			set filename $cchr-[expr {$cstart-$extraseq}]-[expr {$cend+$extraseq}].embl
-			if {[file exists $filename]} {
-				puts "$filename already done"
-				continue
-			}
-			puts $cchr:$cstart-$cend
-			set embl [ensembl_getregion $cchr [expr {$cstart-$extraseq}] [expr {$cend+$extraseq}] -archive $archive]
-			file_write $filename $embl
-		}
-		
-	}
-	default {
-		set args $argv
-		unset -nocomplain argv
-		if {[auto_load cg_$action]} {
-			if {[llength $args] == 1 && [inlist {-h --help} $args]} {
-				help $action
-				exit 0
-			}
-			while 1 {
-				if {[lindex $args 0] eq "--verbose"} {
-					logverbose [lindex $args 1]
-					set args [lrange $args 2 end]
-				} else {
-					break
-				}
-			}
-			set ::base "cg $action"
-			cg_$action {*}$args
+	while 1 {
+		if {[lindex $args 0] eq "--verbose"} {
+			logverbose [lindex $args 1]
+			set args [lrange $args 2 end]
 		} else {
-			puts stderr "ERROR: unkown action $action"
-			puts stderr "must be one of: [join [help_actions] ", "], ..."
-			puts stderr "For more help use:\ncg help"
-			exit 1
+			break
 		}
 	}
+	set ::base "cg $action"
+	cg_$action {*}$args
+} else {
+	puts stderr "ERROR: unkown action $action"
+	puts stderr "must be one of: [join [help_actions] ", "], ..."
+	puts stderr "For more help use:\ncg help"
+	exit 1
 }
