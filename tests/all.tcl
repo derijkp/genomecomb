@@ -4,6 +4,7 @@ exec tclsh "$0" "$@"
 
 source select.tcl
 source reg.tcl
+source compar.tcl
 source annot.tcl
 source tsv.tcl
 source val.tcl
