@@ -52,6 +52,15 @@ proc rtg2annotvar {file {outfile {}}} {
 	file rename -force $outfile.temp $outfile
 }
 
+proc cg_rtg2sft {args} {
+	if {[llength $args] != 2} {
+		errorformat rtg2sft
+		exit 1
+	}
+	foreach {file outfile} $args break
+	rtg2annotvar $file $outfile
+}
+
 proc rtg_line {cline poss} {
 	set line [list_sub $cline $poss]
 	set support [lrange $cline [lindex $poss end] end]

@@ -1,0 +1,14 @@
+= Rtg2sft =
+
+== Format ==
+cg rtg2sft infile outfile
+
+== Summary ==
+Converts data in rtg format to sft (simple feature table) format
+
+== Arguments ==
+; **infile**: file to be converted. File may be compressed.
+; **outfile**: write results to outfile.
+
+== Category ==
+Conversion
