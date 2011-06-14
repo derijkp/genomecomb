@@ -10,6 +10,11 @@ complete genome sequencing.
 
 System requirements and Installation
 ------------------------------------
+This is a preliminary release, while I am still polishing up the package,
+adding documentation, cleanup, ...
+Updates and more information can be found on the website
+http://genomecomb.sourceforge.net/
+
 Binary packages are available for Linux. The application 
 uses the concept of an application directory: Everything needed to run
 the application is in one directory: installation is as simple as moving
@@ -18,6 +23,7 @@ Uninstallation is done by removing the directory.
 The executable (cg) must stay in the application directory to work.
 If you want to be able to start it from another location (desktop, bin),
 make a link to it.
+
 A general overview of how to use the program is given in the help.
 You can get help from the program itself using the command
 cg help

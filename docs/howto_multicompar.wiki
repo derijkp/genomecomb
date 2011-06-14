@@ -1,7 +1,7 @@
 
 == Prepare samples ==
 
-Sort data, Convert variations and gene annotation information to one annotated variation file.
+Sort data, Convert variations and gene annotation information to one annotated variation file called
 * one variation (2 alleles) per line
 * including gene information for the variations that have it
 It also creates
@@ -20,12 +20,24 @@ cg process_sample originalsampledir sampledir dbdir ?force?
   beginning, and redo every step. If not given, the command will only create 
   files that do not exist yet.
 
+Important files in the resulting sample dir are:
+* fannotvar-samplename.tsv: file containing the variant list with annotations in tab separated format
+* sreg-samplename.tsv: region file with the regions that are considered as sequenced by CG
+* coverage: directory containing files with genomewide coverage (per chromosme)
+Other informative files in the resulting sample dir are:
+* reg_cluster.tsv: region file containing regions with clustered variants
+* reg_lowscore.tsv: region file containing regions with low variant score
+* reg_nocall.tsv: region file containing regions that contain at least one nocall allele
+* reg_refcons.tsv: region file containing regions that contain at least one allele score as refconsistant / refinconsistent (uncertain)
+
 {{{
-cg process_rtgsample sampledir dbdir ?force?
+cg process_rtgsample originalsampledir sampledir ?force?
 }}}
-does similar for RTG data. It expects two subdirs:
+does similar for RTG data. It expects two subdirs in originalsampledir:
 * ori: dir containing original rtg variation file (pattern *unfiltered.snp*)
 * allpos: dir with files with info on full genome (pattern chr${chr}_snps.txt) 
+The resulting sampledir is similar to the one produced by process_sample (not all 
+files are present)
 
 == Compare genomes ==
 Compare samples by making a file containing information of all samples in a wide 
