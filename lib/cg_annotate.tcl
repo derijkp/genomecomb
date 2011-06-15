@@ -319,7 +319,7 @@ proc cg_annotate {args} {
 		}
 		putslog "Adding $dbfile"
 		set dbtype [lindex [split [file tail $dbfile] _] 0]
-		if {$name eq "annovar"} {
+		if {$dbtype eq "annovar"} {
 			if {$near != -1} {error "-near option does not work with annovar dbfiles"}
 			lappend afiles $file.${name}_annot
 			if {[file exists $file.${name}_annot]} {

@@ -39,27 +39,18 @@ proc annovar {file resultfile path {build hg18}} {
 	########################################
 	catch {close $fileid} ; catch {close $fileid_out}
 	puts "Making the right input file...."
-	if {[catch {open $file r} fileid]} {
+	if {[catch {gzopen $file} fileid]} {
 		puts "Could not open input file - $fileid"
 		exit 1
 	}
+	set header [tsv_open $fileid]
+	set poss [tsv_basicfields $header]
+	foreach {chrom begin end type refpos allel_place} $poss break
 	set temp $file.annovar
 	if {[catch {open $temp w} fileid_out]} {
 		puts "Could not open new inputfile - $fileid_out"
 		exit 1
 	}
-	set poss [open_region $fileid header]
-	foreach {chrom begin end} $poss break
-	set refpos [lsearch $header reference]
-	if {$refpos == -1} {
-		set refpos [lsearch $header ref]
-	}
-	if {$refpos == -1} {
-		error "No reference position found"
-	}
-	set type [lsearch $header type]
-	set in [gets $fileid]
-	set allel_place [lsearch -all $header "alt"]
 	set next 1000000; set num 0
 	while {![eof $fileid]} {
 		incr num; if {$num >= $next} {puts $num; incr next 1000000}
@@ -115,7 +106,7 @@ proc annovar {file resultfile path {build hg18}} {
 				puts "Could not open .[lindex $which_file $i] inputfile - $fileid"
 				exit 1
 			}
-			if {[catch {open $file r} fileid_old]} {
+			if {[catch {gzopen $file} fileid_old]} {
 				puts "Could not open inputfile - $fileid_old"
 				exit 1
 			}
@@ -124,7 +115,7 @@ proc annovar {file resultfile path {build hg18}} {
 				exit 1
 			}
 			#skipping headers
-			set in_old [gets $fileid_old]
+			set oldheader [tsv_open $fileid_old]
 			#reading real lines
 			set in1 [gets $fileid]
 			set line1 [split $in1 "\t"]
