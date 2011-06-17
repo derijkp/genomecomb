@@ -395,7 +395,7 @@ proc cg_maketabix {args} {
 		putslog "making tabix for $file"
 		set f [gzopen $file]
 		set header [tsv_open $f comment]
-		close $f
+		catch {close $f}
 		set skip [llength [split $comment \n]]
 		foreach {chrompos beginpos endpos} [lmath_calc [tsv_basicfields $header 3] + 1] break
 		exec tabix -s $chrompos -b $beginpos -e $endpos -0 -S $skip $file
