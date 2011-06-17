@@ -40,6 +40,9 @@ cg regjoin ucsc_hg19_genomicSuperDups.tsv > reg_hg19_genomicSuperDups.tsv
 #cg downloaddb $dest hg19 1000g
 # dbsnp
 cg downloaddb $dest hg19 snp132
+cg bgzip /complgen/refseq/hg19/var_hg19_snp132.tsv
+cg maketabix /complgen/refseq/hg19/var_hg19_snp132.tsv.gz
+gunzip -c /complgen/refseq/hg19/var_hg19_snp132.tsv.gz > /complgen/refseq/hg19/var_hg19_snp132.tsv
 
 # genes
 cg downloaddb $dest hg19 refGene ensGene knownGene genscan
