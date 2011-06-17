@@ -401,7 +401,7 @@ proc scratchdir {} {
 		}
 	}
 	if {![info exists ::Extral::scratchdir]} {
-		error "couldn't create temporary directory in [file nativename $::Extral::scratch_dir]"
+		error "couldn't create temporary directory"
 	}
 	return $::Extral::scratchdir
 }
