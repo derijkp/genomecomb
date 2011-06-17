@@ -350,7 +350,7 @@ proc tsv_align_match {comp1 comp2} {
 	return 0
 }
 
-proc tsv_basicfields {header {num 6}} {
+proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	set poss [list_cor $header {chromosome begin end type ref alt}]
 	set nfposs [list_find $poss -1]
 	foreach nfpos $nfposs {
@@ -375,7 +375,7 @@ proc tsv_basicfields {header {num 6}} {
 	}
 	incr num -1
 	set poss [lrange $poss 0 $num]
-	if {([lsearch $poss -1] != -1)} {
+	if {$giveerror && ([lsearch $poss -1] != -1)} {
 		error "header error: fields not found: [list_sub {chromosome begin end type ref alt} [list_find $poss -1]]"
 	}
 	return $poss

@@ -10,6 +10,12 @@ test multicompar {basic} {
 	exec diff temp.sft data/expected-multicompar-var_annotvar_annot2.sft
 } {} 
 
+test multicompar {noalt} {
+	file delete -force temp.sft
+	cg multicompar temp.sft data/var_annotnoalt.sft data/var_annot2noalt.sft
+	exec diff temp.sft data/expected-multicompar-var_annotvar_annot2noalt.sft
+} {} 
+
 test makepvt {basic} {
 	cg makepvt -sorted 0 data/expected-multireg-reg1-reg4.sft temp.sft
 	file_read temp.sft

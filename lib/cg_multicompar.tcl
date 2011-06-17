@@ -5,7 +5,7 @@
 #
 
 proc multicompar_annot_join {cur1 cur2} {
-	global comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 listfields1 listfields2
+	global comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2
 	if {[inlist {{} -} $cur1]} {
 		set region [list_sub $cur2 $comparposs2]
 		set merge [list_sub $cur2 $mergeposs2]
@@ -45,10 +45,18 @@ proc multicompar_annot_join {cur1 cur2} {
 		}
 	}
 	# merge alt
-	set alt1 [split [lindex $cur1 $altpos1] ,]
-	if {[inlist ? $alt1]} {set alt1 ""}
-	set alt2 [split [lindex $cur2 $altpos2] ,]
-	if {[inlist ? $alt2]} {set alt2 ""}
+	if {$altpos1 == -1} {
+		set alt1 [list_remove [list_remdup [list_sub $cur1 $alleleposs1]] $ref]
+	} else {
+		set alt1 [split [lindex $cur1 $altpos1] ,]
+		if {[inlist ? $alt1]} {set alt1 ""}
+	}
+	if {$altpos2 == -1} {
+		set alt2 [list_remove [list_remdup [list_sub $cur2 $alleleposs2]] $ref]
+	} else {
+		set alt2 [split [lindex $cur2 $altpos2] ,]
+		if {[inlist ? $alt2]} {set alt2 ""}
+	}
 	# putsvars cur1 cur2 alt1 alt2
 	if {$alt1 eq $alt2} {
 		set alt $alt1
@@ -92,7 +100,7 @@ proc multicompar_annot_join {cur1 cur2} {
 }
 
 proc multicompar {compar_file dir} {
-	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 listfields1 listfields2
+	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2
 	catch {close $f1}; catch {close $f2}; catch {close $o}
 	set comparfields {chromosome begin end type}
 	# set nonmergefields {chromosome begin end type alt ref reference locus alleleSeq1 alleleSeq2 totalScore1 totalScore2 refscore coverage refcons nocall cluster}
@@ -114,32 +122,38 @@ proc multicompar {compar_file dir} {
 	if {[inlist $header1 alleleSeq1-$name]} {
 		error "$name already present in $compar_file"
 	}
-	set comparposs1 [tsv_basicfields $header1 4]
+	set comparposs1 [tsv_basicfields $header1 6 0]
 	if {([lsearch $comparposs1 -1] != -1)} {
 		puts stderr "header error in comparfile $compar_file"
 		exit 1
 	}
+	set refpos1 [lindex $comparposs1 4]
+	set altpos1 [lindex $comparposs1 5]
+	if {$altpos1 == -1} {
+		set alleleposs1 [list_find -glob $header1 alleleSeq*]
+	}
+	set comparposs1 [lrange $comparposs1 0 3]
 	set tp1 [lindex $comparposs1 0]
 	set dummy1 [list_fill [llength $header1] ?]
 	set f2 [gzopen $file2]
 	set header2 [tsv_open $f2]
-	set comparposs2 [tsv_basicfields $header2 4]
-	if {([lsearch $comparposs2 -1] != -1)} {
+	set comparposs2 [tsv_basicfields $header2 6 0]
+	if {([lsearch [lrange $comparposs2 0 3] -1] != -1)} {
 		puts stderr "header error in fannot_varfile2 $compar_file"
 		exit 1
 	}
+	set refpos2 [lindex $comparposs2 4]
+	set altpos2 [lindex $comparposs2 5]
+	if {$altpos2 == -1} {
+		set alleleposs2 [list_find -glob $header2 alleleSeq*]
+	}
+	set comparposs2 [lrange $comparposs2 0 3]
 	set tp2 [lindex $comparposs2 0]
 	set mergefields [list_common $mergefields $header2]
 	set nonmergefields [list_lremove $header2 $mergefields]
 	set mergeposs1 [list_cor $header1 $mergefields]
 	set mergeposs2 [list_cor $header2 $mergefields]
-	set refpos1 [lsearch $header1 reference]
-	if {$refpos1 == -1} {set refpos1 [lsearch $header1 ref]}
-	set refpos2 [lsearch $header2 reference]
-	if {$refpos2 == -1} {set refpos2 [lsearch $header2 ref]}
 	set dummy2 [list_fill [llength $header2] ?]
-	set altpos1 [lsearch $header1 alt]
-	set altpos2 [lsearch $header2 alt]
 	set listfields1 [list_find -glob $header1 l:*]
 	set listfields2 [list_find -glob $header2 l:*]
 	# make output header
