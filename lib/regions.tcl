@@ -14,24 +14,22 @@ proc open_region {f {headerVar {}}} {
 	if {[string index $header 0] eq "#"} {
 		set header [string range $header 1 end]
 	}
-	set tests {
-		{chromosome begin end}
-		{chrom start end}
-		{chrom chromStart chromEnd}
-		{genoName genoStart genoEnd}
-		{genoName genoStart genoEnd}
-		{tName tStart tEnd}
-		{chr begin end}
-		{chromosome start end}
-		{chrom txStart txEnd}
-	}
-	foreach test $tests {
-		set poss2 [list_cor $header $test]
-		if {[lsearch $poss2 -1] == -1} {
-			return $poss2
+	set poss2 {}
+	foreach {name names} {
+		chromosome {chromosome chrom chr genoName tName}
+		begin {begin start chromStart genoStart tStart txStart}
+		end {end chromEnd genoEnd tEnd txEnd}
+	} {
+		foreach key $names {
+			set pos [lsearch $header $key]
+			if {$pos != -1} break
 		}
+		if {$pos == -1} {
+			error "not a region file, $name position not found"
+		}
+		lappend poss2 $pos
 	}
-	error "not a region file"
+	return $poss2
 }
 
 proc get_region {f poss} {
