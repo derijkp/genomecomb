@@ -10,6 +10,12 @@ if 0 {
 }
 
 proc cg_updatevarfile {args} {
+	if {[lindex $args 0] eq "-f"} {
+		set force 1
+		set args [lrange $args 1 end]
+	} else {
+		set force 0
+	}
 	if {([llength $args] != 3)} {
 		errorformat updatevarfile
 		exit 1
@@ -43,9 +49,17 @@ proc cg_updatevarfile {args} {
 			putslog $chr:$start-$end
 			set count 0
 		}
-		set gref [string toupper [genome_get $fg $chr $start $end]]
-		if {$gref ne $ref && $ref ne ""} {error "different ref for line:\n$line"}
-		lset line 4 $gref
+		set size [expr {$end-$start}]
+		if {$size <= 10} {
+			set gref [string toupper [genome_get $fg $chr $start $end]]
+		} else {
+			set gref $size
+		}
+		if {$ref eq ""} {
+			lset line 4 $gref
+		} elseif {!$force && ($gref ne $ref)} {
+			error "different ref ($ref) for line (ref should be $gref):\n$line"
+		}
 		if {$doalt} {
 			set alleles [list_sub $line $aposs]
 			set alt [list_remove [list_remdup $alleles] - ? N $gref {}]

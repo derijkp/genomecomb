@@ -1,7 +1,7 @@
 = updatevarfile =
 
 == Format ==
-cg updatevarfile varfile resultfile dbdir
+cg updatevarfile ?options? varfile resultfile dbdir
 
 == Summary ==
 Ths command adds ref and alt fields to a variation file that misses them, and fills them.
@@ -13,6 +13,9 @@ alt wil be updated if already present if alleleSeq* fields are present in the va
 ; **srcfile**: variations file
 ; **dstfile**: resulting variations file
 ; **dbdir**: database directory with reference sequence, etc.
+
+== Options ==
+; **-f**: force overwrite of ref if different from genome sequence in **dbdir**, instead of giving error
 
 == Category ==
 Convert
