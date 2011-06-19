@@ -126,6 +126,7 @@ proc downloaddb {path build dbname} {
 	if {![file exists $temp/$dbname.txt.gz]} {
 		puts "Downloading $dbname.txt.gz ....."
 		catch {exec wget --tries=45 --directory-prefix=$temp ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$dbname.txt.gz} errmsg
+		puts $errmsg
 	} else {
 		puts "Skipping download $dbname.txt.gz (already there)"
 	}
@@ -135,6 +136,7 @@ proc downloaddb {path build dbname} {
 			if {![file exists $temp/chr${chr}_$dbname.txt.gz]} {
 				puts "Downloading chr${chr}_$dbname.txt.gz ....."
 				set e [catch {exec wget --tries=45 --directory-prefix=$temp ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/chr${chr}_$dbname.txt.gz} errmsg]
+				puts $errmsg
 				if {![file exists $temp/chr${chr}_$dbname.txt.gz]} {
 					if {$chr eq "1"} {
 						puts "Could not download $dbname.txt.gz"

@@ -34,8 +34,7 @@ mv  reg_hg18_phastConsElements44way.tsv  reg_hg18_phastCons44.tsv
 cg downloaddb /complgen/refseq/hg18 hg18 1000g
 # dbdnp
 cg downloaddb /complgen/refseq/hg18 hg18 snp130
-cg bgzip /complgen/refseq/hg18/var_hg18_snp130.tsv
-cg maketabix /complgen/refseq/hg18/var_hg18_snp130.tsv.gz
+cg maketabix /complgen/refseq/hg18/var_hg18_snp130.tsv
 gunzip -c /complgen/refseq/hg18/var_hg18_snp130.tsv.gz > /complgen/refseq/hg18/var_hg18_snp130.tsv
 
 # genes
@@ -43,6 +42,10 @@ cg downloaddb /complgen/refseq/hg18 hg18 refGene ensGene knownGene genscan
 mv ucsc_hg18_refGene.tsv gene_hg18_refGene.tsv
 mv ucsc_hg18_ensGene.tsv gene_hg18_ensGene.tsv
 mv ucsc_hg18_knownGene.tsv gene_hg18_knownGene.tsv
+cg maketabix gene_hg18_refGene.tsv
+cg maketabix gene_hg18_knownGene.tsv
+cg maketabix gene_hg18_ensGene.tsv
+
 
 # homopolymer
 cd /complgen/refseq/hg18
