@@ -128,7 +128,13 @@ proc genome_close {f} {
 proc genome_get {f chr start end} {
 	global genomefasta
 	set fastaindex $genomefasta($f)
-	foreach {gstart glen} [dict get $fastaindex $chr] break
+	if {[catch {
+		set temp [dict get $fastaindex $chr]
+	}]} {
+		regsub ^chr $chr {} chr
+		set temp [dict get $fastaindex $chr]
+	}
+	foreach {gstart glen} $temp break
 	set pos [expr {$gstart+$start}]
 	seek $f $pos
 	read $f [expr {$end-$start}]
