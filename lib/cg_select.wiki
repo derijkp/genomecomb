@@ -44,6 +44,7 @@ Some extra functions are available:
 === Tools ===
 ; **min(a1,a2,...)**: returns the minimum of a1, a2, ... If one the args is not a number it will be replaced by 999999999
 ; **max(a1,a2,...)**: returns the maximum of a1, a2, ... If one the args is not a number it will be replaced by -999999999
+; **oneof($field,value1,cvalue2,...)**: returns true if the given field matches one of the values
 The default value for non-numeric arguments can be set e.g. to 1000 by giving def=1000 as the first argument
 
 === fields that contain comma separated lists ===

@@ -173,4 +173,11 @@ test select {mm} {
 	split [exec cg select -f {chromosome begin} -q {mm(sample1,sample2)} < data/vars1.sft] \n
 } {{chromosome	begin} {chr2	5005}}
 
+test select {-q count with wildcard} {
+	exec cg select -f {chromosome begin end alleleSeq*} -q {count($alleleSeq*, == "G") > 3} [gzfile data/vars1.sft]
+} {chromosome	begin	end	alleleSeq1-sample1	alleleSeq2-sample1	alleleSeq1-sample2	alleleSeq2-sample2
+chr1	4001	4002	G	G	G	G
+chr2	4000	4001	G	G	G	G
+chr2	4001	4002	G	G	G	G}
+
 testsummarize
