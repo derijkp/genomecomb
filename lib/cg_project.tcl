@@ -264,6 +264,11 @@ proc cg_project {args} {
 				puts "Compressing $file"
 				set job [submit -direct $direct -deps $alljobs bgzip $file]
 			}
+			set files [glob -nocomplain compar/*.temp compar/*.old]
+			if {[llength $files]} {
+				puts "Deleting $files"
+				file delete {*}$files
+			}
 		}
 	}
 
