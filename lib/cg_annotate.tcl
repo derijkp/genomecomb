@@ -69,7 +69,7 @@ proc annotate {file dbfile name annotfile near {outfields {name score freq}}} {
 
 putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 	catch {close $f}
-	set f [open $file]
+	set f [gzopen $file]
 	set poss [open_region $f header]
 	close $f
 	set fields [list_sub $header $poss]
@@ -112,103 +112,6 @@ putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 	# puts [list reg_annot $file {*}$poss $dbfile {*}$dbposs {*}$dataposs $near]
 	exec reg_annot $file {*}$poss $dbfile {*}$dbposs {*}$dataposs $near >> $annotfile.temp 2>@ stderr
 	file rename $annotfile.temp $annotfile
-
-}
-
-if 0 {
-	cd /complgen/tests/annot
-	set file regonly.tsv
-	set annotfile regonly.tsv.knownGene_annot
-	set dbfile /complgen/refseq/hg18/gene_hg18_knownGene.tsv
-	set outfields name
-}
-
-proc annotategene {file dbfile name annotfile {outfields {name}}} {
-	global dbline
-
-	catch {close $f}; catch {close $df}; catch {close $o};
-	set f [open $file]
-	set poss [open_region $f header]
-	set fields [list_sub $header $poss]
-	if {[inlist $poss -1]} {
-		error "Cannot annotate $file: wrong fields"
-	}
-	set type1pos [lsearch $header type]
-	set alt1pos [lsearch $header alt]
-	set df [open $dbfile]
-	set dbposs [open_region $df dbheader]
-	set dataposs [list_cor $dbheader $outfields]
-	set temp [list_find $dataposs -1]
-	set nh [list_sub $outfields -exclude $temp]
-	set dataposs [list_sub $dataposs -exclude $temp]
-	set empty [join [list_fill [llength $dataposs] ""] \t]
-	if {[llength $nh] == 0} {
-		error "outfields ($outfields) not found"
-	} elseif {[llength $nh] == 1} {
-		set newh $name
-	} else {
-		set newh {}
-		foreach key $nh {
-			lappend newh ${name}_$key
-		}
-	}
-	set o [open $annotfile.temp w]
-	puts $o [join $newh \t]
-	set dbline [split [gets $df] \t]
-	foreach {dbchr dbstart dbend} [list_sub $dbline $dbposs] break
-	set dbchr [chr2num $dbchr]
-	set dblist {}
-	while {![eof $f]} {
-		set line [split [gets $f] \t]
-		set loc [list_sub $line $poss]
-		foreach {chr start end} $loc break
-		set chr [chr2num $chr]
-		# add all overlapping to dblist
-		while {![eof $df]} {
-			if {$dbchr > $chr} break
-			if {$dbchr == $chr} {
-				if {$dbstart >= $end} break
-			}
-			lappend dblist $dbline
-			set dbline [split [gets $df] \t]
-			foreach {dbchr dbstart dbend} [list_sub $dbline $dbposs] break
-			set dbchr [chr2num $dbchr]
-		}
-		# check for overlap, remove genes from dblist that are before current var
-		set num 0
-		set remove {}
-		set hitgenes ""
-		foreach gene $dblist {
-			foreach {dc ds de} [list_sub $gene $dbposs] break
-			set dc [chr2num $dc]
-			if {$dc < $chr} {
-				lappend remove $num
-			} elseif {$dc == $chr} {
-				if {$de <= $start} {
-					lappend remove $num
-				} elseif {$ds < $end} {
-					lappend hitgenes $gene
-				}
-			}
-			incr num
-		}
-		if {[llength $remove]} {
-			set dblist [list_sub $dblist -exclude $remove]
-		}
-		if {[llength $hitgenes]} {
-			set result {}
-			foreach p $dataposs {
-				lappend result [join [list_remdup [list_subindex $hitgenes $p]] ,]
-			}
-			set result [join $result \t]
-		} else {
-			set result $empty
-		}
-		puts $o $result
-	}
-
-	close $o; close $f;	close $df
-	file rename -force $annotfile.temp $annotfile
 
 }
 
@@ -271,11 +174,15 @@ proc cg_annotate {args} {
 		exit 1
 	}
 	set near -1
+	set dbdir {}
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
 			-near {
 				set near $value
+			}
+			-dbdir {
+				set dbdir $value
 			}
 			default {
 				break
@@ -287,16 +194,20 @@ proc cg_annotate {args} {
 	foreach {file resultfile} $args break
 	set dbfiles [lrange $args 2 end]
 	if {[file isdir [lindex $dbfiles 0]] && [file tail [lindex $dbfiles 0]] ne "annovar"} {
-		set dbfiles [lsort -dict [list_concat [glob -nocomplain [lindex $dbfiles 0]/var_*.tsv [lindex $dbfiles 0]/reg_*.tsv] [lrange $dbfiles 1 end]]]
+		set dbfiles [lsort -dict [list_concat [glob -nocomplain [lindex $dbfiles 0]/var_*.tsv [lindex $dbfiles 0]/gene_*.tsv [lindex $dbfiles 0]/reg_*.tsv] [lrange $dbfiles 1 end]]]
 	}
 	set names {}
 	foreach dbfile $dbfiles {
 		lappend names [lindex [split [file root [file tail $dbfile]] _] end]
 	}
 	puts "Annotating $file"
-	set f [open $file]
+	if {[gzroot $file] ne $file} {
+		puts stderr "annotate not supported for compressed files (yet)"
+		exit 1
+	}
+	set f [gzopen $file]
 	set poss [open_region $f header]
-	close $f
+	catch {close $f}
 	set common [list_common $header $names]
 	if {[llength $common]} {
 		puts "Fields [join $common ,] already in file: skipping"
@@ -311,7 +222,7 @@ proc cg_annotate {args} {
 		if {[info exists a(name)]} {
 			set name $a(name)
 		} else {
-			set name [lindex [split [file root [file tail $dbfile]] _] end]
+			set name [lindex [split [file root [file tail [gzroot $dbfile]]] _] end]
 		}
 		if {[info exists skip($name)]} {
 			puts "Skipping $dbfile: $name already in file"
@@ -321,33 +232,29 @@ proc cg_annotate {args} {
 		set dbtype [lindex [split [file tail $dbfile] _] 0]
 		if {$dbtype eq "annovar"} {
 			if {$near != -1} {error "-near option does not work with annovar dbfiles"}
-			lappend afiles $file.${name}_annot
-			if {[file exists $file.${name}_annot]} {
-				putslog "$file.${name}_annot exists: skipping scan"
+			lappend afiles $resultfile.${name}_annot
+			if {[file exists $resultfile.${name}_annot]} {
+				putslog "$resultfile.${name}_annot exists: skipping scan"
 				continue
 			}
 			set build [lindex [file split $dbfile] end-1]
-			annovar $file $file.${name}_annot $dbfile $build
+			annovar $resultfile $resultfile.${name}_annot $dbfile $build
 		} elseif {$dbtype eq "gene"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}
-			lappend afiles $file.${name}_annot
-			if {[file exists $file.${name}_annot]} {
-				putslog "$file.${name}_annot exists: skipping scan"
+			if {$dbdir eq ""} {error "-dbdir option must be given when using gene files"}
+			lappend afiles $resultfile.${name}_annot
+			if {[file exists $resultfile.${name}_annot]} {
+				putslog "$resultfile.${name}_annot exists: skipping scan"
 				continue
 			}
-			if {[info exists a(fields)]} {
-				set outfields $a(fields)
-			} else {
-				switch -glob $name {
-					default {set outfields {name name2}}
-				}
-			}
-			annotategene $file $dbfile $name $file.${name}_annot $outfields
+			set genecol [get a(genecol) name2]
+			set transcriptcol [get a(transcriptcol) name]
+			annotategene $file $dbdir $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
-			lappend afiles $file.${name}_annot
-			if {[file exists $file.${name}_annot]} {
-				putslog "$file.${name}_annot exists: skipping scan"
+			lappend afiles $resultfile.${name}_annot
+			if {[file exists $resultfile.${name}_annot]} {
+				putslog "$resultfile.${name}_annot exists: skipping scan"
 				continue
 			}
 			if {[info exists a(fields)]} {
@@ -355,11 +262,11 @@ proc cg_annotate {args} {
 			} else {
 				set outfields {name freq score}
 			}
-			annotatevar $file $dbfile $name $file.${name}_annot $outfields
+			annotatevar $file $dbfile $name $resultfile.${name}_annot $outfields
 		} else {
-			lappend afiles $file.${name}_annot
-			if {[file exists $file.${name}_annot]} {
-				putslog "$file.${name}_annot exists: skipping scan"
+			lappend afiles $resultfile.${name}_annot
+			if {[file exists $resultfile.${name}_annot]} {
+				putslog "$resultfile.${name}_annot exists: skipping scan"
 				continue
 			}
 			putslog "Adding $dbfile"
@@ -376,8 +283,8 @@ proc cg_annotate {args} {
 					default {set outfields {name freq score}}
 				}
 			}
-			annotate $file $dbfile $name $file.${name}_annot.temp $near $outfields
-			file rename $file.${name}_annot.temp $file.${name}_annot
+			annotate $file $dbfile $name $resultfile.${name}_annot.temp $near $outfields
+			file rename $resultfile.${name}_annot.temp $resultfile.${name}_annot
 		}
 	}
 	exec paste $file {*}$afiles > $resultfile
