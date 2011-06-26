@@ -57,8 +57,12 @@ proc cg_updatevarfile {args} {
 		}
 		if {$ref eq ""} {
 			lset line 4 $gref
-		} elseif {!$force && ($gref ne $ref)} {
-			error "different ref ($ref) for line (ref should be $gref):\n$line"
+		} elseif {$gref ne $ref} {
+			if {!$force} {
+				error "different ref ($ref) for line (ref should be $gref):\n$line"
+			} else {
+				lset line 4 $gref
+			}
 		}
 		if {$doalt} {
 			set alleles [list_sub $line $aposs]
