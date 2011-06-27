@@ -460,7 +460,7 @@ proc annotategene_one_del {snppos snptype ref alt} {
 			} else {
 				set snp_annot RNASPLICE
 			}
-			set snp_descr r.${rpos}_[calc_rpos $erpos]sd
+			set snp_descr r.[calc_rpos $srpos]_[calc_rpos $erpos]sd
 		} else {
 			if {[info exists adata(rpstart)]} {
 				if {$erpos < $adata(rpstart)} {
@@ -619,8 +619,6 @@ proc annotategene_one_CDS {snppos snptype from to line} {
 proc annotategene_one_rna {snppos snptype from to line} {
 	global adata snp_annot_score
 	set complement $adata(complement)
-#	set start $adata(start)
-#	set end $adata(end)
 	set snp_annot RNA
 	set snp_descr {}
 	foreach {rpos el eipos} [annotategene_one_getsnpcoords $line $snppos] break
@@ -652,8 +650,6 @@ proc annotategene_one_rna {snppos snptype from to line} {
 proc annotategene_one_g {snppos snptype from to type line} {
 	global adata snp_annot_score
 	set complement $adata(complement)
-#	set start $adata(start)
-#	set end $adata(end)
 	# non spliced annotations
 	set snp_annot [annotate_type2annot $type]
 	foreach {rpos el eipos} [annotategene_one_getsnpcoords $line $snppos] break
@@ -705,12 +701,12 @@ proc annotategene_one {loc geneobj} {
 	return $result
 }
 
-proc annotategene {file dbdir dbfile name annotfile {genecol name2} {transcriptcol name}} {
+proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transcriptcol name}} {
 	global genomef
 	annot_init
 
 	if {[catch {eof $genomef}]} {
-		set genomef [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]
+		set genomef [genome_open $genomefile]
 	}
 	catch {close $f}; catch {close $df}; catch {close $o};
 	set f [gzopen $file]
@@ -730,7 +726,6 @@ proc annotategene {file dbdir dbfile name annotfile {genecol name2} {transcriptc
 		puts stderr "error: gene file $dbfile misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
 		exit 1
 	}
-	set empty [join [list_fill 2 ""] \t]
 	set o [open $annotfile.temp w]
 	set nh [list ${name}_impact ${name}_gene ${name}_descr]
 	puts $o [join $nh \t]
@@ -858,7 +853,12 @@ proc annotategene {file dbdir dbfile name annotfile {genecol name2} {transcriptc
 			set dblist [list_sub $dblist -exclude $remove]
 		}
 		if {[llength $ahitgenes] == 1} {
-			set result [join [lindex $ahitgenes 0] \t]
+			set line [lindex $ahitgenes 0]
+			if {[llength $line]} {
+				set result [join $line \t]
+			} else {
+				set result $empty
+			}
 		} elseif {[llength $ahitgenes]} {
 			set result {}
 			set pos 0
@@ -879,6 +879,7 @@ proc annotategene {file dbdir dbfile name annotfile {genecol name2} {transcriptc
 		puts $o $result
 	}
 
+	close $genomef
 	close $o; catch {close $f};	catch {close $df}
 	file rename -force $annotfile.temp $annotfile
 

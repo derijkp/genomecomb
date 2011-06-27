@@ -42,6 +42,8 @@ cg downloaddb /complgen/refseq/hg18 hg18 refGene ensGene knownGene genscan
 mv ucsc_hg18_refGene.tsv gene_hg18_refGene.tsv
 mv ucsc_hg18_ensGene.tsv gene_hg18_ensGene.tsv
 mv ucsc_hg18_knownGene.tsv gene_hg18_knownGene.tsv
+echo -e "genecol\tproteinID\ntranscriptcol\tname" > gene_hg18_knownGene.tsv.opt
+# todo: also get kgXref, and translate
 cg maketabix gene_hg18_refGene.tsv
 cg maketabix gene_hg18_knownGene.tsv
 cg maketabix gene_hg18_ensGene.tsv
@@ -51,32 +53,4 @@ cg maketabix gene_hg18_ensGene.tsv
 cd /complgen/refseq/hg18
 cg extracthomopolymers genome_hg18.ifas > reg_hg18_homopolymer.tsv.temp
 mv reg_hg18_homopolymer.tsv.temp reg_hg18_homopolymer.tsv
-
-
-
-## annovar
-## -------
-#cd /complgen/refseq/annovar
-#perl annotate_variation.pl -downdb -buildver hg18 gene /complgen/refseq/hg18
-#perl annotate_variation.pl -downdb -buildver hg18 knownGene /complgen/refseq/hg18
-#perl annotate_variation.pl -downdb -buildver hg18 ensGene /complgen/refseq/hg18
-#perl annotate_variation.pl -downdb -buildver hg18 avsift /complgen/refseq/hg18
-#
-##!/bin/sh
-#cd /complgen/refseq
-#cg select -q '$chrom ~ /^chr[0-9XYM][0-9]*$/' -s 'chrom chromStart chromEnd' <  ucsc_ori/_data_db_ucsc-exapted_repeats.tsv  > regdb-exapted_repeats.tsv
-#cg regjoin oregdb-exapted_repeats.tsv > regdb-exapted_repeats.tsv
-#cg select -q '$chrom ~ /^chr[0-9XYM][0-9]*$/' -s 'chrom chromStart chromEnd' < ucsc_ori/_data_db_ucsc-microsatelite.tsv > regdb-microsatelite.tsv
-#cg regjoin oregdb-microsatelite.tsv > regdb-microsatelite.tsv
-#cg select -q '$genoName ~ /^chr[0-9XYM][0-9]*$/' -s 'genoName genoStart genoEnd' < ucsc_ori/_data_db_ucsc-repeatmasker.tsv > regdb-repeatmasker.tsv
-#cg regjoin oregdb-repeatmasker.tsv > regdb-repeatmasker.tsv
-#cg select -q '$chrom ~ /^chr[0-9XYM][0-9]*$/' -s 'chrom chromStart chromEnd' < ucsc_ori/_data_db_ucsc-rnagenes.tsv > regdb-rnagenes.tsv
-#cg regjoin oregdb-rnagenes.tsv > regdb-rnagenes.tsv
-#cg select -q '$chrom ~ /^chr[0-9XYM][0-9]*$/' -s 'chrom chromStart chromEnd' < ucsc_ori/_data_db_ucsc-segdups.tsv > regdb-segdups.tsv
-#cg regjoin oregdb-segdups.tsv > regdb-segdups.tsv
-#cg select -q '$chrom ~ /^chr[0-9XYM][0-9]*$/' -s 'chrom chromStart chromEnd' < ucsc_ori/_data_db_ucsc-simple_repeats.tsv > regdb-simple_repeats.tsv
-#cg regjoin oregdb-simple_repeats.tsv > regdb-simple_repeats.tsv
-#cg select -q '$tName ~ /^chr[0-9XYM][0-9]*$/' -s 'tName tStart tEnd' < ucsc_ori/_data_db_ucsc-selfchain.tsv > temp-selfchain.tsv
-#cg regjoin temp-selfchain.tsv > regdb-selfchain.tsv
-#cg covered regdb-selfchain.tsv > regdb-selfchain.covered
-#
+echo -e "fields\t{base size}" > reg_hg18_homopolymer.tsv.opt
