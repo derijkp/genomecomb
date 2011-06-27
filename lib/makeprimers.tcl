@@ -226,7 +226,7 @@ proc cindex_searchgenome {db pseq {add 0}} {
 	return [list $numresults $results]
 }
 
-proc makeprimers_cindex {name left right {db /data/db/build36-ssa}} {
+proc makeprimers_cindex {name left right {db /complgen/refseq/hg18/genome_hg18.ssa}} {
 	global rscore cachedir a maxnum
 	unset -nocomplain a
 	set list [list_concat $left $right]
@@ -695,7 +695,7 @@ proc cg_makeprimers {args} {
 		puts stderr "archive is may2009 for cgi, empty for latest"
 		puts stderr "maxsize is the maximum amplicon size"
 		puts stderr "prefsize is the prefered amplicon size"
-		puts stderr "db is a searchable database (ssa) of the human genome (/complgen/refseq/hg18/build36-ssa)"
+		puts stderr "db is a searchable database (ssa) of the human genome (/complgen/refseq/hg18/genome_hg18.ssa)"
 		exit 1
 	}
 	foreach {regionfile archive maxsize prefsize db threads} $args break

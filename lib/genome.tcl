@@ -39,7 +39,6 @@ proc cg_downloadgenome {build result} {
 }
 
 proc cg_genome_indexfasta {resultfile} {
-# set file build36.fas
 	set f stdin
 	set o [open $resultfile w]
 	set oi [open $resultfile.index w]

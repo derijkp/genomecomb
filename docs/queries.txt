@@ -97,7 +97,7 @@ cg covered reg4.tsv > reg4.covered
 
 # make sequencing primers
 cg makeregions regsel.tsv 200 > valreg.tsv
-cg makeprimers valreg.tsv may2009 600 500 /complgen/refseq/hg18/build36-ssa 1 > primers-valreg.tsv
+cg makeprimers valreg.tsv may2009 600 500 /complgen/refseq/hg18/genome_hg18.ssa 1 > primers-valreg.tsv
 
 # find common gaps and annotate
 cg regsubtract /complgen/refseq/reg_hg18_completegenome.tsv ../NNN/compar/NNN_reg.tsv > commongaps.tsv

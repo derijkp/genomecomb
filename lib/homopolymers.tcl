@@ -28,5 +28,5 @@ proc cg_extracthomopolymers {args} {
 }
 
 if 0 {
-	set file /complgen/refseq/hg18/build36.ifas
+	set file /complgen/refseq/hg18/genome_hg18.ifas
 }
