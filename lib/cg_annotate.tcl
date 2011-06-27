@@ -241,7 +241,14 @@ proc cg_annotate {args} {
 			annovar $resultfile $resultfile.${name}_annot $dbfile $build
 		} elseif {$dbtype eq "gene"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}
-			if {$dbdir eq ""} {error "-dbdir option must be given when using gene files"}
+			if {$dbdir eq ""} {
+				set dbdir [file dir [file normalize $dbfile]]
+			}
+			set genomefile [lindex [glob -nocomplain $dbdir/genome_*.ifas] 0]
+			if {![file exists $genomefile]} {
+				puts stderr "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
+				exit 1
+			}
 			lappend afiles $resultfile.${name}_annot
 			if {[file exists $resultfile.${name}_annot]} {
 				putslog "$resultfile.${name}_annot exists: skipping scan"
@@ -249,7 +256,7 @@ proc cg_annotate {args} {
 			}
 			set genecol [get a(genecol) name2]
 			set transcriptcol [get a(transcriptcol) name]
-			annotategene $file $dbdir $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
+			annotategene $file $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
 			lappend afiles $resultfile.${name}_annot
