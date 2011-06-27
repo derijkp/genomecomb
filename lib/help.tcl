@@ -48,6 +48,10 @@ puts { * select, graph, multicompar, regsubtract, regjoin, regcommon, makeregion
 proc help_get {action} {
 	if {[file exists $::appdir/lib/cg_$action.wiki]} {
 		set help [file_read $::appdir/lib/cg_$action.wiki]
+	} elseif {[file exists $::appdir/lib-exp/cg_$action.wiki]} {
+		set help [file_read $::appdir/lib-exp/cg_$action.wiki]
+	} elseif {[file exists $::appdir/docs/$action.wiki]} {
+		set help [file_read $::appdir/docs/$action.wiki]
 	} else {
 		puts stderr "Unknown help subject \"$action\""
 		puts stderr "Known subjects are"
