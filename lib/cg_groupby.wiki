@@ -23,6 +23,7 @@ regardless of the order, keeping the results in memory and writing them when fin
 == Options ==
 ; **-sumfields**: make the sum of all values in the given fields in stead of concatenating 
   them using commas. The values in the given fields should be numbers
+; **-f**: return only the fields (separated by spaces) given by -f in the result (and the group field that will always be returned)
 ; **-sorted**: if 0, same values do not have to be consequitive, but potentially large amounts 
   of memory may be needed (default is 1)
 

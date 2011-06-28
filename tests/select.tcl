@@ -147,6 +147,13 @@ u	1,6,7,4000000000	u,v,v,xx	u,u,v,xx
 v	3,4,5	u,v,v	v,u,v
 vx	2	u	u}
 
+test groupby {groupby -sorted 0 -f pos} {
+	exec cg groupby -sorted 0 -f pos s1 < data/table2.tsv
+} {s1	pos
+u	1,6,7,4000000000
+v	3,4,5
+vx	2}
+
 test groupby {groupby -sorted 0 -sumfields} {
 	exec cg groupby -sorted 0 -sumfields pos s2 < data/table2.tsv
 } {s2	pos	s1	s3

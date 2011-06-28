@@ -21,6 +21,7 @@ proc cg_groupby {args} {
 	set pos 0
 	set sumfields {}
 	set sorted 1
+	set usefields {}
 	foreach {key value} $args {
 		switch -- $key {
 			-sumfields {
@@ -28,6 +29,9 @@ proc cg_groupby {args} {
 			}
 			-sorted {
 				set sorted $value
+			}
+			-f {
+				set usefields $value
 			}
 			-- break
 			default {
@@ -59,6 +63,9 @@ proc cg_groupby {args} {
 	set poss [list_cor $header $fields]
 	set sumposs [list_cor $header $sumfields]
 	set listfields [list_sub $header -exclude [list_concat $poss $sumposs]]
+	if {[llength $usefields]} {
+		set listfields [list_common $listfields $usefields]
+	}
 	set listposs [list_cor $header $listfields]
 	puts $o [join [list_concat $fields $sumfields $listfields] \t]
 	if {$sorted} {
