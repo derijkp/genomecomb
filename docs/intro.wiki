@@ -14,11 +14,12 @@ You can find info on each separate command in the [[reference]] section.
 
 == File formats ==
 
-The standard file format used in GenomeComb is a simple tab delimited file (without quoting),
-where the first (non comment) line contains column names. This is very
-flexible and allows for fast parsing. Depending on the columns present, files can be used for
-various purposes. Usually the files are used to describe features on a reference genome
-sequence. The file extension .sft (simple feature table) can be used to refer to this format.
+The standard file format used in GenomeComb is a simple tab delimited file
+(without quoting), where the first (non comment) line contains column
+names. This is very flexible and allows for fast parsing. Depending on the
+columns present, files can be used for various purposes. Usually the files
+are used to describe features on a reference genome sequence. The file
+extension .sft (simple feature table) can be used to refer to this format.
 In this context, genomecomb gives following columns specific meanings:
 
 ; **chromosome** or **chrom**: chromosome name. Many genomecomb tools allow mixing chr1 and 1 notations
@@ -34,7 +35,9 @@ separated by commas.
 ; **alleleSeq1**: gentype of features at one allele
 ; **alleleSeq2**: gentype of features at other allele
 
-Not all these columns must be present, and any other columns can be added and searched. In 
+Most tools expect the files to be sorted on chromosme,begin,end,type and will create sorted files.
+You can sort files using the -s option of [[cg_select]].
+Not all the columns must be present, and any other columns can be added and searched. In 
 multigenome files, columns that are specific to a genome have -genomename append to the 
 column name. Some examples of (minimal) columns present for various genomecomb files:
 
