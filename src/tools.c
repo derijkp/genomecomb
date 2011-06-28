@@ -212,7 +212,11 @@ int parse_pos(char *arg, int **rresult, int *rnum) {
 	pch = strtok (arg, " \t,-");
 	num = 0;
 	while (pch != NULL) {
-		result[num++] = atoi(pch);
+		if (*pch == 'x') {
+			result[num++] = -1;
+		} else {
+			result[num++] = atoi(pch);
+		}
 		if (num >= memsize) {
 			memsize += memsize;
 			result = (int *)realloc(result, memsize*sizeof(int));

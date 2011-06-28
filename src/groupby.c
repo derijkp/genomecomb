@@ -78,7 +78,11 @@ int main(int argc, char *argv[]) {
 		DStringCopy(listr+i,result1+listpos[i]);
 	}
 	for(i = 0 ; i < sumnum ; i++) {
-		sumr[i] = atoll(result1[sumpos[i]].string);
+		if (sumpos[i] == -1) {
+			sumr[i] = 1;
+		} else {
+			sumr[i] = atoll(result1[sumpos[i]].string);
+		}
 	}
 	/* ----- loop ----- */
 	while (!DStringGetTab(line2,f1,max,result2)) {
@@ -123,7 +127,11 @@ int main(int argc, char *argv[]) {
 				DStringCopy(listr+i,result1+listpos[i]);
 			}
 			for(i = 0 ; i < sumnum ; i++) {
-				sumr[i] = atoll(result1[sumpos[i]].string);
+				if (sumpos[i] == -1) {
+					sumr[i] = 1;
+				} else {
+					sumr[i] = atoll(result1[sumpos[i]].string);
+				}
 			}
 		} else {
 			for(i = 0 ; i < listnum ; i++) {
@@ -131,7 +139,11 @@ int main(int argc, char *argv[]) {
 				DStringAppendS(listr+i,result2[listpos[i]].string,result2[listpos[i]].size);
 			}
 			for(i = 0 ; i < sumnum ; i++) {
-				sumr[i] += atoll(result2[sumpos[i]].string);
+				if (sumpos[i] == -1) {
+					sumr[i] += 1;
+				} else {
+					sumr[i] += atoll(result2[sumpos[i]].string);
+				}
 			}
 		}
 	}

@@ -140,6 +140,21 @@ vx	2	u	u
 v	12	u,v,v	v,u,v
 u	4000000013	v,v,xx	u,v,xx}
 
+test groupby {groupby -sumfields one count (non existing)} {
+	exec cg groupby -f s1 -sumfields count s1 < data/table2.tsv
+} {s1	count
+u	1
+vx	1
+v	3
+u	3}
+
+test groupby {groupby -sumfields one count (non existing) -sorted 0} {
+	exec cg groupby -sorted 0 -f s1 -sumfields count s1 < data/table2.tsv
+} {s1	count
+u	4
+v	3
+vx	1}
+
 test groupby {groupby -sorted 0} {
 	exec cg groupby -sorted 0 s1 < data/table2.tsv
 } {s1	pos	s2	s3

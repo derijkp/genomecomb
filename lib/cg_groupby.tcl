@@ -69,6 +69,7 @@ proc cg_groupby {args} {
 	set listposs [list_cor $header $listfields]
 	puts $o [join [list_concat $fields $sumfields $listfields] \t]
 	if {$sorted} {
+		set sumposs [list_change $sumposs {-1 x}]
 		chanexec $f $o [list groupby $poss $listposs $sumposs]
 	} else {
 		groupby_unsorted $f $o $poss $listposs $sumposs
@@ -81,6 +82,7 @@ proc groupby_unsorted {f o poss listposs sumposs} {
 	set start [list_concat [list_fill [llength $sumposs] 0] [list_fill [llength $listposs] {}]]
 	set prevsumposs [list_fill [llength $sumposs] 0 1]
 	set prevlistposs [list_fill [llength $listposs] [llength $sumposs] 1]
+	set countposs [list_find $sumposs -1]
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
@@ -94,7 +96,11 @@ proc groupby_unsorted {f o poss listposs sumposs} {
 		}
 		set result {}
 		foreach p [list_sub $prev $prevsumposs] n [list_sub $line $sumposs] {
-			lappend result [expr {$p+$n}]
+			if {[isint $n]} {
+				lappend result [expr {$p+$n}]
+			} else {
+				lappend result [expr {$p+1}]
+			}
 		}
 		foreach p [list_sub $prev $prevlistposs] n [list_sub $line $listposs] {
 			if {$p eq ""} {set p $n} else {append p ,$n}
