@@ -1,0 +1,53 @@
+=Other functions=
+= =
+
+==Genome region operations==
+= =
+
+Some examples of operations on genome regions files. Although some of the operations can also be achieved by advanced queries, we show here how to use regions files.
+
+{{{
+cg select -q 'count($sequenced-cg*, == 1) == 4' \
+	NA19240_chrom22.tsv.gz > reg_2.tsv
+}}}
+
+selects regions sequenced by CG (with two SNV callers)
+
+{{{
+cg covered reg2.tsv > reg2.covered
+}}}
+
+then calculates how large the selected regions are
+
+{{{
+cg select -q '$impact =="MISSENSE" && $type == "snp" ' \
+	NA19240_chrom22.tsv.gz > reg_missense.tsv
+}}}
+
+selects regions representing all missense SNVs
+
+{{{
+cg regjoin reg_2.tsv reg_missense.tsv > joined.tsv
+}}}
+
+joins both region files
+
+{{{
+cg regsubtract reg_2.tsv reg_missense.tsv > subtracted.tsv
+}}}
+
+subtracts missense SNVs from the first file
+
+==Primer design==
+
+
+{{{
+cg makeregions reg_missense.tsv 200 > regval_missense.tsv
+}}}
+
+First select regions for design for all missense SNVs
+
+{{{
+cg makeprimers regval_missense.tsv ValidationName 600 500 <referencegenome> > primers-valreg.tsv
+
+Then make primers for them using the experiment name ValidationName and the location of the reference genome

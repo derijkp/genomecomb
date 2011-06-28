@@ -1,4 +1,4 @@
-
+= multicompar =
 == Prepare samples ==
 
 Sort data, Convert variations and gene annotation information to one annotated variation file called

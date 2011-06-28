@@ -4,10 +4,13 @@
 cg updatevarfile ?options? varfile resultfile dbdir
 
 == Summary ==
-Ths command adds ref and alt fields to a variation file that misses them, and fills them.
+Complete or correct ref and alt fields in variation file
+
+== Description ==
+This command adds ref and alt fields to a variation file that misses them, and fills them.
 If a ref fields is already present, its contents will be checked, and an error given if there
-is a difference with the genome sequence in dbdir.
-alt wil be updated if already present if alleleSeq* fields are present in the variant file.
+is a difference with the genome sequence in dbdir. Use -f (force) to correct the ref column.
+alt wil be updated if alleleSeq* fields are present in the variant file.
 
 == Arguments ==
 ; **srcfile**: variations file

@@ -1,7 +1,53 @@
 = Introduction =
 
 == GenomeComb ==
-You can find info on the separate commands in the [[reference]] section/
+GenomeComb provides import facilities for Complete Genomics
+([[cg_process_sample|cg_process_sample command]]), Real Time Genomics
+([[cg_process_rtgsample|cg_process_rtgsample command]]) and 
+VariantCallFormat (VCF) variant files ([[cg_vcf2sft|vcf2sft command]]).
+Multiple genomes can be compared within one single, annotated file using
+the  [[howto_multicompar|multicompar protocol]]. Fast querying of this
+outputfile is achieved with an awk-based querying language, of which several
+examples can be seen in the [[howto_query|Howto::Query]] section.
+
+You can find info on each separate command in the [[reference]] section.
 
 == File formats ==
+
+The standard file format used in GenomeComb is a simple tab delimited file (without quoting),
+where the first (non comment) line contains column names. This is very
+flexible and allows for fast parsing. Depending on the columns present, files can be used for
+various purposes. Usually the files are used to describe features on a reference genome
+sequence. The file extension .sft (simple feature table) can be used to refer to this format.
+In this context, genomecomb gives following columns specific meanings:
+
+; **chromosome** or **chrom**: chromosome name. Many genomecomb tools allow mixing chr1 and 1 notations
+; **begin** or **start**: start of feature. half-open coordinates as used by UCSC bed files and
+Complete Genomics files are expected. This means for instance that the first base of a sequence will
+be indicated by start=0 and end=1. An insertion before the first base will have start-0, end=0.
+; **end**: end of feature in half-open coordinates
+; **type**: type of variation: snp, ins, del, sub are recognised
+; **ref** or **reference**: genotype of the reference sequence at the feature. For large deletions, the size 
+of the deletion can be used.
+; **alt**: alternative genotype(s). If there are more than one alternatives, they are 
+separated by commas.
+; **alleleSeq1**: gentype of features at one allele
+; **alleleSeq2**: gentype of features at other allele
+
+Not all these columns must be present, and any other columns can be added and searched. In 
+multigenome files, columns that are specific to a genome have -genomename append to the 
+column name. Some examples of (minimal) columns present for various genomecomb files:
+
+; **region file**: chromosome begin end.
+; **variant file**: chromosome begin end type ref alt ?alleleSeq1? ?alleleSeq2?
+; **multigenome file**: chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 alleleSeq1-sample2 alleleSeq2-sample2 ...
+
+These files can easily be queried using the [[cg_select]] functionality or can
+be loaded into a local database.
+
+The format does not use quoting, so values in the table cannot contain tabs or newlines,
+unless by coding them using escape characters (\t,\n)
+
 == How to start ==
+
+In the [[howto|Howto]] section we give some extended examples on how to process genome files and query the results.

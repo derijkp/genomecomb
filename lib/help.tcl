@@ -5,11 +5,15 @@
 #
 
 proc cg_help {{item {}}} {
-if {$item ne ""} {
+global appdir
+if {$item eq "distr"} {
+	set files [glob -nocomplain $appdir/lib/cg_*.wiki]
+} elseif {$item ne ""} {
 	help $item
 	exit
+} else {
+	set files [glob -nocomplain $appdir/lib/cg_*.wiki $appdir/lib-exp/cg_*.wiki]
 }
-global appdir
 puts {
 = Reference =
 
@@ -17,7 +21,6 @@ puts {
 cg action ....
 
 == Actions == }
-set files [dirglob $appdir/lib/ cg_*.wiki]
 unset -nocomplain a
 foreach file $files {
 	set action [string range [file root [file tail $file]] 3 end]
@@ -101,7 +104,7 @@ proc errorformat {action} {
 }
 
 proc helpparts {action} {
-	set help [file_read $::appdir/lib/cg_$action.wiki]
+	set help [help_get $action]
 	regsub -all {[ \n\t]*== *([^=]+?) *==[ \n\t]*} $help {@@@@\1@@@@} help
 	set result [lrange [string_split $help @@@@] 1 end]
 	return $result
