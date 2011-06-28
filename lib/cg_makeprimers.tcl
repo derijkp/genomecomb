@@ -690,15 +690,11 @@ proc makeprimers {regionsfile archive maxsize prefsize db numthreads {o stdout}}
 proc cg_makeprimers {args} {
 	global scriptname action
 	if {[llength $args] != 6} {
-		puts stderr "format is: $scriptname $action regionfile archive maxsize prefsize db threads"
-		puts stderr "regionfile has to have the columns chromosome, begin, end; must be sorted by chromosome, then begin"
-		puts stderr "archive is may2009 for cgi, empty for latest"
-		puts stderr "maxsize is the maximum amplicon size"
-		puts stderr "prefsize is the prefered amplicon size"
-		puts stderr "db is a searchable database (ssa) of the human genome (/complgen/refseq/hg18/genome_hg18.ssa)"
+		errorformat makeprimers
 		exit 1
 	}
-	foreach {regionfile archive maxsize prefsize db threads} $args break
+	foreach {regionfile archive maxsize prefsize dbdir threads} $args break
+	set db [lindex [glob $dbdir/genome_*.ssa] 0]
 	makeprimers $regionfile $archive $maxsize $prefsize $db $threads
 }
 

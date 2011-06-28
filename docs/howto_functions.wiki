@@ -48,6 +48,6 @@ cg makeregions reg_missense.tsv 200 > regval_missense.tsv
 First select regions for design for all missense SNVs
 
 {{{
-cg makeprimers regval_missense.tsv ValidationName 600 500 <referencegenome> > primers-valreg.tsv
+cg makeprimers regval_missense.tsv ValidationName 600 500 dbdir > primers-valreg.tsv
 
 Then make primers for them using the experiment name ValidationName and the location of the reference genome
