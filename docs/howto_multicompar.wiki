@@ -61,12 +61,11 @@ cg multicompar_reannot resultsdir/mcomparfile
 == Annotate comparison file ==
 Add (a lot of) annotations to the mcomparfile using:
 {{{
-cg annotate mcomparfile resultfile dbdir annovardir
+cg annotate mcomparfile resultfile dbdir
 }}}
 * mcomparfile: variant file (can be from multicomparison, has to have alt field)
 * resultfile: new file that will be written: mcomparfile+ added columns with annotation
 * dbdir: directory containing reference databases and annotation files (.../hg18)
-* annovardir: directory containing annovar and needed databases
 
 == Select variants ==
 cg select can be used to easily query the resulting file.

@@ -17,7 +17,8 @@ after the last underscore)
 == Arguments ==
 ; **variantfile**: file in sft format with variant data
 ; **resultfile**: resulting file in sft format with new columns added
-; **dbfile**: files (sft format) with features used for annotation
+; **dbfile**: files (sft format) with features used for annotation. If a directory is given for
+dbfile, all known anotation files in this directory will be used for annotation
 
 == Options ==
 ; **-near dist**: also annotate variants with the nearest feature in 
@@ -31,8 +32,8 @@ Variants are checked for overlap with regions in the file.
 to annotate variants that match the given values. Typically, columns freq and id are present for annotation.
 Thus, only variants that match the alleles given in alt will be annotated. If there are multiple alt 
 values (separated by commas), the freq annotation will also contain multiple fields (separated by commas).
-; **gene**: gene files, currently only overlap is annotated
-; **annovar**: use annovar to annotate genes
+; **gene**: gene files (in genepred-like format). Variants will be annotated with the effects they have on 
+the genes in these files.
 
 If a database filename does not start with one of these types, 
 it will be considered a regions database.
