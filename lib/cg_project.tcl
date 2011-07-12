@@ -161,7 +161,7 @@ proc cg_project {args} {
 			if {[isint $cjob]} {lappend alljobs $cjob}
 		}
 		if {![file exists [gzfile compar/annot${project}_compar.tsv]]} {
-			set ajob [submit -direct $direct -host lungo -deps [get cjob {}] cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build $refseqdir/$build/annovar]
+			set ajob [submit -direct $direct -host lungo -deps [get cjob {}] cg annotate compar/${project}_compar.tsv compar/annot${project}_compar.tsv $refseqdir/$build]
 	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
 		# multireg
