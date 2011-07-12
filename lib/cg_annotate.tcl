@@ -238,7 +238,7 @@ proc cg_annotate {args} {
 				continue
 			}
 			set build [lindex [file split $dbfile] end-1]
-			annovar $resultfile $resultfile.${name}_annot $dbfile $build
+			annovar $file $resultfile.${name}_annot $dbfile $build
 		} elseif {$dbtype eq "gene"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}
 			if {$dbdir eq ""} {

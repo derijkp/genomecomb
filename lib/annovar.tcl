@@ -143,6 +143,9 @@ proc annovar {file resultfile path {build hg18}} {
 						set line [split $in "\t"]
 						incr k
 						while {[lindex $line1 $beginA] == [lindex $line $beginA] && [lindex $line1 $endA] == [lindex $line $endA] && [lindex $line1 $commentA] == [lindex $line $commentA] }	{
+							if {[eof $fileid]} {
+								set line {}; break
+							}
 							set in [gets $fileid]
 							set line [split $in "\t"]
 							incr k
