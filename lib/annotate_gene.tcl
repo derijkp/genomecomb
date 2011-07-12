@@ -151,21 +151,23 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs} {
 				lappend ftlist [list [expr {$prev}] [expr {$s-1}] esplice]
 			}
 		}
-		if {($cdsStart >= $s) && ($cdsStart < $e)} {
+		if {($cdsStart >= $s) && ($cdsStart <= $e)} {
 			set el [list $s [expr {$cdsStart-1}] $type]
 			lappend ftlist $el
 			set s $cdsStart
 			set type CDS
 		}
-		if {($cdsEnd >= $s) && ($cdsEnd < $e)} {
+		if {($cdsEnd >= $s) && ($cdsEnd <= $e)} {
 			set el [list $s [expr {$cdsEnd-1}] CDS]
 			lappend ftlist $el
 			set s $cdsEnd
 			set type UTR
 		}
 		set prev $e
-		set el [list $s [expr {$e-1}] $type]
-		lappend ftlist $el
+		if {$s != $e} {
+			set el [list $s [expr {$e-1}] $type]
+			lappend ftlist $el
+		}
 	}
 
 	if {$complement} {set type upstream} else  {set type downstream}
