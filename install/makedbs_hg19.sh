@@ -47,8 +47,14 @@ gunzip -c /complgen/refseq/hg19/var_hg19_snp132.tsv.gz > /complgen/refseq/hg19/v
 # genes
 cg downloaddb $dest hg19 refGene ensGene knownGene genscan
 mv ucsc_hg19_refGene.tsv gene_hg19_refGene.tsv
+cg maketabix gene_hg19_refGene.tsv
 mv ucsc_hg19_ensGene.tsv gene_hg19_ensGene.tsv
+cg maketabix gene_hg19_ensGene.tsv
 mv ucsc_hg19_knownGene.tsv gene_hg19_knownGene.tsv
+cg maketabix gene_hg19_knownGene.tsv
+cg downloaddb /complgen/refseq/hg19 hg19 genscan
+mv ucsc_hg19_genscan.tsv gene_hg19_genscan.tsv
+cg maketabix gene_hg19_genscan.tsv
 
 # homopolymer
 cd /complgen/refseq/hg19

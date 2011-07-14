@@ -40,13 +40,16 @@ gunzip -c /complgen/refseq/hg18/var_hg18_snp130.tsv.gz > /complgen/refseq/hg18/v
 # genes
 cg downloaddb /complgen/refseq/hg18 hg18 refGene ensGene knownGene genscan
 mv ucsc_hg18_refGene.tsv gene_hg18_refGene.tsv
+cg maketabix gene_hg18_refGene.tsv
 mv ucsc_hg18_ensGene.tsv gene_hg18_ensGene.tsv
+cg maketabix gene_hg18_knownGene.tsv
 mv ucsc_hg18_knownGene.tsv gene_hg18_knownGene.tsv
+cg maketabix gene_hg18_ensGene.tsv
 echo -e "genecol\tproteinID\ntranscriptcol\tname" > gene_hg18_knownGene.tsv.opt
 # todo: also get kgXref, and translate
-cg maketabix gene_hg18_refGene.tsv
-cg maketabix gene_hg18_knownGene.tsv
-cg maketabix gene_hg18_ensGene.tsv
+cg downloaddb /complgen/refseq/hg18 hg18 genscan
+mv ucsc_hg18_genscan.tsv gene_hg18_genscan.tsv
+cg maketabix gene_hg18_genscan.tsv
 
 
 # homopolymer
