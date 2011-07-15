@@ -23,7 +23,7 @@ test makepvt {basic} {
 0	1	195	7
 1	0	300	8
 1	1	1160	9
-} 
+}
 
 test makepvt {fields} {
 	cg makepvt -sorted 0 data/expected-multireg-reg1-reg4.sft temp.sft {chromosome reg1}

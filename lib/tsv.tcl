@@ -376,7 +376,8 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	incr num -1
 	set poss [lrange $poss 0 $num]
 	if {$giveerror && ([lsearch $poss -1] != -1)} {
-		error "header error: fields not found: [list_sub {chromosome begin end type ref alt} [list_find $poss -1]]"
+		set notfound [list_sub {chromosome begin end type ref alt} [list_find $poss -1]]
+		error "header error: fields not found: $notfound"
 	}
 	return $poss
 }

@@ -119,7 +119,7 @@ proc tsv_select_lmin {} {
 	lappend awkfunctions {
 		function lmin(list,def) {
 			if (def == nill) {def = 999999999}
-		        split(list,a,",");
+		        split(list,a,/[,;]/);
 		        minv = a[1];
 		        for (i in a) {
 		                if (a[i] != a[i]+0) {a[i] = def}
@@ -135,7 +135,7 @@ proc tsv_select_lmax {} {
 	lappend awkfunctions {
 		function lmax(list,def) {
 			if (def == nill) {def = -999999999}
-		        split(list,a,",");
+		        split(list,a,/[,;]/);
 		        maxv = a[1];
 		        for (i in a) {
 		                if (a[i] != a[i]+0) {a[i] = def}
@@ -210,7 +210,7 @@ proc tsv_select_counthasone {ids} {
 	set test [list_pop ids]
 	lappend awkfunctions [subst -nocommands {
 		function tsvfunc${tsv_funcnum}(list) {
-		        split(list,a,",");
+		        split(list,a,/[,;]/);
 		        for (i in a) {
 		                if (a[i] $test) {return 1}
 		        }
@@ -230,7 +230,7 @@ proc tsv_select_counthasall {ids} {
 	set test [list_pop ids]
 	lappend awkfunctions [subst -nocommands {
 		function tsvfunc${tsv_funcnum}(list) {
-		        split(list,a,",");
+		        split(list,a,/[,;]/);
 		        for (i in a) {
 		                if (!(a[i] $test)) {return 0}
 		        }
@@ -268,6 +268,7 @@ proc tsv_select_expandfield {header field qpossVar} {
 proc tsv_select_expandfields {header qfields qpossVar awkfunctionsVar} {
 	upvar $qpossVar qposs
 	upvar $awkfunctionsVar awkfunctions
+	upvar tsv_funcnum tsv_funcnum
 	set qposs {}
 	set rfields {}
 	foreach field $qfields {
@@ -295,6 +296,7 @@ proc tsv_select_expandfields {header qfields qpossVar awkfunctionsVar} {
 
 proc tsv_select_expandcode {header code awkfunctionsVar} {
 	upvar $awkfunctionsVar awkfunctions
+	upvar tsv_funcnum tsv_funcnum
 	set indices [list_unmerge [regexp -all -indices -inline {[$]([*a-zA-z0-9_.-]+)} $code]]
 	set indices [list_reverse $indices]
 	list_foreach {start end} $indices {
@@ -393,13 +395,13 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	set awkfunctions {0 0}
 	set sort ""
 	set cut ""
+	set tsv_funcnum 1
 	set qfields [tsv_select_expandfields $header $qfields qposs awkfunctions]
 	if {$inverse} {
 		set qfields [list_lremove $header $qfields]
 		set qfields [tsv_select_expandfields $header $qfields qposs awkfunctions]
 	}
 
-	set tsv_funcnum 1
 	if {[llength $sortfields]} {
 		set poss [list_cor $header $sortfields]
 		if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $sortfields [list_find $poss -1]] ,] not found"}
