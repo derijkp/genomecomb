@@ -30,7 +30,7 @@ proc cg_makepvt {args} {
 		set fields [list_remove $h chromosome begin end]
 	}
 	set ufields $fields
-	if {[lsearch [list_find $h {chromosome begin end}] -1] != -1} {
+	if {[lsearch [tsv_basicfields $h 3] -1] == -1} {
 		set region 1
 		lappend ufields {numbases=$end - $begin} {numlines=1}
 	} else {
