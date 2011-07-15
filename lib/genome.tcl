@@ -126,6 +126,7 @@ proc genome_close {f} {
 
 proc genome_get {f chr start end} {
 	global genomefasta
+	if {$end < $start} {error "end ($end) is smaller than start ($start)"}
 	set fastaindex $genomefasta($f)
 	if {[catch {
 		set temp [dict get $fastaindex $chr]
@@ -134,6 +135,7 @@ proc genome_get {f chr start end} {
 		set temp [dict get $fastaindex $chr]
 	}
 	foreach {gstart glen} $temp break
+	if {$end >= $glen} {error "trying to get sequence betond end of chromosome ($end >= $glen)"}
 	set pos [expr {$gstart+$start}]
 	seek $f $pos
 	read $f [expr {$end-$start}]
