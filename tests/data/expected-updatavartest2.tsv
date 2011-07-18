@@ -1,0 +1,6 @@
+chromosome	begin	end	type	ref	alt
+20	14369	14370	snp	G	A
+20	17329	17330	snp	A	T
+20	1110695	1110696	snp	A	G,T
+20	1230236	1230237	snp	T	.
+20	1234567	1234570	sub	AGC	,GACT

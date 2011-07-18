@@ -9,12 +9,17 @@ if 0 {
 	set file oldcmt71_compar.tsv.old
 }
 
+package require BioTcl
+
 proc cg_updatevarfile {args} {
-	if {[lindex $args 0] eq "-f"} {
+	set force 0
+	set complement 0
+	if {[lindex $args 0] eq "-c"} {
+		set complement 1
+		set args [lrange $args 1 end]
+	} elseif {[lindex $args 0] eq "-f"} {
 		set force 1
 		set args [lrange $args 1 end]
-	} else {
-		set force 0
 	}
 	if {([llength $args] != 3)} {
 		errorformat updatevarfile
@@ -55,10 +60,20 @@ proc cg_updatevarfile {args} {
 		} else {
 			set gref $size
 		}
+		set ucompl 0
 		if {$ref eq ""} {
 			lset line 4 $gref
 		} elseif {$gref ne $ref} {
-			if {!$force} {
+			if {$complement && ([seq_complement $gref] eq $ref)} {
+				lset line 4 $gref
+				set temp {}
+				foreach a [split $alt ,] {
+					lappend temp [seq_complement $a]
+				}
+				set alt [join $temp ,]
+				lset line 5 $alt
+				set ucompl 1
+			} elseif {!$force} {
 				error "different ref ($ref) for line (ref should be $gref):\n$line"
 			} else {
 				lset line 4 $gref
@@ -66,6 +81,15 @@ proc cg_updatevarfile {args} {
 		}
 		if {$doalt} {
 			set alleles [list_sub $line $aposs]
+			if {$ucompl} {
+				set temp {}
+				foreach a $alleles p $aposs {
+					set a [seq_complement $a]
+					lappend temp $a
+					lset line $p $a
+				}
+				set alleles $temp
+			}
 			set alt [list_remove [list_remdup $alleles] - ? N $gref {}]
 			if {([llength $alt] == 0) && ($type ne "del")} {set alt ?}
 			lset line 5 [join $alt ,]
