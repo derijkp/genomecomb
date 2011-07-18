@@ -4,7 +4,7 @@ chr1	4099	4100	snp	C	T	downstream
 chr1	751594	751595	snp	C	T	RNA
 chr1	850982	850983	snp	A	A,T	upstream
 chr1	850983	850984	snp	G	T	UTR5-0
-chr1	851163	851164	snp	G	A	intron
+chr1	851163	851164	snp	G	A	ESPLICE
 chr1	851164	851165	snp	G	C	UTR5-e2-0
 chr1	851165	851166	snp	G	A	UTR5-e2-1
 chr1	851168	851169	snp	A	G	UTR5-e2-2
