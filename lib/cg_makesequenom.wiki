@@ -19,6 +19,7 @@ chromosome begin end ref alt
 == Options ==
 ; **-f freq**: only softmask (lowercase) dbsnp variants if they have a frequency > freq (default is 0, use -1 to include all)
 ; **-n freq**: only mask (using N) dbsnp variants if they have a frequency > freq (default is 0.2, use -1 to include all)
+; **-d delsize**: only mask (using N) dbsnp variants if they are smaller than delsize (default is 5, use -1 to include all)
 
 == Category ==
 Validation

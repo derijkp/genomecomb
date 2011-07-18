@@ -28,6 +28,7 @@ proc cg_makesequenom {args} {
 	set extraseq 124
 	set freql 0
 	set freqN 0.2
+	set delsize 5
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -36,6 +37,9 @@ proc cg_makesequenom {args} {
 			}
 			-n - --freqn {
 				set freqN $value
+			}
+			-d - --delsize {
+				set delsize $value
 			}
 			-- break
 			default {
@@ -102,7 +106,7 @@ proc cg_makesequenom {args} {
 				set end [expr {$e-$estart-1}]
 				if {$end < $start} {set end $start}
 			}
-			if {$type eq "del" && [expr {$end-$start}] > 5} continue
+			if {$type eq "del" && ($delsize != -1) && ([expr {$end-$start}] > $delsize)} continue
 			set base [string range $seq $start $end]
 			if {$freq > $freqN} {
 				regsub -all . $base N base
