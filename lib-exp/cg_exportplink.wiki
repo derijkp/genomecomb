@@ -1,0 +1,34 @@
+= exportplink =
+
+== Format ==
+cg exportplink ?options? varfile resultfilebase
+
+== Summary ==
+make a plink "Transposed fileset" from the genome data
+
+== Description ==
+This command makes two files that can be used as a transposed fileset in plink (--tfile option).
+
+; **resultfilebase.tfam.pre**: This file must be edited and renamed to resultfilebase.tfam: 
+Only the names are correct. The other fields (father, mother, sex, phenotype) are set 
+to missing (0 or -9) and must be corrected.
+; **resultfilebase.tped**: This file contains the variant and the genotype information.
+Variants  with more than two alleles (which are not supported by plink) are skipped with
+a warning message. The genetic location is (very roughly) estimated by dividing the 
+base position by 1M.
+
+== Use with plink ==
+Edit **resultfilebase.tfam.pre** to the correct settings, and rename to resultfilebase.tfam
+You can use the files with the -tfile option, e.g.
+{{{plink --tfile resultfilebase --recode12}}}
+
+== Arguments ==
+; **varfile**: variant file
+; **resultfilebase**: result file
+
+== Options ==
+; **-q query**: query (as can be given to cg_select). Only variants matching the query are 
+included in the result.
+
+== Category ==
+Convert
