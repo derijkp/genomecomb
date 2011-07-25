@@ -67,10 +67,17 @@ proc help_get {action} {
 
 proc help {action} {
 	set help [help_get $action]
+	set bold "\033\[1;1m"
+	set underline "\033\[1;4m"
+	set green "\033\[1;32m"
+	set yellow "\033\[1;33m"
 	set cyan "\033\[1;36m"
 	set normal "\033\[0m"
 #	regsub -all {(^|\n)\; *([^:\n]+):} $help "\n${cyan}\\2$normal:" help
 	regsub -all {\*\*([^\n*]+)\*\*} $help "${cyan}\\1$normal" help
+	regsub -all {(^|\n)\{\{\{([^\n*]+)\}\}\}} $help "\\1${yellow}\\2$normal" help
+	regsub -all {(^|\n)== ([^\n*]+) ==} $help "\\1${underline}\\2$normal" help
+	regsub -all {(^|\n)= ([^\n*]+) =} $help "\\1${underline}${green}\\2$normal" help
 	puts $help
 }
 
