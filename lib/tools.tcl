@@ -163,6 +163,20 @@ proc opensqlite3 {dbfile query} {
 }
 
 proc cg_bgzip args {
+	set pos 0
+	set keep 0
+	foreach {key value} $args {
+		switch -- $key {
+			-k {
+				set keep 1
+			}
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
 	foreach file $args {
 		set ext [file extension $file]
 		switch $ext {
@@ -173,6 +187,7 @@ proc cg_bgzip args {
 					exec gunzip -d -c $file > $file.temp2
 					exec bgzip -c $file > $file.temp
 					file delete $file.temp2
+					if {$keep} {file rename $file $file.old}
 					file rename -force $file.temp $file
 				}
 			}
@@ -183,7 +198,7 @@ proc cg_bgzip args {
 				exec bgzip -c $result.temp2 > $result.temp
 				file delete $result.temp2
 				file rename $result.temp $result
-				file delete $file
+				if {!$keep} {file delete $file}
 			}
 			.bz2 {
 				putslog "bgzip $file"
@@ -192,13 +207,13 @@ proc cg_bgzip args {
 				exec bgzip -c $result.temp2 > $result.temp
 				file delete $result.temp2
 				file rename $result.temp $result
-				file delete $file
+				if {!$keep} {file delete $file}
 			}
 			default {
 				putslog "bgzip $file"
 				exec bgzip -c $file > $file.gz.temp
 				file rename $file.gz.temp $file.gz
-				file delete $file
+				if {!$keep} {file delete $file}
 			}
 		}
 	}
