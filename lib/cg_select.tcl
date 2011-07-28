@@ -384,7 +384,7 @@ proc tsv_select_expandcode {header code awkfunctionsVar} {
 	return $code
 }
 
-proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {out stdout} {hc 0} {inverse 0}} {
+proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0}} {
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	set header [tsv_open $f keepheader]
@@ -439,7 +439,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {f stdin} {ou
 	} else {
 		set nh $header
 	}
-	if {[llength $newheader]} {
+	if {$sepheader ne ""} {
+		file_write $sepheader ${keepheader}[join $header \t]\n
+	} elseif {[llength $newheader]} {
 		if {[llength $newheader] != [llength $nh]} {error "new header (-nh) of wrong length for query results"}
 		puts $out ${keepheader}[join $newheader \t]
 	} else	{
@@ -514,7 +516,7 @@ proc cg_select {args} {
 		errorformat select
 		exit 1
 	}
-	set query {}; set fields {}; set sortfields {}; set newheader {}; set hc 0; set inverse 0
+	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0; set inverse 0
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -529,6 +531,7 @@ proc cg_select {args} {
 				set inverse 1
 			}
 			-nh {set newheader $value}
+			-sh {set sepheader $value}
 			-hc {set hc 1}
 			-s {set sortfields $value}
 			-n {
@@ -585,7 +588,7 @@ proc cg_select {args} {
 	} else {
 		set o stdout
 	}
-	set error [catch {tsv_select $query $fields $sortfields $newheader $f $o $hc $inverse} result]
+	set error [catch {tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse} result]
 	if {$f ne "stdin"} {catch {close $f}}
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$error} {
