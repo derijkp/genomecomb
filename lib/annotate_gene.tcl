@@ -732,9 +732,13 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 	set nh [list ${name}_impact ${name}_gene ${name}_descr]
 	puts $o [join $nh \t]
 	set empty [join [list_fill [llength $nh] {}] \t]
-	set fdbline [split [gets $df] \t]
-	set dbloc [list_sub $fdbline $dbposs]
-	foreach {dbchr dbstart dbend} $dbloc break
+	while {![eof $df]} {
+		set fdbline [split [gets $df] \t]
+		set dbloc [list_sub $fdbline $dbposs]
+		foreach {dbchr dbstart dbend} $dbloc break
+		if {![isint $dbstart] || ![isint $dbend]} continue
+		break
+	}
 	incr dbstart -2000
 	incr dbend 2000
 	set dbchr [chr2num $dbchr]
@@ -763,13 +767,21 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 			} else {
 				set dblist {}
 			}
-			set fdbline [split [gets $df] \t]
-			set dbloc [list_sub $fdbline $dbposs]
-			foreach {dbchr dbstart dbend} $dbloc break
-			incr dbstart -2000
-			incr dbend 2000
+			set ok 0
+			while {![eof $df]} {
+				set fdbline [split [gets $df] \t]
+				set dbloc [list_sub $fdbline $dbposs]
+				foreach {dbchr dbstart dbend} $dbloc break
+				if {[isint $dbstart] && [isint $dbend]} {
+					set ok 1
+					break
+				}
+			}
 			set dbchr [chr2num $dbchr]
 			lset dbloc 0 $dbchr
+			if {!$ok} break
+			incr dbstart -2000
+			incr dbend 2000
 		}
 		# join [list_subindex $dblist 4] \n\n
 		# check for multiple alleles, proecess these separately (alist contains >1 loc)
