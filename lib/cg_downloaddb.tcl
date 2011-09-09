@@ -241,6 +241,38 @@ proc cg_downloaddb {args} {
 	}
 }
 
+proc cg_calcsequencedgenome {args} {
+	if {([llength $args] != 2)} {
+		puts stderr "format is: $::base resultdir build"
+		puts stderr " - calculate sequenced genome from genome ifas (regions without Ns)"
+		exit 1
+	}
+	foreach {path build} $args break
+	set file $path/$build/genome_$build.ifas
+	set f [open $path/$build/genome_$build.ifas]
+	file mkdir $path/$build/extra/
+	set o [open $path/$build/extra/reg_${build}_sequencedgenome.tsv w]
+	puts $o chromosome\tbegin\tend\tsize
+	while {![eof $f]} {
+		set name [gets $f]
+		if {$name eq ""} continue
+		if {![regexp {chromosome ([0-9A-Z]+)} $name temp chr]} {
+			if {![regexp {chr([0-9A-Z]+)} $name temp chr]} {
+				error "no chromosome found in line $name"
+			}
+		}
+		putslog $name\n$chr
+		set seq [gets $f]
+		set indices [regexp -all -inline -indices {[^N]{1,}} $seq]
+		putslog Writing
+		list_foreach {begin end} $indices {
+			puts $o chr$chr\t$begin\t[expr {$end+1}]
+		}
+	}
+	close $o
+	close $f
+}
+
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	package require pkgtools
 	set appdir [file dir [pkgtools::startdir]]

@@ -10,6 +10,7 @@ cg downloadgenome hg19 genome_hg19.ifas
 cg make_genomecindex genome_hg19.ifas
 mkdir extra
 mv reg_genome_hg19.tsv extra/reg_hg19_fullgenome.tsv
+cg calcsequencedgenome /complgen/refseq hg19
 
 # region databases (ucsc)
 cg downloaddb $dest hg19 simpleRepeat microsat rmsk genomicSuperDups chainSelf

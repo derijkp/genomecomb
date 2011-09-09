@@ -6,7 +6,7 @@ cg downloadgenome hg18 genome_hg18.ifas
 cg make_genomecindex genome_hg18.ifas
 mkdir extra
 mv reg_genome_hg18.tsv extra/reg_hg18_fullgenome.tsv
-
+cg calcsequencedgenome /complgen/refseq hg18
 
 cg downloaddb /complgen/refseq/hg18 hg18 simpleRepeat microsat rmsk genomicSuperDups chainSelf
 cg downloaddb /complgen/refseq/hg18 hg18 omimGene phastConsElements44way oreganno rnaGene tRNAs tfbsConsSites targetScanS evofold
