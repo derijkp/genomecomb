@@ -38,7 +38,8 @@ proc cg_checksum {args} {
 		cd $dir
 		if {![file exists checksum.txt]} {
 			puts "Checking $file"
-			set error [catch {exec sha256sum -c manifest.all > checksum.txt} result]
+			set error [catch {exec sha256sum -c manifest.all > checksum.txt.temp} result]
+			file rename checksum.txt.temp checksum.txt
 		}
 		if {![catch {exec grep FAILED checksum.txt}]} {
 			incr numfailed
