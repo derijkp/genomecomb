@@ -187,7 +187,7 @@ proc cg_genome_get {args} {
 		fcopy $f stdout -size $glen
 		close $f
 	} else {
-		error "format is: genome_get chromosome ?start end?"
+		error "format is: genome_get genome chromosome ?start end?"
 	}
 }
 
