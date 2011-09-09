@@ -226,23 +226,17 @@ proc gzopen {file {pos -1}} {
 		} else {
 			set f [open "| razip -d -c -b $pos $file"]
 		}
-	} elseif {[inlist {.bgz} [file extension $file]]} {
+	} elseif {[inlist {.bgz .gz} [file extension $file]]} {
 		if {$pos == -1} {
 			set f [open "| bgzip -d -c $file"]
 		} else {
 			set f [open "| bgzip -d -c -b $pos $file"]
 		}
-	} elseif {[inlist {.gz} [file extension $file]]} {
-		if {$pos == -1} {
-			set f [open "| zcat $file"]
-		} else {
-			error "positioning not supported in gz files"
-		}
 	} elseif {[inlist {.bz2} [file extension $file]]} {
 		if {$pos == -1} {
 			set f [open "| bzcat $file"]
 		} else {
-			error "positioning not supported in gz files"
+			error "positioning not supported in bz2 files"
 		}
 	} else {
 		set f [open $file]
