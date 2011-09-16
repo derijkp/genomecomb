@@ -25,20 +25,46 @@ proc cg_liftover {args} {
 	set line [split [gets $f] \t]
 	if {![regexp ^chr [lindex $line 0]]} {set addchr 1} else {set addchr 0}
 	close $f
-	set poss [tsv_basicfields $header 3]
-	if {$poss ne "0 1 2"} {error "Rearranged header not supported yet"}
-	if {$addchr} {
-		set fields [cg select -h $varfile]
-		set fields [lreplace $fields 0 0 "chromosome=\"chr\" \$chromosome"]
-		cg select -f $fields -sh $resultfile.temph $varfile $resultfile.temp
-	} else {
-		cg select -sh $resultfile.temph $varfile $resultfile.temp
+	set poss [tsv_basicfields $header 6]
+	if {$poss ne "0 1 2 3 4 5"} {error "Rearranged header not supported yet, start header should be: chromosome begin end type ref alt"}
+	set fields [lrange $header 0 5]
+	set id {}
+	foreach field $fields {
+		lappend id \$$field
 	}
+	if {$addchr} {
+		set fields [lreplace $fields 0 0 "chromosome=\"chr\" \$chromosome"]
+	}
+	lappend fields id=\"[join $id { "-" }]\"
+	cg select -f $fields -sh $resultfile.temph $varfile $resultfile.temp
 	# set dir [file dir [exec which liftOver]]
 	if {[catch {exec liftOver -bedPlus=3 -tab $resultfile.temp $liftoverfile $resultfile.temp2 $unmappedfile} errmsg]} {
 		puts "$errmsg"
 	}
-	exec cat $resultfile.temph $resultfile.temp2 > $resultfile
+	set f [gzopen $varfile]
+	set header [tsv_open $f comment]
+	set fl [open $resultfile.temp2]
+	set o [open $resultfile.temp3 w]
+	lappend header beforeliftover
+	puts $o [join $header \t]
+	while {![eof $fl]} {
+		set lline [split [gets $fl] \t]
+		if {![llength $lline} continue
+		set lname [lindex $lline 6]
+		while 1 {
+			set line [split [gets $f] \t]
+			set name [join [list_sub $line $poss] -]
+			if {$name eq $lname} break
+			if {[eof $f]} {error "$lname not found"}
+		}
+		set rline [lrange $lline 0 5]
+		lappend rline {*}[lrange $line 6 end] [join [lrange [split $lname -] 0 2] -]
+		puts $o [join $rline \t]
+	}
+	close $o
+	close $fl
+	close $f
+	file rename $resultfile.temp3 $resultfile
 #	file delete $resultfile.temph $resultfile.temp $resultfile.temp2
 }
 
