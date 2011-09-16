@@ -1,0 +1,4 @@
+chromosome	begin	end	type	ref	alt
+chr1	972133	972134	del_snp	C	,T
+chr1	972133	972134	snp	C	T
+chr1	972179	972180	snp	G	A

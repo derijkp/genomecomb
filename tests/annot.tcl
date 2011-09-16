@@ -29,6 +29,11 @@ test var_annot {basic} {
 	exec diff temp2.sft data/expected-vars1-var_annot.sft
 } {} 
 
+test var_annot {different types on same pos} {
+	exec cg annotate data/vars2.tsv temp.tsv data/var_annot3.tsv 2> /dev/null
+	exec diff temp.tsv data/expected-vars2-var_annot3.tsv
+} {} 
+
 test var_annot {gene} {
 	exec cg annotate -dbdir /complgen/refseq/hg18 data/vars_annottest.sft temp.sft data/gene_test.tsv 2> /dev/null
 	exec diff temp.sft data/expected-annotate-vars_annottest-gene_test.tsv

@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 	int chr2pos,start2pos,end2pos,type2pos,alt2pos,data2pos,max2;
 	int nchr1=0,start1,end1;
 	int nchr2=0,start2,end2;
-	int error2,curchr=0,nextpos=0,sametype;
+	int error2,curchr=0,nextpos=0,sametype,cmp;
 	if ((argc != 15)) {
 		fprintf(stderr,"Format is: reg_annot file1 chrpos1 startpos1 endpos1 type1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos alt2pos data1pos data2pos");
 		exit(EXIT_FAILURE);
@@ -137,9 +137,10 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 			if (nchr2 == nchr1) {
 				if (start2 == start1) {
 					if (end2 == end1) {
-						if (strcmp(result2[type2pos].string, result1[type1pos].string) == 0) {
+						cmp = strcmp(result2[type2pos].string, result1[type1pos].string);
+						if (cmp == 0) {
 							sametype = 1; break;
-						}
+						} else if (cmp > 0) break; 
 					} else if (end2 > end1) break; 
 				} else if (start2 > start1) break;
 			} else if (nchr2 > nchr1) break;
