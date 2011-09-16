@@ -36,7 +36,12 @@ proc cg_commonvars args {
 	set gsamples [list_regsub {^alleleSeq[12]-} [list_sub $header $gposs] {}]
 	set fams {}
 	foreach sample $gsamples {
-		lappend fams $groupsa($sample)
+		if {[info exists groupsa($sample)]} {
+			lappend fams $groupsa($sample)
+		} else {
+			puts "Warning: sample $sample is not used"
+			lappend fams {}
+		}
 	}
 
 	set rh {chromosome begin end type ref alt}
