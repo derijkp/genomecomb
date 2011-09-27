@@ -11,6 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tools.h"
+#define CHROMM 9095
+#define CHROMX 9096
+#define CHROMY 9097
 
 int main(int argc, char *argv[]) {
 	FILE *o[26];
@@ -31,11 +34,11 @@ int main(int argc, char *argv[]) {
 		sprintf(line,"%s-%d",argv[1],i);
 		o[i] = fopen64(line,"a");
 	}
+	sprintf(line,"%s-M",argv[1]);
+	o[i++] = fopen64(line,"a");
 	sprintf(line,"%s-X",argv[1]);
 	o[i++] = fopen64(line,"a");
 	sprintf(line,"%s-Y",argv[1]);
-	o[i++] = fopen64(line,"a");
-	sprintf(line,"%s-M",argv[1]);
 	o[i++] = fopen64(line,"a");
 	while ((read = getline(&line, &len, stdin)) != -1) {
 		if (col == 0) {
@@ -57,6 +60,13 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		nchr = chromosomenum(chromosome);
+		if (nchr == CHROMM) {
+			nchr = 23;
+		} else if (nchr == CHROMX) {
+			nchr = 24;
+		} else if (nchr == CHROMY) {
+			nchr = 25;
+		}
 		fprintf(o[nchr],"%s", line);
 	}
 	for (i=1 ; i < 26 ; i++) {
