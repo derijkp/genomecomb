@@ -241,6 +241,11 @@ proc cg_downloaddb {args} {
 	}
 }
 
+if 0 {
+	set path /media/663d83bb-851c-4dbb-8c03-e8815d28e483/refseq
+	set nuild hg18
+}
+
 proc cg_calcsequencedgenome {args} {
 	if {([llength $args] != 2)} {
 		puts stderr "format is: $::base resultdir build"
@@ -265,9 +270,16 @@ proc cg_calcsequencedgenome {args} {
 		set seq [gets $f]
 		set indices [regexp -all -inline -indices {[^N]{1,}} $seq]
 		putslog Writing
+		list_foreach {pbegin pend} $indices break
 		list_foreach {begin end} $indices {
-			puts $o chr$chr\t$begin\t[expr {$end+1}]
+			incr end
+			if {$begin > [expr {$pend+1}]} {
+				puts $o chr$chr\t$pbegin\t$pend
+				set pbegin $begin
+			}
+			set pend $end
 		}
+		puts $o chr$chr\t$pbegin\t$pend
 	}
 	close $o
 	close $f
