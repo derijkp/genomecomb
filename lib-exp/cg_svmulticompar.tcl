@@ -223,8 +223,8 @@ proc svmulticompar_getlist {f1 poss1 len1 line1Var f2 poss2 len2 line2Var} {
 
 proc svmulticompar {svfile1 svfile2} {
 	# set locfields {chr1 start1 end1 type size zyg chr2 start2 end2}
-
 	set mergefields {LeftRepeatClassification RightRepeatClassification LeftGenes RightGenes XRef DeletedTransposableElement KnownUnderrepresentedRepeat FrequencyInBaselineGenomeSet}
+	lappend mergefields overlappingGene	knownCNV
 	set locfields {chromosome begin end type start1 end1 size zyg chr2 start2 end2}
 	set ::countpos [expr {[llength $locfields]+2}]
 	if {![file exists $svfile1]} {
@@ -344,12 +344,12 @@ proc cg_svmulticompar {args} {
 	}
 	set done {}
 	foreach {compar_file} $args break
-		if {[file exists $compar_file]} {
-			set list [cg select -h $compar_file]
-			set poss [list_find -glob $list start1-*]
-			set done [list_sub $list $poss]
-			set done [list_regsub -all {^start1-} $done {}]
-		}
+	if {[file exists $compar_file]} {
+		set list [cg select -h $compar_file]
+		set poss [list_find -glob $list start1-*]
+		set done [list_sub $list $poss]
+		set done [list_regsub -all {^start1-} $done {}]
+	}
 	set files [lrange $args 1 end]
 	foreach file $files {
 		set name [lindex [split [file tail [file root $file]] -] end]
