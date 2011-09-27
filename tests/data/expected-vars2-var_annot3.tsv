@@ -1,0 +1,4 @@
+chromosome	begin	end	type	ref	alt	annot3_name	annot3_freq
+chr1	972133	972134	del_snp	C	,T	-	-
+chr1	972133	972134	snp	C	T	rs3121575	0
+chr1	972179	972180	snp	G	A	rs4970350	0.375
