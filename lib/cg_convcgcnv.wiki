@@ -1,0 +1,14 @@
+= Convcgcnv =
+
+== Format ==
+cg convcgcnv srcfile dstfile
+
+== Summary ==
+Convert the Complete Genomics CNV files to the cg format
+
+== Arguments ==
+; **srcfile**: Complete Genomics CNV file
+; **dstfile**: resulting sft cnv file
+
+== Category ==
+Convert
