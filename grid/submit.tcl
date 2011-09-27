@@ -62,10 +62,9 @@ if {[string length $name] > 200} {
 set tasknum {}
 if {[info exists ra([list $name $tasknum])]} {
 	puts "Job $name.$tasknum is running, skipping"
-	continue
+} else {
+	file mkdir osge
+	file mkdir esge
+	set jnum [eval {exec qsub -N j$name -q all.q -o osge -e esge} $options [file normalize ~/bin/repeater.sh] [file normalize [pwd]] $argv]
+	puts "$jnum $name"
 }
-file mkdir osge
-file mkdir esge
-set jnum [eval {exec qsub -N j$name -q all.q -o osge -e esge} $options [file normalize ~/bin/repeater.sh] [file normalize [pwd]] $argv]
-puts "$jnum $name"
-
