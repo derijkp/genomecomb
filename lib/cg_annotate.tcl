@@ -116,6 +116,7 @@ putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 }
 
 proc annotatevar {file dbfile name annotfile {outfields {name score freq}}} {
+#putsvars file dbfile name annotfile outfields
 	catch {close $f}
 	set f [open $file]
 	set poss [open_region $f header]
@@ -217,6 +218,7 @@ proc cg_annotate {args} {
 	}
 	set afiles {}
 	foreach dbfile $dbfiles {
+		putslog "Adding $dbfile"
 		unset -nocomplain a
 		if {[file exists $dbfile.opt]} {array set a [file_read $dbfile.opt]}
 		if {[info exists a(name)]} {
@@ -228,7 +230,6 @@ proc cg_annotate {args} {
 			puts "Skipping $dbfile: $name already in file"
 			continue
 		}
-		putslog "Adding $dbfile"
 		set dbtype [lindex [split [file tail $dbfile] _] 0]
 		if {$dbtype eq "annovar"} {
 			if {$near != -1} {error "-near option does not work with annovar dbfiles"}
