@@ -106,7 +106,7 @@ proc downloaddb_dbsnp {path build dbname} {
 	}
 	close $f ; close $o
 	puts "Sorting $filename"
-	cg select -s {chrom start end type} $filename.temp $filename.temp2
+	cg select -s {chrom start end type alt} $filename.temp $filename.temp2
 	file rename $filename.temp2 $filename
 	file delete $filename.temp
 }
