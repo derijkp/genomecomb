@@ -387,9 +387,15 @@ proc tsv_select_expandcode {header code awkfunctionsVar} {
 proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0}} {
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
-	set header [tsv_open $f keepheader]
-	if {$hc} {
-		tsv_hcheader $f keepheader header
+	if {$hc ne "0" && $hc ne "1"} {
+		set hf [gzopen $hc]
+		set header [tsv_open $hf keepheader]
+		close $hf
+	} else {
+		set header [tsv_open $f keepheader]
+		if {$hc eq "1"} {
+			tsv_hcheader $f keepheader header
+		}
 	}
 	set awk ""
 	set awkfunctions {0 0}
@@ -533,6 +539,7 @@ proc cg_select {args} {
 			-nh {set newheader $value}
 			-sh {set sepheader $value}
 			-hc {set hc 1}
+			-hf {set hc $value}
 			-s {set sortfields $value}
 			-n {
 				if {$value eq ""} {
