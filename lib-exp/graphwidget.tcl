@@ -240,6 +240,7 @@ graphwidget method open {file settingsVar} {
 	set xpos [lindex $poss 0]
 	set ypos [lindex $poss 1]
 	set basecolor [lindex {blue red gray orange yellow green violet} $vnum]
+	if {$basecolor eq ""} {set basecolor blue}
 	lappend data(entries) $name
 	set data($name,chr) $graphd(chr)
 	set data($name,vnum) $vnum
