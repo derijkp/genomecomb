@@ -97,9 +97,11 @@ proc cg_makesequenom {args} {
 		}
 		set list [lsort -dict -decreasing $list]
 		list_foreach {c s e type freq} $list {
-			set start [expr {$s-$estart}]
+			if {$e <= $estart || $s > $eend} continue
 			if {$freq eq ""} {set freq 0}
 			if {$freq <= $freql} continue
+			set start [expr {$s-$estart}]
+			if {$start < 0} {set start 0}
 			if {$type eq "ins"} {
 				set end $start
 			} else {
