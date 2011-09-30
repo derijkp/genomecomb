@@ -18,6 +18,7 @@ will be included in the result. Other types of headers are supported (CGI style,
 
 == Options ==
 ; **-q query**: only lines fullfilling conditions in query will be written to outfile (see further)
+; **-qf queryfile**: only lines fullfilling conditions in queryfile will be written to outfile (see further)
 ; **-f fields**: only write given fields to result.
 An asterix can be used to indicated several fields matching a pattern.
 A field starting with fieldname=formula will add a field with the given fieldname. The value in 
@@ -75,6 +76,11 @@ will give the number of samples for which a variant was found
 ; **df(sample1,sample2, ...)**: different: variant in some, reference in other (all sequenced)
 ; **mm(sample1,sample2, ...)**: mismatch; variant in all, but different genotypes (all sequenced)
 ; **un(sample1,sample2, ...)**: unsequenced in some samples, variant in one of the others
+
+== Queryfile ==
+A queryfile is a tab delimited file with a header describing a query. The output will contain 
+resultlines where all values in the columns given in the query header in the resultline are 
+equal to the corresponding values given in one line of the query file.
 
 == Category ==
 Query

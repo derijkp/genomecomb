@@ -531,6 +531,21 @@ proc cg_select {args} {
 				if {[regexp {[^=!><\\]=[^=]} $query]} {puts stderr "you may have used = instead of == in query"}
 				regsub -all {\\=} $query = query
 			}
+			-qf {
+				set f [gzopen $value]
+				set header [tsv_open $f]
+				set data [csv_file $f \t]
+				close $f
+				set query {}
+				foreach line $data {
+					set el ""
+					foreach field $header v $line {
+						lappend el "\$$field == \"$v\""
+					}
+					lappend query "\( [join $el " && "] \)"
+				}
+				set query [join $query " || "]
+			}
 			-f {set fields $value}
 			-rf {
 				set fields $value
