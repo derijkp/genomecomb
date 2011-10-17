@@ -34,15 +34,24 @@ proc cg_vcf2sft {args} {
 	}
 	array set conv_formata {
 		AD alleledepth
+		GT genotype
 		DP coverage
+		FT filter
 		GL loglikelihood
 		GQ genoqual
-		GT genotype
 		HQ haploqual
+
+		AC allelecount
+		AF frequency
+		AA Ancestralallele
+		DB dbsnp
+		H2 Hapmap2
 	}
 	unset -nocomplain a
+	set comment {# -- sft converted from vcf, original comments follow --}
 	while {![eof $f]} {
 		set line [gets $f]
+		append comment \n$line
 		if {[string range $line 0 1] eq "##"} {
 			regexp {##([^=]+)=(.*)$} $line temp key value
 			lappend a($key) $value
@@ -51,9 +60,10 @@ proc cg_vcf2sft {args} {
 			break
 		}
 	}
+	append comment "\n# ----"
+	puts $o $comment
 	set samples [lrange $header 9 end]
-	set nheader {chromosome begin end type ref alt}
-	lappend nheader quality filter
+	set nheader {chromosome begin end type ref alt name quality filter}
 	set formatfields {GT}
 	set headerfields {alleleSeq1 alleleSeq2 fased}
 	foreach temp $a(FORMAT) {
@@ -71,6 +81,19 @@ proc cg_vcf2sft {args} {
 			}
 		}
 	}
+	set infofields {}
+	set num 0
+	foreach temp $a(INFO) {
+		regexp {ID=([^,]+)} $temp temp id
+		lappend infofields $id
+		if {$id eq "DP"} {
+			lappend nheader totalcoverage
+		} else {
+			lappend nheader [get conv_formata($id) $id]
+		}
+		incr num
+	}
+	set extract [list_fill $num 0 3]
 	puts $o [join $nheader \t]
 	set next 100000; set num 0
 	while {![eof $f]} {
@@ -110,7 +133,7 @@ proc cg_vcf2sft {args} {
 				set type sub
 			}
 		}
-		set result [list $chrom $begin $end $type $ref $alt $qual $filter]
+		set result [list $chrom $begin $end $type $ref $alt $id $qual $filter]
 		foreach sample $samples geno $genos {
 			set order [list_cor $format $formatfields]
 			set temp [list_sub [split $geno :] $order]
@@ -134,6 +157,17 @@ proc cg_vcf2sft {args} {
 			}
 			lappend result $a1 $a2 $phased {*}[lrange $temp 1 end]
 		}
+		set dinfo [regexp -all -inline {([^;=]+)=?([^;=]*)} $info]
+		set dinfo [list_sub $dinfo -exclude $extract]
+		foreach field $infofields {
+			if {[dict exists $dinfo $field]} {
+				set v [dict get $dinfo $field]
+				if {$v eq ""} {set v 1}
+				lappend result $v
+			} else {
+				lappend result {}
+			}
+		}
 		puts $o [join $result \t]
 	}	
 	if {$o ne "stdout"} {catch {close $o}}
@@ -151,7 +185,11 @@ if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 }
 
 if 0 {
-	set filename tests/data/test.vcf
-	set args tests/data/test.vcf
-	cg vcf2sft tests/data/test.vcf tests/data/test.sft
+	set filename data/test.vcf
+	set filename data/test1000glow.vcf
+	set args $filename
+	set f [gzopen $filename]
+	set o stdout
+
+	cg vcf2sft $filename temp.tsv
 }

@@ -9,3 +9,4 @@ source annot.tcl
 source tsv.tcl
 source val.tcl
 source edit.tcl
+source convert.tcl
