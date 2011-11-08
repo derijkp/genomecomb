@@ -27,6 +27,9 @@ proc cg_liftover {args} {
 	close $f
 	set poss [tsv_basicfields $header 6]
 	if {$poss ne "0 1 2 3 4 5"} {error "Rearranged header not supported yet, start header should be: chromosome begin end type ref alt"}
+	#
+	# make input file ($resultfile.temp) for liftover
+	#
 	set fields [lrange $header 0 5]
 	set id {}
 	foreach field $fields {
@@ -35,21 +38,33 @@ proc cg_liftover {args} {
 	if {$addchr} {
 		set fields [lreplace $fields 0 0 "chromosome=\"chr\" \$chromosome"]
 	}
-	lappend fields id=\"[join $id { "-" }]\"
+	lappend fields id=[join $id { "-" }]
 	cg select -f $fields -sh $resultfile.temph $varfile $resultfile.temp
+	#
+	# do liftover -> $resultfile.temp2
+	#
 	# set dir [file dir [exec which liftOver]]
 	if {[catch {exec liftOver -bedPlus=3 -tab $resultfile.temp $liftoverfile $resultfile.temp2 $unmappedfile} errmsg]} {
 		puts "$errmsg"
 	}
+	#
+#	# sort liftovered file ion id -> $resultfile.temp3
+#	#
+#	file_write $resultfile.temph [join {chrom begin end type ref alt id} \t]\n
+#	cg select -s {chrom start end type alt} -hf $resultfile.temph $resultfile.temp2 $resultfile.temp3
+	#
+	# add original data back to liftovered file -> $resultfile.temp3
+	#
 	set f [gzopen $varfile]
 	set header [tsv_open $f comment]
 	set fl [open $resultfile.temp2]
+	set temp [tsv_open $fl]
 	set o [open $resultfile.temp3 w]
 	lappend header beforeliftover
 	puts $o [join $header \t]
 	while {![eof $fl]} {
 		set lline [split [gets $fl] \t]
-		if {![llength $lline} continue
+		if {![llength $lline]} continue
 		set lname [lindex $lline 6]
 		while 1 {
 			set line [split [gets $f] \t]
@@ -64,8 +79,15 @@ proc cg_liftover {args} {
 	close $o
 	close $fl
 	close $f
-	file rename $resultfile.temp3 $resultfile
-#	file delete $resultfile.temph $resultfile.temp $resultfile.temp2
+	#
+	# sort result -> $resultfile.temp4
+	#
+	cg select -s [lrange $header 0 5] $resultfile.temp3 $resultfile.temp4
+	#
+	# rename result, cleanup
+	#
+	file rename $resultfile.temp4 $resultfile
+	file delete $resultfile.temph $resultfile.temp $resultfile.temp2 $resultfile.temp3
 }
 
 if 0 {
