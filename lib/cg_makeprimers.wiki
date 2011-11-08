@@ -1,4 +1,4 @@
-= Makesequenom =
+= Makeprimers =
 
 == Format ==
 cg makeprimers regionfile archive maxsize prefsize dbdir threads
