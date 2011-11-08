@@ -40,6 +40,7 @@ proc cg_vcf2sft {args} {
 		GL loglikelihood
 		GQ genoqual
 		HQ haploqual
+		AN totalallelecount
 
 		AC allelecount
 		AF frequency
@@ -157,8 +158,10 @@ proc cg_vcf2sft {args} {
 			}
 			lappend result $a1 $a2 $phased {*}[lrange $temp 1 end]
 		}
-		set dinfo [regexp -all -inline {([^;=]+)=?([^;=]*)} $info]
-		set dinfo [list_sub $dinfo -exclude $extract]
+		set dinfo [dict create]
+		foreach {temp key value} [regexp -all -inline {([^;=]+)=?([^;=]*)} $info] {
+			dict set dinfo $key $value
+		}
 		foreach field $infofields {
 			if {[dict exists $dinfo $field]} {
 				set v [dict get $dinfo $field]
