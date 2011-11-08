@@ -39,14 +39,28 @@ proc cg_checksum {args} {
 		if {![file exists checksum.txt]} {
 			puts "Checking $file"
 			set error [catch {exec sha256sum -c manifest.all > checksum.txt.temp} result]
-			file rename checksum.txt.temp checksum.txt
+			if {[regexp {no properly formatted SHA256 checksum} $result]} {
+				set error [catch {exec md5sum -c manifest.all > checksum.txt.temp} result]
+			}
+			if {![file size checksum.txt.temp]} {
+				file_write checksum.txt.temp "FAILED: $result\n"
+			}
+			file rename -force checksum.txt.temp checksum.txt
+			puts "$dir/checksum.txt written"
 		}
-		if {![catch {exec grep FAILED checksum.txt}]} {
+		# grep returns error if nothing is found
+		set line {}
+		catch {
+			set f [open $dir/checksum.txt]
+			set line [gets $f]
+			close $f
+		}
+		if {![catch {exec grep FAILED checksum.txt}] && [catch {exec grep OK checksum.txt}]} {
 			incr numfailed
-			puts "FAILED $file"
+			puts "FAILED $dir/checksum.txt ($line)"
 		} else {
 			incr numok
-			puts "OK $file"
+			puts "OK $dir/checksum.txt ($line)"
 		}
 	}
 	puts "ok: $numok"
