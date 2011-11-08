@@ -320,6 +320,7 @@ proc cg_project {args} {
 			if {![file exists docs]} {	
 				exec ln -s /complgen/projects/docs .
 			}
+			exec rm -f [file tail $projectdir]
 			if {![file exists $project]} {
 				exec ln -s $projectdir .
 			}
