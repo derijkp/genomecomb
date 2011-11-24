@@ -449,6 +449,17 @@ proc chanexec {in out pipe} {
 	close $o
 }
 
+proc wgetfile {url {resultfile {}}} {
+	if {$resultfile eq ""} {
+		set resultfile [file tail $url]
+	}
+	catch {exec wget --tries=45 -O $resultfile.temp $url} errmsg
+	if {![file exists $resultfile.temp]} {
+		error $errmsg
+	}
+	file rename $resultfile.temp $resultfile
+}
+
 if 0 {
 
 	ifcatch {error test} result {

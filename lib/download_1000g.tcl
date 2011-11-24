@@ -13,10 +13,29 @@ if 0 {
 	cd /complgen/refseq/hg18
 	set path /complgen/refseq/hg18
 	set build hg18
+	set path /complgen/refseq/hg19
+	set build hg19
 	set pop CEU
 
 cg downloaddb /complgen/refseq/hg18 hg18 1000g
 
+}
+
+proc downloaddb_1000glow {path build} {
+	if {$build ne "hg19"} {
+		error "only build hg19 supported"
+	}
+	set resultfile $path/$build/var_${build}_1000glow.tsv
+	if {[file exists $resultfile]} {
+		puts stderr "skipping file $resultfile: exists"
+		return
+	}
+	set tempdir $path/tmp/$build
+	# catch {exec wget --tries=45 --directory-prefix=$tempdir/ ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20101123/interim_phase1_release/ALL.wgs.phase1.projectConsensus.snps.sites.vcf.gz >@stdout 2>@stderr} errmsg
+	catch {exec wget -c --tries=45 --directory-prefix=$tempdir/ ftp://ftp.ncbi.nlm.nih.gov/1000genomes/ftp/release/20110521/ALL.wgs.merged_beagle_mach.20101123.snps_indels_svs.sites.vcf.gz >@stdout 2>@stderr} errmsg
+	cg vcf2sft $tempdir/ALL.wgs.merged_beagle_mach.20101123.snps_indels_svs.sites.vcf.gz $tempdir/ALL.wgs.merged_beagle_mach.20101123.snps_indels_svs.sites.tsv.temp
+	file rename $tempdir/ALL.wgs.merged_beagle_mach.20101123.snps_indels_svs.sites.tsv.temp $tempdir/ALL.wgs.merged_beagle_mach.20101123.snps_indels_svs.sites.tsv
+	cg select -s {chromosome begin end type alt} -f {chromosome begin end type ref alt {freq=$allelecount/$totalallelecount} quality filter} $tempdir/ALL.wgs.merged_beagle_mach.20101123.snps_indels_svs.sites.tsv $resultfile
 }
 
 proc downloaddb_1000g {path build} {
@@ -26,7 +45,8 @@ proc downloaddb_1000g {path build} {
 	set tempdir $path/tmp/$build
 	set populations {CEU CHB+JPT YRI}
 	foreach pop $populations {
-		set resultfile $path/var_${build}_1000g$pop.tsv
+		regsub -all {\+} $pop _ rpop
+		set resultfile $path/$build/var_${build}_1000g$rpop.tsv
 		if {[file exists $resultfile]} {
 			puts "$resultfile exists: skipping"
 			continue
@@ -34,19 +54,11 @@ proc downloaddb_1000g {path build} {
 		puts "Making $resultfile"
 		if {![file exists $tempdir/$pop.SRP000031.2010_03.sites.vcf.gz]} {
 			puts "downloading $pop.SRP000031.2010_03.sites.vcf.gz"
-			catch {exec wget --tries=45 --directory-prefix=$tempdir/ ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/pilot_data/release/2010_03/pilot1/$pop.SRP000031.2010_03.sites.vcf.gz} errmsg
-			if {![file exists $tempdir/$pop.SRP000031.2010_03.sites.vcf.gz]} {
-				puts $errmsg
-				exit 1
-			}
+			wgetfile ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/pilot_data/release/2010_03/pilot1/$pop.SRP000031.2010_03.sites.vcf.gz $tempdir/$pop.SRP000031.2010_03.sites.vcf.gz
 		}
 #		if {![file exists $tempdir/$pop.SRP000031.2010_03.indels.sites.vcf.gz]} {
 #			puts "downloading $pop.SRP000031.2010_03.indels.sites.vcf.gz"
-#			catch {exec wget --tries=45 --directory-prefix=$tempdir/ ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/pilot_data/release/2010_03/pilot1/indels/$pop.SRP000031.2010_03.indels.sites.vcf.gz} errmsg
-#			if {![file exists $tempdir/$pop.SRP000031.2010_03.sites.vcf.gz]} {
-#				puts $errmsg
-#				exit 1
-#			}
+#			wgetfile ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/pilot_data/release/2010_03/pilot1/indels/$pop.SRP000031.2010_03.indels.sites.vcf.gz $tempdir/$pop.SRP000031.2010_03.indels.sites.vcf.gz
 #		}
 		puts "Changing format"
 		catch {close $f} ; catch {close $o}
@@ -57,7 +69,7 @@ proc downloaddb_1000g {path build} {
 			if {[string index $line 0] ne "#"} break
 		}
 		set line [split $line \t]
-		puts $o [join {chrom start end type freq ref alt id} \t]
+		puts $o [join {chrom start end type ref alt freq id} \t]
 		set num 0; set next 100000
 		set type snp
 		while {![eof $f]} {
@@ -72,7 +84,7 @@ proc downloaddb_1000g {path build} {
 			regexp {AC=([0-9]+)} $temp t ac
 			regexp {AN=([0-9]+)} $temp t an
 			set freq [format %.3f [expr {$ac/double($an)}]]
-			puts $o "chr$chrom\t$start\t$end\t$type\t$freq\t$ref\t$alt\t$id"
+			puts $o "chr$chrom\t$start\t$end\t$type\t$ref\t$alt\t$freq\t$id"
 			set line [split [gets $f] \t]
 		}
 		close $o

@@ -125,8 +125,7 @@ proc downloaddb {path build dbname} {
 	set chromosomes {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
 	if {![file exists $temp/$dbname.txt.gz]} {
 		puts "Downloading $dbname.txt.gz ....."
-		catch {exec wget --tries=45 --directory-prefix=$temp ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$dbname.txt.gz} errmsg
-		puts $errmsg
+		wgetfile ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$dbname.txt.gz $temp/$dbname.txt.gz
 	} else {
 		puts "Skipping download $dbname.txt.gz (already there)"
 	}
@@ -135,8 +134,7 @@ proc downloaddb {path build dbname} {
 		foreach chr $chromosomes {
 			if {![file exists $temp/chr${chr}_$dbname.txt.gz]} {
 				puts "Downloading chr${chr}_$dbname.txt.gz ....."
-				set e [catch {exec wget --tries=45 --directory-prefix=$temp ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/chr${chr}_$dbname.txt.gz} errmsg]
-				puts $errmsg
+				wgetfile ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/chr${chr}_$dbname.txt.gz $temp/chr${chr}_$dbname.txt.gz
 				if {![file exists $temp/chr${chr}_$dbname.txt.gz]} {
 					if {$chr eq "1"} {
 						puts "Could not download $dbname.txt.gz"
@@ -233,6 +231,8 @@ proc cg_downloaddb {args} {
 			downloaddb_mirbase $path $build
 		} elseif {$dbname eq "1000g"} {
 			downloaddb_1000g $path $build
+		} elseif {$dbname eq "1000glow"} {
+			downloaddb_1000glow $path $build
 		} elseif {[regexp {snp.*} $dbname]} {
 			downloaddb_dbsnp $path $build $dbname
 		} else {
