@@ -19,6 +19,9 @@ proc cg_liftover {args} {
 		exit 1
 	}
 	foreach {varfile liftoverfile resultfile} $args break
+	if {[file exists $resultfile]} {
+		error "file $resultfile already exists"
+	}
 	set unmappedfile $resultfile.unmapped
 	set f [gzopen $varfile]
 	set header [tsv_open $f comment]
