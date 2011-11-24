@@ -10,9 +10,23 @@ exec tclsh "$0" ${1+"$@"}
 
 package require Extral
 
+proc cg_wish {args} {
+	package require Tk
+	set tk 1
+	package require Tclx
+	signal -restart error SIGINT
+	if {[info commands "console"] == "console"} {
+		console show
+	} else {
+		package require ClassyTk
+		Classy::cmd
+	}
+}
+
 proc cg_sh {args} {
 	if {[lsearch $args tk] != -1} {
-		package require TK
+		cg_wish {*}$args
+		return
 	}
 	package require Tclx
 	signal -restart error SIGINT
