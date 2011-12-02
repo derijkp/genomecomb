@@ -47,8 +47,8 @@ proc downloaddb_dbsnp_convline {line} {
 }
 
 proc downloaddb_dbsnp {path build dbname} {
-	set ufilename $path/ucsc_${build}_$dbname.tsv
-	set filename $path/var_${build}_$dbname.tsv
+	set ufilename $path/tmp/$build/ucsc_${build}_$dbname.tsv
+	set filename $path/$build/var_${build}_$dbname.tsv
 	puts "Making $filename"
 	if {[file exists $filename]} {
 		puts "file $filename exists: skipping"

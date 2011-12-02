@@ -36,7 +36,7 @@ cg downloaddb /complgen/refseq/hg18 hg18 mirbase
 }
 
 proc downloaddb_mirbase {path build} {
-	set filename $path/reg_${build}_mirbase.tsv
+	set filename $path/$build/reg_${build}_mirbase.tsv
 	set temp $path/tmp/$build
 	if {[file isfile $filename]} {
 		puts "The file '$filename' already exists..."
@@ -112,11 +112,11 @@ proc downloaddb_mirbase {path build} {
 
 proc downloaddb {path build dbname} {
 	file mkdir $path
-	set filename $path/ucsc_${build}_$dbname.tsv
+	set filename $path/$build/ucsc_${build}_$dbname.tsv
 	set temp $path/tmp/$build
 	file mkdir $temp
 	if {[file isfile $filename]} {
-		puts "The file '$path/ucsc_${build}_$dbname.tsv' already exists..."
+		puts "The file '$filename' already exists..."
 		puts "Skipping the download..."
 		puts "----------------------------------------------------"
 		return
@@ -220,12 +220,13 @@ proc downloaddb {path build dbname} {
 proc cg_downloaddb {args} {
 	if {([llength $args] < 2)} {
 		puts stderr "format is: $::base resultdir build database ?...?"
-		puts stderr " - downloads databases from ucsc and converts to region format"
+		puts stderr " - downloads databases from ucsc, mirbase, 1000g, ... and converts to useful format"
 		exit 1
 	}
 	foreach {path build dbname} $args break
 	set dbnames [lrange $args 2 end]
 	puts "----------------------------------------------------"
+	file mkdir $path
 	foreach dbname $dbnames {
 		if {$dbname eq "mirbase"} {
 			downloaddb_mirbase $path $build
