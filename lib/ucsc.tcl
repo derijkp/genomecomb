@@ -30,6 +30,162 @@ proc cg_ucsc2region {args} {
 	ucsc2region $ucsc_file
 }
 
+proc ucsc_wibfile {file dir} {
+	if {[file exists $file]} {
+		return $file
+	}
+	set testfile $dir/[file tail $file]
+	if {[file exists $testfile]} {
+		return $testfile
+	}
+	if {[file exists [file tail $file]]} {
+		return [file tail $file]
+	}
+	puts "Downloading $file"
+	wgetfile ftp://hgdownload.cse.ucsc.edu/$file $testfile
+	return $testfile
+}
+
+proc ucscwiggle2reg {ucsc_file resultfile {precision 1} {formula {}} {addnum {}}} {
+	if {$formula eq ""} {
+		proc formula {value} {return $value}
+	} else {
+		proc formula {value} "return \[expr \{$formula\}\]"
+	}
+	if {$addnum ne ""} {
+		proc putsresult {o args} {
+			puts $o [join $args \t]
+		}
+		set useaddnum 1
+	} else {
+		proc putsresult {o args} {
+			puts $o [join [lrange $args 0 3] \t]
+		}
+		set useaddnum 0
+	}
+	puts "Making $resultfile"
+	catch {close $f}; catch {close $b}; catch {close $o}; 
+	set dir [file dir [file normalize $ucsc_file]]
+	set f [gzopen $ucsc_file]
+	set o [open $resultfile.temp w]
+	putsresult $o chromosome begin end score num
+	set num {}
+	set ucsc_wib {}
+	set header [tsv_open $f]
+	set poss [tsv_basicfields $header 3]
+	lappend poss {*}[list_cor $header {count offset span lowerLimit dataRange file}]
+	if {[lsearch $poss -1] != -1} {
+		error "necessary field not found while converting ucsc wiggle track"
+	}
+	set progress 10000
+	set format "%.${precision}f"
+	set pvalue NaN
+	set pbegin NaN
+	set pend NaN
+	while 1 {
+		if {[eof $f]} break
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		foreach {chrom begin end count offset span lowerLimit dataRange file} [list_sub $line $poss] break
+		if {$begin != $pend} {
+			if {$pvalue ne NaN} {
+				putsresult $o $chrom $pbegin $cur $pvalue $pnum
+			}
+			set pvalue NaN
+			set pbegin NaN
+		}
+		set pend $end
+		if {$progress >= 10000} {
+			puts $chrom:$begin
+			set progress 0
+		}
+		incr progress
+		if {$file ne $ucsc_wib} {
+			catch {close $b}
+			set ucsc_wib $file
+			set file [ucsc_wibfile $file $dir]
+			puts "Opening $file"
+			set b [open $file]
+			fconfigure $b -translation binary
+		}
+		seek $b $offset
+		set bin [read $b $count]
+		if {![binary scan $bin cu$count list]} {
+			error "error scanning wib file"
+		}
+		set cur $begin
+		foreach value $list {
+			if {$value != 128} {
+				set value [expr {$lowerLimit + $dataRange * $value / 127.0}]
+				if {$useaddnum} {
+					if {$value >= $addnum} {set num 1} else {set num 0}
+				}
+				set value [formula $value]
+				set value [format $format $value]
+			} else {
+				set value NaN
+				set num 0
+			}
+			if {$value ne $pvalue} {
+				if {$pvalue ne NaN} {
+					putsresult $o $chrom $pbegin $cur $pvalue $pnum
+				}
+				set pvalue $value
+				set pbegin $cur
+				set pnum $num
+			}
+			incr cur $span
+		}
+	}
+	if {$pvalue ne NaN} {
+		putsresult $o $chrom $pbegin $cur $pvalue $pnum
+	}
+	catch {close $f}; catch {close $b}; catch {close $o}
+	file rename $resultfile.temp $resultfile
+
+}
+
+proc cg_ucscwiggle2reg {args} {
+	set len [llength $args]
+	set precision 1
+	set formula {$value}
+	set addnum {}
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-p {
+				set precision $value
+			}
+			-f {
+				set formula $value
+			}
+			-n {
+				set addnum $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
+	if {($len < 1) && ($len > 2)} {
+		puts "Wrong number of arguments"
+		errorformat ucscwiggle2reg
+		exit 1
+	}
+	foreach {file resultfile} $args break
+	if {$resultfile eq ""} {
+		set resultfile reg_$file
+	}
+	if {[file exists $resultfile]} {
+		puts stderr "Skipping $resultfile: file exists"
+		return
+	}
+	ucscwiggle2reg $file $resultfile $precision $formula $addnum
+}
+
 if 0 {
 # ------------------------------------------------------------------------------
 lappend auto_path ~/dev/completegenomics/lib
@@ -40,4 +196,11 @@ signal -restart error SIGINT
 cd /data/db
 set ucsc_file _data_db_ucsc-simple_repeats.tsv
 
+set type r
+set ucsc_file /complgen/refseq/tmp/hg18/ucsc_hg18_wgEncodeCaltechRnaSeqRawSignalRep1Gm12878CellLongpolyaBb12x75.tsv
+set ucsc_wib /complgen/refseq/tmp/hg18/wgEncodeCaltechRnaSeqRawSignalRep1Gm12878CellLongpolyaBb12x75.wib
+set resultfile /complgen/refseq/tmp/hg18/reg_hg18_wgEncodeCaltechRnaSeqRawSignalRep1Gm12878CellLongpolyaBb12x75.tsv
+
+
+set ucsc_file /complgen/refseq/tmp/hg18/ucsc_hg18_wgEncodeBroadChipSeqSignalK562H3k4me1.tsv
 }

@@ -28,7 +28,7 @@ cg collapseoverlap /complgen/refseq/hg18/ucsc_hg18_oreganno.tsv
 
 }
 
-proc collapseoverlap_join {cur scorepos} {
+proc collapseoverlap_join {cur scorepos {numpos -1}} {
 	if {[llength $cur] == 1} {return [lindex $cur 0]}
 	if {$scorepos != -1} {
 		set cur [lsort -dict -decreasing -index $scorepos $cur]
@@ -36,12 +36,18 @@ proc collapseoverlap_join {cur scorepos} {
 	set result {}
 	set len [llength [lindex $cur 0]]
 	for {set i 0} {$i < $len} {incr i} {
-		set temp [list_subindex $cur $i]
-		set nodup [list_remdup $temp]
-		if {[llength $nodup] < 2} {
-			lappend result $nodup
+		if {$i == $scorepos} {
+			lappend result [lindex $cur 0 $i]
+		} elseif {$i == $numpos} {
+			lappend result [format %0.f [lmath_sum [list_subindex $cur $i]]]
 		} else {
-			lappend result [join $temp ,]
+			set temp [list_subindex $cur $i]
+			set nodup [list_remdup $temp]
+			if {[llength $nodup] < 2} {
+				lappend result $nodup
+			} else {
+				lappend result [join $nodup ,]
+			}
 		}
 	}
 	return $result
@@ -57,6 +63,7 @@ proc collapseoverlap {file resultfile} {
 	set cor [open_region $f header]
 	foreach {chrpos startpos endpos} $cor break
 	set scorepos [lsearch $header score]
+	set numpos [lsearch $header num]
 	if {[catch {open $resultfile.temp w} o]} {
 		error "Could not write outputfile $resultfile"
 	}
@@ -65,9 +72,11 @@ proc collapseoverlap {file resultfile} {
 	foreach {chr start end} [list_sub $line $cor] break
 	set cur [list $line]
 	set num 0; set next 100000
+	set prev {}
 	while {![eof $f]} {
 		incr num; if {$num >= $next} {puts $num; incr next 100000}
 		set line [split [gets $f] "\t"]
+		set cchr {}
 		foreach {cchr cstart cend} [list_sub $line $cor] break
 		set newchr [expr {$cchr ne $chr}]
 		if {$newchr || ($cstart > $start)} {
@@ -81,10 +90,22 @@ proc collapseoverlap {file resultfile} {
 					set stop 1
 				}
 				if {$end != $keepend} {
-					set joined [collapseoverlap_join $cur $scorepos]
+					set joined [collapseoverlap_join $cur $scorepos $numpos]
 					lset joined $startpos $start
 					lset joined $endpos $end
-					puts $o [join $joined \t]
+					if {[llength $prev]} {
+						if {($start != [lindex $prev $endpos]) || ([list_sub $joined -exclude $cor] ne $prevsub)} {
+							puts $o [join $prev \t]
+							set prev $joined
+							set prevsub [list_sub $prev -exclude $cor]
+						} else {
+							lset prev $endpos $end
+						}
+					} else {
+						set prev $joined
+						set prevsub [list_sub $prev -exclude $cor]
+					}
+					# puts $o [join $joined \t]
 					set start $end
 				}
 				if {$stop} break
@@ -100,13 +121,29 @@ proc collapseoverlap {file resultfile} {
 		set chr $cchr
 		set start $cstart
 	}
-	file rename $resultfile.temp $resultfile
+	puts $o [join $prev \t]
 	close $f
 	close $o
+	file rename $resultfile.temp $resultfile
 	puts "Finished $resultfile"
 }
 
 proc cg_collapseoverlap {args} {
+	set pos 0
+	set resultfile {}
+	foreach {key value} $args {
+		switch -- $key {
+			-o {
+				set resultfile $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
 	if {([llength $args] < 1)} {
 		puts stderr "format is: $::base file ..."
 		puts stderr " - Collapses overlapping regions in a region file."
@@ -114,20 +151,54 @@ proc cg_collapseoverlap {args} {
 		puts stderr " - Removal of overlap can be done by taking only the highest"
 		puts stderr " - scoring region (this is always done when score is available)"
 		puts stderr " - or taking all regions in 1 line (if score is not available)"
+		puts stderr " - for a field with then name num all values will be added"
+		puts stderr " - use the -o option to collapse multiple files into one new file (the filename given with the option -o)"
 		exit 1
 	}
-	foreach {path} $args break
-	puts "----------------------------------------------------"
-	foreach file $args {
-		set path [file dir $file]
-		set tail [file tail $file]
-		if {[string range $tail 0 4] eq "ucsc_"} {set tail [string range $tail 5 end]}
-		set resultfile ${path}/reg_$tail
+	if {$resultfile ne ""} {
 		if {[file exists $resultfile]} {
 			puts "Skipping $resultfile: already exists"
-			continue
+			exit 0
 		}
-		collapseoverlap $file $resultfile
+		puts "Collapsing multiple files into $resultfile"
+		set ffile [lindex $args 2]
+		set args [lrange $args 3 end]
+		set f [gzopen $ffile]
+		set header [tsv_open $f]
+		set bposs [tsv_basicfields $header 3]
+		close $f
+		foreach file $args {
+			set f [gzopen $file]
+			set tempheader [tsv_open $f]
+			close $f
+			if {$tempheader ne $header} {
+				error "for collapsing multiple files into one (-o option), all files must have the same columns"
+			}
+		}
+		file copy -force $ffile $resultfile.temp1
+		foreach file $args {
+			exec tail -n +2 $file >> $resultfile.temp1
+		}
+		puts "Sorting"
+		set sfields [list_sub $header $bposs]
+		cg select -s $sfields $resultfile.temp1 $resultfile.temp2
+		puts "Collapsing"
+		collapseoverlap $resultfile.temp2 $resultfile
+		file delete $resultfile.temp1 $resultfile.temp2
+	} else {
+		foreach {path} $args break
+		puts "----------------------------------------------------"
+		foreach file $args {
+			set path [file dir $file]
+			set tail [file tail $file]
+			if {[string range $tail 0 4] eq "ucsc_"} {set tail [string range $tail 5 end]}
+			set resultfile ${path}/reg_$tail
+			if {[file exists $resultfile]} {
+				puts "Skipping $resultfile: already exists"
+				continue
+			}
+			collapseoverlap $file $resultfile
+		}
 	}
 }
 

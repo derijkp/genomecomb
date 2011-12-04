@@ -87,3 +87,57 @@ cg extracthomopolymers genome_${build}.ifas > reg_${build}_homopolymer.tsv.temp
 mv reg_${build}_homopolymer.tsv.temp reg_${build}_homopolymer.tsv
 echo -e "fields\t{base size}" > reg_${build}_homopolymer.tsv.opt
 
+# encode
+cd ${dest}/tmp/${build}
+# enc_transcription
+cg downloaddb ${dest}/tmp ${build} wgEncodeCaltechRnaSeqRawSignalRep1Gm12878CellLongpolyaBb12x75 wgEncodeCaltechRnaSeqRawSignalRep1H1hescCellPapBb2R2x75 wgEncodeCaltechRnaSeqRawSignalRep2Hepg2CellPapBb2R2x75 wgEncodeCaltechRnaSeqRawSignalRep1HuvecCellPapBb2R2x75 wgEncodeCaltechRnaSeqRawSignalRep1K562CellLongpolyaBb12x75 wgEncodeCaltechRnaSeqRawSignalRep1NhekCellPapBb2R2x75
+cg ucscwiggle2reg -n 0.01 -p 1 -f 'log10($value)' ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1Gm12878CellLongpolyaBb12x75.tsv
+cg ucscwiggle2reg -n 0.01 -p 1 -f 'log10($value)' ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1Gm12878CellLongpolyaBb12x75.tsv
+cg ucscwiggle2reg -n 0.01 -p 1 -f 'log10($value)' ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1H1hescCellPapBb2R2x75.tsv
+cg ucscwiggle2reg -n 0.01 -p 1 -f 'log10($value)' ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep2Hepg2CellPapBb2R2x75.tsv
+cg ucscwiggle2reg -n 0.01 -p 1 -f 'log10($value)' ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1HuvecCellPapBb2R2x75.tsv
+cg ucscwiggle2reg -n 0.01 -p 1 -f 'log10($value)' ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1K562CellLongpolyaBb12x75.tsv
+cg ucscwiggle2reg -n 0.01 -p 1 -f 'log10($value)' ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1NhekCellPapBb2R2x75.tsv
+cg collapseoverlap -o ${dest}/${build}/reg_${build}_wgEncodelogRnaSeq.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1Gm12878CellLongpolyaBb12x75.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1H1hescCellPapBb2R2x75.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep2Hepg2CellPapBb2R2x75.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1HuvecCellPapBb2R2x75.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1K562CellLongpolyaBb12x75.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1NhekCellPapBb2R2x75.tsv
+
+# enc_H3K4Me1
+cg downloaddb ${dest} ${build} wgEncodeBroadChipSeqSignalGm12878H3k4me1 wgEncodeBroadChipSeqSignalH1hescH3k4me1 wgEncodeBroadChipSeqSignalHmecH3k4me1 wgEncodeBroadChipSeqSignalHsmmH3k4me1 wgEncodeBroadChipSeqSignalHuvecH3k4me1 wgEncodeBroadChipSeqSignalK562H3k4me1 wgEncodeBroadChipSeqSignalNhekH3k4me1 wgEncodeBroadChipSeqSignalNhlfH3k4me1
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalGm12878H3k4me1.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalH1hescH3k4me1.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalHmecH3k4me1.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalHsmmH3k4me1.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalHuvecH3k4me1.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalK562H3k4me1.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k4me1.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k4me1.tsv
+cg collapseoverlap -o ${dest}/${build}/reg_${build}_wgEncodeH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalGm12878H3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalH1hescH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHmecH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHsmmH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHuvecH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalK562H3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k4me1.tsv
+
+# enc_H3K27Ac
+cg downloaddb ${dest} ${build} wgEncodeBroadChipSeqSignalGm12878H3k27ac wgEncodeBroadChipSeqSignalHepg2H3k27ac wgEncodeBroadChipSeqSignalHmecH3k27ac wgEncodeBroadChipSeqSignalHsmmH3k27ac wgEncodeBroadChipSeqSignalHuvecH3k27ac wgEncodeBroadChipSeqSignalK562H3k27ac wgEncodeBroadChipSeqSignalNhekH3k27ac wgEncodeBroadChipSeqSignalNhlfH3k27ac
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalGm12878H3k27ac.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalHepg2H3k27ac.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalHmecH3k27ac.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalHsmmH3k27ac.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalHuvecH3k27ac.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalK562H3k27ac.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k27ac.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k27ac.tsv
+# collapse
+cg collapseoverlap -o ${dest}/${build}/reg_${build}_wgEncodeH3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalGm12878H3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHepg2H3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHmecH3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHsmmH3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHuvecH3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalK562H3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k27ac.tsv
+
+# enc_H3K4Me3
+cg downloaddb ${dest} ${build} wgEncodeBroadChipSeqSignalGm12878H3k4me3 wgEncodeBroadChipSeqSignalHepg2H3k4me3 wgEncodeBroadChipSeqSignalHmecH3k4me3 wgEncodeBroadChipSeqSignalHsmmH3k4me3 wgEncodeBroadChipSeqSignalHuvecH3k4me3 wgEncodeBroadChipSeqSignalK562H3k4me3 wgEncodeBroadChipSeqSignalNhekH3k4me3 wgEncodeBroadChipSeqSignalNhlfH3k4me3
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalGm12878H3k4me3.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalHepg2H3k4me3.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalHmecH3k4me3.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalHsmmH3k4me3.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalHuvecH3k4me3.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalK562H3k4me3.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k4me3.tsv
+cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k4me3.tsv
+cg collapseoverlap -o ${dest}/${build}/reg_${build}_wgEncodeH3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalGm12878H3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHepg2H3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHmecH3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHsmmH3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHuvecH3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalK562H3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k4me3.tsv
+
+# DNase Clusters and Txn Factor ChIP
+cg downloaddb ${dest} ${build} wgEncodeRegDnaseClustered wgEncodeRegTfbsClustered
+cg collapseoverlap ucsc_${build}_wgEncodeRegDnaseClustered.tsv ucsc_${build}_wgEncodeRegTfbsClustered.tsv
+
