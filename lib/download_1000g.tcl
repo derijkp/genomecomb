@@ -45,7 +45,7 @@ proc downloaddb_1000g {path build} {
 	set tempdir $path/tmp/$build
 	set populations {CEU CHB+JPT YRI}
 	foreach pop $populations {
-		regsub -all {\+} $pop _ rpop
+		regsub -all {\+} $pop x rpop
 		set resultfile $path/$build/var_${build}_1000g$rpop.tsv
 		if {[file exists $resultfile]} {
 			puts "$resultfile exists: skipping"

@@ -41,10 +41,10 @@ cg regjoin ucsc_${build}_genomicSuperDups.tsv > reg_${build}_genomicSuperDups.ts
 
 # 1000 genomes
 cg downloaddb ${dest}/hg18 hg18 1000g
-cg liftover ${dest}/hg18/var_hg18_1000gCHB_JPT.tsv ${dest}/liftover/hg18ToHg19.over.chain ${dest}/${build}/var_${build}_1000gCHB_JPT.tsv
+cg liftover ${dest}/hg18/var_hg18_1000gCHBxJPT.tsv ${dest}/liftover/hg18ToHg19.over.chain ${dest}/${build}/var_${build}_1000gCHBxJPT.tsv
 cg liftover ${dest}/hg18/var_hg18_1000gCEU.tsv ${dest}/liftover/hg18ToHg19.over.chain ${dest}/${build}/var_${build}_1000gCEU.tsv
 cg liftover ${dest}/hg18/var_hg18_1000gYRI.tsv ${dest}/liftover/hg18ToHg19.over.chain ${dest}/${build}/var_${build}_1000gYRI.tsv
-rm var_hg19_1000gCEU.tsv.unmapped var_hg19_1000gCHB_JPT.tsv.unmapped var_hg19_1000gYRI.tsv.unmapped
+rm var_hg19_1000gCEU.tsv.unmapped var_hg19_1000gCHBxJPT.tsv.unmapped var_hg19_1000gYRI.tsv.unmapped
 
 cg downloaddb ${dest} ${build} 1000glow
 

@@ -50,7 +50,7 @@ mv ucsc_${build}_firstEF.tsv reg_${build}_firstEF.tsv
 # 1000 genomes
 cg downloaddb ${dest} ${build} 1000g
 cg downloaddb $dest hg19 1000glow
-cg liftover ${dest}/hg19/var_hg19_1000glow.tsv ${dest}/liftover/hg18ToHg19.over.chain ${dest}/${build}/var_${build}_1000glow.tsv
+cg liftover ${dest}/hg19/var_hg19_1000glow.tsv ${dest}/liftover/hg19ToHg18.over.chain ${dest}/${build}/var_${build}_1000glow.tsv
 
 # dbsnp
 cg downloaddb ${dest} ${build} snp130
@@ -62,7 +62,7 @@ gunzip -c ${dest}/${build}/var_${build}_snp130.tsv.gz > ${dest}/${build}/var_${b
 if [ ! -f ${dest}/hg19/var_hg19_snp132.tsv ]; then
 	cg downloaddb ${dest}/hg19 hg19 snp132;
 fi
-cg liftover ${dest}/hg19/var_hg19_snp132.tsv ${dest}/liftover/hg19To${build}.over.chain ${dest}/${build}/var_${build}_snp132lift.tsv
+cg liftover ${dest}/hg19/var_hg19_snp132.tsv ${dest}/liftover/hg19ToHg18.over.chain ${dest}/${build}/var_${build}_snp132lift.tsv
 rm ${dest}/${build}/var_${build}_snp132lift.tsv.unmapped
 cg maketabix ${dest}/${build}/var_${build}_snp132lift.tsv
 gunzip -c ${dest}/${build}/var_${build}_snp132lift.tsv.gz > ${dest}/${build}/var_${build}_snp132lift.tsv
@@ -140,4 +140,4 @@ cg collapseoverlap -o ${dest}/${build}/reg_${build}_wgEncodeH3k4me3.tsv reg_ucsc
 # DNase Clusters and Txn Factor ChIP
 cg downloaddb ${dest} ${build} wgEncodeRegDnaseClustered wgEncodeRegTfbsClustered
 cg collapseoverlap ucsc_${build}_wgEncodeRegDnaseClustered.tsv ucsc_${build}_wgEncodeRegTfbsClustered.tsv
-
+mv reg_${build}_wgEncodeRegDnaseClustered.tsv reg_${build}_wgEncodeRegTfbsClustered.tsv ${dest}/${build}
