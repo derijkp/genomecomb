@@ -61,7 +61,7 @@ proc cg_checksum {args} {
 			set line [gets $f]
 			close $f
 		}
-		if {![catch {exec grep FAILED checksum.txt}] && [catch {exec grep OK checksum.txt}]} {
+		if {![catch {exec grep FAILED checksum.txt}] || [catch {exec grep OK checksum.txt}]} {
 			incr numfailed
 			puts "FAILED $dir/checksum.txt ($line)"
 		} else {
