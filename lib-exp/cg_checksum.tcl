@@ -14,8 +14,14 @@
 #}
 
 proc cg_checksum {args} {
+	if {[lindex $args 0] eq "-n"} {
+		set check 0
+		set args [lrange $args 1 end]
+	} else {
+		set check 1
+	}
 	if {[llength $args] < 1} {
-		error "format is: cg checksum dir\n or: cg checksum manifestfile manifestfile ..."
+		error "format is: cg checksum dir\n or: cg ?-n? checksum manifestfile manifestfile ...\n (-c option for dryrun: check existing checksum files only)"
 		exit 1
 	}
 	if {[llength $args] == 1} {
@@ -36,7 +42,7 @@ proc cg_checksum {args} {
 	foreach file $files {
 		set dir [file dir $file]
 		cd $dir
-		if {![file exists checksum.txt]} {
+		if {$check && ![file exists checksum.txt]} {
 			puts "Checking $file"
 			set error [catch {exec sha256sum -c manifest.all > checksum.txt.temp} result]
 			if {[regexp {no properly formatted SHA256 checksum} $result]} {
