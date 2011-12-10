@@ -783,6 +783,7 @@ graphwidget method xview {args} {
 	set xmin [expr {round([$w axis cget x -min])}]
 	set xmax [expr {round([$w axis cget x -max])}]
 	set cursize [expr {$xmax-$xmin}]
+	if {$cursize <= 0} {set cursize 1000}
 	set first [lindex $args 0]
 	switch $first {
 		"" {
@@ -791,15 +792,15 @@ graphwidget method xview {args} {
 		}
 		moveto {
 			set fraction [lindex $args 1]
-			set xmin [expr {$amin + $fraction*($amax-$amin+1)}]
+			set xmin [expr {round($amin + $fraction*($amax-$amin+1))}]
 		}
 		scroll {
 			set number [lindex $args 1]
 			set what [lindex $args 2]
 			if {$what eq "pages"} {
-				set xmin [expr {$xmin+$number*$cursize - ($cursize/10)}]
+				set xmin [expr {round($xmin+$number*$cursize - ($cursize/10))}]
 			} else {
-				set xmin [expr {$xmin+$number*($cursize/10)}]
+				set xmin [expr {round($xmin+$number*($cursize/10))}]
 			}
 		}
 	}
