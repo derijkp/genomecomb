@@ -36,10 +36,10 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 		}
 		if {$force || [file extension $file] ne ".gz"} {
 			puts "bgzipping $file"
-			exec bgzip $file
+			cg_maketabix $file
 		}
 	}
-	putslog "Finished finding sv in $dir"
+	putslog "Done: finished finding sv in $dir"
 	cd $keepdir
 }
 

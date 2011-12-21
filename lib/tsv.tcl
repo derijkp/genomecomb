@@ -163,7 +163,10 @@ proc tsv_index {xfield file} {
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
-		set xmax [lindex $line $xpos]
+		set temp [lindex $line $xpos]
+		if {[isint $temp]} {
+			set xmax $temp
+		}
 	}
 	close $f
 	set o [open $indexname.temp w]
@@ -357,9 +360,14 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 		switch $nfpos {
 			0 {
 				set v [lsearch $header chrom]
+				if {$v == -1} {set v [lsearch $header chr1]}
 			}
 			1 {
 				set v [lsearch $header start]
+				if {$v == -1} {set v [lsearch $header end1]}
+			}
+			2 {
+				set v [lsearch $header start2]
 			}
 			4 {
 				set v [lsearch $header reference]

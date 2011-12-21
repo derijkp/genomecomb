@@ -652,9 +652,21 @@ puts "load $name $start $end $data($name,lstart) $data($name,lend)"
 		set xpos [lindex $poss 0]
 		set data($name,lstart) 0
 		set data($name,lend) 0
-		set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
-		set data($name,fpos) $fpos
-		set f [gzopen $data($name,file) $fpos]
+		set ext [file extension $data($name,file)]
+		if {[inlist {.gz .bgz} $ext]} {
+			set f [gzopen $data($name,file)]
+			set header [tsv_open $f]
+			set chrpos [tsv_basicfields $header 1]
+			set line [split [gets $f] \t]
+			set chr [lindex $line $chrpos]
+			catch {close $f}
+			set f [open "| tabix [list $data($name,file)] $chr:$start-$end"]
+			set data($name,bgzregion) $chr:$start-$end
+		} elseif {$ext eq ".rz"} {
+			set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
+			set data($name,fpos) $fpos
+			set f [gzopen $data($name,file) $fpos]
+		}
 		set pnext [expr {$start+200}]
 		set tot [expr {$end-$start}]
 		while {![eof $f]} {
@@ -989,7 +1001,12 @@ graphwidget method point {x y} {
 	$object.g element closest $x $y pd
 	set name $pd(name)
 	set index $pd(index)
-	set f [gzopen $data($name,file) $data($name,fpos)]
+	set ext [file extension $data($name,file)]
+	if {[inlist {.gz .bgz} $ext]} {
+		set f [open "| tabix [list $data($name,file)] $data($name,bgzregion)"]
+	} else {
+		set f [gzopen $data($name,file) $data($name,fpos)]
+	}
 	incr index
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
@@ -1018,7 +1035,7 @@ if 0 {
 	package require Tclx
 	signal -restart error SIGINT
 lappend auto_path /home/peter/bin/tcl
-lappend auto_path /home/peter/dev/completegenomics/lib
+lappend auto_path /home/peter/dev/completegenomics/lib /home/peter/dev/completegenomics/lib-exp
 cd /complgen/sv
 set object .g
 	package require Tk
@@ -1026,7 +1043,20 @@ set object .g
 	pack .g -fill both -expand yes
 set file sv79-20-pairs.tsv
 set file /complgen/sv/GS103/GS103-9-paired.tsv.rz
+set file /media/solid/kr1270/d818_6/sv/d818_6-22-paired.tsv.gz
+set file /media/solid/kr1270/d816_3/sv/d816_3-11-paired.tsv.gz
 .g opendialog $file
+
+cd /media/solid/kr1270/d818_6/sv
+set file d818_6-12-paired.tsv.gz
+set files [glob */sv/*.gz]
+foreach file $files {
+	puts $file
+#	cg select -s {chr1 start1 end1} -nh {chrom bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} $file $file.temp
+#	exec mv $file $file.save
+#	exec mv $file.temp $file
+	cg maketabix $file
+}
 
 
 .g clear
