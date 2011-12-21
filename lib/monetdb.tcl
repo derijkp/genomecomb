@@ -36,6 +36,7 @@ proc cg_monetdb {args} {
 	# work in progress
 	set cmd [lindex $args 0]
 	set args [lrange $args 1 end]
+	set result {}
 	switch $cmd {
 		sql {
 			foreach {database sql} $args break
@@ -49,7 +50,16 @@ proc cg_monetdb {args} {
 		}
 		startdbfarm {
 			foreach {dbfarm} $args break
-			exec monetdbd start $dbfarm
+			set dbfarm [file normalize $dbfarm]
+			set info [monetdb_getinfo $dbfarm]
+			if {[dict get $info status] eq "no monetdbd is serving this dbfarm"} {
+				puts "Starting $dbfarm"
+				exec monetdbd start $dbfarm
+			} else {
+				puts "$dbfarm already running on port: [dict get $info port]"
+			}
+			set info [monetdb_getinfo $dbfarm]
+			return $info
 		}
 		stopdbfarm {
 			foreach {dbfarm} $args break
@@ -144,10 +154,6 @@ proc cg_tomonetdb {args} {
 	set tsvfile [file normalize $tsvfile]
 	set f [gzopen $tsvfile]
 	set header [tsv_open $f]
-	set o [open $tsvfile.temp w]
-	fcopy $f $o
-	close $o
-	close $f
 	array set ftype {begin integer end integer start integer type varchar(10)}
 	set sql ""
 	foreach field $header {
@@ -159,8 +165,14 @@ proc cg_tomonetdb {args} {
 		lappend sql "\"$field\" $type"
 	}
 	set sql "create table \"$table\" ([join $sql ,\n]);\n"
-	set num [lindex [exec wc -l $tsvfile.temp] 0]
 	exec mclient -d$db -s $sql
+	set o [open $tsvfile.temp w]
+	fcopy $f $o
+	flush $o
+	close $f
+	close $o
+	set num [lindex [exec wc -l $tsvfile.temp] 0]
+# set num 3956104
 	exec mclient -d$db -s "copy $num records into \"$table\" from '$tsvfile.temp' delimiters '\t', '\n' null as '';"
 	exec mclient -d$db -s "alter table \"$table\" add column \"rowid\" serial"
 	file delete $tsvfile.temp

@@ -1,0 +1,9 @@
+Menus {
+	Application {
+		MainMenu {
+			_menu MainMenu {Main application menu} {}
+		}
+	}
+} Toolbars {Application {MainTool {
+			_toolbar MainTool {Application main toolbar} {}
+		} Table_tool {_toolbar Table_tool {Table toolbar} {}}}}

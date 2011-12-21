@@ -9,3 +9,7 @@ puts "rebuilding $dir/lib/tclIndex"
 Class::auto_mkindex $dir/lib
 puts "rebuilding $dir/lib-exp/tclIndex"
 Class::auto_mkindex $dir/lib-exp
+puts "rebuilding $dir/cg_viz/lib/code/tclIndex"
+Class::auto_mkindex $dir/cg_viz/lib/code
+puts "rebuilding $dir/cg_viz/lib/interface/tclIndex"
+Class::auto_mkindex $dir/cg_viz/lib/interface
