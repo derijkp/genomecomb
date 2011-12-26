@@ -61,7 +61,7 @@ proc map2sv {files prefix} {
 			if {[file extension $file] eq ".bgz"} continue
 			puts $file
 			set f [open $rfile.temp w]
-			puts $f [join {chr1 bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
+			puts $f [join {chromosome bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
 			close $f
 			exec gnusort8 -T [scratchdir] -t \t -n -s -k5 -T [file dir $file]/tmp $file >> $rfile.temp
 			file rename $rfile.temp $rfile
@@ -118,7 +118,7 @@ proc svinfo {pairfile} {
 	set mode [lindex $slist end 0]
 	if {$mode eq ""} return
 	if {$mode == -1} {
-		set mode [lindex $list end-1 0]
+		set mode [lindex $slist end-1 0]
 	}
 	set minnum [expr {round(0.05*$total)}]
 	set min10num [expr {round(0.10*$total)}]
@@ -166,7 +166,7 @@ proc svinfo {pairfile} {
 	puts $o max25\t$max25
 	close $o
 	file rename -force [gzroot $pairfile].numinfo.temp [gzroot $pairfile].numinfo
-	putslog "finished $pairfile.numinfo"
+	putslog "Made svinfo $pairfile.numinfo"
 }
 
 proc svhisto {pairfile} {
@@ -523,6 +523,7 @@ proc kde {list {kernel {}}} {
 	# convolving with the filter over this is the same as doing the discrete kde
 	set data [lmath_filter $data $kernel]
 	# draw $data $s
+	# data starts at [expr {$s-$ke}]
 	return [list [expr {$s-$ke}] $data]
 }
 
@@ -587,6 +588,7 @@ proc simple_group {list {dist 50} {minnum 3}} {
 }
 
 proc kde_maxima {dists {maxsize 50} {min 1.5}} {
+	# returns begin and end of "peak"
 	if {![llength $dists]} {return {}}
 	set dists [lsort -real $dists]
 	set result {}
@@ -596,6 +598,7 @@ proc kde_maxima {dists {maxsize 50} {min 1.5}} {
 		set s [lindex $group 0]
 		set e [lindex $group end]
 		set size [expr {$e-$s}]
+		# simply return first and last point if range < maxsize
 		if {$size < $maxsize} {
 			lappend result [list $s $e]
 			continue
@@ -603,7 +606,7 @@ proc kde_maxima {dists {maxsize 50} {min 1.5}} {
 		foreach {s data} [kde $group] break
 set ::kdedata $data
 set ::kdes $s
-		draw $data $s
+#		draw $data $s
 		set maxima [lsort -real -index 1 -decreasing [listmaxima $data $min]]
 		if {![llength $maxima]} continue
 		set stopat [expr {max(1.5,0.2*[lindex $maxima 0 1])}]
@@ -674,7 +677,7 @@ proc sv_addtothreads {threads start maxima table} {
 		set cpos [lindex $thread end 0]
 		if {$cpos > $lpos} {set lpos $cpos}
 	}
-	if {[expr $start-$lpos] >= 200} {
+	if {[expr {$start-$lpos}] >= 200} {
 		set prevmains [expr {$mode-50}]
 		set prevmaine [expr {$mode+50}]
 		set temp [list $start $prevmains $prevmaine {} $numthreads]
@@ -866,7 +869,7 @@ proc sv_checkthreads {threads start mode resultVar} {
 			}
 			# smallins
 			# -------
-			if {($diff <= 50) || (($type eq "ins") && ($diff <= 70))} {
+			if {$diff <= $infoa(maxsize)} {
 				if {$zyg eq "hom"} {
 					lappend problems msmall
 				} else {
@@ -881,7 +884,7 @@ proc sv_checkthreads {threads start mode resultVar} {
 			set score [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff $tnum $exnum]
 			# add to result
 			# -------------
-			lappend result [list $chr $cstart $cend $type [expr {round($diff)}] $zyg $problems $chr2 $start2 $end2 $gapsize $score $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum [oformat $opsdiff 0] $tnum $exnum]
+			lappend result [list $chr $cend $start2 $type [expr {round($diff)}] $zyg $score $problems $cstart $cend $chr2 $start2 $end2 $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum [oformat $opsdiff 0] $tnum $exnum]
 		} else {
 			lappend resultthreads $thread
 		}
@@ -1297,7 +1300,7 @@ proc svwindow_checkinv {table rtable} {
 	set trfpos $infoa(trfpos)
 	set clustmin 6
 	set step 5
-	set chr [lindex [lindex $table 0] $chr1pos]
+	set chr [lindex [lindex $rtable 0] $chr1pos]
 	set rtable [lsort -integer -index $end1pos $rtable]
 	set lists [cluster_fts $rtable $end1pos 30]
 	foreach list $lists {
@@ -1359,14 +1362,14 @@ proc svwindow_checkinv {table rtable} {
 			foreach {a b sd} [linreg [list_subindex $group $end1pos] [list_subindex $group $distpos]] break
 			set b [oformat $b]; set sd [oformat $sd]
 			set score [svscore $mode inv $size $zyg {} {} $num $num $weight $patchsize $b $sd {} {} $totnum $opsdiff {} {}]
-			lappend result [list $chr $cstart $cend inv $size $zyg {} $chr $start2 $end2 {} $score $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff 0] {} {}]
+			lappend result [list $chr $cend $start2 inv $size $zyg $score {} $cstart $cend $chr $start2 $end2 {} $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff 0] {} {}]
 		}
 		
 	}
 	return $result
 }
 
-proc svwindow_checktrans {table ctable} {
+proc svwindow_checktrans {table ctable mode} {
 	global infoa
 	set distpos $infoa(distpos)
 	set start1pos $infoa(start1pos)
@@ -1379,7 +1382,7 @@ proc svwindow_checktrans {table ctable} {
 	set chr1pos $infoa(chr1pos)
 	set clustmin 10
 	set step 5
-	set chr [lindex [lindex $table 0] $chr1pos]
+	set chr [lindex [lindex $ctable 0] $chr1pos]
 	set chr2pos $infoa(chr2pos)
 	set start2pos $infoa(start2pos)
 	unset -nocomplain a
@@ -1433,15 +1436,15 @@ proc svwindow_checktrans {table ctable} {
 				foreach {temp b sd} [linreg $xs $ys] break
 				set b [oformat $b]; set sd [oformat $sd]
 				set score [svscore $mode trans $pos2 $zyg {} {} $num $num $weight $patchsize $b $sd {} {} $totnum $opsdiff {} {}]
-				lappend result [list $chr $cstart $cend trans $pos2 $zyg {} $chr2 $start2 $end2 {} $score $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff] {} {}]
+				lappend result [list $chr $cend [expr {$cend+$mode}] trans $pos2 $zyg $score {} $cstart $cend $chr2 $start2 $end2 {} $num {} $weight $patchsize $b $sd {} {} $totnum [oformat $opsdiff] {} {}]
 			}
 		}
 	}
-	if {[llength [list_remdup [list_subindex $result 7]]] > 1} {
+	if {[llength [list_remdup [list_subindex $result 10]]] > 1} {
 		set pos 0
 		foreach line $result {
-			lset result $pos 6 many
-			lset result $pos 8 0
+			lset result $pos 7 many
+			lset result $pos 6 0
 			incr pos
 		}
 	}
@@ -1521,7 +1524,7 @@ proc svrescore {file} {
 	}
 	close $f
 	close $o
-	putslog "finished $ofile"
+	putslog "made svrescore $ofile"
 #sv_evaluate $ofile
 
 }
@@ -1578,12 +1581,13 @@ if 0 {
 
 package require Tclx
 signal -restart error SIGINT
-lappend auto_path ~/dev/completegenomics/lib
+lappend auto_path ~/dev/completegenomics/lib ~/dev/completegenomics/lib-exp
 package require Extral
-cd /complgen/sv
+#cd /complgen/sv
 
 set trffile /complgen/refseq/hg18/reg_hg18_simpleRepeat.tsv
 set pairfile /complgen/projects/cmt71/cmt71_02_a/sv/cmt71_02_a-22-paired.tsv.rz
+set pairfile /media/solid/kr1270/d816_3/sv/d816_3-22-paired.tsv.gz
 
 foreach {score type diff zyg problems gapsize num numnontrf weight patchsize b1 sd1 b2 sd2 totnum opsdiff} [list_sub $line $cor] break
 set nscore [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff]
@@ -1599,11 +1603,12 @@ set pairfile GS103/GS103-20-paired.tsv.rz
 }
 
 proc svfind {pairfile trffile} {
-
+#putslog [list svfind $pairfile $trffile]
 	set bpairfile [gzroot $pairfile]
 	set outfile [file root $bpairfile]-sv.tsv
 	set windowsize 50
 	set maxpairs 10000
+	# set bandwidth 50
 
 	catch {close $trf}
 	catch {close $o}
@@ -1618,13 +1623,15 @@ proc svfind {pairfile trffile} {
 	tsv_open $f
 	array set infoa [split [string trim [read $f]] \n\t]
 	close $f
+	set bandwidth [expr {($infoa(max10)-$infoa(min10)/2)}]
 	set infoa(step) 5
 	set min $infoa(min)
 	set max $infoa(max)
 	set mode $infoa(mode)
 	set infoa(hmode) [expr {$infoa(mode)-$infoa(mode)%$infoa(step)}]
 	set infoa(hremove) [list_fill 5 [expr {$infoa(hmode)-2*$infoa(step)}] $infoa(step)]
-	set infoa(kernel) [makekernel 50]
+	set infoa(kernel) [makekernel $bandwidth]
+	set infoa(maxsize) $bandwidth
 	set f [gzopen $pairfile]
 	set header [gets $f]
 	set iheader {chr1 start1 end1 weight1 numl chr2 start2 end2 weight2 numr type dist}
@@ -1649,15 +1656,14 @@ proc svfind {pairfile trffile} {
 	set distpos $infoa(distpos)
 	set typepos $infoa(typepos)
 #check
-lassign {17950000 17951239} dbgstart dbgstop
-lassign {43675000 43678708} dbgstart dbgstop
-catch {close $f}
-set f [svtools_aprgoto $pairfile $dbgstart]
-set outfile test-sv.tsv
+#lassign {9790000 9790550} dbgstart dbgstop
+#catch {close $f}
+#set f [svtools_aprgoto $pairfile $dbgstart]
+#set outfile test-sv.tsv
 #check
 	set dir [file dir [file normalize $outfile]]
 	set o [open $outfile.temp w]
-	puts $o [join {check chr1 start1 end1 type size zyg problems chr2 start2 end2 gapsize quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum} \t]
+	puts $o [join {check chromosome begin end type size zyg quality problems start1 end1 chr2 start2 end2 gapsize numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum} \t]
 	set list {}
 	set mainrtable {}
 	set rtable {}
@@ -1737,7 +1743,8 @@ set outfile test-sv.tsv
 			# check for insertions and deletions
 			set table [list_concat $plist $list]
 			set dists [list_subindex $table $distpos]
-			set maxima [kde_maxima $dists]
+			set maxima [kde_maxima $dists $infoa(maxsize)]
+#if {$start >= $dbgstop} {error STOPPED}
 # draw $::kdedata $::kdes
 			set threads [sv_addtothreads $threads $start $maxima $table]
 #			set onum [llength $maxima]
@@ -1745,9 +1752,10 @@ set outfile test-sv.tsv
 #				set threads [sv_addtothreads $threads $start $maxima $table]
 #			}
 #check
-if {$start >= $dbgstop} {error STOPPED}
 			set temp {}
 			set threads [sv_checkthreads $threads $start $mode temp]
+#putsvars start
+#puts [t]
 #if {[llength $temp]} {error STOP}
 			if {[llength $temp]} {lappend result {*}$temp}
 			# check for inversions
@@ -1769,12 +1777,13 @@ if {$start >= $dbgstop} {error STOPPED}
 				lappend mainctable {*}$plist
 				set clastpos $start
 			} elseif {[llength $ctable] && ([expr {$start-$clastpos}] > 50)} {
-				set temp [svwindow_checktrans $table $ctable]
+				set temp [svwindow_checktrans $table $ctable $mode]
 				lappend result {*}$temp
 				set mainctable {}
 				set ctable {}
 			}
 			set result [lsort -integer -index $end1pos $result]
+#putsvars result
 			foreach l $result {
 				puts $o \t[join $l \t]
 			}
@@ -1797,7 +1806,7 @@ if {$start >= $dbgstop} {error STOPPED}
 	catch {file delete $outfile.old}
 	catch {file rename $outfile $outfile.old}
 	file rename $outfile.temp $outfile
-	putslog "finished $outfile"
+	putslog "Made svfind $outfile"
 
 }
 
