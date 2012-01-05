@@ -176,7 +176,7 @@ proc tsv_index {xfield file} {
 	puts $o $xmax
 	puts $o [join $index \n]
 	close $o
-	file rename $indexname.temp $indexname
+	file rename -force $indexname.temp $indexname
 	if {[info exists tempfile]} {
 		file delete $tempfile
 	}
