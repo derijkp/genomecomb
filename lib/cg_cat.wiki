@@ -1,0 +1,25 @@
+= cat =
+
+== Format ==
+cg cat ?options? file ?file? ...
+
+== Summary ==
+Concatenate tab separated files and print on the standard output (stripping headers of files 
+other than the first).
+
+== Description ==
+Concatenate tab separated files and print on the standard output.
+Headers of tab files others than the first one will be stripped. If one of the tab file does not have 
+the same fields as the first, an error is given, unless the merge or force options are used.
+
+== Arguments ==
+; **file** ...: files to be concatenated
+
+== Options ==
+; **-m**: if the merge option is given, tab files with different fields will be merged: The resulting tab file has
+each field that occurs in at least one of the source files. If a given field is not present in one of the source files,
+it will be empty for each line coming from this file.
+; **-f**: if the force option is given, tab files with different fields will still be concatenated without error.
+
+== Category ==
+tsv

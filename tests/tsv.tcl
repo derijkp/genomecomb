@@ -53,6 +53,88 @@ test tsv_open {vcf} {
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
 #}}
 
+test tsv_cat {one} {
+	cg cat data/reg1b.tsv
+} {chromosome	test	begin	end
+1	t	10	20
+1	t	50	60}
+
+test tsv_cat {two same header} {
+	cg cat data/reg2.tsv data/reg4.tsv
+} {# ++++ data/reg2.tsv ++++
+# comments added
+#
+# ++++ data/reg4.tsv ++++
+## vcf style header
+##
+test	chromosome	begin	end	test2
+t	1	15	25	t2
+t	1	45	55	t2
+t	2	150	160	t2
+t	2	170	180	t2
+t	2	300	400	t2
+t	2	400	500	t2
+t	3	1000	1100	t2
+t	M	10	25	t2
+t	X	90	200	t2
+t	Y	1010	1900	t2
+t	chr1	15	25	t2
+t	chr1	45	55	t2
+t	chr2	150	160	t2
+t	chr2	170	180	t2
+t	chr2	300	400	t2
+t	chr2	400	500	t2
+t	chr3	1000	1100	t2
+t	chrM	10	25	t2
+t	chrX	90	200	t2
+t	chrY	1010	1900	t2}
+
+test tsv_cat {two diff header} {
+	exec cg cat data/reg1b.tsv data/reg2.tsv
+} {headers do not match, use -f to force or -m to merge} error
+
+test tsv_cat {two diff header -m} {
+	cg cat -m data/reg2.tsv data/reg1b.tsv
+} {# ++++ data/reg2.tsv ++++
+# comments added
+#
+# ++++ data/reg1b.tsv ++++
+test	chromosome	begin	end	test2
+t	1	15	25	t2
+t	1	45	55	t2
+t	2	150	160	t2
+t	2	170	180	t2
+t	2	300	400	t2
+t	2	400	500	t2
+t	3	1000	1100	t2
+t	M	10	25	t2
+t	X	90	200	t2
+t	Y	1010	1900	t2
+t	1	10	20	
+t	1	50	60	}
+
+test tsv_cat {two diff header -f} {
+	cg cat -m data/reg2.tsv data/reg1b.tsv
+} {# ++++ data/reg2.tsv ++++
+# ++ test chromosome begin end test2
+# comments added
+#
+# ++++ data/reg1b.tsv ++++
+# ++ chromosome test begin end
+test	chromosome	begin	end	test2
+t	1	15	25	t2
+t	1	45	55	t2
+t	2	150	160	t2
+t	2	170	180	t2
+t	2	300	400	t2
+t	2	400	500	t2
+t	3	1000	1100	t2
+t	M	10	25	t2
+t	X	90	200	t2
+t	Y	1010	1900	t2
+1	t	10	20
+1	t	50	60}
+
 set ::env(PATH) $keeppath
 
 testsummarize
