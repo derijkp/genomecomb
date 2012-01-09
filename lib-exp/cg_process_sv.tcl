@@ -16,7 +16,9 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 	if {$force || ![file exists $dir/sv/${name}_map2sv_sort_FINISHED]} {
 		cg map2sv $cgdir $dir/sv/$name
 	}
+	set resultfiles {}
 	foreach chr {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X M Y} {
+		lappend resultfiles $dir/sv/$name-$chr-paired-sv.tsv
 		set file [gzfile $dir/sv/$name-$chr-paired.tsv]
 		set root [file root $file]
 		if {$force || ![file exists $file]} {
@@ -39,6 +41,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 			cg_razip $file
 		}
 	}
+	cg cat {*}$resultfiles > $dir/sv-$name.tsv
 	putslog "Done: finished finding sv in $dir"
 	cd $keepdir
 }
