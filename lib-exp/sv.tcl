@@ -884,7 +884,14 @@ proc sv_checkthreads {threads start mode resultVar} {
 			set score [svscore $mode $type $diff $zyg $problems $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum $opsdiff $tnum $exnum]
 			# add to result
 			# -------------
-			lappend result [list $chr $cend $start2 $type [expr {round($diff)}] $zyg $score $problems $cstart $cend $chr2 $start2 $end2 $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum [oformat $opsdiff 0] $tnum $exnum]
+			if {$cend > $start2} {
+				set b $start2
+				set e $cend
+			} else {
+				set b $cend
+				set e $start2
+			}
+			lappend result [list $chr $b $e $type [expr {round($diff)}] $zyg $score $problems $cstart $cend $chr2 $start2 $end2 $gapsize $num $numnontrf $weight $patchsize $b1 $sd1 $b2 $sd2 $totnum [oformat $opsdiff 0] $tnum $exnum]
 		} else {
 			lappend resultthreads $thread
 		}
