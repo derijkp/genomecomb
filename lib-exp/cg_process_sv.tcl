@@ -20,7 +20,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 	foreach chr {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X M Y} {
 		lappend resultfiles $dir/sv/$name-$chr-paired-sv.tsv
 		set file [gzfile $dir/sv/$name-$chr-paired.tsv]
-		set root [file root $file]
+		set root [file root [gzroot $file]]
 		if {$force || ![file exists $file]} {
 			set file $file.rz
 		}
