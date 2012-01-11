@@ -277,9 +277,9 @@ proc gzopen {file {pos -1}} {
 		}
 	} elseif {[inlist {.bgz .gz} [file extension $file]]} {
 		if {$pos == -1} {
-			set f [open "| bgzip -d -c $file"]
+			set f [open "| zcat $file"]
 		} else {
-			set f [open "| bgzip -d -c -b $pos $file"]
+			error "positioning not supported in (b)gz files"
 		}
 	} elseif {[inlist {.bz2} [file extension $file]]} {
 		if {$pos == -1} {
