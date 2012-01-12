@@ -1,0 +1,15 @@
+This directory contains binaries of some externally developed tools, that 
+are available under various open source licenses.
+The binaries have been cross-compiled to an older glibc (2.2.2) to avoid
+compatibility problems with some older installations.
+Some of the original README/LICENSE files have been included under 
+a program_docs directory.
+
+gnusort8 comes from GNU coreutils 8.9, but has been patched to support
+natural sorting. The patched sort.c has been included in the gnusort8_docs.
+
+tabix and bgzip by Heng Li have had some small modifications for making static executables.
+
+The razip binary is compiled from sources distributed with samtools 0.1.5c, 
+but some patches have been applied to fix some issues (e.g. with large files).
+Source files that have been changed are included in razip_docs
