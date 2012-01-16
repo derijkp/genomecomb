@@ -1,7 +1,5 @@
-menu,MainMenu {
-menu "File" {
-	action "Open file" {error "cannot load \"[Classy::selectfile -title Open -selectmode persistent]\" yet"} <<Load>>
-	action "Save" {error "save not implemented yet"} <<Save>>
+menu,MainMenu {menu "File" {
+	action "Open file" {%W open [Classy::selectfile -title Open -selectmode persistent]} <<Load>>
 	action "Save as" {error "save not implemented yet"} <<SaveAs>>
 	separator
 	action "New editor" {edit newfile} <<Editor>>
@@ -13,12 +11,7 @@ menu "File" {
 	action "Exit" "exit" <<Exit>>
 }
 menu "Edit" {
-	action "Cut" {error "cut not implemented yet"} <<Cut>>
 	action "Copy" {error "copy not implemented yet"} <<Copy>>
-	action "Paste" {error "paste not implemented yet"} <<Paste>>
-	action "Undo" {error "undo not implemented yet"} <<Undo>>
-	action "Redo" {error "redo not implemented yet"} <<Redo>>
-	action "Clear undo buffer" {error "clearundo not implemented yet"} <<ClearUndo>>
 }
 menu "Help" {
 	action "Application" {Classy::help application} <<Help>>
@@ -30,11 +23,10 @@ menu "Help" {
 menu,Table_tool {	action query "Query builder" {$object querybuilder}
 }
 toolbar,MainTool {
-	action open "Open" {error "cannot load \"[Classy::selectfile -title Open -selectmode persistent]\" yet"}
+	action open "Open" {%W open [Classy::selectfile -title Open -selectmode persistent]}
 	# action print "Print" {error "print not implemented yet"}
 	separator
 	action copy "Copy" {error "copy not implemented yet"}
-	action cut "Cut" {error "cut not implemented yet"}
 }
 toolbar,Table_tool {label Tableinfo tableinfo {} {}
 action query {Query builder} {$object querybuilder} {}

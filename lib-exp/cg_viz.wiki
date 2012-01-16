@@ -1,0 +1,19 @@
+= viz =
+
+== Format ==
+cg viz tsvfile
+
+== Summary ==
+grahical vizualization of tsv file (even very large ones) as table without loading everything into memory
+
+== Description ==
+Shows the given tsv table in a gui. It indexes the table rather than loading
+it entirely into memory. This means it can be used to browse huge tables very fast.
+It only takes waiting time on first access (making the indexes)
+Queries and vizualzations will be added later
+
+== Arguments ==
+; **tsvfile** ...: tsvfile to display
+
+== Category ==
+tsv

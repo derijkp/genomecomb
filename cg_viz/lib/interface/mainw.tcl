@@ -183,6 +183,24 @@ mainw method opendb {args} {
 	# $object.disp1 options scale 10000000
 }
 
+mainw method opentsv {args} {
+	foreach {file} $args break
+	catch {$object.tb destroy}
+	table_tsv new $object.tb
+	set file [$object.tb open $file]
+	$object.tb link $object.table.data
+	# default graph
+#	catch {$object.disp1 destroy}
+#	display_chr new $object.disp1 $object.canvas.data $object.tb $dbdir
+#	$object.disp1 redraw
+	# $object.disp1 options scale 10000000
+	wm title $object $file
+}
+
+mainw method open {args} {
+	$object opentsv {*}$args
+}
+
 proc commify {num {sep ,}} {
     while {[regsub {^([-+]?\d+)(\d\d\d)} $num "\\1$sep\\2" num]} {}
     return $num
