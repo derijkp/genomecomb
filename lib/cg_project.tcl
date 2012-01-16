@@ -147,8 +147,9 @@ proc cg_project {args} {
 		foreach {cgdir name} $data {
 			lappend names $name
 		}
-		if {[file exists compar/compar_${project}.tsv]} {
-			set done [mcompar_samples compar/compar_${project}.tsv]
+		set resultfile compar/compar-${project}.tsv
+		if {[file exists $resultfile]} {
+			set done [mcompar_samples $resultfile]
 			set names [list_lremove $names $done]
 		} else {
 			set done {}
@@ -156,12 +157,12 @@ proc cg_project {args} {
 		puts "Already done: [join $done {, }]"
 		if {[llength $names]} {
 			file mkdir compar
-			catch {file delete [gzfile compar/annot_compar_${project}.tsv]}
-			set cjob [submit -direct $direct -deps $jobs cg multicompar $reannot compar/compar_${project}.tsv {*}$names]
+			catch {file delete [gzfile compar/annot_compar-${project}.tsv]}
+			set cjob [submit -direct $direct -deps $jobs cg multicompar $reannot $resultfile {*}$names]
 			if {[isint $cjob]} {lappend alljobs $cjob}
 		}
-		if {![file exists [gzfile compar/annot_compar_${project}.tsv]]} {
-			set ajob [submit -direct $direct -deps [get cjob {}] cg annotate compar/compar_${project}.tsv compar/annot_compar_${project}.tsv $refseqdir/$build]
+		if {![file exists [gzfile compar/annot_compar-${project}.tsv]]} {
+			set ajob [submit -direct $direct -deps [get cjob {}] cg annotate $resultfile compar/annot_compar-${project}.tsv $refseqdir/$build]
 	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
 		# multireg
@@ -268,6 +269,39 @@ proc cg_project {args} {
 		}
 		lappend alljobs {*}$svjobs
 		# qalter -u peter -p 1
+		#
+		# sv compar
+		# ---------
+		set done {}
+		set resultfile sv-${project}.tsv
+		puts "Checking [file normalize compar/$resultfile]"
+		set names {}
+		if {[file exists compar/$resultfile]} {
+			set list [cg select -h compar/$resultfile]
+			set poss [list_find -glob $list start1-*]
+			set done [list_sub $list $poss]
+			set done [list_regsub -all {^start1-} $done {}]
+		}
+		set files {}
+		set names {}
+		foreach {cgdir name} $data {
+			if {![inlist $done $name]} {
+				lappend files $name/sv-$name.tsv
+				lappend names $name
+			}
+		}
+		if {[llength $done]} {
+			puts "Multisv already present: $done"
+		}
+		if {[llength $files]} {
+			set svjob [submit -direct $direct -deps $jobs cg svmulticompar compar/$resultfile {*}$files]
+	 		if {[isint $svjob]} {lappend alljobs $svjob}
+		}
+		if {![file exists [gzfile compar/annot_$resultfile]] || [llength $files]} {
+			set cmd [list cg annotate compar/$resultfile compar/annot_$resultfile {*}[glob -nocomplain $refseqdir/$build/reg_*.tsv $refseqdir/$build/gene_*.tsv]]
+			set ajob [submit -direct $direct -deps [get svjob {}] {*}$cmd]
+	 		if {[isint $ajob]} {lappend alljobs $ajob}
+		}
 	}
 
 	# cleanup/compress
@@ -349,7 +383,7 @@ if 0 {
 	if {[info exists svjobs] && [llength $svjobs]} {
 		set temp [eval {exec submit.tcl -deps [join $svjobs ,] cg svmulticompar compar/${project}_svcompar.tsv} $names]
 	} else {
-		set temp [eval {exec submit.tcl cg svmulticompar compar/compar_${project}.tsv} $names]
+		set temp [eval {exec submit.tcl cg svmulticompar compar/compar-${project}.tsv} $names]
 	}
 
 }
