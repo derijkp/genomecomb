@@ -268,6 +268,13 @@ proc cg_razip args {
 	}
 }
 
+proc cg_unzip args {
+	foreach file $args {
+		putslog "Uncompressing $file"
+		gunzip $file
+	}
+}
+
 proc gzopen {file {pos -1}} {
 	if {[inlist {.rz} [file extension $file]]} {
 		if {$pos == -1} {
@@ -409,14 +416,19 @@ proc ifcatch {command varName args} {
 
 proc gunzip {file args} {
 	if {[llength $args]} {
-		set error [catch {exec gunzip -S [file ext $file] -c $file > [lindex $args 0]} result]
+		set resultfile [lindex $args 0]
 	} else {
-		set error [catch {exec gunzip -S [file ext $file] $file} result]
+		set resultfile [file root $file]
 	}
+	set error [catch {exec gunzip -S [file ext $file] -c $file > $resultfile.temp} result]
 	if $error {
 		if {![regexp "decompression OK, trailing garbage ignored" $result]} {
 			error $result
 		}
+	}
+	file rename $resultfile.temp $resultfile
+	if {![llength $args]} {
+		file delete $file
 	}
 	return $result
 }
