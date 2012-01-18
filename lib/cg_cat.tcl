@@ -25,7 +25,7 @@ proc cg_cat {args} {
 		lappend headers $header
 		close $f
 		lappend comments "# ++++ $file ++++"
-		if {$force eq "f"} {
+		if {[inlist {f m} $force]} {
 			lappend comments "# ++ $header"
 		}
 		foreach line [split $comment \n] {

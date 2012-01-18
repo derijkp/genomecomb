@@ -67,6 +67,7 @@ test tsv_cat {two same header} {
 # ++++ data/reg4.tsv ++++
 ## vcf style header
 ##
+#
 test	chromosome	begin	end	test2
 t	1	15	25	t2
 t	1	45	55	t2
@@ -96,9 +97,11 @@ test tsv_cat {two diff header} {
 test tsv_cat {two diff header -m} {
 	cg cat -m data/reg2.tsv data/reg1b.tsv
 } {# ++++ data/reg2.tsv ++++
+# ++ test chromosome begin end test2
 # comments added
 #
 # ++++ data/reg1b.tsv ++++
+# ++ chromosome test begin end
 test	chromosome	begin	end	test2
 t	1	15	25	t2
 t	1	45	55	t2
@@ -132,8 +135,8 @@ t	3	1000	1100	t2
 t	M	10	25	t2
 t	X	90	200	t2
 t	Y	1010	1900	t2
-1	t	10	20
-1	t	50	60}
+t	1	10	20	
+t	1	50	60	}
 
 set ::env(PATH) $keeppath
 
