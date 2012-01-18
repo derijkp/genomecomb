@@ -2,7 +2,7 @@ CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/completegnomics/src
 #CFLAGS=-Wall -O2
 TOOLS= tools.c tools.h debug.h
 
-all: ../bin/map2besthit ../bin/distr2chr ../bin/map2sv ../bin/addcols ../bin/reg_subtract ../bin/reg_join ../bin/covered ../bin/getregions ../bin/reg_annot ../bin/var_annot ../bin/groupby ../bin/multireg
+all: ../bin/map2besthit ../bin/distr2chr ../bin/map2sv ../bin/addcols ../bin/reg_subtract ../bin/reg_join ../bin/covered ../bin/getregions ../bin/reg_annot ../bin/var_annot ../bin/groupby ../bin/multireg ../bin/bcol_indexfile
 
 clean:
 	rm ../bin/*
@@ -42,3 +42,7 @@ clean:
 
 ../bin/multireg: multireg.c $(TOOLS)
 	gcc multireg.c tools.c $(CFLAGS) -o ../bin/multireg
+
+../bin/bcol_indexfile: bcol_indexfile.c $(TOOLS)
+	gcc bcol_indexfile.c tools.c $(CFLAGS) -o ../bin/bcol_indexfile
+

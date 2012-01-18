@@ -10,3 +10,4 @@ source tsv.tcl
 source val.tcl
 source edit.tcl
 source convert.tcl
+source bcol.tcl

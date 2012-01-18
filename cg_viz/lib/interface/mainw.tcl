@@ -128,6 +128,7 @@ $object start
 
 mainw method start {args} {
 #	bind $object.canvas.data <1> [list $object select %x %y]
+	$object.table.buttons.querybuilder configure -command [list $object query]
 	Extral::event listen $object selchanged [list $object redrawselection]
 	Extral::event listen $object querychanged [list $object redrawquery]
 }
@@ -153,7 +154,8 @@ mainw method redrawquery {args} {
 puts "redrawquery $args"
 	set len [$object.tb info len]
 	$object.table.buttons.label1 configure -text "[commify $len] lines"
-	$object.table.data configure -rows $len -cols [llength [$object.tb info qfields]]
+	$object.table.data configure -command [$object.table.data cget -command] -usecommand 1
+	$object.table.data configure -rows [expr {$len+1}] -cols [llength [$object.tb info qfields]]
 }
 
 #mainw method select {x y} {
