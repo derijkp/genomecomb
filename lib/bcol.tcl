@@ -91,7 +91,7 @@ proc bcol_size bcol {
 }
 
 proc bcol_close bcol {
-	close [dict get $bcol fi]
+	catch {close [dict get $bcol fi]}
 }
 
 proc bcol_get {bcol start end} {

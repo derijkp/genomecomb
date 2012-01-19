@@ -82,27 +82,23 @@ table_tsv method table {args} {
 	return $tdata(table)	
 }
 
-table_tsv method query {args} {
-putsvars object args
+table_tsv method query {query} {
 	private $object tdata
-	if {[llength $args]} {
-		set query [lindex $args 0]
-		set tdata(query) $query
-	} else {
-		set query $tdata(query)
-	}
+	set tdata(query) $query
 	if {[get tdata(query_results) ""] ne ""} {
 		bcol_close $tdata(query_results)
 	}
 	if {$tdata(query) eq ""} {
 		set tdata(query_results) {}
+		set tdata(len) $tdata(tlen)
+		$object reset
 		Extral::event generate querychanged $object
 		return
 	}
 	Classy::Progress start 2
 	Classy::Progress message "Running query, please be patient (no progress shown)"
 	putslog "Doing query $query"
-	cg select -q $query -f {rowid=NR-1} $tdata(file) $tdata(indexdir)/query_results.tsv
+	exec cg select -q $query -f {rowid=NR-1} $tdata(file) $tdata(indexdir)/query_results.tsv
 	Classy::Progress next "Converting results"
 	putslog "Converting results"
 	set f [open $tdata(indexdir)/query_results.tsv]
