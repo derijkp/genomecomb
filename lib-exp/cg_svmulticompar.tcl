@@ -171,9 +171,13 @@ proc svmulticompar_write {id group poss2 dummy1 dummy2 {ddummy1 {}} {ddummy2 {}}
 		}
 		lset oline1 0 $count
 		lset oline1 1 $id
-		set oline1 [list_sub $oline1 -exclude $::mergeposs1]
-		set oline2 [list_sub $oline2 -exclude $::mergeposs2]
-		lappend resultlist [join [list_concat $oline1 $oline2 $merge] \t]
+		if {[llength $::mergeposs1]} {
+			set oline1 [list_sub $oline1 -exclude $::mergeposs1]
+		}
+		if {[llength $::mergeposs2]} {
+			set oline2 [list_sub $oline2 -exclude $::mergeposs2]
+		}
+		lappend resultlist [list_concat $oline1 $oline2 $merge]
 	}
 	return $resultlist
 }
@@ -259,7 +263,7 @@ proc svmulticompar {svfile1 svfile2} {
 	# set locfields {chromosome begin end type start1 end1 size zyg chr2 start2 end2}
 	set locfields {id chromosome begin end type start1 end1 size zyg chr2 start2 end2}
 	set locpos(fields) [list_concat src $locfields]
-	foreach f {id chromosome begin type start1 end1 size start2 end2} {
+	foreach f {id chromosome begin end type start1 end1 size start2 end2} {
 		# add 1, because src will be prepended to lines
 		set locpos($f) [expr {[lsearch $locfields $f]+1}]
 	}
@@ -329,7 +333,8 @@ proc svmulticompar {svfile1 svfile2} {
 #puts [join $list \n]\n\n
 # join $list \n\n
 		if {[llength $list] == 1} {
-			puts $o [join [lindex [svmulticompar_write $did $list $poss2 $dummy1 $dummy2 $ddummy1 $ddummy2] 0] \t]
+			set temp [lindex [svmulticompar_write $did $list $poss2 $dummy1 $dummy2 $ddummy1 $ddummy2] 0]
+			puts $o [join $temp \t]
 			incr did
 			continue
 		}
@@ -364,7 +369,8 @@ proc svmulticompar {svfile1 svfile2} {
 		}
 		if {[llength $resultlist] > 1} {
 			set resultlist [lsort -index $locpos(id) -dict $resultlist]
-			set resultlist [lsort -index $locpos(end1) -integer $resultlist]
+			set resultlist [lsort -index $locpos(end) -dict $resultlist]
+			set resultlist [lsort -index $locpos(begin) -integer $resultlist]
 		}
 		foreach temp $resultlist {
 			puts $o [join $temp \t]
@@ -422,17 +428,6 @@ if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 
 
 if 0 {
-	set svfile1 temp
-	set svfile2 cmt71/cmt71_02_a/cgsv-cmt71_02_a.tsv
-	set svfile2 cmt71/cmt71_07_b/cgsv-cmt71_07_b.tsv
-	rm temp
-	cg svmulticompar temp cmt71/cmt71_02_a/cgsv-cmt71_02_a.tsv
-	cg svmulticompar temp cmt71/cmt71_07_b/cgsv-cmt71_07_b.tsv
-
-	cd /complgen/projects/ep861
-	cg svmulticompar temp ep861.03/cgsv-ep861.03.tsv ep861.04/cgsv-ep861.04.tsv
-
-
 	# convert old
 	set base GS103
 	cd /complgen/sv/$base
