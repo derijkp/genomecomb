@@ -678,7 +678,7 @@ proc annotategene_one {loc geneobj} {
 	array set adata $geneobj
 	set complement $adata(complement)
 	foreach {chrom snppos snpend snptype ref alt} $loc break
-	if {[inlist {del sub} $snptype]} {
+	if {[inlist {del sub inv} $snptype]} {
 		# treat deletions and subs separately because they need special care (can span exons, the whole annotation, etc ...)
 		set ref [expr {$snpend-$snppos}]
 		set result [annotategene_one_del $snppos $snptype $ref $alt]
@@ -713,11 +713,14 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 	catch {close $f}; catch {close $df}; catch {close $o};
 	set f [gzopen $file]
 	set header [tsv_open $f]
-	set poss [tsv_basicfields $header]
-	set fields [list_sub $header $poss]
-	if {[inlist $poss -1]} {
-		error "Cannot annotate $file: wrong fields"
+	if {[catch {set poss [tsv_basicfields $header]}]} {
+		set poss [tsv_basicfields $header 4]
+		lappend poss -1 -1
+		set noref 1
+	} else {
+		set noref 0
 	}
+	set fields [list_sub $header $poss]
 	set df [gzopen $dbfile]
 	set header [tsv_open $df]
 	set deffields {chrom start end strand cdsStart cdsEnd exonCount exonStarts exonEnds}
@@ -747,8 +750,19 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 	set counter 0
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
+		if {![llength $line] && [eof $f]} break
 		set loc [list_sub $line $poss]
 		foreach {chr start end type ref alt} $loc break
+		if {$noref} {
+			switch $type {
+				snp {
+					set ref N; set alt N
+					lset loc end N
+				}
+				default {set ref [expr {$end-$start}]}
+			}
+			lset loc end-1 $ref
+		}
 		incr counter
 		if {$counter > 50000} {
 			putslog $chr:$start
@@ -784,8 +798,8 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 			incr dbend 2000
 		}
 		# join [list_subindex $dblist 4] \n\n
-		# check for multiple alleles, proecess these separately (alist contains >1 loc)
-		set malt [split [lindex $loc end] ,]
+		# check for multiple alleles, process these separately (alist contains >1 loc)
+		set malt [split $alt ,]
 		if {[llength $malt] > 1} {
 			set alist {}
 			foreach a $malt {

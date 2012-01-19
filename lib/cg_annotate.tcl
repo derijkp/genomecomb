@@ -260,6 +260,11 @@ proc cg_annotate {args} {
 			annotategene $file $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
+			set altpos [lsearch $header alt]
+			if {$altpos == -1} {
+				puts "Skipping: $file has no alt field"
+				continue
+			}
 			lappend afiles $resultfile.${name}_annot
 			if {[file exists $resultfile.${name}_annot]} {
 				putslog "$resultfile.${name}_annot exists: skipping scan"
