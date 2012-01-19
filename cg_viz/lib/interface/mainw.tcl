@@ -199,8 +199,26 @@ mainw method opentsv {args} {
 	wm title $object $file
 }
 
+mainw method savetsv {file} {
+	$object.tb save $file
+}
+
 mainw method open {args} {
-	$object opentsv {*}$args
+	if {[llength $args]} {
+		set file [lindex $args 0]
+	} else {
+		set file [Classy::selectfile -title Open -selectmode persistent]
+	}
+	$object opentsv $file
+}
+
+mainw method save {args} {
+	if {[llength $args]} {
+		set file [lindex $args 0]
+	} else {
+		set file [Classy::savefile -title Save]
+	}
+	$object savetsv $file
 }
 
 proc commify {num {sep ,}} {

@@ -218,7 +218,7 @@ table_tsv method open {file} {
 	setprivate $object table $table
 	set tdata(indexdir) [dict get $info indexdir]
 	set tdata(lineindex) [dict get $info lineindex]
-	set tdata(file) $file
+	set tdata(file) [file normalize $file]
 	set tdata(database) $database
 	set tdata(table) $table
 	set tdata(tfields) [dict get $info header]
@@ -258,4 +258,38 @@ table_tsv method reset {args} {
 #	catch {
 #		$tdata(tktable) configure -variabletype tktable -usecommand 1 -command "_table_tsv_get [list $object] %r %c"
 #	}
+}
+
+table_tsv method save {file} {
+	private $object tdata cache
+	if {$tdata(query) eq ""} {
+		file copy $tdata(file) $file
+		return
+	}
+	set len $tdata(len)
+	set row 0
+	set lineindex $tdata(lineindex)
+	set o [open $file w]
+	puts $o "# [list orifile $tdata(file)]"
+	puts $o "# [list query $tdata(query)]"
+	puts $o [join $tdata(qfields) \t]
+	while {$row < $len} {
+		set qrows [bcol_get $tdata(query_results) $row [expr {$row+19}]]
+		foreach qrow $qrows {
+			set filepos [bcol_get $lineindex $qrow $qrow]
+			if {$tdata(compressed)} {
+				set f [gzopen $tdata(file) $filepos]
+			} else {
+				set f $tdata(f)
+				seek $f $filepos
+			}
+			puts $o [gets $f]
+			if {$tdata(compressed)} {
+				catch {close $f}
+			}
+			incr r
+		}
+		incr row 20
+	}
+	close $o
 }

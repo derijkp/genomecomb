@@ -1,6 +1,6 @@
 menu,MainMenu {menu "File" {
-	action "Open file" {%W open [Classy::selectfile -title Open -selectmode persistent]} <<Load>>
-	action "Save as" {error "save not implemented yet"} <<SaveAs>>
+	action "Open file" {%W open} <<Load>>
+	action "Save as" {%W save} <<SaveAs>>
 	separator
 	action "New editor" {edit newfile} <<Editor>>
 	action "Command window" {Classy::cmd} <<Cmd>>
