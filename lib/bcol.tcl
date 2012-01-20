@@ -1,7 +1,3 @@
-proc progress args {
-	catch {Classy::Progress {*}$args}
-}
-
 proc bcol_indexlines {file indexfile} {
 	set time [file mtime $file]
 	set ext [file extension $file]

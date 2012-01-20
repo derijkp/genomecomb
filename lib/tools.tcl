@@ -548,6 +548,67 @@ proc cg_checktsv {file} {
 	close $f
 }
 
+proc progress {cmd args} {
+	if {![llength [info commands winfo]]} {
+		global progresslevel
+		if {![info exists progresslevel]} {
+			set progresslevel -1
+		}
+		# no Tk, so we are running commandline: ignore a lot of the progress commands
+		switch $cmd {
+			start {
+				incr progresslevel
+			}
+			stop {
+				if {progresslevel == -1} return
+				incr progresslevel -1
+			}
+			protect {
+				foreach {code on_error} $args break
+				set error [catch {uplevel 1 $code} result]
+				if {$error} {
+					if {$on_error eq ""} {
+						set errorInfo $::errorInfo
+						return -code error -errorinfo $errorInfo $result
+					} else {
+						set ::errorResult $result
+						uplevel 1 $on_error
+					}
+				} else {
+					return $result
+				}
+			}
+		}
+	} else {
+		switch $cmd {
+			onerror {
+				Classy::Progress on_error [subst {
+					[lindex $args 0]
+				}]
+			}
+			startdisplay {
+				if {([Classy::Progress level] == -1)} {
+				}
+				uplevel 1 [list Classy::Progress start] $args
+			}
+			start {
+				if {([Classy::Progress level] == -1)} {
+				}
+				uplevel 1 [list Classy::Progress $cmd] $args
+			}
+			stop {
+				Classy::Progress stop
+				if {([Classy::Progress level] == -1)} {
+					Classy::Progress on_error {}
+				}
+			}
+			default {
+				uplevel 1 [list Classy::Progress $cmd] $args
+			}
+		}
+	}
+}
+
 if 0 {
 
 	ifcatch {error test} result {
