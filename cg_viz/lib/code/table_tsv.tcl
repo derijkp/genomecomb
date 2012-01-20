@@ -32,6 +32,7 @@ proc _table_tsv_get {object row col args} {
 			unset -nocomplain cache
 			set tdata(numcache) 0
 		}
+		set cor $tdata(fieldscor)
 		if {$tdata(query) eq ""} {
 			set filepos [bcol_get $lineindex $row $row]
 			if {$tdata(compressed)} {
@@ -43,7 +44,11 @@ proc _table_tsv_get {object row col args} {
 			set r $row
 			for {set i 0} {$i < $limit} {incr i} {
 				if {[eof $f]} break
-				set cache($r) [split [gets $f] \t]
+				if {[llength $cor]} {
+					set cache($r) [list_sub [split [gets $f] \t] $cor]
+				} else {
+					set cache($r) [split [gets $f] \t]
+				}
 				incr r
 			}
 			if {$tdata(compressed)} {
@@ -60,7 +65,11 @@ proc _table_tsv_get {object row col args} {
 					set f $tdata(f)
 					seek $f $filepos
 				}
-				set cache($r) [split [gets $f] \t]
+				if {[llength $cor]} {
+					set cache($r) [list_sub [split [gets $f] \t] $cor]
+				} else {
+					set cache($r) [split [gets $f] \t]
+				}
 				if {$tdata(compressed)} {
 					catch {close $f}
 				}
@@ -153,11 +162,26 @@ table_tsv method info {key} {
 	return $tdata($key)
 }
 
+table_tsv method tfields {} {
+	private $object tdata
+	return $tdata(tfields)
+}
+
 table_tsv method fields {args} {
 	private $object tdata
 	if {[llength $args]} {
 		set tdata(fields) [lindex $args 0]
-		# set tdata(qfields) [mselect_expandfields $tdata(tfields) $tdata(fields) tdata(qcode)]
+		if {[inlist {* {}} $tdata(fields)]}	{
+			set tdata(qfields) $tdata(tfields)
+			set tdata(fieldscor) {}
+		} else {
+			set tdata(qfields) [tsv_select_expandfields $tdata(tfields) $tdata(fields) tdata(qcode) temp]
+			if {$tdata(qfields) eq $tdata(tfields)} {
+				set tdata(fieldscor) {}
+			} else {
+				set tdata(fieldscor) [list_cor $tdata(tfields) $tdata(qfields)]
+			}
+		}
 		$object reset
 		Extral::event generate querychanged $object
 	} else {
@@ -226,6 +250,7 @@ table_tsv method open {file} {
 	set tdata(tlen) [dict get $info size]
 	set tdata(fields) $tdata(tfields)
 	set tdata(qfields) $tdata(tfields)
+	set tdata(fieldscor) {}
 	set tdata(f) [open $file]
 	if {![file exists $tdata(indexdir)/query_results.bcol]} {
 		set tdata(query) {}
@@ -269,6 +294,7 @@ table_tsv method save {file} {
 	set len $tdata(len)
 	set row 0
 	set lineindex $tdata(lineindex)
+	set cor $tdata(fieldscor)
 	set o [open $file w]
 	puts $o "# [list orifile $tdata(file)]"
 	puts $o "# [list query $tdata(query)]"
@@ -283,7 +309,11 @@ table_tsv method save {file} {
 				set f $tdata(f)
 				seek $f $filepos
 			}
-			puts $o [gets $f]
+			if {[llength $cor]} {
+				puts $o [list_sub [split [gets $f] \t] $cor]
+			} else {
+				puts $o [gets $f]
+			}
 			if {$tdata(compressed)} {
 				catch {close $f}
 			}

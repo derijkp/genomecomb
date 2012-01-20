@@ -38,15 +38,23 @@ mainw method init args {
 	grid $object.table.buttons.label1 -row 0 -column 0 -sticky nesw
 	button $object.table.buttons.querybuilder \
 		-text Query
-	grid $object.table.buttons.querybuilder -row 0 -column 1 -sticky nesw
+	grid $object.table.buttons.querybuilder -row 0 -column 2 -sticky nesw
 	Classy::Entry $object.table.buttons.query \
 		-combo 20 \
 		-width 4
-	grid $object.table.buttons.query -row 0 -column 2 -sticky nesw
+	grid $object.table.buttons.query -row 0 -column 3 -sticky nesw
+	button $object.table.buttons.button1 \
+		-text Fields
+	grid $object.table.buttons.button1 -row 0 -column 1 -sticky nesw
 	grid columnconfigure $object.table.buttons 0 -uniform {}
 	grid columnconfigure $object.table.buttons 1 -uniform {}
-	grid columnconfigure $object.table.buttons 2 -uniform {} -weight 1
+	grid columnconfigure $object.table.buttons 2 -uniform {}
+	grid columnconfigure $object.table.buttons 3 -uniform {} -weight 1
+	grid columnconfigure $object.table.buttons 4 -uniform {}
+	grid columnconfigure $object.table.buttons 5 -uniform {}
 	grid rowconfigure $object.table.buttons 0 -uniform {}
+	grid rowconfigure $object.table.buttons 1 -uniform {}
+	grid rowconfigure $object.table.buttons 2 -uniform {}
 	Classy::TkTable $object.table.data \
 		-rows 0 \
 		-cols 1
@@ -80,15 +88,11 @@ mainw method init args {
 	grid columnconfigure $object 0 -uniform {}
 	grid columnconfigure $object 1 -uniform {}
 	grid columnconfigure $object 2 -uniform {} -weight 1
-	grid columnconfigure $object 3 -uniform {}
-	grid columnconfigure $object 4 -uniform {}
 	grid rowconfigure $object 0 -uniform {}
 	grid rowconfigure $object 1 -uniform {}
 	grid rowconfigure $object 2 -uniform {}
 	grid rowconfigure $object 3 -uniform {}
 	grid rowconfigure $object 4 -uniform {} -weight 1
-	grid rowconfigure $object 5 -uniform {}
-	grid rowconfigure $object 6 -uniform {}
 
 	if {"$args" == "___Classy::Builder__create"} {return $object}
 # ClassyTk Initialise
@@ -110,6 +114,8 @@ $object start
 		-command "$object.table.data xview"
 	$object.table.buttons.query configure \
 		-command [varsubst object {$object query}]
+	$object.table.buttons.button1 configure \
+		-command [varsubst object {$object fields}]
 	$object.table.data configure \
 		-xscrollcommand "$object.table.sh set" \
 		-yscrollcommand "$object.table.sv set"
@@ -127,8 +133,10 @@ $object start
 }
 
 mainw method start {args} {
+	private $object fields
 #	bind $object.canvas.data <1> [list $object select %x %y]
 	$object.table.buttons.querybuilder configure -command [list $object query]
+	set fields {}
 	Extral::event listen $object selchanged [list $object redrawselection]
 	Extral::event listen $object querychanged [list $object redrawquery]
 }
@@ -238,3 +246,39 @@ mainw method query {args} {
 	$tb query $query
 }
 
+mainw method _fields_change {what} {
+	private $object tfields fields sfields
+	set tb $object.tb
+	switch $what {
+		basic {
+			set poss [tsv_basicfields $tfields 6]
+			set fields [list_union [list_sub $tfields $poss] $fields]
+		}
+		addsel {
+			set fields [list_union $fields $sfields]
+		}
+		remsel {
+			set fields [list_lremove $fields $sfields]
+		}
+	}
+}
+
+mainw method fields {args} {
+	private $object fields tfields
+	putsvars object args
+	set tb $object.tb
+	if {![llength $args]} {
+		set tfields [$tb tfields]
+		Classy::Dialog $object.fields -title "Select fields"
+		$object.fields option listbox "Fields" [privatevar $object sfields] [privatevar $object tfields] -selectmode persistent
+		$object.fields option button "Add selected fields from list" [list $object _fields_change addsel]
+		$object.fields option button "Remove selected fields from list" [list $object _fields_change remsel]
+		$object.fields option button "Add basic fields" [list $object _fields_change basic]
+		$object.fields option button "Clear" {setprivate $object fields ""}
+		$object.fields option entry "Fields" [privatevar $object fields]
+		$object.fields add go "Go" [list $object fields [getprivate $object fields]] default
+		$object.fields persistent remove go
+	} else {
+		$tb fields [lindex $args 0]
+	}
+}
