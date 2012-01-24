@@ -405,6 +405,7 @@ proc annotategene_one_del {snppos snptype ref alt} {
 		# pick out the most intersting one
 		set annlist {}
 		list_foreach {ts te ttype} $adata(ftlist) {
+			if {[inlist {post pre} $ttype]} continue
 			if {$snppos < $te && $snpend >= $ts} {
 				lappend annlist $ts $te $ttype
 			}
@@ -420,11 +421,13 @@ proc annotategene_one_del {snppos snptype ref alt} {
 			foreach {tempstart tempend temptype} $annlist {
 				set snp_annot [annotate_type2annot $temptype]
 				if {[get snp_annot_score($snp_annot) 0] > $best_snp_annot_score} {
+					set best_snp_annot $snp_annot
 					set best_snp_annot_score [get snp_annot_score($snp_annot) 0]
 					set dbstart $tempstart
 					set dbend $tempend
 				}
 			}
+			set snp_annot $best_snp_annot
 		}
 		set indel [expr {$snpend-$snppos}]
 		if {!$rlen} {
