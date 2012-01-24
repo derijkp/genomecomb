@@ -70,7 +70,8 @@ proc annotate {file dbfile name annotfile near {outfields {name score freq}}} {
 putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 	catch {close $f}
 	set f [gzopen $file]
-	set poss [open_region $f header]
+	set header [tsv_open $f comment]
+	set poss [tsv_basicfields $header 3]
 	close $f
 	set fields [list_sub $header $poss]
 	if {[inlist $poss -1]} {
@@ -107,6 +108,7 @@ putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 		}
 	}
 	set o [open $annotfile.temp w]
+	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
 	puts $o [join $newh \t]
 	close $o
 	# puts [list reg_annot $file {*}$poss $dbfile {*}$dbposs {*}$dataposs $near]
@@ -118,8 +120,11 @@ putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 proc annotatevar {file dbfile name annotfile {outfields {name score freq}}} {
 #putsvars file dbfile name annotfile outfields
 	catch {close $f}
-	set f [open $file]
-	set poss [open_region $f header]
+#	set f [open $file]
+#	set poss [open_region $f header]
+	set f [gzopen $file]
+	set header [tsv_open $f comment]
+	set poss [tsv_basicfields $header 3]
 	close $f
 	set fields [list_sub $header $poss]
 	if {[inlist $poss -1]} {
@@ -162,6 +167,7 @@ proc annotatevar {file dbfile name annotfile {outfields {name score freq}}} {
 		}
 	}
 	set o [open $annotfile.temp w]
+	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
 	puts $o [join $newh \t]
 	close $o
 	# puts [list var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs]

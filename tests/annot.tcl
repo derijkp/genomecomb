@@ -39,6 +39,35 @@ test var_annot {gene} {
 	exec diff temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
 } {} 
 
+test reg_annot {basic, extra comments} {
+	file_write temp2.sft "# a comment\n"
+	exec cat data/vars1.sft >> temp2.sft
+	exec cg annotate temp2.sft temp.sft data/reg_annot.sft 2> /dev/null
+	exec cg select -rf {list} temp.sft temp2.sft
+	exec diff temp2.sft data/expected-vars1-reg_annot.sft
+} {1d0
+< # a comment	
+child process exited abnormally} error
+
+test var_annot {different types on same pos, extra comments} {
+	file_write temp2.sft "# a comment\n"
+	exec cat data/vars2.tsv >> temp2.sft
+	exec cg annotate temp2.sft temp.tsv data/var_annot3.tsv 2> /dev/null
+	exec diff temp.tsv data/expected-vars2-var_annot3.tsv
+} {1d0
+< # a comment	
+child process exited abnormally} error
+
+test var_annot {gene, extra comments} {
+	file_write temp2.sft "# a comment\n# another comment\n"
+	exec cat data/vars_annottest.sft >> temp2.sft
+	exec cg annotate -dbdir /complgen/refseq/hg18 temp2.sft temp.sft data/gene_test.tsv 2> /dev/null
+	exec diff temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
+} {1,2d0
+< # a comment	
+< # another comment	 
+child process exited abnormally} error
+
 file delete -force temp.sft
 file delete -force temp2.sft
 

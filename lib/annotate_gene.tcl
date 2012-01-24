@@ -365,6 +365,7 @@ proc annotategene_one_getsnpcoords {line snppos} {
 proc annotategene_one_del {snppos snptype ref alt} {
 #putsvars snppos snptype ref alt
 	global adata snp_annot_score
+	set impacttype [string toupper $snptype]
 	set complement $adata(complement)
 	set dbstart $adata(start)
 	set dbend $adata(end)
@@ -398,8 +399,8 @@ proc annotategene_one_del {snppos snptype ref alt} {
 		set gpos [expr {$adata(grefstart) - $snpend}]
 	}
 	if {($snppos <= $dbstart) && ($snpend >= $dbend)} {
-		set snp_annot GENEDEL
-		set snp_descr del
+		set snp_annot GENE$impacttype
+		set snp_descr $snptype
 	} elseif {([string index $sel 0] ne "e") && ($sel == $eel)} {
 		# both start and end are in the same intron, so just check which features are affected
 		# pick out the most intersting one
@@ -432,9 +433,9 @@ proc annotategene_one_del {snppos snptype ref alt} {
 		set indel [expr {$snpend-$snppos}]
 		if {!$rlen} {
 			if {!$complement} {
-				set snp_descr g.${gpos}_[expr {$gpos+$len-1}]del$indel
+				set snp_descr g.${gpos}_[expr {$gpos+$len-1}]$snptype$indel
 			} else {
-				set snp_descr g.[expr {$gpos-$len+1}]_${gpos}del$indel
+				set snp_descr g.[expr {$gpos-$len+1}]_${gpos}$snptype$indel
 			}
 		} else {
 			if {$rlen > 70} {set alt $rlen}
@@ -481,7 +482,7 @@ proc annotategene_one_del {snppos snptype ref alt} {
 		}
 	} elseif {($srpos < [expr {$adata(rpstart)+3}]) && ($erpos >= $adata(rpstart))} {
 		# coding deletion overlaps start codon
-		set snp_annot CDSDELSTART
+		set snp_annot CDS${impacttype}START
 		set snp_descr p.d?
 	} elseif {$sel != $eel} {
 		# coding deletion overlapping splice site
@@ -491,7 +492,7 @@ proc annotategene_one_del {snppos snptype ref alt} {
 		set codonstart [expr {3*$codonpos}]
 		set fromcodon [annotatevar_gene_getprnaseq $codonstart [expr {$codonstart+2}]]
 		set fromAZ [seq_translate $fromcodon]
-		set snp_annot CDSDELSPLICE
+		set snp_annot CDS${impacttype}SPLICE
 		set snp_descr p.${fromAZ}[expr {$codonpos+1}]Xsd
 	} else {
 		# coding deletion
@@ -507,7 +508,7 @@ proc annotategene_one_del {snppos snptype ref alt} {
 			set fromAZ [seq_translate $fromcodon]
 			set snp_descr p.${fromAZ}[expr {$codonpos+1}]Xfs
 		} else {
-			set snp_annot CDSDEL
+			set snp_annot CDS${impacttype}
 			set cpos [expr {$rps-$codonstart}]
 			set endpos [expr {($rpe/3)*3 + 2}]
 			set fromcodon [annotatevar_gene_getprnaseq $codonstart $endpos $sline]
@@ -533,7 +534,7 @@ proc annotategene_one_del {snppos snptype ref alt} {
 		}
 	}
 	if {$adata(complement)} {set strand -} else {set strand +}
-	if {$snp_annot eq "GENEDEL"} {
+	if {$snp_annot eq "GENE${impacttype}"} {
 		set p $strand$adata(transcriptname)
 	} elseif {$sel eq $eel} {
 		set p $strand$adata(transcriptname):$sel:$seipos
@@ -681,7 +682,7 @@ proc annotategene_one {loc geneobj} {
 	array set adata $geneobj
 	set complement $adata(complement)
 	foreach {chrom snppos snpend snptype ref alt} $loc break
-	if {[inlist {del sub inv} $snptype]} {
+	if {[inlist {del sub inv amp} $snptype]} {
 		# treat deletions and subs separately because they need special care (can span exons, the whole annotation, etc ...)
 		set ref [expr {$snpend-$snppos}]
 		set result [annotategene_one_del $snppos $snptype $ref $alt]
@@ -715,7 +716,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 	}
 	catch {close $f}; catch {close $df}; catch {close $o};
 	set f [gzopen $file]
-	set header [tsv_open $f]
+	set header [tsv_open $f comment]
 	if {[catch {set poss [tsv_basicfields $header]}]} {
 		set poss [tsv_basicfields $header 4]
 		lappend poss -1 -1
@@ -735,6 +736,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 		exit 1
 	}
 	set o [open $annotfile.temp w]
+	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
 	set nh [list ${name}_impact ${name}_gene ${name}_descr]
 	puts $o [join $nh \t]
 	set empty [join [list_fill [llength $nh] {}] \t]
