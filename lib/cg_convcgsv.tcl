@@ -25,9 +25,9 @@ proc convcgsv {srcfile dstfile} {
 		set line [split [gets $f] \t]
 		set line [lrange $line 0 $last]
 		if {![llength $line]} continue
-		foreach {id strand1 chr1 start1 len1 transitionLength strand2 chr2 start2 len2 size score scoretype} [list_sub $line $poss] break
+		foreach {id strand1 chr1 end1 len1 transitionLength strand2 chr2 start2 len2 size score scoretype} [list_sub $line $poss] break
 		if {$id eq "W-2"} continue
-		set end1 [expr {$start1+$len1}]
+		set start1 [expr {$end1-$len1}]
 		set end2 [expr {$start2+$len2}]
 		if {![isint $size]} {
 			set size -1
