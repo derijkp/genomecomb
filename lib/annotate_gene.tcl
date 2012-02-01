@@ -758,6 +758,10 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 		if {![llength $line] && [eof $f]} break
 		set loc [list_sub $line $poss]
 		foreach {chr start end type ref alt} $loc break
+		if {$start > $end} {
+			puts stderr "location start > end error: $loc"
+			exit 1
+		}
 		if {$noref} {
 			switch $type {
 				snp {
