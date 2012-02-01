@@ -49,7 +49,13 @@ proc convcgsv {srcfile dstfile} {
 		} else {
 			set end $start2
 		}
-		set result [list $chr1 $end1 $end $type $id $strand1 $start1 $end1 $size $strand2 $chr2 $start2 $end2 $score $scoretype $transitionLength]
+		if {$end1 < $end} {
+			set begin $end1
+		} else {
+			set begin $end
+			set end $end1
+		}
+		set result [list $chr1 $begin $end $type $id $strand1 $start1 $end1 $size $strand2 $chr2 $start2 $end2 $score $scoretype $transitionLength]
 		set temp [list_sub $line -exclude $poss]
 		if {[llength $temp]} {
 			lappend result {*}$temp
