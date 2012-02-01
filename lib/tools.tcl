@@ -560,7 +560,7 @@ proc progress {cmd args} {
 				incr progresslevel
 			}
 			stop {
-				if {progresslevel == -1} return
+				if {$progresslevel == -1} return
 				incr progresslevel -1
 			}
 			protect {
