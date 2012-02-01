@@ -210,10 +210,15 @@ proc downloaddb {path build dbname} {
 		}
 	}
 	puts "Sorting $filename ...."
-	set fields [list_common {chrom start end name score strand thickStart thickEnd itemRgb blockCount blockSizes blockStarts} $header]
-	lappend fields {*}[list_lremove $header $fields]
-	cg select -q {$chrom ~ /^chr[0-9XYM][0-9]*$/} -s {chrom start end} -f $fields $temp/u_$dbname.tsv $filename
-	# file delete -force $temp/$dbname.txt $temp/$dbname.sql $temp/u_$dbname.tsv
+	if {[catch {tsv_basicfields $fields 3}]} {
+		file copy $temp/u_$dbname.tsv $filename
+		# file delete -force $temp/$dbname.txt $temp/$dbname.sql $temp/u_$dbname.tsv
+	} else {
+		set fields [list_common {chrom start end name score strand thickStart thickEnd itemRgb blockCount blockSizes blockStarts} $header]
+		lappend fields {*}[list_lremove $header $fields]
+		cg select -q {$chrom ~ /^chr[0-9XYM][0-9]*$/} -s {chrom start end} -f $fields $temp/u_$dbname.tsv $filename
+		# file delete -force $temp/$dbname.txt $temp/$dbname.sql $temp/u_$dbname.tsv
+	}
 	puts "----------------------------------------------------"
 }
 
