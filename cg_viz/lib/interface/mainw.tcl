@@ -247,7 +247,7 @@ mainw method query {args} {
 }
 
 mainw method _fields_change {what} {
-	private $object tfields fields sfields
+	private $object tfields fields w
 	set tb $object.tb
 	switch $what {
 		basic {
@@ -255,28 +255,31 @@ mainw method _fields_change {what} {
 			set fields [list_union [list_sub $tfields $poss] $fields]
 		}
 		addsel {
-			set fields [list_union $fields $sfields]
+			set fields [list_union $fields [$w get]]
 		}
 		remsel {
-			set fields [list_lremove $fields $sfields]
+			set fields [list_lremove $fields [$w get]]
 		}
 	}
 }
 
 mainw method fields {args} {
-	private $object fields tfields
+	private $object fields tfields w
 	putsvars object args
 	set tb $object.tb
 	if {![llength $args]} {
 		set tfields [$tb tfields]
+		set fields [$tb info qfields]
 		Classy::Dialog $object.fields -title "Select fields"
-		$object.fields option listbox "Fields" [privatevar $object sfields] [privatevar $object tfields] -selectmode persistent
+		set w [$object.fields option listbox "Fields" [privatevar $object sfields] [privatevar $object tfields] -selectmode extended]
+		set w [lindex $w 0]
 		$object.fields option button "Add selected fields from list" [list $object _fields_change addsel]
 		$object.fields option button "Remove selected fields from list" [list $object _fields_change remsel]
 		$object.fields option button "Add basic fields" [list $object _fields_change basic]
 		$object.fields option button "Clear" {setprivate $object fields ""}
+		$object.fields option button "All" "setprivate $object fields \[$tb tfields\]"
 		$object.fields option entry "Fields" [privatevar $object fields]
-		$object.fields add go "Go" [list $object fields [getprivate $object fields]] default
+		$object.fields add go "Go" "$tb fields \[getprivate $object fields\]" default
 		$object.fields persistent remove go
 	} else {
 		$tb fields [lindex $args 0]
