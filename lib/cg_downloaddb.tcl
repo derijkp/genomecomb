@@ -217,6 +217,52 @@ proc downloaddb {path build dbname} {
 	puts "----------------------------------------------------"
 }
 
+proc downloaddbinfo {path build dbname} {
+	set temp $path/tmp/$build
+	file mkdir $temp
+	# do documentation
+	# ----------------
+	if {![file exists $temp/$dbname.html]} {
+		puts "Downloading $dbname.html ....."
+		wgetfile http://genome.ucsc.edu/cgi-bin/hgTrackUi?db=$build&g=$dbname $temp/$dbname.html
+	} else {
+		puts "Skipping download $dbname.html (already there)"
+	}
+	puts "Making reg_${build}_$dbname.info"
+	set c [file_read $temp/$dbname.html]
+	if {[regexp {HGERROR-START} $c]} {
+		puts "Skipping reg_${build}_$dbname.info: Could not download info"
+		return
+	}
+	set title $dbname
+	regexp {<TITLE>([^<]+)</TITLE>} $c t title
+	regexp {<B style='font-family:serif; font-size:200%;'>([^<]+)</B>} $c t title
+#	regsub {^.*<H2>Description</H2>} $c {} c
+	if {![regsub {^.*<A NAME='TRACK_HTML'></A>} $c {} c]} {
+		set c {}
+	} else {
+		regsub {</td><td nowrap>.*$} $c {} c
+		regsub {</H2>\n+$} $c {</H2>} c
+		set c [string_change $c [list <P> {} </P> {} <H2> "== " </H2> " =="]]
+	}
+	file_write $path/$build/reg_${build}_$dbname.info "= $dbname: [string trim $title] =\n\n[string trim $c] \n\n== Category ==\nAnnotation\n"
+}
+
+proc cg_downloaddbinfo {args} {
+	if {([llength $args] < 2)} {
+		puts stderr "format is: $::base resultdir build database ?...?"
+		puts stderr " - downloads databases from ucsc, mirbase, 1000g, ... and converts to useful format"
+		exit 1
+	}
+	foreach {path build dbname} $args break
+	set dbnames [lrange $args 2 end]
+	puts "----------------------------------------------------"
+	file mkdir $path
+	foreach dbname $dbnames {
+			downloaddbinfo $path $build $dbname
+	}
+}
+
 proc cg_downloaddb {args} {
 	if {([llength $args] < 2)} {
 		puts stderr "format is: $::base resultdir build database ?...?"
@@ -238,6 +284,7 @@ proc cg_downloaddb {args} {
 			downloaddb_dbsnp $path $build $dbname
 		} else {
 			downloaddb $path $build $dbname
+			downloaddbinfo $path $build $dbname
 		}
 	}
 }

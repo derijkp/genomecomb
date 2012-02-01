@@ -16,14 +16,26 @@ cg calcsequencedgenome ${dest} ${build}
 
 # region databases (ucsc)
 cg downloaddb ${dest} ${build} simpleRepeat microsat rmsk genomicSuperDups chainSelf
-cg downloaddb ${dest} ${build} omimGene oreganno tRNAs targetScanS evofold refLink
-cg downloaddb ${dest} ${build} cytoBand dgv gwasCatalog kgXref wgRna vistaEnhancers gad tfbsConsSites
+cg downloaddb ${dest} ${build} omimGene oreganno tRNAs targetScanS evofold
+cg downloaddb ${dest} ${build} cytoBand dgv gwasCatalog wgRna vistaEnhancers gad tfbsConsSites
 cg downloaddb ${dest} ${build} phastConsElements28way phastConsElements28wayPlacMammal phastConsElements44way rnaGene 
+# you can download info on the databases using:
+# cg downloaddbinfo ${dest} ${build} simpleRepeat microsat rmsk genomicSuperDups chainSelf
 mv ucsc_${build}_gwasCatalog.tsv ucsc_${build}_gwasCatalog.tsv.temp
+
 cg select \
 	-f 'chrom start end trait pValue pubMedID name bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv' \
 	-nh 'chrom start end name score pubMedID dbsnp bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv' \
 	ucsc_${build}_gwasCatalog.tsv.temp ucsc_${build}_gwasCatalog.tsv
+
+rm reg_${build}_omimGene.info
+cg downloaddbinfo ${dest} ${build} omimGene2
+mv reg_${build}_omimGene2.info reg_${build}_omimGene.info
+
+# other databases
+cg downloaddb ${dest} ${build} refLink kgXref
+mv ucsc_${build}_kgXref.tsv other_${build}_kgXref.tsv
+mv ucsc_${build}_refLink.tsv other_${build}_refLink.tsv
 
 # collapse regions
 cg collapseoverlap ucsc_${build}_cytoBand.tsv ucsc_${build}_evofold.tsv ucsc_${build}_gwasCatalog.tsv ucsc_${build}_microsat.tsv ucsc_${build}_omimGene.tsv ucsc_${build}_oreganno.tsv ucsc_${build}_rmsk.tsv ucsc_${build}_simpleRepeat.tsv ucsc_${build}_targetScanS.tsv ucsc_${build}_tfbsConsSites.tsv ucsc_${build}_tRNAs.tsv ucsc_${build}_wgRna.tsv ucsc_${build}_vistaEnhancers.tsv ucsc_${build}_gad.tsv
@@ -38,11 +50,9 @@ mv ucsc_${build}_phastConsElements28way.tsv ucsc_${build}_phastCons28.tsv
 mv  reg_${build}_phastConsElements28way.tsv  reg_${build}_phastCons28.tsv
 mv ucsc_${build}_phastConsElements44way.tsv ucsc_${build}_phastCons44.tsv
 mv  reg_${build}_phastConsElements44way.tsv  reg_${build}_phastCons44.tsv
-
-cg downloaddb ${dest} ${build} rnaGene augustusAbinitio acembly
-mv ucsc_${build}_rnaGene.tsv reg_${build}_rnaGene.tsv
-mv ucsc_${build}_augustusAbinitio.tsv gene_${build}_augustusAbinitio.tsv
-mv ucsc_${build}_acembly.tsv gene_${build}_acembly.tsv
+mv  reg_${build}_phastConsElements28wayPlacMammal.info  reg_${build}_phastCons28P.info
+mv  reg_${build}_phastConsElements28way.info  reg_${build}_phastCons28.info
+mv  reg_${build}_phastConsElements44way.info  reg_${build}_phastCons44.info
 
 cg downloaddb ${dest} ${build} firstEF 
 mv ucsc_${build}_firstEF.tsv reg_${build}_firstEF.tsv
@@ -70,16 +80,28 @@ gunzip -c ${dest}/${build}/var_${build}_snp132lift.tsv.gz > ${dest}/${build}/var
 # genes
 cg downloaddb ${dest} ${build} refGene ensGene knownGene genscan
 mv ucsc_${build}_refGene.tsv gene_${build}_refGene.tsv
+mv reg_${build}_refGene.info gene_${build}_refGene.info
 cg maketabix gene_${build}_refGene.tsv
 mv ucsc_${build}_ensGene.tsv gene_${build}_ensGene.tsv
+mv reg_${build}_ensGene.info gene_${build}_ensGene.info
 cg maketabix gene_${build}_ensGene.tsv
 echo -e "genecol\tproteinID\ntranscriptcol\tname" > gene_${build}_knownGene.tsv.opt
 mv ucsc_${build}_knownGene.tsv gene_${build}_knownGene.tsv
+mv reg_${build}_knownGene.info gene_${build}_knownGene.info
 cg maketabix gene_${build}_knownGene.tsv
 # todo: also get kgXref, and translate
 cg downloaddb ${dest} ${build} genscan
 mv ucsc_${build}_genscan.tsv gene_${build}_genscan.tsv
+mv reg_${build}_genscan.info gene_${build}_genscan.info
 cg maketabix gene_${build}_genscan.tsv
+
+# cg downloaddbinfo ${dest} ${build} rnaGene augustusAbinitio acembly firstEF
+cg downloaddb ${dest} ${build} rnaGene augustusAbinitio acembly
+mv ucsc_${build}_rnaGene.tsv reg_${build}_rnaGene.tsv
+mv ucsc_${build}_augustusAbinitio.tsv gene_${build}_augustusAbinitio.tsv
+rm reg_${build}_augustusAbinitio.info
+mv ucsc_${build}_acembly.tsv gene_${build}_acembly.tsv
+mv reg_${build}_acembly.info gene_${build}_acembly.info
 
 # homopolymer
 cd ${dest}/${build}
