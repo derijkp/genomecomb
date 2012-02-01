@@ -165,6 +165,7 @@ proc cg_project {args} {
 			set ajob [submit -direct $direct -deps [get cjob {}] cg annotate $resultfile compar/annot_compar-${project}.tsv $refseqdir/$build]
 	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
+		submit -direct $direct -deps [get ajob {}] cg index compar/annot_compar-${project}.tsv
 		# multireg
 		# --------
 		set resultfile compar/reg-${project}.tsv
@@ -190,6 +191,7 @@ proc cg_project {args} {
 			set crjob [submit -direct $direct -deps $jobs cg multireg $resultfile {*}$files]
 	 		if {[isint $crjob]} {lappend alljobs $crjob}
 		}
+		submit -direct $direct -deps [get crjob {}] cg index $resultfile
 		# cgsv
 		# ----
 		set done {}
@@ -218,22 +220,23 @@ proc cg_project {args} {
 	 		if {[isint $cgsvjob]} {lappend alljobs $cgsvjob}
 		}
 		if {![file exists [gzfile compar/annot_$resultfile]] || [llength $files]} {
-			set cmd [list cg annotate compar/$resultfile compar/annot_$resultfile {*}[glob -nocomplain $refseqdir/$build/reg_*.tsv $refseqdir/$build/gene_*.tsv]]
+			set cmd [list cg annotate compar/$resultfile compar/annot_$resultfile $refseqdir/$build]
 			set ajob [submit -direct $direct -deps [get cgsvjob {}] {*}$cmd]
 	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
+		submit -direct $direct -deps [get ajob {}] cg index compar/annot_$resultfile
 		# cgcnv
 		# ----
 		set done {}
 		set resultfile cgcnv-${project}.tsv
 		puts "Checking [file normalize compar/$resultfile]"
-#		set names {}
-#		if {[file exists compar/$resultfile]} {
-#			set list [cg select -h compar/$resultfile]
-#			set poss [list_find -glob $list start-*]
-#			set done [list_sub $list $poss]
-#			set done [list_regsub -all {^start-} $done {}]
-#		}
+		set names {}
+		if {[file exists compar/$resultfile]} {
+			set list [cg select -h compar/$resultfile]
+			set poss [list_find -glob $list start-*]
+			set done [list_sub $list $poss]
+			set done [list_regsub -all {^start-} $done {}]
+		}
 		set files {}
 		set names {}
 		foreach {cgdir name} $data {
@@ -250,10 +253,11 @@ proc cg_project {args} {
 	 		if {[isint $cgcnvjob]} {lappend alljobs $cgcnvjob}
 		}
 		if {![file exists [gzfile compar/annot_$resultfile]] || [llength $files]} {
-			set cmd [list cg annotate compar/$resultfile compar/annot_$resultfile {*}[glob -nocomplain $refseqdir/$build/reg_*.tsv $refseqdir/$build/gene_*.tsv]]
+			set cmd [list cg annotate compar/$resultfile compar/annot_$resultfile $refseqdir/$build]
 			set ajob [submit -direct $direct -deps [get cgcnvjob {}] {*}$cmd]
 	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
+		submit -direct $direct -deps [get ajob {}] cg index compar/annot_$resultfile
 	}
 
 	# sv (our algorithm)
@@ -302,6 +306,7 @@ proc cg_project {args} {
 			set ajob [submit -direct $direct -deps [get svjob {}] {*}$cmd]
 	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
+		submit -direct $direct -deps [get ajob {}] cg index compar/annot_$resultfile
 	}
 
 	# cleanup/compress
