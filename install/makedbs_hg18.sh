@@ -121,6 +121,13 @@ cg ucscwiggle2reg -n 0.01 -p 1 -f 'log10($value)' ucsc_${build}_wgEncodeCaltechR
 cg ucscwiggle2reg -n 0.01 -p 1 -f 'log10($value)' ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1K562CellLongpolyaBb12x75.tsv
 cg ucscwiggle2reg -n 0.01 -p 1 -f 'log10($value)' ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1NhekCellPapBb2R2x75.tsv
 cg collapseoverlap -o ${dest}/${build}/reg_${build}_wgEncodelogRnaSeq.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1Gm12878CellLongpolyaBb12x75.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1H1hescCellPapBb2R2x75.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep2Hepg2CellPapBb2R2x75.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1HuvecCellPapBb2R2x75.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1K562CellLongpolyaBb12x75.tsv reg_ucsc_${build}_wgEncodeCaltechRnaSeqRawSignalRep1NhekCellPapBb2R2x75.tsv
+# make info file
+cg downloaddbinfo ${dest}/tmp ${build} wgEncodeCaltechRnaSeq
+head -1 ${dest}/tmp/${build}/reg_hg18_wgEncodeCaltechRnaSeq.info > ${dest}/${build}/reg_hg18_wgEncodeCaltechRnaSeq.info
+echo $'\n\n== Agregation info ==\n\nThis file combines the data from 7 lines' >> ${dest}/${build}/reg_hg18_wgEncodeCaltechRnaSeq.info
+echo $'score contains the logarithm of the highest score, with a precision of 1 digit after the decimal point.' >> ${dest}/${build}/reg_hg18_wgEncodeCaltechRnaSeq.info
+echo $'num contains the number of lines for which the original value is >= 0.01 (thus log >= -2.0)\n' >> ${dest}/${build}/reg_hg18_wgEncodeCaltechRnaSeq.info
+head -n -2 ${dest}/tmp/${build}/reg_hg18_wgEncodeCaltechRnaSeq.info >> ${dest}/${build}/reg_hg18_wgEncodeCaltechRnaSeq.info
 
 # enc_H3K4Me1
 cg downloaddb ${dest} ${build} wgEncodeBroadChipSeqSignalGm12878H3k4me1 wgEncodeBroadChipSeqSignalH1hescH3k4me1 wgEncodeBroadChipSeqSignalHmecH3k4me1 wgEncodeBroadChipSeqSignalHsmmH3k4me1 wgEncodeBroadChipSeqSignalHuvecH3k4me1 wgEncodeBroadChipSeqSignalK562H3k4me1 wgEncodeBroadChipSeqSignalNhekH3k4me1 wgEncodeBroadChipSeqSignalNhlfH3k4me1
@@ -132,7 +139,15 @@ cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadCh
 cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalK562H3k4me1.tsv
 cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k4me1.tsv
 cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k4me1.tsv
-cg collapseoverlap -o ${dest}/${build}/reg_${build}_wgEncodeH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalGm12878H3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalH1hescH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHmecH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHsmmH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHuvecH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalK562H3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k4me1.tsv
+cg collapseoverlap -o ${dest}/${build}/reg_${build}_wgEncodeRegMarkEnhH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalGm12878H3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalH1hescH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHmecH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHsmmH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHuvecH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalK562H3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k4me1.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k4me1.tsv
+# make info file
+cg downloaddbinfo ${dest}/tmp ${build} wgEncodeRegMarkEnhH3k4me1
+head -1 ${dest}/tmp/${build}/reg_hg18_wgEncodeRegMarkEnhH3k4me1.info > ${dest}/${build}/reg_hg18_wgEncodeH3k4me1.info
+echo $'\n\n== Agregation info ==\n' >> ${dest}/${build}/reg_hg18_wgEncodeH3k4me1.info
+echo $'This file combines the data from 8 cell lines' >> ${dest}/${build}/reg_hg18_wgEncodeH3k4me1.info
+echo $'score contains the highest score rounded up the next 5 fold.' >> ${dest}/${build}/reg_hg18_wgEncodeH3k4me1.info
+echo $'num contains the number of cell lines for which the score is >= 10\n' >> ${dest}/${build}/reg_hg18_wgEncodeH3k4me1.info
+head -n -2 ${dest}/tmp/${build}/reg_hg18_wgEncodeRegMarkEnhH3k4me1.info >> ${dest}/${build}/reg_hg18_wgEncodeH3k4me1.info
 
 # enc_H3K27Ac
 cg downloaddb ${dest} ${build} wgEncodeBroadChipSeqSignalGm12878H3k27ac wgEncodeBroadChipSeqSignalHepg2H3k27ac wgEncodeBroadChipSeqSignalHmecH3k27ac wgEncodeBroadChipSeqSignalHsmmH3k27ac wgEncodeBroadChipSeqSignalHuvecH3k27ac wgEncodeBroadChipSeqSignalK562H3k27ac wgEncodeBroadChipSeqSignalNhekH3k27ac wgEncodeBroadChipSeqSignalNhlfH3k27ac
@@ -146,6 +161,14 @@ cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadCh
 cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k27ac.tsv
 # collapse
 cg collapseoverlap -o ${dest}/${build}/reg_${build}_wgEncodeH3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalGm12878H3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHepg2H3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHmecH3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHsmmH3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHuvecH3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalK562H3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k27ac.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k27ac.tsv
+# make info file
+cg downloaddbinfo ${dest}/tmp ${build} wgEncodeRegMarkEnhH3k27ac
+head -1 ${dest}/tmp/${build}/reg_hg18_wgEncodeRegMarkEnhH3k27ac.info > ${dest}/${build}/reg_hg18_wgEncodeH3k27ac.info
+echo $'\n\n== Agregation info ==\n' >> ${dest}/${build}/reg_hg18_wgEncodeH3k27ac.info
+echo $'This file combines the data from 8 cell lines' >> ${dest}/${build}/reg_hg18_wgEncodeH3k27ac.info
+echo $'score contains the highest score rounded up the next 5 fold.' >> ${dest}/${build}/reg_hg18_wgEncodeH3k27ac.info
+echo $'num contains the number of cell lines for which the score is >= 10\n' >> ${dest}/${build}/reg_hg18_wgEncodeH3k27ac.info
+head -n -2 ${dest}/tmp/${build}/reg_hg18_wgEncodeRegMarkEnhH3k27ac.info >> ${dest}/${build}/reg_hg18_wgEncodeH3k27ac.info
 
 # enc_H3K4Me3
 cg downloaddb ${dest} ${build} wgEncodeBroadChipSeqSignalGm12878H3k4me3 wgEncodeBroadChipSeqSignalHepg2H3k4me3 wgEncodeBroadChipSeqSignalHmecH3k4me3 wgEncodeBroadChipSeqSignalHsmmH3k4me3 wgEncodeBroadChipSeqSignalHuvecH3k4me3 wgEncodeBroadChipSeqSignalK562H3k4me3 wgEncodeBroadChipSeqSignalNhekH3k4me3 wgEncodeBroadChipSeqSignalNhlfH3k4me3
@@ -158,6 +181,14 @@ cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadCh
 cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k4me3.tsv
 cg ucscwiggle2reg -n 10 -p 0 -f '5*(($value+4)/5)' ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k4me3.tsv
 cg collapseoverlap -o ${dest}/${build}/reg_${build}_wgEncodeH3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalGm12878H3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHepg2H3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHmecH3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHsmmH3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalHuvecH3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalK562H3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhekH3k4me3.tsv reg_ucsc_${build}_wgEncodeBroadChipSeqSignalNhlfH3k4me3.tsv
+# make info file
+cg downloaddbinfo ${dest}/tmp ${build} wgEncodeRegMarkPromoter
+head -1 ${dest}/tmp/${build}/reg_hg18_wgEncodeRegMarkPromoter.info > ${dest}/${build}/reg_hg18_wgEncodeH3k4me3.info
+echo $'\n\n== Agregation info ==\n' >> ${dest}/${build}/reg_hg18_wgEncodeH3k4me3.info
+echo $'This file combines the data from 9 cell lines' >> ${dest}/${build}/reg_hg18_wgEncodeH3k4me3.info
+echo $'score contains the highest score rounded up the next 5 fold.' >> ${dest}/${build}/reg_hg18_wgEncodeH3k4me3.info
+echo $'num contains the number of cell lines for which the score is >= 10\n' >> ${dest}/${build}/reg_hg18_wgEncodeH3k4me3.info
+head -n -2 ${dest}/tmp/${build}/reg_hg18_wgEncodeRegMarkPromoter.info >> ${dest}/${build}/reg_hg18_wgEncodeH3k4me3.info
 
 # DNase Clusters and Txn Factor ChIP
 cg downloaddb ${dest} ${build} wgEncodeRegDnaseClustered wgEncodeRegTfbsClustered
