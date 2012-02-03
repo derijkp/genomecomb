@@ -6,68 +6,59 @@ To be able to demonstrate selected queries, we have made our annotations of the 
 
 == Select lines based on specific properties ==
 
+Write all variant positions where the coverage of Complete Genomics is higher or equal to 20 to the file "plus20.sft"
 {{{
 cg select -q ' $type=="ins" && $coverage-cgNA19240 >= 20 " \
 	NA19240_chrom22.tsv.gz > plus20.sft
 }}}
 
-will write all variant positions where the coverage of Complete Genomics is higher or equal to 20 to the file "plus20.sft"
-
+List the genomic positions (chromosome, begin, end) of all missense SNPs in NA19240 chromosome 22
 {{{
 cg select -q ' $type=="snp" && $impact == "MISSENSE" '' \
 	-f 'chromosome begin end' NA19240_chrom22.tsv.gz
 }}}
 
-will list the genomic positions (chromosome, begin, end) of all missense SNPs in NA19240 chromosome 22.
-
-
+List the headers of the file NA19240_chrom22.tsv.gz
 {{{
 cg select -h NA19240_chrom22.tsv.gz
 }}}
 
-will list the headers of the file
-
+Show for each of the different impact types (e.g. missense snp) how many variants are present
 {{{
 cg select -f impact NA19240_chrom22.tsv.gz | sort | uniq -c > refgenetypes.tsv
 }}}
 
-shows for each of the different impact types (e.g. missense snp) how many variants are present
 
+Extracts a specific region from the file
 {{{
 cg select \
 	-q '$chromosome == "chr22" && $begin > 10000 && $end < 200000' \
 	NA19240_chrom22.tsv.gz > NA19240_chrom22_region.tsv
 }}}
 
-extracts a specific region from the file
-
-
+Select all variants where the same genotype is called between CG and RTG callers on the CG genome 
 {{{
 cg select -q 'sm(cgNA19240, cgrtgNA19240)' NA19240_chrom22.tsv.gz
 }}}
 
-selects all variants where the same genotype is called between CG and RTG callers on the CG genome 
-
+Select all positions where the same genotype is called between CG and RTG callers, can be reference calls if the Illumina genome calls a variant at that position
 {{{
 cg select -q 'same(cgNA19240, cgrtgNA19240)' NA19240_chrom22.tsv.gz
 }}}
 
-selects all positions where the same genotype is called between CG and RTG callers, can be reference calls if the Illumina genome calls a variant at that position
-
+Select mismatches between CG and RTG callers on the CG genome, i.e. a variant is called by both but with a different genotype
 {{{
 cg select -q 'mm(cgNA19240, cgrtgNA19240)' NA19240_chrom22.tsv.gz
 }}}
 
-selects mismatches between CG and RTG callers on the CG genome, i.e. a variant is called by both but with a different genotype
-
+Select all variants not in simple tandem repeats, microsatellites or segmental duplications
 {{{
 cg select -q '$type == "snp" \
 	&& $simpleRepeat == "" && $microsat == "" && $genomicSuperDups == "" \
 	NA19240_chrom22.tsv.gz > nonrepeat.tsv
 }}}
 
-selects all variants not in simple tandem repeats, microsatellites or segmental duplications
-
+Select all lines where all 4 technologies (Illumina and CG each with two SNV callers) call a variant
 {{{
 cg select \
 	-q '$sequenced-cgNA19240 == "v" && $sequenced-ilNA19240 == "v" \
@@ -75,40 +66,36 @@ cg select \
 		NA19240_chrom22.tsv.gz > allvariant.tsv
 }}}
 
-selects all lines where all 4 technologies (Illumina and CG each with two SNV callers) call a variant
-
+Select all lines where all 4 technologies call a variant, but by using the **count** function
 {{{
 cg select \
 	-q 'count($sequenced-*, == "v")  == 4' \
 	NA19240_chrom22.tsv.gz > allvariant2.tsv
 }}}
 
-selects all lines where all 4 technologies call a variant, but by using the **count** function
-
+Select all SNVs with coverage between 20 and 100 and not in clustered SNV regions for the cgNA19240 genome
 {{{
 cg select \
-	-q ' \
-	$sequenced-cgNA19240, == "v" \
-	&& $type == "snp" \
-	&& $coverage-cgNA19240 >= 20  \
-	&& $coverage-cgNA19240 <= 100  \
-	&& $cluster-cgNA19240 == ""  \
+	-q '
+	$sequenced-cgNA19240, == "v"
+	&& $type == "snp"
+	&& $coverage-cgNA19240 >= 20 
+	&& $coverage-cgNA19240 <= 100
+	&& $cluster-cgNA19240 == ""
 	' \
 	NA19240_chrom22.tsv.gz > highconfidence.tsv
 }}}
 
-selects all SNVs with coverage between 20 and 100 and not in clustered SNV regions for the cgNA19240 genome
-
+Select all SNVs with coverage between 20 and 100 and not in clustered SNV regions for all 4 genomes (Illumina and CG each with two SNV callers)
 {{{
 cg select \
-	-q ' \
-	count($sequenced-*, == "v")  == 4 \
-	&& $type == "snp" \
-	&& count($coverage-*, <20) == 0 \
-	&& count($coverage-*, > 100) == 0 \
-	&& count($cluster-*, != "") == 0 \
+	-q '
+	count($sequenced-*, == "v")  == 4
+	&& $type == "snp"
+	&& count($coverage-*, <20) == 0
+	&& count($coverage-*, > 100) == 0
+	&& count($cluster-*, != "") == 0
 	' \
 	NA19240_chrom22.tsv.gz > highconfidence2.tsv
 }}}
 
-selects all SNVs with coverage between 20 and 100 and not in clustered SNV regions for all 4 genomes (Illumina and CG each with two SNV callers)
