@@ -276,7 +276,7 @@ mainw method fields {args} {
 		$object.fields option button "Add selected fields from list" [list $object _fields_change addsel]
 		$object.fields option button "Remove selected fields from list" [list $object _fields_change remsel]
 		$object.fields option button "Add basic fields" [list $object _fields_change basic]
-		$object.fields option button "Clear" {setprivate $object fields ""}
+		$object.fields option button "Clear" "setprivate $object fields {}"
 		$object.fields option button "All" "setprivate $object fields \[$tb tfields\]"
 		$object.fields option entry "Fields" [privatevar $object fields]
 		$object.fields add go "Go" "$tb fields \[getprivate $object fields\]" default
