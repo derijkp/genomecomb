@@ -120,9 +120,10 @@ proc tsv_select_lmin {} {
 		function lmin(list,def) {
 			if (def == nill) {def = 999999999}
 		        split(list,a,/[,;]/);
+	                if (a[1] == "-" || a[1] != a[1]+0) {a[1] = def}
 		        minv = a[1];
 		        for (i in a) {
-		                if (a[i] != a[i]+0) {a[i] = def}
+		                if (a[1] == "-" || a[i] != a[i] + 0) {a[i] = def}
 		                if (a[i] < minv) {minv = a[i]}
 		        }
 		        return minv
@@ -136,9 +137,10 @@ proc tsv_select_lmax {} {
 		function lmax(list,def) {
 			if (def == nill) {def = -999999999}
 		        split(list,a,/[,;]/);
+	                if (a[1] == "-" || a[1] != a[1]+0) {a[1] = def}
 		        maxv = a[1];
 		        for (i in a) {
-		                if (a[i] != a[i]+0) {a[i] = def}
+		                if (a[1] == "-" || a[i] != a[i] + 0) {a[i] = def}
 		                if (a[i] > maxv) {maxv = a[i]}
 		        }
 		        return maxv
