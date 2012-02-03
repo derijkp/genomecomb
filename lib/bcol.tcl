@@ -102,13 +102,14 @@ proc bcol_get {bcol start end} {
 	if {$end > $max} {set end $max}
 	set len [expr {$end-$start+1}]
 	if {$len == 0} {return {}}
-	if {[llength $table] == 2} {
+	set offset 0
+	if {[llength $table] > 2} {
 		set offset 0
-	} else {
-		list_foreach {num type offset} $table {
-			if {$start >= $num} {
+		list_foreach {num type noffset} $table {
+			if {$start < $num} {
 				break
 			}
+			set offset $noffset
 		}
 	}
 	set pos [expr {4*$start}]
