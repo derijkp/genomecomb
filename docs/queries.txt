@@ -90,14 +90,17 @@ cg select -q '
 ' ../ftld1/compar/annot_compar-ftld1.tsv > sel.tsv
 wc sel.tsv
 
+# how much region sequenced in at least one sample
+cg select -q 'count($sreg-*, == 1) >= 1' ../ftld1/compar/reg-ftld1.tsv > reg1.tsv
+cg covered reg1.tsv > reg1.covered
 # how much region sequenced in all samples
 cg select -q 'count($sreg-*, == 1) == 4' ../ftld1/compar/reg-ftld1.tsv > reg4.tsv
 cg covered reg4.tsv > reg4.covered
-# find regions of "sequenced" genome missing in at least one of the samples
+# find regions of "sequenced" genome missing in at least one of the samples (i.e. not in all 4)
 cg regsubtract /complgen/refseq/hg18/extra/reg_hg18_sequencedgenome.tsv reg4.tsv > missing.tsv
 cg covered missing.tsv 2> /dev/null
 # annotate these regions
-cg annotate missing.tsv annot_missing.tsv /complgen/refseq/hg18/reg_*.tsv /complgen/refseq/hg18/gene_*.tsv
+cg annotate missing.tsv annot_missing.tsv /complgen/refseq/hg18/
 # other region tools
 cg regjoin -h
 cg regcommon -h
