@@ -22,6 +22,10 @@ foreach {opt value} $argv {
 			lappend options -l hostname=$value
 			incr pos 2
 		}
+		-io {
+			lappend options -l io=$value
+			incr pos 2
+		}
 		-- {
 			incr pos 1
 			break

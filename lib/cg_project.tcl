@@ -14,7 +14,7 @@ proc submit {args} {
 	set host {}
 	set deps {}
 	set submitargs {}
-	set direct 0
+	set direct [get ::submit_direct 1]
 	while 1 {
 		set key [lindex $args 0]
 		if {$key eq "-host"} {
@@ -28,6 +28,10 @@ proc submit {args} {
 			if {[llength $deps]} {
 				lappend submitargs -deps [join $deps ,]
 			}
+			set args [lrange  $args 2 end]
+		} elseif {$key eq "-io"} {
+			set io [lindex $args 1]
+			lappend submitargs -io $io
 			set args [lrange  $args 2 end]
 		} elseif {$key eq "-direct"} {
 			set direct [lindex $args 1]
@@ -121,7 +125,7 @@ proc cg_project {args} {
 			set dir [file dir $cgdir]
 			file mkdir $name
 			set host [lindex [file split $cgdir] 2]
-			set job [submit -direct $direct cg process_sample $cgdir $name $refseqdir/$build]
+			set job [submit cg process_sample $cgdir $name $refseqdir/$build]
 			if {[isint $job]} {lappend jobs $job}
 		}
 		lappend alljobs {*}$jobs
@@ -158,14 +162,14 @@ proc cg_project {args} {
 		if {[llength $names]} {
 			file mkdir compar
 			catch {file delete [gzfile compar/annot_compar-${project}.tsv]}
-			set cjob [submit -direct $direct -deps $jobs cg multicompar $reannot $resultfile {*}$names]
+			set cjob [submit -deps $jobs cg multicompar $reannot $resultfile {*}$names]
 			if {[isint $cjob]} {lappend alljobs $cjob}
 		}
 		if {![file exists [gzfile compar/annot_compar-${project}.tsv]]} {
-			set ajob [submit -direct $direct -deps [get cjob {}] cg annotate $resultfile compar/annot_compar-${project}.tsv $refseqdir/$build]
+			set ajob [submit -deps [get cjob {}] cg annotate $resultfile compar/annot_compar-${project}.tsv $refseqdir/$build]
 	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
-		submit -direct $direct -deps [get ajob {}] cg index compar/annot_compar-${project}.tsv
+		submit -deps [get ajob {}] cg index compar/annot_compar-${project}.tsv
 		# multireg
 		# --------
 		set resultfile compar/reg-${project}.tsv
@@ -188,10 +192,10 @@ proc cg_project {args} {
 			puts "Multireg already done: $done"
 		}
 		if {[llength $files]} {
-			set crjob [submit -direct $direct -deps $jobs cg multireg $resultfile {*}$files]
+			set crjob [submit -deps $jobs cg multireg $resultfile {*}$files]
 	 		if {[isint $crjob]} {lappend alljobs $crjob}
 		}
-		submit -direct $direct -deps [get crjob {}] cg index $resultfile
+		submit -deps [get crjob {}] cg index $resultfile
 		# cgsv
 		# ----
 		set done {}
@@ -216,15 +220,15 @@ proc cg_project {args} {
 			puts "Multicgsv already present: $done"
 		}
 		if {[llength $files]} {
-			set cgsvjob [submit -direct $direct -deps $jobs cg svmulticompar compar/$resultfile {*}$files]
+			set cgsvjob [submit -deps $jobs cg svmulticompar compar/$resultfile {*}$files]
 	 		if {[isint $cgsvjob]} {lappend alljobs $cgsvjob}
 		}
 		if {![file exists [gzfile compar/annot_$resultfile]] || [llength $files]} {
 			set cmd [list cg annotate compar/$resultfile compar/annot_$resultfile $refseqdir/$build]
-			set ajob [submit -direct $direct -deps [get cgsvjob {}] {*}$cmd]
+			set ajob [submit -deps [get cgsvjob {}] {*}$cmd]
 	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
-		submit -direct $direct -deps [get ajob {}] cg index compar/annot_$resultfile
+		submit -deps [get ajob {}] cg index compar/annot_$resultfile
 		# cgcnv
 		# ----
 		set done {}
@@ -249,15 +253,15 @@ proc cg_project {args} {
 			puts "Multicgcnv already present: $done"
 		}
 		if {[llength $files]} {
-			set cgcnvjob [submit -direct $direct -deps $jobs cg svmulticompar compar/$resultfile {*}$files]
+			set cgcnvjob [submit -deps $jobs cg svmulticompar compar/$resultfile {*}$files]
 	 		if {[isint $cgcnvjob]} {lappend alljobs $cgcnvjob}
 		}
 		if {![file exists [gzfile compar/annot_$resultfile]] || [llength $files]} {
 			set cmd [list cg annotate compar/$resultfile compar/annot_$resultfile $refseqdir/$build]
-			set ajob [submit -direct $direct -deps [get cgcnvjob {}] {*}$cmd]
+			set ajob [submit -deps [get cgcnvjob {}] {*}$cmd]
 	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
-		submit -direct $direct -deps [get ajob {}] cg index compar/annot_$resultfile
+		submit -deps [get ajob {}] cg index compar/annot_$resultfile
 	}
 
 	# sv (our algorithm)
@@ -268,7 +272,7 @@ proc cg_project {args} {
 		foreach {cgdir name} $data {
 			set dir [file dir $cgdir]
 			set host [lindex [file split $cgdir] 2]
-			set job [submit -direct $direct cg process_sv $cgdir $name $refseqdir/$build]
+			set job [submit cg process_sv $cgdir $name $refseqdir/$build]
 			if {[isint $job]} {lappend svjobs $job}
 		}
 		lappend alljobs {*}$svjobs
@@ -298,15 +302,15 @@ proc cg_project {args} {
 			puts "Multisv already present: $done"
 		}
 		if {[llength $files]} {
-			set svjob [submit -direct $direct -deps $jobs cg svmulticompar compar/$resultfile {*}$files]
+			set svjob [submit -deps $jobs cg svmulticompar compar/$resultfile {*}$files]
 	 		if {[isint $svjob]} {lappend alljobs $svjob}
 		}
 		if {![file exists [gzfile compar/annot_$resultfile]] || [llength $files]} {
 			set cmd [list cg annotate compar/$resultfile compar/annot_$resultfile {*}[glob -nocomplain $refseqdir/$build/reg_*.tsv $refseqdir/$build/gene_*.tsv]]
-			set ajob [submit -direct $direct -deps [get svjob {}] {*}$cmd]
+			set ajob [submit -deps [get svjob {}] {*}$cmd]
 	 		if {[isint $ajob]} {lappend alljobs $ajob}
 		}
-		submit -direct $direct -deps [get ajob {}] cg index compar/annot_$resultfile
+		submit -deps [get ajob {}] cg index compar/annot_$resultfile
 	}
 
 	# cleanup/compress
@@ -326,14 +330,14 @@ proc cg_project {args} {
 			set files [glob -nocomplain $name/*.tsv $name/*/*.tsv $name/*/*/*.tsv]
 			foreach file $files {
 				puts "Compressing $file"
-				set job [submit -direct $direct -deps $alljobs bgzip $file]
+				set job [submit -deps $alljobs bgzip $file]
 			}
 			# compress sv data
 			set dir [file dir $cgdir]
 			set files [glob -nocomplain $name/sv/*-paired.tsv]
 			foreach file $files {
 				puts "Compressing $file"
-				set job [submit -direct $direct -deps $alljobs bgzip $file]
+				set job [submit -deps $alljobs bgzip $file]
 			}
 			set files [glob -nocomplain compar/*.temp compar/*.old]
 			if {[llength $files]} {
@@ -356,13 +360,47 @@ proc cg_project {args} {
 				exec chown "$user.domain users" /home/MOLGEN/$user/complgen
 			}
 			cd /home/MOLGEN/$user/complgen
+			set destdir [file normalize [file tail $projectdir]]
 			if {![file exists docs]} {	
 				exec ln -s /complgen/projects/docs .
 			}
-			exec rm -f [file tail $projectdir]
-			if {![file exists $project]} {
-				exec ln -s $projectdir .
+			if {![catch {file link $destdir}]} {
+				file delete $destdir
 			}
+			cplinked $projectdir $destdir
+			exec chown -R "peterdr.domain users" $destdir
+		}
+	}
+}
+
+proc cplinked {src dest} {
+	file mkdir $dest
+	exec chmod g+w $dest
+	set files [glob -nocomplain $src/*]
+	foreach file $files {
+		set destfile $dest/[file tail $file]
+		if {![catch {file link $file} link]} {
+			if {[file exists $destfile]} {
+				if {![catch {file link $destfile} link]} {
+					file delete $destfile
+				} else {
+					puts stderror "destfile $destfile exists, renamed to $destfile.old"
+					file rename $destfile $destfile.old
+				}
+			}
+			exec ln -s $file $destfile
+		} elseif {[file isdir $file]} {
+			cplinked $file $destfile
+		} else {
+			if {[file exists $destfile]} {
+				if {![catch {file link $destfile} link]} {
+					file delete $destfile
+				} else {
+					puts stderror "destfile $destfile exists, renamed to $destfile.old"
+					file rename $destfile $destfile.old
+				}
+			}
+			exec ln -s $file $destfile
 		}
 	}
 }
