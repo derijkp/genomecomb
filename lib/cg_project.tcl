@@ -76,7 +76,8 @@ proc mcompar_samples {file} {
 }
 
 proc cg_project {args} {
-	set knownactions {samples compar compar_regonly sv clean users}
+	set chrs {0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
+	set knownactions {samples compar compar_regonly bam sv clean users}
 	if {([llength $args] < 3)} {
 		puts stderr "format is: $::base project_file refseqdir action/option ..."
 		puts stderr " - processes project according to project file"
@@ -108,9 +109,12 @@ proc cg_project {args} {
 	set pos [lsearch $c {}]
 	array set a [list_concat [lrange $c 0 [expr {$pos-1}]]]
 	set build [get a(build) hg18]
-	set data [list_remove [lrange $c [expr {$pos+1}] end] {}]
+	set cdata [list_remove [lrange $c [expr {$pos+1}] end] {}]
 	set poss [list_find -glob $data {#*}]
-	set data [join [list_sub $data -exclude $poss] \n]
+	set data {}
+	list_foreach {cgdir name} [list_sub $cdata -exclude $poss] {
+		lappend data $resultdir/oricg/$cgdir $name
+	}
 	puts "data:\n$data"
 
 	# samples
@@ -264,6 +268,24 @@ proc cg_project {args} {
 		submit -deps [get ajob {}] cg index compar/annot_$resultfile
 	}
 
+	# make bam files
+	# ==================
+	set bamjobs {}
+	if {[inlist $actions bam]} {
+		cd $resultdir
+		file mkdir -force $resultdir/$name/bam
+		foreach {cgdir name} $data {
+			set destprefix $resultdir/$name/bam/bam_$name
+			if {![multiexists $destprefix-chr\$chr.bam $chrs]} {
+				set job [submit cg cg2bam -direct $submit_direct $cgdir $destprefix $refseqdir/$build]
+				if {[isint $job]} {lappend bamjobs $job}
+			} else {
+				putslog "Skipping $destprefix-chr*-.bam: already done"
+			}
+		}
+		lappend alljobs {*}$bamjobs
+	}
+
 	# sv (our algorithm)
 	# ==================
 	if {[inlist $actions sv]} {
@@ -272,7 +294,7 @@ proc cg_project {args} {
 		foreach {cgdir name} $data {
 			set dir [file dir $cgdir]
 			set host [lindex [file split $cgdir] 2]
-			set job [submit cg process_sv $cgdir $name $refseqdir/$build]
+			set job [submit -deps $bamjobs cg process_sv $cgdir $name $refseqdir/$build]
 			if {[isint $job]} {lappend svjobs $job}
 		}
 		lappend alljobs {*}$svjobs
