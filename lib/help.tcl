@@ -53,6 +53,8 @@ proc help_get {action} {
 		set help [file_read $::appdir/lib/cg_$action.wiki]
 	} elseif {[file exists $::appdir/lib-exp/cg_$action.wiki]} {
 		set help [file_read $::appdir/lib-exp/cg_$action.wiki]
+	} elseif {[file exists $::appdir/plugins/cg_$action.wiki]} {
+		set help [file_read $::appdir/plugins/cg_$action.wiki]
 	} elseif {[file exists $::appdir/docs/$action.wiki]} {
 		set help [file_read $::appdir/docs/$action.wiki]
 	} else {
@@ -78,6 +80,7 @@ proc help {action} {
 	regsub -all {(^|\n)\{\{\{([^\n*]+)\}\}\}} $help "\\1${yellow}\\2$normal" help
 	regsub -all {(^|\n)== ([^\n*]+) ==} $help "\\1${underline}\\2$normal" help
 	regsub -all {(^|\n)= ([^\n*]+) =} $help "\\1${underline}${green}\\2$normal" help
+	regsub -all {_*?(^|\n)\{\{\{(.*?\n)\}\}\}} $help "\\1${green}\\2$normal" help
 	puts $help
 }
 

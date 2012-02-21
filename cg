@@ -45,6 +45,12 @@ if {[auto_load cg_$action]} {
 	}
 	set ::base "cg $action"
 	cg_$action {*}$args
+} elseif {[file executable $::appdir/plugins/cg_$action]} {
+	if {[llength $args] == 1 && [inlist {-h --help} $args]} {
+		help $action
+		exit 0
+	}
+	exec $::appdir/plugins/cg_$action {*}$args <@ stdin >@ stdout 2>@ stderr
 } else {
 	puts stderr "ERROR: unkown action $action"
 	puts stderr "must be one of: [join [help_actions] ", "], ..."

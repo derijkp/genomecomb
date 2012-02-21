@@ -1,0 +1,14 @@
+= Select =
+
+== Format ==
+cg testplugin ...
+
+== Summary ==
+test plugin
+
+== Description ==
+A test plugin. It only echos "Test plugin worked" to the output, followed by whatever 
+arguments were given
+
+== Category ==
+plugin
