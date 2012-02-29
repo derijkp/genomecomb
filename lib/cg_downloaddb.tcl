@@ -121,6 +121,7 @@ proc downloaddb {path build dbname} {
 		puts "----------------------------------------------------"
 		return
 	}
+	catch {file mkdir -force [file dir $filename]}
 	set single 1
 	set chromosomes {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
 	if {![file exists $temp/$dbname.txt.gz]} {

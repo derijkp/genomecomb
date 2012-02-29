@@ -11,30 +11,36 @@ proc cg_downloadgenome {build result} {
 	file mkdir $result.temp
 	cd $result.temp
 	set files {}
-	foreach chr {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y} {
-		lappend files chr$chr.fa.gz
-		if {[file exists chr$chr.fa.gz]} {
-			puts "Skipping chromosome $chr: chr$chr.fa.gz already there"
-			continue
+	if {[file exists $result]} {
+		puts "skipping $result: exists"
+	} else {
+		foreach chr {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y} {
+			lappend files chr$chr.fa.gz
+			if {[file exists chr$chr.fa.gz]} {
+				puts "Skipping chromosome $chr: chr$chr.fa.gz already there"
+				continue
+			}
+			putslog "Downloading chromosome chr$chr.fa.gz"
+			catch {exec wget --tries=45 ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr$chr.fa.gz >@ stdout  2>@ stderr}
 		}
-		putslog "Downloading chromosome chr$chr.fa.gz"
-		catch {exec wget --tries=45 ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr$chr.fa.gz >@ stdout  2>@ stderr}
-	}
-	if {![file exists $result]} {
 		putslog "Converting and indexing"
 		exec zcat {*}$files | cg genome_indexfasta [file tail $result]
 		file rename {*}[glob [file tail $result]*] ..
 	}
 	set rfile [file dir $result]/reg_[file root [file tail $result]].tsv
-	putslog "Making $rfile"
-	cd ..
-	set data [file_read $result.index]
-	set o [open $rfile w]
-	puts $o chromosome\tbegin\tend
-	list_foreach {chromosome begin len} [split [string trim $data] \n] {
-		puts $o $chromosome\t0\t$len
+	if {[file exists $rfile]} {
+		puts "skipping $rfile: exists"
+	} else {
+		putslog "Making $rfile"
+		cd ..
+		set data [file_read $result.index]
+		set o [open $rfile w]
+		puts $o chromosome\tbegin\tend
+		list_foreach {chromosome begin len} [lrange [split [string trim $data] \n] 0 end-1] {
+			puts $o $chromosome\t0\t$len
+		}
+		close $o
 	}
-	close $o
 	cd $keepdir
 }
 

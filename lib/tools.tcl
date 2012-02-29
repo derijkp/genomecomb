@@ -187,7 +187,7 @@ proc cg_bgzip args {
 					exec gunzip -d -c $file > $file.temp2
 					exec bgzip -c $file > $file.temp
 					file delete $file.temp2
-					if {$keep} {file rename $file $file.old}
+					if {$keep} {file rename -force $file $file.old}
 					file rename -force $file.temp $file
 				}
 			}
@@ -197,7 +197,7 @@ proc cg_bgzip args {
 				exec razip -d -c $file > $result.temp2
 				exec bgzip -c $result.temp2 > $result.temp
 				file delete $result.temp2
-				file rename $result.temp $result
+				file rename -force $result.temp $result
 				if {!$keep} {file delete $file}
 			}
 			.bz2 {
@@ -206,13 +206,13 @@ proc cg_bgzip args {
 				exec bzcat $file > $result.temp2
 				exec bgzip -c $result.temp2 > $result.temp
 				file delete $result.temp2
-				file rename $result.temp $result
+				file rename -force $result.temp $result
 				if {!$keep} {file delete $file}
 			}
 			default {
 				putslog "bgzip $file"
 				exec bgzip -c $file > $file.gz.temp
-				file rename $file.gz.temp $file.gz
+				file rename -force $file.gz.temp $file.gz
 				if {!$keep} {file delete $file}
 			}
 		}
@@ -243,7 +243,7 @@ proc cg_razip args {
 				exec gunzip -d -c $file > $result.temp2
 				exec razip -c $result.temp2 > $result.temp
 				file delete $result.temp2
-				file rename $result.temp $result
+				file rename -force $result.temp $result
 				if {!$keep} {file delete $file}
 			}
 			.rz {
@@ -255,13 +255,13 @@ proc cg_razip args {
 				exec bzcat $file > $result.temp2
 				exec razip -c $result.temp2 > $result.temp
 				file delete $result.temp2
-				file rename $result.temp $result
+				file rename -force $result.temp $result
 				if {!$keep} {file delete $file}
 			}
 			default {
 				putslog "razip $file"
 				exec razip -c $file > $file.rz.temp
-				file rename $file.rz.temp $file.rz
+				file rename -force $file.rz.temp $file.rz
 				if {!$keep} {file delete $file}
 			}
 		}
@@ -426,7 +426,7 @@ proc gunzip {file args} {
 			error $result
 		}
 	}
-	file rename $resultfile.temp $resultfile
+	file rename -force $resultfile.temp $resultfile
 	if {![llength $args]} {
 		file delete $file
 	}
@@ -516,9 +516,14 @@ proc wgetfile {url {resultfile {}}} {
 	}
 	catch {exec wget --tries=45 -O $resultfile.temp $url} errmsg
 	if {![file exists $resultfile.temp]} {
-		error $errmsg
+		return {}
 	}
-	file rename $resultfile.temp $resultfile
+	if {[regexp "No such file" $errmsg]} {
+		file delete $resultfile.temp
+		return {}
+	}
+	file rename -force $resultfile.temp $resultfile
+	return $resultfile
 }
 
 proc cg_checktsv {file} {
