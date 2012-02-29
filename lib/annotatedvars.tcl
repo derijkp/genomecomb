@@ -53,8 +53,14 @@ proc var2annotvar_readonevar_merge {list} {
 	set keeplist $list
 	# make "ali"
 	set firstpos [lindex $list 0 3]
-	set seq(1) {}; set seq(2) {}; set seq(1,i) {}; set seq(2,i) {}; set seq(1,q) {}; set seq(2,q) {}
+	set extrapos $cache(extrapos)
+	set extranum $cache(extranum)
+	set seq(1) {}; set seq(2) {}; set seq(1,i) {}; set seq(2,i) {}; set seq(1,q) {}; set seq(2,q) {}; set seq(1,e) {}; set seq(2,e) {}
+	set i 0
 	list_foreach {bin hp chr start end type ref oalt score} $list {
+		if {$start == $end} {
+			lset list $i 5 ins
+		}
 		set len [expr {$end-$start}]
 		set alt $oalt
 		if {[regexp {\?} $alt]} {
@@ -78,11 +84,18 @@ proc var2annotvar_readonevar_merge {list} {
 				lappend seq($hp,q) {*}[list_fill [expr {$e-[llength $seq($hp,q)]+1}] {}]
 			}
 			set seq($hp,q) [lreplace $seq($hp,q) $s $e {*}[list_fill [expr {$e-$s+1}] $score]]
-		}		
+			if {$extranum} {
+				set extra [lrange [lindex $list $i] $extrapos end]
+				if {[llength $seq($hp,e)] <= $e} {
+					lappend seq($hp,e) {*}[list_fill [expr {$e-[llength $seq($hp,e)]+1}] {}]
+				}
+				set seq($hp,e) [lreplace $seq($hp,e) $s $e {*}[list_fill [expr {$e-$s+1}] $extra]]
+			}
+		}
+		incr i
 	}
 
 	set types [list_subindex $list 5]
-
 	set poss [list_find -regexp $types {snp|ins|del|delins|sub}]
 	set wlist [list_sub $list $poss]
 	lappend wlist {}
@@ -114,6 +127,10 @@ proc var2annotvar_readonevar_merge {list} {
 			lset line2 8 [lindex $seq($uhp,q) $s]
 			lset line2 9 {}
 			lset line2 7 $alt
+			if {$extranum} {
+				set extra [lindex $seq($uhp,e) $s]
+				set line2 [lreplace $line2 $extrapos end {*}$extra]
+			}
 			lappend rlist $line1 $line2
 			set line1 $line
 			foreach {bin1 hp1 chr1 begin1 end1 type1 ref1} $line1 break
@@ -137,6 +154,8 @@ proc cg_var2annot {args} {
 proc var2annotvar_readonevar f {
 	global cache list
 	# join $cache($f,rov) \n
+	set extrapos $cache(extrapos)
+	set extranum $cache(extranum)
 	if {[info exists cache($f,rov)]} {
 		set line1 [list_shift cache($f,rov)]
 		set line2 [list_shift cache($f,rov)]
@@ -155,14 +174,15 @@ proc var2annotvar_readonevar f {
 				set temp {}
 				foreach line $list {
 					if {[lindex $line 5] eq "sub" && [string length [lindex $line 6]] <= 3} {
+						set extra [lrange $line $extrapos end]
 						foreach {bin al chr start end type ref alt s1 s2 s3} $line break
 						set len [string length $ref]
 						if {$len == [string length $alt]} {
 							string_foreach r $ref e $alt {
 								if {$r ne $e} {
-									lappend temp [list $bin $al $chr $start [expr {$start+1}] snp $r $e $s1 $s2 $s3]
+									lappend temp [list $bin $al $chr $start [expr {$start+1}] snp $r $e $s1 $s2 $s3 {*}$extra]
 								} else {
-									lappend temp [list $bin $al $chr $start [expr {$start+1}] ref $r $r {} {} {}]
+									lappend temp [list $bin $al $chr $start [expr {$start+1}] ref $r $r {} {} {} {*}$extra]
 								}
 								incr start
 							}
@@ -190,6 +210,7 @@ proc var2annotvar_readonevar f {
 	if {![llength $line1]} {
 		return {}
 	}
+	set extrapos $cache(extrapos)
 	foreach {locus haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef} $line1 break
 	foreach {locus2 haplotype2 chromosome2 begin2 end2 varType2 reference2 alleleSeq2 totalScore2 hapLink2 xRef2} $line2 break
 	set type [list [get varType unkown] [get varType2 unknown]]
@@ -197,13 +218,18 @@ proc var2annotvar_readonevar f {
 	if {$type ne ""} {
 		set alleleSeq2 [get alleleSeq2 $reference]
 		set totalScore2 [get totalScore2 ""]
-		if {$alleleSeq2 < $alleleSeq} {
-			set temp $alleleSeq ; set alleleSeq $alleleSeq2 ; set alleleSeq2 $temp
-			set temp $totalScore ; set totalScore $totalScore2 ; set totalScore2 $temp
-		}
+#		if {$alleleSeq2 < $alleleSeq} {
+#			set temp $alleleSeq ; set alleleSeq $alleleSeq2 ; set alleleSeq2 $temp
+#			set temp $totalScore ; set totalScore $totalScore2 ; set totalScore2 $temp
+#		}
 		if {$alleleSeq eq "?"} {set alleleSeq -}
 		if {$alleleSeq2 eq "?"} {set alleleSeq2 -}
 		set result [list $locus $chromosome $begin $end [join $type _] $reference $alleleSeq $alleleSeq2 $totalScore $totalScore2 $xRef]
+		if {$extranum} {
+			foreach v1 [lrange $line1 $extrapos end] v2 [lrange $line2 $extrapos end] {
+				lappend result $v1 $v2
+			}
+		}
 		return $result
 	} else {
 		return {}
@@ -376,6 +402,9 @@ proc var2annotvar {file genefile outfile} {
 	unset -nocomplain cache
 	set f1 [opencgifile $file header]
 	set header1 [split $header \t]
+	set newheader {locus chromosome begin end type reference alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef}
+	set extrapos 11
+	set extranum 0
 	if {$header1 eq "locus haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef"} {
 		set cgv1 1.4
 		set cache(cor1) {}
@@ -387,9 +416,40 @@ proc var2annotvar {file genefile outfile} {
 		set cgv1 1.8
 		set cache(cor1) {0 2 3 4 5 6 7 8 9 10 11}
 		set cache($f1) [list_sub $cache($f1) $cache(cor1)]
+	} elseif {$header1 eq "locus ploidy allele chromosome begin end varType reference alleleSeq varScoreVAF varScoreEAF varQuality hapLink xRef"} {
+		set cgv1 2.0
+		set cache(cor1) {0 2 3 4 5 6 7 8 9 12 13 10 11}
+		set cache($f1) [list_sub $cache($f1) $cache(cor1)]
+		lappend newheader varScoreEAF1 varScoreEAF2 varQuality1 varQuality2
+		set extranum 2
 	} else {
-		error "header error in $file"
+		puts stderr "WARNING: unrecognised header (unsupported CG version), trying to interpret anayway"
+		set cgv1 ?
+		set cor1 [list_cor $header1 {locus allele chromosome begin end varType reference alleleSeq totalScore hapLink xRef}]
+		if {[lindex $cor1 8] == -1} {
+			set poss [list_find -regexp $header1 {[Ss]core}]
+			set pos [lindex [list_lremove $poss $cor1] 0]
+			if {[isint $pos]} {
+				lset cor1 8 $pos
+			}
+		}
+		if {[lsearch $cor1 -1] != -1} {
+			error "Unsupported header error in $file (change in CG format?)"
+		}
+		set extra [list_remove [list_fill [llength $header1] 0 1] {*}$cor1]
+		foreach pos $extra {
+			lappend cor1 $pos
+			set field [lindex $header1 $pos]
+			lappend newheader ${field}1 ${field}2
+			incr extranum
+		}
+		set cache(cor1) $cor1
+		set cache($f1) [list_sub $cache($f1) $cache(cor1)]
+		
+		error "header error in $file (change in CG format?)"
 	}
+	set cache(extrapos) $extrapos
+	set cache(extranum) $extranum
 	set g [opencgifile $genefile header]
 	set header2 [split $header \t]
 	set remheader2 {}
@@ -404,11 +464,10 @@ proc var2annotvar {file genefile outfile} {
 		set cgv2 1.9
 		set remheader2 [lrange $header2 10 end]
 	} else {
-		error "header error in $genefile"
+		error "header error in $genefile (change in CG format?)"
 	}
-	set o [open $outfile w]
-	set newheader {locus chromosome begin end type reference alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef}
 	lappend newheader {*}$remheader2
+	set o [open $outfile w]
 	puts $o [join $newheader \t]
 	set cur [var2annotvar_readonevar $f1]
 	set curgene [readgeneset $g]
