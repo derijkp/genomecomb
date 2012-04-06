@@ -1,0 +1,140 @@
+#!/bin/sh
+# the next line restarts using wish \
+exec tclsh "$0" ${1+"$@"}
+
+#
+# Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
+# See the file "license.txt" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+
+package require Extral
+
+if 0 {
+	set dbdir /complgen/refseq/hg19/
+	set regionfile data/reg_genome_seq.tsv
+}
+
+
+proc cg_genome_seq {args} {
+	set extraseq 124
+	set freql 0
+	set freqN 0.2
+	set delsize 5
+	set repeats s
+	set id {}
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-f - --freq {
+				set freql $value
+			}
+			-n - --freqn {
+				set freqN $value
+			}
+			-d - --delsize {
+				set delsize $value
+			}
+			-r - --repeatmasker {
+				set repeats $value
+			}
+			-i - --id {
+				set id $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
+	if {([llength $args] != 2)} {
+		errorformat genome_seq
+		exit 1
+	}
+	foreach {regionfile dbdir} $args break
+	#
+	catch {close $f}; catch {close $fg}
+	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]
+	set f [gzopen $regionfile]
+	set header [tsv_open $f]
+	set poss [tsv_basicfields $header 3]
+	if {$id ne ""} {
+		set idpos [lsearch $header $id]
+		if {$idpos == -1} {
+			error "id Column $id not found in header"
+		}
+	} else {
+		set idpos -1
+	}
+	set dbsnpfiles [gzfiles $dbdir/var_*snp*.tsv.gz]
+	set dbsnpposs {}
+	foreach dbsnp $dbsnpfiles {
+		set dbsnpheader [cg select -h $dbsnp]
+		set temp [tsv_basicfields $dbsnpheader 4]
+		lappend temp [lsearch $dbsnpheader freq]
+		lappend dbsnpposs $temp
+	}
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		set sub [list_sub $line $poss]
+		putslog $sub
+		foreach {chr estart eend} $sub break
+		regsub ^chr $chr {} chr
+		set name [join [list_sub $sub {0 1 2}] -]
+		set seq [genome_get $fg $chr [expr {$estart}] [expr {$eend}]]
+
+		# repeats are already masked, change lowercase to N if hardmasking is required
+		if {$repeats eq "0"} {
+			set seq [string toupper $seq]
+		} elseif {$repeats eq "N"} {
+			regsub -all {[a-z]} $seq N seq
+		}
+		# mask snps
+		set list {}
+		foreach snpposs $dbsnpposs dbsnp $dbsnpfiles {
+			set temp [split [exec tabix $dbsnp chr$chr:$estart-$eend] \n]
+			lappend list {*}[list_subindex $temp $snpposs]
+		}
+		set list [lsort -dict -decreasing $list]
+		list_foreach {c s e type freq} $list {
+			if {$e <= $estart || $s > $eend} continue
+			if {$freq eq ""} {set freq 0}
+			if {$freq <= $freql} continue
+			set start [expr {$s-$estart}]
+			if {$start < 0} {set start 0}
+			if {$type eq "ins"} {
+				set end $start
+			} else {
+				set end [expr {$e-$estart-1}]
+				if {$end < $start} {set end $start}
+			}
+			if {$type eq "del" && ($delsize != -1) && ([expr {$end-$start}] > $delsize)} continue
+			set base [string range $seq $start $end]
+			if {$freq > $freqN} {
+				regsub -all . $base N base
+			} else {
+				set base [string tolower $base]
+			}
+			set seq [string_replace $seq $start $end $base]
+		}
+		if {$idpos != -1} {
+			set name "[lindex $line $idpos] $name"
+		}
+		puts \>$name
+		puts $seq
+	}
+	close $f; close $fg
+}
+
+if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
+	package require pkgtools
+	set appdir [file dir [pkgtools::startdir]]
+	lappend auto_path $appdir/lib
+	append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
+	package require Extral
+	set ::base $scriptname
+	cg_genome_seq {*}$argv
+}

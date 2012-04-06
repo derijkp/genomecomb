@@ -1,0 +1,27 @@
+= genome_seq =
+
+== Format ==
+cg genome_seq ?options? regionfile dbdir
+
+== Summary ==
+Returns sequences of regions in the genome (fasta file), optionally masked for snps/repeats
+
+== Description ==
+This command returns the sequences of the genomic regions given in the file regionfile in fasta 
+format (to stdout). Regionfile is a tab delimited file with at least following columns: chromosome begin end.
+Repeatmasker repeats are softmasked (lower case) in the output sequences. Optionally you can 
+hardmask repeats, and soft or hardmask known (dbsnp) variants based on frequency.
+
+== Arguments ==
+; **regionfile**: tab delimited file containing targets with at least following columns: chromosome begin end
+; **dbdir**: directory containing reference genomes and variation data
+
+== Options ==
+; **-f freq**: only softmask (lowercase) dbsnp variants if they have a frequency > freq (default is 0, use -1 to include all)
+; **-n freq**: only mask (using N) dbsnp variants if they have a frequency > freq (default is 0.2, use -1 to include all)
+; **-d delsize**: only mask (using N) dbsnp variants if they are smaller than delsize (default is 5, use -1 to include all)
+; **-r repeatmask**: how to mask repeatmasker repeats: "s" means softmask (lowercase), use "N" to mask using Ns, and 0 for no repeatmasking (default is "s")
+; **-i idcolumn**: The ids for the fasta file will be taken from the given column (location will be added after a space)
+
+== Category ==
+Validation
