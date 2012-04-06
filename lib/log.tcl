@@ -4,6 +4,14 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+proc logfile {logfile args} {
+	foreach message $args {
+		set f [open $logfile a]
+		puts $f "[timestamp] $message"
+		close $f
+	}
+}
+
 proc putslog {args} {
 	foreach message $args {
 		puts stderr "[timestamp] $message"
