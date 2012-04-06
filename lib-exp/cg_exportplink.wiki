@@ -22,6 +22,9 @@ Edit **resultfilebase.tfam.pre** to the correct settings, and rename to resultfi
 You can use the files with the -tfile option, e.g.
 {{{plink --tfile resultfilebase --recode12}}}
 
+You can use plink to recode to the default plink format (non-tansposed)
+{{{plink --tfile resultfilebase --recode}}}
+
 == Arguments ==
 ; **varfile**: variant file
 ; **resultfilebase**: result file
