@@ -10,6 +10,10 @@ exec tclsh "$0" ${1+"$@"}
 
 package require Extral
 
+proc submit_direct {{direct 1}} {
+	set ::submit_direct $direct
+}
+
 proc submit {args} {
 	set host {}
 	set deps {}
@@ -96,6 +100,7 @@ proc cg_project {args} {
 		set actions [list_remove $actions direct]
 		set direct 1
 	}
+	submit_direct $direct
 	if {[llength [list_lremove $actions $knownactions]]} {
 		error "unkown action(s) [join [list_lremove $actions $knownactions] ,], must be one or more of: samples compar sv clean users"
 	}
@@ -110,7 +115,7 @@ proc cg_project {args} {
 	array set a [list_concat [lrange $c 0 [expr {$pos-1}]]]
 	set build [get a(build) hg18]
 	set cdata [list_remove [lrange $c [expr {$pos+1}] end] {}]
-	set poss [list_find -glob $data {#*}]
+	set poss [list_find -glob $cdata {#*}]
 	set data {}
 	list_foreach {cgdir name} [list_sub $cdata -exclude $poss] {
 		lappend data $resultdir/oricg/$cgdir $name
@@ -273,11 +278,11 @@ proc cg_project {args} {
 	set bamjobs {}
 	if {[inlist $actions bam]} {
 		cd $resultdir
-		file mkdir -force $resultdir/$name/bam
 		foreach {cgdir name} $data {
+			file mkdir -force $resultdir/$name/bam
 			set destprefix $resultdir/$name/bam/bam_$name
 			if {![multiexists $destprefix-chr\$chr.bam $chrs]} {
-				set job [submit cg cg2bam -direct $submit_direct $cgdir $destprefix $refseqdir/$build]
+				set job [submit cg cg2bam $cgdir $destprefix $refseqdir/$build]
 				if {[isint $job]} {lappend bamjobs $job}
 			} else {
 				putslog "Skipping $destprefix-chr*-.bam: already done"
