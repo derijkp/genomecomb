@@ -8,6 +8,7 @@ proc bcol_indexlines {file indexfile} {
 			progress start 1 "uncompressing $file for indexing, please be patient"
 			progress message "uncompressing $file for indexing, please be patient (no progress shown)"
 			if {$ext eq ".rz"} {
+				set indexdir [gzroot $file].index
 				set tempfile $indexdir/[file root [file tail $file]]
 				if {![file exists $tempfile]} {
 					gunzip $file $tempfile
@@ -34,7 +35,7 @@ proc bcol_indexlines {file indexfile} {
 		if {![file exists $indexfile] || [file mtime $indexfile] < $time} {
 			progress start [file size $tempfile] "Indexing $file, please be patient"
 			progress message "Indexing $file, please be patient"
-			exec bcol_indexfile $file $indexfile.temp $indexfile.bin.temp {*}$poss
+			exec bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss
 			file rename -force $indexfile.bin.temp $indexfile.bin
 			file rename -force $indexfile.temp $indexfile
 			progress stop
@@ -164,7 +165,7 @@ proc cg_index file {
 	if {![file exists $indexdir/info.tsv] || [file mtime $indexdir/info.tsv] < $time} {
 		set f [gzopen $file]
 		set header [tsv_open $f]
-		close $f
+		catch {close $f}
 		set bcol [bcol_open $indexfile]
 		set size [bcol_size $bcol]
 		bcol_close $bcol
