@@ -203,12 +203,28 @@ chr2	4000	4001	G	G	G	G
 chr2	4001	4002	G	G	G	G}
 
 test select {lmin column} {
-	split [exec cg select -f {chromosome begin {lmin=lmin($list,10)}} < data/vars1.sft] \n
-} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	} {chr2	5011	} {chr2	8000	}}
+	split [exec cg select -f {chromosome begin {lmin=lmin($list)}} < data/vars1.sft] \n
+} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	999999999} {chr2	8000	}}
 
-test select {lmin select} {
-	split [exec cg select -f {chromosome begin} -q {lmin($list,10) == 2} < data/vars1.sft] \n
+test select {lmind column} {
+	split [exec cg select -f {chromosome begin {lmin=lmind($list,10)}} < data/vars1.sft] \n
+} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	10} {chr2	5011	10} {chr2	8000	}}
+
+test select {lmind select} {
+	split [exec cg select -f {chromosome begin} -q {lmind($list,10) == 2} < data/vars1.sft] \n
 } {{chromosome	begin} {chr2	4000} {chr2	4001} {chr2	4099} {chr2	5000}}
+
+test select {lmax column} {
+	split [exec cg select -f {chromosome begin {lmax=lmax($list)}} < data/vars1.sft] \n
+} {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	-999999999} {chr2	8000	}}
+
+test select {lmaxd column} {
+	split [exec cg select -f {chromosome begin {lmax=lmaxd($list,0)}} < data/vars1.sft] \n
+} {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	0} {chr2	8000	}}
+
+test select {lmaxd select} {
+	split [exec cg select -f {chromosome begin} -q {lmaxd($list,10) == 2} < data/vars1.sft] \n
+} {{chromosome	begin} {chr1	4099} {chr1	5000} {chr2	4000} {chr2	5000}}
 
 test select {counthasone column} {
 	split [exec cg select -f {chromosome begin {lmin=counthasone($list, ==2)}} < data/vars1.sft] \n

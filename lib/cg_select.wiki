@@ -54,8 +54,10 @@ The default value for non-numeric arguments can be set e.g. to 1000 by giving de
 Some fields can contain multiple values in the form of a comma separated list. The following functions allow
 using this in queries
 
-; **lmin($field, def)**: the minimum of the list of numbers (comma separated) in field, def is given for a - in the list
-; **lmax($field, def)**: the maximum of the list of numbers (comma separated) in field, def is given for a - in the list
+; **lmin($field)**: the minimum of the list of numbers (comma separated) in field. A default value (999999999) is given for non-numeric characters (-)
+; **lmind($field, def)**: same as lmin, but you can set the default value for non-numeric characters using def (default = 0)
+; **lmax($field, def)**: the maximum of the list of numbers (comma separated) in field. A default value (-999999999) is given for non-numeric characters (-)
+; **lmaxd($field, def)**: same as lmax, but you can set the default value for non-numeric characters using def (default = 0)
 
 === multifield functions ===
 The following functions address multiple fields.

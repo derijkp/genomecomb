@@ -117,8 +117,8 @@ proc tsv_select_count {ids} {
 proc tsv_select_lmin {} {
 	upvar awkfunctions awkfunctions
 	lappend awkfunctions {
-		function lmin(list,def) {
-			if (def == nill) {def = 999999999}
+		function lmin(list) {
+			def = 999999999
 		        split(list,a,/[,;]/);
 	                if (a[1] == "-" || a[1] != a[1]+0) {a[1] = def}
 		        minv = a[1];
@@ -134,8 +134,42 @@ proc tsv_select_lmin {} {
 proc tsv_select_lmax {} {
 	upvar awkfunctions awkfunctions
 	lappend awkfunctions {
-		function lmax(list,def) {
-			if (def == nill) {def = -999999999}
+		function lmax(list) {
+			def = -999999999
+		        split(list,a,/[,;]/);
+	                if (a[1] == "-" || a[1] != a[1]+0) {a[1] = def}
+		        maxv = a[1];
+		        for (i in a) {
+		                if (a[1] == "-" || a[i] != a[i] + 0) {a[i] = def}
+		                if (a[i] > maxv) {maxv = a[i]}
+		        }
+		        return maxv
+		}
+	}
+}
+
+proc tsv_select_lmind {} {
+	upvar awkfunctions awkfunctions
+	lappend awkfunctions {
+		function lmind(list,def) {
+			if (def == nill) {def = 0}
+		        split(list,a,/[,;]/);
+	                if (a[1] == "-" || a[1] != a[1]+0) {a[1] = def}
+		        minv = a[1];
+		        for (i in a) {
+		                if (a[1] == "-" || a[i] != a[i] + 0) {a[i] = def}
+		                if (a[i] < minv) {minv = a[i]}
+		        }
+		        return minv
+		}
+	}
+}
+
+proc tsv_select_lmaxd {} {
+	upvar awkfunctions awkfunctions
+	lappend awkfunctions {
+		function lmaxd(list,def) {
+			if (def == nill) {def = 0}
 		        split(list,a,/[,;]/);
 	                if (a[1] == "-" || a[1] != a[1]+0) {a[1] = def}
 		        maxv = a[1];
@@ -365,6 +399,12 @@ proc tsv_select_expandcode {header code awkfunctionsVar} {
 				}
 				lmax {
 					tsv_select_lmax
+				}
+				lmind {
+					tsv_select_lmind
+				}
+				lmaxd {
+					tsv_select_lmaxd
 				}
 				min {
 					set num [regexp -all , $args]
