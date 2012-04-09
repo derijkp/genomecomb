@@ -5,7 +5,7 @@ TOOLS= tools.c tools.h debug.h
 all: ../bin/map2besthit ../bin/distr2chr ../bin/distrsam ../bin/map2sv ../bin/addcols ../bin/reg_subtract ../bin/reg_join ../bin/covered ../bin/getregions ../bin/reg_annot ../bin/var_annot ../bin/groupby ../bin/multireg ../bin/bcol_indexfile
 
 clean:
-	rm ../bin/*
+	rm -f ../bin/*
 
 ../bin/map2besthit: map2besthit.c $(TOOLS)
 	gcc map2besthit.c tools.c $(CFLAGS) -o ../bin/map2besthit
