@@ -29,6 +29,7 @@ proc cg_makesequenom {args} {
 	set freql 0
 	set freqN 0.2
 	set delsize 5
+	set repeats s
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -40,6 +41,9 @@ proc cg_makesequenom {args} {
 			}
 			-d - --delsize {
 				set delsize $value
+			}
+			-r - --repeatmasker {
+				set repeats $value
 			}
 			-- break
 			default {
@@ -88,35 +92,7 @@ proc cg_makesequenom {args} {
 		if {[string toupper $ref] ne [string toupper $test]} {
 			error "ref in vars ($ref) different from ref in genome ($test) for:\n$sub"
 		}
-		# repeats are already masked
-		# mask snps
-		set list {}
-		foreach snpposs $dbsnpposs dbsnp $dbsnpfiles {
-			set temp [split [exec tabix $dbsnp chr$chr:$estart-$eend] \n]
-			lappend list {*}[list_subindex $temp $snpposs]
-		}
-		set list [lsort -dict -decreasing $list]
-		list_foreach {c s e type freq} $list {
-			if {$e <= $estart || $s > $eend} continue
-			if {$freq eq ""} {set freq 0}
-			if {$freq <= $freql} continue
-			set start [expr {$s-$estart}]
-			if {$start < 0} {set start 0}
-			if {$type eq "ins"} {
-				set end $start
-			} else {
-				set end [expr {$e-$estart-1}]
-				if {$end < $start} {set end $start}
-			}
-			if {$type eq "del" && ($delsize != -1) && ([expr {$end-$start}] > $delsize)} continue
-			set base [string range $seq $start $end]
-			if {$freq > $freqN} {
-				regsub -all . $base N base
-			} else {
-				set base [string tolower $base]
-			}
-			set seq [string_replace $seq $start $end $base]
-		}
+		set seq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
 		if {$ref eq ""} {set ref -}
 		if {$alt eq ""} {set alt -}
 		set list [list $ref {*}[split $alt ,]]

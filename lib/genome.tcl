@@ -141,10 +141,67 @@ proc genome_get {f chr start end} {
 		set temp [dict get $fastaindex $chr]
 	}
 	foreach {gstart glen} $temp break
-	if {$end >= $glen} {error "trying to get sequence betond end of chromosome ($end >= $glen)"}
+	if {$end >= $glen} {error "trying to get sequence beyond end of chromosome ($end >= $glen)"}
 	set pos [expr {$gstart+$start}]
 	seek $f $pos
 	read $f [expr {$end-$start}]
+}
+
+proc genome_mask {dbdir seq chr estart eend {freql 0} {freqN 0.2} {delsize 5} {repeats s}} {
+	global dbsnpdata
+	# init dbsnpdata
+	if {![info exists dbsnpdata($dbdir)]} {
+		set dbsnpfiles [gzfiles $dbdir/var_*snp*.tsv.gz]
+		set dbsnpposs {}
+		foreach dbsnp $dbsnpfiles {
+			set dbsnpheader [cg select -h $dbsnp]
+			set temp [tsv_basicfields $dbsnpheader 4]
+			lappend temp [lsearch $dbsnpheader freq]
+			lappend dbsnpposs $temp
+		}
+		set dbsnpdata($dbdir) [dict create dbsnpfiles $dbsnpfiles dbsnpposs $dbsnpposs]
+	} else {
+		set dbsnpfiles [dict get $dbsnpdata($dbdir) dbsnpfiles]
+		set dbsnpposs [dict get $dbsnpdata($dbdir) dbsnpposs]
+	}
+	# repeats are already masked, change lowercase to N if hardmasking is required
+	if {$repeats eq "0"} {
+		set seq [string toupper $seq]
+	} elseif {$repeats eq "N"} {
+		regsub -all {[a-z]} $seq N seq
+	}
+	# mask snps
+	set list {}
+	foreach snpposs $dbsnpposs dbsnp $dbsnpfiles {
+		set temp [split [exec tabix $dbsnp chr$chr:$estart-$eend] \n]
+		lappend list {*}[list_subindex $temp $snpposs]
+	}
+	set list [lsort -dict -decreasing $list]
+	list_foreach {c s e type ffreq} $list {
+		if {$e <= $estart || $s > $eend} continue
+		set freq 0
+		foreach el [split $ffreq ,] {
+			if {[isdouble $el] && $el > $freq} {set freq $el}
+		}
+		if {$freq <= $freql} continue
+		set start [expr {$s-$estart}]
+		if {$start < 0} {set start 0}
+		if {$type eq "ins"} {
+			set end $start
+		} else {
+			set end [expr {$e-$estart-1}]
+			if {$end < $start} {set end $start}
+		}
+		if {$type eq "del" && ($delsize != -1) && ([expr {$end-$start}] > $delsize)} continue
+		set base [string range $seq $start $end]
+		if {$freq > $freqN} {
+			regsub -all . $base N base
+		} else {
+			set base [string tolower $base]
+		}
+		set seq [string_replace $seq $start $end $base]
+	}
+	return $seq
 }
 
 proc cg_make_genomecindex {ifasfile} {

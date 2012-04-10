@@ -68,14 +68,6 @@ proc cg_genome_seq {args} {
 	} else {
 		set idpos -1
 	}
-	set dbsnpfiles [gzfiles $dbdir/var_*snp*.tsv.gz]
-	set dbsnpposs {}
-	foreach dbsnp $dbsnpfiles {
-		set dbsnpheader [cg select -h $dbsnp]
-		set temp [tsv_basicfields $dbsnpheader 4]
-		lappend temp [lsearch $dbsnpheader freq]
-		lappend dbsnpposs $temp
-	}
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
@@ -85,41 +77,7 @@ proc cg_genome_seq {args} {
 		regsub ^chr $chr {} chr
 		set name [join [list_sub $sub {0 1 2}] -]
 		set seq [genome_get $fg $chr [expr {$estart}] [expr {$eend}]]
-
-		# repeats are already masked, change lowercase to N if hardmasking is required
-		if {$repeats eq "0"} {
-			set seq [string toupper $seq]
-		} elseif {$repeats eq "N"} {
-			regsub -all {[a-z]} $seq N seq
-		}
-		# mask snps
-		set list {}
-		foreach snpposs $dbsnpposs dbsnp $dbsnpfiles {
-			set temp [split [exec tabix $dbsnp chr$chr:$estart-$eend] \n]
-			lappend list {*}[list_subindex $temp $snpposs]
-		}
-		set list [lsort -dict -decreasing $list]
-		list_foreach {c s e type freq} $list {
-			if {$e <= $estart || $s > $eend} continue
-			if {$freq eq ""} {set freq 0}
-			if {$freq <= $freql} continue
-			set start [expr {$s-$estart}]
-			if {$start < 0} {set start 0}
-			if {$type eq "ins"} {
-				set end $start
-			} else {
-				set end [expr {$e-$estart-1}]
-				if {$end < $start} {set end $start}
-			}
-			if {$type eq "del" && ($delsize != -1) && ([expr {$end-$start}] > $delsize)} continue
-			set base [string range $seq $start $end]
-			if {$freq > $freqN} {
-				regsub -all . $base N base
-			} else {
-				set base [string tolower $base]
-			}
-			set seq [string_replace $seq $start $end $base]
-		}
+		set seq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
 		if {$idpos != -1} {
 			set name "[lindex $line $idpos] $name"
 		}
