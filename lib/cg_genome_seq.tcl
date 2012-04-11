@@ -22,6 +22,7 @@ proc cg_genome_seq {args} {
 	set freqN 0.2
 	set delsize 5
 	set repeats s
+	set gc -1
 	set id {}
 	set pos 0
 	foreach {key value} $args {
@@ -40,6 +41,9 @@ proc cg_genome_seq {args} {
 			}
 			-i - --id {
 				set id $value
+			}
+			-g - --gc {
+				set gc $value
 			}
 			-- break
 			default {
@@ -78,8 +82,15 @@ proc cg_genome_seq {args} {
 		set name [join [list_sub $sub {0 1 2}] -]
 		set seq [genome_get $fg $chr [expr {$estart}] [expr {$eend}]]
 		set seq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
+		
 		if {$idpos != -1} {
 			set name "[lindex $line $idpos] $name"
+			if {$gc == 0} {
+				append name " GC:[format %.1f [seq_gc $seq]]"
+			} elseif {$gc != -1} {
+				set maxgc [lmath_max [seq_gc $seq $gc]]
+				append name " GC:[format %.1f [seq_gc $seq]] maxGC($gc):[format %.1f $maxgc]"
+			}
 		}
 		puts \>$name
 		puts $seq
