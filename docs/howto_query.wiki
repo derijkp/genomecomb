@@ -6,13 +6,28 @@ To be able to demonstrate selected queries, we have made our annotations of the 
 
 == Select lines based on specific properties ==
 
-Write all variant positions where the coverage of Complete Genomics is higher or equal to 20 to the file "plus20.sft"
+Select exome (very broad): Select all exonic variants, even if only predicited (genscan and augustusAbinitio).
+genesrc_impact will contain CDS ot UTR in the impact field if exonic.
+{{{
+cg select -q '
+    $refGene_impact ~/CDS|UTR/ || $knownGene_impact ~/CDS|UTR/ || $ensGene_impact ~/CDS|UTR/
+    || $acembly_impact ~/CDS|UTR/ || $genscan_impact ~/CDS|UTR/ || $augustusAbinitio_impact ~ /CDS|UTR/
+' annotNA19240_chrom22.tsv.gz > annotNA19240_chrom22_exome.tsv
+}}}
+
+Same result, but shorter and more generic query using the **count** function
+{{{
+cg select -q 'count($*_impact, ~/CDS|UTR/) > 0' annotNA19240_chrom22.tsv.gz > annotNA19240_chrom22_exome.tsv
+}}}
+
+Write all insert variant positions where the coverage of Complete Genomics is higher or equal to 20 to the file "plus20.sft"
 {{{
 cg select -q ' $type=="ins" && $coverage-cgNA19240 >= 20 " \
 	NA19240_chrom22.tsv.gz > plus20.sft
 }}}
 
-List the genomic positions (chromosome, begin, end) of all missense SNPs in NA19240 chromosome 22
+List the genomic positions (chromosome, begin, end) of all missense SNPs (according to complete genomics 
+annotation) in NA19240 chromosome 22
 {{{
 cg select -q ' $type=="snp" && $impact == "MISSENSE" '' \
 	-f 'chromosome begin end' NA19240_chrom22.tsv.gz
@@ -27,7 +42,6 @@ Show for each of the different impact types (e.g. missense snp) how many variant
 {{{
 cg select -f impact NA19240_chrom22.tsv.gz | sort | uniq -c > refgenetypes.tsv
 }}}
-
 
 Extracts a specific region from the file
 {{{
