@@ -118,6 +118,7 @@ puts "$object redraw $args"
 	set ppos -1
 	set pchr {}
 	list_foreach {chr pos type count} $list {
+		regsub ^chr $chr {} chr
 		if {$chr ne $pchr || $pos != $ppos} {
 			set start $st($chr)
 			set pcount 0
