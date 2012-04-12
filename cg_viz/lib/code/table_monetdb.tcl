@@ -20,18 +20,19 @@ proc _table_monetdb_get {object row col args} {
 		}
 		set sortfields {}
 		set inverse 0
-		set qfields rowid
-		set limit 10
-		set offset [expr {$row-1}]
-		set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields $sortfields $inverse $offset $limit]
-		set ids [split [$object sql $sql] \n]
-		set c [split [$object sql ""] \n]
 		set qfields $tdata(fields)
-		set limit 10
+		set limit 50
 		set offset [expr {$row-1}]
-		set qids "\"rowid\" in ([join $ids ,])"
-		set sql [monetdb_makesql $tdata(table) $tdata(tfields) $qids qfields $sortfields 0 {} {}]
-		set c [split [$object sql $sql] \n]
+		set end [expr {$row+$limit}]
+		if {$tdata(query) eq ""} {
+			set query [subst {"rowid" between $offset and $end}]
+			set sql [monetdb_makesql $tdata(table) $tdata(tfields) $query qfields $sortfields]
+			set c [split [$object sql $sql] \n]
+		} else {
+			set query [subst {"query_rowid" between $offset and $end}]
+			set sql [monetdb_makesql query_$tdata(table) $tdata(tfields) $query qfields $sortfields]
+			set c [split [$object sql $sql] \n]
+		}
 		set r $row
 		foreach line $c {
 			set cache($r) [split $line \t]
@@ -59,7 +60,8 @@ table_monetdb method query {args} {
 	}
 	unset -nocomplain cache
 	set tdata(numcache) 0
-	set qfields $tdata(fields)
+	set qfields [list {query_rowid=row_number() over (order by rowid)}]
+	lappend qfields {*}$tdata(fields)
 	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields {} 0 {} {}]
 	set sql "create view query_$tdata(table) as $sql"
 	catch {$object sql [subst {drop view query_$tdata(table)}]}
@@ -93,14 +95,31 @@ table_monetdb method info {key} {
 	return $tdata($key)
 }
 
+table_monetdb method tfields {} {
+	private $object tdata
+	return $tdata(tfields)
+}
+
 table_monetdb method fields {args} {
 	private $object tdata
 	if {[llength $args]} {
 		set tdata(fields) [lindex $args 0]
+		if {[inlist {* {}} $tdata(fields)]}	{
+			set tdata(qfields) $tdata(tfields)
+			set tdata(fieldscor) {}
+		} else {
+			set tdata(qfields) [tsv_select_expandfields $tdata(tfields) $tdata(fields) tdata(qcode) temp]
+			if {$tdata(qfields) eq $tdata(tfields)} {
+				set tdata(fieldscor) {}
+			} else {
+				set tdata(fieldscor) [list_cor $tdata(tfields) $tdata(qfields)]
+			}
+		}
+		$object reset
+		Extral::event generate querychanged $object
+	} else {
+		return $tdata(fields)
 	}
-	set tdata(qfields) [mselect_expandfields $tdata(tfields) $tdata(fields) tdata(qcode)]
-	$object reset
-	Extral::event generate querychanged $object
 }
 
 table_monetdb method link {tktable} {
