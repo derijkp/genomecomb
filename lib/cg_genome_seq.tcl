@@ -45,6 +45,9 @@ proc cg_genome_seq {args} {
 			-g - --gc {
 				set gc $value
 			}
+			-c - --concat {
+				set concat $value
+			}
 			-- break
 			default {
 				break
@@ -72,6 +75,10 @@ proc cg_genome_seq {args} {
 	} else {
 		set idpos -1
 	}
+	if {[info exists concat]} {
+		puts "\>$regionfile concatenated"
+		set firstline 1
+	}
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
@@ -79,21 +86,26 @@ proc cg_genome_seq {args} {
 		putslog $sub
 		foreach {chr estart eend} $sub break
 		regsub ^chr $chr {} chr
-		set name [join [list_sub $sub {0 1 2}] -]
 		set seq [genome_get $fg $chr [expr {$estart}] [expr {$eend}]]
 		set seq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
 		
-		if {$idpos != -1} {
-			set name "[lindex $line $idpos] $name"
-			if {$gc == 0} {
-				append name " GC:[format %.1f [seq_gc $seq]]"
-			} elseif {$gc != -1} {
-				set maxgc [lmath_max [seq_gc $seq $gc]]
-				append name " GC:[format %.1f [seq_gc $seq]] maxGC($gc):[format %.1f $maxgc]"
+		if {![info exists concat]} {
+			set name [join [list_sub $sub {0 1 2}] -]
+			if {$idpos != -1} {
+				set name "[lindex $line $idpos] $name"
+				if {$gc == 0} {
+					append name " GC:[format %.1f [seq_gc $seq]]"
+				} elseif {$gc != -1} {
+					set maxgc [lmath_max [seq_gc $seq $gc]]
+					append name " GC:[format %.1f [seq_gc $seq]] maxGC($gc):[format %.1f $maxgc]"
+				}
 			}
+			puts \>$name
+		} elseif {!$firstline} {
+			puts $concat
 		}
-		puts \>$name
 		puts $seq
+		set firstline 0
 	}
 	close $f; close $fg
 }

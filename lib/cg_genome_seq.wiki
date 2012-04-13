@@ -23,6 +23,7 @@ hardmask repeats, and soft or hardmask known (dbsnp) variants based on frequency
 ; **-r repeatmask**: how to mask repeatmasker repeats: "s" means softmask (lowercase), use "N" to mask using Ns, and 0 for no repeatmasking (default is "s")
 ; **-i idcolumn**: The ids for the fasta file will be taken from the given column (location will be added after a space)
 ; **-g windowsize**: add gc content on id line. if windowsize 0 only total gc content will be added. For windowsize > 0, the max gc content for the given windowsize will also be added (default = -1 for no gc content)
+; **-c concatseq**: using this option, all regions will be concatenated into one sequence with concatseq between them. To just concatenate the sequences, use -c ''
 
 == Category ==
 Validation
