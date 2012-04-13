@@ -386,7 +386,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 proc cg_multicompar {args} {
 	if {([llength $args] < 1)} {
 		puts "Wrong number of arguments"
-		errorformat svmulticompar
+		errorformat multicompar
 		exit 1
 	}
 	set regonly 0
