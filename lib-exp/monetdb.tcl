@@ -46,7 +46,9 @@ proc cg_monetdb {args} {
 			foreach {dbfarm port} $args break
 			# create
 			exec monetdbd create $dbfarm
-			exec monetdbd set port=$port $dbfarm
+			if {[llength $args] > 1} {
+				exec monetdbd set port=$port $dbfarm
+			}
 		}
 		startdbfarm {
 			foreach {dbfarm} $args break
@@ -63,13 +65,24 @@ proc cg_monetdb {args} {
 		}
 		stopdbfarm {
 			foreach {dbfarm} $args break
-			exec monetdbd start $dbfarm
+			exec monetdbd stop $dbfarm
 		}
 		createdb {
 			foreach {dbfarm database} $args break
-			set controlport [dict get [monetdb_getinfo $dbfarm] controlport]
+			set controlport [dict get [monetdb_getinfo $dbfarm] port]
 			exec monetdb -p$controlport create $database
 			exec monetdb -p$controlport start $database
+#			exec mclient -d $database -s {
+#				-- case sensitive
+#				create function pcre_match(s string, pattern string)
+#				  returns BOOLEAN
+#				  external name pcre.match;
+#				
+#				-- case insensitive
+#				create function pcre_imatch(s string, pattern string)
+#				  returns BOOLEAN
+#				  external name pcre.imatch;
+#			}
 			exec monetdb -p$controlport release $database
 		}
 		setuser {
