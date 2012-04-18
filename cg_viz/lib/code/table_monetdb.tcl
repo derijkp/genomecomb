@@ -9,6 +9,7 @@ table_monetdb method init args {
 }
 
 proc _table_monetdb_get {object row col args} {
+# putsvars object row col args
 	private $object tdata cache
 	if {$row == 0} {
 		return [lindex [get tdata(qfields) {}] $col]
@@ -29,8 +30,7 @@ proc _table_monetdb_get {object row col args} {
 			set sql [monetdb_makesql $tdata(table) $tdata(tfields) $query qfields $sortfields]
 			set c [split [$object sql $sql] \n]
 		} else {
-			set query [subst {"query_rowid" between $offset and $end}]
-			set sql [monetdb_makesql query_$tdata(table) $tdata(tfields) $query qfields $sortfields]
+			set sql [subst {select * from "query" where "query_rowid" between $offset and $end}]
 			set c [split [$object sql $sql] \n]
 		}
 		set r $row
@@ -53,24 +53,40 @@ table_monetdb method table {args} {
 	return $tdata(table)	
 }
 
+#table_monetdb method query {args} {
+#	private $object tdata
+#	if {[llength $args]} {
+#		set tdata(query) [lindex $args 0]
+#	}
+#	unset -nocomplain cache
+#	set tdata(numcache) 0
+#	catch {$object sql [subst {drop view query}]}
+#	set qfields $tdata(fields)
+#	lappend qfields {query_rowid=row_number() over (order by rowid)}
+#	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields {} 0 {} {}]
+#	set sql "create view query as $sql"
+#	$object sql $sql
+#	set tdata(len) [$object sql [subst {select count(*) from "query"}]]
+#	$object reset
+#	Extral::event generate querychanged $object
+#}
+
 table_monetdb method query {args} {
+putsvars args
 	private $object tdata
 	if {[llength $args]} {
 		set tdata(query) [lindex $args 0]
 	}
 	unset -nocomplain cache
 	set tdata(numcache) 0
+	catch {$object sql [subst {drop view query}]}
 	set qfields [list {query_rowid=row_number() over (order by rowid)}]
 	lappend qfields {*}$tdata(fields)
 	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields {} 0 {} {}]
-	set sql "create view query_$tdata(table) as $sql"
-	catch {$object sql [subst {drop view query_$tdata(table)}]}
+	catch {$object sql {drop view "query"}}
+	set sql "create view \"query\" as $sql"
 	$object sql $sql
-	set tdata(len) [$object sql [subst {select count(*) from "query_$tdata(table)"}]]
-#	set qfields rowid
-#	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields {} 0 {} {}]
-#	regsub {\"rowid\"} $sql {count(*)} sql
-#	set tdata(len) [$object sql $sql]
+	set tdata(len) [$object sql [subst {select count(*) from "query"}]]
 	$object reset
 	Extral::event generate querychanged $object
 }
@@ -98,6 +114,11 @@ table_monetdb method info {key} {
 table_monetdb method tfields {} {
 	private $object tdata
 	return $tdata(tfields)
+}
+
+table_monetdb method qfields {} {
+	private $object tdata
+	return $tdata(qfields)
 }
 
 table_monetdb method fields {args} {
@@ -137,10 +158,13 @@ table_monetdb method open {dbfarm database table} {
 	setprivate $object table $table
 	set tdata(database) $database
 	set tdata(table) $table
+	# table fields (fields in original table)
 	set tdata(tfields) [cg_monetdb fields $database $table]
-	set tdata(tlen) [exec mclient -d $database -f tab -s [subst {select count(*) from \"$table\"}]]
+	# fields (requested fields for query, may include calculated fields in the form field=...)
 	set tdata(fields) $tdata(tfields)
+	# query fields (requested fields for query)
 	set tdata(qfields) $tdata(tfields)
+	set tdata(tlen) [exec mclient -d $database -f tab -s [subst {select count(*) from \"$table\"}]]
 	set tdata(len) $tdata(tlen)
 	set tdata(query) {}
 	$object reset
