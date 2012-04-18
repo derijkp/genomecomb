@@ -94,8 +94,15 @@ puts "$object redraw $args"
 	set ticks 50
 	set src $options(src)
 	#
-	set max [lmath_max [$src subsql {select count(*) from "temp" group by "chromosome","pos"} [subst {pos="begin"/$scale}]]]
-	set list [lsort -dict [tsv_split [$src subsql {select "chromosome","pos","type",count(*) from "temp" group by "chromosome","pos","type"} [subst {pos="begin"/$scale}]]]]
+	set qfields [$src qfields]
+	set chromosome [list_common $qfields {chromosome chrom}]
+	if {$chromosome eq ""} {return}
+	set begin [list_common $qfields {begin start pos}]
+	if {$begin eq ""} {return}
+	set type [list_common $qfields {type}]
+	if {$type eq ""} {return}
+	set max [lmath_max [$src subsql [subst {select count(*) from "temp" group by "$chromosome","pos"}] [subst {pos="$begin"/$scale}]]]
+	set list [lsort -dict [tsv_split [$src subsql [subst {select "$chromosome","pos","$type",count(*) from "temp" group by "chromosome","pos","type"}] [subst {pos="$begin"/$scale}]]]]
 	# $canvas delete all
 	$canvas delete $tag
 	
