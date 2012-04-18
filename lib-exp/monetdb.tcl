@@ -158,11 +158,14 @@ proc cg_tomonetdb {args} {
 	set sql ""
 	foreach field $header {
 		set type [get ftype($field) clob]
-		regsub -- {\.} $field {x} field
-		regsub -- {_} $field {x} field
-		regsub -- {-} $field {_} field
-		regsub -- {\+} $field {x} field
-		lappend sql "\"$field\" $type"
+		set poss [regexp -all -indices -inline {[^a-zA-Z0-9-]+} $field]
+		set newfield $field
+		list_foreach {s e} [lreverse $poss] {
+			incr e
+			set newfield [string replace $newfield $s $e [string toupper [string index $newfield $e]]]
+		}
+		regsub -all -- - $newfield _ newfield
+		lappend sql "\"$newfield\" $type"
 	}
 	set sql "create table \"$table\" ([join $sql ,\n]);\n"
 	exec mclient -d$db -s $sql
@@ -187,5 +190,4 @@ set db test
 set table compar
 set tsvfile /media/wd2t/complgen/projects/dlb1/dlb_compar.tsv
 set tsvfile /complgen/projects/amg_md200/compar/annotamg_md200_compar.tsv
-
 }
