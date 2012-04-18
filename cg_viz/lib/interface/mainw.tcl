@@ -269,7 +269,7 @@ mainw method fields {args} {
 	set tb $object.tb
 	if {![llength $args]} {
 		set tfields [$tb tfields]
-		set fields [$tb info qfields]
+		set fields [$tb info fields]
 		Classy::Dialog $object.fields -title "Select fields"
 		set w [$object.fields option listbox "Fields" [privatevar $object sfields] [privatevar $object tfields] -selectmode extended]
 		set w [lindex $w 0]
