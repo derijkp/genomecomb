@@ -177,10 +177,14 @@ puts "redrawquery $args"
 #}
 
 mainw method opendb {args} {
-	foreach {dbfarm database table dbdir} $args break
+	if {[llength $args] < 3} {
+		puts stderr "format is cg viz database table refdir"
+		exit 1
+	}
+	foreach {database table dbdir dbfarm} $args break
 	catch {$object.tb destroy}
 	table_monetdb new $object.tb
-	$object.tb open $dbfarm $database $table
+	$object.tb open $database $table $dbfarm
 	set tables [cg_monetdb tables $database]
 	if {[lsearch $tables sel_$table] == -1} {
 		cg_monetdb sql $database [subst {create table "sel_$table" (id integer)}]

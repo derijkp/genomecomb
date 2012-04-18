@@ -7,6 +7,6 @@ focus .mainw
 if {[file exists [lindex $args 0]]} {
 	.mainw opentsv {*}$args
 } else {
-	# .mainw opendb {*}$args
+	.mainw opendb {*}$args
 }
 }

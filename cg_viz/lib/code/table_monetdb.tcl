@@ -80,8 +80,8 @@ putsvars args
 	unset -nocomplain cache
 	set tdata(numcache) 0
 	catch {$object sql [subst {drop view query}]}
-	set qfields [list {query_rowid=row_number() over (order by rowid)}]
-	lappend qfields {*}$tdata(fields)
+	set qfields $tdata(fields)
+	lappend qfields {query_rowid=row_number() over (order by rowid)}
 	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields {} 0 {} {}]
 	catch {$object sql {drop view "query"}}
 	set sql "create view \"query\" as $sql"
@@ -150,7 +150,7 @@ table_monetdb method link {tktable} {
 	[winfo parent $tdata(tktable)].buttons.query configure -textvariable [privatevar $object tdata(query)]
 }
 
-table_monetdb method open {dbfarm database table} {
+table_monetdb method open {database table dbfarm} {
 	private $object tdata cache
 	unset -nocomplain cache
 	set tdata(numcache) 0
