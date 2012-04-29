@@ -15,7 +15,6 @@ if 0 {
 	set regionfile data/reg_genome_seq.tsv
 }
 
-
 proc cg_genome_seq {args} {
 	set extraseq 124
 	set freql 0
@@ -25,6 +24,9 @@ proc cg_genome_seq {args} {
 	set gc -1
 	set id {}
 	set pos 0
+	set makemap 0
+	set econcatlen 0
+	set concatlen 0
 	foreach {key value} $args {
 		switch -- $key {
 			-f - --freq {
@@ -47,6 +49,15 @@ proc cg_genome_seq {args} {
 			}
 			-c - --concat {
 				set concat $value
+				set concatlen [string length $concat]
+			}
+			-e - --econcat {
+				set econcat $value
+				set econcatlen [string length $econcat]
+			}
+			-m - --mapfile {
+				set mapfile $value
+				set makemap 1
 			}
 			-- break
 			default {
@@ -75,9 +86,19 @@ proc cg_genome_seq {args} {
 	} else {
 		set idpos -1
 	}
-	if {[info exists concat]} {
+	if {$concatlen} {
 		puts "\>$regionfile concatenated"
 		set firstline 1
+	}
+	if {$makemap} {
+		set fm [open $mapfile w]
+		puts $fm [join {chromosome begin end destchromosome destbegin destend} \t]
+	}
+	set name concat
+	set fstart 0
+	if {$concatlen && $econcatlen} {
+		puts -nonewline $econcat
+		incr fstart $econcatlen
 	}
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
@@ -89,7 +110,7 @@ proc cg_genome_seq {args} {
 		set seq [genome_get $fg $chr [expr {$estart}] [expr {$eend}]]
 		set seq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
 		
-		if {![info exists concat]} {
+		if {!$concatlen} {
 			set name [join [list_sub $sub {0 1 2}] -]
 			if {$idpos != -1} {
 				set name "[lindex $line $idpos] $name"
@@ -102,10 +123,23 @@ proc cg_genome_seq {args} {
 			}
 			puts \>$name
 		} elseif {!$firstline} {
-			puts $concat
+			puts -nonewline $concat
+			incr fstart $concatlen
 		}
-		puts $seq
+		puts -nonewline $seq
+		if {$makemap} {
+			puts $fm $name\t$fstart\t[expr {$fstart+[string length $seq]}]\t[join $sub \t]
+		}
+		incr fstart [string length $seq]
 		set firstline 0
+	}
+	if {$concatlen && $econcatlen} {
+		puts -nonewline $econcat
+		incr fstart $econcatlen
+	}
+	puts ""
+	if {$makemap} {
+		close $fm
 	}
 	close $f; close $fg
 }

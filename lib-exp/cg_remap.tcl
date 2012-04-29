@@ -4,13 +4,20 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+if 0 {
+	set genome /complgen/refseq/hg19/genome_hg19
+	set file /projects/vegdep_data/seq_vegdep.fas
+	set resultfile /projects/vegdep/reg_vegdep.map
+}
+
 proc make_remap {file genome resultfile} {
-	exec lastal $genome > depvegf_ali.maf
+	set tempfile [tempfile]
+	exec lastal $genome $file > $tempfile
 	
 	catch {close $o}
 	set o [open $resultfile.temp w]
 	puts $o [join {name begin end destname destbegin destend} \t]
-	set f [open depvegf_ali.maf]
+	set f [open $tempfile]
 	while {![eof $f]} {
 		set line [gets $f]
 		if {[string index $line 0] ne "#"} break
@@ -66,13 +73,17 @@ proc cg_remap {file remapfile resultfile} {
 	foreach {chrpos bpos epos} $poss break
 	set fr [gzopen $remapfile]
 	set rheader [tsv_open $fr]
-	if {$rheader ne "name begin end destname destbegin destend"} {
-		error "remap file $remapfile does not have the required header (name begin end destname destbegin destend)"
+	if {
+		$rheader ne "name begin end destname destbegin destend"
+		&& $rheader ne "chromosome begin end destchromosome destbegin destend"
+	} {
+		error "remap file $remapfile does not have the required header (name begin end destname destbegin destend) or (chromosome begin end destchromosome destbegin destend)"
 	}
 	set rline [split [gets $fr] \t]
 	foreach {rchr rbegin rend rdestchr rdestbegin rdestend} $rline break
 	set rchr [chr2num $rchr]
 	set o [open $resultfile w]
+	set u [open $resultfile.unmapped w]
 	puts $o [join $header \t]\torichr\toribegin\toriend
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
@@ -82,20 +93,25 @@ proc cg_remap {file remapfile resultfile} {
 		set nchr [chr2num $rchr]
 		while 1 {
 			if {$rchr > $nchr} break
-			if {($rchr == $nchr) && ($begin >= $rbegin) && !($begin >= $rend)} break
+			# if {($rchr == $nchr) && ($begin >= $rbegin) && !($begin >= $rend)} break
+			if {($nchr < $rchr) || ($begin < $rend)} break
+			if {[eof $fr]} break
 			set rline [split [gets $fr] \t]
 			foreach {rchr rbegin rend rdestchr rdestbegin rdestend} $rline break
 			set rchr [chr2num $rchr]
 		}
 		if {$nchr != $rchr || $begin < $rbegin || $end > $rend} {
-			error "cannot remap $line: outside of regions in remap file"
+			puts stderr "cannot remap $line: outside of regions in remap file"
+			puts $u [join $line \t]
+		} else {
+			lset line $chrpos $rdestchr
+			set shift [expr {$rdestbegin-$rbegin}]
+			lset line $bpos [expr {$begin + $shift}]
+			lset line $epos [expr {$end + $shift}]
+			lappend line $chr $begin $end
+			puts $o [join $line \t]
 		}
-		lset line $chrpos $rdestchr
-		set shift [expr {$rdestbegin-$rbegin}]
-		lset line $bpos [expr {$begin + $shift}]
-		lset line $epos [expr {$end + $shift}]
-		lappend line $chr $begin $end
-		puts $o [join $line \t]
 	}
 	close $o
+	close $u
 }
