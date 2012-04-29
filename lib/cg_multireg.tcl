@@ -8,21 +8,6 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-if 0 {
-	package require Tclx
-	signal -restart error SIGINT
-	lappend auto_path /home/peter/dev/completegenomics/lib
-	package require Extral
-	cd /complgen/multireg
-	set compar_file multireg.tsv
-	set file ../GS102/sreg-GS102.tsv
-	set file ../GS103/sreg-GS103.tsv
-
-	~/dev/completegenomics/lib/cg_multireg.tcl multireg.tsv ../GS102/sreg-GS102.tsv
-	~/dev/completegenomics/lib/cg_multireg.tcl testmultireg.tsv sreg-test.tsv
-}
-
-
 proc multireg_next1 {f1 poss1} {
 	set cur1 {}
 	while {![eof $f1]} {

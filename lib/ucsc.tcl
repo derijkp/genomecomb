@@ -185,22 +185,3 @@ proc cg_ucscwiggle2reg {args} {
 	}
 	ucscwiggle2reg $file $resultfile $precision $formula $addnum
 }
-
-if 0 {
-# ------------------------------------------------------------------------------
-lappend auto_path ~/dev/completegenomics/lib
-package require Extral
-package require Tclx
-signal -restart error SIGINT
-
-cd /data/db
-set ucsc_file _data_db_ucsc-simple_repeats.tsv
-
-set type r
-set ucsc_file /complgen/refseq/tmp/hg18/ucsc_hg18_wgEncodeCaltechRnaSeqRawSignalRep1Gm12878CellLongpolyaBb12x75.tsv
-set ucsc_wib /complgen/refseq/tmp/hg18/wgEncodeCaltechRnaSeqRawSignalRep1Gm12878CellLongpolyaBb12x75.wib
-set resultfile /complgen/refseq/tmp/hg18/reg_hg18_wgEncodeCaltechRnaSeqRawSignalRep1Gm12878CellLongpolyaBb12x75.tsv
-
-
-set ucsc_file /complgen/refseq/tmp/hg18/ucsc_hg18_wgEncodeBroadChipSeqSignalK562H3k4me1.tsv
-}

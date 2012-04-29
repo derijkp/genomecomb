@@ -12,7 +12,7 @@ set file CGI-DATA-sample/GS00028-DNA-C01/MAP/GS000005323-MAP-sample/mapping-1000
 set rfile CGI-DATA-sample/GS00028-DNA-C01/MAP/GS000005323-MAP-sample/reads-100000.tsv
 set resultsdir mappings 
 
-lappend auto_path ~/dev/completegenomics/lib
+lappend auto_path ~/dev/genomecomb/lib
 package require Extral
 
 proc getmategap {libfile} {

@@ -92,13 +92,3 @@ proc cg_liftover {args} {
 	file rename $resultfile.temp4 $resultfile
 	file delete $resultfile.temph $resultfile.temp $resultfile.temp2 $resultfile.temp3
 }
-
-if 0 {
-	cd ~/dev/completegenomics/tests
-	# liftOver -bedPlus=3 -tab data/vars1.sft ~/bin/hg18ToHg19.over.chain temp.sft temp.unmapped
-	set varfile data/vars1.sft
-	set liftoverfile /home/peter/bin/hg18ToHg19.over.chain
-	set resultfile temp.sft
-	set unmappedfile temp.unmapped
-	cg liftover data/vars1.sft /home/peter/bin/hg18ToHg19.over.chain temp.sft temp.unmapped
-}

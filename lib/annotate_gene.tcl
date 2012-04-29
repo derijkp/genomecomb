@@ -921,13 +921,3 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 	file rename -force $annotfile.temp $annotfile
 
 }
-
-if 0 {
-	cd ~/dev/completegenomics/tests
-	set file data/vars_annottest.sft
-	set annotfile vars_annottest.sft.knownGene_annot
-	set dbfile /complgen/refseq/hg18/gene_hg18_knownGene.tsv
-	set outfields name
-	annotategene 
-}
-

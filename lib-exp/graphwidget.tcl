@@ -1035,7 +1035,7 @@ if 0 {
 	package require Tclx
 	signal -restart error SIGINT
 lappend auto_path /home/peter/bin/tcl
-lappend auto_path /home/peter/dev/completegenomics/lib /home/peter/dev/completegenomics/lib-exp
+lappend auto_path /home/peter/dev/genomecomb/lib /home/peter/dev/genomecomb/lib-exp
 cd /complgen/sv
 set object .g
 	package require Tk

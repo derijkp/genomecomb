@@ -4,23 +4,6 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-if 0 {
-
-	package require Tclx
-	signal -restart error SIGINT
-	lappend auto_path /home/peter/dev/completegenomics/lib
-	package require Extral
-	cd /complgen/refseq/hg18
-	set path /complgen/refseq/hg18
-	set build hg18
-	set path /complgen/refseq/hg19
-	set build hg19
-	set pop CEU
-
-cg downloaddb /complgen/refseq/hg18 hg18 1000g
-
-}
-
 proc downloaddb_1000glow {path build} {
 	if {$build ne "hg19"} {
 		error "only build hg19 supported"

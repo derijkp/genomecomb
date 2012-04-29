@@ -184,28 +184,3 @@ proc cg_clusterregions {args} {
 	}
 	clusters
 }
-
-if 0 {
-
-package require Tclx
-signal -restart error SIGINT
-	lappend auto_path /home/peter/dev/completegenomics/lib
-	package require Extral
-cd /complgen/
-	set annotvarfile GS103/annotvar-79-6
-	set annotvarfile GS103/annotvar-GS103.tsv
-	catch {close $f}
-	catch {close $o}
-	set f [open $annotvarfile]
-	set o [open GS103/clusters-GS103.tsv w]
-
-set count 10
-while {![eof $f] && [incr count -1]} {
-	foreach {chr begin end} [get_region $f $poss] break
-	set diff [expr {$begin-$pbegin}]
-	puts $pbegin\t$diff
-	foreach {pchr pbegin pend} [list $chr $begin $end] break
-}
-
-	cg select '$chromosome == 6' < annotvar-GS000000079-ASM.tsv > annotvar-79-6
-}

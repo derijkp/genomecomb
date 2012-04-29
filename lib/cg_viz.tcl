@@ -8,27 +8,6 @@ exec tclsh "$0" "$@"
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-if 0 {
-
-lappend auto_path /home/peter/bin/tcl
-lappend auto_path /home/peter/dev/completegenomics/lib
-
-set object .g
-
-graphwidget .g
-pack .g -fill both -expand yes
-
-set file /complgen/sv/chr20.smoothed.100
-set file /complgen/sv/chr1.smoothed.100
-set file /complgen/sv/sv79-20s.sv
-set file /complgen/sv/sv70-20s.sv
-if {[llength [get argv ""]]} {
-	set file [lindex $argv 0]
-}
-.g open $file
-
-}
-
 proc cg_viz {args} {
 	package require Tk
 	uplevel #0 [list set argv $args]

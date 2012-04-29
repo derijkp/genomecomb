@@ -508,31 +508,6 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 	}
 }
 
-if 0 {
-	lappend auto_path ~/dev/completegenomics/lib
-	package require Tclx
-	signal -restart error SIGINT
-	package require Extral
-	cg select -h /complgen/multicompar/compar.tsv
-	cg select -q 'same(GS102,GS103)' -f 'chromosome begin end reference type alleleSeq1-GS102 alleleSeq2-GS102 alleleSeq1-GS103 alleleSeq2-GS103' /complgen/multicompar/compar.tsv | less
-	cg select -q 'count($coverage-GS102,$coverage-GS103,>20) == 2' -f 'chromosome begin end reference type alleleSeq1-GS102 alleleSeq2-GS102 alleleSeq1-GS103 alleleSeq2-GS103' /complgen/multicompar/compar.tsv | less
-
-	set f [open GS102/ASM/var-GS000000078-ASM.tsv]
-	set query "\$begin < 2000"
-	set qfields "chromosome begin end"
-	set sortfields "haplotype"
-	set sortfields "chromosome begin"
-
-cg select -q '' < GS102/ASM/var-GS000000078-ASM.tsv | less
-cg select -f 'haplotype chromosome begin' < GS102/ASM/var-GS000000078-ASM.tsv | less
-cg select -q '$begin < 2000' < GS102/ASM/var-GS000000078-ASM.tsv | less
-
-cg select -q '$begin < 2000' < GS102/ASM/var-GS000000078-ASM.tsv > /tmp/test1
-cg select -q '$begin < 2000' -f 'chromosome begin end' -s 'chromosome begin' < GS102/ASM/var-GS000000078-ASM.tsv > /tmp/test2
-cg select -q '$begin < 2000' -f 'chromosome begin end' -s 'haplotype' < GS102/ASM/var-GS000000078-ASM.tsv > /tmp/test3
-
-}
-
 proc tsv_hcheader {f keepheaderVar headerVar} {
 	upvar $keepheaderVar keepheader
 	upvar $headerVar header
@@ -540,23 +515,6 @@ proc tsv_hcheader {f keepheaderVar headerVar} {
 	set temp [split [string trimright $keepheader] \n]
 	set header [split [string range [list_pop temp] 1 end] \t]
 	set keepheader [join $temp \n]\n
-}
-
-if 0 {
-	lappend auto_path ~/dev/completegenomics/lib
-	package require Tclx
-	signal -restart error SIGINT
-	package require Extral
-	cd /complgen/compar
-
-	set filename /data/db/ucsc_ori/_data_db_ucsc-exapted_repeats.tsv
-	set f [open $filename]
-	set fields {chrom chromStart chromEnd}
-
-	# set f [open /complgen/compar/78vs79_compar-filter-sc.tsv]
-	set f [open /complgen/compar/78vs79_compar_pvt.tsv]
-	set query {compar df sample "|79 78,79" refcons "" ns "" lowscore "" trf "" str "" rp "" sd "" sc "" dbsnp "" loc EXON}
-
 }
 
 proc cg_select {args} {
@@ -670,24 +628,3 @@ if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	set ::base [file tail [info script]]
 	cg_select {*}$argv
 }
-
-if 0 {
-
-	lappend auto_path ~/dev/completegenomics/lib
-	lappend auto_path /complgen/bin/complgen/apps/cg/lib
-	lappend auto_path ~/bin/complgen/apps/cg/lib
-	package require Extral
-	package require Tclx
-	signal -restart error SIGINT
-
-	cd /complgen/1.8/cnvcg
-	set file1 cnvcg-GS102.tsv
-	set file2 cnvcg-GS103.tsv
-	set joinfields1 {chr begin end}
-	set joinfields2 {chr begin end}
-	set postfix1 -GS102
-	set postfix2 -GS103
-	set method overlap
-
-}
-

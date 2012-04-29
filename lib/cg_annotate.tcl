@@ -8,63 +8,6 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-if 0 {
-
-	package require Tclx
-	signal -restart error SIGINT
-	lappend auto_path /home/peter/dev/completegenomics/lib
-	append env(PATH) :/home/peter/dev/completegenomics/bin
-	package require Extral
-
-	cd /complgen/projects/dlb1
-	set file dlb_compar.tsv
-	set resultfile compar.tsv.temp
-	set args {/complgen/refseq/hg18/reg_hg18_cytoBand.tsv /complgen/refseq/hg18/reg_hg18_simpleRepeat.tsv}
-	set db 1000gCEU
-	set dbfile /complgen/refseq/hg18/1000g_hg18_1000gCEU.tsv
-	set db simpleRepeat
-	set db phastCons28P
-	set dbfile /complgen/refseq/hg18/reg_hg18_${db}.tsv
-	set annotfile $file.${db}_annot
-	annotate $file $dbfile $annotfile
-
-	cg annotate dlb_compar.tsv acompar.tsv /complgen/refseq/hg18/1000g_hg18_1000gCEU.tsv
-cg select -q '$type == "snp" && $more5pct != ""' -f 'chromosome begin end type more5pct 1000gCEU' acompar.tsv | less
-cg select -q '$type == "snp" && $more5pct != "" && $1000gCEU < 0.05' -f 'chromosome begin end type more5pct 1000gCEU' acompar.tsv | less
-
-	cg annotate dlb_compar.tsv acompar.tsv /complgen/refseq/hg18/reg_hg18_simpleRepeat.tsv
-cg select -q '$type == "snp" && $trf != "" && $simpleRepeat == ""' -f 'chromosome begin end type trf simpleRepeat' acompar.tsv | less
-
-	cg annotate dlb_compar.tsv acompar.tsv /complgen/refseq/hg18/reg_hg18_chainSelf.tsv
-cg select -q '$type == "snp" && $selfchain != "" && $chainSelf == ""' -f 'chromosome begin end type selfchain chainSelf' acompar.tsv | less
-
-cg select -q '$type == "snp" && $repeat != "" && $rmsk == ""' -f 'chromosome begin end type repeat rmsk' acompar.tsv | less
-
-	cg annotate part.tsv apart.tsv /complgen/refseq/hg18/reg_*phastCons*
-
-	cg annotate dlb_compar.tsv annotdlbcompar.tsv /complgen/refseq/hg18
-
-cd /complgen/projects/dlb1
-set file dlb_compar.tsv
-set resultfile compar.tsv.temp
-set args /complgen/refseq/hg18/reg_hg18_simpleRepeat.tsv
-set dbfile /complgen/refseq/hg18/reg_hg18_simpleRepeat.tsv
-set dbposs {0 1 2}
-set poss {0 1 2}
-set dataposs {4 -1}
-
-export PATH=$PATH:/home/peter/dev/completegenomics/bin
-
-	reg_annot dlb_compar.tsv 0 1 2 /complgen/refseq/hg18/reg_hg18_simpleRepeat.tsv 0 1 2  4 -1 > temp.tsv
-
-cd /complgen/projects/test
-cg annotate test_compar.tsv antest_compar.tsv /complgen/refseq/hg18/var_hg18_snp130.tsv
-
-cg select -f 'chromosome begin end type ref alt snp130_name snp130_freq' antest_compar.tsv
-
-}
-
-
 proc annotate {file dbfile name annotfile near {outfields {name score freq}}} {
 
 putslog [list annotate $file $dbfile $name $annotfile $near $outfields]

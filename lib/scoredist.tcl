@@ -175,32 +175,3 @@ proc cg_scoredist {args} {
 		scoredist $filename $sample1 $sample2
 	}
 }
-
-if 0 {
-
-	lappend auto_path ~/dev/completegenomics/lib
-	package require Extral
-	package require Tclx
-	signal -restart error SIGINT
-	set file /complgen/multicompar/compar.tsv
-	set sample1 GS102
-	set sample2 GS103
-
-	set sample1 rtg102
-	set sample2 rtg103
-	
-	set files [glob /complgen/compar_*/fcompar_*.tsv.gz]
-	foreach file $files {
-		puts $file
-		scoredist $file
-	}
-	
-
-	set file /complgen/compar_GS100_GS102/fcompar_GS100_GS102.tsv.gz
-	set file /complgen/compar_GS100_GS101A01/fcompar_GS100_GS101A01.tsv.gz
-	set file /complgen/compar_GS102_GS103/fcompar_GS102_GS103.tsv.gz
-
-	cg select -q '$compar == "sm" && min($totalScore1-1,$totalScore1-1,$totalScore1-2,$totalScore2-2) == 20' < compar_GS102_GS103/fcompar_GS102_GS103.tsv | wc
-
-
-}

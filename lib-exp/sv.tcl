@@ -1588,7 +1588,7 @@ if 0 {
 
 package require Tclx
 signal -restart error SIGINT
-lappend auto_path ~/dev/completegenomics/lib ~/dev/completegenomics/lib-exp
+lappend auto_path ~/dev/genomecomb/lib ~/dev/genomecomb/lib-exp
 package require Extral
 #cd /complgen/sv
 

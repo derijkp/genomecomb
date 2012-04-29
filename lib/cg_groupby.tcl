@@ -8,15 +8,6 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-if 0 {
-cd ~/dev/completegenomics/tests
-set file table2.tsv
-set fields s1
-
-cg groupby s1 < ~/dev/completegenomics/tests/table2.tsv
-cg select -q '$symbol != ""' /complgen/projects/test/annottest_compar.tsv | cg groupby symbol > /complgen/projects/test/groupby_symbol_test_compar.tsv
-}
-
 proc cg_groupby {args} {
 	set pos 0
 	set sumfields {}

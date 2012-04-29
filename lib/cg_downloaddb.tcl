@@ -14,27 +14,6 @@ package require Extral
 #
 ##############################################################
 
-if 0 {
-
-	package require Tclx
-	signal -restart error SIGINT
-	lappend auto_path /home/peter/dev/completegenomics/lib
-	package require Extral
-	cd /complgen/refseq/hg18
-	set path /complgen/refseq/hg18
-	set build hg18
-	set dbname tRNAs
-	set dbname simpleRepeat
-	set dbname rmsk
-	set dbname cytoBand
-
-cg downloaddb /complgen/refseq/hg18 hg18 simpleRepeat microsat rmsk genomicSuperDups chainSelf
-cg downloaddb /complgen/refseq/hg18 hg18 omimGene phastConsElements44way oreganno rnaGene tRNAs tfbsConsSites targetScanS evofold
-cg downloaddb /complgen/refseq/hg18 hg18 cytoBand dgv gwasCatalog phastConsElements28wayPlacMammal phastConsElements28way snp130 wgRna
-cg downloaddb /complgen/refseq/hg18 hg18 mirbase
-
-}
-
 proc downloaddb_mirbase {path build} {
 	set filename $path/$build/reg_${build}_mirbase.tsv
 	set temp $path/tmp/$build

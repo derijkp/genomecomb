@@ -336,38 +336,3 @@ proc cg_process_sample {args} {
 	}
 	process_sample {*}$args
 }
-
-if 0 {
-
-	lappend auto_path /complgen/bin/complgen/apps/cg/lib
-	lappend auto_path ~/dev/completegenomics/lib
-	package require Tclx
-	signal -restart error SIGINT
-	package require Extral
-
-78638
-
-	set dbdir /complgen/refseq
-	set basedir /complgen/projects/dlb1
-	set dir $basedir/NNN
-	set destdir $basedir/dlb_d_d388
-	set force 0
-
-	set dir1 $basedir/GS102
-	set dir2 $basedir/GS103
-	set resultsdir $basedir/compar_GS102_GS103
-	set force 0
-	set name1 [file tail $dir1]
-	set name2 [file tail $dir2]
-	set file1 $dir1/fannotvar-$name1.tsv
-	set file2 $dir2/fannotvar-$name2.tsv
-	set regfile1 $dir1/sreg-$name1.tsv
-	set regfile2 $dir2/sreg-$name2.tsv
-	set outfile $resultsdir/compar_${name1}_${name2}.tsv
-	file mkdir $resultsdir
-	cd $resultsdir
-
-	annot_compare_coverage compar_GS102_GS103.tsv $dir1 $dir2 ftemp.tsv
-
-}
-

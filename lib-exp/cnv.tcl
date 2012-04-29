@@ -121,7 +121,7 @@ proc cnvmedian {} {
 # code
 package require Tclx
 signal -restart error SIGINT
-lappend auto_path ~/dev/completegenomics/lib
+lappend auto_path ~/dev/genomecomb/lib
 package require Extral
 cd /complgen
 cd /media/passport/complgen
@@ -184,7 +184,7 @@ cgicnv /mnt/extra/CompleteGenomics/GS00102-DNA-D06/MAP/ /home/MOLGEN/peterdr/com
 
 map2besthit < mapping.tsv | distr2chr distr
 
-lappend auto_path ~/dev/completegenomics/lib
+lappend auto_path ~/dev/genomecomb/lib
 package require Extral
 set file /complgen/GS00103/MAP/GS000005015-MAP/mapping.tsv.gz
 set outfile /complgen/cnv/79.hits
@@ -196,7 +196,7 @@ set file /data/peter/complgendata/CGI-DATA-sample/GS00028-DNA-C01/MAP/GS00000532
 time {map2besthits $file /data/peter/complgendata/tbesthits.tsv}
 1743500 microseconds per iteration
 
-time {exec ~/dev/completegenomics/bin/map2besthit < $file > /data/peter/complgendata/besthits.tsv}
+time {exec ~/dev/genomecomb/bin/map2besthit < $file > /data/peter/complgendata/besthits.tsv}
 
 
 

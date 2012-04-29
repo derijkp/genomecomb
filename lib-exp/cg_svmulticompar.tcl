@@ -8,7 +8,7 @@ if 0 {
 
 package require Tclx
 signal -restart error SIGINT
-lappend auto_path ~/dev/completegenomics/lib ~/dev/completegenomics/lib-exp
+lappend auto_path ~/dev/genomecomb/lib ~/dev/genomecomb/lib-exp
 package require Extral
 cd /complgen/sv
 	cd /complgen/sv
@@ -338,6 +338,7 @@ proc svmulticompar {svfile1 svfile2} {
 			incr did
 			continue
 		}
+#if {[lindex $list 0 $locpos(begin)] == 829684} {error STOPPED}
 		# split on type
 		unset -nocomplain todo
 		foreach line [lsort -integer -index $sizepos $list] {

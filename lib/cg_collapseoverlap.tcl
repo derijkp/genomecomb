@@ -10,24 +10,6 @@ exec tclsh "$0" "$@"
 
 package require Extral
 
-if 0 {
-
-	package require Tclx
-	signal -restart error SIGINT
-	lappend auto_path /home/peter/dev/completegenomics/lib
-	package require Extral
-	cd /complgen/refseq/hg18
-	set file /complgen/refseq/hg18/ucsc_hg18_oreganno.tsv
-	set resultfile /complgen/refseq/hg18/reg_hg18_oreganno.tsv
-	set file /complgen/refseq/hg18/ucsc_hg18_rmsk.tsv
-	set resultfile /complgen/refseq/hg18/reg_hg18_rmsk.tsv
-	set file /complgen/refseq/hg18/ucsc_hg18_snp130.tsv
-	set resultfile /complgen/refseq/hg18/reg_hg18_snp130.tsv
-
-cg collapseoverlap /complgen/refseq/hg18/ucsc_hg18_oreganno.tsv
-
-}
-
 proc collapseoverlap_join {cur scorepos {numpos -1}} {
 	if {[llength $cur] == 1} {return [lindex $cur 0]}
 	if {$scorepos != -1} {

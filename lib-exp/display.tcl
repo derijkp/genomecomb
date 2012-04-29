@@ -4,7 +4,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-lappend auto_path ~/dev/completegenomics/lib
+lappend auto_path ~/dev/genomecomb/lib
 package require ClassyTk
 package require Extral
 package require dbi

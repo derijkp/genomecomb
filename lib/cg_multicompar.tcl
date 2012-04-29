@@ -434,29 +434,3 @@ proc cg_multicompar_reannot {args} {
 	putslog "Reannotating $compar_file"
 	multicompar_reannot $compar_file $force $regonly $skipincomplete
 }
-
-if 0 {
-
-	lappend auto_path ~/dev/completegenomics/lib
-	lappend auto_path /complgen/bin/complgen/apps/cg/lib
-	lappend auto_path ~/bin/complgen/apps/cg/lib
-	package require Extral
-	package require Tclx
-	signal -restart error SIGINT
-
-cd /complgen/projects/dlb1
-set compar_file tempcompar.tsv
-set dir dlb_a_d390
-set dir dlb_d_d388
-
-set compar_file /complgen/multicompar/compar.tsv
-set compar_file /complgen/multicompar/compar-part.tsv
-	set compar_file /complgen/multicompar/compar.tsv.rz
-
-	set basedir /media/passport/complgen
-	set basedir /complgen
-	set dbdir /complgen/refseq
-	set dir /complgen/GS103
-multicompar $compar_file $dir
-
-}

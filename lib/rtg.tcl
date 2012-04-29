@@ -231,29 +231,6 @@ proc annot_rtg_close {dir} {
 	unset annot(cov,$dir)
 }
 
-if 0 {
-
-	lappend auto_path ~/dev/completegenomics/lib
-	package require Extral
-package require Tclx
-signal -restart error SIGINT
-	set dbdir /complgen/refseq
-	set file /complgen/rtg102/GS00102-DNA-D06-unfiltered.snps.gz
-	set dir [file dir $file]
-
-}
-
-if 0 {
-	set cgdir /complgen/GS102
-	set comparfile /complgen/multicompar/compar.tsv
-	set rtgdir /complgen/rtg102
-	submit.tcl cg rtgregions /complgen/GS102 /complgen/multicompar/compar.tsv /complgen/rtg102
-	submit.tcl cg rtgregions /complgen/GS103 /complgen/multicompar/compar.tsv /complgen/rtg103
-	submit.tcl cg rtgregions /complgen/GS100 /complgen/multicompar/compar.tsv /complgen/rtg100
-	submit.tcl cg rtgregions /complgen/GS101A01 /complgen/multicompar/compar.tsv /complgen/rtg101A01
-	submit.tcl cg rtgregions /complgen/GS101A02 /complgen/multicompar/compar.tsv /complgen/rtg101A02
-}
-
 proc rtgregions {cgdir comparfile rtgdir} {
 	set cgdir [file normalize $cgdir]
 	set rtgdir [file normalize $rtgdir]

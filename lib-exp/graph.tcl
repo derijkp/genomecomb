@@ -11,7 +11,7 @@ exec tclsh "$0" "$@"
 if 0 {
 
 lappend auto_path /home/peter/bin/tcl
-lappend auto_path /home/peter/dev/completegenomics/lib
+lappend auto_path /home/peter/dev/genomecomb/lib
 
 set object .g
 
