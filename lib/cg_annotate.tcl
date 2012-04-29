@@ -200,7 +200,7 @@ proc cg_annotate {args} {
 	set args [lrange $args $pos end]
 	foreach {file resultfile} $args break
 	set dbfiles [lrange $args 2 end]
-	if {[file isdir [lindex $dbfiles 0]] && [file tail [lindex $dbfiles 0]] ne "annovar"} {
+	if {[file isdir [lindex $dbfiles 0]]} {
 		set dbfiles [lsort -dict [list_concat [glob -nocomplain [lindex $dbfiles 0]/var_*.tsv [lindex $dbfiles 0]/gene_*.tsv [lindex $dbfiles 0]/reg_*.tsv] [lrange $dbfiles 1 end]]]
 	}
 	set names {}
@@ -237,16 +237,7 @@ proc cg_annotate {args} {
 			continue
 		}
 		set dbtype [lindex [split [file tail $dbfile] _] 0]
-		if {$dbtype eq "annovar"} {
-			if {$near != -1} {error "-near option does not work with annovar dbfiles"}
-			lappend afiles $resultfile.${name}_annot
-			if {[file exists $resultfile.${name}_annot]} {
-				putslog "$resultfile.${name}_annot exists: skipping scan"
-				continue
-			}
-			set build [lindex [file split $dbfile] end-1]
-			annovar $file $resultfile.${name}_annot $dbfile $build
-		} elseif {$dbtype eq "gene"} {
+		if {$dbtype eq "gene"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}
 			if {$dbdir eq ""} {
 				set dbdir [file dir [file normalize $dbfile]]
