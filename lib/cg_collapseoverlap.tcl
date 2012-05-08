@@ -35,19 +35,22 @@ proc collapseoverlap_join {cur scorepos {numpos -1}} {
 	return $result
 }
 
-proc collapseoverlap {file resultfile} {
-	puts "making $resultfile"
-
+proc collapseoverlap {file {resultfile stdout} {scorefield score} {numfield num}} {
 	catch {close $f} ; catch {close $o}
 	if {[catch {open $file} f]} {
 		error "Could not open file $file"
 	}
 	set cor [open_region $f header]
 	foreach {chrpos startpos endpos} $cor break
-	set scorepos [lsearch $header score]
-	set numpos [lsearch $header num]
-	if {[catch {open $resultfile.temp w} o]} {
-		error "Could not write outputfile $resultfile"
+	set scorepos [lsearch $header $scorefield]
+	set numpos [lsearch $header $numfield]
+	if {$resultfile ne "stdout"} {
+		putslog "making $resultfile"
+		if {[catch {open $resultfile.temp w} o]} {
+			error "Could not write outputfile $resultfile"
+		}
+	} else {
+		set o stdout
 	}
 	puts $o [join $header \t]
 	set line [split [gets $f] "\t"]
@@ -56,7 +59,7 @@ proc collapseoverlap {file resultfile} {
 	set num 0; set next 100000
 	set prev {}
 	while {![eof $f]} {
-		incr num; if {$num >= $next} {puts $num; incr next 100000}
+		incr num; if {$num >= $next} {putslog $num; incr next 100000}
 		set line [split [gets $f] "\t"]
 		set cchr {}
 		foreach {cchr cstart cend} [list_sub $line $cor] break
@@ -105,9 +108,11 @@ proc collapseoverlap {file resultfile} {
 	}
 	puts $o [join $prev \t]
 	close $f
-	close $o
-	file rename $resultfile.temp $resultfile
-	puts "Finished $resultfile"
+	if {$resultfile ne "stdout"} {
+		close $o
+		file rename $resultfile.temp $resultfile
+		putslog "Finished $resultfile"
+	}
 }
 
 proc cg_collapseoverlap {args} {
@@ -182,6 +187,61 @@ proc cg_collapseoverlap {args} {
 			collapseoverlap $file $resultfile
 		}
 	}
+}
+
+proc cg_regcollapse {args} {
+	set pos 0
+	set resultfile stdout
+	set scorefield score
+	set numfield num
+	foreach {key value} $args {
+		switch -- $key {
+			-s {
+				set scorefield $value
+			}
+			-n {
+				set numfield $value
+			}
+			-o {
+				set resultfile $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
+	if {([llength $args] < 1)} {
+		errorformat reg_collapse
+		exit 1
+	}
+	if {$resultfile ne "stdout"} {
+		if {[file exists $resultfile]} {
+			puts "$resultfile already exists"
+			exit 0
+		}
+	}
+	putslog "Collapsing file(s) to $resultfile"
+	set tempfile [tempfile]
+	set tempfile2 [tempfile]
+	if {[llength $args]} {
+		putslog "Concatenating files"
+		cg cat -m {*}$args > $tempfile
+		putslog "Sorting"
+		set f [gzopen $tempfile]
+		set header [tsv_open $f]
+		set bposs [tsv_basicfields $header 3]
+		close $f
+		set sfields [list_sub $header $bposs]
+		cg select -s $sfields $tempfile $tempfile2
+	} else {
+		set tempfile2 [lindex $args 0]
+	}
+	putslog "Collapsing"
+	collapseoverlap $tempfile2 $resultfile
+	file delete $tempfile $tempfile2
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
