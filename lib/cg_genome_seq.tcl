@@ -25,8 +25,10 @@ proc cg_genome_seq {args} {
 	set id {}
 	set pos 0
 	set makemap 0
+	set concatlen -1
 	set econcatlen 0
-	set concatlen 0
+	set aconcat ""
+	set aconcatlen 0
 	foreach {key value} $args {
 		switch -- $key {
 			-f - --freq {
@@ -51,9 +53,13 @@ proc cg_genome_seq {args} {
 				set concat $value
 				set concatlen [string length $concat]
 			}
-			-e - --econcat {
+			-e - -ce - --concatend {
 				set econcat $value
 				set econcatlen [string length $econcat]
+			}
+			-ca - --concatadj {
+				set aconcat $value
+				set aconcatlen [string length $econcat]
 			}
 			-m - --mapfile {
 				set mapfile $value
@@ -86,7 +92,7 @@ proc cg_genome_seq {args} {
 	} else {
 		set idpos -1
 	}
-	if {$concatlen} {
+	if {$concatlen >= 0} {
 		puts "\>$regionfile concatenated"
 		set firstline 1
 	}
@@ -96,10 +102,12 @@ proc cg_genome_seq {args} {
 	}
 	set name concat
 	set fstart 0
-	if {$concatlen && $econcatlen} {
+	if {$concatlen >= 0 && $econcatlen} {
 		puts -nonewline $econcat
 		incr fstart $econcatlen
 	}
+	set pchr {}
+	set pend {}
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
@@ -110,7 +118,7 @@ proc cg_genome_seq {args} {
 		set seq [genome_get $fg $chr [expr {$estart}] [expr {$eend}]]
 		set seq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
 		
-		if {!$concatlen} {
+		if {$concatlen == -1} {
 			set name [join [list_sub $sub {0 1 2}] -]
 			if {$idpos != -1} {
 				set name "[lindex $line $idpos] $name"
@@ -123,8 +131,16 @@ proc cg_genome_seq {args} {
 			}
 			puts \>$name
 		} elseif {!$firstline} {
-			puts -nonewline $concat
-			incr fstart $concatlen
+			foreach {chr begin end} $sub break
+			if {[comparechr $chr $pchr] == 0 && $begin == $pend} {
+				puts -nonewline $aconcat
+				incr fstart $aconcatlen
+			} else {
+				puts -nonewline $concat
+				incr fstart $concatlen
+			}
+			set pchr $chr
+			set pend $end
 		}
 		puts -nonewline $seq
 		if {$makemap} {
@@ -133,7 +149,7 @@ proc cg_genome_seq {args} {
 		incr fstart [string length $seq]
 		set firstline 0
 	}
-	if {$concatlen && $econcatlen} {
+	if {$concatlen >= 0 && $econcatlen} {
 		puts -nonewline $econcat
 		incr fstart $econcatlen
 	}

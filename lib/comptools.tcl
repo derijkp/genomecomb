@@ -26,6 +26,12 @@ proc comparepos {comp1 comp2} {
 	}
 }
 
+proc comparechr {chr1 chr2} {
+	set chr1 [chr2num $chr1]
+	set chr2 [chr2num $chr2]
+	expr {$chr1 - $chr2}
+}
+
 proc compare_annot_getline {f} {
 	set cur1 {}
 	while {![eof $f]} {
