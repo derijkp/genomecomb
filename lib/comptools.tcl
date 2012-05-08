@@ -27,9 +27,15 @@ proc comparepos {comp1 comp2} {
 }
 
 proc comparechr {chr1 chr2} {
-	set chr1 [chr2num $chr1]
-	set chr2 [chr2num $chr2]
-	expr {$chr1 - $chr2}
+	if {[string range $chr1 0 2] eq "chr"} {set chr1 [string range $chr1 3 end]}
+	if {[string range $chr2 0 2] eq "chr"} {set chr2 [string range $chr2 3 end]}
+	if {$chr1 eq $chr2} {return 0}
+	set temp [list $chr1 $chr2]
+	if {[lsort -dict $temp] eq $temp} {
+		return -1
+	} else {
+		return 1
+	}
 }
 
 proc compare_annot_getline {f} {
