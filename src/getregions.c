@@ -78,7 +78,8 @@ NODPRINT("%s\n",linepos)
 				}
 			}
 		}
-		if ((read = DStringGetLine(&line, stdin)) == -1) break;
+		read = DStringGetLine(&line, stdin);
+		if ((int)read == -1) break;
 	}
 	if (status) {
 		fprintf(stdout,"%s\t%d\t%d\n", chr, begin+shift, pos+1+shift);

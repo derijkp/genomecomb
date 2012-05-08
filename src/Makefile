@@ -1,51 +1,52 @@
+# ARCH should be defined by caller
 CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/completegnomics/src
 #CFLAGS=-Wall -O2
 TOOLS= tools.c tools.h debug.h
 
-all: ../bin/map2besthit ../bin/distr2chr ../bin/distrsam ../bin/map2sv ../bin/addcols ../bin/reg_subtract ../bin/reg_join ../bin/covered ../bin/getregions ../bin/reg_annot ../bin/var_annot ../bin/groupby ../bin/multireg ../bin/bcol_indexfile
+all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/distrsam ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile
 
 clean:
-	rm -f ../bin/*
+	rm -f ../bin$(ARCH)/*
 
-../bin/map2besthit: map2besthit.c $(TOOLS)
-	gcc map2besthit.c tools.c $(CFLAGS) -o ../bin/map2besthit
+../bin$(ARCH)/map2besthit: map2besthit.c $(TOOLS)
+	gcc map2besthit.c tools.c $(CFLAGS) -o ../bin$(ARCH)/map2besthit
 
-../bin/distr2chr: distr2chr.c $(TOOLS)
-	gcc distr2chr.c tools.c $(CFLAGS) -o ../bin/distr2chr
+../bin$(ARCH)/distr2chr: distr2chr.c $(TOOLS)
+	gcc distr2chr.c tools.c $(CFLAGS) -o ../bin$(ARCH)/distr2chr
 
-../bin/distrsam: distrsam.c $(TOOLS)
-	gcc distrsam.c tools.c $(CFLAGS) -o ../bin/distrsam
+../bin$(ARCH)/distrsam: distrsam.c $(TOOLS)
+	gcc distrsam.c tools.c $(CFLAGS) -o ../bin$(ARCH)/distrsam
 
-../bin/map2sv: map2sv.c $(TOOLS)
-	gcc map2sv.c tools.c $(CFLAGS) -o ../bin/map2sv
+../bin$(ARCH)/map2sv: map2sv.c $(TOOLS)
+	gcc map2sv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/map2sv
 
-../bin/addcols: addcols.c $(TOOLS)
-	gcc addcols.c tools.c $(CFLAGS) -o ../bin/addcols
+../bin$(ARCH)/addcols: addcols.c $(TOOLS)
+	gcc addcols.c tools.c $(CFLAGS) -o ../bin$(ARCH)/addcols
 
-../bin/reg_subtract: reg_subtract.c $(TOOLS)
-	gcc reg_subtract.c tools.c $(CFLAGS) -o ../bin/reg_subtract
+../bin$(ARCH)/reg_subtract: reg_subtract.c $(TOOLS)
+	gcc reg_subtract.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_subtract
 
-../bin/reg_join: reg_join.c $(TOOLS)
-	gcc reg_join.c tools.c $(CFLAGS) -o ../bin/reg_join
+../bin$(ARCH)/reg_join: reg_join.c $(TOOLS)
+	gcc reg_join.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_join
 
-../bin/covered: covered.c $(TOOLS)
-	gcc covered.c tools.c $(CFLAGS) -o ../bin/covered
+../bin$(ARCH)/covered: covered.c $(TOOLS)
+	gcc covered.c tools.c $(CFLAGS) -o ../bin$(ARCH)/covered
 
-../bin/getregions: getregions.c $(TOOLS)
-	gcc getregions.c tools.c $(CFLAGS) -o ../bin/getregions
+../bin$(ARCH)/getregions: getregions.c $(TOOLS)
+	gcc getregions.c tools.c $(CFLAGS) -o ../bin$(ARCH)/getregions
 
-../bin/reg_annot: reg_annot.c $(TOOLS)
-	gcc reg_annot.c tools.c $(CFLAGS) -o ../bin/reg_annot
+../bin$(ARCH)/reg_annot: reg_annot.c $(TOOLS)
+	gcc reg_annot.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_annot
 
-../bin/var_annot: var_annot.c $(TOOLS)
-	gcc var_annot.c tools.c $(CFLAGS) -o ../bin/var_annot
+../bin$(ARCH)/var_annot: var_annot.c $(TOOLS)
+	gcc var_annot.c tools.c $(CFLAGS) -o ../bin$(ARCH)/var_annot
 
-../bin/groupby: groupby.c $(TOOLS)
-	gcc groupby.c tools.c $(CFLAGS) -o ../bin/groupby
+../bin$(ARCH)/groupby: groupby.c $(TOOLS)
+	gcc groupby.c tools.c $(CFLAGS) -o ../bin$(ARCH)/groupby
 
-../bin/multireg: multireg.c $(TOOLS)
-	gcc multireg.c tools.c $(CFLAGS) -o ../bin/multireg
+../bin$(ARCH)/multireg: multireg.c $(TOOLS)
+	gcc multireg.c tools.c $(CFLAGS) -o ../bin$(ARCH)/multireg
 
-../bin/bcol_indexfile: bcol_indexfile.c $(TOOLS)
-	gcc bcol_indexfile.c tools.c $(CFLAGS) -o ../bin/bcol_indexfile
+../bin$(ARCH)/bcol_indexfile: bcol_indexfile.c $(TOOLS)
+	gcc bcol_indexfile.c tools.c $(CFLAGS) -o ../bin$(ARCH)/bcol_indexfile
 

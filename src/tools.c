@@ -114,7 +114,7 @@ int DStringGetLine(DString *linePtr,	FILE *f1) {
 	while (1) {
 		c = getc(f1);
 		if ((c == EOF)&&(size == 0)) {return -1;}
-		if  (c == '\n') break;
+		if  (c == '\n' || c == EOF) break;
 		if (linePtr->memsize <= size) {
 			linePtr->size = size;
 			DStringSetSize(linePtr,2*linePtr->memsize);
