@@ -116,6 +116,35 @@ t	Y	1010	1900	t2
 t	1	10	20	
 t	1	50	60	}
 
+test tsv_cat {two diff header -m} {
+	cg cat -m data/reg1.tsv data/reg2.tsv
+} {# ++++ data/reg1.tsv ++++
+# ++ chromosome test begin end
+# ++++ data/reg2.tsv ++++
+# ++ test chromosome begin end test2
+# comments added
+#
+chromosome	test	begin	end	test2
+1	t	10	20	
+1	t	50	60	
+2	t	100	200	
+2	t	450	480	
+3	t	1000	1100	
+3	t	2000	2100	
+M	t	10	20	
+X	t	100	200	
+Y	t	1000	2000	
+1	t	15	25	t2
+1	t	45	55	t2
+2	t	150	160	t2
+2	t	170	180	t2
+2	t	300	400	t2
+2	t	400	500	t2
+3	t	1000	1100	t2
+M	t	10	25	t2
+X	t	90	200	t2
+Y	t	1010	1900	t2}
+
 test tsv_cat {two diff header -f} {
 	cg cat -m data/reg2.tsv data/reg1b.tsv
 } {# ++++ data/reg2.tsv ++++

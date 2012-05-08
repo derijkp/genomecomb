@@ -49,15 +49,16 @@ proc cg_cat {args} {
 		puts [join $comments \n]
 	}
 	puts [join $header \t]
+	set defcor [list_cor $header $header]
 	foreach testheader $headers file $args {
 		set f [gzopen $file]
-		tsv_open $f
+		set testheader [tsv_open $f]
 		if {$force eq "f" || $force eq ""} {
 			fcopy $f stdout
 		} else {
 			# merge
 			set cor [list_cor $testheader $header]
-			if {[lsearch $cor -1] == -1} {
+			if {$cor eq $defcor} {
 				fcopy $f stdout
 			} else {
 				while {![eof $f]} {
