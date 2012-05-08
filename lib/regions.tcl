@@ -14,21 +14,7 @@ proc open_region {f {headerVar {}}} {
 	if {[string index $header 0] eq "#"} {
 		set header [string range $header 1 end]
 	}
-	set poss2 {}
-	foreach {name names} {
-		chromosome {chromosome chrom chr genoName tName}
-		begin {begin start chromStart genoStart tStart txStart}
-		end {end chromEnd genoEnd tEnd txEnd}
-	} {
-		foreach key $names {
-			set pos [lsearch $header $key]
-			if {$pos != -1} break
-		}
-		if {$pos == -1} {
-			error "not a region file, $name position not found"
-		}
-		lappend poss2 $pos
-	}
+	set poss2 [tsv_basicfields $header 3]
 	return $poss2
 }
 

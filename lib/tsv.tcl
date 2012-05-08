@@ -359,7 +359,7 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	foreach nfpos $nfposs {
 		switch $nfpos {
 			0 {
-				foreach name {chrom chr chr1 genoName tName} {
+				foreach name {chrom chr chr1 genoName tName contig} {
 					set v [lsearch $header $name]
 					if {$v != -1} break
 				}
@@ -400,7 +400,7 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	}
 	if {$giveerror && ($pos != -1)} {
 		set notfound [list_sub {chromosome begin end type ref alt} [list_find $poss -1]]
-		error "header error: fields not found: $notfound"
+		error "header error: fields (or alternatives) not found: $notfound"
 	}
 	return $poss
 }
