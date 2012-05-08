@@ -65,6 +65,9 @@ proc cg_genome_seq {args} {
 				set mapfile $value
 				set makemap 1
 			}
+			--namefield {
+				set namefield $value
+			}
 			-- break
 			default {
 				break
@@ -92,15 +95,26 @@ proc cg_genome_seq {args} {
 	} else {
 		set idpos -1
 	}
+	if {[info exists namefield]} {
+		set namepos [lsearch $header $namefield]
+		if {$namepos == -1} {
+			puts stderr "namefield $namefiled not found"
+			exit 1
+		}
+	} else {
+		set namepos [lsearch $header name]
+	}
 	if {$concatlen >= 0} {
 		puts "\>$regionfile concatenated"
+		set name $regionfile
 		set firstline 1
+	} else {
+		set name concat
 	}
 	if {$makemap} {
 		set fm [open $mapfile w]
-		puts $fm [join {chromosome begin end destchromosome destbegin destend} \t]
+		puts $fm [join {chromosome begin end destchromosome destbegin destend name} \t]
 	}
-	set name concat
 	set fstart 0
 	if {$concatlen >= 0 && $econcatlen} {
 		puts -nonewline $econcat
@@ -144,7 +158,7 @@ proc cg_genome_seq {args} {
 		}
 		puts -nonewline $seq
 		if {$makemap} {
-			puts $fm $name\t$fstart\t[expr {$fstart+[string length $seq]}]\t[join $sub \t]
+			puts $fm $name\t$fstart\t[expr {$fstart+[string length $seq]}]\t[join $sub \t]\t[lindex $line $namepos]
 		}
 		incr fstart [string length $seq]
 		set firstline 0
