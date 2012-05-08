@@ -17,13 +17,17 @@ hardmask repeats, and soft or hardmask known (dbsnp) variants based on frequency
 ; **dbdir**: directory containing reference genomes and variation data
 
 == Options ==
-; **-f freq**: only softmask (lowercase) dbsnp variants if they have a frequency > freq (default is 0, use -1 to include all)
-; **-n freq**: only mask (using N) dbsnp variants if they have a frequency > freq (default is 0.2, use -1 to include all)
-; **-d delsize**: only mask (using N) dbsnp variants if they are smaller than delsize (default is 5, use -1 to include all)
-; **-r repeatmask**: how to mask repeatmasker repeats: "s" means softmask (lowercase), use "N" to mask using Ns, and 0 for no repeatmasking (default is "s")
-; **-i idcolumn**: The ids for the fasta file will be taken from the given column (location will be added after a space)
-; **-g windowsize**: add gc content on id line. if windowsize 0 only total gc content will be added. For windowsize > 0, the max gc content for the given windowsize will also be added (default = -1 for no gc content)
-; **-c concatseq**: using this option, all regions will be concatenated into one sequence with concatseq between them. To just concatenate the sequences, use -c ''
+; **-f freq** (--freq): only softmask (lowercase) dbsnp variants if they have a frequency > freq (default is 0, use -1 to include all)
+; **-n freqn** (--freqn): only mask (using N) dbsnp variants if they have a frequency > freqn (default is 0.2, use -1 to include all)
+; **-d delsize** (--delsize): only mask (using N) dbsnp variants if they are smaller than delsize (default is 5, use -1 to include all)
+; **-r repeatmasker** (--repeatmasker): how to mask repeatmasker repeats: "s" means softmask (lowercase), use "N" to mask using Ns, and 0 for no repeatmasking (default is "s")
+; **-i idcolumn** (--id): The ids for the fasta file will be taken from the given column (location will be added after a space)
+; **-g windowsize** (--gc): add gc content on id line. if windowsize 0 only total gc content will be added. For windowsize > 0, the max gc content for the given windowsize will also be added (default = -1 for no gc content)
+; **-c concatseq** (--concat): using this option, all regions will be concatenated into one sequence with concatseq between them. To just concatenate the sequences, use -c ''
+; **-m mapfile** (--mapfile): Create a map file that describes which regions in the newly created fasta file map to which regions in the genome
+; **--namefield namefield**: entries in the map file will have a name obtained from the **namefield** column in the region file
+; **-e concatend** (--concatend): The sequence given by concatend will be added to start and end of the final sequence (only if -c  option was used)
+; **-ca concatadj** (--concatadj): The concatseq (-c option) will only be added if regions are separated by at least one base. concatadj will be used to concat adjoining regions (and is '' by default)
 
 == Category ==
 Validation
