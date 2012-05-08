@@ -134,6 +134,9 @@ proc cg_annotate {args} {
 			-dbdir {
 				set dbdir $value
 			}
+			-name {
+				set namefield $value
+			}
 			default {
 				break
 			}
@@ -175,6 +178,7 @@ proc cg_annotate {args} {
 		} else {
 			set name [lindex [split [file root [file tail [gzroot $dbfile]]] _] end]
 		}
+		if {[info exists namefield]} {set name $namefield}
 		if {[info exists skip($name)]} {
 			puts "Skipping $dbfile: $name already in file"
 			continue

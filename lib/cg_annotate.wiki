@@ -24,6 +24,9 @@ dbfile, all known anotation files in this directory will be used for annotation
 ; **-near dist**: also annotate variants with the nearest feature in 
 the dbfile if it is closer than **dist** to it. A column name_dist will
 be added that contains the distance.
+; **-name namefield**: The name added as annotation normally is taken from a field called 
+name in the database file, or a field specified in the database opt file. Using -name you 
+can explicitely choose the field to be used.
 
 == database types ==
 ; **reg**: regions file that must at least contain the columns chromosome,start,end. 
