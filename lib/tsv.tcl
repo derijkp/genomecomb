@@ -359,15 +359,22 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	foreach nfpos $nfposs {
 		switch $nfpos {
 			0 {
-				set v [lsearch $header chrom]
-				if {$v == -1} {set v [lsearch $header chr1]}
+				foreach name {chrom chr chr1 genoName tName} {
+					set v [lsearch $header $name]
+					if {$v != -1} break
+				}
 			}
 			1 {
-				set v [lsearch $header start]
-				if {$v == -1} {set v [lsearch $header end1]}
+				foreach name {start end1 chromStart genoStart tStart txStart} {
+					set v [lsearch $header $name]
+					if {$v != -1} break
+				}
 			}
 			2 {
-				set v [lsearch $header start2]
+				foreach name {start2 chromEnd genoEnd tEnd txEnd} {
+					set v [lsearch $header $name]
+					if {$v != -1} break
+				}
 			}
 			4 {
 				set v [lsearch $header reference]
@@ -383,7 +390,15 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	}
 	incr num -1
 	set poss [lrange $poss 0 $num]
-	if {$giveerror && ([lsearch $poss -1] != -1)} {
+	set pos [lsearch $poss -1]
+	if {$pos == 1} {
+		set pos [lsearch $header pos]
+		if {$poss == -1} {set pos [lsearch $header offset]}
+		lset poss 1 $pos
+		lset poss 2 $pos
+		set pos [lsearch $poss -1]
+	}
+	if {$giveerror && ($pos != -1)} {
 		set notfound [list_sub {chromosome begin end type ref alt} [list_find $poss -1]]
 		error "header error: fields not found: $notfound"
 	}
