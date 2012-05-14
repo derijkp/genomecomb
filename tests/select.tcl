@@ -140,6 +140,13 @@ vx	2	u	u
 v	12	u,v,v	v,u,v
 u	4000000013	v,v,xx	u,v,xx}
 
+test groupby {groupby -stats} {
+	exec cg groupby -stats pos s2 < data/table2.tsv
+} {s2	s1	s3	pos_min	pos_total	pos_count	pos_max
+u	u,vx,v	u,u,v	1	6	3	3
+v	v,v,u,u	u,v,u,v	4	22	4	7
+xx	u	xx	4000000000	4000000000	1	4000000000}
+
 test groupby {groupby -sumfields one count (non existing)} {
 	exec cg groupby -f s1 -sumfields count s1 < data/table2.tsv
 } {s1	count
@@ -182,6 +189,13 @@ test groupby {groupby -sorted 0 -sumfields} {
 u	4000000014	u,v,v,xx	u,u,v,xx
 v	12	u,v,v	v,u,v
 vx	2	u	u}
+
+test groupby {groupby -sorted 0 -stats} {
+	exec cg groupby -sorted 0 -stats pos s2 < data/table2.tsv
+} {s2	s1	s3	pos_min	pos_total	pos_count	pos_max
+u	u,vx,v	u,u,v	1	6	3	3
+v	v,v,u,u	u,v,u,v	4	22	4	7
+xx	u	xx	4000000000	4000000000	1	4000000000}
 
 test select {sm} {
 	split [exec cg select -f {chromosome begin} -q {sm(sample1,sample2)} < data/vars1.sft] \n

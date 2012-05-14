@@ -11,12 +11,16 @@ exec tclsh "$0" ${1+"$@"}
 proc cg_groupby {args} {
 	set pos 0
 	set sumfields {}
+	set statsfields {}
 	set sorted 1
 	set usefields {}
 	foreach {key value} $args {
 		switch -- $key {
 			-sumfields {
 				set sumfields $value
+			}
+			-stats {
+				set statsfields $value
 			}
 			-sorted {
 				set sorted $value
@@ -53,27 +57,32 @@ proc cg_groupby {args} {
 	set header [tsv_open $f]
 	set poss [list_cor $header $fields]
 	set sumposs [list_cor $header $sumfields]
-	set listfields [list_sub $header -exclude [list_concat $poss $sumposs]]
+	set statsposs [list_cor $header $statsfields]
+	set listfields [list_sub $header -exclude [list_concat $poss $sumposs $statsposs]]
 	if {[llength $usefields]} {
 		set listfields [list_common $listfields $usefields]
 	}
 	set listposs [list_cor $header $listfields]
-	puts $o [join [list_concat $fields $sumfields $listfields] \t]
+	set header [list_concat $fields $sumfields $listfields]
+	foreach field $statsfields {
+		lappend header ${field}_min ${field}_total ${field}_count ${field}_max
+	}
+	puts $o [join $header \t]
 	if {$sorted} {
 		set sumposs [list_change $sumposs {-1 x}]
-		chanexec $f $o [list groupby $poss $listposs $sumposs]
+		chanexec $f $o [list groupby $poss $listposs $sumposs $statsposs]
 	} else {
-		groupby_unsorted $f $o $poss $listposs $sumposs
+		groupby_unsorted $f $o $poss $listposs $sumposs $statsposs
 	}
 }
 
-proc groupby_unsorted {f o poss listposs sumposs} {
+proc groupby_unsorted {f o poss listposs sumposs statsposs} {
 	set next 1000000; set num 0
 	unset -nocomplain a
-	set start [list_concat [list_fill [llength $sumposs] 0] [list_fill [llength $listposs] {}]]
+	set start [list_concat [list_fill [llength $sumposs] 0] [list_fill [llength $listposs] {}] [list_concat [list_fill [llength $statsposs] {x 0 0 x}]]]
 	set prevsumposs [list_fill [llength $sumposs] 0 1]
 	set prevlistposs [list_fill [llength $listposs] [llength $sumposs] 1]
-	set countposs [list_find $sumposs -1]
+	set prevstatsposs [list_fill [expr {4*[llength $statsposs]}] [expr {[llength $sumposs]+[llength $listposs]}] 1]
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
@@ -96,6 +105,18 @@ proc groupby_unsorted {f o poss listposs sumposs} {
 		foreach p [list_sub $prev $prevlistposs] n [list_sub $line $listposs] {
 			if {$p eq ""} {set p $n} else {append p ,$n}
 			lappend result $p
+		}
+		foreach {min tot count max} [list_sub $prev $prevstatsposs] n [list_sub $line $statsposs] {
+			if {[isint $n]} {
+				if {![isdouble $min]} {set min $n}
+				if {$n < $min} {lappend result $n} else {lappend result $min}
+				lappend result [expr {$tot+$n}]
+				lappend result [expr {$count+1}]
+				if {![isdouble $max]} {set max $n}
+				if {$n > $max} {lappend result $n} else {lappend result $max}
+			} else {
+				lappend result $min $tot $count $max
+			}
 		}
 		set a($cur) $result
 	}
