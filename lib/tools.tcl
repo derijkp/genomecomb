@@ -614,6 +614,11 @@ proc progress {cmd args} {
 	}
 }
 
+proc exiterror errormessage {
+	puts stderr $errormessage
+	exit 1
+}
+
 if 0 {
 
 	ifcatch {error test} result {
