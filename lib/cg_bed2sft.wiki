@@ -1,0 +1,14 @@
+= Bed2sft =
+
+== Format ==
+cg bed2sft ?infile? ?outfile?
+
+== Summary ==
+Converts data in bed format to sft (simple feature table) format
+
+== Arguments ==
+; **infile**: file to be converted, if not given, uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Category ==
+Conversion

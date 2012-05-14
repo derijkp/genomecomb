@@ -14,6 +14,22 @@ test select {vcf2sft} {
 	exec diff temp.tsv data/expected-test1000glow.vcf2sft
 } {}
 
+test select {bed2sft} {
+	exec cg bed2sft data/sample.bed
+} {#browser position chr7:127471196-127495720
+#browser hide all
+#track name="ColorByStrandDemo" description="Color by strand demonstration" visibility=2 colorByStrand="255,0,0 0,0,255"
+chromosome	begin	end	name	score	strand
+chr7	127471196  127472363  Pos1  0  +
+chr7	127472363  127473530  Pos2  0  +
+chr7	127473530  127474697  Pos3  0  +
+chr7	127474697  127475864  Pos4  0  +
+chr7	127475864  127477031  Neg1  0  -
+chr7	127477031  127478198  Neg2  0  -
+chr7	127478198  127479365  Neg3  0  -
+chr7	127479365  127480532  Pos5  0  +
+chr7	127480532  127481699  Neg4  0  -}
+
 file delete temp.tsv
 
 testsummarize
