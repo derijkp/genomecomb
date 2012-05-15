@@ -52,7 +52,7 @@ proc bcol_indexlines {file indexfile} {
 }
 
 proc bcol_open indexfile {
-	set result [dict create objtype bcol file $indexfile binfile $indexfile.bin]
+	set result [dict create objtype bcol file $indexfile binfile $indexfile.bin compressedbin 0]
 	set f [open $indexfile]
 	set header [tsv_open $f comment]
 	set comment [split $comment \n]
@@ -77,9 +77,16 @@ proc bcol_open indexfile {
 	dict set result table $table
 	dict set result tabled $tabled
 	dict set result max [lindex $table end 0]
-	set fi [open $indexfile.bin]
-	fconfigure $fi -encoding binary -translation binary
-	dict set result fi $fi
+	if {[file exists $indexfile.bin]} {
+		set fi [open $indexfile.bin]
+		fconfigure $fi -encoding binary -translation binary
+		dict set result fi $fi
+	} elseif {[file exists $indexfile.bin.rz]} {
+		dict set result binfile $indexfile.bin.rz
+		dict set result compressedbin 1
+	} else {
+		exiterror "binfile $indexfile.bin not found"
+	}
 	return $result
 }
 
@@ -94,45 +101,270 @@ proc bcol_close bcol {
 proc bcol_get {bcol start end} {
 	if {[dict get $bcol objtype] ne "bcol"} {error "This is not a bcol object: $bcol"}
 	set type [dict get $bcol type]
+	if {$type eq "lineindex"} {set type iu}
+	set btype [string index $type 0]
+	array set typesizea {c 1 s 2 i 4 w 8 f 4 d 8}
+	set typesize $typesizea($btype)
 	set max [dict get $bcol max]
  	set table [dict get $bcol table]
 	set tabled [dict get $bcol tabled]
-	if {$start > $max} {
-		return {}
+	if {[catch {dict get $bcol default} default]} {
+		set default 0
 	}
-	if {$end > $max} {set end $max}
-	set len [expr {$end-$start+1}]
-	if {$len == 0} {return {}}
+	if {$start > $max} {return [list_fill [expr {$end-$start+1}] $default]}
+	if {$end > $max} {set uend $max} else {set uend $end}
 	set offset 0
+	set result {}
 	if {[llength $table] > 2} {
-		set offset 0
 		list_foreach {num type noffset} $table {
 			if {$start < $num} {
 				break
 			}
 			set offset $noffset
 		}
+	} else {
+		set num [lindex $table 0 0]
+		while {$start < $num} {
+			if {$start == $end} {return $result}
+			lappend result $default
+			incr start
+			incr curpos
+		}
 	}
-	set pos [expr {4*$start}]
+	set len [expr {$uend-$start+1}]
+	if {$len <= 0} {return {}}
+	set pos [expr {$typesize*($start-$num)}]
 	set binfile [dict get $bcol binfile]
-	set f [open $binfile]
-	fconfigure $f -encoding binary -translation binary
-	seek $f $pos
-	set b [read $f [expr {4*$len}]]
-	binary scan $b i$len sresult
-	close $f
-	set result {}
+	if {![dict get $bcol compressedbin]} {
+		set f [open $binfile]
+		seek $f $pos
+		fconfigure $f -encoding binary -translation binary
+		set b [read $f [expr {$typesize*$len}]]
+	} else {
+		# set f [open "| razip -d -c -s [expr {$typesize*$len}] -b $pos $binfile"]
+		set b [exec razip -d -c -s [expr {$typesize*$len}] -b $pos $binfile]
+	}
+	binary scan $b $type$len sresult
+	catch {close $f}
 	foreach v $sresult {
 		catch {set offset [dict get $tabled $start]}
 		incr start
 		lappend result [expr {($v & 0xffffffff) + $offset}]
 	}
+	if {$uend < $end} {lappend result {*}[list_fill [expr {$end-$uend}] $default]}
 	return $result
+}
+
+proc bcol_table {bcol {start {}} {end {}}} {
+	if {[dict get $bcol objtype] ne "bcol"} {error "This is not a bcol object: $bcol"}
+	set type [dict get $bcol type]
+	if {$type eq "lineindex"} {set type iu}
+	set btype [string index $type 0]
+	array set typesizea {c 1 s 2 i 4 w 8 f 4 d 8}
+	set typesize $typesizea($btype)
+	set max [dict get $bcol max]
+ 	set table [dict get $bcol table]
+	set tabled [dict get $bcol tabled]
+	if {[catch {dict get $bcol default} default]} {
+		set default 0
+	}
+	if {$start eq ""} {set start 0}
+	if {$end eq ""} {set end $max}
+	if {$start > $max} {return [list_fill [expr {$end-$start+1}] $default]}
+	if {$end > $max} {set uend $max} else {set uend $end}
+	set offset 0
+	set curpos $start
+	set o stdout
+	set name [file root [file tail [dict get $bcol file]]]
+	puts $o "pos\tvalue"
+	if {[llength $table] > 2} {
+		list_foreach {num type noffset} $table {
+			if {$start < $num} {
+				break
+			}
+			set offset $noffset
+		}
+	} else {
+		set num [lindex $table 0 0]
+	}
+	while {$start < $num} {
+		if {$start == $end} {return}
+		puts $o $curpos\t$default
+		incr start
+		incr curpos
+	}
+	set len [expr {$uend-$start+1}]
+	if {$len <= 0} {return {}}
+	set pos [expr {$typesize*($start-$num)}]
+	set binfile [dict get $bcol binfile]
+	if {![dict get $bcol compressedbin]} {
+		set f [open $binfile]
+		seek $f $pos
+		fconfigure $f -encoding binary -translation binary
+	} else {
+		set f [open "| razip -d -c -b $pos $binfile"]
+		fconfigure $f -encoding binary -translation binary
+	}
+	while {$curpos <= $end} {
+		catch {set offset [dict get $tabled $start]}
+		incr start
+		set b [read $f $typesize]
+		binary scan $b $type value
+		set value [expr {($value & 0xffffffff) + $offset}]
+		puts $o $curpos\t$value
+		incr curpos
+	}
+	catch {close $f}
+	while {$uend < $end} {
+		puts $o $curpos\t$default
+		incr curpos
+		incr uend
+	}
+}
+
+proc bcol_make {args} {
+	set type iu
+	set offsetcol {}
+	set defaultvalue 0
+	set pos 0
+	set distribute 0
+	set start 0
+	foreach {key value} $args {
+		switch -- $key {
+			-t - --type {
+				set type $value
+			}
+			-p - --poscol {
+				set offsetcol $value
+			}
+			-d - --default {
+				set defaultvalue $value
+			}
+			-c - --chromosomecol {
+				set chromosomecol $value
+				set distribute 1
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
+	if {[llength $args] != 2} {
+		exiterror "wrong # args: should be \"cg bcol make ?options? bcolprefix column\""
+	}
+	foreach {prefix valuecolumn} $args break
+	set result $prefix.bcol
+	if {![inlist {c s i w cu su iu wu f d} $type]} {
+		exiterror "error: type $type not supported (must be one of: c s i cu su iu)"
+	}
+	set btype [string index $type 0]
+	# putslog "Making $result"
+	set f stdin
+	set header [tsv_open $f comment]
+	set colpos [lsearch $header $valuecolumn]
+	if {$colpos == -1} {
+		exiterror "error: valuecolumn $valuecolumn not found"
+	}
+	if {$offsetcol eq ""} {
+		set offsetpos -1
+	} else {
+		set offsetpos [lsearch $header $offsetcol]
+		if {$offsetpos == -1} {
+			exiterror "error: pos column $offsetcol not found"
+		}
+	}
+	if {$distribute} {
+		set chrompos [lsearch $header $chromosomecol]
+		if {$chrompos == -1} {
+			exiterror "error: chromosome column $chromosomecol not found"
+		}
+	}
+	set bo [open $result.bin.temp w]
+	fconfigure $bo -encoding binary -translation binary
+	set prevchr {}
+	set len 0
+	set poffset -1
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		if {$distribute} {
+			set chr [lindex $line $chrompos]
+			if {$chr ne $prevchr} {
+				close $bo
+				if {$prevchr ne ""} {
+					set size [expr {$start+$len-1}]
+					set o [open $prefix-$prevchr.bcol.temp w]
+					puts $o "# binary column"
+					puts $o "# type $type"
+					puts $o "# len $size"
+					puts $o "# default $defaultvalue"
+					puts $o [join {begin type offset} \t]
+					puts $o $start\t$type\t0
+					puts $o $size\tend\t0
+					close $o
+					file rename -force $prefix-$prevchr.bcol.bin.temp $prefix-$prevchr.bcol.bin
+					file rename -force $prefix-$prevchr.bcol.temp $prefix-$prevchr.bcol
+				}
+				set prevchr $chr
+				set poffset -1
+				set len 0
+				# putslog "Making $prefix-$chr.bcol"
+				set bo [open $prefix-$chr.bcol.bin.temp w]
+				fconfigure $bo -encoding binary -translation binary
+			}
+		}
+		if {$offsetpos != -1} {
+			set offset [lindex $line $offsetpos]
+			if {$poffset == -1} {
+				set start $offset
+			} elseif {$poffset != $offset} {
+				set size [expr {$offset-$poffset}]
+				while {$poffset < $offset} {
+					puts -nonewline $bo [binary format $btype $defaultvalue]
+					incr poffset
+				}
+				incr len $size
+			}
+			set poffset [incr offset]
+		}
+		set v [lindex $line $colpos]
+		puts -nonewline $bo [binary format $btype $v]
+		incr len
+	}
+	close $bo
+	if {$distribute} {
+		set size [expr {$start+$len-1}]
+		set o [open $prefix-$prevchr.bcol.temp w]
+	} else {
+		set size [expr {$start+$len-1}]
+		set o [open $result.temp w]
+	}
+	puts $o "# binary column"
+	puts $o "# type $type"
+	puts $o "# len $size"
+	puts $o "# default $defaultvalue"
+	puts $o [join {begin type offset} \t]
+	puts $o $start\t$type\t0
+	puts $o $size\tend\t0
+	close $o
+	if {$distribute} {
+		file rename -force $prefix-$prevchr.bcol.bin.temp $prefix-$prevchr.bcol.bin
+		file rename -force $prefix-$prevchr.bcol.temp $prefix-$prevchr.bcol
+	} else {
+		file rename -force $result.bin.temp $result.bin
+		file rename -force $result.temp $result
+	}
 }
 
 proc cg_bcol {cmd args} {
 	switch $cmd {
 		get {
+			if {[llength $args] != 3} {
+				exiterror "wrong # args: should be \"cg bcol get file start end\""
+			}
 			foreach indexfile $args break
 			set bcol [bcol_open $indexfile]
 			set result [bcol_get $bcol {*}[lrange $args 1 end]]
@@ -140,13 +372,30 @@ proc cg_bcol {cmd args} {
 			puts $result
 			return $result
 		}
+		table {
+			if {[llength $args] < 1 || [llength $args] > 3} {
+				exiterror "wrong # args: should be \"cg bcol table file ?start? ?end?\""
+			}
+			foreach {indexfile start end} $args break
+			set bcol [bcol_open $indexfile]
+			set result [bcol_table $bcol {*}[lrange $args 1 end]]
+			bcol_close $bcol
+			puts $result
+			return $result
+		}
 		size {
+			if {[llength $args] != 1} {
+				exiterror "wrong # args: should be \"cg bcol size file\""
+			}
 			foreach indexfile $args break
 			set bcol [bcol_open $indexfile]
 			set size [bcol_size $bcol]
 			bcol_close $bcol
 			puts $size
 			return $size
+		}
+		make {
+			bcol_make {*}$args
 		}
 		default {
 			error "unknown subcommand $cmd of bcol, must be one of: get, size"
