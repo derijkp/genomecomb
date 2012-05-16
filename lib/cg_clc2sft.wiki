@@ -1,0 +1,18 @@
+= clc2sft =
+
+== Format ==
+cg clc2sft ?options? ?infile? ?outfile?
+
+== Summary ==
+Converts output from the clc bio assembly cell snp caller to sft (simple feature table) format
+
+== Arguments ==
+; **infile**: file to be converted, if not given, uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Options ==
+; **-coverage coverage**: variants at position with coverage below this value will be considered 
+unsequenced: variant data is present in output, but the "sequenced" column gets value "u" (default: 0)
+
+== Category ==
+Conversion
