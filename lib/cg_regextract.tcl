@@ -33,40 +33,61 @@ proc cg_regextract {args} {
 	foreach file $files {
 		putslog "Processing $file"
 		set chr [lindex [file root [split [gzroot $file] -]] 1]
-		set f [gzopen $file]
-		set header [tsv_open $f]
-		catch {close $f}
-		foreach field {chromosome chrom} {
-			set chrcol [lsearch $header $field]
-			if {$chrcol != -1} break
-		}
-		if {$chrcol != -1} {
-			set line [split [get $f] \t]
-			set chr [lindex $line $chrcol]
-			catch {close $f}
+		set ext [file extension $file]
+		if {$ext eq ".bcol"} {
+			set bcol [bcol_open $file]
+			set start [lindex [dict get $bcol table] 0 0]
+			set max [dict get $bcol max]
+			set type [dict get $bcol type]
+			set file [gzfile $file.bin]
+			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
+			set error [catch {
+				# puts "$cat $file | getregionsbcol $chr $type $start $cutoff $above $shift"
+				exec $cat $file | getregionsbcol $chr $type $start $cutoff $above $shift >@ $o
+			} errmessage]
+			if {$error} {
+				set errmessage [split [string trim $errmessage] \n]
+				set errmessage [list_sub $errmessage -exclude [list_find -glob $errmessage {*decompression OK, trailing garbage ignored*}]]
+				if {[llength $errmessage]} {
+					error [join $errmessage \n]
+				}
+			}
+		} else {
 			set f [gzopen $file]
 			set header [tsv_open $f]
-		}
-		foreach field $posfields {
-			set poscol [lsearch $header $field]
-			if {$poscol != -1} break
-		}
-		if {$poscol == -1} {
-			error "no position column (one of [join $posfields ,]) found in $file"
-		}
-		foreach field $qfields {
-			set qcol [lsearch $header $field]
-			if {$qcol != -1} break
-		}
-		if {$qcol == -1} {
-			error "no query column (one of [join $qfields ,]) found in $file"
-		}
-		if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
-		set error [catch {
-			exec $cat $file | getregions $chr $poscol $qcol $cutoff $above $shift >@ $o
-		} errmessage]
-		if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
-			error $errmessage
+			catch {close $f}
+			foreach field {chromosome chrom} {
+				set chrcol [lsearch $header $field]
+				if {$chrcol != -1} break
+			}
+			if {$chrcol != -1} {
+				set line [split [get $f] \t]
+				set chr [lindex $line $chrcol]
+				catch {close $f}
+				set f [gzopen $file]
+				set header [tsv_open $f]
+			}
+			foreach field $posfields {
+				set poscol [lsearch $header $field]
+				if {$poscol != -1} break
+			}
+			if {$poscol == -1} {
+				error "no position column (one of [join $posfields ,]) found in $file"
+			}
+			foreach field $qfields {
+				set qcol [lsearch $header $field]
+				if {$qcol != -1} break
+			}
+			if {$qcol == -1} {
+				error "no query column (one of [join $qfields ,]) found in $file"
+			}
+			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
+			set error [catch {
+				exec $cat $file | getregions $chr $poscol $qcol $cutoff $above $shift >@ $o
+			} errmessage]
+			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
+				error $errmessage
+			}
 		}
 	}
 }

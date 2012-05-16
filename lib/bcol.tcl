@@ -299,7 +299,6 @@ proc bcol_make {args} {
 					set o [open $prefix-$prevchr.bcol.temp w]
 					puts $o "# binary column"
 					puts $o "# type $type"
-					puts $o "# len $size"
 					puts $o "# default $defaultvalue"
 					puts $o [join {begin type offset} \t]
 					puts $o $start\t$type\t0
@@ -344,7 +343,6 @@ proc bcol_make {args} {
 	}
 	puts $o "# binary column"
 	puts $o "# type $type"
-	puts $o "# len $size"
 	puts $o "# default $defaultvalue"
 	puts $o [join {begin type offset} \t]
 	puts $o $start\t$type\t0

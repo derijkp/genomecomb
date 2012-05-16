@@ -103,6 +103,26 @@ test bcol_make {-p and -c} {
 53d26
 <}
 
+test bcol_regextract {basic} {
+	catch {file delete {*}[glob tmp/temp*.bcol]}
+	catch {exec cg bcol make -p pos -c chromosome tmp/temp coverage < data/cov.tsv} e
+	# exec cg bcol table tmp/temp-chr2.bcol > tmp/temp.test
+	cg regextract -above 1 10 {*}[lsort -dict [glob tmp/temp-*.bcol]] 2> /dev/null
+} {chromosome	begin	end
+chr1	22	49
+chr2	10	17
+chr2	33	51}
+
+test bcol_regextract {su} {
+	catch {file delete {*}[glob tmp/temp*.bcol]}
+	catch {exec cg bcol make -p pos -c chromosome -t su tmp/temp coverage < data/cov.tsv} e
+	# exec cg bcol table tmp/temp-chr2.bcol > tmp/temp.test
+	cg regextract -above 1 10 {*}[lsort -dict [glob tmp/temp-*.bcol]] 2> /dev/null
+} {chromosome	begin	end
+chr1	22	49
+chr2	10	17
+chr2	33	51}
+
 file delete -force {*}[glob tmp/*]
 
 set ::env(PATH) $keeppath

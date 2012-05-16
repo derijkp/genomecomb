@@ -3,7 +3,7 @@ CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/completegnomics/src
 #CFLAGS=-Wall -O2
 TOOLS= tools.c tools.h debug.h
 
-all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/distrsam ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile
+all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/distrsam ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -34,6 +34,9 @@ clean:
 
 ../bin$(ARCH)/getregions: getregions.c $(TOOLS)
 	gcc getregions.c tools.c $(CFLAGS) -o ../bin$(ARCH)/getregions
+
+../bin$(ARCH)/getregionsbcol: getregionsbcol.c $(TOOLS)
+	gcc getregionsbcol.c tools.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol
 
 ../bin$(ARCH)/reg_annot: reg_annot.c $(TOOLS)
 	gcc reg_annot.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_annot
