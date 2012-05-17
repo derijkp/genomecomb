@@ -123,6 +123,11 @@ chr1	22	49
 chr2	10	17
 chr2	33	51}
 
+test bcol_regextract {s error} {
+	catch {file delete {*}[glob tmp/temp*.bcol]}
+	exec cg bcol make -p pos -c chromosome -t s tmp/temp coverage < data/cov.tsv
+} {value 60000 too large for type s} error
+
 file delete -force {*}[glob tmp/*]
 
 set ::env(PATH) $keeppath

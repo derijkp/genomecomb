@@ -222,7 +222,11 @@ proc bcol_table {bcol {start {}} {end {}}} {
 	}
 }
 
+array set bcol_typea {c,mn -127 s,mn -32768 i,mn -2147483648 w,mn -9223372036854775808 cu,mn 0 su,mn 0 iu,mn 0}
+array set bcol_typea {c,mx  127 s,mx  32767 i,mx  2147483647 w,mx  9223372036854775807 cu,mx 255 su,mx 65535 iu,mx 4294967295}
+
 proc bcol_make {args} {
+	global bcol_typea
 	set type iu
 	set offsetcol {}
 	set defaultvalue 0
@@ -257,8 +261,18 @@ proc bcol_make {args} {
 	}
 	foreach {prefix valuecolumn} $args break
 	set result $prefix.bcol
-	if {![inlist {c s i w cu su iu wu f d} $type]} {
-		exiterror "error: type $type not supported (must be one of: c s i cu su iu)"
+	if {[info exists bcol_typea($type,mx)]} {
+		set max $bcol_typea($type,mx)
+		set min $bcol_typea($type,mn)
+	} elseif {![inlist {f d} $type]} {
+		exiterror "error: type $type not supported (must be one of: c s i w cu su iu f d)"
+	}
+	if {[info exists max]} {
+		if {$defaultvalue > $max} {
+			exiterror "default value $v too large for type $type"
+		} elseif {$defaultvalue < $min} {
+			exiterror "default value $v too small for type $type"
+		}
 	}
 	set btype [string index $type 0]
 	# putslog "Making $result"
@@ -330,6 +344,13 @@ proc bcol_make {args} {
 			set poffset [incr offset]
 		}
 		set v [lindex $line $colpos]
+		if {[info exists max]} {
+			if {$v > $max} {
+				exiterror "value $v too large for type $type"
+			} elseif {$v < $min} {
+				exiterror "value $v too small for type $type"
+			}
+		}
 		puts -nonewline $bo [binary format $btype $v]
 		incr len
 	}
