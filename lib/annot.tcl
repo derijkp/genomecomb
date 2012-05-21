@@ -98,7 +98,6 @@ proc annot_coverage_init {dir} {
 }
 
 proc annot_coverage_get {dir chr begin} {
-putsvars dir chr begin
 	global annot
 	set present 1
 	foreach {curchr chrfile present poss type obj} [get annot(cov,$dir) {{} {} 0}] break
@@ -113,12 +112,12 @@ putsvars dir chr begin
 			}
 		}
 		regsub ^chr $chr {} nchr
-		set chrfile [gzfile $dir/coverage/coverage-$nchr-*.bcol]
+		set chrfile [gzfile $dir/coverage/coverage-$nchr-*.bcol $dir/coverage/coverage-chr$nchr-*.bcol]
 		if {[file exists $chrfile]} {
-			set reffile [gzfile $dir/coverage/refScore-$nchr-*.bcol]
+			set reffile [gzfile $dir/coverage/refScore-$nchr-*.bcol $dir/coverage/refScore-chr$nchr-*.bcol]
 			set type bcol
 		} else {
-			set chrfile [gzfile $dir/coverage/coverageRefScore-$nchr-*.tsv $dir/coverage/coverage-$nchr-*.tsv]
+			set chrfile [gzfile $dir/coverage/coverageRefScore-$nchr-*.tsv $dir/coverage/coverage-$nchr-*.tsv $dir/coverage/coverageRefScore-chr$nchr-*.tsv $dir/coverage/coverage-chr$nchr-*.tsv]
 			set type tsv
 		}
 		if {[file exists $chrfile]} {
@@ -131,7 +130,11 @@ putsvars dir chr begin
 		}
 		if {!$present} {return {u u}}
 		if {$type eq "bcol"} {
-			set refbcol [bcol_open $reffile]
+			if {[file exists $reffile]} {
+				set refbcol [bcol_open $reffile]
+			} else {
+				set refbcol {}
+			}
 			set covbcol [bcol_open $chrfile]
 			set annot(cov,$dir) [list $chr $chrfile $present $poss $type [list $refbcol $covbcol]]
 		} else {
@@ -147,7 +150,11 @@ putsvars dir chr begin
 	if {!$present} {return {u u}}
 	if {$type eq "bcol"} {
 		foreach {refbcol covbcol} $obj break
-		set refscore [bcol_get $refbcol $begin $begin]
+		if {$refbcol eq ""} {
+			set refscore ?
+		} else {
+			set refscore [bcol_get $refbcol $begin $begin]
+		}
 		set coverage [bcol_get $covbcol $begin $begin]
 		return [list $refscore $coverage]
 	} else {
@@ -167,7 +174,8 @@ proc annot_coverage_close {dir} {
 		}
 		bcol {
 			foreach {refbcol covbcol} $obj break
-			bcol_close $refbcol ; bcol_close $covbcol
+			if {$refbcol ne ""} {bcol_close $refbcol}
+			bcol_close $covbcol
 		}
 	}
 	unset annot(cov,$dir)
