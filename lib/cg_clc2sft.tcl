@@ -13,10 +13,14 @@ package require Extral
 proc cg_clc2sft {args} {
 	set coveragecutoff 0
 	set pos 0
+	set minfreq 0.25
 	foreach {key value} $args {
 		switch -- $key {
 			-coverage {
 				set coveragecutoff $value
+			}
+			-minfreq {
+				set minfreq $value
 			}
 			-- break
 			default {
@@ -105,7 +109,7 @@ proc cg_clc2sft {args} {
 					lappend otherallele $a
 					lappend otherfreq [format %.4f $fr]
 				}
-				if {$status eq "Nochange"} {
+				if {$freq < $minfreq} {
 					set alleleSeq1 $ref
 					set alleleSeq2 $ref
 				} else {
@@ -118,7 +122,7 @@ proc cg_clc2sft {args} {
 				}
 				if {$total < $coveragecutoff} {
 					set sequenced u
-				} elseif {$status eq "Nochange"} {
+				} elseif {$freq < $minfreq} {
 					set sequenced r
 				} else {
 					set sequenced v

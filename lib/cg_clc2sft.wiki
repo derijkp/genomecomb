@@ -13,6 +13,8 @@ Converts output from the clc bio assembly cell snp caller to sft (simple feature
 == Options ==
 ; **-coverage coverage**: variants at position with coverage below this value will be considered 
 unsequenced: variant data is present in output, but the "sequenced" column gets value "u" (default: 0)
+; **-minfreq cutoff**: Position with a frequency >= **cutoff** (default: 0.25) will be considered 
+variant: the "sequenced" column gets value "v"; if lower "sequenced" will be "r"
 
 == Category ==
 Conversion
