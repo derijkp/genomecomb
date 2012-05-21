@@ -131,8 +131,12 @@ proc bcol_get {bcol start end} {
 			incr curpos
 		}
 	}
+	if {$start < $num} {
+		set result [list_fill [expr {$num-$start}] $default
+		set start $num
+	}
 	set len [expr {$uend-$start+1}]
-	if {$len <= 0} {return {}}
+	if {$len <= 0} {return $result}
 	set pos [expr {$typesize*($start-$num)}]
 	set binfile [dict get $bcol binfile]
 	if {![dict get $bcol compressedbin]} {
@@ -142,14 +146,14 @@ proc bcol_get {bcol start end} {
 		set b [read $f [expr {$typesize*$len}]]
 	} else {
 		# set f [open "| razip -d -c -s [expr {$typesize*$len}] -b $pos $binfile"]
-		set b [exec razip -d -c -s [expr {$typesize*$len}] -b $pos $binfile]
+		set b [exec razip -d -c -s [expr {$typesize*($len+1)}] -b $pos $binfile]
 	}
 	binary scan $b $type$len sresult
 	catch {close $f}
 	foreach v $sresult {
 		catch {set offset [dict get $tabled $start]}
 		incr start
-		lappend result [expr {($v & 0xffffffff) + $offset}]
+		lappend result [expr {$v + $offset}]
 	}
 	if {$uend < $end} {lappend result {*}[list_fill [expr {$end-$uend}] $default]}
 	return $result
@@ -210,7 +214,7 @@ proc bcol_table {bcol {start {}} {end {}}} {
 		incr start
 		set b [read $f $typesize]
 		binary scan $b $type value
-		set value [expr {($value & 0xffffffff) + $offset}]
+		set value [expr {$value + $offset}]
 		puts $o $curpos\t$value
 		incr curpos
 	}
@@ -243,6 +247,9 @@ proc bcol_make {args} {
 			}
 			-d - --default {
 				set defaultvalue $value
+			}
+			-n - --nan {
+				set nanvalue $value
 			}
 			-c - --chromosomecol {
 				set chromosomecol $value
@@ -335,6 +342,9 @@ proc bcol_make {args} {
 				set start $offset
 			} elseif {$poffset != $offset} {
 				set size [expr {$offset-$poffset}]
+				if {$size < 0} {
+					exiterror "error: cannot make position based bcol on unsorted data (sort on position first)"
+				}
 				while {$poffset < $offset} {
 					puts -nonewline $bo [binary format $btype $defaultvalue]
 					incr poffset
@@ -344,7 +354,13 @@ proc bcol_make {args} {
 			set poffset [incr offset]
 		}
 		set v [lindex $line $colpos]
-		if {[info exists max]} {
+		if {![isdouble $v] || $v eq "N"} {
+			if {[info exists nanvalue]} {
+				set v $nanvalue
+			} else {
+				exiterror "value $v is not a number"
+			}
+		} elseif {[info exists max]} {
 			if {$v > $max} {
 				exiterror "value $v too large for type $type"
 			} elseif {$v < $min} {
