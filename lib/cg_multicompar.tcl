@@ -5,7 +5,7 @@
 #
 
 proc multicompar_annot_join {cur1 cur2} {
-	global comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2
+	global comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2 sequenced2pos
 	if {[inlist {{} -} $cur1]} {
 		set region [list_sub $cur2 $comparposs2]
 		set merge [list_sub $cur2 $mergeposs2]
@@ -14,7 +14,11 @@ proc multicompar_annot_join {cur1 cur2} {
 		} else {
 			set cur1 [list_change $dummy1 {- {}}]
 		}
-		set sequenced v
+		if {$sequenced2pos != -1} {
+			set sequenced [lindex $cur2 $sequenced2pos]
+		} else {
+			set sequenced v
+		}
 	} elseif {[inlist {{} -} $cur2]} {
 		set region [list_sub $cur1 $comparposs1]
 		set merge [list_sub $cur1 $mergeposs1]
@@ -30,7 +34,11 @@ proc multicompar_annot_join {cur1 cur2} {
 		foreach el1 [list_sub $cur1 $mergeposs1] el2 [list_sub $cur2 $mergeposs2] {
 			lappend merge [list_union $el1 $el2]
 		}
-		set sequenced v
+		if {$sequenced2pos != -1} {
+			set sequenced [lindex $cur2 $sequenced2pos]
+		} else {
+			set sequenced v
+		}
 	}
 	if {$refpos1 == -1} {
 		if {$refpos2 == -1} {
@@ -100,7 +108,7 @@ proc multicompar_annot_join {cur1 cur2} {
 }
 
 proc multicompar {compar_file dir} {
-	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2
+	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2 sequenced2pos
 	catch {close $f1}; catch {close $f2}; catch {close $o}
 	set comparfields {chromosome begin end type}
 	# set nonmergefields {chromosome begin end type alt ref reference locus alleleSeq1 alleleSeq2 totalScore1 totalScore2 refscore coverage refcons nocall cluster}
@@ -162,7 +170,8 @@ proc multicompar {compar_file dir} {
 	set restposs1 [list_cor $header1 $restfields1]
 	set oheader [list_concat {chromosome begin end type ref alt} $restfields1]
 	set restfields2 [list_lremove [list_sub $header2 -exclude $comparposs2] $mergefields]
-	set restfields2 [list_remove $restfields2 ref reference alt]
+	set sequenced2pos [lsearch $header2 sequenced]
+	set restfields2 [list_remove $restfields2 ref reference alt sequenced]
 	set restposs2 [list_cor $header2 $restfields2]
 	foreach field $restfields2 {
 		lappend oheader ${field}-$name
@@ -405,6 +414,7 @@ proc cg_multicompar {args} {
 	foreach {compar_file} $args break
 	set dirs [lrange $args 1 end]
 	foreach dir $dirs {
+		set dir [file normalize $dir]
 		putslog "Adding $dir"
 		multicompar $compar_file $dir
 	}

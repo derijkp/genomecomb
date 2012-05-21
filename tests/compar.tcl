@@ -10,6 +10,25 @@ test multicompar {basic} {
 	exec diff temp.sft data/expected-multicompar-var_annotvar_annot2.sft
 } {} 
 
+test multicompar {basic, sequenced already present} {
+	file delete -force tmp/temp.sft
+	cg multicompar tmp/temp.sft data/var_annot.sft data/var_annot2seq.sft
+	catch {exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft} e
+	set e
+} {1c1
+< chromosome	begin	end	type	ref	alt	alleleSeq1-var_annot	alleleSeq2-var_annot	name-var_annot	freq-var_annot	sequenced-var_annot	alleleSeq1-var_annot2seq	alleleSeq2-var_annot2seq	name-var_annot2seq	freq-var_annot2seq	sequenced-var_annot2seq
+---
+> chromosome	begin	end	type	ref	alt	alleleSeq1-var_annot	alleleSeq2-var_annot	name-var_annot	freq-var_annot	sequenced-var_annot	alleleSeq1-var_annot2	alleleSeq2-var_annot2	name-var_annot2	freq-var_annot2	sequenced-var_annot2
+3c3
+< 1	4001	4002	snp	A	C	A	C	test2	0.2	v	A	C	test2	0.2	r
+---
+> 1	4001	4002	snp	A	C	A	C	test2	0.2	v	A	C	test2	0.2	v
+5c5
+< 1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		test4	0.4	v	AGCGTGGCAA		test4	0.4	r
+---
+> 1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		test4	0.4	v	AGCGTGGCAA		test4	0.4	v
+child process exited abnormally} 
+
 test multicompar {noalt} {
 	file delete -force temp.sft
 	cg multicompar temp.sft data/var_annotnoalt.sft data/var_annot2noalt.sft
