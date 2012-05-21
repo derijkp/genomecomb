@@ -43,7 +43,7 @@ proc cg_clc2sft {args} {
 	} else {
 		set o stdout
 	}
-	puts $o [join [list chromosome begin end type ref alt status freq alleleSeq1 alleleseq2 sequenced coverage other otherfreq countA countC countG countT countN countD] \t]
+	puts $o [join [list chromosome begin end type ref alt status freq alleleSeq1 alleleSeq2 sequenced coverage other otherfreq countA countC countG countT countN countD] \t]
 	set line [gets $f]
 	set num 0
 	array set basica {A 1 T 1 G 1 C 1 N 1 - 1}
