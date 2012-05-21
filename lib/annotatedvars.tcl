@@ -307,9 +307,13 @@ proc annot_annotvar {source outfile todo {dir {}}} {
 	if {$dir ne ""} {
 		annot_coverage_init $dir
 		set ipos [lsearch $header totalScore2]
-		incr ipos
-		set header [linsert $header $ipos refscore coverage]
-		set addref 1
+		if {$ipos != -1} {
+			incr ipos
+			set header [linsert $header $ipos refscore coverage]
+			set addref 1
+		} else {
+			set addref 0
+		}
 	} else {
 		set addref 0
 	}

@@ -94,47 +94,81 @@ proc annot_region_close {regfile} {
 proc annot_coverage_init {dir} {
 	global annot
 	catch {annot_coverage_close $dir}
-	set annot(cov,$dir) {-1 {} 0}
+	set annot(cov,$dir) {-1 {} 0 {} {} {}}
 }
 
 proc annot_coverage_get {dir chr begin} {
+putsvars dir chr begin
 	global annot
 	set present 1
-	foreach {curchr chrfile present poss} [get annot(cov,$dir) {{} {} 0}] break
+	foreach {curchr chrfile present poss type obj} [get annot(cov,$dir) {{} {} 0}] break
 	if {$chr ne $curchr} {
-		if {[string length $chrfile]} {
-			tsv_index_close $chrfile offset
+		switch $type {
+			{} {
+				tsv_index_close $chrfile offset
+			}
+			bcol {
+				foreach {refbcol covbcol} $obj break
+				bcol_close $refbcol ; bcol_close $covbcol
+			}
 		}
 		regsub ^chr $chr {} nchr
-		set chrfile [gzfile $dir/coverage/coverageRefScore-$nchr-*.tsv $dir/coverage/coverage-$nchr-*.tsv]
+		set chrfile [gzfile $dir/coverage/coverage-$nchr-*.bcol]
 		if {[file exists $chrfile]} {
-			tsv_index_open $chrfile offset 1
+			set reffile [gzfile $dir/coverage/refScore-$nchr-*.bcol]
+			set type bcol
+		} else {
+			set chrfile [gzfile $dir/coverage/coverageRefScore-$nchr-*.tsv $dir/coverage/coverage-$nchr-*.tsv]
+			set type tsv
+		}
+		if {[file exists $chrfile]} {
 			set present 1
 		} elseif {[inlist {Y chrY} $chr]} {
 			set present 0
 		} else {
-			puts stderr "coverageRefScore file not found ($dir/coverage/coverage(RefScore)-$nchr-*.tsv)"
+			puts stderr "coverage(RefScore) file not found ($dir/coverage/coverage(RefScore)-$nchr-*.(tsv|bcol))"
 			set present 0
 		}
-		set header [tsv_index_header $chrfile]
-		set rpos [lsearch $header refScore]
-		set cpos [lsearch $header uniqueSequenceCoverage]
-		if {$cpos == -1} {set cpos [lsearch $header coverage]}
-		set poss [list $rpos $cpos]
-		set annot(cov,$dir) [list $chr $chrfile $present $poss]
+		if {!$present} {return {u u}}
+		if {$type eq "bcol"} {
+			set refbcol [bcol_open $reffile]
+			set covbcol [bcol_open $chrfile]
+			set annot(cov,$dir) [list $chr $chrfile $present $poss $type [list $refbcol $covbcol]]
+		} else {
+			tsv_index_open $chrfile offset 1
+			set header [tsv_index_header $chrfile]
+			set rpos [lsearch $header refScore]
+			set cpos [lsearch $header uniqueSequenceCoverage]
+			if {$cpos == -1} {set cpos [lsearch $header coverage]}
+			set poss [list $rpos $cpos]
+			set annot(cov,$dir) [list $chr $chrfile $present $poss $type {}]
+		}
 	}
 	if {!$present} {return {u u}}
-	ifcatch {tsv_index_get $chrfile offset $begin} cline -regexp {
-		"not found in" {set cline {u u u}}
+	if {$type eq "bcol"} {
+		foreach {refbcol covbcol} $obj break
+		set refscore [bcol_get $refbcol $begin $begin]
+		set coverage [bcol_get $covbcol $begin $begin]
+		return [list $refscore $coverage]
+	} else {
+		ifcatch {tsv_index_get $chrfile offset $begin} cline -regexp {
+			"not found in" {set cline {u u u}}
+		}
+		return [list_sub $cline $poss]
 	}
-	return [list_sub $cline $poss]
 }
 
 proc annot_coverage_close {dir} {
 	global annot
-	foreach {curchr chrfile present} [get annot(cov,$dir) {{} {} 0}] break
-	if {[llength $chrfile]} {
-		tsv_index_close $chrfile offset
+	foreach {curchr chrfile present poss type obj} [get annot(cov,$dir) {{} {} 0 {} {} {}}] break
+	switch $type {
+		tsv {
+			tsv_index_close $chrfile offset
+		}
+		bcol {
+			foreach {refbcol covbcol} $obj break
+			bcol_close $refbcol ; bcol_close $covbcol
+		}
 	}
 	unset annot(cov,$dir)
 }

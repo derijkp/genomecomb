@@ -619,6 +619,21 @@ proc exiterror errormessage {
 	exit 1
 }
 
+proc catprog file {
+	set ext [file extension $file]
+	switch $ext {
+		.rz - .gz - .bgz {
+			return zcat
+		}
+		.bz2 {
+			return bzcat
+		}
+		default {
+			return cat
+		}
+	}
+}
+
 if 0 {
 
 	ifcatch {error test} result {
