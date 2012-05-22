@@ -148,8 +148,8 @@ proc cg_collapseoverlap {args} {
 			exit 0
 		}
 		puts "Collapsing multiple files into $resultfile"
-		set ffile [lindex $args 2]
-		set args [lrange $args 3 end]
+		set ffile [lindex $args 0]
+		set args [lrange $args 1 end]
 		set f [gzopen $ffile]
 		set header [tsv_open $f]
 		set bposs [tsv_basicfields $header 3]
