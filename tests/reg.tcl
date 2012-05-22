@@ -37,7 +37,7 @@ test multireg {add empty first} {
 test multireg {add fully empty} {
 	file delete temp.tsv
 	exec cg multireg temp.tsv data/reg1b.tsv data/empty.tsv
-} {not a region file} error regexp
+} {header error: fields \(or alternatives\) not found: chromosome begin end} error regexp
 
 test multireg {3 adds} {
 	file delete temp.tsv
