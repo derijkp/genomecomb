@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 #include "debug.h"
 
 #define DSTRING_STATICLEN 5
@@ -90,6 +91,179 @@ void DStringCopy(DString *dest, DString *src) {
 	DStringSetSize(dest,src->size);
 	strncpy(dest->string,src->string,src->size+1);
 	dest->size = src->size;
+}
+
+/* 
+    "natural" sort order: deals with mixed alphabetic and numbers
+ */
+#define UCHAR(c) ((unsigned char) (c))
+#define NATDIGIT(c) (isdigit(UCHAR(*(c))))
+static int naturalcompare (char const *a, char const *b) {
+	int diff, digitleft,digitright;
+	int secondaryDiff = 0,prezero,invert,comparedigits;
+	char *left=NULL,*right=NULL,*keep=NULL;
+	while (isblank(*a)) a++;
+	while (isblank(*b)) b++;
+	left = (char *)a;
+	right = (char *)b;
+	/* fprintf(stdout,"%s <> %s\n",a,b);fflush(stdout); */
+	while (1) {
+		diff = *left - *right;
+		if (*left == '\0') {
+			if (*right == '\0') {return secondaryDiff;} else {break;}
+		}
+		if (*right == '\0') {break;}
+		if (*left != *right) {
+			if (diff) {	
+				/* only sort on case if no other diff -> keep secondaryDiff for case diff */
+				if (isupper(UCHAR(*left)) && islower(UCHAR(*right))) {
+					diff = tolower(*left) - *right;
+					if (diff) {
+						break;
+					} else if (secondaryDiff == 0) {
+						secondaryDiff = -1;
+					}
+				} else if (isupper(UCHAR(*right)) && islower(UCHAR(*left))) {
+					diff = *left - tolower(UCHAR(*right));
+					if (diff) {
+						break;
+					} else if (secondaryDiff == 0) {
+						secondaryDiff = 1;
+					}
+				} else if (*right == '+') {
+					if (*left == '-') {
+						if (NATDIGIT(left+1) && NATDIGIT(right+1)) {return -1;} else {return 1;}
+					} else if (NATDIGIT(right+1) && NATDIGIT(left)) {
+						secondaryDiff = -1;
+						right++;
+						continue;
+					}
+				} else if (*left == '+') {
+					if (*right == '-') {
+						if (NATDIGIT(left+1) && NATDIGIT(right+1)) {return 1;} else {return -1;}
+					} else if (NATDIGIT(left+1) && NATDIGIT(right)) {
+						secondaryDiff = 1;
+						left++;
+						continue;
+					}
+				} else {
+					break;
+				}
+			}
+		}
+		left++;
+		right++;
+	}
+	digitright = NATDIGIT(right);
+	digitleft = NATDIGIT(left);
+	if (*left == '-') {
+		if (digitright) {
+			return -1;
+		} else {
+			return(*left - *right);
+		}
+	} else if (*right == '-' && digitleft) {
+		if (digitleft) {
+			return 1;
+		} else {
+			return(*left - *right);
+		}
+	}
+	/* fprintf(stdout,"digit %s <> %s: %d, %d\n",left,right,digitleft,digitright);fflush(stdout); */
+
+	comparedigits = 1;
+	if (!digitright) {
+		if (!digitleft || (right == b) || !NATDIGIT(right-1)) {comparedigits = 0;}
+	}
+	if (!digitleft) {
+		if ((left == a) || !NATDIGIT(left-1)) {comparedigits = 0;}
+	}
+
+	if (!comparedigits) {
+		if (diff == 0) {return secondaryDiff;} else {return diff;}
+	}
+	/*
+	 * There are decimal numbers embedded in the two
+	 * strings.  Compare them as numbers, rather than
+	 * strings.  If one number has more leading zeros than
+	 * the other, the number with more leading zeros sorts
+	 * later, but only as a secondary choice.
+	 */
+	keep = left;
+	prezero = 1;
+	while (--keep > a) {
+		if (!NATDIGIT(keep)) break;
+		if (*keep != '0') prezero = 0;
+	}
+	if (*keep == '.') {
+		while (--keep > a) {
+			if (!NATDIGIT(keep)) break;
+		}
+		if (*keep == '-') {
+			invert = -1;
+		} else {
+			invert = 1;
+		}
+		if (diff == 0) {return invert*secondaryDiff;} else {return invert*diff;}
+	} else {
+		if (*keep == '-') {
+			invert = -1;
+		} else {
+			if (NATDIGIT(keep) && (*keep != '0')) {prezero = 0;}
+			invert = 1;
+		}
+		if (prezero) {
+			if (*left == '0') {
+				secondaryDiff = 1;
+				while (*left == '0') {
+					left++;
+				}
+			} else if (*right == '0') {
+				secondaryDiff = -1;
+				while (*right == '0') {
+					right++;
+				}
+			}
+		}
+		/*
+		 * The code below compares the numbers in the two
+		 * strings without ever converting them to integers.  It
+		 * does this by first comparing the lengths of the
+		 * numbers and then comparing the digit values.
+		 */
+		diff = 0;
+		while (1) {
+			if (diff == 0) {
+				diff = *left - *right;
+			}
+			if (!NATDIGIT(right)) {
+				if (NATDIGIT(left)) {
+					return invert;
+				} else {
+					/*
+					 * The two numbers have the same length. See
+					 * if their values are different.
+					 */
+	
+					if (diff != 0) {
+						return invert*diff;
+					} else {
+						return invert*secondaryDiff;
+					}
+				}
+			} else if (!NATDIGIT(left)) {
+				return -1*invert;
+			}
+			right++;
+			left++;
+		}
+	}
+	fprintf(stderr,"shouldnt get here\n"); exit(1);
+	return 0;
+}
+
+int DStringCompare(DString *a, DString *b) {
+	return naturalcompare(a->string,b->string);
 }
 
 void DStringAppend(DString *dstring, char *string) {

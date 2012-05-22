@@ -39,11 +39,12 @@ int main(int argc, char *argv[]) {
 			DStringCopy(&keepchromosome,&chromosome1);
 			curchr = 1;
 		}
-		if (nchr1 > curchr) {
+NODPRINT("%s <-> %s\n",keepchromosome.string,chromosome1.string)
+		if (DStringCompare(&chromosome1,&keepchromosome)) {
 			totsize += size;
 			fprintf(stdout,"%s\t%lld\n", keepchromosome.string, size);
+NODPRINT("is new\n")
 			size = 0;
-			curchr = nchr1;
 			nextpos = 0;
 			DStringCopy(&keepchromosome,&chromosome1);
 		}

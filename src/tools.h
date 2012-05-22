@@ -23,6 +23,7 @@ void DStringSetSize(DString *dstring, int size);
 void DStringSet(DString *dstring, char *string);
 void DStringSetS(DString *dstring, char *string,int size);
 void DStringCopy(DString *dest, DString *src);
+int DStringCompare(DString *a, DString *b);
 void DStringAppend(DString *dstring, char *string);
 void DStringAppendS(DString *dstring, char *string,int size);
 ssize_t DStringGetLine(DString *dstring,	FILE *f1);
