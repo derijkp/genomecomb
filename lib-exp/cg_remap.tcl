@@ -74,8 +74,8 @@ proc cg_remap {file remapfile resultfile} {
 	set fr [gzopen $remapfile]
 	set rheader [tsv_open $fr]
 	if {
-		$rheader ne "name begin end destname destbegin destend"
-		&& $rheader ne "chromosome begin end destchromosome destbegin destend"
+		[lrange $rheader 0 5] ne "name begin end destname destbegin destend"
+		&& [lrange $rheader 0 5] ne "chromosome begin end destchromosome destbegin destend"
 	} {
 		error "remap file $remapfile does not have the required header (name begin end destname destbegin destend) or (chromosome begin end destchromosome destbegin destend)"
 	}
