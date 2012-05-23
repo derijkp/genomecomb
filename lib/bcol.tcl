@@ -98,8 +98,14 @@ proc bcol_close bcol {
 	catch {close [dict get $bcol fi]}
 }
 
-proc bcol_get {bcol start end} {
+# Warning:
+# while cg bcol get follows the half-open convention, end position is not included
+# the procedure bcol_get follows the Tcl lrange convention: end position is included!
+proc bcol_get {bcol start {end {}}} {
 	if {[dict get $bcol objtype] ne "bcol"} {error "This is not a bcol object: $bcol"}
+	if {$end eq ""} {
+		set end $start
+	}
 	set type [dict get $bcol type]
 	if {$type eq "lineindex"} {set type iu}
 	set btype [string index $type 0]
@@ -125,7 +131,7 @@ proc bcol_get {bcol start end} {
 	} else {
 		set num [lindex $table 0 0]
 		while {$start < $num} {
-			if {$start == $end} {return $result}
+			if {$start > $end} {return $result}
 			lappend result $default
 			incr start
 			incr curpos
@@ -145,8 +151,10 @@ proc bcol_get {bcol start end} {
 		fconfigure $f -encoding binary -translation binary
 		set b [read $f [expr {$typesize*$len}]]
 	} else {
-		# set f [open "| razip -d -c -s [expr {$typesize*$len}] -b $pos $binfile"]
-		set b [exec razip -d -c -s [expr {$typesize*($len+1)}] -b $pos $binfile]
+		set f [open "| razip -d -c -b $pos $binfile"]
+		fconfigure $f -encoding binary -translation binary
+		set b [read $f [expr {$typesize*($len+1)}]]
+		catch {close $f}
 	}
 	binary scan $b $type$len sresult
 	catch {close $f}
@@ -159,6 +167,9 @@ proc bcol_get {bcol start end} {
 	return $result
 }
 
+# Warning:
+# while cg table get follows the half-open convention, end position is not included
+# the procedure bcol_table follows the Tcl lrange convention: end position is included!
 proc bcol_table {bcol {start {}} {end {}}} {
 	if {[dict get $bcol objtype] ne "bcol"} {error "This is not a bcol object: $bcol"}
 	set type [dict get $bcol type]
@@ -174,7 +185,9 @@ proc bcol_table {bcol {start {}} {end {}}} {
 	}
 	if {$start eq ""} {set start 0}
 	if {$end eq ""} {set end $max}
-	if {$start > $max} {return [list_fill [expr {$end-$start+1}] $default]}
+	set len [expr {$end-$start+1}]
+	if {$len <= 0} {return {}}
+	if {$start > $max} {return [list_fill $len $default]}
 	if {$end > $max} {set uend $max} else {set uend $end}
 	set offset 0
 	set curpos $start
@@ -192,7 +205,7 @@ proc bcol_table {bcol {start {}} {end {}}} {
 		set num [lindex $table 0 0]
 	}
 	while {$start < $num} {
-		if {$start == $end} {return}
+		if {$start > $end} {return}
 		puts $o $curpos\t$default
 		incr start
 		incr curpos
@@ -229,14 +242,14 @@ proc bcol_table {bcol {start {}} {end {}}} {
 array set bcol_typea {c,mn -127 s,mn -32768 i,mn -2147483648 w,mn -9223372036854775808 cu,mn 0 su,mn 0 iu,mn 0}
 array set bcol_typea {c,mx  127 s,mx  32767 i,mx  2147483647 w,mx  9223372036854775807 cu,mx 255 su,mx 65535 iu,mx 4294967295}
 
-proc bcol_make {args} {
+proc cg_bcol_make {args} {
 	global bcol_typea
 	set type iu
 	set offsetcol {}
 	set defaultvalue 0
-	set pos 0
 	set distribute 0
 	set start 0
+	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
 			-t - --type {
@@ -343,7 +356,7 @@ proc bcol_make {args} {
 			} elseif {$poffset != $offset} {
 				set size [expr {$offset-$poffset}]
 				if {$size < 0} {
-					exiterror "error: cannot make position based bcol on unsorted data (sort on position first)"
+					exiterror "error: cannot make position based bcol on unsorted data ($offset < $poffset sort on position first)"
 				}
 				while {$poffset < $offset} {
 					puts -nonewline $bo [binary format $btype $defaultvalue]
@@ -394,48 +407,150 @@ proc bcol_make {args} {
 	}
 }
 
-proc cg_bcol {cmd args} {
-	switch $cmd {
-		get {
-			if {[llength $args] != 3} {
-				exiterror "wrong # args: should be \"cg bcol get file start end\""
-			}
-			foreach indexfile $args break
-			set bcol [bcol_open $indexfile]
-			set result [bcol_get $bcol {*}[lrange $args 1 end]]
-			bcol_close $bcol
-			puts $result
-			return $result
-		}
-		table {
-			if {[llength $args] < 1 || [llength $args] > 3} {
-				exiterror "wrong # args: should be \"cg bcol table file ?start? ?end?\""
-			}
-			foreach {indexfile start end} $args break
-			set bcol [bcol_open $indexfile]
-			set result [bcol_table $bcol {*}[lrange $args 1 end]]
-			bcol_close $bcol
-			puts $result
-			return $result
-		}
-		size {
-			if {[llength $args] != 1} {
-				exiterror "wrong # args: should be \"cg bcol size file\""
-			}
-			foreach indexfile $args break
-			set bcol [bcol_open $indexfile]
-			set size [bcol_size $bcol]
-			bcol_close $bcol
-			puts $size
-			return $size
-		}
-		make {
-			bcol_make {*}$args
-		}
-		default {
-			error "unknown subcommand $cmd of bcol, must be one of: get, size"
-		}
+proc cg_bcol_get {args} {
+	if {[llength $args] != 3} {
+		exiterror "wrong # args: should be \"cg bcol get file start end\""
 	}
+	foreach {indexfile begin end} $args break
+	set bcol [bcol_open $indexfile]
+	if {[isint $end]} {incr end -1}
+	set result [bcol_get $bcol $begin $end]
+	bcol_close $bcol
+	puts $result
+	return $result
+}
+
+proc cg_bcol_table {args} {
+	if {[llength $args] < 1 || [llength $args] > 3} {
+		exiterror "wrong # args: should be \"cg bcol table file ?start? ?end?\""
+	}
+	foreach {indexfile begin end} $args break
+	set bcol [bcol_open $indexfile]
+	if {[isint $end]} {incr end -1}
+	set result [bcol_table $bcol $begin $end]
+	bcol_close $bcol
+	puts $result
+	return $result
+}
+
+proc cg_bcol_size {args} {
+	if {[llength $args] != 1} {
+		exiterror "wrong # args: should be \"cg bcol size file\""
+	}
+	foreach indexfile $args break
+	set bcol [bcol_open $indexfile]
+	set size [bcol_size $bcol]
+	bcol_close $bcol
+	puts $size
+	return $size
+}
+
+proc cg_bcol_histo {args} {
+	set pos 0
+	set namecol name
+	foreach {key value} $args {
+		switch -- $key {
+			-n - --namecol {
+				set namecol $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
+	if {[llength $args] != 3} {
+		exiterror "wrong # args: should be \"cg bcol histo regionfile bcolfile/prefix intervals\""
+	}
+	foreach {regionfile bcolfile intervals} $args break
+	set f [gzopen $regionfile]
+	set header [tsv_open $f]
+	set poss [tsv_basicfields $header 3]
+	set namepos [lsearch $header $namecol]
+	lappend poss $namepos
+	if {![file exists $bcolfile]} {
+		set prefix 1
+		set pchr {}
+	} else {
+		set prefix 0
+		set bcol [bcol_open $bcolfile]
+	}
+	set biv <[lindex $intervals 0]
+	set iv $biv
+	set header [list name]
+	set p {}
+	set tota($iv) 0
+	foreach limit $intervals {
+		set tota($limit) 0
+	}
+	set a($iv) 0
+	foreach limit $intervals {
+		set a($limit) 0
+		lappend header r$p<$limit
+		set p $limit
+	}
+	lappend header r${limit}<
+	puts [join $header \t]
+	set line [getline $f]
+	set prevname [lindex $line 3]
+	while {1} {
+		foreach {chr begin end name} [list_sub $line $poss] break
+		if {$prefix && $chr ne $pchr} {
+			catch {bcol_close $bcol}
+			set file [lindex [gzfile $bcolfile-$chr-*.bcol $bcolfile-chr$chr-*.bcol] 0]
+			set bcol [bcol_open $file]
+		}
+		if {[eof $f] || $name ne $prevname} {
+			incr tota($biv) $a($biv)
+			set result [list $a($biv)]
+			set iv $biv
+			set a($iv) 0
+			foreach limit $intervals {
+				incr tota($limit) $a($limit)
+				lappend result $a($limit)
+				set a($limit) 0
+			}
+			puts $prevname\t[join $result \t]
+			set prevname $name
+			if {[eof $f]} break
+		}
+		incr end -1
+		set data [bcol_get $bcol $begin $end]
+		foreach v $data {
+			set iv $biv
+			foreach limit $intervals {
+				if {$v < $limit} break
+				set iv $limit
+			}
+			incr a($iv)
+		}
+		set line [getline $f]
+	}
+	close $f
+	bcol_close $bcol
+	puts ----------
+	set result [list $tota($biv)]
+	foreach limit $intervals {
+		lappend result $tota($limit)
+	}
+	puts Total\t[join $result \t]
+	set tot [lmath_sum $result]
+	set presult [list [format %.2f [expr {100*$tota($biv)/$tot}]]]
+	foreach limit $intervals {
+		lappend presult [format %.2f [expr {100*$tota($limit)/$tot}]]
+	}
+	puts Totalpercent\t[join $presult \t]
+}
+
+proc cg_bcol {cmd args} {
+	if {![llength [info commands cg_bcol_$cmd]]} {
+		set list [info commands cg_bcol_*]
+		set list [list_regsub ^cg_bcol_ $list {}]
+		exiterror "cg bcol has no subcommand $cmd, must be one of: [join $list ,]"
+	}
+	cg_bcol_$cmd {*}$args
 }
 
 proc cg_index file {

@@ -634,6 +634,14 @@ proc catprog file {
 	}
 }
 
+proc getline f {
+	set line [split [gets $f] \t]
+	while {![llength $line] && ![eof $f]} {
+		set line [split [gets $f] \t]
+	}
+	return $line
+}
+
 if 0 {
 
 	ifcatch {error test} result {
