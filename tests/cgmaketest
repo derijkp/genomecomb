@@ -1,0 +1,72 @@
+cgmake_clear
+unset -nocomplain names
+
+target @names -deps {$srcdir/cgdat*.tsv} -code {
+	set file [lindex [glob $deps] 0]
+	set f [open $file]
+	set list {}
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		lappend list [lindex $line 0]
+	}
+	close $f
+	set ::@names $list
+}
+
+target {sum-(.*)\.txt} -deps {$srcdir/cgdat*.tsv} -code {
+	# var target contains target
+	# var deps contains a list of all dependencies
+	# var dep conains first dependency (so you do not have to do [lindex $deps 0] to get it)
+	# var name contains the currently targetted instance of @names
+	for {set i 1} {$i < 5} {incr i} {
+		puts "progress $target $i"
+		after 250
+	}
+	set f [open [glob $dep]]
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {[lindex $line 0] eq $target1} break
+	}
+	close $f
+	puts line=$line
+	set o [open $target.temp w]
+	set calc [join [lrange $line 1 end] +]
+	puts $o $calc=[expr $calc]
+	close $o
+	file rename $target.temp $target
+}
+
+target {sum2-(.*)\.txt} -deps {sum-$target1.txt} -code {
+	for {set i 1} {$i < 5} {incr i} {
+		puts "progress $i"
+		after 250
+	}
+	file copy $dep $target.temp
+	exec echo 2 >> $target.temp
+	file rename $target.temp $target
+}
+
+target all.txt -deps {notpresent.txt} -code {
+	error "This should not be executed, as the dependencies are not fullfilled, the other target is used"
+}
+
+target all.txt -deps {sum-$@names.txt} -vars header -code {
+	exec echo $header > $target.temp
+	exec cat {*}$deps >> $target.temp
+	file rename -force $target.temp $target
+}
+
+target all -deps {all.txt sum2-$@names.txt}
+
+proc cg_maketest {args} {
+	set args [cgmake_args {*}$args]
+putsvars args
+	if {[llength $args] != 2} {
+		exiterror "wrong # args: should be cgmaketest.tcl ?options? srcdir header"
+	}
+	foreach {::srcdir ::header} $args break
+	cgmake all
+}
+
+cg_maketest {*}$argv
