@@ -113,20 +113,22 @@ proc process_sample {dir destdir dbdir {force 0}} {
 		}
 		set other [list_remove $header $posfield $covfield]
 		foreach field $other {
-			if {![file exists coverage/$field-$chr-$name.bcol]} {
-				putslog "Making coverage/$field-$chr-$name.bcol"
+			set base coverage/$field-$name-$chr
+			if {![file exists $base.bcol]} {
+				putslog "Making $base.bcol"
 				if {[catch {
-					exec [catprog $file] $file | cg bcol make -p $posfield -t s -n -1 coverage/$field-$chr-$name $field <  $file
+					exec [catprog $file] $file | cg bcol make -p $posfield -t s -n -1 $base $field <  $file
 				} e]} {
-					exec [catprog $file] $file | cg bcol make -p $posfield -t i -n -1 coverage/$field-$chr-$name $field <  $file
+					exec [catprog $file] $file | cg bcol make -p $posfield -t i -n -1 $base $field <  $file
 				}
-				cg razip coverage/$field-$chr-$name.bcol.bin
+				cg razip $base.bcol.bin
 			}
 		}
-		if {![file exists coverage/coverage-$chr-$name.bcol]} {
-			putslog "Making coverage/coverage-$chr-$name.bcol"
-			exec [catprog $file] $file | cg bcol make -p $posfield -t su coverage/coverage-$chr-$name $covfield
-			cg razip coverage/coverage-$chr-$name.bcol.bin
+		set base coverage/coverage-$name-$chr
+		if {![file exists $base.bcol]} {
+			putslog "Making $base.bcol"
+			exec [catprog $file] $file | cg bcol make -p $posfield -t su $base $covfield
+			cg razip $base.bcol.bin
 		}
 	}
 	# copy extra info

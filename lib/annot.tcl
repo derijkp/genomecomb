@@ -112,9 +112,9 @@ proc annot_coverage_get {dir chr begin} {
 			}
 		}
 		regsub ^chr $chr {} nchr
-		set chrfile [gzfile $dir/coverage/coverage-$nchr-*.bcol $dir/coverage/coverage-chr$nchr-*.bcol]
+		set chrfile [gzfile $dir/coverage/coverage-*-$nchr.bcol $dir/coverage/coverage-*-chr$nchr.bcol]
 		if {[file exists $chrfile]} {
-			set reffile [gzfile $dir/coverage/refScore-$nchr-*.bcol $dir/coverage/refScore-chr$nchr-*.bcol]
+			set reffile [gzfile $dir/coverage/refScore-*-$nchr.bcol $dir/coverage/refScore-*-chr$nchr.bcol]
 			set type bcol
 		} else {
 			set chrfile [gzfile $dir/coverage/coverageRefScore-$nchr-*.tsv $dir/coverage/coverage-$nchr-*.tsv $dir/coverage/coverageRefScore-chr$nchr-*.tsv $dir/coverage/coverage-chr$nchr-*.tsv]
@@ -125,7 +125,7 @@ proc annot_coverage_get {dir chr begin} {
 		} elseif {[inlist {Y chrY} $chr]} {
 			set present 0
 		} else {
-			puts stderr "coverage(RefScore) file not found ($dir/coverage/coverage(RefScore)-$nchr-*.(tsv|bcol))"
+			puts stderr "coverage(RefScore) file not found ($dir/coverage/coverage(RefScore)-*-$nchr.(tsv|bcol))"
 			set present 0
 		}
 		if {!$present} {return {u u}}
