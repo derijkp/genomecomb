@@ -37,6 +37,11 @@ proc cg_sh {args} {
 	}
 }
 
+proc cg_exec {file args} {
+	set ::argv $args
+	uplevel #0 source $file
+}
+
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	set scriptname [info script]
 	package require pkgtools
