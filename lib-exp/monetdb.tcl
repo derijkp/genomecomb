@@ -151,7 +151,7 @@ proc cg_monetdb {args} {
 			set result [exec mclient -d $database -f tab -s $sql]
 		}
 		default {
-			error "unkown command \"$cmd\""
+			error "cg monetdb unkown sub command \"$cmd\""
 		}
 	}
 	return $result
