@@ -56,7 +56,7 @@ using this in queries
 
 ; **lmin($field)**: the minimum of the list of numbers (comma separated) in field. A default value (999999999) is given for non-numeric characters (-)
 ; **lmind($field, def)**: same as lmin, but you can set the default value for non-numeric characters using def (default = 0)
-; **lmax($field, def)**: the maximum of the list of numbers (comma separated) in field. A default value (-999999999) is given for non-numeric characters (-)
+; **lmax($field)**: the maximum of the list of numbers (comma separated) in field. A default value (-999999999) is given for non-numeric characters (-)
 ; **lmaxd($field, def)**: same as lmax, but you can set the default value for non-numeric characters using def (default = 0)
 
 === multifield functions ===
