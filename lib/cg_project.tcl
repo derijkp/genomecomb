@@ -400,38 +400,6 @@ proc cg_project {args} {
 	}
 }
 
-proc cplinked {src dest} {
-	file mkdir $dest
-	exec chmod g+w $dest
-	set files [glob -nocomplain $src/*]
-	foreach file $files {
-		set destfile $dest/[file tail $file]
-		if {![catch {file link $file} link]} {
-			if {[file exists $destfile]} {
-				if {![catch {file link $destfile} link]} {
-					file delete $destfile
-				} else {
-					puts stderror "destfile $destfile exists, renamed to $destfile.old"
-					file rename $destfile $destfile.old
-				}
-			}
-			exec ln -s $file $destfile
-		} elseif {[file isdir $file]} {
-			cplinked $file $destfile
-		} else {
-			if {[file exists $destfile]} {
-				if {![catch {file link $destfile} link]} {
-					file delete $destfile
-				} else {
-					puts stderror "destfile $destfile exists, renamed to $destfile.old"
-					file rename $destfile $destfile.old
-				}
-			}
-			exec ln -s $file $destfile
-		}
-	}
-}
-
 if 0 {
 	foreach {cgdir name} $data {
 		set dir [file dir $cgdir]
