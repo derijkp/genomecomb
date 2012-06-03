@@ -200,8 +200,16 @@ proc makeprimers_annotate {line shift} {
 	return $line
 }
 
-proc cindex_searchgenome {db pseq {add 0}} {
+# db: must point to a dir with cindex chromsome files
+# pseq: is the sequence to be found
+# add: will be added to each position where pseq was found in the results
+# nummax: maximum number of hits, if more are encountered, an error will be generated
+# result will be a list with
+#   * the total number of hits
+#   * a dictionary with chromosomes as keys, and a list of the positions found on that chromosome in the value
+proc cindex_searchgenome {db pseq {add 0} {nummax {}}} {
 	global cindex_genome maxnum
+	if {$nummax eq {}} {set nummax $maxnum}
 	if {![info exists cindex_genome]} {
 		set cindex_genome {}
 		putslog "loading genome database"
@@ -215,9 +223,9 @@ proc cindex_searchgenome {db pseq {add 0}} {
 	set results {}
 	set numresults 0
 	dict for {chr cindex} $cindex_genome {
-		set temp [cindex locate $cindex $pseq $maxnum]
+		set temp [cindex locate $cindex $pseq $nummax]
 		incr numresults [llength $temp]
-		if {$numresults > $maxnum} {error "found $numresults"}
+		if {$numresults > $nummax} {error "found > $nummax hits"}
 		if {[llength $temp]} {
 			if {$add} {set temp [lmath_calc $temp + $add]}
 			dict set results $chr $temp
@@ -244,8 +252,13 @@ proc makeprimers_cindex {name left right {db /complgen/refseq/hg18/genome_hg18.s
 	putslog "search [llength $new]"
 	foreach pseq $new {
 		puts -nonewline stderr .
-		set prelen [expr {[string length $pseq]-14}]
-		set endseq [string range $pseq end-14 end]
+		if {$plen($p) >= 15} {
+			set prelen 15
+			set endseq [string range $pseq end-14 end]
+		} else {
+			set prelen [string length $pseq]
+			set endseq $pseq
+		}
 		if {![catch {
 			foreach {numhits hits} [cindex_searchgenome $db $endseq $prelen] break
 		}]} {
