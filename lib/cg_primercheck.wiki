@@ -1,0 +1,37 @@
+= Makeprimers =
+
+== Format ==
+cg primercheck ?options? primerfile dbdir ?resultfile?
+
+== Summary ==
+check primer sets for multiple amplicons and snps
+
+== Description ==
+This command checks a list of primersets, given in a tab separated file with at least
+the columns name, primer1, primer2. It will add the location of the amplicon amplified
+by these primers (in the genome given in **dbdir**) as columns chromosome, begin, end.
+If the full primers match more than one amplicon, these values cannot be attributed.
+
+The command will also perform an ePCR by checking if the 15base end parts of the primers 
+amplify more than 1 amplicon; the number of amplicons found is in the column 
+"numamplicons", the location of the amplicons in "amplicons".
+
+The positions of the primers are checked for known snps (in dbsnp). All snps found 
+are listed in the columns "primer1_snps" and /"primer2_snps", together with information 
+about position,frequency and validation status. The frequency of the most frequent snp is 
+shown in columns "primer1_snpsmaxfreq" and "primer2_snpsmaxfreq".
+
+The "amplicon_fts" column will list any homopolymers detected in the amplicon.
+
+== Arguments ==
+; **primerfile**: tsv file that has at least the columns name, primer1, primer2
+; **dbdir**: directory containing reference genomes and variation data
+; **resultfile**: results will be written to this file if given, otherwise to stdout
+
+== Options ==
+; **-m maxnum**: further analysis stops if a primer has > **maxnum** hits in the genome (default 5000)
+; **-s maxsize**: only amplicons smaller than **maxsize** are considered in numamplicons (default 1000)
+; **-a maxamplicons**: if more than **maxamplicons** are found, further analysis is aborted (default 100)
+
+== Category ==
+Validation

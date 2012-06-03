@@ -14,6 +14,7 @@ package require BioTcl
 
 proc downloaddb_dbsnp_convline {line} {
 	foreach {chr begin end class ref observed name freq} $line break
+	set rest [lrange $line 8 end]
 	set observed [split $observed /]
 	set rp [lsearch $observed $ref]
 	if {$rp == -1} {
@@ -43,7 +44,7 @@ proc downloaddb_dbsnp_convline {line} {
 	set len [llength $observed]
 	set name [list_fill $len $name]
 	set freq [list_fill $len $freq]
-	list $chr $begin $end $type $ref $observed $name $freq
+	list $chr $begin $end $type $ref $observed $name $freq {*}$rest
 }
 
 proc downloaddb_dbsnp {path build dbname} {
@@ -63,8 +64,8 @@ proc downloaddb_dbsnp {path build dbname} {
 	set f [open $ufilename]
 	set o [open $filename.temp w]
 	set header [split [gets $f] \t]
-	set poss [list_cor $header {chrom start end class refNCBI observed name avHet}]
-	puts $o [join {chrom start end type ref alt name freq} \t]
+	set poss [list_cor $header {chrom start end class refNCBI observed name avHet avHetSE strand molType valid func weight exceptions submitterCount submitters alleleFreqCount alleles alleleNs alleleFreqs bitfields}]
+	puts $o [join {chrom start end type ref alt name freq avHetSE strand molType valid func weight exceptions submitterCount submitters alleleFreqCount alleles alleleNs alleleFreqs bitfields} \t]
 	set pline [list_sub [split [gets $f] \t] $poss]
 	set pline [downloaddb_dbsnp_convline $pline]
 	set num 0 ; set next 100000

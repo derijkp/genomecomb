@@ -29,6 +29,11 @@ test genome_seq {basic} {
 	exec diff tmp/temp.sft data/expected-reg_genome_seq-1-1.tsv
 } {} 
 
+test primercheck {basic} {
+	exec cg primercheck data/primers.tsv /complgen/refseq/hg19_test tmp/primerinfo.tsv 2> /dev/null
+	exec diff tmp/primerinfo.tsv data/primercheck-results.tsv
+} {} 
+
 file delete -force tmp/temp.sft
 
 set ::env(PATH) $keeppath

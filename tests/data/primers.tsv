@@ -1,0 +1,8 @@
+name	primer1	primer2	info
+disc1	CCCTCAACTTGTCACTTAAAGAAATCAC	AGTCAAACGAAAACTTCATAGGCTTCT	DISC1
+P00409_and_P00410	ttcagtttctctcggtgttcct	tacacctgcacatgtgatgaaa	"rs7059175, X33001608:33001629-33001696:33001717"
+test1	CTGGGCCCTGTCCTGCTTC	GAACAAGTCTGTGCTGTGGTCTGC	"1-12842204-12842740, pairhits 1 hits 6"
+test1.5	CTAGGCCACTTCCCGGTTGTAA	ACCCATTGCAGGCGAGGAG	"2-895210-895621, pairhits 1.5 hits 1, pairhits 1.5 hits 2 fts {{repeat 0 18 completerepeat,low trf}}"
+testsnp	GCTGGGTGGGTTGACAGAGGT	CAGCCCTCACTAGCTGCACTCAC	"17-78606549-78607126, pairhits 1 hits ? fts {{repeat 0 20 completerepeat,low trf} {repeat 0 20 completerepeat,low trf} {dbsnp 5 5 dbSNP:rs12603376}}, pairhits 1 hits 2"
+repeat	cctcacctgcttccatcctccctgg	CTGAGGCTGCTCTGCACGTGGAGTG	"1:18906-19240, repeat+snps"
+bad	AAAAAAAAAAAAAAAAAAAA	GGGGGGGGGGGGGGGGGGGG	bad

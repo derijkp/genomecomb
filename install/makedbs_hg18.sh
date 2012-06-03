@@ -63,7 +63,8 @@ if [ -f "${dest}/${build}/var_${build}_snp130.tsv.gz.tbi" ]; then
 	echo "Skipping ${dest}/${build}/var_${build}_snp130.tsv.tbi, file exists"
 else
 	cg maketabix ${dest}/${build}/var_${build}_snp130.tsv
-	gunzip -c ${dest}/${build}/var_${build}_snp130.tsv.gz > ${dest}/${build}/var_${build}_snp130.tsv
+	# gunzip -c ${dest}/${build}/var_${build}_snp130.tsv.gz > ${dest}/${build}/var_${build}_snp130.tsv
+	cg select -f 'chrom start end type ref alt name freq' ${dest}/${build}/var_${build}_snp130.tsv.gz ${dest}/${build}/var_${build}_snp130.tsv
 fi
 
 # dbsnp135 with liftover
