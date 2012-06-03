@@ -143,7 +143,7 @@ proc cg_genome_seq {args} {
 					append name " GC:[format %.1f [seq_gc $seq]] maxGC($gc):[format %.1f $maxgc]"
 				}
 			}
-			puts \>$name
+			puts \n\>$name
 		} elseif {!$firstline} {
 			foreach {chr begin end} $sub break
 			if {[comparechr $chr $pchr] == 0 && $begin == $pend} {
