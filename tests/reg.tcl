@@ -5,50 +5,50 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 test multireg {basic} {
-	file delete temp.tsv
-	exec cg multireg temp.tsv data/reg1.tsv data/reg2.tsv 2> /dev/null
-	exec diff temp.tsv data/expected-multireg-reg1-reg2.sft
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg2.tsv 2> /dev/null
+	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg2.sft
 } {}
 
 test multireg {same} {
-	file delete temp.tsv
-	exec cg multireg temp.tsv data/reg1.tsv data/reg1b.tsv 2> /dev/null
-	exec diff temp.tsv data/expected-multireg-reg1-reg1b.sft
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg1b.tsv 2> /dev/null
+	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg1b.sft
 } {}
 
 test multireg {add empty} {
-	file delete temp.tsv
-	exec cg multireg temp.tsv data/reg1b.tsv data/regempty.tsv 2> /dev/null
-	file_read temp.tsv
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/reg1b.tsv data/regempty.tsv 2> /dev/null
+	file_read tmp/temp.tsv
 } {chromosome	begin	end	reg1b	regempty
 1	10	20	1	0
 1	50	60	1	0
 }
 
 test multireg {add empty first} {
-	file delete temp.tsv
-	exec cg multireg temp.tsv data/regempty.tsv data/reg1b.tsv 2> /dev/null
-	file_read temp.tsv
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/regempty.tsv data/reg1b.tsv 2> /dev/null
+	file_read tmp/temp.tsv
 } {chromosome	begin	end	regempty	reg1b
 1	10	20	0	1
 1	50	60	0	1
 }
 
 test multireg {add fully empty} {
-	file delete temp.tsv
-	exec cg multireg temp.tsv data/reg1b.tsv data/empty.tsv
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/reg1b.tsv data/empty.tsv
 } {header error: fields \(or alternatives\) not found: chromosome begin end} error regexp
 
 test multireg {3 adds} {
-	file delete temp.tsv
-	exec cg multireg temp.tsv data/reg1.tsv data/reg1b.tsv data/reg2.tsv 2> /dev/null
-	exec diff temp.tsv data/expected-multireg-reg1-reg1b-reg2.sft
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg1b.tsv data/reg2.tsv 2> /dev/null
+	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg1b-reg2.sft
 } {}
 
 test multireg {different chromosome naming} {
-	file delete temp.tsv
-	exec cg multireg temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
-	exec diff temp.tsv data/expected-multireg-reg1-reg4.sft
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
+	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg4.sft
 } {}
 
 test regsubtract {basic} {
@@ -224,6 +224,6 @@ Y	t	1900	2000	}
 
 set ::env(PATH) $keeppath
 
-file delete -force temp.tsv temp.tsv.old
+file delete -force tmp/temp.tsv tmp/temp.tsv.old
 
 testsummarize

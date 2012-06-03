@@ -89,9 +89,9 @@ chr1	4000	4001	2
 chr2	4000	4001	4}
 
 test select {keep header info and format rtg: -hc} {
-	exec cg select -hc 1 -s position data/rtgsnps.tsv temp.tsv
+	exec cg select -hc 1 -s position data/rtgsnps.tsv tmp/temp.tsv
 	file delete temp
-	catch {exec diff temp.tsv data/rtgsnps.tsv > temp}
+	catch {exec diff tmp/temp.tsv data/rtgsnps.tsv > temp}
 	file_read temp
 } {3c3
 < name	position	type	reference	prediction	posterior	coverage	correction	support_statistics
@@ -100,9 +100,9 @@ test select {keep header info and format rtg: -hc} {
 }
 
 test select {keep header info and format vcf} {
-	exec cg select -s POS data/test.vcf temp.tsv
+	exec cg select -s POS data/test.vcf tmp/temp.tsv
 	file delete temp
-	catch {exec diff temp.tsv data/test.vcf > temp}
+	catch {exec diff tmp/temp.tsv data/test.vcf > temp}
 	file_read temp
 } {18c18
 < #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003

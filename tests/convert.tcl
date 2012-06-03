@@ -5,13 +5,13 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 test select {vcf2sft} {
-	exec cg vcf2sft data/test.vcf temp.tsv
-	exec diff temp.tsv data/expected-test.vcf2sft
+	exec cg vcf2sft data/test.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test.vcf2sft
 } {}
 
 test select {vcf2sft} {
-	exec cg vcf2sft data/test1000glow.vcf temp.tsv
-	exec diff temp.tsv data/expected-test1000glow.vcf2sft
+	exec cg vcf2sft data/test1000glow.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2sft
 } {}
 
 test select {bed2sft} {
@@ -30,6 +30,6 @@ chr7	127478198  127479365  Neg3  0  -
 chr7	127479365  127480532  Pos5  0  +
 chr7	127480532  127481699  Neg4  0  -}
 
-file delete temp.tsv
+file delete tmp/temp.tsv
 
 testsummarize

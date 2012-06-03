@@ -16,3 +16,5 @@ append ::env(PATH) :$appdir/bin
 set env(SCRATCHDIR) [file dir [tempdir]]
 
 lappend auto_path $appdir/lib
+
+file mkdir tmp

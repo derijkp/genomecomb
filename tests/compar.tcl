@@ -5,9 +5,9 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 test multicompar {basic} {
-	file delete -force temp.sft
-	cg multicompar temp.sft data/var_annot.sft data/var_annot2.sft
-	exec diff temp.sft data/expected-multicompar-var_annotvar_annot2.sft
+	file delete -force tmp/temp.sft
+	cg multicompar tmp/temp.sft data/var_annot.sft data/var_annot2.sft
+	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft
 } {} 
 
 test multicompar {basic, sequenced already present} {
@@ -30,14 +30,14 @@ test multicompar {basic, sequenced already present} {
 child process exited abnormally} 
 
 test multicompar {noalt} {
-	file delete -force temp.sft
-	cg multicompar temp.sft data/var_annotnoalt.sft data/var_annot2noalt.sft
-	exec diff temp.sft data/expected-multicompar-var_annotvar_annot2noalt.sft
+	file delete -force tmp/temp.sft
+	cg multicompar tmp/temp.sft data/var_annotnoalt.sft data/var_annot2noalt.sft
+	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2noalt.sft
 } {} 
 
 test makepvt {basic} {
-	cg makepvt -sorted 0 data/expected-multireg-reg1-reg4.sft temp.sft
-	file_read temp.sft
+	cg makepvt -sorted 0 data/expected-multireg-reg1-reg4.sft tmp/temp.sft
+	file_read tmp/temp.sft
 } {reg1	reg4	numbases	numlines
 0	1	195	7
 1	0	300	8
@@ -45,8 +45,8 @@ test makepvt {basic} {
 }
 
 test makepvt {fields} {
-	cg makepvt -sorted 0 data/expected-multireg-reg1-reg4.sft temp.sft {chromosome reg1}
-	file_read temp.sft
+	cg makepvt -sorted 0 data/expected-multireg-reg1-reg4.sft tmp/temp.sft {chromosome reg1}
+	file_read tmp/temp.sft
 } {chromosome	reg1	numbases	numlines
 1	0	10	2
 1	1	20	4
@@ -60,7 +60,7 @@ X	1	100	1
 Y	1	1000	3
 } 
 
-file delete -force temp.sft
+file delete -force tmp/temp.sft
 
 set ::env(PATH) $keeppath
 

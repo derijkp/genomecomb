@@ -10,26 +10,26 @@ puts "expected data no longer valid with new dbsnp"
 # exit
 
 test makesequenom {basic} {
-	exec cg makesequenom data/testvars.tsv temp.sft /complgen/refseq/hg19 2> /dev/null
-	exec diff temp.sft data/expected-makesequenom-testvars.tsv
+	exec cg makesequenom data/testvars.tsv tmp/temp.sft /complgen/refseq/hg19_test 2> /dev/null
+	exec diff tmp/temp.sft data/expected-makesequenom-testvars.tsv
 } {} 
 
 test makesequenom {basic} {
-	exec cg makesequenom -f -1 -n -1 data/testvars.tsv temp.sft /complgen/refseq/hg19 2> /dev/null
-	exec diff temp.sft data/expected-makesequenom-1-1-testvars.tsv
+	exec cg makesequenom -f -1 -n -1 data/testvars.tsv tmp/temp.sft /complgen/refseq/hg19_test 2> /dev/null
+	exec diff tmp/temp.sft data/expected-makesequenom-1-1-testvars.tsv
 } {} 
 
 test genome_seq {basic} {
-	exec cg genome_seq -i name data/reg_genome_seq.tsv /complgen/refseq/hg19 > temp.sft  2> /dev/null
-	exec diff temp.sft data/expected-reg_genome_seq.tsv
+	exec cg genome_seq -i name data/reg_genome_seq.tsv /complgen/refseq/hg19_test > tmp/temp.sft  2> /dev/null
+	exec diff tmp/temp.sft data/expected-reg_genome_seq.tsv
 } {} 
 
-test makesequenom {basic} {
-	exec cg genome_seq -f -1 -n -1 data/reg_genome_seq.tsv /complgen/refseq/hg19 > temp.sft  2> /dev/null
-	exec diff temp.sft data/expected-reg_genome_seq-1-1.tsv
+test genome_seq {basic} {
+	exec cg genome_seq -f -1 -n -1 data/reg_genome_seq.tsv /complgen/refseq/hg19_test > tmp/temp.sft  2> /dev/null
+	exec diff tmp/temp.sft data/expected-reg_genome_seq-1-1.tsv
 } {} 
 
-file delete -force temp.sft
+file delete -force tmp/temp.sft
 
 set ::env(PATH) $keeppath
 
