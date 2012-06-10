@@ -15,6 +15,13 @@ typedef struct DString {
 	char staticspace[DSTRING_STATICLEN];
 } DString;
 
+typedef struct Buffer {
+	int memsize;
+	int size;
+	char *data;
+	char *pos;
+} Buffer;
+
 void DStringInit(DString *dstring);
 DString *DStringNew();
 void DStringDestroy(DString *dstring);
@@ -27,6 +34,10 @@ int DStringCompare(DString *a, DString *b);
 void DStringAppend(DString *dstring, char *string);
 void DStringAppendS(DString *dstring, char *string,int size);
 ssize_t DStringGetLine(DString *dstring,	FILE *f1);
+
+void InitBuffer(Buffer *buffer,int size);
+void DelBuffer(Buffer *buffer);
+int DStringGetLine_b(DString *linePtr,	FILE *f1,Buffer *buffer);
 
 DString *DStringArrayNew(int size);
 DString *DStringArrayDestroy(DString *dstringarray);

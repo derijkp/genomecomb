@@ -1,0 +1,114 @@
+# The name of your package. This should be made of only alphanumeric characters.
+config package genomecomb
+
+# The major version number of your package. The convention, particularly
+# with stubs-enabled extensions, is that upward compatability of
+# interfaces is maintained as long as the major version number
+# remains the same.
+# $Format: "config major $ProjectMajorVersion$"$
+config major 0
+
+# The minor version number of your package.
+# $Format: "config minor $ProjectMinorVersion$"$
+config minor 8
+
+# The patchlevel of your package. This component usually gets omitted from
+# library and directory names, and may even be left blank.
+# $Format: "config patchlevel $ProjectPatchLevel$"$
+config patchlevel 6
+
+# The name of a file in your distribution that configure should find to
+# discover whether it is where it thinks it ought to be. This should
+# be a file that is unique to your extension.
+config locator generic/genomecomb.c
+
+# The list of source files that are to be built on all platforms. These
+# are conventionally held in either the top-level directory or
+# in the 'generic' subdirectory.
+config genericSources {
+	genomecombInit.c genomecomb.c tools.c
+}
+
+# The list of additional source files that are to be built on UNIX platforms.
+# These are conventionally held in the 'unix' subdirectory.
+config unixSources {
+}
+
+# The list of additional source files that are to be built on Windows. These
+# are conventionally held in the 'win' subdirectory.
+config winSources {
+}
+
+# The list of source files (held in the 'library' subdirectory) that are
+# to be installed when the extension is installed. Many packages
+# leave this blank.
+config runtimeSources {
+}
+
+# The list of header files that are to be installed when the extension is
+# installed. Note that these headers are listed relative to the
+# top-level directory.
+config headers {
+}
+
+# Does your package generate its own stub library?
+config stubsEnabled 0
+
+# Does your package extends Tk as well as Tcl?
+config tkExtension 0
+# Does your package require access to Tcl or Tk's internal interfaces?
+config accessPrivate 0
+
+# Extra libraries needed by the extension
+# contains a list of:
+# - library name
+# - paths to look in for include besides in given dir or typical dirs (based on prefix)
+# - include file to find in include dir
+# - paths to look in for libs besides in given dir or typical dirs (based on prefix)
+# - base library name to find (without lib in front ie. the one you put in -l<name>)
+config extralibs {
+}
+
+# An autoconf fragment used to check for additional system features that
+# the standard TEA configuration does not detect. Any extra
+# substitutions that you introduce through this (e.g. through the
+# use of AC_SUBST) should also be listed below if you want your
+# makefiles to pick them up. Symbols defined with AC_DEFINE do not
+# need any special action.
+config defineChecks {
+}
+
+# Special libraries that autoconf does not detect but which need to be
+# listed on the link line (e.g. those libraries that you create
+# yourself.)
+config unixlibraries {
+}
+
+# Special libraries that autoconf does not detect but which need to be
+# linked on windows systems
+config winlibraries {
+}
+
+# A list of the extra substitutions that autoconf is to put into the
+# makefiles it generates. By convention, these are written in
+# capital letters with underscores separating words.
+config extraVariables {
+}
+
+config doc {
+	$(TCLSH_PROG) $(srcdir)/build/makedoc.tcl srcdir \$(srcdir)
+}
+
+# Name of a tcl script that will be used to do the installation
+# instead of all the default shell stuff.
+# The script will be called with a key value list containing data about installation locations.
+# The filename must be relative to the configure dir
+config installscript build/install.tcl
+
+# Name of a tcl script that will be used to do the uninstallation
+# The script will be called with a key value list containing data about installation locations.
+# The filename must be relative to the configure dir
+config uninstallscript build/uninstall.tcl
+
+# Name of a tcl script that will be used to do update version numbers (in place)
+config versionscript build/version.tcl

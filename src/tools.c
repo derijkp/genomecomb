@@ -23,6 +23,13 @@ typedef struct DString {
 	char staticspace[DSTRING_STATICLEN];
 } DString;
 
+typedef struct Buffer {
+	int memsize;
+	int size;
+	char *data;
+	char *pos;
+} Buffer;
+
 void DStringInit(DString *dstring) {
 	dstring->memsize = DSTRING_STATICLEN-1;
 	dstring->size = 0;
@@ -287,7 +294,10 @@ int DStringGetLine(DString *linePtr,	FILE *f1) {
 	ssize_t size = 0;
 	while (1) {
 		c = getc(f1);
-		if ((c == EOF)&&(size == 0)) {return -1;}
+		if ((c == EOF)&&(size == 0)) {
+			*cur = '\0';
+			return -1;
+		}
 		if  (c == '\n' || c == EOF) break;
 		if (linePtr->memsize <= size) {
 			linePtr->size = size;
@@ -296,6 +306,60 @@ int DStringGetLine(DString *linePtr,	FILE *f1) {
 		}
 		*cur++ = c;
 		++size;
+	}
+	linePtr->size = size;
+	if (linePtr->memsize <= size) {
+		DStringSetSize(linePtr,2*linePtr->memsize);
+		cur = linePtr->string+size;
+	}
+	*cur = '\0';
+	return size;
+}
+
+void InitBuffer(Buffer *buffer,int size) {
+	buffer->memsize = size;
+	buffer->data = (char *)malloc(size+1);
+	buffer->pos = buffer->data;
+	buffer->size = 0;
+}
+
+void DelBuffer(Buffer *buffer) {
+	buffer->memsize = 0;
+	free(buffer->data);
+	buffer->data = NULL;
+	buffer->pos = NULL;
+	buffer->size = 0;
+}
+
+int DStringGetLine_b(DString *linePtr,	FILE *f1,Buffer *buffer) {
+	char *cur = linePtr->string;
+	int c,newdata=0;
+	ssize_t size = 0;
+NODPRINT("getline\n");
+	while (1) {
+		if (!buffer->size) {
+			buffer->size = fread(buffer->data,sizeof(char),buffer->memsize,f1);
+			buffer->pos = buffer->data;
+NODPRINT("read buffer %d\n",buffer->size);
+			if (!buffer->size) break;
+		}
+		newdata = 1;
+		buffer->size--;
+		c = *(buffer->pos)++;
+		if  (c == '\n') {
+			break;
+		}
+		if (linePtr->memsize <= size) {
+			linePtr->size = size;
+			DStringSetSize(linePtr,2*linePtr->memsize);
+			cur = linePtr->string+size;
+		}
+		*cur++ = c;
+		++size;
+	}
+	if (!newdata) {
+		*cur = '\0';
+		return -1;
 	}
 	linePtr->size = size;
 	if (linePtr->memsize <= size) {
