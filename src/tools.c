@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdint.h>
 #include <ctype.h>
 #include "debug.h"
 
@@ -289,31 +290,39 @@ void DStringAppendS(DString *dstring, char *string,int size) {
 }
 
 int DStringGetLine(DString *linePtr,	FILE *f1) {
-	char *cur = linePtr->string;
-	int c;
-	ssize_t size = 0;
-	while (1) {
-		c = getc(f1);
-		if ((c == EOF)&&(size == 0)) {
-			*cur = '\0';
-			return -1;
-		}
-		if  (c == '\n' || c == EOF) break;
-		if (linePtr->memsize <= size) {
-			linePtr->size = size;
-			DStringSetSize(linePtr,2*linePtr->memsize);
-			cur = linePtr->string+size;
-		}
-		*cur++ = c;
-		++size;
+	register char *buf,*buf_end;
+	int bsz;
+	register char *cur;
+	register int cnt;
+	register int	c;
+	if (linePtr->memsize != -1 && linePtr->string != linePtr->staticspace) {
+		buf = linePtr->string;
+		buf_end = linePtr->string+linePtr->memsize;
+		bsz = linePtr->memsize;
+	} else {
+		buf=malloc(128);
+		bsz=128;
+		buf_end=buf+bsz;
 	}
-	linePtr->size = size;
-	if (linePtr->memsize <= size) {
-		DStringSetSize(linePtr,2*linePtr->memsize);
-		cur = linePtr->string+size;
+	cur=buf;
+	cnt=0;
+	while ((c=getc_unlocked(f1))!=EOF) {
+		if (c == '\n') break;
+		*cur++=c;
+		cnt++;
+		if (cur == buf_end) {
+			buf=realloc(buf,bsz*2);
+			cur=buf+bsz;
+			bsz*=2;
+			buf_end=buf+bsz;
+		}
 	}
-	*cur = '\0';
-	return size;
+	*cur='\0';
+	linePtr->string = buf;
+	linePtr->size = cnt;
+	linePtr->memsize = buf_end-buf;
+	if (c == EOF && cnt == 0) return -1;
+	return cnt;
 }
 
 void InitBuffer(Buffer *buffer,int size) {
@@ -335,12 +344,12 @@ int DStringGetLine_b(DString *linePtr,	FILE *f1,Buffer *buffer) {
 	char *cur = linePtr->string;
 	int c,newdata=0;
 	ssize_t size = 0;
-NODPRINT("getline\n");
+NODPRINT("getline");
 	while (1) {
 		if (!buffer->size) {
 			buffer->size = fread(buffer->data,sizeof(char),buffer->memsize,f1);
 			buffer->pos = buffer->data;
-NODPRINT("read buffer %d\n",buffer->size);
+NODPRINT("read buffer %d",buffer->size);
 			if (!buffer->size) break;
 		}
 		newdata = 1;
@@ -391,55 +400,75 @@ void DStringArrayDestroy(DString *dstringarray) {
 	free(dstringarray);
 }
 
-int DStringGetTab(DString *line,	FILE *f1, int max, DString *result) {
-	char *linepos = NULL,*prevpos = NULL;
-	ssize_t read;
-	int count=0;
-	int c;
-	while ((read = DStringGetLine(line, f1)) != -1) {
-		prevpos = line->string;
-		linepos = line->string;
-		count = 0;
-		while (1) {
-			c = *linepos;
-			if (c == '\0') {
-				result[count].string = prevpos;
-				result[count].size = linepos-prevpos;
-				result[count].memsize = -1;
+int DStringGetTab(
+	DString *linePtr,	FILE *f1, int maxtab, DString *result
+) {
+	register char *cur = linePtr->string;
+	register int c,newdata=0;
+	register int count=0;
+	ssize_t size = 0;
+	maxtab += 1;
+	result[count].string = cur;
+	result[count].memsize = -1;
+	while (1) {
+		c = getc_unlocked(f1);
+		if  (c == '\t') {
+			if (count <= maxtab) {
+				result[count].size = size;
+				//fprintf(stdout,"count=%d size=%d\n",count, result[count].size);
 				count++;
-				break;
-			} else if (c == '\n') {
-				*linepos = '\0';
-				result[count].string = prevpos;
-				result[count].size = linepos-prevpos;
-				result[count].memsize = -1;
-				count++;
-				break;
-			} else if (c == '\t') {
-				*linepos = '\0';
-				result[count].string = prevpos;
-				result[count].size = linepos-prevpos;
-				result[count].memsize = -1;
-				prevpos = linepos;
-				count++;
-				if (count > max) break;
-				prevpos = linepos+1;
 			}
-			if (c == '\0') break;
-			linepos++;
+		} else if (c == '\n' || c == EOF) {
+			if (count <= maxtab) {
+				result[count].size = size;
+			}
+			break;
 		}
-		if (count >= max) break;
+		newdata = 1;
+		if (linePtr->memsize <= size) {
+			linePtr->size = size;
+			DStringSetSize(linePtr,2*linePtr->memsize);
+			cur = linePtr->string+size;
+		}
+		*cur++ = c;
+		++size;
 	}
-	if (count < max) {return 1;}
-	if (c == '\0') {
-		DStringSetS(result+count,"",0);
-	} else {
-		result[count].string = linepos+1;
-		result[count].size = (line->string+line->size) - linepos;
+	if (!newdata) {
+		*cur = '\0';
+		return -1;
+	}
+	/* fill rest of tab separated elements in array */
+	if (count < maxtab) {
+		result[count].size = size;
+		while (count < maxtab) {
+			result[++count].size = size;
+		}
+	}
+	/* add \0 to line*/
+	linePtr->size = size;
+	if (linePtr->memsize <= size) {
+		DStringSetSize(linePtr,2*linePtr->memsize);
+		cur = linePtr->string+size;
+	}
+	*cur = '\0';
+	/* make array */
+	{
+	register int prevsize;
+	count = 0;
+	prevsize = 0;
+	while (count < maxtab) {
+		int pos = result[count].size;
+		result[count].size = result[count].size-prevsize;
+		result[count].string = linePtr->string + prevsize;
 		result[count].memsize = -1;
+//fprintf(stdout,"final count=%d size=%d pos=%d\n",count, result[count].size,result[count].string);
+		prevsize = pos+1;
+		count++;
 	}
-	if (read == -1) {return 1;}
-	return 0;
+	}
+	NODPRINT("\n==== result ====\n%d %s",size,linePtr->string);
+	NODPRINT("==================== getline finished ====================");
+	return size;
 }
 
 int parse_pos(char *arg, int **rresult, int *rnum) {
