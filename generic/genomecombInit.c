@@ -16,6 +16,6 @@ Genomecomb_Init(interp)
 		return TCL_ERROR;
 	}
 #endif
-	Tcl_CreateObjCommand(interp,"tsv_select",(Tcl_ObjCmdProc *)genomecomb_tsv_select_ObjCmd,(ClientData)NULL,(Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateObjCommand(interp,"tsv_selectc",(Tcl_ObjCmdProc *)genomecomb_tsv_select_ObjCmd,(ClientData)NULL,(Tcl_CmdDeleteProc *)NULL);
 	return TCL_OK;
 }
