@@ -129,7 +129,7 @@ table_monetdb method fields {args} {
 			set tdata(qfields) $tdata(tfields)
 			set tdata(fieldscor) {}
 		} else {
-			set tdata(qfields) [tsv_select_expandfields $tdata(tfields) $tdata(fields) tdata(qcode) temp]
+			set tdata(qfields) [tsv_select_expandfields $tdata(tfields) $tdata(fields) tdata(qcode)]
 			if {$tdata(qfields) eq $tdata(tfields)} {
 				set tdata(fieldscor) {}
 			} else {

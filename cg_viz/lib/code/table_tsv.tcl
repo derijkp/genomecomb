@@ -125,7 +125,7 @@ table_tsv method query {query} {
 	set o [open $tdata(indexdir)/query_results.bcol.temp w]
 	puts $o "# binary column"
 	puts $o "# type iu"
-	puts $o "# len $len"
+	# puts $o "# len $len"
 	puts $o "# [list query $query]"
 #	puts $o [join {begin end type} \t]
 	puts $o [join {begin type offset} \t]
@@ -175,7 +175,7 @@ table_tsv method fields {args} {
 			set tdata(qfields) $tdata(tfields)
 			set tdata(fieldscor) {}
 		} else {
-			set tdata(qfields) [tsv_select_expandfields $tdata(tfields) $tdata(fields) tdata(qcode) temp]
+			set tdata(qfields) [tsv_select_expandfields $tdata(tfields) $tdata(fields) tdata(qcode)]
 			if {$tdata(qfields) eq $tdata(tfields)} {
 				set tdata(fieldscor) {}
 			} else {

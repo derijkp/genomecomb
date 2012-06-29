@@ -8,81 +8,67 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc tsv_select_idtopos {header id fields} {
-	set poss [list_cor $header $fields]
-	if {[inlist $poss -1]} {error "sample $id not present"}
-	return [lmath_calc $poss + 1]
-}
-
-proc tsv_select_f_samegeno {} {
-	upvar awkfunctions awkfunctions
-	lappend awkfunctions {
-		function samegeno(a11,a12,a21,a22) {
-			if ((a11 == a21) && (a12 == a22)) {return 1;}
-			if ((a11 == a22) && (a12 == a21)) {return 1;}
-			return 0;
-		}
-	}
-}
-
-proc tsv_select_sm {header ids} {
-	upvar awkfunctions awkfunctions
-	tsv_select_f_samegeno
-	set id1 [list_pop ids]
-	foreach {a11 a21 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 sequenced-$id1]] break
-	set temp [list "(\$$sequenced == \"v\")"]
+proc tsv_select_sm {ids neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	set id1 [string trim [list_pop ids]]
+	set temp [list "(\$\{sequenced-$id1\} == \"v\")"]
+	lappend neededfields sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1
 	foreach id $ids {
-		foreach {a12 a22 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
-		lappend temp "(\$$sequenced == \"v\")"  "samegeno(\$$a11,\$$a21,\$$a12,\$$a22)"
+		set id [string trim $id]
+		lappend neededfields sequenced-$id alleleSeq1-$id alleleSeq2-$id
+		lappend temp "(\$\{sequenced-$id\} == \"v\")"  "samegeno(\$\{alleleSeq1-$id1\},\$\{alleleSeq2-$id1\},\$\{alleleSeq1-$id\},\$\{alleleSeq2-$id\})"
 	}
 	set temp "([join $temp " && "])"
 }
 
-proc tsv_select_same {header ids} {
-	upvar awkfunctions awkfunctions
-	tsv_select_f_samegeno
-	set id1 [list_pop ids]
-	foreach {a11 a21 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id1 alleleSeq2-$id1 sequenced-$id1]] break
-	set seqlist [list "\$$sequenced != \"u\""]
+proc tsv_select_same {ids neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	set id1 [string trim [list_pop ids]]
+	set seqlist [list "\$\{sequenced-$id1\} != \"u\""]
+	lappend neededfields sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1
 	set temp {}
 	foreach id $ids {
-		lappend seqlist "\$$sequenced != \"u\""
-		foreach {a12 a22 sequenced} [tsv_select_idtopos $header $id1 [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
-		lappend temp "samegeno(\$$a11,\$$a21,\$$a12,\$$a22)"
+		set id [string trim $id]
+		lappend neededfields sequenced-$id alleleSeq1-$id alleleSeq2-$id
+		lappend seqlist "\$\{sequenced-$id\} != \"u\""
+		lappend temp "samegeno(\$\{alleleSeq1-$id1\},\$\{alleleSeq2-$id1\},\$\{alleleSeq1-$id\},\$\{alleleSeq2-$id\})"
 	}
 	set temp "([join $seqlist " && "] && [join $temp " && "])"
 }
 
-proc tsv_select_df {header ids} {
+proc tsv_select_df {ids neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
 	set temp1 {}
 	set temp2 {}
 	set seqlist {}
 	foreach id $ids {
-		foreach {a1 a2 sequenced} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
-		lappend seqlist "(\$$sequenced != \"u\")"
-		lappend temp1 "(\$$sequenced == \"v\")"
-		lappend temp2 "(\$$sequenced == \"r\")"
+		set id [string trim $id]
+		lappend neededfields sequenced-$id
+		lappend seqlist "(\$\{sequenced-$id\} != \"u\")"
+		lappend temp1 "(\$\{sequenced-$id\} == \"v\")"
+		lappend temp2 "(\$\{sequenced-$id\} == \"r\")"
 	}
 	set temp "(([join $seqlist " && " ]) && ([join $temp1 " || " ]) && ([join $temp2 " || "]))"
 }
 
-proc tsv_select_mm {header ids} {
-	upvar awkfunctions awkfunctions
-	tsv_select_f_samegeno
+proc tsv_select_mm {header ids neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
 	set temp1 {}
 	set temp2 {}
 	set list {}
 	set seqlist {}
 	foreach id $ids {
-		foreach {a1 a2 sequenced} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
-		lappend seqlist "(\$$sequenced == \"v\")"
-		lappend list [list $a1 $a2]
+		set id [string trim $id]
+		lappend seqlist "(\$\{sequenced-$id\} == \"v\")"
+		lappend list [list \{alleleSeq1-$id\} \{alleleSeq2-$id\}]
+		lappend neededfields sequenced-$id alleleSeq1-$id alleleSeq2-$id
 	}
-	set ref [lsearch $header reference]
-	if {$ref == -1} {
-		set ref [lsearch $header ref]
+	if {[lsearch $header reference] != -1} {
+		set ref reference
+	} else {
+		set ref ref
 	}
-	incr ref
+	lappend neededfields $ref
 	while {[llength $list]} {
 		foreach {a1 a2} [list_pop list] break
 		lappend temp1 "((\$$a1 != \$$ref) || (\$$a2 != \$$ref))"
@@ -93,194 +79,48 @@ proc tsv_select_mm {header ids} {
 	set temp "(([join $seqlist " && " ]) && ([join $temp1 " && " ]) && ([join $temp2 " || "]))"
 }
 
-proc tsv_select_un {header ids} {
+proc tsv_select_un {ids neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
 	set temp1 {}
 	set temp2 {}
 	foreach id $ids {
+		set id [string trim $id]
 		foreach {a1 a2 sequenced} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
-		lappend temp1 "(\$$sequenced == \"v\")"
-		lappend temp2 "(\$$sequenced == \"u\")"
+		lappend temp1 "(\$\{sequenced-$id\} == \"v\")"
+		lappend temp2 "(\$\{sequenced-$id\} == \"u\")"
+		lappend neededfields sequenced-$id
 	}
 	set temp "(([join $temp2 " || "]) && ([join $temp1 " || " ]))"
 }
 
-proc tsv_select_count {ids} {
-	set test [list_pop ids]
+proc tsv_select_count {arguments header neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	set test [list_pop arguments]
 	set temp {}
-	foreach id $ids {
-		lappend temp "($id $test)"
-	}
-	return "([join $temp " + "])"
-}
-# cg select -q 'count($alleleSeq1,$alleleSeq2, == "G") == 1' annotvar.tsv
-
-proc tsv_select_lmin {} {
-	upvar awkfunctions awkfunctions
-	lappend awkfunctions {
-		function lmin(list) {
-			def = 999999999
-		        split(list,a,/[,;]/);
-	                if (a[1] == "-" || a[1] != a[1]+0) {a[1] = def}
-		        minv = a[1];
-		        for (i in a) {
-		                if (a[1] == "-" || a[i] != a[i] + 0) {a[i] = def}
-		                if (a[i] < minv) {minv = a[i]}
-		        }
-		        return minv
-		}
-	}
-}
-
-proc tsv_select_lmax {} {
-	upvar awkfunctions awkfunctions
-	lappend awkfunctions {
-		function lmax(list) {
-			def = -999999999
-		        split(list,a,/[,;]/);
-	                if (a[1] == "-" || a[1] != a[1]+0) {a[1] = def}
-		        maxv = a[1];
-		        for (i in a) {
-		                if (a[1] == "-" || a[i] != a[i] + 0) {a[i] = def}
-		                if (a[i] > maxv) {maxv = a[i]}
-		        }
-		        return maxv
-		}
-	}
-}
-
-proc tsv_select_lmind {} {
-	upvar awkfunctions awkfunctions
-	lappend awkfunctions {
-		function lmind(list,def) {
-			if (def == nill) {def = 0}
-		        split(list,a,/[,;]/);
-	                if (a[1] == "-" || a[1] != a[1]+0) {a[1] = def}
-		        minv = a[1];
-		        for (i in a) {
-		                if (a[1] == "-" || a[i] != a[i] + 0) {a[i] = def}
-		                if (a[i] < minv) {minv = a[i]}
-		        }
-		        return minv
-		}
-	}
-}
-
-proc tsv_select_lmaxd {} {
-	upvar awkfunctions awkfunctions
-	lappend awkfunctions {
-		function lmaxd(list,def) {
-			if (def == nill) {def = 0}
-		        split(list,a,/[,;]/);
-	                if (a[1] == "-" || a[1] != a[1]+0) {a[1] = def}
-		        maxv = a[1];
-		        for (i in a) {
-		                if (a[1] == "-" || a[i] != a[i] + 0) {a[i] = def}
-		                if (a[i] > maxv) {maxv = a[i]}
-		        }
-		        return maxv
-		}
-	}
-}
-
-proc tsv_select_min {num} {
-	incr num
-	set temp [list_fill $num 1 1]
-	set result [subst {
-		function min(a[join $temp ,a]) \{
-			if (a1 ~ /def=(.*)/) {
-				def = substr(a1,5)
-				if (a2 != a2 + 0) {a2 = def}
-				minv = a2
-			} else {
-				if (a1 != a1 + 0) {a1 = def}
-				def = 999999999
-				minv = a1
-			}
-	}]
-	foreach field [lrange $temp 1 end] {
-		append result [subst {
-			if (a$field == nill) {return minv}
-			if (a$field != a$field + 0) {a$field = def}
-			if (a$field < minv) {minv = a$field}
-		}]
-	}
-	append result [subst {
-			return minv
-		\}
-	}]
-	return $result
-}
-
-proc tsv_select_max {num} {
-	incr num
-	set temp [list_fill $num 1 1]
-	set result [subst {
-		function max(a[join $temp ,a]) \{
-			if (a1 ~ /def=(.*)/) {
-				def = substr(a1,5)
-				if (a2 != a2 + 0) {a2 = def}
-				maxv = a2
-			} else {
-				if (a1 != a1 + 0) {a1 = def}
-				def = -999999999
-				maxv = a1
-			}
-	}]
-	foreach field [lrange $temp 1 end] {
-		append result [subst {
-			if (a$field == nill) {return maxv}
-			if (a$field != a$field + 0) {a$field = def}
-			if (a$field > maxv) {maxv = a$field}
-		}]
-	}
-	append result [subst {
-			return maxv
-		\}
-	}]
-	return $result
-}
-
-proc tsv_select_counthasone {ids} {
-	upvar awkfunctions awkfunctions
-	upvar tsv_funcnum tsv_funcnum
-	set test [list_pop ids]
-	lappend awkfunctions [subst -nocommands {
-		function tsvfunc${tsv_funcnum}(list) {
-		        split(list,a,/[,;]/);
-		        for (i in a) {
-		                if (a[i] $test) {return 1}
-		        }
-		        return 0
-		}
-	}]
-	set temp {}
-	foreach id $ids {
-		lappend temp "tsvfunc${tsv_funcnum}($id)"
+	foreach q $arguments {
+		lappend q {*}$test
+		lappend temp "([tsv_select_detokenize $q $header neededfields])"
 	}
 	return "([join $temp " + "])"
 }
 
-proc tsv_select_counthasall {ids} {
-	upvar awkfunctions awkfunctions
-	upvar tsv_funcnum tsv_funcnum
-	set test [list_pop ids]
-	lappend awkfunctions [subst -nocommands {
-		function tsvfunc${tsv_funcnum}(list) {
-		        split(list,a,/[,;]/);
-		        for (i in a) {
-		                if (!(a[i] $test)) {return 0}
-		        }
-		        return 1
-		}
-	}]
+proc tsv_select_counthasone {ids operand value} {
 	set temp {}
 	foreach id $ids {
-		lappend temp "tsvfunc${tsv_funcnum}($id)"
+		lappend temp "hasone($id, \"$operand\", $value)"
 	}
 	return "([join $temp " + "])"
 }
 
-proc tsv_select_oneof {header ids} {
+proc tsv_select_counthasall {ids operand value} {
+	set temp {}
+	foreach id $ids {
+		lappend temp "hasall($id, \"$operand\", $value)"
+	}
+	return "([join $temp " + "])"
+}
+
+proc tsv_select_oneof {ids} {
 	set value [list_shift ids]
 	set temp {}
 	foreach id $ids {
@@ -288,35 +128,48 @@ proc tsv_select_oneof {header ids} {
 	}
 	return "([join $temp " || "])"
 }
-# cg select -q 'oneof($alleleSeq1-dlb_a_d390,"G","C")' annottest_compar.tsv
 
-proc tsv_select_expandfield {header field qpossVar} {
-	upvar $qpossVar qposs
+proc tsv_select_region {ids header neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	set ids [split $ids ":-_ ,\{\}\""]
+	set ids [list_remove $ids {}]
+	set poss [tsv_basicfields $header 3]
+	set fields [list_sub $header $poss]
+	foreach {rchr rbegin rend} $fields break
+	lappend neededfields {*}$fields
+	set result {}
+	foreach {chr begin end} $ids {
+		lappend result "(samechr(\"$chr\",\$$rchr) && ($begin) < \$$rend && ($end) > \$$rbegin)"
+	}
+	return "(([join $result "\) || \("]))"
+}
+
+proc tsv_select_expandfield {header field} {
 	set qposs [list_find -glob $header $field]
 	if {![llength $qposs]} {
 		error "no fields matched \"$field\""
 	}
 	set result [list_sub $header $qposs]
-	set qposs [lmath_calc $qposs + 1]
-	return $result
+	return [list_remdup $result]
 }
 
-proc tsv_select_expandfields {header qfields qpossVar awkfunctionsVar} {
+proc tsv_select_expandfields {header qfields qpossVar} {
 	upvar $qpossVar qposs
-	upvar $awkfunctionsVar awkfunctions
 	upvar tsv_funcnum tsv_funcnum
 	set qposs {}
 	set rfields {}
 	foreach field $qfields {
 		set pos [string first = $field]
 		if {$pos != -1} {
-			lappend rfields [string range $field 0 [expr {$pos-1}]]
+			set fieldname [string range $field 0 [expr {$pos-1}]]
+			lappend rfields $fieldname
 			set code [string range $field [expr {$pos+1}] end]
-			lappend qposs [tsv_select_expandcode $header $code awkfunctions]
+			lappend qposs [list code $code]
 		} elseif {[string first * $field] != -1} {
-			lappend rfields {*}[tsv_select_expandfield $header $field poss]
-			foreach pos $poss {
-				lappend qposs \$$pos
+			set efields [tsv_select_expandfield $header $field]
+			lappend rfields {*}$efields
+			foreach pos [list_cor $header $efields] {
+				lappend qposs $pos
 			}
 		} else {
 			set pos [lsearch $header $field]
@@ -324,106 +177,300 @@ proc tsv_select_expandfields {header qfields qpossVar awkfunctionsVar} {
 				error "field \"$field\" not present"
 			}
 			lappend rfields $field
-			lappend qposs \$[expr {$pos+1}]
+			lappend qposs $pos
 		}
 	}
 	return $rfields
 }
 
-proc tsv_select_expandcode {header code awkfunctionsVar} {
-	upvar $awkfunctionsVar awkfunctions
+proc tsv_select_tokenize {header code neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
 	upvar tsv_funcnum tsv_funcnum
-	set indices [list_unmerge [regexp -all -indices -inline {[$]([*a-zA-z0-9_.-]+)} $code]]
-	set indices [list_reverse $indices]
-	list_foreach {start end} $indices {
-		set field [string range $code [expr {$start+1}] $end]
-		if {[string first * $field] == -1} {
-			set pos [lsearch $header $field]
-			if {$pos == -1} {error "field \"$field\" not present"}
-			incr pos
-			set code [string_replace $code $start $end \$$pos]
-		} else {
-			set temp [tsv_select_expandfield $header $field tposs]
-			if {![llength $temp]} {error "field \"$field\" not present"}
-			set new {}
-			foreach pos $tposs {
-				lappend new \$$pos
+	# variable preprocessor first, to expand *
+	# check and exchange variables needed
+	set code [string trim $code]
+	set newcode {}
+	set escape 0
+	set len [string length $code]
+	set prevpos 0
+	set pos 0
+	while {$pos < $len} {
+		set pos [lindex [regexp -start $pos -inline -indices {\$} $code] 0 0]
+		if {$pos eq ""} {
+			append newcode [string range $code $prevpos end]
+			break
+		}
+		append newcode [string range $code $prevpos $pos]
+		incr pos
+		set prevpos $pos
+		set char [string index $code $pos]
+		if {$char eq "\{"} {
+			set pos [lindex [regexp -start $pos -inline -indices \} $code] 0 0]
+			set field [string range $code [expr {$prevpos+1}] [expr {$pos-1}]]
+			set fields [tsv_select_expandfield $header $field]
+			if {![llength $fields]} {
+				error "field \"$field\" not present"
 			}
-			set code [string_replace $code $start $end [join $new ,]]
+			append newcode \{[join $fields \},\$\{]\}
+			lappend neededfields {*}$fields
+			set prevpos [expr {$pos+1}]
+		} else {
+			while 1 {
+				set pos [lindex [regexp -start $pos -inline -indices {[^A-Za-z0-9._*]} $code] 0 0]
+				set char [string index $code $pos]
+				if {$char ne "-"} break
+				incr pos
+				set char [string index $code $pos]
+				if {![regexp {[A-Za-z.*]} $char]} break
+			}
+			set field [string range $code $prevpos [expr {$pos-1}]]
+			set fields [tsv_select_expandfield $header $field]
+			if {![llength $fields]} {
+				error "field \"$field\" not present"
+			}
+			append newcode \{[join $fields \},\$\{]\}
+			lappend neededfields {*}$fields
+			set prevpos $pos
 		}
 	}
-	set indices [list_unmerge [regexp -all -indices -inline {([a-zA-z0-9_]+)\([^)]+\)} $code]]
-	set indices [list_reverse $indices]
-	list_foreach {start end} $indices {
-		set full [string range $code [expr {$start}] $end]
-		if {[regexp {^(.*)\((.*)\)$} $full temp func args]} {
-			switch $func {
-				sm {
-					set ids [split $args ,]
-					set temp [tsv_select_sm $header $ids]
-				}
-				same {
-					set ids [split $args ,]
-					set temp [tsv_select_same $header $ids]
-				}
-				df {
-					set ids [split $args ,]
-					set temp [tsv_select_df $header $ids]
-				}
-				mm {
-					set ids [split $args ,]
-					set temp [tsv_select_mm $header $ids]
-				}
-				un {
-					set ids [split $args ,]
-					set temp [tsv_select_un $header $ids]
-				}
-				count {
-					set ids [split $args ,]
-					set temp [tsv_select_count $ids]
-				}
-				counthasone {
-					set ids [split $args ,]
-					set temp [tsv_select_counthasone $ids]
-				}
-				counthasall {
-					set ids [split $args ,]
-					set temp [tsv_select_counthasall $ids]
-				}
-				oneof {
-					set ids [split $args ,]
-					set temp [tsv_select_oneof $header $ids]
-				}
-				lmin {
-					tsv_select_lmin
-				}
-				lmax {
-					tsv_select_lmax
-				}
-				lmind {
-					tsv_select_lmind
-				}
-				lmaxd {
-					tsv_select_lmaxd
-				}
-				min {
-					set num [regexp -all , $args]
-					if {$num > [lindex $awkfunctions 0]} {lset awkfunctions 0 $num}
-				}
-				max {
-					set num [regexp -all , $args]
-					if {$num > [lindex $awkfunctions 1]} {lset awkfunctions 1 $num}
-				}
-			}
-			set code [string_replace $code $start $end $temp]
-		} else {
-			set pos [lsearch $header $field]
-			if {$pos == -1} {error "field \"$field\" not present"}
+	set code $newcode
+	#
+	# tokenize
+	set len [string length $code]
+	set prevpos 0
+	set pos 0
+	set stack {}
+	set curstack {}
+	set curtype {}
+	set work {}
+	array set opsa {- u + u ~ u ! u ** d * d / d % d << d >> d < d > d <= d >= d == d != d eq d ne d in s ni s & d ^ d | d && d || t ? t : t}
+	while {$pos < $len} {
+		set char [string index $code $pos]
+		while {[regexp {[ \t\n]} $char]} {
 			incr pos
-			set code [string_replace $code $start $end \$$pos]
+			set char [string index $code $pos]
+		}
+		set prevpos $pos
+		if {[regexp {[0-9.]} $char]} {
+			# number
+			incr pos
+			set pos [lindex [regexp -start $pos -inline -indices {[^0-9.]|$} $code] 0 0]
+			lappend curstack [list @num [string range $code $prevpos [expr {$pos-1}]]]
+		} elseif {[regexp {[+!*/%<>&^|?:=-]} $char]} {
+			# operand
+			incr pos
+			set pos [lindex [regexp -start $pos -inline -indices {[^+!*/%<>&^|?:=-]|$} $code] 0 0]
+			set op [string range $code $prevpos [expr {$pos-1}]]
+			if {[info exists opsa($op)]} {set type @op} else {set type @newop}
+			lappend curstack [list $type $op]
+		} elseif {[regexp {[A-Za-z]} $char]} {
+			# function or text operand
+			set pos [lindex [regexp -start $pos -inline -indices {[^A-Za-z0-9_]|$} $code] 0 0]
+			set char [string index $code $pos]
+			if {$char eq "\("} {
+				# function
+				lappend curstack [list @function [string range $code $prevpos [expr {$pos-1}]]]
+				lappend stack $curstack
+				set curstack {}
+				incr pos
+			} else {
+				# text operand
+				set op [string range $code $prevpos [expr {$pos-1}]]
+				if {[info exists opsa($op)]} {set type @op} else {set type @newop}
+				lappend curstack [list $type $op]
+			}
+		} elseif {$char eq "\("} {
+			if {$curstack ne""} {
+				lappend curstack [list @braces]
+				lappend stack $curstack
+				set curstack {}
+			}
+			incr pos
+			set prevpos $pos
+		} elseif {$char eq "\$"} {
+			# variable
+			set prevpos $pos
+			incr pos 2
+			set pos [string first \} $code $pos]
+			lappend curstack [list @var [string range $code [expr {$prevpos+2}] [expr {$pos-1}]]]
+			incr pos
+		} elseif {$char eq ","} {
+			set prevstack [list_pop stack]
+			set temp [list_pop prevstack]
+			if {[lindex $temp 0] ne "@function"} {
+				error "Error: unexpected \",\" outside function argument list on position $pos in $code"
+			}
+			lappend temp $curstack
+			lappend prevstack $temp
+			lappend stack $prevstack
+			set curstack {}
+			incr pos
+		} elseif {$char eq "\)"} {
+			set prevstack [list_pop stack]
+			set prevtype [lindex $prevstack end 0]
+			if {$prevtype eq "@function"} {
+				set temp [list_pop prevstack]
+				lappend temp $curstack
+				lappend prevstack $temp
+				set curstack $prevstack
+				incr pos
+			} elseif {$prevtype eq "@braces"} {
+				set temp [list_pop prevstack]
+				lappend temp {*}$curstack
+				lappend prevstack $temp
+				set curstack $prevstack
+				incr pos
+			} else {
+				error "Error: unexpected \")\""
+			}
+		} elseif {$char eq "\{"} {
+			incr pos
+			set pos [string first \} $code $pos]
+			lappend curstack [list @val [string range $code $prevpos $pos]]
+			incr pos
+		} elseif {$char eq "\""} {
+			incr pos
+			set pos [string first \" $code $pos]
+			lappend curstack [list @val [string range $code $prevpos $pos]]
+			incr pos
+		} elseif {$char eq "\["} {
+			incr pos
+			set prevpos $pos
+			while {$pos < $len} {
+				set pos [string first \] $code $pos]
+				set command [string range $code $prevpos [expr {$pos-1}]]
+				if {[info complete $command]} break
+			}
+			if {![info complete $command]} {
+				error "error: incomplete command in expression"
+			}
+			lappend curstack [list @command $command]
+			incr pos
+		} elseif {$char eq "~"} {
+			# awk style regexp
+			incr pos
+			set char [string index $code $pos]
+			while {[regexp {[ \t\n]} $char]} {
+				incr pos
+				set char [string index $code $pos]
+			}
+			if {$char eq "/"} {
+				incr pos
+				set prevpos $pos
+				lappend curstack [list @newop regexp]
+				set pos [string first / $code $pos]
+				lappend curstack [list @val \{[string range $code $prevpos [expr {$pos-1}]]\}]
+				incr pos
+			} else {
+				lappend curstack [list @op ~]
+			}
+		} else {
+			error "????"
 		}
 	}
-	return $code
+	if {$stack ne ""} {
+		error "unbalanced expression"
+	}
+	return $curstack
+}
+
+proc tsv_select_detokenize {tokens header neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	if {[llength $tokens] >= 3} {
+		set ops [list_subindex $tokens 0]
+		set poss [lsort -integer -decreasing [list_find $ops @newop]]
+		foreach pos $poss {
+			foreach {pre op post} [lrange $tokens [expr {$pos-1}] [expr {$pos+1}]] break
+			set tokens [lreplace $tokens [expr {$pos-1}] [expr {$pos+1}] [list @function [lindex $op end] [list $pre] [list $post]]]
+		}
+	}
+	set result {}
+	foreach line $tokens {
+		foreach {type val} $line break
+		switch -exact $type {
+			@num - @val {
+				lappend result $val
+			}
+			@var {
+				lappend result \$\{$val\}
+			}
+			@op {
+				lappend result $val
+			}
+			@newop {
+				lappend result $val
+			}
+			@function {
+				set arguments [lrange $line 2 end]
+				set ids {}
+				foreach el $arguments {
+					lappend ids [tsv_select_detokenize $el $header neededfields]
+				}
+				switch $val {
+					sm {
+						set temp [tsv_select_sm $ids neededfields]
+					}
+					same {
+						set temp [tsv_select_same $ids neededfields]
+					}
+					df {
+						set temp [tsv_select_df $ids neededfields]
+					}
+					mm {
+						set temp [tsv_select_mm $header $ids neededfields]
+					}
+					un {
+						set temp [tsv_select_un $ids neededfields]
+					}
+					count {
+						set temp [tsv_select_count $arguments $header neededfields]
+					}
+					region {
+						set temp [tsv_select_region $ids $header neededfields]
+					}
+					counthasone {
+						foreach {operand value} [lindex $line end] break
+						set operand [tsv_select_detokenize [list $operand] $header neededfields]
+						set value [tsv_select_detokenize [list $value] $header neededfields]
+						set temp [tsv_select_counthasone [lrange $ids 0 end-1] $operand $value]
+					}
+					counthasall {
+						foreach {operand value} [lindex $line end] break
+						set operand [tsv_select_detokenize [list $operand] $header neededfields]
+						set value [tsv_select_detokenize [list $value] $header neededfields]
+						set temp [tsv_select_counthasall [lrange $ids 0 end-1] $operand $value]
+					}
+					oneof {
+						set temp [tsv_select_oneof $ids]
+					}
+					default {
+						set temp "${val}\([join $ids ", "]\)"
+					}
+				}
+				lappend result $temp
+			}
+			@braces {
+				lappend result \([tsv_select_detokenize [lrange $line 1 end] $header neededfields]\)
+			}
+			@command {
+				append result \[$val\]
+			}
+			default {
+				error "unkown token $type"
+			}
+		}
+	}
+	return [join $result " "]
+}
+
+proc tsv_select_expandcode {header code neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	upvar tsv_funcnum tsv_funcnum
+	# variable preprocessor first, to expand *
+	# check and exchange variables needed
+	set tokens [tsv_select_tokenize $header $code neededfields]
+	# detokenize, making necessary changes
+	tsv_select_detokenize $tokens $header neededfields
 }
 
 proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0}} {
@@ -439,15 +486,14 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			tsv_hcheader $f keepheader header
 		}
 	}
-	set awk ""
-	set awkfunctions {0 0}
+	set neededfields {}
 	set sort ""
 	set cut ""
 	set tsv_funcnum 1
-	set qfields [tsv_select_expandfields $header $qfields qposs awkfunctions]
+	set qfields [tsv_select_expandfields $header $qfields qposs]
 	if {$inverse} {
 		set qfields [list_lremove $header $qfields]
-		set qfields [tsv_select_expandfields $header $qfields qposs awkfunctions]
+		set qfields [tsv_select_expandfields $header $qfields qposs]
 	}
 
 	if {[llength $sortfields]} {
@@ -460,24 +506,55 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		}
 		set sort "gnusort8 -T \"[scratchdir]\" -t \\t -N -s -k[join $keys " -k"]"
 	}
-	if {($query ne "") || ($qfields ne "")} {
-		append awk {BEGIN {FS="\t" ; OFS="\t"}}
-		if {$query ne ""} {
-			set query [tsv_select_expandcode $header $query awkfunctions]
-			append awk " $query "
-		}
-		append awk " \{print [join $qposs ,]\}"
+	set query [string trim $query]
+	if {$query ne ""} {
+		set pquery [tsv_select_expandcode $header $query neededfields]
+	} else {
+		set pquery 1
 	}
 	set pipe {}
 	if {$sort ne ""} {
 		lappend pipe $sort
 	}
-	if {[lindex $awkfunctions 0]} {lappend awkfunctions [tsv_select_min [lindex $awkfunctions 0]]}
-	if {[lindex $awkfunctions 1]} {lappend awkfunctions [tsv_select_max [lindex $awkfunctions 1]]}
-	set awk [join [list_remdup [lrange $awkfunctions 2 end]] \n]\n$awk
-# putslog stderr ----------\n$awk\n----------
-	if {[string trim $awk] ne ""} {
-		lappend pipe [list awk $awk]
+# putslog stderr ----------\n$query\n----------
+	if {$query ne "" || [llength $qfields]} {
+		set outcols {}
+		set todo {}
+		set num 0
+		foreach el $qposs {
+			if {[isint $el]} {
+				lappend outcols $el
+			} else {
+				set code [tsv_select_expandcode $header [lindex $el 1] neededfields]
+				lappend outcols make_col$num
+				lappend todo make_col$num $code
+			}
+			incr num
+		}
+		set neededfields [list_remdup $neededfields]
+		set neededcols [list_cor $header $neededfields]
+		set tclcode "package require genomecomb\n"
+		foreach {name code} $todo {
+			append tclcode [subst -nocommands {
+				proc $name {$neededfields} {
+					if {[catch {expr {$code}} e]} {
+						switch \$e {
+							{domain error: argument not in valid range} {return NaN}
+							{divide by zero} {return NaN}
+						}
+					}
+					return \$e
+				}
+			}]
+		}
+		append tclcode [subst -nocommands {
+			proc tsv_selectc_query {$neededfields} {
+				expr {$pquery}
+			}
+			tsv_selectc tsv_selectc_query {$neededcols} {$outcols}
+			exit
+		}]
+		lappend pipe [list cg exec $tclcode]
 	}
 #putslog -------------pipe-------------------
 #putslog pipe:[join $pipe " | "]
@@ -593,6 +670,7 @@ proc cg_select {args} {
 		incr pos 2
 	}
 	set args [lrange $args $pos end]
+	# clean fields and query: remove comments \n anf \t to space
 	regsub -all {\n#[^\n]*} $fields {} fields
 	regsub -all {\n#[^\n]*} $query {} query
 	regsub -all {\n|\t} $query { } query
@@ -628,3 +706,5 @@ if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	set ::base [file tail [info script]]
 	cg_select {*}$argv
 }
+
+

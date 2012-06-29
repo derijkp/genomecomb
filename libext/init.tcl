@@ -33,3 +33,25 @@ if {![info exists appdir]} {
 	set env(PATH) $appdir/bin:$appdir/extern:[file dir [file dir $appdir]]/bin:$env(PATH)
 }
 
+interp alias {} ::tcl::mathfunc::! {} ::tcl::mathop::!
+interp alias {} ::tcl::mathfunc::== {} ::tcl::mathop::==
+interp alias {} ::tcl::mathfunc::ne {} ::tcl::mathop::ne
+interp alias {} ::tcl::mathfunc::** {} ::tcl::mathop::**
+interp alias {} ::tcl::mathfunc::% {} ::tcl::mathop::%
+interp alias {} ::tcl::mathfunc::& {} ::tcl::mathop::&
+interp alias {} ::tcl::mathfunc::!= {} ::tcl::mathop::!=
+interp alias {} ::tcl::mathfunc::ni {} ::tcl::mathop::ni
+interp alias {} ::tcl::mathfunc::<< {} ::tcl::mathop::<<
+interp alias {} ::tcl::mathfunc::<= {} ::tcl::mathop::<=
+interp alias {} ::tcl::mathfunc::* {} ::tcl::mathop::*
+interp alias {} ::tcl::mathfunc::>= {} ::tcl::mathop::>=
+interp alias {} ::tcl::mathfunc::+ {} ::tcl::mathop::+
+interp alias {} ::tcl::mathfunc::< {} ::tcl::mathop::<
+interp alias {} ::tcl::mathfunc::| {} ::tcl::mathop::|
+interp alias {} ::tcl::mathfunc::>> {} ::tcl::mathop::>>
+interp alias {} ::tcl::mathfunc::- {} ::tcl::mathop::-
+interp alias {} ::tcl::mathfunc::eq {} ::tcl::mathop::eq
+interp alias {} ::tcl::mathfunc::> {} ::tcl::mathop::>
+interp alias {} ::tcl::mathfunc::^ {} ::tcl::mathop::^
+interp alias {} ::tcl::mathfunc::/ {} ::tcl::mathop::/
+interp alias {} ::tcl::mathfunc::in {} ::tcl::mathop::in
