@@ -75,5 +75,6 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 	fclose(f2);
 	fclose(f3);
 	if (line1) {DStringDestroy(line1);}
+	if (result1) {DStringArrayDestroy(result1);}
 	exit(EXIT_SUCCESS);
 }
