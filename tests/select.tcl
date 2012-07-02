@@ -244,4 +244,20 @@ test select {counthasone column} {
 	split [exec cg select -f {chromosome begin {lmin=counthasone($list, ==2)}} < data/vars1.sft] \n
 } {{chromosome	begin	lmin} {chr1	4000	0} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	0} {chr2	4000	1} {chr2	4001	1} {chr2	4099	1} {chr2	5000	1} {chr2	5000	0} {chr2	5005	0} {chr2	5010	0} {chr2	5011	0} {chr2	8000	0}}
 
+test select {ROW} {
+	split [exec cg select -f {chromosome begin end} -q {$ROW == 2} < data/vars1.sft] \n
+} {{chromosome	begin	end} {chr1	4099	5000}}
+
+test select {ROW} {
+	split [exec cg select -f {chromosome begin end row=$ROW} -q {$ROW >= 2 && $ROW <= 3} < data/vars1.sft] \n
+} {{chromosome	begin	end	row} {chr1	4099	5000	2} {chr1	5000	5010	3}}
+
+test select {shared objects bugcheck} {
+	split [exec cg select -f {chromosome begin end {test=[set ::keep $begin]}} -q {$ROW between {2 3}} < data/vars1.sft] \n
+} {{chromosome	begin	end	test} {chr1	4099	5000	4099} {chr1	5000	5010	5000}}
+
+test select {shared objects bugcheck} {
+	split [exec cg select -f {chromosome begin end {test="[get ::keep 1]-[set ::keep $begin]"}} -q {$ROW between {2 3}} < data/vars1.sft] \n
+} {{chromosome	begin	end	test} {chr1	4099	5000	1-4099} {chr1	5000	5010	4099-5000}}
+
 testsummarize

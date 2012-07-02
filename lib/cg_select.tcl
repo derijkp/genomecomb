@@ -145,6 +145,7 @@ proc tsv_select_region {ids header neededfieldsVar} {
 }
 
 proc tsv_select_expandfield {header field} {
+	if {$field eq "ROW"} {return "ROW"}
 	set qposs [list_find -glob $header $field]
 	if {![llength $qposs]} {
 		error "no fields matched \"$field\""
@@ -216,7 +217,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 			set prevpos [expr {$pos+1}]
 		} else {
 			while 1 {
-				set pos [lindex [regexp -start $pos -inline -indices {[^A-Za-z0-9._*]} $code] 0 0]
+				set pos [lindex [regexp -start $pos -inline -indices {[^A-Za-z0-9._*]|$} $code] 0 0]
 				set char [string index $code $pos]
 				if {$char ne "-"} break
 				incr pos
@@ -439,6 +440,16 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 						set operand [tsv_select_detokenize [list $operand] $header neededfields]
 						set value [tsv_select_detokenize [list $value] $header neededfields]
 						set temp [tsv_select_counthasall [lrange $ids 0 end-1] $operand $value]
+					}
+					hasone {
+						if {[llength $ids] == 2} {
+							foreach {operand value} [lindex $line end] break
+							set operand [tsv_select_detokenize [list $operand] $header neededfields]
+							set value [tsv_select_detokenize [list $value] $header neededfields]
+							set temp "${val}\([lindex $ids 0], \"$operand\", $value\)"
+						} else {
+							set temp "${val}\([join $ids ", "]\)"
+						}
 					}
 					oneof {
 						set temp [tsv_select_oneof $ids]

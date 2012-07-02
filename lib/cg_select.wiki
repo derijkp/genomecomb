@@ -39,8 +39,13 @@ Lines starting with a # are comments
 In queries, the value of a field for the line can be accessed using a $ followed by the name of the field.
 e.g.:
 $start > 10000
-will only return lines where the field start is larger than 10000. Queries support all operators
-and functions provided by awk.
+will only return lines where the field start is larger than 10000.
+The special variable ROW will contain the row number of the current line. $ROW starts at 0 for this 
+first line after the header/comments.
+e.g.:
+$ROW == 1000
+will select data line 1000 in the file.
+Queries support all operators and functions provided by Tcl expr.
 
 Some extra functions are available:
 
@@ -53,20 +58,27 @@ a1, etc. can be a list of numbers (separated by commas, spaces or ;).
 If one of the args is not a number it will be replaced by -Inf
 ; **oneof($field,value1,cvalue2,...)**: returns true if the given field matches one of the values
 The default value for non-numeric arguments can be set e.g. to 1000 by giving def=1000 as the first argument
+; **between(value,{min max})**: true of value is >= min and <= max (e.g. "between($begin,1000,2000)")
+This function can also be used as an operand, eg "$field between {1 2}"
 ; **avg(value,...)**: returns the average of the values given. Non-number values are ignored.
 If no number was given, the answer will be NaN
 ; **region("chromosome:begin-end",...)**: is true for any region in dataset that overlaps the given regions.
 Can also be given as region(chromosome,begin,end,...).
 If the chromosome value in the query or the data file starts with chr, this part is ignored: chr2 will match 2, as wel as Chr2.
 ; **regexp(value,pattern): true if value matches the regular expression given by **pattern**
+
 === fields that contain comma separated lists ===
-Some fields can contain multiple values in the form of a comma separated list. The following functions allow
+Some fields can contain multiple values in the form of a comma or ; separated list. The following functions allow
 using this in queries
 
 ; **lmin($field, ...)**: the minimum of the list of numbers (comma or space or ; separated) in field. A default value (Inf) is given for non-numeric characters (-)
 ; **lmind($field, ..., def)**: same as lmin, but you can set the default value for non-numeric characters is given as the last parameter
 ; **lmax($field, ...)**: the maximum of the list of numbers (comma or space or ; separated) in field. A default value (-Inf) is given for non-numeric characters (-)
 ; **lmaxd($field, ..., def)**: same as lmax, but you can set the default value for non-numeric characters is given as the last parameter
+; **contains($field, value)**; true if the list in **field** contains **value**. 
+This can also be used as an operand: $field contains value
+; **shares($field, valuelist)**; true if the list in **field** and the list in **valuelist** (a SPACE separated list!) share a value.
+This can also be used as an operand: $field shares valuelist
 
 === multifield functions ===
 The following functions address multiple fields.

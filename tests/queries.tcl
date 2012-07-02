@@ -198,4 +198,32 @@ test query {query 21 combine} {
 	exec diff temp.tsv answers/query21.tsv
 } {}
 
+test query {query 22} {
+	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
+		hasone($refGene_impact, "==", "CDSMIS") || hasone($knownGene_impact, "==", "CDSMIS")
+	} annottestcompar.tsv.rz temp.tsv
+	exec diff temp.tsv answers/query22.tsv
+} {}
+
+test query {query 22 b} {
+	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
+		contains($refGene_impact, "CDSMIS") || ($knownGene_impact contains "CDSMIS")
+	} annottestcompar.tsv.rz temp.tsv
+	exec diff temp.tsv answers/query22.tsv
+} {}
+
+test query {query 22 c} {
+	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
+		hasone($refGene_impact, == "CDSMIS") || hasone($knownGene_impact, == "CDSMIS")
+	} annottestcompar.tsv.rz temp.tsv
+	exec diff temp.tsv answers/query22.tsv
+} {}
+
+test query {query 23 b} {
+	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
+		shares($refGene_impact, "CDSMIS CDSINS") && ($knownGene_impact shares "CDSMIS CDSINS")
+	} annottestcompar.tsv.rz temp.tsv
+	exec diff temp.tsv answers/query23.tsv
+} {}
+
 testsummarize
