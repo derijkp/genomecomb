@@ -27,9 +27,7 @@ test bcol_make {basic} {
 } {1c1
 < value
 ---
-> coverage
-77d76
-<}
+> coverage}
 
 test bcol_make {-p} {
 	file delete tmp/temp.bcol
@@ -58,9 +56,7 @@ test bcol_make {-c} {
 } {1c1
 < value
 ---
-> coverage
-27d26
-<}
+> coverage}
 
 test bcol_make {-p and -c} {
 	file delete tmp/temp.bcol

@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 	DString *line1 = NULL;
 	char *chromosome1;
 	off_t fpos;
-	uint64_t count = -1,next = 4294967296L, offset = 0L;
+	uint64_t count = -1,next = 4294967295LL, offset = 0L;
 	uint32_t data;
 	int chr1pos,start1pos,end1pos,type1pos,max1;
 	int nchr1=0,start1,end1;

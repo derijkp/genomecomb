@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tools.h"
+#include "debug.h"
 
 void connectalt(
 	char *alt1, char *alt2, char *data
@@ -114,11 +115,13 @@ int main(int argc, char *argv[]) {
 	nchr2 = chromosomenum(chromosome2);
 	sscanf(result2[start2pos].string,"%d",&start2);
 	sscanf(result2[end2pos].string,"%d",&end2);
+NODPRINT("line2 %d,%d,%d %s",nchr2,start2,end2,line2->string)
 	while (!DStringGetTab(line1,f1,max1,result1)) {
 		chromosome1 = result1[chr1pos].string;
 		nchr1 = chromosomenum(chromosome1);
 		sscanf(result1[start1pos].string,"%d",&start1);
 		sscanf(result1[end1pos].string,"%d",&end1);
+NODPRINT("line1 (a=%3.3s) %d,%d,%d %s",result1[type1pos].string,nchr1,start1,end1,line1->string)
 /*
 fprintf(stdout,"----- %d\t%s\t%d\t%d\n",1,chromosome1,start1,end1);
 fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
@@ -134,10 +137,11 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 		}
 		while (!error2) {
 			sametype = 0;
+NODPRINT("line2 (a=%3.3s) %d,%d,%d %s",result2[type2pos].string,nchr2,start2,end2,line2->string)
 			if (nchr2 == nchr1) {
 				if (start2 == start1) {
 					if (end2 == end1) {
-						cmp = strcmp(result2[type2pos].string, result1[type1pos].string);
+						cmp = DStringCompare(result2+type2pos, result1+type1pos);
 						if (cmp == 0) {
 							sametype = 1; break;
 						} else if (cmp > 0) break; 

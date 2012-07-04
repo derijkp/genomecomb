@@ -42,7 +42,7 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	Tcl_Obj **listobjv,**listoutv;
 	DString *line = NULL,*array;
 	ssize_t read;
-	int maxtab=0,objc,show,i,error;
+	int maxtab=0,objc,show,i,error,line_nr=0;
 	if ((argc < 4)||(argc > 4)) {
 		Tcl_WrongNumArgs(interp, 1, argv, "queryproc varcolumns outcolumns");
 		return TCL_ERROR;
@@ -83,9 +83,18 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 		if (line->string[0] == '\0') break;
 		NODPRINT("line = %s",line->string);
 		for (i = 0 ; i < listobjc ; i++) {
-			NODPRINT("col = %d, val=%.*s",cols[i],array[cols[i]].size,array[cols[i]].string);
-			Tcl_SetByteArrayObj(objv[i+1],(unsigned char *)array[cols[i]].string,array[cols[i]].size);
+			if (Tcl_IsShared(objv[i+1])) {
+				objv[i+1] = Tcl_NewObj();
+				Tcl_IncrRefCount(objv[i+1]);
+			}
+			if (cols[i] != -1) {
+				NODPRINT("col = %d, val=%.*s",cols[i],array[cols[i]].size,array[cols[i]].string);
+				Tcl_SetByteArrayObj(objv[i+1],(unsigned char *)array[cols[i]].string,array[cols[i]].size);
+			} else {
+				Tcl_SetIntObj(objv[i+1],line_nr);
+			}
 		}
+		line_nr++;
 		error = cmdinfo.objProc(cmdinfo.objClientData,interp,objc,objv);
 		if (error) {return error;}
 		queryresult = Tcl_GetObjResult(interp);
@@ -95,7 +104,16 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 			register char *cur;
 			int size;
 			if (listoutc == 0) {
-				fprintf(stdout,"%.*s\n",line->size,line->string);
+				cur = line->string; size = line->size;
+				while {size--} {
+					c = *cur++;
+					if (c == '\0') {
+						putc_unlocked('\t',stdout);
+					} else {
+						putc_unlocked(c,stdout);
+					}
+				}
+				putc_unlocked('\n',stdout);
 			} else {
 				int out,first=1;
 				for (i = 0 ; i < listoutc ; i++) {

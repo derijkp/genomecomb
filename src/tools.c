@@ -106,21 +106,21 @@ void DStringCopy(DString *dest, DString *src) {
  */
 #define UCHAR(c) ((unsigned char) (c))
 #define NATDIGIT(c) (isdigit(UCHAR(*(c))))
-static int naturalcompare (char const *a, char const *b) {
+static int naturalcompare (char const *a, char const *b,int alen,int blen) {
 	int diff, digitleft,digitright;
 	int secondaryDiff = 0,prezero,invert,comparedigits;
 	char *left=NULL,*right=NULL,*keep=NULL;
-	while (isblank(*a)) a++;
-	while (isblank(*b)) b++;
+	while (isblank(*a) && alen) {a++; alen--;}
+	while (isblank(*b) && blen) {b++;; blen--;}
 	left = (char *)a;
 	right = (char *)b;
 	/* fprintf(stdout,"%s <> %s\n",a,b);fflush(stdout); */
 	while (1) {
 		diff = *left - *right;
-		if (*left == '\0') {
-			if (*right == '\0') {return secondaryDiff;} else {break;}
+		if (!alen || *left == '\0') {
+			if (!blen || *right == '\0') {return secondaryDiff;} else {break;}
 		}
-		if (*right == '\0') {break;}
+		if (!blen || *right == '\0') {break;}
 		if (*left != *right) {
 			if (diff) {	
 				/* only sort on case if no other diff -> keep secondaryDiff for case diff */
@@ -143,7 +143,7 @@ static int naturalcompare (char const *a, char const *b) {
 						if (NATDIGIT(left+1) && NATDIGIT(right+1)) {return -1;} else {return 1;}
 					} else if (NATDIGIT(right+1) && NATDIGIT(left)) {
 						secondaryDiff = -1;
-						right++;
+						right++; blen--;
 						continue;
 					}
 				} else if (*left == '+') {
@@ -151,7 +151,7 @@ static int naturalcompare (char const *a, char const *b) {
 						if (NATDIGIT(left+1) && NATDIGIT(right+1)) {return 1;} else {return -1;}
 					} else if (NATDIGIT(left+1) && NATDIGIT(right)) {
 						secondaryDiff = 1;
-						left++;
+						left++; alen--;
 						continue;
 					}
 				} else {
@@ -159,11 +159,11 @@ static int naturalcompare (char const *a, char const *b) {
 				}
 			}
 		}
-		left++;
-		right++;
+		left++; alen--;
+		right++; blen--;
 	}
-	digitright = NATDIGIT(right);
-	digitleft = NATDIGIT(left);
+	digitright = blen && NATDIGIT(right);
+	digitleft = alen && NATDIGIT(left);
 	if (*left == '-') {
 		if (digitright) {
 			return -1;
@@ -197,6 +197,7 @@ static int naturalcompare (char const *a, char const *b) {
 	 * the other, the number with more leading zeros sorts
 	 * later, but only as a secondary choice.
 	 */
+	/* first take steps back (keep) to check for -0.0 */
 	keep = left;
 	prezero = 1;
 	while (--keep > a) {
@@ -224,12 +225,12 @@ static int naturalcompare (char const *a, char const *b) {
 			if (*left == '0') {
 				secondaryDiff = 1;
 				while (*left == '0') {
-					left++;
+					left++; alen--;
 				}
 			} else if (*right == '0') {
 				secondaryDiff = -1;
 				while (*right == '0') {
-					right++;
+					right++; blen--;
 				}
 			}
 		}
@@ -244,8 +245,8 @@ static int naturalcompare (char const *a, char const *b) {
 			if (diff == 0) {
 				diff = *left - *right;
 			}
-			if (!NATDIGIT(right)) {
-				if (NATDIGIT(left)) {
+			if (!blen || !NATDIGIT(right)) {
+				if (alen && NATDIGIT(left)) {
 					return invert;
 				} else {
 					/*
@@ -259,11 +260,11 @@ static int naturalcompare (char const *a, char const *b) {
 						return invert*secondaryDiff;
 					}
 				}
-			} else if (!NATDIGIT(left)) {
+			} else if (!alen || !NATDIGIT(left)) {
 				return -1*invert;
 			}
-			right++;
-			left++;
+			right++; blen--;
+			left++; alen--;
 		}
 	}
 	fprintf(stderr,"shouldnt get here\n"); exit(1);
@@ -271,7 +272,7 @@ static int naturalcompare (char const *a, char const *b) {
 }
 
 int DStringCompare(DString *a, DString *b) {
-	return naturalcompare(a->string,b->string);
+	return naturalcompare(a->string,b->string,a->size,b->size);
 }
 
 void DStringAppend(DString *dstring, char *string) {
@@ -407,19 +408,21 @@ int DStringGetTab(
 	register int c,newdata=0;
 	register int count=0;
 	ssize_t size = 0;
+NODPRINT("maxtab=%d",maxtab)
 	maxtab += 1;
 	result[count].string = cur;
 	result[count].memsize = -1;
+	/* fill current pos (size) in the array for now, convert to array element sizes later */
 	while (1) {
 		c = getc_unlocked(f1);
 		if  (c == '\t') {
-			if (count <= maxtab) {
+			if (count < maxtab) {
 				result[count].size = size;
 				//fprintf(stdout,"count=%d size=%d\n",count, result[count].size);
 				count++;
 			}
 		} else if (c == '\n' || c == EOF) {
-			if (count <= maxtab) {
+			if (count < maxtab) {
 				result[count].size = size;
 			}
 			break;
@@ -433,42 +436,42 @@ int DStringGetTab(
 		*cur++ = c;
 		++size;
 	}
-	if (!newdata) {
-		*cur = '\0';
-		return -1;
-	}
-	/* fill rest of tab separated elements in array */
-	if (count < maxtab) {
-		result[count].size = size;
-		while (count < maxtab) {
-			result[++count].size = size;
-		}
-	}
 	/* add \0 to line*/
 	linePtr->size = size;
 	if (linePtr->memsize <= size) {
-		DStringSetSize(linePtr,2*linePtr->memsize);
+		DStringSetSize(linePtr,linePtr->memsize+2);
 		cur = linePtr->string+size;
 	}
 	*cur = '\0';
+	if (!newdata) {
+		return 1;
+	}
+	/* fill rest of tab separated elements in array */
+	if (count <= maxtab) {
+		result[count].size = size;
+		while (count <= maxtab) {
+			result[++count].size = size;
+		}
+	}
 	/* make array */
 	{
 	register int prevsize;
 	count = 0;
 	prevsize = 0;
-	while (count < maxtab) {
+	while (count <= maxtab) {
 		int pos = result[count].size;
 		result[count].size = result[count].size-prevsize;
 		result[count].string = linePtr->string + prevsize;
+		result[count].string[result[count].size] = '\0';
 		result[count].memsize = -1;
-//fprintf(stdout,"final count=%d size=%d pos=%d\n",count, result[count].size,result[count].string);
+NODPRINT("final count=%d size=%d %s",count, result[count].size,result[count].string)
 		prevsize = pos+1;
 		count++;
 	}
 	}
 	NODPRINT("\n==== result ====\n%d %s",size,linePtr->string);
 	NODPRINT("==================== getline finished ====================");
-	return size;
+	return 0;
 }
 
 int parse_pos(char *arg, int **rresult, int *rnum) {
