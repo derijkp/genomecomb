@@ -135,7 +135,7 @@ $object start
 mainw method start {args} {
 	private $object fields
 #	bind $object.canvas.data <1> [list $object select %x %y]
-	$object.table.buttons.querybuilder configure -command [list $object query]
+	$object.table.buttons.querybuilder configure -command [list $object querybuilder]
 	set fields {}
 	Extral::event listen $object selchanged [list $object redrawselection]
 	Extral::event listen $object querychanged [list $object redrawquery]
@@ -161,7 +161,8 @@ mainw method redrawselection {args} {
 mainw method redrawquery {args} {
 puts "redrawquery $args"
 	set len [$object.tb info len]
-	$object.table.buttons.label1 configure -text "[commify $len] lines"
+	set total [$object.tb info tlen]
+	$object.table.buttons.label1 configure -text "[commify $len] / [commify $total] lines"
 	$object.table.data configure -command [$object.table.data cget -command] -usecommand 1
 	$object.table.data configure -rows [expr {$len+1}] -cols [llength [$object.tb info qfields]]
 }
@@ -248,6 +249,15 @@ mainw method query {args} {
 		set query [get $var ""]
 	}
 	$tb query $query
+}
+
+mainw method querybuilder {args} {
+	set tb $object.tb
+	destroy $object.querybuilder
+	set var [$object.table.buttons.query cget -textvariable]
+	Classy::Dialog $object.querybuilder -title Query
+	$object.querybuilder option text Query $var Query
+	$object.querybuilder add query "Query" [list $object query] default
 }
 
 mainw method _fields_change {what} {
