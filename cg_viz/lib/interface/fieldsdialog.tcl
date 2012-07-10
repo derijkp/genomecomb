@@ -161,7 +161,7 @@ fieldsdialog method tfields {fields} {
 
 fieldsdialog method fields {curfields} {
 	private $object fields
-	set fields $curfields
+	set fields [list_remove $curfields {}]
 	$object redraw
 	$object.options.fields selection set end
 	$object.options.fields activate end
@@ -276,4 +276,15 @@ fieldsdialog method addcalc {args} {
 
 fieldsdialog method search {args} {
 	$object redraw
+}
+
+fieldsdialog method editfields {} {
+	private $object tfields fields
+	catch {destroy $object.editfields}
+	Classy::Dialog $object.editfields -title "Edit fields"
+	Classy::Text $object.editfields.options.text
+	pack $object.editfields.options.text -fill both -expand yes
+	$object.editfields.options.text insert end [join $fields \n]
+	$object.editfields add change "Change" "[list $object] fields \[split \[$object.editfields.options.text get 1.0 end\] \\n\]"
+	$object.editfields persistent remove change
 }
