@@ -260,23 +260,6 @@ mainw method querybuilder {args} {
 	$object.querybuilder add query "Query" [list $object query] default
 }
 
-mainw method _fields_change {what} {
-	private $object tfields fields w
-	set tb $object.tb
-	switch $what {
-		basic {
-			set poss [tsv_basicfields $tfields 6]
-			set fields [list_union [list_sub $tfields $poss] $fields]
-		}
-		addsel {
-			set fields [list_union $fields [$w get]]
-		}
-		remsel {
-			set fields [list_lremove $fields [$w get]]
-		}
-	}
-}
-
 mainw method fields {args} {
 	private $object fields tfields w
 	putsvars object args
@@ -284,17 +267,12 @@ mainw method fields {args} {
 	if {![llength $args]} {
 		set tfields [$tb tfields]
 		set fields [$tb info fields]
-		Classy::Dialog $object.fields -title "Select fields"
-		set w [$object.fields option listbox "Fields" [privatevar $object sfields] [privatevar $object tfields] -selectmode extended]
-		set w [lindex $w 0]
-		$object.fields option button "Add selected fields from list" [list $object _fields_change addsel]
-		$object.fields option button "Remove selected fields from list" [list $object _fields_change remsel]
-		$object.fields option button "Add basic fields" [list $object _fields_change basic]
-		$object.fields option button "Clear" "setprivate $object fields {}"
-		$object.fields option button "All" "setprivate $object fields \[$tb tfields\]"
-		$object.fields option entry "Fields" [privatevar $object fields]
-		$object.fields add go "Go" "$tb fields \[getprivate $object fields\]" default
-		$object.fields persistent remove go
+		set w $object.fieldsdialog
+		catch {destroy $w}
+		fieldsdialog $w
+		$w fields $fields
+		$w tfields $tfields
+		$w configure -command [list $object fields]
 	} else {
 		$tb fields [lindex $args 0]
 	}
