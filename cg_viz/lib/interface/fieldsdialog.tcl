@@ -129,6 +129,7 @@ fieldsdialog method start {} {
 	$object.options.fields configure -selectmode extended -exportselection 0
 	bind $object.options.fields <Up> "[list $object fieldsup]; break"
 	bind $object.options.fields <Down> "[list $object fieldsdown]; break"
+	$object.options.fields configure -browsecommand [list $object setcalc]
 	$object.options.fields activate end
 }
 
@@ -254,6 +255,10 @@ fieldsdialog method fieldsdown {} {
 	$object.options.fields selection set $pos [expr {$pos+[llength $movefields]-1}]
 }
 
+fieldsdialog method setcalc {args} {
+	$object.options.calc nocmdset [lindex $args 0]
+}
+
 fieldsdialog method addcalc {args} {
 	private $object tfields fields
 	if {![llength $args]} {
@@ -265,11 +270,27 @@ fieldsdialog method addcalc {args} {
 		$object.calcfield persistent remove add
 		
 	} else {
+		foreach {code} $args break
+		if {![regexp {^([^=]+)=} $code temp field]} {
+			error "Calculated field must be of format: fieldname=code"
+		}
 		set pos [$object.options.fields index active]
 		incr pos
-		foreach {code} $args break
-		if {![regexp = $code]} {error "Calculated field must be of format: fieldname=code"}
-		set fields [linsert $fields $pos \{$code\}]
+		set new 1
+		set curpos 0
+		foreach line $fields {
+			if {[regexp {^([^=]+)=} $line temp testfield] && $testfield == $field} {
+				set new 0
+				set pos $curpos
+				break
+			}
+			incr curpos
+		}
+		if {$new} {
+			set fields [linsert $fields $pos $code]
+		} else {
+			set fields [lreplace $fields $pos $pos $code]
+		}
 	}
 	$object redraw
 }

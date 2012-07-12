@@ -143,7 +143,6 @@ mainw method start {args} {
 
 mainw method redrawselection {args} {
 	puts redrawselection
-	putsvars args
 	set var [$object.table.buttons.query cget -textvariable]
 	set table [$object.tb table]
 	set query [get $var ""]
@@ -262,7 +261,6 @@ mainw method querybuilder {args} {
 
 mainw method fields {args} {
 	private $object fields tfields w
-	putsvars object args
 	set tb $object.tb
 	if {![llength $args]} {
 		set tfields [$tb tfields]

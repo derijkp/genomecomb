@@ -18,6 +18,16 @@ if 0 {
 	set binfile /complgen/projects/kr1270/compar/annot_sv-kr1270.tsv.index/query_results.bincol
 }
 
+proc _table_tsv_calcline {object line cor} {
+	if {[llength $cor] == 1} {
+		return [list_sub $line [lindex $cor 1]]
+	} elseif {[llength $cor]} {
+		return [$object.calcline $cor $line]
+	} else {
+		return $line
+	}
+}
+
 proc _table_tsv_get {object row col args} {
 	private $object tdata cache
 	if {![info exists tdata(f)]} return
@@ -44,11 +54,8 @@ proc _table_tsv_get {object row col args} {
 			set r $row
 			for {set i 0} {$i < $limit} {incr i} {
 				if {[eof $f]} break
-				if {[llength $cor]} {
-					set cache($r) [list_sub [split [gets $f] \t] $cor]
-				} else {
-					set cache($r) [split [gets $f] \t]
-				}
+				set line [split [gets $f] \t]
+				set cache($r) [_table_tsv_calcline $object $line $cor]
 				incr r
 			}
 			if {$tdata(compressed)} {
@@ -65,11 +72,8 @@ proc _table_tsv_get {object row col args} {
 					set f $tdata(f)
 					seek $f $filepos
 				}
-				if {[llength $cor]} {
-					set cache($r) [list_sub [split [gets $f] \t] $cor]
-				} else {
-					set cache($r) [split [gets $f] \t]
-				}
+				set line [split [gets $f] \t]
+				set cache($r) [_table_tsv_calcline $object $line $cor]
 				if {$tdata(compressed)} {
 					catch {close $f}
 				}
@@ -107,7 +111,8 @@ table_tsv method query {query} {
 	Classy::Progress start 2
 	Classy::Progress message "Running query, please be patient (no progress shown)"
 	putslog "Doing query $query"
-	exec cg select -q $query -f {rowid=NR-1} $tdata(file) $tdata(indexdir)/query_results.tsv
+	regsub -all \n $query { } query
+	exec cg select -q $query -f {rowid=$ROW} $tdata(file) $tdata(indexdir)/query_results.tsv
 	Classy::Progress next "Converting results"
 	putslog "Converting results"
 	set f [open $tdata(indexdir)/query_results.tsv]
@@ -175,11 +180,55 @@ table_tsv method fields {args} {
 			set tdata(qfields) $tdata(tfields)
 			set tdata(fieldscor) {}
 		} else {
-			set tdata(qfields) [tsv_select_expandfields $tdata(tfields) $tdata(fields) tdata(qcode)]
-			if {$tdata(qfields) eq $tdata(tfields)} {
+			set header $tdata(tfields)
+			set tdata(qfields) [tsv_select_expandfields $header $tdata(fields) tdata(qcode)]
+			if {$tdata(qfields) eq $header} {
 				set tdata(fieldscor) {}
 			} else {
-				set tdata(fieldscor) [list_cor $tdata(tfields) $tdata(qfields)]
+				set cor [list_cor $header $tdata(qfields)]
+				set poss [list_find $cor -1]
+				if {![llength $poss]} {
+					set tdata(fieldscor) [list $cor]
+				} else {
+					set neededfields {}
+					set num 0
+					# neededfields will be the same for all procs, so first gather all we need using todo list
+					# then make the procs from todo list later
+					set todo {}
+					foreach pos $poss {
+						set el [lindex $tdata(qcode) $pos]
+						set code [tsv_select_expandcode $header [lindex $el 1] neededfields]
+						lappend todo $object.make_col$num $code
+						incr num
+					}
+					# make procs for each calculated field
+					set tclcode ""
+					foreach {name code} $todo {
+						append tclcode [subst -nocommands {
+							proc $name {$neededfields} {
+								if {[catch {expr {$code}} e]} {
+									switch \$e {
+										{domain error: argument not in valid range} {return NaN}
+										{divide by zero} {return NaN}
+									}
+								}
+								return \$e
+							}
+						}]
+						lappend procs $name
+					}
+					# make main proc
+					set neededcols [list_cor $header $neededfields]
+					append tclcode "\nproc $object.calcline {cor line} \{\n"
+					append tclcode "set result \[list_sub \$line [list $cor]\]\n"
+					append tclcode "set neededfields \[list_sub \$line [list $neededcols]\]\n"
+					foreach {name code} $todo pos $poss {
+						append tclcode "lset result $pos \[$name {*}\$neededfields\]\n"
+					}
+					append tclcode "return \$result\n\}\n"
+					uplevel #0 $tclcode
+					set tdata(fieldscor) [list $cor $object.calcline]
+				}
 			}
 		}
 		$object reset
@@ -234,6 +283,7 @@ table_tsv method close {} {
 table_tsv method open {file} {
 	private $object tdata cache
 	$object close
+	set file [file normalize $file]
 	set info [$object index $file]
 	set file [dict get $info file]
 	set database [file dir $file]
@@ -242,7 +292,7 @@ table_tsv method open {file} {
 	setprivate $object table $table
 	set tdata(indexdir) [dict get $info indexdir]
 	set tdata(lineindex) [dict get $info lineindex]
-	set tdata(file) [file normalize $file]
+	set tdata(file) $file
 	set tdata(database) $database
 	set tdata(table) $table
 	set tdata(tfields) [dict get $info header]

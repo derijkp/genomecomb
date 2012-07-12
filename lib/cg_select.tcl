@@ -532,6 +532,8 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		set outcols {}
 		set todo {}
 		set num 0
+		# neededfields will be the same for all procs, so first gather all we need using todo list
+		# then make the procs from todo list later
 		foreach el $qposs {
 			if {[isint $el]} {
 				lappend outcols $el
