@@ -10,6 +10,8 @@ if 0 {
 	set resultfile /projects/vegdep/reg_vegdep.map
 }
 
+package require genomecomb
+
 proc make_remap {file genome resultfile} {
 	set tempfile [tempfile]
 	exec lastal $genome $file > $tempfile
@@ -81,26 +83,24 @@ proc cg_remap {file remapfile resultfile} {
 	}
 	set rline [split [gets $fr] \t]
 	foreach {rchr rbegin rend rdestchr rdestbegin rdestend} $rline break
-	set rchr [chr2num $rchr]
 	set o [open $resultfile w]
 	set u [open $resultfile.unmapped w]
+	puts $u [join $header \t]
 	puts $o [join $header \t]\torichr\toribegin\toriend
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		set cur [list_sub $line $poss]
 		foreach {chr begin end} $cur break
-		set nchr [chr2num $rchr]
 		while 1 {
-			if {$rchr > $nchr} break
-			# if {($rchr == $nchr) && ($begin >= $rbegin) && !($begin >= $rend)} break
-			if {($nchr < $rchr) || ($begin < $rend)} break
+			set chrcomp [loc_compare $rchr $chr]
+			if {$chrcomp > 0} break
+			if {($chrcomp == 0) && ($rend > $begin)} break
 			if {[eof $fr]} break
 			set rline [split [gets $fr] \t]
 			foreach {rchr rbegin rend rdestchr rdestbegin rdestend} $rline break
-			set rchr [chr2num $rchr]
 		}
-		if {$nchr != $rchr || $begin < $rbegin || $end > $rend} {
+		if {$chrcomp != 0 || $begin < $rbegin || $end >= $rend} {
 			puts stderr "cannot remap $line: outside of regions in remap file"
 			puts $u [join $line \t]
 		} else {
