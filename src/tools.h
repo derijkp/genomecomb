@@ -51,3 +51,5 @@ char* num2chromosome(char *chromosome,int num);
 #define NOCHROM 100000
 int get_region(FILE *f1, DString *line, int chr1pos, int start1pos, int end1pos, int max1, DString *chromosome1, int *nchr1, int *start1, int *end1);
 void skip_header(FILE *f1, DString *linePtr);
+
+int naturalcompare (char const *a, char const *b,int alen,int blen);

@@ -3,6 +3,55 @@
 exec tclsh "$0" "$@"
 
 source tools.tcl
+package require genomecomb
+
+test nat_compare {chr1 1} {
+	nat_compare chr10 chr2
+} 1
+
+test nat_compare {chr1 1} {
+	nat_compare chr1 1
+} 50
+
+test loc_compare {2 2} {
+	loc_compare 2 2
+} 0
+
+test loc_compare {1 10} {
+	loc_compare 1 10
+} -1
+
+test loc_compare {2 10} {
+	loc_compare 2 10
+} -1
+
+test loc_compare {10 2} {
+	loc_compare 10 2
+} 1
+
+test loc_compare {chr1 chr2} {
+	loc_compare chr1 chr2
+} -1
+
+test loc_compare {chr1 1} {
+	loc_compare chr1 1
+} 0
+
+test loc_compare {chr2 chr1} {
+	loc_compare chr2 Chr1
+} 1
+
+test loc_compare {chr2 chr1} {
+	loc_compare chr-2 1
+} 1
+
+test loc_compare {chr2 chr1} {
+	loc_compare ab2 ab10
+} -1
+
+test loc_compare {{chr2 10} {chr2 2}} {
+	loc_compare {chr2 10} {chr2 2}
+} 1
 
 test multicompar {basic} {
 	file delete -force tmp/temp.sft

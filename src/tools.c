@@ -106,12 +106,12 @@ void DStringCopy(DString *dest, DString *src) {
  */
 #define UCHAR(c) ((unsigned char) (c))
 #define NATDIGIT(c) (isdigit(UCHAR(*(c))))
-static int naturalcompare (char const *a, char const *b,int alen,int blen) {
+int naturalcompare (char const *a, char const *b,int alen,int blen) {
 	int diff, digitleft,digitright;
 	int secondaryDiff = 0,prezero,invert,comparedigits;
 	char *left=NULL,*right=NULL,*keep=NULL;
 	while (isblank(*a) && alen) {a++; alen--;}
-	while (isblank(*b) && blen) {b++;; blen--;}
+	while (isblank(*b) && blen) {b++; blen--;}
 	left = (char *)a;
 	right = (char *)b;
 	/* fprintf(stdout,"%s <> %s\n",a,b);fflush(stdout); */
