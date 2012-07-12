@@ -37,9 +37,14 @@ proc cg_sh {args} {
 	}
 }
 
-proc cg_exec {file args} {
+proc cg_source {file args} {
 	set ::argv $args
 	uplevel #0 source $file
+}
+
+proc cg_exec {commands args} {
+	set ::argv $args
+	uplevel #0 $commands
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
