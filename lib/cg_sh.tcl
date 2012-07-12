@@ -28,12 +28,14 @@ proc cg_sh {args} {
 		cg_wish {*}$args
 		return
 	}
-	package require Tclx
-	signal -restart error SIGINT
 	if {[info commands "console"] == "console"} {
 		console show
-	} else {
+	} elseif {![catch {package require Tclx}]} {
+		signal -restart error SIGINT
 		uplevel #0 {commandloop -prompt1 {puts -nonewline "% "} -prompt2 {puts -nonewline ""}}
+	} else {
+		package require TclReadLine
+		uplevel #0 TclReadLine::interact
 	}
 }
 
