@@ -102,10 +102,10 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 		if (error) {return error;}
 		if (show) {
 			register char *cur;
-			int size;
+			int size,c;
 			if (listoutc == 0) {
 				cur = line->string; size = line->size;
-				while {size--} {
+				while (size--) {
 					c = *cur++;
 					if (c == '\0') {
 						putc_unlocked('\t',stdout);
