@@ -200,12 +200,14 @@ static int naturalcompare (char const *a, char const *b,int alen,int blen) {
 	/* first take steps back (keep) to check for -0.0 */
 	keep = left;
 	prezero = 1;
-	while (--keep > a) {
+	while (keep > a) {
+		keep--;
 		if (!NATDIGIT(keep)) break;
 		if (*keep != '0') prezero = 0;
 	}
 	if (*keep == '.') {
-		while (--keep > a) {
+		while (keep > a) {
+			keep--;
 			if (!NATDIGIT(keep)) break;
 		}
 		if (*keep == '-') {
