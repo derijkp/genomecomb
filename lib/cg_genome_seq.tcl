@@ -98,7 +98,7 @@ proc cg_genome_seq {args} {
 	if {[info exists namefield]} {
 		set namepos [lsearch $header $namefield]
 		if {$namepos == -1} {
-			puts stderr "namefield $namefiled not found"
+			puts stderr "namefield $namefield not found"
 			exit 1
 		}
 	} else {
