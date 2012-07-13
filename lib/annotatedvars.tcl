@@ -369,11 +369,6 @@ proc annot_annotvar {source outfile todo {dir {}}} {
 }
 
 
-proc chrcomp {chr1 chr2} {
-	if {$chr1 eq $chr2} {return 0}
-	return [expr {[chr2num $chr1] - [chr2num $chr2]}]
-}
-
 proc readgeneset {g} {
 	global cache
 	set line $cache($g)
@@ -485,7 +480,7 @@ proc var2annotvar {file genefile outfile} {
 		incr num
 		if {$num >= $next} {putsprogress $num; incr next 100000}
 		while {![eof $g]} {
-			set chrcomp [chrcomp $gchr $fchr]
+			set chrcomp [chr_compare $gchr $fchr]
 			if {$chrcomp > 0} break
 			if {($chrcomp == 0) && ($gbegin >= $fbegin)} break
 			set curgene [readgeneset $g]

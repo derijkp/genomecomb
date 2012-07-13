@@ -4,38 +4,13 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+# comparepos replaced by loc_compare in extension
 # < 0 if comp1 < comp2
 # > 0 if comp1 > comp2
-proc comparepos {comp1 comp2} {
-	if {![isint [lindex $comp1 1]]} {return 1}
-	if {![isint [lindex $comp2 1]]} {return -1}
-	foreach {chr1 pos1 end1 type1} $comp1 break
-	foreach {chr2 pos2 end2 type2} $comp2 break
-	set chr1 [chr2num $chr1]
-	set chr2 [chr2num $chr2]
-	if {$chr1 ne $chr2} {
-		return [expr {$chr1-$chr2}]
-	} elseif {$pos1 != $pos2} {
-		return [expr {$pos1-$pos2}]
-	} elseif {$end1 != $end2} {
-		return [expr {$end1-$end2}]
-	} elseif {$type1 ne $type2} {
-		if {$type1 < $type2} {return -1} else {return 1}
-	} else {
-		return 0
-	}
-}
+# chr_compare is currently also implemented by loc_compare in extension
 
-proc comparechr {chr1 chr2} {
-	if {[string range $chr1 0 2] eq "chr"} {set chr1 [string range $chr1 3 end]}
-	if {[string range $chr2 0 2] eq "chr"} {set chr2 [string range $chr2 3 end]}
-	if {$chr1 eq $chr2} {return 0}
-	set temp [list $chr1 $chr2]
-	if {[lsort -dict $temp] eq $temp} {
-		return -1
-	} else {
-		return 1
-	}
+proc chr_compare {chr1 chr2} {
+	loc_compare $chr1 $chr2
 }
 
 proc compare_annot_getline {f} {

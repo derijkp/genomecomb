@@ -191,7 +191,7 @@ proc multicompar {compar_file dir} {
 	while {![eof $f1] || ![eof $f2]} {
 		incr num
 		if {$num > $next} {putslog $num ; incr next 100000}
-		set d [comparepos $comp1 $comp2]
+		set d [loc_compare $comp1 $comp2]
 		if {$d == 0} {
 			puts $o [multicompar_annot_join $cur1 $cur2]
 			set cur1 [compare_annot_getline $f1]
@@ -201,7 +201,7 @@ proc multicompar {compar_file dir} {
 			if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
 			set comp2 [list_sub $cur2 $comparposs2]
 		} elseif {$d < 0} {
-			while {[comparepos $comp1 $comp2] < 0} {
+			while {[loc_compare $comp1 $comp2] < 0} {
 				puts $o [multicompar_annot_join $cur1 -]
 				if {[eof $f1]} break
 				set cur1 [compare_annot_getline $f1]
@@ -212,7 +212,7 @@ proc multicompar {compar_file dir} {
 				if {![expr {$num % 100000}]} {putslog $num}
 			}
 		} else {
-			while {[comparepos $comp1 $comp2] > 0} {
+			while {[loc_compare $comp1 $comp2] > 0} {
 				puts $o [multicompar_annot_join - $cur2]
 				if {[eof $f2]} break
 				set cur2 [compare_annot_getline $f2]

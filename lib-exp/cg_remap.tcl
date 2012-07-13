@@ -93,7 +93,7 @@ proc cg_remap {file remapfile resultfile} {
 		set cur [list_sub $line $poss]
 		foreach {chr begin end} $cur break
 		while 1 {
-			set chrcomp [loc_compare $rchr $chr]
+			set chrcomp [chr_compare $rchr $chr]
 			if {$chrcomp > 0} break
 			if {($chrcomp == 0) && ($rend > $begin)} break
 			if {[eof $fr]} break

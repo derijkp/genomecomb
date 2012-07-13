@@ -146,7 +146,7 @@ proc cg_genome_seq {args} {
 			puts \n\>$name
 		} elseif {!$firstline} {
 			foreach {chr begin end} $sub break
-			if {[comparechr $chr $pchr] == 0 && $begin == $pend} {
+			if {[chr_compare $chr $pchr] == 0 && $begin == $pend} {
 				puts -nonewline $aconcat
 				incr fstart $aconcatlen
 			} else {
