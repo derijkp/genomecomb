@@ -50,7 +50,7 @@ proc cg_exportplink {args} {
 			puts stderr "skipping var: error in line: $line"
 			continue
 		}
-		regsub ^chr $chr {} chr
+		set chr [chr_clip $chr]
 		if {$chr eq "M"} {set chr MT}
 		set result [list $chr $chr-$b-$e-$type [format %.4f [expr {$b/1000000.0}]] $b]
 		set alleles {}

@@ -58,14 +58,13 @@ proc lset_always {varName pos value} {
 array set chrtrans {M 95 MT 95 X 96 Y 97}
 proc chr2num {chr} {
 	if {[isint $chr]} {return $chr}
-	regsub ^chr $chr {} chr
+	set chr [chr_clip $chr]
 	set nchr [get ::chrtrans($chr) $chr]
 	return $nchr
 }
 
-proc chr2clean {chr} {
-	if {[isint $chr]} {return $chr}
-	regsub ^chr $chr {} chr
+proc chr_clip chr {
+	regsub {^[Cc][Hh][Rr]-?} $chr {} chr
 	if {$chr eq "MT"} {set chr M}
 	return $chr
 }

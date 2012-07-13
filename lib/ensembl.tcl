@@ -7,7 +7,7 @@
 package require http
 
 proc ensembl_getregion {chr start end args} {
-	regsub ^chr $chr {} chr
+	set chr [chr_clip $chr]
 	if {$chr eq "M"} {set chr MT}
 	set url www.ensembl.org
 	set species Homo_sapiens

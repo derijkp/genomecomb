@@ -128,7 +128,7 @@ proc cg_genome_seq {args} {
 		set sub [list_sub $line $poss]
 		putslog $sub
 		foreach {chr estart eend} $sub break
-		regsub ^chr $chr {} chr
+		set chr [chr_clip $chr]
 		set seq [genome_get $fg $chr [expr {$estart}] [expr {$eend}]]
 		set seq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
 		

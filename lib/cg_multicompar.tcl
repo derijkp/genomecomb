@@ -182,10 +182,10 @@ proc multicompar {compar_file dir} {
 	set o [open $compar_file.temp w]
 	puts $o [join $oheader \t]
 	set cur1 [split [gets $f1] \t]
-	if {[llength $cur1]} {lset cur1 $tp1 [chr2clean [lindex $cur1 $tp1]]}
+	if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
 	set comp1 [list_sub $cur1 $comparposs1]
 	set cur2 [split [gets $f2] \t]
-	if {[llength $cur2]} {lset cur2 $tp2 [chr2clean [lindex $cur2 $tp2]]}
+	if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
 	set comp2 [list_sub $cur2 $comparposs2]
 	set num 1; set next 100000
 	while {![eof $f1] || ![eof $f2]} {
@@ -195,17 +195,17 @@ proc multicompar {compar_file dir} {
 		if {$d == 0} {
 			puts $o [multicompar_annot_join $cur1 $cur2]
 			set cur1 [compare_annot_getline $f1]
-			if {[llength $cur1]} {lset cur1 $tp1 [chr2clean [lindex $cur1 $tp1]]}
+			if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
 			set comp1 [list_sub $cur1 $comparposs1]
 			set cur2 [compare_annot_getline $f2]
-			if {[llength $cur2]} {lset cur2 $tp2 [chr2clean [lindex $cur2 $tp2]]}
+			if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
 			set comp2 [list_sub $cur2 $comparposs2]
 		} elseif {$d < 0} {
 			while {[comparepos $comp1 $comp2] < 0} {
 				puts $o [multicompar_annot_join $cur1 -]
 				if {[eof $f1]} break
 				set cur1 [compare_annot_getline $f1]
-				if {[llength $cur1]} {lset cur1 $tp1 [chr2clean [lindex $cur1 $tp1]]}
+				if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
 				set comp1 [list_sub $cur1 $comparposs1]
 				if {![llength $cur1]} break
 				incr num
@@ -216,7 +216,7 @@ proc multicompar {compar_file dir} {
 				puts $o [multicompar_annot_join - $cur2]
 				if {[eof $f2]} break
 				set cur2 [compare_annot_getline $f2]
-				if {[llength $cur2]} {lset cur2 $tp2 [chr2clean [lindex $cur2 $tp2]]}
+				if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
 				set comp2 [list_sub $cur2 $comparposs2]
 				if {![llength $cur2]} break
 				incr num

@@ -113,7 +113,7 @@ puts "$object redraw $args"
 	
 	foreach {chr len} $full {
 		set st($chr) $start
-		regsub ^chr $chr {} nchr
+		set nchr [chr_clip $chr]
 		set st($nchr) $start
 		$canvas create line $start $height [expr {$start+($len/$scale)}] $height -tag [list $tag chr c_$chr]
 		$canvas create text $start [expr {$height+1}] -anchor nw -text $chr -tag [list $tag chr text c_$chr]
@@ -125,7 +125,7 @@ puts "$object redraw $args"
 	set ppos -1
 	set pchr {}
 	list_foreach {chr pos type count} $list {
-		regsub ^chr $chr {} chr
+		set chr [chr_clip $chr]
 		if {$chr ne $pchr || $pos != $ppos} {
 			set start $st($chr)
 			set pcount 0

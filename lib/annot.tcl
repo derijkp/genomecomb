@@ -111,7 +111,7 @@ proc annot_coverage_get {dir chr begin} {
 				bcol_close $refbcol ; bcol_close $covbcol
 			}
 		}
-		regsub ^chr $chr {} nchr
+		set nchr [chr_clip $chr]
 		set chrfile [gzfile $dir/coverage/coverage-*-$nchr.bcol $dir/coverage/coverage-*-chr$nchr.bcol]
 		if {[file exists $chrfile]} {
 			set reffile [gzfile $dir/coverage/refScore-*-$nchr.bcol $dir/coverage/refScore-*-chr$nchr.bcol]

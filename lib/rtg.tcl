@@ -75,7 +75,7 @@ proc rtg_line {cline poss} {
 		set stats($b,n) $n
 		set stats($b,p) $p
 	}
-	regsub ^chr $name {} chromosome
+	set chromosome [chr_clip $name]
 	set alleles [lrange [split $prediction :] 0 1]
 	if {[llength $alleles] == 1} {lappend alleles [lindex $alleles 0]}
 	set begin [expr {$position-1}]
@@ -194,7 +194,7 @@ proc annot_rtg_init {dir} {
 
 proc annot_rtg_get {dir chr begin} {
 	global annot
-	regsub ^chr $chr {} chr
+	set chr [chr_clip $chr]
 	foreach {curchr chrfile present poss} [get annot(cov,$dir) {{} {} 0}] break
 	if {$chr ne $curchr} {
 		if {[llength $chrfile]} {

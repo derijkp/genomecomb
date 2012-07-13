@@ -80,7 +80,7 @@ proc cg_makesequenom {args} {
 		set sub [list_sub $line $poss]
 		putslog $sub
 		foreach {chr start end type ref alt} $sub break
-		regsub ^chr $chr {} chr
+		set chr [chr_clip $chr]
 		set name [join [list_sub $sub {0 1 2}] -]
 		set estart [expr {$start-$extraseq}]
 		if {$estart < 0} {set estart 0}

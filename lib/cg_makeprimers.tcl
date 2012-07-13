@@ -666,7 +666,7 @@ proc makeprimers {regionsfile archive maxsize prefsize db numthreads {o stdout}}
 	list_shift regionlist
 	foreach region $regionlist {
 		foreach {cchr cstart cend} $region break
-		regsub ^chr $cchr {} cchr
+		set cchr [chr_clip $cchr]
 		set name [join $region -]
 		putslog $name
 		set bestpair [makeprimers_region $name $maxsize $prefsize $temperature $archive $db $extraseq]

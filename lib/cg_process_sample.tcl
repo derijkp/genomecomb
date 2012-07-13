@@ -97,7 +97,7 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	set files [lsort -dict [glob -nocomplain $dir/ASM/REF/coverage*]]
 	foreach file $files {
 		set chr [lindex [split $file -] 1]
-		regsub ^chr $chr {} chr
+		set chr [chr_clip $chr]
 		set header [cg select -h $file]
 		foreach posfield {offset pos} {
 			if {[lsearch $header $posfield] != -1}  break

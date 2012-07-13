@@ -137,7 +137,7 @@ proc genome_get {f chr start end} {
 	if {[catch {
 		set temp [dict get $fastaindex $chr]
 	}]} {
-		regsub ^chr $chr {} chr
+		set chr [chr_clip $chr]
 		set temp [dict get $fastaindex $chr]
 	}
 	foreach {gstart glen} $temp break

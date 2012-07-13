@@ -28,7 +28,7 @@ proc ucsc2annotvar {file outfile} {
 			set s2 $s1
 		}
 		incr chromEnd -1
-		regsub ^chr $chrom {} chrom
+		set chrom [chr_clip $chrom]
 		puts $o [join [list $bin $chrom $chromStart $chromEnd snp $a1 $a2] \t]
 	}
 	close $o
