@@ -19,6 +19,7 @@ set appdir [file dir $script]
 lappend auto_path $appdir/lib $appdir/lib-exp
 set env(PATH) $appdir/bin:$appdir/extern:[file dir [file dir $appdir]]/bin:$env(PATH)
 package require Extral
+package require genomecomb
 
 # generic help on no args
 if {[llength $argv] < 1} {

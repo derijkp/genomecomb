@@ -10,8 +10,6 @@ if 0 {
 	set resultfile /projects/vegdep/reg_vegdep.map
 }
 
-package require genomecomb
-
 proc make_remap {file genome resultfile} {
 	set tempfile [tempfile]
 	exec lastal $genome $file > $tempfile
