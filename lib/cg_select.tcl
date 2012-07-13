@@ -189,6 +189,8 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 	upvar tsv_funcnum tsv_funcnum
 	# variable preprocessor first, to expand *
 	# check and exchange variables needed
+	# variables are all changed to quoted format: ${variable name}
+	# subsequent code expects this quoting!
 	set code [string trim $code]
 	set newcode {}
 	set escape 0
@@ -237,6 +239,12 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 	set code $newcode
 	#
 	# tokenize
+	# returns list of values and ops
+	# elements of this list can contain sublists (braces, functions)
+	# pos indicates current position, and goes over the string, detecting values, ops, etc 
+	# and lappending the codes to curstack
+	# braces, functions will put curstack to stack and start new curstack
+	# on a closing brace sublists are managed, and prev curstack is returned
 	set len [string length $code]
 	set prevpos 0
 	set pos 0
@@ -281,11 +289,9 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 				lappend curstack [list $type $op]
 			}
 		} elseif {$char eq "\("} {
-			if {$curstack ne""} {
-				lappend curstack [list @braces]
-				lappend stack $curstack
-				set curstack {}
-			}
+			lappend curstack [list @braces]
+			lappend stack $curstack
+			set curstack {}
 			incr pos
 			set prevpos $pos
 		} elseif {$char eq "\$"} {

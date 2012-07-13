@@ -260,4 +260,8 @@ test select {shared objects bugcheck} {
 	split [exec cg select -f {chromosome begin end {test="[get ::keep 1]-[set ::keep $begin]"}} -q {$ROW between {2 3}} < data/vars1.sft] \n
 } {{chromosome	begin	end	test} {chr1	4099	5000	1-4099} {chr1	5000	5010	4099-5000}}
 
+test select {start brace bugcheck} {
+	split [exec cg select -f {chromosome begin end {type=($type == "snp")? "Snp" : (($type == "del")? "Deletion" : $type)}} -q {$ROW in {2 3 9 10}} < data/vars1.sft] \n
+} {{chromosome begin end  type} {chr1 4099 5000 Snp} {chr1 5000 5010 Deletion} {chr2  5000 5010 ins} {chr2 5005 5006 Snp}}
+
 testsummarize
