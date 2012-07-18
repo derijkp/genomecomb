@@ -13,15 +13,6 @@ proc cg_clusters_distgraph {} {
 	puts $o "begin\tdistance"
 	foreach {pchr pbegin pend} [get_region $f $poss] break
 	set pnchr [chr2num $pchr]
-			while {![eof $f]} {
-				incr num
-				if {![expr $num%100000]} {putslog $num}
-				set line [get_region $f $poss]
-				foreach {pchr pbegin pend} $line break
-				set pnchr [chr2num $pchr]
-				if {$pnchr == 6} break
-			}
-			# seek $f 97574037
 	while {![eof $f]} {
 		incr num
 		if {![expr $num%100000]} {putsprogress $num}
