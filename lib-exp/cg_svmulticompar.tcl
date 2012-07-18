@@ -78,23 +78,22 @@ proc svmulticompar_groupcompatible {plist} {
 }
 
 proc svmulticompar_compar {line1 line2 {margin 20}} {
-	if {![llength $line1]} {return -1}
-	if {![llength $line2]} {return 1}
+	if {![llength $line1]} {return 1}
+	if {![llength $line2]} {return -1}
 	# must be adapted on locfields changes
 	foreach {src id1 chr1 begin end type start1 end1} $line1 break
 	foreach {src id2 chr2 begin end type start2 end2} $line2 break
 	if {$id1 ne "" && $id1 eq $id2} {
 		return 0
 	}
-	if {$chr1 ne $chr2} {
-		set nchr1 [chr2num $chr1]
-		set nchr2 [chr2num $chr2]
-		return [expr {$nchr2 - $nchr1}]
+	set chrcomp [chr_compare $chr1 $chr2]
+	if {$chrcomp != 0} {
+		return $chrcomp
 	}
 	if {[expr {$end2+$margin}] <= $start1} {
-		return -1
-	} elseif {[expr {$end1+$margin}] <= $start2} {
 		return 1
+	} elseif {[expr {$end1+$margin}] <= $start2} {
+		return -1
 	} else {
 		return 0
 	}
@@ -195,14 +194,18 @@ proc svmulticompar_getlist {f1 poss1 len1 line1Var f2 poss2 len2 line2Var} {
 	set startpos $locpos(start1)
 	set endpos $locpos(end1)
 	set list {}
+exec echo ------------------------ >> log
+exec echo $line1 >> log
+exec echo $line2 >> log
 	set compar [svmulticompar_compar $line1 $line2 $margin]
-	if {$compar > 0} {
+exec echo $compar >> log
+	if {$compar < 0} {
 		set listchr [lindex $line1 $chrpos]	
 		set liststart [lindex $line1 $startpos]
 		set listend [expr {[lindex $line1 $endpos]+$margin}]
 		set curid1 [lindex $line1 $idpos]
 		set curid2 {}
-	} elseif {$compar < 0} {
+	} elseif {$compar > 0} {
 		set listchr [lindex $line2 $chrpos]	
 		set liststart [lindex $line2 $startpos]
 		set listend [expr {[lindex $line2 $endpos]+$margin}]

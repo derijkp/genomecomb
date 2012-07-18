@@ -25,11 +25,6 @@ proc get_region {f poss} {
 		if {[eof $f]} break
 	}
 	set result [list_sub $line $poss]
-#	set chr [lindex $result 0]
-#	if {![isint $chr]} {
-#		lset result 0 [chr2num $chr]
-#	}
-#	return $result
 }
 
 proc refconsregions {varfile} {

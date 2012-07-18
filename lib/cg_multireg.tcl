@@ -8,33 +8,6 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc multireg_next1 {f1 poss1} {
-	set cur1 {}
-	while {![eof $f1]} {
-		set cur1 [split [gets $f1] \t]
-		if {![llength $cur1]} continue
-		set part1 [lrange $cur1 3 end]
-		set comp1 [list_sub $cur1 $poss1]
-		foreach {chr1 start1 end1} $comp1 break
-		if {[isint $start1]} break
-	}
-	if {![llength $cur1] || ![isint $start1]} {return {{} 1000 1000 -1 -1}}
-	set nchr1 [chr2num $chr1]
-	list $part1 $chr1 $nchr1 $start1 $end1
-}
-
-proc multireg_next2 {f2 poss2} {
-	set start2 {}
-	while {![eof $f2]} {
-		set comp2 [get_region $f2 $poss2]
-		foreach {chr2 start2 end2} $comp2 break
-		if {[isint $start2]} break
-	}
-	if {![isint $start2]} {return {1000 1000 -1 -1}}
-	set nchr2 [chr2num $chr2]
-	list $chr2 $nchr2 $start2 $end2
-}
-
 proc multireg {compar_file file} {
 	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2
 

@@ -749,7 +749,6 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 	}
 	incr dbstart -2000
 	incr dbend 2000
-	set dbchr [chr2num $dbchr]
 	lset dbloc 0 $dbchr
 	set dblist {}
 	set counter 0
@@ -777,12 +776,12 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 			putslog $chr:$start
 			set counter 0
 		}
-		set chr [chr2num $chr]
 		# add all overlapping to dblist
 # if {$start == 43198434} {error STOPPED}
 		while {![eof $df]} {
-			if {$dbchr > $chr} break
-			if {$dbchr == $chr} {
+			set chrcompar [chr_compare $dbchr $chr]
+			if {$chrcompar > 0} break
+			if {$chrcompar == 0} {
 				if {$dbstart >= $end} break
 				if {$dbend >= $start} {
 					lappend dblist [list $dbchr $dbstart $dbend {} $fdbline]
@@ -800,7 +799,6 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 					break
 				}
 			}
-			set dbchr [chr2num $dbchr]
 			lset dbloc 0 $dbchr
 			if {!$ok} break
 			incr dbstart -2000
@@ -825,10 +823,10 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 			set hitgenes ""
 			# join [list_subindex $dblist 4] \n\n
 			list_foreach {dc ds de geneobj dbline} $dblist {
-				set dc [chr2num $dc]
-				if {$dc < $chr} {
+				set chrcompar [chr_compare $dc $chr]
+				if {$chrcompar < 0} {
 					lappend remove $num
-				} elseif {$dc == $chr} {
+				} elseif {$chrcompar == 0} {
 					if {$de <= $start} {
 						lappend remove $num
 					} elseif {$ds < $end} {

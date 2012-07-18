@@ -1463,7 +1463,7 @@ proc svloadtrf {trf chr pstart start end trfposs trflistVar trflineVar} {
 	upvar $trflineVar trfline
 	set temp {}
 	list_foreach {trfchr trfstart trfend} $trflist {
-		set trfchr [chr2num $trfchr]
+		set chrcompar [chr_compare $trfchr $chr]
 		if {($trfchr == $chr) && ($trfend >= $start) && ($trfstart < $end)} {
 			lappend temp [list $trfchr $trfstart $trfend]
 		}
@@ -1471,8 +1471,8 @@ proc svloadtrf {trf chr pstart start end trfposs trflistVar trflineVar} {
 	set trflist $temp
 	while {![eof $trf]} {
 		foreach {trfchr trfstart trfend} $trfline break
-		set trfchr [chr2num $trfchr]
-		if {$trfchr > $chr} break
+		set chrcompar [chr_compare $trfchr $chr]
+		if {$chrcompar > 1} break
 		if {$trfstart > $end} break
 		set trflen [expr {$trfend-$trfstart}]
 		if {($trfchr == $chr) && ($trfend >= $pstart) && ($trflen > 30)} {
@@ -1700,8 +1700,8 @@ proc svfind {pairfile trffile} {
 	while {![eof $trf]} {
 		set trfline [get_region $trf $trfposs]
 		foreach {trfchr trfstart trfend} $trfline break
-		set trfchr [chr2num $trfchr]
-		if {$trfchr >= $chr} break
+		set chrcompar [chr_compare $trfchr $chr]
+		if {$chrcompar >= 0} break
 	}
 	# go over file and find sv
 	set prevmains [expr {$mode-50}]

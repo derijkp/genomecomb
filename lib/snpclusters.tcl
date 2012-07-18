@@ -12,21 +12,20 @@ proc cg_clusters_distgraph {} {
 	set num 0
 	puts $o "begin\tdistance"
 	foreach {pchr pbegin pend} [get_region $f $poss] break
-	set pnchr [chr2num $pchr]
 	while {![eof $f]} {
 		incr num
 		if {![expr $num%100000]} {putsprogress $num}
 		set line [get_region $f $poss]
 		if {![isint [lindex $line 2]]} continue
 		foreach {chr begin end} $line break
-		set nchr [chr2num $chr]
-		if {$nchr == $pnchr} {
+		set chrcompar [chr_compare $pchr $chr]
+		if {$chrcompar == 0} {
 			set dist [expr {$begin - $pbegin}]
 			puts $o $pbegin\t$dist
 		} else {
 			error "only one chromsome at the time"
 		}
-		foreach {pchr pnchr pbegin pend} [list $chr $nchr $begin $end] break
+		foreach {pchr pbegin pend} [list $chr $begin $end] break
 	}
 	close $o
 	close $f
