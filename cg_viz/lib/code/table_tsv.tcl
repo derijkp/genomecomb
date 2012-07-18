@@ -20,8 +20,10 @@ if 0 {
 
 proc _table_tsv_calcline {object line cor} {
 	if {[llength $cor] == 1} {
-		return [list_sub $line [lindex $cor 1]]
+		return [list_sub $line [lindex $cor 0]]
 	} elseif {[llength $cor]} {
+		# $object.calcline is a function defined by method fields
+		# when there are calculated fields
 		return [$object.calcline $cor $line]
 	} else {
 		return $line
