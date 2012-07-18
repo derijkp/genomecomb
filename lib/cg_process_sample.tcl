@@ -19,13 +19,23 @@ proc process_sample {dir destdir dbdir {force 0}} {
 	set name [file tail $destdir]
 	putslog "Processing sample $dir -> $destdir"
 	# sort files
-	if {[file exists $destdir/variants-$name.tsv]} {
+	set varfile [glob -nocomplain $dir/ASM/var-*-ASM*.tsv*]
+	if {![llength $varfile]} {
 		# prepared dir, not coming from CG
 		if {![file exists $destdir/annotvar-$name.tsv]} {
-			file link -symbolic $destdir/annotvar-$name.tsv $destdir/variants-$name.tsv
+			set keep [pwd]
+			cd $destdir
+			if {[file exists $destdir/variants-$name.tsv]} {
+				set varfile $destdir/variants-$name.tsv
+			} else {
+				set varfile [lindex [glob $destdir/var*-$name.tsv] 0]
+			}
+			file link -symbolic annotvar-$name.tsv $varfile
+			cd $keep
 		}
 	} else {
 		if {$force || ![file exists [gzfile svar-$name.tsv]] || ![file exists $destdir/info.txt]} {
+			set varfile [lindex $varfile 0]
 			set varfile [glob $dir/ASM/var-*-ASM*.tsv*]
 			if {[llength $varfile] != 1} {error "could not identify varfile"}
 			if {[llength $varfile] > 1} {error "could not identify varfile"}
