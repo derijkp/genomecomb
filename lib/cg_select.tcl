@@ -93,6 +93,17 @@ proc tsv_select_un {ids neededfieldsVar} {
 	set temp "(([join $temp2 " || "]) && ([join $temp1 " || " ]))"
 }
 
+proc tsv_select_hovar {ids neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	set temp {}
+	foreach id $ids {
+		lappend neededfields sequenced-$id alleleSeq1-$id alleleSeq2-$id
+		lappend temp "\$\{sequenced-$id\} == \"v\" && \$\{alleleSeq1-$id\} == \$\{alleleSeq2-$id\}"
+	}
+	set temp "([join $temp {) && (}])"
+	return $temp
+}
+
 proc tsv_select_count {arguments header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set test [list_pop arguments]
@@ -428,6 +439,9 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 					}
 					un {
 						set temp [tsv_select_un $ids neededfields]
+					}
+					hovar {
+						set temp [tsv_select_hovar $ids neededfields]
 					}
 					count {
 						set temp [tsv_select_count $arguments $header neededfields]
