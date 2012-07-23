@@ -4,11 +4,6 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc cg {args} {
-	# puts "cg $args"
-	eval exec cg $args 2>@ stderr
-}
-
 proc process_sample {dir destdir dbdir {force 0}} {
 	set keepdir [pwd]
 	set dir [file normalize $dir]

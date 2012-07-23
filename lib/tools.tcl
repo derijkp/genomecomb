@@ -4,6 +4,11 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+proc cg {args} {
+	# puts "cg $args"
+	eval exec cg $args 2>@ stderr
+}
+
 proc opencgifile {file headerVar {numlinesVar {}}} {
 	if {$numlinesVar ne ""} {
 		upvar $numlinesVar numlines
