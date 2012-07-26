@@ -660,9 +660,20 @@ proc mklink {src dest} {
 		if {$s ne $d} break
 		incr pos
 	}
-	set prelen [expr {[llength $ssrc]-$pos}]
+	set prelen [expr {[llength $ssrc]-$pos -1}]
 	set src [file join {*}[list_fill $prelen ..] {*}[lrange $ssrc $pos end]]
 	file link -symbolic $dest $src
+}
+
+proc gzmklink {src dest} {
+	set src [gzfile $src]
+	set ext_s [file extension $src]
+	set ext_d [file extension $dest]
+	if {$ext_s ne $ext_d && [inlist {.gz .bgz .rz} $ext_s]} {
+		mklink $src $dest$ext_s
+	} else {
+		mklink $src $dest
+	}
 }
 
 if 0 {

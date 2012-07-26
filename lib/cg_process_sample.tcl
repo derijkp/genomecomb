@@ -51,11 +51,11 @@ proc cg_process_indexcompress {args} {
 proc cg_process_sample {args} {
 	cgmakelib_process_sample
 	global sample
+	set args [cgmake_args {*}$args]
 	if {([llength $args] < 2) || ([llength $args] > 3)} {
 		errorformat process_sample ?force?
 		exit 1
 	}
-	set force 0
 	foreach {dir destdir force} $args break
 	set dir [file normalize $dir]
 	set destdir [file normalize $destdir]
@@ -65,6 +65,6 @@ proc cg_process_sample {args} {
 		mklink $dir $destdir/oricg
 	}
 	set sample [file tail $destdir]
-	catch {file delete $destdir/cg_process_sample.finished}
-	cgmake --force $force $destdir/cg_process_sample-$sample.finished
+	catch {file delete $destdir/cg_process_sample-$sample.finished}
+	cgmake $destdir/cg_process_sample-$sample.finished
 }

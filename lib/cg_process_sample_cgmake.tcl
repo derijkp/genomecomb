@@ -4,6 +4,9 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+# load bam rules as these are used by some rules (e.g. cg_chromosomes_bam) in this file
+cgmakelib_bam
+
 target cg_chromosomes {cg_chromosomes\((.*)\)} -deps {$target1/oricg/ASM/REF/coverage*} -code {
 	set result {}
 	set files [gzfiles $dep]
@@ -11,6 +14,19 @@ target cg_chromosomes {cg_chromosomes\((.*)\)} -deps {$target1/oricg/ASM/REF/cov
 		lappend result [chr_clip [lindex [split $file -] 1]]
 	}	
 	set ::cg_chromosomes($target1) $result
+}
+
+target cg_chromosomes_bam {cg_chromosomes\((.*)\)} -deps {$target1/*.bam.idxstats} -code {
+	set f [gzopen [gzfile $dep]]
+	set chrs {}
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		foreach {chr chrsize aligned unaligned} $line break
+		if {$chr eq "*" || $chr eq "*"} continue
+		lappend chrs $chr
+	}
+	close $f
+	set ::cg_chromosomes($target1) $chrs
 }
 
 target cg_svar {(.*)/svar-([^/-]*).tsv} -deps {$target1/oricg/ASM/var-*-ASM*.tsv} -code {
@@ -55,30 +71,20 @@ target cg_annotvar {(.*)/annotvar-([^/-]*).tsv} -deps {$target1/svar-$target2.ts
 }
 
 # if not from cg, we do not have svar and sgene, take from first var_* file found
-target cg_annotvar_other {(.*)/annotvar-([^/-]*).tsv} -deps {$target1/var_*.tsv} -code {
+target cg_annotvar_other {(.*)/annotvar-([^/-]*).tsv} -deps {$target1/vars_*.tsv} -code {
 	set file [gzfile $dep]
-	set ext [file extension $file]
-	if {$ext ne ".tsv"} {
-		mklink $file $target$ext
-	} else {
-		mklink $file $target
-	}
+	gzmklink $file $target
 }
 
 # if we also do not find a var_* file, take from first variant* file found
 target cg_annotvar_other {(.*)/annotvar-([^/-]*).tsv} -deps {$target1/variant*.tsv} -code {
 	set file [gzfile $dep]
-	set ext [file extension $file]
-	if {$ext ne ".tsv"} {
-		mklink $file $target$ext
-	} else {
-		mklink $file $target
-	}
+	gzmklink $file $target
 }
 
 # if not from cg, we do not have svar and sgene, take from first var_file found
 target cg_annotvar_other {(.*)/annotvar-([^/-]*).tsv} -deps {$target1/var_*.tsv} -code {
-	mklink $dep $target
+	gzmklink $dep $target
 }
 
 target cg_sreg {(.*)/sreg-([^/-]*).tsv} -deps {$target1/oricg/ASM/reg-*-ASM*.tsv*} -code {
@@ -94,6 +100,16 @@ target cg_regfromsvar {(.*)/sreg-([^/-]*).tsv} -deps {$target1/svar-$target2.tsv
 	cg select -q {$varType != "no-call" && $varType != "no-ref"} -f "chromosome begin end" $svarfile $target.temp
 	cg regjoin $target.temp > $target.temp2
 	file rename -force $target.temp2 $target
+	file delete $target.temp
+}
+
+# if we do not have an svar (from cg), try getting a region file from the coverage
+# currently hardcoded at coverage > 7
+target bam_regsfromscoverage {(.*)/sreg-([^/-]*).tsv} -deps {$target1/coverage/coverage-*.bcol} -code {
+	set files [lsort -dict [gzfiles $dep]]
+	cg regextract -above 1 7 {*}$files > $target.temp
+	cg select -s {chromosome begin end} $target.temp $target.temp2
+	file rename $target.temp2 $target
 	file delete $target.temp
 }
 
@@ -153,23 +169,32 @@ target cg_coverage {(.*)/coverage/coverage-([^/-]*)-([^/-]*).bcol} -deps {$targe
 	}
 }
 
-target cg_cpCNV {(.*)/CNV} -deps {$target1/oricg/ASM/CNV} -code {
+# if we are coming from bams, coverage file name looks different, use these by making link
+target cg_coverage {(.*)/coverage/coverage-([^/-]*)-([^/-]*).bcol.bin} -deps {$target1/coverage/coverage-$target2-coverage-$target3.bcol.bin} -code {
+	gzmklink $dep $target
+}
+
+target cg_coverage {(.*)/coverage/coverage-([^/-]*)-([^/-]*).bcol} -deps {$target.bin $target1/coverage/coverage-$target2-coverage-$target3.bcol} -code {
+	gzmklink $dep $target
+}
+
+target cg_cpCNV {(.*)/CNV/finished} -deps {$target1/oricg/ASM/CNV} -code {
 	putslog "Copying CNV"
-	file delete -force $target.temp
-	catch {
-		file copy $dep $target.temp
-		file rename $target.temp $target
-	} result
+	set targetdir [file dir $target]
+	file delete -force $targetdir.temp
+	file copy $dep $targetdir.temp
+	file rename $targetdir.temp $targetdir
+	file_write $target [timestamp]
 	putslog $result
 }
 
-target cg_cpSV {(.*)/SV} -deps {$target1/oricg/ASM/SV} -code {
+target cg_cpSV {(.*)/SV/finished} -deps {$target1/oricg/ASM/SV} -code {
 	putslog "Copying SV"
-	file delete -force $target.temp
-	catch {
-		file copy $dep $target.temp
-		file rename $target.temp $target
-	} result
+	set targetdir [file dir $target]
+	file delete -force $targetdir.temp
+	file copy $dep $targetdir.temp
+	file rename $targetdir.temp $targetdir
+	file_write $target [timestamp]
 	putslog $result
 }
 
@@ -292,9 +317,9 @@ target cg_filteredcluster_covered {(.*)/filteredcluster-(.*).covered} -deps {$ta
 target cg_process_sample {(.*)/cg_process_sample-(.*).finished} -deps {
 	$target1/annotvar-$target2.tsv
 	$target1/sreg-$target2.tsv
-	$target1/reg_refcons-$target2.tsv
 	$target1/coverage/coverage-$target2-${_cg_chromosomes($target1)}.bcol
 	$target1/fannotvar-$target2.tsv
+	($target1/reg_refcons-$target2.tsv)
 	($target1/reg_nocall-$target2.tsv)
 	($target1/SV) ($target1/CNV)
 	($target1/cgsv-$target2.tsv)
