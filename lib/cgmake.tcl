@@ -130,11 +130,11 @@ proc cgmake_expandvars {string} {
 			}
 			set status [cgmaketarget $var newids 1]
 			if {[regexp {^cannot make} $status]} {
-				putslog "cannot make $var"
-				error "cannot make $var"
+				putslog $status
+				error $status
 			}
 			if {![info exists ::$var]} {
-				error "cannot make $var"
+				error "cannot make $var: make finished, but var is not defined"
 			}
 			if {$expand} {
 				set valuelist [get ::$var]
@@ -197,14 +197,14 @@ proc cgmaketarget {target newidsVar {direct 0}} {
 		return ok
 	} elseif {[info exists cgmakeids($target)]} {
 		if {$cgmakeids($target) eq ""} {
-			putslog "Target $target already done"
+			putslog "target $target already done"
 		} else {
-			putslog "Target $target already submitted (id $cgmakeids($target))"
+			putslog "target $target already submitted (id $cgmakeids($target))"
 			lappend newids $cgmakeids($target)
 		}
 		return ok
 	} elseif {[info exists ::$target]} {
-		putslog "Target variable $target already done"
+		putslog "variable $target exists"
 		return ok
 	}
 	logleveldown
@@ -220,9 +220,9 @@ proc cgmaketarget {target newidsVar {direct 0}} {
 		}
 	}
 	if {![llength $checklist]} {
-		putslog "cannot make $target"
+		putslog "cannot make $target: no rule found"
 		loglevelup
-		return "cannot make $target"
+		return "cannot make $target: no rule found"
 	}
 	list_foreach {targetname pattern deps vars precode code submitopts} $checklist {
 		putslog "Test rule $targetname"
@@ -284,9 +284,9 @@ proc cgmaketarget {target newidsVar {direct 0}} {
 		set depsok 0
 	}
 	if {!$depsok} {
-		putslog "cannot make $target"
+		putslog "cannot make $target: missing dependencies"
 		loglevelup
-		return "cannot make $target"
+		return "cannot make $target: missing dependencies"
 	}
 	loglevelup
 	putslog "making $target (rule $targetname)"
