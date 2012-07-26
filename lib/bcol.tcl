@@ -338,6 +338,7 @@ proc cg_bcol_make {args} {
 					puts $o $size\tend\t0
 					close $o
 					exec razip -c $prefix-$prevchr.bcol.bin.temp > $prefix-$prevchr.bcol.bin.rz.temp
+					file delete $prefix-$prevchr.bcol.bin.temp
 					file rename -force $prefix-$prevchr.bcol.bin.rz.temp $prefix-$prevchr.bcol.bin.rz
 					file rename -force $prefix-$prevchr.bcol.temp $prefix-$prevchr.bcol
 				}
@@ -400,10 +401,12 @@ proc cg_bcol_make {args} {
 	close $o
 	if {$distribute} {
 		exec razip -c $prefix-$prevchr.bcol.bin.temp > $prefix-$prevchr.bcol.bin.rz.temp
+		file delete $prefix-$prevchr.bcol.bin.temp
 		file rename -force $prefix-$prevchr.bcol.bin.rz.temp $prefix-$prevchr.bcol.bin.rz
 		file rename -force $prefix-$prevchr.bcol.temp $prefix-$prevchr.bcol
 	} else {
 		exec razip -c $result.bin.temp > $result.bin.rz.temp
+		file delete $result.bin.temp
 		file rename -force $result.bin.rz.temp $result.bin.rz
 		file rename -force $result.temp $result
 	}
