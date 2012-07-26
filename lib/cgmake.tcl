@@ -292,11 +292,21 @@ proc cgmaketarget {target newidsVar {direct 0}} {
 	putslog "making $target (rule $targetname)"
 	set ecode [cgmakecode $code $target $targetvars $deps $vars]
 	if {$cgmakeargs(distribute) == 0} {
-		incr cgmakeids()
-		set cgmakeids($target) $cgmakeids()
+#		incr cgmakeids()
+#		set cgmakeids($target) $cgmakeids()
 		proc cgmake_temp {} $ecode
 		uplevel #0 cgmake_temp
-		set cgmakeids($target) {}
+		if {[llength [gzfiles $target]]} {
+			putslog "file $target ok"
+			return ok
+		} elseif {[info exists ::$target]} {
+			putslog "variable $target ok"
+			return ok
+		} else {
+			putslog "cannot make $target: ERROR rule $targetname did not actually make target"
+			return "cannot make $target: ERROR rule $targetname did not actually make target"
+		}
+#		set cgmakeids($target) {}
 		putslog "Made $targetname ($target)\n"
 	} else {
 		error "other than -d 0 not implemented yet"
