@@ -44,8 +44,7 @@ proc bcol_indexlines {file indexfile} {
 			if {$ext eq ".rz"} {
 				file delete $tempfile
 			} else {
-				cg razip $file
-				set file $file.rz
+				exec razip -c $file > $file.rz
 			}
 		}
 	}
@@ -338,7 +337,8 @@ proc cg_bcol_make {args} {
 					puts $o $start\t$type\t0
 					puts $o $size\tend\t0
 					close $o
-					file rename -force $prefix-$prevchr.bcol.bin.temp $prefix-$prevchr.bcol.bin
+					exec razip -c $prefix-$prevchr.bcol.bin.temp > $prefix-$prevchr.bcol.bin.rz.temp
+					file rename -force $prefix-$prevchr.bcol.bin.rz.temp $prefix-$prevchr.bcol.bin.rz
 					file rename -force $prefix-$prevchr.bcol.temp $prefix-$prevchr.bcol
 				}
 				set prevchr $chr
@@ -399,10 +399,12 @@ proc cg_bcol_make {args} {
 	puts $o $size\tend\t0
 	close $o
 	if {$distribute} {
-		file rename -force $prefix-$prevchr.bcol.bin.temp $prefix-$prevchr.bcol.bin
+		exec razip -c $prefix-$prevchr.bcol.bin.temp > $prefix-$prevchr.bcol.bin.rz.temp
+		file rename -force $prefix-$prevchr.bcol.bin.rz.temp $prefix-$prevchr.bcol.bin.rz
 		file rename -force $prefix-$prevchr.bcol.temp $prefix-$prevchr.bcol
 	} else {
-		file rename -force $result.bin.temp $result.bin
+		exec razip -c $result.bin.temp > $result.bin.rz.temp
+		file rename -force $result.bin.rz.temp $result.bin.rz
 		file rename -force $result.temp $result
 	}
 }
