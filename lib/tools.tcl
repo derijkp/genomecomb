@@ -650,6 +650,21 @@ proc getline f {
 	return $line
 }
 
+proc mklink {src dest} {
+	set src [file normalize $src]
+	set dest [file normalize $dest]
+	set pos 0
+	set ssrc [file split $src]
+	set sdest [file split $dest]
+	foreach s $ssrc d $sdest {
+		if {$s ne $d} break
+		incr pos
+	}
+	set prelen [expr {[llength $ssrc]-$pos}]
+	set src [file join {*}[list_fill $prelen ..] {*}[lrange $ssrc $pos end]]
+	file link -symbolic $dest $src
+}
+
 if 0 {
 
 	ifcatch {error test} result {
