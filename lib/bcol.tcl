@@ -244,11 +244,13 @@ array set bcol_typea {c,mx  127 s,mx  32767 i,mx  2147483647 w,mx  9223372036854
 proc cg_bcol_make {args} {
 	global bcol_typea
 	set type iu
+	set chromosomecol 0
 	set offsetcol {}
 	set defaultvalue 0
 	set distribute 0
 	set start 0
 	set pos 0
+	set header 1
 	foreach {key value} $args {
 		switch -- $key {
 			-t - --type {
@@ -266,6 +268,9 @@ proc cg_bcol_make {args} {
 			-c - --chromosomecol {
 				set chromosomecol $value
 				set distribute 1
+			}
+			-h - --header {
+				set header $value
 			}
 			-- break
 			default {
@@ -296,24 +301,30 @@ proc cg_bcol_make {args} {
 	set btype [string index $type 0]
 	# putslog "Making $result"
 	set f stdin
-	set header [tsv_open $f comment]
-	set colpos [lsearch $header $valuecolumn]
-	if {$colpos == -1} {
-		exiterror "error: valuecolumn $valuecolumn not found"
-	}
-	if {$offsetcol eq ""} {
-		set offsetpos -1
+	if {$header} {
+		set header [tsv_open $f comment]
+		set colpos [lsearch $header $valuecolumn]
+		if {$colpos == -1} {
+			exiterror "error: valuecolumn $valuecolumn not found"
+		}
+		if {$offsetcol eq ""} {
+			set offsetpos -1
+		} else {
+			set offsetpos [lsearch $header $offsetcol]
+			if {$offsetpos == -1} {
+				exiterror "error: pos column $offsetcol not found"
+			}
+		}
+		if {$distribute} {
+			set chrompos [lsearch $header $chromosomecol]
+			if {$chrompos == -1} {
+				exiterror "error: chromosome column $chromosomecol not found"
+			}
+		}
 	} else {
-		set offsetpos [lsearch $header $offsetcol]
-		if {$offsetpos == -1} {
-			exiterror "error: pos column $offsetcol not found"
-		}
-	}
-	if {$distribute} {
-		set chrompos [lsearch $header $chromosomecol]
-		if {$chrompos == -1} {
-			exiterror "error: chromosome column $chromosomecol not found"
-		}
+		set offsetpos $offsetcol
+		set colpos $valuecolumn
+		set chrompos $chromosomecol
 	}
 	set bo [open $result.bin.temp w]
 	fconfigure $bo -encoding binary -translation binary
