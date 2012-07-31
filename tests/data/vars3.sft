@@ -1,0 +1,7 @@
+chromosome	begin	end	type	ref	alt	freq-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample1	freq-sample2	alleleSeq1-sample2	alleleSeq2-sample2	sequenced-sample2
+chr1	4000	4001	snp	G	A	0.5	A	G	v	0.4	A	G	v
+chr1	4001	4002	snp	A	G,C	0.5,0.1	G	G	v	0.4,0.2	G	G	v
+chr1	4099	5000	snp	C	T,A	0.5,0.1	T	T	v	0.2,0.6	T	T	v
+chr1	5020	5021	snp	G	A,T,C	0.1,0.5,0.2	G	C	v	0.2,-,0.2	G	G	r
+chr2	4001	4002	snp	A	G,C	-,0.8	G	G	v	0.9,-	G	G	v
+chr2	4099	5000	snp	C	T,G	0.2,0.4	T	T	v	,-	T	T	v

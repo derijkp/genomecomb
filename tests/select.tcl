@@ -264,4 +264,64 @@ test select {start brace bugcheck} {
 	split [exec cg select -f {chromosome begin end {type=($type == "snp")? "Snp" : (($type == "del")? "Deletion" : $type)}} -q {$ROW in {2 3 9 10}} < data/vars1.sft] \n
 } {{chromosome	begin	end	type} {chr1	4099	5000	Snp} {chr1	5000	5010	Deletion} {chr2	5000	5010	ins} {chr2	5005	5006	Snp}}
 
+test select {list @-} {
+	split [exec cg select -f {begin {diff=vdef($freq-sample1,0) @- vdef($freq-sample2,0)}} < data/vars3.sft] \n
+} {{begin	diff} {4000	0.09999999999999998} {4001	0.09999999999999998,-0.1} {4099	0.3,-0.5} {5020	-0.1,0.5,0.0} {4001	-0.9,0.8} {4099	0.2,0.4}}
+
+test select {list @- @-} {
+	split [exec cg select -f {begin {diff=vdef($freq-sample1,0) @- vdef($freq-sample2,0) @- vdef($freq-sample2,0)}} < data/vars3.sft] \n
+} {{begin	diff} {4000	-0.30000000000000004} {4001	-0.30000000000000004,-0.30000000000000004} {4099	0.09999999999999998,-1.1} {5020	-0.30000000000000004,0.5,-0.2} {4001	-1.8,0.8} {4099	0.2,0.4}}
+
+test select {list @- @<} {
+	split [exec cg select \
+		-f {begin {diff=vdef($freq-sample1,0) @- vdef($freq-sample2,0)}} \
+		-q {vone((vdef($freq-sample1,0) @- vdef($freq-sample2,0)) @< 0)} \
+		< data/vars3.sft] \n
+} {{begin	diff} {4001	0.09999999999999998,-0.1} {4099	0.3,-0.5} {5020	-0.1,0.5,0.0} {4001	-0.9,0.8}}
+
+test select {list @- NaN} {
+	split [exec cg select -f {begin {diff=$freq-sample1 @- $freq-sample2}} < data/vars3.sft] \n
+} {{begin	diff} {4000	0.09999999999999998} {4001	0.09999999999999998,-0.1} {4099	0.3,-0.5} {5020	-0.1,NaN,0.0} {4001	NaN,NaN} {4099	NaN,NaN}}
+
+test select {list vabs} {
+	split [exec cg select -f {begin {diff=vabs(vdef($freq-sample1,0) @- vdef($freq-sample2,0))}} < data/vars3.sft] \n
+} {{begin	diff} {4000	0.09999999999999998} {4001	0.09999999999999998,0.1} {4099	0.3,0.5} {5020	0.1,0.5,0.0} {4001	0.9,0.8} {4099	0.2,0.4}}
+
+test select {list vabs NaN} {
+	split [exec cg select -f {begin {diff=vabs($freq-sample1 @- $freq-sample2)}} < data/vars3.sft] \n
+} {{begin	diff} {4000	0.09999999999999998} {4001	0.09999999999999998,0.1} {4099	0.3,0.5} {5020	0.1,NaN,0.0} {4001	NaN,NaN} {4099	NaN,NaN}}
+
+test select {list @+} {
+	split [exec cg select -f {begin {diff=vabs(vdef($freq-sample1,0) @+ vdef($freq-sample2,0))}} < data/vars3.sft] \n
+} {{begin	diff} {4000	0.9} {4001	0.9,0.30000000000000004} {4099	0.7,0.7} {5020	0.30000000000000004,0.5,0.4} {4001	0.9,0.8} {4099	0.2,0.4}}
+
+test select {list @*} {
+	split [exec cg select -f {begin {diff=vabs(vdef($freq-sample1,0) @* vdef($freq-sample2,0))}} < data/vars3.sft] \n
+} {{begin	diff} {4000	0.2} {4001	0.2,0.020000000000000004} {4099	0.1,0.06} {5020	0.020000000000000004,0.0,0.04000000000000001} {4001	0.0,0.0} {4099	0.0,0.0}}
+
+test select {list @/} {
+	split [exec cg select -f {begin {diff=vabs(vdef($freq-sample1,0) @/ vdef($freq-sample2,0))}} < data/vars3.sft] \n
+} {{begin	diff} {4000	1.25} {4001	1.25,0.5} {4099	2.5,0.16666666666666669} {5020	0.5,Inf,1.0} {4001	0.0,Inf} {4099	Inf,Inf}}
+
+test tokenize {@newop precedence} {
+	set code {$a @- 1 - $b * $b / 2 + 3}
+	set header {a b}; set a 1; set b 1
+	set tokens [tsv_select_tokenize $header $code n]
+	set pquery [tsv_select_detokenize $tokens $header n]
+} {((vminus(${a}, 1) - ((${b} * ${b}) / 2)) + 3)}
+
+test tokenize {@newop precedence} {
+	set code {$a @- 1 - $b * $b / 2 @+ 3}
+	set header {a b}; set a 1; set b 1
+	set tokens [tsv_select_tokenize $header $code n]
+	set pquery [tsv_select_detokenize $tokens $header n]
+} {vplus((vminus(${a}, 1) - ((${b} * ${b}) / 2)), 3)}
+
+test select {lindex} {
+	split [exec cg select \
+		-f {chromosome begin} \
+		-q {lindex($freq-sample1,1) == 0.1} \
+		< data/vars3.sft] \n
+} {{chromosome	begin} {chr1	4001} {chr1	4099}}
+
 testsummarize

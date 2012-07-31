@@ -110,6 +110,7 @@ proc tsv_select_count {arguments header neededfieldsVar} {
 	set temp {}
 	foreach q $arguments {
 		lappend q {*}$test
+		set q [tsv_select_precedence $q]
 		lappend temp "([tsv_select_detokenize $q $header neededfields])"
 	}
 	return "([join $temp " + "])"
@@ -195,7 +196,53 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 	return $rfields
 }
 
+array set tsv_select_tokenize_opsa {
+	~ {u 1} ! {u 1} 
+	** {d 2}
+	@** {d 2}
+	* {d 3} / {d 3} % {d 3}
+	@* {d 3} @/ {d 3} @% {d 3}
+	- {d 4} + {d 4} 
+	@- {d 4} @+ {d 4} 
+	<< {d 5} >> {d 5}
+	< {d 6} > {d 6} <= {d 6} >= {d 6}
+	@< {d 6} @> {d 6} @<= {d 6} @>= {d 6}
+	== {d 7} != {d 7}
+	@== {d 7} @!= {d 7}
+	eq {d 8} ne {d 8}
+	in {s 9} ni {s 9}
+	& {d 10} ^ {d 11} | {d 12} && {d 13} || {d 14}
+	? {t 15} : {t 16}
+}
+
+array set tsv_select_tokenize_newopsa {
+	@** vpower
+	@* vtimes @/ vdivide @% vmod
+	@- vminus @+ vplus 
+	@> vgt @< vlt @>= vgte @<= vlte
+	@== veq @!= vne
+}
+
+proc tsv_select_tokenize_opsdata op {
+	global tsv_select_tokenize_opsa
+	if {[info exists tsv_select_tokenize_opsa($op)]} {
+		foreach {numargs prec} $tsv_select_tokenize_opsa($op) break
+		if {[info exists ::tsv_select_tokenize_newopsa($op)]} {
+			set type @newop
+			set op $::tsv_select_tokenize_newopsa($op)
+		} else {
+			set type @op
+		}
+	} else {
+		set type @newop
+		set prec 0
+		set numargs 2
+	}
+	list $type $op $prec
+}
+
 proc tsv_select_tokenize {header code neededfieldsVar} {
+	global tsv_select_tokenize_opsa
 	upvar $neededfieldsVar neededfields
 	upvar tsv_funcnum tsv_funcnum
 	# variable preprocessor first, to expand *
@@ -263,7 +310,6 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 	set curstack {}
 	set curtype {}
 	set work {}
-	array set opsa {- u + u ~ u ! u ** d * d / d % d << d >> d < d > d <= d >= d == d != d eq d ne d in s ni s & d ^ d | d && d || t ? t : t}
 	while {$pos < $len} {
 		set char [string index $code $pos]
 		while {[regexp {[ \t\n]} $char]} {
@@ -276,13 +322,12 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 			incr pos
 			set pos [lindex [regexp -start $pos -inline -indices {[^0-9.]|$} $code] 0 0]
 			lappend curstack [list @num [string range $code $prevpos [expr {$pos-1}]]]
-		} elseif {[regexp {[+!*/%<>&^|?:=-]} $char]} {
+		} elseif {[regexp {[+!*/%<>&^|@?:=-]} $char]} {
 			# operand
 			incr pos
-			set pos [lindex [regexp -start $pos -inline -indices {[^+!*/%<>&^|?:=-]|$} $code] 0 0]
+			set pos [lindex [regexp -start $pos -inline -indices {[^+!*/%<>&^|?@:=-]|$} $code] 0 0]
 			set op [string range $code $prevpos [expr {$pos-1}]]
-			if {[info exists opsa($op)]} {set type @op} else {set type @newop}
-			lappend curstack [list $type $op]
+			lappend curstack [tsv_select_tokenize_opsdata $op]
 		} elseif {[regexp {[A-Za-z]} $char]} {
 			# function or text operand
 			set pos [lindex [regexp -start $pos -inline -indices {[^A-Za-z0-9_]|$} $code] 0 0]
@@ -296,8 +341,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 			} else {
 				# text operand
 				set op [string range $code $prevpos [expr {$pos-1}]]
-				if {[info exists opsa($op)]} {set type @op} else {set type @newop}
-				lappend curstack [list $type $op]
+				lappend curstack [tsv_select_tokenize_opsdata $op]
 			}
 		} elseif {$char eq "\("} {
 			lappend curstack [list @braces]
@@ -318,6 +362,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 			if {[lindex $temp 0] ne "@function"} {
 				error "Error: unexpected \",\" outside function argument list on position $pos in $code"
 			}
+			set curstack [tsv_select_precedence $curstack]
 			lappend temp $curstack
 			lappend prevstack $temp
 			lappend stack $prevstack
@@ -328,12 +373,14 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 			set prevtype [lindex $prevstack end 0]
 			if {$prevtype eq "@function"} {
 				set temp [list_pop prevstack]
+				set curstack [tsv_select_precedence $curstack]
 				lappend temp $curstack
 				lappend prevstack $temp
 				set curstack $prevstack
 				incr pos
 			} elseif {$prevtype eq "@braces"} {
 				set temp [list_pop prevstack]
+				set curstack [tsv_select_precedence $curstack]
 				lappend temp {*}$curstack
 				lappend prevstack $temp
 				set curstack $prevstack
@@ -389,19 +436,80 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 	if {$stack ne ""} {
 		error "unbalanced expression"
 	}
+	set curstack [tsv_select_precedence $curstack]
 	return $curstack
 }
 
-proc tsv_select_detokenize {tokens header neededfieldsVar} {
-	upvar $neededfieldsVar neededfields
-	if {[llength $tokens] >= 3} {
-		set ops [list_subindex $tokens 0]
-		set poss [lsort -integer -decreasing [list_find $ops @newop]]
-		foreach pos $poss {
-			foreach {pre op post} [lrange $tokens [expr {$pos-1}] [expr {$pos+1}]] break
-			set tokens [lreplace $tokens [expr {$pos-1}] [expr {$pos+1}] [list @function [lindex $op end] [list $pre] [list $post]]]
+proc tsv_select_precedence {curstack} {
+	if {[llength $curstack] < 3} {return $curstack}
+	set poss [list_find -glob $curstack @newop*]
+	# only need to do precedence myself using braces if there are @newops
+	if {![llength $poss]} {return $curstack}
+	lappend poss {*}[list_find -glob $curstack @op*]
+	set poss [lsort -integer -decreasing $poss]
+	set prev -1
+	unset -nocomplain todoops
+	foreach pos $poss {
+		if {$prev - $pos == 1} {
+			set temp [expr {$prev+1}]
+			set curstack [lreplace $curstack $prev $temp [list @braces {*}[lrange $curstack $prev $temp]]]
+		} elseif {$prev != -1} {
+			set temp [lindex $curstack $prev]
+			set level [lindex $temp 2]
+			if {![isint $level]} {set level 0}
+			lappend todoops($level) $temp
+		}
+		set prev $pos
+	}
+	if {$prev == 0} {
+		set curstack [lreplace $curstack 0 1 [list @braces {*}[lrange $curstack 0 1]]]
+	} else {
+		set temp [lindex $curstack $prev]
+		set level [lindex $temp 2]
+		if {![isint $level]} {set level 0}
+		lappend todoops($level) $temp
+	}
+	# join $curstack \n
+	set levels [array names todoops]
+	if {[llength $levels] > 0} {
+		set levels [lsort -integer $levels]
+		foreach level $levels {
+			set poss {}
+			foreach todoop [list_remdup $todoops($level)] {
+				lappend poss {*}[list_find $curstack $todoop]
+			}
+			set poss [lsort -integer $poss]
+			set shift 0
+			foreach pos $poss {
+				set from [expr {$pos+$shift-1}]
+				set to [expr {$pos+$shift+1}]
+				foreach {pre op post} [lrange $curstack $from $to] break
+				if {[lindex $op 0] eq "@op"} {
+					set curstack [lreplace $curstack $from $to [list @braces $pre $op $post]]
+				} else {
+					set op [lindex $op 1]
+					set curstack [lreplace $curstack $from $to [list @function $op [list $pre] [list $post]]]
+				}
+				incr shift -2
+			}
 		}
 	}
+	return $curstack
+}
+
+#	upvar $neededfieldsVar neededfields
+#	if {[llength $tokens] >= 3} {
+#		set ops [list_subindex $tokens 0]
+#		set poss [lsort -integer -decreasing [list_find $ops @newop]]
+#		foreach pos $poss {
+#			foreach {pre op post} [lrange $tokens [expr {$pos-1}] [expr {$pos+1}]] break
+#			set tokens [lreplace $tokens [expr {$pos-1}] [expr {$pos+1}] [list @function [lindex $op end] [list $pre] [list $post]]]
+#		}
+#	}
+
+proc tsv_select_detokenize {tokens header neededfieldsVar} {
+	global newoptransa
+	upvar $neededfieldsVar neededfields
 	set result {}
 	foreach line $tokens {
 		foreach {type val} $line break

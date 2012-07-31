@@ -26,6 +26,38 @@ proc tcl::mathfunc::lmax args {
 	return $max
 }
 
+proc tcl::mathfunc::lmaxpos args {
+	set max -Inf
+	set maxpos NaN
+	foreach v $args {
+		set curpos 0
+		foreach v [split $v ";, "] {
+			if {[isdouble $v] && $v > $max} {
+				set max $v
+				set maxpos $curpos
+			}
+			incr curpos
+		}
+	}
+	return $maxpos
+}
+
+proc tcl::mathfunc::lminpos args {
+	set min Inf
+	set minpos NaN
+	foreach v $args {
+		set curpos 0
+		foreach v [split $v ";, "] {
+			if {[isdouble $v] && $v < $min} {
+				set min $v
+				set minpos $curpos
+			}
+			incr curpos
+		}
+	}
+	return $minpos
+}
+
 proc tcl::mathfunc::lmind {args} {
 	set def [list_pop args]
 	set min Inf
