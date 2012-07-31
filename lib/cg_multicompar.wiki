@@ -14,6 +14,10 @@ These are tab separated files indicating variants present in one or more samples
 * The sample dir(s) should be one directory below compar_file (for reannot)
 * missing annotations must be checked and added afterwards using multicompar_reannot
 
+Fields starting with l: will be regarded as list dependend on different alt 
+genotypes (a comma separated list). The -listfields option can be used to define columns
+to be treated this way.
+
 == Arguments ==
 ; **multicomparfile**: resultfile, will be created if it does not exist
 ; **sampledir**: 
@@ -23,6 +27,7 @@ These are tab separated files indicating variants present in one or more samples
 == Options ==
 ; **-reannot**: Also do reannotation (see cg multicompar_reannot)
 ; **-reannotregonly**: Also do reannotation, but only region data (sequenced) will be updated
+; **-listfields listfields**: fields given by listfields will be regarded as lists (comma separated) dependend on the different alt genotypes
 
 == Category ==
 Compare

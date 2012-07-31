@@ -107,7 +107,7 @@ proc multicompar_annot_join {cur1 cur2} {
 	return [join $result \t]
 }
 
-proc multicompar {compar_file dir} {
+proc multicompar {compar_file dir {listfields {}}} {
 	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2 sequenced2pos
 	catch {close $f1}; catch {close $f2}; catch {close $o}
 	set comparfields {chromosome begin end type}
@@ -164,6 +164,14 @@ proc multicompar {compar_file dir} {
 	set dummy2 [list_fill [llength $header2] ?]
 	set listfields1 [list_find -glob $header1 l:*]
 	set listfields2 [list_find -glob $header2 l:*]
+	foreach p $listfields {
+		set poss [list_find -glob $header1 $p]
+		if {[llength $poss]} {lappend listfields1 {*}$poss}
+		set poss [list_find -glob $header2 $p]
+		if {[llength $poss]} {lappend listfields2 {*}$poss}
+	}
+	set listfields1 [lsort -integer [list_remdup $listfields1]]
+	set listfields2 [lsort -integer [list_remdup $listfields2]]
 	# make output header
 	set restfields1 [list_lremove [list_sub $header1 -exclude $comparposs1] $mergefields]
 	set restfields1 [list_remove $restfields1 ref reference alt]
@@ -393,30 +401,45 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 }
 
 proc cg_multicompar {args} {
+	set reannot 0
+	set regonly 0
+	set listfields {}
+	set pos 0
+	while 1 {
+		set key [lindex $args $pos]
+		switch -- $key {
+			-reannot {
+				putslog "Also reannot"
+				set reannot 1
+			}
+			-reannotregonly {
+				putslog "Also reannot"
+				set reannot 1
+				set regonly 1
+			}
+			-listfields {
+				incr pos
+				set listfields [lindex $args $pos]
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos
+	}
+	set args [lrange $args $pos end]
 	if {([llength $args] < 1)} {
 		puts "Wrong number of arguments"
 		errorformat multicompar
 		exit 1
-	}
-	set regonly 0
-	if {[lindex $args 0] eq "-reannot"} {
-		putslog "Also reannot"
-		set reannot 1
-		set args [lrange $args 1 end]
-	} elseif {[lindex $args 0] eq "-reannotregonly"} {
-		putslog "Also reannot"
-		set reannot 1
-		set regonly 1
-		set args [lrange $args 1 end]
-	} else {
-		set reannot 0
 	}
 	foreach {compar_file} $args break
 	set dirs [lrange $args 1 end]
 	foreach dir $dirs {
 		set dir [file normalize $dir]
 		putslog "Adding $dir"
-		multicompar $compar_file $dir
+		multicompar $compar_file $dir $listfields
 	}
 	if {$reannot} {
 		putslog "Reannotating $compar_file"
