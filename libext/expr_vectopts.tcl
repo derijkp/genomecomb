@@ -170,3 +170,44 @@ proc tcl::mathfunc::vne {v1 v2} {
 	}
 	return [join $result ,]
 }
+
+proc tcl::mathfunc::vand {v1 v2} {
+	foreach {v1 v2} [::matchlistsize $v1 $v2] break
+	set result {}
+	foreach e1 $v1 e2 $v2 {
+		lappend result [expr {$e1 && $e2}]
+	}
+	return [join $result ,]
+}
+
+proc tcl::mathfunc::vor {v1 v2} {
+	foreach {v1 v2} [::matchlistsize $v1 $v2] break
+	set result {}
+	foreach e1 $v1 e2 $v2 {
+		lappend result [expr {$e1 || $e2}]
+	}
+	return [join $result ,]
+}
+
+proc tcl::mathfunc::vin {v1 v2} {
+	foreach {v1 v2} [::matchlistsize $v1 $v2] break
+	set result {}
+	foreach e1 $v1 {
+		lappend result [inlist $v2 $e1]
+	}
+	return [join $result ,]
+}
+
+proc tcl::mathfunc::vni {v1 v2} {
+	foreach {v1 v2} [::matchlistsize $v1 $v2] break
+	set result {}
+	foreach e1 $v1 {
+		if {![inlist $v2 $e1]} {
+			lappend result 1
+		} else {
+			lappend result 0
+		}
+	}
+	return [join $result ,]
+}
+

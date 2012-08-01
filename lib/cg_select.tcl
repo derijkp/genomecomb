@@ -211,7 +211,11 @@ array set tsv_select_tokenize_opsa {
 	@== {d 7} @!= {d 7}
 	eq {d 8} ne {d 8}
 	in {s 9} ni {s 9}
-	& {d 10} ^ {d 11} | {d 12} && {d 13} || {d 14}
+	vin {s 9} vni {s 9}
+	& {d 10} ^ {d 11} | {d 12}
+	&& {d 13} || {d 14}
+	@&& {d 13} @|| {d 14}
+	vand {d 13} vor {d 14}
 	? {t 15} : {t 16}
 }
 
@@ -221,10 +225,14 @@ array set tsv_select_tokenize_newopsa {
 	@- vminus @+ vplus 
 	@> vgt @< vlt @>= vgte @<= vlte
 	@== veq @!= vne
+	vin vin vni vni
+	@&& vand @|| vor
+	vand vand vor vor
 }
 
 proc tsv_select_tokenize_opsdata op {
 	global tsv_select_tokenize_opsa
+	if {$op eq "and"} {set op &&} elseif {$op eq "or"} {set op ||}
 	if {[info exists tsv_select_tokenize_opsa($op)]} {
 		foreach {numargs prec} $tsv_select_tokenize_opsa($op) break
 		if {[info exists ::tsv_select_tokenize_newopsa($op)]} {

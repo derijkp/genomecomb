@@ -136,4 +136,20 @@ test libext {vmin} {
 	expr {vmin("10,2","1,20")}
 } {1,2}
 
+test libext {vand} {
+	expr {vand("0,1,1","0,0,1")}
+} {0,0,1}
+
+test libext {vor} {
+	expr {vor("0,1,1","0,0,1")}
+} {0,1,1}
+
+test libext {vin} {
+	expr {vin("1,2,3","4,3,2")}
+} {0,1,1}
+
+test libext {vni} {
+	expr {vni("1,2,3","4,3,2")}
+} {1,0,0}
+
 testsummarize

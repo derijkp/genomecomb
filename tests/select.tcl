@@ -275,7 +275,7 @@ test select {list @- @-} {
 test select {list @- @<} {
 	split [exec cg select \
 		-f {begin {diff=vdef($freq-sample1,0) @- vdef($freq-sample2,0)}} \
-		-q {vone((vdef($freq-sample1,0) @- vdef($freq-sample2,0)) @< 0)} \
+		-q {lone((vdef($freq-sample1,0) @- vdef($freq-sample2,0)) @< 0)} \
 		< data/vars3.sft] \n
 } {{begin	diff} {4001	0.09999999999999998,-0.1} {4099	0.3,-0.5} {5020	-0.1,0.5,0.0} {4001	-0.9,0.8}}
 
@@ -323,5 +323,47 @@ test select {lindex} {
 		-q {lindex($freq-sample1,1) == 0.1} \
 		< data/vars3.sft] \n
 } {{chromosome	begin} {chr1	4001} {chr1	4099}}
+
+test select {and} {
+	split [exec cg select \
+		-f {chromosome begin} \
+		-q {$freq-sample1 contains 0.5 and $freq-sample2 contains 0.2} \
+		< data/vars3.sft] \n
+} {{chromosome	begin} {chr1	4001} {chr1	4099} {chr1	5020}}
+
+test select {or} {
+	split [exec cg select \
+		-f {chromosome begin} \
+		-q {$freq-sample1 contains 0.5 or $freq-sample2 contains 0.2} \
+		< data/vars3.sft] \n
+} {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr1	5020}}
+
+test select {vand} {
+	split [exec cg select \
+		-f {chromosome begin} \
+		-q {lone($freq-sample1 @== 0.5 vand $freq-sample2 @== 0.2)} \
+		< data/vars3.sft] \n
+} {{chromosome	begin} {chr1	4099}}
+
+test select {@&&} {
+	split [exec cg select \
+		-f {chromosome begin} \
+		-q {lone($freq-sample1 @== 0.5 @&& $freq-sample2 @== 0.2)} \
+		< data/vars3.sft] \n
+} {{chromosome	begin} {chr1	4099}}
+
+test select {vor} {
+	split [exec cg select \
+		-f {chromosome begin} \
+		-q {lone($freq-sample1 @== 0.5 vor $freq-sample2 @== 0.2)} \
+		< data/vars3.sft] \n
+} {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr1	5020}}
+
+test select {@||} {
+	split [exec cg select \
+		-f {chromosome begin} \
+		-q {lone($freq-sample1 @== 0.5 @|| $freq-sample2 @== 0.2)} \
+		< data/vars3.sft] \n
+} {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr1	5020}}
 
 testsummarize

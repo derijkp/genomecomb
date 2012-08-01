@@ -219,6 +219,13 @@ test query {query 22 c} {
 	exec diff temp.tsv answers/query22.tsv
 } {}
 
+test query {query 22 d} {
+	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
+		lone($refGene_impact @== "CDSMIS") || lone($knownGene_impact @== "CDSMIS")
+	} annottestcompar.tsv.rz temp.tsv
+	exec diff temp.tsv answers/query22.tsv
+} {}
+
 test query {query 23 b} {
 	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
 		shares($refGene_impact, "CDSMIS CDSINS") && ($knownGene_impact shares "CDSMIS CDSINS")
