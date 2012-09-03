@@ -656,12 +656,15 @@ proc mklink {src dest} {
 	set pos 0
 	set ssrc [file split $src]
 	set sdest [file split $dest]
+	# puts $ssrc\n$sdest
 	foreach s $ssrc d $sdest {
 		if {$s ne $d} break
 		incr pos
 	}
-	set prelen [expr {[llength $ssrc]-$pos -1}]
-	set src [file join {*}[list_fill $prelen ..] {*}[lrange $ssrc $pos end]]
+	if {$pos > 1} {
+		set prelen [expr {[llength $sdest]-$pos -1}]
+		set src [file join {*}[list_fill $prelen ..] {*}[lrange $ssrc $pos end]]
+	}
 	file link -symbolic $dest $src
 }
 
