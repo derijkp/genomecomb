@@ -13,4 +13,5 @@ source val.tcl
 source remap.tcl
 source libext.tcl
 source select.tcl
+source misc.tcl
 source queries.tcl

@@ -3,6 +3,7 @@
 exec tclsh "$0" "$@"
 
 source tools.tcl
+set keepdir [pwd]
 cd /complgen/testqueries
 
 test query {query 1} {
@@ -232,5 +233,7 @@ test query {query 23 b} {
 	} annottestcompar.tsv.rz temp.tsv
 	exec diff temp.tsv answers/query23.tsv
 } {}
+
+cd $keepdir
 
 testsummarize

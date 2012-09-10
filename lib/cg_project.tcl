@@ -387,15 +387,14 @@ proc cg_project {args} {
 				exec chown "$user.domain users" /home/MOLGEN/$user/complgen
 			}
 			cd /home/MOLGEN/$user/complgen
-			set destdir [file normalize [file tail $projectdir]]
 			if {![file exists docs]} {	
 				exec ln -s /complgen/projects/docs .
 			}
 			if {![catch {file link $destdir}]} {
 				file delete $destdir
 			}
-			cplinked $projectdir $destdir
-			exec chown -R "peterdr.domain users" $destdir
+			cplinked $projectdir .
+			exec chown -R "peterdr.domain users" .
 		}
 	}
 }
