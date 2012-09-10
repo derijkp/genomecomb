@@ -234,6 +234,13 @@ test query {query 23 b} {
 	exec diff temp.tsv answers/query23.tsv
 } {}
 
+test query {query 24} {
+	exec cg select -q {
+		count($alleleSeq*-testNA19240chr2122cg, == $alt)  == 1
+	} annottestcompar.tsv.rz temp.tsv
+	exec diff temp.tsv answers/query12.tsv
+} {}
+
 cd $keepdir
 
 testsummarize
