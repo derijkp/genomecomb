@@ -151,7 +151,14 @@ proc tsv_select_region {ids header neededfieldsVar} {
 	lappend neededfields {*}$fields
 	set result {}
 	foreach {chr begin end} $ids {
-		lappend result "(samechr(\"$chr\",\$$rchr) && ($begin) < \$$rend && ($end) > \$$rbegin)"
+		set q "samechr(\"$chr\",\$$rchr)"
+		if {$begin ne ""} {
+			lappend q "($begin) < \$$rend"
+		}
+		if {$end ne ""} {
+			lappend q "($end) > \$$rbegin"
+		}
+		lappend result "([join $q " && "])"
 	}
 	return "(([join $result "\) || \("]))"
 }

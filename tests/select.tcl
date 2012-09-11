@@ -366,4 +366,12 @@ test select {@||} {
 		< data/vars3.sft] \n
 } {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr1	5020}}
 
+test select {region} {
+	split [exec cg select -f {chromosome begin} -q {region("chr2:4099-5020")} < data/vars1.sft] \n
+} {{chromosome	begin} {chr2	4099} {chr2	5000} {chr2	5000} {chr2	5005} {chr2	5010} {chr2	5011}}
+
+test select {region, only chr} {
+	split [exec cg select -f {chromosome begin} -q {region("chr1")} < data/vars1.sft] \n
+} {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr1	5000} {chr1	5020}}
+
 testsummarize
