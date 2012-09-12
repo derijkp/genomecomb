@@ -394,7 +394,7 @@ proc cg_project {args} {
 				file delete $destdir
 			}
 			cplinked $projectdir .
-			exec chown -R "peterdr.domain users" .
+			exec chown -R "$user.domain users" .
 		}
 	}
 }
