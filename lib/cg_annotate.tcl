@@ -95,15 +95,13 @@ proc annotatevar {file dbfile name annotfile {outfields {name score freq}}} {
 	set nh [list_sub $outfields -exclude $temp]
 	set dataposs [list_sub $dataposs -exclude $temp]
 	if {[llength $nh] == 0} {
-		set dataposs {-1 -1}
+		set dataposs {}
 		set newh $name
 	} elseif {[llength $nh] == 1} {
-		lappend dataposs -1
 		set newh $name
 	} else {
-		set dataposs [lrange $dataposs 0 1]
 		set newh {}
-		foreach key [lrange $nh 0 1] {
+		foreach key $nh {
 			lappend newh ${name}_$key
 		}
 	}

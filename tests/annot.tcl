@@ -38,6 +38,15 @@ test var_annot {basic} {
 	exec diff tmp/temp2.sft data/expected-vars1-var_annot.sft
 } {} 
 
+test var_annot {basic multi} {
+	file mkdir tmp
+	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
+	file copy -force data/var_annot.sft tmp/var_annot.sft
+	file_write tmp/var_annot.sft.opt "fields\t{name freq alt}\n"
+	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/var_annot.sft 2> /dev/null
+	exec diff tmp/temp.sft data/expected-vars1-var_annot-multi.sft
+} {} 
+
 test var_annot {different types on same pos} {
 	exec cg annotate data/vars2.tsv tmp/temp.tsv data/var_annot3.tsv 2> /dev/null
 	exec diff tmp/temp.tsv data/expected-vars2-var_annot3.tsv

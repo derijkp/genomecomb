@@ -76,13 +76,14 @@ int main(int argc, char *argv[]) {
 	DString *result1=NULL,*result2=NULL;
 	DString *line1 = NULL,*line2 = NULL;
 	char *chromosome1,*chromosome2;
-	int chr1pos,start1pos,end1pos,type1pos,alt1pos,data1pos,max1;
-	int chr2pos,start2pos,end2pos,type2pos,alt2pos,data2pos,max2;
+	int chr1pos,start1pos,end1pos,type1pos,alt1pos,max1;
+	int chr2pos,start2pos,end2pos,type2pos,alt2pos,max2;
+	int datalen=0,*datapos=NULL;
 	int nchr1=0,start1,end1;
 	int nchr2=0,start2,end2;
-	int error2,curchr=0,nextpos=0,sametype,cmp;
-	if ((argc != 15)) {
-		fprintf(stderr,"Format is: reg_annot file1 chrpos1 startpos1 endpos1 type1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos alt2pos data1pos data2pos");
+	int error2,curchr=0,nextpos=0,sametype,cmp,i;
+	if ((argc < 13)) {
+		fprintf(stderr,"Format is: reg_annot file1 chrpos1 startpos1 endpos1 type1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos alt2pos datapos ...");
 		exit(EXIT_FAILURE);
 	}
 	f1 = fopen64(argv[1],"r");
@@ -104,9 +105,14 @@ int main(int argc, char *argv[]) {
 	alt2pos = atoi(argv[12]);
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 	if (type2pos > max2) {max2 = type2pos;} ; if (alt2pos > max2) {max2 = alt2pos;} ;
-	data1pos = atoi(argv[13]);
-	data2pos = atoi(argv[14]);
-	if (data1pos > max2) {max2 = data1pos;} ; if (data2pos > max2) {max2 = data2pos;} ;
+	datalen = argc-13;
+	datapos = malloc(datalen*sizeof(int));
+	for (i = 0 ; i < datalen ; i++) {
+		datapos[i] = atoi(argv[13+i]);
+	}
+	for (i = 0 ; i < datalen ; i++) {
+		if (datapos[i] > max2) {max2 = datapos[i];}
+	}
 	result2 = DStringArrayNew(max2+1);
 	skip_header(f1,line1);
 	skip_header(f2,line2);
@@ -156,29 +162,30 @@ NODPRINT("line2 (a=%3.3s) %d,%d,%d %s",result2[type2pos].string,nchr2,start2,end
 			sscanf(result2[end2pos].string,"%d",&end2);
 		}
 		if (error2 || (nchr1 != nchr2) || (start2 != start1) || (end2 != end1) || !sametype) {
-			if (data2pos == -1) {
-				fprintf(stdout,"-\n");
+			if (!datalen) {
+				fprintf(stdout,"\n");
 			} else {
-				fprintf(stdout,"-\t-\n");
+				for (i = 1 ; i < datalen ; i++) {
+					fprintf(stdout,"-\t");
+				}
+				fprintf(stdout,"-\n");
 			}
 		} else {
-			if (data1pos == -1) {
+			if (!datalen) {
 				fprintf(stdout,"1\n");
-			} else if (data2pos == -1) {
-				connectalt(result1[alt1pos].string,result2[alt2pos].string,result2[data1pos].string);
-				fprintf(stdout,"\n");
-				/*fprintf(stdout,"%s\n", result2[data1pos]);*/
 			} else {
-				connectalt(result1[alt1pos].string,result2[alt2pos].string,result2[data1pos].string);
-				fprintf(stdout,"\t");
-				connectalt(result1[alt1pos].string,result2[alt2pos].string,result2[data2pos].string);
+				connectalt(result1[alt1pos].string,result2[alt2pos].string,result2[datapos[0]].string);
+				for (i = 1 ; i < datalen ; i++) {
+					fprintf(stdout,"\t");
+					connectalt(result1[alt1pos].string,result2[alt2pos].string,result2[datapos[i]].string);
+				}
 				fprintf(stdout,"\n");
-				/* fprintf(stdout,"%s\t%s\n", result2[data1pos].string, result2[data2pos].string); */
 			}
 		}
 	}
 	fclose(f1);
 	fclose(f2);
+	if (datapos) {free(datapos);}
 	if (line1) {DStringDestroy(line1);}
 	if (line2) {DStringDestroy(line2);}
 	if (result1) {DStringArrayDestroy(result1);}
