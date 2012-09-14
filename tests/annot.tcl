@@ -10,6 +10,15 @@ test reg_annot {basic} {
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
 } {} 
 
+test reg_annot {basic, multiple fields} {
+	file mkdir tmp
+	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
+	file copy -force data/reg_annot.sft tmp/reg_annot.sft
+	file_write tmp/reg_annot.sft.opt "fields\t{type begin end}\n"
+	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/reg_annot.sft 2> /dev/null
+	exec diff tmp/temp.sft data/expected-vars1-reg_annot-multi.sft
+} {} 
+
 test reg_annot {near} {
 	exec cg annotate -near 1000 data/vars1.sft tmp/temp.sft data/reg_annot.sft 2> /dev/null
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft

@@ -28,22 +28,20 @@ putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 	set nh [list_sub $outfields -exclude $temp]
 	set dataposs [list_sub $dataposs -exclude $temp]
 	if {[llength $nh] == 0} {
-		set dataposs {-1 -1}
+		set dataposs {}
 		if {$near != -1} {
 			set newh ${name}_dist
 		} else {
 			set newh $name
 		}
 	} elseif {[llength $nh] == 1} {
-		lappend dataposs -1
 		set newh $name
 		if {$near != -1} {
 			lappend newh ${name}_dist
 		}
 	} else {
-		set dataposs [lrange $dataposs 0 1]
 		set newh {}
-		foreach key [lrange $nh 0 1] {
+		foreach key $nh {
 			lappend newh ${name}_$key
 		}
 		if {$near != -1} {
@@ -54,8 +52,8 @@ putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
 	puts $o [join $newh \t]
 	close $o
-	# puts [list reg_annot $file {*}$poss $dbfile {*}$dbposs {*}$dataposs $near]
-	exec reg_annot $file {*}$poss $dbfile {*}$dbposs {*}$dataposs $near >> $annotfile.temp 2>@ stderr
+	# puts [list reg_annot $file {*}$poss $dbfile {*}$dbposs $near {*}$dataposs]
+	exec reg_annot $file {*}$poss $dbfile {*}$dbposs $near {*}$dataposs >> $annotfile.temp 2>@ stderr
 	file rename $annotfile.temp $annotfile
 
 }
