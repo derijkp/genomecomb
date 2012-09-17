@@ -27,7 +27,7 @@ proc cg_liftover {args} {
 	set header [tsv_open $f comment]
 	set line [split [gets $f] \t]
 	if {![regexp ^chr [lindex $line 0]]} {set addchr 1} else {set addchr 0}
-	close $f
+	gzclose $f
 	set poss [tsv_basicfields $header 6]
 	if {$poss ne "0 1 2 3 4 5"} {error "Rearranged header not supported yet, start header should be: chromosome begin end type ref alt"}
 	#
@@ -36,12 +36,12 @@ proc cg_liftover {args} {
 	set fields [lrange $header 0 5]
 	set id {}
 	foreach field $fields {
-		lappend id \$$field
+		lappend id \$\{$field\}
 	}
 	if {$addchr} {
-		set fields [lreplace $fields 0 0 "chromosome=\"chr\" \$chromosome"]
+		set fields [lreplace $fields 0 0 "chromosome=\"chr\$chromosome\""]
 	}
-	lappend fields id=[join $id { "-" }]
+	lappend fields id=\"[join $id -]\"
 	cg select -f $fields -sh $resultfile.temph $varfile $resultfile.temp
 	#
 	# do liftover -> $resultfile.temp2
@@ -81,7 +81,7 @@ proc cg_liftover {args} {
 	}
 	close $o
 	close $fl
-	close $f
+	gzclose $f
 	#
 	# sort result -> $resultfile.temp4
 	#
