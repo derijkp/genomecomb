@@ -352,7 +352,9 @@ table_tsv method save {file} {
 	puts $o "# [list query $tdata(query)]"
 	puts $o [join $tdata(qfields) \t]
 	while {$row < $len} {
-		set qrows [bcol_get $tdata(query_results) $row [expr {$row+19}]]
+		set end [expr {$row+19}]
+		if {$end >= $len} {set end [expr {$len-1}]}
+		set qrows [bcol_get $tdata(query_results) $row $end]
 		foreach qrow $qrows {
 			set filepos [bcol_get $lineindex $qrow $qrow]
 			if {$tdata(compressed)} {
