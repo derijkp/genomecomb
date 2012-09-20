@@ -374,4 +374,11 @@ test select {region, only chr} {
 	split [exec cg select -f {chromosome begin} -q {region("chr1")} < data/vars1.sft] \n
 } {{chromosome	begin} {chr1	4000} {chr1	4001} {chr1	4099} {chr1	5000} {chr1	5020}}
 
+
+test select {empty first field bug check} {
+	cg select -f test data/select-bugcheck.tsv
+} {test
+0
+100}
+
 testsummarize

@@ -446,7 +446,7 @@ NODPRINT("maxtab=%d",maxtab)
 	}
 	*cur = '\0';
 	if (!newdata) {
-		return 1;
+		return -1;
 	}
 	/* fill rest of tab separated elements in array */
 	if (count <= maxtab) {

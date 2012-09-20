@@ -628,6 +628,7 @@ proc tsv_select_expandcode {header code neededfieldsVar} {
 }
 
 proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0}} {
+# putsvars query qfields sortfields newheader sepheader f stdin out stdout h inverse
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	if {$hc ne "0" && $hc ne "1"} {
