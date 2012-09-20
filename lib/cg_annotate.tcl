@@ -20,7 +20,7 @@ putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 	if {[inlist $poss -1]} {
 		error "Cannot annotate $file: wrong fields"
 	}
-	set f [open $dbfile]
+	set f [gzopen $dbfile]
 	set dbposs [open_region $f dbheader]
 	close $f
 	set dataposs [list_cor $dbheader $outfields]
@@ -52,8 +52,15 @@ putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
 	puts $o [join $newh \t]
 	close $o
-	# puts [list reg_annot $file {*}$poss $dbfile {*}$dbposs $near {*}$dataposs]
-	exec reg_annot $file {*}$poss $dbfile {*}$dbposs $near {*}$dataposs >> $annotfile.temp 2>@ stderr
+	if {[gziscompressed $file]} {
+		set file "|[gzcat $file] '$file'"
+	}
+	# puts [list {*}[gzcat $dbfile] $dbfile | reg_annot $file {*}$poss - {*}$dbposs $near {*}$dataposs]
+	if {[catch {
+		exec {*}[gzcat $dbfile] $dbfile | reg_annot $file {*}$poss - {*}$dbposs $near {*}$dataposs >> $annotfile.temp 2>@ stderr
+	} error]} {
+		if {$error ne "child killed: write on pipe with no readers"} {error $error}
+	}
 	file rename $annotfile.temp $annotfile
 
 }
@@ -141,6 +148,7 @@ proc cg_annotate {args} {
 	}
 	set args [lrange $args $pos end]
 	foreach {file resultfile} $args break
+	set file [gztemp $file]
 	set dbfiles [lrange $args 2 end]
 	if {[file isdir [lindex $dbfiles 0]]} {
 		set dbfiles [lsort -dict [list_concat [glob -nocomplain [lindex $dbfiles 0]/var_*.tsv [lindex $dbfiles 0]/gene_*.tsv [lindex $dbfiles 0]/reg_*.tsv] [lrange $dbfiles 1 end]]]
@@ -150,10 +158,6 @@ proc cg_annotate {args} {
 		lappend names [lindex [split [file root [file tail $dbfile]] _] end]
 	}
 	puts "Annotating $file"
-	if {[gzroot $file] ne $file} {
-		puts stderr "annotate not supported for compressed files (yet)"
-		exit 1
-	}
 	set f [gzopen $file]
 	set poss [open_region $f header]
 	catch {close $f}
@@ -168,7 +172,7 @@ proc cg_annotate {args} {
 	foreach dbfile $dbfiles {
 		putslog "Adding $dbfile"
 		unset -nocomplain a
-		if {[file exists $dbfile.opt]} {array set a [file_read $dbfile.opt]}
+		if {[file exists [gzroot $dbfile].opt]} {array set a [file_read [gzroot $dbfile].opt]}
 		if {[info exists a(name)]} {
 			set name $a(name)
 		} else {
@@ -242,6 +246,7 @@ proc cg_annotate {args} {
 	}
 	exec paste $file {*}$afiles > $resultfile
 	if {[llength $afiles]} {file delete {*}$afiles}
+	gzrmtemp $file
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {

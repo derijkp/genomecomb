@@ -33,7 +33,11 @@ int main(int argc, char *argv[]) {
 	start1pos = atoi(argv[3]);
 	end1pos = atoi(argv[4]);
 	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
-	f2 = fopen64(argv[5],"r");
+	if (strlen(argv[5]) == 1 && argv[5][0] == '-') {
+		f2 = stdin;
+	} else {
+		f2 = fopen64(argv[5],"r");
+	}
 	chr2pos = atoi(argv[6]);
 	start2pos = atoi(argv[7]);
 	end2pos = atoi(argv[8]);

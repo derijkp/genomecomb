@@ -311,11 +311,26 @@ proc gzopen {file {pos -1}} {
 	return $f
 }
 
+proc gzclose {f} {
+	if {[catch {close $f} error]} {
+		if {$error eq "child killed: write on pipe with no readers"} return
+		error $error
+	}
+}
+
 proc gzroot filename {
 	if {[inlist {.rz .gz .bgz} [file extension $filename]]} {
 		return [file root $filename]
 	} else {
 		return $filename
+	}
+}
+
+proc gziscompressed filename {
+	if {[inlist {.rz .gz .bgz} [file extension $filename]]} {
+		return 1
+	} else {
+		return 0
 	}
 }
 
@@ -340,11 +355,46 @@ proc gzfiles {args} {
 
 proc gzcat {filename} {
 	switch [file extension $filename] {
-		.rz - .gz - .bgz {set cat zcat}
+		.rz {set cat "razip -d -c"}
+		.gz - .bgz {set cat zcat}
 		.bz2 {set cat bzcat}
 		default {set cat cat}
 	}
 	return $cat
+}
+
+proc gztemp {filename} {
+	set ext [file extension $filename]
+	switch $ext {
+		.gz {
+			set tempfile [tempfile]
+			exec gunzip -d -c $filename > $tempfile
+			set ::gztemp_files($tempfile) 1
+			return $tempfile
+		}
+		.rz {
+			set tempfile [tempfile]
+			exec razip -d -c $filename > $tempfile
+			set ::gztemp_files($tempfile) 1
+			return $tempfile
+		}
+		.bz2 {
+			set tempfile [tempfile]
+			exec bzcat $filename > $tempfile
+			set ::gztemp_files($tempfile) 1
+			return $tempfile
+		}
+		default {
+			set ::gztemp_files($filename) 0
+			return $filename
+		}
+	}
+}
+
+proc gzrmtemp {filename} {
+	if {$::gztemp_files($filename)} {
+		file delete $filename
+	}
 }
 
 proc overlap {start1 end1 start2 end2} {

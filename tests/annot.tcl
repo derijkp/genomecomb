@@ -4,14 +4,31 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
+file mkdir tmp
+
 test reg_annot {basic} {
 	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft 2> /dev/null
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
 } {} 
 
+test reg_annot {compressed} {
+	file copy -force data/reg_annot.sft data/reg_annot.sft.opt tmp
+	exec cg razip tmp/reg_annot.sft 2> /dev/null
+	exec cg annotate data/vars1.sft tmp/temp.sft tmp/reg_annot.sft.rz 2> /dev/null
+	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
+	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
+} {} 
+
+test reg_annot {2 compressed} {
+	file copy -force data/vars1.sft data/reg_annot.sft data/reg_annot.sft.opt tmp
+	exec cg razip tmp/reg_annot.sft tmp/vars1.sft 2> /dev/null
+	exec cg annotate tmp/vars1.sft.rz tmp/temp.sft tmp/reg_annot.sft.rz 2> /dev/null
+	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
+	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
+} {} 
+
 test reg_annot {basic, multiple fields} {
-	file mkdir tmp
 	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
 	file copy -force data/reg_annot.sft tmp/reg_annot.sft
 	file_write tmp/reg_annot.sft.opt "fields\t{type begin end}\n"
