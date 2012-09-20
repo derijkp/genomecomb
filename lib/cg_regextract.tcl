@@ -5,10 +5,6 @@
 #
 
 proc cg_regextract {args} {
-	if {[llength $args] < 4} {
-		errorformat regextract
-		exit 1
-	}
 	set qfields {coverage uniqueSequenceCoverage}
 	set posfields {offset pos position begin start}
 	set above 0; set shift 0
@@ -25,6 +21,10 @@ proc cg_regextract {args} {
 		incr pos 2
 	}
 	set args [lrange $args $pos end]
+	if {[llength $args] < 2} {
+		errorformat regextract
+		exit 1
+	}
 	foreach {cutoff} $args break
 	set files [lrange $args 1 end]
 	set files [lsort -dict $files]

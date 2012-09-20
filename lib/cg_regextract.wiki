@@ -13,7 +13,7 @@ Chromosome name is taken from the filename by splitting on "-", and taking
 the second element.
 
 == Arguments ==
-; **cutoff**: regions file
+; **cutoff**: cutoff
 ; **file1**: file containing position and value columns.
 ; **...**: other files
  

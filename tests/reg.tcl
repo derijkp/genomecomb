@@ -130,6 +130,13 @@ test getregions {shift} {
 chr1	27	30
 chr1	39	41}
 
+test cg_regextract {basic} {
+	exec cg regextract 10 data/coverage-chr1.tsv 2> /dev/null
+} {chromosome	begin	end
+chr1	20	24
+chr1	27	28
+chr1	42	43}
+
 test cg_regextract {above} {
 	exec cg regextract --verbose 0 -qfields coverage -above 1 -shift 0 10 data/coverage-chr1.tsv
 } {chromosome	begin	end
