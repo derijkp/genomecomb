@@ -35,7 +35,8 @@ proc bcol_indexlines {file indexfile} {
 		if {![file exists $indexfile] || [file mtime $indexfile] < $time} {
 			progress start [file size $tempfile] "Indexing $file, please be patient"
 			progress message "Indexing $file, please be patient"
-			exec bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss
+			# putslog "bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss"
+			exec bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss 2> /dev/null
 			file rename -force $indexfile.bin.temp $indexfile.bin
 			file rename -force $indexfile.temp $indexfile
 			progress stop
@@ -71,7 +72,7 @@ proc bcol_open indexfile {
 	set tabled [dict create]
 	list_foreach {num type offset} $table {
 		if {$type eq "end"} break
-		dict set tabled $num $offset
+		dict set tabled [expr {$num+1}] $offset
 	}
 	dict set result table $table
 	dict set result tabled $tabled
@@ -118,31 +119,28 @@ proc bcol_get {bcol start {end {}}} {
 	}
 	if {$start > $max} {return [list_fill [expr {$end-$start+1}] $default]}
 	if {$end > $max} {set uend $max} else {set uend $end}
-	set offset 0
 	set result {}
+	set num [lindex $table 0 0]
+	if {$start < $num} {
+		if {$end < $num} {
+			return [list_fill [expr {$end-$start+1}] $default]
+		} else {
+			set result [list_fill [expr {$num-$start}] $default]
+		}
+		set start $num
+	}
+	set offset 0
 	if {[llength $table] > 2} {
-		list_foreach {num type noffset} $table {
-			if {$start < $num} {
+		list_foreach {cnum temp noffset} $table {
+			if {$start <= $cnum} {
 				break
 			}
 			set offset $noffset
 		}
-	} else {
-		set num [lindex $table 0 0]
-		while {$start < $num} {
-			if {$start > $end} {return $result}
-			lappend result $default
-			incr start
-			incr curpos
-		}
-	}
-	if {$start < $num} {
-		set result [list_fill [expr {$num-$start}] $default
-		set start $num
 	}
 	set len [expr {$uend-$start+1}]
 	if {$len <= 0} {return $result}
-	set pos [expr {$typesize*($start-$num)}]
+	set pos [expr {$typesize*$start}]
 	set binfile [dict get $bcol binfile]
 	if {![dict get $bcol compressedbin]} {
 		set f [open $binfile]
@@ -195,7 +193,7 @@ proc bcol_table {bcol {start {}} {end {}}} {
 	puts $o "pos\tvalue"
 	if {[llength $table] > 2} {
 		list_foreach {num type noffset} $table {
-			if {$start < $num} {
+			if {$start <= $num} {
 				break
 			}
 			set offset $noffset
