@@ -44,7 +44,6 @@ test job {job_expandvars} {
 proc jobtest {args} {
 	set args [job_args $args]
 	foreach {srcdir destdir header} $args break
-
 	set srcdir [file normalize $srcdir]
 	set destdir [file normalize $destdir]
 	job_logdir $destdir/log_jobs
@@ -59,7 +58,9 @@ proc jobtest {args} {
 		lappend names [lindex $line 0]
 	}
 	close $f
-	job sumvar -deps {$srcdir/cgdat(.*)\.tsv} -targets {$destdir/sum-$_names.txt} -vars destdir -code {
+	job sumvar -deps {$srcdir/cgdat(.*)\.tsv} \
+	-targets {$destdir/sum-$_names.txt} \
+	-vars destdir -code {
 		for {set i 1} {$i < 5} {incr i} {
 			puts "progress $target $i"
 			after 250
@@ -82,7 +83,10 @@ proc jobtest {args} {
 		close $f
 		set targets
 	}
-	job sumpattern -deps {$srcdir/cgdat(.*)\.tsv} -targets {$destdir/sumpattern.log} -ptargets {$destdir/sumpattern-(.*).txt} -vars destdir -code {
+	job sumpattern -deps {$srcdir/cgdat(.*)\.tsv} \
+	-targets {$destdir/sumpattern.log} \
+	-ptargets {$destdir/sumpattern-(.*).txt} \
+	-vars destdir -code {
 		# var target contains target
 		# var target1 contains first braced part of target (= destdir)
 		# var target1 contains second braced part of target (= name)
@@ -113,7 +117,9 @@ proc jobtest {args} {
 	job test -foreach {$srcdir/cgdat(.*)\.tsv} -targets {$destdir/test.txt} -code {
 		exec wc $dep > $target
 	}
-	job sum2 -foreach {$destdir/sum-(.*).txt} -targets {$destdir/sum2-\1.txt} -code {
+	job sum2 -foreach {$destdir/sum-(.*).txt} \
+	-skip {$destdir/all2.txt} \
+	-targets {$destdir/sum2-\1.txt} -code {
 		for {set i 1} {$i < 5} {incr i} {
 			puts "progress $i"
 			after 250
@@ -130,7 +136,11 @@ proc jobtest {args} {
 		exec cat {*}$deps >> $target.temp
 		file rename -force $target.temp $target
 	}
-
+	job all2.txt -vars header -deps {$destdir/sum2-(.*).txt} -targets {$destdir/all2.txt} -code {
+		file_write $target.temp $header\n
+		exec cat {*}$deps >> $target.temp
+		file rename -force $target.temp $target
+	}
 }
 
 
@@ -146,7 +156,7 @@ test job {basic} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} {testh
+} {{test/all.txt test/all2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -168,7 +178,7 @@ test job {--force 0} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {6+7+8=21
+} {{test/all.txt test/all2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {6+7+8=21
 2
 }}
 
@@ -187,7 +197,7 @@ test job {--force 1} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all.txt.old1 test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {testh
+} {{test/all.txt test/all.txt.old1 test/all2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {testh
 1+2=3
 3+4+5=12
 6+7+8=21

@@ -277,7 +277,7 @@ proc job_process {} {
 	global cgjob job_deps 
 	set jobroot [pwd]
 	foreach line $cgjob(queue) {
-		foreach {jobid mjobname deps foreach ftargets fptargets code submitopts} $line break
+		foreach {jobid mjobname deps foreach ftargets fptargets fskip code submitopts} $line break
 		cd $jobroot
 		set newids {}
 		job_logname $mjobname
@@ -314,6 +314,13 @@ proc job_process {} {
 			lappend adeps {*}$newadeps
 			# check targets, if already done or running, skip
 			set run 0
+			if {!$cgjob(force) && [llength $fskip]} {
+				set skip [job_targetsreplace $fskip $targetvars]
+				if {[llength $skip] && [job_checktargets $skip running]} {
+					job_log "skipping $jobname: skip targets already completed or running"
+					continue
+				}
+			}
 			set targets [job_targetsreplace $ftargets $targetvars]
 			if {![job_checktargets $targets running]} {
 				set run 1
@@ -389,6 +396,7 @@ proc job {jobname args} {
 	set precode {}
 	set code {}
 	set targets {}
+	set skip {}
 	set ptargets {}
 	set submitopts {}
 	set len [llength $args]
@@ -406,6 +414,10 @@ proc job {jobname args} {
 			}
 			-targets {
 				set targets [lindex $args $pos]
+				incr pos
+			}
+			-skip {
+				set skip [lindex $args $pos]
 				incr pos
 			}
 			-ptargets {
@@ -451,13 +463,14 @@ proc job {jobname args} {
 	set edeps [job_expandvarslist $deps 1]
 	set eforeach [job_expandvarslist $foreach 1]
 	set etargets [job_expandvarslist $targets 1]
+	set eskip [job_expandvarslist $skip 1]
 	set eptargets [job_expandvarslist $ptargets 1]
 	set newcode {}
 	foreach var $vars {
 		append newcode [list set $var [uplevel get $var]]\n
 	}
 	append newcode $code
-	lappend cgjob(queue) [list $cgjob(id) $jobname $edeps $eforeach $etargets $eptargets $newcode $submitopts $precode]	
+	lappend cgjob(queue) [list $cgjob(id) $jobname $edeps $eforeach $etargets $eptargets $eskip $newcode $submitopts $precode]	
 	incr cgjob(id)
 	job_process
 }
