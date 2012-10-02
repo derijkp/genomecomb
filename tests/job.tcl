@@ -58,7 +58,7 @@ proc jobtest {args} {
 		lappend names [lindex $line 0]
 	}
 	close $f
-	job sumvar -deps {$srcdir/cgdat(.*)\.tsv} \
+	job sumvar -deps {$srcdir/cgdat*.tsv} \
 	-targets {$destdir/sum-$_names.txt} \
 	-vars destdir -code {
 		for {set i 1} {$i < 5} {incr i} {
@@ -83,7 +83,7 @@ proc jobtest {args} {
 		close $f
 		set targets
 	}
-	job sumpattern -deps {$srcdir/cgdat(.*)\.tsv} \
+	job sumpattern -deps {$srcdir/cgdat*.tsv} \
 	-targets {$destdir/sumpattern.log} \
 	-ptargets {$destdir/sumpattern-(.*).txt} \
 	-vars destdir -code {
@@ -114,12 +114,12 @@ proc jobtest {args} {
 		close $f
 		file_write $destdir/sumpattern.log [join $targets \n]
 	}
-	job test -foreach {$srcdir/cgdat(.*)\.tsv} -targets {$destdir/test.txt} -code {
+	job test -foreach {^$srcdir/cgdat(.*)\.tsv$} -targets {$destdir/test.txt} -code {
 		exec wc $dep > $target
 	}
-	job sum2 -foreach {$destdir/sum-(.*).txt} \
-	-skip {$destdir/all2.txt} \
-	-targets {$destdir/sum2-\1.txt} -code {
+	job sum2 -foreach {^$destdir/sum-(.*)\.txt$} \
+	  -skip {$destdir/all2.txt} \
+	  -targets {$destdir/sum2-\1.txt} -code {
 		for {set i 1} {$i < 5} {incr i} {
 			puts "progress $i"
 			after 250
@@ -131,16 +131,19 @@ proc jobtest {args} {
 	job error_all.txt -deps {$srcdir/notpresent.txt} -targets {$destdir/all.txt} -code {
 		error "This should not be executed, as the dependencies are not fullfilled, the other target is used"
 	}
-	job all.txt -vars header -deps {$destdir/sum-(.*).txt} -targets {$destdir/all.txt} -code {
+	job all.txt -vars header -deps {^$destdir/sum-(.*)\.txt$} -targets {$destdir/all.txt} -code {
 		file_write $target.temp $header\n
 		exec cat {*}$deps >> $target.temp
 		file rename -force $target.temp $target
 	}
-	job all2.txt -vars header -deps {$destdir/sum2-(.*).txt} -targets {$destdir/all2.txt} -code {
+	set keepdir [pwd]
+	cd $destdir
+	job all2.txt -vars header -deps {^sum2-(.*)\.txt$} -targets {all2.txt} -code {
 		file_write $target.temp $header\n
 		exec cat {*}$deps >> $target.temp
 		file rename -force $target.temp $target
 	}
+	cd $keepdir
 }
 
 

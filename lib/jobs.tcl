@@ -46,6 +46,8 @@ proc job_init {args} {
 	job_logdir [file normalize [pwd]/log_jobs]
 }
 
+job_init
+
 # job_expandvars fills in all variables (from one level up)
 # variables prefixed with _ are considered a list, and will be "expanded"
 # e.g.
@@ -120,12 +122,15 @@ proc job_expandvarslist {list {level 1}} {
 }
 
 proc job_finddep {pattern} {
+	return [lsort -dict [gzfiles $pattern]]
+}
+
+proc job_findregexpdep {pattern} {
 	global job_data job_files
-	set fpattern [file normalize $pattern]
-	set glob [regexp2glob $fpattern]
+	set glob [regexp2glob $pattern]
 	set files {}
 	foreach file [lsort -dict [gzfiles $glob]] {
-		if {[regexp $pattern $file]} {lappend files $file}
+		if {[regexp ^$pattern\$ $file]} {lappend files $file}
 	}
 	return $files
 }
@@ -156,7 +161,6 @@ proc job_finddeps {deps targetvarsVar {ftargetvars {}}} {
 	set finaldeps {}
 	set targetvars {}
 	foreach pattern $deps {
-		set pattern [file normalize $pattern]
 		if {[string index $pattern 0] eq "\(" && [string index $pattern end] eq "\)"} {
 			set opt 1
 			set pattern [string range $pattern 1 end-1]
@@ -164,7 +168,12 @@ proc job_finddeps {deps targetvarsVar {ftargetvars {}}} {
 			set opt 0
 		}
 		set pattern [job_targetreplace $pattern $ftargetvars]
-		set files [job_finddep $pattern]
+		if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
+			set pattern [string range $pattern 1 end-1]
+			set files [job_findregexpdep $pattern]
+		} else {
+			set files [job_finddep $pattern]
+		}
 		if {![llength $files]} {
 			if {!$opt} {
 				error "missing dependency $pattern"
@@ -277,8 +286,9 @@ proc job_process {} {
 	global cgjob job_deps 
 	set jobroot [pwd]
 	foreach line $cgjob(queue) {
-		foreach {jobid mjobname deps foreach ftargets fptargets fskip code submitopts} $line break
-		cd $jobroot
+putsvars line
+		foreach {jobid mjobname pwd deps foreach ftargets fptargets fskip code submitopts} $line break
+		cd $pwd
 		set newids {}
 		job_logname $mjobname
 		# check foreach deps, skip if not fullfilled
@@ -295,6 +305,7 @@ proc job_process {} {
 			set ftargetvars {{}}
 		}
 		foreach fdep $fadeps ftargetvar $ftargetvars {
+			cd $pwd
 			if {$fdep eq ""} {
 				set jobname $mjobname
 			} else {
@@ -344,6 +355,7 @@ proc job_process {} {
 			}
 			# run code
 			set cmd "proc job_run {} \{\n"
+			append cmd "[list cd $pwd]\n"
 			append cmd "[list set deps $adeps]\n"
 			append cmd "[list set dep [lindex $adeps 0]]\n"
 			set num 1
@@ -377,6 +389,7 @@ proc job_process {} {
 			}
 		}
 	}
+	cd $jobroot
 	set cgjob(queue) {}
 }
 
@@ -470,7 +483,7 @@ proc job {jobname args} {
 		append newcode [list set $var [uplevel get $var]]\n
 	}
 	append newcode $code
-	lappend cgjob(queue) [list $cgjob(id) $jobname $edeps $eforeach $etargets $eptargets $eskip $newcode $submitopts $precode]	
+	lappend cgjob(queue) [list $cgjob(id) $jobname [pwd] $edeps $eforeach $etargets $eptargets $eskip $newcode $submitopts $precode]	
 	incr cgjob(id)
 	job_process
 }
