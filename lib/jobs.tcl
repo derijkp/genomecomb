@@ -1,6 +1,3 @@
-#namespace ensemble create -command job -prefixes 0 \
-#	-map {submit job_submit getvar job_getvar}
-
 proc regexp2glob {pattern} {
 	regsub -all {[\[\{(][^\]\})]*[\]\})]} $pattern {*} glob
 	regsub -all {\\.} $glob {*} glob
@@ -8,10 +5,44 @@ proc regexp2glob {pattern} {
 	return $glob
 }
 
+proc job_args {jobargs} {
+	global cgjob
+	if {![info exists cgjob(distribute)]} {
+		set cgjob(distribute) 0
+	}
+	if {![info exists cgjob(force)]} {
+		set cgjob(force) 0
+	}
+	if {![llength $jobargs]} {return {}}
+	set newargs {}
+	set pos 0
+	while {$pos < [llength $jobargs]} {
+		set key [lindex $jobargs $pos]
+		incr pos
+		switch -- $key {
+			-f - -force - --force {
+				set cgjob(force) [lindex $jobargs $pos]
+				incr pos
+			}
+			-d - -distribute - --distribute {
+				set cgjob(distribute) [lindex $jobargs $pos]
+				incr pos
+			}
+			-- break
+			default {
+				lappend newargs $key
+			}
+		}
+	}
+	lappend newargs {*}[lrange $jobargs $pos end]
+}
+
 proc job_init {args} {
-	global job_queue job_id job_logdir
-	set job_queue {}
-	set job_id 1
+	global cgjob job_logdir
+	set cgjob(distribute) 0
+	set cgjob(force) 0
+	set cgjob(queue) {}
+	set cgjob(id) 1
 	job_logdir [file normalize [pwd]/log_jobs]
 }
 
@@ -151,21 +182,22 @@ proc job_finddeps {deps targetvarsVar {ftargetvars {}}} {
 # dependencies between braces () are optional (braces must be at start and end of dependency)
 
 proc job_checktarget {target {newidsVar {}}} {
-	global job_ids
+	global cgjob_ids
 	if {$newidsVar ne ""} {
 		upvar $newidsVar newids
 	}
 	if {[llength [gzfiles $target]]} {
 		job_log "target $target ok"
 		return 1
-	} elseif {[info exists job_ids($target)]} {
-		if {$job_ids($target) eq ""} {
+	} elseif {[info exists cgjob_ids($target)]} {
+		if {$cgjob_ids($target) eq ""} {
 			job_log "target $target already done"
+			return 1
 		} else {
-			job_log "target $target already submitted (id $job_ids($target))"
-			set newids $job_ids($target)
+			job_log "target $target already submitted (id $cgjob_ids($target))"
+			set newids $cgjob_ids($target)
+			return 2
 		}
-		return 1
 	} elseif {[info exists ::$target]} {
 		job_log "variable $target exists (= [get ::$target])"
 		return 1
@@ -173,18 +205,26 @@ proc job_checktarget {target {newidsVar {}}} {
 	return 0
 }
 
-proc job_checktargets {targets} {
+proc job_checktargets {targets {runningVar {}}} {
+	if {$runningVar ne ""} {
+		upvar $runningVar running
+		set running {}
+	}
 	set ok 1
 	foreach target $targets {
-		if {![job_checktarget $target]} {
+		set check [job_checktarget $target]
+		if {!$check} {
 			set ok 0
+		}
+		if {$check == 2} {
+			lappend running $target
 		}
 	}
 	return $ok
 }
 
 proc job_findptargets {ptargets} {
-	global job_ids
+	global cgjob_ids
 	set targets {}
 	set ok 1
 	foreach ptarget $ptargets {
@@ -219,10 +259,24 @@ proc job_log {args} {
 	flush $job_log(f)
 }
 
+proc job_backup {file {rename 0}} {
+	if {![file exists $file]} return
+	set num 1
+	while 1 {
+		if {![file exists $file.old$num]} break
+		incr num
+	}
+	if {$rename} {
+		file rename $file $file.old$num
+	} else {
+		file copy $file $file.old$num
+	}
+}
+
 proc job_process {} {
-	global job_queue job_deps 
+	global cgjob job_deps 
 	set jobroot [pwd]
-	foreach line $job_queue {
+	foreach line $cgjob(queue) {
 		foreach {jobid mjobname deps foreach ftargets fptargets code submitopts} $line break
 		cd $jobroot
 		set newids {}
@@ -261,11 +315,20 @@ proc job_process {} {
 			# check targets, if already done or running, skip
 			set run 0
 			set targets [job_targetsreplace $ftargets $targetvars]
-			if {![job_checktargets $targets]} {
+			if {![job_checktargets $targets running]} {
 				set run 1
 			}
 			set ptargets [job_targetsreplace $fptargets $targetvars]
 			if {[llength $ptargets] && ![llength [job_findptargets $ptargets]]} {
+				set run 1
+			}
+			if {$cgjob(force)} {
+				if {[llength $running]} {
+					error "cannot force job with still running tasks ([join $running ,])"
+				}
+				foreach target [list_concat $targets $ptargets] {
+					job_backup $target 1
+				}
 				set run 1
 			}
 			if {!$run} {
@@ -307,7 +370,7 @@ proc job_process {} {
 			}
 		}
 	}
-	set job_queue {}
+	set cgjob(queue) {}
 }
 
 # var targets contains list of all targets
@@ -316,8 +379,8 @@ proc job_process {} {
 # var dep contains the first element of the first dependency (so you do not have to do [lindex $deps 0] to get it)
 
 proc job {jobname args} {
-	global curjobid job_queue job_id
-	if {![info exists job_id]} {set job_id 1}
+	global curjobid cgjob
+	if {![info exists cgjob(id)]} {set cgjob(id) 1}
 	if {[llength $args] < 1} {error "wrong # args for target: must be job jobname -deps deps -targets targets -code code ..."}
 	set pos 0
 	set foreach {}
@@ -394,8 +457,8 @@ proc job {jobname args} {
 		append newcode [list set $var [uplevel get $var]]\n
 	}
 	append newcode $code
-	lappend job_queue [list $job_id $jobname $edeps $eforeach $etargets $eptargets $newcode $submitopts $precode]	
-	incr job_id
+	lappend cgjob(queue) [list $cgjob(id) $jobname $edeps $eforeach $etargets $eptargets $newcode $submitopts $precode]	
+	incr cgjob(id)
 	job_process
 }
 

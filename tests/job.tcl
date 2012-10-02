@@ -41,7 +41,9 @@ test job {job_expandvars} {
 	job_expandvars $string
 } {A(B1(C1)) A(B2(C1)) A(B(C2))}
 
-proc jobtest {srcdir destdir header} {
+proc jobtest {args} {
+	set args [job_args $args]
+	foreach {srcdir destdir header} $args break
 
 	set srcdir [file normalize $srcdir]
 	set destdir [file normalize $destdir]
@@ -137,10 +139,55 @@ test job {basic} {
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
 	jobtest ../data test testh
-	set result [list [lsort -dict [glob test/*]] [file_read test/all.txt] [file_read test/sum2-test3.txt]]
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+	]
 	cd $::testdir
 	set result
 } {{test/all.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} {testh
+1+2=3
+3+4+5=12
+6+7+8=21
+} {6+7+8=21
+2
+}}
+
+test job {--force 0} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	file mkdir test
+	file_write test/all.txt error
+	jobtest --force 0 ../data test testh
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+	]
+	cd $::testdir
+	set result
+} {{test/all.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {6+7+8=21
+2
+}}
+
+test job {--force 1} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	file mkdir test
+	file_write test/all.txt error
+	jobtest --force 1 ../data test testh
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[file_read test/all.txt.old1] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+	]
+	cd $::testdir
+	set result
+} {{test/all.txt test/all.txt.old1 test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {testh
 1+2=3
 3+4+5=12
 6+7+8=21
