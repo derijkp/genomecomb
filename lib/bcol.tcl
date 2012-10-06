@@ -117,10 +117,22 @@ proc bcol_get {bcol start {end {}}} {
 	if {[catch {dict get $bcol default} default]} {
 		set default 0
 	}
-	if {$start > $max} {return [list_fill [expr {$end-$start+1}] $default]}
+	set len [expr {$end-$start+1}]
+	if {$len <= 0} {return {}}
+	if {$start > $max} {return [list_fill $len $default]}
 	if {$end > $max} {set uend $max} else {set uend $end}
 	set result {}
-	set num [lindex $table 0 0]
+	set offset 0
+	if {[llength $table] > 2} {
+		list_foreach {num type noffset} $table {
+			if {$start <= $num} {
+				break
+			}
+			set offset $noffset
+		}
+	} else {
+		set num [lindex $table 0 0]
+	}
 	if {$start < $num} {
 		if {$end < $num} {
 			return [list_fill [expr {$end-$start+1}] $default]
@@ -129,18 +141,9 @@ proc bcol_get {bcol start {end {}}} {
 		}
 		set start $num
 	}
-	set offset 0
-	if {[llength $table] > 2} {
-		list_foreach {cnum temp noffset} $table {
-			if {$start <= $cnum} {
-				break
-			}
-			set offset $noffset
-		}
-	}
 	set len [expr {$uend-$start+1}]
 	if {$len <= 0} {return $result}
-	set pos [expr {$typesize*$start}]
+	set pos [expr {$typesize*($start-$num)}]
 	set binfile [dict get $bcol binfile]
 	if {![dict get $bcol compressedbin]} {
 		set f [open $binfile]
