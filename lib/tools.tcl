@@ -319,7 +319,7 @@ proc gzclose {f} {
 }
 
 proc gzroot filename {
-	if {[inlist {.rz .gz .bgz} [file extension $filename]]} {
+	if {[inlist {.rz .gz .bgz .bz2} [file extension $filename]]} {
 		return [file root $filename]
 	} else {
 		return $filename
@@ -327,7 +327,7 @@ proc gzroot filename {
 }
 
 proc gziscompressed filename {
-	if {[inlist {.rz .gz .bgz} [file extension $filename]]} {
+	if {[inlist {.rz .gz .bgz .bz2} [file extension $filename]]} {
 		return 1
 	} else {
 		return 0
@@ -336,7 +336,7 @@ proc gziscompressed filename {
 
 proc gzfile {args} {
 	foreach filename $args {
-		if {![catch {glob $filename $filename.rz $filename.bgz $filename.gz} list]} {
+		if {![catch {glob $filename $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
 			return [lindex $list 0]
 		}
 	}
@@ -346,7 +346,7 @@ proc gzfile {args} {
 proc gzfiles {args} {
 	set result {}
 	foreach filename $args {
-		if {![catch {glob $filename $filename.rz $filename.bgz $filename.gz} list]} {
+		if {![catch {glob $filename $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
 			lappend result {*}$list
 		}
 	}
@@ -722,7 +722,7 @@ proc gzmklink {src dest} {
 	set src [gzfile $src]
 	set ext_s [file extension $src]
 	set ext_d [file extension $dest]
-	if {$ext_s ne $ext_d && [inlist {.gz .bgz .rz} $ext_s]} {
+	if {$ext_s ne $ext_d && [inlist {.gz .bgz .rz .bz2} $ext_s]} {
 		mklink $src $dest$ext_s
 	} else {
 		mklink $src $dest

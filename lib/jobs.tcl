@@ -1,7 +1,8 @@
 proc regexp2glob {pattern} {
-	regsub -all {[\[\{(][^\]\})]*[\]\})]} $pattern {*} glob
+	regsub -all {\[[^]]*\]} $pattern {*} glob
+	regsub -all {\{[^\}]*\}} $glob {*} glob
 	regsub -all {\\.} $glob {*} glob
-	regsub -all {[*+?.]+} $glob {*} glob
+	regsub -all {[*+?.()]+} $glob {*} glob
 	return $glob
 }
 
@@ -37,17 +38,6 @@ proc job_args {jobargs} {
 	lappend newargs {*}[lrange $jobargs $pos end]
 }
 
-proc job_init {args} {
-	global cgjob job_logdir
-	set cgjob(distribute) 0
-	set cgjob(force) 0
-	set cgjob(queue) {}
-	set cgjob(id) 1
-	job_logdir [file normalize [pwd]/log_jobs]
-}
-
-job_init
-
 # job_expandvars fills in all variables (from one level up)
 # variables prefixed with _ are considered a list, and will be "expanded"
 # e.g.
@@ -71,14 +61,14 @@ proc job_expandvars {string {level 0}} {
 				continue
 			}
 			set alldone 0
-			set cmd "$code\nsubst -nobackslashes \$string\n\}"
+			set cmd "$code\nsubst -nobackslashes -nocommands \$string\n\}"
 			eval $cmd
 			if {![catch {job_testvars $string} result]} {
 				lappend resultlist $code 1 $result
 				continue
 			}
 			if {![regexp {can't read "(.*)": no such variable} $result temp var]} {
-				putslog "cannot make $var: ERROR: $result"
+				putslog "cannot expand $string: ERROR: $result"
 				error $result $::errorInfo
 			}
 			if {[string index $var 0] eq "_"} {
@@ -177,8 +167,13 @@ proc job_finddeps {deps targetvarsVar {ftargetvars {}}} {
 		if {![llength $files]} {
 			if {!$opt} {
 				error "missing dependency $pattern"
+			} else {
+				error "missing optional dependency $pattern"
+				lappend finaldeps {}
 			}
 			continue
+		} else {
+			job_log "dependency ok ($pattern): $files"
 		}
 		lappend finaldeps {*}$files
 		foreach file $files {
@@ -195,22 +190,21 @@ proc job_checktarget {target {newidsVar {}}} {
 	if {$newidsVar ne ""} {
 		upvar $newidsVar newids
 	}
-	if {[llength [gzfiles $target]]} {
-		job_log "target $target ok"
+	set files [gzfiles $target]
+	if {[llength $files]} {
+		job_log "target ok: $target"
 		return 1
 	} elseif {[info exists cgjob_ids($target)]} {
 		if {$cgjob_ids($target) eq ""} {
-			job_log "target $target already done"
+			job_log "target already done: $target"
 			return 1
 		} else {
-			job_log "target $target already submitted (id $cgjob_ids($target))"
+			job_log "target already submitted/running (id $cgjob_ids($target)): $target "
 			set newids $cgjob_ids($target)
 			return 2
 		}
-	} elseif {[info exists ::$target]} {
-		job_log "variable $target exists (= [get ::$target])"
-		return 1
 	}
+	job_log "target missing: $target"
 	return 0
 }
 
@@ -262,8 +256,8 @@ proc job_logname {name} {
 proc job_log {args} {
 	global job_log
 	foreach message $args {
-		puts $job_log(f) "[timestamp] $message"
-		puts stderr "[timestamp] $message"
+		puts $job_log(f) "$message ([timestamp])"
+		puts stderr "$message ([timestamp])"
 	}
 	flush $job_log(f)
 }
@@ -294,7 +288,11 @@ putsvars line
 		# check foreach deps, skip if not fullfilled
 		if {[llength $foreach]} {
 			if {[catch {job_finddeps $foreach ftargetvars} fadeps]} {
-				job_log "error in foreach dependencies for $mjobname: $fadeps"
+				if {![regexp {^missing dependency} $fadeps]} {
+					job_log "error in foreach dependencies for $mjobname: $fadeps"
+				} else {
+					job_log "$fadeps"
+				}
 				job_log "job $mjobname failed"
 				continue
 			}
@@ -314,8 +312,15 @@ putsvars line
 			job_logname $jobname
 			job_log "==================== $jobname ===================="
 			# check deps, skip if not fullfilled
+			if {$fdep ne ""} {
+				job_log "foreach dep ok: $fdep"
+			}
 			if {[catch {job_finddeps $deps newtargetvars $ftargetvar} newadeps]} {
-				job_log "error in dependencies for $jobname: $newadeps"
+				if {![regexp {^missing dependency} $newadeps]} {
+					job_log "error in dependencies for $jobname: $newadeps"
+				} else {
+					job_log "$newadeps"
+				}
 				job_log "job $jobname failed"
 				continue
 			}
@@ -353,18 +358,31 @@ putsvars line
 				job_log "skipping $jobname: targets already completed or running"
 				continue
 			}
+			job_log "running $jobname"
 			# run code
 			set cmd "proc job_run {} \{\n"
 			append cmd "[list cd $pwd]\n"
 			append cmd "[list set deps $adeps]\n"
 			append cmd "[list set dep [lindex $adeps 0]]\n"
 			set num 1
+			foreach dep $adeps {
+				append cmd "[list set dep$num $dep]\n"
+				incr num
+				if {$num > 10} break
+			}
+			set num 1
 			foreach targetvar $targetvars {
-				append cmd "[list set dep$num $targetvar]\n"
+				append cmd "[list set match$num $targetvar]\n"
 				incr num
 			}
 			append cmd "[list set targets $targets]\n"
 			append cmd "[list set target [lindex $targets 0]]\n"
+			set num 1
+			foreach target $targets {
+				append cmd "[list set target$num $target]\n"
+				incr num
+				if {$num > 10} break
+			}
 			append cmd $code\n\}
 			set ok 1
 			if {[catch {eval $cmd} result]} {
@@ -404,11 +422,8 @@ proc job {jobname args} {
 	if {[llength $args] < 1} {error "wrong # args for target: must be job jobname -deps deps -targets targets -code code ..."}
 	set pos 0
 	set foreach {}
-	set deps {}
 	set vars {}
 	set precode {}
-	set code {}
-	set targets {}
 	set skip {}
 	set ptargets {}
 	set submitopts {}
@@ -460,15 +475,26 @@ proc job {jobname args} {
 			default {
 				if {[string index $key 0] eq "-"} {
 					error "unkown option $key for target, must be one of: -deps, -targets, -code, -direct, -io"
-				} else {
-					error "wrong # args for target: must be job submit jobname -deps deps -targets targets -code code ..."
 				}
 				break
 			}
 		}
 	}
 	if {$pos < $len} {
-		error "wrong # args for target: must be job submit jobname -deps deps -targets targets -code code ..."
+		set args [lrange $args [expr {$pos-1}] end]
+		if {[llength $args] != 2 && [llength $args] != 3} {
+			error "wrong # args for job: must be:\n job jobname -deps deps -targets targets -code code ... \nor\n job jobname options deps targets code"
+		}
+		lappend args {} {}
+		set toget {}
+		if {![info exists deps]} {lappend toget deps}
+		if {![info exists targets]} {lappend toget targets}
+		if {![info exists code]} {lappend toget code}
+		foreach $toget $args break
+	} else {
+		if {![info exists deps]} {set deps {}}
+		if {![info exists targets]} {set targets {}}
+		if {![info exists code]} {set code {}}
 	}
 	if {$targets eq ""} {
 		error "Each job must have targets (use -targets)"
@@ -488,3 +514,13 @@ proc job {jobname args} {
 	job_process
 }
 
+proc job_init {args} {
+	global cgjob job_logdir
+	set cgjob(distribute) 0
+	set cgjob(force) 0
+	set cgjob(queue) {}
+	set cgjob(id) 1
+	job_logdir [file normalize [pwd]/log_jobs]
+}
+
+job_init
