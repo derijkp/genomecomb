@@ -43,8 +43,7 @@ return
 	}
 }
 
-
-
+if 0 {
 cd /complgen/sv/
 set file sv79-20s.sqlite
 set object .d
@@ -55,6 +54,5 @@ set db $object.db
 
 .d redraw
 
-if 0 {
 
 }

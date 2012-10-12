@@ -753,3 +753,13 @@ if 0 {
 	}
 
 }
+
+proc reload {} {
+	global appdir
+	foreach file [glob $appdir/lib/*.tcl $appdir/lib-exp/*.tcl] {
+		puts "sourcing $file"
+		if {[catch {source $file} e]} {
+			puts "error: $e"
+		}
+	}
+}
