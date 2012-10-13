@@ -6,6 +6,23 @@ proc regexp2glob {pattern} {
 	return $glob
 }
 
+proc job_distribute {type} {
+	global cgjob
+	set cgjob(distribute) $type
+	if {[isint $cgjob(distribute)]} {
+		if {$cgjob(distribute) <= 1} {
+			set target direct
+		} else {
+			set target distr
+		}
+	} else {
+		set target $type
+	}
+	auto_load job_process_$target
+	interp alias {} job_process {} job_process_$target
+	interp alias {} job_wait {} job_process_${target}_wait
+}
+
 proc job_args {jobargs} {
 	global cgjob
 	if {![info exists cgjob(distribute)]} {
@@ -26,7 +43,7 @@ proc job_args {jobargs} {
 				incr pos
 			}
 			-d - -distribute - --distribute {
-				set cgjob(distribute) [lindex $jobargs $pos]
+				job_distribute [lindex $jobargs $pos]
 				incr pos
 			}
 			-- break
@@ -111,18 +128,77 @@ proc job_expandvarslist {list {level 1}} {
 	return $result
 }
 
-proc job_finddep {pattern} {
-	return [lsort -dict [gzfiles $pattern]]
+proc job_finddep {pattern idsVar} {
+	global cgjob_id
+	upvar $idsVar ids
+	set files [lsort -dict [gzfiles $pattern]]
+	lappend ids {*}[list_fill [llength $files] {}]
+	foreach file [array names cgjob_id [file normalize $pattern]] {
+		lappend files $file
+		lappend ids $cgjob_id($file)
+	}
+	return $files
 }
 
-proc job_findregexpdep {pattern} {
-	global job_data job_files
+proc job_findregexpdep {pattern idsVar} {
+	global job_data job_files cgjob_id
+	upvar $idsVar ids
 	set glob [regexp2glob $pattern]
 	set files {}
 	foreach file [lsort -dict [gzfiles $glob]] {
-		if {[regexp ^$pattern\$ $file]} {lappend files $file}
+		if {[regexp ^$pattern\$ $file]} {
+			lappend files $file
+			lappend ids {}
+		}
+	}
+	foreach file [array names cgjob_id [file normalize $glob]] {
+		if {![regexp ^[file normalize $pattern]\$ $file]} continue
+		lappend files $file
+		lappend ids $cgjob_id($file)
 	}
 	return $files
+}
+
+# dependencies between braces () are optional (braces must be at start and end of dependency)
+proc job_finddeps {job deps targetvarsVar idsVar {ftargetvars {}}} {
+	upvar $idsVar ids
+	if {$targetvarsVar ne ""} {
+		upvar $targetvarsVar targetvars
+	}
+	set ids {}
+	set finaldeps {}
+	set targetvars {}
+	foreach pattern $deps {
+		if {[string index $pattern 0] eq "\(" && [string index $pattern end] eq "\)"} {
+			set opt 1
+			set pattern [string range $pattern 1 end-1]
+		} else {
+			set opt 0
+		}
+		set pattern [job_targetreplace $pattern $ftargetvars]
+		if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
+			set pattern [string range $pattern 1 end-1]
+			set files [job_findregexpdep $pattern ids]
+		} else {
+			set files [job_finddep $pattern ids]
+		}
+		if {![llength $files]} {
+			if {!$opt} {
+				error "missing dependency $pattern"
+			} else {
+				error "missing optional dependency $pattern"
+				lappend finaldeps {}
+			}
+			continue
+		} else {
+			job_lognf $job "dependency ok ($pattern): $files"
+		}
+		lappend finaldeps {*}$files
+		foreach file $files {
+			lappend targetvars {*}[lrange [regexp -all -inline ^$pattern\$ $file] 1 end]
+		}
+	}
+	return $finaldeps
 }
 
 # set string {abc\1def\\1ghi\\\1jkl\\\\1s}
@@ -141,81 +217,38 @@ proc job_targetreplace {string targetvars} {
 proc job_targetsreplace {list targetvars} {
 	set result {}
 	foreach string $list {
-		lappend result [job_targetreplace $string $targetvars]
+		lappend result [file normalize [job_targetreplace $string $targetvars]]
 	}
 	return $result
 }
 
-proc job_finddeps {deps targetvarsVar {ftargetvars {}}} {
-	upvar $targetvarsVar targetvars
-	set finaldeps {}
-	set targetvars {}
-	foreach pattern $deps {
-		if {[string index $pattern 0] eq "\(" && [string index $pattern end] eq "\)"} {
-			set opt 1
-			set pattern [string range $pattern 1 end-1]
-		} else {
-			set opt 0
-		}
-		set pattern [job_targetreplace $pattern $ftargetvars]
-		if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
-			set pattern [string range $pattern 1 end-1]
-			set files [job_findregexpdep $pattern]
-		} else {
-			set files [job_finddep $pattern]
-		}
-		if {![llength $files]} {
-			if {!$opt} {
-				error "missing dependency $pattern"
-			} else {
-				error "missing optional dependency $pattern"
-				lappend finaldeps {}
-			}
-			continue
-		} else {
-			job_log "dependency ok ($pattern): $files"
-		}
-		lappend finaldeps {*}$files
-		foreach file $files {
-			lappend targetvars {*}[lrange [regexp -all -inline ^$pattern\$ $file] 1 end]
-		}
-	}
-	return $finaldeps
-}
-
-# dependencies between braces () are optional (braces must be at start and end of dependency)
-
-proc job_checktarget {target {newidsVar {}}} {
-	global cgjob_ids
+proc job_checktarget {job target {newidsVar {}}} {
+	global cgjob_id
 	if {$newidsVar ne ""} {
 		upvar $newidsVar newids
 	}
 	set files [gzfiles $target]
 	if {[llength $files]} {
-		job_log "target ok: $target"
+		job_lognf $job "target ok: $target"
+		unset -nocomplain cgjob_id($target)
 		return 1
-	} elseif {[info exists cgjob_ids($target)]} {
-		if {$cgjob_ids($target) eq ""} {
-			job_log "target already done: $target"
-			return 1
-		} else {
-			job_log "target already submitted/running (id $cgjob_ids($target)): $target "
-			set newids $cgjob_ids($target)
-			return 2
-		}
+	} elseif {[info exists cgjob_id($target)] && $cgjob_id($target) != "q"} {
+		job_lognf $job "target already submitted/running (id $cgjob_id($target)): $target "
+		set newids $cgjob_id($target)
+		return 2
 	}
-	job_log "target missing: $target"
+	job_lognf $job "target missing: $target"
 	return 0
 }
 
-proc job_checktargets {targets {runningVar {}}} {
+proc job_checktargets {job targets {runningVar {}}} {
 	if {$runningVar ne ""} {
 		upvar $runningVar running
 		set running {}
 	}
 	set ok 1
 	foreach target $targets {
-		set check [job_checktarget $target]
+		set check [job_checktarget $job $target]
 		if {!$check} {
 			set ok 0
 		}
@@ -227,39 +260,80 @@ proc job_checktargets {targets {runningVar {}}} {
 }
 
 proc job_findptargets {ptargets} {
-	global cgjob_ids
+	global cgjob_id
 	set targets {}
 	set ok 1
 	foreach ptarget $ptargets {
-		lappend targets {*}[job_finddep $ptarget]
+		lappend targets {*}[job_finddep $ptarget ids]
 	}
 	return $targets
 }
 
 proc job_logdir {logdir} {
-	global job_log
-	if {![info exists job_log(file)]} {set job_log(file) joblog.txt}
-	set job_log(file) [file normalize $logdir/[file tail $job_log(file)]]
-	file mkdir $logdir
-	catch {close $job_log(f)}
-	set job_log(f) [open $job_log(file) a+]
+	global cgjob
+	set cgjob(logdir) [file normalize $logdir]
 }
 
 proc job_logname {name} {
-	global job_log
-	set name log_[string_change $name {/ __ : _ \" _ \' _}].txt
-	set job_log(file) [file normalize [file dir $job_log(file)]/$name]
-	catch {close $job_log(f)}
-	set job_log(f) [open $job_log(file) a+]
+	global cgjob
+	set name [string_change $name {/ __ : _ \" _ \' _}]
+	return [file normalize $cgjob(logdir)/$name]
 }
 
-proc job_log {args} {
-	global job_log
-	foreach message $args {
-		puts $job_log(f) "$message ([timestamp])"
-		puts stderr "$message ([timestamp])"
+proc job_logclear {job} {
+	set ::cgjob(buffer,$job) {}
+}
+
+proc job_timestamp {} {
+	set now [clock milliseconds]
+	set seconds [expr {$now/1000}]
+	set milliseconds [expr {$now%1000}]
+	return [clock format $seconds -format "%Y-%m-%d %H:%M:%S"].$milliseconds
+}
+
+proc file_add {file args} {
+	set f [open $file a]
+	foreach arg $args {
+		puts $f $arg
 	}
-	flush $job_log(f)
+	close $f
+}
+
+proc job_log {job args} {
+	global cgjob
+	file mkdir $cgjob(logdir)
+	foreach message $args {
+		lappend cgjob(buffer,$job) "[job_timestamp]\t$message"
+	}
+	if {![llength $cgjob(buffer,$job)]} return
+	if {![info exists cgjob(f,$job)]} {
+		set cgjob(f,$job) [open $job.log a]
+	}
+	set f $cgjob(f,$job)
+	set log [join $cgjob(buffer,$job) \n]
+	puts $cgjob(f,$job) $log
+	puts stderr $log
+	set cgjob(buffer,$job) {}
+	flush $cgjob(f,$job)
+}
+
+proc job_lognf {job args} {
+	global cgjob
+	foreach message $args {
+		lappend cgjob(buffer,$job) "[job_timestamp]\t$message"
+	}
+}
+
+proc job_logclose {job args} {
+	global cgjob
+	if {![info exists cgjob(f,$job)]} {
+		set cgjob(f,$job) [open $job.log a]
+	}
+	job_log $job
+	set f $cgjob(f,$job)
+	catch {close $f}
+	unset cgjob(f,$job)
+	unset cgjob(buffer,$job)
 }
 
 proc job_backup {file {rename 0}} {
@@ -276,145 +350,39 @@ proc job_backup {file {rename 0}} {
 	}
 }
 
-proc job_process {} {
-	global cgjob job_deps 
-	set jobroot [pwd]
-	foreach line $cgjob(queue) {
-putsvars line
-		foreach {jobid mjobname pwd deps foreach ftargets fptargets fskip code submitopts} $line break
-		cd $pwd
-		set newids {}
-		job_logname $mjobname
-		# check foreach deps, skip if not fullfilled
-		if {[llength $foreach]} {
-			if {[catch {job_finddeps $foreach ftargetvars} fadeps]} {
-				if {![regexp {^missing dependency} $fadeps]} {
-					job_log "error in foreach dependencies for $mjobname: $fadeps"
-				} else {
-					job_log "$fadeps"
-				}
-				job_log "job $mjobname failed"
-				continue
-			}
-			set fadeps [list_concat $fadeps]
-			set ftargetvars [list_concat $ftargetvars]
-		} else {
-			set fadeps {{}}
-			set ftargetvars {{}}
-		}
-		foreach fdep $fadeps ftargetvar $ftargetvars {
-			cd $pwd
-			if {$fdep eq ""} {
-				set jobname $mjobname
-			} else {
-				set jobname $mjobname-$fdep
-			}
-			job_logname $jobname
-			job_log "==================== $jobname ===================="
-			# check deps, skip if not fullfilled
-			if {$fdep ne ""} {
-				job_log "foreach dep ok: $fdep"
-			}
-			if {[catch {job_finddeps $deps newtargetvars $ftargetvar} newadeps]} {
-				if {![regexp {^missing dependency} $newadeps]} {
-					job_log "error in dependencies for $jobname: $newadeps"
-				} else {
-					job_log "$newadeps"
-				}
-				job_log "job $jobname failed"
-				continue
-			}
-			set targetvars $ftargetvar
-			lappend targetvars {*}$newtargetvars
-			set adeps $fdep
-			lappend adeps {*}$newadeps
-			# check targets, if already done or running, skip
-			set run 0
-			if {!$cgjob(force) && [llength $fskip]} {
-				set skip [job_targetsreplace $fskip $targetvars]
-				if {[llength $skip] && [job_checktargets $skip running]} {
-					job_log "skipping $jobname: skip targets already completed or running"
-					continue
-				}
-			}
-			set targets [job_targetsreplace $ftargets $targetvars]
-			if {![job_checktargets $targets running]} {
-				set run 1
-			}
-			set ptargets [job_targetsreplace $fptargets $targetvars]
-			if {[llength $ptargets] && ![llength [job_findptargets $ptargets]]} {
-				set run 1
-			}
-			if {$cgjob(force)} {
-				if {[llength $running]} {
-					error "cannot force job with still running tasks ([join $running ,])"
-				}
-				foreach target [list_concat $targets $ptargets] {
-					job_backup $target 1
-				}
-				set run 1
-			}
-			if {!$run} {
-				job_log "skipping $jobname: targets already completed or running"
-				continue
-			}
-			job_log "running $jobname"
-			# run code
-			set cmd "proc job_run {} \{\n"
-			append cmd "[list cd $pwd]\n"
-			append cmd "[list set deps $adeps]\n"
-			append cmd "[list set dep [lindex $adeps 0]]\n"
-			set num 1
-			foreach dep $adeps {
-				append cmd "[list set dep$num $dep]\n"
-				incr num
-				if {$num > 10} break
-			}
-			set num 1
-			foreach targetvar $targetvars {
-				append cmd "[list set match$num $targetvar]\n"
-				incr num
-			}
-			append cmd "[list set targets $targets]\n"
-			append cmd "[list set target [lindex $targets 0]]\n"
-			set num 1
-			foreach target $targets {
-				append cmd "[list set target$num $target]\n"
-				incr num
-				if {$num > 10} break
-			}
-			append cmd $code\n\}
-			set ok 1
-			if {[catch {eval $cmd} result]} {
-				set ok 0
-				job_log "error creating $jobname: $result"
-			}
-			if {[catch {job_run} result]} {
-				set ok 0
-				job_log "error running $jobname: $result"
-			}
-			# check if targets are ok
-			if {![job_checktargets $targets]} {
-				set ok 0
-				job_log "job $jobname failed: missing targets"
-			}
-			if {[llength $ptargets] && ![llength [job_findptargets $ptargets]]} {
-				set ok 0
-				job_log "job $jobname failed: missing ptargets"
-			}
-			if {$ok} {
-				job_log "job $jobname success"
-			}
-		}
+proc job_generate_code {pwd adeps targetvars targets code} {
+	set cmd ""
+	append cmd "[list cd $pwd]\n"
+	append cmd "[list set deps $adeps]\n"
+	append cmd "[list set dep [lindex $adeps 0]]\n"
+	set num 1
+	foreach dep $adeps {
+		append cmd "[list set dep$num $dep]\n"
+		incr num
+		if {$num > 10} break
 	}
-	cd $jobroot
-	set cgjob(queue) {}
+	set num 1
+	foreach targetvar $targetvars {
+		append cmd "[list set match$num $targetvar]\n"
+		incr num
+	}
+	append cmd "[list set targets $targets]\n"
+	append cmd "[list set target [lindex $targets 0]]\n"
+	set num 1
+	foreach target $targets {
+		append cmd "[list set target$num $target]\n"
+		incr num
+		if {$num > 10} break
+	}
+	append cmd $code\n
+	return $cmd
 }
 
 # var targets contains list of all targets
 # var target contains the first target
 # var deps contains a list of all dependencies
 # var dep contains the first element of the first dependency (so you do not have to do [lindex $deps 0] to get it)
+# var match1, match2, ... contain the first, second, ... match (in parenthesis) in deps (foreach deps and plain deps)
 
 proc job {jobname args} {
 	global curjobid cgjob
@@ -509,18 +477,24 @@ proc job {jobname args} {
 		append newcode [list set $var [uplevel get $var]]\n
 	}
 	append newcode $code
-	lappend cgjob(queue) [list $cgjob(id) $jobname [pwd] $edeps $eforeach $etargets $eptargets $eskip $newcode $submitopts $precode]	
+	lappend cgjob(queue) [list $cgjob(id) $jobname [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $newcode $submitopts $precode]	
 	incr cgjob(id)
 	job_process
 }
 
 proc job_init {args} {
-	global cgjob job_logdir
+	global cgjob cgjob_id cgjob_running
+	unset -nocomplain cgjob
+	unset -nocomplain cgjob_id
+	unset -nocomplain cgjob_running
 	set cgjob(distribute) 0
 	set cgjob(force) 0
 	set cgjob(queue) {}
 	set cgjob(id) 1
 	job_logdir [file normalize [pwd]/log_jobs]
+	interp alias {} job_process {} job_process_direct
+	interp alias {} job_wait {} job_process_direct_wait
+	job_args $args
 }
 
 job_init

@@ -1,0 +1,189 @@
+proc job_process_distr_running {jobs} {
+	global cgjob_running
+	foreach job $jobs {
+		if {$job eq ""} continue
+		if {$job eq "q"}  {
+			return 1
+		}
+		if {[get cgjob_running($job) 0]} {
+			return 1
+		}
+	}
+	return 0
+}
+
+proc job_process_distr_progress {job args} {
+	foreach line $args {
+		job_log $job "$line"
+	}
+}
+
+proc job_process_distr_done {job targets args} {
+	global cgjob cgjob_id cgjob_running
+	job_log $job "-------------------- end [file tail $job] --------------------"
+	# job has ended
+	unset -nocomplain cgjob_running($job)
+	# check targets (if ok, cgjob_id($target) is set to "" to indicate they are nolonger running)
+	if {![job_checktargets $job $targets]} {
+		job_log $job "job [file tail $job] failed: missing targets"
+	} else {
+		job_log $job "job [file tail $job] ok"
+	}
+#	if {[llength $ptargets] && ![llength [job_findptargets ptargets]]} {
+#		job_log $job "job [file tail $job] failed: missing ptargets"
+#	}
+	job_logclose $job
+	# other jobs to do, if not signal end to vwait by setting var cgjob_exit
+	update
+	if {[llength $cgjob(queue)]} {
+		after idle job_process_distr
+	} elseif {![llength [array names cgjob_running]]} {
+		set ::cgjob_exit 1
+	}
+}
+
+proc job_status {} {
+	global cgjob_id
+	set result ""
+	foreach name [array names cgjob_id] {
+		lappend result "$name: $cgjob_id($name)"
+	}
+	return $result
+}
+
+proc job_process_distr {} {
+	global cgjob cgjob_id cgjob_targets cgjob_running cgjob_pid
+	set queue $cgjob(queue)
+	update
+	if {![llength $queue]} return
+	set cgjob(queue) {}
+	set jobroot [pwd]
+	set running [array names cgjob_running]
+	while {[llength $queue]} {
+		if {[llength $running] > $cgjob(distribute)} {
+			break
+		}
+		set line [list_shift queue]
+		foreach {jobid jobname pwd deps foreach ftargetvars ftargets fptargets fskip code submitopts} $line break
+		cd $pwd
+		set job [job_logname $jobname]
+		# check foreach deps, skip if not fullfilled
+		# check for foreach patterns, expand into one ore more entries in the queue
+		if {[llength $foreach]} {
+			if {[catch {job_finddeps $job $foreach ftargetvars fids} fadeps]} {
+				if {![regexp {^missing dependency} $fadeps]} {
+					job_log $job "error in foreach dependencies for $jobname: $fadeps"
+				} else {
+					job_log $job "$fadeps"
+				}
+				job_log $job "job $jobname failed"
+				continue
+			}
+			set temp {}
+			# make foreach empty
+			lset line 4 {}
+			foreach fdep $fadeps ftargetvar $ftargetvars {
+				lset line 1 $jobname-$fdep
+				lset line 3 [list $fdep {*}$deps]
+				lset line 5 $ftargetvar
+				lappend temp $line
+			}
+			set queue [list_concat $temp $queue]
+			continue
+		}
+		job_lognf $job "==================== $jobname ===================="
+		cd $pwd
+		# check deps, skip if not fullfilled
+		if {[catch {job_finddeps $job $deps newtargetvars ids $ftargetvars} adeps]} {
+			# dependencies not found (or error) -> really skip job
+			if {![regexp {^missing dependency} $adeps]} {
+				job_log $job "error in dependencies for $jobname: $adeps"
+			} else {
+				job_log $job "$adeps"
+			}
+			job_log $job "job $jobname failed"
+			continue
+		}
+		if {[job_process_distr_running $ids]} {
+			set depsrunning 1
+		} else {
+			set depsrunning 0
+		}
+		set targetvars $ftargetvars
+		lappend targetvars {*}$newtargetvars
+		# check skip targets, if already done or running, skip
+		if {!$cgjob(force) && [llength $fskip]} {
+			set skip [job_targetsreplace $fskip $targetvars]
+			if {[llength $skip] && [job_checktargets $job $skip running]} {
+				job_log $job "skipping $jobname: skip targets already completed or running"
+				continue
+			}
+		}
+		# check targets, if already done or running, skip
+		set targets [job_targetsreplace $ftargets $targetvars]
+		set newtargets 0
+		if {![job_checktargets $job $targets targetsrunning]} {
+			set newtargets 1
+		}
+		set ptargets [job_targetsreplace $fptargets $targetvars]
+		if {[llength $ptargets] && ![llength [job_findptargets $ptargets]]} {
+			set newtargets 1
+		}
+		# indicate targets are in the queue, so job_finddeps will find them
+		foreach target $targets {
+			if {![info exists cgjob_id($target)]} {
+				set cgjob_id($target) q
+			}
+		}
+		# if deps or overlapping targets are not finished yet, put line back in the queue and skip running
+		if {$depsrunning || [llength $targetsrunning]} {
+			job_logclear $job
+			lappend cgjob(queue) $line
+			continue
+		}
+		job_log $job
+		if {$cgjob(force)} {
+			foreach target [list_concat $targets $ptargets] {
+				job_backup $target 1
+			}
+			set newtargets 1
+		}
+		if {!$newtargets} {
+			job_log $job "skipping $jobname: targets already completed or running"
+			continue
+		}
+		job_log $job "-------------------- running $jobname --------------------"
+		# run code
+		set cmd {#!/bin/sh}
+		append cmd "\n\# the next line restarts using cgsh \\\n"
+		append cmd {exec cg source "$0" "$@"} \n
+		append cmd [job_generate_code $pwd $adeps $targetvars $targets $code]\n
+		set runfile $job.run
+		file_write $runfile $cmd
+		file attributes $runfile -permissions u+x
+		Extral::bgexec -channelvar ch -no_error_redir -pidvar cgjob_pid \
+			-command [list job_process_distr_done $job $targets] \
+			-progresscommand [list job_process_distr_progress $job] \
+			$runfile 2> $runfile.stderr
+		foreach target $targets {
+			set cgjob_id($target) $job
+		}
+		set cgjob_running($job) $cgjob_pid
+		lappend running $job
+	}
+	lappend cgjob(queue) {*}$queue
+	cd $jobroot
+	after idle update
+}
+
+proc job_process_distr_wait {} {
+	global cgjob cgjob_exit
+	unset -nocomplain cgjob_exit
+	set running [array names cgjob_running]
+	if {![llength cgjob(queue)] && ![llength $running]} return
+	if {[catch {vwait cgjob_exit} e]} {
+		puts "job_wait error: $e"
+	}
+	unset cgjob_exit
+}
+

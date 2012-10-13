@@ -81,7 +81,6 @@ proc jobtest {args} {
 			lappend targets $target
 		}
 		close $f
-		set targets
 	}
 	job sumpattern -deps {$srcdir/cgdat*.tsv} \
 	-targets {$destdir/sumpattern.log} \
@@ -146,12 +145,13 @@ proc jobtest {args} {
 	cd $keepdir
 }
 
-
 test job {basic} {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
+	job_init
 	jobtest ../data test testh
+	job_wait
 	set result [list \
 		[lsort -dict [glob test/*]] \
 		[file_read test/all.txt] \
@@ -173,7 +173,9 @@ test job {--force 0} {
 	cd $::testdir/tmp
 	file mkdir test
 	file_write test/all.txt error
+	job_init
 	jobtest --force 0 ../data test testh
+	job_wait
 	set result [list \
 		[lsort -dict [glob test/*]] \
 		[file_read test/all.txt] \
@@ -191,7 +193,77 @@ test job {--force 1} {
 	cd $::testdir/tmp
 	file mkdir test
 	file_write test/all.txt error
+	job_init
 	jobtest --force 1 ../data test testh
+	job_wait
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[file_read test/all.txt.old1] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+	]
+	cd $::testdir
+	set result
+} {{test/all.txt test/all.txt.old1 test/all2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {testh
+1+2=3
+3+4+5=12
+6+7+8=21
+} {6+7+8=21
+2
+}}
+
+test job {basic -d 4} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	job_init -d 4
+	jobtest ../data test testh
+	job_wait
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[glob test/log_jobs/all.txt.log] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+	]
+	cd $::testdir
+	set result
+} {{test/all.txt test/all2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} test/log_jobs/all.txt.log {testh
+1+2=3
+3+4+5=12
+6+7+8=21
+} {6+7+8=21
+2
+}}
+
+test job {--force 0 -d 4} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	file mkdir test
+	file_write test/all.txt error
+	job_init -d 4
+	jobtest --force 0 ../data test testh
+	job_wait
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+	]
+	cd $::testdir
+	set result
+} {{test/all.txt test/all2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {6+7+8=21
+2
+}}
+
+test job {--force 1 -d 4} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	file mkdir test
+	file_write test/all.txt error
+	job_init -d 4
+	jobtest --force 1 ../data test testh
+	job_wait
 	set result [list \
 		[lsort -dict [glob test/*]] \
 		[file_read test/all.txt.old1] \
