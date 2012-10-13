@@ -18,8 +18,8 @@ proc job_process_distr_progress {job args} {
 	}
 }
 
-proc job_process_distr_done {job targets args} {
-	global cgjob cgjob_id cgjob_running
+proc job_process_distr_done {job targets ptargets args} {
+	global cgjob cgjob_id cgjob_running cgjob_ptargets
 	job_log $job "-------------------- end [file tail $job] --------------------"
 	# job has ended
 	unset -nocomplain cgjob_running($job)
@@ -29,9 +29,15 @@ proc job_process_distr_done {job targets args} {
 	} else {
 		job_log $job "job [file tail $job] ok"
 	}
-#	if {[llength $ptargets] && ![llength [job_findptargets ptargets]]} {
-#		job_log $job "job [file tail $job] failed: missing ptargets"
-#	}
+	if {[llength $ptargets]} {
+		set files [job_findptargets ptargets]
+		if {![llength $files]} {
+			job_log $job "job [file tail $job] failed: missing ptargets"
+		}
+		foreach ptarget $ptargets {
+			unset cgjob_ptargets($ptarget)
+		}
+	}
 	job_logclose $job
 	# other jobs to do, if not signal end to vwait by setting var cgjob_exit
 	update
@@ -52,7 +58,7 @@ proc job_status {} {
 }
 
 proc job_process_distr {} {
-	global cgjob cgjob_id cgjob_targets cgjob_running cgjob_pid
+	global cgjob cgjob_id cgjob_running cgjob_pid cgjob_ptargets
 	set queue $cgjob(queue)
 	update
 	if {![llength $queue]} return
@@ -71,10 +77,19 @@ proc job_process_distr {} {
 		# check for foreach patterns, expand into one ore more entries in the queue
 		if {[llength $foreach]} {
 			if {[catch {job_finddeps $job $foreach ftargetvars fids} fadeps]} {
-				if {![regexp {^missing dependency} $fadeps]} {
-					job_log $job "error in foreach dependencies for $jobname: $fadeps"
-				} else {
+				if {[regexp {^missing dependency} $fadeps]} {
 					job_log $job "$fadeps"
+				} elseif {[regexp {^ptargets hit} $fadeps]} {
+					# if one of the deps hit a ptarget, we cannot continue:
+					# future jobs deps may depend on this lines targets,
+					# which depend on the outcome of the ptarget job
+					# we wait for the ptarget job to finish, by breaking the loop (will reenter after next job is finished)
+					job_logclear $job
+					job_log $job "blocking at $jobname: $fadeps"
+					lappend cgjob(queue) $line
+					break
+				} else {
+					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				}
 				job_log $job "job $jobname failed"
 				continue
@@ -96,10 +111,19 @@ proc job_process_distr {} {
 		# check deps, skip if not fullfilled
 		if {[catch {job_finddeps $job $deps newtargetvars ids $ftargetvars} adeps]} {
 			# dependencies not found (or error) -> really skip job
-			if {![regexp {^missing dependency} $adeps]} {
-				job_log $job "error in dependencies for $jobname: $adeps"
-			} else {
+			if {[regexp {^missing dependency} $adeps]} {
 				job_log $job "$adeps"
+			} elseif {[regexp {^ptargets hit} $adeps]} {
+				# if one of the deps hit a ptarget, we cannot continue:
+				# future jobs deps may depend on this lines targets,
+				# which depend on the outcome of the ptarget job
+				# we wait for the ptarget job to finish, by breaking the loop (will reenter after next job is finished)
+				job_logclear $job
+				job_log $job "blocking at $jobname: $adeps"
+				lappend cgjob(queue) $line
+				break
+			} else {
+				job_log $job "error in dependencies for $jobname: $adeps"
 			}
 			job_log $job "job $jobname failed"
 			continue
@@ -135,6 +159,11 @@ proc job_process_distr {} {
 				set cgjob_id($target) q
 			}
 		}
+		foreach ptarget $ptargets {
+			if {![info exists cgjob_id($ptarget)]} {
+				set cgjob_ptargets($ptarget) q
+			}
+		}
 		# if deps or overlapping targets are not finished yet, put line back in the queue and skip running
 		if {$depsrunning || [llength $targetsrunning]} {
 			job_logclear $job
@@ -162,11 +191,14 @@ proc job_process_distr {} {
 		file_write $runfile $cmd
 		file attributes $runfile -permissions u+x
 		Extral::bgexec -channelvar ch -no_error_redir -pidvar cgjob_pid \
-			-command [list job_process_distr_done $job $targets] \
+			-command [list job_process_distr_done $job $targets $ptargets] \
 			-progresscommand [list job_process_distr_progress $job] \
 			$runfile 2> $runfile.stderr
 		foreach target $targets {
 			set cgjob_id($target) $job
+		}
+		foreach ptarget $ptargets {
+			set cgjob_ptargets($ptarget) $job
 		}
 		set cgjob_running($job) $cgjob_pid
 		lappend running $job
@@ -184,6 +216,6 @@ proc job_process_distr_wait {} {
 	if {[catch {vwait cgjob_exit} e]} {
 		puts "job_wait error: $e"
 	}
-	unset cgjob_exit
+	unset -nocomplain cgjob_exit
 }
 

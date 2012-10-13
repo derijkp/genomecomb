@@ -129,11 +129,15 @@ proc job_expandvarslist {list {level 1}} {
 }
 
 proc job_finddep {pattern idsVar} {
-	global cgjob_id
+	global cgjob_id cgjob_ptargets
 	upvar $idsVar ids
+	set pattern [file normalize $pattern]
+	if {[llength [array names cgjob_ptargets $pattern]]} {
+		error "ptargets hit $pattern: wait till ptarget deps have finished"
+	}
 	set files [lsort -dict [gzfiles $pattern]]
 	lappend ids {*}[list_fill [llength $files] {}]
-	foreach file [array names cgjob_id [file normalize $pattern]] {
+	foreach file [array names cgjob_id $pattern] {
 		lappend files $file
 		lappend ids $cgjob_id($file)
 	}
@@ -141,9 +145,12 @@ proc job_finddep {pattern idsVar} {
 }
 
 proc job_findregexpdep {pattern idsVar} {
-	global job_data job_files cgjob_id
+	global cgjob_id cgjob_ptargets
 	upvar $idsVar ids
 	set glob [regexp2glob $pattern]
+	if {[llength [array names cgjob_ptargets $glob]]} {
+		error "ptargets hit $pattern: wait till ptarget deps have finished"
+	}
 	set files {}
 	foreach file [lsort -dict [gzfiles $glob]] {
 		if {[regexp ^$pattern\$ $file]} {
@@ -263,8 +270,21 @@ proc job_findptargets {ptargets} {
 	global cgjob_id
 	set targets {}
 	set ok 1
-	foreach ptarget $ptargets {
-		lappend targets {*}[job_finddep $ptarget ids]
+	foreach pattern $ptargets {
+		if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
+			set pattern [string range $pattern 1 end-1]
+			set glob [regexp2glob $pattern]
+			set files {}
+			foreach file [lsort -dict [gzfiles $glob]] {
+				if {[regexp ^$pattern\$ $file]} {
+					lappend files $file
+					lappend ids {}
+				}
+			}
+		} else {
+			set files [lsort -dict [gzfiles $pattern]]
+		}
+		lappend targets {*}$files
 	}
 	return $targets
 }
@@ -288,7 +308,7 @@ proc job_timestamp {} {
 	set now [clock milliseconds]
 	set seconds [expr {$now/1000}]
 	set milliseconds [expr {$now%1000}]
-	return [clock format $seconds -format "%Y-%m-%d %H:%M:%S"].$milliseconds
+	return [clock format $seconds -format "%Y-%m-%d %H:%M:%S"].[format %03d $milliseconds]
 }
 
 proc file_add {file args} {
@@ -498,3 +518,4 @@ proc job_init {args} {
 }
 
 job_init
+
