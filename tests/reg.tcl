@@ -113,19 +113,19 @@ X-90
 Y-1010} error
 
 test getregions {above} {
-	exec getregions < data/coverage-chr1.tsv chr1 0 1 10 1 0
+	exec getregions < data/coverage-chr1.tsv chr1 -1 0 1 10 1 0 1
 } {chr1	25	27
 chr1	28	31
 chr1	40	42}
 
 test getregions {below} {
-	exec getregions < data/coverage-chr1.tsv chr1 0 1 10 0 0
+	exec getregions < data/coverage-chr1.tsv chr1 -1 0 1 10 0 0 1
 } {chr1	20	24
 chr1	27	28
 chr1	42	43}
 
 test getregions {shift} {
-	exec getregions < data/coverage-chr1.tsv chr1 0 1 10 1 -1
+	exec getregions < data/coverage-chr1.tsv chr1 -1 0 1 10 1 -1 1
 } {chr1	24	26
 chr1	27	30
 chr1	39	41}
@@ -143,6 +143,15 @@ test cg_regextract {above} {
 chr1	25	27
 chr1	28	31
 chr1	40	42}
+
+test cg_regextract {above with chromosome field} {
+	exec cg regextract --verbose 0 -qfields coverage -above 1 -shift 0 10 data/coverage.tsv
+} {chromosome	begin	end
+chr1	25	27
+chr1	28	31
+chr1	40	42
+chr2	24	27
+chr2	28	30}
 
 test cg_regextract {below} {
 	exec cg regextract --verbose 0 -qfields coverage -above 0 -shift 0 10 data/coverage-chr1.tsv

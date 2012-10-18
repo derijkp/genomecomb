@@ -52,6 +52,11 @@ proc cg_regextract {args} {
 					error [join $errmessage \n]
 				}
 			}
+		} elseif {$ext eq ".bam"} {
+			set chrcol 0
+			set poscol 1
+			set valuecol 2
+			exec samtools depth $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $shift 0 >@ $o
 		} else {
 			set f [gzopen $file]
 			set header [tsv_open $f]
@@ -83,7 +88,7 @@ proc cg_regextract {args} {
 			}
 			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
 			set error [catch {
-				exec $cat $file | getregions $chr $poscol $qcol $cutoff $above $shift >@ $o
+				exec $cat $file | getregions $chr $chrcol $poscol $qcol $cutoff $above $shift 1 >@ $o
 			} errmessage]
 			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
 				error $errmessage

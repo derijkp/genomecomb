@@ -15,26 +15,31 @@
 
 int main(int argc, char *argv[]) {
 	DString line;
-	char *chr, *linepos = NULL, *scanpos = NULL;
+	char curchr[1000], *linepos = NULL, *scanpos = NULL;
 	ssize_t read;
-	int poscol,valuecol,above,shift,maxcol,pos,prev,value,cutoff,accept;
+	int chrcol,poscol,valuecol,above,shift,maxcol,pos,prev,value,cutoff,accept,header;
 	int status,begin=0,count;
-	if ((argc != 7)) {
-		fprintf(stderr,"Format is: getregions chromosome poscol valuecol cutoff above shift");
+	if ((argc != 9)) {
+		fprintf(stderr,"Format is: getregions chromosome chrpos poscol valuecol cutoff above shift header");
 		exit(EXIT_FAILURE);
 	}
 	DStringInit(&line);
-	chr = argv[1];
-	poscol = atoi(argv[2]);
-	valuecol = atoi(argv[3]);
-	cutoff = atoi(argv[4]);
-	above = atoi(argv[5]);
-	shift = atoi(argv[6]);
+	strncpy(curchr,argv[1],999);
+	chrcol = atoi(argv[2]);
+	poscol = atoi(argv[3]);
+	valuecol = atoi(argv[4]);
+	cutoff = atoi(argv[5]);
+	above = atoi(argv[6]);
+	shift = atoi(argv[7]);
+	header = atoi(argv[8]);
 	pos = 0 - shift;
-	maxcol = poscol ; if (valuecol > maxcol) {maxcol = valuecol;}
-	skip_header(stdin,&line);
+	maxcol = poscol;
+	if (valuecol > maxcol) {maxcol = valuecol;}
+	if (chrcol > maxcol) {maxcol = chrcol;}
+	if (header) skip_header(stdin,&line);
 	DStringGetLine(&line, stdin);
 	begin = -1;
+	/* if status is 1, we are in a region */
 	status = 0;
 	while (1) {
 		linepos = line.string;
@@ -51,6 +56,25 @@ NODPRINT("%s\n",linepos)
 					sscanf(scanpos,"%d",&pos);
 				} else if (count == valuecol) {
 					sscanf(scanpos,"%d",&value);
+				} else if (count == chrcol) {
+					char *testpos = linepos, *curpos = curchr; int count = 999;
+					while (*testpos && *testpos != '\t') {
+						if (*testpos != *curpos) {
+							if (status) {
+								fprintf(stdout,"%s\t%d\t%d\n", curchr, begin+shift, pos+1+shift);
+								status = 0;
+							}
+							while (*testpos && *testpos != '\t') {
+								*curpos++ = *testpos++; count--;
+								if (!count) break;
+							}
+							*curpos = '\0';
+							break;
+						}
+						if (*testpos == '\0') break;
+						testpos++; curpos++; count--;
+						if (!count) break;
+					}
 				}
 				count++;
 			}
@@ -60,7 +84,7 @@ NODPRINT("%s\n",linepos)
 			accept = ((above && (value > cutoff)) || (!above && (value < cutoff)));
 			if (status) {
 				if ((prev != pos) || !accept) {
-					fprintf(stdout,"%s\t%d\t%d\n", chr, begin+shift, prev+shift);
+					fprintf(stdout,"%s\t%d\t%d\n", curchr, begin+shift, prev+shift);
 					status = 0;
 					if ((prev != pos) && accept) {
 						begin = pos;
@@ -82,7 +106,7 @@ NODPRINT("%s\n",linepos)
 		if ((int)read == -1) break;
 	}
 	if (status) {
-		fprintf(stdout,"%s\t%d\t%d\n", chr, begin+shift, pos+1+shift);
+		fprintf(stdout,"%s\t%d\t%d\n", curchr, begin+shift, pos+1+shift);
 	}
 	DStringClear(&line);
 	exit(EXIT_SUCCESS);
