@@ -554,6 +554,14 @@ proc scratchfile {{action {get}} {type file}} {
 	}
 }
 
+proc file_add {file args} {
+	set f [open $file a]
+	foreach arg $args {
+		puts $f $arg
+	}
+	close $f
+}
+
 proc chanexec {in out pipe} {
 	set o [open "|\ $pipe\ >@\ $out 2>@\ stderr" w]
 	if {[info exists ::filebuffer($in)]} {

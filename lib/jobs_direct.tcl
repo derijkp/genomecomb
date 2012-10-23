@@ -76,7 +76,7 @@ proc job_process_direct {} {
 		job_log $job "-------------------- running $jobname --------------------"
 		# run code
 		set cmd "proc job_run {} \{\n"
-		append cmd [job_generate_code $pwd $adeps $targetvars $targets $code]
+		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $code]
 		append cmd \}
 		set ok 1
 		if {[catch {eval $cmd} result]} {

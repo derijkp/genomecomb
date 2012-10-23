@@ -138,6 +138,10 @@ proc job_finddep {pattern idsVar} {
 	set files [lsort -dict [gzfiles $pattern]]
 	lappend ids {*}[list_fill [llength $files] {}]
 	foreach file [array names cgjob_id $pattern] {
+		if {[inlist $files $file]} {
+			unset cgjob_id($file)
+			continue
+		}
 		lappend files $file
 		lappend ids $cgjob_id($file)
 	}
@@ -160,6 +164,10 @@ proc job_findregexpdep {pattern idsVar} {
 	}
 	foreach file [array names cgjob_id [file normalize $glob]] {
 		if {![regexp ^[file normalize $pattern]\$ $file]} continue
+		if {[inlist $files $file]} {
+			unset cgjob_id($file)
+			continue
+		}
 		lappend files $file
 		lappend ids $cgjob_id($file)
 	}
@@ -311,14 +319,6 @@ proc job_timestamp {} {
 	return [clock format $seconds -format "%Y-%m-%d %H:%M:%S"].[format %03d $milliseconds]
 }
 
-proc file_add {file args} {
-	set f [open $file a]
-	foreach arg $args {
-		puts $f $arg
-	}
-	close $f
-}
-
 proc job_log {job args} {
 	global cgjob
 	file mkdir $cgjob(logdir)
@@ -370,8 +370,10 @@ proc job_backup {file {rename 0}} {
 	}
 }
 
-proc job_generate_code {pwd adeps targetvars targets code} {
+proc job_generate_code {job pwd adeps targetvars targets code} {
 	set cmd ""
+	set jobname [file tail $job]
+	append cmd "file_add \{$job.log\} \"[job_timestamp]\\tstarting $jobname\"\n"
 	append cmd "[list cd $pwd]\n"
 	append cmd "[list set deps $adeps]\n"
 	append cmd "[list set dep [lindex $adeps 0]]\n"
@@ -395,6 +397,7 @@ proc job_generate_code {pwd adeps targetvars targets code} {
 		if {$num > 10} break
 	}
 	append cmd $code\n
+	append cmd "file_add \{$job.log\} \"[job_timestamp]\\tfinished $jobname\"\n"
 	return $cmd
 }
 
@@ -499,7 +502,7 @@ proc job {jobname args} {
 	append newcode $code
 	lappend cgjob(queue) [list $cgjob(id) $jobname [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $newcode $submitopts $precode]	
 	incr cgjob(id)
-	job_process
+	if {$cgjob(directprocess)} job_process
 }
 
 proc job_init {args} {
@@ -507,6 +510,7 @@ proc job_init {args} {
 	unset -nocomplain cgjob
 	unset -nocomplain cgjob_id
 	unset -nocomplain cgjob_running
+	set cgjob(directprocess) 1
 	set cgjob(distribute) 0
 	set cgjob(force) 0
 	set cgjob(queue) {}

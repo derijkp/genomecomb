@@ -6,41 +6,6 @@ source tools.tcl
 
 catch {file delete -force {*}[glob tmp/*]}
 
-test job {job_expandvars} {
-	unset -nocomplain ::a; unset -nocomplain ::b; unset -nocomplain ::c; unset -nocomplain ::d;
-	set string {$a($b($c))}
-	set a(B(C)) A(B(C))
-	set b(C) B(C)
-	set c C
-	set d D
-	job_expandvars $string
-} {A(B(C))}
-
-test job {job_expandvars} {
-	unset -nocomplain ::a; unset -nocomplain ::b; unset -nocomplain ::c; unset -nocomplain ::d;
-	set string {$a($b($_c))}
-	set a(B(C1)) A(B(C1))
-	set a(B(C2)) A(B(C2))
-	set b(C1) B(C1)
-	set b(C2) B(C2)
-	set c {C1 C2}
-	set d D
-	job_expandvars $string
-} {A(B(C1)) A(B(C2))}
-
-test job {job_expandvars} {
-	unset -nocomplain ::a; unset -nocomplain ::b; unset -nocomplain ::c; unset -nocomplain ::d;
-	set string {$a($_b($_c))}
-	set a(B1(C1)) A(B1(C1))
-	set a(B2(C1)) A(B2(C1))
-	set a(B(C2)) A(B(C2))
-	set b(C1) {B1(C1) B2(C1)}
-	set b(C2) B(C2)
-	set c {C1 C2}
-	set d D
-	job_expandvars $string
-} {A(B1(C1)) A(B2(C1)) A(B(C2))}
-
 proc jobtest {args} {
 	set args [job_args $args]
 	foreach {srcdir destdir header} $args break
@@ -149,6 +114,41 @@ proc jobtest {args} {
 	}
 	cd $keepdir
 }
+
+test job {job_expandvars} {
+	unset -nocomplain ::a; unset -nocomplain ::b; unset -nocomplain ::c; unset -nocomplain ::d;
+	set string {$a($b($c))}
+	set a(B(C)) A(B(C))
+	set b(C) B(C)
+	set c C
+	set d D
+	job_expandvars $string
+} {A(B(C))}
+
+test job {job_expandvars} {
+	unset -nocomplain ::a; unset -nocomplain ::b; unset -nocomplain ::c; unset -nocomplain ::d;
+	set string {$a($b($_c))}
+	set a(B(C1)) A(B(C1))
+	set a(B(C2)) A(B(C2))
+	set b(C1) B(C1)
+	set b(C2) B(C2)
+	set c {C1 C2}
+	set d D
+	job_expandvars $string
+} {A(B(C1)) A(B(C2))}
+
+test job {job_expandvars} {
+	unset -nocomplain ::a; unset -nocomplain ::b; unset -nocomplain ::c; unset -nocomplain ::d;
+	set string {$a($_b($_c))}
+	set a(B1(C1)) A(B1(C1))
+	set a(B2(C1)) A(B2(C1))
+	set a(B(C2)) A(B(C2))
+	set b(C1) {B1(C1) B2(C1)}
+	set b(C2) B(C2)
+	set c {C1 C2}
+	set d D
+	job_expandvars $string
+} {A(B1(C1)) A(B2(C1)) A(B(C2))}
 
 test job {basic} {
 	cd $::testdir
@@ -278,6 +278,63 @@ test job {--force 1 -d 4} {
 	cd $::testdir
 	set result
 } {{test/all.txt test/all.txt.old1 test/all2.txt test/allp.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {testh
+1+2=3
+3+4+5=12
+6+7+8=21
+} {6+7+8=21
+2
+}}
+
+test job {basic -d sge} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	job_init -d sge
+	jobtest ../data test testh
+	job_wait
+	puts "wait for jobs to finish"
+	while {![file exists test/all2.txt]} {
+		after 500
+	}
+	puts "done"
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+	]
+	cd $::testdir
+	set result
+} {{test/all.txt test/all2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} {testh
+1+2=3
+3+4+5=12
+6+7+8=21
+} {6+7+8=21
+2
+}}
+
+test job {--force 1 -d sge} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	file mkdir test
+	file_write test/all.txt error
+	job_init -d sge
+	jobtest --force 1 ../data test testh
+	job_wait
+	puts "wait for jobs to finish"
+	while {![file exists test/all2.txt]} {
+		after 500
+	}
+	puts "done"
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[file_read test/all.txt.old1] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+	]
+	cd $::testdir
+	set result
+} {{test/all.txt test/all.txt.old1 test/all2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {testh
 1+2=3
 3+4+5=12
 6+7+8=21
