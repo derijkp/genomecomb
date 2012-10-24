@@ -118,7 +118,7 @@ table_tsv method query {query} {
 	Classy::Progress next "Converting results"
 	putslog "Converting results"
 	set f [open $tdata(indexdir)/query_results.tsv]
-	gets $f
+	set header [tsv_open $f]
 	set o [open $tdata(indexdir)/query_results.bcol.bin.temp w]
 	fconfigure $o -encoding binary -translation binary
 	set len 0
