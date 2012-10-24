@@ -339,14 +339,18 @@ table_tsv method reset {args} {
 
 table_tsv method save {file} {
 	private $object tdata cache
+	set cor $tdata(fieldscor)
 	if {$tdata(query) eq ""} {
-		file copy $tdata(file) $file
+		if {![llength $cor]} {
+			file copy $tdata(file) $file
+		} else {
+			cg select -f $tdata(fields) $tdata(file) $file
+		}
 		return
 	}
 	set len $tdata(len)
 	set row 0
 	set lineindex $tdata(lineindex)
-	set cor $tdata(fieldscor)
 	set o [open $file w]
 	puts $o "# [list orifile $tdata(file)]"
 	puts $o "# [list query $tdata(query)]"
@@ -364,7 +368,8 @@ table_tsv method save {file} {
 				seek $f $filepos
 			}
 			if {[llength $cor]} {
-				puts $o [list_sub [split [gets $f] \t] $cor]
+				set line [split [gets $f] \t]
+				puts $o [join [_table_tsv_calcline $object $line $cor] \t]
 			} else {
 				puts $o [gets $f]
 			}
