@@ -78,6 +78,22 @@ proc jobtest {args} {
 		close $f
 		file_write $destdir/sumpattern.log [join $targets \n]
 	}
+	job sumpattern2 -foreach {^$destdir/sumpattern-(.*)\.txt$} \
+	  -skip {$destdir/allp2.txt} \
+	  -targets {$destdir/sumpattern2-\1.txt} -code {
+		for {set i 1} {$i < 5} {incr i} {
+			puts "progress $i"
+			after 250
+		}
+		file copy $dep $target.temp
+		exec echo 2 >> $target.temp
+		file rename $target.temp $target
+	}
+	job allp2.txt -vars header -deps {^$destdir/sumpattern2-(.*)\.txt$} -targets {$destdir/allp2.txt} -code {
+		file_write $target.temp $header\n
+		exec cat {*}$deps >> $target.temp
+		file rename -force $target.temp $target
+	}
 	job allp.txt -vars header -deps {^$destdir/sumpattern-(.*)\.txt$} -targets {$destdir/allp.txt} -code {
 		file_write $target.temp $header\n
 		exec cat {*}$deps >> $target.temp
@@ -99,6 +115,13 @@ proc jobtest {args} {
 	}
 	job error_all.txt -deps {$srcdir/notpresent.txt} -targets {$destdir/all.txt} -code {
 		error "This should not be executed, as the dependencies are not fullfilled, the other target is used"
+	}
+	job error_notdone.txt -deps {^$srcdir/cgdata\.tsv$} -targets {$destdir/error_notdone.txt} -code {
+		# this (intentionally) does not produce its target, and should by identified by an error in the logs
+	}
+	job error_notdonedep.txt -deps {$destdir/error_notdone.txt} -targets {$destdir/error_notdonedep.txt} -code {
+		# this depends on error_notdone.txt, which will fail to produce its target
+		# backends should cope with this gracefully (e.g. not hanging)
 	}
 	job all.txt -vars header -deps {^$destdir/sum-(.*)\.txt$} -targets {$destdir/all.txt} -code {
 		file_write $target.temp $header\n
@@ -154,7 +177,7 @@ test job {basic} {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
-	job_init
+	job_init -silent
 	jobtest ../data test testh
 	job_wait
 	set result [list \
@@ -164,7 +187,7 @@ test job {basic} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} {testh
+} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -178,7 +201,7 @@ test job {--force 0} {
 	cd $::testdir/tmp
 	file mkdir test
 	file_write test/all.txt error
-	job_init
+	job_init -silent
 	jobtest --force 0 ../data test testh
 	job_wait
 	set result [list \
@@ -188,7 +211,7 @@ test job {--force 0} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {6+7+8=21
+} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} error {6+7+8=21
 2
 }}
 
@@ -198,7 +221,7 @@ test job {--force 1} {
 	cd $::testdir/tmp
 	file mkdir test
 	file_write test/all.txt error
-	job_init
+	job_init -silent
 	jobtest --force 1 ../data test testh
 	job_wait
 	set result [list \
@@ -209,7 +232,7 @@ test job {--force 1} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all.txt.old1 test/all2.txt test/allp.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {testh
+} {{test/all.txt test/all.txt.old1 test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} error {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -221,7 +244,7 @@ test job {basic -d 4} {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
-	job_init -d 4
+	job_init -silent -d 4
 	jobtest ../data test testh
 	job_wait
 	set result [list \
@@ -232,7 +255,7 @@ test job {basic -d 4} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} test/log_jobs/all.txt.log {testh
+} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} test/log_jobs/all.txt.log {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -246,7 +269,7 @@ test job {--force 0 -d 4} {
 	cd $::testdir/tmp
 	file mkdir test
 	file_write test/all.txt error
-	job_init -d 4
+	job_init -silent -d 4
 	jobtest --force 0 ../data test testh
 	job_wait
 	set result [list \
@@ -256,7 +279,7 @@ test job {--force 0 -d 4} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {6+7+8=21
+} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} error {6+7+8=21
 2
 }}
 
@@ -266,7 +289,7 @@ test job {--force 1 -d 4} {
 	cd $::testdir/tmp
 	file mkdir test
 	file_write test/all.txt error
-	job_init -d 4
+	job_init -silent -d 4
 	jobtest --force 1 ../data test testh
 	job_wait
 	set result [list \
@@ -277,7 +300,7 @@ test job {--force 1 -d 4} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all.txt.old1 test/all2.txt test/allp.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {testh
+} {{test/all.txt test/all.txt.old1 test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} error {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -285,11 +308,15 @@ test job {--force 1 -d 4} {
 2
 }}
 
+if {[catch {exec qstat}]} {
+	puts "Cannot test sge option (missing qstat; grid engine not installed?)"
+} else {
+
 test job {basic -d sge} {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
-	job_init -d sge
+	job_init -silent -d sge
 	jobtest ../data test testh
 	job_wait
 	puts "wait for jobs to finish"
@@ -304,7 +331,7 @@ test job {basic -d sge} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} {testh
+} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -318,7 +345,7 @@ test job {--force 1 -d sge} {
 	cd $::testdir/tmp
 	file mkdir test
 	file_write test/all.txt error
-	job_init -d sge
+	job_init -silent -d sge
 	jobtest --force 1 ../data test testh
 	job_wait
 	puts "wait for jobs to finish"
@@ -334,13 +361,14 @@ test job {--force 1 -d sge} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all.txt.old1 test/all2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/test.txt} error {testh
+} {{test/all.txt test/all.txt.old1 test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} error {testh
 1+2=3
 3+4+5=12
 6+7+8=21
 } {6+7+8=21
 2
 }}
+}
 
 set ::env(PATH) $keeppath
 

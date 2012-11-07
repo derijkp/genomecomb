@@ -7,6 +7,7 @@ proc job_process_direct {} {
 		cd $pwd
 		set job [job_logname $jobname]
 		# check foreach deps, skip if not fullfilled
+		# add all resulting (foreach) jobs in front of the queue, and go back to running the queue
 		if {[llength $foreach]} {
 			if {[catch {job_finddeps $job $foreach ftargetvars fids} fadeps]} {
 				if {![regexp {^missing dependency} $fadeps]} {
@@ -76,7 +77,7 @@ proc job_process_direct {} {
 		job_log $job "-------------------- running $jobname --------------------"
 		# run code
 		set cmd "proc job_run {} \{\n"
-		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $code]
+		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $code]
 		append cmd \}
 		set ok 1
 		if {[catch {eval $cmd} result]} {
@@ -88,18 +89,6 @@ proc job_process_direct {} {
 			job_log $job "error running $jobname: $result"
 		}
 		job_log $job "-------------------- end $jobname --------------------"
-		# check if targets are ok
-		if {![job_checktargets $job $targets]} {
-			set ok 0
-			job_log $job "job $jobname failed: missing targets"
-		}
-		if {[llength $ptargets] && ![llength [job_findptargets $ptargets]]} {
-			set ok 0
-			job_log $job "job $jobname failed: missing ptargets"
-		}
-		if {$ok} {
-			job_log $job "job $jobname success"
-		}
 	}
 	cd $jobroot
 }

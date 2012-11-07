@@ -23,17 +23,12 @@ proc job_process_distr_done {job targets ptargets args} {
 	job_log $job "-------------------- end [file tail $job] --------------------"
 	# job has ended
 	unset -nocomplain cgjob_running($job)
-	# check targets (if ok, cgjob_id($target) is set to "" to indicate they are nolonger running)
-	if {![job_checktargets $job $targets]} {
-		job_log $job "job [file tail $job] failed: missing targets"
-	} else {
-		job_log $job "job [file tail $job] ok"
+	# unset cgjob_id($target) to indicate they are nolonger running
+	# we no longer write results of the check to the log, as the job has already done that
+	foreach target $targets {
+		unset -nocomplain cgjob_id($target)
 	}
 	if {[llength $ptargets]} {
-		set files [job_findptargets ptargets]
-		if {![llength $files]} {
-			job_log $job "job [file tail $job] failed: missing ptargets"
-		}
 		foreach ptarget $ptargets {
 			unset cgjob_ptargets($ptarget)
 		}
@@ -65,6 +60,7 @@ proc job_process_distr {} {
 	set cgjob(queue) {}
 	set jobroot [pwd]
 	set running [array names cgjob_running]
+	set initlen [llength $queue]
 	while {[llength $queue]} {
 		if {[llength $running] > $cgjob(distribute)} {
 			break
@@ -114,7 +110,7 @@ proc job_process_distr {} {
 			if {[regexp {^missing dependency} $adeps]} {
 				job_log $job "$adeps"
 			} elseif {[regexp {^ptargets hit} $adeps]} {
-				# if one of the deps hit a ptarget, we cannot continue:
+				# if one of the deps hit a ptarget, we wil not continue:
 				# future jobs deps may depend on this lines targets,
 				# which depend on the outcome of the ptarget job
 				# we wait for the ptarget job to finish, by breaking the loop (will reenter after next job is finished)
@@ -186,11 +182,11 @@ proc job_process_distr {} {
 		set cmd {#!/bin/sh}
 		append cmd "\n\# the next line restarts using cgsh \\\n"
 		append cmd {exec cg source "$0" "$@"} \n
-		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $code]\n
+		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $code]\n
 		set runfile $job.run
 		file_write $runfile $cmd
 		file attributes $runfile -permissions u+x
-		Extral::bgexec -channelvar ch -no_error_redir -pidvar cgjob_pid \
+		Extral::bgexec -no_error_redir -pidvar cgjob_pid \
 			-command [list job_process_distr_done $job $targets $ptargets] \
 			-progresscommand [list job_process_distr_progress $job] \
 			$runfile 2> $runfile.stderr
@@ -203,6 +199,7 @@ proc job_process_distr {} {
 		set cgjob_running($job) $cgjob_pid
 		lappend running $job
 	}
+	set running [array names cgjob_running]
 	lappend cgjob(queue) {*}$queue
 	cd $jobroot
 	after idle update

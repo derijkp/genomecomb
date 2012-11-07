@@ -6,6 +6,9 @@ proc regexp2glob {pattern} {
 	return $glob
 }
 
+proc job_targets2ptargets {targets} {
+}
+
 proc job_distribute {type} {
 	global cgjob
 	set cgjob(distribute) $type
@@ -31,6 +34,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(force)]} {
 		set cgjob(force) 0
 	}
+	if {![info exists cgjob(silent)]} {
+		set cgjob(silent) 1
+	}
 	if {![llength $jobargs]} {return {}}
 	set newargs {}
 	set pos 0
@@ -45,6 +51,9 @@ proc job_args {jobargs} {
 			-d - -distribute - --distribute {
 				job_distribute [lindex $jobargs $pos]
 				incr pos
+			}
+			-s - -silent - --silent {
+				set cgjob(silent) 1
 			}
 			-- break
 			default {
@@ -132,7 +141,8 @@ proc job_finddep {pattern idsVar} {
 	global cgjob_id cgjob_ptargets
 	upvar $idsVar ids
 	set pattern [file normalize $pattern]
-	if {[llength [array names cgjob_ptargets $pattern]]} {
+	set ptargethits [array names cgjob_ptargets $pattern]
+	if {[llength $ptargethits]} {
 		error "ptargets hit $pattern: wait till ptarget deps have finished"
 	}
 	set files [lsort -dict [gzfiles $pattern]]
@@ -151,6 +161,7 @@ proc job_finddep {pattern idsVar} {
 proc job_findregexpdep {pattern idsVar} {
 	global cgjob_id cgjob_ptargets
 	upvar $idsVar ids
+	set pattern [file normalize $pattern]
 	set glob [regexp2glob $pattern]
 	if {[llength [array names cgjob_ptargets $glob]]} {
 		error "ptargets hit $pattern: wait till ptarget deps have finished"
@@ -218,13 +229,14 @@ proc job_finddeps {job deps targetvarsVar idsVar {ftargetvars {}}} {
 
 # set string {abc\1def\\1ghi\\\1jkl\\\\1s}
 proc job_targetreplace {string targetvars} {
-	if {![llength $targetvars]} {return $string}
+	set targetvarslen [llength $targetvars]
 	list_foreach {b e} [list_reverse [regexp -inline -all -indices {\\+[0-9]+} $string]] {
 		regexp {(\\+)([0-9]+)} [string range $string $b $e] temp pre num
 		set len [string length $pre]
 		if {![expr {$len%2}]} continue
 		incr num -1
-		set string [string_replace $string [expr {$b+$len-1}] $e [lindex $targetvars $num]]
+		if {!$targetvarslen} {set value *} else {set value [lindex $targetvars $num]}
+		set string [string_replace $string [expr {$b+$len-1}] $e $value]
 	}
 	return $string
 }
@@ -332,7 +344,7 @@ proc job_log {job args} {
 	set f $cgjob(f,$job)
 	set log [join $cgjob(buffer,$job) \n]
 	puts $cgjob(f,$job) $log
-	puts stderr $log
+	if {!$cgjob(silent)} {puts stderr $log}
 	set cgjob(buffer,$job) {}
 	flush $cgjob(f,$job)
 }
@@ -370,11 +382,15 @@ proc job_backup {file {rename 0}} {
 	}
 }
 
-proc job_generate_code {job pwd adeps targetvars targets code} {
+proc job_generate_code {job pwd adeps targetvars targets ptargets code} {
 	set cmd ""
 	set jobname [file tail $job]
 	append cmd "file_add \{$job.log\} \"[job_timestamp]\\tstarting $jobname\"\n"
 	append cmd "[list cd $pwd]\n"
+	append cmd "[list set rootdir $pwd]\n"
+	append cmd "[list set job $job]\n"
+	append cmd "[list set jobname $jobname]\n"
+	append cmd "[list set ptargets $ptargets]\n"
 	append cmd "[list set deps $adeps]\n"
 	append cmd "[list set dep [lindex $adeps 0]]\n"
 	set num 1
@@ -397,7 +413,32 @@ proc job_generate_code {job pwd adeps targetvars targets code} {
 		if {$num > 10} break
 	}
 	append cmd $code\n
-	append cmd "file_add \{$job.log\} \"[job_timestamp]\\tfinished $jobname\"\n"
+	append cmd [string_change {
+		set ok 1
+		cd {@PWD@}
+		foreach target @TARGETS@ {
+			set files [gzfiles $target]
+			if {[llength $files]} {
+				file_add {@JOB@.log} "[job_timestamp]\ttarget ok: $target"
+			} else {
+				file_add {@JOB@.log} "[job_timestamp]\ttarget not found: $target"
+				set ok 0
+			}
+		}
+		if {[llength @PTARGETS@]} {
+			if {[llength [job_findptargets @PTARGETS@]]} {
+				file_add {@JOB@.log} "[job_timestamp]\tptargets ok"
+			} else {
+				set ok 0
+				file_add {@JOB@.log} "[job_timestamp]\tmissing ptargets"
+			}
+		}
+		if {$ok} {
+			file_add {@JOB@.log} "[job_timestamp]\tfinished @JOBNAME@\n"
+		} else {
+			file_add {@JOB@.log} "[job_timestamp]\tfailed @JOBNAME@\n"
+		}
+	} [list @PWD@ $pwd @JOB@ $job @JOBNAME@ $jobname @TARGETS@ [list $targets] @PTARGETS@ [list $ptargets]]]
 	return $cmd
 }
 

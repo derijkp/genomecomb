@@ -48,6 +48,7 @@ proc job_process_sge_jobid {job} {
 	}
 	set jobid [file_read $job.jobid]
 	if {[catch {exec qstat -j $jobid}]} {
+		file delete $job.jobid
 		return ""
 	} else {
 		return $jobid
@@ -55,21 +56,48 @@ proc job_process_sge_jobid {job} {
 }
 
 proc job_process_sge_marktargets {targets ptargets id} {
-	global cgjob_id
+	global cgjob_id cgjob_ptargets
 	foreach target $targets {
-		if {![info exists cgjob_id($target)]} {
+		if {[get cgjob_id($target) q] eq "q"} {
 			set cgjob_id($target) $id
 		}
 	}
 	foreach ptarget $ptargets {
-		if {![info exists cgjob_id($ptarget)]} {
+		if {[get cgjob_id($ptarget) q] eq "q"} {
 			set cgjob_ptargets($ptarget) $id
 		}
 	}
 }
 
+proc job_process_checkptargetsfinished {} {
+	global cgjob_ptargets
+	set done 0
+	foreach ptarget [array names cgjob_ptargets] {
+		set jobid $cgjob_ptargets($ptarget)
+		if {[isint $jobid] && [catch {exec qstat -j $jobid}]} {
+			unset cgjob_ptargets($ptarget)
+			incr done
+		}
+	}
+	return $done
+}
+
 proc job_process_sge {} {
-	global cgjob cgjob_id cgjob_running cgjob_pid cgjob_ptargets
+	global cgjob
+	while 1 {
+		job_process_sge_onepass
+		if {![llength $cgjob(queue)]} break
+		# The queue may be not empty if jobs with deps on ptargets were present
+		# only if (a) original job with ptargets is finished can we proceed
+		after 1000
+		while {![job_process_checkptargetsfinished]} {
+			after 1000
+		}
+	}
+}
+
+proc job_process_sge_onepass {} {
+	global cgjob cgjob_id cgjob_running cgjob_pid cgjob_ptargets cgjob_blocked
 	set queue $cgjob(queue)
 	update
 	if {![llength $queue]} return
@@ -81,6 +109,15 @@ proc job_process_sge {} {
 		cd $pwd
 		set job [job_logname $jobname]
 		file mkdir [file dir $job]
+		# If this job was previously blocked because of ptargets deps,
+		# the ptargets set to stop further processing are cleared here
+		# (They can still be reapplied later if they depend on ptargets that are not finished yet)
+		if {[info exists cgjob_blocked($job)]} {
+			foreach ptarget [job_targetsreplace $ftargets {}] {
+				unset cgjob_ptargets($ptarget)
+			}
+			unset cgjob_blocked($job)
+		}
 		# check foreach deps, skip if not fullfilled
 		# check for foreach patterns, expand into one ore more entries in the queue
 		if {[llength $foreach]} {
@@ -88,14 +125,16 @@ proc job_process_sge {} {
 				if {[regexp {^missing dependency} $fadeps]} {
 					job_log $job "$fadeps"
 				} elseif {[regexp {^ptargets hit} $fadeps]} {
-					# if one of the deps hit a ptarget, we cannot continue:
-					# future jobs deps may depend on this lines targets,
-					# which depend on the outcome of the ptarget job
-					# we wait for the ptarget job to finish, by breaking the loop (will reenter after next job is finished)
-					job_logclear $job
+					# ptarget dependency means the job cannot yet be submitted
+					# nor any of the jobs that may be dependent on it
+					# we wil re-add it to the queue for later processing
+					# and create ptargets from its targets
+					# job_logclear $job
 					job_log $job "blocking at $jobname: $fadeps"
 					lappend cgjob(queue) $line
-					break
+					set cgjob_blocked($job) 1
+					job_process_sge_marktargets {} [job_targetsreplace $ftargets {}] q
+					continue
 				} else {
 					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				}
@@ -120,6 +159,8 @@ proc job_process_sge {} {
 		set jobnum [job_process_sge_jobid $job]
 		if {[isint $jobnum]} {
 			job_process_sge_marktargets [file_read $job.targets] [file_read $job.$ptargets] $jobnum
+			job_log $job "job $jobname is already running, skip"
+			continue
 		}
 		# check deps, skip if not fullfilled
 		if {[catch {job_finddeps $job $deps newtargetvars ids $ftargetvars} adeps]} {
@@ -127,15 +168,16 @@ proc job_process_sge {} {
 			if {[regexp {^missing dependency} $adeps]} {
 				job_log $job "$adeps"
 			} elseif {[regexp {^ptargets hit} $adeps]} {
-				error "ptargets not supported by sge (yet)"
-				# if one of the deps hit a ptarget, we cannot continue:
-				# future jobs deps may depend on this lines targets,
-				# which depend on the outcome of the ptarget job
-				# we wait for the ptarget job to finish, by breaking the loop (will reenter after next job is finished)
-				job_logclear $job
+				# ptarget dependency means the job cannot yet be submitted
+				# nor any of the jobs that may be dependent on it
+				# we wil re-add it to the queue for later processing
+				# and create ptargets from its targets
+				# job_logclear $job
 				job_log $job "blocking at $jobname: $adeps"
 				lappend cgjob(queue) $line
-				break
+				set cgjob_blocked($job) 1
+				job_process_sge_marktargets {} [job_targetsreplace $ftargets {}] q
+				continue
 			} else {
 				job_log $job "error in dependencies for $jobname: $adeps"
 			}
@@ -198,8 +240,7 @@ proc job_process_sge {} {
 		append cmd {#$ -cwd} \n
 		append cmd "\n\# the next line restarts using cgsh \\\n"
 		append cmd {exec cg source "$0" "$@"} \n
-		append cmd "file_add \{$job.log\} \"[job_timestamp]\\tstarting $jobname\"\n"
-		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $code]\n
+		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $code]\n
 		append cmd "file_add \{$job.log\} \"[timestamp]\\tending $jobname\"\n"
 		set runfile $job.run
 		file_write $runfile $cmd
@@ -209,10 +250,10 @@ proc job_process_sge {} {
 		file_write $job.jobid $jobnum
 		job_process_sge_marktargets $targets $ptargets $jobnum
 		set cgjob_running($job) $jobnum
+
 	}
 	lappend cgjob(queue) {*}$queue
 	cd $jobroot
-	after idle update
 }
 
 proc job_process_sge_submit {job runfile args} {
