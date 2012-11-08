@@ -652,14 +652,20 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 	}
 
 	if {[llength $sortfields]} {
-		set poss [list_cor $header $sortfields]
-		if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $sortfields [list_find $poss -1]] ,] not found"}
-		set poss [lmath_calc $poss + 1]
-		set keys {}
-		foreach pos $poss {
-			lappend keys $pos,$pos
+		if {$sortfields eq "-"} {
+			set poss [list_remove [tsv_basicfields $header 6 0] -1]
+		} else {
+			set poss [list_cor $header $sortfields]
 		}
-		set sort "gnusort8 -T \"[scratchdir]\" -t \\t -N -s -k[join $keys " -k"]"
+		if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $sortfields [list_find $poss -1]] ,] not found"}
+		if {[llength $poss]} {
+			set poss [lmath_calc $poss + 1]
+			set keys {}
+			foreach pos $poss {
+				lappend keys $pos,$pos
+			}
+			set sort "gnusort8 -T \"[scratchdir]\" -t \\t -N -s -k[join $keys " -k"]"
+		}
 	}
 	set query [string trim $query]
 	if {$query ne ""} {
