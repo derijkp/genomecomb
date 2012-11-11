@@ -26,7 +26,7 @@ the column will be calculated using the given formula. If the formula is complex
 braces around the entire field=formula.
 ; **-rf removefields**: write all, except given fields to result.
 ; **-s sortfields**: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
-if **sortfields** is "-", the default sort fields will be used (chromosome,begin,end,type,ref,alt).
+if **sortfields** is "-", the default sort fields will be used (chromosome,begin,end,type,alt).
 This will also accept name variations of the fields, such as chrom instead of chromosome.
 ; **-nh newheader**: replace header in output with fields given by this option
 ; **-sh sepheader**: write a resultfile without header, and write the header into the file **sepheader**

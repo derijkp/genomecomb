@@ -653,7 +653,8 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 
 	if {[llength $sortfields]} {
 		if {$sortfields eq "-"} {
-			set poss [list_remove [tsv_basicfields $header 6 0] -1]
+			set poss [list_sub [tsv_basicfields $header 6 0] -exclude 4]
+			set poss [list_remove $poss -1]
 		} else {
 			set poss [list_cor $header $sortfields]
 		}
