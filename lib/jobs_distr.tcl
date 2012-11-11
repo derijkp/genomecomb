@@ -61,6 +61,7 @@ proc job_process_distr {} {
 	set jobroot [pwd]
 	set running [array names cgjob_running]
 	set initlen [llength $queue]
+	# join [list_subindex $queue {0 1 2 3 4 5 6}] \n
 	while {[llength $queue]} {
 		if {[llength $running] > $cgjob(distribute)} {
 			break
@@ -72,7 +73,7 @@ proc job_process_distr {} {
 		# check foreach deps, skip if not fullfilled
 		# check for foreach patterns, expand into one ore more entries in the queue
 		if {[llength $foreach]} {
-			if {[catch {job_finddeps $job $foreach ftargetvars fids} fadeps]} {
+			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids} fadeps]} {
 				if {[regexp {^missing dependency} $fadeps]} {
 					job_log $job "$fadeps"
 				} elseif {[regexp {^ptargets hit} $fadeps]} {
@@ -105,7 +106,7 @@ proc job_process_distr {} {
 		job_lognf $job "==================== $jobname ===================="
 		cd $pwd
 		# check deps, skip if not fullfilled
-		if {[catch {job_finddeps $job $deps newtargetvars ids $ftargetvars} adeps]} {
+		if {[catch {job_finddeps $job $deps newtargetvars 0 ids $ftargetvars} adeps]} {
 			# dependencies not found (or error) -> really skip job
 			if {[regexp {^missing dependency} $adeps]} {
 				job_log $job "$adeps"

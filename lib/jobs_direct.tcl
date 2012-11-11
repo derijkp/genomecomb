@@ -9,7 +9,7 @@ proc job_process_direct {} {
 		# check foreach deps, skip if not fullfilled
 		# add all resulting (foreach) jobs in front of the queue, and go back to running the queue
 		if {[llength $foreach]} {
-			if {[catch {job_finddeps $job $foreach ftargetvars fids} fadeps]} {
+			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids} fadeps]} {
 				if {![regexp {^missing dependency} $fadeps]} {
 					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				} else {
@@ -33,7 +33,7 @@ proc job_process_direct {} {
 		cd $pwd
 		job_log $job "==================== $jobname ===================="
 		# check deps, skip if not fullfilled
-		if {[catch {job_finddeps $job $deps newtargetvars ids $ftargetvars} adeps]} {
+		if {[catch {job_finddeps $job $deps newtargetvars 0 ids $ftargetvars} adeps]} {
 			if {![regexp {^missing dependency} $adeps]} {
 				job_log $job "error in dependencies for $jobname: $adeps"
 			} else {

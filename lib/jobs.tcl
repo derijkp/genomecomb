@@ -6,9 +6,6 @@ proc regexp2glob {pattern} {
 	return $glob
 }
 
-proc job_targets2ptargets {targets} {
-}
-
 proc job_distribute {type} {
 	global cgjob
 	set cgjob(distribute) $type
@@ -35,7 +32,7 @@ proc job_args {jobargs} {
 		set cgjob(force) 0
 	}
 	if {![info exists cgjob(silent)]} {
-		set cgjob(silent) 1
+		set cgjob(silent) 0
 	}
 	if {![llength $jobargs]} {return {}}
 	set newargs {}
@@ -186,7 +183,7 @@ proc job_findregexpdep {pattern idsVar} {
 }
 
 # dependencies between braces () are optional (braces must be at start and end of dependency)
-proc job_finddeps {job deps targetvarsVar idsVar {ftargetvars {}}} {
+proc job_finddeps {job deps targetvarsVar targetvarslist idsVar {ftargetvars {}}} {
 	upvar $idsVar ids
 	if {$targetvarsVar ne ""} {
 		upvar $targetvarsVar targetvars
@@ -221,7 +218,14 @@ proc job_finddeps {job deps targetvarsVar idsVar {ftargetvars {}}} {
 		}
 		lappend finaldeps {*}$files
 		foreach file $files {
-			lappend targetvars {*}[lrange [regexp -all -inline ^$pattern\$ $file] 1 end]
+			set targets [lrange [regexp -all -inline ^[file normalize $pattern]\$ $file] 1 end]
+			if {!$targetvarslist} {
+				lappend targetvars {*}$targets
+			} else {
+				# for foreach deps, we must get separate lists for each file
+				# in order to be able to insert the correct ftargetvars into the new jobs in the queue
+				lappend targetvars $targets
+			}
 		}
 	}
 	return $finaldeps
