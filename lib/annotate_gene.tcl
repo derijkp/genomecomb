@@ -752,10 +752,17 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 	lset dbloc 0 $dbchr
 	set dblist {}
 	set counter 0
+	set prevloc ""
+	set prevdbloc ""
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line] && [eof $f]} break
 		set loc [list_sub $line $poss]
+		set ploc [lrange $loc 0 2]
+		if {[loc_compare $prevloc $ploc] > 0} {
+			error "Cannot annotate because the variant file is not correctly sorted (sort correctly using \"cg select -s -\")"
+		}
+		set prevloc $ploc
 		foreach {chr start end type ref alt} $loc break
 		if {$start > $end} {
 			puts stderr "location start > end error: $loc"
@@ -799,6 +806,11 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 					break
 				}
 			}
+			set pdbloc [lrange $dbloc 0 2]
+			if {[loc_compare $prevdbloc $pdbloc] > 0} {
+				error "Cannot annotate because the database file ($dbfile) is not correctly sorted (sort correctly using \"cg select -s -\")"
+			}
+			set prevdbloc $pdbloc
 			lset dbloc 0 $dbchr
 			if {!$ok} break
 			incr dbstart -2000

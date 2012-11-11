@@ -69,8 +69,31 @@ test var_annot {different types on same pos} {
 	exec diff tmp/temp.tsv data/expected-vars2-var_annot3.tsv
 } {} 
 
-test var_annot {gene} {
-	exec cg annotate -dbdir /complgen/refseq/hg18 data/vars_annottest.sft tmp/temp.sft data/gene_test.tsv 2> /dev/null
+test gene_annot {variant file sort error 1} {
+	exec cg annotate -dbdir /complgen/refseq/hg18 data/vars_sorterror1.sft tmp/temp.sft data/gene_test.tsv
+} {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test gene_annot {variant file sort error 2} {
+	exec cg annotate -dbdir /complgen/refseq/hg18 data/vars_sorterror2.sft tmp/temp.sft data/gene_test.tsv
+} {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test gene_annot {variant file sort error 3} {
+	exec cg annotate -dbdir /complgen/refseq/hg18 data/vars_sorterror3.sft tmp/temp.sft data/gene_test.tsv
+} {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test gene_annot {gene wrongly sorted database file error} {
+	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test-wrong1.tsv
+} {*Cannot annotate because the database file (data/gene_test-wrong1.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test gene_annot {gene wrongly sorted database file error} {
+	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test-wrong2.tsv
+} {*Cannot annotate because the database file (data/gene_test-wrong2.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test gene_annot {gene} {
+	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv 2> /dev/null
 	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
 } {} 
 
@@ -93,9 +116,9 @@ test var_annot {different types on same pos, extra comments} {
 < # a comment	
 child process exited abnormally} error
 
-test var_annot {gene, extra comments} {
+test gene_annot {gene, extra comments} {
 	file_write tmp/temp2.sft "# a comment\n# another comment\n"
-	exec cat data/vars_annottest.sft >> tmp/temp2.sft
+	exec cg select -s - data/vars_annottest.sft >> tmp/temp2.sft
 	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/temp2.sft tmp/temp.sft data/gene_test.tsv 2> /dev/null
 	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
 } {1,2d0
