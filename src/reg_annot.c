@@ -18,12 +18,12 @@ int main(int argc, char *argv[]) {
 	DString *result1=NULL,*result2=NULL,*resultkeep=NULL,*resulttemp=NULL;
 	DString *line1 = NULL,*line2 = NULL,*linekeep = NULL,*linetemp = NULL,*empty=NULL;
 	DString **data = NULL;
-	char *chromosome1,*chromosome2;
-	int chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2;
+	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
+	int comp,chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2;
 	int datalen=0,*datapos=NULL;
-	int nchrkeep=0,endkeep,near,near2;
-	int nchr1=0,start1,end1,nchr2=0,start2,end2;
-	int error2,curchr=0,nextpos=0,datanear=-1,i;
+	int endkeep,near,near2;
+	int start1,end1,start2,end2;
+	int error2,nextpos=0,datanear=-1,i;
 	if ((argc < 10)) {
 		fprintf(stderr,"Format is: reg_annot file1 chrpos1 startpos1 endpos1 file2 chrpos2 startpos2 endpos2 datanear datapos1 ...");
 		exit(EXIT_FAILURE);
@@ -42,14 +42,15 @@ int main(int argc, char *argv[]) {
 	start2pos = atoi(argv[7]);
 	end2pos = atoi(argv[8]);
 	datanear = atoi(argv[9]);
+NODPRINT("reg_annot %s %d %d %d %s %d %d %d %d",argv[1],chr1pos,start1pos,end1pos,argv[5],chr2pos,start2pos,end2pos,datanear)
 	datalen = argc-10;
 	datapos = malloc(datalen*sizeof(int));
 	data = malloc(datalen*sizeof(DString *));
 	for (i = 0 ; i < datalen ; i++) {
 		datapos[i] = atoi(argv[10+i]);
+NODPRINT("%d",datapos[i])
 	}
 	
-NODPRINT("datapos %d %d",datapos[0],datapos[1])
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 	for (i = 0 ; i < datalen ; i++) {
 		if (datapos[i] > max2) {max2 = datapos[i];}
@@ -57,39 +58,42 @@ NODPRINT("datapos %d %d",datapos[0],datapos[1])
 	}
 	/* allocate */
 	line1 = DStringNew(); line2=DStringNew(); linekeep=DStringNew(); empty = DStringNew();
+	curchromosome = DStringEmtpy();
 	result1 = DStringArrayNew(max1+1);
 	result2 = DStringArrayNew(max2+1);
 	resultkeep = DStringArrayNew(max2+1);
 	skip_header(f1,line1);
 	skip_header(f2,line2);
-	error2 = DStringGetTab(line2,f2,max2,result2);
-	chromosome2 = result2[chr2pos].string;
-	nchr2 = chromosomenum(chromosome2);
+	error2 = DStringGetTab(line2,f2,max2,result2,1);
+	chromosome2 = result2+chr2pos;
 	sscanf(result2[start2pos].string,"%d",&start2);
 	sscanf(result2[end2pos].string,"%d",&end2);
 	for (i = 0 ; i < datalen ; i++) {
 		if (datapos[i] != -1) {data[i] = result2+datapos[i];}
 	}
-	while (!DStringGetTab(line1,f1,max1,result1)) {
-		chromosome1 = result1[chr1pos].string;
-		nchr1 = chromosomenum(chromosome1);
+	while (!DStringGetTab(line1,f1,max1,result1,1)) {
+		chromosome1 = result1+chr1pos;
 		sscanf(result1[start1pos].string,"%d",&start1);
 		sscanf(result1[end1pos].string,"%d",&end1);
-NODPRINT("%d\t%s\t%d\t%d\t%d",1,chromosome1,nchr1,start1,end1)
-NODPRINT("%d\t%s\t%d\t%d\t%d",2,chromosome2,nchr2,start2,end2)
-		if (nchr1 > curchr) {
-			curchr = nchr1;
+NODPRINT("%d\t%s\t%d\t%d",1,Loc_ChrString(chromosome1),start1,end1)
+NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
+	 	comp = DStringLocCompare(chromosome1,curchromosome);
+		if (comp < 0) {
+			fprintf(stderr,"error in chromosome order of file %s",argv[1]);
+		} else if (comp > 0) {
+			curchromosome = chromosome1;
 			nextpos = 0;
 		}
 		if (start1 >= nextpos) {
-			fprintf(stderr, "%s-%d\n",chromosome1,start1);
+			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
 			fflush(stderr);
 			nextpos += 50000000;
 		}
-		while (!error2 && ((nchr2 < nchr1) || ((nchr2 == nchr1) && (end2 <= start1)))) {
+		comp = DStringLocCompare(chromosome2, chromosome1);
+		while (!error2 && ((comp < 0) || ((comp == 0) && (end2 <= start1)))) {
 			/* keep data of previous */
 			/* to avoid allocating new memory everytime, reuse linekeep and associated data */
-			nchrkeep = nchr2; endkeep = end2;
+			chromosomekeep = chromosome2; endkeep = end2;
 			linetemp = linekeep;
 			linekeep = line2;
 			line2 = linetemp;
@@ -97,18 +101,19 @@ NODPRINT("%d\t%s\t%d\t%d\t%d",2,chromosome2,nchr2,start2,end2)
 			resultkeep = result2;
 			result2 = resulttemp;
 			/* get new line */
-			error2 = DStringGetTab(line2,f2,max2,result2);
+			error2 = DStringGetTab(line2,f2,max2,result2,1);
 			if (error2)  {
-				nchr2 = -1;
+				chromosome2 = NULL;
+				comp = -1;
 				break;
 			}
-			chromosome2 = result2[chr2pos].string;
-			nchr2 = chromosomenum(chromosome2);
+			chromosome2 = result2+chr2pos;
 			sscanf(result2[start2pos].string,"%d",&start2);
 			sscanf(result2[end2pos].string,"%d",&end2);
 			for (i = 0 ; i < datalen ; i++) {
 				if (datapos[i] != -1) {data[i] = result2+datapos[i];}
 			}
+			comp = DStringLocCompare(chromosome2, chromosome1);
 		}
 /*
 DPRINT("datalen: %d",datalen)
@@ -116,17 +121,17 @@ for (i = 0; i < datalen ; i++) {
 DPRINT("data[%d] %d %s",i,data[i]->size,data[i]->string)
 }
 */
-		if (error2 || (nchr1 < nchr2) || ((nchr1 == nchr2) && (end1 <= start2))) {
+		if (error2 || (comp > 0) || ((comp == 0) && (end1 <= start2))) {
 			NODPRINT("no overlap")
 			if (datanear != -1) {
 				near = datanear;
-				if (nchr1 == nchr2) {
+				if (comp == 0) {
 					near = start2-end1;
 					for (i = 0 ; i < datalen ; i++) {
 						if (datapos[i] != -1) {data[i] = result2+datapos[i];}
 					}
 				}
-				if (nchr1 == nchrkeep) {
+				if (DStringLocCompare(chromosome1,chromosomekeep) == 0) {
 					near2 = start1-endkeep;
 					if (near2 < near) {
 						near = near2;

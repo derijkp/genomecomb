@@ -5,7 +5,7 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 set keepdir [pwd]
-catch {file delete -force {*}[glob tmp/*]}
+test_cleantmp
 
 file mkdir tmp
 file mkdir tmp/test
@@ -113,6 +113,17 @@ test cplinked {file replace file} {
 	file delete -force tmp/out/test
 	set result
 } {{tmp/out/testl ../test/test1 1} {tmp/out/testl.old1 - pre}} 
+
+test distr2chr {basic} {
+	test_cleantmp
+	exec distr2chr tmp/distrvars1- 0 < data/vars1.sft
+	list [glob tmp/*] [file_read tmp/distrvars1-chr1]
+} {{tmp/distrvars1-chromosome tmp/distrvars1-chr1 tmp/distrvars1-chr2} {chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
+chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
+chr1	4099	5000	snp	C	T	T	T	47	v	T	T	35	v	1,2
+chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v	-	-	41	u	1;2
+chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
+}} 
 
 cd $keepdir
 file delete -force {*}[glob tmp/*]

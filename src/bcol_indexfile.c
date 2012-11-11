@@ -18,12 +18,10 @@ int main(int argc, char *argv[]) {
 	FILE *f1,*f2,*f3;
 	DString *result1=NULL;
 	DString *line1 = NULL;
-	char *chromosome1;
 	off_t fpos;
-	uint64_t count = -1,next = 4294967295LL, offset = 0L;
+	uint64_t count = -1,next = 4294967296LL, offset = 0L, progress = 50000000L;
 	uint32_t data;
 	int chr1pos,start1pos,end1pos,type1pos,max1;
-	int nchr1=0,start1,end1;
 	if ((argc != 8)) {
 		fprintf(stderr,"Format is: bcol_indexfile file indexfile indexfilebin chrpos startpos endpos typepos");
 		exit(EXIT_FAILURE);
@@ -50,18 +48,25 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 		exit(EXIT_FAILURE);
 	}
 	fprintf(f2,"%d\t%s\t%d\n",0,"iu",0);
-	while (!DStringGetTab(line1,f1,max1,result1)) {
+	while (!DStringGetTab(line1,f1,max1,result1,1)) {
 		count++;
 		data = (uint32_t)(fpos-offset);
 		fwrite(&data,4,1,f3);
 /*
+		{
+		char *chromosome1;
+		int start1,end1;
 		chromosome1 = result1[chr1pos].string;
-		nchr1 = chromosomenum(chromosome1);
 		sscanf(result1[start1pos].string,"%d",&start1);
 		sscanf(result1[end1pos].string,"%d",&end1);
-		NODPRINT("%d\t%s\t%d\t%d\t%d",1,chromosome1,nchr1,start1,end1)
+		NODPRINT("%d\t%s\t%d\t%d\t%d",1,chromosome1,start1,end1)
+		}
 */
 		fpos = ftello(f1);
+		if (fpos > progress) {
+			fprintf(stderr,"filepos: %llu\n",(unsigned long long)fpos);
+			progress += 50000000L;
+		}
 		if (fpos >= next) {
 			while (fpos >= next) {
 				offset=next;

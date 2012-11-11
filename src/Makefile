@@ -1,9 +1,9 @@
 # ARCH should be defined by caller
 CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/completegnomics/src
 #CFLAGS=-Wall -O2
-TOOLS= tools.c tools.h debug.h
+TOOLS= tools.c tools.h debug.h khash-dstring.h
 
-all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/distrsam ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile
+all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -13,9 +13,6 @@ clean:
 
 ../bin$(ARCH)/distr2chr: distr2chr.c $(TOOLS)
 	gcc distr2chr.c tools.c $(CFLAGS) -o ../bin$(ARCH)/distr2chr
-
-../bin$(ARCH)/distrsam: distrsam.c $(TOOLS)
-	gcc distrsam.c tools.c $(CFLAGS) -o ../bin$(ARCH)/distrsam
 
 ../bin$(ARCH)/map2sv: map2sv.c $(TOOLS)
 	gcc map2sv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/map2sv

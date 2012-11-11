@@ -10,16 +10,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "debug.h"
 #include "tools.h"
 
 int main(int argc, char *argv[]) {
 	FILE *f1,*f2;
 	DString line;
-	DString chromosome1,chromosome2;
-	int chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2;
-	int nchr1=0,start1,end1,nchr2=0,start2,end2;
-	int error,error2,curchr=0,nextpos=0;
-	DStringInit(&line);DStringInit(&chromosome1);DStringInit(&chromosome2);
+	DString *chromosome1 = NULL,*chromosome2 = NULL,curchromosome;
+	int chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2,comp;
+	int start1,end1,start2,end2;
+	int error,error2,nextpos=0;
+	DStringInit(&line);
+	chromosome1 = DStringNew();
+	chromosome2 = DStringNew();
+	DStringInit(&curchromosome);
 	if ((argc != 9)) {
 		fprintf(stderr,"Format is: reg_subtract file1 chrpos1 startpos1 endpos1 file2 chrpos2 startpos2 endpos2");
 		exit(EXIT_FAILURE);
@@ -33,56 +37,59 @@ int main(int argc, char *argv[]) {
 	chr2pos = atoi(argv[6]);
 	start2pos = atoi(argv[7]);
 	end2pos = atoi(argv[8]);
+NODPRINT("reg_subtract %s %d %d %d %s %d %d %d",argv[1],chr1pos,start1pos,end1pos,argv[5],chr2pos,start2pos,end2pos)
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 	fprintf(stdout,"chromosome\tbegin\tend\n");
 	skip_header(f2,&line);
 	skip_header(f1,&line);
-	error = get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&nchr1,&start1,&end1);
+	error = get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&start1,&end1);
 	if (error) {exit(0);}
-	error2 = get_region(f2,&line,chr2pos,start2pos,end2pos,max2,&chromosome2,&nchr2,&start2,&end2);
+	error2 = get_region(f2,&line,chr2pos,start2pos,end2pos,max2,&chromosome2,&start2,&end2);
 	while (1) {
 /*
 fprintf(stdout,"----- %d\t%s\t%d\t%d\n",1,chromosome1,start1,end1);
 fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 */
-		if (nchr1 > curchr) {
-			curchr = nchr1;
+	 	comp = DStringLocCompare(chromosome1,&curchromosome);
+		if (comp > 0) {
+			DStringCopy(&curchromosome,chromosome1);
 			nextpos = 0;
 		}
-		if (start1 >= nextpos) {
-			fprintf(stderr, "%s-%d\n",chromosome1.string,start1);
+		if (chromosome1 != NULL && start1 >= nextpos) {
+			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
 			fflush(stderr);
 			nextpos += 10000000;
 		}
-		if ((nchr2 < nchr1) || ((nchr2 == nchr1) && (end2 <= start1))) {
-			error2 = get_region(f2,&line,chr2pos,start2pos,end2pos,max2,&chromosome2,&nchr2,&start2,&end2);
+	 	comp = DStringLocCompare(chromosome2,chromosome1);
+		if ((comp < 0) || ((comp == 0) && (end2 <= start1))) {
+			error2 = get_region(f2,&line,chr2pos,start2pos,end2pos,max2,&chromosome2,&start2,&end2);
 			if (error2)  {
-				fprintf(stdout,"%s\t%d\t%d\n", chromosome1.string,start1,end1);
+				fprintf(stdout,"%s\t%d\t%d\n", Loc_ChrString(chromosome1),start1,end1);
 				break;
 			}
-		} else if ((nchr1 < nchr2) || ((nchr1 == nchr2) && (end1 <= start2))) {
-			fprintf(stdout,"%s\t%d\t%d\n", chromosome1.string,start1,end1);
-			error = get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&nchr1,&start1,&end1);
+		} else if ((comp > 0) || ((comp == 0) && (end1 <= start2))) {
+			fprintf(stdout,"%s\t%d\t%d\n", Loc_ChrString(chromosome1),start1,end1);
+			error = get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&start1,&end1);
 			if (error) break;
 		} else {
 			if (start2 > start1) {
-				fprintf(stdout,"%s\t%d\t%d\n", chromosome1.string,start1,start2);
+				fprintf(stdout,"%s\t%d\t%d\n", Loc_ChrString(chromosome1),start1,start2);
 			}
 			if (end2 >= end1) {
-				error = get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&nchr1,&start1,&end1);
+				error = get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&start1,&end1);
 				if (error) break;
 			} else {
 				start1 = end2;
-				error2 = get_region(f2,&line,chr2pos,start2pos,end2pos,max2,&chromosome2,&nchr2,&start2,&end2);
+				error2 = get_region(f2,&line,chr2pos,start2pos,end2pos,max2,&chromosome2,&start2,&end2);
 				if (error2)  {
-					fprintf(stdout,"%s\t%d\t%d\n", chromosome1.string,start1,end1);
+					fprintf(stdout,"%s\t%d\t%d\n", Loc_ChrString(chromosome1),start1,end1);
 					break;
 				}
 			}
 		}
 	}
-	while (!get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&nchr1,&start1,&end1)) {
-		fprintf(stdout,"%s\t%d\t%d\n", chromosome1.string,start1,end1);
+	while (!get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&start1,&end1)) {
+		fprintf(stdout,"%s\t%d\t%d\n", Loc_ChrString(chromosome1),start1,end1);
 	}
 	fclose(f1);
 	fclose(f2);

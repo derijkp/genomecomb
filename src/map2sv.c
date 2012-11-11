@@ -35,8 +35,8 @@ int main(int argc, char *argv[]) {
 	char *chromosome1,*chromosome2;
 	int flags,offsetInChr,gap1,gap2,gap3,mateRec,side,last,index=-1,cur=0;
 	char strand1='?',strand2='?';
-	int chr1=-1,start1=-1,end1=-1,side1=-1,weight1=-1;
-	int chr2=-1,start2=-1,end2=-1,side2=-1,weight2=-1;
+	int start1=-1,end1=-1,side1=-1,weight1=-1;
+	int start2=-1,end2=-1,side2=-1,weight2=-1;
 	int numl=0,numr=0,type,dist,min = 300,max = 600,bin,num,fnum=0;
 	if (argc != 2) {
 		fprintf(stderr,"Format is: map2sv num");
@@ -52,7 +52,6 @@ int main(int argc, char *argv[]) {
 		side = flags & 0x02;
 		if (side) {numr++;} else {numl++;}
 		if (!cur) {
-			chr1 = chromosomenum(chromosome);
 			strcpy(chromosomeb1,chromosome);
 			chromosome1 = chromosomeb1;
 			start1 = offsetInChr;
@@ -62,7 +61,6 @@ int main(int argc, char *argv[]) {
 			weight1 = weight - 33;
 			index = mateRec;
 		} else if ((cur == index) || ((index == 0) && (side != side1))) {
-			chr2 = chromosomenum(chromosome);
 			strcpy(chromosomeb2,chromosome);
 			chromosome2 = chromosomeb2;
 			start2 = offsetInChr;
@@ -84,7 +82,6 @@ int main(int argc, char *argv[]) {
 			} else {
 				if (end1 > start2) {
 					int tempi;char tempc, *temps;
-					tempi=chr1; chr1=chr2; chr2=tempi;
 					temps=chromosome1; chromosome1=chromosome2; chromosome2=temps;
 					tempi=start1; start1=start2; start2=tempi;
 					tempi=end1; end1=end2; end2=tempi;
@@ -95,7 +92,8 @@ int main(int argc, char *argv[]) {
 				}
 				dist = start2-end1;
 				bin = pos2bin(start1,end2);
-				if (chr1 != chr2) {
+				
+				if (loccompare(chromosome1,chromosome2,strlen(chromosome1),strlen(chromosome2)) != 0) {
 					type = 'c';
 					dist = -1;
 					bin = pos2bin(start1,end1);

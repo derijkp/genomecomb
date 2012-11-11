@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 	listr = (DString *)malloc(listnum*sizeof(DString));
 	group1lens = (int *)malloc(groupnum*sizeof(int));
 	/* ----- initialise from first ----- */
-	error1 = DStringGetTab(line1,f1,max,result1);
+	error1 = DStringGetTab(line1,f1,max,result1,1);
 	if (error1) {exit(EXIT_SUCCESS);}
 	for(i = 0 ; i < groupnum ; i++) {
 		group1lens[i] = result1[grouppos[i]].size;
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	/* ----- loop ----- */
-	while (!DStringGetTab(line2,f1,max,result2)) {
+	while (!DStringGetTab(line2,f1,max,result2,1)) {
 		count++;
 		if (count >= next) {
 			fprintf(stderr,"%d\n",count);

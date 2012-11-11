@@ -44,6 +44,13 @@ DString *DStringNew() {
 	return dstring;
 }
 
+static DString empty_dstring;
+
+DString *DStringEmtpy() {
+	DStringInit(&empty_dstring);
+	return &empty_dstring;
+}
+
 void DStringClear(DString *dstring) {
 	if (dstring->string != dstring->staticspace && dstring->memsize != -1) {
 		free(dstring->string);
@@ -55,6 +62,8 @@ void DStringClear(DString *dstring) {
 }
 
 void DStringDestroy(DString *dstring) {
+	if (dstring == NULL) return;
+	if (dstring == &empty_dstring) return;
 	DStringClear(dstring);
 	free(dstring);
 }
@@ -274,7 +283,57 @@ int naturalcompare (char const *a, char const *b,int alen,int blen) {
 }
 
 int DStringCompare(DString *a, DString *b) {
+	if (a == b) {return 0;}
 	return naturalcompare(a->string,b->string,a->size,b->size);
+}
+
+int loccompare (char const *a, char const *b,int alen,int blen) {
+	if (alen >= 3) {
+		if ((a[0] == 'C' || a[0] == 'c') && (a[1] == 'H' || a[1] == 'h') && (a[2] == 'R' || a[2] == 'r')) {
+			a += 3; alen -= 3;
+			if (alen && a[0] == '-') {
+				a++; alen--;
+			}
+		}
+	}
+	if (blen >= 3) {
+		if ((b[0] == 'C' || b[0] == 'c') && (b[1] == 'H' || b[1] == 'h') && (b[2] == 'R' || b[2] == 'r')) {
+			b += 3; blen -= 3;
+			if (blen && b[0] == '-') {
+				b++; blen--;
+			}
+		}
+	}
+	return naturalcompare(a,b,alen,blen);
+}
+
+int DStringLocCompare(DString *a, DString *b) {
+	if (a == b) {return 0;}
+	if (a == NULL) {
+		return 1;
+	} else if (b == NULL) {
+		return -1;
+	}
+	return loccompare(a->string,b->string,a->size,b->size);
+}
+
+char *Loc_ChrString(DString *ds) {
+	char *s;
+	if (ds == NULL) {
+		return "";
+	} else {
+		s = ds->string;
+		if (ds->size > 3) {
+			if ((s[0] == 'C' || s[0] == 'c') && (s[1] == 'H' || s[1] == 'h') && (s[2] == 'R' || s[2] == 'r')) {
+				if (ds->size > 4 && s[3] == '-') {
+					s += 4;
+				} else {
+					s += 3;
+				}
+			}
+		}
+		return s;
+	}
 }
 
 void DStringAppend(DString *dstring, char *string) {
@@ -404,7 +463,7 @@ void DStringArrayDestroy(DString *dstringarray) {
 }
 
 int DStringGetTab(
-	DString *linePtr,	FILE *f1, int maxtab, DString *result
+	DString *linePtr,	FILE *f1, int maxtab, DString *result, int setzero
 ) {
 	register char *cur = linePtr->string;
 	register int c,newdata=0;
@@ -464,7 +523,9 @@ NODPRINT("maxtab=%d",maxtab)
 		int pos = result[count].size;
 		result[count].size = result[count].size-prevsize;
 		result[count].string = linePtr->string + prevsize;
-		result[count].string[result[count].size] = '\0';
+		if (setzero) {
+			result[count].string[result[count].size] = '\0';
+		}
 		result[count].memsize = -1;
 NODPRINT("final count=%d size=%d %s",count, result[count].size,result[count].string)
 		prevsize = pos+1;
@@ -500,48 +561,17 @@ int parse_pos(char *arg, int **rresult, int *rnum) {
 	return 0;
 }
 
-int chromosomenum(char *chromosome) {
-	int i;
-	if (strncmp(chromosome,"chr",3) == 0) {
-		chromosome += 3;
-	} else if (strncmp(chromosome,"CHR",3) == 0) {
-		chromosome += 3;
-	}
-	if (*chromosome == 'M') {
-		return CHROMM;
-	} else if (*chromosome == 'X') {
-		return CHROMX;
-	} else if (*chromosome == 'Y') {
-		return CHROMY;
-	} else {
-		i = atoi(chromosome);
-		if (i > CHROMMAX) {
-			fprintf(stderr,"wrong chromosome %s",chromosome);
-			exit(EXIT_FAILURE);
-		}
-		return i;
-	}
-}
-
-char* num2chromosome(char *chromosome,int num) {
-	if (num == CHROMM) {
-		sprintf(chromosome,"M");
-	} else if (num == CHROMX) {
-		sprintf(chromosome,"X");
-	} else if (num == CHROMY) {
-		sprintf(chromosome,"Y");
-	} else {
-		sprintf(chromosome,"%d",num);
-	}
-	return chromosome;
-}
-
-int get_region(FILE *f1, DString *linePtr, int chr1pos, int start1pos, int end1pos, int max1, DString *chromosome1, int *nchr1, int *start1, int *end1) {
+int get_region(FILE *f1, DString *linePtr, int chr1pos, int start1pos, int end1pos, int max1, DString **chromosome1, int *start1, int *end1) {
 	char *linepos = NULL,*scanpos = NULL,*endpos;
 	ssize_t read;
 	int count;
+	if (chromosome1 == NULL) {
+		return 1;
+	}
 	if (f1 == NULL) {
-		*nchr1 = FINISHED;
+		DStringDestroy(*chromosome1);
+		*chromosome1 = NULL;
+		return 1;
 	}
 	while ((read = DStringGetLine(linePtr, f1)) != -1) {
 NODPRINT("%s",linePtr->string)
@@ -554,7 +584,7 @@ NODPRINT("%s",linePtr->string)
 				if (count == chr1pos) {
 					char *pos=scanpos;
 					while (*pos != '\t' && *pos != '\0' && pos != endpos) {++pos;}
-					DStringSetS(chromosome1,scanpos,pos-scanpos);
+					DStringSetS(*chromosome1,scanpos,pos-scanpos);
 				} else if (count == start1pos) {
 					sscanf(scanpos,"%d",start1);
 				} else if (count == end1pos) {
@@ -571,10 +601,10 @@ NODPRINT("%s",linePtr->string)
 		if (count >= max1) break;
 	}
 	if (read == -1) {
-		*nchr1 = FINISHED;
+		DStringDestroy(*chromosome1);
+		*chromosome1 = NULL;
 		return 1;
 	} else {
-		*nchr1 = chromosomenum(chromosome1->string);
 		return 0;
 	}
 }

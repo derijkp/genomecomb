@@ -79,7 +79,7 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	}
 	objv[i] = NULL;
 	objc = listobjc+1;
-	while ((read = DStringGetTab(line,stdin,maxtab,array)) != -1) {
+	while ((read = DStringGetTab(line,stdin,maxtab,array,1)) != -1) {
 		NODPRINT("line = %s",line->string);
 		for (i = 0 ; i < listobjc ; i++) {
 			if (Tcl_IsShared(objv[i+1])) {
@@ -166,25 +166,9 @@ genomecomb_loc_compare_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int ar
 		return TCL_ERROR;
 	}
 	loc1 = Tcl_GetStringFromObj(argv[1],&loc1len);
-	if (loc1len >= 3) {
-		if ((loc1[0] == 'C' || loc1[0] == 'c') && (loc1[1] == 'H' || loc1[1] == 'h') && (loc1[2] == 'R' || loc1[2] == 'r')) {
-			loc1 += 3; loc1len -= 3;
-			if (loc1len && loc1[0] == '-') {
-				loc1++; loc1len--;
-			}
-		}
-	}
 	loc2 = Tcl_GetStringFromObj(argv[2],&loc2len);
-	if (loc2len >= 3) {
-		if ((loc2[0] == 'C' || loc2[0] == 'c') && (loc2[1] == 'H' || loc2[1] == 'h') && (loc2[2] == 'R' || loc2[2] == 'r')) {
-			loc2 += 3; loc2len -= 3;
-			if (loc2len && loc2[0] == '-') {
-				loc2++; loc2len--;
-			}
-		}
-	}
 /* fprintf(stdout,"naturalcompare %s,%s,%d,%d\n",loc1,loc2,loc1len,loc2len); */
-	result = naturalcompare(loc1,loc2,loc1len,loc2len);
+	result = loccompare(loc1,loc2,loc1len,loc2len);
 	Tcl_SetObjResult(interp,Tcl_NewIntObj(result));
 	return TCL_OK;
 }

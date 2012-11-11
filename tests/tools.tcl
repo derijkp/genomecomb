@@ -15,6 +15,12 @@ append ::env(PATH) :$appdir/bin
 # putsvars ::env(PATH)
 set env(SCRATCHDIR) [file dir [tempdir]]
 
+proc test_cleantmp {} {
+	foreach file [glob -nocomplain tmp/*] {
+		file delete -force $file
+	}
+}
+
 lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
 
 file mkdir tmp
