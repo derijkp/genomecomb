@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
 	int datalen=0,*datapos=NULL;
 	int endkeep,near,near2;
 	int start1,end1,start2,end2;
+	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
 	int error2,nextpos=0,datanear=-1,i;
 	if ((argc < 10)) {
 		fprintf(stderr,"Format is: reg_annot file1 chrpos1 startpos1 endpos1 file2 chrpos2 startpos2 endpos2 datanear datapos1 ...");
@@ -77,13 +78,16 @@ NODPRINT("%d",datapos[i])
 		sscanf(result1[end1pos].string,"%d",&end1);
 NODPRINT("%d\t%s\t%d\t%d",1,Loc_ChrString(chromosome1),start1,end1)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
+NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 	 	comp = DStringLocCompare(chromosome1,curchromosome);
-		if (comp < 0) {
-			fprintf(stderr,"error in chromosome order of file %s",argv[1]);
+		if (comp < 0 || (comp == 0 && (start1 < prevstart1 || (start1 == prevstart1 && end1 < prevend1)))) {
+			fprintf(stderr,"Cannot annotate because the variant file (%s) is not correctly sorted (sort correctly using \"cg select -s -\")",argv[1]);
+			exit(1);
 		} else if (comp > 0) {
-			curchromosome = chromosome1;
+			DStringCopy(curchromosome,chromosome1);
 			nextpos = 0;
 		}
+		prevstart1 = start1; prevend1 = end1;
 		if (start1 >= nextpos) {
 			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
 			fflush(stderr);
@@ -110,6 +114,12 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
 			chromosome2 = result2+chr2pos;
 			sscanf(result2[start2pos].string,"%d",&start2);
 			sscanf(result2[end2pos].string,"%d",&end2);
+			comp = DStringLocCompare(chromosome2, chromosomekeep);
+			if (comp < 0 || (comp == 0 && (start2 < prevstart2 || (start2 == prevstart2 && end2 < prevend2)))) {
+				fprintf(stderr,"Cannot annotate because the database file is not correctly sorted (sort correctly using \"cg select -s -\")");
+				exit(1);
+			}
+			prevstart2 = start2; prevend2 = end2;
 			for (i = 0 ; i < datalen ; i++) {
 				if (datapos[i] != -1) {data[i] = result2+datapos[i];}
 			}
