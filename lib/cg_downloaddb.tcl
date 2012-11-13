@@ -14,81 +14,6 @@ package require Extral
 #
 ##############################################################
 
-proc downloaddb_mirbase {path build} {
-	set filename $path/$build/reg_${build}_mirbase.tsv
-	set temp $path/tmp/$build
-	if {[file isfile $filename]} {
-		puts "The file '$filename' already exists..."
-		puts "Skipping the changes..."
-		puts "----------------------------------------------------"
-		return
-	}
-	if {![file isfile $temp/mirbase.bed]} {
-		if {![file isfile $temp/hsa.gff]} {
-			puts "Downloading mirbase.gff....."
-			catch {exec wget --tries=45 --directory-prefix=$temp/ ftp://mirbase.org/pub/mirbase/16/genomes/hsa.gff} errmsg
-			if {![file exists $temp/hsa.gff]} {
-				puts $errmsg
-				exit 1
-			}
-		} else {
-			puts "The file 'hsa.gff' already exists..."
-			puts "Skipping the download..."
-		}
-		# Van gff formaat naar bed zodat het in liftOver kan en in Aregio
-		puts "Making some changes..... "
-		puts "From hsa.gff to mirbase.bed...."
-		if {[catch {open $temp/hsa.gff r} fileid]} {
-			puts "Could not open frequency file - $fileid"
-			exit 1
-		}
-		if {[catch {open $temp/mirbase.bed w} fileid_out]} {
-			puts "Could not open outputfile - $fileid_out"
-			exit 1
-		}	
-		set in [gets $fileid]
-		while {![eof $fileid]} {
-			# commend lines overslaan
-			if {[string match #* $in]} {
-				set in [gets $fileid]
-			} else {
-				set line [split $in "\t"]
-				set name [lindex $line 8]
-				set new_name [string map {"; " ","} $name]
-				set new_name [string map {";" ""} $new_name]
-				set new_line "chr[lindex $line 0] [lindex $line 3] [lindex $line 4] $new_name [lindex $line 6]"
-				puts $fileid_out [join $new_line \t]
-				set in [gets $fileid]
-			}
-		}
-		close $fileid
-		close $fileid_out
-	} else { 
-		puts "The file 'mirbase.bed' already exists..."
-		puts "Skipping the changes..."
-	}
-	puts "Use liftOver to make hg18 from hg19...."
-	set dir [file dir [exec which liftOver]]
-	if {[catch {exec liftOver $temp/mirbase.bed $dir/hg19ToHg18.over.chain $temp/hg18_mirbase.bed $temp/unmapped.bed} errmsg]} {
-		puts "$errmsg"
-	}	
-	# temp file maken met header, deze dan tegen de tsv file kleven...
-	if {[catch {open $temp/mirbase.tsv w} fileid_out]} {
-		puts "Could not open tsv file - $fileid_out"
-		exit 1
-	}
-	set new_header {chrom start end name strand}
-	puts $fileid_out [join $new_header \t]
-	close $fileid_out
-	if {[catch "exec cat $temp/hg18_mirbase.bed >> $temp/mirbase.tsv" errmsg]} {
-		puts "Pasting head to file failed - $errmsg"
-	}	
-	puts "Sorting $filename ...."
-	cg select -q {$chrom ~ /^chr[0-9XYM][0-9]*$/} -s {chrom start end} $temp/mirbase.tsv $filename
-	# file delete -force $temp/mirbase.bed $temp/mirbase.gff unmapped.bed
-	puts "----------------------------------------------------"
-}
-
 proc downloaddb {path build dbname} {
 	file mkdir $path
 	set filename $path/$build/ucsc_${build}_$dbname.tsv
@@ -236,7 +161,7 @@ proc downloaddbinfo {path build dbname} {
 proc cg_downloaddbinfo {args} {
 	if {([llength $args] < 2)} {
 		puts stderr "format is: $::base resultdir build database ?...?"
-		puts stderr " - downloads databases from ucsc, mirbase, 1000g, ... and converts to useful format"
+		puts stderr " - downloads databases from ucsc, 1000g, ... and converts to useful format"
 		exit 1
 	}
 	foreach {path build dbname} $args break
@@ -251,7 +176,7 @@ proc cg_downloaddbinfo {args} {
 proc cg_downloaddb {args} {
 	if {([llength $args] < 2)} {
 		puts stderr "format is: $::base resultdir build database ?...?"
-		puts stderr " - downloads databases from ucsc, mirbase, 1000g, ... and converts to useful format"
+		puts stderr " - downloads databases from ucsc, 1000g, ... and converts to useful format"
 		exit 1
 	}
 	foreach {path build dbname} $args break
@@ -259,9 +184,7 @@ proc cg_downloaddb {args} {
 	puts "----------------------------------------------------"
 	file mkdir $path
 	foreach dbname $dbnames {
-		if {$dbname eq "mirbase"} {
-			downloaddb_mirbase $path $build
-		} elseif {$dbname eq "1000g"} {
+		if {$dbname eq "1000g"} {
 			downloaddb_1000g $path $build
 		} elseif {$dbname eq "1000glow"} {
 			downloaddb_1000glow $path $build
