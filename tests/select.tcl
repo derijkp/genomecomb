@@ -75,19 +75,6 @@ test select {default -s -} {
 	exec diff data/expected-test1000glow.vcf2sft tmp/result.tsv
 } {}
 
-test select {default -s - with different sort} {
-	exec cg select -s - data/vars_annottest.sft tmp/result.tsv
-	exec diff data/vars_annottest.sft tmp/result.tsv
-} {20d19
-< chr1	897530	897531	snp	G	T	CDSMIS
-24a24
-> chr1	897530	897531	snp	G	T	CDSMIS
-40d39
-< chr1	42978320	42978321	snp	T	C	CDSSTART-0
-42a42
-> chr1	42978320	42978321	snp	T	C	CDSSTART-0
-child process exited abnormally} error
-
 test select {-f *} {
 	exec cg select -f {chromosome begin end alleleSeq1-*} -q {$begin == 4000} [gzfile data/vars1.sft]
 } {chromosome	begin	end	alleleSeq1-sample1	alleleSeq1-sample2

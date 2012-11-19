@@ -8,9 +8,9 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc annotate {file dbfile name annotfile near {outfields {name score freq}}} {
+proc annotatereg {file dbfile name annotfile near {outfields {name score freq}}} {
 
-putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
+putslog [list annotatereg $file $dbfile $name $annotfile $near $outfields]
 	catch {close $f}
 	set f [gzopen $file]
 	set header [tsv_open $f comment]
@@ -61,7 +61,7 @@ putslog [list annotate $file $dbfile $name $annotfile $near $outfields]
 	} error]} {
 		if {$error ne "child killed: write on pipe with no readers"} {error $error}
 	}
-	file rename $annotfile.temp $annotfile
+	file rename -force $annotfile.temp $annotfile
 
 }
 
@@ -157,7 +157,7 @@ proc cg_annotate {args} {
 	foreach dbfile $dbfiles {
 		lappend names [lindex [split [file root [file tail $dbfile]] _] end]
 	}
-	puts "Annotating $file"
+	putslog "Annotating $file"
 	set f [gzopen $file]
 	set poss [open_region $f header]
 	catch {close $f}
@@ -240,7 +240,7 @@ proc cg_annotate {args} {
 					default {set outfields {name freq score}}
 				}
 			}
-			annotate $file $dbfile $name $resultfile.${name}_annot.temp $near $outfields
+			annotatereg $file $dbfile $name $resultfile.${name}_annot.temp $near $outfields
 			file rename $resultfile.${name}_annot.temp $resultfile.${name}_annot
 		}
 	}

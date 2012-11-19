@@ -299,8 +299,7 @@ if 0 {
 
 # todo list of lists: field value regfile
 proc annot_annotvar {source outfile todo {dir {}}} {
-	puts "annotating $source -> $outfile"
-
+	putslog "annotating $source -> $outfile"
 	catch {close $f} ; catch {close $o}
 	set f [open $source]
 	set header [tsv_open $f]
