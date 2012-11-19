@@ -104,6 +104,51 @@ test var_annot {different types on same pos} {
 	exec diff tmp/temp.tsv data/expected-vars2-var_annot3.tsv
 } {} 
 
+test var_annot {sort error 1 in vars} {
+	exec cg annotate data/vars_sorterror1.sft tmp/temp.sft data/var_annot.sft
+} {*Cannot annotate because the variant file (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test var_annot {sort error 2 in vars} {
+	exec cg annotate data/vars_sorterror2.sft tmp/temp.sft data/var_annot.sft
+} {*Cannot annotate because the variant file (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test var_annot {sort error 3 in vars} {
+	exec cg annotate data/vars_sorterror3.sft tmp/temp.sft data/var_annot.sft
+} {*Cannot annotate because the variant file (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test var_annot {sort error 4 in vars} {
+	exec cg annotate data/vars_sorterror4.sft tmp/temp.sft data/var_annot.sft
+} {*Cannot annotate because the variant file (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test var_annot {sort error 5 in vars} {
+	exec cg annotate data/vars_sorterror5.sft tmp/temp.sft data/var_annot.sft
+} {*Cannot annotate because the variant file (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test var_annot {sort error 1 in database file} {
+	file copy -force data/vars_sorterror1.sft tmp/var_annot.sft
+	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
+} {*Cannot annotate because the database file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test var_annot {sort error 2 in database file} {
+	file copy -force data/vars_sorterror2.sft tmp/var_annot.sft
+	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
+} {*Cannot annotate because the database file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test var_annot {sort error 3 in database file} {
+	file copy -force data/vars_sorterror3.sft tmp/var_annot.sft
+	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
+} {*Cannot annotate because the database file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test var_annot {sort error 4 in database file} {
+	file copy -force data/vars_sorterror4.sft tmp/var_annot.sft
+	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
+} {*Cannot annotate because the database file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test var_annot {sort error 5 in database file} {
+	file copy -force data/vars_sorterror5.sft tmp/var_annot.sft
+	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
+} {*Cannot annotate because the database file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
 test gene_annot {variant file sort error 1} {
 	exec cg annotate -dbdir /complgen/refseq/hg18 data/vars_sorterror1.sft tmp/temp.sft data/gene_test.tsv
 } {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
