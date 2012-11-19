@@ -8,8 +8,13 @@ mkdir -p ${dest}/${build}
 cd ${dest}/${build}
 
 # download genome
-cg downloadgenome ${build} genome_${build}.ifas
-cg make_genomecindex genome_${build}.ifas
+if [ -f "${dest}/${build}/genome_${build}.ifas" ]; then
+	echo "Skipping ${dest}/${build}/genome_${build}.ifas, file exists"
+else
+	cg downloadgenome ${build} genome_${build}.ifas
+	cg make_genomecindex genome_${build}.ifas
+fi
+
 mkdir extra
 mv reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
 if [ -f "${dest}/${build}/extra/reg_${build}_sequencedgenome.tsv" ]; then
@@ -73,12 +78,14 @@ for database in refGene ensGene knownGene genscan acembly ; do
         echo "Skipping ${dest}/${build}/gene_${build}_${database}.tsv, file exists"
     else
         cg downloaddb ${dest} ${build} $database
-        cg select -s 'chrom start end' -q '$chrom !~ /_/' ucsc_${build}_${database}.tsv gene_${build}_${database}.tsv
+        cg select -s - ucsc_${build}_${database}.tsv gene_${build}_${database}.tsv.temp
+	mv gene_${build}_${database}.tsv.temp gene_${build}_${database}.tsv
         mv reg_${build}_${database}.info gene_${build}_${database}.info
         cg maketabix gene_${build}_${database}.tsv
         gunzip -c gene_${build}_${database}.tsv.gz > gene_${build}_${database}.tsv
     fi
 done
+
 
 # homopolymer
 cd ${dest}/${build}
@@ -91,3 +98,23 @@ else
         gunzip -c reg_${build}_homopolymer.tsv.gz > reg_${build}_homopolymer.tsv
 fi
 echo -e "fields\t{base size}" > reg_${build}_homopolymer.tsv.opt
+
+# gencode
+wget ftp://ftp.sanger.ac.uk/pub/gencode/release_14/gencode.v14.annotation.gtf.gz
+cg gtf2sft gencode.v14.annotation.gtf.gz gene_${build}_gencode.tsv.temp
+cg select -s - gene_${build}_gencode.tsv.temp gene_${build}_gencode.tsv.temp2
+rm gene_${build}_gencode.tsv.temp
+mv gene_${build}_gencode.tsv.temp2 gene_${build}_gencode.tsv.temp
+cg maketabix gene_${build}_gencode.tsv
+gunzip -c gene_${build}_gencode.tsv.gz > gene_${build}_gencode.tsv
+wget ftp://ftp.sanger.ac.uk/pub/gencode/_README.TXT
+mv _README.TXT gene_${build}_gencode.info
+rm gencode.v14.annotation.gtf.gz
+
+# mirbase
+wget --tries=45 --directory-prefix=${dest}/tmp/hg19 ftp://mirbase.org/pub/mirbase/19/genomes/hsa.gff2
+cg gff2sft ${dest}/tmp/hg19/hsa.gff2 ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp
+cg select -s - ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp2
+mv ${dest}/tmp/reg_hg19_mirbase.tsv.temp2 reg_${build}_mirbase.tsv
+wget ftp://mirbase.org/pub/mirbase/19/README
+mv README reg_${build}_mirbase.info

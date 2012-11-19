@@ -16,11 +16,11 @@ proc downloaddb_1000glow {path build} {
 	set tempdir $path/tmp/$build
 	# catch {exec wget --tries=45 --directory-prefix=$tempdir/ ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20101123/interim_phase1_release/ALL.wgs.phase1.projectConsensus.snps.sites.vcf.gz >@stdout 2>@stderr} errmsg
 	# catch {exec wget -c --tries=45 --directory-prefix=$tempdir/ ftp://ftp.ncbi.nlm.nih.gov/1000genomes/ftp/release/20110521/ALL.wgs.merged_beagle_mach.20101123.snps_indels_svs.sites.vcf.gz >@stdout 2>@stderr} errmsg
-	catch {exec wget -c --tries=45 --directory-prefix=$tempdir/ ftp://ftp.ncbi.nlm.nih.gov/1000genomes/ftp/release/20110521/ALL.wgs.phase1_release_v2.20101123.snps_indels_sv.sites.vcf.gz >@stdout 2>@stderr} errmsg
-
-	cg vcf2sft $tempdir/ALL.wgs.phase1_release_v2.20101123.snps_indels_sv.sites.vcf.gz $tempdir/ALL.wgs.phase1_release_v2.20101123.snps_indels_sv.sites.tsv.temp
-	file rename $tempdir/ALL.wgs.phase1_release_v2.20101123.snps_indels_sv.sites.tsv.temp $tempdir/ALL.wgs.phase1_release_v2.20101123.snps_indels_sv.sites.tsv
-	cg select -s {chromosome begin end type alt} -f {chromosome begin end type ref alt {freq=$allelecount/$totalallelecount} quality filter} $tempdir/ALL.wgs.phase1_release_v2.20101123.snps_indels_sv.sites.tsv $resultfile
+	# catch {exec wget -c --tries=45 --directory-prefix=$tempdir/ ftp://ftp.ncbi.nlm.nih.gov/1000genomes/ftp/release/20110521/ALL.wgs.phase1_release_v2.20101123.snps_indels_sv.sites.vcf.gz >@stdout 2>@stderr} errmsg
+	catch {exec wget -c --tries=45 --directory-prefix=$tempdir/ ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20110521/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.vcf.gz >@stdout 2>@stderr} errmsg
+	cg vcf2sft $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.vcf.gz $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv.temp
+	file rename $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv.temp $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv
+	cg select -s {chromosome begin end type alt} -f {chromosome begin end type ref alt {freq=$allelecount/$totalallelecount} quality filter} $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv $resultfile
 }
 
 proc downloaddb_1000g {path build} {

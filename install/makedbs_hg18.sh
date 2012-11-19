@@ -8,8 +8,12 @@ mkdir -p ${dest}/${build}
 cd ${dest}/${build}
 
 # download genome
-cg downloadgenome ${build} genome_${build}.ifas
-cg make_genomecindex genome_${build}.ifas
+if [ -f "${dest}/${build}/genome_${build}.ifas" ]; then
+	echo "Skipping ${dest}/${build}/genome_${build}.ifas, file exists"
+else
+	cg downloadgenome ${build} genome_${build}.ifas
+	cg make_genomecindex genome_${build}.ifas
+fi
 mkdir extra
 mv reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
 if [ -f "${dest}/${build}/extra/reg_${build}_sequencedgenome.tsv" ]; then
@@ -85,12 +89,12 @@ else
 fi
 
 # genes
-for database in refGene ensGene knownGene genscan augustusAbinitio acembly; do
+for database in refGene ensGene knownGene genscan augustusAbinitio acembly wgEncodeGencodeManualV3 wgEncodeGencodeAutoV3; do
     if [ -f "${dest}/${build}/gene_${build}_${database}.tsv" ]; then
         echo "Skipping ${dest}/${build}/gene_${build}_${database}.tsv, file exists"
     else
         cg downloaddb ${dest} ${build} $database
-        cg select -s 'chrom start end' -q '$chrom !~ /_/' ucsc_${build}_${database}.tsv gene_${build}_${database}.tsv
+        cg select -s - ucsc_${build}_${database}.tsv gene_${build}_${database}.tsv
         mv reg_${build}_${database}.info gene_${build}_${database}.info
         cg maketabix gene_${build}_${database}.tsv
         gunzip -c gene_${build}_${database}.tsv.gz > gene_${build}_${database}.tsv
@@ -223,3 +227,13 @@ else
 	cg collapseoverlap ucsc_${build}_wgEncodeRegTfbsClustered.tsv
 	mv reg_${build}_wgEncodeRegTfbsClustered.tsv ${dest}/${build}
 fi
+
+# mirbase
+wget --tries=45 --directory-prefix=${dest}/tmp/hg19 ftp://mirbase.org/pub/mirbase/19/genomes/hsa.gff2
+cg gff2sft ${dest}/tmp/hg19/hsa.gff2 ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp
+cg select -s - ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp2
+rm ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2 || true
+cg liftover ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp2 ${dest}/liftover/hg19ToHg18.over.chain ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2
+mv ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2 reg_${build}_mirbase.tsv
+wget ftp://mirbase.org/pub/mirbase/19/README
+mv README reg_${build}_mirbase.info
