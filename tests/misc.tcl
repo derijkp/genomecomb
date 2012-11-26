@@ -11,24 +11,42 @@ file mkdir tmp
 file mkdir tmp/test
 file_write tmp/test/test1 1
 file_write tmp/test/test2 2
+file mkdir tmp/test/subdir
+file_write tmp/test/subdir/test3 3
 file mkdir tmp/out
 
 proc dirinfo {dir} {
 	set result {}
 	foreach file [lsort -dict [glob $dir/*]] {
 		if {[catch {file link $file} link]} {set link -}
-		lappend result [list $file $link [file_read $file]]
+		if {[file isdir $file]} {
+			set data [list dir [dirinfo $file]]
+		} else {
+			set data [file_read $file]
+		}
+		lappend result [list $file $link $data]
 	}
 	return $result
 }
 
 test cplinked {relative} {
+	file delete -force tmp/out
 	file mkdir tmp/out
 	exec cg cplinked tmp/test tmp/out
 	set result [dirinfo tmp/out/test]
 	file delete -force tmp/out/test
 	set result
-} {{tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test2 ../../test/test2 2}} 
+} {{tmp/out/test/subdir - {dir {{tmp/out/test/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test2 ../../test/test2 2}} 
+
+test cplinked {over existing} {
+	file delete -force tmp/out
+	file mkdir tmp/out
+	exec cg cplinked tmp/test tmp/out
+	exec cg cplinked tmp/test tmp/out
+	set result [dirinfo tmp/out/test]
+	file delete -force tmp/out/test
+	set result
+} {{tmp/out/test/subdir - {dir {{tmp/out/test/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test2 ../../test/test2 2}} 
 
 test cplinked {relative, new dir} {
 	file delete -force tmp/out
@@ -37,7 +55,7 @@ test cplinked {relative, new dir} {
 	set result [dirinfo tmp/out/test2]
 	file delete -force tmp/out/test2
 	set result
-} {{tmp/out/test2/test1 ../../test/test1 1} {tmp/out/test2/test2 ../../test/test2 2}} 
+} {{tmp/out/test2/subdir - {dir {{tmp/out/test2/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test2/test1 ../../test/test1 1} {tmp/out/test2/test2 ../../test/test2 2}} 
 
 test cplinked {relative, new dir 2} {
 	file delete -force tmp/out
@@ -45,7 +63,7 @@ test cplinked {relative, new dir 2} {
 	set result [dirinfo tmp/out/test]
 	file delete -force tmp/out/test
 	set result
-} {{tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test2 ../../test/test2 2}} 
+} {{tmp/out/test/subdir - {dir {{tmp/out/test/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test2 ../../test/test2 2}} 
 
 test cplinked {relative extra level} {
 	file delete -force tmp/out
@@ -54,7 +72,7 @@ test cplinked {relative extra level} {
 	set result [dirinfo tmp/out/test2/testl]
 	file delete -force tmp/out
 	set result
-} {{tmp/out/test2/testl/test1 ../../../test/test1 1} {tmp/out/test2/testl/test2 ../../../test/test2 2}} 
+} {{tmp/out/test2/testl/subdir - {dir {{tmp/out/test2/testl/subdir/test3 ../../../../test/subdir/test3 3}}}} {tmp/out/test2/testl/test1 ../../../test/test1 1} {tmp/out/test2/testl/test2 ../../../test/test2 2}} 
 
 test cplinked {absolute} {
 	file delete -force /tmp/test2
@@ -62,7 +80,7 @@ test cplinked {absolute} {
 	set result [dirinfo /tmp/test2]
 	file delete -force /tmp/test2
 	set result
-} [list [list /tmp/test2/test1 $keepdir/tmp/test/test1 1] [list /tmp/test2/test2 $keepdir/tmp/test/test2 2]]
+} [list [list /tmp/test2/subdir - [list dir [list [list /tmp/test2/subdir/test3 $keepdir/tmp/test/subdir/test3 3]]]] [list /tmp/test2/test1 $keepdir/tmp/test/test1 1] [list /tmp/test2/test2 $keepdir/tmp/test/test2 2]]
 
 test cplinked {backup existing} {
 	file delete -force tmp/out
@@ -72,7 +90,7 @@ test cplinked {backup existing} {
 	set result [dirinfo tmp/out/test]
 	file delete -force tmp/out/test
 	set result
-} {{tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test1.old1 - pre} {tmp/out/test/test2 ../../test/test2 2}} 
+} {{tmp/out/test/subdir - {dir {{tmp/out/test/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test1.old1 - pre} {tmp/out/test/test2 ../../test/test2 2}} 
 
 test cplinked {backup existing 2} {
 	file delete -force tmp/out
@@ -83,7 +101,7 @@ test cplinked {backup existing 2} {
 	set result [dirinfo tmp/out/test]
 	file delete -force tmp/out/test
 	set result
-} {{tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test1.old1 - old} {tmp/out/test/test1.old2 - pre} {tmp/out/test/test2 ../../test/test2 2}} 
+} {{tmp/out/test/subdir - {dir {{tmp/out/test/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test1.old1 - old} {tmp/out/test/test1.old2 - pre} {tmp/out/test/test2 ../../test/test2 2}} 
 
 test cplinked {file} {
 	file delete -force tmp/out

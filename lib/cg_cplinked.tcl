@@ -3,10 +3,6 @@
 proc cplinked {src dest} {
 	set src [file normalize $src]
 	set dest [file normalize $dest]
-	if {[file isdir $dest]} {
-		set tail [file tail $src]
-		set dest $dest/$tail
-	}
 	if {![file isdir $src]} {
 		cplinked_file $src $dest
 		return
@@ -50,5 +46,9 @@ proc cg_cplinked {args} {
 		exiterror {wrong # args: should be "cg cplinked src dest"}
 	}
 	foreach {src dest} $args break
+	if {[file isdir $dest]} {
+		set tail [file tail $src]
+		set dest $dest/$tail
+	}
 	cplinked $src $dest
 }
