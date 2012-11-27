@@ -28,7 +28,7 @@ proc cg_hardsync {args} {
 
 proc cg_rsync {args} {
 	set list {}
-	foreach el $argv {
+	foreach el $args {
 		lappend list [string trimright $el /]
 	}
 	puts "rsync -av --delete $list"
