@@ -1,7 +1,7 @@
 = Process =
 
 == Format ==
-cg process_sample sampledir destdir ?force?
+cg process_sample ?joboptions? ?sampledir? destdir ?force?
 
 == Summary ==
 Convert Complete Genomics data to cg format and add several analysis files

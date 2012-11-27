@@ -49,11 +49,21 @@ proc cg_process_indexcompress {args} {
 }
 
 proc process_sample {args} {
-	set args [job_args $args]
-	foreach {workdir srcdir} $args break
-	set workdir [file normalize $workdir]
+	set srcdir ""
+	if {[llength $args] == 1} {
+		foreach {destdir} $args break
+	} elseif {[llength $args] == 2} {
+		foreach {srcdir destdir} $args break
+	} else {
+		errorformat process_sample
+		exit 1
+	}
+	set srcdir [file normalize $srcdir]
+	set workdir [file normalize $destdir]
 	file mkdir $workdir
-	if {$srcdir ne ""} {
+	set sample [file tail $workdir]
+	catch {file delete $workdir/cg_process_sample-$sample.finished}
+	if {[file exists $srcdir]} {
 		set srcdir [file normalize $srcdir]
 		cplinked_file $srcdir $workdir/ori
 	}
@@ -64,10 +74,18 @@ proc process_sample {args} {
 	job_logdir $workdir/log_jobs
 	set chromosomes {}
 	set files [gzfiles $workdir/ori/ASM/REF/coverage*.tsv]
-	foreach file $files {
-		lappend chromosomes [chr_clip [lindex [split $file -] 1]]
+	if {[llength $files]} {
+		foreach file $files {
+			lappend chromosomes [chr_clip [lindex [split $file -] 1]]
+		}
+		set chromosomes [lsort -dict [list_remdup $chromosomes]]
+	} else {
+		set files [gzfiles $workdir/coverage/coverage*.tsv]
+		foreach file $files {
+			lappend chromosomes [chr_clip [lindex [split $file -] end-1]]
+		}
+		set chromosmes [lsort -dict [list_remdup $chromosomes]]
 	}
-	set chromosomes [list_remdup $chromosomes]
 
 	# start from CGI data
 	job cg_svar -deps {ori/ASM/var-*-ASM*.tsv} -targets {svar-$sample.tsv} -code {
@@ -167,50 +185,54 @@ proc process_sample {args} {
 		}
 	}
 
-	set files [glob ori/ASM/REF/coverage*-chr*]
-	set fields [list_remove [cg select -h [lindex $files 0]] offset uniqueSequenceCoverage coverage]
-	lappend fields coverage
-	job cg_coverage -foreach {^ori/ASM/REF/coverage.*-chr([^-]*)-.*$} -vars sample \
-	   -targets {coverage/$_fields-$sample-\1.bcol} -code {
-		# make coverage files
-		set file $dep
-		file mkdir coverage
-		set chr $match1
-		set chr [chr_clip $chr]
-		set header [cg select -h $file]
-		foreach posfield {offset pos} {
-			if {[lsearch $header $posfield] != -1}  break
-		}
-		if {$posfield == -1} {
-			exiterror "No position/offset field found in $file"
-		}
-		foreach covfield {uniqueSequenceCoverage coverage} {
-			if {[lsearch $header $covfield] != -1}  break
-		}
-		if {$covfield == -1} {
-			exiterror "No coverage/uniqueSequenceCoverage field found in $file"
-		}
-		set other [list_remove $header $posfield $covfield]
-		foreach field $other {
-			set base coverage/$field-$sample-$chr
-			if {![file exists $base.bcol]} {
-				putslog "Making $base.bcol"
-				if {[catch {
-					exec [catprog $file] $file | cg bcol make -p $posfield -t s -n -1 $base $field <  $file
-				} e]} {
-					exec [catprog $file] $file | cg bcol make -p $posfield -t i -n -1 $base $field <  $file
+	set files [glob -nocomplain ori/ASM/REF/coverage*-chr*]
+	if {[llength $files]} {
+		# this will only work if ori/ASM/REF/coverage*-chr* already exist from the start
+		# maybe later make more flexible
+		set fields [list_remove [cg select -h [lindex $files 0]] offset uniqueSequenceCoverage coverage]
+		lappend fields coverage
+		job cg_coverage -foreach {^ori/ASM/REF/coverage.*-chr([^-]*)-.*$} -vars sample \
+		   -targets {coverage/$_fields-\1-$sample.bcol} -code {
+			# make coverage files
+			set file $dep
+			file mkdir coverage
+			set chr $match1
+			set chr [chr_clip $chr]
+			set header [cg select -h $file]
+			foreach posfield {offset pos} {
+				if {[lsearch $header $posfield] != -1}  break
+			}
+			if {$posfield == -1} {
+				exiterror "No position/offset field found in $file"
+			}
+			foreach covfield {uniqueSequenceCoverage coverage} {
+				if {[lsearch $header $covfield] != -1}  break
+			}
+			if {$covfield == -1} {
+				exiterror "No coverage/uniqueSequenceCoverage field found in $file"
+			}
+			set other [list_remove $header $posfield $covfield]
+			foreach field $other {
+				set base coverage/$field-$chr-$sample
+				if {![file exists $base.bcol]} {
+					putslog "Making $base.bcol"
+					if {[catch {
+						exec [catprog $file] $file | cg bcol make -p $posfield -t s -n -1 $base $field <  $file
+					} e]} {
+						exec [catprog $file] $file | cg bcol make -p $posfield -t i -n -1 $base $field <  $file
+					}
 				}
 			}
-		}
-		set base coverage/coverage-$sample-$chr
-		if {![file exists $base.bcol]} {
-			putslog "Making $base.bcol"
-			exec [catprog $file] $file | cg bcol make -p $posfield -t su $base $covfield
+			set base coverage/coverage-$chr-$sample
+			if {![file exists $base.bcol]} {
+				putslog "Making $base.bcol"
+				exec [catprog $file] $file | cg bcol make -p $posfield -t su $base $covfield
+			}
 		}
 	}
 
 	# if we are coming from bams, coverage file name looks different, use these by making link
-	job cg_coverage {^coverage/coverage-(.*)-coverage-(.*)\.bcol ^coverage/coverage-(.*)-coverage-(.*)\.bcol\.bin$} {coverage/coverage-\1-\2.bcol coverage/coverage-\1-\2.bcol.bin} {
+	job cg_bamcoverage {^coverage/coverage-(.*)-coverage-(.*)\.bcol ^coverage/coverage-(.*)-coverage-(.*)\.bcol\.bin$} {coverage/coverage-\1-\2.bcol coverage/coverage-\1-\2.bcol.bin} {
 		gzmklink [lindex $dep 0] [lindex $target 0]
 		gzmklink [lindex $dep 1] [lindex $target 1]
 	}
@@ -354,7 +376,7 @@ proc process_sample {args} {
 	job cg_process_sample -targets {cg_process_sample-$sample.finished} -deps {
 		annotvar-$sample.tsv
 		sreg-$sample.tsv
-		coverage/coverage-$sample-$_chromosomes.bcol
+		coverage/coverage-$_chromosomes-$sample.bcol
 		fannotvar-$sample.tsv
 		(reg_refcons-$sample.tsv)
 		(reg_nocall-$sample.tsv)
@@ -371,27 +393,26 @@ proc process_sample {args} {
 		(filteredcluster-$sample.covered)
 		(histo-refcons-$sample.tsv)
 	} -code {
-		file_write $target [timestamp]
+		set ok 1
+		foreach file $deps {
+			if {![file exists $file]} {
+				putslog "ok: $file"
+				putslog "missing: $file"
+				set ok 0
+			}
+		}
+		if {$ok} {
+			file_write $target [timestamp]
+		} else {
+			putslog "job cg_process_sample-$sample failed: some results are missing"
+		}
 	}
 
 	cd $keepdir
 }
 
 proc cg_process_sample {args} {
-	global sample
-	set args [job_args $args]
-	if {[llength $args] == 1} {
-		foreach {destdir} $args break
-	} elseif {[llength $args] == 2} {
-		foreach {srcdir destdir} $args break
-	} else {
-		errorformat process_sample
-		exit 1
-	}
-	set srcdir [file normalize $srcdir]
-	set destdir [file normalize $destdir]
-	file mkdir $destdir
-	set sample [file tail $destdir]
-	catch {file delete $destdir/cg_process_sample-$sample.finished}
-	process_sample $destdir $srcdir
+	set args [job_init {*}$args]
+	process_sample {*}$args
+	job_wait
 }
