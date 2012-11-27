@@ -134,7 +134,7 @@ proc cg_project {args} {
 			set dir [file dir $cgdir]
 			file mkdir $name
 			set host [lindex [file split $cgdir] 2]
-			set job [submit cg process_sample $cgdir $name $refseqdir/$build]
+			set job [submit cg process_sample $cgdir $name]
 			if {[isint $job]} {lappend jobs $job}
 		}
 		lappend alljobs {*}$jobs
