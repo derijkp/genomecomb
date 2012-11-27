@@ -7,7 +7,9 @@ static kh_inline khint_t __kh_dstr_hash_string(DString *ds)
 	char *s = ds->string;
 	int count = ds->size;
 	khint_t h = (khint_t) s;
-	if (h) {
+	if (count <= 0) {
+		h = 0;
+	} else {
 		s++;
 		while (--count) {
 			h = (h << 5) - h + (khint_t) * s;

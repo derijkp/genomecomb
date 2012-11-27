@@ -348,6 +348,7 @@ void DStringAppendS(DString *dstring, char *string,int size) {
 	int nsize = dstring->size + size;
 	DStringSetSize(dstring,nsize);
 	strncpy(dstring->string+dstring->size,string,size+1);
+	dstring->string[nsize] = '\0';
 	dstring->size = nsize;
 }
 

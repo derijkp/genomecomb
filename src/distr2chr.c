@@ -14,38 +14,42 @@
 #include "debug.h"
 #include "khash-dstring.h"
 
-KHASH_MAP_INIT_DSTR(STRING, FILE*);
+KHASH_MAP_INIT_DSTR(DSTRING, FILE*);
 
 /*#include "dstring-khash.h"*/
 
 int main(int argc, char *argv[]) {
-	khash_t(STRING) *hashtable;
+	khash_t(DSTRING) *hashtable;
 	FILE *o;
 	DString *result = NULL, *buffer = NULL;
 	DString *line = NULL,*chromosome = NULL;
 	khiter_t k;
-	int col = 0,ret;
-	if ((argc != 2)&&(argc != 3)) {
-		fprintf(stderr,"Format is: distr2chr output_pre ?col?");
+	int col = 0,header = 0,ret;
+	if ((argc < 2)&&(argc > 4)) {
+		fprintf(stderr,"Format is: distr2chr output_pre ?col? ?header?");
 		exit(EXIT_FAILURE);
 	}
-	if (argc == 3) {
+	if (argc >= 3) {
 		col = atoi(argv[2]);
 	}
 	line = DStringNew();
+	if (argc == 4) {
+		header = atoi(argv[2]);
+		skip_header(stdin,line);
+	}
 	result = DStringArrayNew(col+1);
-	hashtable = kh_init(STRING);
+	hashtable = kh_init(DSTRING);
 	while (!DStringGetTab(line,stdin,col,result,0)) {
 		chromosome = result+col;
-		k = kh_put(STRING,hashtable, chromosome, &ret);
+		k = kh_put(DSTRING,hashtable, chromosome, &ret);
 		if (ret == 0) {
 			/* key was already present in the hashtable */
 			o = kh_value(hashtable, k);
 		} else {
 			buffer = DStringNew();
 			DStringAppend(buffer,argv[1]);
-			DStringAppendS(buffer,chromosome->string,chromosome->size-1);
-			o = fopen64(buffer->string,"a");
+			DStringAppendS(buffer,chromosome->string,chromosome->size);
+			o = fopen64(buffer->string,"w");
 			kh_value(hashtable, k) = o;
 			DStringSetS(buffer,chromosome->string,chromosome->size);
 			kh_key(hashtable, k) = buffer;
@@ -61,6 +65,6 @@ int main(int argc, char *argv[]) {
 	}
 	if (line) {DStringDestroy(line);}
 	if (result) {DStringArrayDestroy(result);}
-	kh_destroy(STRING,hashtable);
+	kh_destroy(DSTRING,hashtable);
 	exit(EXIT_SUCCESS);
 }
