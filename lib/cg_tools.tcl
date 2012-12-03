@@ -1,4 +1,8 @@
 proc cg_hardsync {args} {
+	if {[llength $args] < 2} {
+		puts stderr "wrong # of arguments, correct format is: cg hardsync src ?...? dest"
+		exit 1
+	}
 	set opts {}
 	set num 0
 	foreach el $args {
@@ -28,6 +32,10 @@ proc cg_hardsync {args} {
 
 proc cg_rsync {args} {
 	set list {}
+	if {[llength $args] < 2} {
+		puts stderr "wrong # of arguments, correct format is: cg rsync src ?...? dest"
+		exit 1
+	}
 	foreach el $args {
 		lappend list [string trimright $el /]
 	}
