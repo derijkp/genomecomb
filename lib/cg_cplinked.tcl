@@ -1,3 +1,39 @@
+# rmlinked removes a directory, but only if it contains only (soft)links, or directories containing softlinks
+proc rmlinked {src} {
+	set src [file normalize $src]
+	if {![file isdir $src]} {
+		if {![catch {file link $src} link]} {
+			file delete $src
+		}
+		return
+	}
+	# exec chmod g+w $dest
+	set files [glob -nocomplain $src/*]
+	set keep 0
+	foreach file $files {
+		if {[file isdir $file] && [catch {file link $file} link]} {
+			if {[rmlinked $file]} {set keep 1}
+		} else {
+			if {![catch {file link $file} link]} {
+				file delete $file
+			} else {
+				set keep 1
+			}
+		}
+	}
+	if {!$keep} {file delete $src}
+	return $keep
+}
+
+proc cg_rmlinked {args} {
+	if {[llength $args] < 1} {
+		exiterror {wrong # args: should be "cg rmlinked dir ..."}
+	}
+	foreach {src} $args {
+		rmlinked $src
+	}
+}
+
 # cplinked copies a directory, but by making (soft)links to the original directory for all files
 # existing files (that are not links) will be backed up
 proc cplinked {src dest} {
