@@ -35,7 +35,7 @@ proc cg_covered args {
 		set f stdin
 	}
 	set header [tsv_open $f]
-	catch {tsv_basicfields $header 3} poss
+	catch {tsv_basicfields $header 3 0} poss
 	if {[info exists namecol]} {
 		set pos [lsearch $header $namecol]
 		lset poss 0 $pos

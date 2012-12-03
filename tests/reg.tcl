@@ -94,7 +94,7 @@ M-10
 X-100
 Y-1000} error
 
-test covered {basic} {
+test covered {basic 2} {
 	exec cg covered data/reg2.tsv
 } {chromosome	bases
 1	20
@@ -111,6 +111,30 @@ total	1355
 M-10
 X-90
 Y-1010} error
+
+test covered {name} {
+	cg select -f {name=$chromosome test begin end} data/reg1.tsv temp.tsv
+	exec cg covered -n name temp.tsv
+} {chromosome	bases
+1	20
+2	130
+3	200
+M	10
+X	100
+Y	1000
+
+total	1460
+1-10
+2-100
+3-1000
+M-10
+X-100
+Y-1000} error
+
+test covered {name error} {
+	cg select -f {name=$chromosome test begin end} data/reg1.tsv temp.tsv
+	exec cg covered temp.tsv
+} {header error: some fields (or alternatives) not found} error
 
 test getregions {above} {
 	exec getregions < data/coverage-chr1.tsv chr1 -1 0 1 10 1 0 1
