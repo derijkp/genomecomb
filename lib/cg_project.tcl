@@ -113,7 +113,10 @@ proc cg_project {args} {
 	set c [split [file_read $projectfile] \n]
 	set pos [lsearch $c {}]
 	array set a [list_concat [lrange $c 0 [expr {$pos-1}]]]
-	set build [get a(build) hg18]
+	if {![info exists a(build)]} {
+		error "no build given in project file"
+	}
+	set build $a(build)
 	set cdata [list_remove [lrange $c [expr {$pos+1}] end] {}]
 	set poss [list_find -glob $cdata {#*}]
 	set data {}
