@@ -39,7 +39,7 @@ proc cg_rmlinked {args} {
 proc cplinked {src dest} {
 	set src [file normalize $src]
 	set dest [file normalize $dest]
-	if {![file isdir $src]} {
+	if {![file isdir $src] || ![catch {file link $src} link]} {
 		cplinked_file $src $dest
 		return
 	}

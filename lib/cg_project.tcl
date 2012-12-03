@@ -384,10 +384,14 @@ proc cg_project {args} {
 		exec chmod g-w {*}[glob /complgen/projects/*]
 		foreach user [get a(users) ""] {
 			puts "$project -> $user"
+			if {![file exists /home/MOLGEN/$user]} {
+				puts "skipping $user"
+				continue
+			}
 			if {![file exists /home/MOLGEN/$user/complgen]} {
 				catch {file mkdir /home/MOLGEN/$user/complgen}
-				exec chown "$user.domain users" /home/MOLGEN/$user
-				exec chown "$user.domain users" /home/MOLGEN/$user/complgen
+				catch {exec chown "$user.domain users" /home/MOLGEN/$user}
+				catch {exec chown "$user.domain users" /home/MOLGEN/$user/complgen}
 			}
 			cd /home/MOLGEN/$user/complgen
 			if {![file exists docs]} {	
@@ -396,8 +400,8 @@ proc cg_project {args} {
 			if {![catch {file link $destdir}]} {
 				file delete $destdir
 			}
-			cplinked $projectdir .
-			exec chown -R "$user.domain users" .
+			cg_cplinked $projectdir .
+			catch {exec chown -R "$user.domain users" .}
 		}
 	}
 }
