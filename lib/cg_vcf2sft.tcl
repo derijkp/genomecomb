@@ -120,7 +120,11 @@ proc cg_vcf2sft {args} {
 		} else {
 			set begin $pos
 			set end [expr {$pos + $l1 - 1}]
-			set ref [string range $ref 1 end]
+			if {$l1 > 20} {
+				set ref [expr {$l1 - 1}]
+			} else {
+				set ref [string range $ref 1 end]
+			}
 			set temp {}
 			foreach calt $alts {
 				lappend temp [string range $calt 1 end]
