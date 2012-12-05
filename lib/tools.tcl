@@ -771,3 +771,11 @@ proc reload {} {
 		}
 	}
 }
+
+proc dict_get_default {d key {default {}}} {
+	if {[catch {dict get $d $key} result]} {
+		return $default
+	} else {
+		return $result
+	}
+}

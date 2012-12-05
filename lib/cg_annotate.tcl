@@ -121,6 +121,86 @@ proc annotatevar {file dbfile name annotfile {outfields {name score freq}}} {
 	file rename -force $annotfile.temp $annotfile
 }
 
+proc cg_annotatedb_info {dbfile {near -1}} {
+	if {[file exists [gzroot $dbfile].opt]} {
+		set a [dict create {*}[file_read [gzroot $dbfile].opt]]
+	} else {
+		set a [dict create]
+	}
+	set name [dict_get_default $a name [lindex [split [file root [file tail [gzroot $dbfile]]] _] end]]
+	dict set a name $name
+	set dbtype [lindex [split [file tail $dbfile] _] 0]
+	dict set a dbtype $dbtype
+	set f [gzopen $dbfile]
+	set header [tsv_open $f comment]
+	close $f
+	dict set a header $header
+	set newh $name
+	if {$dbtype eq "gene"} {
+		set outfields {}
+		set dataposs {}
+		set poss {}
+	} elseif {$dbtype eq "var"} {
+		set outfields [dict_get_default $a fields {name freq score}]
+		set outfields [list_common $outfields $header]
+		set dataposs [list_cor $header $outfields]
+		set poss [tsv_basicfields $header 3]
+	} else {
+		if {[dict exists $a fields]} {
+			set outfields [dict get $a fields]
+		} else {
+			switch -glob $name {
+				1000g* {set outfields freq}
+				rmsk {set outfields name}
+				evofold {set outfields score}
+				rnaGene {set outfields name}
+				simpleRepeat {set outfields score}
+				tRNAs {set outfields name}
+				default {set outfields {name freq score}}
+			}
+		}
+		set outfields [list_common $outfields $header]
+		set dataposs [list_cor $header $outfields]
+		set poss [tsv_basicfields $header 3]
+	}
+	if {$dbtype eq "gene"} {
+		set newh [list ${name}_impact ${name}_gene ${name}_descr]
+	} else {
+		switch [llength $outfields] {
+		0 {
+			if {$near != -1} {
+				set newh ${name}_dist
+			} else {
+				set newh $name
+			}
+		}
+		1 {
+			set newh $name
+			if {$near != -1} {
+				lappend newh ${name}_dist
+			}
+		}
+		default {
+			set newh {}
+			foreach key $outfields {
+				lappend newh ${name}_$key
+			}
+			if {$near != -1} {
+				lappend newh ${name}_dist
+			}
+		}
+		}
+	}
+	dict set a outfields $outfields
+	dict set a newh $newh
+	dict set a dataposs $dataposs
+	dict set a basicfields $poss
+	if {![dict exists $a fields]} {
+		dict set a fields [dict get $a name]
+	}
+	return $a
+}
+
 proc cg_annotate {args} {
 	if {([llength $args] < 3)} {
 		errorformat annotate
@@ -129,6 +209,7 @@ proc cg_annotate {args} {
 	set near -1
 	set dbdir {}
 	set pos 0
+	set replace 0
 	foreach {key value} $args {
 		switch -- $key {
 			-near {
@@ -139,6 +220,9 @@ proc cg_annotate {args} {
 			}
 			-name {
 				set namefield $value
+			}
+			-replace {
+				set replace $value
 			}
 			default {
 				break
@@ -154,30 +238,33 @@ proc cg_annotate {args} {
 		set dbfiles [lsort -dict [list_concat [glob -nocomplain [lindex $dbfiles 0]/var_*.tsv [lindex $dbfiles 0]/gene_*.tsv [lindex $dbfiles 0]/reg_*.tsv] [lrange $dbfiles 1 end]]]
 	}
 	set names {}
+	set newh {}
 	foreach dbfile $dbfiles {
-		lappend names [lindex [split [file root [file tail $dbfile]] _] end]
+		set dbinfo [cg_annotatedb_info $dbfile $near]
+		lappend names [dict get $dbinfo name]
+		lappend newh {*}[dict get $dbinfo newh]
 	}
 	putslog "Annotating $file"
 	set f [gzopen $file]
 	set poss [open_region $f header]
 	catch {close $f}
-	set common [list_common $header $names]
+	set common [list_common $header $newh]
 	if {[llength $common]} {
-		puts "Fields [join $common ,] already in file: skipping"
-		foreach name $common {
-			set skip($name) 1
+		if {!$replace} {
+			puts stderr "Error: field(s) [join $common ,] already in file"
+			exit 1
 		}
+#		foreach name $common {
+#			set skip($name) 1
+#		}
+	} else {
+		set replace 0
 	}
 	set afiles {}
 	foreach dbfile $dbfiles {
 		putslog "Adding $dbfile"
-		unset -nocomplain a
-		if {[file exists [gzroot $dbfile].opt]} {array set a [file_read [gzroot $dbfile].opt]}
-		if {[info exists a(name)]} {
-			set name $a(name)
-		} else {
-			set name [lindex [split [file root [file tail [gzroot $dbfile]]] _] end]
-		}
+		set dbinfo [cg_annotatedb_info $dbfile $near]
+		set name [dict get $dbinfo name]
 		if {[info exists namefield]} {set name $namefield}
 		if {[info exists skip($name)]} {
 			puts "Skipping $dbfile: $name already in file"
@@ -199,8 +286,8 @@ proc cg_annotate {args} {
 				putslog "$resultfile.${name}_annot exists: skipping scan"
 				continue
 			}
-			set genecol [get a(genecol) name2]
-			set transcriptcol [get a(transcriptcol) name]
+			set genecol [dict_get_default $dbinfo genecol name2]
+			set transcriptcol [dict_get_default $dbinfo transcriptcol name]
 			annotategene $file $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
@@ -214,11 +301,7 @@ proc cg_annotate {args} {
 				putslog "$resultfile.${name}_annot exists: skipping scan"
 				continue
 			}
-			if {[info exists a(fields)]} {
-				set outfields $a(fields)
-			} else {
-				set outfields {name freq score}
-			}
+			set outfields [dict get $dbinfo outfields]
 			annotatevar $file $dbfile $name $resultfile.${name}_annot $outfields
 		} else {
 			lappend afiles $resultfile.${name}_annot
@@ -227,24 +310,18 @@ proc cg_annotate {args} {
 				continue
 			}
 			putslog "Adding $dbfile"
-			if {[info exists a(fields)]} {
-				set outfields $a(fields)
-			} else {
-				switch -glob $name {
-					1000g* {set outfields freq}
-					rmsk {set outfields name}
-					evofold {set outfields score}
-					rnaGene {set outfields name}
-					simpleRepeat {set outfields score}
-					tRNAs {set outfields name}
-					default {set outfields {name freq score}}
-				}
-			}
+			set outfields [dict get $dbinfo outfields]
 			annotatereg $file $dbfile $name $resultfile.${name}_annot.temp $near $outfields
 			file rename $resultfile.${name}_annot.temp $resultfile.${name}_annot
 		}
 	}
-	exec paste $file {*}$afiles > $resultfile
+	if {$replace} {
+		cg select -f [list_lremove $header $newh] $file $resultfile.temp
+		exec paste $resultfile.temp {*}$afiles > $resultfile
+		file delete $resultfile.temp
+	} else {
+		exec paste $file {*}$afiles > $resultfile
+	}
 	if {[llength $afiles]} {file delete {*}$afiles}
 	gzrmtemp $file
 }

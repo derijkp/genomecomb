@@ -206,6 +206,18 @@ test gene_annot {gene, extra comments} {
 < # another comment	 
 child process exited abnormally} error
 
+test reg_annot {existing field error} {
+	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft 2> /dev/null
+	exec cg annotate -near 1000 tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
+} {*Error: field(s) regtest already in file} match error
+
+test reg_annot {replace} {
+	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft 2> /dev/null
+	exec cg annotate -near 1000 -replace 1 tmp/temp.sft tmp/temp2.sft data/reg_annot.sft 2> /dev/null
+	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
+	exec diff tmp/temp3.sft data/expected_near-vars1-reg_annot.sft
+} {} 
+
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
 
