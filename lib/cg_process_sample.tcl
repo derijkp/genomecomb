@@ -217,16 +217,20 @@ proc process_sample {args} {
 				if {![file exists $base.bcol]} {
 					putslog "Making $base.bcol"
 					if {[catch {
-						exec [catprog $file] $file | cg bcol make -p $posfield -t s -n -1 $base $field <  $file
+						exec [catprog $file] $file | cg bcol make -p $posfield -t s -n -1 $base $field
 					} e]} {
-						exec [catprog $file] $file | cg bcol make -p $posfield -t i -n -1 $base $field <  $file
+						exec [catprog $file] $file | cg bcol make -p $posfield -t i -n -1 $base $field
 					}
 				}
 			}
 			set base coverage/coverage-$chr-$sample
 			if {![file exists $base.bcol]} {
 				putslog "Making $base.bcol"
-				exec [catprog $file] $file | cg bcol make -p $posfield -t su $base $covfield
+					if {[catch {
+						exec [catprog $file] $file | cg bcol make -p $posfield -t su $base $covfield
+					} e]} {
+						exec [catprog $file] $file | cg bcol make -p $posfield -t iu $base $covfield
+					}
 			}
 		}
 	}
@@ -372,8 +376,7 @@ proc process_sample {args} {
 		cg covered $dep > $target.temp
 		file rename -force $target.temp $target
 	}
-
-	job cg_process_sample -targets {cg_process_sample-$sample.finished} -deps {
+	job cg_process_sample -deps {
 		annotvar-$sample.tsv
 		sreg-$sample.tsv
 		coverage/coverage-$_chromosomes-$sample.bcol
@@ -392,20 +395,8 @@ proc process_sample {args} {
 		(filteredlowscore-$sample.covered)
 		(filteredcluster-$sample.covered)
 		(histo-refcons-$sample.tsv)
-	} -code {
-		set ok 1
-		foreach file $deps {
-			if {![file exists $file]} {
-				putslog "ok: $file"
-				putslog "missing: $file"
-				set ok 0
-			}
-		}
-		if {$ok} {
-			file_write $target [timestamp]
-		} else {
-			putslog "job cg_process_sample-$sample failed: some results are missing"
-		}
+	} -targets {cg_process_sample-$sample.finished} -vars {sample} -code {
+			file_write $target [timestamp]\n
 	}
 
 	cd $keepdir
