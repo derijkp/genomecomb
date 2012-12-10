@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
 	DString *result = NULL, *buffer = NULL;
 	DString *line = NULL,*chromosome = NULL;
 	khiter_t k;
-	int col = 0,header = 0,ret;
+	int col = 0,ret,header=0;
 	if ((argc < 2)&&(argc > 4)) {
 		fprintf(stderr,"Format is: distr2chr output_pre ?col? ?header?");
 		exit(EXIT_FAILURE);
@@ -34,8 +34,10 @@ int main(int argc, char *argv[]) {
 	}
 	line = DStringNew();
 	if (argc == 4) {
-		header = atoi(argv[2]);
-		skip_header(stdin,line);
+		header = atoi(argv[3]);
+		if (header) {
+			skip_header(stdin,line);
+		}
 	}
 	result = DStringArrayNew(col+1);
 	hashtable = kh_init(DSTRING);
