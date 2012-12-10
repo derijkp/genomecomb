@@ -83,6 +83,12 @@ proc bcol_open indexfile {
 		dict set result fi $fi
 	} elseif {[file exists $indexfile.bin.rz]} {
 		dict set result binfile $indexfile.bin.rz
+		set tempfile [tempfile]
+		exec razip -d -c $indexfile.bin.rz > $tempfile
+		dict set result tempfile $tempfile
+		set fi [open $tempfile]
+		fconfigure $fi -encoding binary -translation binary
+		dict set result fi $fi
 		dict set result compressedbin 1
 	} else {
 		exiterror "binfile $indexfile.bin not found"
@@ -96,6 +102,9 @@ proc bcol_size bcol {
 
 proc bcol_close bcol {
 	catch {close [dict get $bcol fi]}
+	if {[dict exists $bcol tempfile]} {
+		file delete [dict get $bcol tempfile]
+	}
 }
 
 # Warning:
@@ -145,19 +154,12 @@ proc bcol_get {bcol start {end {}}} {
 	if {$len <= 0} {return $result}
 	set pos [expr {$typesize*($start-$num)}]
 	set binfile [dict get $bcol binfile]
-	if {![dict get $bcol compressedbin]} {
-		set f [open $binfile]
-		seek $f $pos
-		fconfigure $f -encoding binary -translation binary
-		set b [read $f [expr {$typesize*$len}]]
-	} else {
-		set f [open "| razip -d -c -b $pos $binfile"]
-		fconfigure $f -encoding binary -translation binary
-		set b [read $f [expr {$typesize*($len+1)}]]
-		catch {close $f}
-	}
+	# get data from already opened file
+	set f [dict get $bcol fi]
+	seek $f $pos
+	fconfigure $f -encoding binary -translation binary
+	set b [read $f [expr {$typesize*$len}]]
 	binary scan $b $type$len sresult
-	catch {close $f}
 	foreach v $sresult {
 		catch {set offset [dict get $tabled $start]}
 		incr start
@@ -213,15 +215,10 @@ proc bcol_table {bcol {start {}} {end {}}} {
 	set len [expr {$uend-$start+1}]
 	if {$len <= 0} {return {}}
 	set pos [expr {$typesize*($start-$num)}]
-	set binfile [dict get $bcol binfile]
-	if {![dict get $bcol compressedbin]} {
-		set f [open $binfile]
-		seek $f $pos
-		fconfigure $f -encoding binary -translation binary
-	} else {
-		set f [open "| razip -d -c -b $pos $binfile"]
-		fconfigure $f -encoding binary -translation binary
-	}
+	# get data from already opened file
+	set f [dict get $bcol fi]
+	seek $f $pos
+	fconfigure $f -encoding binary -translation binary
 	while {$curpos <= $end} {
 		catch {set offset [dict get $tabled $start]}
 		incr start
@@ -231,7 +228,6 @@ proc bcol_table {bcol {start {}} {end {}}} {
 		puts $o $curpos\t$value
 		incr curpos
 	}
-	catch {close $f}
 	while {$uend < $end} {
 		puts $o $curpos\t$default
 		incr curpos
