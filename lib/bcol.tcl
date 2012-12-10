@@ -245,7 +245,8 @@ array set bcol_typea {c,mx  127 s,mx  32767 i,mx  2147483647 w,mx  9223372036854
 proc cg_bcol_make {args} {
 	global bcol_typea
 	set type iu
-	set chromosomecol 0
+	set chromosomecol coverage
+	set chrompos -1
 	set offsetcol {}
 	set defaultvalue 0
 	set distribute 0
@@ -285,12 +286,14 @@ proc cg_bcol_make {args} {
 		exiterror "wrong # args: should be \"cg bcol make ?options? bcolprefix column\""
 	}
 	foreach {prefix valuecolumn} $args break
-	set result $prefix.bcol
+	set prefix [file normalize $prefix]
+	set tail [file tail $prefix]
+	file mkdir $prefix.bcol.temp
 	if {[info exists bcol_typea($type,mx)]} {
 		set max $bcol_typea($type,mx)
 		set min $bcol_typea($type,mn)
-	} elseif {![inlist {f d} $type]} {
-		exiterror "error: type $type not supported (must be one of: c s i w cu su iu f d)"
+	} elseif {![inlist {c s i w cu su iu wu f d} $type]} {
+		exiterror "error: type $type not supported (must be one of: c s i w cu su iu wu f d)"
 	}
 	if {[info exists max]} {
 		if {$defaultvalue > $max} {
@@ -300,7 +303,6 @@ proc cg_bcol_make {args} {
 		}
 	}
 	set btype [string index $type 0]
-	# putslog "Making $result"
 	set f stdin
 	if {$header} {
 		set header [tsv_open $f comment]
@@ -325,103 +327,22 @@ proc cg_bcol_make {args} {
 	} else {
 		set offsetpos $offsetcol
 		set colpos $valuecolumn
-		set chrompos $chromosomecol
 	}
-	set bo [open $result.bin.temp w]
-	fconfigure $bo -encoding binary -translation binary
-	set prevchr {}
-	set len 0
-	set poffset -1
-	while {![eof $f]} {
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		if {$distribute} {
-			set chr [lindex $line $chrompos]
-			if {$chr ne $prevchr} {
-				close $bo
-				if {$prevchr ne ""} {
-					set size [expr {$start+$len-1}]
-					set o [open $prefix-$prevchr.bcol.temp w]
-					puts $o "# binary column"
-					puts $o "# type $type"
-					puts $o "# default $defaultvalue"
-					puts $o [join {begin type offset} \t]
-					puts $o $start\t$type\t0
-					puts $o $size\tend\t0
-					close $o
-					exec razip -c $prefix-$prevchr.bcol.bin.temp > $prefix-$prevchr.bcol.bin.rz.temp
-					file delete $prefix-$prevchr.bcol.bin.temp
-					file rename -force $prefix-$prevchr.bcol.bin.rz.temp $prefix-$prevchr.bcol.bin.rz
-					file rename -force $prefix-$prevchr.bcol.temp $prefix-$prevchr.bcol
-				}
-				set prevchr $chr
-				set poffset -1
-				set len 0
-				# putslog "Making $prefix-$chr.bcol"
-				set bo [open $prefix-$chr.bcol.bin.temp w]
-				fconfigure $bo -encoding binary -translation binary
-			}
-		}
-		if {$offsetpos != -1} {
-			set offset [lindex $line $offsetpos]
-			if {$poffset == -1} {
-				set start $offset
-			} elseif {$poffset != $offset} {
-				set size [expr {$offset-$poffset}]
-				if {$size < 0} {
-					exiterror "error: cannot make position based bcol on unsorted data ($offset < $poffset sort on position first)"
-				}
-				while {$poffset < $offset} {
-					puts -nonewline $bo [binary format $btype $defaultvalue]
-					incr poffset
-				}
-				incr len $size
-			}
-			set poffset [incr offset]
-		}
-		set v [lindex $line $colpos]
-		if {![isdouble $v] || $v eq "N"} {
-			if {[info exists nanvalue]} {
-				set v $nanvalue
-			} else {
-				exiterror "value $v is not a number"
-			}
-		} elseif {[info exists max]} {
-			if {$v > $max} {
-				exiterror "value $v too large for type $type"
-			} elseif {$v < $min} {
-				exiterror "value $v too small for type $type"
-			}
-		}
-		puts -nonewline $bo [binary format $btype $v]
-		incr len
+	set pipe [open "| bcol_make [list $prefix.bcol.temp/$tail] $type $colpos $chrompos $offsetpos $defaultvalue >@ stdout 2>@ stderr" w]
+	fconfigure $f -encoding binary -translation binary
+	fconfigure $pipe -encoding binary -translation binary
+	fcopy $f $pipe
+	if {[catch {close $pipe} err]} {
+		regsub {child process exited abnormally} $err {} err
+		puts stderr $err
+		exit 1
 	}
-	close $bo
-	if {$distribute} {
-		set size [expr {$start+$len-1}]
-		set o [open $prefix-$prevchr.bcol.temp w]
-	} else {
-		set size [expr {$start+$len-1}]
-		set o [open $result.temp w]
+	foreach file [glob $prefix.bcol.temp/${tail}*.bin] {
+		exec razip -c $file > $file.rz
+		file delete $file
 	}
-	puts $o "# binary column"
-	puts $o "# type $type"
-	puts $o "# default $defaultvalue"
-	puts $o [join {begin type offset} \t]
-	puts $o $start\t$type\t0
-	puts $o $size\tend\t0
-	close $o
-	if {$distribute} {
-		exec razip -c $prefix-$prevchr.bcol.bin.temp > $prefix-$prevchr.bcol.bin.rz.temp
-		file delete $prefix-$prevchr.bcol.bin.temp
-		file rename -force $prefix-$prevchr.bcol.bin.rz.temp $prefix-$prevchr.bcol.bin.rz
-		file rename -force $prefix-$prevchr.bcol.temp $prefix-$prevchr.bcol
-	} else {
-		exec razip -c $result.bin.temp > $result.bin.rz.temp
-		file delete $result.bin.temp
-		file rename -force $result.bin.rz.temp $result.bin.rz
-		file rename -force $result.temp $result
-	}
+	file rename {*}[glob $prefix.bcol.temp/*] [file dir $prefix]
+	file delete -force $prefix.bcol.temp
 }
 
 proc cg_bcol_get {args} {
@@ -585,13 +506,14 @@ proc cg_index file {
 		set bcol [bcol_open $indexfile]
 		set size [bcol_size $bcol]
 		bcol_close $bcol
-		set f [open $indexdir/info.tsv w]
+		set f [open $indexdir/info.tsv.temp w]
 		puts $f key\tvalue
 		puts $f file\t$file
 		puts $f lineindexfile\t[file tail $indexfile]
 		puts $f header\t$header
 		puts $f size\t$size
 		close $f
+		file rename $indexdir/info.tsv.temp $indexdir/info.tsv
 	}
 	return $indexfile
 }
