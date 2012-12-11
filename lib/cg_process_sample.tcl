@@ -52,22 +52,22 @@ proc process_sample {args} {
 	set srcdir ""
 	if {[llength $args] == 1} {
 		foreach {destdir} $args break
+		set workdir [file normalize $destdir]
 	} elseif {[llength $args] == 2} {
 		foreach {srcdir destdir} $args break
+		set workdir [file normalize $destdir]
+		set srcdir [file normalize $srcdir]
+		if {[file exists $srcdir]} {
+			set srcdir [file normalize $srcdir]
+			cplinked_file $srcdir $workdir/ori
+		}
 	} else {
 		errorformat process_sample
 		exit 1
 	}
-	set srcdir [file normalize $srcdir]
-	set workdir [file normalize $destdir]
 	file mkdir $workdir
 	set sample [file tail $workdir]
-	catch {file delete $workdir/cg_process_sample-$sample.finished}
-	if {[file exists $srcdir]} {
-		set srcdir [file normalize $srcdir]
-		cplinked_file $srcdir $workdir/ori
-	}
-	set sample [file tail $workdir]
+	catch {file delete $workdir/summary-$sample.txt}
 	# process_bam2cg $srcdir
 	set keepdir [pwd]
 	cd $workdir
@@ -76,15 +76,15 @@ proc process_sample {args} {
 	set files [gzfiles $workdir/ori/ASM/REF/coverage*.tsv]
 	if {[llength $files]} {
 		foreach file $files {
-			lappend chromosomes [chr_clip [lindex [split $file -] 1]]
+			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] 1]]
 		}
 		set chromosomes [lsort -dict [list_remdup $chromosomes]]
 	} else {
 		set files [gzfiles $workdir/coverage/coverage*.tsv]
 		foreach file $files {
-			lappend chromosomes [chr_clip [lindex [split $file -] end-1]]
+			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] end-1]]
 		}
-		set chromosmes [lsort -dict [list_remdup $chromosomes]]
+		set chromosomes [lsort -dict [list_remdup $chromosomes]]
 	}
 
 	# start from CGI data
@@ -248,7 +248,6 @@ proc process_sample {args} {
 		file copy $dep $targetdir.temp
 		file rename $targetdir.temp $targetdir
 		file_write $target [timestamp]
-		putslog $result
 	}
 
 	job cg_cpSV {ori/ASM/SV} {SV/finished} {
@@ -258,7 +257,6 @@ proc process_sample {args} {
 		file copy $dep $targetdir.temp
 		file rename $targetdir.temp $targetdir
 		file_write $target [timestamp]
-		putslog $result
 	}
 
 	job cg_cgsv {SV/allJunctionsBeta-*.tsv*} {cgsv-$sample.tsv} {
@@ -297,7 +295,7 @@ proc process_sample {args} {
 		}
 	}
 
-	job cg_fannotvar {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv)} {fannotvar-$sample.tsv} {
+	job cg_fannotvar {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage/coverage-*-$sample.bcol) (coverage/refscore-*-$sample.bcol)} {fannotvar-$sample.tsv} {
 		# add filterdata to annotvar
 		set todo {}
 		if {[file exists $dep2]} {
@@ -376,9 +374,10 @@ proc process_sample {args} {
 		cg covered $dep > $target.temp
 		file rename -force $target.temp $target
 	}
-	job cg_process_sample -deps {
+	job cg_process_summary -deps {
 		annotvar-$sample.tsv
 		sreg-$sample.tsv
+		reg-$sample.covered
 		coverage/coverage-$_chromosomes-$sample.bcol
 		fannotvar-$sample.tsv
 		(reg_refcons-$sample.tsv)
@@ -395,10 +394,43 @@ proc process_sample {args} {
 		(filteredlowscore-$sample.covered)
 		(filteredcluster-$sample.covered)
 		(histo-refcons-$sample.tsv)
-	} -targets {cg_process_sample-$sample.finished} -vars {sample} -code {
-			file_write $target [timestamp]\n
+	} -targets {summary-$sample.txt} -vars {sample} -code {
+		set f [open $target.temp w]
+		puts $f "finished\t\t[timestamp]"
+		set c [split [exec cg select -f chromosome $dep | uniq -c] \n]
+		puts $f ""
+		puts $f "Variants:\nchromosome\tvalue"
+		set total 0
+		foreach line [lrange $c 1 end] {
+			foreach {num chr} $line break
+			puts $f "$chr\t$num"
+			incr total $num
+		}
+		puts $f "total\t$total"
+		puts $f ""
+		puts $f "covered:\nchromosome\tvalue"
+		set c [split [file_read $dep3] \n]
+		set total 0
+		foreach line [lrange $c 1 end] {
+			if {![llength $line]} break
+			foreach {chr num} $line break
+			puts $f "$chr\t$num"
+			incr total $num
+		}
+		puts $f "total\t$total"
+		set header [cg select -h $dep]
+		if {[inlist $header impact]} {
+			puts $f ""
+			puts $f "impact:\nimpact\tnumber_of_variants"
+			set c [split [exec cg select -s impact -f impact $dep | uniq -c] \n]
+			foreach line [lrange $c 1 end] {
+				foreach {num impact} $line break
+				puts $f "$impact\t$num"
+			}
+		}
+		close $f
+		file rename -force $target.temp $target
 	}
-
 	cd $keepdir
 }
 
