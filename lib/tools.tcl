@@ -506,7 +506,7 @@ proc gunzip {file args} {
 proc scratchdir {} {
 	global env
 	if {![info exists env(SCRATCHDIR)]} {
-		putslog "Could not find SCRATCHDIR, using tempdir"
+		# putslog "Could not find SCRATCHDIR, using tempdir"
 		return [tempdir]
 	}
 	if {![info exists ::Extral::scratchdir]} {
