@@ -94,18 +94,20 @@ proc annot_coverage_init {dir} {
 	set annot(cov,$dir) {-1 {} 0 {} {} {}}
 }
 
-proc annot_coverage_get {dir chr begin} {
+proc annot_coverage_get {dir chr begin {force 0}} {
 	global annot
 	set present 1
 	foreach {curchr chrfile present poss type obj} [get annot(cov,$dir) {{} {} 0}] break
-	if {$chr ne $curchr} {
-		switch $type {
-			{} {
-				tsv_index_close $chrfile offset
-			}
-			bcol {
-				foreach {refbcol covbcol} $obj break
-				bcol_close $refbcol ; bcol_close $covbcol
+	if {$chr ne $curchr || $force} {
+		if {$present} {
+			switch $type {
+				{} {
+					tsv_index_close $chrfile offset
+				}
+				bcol {
+					foreach {refbcol covbcol} $obj break
+					bcol_close $refbcol ; bcol_close $covbcol
+				}
 			}
 		}
 		set nchr [chr_clip $chr]
@@ -125,7 +127,10 @@ proc annot_coverage_get {dir chr begin} {
 			puts stderr "coverage(RefScore) file not found ($dir/coverage/coverage(RefScore)-*-$nchr.(tsv|bcol))"
 			set present 0
 		}
-		if {!$present} {return {u u}}
+		if {!$present} {
+			set annot(cov,$dir) [list $chr {} $present $poss $type {}]
+			return {u u}
+		}
 		if {$type eq "bcol"} {
 			if {[file exists $reffile]} {
 				set refbcol [bcol_open $reffile]

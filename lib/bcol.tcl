@@ -56,8 +56,14 @@ proc bcol_open indexfile {
 	set f [open $indexfile]
 	set header [tsv_open $f comment]
 	set comment [split $comment \n]
-	if {[lindex $comment 0] ne "# binary column"} {error "file \"$indexfile\" is not a binary column file"}
-	if {$header ne "begin type offset"} {error "file \"$indexfile\" has an incorrect table header"}
+	if {[lindex $comment 0] ne "# binary column"} {
+		close $f
+		error "file \"$indexfile\" is not a binary column file"
+	}
+	if {$header ne "begin type offset"} {
+		close $f
+		error "file \"$indexfile\" has an incorrect table header"
+	}
 	foreach line $comment {
 		set line [string range $line 1 end]
 		dict set result [lindex $line 0] [lindex $line 1]
@@ -102,6 +108,7 @@ proc bcol_size bcol {
 
 proc bcol_close bcol {
 	catch {close [dict get $bcol fi]}
+	dict set bcol fi {}
 	if {[dict exists $bcol tempfile]} {
 		file delete [dict get $bcol tempfile]
 	}
