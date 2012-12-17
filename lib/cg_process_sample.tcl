@@ -271,6 +271,10 @@ proc process_sample {args} {
 		cg convcgcnv $dep $target
 	}
 
+	job cg_cgcnv {CNV/cnvSegmentsDiploidBeta-*.tsv*} {cgcnv-$sample.tsv} {
+		cg convcgcnv $dep $target
+	}
+
 	job cg_cgcnv {CNV/cnvSegmentsAlpha-*.tsv*} {cgcnv-$sample.tsv} {
 		cg convcgcnv [gzfile $dep] $target
 	}
