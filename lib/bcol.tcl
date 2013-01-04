@@ -146,6 +146,7 @@ proc bcol_get {bcol start {end {}}} {
 			}
 			set offset $noffset
 		}
+		set num [lindex $table 0 0]
 	} else {
 		set num [lindex $table 0 0]
 	}
@@ -503,6 +504,7 @@ proc cg_index file {
 	set indexfile $indexdir/lines.bcol
 	bcol_indexlines $file $indexfile
 	if {![file exists $indexdir/info.tsv] || [file mtime $indexdir/info.tsv] < $time} {
+		catch {file delete $indexdir/info.tsv}
 		set f [gzopen $file]
 		set header [tsv_open $f]
 		catch {close $f}

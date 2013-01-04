@@ -138,7 +138,7 @@ proc job_process_sge_onepass {} {
 				} else {
 					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				}
-				job_log $job "job $jobname failed"
+				job_log $job "job $jobname skipped: dependencies not found"
 				continue
 			}
 			set temp {}
@@ -158,7 +158,7 @@ proc job_process_sge_onepass {} {
 		# check if job is already running, if so, mark targets with jobid
 		set jobnum [job_process_sge_jobid $job]
 		if {[isint $jobnum]} {
-			job_process_sge_marktargets [file_read $job.targets] [file_read $job.$ptargets] $jobnum
+			job_process_sge_marktargets [file_read $job.targets] [file_read $job.ptargets] $jobnum
 			job_log $job "job $jobname is already running, skip"
 			continue
 		}
@@ -181,7 +181,7 @@ proc job_process_sge_onepass {} {
 			} else {
 				job_log $job "error in dependencies for $jobname: $adeps"
 			}
-			job_log $job "job $jobname failed"
+			job_log $job "job $jobname skipped: dependencies not found"
 			continue
 		}
 		file_write $job.deps $adeps

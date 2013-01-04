@@ -88,7 +88,7 @@ proc job_process_distr {} {
 				} else {
 					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				}
-				job_log $job "job $jobname failed"
+				job_log $job "job $jobname skipped: dependencies not found"
 				continue
 			}
 			set temp {}
@@ -122,7 +122,7 @@ proc job_process_distr {} {
 			} else {
 				job_log $job "error in dependencies for $jobname: $adeps"
 			}
-			job_log $job "job $jobname failed"
+			job_log $job "job $jobname skipped: dependencies not found"
 			continue
 		}
 		if {[job_process_distr_running $ids]} {

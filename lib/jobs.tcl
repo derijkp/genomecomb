@@ -209,7 +209,7 @@ proc job_finddeps {job deps targetvarsVar targetvarslist idsVar {ftargetvars {}}
 			if {!$opt} {
 				error "missing dependency $pattern"
 			} else {
-				error "missing optional dependency $pattern"
+				job_lognf $job "missing optional dependency $pattern"
 				lappend finaldeps {}
 			}
 			continue

@@ -39,7 +39,7 @@ proc job_process_direct {} {
 			} else {
 				job_log $job "$adeps"
 			}
-			job_log $job "job $jobname failed"
+			job_log $job "job $jobname skipped: dependencies not found"
 			continue
 		}
 		set targetvars $ftargetvars
