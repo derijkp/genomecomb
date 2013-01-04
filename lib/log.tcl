@@ -5,11 +5,11 @@
 #
 
 proc logfile {logfile args} {
+	set f [open $logfile a]
 	foreach message $args {
-		set f [open $logfile a]
 		puts $f "[timestamp] $message"
-		close $f
 	}
+	close $f
 }
 
 proc putslog {args} {
