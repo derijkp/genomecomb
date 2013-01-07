@@ -378,8 +378,8 @@ proc monetdb_makesql {table header query qfieldsVar {sortfields {}} {inverse 0} 
 		set sqlsort "order by \"[join $sortfields "\",\""]\""
 	}
 	if {$query ne ""} {
-		set query [mselect_expandcode $header $query]
-		set sqlwhere "where $query"
+		set tquery [mselect_expandcode $header $query]
+		set sqlwhere "where $tquery"
 	}
 	set sql "select $sqlfields from \"$table\" $sqlwhere $sqlsort"
 	if {[isint $limit]} {
