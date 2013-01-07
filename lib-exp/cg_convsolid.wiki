@@ -1,0 +1,25 @@
+= Process =
+
+== Format ==
+cg convsolid projectfile
+
+== Summary ==
+Split and convert xsq files (from solid 5500xl) into csfasta, and distribute over projects
+
+== Description ==
+based on a projectfile, multiple xsq solid runs can be split, converted and distributed over experiments.
+The project file is a tab separated file, where each line represents a barcoded part of the run.
+It must contain following fields: experiment, sample, source, barcode.
+**experiment** is a directory downloaded from the machine, containing the original xsq files.
+The run data tagged with **barcode** will be stored in **experiment**/**sample**/**csfasta** in csfasta format
+All files are searched and saved within the working directory, that is the directory where the 
+projectfile is found. 
+
+The command expects the xsq tools (convertFromXSQ.sh) to be available in the PATH
+
+== Arguments ==
+; **projectfile**: project file
+
+== Category ==
+Conversion
+
