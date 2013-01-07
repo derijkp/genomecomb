@@ -48,7 +48,7 @@ proc map2sv {files prefix} {
 		foreach file $files {
 			puts $file
 			set cat [gzcat $file]
-			exec $cat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $scratchprefix
+			exec {*}$cat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $scratchprefix
 			incr num
 		}
 		set files [glob $scratchprefix-*]
