@@ -14,45 +14,64 @@
 #}
 
 proc cg_checksum {args} {
-	if {[lindex $args 0] eq "-n"} {
-		set check 0
-		set args [lrange $args 1 end]
-	} else {
-		set check 1
+	set check 1; set outdir {}
+	set pos 0
+	while 1 {
+		set key [lindex $args $pos]
+		switch -- $key {
+			-n {
+				set check 0
+				incr pos
+			}
+			-o {
+				incr pos
+				set outdir [file normalize [lindex $args $pos]]
+				incr pos
+			}
+			-- break
+			default {
+				break
+			}
+		}
 	}
+	set args [lrange $args $pos end]
 	if {[llength $args] < 1} {
 		error "format is: cg checksum dir\n or: cg ?-n? checksum manifestfile manifestfile ...\n (-c option for dryrun: check existing checksum files only)"
 		exit 1
 	}
-	if {[llength $args] == 1} {
-		set basedir [lindex $args 0]
-		if {[file isdir $basedir]} {
-			set files [glob $basedir/manifest.all $basedir/*/manifest.all $basedir/*/*/manifest.all]
+	set files {}
+	foreach file $args {
+		set file [file normalize $file]
+		if {[file isdir $file]} {
+			set temp [glob $file/manifest.all $file/*/manifest.all $file/*/*/manifest.all]
 			if {[llength $files] == 0} {
-				set files [exec find $basedir -iname manifest.all]
+				set files [split [exec find $file -iname manifest.all] \n]
 			}
 		} else {
-			set files $args
+			lappend files $file
 		}
-	} else {
-		set files $args
 	}
 	set numok 0
 	set numfailed 0
 	foreach file $files {
 		set dir [file dir $file]
 		cd $dir
-		if {$check && ![file exists checksum.txt]} {
+		if {$outdir eq ""} {
+			set checksumfile checksum.txt
+		} else {
+			set checksumfile [file join $outdir [file tail $dir]-checksum.txt]
+		}
+		if {$check && ![file exists $checksumfile]} {
 			puts "Checking $file"
-			set error [catch {exec sha256sum -c manifest.all > checksum.txt.temp} result]
+			set error [catch {exec sha256sum -c manifest.all > $checksumfile.temp} result]
 			if {[regexp {no properly formatted SHA256 checksum} $result]} {
-				set error [catch {exec md5sum -c manifest.all > checksum.txt.temp} result]
+				set error [catch {exec md5sum -c manifest.all > $checksumfile.temp} result]
 			}
-			if {![file size checksum.txt.temp]} {
-				file_write checksum.txt.temp "FAILED: $result\n"
+			if {![file size $checksumfile.temp]} {
+				file_write $checksumfile.temp "FAILED: $result\n"
 			}
-			file rename -force checksum.txt.temp checksum.txt
-			puts "$dir/checksum.txt written"
+			file rename -force $checksumfile.temp $checksumfile
+			puts "$checksumfile written"
 		}
 		# grep returns error if nothing is found
 		set line {}
