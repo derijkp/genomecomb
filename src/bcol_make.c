@@ -13,7 +13,7 @@
 #include <string.h>
 #include "tools.h"
 #include "debug.h"
-#include "khash-dstring.h"
+#include "hash.h"
 #include "tools_bcol.h"
 
 typedef struct Dest {
@@ -23,19 +23,15 @@ typedef struct Dest {
 	uint64_t lastpos;
 } Dest;
 
-KHASH_MAP_INIT_DSTR(DSTRING, Dest*);
-
-/*#include "dstring-khash.h"*/
-
-Dest *bcol_make_getout(khash_t(DSTRING) *hashtable,char *pre,DString *chromosome) {
+Dest *bcol_make_getout(Hash_table *hashtable,char *pre,DString *chromosome) {
 	DString *buffer = NULL;
 	Dest *o;
-	khiter_t k;
-	int ret;
-	k = kh_put(DSTRING,hashtable, chromosome, &ret);
-	if (ret == 0) {
+	Hash_bucket *bucket;
+	int new;
+	bucket = hash_get(hashtable, (void *)chromosome, hash_Dstring_hash, hash_Dstring_compare, &new);
+	if (new == 0) {
 		/* key was already present in the hashtable */
-		o = kh_value(hashtable, k);
+		o = hash_getvalue(bucket);
 	} else {
 		o = (Dest *)malloc(sizeof(Dest));
 		o->start = 0;
@@ -57,21 +53,23 @@ Dest *bcol_make_getout(khash_t(DSTRING) *hashtable,char *pre,DString *chromosome
 			fprintf(stderr,"Error opening file %s: %s.\n", buffer->string, strerror(errno));
 			exit(EXIT_FAILURE);
 		}
-		kh_value(hashtable, k) = o;
+		hash_setvalue(bucket,o)
 		DStringSetS(buffer,chromosome->string,chromosome->size);
-		kh_key(hashtable, k) = buffer;
+		bucket->key = (void *)buffer;
+		hash_setkey(bucket,buffer)
 		buffer = NULL;
 	}
 	return o;
 }
 
 int main(int argc, char *argv[]) {
-	khash_t(DSTRING) *hashtable;
+	Hash_table *hashtable;
 	Dest *o,*po = NULL;
 	DString *result = NULL;
 	DString *line = NULL,*chromosome = NULL;
-	khiter_t k;
-	char *pre,*type,*defaultvalue;
+	Hash_iter iter;
+	Hash_bucket *bucket;
+	char *pre,*type,*defaultvalue = "";
 	uint64_t offset, poffset = -1, size;
 	int reverse = 0, isunsigned = 0;
 	int col = 0,max = 0,offsetcol = -1,chrcol = -1;
@@ -103,7 +101,7 @@ NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)
 	reverse = bcol_NeedReversing((int)type[0]);
 	if (type[1] == 'u') {isunsigned = 1;}
 	result = DStringArrayNew(max+1);
-	hashtable = kh_init(DSTRING);
+	hashtable = hash_init();
 	if (chrcol == -1) {
 		o = bcol_make_getout(hashtable,pre,DStringEmtpy());
 		poffset = -1;
@@ -139,24 +137,25 @@ NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)
 		bcol_printbin(o->f,reverse,isunsigned,type,result[col].string);
 		o->lastpos ++;
 	}
-	for (k = kh_begin(hashtable); k != kh_end(hashtable); ++k) {
-		if (kh_exist(hashtable, k)) {
-			DStringDestroy(kh_key(hashtable, k));
-			o = kh_value(hashtable, k);
-			fclose(o->f);
-			fprintf(o->rf,"# binary column\n");
-			fprintf(o->rf,"# type %s\n",type);
-			fprintf(o->rf,"# default %s\n","0");
-			fprintf(o->rf,"begin\ttype\toffset\n");
-			fprintf(o->rf,"%llu\t%s\t%d\n",o->start,type,0);
-			fprintf(o->rf,"%llu\tend\t%d\n",o->start + o->lastpos,0);
-			fclose(o->rf);
-			free(o);
-		}
+	bucket = hash_first(hashtable,&iter);
+	while(bucket != NULL) {
+		DString *ds = hash_getkey(bucket);
+		DStringDestroy(ds);
+		o = hash_getvalue(bucket);
+		fclose(o->f);
+		fprintf(o->rf,"# binary column\n");
+		fprintf(o->rf,"# type %s\n",type);
+		fprintf(o->rf,"# default %s\n","0");
+		fprintf(o->rf,"begin\ttype\toffset\n");
+		fprintf(o->rf,"%llu\t%s\t%d\n",(long long int)o->start,type,0);
+		fprintf(o->rf,"%llu\tend\t%d\n",(long long int)(o->start + o->lastpos),0);
+		fclose(o->rf);
+		free(o);
+		bucket = hash_next(&iter);
 	}
 	if (line) {DStringDestroy(line);}
 	if (result) {DStringArrayDestroy(result);}
-	kh_destroy(DSTRING,hashtable);
+	hash_destroy(hashtable);
 	exit(EXIT_SUCCESS);
 }
 

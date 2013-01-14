@@ -12,19 +12,16 @@
 #include <string.h>
 #include "tools.h"
 #include "debug.h"
-#include "khash-dstring.h"
-
-KHASH_MAP_INIT_DSTR(DSTRING, FILE*);
-
-/*#include "dstring-khash.h"*/
+#include "hash.h"
 
 int main(int argc, char *argv[]) {
-	khash_t(DSTRING) *hashtable;
+	Hash_table *hashtable;
 	FILE *o;
 	DString *result = NULL, *buffer = NULL;
 	DString *line = NULL,*chromosome = NULL;
-	khiter_t k;
-	int col = 0,ret,header=0;
+	Hash_bucket *bucket;
+	Hash_iter iter;
+	int col = 0,new,header=0;
 	if ((argc < 2)&&(argc > 4)) {
 		fprintf(stderr,"Format is: distr2chr output_pre ?col? ?header?");
 		exit(EXIT_FAILURE);
@@ -40,33 +37,35 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	result = DStringArrayNew(col+1);
-	hashtable = kh_init(DSTRING);
+	hashtable = hash_init();
 	while (!DStringGetTab(line,stdin,col,result,0)) {
 		chromosome = result+col;
-		k = kh_put(DSTRING,hashtable, chromosome, &ret);
-		if (ret == 0) {
+		bucket = hash_get(hashtable, (void *)chromosome, hash_Dstring_hash, hash_Dstring_compare, &new);
+		if (new == 0) {
 			/* key was already present in the hashtable */
-			o = kh_value(hashtable, k);
+			o = hash_getvalue(bucket);
 		} else {
 			buffer = DStringNew();
 			DStringAppend(buffer,argv[1]);
 			DStringAppendS(buffer,chromosome->string,chromosome->size);
 			o = fopen64(buffer->string,"w");
-			kh_value(hashtable, k) = o;
+			hash_setvalue(bucket,o)
 			DStringSetS(buffer,chromosome->string,chromosome->size);
-			kh_key(hashtable, k) = buffer;
+			hash_setkey(bucket,buffer)
 			buffer = NULL;
 		}
 		fprintf(o,"%s\n", line->string);
 	}
-	for (k = kh_begin(hashtable); k != kh_end(hashtable); ++k) {
-		if (kh_exist(hashtable, k)) {
-			DStringDestroy(kh_key(hashtable, k));
-			fclose(kh_value(hashtable, k));
-		}
+	bucket = hash_first(hashtable,&iter);
+	while(bucket != NULL) {
+		DString *ds = hash_getkey(bucket);
+		DStringDestroy(ds);
+		o = hash_getvalue(bucket);
+		fclose(o);
+		bucket = hash_next(&iter);
 	}
 	if (line) {DStringDestroy(line);}
 	if (result) {DStringArrayDestroy(result);}
-	kh_destroy(DSTRING,hashtable);
+	hash_destroy(hashtable);
 	exit(EXIT_SUCCESS);
 }

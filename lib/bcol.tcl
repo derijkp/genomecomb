@@ -332,6 +332,7 @@ proc cg_bcol_make {args} {
 		set offsetpos $offsetcol
 		set colpos $valuecolumn
 	}
+# puts "bcol_make [list $prefix.bcol.temp/$tail] $type $colpos $chrompos $offsetpos $defaultvalue"
 	set pipe [open "| bcol_make [list $prefix.bcol.temp/$tail] $type $colpos $chrompos $offsetpos $defaultvalue >@ stdout 2>@ stderr" w]
 	fconfigure $f -encoding binary -translation binary
 	fconfigure $pipe -encoding binary -translation binary

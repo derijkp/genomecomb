@@ -305,12 +305,24 @@ int bcol_printbin(FILE *f,int reverse,int isunsigned,char *type,char *string) {
 				exit(EXIT_FAILURE);
 			}
 			uvalue = (long)strtoul(string,NULL,10);
+			if (errno) {
+				fprintf(stderr,"conversion error for type %s, value %s: %s.\n", type, string, strerror(errno));
+				exit(EXIT_FAILURE);
+			}
+			if (uvalue > 4294967295) {
+				fprintf(stderr,"conversion error for type %s, value %s: Numerical result out of range.\n", type, string);
+				exit(EXIT_FAILURE);
+			}
 		} else {
 			value = strtol(string,NULL,10);
-		}
-		if (errno) {
-			fprintf(stderr,"conversion error for type %s, value %s: %s.\n", type, string, strerror(errno));
-			exit(EXIT_FAILURE);
+			if (errno) {
+				fprintf(stderr,"conversion error for type %s, value %s: %s.\n", type, string, strerror(errno));
+				exit(EXIT_FAILURE);
+			}
+			if (value > 2147483647 || value < -2147483648) {
+				fprintf(stderr,"conversion error for type %s, value %s: Numerical result out of range.\n", type, string);
+				exit(EXIT_FAILURE);
+			}
 		}
 		if (isunsigned) {
 			if (uvalue > UINT32_MAX) {errno = 1;}
@@ -493,7 +505,7 @@ int bcol_printtext(FILE *f,int reverse,int isunsigned,char *type,char *buffer) {
 			    | (((uint64_t) buffer[1]) << 48)
 			    | (((uint64_t) buffer[0]) << 56);
 		}
-		fprintf(f,"%lld",wvalue);
+		fprintf(f,"%lld",(long long int)wvalue);
 /* need to handle unsigned properly ... (later)
 		if (unsigned) {
 			

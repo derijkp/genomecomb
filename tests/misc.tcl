@@ -154,6 +154,27 @@ chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v	-	-	41	u	1;2
 chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
 }} 
 
+test distr2chr {many} {
+	test_cleantmp
+	exec distr2chr tmp/distrvars1- 0 < data/manychr.tsv
+	exec cat {*}[glob tmp/distrvars1-*] > tmp/cat.tsv
+	exec sort tmp/cat.tsv > tmp/scat.tsv
+	exec sort data/manychr.tsv > tmp/check.tsv
+	set result {}
+	lappend result [exec diff tmp/scat.tsv tmp/check.tsv]
+	set files [glob tmp/distrvars1-*]
+	foreach file $files {
+		set temp [lindex [split $file -] end]
+		catch {exec grep -v $temp $file} r
+		if {$r ne "child process exited abnormally"} {error "file $file error: $r"}
+	}
+	lappend result [llength $files]
+	lappend result [file_read tmp/distrvars1-chr2]
+	set result
+} {{} 81 {chr2	2
+chr2	2-2
+}} 
+
 cd $keepdir
 file delete -force {*}[glob tmp/*]
 

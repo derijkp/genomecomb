@@ -1,10 +1,11 @@
 # ARCH should be defined by caller
 CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/completegnomics/src
 #CFLAGS=-Wall -O2
-TOOLS= tools.c tools.h debug.h khash-dstring.h
+TOOLS= tools.c tools.h debug.h
+HASHTOOLS=hash.h hash.c
 BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h
 
-all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile ../bin$(ARCH)/bcol_make
+all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_annot
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -12,8 +13,8 @@ clean:
 ../bin$(ARCH)/map2besthit: map2besthit.c $(TOOLS)
 	gcc map2besthit.c tools.c $(CFLAGS) -o ../bin$(ARCH)/map2besthit
 
-../bin$(ARCH)/distr2chr: distr2chr.c $(TOOLS)
-	gcc distr2chr.c tools.c $(CFLAGS) -o ../bin$(ARCH)/distr2chr
+../bin$(ARCH)/distr2chr: distr2chr.c $(TOOLS) $(HASHTOOLS)
+	gcc distr2chr.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/distr2chr
 
 ../bin$(ARCH)/map2sv: map2sv.c $(TOOLS)
 	gcc map2sv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/map2sv
@@ -51,5 +52,8 @@ clean:
 ../bin$(ARCH)/bcol_indexfile: bcol_indexfile.c $(TOOLS)
 	gcc bcol_indexfile.c tools.c $(CFLAGS) -o ../bin$(ARCH)/bcol_indexfile
 
-../bin$(ARCH)/bcol_make: bcol_make.c $(TOOLS) $(BCOL_TOOLS)
-	gcc bcol_make.c tools.c tools_bcol.c razf.c -lz $(CFLAGS) -o ../bin$(ARCH)/bcol_make
+../bin$(ARCH)/bcol_make: bcol_make.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
+	gcc bcol_make.c tools.c tools_bcol.c hash.c razf.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make -Wl,-Bstatic -lz -Wl,-Bdynamic
+
+../bin$(ARCH)/bcol_annot: bcol_annot.c $(TOOLS) $(BCOL_TOOLS)
+	gcc bcol_annot.c tools.c tools_bcol.c razf.c $(CFLAGS) -o ../bin$(ARCH)/bcol_annot -Wl,-Bstatic -lz -Wl,-Bdynamic
