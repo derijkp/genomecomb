@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 NODPRINT("%s <-> %s\n",keepchromosome.string,Loc_ChrString(chromosome1))
 		if (DStringLocCompare(chromosome1,&keepchromosome)) {
 			totsize += size;
-			fprintf(stdout,"%s\t%lld\n", keepchromosome.string, size);
+			fprintf(stdout,"%s\t%lld\n", keepchromosome.string, (long long int)size);
 NODPRINT("is new\n")
 			size = 0;
 			nextpos = 0;
@@ -57,8 +57,8 @@ NODPRINT("is new\n")
 		size += end1 - start1;
 	}
 	totsize += size;
-	fprintf(stdout,"%s\t%lld\n", keepchromosome.string, size);
-	fprintf(stdout,"\ntotal\t%lld\n", totsize);
+	fprintf(stdout,"%s\t%lld\n", keepchromosome.string, (long long int)size);
+	fprintf(stdout,"\ntotal\t%lld\n", (long long int)totsize);
 	fclose(f1);
 	DStringClear(&line);
 	exit(EXIT_SUCCESS);
