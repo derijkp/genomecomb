@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include "tools.h"
 #include "tools_bcol.h"
 #include "debug.h"
@@ -309,20 +310,24 @@ int bcol_printbin(FILE *f,int reverse,int isunsigned,char *type,char *string) {
 				fprintf(stderr,"conversion error for type %s, value %s: %s.\n", type, string, strerror(errno));
 				exit(EXIT_FAILURE);
 			}
+#if ULONG_MAX > 4294967295
 			if (uvalue > 4294967295) {
 				fprintf(stderr,"conversion error for type %s, value %s: Numerical result out of range.\n", type, string);
 				exit(EXIT_FAILURE);
 			}
+#endif
 		} else {
 			value = strtol(string,NULL,10);
 			if (errno) {
 				fprintf(stderr,"conversion error for type %s, value %s: %s.\n", type, string, strerror(errno));
 				exit(EXIT_FAILURE);
 			}
+#if LONG_MAX > 2147483647
 			if (value > 2147483647 || value < -2147483648) {
 				fprintf(stderr,"conversion error for type %s, value %s: Numerical result out of range.\n", type, string);
 				exit(EXIT_FAILURE);
 			}
+#endif
 		}
 		if (isunsigned) {
 			if (uvalue > UINT32_MAX) {errno = 1;}
