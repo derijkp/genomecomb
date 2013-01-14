@@ -71,10 +71,10 @@ int main(int argc, char *argv[]) {
 	Hash_bucket *bucket;
 	char *pre,*type,*defaultvalue = "";
 	uint64_t offset, poffset = -1, size;
-	int reverse = 0, isunsigned = 0;
+	int reverse = 0, isunsigned = 0, header = 0;
 	int col = 0,max = 0,offsetcol = -1,chrcol = -1;
-	if ((argc < 2)||(argc > 8)) {
-		fprintf(stderr,"Format is: bcol_make output_pre type ?col? ?chromosomecol? ?offsetcol? ?default?\n");
+	if ((argc < 2)||(argc > 9)) {
+		fprintf(stderr,"Format is: bcol_make output_pre type ?col? ?chromosomecol? ?offsetcol? ?default? ?header?\n");
 		exit(EXIT_FAILURE);
 	}
 	pre = argv[1];
@@ -95,6 +95,15 @@ int main(int argc, char *argv[]) {
 	}
 	if (argc >= 7) {
 		defaultvalue = argv[6];
+	}
+	if (argc >= 8) {
+		header = atoi(argv[7]);
+		if (header) {
+			DString *line = NULL;
+			line = DStringNew();
+			skip_header(stdin,line);
+			DStringDestroy(line);
+		}
 	}
 NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)
 	line = DStringNew();
