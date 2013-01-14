@@ -32,4 +32,9 @@ chr7	127480532  127481699  Neg4  0  -}
 
 file delete tmp/temp.tsv
 
+test select {sft2gff} {
+	exec cg vcf2sft data/test1000glow.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2sft
+} {}
+
 testsummarize
