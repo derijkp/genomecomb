@@ -5,6 +5,7 @@
 
 #include "tools.h"
 #include "hash.h"
+#include "debug.h"
 
 Hash_table *hash_init_size(int tablesize) {
 	Hash_table *table;
@@ -13,7 +14,7 @@ Hash_table *hash_init_size(int tablesize) {
 	table->table = (Hash_tableitem *)malloc(size);
 	memset(table->table,0,size);
 	table->max = tablesize-1;
-	table->maxload = size*0.7;
+	table->maxload = (int)((double)size*0.7);
 	table->datasize = 0;
 	table->items = NULL;
 	return(table);
@@ -29,26 +30,27 @@ void hash_resize(Hash_table *table, hash_hash_func *hashfunc) {
 	while (olditem != NULL) {
 		oldbucket = olditem->chain;
 		while (oldbucket->key != NULL) {
-			int hash;
+			unsigned int hash;
 			hash = hashfunc(oldbucket->key,newtable->max);
 			/* can we find the bucket with the right key	*/
 			/* will allways be new buckets, so do not check for existing here, no compar function needed */
-			tableitem = newtable->table+hash;
+			tableitem = table->table+hash;
 			if (tableitem->chain == NULL) {
 				/* not found, create new chain */
 				bucket = (Hash_bucket *)malloc(2*sizeof(Hash_bucket));
+				NODPRINT("new bucket")
 				tableitem->chain = bucket;
-				tableitem->next = newtable->items;
-				newtable->items = tableitem;
+				tableitem->next = table->items;
+				table->items = tableitem;
 			} else {
 				int pos = 0;
 				bucket = tableitem->chain;
 				while(1) {
 					bucket++;
-					if (bucket->key == NULL) break;
 					pos++;
+					if (bucket->key == NULL) break;
 				}
-				newtable->datasize ++;
+				NODPRINT("bucket at %d",pos)
 				tableitem->chain = (Hash_bucket *)realloc(tableitem->chain,(pos+2)*sizeof(Hash_bucket));
 				bucket = tableitem->chain + pos;
 			}
@@ -73,13 +75,16 @@ void hash_resize(Hash_table *table, hash_hash_func *hashfunc) {
 Hash_bucket *hash_get(Hash_table *table, void *key, hash_hash_func *hashfunc, hash_key_compare_func *compare, int *new) {
 	Hash_tableitem *tableitem;
 	Hash_bucket *bucket;
-	int comp,hash;
+	unsigned int hash;
+	int comp;
 	hash = hashfunc(key,table->max);
+	NODPRINT("hash %s -> %d",((DString *)key)->string,hash);
 	/* can we find the bucket with the right key	*/
 	tableitem = table->table+hash;
 	if (tableitem->chain == NULL) {
 		/* not found, create new chain */
 		bucket = (Hash_bucket *)malloc(2*sizeof(Hash_bucket));
+		NODPRINT("new bucket")
 		tableitem->chain = bucket;
 		tableitem->next = table->items;
 		table->items = tableitem;
@@ -93,13 +98,14 @@ Hash_bucket *hash_get(Hash_table *table, void *key, hash_hash_func *hashfunc, ha
 				return bucket;
 			}
 			bucket++;
-			if (bucket->key == NULL) break;
 			pos++;
+			if (bucket->key == NULL) break;
 		}
-		table->datasize ++;
+		NODPRINT("bucket at %d",pos)
 		tableitem->chain = (Hash_bucket *)realloc(tableitem->chain,(pos+2)*sizeof(Hash_bucket));
 		bucket = tableitem->chain + pos;
 	}
+	table->datasize ++;
 	bucket->key = key;
 	bucket->value = NULL;
 	bucket[1].key = NULL;
@@ -150,22 +156,24 @@ void hash_destroy(Hash_table *table) {
 	free(table);
 }
 
-int hash_Dstring_hash (void *key,int hashtablemax)
+unsigned int hash_Dstring_hash (void *key,unsigned int hashtablemax)
 {
+	register unsigned int result;
+	register int c;
 	DString *ds = key;
-	char *s = ds->string;
+	char *string = ds->string;
 	int count = ds->size;
-	uint32_t h = (uint32_t) s;
 	if (count <= 0) {
-		h = 0;
+		result = 0;
 	} else {
-		s++;
+		result = 0;
 		while (--count) {
-			h = (h << 5) - h + (uint32_t) * s;
-			s++;
+			c = *string;
+			result += (result<<3) + c;
+			string++;
 		}
 	}
-	return h & hashtablemax;
+	return result & hashtablemax;
 }
 
 int hash_Dstring_compare(const void* key1, const void* key2)

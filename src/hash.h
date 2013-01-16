@@ -23,7 +23,7 @@ typedef struct Hash_iter {
 } Hash_iter;
 
 typedef int hash_key_compare_func(const void* key1, const void* key2);
-typedef int hash_hash_func(void* key, int hashtablesize);
+typedef unsigned int hash_hash_func(void* key, unsigned int hashtablesize);
 
 Hash_table *hash_init_size(int tablesize);
 void hash_destroy(Hash_table *table);
@@ -37,5 +37,5 @@ Hash_bucket *hash_next(Hash_iter *iter);
 #define hash_setvalue(bucket,o) bucket->value = (void *)o;
 #define hash_init() (hash_init_size(64));
 
-int hash_Dstring_hash (void *key,int hashtablesize);
+unsigned int hash_Dstring_hash (void *key,unsigned int hashtablesize);
 int hash_Dstring_compare(const void* key1, const void* key2);

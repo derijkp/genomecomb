@@ -188,6 +188,16 @@ test bcol_make {-p and -c} {
 53d26
 <}
 
+test bcol_make {-p and -c allchr: check bug} {
+	test_cleantmp
+	catch {exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/allchr.tsv} e
+	set files [glob tmp/temp-*.bcol]
+	foreach file $files {
+		if {[file size $file] == 0} {error "file $file has size 0"}
+	}
+	set result {}
+} {}
+
 test bcol_regextract {basic} {
 	test_cleantmp
 	catch {exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv} e

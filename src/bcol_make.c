@@ -34,6 +34,7 @@ Dest *bcol_make_getout(Hash_table *hashtable,char *pre,DString *chromosome) {
 		o = hash_getvalue(bucket);
 	} else {
 		o = (Dest *)malloc(sizeof(Dest));
+		NODPRINT("new %s: %p",chromosome->string,o)
 		o->start = 0;
 		o->lastpos = -1;
 		buffer = DStringNew();
@@ -96,17 +97,14 @@ int main(int argc, char *argv[]) {
 	if (argc >= 7) {
 		defaultvalue = argv[6];
 	}
+	line = DStringNew();
 	if (argc >= 8) {
 		header = atoi(argv[7]);
 		if (header) {
-			DString *line = NULL;
-			line = DStringNew();
 			skip_header(stdin,line);
-			DStringDestroy(line);
 		}
 	}
-NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)
-	line = DStringNew();
+	NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)
 	reverse = bcol_NeedReversing((int)type[0]);
 	if (type[1] == 'u') {isunsigned = 1;}
 	result = DStringArrayNew(max+1);
@@ -149,8 +147,8 @@ NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)
 	bucket = hash_first(hashtable,&iter);
 	while(bucket != NULL) {
 		DString *ds = hash_getkey(bucket);
-		DStringDestroy(ds);
 		o = hash_getvalue(bucket);
+		NODPRINT("close %s: %p",ds->string,o)
 		fclose(o->f);
 		fprintf(o->rf,"# binary column\n");
 		fprintf(o->rf,"# type %s\n",type);
@@ -159,6 +157,7 @@ NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)
 		fprintf(o->rf,"%llu\t%s\t%d\n",(long long int)o->start,type,0);
 		fprintf(o->rf,"%llu\tend\t%d\n",(long long int)(o->start + o->lastpos),0);
 		fclose(o->rf);
+		DStringDestroy(ds);
 		free(o);
 		bucket = hash_next(&iter);
 	}
