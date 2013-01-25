@@ -109,7 +109,6 @@ proc cg_vcf2sft {args} {
 		set l1 [string length $ref]
 		set l2 0
 		set alts [split $alt ,]
-		set genotypes [list_concat $ref $alts]
 		foreach calt $alts {
 			if {[string length $calt] > $l2} {set l2 [string length $calt]}
 		}
@@ -129,7 +128,8 @@ proc cg_vcf2sft {args} {
 			foreach calt $alts {
 				lappend temp [string range $calt 1 end]
 			}
-			set alt [join $temp ,]
+			set alts $temp
+			set alt [join $alts ,]
 			if {$l1 == 1} {
 				set type ins
 			} elseif {$l2 == 1} {
@@ -138,6 +138,7 @@ proc cg_vcf2sft {args} {
 				set type sub
 			}
 		}
+		set genotypes [list $ref {*}$alts]
 		set result [list $chrom $begin $end $type $ref $alt $id $qual $filter]
 		foreach sample $samples geno $genos {
 			set order [list_cor $format $formatfields]

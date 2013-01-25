@@ -9,6 +9,11 @@ test select {vcf2sft} {
 	exec diff tmp/temp.tsv data/expected-test.vcf2sft
 } {}
 
+test select {vcf2sft ins and del} {
+	exec cg vcf2sft data/test2.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test2.vcf2sft
+} {}
+
 test select {vcf2sft} {
 	exec cg vcf2sft data/test1000glow.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2sft
