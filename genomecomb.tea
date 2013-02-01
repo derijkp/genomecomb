@@ -10,12 +10,12 @@ config major 0
 
 # The minor version number of your package.
 # $Format: "config minor $ProjectMinorVersion$"$
-config minor 8
+config minor 9
 
 # The patchlevel of your package. This component usually gets omitted from
 # library and directory names, and may even be left blank.
 # $Format: "config patchlevel $ProjectPatchLevel$"$
-config patchlevel 6
+config patchlevel 0
 
 # The name of a file in your distribution that configure should find to
 # discover whether it is where it thinks it ought to be. This should
@@ -26,7 +26,7 @@ config locator generic/genomecomb.c
 # are conventionally held in either the top-level directory or
 # in the 'generic' subdirectory.
 config genericSources {
-	genomecombInit.c genomecomb.c tools.c
+	genomecombInit.c genomecomb.c genomecomb_selectindexed.c tools.c
 }
 
 # The list of additional source files that are to be built on UNIX platforms.

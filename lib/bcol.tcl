@@ -496,34 +496,6 @@ proc cg_bcol {cmd args} {
 	cg_bcol_$cmd {*}$args
 }
 
-proc cg_index file {
-	set time [file mtime $file]
-	set indexdir [gzroot $file].index
-	set ext [file extension $file]
-	if {[inlist {.rz .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
-	file mkdir $indexdir
-	set indexfile $indexdir/lines.bcol
-	bcol_indexlines $file $indexfile
-	if {![file exists $indexdir/info.tsv] || [file mtime $indexdir/info.tsv] < $time} {
-		catch {file delete $indexdir/info.tsv}
-		set f [gzopen $file]
-		set header [tsv_open $f]
-		catch {close $f}
-		set bcol [bcol_open $indexfile]
-		set size [bcol_size $bcol]
-		bcol_close $bcol
-		set f [open $indexdir/info.tsv.temp w]
-		puts $f key\tvalue
-		puts $f file\t$file
-		puts $f lineindexfile\t[file tail $indexfile]
-		puts $f header\t$header
-		puts $f size\t$size
-		close $f
-		file rename $indexdir/info.tsv.temp $indexdir/info.tsv
-	}
-	return $indexfile
-}
-
 proc cg_size file {
 	set indexfile [cg_index $file]
 	set bcol [bcol_open $indexfile]

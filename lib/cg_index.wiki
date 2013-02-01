@@ -1,0 +1,21 @@
+= index =
+
+== Format ==
+cg index ?-cols? tsvfile
+
+== Summary ==
+make indices for a tsv file
+
+== Description ==
+This command creates a directory with indices that
+may speed up some functionality. It is mainly used (and 
+needed) for providing fast access to the file in cg viz.
+The optional column indices will speed up some queries,
+but can take a significant amount of disc space
+
+== Arguments ==
+; **tsvfile**: file to index
+; **-cols**: Add extra column indices
+
+== Category ==
+tsv

@@ -633,7 +633,7 @@ proc tsv_select_expandcode {header code neededfieldsVar} {
 	tsv_select_detokenize $tokens $header neededfields
 }
 
-proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0}} {
+proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {index {}}} {
 # putsvars query qfields sortfields newheader sepheader f stdin out stdout h inverse
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
@@ -656,8 +656,10 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		set qfields [list_lremove $header $qfields]
 		set qfields [tsv_select_expandfields $header $qfields qposs]
 	}
-
+	if {![file exists $index/cols]} {set index {}}
+	if {[llength $qfields] == [llength $header]} {set index {}}
 	if {[llength $sortfields]} {
+		set index {}
 		if {$sortfields eq "-"} {
 			set poss [list_sub [tsv_basicfields $header 6 0] -exclude 4]
 			set poss [list_remove $poss -1]
@@ -720,17 +722,48 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				}
 			}]
 		}
-		append tclcode [subst {
-			proc tsv_selectc_query {$neededfields} {
-				expr {$pquery}
+		if {$index eq ""} {
+			append tclcode [subst {
+				proc tsv_selectc_query {$neededfields} {
+					expr {$pquery}
+				}
+				tsv_selectc tsv_selectc_query [list $neededcols] [list $outcols]
+				exit
+			}]
+		} else {
+			set index [file normalize $index]
+			set indexcols [list_remove $neededcols -1]
+			foreach el $outcols {
+				if {[isint $el]} {lappend indexcols $el}
 			}
-			tsv_selectc tsv_selectc_query [list $neededcols] [list $outcols]
-			exit
-		}]
+			set indexcols [list_remdup $indexcols]
+			set temp {}
+			foreach el $outcols {
+				if {[isint $el]} {
+					lappend temp [lsearch $indexcols $el]
+				} else {
+					lappend temp $el
+				}
+			}
+			set outcols $temp
+			set neededcols [list_cor $indexcols $neededcols]
+			set indexfiles {}
+			foreach col $indexcols {
+				lappend indexfiles $index/cols/[lindex $header $col].col
+			}
+			append tclcode [subst {
+				proc tsv_selectc_query {$neededfields} {
+					expr {$pquery}
+				}
+				tsv_selectc_indexed tsv_selectc_query [list $neededcols] [list $outcols] [list $indexfiles]
+				exit
+			}]
+		}
 		lappend pipe [list cg exec $tclcode]
 	}
 #putslog -------------pipe-------------------
 #putslog pipe:[join $pipe " | "]
+putsvars pipe
 #putslog ------------------------------------
 	if {$qfields ne ""} {
 		set nh $qfields
@@ -753,6 +786,8 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			unset ::filebuffer($f)
 		}
 		fcopy $f $out
+	} elseif {$index ne ""} {
+		exec {*}[join $pipe " | "] >@ $out 2>@ stderr
 	} else {
 		chanexec $f $out [join $pipe " | "]
 	}
@@ -851,8 +886,10 @@ proc cg_select {args} {
 #puts stderr [list fields=$fields query=$query]
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]
+		set index $filename.index
 		set f [gzopen $filename]
 	} else {
+		set index {}
 		set f stdin
 	}
 	if {[llength $args] > 1} {
@@ -861,7 +898,7 @@ proc cg_select {args} {
 	} else {
 		set o stdout
 	}
-	set error [catch {tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse} result]
+	set error [catch {tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $index} result]
 	if {$f ne "stdin"} {catch {close $f}}
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$error} {
