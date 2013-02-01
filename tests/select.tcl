@@ -254,8 +254,8 @@ test select {ROW} {
 } {{chromosome	begin	end} {chr1	4099	5000}}
 
 test select {ROW} {
-	split [exec cg select -f {chromosome begin end row=$ROW} -q {$ROW >= 2 && $ROW <= 3} < data/vars1.sft] \n
-} {{chromosome	begin	end	row} {chr1	4099	5000	2} {chr1	5000	5010	3}}
+	split [exec cg select -f {chromosome begin end ROW} -q {$ROW >= 2 && $ROW <= 3} < data/vars1.sft] \n
+} {{chromosome	begin	end	ROW} {chr1	4099	5000	2} {chr1	5000	5010	3}}
 
 test select {shared objects bugcheck} {
 	split [exec cg select -f {chromosome begin end {test=[set ::keep $begin]}} -q {$ROW between {2 3}} < data/vars1.sft] \n

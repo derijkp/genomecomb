@@ -179,6 +179,12 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 	set qposs {}
 	set rfields {}
 	foreach field $qfields {
+		if {$field eq "ROW"} {
+			lappend rfields ROW
+			lappend qposs {}
+			# empty for code will output ROW directly later
+			continue
+		}
 		set pos [string first = $field]
 		if {$pos != -1} {
 			set fieldname [string range $field 0 [expr {$pos-1}]]
@@ -688,6 +694,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		foreach el $qposs {
 			if {[isint $el]} {
 				lappend outcols $el
+			} elseif {$el eq ""} {
+				# empty instead of code or int will directly output ROW
+				lappend outcols {}
 			} else {
 				set code [tsv_select_expandcode $header [lindex $el 1] neededfields]
 				lappend outcols make_col$num
@@ -711,11 +720,11 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				}
 			}]
 		}
-		append tclcode [subst -nocommands {
+		append tclcode [subst {
 			proc tsv_selectc_query {$neededfields} {
 				expr {$pquery}
 			}
-			tsv_selectc tsv_selectc_query {$neededcols} {$outcols}
+			tsv_selectc tsv_selectc_query [list $neededcols] [list $outcols]
 			exit
 		}]
 		lappend pipe [list cg exec $tclcode]

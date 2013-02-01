@@ -42,7 +42,8 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	Tcl_Obj **listobjv,**listoutv;
 	DString *line = NULL,*array;
 	ssize_t read;
-	int maxtab=0,objc,show,i,error,line_nr=0;
+	int maxtab=0,objc,show,i,error;
+	unsigned int line_nr=0;
 	if ((argc < 4)||(argc > 4)) {
 		Tcl_WrongNumArgs(interp, 1, argv, "queryproc varcolumns outcolumns");
 		return TCL_ERROR;
@@ -93,7 +94,6 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 				Tcl_SetIntObj(objv[i+1],line_nr);
 			}
 		}
-		line_nr++;
 		error = cmdinfo.objProc(cmdinfo.objClientData,interp,objc,objv);
 		if (error) {return error;}
 		queryresult = Tcl_GetObjResult(interp);
@@ -124,23 +124,31 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 						size = array[out].size;
 						while(size--) {putc_unlocked(*cur++,stdout);}
 					} else {
-						objv[0]=listoutv[i];
-						error = Tcl_GetCommandInfo(interp,Tcl_GetStringFromObj(listoutv[i],NULL),&cmdinfo2);
-						if (error==0) {
-							Tcl_ResetResult(interp);
-							Tcl_AppendResult(interp, "unknown command: \"", Tcl_GetStringFromObj(listoutv[i],NULL), "\"", (char *) NULL);
-							return TCL_ERROR;
+						char *string;
+						int len;
+						string = Tcl_GetStringFromObj(listoutv[i],&len);
+						if (len == 0) {
+							fprintf(stdout,"%d",line_nr);
+						} else {
+							objv[0]=listoutv[i];
+							error = Tcl_GetCommandInfo(interp,string,&cmdinfo2);
+							if (error==0) {
+								Tcl_ResetResult(interp);
+								Tcl_AppendResult(interp, "unknown command: \"", string, "\"", (char *) NULL);
+								return TCL_ERROR;
+							}
+							error = cmdinfo2.objProc(cmdinfo2.objClientData,interp,objc,objv);
+							if (error) {return error;}
+							queryresult = Tcl_GetObjResult(interp);
+							cur = Tcl_GetStringFromObj(queryresult,&size);
+							while(size--) {putc_unlocked(*cur++,stdout);}
 						}
-						error = cmdinfo2.objProc(cmdinfo2.objClientData,interp,objc,objv);
-						if (error) {return error;}
-						queryresult = Tcl_GetObjResult(interp);
-						cur = Tcl_GetStringFromObj(queryresult,&size);
-						while(size--) {putc_unlocked(*cur++,stdout);}
 					}
 				}
 				putc_unlocked('\n',stdout);
 			}
 		}
+		line_nr++;
 	}
 	for (i = 1 ; i <= listobjc ; i++) {
 		Tcl_DecrRefCount(objv[i]);
