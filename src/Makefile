@@ -57,3 +57,6 @@ clean:
 
 ../bin$(ARCH)/bcol_annot: bcol_annot.c $(TOOLS) $(BCOL_TOOLS)
 	gcc bcol_annot.c tools.c tools_bcol.c razf.c $(CFLAGS) -o ../bin$(ARCH)/bcol_annot -Wl,-Bstatic -lz -Wl,-Bdynamic
+
+../bin$(ARCH)/test: test.c tools.c
+	gcc test.c tools.c $(CFLAGS) -o ../bin$(ARCH)/test
