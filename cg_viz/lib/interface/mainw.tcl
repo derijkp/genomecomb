@@ -185,9 +185,9 @@ mainw method opendb {args} {
 	catch {$object.tb destroy}
 	table_monetdb new $object.tb
 	$object.tb open $database $table $dbfarm
-	set tables [cg_monetdb tables $database]
+	set tables [cg_monetdb_tables $database]
 	if {[lsearch $tables sel_$table] == -1} {
-		cg_monetdb sql $database [subst {create table "sel_$table" (id integer)}]
+		cg_monetdb_sql $database [subst {create table "sel_$table" (id integer)}]
 	}
 	$object.tb link $object.table.data
 	# default graph

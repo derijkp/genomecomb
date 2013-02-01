@@ -159,7 +159,7 @@ table_monetdb method open {database table dbfarm} {
 	set tdata(database) $database
 	set tdata(table) $table
 	# table fields (fields in original table)
-	set tdata(tfields) [cg_monetdb fields $database $table]
+	set tdata(tfields) [cg_monetdb_fields $database $table]
 	# fields (requested fields for query, may include calculated fields in the form field=...)
 	set tdata(fields) $tdata(tfields)
 	# query fields (requested fields for query)

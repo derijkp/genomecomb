@@ -471,7 +471,7 @@ proc cg_mselect {args} {
 			-hf {set hc $value}
 			-s {set sortfields $value}
 			-n {
-				set header [cg_monetdb fields $db $table]
+				set header [cg_monetdb_fields $db $table]
 				set names {}
 				foreach col $header {
 					set split [split $col _]
@@ -499,7 +499,7 @@ proc cg_mselect {args} {
 		exit 1
 	}
 	foreach {db table outfile} $args break
-	set header [cg_monetdb fields $db $table]
+	set header [cg_monetdb_fields $db $table]
 	if {$printheader} {
 		puts stdout [join $header \n]
 		exit 0
