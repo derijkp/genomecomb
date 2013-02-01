@@ -140,7 +140,7 @@ proc bcol_get {bcol start {end {}}} {
 	set result {}
 	set offset 0
 	if {[llength $table] > 2} {
-		list_foreach {num type noffset} $table {
+		list_foreach {num temp noffset} $table {
 			if {$start <= $num} {
 				break
 			}
