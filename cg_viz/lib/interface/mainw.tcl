@@ -50,11 +50,7 @@ mainw method init args {
 	grid columnconfigure $object.table.buttons 1 -uniform {}
 	grid columnconfigure $object.table.buttons 2 -uniform {}
 	grid columnconfigure $object.table.buttons 3 -uniform {} -weight 1
-	grid columnconfigure $object.table.buttons 4 -uniform {}
-	grid columnconfigure $object.table.buttons 5 -uniform {}
 	grid rowconfigure $object.table.buttons 0 -uniform {}
-	grid rowconfigure $object.table.buttons 1 -uniform {}
-	grid rowconfigure $object.table.buttons 2 -uniform {}
 	Classy::TkTable $object.table.data \
 		-rows 0 \
 		-cols 1
@@ -88,11 +84,15 @@ mainw method init args {
 	grid columnconfigure $object 0 -uniform {}
 	grid columnconfigure $object 1 -uniform {}
 	grid columnconfigure $object 2 -uniform {} -weight 1
+	grid columnconfigure $object 3 -uniform {}
+	grid columnconfigure $object 4 -uniform {}
 	grid rowconfigure $object 0 -uniform {}
 	grid rowconfigure $object 1 -uniform {}
 	grid rowconfigure $object 2 -uniform {}
 	grid rowconfigure $object 3 -uniform {}
 	grid rowconfigure $object 4 -uniform {} -weight 1
+	grid rowconfigure $object 5 -uniform {}
+	grid rowconfigure $object 6 -uniform {}
 
 	if {"$args" == "___Classy::Builder__create"} {return $object}
 # ClassyTk Initialise
@@ -104,6 +104,10 @@ $object start
 		-destroycommand "exit"
 	$object.maintool configure \
 		-cmdw [varsubst object {$object}]
+	$object.tree configure \
+		-endnodecommand [varsubst object {$object tree_browse}] \
+		-opencommand [varsubst object {$object tree_open}] \
+		-closecommand [varsubst object {$object tree_close}]
 	$object.panedh configure \
 		-window [varsubst object {$object.canvas}]
 	$object.panedv configure \
@@ -139,6 +143,7 @@ mainw method start {args} {
 	set fields {}
 	Extral::event listen $object selchanged [list $object redrawselection]
 	Extral::event listen $object querychanged [list $object redrawquery]
+	$object.tree clearnode {}
 }
 
 mainw method redrawselection {args} {
@@ -197,6 +202,36 @@ mainw method opendb {args} {
 	# $object.disp1 options scale 10000000
 }
 
+mainw method tree_close {dir} {
+	$object.tree clearnode $dir
+}
+
+mainw method tree_browse {file} {
+	$object open $file
+}
+
+mainw method tree_open {dir} {
+putsvars dir
+	$object.tree clearnode $dir
+	set dirs {}
+	set files {}
+	foreach file [glob -nocomplain $dir/*] {
+		set ext [file extension $file]
+		if {$ext eq ".index"} continue
+		if {[file isdirectory $file]} {
+			lappend dirs $file
+		} else {
+			lappend files $file
+		}
+	}
+	foreach file [lsort $dirs] {
+		$object.tree addnode $dir $file -text [file tail $file]
+	}
+	foreach file [lsort $files] {
+		$object.tree addnode $dir $file -type end -text [file tail $file]
+	}
+}
+
 mainw method opentsv {args} {
 	foreach {file} $args break
 	catch {$object.tb destroy}
@@ -209,6 +244,31 @@ mainw method opentsv {args} {
 #	$object.disp1 redraw
 	# $object.disp1 options scale 10000000
 	wm title $object $file
+	# find root and start tree
+	set file [file normalize $file]
+	if {[file isdir $file]} {
+		set root $file
+	} else {
+		set root [file dir $file]
+	}
+	while 1 {
+		if {$root eq "."} break
+		if {[file exists $root/compar]} break
+		if {[llength [glob -nocomplain $root/*.cgproj]]} break
+		lappend path [file tail $root]
+		set root [file dir $root]
+	}
+	$object.tree selection set node $file
+	if {![llength [$object.tree selection]]} {
+		$object.tree clearnode {}
+		$object.tree addnode {} $root -text [file tail $root]
+		$object tree_open $root
+		foreach dir [list_reverse $path] {
+			set root $root/$dir
+			$object tree_open $root
+		}
+		$object.tree selection set node $file
+	}
 }
 
 mainw method savetsv {file} {
@@ -481,3 +541,4 @@ mainw method fields {args} {
 		$tb fields [lindex $args 0]
 	}
 }
+
