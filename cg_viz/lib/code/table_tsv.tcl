@@ -114,7 +114,7 @@ table_tsv method query {query} {
 	Classy::Progress message "Running query, please be patient (no progress shown)"
 	putslog "Doing query $query"
 	regsub -all \n $query { } query
-	exec cg select -q $query -f {rowid=$ROW} $tdata(file) $tdata(indexdir)/query_results.tsv
+	exec cg select -q $query -f ROW $tdata(file) $tdata(indexdir)/query_results.tsv
 	Classy::Progress next "Converting results"
 	putslog "Converting results"
 	set f [open $tdata(indexdir)/query_results.tsv]
@@ -172,6 +172,28 @@ table_tsv method info {key} {
 table_tsv method tfields {} {
 	private $object tdata
 	return $tdata(tfields)
+}
+
+table_tsv method qfields {} {
+	private $object tdata
+	return $tdata(monetfields)
+}
+
+table_tsv method values {field {max 1000}} {
+	private $object tdata
+	set histofile $tdata(file).index/cols/$field.col.histo
+	if (![file exists $histofile]) {return {}}
+	set result {}
+	set f [open $histofile]
+	while {![eof $f]} {
+		set line [gets $f]
+		if {![llength $line]} continue
+		foreach {num value} $line break
+		lappend result [list $value $num]
+		if {[llength $result] == $max} break
+	}
+	close $f
+	return $result
 }
 
 table_tsv method fields {args} {
@@ -324,6 +346,10 @@ table_tsv method open {file} {
 		}
 	}
 	$object reset
+	if {[info exists tdata(sqlbackend_db)]} {
+		display_chr new $object.disp1 $object.canvas.data $object.tb $tdata(dbdir)
+		$object.disp1 redraw
+	}
 	Extral::event generate querychanged $object
 	return $file
 }

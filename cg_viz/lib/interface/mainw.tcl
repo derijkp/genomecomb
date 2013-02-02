@@ -250,13 +250,219 @@ mainw method query {args} {
 	$tb query $query
 }
 
+mainw method querybuilder_filterfields {args} {
+	private $object qfields qfieldsfilter
+	set qfields [$object.tb tfields]
+	if {$qfieldsfilter ne "" && $qfieldsfilter ne "*"} {
+		set poss [list_find -regexp $qfields $qfieldsfilter]
+		set qfields [list_sub $qfields $poss]
+	}
+}
+
+mainw method querybuilder_filteroperators {args} {
+	private $object qoperators qoperatorsfilter
+	set qoperators {== != < <= > >= regexp contains shares }
+#	if {$qoperatorsfilter ne "" && $qoperatorsfilter ne "*"} {
+#		set poss [list_find -regexp $qoperators $qoperatorsfilter]
+#		set qoperators [list_sub $qoperators $poss]
+#	}
+}
+
+mainw method querybuilder_filtervalues {args} {
+	private $object qvalues qvaluesfilter
+	set w $object.querybuilder.options.paned
+	set field [lindex [$w.fields.fields get] 0]
+	if {$field eq ""} return
+	set list [$object.tb values $field]
+	set qnums [list_subindex $list 1]
+	set list [list_subindex $list 0]
+	if {[llength $list]} {
+		# found the values, do nothing else
+	} elseif {[regexp ^sequenced- $field]} {
+		set list {r v u}
+	} elseif {[regexp _impact $field]} {
+		set list {CDS RNA}
+	} else {
+		set list {}
+	}
+	if {$qvaluesfilter ne "" && $qvaluesfilter ne "*"} {
+		set poss [list_find -regexp $list $qvaluesfilter]
+		set list [list_sub $list $poss]
+		set qnums [list_sub $list $poss]
+	}
+	set qvalues $list
+putsvars qvalues
+	if {![inlist $qvalues [$w.values.value get]]} {
+		$w.values.values activate [lindex $qvalues 0]
+		$w.values.value set [lindex $qvalues 0]
+	}
+#	set qvalues {}
+#	foreach value $list num $qnums {
+#		lappend qvalues "$value ($num)"
+#	}
+	return $qvalues
+}
+
+mainw method querybuilder_selfield {value} {
+	$object.querybuilder.options.paned.query.query insert current " \$$value "
+}
+
+mainw method querybuilder_browsefield {args} {
+	Classy::todo $object querybuilder_filtervalues
+}
+
+mainw method querybuilder_browsevalue {args} {
+	set w $object.querybuilder.options.paned
+	$w.values.value set [$w.values.values get]
+}
+
+mainw method querybuilder_seloperator {value} {
+	$object.querybuilder.options.paned.query.query insert current " $value "
+}
+
+mainw method querybuilder_selvalue {value} {
+	if {[isdouble $value]} {
+		set insert " $value "
+	} else {
+		set insert " \"$value\" "
+	}
+	$object.querybuilder.options.paned.query.query insert current $insert
+}
+
+mainw method querybuilder_quotevalue {value} {
+	if {[isdouble $value]} {
+		return $value
+	} else {
+		return \"$value\"
+	}
+}
+
+mainw method querybuilder_insert {insert {join and}} {
+	upvar #0 [$object.table.buttons.query cget -textvariable] query
+	set w $object.querybuilder.options.paned
+	if {[string trim $query] ne ""} {set insert "\n$join $insert"}
+	$w.query.query insert insert $insert
+}
+
+mainw method querybuilder_add {command} {
+	upvar #0 [$object.table.buttons.query cget -textvariable] query
+	set w $object.querybuilder.options.paned
+	set fields [$w.fields.fields get]
+	set operator [$w.operators.operators get]
+	set values [$w.values.value get]
+	if {$command eq "count"} {
+		set value [lindex $values 0]
+		set value [$object querybuilder_quotevalue $value]
+		set insert "count\("
+		foreach field $fields {
+			append insert "\$$field, "
+		}
+		append insert "$operator $value \) > 0"
+		set join and
+		$object querybuilder_insert $insert $join
+	} elseif {$command eq "region"} {
+		Classy::Dialog $object.region -title "Select region"
+		$object.region option entry Chromosome [privatevar $object region(chr)]
+		$object.region option entry Begin [privatevar $object region(begin)]
+		$object.region option entry End [privatevar $object region(end)]
+		$object.region add go Go "$object querybuilder_insert region(\[getprivate $object region(chr) \]:\[getprivate $object region(begin) \]-\[getprivate $object region(end) \])" default
+	} else {
+		set insert {}
+		foreach field $fields {
+			set temp {}
+			foreach value $values {
+				set value [$object querybuilder_quotevalue $value]
+				lappend temp "\$$field $operator $value"
+			}
+			if {[llength $temp] > 1} {
+				lappend insert "\( [join $temp " or "] \)"
+			} else {
+				lappend insert "[join $temp " or "]"
+			}
+		}
+		set insert [join $insert "\n    $command "]
+		set join $command
+		$object querybuilder_insert $insert $join
+	}
+}
+
 mainw method querybuilder {args} {
-	set tb $object.tb
-	destroy $object.querybuilder
+
+	private $object qfields qvalues
 	set var [$object.table.buttons.query cget -textvariable]
+	destroy $object.querybuilder
 	Classy::Dialog $object.querybuilder -title Query
-	$object.querybuilder option text Query $var Query
+	set w $object.querybuilder.options.paned
+	ttk::panedwindow $w -orient horizontal
+	pack $w -fill both -expand yes
+	# fields
+	frame $w.fields -borderwidth 0 -highlightthickness 0
+	button $w.fields.header -text "Fields" -command "[list set [privatevar $object qfieldsfilter] {}]; [list $object querybuilder_filterfields]"
+	pack $w.fields.header -fill x
+	Classy::Entry $w.fields.filter -label Filter \
+		-textvariable [privatevar $object qfieldsfilter] \
+		-command [list $object querybuilder_filterfields]
+	pack $w.fields.filter -fill x
+	Classy::ListBox $w.fields.fields \
+		-listvariable [privatevar $object qfields] \
+		-command [list $object querybuilder_selfield] \
+		-browsecommand [list $object querybuilder_browsefield] \
+		-exportselection 0 -selectmode extended
+	pack $w.fields.fields -fill both -expand yes
+	# operators
+	frame $w.operators -borderwidth 0 -highlightthickness 0
+	button $w.operators.header -text "Operator" -command "[list set [privatevar $object qoperatorsfilter] {}]; [list $object querybuilder_filteroperators]"
+	pack $w.operators.header -fill x
+#	Classy::Entry $w.operators.filter -label Filter \
+#		-textvariable [privatevar $object qoperatorsfilter] \
+#		-command [list $object querybuilder_filteroperators]
+#	pack $w.operators.filter -fill x
+	Classy::ListBox $w.operators.operators \
+		-listvariable [privatevar $object qoperators] \
+		-command [list $object querybuilder_seloperator] \
+		-width 6 -exportselection 0 -selectmode extended
+	pack $w.operators.operators -fill both -expand yes
+	# values
+	frame $w.values -borderwidth 0 -highlightthickness 0
+	button $w.values.header -text "Values" -command "[list set [privatevar $object qfieldsfilter] {}]; [list $object querybuilder_filtervalues]"
+	pack $w.values.header -fill x
+	Classy::Entry $w.values.value
+	pack $w.values.value -fill x
+	Classy::Entry $w.values.filter -label Filter \
+		-textvariable [privatevar $object qvaluesfilter] \
+		-command [list $object querybuilder_filtervalues]
+	pack $w.values.filter -fill x
+	Classy::ListBox $w.values.values \
+		-listvariable [privatevar $object qvalues] \
+		-command [list $object querybuilder_selvalue] \
+		-browsecommand [list $object querybuilder_browsevalue] \
+		-exportselection 0 -selectmode extended
+	pack $w.values.values -fill both -expand yes
+	# query
+	frame $w.query -borderwidth 0 -highlightthickness 0
+	frame $w.query.buttons -borderwidth 0 -highlightthickness 0
+	foreach command {and or count region} {
+		button $w.query.buttons.$command -text $command -command [list $object querybuilder_add $command]
+		pack $w.query.buttons.$command -side left
+	}
+	Classy::ScrolledText $w.query.query -textvariable $var
+	pack $w.query.buttons -fill both -expand yes
+	pack $w.query.query -fill both -expand yes
+	# fill paned
+	$w add $w.fields
+	$w add $w.operators
+	$w add $w.values
+	$w add $w.query
+	$object querybuilder_filterfields
+	$object querybuilder_filteroperators
+	$object querybuilder_filtervalues
+	Classy::todo $object querybuilder_browsevalue
 	$object.querybuilder add query "Query" [list $object query] default
+	$object.querybuilder add clear "Clear" "[list set $var {}]"
+	$w.fields.fields set [$w.fields.fields get 0]
+	$w.operators.operators set [$w.operators.operators get 0]
+	catch {$w.values.values set [$w.values.values get 0]}
+
 }
 
 mainw method fields {args} {
