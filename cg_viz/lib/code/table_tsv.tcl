@@ -182,7 +182,31 @@ table_tsv method qfields {} {
 table_tsv method values {field {max 1000}} {
 	private $object tdata
 	set histofile $tdata(file).index/cols/$field.col.histo
-	if (![file exists $histofile]) {return {}}
+	if (![file exists $histofile]) {
+		private $object values
+		if {![info exists values($field)]} {
+			set f [gzopen $tdata(file)]
+			set header [tsv_open $f]
+			set pos [lsearch $header $field]
+			set result {}
+			set num 0
+			set break 0
+			while {![eof $f]} {
+				set line [split [gets $f] \t]
+				lappend result [lindex $line $pos]
+				incr num
+				if {$num  >= 5000} {
+					set break 1
+					break
+				}
+			}
+			close $f
+			set result [list_remdup $result]
+			if {$break} {lappend result ..}
+			set values($field) $result
+		}
+		return $values($field)
+	}
 	set result {}
 	set f [open $histofile]
 	while {![eof $f]} {
@@ -190,7 +214,10 @@ table_tsv method values {field {max 1000}} {
 		if {![llength $line]} continue
 		foreach {num value} $line break
 		lappend result [list $value $num]
-		if {[llength $result] == $max} break
+		if {[llength $result] == $max} {
+			lappend result {.. {}}
+			break
+		}
 	}
 	close $f
 	return $result
