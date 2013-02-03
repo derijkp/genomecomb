@@ -422,11 +422,28 @@ mainw method querybuilder_add {command} {
 		set join and
 		$object querybuilder_insert $insert $join
 	} elseif {$command eq "region"} {
+		destroy $object.region
 		Classy::Dialog $object.region -title "Select region"
 		$object.region option entry Chromosome [privatevar $object region(chr)]
 		$object.region option entry Begin [privatevar $object region(begin)]
 		$object.region option entry End [privatevar $object region(end)]
 		$object.region add go Go "$object querybuilder_insert region(\[getprivate $object region(chr) \]:\[getprivate $object region(begin) \]-\[getprivate $object region(end) \])" default
+	} elseif {$command eq "compare"} {
+		private $object compare tdata
+		destroy $object.compare
+		Classy::Dialog $object.compare -title "Compare"
+		set compare(types) {
+			{same same: all samples have the same genotype (does not have to be a variant) (all sequenced)}
+			{sm same: variant with the same genotype in all given samples (all sequenced)}
+			{df different: variant in some, reference in other (all sequenced)}
+			{mm mismatch; variant in all, but different genotypes (all sequenced)}
+			{un unsequenced in some samples, variant in one of the others}
+		}
+		$object.compare option select Comparison [privatevar $object compare(type)] [privatevar $object compare(types)]
+		set compare(type) [lindex $compare(types) 0]
+		set compare(samples) [cg select -n $tdata(file)]
+		$object.compare option listbox Sample1 [privatevar $object compare(selsamples)] compare(samples) -selectmode multiple
+		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(type) \] 0\]\(\[join \[getprivate $object compare(selsamples) \] ,\]\)\"" default
 	} else {
 		set insert {}
 		foreach field $fields {
@@ -502,7 +519,7 @@ mainw method querybuilder {args} {
 	# query
 	frame $w.query -borderwidth 0 -highlightthickness 0
 	frame $w.query.buttons -borderwidth 0 -highlightthickness 0
-	foreach command {and or count region} {
+	foreach command {and or count region compare} {
 		button $w.query.buttons.$command -text $command -command [list $object querybuilder_add $command]
 		pack $w.query.buttons.$command -side left
 	}
