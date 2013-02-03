@@ -27,7 +27,7 @@ proc _table_monetdb_get {object row col args} {
 		set end [expr {$row+$limit}]
 		if {$tdata(query) eq ""} {
 			set query [subst {"rowid" between $offset and $end}]
-			set sql [monetdb_makesql $tdata(table) $tdata(tfields) $query qfields $sortfields]
+			set sql [monetdb_makesql $tdata(table) $tdata(tfields) $query qfields [list_union $sortfields rowid]]
 			set c [split [$object sql $sql] \n]
 		} else {
 			set sql [subst {select * from "query" where "query_rowid" between $offset and $end}]
@@ -72,7 +72,6 @@ table_monetdb method table {args} {
 #}
 
 table_monetdb method query {args} {
-putsvars args
 	private $object tdata
 	if {[llength $args]} {
 		set tdata(query) [lindex $args 0]
@@ -82,7 +81,7 @@ putsvars args
 	catch {$object sql [subst {drop view query}]}
 	set qfields $tdata(fields)
 	lappend qfields {query_rowid=row_number() over (order by rowid)}
-	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields {} 0 {} {}]
+	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields rowid 0 {} {}]
 	catch {$object sql {drop view "query"}}
 	set sql "create view \"query\" as $sql"
 	$object sql $sql
