@@ -144,6 +144,7 @@ mainw method start {args} {
 	Extral::event listen $object selchanged [list $object redrawselection]
 	Extral::event listen $object querychanged [list $object redrawquery]
 	$object.tree clearnode {}
+	.mainw.table.data configure -wrap 1 -resizeborders both -bordercursor crosshair
 }
 
 mainw method redrawselection {args} {
