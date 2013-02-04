@@ -763,7 +763,6 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 	}
 #putslog -------------pipe-------------------
 #putslog pipe:[join $pipe " | "]
-putsvars pipe
 #putslog ------------------------------------
 	if {$qfields ne ""} {
 		set nh $qfields
