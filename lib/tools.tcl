@@ -800,3 +800,14 @@ proc infofile_write {file data} {
 	close $o
 	file rename -force $file.temp $file
 }
+
+proc samples {header} {
+	set names {}
+	foreach col $header {
+		set split [split $col -]
+		if {[llength $split] > 1} {
+			lappend names [lindex $split end]
+		}
+	}
+	list_remdup $names
+}

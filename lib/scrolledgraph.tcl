@@ -83,6 +83,10 @@ scrolledgraph method init {args} {
 	Classy::todo $object start
 }
 
+scrolledgraph method destroy {} {
+	$object clear
+}
+
 scrolledgraph chainoptions {$object.g}
 
 catch {PushZoom}
@@ -111,7 +115,6 @@ scrolledgraph method paste {} {
 
 scrolledgraph method start {} {
 	private $object region
-	array set region {xrange {1000 9000} xrangeextra 1000 ymin -2 ymax 600}
 	Classy::todo $object redraw
 }
 
@@ -123,6 +126,11 @@ scrolledgraph method clear {} {
 	foreach v [vector names $object.*] {
 		vector destroy ::$v
 	}
+if 0 {
+	foreach v [info commands $object.*] {
+		rename ::$v {}
+	}
+}
 	unset -nocomplain data
 	lassign {0 0 0 0} xmin xmax ymin ymax
 	set data(entries) {}
@@ -175,26 +183,48 @@ scrolledgraph method _configureevent {} {
 	set region(cancel) 0
 }
 
+scrolledgraph method getlabel {win num} {
+putsvars win num
+	private $object labels
+	if {[isint $num]} {
+		return [lindex $labels $num]
+	} else {
+		return ""
+	}
+}
+
 scrolledgraph method add {table} {
-	private $object xv yv wv data colors
+	private $object xv yv wv data colors labels region
 	set showregion 0
 	set vnum [llength $data(entries)]
 	set header [list_shift table]
 	set table [lsort -dict -index 0 $table]
 	set xs [list_subindex $table 0]
-	set poss [list_find $xs u]
-	set xs [list_sub $xs -exclude $poss]
-	set table [list_sub $table -exclude $poss]
 	vector create ::$object.x
-	::$object.x set $xs
-	set amin [min [lmath_min $xs] [::$object.ends.x index 0]]
-	set amax [max [lmath_max $xs] [::$object.ends.x index 1]]
+	if {[catch {::$object.x set $xs}]} {
+		set labels $xs
+		set xs [list_fill [llength $xs] 0 1]
+		::$object.x set $xs
+		$object.g axis configure x -command [list $object getlabel] -subdivisions 0 -stepsize 1
+	} else {
+		unset -nocomplain labels
+		$object.g axis configure x -command {}
+	}
+#	set amin [min [lmath_min $xs] [::$object.ends.x index 0]]
+#	set amax [max [lmath_max $xs] [::$object.ends.x index 1]]
+	set amin [lmath_min $xs]
+	set amax [lmath_max $xs]
+	if {[info exists labels]} {
+		set amin [expr {$amin - 1}]
+		set amax [expr {$amax + 1}]
+	}
 	::$object.ends.x set [list $amin $amax]
 	set pos 0
 	set symbols {cross circle square diamond plus splus scross triangle}
 	# set dcolors {blue red gray orange yellow green violet}
 	set dcolors [distinctColors [expr {[llength $header]-1}]]
-	
+	set amin {}
+	set amax {}
 	foreach field [lrange $header 1 end] {
 		incr pos
 		set name $field
@@ -203,9 +233,8 @@ scrolledgraph method add {table} {
 		}
 		set ys [list_subindex $table $pos]
 		::$object.$vnum.y set $ys
-		set amin [min [lmath_min $ys] [::$object.ends.y index 0]]
-		set amax [max [lmath_max $ys] [::$object.ends.y index 1]]
-		::$object.ends.y set [list $amin $amax]
+		set amin [min [lmath_min $ys] $amin]
+		set amax [max [lmath_max $ys] $amax]
 		set basecolor [lindex $dcolors $vnum]
 		if {$basecolor eq ""} {set basecolor blue}
 		lappend data(entries) $name
@@ -230,11 +259,14 @@ scrolledgraph method add {table} {
 		$object.g legend bind $name <1> [list $object elconf $name]
 		incr vnum
 	}
+	if {![isdouble $amin]} {set amin 0}
+	if {![isdouble $amax]} {set amax 0}
+	::$object.ends.y set [list $amin $amax]
 	set region(xmin) [::$object.ends.x index 0]
 	set region(xmax) [::$object.ends.x index 1]
 	set region(ymin) [::$object.ends.y index 0]
 	set region(ymax) [::$object.ends.y index 1]
-	Classy::todo $object _configureevent
+	Classy::todo $object redraw
 }
 
 proc ::tk::MouseWheel {wFired X Y D {shifted 0}} {
@@ -278,35 +310,6 @@ proc ::tk::MouseWheel {wFired X Y D {shifted 0}} {
     }
 }
 
-#scrolledgraph method _xrange {args} {
-#	private $object region
-#	set xmin ""
-#	set xmax ""
-#	if {![isdouble $region(xrangeextra)]} {set region(xrangeextra) 0}
-#	set temp [regexp -inline -all {[0-9.]+} $region(xrange)]
-#	foreach {xmin xmax} $temp break
-#	if {[isdouble $xmin] && ![isdouble $xmax]} {
-#		set xmax [expr {$xmin+1}]
-#	}
-#	if {[isdouble $xmin] && [isdouble $xmax] && [isdouble $region(xrangeextra)]} {
-#		set xmin [expr {$xmin - $region(xrangeextra)}]
-#		set xmax [expr {$xmax + $region(xrangeextra)}]
-#	}
-#	set region(xmin) [expr {round($xmin)}]
-#	set region(xmax) [expr {round($xmax)}]
-#	if {[llength $temp] > 2} {
-#		set y [lindex $temp 2]
-#		if {$y < 3000} {
-#			set region(ymin) -1
-#			set region(ymax) [expr {$y+500}]
-#		} else {
-#			set region(ymin) [expr {$y-500}]
-#			set region(ymax) [expr {$y+500}]
-#		}
-#	}
-#	set region(xrange) $xmin-$xmax
-#}
-
 scrolledgraph method redraw {args} {
 puts ----------redraw----------
 	private $object region
@@ -324,12 +327,9 @@ scrolledgraph method _setvars {} {
 	set w $object.g
 	set xmin [expr {round([$w axis cget x -min])}]
 	set xmax [expr {round([$w axis cget x -max])}]
-puts _setvars($xmin-$xmax)
-	if {![isdouble $region(xrangeextra)]} {set region(xrangeextra) 0}
 	if {[isdouble $xmin] && [isdouble $xmax]} {
 		set region(xmin) $xmin
 		set region(xmax) $xmax
-		set region(xrange) [expr {$xmin + $region(xrangeextra)}]-[expr {$xmax - $region(xrangeextra)}]
 	}
 	set ymin [$w axis cget y -min]
 	set ymax [$w axis cget y -max]
@@ -337,6 +337,7 @@ puts _setvars($xmin-$xmax)
 	catch {set ymax [format %.0f $ymax]}
 	set region(ymin) $ymin
 	set region(ymax) $ymax
+	Classy::todo $object _configureevent
 }
 
 scrolledgraph method _fillregion {args} {
@@ -473,6 +474,7 @@ scrolledgraph method confcurrent {args} {
 }
 
 scrolledgraph method elconf {name} {
+return
 	puts "conf $name"
 	private $object conf
 	catch {destroy $object.conf}
@@ -571,6 +573,8 @@ scrolledgraph method xview {args} {
 			}
 		}
 	}
+	if {$xmin < $amin} {set xmin $amin}
+	if {$xmin > $amax} {set xmin $amax}
 	set xmax [expr {$xmin+$cursize}]
 	$w axis configure x -min $xmin -max $xmax
 	$object _setvars
@@ -672,55 +676,4 @@ scrolledgraph method point {x y} {
 	lappend points $line
 	$ptable.editor configure -variable [privatevar $object points]
 	$ptable.editor autosize
-}
-
-if 0 {
-
-	package require Tclx
-	signal -restart error SIGINT
-lappend auto_path /home/peter/bin/tcl
-lappend auto_path /home/peter/dev/genomecomb/lib /home/peter/dev/genomecomb/lib-exp
-cd /complgen/sv
-set object .g
-	package require Tk
-	scrolledgraph .g
-	pack .g -fill both -expand yes
-set file sv79-20-pairs.tsv
-set file /complgen/sv/GS103/GS103-9-paired.tsv.rz
-set file /media/solid/kr1270/d818_6/sv/d818_6-22-paired.tsv.gz
-set file /media/solid/kr1270/d816_3/sv/d816_3-11-paired.tsv.gz
-.g opendialog $file
-
-cd /media/solid/kr1270/d818_6/sv
-set file d818_6-12-paired.tsv.gz
-set files [glob */sv/*.gz]
-foreach file $files {
-	puts $file
-#	cg select -s {chr1 start1 end1} -nh {chrom bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} $file $file.temp
-#	exec mv $file $file.save
-#	exec mv $file.temp $file
-	cg maketabix $file
-}
-
-
-.g clear
-set chr 20
-.g open /complgen/sv/GS103/GS103-$chr-paired.tsv.rz ::graphd
-.g open /complgen/sv/GS102/GS102-$chr-paired.tsv.rz ::graphd
-
-
-set file sv79-20-pairs.tsv
-set file sv78-20-pairs.tsv
-catch {close $f}
-catch {close $o}
-
-$object xview scroll 1 pages
-
-$object reload
-$object.scx configure -command [list $object xview]
-$object.scx configure -command {}
-
-$object.g axis configure x -scrollcommand [list $object xset]
-$object.g axis configure x -scrollcommand {}
-
 }

@@ -848,14 +848,7 @@ proc cg_select {args} {
 					set header [tsv_open $f]
 					catch {close $f}
 				}
-				set names {}
-				foreach col $header {
-					set split [split $col -]
-					if {[llength $split] > 1} {
-						lappend names [lindex $split end]
-					}
-				}
-				puts stdout [join [list_remdup $names] \n]
+				puts stdout [join [samples $header] \n]
 				exit 0
 			}
 			-h {

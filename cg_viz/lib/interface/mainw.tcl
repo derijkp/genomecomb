@@ -32,13 +32,9 @@ mainw method init args {
 	grid $object.table.data -row 1 -column 0 -sticky nesw
 	grid columnconfigure $object.table 0 -uniform {} -weight 1
 	grid columnconfigure $object.table 1 -uniform {}
-	grid columnconfigure $object.table 2 -uniform {}
-	grid columnconfigure $object.table 3 -uniform {}
 	grid rowconfigure $object.table 0 -uniform {}
 	grid rowconfigure $object.table 1 -uniform {} -weight 1
 	grid rowconfigure $object.table 2 -uniform {}
-	grid rowconfigure $object.table 3 -uniform {}
-	grid rowconfigure $object.table 4 -uniform {}
 	frame $object.canvas  \
 		-borderwidth 0 \
 		-relief groove \
@@ -84,13 +80,21 @@ mainw method init args {
 		-list {data
 summary
 graph}
-	grid $object.buttons.optionmenu1 -row 0 -column 4 -sticky nesw
+	grid $object.buttons.optionmenu1 -row 0 -column 5 -sticky nesw
+	button $object.buttons.button2 \
+		-text Settings
+	grid $object.buttons.button2 -row 0 -column 4 -sticky nesw
 	grid columnconfigure $object.buttons 0 -uniform {}
 	grid columnconfigure $object.buttons 1 -uniform {}
 	grid columnconfigure $object.buttons 2 -uniform {}
 	grid columnconfigure $object.buttons 3 -uniform {} -weight 1
 	grid columnconfigure $object.buttons 4 -uniform {}
+	grid columnconfigure $object.buttons 5 -uniform {}
+	grid columnconfigure $object.buttons 6 -uniform {}
+	grid columnconfigure $object.buttons 7 -uniform {}
 	grid rowconfigure $object.buttons 0 -uniform {}
+	grid rowconfigure $object.buttons 1 -uniform {}
+	grid rowconfigure $object.buttons 2 -uniform {}
 	grid columnconfigure $object 0 -uniform {}
 	grid columnconfigure $object 1 -uniform {}
 	grid columnconfigure $object 2 -uniform {} -weight 1
@@ -139,7 +143,9 @@ $object start
 		-command [varsubst object {$object fields}]
 	$object.buttons.optionmenu1 configure \
 		-command [varsubst object {$object view}] \
-		-textvariable [privatevar $object view]
+		-textvariable [privatevar $object view(cur)]
+	$object.buttons.button2 configure \
+		-command [varsubst object {$object viewsettings}]
 	Classy::DynaMenu attachmainmenu MainMenu $object
 	# Configure initial arguments
 	if {"$args" != ""} {eval $object configure $args}
@@ -148,7 +154,7 @@ $object start
 
 mainw method start {args} {
 	private $object fields view
-	set view data
+	set view(cur) data
 #	bind $object.canvas.data <1> [list $object select %x %y]
 	$object.buttons.querybuilder configure -command [list $object querybuilder]
 	set fields {}
@@ -245,6 +251,7 @@ putsvars dir
 }
 
 mainw method opentsv {args} {
+	private $object view
 	foreach {file} $args break
 	catch {$object.tb destroy}
 	table_tsv new $object.tb
@@ -283,6 +290,14 @@ mainw method opentsv {args} {
 		$object.disp1 redraw
 		# $object.disp1 options scale 10000000
 	}
+	set fields [$object.tb fields]
+	set sample [lindex [samples $fields] 0]
+	set view(summary_rows) {chromosome {}}
+	set view(summary_cols) [list sequenced-$sample {v r u}]
+	set view(summary_cells) [list sequenced-$sample count]
+	set view(graph_rows) [list coverage-$sample {}]
+	set view(graph_cols) [list sequenced-$sample {v r u}]
+	set view(graph_cells) [list coverage-$sample count]
 }
 
 mainw method savetsv {file} {
@@ -290,6 +305,7 @@ mainw method savetsv {file} {
 }
 
 mainw method open {args} {
+putsvars args
 	private $object tdata
 	if {[llength $args]} {
 		set file [lindex $args 0]
@@ -298,6 +314,7 @@ mainw method open {args} {
 	}
 	set file [file normalize $file]
 	set tdata(file) $file
+	$object view data
 	$object opentsv $file
 }
 
@@ -582,17 +599,21 @@ return
 
 mainw method summary_redraw {args} {
 putsvars summary_redraw
-	private $object summary
-	set summaryview {
-		{chromosome {}}
-		{sequenced-zas40 {v} type {snp ins del}}
-		{coverage-zas40 count}
+	private $object summary view
+	set definition [list $view(summary_rows) $view(summary_cols) $view(summary_cells)]
+	set error [catch {$object.tb summary $definition} newsummary]
+	if {$error} {
+		set newsummary ""
+	} else {
+		set header [list_shift newsummary]
+		set newsummary [list $header {*}[lsort -dict $newsummary]]
 	}
-	set summary [$object.tb summary $summaryview]
-	set header [list_shift summary]
-	set summary [list $header {*}[lsort -dict $summary]]
+	set summary $newsummary
 	$object.summary.data configure -variable [privatevar $object summary] -variabletype list
 	$object.summary.data configure -rows [llength $summary] -cols [llength [lindex $summary 0]]	
+	if {$error} {
+		error "error in summary definition\n\n$summary"
+	}
 }
 
 mainw method graph_redrawselect {args} {
@@ -602,22 +623,51 @@ return
 
 mainw method graph_redraw {args} {
 putsvars graph_redraw
-	private $object graph
-	set graphview {
-		{coverage-zas40 {}}
-		{chromosome {} sequenced-zas40 v}
-		{coverage-zas40 count}
-	}
-	set summary [$object.tb summary $graphview]
+	private $object view
+	set definition [list $view(graph_rows) $view(graph_cols) $view(graph_cells)]
+	set error [catch {$object.tb summary $definition} newsummary]
 	$object.graph clear
-
+	if {!$error} {
+		set header [list_shift newsummary]
+		set newsummary [list $header {*}[lsort -dict $newsummary]]
+		$object.graph add $newsummary
+	} else {
+		error "error in graph definition\n\n$newsummary"
+	}
 }
 
-mainw method view {view} {
-	foreach w {table summary graph} {
-		catch {grid forget $object.$w}
+mainw method viewsettings {} {
+	private $object view
+	switch [get view(cur) data] {
+		summary {
+			destroy $object.viewsettings
+			Classy::Dialog $object.viewsettings -title "$view(cur) settings"
+			$object.viewsettings option entry Rows [privatevar $object view(summary_rows)]
+			$object.viewsettings option entry Cols [privatevar $object view(summary_cols)]
+			$object.viewsettings option entry Cells [privatevar $object view(summary_cells)]
+			$object.viewsettings add go "Go" [list $object summary_redraw] default
+		}
+		graph {
+			destroy $object.viewsettings
+			Classy::Dialog $object.viewsettings -title "$view(cur) settings"
+			$object.viewsettings option entry Rows [privatevar $object view(graph_rows)]
+			$object.viewsettings option entry Cols [privatevar $object view(graph_cols)]
+			$object.viewsettings option entry Cells [privatevar $object view(graph_cells)]
+			$object.viewsettings add go "Go" [list $object graph_redraw] default
+		}
+	}		
+}
+
+mainw method view {newview} {
+	private $object view
+	set view(cur) $newview
+	catch {grid forget $object.table}
+	foreach w {summary graph} {
+		Extral::event remove $object.$w selchanged [list $object summary_redrawselect]
+		Extral::event remove $object.$w querychanged [list $object summary_redrawselect]
+		destroy $object.$w
 	}
-	switch $view {
+	switch $newview {
 		data {
 			grid $object.table -row 5 -column 2 -sticky nesw
 		}
@@ -651,41 +701,13 @@ mainw method view {view} {
 			$object summary_redraw
 		}
 		graph {
-#			if {![winfo exists $object.graph]} {
-##				package require rbc
-##				namespace import ::rbc::*
-##				frame $object.graph  \
-##					-borderwidth 0 \
-##					-relief groove \
-##					-height 10 \
-##					-width 10
-##				graph $object.graph.data -rows 0 -cols 1
-##				scrollbar $object.graph.sv
-##				scrollbar $object.graph.sh -orient horizontal
-##				grid $object.graph.data -row 0 -column 0 -sticky nesw
-##				grid $object.graph.sv -row 0 -column 1 -sticky nesw
-##				grid $object.graph.sh -row 1 -column 0 -sticky nesw
-##				grid columnconfigure $object.graph 0 -weight 1
-##				grid rowconfigure $object.graph 0 -weight 1
-##				$object.graph.sv configure \
-##					-command "$object.graph.data yview"
-##				$object.graph.sh configure \
-##					-command "$object.graph.data xview"
-##				$object.graph.data configure \
-##					-xscrollcommand "$object.graph.sh set" \
-##					-yscrollcommand "$object.graph.sv set"
-##				$object.graph.data configure
-#				destroy $object.graph
-#				scrolledgraph $object.graph
-#			}
-
 			destroy $object.graph
 			scrolledgraph $object.graph
 			Extral::event listen $object.graph selchanged [list $object graph_redrawselect]
 			Extral::event listen $object.graph querychanged [list $object graph_redraw]
 			grid $object.graph -row 5 -column 2 -sticky nesw
 			$object graph_redraw
-
 		}
 	}
 }
+
