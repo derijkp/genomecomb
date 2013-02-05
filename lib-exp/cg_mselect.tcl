@@ -11,6 +11,24 @@ proc mselect_samegeno {a11 a12 a21 a22} {
 	return "(($a11 = $a21 and $a12 = $a22) or ($a11 = $a22 and $a12 = $a21))"
 }
 
+proc mselect_compare {header ids} {
+	if {[llength $ids]  != 2} {error "compare only with 2 ids"}
+	foreach {id1 id2} $ids break
+	set a11 \"alleleSeq1_$id1\"
+	set a21 \"alleleSeq2_$id1\"
+	set a12 \"alleleSeq1_$id2\"
+	set a22 \"alleleSeq2_$id2\"
+	set sql [subst {(case
+		when "sequenced_$id1" = 'r' and "sequenced_$id2" = 'r' then 'r'
+		when "sequenced_$id1" = 'u' or "sequenced_$id2" = 'u' then 'un'
+		when "sequenced_$id1" = 'r' and "sequenced_$id2" = 'v' then 'df'
+		when "sequenced_$id1" = 'v' and "sequenced_$id2" = 'r' then 'df'
+		when "sequenced_$id1" = 'v' and "sequenced_$id2" = 'v' and [mselect_samegeno $a11 $a21 $a12 $a22] then 'sm'
+		when "sequenced_$id1" = 'v' and "sequenced_$id2" = 'v' then 'mm'
+		else '?' end)
+	}]
+}
+
 proc mselect_sm {header ids} {
 	set id1 [list_pop ids]
 	set id1 [string trim $id1 \"]
@@ -317,6 +335,10 @@ proc mselect_expandcode {header code} {
 					set ids [split $args ,]
 					set temp [mselect_un $header $ids]
 				}
+				compare {
+					set ids [split $args ,]
+					set temp [mselect_compare $header $ids]
+				}
 				count {
 					set ids [split $args ,]
 					set temp [mselect_count $ids]
@@ -407,6 +429,9 @@ proc monetdb_select {db table header query {qfields {}} {sortfields {}} {newhead
 #			tsv_hcheader $f keepheader header
 #		}
 #	}
+	if {![inlist $sortfields rowid]} {
+		lappend sortfields rowid
+	}
 	set sql [monetdb_makesql $table $header $query qfields $sortfields $inverse]
 #putslog -------------sql--------------------
 #putslog sql:\n$sql

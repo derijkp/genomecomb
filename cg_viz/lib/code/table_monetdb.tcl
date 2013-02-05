@@ -142,11 +142,11 @@ table_monetdb method fields {args} {
 	}
 }
 
-table_monetdb method link {tktable} {
+table_monetdb method link {tktable button} {
 	private $object tdata
 	set tdata(tktable)	$tktable
 	$tktable configure -variabletype tktable -usecommand 1 -command "_table_monetdb_get [list $object] %r %c"
-	[winfo parent $tdata(tktable)].buttons.query configure -textvariable [privatevar $object tdata(query)]
+	$button configure -textvariable [privatevar $object tdata(query)]
 }
 
 table_monetdb method open {database table dbfarm} {

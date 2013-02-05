@@ -779,3 +779,24 @@ proc dict_get_default {d key {default {}}} {
 		return $result
 	}
 }
+
+proc infofile_read {file} {
+	set f [open $file]
+	set result {}
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		dict set result [lindex $line 0] [lindex $line 1]
+	}
+	return $result
+}
+
+proc infofile_write {file data} {
+	set o [open $file.temp w]
+	puts $o key\tvalue
+	foreach {key value} $data {
+		puts $o $key\t$value
+	}
+	close $o
+	file rename -force $file.temp $file
+}

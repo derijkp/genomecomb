@@ -1,11 +1,29 @@
 proc cg_index {args} {
-	if {[lindex $args 0] eq "-cols"} {
-		set cols 1
-		set args [lrange $args 1 end]
-	} else {
-		set cols 0
+	set updated 0
+	set pos 0
+	set len [llength $args]
+	set cols 0
+	set dbstring {}
+	set refdir {}
+	while {$pos < $len} {
+		set opt [lindex $args $pos]
+		if {$opt eq "-cols"} {
+			set cols 1
+			incr pos
+		} elseif {$opt eq "-db"} {
+			incr pos
+			set dbstring [lindex $args $pos]
+			incr pos
+		} elseif {$opt eq "-refdir"} {
+			incr pos
+			set refdir [lindex $args $pos]
+			incr pos
+		} else {
+			break
+		}
 	}
-	if {[llength $args] == 0} {
+	set args [lrange $args $pos end]
+	if {[llength $args] != 1} {
 		errorformat index
 		exit 1
 	}
@@ -14,10 +32,20 @@ proc cg_index {args} {
 	set indexdir [gzroot $file].index
 	set ext [file extension $file]
 	if {[inlist {.rz .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
+	if {[file exists $indexdir/info.tsv]} {
+		set info [infofile_read $indexdir/info.tsv]
+	} else {
+		set info {}
+	}
 	file mkdir $indexdir
 	set indexfile $indexdir/lines.bcol
-	bcol_indexlines $file $indexfile
-	if {![file exists $indexdir/info.tsv] || [file mtime $indexdir/info.tsv] < $time} {
+	if {$refdir ne ""} {
+		set updated 1
+		dict set info refdir $refdir
+	}
+	if {![file exists $indexdir/info.tsv] || [file mtime $indexdir/info.tsv] < $time || ![file exists $indexfile]} {
+		puts "Creating lineindex"
+		bcol_indexlines $file $indexfile
 		catch {file delete $indexdir/info.tsv}
 		set f [gzopen $file]
 		set header [tsv_open $f]
@@ -25,14 +53,11 @@ proc cg_index {args} {
 		set bcol [bcol_open $indexfile]
 		set size [bcol_size $bcol]
 		bcol_close $bcol
-		set f [open $indexdir/info.tsv.temp w]
-		puts $f key\tvalue
-		puts $f file\t$file
-		puts $f lineindexfile\t[file tail $indexfile]
-		puts $f header\t$header
-		puts $f size\t$size
-		close $f
-		file rename $indexdir/info.tsv.temp $indexdir/info.tsv
+		dict set info file $file
+		dict set info lineindexfile [file tail $indexfile]
+		dict set info header $header
+		dict set info size $size
+		set updated 1
 	}
 	if {$cols} {
 		file mkdir $indexdir/cols
@@ -54,6 +79,45 @@ proc cg_index {args} {
 		foreach field $header {
 			exec gnusort8 -N $indexdir/cols/$field.col | uniq -c | gnusort8 -n > $indexdir/cols/$field.col.histo
 		}
+	}
+	if {[dict exists $info sqlbackend_db]} {
+		set db [dict get $info sqlbackend_db]
+		set table [dict get $info sqlbackend_table]
+		set user [dict get $info user]
+		set pw [dict get $info pw]
+	}
+	if {$dbstring ne ""} {
+		if {[llength $dbstring] < 2} {
+			error "option -db must have format: database table ?user? ?pw?"
+		}
+		foreach {db table user pw} $dbstring break
+	}
+	if {[get db ""] ne "" || [dict exists $info sqlbackend_table]} {
+		set updated 1
+		dict set info sqlbackend_db $db 
+		dict set info sqlbackend_table $table
+		dict set info user $user
+		dict set info pw $pw
+		set error [catch {
+			set dbtime [cg_monetdb_sql $db [subst {select "value" from "genomecomb_info" where "table" = '$table' and "key" = 'time'}]]
+		}]
+		if {$error || ![isint $dbtime] || $dbtime < $time} {
+			puts "Loding into database $db ($table)"
+			cg_tomonetdb $db $table $file
+			if {$user ne ""} {
+				set o [open $indexdir/.monetdb w]
+				puts $o "user=$user"
+				puts $o "password=$pw"
+				puts $o "language=sql"
+				puts $o "save_history=true"
+				close $o
+			} else {
+				file delete $indexdir/.monetdb
+			}
+		}
+	}
+	if {$updated} {
+		infofile_write $indexdir/info.tsv $info
 	}
 	return $indexfile
 }

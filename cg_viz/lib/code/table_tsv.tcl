@@ -114,7 +114,11 @@ table_tsv method query {query} {
 	Classy::Progress message "Running query, please be patient (no progress shown)"
 	putslog "Doing query $query"
 	regsub -all \n $query { } query
-	exec cg select -q $query -f ROW $tdata(file) $tdata(indexdir)/query_results.tsv
+	if {![info exists tdata(sqlbackend_db)]} {
+		exec cg select -q $query -f {rowid=$ROW} $tdata(file) $tdata(indexdir)/query_results.tsv
+	} else {
+		exec cg mselect -q $query -f {rowid=rowid-1} $tdata(sqlbackend_db) $tdata(sqlbackend_table) $tdata(indexdir)/query_results.tsv
+	}
 	Classy::Progress next "Converting results"
 	putslog "Converting results"
 	set f [open $tdata(indexdir)/query_results.tsv]
@@ -149,20 +153,30 @@ table_tsv method query {query} {
 	Extral::event generate querychanged $object
 }
 
-#table_tsv method subsql {args} {
-#	private $object tdata
-#	set query [lindex $args 0]
+table_tsv method subsql {args} {
+putsvars args
+	private $object tdata
+	if {![info exists tdata(sqlbackend_db)]} {
+		error "no fast access without db backend"
+	}
+	private $object tdata
+	set query [lindex $args 0]
 #	set qfields $tdata(fields)
-#	lappend qfields {*}[lrange $args 1 end]
-#	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields {} 0 {} {}]
-#	set fsql "with \"temp\" as ($sql) $query"
-#	$object sql $fsql
-#}
-#
-#table_tsv method sql {sql} {
-#	private $object tdata
-#	exec mclient -d $tdata(database) -f tab -s $sql
-#}
+	set qfields $tdata(monetfields)
+	lappend qfields {*}[lrange $args 1 end]
+	set sql [monetdb_makesql $tdata(sqlbackend_table) $tdata(monetfields) $tdata(query) qfields {} 0 {} {}]
+	set fsql "with \"temp\" as ($sql) $query"
+	$object sql $fsql
+}
+
+table_tsv method sql {sql {file {}}} {
+	private $object tdata
+	if {![info exists tdata(sqlbackend_db)]} {
+		error "no fast access without db backend"
+	}
+	if {![info exists tdata(sqlbackend_db)]} {return {}}
+	exec mclient -d $tdata(sqlbackend_db) -f tab -s $sql
+}
 
 table_tsv method info {key} {
 	private $object tdata
@@ -289,11 +303,11 @@ table_tsv method fields {args} {
 	}
 }
 
-table_tsv method link {tktable} {
+table_tsv method link {tktable button} {
 	private $object tdata
 	set tdata(tktable)	$tktable
 	$tktable configure -variabletype tktable -usecommand 1 -command "_table_tsv_get [list $object] %r %c"
-	[winfo parent $tdata(tktable)].buttons.query configure -textvariable [privatevar $object tdata(query)]
+	$button configure -textvariable [privatevar $object tdata(query)]
 }
 
 table_tsv method index {file} {
@@ -304,7 +318,7 @@ table_tsv method index {file} {
 	set ext [file extension $file]
 	if {[inlist {.rz .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
 	cg_index $file
-	set result [split [string trim [file_read $indexdir/info.tsv]] \n\t]
+	set result [infofile_read $indexdir/info.tsv]
 	dict set result lineindex [bcol_open $indexfile]
 	dict set result file [file normalize $file]
 	dict set result compressed $compressed
@@ -331,23 +345,17 @@ table_tsv method close {} {
 	set tdata(numcache) 0
 }
 
-table_tsv method open {file} {
+table_tsv method open {file parent} {
 	private $object tdata cache
 	$object close
 	set file [file normalize $file]
 	set info [$object index $file]
-	set file [dict get $info file]
-	set database [file dir $file]
-	set table $file
-	setprivate $object database $database
-	setprivate $object table $table
-	set tdata(indexdir) [dict get $info indexdir]
-	set tdata(lineindex) [dict get $info lineindex]
+	unset -nocomplain tdata
+	# tdata(query) is linked to entry, so clear it explicitely
+	set tdata(query) ""
+	array set tdata $info
 	set tdata(file) $file
-	set tdata(database) $database
-	set tdata(table) $table
 	set tdata(tfields) [dict get $info header]
-	set tdata(compressed) [dict get $info compressed]
 	set tdata(tlen) [dict get $info size]
 	set tdata(fields) $tdata(tfields)
 	set tdata(qfields) $tdata(tfields)
@@ -373,9 +381,12 @@ table_tsv method open {file} {
 		}
 	}
 	$object reset
-	if {[info exists tdata(sqlbackend_db)]} {
-		display_chr new $object.disp1 $object.canvas.data $object.tb $tdata(dbdir)
-		$object.disp1 redraw
+	if {[info exists tdata(sqlbackend_db)] && [info exists tdata(refdir)]} {
+		set tdata(monetfields) [split [cg_monetdb_fields $tdata(sqlbackend_db)  $tdata(sqlbackend_table)] \n]
+		set tdata(monetfieldtrans) [cg_monetdb_sql $tdata(sqlbackend_db) [subst {select "value" from "genomecomb_info" where "table" = '$tdata(sqlbackend_table)' and "key" = 'fieldtrans'}]]
+		catch {$object.disp1 destroy}
+		display_chr new $object.disp1 $parent.canvas.data $object $tdata(refdir)
+		Classy::todo $object.disp1 redraw
 	}
 	Extral::event generate querychanged $object
 	return $file
