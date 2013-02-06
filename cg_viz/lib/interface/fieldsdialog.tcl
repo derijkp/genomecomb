@@ -189,6 +189,9 @@ fieldsdialog method fieldadd {movefields} {
 fieldsdialog method addfields {} {
 	private $object fields tfields
 	set movefields [$object.options.selfields get]
+	if {![llength $movefields]} {
+		set movefields [$object.options.selfields get 0 end]
+	}
 	$object fieldadd $movefields
 }
 
