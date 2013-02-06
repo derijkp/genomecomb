@@ -1,11 +1,10 @@
 proc main args {
-	global env appdir
+	global env appdir cgdir cgbase
 	#putsvars ::appdir
 	set appdir $::Classy::appdir
 	lappend ::auto_path [file normalize $appdir/../lib]
-	set cgdir [file normalize $appdir/..]
-	lappend ::auto_path $cgdir/lib $cgdir/lib-exp
-	set env(PATH) $appdir/bin:$appdir/extern:[file dir [file dir $appdir]]/bin:$env(PATH)
+	lappend ::auto_path [file dir $appdir]/lib [file dir $appdir]/lib-exp
+	genomecombenv
 	mainw .mainw
 	focus .mainw
 	#Classy::cmd
