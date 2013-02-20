@@ -227,44 +227,14 @@ test bcol_regextract {s error} {
 test bcol_histo {basic} {
 	test_cleantmp
 	catch {exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv}
-	exec cg bcol table tmp/temp-chr2.bcol > tmp/temp.test
-	exec cg select -f {pos	coverage} -q {$chromosome == "chr2"} data/cov.tsv tmp/temp.test2
-	catch {exec diff tmp/temp.test tmp/temp.test2} e
-	regsub {child process exited abnormally} $e {} e
-	string trim $e
-} {1,11c1
-< pos	value
-< 0	0
-< 1	0
-< 2	0
-< 3	0
-< 4	0
-< 5	0
-< 6	0
-< 7	0
-< 8	0
-< 9	0
----
-> pos	coverage
-19,34d8
-< 17	0
-< 18	0
-< 19	0
-< 20	0
-< 21	0
-< 22	0
-< 23	0
-< 24	0
-< 25	0
-< 26	0
-< 27	0
-< 28	0
-< 29	0
-< 30	0
-< 31	0
-< 32	0
-53d26
-<}
+	file_write tmp/reg.tsv "chromosome\tbegin\tend\tname\nchr1\t4\t20\tt1\nchr1\t40\t60\tt2\n"
+	cg bcol_histo tmp/reg.tsv tmp/temp-chr1.bcol {1 8 10}
+} {name	r<1	r1<8	r8<10	r10<
+t1	0	11	5	0
+t2	10	0	0	10
+----------
+Total	10	11	5	10
+Totalpercent	27.78	30.56	13.89	27.78}
 
 test bcol_make {c too large error} {
 	test_cleantmp
