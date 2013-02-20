@@ -1,5 +1,11 @@
+
+# set pattern (a|(bc|de))X(c|d)
+# set pattern adfg(ab)
 proc regexp2glob {pattern} {
-	regsub -all {\[[^]]*\]} $pattern {*} glob
+	set glob $pattern
+	while {[regsub -all {\([^\(\)]*[|][^\(\)]*\)} $glob {*} glob]} {}
+	regsub -all {\(\[^\(\)]*|[^\(\)]*\)} $pattern {*} glob
+	regsub -all {\[[^]]*\]} $glob {*} glob
 	regsub -all {\{[^\}]*\}} $glob {*} glob
 	regsub -all {\\.} $glob {*} glob
 	regsub -all {[*+?.()]+} $glob {*} glob
