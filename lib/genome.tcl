@@ -141,7 +141,7 @@ proc genome_get {f chr start end} {
 		set temp [dict get $fastaindex $chr]
 	}
 	foreach {gstart glen} $temp break
-	if {$end >= $glen} {error "trying to get sequence beyond end of chromosome ($end >= $glen)"}
+	if {$end > $glen} {error "trying to get sequence beyond end of chromosome ($end > $glen)"}
 	set pos [expr {$gstart+$start}]
 	seek $f $pos
 	read $f [expr {$end-$start}]
