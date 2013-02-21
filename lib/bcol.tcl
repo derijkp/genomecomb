@@ -435,6 +435,15 @@ proc cg_bcol_histo {args} {
 		set p $limit
 	}
 	lappend header r${limit}<
+	set totsize 0
+	set totsum 0
+	set totmin {}
+	set totmax {}
+	set size 0
+	set sum 0
+	set mins {}
+	set maxs {}
+	lappend header size avg min max
 	puts [join $header \t]
 	set line [getline $f]
 	set prevname [lindex $line 3]
@@ -455,8 +464,22 @@ proc cg_bcol_histo {args} {
 				lappend result $a($limit)
 				set a($limit) 0
 			}
+			set min [lmath_min $mins]
+			set max [lmath_max $maxs]
+			lappend result $size
+			lappend result [format %.2f [expr {$sum/double($size)}]]
+			lappend result $min
+			lappend result $max
 			puts $prevname\t[join $result \t]
 			set prevname $name
+			incr totsize $size
+			incr totsum $sum
+			if {$totmin eq "" || $min < $totmin} {set totmin $min}
+			if {$totmax eq "" || $max > $totmax} {set totmax $max}
+			set size 0
+			set sum 0
+			set mins {}
+			set maxs {}
 			if {[eof $f]} break
 		}
 		incr end -1
@@ -469,6 +492,10 @@ proc cg_bcol_histo {args} {
 			}
 			incr a($iv)
 		}
+		incr size [llength $data]
+		set sum [expr {$sum + round([lmath_sum $data])}]
+		lappend mins [lmath_min $data]
+		lappend maxs [lmath_max $data]
 		set line [getline $f]
 	}
 	close $f
@@ -478,12 +505,13 @@ proc cg_bcol_histo {args} {
 	foreach limit $intervals {
 		lappend result $tota($limit)
 	}
-	puts Total\t[join $result \t]
 	set tot [lmath_sum $result]
 	set presult [list [format %.2f [expr {100*$tota($biv)/$tot}]]]
 	foreach limit $intervals {
 		lappend presult [format %.2f [expr {100*$tota($limit)/$tot}]]
 	}
+	lappend result $totsize [format %.2f [expr {$totsum/double($totsize)}]] $totmin $totmax
+	puts Total\t[join $result \t]
 	puts Totalpercent\t[join $presult \t]
 }
 

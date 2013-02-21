@@ -229,11 +229,11 @@ test bcol_histo {basic} {
 	catch {exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv}
 	file_write tmp/reg.tsv "chromosome\tbegin\tend\tname\nchr1\t4\t20\tt1\nchr1\t40\t60\tt2\n"
 	cg bcol_histo tmp/reg.tsv tmp/temp-chr1.bcol {1 8 10}
-} {name	r<1	r1<8	r8<10	r10<
-t1	0	11	5	0
-t2	10	0	0	10
+} {name	r<1	r1<8	r8<10	r10<	size	avg	min	max
+t1	0	11	5	0	16	5.81	2	9
+t2	10	0	0	10	20	6.25	0	14
 ----------
-Total	10	11	5	10
+Total	10	11	5	10	36	6.06	0	14
 Totalpercent	27.78	30.56	13.89	27.78}
 
 test bcol_make {c too large error} {
