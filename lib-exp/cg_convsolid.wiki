@@ -1,4 +1,4 @@
-= Process =
+= Convsolid =
 
 == Format ==
 cg convsolid projectfile

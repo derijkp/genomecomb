@@ -1,4 +1,4 @@
-= Makeprimers =
+= Primercheck =
 
 == Format ==
 cg primercheck ?options? primerfile dbdir ?resultfile?
