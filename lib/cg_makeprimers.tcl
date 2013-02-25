@@ -28,10 +28,10 @@ foreach rtype {
 
 proc makeprimers_primer3 {seq rstart rend {size 600} {temperature 60}} {
 	global primer3 cachedir
-	if {[file isdir $cachedir]} {
-		set tempdir $cachedir
-	} else {
+	if {![info exists cachedir] || [file isdir $cachedir]} {
 		set tempdir [tempdir]
+	} else {
+		set tempdir $cachedir
 	}
 	set f [open $tempdir/primer3input.txt w]
 	puts $f "PRIMER_SEQUENCE_ID=temp"
