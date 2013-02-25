@@ -30,7 +30,7 @@ proc cg_sh {args} {
 	}
 	if {[info commands "console"] == "console"} {
 		console show
-	} elseif {![catch {package require Tclx}]} {
+	} elseif {[lsearch $args nox] == -1 && ![catch {package require Tclx}]} {
 		signal -restart error SIGINT
 		uplevel #0 {commandloop -prompt1 {puts -nonewline "% "} -prompt2 {puts -nonewline ""}}
 	} else {
