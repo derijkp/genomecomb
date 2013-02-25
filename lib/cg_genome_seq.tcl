@@ -171,7 +171,7 @@ proc cg_genome_seq {args} {
 	if {$makemap} {
 		close $fm
 	}
-	close $f; close $fg
+	close $f; genome_close $fg
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
