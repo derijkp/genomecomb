@@ -467,7 +467,11 @@ proc cg_bcol_histo {args} {
 			set min [lmath_min $mins]
 			set max [lmath_max $maxs]
 			lappend result $size
-			lappend result [format %.2f [expr {$sum/double($size)}]]
+			if {$size == 0} {
+				lappend result ""
+			} else {
+				lappend result [format %.2f [expr {$sum/double($size)}]]
+			}
 			lappend result $min
 			lappend result $max
 			puts $prevname\t[join $result \t]
