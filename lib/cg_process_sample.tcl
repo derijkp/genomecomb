@@ -65,6 +65,7 @@ proc process_sample {args} {
 		errorformat process_sample
 		exit 1
 	}
+	putslog "Making $workdir"
 	file mkdir $workdir
 	set sample [file tail $workdir]
 	catch {file delete $workdir/summary-$sample.txt}
