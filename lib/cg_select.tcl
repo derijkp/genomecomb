@@ -8,6 +8,26 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+proc tsv_select_compare {ids neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	set id1 [string trim [list_pop ids]]
+	set fields [list sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1]
+	foreach id $ids {
+		set id [string trim $id]
+		lappend fields sequenced-$id alleleSeq1-$id alleleSeq2-$id
+	}
+	lappend neededfields {*}$fields
+	set temp "\[compare \$\{[join $fields "\} \$\{"]\}\]"
+}
+
+proc tsv_select_zyg {ids neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	set id1 [string trim [list_pop ids]]
+	set fields [list sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1 ref alt]
+	lappend neededfields {*}$fields
+	set temp "\[zyg \$\{[join $fields "\} \$\{"]\}\]"
+}
+
 proc tsv_select_sm {ids neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set id1 [string trim [list_pop ids]]
@@ -220,7 +240,7 @@ array set tsv_select_tokenize_opsa {
 	<< {d 5} >> {d 5}
 	< {d 6} > {d 6} <= {d 6} >= {d 6}
 	@< {d 6} @> {d 6} @<= {d 6} @>= {d 6}
-	== {d 7} != {d 7}
+	== {d 7} = {d 7} != {d 7}
 	@== {d 7} @!= {d 7}
 	eq {d 8} ne {d 8}
 	in {s 9} ni {s 9}
@@ -542,6 +562,9 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 				lappend result \$\{$val\}
 			}
 			@op {
+				if {$val eq "="} {
+					set val ==
+				}
 				lappend result $val
 			}
 			@newop {
@@ -571,6 +594,12 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 					}
 					hovar {
 						set temp [tsv_select_hovar $ids neededfields]
+					}
+					compare {
+						set temp [tsv_select_compare $ids neededfields]
+					}
+					zyg {
+						set temp [tsv_select_zyg $ids neededfields]
 					}
 					count {
 						set temp [tsv_select_count $arguments $header neededfields]
@@ -625,7 +654,6 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 
 proc tsv_select_expandcode {header code neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
-	upvar tsv_funcnum tsv_funcnum
 	# variable preprocessor first, to expand *
 	# check and exchange variables needed
 	set tokens [tsv_select_tokenize $header $code neededfields]
