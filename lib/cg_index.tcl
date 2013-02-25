@@ -5,21 +5,34 @@ proc cg_index {args} {
 	set cols 0
 	set dbstring {}
 	set refdir {}
+	set verbose 0
 	while {$pos < $len} {
 		set opt [lindex $args $pos]
-		if {$opt eq "-cols"} {
-			set cols 1
-			incr pos
-		} elseif {$opt eq "-db"} {
-			incr pos
-			set dbstring [lindex $args $pos]
-			incr pos
-		} elseif {$opt eq "-refdir"} {
-			incr pos
-			set refdir [lindex $args $pos]
-			incr pos
-		} else {
-			break
+		switch $opt {
+			-cols {
+				set cols 1
+				incr pos
+			}
+			-db {
+				incr pos
+				set dbstring [lindex $args $pos]
+				incr pos
+			}
+			-refdir {
+				incr pos
+				set refdir [lindex $args $pos]
+				incr pos
+			}
+			-v {
+				set verbose 1
+				incr pos
+			}
+			-- break
+			default {
+				if {[string index $opt 0] ne "-"} break
+				puts stderr "ERROR: Unkown option $opt: should be one of -cols, -db, -refdir, -v"
+				exit 1
+			}
 		}
 	}
 	set args [lrange $args $pos end]
@@ -44,7 +57,9 @@ proc cg_index {args} {
 		dict set info refdir $refdir
 	}
 	if {![file exists $indexdir/info.tsv] || [file mtime $indexdir/info.tsv] < $time || ![file exists $indexfile]} {
-		puts "Creating lineindex"
+		if {$verbose} {
+			putslog "Creating lineindex"
+		}
 		bcol_indexlines $file $indexfile
 		catch {file delete $indexdir/info.tsv}
 		set f [gzopen $file]
@@ -102,7 +117,9 @@ proc cg_index {args} {
 			set dbtime [cg_monetdb_sql $db [subst {select "value" from "genomecomb_info" where "table" = '$table' and "key" = 'time'}]]
 		}]
 		if {$error || ![isint $dbtime] || $dbtime < $time} {
-			puts "Loding into database $db ($table)"
+			if {$verbose} {
+				putslog "Loading into database $db ($table)"
+			}
 			cg_tomonetdb $db $table $file
 			if {$user ne ""} {
 				set o [open $indexdir/.monetdb w]

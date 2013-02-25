@@ -1,7 +1,7 @@
 = index =
 
 == Format ==
-cg index ?-cols? tsvfile
+cg index ?options? tsvfile
 
 == Summary ==
 make indices for a tsv file
@@ -16,6 +16,9 @@ but can take a significant amount of disc space
 == Arguments ==
 ; **tsvfile**: file to index
 ; **-cols**: Add extra column indices
+; **-v**: Verbose: output progress information on stderr
+; **-refdir filename**: filename of a directory that contains the reference databases (genome sequence, annotion, etc.) for the build the file is based on
+; **-db 'databasename tablename'**
 
 == Category ==
 tsv
