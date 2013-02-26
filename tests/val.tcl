@@ -9,6 +9,12 @@ source tools.tcl
 puts "expected data no longer valid with new dbsnp"
 # exit
 
+test makeprimers {basic} {
+	exec cg makeregions data/testvars.tsv 200 > tmp/valregs.tsv
+	exec cg makeprimers tmp/valregs.tsv may2009 600 500 /complgen/refseq/hg18 1 > tmp/primersvalregs.tsv
+	exec diff tmp/primersvalregs.tsv data/makeprimers-results.tsv
+} {} 
+
 test makesequenom {basic} {
 	exec cg makesequenom data/testvars.tsv tmp/temp.sft /complgen/refseq/hg19_test 2> /dev/null
 	exec diff tmp/temp.sft data/expected-makesequenom-testvars.tsv

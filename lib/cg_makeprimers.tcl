@@ -207,16 +207,20 @@ proc makeprimers_annotate {line shift} {
 # result will be a list with
 #   * the total number of hits
 #   * a dictionary with chromosomes as keys, and a list of the positions found on that chromosome in the value
-proc cindex_searchgenome {db pseq {add 0} {nummax {}}} {
+proc cindex_searchgenome {db pseq {add 0} {nummax {}} {verbose 0}} {
 	global cindex_genome maxnum
 	if {$nummax eq {}} {set nummax $maxnum}
 	if {![info exists cindex_genome]} {
+		if {$verbose} {
+			putslog "loading genome database"
+		}
 		set cindex_genome {}
-		putslog "loading genome database"
 		foreach file [lsort -dict [glob $db/*]] {
 			set file [file root $file]
 			set chr [lindex [split $file -] end]
-			putslog "loading chr $chr"
+			if {$verbose} {
+				putslog "loading chr $chr"
+			}
 			dict set cindex_genome $chr [cindex load $file]
 		}
 	}
@@ -252,15 +256,16 @@ proc makeprimers_cindex {name left right {db /complgen/refseq/hg18/genome_hg18.s
 	putslog "search [llength $new]"
 	foreach pseq $new {
 		puts -nonewline stderr .
-		if {$plen($p) >= 15} {
-			set prelen 15
+		if {[string length $pseq] >= 15} {
+			# prelen is the size that was cut off
+			set prelen [expr {[string length $pseq]-14}]
 			set endseq [string range $pseq end-14 end]
 		} else {
-			set prelen [string length $pseq]
+			set prelen 0
 			set endseq $pseq
 		}
 		if {![catch {
-			foreach {numhits hits} [cindex_searchgenome $db $endseq $prelen] break
+			foreach {numhits hits} [cindex_searchgenome $db $endseq $prelen {} $verbose] break
 		}]} {
 			set a(${pseq}+) [list $numhits $hits]
 		} else {
@@ -653,7 +658,7 @@ proc makeprimers_region {name maxsize prefsize temperature archive db extraseq} 
 	return $bestpair
 }
 
-proc makeprimers {regionsfile archive maxsize prefsize db numthreads {o stdout}} {
+proc makeprimers {regionfile archive maxsize prefsize db numthreads {o stdout}} {
 	global cachedir threads temperature extraseq
 	set cachedir [pwd]/cache 
 	set threads $numthreads
@@ -662,7 +667,7 @@ proc makeprimers {regionsfile archive maxsize prefsize db numthreads {o stdout}}
 	catch {rename e {}}
 	EmblFile new e
 	puts $o [join {remark label sequence modification scale purification project pair species chromosome cyto target contig pos temperature mg} \t]
-	set regionlist [split [string trim [file_read $regionsfile]] \n]
+	set regionlist [split [string trim [file_read $regionfile]] \n]
 	list_shift regionlist
 	foreach region $regionlist {
 		foreach {cchr cstart cend} $region break
