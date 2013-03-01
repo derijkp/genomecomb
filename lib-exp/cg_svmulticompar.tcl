@@ -194,11 +194,7 @@ proc svmulticompar_getlist {f1 poss1 len1 line1Var f2 poss2 len2 line2Var} {
 	set startpos $locpos(start1)
 	set endpos $locpos(end1)
 	set list {}
-exec echo ------------------------ >> log
-exec echo $line1 >> log
-exec echo $line2 >> log
 	set compar [svmulticompar_compar $line1 $line2 $margin]
-exec echo $compar >> log
 	if {$compar < 0} {
 		set listchr [lindex $line1 $chrpos]	
 		set liststart [lindex $line1 $startpos]
@@ -220,7 +216,6 @@ exec echo $compar >> log
 	}
 	while {![eof $f1] || ![eof $f2]} {
 		set match 0
-#putsvars listchr liststart listend line1 line2
 		if {[llength $line1]} {
 			set id1 [lindex $line1 $idpos]
 			set listchr1 [lindex $line1 $chrpos]
@@ -301,7 +296,14 @@ proc svmulticompar {svfile1 svfile2} {
 	set f2 [gzopen $svfile2]
 	set header2 [tsv_open $f2]
 	set len2 [llength $header2]
+	# make poss2
 	set poss2 [list_cor $header2 $locfields]
+	set temp [tsv_basicfields $header2 4]
+	set poss2 [lreplace $poss2 1 4 {*}$temp]
+	if {[lindex $poss2 5] == -1} {lset poss2 5 [lindex $temp 1]}
+	if {[lindex $poss2 6] == -1} {lset poss2 6 [lindex $temp 1]}
+	if {[lindex $poss2 7] == -1} {lset poss2 7 [lindex $temp 2]}
+	if {[lindex $poss2 8] == -1} {lset poss2 8 [lindex $temp 2]}
 	set mergefields2 [list_common $header2 $mergefields]
 	set ::mergeposs2 [list_cor $header2 $mergefields2]
 	set templen [llength $header2]
