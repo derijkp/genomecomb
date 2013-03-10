@@ -34,14 +34,14 @@ void hash_resize(Hash_table *table, hash_hash_func *hashfunc) {
 			hash = hashfunc(oldbucket->key,newtable->max);
 			/* can we find the bucket with the right key	*/
 			/* will allways be new buckets, so do not check for existing here, no compar function needed */
-			tableitem = table->table+hash;
+			tableitem = newtable->table+hash;
 			if (tableitem->chain == NULL) {
 				/* not found, create new chain */
 				bucket = (Hash_bucket *)malloc(2*sizeof(Hash_bucket));
 				NODPRINT("new bucket")
 				tableitem->chain = bucket;
-				tableitem->next = table->items;
-				table->items = tableitem;
+				tableitem->next = newtable->items;
+				newtable->items = tableitem;
 			} else {
 				int pos = 0;
 				bucket = tableitem->chain;
@@ -149,9 +149,9 @@ Hash_bucket *hash_next(Hash_iter *iter) {
 void hash_destroy(Hash_table *table) {
 	Hash_tableitem *item = table->items;
 	while(1) {
+		if (item == NULL) break;
 		free((char *)item->chain);
 		item = item->next;
-		if (item == NULL) break;
 	}
 	free(table);
 }
