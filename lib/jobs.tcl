@@ -40,6 +40,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(silent)]} {
 		set cgjob(silent) 0
 	}
+	if {![info exists cgjob(debug)]} {
+		set cgjob(debug) 0
+	}
 	if {![llength $jobargs]} {return {}}
 	set newargs {}
 	set pos 0
@@ -57,6 +60,9 @@ proc job_args {jobargs} {
 			}
 			-s - -silent - --silent {
 				set cgjob(silent) 1
+			}
+			-debug {
+				set cgjob(debug) 1
 			}
 			-- break
 			default {
@@ -140,15 +146,19 @@ proc job_expandvarslist {list {level 1}} {
 	return $result
 }
 
-proc job_finddep {pattern idsVar} {
+proc job_finddep {pattern idsVar timeVar} {
 	global cgjob_id cgjob_ptargets
 	upvar $idsVar ids
+	upvar $timeVar time
 	set pattern [file normalize $pattern]
 	set ptargethits [array names cgjob_ptargets $pattern]
 	if {[llength $ptargethits]} {
 		error "ptargets hit $pattern: wait till ptarget deps have finished"
 	}
 	set files [lsort -dict [gzfiles $pattern]]
+	foreach file $files {
+		maxfiletime $file time
+	}
 	lappend ids {*}[list_fill [llength $files] {}]
 	foreach file [array names cgjob_id $pattern] {
 		if {[inlist $files $file]} {
@@ -157,13 +167,22 @@ proc job_finddep {pattern idsVar} {
 		}
 		lappend files $file
 		lappend ids $cgjob_id($file)
+		set time now
 	}
 	return $files
 }
 
-proc job_findregexpdep {pattern idsVar} {
+proc maxfiletime {file timeVar} {
+	upvar $timeVar time
+	if {$time eq "now"} {return $time}
+	set ftime [file mtime $file]
+	if {$ftime > $time} {set time $ftime}
+}
+
+proc job_findregexpdep {pattern idsVar timeVar} {
 	global cgjob_id cgjob_ptargets
 	upvar $idsVar ids
+	upvar $timeVar time
 	set pattern [file normalize $pattern]
 	set glob [regexp2glob $pattern]
 	if {[llength [array names cgjob_ptargets $glob]]} {
@@ -172,6 +191,7 @@ proc job_findregexpdep {pattern idsVar} {
 	set files {}
 	foreach file [lsort -dict [gzfiles $glob]] {
 		if {[regexp ^$pattern\$ $file]} {
+			maxfiletime $file time
 			lappend files $file
 			lappend ids {}
 		}
@@ -184,16 +204,19 @@ proc job_findregexpdep {pattern idsVar} {
 		}
 		lappend files $file
 		lappend ids $cgjob_id($file)
+		set time now
 	}
 	return $files
 }
 
 # dependencies between braces () are optional (braces must be at start and end of dependency)
-proc job_finddeps {job deps targetvarsVar targetvarslist idsVar {ftargetvars {}}} {
+proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar {ftargetvars {}}} {
 	upvar $idsVar ids
 	if {$targetvarsVar ne ""} {
 		upvar $targetvarsVar targetvars
 	}
+	upvar $timeVar time
+	set time 0
 	set ids {}
 	set finaldeps {}
 	set targetvars {}
@@ -207,9 +230,9 @@ proc job_finddeps {job deps targetvarsVar targetvarslist idsVar {ftargetvars {}}
 		set pattern [job_targetreplace $pattern $ftargetvars]
 		if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
 			set pattern [string range $pattern 1 end-1]
-			set files [job_findregexpdep $pattern ids]
+			set files [job_findregexpdep $pattern ids time]
 		} else {
-			set files [job_finddep $pattern ids]
+			set files [job_finddep $pattern ids time]
 		}
 		if {![llength $files]} {
 			if {!$opt} {
@@ -259,16 +282,33 @@ proc job_targetsreplace {list targetvars} {
 	return $result
 }
 
-proc job_checktarget {job target {newidsVar {}}} {
+proc job_checktarget {job target time {newidsVar {}}} {
 	global cgjob_id
 	if {$newidsVar ne ""} {
 		upvar $newidsVar newids
 	}
 	set files [gzfiles $target]
 	if {[llength $files]} {
-		job_lognf $job "target ok: $target"
-		unset -nocomplain cgjob_id($target)
-		return 1
+		if {$time ne "now"} {
+			foreach file $files {
+				if {[file mtime $file] < $time} {
+					set time now
+					break
+				}
+			}
+		}
+		if {$time eq "now"} {
+			job_lognf $job "target older than dep (removing): $target"
+			# foreach file $files {
+			# 	job_backup $file 1
+			# }
+			file delete {*}$files
+			return 0
+		} else {		
+			job_lognf $job "target ok: $target"
+			unset -nocomplain cgjob_id($target)
+			return 1
+		}
 	} elseif {[info exists cgjob_id($target)] && $cgjob_id($target) != "q"} {
 		job_lognf $job "target already submitted/running (id $cgjob_id($target)): $target "
 		set newids $cgjob_id($target)
@@ -278,14 +318,14 @@ proc job_checktarget {job target {newidsVar {}}} {
 	return 0
 }
 
-proc job_checktargets {job targets {runningVar {}}} {
+proc job_checktargets {job targets time {runningVar {}}} {
 	if {$runningVar ne ""} {
 		upvar $runningVar running
 		set running {}
 	}
 	set ok 1
 	foreach target $targets {
-		set check [job_checktarget $job $target]
+		set check [job_checktarget $job $target $time]
 		if {!$check} {
 			set ok 0
 		}
@@ -553,15 +593,16 @@ proc job {jobname args} {
 	append newcode $code
 	lappend cgjob(queue) [list $cgjob(id) $jobname [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $newcode $submitopts $precode]	
 	incr cgjob(id)
-	if {$cgjob(directprocess)} job_process
+	if {!$cgjob(debug)} job_process
 }
 
 proc job_init {args} {
-	global cgjob cgjob_id cgjob_running
+	global cgjob cgjob_id cgjob_running cgjob_ptargets
 	unset -nocomplain cgjob
 	unset -nocomplain cgjob_id
 	unset -nocomplain cgjob_running
-	set cgjob(directprocess) 1
+	unset -nocomplain cgjob_ptargets
+	set cgjob(debug) 0
 	set cgjob(distribute) 0
 	set cgjob(force) 0
 	set cgjob(queue) {}

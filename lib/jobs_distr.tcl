@@ -54,6 +54,7 @@ proc job_status {} {
 
 proc job_process_distr {} {
 	global cgjob cgjob_id cgjob_running cgjob_pid cgjob_ptargets
+
 	set queue $cgjob(queue)
 	update
 	if {![llength $queue]} return
@@ -62,18 +63,21 @@ proc job_process_distr {} {
 	set running [array names cgjob_running]
 	set initlen [llength $queue]
 	# join [list_subindex $queue {0 1 2 3 4 5 6}] \n
-	while {[llength $queue]} {
+	while {[llength $queue]} \
+ {
 		if {[llength $running] > $cgjob(distribute)} {
 			break
 		}
 		set line [list_shift queue]
 		foreach {jobid jobname pwd deps foreach ftargetvars ftargets fptargets fskip code submitopts} $line break
+puts $jobname
+
 		cd $pwd
 		set job [job_logname $jobname]
 		# check foreach deps, skip if not fullfilled
 		# check for foreach patterns, expand into one ore more entries in the queue
 		if {[llength $foreach]} {
-			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids} fadeps]} {
+			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time} fadeps]} {
 				if {[regexp {^missing dependency} $fadeps]} {
 					job_log $job "$fadeps"
 				} elseif {[regexp {^ptargets hit} $fadeps]} {
@@ -106,7 +110,7 @@ proc job_process_distr {} {
 		job_lognf $job "==================== $jobname ===================="
 		cd $pwd
 		# check deps, skip if not fullfilled
-		if {[catch {job_finddeps $job $deps newtargetvars 0 ids $ftargetvars} adeps]} {
+		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $ftargetvars} adeps]} {
 			# dependencies not found (or error) -> really skip job
 			if {[regexp {^missing dependency} $adeps]} {
 				job_log $job "$adeps"
@@ -135,7 +139,7 @@ proc job_process_distr {} {
 		# check skip targets, if already done or running, skip
 		if {!$cgjob(force) && [llength $fskip]} {
 			set skip [job_targetsreplace $fskip $targetvars]
-			if {[llength $skip] && [job_checktargets $job $skip running]} {
+			if {[llength $skip] && [job_checktargets $job $skip $time running]} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
 				continue
 			}
@@ -143,7 +147,7 @@ proc job_process_distr {} {
 		# check targets, if already done or running, skip
 		set targets [job_targetsreplace $ftargets $targetvars]
 		set newtargets 0
-		if {![job_checktargets $job $targets targetsrunning]} {
+		if {![job_checktargets $job $targets $time targetsrunning]} {
 			set newtargets 1
 		}
 		set ptargets [job_targetsreplace $fptargets $targetvars]
@@ -156,11 +160,6 @@ proc job_process_distr {} {
 				set cgjob_id($target) q
 			}
 		}
-		foreach ptarget $ptargets {
-			if {![info exists cgjob_id($ptarget)]} {
-				set cgjob_ptargets($ptarget) q
-			}
-		}
 		# if deps or overlapping targets are not finished yet, put line back in the queue and skip running
 		if {$depsrunning || [llength $targetsrunning]} {
 			job_logclear $job
@@ -169,14 +168,26 @@ proc job_process_distr {} {
 		}
 		job_log $job
 		if {$cgjob(force)} {
-			foreach target [list_concat $targets $ptargets] {
-				job_backup $target 1
+			foreach target $targets {
+				# job_backup $target 1
+				file delete $target
 			}
 			set newtargets 1
 		}
 		if {!$newtargets} {
 			job_log $job "skipping $jobname: targets already completed or running"
+			foreach ptarget $ptargets {
+				unset -nocomplain cgjob_ptargets($ptarget)
+			}
 			continue
+		}
+		# put ptargets in the queue only if we will actually be running the job
+		# Otherwise they would keep dependend jobs from being started
+		# (normal targets do not cause this, so these can stay)
+		foreach ptarget $ptargets {
+			if {![info exists cgjob_id($ptarget)]} {
+				set cgjob_ptargets($ptarget) q
+			}
 		}
 		job_log $job "-------------------- running $jobname --------------------"
 		# run code
@@ -200,6 +211,7 @@ proc job_process_distr {} {
 		set cgjob_running($job) $cgjob_pid
 		lappend running $job
 	}
+
 	set running [array names cgjob_running]
 	lappend cgjob(queue) {*}$queue
 	cd $jobroot
@@ -212,7 +224,7 @@ proc job_process_distr_wait {} {
 	set running [array names cgjob_running]
 	if {![llength cgjob(queue)] && ![llength $running]} return
 	if {[catch {vwait cgjob_exit} e]} {
-		puts "job_wait error: $e"
+		puts "job_wait warning: $e"
 	}
 	unset -nocomplain cgjob_exit
 }

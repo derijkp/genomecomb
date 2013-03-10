@@ -121,7 +121,7 @@ proc job_process_sge_onepass {} {
 		# check foreach deps, skip if not fullfilled
 		# check for foreach patterns, expand into one ore more entries in the queue
 		if {[llength $foreach]} {
-			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids} fadeps]} {
+			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time} fadeps]} {
 				if {[regexp {^missing dependency} $fadeps]} {
 					job_log $job "$fadeps"
 				} elseif {[regexp {^ptargets hit} $fadeps]} {
@@ -163,7 +163,7 @@ proc job_process_sge_onepass {} {
 			continue
 		}
 		# check deps, skip if not fullfilled
-		if {[catch {job_finddeps $job $deps newtargetvars 0 ids $ftargetvars} adeps]} {
+		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $ftargetvars} adeps]} {
 			# dependencies not found (or error) -> really skip job
 			if {[regexp {^missing dependency} $adeps]} {
 				job_log $job "$adeps"
@@ -195,7 +195,7 @@ proc job_process_sge_onepass {} {
 		# check skip targets, if already done or running, skip
 		if {!$cgjob(force) && [llength $fskip]} {
 			set skip [job_targetsreplace $fskip $targetvars]
-			if {[llength $skip] && [job_checktargets $job $skip running]} {
+			if {[llength $skip] && [job_checktargets $job $skip $time running]} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
 				continue
 			}
@@ -204,7 +204,7 @@ proc job_process_sge_onepass {} {
 		set targets [job_targetsreplace $ftargets $targetvars]
 		file_write $job.targets $targets
 		set newtargets 0
-		if {![job_checktargets $job $targets targetsrunning]} {
+		if {![job_checktargets $job $targets $time targetsrunning]} {
 			set newtargets 1
 		}
 		set ptargets [job_targetsreplace $fptargets $targetvars]
@@ -222,8 +222,9 @@ proc job_process_sge_onepass {} {
 #		}
 		job_log $job
 		if {$cgjob(force)} {
-			foreach target [list_concat $targets $ptargets] {
-				job_backup $target 1
+			foreach target $targets {
+				# job_backup $target 1
+				file delete $target
 			}
 			set newtargets 1
 		}

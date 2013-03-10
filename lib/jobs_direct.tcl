@@ -9,7 +9,7 @@ proc job_process_direct {} {
 		# check foreach deps, skip if not fullfilled
 		# add all resulting (foreach) jobs in front of the queue, and go back to running the queue
 		if {[llength $foreach]} {
-			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids} fadeps]} {
+			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time} fadeps]} {
 				if {![regexp {^missing dependency} $fadeps]} {
 					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				} else {
@@ -33,7 +33,7 @@ proc job_process_direct {} {
 		cd $pwd
 		job_log $job "==================== $jobname ===================="
 		# check deps, skip if not fullfilled
-		if {[catch {job_finddeps $job $deps newtargetvars 0 ids $ftargetvars} adeps]} {
+		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $ftargetvars} adeps]} {
 			if {![regexp {^missing dependency} $adeps]} {
 				job_log $job "error in dependencies for $jobname: $adeps"
 			} else {
@@ -44,17 +44,18 @@ proc job_process_direct {} {
 		}
 		set targetvars $ftargetvars
 		lappend targetvars {*}$newtargetvars
-		# check targets, if already done or running, skip
+		# check skip targets, if already done or running, skip
 		set run 0
 		if {!$cgjob(force) && [llength $fskip]} {
 			set skip [job_targetsreplace $fskip $targetvars]
-			if {[llength $skip] && [job_checktargets $job $skip running]} {
+			if {[llength $skip] && [job_checktargets $job $skip $time running]} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
 				continue
 			}
 		}
+		# check targets, if already done or running, skip
 		set targets [job_targetsreplace $ftargets $targetvars]
-		if {![job_checktargets $job $targets running]} {
+		if {![job_checktargets $job $targets $time running]} {
 			set run 1
 		}
 		set ptargets [job_targetsreplace $fptargets $targetvars]
@@ -65,8 +66,9 @@ proc job_process_direct {} {
 			if {[llength $running]} {
 				error "cannot force job with still running tasks ([join $running ,])"
 			}
-			foreach target [list_concat $targets $ptargets] {
-				job_backup $target 1
+			foreach target $targets {
+				# job_backup $target 1
+				file delete $target
 			}
 			set run 1
 		}

@@ -827,3 +827,11 @@ proc genomecombenv {} {
 	}
 	return $genomecombdir
 }
+
+proc lforeach {args} {
+	set result {}
+	set pattern [list_pop args]
+	set code "lappend result \"$pattern\""
+	foreach {*}$args $code
+	return $result
+}

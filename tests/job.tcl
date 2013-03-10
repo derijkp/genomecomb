@@ -53,7 +53,7 @@ proc jobtest {args} {
 	-vars destdir -code {
 		# var target contains target
 		# var target1 contains first braced part of target (= destdir)
-		# var target1 contains second braced part of target (= name)
+		# var target2 contains second braced part of target (= name)
 		# var deps contains a list of all dependencies
 		# var dep contains the first element of the first dependency (so you do not have to do [lindex $deps 0] to get it)
 		for {set i 1} {$i < 5} {incr i} {
@@ -72,7 +72,7 @@ proc jobtest {args} {
 			set calc [join [lrange $line 1 end] +]
 			puts $o "p $calc=[expr $calc]"
 			close $o
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 			lappend targets $target
 		}
 		close $f
@@ -200,6 +200,10 @@ test job {--force 0} {
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
 	file mkdir test
+	job_init -silent
+	jobtest --force 0 ../data test testh
+	job_wait
+	after 1000
 	file_write test/all.txt error
 	job_init -silent
 	jobtest --force 0 ../data test testh
@@ -220,19 +224,22 @@ test job {--force 1} {
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
 	file mkdir test
+	job_init -silent
+	jobtest --force 0 ../data test testh
+	job_wait
+	after 1000
 	file_write test/all.txt error
 	job_init -silent
 	jobtest --force 1 ../data test testh
 	job_wait
 	set result [list \
 		[lsort -dict [glob test/*]] \
-		[file_read test/all.txt.old1] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all.txt.old1 test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} error {testh
+} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -268,6 +275,10 @@ test job {--force 0 -d 4} {
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
 	file mkdir test
+	job_init -silent
+	jobtest --force 0 ../data test testh
+	job_wait
+	after 1000
 	file_write test/all.txt error
 	job_init -silent -d 4
 	jobtest --force 0 ../data test testh
@@ -288,23 +299,80 @@ test job {--force 1 -d 4} {
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
 	file mkdir test
+	job_init -silent
+	jobtest --force 0 ../data test testh
+	job_wait
+	after 1000
 	file_write test/all.txt error
 	job_init -silent -d 4
 	jobtest --force 1 ../data test testh
 	job_wait
 	set result [list \
 		[lsort -dict [glob test/*]] \
-		[file_read test/all.txt.old1] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all.txt.old1 test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} error {testh
+} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
 1+2=3
 3+4+5=12
 6+7+8=21
 } {6+7+8=21
+2
+}}
+
+test job {time} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	job_init -silent
+	jobtest ../data test testh
+	job_wait
+	after 1000
+	file_write $::testdir/tmp/test/sum-test3.txt "replaced\n"
+	job_init -silent
+	jobtest ../data test testh
+	job_wait
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+	]
+	cd $::testdir
+	set result
+} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
+1+2=3
+3+4+5=12
+replaced
+} {replaced
+2
+}}
+
+test job {time -d 4} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	job_init -silent -d 4
+	jobtest ../data test testh
+	job_wait
+	after 1000
+	file_write $::testdir/tmp/test/sum-test3.txt "replaced\n"
+	job_init -silent -d 4
+	jobtest ../data test testh
+	job_wait
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+	]
+	cd $::testdir
+	set result
+} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
+1+2=3
+3+4+5=12
+replaced
+} {replaced
 2
 }}
 
@@ -344,6 +412,10 @@ test job {--force 1 -d sge} {
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
 	file mkdir test
+	job_init -silent -d sge
+	jobtest --force 1 ../data test testh
+	job_wait
+	after 1000
 	file_write test/all.txt error
 	job_init -silent -d sge
 	jobtest --force 1 ../data test testh
