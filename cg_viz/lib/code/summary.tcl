@@ -37,31 +37,67 @@ table_tsv method summary {definition {file {}}} {
 	if {![llength $coldef]} {
 		set fieldnames all
 		set fieldqueries [list {}]
+		set fieldsamples [list {}]
 	} else {
 		set fieldnames {{}}
 		set fieldqueries {{}}
+		set fieldsamples {{}}
 	}
+	set fields [$object fields]
 	foreach {field values} $coldef {
-		set mfield [$object mfield $field extrafields colfield]
-		# lappend groupby \"$mfield\"
-		if {![llength $values]} {
-			set values [$object subsql [subst {select distinct("$mfield") from "temp"}] {*}$extrafields]
-		}
-		set tempqueries {}
-		set tempnames {}
-		foreach fieldquery $fieldqueries fieldname $fieldnames {
-			foreach value $values {
-				lappend tempqueries [list_union $fieldquery [list "\"$mfield\" = \'$value\'"]]
-				lappend tempnames [list_union $fieldname [list $value]]
+		if {$field eq "sample"} {
+			if {[llength [list_remove $fieldsamples {}]]} {
+				error "error in definition, you can only use field sample once"
 			}
+			if {![llength $values]} {
+				set values [samples $fields]
+			}
+			set tempqueries {}
+			set tempnames {}
+			set tempsamples {}
+			foreach fieldquery $fieldqueries fieldname $fieldnames fieldsample $fieldsamples {
+				foreach value $values {
+					lappend tempqueries $fieldquery
+					lappend tempnames [list_union $fieldname [list $value]]
+					lappend tempsamples $value
+				}
+			}
+			set fieldqueries $tempqueries
+			set fieldnames $tempnames
+			set fieldsamples $tempsamples
+		} else {
+			set tempqueries {}
+			set tempnames {}
+			set tempsamples {}
+			foreach fieldquery $fieldqueries fieldname $fieldnames fieldsample $fieldsamples {
+				if {$fieldsample eq ""} {
+					set mfield [$object mfield $field extrafields colfield]
+				} else {
+					set mfield [$object mfield ${field}-$fieldsample extrafields colfield]
+				}
+				# lappend groupby \"$mfield\"
+				if {![llength $values]} {
+					set values [$object subsql [subst {select distinct("$mfield") from "temp"}] {*}$extrafields]
+				}
+				foreach value $values {
+					lappend tempqueries [list_union $fieldquery [list "\"$mfield\" = \'$value\'"]]
+					lappend tempnames [list_union $fieldname [list $value]]
+					lappend tempsamples $fieldsample
+				}
+			}
+			set fieldqueries $tempqueries
+			set fieldnames $tempnames
+			set fieldsamples $tempsamples
 		}
-		set fieldqueries $tempqueries
-		set fieldnames $tempnames
 	}
-	set mfield [$object mfield $cellfield extrafields colfield]
 	set colnum 0
 	set num 0
-	foreach fieldquery $fieldqueries fieldname $fieldnames {
+	foreach fieldquery $fieldqueries fieldname $fieldnames fieldsample $fieldsamples {
+		if {$fieldsample eq ""} {
+			set mfield [$object mfield $cellfield extrafields colfield]
+		} else {
+			set mfield [$object mfield ${cellfield}-$fieldsample extrafields colfield]
+		}
 		if {$fieldquery eq ""} {
 			set temp \"$mfield\"
 		} else {

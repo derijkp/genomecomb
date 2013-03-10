@@ -117,7 +117,11 @@ table_tsv method query {query} {
 	if {![info exists tdata(sqlbackend_db)]} {
 		exec cg select -q $query -f {rowid=$ROW} $tdata(file) $tdata(indexdir)/query_results.tsv
 	} else {
-		exec cg mselect -q $query -f {rowid=rowid-1} $tdata(sqlbackend_db) $tdata(sqlbackend_table) $tdata(indexdir)/query_results.tsv
+		set qfields ROW
+		set sql [monetdb_makesql $tdata(sqlbackend_table) $tdata(tfields) $query qfields rowid 0 $tdata(monetfieldtrans)]
+		file_write $tdata(indexdir)/query_results.tsv ROW\n
+		exec mclient -d $tdata(sqlbackend_db) -f tab -s $sql >> $tdata(indexdir)/query_results.tsv
+		# exec cg mselect -q $query -f ROW $tdata(sqlbackend_db) $tdata(sqlbackend_table) $tdata(indexdir)/query_results.tsv
 	}
 	Classy::Progress next "Converting results"
 	putslog "Converting results"
@@ -161,10 +165,10 @@ putsvars args
 	}
 	private $object tdata
 	set query [lindex $args 0]
-#	set qfields $tdata(fields)
-	set qfields $tdata(monetfields)
+	set qfields $tdata(fields)
+#	set qfields $tdata(monetfields)
 	lappend qfields {*}[lrange $args 1 end]
-	set sql [monetdb_makesql $tdata(sqlbackend_table) $tdata(monetfields) $tdata(query) qfields {} 0 {} {}]
+	set sql [monetdb_makesql $tdata(sqlbackend_table) $tdata(tfields) $tdata(query) qfields {} 0 $tdata(monetfieldtrans)]
 	set fsql "with \"temp\" as ($sql) $query"
 	$object sql $fsql
 }

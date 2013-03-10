@@ -101,8 +101,13 @@ puts "$object redraw $args"
 	if {$begin eq ""} {return}
 	set type [list_common $qfields {type}]
 	if {$type eq ""} {return}
-	set max [lmath_max [$src subsql [subst {select count(*) from "temp" group by "$chromosome","pos"}] [subst {pos="$begin"/$scale}]]]
-	set list [lsort -dict [tsv_split [$src subsql [subst {select "$chromosome","pos","$type",count(*) from "temp" group by "chromosome","pos","type"}] [subst {pos="$begin"/$scale}]]]]
+	if {[catch {
+		set max [lmath_max [$src subsql [subst {select count(*) from "temp" group by "$chromosome","pos"}] [subst {pos=\$begin/$scale}]]]
+		set list [lsort -dict [tsv_split [$src subsql [subst {select "$chromosome","pos","$type",count(*) from "temp" group by "chromosome","pos","type"}] [subst {pos=\$begin/$scale}]]]]
+	}]} {
+		set max 0
+		set list {}
+	}
 	# $canvas delete all
 	$canvas delete $tag
 	

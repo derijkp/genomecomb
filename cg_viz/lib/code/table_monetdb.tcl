@@ -63,7 +63,7 @@ table_monetdb method table {args} {
 #	catch {$object sql [subst {drop view query}]}
 #	set qfields $tdata(fields)
 #	lappend qfields {query_rowid=row_number() over (order by rowid)}
-#	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields {} 0 {} {}]
+#	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields {} 0]
 #	set sql "create view query as $sql"
 #	$object sql $sql
 #	set tdata(len) [$object sql [subst {select count(*) from "query"}]]
@@ -81,7 +81,7 @@ table_monetdb method query {args} {
 	catch {$object sql [subst {drop view query}]}
 	set qfields $tdata(fields)
 	lappend qfields {query_rowid=row_number() over (order by rowid)}
-	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields rowid 0 {} {}]
+	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields rowid 0]
 	catch {$object sql {drop view "query"}}
 	set sql "create view \"query\" as $sql"
 	$object sql $sql
@@ -95,7 +95,7 @@ table_monetdb method subsql {args} {
 	set query [lindex $args 0]
 	set qfields $tdata(fields)
 	lappend qfields {*}[lrange $args 1 end]
-	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields {} 0 {} {}]
+	set sql [monetdb_makesql $tdata(table) $tdata(tfields) $tdata(query) qfields {} 0]
 	set fsql "with \"temp\" as ($sql) $query"
 	$object sql $fsql
 }

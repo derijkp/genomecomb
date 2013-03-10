@@ -828,6 +828,14 @@ proc genomecombenv {} {
 	return $genomecombdir
 }
 
+proc trans {trans value} {
+	if {[dict exists $trans $value]} {
+		return [dict get $trans $value]
+	} {
+		return $value
+	}
+}
+
 proc lforeach {args} {
 	set result {}
 	set pattern [list_pop args]

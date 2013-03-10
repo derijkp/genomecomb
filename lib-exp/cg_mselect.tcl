@@ -11,52 +11,70 @@ proc mselect_samegeno {a11 a12 a21 a22} {
 	return "(($a11 = $a21 and $a12 = $a22) or ($a11 = $a22 and $a12 = $a21))"
 }
 
-proc mselect_compare {header ids} {
+proc mselect_compare {header ids trans} {
 	if {[llength $ids]  != 2} {error "compare only with 2 ids"}
 	foreach {id1 id2} $ids break
-	set a11 \"alleleSeq1_$id1\"
-	set a21 \"alleleSeq2_$id1\"
-	set a12 \"alleleSeq1_$id2\"
-	set a22 \"alleleSeq2_$id2\"
+	set a11 \"[trans $trans alleleSeq1-$id1]\"
+	set a21 \"[trans $trans alleleSeq2-$id1]\"
+	set a12 \"[trans $trans alleleSeq1-$id2]\"
+	set a22 \"[trans $trans alleleSeq2-$id2]\"
+	set s1 [trans $trans sequenced-$id1]
+	set s2 [trans $trans sequenced-$id2]
 	set sql [subst {(case
-		when "sequenced_$id1" = 'r' and "sequenced_$id2" = 'r' then 'r'
-		when "sequenced_$id1" = 'u' or "sequenced_$id2" = 'u' then 'un'
-		when "sequenced_$id1" = 'r' and "sequenced_$id2" = 'v' then 'df'
-		when "sequenced_$id1" = 'v' and "sequenced_$id2" = 'r' then 'df'
-		when "sequenced_$id1" = 'v' and "sequenced_$id2" = 'v' and [mselect_samegeno $a11 $a21 $a12 $a22] then 'sm'
-		when "sequenced_$id1" = 'v' and "sequenced_$id2" = 'v' then 'mm'
+		when "$s1" = 'r' and "$s2" = 'r' then 'r'
+		when "$s1" = 'u' or "$s2" = 'u' then 'un'
+		when "$s1" = 'r' and "$s2" = 'v' then 'df'
+		when "$s1" = 'v' and "$s2" = 'r' then 'df'
+		when "$s1" = 'v' and "$s2" = 'v' and [mselect_samegeno $a11 $a21 $a12 $a22] then 'sm'
+		when "$s1" = 'v' and "$s2" = 'v' then 'mm'
 		else '?' end)
 	}]
 }
 
-proc mselect_sm {header ids} {
+proc mselect_zyg {header ids trans} {
+	if {[llength $ids]  != 1} {error "wrong # of args for zyg: only one allowed"}
+	foreach {id1} $ids break
+	set a11 \"[trans $trans alleleSeq1-$id1]\"
+	set a21 \"[trans $trans alleleSeq2-$id1]\"
+	set s1 [trans $trans sequenced-$id1]
+	set sql [subst {(case
+		when "$s1" = 'r' then 'r'
+		when "$s1" = 'u' then 'u'
+		when "$s1" = 'v' and "$a11" = "alt" and "$a21" = "alt" then 'm'
+		when "$s1" = 'v' and (("$a11" = "ref" and "$a21" = "alt") or ("$a11" = "alt" and "$a21" = "ref") then 't'
+		when "$s1" = 'v' and "$a11" = "alt" or "$a21" = "alt" then 'c'
+		else 'o' end)
+	}]
+}
+
+proc mselect_sm {header ids trans} {
 	set id1 [list_pop ids]
 	set id1 [string trim $id1 \"]
-	set a11 \"alleleSeq1_$id1\"
-	set a21 \"alleleSeq2_$id1\"
-	set temp [list "(\"sequenced_$id1\" = \'v\')"]
+	set a11 \"[trans $trans alleleSeq1-$id1]\"
+	set a21 \"[trans $trans alleleSeq2-$id1]\"
+	set temp [list "(\"[trans $trans sequenced-$id1]\" = \'v\')"]
 	foreach id $ids {
 		set id [string trim $id \"]
-		set a12 \"alleleSeq1_$id\"
-		set a22 \"alleleSeq2_$id\"
-		lappend temp "(\"sequenced_$id\" = \'v\')"  "[mselect_samegeno $a11 $a21 $a12 $a22]"
+		set a12 \"[trans $trans alleleSeq1-$id]\"
+		set a22 \"[trans $trans alleleSeq2-$id]\"
+		lappend temp "(\"[trans $trans sequenced-$id]\" = \'v\')"  "[mselect_samegeno $a11 $a21 $a12 $a22]"
 	}
 	set temp "([join $temp " and "])"
 }
 
-proc mselect_same {header ids} {
+proc mselect_same {header ids trans} {
 	set id1 [list_pop ids]
 	set id1 [string trim $id1 \"]
-	set a11 \"alleleSeq1_$id1\"
-	set a21 \"alleleSeq2_$id1\"
-	set sequenced \"sequenced_$id1\"
+	set a11 \"[trans $trans alleleSeq1-$id1]\"
+	set a21 \"[trans $trans alleleSeq2-$id1]\"
+	set sequenced \"[trans $trans sequenced-$id1]\"
 	set seqlist [list "$sequenced <> \'u\'"]
 	set temp {}
 	foreach id $ids {
 		lappend seqlist "$sequenced <> \'u\'"
-		set a12 \"alleleSeq1_$id\"
-		set a22 \"alleleSeq2_$id\"
-		set sequenced \"sequenced_$id\"
+		set a12 \"[trans $trans alleleSeq1-$id]\"
+		set a22 \"[trans $trans alleleSeq2-$id]\"
+		set sequenced \"[trans $trans sequenced-$id]\"
 		lappend temp "[mselect_samegeno $a11 $a21 $a12 $a22]"
 	}
 	set temp "([join $seqlist " && "] && [join $temp " && "])"
@@ -67,9 +85,9 @@ proc mselect_df {header ids} {
 	set temp2 {}
 	set seqlist {}
 	foreach id $ids {
-		set a1 \"alleleSeq1_$id\"
-		set a2 \"alleleSeq2_$id\"
-		set sequenced \"sequenced_$id\"
+		set a1 \"[trans $trans alleleSeq1-$id]\"
+		set a2 \"[trans $trans alleleSeq2-$id]\"
+		set sequenced \"[trans $trans sequenced-$id]\"
 		lappend seqlist "($sequenced <> \'u\')"
 		lappend temp1 "($sequenced = \'v\')"
 		lappend temp2 "($sequenced = \'r\')"
@@ -83,9 +101,9 @@ proc mselect_mm {header ids} {
 	set list {}
 	set seqlist {}
 	foreach id $ids {
-		set a1 \"alleleSeq1_$id\"
-		set a2 \"alleleSeq2_$id\"
-		set sequenced \"sequenced_$id\"
+		set a1 \"[trans $trans alleleSeq1-$id]\"
+		set a2 \"[trans $trans alleleSeq2-$id]\"
+		set sequenced \"[trans $trans sequenced-$id]\"
 		lappend seqlist "($sequenced = \'v\')"
 		lappend list [list $a1 $a2]
 	}
@@ -116,11 +134,13 @@ proc mselect_un {header ids} {
 	set temp "(([join $temp2 " || "]) && ([join $temp1 " || " ]))"
 }
 
-proc mselect_count {ids} {
-	set test [list_pop ids]
+proc mselect_count {arguments header trans} {
+	set test [list_pop arguments]
 	set temp {}
-	foreach id $ids {
-		lappend temp "($id $test)"
+	foreach q $arguments {
+		lappend q {*}$test
+		set q [tsv_select_precedence $q]
+		lappend temp "([mselect_detokenize $q $header neededfields $trans])"
 	}
 	return "([join $temp " + "])"
 }
@@ -256,30 +276,111 @@ proc mselect_count {ids} {
 #	return "([join $temp " + "])"
 #}
 
-proc mselect_expandfield {header field qpossVar} {
+proc mselect_min {ids header} {
+putsvars ids header
+	set result "(case \n"
+	set else [lindex $ids end]
+	set test [lrange $ids 0 end-1]
+	set pos 1
+	foreach id $test {
+		set rest [list_sub $ids -exclude $pos]
+		incr pos
+		set temp {}
+		foreach rid $rest {
+			lappend temp "($id) <= ($rid)"
+		}
+		append result "when [join $temp " and "] then ($id)\n"
+	}
+	append result "else $else \n end)"
+	return $result
+}
+
+proc mselect_max {ids header} {
+	set result "(case \n"
+	set else [lindex $ids end]
+	set test [lrange $ids 0 end-1]
+	set pos 1
+	foreach id $test {
+		set rest [list_sub $ids -exclude $pos]
+		incr pos
+		set temp {}
+		foreach rid $rest {
+			lappend temp "($id) >= ($rid)"
+		}
+		append result "when [join $temp " and "] then ($id)\n"
+	}
+	append result "else $else \n end)"
+	return $result
+}
+
+proc mselect_asint {ids header} {
+	return "cast ([lindex $ids 0] as integer)"
+}
+
+proc mselect_asdouble {ids header} {
+	return "cast ([lindex $ids 0] as double)"
+}
+
+proc mselect_region {ids header} {
+	set ids [split $ids ":-_ ,\{\}\(\)\"'"]
+	set ids [list_remove $ids {}]
+	set poss [tsv_basicfields $header 3]
+	set fields [list_sub $header $poss]
+	foreach {rchr rbegin rend} $fields break
+	lappend neededfields {*}$fields
+	set result {}
+	foreach {chr begin end} $ids {
+		set q [list "(\"$rchr\" = '$chr' \
+			or (left(\"$rchr\",3) = 'chr' and right(\"$rchr\",length(\"$rchr\")-3) = '$chr') \
+			or (left('$chr',3) = 'chr' and right('$chr',length('$chr')-3) = \"$rchr\") \
+		)"]
+		set temp "(case when left(\"$rchr\",3) = 'chr' then right(\"$rchr\",length(\"$rchr\")-3) else \"$rchr\" end)"
+		append temp " = (case when left('$chr',3) = 'chr' then right('$chr',length('$chr')-3) else '$chr' end)"
+		set q [list $temp]
+		if {$begin ne ""} {
+			lappend q "\"$rend\" > ($begin) "
+		}
+		if {$end ne ""} {
+			lappend q "\"$rbegin\" < ($end)"
+		}
+		lappend result "([join $q " and "])"
+	}
+	return "(([join $result "\) or \("]))"
+}
+
+proc mselect_expandfield {header field qpossVar trans} {
 	upvar $qpossVar qposs
 	set qposs [list_find -glob $header $field]
 	if {![llength $qposs]} {
 		error "no fields matched \"$field\""
 	}
-	set result [list_sub $header $qposs]
+	set result {}
+	foreach field [list_sub $header $qposs] {
+		if {[dict exists $trans $field]} {set field [dict get $trans $field]}
+		lappend result $field
+	}
 	set qposs [lmath_calc $qposs + 1]
 	return $result
 }
 
-proc mselect_expandfields {header qfields qcodeVar} {
+proc mselect_expandfields {header qfields qcodeVar trans} {
 	upvar $qcodeVar qcode
 	upvar tsv_funcnum tsv_funcnum
 	set qcode {}
 	set rfields {}
 	foreach field $qfields {
+		if {$field eq "ROW"} {
+			lappend rfields ROW
+			lappend qcode {("rowid"-1)}
+			continue
+		}
 		set pos [string first = $field]
 		if {$pos != -1} {
 			lappend rfields [string range $field 0 [expr {$pos-1}]]
 			set code [string range $field [expr {$pos+1}] end]
-			lappend qcode [mselect_expandcode $header $code]
+			lappend qcode [mselect_expandcode $header $code $trans]
 		} elseif {[string first * $field] != -1} {
-			lappend rfields {*}[mselect_expandfield $header $field poss]
+			lappend rfields {*}[mselect_expandfield $header $field poss $trans]
 			foreach pos $poss {
 				lappend qcode {}
 			}
@@ -288,6 +389,7 @@ proc mselect_expandfields {header qfields qcodeVar} {
 			if {$pos == -1} {
 				error "field \"$field\" not present"
 			}
+			if {[dict exists $trans $field]} {set field [dict get $trans $field]}
 			lappend rfields $field
 			lappend qcode {}
 		}
@@ -295,7 +397,149 @@ proc mselect_expandfields {header qfields qcodeVar} {
 	return $rfields
 }
 
-proc mselect_expandcode {header code} {
+array set mselect_transop {
+	== = != <>
+	eq = ne <>
+	in in ni {not in}
+	&& and || or
+	! not
+}
+
+proc mselect_detokenize {tokens header neededfieldsVar trans} {
+	global mselect_transop
+	upvar $neededfieldsVar neededfields
+	set result {}
+	foreach line $tokens {
+		foreach {type val} $line break
+		switch -exact $type {
+			@num - @val {
+				set pre [string index $val 0]
+				set post [string index $val end]
+				if {($pre eq "\{" && $post eq "\}") || ($pre eq "\"" && $post eq "\"")} {
+					set val \'[string range $val 1 end-1]\'
+				}
+				lappend result $val
+			}
+			@var {
+				if {[dict exists $trans $val]} {set val [dict get $trans $val]}
+				lappend result \"$val\"
+			}
+			@op {
+				if {[info exists mselect_transop($val)]} {
+					lappend result $mselect_transop($val)
+				} else {
+					lappend result $val
+				}
+			}
+			@newop {
+				lappend result $val
+			}
+			@function {
+				set arguments [lrange $line 2 end]
+				set ids {}
+				foreach el $arguments {
+					lappend ids [mselect_detokenize $el $header neededfields $trans]
+				}
+				switch $val {
+					sm {
+						set temp [mselect_sm $header $ids $trans]
+					}
+					same {
+						set temp [mselect_same $header $ids $trans]
+					}
+					df {
+						set temp [mselect_df $header $ids $trans]
+					}
+					mm {
+						set temp [mselect_mm $header $ids $trans]
+					}
+					un {
+						set temp [mselect_un $header $ids $trans]
+					}
+					compare {
+						set temp [mselect_compare $header $ids $trans]
+					}
+					zyg {
+						set temp [mselect_zyg $header $ids $trans]
+					}
+					hovar {
+						set temp [mselect_hovar $header $ids $trans]
+					}
+					count {
+						set temp [mselect_count $arguments $header $trans]
+					}
+					region {
+						set temp [mselect_region $ids $header]
+					}
+					min {
+						set temp [mselect_min $ids $header]
+					}
+					max {
+						set temp [mselect_max $ids $header]
+					}
+					asint {
+						set temp [mselect_asint $ids $header]
+					}
+					asdouble {
+						set temp [mselect_asdouble $ids $header]
+					}
+					counthasone {
+						foreach {operand value} [lindex $line end] break
+						set operand [mselect_detokenize [list $operand] $header needefields $trans]
+						set value [mselect_detokenize [list $value] $header needefields $trans]
+						set temp [mselect_counthasone [lrange $ids 0 end-1] $operand $value]
+					}
+					counthasall {
+						foreach {operand value} [lindex $line end] break
+						set operand [mselect_detokenize [list $operand] $header needefields $trans]
+						set value [mselect_detokenize [list $value] $header needefields $trans]
+						set temp [mselect_counthasall [lrange $ids 0 end-1] $operand $value]
+					}
+					hasone {
+						if {[llength $ids] == 2} {
+							foreach {operand value} [lindex $line end] break
+							set operand [mselect_detokenize [list $operand] $header needefields $trans]
+							set value [mselect_detokenize [list $value] $header needefields $trans]
+							set temp "${val}\([lindex $ids 0], \"$operand\", $value\)"
+						} else {
+							set temp "${val}\([join $ids ", "]\)"
+						}
+					}
+					oneof {
+						set temp [mselect_oneof $ids]
+					}
+					regexp {
+						set temp "pcre_match\([join $ids ", "]\)"
+					}
+					default {
+						set temp "${val}\([join $ids ", "]\)"
+					}
+				}
+				lappend result $temp
+			}
+			@braces {
+				lappend result \([mselect_detokenize [lrange $line 1 end] $header needefields $trans]\)
+			}
+			@command {
+				append result \[$val\]
+			}
+			default {
+				error "unkown token $type"
+			}
+		}
+	}
+	return [join $result " "]
+}
+
+proc mselect_expandcode {header code trans} {
+	# variable preprocessor first, to expand *
+	# check and exchange variables needed
+	set tokens [tsv_select_tokenize $header $code neededfields]
+	# detokenize, making necessary changes
+	mselect_detokenize $tokens $header neededfields $trans
+}
+
+proc mselect_expandcode.old {header code} {
 	upvar tsv_funcnum tsv_funcnum
 	set indices [list_unmerge [regexp -all -indices -inline {["]?([*a-zA-z0-9_.-]*[*][*a-zA-z0-9_.-]*)["]?} $code]]
 	set indices [list_reverse $indices]
@@ -375,32 +619,32 @@ proc mselect_expandcode {header code} {
 	return $code
 }
 
-proc monetdb_makesql {table header query qfieldsVar {sortfields {}} {inverse 0} {offset {}} {limit {}}} {
+proc monetdb_makesql {table header query qfieldsVar {sortfields {}} {inverse 0} {trans {}} {offset {}} {limit {}}} {
+putsvars table header query qfieldsVar sortfields inverse trans offset limit
 	upvar $qfieldsVar qfields
 	set sqlfields {}
 	set sqlwhere {}
 	set sqlsort {}
 	if {$qfields eq ""} {
-		set sqlfields \"[join $header "\",\""]\"
-	} else {
-		set qfields [mselect_expandfields $header $qfields qcode]
-		if {$inverse} {
-			set qfields [list_lremove $header $qfields]
-		}
-		foreach field $qfields code $qcode {
-			if {$code ne ""} {
-				lappend sqlfields "$code as \"$field\""
-			} else {
-				lappend sqlfields \"$field\"
-			}
-		}
-		set sqlfields [join $sqlfields ,]
+		set sqlfields $header
 	}
+	set qfields [mselect_expandfields $header $qfields qcode $trans]
+	if {$inverse} {
+		set qfields [list_lremove $header $qfields]
+	}
+	foreach field $qfields code $qcode {
+		if {$code ne ""} {
+			lappend sqlfields "$code as \"$field\""
+		} else {
+			lappend sqlfields \"$field\"
+		}
+	}
+	set sqlfields [join $sqlfields ,]
 	if {[llength $sortfields]} {
 		set sqlsort "order by \"[join $sortfields "\",\""]\""
 	}
 	if {$query ne ""} {
-		set tquery [mselect_expandcode $header $query]
+		set tquery [mselect_expandcode $header $query $trans]
 		set sqlwhere "where $tquery"
 	}
 	set sql "select $sqlfields from \"$table\" $sqlwhere $sqlsort"

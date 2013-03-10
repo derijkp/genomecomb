@@ -228,7 +228,10 @@ proc monetdb_convfield field {
 	set newfield $field
 	list_foreach {s e} [lreverse $poss] {
 		incr e
-		set newfield [string replace $newfield $s $e [string toupper [string index $newfield $e]]]
+		set c [string index $newfield $e]
+		set u [string toupper $c]
+		if {$u eq $c} {set u x$u}
+		set newfield [string replace $newfield $s $e $u]
 	}
 	regsub -all -- - $newfield _ newfield
 	return $newfield
@@ -257,7 +260,7 @@ proc cg_tomonetdb {args} {
 		lappend fieldtrans $field $newfield
 		lappend sql "\"$newfield\" $type"
 	}
-	cg_monetdb_sql $db "drop table \"$table\""
+	catch {cg_monetdb_sql $db "drop table \"$table\""}
 	cg_monetdb_sql $db "create table \"$table\" ([join $sql ,\n]);\n"
 	# exec {*}[gzcat $tsvfile] $tsvfile | mclient -d$db -s "copy $num offset $offset records into \"$table\" from stdin delimiters '\t', '\n' null as '';"
 	set o [open $tsvfile.temp w]

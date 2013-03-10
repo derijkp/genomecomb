@@ -470,11 +470,12 @@ mainw method querybuilder_add {command} {
 			{df different: variant in some, reference in other (all sequenced)}
 			{mm mismatch; variant in all, but different genotypes (all sequenced)}
 			{un unsequenced in some samples, variant in one of the others}
+			{compare returns sm,df,mm,un depending on type of match between two samples}
 		}
 		$object.compare option select Comparison [privatevar $object compare(type)] [privatevar $object compare(types)]
 		set compare(type) [lindex $compare(types) 0]
 		set compare(samples) [cg select -n $tdata(file)]
-		$object.compare option listbox Sample1 [privatevar $object compare(selsamples)] compare(samples) -selectmode multiple
+		$object.compare option listbox Sample1 [privatevar $object compare(selsamples)] [privatevar $object compare(samples)] -selectmode multiple
 		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(type) \] 0\]\(\[join \[getprivate $object compare(selsamples) \] ,\]\)\"" default
 	} else {
 		set insert {}
@@ -603,16 +604,15 @@ putsvars summary_redraw
 	set definition [list $view(summary_rows) $view(summary_cols) $view(summary_cells)]
 	set error [catch {$object.tb summary $definition} newsummary]
 	if {$error} {
-		set newsummary ""
+		set summary ""
 	} else {
 		set header [list_shift newsummary]
-		set newsummary [list $header {*}[lsort -dict $newsummary]]
+		set summary [list $header {*}[lsort -dict $newsummary]]
 	}
-	set summary $newsummary
 	$object.summary.data configure -variable [privatevar $object summary] -variabletype list
 	$object.summary.data configure -rows [llength $summary] -cols [llength [lindex $summary 0]]	
 	if {$error} {
-		error "error in summary definition\n\n$summary"
+		error "error in summary definition (or query)\n\n$newsummary"
 	}
 }
 
