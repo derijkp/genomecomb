@@ -63,17 +63,14 @@ proc job_process_distr {} {
 	set running [array names cgjob_running]
 	set initlen [llength $queue]
 	# join [list_subindex $queue {0 1 2 3 4 5 6}] \n
-	while {[llength $queue]} \
- {
+	while {[llength $queue]} {
 		if {[llength $running] > $cgjob(distribute)} {
 			break
 		}
 		set line [list_shift queue]
-		foreach {jobid jobname pwd deps foreach ftargetvars ftargets fptargets fskip code submitopts} $line break
-puts $jobname
-
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip code submitopts} $line break
 		cd $pwd
-		set job [job_logname $jobname]
+		set job [job_logname $job_logdir $jobname]
 		# check foreach deps, skip if not fullfilled
 		# check for foreach patterns, expand into one ore more entries in the queue
 		if {[llength $foreach]} {
@@ -97,11 +94,11 @@ puts $jobname
 			}
 			set temp {}
 			# make foreach empty
-			lset line 4 {}
+			lset line 5 {}
 			foreach fdep $fadeps ftargetvar $ftargetvars {
 				lset line 1 $jobname-$fdep
-				lset line 3 [list $fdep {*}$deps]
-				lset line 5 $ftargetvar
+				lset line 4 [list $fdep {*}$deps]
+				lset line 6 $ftargetvar
 				lappend temp $line
 			}
 			set queue [list_concat $temp $queue]
@@ -212,14 +209,24 @@ puts $jobname
 		lappend running $job
 	}
 
+	if {[llength $queue]} {
+		lappend cgjob(queue) {*}$queue
+	}
 	set running [array names cgjob_running]
-	lappend cgjob(queue) {*}$queue
 	cd $jobroot
+	if {![llength $running]} {
+		if {[llength $cgjob(queue)]} {
+			after idle job_process_distr
+		} else {
+			set ::cgjob_exit 1
+		}
+	}
 	after idle update
 }
 
 proc job_process_distr_wait {} {
 	global cgjob cgjob_exit
+	update
 	unset -nocomplain cgjob_exit
 	set running [array names cgjob_running]
 	if {![llength cgjob(queue)] && ![llength $running]} return

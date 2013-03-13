@@ -11,7 +11,7 @@ proc jobtest {args} {
 	foreach {srcdir destdir header} $args break
 	set srcdir [file normalize $srcdir]
 	set destdir [file normalize $destdir]
-	job_logdir $destdir/log_jobs
+	set job_logdir $destdir/log_jobs
 	global test_names
 	file mkdir $destdir
 	set file [lindex [glob $srcdir/cgdat*.tsv] 0]

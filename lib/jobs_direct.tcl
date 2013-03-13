@@ -3,9 +3,9 @@ proc job_process_direct {} {
 	set jobroot [pwd]
 	while {[llength $cgjob(queue)]} {
 		set line [list_shift cgjob(queue)]
-		foreach {jobid jobname pwd deps foreach ftargetvars ftargets fptargets fskip code submitopts} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip code submitopts} $line break
 		cd $pwd
-		set job [job_logname $jobname]
+		set job [job_logname $job_logdir $jobname]
 		# check foreach deps, skip if not fullfilled
 		# add all resulting (foreach) jobs in front of the queue, and go back to running the queue
 		if {[llength $foreach]} {
@@ -20,11 +20,11 @@ proc job_process_direct {} {
 			}
 			set temp {}
 			# make foreach empty
-			lset line 4 {}
+			lset line 5 {}
 			foreach fdep $fadeps ftargetvar $ftargetvars {
 				lset line 1 $jobname-$fdep
-				lset line 3 [list $fdep {*}$deps]
-				lset line 5 $ftargetvar
+				lset line 4 [list $fdep {*}$deps]
+				lset line 6 $ftargetvar
 				lappend temp $line
 			}
 			set cgjob(queue) [list_concat $temp $cgjob(queue)]

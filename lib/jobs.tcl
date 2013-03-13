@@ -359,15 +359,17 @@ proc job_findptargets {ptargets} {
 	return $targets
 }
 
-proc job_logdir {logdir} {
-	global cgjob
-	set cgjob(logdir) [file normalize $logdir]
+proc job_logdir {{logdir {}}} {
+	upvar job_logdir job_logdir
+	if {$logdir eq ""} {
+		set logdir [file join [pwd] log_jobs]
+	}
+	set job_logdir [file normalize $logdir]
 }
 
-proc job_logname {name} {
-	global cgjob
+proc job_logname {job_logdir name} {
 	set name [string_change $name {/ __ : _ \" _ \' _}]
-	return [file normalize $cgjob(logdir)/$name]
+	return [file normalize $job_logdir/$name]
 }
 
 proc job_logclear {job} {
@@ -383,7 +385,7 @@ proc job_timestamp {} {
 
 proc job_log {job args} {
 	global cgjob
-	file mkdir $cgjob(logdir)
+	file mkdir [file dir $job]
 	foreach message $args {
 		lappend cgjob(buffer,$job) "[job_timestamp]\t$message"
 	}
@@ -499,6 +501,10 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets code} {
 # var match1, match2, ... contain the first, second, ... match (in parenthesis) in deps (foreach deps and plain deps)
 
 proc job {jobname args} {
+	upvar job_logdir job_logdir
+	if {![info exists job_logdir]} {
+		error "The variable job_logdir is not set, This must be set before calling job, either by using the command job_logdir, or by setting the variable directly"
+	}
 	global curjobid cgjob
 	if {![info exists cgjob(id)]} {set cgjob(id) 1}
 	if {[llength $args] < 1} {error "wrong # args for target: must be job jobname -deps deps -targets targets -code code ..."}
@@ -591,13 +597,14 @@ proc job {jobname args} {
 		append newcode [list set $var [uplevel get $var]]\n
 	}
 	append newcode $code
-	lappend cgjob(queue) [list $cgjob(id) $jobname [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $newcode $submitopts $precode]	
+	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $newcode $submitopts $precode]	
 	incr cgjob(id)
 	if {!$cgjob(debug)} job_process
 }
 
 proc job_init {args} {
 	global cgjob cgjob_id cgjob_running cgjob_ptargets
+	upvar job_logdir job_logdir
 	unset -nocomplain cgjob
 	unset -nocomplain cgjob_id
 	unset -nocomplain cgjob_running
@@ -607,7 +614,7 @@ proc job_init {args} {
 	set cgjob(force) 0
 	set cgjob(queue) {}
 	set cgjob(id) 1
-	job_logdir [file normalize [pwd]/log_jobs]
+	set job_logdir [file normalize [pwd]/log_jobs]
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_wait {} job_process_direct_wait
 	job_args $args

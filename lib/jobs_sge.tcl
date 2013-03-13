@@ -105,9 +105,9 @@ proc job_process_sge_onepass {} {
 	set jobroot [pwd]
 	while {[llength $queue]} {
 		set line [list_shift queue]
-		foreach {jobid jobname pwd deps foreach ftargetvars ftargets fptargets fskip code submitopts} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip code submitopts} $line break
 		cd $pwd
-		set job [job_logname $jobname]
+		set job [job_logname $job_logdir $jobname]
 		file mkdir [file dir $job]
 		# If this job was previously blocked because of ptargets deps,
 		# the ptargets set to stop further processing are cleared here
@@ -143,11 +143,11 @@ proc job_process_sge_onepass {} {
 			}
 			set temp {}
 			# make foreach empty
-			lset line 4 {}
+			lset line 5 {}
 			foreach fdep $fadeps ftargetvar $ftargetvars {
 				lset line 1 $jobname-$fdep
-				lset line 3 [list $fdep {*}$deps]
-				lset line 5 $ftargetvar
+				lset line 4 [list $fdep {*}$deps]
+				lset line 6 $ftargetvar
 				lappend temp $line
 			}
 			set queue [list_concat $temp $queue]
