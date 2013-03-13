@@ -65,7 +65,7 @@ proc cg_clc2sft {args} {
 				if {$line eq ""} break
 			}	
 		} else {
-			set chrom [lindex $line 0]
+			set chrom [string trimright [lindex $line 0] :]
 			incr num
 			set line [gets $f]
 			if {$line ne ""}	{error "format error at line $num: expected empty line"}
