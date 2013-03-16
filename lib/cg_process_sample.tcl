@@ -127,12 +127,12 @@ proc process_sample {args} {
 	}
 
 	# if not from CGI, we do not have svar and sgene, take from first var_* file found
-	job cg_annotvar_other {vars_*.tsv} {annotvar-$sample.tsv} {
+	job cg_annotvar_var {vars_*.tsv} {annotvar-$sample.tsv} {
 		gzmklink $dep $target
 	}
 
 	# if we also do not find a var_* file, take from first variant* file found
-	job cg_annotvar_other {variant*.tsv} {annotvar-$sample.tsv} {
+	job cg_annotvar_variant {variant*.tsv} {annotvar-$sample.tsv} {
 		set file [gzfile $dep]
 		gzmklink $file $target
 	}
@@ -264,7 +264,7 @@ proc process_sample {args} {
 		cg convcgsv $dep $target
 	}
 
-	job cg_cgsv {SV/annotatedJunctionsAlpha-*.tsv*} {cgsv-$sample.tsv} {
+	job cg_cgsv_alpha {SV/annotatedJunctionsAlpha-*.tsv*} {cgsv-$sample.tsv} {
 		cg convcgsv $dep $target
 	}
 
@@ -272,11 +272,11 @@ proc process_sample {args} {
 		cg convcgcnv $dep $target
 	}
 
-	job cg_cgcnv {CNV/cnvSegmentsDiploidBeta-*.tsv*} {cgcnv-$sample.tsv} {
+	job cg_cgcnv_diploid {CNV/cnvSegmentsDiploidBeta-*.tsv*} {cgcnv-$sample.tsv} {
 		cg convcgcnv $dep $target
 	}
 
-	job cg_cgcnv {CNV/cnvSegmentsAlpha-*.tsv*} {cgcnv-$sample.tsv} {
+	job cg_cgcnv_alpha {CNV/cnvSegmentsAlpha-*.tsv*} {cgcnv-$sample.tsv} {
 		cg convcgcnv [gzfile $dep] $target
 	}
 

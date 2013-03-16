@@ -86,9 +86,12 @@ proc job_process_direct {} {
 			set ok 0
 			job_log $job "error creating $jobname: $result"
 		}
-		if {[catch {job_run} result]} {
+		catch {file delete $job.finished $job.failed}
+		if {[catch {job_run} result] || ![file exists $job.finished]} {
+			file_write $job.err $result
+			file_write $job.failed $result
+			job_log $job "job [file tail $job] did not finish\nerror:\n$result\n"
 			set ok 0
-			job_log $job "error running $jobname: $result"
 		}
 		job_log $job "-------------------- end $jobname --------------------"
 	}

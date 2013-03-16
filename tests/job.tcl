@@ -116,6 +116,10 @@ proc jobtest {args} {
 	job error_all.txt -deps {$srcdir/notpresent.txt} -targets {$destdir/all.txt} -code {
 		error "This should not be executed, as the dependencies are not fullfilled, the other target is used"
 	}
+	job joberror -deps {^$srcdir/cgdata\.tsv$} -targets {$destdir/joberror.txt} -code {
+		# this (intentionally) causes an error, and should by identified by an error in the logs
+		error "Intentional job error"
+	}
 	job error_notdone.txt -deps {^$srcdir/cgdata\.tsv$} -targets {$destdir/error_notdone.txt} -code {
 		# this (intentionally) does not produce its target, and should by identified by an error in the logs
 	}

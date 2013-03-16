@@ -491,6 +491,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets code} {
 			file_add {@JOB@.log} "[job_timestamp]\tfailed @JOBNAME@\n"
 		}
 	} [list @PWD@ $pwd @JOB@ $job @JOBNAME@ $jobname @TARGETS@ [list $targets] @PTARGETS@ [list $ptargets]]]
+	append cmd "file_write $job.finished \[timestamp\]\n"
 	return $cmd
 }
 
@@ -501,11 +502,15 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets code} {
 # var match1, match2, ... contain the first, second, ... match (in parenthesis) in deps (foreach deps and plain deps)
 
 proc job {jobname args} {
+	global curjobid cgjob job_logdir_submit
 	upvar job_logdir job_logdir
 	if {![info exists job_logdir]} {
 		error "The variable job_logdir is not set, This must be set before calling job, either by using the command job_logdir, or by setting the variable directly"
 	}
-	global curjobid cgjob
+	if {[info exists job_logdir_submit($jobname,$job_logdir)]} {
+		error "already submitted job $jobname for logdir $job_logdir"
+	}
+	set job_logdir_submit($jobname,$job_logdir) 1
 	if {![info exists cgjob(id)]} {set cgjob(id) 1}
 	if {[llength $args] < 1} {error "wrong # args for target: must be job jobname -deps deps -targets targets -code code ..."}
 	set pos 0
@@ -603,12 +608,13 @@ proc job {jobname args} {
 }
 
 proc job_init {args} {
-	global cgjob cgjob_id cgjob_running cgjob_ptargets
+	global cgjob cgjob_id cgjob_running cgjob_ptargets job_logdir_submit
 	upvar job_logdir job_logdir
 	unset -nocomplain cgjob
 	unset -nocomplain cgjob_id
 	unset -nocomplain cgjob_running
 	unset -nocomplain cgjob_ptargets
+	unset -nocomplain job_logdir_submit
 	set cgjob(debug) 0
 	set cgjob(distribute) 0
 	set cgjob(force) 0

@@ -18,11 +18,34 @@ proc job_process_distr_progress {job args} {
 	}
 }
 
+proc tail {file {num 1}} {
+	set f [open $file]
+	set result {}
+	while {1} {
+		set line [gets $f]
+		lappend result $line
+		if {[llength $result] > $num} {set result [lrange $result end-$num end]}
+		if {[eof $f]} break
+	}
+	incr num -1
+	return [lrange $result end-$num end]
+}
+
 proc job_process_distr_done {job targets ptargets args} {
 	global cgjob cgjob_id cgjob_running cgjob_ptargets
-	job_log $job "-------------------- end [file tail $job] --------------------"
 	# job has ended
 	unset -nocomplain cgjob_running($job)
+	set line [tail $job.log 3]
+	if {![file exists $job.finished]} {
+		file copy $job.err $job.failed
+		job_log $job "job [file tail $job] did not finish\nerror:\n[file_read $job.err]\n"
+		job_log $job "failed [file tail $job]\n"
+	} elseif {[regexp failed $line]} {
+		file delete $job.finished
+		file_write $job.failed "not all targets made\n"
+	}
+	job_log $job "-------------------- end [file tail $job] --------------------"
+	if {!$cgjob(silent)} {puts stderr "   -=- [llength [array names cgjob_running]] running, [llength $cgjob(queue)] in queue"}
 	# unset cgjob_id($target) to indicate they are nolonger running
 	# we no longer write results of the check to the log, as the job has already done that
 	foreach target $targets {
@@ -55,12 +78,13 @@ proc job_status {} {
 proc job_process_distr {} {
 	global cgjob cgjob_id cgjob_running cgjob_pid cgjob_ptargets
 
-	set queue $cgjob(queue)
 	update
+	set queue $cgjob(queue)
 	if {![llength $queue]} return
 	set cgjob(queue) {}
 	set jobroot [pwd]
 	set running [array names cgjob_running]
+
 	set initlen [llength $queue]
 	# join [list_subindex $queue {0 1 2 3 4 5 6}] \n
 	while {[llength $queue]} {
@@ -192,13 +216,14 @@ proc job_process_distr {} {
 		append cmd "\n\# the next line restarts using cgsh \\\n"
 		append cmd {exec cg source "$0" "$@"} \n
 		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $code]\n
+		catch {file delete $job.finished $job.failed}
 		set runfile $job.run
 		file_write $runfile $cmd
 		file attributes $runfile -permissions u+x
 		Extral::bgexec -no_error_redir -pidvar cgjob_pid \
 			-command [list job_process_distr_done $job $targets $ptargets] \
 			-progresscommand [list job_process_distr_progress $job] \
-			$runfile 2> $runfile.stderr
+			$runfile 2> $job.err
 		foreach target $targets {
 			set cgjob_id($target) $job
 		}
@@ -230,6 +255,13 @@ proc job_process_distr_wait {} {
 	unset -nocomplain cgjob_exit
 	set running [array names cgjob_running]
 	if {![llength cgjob(queue)] && ![llength $running]} return
+	if {![llength $running]} {
+		if {[llength cgjob(queue)]} {
+			after idle job_process_distr
+		} else {
+			return
+		}
+	}
 	if {[catch {vwait cgjob_exit} e]} {
 		puts "job_wait warning: $e"
 	}
