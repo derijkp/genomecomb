@@ -2,10 +2,12 @@ proc cg_bam2coverage {bamfile destprefix} {
 	set dir [file dir $destprefix]
 	set prefix [file tail $destprefix]
 	file mkdir $dir
+	file mkdir $destprefix.temp
 	puts "coverage: making $destprefix"
-	exec samtools depth $bamfile | cg bcol make -p pos -c contig -t su $dir/tmp-$prefix coverage
+	# exec samtools depth $bamfile | cg bcol make -p pos -c contig -t su $dir/tmp-$prefix coverage
+	exec samtools depth $bamfile | cg bcol make --header 0 --chromosomecol 0 --poscol 1 --type su $destprefix.temp/$prefix 2
 	file mkdir $dir/tmp
-	set files [glob -nocomplain $dir/tmp/$prefix-*.bcol]
+	set files [glob -nocomplain $destprefix.temp/$prefix-*.bcol]
 	foreach file $files {
 		# samtools depth is 1 based, this hack will correct this (without having to remap the entire coverage file)
 		set c [split [string trim [file_read $file]] \n]
@@ -19,6 +21,7 @@ proc cg_bam2coverage {bamfile destprefix} {
 		lset c end [join $line \t]
 		write_file $file [join $c \n]
 	}
-	file rename {*}[glob $dir/tmp/$prefix-*.bcol*] $dir
-	write_file $destprefix.FINISHED ""
+	file rename -force {*}[glob $destprefix.temp/$prefix*.bcol*] $dir
+	file delete $destprefix.temp
+	file_write $destprefix.FINISHED ""
 }
