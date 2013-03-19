@@ -323,12 +323,19 @@ proc cg_bcol_make {args} {
 			}
 		}
 		if {$distribute} {
-			set chrompos [lsearch $header $chromosomecol]
+			if {[isint $chromosomecol]} {
+				set chrompos $chromosomecol
+			} else {
+				set chrompos [lsearch $header $chromosomecol]
+			}
 			if {$chrompos == -1} {
 				exiterror "error: chromosome column $chromosomecol not found"
 			}
 		}
 	} else {
+		if {$distribute && [isint $chromosomecol]} {
+			set chrompos $chromosomecol
+		}
 		set offsetpos $offsetcol
 		set colpos $valuecolumn
 	}
@@ -346,7 +353,7 @@ proc cg_bcol_make {args} {
 		exec razip -c $file > $file.rz
 		file delete $file
 	}
-	file rename {*}[glob $prefix.bcol.temp/*] [file dir $prefix]
+	file rename -force {*}[glob $prefix.bcol.temp/*] [file dir $prefix]
 	file delete -force $prefix.bcol.temp
 }
 
