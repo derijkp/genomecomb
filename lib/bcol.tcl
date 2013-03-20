@@ -168,6 +168,9 @@ proc bcol_get {bcol start {end {}}} {
 	fconfigure $f -encoding binary -translation binary
 	set b [read $f [expr {$typesize*$len}]]
 	binary scan $b $type$len sresult
+	if {![info exists sresult]} {
+		error "error getting data from $binfile for position $start-$end"
+	}
 	foreach v $sresult {
 		catch {set offset [dict get $tabled $start]}
 		incr start
