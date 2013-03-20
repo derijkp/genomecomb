@@ -27,6 +27,7 @@ proc tail {file {num 1}} {
 		if {[llength $result] > $num} {set result [lrange $result end-$num end]}
 		if {[eof $f]} break
 	}
+	close $f
 	incr num -1
 	return [lrange $result end-$num end]
 }
@@ -58,12 +59,15 @@ proc job_process_distr_done {job targets ptargets args} {
 	}
 	job_logclose $job
 	# other jobs to do, if not signal end to vwait by setting var cgjob_exit
+#	if {![llength [array names cgjob_running]] && ![llength $cgjob(queue)]} {
+#	}
 	update
 	if {[llength $cgjob(queue)]} {
 		after idle job_process_distr
 	} elseif {![llength [array names cgjob_running]]} {
 		set ::cgjob_exit 1
 	}
+	update
 }
 
 proc job_status {} {
@@ -254,9 +258,8 @@ proc job_process_distr_wait {} {
 	update
 	unset -nocomplain cgjob_exit
 	set running [array names cgjob_running]
-	if {![llength cgjob(queue)] && ![llength $running]} return
 	if {![llength $running]} {
-		if {[llength cgjob(queue)]} {
+		if {[llength $cgjob(queue)]} {
 			after idle job_process_distr
 		} else {
 			return
