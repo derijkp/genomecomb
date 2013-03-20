@@ -84,6 +84,12 @@ test multicompar {noalt} {
 	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2noalt.sft
 } {} 
 
+test svmulticompar {basic} {
+	file delete -force tmp/temp.sft
+	cg svmulticompar tmp/temp.sft data/cgsv1.tsv data/cgsv2.tsv data/cgsv2.tsv
+	exec diff tmp/temp.sft data/expected-svmulticompar.tsv
+} {} 
+
 test makepvt {basic} {
 	cg makepvt -sorted 0 data/expected-multireg-reg1-reg4.sft tmp/temp.sft
 	file_read tmp/temp.sft
