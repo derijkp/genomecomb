@@ -113,11 +113,13 @@ proc job_process_distr {} {
 					job_logclear $job
 					job_log $job "blocking at $jobname: $fadeps"
 					lappend cgjob(queue) $line
+					job_logclose $job
 					break
 				} else {
 					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				}
 				job_log $job "job $jobname skipped: dependencies not found"
+				job_logclose $job
 				continue
 			}
 			set temp {}
@@ -130,6 +132,7 @@ proc job_process_distr {} {
 				lappend temp $line
 			}
 			set queue [list_concat $temp $queue]
+			job_logclose $job
 			continue
 		}
 		job_lognf $job "==================== $jobname ===================="
@@ -147,11 +150,13 @@ proc job_process_distr {} {
 				job_logclear $job
 				job_log $job "blocking at $jobname: $adeps"
 				lappend cgjob(queue) $line
+				job_logclose $job
 				break
 			} else {
 				job_log $job "error in dependencies for $jobname: $adeps"
 			}
 			job_log $job "job $jobname skipped: dependencies not found"
+			job_logclose $job
 			continue
 		}
 		if {[job_process_distr_running $ids]} {
@@ -166,6 +171,7 @@ proc job_process_distr {} {
 			set skip [job_targetsreplace $fskip $targetvars]
 			if {[llength $skip] && [job_checktargets $job $skip $time running]} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
+				job_logclose $job
 				continue
 			}
 		}
@@ -189,6 +195,7 @@ proc job_process_distr {} {
 		if {$depsrunning || [llength $targetsrunning]} {
 			job_logclear $job
 			lappend cgjob(queue) $line
+			job_logclose $job
 			continue
 		}
 		job_log $job
@@ -204,6 +211,7 @@ proc job_process_distr {} {
 			foreach ptarget $ptargets {
 				unset -nocomplain cgjob_ptargets($ptarget)
 			}
+			job_logclose $job
 			continue
 		}
 		# put ptargets in the queue only if we will actually be running the job

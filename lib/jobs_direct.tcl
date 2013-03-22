@@ -16,6 +16,7 @@ proc job_process_direct {} {
 					job_log $job "$fadeps"
 				}
 				job_log $job "job $jobname failed"
+				job_logclose $job
 				continue
 			}
 			set temp {}
@@ -28,6 +29,7 @@ proc job_process_direct {} {
 				lappend temp $line
 			}
 			set cgjob(queue) [list_concat $temp $cgjob(queue)]
+			job_logclose $job
 			continue
 		}
 		cd $pwd
@@ -40,6 +42,7 @@ proc job_process_direct {} {
 				job_log $job "$adeps"
 			}
 			job_log $job "job $jobname skipped: dependencies not found"
+			job_logclose $job
 			continue
 		}
 		set targetvars $ftargetvars
@@ -50,6 +53,7 @@ proc job_process_direct {} {
 			set skip [job_targetsreplace $fskip $targetvars]
 			if {[llength $skip] && [job_checktargets $job $skip $time running]} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
+				job_logclose $job
 				continue
 			}
 		}
@@ -74,6 +78,7 @@ proc job_process_direct {} {
 		}
 		if {!$run} {
 			job_log $job "skipping $jobname: targets already completed or running"
+			job_logclose $job
 			continue
 		}
 		job_log $job "-------------------- running $jobname --------------------"
@@ -94,6 +99,7 @@ proc job_process_direct {} {
 			set ok 0
 		}
 		job_log $job "-------------------- end $jobname --------------------"
+		job_logclose $job
 	}
 	cd $jobroot
 }

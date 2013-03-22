@@ -401,10 +401,10 @@ proc job_log {job args} {
 	}
 	set f $cgjob(f,$job)
 	set log [join $cgjob(buffer,$job) \n]
-	puts $cgjob(f,$job) $log
+	puts $f $log
 	if {!$cgjob(silent)} {puts stderr $log}
 	set cgjob(buffer,$job) {}
-	flush $cgjob(f,$job)
+	flush $f
 }
 
 proc job_lognf {job args} {
