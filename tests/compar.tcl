@@ -86,7 +86,7 @@ test multicompar {noalt} {
 
 test svmulticompar {basic} {
 	file delete -force tmp/temp.sft
-	cg svmulticompar tmp/temp.sft data/cgsv1.tsv data/cgsv2.tsv data/cgsv2.tsv
+	cg svmulticompar tmp/temp.sft data/cgsv1.tsv data/cgsv2.tsv data/cgsv3.tsv
 	exec diff tmp/temp.sft data/expected-svmulticompar.tsv
 } {} 
 

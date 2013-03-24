@@ -300,10 +300,12 @@ proc svmulticompar {svfile1 svfile2} {
 	set poss2 [list_cor $header2 $locfields]
 	set temp [tsv_basicfields $header2 4]
 	set poss2 [lreplace $poss2 1 4 {*}$temp]
-	if {[lindex $poss2 5] == -1} {lset poss2 5 [lindex $temp 1]}
-	if {[lindex $poss2 6] == -1} {lset poss2 6 [lindex $temp 1]}
-	if {[lindex $poss2 7] == -1} {lset poss2 7 [lindex $temp 2]}
-	if {[lindex $poss2 8] == -1} {lset poss2 8 [lindex $temp 2]}
+	set workfields {id chr1 begin end type start1 end1 size zyg chr2 start2 end2 (complete line)}
+	# set locfields {id chromosome begin end type start1 end1 size zyg chr2 start2 end2}
+	foreach {fld basicpos} {start1 1 end1 1 start2 2 end2 2 chr2 0} {
+		set workpos [lsearch $workfields $fld]
+		if {[lindex $poss2 $workpos] == -1} {lset poss2 $workpos [lindex $temp $basicpos]}
+	}
 	set mergefields2 [list_common $header2 $mergefields]
 	set ::mergeposs2 [list_cor $header2 $mergefields2]
 	set templen [llength $header2]
