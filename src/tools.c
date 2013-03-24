@@ -24,6 +24,11 @@ typedef struct DString {
 	char staticspace[DSTRING_STATICLEN];
 } DString;
 
+typedef struct DStringArray {
+	DString *data;
+	int size;
+} DStringArray;
+
 typedef struct Buffer {
 	int memsize;
 	int size;
@@ -442,29 +447,28 @@ NODPRINT("read buffer %d",buffer->size);
 	return size;
 }
 
-DString *DStringArrayNew(int size) {
-	DString *dstringarray;
+DStringArray *DStringArrayNew(int size) {
+	DStringArray *dstringarray;
 	int i;
-	dstringarray = (DString *)malloc((size+2)*sizeof(DString));
+	dstringarray = (DStringArray *)malloc(1*sizeof(DStringArray));
+	dstringarray->data = (DString *)malloc(size*sizeof(DString));
+	dstringarray->size = size;
 	for (i = 0; i < size ; i++) {
-		DStringInit(dstringarray+i);
+		DStringInit(dstringarray->data+i);
 	}
-	dstringarray[i].string=NULL;
 	return dstringarray;
 }
 
-void DStringArrayDestroy(DString *dstringarray) {
+void DStringArrayDestroy(DStringArray *dstringarray) {
 	int i=0;
-	while (1) {
-		if (dstringarray[i].string == NULL) break;
-		DStringClear(dstringarray+i);
-		i++;
+	for (i =0; i < dstringarray->size ; i++) {
+		DStringClear(dstringarray->data+i);
 	}
 	free(dstringarray);
 }
 
 int DStringGetTab(
-	DString *linePtr,	FILE *f1, int maxtab, DString *result, int setzero
+	DString *linePtr,	FILE *f1, int maxtab, DStringArray *result, int setzero
 ) {
 	register char *cur = linePtr->string;
 	register int c,newdata=0;
@@ -472,20 +476,20 @@ int DStringGetTab(
 	ssize_t size = 0;
 NODPRINT("maxtab=%d",maxtab)
 	maxtab += 1;
-	result[count].string = cur;
-	result[count].memsize = -1;
+	result->data[count].string = cur;
+	result->data[count].memsize = -1;
 	/* fill current pos (size) in the array for now, convert to array element sizes later */
 	while (1) {
 		c = getc_unlocked(f1);
 		if  (c == '\t') {
 			if (count < maxtab) {
-				result[count].size = size;
-				//fprintf(stdout,"count=%d size=%d\n",count, result[count].size);
+				result->data[count].size = size;
+				//fprintf(stdout,"count=%d size=%d\n",count, result->data[count].size);
 				count++;
 			}
 		} else if (c == '\n' || c == EOF) {
 			if (count < maxtab) {
-				result[count].size = size;
+				result->data[count].size = size;
 			}
 			break;
 		}
@@ -509,11 +513,8 @@ NODPRINT("maxtab=%d",maxtab)
 		return -1;
 	}
 	/* fill rest of tab separated elements in array */
-	if (count <= maxtab) {
-		result[count].size = size;
-		while (count <= maxtab) {
-			result[++count].size = size;
-		}
+	while (count <= maxtab) {
+		result->data[count++].size = size;
 	}
 	/* make array */
 	{
@@ -521,14 +522,14 @@ NODPRINT("maxtab=%d",maxtab)
 	count = 0;
 	prevsize = 0;
 	while (count <= maxtab) {
-		int pos = result[count].size;
-		result[count].size = result[count].size-prevsize;
-		result[count].string = linePtr->string + prevsize;
+		int pos = result->data[count].size;
+		result->data[count].size = result->data[count].size-prevsize;
+		result->data[count].string = linePtr->string + prevsize;
 		if (setzero) {
-			result[count].string[result[count].size] = '\0';
+			result->data[count].string[result->data[count].size] = '\0';
 		}
-		result[count].memsize = -1;
-NODPRINT("final count=%d size=%d %s",count, result[count].size,result[count].string)
+		result->data[count].memsize = -1;
+NODPRINT("final count=%d size=%d %s",count, result->data[count].size,result->data[count].string)
 		prevsize = pos+1;
 		count++;
 	}

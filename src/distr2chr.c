@@ -17,7 +17,8 @@
 int main(int argc, char *argv[]) {
 	Hash_table *hashtable;
 	FILE *o;
-	DString *result = NULL, *buffer = NULL;
+	DStringArray *result = NULL;
+	DString *buffer = NULL;
 	DString *line = NULL,*chromosome = NULL;
 	Hash_bucket *bucket;
 	Hash_iter iter;
@@ -36,10 +37,10 @@ int main(int argc, char *argv[]) {
 			skip_header(stdin,line);
 		}
 	}
-	result = DStringArrayNew(col+1);
+	result = DStringArrayNew(col+2);
 	hashtable = hash_init();
 	while (!DStringGetTab(line,stdin,col,result,0)) {
-		chromosome = result+col;
+		chromosome = result->data + col;
 		bucket = hash_get(hashtable, (void *)chromosome, hash_Dstring_hash, hash_Dstring_compare, &new);
 		if (new == 0) {
 			/* key was already present in the hashtable */

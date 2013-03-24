@@ -16,7 +16,7 @@
 
 int main(int argc, char *argv[]) {
 	FILE *f1,*f2,*f3;
-	DString *result1=NULL;
+	DStringArray *result1=NULL;
 	DString *line1 = NULL;
 	off_t fpos;
 	uint64_t count = -1,next = 4294967296LL, offset = 0L, progress = 50000000L;
@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 	/* allocate */
 	line1 = DStringNew();
-	result1 = DStringArrayNew(max1+1);
+	result1 = DStringArrayNew(max1+2);
 	skip_header(f1,line1);
 	fpos = ftello(f1);
 	if (fpos >= next) {
@@ -56,9 +56,9 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 		{
 		char *chromosome1;
 		int start1,end1;
-		chromosome1 = result1[chr1pos].string;
-		sscanf(result1[start1pos].string,"%d",&start1);
-		sscanf(result1[end1pos].string,"%d",&end1);
+		chromosome1 = result1->data[chr1pos].string;
+		sscanf(result1->data[start1pos].string,"%d",&start1);
+		sscanf(result1->data[end1pos].string,"%d",&end1);
 		NODPRINT("%d\t%s\t%d\t%d\t%d",1,chromosome1,start1,end1)
 		}
 */

@@ -40,7 +40,8 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	Tcl_Obj **objv,*queryresult,*querycmd=NULL;
 	int listobjc,listoutc,*cols=NULL,*outs=NULL;
 	Tcl_Obj **listobjv,**listoutv;
-	DString *line = NULL,*array;
+	DStringArray *array = NULL;
+	DString *line = NULL;
 	ssize_t read;
 	int maxtab=0,objc,show,i,error;
 	unsigned int line_nr=0;
@@ -88,8 +89,8 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 				Tcl_IncrRefCount(objv[i+1]);
 			}
 			if (cols[i] != -1) {
-				NODPRINT("col = %d, val=%.*s",cols[i],array[cols[i]].size,array[cols[i]].string);
-				Tcl_SetByteArrayObj(objv[i+1],(unsigned char *)array[cols[i]].string,array[cols[i]].size);
+				NODPRINT("col = %d, val=%.*s",cols[i],array->data[cols[i]].size,array->data[cols[i]].string);
+				Tcl_SetByteArrayObj(objv[i+1],(unsigned char *)array->data[cols[i]].string,array->data[cols[i]].size);
 			} else {
 				Tcl_SetIntObj(objv[i+1],line_nr);
 			}
@@ -120,8 +121,8 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 					if (!first) {putc_unlocked('\t',stdout);}
 					first = 0;
 					if (out != -1) {
-						cur = array[out].string;
-						size = array[out].size;
+						cur = array->data[out].string;
+						size = array->data[out].size;
 						while(size--) {putc_unlocked(*cur++,stdout);}
 					} else {
 						char *string;

@@ -73,7 +73,7 @@ void connectalt(
 
 int main(int argc, char *argv[]) {
 	FILE *f1,*f2;
-	DString *result1=NULL,*result2=NULL;
+	DStringArray *result1=NULL,*result2=NULL;
 	DString *line1 = NULL,*line2 = NULL;
 	DString *prevchromosome1 = DStringNew(), *prevchromosome2 = DStringNew();
 	DString *prevtype1 = DStringNew(), *prevtype2 = DStringNew();
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
 	line1 = DStringNew(); line2=DStringNew();
 	/* The following allocation is not destroyed at end as it may point to something else */
 	/* This will leak mem, but as the prog is finished anyway ... */
-	result1 = DStringArrayNew(max1+1);
+	result1 = DStringArrayNew(max1+2);
 	f2 = fopen64(argv[7],"r");
 	chr2pos = atoi(argv[8]);
 	start2pos = atoi(argv[9]);
@@ -126,22 +126,22 @@ NODPRINT("\n");
 	for (i = 0 ; i < datalen ; i++) {
 		if (datapos[i] > max2) {max2 = datapos[i];}
 	}
-	result2 = DStringArrayNew(max2+1);
+	result2 = DStringArrayNew(max2+2);
 	skip_header(f1,line1);
 	skip_header(f2,line2);
 	error2 = DStringGetTab(line2,f2,max2,result2,1);
-	chromosome2 = result2+chr2pos;
-	type2 = result2+type2pos;
-	alt2 = result2+alt2pos;
-	sscanf(result2[start2pos].string,"%d",&start2);
-	sscanf(result2[end2pos].string,"%d",&end2);
+	chromosome2 = result2->data+chr2pos;
+	type2 = result2->data+type2pos;
+	alt2 = result2->data+alt2pos;
+	sscanf(result2->data[start2pos].string,"%d",&start2);
+	sscanf(result2->data[end2pos].string,"%d",&end2);
 NODPRINT("line2 %s,%d,%d %s",Loc_ChrString(chromosome2),start2,end2,line2->string)
 	while (!DStringGetTab(line1,f1,max1,result1,1)) {
-		chromosome1 = result1+chr1pos;
-		sscanf(result1[start1pos].string,"%d",&start1);
-		sscanf(result1[end1pos].string,"%d",&end1);
-		type1 = result1+type1pos;
-		alt1 = result1+alt1pos;
+		chromosome1 = result1->data+chr1pos;
+		sscanf(result1->data[start1pos].string,"%d",&start1);
+		sscanf(result1->data[end1pos].string,"%d",&end1);
+		type1 = result1->data+type1pos;
+		alt1 = result1->data+alt1pos;
 NODPRINT("line1 (a=%3.3s) %s,%d,%d %s",type1->string,chromosome1->string,start1,end1,alt1->string)
 /*
 fprintf(stdout,"----- %d\t%s\t%d\t%d\n",1,Loc_ChrString(chromosome1),start1,end1);
@@ -186,11 +186,11 @@ NODPRINT("line2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),prevstart2,preven
 			} else if (comp > 0) break;
 			error2 = DStringGetTab(line2,f2,max2,result2,1);
 			if (error2)  {break;}
-			chromosome2 = result2+chr2pos;
-			sscanf(result2[start2pos].string,"%d",&start2);
-			sscanf(result2[end2pos].string,"%d",&end2);
-			type2 = result2+type2pos;
-			alt2 = result2+alt2pos;
+			chromosome2 = result2->data+chr2pos;
+			sscanf(result2->data[start2pos].string,"%d",&start2);
+			sscanf(result2->data[end2pos].string,"%d",&end2);
+			type2 = result2->data+type2pos;
+			alt2 = result2->data+alt2pos;
 			comp = DStringLocCompare(chromosome2, prevchromosome2);
 			comptype = DStringLocCompare(type2,prevtype2);
 			compalt = DStringLocCompare(alt2,prevalt2);
@@ -225,10 +225,10 @@ NODPRINT("line2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),start2,end2,type2
 			if (!datalen) {
 				fprintf(stdout,"1\n");
 			} else {
-				connectalt(alt1->string,alt2->string,result2[datapos[0]].string);
+				connectalt(alt1->string,alt2->string,result2->data[datapos[0]].string);
 				for (i = 1 ; i < datalen ; i++) {
 					fprintf(stdout,"\t");
-					connectalt(alt1->string,alt2->string,result2[datapos[i]].string);
+					connectalt(alt1->string,alt2->string,result2->data[datapos[i]].string);
 				}
 				fprintf(stdout,"\n");
 			}

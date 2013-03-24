@@ -66,7 +66,7 @@ Dest *bcol_make_getout(Hash_table *hashtable,char *pre,DString *chromosome) {
 int main(int argc, char *argv[]) {
 	Hash_table *hashtable;
 	Dest *o,*po = NULL;
-	DString *result = NULL;
+	DStringArray *result = NULL;
 	DString *line = NULL,*chromosome = NULL;
 	Hash_iter iter;
 	Hash_bucket *bucket;
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
 	NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)
 	reverse = bcol_NeedReversing((int)type[0]);
 	if (type[1] == 'u') {isunsigned = 1;}
-	result = DStringArrayNew(max+1);
+	result = DStringArrayNew(max+2);
 	hashtable = hash_init();
 	if (chrcol == -1) {
 		o = bcol_make_getout(hashtable,pre,DStringEmtpy());
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 	}
 	while (!DStringGetTab(line,stdin,max,result,0)) {
 		if (chrcol != -1) {
-			chromosome = result+chrcol;
+			chromosome = result->data+chrcol;
 			o = bcol_make_getout(hashtable,pre,chromosome);
 			if (o != po) {
 				po = o;
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		if (offsetcol != -1) {
-			offset = atoll(result[offsetcol].string);
+			offset = atoll(result->data[offsetcol].string);
 			if (poffset == -1) {
 				o->start = offset;
 			} else if (poffset != offset) {
@@ -140,8 +140,8 @@ int main(int argc, char *argv[]) {
 			}
 			poffset = offset+1;
 		}
-		NODPRINT("s=%s\n",result[col].string)
-		bcol_printbin(o->f,reverse,isunsigned,type,result[col].string);
+		NODPRINT("s=%s\n",result->data[col].string)
+		bcol_printbin(o->f,reverse,isunsigned,type,result->data[col].string);
 		o->lastpos ++;
 	}
 	bucket = hash_first(hashtable,&iter);

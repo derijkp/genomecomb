@@ -15,7 +15,7 @@
 
 int main(int argc, char *argv[]) {
 	FILE *f1,*f2;
-	DString *result1=NULL,*result2=NULL,*resultkeep=NULL,*resulttemp=NULL;
+	DStringArray *result1=NULL,*result2=NULL,*resultkeep=NULL,*resulttemp=NULL;
 	DString *line1 = NULL,*line2 = NULL,*linekeep = NULL,*linetemp = NULL,*empty=NULL;
 	DString **data = NULL;
 	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
@@ -60,22 +60,23 @@ NODPRINT("%d",datapos[i])
 	/* allocate */
 	line1 = DStringNew(); line2=DStringNew(); linekeep=DStringNew(); empty = DStringNew();
 	curchromosome = DStringEmtpy();
-	result1 = DStringArrayNew(max1+1);
-	result2 = DStringArrayNew(max2+1);
-	resultkeep = DStringArrayNew(max2+1);
+	/* we add 2 to max because we need to have the column itself, and an extra space for the remainder */
+	result1 = DStringArrayNew(max1+2);
+	result2 = DStringArrayNew(max2+2);
+	resultkeep = DStringArrayNew(max2+2);
 	skip_header(f1,line1);
 	skip_header(f2,line2);
 	error2 = DStringGetTab(line2,f2,max2,result2,1);
-	chromosome2 = result2+chr2pos;
-	sscanf(result2[start2pos].string,"%d",&start2);
-	sscanf(result2[end2pos].string,"%d",&end2);
+	chromosome2 = result2->data+chr2pos;
+	sscanf(result2->data[start2pos].string,"%d",&start2);
+	sscanf(result2->data[end2pos].string,"%d",&end2);
 	for (i = 0 ; i < datalen ; i++) {
-		if (datapos[i] != -1) {data[i] = result2+datapos[i];}
+		if (datapos[i] != -1) {data[i] = result2->data+datapos[i];}
 	}
 	while (!DStringGetTab(line1,f1,max1,result1,1)) {
-		chromosome1 = result1+chr1pos;
-		sscanf(result1[start1pos].string,"%d",&start1);
-		sscanf(result1[end1pos].string,"%d",&end1);
+		chromosome1 = result1->data+chr1pos;
+		sscanf(result1->data[start1pos].string,"%d",&start1);
+		sscanf(result1->data[end1pos].string,"%d",&end1);
 NODPRINT("%d\t%s\t%d\t%d",1,Loc_ChrString(chromosome1),start1,end1)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
@@ -111,9 +112,9 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 				comp = -1;
 				break;
 			}
-			chromosome2 = result2+chr2pos;
-			sscanf(result2[start2pos].string,"%d",&start2);
-			sscanf(result2[end2pos].string,"%d",&end2);
+			chromosome2 = result2->data+chr2pos;
+			sscanf(result2->data[start2pos].string,"%d",&start2);
+			sscanf(result2->data[end2pos].string,"%d",&end2);
 			comp = DStringLocCompare(chromosome2, chromosomekeep);
 			if (comp < 0 || (comp == 0 && (start2 < prevstart2 || (start2 == prevstart2 && end2 < prevend2)))) {
 				fprintf(stderr,"Cannot annotate because the database file is not correctly sorted (sort correctly using \"cg select -s -\")");
@@ -121,7 +122,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 			}
 			prevstart2 = start2; prevend2 = end2;
 			for (i = 0 ; i < datalen ; i++) {
-				if (datapos[i] != -1) {data[i] = result2+datapos[i];}
+				if (datapos[i] != -1) {data[i] = result2->data+datapos[i];}
 			}
 			comp = DStringLocCompare(chromosome2, chromosome1);
 		}
@@ -138,7 +139,7 @@ DPRINT("data[%d] %d %s",i,data[i]->size,data[i]->string)
 				if (comp == 0) {
 					near = start2-end1;
 					for (i = 0 ; i < datalen ; i++) {
-						if (datapos[i] != -1) {data[i] = result2+datapos[i];}
+						if (datapos[i] != -1) {data[i] = result2->data+datapos[i];}
 					}
 				}
 				if (DStringLocCompare(chromosome1,chromosomekeep) == 0) {
@@ -146,7 +147,7 @@ DPRINT("data[%d] %d %s",i,data[i]->size,data[i]->string)
 					if (near2 < near) {
 						near = near2;
 						for (i = 0 ; i < datalen ; i++) {
-							if (datapos[i] != -1) {data[i] = resultkeep+datapos[i];}
+							if (datapos[i] != -1) {data[i] = resultkeep->data+datapos[i];}
 						}
 					}
 				}
@@ -158,7 +159,11 @@ DPRINT("data[%d] %d %s",i,data[i]->size,data[i]->string)
 				} else {
 					if (datalen) {
 						for (i = 0 ; i < datalen ; i++) {
-							fprintf(stdout,"%s\t", data[i]->string);
+							if (data[i] == NULL) {
+								fprintf(stdout,"\t");
+							} else {
+								fprintf(stdout,"%s\t", data[i]->string);
+							}
 						}
 					}
 					fprintf(stdout,"%d\n",near);
@@ -178,7 +183,11 @@ DPRINT("data[%d] %d %s",i,data[i]->size,data[i]->string)
 				if (near2 >= 0) {near2 = -1;}
 				if (near2 > near) {near = near2;}
 				for (i = 0 ; i < datalen ; i++) {
-					fprintf(stdout,"%s\t", data[i]->string);
+					if (data[i] == NULL) {
+						fprintf(stdout,"\t");
+					} else {
+						fprintf(stdout,"%s\t", data[i]->string);
+					}
 				}
 				fprintf(stdout,"%d\n",near);
 			} else {
@@ -187,7 +196,11 @@ DPRINT("data[%d] %d %s",i,data[i]->size,data[i]->string)
 				} else {
 					fprintf(stdout,"%s", data[0]->string);
 					for (i = 1 ; i < datalen ; i++) {
-						fprintf(stdout,"\t%s", data[i]->string);
+						if (data[i] == NULL) {
+							fprintf(stdout,"\t");
+						} else {
+							fprintf(stdout,"\t%s", data[i]->string);
+						}
 					}
 					fprintf(stdout,"\n");
 				}

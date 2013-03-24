@@ -53,6 +53,7 @@ void hash_resize(Hash_table *table, hash_hash_func *hashfunc) {
 				NODPRINT("bucket at %d",pos)
 				tableitem->chain = (Hash_bucket *)realloc(tableitem->chain,(pos+2)*sizeof(Hash_bucket));
 				bucket = tableitem->chain + pos;
+				tableitem->chain[pos+1].key = NULL;
 			}
 			bucket->key = oldbucket->key;
 			bucket->value = oldbucket->value;
@@ -77,6 +78,10 @@ Hash_bucket *hash_get(Hash_table *table, void *key, hash_hash_func *hashfunc, ha
 	Hash_bucket *bucket;
 	unsigned int hash;
 	int comp;
+	/* do we need a resize */
+	if (table->datasize >= table->maxload) {
+		hash_resize(table,hashfunc);
+	}
 	hash = hashfunc(key,table->max);
 	NODPRINT("hash %s -> %d",((DString *)key)->string,hash);
 	/* can we find the bucket with the right key	*/
@@ -104,6 +109,7 @@ Hash_bucket *hash_get(Hash_table *table, void *key, hash_hash_func *hashfunc, ha
 		NODPRINT("bucket at %d",pos)
 		tableitem->chain = (Hash_bucket *)realloc(tableitem->chain,(pos+2)*sizeof(Hash_bucket));
 		bucket = tableitem->chain + pos;
+		tableitem->chain[pos+1].key = NULL;
 	}
 	table->datasize ++;
 	bucket->key = key;
@@ -111,10 +117,6 @@ Hash_bucket *hash_get(Hash_table *table, void *key, hash_hash_func *hashfunc, ha
 	bucket[1].key = NULL;
 	bucket[1].value = NULL;
 	*new = 1;
-	/* do we need a resize */
-	if (table->datasize >= table->maxload) {
-		hash_resize(table,hashfunc);
-	}
 	return bucket;
 }
 

@@ -14,17 +14,17 @@
 #include "tools.h"
 #include "debug.h"
 
-int multireg_next(FILE *f1,DString *line1,int chr1pos, int start1pos, int end1pos, int max1,DString *result1,DString **chromosome1,int *start1,int *end1,DString **cur1) {
+int multireg_next(FILE *f1,DString *line1,int chr1pos, int start1pos, int end1pos, int max1,DStringArray *result1,DString **chromosome1,int *start1,int *end1,DString **cur1) {
 	int error1;
 	error1 = DStringGetTab(line1,f1,max1,result1,1);
 	if (error1) {goto error;}
-	*chromosome1 = result1+chr1pos;
-	error1 = sscanf(result1[start1pos].string,"%d",start1);
+	*chromosome1 = result1->data+chr1pos;
+	error1 = sscanf(result1->data[start1pos].string,"%d",start1);
 	if (!error1) {goto error;}
-	error1 = sscanf(result1[end1pos].string,"%d",end1);
+	error1 = sscanf(result1->data[end1pos].string,"%d",end1);
 	if (!error1) {goto error;}
 	if (cur1 != NULL) {
-		*cur1 = result1+max1+1;
+		*cur1 = result1->data+max1+1;
 	}
 	return 0;
 	error:
@@ -36,7 +36,7 @@ int multireg_next(FILE *f1,DString *line1,int chr1pos, int start1pos, int end1po
 
 int main(int argc, char *argv[]) {
 	FILE *f1,*f2;
-	DString *result1=NULL,*result2=NULL;
+	DStringArray *result1=NULL,*result2=NULL;
 	DString *line1 = NULL,*line2 = NULL,*cur1 = NULL;
 	DString *chromosome1 = NULL, *chromosome2 = NULL, *curchromosome = NULL;
 	char *nulldata;

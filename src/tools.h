@@ -15,6 +15,11 @@ typedef struct DString {
 	char staticspace[DSTRING_STATICLEN];
 } DString;
 
+typedef struct DStringArray {
+	DString *data;
+	int size;
+} DStringArray;
+
 typedef struct Buffer {
 	int memsize;
 	int size;
@@ -42,9 +47,9 @@ void InitBuffer(Buffer *buffer,int size);
 void DelBuffer(Buffer *buffer);
 int DStringGetLine_b(DString *linePtr,	FILE *f1,Buffer *buffer);
 
-DString *DStringArrayNew(int size);
-DString *DStringArrayDestroy(DString *dstringarray);
-int DStringGetTab(DString *line,	FILE *f1, int max, DString *result, int setzero);
+DStringArray *DStringArrayNew(int size);
+void DStringArrayDestroy(DStringArray *dstringarray);
+int DStringGetTab(DString *line,	FILE *f1, int max, DStringArray *result, int setzero);
 
 int parse_pos(char *arg, int **rresult, int *rnum);
 
