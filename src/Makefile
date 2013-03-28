@@ -5,7 +5,7 @@ TOOLS= tools.c tools.h debug.h
 HASHTOOLS=hash.h hash.c
 BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h
 
-all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_annot
+all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile ../bin$(ARCH)/bcol_indexfile_all ../bin$(ARCH)/bcol_make
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -51,6 +51,9 @@ clean:
 
 ../bin$(ARCH)/bcol_indexfile: bcol_indexfile.c $(TOOLS)
 	gcc bcol_indexfile.c tools.c $(CFLAGS) -o ../bin$(ARCH)/bcol_indexfile
+
+../bin$(ARCH)/bcol_indexfile_all: bcol_indexfile_all.c $(TOOLS) $(HASHTOOLS)
+	gcc bcol_indexfile_all.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_indexfile_all
 
 ../bin$(ARCH)/bcol_make: bcol_make.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
 	gcc bcol_make.c tools.c tools_bcol.c hash.c razf.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make -Wl,-Bstatic -lz -Wl,-Bdynamic

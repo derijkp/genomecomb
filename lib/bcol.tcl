@@ -1,4 +1,4 @@
-proc bcol_indexlines {file indexfile} {
+proc bcol_indexlines {file indexfile {colinfo 0}} {
 	set time [file mtime $file]
 	set ext [file extension $file]
 	if {[inlist {.rz .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
@@ -36,7 +36,15 @@ proc bcol_indexlines {file indexfile} {
 			progress start [file size $tempfile] "Indexing $file, please be patient"
 			progress message "Indexing $file, please be patient"
 			# putslog "bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss"
-			exec bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss 2> /dev/null
+			if {$colinfo} {
+				set indexdir [file dir $indexfile]
+				file mkdir $indexdir/colinfo.temp/
+				exec bcol_indexfile_all $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2> /dev/null
+				catch {file delete -force $indexdir/colinfo}
+				file rename $indexdir/colinfo.temp/ $indexdir/colinfo
+			} else {
+				exec bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss 2> /dev/null
+			}
 			file rename -force $indexfile.bin.temp $indexfile.bin
 			file rename -force $indexfile.temp $indexfile
 			progress stop

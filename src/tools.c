@@ -27,6 +27,7 @@ typedef struct DString {
 typedef struct DStringArray {
 	DString *data;
 	int size;
+	int memsize;
 } DStringArray;
 
 typedef struct Buffer {
@@ -452,7 +453,8 @@ DStringArray *DStringArrayNew(int size) {
 	int i;
 	dstringarray = (DStringArray *)malloc(1*sizeof(DStringArray));
 	dstringarray->data = (DString *)malloc(size*sizeof(DString));
-	dstringarray->size = size;
+	dstringarray->size = 0;
+	dstringarray->memsize = size;
 	for (i = 0; i < size ; i++) {
 		DStringInit(dstringarray->data+i);
 	}
@@ -461,7 +463,7 @@ DStringArray *DStringArrayNew(int size) {
 
 void DStringArrayDestroy(DStringArray *dstringarray) {
 	int i=0;
-	for (i =0; i < dstringarray->size ; i++) {
+	for (i =0; i < dstringarray->memsize ; i++) {
 		DStringClear(dstringarray->data+i);
 	}
 	free(dstringarray);
@@ -476,6 +478,10 @@ int DStringGetTab(
 	ssize_t size = 0;
 NODPRINT("maxtab=%d",maxtab)
 	maxtab += 1;
+	if (maxtab > result->memsize) {
+		fprintf(stderr,"cannot DStringGetTab, array memsize < maxtab");
+		exit(1);
+	}
 	result->data[count].string = cur;
 	result->data[count].memsize = -1;
 	/* fill current pos (size) in the array for now, convert to array element sizes later */
@@ -489,7 +495,7 @@ NODPRINT("maxtab=%d",maxtab)
 			}
 		} else if (c == '\n' || c == EOF) {
 			if (count < maxtab) {
-				result->data[count].size = size;
+				result->data[count++].size = size;
 			}
 			break;
 		}
@@ -502,6 +508,7 @@ NODPRINT("maxtab=%d",maxtab)
 		*cur++ = c;
 		++size;
 	}
+	result->size = count;
 	/* add \0 to line*/
 	linePtr->size = size;
 	if (linePtr->memsize <= size) {

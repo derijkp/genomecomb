@@ -60,7 +60,7 @@ proc cg_index {args} {
 		if {$verbose} {
 			putslog "Creating lineindex"
 		}
-		bcol_indexlines $file $indexfile
+		bcol_indexlines $file $indexfile 1
 		catch {file delete $indexdir/info.tsv}
 		set f [gzopen $file]
 		set header [tsv_open $f]
