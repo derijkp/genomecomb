@@ -203,23 +203,40 @@ table_tsv method values {field {max 5000}} {
 	if (![file exists $histofile]) {
 		private $object values
 		if {![info exists values($field)]} {
-			set f [gzopen $tdata(file)]
+			set lineindex $tdata(lineindex)
+			set step [expr {int([dict get $lineindex max]/double($max))}]
+			if {$step < 1} {set step 1}
+			catch {close $f} ; set f [gzopen $tdata(file)]
 			set header [tsv_open $f]
 			set pos [lsearch $header $field]
-			set result {}
 			set num 0
+			set row 0
 			set break 0
+			unset -nocomplain a
 			while {![eof $f]} {
 				set line [split [gets $f] \t]
-				lappend result [lindex $line $pos]
+				set v [lindex $line $pos]
+				if {![info exists a($v)]} {
+					set a($v) 1
+				} else {
+					incr a($v)
+				}
 				incr num
 				if {$num >= $max} {
 					set break 1
 					break
 				}
+				if {$step > 1} {
+					incr row $step
+					seek $f [bcol_get $lineindex $row $row]
+				}
 			}
 			close $f
-			set result [list_remdup $result]
+			set result {}
+			foreach v [array names a] {
+				lappend result [list $v $a($v)]
+			}
+			set result [lsort -dict -index 1 -decreasing $result]
 			if {$break} {lappend result {sampled incomplete}}
 			set values($field) $result
 		}
