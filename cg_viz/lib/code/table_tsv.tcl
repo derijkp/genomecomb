@@ -197,9 +197,9 @@ table_tsv method qfields {} {
 	return $tdata(monetfields)
 }
 
-table_tsv method values {field {max 1000}} {
+table_tsv method values {field {max 5000}} {
 	private $object tdata
-	set histofile $tdata(file).index/cols/$field.col.histo
+	set histofile $tdata(file).index/colinfo/$field.colinfo
 	if (![file exists $histofile]) {
 		private $object values
 		if {![info exists values($field)]} {
@@ -213,14 +213,14 @@ table_tsv method values {field {max 1000}} {
 				set line [split [gets $f] \t]
 				lappend result [lindex $line $pos]
 				incr num
-				if {$num  >= 5000} {
+				if {$num >= $max} {
 					set break 1
 					break
 				}
 			}
 			close $f
 			set result [list_remdup $result]
-			if {$break} {lappend result ..}
+			if {$break} {lappend result {sampled incomplete}}
 			set values($field) $result
 		}
 		return $values($field)
@@ -230,14 +230,30 @@ table_tsv method values {field {max 1000}} {
 	while {![eof $f]} {
 		set line [gets $f]
 		if {![llength $line]} continue
-		foreach {num value} $line break
-		lappend result [list $value $num]
-		if {[llength $result] == $max} {
-			lappend result {.. {}}
-			break
+		if {[string index $line 0] eq "#"}		{
+			if {[regexp {^# *([^: ]+): *(.*)$} $line temp key value]} {
+				set a($key) $value
+			}
+		} else {
+			lappend result [split $line \t]
 		}
 	}
 	close $f
+	if {[lindex $result end] eq "..."} {
+		set a(incomplete) 1
+		list_pop result
+	} else {
+		set a(incomplete) 0
+	}
+	set result [lsort -dict -index 1 -decreasing $result]
+	if {[isdouble [get a(min) {}]] && [isdouble [get a(max) {}]]} {
+		regsub {\.0+$} $a(min) {} min
+		regsub {\.0+$} $a(max) {} max
+		lappend result [list $max maxnum] [list $min minnum]
+	}
+	if {$a(incomplete)} {
+		lappend result {... incomplete}
+	}
 	return $result
 }
 

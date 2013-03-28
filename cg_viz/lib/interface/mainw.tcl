@@ -76,14 +76,14 @@ mainw method init args {
 	button $object.buttons.button1 \
 		-text Fields
 	grid $object.buttons.button1 -row 0 -column 1 -sticky nesw
-	Classy::OptionMenu $object.buttons.optionmenu1  \
+	Classy::OptionMenu $object.buttons.view  \
 		-list {data
 summary
 graph}
-	grid $object.buttons.optionmenu1 -row 0 -column 5 -sticky nesw
-	button $object.buttons.button2 \
+	grid $object.buttons.view -row 0 -column 5 -sticky nesw
+	button $object.buttons.settings \
 		-text Settings
-	grid $object.buttons.button2 -row 0 -column 4 -sticky nesw
+	grid $object.buttons.settings -row 0 -column 4 -sticky nesw
 	grid columnconfigure $object.buttons 0 -uniform {}
 	grid columnconfigure $object.buttons 1 -uniform {}
 	grid columnconfigure $object.buttons 2 -uniform {}
@@ -141,10 +141,10 @@ $object start
 		-command [varsubst object {$object query}]
 	$object.buttons.button1 configure \
 		-command [varsubst object {$object fields}]
-	$object.buttons.optionmenu1 configure \
+	$object.buttons.view configure \
 		-command [varsubst object {$object view}] \
 		-textvariable [privatevar $object view(cur)]
-	$object.buttons.button2 configure \
+	$object.buttons.settings configure \
 		-command [varsubst object {$object viewsettings}]
 	Classy::DynaMenu attachmainmenu MainMenu $object
 	# Configure initial arguments
@@ -363,11 +363,19 @@ mainw method querybuilder_filteroperators {args} {
 }
 
 mainw method querybuilder_filtervalues {args} {
-	private $object qvalues qvaluesfilter
+	private $object qvalues qvaluestext qvaluesfilter
 	set w $object.querybuilder.options.paned
 	set field [lindex [$w.fields.fields get] 0]
 	if {$field eq ""} return
 	set list [$object.tb values $field]
+	if {[lindex $list end 1] ne "incomplete"} {
+		set text [list "All values"]
+	}
+	while {![isint [lindex $list end 1]]} {
+		set line [list_pop list]
+		lappend text "[lindex $line 1]: [lindex $line 0]"
+	}
+	set qvaluestext [join $text \n]
 	set qnums [list_subindex $list 1]
 	set list [list_subindex $list 0]
 	if {[llength $list]} {
@@ -539,6 +547,8 @@ mainw method querybuilder {args} {
 	pack $w.values.header -fill x
 	Classy::Entry $w.values.value
 	pack $w.values.value -fill x
+	label $w.values.label -textvariable [privatevar $object qvaluestext] -justify left -anchor w
+	pack $w.values.label -fill x
 	Classy::Entry $w.values.filter -label Filter \
 		-textvariable [privatevar $object qvaluesfilter] \
 		-command [list $object querybuilder_filtervalues]
