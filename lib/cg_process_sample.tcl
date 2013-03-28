@@ -68,7 +68,6 @@ proc process_sample {args} {
 	putslog "Making $workdir"
 	file mkdir $workdir
 	set sample [file tail $workdir]
-	catch {file delete $workdir/summary-$sample.txt}
 	# process_bam2cg $srcdir
 	set keepdir [pwd]
 	cd $workdir
