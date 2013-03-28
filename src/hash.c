@@ -14,7 +14,7 @@ Hash_table *hash_init_size(int tablesize) {
 	table->table = (Hash_tableitem *)malloc(size);
 	memset(table->table,0,size);
 	table->max = tablesize-1;
-	table->maxload = (int)((double)size*0.7);
+	table->maxload = (int)((double)tablesize*0.7);
 	table->datasize = 0;
 	table->items = NULL;
 	return(table);
@@ -155,6 +155,7 @@ void hash_destroy(Hash_table *table) {
 		free((char *)item->chain);
 		item = item->next;
 	}
+	free(table->table);
 	free(table);
 }
 
