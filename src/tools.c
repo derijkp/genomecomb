@@ -466,6 +466,7 @@ void DStringArrayDestroy(DStringArray *dstringarray) {
 	for (i =0; i < dstringarray->memsize ; i++) {
 		DStringClear(dstringarray->data+i);
 	}
+	free(dstringarray->data);
 	free(dstringarray);
 }
 
