@@ -50,6 +50,7 @@ int DStringGetLine_b(DString *linePtr,	FILE *f1,Buffer *buffer);
 DStringArray *DStringArrayNew(int size);
 void DStringArrayDestroy(DStringArray *dstringarray);
 int DStringGetTab(DString *line,	FILE *f1, int max, DStringArray *result, int setzero);
+FILE *fopen64_or_die(char *filename,char *mode);
 
 int parse_pos(char *arg, int **rresult, int *rnum);
 

@@ -63,8 +63,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"Format is: bcol_indexfile file indexfile indexfilebin chrpos startpos endpos typepos colinfoprefix columns");
 		exit(EXIT_FAILURE);
 	}
-	f1 = fopen64(argv[1],"r");
-		if (f1 == NULL) {fprintf(stderr,"%s\n",strerror(errno));	exit(1);}
+	f1 = fopen64_or_die(argv[1],"r");
 	chr1pos = atoi(argv[4]);
 	start1pos = atoi(argv[5]);
 	end1pos = atoi(argv[6]);
@@ -88,13 +87,11 @@ int main(int argc, char *argv[]) {
 		colinfo[i].max = -INFINITY;
 		colinfo[i].extra = 0;
 	}
-	f2 = fopen64(argv[2],"w");
-	if (f2 == NULL) {fprintf(stderr,"%s\n",strerror(errno));	exit(1);}
+	f2 = fopen64_or_die(argv[2],"w");
 	fprintf(f2,"# binary column\n");
 	fprintf(f2,"# type lineindex\n");
 	fprintf(f2,"begin\ttype\toffset\n");
-	f3 = fopen64(argv[3],"w");
-	if (f3 == NULL) {fprintf(stderr,"%s\n",strerror(errno));	exit(1);}
+	f3 = fopen64_or_die(argv[3],"w");
 NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 	/* allocate */
 	line1 = DStringNew();
@@ -211,8 +208,7 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 		cur++;
 		fprintf(stderr,"Writing %s\n",buffer->string);
 		cur += size;
-		f1 = fopen64(buffer->string,"w");
-		if (f1 == NULL) {fprintf(stderr,"%s\n",strerror(errno));	exit(1);}
+		f1 = fopen64_or_die(buffer->string,"w");
 		fprintf(f1,"# type: %c\n",colinfo[i].type);
 		if (colinfo[i].type == 'i' || colinfo[i].type == 'd') {
 			fprintf(f1,"# null: %s\n",colinfo[i].extra);

@@ -29,13 +29,13 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"Format is: reg_join file1 chrpos1 startpos1 endpos1 file2 chrpos2 startpos2 endpos2");
 		exit(EXIT_FAILURE);
 	}
-	f1 = fopen64(argv[1],"r");
+	f1 = fopen64_or_die(argv[1],"r");
 	chr1pos = atoi(argv[2]);
 	start1pos = atoi(argv[3]);
 	end1pos = atoi(argv[4]);
 	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
 	if (argv[5][0] != '\0') {
-		f2 = fopen64(argv[5],"r");
+		f2 = fopen64_or_die(argv[5],"r");
 	}
 	chr2pos = atoi(argv[6]);
 	start2pos = atoi(argv[7]);

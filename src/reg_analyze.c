@@ -81,17 +81,9 @@ int main (int argc, char *argv[]) {
 
 void annotate (char *out1, char *in, int in_chrom, int in_begin, int in_end, char *db, int chrom_col, int begin, int end, int name, int score, int allel_freq) {
 	FILE *input;
-	input = fopen64(in, "r+");
-	if (input == NULL) {
-		perror ("Error opening inputfile");
-		exit(EXIT_FAILURE);
-	}
+	input = fopen64_or_die(in, "r+");
 	FILE *db_input;
-	db_input = fopen64(db, "r");
-	if (db_input == NULL) {
-		perror ("Error opening database");
-		exit(EXIT_FAILURE);
-	}
+	db_input = fopen64_or_die(db, "r");
 	
 	// Initiate
 
@@ -141,11 +133,7 @@ void annotate (char *out1, char *in, int in_chrom, int in_begin, int in_end, cha
 		strcat(outfile, out2);
 	} 
 
-	output_id = fopen64(outfile, "w");
-	if (output_id == NULL) {
-		perror ("Error opening outputfile");
-		exit(EXIT_FAILURE);
-	}
+	output_id = fopen64_or_die(outfile, "w");
 
 	annot_col_1 = "_name";
 	annot_col_2 = "_score";

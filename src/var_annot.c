@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"Format is: reg_annot file1 chrpos1 startpos1 endpos1 type1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos alt2pos datapos ...");
 		exit(EXIT_FAILURE);
 	}
-	f1 = fopen64(argv[1],"r");
+	f1 = fopen64_or_die(argv[1],"r");
 	chr1pos = atoi(argv[2]);
 	start1pos = atoi(argv[3]);
 	end1pos = atoi(argv[4]);
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 	/* The following allocation is not destroyed at end as it may point to something else */
 	/* This will leak mem, but as the prog is finished anyway ... */
 	result1 = DStringArrayNew(max1+2);
-	f2 = fopen64(argv[7],"r");
+	f2 = fopen64_or_die(argv[7],"r");
 	chr2pos = atoi(argv[8]);
 	start2pos = atoi(argv[9]);
 	end2pos = atoi(argv[10]);

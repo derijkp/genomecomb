@@ -26,17 +26,17 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"Format is: bcol_indexfile file indexfile indexfilebin chrpos startpos endpos typepos");
 		exit(EXIT_FAILURE);
 	}
-	f1 = fopen64(argv[1],"r");
+	f1 = fopen64_or_die(argv[1],"r");
 	chr1pos = atoi(argv[4]);
 	start1pos = atoi(argv[5]);
 	end1pos = atoi(argv[6]);
 	type1pos = atoi(argv[7]);
 	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ; if (type1pos > max1) {max1 = type1pos;} ;
-	f2 = fopen64(argv[2],"w");
+	f2 = fopen64_or_die(argv[2],"w");
 	fprintf(f2,"# binary column\n");
 	fprintf(f2,"# type lineindex\n");
 	fprintf(f2,"begin\ttype\toffset\n");
-	f3 = fopen64(argv[3],"w");
+	f3 = fopen64_or_die(argv[3],"w");
 NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 	/* allocate */
 	line1 = DStringNew();

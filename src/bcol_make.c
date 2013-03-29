@@ -43,17 +43,9 @@ Dest *bcol_make_getout(Hash_table *hashtable,char *pre,DString *chromosome) {
 			DStringAppendS(buffer,chromosome->string,chromosome->size);
 		}
 		DStringAppend(buffer,".bcol");
-		o->rf = fopen64(buffer->string,"w");
-		if (o->rf == NULL) {
-			fprintf(stderr,"Error opening file %s: %s.\n", buffer->string, strerror(errno));
-			exit(EXIT_FAILURE);
-		}
+		o->rf = fopen64_or_die(buffer->string,"w");
 		DStringAppend(buffer,".bin");
-		o->f = fopen64(buffer->string,"w");
-		if (o->f == NULL) {
-			fprintf(stderr,"Error opening file %s: %s.\n", buffer->string, strerror(errno));
-			exit(EXIT_FAILURE);
-		}
+		o->f = fopen64_or_die(buffer->string,"w");
 		hash_setvalue(bucket,o)
 		DStringSetS(buffer,chromosome->string,chromosome->size);
 		bucket->key = (void *)buffer;

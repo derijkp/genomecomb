@@ -647,3 +647,13 @@ void skip_header(FILE *f1, DString *linePtr) {
 	}
 	NODPRINT("%s",linePtr->string)
 }
+
+FILE *fopen64_or_die(char *filename,char *mode) {
+	FILE *f;
+	f = fopen64(filename,mode);
+	if (f == NULL) {
+		fprintf(stderr,"Error opening file %s: %s.\n", filename, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	return(f);
+}
