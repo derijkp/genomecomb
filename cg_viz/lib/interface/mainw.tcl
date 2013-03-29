@@ -485,6 +485,20 @@ mainw method querybuilder_add {command} {
 		set compare(samples) [cg select -n $tdata(file)]
 		$object.compare option listbox Sample1 [privatevar $object compare(selsamples)] [privatevar $object compare(samples)] -selectmode multiple
 		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(type) \] 0\]\(\[join \[getprivate $object compare(selsamples) \] ,\]\)\"" default
+	} elseif {$command in {min max avg}} {
+		private $object compare tdata
+		destroy $object.compare
+		Classy::Dialog $object.compare -title "Functions"
+		set compare(functypes) {
+			{min : min(a1,a2,...)**: returns the minimum of a1, a2, ... a1, etc. can be a list of numbers (separated by commas, spaces or ;)}
+			{max : max(a1,a2,...)**: returns the maximum of a1, a2, ... a1, etc. can be a list of numbers (separated by commas, spaces or ;)}
+			{avg : returns the average of the values given. Non-number values are ignored. If no number was given, the answer will be NaN}
+		}
+		$object.compare option select Function [privatevar $object compare(functype)] [privatevar $object compare(functypes)]
+		set compare(functype) $command
+		set compare(fields) [cg select -h $tdata(file)]
+		$object.compare option listbox Sample1 [privatevar $object compare(selfields)] [privatevar $object compare(fields)] -selectmode multiple
+		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(functype) \] 0\]\(\[join \[getprivate $object compare(selfields) \] ,\]\)\"" default
 	} else {
 		set insert {}
 		foreach field $fields {
@@ -506,7 +520,6 @@ mainw method querybuilder_add {command} {
 }
 
 mainw method querybuilder {args} {
-
 	private $object qfields qvalues
 	set var [$object.buttons.query cget -textvariable]
 	destroy $object.querybuilder
@@ -562,7 +575,7 @@ mainw method querybuilder {args} {
 	# query
 	frame $w.query -borderwidth 0 -highlightthickness 0
 	frame $w.query.buttons -borderwidth 0 -highlightthickness 0
-	foreach command {and or count region compare} {
+	foreach command {and or count region compare min max avg} {
 		button $w.query.buttons.$command -text $command -command [list $object querybuilder_add $command]
 		pack $w.query.buttons.$command -side left
 	}
@@ -583,7 +596,7 @@ mainw method querybuilder {args} {
 	$w.fields.fields set [$w.fields.fields get 0]
 	$w.operators.operators set [$w.operators.operators get 0]
 	catch {$w.values.values set [$w.values.values get 0]}
-
+	after idle $object querybuilder_browsefield
 }
 
 mainw method fields {args} {
