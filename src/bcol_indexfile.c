@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 	DStringArray *result1=NULL;
 	DString *line1 = NULL;
 	off_t fpos;
-	uint64_t count = -1,next = 4294967296LL, offset = 0L, progress = 50000000L;
+	uint64_t count = -1,next = 4294967296LL, offset = 0L, progress = 20000000L;
 	uint32_t data;
 	int chr1pos,start1pos,end1pos,type1pos,max1;
 	if ((argc != 8)) {
@@ -65,7 +65,7 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 		fpos = ftello(f1);
 		if (fpos > progress) {
 			fprintf(stderr,"filepos: %llu\n",(unsigned long long)fpos);
-			progress += 50000000L;
+			progress += 20000000L;
 		}
 		if (fpos >= next) {
 			while (fpos >= next) {

@@ -19,7 +19,6 @@
 typedef struct Colinfo {
 	char type;
 	Hash_table *hashtable;
-	int size;
 	int numnum;
 	double min;
 	double max;
@@ -55,7 +54,7 @@ int main(int argc, char *argv[]) {
 	Hash_iter iter;
 	char *cur,*prefix;
 	off_t fpos;
-	uint64_t count = -1,next = 4294967296LL, offset = 0L, progress = 50000000L;
+	uint64_t count = -1,next = 4294967296LL, offset = 0L, progress = 20000000L;
 	uint32_t data;
 	double testd;
 	long int temp;
@@ -74,7 +73,7 @@ int main(int argc, char *argv[]) {
 	cur = argv[9];
 	max1 = 1;
 	while (*cur != '\0') {
-		if (*cur == ' ') {max1++;}
+		if (*cur == ' ' || *cur == '\n') {max1++;}
 		cur++;
 	}
 	if (start1pos > max1) {max1 = start1pos;}
@@ -83,8 +82,7 @@ int main(int argc, char *argv[]) {
 	colinfo = (ColInfo *)malloc(max1*sizeof(ColInfo));
 	for(i = 0 ; i < max1 ; i++) {
 		colinfo[i].type = 'i';
-		colinfo[i].hashtable = hash_init();
-		colinfo[i].size = 0;
+		colinfo[i].hashtable = hash_init_size(500);
 		colinfo[i].numnum = 0;
 		colinfo[i].min = INFINITY;
 		colinfo[i].max = -INFINITY;
@@ -126,7 +124,7 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 		fpos = ftello(f1);
 		if (fpos > progress) {
 			fprintf(stderr,"filepos: %llu\n",(unsigned long long)fpos);
-			progress += 50000000L;
+			progress += 20000000L;
 		}
 		if (fpos >= next) {
 			while (fpos >= next) {
@@ -146,7 +144,7 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 			}
 			if (isnum && colinfo[i].numnum >= 256) {
 				/* only put < 256 numbers in hashtable, otherwise only min and max data */
-			} else if (colinfo[i].size < 1000) {
+			} else if (colinfo[i].hashtable->datasize < 500) {
 				bucket = hash_get(colinfo[i].hashtable, (void *)(result1->data+i), hash_Dstring_hash, hash_Dstring_compare, &new);
 				if (new == 0) {
 					/* key was already present in the hashtable */
@@ -198,14 +196,14 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 	fclose(f2);
 	fclose(f3);
 	fprintf(stderr,"Writing columns\n");
-	if (line1) {DStringDestroy(line1);}
-	if (result1) {DStringArrayDestroy(result1);}
+	if (line1 != NULL) {DStringDestroy(line1);}
+	if (result1 != NULL) {DStringArrayDestroy(result1);}
 	cur = argv[9];
 	buffer = DStringNew();
 	for(i = 0 ; i < max1 ; i++) {
 		DStringSet(buffer,prefix);
 		size = 0;
-		while (cur[size] != ' ' && cur[size] != '\0') {
+		while (cur[size] != ' ' && cur[size] != '\n' &&cur[size] != '\0') {
 			size++;
 		}
 		DStringAppendS(buffer,cur,size);
@@ -238,9 +236,10 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 			bucket = hash_next(&iter);
 		}
 		hash_destroy(colinfo[i].hashtable);
-		if (colinfo[i].size >= 1000 || (colinfo[i].numnum >= 256)) {
+		if (colinfo[i].hashtable->datasize >= 500 || (colinfo[i].numnum >= 256)) {
 			fprintf(f1,"...\n");
 		}
+		fclose(f1);
 		if (colinfo[i].extra != NULL) {free(colinfo[i].extra);}
 	}
 	DStringDestroy(buffer);
