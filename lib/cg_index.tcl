@@ -3,6 +3,7 @@ proc cg_index {args} {
 	set pos 0
 	set len [llength $args]
 	set cols 0
+	set colinfo 0
 	set dbstring {}
 	set refdir {}
 	set verbose 0
@@ -11,6 +12,10 @@ proc cg_index {args} {
 		switch $opt {
 			-cols {
 				set cols 1
+				incr pos
+			}
+			-colinfo {
+				set colinfo 1
 				incr pos
 			}
 			-db {
@@ -60,7 +65,7 @@ proc cg_index {args} {
 		if {$verbose} {
 			putslog "Creating lineindex"
 		}
-		bcol_indexlines $file $indexfile 1
+		bcol_indexlines $file $indexfile $colinfo
 		catch {file delete $indexdir/info.tsv}
 		set f [gzopen $file]
 		set header [tsv_open $f]
