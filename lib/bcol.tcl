@@ -39,11 +39,11 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 			if {$colinfo} {
 				set indexdir [file dir $indexfile]
 				file mkdir $indexdir/colinfo.temp/
-				exec bcol_indexfile_all $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2> /dev/null
+				exec bcol_indexfile_all $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@ stderr
 				catch {file delete -force $indexdir/colinfo}
 				file rename $indexdir/colinfo.temp/ $indexdir/colinfo
 			} else {
-				exec bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss 2> /dev/null
+				exec bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss 2>@ stderr
 			}
 			file rename -force $indexfile.bin.temp $indexfile.bin
 			file rename -force $indexfile.temp $indexfile
