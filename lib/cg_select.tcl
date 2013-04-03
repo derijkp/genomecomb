@@ -136,6 +136,18 @@ proc tsv_select_count {arguments header neededfieldsVar} {
 	return "([join $temp " + "])"
 }
 
+proc tsv_select_if {arguments header neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	if {[llength $arguments] != 3} {
+		error "wrong # args for function if, must be: if(condition,true,false)"
+	}
+	foreach field {condition true false} q $arguments {
+		set q [tsv_select_precedence $q]
+		set $field "([tsv_select_detokenize $q $header neededfields])"
+	}
+	return "($condition ? $true : $false)"
+}
+
 proc tsv_select_counthasone {ids operand value} {
 	set temp {}
 	foreach id $ids {
@@ -603,6 +615,9 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 					}
 					count {
 						set temp [tsv_select_count $arguments $header neededfields]
+					}
+					if {
+						set temp [tsv_select_if $arguments $header neededfields]
 					}
 					region {
 						set temp [tsv_select_region $ids $header neededfields]

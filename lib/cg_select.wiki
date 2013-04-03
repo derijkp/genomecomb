@@ -51,6 +51,10 @@ Queries support all operators and functions provided by Tcl expr.
 
 Some extra functions are available:
 
+=== Logical functions ===
+; **if(condition,true,false)**: if **condition** is true, the value for "true" will be returned, 
+otherwise the last parameter (**false**) is returned
+
 === Bio functions ===
 ; **region("chromosome:begin-end",...)**: is true for any region in dataset that overlaps the given regions.
 Can also be given as region(chromosome,begin,end,...).
