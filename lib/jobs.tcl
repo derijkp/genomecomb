@@ -118,10 +118,10 @@ proc job_expandvars {string {level 0}} {
 			} else {
 				set expand 0
 			}
-			upvar $level $var value
-			if {![info exists value]} {
+			if {![uplevel $level info exists $var]} {
 				error "Error: can't read \"$var\": no such variable $var"
 			}
+			set value [uplevel $level get $var]
 			if {$expand} {
 				foreach value $value {
 					lappend resultlist "$code\n[list set _$var $value]" 0 {}
