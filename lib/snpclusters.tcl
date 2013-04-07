@@ -112,10 +112,9 @@ proc clusters {} {
 							puts $o *****end*****
 							puts $o [join [lrange $keep [expr {$rend+1}] end] \n]
 						}
-						set begin [lindex $keep $rstart 0]
-						set end [expr {[lindex $keep $rend 0]+1}]
-						puts $o $chr\t$begin\t$end\t[expr {$end - $begin + 1}]
-						# putslog $chr\t$begin\t$end\t[expr {$end - $begin + 1}]
+						set obegin [lindex $keep $rstart 0]
+						set oend [expr {[lindex $keep $rend 0]+1}]
+						puts $o $pchr\t$obegin\t$oend\t[expr {$oend - $obegin + 1}]
 					}
 					set checking 0
 					set keep [lrange $keep end-$checknum end]
