@@ -14,16 +14,18 @@ the second element.
 
 == Arguments ==
 ; **cutoff**: cutoff
-; **file1**: file containing position and value columns.
+; **file1**: file containing position and value columns, or bcol file.
 ; **...**: other files
  
 == Options ==
 ; **-qfields**: list (separated by spaces) of possible fieldnames to use as values
             for the cutoff; The first in the list that is in the header will be used
-            (default = "coverage uniqueSequenceCoverage")
+            (default = "coverage uniqueSequenceCoverage").
+            This option is not used for bcol files, as they contain data for only one "column".
 ; **-posfields**: list (separated by spaces) of possible fieldnames to use as position;
-              The first in the list that is in the header will be used
-              (default = "offset pos position begin start")
+            The first in the list that is in the header will be used
+            (default = "offset pos position begin start").
+            This option is not used for bcol files.
 ; **-above**: 1 if regions should contain values > given cutoff.
           defaults to 0, meaning values should be < the cutoff.
 ; **-shift**: change the position by the given amount, e.g. -1 to change from
