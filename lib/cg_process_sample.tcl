@@ -233,6 +233,22 @@ proc process_sample {args} {
 					}
 			}
 		}
+		foreach field $fields {
+			set target coverage/bcol_[string tolower $field]-$sample.tsv
+			job cg_bcol_coverage-$field -deps {coverage/$field-*-$sample.bcol} -vars {sample field} \
+			-targets $target -code {
+				set deps [lsort -dict $deps]
+				set f [open $target.temp w]
+				puts $f "chromosome\tfile"
+				foreach dep $deps {
+					set tail [file tail $dep]
+					regexp "^$field-(\[^-\]+)" $tail temp chr
+					puts $f $chr\t[file tail $dep]
+				}
+				close $f
+				file rename $target.temp $target
+			}
+		}
 	}
 
 	# if we are coming from bams, coverage file name looks different, use these by making link
@@ -299,30 +315,8 @@ proc process_sample {args} {
 		}
 	}
 
-	job cg_fannotvar {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage/coverage-*-$sample.bcol) (coverage/refscore-*-$sample.bcol)} {fannotvar-$sample.tsv} {
-		# add filterdata to annotvar
-		set todo {}
-		if {[file exists $dep2]} {
-			lappend todo [list refcons rc $dep2]
-		}
-		# lappend todo [list nocall nc reg_nocall-$sample.tsv]
-		if {[file exists $dep3]} {
-			lappend todo [list cluster cl $dep3]
-		}
-		# lappend todo [list trf trf $dbdir/regdb-simple_repeats.tsv]
-		# lappend todo [list str str $dbdir/regdb-microsatelite.tsv]
-		# lappend todo [list segdup sd $dbdir/regdb-segdups.tsv]
-		# lappend todo [list selfchain sc $dbdir/regdb-selfchain.tsv]
-		# lappend todo [list repeat rp $dbdir/regdb-repeatmasker.tsv]
-		# lappend todo [list rna rna $dbdir/regdb-rnagenes.tsv]
-		# lappend todo [list more5pct m5 $dbdir/regdb-1000genomesmore5pct.tsv]
-		# lappend todo [list more1pct m1 $dbdir/regdb-1000genomesmore1pct.tsv]
-		# foreach file [lsort -dictionary [glob -nocomplain $dbdir/checked*.tsv]] {
-		# 	set value [lindex [split [file root [file tail $file]] _] 1]
-		# 	if {$value eq ""} {set value checked}
-		# 	lappend todo [list checked $value $file]
-		# }
-		annot_annotvar $dep $target $todo [file dir $target]
+	job cg_fannotvar {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage/bcol_coverage-$sample.tsv) (coverage/bcol_refscore-$sample.tsv)} {fannotvar-$sample.tsv} {
+		cg annotate $dep $target {*}[list_remove [lrange $deps 1 end] {}]
 	}
 
 	job reg_covered {sreg-$sample.tsv} {reg-$sample.covered} {
