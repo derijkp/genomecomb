@@ -11,7 +11,7 @@ puts "expected data no longer valid with new dbsnp"
 
 test makeprimers {basic} {
 	exec cg makeregions data/testvars.tsv 200 > tmp/valregs.tsv
-	exec cg makeprimers tmp/valregs.tsv may2009 600 500 /complgen/refseq/hg18 1 > tmp/primersvalregs.tsv
+	exec cg makeprimers tmp/valregs.tsv may2009 600 500 /complgen/refseq/hg18 1 > tmp/primersvalregs.tsv 2> /dev/null
 	exec diff tmp/primersvalregs.tsv data/makeprimers-results.tsv
 } {} 
 

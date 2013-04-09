@@ -9,10 +9,10 @@ source convert.tcl
 source edit.tcl
 source reg.tcl
 source tsv.tcl
-source val.tcl
 source remap.tcl
 source libext.tcl
 source select.tcl
 source misc.tcl
 source job.tcl
 source queries.tcl
+source val.tcl
