@@ -218,6 +218,40 @@ test reg_annot {replace} {
 	exec diff tmp/temp3.sft data/expected_near-vars1-reg_annot.sft
 } {} 
 
+test bcol_annot {basic} {
+	test_cleantmp
+	exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv
+	file_write tmp/bcol_coverage.tsv "chromosome\tfile\nchr1\ttemp-chr1.bcol\nchr2\ttemp-chr2.bcol\n"
+	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv 2> /dev/null
+	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
+} {} 
+
+test bcol_annot {header error} {
+	test_cleantmp
+	exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv
+	file_write tmp/bcol_coverage.tsv "chr1\ttemp-chr1.bcol\nchr2\ttemp-chr2.bcol\n"
+	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
+} {*bcol database (tmp/bcol_coverage.tsv) should have a header of the type: chromosome file*} error match
+
+#test bcol_annot {basic compressed} {
+#	test_cleantmp
+#	exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv
+#	file_write tmp/bcol_coverage.tsv "chromosome\tfile\nchr1\ttemp-chr1.bcol\nchr2\ttemp-chr2.bcol\n"
+#	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
+#	cg razip tmp/bcol_annot-test.tsv 2> /dev/null
+#	exec cg annotate tmp/bcol_annot-test.tsv.gz tmp/annot_test.tsv tmp/bcol_coverage.tsv 2> /dev/null
+#	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
+#} {} 
+
+test bcol_annot {basic uncompressed bcol} {
+	test_cleantmp
+	exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv
+	cg unzip {*}[glob tmp/*.rz]
+	file_write tmp/bcol_coverage.tsv "chromosome\tfile\nchr1\ttemp-chr1.bcol\nchr2\ttemp-chr2.bcol\n"
+	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv 2> /dev/null
+	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
+} {} 
+
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
 

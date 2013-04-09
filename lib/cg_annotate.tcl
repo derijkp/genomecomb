@@ -121,13 +121,61 @@ proc annotatevar {file dbfile name annotfile {outfields {name score freq}}} {
 	file rename -force $annotfile.temp $annotfile
 }
 
+proc annotatebcol {file dbfile name annotfile} {
+#putslog [list annotatebcol $file $dbfile $name $annotfile]
+	catch {close $f}
+	set f [gzopen $file]
+	set header [tsv_open $f comment]
+	set poss [tsv_basicfields $header 3]
+	close $f
+	set fields [list_sub $header $poss]
+	if {[inlist $poss -1]} {
+		error "Cannot annotate $file: wrong fields"
+	}
+	set f [open $dbfile]
+	set header [tsv_open $f]
+	if {$header ne {chromosome file}} {
+		error "bcol database ($dbfile) should have a header of the type: chromosome file"
+	}
+	set bcollist {}
+	set dir [file dir [file normalize $dbfile]]
+	while {![eof $f]} {
+		set line [gets $f]
+		if {$line eq ""} continue
+		foreach {chr dbfile} [split $line \t] break
+		lappend bcollist [list $chr $dir/$dbfile]
+	}
+	close $f
+	set bcollist [lsort -dict -index 0 $bcollist]
+	set newh $name
+	set o [open $annotfile.temp w]
+	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
+	puts $o $newh
+	close $o
+	if {[gziscompressed $file]} {
+		error "bcol_annot not supported for compressed files"
+	}
+	# puts "bcol_annot $file $poss [list_concat $bcollist]"
+	if {[catch {
+		exec bcol_annot $file {*}$poss {*}[list_concat $bcollist] >> $annotfile.temp 2>@ stderr
+	} error]} {
+		if {$error ne "child killed: write on pipe with no readers"} {error $error}
+	}
+	file rename -force $annotfile.temp $annotfile
+}
+
 proc cg_annotatedb_info {dbfile {near -1}} {
 	if {[file exists [gzroot $dbfile].opt]} {
 		set a [dict create {*}[file_read [gzroot $dbfile].opt]]
 	} else {
 		set a [dict create]
 	}
-	set name [dict_get_default $a name [lindex [split [file root [file tail [gzroot $dbfile]]] _] end]]
+	if {[dict exists $a name]} {
+		set name [dict get $a name]
+	} else {
+		set split [split [lindex [split [file root [file tail [gzroot $dbfile]]] -] 0] _]
+		set name [lindex $split end]
+	}
 	dict set a name $name
 	set dbtype [lindex [split [file tail $dbfile] _] 0]
 	dict set a dbtype $dbtype
@@ -145,6 +193,10 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 		set outfields [list_common $outfields $header]
 		set dataposs [list_cor $header $outfields]
 		set poss [tsv_basicfields $header 3]
+	} elseif {$dbtype eq "bcol"} {
+		set outfields {}
+		set dataposs {}
+		set poss {}
 	} else {
 		if {[dict exists $a fields]} {
 			set outfields [dict get $a fields]
@@ -165,6 +217,8 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 	}
 	if {$dbtype eq "gene"} {
 		set newh [list ${name}_impact ${name}_gene ${name}_descr]
+	} elseif {$dbtype eq "bcol"} {
+		set newh [list $name]
 	} else {
 		switch [llength $outfields] {
 		0 {
@@ -233,9 +287,13 @@ proc cg_annotate {args} {
 	set args [lrange $args $pos end]
 	foreach {file resultfile} $args break
 	set file [gztemp $file]
-	set dbfiles [lrange $args 2 end]
-	if {[file isdir [lindex $dbfiles 0]]} {
-		set dbfiles [lsort -dict [list_concat [glob -nocomplain [lindex $dbfiles 0]/var_*.tsv [lindex $dbfiles 0]/gene_*.tsv [lindex $dbfiles 0]/reg_*.tsv] [lrange $dbfiles 1 end]]]
+	set dbfiles {}
+	foreach testfile [lrange $args 2 end] {
+		if {[file isdir $testfile]} {
+			lappend dbfiles {*}[glob -nocomplain $testfile/var_*.tsv $testfile/gene_*.tsv $testfile/reg_*.tsv $testfile/bcol_*.tsv]
+		} else {
+			lappend dbfiles $testfile
+		}
 	}
 	set names {}
 	set newh {}
@@ -303,6 +361,15 @@ proc cg_annotate {args} {
 			}
 			set outfields [dict get $dbinfo outfields]
 			annotatevar $file $dbfile $name $resultfile.${name}_annot $outfields
+		} elseif {$dbtype eq "bcol"} {
+			if {$near != -1} {error "-near option does not work with bcol dbfiles"}
+			lappend afiles $resultfile.${name}_annot
+			if {[file exists $resultfile.${name}_annot]} {
+				putslog "$resultfile.${name}_annot exists: skipping scan"
+				continue
+			}
+			set outfields [dict get $dbinfo outfields]
+			annotatebcol $file $dbfile $name $resultfile.${name}_annot
 		} else {
 			lappend afiles $resultfile.${name}_annot
 			if {[file exists $resultfile.${name}_annot]} {

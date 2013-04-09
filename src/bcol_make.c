@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)
-	reverse = bcol_NeedReversing((int)type[0]);
+	reverse = bcol_NeedReversing(type[0]);
 	if (type[1] == 'u') {isunsigned = 1;}
 	result = DStringArrayNew(max+2);
 	hashtable = hash_init();

@@ -4,6 +4,9 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
+#define _FILE_OFFSET_BITS 64
+#define _LARGEFILE64_SOURCE
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -44,7 +47,7 @@
  *----------------------------------------------------------------------
  */
 
-int bcol_NeedReversing(int format) {
+int bcol_NeedReversing(char format) {
 	switch (format) {
 	/* native floats and doubles: never reverse */
 	case 'd':
@@ -409,12 +412,12 @@ int bcol_printbin(FILE *f,int reverse,int isunsigned,char *type,char *string) {
 	}
 }
 
-int bcol_printtext(FILE *f,int reverse,int isunsigned,char *type,char *buffer) {
+int bcol_printtext(FILE *f,int reverse,int isunsigned,char type,unsigned char *buffer) {
 	long value;
 	double dvalue;
 	uint64_t wvalue;
 	float fvalue;
-	switch (type[0]) {
+	switch (type) {
 	    case 'c':
 		/*
 		 * Characters need special handling. We want to produce a signed
@@ -536,24 +539,46 @@ int bcol_printtext(FILE *f,int reverse,int isunsigned,char *type,char *buffer) {
 		fprintf(f,"%f",fvalue);
 		return 1;
 	    default:
-		fprintf(stderr,"unknown type %s\n",type);
+		fprintf(stderr,"unknown type %s\n",&type);
 		exit(EXIT_FAILURE);
 	}
 }
 
-BCol *bcol_open(char *bcolfile,char *bcoltype) {
+BCol *bcol_open(char *bcolfile) {
+	FILE *f;
 	BCol *result;
+	DString *line = DStringNew();
 	int typesize,len=strlen(bcolfile);
 	result = (BCol *)malloc(sizeof(BCol));
-	if (len >= 3 && (strncmp(bcolfile+len-3,".rz",3)) == 0) {
-		result->rz = razf_open(bcolfile, "r");
-		result->f = NULL;
+	result->type = 'i';
+	result->isunsigned = 1;
+	f = fopen64_or_die(bcolfile, "r");
+	while (DStringGetLine(line,f) != -1) {
+		if (line->string[0] != '#') break;
+		if (line->size > 7 && strncmp(line->string,"# type ",7) == 0) {
+			result->type = line->string[7];
+			if (line->string[8] == 'u') {
+				result->isunsigned = 1;
+			} else {
+				result->isunsigned = 0;
+			}
+		}
+	}
+	DStringGetLine(line,f);
+	result->start = atoi(line->string);
+	fclose(f);
+	DStringDestroy(line);
+	result->file = (char *)malloc((len+8)*sizeof(char));
+	strncpy(result->file,bcolfile,len);
+	sprintf(result->file+len,".bin");
+	result->f = fopen64(result->file, "r");
+	if (result->f == NULL) {
+		sprintf(result->file+len,".bin.rz");
+		result->rz = razf_open(result->file, "r");
 	} else {
-		result->f = fopen(bcolfile, "r");
 		result->rz = NULL;
 	}
-	result->type = bcoltype;
-	switch (bcoltype[0]) {
+	switch (result->type) {
 		case 'c':
 			typesize = 1;
 			break;
@@ -564,19 +589,12 @@ BCol *bcol_open(char *bcolfile,char *bcoltype) {
 			typesize = 4;
 			break;
 		default:
-			fprintf(stderr,"Unsupported bcol type: %s",bcoltype);
+			fprintf(stderr,"Unsupported bcol type: %c\n",result->type);
 			exit(EXIT_FAILURE);
 	}
-	result->reverse = bcol_NeedReversing((int)bcoltype[0]);
-	if (bcoltype[1] == 'u') {
-		result->isunsigned = 1;
-	} else {
-		result->isunsigned = 0;
-	}
-	result->file = bcolfile;
-	result->type = bcoltype;
+	result->reverse = bcol_NeedReversing(result->type);
 	result->typesize = typesize;
-	result->buffer = (char *)malloc(typesize);
+	result->buffer = (unsigned char *)malloc(typesize);
 	result->buffersize = typesize;
 	return(result);
 }
@@ -587,19 +605,42 @@ void bcol_close(BCol *bcol) {
 	} else {
 		fclose(bcol->f);
 	}
+	free(bcol->file);
 	free(bcol->buffer);
 	free(bcol);
 }
 
-int bcol_get(BCol *fbcol,int start,int end) {
+int read_unlocked(FILE *f,unsigned char *buffer,int size) {
+	int count = size,c;
+	while (count--) {
+		c = getc_unlocked(f);
+		if (c == EOF) break;
+		*buffer++ = c;
+	}
+	return(size-(count+1));
+}
+
+int bcol_getbin(BCol *fbcol,int start,int end) {
 	RAZF *rz = fbcol->rz;
+	FILE *f = fbcol->f;
 	int rsize,c;
-	razf_seek(rz, start, SEEK_SET);
 	rsize = (end-start+1)*fbcol->typesize;
 	if (fbcol->buffersize < rsize) {
 		fbcol->buffer = realloc(fbcol->buffer,rsize);
 		fbcol->buffersize = rsize;
 	}
-	c = razf_read(rz, fbcol->buffer, rsize);
+	start = (start-fbcol->start)*fbcol->typesize;
+	if (start < 0) {
+		c = 0;
+	} else if (rz != NULL) {
+		razf_seek(rz, start, SEEK_SET);
+		c = razf_read(rz, fbcol->buffer, rsize);
+	} else {
+		fseek(f, start, SEEK_SET);
+		c = read_unlocked(f, fbcol->buffer, rsize);
+	}
+	if (c < rsize) {
+		memset(fbcol->buffer+c,0,rsize-c);
+	}
 	return(c);
 }
