@@ -220,7 +220,7 @@ proc multicompar {compar_file dir {listfields {}}} {
 				if {![expr {$num % 100000}]} {putslog $num}
 			}
 		} else {
-			while {[loc_compare $comp1 $comp2] > 0} {
+			while {$d > 0} {
 				puts $o [multicompar_annot_join - $cur2]
 				if {[eof $f2]} break
 				set cur2 [compare_annot_getline $f2]
@@ -229,6 +229,7 @@ proc multicompar {compar_file dir {listfields {}}} {
 				if {![llength $cur2]} break
 				incr num
 				if {![expr {$num % 100000}]} {putslog $num}
+				set d [loc_compare $comp1 $comp2]
 			}
 		}
 	}
