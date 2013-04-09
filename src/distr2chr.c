@@ -34,12 +34,12 @@ int main(int argc, char *argv[]) {
 	if (argc == 4) {
 		header = atoi(argv[3]);
 		if (header) {
-			skip_header(stdin,line);
+			skip_header(stdin,line,NULL);
 		}
 	}
 	result = DStringArrayNew(col+2);
 	hashtable = hash_init();
-	while (!DStringGetTab(line,stdin,col,result,0)) {
+	while (!DStringGetTab(line,stdin,col,result,0,NULL)) {
 		chromosome = result->data + col;
 		bucket = hash_get(hashtable, (void *)chromosome, hash_Dstring_hash, hash_Dstring_compare, &new);
 		if (new == 0) {

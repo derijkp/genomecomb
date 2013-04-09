@@ -471,11 +471,11 @@ void DStringArrayDestroy(DStringArray *dstringarray) {
 }
 
 int DStringGetTab(
-	DString *linePtr,	FILE *f1, int maxtab, DStringArray *result, int setzero
+	DString *linePtr,	FILE *f1, int maxtab, DStringArray *result, int setzero,unsigned int *numfields
 ) {
 	register char *cur = linePtr->string;
 	register int c,newdata=0;
-	register int count=0;
+	register unsigned int count=0,othertab=0;
 	ssize_t size = 0;
 NODPRINT("maxtab=%d",maxtab)
 	maxtab += 1;
@@ -493,10 +493,12 @@ NODPRINT("maxtab=%d",maxtab)
 				result->data[count].size = size;
 				//fprintf(stdout,"count=%d size=%d\n",count, result->data[count].size);
 				count++;
+			} else {
+				othertab++;
 			}
 		} else if (c == '\n' || c == EOF) {
 			if (count < maxtab) {
-				result->data[count++].size = size;
+				result->data[count].size = size;
 			}
 			break;
 		}
@@ -509,7 +511,21 @@ NODPRINT("maxtab=%d",maxtab)
 		*cur++ = c;
 		++size;
 	}
-	result->size = count;
+	*cur = '\0';
+	if (numfields != NULL) {
+		int num = count+othertab+1;
+		if (c == EOF && num == 1) {
+		} else if (num != *numfields) {
+			fprintf(stderr,"ERROR: rows with number of columns different from the header, eg %d instead of %d for:\n%s\n",num,*numfields,linePtr->string);
+			exit(1);
+		}
+	}
+	if (count < maxtab) {
+		count++;
+		result->size = count;
+	} else {
+		result->size = maxtab;
+	}
 	/* add \0 to line*/
 	linePtr->size = size;
 	if (linePtr->memsize <= size) {
@@ -619,7 +635,7 @@ NODPRINT("%s",linePtr->string)
 	}
 }
 
-void skip_header(FILE *f1, DString *linePtr) {
+void skip_header(FILE *f1, DString *linePtr, unsigned int *numfields) {
 	ssize_t read;
 	read = DStringGetLine(linePtr, f1);
 	if (read == -1) return;
@@ -644,6 +660,17 @@ void skip_header(FILE *f1, DString *linePtr) {
 			if (linePtr->string[0] != '#' && linePtr->string[0] != '>') break;
 			read = DStringGetLine(linePtr, f1);
 		}
+	}
+	if (numfields != NULL) {
+		char *buffer;
+		unsigned int count;
+		buffer = linePtr->string;
+		count = 1;
+		while (*buffer != '\0') {
+			if (*buffer == '\t') {count++;}
+			buffer++;
+		}
+		*numfields = count;
 	}
 	NODPRINT("%s",linePtr->string)
 }

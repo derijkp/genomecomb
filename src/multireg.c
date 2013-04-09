@@ -16,7 +16,7 @@
 
 int multireg_next(FILE *f1,DString *line1,int chr1pos, int start1pos, int end1pos, int max1,DStringArray *result1,DString **chromosome1,int *start1,int *end1,DString **cur1) {
 	int error1;
-	error1 = DStringGetTab(line1,f1,max1,result1,1);
+	error1 = DStringGetTab(line1,f1,max1,result1,1,NULL);
 	if (error1) {goto error;}
 	*chromosome1 = result1->data+chr1pos;
 	error1 = sscanf(result1->data[start1pos].string,"%d",start1);
@@ -69,8 +69,8 @@ DPRINT("multireg %s %d %d %d %s %s %d %d %d",argv[1],chr1pos,start1pos,end1pos,n
 	curchromosome = DStringEmtpy();
 	result1 = DStringArrayNew(max1+2);
 	result2 = DStringArrayNew(max2+2);
-	skip_header(f1,line1);
-	skip_header(f2,line2);
+	skip_header(f1,line1,NULL);
+	skip_header(f2,line2,NULL);
 	error1 = multireg_next(f1,line1,chr1pos,start1pos,end1pos,max1,result1,&chromosome1,&start1,&end1,&cur1);
 	error2 = multireg_next(f2,line2,chr2pos,start2pos,end2pos,max2,result2,&chromosome2,&start2,&end2,NULL);
 	while (!error1 || !error2) {

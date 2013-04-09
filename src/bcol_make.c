@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 	if (argc >= 8) {
 		header = atoi(argv[7]);
 		if (header) {
-			skip_header(stdin,line);
+			skip_header(stdin,line,NULL);
 		}
 	}
 	NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
 		o = bcol_make_getout(hashtable,pre,DStringEmtpy());
 		poffset = -1;
 	}
-	while (!DStringGetTab(line,stdin,max,result,0)) {
+	while (!DStringGetTab(line,stdin,max,result,0,NULL)) {
 		if (chrcol != -1) {
 			chromosome = result->data+chrcol;
 			o = bcol_make_getout(hashtable,pre,chromosome);

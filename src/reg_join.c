@@ -43,10 +43,10 @@ int main(int argc, char *argv[]) {
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 NODPRINT("reg_join %s %d %d %d %s %d %d %d",argv[1],chr1pos,start1pos,end1pos,argv[5],chr2pos,start2pos,end2pos)
 	fprintf(stdout,"chromosome\tbegin\tend\n");
-	skip_header(f1, &line);
+	skip_header(f1, &line,NULL);
 	finished1 = get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&start1,&end1);
 	if (f2 != NULL) {
-		skip_header(f2, &line);
+		skip_header(f2, &line,NULL);
 		finished2 = get_region(f2,&line,chr2pos,start2pos,end2pos,max2,&chromosome2,&start2,&end2);
 	} else {
 		finished2 = 1;

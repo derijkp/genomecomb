@@ -81,7 +81,7 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	}
 	objv[i] = NULL;
 	objc = listobjc+1;
-	while ((read = DStringGetTab(line,stdin,maxtab,array,1)) != -1) {
+	while ((read = DStringGetTab(line,stdin,maxtab,array,1,NULL)) != -1) {
 		NODPRINT("line = %s",line->string);
 		for (i = 0 ; i < listobjc ; i++) {
 			if (Tcl_IsShared(objv[i+1])) {

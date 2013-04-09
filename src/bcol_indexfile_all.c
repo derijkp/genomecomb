@@ -96,14 +96,14 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 	/* allocate */
 	line1 = DStringNew();
 	result1 = DStringArrayNew(max1+2); /* need one extra for the remainder */
-	skip_header(f1,line1);
+	skip_header(f1,line1,NULL);
 	fpos = ftello(f1);
 	if (fpos >= next) {
 		fprintf(stderr,"Header too long");
 		exit(EXIT_FAILURE);
 	}
 	fprintf(f2,"%d\t%s\t%d\n",0,"iu",0);
-	while (!DStringGetTab(line1,f1,max1,result1,1)) {
+	while (!DStringGetTab(line1,f1,max1,result1,1,NULL)) {
 		count++;
 		data = (uint32_t)(fpos-offset);
 		fwrite(&data,4,1,f3);

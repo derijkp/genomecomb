@@ -49,7 +49,7 @@ int DStringGetLine_b(DString *linePtr,	FILE *f1,Buffer *buffer);
 
 DStringArray *DStringArrayNew(int size);
 void DStringArrayDestroy(DStringArray *dstringarray);
-int DStringGetTab(DString *line,	FILE *f1, int max, DStringArray *result, int setzero);
+int DStringGetTab(DString *line,	FILE *f1, int max, DStringArray *result, int setzero,unsigned int *numfields);
 FILE *fopen64_or_die(char *filename,char *mode);
 
 int parse_pos(char *arg, int **rresult, int *rnum);
@@ -57,7 +57,7 @@ int parse_pos(char *arg, int **rresult, int *rnum);
 #define FINISHED 1000000
 #define NOCHROM 100000
 int get_region(FILE *f1, DString *line, int chr1pos, int start1pos, int end1pos, int max1, DString **chromosome1, int *start1, int *end1);
-void skip_header(FILE *f1, DString *linePtr);
+void skip_header(FILE *f1, DString *linePtr,unsigned int *numfields);
 
 int naturalcompare (char const *a, char const *b,int alen,int blen);
 int loccompare (char const *a, char const *b,int alen,int blen);
