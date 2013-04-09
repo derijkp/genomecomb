@@ -140,17 +140,6 @@ proc var2annotvar_readonevar_merge {list} {
 	return $rlist
 }
 
-proc cg_var2annot {args} {
-	global scriptname action
-	if {[llength $args] != 3} {
-		puts stderr "format is: $scriptname $action variation_file sorted_gene_file output_file"
-		puts stderr " - makes a new variation file, where the gene information is included"
-		exit 1
-	}
-	foreach {file genefile outfile} $args break
-	var2annotvar $file $genefile $outfile
-}
-
 proc var2annotvar_readonevar f {
 	global cache list
 	# join $cache($f,rov) \n
@@ -337,10 +326,10 @@ proc annot_annotvar {source outfile todo {dir {}}} {
 	set num 0
 	while {![eof $f]} {
 		incr num
-		if {![expr $num%10000]} {putsprogress $num}
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		foreach {chr begin end} [list_sub $line $poss] break
+		if {![expr $num%10000]} {putsprogress "$num $chr-$begin"}
 		if {$addref} {
 			# refscore
 			foreach {refscore coverage} {{} {}} break
@@ -464,6 +453,7 @@ proc var2annotvar {file genefile outfile} {
 	} else {
 		error "header error in $genefile (change in CG format?)"
 	}
+	set lastpos2 [expr {[llength $header2]-1}]
 	lappend newheader {*}$remheader2
 	set o [open $outfile w]
 	puts $o [join $newheader \t]
@@ -492,7 +482,7 @@ proc var2annotvar {file genefile outfile} {
 			foreach gline $curgene {
 				set gcomp [lrange $gline 5 6]
 				if {$fcomp eq $gcomp} {
-					set annot [lrange $gline 10 end]
+					set annot [lrange $gline 10 $lastpos2]
 					break
 				}
 			}
@@ -506,4 +496,15 @@ proc var2annotvar {file genefile outfile} {
 	close $g
 	close $f1
 
+}
+
+proc cg_var2annot {args} {
+	global scriptname action
+	if {[llength $args] != 3} {
+		puts stderr "format is: $scriptname $action variation_file sorted_gene_file output_file"
+		puts stderr " - makes a new variation file, where the gene information is included"
+		exit 1
+	}
+	foreach {file genefile outfile} $args break
+	var2annotvar $file $genefile $outfile
 }
