@@ -53,9 +53,13 @@ proc process_sample {args} {
 	if {[llength $args] == 1} {
 		foreach {destdir} $args break
 		set workdir [file normalize $destdir]
+		putslog "Making $workdir"
+		file mkdir $workdir
 	} elseif {[llength $args] == 2} {
 		foreach {srcdir destdir} $args break
 		set workdir [file normalize $destdir]
+		putslog "Making $workdir"
+		file mkdir $workdir
 		set srcdir [file normalize $srcdir]
 		if {[file exists $srcdir]} {
 			set srcdir [file normalize $srcdir]
@@ -65,8 +69,6 @@ proc process_sample {args} {
 		errorformat process_sample
 		exit 1
 	}
-	putslog "Making $workdir"
-	file mkdir $workdir
 	set sample [file tail $workdir]
 	# process_bam2cg $srcdir
 	set keepdir [pwd]
