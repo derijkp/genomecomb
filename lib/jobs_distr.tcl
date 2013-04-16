@@ -38,7 +38,6 @@ proc job_process_distr_done {job targets ptargets args} {
 	unset -nocomplain cgjob_running($job)
 	set line [tail $job.log 3]
 	if {![file exists $job.finished]} {
-		file copy $job.err $job.failed
 		job_log $job "job [file tail $job] did not finish\nerror:\n[file_read $job.err]\n"
 		job_log $job "failed [file tail $job]\n"
 	} elseif {[regexp failed $line]} {

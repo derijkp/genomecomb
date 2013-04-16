@@ -106,7 +106,7 @@ proc jobtest {args} {
 	  -skip {$destdir/all2.txt} \
 	  -targets {$destdir/sum2-\1.txt} -code {
 		for {set i 1} {$i < 5} {incr i} {
-			puts "progress $i"
+			puts stderr "progress $i"
 			after 250
 		}
 		file copy $dep $target.temp
@@ -188,6 +188,7 @@ test job {basic} {
 		[lsort -dict [glob test/*]] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
+		[file_read test/log_jobs/joberror.err] \
 	]
 	cd $::testdir
 	set result
@@ -197,6 +198,7 @@ test job {basic} {
 6+7+8=21
 } {6+7+8=21
 2
+} {Intentional job error
 }}
 
 test job {--force 0} {
@@ -263,6 +265,7 @@ test job {basic -d 4} {
 		[glob test/log_jobs/all.txt.log] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
+		[string range [file_read test/log_jobs/joberror.err] 0 20] \
 	]
 	cd $::testdir
 	set result
@@ -272,7 +275,7 @@ test job {basic -d 4} {
 6+7+8=21
 } {6+7+8=21
 2
-}}
+} {Intentional job error}}
 
 test job {--force 0 -d 4} {
 	cd $::testdir

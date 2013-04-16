@@ -480,6 +480,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets code} {
 				file_add {@JOB@.log} "[job_timestamp]\ttarget ok: $target"
 			} else {
 				file_add {@JOB@.log} "[job_timestamp]\ttarget not found: $target"
+				puts stderr "[job_timestamp]\ttarget not found: $target"
 				set ok 0
 			}
 		}
@@ -489,15 +490,17 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets code} {
 			} else {
 				set ok 0
 				file_add {@JOB@.log} "[job_timestamp]\tmissing ptargets"
+				puts stderr "[job_timestamp]\tmissing ptargets"
 			}
 		}
 		if {$ok} {
 			file_add {@JOB@.log} "[job_timestamp]\tfinished @JOBNAME@\n"
+			file_write $job.finished \[timestamp\]\n
+			catch {file rename {@JOB@.err} {@JOB@.msgs}}
 		} else {
 			file_add {@JOB@.log} "[job_timestamp]\tfailed @JOBNAME@\n"
 		}
 	} [list @PWD@ $pwd @JOB@ $job @JOBNAME@ $jobname @TARGETS@ [list $targets] @PTARGETS@ [list $ptargets]]]
-	append cmd "file_write $job.finished \[timestamp\]\n"
 	return $cmd
 }
 

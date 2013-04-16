@@ -1,3 +1,39 @@
+proc stderr2file {fileout {fileerr {}}} {
+	if {$fileout ne ""} {
+		if {![llength [info command __puts] ]} {
+			rename puts __puts
+		}
+		proc puts {args} [string_change {
+			if {[llength $args] > 1} {
+				set chan [lindex $args 0]
+				if {$chan eq "stderr"} {
+					set f [open {@FILEERR@} a+]
+					catch {__puts {*}[lreplace $args 0 0 $f]}
+					close $f
+				} elseif {$chan eq "stdout"} {
+					set f [open {@FILEOUT@} a+]
+					catch {__puts {*}[lreplace $args 0 0 $f]}
+					close $f
+				}
+			} else {
+				set f [open {@FILEOUT@} a+]
+				catch {__puts $f [lindex $args 0]}
+				close $f
+			}
+			if {[catch {
+				__puts {*}$args
+			} err]} {
+				return -code error $err
+			}
+		} [list @FILEOUT@ [file normalize $fileout] @FILEERR@ [file normalize $fileerr]]]
+	} else {
+		if {[llength [info command __puts] ]} {
+			rename puts {}
+			rename __puts puts
+		}
+	}
+}
+
 proc job_process_direct {} {
 	global cgjob job_deps
 	set jobroot [pwd]
@@ -92,10 +128,15 @@ proc job_process_direct {} {
 			job_log $job "error creating $jobname: $result"
 		}
 		catch {file delete $job.finished $job.failed}
-		if {[catch {job_run} result] || ![file exists $job.finished]} {
-			file_write $job.err $result
-			file_write $job.failed $result
-			job_log $job "job [file tail $job] did not finish\nerror:\n$result\n"
+		set f [open $job.err w]; close $f
+		stderr2file $job.out $job.err
+		set error [catch {job_run} result]
+		stderr2file {}
+		if {$error} {
+			file_add $job.err $result
+		}
+		if {$error || ![file exists $job.finished]} {
+			job_log $job "job [file tail $job] did not finish correctly\nerror:\n$result\n"
 			set ok 0
 		}
 		job_log $job "-------------------- end $jobname --------------------"
