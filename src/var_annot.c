@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 	DString *prevtype1 = DStringNew(), *prevtype2 = DStringNew();
 	DString *prevalt1 = DStringNew(), *prevalt2 = DStringNew();
 	DString *chromosome1=NULL,*chromosome2=NULL,*type1 = NULL,*type2 = NULL,*alt1 = NULL,*alt2 = NULL;
-	unsigned int numfields1,numfields2;
+	unsigned int numfields1,numfields2,numfields,pos1,pos2;
 	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
 	int chr1pos,start1pos,end1pos,type1pos,alt1pos,max1;
 	int chr2pos,start2pos,end2pos,type2pos,alt2pos,max2;
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 	int start2,end2;
 	int error2,nextpos=0,sametype,cmp,i;
 	if ((argc < 13)) {
-		fprintf(stderr,"Format is: reg_annot file1 chrpos1 startpos1 endpos1 type1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos alt2pos datapos ...");
+		fprintf(stderr,"Format is: var_annot file1 chrpos1 startpos1 endpos1 type1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos alt2pos datapos ...");
 		exit(EXIT_FAILURE);
 	}
 	f1 = fopen64_or_die(argv[1],"r");
@@ -128,16 +128,19 @@ NODPRINT("\n");
 		if (datapos[i] > max2) {max2 = datapos[i];}
 	}
 	result2 = DStringArrayNew(max2+2);
-	skip_header(f1,line1,&numfields1);
-	skip_header(f2,line2,&numfields2);
-	error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields2);
+	skip_header(f1,line1,&numfields1,&pos1);
+	skip_header(f2,line2,&numfields2,&pos2);
+	error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields); pos2++;
+	check_numfieldserror(numfields,numfields2,line2,argv[7],&pos2);
 	chromosome2 = result2->data+chr2pos;
 	type2 = result2->data+type2pos;
 	alt2 = result2->data+alt2pos;
 	sscanf(result2->data[start2pos].string,"%d",&start2);
 	sscanf(result2->data[end2pos].string,"%d",&end2);
 NODPRINT("line2 %s,%d,%d %s",Loc_ChrString(chromosome2),start2,end2,line2->string)
-	while (!DStringGetTab(line1,f1,max1,result1,1,&numfields1)) {
+	while (!DStringGetTab(line1,f1,max1,result1,1,&numfields)) {
+		pos1++;
+		check_numfieldserror(numfields,numfields1,line1,argv[1],&pos1);
 		chromosome1 = result1->data+chr1pos;
 		sscanf(result1->data[start1pos].string,"%d",&start1);
 		sscanf(result1->data[end1pos].string,"%d",&end1);
@@ -185,8 +188,10 @@ NODPRINT("line2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),prevstart2,preven
 					} else if (end2 > end1) break; 
 				} else if (start2 > start1) break;
 			} else if (comp > 0) break;
-			error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields2);
-			if (error2)  {break;}
+			error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields); pos2++;
+			if (error2)  {break;} else {
+				check_numfieldserror(numfields,numfields2,line2,argv[7],&pos2);
+			}
 			chromosome2 = result2->data+chr2pos;
 			sscanf(result2->data[start2pos].string,"%d",&start2);
 			sscanf(result2->data[end2pos].string,"%d",&end2);

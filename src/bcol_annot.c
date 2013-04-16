@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 	DString *line1 = NULL,*linekeep = NULL,*empty=NULL;
 	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
 	char *bcolfile;
-	unsigned int numfields1;
+	unsigned int numfields1,numfields,pos1;
 	int comp,chr1pos,start1pos,end1pos,max1,loaded2 = 0;
 	int bcolpos;
 	int start1,end1;
@@ -45,8 +45,10 @@ int main(int argc, char *argv[]) {
 	line1 = DStringNew(); linekeep=DStringNew(); empty = DStringNew();
 	curchromosome = DStringEmtpy();
 	result1 = DStringArrayNew(max1+2);
-	skip_header(f1,line1,&numfields1);
-	while (!DStringGetTab(line1,f1,max1,result1,1,&numfields1)) {
+	skip_header(f1,line1,&numfields1,&pos1);
+	while (!DStringGetTab(line1,f1,max1,result1,1,&numfields)) {
+		pos1++;
+		check_numfieldserror(numfields,numfields1,line1,argv[1],&pos1);
 		chromosome1 = result1->data+chr1pos;
 		sscanf(result1->data[start1pos].string,"%d",&start1);
 		sscanf(result1->data[end1pos].string,"%d",&end1);

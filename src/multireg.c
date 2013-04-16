@@ -69,8 +69,8 @@ DPRINT("multireg %s %d %d %d %s %s %d %d %d",argv[1],chr1pos,start1pos,end1pos,n
 	curchromosome = DStringEmtpy();
 	result1 = DStringArrayNew(max1+2);
 	result2 = DStringArrayNew(max2+2);
-	skip_header(f1,line1,NULL);
-	skip_header(f2,line2,NULL);
+	skip_header(f1,line1,NULL,NULL);
+	skip_header(f2,line2,NULL,NULL);
 	error1 = multireg_next(f1,line1,chr1pos,start1pos,end1pos,max1,result1,&chromosome1,&start1,&end1,&cur1);
 	error2 = multireg_next(f2,line2,chr2pos,start2pos,end2pos,max2,result2,&chromosome2,&start2,&end2,NULL);
 	while (!error1 || !error2) {

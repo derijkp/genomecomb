@@ -470,6 +470,17 @@ void DStringArrayDestroy(DStringArray *dstringarray) {
 	free(dstringarray);
 }
 
+void check_numfieldserror(int numfields,int numfields2,DString *line,char *filename,unsigned int *linenum) {
+	if (numfields != numfields2) {
+		fprintf(stderr,"ERROR in file %s",filename);
+		if (linenum != NULL) {
+			fprintf(stderr," at line %d",*linenum);
+		}
+		fprintf(stderr,": number of columns different from the header: %d instead of %d for:\n%s\n",numfields,numfields2,line->string);
+		exit(1);
+	}
+}
+
 int DStringGetTab(
 	DString *linePtr,	FILE *f1, int maxtab, DStringArray *result, int setzero,unsigned int *numfields
 ) {
@@ -513,12 +524,7 @@ NODPRINT("maxtab=%d",maxtab)
 	}
 	*cur = '\0';
 	if (numfields != NULL) {
-		int num = count+othertab+1;
-		if (c == EOF && num == 1) {
-		} else if (num != *numfields) {
-			fprintf(stderr,"ERROR: rows with number of columns different from the header, eg %d instead of %d for:\n%s\n",num,*numfields,linePtr->string);
-			exit(1);
-		}
+		*numfields = count+othertab+1;
 	}
 	if (count < maxtab) {
 		count++;
@@ -635,32 +641,35 @@ NODPRINT("%s",linePtr->string)
 	}
 }
 
-void skip_header(FILE *f1, DString *linePtr, unsigned int *numfields) {
+void skip_header(FILE *f1, DString *linePtr, unsigned int *numfields,unsigned int *pos) {
 	ssize_t read;
+	unsigned int curpos=0;
+	if (pos != NULL) {curpos=*pos;}
 	read = DStringGetLine(linePtr, f1);
 	if (read == -1) return;
 	if (linePtr->string[0] == '#' && linePtr->string[1] == '#') {
 		/* vcf style header */
 		while (read != -1) {
 			if (linePtr->string[0] == '\0') {
-				DStringGetLine(linePtr, f1);
+				DStringGetLine(linePtr, f1); curpos++;
 				break;
 			}
 			if (linePtr->string[0] != '#' || linePtr->string[1] != '#') {
 				break;
 			}
-			read = DStringGetLine(linePtr, f1);
+			read = DStringGetLine(linePtr, f1); curpos++;
 		}
 	} else {
 		while (read != -1) {
 			if (linePtr->string[0] == '\0') {
-				DStringGetLine(linePtr, f1);
+				DStringGetLine(linePtr, f1); curpos++;
 				break;
 			}
 			if (linePtr->string[0] != '#' && linePtr->string[0] != '>') break;
-			read = DStringGetLine(linePtr, f1);
+			read = DStringGetLine(linePtr, f1); curpos++;
 		}
 	}
+	if (pos != NULL) {*pos = curpos;}
 	if (numfields != NULL) {
 		char *buffer;
 		unsigned int count;

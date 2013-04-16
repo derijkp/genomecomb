@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 	if (argc >= 8) {
 		header = atoi(argv[7]);
 		if (header) {
-			skip_header(stdin,line,NULL);
+			skip_header(stdin,line,NULL,NULL);
 		}
 	}
 	NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)

@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 	if (argc == 4) {
 		header = atoi(argv[3]);
 		if (header) {
-			skip_header(stdin,line,NULL);
+			skip_header(stdin,line,NULL,NULL);
 		}
 	}
 	result = DStringArrayNew(col+2);

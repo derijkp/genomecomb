@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 	maxcol = poscol;
 	if (valuecol > maxcol) {maxcol = valuecol;}
 	if (chrcol > maxcol) {maxcol = chrcol;}
-	if (header) skip_header(stdin,&line,NULL);
+	if (header) skip_header(stdin,&line,NULL,NULL);
 	DStringGetLine(&line, stdin);
 	begin = -1;
 	/* if status is 1, we are in a region */

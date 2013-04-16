@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
 	int comp,chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2;
 	int datalen=0,*datapos=NULL;
-	unsigned int numfields1,numfields2;
+	unsigned int numfields1,numfields2,numfields,pos1,pos2;
 	int endkeep,near,near2;
 	int start1,end1,start2,end2;
 	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
@@ -65,16 +65,19 @@ NODPRINT("%d",datapos[i])
 	result1 = DStringArrayNew(max1+2);
 	result2 = DStringArrayNew(max2+2);
 	resultkeep = DStringArrayNew(max2+2);
-	skip_header(f1,line1,&numfields1);
-	skip_header(f2,line2,&numfields2);
-	error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields2);
+	skip_header(f1,line1,&numfields1,&pos1);
+	skip_header(f2,line2,&numfields2,&pos2);
+	error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields);	pos2++;
+	check_numfieldserror(numfields,numfields2,line2,argv[5],&pos2);
 	chromosome2 = result2->data+chr2pos;
 	sscanf(result2->data[start2pos].string,"%d",&start2);
 	sscanf(result2->data[end2pos].string,"%d",&end2);
 	for (i = 0 ; i < datalen ; i++) {
 		if (datapos[i] != -1) {data[i] = result2->data+datapos[i];}
 	}
-	while (!DStringGetTab(line1,f1,max1,result1,1,&numfields1)) {
+	while (!DStringGetTab(line1,f1,max1,result1,1,&numfields)) {
+		pos1++;
+		check_numfieldserror(numfields,numfields1,line1,argv[1],&pos1);
 		chromosome1 = result1->data+chr1pos;
 		sscanf(result1->data[start1pos].string,"%d",&start1);
 		sscanf(result1->data[end1pos].string,"%d",&end1);
@@ -107,11 +110,13 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 			resultkeep = result2;
 			result2 = resulttemp;
 			/* get new line */
-			error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields2);
+			error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields); pos2++;
 			if (error2)  {
 				chromosome2 = NULL;
 				comp = -1;
 				break;
+			} else {
+				check_numfieldserror(numfields,numfields2,line2,argv[5],&pos2);
 			}
 			chromosome2 = result2->data+chr2pos;
 			sscanf(result2->data[start2pos].string,"%d",&start2);

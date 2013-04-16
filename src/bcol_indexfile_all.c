@@ -96,7 +96,7 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 	/* allocate */
 	line1 = DStringNew();
 	result1 = DStringArrayNew(max1+2); /* need one extra for the remainder */
-	skip_header(f1,line1,NULL);
+	skip_header(f1,line1,NULL,NULL);
 	fpos = ftello(f1);
 	if (fpos >= next) {
 		fprintf(stderr,"Header too long");
