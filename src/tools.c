@@ -514,7 +514,7 @@ NODPRINT("maxtab=%d",maxtab)
 			break;
 		}
 		newdata = 1;
-		if (linePtr->memsize <= size) {
+		if (linePtr->memsize <= (size+1)) {
 			linePtr->size = size;
 			DStringSetSize(linePtr,2*linePtr->memsize);
 			cur = linePtr->string+size;
