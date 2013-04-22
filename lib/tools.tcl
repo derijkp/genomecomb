@@ -814,16 +814,19 @@ proc samples {header} {
 
 proc genomecombenv {} {
 	global auto_path env appdir tcl_dirtcl genomecombdir externdir
+	if {![info exists appdir]} {
+		set appdir ${genomecomb::dir}
+	}
 	if {[file dir [file dir $appdir]] eq [get tcl_dirtcl ""]} {
 		# we are being run from a dirtcl installation in apps/cg
 		set genomecombdir $tcl_dirtcl
-		set env(PATH) $appdir/bin:$genomecombdir/extern:$genomecombdir:$env(PATH)
 		set externdir $genomecombdir/bin
+		set env(PATH) $appdir/bin:$externdir:$genomecombdir:$env(PATH)
 	} else {
 		# we are being run from dev 
 		set genomecombdir $appdir
-		set env(PATH) $genomecombdir/bin:$genomecombdir/extern:$genomecombdir:$env(PATH)
 		set externdir $genomecombdir/extern
+		set env(PATH) $genomecombdir/bin:$externdir:$genomecombdir:$env(PATH)
 	}
 	return $genomecombdir
 }
