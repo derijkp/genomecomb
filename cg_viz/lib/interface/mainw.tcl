@@ -221,7 +221,7 @@ mainw method opendb {args} {
 }
 
 mainw method tree_close {dir} {
-	$object.tree clearnode $dir
+	catch {$object.tree clearnode $dir}
 }
 
 mainw method tree_browse {file} {
@@ -230,7 +230,7 @@ mainw method tree_browse {file} {
 
 mainw method tree_open {dir} {
 putsvars dir
-	$object.tree clearnode $dir
+	catch {$object.tree clearnode $dir}
 	set dirs {}
 	set files {}
 	foreach file [glob -nocomplain $dir/*] {
@@ -266,7 +266,10 @@ mainw method opentsv {args} {
 		set root [file dir $file]
 	}
 	while 1 {
-		if {$root eq "."} break
+		if {$root eq "." || $root eq "/"} {
+			set root [file dir $file]
+			break
+		}
 		if {[file exists $root/compar]} break
 		if {[llength [glob -nocomplain $root/*.cgproj]]} break
 		lappend path [file tail $root]
