@@ -188,6 +188,7 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 			}
 		}
 	}
+	if (count == -1) {count = 0;}
 	fprintf(f2,"%ju\t%s\t%ju\n",(uintmax_t)count,"end",(uintmax_t)offset);
 	fclose(f1);
 	fclose(f2);

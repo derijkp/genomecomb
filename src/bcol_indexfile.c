@@ -75,6 +75,7 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 			fprintf(f2,"%ju\t%s\t%ju\n",(uintmax_t)count,"iu",(uintmax_t)offset);
 		}
 	}
+	if (count == -1) {count = 0;}
 	fprintf(f2,"%ju\t%s\t%ju\n",(uintmax_t)count,"end",(uintmax_t)offset);
 	fclose(f1);
 	fclose(f2);
