@@ -216,6 +216,8 @@ proc job_findregexpdep {pattern idsVar timeVar} {
 }
 
 # dependencies between braces () are optional (braces must be at start and end of dependency)
+# $targetvarsVar will contain the values extracted from () matches in the dep pattern, that will be filled in
+# for \1, ... in the target
 proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar {ftargetvars {}}} {
 	upvar $idsVar ids
 	if {$targetvarsVar ne ""} {
@@ -266,24 +268,54 @@ proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar {ftarget
 	return $finaldeps
 }
 
-# set string {abc\1def\\1ghi\\\1jkl\\\\1s}
-proc job_targetreplace {string targetvars} {
+# set string {abc\1def\\1ghi\\\1jkl\\\\1s\_a} ; set targetvars {x xx}
+proc job_targetreplace {string targetvars {expandVar {}}} {
 	set targetvarslen [llength $targetvars]
-	list_foreach {b e} [list_reverse [regexp -inline -all -indices {\\+[0-9]+} $string]] {
-		regexp {(\\+)([0-9]+)} [string range $string $b $e] temp pre num
+	set expandlist {}
+	if {$expandVar != ""} {
+		upvar $expandVar expand
+		set expand {}
+		set pattern1 {\\+(?:[0-9]+|_)}
+		set pattern2 {(\\+)([0-9]+|_)}
+	} else {
+		set pattern1 {\\+[0-9]+}
+		set pattern2 {(\\+)([0-9]+)}
+	}
+	list_foreach {b e} [list_reverse [regexp -inline -all -indices $pattern1 $string]] {
+		regexp $pattern2 [string range $string $b $e] temp pre num
 		set len [string length $pre]
 		if {![expr {$len%2}]} continue
-		incr num -1
-		if {!$targetvarslen} {set value *} else {set value [lindex $targetvars $num]}
-		set string [string_replace $string [expr {$b+$len-1}] $e $value]
+		if {$num eq "_"} {
+			lappend expandlist [string range $string [expr {$e+1}] end]
+			set string [string range $string 0 [expr {$b+$len-2}]]
+		} else {
+			incr num -1
+			if {!$targetvarslen} {set value *} else {set value [lindex $targetvars $num]}
+			set string [string_replace $string [expr {$b+$len-1}] $e $value]
+		}
 	}
-	return $string
+	if {[llength $expandlist]} {
+		lappend expandlist $string
+		set expandlist [list_reverse $expandlist]
+		set expand {}
+		foreach t $targetvars {
+			lappend expand [file normalize [join $expandlist $t]]
+		}
+		return {}
+	} else {
+		return $string
+	}
 }
 
 proc job_targetsreplace {list targetvars} {
 	set result {}
 	foreach string $list {
-		lappend result [file normalize [job_targetreplace $string $targetvars]]
+		set temp [job_targetreplace $string $targetvars expand]
+		if {[llength $expand]} {
+			lappend result {*}$expand
+		} else {
+			lappend result [file normalize $temp]
+		}
 	}
 	return $result
 }
@@ -371,6 +403,7 @@ proc job_logdir {{logdir {}}} {
 		set logdir [file join [pwd] log_jobs]
 	}
 	set job_logdir [file normalize $logdir]
+	file mkdir $job_logdir
 }
 
 proc job_logname {job_logdir name} {
@@ -474,33 +507,33 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets code} {
 	append cmd [string_change {
 		set ok 1
 		cd {@PWD@}
-		foreach target @TARGETS@ {
+		foreach target $targets {
 			set files [gzfiles $target]
 			if {[llength $files]} {
-				file_add {@JOB@.log} "[job_timestamp]\ttarget ok: $target"
+				file_add $job.log "[job_timestamp]\ttarget ok: $target"
 			} else {
-				file_add {@JOB@.log} "[job_timestamp]\ttarget not found: $target"
+				file_add $job.log "[job_timestamp]\ttarget not found: $target"
 				puts stderr "[job_timestamp]\ttarget not found: $target"
 				set ok 0
 			}
 		}
 		if {[llength @PTARGETS@]} {
 			if {[llength [job_findptargets @PTARGETS@]]} {
-				file_add {@JOB@.log} "[job_timestamp]\tptargets ok"
+				file_add $job.log "[job_timestamp]\tptargets ok"
 			} else {
 				set ok 0
-				file_add {@JOB@.log} "[job_timestamp]\tmissing ptargets"
+				file_add $job.log "[job_timestamp]\tmissing ptargets"
 				puts stderr "[job_timestamp]\tmissing ptargets"
 			}
 		}
 		if {$ok} {
-			file_add {@JOB@.log} "[job_timestamp]\tfinished @JOBNAME@\n"
-			file_write $job.finished \[timestamp\]\n
-			catch {file rename {@JOB@.err} {@JOB@.msgs}}
+			file_add $job.log "[job_timestamp]\t$jobname finished\n"
+			file_write $job.finished [job_timestamp]\n
+			catch {file rename $job.err $job.msgs}
 		} else {
-			file_add {@JOB@.log} "[job_timestamp]\tfailed @JOBNAME@\n"
+			file_add $job.log "[job_timestamp]\tjob $jobname failed\n"
 		}
-	} [list @PWD@ $pwd @JOB@ $job @JOBNAME@ $jobname @TARGETS@ [list $targets] @PTARGETS@ [list $ptargets]]]
+	} [list @PWD@ $pwd @PTARGETS@ [list $ptargets]]]
 	return $cmd
 }
 
@@ -617,12 +650,13 @@ proc job {jobname args} {
 }
 
 proc job_init {args} {
-	global cgjob cgjob_id cgjob_running cgjob_ptargets job_logdir_submit
+	global cgjob cgjob_id cgjob_running cgjob_ptargets job_logdir_submit cgjob_info
 	upvar job_logdir job_logdir
 	unset -nocomplain cgjob
 	unset -nocomplain cgjob_id
 	unset -nocomplain cgjob_running
 	unset -nocomplain cgjob_ptargets
+	unset -nocomplain cgjob_info
 	unset -nocomplain job_logdir_submit
 	set cgjob(debug) 0
 	set cgjob(distribute) 0

@@ -51,7 +51,7 @@ proc job_process_direct {} {
 				} else {
 					job_log $job "$fadeps"
 				}
-				job_log $job "job $jobname failed"
+				job_log $job "-----> job $jobname failed"
 				job_logclose $job
 				continue
 			}
@@ -77,7 +77,7 @@ proc job_process_direct {} {
 			} else {
 				job_log $job "$adeps"
 			}
-			job_log $job "job $jobname skipped: dependencies not found"
+			job_log $job "-----> job $jobname skipped: dependencies not found"
 			job_logclose $job
 			continue
 		}
@@ -88,7 +88,7 @@ proc job_process_direct {} {
 		if {!$cgjob(force) && [llength $fskip]} {
 			set skip [job_targetsreplace $fskip $targetvars]
 			if {[llength $skip] && [job_checktargets $job $skip $time running]} {
-				job_log $job "skipping $jobname: skip targets already completed or running"
+				job_log $job "-----> job $jobname skipped : skip targets already completed or running"
 				job_logclose $job
 				continue
 			}
@@ -127,7 +127,7 @@ proc job_process_direct {} {
 			set ok 0
 			job_log $job "error creating $jobname: $result"
 		}
-		catch {file delete $job.finished $job.failed}
+		catch {file delete $job.finished}
 		set f [open $job.err w]; close $f
 		stderr2file $job.out $job.err
 		set error [catch {job_run} result]
@@ -135,11 +135,15 @@ proc job_process_direct {} {
 		if {$error} {
 			file_add $job.err $result
 		}
-		if {$error || ![file exists $job.finished]} {
-			job_log $job "job [file tail $job] did not finish correctly\nerror:\n$result\n"
-			set ok 0
+		if {![file exists $job.finished]} {
+			job_log $job "-----> job $jobname failed: did not finish\nerror:\n$result\n"
+		} elseif {$error} {
+			file delete $job.finished
+			job_log $job "-----> job $job failed: error processing job\nerror:\n$result\n"
+		} else {
+			job_log $job "-------------------- end $jobname --------------------"
+			job_log $job "-----> job $jobname finished successfully\n"
 		}
-		job_log $job "-------------------- end $jobname --------------------"
 		job_logclose $job
 	}
 	cd $jobroot

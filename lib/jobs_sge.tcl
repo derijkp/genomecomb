@@ -75,7 +75,7 @@ proc job_process_checkptargetsfinished {} {
 	foreach ptarget [array names cgjob_ptargets] {
 		set jobid $cgjob_ptargets($ptarget)
 		if {[isint $jobid] && [catch {exec qstat -j $jobid}]} {
-			unset cgjob_ptargets($ptarget)
+			unset -nocomplain cgjob_ptargets($ptarget)
 			incr done
 		}
 	}
@@ -114,7 +114,7 @@ proc job_process_sge_onepass {} {
 		# (They can still be reapplied later if they depend on ptargets that are not finished yet)
 		if {[info exists cgjob_blocked($job)]} {
 			foreach ptarget [job_targetsreplace $ftargets {}] {
-				unset cgjob_ptargets($ptarget)
+				unset -nocomplain cgjob_ptargets($ptarget)
 			}
 			unset cgjob_blocked($job)
 		}
@@ -138,7 +138,7 @@ proc job_process_sge_onepass {} {
 				} else {
 					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				}
-				job_log $job "job $jobname skipped: dependencies not found"
+				job_log $job "-----> job $jobname skipped: dependencies not found"
 				continue
 			}
 			set temp {}
@@ -181,7 +181,7 @@ proc job_process_sge_onepass {} {
 			} else {
 				job_log $job "error in dependencies for $jobname: $adeps"
 			}
-			job_log $job "job $jobname skipped: dependencies not found"
+			job_log $job "-----> job $jobname skipped: dependencies not found"
 			continue
 		}
 		file_write $job.deps $adeps
@@ -242,7 +242,7 @@ proc job_process_sge_onepass {} {
 		append cmd "\n\# the next line restarts using cgsh \\\n"
 		append cmd {exec cg source "$0" "$@"} \n
 		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $code]\n
-		append cmd "file_add \{$job.log\} \"[timestamp]\\tending $jobname\"\n"
+		append cmd "file_add \{$job.log\} \"\[job_timestamp\]\\tending $jobname\"\n"
 		set runfile $job.run
 		file_write $runfile $cmd
 		file attributes $runfile -permissions u+x
@@ -265,6 +265,8 @@ proc job_process_sge_submit {job runfile args} {
 	foreach {opt value} $args {
 		switch -- $opt {
 			-deps {
+				set value [list_remove $value {}]
+
 				if {[llength $value]} {
 					lappend options -hold_jid $value
 				}
@@ -307,7 +309,7 @@ proc job_process_sge_submit {job runfile args} {
 		set name [string range $name 0 100]....[string range $name end-100 end]
 	}
 	set dir [file dir $job]
-	catch {file delete $job.finished $job.failed}
+	catch {file delete $job.finished}
 	set jnum [exec qsub -N j$name -q all.q -o $job.out -e $job.err {*}$options $runfile]
 	regexp {[0-9]+} $jnum jobnum
 	return $jobnum

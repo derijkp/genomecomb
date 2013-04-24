@@ -142,6 +142,31 @@ proc jobtest {args} {
 	cd $keepdir
 }
 
+proc jobtestnojobs {args} {
+	set args [job_args $args]
+	foreach destdir $args break
+	job_logdir $destdir/log_jobs
+	job nodeps1 -deps {abcd} -targets {abcde} -code {
+	}
+	job nodeps2 -deps {abcde} -targets {abcdef} -code {
+	}
+}
+
+proc jobtestlong {args} {
+	set args [job_args $args]
+	foreach destdir $args break
+	file mkdir $destdir
+	cd $destdir
+	job_logdir $destdir/log_jobs
+	job long -deps {} -targets {long.txt} -code {
+		for {set i 0} {$i < 4} {incr i} {
+			after 1000
+			puts $i
+		}
+		file_write long.txt done
+	}
+}
+
 test job {job_expandvars} {
 	unset -nocomplain ::a; unset -nocomplain ::b; unset -nocomplain ::c; unset -nocomplain ::d;
 	set string {$a($b($c))}
@@ -258,6 +283,30 @@ test job {basic -d 4} {
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
 	job_init -silent -d 4
+	jobtest ../data test testh
+	job_wait
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[glob test/log_jobs/all.txt.log] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+		[string range [file_read test/log_jobs/joberror.err] 0 20] \
+	]
+	cd $::testdir
+	set result
+} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} test/log_jobs/all.txt.log {testh
+1+2=3
+3+4+5=12
+6+7+8=21
+} {6+7+8=21
+2
+} {Intentional job error}}
+
+test job {basic -d 30} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	job_init -silent -d 30
 	jobtest ../data test testh
 	job_wait
 	set result [list \
@@ -448,6 +497,24 @@ test job {--force 1 -d sge} {
 2
 }}
 }
+
+test job {jobtestnojobs} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	job_init -silent -d 2
+	jobtestnojobs $::testdir/tmp
+	job_wait
+} {}
+
+test job {jobtestnojobs} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	job_init -silent -d 2
+	jobtestlong $::testdir/tmp
+	job_wait
+} {}
 
 set ::env(PATH) $keeppath
 

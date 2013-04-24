@@ -13,9 +13,16 @@ proc job_process_distr_running {jobs} {
 }
 
 proc job_process_distr_progress {job args} {
-	foreach line $args {
-		job_log $job "$line"
+	global cgjob_info
+	if {![info exists cgjob_info($job,out)]} {
+		set cgjob_info($job,out) [open $job.out w]
 	}
+	set f $cgjob_info($job,out)
+	foreach line $args {
+		puts $f $line
+		# job_log $job "$line"
+	}
+	flush $f
 }
 
 proc tail {file {num 1}} {
@@ -32,31 +39,57 @@ proc tail {file {num 1}} {
 	return [lrange $result end-$num end]
 }
 
-proc job_process_distr_done {job targets ptargets args} {
-	global cgjob cgjob_id cgjob_running cgjob_ptargets
-	# job has ended
-	unset -nocomplain cgjob_running($job)
-	set line [tail $job.log 3]
-	if {![file exists $job.finished]} {
-		job_log $job "job [file tail $job] did not finish\nerror:\n[file_read $job.err]\n"
-		job_log $job "failed [file tail $job]\n"
-	} elseif {[regexp failed $line]} {
-		file delete $job.finished
-		file_write $job.failed "not all targets made\n"
-	}
-	job_log $job "-------------------- end [file tail $job] --------------------"
+proc job_process_distr_watchdog {} {
+	global cgjob cgjob_running cgjob_info
 	if {!$cgjob(silent)} {puts stderr "   -=- [llength [array names cgjob_running]] running, [llength $cgjob(queue)] in queue"}
-	# unset cgjob_id($target) to indicate they are nolonger running
+	set pids [exec ps -eo pid]
+	foreach job [array names cgjob_running] {
+		if {![inlist $pids $cgjob_running($job)]} {
+			puts "[job_timestamp] watchdog stopped $job"
+			job_process_distr_done $job
+		}
+	}
+	after 1000 job_process_distr_watchdog
+}
+
+proc job_process_distr_finishjob {job} {
+	global cgjob cgjob_running cgjob_info cgjob_id cgjob_ptargets
+	set targets [get cgjob_info($job,targets) ""]
+	set ptargets [get cgjob_info($job,ptargets) ""]
+	# unset cgjob_id($target) to indicate they are no longer running
 	# we no longer write results of the check to the log, as the job has already done that
 	foreach target $targets {
 		unset -nocomplain cgjob_id($target)
 	}
 	if {[llength $ptargets]} {
 		foreach ptarget $ptargets {
-			unset cgjob_ptargets($ptarget)
+			unset -nocomplain cgjob_ptargets($ptarget)
 		}
 	}
+	if {[info exists cgjob_info($job,out)]} {
+		catch {close $cgjob_info($job,out)}
+	}
 	job_logclose $job
+	unset -nocomplain cgjob_running($job)
+	unset -nocomplain cgjob_info($job,chan)
+}
+
+proc job_process_distr_done {job args} {
+	global cgjob cgjob_running cgjob_info
+	# job has ended
+	set jobname [file tail $job]
+	set line [tail $job.log 3]
+	if {![file exists $job.finished]} {
+		job_log $job "-----> job $jobname failed: did not finish\n"
+	} elseif {[regexp failed $line]} {
+		file delete $job.finished
+		job_log $job "-----> job $job failed: not all targets made\n"
+	} else {
+		job_log $job "-------------------- end [file tail $job] --------------------"
+		job_log $job "-----> job $jobname finished successfully\n"
+	}
+	if {!$cgjob(silent)} {puts stderr "   -=- [llength [array names cgjob_running]] running, [llength $cgjob(queue)] in queue"}
+	job_process_distr_finishjob $job
 	# other jobs to do, if not signal end to vwait by setting var cgjob_exit
 #	if {![llength [array names cgjob_running]] && ![llength $cgjob(queue)]} {
 #	}
@@ -79,7 +112,7 @@ proc job_status {} {
 }
 
 proc job_process_distr {} {
-	global cgjob cgjob_id cgjob_running cgjob_pid cgjob_ptargets
+	global cgjob cgjob_id cgjob_running cgjob_pid cgjob_ptargets cgjob_info
 
 	update
 	set queue $cgjob(queue)
@@ -117,8 +150,8 @@ proc job_process_distr {} {
 				} else {
 					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				}
-				job_log $job "job $jobname skipped: dependencies not found"
-				job_logclose $job
+				job_log $job "-----> job $jobname skipped: dependencies not found"
+				job_process_distr_finishjob $job
 				continue
 			}
 			set temp {}
@@ -154,8 +187,8 @@ proc job_process_distr {} {
 			} else {
 				job_log $job "error in dependencies for $jobname: $adeps"
 			}
-			job_log $job "job $jobname skipped: dependencies not found"
-			job_logclose $job
+			job_log $job "-----> job $jobname skipped: dependencies not found"
+			job_process_distr_finishjob $job
 			continue
 		}
 		if {[job_process_distr_running $ids]} {
@@ -170,7 +203,7 @@ proc job_process_distr {} {
 			set skip [job_targetsreplace $fskip $targetvars]
 			if {[llength $skip] && [job_checktargets $job $skip $time running]} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
-				job_logclose $job
+				job_process_distr_finishjob $job
 				continue
 			}
 		}
@@ -190,6 +223,7 @@ proc job_process_distr {} {
 				set cgjob_id($target) q
 			}
 		}
+		set cgjob_info($job,targets) $targets
 		# if deps or overlapping targets are not finished yet, put line back in the queue and skip running
 		if {$depsrunning || [llength $targetsrunning]} {
 			job_logclear $job
@@ -210,7 +244,7 @@ proc job_process_distr {} {
 			foreach ptarget $ptargets {
 				unset -nocomplain cgjob_ptargets($ptarget)
 			}
-			job_logclose $job
+			job_process_distr_finishjob $job
 			continue
 		}
 		# put ptargets in the queue only if we will actually be running the job
@@ -221,18 +255,19 @@ proc job_process_distr {} {
 				set cgjob_ptargets($ptarget) q
 			}
 		}
+		set cgjob_info($job,ptargets) $ptargets
 		job_log $job "-------------------- running $jobname --------------------"
 		# run code
 		set cmd {#!/bin/sh}
 		append cmd "\n\# the next line restarts using cgsh \\\n"
 		append cmd {exec cg source "$0" "$@"} \n
 		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $code]\n
-		catch {file delete $job.finished $job.failed}
+		catch {file delete $job.finished}
 		set runfile $job.run
 		file_write $runfile $cmd
 		file attributes $runfile -permissions u+x
-		Extral::bgexec -no_error_redir -pidvar cgjob_pid \
-			-command [list job_process_distr_done $job $targets $ptargets] \
+		Extral::bgexec -no_error_redir -pidvar cgjob_pid  \
+			-command [list job_process_distr_done $job] \
 			-progresscommand [list job_process_distr_progress $job] \
 			$runfile 2> $job.err
 		foreach target $targets {
@@ -252,10 +287,9 @@ proc job_process_distr {} {
 	cd $jobroot
 	if {![llength $running]} {
 		if {[llength $cgjob(queue)]} {
-			after idle job_process_distr
-		} else {
-			set ::cgjob_exit 1
+			puts stderr "[llength $cgjob(queue)] jobs in queue cannot be executed: [list_subindex $cgjob(queue) 1]"
 		}
+		set ::cgjob_exit 1
 	}
 	after idle update
 }
@@ -264,6 +298,7 @@ proc job_process_distr_wait {} {
 	global cgjob cgjob_exit
 	update
 	unset -nocomplain cgjob_exit
+	after cancel job_process_distr_watchdog
 	set running [array names cgjob_running]
 	if {![llength $running]} {
 		if {[llength $cgjob(queue)]} {
@@ -272,9 +307,11 @@ proc job_process_distr_wait {} {
 			return
 		}
 	}
+	after 1000 job_process_distr_watchdog
 	if {[catch {vwait cgjob_exit} e]} {
 		puts "job_wait warning: $e"
 	}
+	puts "All jobs done"
 	unset -nocomplain cgjob_exit
 }
 
