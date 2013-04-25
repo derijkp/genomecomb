@@ -205,7 +205,8 @@ scrolledgraph method add {table} {
 		set labels $xs
 		set xs [list_fill [llength $xs] 0 1]
 		::$object.x set $xs
-		$object.g axis configure x -command [list $object getlabel] -subdivisions 0 -stepsize 1
+		$object.g axis configure x -command [list $object getlabel]
+		# -subdivisions 0 -stepsize 1
 	} else {
 		unset -nocomplain labels
 		$object.g axis configure x -command {}
