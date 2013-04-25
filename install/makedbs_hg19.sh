@@ -115,6 +115,6 @@ rm gencode.v14.annotation.gtf.gz
 wget --tries=45 --directory-prefix=${dest}/tmp/hg19 ftp://mirbase.org/pub/mirbase/19/genomes/hsa.gff2
 cg gff2sft ${dest}/tmp/hg19/hsa.gff2 ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp
 cg select -s - ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp2
-mv ${dest}/tmp/reg_hg19_mirbase.tsv.temp2 reg_${build}_mirbase.tsv
+mv ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp2 reg_${build}_mirbase.tsv
 wget ftp://mirbase.org/pub/mirbase/19/README
 mv README reg_${build}_mirbase.info
