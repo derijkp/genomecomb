@@ -67,7 +67,7 @@ proc cg_vcf2sft {args} {
 	set nheader {chromosome begin end type ref alt name quality filter}
 	set formatfields {GT}
 	set headerfields {alleleSeq1 alleleSeq2 fased}
-	foreach temp $a(FORMAT) {
+	foreach temp [get a(FORMAT) ""] {
 		regexp {ID=([^,]+)} $temp temp id
 		if {[inlist {GT} $id]} continue
 		lappend formatfields $id
