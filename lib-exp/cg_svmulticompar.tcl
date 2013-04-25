@@ -103,6 +103,8 @@ proc svmulticompar_getline {f poss {type 1}} {
 	global cchr cpos locpos
 	# -1 because count has not been prepended yet
 	set chrpos [expr {$locpos(chromosome)-1}]
+	set typepos [expr {$locpos(type)-1}]
+	set sizepos [expr {$locpos(size)-1}]
 	set end2pos [expr {$locpos(end2)-1}]
 	while 1 {
 		set line [split [gets $f] \t]
@@ -110,11 +112,18 @@ proc svmulticompar_getline {f poss {type 1}} {
 		if {[eof $f]} {return {}}
 	}
 	set cur [list_sub $line $poss]
-	if {[lindex $cur $locpos(type)] eq "trans"} {
-		set endpos [expr {[lindex $cur $locpos(end1)]+200}]
-		lset cur $locpos(size) 0
-		lset cur $locpos(start2) $endpos
-		lset cur $locpos(end2) [expr {$endpos+400}]
+	if {[lindex $cur $typepos] eq "trans"} {
+		set end1pos [expr {$locpos(end1)-1}]
+		set start2pos [expr {$locpos(start2)-1}]
+		set endpos [expr {[lindex $cur $end1pos]+200}]
+		lset cur $sizepos 0
+		lset cur $start2pos $endpos
+		lset cur $end2pos [expr {$endpos+400}]
+	}
+	if {![isint [lindex $cur $sizepos]]} {
+		set beginpos [expr {$locpos(begin)-1}]
+		set endpos [expr {$locpos(end)-1}]
+		lset cur $sizepos [expr {[lindex $cur $endpos]-[lindex $cur $beginpos]}]
 	}
 	set temp [lindex $cur $chrpos]
 	if {$temp ne $cchr} {
@@ -345,7 +354,6 @@ proc svmulticompar {svfile1 svfile2} {
 			incr did
 			continue
 		}
-#if {[lindex $list 0 $locpos(begin)] == 829684} {error STOPPED}
 		# split on type
 		unset -nocomplain todo
 		foreach line [lsort -integer -index $sizepos $list] {
