@@ -119,7 +119,8 @@ proc multicompar {compar_file dir {listfields {}}} {
 		set name [file tail $dir]
 		set file2 [gzfile $dir/fannotvar-$name.tsv]
 	} else {
-		set name [lindex [split [file root [file tail [gzroot $dir]]] -] end]
+		set base [file root [file tail [gzroot $dir]]]
+		set name [sourcename $base]
 		set file2 [gzfile $dir]
 	}
 	if {![file exists $compar_file]} {
@@ -239,6 +240,42 @@ proc multicompar {compar_file dir {listfields {}}} {
 	file rename $compar_file.temp $compar_file
 }
 
+proc multicompar_reannot_find {basedir sample args} {
+	if {![llength $args]} {set args [list {}]}
+	set esample [lindex [split $sample -] end]
+	foreach pattern $args {
+		set test [gzfile [file join $basedir $sample $pattern]]
+		if {[file exists $test]} {
+			return $test
+		}
+	}
+	foreach pattern $args {
+		set test [gzfile [file join [file dir $basedir] $sample $pattern]]
+		if {[file exists $test]} {
+			return $test
+		}
+	}
+	foreach pattern $args {
+		set test [gzfile [file join $basedir $esample $pattern]]
+		if {[file exists $test]} {
+			return $test
+		}
+	}
+	foreach pattern $args {
+		set test [gzfile [file join [file dir $basedir] $esample $pattern]]
+		if {[file exists $test]} {
+			return $test
+		}
+	}
+	foreach pattern $args {
+		set test [gzfile [file join $basedir $pattern]]
+		if {[file exists $test]} {
+			return $test
+		}
+	}
+	return {}
+}
+
 proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} {
 
 	set compar_file [file normalize $compar_file]
@@ -252,8 +289,8 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 	foreach field $header {
 		incr pos
 		set temp [split $field -]
-		if {[llength $temp] == 2} {
-			set sample [lindex $temp 1]
+		if {[llength $temp] > 1} {
+			set sample [lindex $temp end]
 			lappend samplea(poss,$sample) $pos
 			lappend samplea(fields,$sample) [lindex $temp 0]
 			list_addnew samples $sample
@@ -267,14 +304,8 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 		set samplea(rpos,$sample) [lsearch $header refscore-$sample]
 		set samplea(cpos,$sample) [lsearch $header coverage-$sample]
 		set samplea(seq,$sample) [lsearch $header sequenced-$sample]
-		if {[file exists [gzfile $basedir/$sample/fannotvar-$sample.tsv]]} {
-			set samplea(dir,$sample) $basedir/$sample
-		} elseif {[file exists [gzfile [file dir $basedir]/$sample/fannotvar-$sample.tsv]]} {
-			set samplea(dir,$sample) [file dir $basedir]/$sample
-		} else {
-			error "sample dir for $sample not found"
-		}
-		set samplea(regionfile,$sample) [gzfile $samplea(dir,$sample)/sreg-$sample.tsv]
+		set samplea(dir,$sample) [multicompar_reannot_find $basedir $sample]
+		set samplea(regionfile,$sample) [multicompar_reannot_find $basedir $sample sreg-$sample.tsv]
 		if {[file exists $samplea(dir,$sample)/allpos]} {
 			set samplea(type,$sample) rtg
 			annot_rtg_init $samplea(dir,$sample)
@@ -288,24 +319,27 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 		} elseif {[file exists $samplea(regionfile,$sample)]} {
 			set samplea(type,$sample) cg
 			if {!$regonly} {
-				annot_coverage_init $samplea(dir,$sample)
+				annot_coverage_init $samplea(dir,$sample) $sample
 			}
 			annot_region_init $samplea(regionfile,$sample)
 		} else {
 			if {!$skipincomplete} {
-				error "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found in $samplea(dir,$sample): not properly processed sample"
+				error "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found: not properly processed sample"
 			}
 			set samples [list_remove $samples $sample]
 		}
+		set samplea(varall,$sample) [multicompar_reannot_find $basedir $sample varall-$sample.tsv]
+		if {$samplea(varall,$sample) ne ""} {
+			if {!$regonly} {
+				annot_varall_init $samplea(varall,$sample) $sample $header
+			}
+		}
 		set samplea(todo,$sample) {}
-		if {[inlist $samplea(fields,$sample) refcons]} {
-			lappend samplea(todo,$sample) [list [lsearch $header refcons-$sample] rc $samplea(dir,$sample)/reg_refcons-$sample.tsv]
-		}
-		if {[inlist $samplea(fields,$sample) nocall]} {
-			lappend samplea(todo,$sample) [list [lsearch $header nocall-$sample] rc $samplea(dir,$sample)/reg_nocall-$sample.tsv]
-		}
-		if {[inlist $samplea(fields,$sample) cluster]} {
-			lappend samplea(todo,$sample) [list [lsearch $header cluster-$sample] cl $samplea(dir,$sample)/reg_cluster-$sample.tsv]
+		foreach temp {refcons nocall cluster} {
+			set regfile [multicompar_reannot_find $basedir $sample reg_${temp}-$sample.tsv]
+			if {$regfile ne "" && [inlist $samplea(fields,$sample) $temp]} {
+				lappend samplea(todo,$sample) [list [lsearch $header ${temp}-$sample] 1 $regfile]
+			}
 		}
 		list_foreach {field value regfile} $samplea(todo,$sample) {
 			annot_region_init $regfile
@@ -322,7 +356,8 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		set reference [lindex $line $referencepos]
-		foreach {chr begin end} [list_sub $line $poss] break
+		set loc [list_sub $line $poss]
+		foreach {chr begin end} $loc break
 		foreach sample $samples {
 			#if {!$force && ([lindex $line $samplea(a1,$sample)] ne "?")} continue
 			list_foreach {field value regfile} $samplea(todo,$sample) {
@@ -331,9 +366,14 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 				set r [annot_region_get $regfile $chr $begin $end]
 				if {$r} {lset line $field $value} else {lset line $field {}}
 			}
+			if {$samplea(varall,$sample) ne ""} {
+				if {!$regonly} {
+					annot_varall_annot $samplea(varall,$sample) $sample $loc $force line
+				}
+			}
 			if {$samplea(type,$sample) eq "cg"} {
 				if {!$regonly && ($force || ([lindex $line $samplea(rpos,$sample)] eq "?") || ([lindex $line $samplea(cpos,$sample)] eq "?"))} {
-					foreach {r c} [annot_coverage_get $samplea(dir,$sample) $chr $begin] break
+					foreach {r c} [annot_coverage_get $samplea(dir,$sample) $sample $chr $begin] break
 					if {$samplea(rpos,$sample) != -1} {lset line $samplea(rpos,$sample) $r}
 					lset line $samplea(cpos,$sample) $c
 				}
@@ -388,9 +428,14 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 		list_foreach {field value regfile} $samplea(todo,$sample) {
 			annot_region_close $regfile
 		}
+		if {$samplea(varall,$sample) ne ""} {
+			if {!$regonly} {
+				annot_varall_close $samplea(varall,$sample) $sample
+			}
+		}
 		if {$samplea(type,$sample) eq "cg"} {
 			if {!$regonly} {
-				annot_coverage_close $samplea(dir,$sample)
+				annot_coverage_close $samplea(dir,$sample) $sample
 			}
 			annot_region_close $samplea(regionfile,$sample)
 		} else {

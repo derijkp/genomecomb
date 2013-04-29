@@ -54,13 +54,24 @@ test loc_compare {{chr2 10} {chr2 2}} {
 } 1
 
 test multicompar {basic} {
-	file delete -force tmp/temp.sft
+	test_cleantmp
 	cg multicompar tmp/temp.sft data/var_annot.sft data/var_annot2.sft
 	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft
 } {} 
 
+test multicompar {basic reannot} {
+	test_cleantmp
+	file copy data/var_annot.sft tmp/var-annot1.tsv
+	file copy data/var_annot2.sft tmp/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	cg multicompar tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
+	cg multicompar_reannot tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-multicompar_reannot-var_annotvar_annot2.sft
+} {} 
+
 test multicompar {basic, sequenced already present} {
-	file delete -force tmp/temp.sft
+	test_cleantmp
 	cg multicompar tmp/temp.sft data/var_annot.sft data/var_annot2seq.sft
 	catch {exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft} e
 	set e
@@ -79,13 +90,13 @@ test multicompar {basic, sequenced already present} {
 child process exited abnormally} 
 
 test multicompar {noalt} {
-	file delete -force tmp/temp.sft
+	test_cleantmp
 	cg multicompar tmp/temp.sft data/var_annotnoalt.sft data/var_annot2noalt.sft
 	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2noalt.sft
 } {} 
 
 test svmulticompar {basic} {
-	file delete -force tmp/temp.sft
+	test_cleantmp
 	cg svmulticompar tmp/temp.sft data/cgsv1.tsv data/cgsv2.tsv data/cgsv3.tsv
 	exec diff tmp/temp.sft data/expected-svmulticompar.tsv
 } {} 
@@ -115,7 +126,55 @@ X	1	100	1
 Y	1	1000	3
 } 
 
-file delete -force tmp/temp.sft
+test multicompar {var and mapper naming convention} {
+	test_cleantmp
+	catch {file link tmp/var-varcaller1-mapper1-sample1.sft ../data/var_annot.sft}
+	catch {file link tmp/var-varcaller2-mapper2-sample1.sft ../data/var_annot.sft}
+	catch {file link tmp/var-varcaller1-mapper1-sample2.sft ../data/var_annot2.sft}
+	catch {file link tmp/var-varcaller2-mapper2-sample2.sft ../data/var_annot2.sft}
+	cg multicompar tmp/temp.sft tmp/var-varcaller1-mapper1-sample1.sft tmp/var-varcaller2-mapper2-sample1.sft tmp/var-varcaller1-mapper1-sample2.sft tmp/var-varcaller2-mapper2-sample2.sft
+	set fields {chromosome	begin	end	type	ref	alt}
+	foreach {from to} {
+		var_annot varcaller1-mapper1-sample1 var_annot varcaller2-mapper2-sample1
+		var_annot2 varcaller1-mapper1-sample2 var_annot2 varcaller2-mapper2-sample2
+	} {
+		foreach field {alleleSeq1 alleleSeq2 name freq sequenced} {
+			lappend fields $field-$to=\$$field-$from
+		}
+	}
+	cg select -f $fields data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.sft
+	exec diff tmp/temp.sft tmp/expected.sft
+} {} 
+
+test multicompar {basic reannot var-all} {
+	test_cleantmp
+	file copy data/var_annot.sft tmp/var-annot1.tsv
+	file copy data/var_annot2.sft tmp/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	catch {file delete temp.tsv}
+	# make tmp/varall-annot1.tsv
+	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
+	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 r} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
+	# make tmp/varall-annot2.tsv
+	catch {file delete temp.tsv}
+	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr1 4050 4060 snp N T T T test3e 0.3 r} \t]
+	puts $f [join {chr2 4001 4002 snp A C G C test8e 0.2 r} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
+	file delete tmp/temp.tsv
+	cg multicompar tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
+	cg multicompar_reannot tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft
+} {} 
+
+test_cleantmp
 
 set ::env(PATH) $keeppath
 

@@ -234,40 +234,40 @@ if 0 {
 	set dest ftestannotvar.tsv
 }
 
-proc annot_coverage {dir source dest} {
-
-	catch {close $o} ; catch {close $f} ; catch {close $fc}
-	set f [open $source]
-	set o [open $dest w]
-	set header [split [gets $f] \t]
-	set len [llength $header]
-	set ipos [lsearch $header totalScore2]
-	incr ipos
-	puts $o [join [linsert $header $ipos refscore coverage] \t]
-	set poss [list_cor $header {chromosome begin end}]
-	annot_coverage_init $dir
-	set num 0
-	while {![eof $f]} {
-		incr num
-		if {![expr {$num%10000}]} {putsprogress $num}
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		if {[llength $line] < $len} {
-			lappend line {*}[list_fill [expr {$len-[llength $line]}] {}]
-		} elseif {[llength $line] > $len} {
-			set line [lrange $line 0 [expr {$len-1}]]
-		}
-		foreach {chr begin end} [list_sub $line $poss] break
-		foreach {refscore coverage} {{} {}} break
-		foreach {refscore coverage} [annot_coverage_get $dir $chr $begin] break
-		set line [linsert $line $ipos $refscore $coverage]
-		puts $o [join $line \t]
-	}
-	annot_coverage_close $dir
-
-	close $o
-	close $f
-}
+#proc annot_coverage {dir source dest} {
+#
+#	catch {close $o} ; catch {close $f} ; catch {close $fc}
+#	set f [open $source]
+#	set o [open $dest w]
+#	set header [split [gets $f] \t]
+#	set len [llength $header]
+#	set ipos [lsearch $header totalScore2]
+#	incr ipos
+#	puts $o [join [linsert $header $ipos refscore coverage] \t]
+#	set poss [list_cor $header {chromosome begin end}]
+#	annot_coverage_init $dir
+#	set num 0
+#	while {![eof $f]} {
+#		incr num
+#		if {![expr {$num%10000}]} {putsprogress $num}
+#		set line [split [gets $f] \t]
+#		if {![llength $line]} continue
+#		if {[llength $line] < $len} {
+#			lappend line {*}[list_fill [expr {$len-[llength $line]}] {}]
+#		} elseif {[llength $line] > $len} {
+#			set line [lrange $line 0 [expr {$len-1}]]
+#		}
+#		foreach {chr begin end} [list_sub $line $poss] break
+#		foreach {refscore coverage} {{} {}} break
+#		foreach {refscore coverage} [annot_coverage_get $dir $chr $begin] break
+#		set line [linsert $line $ipos $refscore $coverage]
+#		puts $o [join $line \t]
+#	}
+#	annot_coverage_close $dir
+#
+#	close $o
+#	close $f
+#}
 
 if 0 {
 	set name GS102
@@ -292,8 +292,9 @@ proc annot_annotvar {source outfile todo {dir {}}} {
 	catch {close $f} ; catch {close $o}
 	set f [open $source]
 	set header [tsv_open $f]
+	set sample [file tail $dir]
 	if {$dir ne ""} {
-		annot_coverage_init $dir
+		annot_coverage_init $dir $sample
 		set ipos [lsearch $header totalScore2]
 		if {$ipos != -1} {
 			incr ipos
@@ -333,7 +334,7 @@ proc annot_annotvar {source outfile todo {dir {}}} {
 		if {$addref} {
 			# refscore
 			foreach {refscore coverage} {{} {}} break
-			foreach {refscore coverage} [annot_coverage_get $dir $chr $begin] break
+			foreach {refscore coverage} [annot_coverage_get $dir $sample $chr $begin] break
 			set line [linsert $line $ipos $refscore $coverage]
 		}
 		# regions
@@ -346,7 +347,7 @@ proc annot_annotvar {source outfile todo {dir {}}} {
 		}
 		puts $o [join $line \t]
 	}
-	if {$addref} {annot_coverage_close $dir}
+	if {$addref} {annot_coverage_close $dir $sample}
 	close $o
 	close $f
 	list_foreach {field value regfile} $wtodo {

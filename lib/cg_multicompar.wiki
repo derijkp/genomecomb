@@ -1,18 +1,33 @@
 = Multicompar =
 
 == Format ==
-cg multicompar ?options? multicomparfile sampledir ...
+cg multicompar ?options? multicomparfile sampledir/varfile ...
 
 == Summary ==
 Compare multiple variant files
 
 == Description ==
-This command is used to create multicompar files.
-These are tab separated files indicating variants present in one or more samples.
+This command is used to create a multicompar file.
+This is a tab separated file containing a wide table used to compare variants between different samples.
+Each line contains general variant info (position, type, annotation, etc.), plus columns with variant 
+info specific to each sample (genotype, coverage, etc.). The latter have a column heading of 
+the form field-<source>. source will generally be the samplename, but may also be of the form 
+method-samplename to indicate sequencing or analysis method, thus allowing the comparison of different 
+methods on the same sample.
 
-* The sample names in the multicompar file will be the names of the sample dir(s).
-* The sample dir(s) should be one directory below compar_file (for reannot)
-* missing annotations must be checked and added afterwards using multicompar_reannot
+The source that is added after the fieldnames (-samplename, -method-samplename) is extracted from the filenames:
+* If a sample directory was specified, <source> will be the directory name. The directory should contain a
+file <source>/fannotvar-<source>.tsv that will be used as variantfile.
+* If a filename is given, <source> will be extracted by removing the file extension and the start 
+of the filename up to and including the first - (which is expected to be
+some indicator of type). e.g. the file var-bowtie2-sample1.tsv will yield bowtie2-sample1 as source.
+ 
+When some samples contain a variant that others do not, the information in the multicompar file cannot
+be complete by comparing variant lists alone: A variant missing in a variant list may either mean
+that it is reference or that it is not sequenced. Information about coverage, etc. will also be missing.
+multicompar will indicate this missing information with a questing mark in the table; this missing information
+can be added by using the -reannot option or the multicompar_reannot command, if it is available in other files.
+(check cg multicompar_reannot help for more info)
 
 Fields starting with l: will be regarded as list dependend on different alt 
 genotypes (a comma separated list). The -listfields option can be used to define columns
@@ -20,8 +35,7 @@ to be treated this way.
 
 == Arguments ==
 ; **multicomparfile**: resultfile, will be created if it does not exist
-; **sampledir**: 
-; **varfile**: file containing variants of new sample to be added
+; **sampledir/varfile**: directory or file containing variants of new sample to be added
   More than one can added in one command
 
 == Options ==

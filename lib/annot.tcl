@@ -88,16 +88,16 @@ proc annot_region_close {regfile} {
 	unset annot(reg,$regfile)
 }
 
-proc annot_coverage_init {dir} {
+proc annot_coverage_init {dir sample} {
 	global annot
 	catch {annot_coverage_close $dir}
-	set annot(cov,$dir) {-1 {} 0 {} {} {}}
+	set annot(cov,$dir,$sample) [list -1 {} 0 {} {} {}]
 }
 
-proc annot_coverage_get {dir chr begin {force 0}} {
+proc annot_coverage_get {dir sample chr begin {force 0}} {
 	global annot
 	set present 1
-	foreach {curchr chrfile present poss type obj} [get annot(cov,$dir) {{} {} 0}] break
+	foreach {curchr chrfile present poss type obj} [get annot(cov,$dir,$sample) {{} {} 0}] break
 	if {$chr ne $curchr || $force} {
 		if {$present} {
 			switch $type {
@@ -111,12 +111,12 @@ proc annot_coverage_get {dir chr begin {force 0}} {
 			}
 		}
 		set nchr [chr_clip $chr]
-		set chrfile [gzfile $dir/coverage/coverage-*-$nchr.bcol $dir/coverage/coverage-*-chr$nchr.bcol $dir/coverage/coverage-$nchr-*.bcol $dir/coverage/coverage-chr$nchr-*.bcol]
+		set chrfile [multicompar_reannot_find $dir $sample coverage/coverage-*-$nchr.bcol coverage/coverage-*-chr$nchr.bcol coverage/coverage-$nchr-*.bcol coverage/coverage-chr$nchr-*.bcol]
 		if {[file exists $chrfile]} {
-			set reffile [gzfile $dir/coverage/refScore-*-$nchr.bcol $dir/coverage/refScore-*-chr$nchr.bcol $dir/coverage/refScore-$nchr-*.bcol $dir/coverage/refScore-chr$nchr-*.bcol]
+			set reffile [multicompar_reannot_find $dir $sample coverage/refScore-*-$nchr.bcol coverage/refScore-*-chr$nchr.bcol coverage/refScore-$nchr-*.bcol coverage/refScore-chr$nchr-*.bcol]
 			set type bcol
 		} else {
-			set chrfile [gzfile $dir/coverage/coverageRefScore-$nchr-*.tsv $dir/coverage/coverage-$nchr-*.tsv $dir/coverage/coverageRefScore-chr$nchr-*.tsv $dir/coverage/coverage-chr$nchr-*.tsv]
+			set chrfile [multicompar_reannot_find $dir $sample coverage/coverageRefScore-$nchr-*.tsv coverage/coverage-$nchr-*.tsv coverage/coverageRefScore-chr$nchr-*.tsv coverage/coverage-chr$nchr-*.tsv]
 			set type tsv
 		}
 		if {[file exists $chrfile]} {
@@ -128,7 +128,7 @@ proc annot_coverage_get {dir chr begin {force 0}} {
 			set present 0
 		}
 		if {!$present} {
-			set annot(cov,$dir) [list $chr {} $present $poss $type {}]
+			set annot(cov,$dir,$sample) [list $chr {} $present $poss $type {}]
 			return {u u}
 		}
 		if {$type eq "bcol"} {
@@ -139,7 +139,7 @@ proc annot_coverage_get {dir chr begin {force 0}} {
 			}
 			set covbcol [bcol_open $chrfile]
 			set obj [list $refbcol $covbcol]
-			set annot(cov,$dir) [list $chr $chrfile $present $poss $type $obj]
+			set annot(cov,$dir,$sample) [list $chr $chrfile $present $poss $type $obj]
 		} else {
 			tsv_index_open $chrfile offset 1
 			set header [tsv_index_header $chrfile]
@@ -147,7 +147,7 @@ proc annot_coverage_get {dir chr begin {force 0}} {
 			set cpos [lsearch $header uniqueSequenceCoverage]
 			if {$cpos == -1} {set cpos [lsearch $header coverage]}
 			set poss [list $rpos $cpos]
-			set annot(cov,$dir) [list $chr $chrfile $present $poss $type {}]
+			set annot(cov,$dir,$sample) [list $chr $chrfile $present $poss $type {}]
 		}
 	}
 	if {!$present} {return {u u}}
@@ -168,9 +168,9 @@ proc annot_coverage_get {dir chr begin {force 0}} {
 	}
 }
 
-proc annot_coverage_close {dir} {
+proc annot_coverage_close {dir sample} {
 	global annot
-	foreach {curchr chrfile present poss type obj} [get annot(cov,$dir) {{} {} 0 {} {} {}}] break
+	foreach {curchr chrfile present poss type obj} [get annot(cov,$dir,$sample) {{} {} 0 {} {} {}}] break
 	switch $type {
 		tsv {
 			tsv_index_close $chrfile offset
@@ -181,5 +181,64 @@ proc annot_coverage_close {dir} {
 			bcol_close $covbcol
 		}
 	}
-	unset annot(cov,$dir)
+	unset annot(cov,$dir,$sample)
+}
+
+proc annot_varall_init {varallfile sample header} {
+	global annot
+	set af [gzopen $varallfile]
+	set aheader [tsv_open $af]
+	set loc2poss [tsv_basicfields $aheader 6 0]
+	set poss1 {}
+	set poss2 {}
+	set i 0
+	foreach field $aheader {
+		set pos [lsearch $header $field-$sample]
+		if {[inlist $loc2poss $pos]} continue
+		if {$pos != -1} {
+			lappend poss1 $pos
+			lappend poss2 $i
+		}
+		incr i
+	}
+	set loc2poss [lrange $loc2poss 0 2]
+	set line2 [split [gets $af] \t]
+	set loc2 [list_sub $line2 $loc2poss]
+	set annot(varallinfo,$varallfile,$sample) [dict create af $af poss1 $poss1 poss2 $poss2 line2 $line2 loc2 $loc2 loc2poss $loc2poss]
+}
+
+proc annot_varall_annot {varallfile sample loc force lineVar} {
+	global annot
+	upvar $lineVar line
+	set info $annot(varallinfo,$varallfile,$sample)
+	set af [dict get $info af]
+	set line2 [dict get $info line2]
+	set loc2 [dict get $info loc2]
+	set loc2poss [dict get $info loc2poss]
+	while {![eof $af]} {
+		set d [loc_compare $loc $loc2]
+		if {$d == 0} {
+			set poss1 [dict get $info poss1]
+			set cur [list_sub $line $poss1]	
+			set newvalues [list_sub $line2 [dict get $info poss2]]
+			foreach c $cur pos $poss1 newvalue $newvalues {
+				if {(!$force) && $c ne "?"} continue
+				lset line $pos $newvalue
+			}
+			break
+		} elseif {$d < 0} {
+			break
+		}
+		set line2 [split [gets $af] \t]
+		set loc2 [list_sub $line2 $loc2poss]
+	}
+	dict set annot(varallinfo,$varallfile,$sample) line2 $line2
+	dict set annot(varallinfo,$varallfile,$sample) loc2 $loc2
+}
+
+proc annot_varall_close {varallfile sample} {
+	global annot
+	set info $annot(varallinfo,$varallfile,$sample)
+	close [dict get $info af]
+	unset annot(varallinfo,$varallfile,$sample)
 }

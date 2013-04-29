@@ -1,4 +1,4 @@
-= Multicompar =
+= Multicompar_reannot =
 
 == Format ==
 cg multicompar_reannot compar_file ?force? ?regonly? ?skipincomplete?
@@ -7,14 +7,33 @@ cg multicompar_reannot compar_file ?force? ?regonly? ?skipincomplete?
 Reannotate multicompar file
 
 == Description ==
-Complete coverage and sequenced information in a multicompar file. The sample directories 
-of samples in the multicompar file are expected to be available as sibs or one dir below the
-compar_file.
+cg multicompar-reannot will try to add missing information in a multicompar file (see cg multicompar),
+such as whether a variant is reference or missing (unsequenced) in a sample that did not contain the
+variant.
+To do this, it needs extra information beyond the variant file. It will try to find this information
+in several locations. It will look for files with this information in sample directories that are siblings to 
+or one dir below the multicompar file. The file sreg-<source>.tsv should minimally be available for 
+reannotation (sequenced or not); if not, an error is given.
+
+Some region files can be used to fix missing information
+* sreg-<source>.tsv should contain all regions that are considered to be sequenced. If the variant
+is located in such a region, the sequenced-source value will be changed from ? to r (for reference). Outside 
+of these regions it will be annotated as u (unsequenced).
+* reg_cluster-<source>.tsv: contains regions of clustered variants. Used to fill in the cluster column if present
+* reg_refcons-<source>.tsv or reg_nocall-<source>.tsv: contains poorly called regions (complete genomics). Used to fill in the refcons column if present.
+
+Coverage (and other) information can be obtained from several sources (if found)
+* coverage/coverage-*-<chromosome>.bcol: a binary format containing the coverage data for the entire 
+genome (organised per chromosome). This format can be created using genomecomb tools, e.g from bam files using cg bam2coverage
+* varall-<source>.tsv: an sft file made by returning "variant" calling results for all positions. This will normally
+contain the same columns as the variant file.
+* coverage/coverageRefScore-<chromosome>-*.tsv (Complete Genomics): files provided in a Complete Genomics run 
+containing the coverage and refscore for each position of the genome.
 
 == Arguments ==
 ; **compar_file**: multicompar file
 ; **force**: if present, all data will be updated, otherwise only unfilled (indicated with a ?) cells will be updated
 ; **regonly**: if the regonly option is used, only region data (sequenced) will be updated
-; **skipincomplete**: go on even if data for some samples is not complete (skipping those samples)
+; **skipincomplete**: go on even if data for some samples is not complete (skipping samples which are e.g. missing coverage data for some of the chromosomes)
 == Category ==
 Compare

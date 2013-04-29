@@ -804,9 +804,10 @@ proc infofile_write {file data} {
 proc samples {header} {
 	set names {}
 	foreach col $header {
-		set split [split $col -]
-		if {[llength $split] > 1} {
-			lappend names [lindex $split end]
+		set pos [string first - $col]
+		if {$pos != -1} {
+			incr pos
+			lappend names [string range $col $pos end]
 		}
 	}
 	list_remdup $names
@@ -845,4 +846,11 @@ proc lforeach {args} {
 	set code "lappend result \"$pattern\""
 	foreach {*}$args $code
 	return $result
+}
+
+proc sourcename base {
+	if {![regexp {^[^-]*-(.+)$} $base temp name]} {
+		set name $base
+	}
+	return $name
 }
