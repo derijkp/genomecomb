@@ -340,7 +340,9 @@ proc job_checktarget {job target time {newidsVar {}}} {
 			# foreach file $files {
 			# 	job_backup $file 1
 			# }
-			file delete {*}$files
+			foreach file $files {
+				file rename -force $file $file.old
+			}
 			return 0
 		} else {		
 			job_lognf $job "target ok: $target"
