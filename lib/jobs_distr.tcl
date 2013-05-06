@@ -124,7 +124,7 @@ proc job_process_distr {} {
 	set initlen [llength $queue]
 	# join [list_subindex $queue {0 1 2 3 4 5 6}] \n
 	while {[llength $queue]} {
-		if {[llength $running] > $cgjob(distribute)} {
+		if {[llength $running] >= $cgjob(distribute)} {
 			break
 		}
 		set line [list_shift queue]
