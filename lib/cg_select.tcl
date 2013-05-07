@@ -220,16 +220,22 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 		set pos [string first = $field]
 		if {$pos != -1} {
 			set fieldname [string range $field 0 [expr {$pos-1}]]
-			lappend rfields $fieldname
+			set fpos [lsearch $rfields $fieldname]
 			set code [string range $field [expr {$pos+1}] end]
-			lappend qposs [list code $code]
+			if {$fpos == -1} {
+				lappend rfields $fieldname
+				lappend qposs [list code $code]
+			} else {
+				lset qposs $fpos [list code $code]
+			}
 		} elseif {[string first * $field] != -1} {
-			set efields [tsv_select_expandfield $header $field]
+			set efields [list_lremove [tsv_select_expandfield $header $field] $rfields]
 			lappend rfields {*}$efields
 			foreach pos [list_cor $header $efields] {
 				lappend qposs $pos
 			}
 		} else {
+			if {[inlist $rfields $field]} continue
 			set pos [lsearch $header $field]
 			if {$pos == -1} {
 				error "field \"$field\" not present"
@@ -731,6 +737,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 	}
 # putslog stderr ----------\n$query\n----------
 	if {$query ne "" || [llength $qfields]} {
+		set keepheader \#selectquery:$query\n\#selectfields:$qfields\n$keepheader
 		set outcols {}
 		set todo {}
 		set num 0
