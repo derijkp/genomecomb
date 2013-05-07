@@ -737,7 +737,6 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 	}
 # putslog stderr ----------\n$query\n----------
 	if {$query ne "" || [llength $qfields]} {
-		set keepheader \#selectquery:$query\n\#selectfields:$qfields\n$keepheader
 		set outcols {}
 		set todo {}
 		set num 0

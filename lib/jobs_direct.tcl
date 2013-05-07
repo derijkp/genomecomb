@@ -1,5 +1,6 @@
 proc stderr2file {fileout {fileerr {}}} {
 	if {$fileout ne ""} {
+		set ::stderr_redirect $fileerr
 		if {![llength [info command __puts] ]} {
 			rename puts __puts
 		}
@@ -27,6 +28,7 @@ proc stderr2file {fileout {fileerr {}}} {
 			}
 		} [list @FILEOUT@ [file normalize $fileout] @FILEERR@ [file normalize $fileerr]]]
 	} else {
+		unset -nocomplain ::stderr_redirect
 		if {[llength [info command __puts] ]} {
 			rename puts {}
 			rename __puts puts
@@ -133,6 +135,7 @@ proc job_process_direct {} {
 		set error [catch {job_run} result]
 		stderr2file {}
 		if {$error} {
+			puts stderr $result
 			file_add $job.err $result
 		}
 		if {![file exists $job.finished]} {

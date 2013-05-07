@@ -6,7 +6,20 @@
 
 proc cg {args} {
 	# puts "cg $args"
-	eval exec cg $args 2>@ stderr
+	if {[info exists ::stderr_redirect]} {
+		set tempfile $::stderr_redirect
+	} else {
+		set tempfile [tempfile]
+	}
+	set error [catch {exec cg {*}$args 2> $tempfile} result]
+	if {$error} {
+		set errmessage [file_read $tempfile]
+		if {[info exists ::stderr_redirect]} {file delete $tempfile}
+		return -code error $errmessage\n$result
+	} else {
+		if {[info exists ::stderr_redirect]} {file delete $tempfile}
+		return $result
+	}
 }
 
 proc opencgifile {file headerVar {numlinesVar {}}} {
