@@ -66,7 +66,7 @@ proc cg_vcf2sft {args} {
 	set samples [lrange $header 9 end]
 	set nheader {chromosome begin end type ref alt name quality filter}
 	set formatfields {GT}
-	set headerfields {alleleSeq1 alleleSeq2 fased}
+	set headerfields {alleleSeq1 alleleSeq2 zyg phased}
 	foreach temp [get a(FORMAT) ""] {
 		regexp {ID=([^,]+)} $temp temp id
 		if {[inlist {GT} $id]} continue
@@ -161,7 +161,20 @@ proc cg_vcf2sft {args} {
 			} else {
 				set a2 [lindex $genotypes $a2]
 			}
-			lappend result $a1 $a2 $phased {*}[lrange $temp 1 end]
+			if {$a1 ne $ref} {
+				if {$a2 eq $a1} {
+					set zyg m
+				} elseif {$a2 ne $ref} {
+					set zyg c
+				} else {
+					set zyg t
+				}
+			} elseif {$a2 ne $ref} {
+				set zyg t
+			} else {
+				set zyg r
+			}
+			lappend result $a1 $a2 $zyg $phased {*}[lrange $temp 1 end]
 		}
 		set dinfo [dict create]
 		foreach {temp key value} [regexp -all -inline {([^;=]+)=?([^;=]*)} $info] {
