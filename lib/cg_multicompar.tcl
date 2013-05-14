@@ -101,8 +101,8 @@ proc multicompar_annot_join {cur1 cur2} {
 	lappend result $ref
 	lappend result [join $alt ,]
 	lappend result {*}[list_sub $cur1 $restposs1]
-	lappend result {*}[list_sub $cur2 $restposs2]
 	lappend result $sequenced
+	lappend result {*}[list_sub $cur2 $restposs2]
 	lappend result {*}$merge
 	return [join $result \t]
 }
@@ -182,10 +182,10 @@ proc multicompar {compar_file dir {listfields {}}} {
 	set sequenced2pos [lsearch $header2 sequenced]
 	set restfields2 [list_remove $restfields2 ref reference alt sequenced]
 	set restposs2 [list_cor $header2 $restfields2]
+	lappend oheader sequenced-$name
 	foreach field $restfields2 {
 		lappend oheader ${field}-$name
 	}
-	lappend oheader sequenced-$name
 	set oheader [list_concat $oheader $mergefields]
 	# start
 	set o [open $compar_file.temp w]
@@ -242,7 +242,7 @@ proc multicompar {compar_file dir {listfields {}}} {
 
 proc multicompar_reannot_find {basedir sample args} {
 	if {![llength $args]} {set args [list {}]}
-	set esample [lindex [split $sample -] end]
+	set sampledir [lindex [split $sample -] end]
 	foreach pattern $args {
 		set test [gzfile [file join $basedir $sample $pattern]]
 		if {[file exists $test]} {
@@ -256,13 +256,13 @@ proc multicompar_reannot_find {basedir sample args} {
 		}
 	}
 	foreach pattern $args {
-		set test [gzfile [file join $basedir $esample $pattern]]
+		set test [gzfile [file join $basedir $sampledir $pattern]]
 		if {[file exists $test]} {
 			return $test
 		}
 	}
 	foreach pattern $args {
-		set test [gzfile [file join [file dir $basedir] $esample $pattern]]
+		set test [gzfile [file join [file dir $basedir] $sampledir $pattern]]
 		if {[file exists $test]} {
 			return $test
 		}
@@ -290,7 +290,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 		incr pos
 		set temp [split $field -]
 		if {[llength $temp] > 1} {
-			set sample [lindex $temp end]
+			set sample [join [lrange $temp 1 end] -]
 			lappend samplea(poss,$sample) $pos
 			lappend samplea(fields,$sample) [lindex $temp 0]
 			list_addnew samples $sample
