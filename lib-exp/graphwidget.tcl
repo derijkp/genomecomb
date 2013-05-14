@@ -55,6 +55,8 @@ graphwidget method init {args} {
 	pack $object.b.open -side left
 	button $object.b.clear -text "Clear" -command [list $object clear]
 	pack $object.b.clear -side left
+	button $object.b.redraw -text "Redraw" -command [list $object redraw force]
+	pack $object.b.redraw -side left
 	button $object.b.print -text "Print" -command [list $object print]
 	pack $object.b.print -side left
 	button $object.b.check -text "Check" -command [list $object checkfile]
@@ -174,9 +176,13 @@ graphwidget method gradientstyle {basecolor} {
 graphwidget method opendialog {{file {}}} {
 	global graphd
 	if {$file eq ""} {set file [Classy::selectfile]}
-	set f [gzopen $file]
-	set header [tsv_open $f]
-	catch {close $f}
+	if {[file extension $file] eq ".bcol"} {
+		set header {pos value}
+	} else {
+		set f [gzopen $file]
+		set header [tsv_open $f]
+		catch {close $f}
+	}
 	set graphd(file) [file normalize $file]
 	set graphd(header) $header
 	lappend graphd(header) {}
@@ -223,7 +229,6 @@ graphwidget method _configureevent {} {
 graphwidget method open {file settingsVar} {
 	private $object xv yv wv data colors
 	upvar $settingsVar graphd
-	set showregion $graphd(region)
 	set vnum [llength $data(entries)]
 	foreach field {x y w i} {
 		vector create ::$object.$vnum.$field
@@ -231,8 +236,17 @@ graphwidget method open {file settingsVar} {
 	set elements [list $graphd(xfield) $graphd(yfield) $graphd(wfield)]
 	set indexname [gzroot $file].$graphd(xfield)_index
 	set name [file root [file tail [gzroot $file]]]
-	set f [gzopen $file]
-	set header [tsv_open $f]
+	if {[file extension $file] eq ".bcol"} {
+		set bcol [bcol_open $file]
+		set data($name,bcol) $bcol
+		set header {pos value}
+		set graphd(region) 0
+	} else {
+		unset -nocomplain data($name,bcol)
+		set f [gzopen $file]
+		set header [tsv_open $f]
+	}
+	set showregion $graphd(region)
 	set poss {}
 	foreach el $elements {
 		lappend poss [lsearch $header $el]
@@ -255,6 +269,12 @@ graphwidget method open {file settingsVar} {
 	# create index
 	if {$graphd(region)} {
 		$object loadregtype $file $f $name
+		catch {close $f}
+	} elseif {[info exists data($name,bcol)]} {
+		set data($name,xmin) [bcol_first $bcol]
+		set data($name,xmax) [bcol_last $bcol]
+		set data($name,findex) $data($name,xmin)
+		::$object.ends.x set [list $data($name,xmin) $data($name,xmax)]
 	} else {
 		set indexed 1
 		set index ::$object.$vnum.i
@@ -286,8 +306,8 @@ graphwidget method open {file settingsVar} {
 		::$object.ends.x set [list $amin $amax]
 		::$object.ends.y set {0 0}
 		set data($name,indexed) $indexed
+		catch {close $f}
 	}
-	catch {close $f}
 	set xv ::$object.$vnum.x
 	set yv ::$object.$vnum.y
 	set wv ::$object.$vnum.w
@@ -390,12 +410,19 @@ graphwidget method _xrange {args} {
 
 graphwidget method redraw {args} {
 puts ----------redraw----------
-	private $object region
+	private $object region data
 	set w $object.g
 	Classy::canceltodo $object redraw
 	$object _xrange
 	$w axis configure x -min $region(xmin) -max $region(xmax)
 	$w axis configure y -min $region(ymin) -max $region(ymax)
+	if {[inlist $args force]} {
+		foreach name $data(entries) {
+			if {$data($name,region)} continue
+			set data($name,lstart) 0
+			set data($name,lend) 0
+		}
+	}
 	Classy::todo $object reload
 }
 
@@ -533,7 +560,6 @@ graphwidget method reconf {args} {
 	set data($name,color) [get conf(color) gray]
 	set style [$object gradientstyle $data($name,color)]
 	set color [get colors($data($name,color)-0) $data($name,color)]
-putsvars name color
 	$object.g element configure $name -linewidth $conf(linewidth) -fill $color -outline $color -color $color \
 		-outlinewidth 1 -pixels 2 -symbol $conf(symbol) \
 		-styles $style
@@ -609,6 +635,7 @@ graphwidget method delelement {name} {
 }
 
 graphwidget method loadregion {name} {
+putsvars object name
 	private $object region data
 	array set trans [get data($name,trans) ""]
 	if {[get region(cancel) 0]} return
@@ -616,12 +643,12 @@ graphwidget method loadregion {name} {
 	set end $region(xmax)
 	set start [expr {round([$object.g axis cget x -min])}]
 	set end [expr {round([$object.g axis cget x -max])}]
+putsvars data($name,lstart) data($name,lend) start end
 	if {($start >= $data($name,lstart)) && ($end <= $data($name,lend))} return
 	incr start -5000
 	incr end 5000
 	set start [expr {round($start)-round($start)%10000}]
 	if {$start < $data($name,findex)} {set start $data($name,findex)}
-puts "load $name $start $end $data($name,lstart) $data($name,lend)"
 	if {![info exists data($name,vnum)]} return
 	set vnum $data($name,vnum)
 	set poss $data($name,poss)
@@ -639,6 +666,42 @@ puts "load $name $start $end $data($name,lstart) $data($name,lend)"
 #		}
 #		set graphd(xfield) region
 #		set graphd(yfield) y
+	} elseif {[info exists data($name,bcol)]} {
+		foreach el {x y w} v [list $data($name,xmin) 0 0] {
+			::$object.$vnum.$el set {}
+		}
+		update
+		if {[get region(cancel) 0]} {
+			$object.progress configure -message "Loading $name canceled"
+			puts "Loading $name canceled"
+			return
+		}
+		set data($name,lstart) 0
+		set data($name,lend) 0
+		set bcol $data($name,bcol)
+		set tot [expr {$end-$start}]
+		set x $start
+		set pnext [expr {$x+200}]
+		if {$pnext > $end} {set pnext $end}
+		while {$pnext > $x} {
+			set ys [bcol_get $bcol $x $pnext]
+			::$object.$vnum.y append $ys
+			set xs [list_fill [llength $ys] $x 1]
+			::$object.$vnum.x append $xs
+			set ws [list_fill [llength $ys] 100]
+			::$object.$vnum.w append $ws
+			update
+			$object.progress configure -message "Loading $name [format %.1f [expr {100*($x-$start)/$tot}]]% ([get region(cancel) 0])"
+			puts "$x [format %.1f [expr {100*($x-$start)/$tot}]]%"
+			if {[get region(cancel) 0]} {
+				$object.progress configure -message "Loading $name canceled"
+				puts "Loading $name canceled"
+				return
+			}
+			set x [expr {$pnext+1}]
+			set pnext [expr {$x+10000}]
+			if {$pnext > $end} {set pnext $end}
+		}
 	} else {
 		foreach el {x y w} v [list $data($name,xmin) 0 0] {
 			::$object.$vnum.$el set {}
@@ -663,6 +726,10 @@ puts "load $name $start $end $data($name,lstart) $data($name,lend)"
 			set f [open "| tabix [list $data($name,file)] $chr:$start-$end"]
 			set data($name,bgzregion) $chr:$start-$end
 		} elseif {$ext eq ".rz"} {
+			set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
+			set data($name,fpos) $fpos
+			set f [gzopen $data($name,file) $fpos]
+		} else {
 			set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
 			set data($name,fpos) $fpos
 			set f [gzopen $data($name,file) $fpos]
@@ -696,12 +763,12 @@ puts "load $name $start $end $data($name,lstart) $data($name,lend)"
 			}
 		}
 		catch {close $f}
-		set data($name,lstart) $start
-		set data($name,lend) $end
-		if {[get data($name,shift) 0] != 0} {
-			set yv [$object.g element cget $name -ydata]
-			$yv expr {$yv + $data($name,shift)}
-		}
+	}
+	set data($name,lstart) $start
+	set data($name,lend) $end
+	if {[get data($name,shift) 0] != 0} {
+		set yv [$object.g element cget $name -ydata]
+		$yv expr {$yv + $data($name,shift)}
 	}
 	puts "Finished loading $name"
 	$object.progress configure -message "Finished loading $name"

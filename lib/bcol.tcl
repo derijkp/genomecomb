@@ -114,6 +114,14 @@ proc bcol_size bcol {
 	expr {[dict get $bcol max]+1}
 }
 
+proc bcol_first bcol {
+	lindex [dict get $bcol tabled] 0
+}
+
+proc bcol_last bcol {
+	dict get $bcol max
+}
+
 proc bcol_close bcol {
 	catch {close [dict get $bcol fi]}
 	dict set bcol fi {}
