@@ -29,7 +29,10 @@ typedef struct Buffer {
 
 void DStringInit(DString *dstring);
 DString *DStringNew();
+DString *DStringNewFromChar(char *string);
+DString *DStringNewFromCharS(char *string,int size);
 DString *DStringEmtpy();
+DString *DStringDup(DString *dstring);
 void DStringDestroy(DString *dstring);
 void DStringClear(DString *dstring);
 void DStringSetSize(DString *dstring, int size);

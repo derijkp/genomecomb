@@ -116,6 +116,24 @@ void DStringCopy(DString *dest, DString *src) {
 	dest->size = src->size;
 }
 
+DString *DStringNewFromChar(char *string) {
+	DString *dstring = DStringNew();
+	DStringSet(dstring,string);
+	return dstring;
+}
+
+DString *DStringNewFromCharS(char *string,int size) {
+	DString *dstring = DStringNew();
+	DStringSetS(dstring,string,size);
+	return dstring;
+}
+
+DString *DStringDup(DString *dstring) {
+	DString *result = DStringNew();
+	DStringSetS(result,dstring->string,dstring->size);
+	return result;
+}
+
 /* 
     "natural" sort order: deals with mixed alphabetic and numbers
  */
