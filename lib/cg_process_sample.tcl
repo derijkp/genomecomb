@@ -138,11 +138,6 @@ proc process_sample {args} {
 		gzmklink $file $target
 	}
 
-	# if not from CGI, we do not have svar and sgene, take from first var_file found
-	job cg_annotvar_other-$sample {var_*.tsv} {annotvar-$sample.tsv} {
-		gzmklink $dep $target
-	}
-
 	# only if reg file exists, otherwise extract from svar (next)
 	job cg_sreg-$sample {ori/ASM/reg-*-ASM*.tsv*} {sreg-$sample.tsv} {
 		set regfile [gzfile $dep]
@@ -160,6 +155,7 @@ proc process_sample {args} {
 		file delete $target.temp
 	}
 
+	# multiarch
 	# if we do not have an svar (CGI), try getting a region file from the coverage
 	# currently hardcoded at coverage > 7
 	job bam_regsfromscoverage-$sample {coverage/coverage-*-coverage-*.bcol} {sreg-$sample.tsv} {
@@ -256,6 +252,7 @@ proc process_sample {args} {
 		}
 	}
 
+	# multiarch
 	# if we are coming from bams, coverage file name looks different, use these by making link
 	job cg_bamcoverage-$sample {^coverage/coverage-(.*)-coverage-(.*)\.bcol ^coverage/coverage-(.*)-coverage-(.*)\.bcol\.bin$} {coverage/coverage-\1-\2.bcol coverage/coverage-\1-\2.bcol.bin} {
 		gzmklink [lindex $dep 0] [lindex $target 0]
@@ -300,6 +297,7 @@ proc process_sample {args} {
 		cg convcgcnv [gzfile $dep] $target
 	}
 
+	# multiarch
 	job reg_cluster-$sample {annotvar-$sample.tsv} {reg_cluster-$sample.tsv} {
 		cg clusterregions < $dep > $target.temp
 		file rename -force $target.temp $target
@@ -322,6 +320,18 @@ proc process_sample {args} {
 
 	job cg_fannotvar-$sample {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage/bcol_coverage-$sample.tsv) (coverage/bcol_refscore-$sample.tsv)} {fannotvar-$sample.tsv} {
 		cg annotate $dep $target {*}[list_remove [lrange $deps 1 end] {}]
+	}
+
+	job cg_multitechlink_var-$sample {fannotvar-$sample.tsv} {var-cg-cg-$sample.tsv} {
+		gzmklink $dep $target
+	}
+
+	job cg_multitechlink_sreg-$sample {sreg-$sample.tsv} {sreg-cg-cg-$sample.tsv} {
+		gzmklink $dep $target
+	}
+
+	job cg_multitechlink_coverage-$sample {coverage} {coverage-cg-$sample} {
+		gzmklink $dep $target
 	}
 
 	job reg_covered-$sample {sreg-$sample.tsv} {reg-$sample.covered} {
