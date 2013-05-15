@@ -98,5 +98,5 @@ if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
 	package require Extral
 	set ::base $scriptname
-	cg_vcf2sft {*}$argv
+	cg_gff2sft {*}$argv
 }
