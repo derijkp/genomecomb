@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 			buffer = DStringNew();
 			DStringAppend(buffer,argv[1]);
 			DStringAppendS(buffer,chromosome->string,chromosome->size);
-			o = fopen64_or_die(buffer->string,"w");
+			o = fopen64_or_die(buffer->string,"a");
 			hash_setvalue(bucket,o)
 			DStringSetS(buffer,chromosome->string,chromosome->size);
 			hash_setkey(bucket,buffer)
