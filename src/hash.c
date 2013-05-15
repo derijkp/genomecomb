@@ -148,8 +148,25 @@ Hash_bucket *hash_next(Hash_iter *iter) {
 	return iter->bucket;
 }
 
-void hash_destroy(Hash_table *table) {
+void hash_destroy(Hash_table *table,hash_free_func *freekeyfunc, hash_free_func *freevaluefunc) {
 	Hash_tableitem *item = table->items;
+	Hash_iter iter;
+	Hash_bucket *bucket;
+	bucket = hash_first(table,&iter);
+	if (freekeyfunc != NULL || freevaluefunc != NULL) {
+		while(bucket != NULL) {
+			void *key, *value;
+			if (freekeyfunc != NULL) {
+				*key = hash_getkey(bucket);
+				freekeyfunc(key);
+			}
+			if (freevaluefunc != NULL) {
+				value = hash_getvalue(bucket);
+				freevaluefunc(value);
+			}
+			bucket = hash_next(&iter);
+		}
+	}
 	while(1) {
 		if (item == NULL) break;
 		free((char *)item->chain);
@@ -184,3 +201,71 @@ int hash_Dstring_compare(const void* key1, const void* key2)
 	DString *ds1 = (DString *)key1, *ds2 = (DString *)key2;
 	return DStringCompare(ds1,ds2);
 }
+
+unsigned int hash_char_hash (void *key,unsigned int hashtablemax)
+{
+	register unsigned int result;
+	register int c;
+	char *string = (char *)key;
+	result = 0;
+	while (*string != '\0') {
+		c = *string;
+		result += (result<<3) + c;
+		string++;
+	}
+	return result & hashtablemax;
+}
+
+int hash_char_compare(const void* key1, const void* key2)
+{
+	return strcmp((char *)key1,(char *)key2);
+}
+
+int char_hash_set(Hash_table *hashtable,char *key,void *value) {
+	Hash_bucket *bucket;
+	bucket = hash_get(colinfo[i].hashtable, (void *)key, hash_char_hash, hash_char_compare, &new);
+	if (new == 0) {
+		/* key was already present in the hashtable */
+		hash_setvalue(bucket,value);
+	} else {
+		hash_setkey(bucket,key);
+		hash_setvalue(bucket,value);
+	}
+	return new;
+}
+
+void char_hash_get(Hash_table *hashtable,char *key) {
+	Hash_bucket *bucket;
+	bucket = hash_get(colinfo[i].hashtable, (void *)key, hash_char_hash, hash_char_compare, &new);
+	if (new == 0) {
+		/* key was already present in the hashtable */
+		return hash_getvalue(bucket);
+	} else {
+		return NULL;
+	}
+}
+
+int dstring_hash_set(Hash_table *hashtable,DString *key,void *value) {
+	Hash_bucket *bucket;
+	bucket = hash_get(colinfo[i].hashtable, (void *)key, hash_DString_hash, hash_DString_compare, &new);
+	if (new == 0) {
+		/* key was already present in the hashtable */
+		hash_setvalue(bucket,value);
+	} else {
+		hash_setkey(bucket,key);
+		hash_setvalue(bucket,value);
+	}
+	return new;
+}
+
+void *dstring_hash_get(Hash_table *hashtable,char *key) {
+	Hash_bucket *bucket;
+	bucket = hash_get(colinfo[i].hashtable, (void *)key, hash_DString_hash, hash_DString_compare, &new);
+	if (new == 0) {
+		/* key was already present in the hashtable */
+		return hash_getvalue(bucket);
+	} else {
+		return NULL;
+	}
+}
+

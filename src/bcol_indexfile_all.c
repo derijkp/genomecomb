@@ -232,7 +232,7 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 			DStringDestroy(ds);
 			bucket = hash_next(&iter);
 		}
-		hash_destroy(colinfo[i].hashtable);
+		hash_destroy(colinfo[i].hashtable,NULL,NULL);
 		if (colinfo[i].hashtable->datasize >= 500 || (colinfo[i].numnum >= 256)) {
 			fprintf(f1,"...\n");
 		}

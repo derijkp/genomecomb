@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
 	}
 	if (line) {DStringDestroy(line);}
 	if (result) {DStringArrayDestroy(result);}
-	hash_destroy(hashtable);
+	hash_destroy(hashtable,NULL,NULL);
 	exit(EXIT_SUCCESS);
 }
 
