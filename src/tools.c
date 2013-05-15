@@ -28,6 +28,7 @@ typedef struct DStringArray {
 	DString *data;
 	int size;
 	int memsize;
+	DString *datablock;
 } DStringArray;
 
 typedef struct Buffer {
@@ -473,9 +474,76 @@ DStringArray *DStringArrayNew(int size) {
 	dstringarray->data = (DString *)malloc(size*sizeof(DString));
 	dstringarray->size = 0;
 	dstringarray->memsize = size;
+	dstringarray->datablock = NULL;
 	for (i = 0; i < size ; i++) {
 		DStringInit(dstringarray->data+i);
 	}
+	return dstringarray;
+}
+
+DStringArray *DStringArrayFromChar(char *string,char sep) {
+	DStringArray *result;
+	char *cur,*prev;
+	int count=1,stringsize,pos;
+	cur=string;
+	while(*cur) {
+		if (*cur == sep) count++;
+		cur++;
+	}
+	stringsize = cur-string;
+	result = DStringArrayNew(count);
+	result->datablock = DStringNew();
+	DStringSet(result->datablock,string);
+	cur = result->datablock->string;
+	prev = cur;
+	pos = 0;
+	while(*cur) {
+		if (*cur == sep) {
+			DStringSetS(result->data+pos,prev,cur-prev);
+			pos++;
+			prev = cur+1;
+		}
+		cur++;
+	}
+	return result;
+}
+
+DStringArray *DStringArrayRange(DStringArray *dstringarray,int start, int end) {
+	DStringArray *result;
+	int i;
+	result = DStringArrayNew(end-start+1);
+	for (i = start; i <= end ; i++) {
+		DStringCopy(result->data+(i-start), dstringarray->data+i);
+	}
+	return result;	
+}
+
+DStringArray *DStringArrayAppend(DStringArray *dstringarray,char *string,int size) {
+	if (dstringarray->size == dstringarray->memsize) {
+		dstringarray->memsize *= 2;
+		dstringarray->data = (DString *)malloc(dstringarray->memsize*sizeof(DString));
+	}
+	DStringInit(dstringarray->data+dstringarray->size);
+	if (size < 0) {size = strlen(string);}
+	DStringSetS(dstringarray->data+dstringarray->size, string, size);
+	dstringarray->size++;
+	return dstringarray;
+}
+
+DStringArray *DStringArraySet(DStringArray *dstringarray,int pos,char *string,int size) {
+	int i;
+	if (pos >= dstringarray->memsize) {
+		dstringarray->memsize = pos+1;
+		dstringarray->data = (DString *)malloc(dstringarray->memsize*sizeof(DString));
+		i = dstringarray->size;
+		while (i <= pos) {
+			DStringInit(dstringarray->data+i);
+			i++;
+		}
+		dstringarray->size=pos+1;
+	}
+	if (size < 0) {size = strlen(string);}
+	DStringSetS(dstringarray->data+pos, string, size);
 	return dstringarray;
 }
 
@@ -485,6 +553,7 @@ void DStringArrayDestroy(DStringArray *dstringarray) {
 		DStringClear(dstringarray->data+i);
 	}
 	free(dstringarray->data);
+	if (dstringarray->datablock) DStringDestroy(dstringarray->datablock);
 	free(dstringarray);
 }
 

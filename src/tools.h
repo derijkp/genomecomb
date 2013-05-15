@@ -51,6 +51,11 @@ void DelBuffer(Buffer *buffer);
 int DStringGetLine_b(DString *linePtr,	FILE *f1,Buffer *buffer);
 
 DStringArray *DStringArrayNew(int size);
+DStringArray *DStringArrayFromChar(char *string,char sep);
+DStringArray *DStringArrayAppend(DStringArray *dstringarray,char *string,int size);
+DStringArray *DStringArraySet(DStringArray *dstringarray,int pos,char *string,int size);
+DStringArray *DStringArrayRange(DStringArray *dstringarray,int start, int end);
+#define DStringArrayGet(dstringarray,pos) (dstringarray->data[pos])
 void DStringArrayDestroy(DStringArray *dstringarray);
 void check_numfieldserror(int numfields,int numfields2,DString *line,char *filename,unsigned int *linenum);
 int DStringGetTab(DString *line,	FILE *f1, int max, DStringArray *result, int setzero,unsigned int *numfields);
