@@ -143,6 +143,11 @@ proc cg_vcf2sft {args} {
 		foreach sample $samples geno $genos {
 			set order [list_cor $format $formatfields]
 			set temp [list_sub [split $geno :] $order]
+			if {[lindex $order 0] eq "-1"} {
+				# no genotype given -> ref call
+				lappend result $ref $ref r 0 {*}[lrange $temp 1 end]
+				continue
+			}
 			if {[string first / $temp] != -1} {set phased 0} else {set phased 1}
 			set genotype [split [lindex $temp 0] {|/}]
 			set a1 [lindex $genotype 0]
