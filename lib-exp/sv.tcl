@@ -95,6 +95,91 @@ proc map2sv {files prefix} {
 	exec touch ${prefix}_map2sv_sort_FINISHED
 }
 
+proc bam2sv {bamfile prefix} {
+	global appdir
+	set bamfile [file normalize $bamfile]
+	set prefix [file normalize $prefix]
+	file mkdir [file dir $prefix]
+	if {![file exists ${prefix}_map2sv_sort_FINISHED]} {
+
+		foreach chr [array names o] {
+			close $o($chr)
+		}
+		catch {close $f}
+		set f [open "| [list samtools view $bamfile]"]
+		# numl,numr,num,bin not directly useful here
+		set numl ""; set numr ""; set num "" ; set bin ""; set side ""
+		unset -nocomplain todo
+		unset -nocomplain o
+		set curchr ""
+		set fnum -1
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			incr fnum
+			if {![llength $line]} continue
+			foreach {qname flags} $line break
+			set chr2 [lindex $line 6]
+			if {[sam_unmapped $flags]} continue
+			if {[info exists todo($qname)] || $chr2 eq "*" || [sam_unmapped_mate $flags]} {
+				if {[info exists todo($qname)]} {
+					set line2 $line
+					set line1 $todo($qname)
+					unset todo($qname)
+				} else {
+					unset -nocomplain line2
+					set line1 $line
+				}
+				foreach {qname1 flags1 chr1 pos1 mapq1 cigar1 chr2 pos2 tlen1 seq1 qual1} $line1 break
+				if {![info exists o($chr1)]} {
+					set o($chr1) [open $prefix-$chr1-paired.tsv.temp w]
+					puts $o($chr1) [join {chromosome bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
+				}
+				incr pos1 -1
+				# this should take into account cigar, and is thus not correct
+				# but need to get it to work good enough fast ...
+				set end1 [expr {$pos1+[string length $seq1]}]
+				set weight1 $mapq1
+				if {[sam_reverse $flags1]} {set strand1 -} else {set strand1 +}
+				if {[info exists line2]} {
+					foreach {qname2 flags2 chr2 pos2 mapq2 cigar2 temp temp temp seq2 qual2} $line2 break
+					if {$qname1 ne $qname2} {error "names of pair do not match:\n$line1\n$line2"}
+					incr pos2 -1
+					# this should take into account cigar, and is thus not correct
+					# but need to get it to work good enough fast ...
+					set end2 [expr {$pos2+[string length $seq2]}]
+					set weight2 $mapq2
+					if {[sam_reverse_mate $flags1]} {set strand2 -} else {set strand2 +}
+					set dist [expr {$pos2-$end1}]
+					if {$chr1 ne $chr2} {
+						set type c
+						set dist -1
+					} elseif {$strand1 eq $strand2} {
+						set type r
+					} else {
+						set type u
+					}
+				} else {
+					set dist ""
+					set type s
+					foreach {chr2 strand2 pos2 end2 weight2 numr dist} {{} {} {} {} {} {} {}} break
+				}
+				puts $o($chr1) [join [list $chr1 $bin $strand1 $pos1 $end1 $weight1 $numl $type $chr2 $strand2 $pos2 $end2 $weight2 $numr $dist $num $fnum $side] \t]
+			} else {
+				set todo($qname) $line
+			}
+		}
+
+		foreach chr [array names o] {
+			close $o($chr)
+			cg select -s {chromosome start1 end1 chr2 start2 end2} $prefix-$chr1-paired.tsv.temp $prefix-$chr1-paired.tsv.temp2
+			file delete $prefix-$chr1-paired.tsv.temp
+			file rename -force $prefix-$chr1-paired.tsv.temp2 $prefix-$chr1-paired.tsv
+		}
+		catch {close $f}
+	}
+	exec touch ${prefix}_map2sv_sort_FINISHED
+}
+
 proc sv2db {files} {
 	foreach file $files {
 		puts $file
