@@ -35,35 +35,59 @@ proc map2sv {files prefix} {
 	if {[llength $files] == 1 && [file isdir [lindex $files 0]]} {
 		set files [glob [lindex $files 0]/MAP/*/mapping_*.tsv.bz2]
 	}
-	set num 0
 	set rdir [file dir $prefix]
 	file mkdir $rdir
-	set scratchdir [scratchdir]
-	set rem [glob -nocomplain $scratchdir/*]
-	if {[llength $rem]} {
-		file delete {*}$rem
+	if {[file exists $rdir/working_in_scratch.txt]} {
+		set scratchdir [file_read $rdir/working_in_scratch.txt]
+		file mkdir $scratchdir
+	} else {
+		set scratchdir [scratchdir]
+		file_write $rdir/working_in_scratch.txt $scratchdir
 	}
+#	set rem [glob -nocomplain $scratchdir/*]
+#	if {[llength $rem]} {
+#		file delete {*}$rem
+#	}
 	if {![file exists ${prefix}_map2sv_sort_FINISHED]} {
-		set scratchprefix $scratchdir/[file tail $prefix]
+		file mkdir $scratchdir/tmp
+		set tail [file tail $prefix]
+		set scratchprefix $scratchdir/tmp/$tail-
+		set num 0
 		foreach file $files {
-			puts $file
-			set cat [gzcat $file]
-			exec {*}$cat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $scratchprefix
+			set root [file root [file root [file tail $file]]]
+			if {[llength [glob -nocomplain $scratchdir/$tail-$root-*]]} {
+				puts "already done: $file"
+			} else {
+				puts "doing: $file"
+				set cat [gzcat $file]
+				exec {*}$cat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $scratchprefix$root-
+				file rename {*}[glob $scratchprefix$root-*] $scratchdir
+			}
 			incr num
 		}
-		set files [glob $scratchprefix-*]
+		set files [glob $scratchdir/$tail-*]
+		unset -nocomplain a
 		foreach file $files {
 			set tail [file tail $file]
-			set rfile $rdir/${tail}-paired.tsv
-			file mkdir [file dir $file]/tmp
-			if {[file extension $file] eq ".tsv"} continue
-			if {[file extension $file] eq ".rz"} continue
-			if {[file extension $file] eq ".bgz"} continue
-			puts $file
+			set chr [lindex [split $tail -] end]
+			lappend a($chr) $file
+		}
+		foreach chr [lsort -dict [array names a]] {
+			set rfile $prefix-$chr-paired.tsv
+			if {[file exists $rfile]} {
+				puts "$rfile exists"
+				continue
+			} else {
+				puts "Making $rfile"
+			}
+#			file mkdir [file dir $file]/tmp
+#			if {[file extension $file] eq ".tsv"} continue
+#			if {[file extension $file] eq ".rz"} continue
+#			if {[file extension $file] eq ".bgz"} continue
 			set f [open $rfile.temp w]
 			puts $f [join {chromosome bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
 			close $f
-			exec gnusort8 -T [scratchdir] -t \t -n -s -k5 -T [file dir $file]/tmp $file >> $rfile.temp
+			exec cat {*}$a($chr) | gnusort8 -T $scratchdir/tmp -t \t -n -s -k5 >> $rfile.temp
 			file rename $rfile.temp $rfile
 		}
 		file delete -force $scratchdir/tmp {*}$files
@@ -1825,6 +1849,15 @@ proc cg_map2sv {args} {
 	}
 	set prefix [list_pop args]
 	map2sv $args $prefix
+}
+
+proc cg_bam2sv {args} {
+	global scriptname action
+	if {[llength $args] < 2} {
+		puts stderr "format is: $scriptname $action bamfile out_prefix"
+		exit 1
+	}
+	bam2sv {*}$args
 }
 
 proc cg_sv2db {args} {

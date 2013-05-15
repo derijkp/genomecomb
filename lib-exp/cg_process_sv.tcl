@@ -5,49 +5,54 @@
 #
 
 proc process_sv {cgdir dir dbdir {force 0}} {
+	job_logdir $dir/log_jobs
 	set keepdir [pwd]
 	set cgdir [file normalize $cgdir]
 	set dir [file normalize $dir]
 	set dbdir [file normalize $dbdir]
 	set name [file tail $dir]
-	file mkdir $dir/sv
-	cd $dir/sv
+	file mkdir $dir/sv.temp
+	cd $dir/sv.temp
 
 	if {$force || ![file exists $dir/sv/${name}_map2sv_sort_FINISHED]} {
-		cg map2sv $cgdir $dir/sv/$name
+		cg map2sv $cgdir $dir/sv.temp/$name >@ stdout
+		file rename {*}[glob $dir/sv.temp/*] $dir/sv
+		file delete $dir/sv.temp
 	}
 	set resultfiles {}
-	foreach chr {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X M Y} {
-		lappend resultfiles $dir/sv/$name-$chr-paired-sv.tsv
-		set file [gzfile $dir/sv/$name-$chr-paired.tsv]
+	cd $dir/sv
+	set files [gzfiles $name-*-paired.tsv]
+	foreach file [lsort -dict $files] {
 		set root [file root [gzroot $file]]
-		if {$force || ![file exists $file]} {
-			set file $file.rz
+		job svindex-$root -deps $file -targets $root.tsv.end1_index -code {
+			puts "Indexing $dep"
+			cg tsv_index end1 $dep
 		}
-		if {$force || ![file exists $root.tsv.end1_index]} {
-			puts "Indexing $file"
-			cg tsv_index end1 $file
+		job svinfo-$root -deps $file -targets $root.tsv.numinfo -code {
+			puts "Info on $dep"
+			cg svinfo $dep
 		}
-		if {$force || ![file exists $root.tsv.numinfo]} {
-			puts "Info on $file"
-			cg svinfo $file
+		job svfind-$root -deps {$file $root.tsv.numinfo} -targets $root-sv.tsv -vars {dbdir} -code {
+			puts "svfind $dep"
+			cg svfind $dep [lindex [glob $dbdir/reg_*_simpleRepeat.tsv] 0]
 		}
-		if {$force || ![file exists $root-sv.tsv]} {
-			puts "svfind $file"
-			cg svfind $file $dbdir/reg_hg18_simpleRepeat.tsv
-		}
-		if {$force || [file extension $file] ne ".rz"} {
-			puts "razipping $file"
-			cg_razip $file
-		}
+		lappend resultfiles $root-sv.tsv
+#		if {$force || [file extension $file] ne ".rz"} {
+#			puts "razipping $file"
+#			cg_razip $file
+#		}
 	}
-	cg cat {*}$resultfiles > $dir/sv-$name.tsv
-	putslog "Done: finished finding sv in $dir"
+	job svfind-$root -deps $resultfiles -targets $dir/sv-$name.tsv -vars {dbdir} -code {
+		cg cat {*}$deps > $target.temp
+		file rename $target.temp $target
+		putslog "Done: finished finding sv in $dir"
+	}
 	cd $keepdir
 }
 
 proc cg_process_sv {args} {
 	global scriptname action
+	set args [job_args $args]
 	if {([llength $args] < 2) || ([llength $args] > 3)} {
 		puts stderr "format is: $scriptname $action sampledir destdir dbdir ?force?"
 		puts stderr " - processes sv for one sample directory."
@@ -62,4 +67,5 @@ proc cg_process_sv {args} {
 		default {error "unrecognized option $force"}
 	}
 	process_sv $dir $destdir $dbdir $force
+	job_wait
 }
