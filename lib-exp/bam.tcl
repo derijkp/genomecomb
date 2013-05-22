@@ -10,10 +10,10 @@ proc multiexists {pattern {chrs {0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 
 proc cg_map2bam {readfile mapfile reffile outfile} {
 	set name [file tail $outfile]
 	set chrs {0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
-	if {[multiexists $outfile-chr\$chr.bam $chrs]} {
-		putslog "skipping files $outfile: all bams exist already"
-		return
-	}
+#	if {[multiexists $outfile-chr\$chr.bam $chrs]} {
+#		putslog "skipping files $outfile: all bams exist already"
+#		return
+#	}
 	set scratchdir [scratchdir]
 	set scratchbase $scratchdir/temp_[file tail $outfile]
 	set samfile $scratchbase.sam
@@ -26,6 +26,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 		if {$error ne {}} {error $error}
 	}
 	file rename $samfile.temp $samfile
+	# read header
 	if {[catch {
 		set header [exec samtools view -S -H $samfile 2> /dev/null]
 	} error]} {
@@ -39,7 +40,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 	set pos [lindex $poss 0]
 	set header [lreplace [list_sub $header -exclude $poss] $pos -1 {*}$list]
 	putslog "Distributing sam to chromosomes for $name"
-	exec tail -n +[expr {($len+1)}] $samfile | distrsam $scratchbase
+	exec tail -n +[expr {($len+1)}] $samfile | distr2chr $scratchbase 2
 	file delete $samfile
 	putslog "Making and sorting sam per chromosome for $name"
 	foreach chr $chrs {
@@ -73,16 +74,6 @@ proc cg_mergebam {outfile args} {
 }
 
 proc cg_cg2bam {args} {
-	set ::submit_direct 0
-	while 1 {
-		set key [lindex $args 0]
-		if {$key eq "-direct"} {
-			set ::submit_direct [lindex $args 1]
-			set args [lrange $args 2 end]
-		} else {
-			break
-		}
-	}
 	set len [llength $args]
 	if {($len < 3) || ($len > 3)} {
 		puts stderr "format is: cg cg2bam cgdir destdir dbdir"
