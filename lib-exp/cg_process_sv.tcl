@@ -12,6 +12,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 	set dbdir [file normalize $dbdir]
 	set name [file tail $dir]
 	file mkdir $dir/sv.temp
+	file mkdir $dir/sv
 	cd $dir/sv.temp
 
 	if {$force || ![file exists $dir/sv/${name}_map2sv_sort_FINISHED]} {
@@ -42,7 +43,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 #			cg_razip $file
 #		}
 	}
-	job svfind-$root -deps $resultfiles -targets $dir/sv-$name.tsv -vars {dbdir} -code {
+	job svfind-[file tail $dir] -deps $resultfiles -targets $dir/sv-$name.tsv -vars {dbdir} -code {
 		cg cat {*}$deps > $target.temp
 		file rename $target.temp $target
 		putslog "Done: finished finding sv in $dir"
