@@ -265,6 +265,7 @@ mainw method opentsv {args} {
 	} else {
 		set root [file dir $file]
 	}
+	lappend path $root
 	while 1 {
 		if {$root eq "." || $root eq "/"} {
 			set root [file dir $file]
