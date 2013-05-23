@@ -1750,7 +1750,7 @@ proc svfind {pairfile trffile} {
 	set infoa(maxsize) $bandwidth
 	set f [gzopen $pairfile]
 	set header [gets $f]
-	set iheader {chr1 start1 end1 weight1 numl chr2 start2 end2 weight2 numr type dist}
+	set iheader {chromosome start1 end1 weight1 numl chr2 start2 end2 weight2 numr type dist}
 	set poss [list_cor $header $iheader]
 	array set infoa [list \
 		start1pos [lsearch $iheader start1] \
@@ -1758,7 +1758,7 @@ proc svfind {pairfile trffile} {
 		start2pos [lsearch $iheader start2] \
 		end2pos [lsearch $iheader end2] \
 		typepos [lsearch $iheader type] \
-		chr1pos [lsearch $iheader chr1] \
+		chr1pos [lsearch $iheader chromosome] \
 		distpos [lsearch $iheader dist] \
 		weight1pos [lsearch $iheader weight1] \
 		weight2pos [lsearch $iheader weight2] \
