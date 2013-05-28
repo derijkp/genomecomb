@@ -240,7 +240,7 @@ proc cg_regcollapse {args} {
 		set tempfile2 [lindex $args 0]
 	}
 	putslog "Collapsing"
-	collapseoverlap $tempfile2 $resultfile
+	collapseoverlap $tempfile2 $resultfile $scorefield $numfields
 	file delete $tempfile $tempfile2
 }
 
