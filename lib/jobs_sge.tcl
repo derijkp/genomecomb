@@ -268,7 +268,7 @@ proc job_process_sge_submit {job runfile args} {
 				set value [list_remove $value {}]
 
 				if {[llength $value]} {
-					lappend options -hold_jid $value
+					lappend options -hold_jid [join $value ,]
 				}
 				incr pos 2
 			}
