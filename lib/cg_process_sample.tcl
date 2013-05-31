@@ -63,6 +63,7 @@ proc process_sample {args} {
 		set srcdir [file normalize $srcdir]
 		if {[file exists $srcdir]} {
 			set srcdir [file normalize $srcdir]
+			file delete $workdir/ori
 			cplinked_file $srcdir $workdir/ori
 		}
 	} else {
