@@ -80,6 +80,7 @@ proc jobtest {args} {
 	}
 	job sumpattern2 -foreach {^$destdir/sumpattern-(.*)\.txt$} \
 	  -skip {$destdir/allp2.txt} \
+	  -cores 2 \
 	  -targets {$destdir/sumpattern2-\1.txt} -code {
 		for {set i 1} {$i < 5} {incr i} {
 			puts "progress $i"
@@ -270,7 +271,7 @@ test job {--force 1} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
+} {{test/all.txt test/all.txt.old test/all2.txt test/all2.txt.old test/allp.txt test/allp.txt.old test/allp2.txt test/allp2.txt.old test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test1.txt.old test/sum2-test2.txt test/sum2-test2.txt.old test/sum2-test3.txt test/sum2-test3.txt.old test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test1.txt.old test/sumpattern2-test2.txt test/sumpattern2-test2.txt.old test/sumpattern2-test3.txt test/sumpattern2-test3.txt.old test/test.txt} {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -370,7 +371,7 @@ test job {--force 1 -d 4} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
+}  {{test/all.txt test/all.txt.old test/all2.txt test/all2.txt.old test/allp.txt test/allp.txt.old test/allp2.txt test/allp2.txt.old test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test1.txt.old test/sum2-test2.txt test/sum2-test2.txt.old test/sum2-test3.txt test/sum2-test3.txt.old test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test1.txt.old test/sumpattern2-test2.txt test/sumpattern2-test2.txt.old test/sumpattern2-test3.txt test/sumpattern2-test3.txt.old test/test.txt} {testh
 1+2=3
 3+4+5=12
 6+7+8=21
@@ -397,7 +398,7 @@ test job {time} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
+} {{test/all.txt test/all.txt.old test/all2.txt test/all2.txt.old test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum2-test3.txt.old test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
 1+2=3
 3+4+5=12
 replaced
@@ -424,7 +425,7 @@ test job {time -d 4} {
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
+} {{test/all.txt test/all.txt.old test/all2.txt test/all2.txt.old test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum2-test3.txt.old test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
 1+2=3
 3+4+5=12
 replaced

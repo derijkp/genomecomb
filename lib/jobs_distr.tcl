@@ -124,7 +124,11 @@ proc job_process_distr {} {
 	set initlen [llength $queue]
 	# join [list_subindex $queue {0 1 2 3 4 5 6}] \n
 	while {[llength $queue]} {
-		if {[llength $running] >= $cgjob(distribute)} {
+		set countrunning 0
+		foreach job $running {
+			incr countrunning [get cgjob_info($job,cores) 1]
+		}
+		if {$countrunning >= $cgjob(distribute)} {
 			break
 		}
 		set line [list_shift queue]
@@ -166,6 +170,12 @@ proc job_process_distr {} {
 			set queue [list_concat $temp $queue]
 			job_logclose $job
 			continue
+		}
+		set opos [lsearch $submitopts -cores]
+		if {$opos != -1} {
+			set value [lindex $submitopts [incr opos]]
+			set cgjob_info($job,cores) $value
+			if {$value <= $cgjob(distribute) && $value > ($cgjob(distribute)-$countrunning)} continue
 		}
 		job_lognf $job "==================== $jobname ===================="
 		cd $pwd

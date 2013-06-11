@@ -600,6 +600,10 @@ proc job {jobname args} {
 				lappend submitopts -io [lindex $args $pos]
 				incr pos
 			}
+			-cores {
+				lappend submitopts -cores [lindex $args $pos]
+				incr pos
+			}
 			-vars {
 				set vars [lindex $args $pos]
 				incr pos

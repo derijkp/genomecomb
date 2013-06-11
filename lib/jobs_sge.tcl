@@ -247,7 +247,7 @@ proc job_process_sge_onepass {} {
 		file_write $runfile $cmd
 		file attributes $runfile -permissions u+x
 		# submit job
-		set jobnum [job_process_sge_submit $job $runfile -deps $ids]
+		set jobnum [job_process_sge_submit $job $runfile -deps $ids {*}$submitopts]
 		file_write $job.jobid $jobnum
 		job_process_sge_marktargets $targets $ptargets $jobnum
 		set cgjob_running($job) $jobnum
@@ -270,6 +270,10 @@ proc job_process_sge_submit {job runfile args} {
 				if {[llength $value]} {
 					lappend options -hold_jid [join $value ,]
 				}
+				incr pos 2
+			}
+			-cores {
+				lappend hard -pe local $value
 				incr pos 2
 			}
 			-hard {
