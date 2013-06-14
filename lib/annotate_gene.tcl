@@ -756,7 +756,10 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 	set prevdbloc ""
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
-		if {![llength $line] && [eof $f]} break
+		if {![llength $line]} {
+			if {[eof $f]} break
+			error "error: empty line in $file"
+		}
 		set loc [list_sub $line $poss]
 		set ploc [lrange $loc 0 2]
 		if {[loc_compare $prevloc $ploc] > 0} {
