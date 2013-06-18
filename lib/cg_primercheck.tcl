@@ -169,7 +169,7 @@ proc cg_primercheck {args} {
 		}
 		set amplicons [primercheck_epcr $fhits(1,f) $fhits(2,f) $fhits(1,r) $fhits(2,r) $maxsize $maxamplicons]
 		set overlap 0
-		if {$amplicons ne "many"} {
+		if {$amplicons ne "many" && [llength $amplicons]} {
 			set amplicons [primercheck_overlappingamplicons $amplicons overlap]
 		}
 		if {$amplicons eq "many"} {
@@ -211,7 +211,7 @@ proc cg_primercheck {args} {
 				set type [lindex [split [file root [gzroot [file tail $db]]] _] 2]
 				foreach line $temp {
 					foreach {c b e base num} $line break
-					lappend ampliconfts $base$num($c:$b-$e)
+					lappend ampliconfts $base${num}($c:$b-$e)
 				}
 			}
 		}
