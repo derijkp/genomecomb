@@ -81,8 +81,8 @@ proc cg_remap {file remapfile resultfile} {
 	}
 	set rline [split [gets $fr] \t]
 	foreach {rchr rbegin rend rdestchr rdestbegin rdestend} $rline break
-	set o [open $resultfile w]
-	set u [open $resultfile.unmapped w]
+	set o [open $resultfile.temp w]
+	set u [open $resultfile.temp.unmapped w]
 	puts $u [join $header \t]
 	puts $o [join $header \t]\torichr\toribegin\toriend
 	while {![eof $f]} {
@@ -112,4 +112,8 @@ proc cg_remap {file remapfile resultfile} {
 	}
 	close $o
 	close $u
+	cg select -s - $resultfile.temp $resultfile.temp2
+	file delete $resultfile.temp
+	file rename -force $resultfile.temp.unmapped $resultfile.unmapped
+	file rename -force $resultfile.temp2 $resultfile
 }
