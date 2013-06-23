@@ -26,6 +26,7 @@ hardmask repeats, and soft or hardmask known (dbsnp) variants based on frequency
 ; **-c concatseq** (--concat): using this option, all regions will be concatenated into one sequence with concatseq between them. To just concatenate the sequences, use -c ''
 ; **-m mapfile** (--mapfile): Create a map file that describes which regions in the newly created fasta file map to which regions in the genome
 ; **--namefield namefield**: entries in the map file will have a name obtained from the **namefield** column in the region file
+; **-cn concatname** (--concatname): The concatname wil be the name of sequence in the fasta file generated (if not given, the name will be based on the file)
 ; **-e concatend** (--concatend): The sequence given by concatend will be added to start and end of the final sequence (only if -c  option was used)
 ; **-ca concatadj** (--concatadj): The concatseq (-c option) will only be added if regions are separated by at least one base. concatadj will be used to concat adjoining regions (and is '' by default)
 

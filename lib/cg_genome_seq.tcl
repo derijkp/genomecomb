@@ -61,6 +61,9 @@ proc cg_genome_seq {args} {
 				set aconcat $value
 				set aconcatlen [string length $econcat]
 			}
+			-cn - --concatname {
+				set concatname $value
+			}
 			-m - --mapfile {
 				set mapfile $value
 				set makemap 1
@@ -105,8 +108,8 @@ proc cg_genome_seq {args} {
 		set namepos [lsearch $header name]
 	}
 	if {$concatlen >= 0} {
-		puts "\>$regionfile concatenated"
-		set name $regionfile
+		if {[info exists concatname]} {set name $concatname} else {set name [file root [file tail $regionfile]]}
+		puts "\>$name concatenated"
 		set firstline 1
 	} else {
 		set name concat
