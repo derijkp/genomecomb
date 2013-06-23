@@ -386,4 +386,26 @@ test select {empty first field bug check} {
 0
 100}
 
+test select {group simple} {
+	cg select -g {type alt} data/expected-annotate-vars_annottest-gene_test.tsv
+} {type-alt	count
+del-	4
+ins-GG	1
+snp-A	11
+snp-A,T	1
+snp-C	6
+snp-C,T	1
+snp-G	5
+snp-T	15
+snp-T,C,A	1
+sub-GGG	1}
+
+test select {group calc col, multiple cols} {
+	cg select -f {{coding=if($test_impact regexp "CDS","coding","noncoding")} *} \
+	-g test_gene \
+	-gc {type {snp del} coding {} count,min(begin),max(begin),max(end),avg(begin)} \
+	data/expected-annotate-vars_annottest-gene_test.tsv tmp/result.tsv
+	exec diff data/expected-selectgroup.tsv tmp/result.tsv
+} {}
+
 testsummarize
