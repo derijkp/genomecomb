@@ -20,7 +20,10 @@ int main(int argc, char *argv[]) {
 	int64_t size=0,totsize=0;
 	int chr1pos,start1pos,end1pos,max1;
 	int start1=-1,end1=-1;
-	int error,curchr=0,nextpos=0;
+	int error,curchr=0;
+#ifdef SHOWPROGRESS
+	int nextpos=0;
+#endif
 	DStringInit(&line);DStringInit(&keepchromosome);
 	chromosome1 = DStringNew();
 	if ((argc != 4)) {
@@ -46,14 +49,18 @@ NODPRINT("%s <-> %s\n",keepchromosome.string,Loc_ChrString(chromosome1))
 			fprintf(stdout,"%s\t%lld\n", keepchromosome.string, (long long int)size);
 NODPRINT("is new\n")
 			size = 0;
+#ifdef SHOWPROGRESS
 			nextpos = 0;
+#endif
 			DStringCopy(&keepchromosome,chromosome1);
 		}
+#ifdef SHOWPROGRESS
 		if (start1 >= nextpos) {
 			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
 			fflush(stderr);
 			nextpos += 10000000;
 		}
+#endif
 		size += end1 - start1;
 	}
 	totsize += size;

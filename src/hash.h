@@ -38,8 +38,8 @@ Hash_bucket *hash_next(Hash_iter *iter);
 #define hash_setvalue(bucket,o) bucket->value = (void *)o;
 #define hash_init() (hash_init_size(64));
 
-unsigned int hash_Dstring_hash (void *key,unsigned int hashtablesize);
-int hash_Dstring_compare(const void* key1, const void* key2);
+unsigned int hash_DString_hash(void *key,unsigned int hashtablesize);
+int hash_DString_compare(const void* key1, const void* key2);
 
 int char_hash_set(Hash_table *hashtable,char *key,void *value);
 void *char_hash_get(Hash_table *hashtable,char *key);

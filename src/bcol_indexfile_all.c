@@ -142,7 +142,7 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 			if (isnum && colinfo[i].numnum >= 256) {
 				/* only put < 256 numbers in hashtable, otherwise only min and max data */
 			} else if (colinfo[i].hashtable->datasize < 500) {
-				bucket = hash_get(colinfo[i].hashtable, (void *)(result1->data+i), hash_Dstring_hash, hash_Dstring_compare, &new);
+				bucket = hash_get(colinfo[i].hashtable, (void *)(result1->data+i), hash_DString_hash, hash_DString_compare, &new);
 				if (new == 0) {
 					/* key was already present in the hashtable */
 					temp = (long int)hash_getvalue(bucket);

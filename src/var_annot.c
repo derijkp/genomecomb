@@ -131,10 +131,12 @@ NODPRINT("\n");
 	skip_header(f1,line1,&numfields1,&pos1);
 	skip_header(f2,line2,&numfields2,&pos2);
 	error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields); pos2++;
-	check_numfieldserror(numfields,numfields2,line2,argv[7],&pos2);
-	chromosome2 = result2->data+chr2pos;
-	type2 = result2->data+type2pos;
-	alt2 = result2->data+alt2pos;
+	if (!error2) {
+		check_numfieldserror(numfields,numfields2,line2,argv[7],&pos2);
+		chromosome2 = result2->data+chr2pos;
+		type2 = result2->data+type2pos;
+		alt2 = result2->data+alt2pos;
+	}
 	sscanf(result2->data[start2pos].string,"%d",&start2);
 	sscanf(result2->data[end2pos].string,"%d",&end2);
 NODPRINT("line2 %s,%d,%d %s",Loc_ChrString(chromosome2),start2,end2,line2->string)

@@ -28,7 +28,7 @@ Dest *bcol_make_getout(Hash_table *hashtable,char *pre,DString *chromosome) {
 	Dest *o;
 	Hash_bucket *bucket;
 	int new;
-	bucket = hash_get(hashtable, (void *)chromosome, hash_Dstring_hash, hash_Dstring_compare, &new);
+	bucket = hash_get(hashtable, (void *)chromosome, hash_DString_hash, hash_DString_compare, &new);
 	if (new == 0) {
 		/* key was already present in the hashtable */
 		o = hash_getvalue(bucket);

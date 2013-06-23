@@ -68,10 +68,12 @@ NODPRINT("%d",datapos[i])
 	skip_header(f1,line1,&numfields1,&pos1);
 	skip_header(f2,line2,&numfields2,&pos2);
 	error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields);	pos2++;
-	check_numfieldserror(numfields,numfields2,line2,argv[5],&pos2);
-	chromosome2 = result2->data+chr2pos;
-	sscanf(result2->data[start2pos].string,"%d",&start2);
-	sscanf(result2->data[end2pos].string,"%d",&end2);
+	if (!error2) {
+		check_numfieldserror(numfields,numfields2,line2,argv[5],&pos2);
+		chromosome2 = result2->data+chr2pos;
+		sscanf(result2->data[start2pos].string,"%d",&start2);
+		sscanf(result2->data[end2pos].string,"%d",&end2);
+	}
 	for (i = 0 ; i < datalen ; i++) {
 		if (datapos[i] != -1) {data[i] = result2->data+datapos[i];}
 	}

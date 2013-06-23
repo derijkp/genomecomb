@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 	hashtable = hash_init();
 	while (!DStringGetTab(line,stdin,col,result,0,NULL)) {
 		chromosome = result->data + col;
-		bucket = hash_get(hashtable, (void *)chromosome, hash_Dstring_hash, hash_Dstring_compare, &new);
+		bucket = hash_get(hashtable, (void *)chromosome, hash_DString_hash, hash_DString_compare, &new);
 		if (new == 0) {
 			/* key was already present in the hashtable */
 			o = hash_getvalue(bucket);

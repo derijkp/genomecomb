@@ -157,7 +157,7 @@ void hash_destroy(Hash_table *table,hash_free_func *freekeyfunc, hash_free_func 
 		while(bucket != NULL) {
 			void *key, *value;
 			if (freekeyfunc != NULL) {
-				*key = hash_getkey(bucket);
+				key = hash_getkey(bucket);
 				freekeyfunc(key);
 			}
 			if (freevaluefunc != NULL) {
@@ -176,7 +176,7 @@ void hash_destroy(Hash_table *table,hash_free_func *freekeyfunc, hash_free_func 
 	free(table);
 }
 
-unsigned int hash_Dstring_hash (void *key,unsigned int hashtablemax)
+unsigned int hash_DString_hash(void *key,unsigned int hashtablemax)
 {
 	register unsigned int result;
 	register int c;
@@ -196,7 +196,7 @@ unsigned int hash_Dstring_hash (void *key,unsigned int hashtablemax)
 	return result & hashtablemax;
 }
 
-int hash_Dstring_compare(const void* key1, const void* key2)
+int hash_DString_compare(const void* key1, const void* key2)
 {
 	DString *ds1 = (DString *)key1, *ds2 = (DString *)key2;
 	return DStringCompare(ds1,ds2);
@@ -223,7 +223,8 @@ int hash_char_compare(const void* key1, const void* key2)
 
 int char_hash_set(Hash_table *hashtable,char *key,void *value) {
 	Hash_bucket *bucket;
-	bucket = hash_get(colinfo[i].hashtable, (void *)key, hash_char_hash, hash_char_compare, &new);
+	int new;
+	bucket = hash_get(hashtable, (void *)key, hash_char_hash, hash_char_compare, &new);
 	if (new == 0) {
 		/* key was already present in the hashtable */
 		hash_setvalue(bucket,value);
@@ -234,9 +235,10 @@ int char_hash_set(Hash_table *hashtable,char *key,void *value) {
 	return new;
 }
 
-void char_hash_get(Hash_table *hashtable,char *key) {
+void *char_hash_get(Hash_table *hashtable,char *key) {
 	Hash_bucket *bucket;
-	bucket = hash_get(colinfo[i].hashtable, (void *)key, hash_char_hash, hash_char_compare, &new);
+	int new;
+	bucket = hash_get(hashtable, (void *)key, hash_char_hash, hash_char_compare, &new);
 	if (new == 0) {
 		/* key was already present in the hashtable */
 		return hash_getvalue(bucket);
@@ -247,7 +249,8 @@ void char_hash_get(Hash_table *hashtable,char *key) {
 
 int dstring_hash_set(Hash_table *hashtable,DString *key,void *value) {
 	Hash_bucket *bucket;
-	bucket = hash_get(colinfo[i].hashtable, (void *)key, hash_DString_hash, hash_DString_compare, &new);
+	int new;
+	bucket = hash_get(hashtable, (void *)key, hash_DString_hash, hash_DString_compare, &new);
 	if (new == 0) {
 		/* key was already present in the hashtable */
 		hash_setvalue(bucket,value);
@@ -260,7 +263,8 @@ int dstring_hash_set(Hash_table *hashtable,DString *key,void *value) {
 
 void *dstring_hash_get(Hash_table *hashtable,char *key) {
 	Hash_bucket *bucket;
-	bucket = hash_get(colinfo[i].hashtable, (void *)key, hash_DString_hash, hash_DString_compare, &new);
+	int new;
+	bucket = hash_get(hashtable, (void *)key, hash_DString_hash, hash_DString_compare, &new);
 	if (new == 0) {
 		/* key was already present in the hashtable */
 		return hash_getvalue(bucket);

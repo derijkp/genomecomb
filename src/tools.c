@@ -484,13 +484,12 @@ DStringArray *DStringArrayNew(int size) {
 DStringArray *DStringArrayFromChar(char *string,char sep) {
 	DStringArray *result;
 	char *cur,*prev;
-	int count=1,stringsize,pos;
+	int count=1,pos;
 	cur=string;
 	while(*cur) {
 		if (*cur == sep) count++;
 		cur++;
 	}
-	stringsize = cur-string;
 	result = DStringArrayNew(count);
 	result->datablock = DStringNew();
 	DStringSet(result->datablock,string);
