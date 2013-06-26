@@ -193,14 +193,14 @@ proc cg_regcollapse {args} {
 	set pos 0
 	set resultfile stdout
 	set scorefield score
-	set numfield num
+	set numfields num
 	foreach {key value} $args {
 		switch -- $key {
 			-s {
 				set scorefield $value
 			}
 			-n {
-				set numfield $value
+				set numfields $value
 			}
 			-o {
 				set resultfile $value
