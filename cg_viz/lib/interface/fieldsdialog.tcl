@@ -11,12 +11,12 @@ fieldsdialog method init args {
 		-height 10 \
 		-width 10
 	grid $object.options.buttons -row 0 -column 2 -rowspan 2 -sticky nesw
-	button $object.options.buttons.button1 \
+	button $object.options.buttons.addfields \
 		-text -->
-	grid $object.options.buttons.button1 -row 1 -column 0 -sticky nesw
-	button $object.options.buttons.button2 \
+	grid $object.options.buttons.addfields -row 1 -column 0 -sticky nesw
+	button $object.options.buttons.delfields \
 		-text <--
-	grid $object.options.buttons.button2 -row 2 -column 0 -sticky nesw
+	grid $object.options.buttons.delfields -row 2 -column 0 -sticky nesw
 	button $object.options.buttons.button3 \
 		-text Basic
 	grid $object.options.buttons.button3 -row 4 -column 0 -sticky nesw
@@ -64,16 +64,16 @@ fieldsdialog method init args {
 	grid rowconfigure $object.options.buttons 13 -uniform {}
 	Classy::ListBox $object.options.selfields  \
 		-height 4
-	grid $object.options.selfields -row 1 -column 0 -sticky nesw
+	grid $object.options.selfields -row 0 -column 0 -rowspan 2 -sticky nesw
 	Classy::ListBox $object.options.fields  \
 		-height 4 \
 		-width 10
 	grid $object.options.fields -row 1 -column 3 -sticky nesw
-	Classy::Entry $object.options.search \
-		-label Search \
-		-combo 20 \
-		-width 4
-	grid $object.options.search -row 0 -column 0 -sticky nesw
+#	Classy::Entry $object.options.search \
+#		-label Search \
+#		-combo 20 \
+#		-width 4
+#	grid $object.options.search -row 0 -column 0 -sticky nesw
 	Classy::Entry $object.options.calc \
 		-label Calculated \
 		-width 4
@@ -91,9 +91,13 @@ fieldsdialog method init args {
 		-title Toplevel
 	$object.options.paned configure \
 		-window [varsubst object {$object.options.selfields}]
-	$object.options.buttons.button1 configure \
+	$object.options.selfields configure \
+		-filtervariable [privatevar $object filterselfields]
+	$object.options.fields configure \
+		-filtervariable [privatevar $object filterfields]
+	$object.options.buttons.addfields configure \
 		-command [varsubst object {$object addfields}]
-	$object.options.buttons.button2 configure \
+	$object.options.buttons.delfields configure \
 		-command [varsubst object {$object delfields}]
 	$object.options.buttons.button3 configure \
 		-command [varsubst object {$object basicfields}]
@@ -107,9 +111,9 @@ fieldsdialog method init args {
 		-command [varsubst object {$object fieldsdown}]
 	$object.options.buttons.button8 configure \
 		-command [varsubst object {$object editfields}]
-	$object.options.search configure \
-		-command [varsubst object {$object search}] \
-		-textvariable [privatevar $object search]
+#	$object.options.search configure \
+#		-command [varsubst object {$object search}] \
+#		-textvariable [privatevar $object search]
 	$object.options.calc configure \
 		-command [varsubst object {$object addcalc}]
 	$object add go Go [varsubst object {$object go}] default
@@ -144,11 +148,11 @@ fieldsdialog method redraw {} {
 	set active [$object.options.fields index active]
 	$object.options.fields configure -content $fields
 	set showtfields [list_lremove $tfields $fields]
-	set search [$object.options.search get]
-	if {$search ne "" && $search ne "*"} {
-		set poss [list_find -regexp $showtfields $search]
-		set showtfields [list_sub $showtfields $poss]
-	}
+#	set search [$object.options.search get]
+#	if {$search ne "" && $search ne "*"} {
+#		set poss [list_find -regexp $showtfields $search]
+#		set showtfields [list_sub $showtfields $poss]
+#	}
 	$object.options.selfields configure -content $showtfields
 	$object selectfields $selection
 	$object.options.fields.list activate $active
@@ -198,6 +202,9 @@ fieldsdialog method addfields {} {
 fieldsdialog method delfields {} {
 	private $object fields tfields
 	set movefields [$object.options.fields get]
+	if {![llength $movefields]} {
+		set movefields [$object.options.fields get 0 end]
+	}
 	set fields [list_lremove $fields $movefields]
 	$object redraw
 }
@@ -298,9 +305,9 @@ fieldsdialog method addcalc {args} {
 	$object redraw
 }
 
-fieldsdialog method search {args} {
-	$object redraw
-}
+#fieldsdialog method search {args} {
+#	$object redraw
+#}
 
 fieldsdialog method editfields {} {
 	private $object tfields fields
