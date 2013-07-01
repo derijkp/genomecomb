@@ -1,12 +1,3 @@
-mainw method querybuilder_filteroperators {args} {
-	private $object qoperators qoperatorsfilter
-	set qoperators {== != < <= > >= regexp contains oneof shares }
-#	if {$qoperatorsfilter ne "" && $qoperatorsfilter ne "*"} {
-#		set poss [list_find -regexp $qoperators $qoperatorsfilter]
-#		set qoperators [list_sub $qoperators $poss]
-#	}
-}
-
 mainw method querybuilder_fillvalues {args} {
 	private $object qvalues qvaluestext fieldsw valuesw valuew
 	set w $object.querybuilder.options.paned
@@ -17,6 +8,7 @@ mainw method querybuilder_fillvalues {args} {
 		set text [list "All values"]
 	}
 	while {![isint [lindex $list end 1]]} {
+		if {![llength $list]} break
 		set line [list_pop list]
 		lappend text "[lindex $line 1]: [lindex $line 0]"
 	}
@@ -36,7 +28,10 @@ mainw method querybuilder_fillvalues {args} {
 	if {![inlist $qvalues [$valuew get]]} {
 		$valuesw activate [lindex $qvalues 0]
 		$valuesw set [lindex $qvalues 0]
+	} else {
+		$valuesw set [$valuew get]
 	}
+	$valuew set [$valuesw get]
 #	set qvalues {}
 #	foreach value $list num $qnums {
 #		lappend qvalues "$value ($num)"
@@ -49,12 +44,19 @@ mainw method querybuilder_selfield {value} {
 }
 
 mainw method querybuilder_browsefield {args} {
+	private $object operatorsw valuesw
+	if {[$operatorsw get] eq ""} {
+		catch {$operatorsw set [$operatorsw get 0]}
+	}
 	Classy::todo $object querybuilder_fillvalues
+#	if {[$valuesw get] eq ""} {
+#		catch {$valuesw set [$valuesw get 0]}
+#	}
+#	$object querybuilder_browsevalue
 }
 
 mainw method querybuilder_browsevalue {args} {
 	private $object valuesw valuew
-	set w $object.querybuilder.options.paned
 	$valuew set [$valuesw get]
 }
 
@@ -87,8 +89,7 @@ mainw method querybuilder_insert {insert {join and}} {
 	$queryw insert insert $insert
 }
 
-mainw method querybuilder_add {command} {
-putsvars command
+mainw method querybuilder_add {command {join and}} {
 	private $object fieldsw operatorsw valuew
 	upvar #0 [$object.buttons.query cget -textvariable] query
 	set w $object.querybuilder.options.paned
@@ -103,46 +104,47 @@ putsvars command
 			append insert "\$$field, "
 		}
 		append insert "$operator $value \) > 0"
-		set join and
 		$object querybuilder_insert $insert $join
+	} elseif {$command eq "value"} {
+		$object querybuilder_insert "\$\{[join $fields "\}\$\{"]\}" $join
 	} elseif {$command eq "region"} {
 		destroy $object.region
 		Classy::Dialog $object.region -title "Select region"
 		$object.region option entry Chromosome [privatevar $object region(chr)]
 		$object.region option entry Begin [privatevar $object region(begin)]
 		$object.region option entry End [privatevar $object region(end)]
-		$object.region add go Go "$object querybuilder_insert region(\[getprivate $object region(chr) \]:\[getprivate $object region(begin) \]-\[getprivate $object region(end) \])" default
+		$object.region add go Go "$object querybuilder_insert region(\[getprivate $object region(chr) \]:\[getprivate $object region(begin) \]-\[getprivate $object region(end) \]) $join" default
 	} elseif {$command eq "compare"} {
 		private $object compare tdata
 		destroy $object.compare
 		Classy::Dialog $object.compare -title "Compare"
 		set compare(types) {
+			{compare returns sm,df,mm,un depending on type of match between two samples}
 			{same same: all samples have the same genotype (does not have to be a variant) (all sequenced)}
 			{sm same: variant with the same genotype in all given samples (all sequenced)}
 			{df different: variant in some, reference in other (all sequenced)}
 			{mm mismatch; variant in all, but different genotypes (all sequenced)}
 			{un unsequenced in some samples, variant in one of the others}
-			{compare returns sm,df,mm,un depending on type of match between two samples}
 		}
 		$object.compare option select Comparison [privatevar $object compare(type)] [privatevar $object compare(types)]
 		set compare(type) [lindex $compare(types) 0]
 		set compare(samples) [cg select -n $tdata(file)]
 		$object.compare option listbox Sample1 [privatevar $object compare(selsamples)] [privatevar $object compare(samples)] -selectmode multiple
-		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(type) \] 0\]\(\[join \[getprivate $object compare(selsamples) \] ,\]\)\"" default
-	} elseif {$command in {min max avg}} {
+		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(type) \] 0\]\(\[join \[getprivate $object compare(selsamples) \] ,\]\)\" $join" default
+	} elseif {$command in {min max lmin lmax avg}} {
 		private $object compare tdata
 		destroy $object.compare
 		Classy::Dialog $object.compare -title "Functions"
 		set compare(functypes) {
-			{min : min(a1,a2,...)**: returns the minimum of a1, a2, ... a1, etc. can be a list of numbers (separated by commas, spaces or ;)}
-			{max : max(a1,a2,...)**: returns the maximum of a1, a2, ... a1, etc. can be a list of numbers (separated by commas, spaces or ;)}
+			{lmin : lmin(a1,a2,...)**: returns the minimum of a1, a2, ... a1, etc. can be a list of numbers (separated by commas, spaces or ;)}
+			{lmax : lmax(a1,a2,...)**: returns the maximum of a1, a2, ... a1, etc. can be a list of numbers (separated by commas, spaces or ;)}
 			{avg : returns the average of the values given. Non-number values are ignored. If no number was given, the answer will be NaN}
 		}
 		$object.compare option select Function [privatevar $object compare(functype)] [privatevar $object compare(functypes)]
 		set compare(functype) $command
 		set compare(fields) [cg select -h $tdata(file)]
 		$object.compare option listbox Sample1 [privatevar $object compare(selfields)] [privatevar $object compare(fields)] -selectmode multiple
-		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(functype) \] 0\]\(\[join \[getprivate $object compare(selfields) \] ,\]\)\"" default
+		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(functype) \] 0\]\(\$\[join \[getprivate $object compare(selfields) \] ,\$\]\)\" $join" default
 	} else {
 		set insert {}
 		foreach field $fields {
@@ -161,19 +163,48 @@ putsvars command
 				}
 			}
 		}
-		set insert [join $insert "\n    $command "]
-		set join $command
-		$object querybuilder_insert $insert $join
+		if {$command eq "if"} {
+			private $object if
+			destroy $object.if
+			set if(if) [join $insert " and "]
+			set if(true) 1
+			set if(false) 0
+			Classy::Dialog $object.if -title "Conditional value (if)"
+			$object.if option entry Criterion [privatevar $object if(if)]
+			$object.if option entry Truevalue [privatevar $object if(true)]
+			$object.if option entry FalseValue [privatevar $object if(false)]
+			$object.if add go Go "$object querybuilder_insert if(\[getprivate $object if(if) \],\[getprivate $object if(true) \],\[getprivate $object if(false) \]) $join" default
+		} else {
+			set insert [join $insert "\n    $command "]
+			set join $command
+			$object querybuilder_insert $insert $join
+		}
 	}
 }
 
 mainw method querybuilder {args} {
-	private $object qfields qvalues fieldsw operatorsw valuesw valuew queryw qfieldsfilter valuesfilter
+	private $object qfields qoperators qvalues fieldsw operatorsw valuesw valuew queryw qfieldsfilter valuesfilter
+	set qfields [$object.tb tfields]
+	set qoperators {== != < <= > >= regexp contains shares }
 	set qfieldsfilter {}
 	set valuesfilter {}
-	set var [$object.buttons.query cget -textvariable]
 	destroy $object.querybuilder
 	Classy::Dialog $object.querybuilder -title Query
+	if {[llength $args]} {
+		$object.querybuilder configure -title "Calcualted field builder"
+		set fieldbuilder 1
+		set fieldbuilderw [lindex $args 0]
+		set var [privatevar $object fieldcalc]
+		Classy::Entry $object.querybuilder.options.fieldname -label Fieldname -textvariable [privatevar $object fieldname]
+		pack $object.querybuilder.options.fieldname -side top -expand yes -fill x
+		set funcbuttons {value if count lmin lmax avg compare percent and or region isnum}
+		set join ""
+	} else {
+		set fieldbuilder 0
+		set var [$object.buttons.query cget -textvariable]
+		set funcbuttons {and or count region compare lmin lmax avg if isnum percent}
+		set join and
+	}
 	set w $object.querybuilder.options.paned
 	ttk::panedwindow $w -orient horizontal
 	pack $w -fill both -expand yes
@@ -193,12 +224,8 @@ mainw method querybuilder {args} {
 	set w $w.pane2
 	ttk::panedwindow $w -orient horizontal
 	frame $w.operators -borderwidth 0 -highlightthickness 0
-	button $w.operators.header -text "Operator" -command "[list set [privatevar $object qoperatorsfilter] {}]; [list $object querybuilder_filteroperators]"
+	button $w.operators.header -text "Operator"
 	pack $w.operators.header -fill x
-#	Classy::Entry $w.operators.filter -label Filter \
-#		-textvariable [privatevar $object qoperatorsfilter] \
-#		-command [list $object querybuilder_filteroperators]
-#	pack $w.operators.filter -fill x
 	set operatorsw $w.operators.operators
 	Classy::ListBox $w.operators.operators \
 		-listvariable [privatevar $object qoperators] \
@@ -221,14 +248,14 @@ mainw method querybuilder {args} {
 		-listvariable [privatevar $object qvalues] \
 		-filtervariable [privatevar $object qvaluesfilter] \
 		-command [list $object querybuilder_selvalue] \
-		-browsecommand [list $object querybuilder_browsevalue] \
+		-browsecommand [list Classy::todo $object querybuilder_browsevalue] \
 		-exportselection 0 -selectmode extended
 	pack $w.values.values -fill both -expand yes
 	# query
 	frame $w.query -borderwidth 0 -highlightthickness 0
 	frame $w.query.buttons -borderwidth 0 -highlightthickness 0
-	foreach command {and or count region compare min max avg} {
-		button $w.query.buttons.$command -text $command -command [list $object querybuilder_add $command]
+	foreach command $funcbuttons {
+		button $w.query.buttons.$command -text $command -command [list $object querybuilder_add $command $join]
 		pack $w.query.buttons.$command -side left
 	}
 	set queryw $w.query.query
@@ -246,14 +273,17 @@ mainw method querybuilder {args} {
 	$w add $w.values
 	$w add $w.query
 	set w $object.querybuilder.options.paned
-	$object querybuilder_filteroperators
-	$object querybuilder_fillvalues
-	Classy::todo $object querybuilder_browsevalue
-	$object.querybuilder add query "Query" "[list $object query]; destroy $object.querybuilder"
+	if {$fieldbuilder} {
+		$object.querybuilder add query "Query" "[list $fieldbuilderw] addcalc \"\$\{[privatevar $object fieldname]\}=\$\{$var\}\"; destroy $object.querybuilder"
+	} else {
+		$object.querybuilder add query "Query" "[list $object query]; destroy $object.querybuilder"
+	}
 	$object.querybuilder add clear "Clear" "[list set $var {}]"
+	$object querybuilder_fillvalues
 	update
-	$w.fields.fields set [$w.fields.fields get 0]
-	$operatorsw set [$operatorsw get 0]
-	catch {$valuesw set [$valuesw get 0]}
-	after idle $object querybuilder_browsefield
+	set field [$w.fields.fields get 0]
+	if {$field ne ""} {
+		$w.fields.fields set $field
+		Classy::todo $object querybuilder_browsefield
+	}
 }

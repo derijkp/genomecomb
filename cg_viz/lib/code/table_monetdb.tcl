@@ -117,7 +117,7 @@ table_monetdb method tfields {} {
 
 table_monetdb method qfields {} {
 	private $object tdata
-	return $tdata(qfields)
+	return [get tdata(qfields) ""]
 }
 
 table_monetdb method fields {args} {

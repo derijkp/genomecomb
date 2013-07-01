@@ -46,8 +46,6 @@ fieldsdialog method init args {
 		-text Edit
 	grid $object.options.buttons.button8 -row 7 -column 0 -sticky nesw
 	grid columnconfigure $object.options.buttons 0 -uniform {}
-	grid columnconfigure $object.options.buttons 1 -uniform {}
-	grid columnconfigure $object.options.buttons 2 -uniform {}
 	grid rowconfigure $object.options.buttons 0 -uniform {} -weight 1
 	grid rowconfigure $object.options.buttons 1 -uniform {}
 	grid rowconfigure $object.options.buttons 2 -uniform {}
@@ -60,30 +58,31 @@ fieldsdialog method init args {
 	grid rowconfigure $object.options.buttons 9 -uniform {}
 	grid rowconfigure $object.options.buttons 10 -uniform {}
 	grid rowconfigure $object.options.buttons 11 -uniform {} -weight 1
-	grid rowconfigure $object.options.buttons 12 -uniform {}
-	grid rowconfigure $object.options.buttons 13 -uniform {}
 	Classy::ListBox $object.options.selfields  \
 		-height 4
 	grid $object.options.selfields -row 0 -column 0 -rowspan 2 -sticky nesw
 	Classy::ListBox $object.options.fields  \
 		-height 4 \
 		-width 10
-	grid $object.options.fields -row 1 -column 3 -sticky nesw
-#	Classy::Entry $object.options.search \
-#		-label Search \
-#		-combo 20 \
-#		-width 4
-#	grid $object.options.search -row 0 -column 0 -sticky nesw
+	grid $object.options.fields -row 1 -column 3 -columnspan 2 -sticky nesw
 	Classy::Entry $object.options.calc \
-		-label Calculated \
+		-label {Calculated Field} \
 		-width 4
 	grid $object.options.calc -row 0 -column 3 -sticky nesw
+	button $object.options.button1 \
+		-text Builder
+	grid $object.options.button1 -row 0 -column 4 -sticky nesw
 	grid columnconfigure $object.options 0 -uniform {}
 	grid columnconfigure $object.options 1 -uniform {}
 	grid columnconfigure $object.options 2 -uniform {}
 	grid columnconfigure $object.options 3 -uniform {} -weight 1
+	grid columnconfigure $object.options 4 -uniform {}
+	grid columnconfigure $object.options 5 -uniform {}
+	grid columnconfigure $object.options 6 -uniform {}
 	grid rowconfigure $object.options 0 -uniform {}
 	grid rowconfigure $object.options 1 -uniform {} -weight 1
+	grid rowconfigure $object.options 2 -uniform {}
+	grid rowconfigure $object.options 3 -uniform {}
 
 	if {"$args" == "___Classy::Builder__create"} {return $object}
 	# Parse this
@@ -91,10 +90,6 @@ fieldsdialog method init args {
 		-title Toplevel
 	$object.options.paned configure \
 		-window [varsubst object {$object.options.selfields}]
-	$object.options.selfields configure \
-		-filtervariable [privatevar $object filterselfields]
-	$object.options.fields configure \
-		-filtervariable [privatevar $object filterfields]
 	$object.options.buttons.addfields configure \
 		-command [varsubst object {$object addfields}]
 	$object.options.buttons.delfields configure \
@@ -111,11 +106,14 @@ fieldsdialog method init args {
 		-command [varsubst object {$object fieldsdown}]
 	$object.options.buttons.button8 configure \
 		-command [varsubst object {$object editfields}]
-#	$object.options.search configure \
-#		-command [varsubst object {$object search}] \
-#		-textvariable [privatevar $object search]
+	$object.options.selfields configure \
+		-filtervariable [privatevar $object filterselfields]
+	$object.options.fields configure \
+		-filtervariable [privatevar $object filterfields]
 	$object.options.calc configure \
 		-command [varsubst object {$object addcalc}]
+	$object.options.button1 configure \
+		-command [varsubst object {$object fieldbuilder}]
 	$object add go Go [varsubst object {$object go}] default
 	$object persistent set 
 	# Configure initial arguments
@@ -271,6 +269,7 @@ fieldsdialog method setcalc {args} {
 
 fieldsdialog method addcalc {args} {
 	private $object tfields fields
+putsvars args
 	if {![llength $args]} {
 		catch {destroy $object.calcfield}
 		Classy::Dialog $object.calcfield -title "Add calculated field"
@@ -303,6 +302,7 @@ fieldsdialog method addcalc {args} {
 		}
 	}
 	$object redraw
+	Classy::todo $object.options.fields activate $code
 }
 
 #fieldsdialog method search {args} {
@@ -318,4 +318,12 @@ fieldsdialog method editfields {} {
 	$object.editfields.options.text insert end [join $fields \n]
 	$object.editfields add change "Change" "[list $object] fields \[split \[$object.editfields.options.text get 1.0 end\] \\n\]"
 	$object.editfields persistent remove change
+}
+
+fieldsdialog method fieldbuilder {} {
+	set data [split [$object.options.calc get] =]
+	set p [winfo parent $object]
+	private $p fieldname fieldcalc
+	foreach {fieldname fieldcalc} $data break
+	$p querybuilder $object
 }

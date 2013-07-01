@@ -836,6 +836,11 @@ proc genomecombenv {} {
 		set genomecombdir $tcl_dirtcl
 		set externdir $genomecombdir/bin
 		set env(PATH) $appdir/bin:$externdir:$genomecombdir:$env(PATH)
+	} elseif {[file tail $appdir] eq "cg_viz"} {
+		# we are being run from dev cg_viz
+		set genomecombdir [file dir $appdir]
+		set externdir $genomecombdir/extern
+		set env(PATH) $genomecombdir/bin:$externdir:$genomecombdir:$env(PATH)
 	} else {
 		# we are being run from dev 
 		set genomecombdir $appdir
