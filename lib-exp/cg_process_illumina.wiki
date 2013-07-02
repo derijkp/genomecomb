@@ -1,0 +1,19 @@
+= Process_illumina =
+
+== Format ==
+cg project_illumina ?options? dir dbdir
+
+== Summary ==
+process an illumina sequencing project, results in genomecomb dir with multicompar, etc.
+
+== Description ==
+
+== Arguments ==
+; **dir**: directory with illumina data for different samples, each sample in a sub directory. The proc will search for fastq files in dir/samplename/fastq/
+; **dbdir**: directory containing reference data (genome sequence, annotation, ...)
+
+== Options ==
+supports job options (-d)
+
+== Category ==
+Conversion

@@ -1,0 +1,36 @@
+= Process_mastr =
+
+== Format ==
+cg project_mastr ?options? mastrdesigndir mastrprojectdir dbdir
+
+== Summary ==
+process an mastr sequencing project, results in genomecomb project dir (mastrprojectdir) with 
+multicompar, etc.
+
+== Description ==
+
+== Arguments ==
+; **mastrdesigndir**: directory with data about the mastr design. The mastrname is the root name of the 
+mastrdesigndir (e.g. the mastername of mastrdesigndir test.mastr would be test). This directory
+should contain at least one file named amplicons-<mastrname>.tsv that contains the mastr design.
+This should be a tab separated file with at least the columns: name, chromosome, begin, end
+showing the positions of the amplicons. If the fields primer1_end and primer2_begin are also given,
+the primers can be properly clipped.
+; **mastrprojectdir**: genomecomb style project directory that will be made containing a 
+directory (with bams, var lists, ...) per sample, and a compar dir containing multicompar 
+data on the project
+; **dbdir**: directory containing reference data (genome sequence, annotation, ...)
+
+== Options ==
+supports job options (-d <num> or -d sge)
+
+== Example ==
+{{{
+export GATK=/opt/bio/GenomeAnalysisTK-2.4-9-g532efad/GenomeAnalysisTK.jar
+export PICARD=/opt/bio/picard-tools-1.87
+cg process_conv_illmastr 130625_M01318_0013_000000000-A546C testproject
+cg process_mastr -d 2 test.mastr testproject /complgen/refseq/hg19
+}}}
+
+== Category ==
+Process
