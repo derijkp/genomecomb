@@ -119,13 +119,11 @@ proc job_process_distr {} {
 	if {![llength $queue]} return
 	set cgjob(queue) {}
 	set jobroot [pwd]
-	set running [array names cgjob_running]
-
 	set initlen [llength $queue]
 	# join [list_subindex $queue {0 1 2 3 4 5 6}] \n
 	while {[llength $queue]} {
 		set countrunning 0
-		foreach job $running {
+		foreach job [array names cgjob_running] {
 			incr countrunning [get cgjob_info($job,cores) 1]
 		}
 		if {$countrunning >= $cgjob(distribute)} {
