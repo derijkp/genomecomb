@@ -743,6 +743,11 @@ proc tsv_select_addaggregatecalc {colVar colactionsVar todolist} {
 				set resultdata($_groupname,$_colname,$_val,m2) [expr {$resultdata($_groupname,$_colname,$_val,m2) + $delta*(${@val@}-$resultdata($_groupname,$_colname,$_val,avg))}]
 			} [list @val@ $fieldused]]
 		}
+		if {[inlist $todo distinct]} {
+			append colactions [string_change {
+				dict set resultdata($_groupname,$_colname,$_val,d) ${@val@} 1
+			} [list @val@ $fieldused]]
+		}
 	}
 	#	set stddev [expr {sqrt($m2/($n - 1))}]
 	#	set stddev [expr {sqrt($m2/$n)}]
@@ -774,6 +779,10 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 				} else {
 					lappend result ""
 				}
+			} [list @field@ $field]]
+		} elseif {$func eq "distinct"} {
+			append calcresults [string_change {
+				lappend result [join [lsort -dict [dict keys [get resultdata($_groupname,$col,@field@,d) ""]]] ,]
 			} [list @field@ $field]]
 		}
 	}
@@ -895,7 +904,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				}
 			}
 		}
-		set typetodoa {max max min min count {} avg {avg} stddev {avg m2}}
+		set typetodoa {max max min min count {} avg {avg} stddev {avg m2} distinct distinct}
 		set grouptypes {}
 		foreach grouptype $grouptypelist {
 			if {$grouptype eq "count"} {
