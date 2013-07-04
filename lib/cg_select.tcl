@@ -16,7 +16,7 @@ proc tsv_select_compare {ids neededfieldsVar} {
 		set id [string trim $id]
 		lappend fields sequenced-$id alleleSeq1-$id alleleSeq2-$id
 	}
-	lappend neededfields {*}$fieldsBun Dem
+	lappend neededfields {*}$fields
 	set temp "\[compare \$\{[join $fields "\} \$\{"]\}\]"
 }
 
@@ -758,6 +758,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		}
 		foreach field $group {
 			if {![info exists calccols($field)]} {
+				if {![inlist $header $field]} {
+					error "group field $field not present in file"
+				}
 				lappend neededfields $field
 			}
 		}
@@ -778,6 +781,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				}
 				lappend grouptypes $func $val
 				if {![info exists calccols($val)]} {
+					if {![inlist $header $val]} {
+						error "group field $val not present in file"
+					}
 					lappend neededfields $val
 				}
 			} else {
@@ -786,6 +792,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		}
 		foreach {field values} $groupcol {
 			if {![info exists calccols($field)]} {
+				if {![inlist $header $field]} {
+					error "group field $field not present in file"
+				}
 				lappend neededfields $field
 			}
 		}
@@ -831,7 +840,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				}
 				lappend col \$\{$field\}
 				if {[llength $filter]} {
-					lappend colquery "\[inlist \{$filter\} \$$field\]"
+					lappend colquery "\[inlist \{$filter\} \$\{$field\}\]"
 				}
 			}
 			append colactions "set _colname \"[join $col -]\"\n"
