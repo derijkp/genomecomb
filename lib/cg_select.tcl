@@ -682,113 +682,6 @@ proc tsv_select_expandcode {header code neededfieldsVar} {
 	tsv_select_detokenize $tokens $header neededfields
 }
 
-proc tsv_select_sampleusefield {header field sample calccolsVar precalcVar} {
-	upvar $calccolsVar calccols
-	upvar $precalcVar precalc
-	if {[info exists calccols($field)]} {
-		set fieldused $fiels
-		lappend precalc "set $field \[$calccols($field) \$[join $neededfields " \$"]\]" \n
-	} elseif {[info exists calccols($field-$sample)]} {
-		set fieldused ${field}-$sample
-		lappend precalc "set $fieldused \[$calccols($fieldused) \$[join $neededfields " \$"]\]" \n
-	} elseif {[inlist $header $field]} {
-		set fieldused $field
-	} elseif {[inlist $header ${field}-$sample]} {
-		set fieldused ${field}-$sample
-	} else {
-		error "unknown field $field"
-	}
-	return $fieldused
-}
-
-proc tsv_select_addaggregatecalc {colVar colactionsVar todolist} {
-	upvar $colVar col
-	upvar $colactionsVar colactions
-	# add calculations for everything needed for aggregates to colactions
-	append colactions {set resultgroups($_groupname) 1} \n
-	append colactions "set _colname \"[join $col -]\"\n"
-	append colactions {set resultdatacols($_colname) 1} \n
-	append colactions {incr resultcount($_groupname,$_colname)} \n
-	foreach {item todo} $todolist {
-		foreach {field fieldused} $item break
-		append colactions [string_change {set _val {@val@}} [list @val@ $field]] \n
-		if {[inlist $todo max]} {
-			append colactions [string_change {
-				if {![info exists resultdata($_groupname,$_colname,$_val,max)] || ${@val@} > $resultdata($_groupname,$_colname,$_val,max)} {
-					set resultdata($_groupname,$_colname,$_val,max) ${@val@}
-				}
-			} [list @val@ $fieldused]]
-		}
-		if {[inlist $todo min]} {
-			append colactions [string_change {
-				if {![info exists resultdata($_groupname,$_colname,$_val,min)] || ${@val@} < $resultdata($_groupname,$_colname,$_val,min)} {
-					set resultdata($_groupname,$_colname,$_val,min) ${@val@}
-				}
-			} [list @val@ $fieldused]]
-		}
-		if {[inlist $todo avg]} {
-			append colactions [string_change {
-				if {![info exists resultdata($_groupname,$_colname,$_val,avg)]} {
-					set resultdata($_groupname,$_colname,$_val,avg) 0.0
-				}
-				set _delta [expr {${@val@}-$resultdata($_groupname,$_colname,$_val,avg)}]
-				set resultdata($_groupname,$_colname,$_val,avg) [expr {$resultdata($_groupname,$_colname,$_val,avg) + $_delta/$resultcount($_groupname,$_colname)}]
-			} [list @val@ $fieldused]]
-		}
-		if {[inlist $todo m2]} {
-			append colactions [string_change {
-				if {![info exists resultdata($_groupname,$_colname,$_val,m2)]} {
-					set resultdata($_groupname,$_colname,$_val,m2) 0.0
-				}
-				set resultdata($_groupname,$_colname,$_val,m2) [expr {$resultdata($_groupname,$_colname,$_val,m2) + $delta*(${@val@}-$resultdata($_groupname,$_colname,$_val,avg))}]
-			} [list @val@ $fieldused]]
-		}
-		if {[inlist $todo distinct]} {
-			append colactions [string_change {
-				dict set resultdata($_groupname,$_colname,$_val,d) ${@val@} 1
-			} [list @val@ $fieldused]]
-		}
-	}
-	#	set stddev [expr {sqrt($m2/($n - 1))}]
-	#	set stddev [expr {sqrt($m2/$n)}]
-}
-
-proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
-	upvar $calccolsVar calccols
-	foreach {func field} $grouptypes {
-		if {$func eq "count"} {
-			append calcresults {
-				lappend result [get resultcount($_groupname,$col) 0]
-			}
-		} elseif {$func eq "max"} {
-			append calcresults [string_change {
-				lappend result [get resultdata($_groupname,$col,@field@,max) ""]
-			} [list @field@ $field]]
-		} elseif {$func eq "min"} {
-			append calcresults [string_change {
-				lappend result [get resultdata($_groupname,$col,@field@,min) ""]
-			} [list @field@ $field]]
-		} elseif {$func eq "avg"} {
-			append calcresults [string_change {
-				lappend result [get resultdata($_groupname,$col,@field@,avg) ""]
-			} [list @field@ $field]]
-		} elseif {$func eq "stddev"} {
-			append calcresults [string_change {
-				if {[info exists resultdata($_groupname,$col,@field@,m2)} {
-					lappend result [expr {$resultdata($_groupname,$col,@field@,m2)/$resultcount($_groupname,$col)}]
-				} else {
-					lappend result ""
-				}
-			} [list @field@ $field]]
-		} elseif {$func eq "distinct"} {
-			append calcresults [string_change {
-				lappend result [join [lsort -dict [dict keys [get resultdata($_groupname,$col,@field@,d) ""]]] ,]
-			} [list @field@ $field]]
-		}
-	}
-	return $calcresults
-}
-
 proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}}} {
 # putsvars query qfields sortfields newheader sepheader f stdin out stdout h inverse group groupcols index
 	fconfigure $f -buffering none
@@ -843,226 +736,39 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		lappend pipe $sort
 	}
 # putslog stderr ----------\n$query\n----------
-	if {$query ne "" || $group ne "" ||[llength $qfields]} {
+	if {$group ne ""} {
+		append tclcode \n [tsv_select_group $header $pquery $qposs $qfields $group $groupcols $neededfields]
+		#file_write /tmp/temp.tcl $tclcode\n
+		#putsvars tclcode
+		lappend pipe [list cg exec $tclcode]
+	} elseif {$query ne "" || [llength $qfields]} {
 		set outcols {}
-		set todo {}
 		set num 0
-		# neededfields will be the same for all procs, so first gather all we need using todo list
-		# then make the procs from todo list later
+		# start making code
+		# neededfields will contain all fields needed by the query proc and by the output procs
+		# as the same args will be used for all, start with a placeholder (@neededfields@) here 
+		# that will be filled in at the end
+		# outcols contains the column number for plain fields and a proc name for calculated fields
+		set tclcode "package require genomecomb\n"
 		foreach el $qposs field $qfields {
 			if {[isint $el]} {
 				lappend outcols $el
 			} elseif {$el eq ""} {
 				# empty instead of code or int will directly output ROW
 				lappend outcols {}
+			} elseif {[info exists calccols($field)]} {
+				lappend outcols $calccols($field)
 			} else {
 				set code [tsv_select_expandcode $header [lindex $el 1] neededfields]
 				lappend outcols make_col$num
-				lappend todo make_col$num $code
+				append tclcode [tsv_select_makecol make_col$num $code]
 				set calccols($field) make_col$num
 			}
 			incr num
 		}
-		foreach field $group {
-			if {![info exists calccols($field)]} {
-				if {![inlist $header $field]} {
-					error "group field $field not present in file"
-				}
-				lappend neededfields $field
-			}
-		}
-		# more than one groupcol not supported (yet)
-		if {![llength $groupcols]} {
-			set groupcol count
-		} else {
-			set groupcol [lindex $groupcols 0]
-		}
-		set gsamples {}
-		set grouptypelist [split [list_pop groupcol] ,]
-		foreach {field values} $groupcol {
-			if {$field eq "sample"} {
-				if {[llength $values]} {
-					set gsamples $values
-				} else {
-					set gsamples [samples $header]
-				}
-				continue
-			}
-			if {![info exists calccols($field)]} {
-				if {[inlist $header $field]} {
-					lappend neededfields $field
-				} elseif {[llength $gsamples]} {
-					foreach sample $gsamples {
-						if {[inlist $header $field-$sample]} {
-							lappend neededfields $field-$sample
-						} else {
-							error "group field $field-$sample not present in file"
-						}
-					}
-				} else {
-					error "group field $field not present in file"
-				}
-			}
-		}
-		set typetodoa {max max min min count {} avg {avg} stddev {avg m2} distinct distinct}
-		set grouptypes {}
-		foreach grouptype $grouptypelist {
-			if {$grouptype eq "count"} {
-				lappend grouptypes count {}
-			} elseif {[regexp {^([^()]+)\(([^()]+)\)$} $grouptype temp func field]} {
-				if {![dict exists $typetodoa $func]} {
-					error "aggregate function $func unknown"
-				}
-				lappend grouptypes $func $field
-				if {![info exists calccols($field)]} {
-					if {[inlist $header $field]} {
-						lappend neededfields $field
-					} elseif {[llength $gsamples]} {
-						foreach sample $gsamples {
-							if {[inlist $header $field-$sample]} {
-								lappend neededfields $field-$sample
-							} else {
-								error "aggregate field $field-$sample not present in file"
-							}
-						}
-					} else {
-						error "aggregate field $field not present in file"
-					}
-				}
-			} else {
-				error "aggregate function (last element in groupcol argument) must be of the form function(value) or count"
-			}
-		}
-		# start making code
-		set neededfields [list_remdup $neededfields]
+		# neededcols contains the column numbers used to supply neededfields by tsv_selectc to the run proc
 		set neededcols [list_cor $header $neededfields]
-		set tclcode "package require genomecomb\n"
-		foreach {name code} $todo {
-			append tclcode [subst -nocommands {
-				proc $name {$neededfields} {
-					if {[catch {expr {$code}} e]} {
-						switch \$e {
-							{domain error: argument not in valid range} {return NaN}
-							{divide by zero} {return NaN}
-						}
-					}
-					return \$e
-				}
-			}]
-		}
-		if {$group ne ""} {
-			# precalc is run for every match (sets some variables used in query, etc.)
-			set precalc {}
-			# colactions will be executed only when the colquery fits
-			set colactions {}
-			# calculate groupname
-			set groupname {}
-			foreach field $group {
-				if {[info exists calccols($field)]} {
-					lappend precalc "set $field \[$calccols($field) \$[join $neededfields " \$"]\]"
-				}
-				lappend groupname \$\{$field\}
-			}
-			lappend precalc "set _groupname \"[join $groupname -]\""
-			set addcols {}
-			if {![llength $gsamples]} {
-				# first see what I need to calculate requested aggregates
-				unset -nocomplain todoa
-				foreach {func field} $grouptypes {
-					foreach item [dict get $typetodoa $func] {
-						list_addnew todoa([list $field $fieldused]) $item
-					}
-				}
-				# precalculate all calculated fields needed for groupcols
-				# also make query for skipping data for which no cols will be made (colquery)
-				set todolist [array get todoa]
-				set col {}
-				set colquery {}
-				foreach {field filter} $groupcol {
-					if {[info exists calccols($field)]} {
-						lappend precalc "set $field \[$calccols($field) \$[join $neededfields " \$"]\]"
-					}
-					lappend col \$\{$field\}
-					if {[llength $filter]} {
-						lappend colquery "\[inlist \{$filter\} \$\{$field\}\]"
-					}
-				}
-				# add calculations for everything needed for aggregates to colactions
-				tsv_select_addaggregatecalc col colactions $todolist
-				# create calcresults, that calculate the final agregate results for each group (runs after looping through the file)
-				set calcresults [tsv_select_addaggregateresult $grouptypes $header {} calccols]
-			} else {
-				foreach sample $gsamples {
-					# first see what I need to calculate requested aggregates
-					unset -nocomplain todoa
-					foreach {func field} $grouptypes {
-						foreach item [dict get $typetodoa $func] {
-							set fieldused [tsv_select_sampleusefield $header $field $sample calccols precalc]
-							list_addnew todoa([list $field $fieldused]) $item
-						}
-					}
-					# precalculate all calculated fields needed for groupcols
-					# also make query for skipping data for which no cols will be made (colquery)
-					set todolist [array get todoa]
-					set col {}
-					set colquery {}
-					foreach {field filter} $groupcol {
-						if {$field eq "sample"} {
-							lappend col $sample
-							continue
-						} else {
-							set fieldused [tsv_select_sampleusefield $header $field $sample calccols precalc]
-						}
-						lappend col \$\{$fieldused\}
-						if {[llength $filter]} {
-							lappend colquery "\[inlist \{$filter\} \$\{$fieldused\}\]"
-						}
-					}
-					# add calculations for everything needed for aggregates to colactions
-					tsv_select_addaggregatecalc col colactions $todolist
-					# create calcresults, that calculate the final agregate results for each group (runs after looping through the file)
-					set calcresults [tsv_select_addaggregateresult $grouptypes $header $sample calccols]
-				}
-			}
-			if {[llength $colquery]} {
-				append addcols "if \{[join $colquery { && }]\} \{\n$colactions\}\n"
-			} else {
-				append addcols $colactions
-			}
-			append tclcode [string_change {
-				proc tsv_selectc_query {@neededfields@} {
-					global resultdata resultgroups resultcount resultdatacols
-					if {@pquery@} {
-						@precalc@
-						@addcols@
-					}
-					return 0
-				}
-				tsv_selectc tsv_selectc_query {@neededcols@} {}
-				set cols [lsort -dict [array names resultdatacols]]
-				set header [list @grouph@]
-				foreach col $cols {
-					foreach {func val} @grouptypes@ {
-						if {$val ne ""} {append func _$val} 
-						lappend header [join [list {*}${col} $func] -]
-					}
-				}
-				puts [join $header \t]
-				foreach _groupname [lsort -dict [array names resultgroups]] {
-					set result {}
-					# puts "$name\t$resultdata($name)"
-					foreach col $cols {
-						@calcresults@
-					}
-					puts "$_groupname\t[join $result \t]"
-				}
-				exit
-			} [list @neededfields@ $neededfields @pquery@ $pquery \
-				@precalc@ [join [list_remdup $precalc] \n] @addcols@ $addcols \
-				@neededcols@ $neededcols @calcresults@ $calcresults \
-				@grouptypes@ [list $grouptypes] @grouph@ [join $group -]
-			]]
-		} elseif {$index eq ""} {
+		if {$index eq ""} {
 			append tclcode [subst {
 				proc tsv_selectc_query {$neededfields} {
 					expr {$pquery}
@@ -1099,8 +805,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				exit
 			}]
 		}
-file_write /tmp/temp.tcl $tclcode\n
-#putsvars tclcode
+		set tclcode [string_change $tclcode [list @neededfield@ $neededfields]]
+		file_write /tmp/temp.tcl $tclcode\n
+		#putsvars tclcode
 		lappend pipe [list cg exec $tclcode]
 	}
 #putslog -------------pipe-------------------
@@ -1213,6 +920,9 @@ proc cg_select {args} {
 			}
 		}
 		incr pos 2
+	}
+	if {[llength $groupcols] && ![llength $group]} {
+		error "cannot use -gc option without -g option"
 	}
 	set args [lrange $args $pos end]
 	# clean fields and query: remove comments \n anf \t to space

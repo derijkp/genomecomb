@@ -34,19 +34,30 @@ This will also accept name variations of the fields, such as chrom instead of ch
 ; **-hf headerfile: infile does not have a header, the header will be read from **headerfile** instead
 ; **-h**: return header fields in file
 ; **-n**: return sample names in file
-; **-g groupfields**: with this option a summary table is returned. This will contain one line with information 
-for each value or combination of values in the given groupfield(s). By default a column is added showing 
-the number of lines in the data file containing the value. Other columns can be added using the -gc option.
+; **-g groupfields**: with this option a summary table is returned. This will contain one line with 
+information for each value or combination of values in the given groupfield(s). If hte -gc option is not given,
+the table will contain one extra column showing the number of lines in the data file containing the group 
+value. Other columns can be added using the -gc option.
 Fields used in groupfields may be calculated columns; these shoud be defined in the -f option.
 This option will use memory proportional to the size of the result set!
 ; **-gc groupcols**: show other columns instead of count when using the -g option. **groupcols** has the 
 following format: "field1 values1 field2 values2 ... functions". A different column will be made in the 
 summary table for each combination of values in field1,field2,... Only values given in 
-values1 (a space separated list) will be included. If value1, ... is empty, all values will be included.
+values1,... (a space separated list) will be included. If value1, ... is empty (e.g. type {}), all values for this 
+field in the file will be included.
 Functions determines what type of summary data will be given in each column, I takes the form of 
-e.g. avg(quality), which will return the average of the values in quality column matching the given values in
-group and column. Other functions supported are min (minimum), max (maximum), stddev (standard deviation) 
-and count (the number of lines). For count no field has to be given.
+e.g. avg(quality), which will return the average of the values in the quality column matching the given 
+values in group and column. Supported functions are
+; count: number of lines (does not need a field argument)
+; min(field): minimum of all values in the field (for the given group and column)
+; max(field): maximum
+; avg(field): average
+; stddev(field): standard deviation
+; distinct(field): lists (comma separated) all distinct values found in the field
+; list(field): lists (comma separated) all values found in the field (the same one can occur multiple times)
+The field sample in groupcols is interpreted specially: If sample is present in groupcols, you can
+give fieldnames without the sample suffix (in both -gc and -g), and the sample name (of the current 
+column) will be automatically added where fields in the form field-sample are available.
 
 The query or field lines can contain more than one line (enclose in '').
 Lines starting with a # are comments
