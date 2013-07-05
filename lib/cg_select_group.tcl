@@ -26,7 +26,7 @@ proc tsv_select_sampleusefield {header field sample calccolsVar {neededfieldsVar
 		set fieldused ${field}-$sample
 		lappend neededfields $fieldused
 	} else {
-		error "unknown field $field"
+		error "unknown field \"$field\""
 	}
 	return $fieldused
 }
@@ -39,6 +39,12 @@ proc tsv_select_addaggregatecalc {todolist} {
 	foreach {item todo} $todolist {
 		foreach {field fieldused} $item break
 		append colactions \t\t\t\t\t [string_change {set _val {@val@}} [list @val@ $field]] \n
+		if {[inlist $todo total]} {
+			append colactions \t\t\t\t\t {incr resultdata($_colname,t)} \n
+		}
+		if {[inlist $todo gtotal]} {
+			append colactions \t\t\t\t\t {incr resultdata($_groupname,gt)} \n
+		}
 		if {[inlist $todo max]} {
 			append colactions [string_change {
 					if {![info exists resultdata($_groupname,$_colname,$_val,max)] || ${@val@} > $resultdata($_groupname,$_colname,$_val,max)} {
@@ -92,6 +98,14 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 		if {$func eq "count"} {
 			append calcresults {
 				lappend result [get resultcount($_groupname,$col) 0]
+			}
+		} elseif {$func eq "percent"} {
+			append calcresults {
+				lappend result [format %.2f [expr {100.0*[get resultcount($_groupname,$col) 0]/[get resultdata($col,t) 1]}]]
+			}
+		} elseif {$func eq "gpercent"} {
+			append calcresults {
+				lappend result [format %.2f [expr {100.0*[get resultcount($_groupname,$col) 0]/[get resultdata($_groupname,gt) 1]}]]
 			}
 		} elseif {$func eq "max"} {
 			append calcresults [string_change {
@@ -174,11 +188,15 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 		set gsamples {{}}
 	}
 	# parse grouptypes (aggregate results), and see which functions are needed
-	set typetodoa {max max min min count {} avg {avg} stddev {avg m2} distinct distinct list list}
+	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list}
 	set grouptypes {}
 	foreach grouptype $grouptypelist {
 		if {$grouptype eq "count"} {
 			lappend grouptypes count {}
+		} elseif {$grouptype eq "percent"} {
+			lappend grouptypes percent {}
+		} elseif {$grouptype eq "gpercent"} {
+			lappend grouptypes gpercent {}
 		} elseif {[regexp {^([^()]+)\(([^()]+)\)$} $grouptype temp func field]} {
 			if {![dict exists $typetodoa $func]} {
 				error "aggregate function $func unknown"
@@ -206,7 +224,11 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 		unset -nocomplain todoa
 		foreach {func field} $grouptypes {
 			foreach item [dict get $typetodoa $func] {
-				set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
+				if {[inlist {percent gpercent} $func]} {
+					set fieldused {}
+				} else {
+					set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
+				}
 				list_addnew todoa([list $field $fieldused]) $item
 			}
 		}

@@ -49,6 +49,8 @@ Functions determines what type of summary data will be given in each column, I t
 e.g. avg(quality), which will return the average of the values in the quality column matching the given 
 values in group and column. Supported functions are
 ; count: number of lines (does not need a field argument)
+; percent: count as percent versus total count in given column
+; gpercent: count as percent versus total count in given group (row)
 ; min(field): minimum of all values in the field (for the given group and column)
 ; max(field): maximum
 ; avg(field): average

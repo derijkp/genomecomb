@@ -442,6 +442,18 @@ test select {group sample} {
 chr1	5	3
 chr2	9	5}
 
+test select {group sample percent} {
+	cg select -g chromosome -gc {sample {} sequenced v percent} data/expected_near-vars1-reg_annot.sft
+} {chromosome	sample1-v-percent	sample2-v-percent
+chr1	35.71	37.50
+chr2	64.29	62.50}
+
+test select {group sample gpercent} {
+	cg select -g chromosome -gc {sample {} sequenced v gpercent} data/expected_near-vars1-reg_annot.sft
+} {chromosome	sample1-v-gpercent	sample2-v-gpercent
+chr1	62.50	37.50
+chr2	64.29	35.71}
+
 test select {group sample and query} {
 	cg select -q {$coverage-sample1 > 2} -g chromosome -gc {sample {} sequenced v count} data/expected_near-vars1-reg_annot.sft
 } {chromosome	sample1-v-count	sample2-v-count
