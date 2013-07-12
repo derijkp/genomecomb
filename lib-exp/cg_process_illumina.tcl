@@ -1,7 +1,11 @@
 proc picard {} {
 	global picard
 	if {![info exists picard]} {
-		set picard $::env(PICARD)
+		if {[info exists ::env(PICARD)]} {
+			set picard $::env(PICARD)
+		} else {
+ 			set picard $::externdir/picard
+		}
 	}
 	return $picard
 }
@@ -9,7 +13,11 @@ proc picard {} {
 proc gatk {} {
 	global gatk
 	if {![info exists gatk]} {
-		set gatk $::env(GATK)
+		if {[info exists ::env(GATK)]} {
+			set gatk $::env(GATK)
+		} else {
+ 			set picard $::externdir/gatk/GenomeAnalysisTK.jar
+		}
 	}
 	return $gatk
 }
