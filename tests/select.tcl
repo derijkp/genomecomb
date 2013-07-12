@@ -93,6 +93,12 @@ test select {-f calculated functions} {
 chr1	4000	4001	2
 chr2	4000	4001	4}
 
+test select {-f calculated if} {
+	exec cg select -f {chromosome begin end {countG=if(count($alleleSeq*, == "G")<4,"<4",">=4")}} -q {$begin == 4000} [gzfile data/vars1.sft]
+} {chromosome	begin	end	countG
+chr1	4000	4001	<4
+chr2	4000	4001	>=4}
+
 test select {keep header info and format rtg: -hc} {
 	exec cg select -hc 1 -s position data/rtgsnps.tsv tmp/temp.tsv
 	file delete temp
