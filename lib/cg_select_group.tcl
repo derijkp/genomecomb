@@ -1,3 +1,44 @@
+proc select_parse_grouptypes {grouptypelist} {
+	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list}
+	set grouptypes {}
+	foreach grouptype $grouptypelist {
+		if {$grouptype eq "count"} {
+			lappend grouptypes count {}
+		} elseif {$grouptype eq "percent"} {
+			lappend grouptypes percent {}
+		} elseif {$grouptype eq "gpercent"} {
+			lappend grouptypes gpercent {}
+		} elseif {[regexp {^([^()]+)\(([^()]+)\)$} $grouptype temp func field]} {
+			if {![dict exists $typetodoa $func]} {
+				error "aggregate function $func unknown"
+			}
+			lappend grouptypes $func $field
+		} else {
+			error "aggregate function (last element in groupcol argument) must be of the form function(value) or count"
+		}
+	}
+	return $grouptypes
+}
+
+proc select_parse_for_samples {groupcol header} {
+	set gsamples {}
+	foreach {field values} $groupcol {
+		if {$field eq "sample"} {
+			if {[llength $values]} {
+				set gsamples $values
+			} else {
+				set gsamples [samples $header]
+			}
+			break
+		}
+	}
+	# if no sample field found, do not actually use samples by making gsamples a list with only one empty sample
+	if {![llength $gsamples]} {
+		set gsamples {{}}
+	}
+	return $gsamples
+}
+
 proc tsv_select_makecol {name code {arg @neededfield@}} {
 	subst -nocommands {
 		proc $name {$arg} {
@@ -148,6 +189,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 	# calculated fields will be calculated in the begining of the query proc
 	# these are gathered in precalc
 	# precalc is run for every match (sets some variables used in query, etc.)
+	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list}
 	unset -nocomplain calccols
 	set precalc {}
 	set num 0
@@ -172,40 +214,9 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 	}
 	set grouptypelist [split [list_pop groupcol] ,]
 	# check groupcols for presence of sample field
-	set gsamples {}
-	foreach {field values} $groupcol {
-		if {$field eq "sample"} {
-			if {[llength $values]} {
-				set gsamples $values
-			} else {
-				set gsamples [samples $header]
-			}
-			break
-		}
-	}
-	# if no sample field found, do not actually use samples by making gsamples a list with only one empty sample
-	if {![llength $gsamples]} {
-		set gsamples {{}}
-	}
+	set gsamples [select_parse_for_samples $groupcol $header]
 	# parse grouptypes (aggregate results), and see which functions are needed
-	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list}
-	set grouptypes {}
-	foreach grouptype $grouptypelist {
-		if {$grouptype eq "count"} {
-			lappend grouptypes count {}
-		} elseif {$grouptype eq "percent"} {
-			lappend grouptypes percent {}
-		} elseif {$grouptype eq "gpercent"} {
-			lappend grouptypes gpercent {}
-		} elseif {[regexp {^([^()]+)\(([^()]+)\)$} $grouptype temp func field]} {
-			if {![dict exists $typetodoa $func]} {
-				error "aggregate function $func unknown"
-			}
-			lappend grouptypes $func $field
-		} else {
-			error "aggregate function (last element in groupcol argument) must be of the form function(value) or count"
-		}
-	}
+	set grouptypes [select_parse_grouptypes $grouptypelist]
 	# colactions will be executed only when the colquery fits
 	set addcols {}
 	foreach sample $gsamples {

@@ -94,6 +94,12 @@ chr1	4000	4001	2
 chr2	4000	4001	4}
 
 test select {-f calculated if} {
+	exec cg select -f {chromosome begin end {countG=if(($alleleSeq1-sample1 == "A" || $alleleSeq2-sample1 == "A"),"hasA","noA")}} -q {$begin == 4000} [gzfile data/vars1.sft]
+} {chromosome	begin	end	countG
+chr1	4000	4001	hasA
+chr2	4000	4001	noA}
+
+test select {-f calculated if} {
 	exec cg select -f {chromosome begin end {countG=if(count($alleleSeq*, == "G")<4,"<4",">=4")}} -q {$begin == 4000} [gzfile data/vars1.sft]
 } {chromosome	begin	end	countG
 chr1	4000	4001	<4

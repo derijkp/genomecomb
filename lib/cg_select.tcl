@@ -806,7 +806,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			}]
 		}
 		set tclcode [string_change $tclcode [list @neededfield@ $neededfields]]
-		file_write /tmp/temp.tcl $tclcode\n
+		#file_write /tmp/temp.tcl $tclcode\n
 		#putsvars tclcode
 		lappend pipe [list cg exec $tclcode]
 	}
