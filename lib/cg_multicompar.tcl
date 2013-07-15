@@ -484,8 +484,29 @@ proc cg_multicompar {args} {
 	set dirs [lrange $args 1 end]
 	foreach dir $dirs {
 		set dir [file normalize $dir]
-		putslog "Adding $dir"
-		multicompar $compar_file $dir $listfields
+		if {![file isdir $dir] && [llength [cg select -n $dir]]} {
+			set header [cg select -h $dir]
+			set samples [samples $header]
+			set basicfields [list_sub $header -exclude [list_find -regexp $header -]]
+			putslog "$dir is already a multicompar, merging"
+			foreach sample $samples {
+				putslog "Adding $dir sample $sample"
+				catch {file delete $dir.temp}
+				file mkdir $dir.temp
+				set fields $basicfields
+				foreach field [list_sub $header [list_find -regexp $header -$sample]] {
+					set nfield [join [lrange [split $field -] 0 end-1] -]
+					lappend fields $nfield=\$$field
+				}
+				cg select -f $fields $dir $dir.temp/vars-$sample.tsv
+				multicompar $compar_file $dir.temp/vars-$sample.tsv $listfields
+				file delete $dir.temp/vars-$sample.tsv
+			}
+			file delete -force $dir.temp
+		} else {
+			putslog "Adding $dir"
+			multicompar $compar_file $dir $listfields
+		}
 	}
 	if {$reannot} {
 		putslog "Reannotating $compar_file"

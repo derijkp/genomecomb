@@ -174,6 +174,17 @@ test multicompar {basic reannot var-all} {
 	exec diff tmp/temp.tsv data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft
 } {} 
 
+test multicompar {merge} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/mcompar.tsv
+	set c [file_read data/vars3.sft]
+	regsub -all sample1 $c sample3 c
+	regsub -all sample2 $c sample4 c
+	file_write tmp/merge.tsv $c
+	cg multicompar -listfields list tmp/mcompar.tsv tmp/merge.tsv
+	exec diff tmp/mcompar.tsv data/expected-multicompar-merge.tsv
+} {}
+
 test_cleantmp
 
 set ::env(PATH) $keeppath
