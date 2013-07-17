@@ -1,6 +1,7 @@
 menu,MainMenu {menu "File" {
 	action "Open file" {%W open} <<Load>>
 	action "Save as" {%W save} <<SaveAs>>
+	action "Save summary" {%W savesummary}
 	separator
 	action "New editor" {edit newfile} <<Editor>>
 	action "Command window" {Classy::cmd} <<Cmd>>

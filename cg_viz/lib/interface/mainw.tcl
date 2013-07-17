@@ -383,6 +383,19 @@ mainw method summary_recalc {args} {
 	return $summary
 }
 
+mainw method savesummary {args} {
+	private $object summary view
+	if {[llength $args]} {
+		set file [lindex $args 0]
+	} else {
+		set file [Classy::savefile -title "Save Summary"]
+	}
+	set f [open $file w]
+	puts $f "\# Summary definition: [get view(olddefintion) ""]"
+	csv_write $f $summary \t {}
+	close $f
+}
+
 mainw method summary_redraw {args} {
 puts summary_redraw
 putsvars args
