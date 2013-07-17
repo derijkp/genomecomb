@@ -227,10 +227,15 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 		set colactions {}
 		# calculate groupname
 		foreach field $group {
-			set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
-			lappend groupname \$\{$fieldused\}
+			if {![catch {
+				set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
+			}]} {
+				lappend groupname \$\{$fieldused\}
+			} else {
+				lappend groupname $field
+			}
 		}
-		append colactions \t\t\t\t\t "set _groupname \"[join $groupname -]\"" \n
+		append colactions \t\t\t\t\t "set _groupname \[list [join $groupname { }]\]" \n
 		# first see what I need to calculate requested aggregates
 		unset -nocomplain todoa
 		foreach {func field} $grouptypes {
@@ -296,13 +301,13 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 			foreach col $cols {
 				@calcresults@
 			}
-			puts "$_groupname\t[join $result \t]"
+			puts "[join $_groupname \t]\t[join $result \t]"
 		}
 		exit
 	} [list @neededfields@ $neededfields @pquery@ $pquery \
 		@precalc@ [join [list_remdup $precalc] \n] @addcols@ $addcols \
 		@neededcols@ $neededcols @calcresults@ $calcresults \
-		@grouptypes@ [list $grouptypes] @grouph@ [join $group -]
+		@grouptypes@ [list $grouptypes] @grouph@ $group]
 	]]
 	return $tclcode
 }
