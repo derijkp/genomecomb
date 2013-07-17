@@ -16,7 +16,7 @@ proc gatk {} {
 		if {[info exists ::env(GATK)]} {
 			set gatk $::env(GATK)
 		} else {
- 			set picard $::externdir/gatk/GenomeAnalysisTK.jar
+ 			set gatk $::externdir/gatk/GenomeAnalysisTK.jar
 		}
 	}
 	return $gatk
