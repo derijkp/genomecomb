@@ -163,13 +163,12 @@ putsvars args
 	if {![info exists tdata(sqlbackend_db)]} {
 		error "no fast access without db backend"
 	}
-	private $object tdata
 	set query [lindex $args 0]
 	set qfields $tdata(fields)
 #	set qfields $tdata(monetfields)
 	lappend qfields {*}[lrange $args 1 end]
-	set sql [monetdb_makesql $tdata(sqlbackend_table) $tdata(tfields) $tdata(query) qfields {} 0 $tdata(monetfieldtrans)]
-	set fsql "with \"temp\" as ($sql) $query"
+	set supersql [monetdb_makesql $tdata(sqlbackend_table) $tdata(tfields) $tdata(query) qfields {} 0 $tdata(monetfieldtrans)]
+	set fsql "with \"temp\" as ($supersql) $query"
 	$object sql $fsql
 }
 
@@ -194,7 +193,7 @@ table_tsv method tfields {} {
 
 table_tsv method qfields {} {
 	private $object tdata
-	return $tdata(monetfields)
+	return $tdata(qfields)
 }
 
 table_tsv method values {field {max 5000}} {

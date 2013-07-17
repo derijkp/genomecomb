@@ -1,6 +1,7 @@
 proc main args {
 	global env appdir cgdir cgbase
 	#putsvars ::appdir
+	package require genomecomb
 	set appdir $::Classy::appdir
 	lappend ::auto_path [file normalize $appdir/../lib]
 	lappend ::auto_path [file dir $appdir]/lib [file dir $appdir]/lib-exp

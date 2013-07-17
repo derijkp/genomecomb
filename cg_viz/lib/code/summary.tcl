@@ -16,7 +16,21 @@ table_tsv method mfield {field extrafieldsVar colfieldVar} {
 table_tsv method summary {definition {file {}}} {
 	private $object tdata
 	if {![info exists tdata(sqlbackend_db)]} {
-		error "No fast summaries without db backend"
+		foreach {rowdef coldef celdef} $definition break
+		lappend coldef $celdef
+		Classy::Progress start 1
+		Classy::Progress message "Creating Summary, please be patient (no progress shown)"
+		update
+		cg select -f $tdata(fields) -q $tdata(query) -g $rowdef -gc $coldef $tdata(file) $tdata(indexdir)/summary_results.tsv
+		Classy::Progress stop
+		if {$file ne ""} {
+			file copy $tdata(indexdir)/summary_results.tsv $file
+			return
+		} else {
+			set f [open $tdata(indexdir)/summary_results.tsv]
+			set result [csv_file $f \t]
+			return $result
+		}
 	}
 	foreach {rowdef coldef celdef} $definition break
 	foreach {cellfield aggregate} $celdef break

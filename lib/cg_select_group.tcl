@@ -189,6 +189,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 	# calculated fields will be calculated in the begining of the query proc
 	# these are gathered in precalc
 	# precalc is run for every match (sets some variables used in query, etc.)
+	regsub -all \n $group { } group
+	regsub -all \n $groupcols { } groupcols
 	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list}
 	unset -nocomplain calccols
 	set precalc {}

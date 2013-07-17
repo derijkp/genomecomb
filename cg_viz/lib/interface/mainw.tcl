@@ -145,7 +145,7 @@ $object start
 		-command [varsubst object {$object view}] \
 		-textvariable [privatevar $object view(cur)]
 	$object.buttons.settings configure \
-		-command [varsubst object {$object viewsettings}]
+		-command [varsubst object {$object summarybuilder}]
 	Classy::DynaMenu attachmainmenu MainMenu $object
 	# Configure initial arguments
 	if {"$args" != ""} {eval $object configure $args}
@@ -296,12 +296,9 @@ mainw method opentsv {args} {
 	}
 	set fields [$object.tb fields]
 	set sample [lindex [samples $fields] 0]
-	set view(summary_rows) {chromosome {}}
-	set view(summary_cols) [list sequenced-$sample {v r u}]
-	set view(summary_cells) [list sequenced-$sample count]
-	set view(graph_rows) [list coverage-$sample {}]
-	set view(graph_cols) [list sequenced-$sample {v r u}]
-	set view(graph_cells) [list coverage-$sample count]
+	set view(summary_rows) {chromosome}
+	set view(summary_cols) [list sample {} sequenced {v}]
+	set view(summary_cells) [list count]
 }
 
 mainw method savetsv {file} {
@@ -370,64 +367,50 @@ puts summary_redrawselect
 return
 }
 
-mainw method summary_redraw {args} {
-putsvars summary_redraw
+mainw method summary_recalc {args} {
 	private $object summary view
 	set definition [list $view(summary_rows) $view(summary_cols) $view(summary_cells)]
-	set error [catch {$object.tb summary $definition} newsummary]
-	if {$error} {
-		set summary ""
-	} else {
-		set header [list_shift newsummary]
-		set summary [list $header {*}[lsort -dict $newsummary]]
+	if {![info exists summary] || [inlist $args querychanged] || $definition ne [get view(olddefintion) ""]} {
+		set error [catch {$object.tb summary $definition} newsummary]
+		if {$error} {
+			error "error in summary definition (or query)\n\n$newsummary"
+		} else {
+			set header [list_shift newsummary]
+			set summary [list $header {*}[lsort -dict $newsummary]]
+			set view(olddefintion) $definition
+		}
 	}
+	return $summary
+}
+
+mainw method summary_redraw {args} {
+puts summary_redraw
+putsvars args
+	private $object summary view
+	set error [catch {
+		set summary [$object summary_recalc {*}$args]
+	} message]
 	$object.summary.data configure -variable [privatevar $object summary] -variabletype list
 	$object.summary.data configure -rows [llength $summary] -cols [llength [lindex $summary 0]]	
-	if {$error} {
-		error "error in summary definition (or query)\n\n$newsummary"
-	}
+	if {$error} {error $message}
 }
 
 mainw method graph_redrawselect {args} {
-puts graph_redrawselect
-return
+	puts graph_redrawselect
+	return
 }
 
 mainw method graph_redraw {args} {
-putsvars graph_redraw
 	private $object view
-	set definition [list $view(graph_rows) $view(graph_cols) $view(graph_cells)]
-	set error [catch {$object.tb summary $definition} newsummary]
+	set error [catch {
+		set summary [$object summary_recalc {*}$args]
+	} message]
 	$object.graph clear
 	if {!$error} {
-		set header [list_shift newsummary]
-		set newsummary [list $header {*}[lsort -dict $newsummary]]
-		$object.graph add $newsummary
+		$object.graph add $summary
 	} else {
-		error "error in graph definition\n\n$newsummary"
+		error "error in graph definition\n\n$message"
 	}
-}
-
-mainw method viewsettings {} {
-	private $object view
-	switch [get view(cur) data] {
-		summary {
-			destroy $object.viewsettings
-			Classy::Dialog $object.viewsettings -title "$view(cur) settings"
-			$object.viewsettings option entry Rows [privatevar $object view(summary_rows)]
-			$object.viewsettings option entry Cols [privatevar $object view(summary_cols)]
-			$object.viewsettings option entry Cells [privatevar $object view(summary_cells)]
-			$object.viewsettings add go "Go" [list $object summary_redraw] default
-		}
-		graph {
-			destroy $object.viewsettings
-			Classy::Dialog $object.viewsettings -title "$view(cur) settings"
-			$object.viewsettings option entry Rows [privatevar $object view(graph_rows)]
-			$object.viewsettings option entry Cols [privatevar $object view(graph_cols)]
-			$object.viewsettings option entry Cells [privatevar $object view(graph_cells)]
-			$object.viewsettings add go "Go" [list $object graph_redraw] default
-		}
-	}		
 }
 
 mainw method view {newview} {
@@ -435,9 +418,10 @@ mainw method view {newview} {
 	set view(cur) $newview
 	catch {grid forget $object.table}
 	foreach w {summary graph} {
-		Extral::event remove $object.$w selchanged [list $object summary_redrawselect]
-		Extral::event remove $object.$w querychanged [list $object summary_redrawselect]
-		destroy $object.$w
+		Extral::event remove $object.$w selchanged [list $object ${w}_redrawselect]
+		Extral::event remove $object.$w querychanged [list $object ${w}_redraw]
+		grid forget $object.$w
+		# destroy $object.$w
 	}
 	switch $newview {
 		data {
@@ -468,7 +452,7 @@ mainw method view {newview} {
 				$object.summary.data configure -wrap 1 -resizeborders both -bordercursor crosshair
 			}
 			Extral::event listen $object.summary selchanged [list $object summary_redrawselect]
-			Extral::event listen $object.summary querychanged [list $object summary_redraw]
+			Extral::event listen $object.summary querychanged [list $object summary_redraw querychanged]
 			grid $object.summary -row 5 -column 2 -sticky nesw
 			$object summary_redraw
 		}
@@ -476,7 +460,7 @@ mainw method view {newview} {
 			destroy $object.graph
 			scrolledgraph $object.graph
 			Extral::event listen $object.graph selchanged [list $object graph_redrawselect]
-			Extral::event listen $object.graph querychanged [list $object graph_redraw]
+			Extral::event listen $object.graph querychanged [list $object graph_redraw querychanged]
 			grid $object.graph -row 5 -column 2 -sticky nesw
 			$object graph_redraw
 		}
