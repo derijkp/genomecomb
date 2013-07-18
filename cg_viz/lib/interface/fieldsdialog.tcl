@@ -67,7 +67,8 @@ fieldsdialog method init args {
 	grid $object.options.fields -row 1 -column 3 -columnspan 2 -sticky nesw
 	Classy::Entry $object.options.calc \
 		-label {Calculated Field} \
-		-width 4
+		-width 4 \
+		-combo 20
 	grid $object.options.calc -row 0 -column 3 -sticky nesw
 	button $object.options.button1 \
 		-text Builder
@@ -327,3 +328,4 @@ fieldsdialog method fieldbuilder {} {
 	foreach {fieldname fieldcalc} $data break
 	$p querybuilder $object
 }
+

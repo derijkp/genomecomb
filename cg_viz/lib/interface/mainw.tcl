@@ -433,7 +433,7 @@ mainw method view {newview} {
 	foreach w {summary graph} {
 		Extral::event remove $object.$w selchanged [list $object ${w}_redrawselect]
 		Extral::event remove $object.$w querychanged [list $object ${w}_redraw]
-		grid forget $object.$w
+		catch {grid forget $object.$w}
 		# destroy $object.$w
 	}
 	switch $newview {
