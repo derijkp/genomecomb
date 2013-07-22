@@ -1,0 +1,15 @@
+chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	sequenced-sample2	list	sequenced-sample3	freq-sample3	alleleSeq1-sample3	alleleSeq2-sample3	sequenced-sample4	freq-sample4	alleleSeq1-sample4	alleleSeq2-sample4
+1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4	v	0.5	A	G	v	0.4	A	G
+1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4	v	0.5,0.1	G	G	v	0.4,0.2	G	G
+1	4099	5000	snp	C	T,A	T	T	47	v	T	T	35	v	1,-	v	0.5,0.1	T	T	v	0.2,0.6	T	T
+1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v	-	-	41	u	1;2	?	?	?	?	?	?	?	?
+1	5020	5021	snp	G	C,A,T	G	C	54	v	G	G	52	r	3,-,-	v	0.1,0.5,0.2	G	C	r	0.2,-,0.2	G	G
+2	4000	4001	snp	G	A	G	G	1	v	G	G	0	v	2	?	?	?	?	?	?	?	?
+2	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	2,4	v	-,0.8	G	G	v	0.9,-	G	G
+2	4099	5000	snp	C	T,G	T	T	47	v	T	T	35	v	2;4,-	v	0.2,0.4	T	T	v	,-	T	T
+2	5000	5001	snp	G	C	G	C	54	v	G	G	52	r	2	?	?	?	?	?	?	?	?
+2	5000	5010	ins		AGCGTGGCAA	AGCGTGGCAA		32	v	-	-	41	u	3	?	?	?	?	?	?	?	?
+2	5005	5006	snp	G	C,A	G	C	54	v	G	A	52	v	4	?	?	?	?	?	?	?	?
+2	5010	5011	snp	G	C	G	C	54	v	C	G	52	v	-,20	?	?	?	?	?	?	?	?
+2	5011	5012	snp	G	C	G	C	54	v	G	G	52	r	-	?	?	?	?	?	?	?	?
+2	8000	8001	snp	G	C	G	C	54	v	G	G	52	r		?	?	?	?	?	?	?	?
