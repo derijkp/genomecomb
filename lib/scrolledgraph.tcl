@@ -70,6 +70,11 @@ scrolledgraph method init {args} {
 			-textvariable [privatevar $object region($type)] -command [list Classy::todo $object redraw]
 		pack $object.b.$type -side left
 	}
+	foreach type {xlog ylog} {
+		checkbutton $object.b.$type  -text $type -onvalue 1 -offvalue 0 \
+			-variable [privatevar $object region($type)] -command [list Classy::todo $object redraw]
+		pack $object.b.$type -side left
+	}
 #	Classy::ProgressWidget $object.progress
 #	grid $object.progress -sticky nwse -columnspan 2
 #	Classy::Progress display $object.progress
@@ -363,6 +368,8 @@ scrolledgraph method addscatter {table xcol ycol datacols} {
 	set region(xmax) [::$object.ends.x index 1]
 	set region(ymin) [::$object.ends.y index 0]
 	set region(ymax) [::$object.ends.y index 1]
+	set region(xlog) 0
+	set region(ylog) 1
 	Classy::todo $object redraw
 }
 
@@ -415,8 +422,26 @@ puts ----------redraw----------
 	# $object _xrange
 	if {$region(xmax) <= $region(xmin)} {set region(xmax) [expr {$region(xmin)+1}]}
 	if {$region(ymax) <= $region(ymin)} {set region(ymax) [expr {$region(ymin)+1}]}
-	$w axis configure x -min $region(xmin) -max $region(xmax)
-	$w axis configure y -min $region(ymin) -max $region(ymax)
+	$w axis configure x -min $region(xmin) -max $region(xmax) -logscale $region(xlog)
+	$w axis configure y -min $region(ymin) -max $region(ymax) -logscale $region(ylog)
+	if {$region(xlog)} {
+		$object.scx configure -command {}
+		$object.g axis configure x -scrollcommand {}
+		grid forget $object.scx
+	} else {
+		$object.scx configure -command [list $object xview]
+		$object.g axis configure x -scrollcommand [list $object xset]
+		grid $object.scx -row 2 -sticky nwse
+	}
+	if {$region(ylog)} {
+		$object.scy configure -command {}
+		$object.g axis configure y -scrollcommand {}
+		grid forget $object.scy
+	} else {
+		$object.scy configure -command [list $object yview]
+		$object.g axis configure y -scrollcommand [list $object yset]
+		grid $object.scy -row 1 -column 2 -sticky nwse
+	}
 	Classy::todo $object _configureevent
 	# Classy::todo $object reload
 }
