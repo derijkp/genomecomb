@@ -97,6 +97,7 @@ mainw method querybuilder_add {command {join and}} {
 	set operator [$operatorsw get]
 	set values [$valuew get]
 	if {$command eq "count"} {
+		if {![llength $fields]} {error "Select some fields first"}
 		set value [lindex $values 0]
 		set value [$object querybuilder_quotevalue $value]
 		set insert "count\("
@@ -106,6 +107,7 @@ mainw method querybuilder_add {command {join and}} {
 		append insert "$operator $value \) > 0"
 		$object querybuilder_insert $insert $join
 	} elseif {$command eq "value"} {
+		if {![llength $fields]} {error "Select some fields first"}
 		$object querybuilder_insert "\$\{[join $fields "\}\$\{"]\}" $join
 	} elseif {$command eq "region"} {
 		destroy $object.region
@@ -131,21 +133,16 @@ mainw method querybuilder_add {command {join and}} {
 		set compare(samples) [cg select -n $tdata(file)]
 		$object.compare option listbox Sample1 [privatevar $object compare(selsamples)] [privatevar $object compare(samples)] -selectmode multiple
 		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(type) \] 0\]\(\[join \[getprivate $object compare(selsamples) \] ,\]\)\" $join" default
-	} elseif {$command in {min max lmin lmax avg}} {
-		private $object compare tdata
-		destroy $object.compare
-		Classy::Dialog $object.compare -title "Functions"
-		set compare(functypes) {
-			{lmin : lmin(a1,a2,...)**: returns the minimum of a1, a2, ... a1, etc. can be a list of numbers (separated by commas, spaces or ;)}
-			{lmax : lmax(a1,a2,...)**: returns the maximum of a1, a2, ... a1, etc. can be a list of numbers (separated by commas, spaces or ;)}
-			{avg : returns the average of the values given. Non-number values are ignored. If no number was given, the answer will be NaN}
-		}
-		$object.compare option select Function [privatevar $object compare(functype)] [privatevar $object compare(functypes)]
-		set compare(functype) $command
-		set compare(fields) [cg select -h $tdata(file)]
-		$object.compare option listbox Sample1 [privatevar $object compare(selfields)] [privatevar $object compare(fields)] -selectmode multiple
-		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(functype) \] 0\]\(\$\[join \[getprivate $object compare(selfields) \] ,\$\]\)\" $join" default
+	} elseif {$command in {min max lmin lmax avg sum}} {
+		if {![llength $fields]} {error "Select some fields first"}
+		set insert "${command}(\$[join $fields ",\$"])"
+		$object querybuilder_insert $insert $join
+	} elseif {$command in {percent}} {
+		if {![llength $fields]} {error "Select some fields first"}
+		set insert "${command}(\$[lindex $fields 0])"
+		$object querybuilder_insert $insert $join
 	} else {
+		if {![llength $fields]} {error "Select some fields first"}
 		set insert {}
 		foreach field $fields {
 			set temp {}
@@ -191,18 +188,18 @@ mainw method querybuilder {args} {
 	destroy $object.querybuilder
 	Classy::Dialog $object.querybuilder -title Query
 	if {[llength $args]} {
-		$object.querybuilder configure -title "Calcualted field builder"
+		$object.querybuilder configure -title "Calculated field builder"
 		set fieldbuilder 1
 		set fieldbuilderw [lindex $args 0]
 		set var [privatevar $object fieldcalc]
 		Classy::Entry $object.querybuilder.options.fieldname -label Fieldname -textvariable [privatevar $object fieldname]
 		pack $object.querybuilder.options.fieldname -side top -expand yes -fill x
-		set funcbuttons {value if count lmin lmax avg compare percent and or region isnum}
+		set funcbuttons {value if count lmin lmax avg sum compare percent and or region isnum}
 		set join ""
 	} else {
 		set fieldbuilder 0
 		set var [$object.buttons.query cget -textvariable]
-		set funcbuttons {and or count region compare lmin lmax avg if isnum percent}
+		set funcbuttons {and or count region compare lmin lmax avg sum if isnum percent}
 		set join and
 	}
 	set w $object.querybuilder.options.paned
@@ -274,7 +271,7 @@ mainw method querybuilder {args} {
 	$w add $w.query
 	set w $object.querybuilder.options.paned
 	if {$fieldbuilder} {
-		$object.querybuilder add query "Query" "[list $fieldbuilderw] addcalc \"\$\{[privatevar $object fieldname]\}=\$\{$var\}\"; destroy $object.querybuilder"
+		$object.querybuilder add query "Insert calc field" "[list $fieldbuilderw] addcalc \"\$\{[privatevar $object fieldname]\}=\$\{$var\}\"; destroy $object.querybuilder"
 	} else {
 		$object.querybuilder add query "Query" "[list $object query]; destroy $object.querybuilder"
 	}
