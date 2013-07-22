@@ -233,6 +233,7 @@ fieldsdialog method basicfields {} {
 fieldsdialog method fieldsup {} {
 	private $object tfields fields
 	set poss [$object.options.fields curselection]
+	if {![llength $poss]} {set poss [$object.options.fields index active]}
 	set pos [lindex $poss 0]
 	incr pos -1
 	if {$pos < 0} {set pos 0}
@@ -242,11 +243,13 @@ fieldsdialog method fieldsup {} {
 	$object.options.fields configure -content $fields
 	$object.options.fields activate $pos
 	$object.options.fields selection set $pos [expr {$pos+[llength $movefields]-1}]
+	$object.options.fields see $pos
 }
 
 fieldsdialog method fieldsdown {} {
 	private $object tfields fields
 	set poss [$object.options.fields curselection]
+	if {![llength $poss]} {set poss [$object.options.fields index active]}
 	set pos [lindex $poss end]
 	incr pos
 	set lastfield [lindex $fields $pos]
@@ -262,6 +265,7 @@ fieldsdialog method fieldsdown {} {
 	if {$pos eq "end"} {set pos [expr {[llength $fields]-[llength $movefields]}]}
 	$object.options.fields activate $pos
 	$object.options.fields selection set $pos [expr {$pos+[llength $movefields]-1}]
+	$object.options.fields see $pos
 }
 
 fieldsdialog method setcalc {args} {
