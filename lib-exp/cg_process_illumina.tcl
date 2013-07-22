@@ -24,14 +24,15 @@ proc gatk {} {
 
 proc bowtie2refseq_job {refseq} {
 	upvar job_logdir job_logdir
-	set bwrefseq $refseq.bowtieindex/[file tail $refseq]
-	job bowtie2refseq-[file tail $refseq] -deps $refseq -targets {$refseq.bowtieindex $bwrefseq.1.bt2} \
-	-vars {refseq bwrefseq} -code {
-		file mkdir $refseq.bowtieindex.temp
-		exec bowtie2-build $refseq $refseq.bowtieindex.temp/[file tail $refseq]
-		file rename $refseq.bowtieindex.temp $refseq.bowtieindex
+	set bowtie2refseq $refseq.bowtie2/[file tail $refseq]
+	job bowtie2refseq-[file tail $refseq] -deps $refseq -targets {$refseq.bowtie2 $bowtie2refseq.1.bt2} \
+	-vars {refseq} -code {
+		file mkdir $refseq.bowtie2.temp
+		mklink $refseq $refseq.bowtie2.temp/[file tail $refseq]
+		exec bowtie2-build $refseq $refseq.bowtie2.temp/[file tail $refseq]
+		file rename $refseq.bowtie2.temp $refseq.bowtie2
 	}
-	return $bwrefseq
+	return $bowtie2refseq
 }
 
 proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
@@ -42,8 +43,8 @@ proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
 	set result ${pre}map-bowtie2-$sample
 	set readgroupdata [array get a]
 	upvar job_logdir job_logdir
-	set bwrefseq [bowtie2refseq_job $refseq]
-	job bowtie2 -deps [list $bwrefseq {*}$files] -targets $result.sam -vars {bwrefseq readgroupdata sample} -skip $result.bam -code {
+	set bowtie2refseq [bowtie2refseq_job $refseq]
+	job bowtie2-$sample -deps [list $bowtie2refseq {*}$files] -targets $result.sam -vars {bowtie2refseq readgroupdata sample} -skip $result.bam -code {
 		puts "making $target"
 		list_shift deps
 		set rg {}
@@ -56,7 +57,7 @@ proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
 			lappend files1 $file1
 			lappend files2 $file2
 		}
-		exec bowtie2 -p 2 --sensitive -x $bwrefseq -1 [join $files1 ,] -2 [join $files2 ,] \
+		exec bowtie2 -p 2 --sensitive -x $bowtie2refseq -1 [join $files1 ,] -2 [join $files2 ,] \
 		--rg-id "$sample" {*}$rg \
 		-S $target.temp >@ stdout 2>@ stderr
 		file rename $target.temp $target
@@ -125,7 +126,7 @@ proc map_bwa_job {refseq files sample {readgroupdata {}} {pre {}}} {
 			mklink $file1 bwa1.fastq
 			mklink $file2 bwa2.fastq
 		}
-		exec bwa mem -t 2 -a -M -R @RG\tID:$sample\t[join $rg \t] $bwarefseq bwa1.fastq bwa2.fastq > $target.temp
+		exec bwa mem -t 2 -a -M -R @RG\tID:$sample\t[join $rg \t] $bwarefseq bwa1.fastq bwa2.fastq > $target.temp 2>@ stderr
 		file rename $target.temp $target
 		file delete bwa1.fastq bwa2.fastq
 	}
@@ -152,16 +153,21 @@ proc map_bwa_job {refseq files sample {readgroupdata {}} {pre {}}} {
 
 proc gatk_refseq_job refseq {
 	upvar job_logdir job_logdir
+	set nrefseq [file root $refseq].fa
+	file delete $nrefseq
+	exec ln -s $refseq $nrefseq
+	file mkdir $refseq.gatk
 	set picard [picard]
-	job bam_clean_sam_faidx-[file tail $refseq] -deps $refseq -targets {$refseq.fai} -code {
+	job bam_clean_sam_faidx-[file tail $nrefseq] -deps $nrefseq -targets {$nrefseq.fai} -code {
 		exec samtools faidx $dep
 	}
-	set dict [file root $refseq].dict
-	job gatkrefseq-[file tail $refseq] -deps $refseq -targets {$dict} -vars {refseq picard} -code {
+	set dict [file root $nrefseq].dict
+	job gatkrefseq-[file tail $nrefseq] -deps $nrefseq -targets {$dict} -vars {nrefseq picard} -code {
 		file delete $target.temp
-		exec java -jar $picard/CreateSequenceDictionary.jar R= $refseq O= $target.temp 2>@ stderr > stdout
+		exec java -jar $picard/CreateSequenceDictionary.jar R= $nrefseq O= $target.temp 2>@ stderr > stdout
 		file rename $target.temp $target
 	}
+	return $nrefseq
 }
 
 proc bam_clean_job {bamfile refseq sample args} {
@@ -170,9 +176,11 @@ proc bam_clean_job {bamfile refseq sample args} {
 	upvar job_logdir job_logdir
 	array set opt $args
 	set removeduplicates 1
+	set realign 1
 	foreach {key value} $args {
 		switch -- $key {
 			-removeduplicates {set removeduplicates $value}
+			-realign {set realign $value}
 			default {error "bam_clean_job: unknown option $key"}
 		}
 	}
@@ -180,47 +188,56 @@ proc bam_clean_job {bamfile refseq sample args} {
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
-	set dict [file root $refseq].dict
 	# make gatk refseq
-	gatk_refseq_job $refseq
+	set gatkrefseq [gatk_refseq_job $refseq]
+	set dict [file root $gatkrefseq].dict
 	# clean bamfile: sort using picard, mark duplicates, and add readgroup info (needed for gatk)
-	job bamclean-$root -deps {$bamfile} -targets {$dir/$pre-cl$root.bam} \
-	-vars {removeduplicates sample picard} -skip {$dir/$pre-rcl$root.bam} -code {
-		file delete $target.temp
-		exec java -jar $picard/SortSam.jar	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr > stdout
-		if {$removeduplicates} {
-			puts "removing duplicates"
-			exec java -jar $picard/MarkDuplicates.jar	I=$target.temp	O=$target.temp2 METRICS_FILE=$target.dupmetrics 2>@ stderr > stdout
-			set src $target.temp2
-		} else {
-			set src $target.temp
+	if {![file exists $dir/$pre-ds$root.bam] && ![file exists $dir/$pre-rs$root.bam]} {
+		job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
+		-vars {removeduplicates sample picard} -skip {$dir/$pre-rds$root.bam} -code {
+			file delete $target.temp
+			exec java -jar $picard/SortSam.jar	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr > stdout
+			file rename $target.temp $target
 		}
-		# exec java -jar $picard/AddOrReplaceReadGroups.jar	I=$src	O=$target.temp3	RGID=$sample	RGLB=solexa-123	RGPL=illumina	RGPU=$sample RGSM=$sample 2>@ stderr > stdout
-		# file delete $target.temp $target.temp2
-		# file rename $target.temp3 $target
-		file rename $src $target
-		file delete $target.temp $target.temp2
 	}
-	# index cleaned result
-	job clbam_index-$root -deps $dir/$pre-cl$root.bam -targets $dir/$pre-cl$root.bam.bai \
-	-skip {$dir/$pre-rcl$root.bam} -code {
-		exec samtools index $dep >@ stdout 2>@ stderr
-		puts "making $target"
+	set root s$root
+	if {$removeduplicates} {
+		job bamremdup-$root -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-d$root.bam} \
+		-vars {sample picard} -skip {$dir/$pre-rd$root.bam} -code {
+			puts "removing duplicates"
+			exec java -jar $picard/MarkDuplicates.jar	I=$dep	O=$target.temp METRICS_FILE=$target.dupmetrics 2>@ stderr > stdout
+			file rename $target.temp $target
+	#		set src $target.temp2
+	#		# exec java -jar $picard/AddOrReplaceReadGroups.jar	I=$src	O=$target.temp3	RGID=$sample	RGLB=solexa-123	RGPL=illumina	RGPU=$sample RGSM=$sample 2>@ stderr > stdout
+	#		# file delete $target.temp $target.temp2
+	#		# file rename $target.temp3 $target
+	#		file rename $src $target
+	#		file delete $target.temp $target.temp2
+		}
+		set root d$root
+		# index cleaned result
+		job bamrs_index-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai \
+		-code {
+			exec samtools index $dep >@ stdout 2>@ stderr
+			puts "making $target"
+		}
 	}
-	set root cl$root
-	# realign around indels
-	job gatkrealign-$root -deps {$dir/$pre-$root.bam $dict} -targets {$dir/$pre-r$root.bam} \
-	-vars {refseq gatk pre root} -code {
-		exec java -jar $gatk -T RealignerTargetCreator -R $refseq -I $dep -o $target.intervals 2>@ stderr >@ stdout
-		exec java -jar $gatk -T IndelRealigner -R $refseq -targetIntervals $target.intervals -I $dep -o $target.temp 2>@ stderr >@ stdout
-		file rename $target.temp $target
-		file delete $dep $dep.bai
+	if {$realign} {
+		# realign around indels
+		job bamrealign-$root -deps {$dir/$pre-$root.bam $dict} -targets {$dir/$pre-r$root.bam} \
+		-vars {gatkrefseq gatk pre} -code {
+			exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals 2>@ stderr >@ stdout
+			exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp 2>@ stderr >@ stdout
+			file rename $target.temp $target
+			file delete $dep $dep.bai
+		}
+		set root r$root
+		job bamrealign_index-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai -code {
+			exec samtools index $dep >@ stdout 2>@ stderr
+			puts "making $target"
+		}
 	}
-	job rclbam_index-$root -deps $dir/$pre-r$root.bam -targets $dir/$pre-r$root.bam.bai -code {
-		exec samtools index $dep >@ stdout 2>@ stderr
-		puts "making $target"
-	}
-	return $dir/$pre-r$root.bam
+	return $dir/$pre-$root.bam
 }
 
 proc annotvar_clusters_job {file resultfile} {
@@ -257,7 +274,7 @@ proc var_sam_job {bamfile refseq {pre {}}} {
 	job ${pre}var_sam_faidx -deps $refseq -targets {$refseq.fai} -code {
 		exec samtools faidx $dep
 	}
-	job ${pre}varall-sam-$root -deps $file -targets {${pre}varall-sam-$root.vcf} -vars {refseq} -skip varall-sam-$root.tsv -code {
+	job ${pre}varall-sam-$root -deps {$file $refseq.fai} -targets {${pre}varall-sam-$root.vcf} -vars {refseq} -skip varall-sam-$root.tsv -code {
 		# bcftools -v for variant only
 		exec samtools mpileup -uDS -f $refseq $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
 		file rename $target.temp $target
@@ -308,15 +325,17 @@ proc var_gatk_job {bamfile refseq {pre {}}} {
 	cd $dir
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
-	job ${pre}varall-gatk-$root -deps $file -targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.vcf.rz -vars {gatk refseq} -code {
-		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper -R $refseq -I $dep -o $target.temp \
+	set gatkrefseq [gatk_refseq_job $refseq]
+	job ${pre}varall-gatk-$root -deps [list $file $gatkrefseq] \
+	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk} -code {
+		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 50.0 -stand_emit_conf 10.0 -dcov 1000 \
 			-glm BOTH --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr
 		file rename $target.temp $target
 		catch {file rename $target.temp.idx $target.idx}
 		# file delete $target.temp
 	}
-	job ${pre}varall-gatk2sft-$root -deps ${pre}varall-gatk-$root.vcf -targets ${pre}varall-gatk-$root.tsv -vars {sample refseq} -code {
+	job ${pre}varall-gatk2sft-$root -deps [list ${pre}varall-gatk-$root.vcf] -targets ${pre}varall-gatk-$root.tsv -vars {sample} -code {
 		cg vcf2sft $dep $target.temp
 		file rename $target.temp $target
 	}
@@ -392,47 +411,51 @@ proc multicompar_job {experiment dbdir todo} {
 
 proc process_illumina {destdir dbdir} {
 	set refseq [glob $dbdir/genome_*.ifas]
-	set oridir $destdir
-	set oridir [file normalize $oridir]
 	set destdir [file normalize $destdir]
 	set samples {}
-	foreach sample [dirglob $destdir */fastq] {
-		lappend samples [file dir $sample]
+	foreach dir [dirglob $destdir */fastq] {
+		lappend samples [file dir $dir]
 	}
+	set samples [lsort -dict $samples]
 	set keeppwd [pwd]
 	cd $destdir
 	job_logdir $destdir/log_jobs
 	foreach sample $samples {
 		puts $sample
-		set name ${sample}
-		set dir $destdir/$name
+		set dir $destdir/$sample
 		catch {file mkdir $dir}
 		puts $dir
 		cd $dir
 		job_logdir $dir/log_jobs
 		# job_logdir $dir/log_jobs
-		catch {exec ln -s $oridir/$sample ori}
-		set gzfiles [glob -nocomplain $oridir/$sample/fastq/*.gz]
-		if {[llength $gzfiles]} {exec gunzip {*}$gzfiles}
-		set files [lsort -dict [glob -nocomplain $oridir/$sample/fastq/*.fastq]]
+		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
 		if {![llength $files]} continue
 		#
-		# map using bowtie2
-		map_bowtie2_job $refseq $name $files
+#		# map using bowtie2
+#		map_bowtie2_job $refseq $sample $files
+#		# clean bamfile (mark duplicates, realign)
+#		bam_clean_job map-bowtie2-$sample.bam $refseq $sample
+#		# samtools variant calling on map-bowtie2
+#		#var_sam_job map-bowtie2-$sample.bam $refseq
+#		# samtools variant calling on map-rdsbowtie2
+#		var_sam_job map-rdsbowtie2-$sample.bam $refseq
+#		# gatk variant calling on map-rdsbowtie2
+#		var_gatk_job map-rdsbowtie2-$sample.bam $refseq
+		#
+		# map using bwa
+		map_bwa_job $refseq $files $sample
 		# clean bamfile (mark duplicates, realign)
-		bam_clean_job map-bowtie2-$name.bam $refseq $sample
-		# samtools variant calling on map-bowtie2
-		#var_sam_job map-bowtie2-$sample.bam $refseq
-		# samtools variant calling on map-rclbowtie2
-		var_sam_job map-rclbowtie2-$name.bam $refseq
-		# gatk variant calling on map-rclbowtie2
-		var_gatk_job map-rclbowtie2-$name.bam $refseq
+		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign 0]
+		# samtools variant calling on map-rdsbwa
+		var_sam_job $cleanedbam $refseq
+		# gatk variant calling on map-rdsbwa
+		var_gatk_job $cleanedbam $refseq
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo {}
 	foreach sample $samples {
-		lappend todo sam-rclbowtie2-$sample gatk-rclbowtie2-$sample
+		lappend todo sam-rdsbowtie2-$sample gatk-rdsbowtie2-$sample
 	}
 	multicompar_job $experiment $dbdir $todo
 	cd $keeppwd

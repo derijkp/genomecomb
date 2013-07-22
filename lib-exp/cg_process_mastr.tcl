@@ -135,58 +135,38 @@ proc process_mastr_job {mastrdir destdir dbdir} {
 		}
 		# do own alignment
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
-#		# clip primers, quality
-#		set adapterfile ../primers.fa
-#		set outfiles {}
-#		set out {}
-#		foreach file $files {
-#			set outfile [file root $file].clipped.fastq
-#			lappend out -o $outfile
-#			lappend outfiles $outfile
-#		}
-#		exec fastq-mcf -t 0 -k 0 -x 0 {*}$out $adapterfile {*}$files 2>@ stderr
-
-#		set files {}
-#		set tempfiles {}
-#		foreach file $gzfiles {
-#			if {[file extension $file] eq ".gz"} {
-#				gunzip $file $file.temp
-#				lappend files $file.temp
-#				lappend tempfiles $file.temp
-#			} else {
-#				lappend files $file
-#			}
-#		}
+# map_bwa_job /complgen/refseq/hg19/genome_hg19.ifas [glob fastq/*] $sample
+# map_bowtie2_job /complgen/refseq/hg19/genome_hg19.ifas $files $name {PL illumina LB solexa-123}
 		if {![llength $files]} continue
 		#
 		# map using bowtie2
 		map_bowtie2_job $refseq $files $name {PL illumina LB solexa-123} reg_
 		# clean bamfile (do not mark duplicates, realign)
-		bam_clean_job reg_map-bowtie2-$name.bam $refseq $sample -removeduplicates 0
-		# samtools variant calling on map-rclbowtie2
-		var_sam_job reg_map-rclbowtie2-$name.bam $refseq reg_
-		job remapsam-varall-$name -deps {reg_varall-sam-rclbowtie2-$name.tsv $mapfile} -targets varall-sam-rclbowtie2-$name.tsv -code {
+		set cleanbam [bam_clean_job reg_map-bowtie2-$name.bam $refseq $sample -removeduplicates 0]
+		# samtools variant calling on map-rsbowtie2
+		var_sam_job $cleanbam $refseq reg_
+		job remapsam-varall-$name -deps {reg_varall-sam-rsbowtie2-$name.tsv $mapfile} -targets varall-sam-rsbowtie2-$name.tsv -code {
 			cg remap $dep1 $dep2 $target
 		}
-		job remapsam-var-$name -deps {reg_var-sam-rclbowtie2-$name.tsv $mapfile} -targets var-sam-rclbowtie2-$name.tsv -code {
+		job remapsam-var-$name -deps {reg_var-sam-rsbowtie2-$name.tsv $mapfile} -targets var-sam-rsbowtie2-$name.tsv -code {
 			cg remap $dep1 $dep2 $target
 		}
-		sreg_sam_job sreg-sam-rclbowtie2-$name varall-sam-rclbowtie2-$name.tsv sreg-sam-rclbowtie2-$name.tsv
-		# gatk variant calling on map-rclbowtie2
-		var_gatk_job reg_map-rclbowtie2-$name.bam $refseq reg_
-		job remapgatk-varall-$name -deps {reg_varall-gatk-rclbowtie2-$name.tsv $mapfile} -targets varall-gatk-rclbowtie2-$name.tsv -code {
+		sreg_sam_job sreg-sam-rsbowtie2-$name varall-sam-rsbowtie2-$name.tsv sreg-sam-rsbowtie2-$name.tsv
+		# gatk variant calling on map-rsbowtie2
+		var_gatk_job reg_map-rsbowtie2-$name.bam $refseq reg_
+		job remapgatk-varall-$name -deps {reg_varall-gatk-rsbowtie2-$name.tsv $mapfile} -targets varall-gatk-rsbowtie2-$name.tsv -code {
 			cg remap $dep1 $dep2 $target
 		}
-		job remapgatk-var-$name -deps {reg_var-gatk-rclbowtie2-$name.tsv $mapfile} -targets var-gatk-rclbowtie2-$name.tsv -code {
+		job remapgatk-var-$name -deps {reg_var-gatk-rsbowtie2-$name.tsv $mapfile} -targets var-gatk-rsbowtie2-$name.tsv -code {
 			cg remap $dep1 $dep2 $target
 		}
-		sreg_gatk_job sreg-gatk-rclbowtie2-$name varall-gatk-rclbowtie2-$name.tsv sreg-gatk-rclbowtie2-$name.tsv
+		sreg_gatk_job sreg-gatk-rsbowtie2-$name varall-gatk-rsbowtie2-$name.tsv sreg-gatk-rsbowtie2-$name.tsv
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo {}
 	foreach sample $samples {
-		lappend todo sam-rclbowtie2-$sample gatk-rclbowtie2-$sample
+		lappend todo sam-rsbowtie2-$sample gatk-rsbowtie2-$sample
 	}
 	multicompar_job $experiment $dbdir $todo
 	cd $keeppwd
