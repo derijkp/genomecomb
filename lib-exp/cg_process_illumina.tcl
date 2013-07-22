@@ -22,6 +22,36 @@ proc gatk {} {
 	return $gatk
 }
 
+proc fastq_clipadapters {files targets {adapterfile {}}} {
+	if {$adapterfile eq ""} {
+		set adapterfile $::externdir/adaptors.fa
+	}
+	# clip primers, quality
+	set out {}
+	foreach target $targets {
+		file mkdir [file dir $target]
+		lappend out -o $target.temp
+	}
+	exec fastq-mcf {*}$out $adapterfile {*}$files 2>@ stderr
+	foreach target $targets {
+		file rename $target.temp $target
+	}
+}
+
+proc fastq_clipadapters_job {files {adapterfile {}}} {
+	upvar job_logdir job_logdir
+	set targets {}
+	foreach file $files {
+		set file [file normalize [gzroot $file]]
+		set root [file root $file]
+		lappend targets [file dir $root].clipped/[file tail $root].clipped.fastq
+	}
+	job clip-[file dir [file dir $root]] -deps $files -targets $targets -code {
+		fastq_clipadapters $deps $targets
+	}
+	return $targets
+}
+
 proc bowtie2refseq_job {refseq} {
 	upvar job_logdir job_logdir
 	set bowtie2refseq $refseq.bowtie2/[file tail $refseq]
@@ -430,6 +460,8 @@ proc process_illumina {destdir dbdir} {
 		# job_logdir $dir/log_jobs
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
 		if {![llength $files]} continue
+		# quality and adapter clipping
+		set files [fastq_clipadapters_job $files]
 		#
 #		# map using bowtie2
 #		map_bowtie2_job $refseq $sample $files
