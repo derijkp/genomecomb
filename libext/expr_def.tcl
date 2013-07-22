@@ -4,7 +4,7 @@ proc tcl::mathfunc::def {value def} {
 
 proc tcl::mathfunc::vdef {value def} {
 	set result {}
-	foreach el [split $value ,] {
+	foreach el [split $value ";, "] {
 		if {[isdouble $el]} {
 			lappend result $el
 		} else {
