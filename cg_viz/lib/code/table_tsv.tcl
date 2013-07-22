@@ -97,8 +97,12 @@ table_tsv method table {args} {
 	return $tdata(table)	
 }
 
-table_tsv method query {query} {
+table_tsv method query {args} {
 	private $object tdata
+	if {![llength $args]} {
+		return $tdata(query)
+	}
+	set query [lindex $args 0]
 	set tdata(query) $query
 	if {[get tdata(query_results) ""] ne ""} {
 		bcol_close $tdata(query_results)
@@ -277,6 +281,7 @@ table_tsv method fields {args} {
 	private $object tdata
 	if {[llength $args]} {
 		set tdata(fields) [lindex $args 0]
+		file_write $tdata(indexdir)/query_fields.txt $tdata(fields)
 		if {[inlist {* {}} $tdata(fields)]}	{
 			set tdata(qfields) $tdata(tfields)
 			set tdata(fieldscor) {}
@@ -423,6 +428,9 @@ table_tsv method open {file parent} {
 		catch {$object.disp1 destroy}
 		display_chr new $object.disp1 $parent.canvas.data $object $tdata(refdir)
 		Classy::todo $object.disp1 redraw
+	}
+	if {[file exists $tdata(indexdir)/query_fields.txt]} {
+		$object fields [file_read $tdata(indexdir)/query_fields.txt]
 	}
 	Extral::event generate querychanged $object
 	return $file

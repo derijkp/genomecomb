@@ -140,39 +140,52 @@ if 0 {
 	event generate $object.g <Configure>
 }
 
-scrolledgraph method gradientstyle {basecolor} {
+scrolledgraph method gradientstyle {basecolor {min 0} {max 100} {null 0} {symbol plus}} {
 	private $object colors
+	if {![llength [$object.g pen names $basecolor-0]]} {
+		$object.g pen create $basecolor-0 -fill $basecolor -outline $basecolor -outlinewidth 0 -pixels 0 -symbol $symbol
+	}
 	if {$basecolor eq "gray"} {
-		foreach {num} {
-			100 90 80 70 60 50 40 30 20 10 0
+		set num 1
+		foreach {gnum} {
+			90 80 70 60 50 40 30 20 10 0
 		} {
 			set color gray-$num
-			set colorcode gray$num
-			set colors($color) $colorcode
+			set colorcode gray$gnum
 			if {![llength [$object.g pen names $color]]} {
-				$object.g pen create $color -fill $colorcode -outline $colorcode -outlinewidth 1 -pixels 2 -symbol plus
+				$object.g pen create $color -fill $colorcode -outline $colorcode -outlinewidth 1 -pixels 2 -symbol $symbol
 			} else {
-				# $object.g pen configure $color -fill $colorcode -outline $colorcode -outlinewidth 1 -pixels 2 -symbol plus
+				# $object.g pen configure $color -fill $colorcode -outline $colorcode -outlinewidth 1 -pixels 2 -symbol $symbol
 			}
+			incr num
 		}
 	} else {
-		foreach {num factor} {
-			100 0.5 90 0.4 80 0.3 70 0.2 60 0.1 50 0.0 40 -0.1 30 -0.2 20 -0.3 10 -0.4 0 -0.5
+		set num 1
+		foreach {factor} {
+			0.4 0.3 0.2 0.1 0.0 -0.1 -0.2 -0.3 -0.4 -0.5
 		} {
 			set color $basecolor-$num
 			set colorcode [gradient $basecolor $factor]
 			if {![llength [$object.g pen names $color]]} {
-				$object.g pen create $color -fill $colorcode -outline $colorcode -outlinewidth 1 -pixels 2 -symbol plus
+				$object.g pen create $color -fill $colorcode -outline $colorcode -outlinewidth 1 -pixels 2 -symbol $symbol
 			} else {
-				# $object.g pen configure $color -fill $colorcode -outline $colorcode -outlinewidth 1 -pixels 2 -symbol plus
+				# $object.g pen configure $color -fill $colorcode -outline $colorcode -outlinewidth 1 -pixels 2 -symbol $symbol
 			}
+			incr num
 		}
 	}
 	set style {}
-	lappend style [list $basecolor-80 -1000000000 10]
-	lappend style [list $basecolor-60 11 20]
-	lappend style [list $basecolor-40 21 30]
-	lappend style [list $basecolor-0 31 1000000000]
+	set step [expr {($max-$min)/10.0}]
+	set num 1
+	set cur $min
+	for {set num 1} {$num <= 10} {incr num} {
+		set next [expr {$cur+$step}]
+		lappend style [list $basecolor-$num $cur $next]
+		set cur $next
+		incr num
+	}
+	lset style end end [expr {$max+1}]
+	lappend style [list $basecolor-0 $null $null]
 	return $style
 }
 
@@ -193,31 +206,36 @@ putsvars win num
 	}
 }
 
-scrolledgraph method add {table} {
+scrolledgraph method add {table {xtitle {}} {ytitle {}}} {
 	private $object xv yv wv data colors labels region
 	set showregion 0
+	# we will add to existing (data(entries) already there)
 	set vnum [llength $data(entries)]
 	set header [list_shift table]
 	set table [lsort -dict -index 0 $table]
 	set xs [list_subindex $table 0]
 	vector create ::$object.x
+	$object.g axis configure y -title $ytitle
 	if {[catch {::$object.x set $xs}]} {
 		set labels $xs
 		set xs [list_fill [llength $xs] 0 1]
 		::$object.x set $xs
-		$object.g axis configure x -command [list $object getlabel]
+		$object.g axis configure x -command [list $object getlabel] -title $xtitle
 		# -subdivisions 0 -stepsize 1
 	} else {
 		unset -nocomplain labels
-		$object.g axis configure x -command {}
+		$object.g axis configure x -command {} -title $xtitle
 	}
 #	set amin [min [lmath_min $xs] [::$object.ends.x index 0]]
 #	set amax [max [lmath_max $xs] [::$object.ends.x index 1]]
-	set amin [lmath_min $xs]
-	set amax [lmath_max $xs]
+	set amin [lmath_min [list_lremove $xs {Inf -Inf NaN}]]
+	set amax [lmath_max [list_lremove $xs {Inf -Inf NaN}]]
 	if {[info exists labels]} {
 		set amin [expr {$amin - 1}]
 		set amax [expr {$amax + 1}]
+	}
+	if {$region(xmax) == Inf} {
+		set region(xmax) [::$object.ends.x index 1]
 	}
 	::$object.ends.x set [list $amin $amax]
 	set pos 0
@@ -234,8 +252,8 @@ scrolledgraph method add {table} {
 		}
 		set ys [list_subindex $table $pos]
 		::$object.$vnum.y set $ys
-		set amin [min [lmath_min $ys] $amin]
-		set amax [max [lmath_max $ys] $amax]
+		set amin [min [lmath_min [list_lremove $ys {Inf -Inf NaN}]] $amin]
+		set amax [max [lmath_max [list_lremove $ys {Inf -Inf NaN}]] $amax]
 		set basecolor [lindex $dcolors $vnum]
 		if {$basecolor eq ""} {set basecolor blue}
 		lappend data(entries) $name
@@ -246,15 +264,15 @@ scrolledgraph method add {table} {
 		set xv ::$object.x
 		set yv ::$object.$vnum.y
 		set wv ::$object.$vnum.w
-		$object.g element create $name -xdata $xv -ydata $yv -symbol none
-		# $object.g element configure $name -weights ::$wv
-		set style [$object gradientstyle $basecolor]
-		set color [get colors(${basecolor}0) $basecolor]
-		# $object.g element configure $name -linewidth 1 -fill $color -outlinewidth 1 -pixels 1 -symbol circle
-		$object.g element configure $name -linewidth 1 -color $basecolor -outline $basecolor -outlinewidth 1 -pixels 2 -symbol plus \
+		$object.g element create e$name -label $name -xdata $xv -ydata $yv -symbol none
+		# $object.g element configure e$name -weights ::$wv
+		set style [$object gradientstyle $basecolor $amin $amax 0]
+		set color $basecolor
+		# $object.g element configure e$name -linewidth 1 -fill $color -outlinewidth 1 -pixels 1 -symbol circle
+		$object.g element configure e$name -linewidth 1 -color $basecolor -outline $basecolor -outlinewidth 1 -pixels 2 -symbol plus \
 			-styles $style
 		if {$showregion} {
-			$object.g element configure $name -linewidth 10 -trace decreasing
+			$object.g element configure e$name -linewidth 10 -trace decreasing
 		}
 		set data($name,color) $color
 		$object.g legend bind $name <1> [list $object elconf $name]
@@ -263,6 +281,84 @@ scrolledgraph method add {table} {
 	if {![isdouble $amin]} {set amin 0}
 	if {![isdouble $amax]} {set amax 0}
 	::$object.ends.y set [list $amin $amax]
+	set region(xmin) [::$object.ends.x index 0]
+	set region(xmax) [::$object.ends.x index 1]
+	set region(ymin) [::$object.ends.y index 0]
+	set region(ymax) [::$object.ends.y index 1]
+	Classy::todo $object redraw
+}
+
+scrolledgraph method addscatter {table xcol ycol datacols} {
+	private $object xv yv wv data colors labels region
+	# we will add to existing (data(entries) already there)
+	set vnum [llength $data(entries)]
+	set header [list_shift table]
+	set xpos [lsearch $header $xcol]
+	set ypos [lsearch $header $ycol]
+	# set table [lsort -dict -index $xpos $table]
+	# x
+	set xs [list_subindex $table $xpos]
+	vector create ::$object.x
+	if {[catch {::$object.x set $xs}]} {
+		error "x column may only contain numbers"
+	}
+	set amin [lmath_min [list_lremove $xs {Inf -Inf NaN}]]
+	set amax [lmath_max [list_lremove $xs {Inf -Inf NaN}]]
+	if {![isdouble $amin]} {set amin 0}
+	if {![isdouble $amax]} {set amax 0}
+	::$object.ends.x set [list $amin $amax]
+	$object.g axis configure x -title $xcol
+	# y
+	set ys [list_subindex $table $ypos]
+	vector create ::$object.y
+	if {[catch {::$object.y set $ys}]} {
+		error "y column may only contain numbers"
+	}
+	set amin [lmath_min [list_lremove $ys {Inf -Inf NaN}]]
+	set amax [lmath_max [list_lremove $ys {Inf -Inf NaN}]]
+	if {![isdouble $amin]} {set amin 0}
+	if {![isdouble $amax]} {set amax 0}
+	::$object.ends.y set [list $amin $amax]
+	$object.g axis configure y -title $ycol
+	set symbols {cross circle square diamond plus splus scross triangle}
+	set pos 0
+	if {[llength $datacols] <= 7} {
+		set dcolors {blue red gray orange yellow green violet}
+	} else {
+		set dcolors [distinctColors [llength $datacols]]
+	}
+	set amin {}
+	set amax {}
+	foreach field $datacols {
+		set datapos [lsearch $header $field]
+		incr pos
+		set name $field
+		vector create ::$object.$vnum.w
+		set ws [list_subindex $table $datapos]
+		set min [lmath_min [list_lremove $ws {Inf -Inf NaN}]]
+		set max [lmath_max [list_lremove $ws {Inf -Inf NaN}]]
+		::$object.$vnum.w set $ws
+		set basecolor [lindex $dcolors $vnum]
+		if {$basecolor eq ""} {set basecolor blue}
+		lappend data(entries) $name
+		set data($name,vnum) $vnum
+		set data($name,lstart) 0
+		set data($name,lend) 0
+		set data($name,header) $header
+		set xv ::$object.x
+		set yv ::$object.y
+		set wv ::$object.$vnum.w
+		$object.g element create e$name -xdata $xv -ydata $yv -weight $wv -symbol none
+		# $object.g element configure e$name -weights ::$wv
+		set style [$object gradientstyle $basecolor $min $max 0]
+		set color $basecolor
+		# $object.g element configure e$name -linewidth 1 -fill $color -outlinewidth 1 -pixels 1 -symbol circle
+		$object.g element configure e$name -linewidth 0 -color $basecolor -outline $basecolor -outlinewidth 1 -pixels 2 -symbol plus \
+			-styles $style
+		set data($name,color) $color
+		$object.g legend bind $name <1> [list $object elconf $name]
+		incr vnum
+	}
 	set region(xmin) [::$object.ends.x index 0]
 	set region(xmax) [::$object.ends.x index 1]
 	set region(ymin) [::$object.ends.y index 0]
@@ -317,6 +413,8 @@ puts ----------redraw----------
 	set w $object.g
 	Classy::canceltodo $object redraw
 	# $object _xrange
+	if {$region(xmax) <= $region(xmin)} {set region(xmax) [expr {$region(xmin)+1}]}
+	if {$region(ymax) <= $region(ymin)} {set region(ymax) [expr {$region(ymin)+1}]}
 	$w axis configure x -min $region(xmin) -max $region(xmax)
 	$w axis configure y -min $region(ymin) -max $region(ymax)
 	Classy::todo $object _configureevent
@@ -455,8 +553,7 @@ scrolledgraph method reconf {args} {
 	set data($name,color) [get conf(color) gray]
 	set style [$object gradientstyle $data($name,color)]
 	set color [get colors($data($name,color)-0) $data($name,color)]
-putsvars name color
-	$object.g element configure $name -linewidth $conf(linewidth) -fill $color -outline $color -color $color \
+	$object.g element configure e$name -linewidth $conf(linewidth) -fill $color -outline $color -color $color \
 		-outlinewidth 1 -pixels 2 -symbol $conf(symbol) \
 		-styles $style
 	Classy::todo $object _configureevent
@@ -465,8 +562,8 @@ putsvars name color
 scrolledgraph method confcurrent {args} {
 	private $object data conf
 	set name $conf(entry)
-	set conf(symbol) [$object.g element cget $name -symbol]
-	set conf(linewidth) [$object.g element cget $name -linewidth]
+	set conf(symbol) [$object.g element cget e$name -symbol]
+	set conf(linewidth) [$object.g element cget e$name -linewidth]
 	set conf(color) $data($name,color)
 	set conf(fields) $data($name,header)
 	lappend conf(fields) ""

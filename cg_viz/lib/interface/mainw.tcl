@@ -79,10 +79,13 @@ mainw method init args {
 	Classy::OptionMenu $object.buttons.view  \
 		-list {data
 summary
-graph}
+summarygraph
+summaryscatter
+graph
+scatter}
 	grid $object.buttons.view -row 0 -column 5 -sticky nesw
 	button $object.buttons.settings \
-		-text Settings
+		-text Summaries
 	grid $object.buttons.settings -row 0 -column 4 -sticky nesw
 	grid columnconfigure $object.buttons 0 -uniform {}
 	grid columnconfigure $object.buttons 1 -uniform {}
@@ -260,6 +263,7 @@ mainw method opentsv {args} {
 	wm title $object $file
 	# find root and start tree
 	set file [file normalize $file]
+	set view(file) $file
 	if {[file isdir $file]} {
 		set root $file
 	} else {
@@ -369,8 +373,10 @@ return
 
 mainw method summary_recalc {args} {
 	private $object summary view
+	set curquery [$object.tb query]
 	set definition [list $view(summary_rows) $view(summary_cols) $view(summary_cells)]
-	if {![info exists summary] || [inlist $args querychanged] || $definition ne [get view(olddefintion) ""]} {
+	if {![info exists summary] || [llength [list_common $args querychanged]] 
+		|| $definition ne [get view(olddefintion) ""] || $curquery ne [get view(oldquery) ""]} {
 		set error [catch {$object.tb summary $definition} newsummary]
 		if {$error} {
 			error "error in summary definition (or query)\n\n$newsummary"
@@ -379,6 +385,7 @@ mainw method summary_recalc {args} {
 			set summary [list $header {*}[lsort -dict $newsummary]]
 			set view(olddefintion) $definition
 		}
+		set view(oldquery) $curquery
 	}
 	return $summary
 }
@@ -388,7 +395,7 @@ mainw method savesummary {args} {
 	if {[llength $args]} {
 		set file [lindex $args 0]
 	} else {
-		set file [Classy::savefile -title "Save Summary"]
+		set file [Classy::savefile -initialfile [file dir $view(file)]/summary\ [join $view(summary_rows) ,]\ [join [list_unmerge $view(summary_cols)] ,]\ $view(summary_cells).tsv -title "Save Summary"]
 	}
 	set f [open $file w]
 	puts $f "\# Summary definition: [get view(olddefintion) ""]"
@@ -397,8 +404,6 @@ mainw method savesummary {args} {
 }
 
 mainw method summary_redraw {args} {
-puts summary_redraw
-putsvars args
 	private $object summary view
 	set error [catch {
 		set summary [$object summary_recalc {*}$args]
@@ -413,17 +418,100 @@ mainw method graph_redrawselect {args} {
 	return
 }
 
-mainw method graph_redraw {args} {
+proc getytitle {cols} {
+	set ytitle {}
+	foreach field $cols {
+		if {[regexp {([^-]+)_[^_]+$} $field temp func]} {
+			list_addnew ytitle $func
+		} elseif {[regexp -- {-([^-]+)$} $field temp func]} {
+			list_addnew ytitle $func
+		} else {
+			list_addnew ytitle $field
+		}
+	}
+	return [join $ytitle ,]
+}
+
+mainw method summarygraph_redraw {args} {
 	private $object view
 	set error [catch {
 		set summary [$object summary_recalc {*}$args]
 	} message]
 	$object.graph clear
 	if {!$error} {
-		$object.graph add $summary
+		set xtitle [lindex $view(summary_rows) 0]
+		set cols [list_union [lrange $view(summary_rows) 1 end] $view(summary_cells)]
+		if {$view(summary_cells) eq ""} {lappend cols count}
+		$object.graph add $summary $xtitle [getytitle $cols]
 	} else {
 		error "error in graph definition\n\n$message"
 	}
+}
+
+mainw method summaryscatter_redraw {args} {
+	private $object view
+	set error [catch {
+		set summary [$object summary_recalc {*}$args]
+	} message]
+	$object.graph clear
+	if {!$error} {
+		set header [lindex $summary 0]
+		set xcol [lindex $header 0]
+		set ycol [lindex $header 1]
+		set datacols [lrange $header 2 end]
+		$object.graph addscatter $summary $xcol $ycol $datacols
+	} else {
+		error "error in graph definition\n\n$message"
+	}
+}
+
+mainw method graph_redraw {args} {
+	private $object view
+	if {[file size $view(file)] > 10000000} {
+		error "File too large to make graph, make a summary first?"
+	}
+	set f [open $view(file)]
+	set header [tsv_open $f]
+	set summary [csv_file $f \t {}]
+	close $f
+	set summary [list $header {*}[lsort -dict -index 0 $summary]]
+	if {[info exists view(graph_rows)]} {
+		set rows $view(graph_rows)
+	} else {
+		set rows [lindex $header 0]
+	}
+	if {[info exists view(graph_cols)]} {
+		set cols $view(graph_cols)
+	} else {
+		set cols [lrange $header 1 end]
+	}
+	$object.graph clear
+	$object.graph add $summary $rows [getytitle $cols]
+}
+
+mainw method scatter_redraw {args} {
+	private $object view
+	if {[file size $view(file)] > 10000000} {
+		error "File too large to make graph, make a summary first?"
+	}
+	set f [open $view(file)]
+	set header [tsv_open $f]
+	set summary [csv_file $f \t {}]
+	close $f
+	set summary [list $header {*}[lsort -dict -index 0 $summary]]
+	if {[info exists view(graph_rows)]} {
+		set rows $view(graph_rows)
+	} else {
+		set rows [lrange $header 0 1]
+	}
+	if {[info exists view(graph_cols)]} {
+		set cols $view(graph_cols)
+	} else {
+		set cols [lrange $header 2 end]
+	}
+	$object.graph clear
+	foreach {xcol ycol} $rows break
+	$object.graph addscatter $summary $xcol $ycol $cols
 }
 
 mainw method view {newview} {
@@ -465,17 +553,41 @@ mainw method view {newview} {
 				$object.summary.data configure -wrap 1 -resizeborders both -bordercursor crosshair
 			}
 			Extral::event listen $object.summary selchanged [list $object summary_redrawselect]
-			Extral::event listen $object.summary querychanged [list $object summary_redraw querychanged]
+			Extral::event listen $object.summary querychanged [list Classy::todo $object summary_redraw querychanged]
 			grid $object.summary -row 5 -column 2 -sticky nesw
 			$object summary_redraw
+		}
+		summarygraph {
+			destroy $object.graph
+			scrolledgraph $object.graph
+			# Extral::event listen $object.graph selchanged [list Classy::todo $object summarygraph_redrawselect]
+			Extral::event listen $object.graph querychanged [list Classy::todo $object summarygraph_redraw querychanged]
+			grid $object.graph -row 5 -column 2 -sticky nesw
+			$object summarygraph_redraw
+		}
+		summaryscatter {
+			destroy $object.graph
+			scrolledgraph $object.graph
+			# Extral::event listen $object.graph selchanged [list Classy::todo $object summaryscatter_redrawselect]
+			Extral::event listen $object.graph querychanged [list Classy::todo $object summaryscatter_redraw querychanged]
+			grid $object.graph -row 5 -column 2 -sticky nesw
+			$object summaryscatter_redraw
 		}
 		graph {
 			destroy $object.graph
 			scrolledgraph $object.graph
-			Extral::event listen $object.graph selchanged [list $object graph_redrawselect]
-			Extral::event listen $object.graph querychanged [list $object graph_redraw querychanged]
+			Extral::event listen $object.graph selchanged [list Classy::todo $object graph_redrawselect]
+			Extral::event listen $object.graph querychanged [list Classy::todo $object graph_redraw querychanged]
 			grid $object.graph -row 5 -column 2 -sticky nesw
 			$object graph_redraw
+		}
+		scatter {
+			destroy $object.graph
+			scrolledgraph $object.graph
+			# Extral::event listen $object.graph selchanged [list Classy::todo $object scatter_redrawselect]
+			Extral::event listen $object.graph querychanged [list Classy::todo $object scatter_redraw querychanged]
+			grid $object.graph -row 5 -column 2 -sticky nesw
+			$object scatter_redraw
 		}
 	}
 }

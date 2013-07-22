@@ -135,6 +135,7 @@ proc tsv_select_addaggregatecalc {todolist} {
 
 proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 	upvar $calccolsVar calccols
+	set calcresults ""
 	foreach {func field} $grouptypes {
 		if {$func eq "count"} {
 			append calcresults {
@@ -189,8 +190,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 	# calculated fields will be calculated in the begining of the query proc
 	# these are gathered in precalc
 	# precalc is run for every match (sets some variables used in query, etc.)
-	regsub -all \n $group { } group
-	regsub -all \n $groupcols { } groupcols
+	regsub -all \n [string trim $group] { } group
 	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list}
 	unset -nocomplain calccols
 	set precalc {}
@@ -209,13 +209,14 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 		incr num
 	}
 	# more than one groupcol not supported (yet)
-	if {![llength $groupcols]} {
+puts stderr newversion==============================
+	set groupcol [lindex $groupcols 0]
+	regsub -all \n [string trim $groupcol] { } groupcol
+	if {![llength $groupcol]} {
 		set groupcol count
-	} else {
-		set groupcol [lindex $groupcols 0]
 	}
 	set grouptypelist [split [list_pop groupcol] ,]
-	# check groupcols for presence of sample field
+	# check groupcol for presence of sample field
 	set gsamples [select_parse_for_samples $groupcol $header]
 	# parse grouptypes (aggregate results), and see which functions are needed
 	set grouptypes [select_parse_grouptypes $grouptypelist]

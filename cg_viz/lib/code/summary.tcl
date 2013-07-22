@@ -17,7 +17,9 @@ table_tsv method summary {definition {file {}}} {
 	private $object tdata
 	if {![info exists tdata(sqlbackend_db)]} {
 		foreach {rowdef coldef celdef} $definition break
-		lappend coldef $celdef
+		if {$celdef ne ""} {
+			lappend coldef $celdef
+		}
 		Classy::Progress start 1
 		Classy::Progress message "Creating Summary, please be patient (no progress shown)"
 		update

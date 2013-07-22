@@ -208,7 +208,7 @@ mainw method summarybuilder {args} {
 	set qfieldsfilter {}
 	set valuesfilter {}
 	destroy $object.summarybuilder
-	Classy::Dialog $object.summarybuilder -title Query
+	Classy::Dialog $object.summarybuilder -title "Summary options"
 	set w $object.summarybuilder.options.paned
 	ttk::panedwindow $w -orient horizontal
 	pack $w -fill both -expand yes
@@ -287,7 +287,8 @@ mainw method summarybuilder {args} {
 	$w add $w.query
 	set w $object.summarybuilder.options.paned
 	$object.summarybuilder add summary "Summary" [list $object view summary]
-	$object.summarybuilder add graph "Graph" [list $object view graph]
+	$object.summarybuilder add graph "Graph" [list $object view summarygraph]
+	$object.summarybuilder add scatter "Scatterplot" [list $object view summaryscatter]
 	$object summarybuilder_fillvalues
 	update
 	set field [$w.fields.fields get 0]
