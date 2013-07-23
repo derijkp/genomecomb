@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
+#include <limits.h>
 #include "debug.h"
 #include "tcl.h"
 #include "tools.h"
@@ -43,10 +44,10 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	DStringArray *array = NULL;
 	DString *line = NULL;
 	ssize_t read;
-	int maxtab=0,objc,show,i,error;
+	int maxtab=0,objc,show,i,error,verbose = INT_MAX,next = INT_MAX;
 	unsigned int line_nr=0;
-	if ((argc < 4)||(argc > 4)) {
-		Tcl_WrongNumArgs(interp, 1, argv, "queryproc varcolumns outcolumns");
+	if ((argc < 4)||(argc > 5)) {
+		Tcl_WrongNumArgs(interp, 1, argv, "queryproc varcolumns outcolumns ?verbose?");
 		return TCL_ERROR;
 	}
 	if (Tcl_ListObjGetElements(interp, argv[2], &listobjc, &listobjv) != TCL_OK) {
@@ -54,6 +55,12 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	}
 	if (Tcl_ListObjGetElements(interp, argv[3], &listoutc, &listoutv) != TCL_OK) {
 		return TCL_ERROR;
+	}
+	if (argc == 5) {
+		if (Tcl_GetIntFromObj(interp, argv[4], &verbose) != TCL_OK) {
+			return TCL_ERROR;
+		}
+		next = verbose;
 	}
 	cols = (int *)Tcl_Alloc(listobjc*sizeof(int));
 	for (i = 0 ; i < listobjc ; i++) {
@@ -82,6 +89,10 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	objv[i] = NULL;
 	objc = listobjc+1;
 	while ((read = DStringGetTab(line,stdin,maxtab,array,1,NULL)) != -1) {
+		if (line_nr >= next) {
+			fprintf(stderr,"%d\n",line_nr);
+			next += verbose;
+		}
 		NODPRINT("line = %s",line->string);
 		for (i = 0 ; i < listobjc ; i++) {
 			if (Tcl_IsShared(objv[i+1])) {
