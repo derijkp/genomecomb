@@ -268,6 +268,7 @@ array set bcol_typea {c,mx  127 s,mx  32767 i,mx  2147483647 w,mx  9223372036854
 proc cg_bcol_make {args} {
 	global bcol_typea
 	set type iu
+	set compress 1
 	set chromosomecol coverage
 	set chrompos -1
 	set offsetcol {}
@@ -293,6 +294,9 @@ proc cg_bcol_make {args} {
 			-c - --chromosomecol {
 				set chromosomecol $value
 				set distribute 1
+			}
+			-co - --compress {
+				set compress $value
 			}
 			-h - --header {
 				set header $value
@@ -368,9 +372,11 @@ proc cg_bcol_make {args} {
 		puts stderr $err
 		exit 1
 	}
-	foreach file [glob $prefix.bcol.temp/${tail}*.bin] {
-		exec razip -c $file > $file.rz
-		file delete $file
+	if {$compress} {
+		foreach file [glob $prefix.bcol.temp/${tail}*.bin] {
+			exec razip -c $file > $file.rz
+			file delete $file
+		}
 	}
 	file rename -force {*}[glob $prefix.bcol.temp/*] [file dir $prefix]
 	file delete -force $prefix.bcol.temp
