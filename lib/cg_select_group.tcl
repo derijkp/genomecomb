@@ -182,7 +182,7 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 	return $calcresults
 }
 
-proc tsv_select_group {header pquery qposs qfields group groupcols neededfields} {
+proc tsv_select_group {header pquery qposs qfields group groupcols neededfields {verbose 0}} {
 # putsvars header pquery qposs qfields group groupcols neededfields
 	# outcols not used in group
 	# start making code
@@ -209,7 +209,6 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 		incr num
 	}
 	# more than one groupcol not supported (yet)
-puts stderr newversion==============================
 	set groupcol [lindex $groupcols 0]
 	regsub -all \n [string trim $groupcol] { } groupcol
 	if {![llength $groupcol]} {
@@ -288,7 +287,7 @@ puts stderr newversion==============================
 			}
 			return 0
 		}
-		tsv_selectc tsv_selectc_query {@neededcols@} {}
+		tsv_selectc tsv_selectc_query {@neededcols@} {} @verbose@
 		set cols [lsort -dict [array names resultdatacols]]
 		set header [list @grouph@]
 		foreach col $cols {
@@ -310,7 +309,7 @@ puts stderr newversion==============================
 	} [list @neededfields@ $neededfields @pquery@ $pquery \
 		@precalc@ [join [list_remdup $precalc] \n] @addcols@ $addcols \
 		@neededcols@ $neededcols @calcresults@ $calcresults \
-		@grouptypes@ [list $grouptypes] @grouph@ $group]
+		@grouptypes@ [list $grouptypes] @grouph@ $group @verbose@ $verbose]
 	]]
 	return $tclcode
 }

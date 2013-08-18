@@ -737,7 +737,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 	}
 # putslog stderr ----------\n$query\n----------
 	if {$group ne ""} {
-		append tclcode \n [tsv_select_group $header $pquery $qposs $qfields $group $groupcols $neededfields]
+		append tclcode \n [tsv_select_group $header $pquery $qposs $qfields $group $groupcols $neededfields $verbose]
 		#file_write /tmp/temp.tcl $tclcode\n
 		#putsvars tclcode
 		lappend pipe [list cg exec $tclcode]
