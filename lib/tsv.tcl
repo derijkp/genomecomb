@@ -141,7 +141,7 @@ proc tsv_index {xfield file} {
 	set prev $findex
 	set next [expr {$prev + 10000}]
 	set index [list $fpos]
-	catch {Classy::Progress start [file size $file] "Making index"}
+	catch {progress start [file size $file] "Making index"}
 	while {![eof $f]} {
 		set fpos [tsv_next $f $xpos $next]
 		if {[eof $f]} {
@@ -151,10 +151,10 @@ proc tsv_index {xfield file} {
 		lappend index $fpos
 		incr prev 10000
 		incr next 10000
-		catch {Classy::Progress set [tell $f]}
+		catch {progress set [tell $f]}
 		if {![expr $next%1000000]} {putslog $next}
 	}
-	catch {Classy::Progress stop}
+	catch {progress stop}
 	close $f
 	set size [file size $file]
 	set f [open $file]

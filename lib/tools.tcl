@@ -686,6 +686,10 @@ proc progress {cmd args} {
 					Classy::Progress on_error {}
 				}
 			}
+			next {
+				uplevel 1 [list Classy::Progress $cmd] $args
+				update idletasks
+			}
 			default {
 				uplevel 1 [list Classy::Progress $cmd] $args
 			}

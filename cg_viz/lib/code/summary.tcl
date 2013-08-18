@@ -20,11 +20,24 @@ table_tsv method summary {definition {file {}}} {
 		if {$celdef ne ""} {
 			lappend coldef $celdef
 		}
-		Classy::Progress start 1
-		Classy::Progress message "Creating Summary, please be patient (no progress shown)"
-		update
-		cg select -f $tdata(fields) -q $tdata(query) -g $rowdef -gc $coldef $tdata(file) $tdata(indexdir)/summary_results.tsv
-		Classy::Progress stop
+		if {[file exists $tdata(indexdir)/info.tsv]} {
+			set info [infofile_read $tdata(indexdir)/info.tsv]
+			catch {set numlines [dict get $info size]}
+		}
+		if {![info exists numlines]} {
+			progress start 1
+			progress message "Creating Summary, please be patient (no progress shown)"
+			update
+			cg select -f $tdata(fields) -q $tdata(query) -g $rowdef -gc $coldef $tdata(file) $tdata(indexdir)/summary_results.tsv
+			progress stop
+		} else {
+			set step [expr {$numlines/10}]
+			if {$step > 50000} {set step 50000} elseif {$step < 1} {set step 1}
+			progress start [expr {$numlines + 1}] "Making Summary" "Making Summary"
+			Extral::bgexec -progresscommand [list $object queryprogress] -no_error_redir -channelvar [privatevar $object bgexechandle] \
+				cg select -v $step -f $tdata(fields) -q $tdata(query) -g $rowdef -gc $coldef $tdata(file) $tdata(indexdir)/summary_results.tsv 2>@1
+			progress stop
+		}
 		if {$file ne ""} {
 			file copy $tdata(indexdir)/summary_results.tsv $file
 			return

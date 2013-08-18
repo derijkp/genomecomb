@@ -97,6 +97,22 @@ table_tsv method table {args} {
 	return $tdata(table)	
 }
 
+table_tsv method queryprogress {args} {
+puts "queryprogress $args"
+	if {![isint $args]} {
+		append ::bgerror [lindex $args 0]\n
+		return
+	}
+	if {[catch {
+		progress next $args
+		progress set $args
+	}]} {
+		private $object bgexechandle
+		puts error
+		Extral::bgexec_cancel $bgexechandle
+	}
+}
+
 table_tsv method query {args} {
 	private $object tdata
 	if {![llength $args]} {
@@ -114,55 +130,52 @@ table_tsv method query {args} {
 		Extral::event generate querychanged $object
 		return
 	}
-	Classy::Progress start 2
-	Classy::Progress message "Running query, please be patient (no progress shown)"
+	progress start {70 30}
 	putslog "Doing query $query"
 	regsub -all \n $query { } query
 	if {![info exists tdata(sqlbackend_db)]} {
-		exec cg select -q $query -f {rowid=$ROW} $tdata(file) $tdata(indexdir)/query_results.tsv
+		if {[file exists $tdata(indexdir)/info.tsv]} {
+			set info [infofile_read $tdata(indexdir)/info.tsv]
+			catch {set numlines [dict get $info size]}
+		}
+		if {![info exists numlines]} {
+			progress message "Running query, please be patient (no progress shown)"
+			exec cg select -q $query -f {rowid=$ROW} $tdata(file) $tdata(indexdir)/query_results.tsv
+		} else {
+			set step [expr {$numlines/10}]
+			if {$step > 50000} {set step 50000} elseif {$step < 1} {set step 1}
+			progress start $numlines "Running query" "Running query"
+			set ::bgerror {}
+			Extral::bgexec -progresscommand [list $object queryprogress] -no_error_redir -channelvar [privatevar $object bgexechandle] \
+				cg select -v $step -q $query -f {rowid=$ROW} $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
+			if {$::bgerror ne ""} {error $::bgerror}
+			progress stop
+		}
 	} else {
+		progress message "Running query, please be patient (no progress shown)"
 		set qfields ROW
 		set sql [monetdb_makesql $tdata(sqlbackend_table) $tdata(tfields) $query qfields rowid 0 $tdata(monetfieldtrans)]
 		file_write $tdata(indexdir)/query_results.tsv ROW\n
 		exec mclient -d $tdata(sqlbackend_db) -f tab -s $sql >> $tdata(indexdir)/query_results.tsv
 		# exec cg mselect -q $query -f ROW $tdata(sqlbackend_db) $tdata(sqlbackend_table) $tdata(indexdir)/query_results.tsv
 	}
-	Classy::Progress next "Converting results"
+	progress next "Converting results"
 	putslog "Converting results"
-	set f [open $tdata(indexdir)/query_results.tsv]
-	set header [tsv_open $f]
-	set o [open $tdata(indexdir)/query_results.bcol.bin.temp w]
-	fconfigure $o -encoding binary -translation binary
-	set len 0
-	while {![eof $f]} {
-		set line [split [gets $f] \t]
-		if {![llength $line] && [eof $f]} break
-		incr len
-		puts -nonewline $o [binary format i $line]
-	}
-	close $o
-	set o [open $tdata(indexdir)/query_results.bcol.temp w]
-	puts $o "# binary column"
-	puts $o "# type iu"
-	# puts $o "# len $len"
-	puts $o "# [list query $query]"
-#	puts $o [join {begin end type} \t]
-	puts $o [join {begin type offset} \t]
-	puts $o 0\tiu\t0
-	puts $o [expr {$len-1}]\tend\t0
-	close $o
-	file rename -force $tdata(indexdir)/query_results.bcol.bin.temp $tdata(indexdir)/query_results.bcol.bin
-	file rename -force $tdata(indexdir)/query_results.bcol.temp $tdata(indexdir)/query_results.bcol
+	cg bcol make -t iu -co 0 $tdata(indexdir)/tempquery_results rowid < $tdata(indexdir)/query_results.tsv
+	set c [file_read $tdata(indexdir)/tempquery_results.bcol]
+	file_write $tdata(indexdir)/tempquery_results.bcol [string_change $c [list "\# default 0" "\# default 0\n\# [list query $query]"]]
+	set len [expr {[lindex [split [string trim $c] \n] end 0]+1}]
+	file rename -force $tdata(indexdir)/tempquery_results.bcol.bin $tdata(indexdir)/query_results.bcol.bin
+	file rename -force $tdata(indexdir)/tempquery_results.bcol $tdata(indexdir)/query_results.bcol
 	set tdata(len) $len
 	$object reset
 	set tdata(query_results) [bcol_open $tdata(indexdir)/query_results.bcol]
 	putslog "query done"
-	Classy::Progress stop
+	progress stop
 	Extral::event generate querychanged $object
 }
 
 table_tsv method subsql {args} {
-putsvars args
 	private $object tdata
 	if {![info exists tdata(sqlbackend_db)]} {
 		error "no fast access without db backend"

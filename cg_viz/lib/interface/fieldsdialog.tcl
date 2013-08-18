@@ -274,7 +274,6 @@ fieldsdialog method setcalc {args} {
 
 fieldsdialog method addcalc {args} {
 	private $object tfields fields
-putsvars args
 	if {![llength $args]} {
 		catch {destroy $object.calcfield}
 		Classy::Dialog $object.calcfield -title "Add calculated field"

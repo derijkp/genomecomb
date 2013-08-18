@@ -310,7 +310,6 @@ mainw method savetsv {file} {
 }
 
 mainw method open {args} {
-putsvars args
 	private $object tdata
 	if {[llength $args]} {
 		set file [lindex $args 0]
@@ -379,7 +378,7 @@ mainw method summary_recalc {args} {
 		|| $definition ne [get view(olddefintion) ""] || $curquery ne [get view(oldquery) ""]} {
 		set error [catch {$object.tb summary $definition} newsummary]
 		if {$error} {
-			error "error in summary definition (or query)\n\n$newsummary"
+			error "error in summary definition (or query)\n\n$newsummary" $::errorInfo
 		} else {
 			set header [list_shift newsummary]
 			set summary [list $header {*}[lsort -dict $newsummary]]
@@ -408,9 +407,10 @@ mainw method summary_redraw {args} {
 	set error [catch {
 		set summary [$object summary_recalc {*}$args]
 	} message]
+	set errorInfo $::errorInfo
 	$object.summary.data configure -variable [privatevar $object summary] -variabletype list
 	$object.summary.data configure -rows [llength $summary] -cols [llength [lindex $summary 0]]	
-	if {$error} {error $message}
+	if {$error} {error $message $errorInfo}
 }
 
 mainw method graph_redrawselect {args} {

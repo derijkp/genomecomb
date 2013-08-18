@@ -169,6 +169,9 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	if (outs) {Tcl_Free((char *)outs);}
 	if (line) {DStringDestroy(line);}
 	if (array) {DStringArrayDestroy(array);}
+	if (verbose != -1) {
+		fprintf(stderr,"%d\n",line_nr);
+	}
 	return TCL_OK;
 }
 
