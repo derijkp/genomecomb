@@ -203,31 +203,49 @@ test job {job_expandvars} {
 	job_expandvars $string
 } {A(B1(C1)) A(B2(C1)) A(B(C2))}
 
-test job {basic} {
+# ------------------------------------
+# test in different "processing modes"
+# ------------------------------------
+foreach {testname initcode} {
+	"direct" {uplevel job_init -silent}
+	"-d 4" {uplevel job_init -silent -d 4}
+	"-d 30" {uplevel job_init -silent -d 30}
+	"-d sge" {uplevel job_init -silent -d sge}
+} {
+# start of block
+
+if {$testname eq "-d sge" && [catch {exec qstat}]} {
+	puts "Cannot test sge option (missing qstat; grid engine not installed?)"
+	continue
+}
+
+proc test_job_init {} $initcode
+
+test job "basic $testname" {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
-	job_init -silent
+	test_job_init
 	jobtest ../data test testh
 	job_wait
 	set result [list \
 		[lsort -dict [glob test/*]] \
+		[glob test/log_jobs/all.txt.log] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
-		[file_read test/log_jobs/joberror.err] \
+		[string range [file_read test/log_jobs/joberror.err] 0 20] \
 	]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
+} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} test/log_jobs/all.txt.log {testh
 1+2=3
 3+4+5=12
 6+7+8=21
 } {6+7+8=21
 2
-} {Intentional job error
-}}
+} {Intentional job error}}
 
-test job {--force 0} {
+test job "--force 0 $testname" {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
@@ -237,7 +255,7 @@ test job {--force 0} {
 	job_wait
 	after 1000
 	file_write test/all.txt error
-	job_init -silent
+	test_job_init
 	jobtest --force 0 ../data test testh
 	job_wait
 	set result [list \
@@ -251,7 +269,7 @@ test job {--force 0} {
 2
 }}
 
-test job {--force 1} {
+test job "--force 1 $testname" {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
@@ -261,7 +279,7 @@ test job {--force 1} {
 	job_wait
 	after 1000
 	file_write test/all.txt error
-	job_init -silent
+	test_job_init
 	jobtest --force 1 ../data test testh
 	job_wait
 	set result [list \
@@ -279,116 +297,16 @@ test job {--force 1} {
 2
 }}
 
-test job {basic -d 4} {
+test job "time $testname" {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
-	job_init -silent -d 4
-	jobtest ../data test testh
-	job_wait
-	set result [list \
-		[lsort -dict [glob test/*]] \
-		[glob test/log_jobs/all.txt.log] \
-		[file_read test/all.txt] \
-		[file_read test/sum2-test3.txt] \
-		[string range [file_read test/log_jobs/joberror.err] 0 20] \
-	]
-	cd $::testdir
-	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} test/log_jobs/all.txt.log {testh
-1+2=3
-3+4+5=12
-6+7+8=21
-} {6+7+8=21
-2
-} {Intentional job error}}
-
-test job {basic -d 30} {
-	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
-	cd $::testdir/tmp
-	job_init -silent -d 30
-	jobtest ../data test testh
-	job_wait
-	set result [list \
-		[lsort -dict [glob test/*]] \
-		[glob test/log_jobs/all.txt.log] \
-		[file_read test/all.txt] \
-		[file_read test/sum2-test3.txt] \
-		[string range [file_read test/log_jobs/joberror.err] 0 20] \
-	]
-	cd $::testdir
-	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} test/log_jobs/all.txt.log {testh
-1+2=3
-3+4+5=12
-6+7+8=21
-} {6+7+8=21
-2
-} {Intentional job error}}
-
-test job {--force 0 -d 4} {
-	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
-	cd $::testdir/tmp
-	file mkdir test
-	job_init -silent
-	jobtest --force 0 ../data test testh
-	job_wait
-	after 1000
-	file_write test/all.txt error
-	job_init -silent -d 4
-	jobtest --force 0 ../data test testh
-	job_wait
-	set result [list \
-		[lsort -dict [glob test/*]] \
-		[file_read test/all.txt] \
-		[file_read test/sum2-test3.txt] \
-	]
-	cd $::testdir
-	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} error {6+7+8=21
-2
-}}
-
-test job {--force 1 -d 4} {
-	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
-	cd $::testdir/tmp
-	file mkdir test
-	job_init -silent
-	jobtest --force 0 ../data test testh
-	job_wait
-	after 1000
-	file_write test/all.txt error
-	job_init -silent -d 4
-	jobtest --force 1 ../data test testh
-	job_wait
-	set result [list \
-		[lsort -dict [glob test/*]] \
-		[file_read test/all.txt] \
-		[file_read test/sum2-test3.txt] \
-	]
-	cd $::testdir
-	set result
-}  {{test/all.txt test/all.txt.old test/all2.txt test/all2.txt.old test/allp.txt test/allp.txt.old test/allp2.txt test/allp2.txt.old test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test1.txt.old test/sum2-test2.txt test/sum2-test2.txt.old test/sum2-test3.txt test/sum2-test3.txt.old test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test1.txt.old test/sumpattern2-test2.txt test/sumpattern2-test2.txt.old test/sumpattern2-test3.txt test/sumpattern2-test3.txt.old test/test.txt} {testh
-1+2=3
-3+4+5=12
-6+7+8=21
-} {6+7+8=21
-2
-}}
-
-test job {time} {
-	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
-	cd $::testdir/tmp
-	job_init -silent
+	test_job_init
 	jobtest ../data test testh
 	job_wait
 	after 1000
 	file_write $::testdir/tmp/test/sum-test3.txt "replaced\n"
-	job_init -silent
+	test_job_init
 	jobtest ../data test testh
 	job_wait
 	set result [list \
@@ -406,104 +324,85 @@ replaced
 2
 }}
 
-test job {time -d 4} {
+test job "-skip: not present $testname" {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
-	job_init -silent -d 4
-	jobtest ../data test testh
-	job_wait
-	after 1000
-	file_write $::testdir/tmp/test/sum-test3.txt "replaced\n"
-	job_init -silent -d 4
-	jobtest ../data test testh
-	job_wait
-	set result [list \
-		[lsort -dict [glob test/*]] \
-		[file_read test/all.txt] \
-		[file_read test/sum2-test3.txt] \
-	]
-	cd $::testdir
-	set result
-} {{test/all.txt test/all.txt.old test/all2.txt test/all2.txt.old test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sum2-test3.txt.old test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
-1+2=3
-3+4+5=12
-replaced
-} {replaced
-2
-}}
-
-if {[catch {exec qstat}]} {
-	puts "Cannot test sge option (missing qstat; grid engine not installed?)"
-} else {
-
-test job {basic -d sge} {
-	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
-	cd $::testdir/tmp
-	job_init -silent -d sge
-	jobtest ../data test testh
-	job_wait
-	puts "wait for jobs to finish"
-	while {![file exists test/all2.txt]} {
-		after 500
+	test_job_init
+	job testskip -deps {} -targets result.txt -skip {skip1.txt skip2.txt} -code {
+		file_write result.txt test
 	}
-	puts "done"
-	set result [list \
-		[lsort -dict [glob test/*]] \
-		[file_read test/all.txt] \
-		[file_read test/sum2-test3.txt] \
-	]
+	job_wait
+	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} {testh
-1+2=3
-3+4+5=12
-6+7+8=21
-} {6+7+8=21
-2
-}}
+} {log_jobs result.txt}
 
-test job {--force 1 -d sge} {
+test job "-skip: only one present $testname" {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
-	file mkdir test
-	job_init -silent -d sge
-	jobtest --force 1 ../data test testh
-	job_wait
-	after 1000
-	file_write test/all.txt error
-	job_init -silent -d sge
-	jobtest --force 1 ../data test testh
-	job_wait
-	puts "wait for jobs to finish"
-	while {![file exists test/all2.txt]} {
-		after 500
+	test_job_init
+	file_write skip1.txt test1
+	job testskip -deps {} -targets result.txt -skip {skip1.txt skip2.txt} -code {
+		file_write result.txt test
 	}
-	puts "done"
-	set result [list \
-		[lsort -dict [glob test/*]] \
-		[file_read test/all.txt.old1] \
-		[file_read test/all.txt] \
-		[file_read test/sum2-test3.txt] \
-	]
+	job_wait
+	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {{test/all.txt test/all.txt.old1 test/all2.txt test/allp.txt test/allp2.txt test/log_jobs test/sum-test1.txt test/sum-test2.txt test/sum-test3.txt test/sum2-test1.txt test/sum2-test2.txt test/sum2-test3.txt test/sumpattern-test1.txt test/sumpattern-test2.txt test/sumpattern-test3.txt test/sumpattern.log test/sumpattern2-test1.txt test/sumpattern2-test2.txt test/sumpattern2-test3.txt test/test.txt} error {testh
-1+2=3
-3+4+5=12
-6+7+8=21
-} {6+7+8=21
-2
-}}
-}
+} {log_jobs result.txt skip1.txt}
+
+test job "-skip: all present $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write skip1.txt test1
+	file_write skip2.txt test2
+	job testskip -deps {} -targets result.txt -skip {skip1.txt skip2.txt} -code {
+		file_write result.txt test
+	}
+	job_wait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {log_jobs skip1.txt skip2.txt}
+
+test job "-skip -skip: none present $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	job testskip -deps {} -targets result.txt -skip skip1.txt -skip skip2.txt -code {
+		file_write result.txt test
+	}
+	job_wait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {log_jobs result.txt}
+
+test job "-skip -skip: one present $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write skip2.txt test2
+	job testskip -deps {} -targets result.txt -skip skip1.txt -skip skip2.txt -code {
+		file_write result.txt test
+	}
+	job_wait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {log_jobs skip2.txt}
 
 test job {jobtestnojobs} {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
-	job_init -silent -d 2
+	test_job_init
 	jobtestnojobs $::testdir/tmp
 	job_wait
 } {}
@@ -512,10 +411,13 @@ test job {jobtestnojobs} {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
-	job_init -silent -d 2
+	test_job_init
 	jobtestlong $::testdir/tmp
 	job_wait
 } {}
+
+# end of block
+}
 
 set ::env(PATH) $keeppath
 

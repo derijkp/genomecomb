@@ -15,6 +15,7 @@ proc job_process_distr_running {jobs} {
 proc job_process_distr_progress {job args} {
 	global cgjob_info
 	if {![info exists cgjob_info($job,out)]} {
+		file mkdir [file dir $job]
 		set cgjob_info($job,out) [open $job.out w]
 	}
 	set f $cgjob_info($job,out)
@@ -56,6 +57,10 @@ proc job_process_distr_finishjob {job} {
 	global cgjob cgjob_running cgjob_info cgjob_id cgjob_ptargets
 	set targets [get cgjob_info($job,targets) ""]
 	set ptargets [get cgjob_info($job,ptargets) ""]
+	if {[info exists cgjob_info($job,out)]} {
+		catch {close $cgjob_info($job,out)}
+	}
+	job_logclose $job
 	# unset cgjob_id($target) to indicate they are no longer running
 	# we no longer write results of the check to the log, as the job has already done that
 	foreach target $targets {
@@ -66,10 +71,6 @@ proc job_process_distr_finishjob {job} {
 			unset -nocomplain cgjob_ptargets($ptarget)
 		}
 	}
-	if {[info exists cgjob_info($job,out)]} {
-		catch {close $cgjob_info($job,out)}
-	}
-	job_logclose $job
 	unset -nocomplain cgjob_running($job)
 	unset -nocomplain cgjob_info($job,chan)
 }
@@ -208,10 +209,16 @@ proc job_process_distr {} {
 		lappend targetvars {*}$newtargetvars
 		# check skip targets, if already done or running, skip
 		if {!$cgjob(force) && [llength $fskip]} {
-			set skip [job_targetsreplace $fskip $targetvars]
-			if {[llength $skip] && [job_checktargets $job $skip $time running]} {
+			set doskip 0
+			foreach skip $fskip {
+				set skip [job_targetsreplace $skip $targetvars]
+				if {[llength $skip] && [job_checktargets $job $skip $time running]} {
+					set doskip 1
+					break
+				}
+			}
+			if {$doskip} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
-				job_process_distr_finishjob $job
 				continue
 			}
 		}
@@ -287,7 +294,6 @@ proc job_process_distr {} {
 		set cgjob_running($job) $cgjob_pid
 		lappend running $job
 	}
-
 	if {[llength $queue]} {
 		lappend cgjob(queue) {*}$queue
 	}
@@ -303,7 +309,7 @@ proc job_process_distr {} {
 }
 
 proc job_process_distr_wait {} {
-	global cgjob cgjob_exit
+	global cgjob cgjob_exit cgjob_running
 	update
 	unset -nocomplain cgjob_exit
 	after cancel job_process_distr_watchdog

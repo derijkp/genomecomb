@@ -194,8 +194,15 @@ proc job_process_sge_onepass {} {
 		lappend targetvars {*}$newtargetvars
 		# check skip targets, if already done or running, skip
 		if {!$cgjob(force) && [llength $fskip]} {
-			set skip [job_targetsreplace $fskip $targetvars]
-			if {[llength $skip] && [job_checktargets $job $skip $time running]} {
+			set doskip 0
+			foreach skip $fskip {
+				set skip [job_targetsreplace $skip $targetvars]
+				if {[llength $skip] && [job_checktargets $job $skip $time running]} {
+					set doskip 1
+					break
+				}
+			}
+			if {$doskip} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
 				continue
 			}

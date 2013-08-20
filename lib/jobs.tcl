@@ -555,13 +555,14 @@ proc job {jobname args} {
 		error "already submitted job $jobname for logdir $job_logdir"
 	}
 	set job_logdir_submit($jobname,$job_logdir) 1
+	file mkdir $job_logdir
 	if {![info exists cgjob(id)]} {set cgjob(id) 1}
 	if {[llength $args] < 1} {error "wrong # args for target: must be job jobname -deps deps -targets targets -code code ..."}
 	set pos 0
 	set foreach {}
 	set vars {}
 	set precode {}
-	set skip {}
+	set skiplist {}
 	set ptargets {}
 	set submitopts {}
 	set len [llength $args]
@@ -582,7 +583,7 @@ proc job {jobname args} {
 				incr pos
 			}
 			-skip {
-				set skip [lindex $args $pos]
+				lappend skiplist [lindex $args $pos]
 				incr pos
 			}
 			-ptargets {
@@ -643,7 +644,10 @@ proc job {jobname args} {
 	set edeps [job_expandvarslist $deps 1]
 	set eforeach [job_expandvarslist $foreach 1]
 	set etargets [job_expandvarslist $targets 1]
-	set eskip [job_expandvarslist $skip 1]
+	set eskip {}
+	foreach skip $skiplist {
+		lappend eskip [job_expandvarslist $skip 1]
+	}
 	set eptargets [job_expandvarslist $ptargets 1]
 	set newcode {}
 	foreach var $vars {

@@ -86,16 +86,22 @@ proc job_process_direct {} {
 		set targetvars $ftargetvars
 		lappend targetvars {*}$newtargetvars
 		# check skip targets, if already done or running, skip
-		set run 0
 		if {!$cgjob(force) && [llength $fskip]} {
-			set skip [job_targetsreplace $fskip $targetvars]
-			if {[llength $skip] && [job_checktargets $job $skip $time running]} {
-				job_log $job "-----> job $jobname skipped : skip targets already completed or running"
-				job_logclose $job
+			set doskip 0
+			foreach skip $fskip {
+				set skip [job_targetsreplace $skip $targetvars]
+				if {[llength $skip] && [job_checktargets $job $skip $time running]} {
+					set doskip 1
+					break
+				}
+			}
+			if {$doskip} {
+				job_log $job "skipping $jobname: skip targets already completed or running"
 				continue
 			}
 		}
 		# check targets, if already done or running, skip
+		set run 0
 		set targets [job_targetsreplace $ftargets $targetvars]
 		if {![job_checktargets $job $targets $time running]} {
 			set run 1
