@@ -44,7 +44,7 @@ proc job_args {jobargs} {
 		set cgjob(debug) 0
 	}
 	if {![info exists cgjob(resubmit)]} {
-		set cgjob(resubmit) 0
+		set cgjob(resubmit) 1
 	}
 	if {![llength $jobargs]} {return {}}
 	set newargs {}
@@ -67,8 +67,8 @@ proc job_args {jobargs} {
 			-debug {
 				set cgjob(debug) 1
 			}
-			-resubmit {
-				set cgjob(resubmit) 1
+			-noresubmit {
+				set cgjob(resubmit) 0
 			}
 			-- break
 			default {
@@ -673,7 +673,7 @@ proc job_init {args} {
 	set cgjob(force) 0
 	set cgjob(queue) {}
 	set cgjob(id) 1
-	set cgjob(resubmit) 0
+	set cgjob(resubmit) 1
 	set job_logdir [file normalize [pwd]/log_jobs]
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_wait {} job_process_direct_wait
