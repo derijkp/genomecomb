@@ -384,8 +384,8 @@ proc svmulticompar {svfile1 svfile2} {
 			incr did
 		}
 		if {[llength $resultlist] > 1} {
-			set resultlist [lsort -index $locpos(id) -dict $resultlist]
-			set resultlist [lsort -index $locpos(end) -dict $resultlist]
+			set resultlist [ssort -index $locpos(id) -natural $resultlist]
+			set resultlist [ssort -index $locpos(end) -natural $resultlist]
 			set resultlist [lsort -index $locpos(begin) -integer $resultlist]
 		}
 		foreach temp $resultlist {

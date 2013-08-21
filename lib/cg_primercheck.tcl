@@ -65,7 +65,7 @@ proc primercheck_epcr {hits1 hits2 rhits1 rhits2 maxsize maxamplicons} {
 
 proc primercheck_overlappingamplicons {amplicons overlapVar} {
 	upvar $overlapVar overlap
-	set amplicons [lsort -dict $amplicons]
+	set amplicons [ssort -natural $amplicons]
 	foreach {pchr pbegin pend psize pf pr} [lindex $amplicons 0] break
 	set overlap 0
 	set result {}

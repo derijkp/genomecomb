@@ -27,7 +27,7 @@ proc cg_regextract {args} {
 	}
 	foreach {cutoff} $args break
 	set files [lrange $args 1 end]
-	set files [lsort -dict $files]
+	set files [ssort -natural $files]
 	set o stdout
 	puts $o "chromosome\tbegin\tend"
 	foreach file $files {

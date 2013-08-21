@@ -498,7 +498,7 @@ proc cg_validatesv_cindex_searchgenome {DB pseq {add 0}} {
 	if {![info exists cindex_genome]} {
 		set cindex_genome {}
 		#puts "loading genome database" ; #TEST
-		foreach file [lsort -dict [glob $DB/*]] {
+		foreach file [ssort -natural [glob $DB/*]] {
 			set file [file root $file]
 			set chr [lindex [split $file -] end]
 			#puts "loading chr $chr" ; #TEST

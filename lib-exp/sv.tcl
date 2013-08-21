@@ -72,7 +72,7 @@ proc map2sv {files prefix} {
 			set chr [lindex [split $tail -] end]
 			lappend a($chr) $file
 		}
-		foreach chr [lsort -dict [array names a]] {
+		foreach chr [ssort -natural [array names a]] {
 			set rfile $prefix-$chr-paired.tsv
 			if {[file exists $rfile]} {
 				puts "$rfile exists"

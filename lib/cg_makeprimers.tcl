@@ -215,7 +215,7 @@ proc cindex_searchgenome {db pseq {add 0} {nummax {}} {verbose 0}} {
 			putslog "loading genome database"
 		}
 		set cindex_genome {}
-		foreach file [lsort -dict [glob $db/*]] {
+		foreach file [ssort -natural [glob $db/*]] {
 			set file [file root $file]
 			set chr [lindex [split $file -] end]
 			if {$verbose} {

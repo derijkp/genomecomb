@@ -643,7 +643,7 @@ proc cg_checktsv {file} {
 		if {!$llen && [eof $f]} break
 		incr linenr
 		set cur [list_sub $line $poss]
-		if {[list $prev $cur] ne [lsort -dict [list $prev $cur]]} {
+		if {[list $prev $cur] ne [ssort -natural [list $prev $cur]]} {
 			puts "line $linenr is sorted wrong:\t$line"
 		}
 		set prev $cur

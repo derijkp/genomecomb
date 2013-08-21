@@ -171,7 +171,7 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 			} [list @field@ $field]]
 		} elseif {$func eq "distinct"} {
 			append calcresults [string_change {
-				lappend result [join [lsort -dict [dict keys [get resultdata($_groupname,$col,@field@,d) ""]]] ,]
+				lappend result [join [ssort -natural [dict keys [get resultdata($_groupname,$col,@field@,d) ""]]] ,]
 			} [list @field@ $field]]
 		} elseif {$func eq "list"} {
 			append calcresults [string_change {
@@ -288,7 +288,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			return 0
 		}
 		tsv_selectc tsv_selectc_query {@neededcols@} {} @verbose@
-		set cols [lsort -dict [array names resultdatacols]]
+		set cols [ssort -natural [array names resultdatacols]]
 		set header [list @grouph@]
 		foreach col $cols {
 			foreach {func val} @grouptypes@ {
@@ -297,7 +297,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			}
 		}
 		puts [join $header \t]
-		foreach _groupname [lsort -dict [array names resultgroups]] {
+		foreach _groupname [ssort -natural [array names resultgroups]] {
 			set result {}
 			# puts "$name\t$resultdata($name)"
 			foreach col $cols {

@@ -120,7 +120,7 @@ proc groupby_unsorted {f o poss listposs sumposs statsposs} {
 		}
 		set a($cur) $result
 	}
-	foreach cur [lsort -dict [array names a]] {
+	foreach cur [ssort -natural [array names a]] {
 		puts $o [join $cur \t]\t[join $a($cur) \t]
 	}
 	close $f

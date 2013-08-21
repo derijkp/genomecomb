@@ -13,7 +13,7 @@ package require Extral
 proc collapseoverlap_join {cur scorepos {numpos -1}} {
 	if {[llength $cur] == 1} {return [lindex $cur 0]}
 	if {$scorepos != -1} {
-		set cur [lsort -dict -decreasing -index $scorepos $cur]
+		set cur [ssort -natural -decreasing -index $scorepos $cur]
 	}
 	set result {}
 	set len [llength [lindex $cur 0]]

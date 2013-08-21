@@ -65,7 +65,7 @@ proc cg_convsolid {args} {
 	foreach target1 $projectsamples {
 		# convert to csfasta
 		file mkdir $target1/csfasta
-		set files [lsort -dict [glob $target1/xsq/*.xsq]]
+		set files [ssort -natural [glob $target1/xsq/*.xsq]]
 		foreach file $files {
 			putslog "convert to $target1/csfasta from $file"
 			exec convertFromXSQ.sh -c $file -o $target1/csfasta >> log

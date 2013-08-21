@@ -124,7 +124,7 @@ proc process_rtgsample {dir destdir {force 0}} {
 		annot_annotvar annotvar-$name.tsv fannotvar-$name.tsv $todo
 	}
 	putslog "Make allposs files"
-	set files [lsort -dict [glob $dir/allpos/chr*/*snps.txt*]]
+	set files [ssort -natural [glob $dir/allpos/chr*/*snps.txt*]]
 	file mkdir allpos
 	foreach file $files {
 		set comments {}
@@ -157,7 +157,7 @@ proc process_rtgsample {dir destdir {force 0}} {
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {
 		putslog "Make region file sreg-$name.tsv"
-		set files [lsort -dict [glob allpos/chr*snps.txt allpos/chr*snps.txt.gz]]
+		set files [ssort -natural [glob allpos/chr*snps.txt allpos/chr*snps.txt.gz]]
 		file delete sreg-$name.tsv.temp
 		set f [open sreg-$name.tsv.temp w]
 		puts $f "chromosome\tbegin\tend"

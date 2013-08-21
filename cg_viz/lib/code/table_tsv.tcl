@@ -252,7 +252,7 @@ table_tsv method values {field {max 5000}} {
 			foreach v [array names a] {
 				lappend result [list $v $a($v)]
 			}
-			set result [lsort -dict -index 1 -decreasing $result]
+			set result [ssort -natural -index 1 -decreasing $result]
 			if {$break} {lappend result {sampled incomplete}}
 			set values($field) $result
 		}
@@ -278,7 +278,7 @@ table_tsv method values {field {max 5000}} {
 	} else {
 		set a(incomplete) 0
 	}
-	set result [lsort -dict -index 1 -decreasing $result]
+	set result [ssort -natural -index 1 -decreasing $result]
 	if {[isdouble [get a(min) {}]] && [isdouble [get a(max) {}]]} {
 		regsub {\.0+$} $a(min) {} min
 		regsub {\.0+$} $a(max) {} max

@@ -146,7 +146,7 @@ proc annotatebcol {file dbfile name annotfile} {
 		lappend bcollist [list $chr $dir/$dbfile]
 	}
 	close $f
-	set bcollist [lsort -dict -index 0 $bcollist]
+	set bcollist [ssort -natural -index 0 $bcollist]
 	set newh $name
 	set o [open $annotfile.temp w]
 	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]

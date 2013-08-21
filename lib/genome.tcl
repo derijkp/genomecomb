@@ -176,7 +176,7 @@ proc genome_mask {dbdir seq chr estart eend {freql 0} {freqN 0.2} {delsize 5} {r
 		set temp [split [exec tabix $dbsnp chr$chr:$estart-$eend] \n]
 		lappend list {*}[list_subindex $temp $snpposs]
 	}
-	set list [lsort -dict -decreasing $list]
+	set list [ssort -natural -decreasing $list]
 	list_foreach {c s e type ffreq} $list {
 		if {$e <= $estart || $s > $eend} continue
 		set freq 0

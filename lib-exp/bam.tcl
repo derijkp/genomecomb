@@ -36,7 +36,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 	set len [llength $header]
 	set poss [list_find -glob $header @SQ*]
 	set list [list_sub $header $poss]
-	set list [lsort -dict -index 1 $list]
+	set list [ssort -natural -index 1 $list]
 	set pos [lindex $poss 0]
 	set header [lreplace [list_sub $header -exclude $poss] $pos -1 {*}$list]
 	putslog "Distributing sam to chromosomes for $name"

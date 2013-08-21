@@ -23,7 +23,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 	set resultfiles {}
 	cd $dir/sv
 	set files [gzfiles $name-*-paired.tsv]
-	foreach file [lsort -dict $files] {
+	foreach file [ssort -natural $files] {
 		set root [file root [gzroot $file]]
 		job svindex-$root -deps $file -targets $root.tsv.end1_index -code {
 			puts "Indexing $dep"

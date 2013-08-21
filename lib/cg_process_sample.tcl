@@ -81,13 +81,13 @@ proc process_sample {args} {
 		foreach file $files {
 			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] 1]]
 		}
-		set chromosomes [lsort -dict [list_remdup $chromosomes]]
+		set chromosomes [ssort -natural [list_remdup $chromosomes]]
 	} else {
 		set files [gzfiles $workdir/coverage/coverage*.tsv]
 		foreach file $files {
 			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] end-1]]
 		}
-		set chromosomes [lsort -dict [list_remdup $chromosomes]]
+		set chromosomes [ssort -natural [list_remdup $chromosomes]]
 	}
 
 	# start from CGI data
@@ -160,7 +160,7 @@ proc process_sample {args} {
 	# if we do not have an svar (CGI), try getting a region file from the coverage
 	# currently hardcoded at coverage > 7
 	job bam_regsfromscoverage-$sample {coverage/coverage-*-coverage-*.bcol} {sreg-$sample.tsv} {
-		set files [lsort -dict $deps]
+		set files [ssort -natural $deps]
 		cg regextract -above 1 7 {*}$files > $target.temp
 		cg select -s {chromosome begin end} $target.temp $target.temp2
 		file rename $target.temp2 $target
@@ -239,7 +239,7 @@ proc process_sample {args} {
 			set target coverage/bcol_[string tolower $field]-$sample.tsv
 			job cg_bcol_coverage-$field-$sample -deps {coverage/$field-*-$sample.bcol} -vars {sample field} \
 			-targets $target -code {
-				set deps [lsort -dict $deps]
+				set deps [ssort -natural $deps]
 				set f [open $target.temp w]
 				puts $f "chromosome\tfile"
 				foreach dep $deps {

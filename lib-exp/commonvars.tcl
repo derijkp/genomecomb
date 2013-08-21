@@ -28,7 +28,7 @@ proc cg_commonvars args {
 		set groupsa($sampledir) $group,$family
 		lappend famsa($group) $family
 	}
-	set groups [lsort -dict [array names famsa]]
+	set groups [ssort -natural [array names famsa]]
 	# read compar file
 	set f [gzopen [gzfile $comparfile]]
 	set header [tsv_open $f]

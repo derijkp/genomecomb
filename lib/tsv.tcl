@@ -347,7 +347,7 @@ proc tsv_align_match {comp1 comp2} {
 			} elseif {$e1 eq ""} {
 				return -2
 			}
-			if {[lsort -dict [list $e1 $e2]] eq [list $e1 $e2]} {return -1} else {return -2}
+			if {[ssort -natural [list $e1 $e2]] eq [list $e1 $e2]} {return -1} else {return -2}
 		}
 	}
 	return 0

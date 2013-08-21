@@ -154,7 +154,7 @@ table_tsv method summary {definition {file {}}} {
 		close $f
 	} else {
 		set result [list $colnames]
-		foreach line [lsort -dict [split $data \n]] {
+		foreach line [ssort -natural [split $data \n]] {
 			lappend result [split $line \t]
 		}
 		return $result

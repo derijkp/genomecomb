@@ -381,7 +381,7 @@ mainw method summary_recalc {args} {
 			error "error in summary definition (or query)\n\n$newsummary" $::errorInfo
 		} else {
 			set header [list_shift newsummary]
-			set summary [list $header {*}[lsort -dict $newsummary]]
+			set summary [list $header {*}[ssort -natural $newsummary]]
 			set view(olddefintion) $definition
 		}
 		set view(oldquery) $curquery
@@ -474,7 +474,7 @@ mainw method graph_redraw {args} {
 	set header [tsv_open $f]
 	set summary [csv_file $f \t {}]
 	close $f
-	set summary [list $header {*}[lsort -dict -index 0 $summary]]
+	set summary [list $header {*}[ssort -natural -index 0 $summary]]
 	if {[info exists view(graph_rows)]} {
 		set rows $view(graph_rows)
 	} else {
@@ -498,7 +498,7 @@ mainw method scatter_redraw {args} {
 	set header [tsv_open $f]
 	set summary [csv_file $f \t {}]
 	close $f
-	set summary [list $header {*}[lsort -dict -index 0 $summary]]
+	set summary [list $header {*}[ssort -natural -index 0 $summary]]
 	if {[info exists view(graph_rows)]} {
 		set rows $view(graph_rows)
 	} else {

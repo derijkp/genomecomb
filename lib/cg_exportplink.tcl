@@ -32,7 +32,7 @@ proc cg_exportplink {args} {
 		foreach {an name} [split $field -] break
 		lappend temp [list $name $an $p]
 	}
-	set temp [lsort -dict $temp]
+	set temp [ssort -natural $temp]
 	set o [open $resultfile.tfam.pre w]
 	foreach {name ignore} [list_subindex $temp 0] {
 		puts $o [join [list fam $name 0 0 0 -9] \t]

@@ -217,7 +217,7 @@ scrolledgraph method add {table {xtitle {}} {ytitle {}}} {
 	# we will add to existing (data(entries) already there)
 	set vnum [llength $data(entries)]
 	set header [list_shift table]
-	set table [lsort -dict -index 0 $table]
+	set table [ssort -natural -index 0 $table]
 	set xs [list_subindex $table 0]
 	vector create ::$object.x
 	$object.g axis configure y -title $ytitle
@@ -300,7 +300,7 @@ scrolledgraph method addscatter {table xcol ycol datacols} {
 	set header [list_shift table]
 	set xpos [lsearch $header $xcol]
 	set ypos [lsearch $header $ycol]
-	# set table [lsort -dict -index $xpos $table]
+	# set table [ssort -natural -index $xpos $table]
 	# x
 	set xs [list_subindex $table $xpos]
 	vector create ::$object.x
