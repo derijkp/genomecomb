@@ -152,7 +152,7 @@ proc job_expandvarslist {list {level 1}} {
 	return $result
 }
 
-proc job_finddep {pattern idsVar timeVar} {
+proc job_finddep {pattern idsVar timeVar checkcompressed} {
 	global cgjob_id cgjob_ptargets
 	upvar $idsVar ids
 	upvar $timeVar time
@@ -161,7 +161,11 @@ proc job_finddep {pattern idsVar timeVar} {
 	if {[llength $ptargethits]} {
 		error "ptargets hit $pattern: wait till ptarget deps have finished"
 	}
-	set files [lsort -dict [gzfiles $pattern]]
+	if {$checkcompressed} {
+		set files [lsort -dict [gzfiles $pattern]]
+	} else {
+		set files [lsort -dict [checkfiles $pattern]]
+	}
 	foreach file $files {
 		maxfiletime $file time
 	}
@@ -185,7 +189,7 @@ proc maxfiletime {file timeVar} {
 	if {$ftime > $time} {set time $ftime}
 }
 
-proc job_findregexpdep {pattern idsVar timeVar} {
+proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 	global cgjob_id cgjob_ptargets
 	upvar $idsVar ids
 	upvar $timeVar time
@@ -195,7 +199,12 @@ proc job_findregexpdep {pattern idsVar timeVar} {
 		error "ptargets hit $pattern: wait till ptarget deps have finished"
 	}
 	set files {}
-	foreach file [lsort -dict [gzfiles $glob]] {
+	if {$checkcompressed} {
+		set list [lsort -dict [gzfiles $glob]]
+	} else {
+		set list [lsort -dict [checkfiles $glob]]
+	}
+	foreach file $list {
 		if {[regexp ^$pattern\$ $file]} {
 			maxfiletime $file time
 			lappend files $file
@@ -218,7 +227,7 @@ proc job_findregexpdep {pattern idsVar timeVar} {
 # dependencies between braces () are optional (braces must be at start and end of dependency)
 # $targetvarsVar will contain the values extracted from () matches in the dep pattern, that will be filled in
 # for \1, ... in the target
-proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar {ftargetvars {}}} {
+proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar checkcompressed {ftargetvars {}}} {
 	upvar $idsVar ids
 	if {$targetvarsVar ne ""} {
 		upvar $targetvarsVar targetvars
@@ -238,9 +247,9 @@ proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar {ftarget
 		set pattern [job_targetreplace $pattern $ftargetvars]
 		if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
 			set pattern [string range $pattern 1 end-1]
-			set files [job_findregexpdep $pattern ids time]
+			set files [job_findregexpdep $pattern ids time $checkcompressed]
 		} else {
-			set files [job_finddep $pattern ids time]
+			set files [job_finddep $pattern ids time $checkcompressed]
 		}
 		if {![llength $files]} {
 			if {!$opt} {
@@ -320,12 +329,16 @@ proc job_targetsreplace {list targetvars} {
 	return $result
 }
 
-proc job_checktarget {job target time {newidsVar {}}} {
+proc job_checktarget {job target time checkcompressed {newidsVar {}}} {
 	global cgjob_id
 	if {$newidsVar ne ""} {
 		upvar $newidsVar newids
 	}
-	set files [gzfiles $target]
+	if {$checkcompressed} {
+		set files [gzfiles $target]
+	} else {
+		set files [checkfiles $target]
+	}
 	if {[llength $files]} {
 		if {$time ne "now"} {
 			foreach file $files {
@@ -358,14 +371,14 @@ proc job_checktarget {job target time {newidsVar {}}} {
 	return 0
 }
 
-proc job_checktargets {job targets time {runningVar {}}} {
+proc job_checktargets {job targets time checkcompressed {runningVar {}}} {
 	if {$runningVar ne ""} {
 		upvar $runningVar running
 		set running {}
 	}
 	set ok 1
 	foreach target $targets {
-		set check [job_checktarget $job $target $time]
+		set check [job_checktarget $job $target $time $checkcompressed]
 		if {!$check} {
 			set ok 0
 		}
@@ -376,7 +389,7 @@ proc job_checktargets {job targets time {runningVar {}}} {
 	return $ok
 }
 
-proc job_findptargets {ptargets} {
+proc job_findptargets {ptargets checkcompressed} {
 	global cgjob_id
 	set targets {}
 	set ok 1
@@ -385,14 +398,23 @@ proc job_findptargets {ptargets} {
 			set pattern [string range $pattern 1 end-1]
 			set glob [regexp2glob $pattern]
 			set files {}
-			foreach file [lsort -dict [gzfiles $glob]] {
+			if {$checkcompressed} {
+				set list [gzfiles $glob]
+			} else {
+				set list [checkfiles $glob]
+			}
+			foreach file [lsort -dict $list] {
 				if {[regexp ^$pattern\$ $file]} {
 					lappend files $file
 					lappend ids {}
 				}
 			}
 		} else {
-			set files [lsort -dict [gzfiles $pattern]]
+			if {$checkcompressed} {
+				set files [lsort -dict [gzfiles $pattern]]
+			} else {
+				set files [lsort -dict [checkfiles $pattern]]
+			}
 		}
 		lappend targets {*}$files
 	}
@@ -475,7 +497,7 @@ proc job_backup {file {rename 0}} {
 	}
 }
 
-proc job_generate_code {job pwd adeps targetvars targets ptargets code} {
+proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompressed code} {
 	set cmd ""
 	set jobname [file tail $job]
 	append cmd "file_add \{$job.log\} \"[job_timestamp]\\tstarting $jobname\"\n"
@@ -486,6 +508,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets code} {
 	append cmd "[list set ptargets $ptargets]\n"
 	append cmd "[list set deps $adeps]\n"
 	append cmd "[list set dep [lindex $adeps 0]]\n"
+	append cmd "[list set checkcompressed $checkcompressed]\n"
 	set num 1
 	foreach dep $adeps {
 		append cmd "[list set dep$num $dep]\n"
@@ -510,7 +533,11 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets code} {
 		set ok 1
 		cd {@PWD@}
 		foreach target $targets {
-			set files [gzfiles $target]
+			if {$checkcompressed} {
+				set files [gzfiles $target]
+			} else {
+				set files [checkfiles $target]
+			}
 			if {[llength $files]} {
 				file_add $job.log "[job_timestamp]\ttarget ok: $target"
 			} else {
@@ -520,7 +547,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets code} {
 			}
 		}
 		if {[llength @PTARGETS@]} {
-			if {[llength [job_findptargets @PTARGETS@]]} {
+			if {[llength [job_findptargets @PTARGETS@ $checkcompressed]]} {
 				file_add $job.log "[job_timestamp]\tptargets ok"
 			} else {
 				set ok 0
@@ -565,6 +592,7 @@ proc job {jobname args} {
 	set skiplist {}
 	set ptargets {}
 	set submitopts {}
+	set checkcompressed 1
 	set len [llength $args]
 	while {$pos < $len} {
 		set key [lindex $args $pos]
@@ -613,6 +641,10 @@ proc job {jobname args} {
 				set precode [lindex $args $pos]
 				incr pos
 			}
+			-checkcompressed {
+				set checkcompressed [lindex $args $pos]
+				incr pos
+			}
 			-- break
 			default {
 				if {[string index $key 0] eq "-"} {
@@ -654,7 +686,7 @@ proc job {jobname args} {
 		append newcode [list set $var [uplevel get $var]]\n
 	}
 	append newcode $code
-	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $newcode $submitopts $precode]	
+	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $precode]	
 	incr cgjob(id)
 	if {!$cgjob(debug)} job_process
 }
@@ -681,4 +713,3 @@ proc job_init {args} {
 }
 
 job_init
-

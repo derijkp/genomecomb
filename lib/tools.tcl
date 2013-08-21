@@ -356,10 +356,29 @@ proc gzfile {args} {
 	return [lindex $args 0]
 }
 
+proc checkfile {args} {
+	foreach filename $args {
+		if {![catch {glob $filename} list]} {
+			return [lindex $list 0]
+		}
+	}
+	return [lindex $args 0]
+}
+
 proc gzfiles {args} {
 	set result {}
 	foreach filename $args {
 		if {![catch {glob $filename $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
+			lappend result {*}$list
+		}
+	}
+	return $result
+}
+
+proc checkfiles {args} {
+	set result {}
+	foreach filename $args {
+		if {![catch {glob $filename} list]} {
 			lappend result {*}$list
 		}
 	}
@@ -875,4 +894,10 @@ proc sourcename base {
 		set name $base
 	}
 	return $name
+}
+
+proc job_razip file {
+	uplevel [list job razip-$file -checkcompressed 0 -deps $file -targets $file.rz -code {
+		cg_razip $dep
+	}]
 }

@@ -105,7 +105,7 @@ proc job_process_sge_onepass {} {
 	set jobroot [pwd]
 	while {[llength $queue]} {
 		set line [list_shift queue]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip code submitopts} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 		file mkdir [file dir $job]
@@ -121,7 +121,7 @@ proc job_process_sge_onepass {} {
 		# check foreach deps, skip if not fullfilled
 		# check for foreach patterns, expand into one ore more entries in the queue
 		if {[llength $foreach]} {
-			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time} fadeps]} {
+			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time $checkcompressed} fadeps]} {
 				if {[regexp {^missing dependency} $fadeps]} {
 					job_log $job "$fadeps"
 				} elseif {[regexp {^ptargets hit} $fadeps]} {
@@ -163,7 +163,7 @@ proc job_process_sge_onepass {} {
 			continue
 		}
 		# check deps, skip if not fullfilled
-		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $ftargetvars} adeps]} {
+		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $checkcompressed $ftargetvars} adeps]} {
 			# dependencies not found (or error) -> really skip job
 			if {[regexp {^missing dependency} $adeps]} {
 				job_log $job "$adeps"
@@ -197,7 +197,7 @@ proc job_process_sge_onepass {} {
 			set doskip 0
 			foreach skip $fskip {
 				set skip [job_targetsreplace $skip $targetvars]
-				if {[llength $skip] && [job_checktargets $job $skip $time running]} {
+				if {[llength $skip] && [job_checktargets $job $skip $time $checkcompressed running]} {
 					set doskip 1
 					break
 				}
@@ -212,16 +212,17 @@ proc job_process_sge_onepass {} {
 			set targets [job_targetsreplace $ftargets $targetvars]
 			file_write $job.targets $targets
 			set newtargets 0
-			if {![job_checktargets $job $targets $time targetsrunning]} {
+			if {![job_checktargets $job $targets $time $checkcompressed targetsrunning]} {
 				set newtargets 1
 			}
 		} else {
 			set targets {}
+			set targetsrunning {}
 			set newtargets 1
 		}
 		set ptargets [job_targetsreplace $fptargets $targetvars]
 		file_write $job.ptargets $ptargets
-		if {[llength $ptargets] && ![llength [job_findptargets $ptargets]]} {
+		if {[llength $ptargets] && ![llength [job_findptargets $ptargets $checkcompressed]]} {
 			set newtargets 1
 		}
 		# indicate targets are in the queue, so job_finddeps will find them
@@ -253,7 +254,7 @@ proc job_process_sge_onepass {} {
 		append cmd {#$ -cwd} \n
 		append cmd "\n\# the next line restarts using cgsh \\\n"
 		append cmd {exec cg source "$0" "$@"} \n
-		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $code]\n
+		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $checkcompressed $code]\n
 		append cmd "file_add \{$job.log\} \"\[job_timestamp\]\\tending $jobname\"\n"
 		set runfile $job.run
 		file_write $runfile $cmd

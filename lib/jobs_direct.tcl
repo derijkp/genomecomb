@@ -41,13 +41,13 @@ proc job_process_direct {} {
 	set jobroot [pwd]
 	while {[llength $cgjob(queue)]} {
 		set line [list_shift cgjob(queue)]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip code submitopts} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 		# check foreach deps, skip if not fullfilled
 		# add all resulting (foreach) jobs in front of the queue, and go back to running the queue
 		if {[llength $foreach]} {
-			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time} fadeps]} {
+			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time $checkcompressed} fadeps]} {
 				if {![regexp {^missing dependency} $fadeps]} {
 					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				} else {
@@ -73,7 +73,7 @@ proc job_process_direct {} {
 		cd $pwd
 		job_log $job "==================== $jobname ===================="
 		# check deps, skip if not fullfilled
-		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $ftargetvars} adeps]} {
+		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $checkcompressed $ftargetvars} adeps]} {
 			if {![regexp {^missing dependency} $adeps]} {
 				job_log $job "error in dependencies for $jobname: $adeps"
 			} else {
@@ -90,7 +90,7 @@ proc job_process_direct {} {
 			set doskip 0
 			foreach skip $fskip {
 				set skip [job_targetsreplace $skip $targetvars]
-				if {[llength $skip] && [job_checktargets $job $skip $time running]} {
+				if {[llength $skip] && [job_checktargets $job $skip $time $checkcompressed running]} {
 					set doskip 1
 					break
 				}
@@ -104,15 +104,16 @@ proc job_process_direct {} {
 		set run 0
 		if {$ftargets ne ""} {
 			set targets [job_targetsreplace $ftargets $targetvars]
-			if {![job_checktargets $job $targets $time running]} {
+			if {![job_checktargets $job $targets $time $checkcompressed running]} {
 				set run 1
 			}
 		} else {
 			set targets {}
+			set running {}
 			set run 1
 		}
 		set ptargets [job_targetsreplace $fptargets $targetvars]
-		if {[llength $ptargets] && ![llength [job_findptargets $ptargets]]} {
+		if {[llength $ptargets] && ![llength [job_findptargets $ptargets $checkcompressed]]} {
 			set run 1
 		}
 		if {$cgjob(force)} {
@@ -133,7 +134,7 @@ proc job_process_direct {} {
 		job_log $job "-------------------- running $jobname --------------------"
 		# run code
 		set cmd "proc job_run {} \{\n"
-		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $code]
+		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $checkcompressed $code]
 		append cmd \}
 		set ok 1
 		if {[catch {eval $cmd} result]} {

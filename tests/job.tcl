@@ -4,6 +4,10 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
+# use these for trying out individual tests
+set testname direct
+proc test_job_init {} {uplevel job_init}
+
 catch {file delete -force {*}[glob tmp/*]}
 
 proc jobtest {args} {
@@ -444,6 +448,74 @@ test job {no -targets, dep not found} {
 	cd $::testdir
 	set result
 } {log_jobs}
+
+test job {no -checkcompressed 1 (default), dep} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write dep.txt test
+	cg razip dep.txt
+	job testcheckcompressed -deps {dep.txt} -targets result.txt -code {
+		file_write result.txt test
+	}
+	job_wait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {dep.txt.rz log_jobs result.txt}
+
+test job {no -checkcompressed 1 (default), dep} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write dep.txt test
+	cg razip dep.txt
+	job testcheckcompressed -checkcompressed 0 -deps {dep.txt} -targets result.txt -code {
+		file_write result.txt test
+	}
+	job_wait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {dep.txt.rz log_jobs}
+
+test job {no -checkcompressed 1 (default), targets} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write dep.txt test
+	file_write target.txt test
+	cg razip target.txt
+	job testcheckcompressed -deps {dep.txt} -targets target.txt -code {
+		file_write result.txt test
+		file_write target.txt test
+	}
+	job_wait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {dep.txt log_jobs target.txt.rz}
+
+test job {no -checkcompressed 1 (default), dep} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write dep.txt test
+	file_write target.txt test
+	cg razip target.txt
+	job testcheckcompressed -checkcompressed 0 -deps {dep.txt} -targets target.txt -code {
+		file_write result.txt test
+		file_write target.txt test
+	}
+	job_wait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {dep.txt log_jobs result.txt target.txt target.txt.rz}
 
 # end of block
 }
