@@ -215,10 +215,11 @@ table_tsv method qfields {} {
 
 table_tsv method values {field {max 5000}} {
 	private $object tdata
-	set histofile $tdata(file).index/colinfo/$field.colinfo
+	set histofile $tdata(indexdir)/colinfo/$field.colinfo
 	if (![file exists $histofile]) {
 		private $object values
 		if {![info exists values($field)]} {
+			set compressed $tdata(compressed)
 			set lineindex $tdata(lineindex)
 			set step [expr {int([dict get $lineindex max]/double($max))}]
 			if {$step < 1} {set step 1}
@@ -244,10 +245,12 @@ table_tsv method values {field {max 5000}} {
 				}
 				if {$step > 1} {
 					incr row $step
-					seek $f [bcol_get $lineindex $row $row]
+					if {!$compressed} {
+						seek $f [bcol_get $lineindex $row $row]
+					}
 				}
 			}
-			close $f
+			catch {close $f}
 			set result {}
 			foreach v [array names a] {
 				lappend result [list $v $a($v)]
@@ -373,12 +376,12 @@ table_tsv method index {file} {
 	if {[inlist {.rz .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
 	cg_index $file
 	set result [infofile_read $indexdir/info.tsv]
+	dict set result indexdir $indexdir
 	dict set result lineindex [bcol_open $indexfile]
 	dict set result file [file normalize $file]
 	dict set result compressed $compressed
 	dict set result lineindexfile [file normalize $indexfile]
 	dict set result file $file
-	lappend result indexdir $indexdir
 	return $result
 }
 
