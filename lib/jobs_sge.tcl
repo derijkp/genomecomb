@@ -208,10 +208,15 @@ proc job_process_sge_onepass {} {
 			}
 		}
 		# check targets, if already done or running, skip
-		set targets [job_targetsreplace $ftargets $targetvars]
-		file_write $job.targets $targets
-		set newtargets 0
-		if {![job_checktargets $job $targets $time targetsrunning]} {
+		if {$ftargets ne ""} {
+			set targets [job_targetsreplace $ftargets $targetvars]
+			file_write $job.targets $targets
+			set newtargets 0
+			if {![job_checktargets $job $targets $time targetsrunning]} {
+				set newtargets 1
+			}
+		} else {
+			set targets {}
 			set newtargets 1
 		}
 		set ptargets [job_targetsreplace $fptargets $targetvars]

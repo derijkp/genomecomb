@@ -223,9 +223,14 @@ proc job_process_distr {} {
 			}
 		}
 		# check targets, if already done or running, skip
-		set targets [job_targetsreplace $ftargets $targetvars]
-		set newtargets 0
-		if {![job_checktargets $job $targets $time targetsrunning]} {
+		if {$ftargets ne ""} {
+			set targets [job_targetsreplace $ftargets $targetvars]
+			set newtargets 0
+			if {![job_checktargets $job $targets $time targetsrunning]} {
+				set newtargets 1
+			}
+		} else {
+			set targets {}
 			set newtargets 1
 		}
 		set ptargets [job_targetsreplace $fptargets $targetvars]

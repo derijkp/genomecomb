@@ -638,9 +638,9 @@ proc job {jobname args} {
 		if {![info exists targets]} {set targets {}}
 		if {![info exists code]} {set code {}}
 	}
-	if {$targets eq ""} {
-		error "Each job must have targets (use -targets)"
-	}
+#	if {$targets eq ""} {
+#		error "Each job must have targets (use -targets)"
+#	}
 	set edeps [job_expandvarslist $deps 1]
 	set eforeach [job_expandvarslist $foreach 1]
 	set etargets [job_expandvarslist $targets 1]

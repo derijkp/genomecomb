@@ -416,6 +416,35 @@ test job {jobtestnojobs} {
 	job_wait
 } {}
 
+test job {no -targets} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write dep.txt dep
+	job testnotarget -deps {dep.txt} -code {
+		file_write result.txt test
+	}
+	job_wait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {dep.txt log_jobs result.txt}
+
+test job {no -targets, dep not found} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	job testnotarget -deps {dep.txt} -code {
+		file_write result.txt test
+	}
+	job_wait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {log_jobs}
+
 # end of block
 }
 

@@ -102,8 +102,13 @@ proc job_process_direct {} {
 		}
 		# check targets, if already done or running, skip
 		set run 0
-		set targets [job_targetsreplace $ftargets $targetvars]
-		if {![job_checktargets $job $targets $time running]} {
+		if {$ftargets ne ""} {
+			set targets [job_targetsreplace $ftargets $targetvars]
+			if {![job_checktargets $job $targets $time running]} {
+				set run 1
+			}
+		} else {
+			set targets {}
 			set run 1
 		}
 		set ptargets [job_targetsreplace $fptargets $targetvars]
