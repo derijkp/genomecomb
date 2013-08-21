@@ -148,6 +148,14 @@ proc tsv_select_if {arguments header neededfieldsVar} {
 	return "($condition ? $true : $false)"
 }
 
+proc tsv_select_catch {arguments header neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	if {[llength $arguments] != 1} {
+		error "wrong # args for function if, must be: catch(expression)"
+	}
+	return "\[catch \{expr \{[tsv_select_detokenize [lindex $arguments 0] $header neededfields]\}\}\]"
+}
+
 proc tsv_select_counthasone {ids operand value} {
 	set temp {}
 	foreach id $ids {
@@ -624,6 +632,9 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 					}
 					if {
 						set temp [tsv_select_if $arguments $header neededfields]
+					}
+					catch {
+						set temp [tsv_select_catch $arguments $header neededfields]
 					}
 					region {
 						set temp [tsv_select_region $ids $header neededfields]
