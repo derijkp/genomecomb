@@ -478,7 +478,7 @@ proc process_illumina {destdir dbdir} {
 	foreach dir [dirglob $destdir */fastq] {
 		lappend samples [file dir $dir]
 	}
-	set samples [lsort -dict $samples]
+	set samples [ssort -natural $samples]
 	set keeppwd [pwd]
 	cd $destdir
 	job_logdir $destdir/log_jobs

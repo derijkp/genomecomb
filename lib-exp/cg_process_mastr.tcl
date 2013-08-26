@@ -56,7 +56,7 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 		file mkdir $destdir/$sample/fastq
 		exec cp -al $file $destdir/$sample/fastq
 	}
-	set alidir [lindex [lsort -dict [glob $illsrc/Alignment*]] end]
+	set alidir [lindex [ssort -natural [glob $illsrc/Alignment*]] end]
 	set files [glob $alidir/*.bam $alidir/*.bam.bai]
 	foreach file $files {
 		set tail [file tail $file]
@@ -85,7 +85,7 @@ proc mastr_refseq_job {mastrdir dbdir} {
 	set refseq seq-$mastrname.fa
 	set mapfile reg-$mastrname.map
 	job makeminigenome-$mastrname -deps amplicons-$mastrname.tsv \
-	-targets {$refseq reg-$mastrname.bed reg-$mastrname.map reg-$mastrname.tsv} \
+	-targets {$refseq reg-$mastrname.bed $mapfile reg-$mastrname.tsv} \
 	-vars {dbdir mastrname} -code {
 		puts stderr "makeminigenome $dbdir $mastrname $dep name"
 		makeminigenome $dbdir $mastrname $dep name
@@ -120,7 +120,7 @@ proc process_mastr_job {mastrdir destdir dbdir} {
 	foreach file [dirglob $destdir */fastq] {
 		lappend samples [file dir $file]
 	}
-	set samples [lsort -dict $samples]
+	set samples [ssort -natural $samples]
 	foreach sample $samples {
 		puts $sample
 		set name ${sample}
