@@ -223,14 +223,30 @@ proc bam_clean_job {bamfile refseq sample args} {
 	# make gatk refseq
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set dict [file root $gatkrefseq].dict
-	# clean bamfile: sort using picard, mark duplicates, and add readgroup info (needed for gatk)
-	if {![file exists $dir/$pre-ds$root.bam] && ![file exists $dir/$pre-rs$root.bam]} {
-		job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
-		-vars {removeduplicates sample picard} -skip {$dir/$pre-rds$root.bam} -code {
-			file delete $target.temp
-			exec java -jar $picard/SortSam.jar	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr > stdout
-			file rename $target.temp $target
+	# sort using picard
+	set skips {}
+	set cleanup {}
+	if {$removeduplicates} {
+		lappend skips -skip $dir/$pre-ds$root.bam
+		lappend cleanup $dir/$pre-s$root.bam $dir/$pre-s$root.bam.bai
+		if {$realign} {
+			lappend skips -skip $dir/$pre-rds$root.bam
+			lappend cleanup $dir/$pre-ds$root.bam $dir/$pre-ds$root.bam.bai
 		}
+	} else {
+		if {$realign} {
+			lappend skips -skip $dir/$pre-rs$root.bam
+			lappend cleanup $dir/$pre-s$root.bam $dir/$pre-s$root.bam.bai
+		}
+	}
+	job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
+	-vars {removeduplicates sample picard} {*}$skips -code {
+		file delete $target.temp
+		exec java -jar $picard/SortSam.jar	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr > stdout
+		file rename $target.temp $target
+	#	# exec java -jar $picard/AddOrReplaceReadGroups.jar	I=$src	O=$target.temp3	RGID=$sample	RGLB=solexa-123	RGPL=illumina	RGPU=$sample RGSM=$sample 2>@ stderr > stdout
+	#	# file delete $target.temp $target.temp2
+	#	# file rename $target.temp3 $target
 	}
 	set root s$root
 	if {$removeduplicates} {
@@ -239,20 +255,15 @@ proc bam_clean_job {bamfile refseq sample args} {
 			puts "removing duplicates"
 			exec java -jar $picard/MarkDuplicates.jar	I=$dep	O=$target.temp METRICS_FILE=$target.dupmetrics 2>@ stderr > stdout
 			file rename $target.temp $target
-	#		set src $target.temp2
-	#		# exec java -jar $picard/AddOrReplaceReadGroups.jar	I=$src	O=$target.temp3	RGID=$sample	RGLB=solexa-123	RGPL=illumina	RGPU=$sample RGSM=$sample 2>@ stderr > stdout
-	#		# file delete $target.temp $target.temp2
-	#		# file rename $target.temp3 $target
-	#		file rename $src $target
-	#		file delete $target.temp $target.temp2
 		}
 		set root d$root
-		# index cleaned result
-		job bamrs_index-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai \
-		-code {
-			exec samtools index $dep >@ stdout 2>@ stderr
-			puts "making $target"
-		}
+	}
+	# index intermediate result
+	job bam_index-$pre-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai \
+	-skip {$dir/$pre-ds$root.bam} -skip {$dir/$pre-rs$root.bam} -skip {$dir/$pre-rds$root.bam} \
+	-code {
+		exec samtools index $dep >@ stdout 2>@ stderr
+		puts "making $target"
 	}
 	if {$realign} {
 		# realign around indels
@@ -260,13 +271,19 @@ proc bam_clean_job {bamfile refseq sample args} {
 		-vars {gatkrefseq gatk pre} -code {
 			exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals 2>@ stderr >@ stdout
 			exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp 2>@ stderr >@ stdout
+			catch {file rename $target.temp.bai $target.bai}
+			catch {file delete $target.intervals}
 			file rename $target.temp $target
-			file delete $dep $dep.bai
 		}
 		set root r$root
 		job bamrealign_index-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai -code {
 			exec samtools index $dep >@ stdout 2>@ stderr
 			puts "making $target"
+		}
+	}
+	job bamclean_remtemp-$root -deps {$dir/$pre-$root.bam} -vars {cleanup} -code {
+		foreach file $cleanup {
+			catch {file delete $file}
 		}
 	}
 	return $dir/$pre-$root.bam
