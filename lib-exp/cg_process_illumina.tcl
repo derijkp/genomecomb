@@ -184,8 +184,10 @@ proc map_bwa_job {refseq files sample {readgroupdata {}} {pre {}}} {
 proc gatk_refseq_job refseq {
 	upvar job_logdir job_logdir
 	set nrefseq [file root $refseq].fa
-	file delete $nrefseq
-	exec ln -s $refseq $nrefseq
+	if {$refseq ne $nrefseq} {
+		file delete $nrefseq
+		exec ln -s $refseq $nrefseq
+	}
 	file mkdir $refseq.gatk
 	set picard [picard]
 	job bam_clean_sam_faidx-[file tail $nrefseq] -deps $nrefseq -targets {$nrefseq.fai} -code {
