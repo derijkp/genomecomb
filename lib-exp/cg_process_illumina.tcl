@@ -116,7 +116,7 @@ proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
 proc bwarefseq_job {refseq} {
 	upvar job_logdir job_logdir
 	set bwarefseq $refseq.bwa/[file tail $refseq]
-	job bowtie2refseq-[file tail $refseq] -deps $refseq -targets {$refseq.bwa} -code {
+	job bwa2refseq-[file tail $refseq] -deps $refseq -targets {$refseq.bwa} -code {
 		file delete -force $target.temp
 		file mkdir $target.temp
 		mklink $dep $target.temp/[file tail $dep]
