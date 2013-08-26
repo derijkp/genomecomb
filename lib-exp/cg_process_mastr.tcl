@@ -152,6 +152,7 @@ proc process_mastr_job {mastrdir destdir dbdir} {
 			cg remap $dep1 $dep2 $target
 		}
 		sreg_sam_job sreg-sam-rsbowtie2-$name varall-sam-rsbowtie2-$name.tsv sreg-sam-rsbowtie2-$name.tsv
+		job_razip varall-sam-rsbowtie2-$name.tsv
 		# gatk variant calling on map-rsbowtie2
 		var_gatk_job reg_map-rsbowtie2-$name.bam $refseq reg_
 		job remapgatk-varall-$name -deps {reg_varall-gatk-rsbowtie2-$name.tsv $mapfile} -targets varall-gatk-rsbowtie2-$name.tsv -code {
@@ -161,6 +162,7 @@ proc process_mastr_job {mastrdir destdir dbdir} {
 			cg remap $dep1 $dep2 $target
 		}
 		sreg_gatk_job sreg-gatk-rsbowtie2-$name varall-gatk-rsbowtie2-$name.tsv sreg-gatk-rsbowtie2-$name.tsv
+		job_razip varall-gatk-rsbowtie2-$name.tsv
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
