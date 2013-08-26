@@ -403,6 +403,15 @@ proc var_gatk_job {bamfile refseq {pre {}}} {
 	sreg_gatk_job ${pre}sreg-gatk-$root ${pre}varall-gatk-$root.tsv ${pre}sreg-gatk-$root.tsv
 	## filter SNPs (according to seqanswers exome guide)
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
+	# cleanup
+	job clean_${pre}varall-gatk-$root -deps {${pre}varall-gatk-$root.tsv} -vars {pre root} -targets {} -code {
+		catch {file delete ${pre}varall-gatk-$root.vcf}
+		catch {file delete ${pre}varall-gatk-$root.vcf.idx}
+	}
+	job clean_${pre}varall-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} -code {
+		catch {file delete ${pre}uvar-gatk-$root.tsv}
+	}
+	job_razip ${pre}varall-gatk-$root.tsv
 	cd $keeppwd
 	return [file join $dir ${pre}var-gatk-$root.tsv]
 }
