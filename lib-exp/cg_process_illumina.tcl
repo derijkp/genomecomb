@@ -323,7 +323,8 @@ proc var_sam_job {bamfile refseq {pre {}}} {
 	job ${pre}var_sam_faidx -deps $refseq -targets {$refseq.fai} -code {
 		exec samtools faidx $dep
 	}
-	job ${pre}varall-sam-$root -deps {$file $refseq.fai} -targets {${pre}varall-sam-$root.vcf} -vars {refseq} -skip varall-sam-$root.tsv -code {
+	job ${pre}varall-sam-$root -deps {$file $refseq.fai} -targets {${pre}varall-sam-$root.vcf} \
+		-vars {refseq} -skip ${pre}varall-sam-$root.tsv -code {
 		# bcftools -v for variant only
 		exec samtools mpileup -uDS -f $refseq $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
 		file rename $target.temp $target
@@ -334,22 +335,25 @@ proc var_sam_job {bamfile refseq {pre {}}} {
 		file delete $target.temp
 		file rename $target.temp2 $target
 	}
-	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}var-sam-$root.tsv} -code {
+	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} -code {
 		cg select -s - -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 5 && $totalcoverage > 3} \
 			-f {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 {sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))} *} \
 			$dep $target.temp
 		file rename $target.temp $target
 	}
+	# annotvar_clusters_job works using jobs
+	annotvar_clusters_job ${pre}uvar-sam-$root.tsv ${pre}var-sam-$root.tsv
+	# find regions
 	sreg_sam_job ${pre}sreg-sam-$root ${pre}varall-sam-$root.tsv ${pre}sreg-sam-$root.tsv
-#	job ${pre}var-sam-$root -deps $file -targets {var-sam-$root.vcf} -vars {refseq} -code {
-#		# bcftools -v for variant only
-#		exec samtools mpileup -uDS -f $refseq $dep 2>@ stderr | bcftools view -vcg - > $target.temp 2>@ stderr
-#		file rename $target.temp $target
-#	}
-#	job ${pre}var-sam2sft-$root -deps var-sam-$root.vcf -targets var-sam-$root.tsv -vars {refseq} -code {
-#		cg vcf2sft $dep $target.temp
-#		file rename $target.temp $target
-#	}
+	# cleanup
+	job clean_${pre}varall-sam-$root -deps {${pre}varall-sam-$root.tsv} -vars {pre root} -targets {} -code {
+		catch {file delete ${pre}varall-sam-$root.vcf}
+		catch {file delete ${pre}varall-sam-$root.vcf.idx}
+	}
+	job clean_${pre}varall-sam-$root -deps {${pre}var-sam-$root.tsv} -vars {pre root} -targets {} -code {
+		catch {file delete ${pre}uvar-sam-$root.tsv}
+	}
+	job_razip ${pre}varall-sam-$root.tsv
 	cd $keeppwd
 	return [file join $dir var-sam-$root.tsv]
 }
