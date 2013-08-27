@@ -42,7 +42,15 @@ proc tail {file {num 1}} {
 
 proc job_process_distr_watchdog {} {
 	global cgjob cgjob_running cgjob_info
-	if {!$cgjob(silent)} {puts stderr "   -=- [llength [array names cgjob_running]] running, [llength $cgjob(queue)] in queue"}
+	if {!$cgjob(silent)} {
+		set msg "   -=- [llength [array names cgjob_running]] running, [llength $cgjob(queue)] in queue"
+		if {$msg eq [get cgjob(prvmsg) ""]} {
+			puts -nonewline stderr .
+		} else {
+			puts stderr $msg
+			set cgjob(prvmsg) $msg
+		}
+	}
 	set pids [exec ps -eo pid]
 	foreach job [array names cgjob_running] {
 		if {![inlist $pids $cgjob_running($job)]} {
