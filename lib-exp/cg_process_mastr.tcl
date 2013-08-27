@@ -76,7 +76,7 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 	cd $keeppwd
 }
 
-proc mastr_refseq_job {mastrdir dbdir} {
+proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	set keeppwd [pwd]
 	cd $mastrdir
 	set mastrname [file root [file tail $mastrdir]]
@@ -90,7 +90,9 @@ proc mastr_refseq_job {mastrdir dbdir} {
 		puts stderr "makeminigenome $dbdir $mastrname $dep name"
 		makeminigenome $dbdir $mastrname $dep name
 	}
-#	set refseq [lindex [glob $dbdir/genome_*.ifas] 0]
+	if {!$useminigenome} {
+		set refseq [glob $dbdir/genome_*.ifas]
+	}
 	# index refseq for bowtie2
 	bowtie2refseq_job $refseq
 	# index refseq for gatk
@@ -98,17 +100,18 @@ proc mastr_refseq_job {mastrdir dbdir} {
 	# index refseq for bwa
 	bwarefseq_job $refseq
 	cd $keeppwd
-	return [list $mastrname $mastrdir/seq-$mastrname.fa $mastrdir/reg-$mastrname.map]
+	return [list $mastrname $refseq $mastrdir/reg-$mastrname.map]
 }
 
-proc process_mastr_job {mastrdir destdir dbdir} {
+proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} {
 	#
 #	# make minigenome
 	set mastrdir [file normalize $mastrdir]
 	set destdir [file normalize $destdir]
 	set dbdir [file normalize $dbdir]
+	if {$useminigenome} {set pre reg_} else {set pre {}}
 	# make sure mastrdir contains everything needed
-	foreach {mastrname refseq mapfile} [mastr_refseq_job $mastrdir $dbdir] break
+	foreach {mastrname refseq mapfile} [mastr_refseq_job $mastrdir $dbdir $useminigenome] break
 	# start mastr analysis
 	set keeppwd [pwd]
 	cd $destdir
@@ -136,39 +139,43 @@ proc process_mastr_job {mastrdir destdir dbdir} {
 		# do own alignment
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
 # map_bwa_job /complgen/refseq/hg19/genome_hg19.ifas [glob fastq/*] $sample
-# map_bowtie2_job /complgen/refseq/hg19/genome_hg19.ifas $files $name {PL illumina LB solexa-123}
+# map_${aligner}_job /complgen/refseq/hg19/genome_hg19.ifas $files $name {PL illumina LB solexa-123}
 		if {![llength $files]} continue
 		#
-		# map using bowtie2
-		map_bowtie2_job $refseq $files $name {PL illumina LB solexa-123} reg_
+		# map using $aligner
+		map_${aligner}_job $refseq $files $name {PL illumina LB solexa-123} $pre
 		# clean bamfile (do not mark duplicates, realign)
-		set cleanbam [bam_clean_job reg_map-bowtie2-$name.bam $refseq $sample -removeduplicates 0]
-		# samtools variant calling on map-rsbowtie2
-		var_sam_job $cleanbam $refseq reg_
-		job remapsam-varall-$name -deps {reg_varall-sam-rsbowtie2-$name.tsv $mapfile} -targets varall-sam-rsbowtie2-$name.tsv -code {
-			cg remap $dep1 $dep2 $target
+		set cleanbam [bam_clean_job ${pre}map-${aligner}-$name.bam $refseq $sample -removeduplicates 0]
+		# samtools variant calling on map-rs${aligner}
+		var_sam_job $cleanbam $refseq $pre
+		if {$useminigenome} {
+			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets varall-sam-rs${aligner}-$name.tsv -code {
+				cg remap $dep1 $dep2 $target
+			}
+			job remapsam-var-$name -deps {reg_var-sam-rs${aligner}-$name.tsv $mapfile} -targets var-sam-rs${aligner}-$name.tsv -code {
+				cg remap $dep1 $dep2 $target
+			}
 		}
-		job remapsam-var-$name -deps {reg_var-sam-rsbowtie2-$name.tsv $mapfile} -targets var-sam-rsbowtie2-$name.tsv -code {
-			cg remap $dep1 $dep2 $target
+		sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv
+		job_razip varall-sam-rs${aligner}-$name.tsv
+		# gatk variant calling on map-rs${aligner}
+		var_gatk_job $cleanbam $refseq $pre
+		if {$useminigenome} {
+			job remapgatk-varall-$name -deps {reg_varall-gatk-rs${aligner}-$name.tsv $mapfile} -targets varall-gatk-rs${aligner}-$name.tsv -code {
+				cg remap $dep1 $dep2 $target
+			}
+			job remapgatk-var-$name -deps {reg_var-gatk-rs${aligner}-$name.tsv $mapfile} -targets var-gatk-rs${aligner}-$name.tsv -code {
+				cg remap $dep1 $dep2 $target
+			}
 		}
-		sreg_sam_job sreg-sam-rsbowtie2-$name varall-sam-rsbowtie2-$name.tsv sreg-sam-rsbowtie2-$name.tsv
-		job_razip varall-sam-rsbowtie2-$name.tsv
-		# gatk variant calling on map-rsbowtie2
-		var_gatk_job reg_map-rsbowtie2-$name.bam $refseq reg_
-		job remapgatk-varall-$name -deps {reg_varall-gatk-rsbowtie2-$name.tsv $mapfile} -targets varall-gatk-rsbowtie2-$name.tsv -code {
-			cg remap $dep1 $dep2 $target
-		}
-		job remapgatk-var-$name -deps {reg_var-gatk-rsbowtie2-$name.tsv $mapfile} -targets var-gatk-rsbowtie2-$name.tsv -code {
-			cg remap $dep1 $dep2 $target
-		}
-		sreg_gatk_job sreg-gatk-rsbowtie2-$name varall-gatk-rsbowtie2-$name.tsv sreg-gatk-rsbowtie2-$name.tsv
-		job_razip varall-gatk-rsbowtie2-$name.tsv
+		sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv
+		job_razip varall-gatk-rs${aligner}-$name.tsv
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo {}
 	foreach sample $samples {
-		lappend todo sam-rsbowtie2-$sample gatk-rsbowtie2-$sample
+		lappend todo sam-rs${aligner}-$sample gatk-rs${aligner}-$sample
 	}
 	multicompar_job $experiment $dbdir $todo
 	cd $keeppwd
@@ -176,12 +183,32 @@ proc process_mastr_job {mastrdir destdir dbdir} {
 
 proc cg_process_mastr {args} {
 	set args [job_init {*}$args]
-	if {[llength $args] < 2} {
+	set useminigenome 0
+	set aligner bwa
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-m - --minigenome {
+				set useminigenome $value
+			}
+			-a - --aligner {
+				set aligner $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
+	if {[llength $args] < 3} {
 		puts "Wrong number of arguments"
 		errorformat process_mastr
 		exit 1
 	}
-	process_mastr_job {*}$args
+	foreach {mastrdir destdir dbdir} $args break
+	process_mastr_job $mastrdir $destdir $dbdir $useminigenome $aligner
 	job_wait
 }
 
