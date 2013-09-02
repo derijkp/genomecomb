@@ -667,12 +667,15 @@ proc makeprimers {regionfile archive maxsize prefsize db numthreads {o stdout}} 
 	catch {rename e {}}
 	EmblFile new e
 	puts $o [join {remark label sequence modification scale purification project pair species chromosome cyto target contig pos temperature mg} \t]
-	set regionlist [split [string trim [file_read $regionfile]] \n]
-	list_shift regionlist
+	set f [gzopen  $regionfile]
+	set header [tsv_open $f]
+	set order [tsv_basicfields $header 3]
+	set regionlist [split [string trim [read $f]] \n]
+	close $f
 	foreach region $regionlist {
-		foreach {cchr cstart cend} $region break
+		foreach {cchr cstart cend} [list_sub $region $order] break
 		set cchr [chr_clip $cchr]
-		set name [join $region -]
+		set name "${cchr}-${cstart}-${cend}"
 		putslog $name
 		set bestpair [makeprimers_region $name $maxsize $prefsize $temperature $archive $db $extraseq]
 		if {[llength $bestpair] == 1} {
