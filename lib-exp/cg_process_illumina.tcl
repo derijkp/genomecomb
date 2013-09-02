@@ -382,8 +382,9 @@ proc sreg_gatk_job {job varallfile resultfile} {
 	}
 }
 
-proc var_gatk_job {bamfile refseq {pre {}}} {
+proc var_gatk_job {bamfile refseq args} {
 	upvar job_logdir job_logdir
+	set pre [list_shift args]
 	set gatk [gatk]
 	## Produce gatk SNP calls
 	set dir [file dir $bamfile]
@@ -393,9 +394,11 @@ proc var_gatk_job {bamfile refseq {pre {}}} {
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	set gatkrefseq [gatk_refseq_job $refseq]
 	job ${pre}varall-gatk-$root -deps [list $file $gatkrefseq] \
-	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk} -code {
-		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper -R $dep2 -I $dep -o $target.temp \
+	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk args} -code {
+		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
+			{*}$args -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 50.0 -stand_emit_conf 10.0 -dcov 1000 \
+			--annotateNDA \
 			-glm BOTH --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr
 		file rename $target.temp $target
 		catch {file rename $target.temp.idx $target.idx}

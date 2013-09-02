@@ -138,8 +138,6 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		}
 		# do own alignment
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
-# map_bwa_job /complgen/refseq/hg19/genome_hg19.ifas [glob fastq/*] $sample
-# map_${aligner}_job /complgen/refseq/hg19/genome_hg19.ifas $files $name {PL illumina LB solexa-123}
 		if {![llength $files]} continue
 		#
 		# map using $aligner
@@ -158,15 +156,18 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		}
 		sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv
 		job_razip varall-sam-rs${aligner}-$name.tsv
-		# gatk variant calling on map-rs${aligner}
-		var_gatk_job $cleanbam $refseq $pre
 		if {$useminigenome} {
+			# gatk variant calling on map-rs${aligner}
+			var_gatk_job $cleanbam $refseq $pre
 			job remapgatk-varall-$name -deps {reg_varall-gatk-rs${aligner}-$name.tsv $mapfile} -targets varall-gatk-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
 			job remapgatk-var-$name -deps {reg_var-gatk-rs${aligner}-$name.tsv $mapfile} -targets var-gatk-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
+		} else {
+			# gatk variant calling on map-rs${aligner}
+			var_gatk_job $cleanbam $refseq $pre -L $mastrdir/reg-$mastrname.bed
 		}
 		sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv
 		job_razip varall-gatk-rs${aligner}-$name.tsv
