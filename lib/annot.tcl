@@ -239,6 +239,6 @@ proc annot_varall_annot {varallfile sample loc force lineVar} {
 proc annot_varall_close {varallfile sample} {
 	global annot
 	set info $annot(varallinfo,$varallfile,$sample)
-	close [dict get $info af]
+	catch {close [dict get $info af]}
 	unset annot(varallinfo,$varallfile,$sample)
 }
