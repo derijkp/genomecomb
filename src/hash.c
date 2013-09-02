@@ -73,7 +73,7 @@ void hash_resize(Hash_table *table, hash_hash_func *hashfunc) {
 	free(newtable);
 }
 
-Hash_bucket *hash_get(Hash_table *table, void *key, hash_hash_func *hashfunc, hash_key_compare_func *compare, int *new) {
+Hash_bucket *hash_get(Hash_table *table, void *key, hash_hash_func *hashfunc, hash_key_compare_func *compare, int *new,int create) {
 	Hash_tableitem *tableitem;
 	Hash_bucket *bucket;
 	unsigned int hash;
@@ -88,6 +88,7 @@ Hash_bucket *hash_get(Hash_table *table, void *key, hash_hash_func *hashfunc, ha
 	tableitem = table->table+hash;
 	if (tableitem->chain == NULL) {
 		/* not found, create new chain */
+		if (!create) {return NULL;}
 		bucket = (Hash_bucket *)malloc(2*sizeof(Hash_bucket));
 		NODPRINT("new bucket")
 		tableitem->chain = bucket;
@@ -106,6 +107,7 @@ Hash_bucket *hash_get(Hash_table *table, void *key, hash_hash_func *hashfunc, ha
 			pos++;
 			if (bucket->key == NULL) break;
 		}
+		if (!create) {return NULL;}
 		NODPRINT("bucket at %d",pos)
 		tableitem->chain = (Hash_bucket *)realloc(tableitem->chain,(pos+2)*sizeof(Hash_bucket));
 		bucket = tableitem->chain + pos;
@@ -224,7 +226,7 @@ int hash_char_compare(const void* key1, const void* key2)
 int char_hash_set(Hash_table *hashtable,char *key,void *value) {
 	Hash_bucket *bucket;
 	int new;
-	bucket = hash_get(hashtable, (void *)key, hash_char_hash, hash_char_compare, &new);
+	bucket = hash_get(hashtable, (void *)key, hash_char_hash, hash_char_compare, &new,1);
 	if (new == 0) {
 		/* key was already present in the hashtable */
 		hash_setvalue(bucket,value);
@@ -238,8 +240,8 @@ int char_hash_set(Hash_table *hashtable,char *key,void *value) {
 void *char_hash_get(Hash_table *hashtable,char *key) {
 	Hash_bucket *bucket;
 	int new;
-	bucket = hash_get(hashtable, (void *)key, hash_char_hash, hash_char_compare, &new);
-	if (new == 0) {
+	bucket = hash_get(hashtable, (void *)key, hash_char_hash, hash_char_compare, &new,0);
+	if (bucket != NULL) {
 		/* key was already present in the hashtable */
 		return hash_getvalue(bucket);
 	} else {
@@ -250,7 +252,7 @@ void *char_hash_get(Hash_table *hashtable,char *key) {
 int dstring_hash_set(Hash_table *hashtable,DString *key,void *value) {
 	Hash_bucket *bucket;
 	int new;
-	bucket = hash_get(hashtable, (void *)key, hash_DString_hash, hash_DString_compare, &new);
+	bucket = hash_get(hashtable, (void *)key, hash_DString_hash, hash_DString_compare, &new,1);
 	if (new == 0) {
 		/* key was already present in the hashtable */
 		hash_setvalue(bucket,value);
@@ -261,11 +263,11 @@ int dstring_hash_set(Hash_table *hashtable,DString *key,void *value) {
 	return new;
 }
 
-void *dstring_hash_get(Hash_table *hashtable,char *key) {
+void *dstring_hash_get(Hash_table *hashtable,DString *key) {
 	Hash_bucket *bucket;
 	int new;
-	bucket = hash_get(hashtable, (void *)key, hash_DString_hash, hash_DString_compare, &new);
-	if (new == 0) {
+	bucket = hash_get(hashtable, (void *)key, hash_DString_hash, hash_DString_compare, &new,0);
+	if (bucket != NULL) {
 		/* key was already present in the hashtable */
 		return hash_getvalue(bucket);
 	} else {

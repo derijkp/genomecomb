@@ -11,6 +11,20 @@ exec tclsh "$0" ${1+"$@"}
 # todo:
 # genotype in haploid calls (Y chromosome)
 
+proc cg_vcf2sft.new {args} {
+	set len [llength $args]
+	if {$len == 0} {
+		exec vcf2tsv <@ stdin >@ stdout
+	} elseif {$len == 1} {
+		exec vcf2tsv [lindex $args 0] >@ stdout
+	} elseif {$len == 2} {
+		exec vcf2tsv [lindex $args 0] [lindex $args 1]
+	} else {
+		errorformat vcf2sft
+		exit 1
+	}
+}
+
 proc cg_vcf2sft {args} {
 	if {([llength $args] < 0) || ([llength $args] > 2)} {
 		errorformat vcf2sft
@@ -114,6 +128,10 @@ proc cg_vcf2sft {args} {
 		}
 		if {$l1 == 1 && $l2 == 1} {
 			set begin [expr {$pos - 1}]
+#			if {[catch {set begin [expr {$pos - 1}]}]} {
+#				regsub -all {[^0-9]} $pos {} pos
+#				set begin [expr {$pos - 1}]
+#			}
 			set end $pos
 			set type snp
 		} else {
@@ -140,8 +158,8 @@ proc cg_vcf2sft {args} {
 		}
 		set genotypes [list $ref {*}$alts]
 		set result [list $chrom $begin $end $type $ref $alt $id $qual $filter]
+		set order [list_cor $format $formatfields]
 		foreach sample $samples geno $genos {
-			set order [list_cor $format $formatfields]
 			set temp [list_sub [split $geno :] $order]
 			if {[lindex $order 0] eq "-1"} {
 				# no genotype given -> ref call

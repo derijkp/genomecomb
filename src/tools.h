@@ -31,6 +31,7 @@ void DStringInit(DString *dstring);
 DString *DStringNew();
 DString *DStringNewFromChar(char *string);
 DString *DStringNewFromCharS(char *string,int size);
+DString *DStringNewFromInt(int i);
 DString *DStringEmtpy();
 DString *DStringDup(DString *dstring);
 void DStringDestroy(DString *dstring);
@@ -38,6 +39,7 @@ void DStringClear(DString *dstring);
 void DStringSetSize(DString *dstring, int size);
 void DStringSet(DString *dstring, char *string);
 void DStringSetS(DString *dstring, char *string,int size);
+void DStringPrintf(DString *dstring, ...);
 void DStringCopy(DString *dest, DString *src);
 int DStringCompare(DString *a, DString *b);
 int DStringLocCompare(DString *a, DString *b);
@@ -52,10 +54,12 @@ int DStringGetLine_b(DString *linePtr,	FILE *f1,Buffer *buffer);
 
 DStringArray *DStringArrayNew(int size);
 DStringArray *DStringArrayFromChar(char *string,char sep);
+DStringArray *DStringArrayFromCharM(char *string,char *seps);
 DStringArray *DStringArrayAppend(DStringArray *dstringarray,char *string,int size);
 DStringArray *DStringArraySet(DStringArray *dstringarray,int pos,char *string,int size);
+int DStringArraySearch(DStringArray *dstringarray,char *string,int size);
 DStringArray *DStringArrayRange(DStringArray *dstringarray,int start, int end);
-#define DStringArrayGet(dstringarray,pos) (dstringarray->data[pos])
+#define DStringArrayGet(dstringarray,pos) (dstringarray->data+pos)
 void DStringArrayDestroy(DStringArray *dstringarray);
 void check_numfieldserror(int numfields,int numfields2,DString *line,char *filename,unsigned int *linenum);
 int DStringGetTab(DString *line,	FILE *f1, int max, DStringArray *result, int setzero,unsigned int *numfields);

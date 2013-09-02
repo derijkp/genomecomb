@@ -2,6 +2,7 @@
 
 #define _GNU_SOURCE
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -16,6 +17,8 @@
 #define CHROMM 9095
 #define CHROMX 9096
 #define CHROMY 9097
+
+#define DStringArrayGet(dstringarray,pos) (dstringarray->data+pos)
 
 typedef struct DString {
 	int memsize;
@@ -117,6 +120,18 @@ void DStringCopy(DString *dest, DString *src) {
 	dest->size = src->size;
 }
 
+void DStringPrintf(DString *dstring, char *format, ...) {
+	va_list args;
+	int size;
+	va_start(args, format);
+	size = vsnprintf(NULL,0, format, args);
+	va_end(args);
+	DStringSetSize(dstring,dstring->size+size);
+	va_start(args, format);
+	vsprintf(dstring->string+dstring->size, format, args);
+	va_end(args);
+}
+
 DString *DStringNewFromChar(char *string) {
 	DString *dstring = DStringNew();
 	DStringSet(dstring,string);
@@ -133,6 +148,14 @@ DString *DStringDup(DString *dstring) {
 	DString *result = DStringNew();
 	DStringSetS(result,dstring->string,dstring->size);
 	return result;
+}
+
+DString *DStringNewFromInt(int i) {
+	DString *dstring = DStringNew();
+	int size=snprintf(NULL,0,"%d",i);
+	DStringSetSize(dstring,size);
+	sprintf(dstring->string,"%d",i);
+	return dstring;
 }
 
 /* 
@@ -481,29 +504,70 @@ DStringArray *DStringArrayNew(int size) {
 	return dstringarray;
 }
 
+DStringArray *DStringArrayAppend(DStringArray *dstringarray,char *string,int size) {
+	if (dstringarray->size == dstringarray->memsize) {
+		DString *temp = NULL;
+		int oldmemsize = dstringarray->memsize,i;
+		dstringarray->memsize *= 2;
+		/* 
+			need to correct string pointer in all DStrings that point to the static space
+		*/
+		temp = (DString *)malloc(dstringarray->memsize*sizeof(DString));
+		memcpy(temp,dstringarray->data,oldmemsize*sizeof(DString));
+		for (i = 0 ; i < dstringarray->size ; i++) {
+			if (dstringarray->data[i].string == dstringarray->data[i].staticspace) {
+				temp[i].string = temp[i].staticspace;
+			}
+		}
+		free(dstringarray->data);
+		dstringarray->data = temp;
+	}
+	DStringInit(dstringarray->data+dstringarray->size);
+	if (size < 0) {size = strlen(string);}
+	DStringSetS(dstringarray->data+dstringarray->size, string, size);
+	dstringarray->size++;
+	return dstringarray;
+}
+
 DStringArray *DStringArrayFromChar(char *string,char sep) {
 	DStringArray *result;
 	char *cur,*prev;
-	int count=1,pos;
+	int count=1;
 	cur=string;
 	while(*cur) {
 		if (*cur == sep) count++;
 		cur++;
 	}
-	result = DStringArrayNew(count);
-	result->datablock = DStringNew();
-	DStringSet(result->datablock,string);
-	cur = result->datablock->string;
+	result = DStringArrayNew(count+1);
+	cur = string;
 	prev = cur;
-	pos = 0;
 	while(*cur) {
 		if (*cur == sep) {
-			DStringSetS(result->data+pos,prev,cur-prev);
-			pos++;
+			DStringArrayAppend(result,prev,cur-prev);
 			prev = cur+1;
 		}
 		cur++;
 	}
+	DStringArrayAppend(result,prev,cur-prev);
+	return result;
+}
+
+DStringArray *DStringArrayFromCharM(char *string,char *seps) {
+	DStringArray *result;
+	char *cur,*prev;
+	result = DStringArrayNew(5);
+	cur = string;
+	prev = cur;
+	while(*cur) {
+		if (strchr((const char *)seps,*cur)) {
+			DStringArrayAppend(result,prev,cur-prev);
+			do {cur++;} while(!strchr((const char *)seps,*cur));
+			prev = cur;
+		} else {
+			cur++;
+		}
+	}
+	DStringArrayAppend(result,prev,cur-prev);
 	return result;
 }
 
@@ -514,26 +578,15 @@ DStringArray *DStringArrayRange(DStringArray *dstringarray,int start, int end) {
 	for (i = start; i <= end ; i++) {
 		DStringCopy(result->data+(i-start), dstringarray->data+i);
 	}
+	result->size = end-start+1;
 	return result;	
-}
-
-DStringArray *DStringArrayAppend(DStringArray *dstringarray,char *string,int size) {
-	if (dstringarray->size == dstringarray->memsize) {
-		dstringarray->memsize *= 2;
-		dstringarray->data = (DString *)malloc(dstringarray->memsize*sizeof(DString));
-	}
-	DStringInit(dstringarray->data+dstringarray->size);
-	if (size < 0) {size = strlen(string);}
-	DStringSetS(dstringarray->data+dstringarray->size, string, size);
-	dstringarray->size++;
-	return dstringarray;
 }
 
 DStringArray *DStringArraySet(DStringArray *dstringarray,int pos,char *string,int size) {
 	int i;
 	if (pos >= dstringarray->memsize) {
 		dstringarray->memsize = pos+1;
-		dstringarray->data = (DString *)malloc(dstringarray->memsize*sizeof(DString));
+		dstringarray->data = (DString *)realloc(dstringarray->data,dstringarray->memsize*sizeof(DString));
 		i = dstringarray->size;
 		while (i <= pos) {
 			DStringInit(dstringarray->data+i);
@@ -546,7 +599,26 @@ DStringArray *DStringArraySet(DStringArray *dstringarray,int pos,char *string,in
 	return dstringarray;
 }
 
+int DStringArraySearch(DStringArray *dstringarray,char *string,int size) {
+	DString *astring;
+	int i;
+	for (i = 0; i < dstringarray->size ; i++) {
+		astring = DStringArrayGet(dstringarray,i);
+		if (size != -1) {
+			if (astring->size == size && strncmp(astring->string,string,size) == 0) {
+				return i;
+			}
+		} else {
+			if (strcmp(astring->string,string) == 0) {
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+
 void DStringArrayDestroy(DStringArray *dstringarray) {
+	if (dstringarray == NULL) return;
 	int i=0;
 	for (i =0; i < dstringarray->memsize ; i++) {
 		DStringClear(dstringarray->data+i);
@@ -574,10 +646,10 @@ int DStringGetTab(
 	register int c,newdata=0;
 	register unsigned int count=0,othertab=0;
 	ssize_t size = 0;
-NODPRINT("maxtab=%d",maxtab)
+NODPRINT("maxtab=%d result->memsize=%d",maxtab,result->memsize)
 	maxtab += 1;
 	if (maxtab > result->memsize) {
-		fprintf(stderr,"cannot DStringGetTab, array memsize < maxtab");
+		fprintf(stderr,"cannot DStringGetTab, array memsize < maxtab+1\n");
 		exit(1);
 	}
 	result->data[count].string = cur;
