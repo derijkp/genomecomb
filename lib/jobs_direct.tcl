@@ -148,7 +148,7 @@ proc job_process_direct {} {
 		stderr2file {}
 		if {$error} {
 			puts stderr $result
-			file_add $job.err $result
+			file_add $job.err $result\n$::errorInfo
 		}
 		if {![file exists $job.finished]} {
 			job_log $job "-----> job $jobname failed: did not finish\nerror:\n$result\n"
