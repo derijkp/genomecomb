@@ -1,11 +1,28 @@
+proc searchpath {envvar args} {
+	set name [lindex $args 0]
+	if {[info exists ::env($envvar)]} {
+		if {![file exists $::env($envvar)]} {
+			error "$name not found at $::env($envvar) (from env var $envvar)"
+		}
+		return $::env($envvar)
+	} else {
+		set dirlist [split [get ::env(PATH) ""] :]
+		list_addnew dirlist $::externdir
+		foreach pattern $args {
+			foreach dir $dirlist {
+				if {![catch {glob $dir/$pattern} dirs]} {
+					return [lindex [lsort -dict $dirs] 0]
+				}
+			}
+		}
+		error "$name not found in PATH"
+	}
+}
+
 proc picard {} {
 	global picard
 	if {![info exists picard]} {
-		if {[info exists ::env(PICARD)]} {
-			set picard $::env(PICARD)
-		} else {
- 			set picard $::externdir/picard
-		}
+		set picard [searchpath PICARD picard picard*]
 	}
 	return $picard
 }
@@ -13,11 +30,7 @@ proc picard {} {
 proc gatk {} {
 	global gatk
 	if {![info exists gatk]} {
-		if {[info exists ::env(GATK)]} {
-			set gatk $::env(GATK)
-		} else {
- 			set gatk $::externdir/gatk/GenomeAnalysisTK.jar
-		}
+		set gatk [searchpath GATK gatk GenomeAnalysisTK*]
 	}
 	return $gatk
 }
