@@ -325,8 +325,11 @@ proc sreg_sam_job {job varallfile resultfile} {
 	}
 }
 
-proc var_sam_job {bamfile refseq {pre {}}} {
+proc var_sam_job {bamfile refseq args} {
 	upvar job_logdir job_logdir
+	set pre [list_shift args]
+	array set a $args
+	set regselect [get a(-r) ""]
 	set dir [file normalize [file dir $bamfile]]
 	set keeppwd [pwd]
 	cd $dir
@@ -342,11 +345,17 @@ proc var_sam_job {bamfile refseq {pre {}}} {
 		exec samtools mpileup -uDS -f $refseq $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
 		file rename $target.temp $target
 	}
-	job ${pre}varall-sam_2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv -code {
+	job ${pre}varall-sam_2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv \
+	-vars {regselect} -code {
 		cg vcf2sft $dep $target.temp
 		cg select -s - $target.temp $target.temp2
 		file delete $target.temp
-		file rename $target.temp2 $target
+		if {$regselect eq ""} {
+			file rename $target.temp2 $target
+		} else {
+			cg regselect $target.temp2 $regselect > $target.temp3
+			file rename $target.temp3 $target
+		}
 	}
 	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \

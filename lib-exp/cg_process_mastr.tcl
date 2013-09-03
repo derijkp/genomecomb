@@ -145,7 +145,7 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		# clean bamfile (do not mark duplicates, realign)
 		set cleanbam [bam_clean_job ${pre}map-${aligner}-$name.bam $refseq $sample -removeduplicates 0]
 		# samtools variant calling on map-rs${aligner}
-		var_sam_job $cleanbam $refseq $pre
+		var_sam_job $cleanbam $refseq $pre -r $mastrdir/reg-$mastrname.tsv
 		if {$useminigenome} {
 			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets varall-sam-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
