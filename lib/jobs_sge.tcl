@@ -158,7 +158,20 @@ proc job_process_sge_onepass {} {
 		# check if job is already running, if so, mark targets with jobid
 		set jobnum [job_process_sge_jobid $job]
 		if {[isint $jobnum]} {
-			job_process_sge_marktargets [file_read $job.targets] [file_read $job.ptargets] $jobnum
+			if {[file exists $job.targets]} {
+				set temptargets [file_read $job.targets]
+			} else {
+				set temptargets {}
+			}
+			if {![file exists $job.ptargets]} {
+				error "job $job ($jobnum) seems to be running, but there is no $job.ptargets"
+			}
+			if {[file exists $job.ptargets]} {
+				set tempptargets [file_read $job.ptargets]
+			} else {
+				set tempptargets {}
+			}
+			job_process_sge_marktargets $temptargets $tempptargets $jobnum
 			job_log $job "job $jobname is already running, skip"
 			continue
 		}
@@ -217,6 +230,7 @@ proc job_process_sge_onepass {} {
 			}
 		} else {
 			set targets {}
+			file_write $job.targets {}
 			set targetsrunning {}
 			set newtargets 1
 		}
