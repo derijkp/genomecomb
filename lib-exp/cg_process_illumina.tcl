@@ -30,7 +30,7 @@ proc picard {} {
 proc gatk {} {
 	global gatk
 	if {![info exists gatk]} {
-		set gatk [searchpath GATK gatk GenomeAnalysisTK*]
+		set gatk [searchpath GATK gatk GenomeAnalysisTK*]/GenomeAnalysisTK.jar
 	}
 	return $gatk
 }
