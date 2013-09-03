@@ -494,6 +494,7 @@ proc process_illumina {destdir dbdir} {
 	set refseq [glob $dbdir/genome_*.ifas]
 	set destdir [file normalize $destdir]
 	set samples {}
+	set experiment [file tail $destdir]
 	foreach dir [dirglob $destdir */fastq] {
 		lappend samples [file dir $dir]
 	}
