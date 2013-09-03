@@ -348,7 +348,9 @@ proc var_sam_job {bamfile refseq {pre {}}} {
 		file delete $target.temp
 		file rename $target.temp2 $target
 	}
-	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} -code {
+	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
+	-skip {${pre}var-sam-$root.tsv} \
+	-code {
 		cg select -s - -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 5 && $totalcoverage > 3} \
 			-f {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 {sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))} *} \
 			$dep $target.temp
@@ -408,7 +410,8 @@ proc var_gatk_job {bamfile refseq args} {
 		cg vcf2sft $dep $target.temp
 		file rename $target.temp $target
 	}
-	job ${pre}uvar-gatk-$root -deps ${pre}varall-gatk-$root.tsv -targets ${pre}uvar-gatk-$root.tsv -skip {${pre}var-gatk-$root.tsv} -code {
+	job ${pre}uvar-gatk-$root -deps ${pre}varall-gatk-$root.tsv -targets ${pre}uvar-gatk-$root.tsv \
+	-skip {${pre}var-gatk-$root.tsv} -code {
 		cg select -s - -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 3} \
 			-f {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 {sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))} *} \
 			$dep $target.temp
