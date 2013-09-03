@@ -262,6 +262,40 @@ Y	t	1000	1010
 Y	t	1010	1900	t2,
 Y	t	1900	2000	}
 
+test regselect {basic} {
+	exec cg regselect data/vars1.sft data/reg_annot.sft > tmp/temp.tsv 2> /dev/null
+	exec cg select -rf {list} tmp/temp.tsv tmp/temp2.tsv
+	exec cg select -q {$regtest != ""} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} ../tests/data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
+	exec diff tmp/temp2.tsv tmp/tempexpected.tsv
+} {}
+
+test regselect {basic2} {
+	exec cg regselect data/vars1.sft data/reg_annot.sft > tmp/temp.tsv 2> /dev/null
+	exec cg select -f {chromosome begin end type} tmp/temp.tsv
+} {chromosome	begin	end	type
+chr1	4000	4001	snp
+chr1	4001	4002	snp
+chr1	4099	5000	snp
+chr1	5000	5010	del
+chr2	5000	5001	snp
+chr2	5000	5010	ins}
+
+test regselect {near} {
+	exec cg regselect data/vars1.sft data/reg_annot.sft 10 > tmp/temp.tsv 2> /dev/null
+	exec cg select -f {chromosome begin end type} tmp/temp.tsv
+} {chromosome	begin	end	type
+chr1	4000	4001	snp
+chr1	4001	4002	snp
+chr1	4099	5000	snp
+chr1	5000	5010	del
+chr1	5020	5021	snp
+chr2	4099	5000	snp
+chr2	5000	5001	snp
+chr2	5000	5010	ins
+chr2	5005	5006	snp
+chr2	5010	5011	snp
+chr2	5011	5012	snp}
+
 set ::env(PATH) $keeppath
 
 file delete -force tmp/temp.tsv tmp/temp.tsv.old
