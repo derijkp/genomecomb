@@ -896,8 +896,9 @@ proc sourcename base {
 	return $name
 }
 
-proc job_razip file {
-	uplevel [list job razip-$file -checkcompressed 0 -deps $file -targets $file.rz -code {
+proc job_razip {file args} {
+	set deps [list $file {*}$args]
+	uplevel [list job razip-$file -checkcompressed 0 -deps $deps -targets $file.rz -code {
 		cg_razip $dep
 	}]
 }

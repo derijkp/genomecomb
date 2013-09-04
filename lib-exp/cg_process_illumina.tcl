@@ -377,7 +377,7 @@ proc var_sam_job {bamfile refseq args} {
 	job clean_${pre}varall-sam-$root -deps {${pre}var-sam-$root.tsv} -vars {pre root} -targets {} -code {
 		catch {file delete ${pre}uvar-sam-$root.tsv}
 	}
-	job_razip ${pre}varall-sam-$root.tsv
+	job_razip ${pre}varall-sam-$root.tsv ${pre}var-sam-$root.tsv
 	cd $keeppwd
 	return [file join $dir var-sam-$root.tsv]
 }
@@ -439,7 +439,7 @@ proc var_gatk_job {bamfile refseq args} {
 	job clean_${pre}varall-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} -code {
 		catch {file delete ${pre}uvar-gatk-$root.tsv}
 	}
-	job_razip ${pre}varall-gatk-$root.tsv
+	job_razip ${pre}varall-gatk-$root.tsv ${pre}var-gatk-$root.tsv
 	cd $keeppwd
 	return [file join $dir ${pre}var-gatk-$root.tsv]
 }
