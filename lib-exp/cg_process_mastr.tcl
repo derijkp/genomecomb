@@ -29,12 +29,18 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	# make bed files
 	tsv2bed $dir/reg-$name.tsv $dir/reg-$name.bed {} chromosome begin end $namefield
 	tsv2bed $dir/reg-$name.map $dir/reg-mini_$name.bed $name begin end name
-	catch {
+	set list [cg select -h $ampliconsfile]
+	if {[inlist $list upprobelen] && [inlist $list downprobelen]} {
+		# clipped files
+		cg select -f {chromosome {begin=$begin+$upprobelen} {end=$end+$downprobelen} name} $ampliconsfile $dir/inner_$tail.temp
+	} else {
 		cg select -f {chromosome begin=$primer1_end end=$primer2_begin name} $ampliconsfile $dir/inner_$tail.temp
-		cg select -s - $dir/inner_$tail.temp $dir/inner_$tail.temp2
-		file rename -force $dir/inner_$tail.temp2 $dir/inner_$tail
-		file delete $dir/inner_$tail.temp
 	}
+	cg select -s - $dir/inner_$tail.temp $dir/inner_$tail.temp2
+	file delete $dir/inner_$tail.temp
+	file rename -force $dir/inner_$tail.temp2 $dir/inner_$tail
+	cg regcollapse $dir/inner_$tail > $dir/reg-inner-$name.tsv
+	tsv2bed $dir/reg-inner-$name.tsv $dir/reg-inner-$name.bed {} chromosome begin end $namefield
 }
 
 proc cg_process_conv_illmastr {illsrc destdir} {
@@ -139,13 +145,15 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		# do own alignment
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
 		if {![llength $files]} continue
+#		# quality and adapter clipping
+#		set files [fastq_clipadapters_job $files]
 		#
 		# map using $aligner
 		map_${aligner}_job $refseq $files $name {PL illumina LB solexa-123} $pre
 		# clean bamfile (do not mark duplicates, realign)
 		set cleanbam [bam_clean_job ${pre}map-${aligner}-$name.bam $refseq $sample -removeduplicates 0]
 		# samtools variant calling on map-rs${aligner}
-		var_sam_job $cleanbam $refseq $pre -r $mastrdir/reg-$mastrname.tsv
+		var_sam_job $cleanbam $refseq $pre -r $mastrdir/reg-inner-$mastrname.tsv
 		if {$useminigenome} {
 			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets varall-sam-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
@@ -167,7 +175,7 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 			}
 		} else {
 			# gatk variant calling on map-rs${aligner}
-			var_gatk_job $cleanbam $refseq $pre -L $mastrdir/reg-$mastrname.bed
+			var_gatk_job $cleanbam $refseq $pre -L $mastrdir/reg-inner-$mastrname.bed
 		}
 		sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv
 		job_razip varall-gatk-rs${aligner}-$name.tsv
