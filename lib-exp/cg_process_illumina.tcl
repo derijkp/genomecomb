@@ -444,7 +444,7 @@ proc var_gatk_job {bamfile refseq args} {
 	return [file join $dir ${pre}var-gatk-$root.tsv]
 }
 
-proc multicompar_job {experiment dbdir todo} {
+proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 	upvar job_logdir job_logdir
 	file mkdir compar
 	if {[catch {cg select -n compar/compar-$experiment.tsv} done]} {set done {}}
@@ -462,10 +462,15 @@ proc multicompar_job {experiment dbdir todo} {
 		if {[file exists compar/compar-$experiment.tsv]} {
 			file rename compar/compar-$experiment.tsv compar/compar-$experiment.tsv.temp
 		}
-		job multicompar-$experiment -deps $stilltodo -targets compar/compar-$experiment.tsv -vars stilltodo -code {
+		job multicompar-$experiment -deps $stilltodo -targets compar/compar-$experiment.tsv \
+		-vars {stilltodo skipincomplete} -code {
 			# should maybe better recheck todo here
 			cg multicompar $target.temp {*}$stilltodo
-			cg multicompar_reannot $target.temp
+			if {$skipincomplete} {
+				cg multicompar_reannot $target.temp skipincomplete
+			} else {
+				cg multicompar_reannot $target.temp
+			}
 			file rename $target.temp $target
 		}
 	}
@@ -511,6 +516,7 @@ proc process_illumina {destdir dbdir} {
 	set keeppwd [pwd]
 	cd $destdir
 	job_logdir $destdir/log_jobs
+	set todo {}
 	foreach sample $samples {
 		puts $sample
 		set dir $destdir/$sample
@@ -518,6 +524,21 @@ proc process_illumina {destdir dbdir} {
 		puts $dir
 		cd $dir
 		job_logdir $dir/log_jobs
+		# convert existing vcfs
+		set files [gzfiles *.vcf]
+		foreach file $files {
+			set target [file root [gzroot $file]].tsv
+			job vcf2sft-$file -deps $file -targets $target -code {
+				cg vcf2sft $dep $target
+				if {![file exists ]}
+			}
+			lappend todo [string range $target 4 end-4]
+		}
+		set files [gzfiles var-*.tsv]
+		foreach file $files {
+			set target [file root [gzroot $file]].tsv
+			lappend todo [string range $target 4 end-4]
+		}
 		# job_logdir $dir/log_jobs
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
 		if {![llength $files]} continue
@@ -539,18 +560,17 @@ proc process_illumina {destdir dbdir} {
 		map_bwa_job $refseq $files $sample
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign 0]
-		# samtools variant calling on map-rdsbwa
+		# samtools variant calling on map-dsbwa
 		var_sam_job $cleanedbam $refseq
+		lappend todo sam-dsbwa-$sample
 		# gatk variant calling on map-rdsbwa
 		var_gatk_job $cleanedbam $refseq
+		lappend todo gatk-dsbwa-$sample
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
-	set todo {}
-	foreach sample $samples {
-		lappend todo sam-rdsbowtie2-$sample gatk-rdsbowtie2-$sample
-	}
-	multicompar_job $experiment $dbdir $todo
+	set todo [list_remdup $todo]
+	multicompar_job $experiment $dbdir $todo 1
 	cd $keeppwd
 
 }
