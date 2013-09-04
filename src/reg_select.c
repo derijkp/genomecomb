@@ -8,6 +8,7 @@
 
 #define _GNU_SOURCE
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "tools.h"
@@ -18,12 +19,14 @@ int main(int argc, char *argv[]) {
 	DStringArray *result1=NULL,*result2=NULL,*resultkeep=NULL,*resulttemp=NULL;
 	DString *line1 = NULL,*line2 = NULL,*linekeep = NULL,*linetemp = NULL,*empty=NULL;
 	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
+	off_t fpos;
+	uint64_t progress = 20000000L;
 	int comp,chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2;
 	unsigned int numfields1,numfields2,numfields,pos1,pos2;
 	int endkeep=-1,near,near2;
 	int start1,end1,start2,end2;
 	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
-	int error2,nextpos=0,datanear=-1;
+	int error2,datanear=-1;
 	if ((argc != 10)) {
 		fprintf(stderr,"Format is: reg_select file1 chrpos1 startpos1 endpos1 file2 chrpos2 startpos2 endpos2 datanear");
 		exit(EXIT_FAILURE);
@@ -42,7 +45,7 @@ int main(int argc, char *argv[]) {
 	start2pos = atoi(argv[7]);
 	end2pos = atoi(argv[8]);
 	datanear = atoi(argv[9]);
-NODPRINT("reg_annot %s %d %d %d %s %d %d %d %d",argv[1],chr1pos,start1pos,end1pos,argv[5],chr2pos,start2pos,end2pos,datanear)
+NODPRINT("reg_select %s %d %d %d %s %d %d %d %d",argv[1],chr1pos,start1pos,end1pos,argv[5],chr2pos,start2pos,end2pos,datanear)
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 	/* allocate */
 	line1 = DStringNew(); line2=DStringNew(); linekeep=DStringNew(); empty = DStringNew();
@@ -76,13 +79,12 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 			exit(1);
 		} else if (comp > 0) {
 			DStringCopy(curchromosome,chromosome1);
-			nextpos = 0;
 		}
 		prevstart1 = start1; prevend1 = end1;
-		if (start1 >= nextpos) {
-			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
-			fflush(stderr);
-			nextpos += 50000000;
+		fpos = ftello(f1);
+		if (fpos > progress) {
+			fprintf(stderr,"filepos: %llu\n",(unsigned long long)fpos);
+			progress += 20000000L;
 		}
 		comp = DStringLocCompare(chromosome2, chromosome1);
 		while (!error2 && ((comp < 0) || ((comp == 0) && (end2 <= start1)))) {
