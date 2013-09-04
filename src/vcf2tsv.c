@@ -95,6 +95,7 @@ int main(int argc, char *argv[]) {
 		DStringArrayAppend(headerfields,"alleleSeq2",10);
 		DStringArrayAppend(headerfields,"zyg",3);
 		DStringArrayAppend(headerfields,"phased",6);
+		DStringArrayAppend(headerfields,"genotypes",9);
 		for (i = 0 ; i < format->size ; i ++) {
 			DString *id,*ds;
 			id = extractID(DStringArrayGet(format,i));
@@ -204,7 +205,7 @@ int main(int argc, char *argv[]) {
 			DStringAppendS(alt, temp->string+diff, temp->size-diff);
 		}
 		fprintf(fo,"%s\t%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s", a_chrom(linea)->string, begin, end, type->string, ref->string, alt->string, a_id(linea)->string, a_qual(linea)->string, a_filter(linea)->string);
-		if (header->size >= 8) {
+		if (header->size >= 9) {
 			NODPRINT("==== Process genos ====")
 			order = realloc(order,formatfields->size*sizeof(int));
 			for (i = 0 ; i < formatfields->size ; i++) {
@@ -231,7 +232,7 @@ int main(int argc, char *argv[]) {
 					fprintf(fo,"\t?");
 					a1 = -2;
 				} else if (genotype->string == genotypecur) {
-					fprintf(fo,"\t.");
+					fprintf(fo,"\t-");
 					a1 = -1;
 				} else {
 					a1 = atol(genotype->string);
@@ -242,12 +243,12 @@ int main(int argc, char *argv[]) {
 						fprintf(fo,"\t%*.*s",temp->size-diff,temp->size-diff,temp->string+diff);
 					}
 				}
-				genotypecur++;
+				if (*genotypecur != '\0') {genotypecur++;}
 				if (*genotypecur == '.') {
 					fprintf(fo,"\t?");
 					a2 = -2;
 				} else if (*genotypecur == '\0') {
-					fprintf(fo,"\t.");
+					fprintf(fo,"\t-");
 					a2 = -1;
 				} else {
 					a2 = atol(genotypecur);
@@ -273,6 +274,19 @@ int main(int argc, char *argv[]) {
 				}
 				fprintf(fo,"\t%c",zyg);
 				fprintf(fo,"\t%d",phased);
+				genotypecur = genotype->string;
+				/* fprintf(fo,"\t%s",genotype->string); */
+				fputc_unlocked('\t',fo);
+				while (*genotypecur != '\0') {
+					if (*genotypecur == '|') {
+						fputc_unlocked(',',fo);
+					} else if (*genotypecur == '/') {
+						fputc_unlocked(';',fo);
+					} else {
+						fputc_unlocked(*genotypecur,fo);
+					}
+					genotypecur++;
+				}
 				for (i = 1 ; i < formatfields->size; i++) {
 					if (order[i] <= 0) {
 						fprintf(fo,"\t");

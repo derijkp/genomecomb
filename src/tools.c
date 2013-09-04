@@ -561,13 +561,16 @@ DStringArray *DStringArrayFromCharM(char *string,char *seps) {
 	while(*cur) {
 		if (strchr((const char *)seps,*cur)) {
 			DStringArrayAppend(result,prev,cur-prev);
-			do {cur++;} while(!strchr((const char *)seps,*cur));
+			do {cur++;} while(strchr((const char *)seps,*cur) && *cur);
 			prev = cur;
+			if (!*cur) break;
 		} else {
 			cur++;
 		}
 	}
-	DStringArrayAppend(result,prev,cur-prev);
+	if (cur-prev > 0) {
+		DStringArrayAppend(result,prev,cur-prev);
+	}
 	return result;
 }
 

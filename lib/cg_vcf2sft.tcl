@@ -11,7 +11,7 @@ exec tclsh "$0" ${1+"$@"}
 # todo:
 # genotype in haploid calls (Y chromosome)
 
-proc cg_vcf2sft.new {args} {
+proc cg_vcf2tsv {args} {
 	set len [llength $args]
 	if {$len == 0} {
 		exec vcf2tsv <@ stdin >@ stdout
@@ -26,6 +26,10 @@ proc cg_vcf2sft.new {args} {
 }
 
 proc cg_vcf2sft {args} {
+	cg_vcf2tsv {*}$args
+}
+
+proc cg_vcf2sft.old {args} {
 	if {([llength $args] < 0) || ([llength $args] > 2)} {
 		errorformat vcf2sft
 		exit 1
