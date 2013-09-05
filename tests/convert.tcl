@@ -4,19 +4,19 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
-test select {vcf2sft} {
-	exec cg vcf2sft data/test.vcf tmp/temp.tsv
-	exec diff tmp/temp.tsv data/expected-test.vcf2sft
+test select {vcf2tsv} {
+	exec cg vcf2tsv data/test.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test.vcf2tsv
 } {}
 
-test select {vcf2sft ins and del} {
-	exec cg vcf2sft data/test2.vcf tmp/temp.tsv
-	exec diff tmp/temp.tsv data/expected-test2.vcf2sft
+test select {vcf2tsv ins and del} {
+	exec cg vcf2tsv data/test2.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test2.vcf2tsv
 } {}
 
-test select {vcf2sft} {
-	exec cg vcf2sft data/test1000glow.vcf tmp/temp.tsv
-	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2sft
+test select {vcf2tsv} {
+	exec cg vcf2tsv data/test1000glow.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
 } {}
 
 test select {bed2sft} {
@@ -38,8 +38,8 @@ chr7	127480532  127481699  Neg4  0  -}
 file delete tmp/temp.tsv
 
 test select {sft2gff} {
-	exec cg vcf2sft data/test1000glow.vcf tmp/temp.tsv
-	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2sft
+	exec cg vcf2tsv data/test1000glow.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
 } {}
 
 testsummarize

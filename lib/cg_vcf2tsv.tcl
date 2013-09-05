@@ -20,7 +20,7 @@ proc cg_vcf2tsv {args} {
 	} elseif {$len == 2} {
 		exec vcf2tsv [lindex $args 0] [lindex $args 1]
 	} else {
-		errorformat vcf2sft
+		errorformat vcf2tsv
 		exit 1
 	}
 }
@@ -31,7 +31,7 @@ proc cg_vcf2sft {args} {
 
 proc cg_vcf2sft.old {args} {
 	if {([llength $args] < 0) || ([llength $args] > 2)} {
-		errorformat vcf2sft
+		errorformat vcf2tsv
 		exit 1
 	}
 	if {[llength $args] > 0} {
