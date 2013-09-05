@@ -166,7 +166,7 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		job_razip varall-sam-rs${aligner}-$name.tsv
 		if {$useminigenome} {
 			# gatk variant calling on map-rs${aligner}
-			var_gatk_job $cleanbam $refseq $pre
+			var_gatk_job $cleanbam $refseq $pre -dt NONE
 			job remapgatk-varall-$name -deps {reg_varall-gatk-rs${aligner}-$name.tsv $mapfile} -targets varall-gatk-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
@@ -175,7 +175,7 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 			}
 		} else {
 			# gatk variant calling on map-rs${aligner}
-			var_gatk_job $cleanbam $refseq $pre -L $mastrdir/reg-inner-$mastrname.bed
+			var_gatk_job $cleanbam $refseq $pre -dt NONE -L $mastrdir/reg-inner-$mastrname.bed
 		}
 		sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv
 		job_razip varall-gatk-rs${aligner}-$name.tsv
