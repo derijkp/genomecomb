@@ -130,6 +130,7 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		lappend samples [file dir $file]
 	}
 	set samples [ssort -natural $samples]
+	set todo {}
 	foreach sample $samples {
 		puts $sample
 		set name ${sample}
@@ -138,9 +139,21 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		puts $dir
 		cd $dir
 		job_logdir $dir/log_jobs
-		# convert illumina
-		job vcf2sft-ill-$name -deps {var-ill-ill-$name.vcf} -targets var-ill-ill-$name.tsv -code {
-			cg vcf2sft $dep $target
+		# convert existing vcfs
+		set files [gzfiles *.vcf]
+		foreach file $files {
+			set target [file root [gzroot $file]].tsv
+			job vcf2sft-$file -deps $file -targets $target -code {
+				cg vcf2sft $dep $target
+				if {![file exists ]}
+			}
+			lappend todo [string range $target 4 end-4]
+		}
+		# add existing var files to todo
+		set files [gzfiles var-*.tsv]
+		foreach file $files {
+			set target [file root [gzroot $file]].tsv
+			lappend todo [string range $target 4 end-4]
 		}
 		# do own alignment
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
@@ -154,6 +167,7 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		set cleanbam [bam_clean_job ${pre}map-${aligner}-$name.bam $refseq $sample -removeduplicates 0]
 		# samtools variant calling on map-rs${aligner}
 		var_sam_job $cleanbam $refseq $pre -r $mastrdir/reg-inner-$mastrname.tsv
+		lappend todo sam-rs${aligner}-$sample
 		if {$useminigenome} {
 			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets varall-sam-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
@@ -177,15 +191,13 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 			# gatk variant calling on map-rs${aligner}
 			var_gatk_job $cleanbam $refseq $pre -dt NONE -L $mastrdir/reg-inner-$mastrname.bed
 		}
+		lappend todo gatk-rs${aligner}-$sample
 		sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv
 		job_razip varall-gatk-rs${aligner}-$name.tsv
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
-	set todo {}
-	foreach sample $samples {
-		lappend todo sam-rs${aligner}-$sample gatk-rs${aligner}-$sample
-	}
+	set todo [list_remdup $todo]
 	multicompar_job $experiment $dbdir $todo
 	cd $keeppwd
 }
