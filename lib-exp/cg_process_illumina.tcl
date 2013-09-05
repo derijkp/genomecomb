@@ -347,7 +347,7 @@ proc var_sam_job {bamfile refseq args} {
 	}
 	job ${pre}varall-sam_2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv \
 	-vars {regselect} -code {
-		cg vcf2sft $dep $target.temp
+		cg vcf2tsv $dep $target.temp
 		cg select -s - $target.temp $target.temp2
 		file delete $target.temp
 		if {$regselect eq ""} {
@@ -416,8 +416,10 @@ proc var_gatk_job {bamfile refseq args} {
 		# file delete $target.temp
 	}
 	job ${pre}varall-gatk2sft-$root -deps [list ${pre}varall-gatk-$root.vcf] -targets ${pre}varall-gatk-$root.tsv -vars {sample} -code {
-		cg vcf2sft $dep $target.temp
-		file rename $target.temp $target
+		cg vcf2tsv $dep $target.temp
+		cg select -s - $target.temp $target.temp2
+		file delete $target.temp
+		file rename $target.temp2 $target
 	}
 	job ${pre}uvar-gatk-$root -deps ${pre}varall-gatk-$root.tsv -targets ${pre}uvar-gatk-$root.tsv \
 	-skip {${pre}var-gatk-$root.tsv} -code {
@@ -528,12 +530,13 @@ proc process_illumina {destdir dbdir} {
 		set files [gzfiles *.vcf]
 		foreach file $files {
 			set target [file root [gzroot $file]].tsv
-			job vcf2sft-$file -deps $file -targets $target -code {
-				cg vcf2sft $dep $target
+			job vcf2tsv-$file -deps $file -targets $target -code {
+				cg vcf2tsv $dep $target
 				if {![file exists ]}
 			}
 			lappend todo [string range $target 4 end-4]
 		}
+		# add existing var files to todo
 		set files [gzfiles var-*.tsv]
 		foreach file $files {
 			set target [file root [gzroot $file]].tsv
