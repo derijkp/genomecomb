@@ -334,18 +334,40 @@ scrolledgraph method addscatter {table xcol ycol datacols} {
 	}
 	set amin {}
 	set amax {}
-	foreach field $datacols {
-		set datapos [lsearch $header $field]
+	if {[llength $datacols]} {
+		foreach field $datacols {
+			set datapos [lsearch $header $field]
+			incr pos
+			set name $field
+			vector create ::$object.$vnum.w
+			set ws [list_subindex $table $datapos]
+			set min [lmath_min [list_lremove $ws {Inf -Inf NaN}]]
+			set max [lmath_max [list_lremove $ws {Inf -Inf NaN}]]
+			::$object.$vnum.w set $ws
+			set basecolor [lindex $dcolors $vnum]
+			if {$basecolor eq ""} {set basecolor blue}
+			lappend data(entries) $name
+			set data($name,vnum) $vnum
+			set data($name,lstart) 0
+			set data($name,lend) 0
+			set data($name,header) $header
+			set xv ::$object.x
+			set yv ::$object.y
+			set wv ::$object.$vnum.w
+			$object.g element create e$name -xdata $xv -ydata $yv -weight $wv -symbol none
+			# $object.g element configure e$name -weights ::$wv
+			set style [$object gradientstyle $basecolor $min $max 0]
+			set color $basecolor
+			# $object.g element configure e$name -linewidth 1 -fill $color -outlinewidth 1 -pixels 1 -symbol circle
+			$object.g element configure e$name -linewidth 0 -color $basecolor -outline $basecolor -outlinewidth 1 -pixels 2 -symbol plus \
+				-styles $style
+			set data($name,color) $color
+			$object.g legend bind $name <1> [list $object elconf $name]
+			incr vnum
+		}
+	} else {
 		incr pos
-		set name $field
-		vector create ::$object.$vnum.w
-		set ws [list_subindex $table $datapos]
-		set min [lmath_min [list_lremove $ws {Inf -Inf NaN}]]
-		set max [lmath_max [list_lremove $ws {Inf -Inf NaN}]]
-		::$object.$vnum.w set $ws
-		set basecolor [lindex $dcolors $vnum]
-		if {$basecolor eq ""} {set basecolor blue}
-		lappend data(entries) $name
+		set name x
 		set data($name,vnum) $vnum
 		set data($name,lstart) 0
 		set data($name,lend) 0
@@ -353,13 +375,9 @@ scrolledgraph method addscatter {table xcol ycol datacols} {
 		set xv ::$object.x
 		set yv ::$object.y
 		set wv ::$object.$vnum.w
-		$object.g element create e$name -xdata $xv -ydata $yv -weight $wv -symbol none
-		# $object.g element configure e$name -weights ::$wv
-		set style [$object gradientstyle $basecolor $min $max 0]
-		set color $basecolor
-		# $object.g element configure e$name -linewidth 1 -fill $color -outlinewidth 1 -pixels 1 -symbol circle
-		$object.g element configure e$name -linewidth 0 -color $basecolor -outline $basecolor -outlinewidth 1 -pixels 2 -symbol plus \
-			-styles $style
+		$object.g element create e$name -xdata $xv -ydata $yv -symbol none
+		set color black
+		$object.g element configure e$name -linewidth 0 -color $color -outline $color -outlinewidth 1 -pixels 2 -symbol plus
 		set data($name,color) $color
 		$object.g legend bind $name <1> [list $object elconf $name]
 		incr vnum
@@ -368,8 +386,8 @@ scrolledgraph method addscatter {table xcol ycol datacols} {
 	set region(xmax) [::$object.ends.x index 1]
 	set region(ymin) [::$object.ends.y index 0]
 	set region(ymax) [::$object.ends.y index 1]
-	set region(xlog) 0
-	set region(ylog) 1
+	set region(xlog) [get region(xlog) 0]
+	set region(ylog) [get region(ylog) 0]
 	Classy::todo $object redraw
 }
 
