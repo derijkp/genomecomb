@@ -30,6 +30,10 @@ cg downloaddb ${dest} ${build} phastConsElements28way phastConsElements28wayPlac
 # you can explicitely download info on the databases using:
 # cg downloaddbinfo ${dest} ${build} simpleRepeat microsat rmsk genomicSuperDups chainSelf
 mv ucsc_${build}_gwasCatalog.tsv ucsc_${build}_gwasCatalog.tsv.temp
+cg maketabix ${dest}/${build}/reg_${build}_rmsk.tsv
+gunzip -c ${dest}/${build}/reg_${build}_rmsk.tsv.gz > ${dest}/${build}/reg_${build}_rmsk.tsv
+cg maketabix ${dest}/${build}/reg_${build}_simpleRepeat.tsv
+gunzip -c ${dest}/${build}/reg_${build}_simpleRepeat.tsv.gz > ${dest}/${build}/reg_${build}_simpleRepeat.tsv
 
 cg select \
 	-f 'chrom start end trait pValue pubMedID name bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv' \

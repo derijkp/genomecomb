@@ -490,62 +490,58 @@ proc makeprimers_filterseq {fseq ftype} {
 	return $fseq
 }
 
-proc makeprimers_region {name maxsize prefsize temperature archive db extraseq} {
-	global cachedir a prefmargin
+proc makeprimers_region {name maxsize prefsize temperature dbdir db extraseq minfreq} {
+	global cachedir a prefmargin fg
 	unset -nocomplain a
 	foreach {cchr cstart cend} [split $name -] break
-	set emblfile $cachedir/$name.embl
-	if {![file exists $emblfile]} {
-		set embl [ensembl_getregion $cchr [expr {$cstart-$extraseq}] [expr {$cend+$extraseq}] -archive $archive]
-		file_write $emblfile $embl
-	}
-	e open $emblfile
-	set seq [e sequence 0]
+	set fg [genome_open $dbdir]
+	set regstart [expr {$cstart-$extraseq-1}]
+	set regend [expr {$cend+$extraseq}]
+	set seq [string toupper [genome_get $fg $cchr $regstart $regend 1]]
 	set rstart $extraseq
 	set rend [expr {$extraseq+$cend-$cstart}]
 	# mask snps and repeats, and find extended region
-#	set estart $rstart
-#	set eend $rend
-#	set fts [e features 0]
-#	foreach ft $fts {
-#		foreach {type loc descr} $ft break
-#		set floc [lindex $loc 0]
-#		if {[dict exists $floc acc]} continue
-#		if {$type eq "exon"} {
-#			set s [dict get $floc start]
-#			set e [dict get $floc end]
-#			if {($s >= $eend)||($e <= $estart)} continue
-#			if {$e > $eend} {
-#				set eend [min $e [expr {$estart + $prefsize}]]
-#			}
-#			if {$s < $estart} {
-#				set estart [max $s [expr {$eend - $prefsize}]]
-#			}
-#		}
-#	}
 	# fts in db
 	catch {db destroy}
 	dbi_sqlite3 db
 	db open :memory:
-	db exec {create table ft (id integer primary key, type text, chromosome text, start integer, end integer, name text)}
-	set fts [e features 0]
+	db exec {create table ft (id integer primary key, type text, chromosome text, start integer, end integer, name text, freq double)}
+	# get snps in region
+	set dbsnpfiles [gzfiles $dbdir/var_*snp*.tsv.gz]
 	set id 1
-	foreach ft $fts {
-		foreach {type loc descr} $ft break
-		set floc [lindex $loc 0]
-		set start [dict get $floc start]
-		if {[dict exists $floc complement]} {set complement 1} else {set complement 0}
-		set end [dict get $floc end]
-		if {$end < $start} continue
-		if {[dict exists $floc acc]} continue
-		set filter 0
-		if {$type eq "variation"} {
-			if {![regexp dbSNP [dict get $descr db_xref]]} continue
+	foreach dbsnpfile $dbsnpfiles {
+		set dbsnpheader [cg select -h $dbsnpfile]
+		set poss [tsv_basicfields $dbsnpheader 3]
+		lappend poss [lsearch $dbsnpheader name]
+		lappend poss [lsearch $dbsnpheader freq]
+		set temp [split [exec tabix $dbsnpfile chr$cchr:$regstart-$regend] \n]
+		foreach dbsnpline $temp {
+			set dbsnpline [split $dbsnpline \t]
+			foreach {chr start end name freq} [list_sub $dbsnpline $poss] break
+			set start [expr {$start - $regstart}]
+			if {$start < 0} {set start 0}
+			incr end -1
+			set end [expr {$end - $regstart}]
 			if {[expr {$end - $start}] > 2} continue
-			db set [list ft $id] type dbsnp name [dict get [lindex $ft end] db_xref] chromosome $cchr start $start end $end
+			set freq [max {*}[split $freq ,]]
+			if {$freq <= $minfreq && $minfreq >= 0} continue
+			db set [list ft $id] type dbsnp name $name chromosome $cchr start $start end $end freq $freq
 			incr id
-		} elseif {$type eq "repeat_region"} {
-			db set [list ft $id] type repeat name [lindex [dict get [lindex $ft end] note] 0] chromosome $cchr start $start end $end
+		}
+	}
+	foreach repeatfile [gzfiles $dbdir/reg_*rmsk.tsv.gz $dbdir/reg_*simpleRepeat.tsv.gz] {
+		set temp [split [exec tabix $repeatfile chr$cchr:$regstart-$regend] \n]
+		set tempheader [cg select -h $repeatfile]
+		set poss [tsv_basicfields $tempheader 3]
+		lappend poss [lsearch $tempheader name]
+		foreach templine $temp {
+			set templine [split $templine \t]
+			foreach {chr start end name} [list_sub $templine $poss] break
+			set start [expr {$start - $regstart}]
+			if {$start < 0} {set start 0}
+			incr end -1
+			set end [expr {$end - $regstart}]
+			db set [list ft $id] type repeat name $name chromosome $cchr start $start end $end
 			incr id
 		}
 	}
@@ -561,10 +557,6 @@ proc makeprimers_region {name maxsize prefsize temperature archive db extraseq} 
 	}
 	set numl [llength [list_find [list_subindex $fleft 15] clean]]
 	set left [lsort -real -index 6 $fleft]
-#	while 1 {
-#		if {[lindex $left end 6] != 100000} break
-#		list_pop left
-#	}
 	set fright {}
 	foreach line $right {
 		set line [makeprimers_annotate $line [expr {$cstart-$extraseq}]]
@@ -572,10 +564,6 @@ proc makeprimers_region {name maxsize prefsize temperature archive db extraseq} 
 	}
 	set numr [llength [list_find [list_subindex $fright 15] clean]]
 	set right [lsort -real -index 6 $fright]
-#	while 1 {
-#		if {[lindex $right end 6] != 100000} break
-#		list_pop right
-#	}
 	if {$numl < 5} {set numl 5}
 	if {$numr < 5} {set numr 5}
 	# join [list_subindex $left 1] \n
@@ -658,7 +646,7 @@ proc makeprimers_region {name maxsize prefsize temperature archive db extraseq} 
 	return $bestpair
 }
 
-proc makeprimers {regionfile archive maxsize prefsize db numthreads {o stdout}} {
+proc makeprimers {regionfile dbdir maxsize prefsize db {minfreq -1} {numthreads 1} {o stdout}} {
 	global cachedir threads temperature extraseq
 	set cachedir [pwd]/cache 
 	set threads $numthreads
@@ -677,7 +665,7 @@ proc makeprimers {regionfile archive maxsize prefsize db numthreads {o stdout}} 
 		set cchr [chr_clip $cchr]
 		set name "${cchr}-${cstart}-${cend}"
 		putslog $name
-		set bestpair [makeprimers_region $name $maxsize $prefsize $temperature $archive $db $extraseq]
+		set bestpair [makeprimers_region $name $maxsize $prefsize $temperature $dbdir $db $extraseq $minfreq]
 		if {[llength $bestpair] == 1} {
 			puts $o "$bestpair\t$name"
 		} elseif {[llength $bestpair] < 2} {
@@ -710,13 +698,16 @@ proc makeprimers {regionfile archive maxsize prefsize db numthreads {o stdout}} 
 
 proc cg_makeprimers {args} {
 	global scriptname action
-	if {[llength $args] != 6} {
+	set len [llength $args]
+	if {$len < 4 || $len > 6} {
 		errorformat makeprimers
 		exit 1
 	}
-	foreach {regionfile archive maxsize prefsize dbdir threads} $args break
+	set threads 1
+	set minfreq -1
+	foreach {regionfile maxsize prefsize dbdir minfreq threads} $args break
 	set db [lindex [glob $dbdir/genome_*.ssa] 0]
-	makeprimers $regionfile $archive $maxsize $prefsize $db $threads
+	makeprimers $regionfile $dbdir $maxsize $prefsize $db $minfreq $threads
 }
 
 proc makeprimers_makeregions {filteredfile maxsize {o stdout}} {
@@ -765,3 +756,4 @@ proc cg_makeregions {args} {
 	foreach {selvariationfile maxsize} $args break
 	makeprimers_makeregions $selvariationfile $maxsize
 }
+

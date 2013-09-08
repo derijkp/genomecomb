@@ -1,24 +1,27 @@
 = Makeprimers =
 
 == Format ==
-cg makeprimers regionfile archive maxsize prefsize dbdir threads
+cg makeprimers regionfile maxsize prefsize dbdir ?minfreq? ?threads?
 
 == Summary ==
 Make sequencing primers for Sanger validation experiments
 
 == Description ==
-This command makes primers for sequencing target regions of the genome. Variants close together
-can be grouped into regions first using the command:
+This command makes primers for sequencing target regions of the genome. It will try to avoid
+having known SNPs (from dbSNP) or repeats in the primers. If these canot be avoided, it will 
+annotate the primers with this info.
+Variants close together can be grouped into regions first using the command:
 {{{
 cg makeregions selvariantlist.tsv 200 > regionfile.tsv
 }}}
 
 == Arguments ==
 ; **regionfile**: sft that has at least the columns chromosome, begin, end; must be sorted by chromosome, then begin
-; **archive**: (ensembl) archive used: may2009 for hg18, empty for latest
 ; **maxsize**: the maximum amplicon size
 ; **prefsize**: the prefered amplicon size
-; **dbdir**: directory containing reference genomes and variation data
+; **dbdir**: directory containing reference genomes, region and variation data
+; **minfreq**: only snps with a frequency > **minfreq** will be avoided. 
+All will be used if **minfreq** is not given or smaller than 0
 ; **threads**: how many threads to use (use 1)
 
 == Category ==

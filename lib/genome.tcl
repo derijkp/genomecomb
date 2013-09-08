@@ -111,6 +111,9 @@ proc genome_makefastaindex {fastafile} {
 
 proc genome_open {file} {
 	global genomefasta
+	if {[file isdir $file]} {
+		set file [lindex [glob $file/genome_*.ifas] 0]
+	}
 	set f [open $file]
 	set fastaindex {}
 	if {![file exists $file.index]} {
@@ -130,7 +133,7 @@ proc genome_close {f} {
 	unset genomefasta($f)
 }
 
-proc genome_get {f chr start end} {
+proc genome_get {f chr start end {correctend 0}} {
 	global genomefasta
 	if {$end < $start} {error "end ($end) is smaller than start ($start)"}
 	set fastaindex $genomefasta($f)
@@ -141,7 +144,13 @@ proc genome_get {f chr start end} {
 		set temp [dict get $fastaindex $chr]
 	}
 	foreach {gstart glen} $temp break
-	if {$end > $glen} {error "trying to get sequence beyond end of chromosome ($end > $glen)"}
+	if {$end > $glen} {
+		if {!$correctend} {
+			error "trying to get sequence beyond end of chromosome ($end > $glen)"
+		} else {
+			set end $glen
+		}
+	}
 	set pos [expr {$gstart+$start}]
 	seek $f $pos
 	read $f [expr {$end-$start}]
