@@ -1,6 +1,6 @@
 # ARCH should be defined by caller
-#CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/completegnomics/src
-CFLAGS=-Wall -O2
+CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/completegnomics/src
+#CFLAGS=-Wall -O2
 TOOLS= tools.c tools.h debug.h
 HASHTOOLS=hash.h hash.c
 BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h
@@ -9,7 +9,8 @@ all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../b
      ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions \
      ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby \
      ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile ../bin$(ARCH)/bcol_indexfile_all \
-     ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_annot ../bin$(ARCH)/vcf2tsv ../bin$(ARCH)/reg_select
+     ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_annot ../bin$(ARCH)/vcf2tsv ../bin$(ARCH)/reg_select \
+     ../bin$(ARCH)/check_sort
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -73,3 +74,6 @@ clean:
 
 ../bin$(ARCH)/reg_select: reg_select.c $(TOOLS)
 	gcc reg_select.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_select
+
+../bin$(ARCH)/check_sort: check_sort.c $(TOOLS)
+	gcc check_sort.c tools.c $(CFLAGS) -o ../bin$(ARCH)/check_sort

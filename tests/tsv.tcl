@@ -169,4 +169,24 @@ t	1	50	60	}
 
 set ::env(PATH) $keeppath
 
+test check_sort {sort error 1 in vars} {
+	exec cg checksort data/vars_sorterror1.sft
+} {error in file data/vars_sorterror1.sft: file is not correctly sorted (sort correctly using "cg select -s -")} error
+
+test check_sort {sort error 2 in vars} {
+	exec cg checksort data/vars_sorterror2.sft
+} {error in file data/vars_sorterror2.sft: file is not correctly sorted (sort correctly using "cg select -s -")} error
+
+test check_sort {sort error 3 in vars} {
+	exec cg checksort data/vars_sorterror3.sft
+} {error in file data/vars_sorterror3.sft: file is not correctly sorted (sort correctly using "cg select -s -")} error
+
+test check_sort {sort error 4 in vars} {
+	exec cg checksort data/vars_sorterror4.sft
+} {error in file data/vars_sorterror4.sft: file is not correctly sorted (sort correctly using "cg select -s -")} error
+
+test check_sort {sort error 5 in vars} {
+	cg checksort data/vars_sorterror5.sft
+} {error in file data/vars_sorterror5.sft: file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
 testsummarize
