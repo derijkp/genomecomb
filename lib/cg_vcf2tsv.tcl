@@ -14,11 +14,13 @@ exec tclsh "$0" ${1+"$@"}
 proc cg_vcf2tsv {args} {
 	set len [llength $args]
 	if {$len == 0} {
-		exec vcf2tsv <@ stdin >@ stdout
+		exec vcf2tsv | cg select -s - <@ stdin >@ stdout
 	} elseif {$len == 1} {
-		exec vcf2tsv [lindex $args 0] >@ stdout
+		set infile [lindex $args 0]
+		exec {*}[gzcat $infile] $infile | vcf2tsv | cg select -s - >@ stdout
 	} elseif {$len == 2} {
-		exec vcf2tsv [lindex $args 0] [lindex $args 1]
+		set infile [lindex $args 0]
+		exec {*}[gzcat $infile] $infile | vcf2tsv | cg select -s - > [lindex $args 1]
 	} else {
 		errorformat vcf2tsv
 		exit 1

@@ -4,7 +4,8 @@
 cg vcf2tsv ?infile? ?outfile?
 
 == Summary ==
-Converts data in vcf format to tsv (tab separated, simple feature table) format
+Converts data in vcf format to tsv (tab separated, simple feature table) format.
+The command will also sort the tsv appropriately.
 
 == Arguments ==
 ; **infile**: file to be converted, if not given, uses stdin. File may be compressed.
