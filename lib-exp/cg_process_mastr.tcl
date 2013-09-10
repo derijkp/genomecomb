@@ -58,9 +58,12 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 	set files [glob $illsrc/*.fastq*]
 	foreach file $files {
 		set sample [lindex [split [file tail $file] _] 0]
+		file mkdir $destdir/$sample/ori
+		file mkdir $destdir/$sample/ori/fastq
 		file mkdir $destdir/$sample
 		file mkdir $destdir/$sample/fastq
-		exec cp -al $file $destdir/$sample/fastq
+		exec cp -al $file $destdir/$sample/ori/fastq
+		cplinked $destdir/$sample/ori/fastq $destdir/$sample/fastq
 	}
 	set alidir [lindex [ssort -natural [glob $illsrc/Alignment*]] end]
 	set files [glob $alidir/*.bam $alidir/*.bam.bai]
@@ -68,8 +71,10 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 		set tail [file tail $file]
 		foreach {sample barcode} [split $tail _.] break
 		file mkdir $destdir/$sample
+		file mkdir $destdir/$sample/ori
 		if {[file ext $file] eq ".bam"} {set ext bam} else {set ext bam.bai}
-		exec cp -al $file $destdir/$sample/map-ill-$sample.$ext
+		exec cp -al $file $destdir/$sample/ori/map-ill-$sample.$ext
+		cplinked $destdir/$sample/ori/map-ill-$sample.$ext $destdir/$sample/map-ill-$sample.$ext
 	}
 	set files [glob $alidir/*.vcf]
 	foreach file $files {
@@ -77,7 +82,9 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 		foreach {sample barcode} [split $tail _.] break
 		if {$sample eq "tempvariants"} continue
 		file mkdir $destdir/$sample
-		exec cp -al $file $destdir/$sample/var-ill-ill-$sample.vcf
+		file mkdir $destdir/$sample/ori
+		exec cp -al $file $destdir/$sample/ori/var-ill-ill-$sample.vcf
+		cplinked $destdir/$sample/ori/var-ill-ill-$sample.vcf $destdir/$sample/var-ill-ill-$sample.vcf
 	}
 	cd $keeppwd
 }
