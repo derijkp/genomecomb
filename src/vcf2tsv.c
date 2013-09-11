@@ -310,6 +310,10 @@ int main(int argc, char *argv[]) {
 			curend = cur;
 			while (1) {
 				while (*curend != '=' && *curend != ';' && *curend != '\0') curend++;
+				if (curend == cur) {
+					cur = ++curend;
+					continue;
+				}
 				pos = DStringArraySearch(infofields,cur,curend-cur);
 				if (pos == -1) {fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur);}
 				if (*curend == '=') {curend++;}
