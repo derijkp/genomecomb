@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
 	DString *geno = NULL, *outinfo = NULL;
 	DStringArray *header=NULL, *format=NULL, *info=NULL, *samples=NULL;
 	DStringArray *formatfields=NULL, *headerfields=NULL, *infofields=NULL, *linea=NULL;
-	int read,i,j,pos,maxtab,igeno,isample;
+	int read,i,j,pos,maxtab,igeno,isample,linenr=0;
 	line = DStringNew();
 	if (argc >= 2) {fd = fopen(argv[1],"r");} else {fd = stdin;}
 	if (argc == 3) {fo = fopen(argv[2],"w");} else {fo = stdout;}
@@ -65,6 +65,7 @@ int main(int argc, char *argv[]) {
 	info = DStringArrayNew(10);
 	format = DStringArrayNew(10);
 	while ((read = DStringGetLine(line, fd)) != -1) {
+		linenr++;
 		fprintf(fo,"%s\n",line->string);
 		if (line->string[0] == '#') {
 			if (line->string[1] == '#') {
@@ -166,6 +167,7 @@ int main(int argc, char *argv[]) {
 		char *genotypecur,zyg;
 		int *order = NULL;
 		int l1,l2,begin,end,len,diff;
+		linenr++;
 		format = DStringArrayFromChar(a_format(linea)->string,':');
 		/* set genos [lrange $line 9 end] */
 		l1 = a_ref(linea)->size;
@@ -309,7 +311,7 @@ int main(int argc, char *argv[]) {
 			while (1) {
 				while (*curend != '=' && *curend != ';' && *curend != '\0') curend++;
 				pos = DStringArraySearch(infofields,cur,curend-cur);
-				if (pos == -1) {fprintf(stderr,"info field %*.*s not described in header, skipping\n",(int)(curend-cur),(int)(curend-cur),cur);}
+				if (pos == -1) {fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur);}
 				if (*curend == '=') {curend++;}
 				cur = curend;
 				if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
