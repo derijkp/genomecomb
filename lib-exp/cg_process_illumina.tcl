@@ -369,12 +369,10 @@ proc var_sam_job {bamfile refseq args} {
 	# find regions
 	sreg_sam_job ${pre}sreg-sam-$root ${pre}varall-sam-$root.tsv ${pre}sreg-sam-$root.tsv
 	# cleanup
-	job clean_${pre}varall-sam-$root -deps {${pre}varall-sam-$root.tsv} -vars {pre root} -targets {} -code {
+	job clean_${pre}var-sam-$root -deps {${pre}var-sam-$root.tsv} -vars {pre root} -targets {} -code {
+		catch {file delete ${pre}uvar-sam-$root.tsv}
 		catch {file delete ${pre}varall-sam-$root.vcf}
 		catch {file delete ${pre}varall-sam-$root.vcf.idx}
-	}
-	job clean_${pre}varall-sam-$root -deps {${pre}var-sam-$root.tsv} -vars {pre root} -targets {} -code {
-		catch {file delete ${pre}uvar-sam-$root.tsv}
 	}
 	job_razip ${pre}varall-sam-$root.tsv ${pre}var-sam-$root.tsv
 	cd $keeppwd
@@ -431,12 +429,10 @@ proc var_gatk_job {bamfile refseq args} {
 	## filter SNPs (according to seqanswers exome guide)
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup
-	job clean_${pre}varall-gatk-$root -deps {${pre}varall-gatk-$root.tsv} -vars {pre root} -targets {} -code {
+	job clean_${pre}var-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} -code {
+		catch {file delete ${pre}uvar-gatk-$root.tsv}
 		catch {file delete ${pre}varall-gatk-$root.vcf}
 		catch {file delete ${pre}varall-gatk-$root.vcf.idx}
-	}
-	job clean_${pre}varall-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} -code {
-		catch {file delete ${pre}uvar-gatk-$root.tsv}
 	}
 	job_razip ${pre}varall-gatk-$root.tsv ${pre}var-gatk-$root.tsv
 	cd $keeppwd
