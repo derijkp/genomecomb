@@ -899,6 +899,7 @@ proc sourcename base {
 proc job_razip {file args} {
 	set deps [list $file {*}$args]
 	uplevel [list job razip-$file -checkcompressed 0 -deps $deps -targets $file.rz -code {
+		if {![file exists $dep]} {error "error compressing: file $dep does not exist"}
 		cg_razip $dep
 	}]
 }
