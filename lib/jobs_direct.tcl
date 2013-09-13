@@ -1,3 +1,8 @@
+proc job_process_direct_init {} {
+	interp alias {} job_process {} job_process_direct
+	interp alias {} job_wait {} job_process_direct_wait
+}
+
 proc stderr2file {fileout {fileerr {}}} {
 	if {$fileout ne ""} {
 		set ::stderr_redirect $fileerr
@@ -41,7 +46,7 @@ proc job_process_direct {} {
 	set jobroot [pwd]
 	while {[llength $cgjob(queue)]} {
 		set line [list_shift cgjob(queue)]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 		# check foreach deps, skip if not fullfilled

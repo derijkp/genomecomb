@@ -24,9 +24,10 @@ proc job_distribute {type} {
 	} else {
 		set target $type
 	}
-	auto_load job_process_$target
-	interp alias {} job_process {} job_process_$target
-	interp alias {} job_wait {} job_process_${target}_wait
+	if {[info commands job_process_${target}_init] eq ""} {auto_load job_process_${target}_init}
+#	interp alias {} job_process {} job_process_$target
+#	interp alias {} job_wait {} job_process_${target}_wait
+	job_process_${target}_init
 }
 
 proc job_args {jobargs} {
@@ -153,7 +154,7 @@ proc job_expandvarslist {list {level 1}} {
 }
 
 proc job_finddep {pattern idsVar timeVar checkcompressed} {
-	global cgjob_id cgjob_ptargets
+	global cgjob_id cgjob_ptargets cgjob_rm
 	upvar $idsVar ids
 	upvar $timeVar time
 	set pattern [file normalize $pattern]
@@ -167,10 +168,15 @@ proc job_finddep {pattern idsVar timeVar checkcompressed} {
 		set files [lsort -dict [checkfiles $pattern]]
 	}
 	foreach file $files {
+		if {[info exists cgjob_rm($file)]} {
+			set files [list_remove $files $file]
+			continue
+		}
 		maxfiletime $file time
 	}
 	lappend ids {*}[list_fill [llength $files] {}]
 	foreach file [array names cgjob_id $pattern] {
+		if {[info exists cgjob_rm($file)]} continue
 		if {[inlist $files $file]} {
 			unset cgjob_id($file)
 			continue
@@ -190,7 +196,7 @@ proc maxfiletime {file timeVar} {
 }
 
 proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
-	global cgjob_id cgjob_ptargets
+	global cgjob_id cgjob_ptargets cgjob_rm
 	upvar $idsVar ids
 	upvar $timeVar time
 	set pattern [file normalize $pattern]
@@ -205,6 +211,7 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 		set list [lsort -dict [checkfiles $glob]]
 	}
 	foreach file $list {
+		if {[info exists cgjob_rm($file)]} continue
 		if {[regexp ^$pattern\$ $file]} {
 			maxfiletime $file time
 			lappend files $file
@@ -212,6 +219,7 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 		}
 	}
 	foreach file [array names cgjob_id [file normalize $glob]] {
+		if {[info exists cgjob_rm($file)]} continue
 		if {![regexp ^[file normalize $pattern]\$ $file]} continue
 		if {[inlist $files $file]} {
 			unset cgjob_id($file)
@@ -585,6 +593,7 @@ proc job {jobname args} {
 	file mkdir $job_logdir
 	if {![info exists cgjob(id)]} {set cgjob(id) 1}
 	if {[llength $args] < 1} {error "wrong # args for target: must be job jobname -deps deps -targets targets -code code ..."}
+	set rmtargets {}
 	set pos 0
 	set foreach {}
 	set vars {}
@@ -608,6 +617,10 @@ proc job {jobname args} {
 			}
 			-targets {
 				set targets [lindex $args $pos]
+				incr pos
+			}
+			-rmtargets {
+				set rmtargets [lindex $args $pos]
 				incr pos
 			}
 			-skip {
@@ -676,6 +689,7 @@ proc job {jobname args} {
 	set edeps [job_expandvarslist $deps 1]
 	set eforeach [job_expandvarslist $foreach 1]
 	set etargets [job_expandvarslist $targets 1]
+	set ermtargets [job_expandvarslist $rmtargets 1]
 	set eskip {}
 	foreach skip $skiplist {
 		lappend eskip [job_expandvarslist $skip 1]
@@ -686,16 +700,17 @@ proc job {jobname args} {
 		append newcode [list set $var [uplevel get $var]]\n
 	}
 	append newcode $code
-	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $precode]	
+	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode]
 	incr cgjob(id)
 	if {!$cgjob(debug)} job_process
 }
 
 proc job_init {args} {
-	global cgjob cgjob_id cgjob_running cgjob_ptargets job_logdir_submit cgjob_info
+	global cgjob cgjob_id cgjob_running cgjob_ptargets job_logdir_submit cgjob_info cgjob_rm
 	upvar job_logdir job_logdir
 	unset -nocomplain cgjob
 	unset -nocomplain cgjob_id
+	unset -nocomplain cgjob_rm
 	unset -nocomplain cgjob_running
 	unset -nocomplain cgjob_ptargets
 	unset -nocomplain cgjob_info

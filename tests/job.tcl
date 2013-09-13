@@ -218,9 +218,21 @@ foreach {testname initcode} {
 } {
 # start of block
 
-if {$testname eq "-d sge" && [catch {exec qstat}]} {
-	puts "Cannot test sge option (missing qstat; grid engine not installed?)"
-	continue
+if {$testname eq "-d sge"} {
+	if {[catch {exec qstat}]} {
+		puts "Cannot test sge option (missing qstat; grid engine not installed?)"
+		continue
+	}
+	proc gridwait {} {
+		while 1 {
+			after 500
+			puts -nonewline .
+			flush stdout
+			if {[exec qstat] eq ""} break
+		}
+	}
+} else {
+	proc gridwait {} {}
 }
 
 proc test_job_init {} $initcode
@@ -232,6 +244,7 @@ test job "basic $testname" {
 	test_job_init
 	jobtest ../data test testh
 	job_wait
+	gridwait
 	set result [list \
 		[lsort -dict [glob test/*]] \
 		[glob test/log_jobs/all.txt.log] \
@@ -257,11 +270,13 @@ test job "--force 0 $testname" {
 	job_init -silent
 	jobtest --force 0 ../data test testh
 	job_wait
+	gridwait
 	after 1000
 	file_write test/all.txt error
 	test_job_init
 	jobtest --force 0 ../data test testh
 	job_wait
+	gridwait
 	set result [list \
 		[lsort -dict [glob test/*]] \
 		[file_read test/all.txt] \
@@ -281,11 +296,13 @@ test job "--force 1 $testname" {
 	job_init -silent
 	jobtest --force 0 ../data test testh
 	job_wait
+	gridwait
 	after 1000
 	file_write test/all.txt error
 	test_job_init
 	jobtest --force 1 ../data test testh
 	job_wait
+	gridwait
 	set result [list \
 		[lsort -dict [glob test/*]] \
 		[file_read test/all.txt] \
@@ -308,11 +325,13 @@ test job "time $testname" {
 	test_job_init
 	jobtest ../data test testh
 	job_wait
+	gridwait
 	after 1000
 	file_write $::testdir/tmp/test/sum-test3.txt "replaced\n"
 	test_job_init
 	jobtest ../data test testh
 	job_wait
+	gridwait
 	set result [list \
 		[lsort -dict [glob test/*]] \
 		[file_read test/all.txt] \
@@ -337,6 +356,7 @@ test job "-skip: not present $testname" {
 		file_write result.txt test
 	}
 	job_wait
+	gridwait
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
@@ -352,6 +372,7 @@ test job "-skip: only one present $testname" {
 		file_write result.txt test
 	}
 	job_wait
+	gridwait
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
@@ -368,6 +389,7 @@ test job "-skip: all present $testname" {
 		file_write result.txt test
 	}
 	job_wait
+	gridwait
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
@@ -382,6 +404,7 @@ test job "-skip -skip: none present $testname" {
 		file_write result.txt test
 	}
 	job_wait
+	gridwait
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
@@ -397,6 +420,7 @@ test job "-skip -skip: one present $testname" {
 		file_write result.txt test
 	}
 	job_wait
+	gridwait
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
@@ -409,15 +433,17 @@ test job {jobtestnojobs} {
 	test_job_init
 	jobtestnojobs $::testdir/tmp
 	job_wait
+	gridwait
 } {}
 
-test job {jobtestnojobs} {
+test job {jobtestlong} {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
 	test_job_init
 	jobtestlong $::testdir/tmp
 	job_wait
+	gridwait
 } {}
 
 test job {no -targets} {
@@ -430,6 +456,7 @@ test job {no -targets} {
 		file_write result.txt test
 	}
 	job_wait
+	gridwait
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
@@ -444,6 +471,7 @@ test job {no -targets, dep not found} {
 		file_write result.txt test
 	}
 	job_wait
+	gridwait
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
@@ -460,6 +488,7 @@ test job {no -checkcompressed 1 (default), dep} {
 		file_write result.txt test
 	}
 	job_wait
+	gridwait
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
@@ -476,6 +505,7 @@ test job {no -checkcompressed 1 (default), dep} {
 		file_write result.txt test
 	}
 	job_wait
+	gridwait
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
@@ -494,6 +524,7 @@ test job {no -checkcompressed 1 (default), targets} {
 		file_write target.txt test
 	}
 	job_wait
+	gridwait
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
@@ -512,10 +543,59 @@ test job {no -checkcompressed 1 (default), dep} {
 		file_write target.txt test
 	}
 	job_wait
+	gridwait
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
 } {dep.txt log_jobs result.txt target.txt target.txt.rz}
+
+test job "rmtargets $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write data1.txt test1
+	job data1 -deps {data1.txt} -rmtargets data1.txt -code {
+		after 1000
+		file delete data1.txt
+	}
+	job data2 -deps {data1.txt} -targets data2.txt -code {
+		file copy data1.txt data2.txt
+	}
+	job_wait
+	gridwait
+	set temp [file_read log_jobs/data2.log]
+	set result [list [lsort -dict [glob *]] [regexp {missing dependency data1.txt} $temp]]
+	cd $::testdir
+	set result
+} {log_jobs 1}
+
+test job "rmtargets $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	job data1 -targets data1.txt -code {
+		after 1000
+		file_write data1.txt test1
+	}
+	job data2 -deps {data1.txt} -targets data2.txt -code {
+		file copy data1.txt data2.txt
+	}
+	job rmdata1 -deps {data1.txt data2.txt} -rmtargets data1.txt -code {
+		after 1000
+		file delete data1.txt
+	}
+	job data3 -deps {data1.txt} -targets data3.txt -code {
+		file copy data1.txt data3.txt
+	}
+	job_wait
+	gridwait
+	set temp [file_read log_jobs/data3.log]
+	set result [list [lsort -dict [glob *]] [regexp {missing dependency data1.txt} $temp]]
+	cd $::testdir
+	set result
+} {{data2.txt log_jobs} 1}
 
 # end of block
 }
