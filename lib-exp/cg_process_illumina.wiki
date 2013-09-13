@@ -5,6 +5,8 @@ cg process_illumina ?options? dir dbdir
 
 == Summary ==
 process an illumina sequencing project, results in genomecomb dir with multicompar, etc.
+By default alignment is done using bwa, duplicates removed (using picard), realigned (using gatk).
+Variants are called using gatk and samtools.
 
 == Description ==
 

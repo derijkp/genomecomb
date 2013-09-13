@@ -359,7 +359,7 @@ proc var_sam_job {bamfile refseq args} {
 	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \
 	-code {
-		cg select -s - -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 5 && $totalcoverage > 3} \
+		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 5 && $totalcoverage > 3} \
 			-f {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 {sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))} *} \
 			$dep $target.temp
 		file rename $target.temp $target
@@ -369,12 +369,13 @@ proc var_sam_job {bamfile refseq args} {
 	# find regions
 	sreg_sam_job ${pre}sreg-sam-$root ${pre}varall-sam-$root.tsv ${pre}sreg-sam-$root.tsv
 	# cleanup
-	job clean_${pre}var-sam-$root -deps {${pre}var-sam-$root.tsv} -vars {pre root} -targets {} -code {
+	job clean_${pre}var-sam-$root -deps {${pre}var-sam-$root.tsv} -vars {pre root} -targets {} \
+	-rmtargets {${pre}uvar-sam-$root.tsv ${pre}varall-sam-$root.vcf ${pre}varall-sam-$root.vcf.idx} -code {
 		catch {file delete ${pre}uvar-sam-$root.tsv}
 		catch {file delete ${pre}varall-sam-$root.vcf}
 		catch {file delete ${pre}varall-sam-$root.vcf.idx}
 	}
-	job_razip ${pre}varall-sam-$root.tsv ${pre}var-sam-$root.tsv
+	job_razip ${pre}varall-sam-$root.tsv ${pre}var-sam-$root.tsv ${pre}sreg-sam-$root.tsv
 	cd $keeppwd
 	return [file join $dir var-sam-$root.tsv]
 }
@@ -418,7 +419,7 @@ proc var_gatk_job {bamfile refseq args} {
 	}
 	job ${pre}uvar-gatk-$root -deps ${pre}varall-gatk-$root.tsv -targets ${pre}uvar-gatk-$root.tsv \
 	-skip {${pre}var-gatk-$root.tsv} -code {
-		cg select -s - -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 3} \
+		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 3} \
 			-f {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 {sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))} *} \
 			$dep $target.temp
 		file rename $target.temp $target
@@ -429,12 +430,13 @@ proc var_gatk_job {bamfile refseq args} {
 	## filter SNPs (according to seqanswers exome guide)
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup
-	job clean_${pre}var-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} -code {
+	job clean_${pre}var-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} \
+	-rmtargets {${pre}uvar-gatk-$root.tsv ${pre}varall-gatk-$root.vcf ${pre}varall-gatk-$root.vcf.idx} -code {
 		catch {file delete ${pre}uvar-gatk-$root.tsv}
 		catch {file delete ${pre}varall-gatk-$root.vcf}
 		catch {file delete ${pre}varall-gatk-$root.vcf.idx}
 	}
-	job_razip ${pre}varall-gatk-$root.tsv ${pre}var-gatk-$root.tsv
+	job_razip ${pre}varall-gatk-$root.tsv ${pre}var-gatk-$root.tsv ${pre}sreg-gatk-$root.tsv
 	cd $keeppwd
 	return [file join $dir ${pre}var-gatk-$root.tsv]
 }
@@ -449,7 +451,10 @@ proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 		set name [lindex [split $sample -] end]
 		if {![inlist $done $sample]} {
 			lappend stilltodo $name/var-$sample.tsv
-			lappend deps $name/sreg-$sample.tsv
+			lappend deps \($name/sreg-$sample.tsv\) \($name/varall-$sample.tsv\)
+			lappend deps \($name/coverage/coverage-*.bcol\) \($name/coverage/refScore-*.bcol\)
+			lappend deps \($name/coverage/coverage-*.tsv\)
+			lappend deps \($name/reg_refcons-$sample.tsv\) \($name/reg_nocall-$sample.tsv\) \($name/reg_cluster-$sample.tsv\)
 		}
 	}
 	if {[llength $stilltodo]} {
@@ -457,7 +462,7 @@ proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 		if {[file exists compar/compar-$experiment.tsv]} {
 			file rename compar/compar-$experiment.tsv compar/compar-$experiment.tsv.temp
 		}
-		job multicompar-$experiment -deps $stilltodo -targets compar/compar-$experiment.tsv \
+		job multicompar-$experiment -deps [list_concat $stilltodo $deps] -targets compar/compar-$experiment.tsv \
 		-vars {stilltodo skipincomplete} -code {
 			# should maybe better recheck todo here
 			cg multicompar $target.temp {*}$stilltodo
@@ -484,7 +489,7 @@ proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 	foreach sample $todo {
 		set name [lindex [split $sample -] end]
 		if {![inlist $done $sample]} {
-			lappend stilltodo $name/sreg-$sample.tsv
+			lappend stilltodo \($name/sreg-$sample.tsv\)
 		}
 	}
 	if {[llength $stilltodo]} {
@@ -493,7 +498,7 @@ proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 			file rename compar/sreg-$experiment.tsv compar/sreg-$experiment.tsv.temp
 		}
 		job sreg-$experiment -deps $stilltodo -targets compar/sreg-$experiment.tsv -vars stilltodo -code {
-			cg multireg $target.temp {*}$stilltodo
+			cg multireg $target.temp {*}[list_remove $deps {}]
 			file rename $target.temp $target
 		}
 	}

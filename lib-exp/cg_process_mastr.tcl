@@ -173,7 +173,6 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		set cleanbam [bam_clean_job ${pre}map-${aligner}-$name.bam $refseq $sample -removeduplicates 0]
 		# samtools variant calling on map-rs${aligner}
 		var_sam_job $cleanbam $refseq $pre -r $mastrdir/reg-inner-$mastrname.tsv
-		lappend todo sam-rs${aligner}-$sample
 		if {$useminigenome} {
 			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets varall-sam-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
@@ -181,9 +180,10 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 			job remapsam-var-$name -deps {reg_var-sam-rs${aligner}-$name.tsv $mapfile} -targets var-sam-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
+			sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv
+			job_razip varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv
 		}
-		sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv
-		job_razip varall-sam-rs${aligner}-$name.tsv
+		lappend todo sam-rs${aligner}-$sample
 		if {$useminigenome} {
 			# gatk variant calling on map-rs${aligner}
 			var_gatk_job $cleanbam $refseq $pre -dt NONE
@@ -193,13 +193,13 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 			job remapgatk-var-$name -deps {reg_var-gatk-rs${aligner}-$name.tsv $mapfile} -targets var-gatk-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
+			sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv
+			job_razip varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv 
 		} else {
 			# gatk variant calling on map-rs${aligner}
 			var_gatk_job $cleanbam $refseq $pre -dt NONE -L $mastrdir/reg-inner-$mastrname.bed
 		}
 		lappend todo gatk-rs${aligner}-$sample
-		sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv
-		job_razip varall-gatk-rs${aligner}-$name.tsv
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
