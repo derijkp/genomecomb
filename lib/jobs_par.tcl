@@ -81,11 +81,13 @@ proc job_process_par_onepass {} {
 					lappend cgjob(queue) $line
 					set cgjob_blocked($job) 1
 					job_process_par_marktargets {} [job_targetsreplace $ftargets {}] {} q
+					job_logclose $job
 					continue
 				} else {
 					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				}
 				job_log $job "-----> job $jobname skipped: dependencies not found"
+				job_logclose $job
 				continue
 			}
 			set temp {}
@@ -98,6 +100,7 @@ proc job_process_par_onepass {} {
 				lappend temp $line
 			}
 			set queue [list_concat $temp $queue]
+			job_logclose $job
 			continue
 		}
 		job_lognf $job "==================== $jobname ===================="
@@ -125,6 +128,7 @@ proc job_process_par_onepass {} {
 			}
 			job_process_par_marktargets $temptargets $tempptargets $temprmtargets $jobnum
 			job_log $job "job $jobname is already running, skip"
+			job_logclose $job
 			continue
 		}
 		# check deps, skip if not fullfilled
@@ -142,11 +146,13 @@ proc job_process_par_onepass {} {
 				lappend cgjob(queue) $line
 				set cgjob_blocked($job) 1
 				job_process_par_marktargets {} [job_targetsreplace $ftargets {}] {} q
+				job_logclose $job
 				continue
 			} else {
 				job_log $job "error in dependencies for $jobname: $adeps"
 			}
 			job_log $job "-----> job $jobname skipped: dependencies not found"
+			job_logclose $job
 			continue
 		}
 		file_write $job.deps $adeps
@@ -164,6 +170,7 @@ proc job_process_par_onepass {} {
 			}
 			if {$doskip} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
+				job_logclose $job
 				continue
 			}
 		}
@@ -198,6 +205,7 @@ proc job_process_par_onepass {} {
 #		if {$depsrunning || [llength $targetsrunning]} {
 #			job_logclear $job
 #			lappend cgjob(queue) $line
+#			job_logclose $job
 #			continue
 #		}
 		job_log $job
@@ -210,6 +218,7 @@ proc job_process_par_onepass {} {
 		}
 		if {!$newtargets} {
 			job_log $job "skipping $jobname: targets already completed or running"
+			job_logclose $job
 			continue
 		}
 		# job_log $job "-------------------- submitting $jobname --------------------"
@@ -230,6 +239,7 @@ proc job_process_par_onepass {} {
 		set ids [list_remove $ids {}]
 		set jobnum [job_process_par_submit $job $runfile -deps $ids {*}$submitopts]
 		job_log $job "-------------------- submitted $jobname ($jobnum <- $ids) --------------------"
+		job_logclose $job
 		file_write $job.jobid $jobnum
 		job_process_par_marktargets $targets $ptargets $rmtargets $jobnum
 		set cgjob_running($job) $jobnum
