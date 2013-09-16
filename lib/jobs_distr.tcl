@@ -32,6 +32,7 @@ proc job_process_distr_jobmanager {} {
 	set maxrunning [get cgjob(distribute) 4]
 	if {$countrunning >= $maxrunning} {
 		if {!$cgjob(silent)} {puts -nonewline stderr .}
+		after 1000 job_process_distr_jobmanager
 		return
 	}
 	set torun [expr {$maxrunning - $countrunning}]
