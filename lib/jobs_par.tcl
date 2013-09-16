@@ -219,8 +219,8 @@ proc job_process_par_onepass {} {
 		append cmd {#$ -S /bin/bash} \n
 		append cmd {#$ -V} \n
 		append cmd {#$ -cwd} \n
-		append cmd "\n\# the next line restarts using cgsh \\\n"
-		append cmd {exec cg source "$0" "$@"} \n
+		append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
+		append cmd "exec $cgjob(runcmd) \"\$0\" \"\$@\"\n"
 		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $checkcompressed $code]\n
 		append cmd "file_add \{$job.log\} \"\[job_timestamp\]\\tending $jobname\"\n"
 		set runfile $job.run

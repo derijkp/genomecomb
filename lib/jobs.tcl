@@ -65,6 +65,10 @@ proc job_args {jobargs} {
 			-s - -silent - --silent {
 				set cgjob(silent) 1
 			}
+			-r - -runcmd {
+				set cgjob(runcmd) [lindex $jobargs $pos]
+				incr pos
+			}
 			-debug {
 				set cgjob(debug) 1
 			}
@@ -721,6 +725,7 @@ proc job_init {args} {
 	set cgjob(queue) {}
 	set cgjob(id) 1
 	set cgjob(resubmit) 1
+	set cgjob(runcmd) {cg source}
 	set job_logdir [file normalize [pwd]/log_jobs]
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_wait {} job_process_direct_wait
