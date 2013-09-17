@@ -1,4 +1,23 @@
+proc bcol_progress {args} {
+puts "progress: $args"
+	set pos [lindex [lindex $args end] end]
+	if {![isint $pos]} {
+		progress message $args
+		return
+	}
+	if {[catch {
+		progress next $pos
+		progress set $pos
+	}]} {
+		global bgexechandle
+		puts error
+		Extral::bgexec_cancel $bgexechandle
+	}
+}
+
 proc bcol_indexlines {file indexfile {colinfo 0}} {
+	set file [file normalize $file]
+	set indexfile [file normalize $indexfile]
 	set time [file mtime $file]
 	set ext [file extension $file]
 	if {[inlist {.rz .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
@@ -39,11 +58,14 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 			if {$colinfo} {
 				set indexdir [file dir $indexfile]
 				file mkdir $indexdir/colinfo.temp/
-				exec bcol_indexfile_all $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@ stderr
+				# exec bcol_indexfile_all $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@ stderr
+				Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
+					bcol_indexfile_all $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@1
 				catch {file delete -force $indexdir/colinfo}
 				file rename $indexdir/colinfo.temp/ $indexdir/colinfo
 			} else {
-				exec bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss 2>@ stderr
+				Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
+					bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss 2>@1
 			}
 			file rename -force $indexfile.bin.temp $indexfile.bin
 			file rename -force $indexfile.temp $indexfile
