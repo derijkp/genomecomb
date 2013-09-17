@@ -98,7 +98,6 @@ table_tsv method table {args} {
 }
 
 table_tsv method queryprogress {args} {
-puts "queryprogress $args"
 	if {![isint $args]} {
 		append ::bgerror [lindex $args 0]\n
 		return
@@ -374,7 +373,7 @@ table_tsv method index {file} {
 	set indexfile $indexdir/lines.bcol
 	set ext [file extension $file]
 	if {[inlist {.rz .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
-	cg_index $file
+	cg_index -colinfo $file
 	set result [infofile_read $indexdir/info.tsv]
 	dict set result indexdir $indexdir
 	dict set result lineindex [bcol_open $indexfile]
