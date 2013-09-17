@@ -1,7 +1,7 @@
 monetdbinit
 
 proc mselect_idtopos {header id fields} {
-	set id [string trim $id \"]
+	set id [string trim $id "\"\' "]
 	set poss [list_cor $header $fields]
 	if {[inlist $poss -1]} {error "sample $id not present"}
 	return [lmath_calc $poss + 1]
@@ -14,6 +14,8 @@ proc mselect_samegeno {a11 a12 a21 a22} {
 proc mselect_compare {header ids trans} {
 	if {[llength $ids]  != 2} {error "compare only with 2 ids"}
 	foreach {id1 id2} $ids break
+	set id1 [string trim $id1 "\"\' "]
+	set id2 [string trim $id2 "\"\' "]
 	set a11 \"[trans $trans alleleSeq1-$id1]\"
 	set a21 \"[trans $trans alleleSeq2-$id1]\"
 	set a12 \"[trans $trans alleleSeq1-$id2]\"
@@ -34,6 +36,7 @@ proc mselect_compare {header ids trans} {
 proc mselect_zyg {header ids trans} {
 	if {[llength $ids]  != 1} {error "wrong # of args for zyg: only one allowed"}
 	foreach {id1} $ids break
+	set id1 [string trim $id1 "\"\' "]
 	set a11 \"[trans $trans alleleSeq1-$id1]\"
 	set a21 \"[trans $trans alleleSeq2-$id1]\"
 	set s1 [trans $trans sequenced-$id1]
@@ -49,12 +52,12 @@ proc mselect_zyg {header ids trans} {
 
 proc mselect_sm {header ids trans} {
 	set id1 [list_pop ids]
-	set id1 [string trim $id1 \"]
+	set id1 [string trim $id1 "\"\' "]
 	set a11 \"[trans $trans alleleSeq1-$id1]\"
 	set a21 \"[trans $trans alleleSeq2-$id1]\"
 	set temp [list "(\"[trans $trans sequenced-$id1]\" = \'v\')"]
 	foreach id $ids {
-		set id [string trim $id \"]
+		set id [string trim $id "\"\' "]
 		set a12 \"[trans $trans alleleSeq1-$id]\"
 		set a22 \"[trans $trans alleleSeq2-$id]\"
 		lappend temp "(\"[trans $trans sequenced-$id]\" = \'v\')"  "[mselect_samegeno $a11 $a21 $a12 $a22]"
@@ -64,13 +67,14 @@ proc mselect_sm {header ids trans} {
 
 proc mselect_same {header ids trans} {
 	set id1 [list_pop ids]
-	set id1 [string trim $id1 \"]
+	set id1 [string trim $id1 "\"\' "]
 	set a11 \"[trans $trans alleleSeq1-$id1]\"
 	set a21 \"[trans $trans alleleSeq2-$id1]\"
 	set sequenced \"[trans $trans sequenced-$id1]\"
 	set seqlist [list "$sequenced <> \'u\'"]
 	set temp {}
 	foreach id $ids {
+		set id [string trim $id "\"\' "]
 		lappend seqlist "$sequenced <> \'u\'"
 		set a12 \"[trans $trans alleleSeq1-$id]\"
 		set a22 \"[trans $trans alleleSeq2-$id]\"
@@ -85,6 +89,7 @@ proc mselect_df {header ids} {
 	set temp2 {}
 	set seqlist {}
 	foreach id $ids {
+		set id [string trim $id "\"\' "]
 		set a1 \"[trans $trans alleleSeq1-$id]\"
 		set a2 \"[trans $trans alleleSeq2-$id]\"
 		set sequenced \"[trans $trans sequenced-$id]\"
@@ -127,7 +132,8 @@ proc mselect_un {header ids} {
 	set temp1 {}
 	set temp2 {}
 	foreach id $ids {
-		foreach {a1 a2 sequenced} [mselect_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
+		set id [string trim $id "\"\' "]
+		foreach {a1 a2 sequenced} [mselect_idtopos $header $id [list [trans $trans alleleSeq1-$id] [trans $trans alleleSeq2-$id] [trans $trans sequenced-$id]]] break
 		lappend temp1 "(\$$sequenced == \"v\")"
 		lappend temp2 "(\$$sequenced == \"u\")"
 	}

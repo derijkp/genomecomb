@@ -10,10 +10,10 @@ exec tclsh "$0" ${1+"$@"}
 
 proc tsv_select_compare {ids neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
-	set id1 [string trim [list_pop ids]]
+	set id1 [string trim [list_pop ids] "\"\' "]
 	set fields [list sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1]
 	foreach id $ids {
-		set id [string trim $id]
+		set id [string trim $id "\"\' "]
 		lappend fields sequenced-$id alleleSeq1-$id alleleSeq2-$id
 	}
 	lappend neededfields {*}$fields
@@ -30,11 +30,11 @@ proc tsv_select_zyg {ids neededfieldsVar} {
 
 proc tsv_select_sm {ids neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
-	set id1 [string trim [list_pop ids]]
+	set id1 [string trim [list_pop ids] "\"\' "]
 	set temp [list "(\$\{sequenced-$id1\} == \"v\")"]
 	lappend neededfields sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1
 	foreach id $ids {
-		set id [string trim $id]
+		set id [string trim $id "\"\' "]
 		lappend neededfields sequenced-$id alleleSeq1-$id alleleSeq2-$id
 		lappend temp "(\$\{sequenced-$id\} == \"v\")"  "samegeno(\$\{alleleSeq1-$id1\},\$\{alleleSeq2-$id1\},\$\{alleleSeq1-$id\},\$\{alleleSeq2-$id\})"
 	}
@@ -43,12 +43,12 @@ proc tsv_select_sm {ids neededfieldsVar} {
 
 proc tsv_select_same {ids neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
-	set id1 [string trim [list_pop ids]]
+	set id1 [string trim [list_pop ids] "\"\' "]
 	set seqlist [list "\$\{sequenced-$id1\} != \"u\""]
 	lappend neededfields sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1
 	set temp {}
 	foreach id $ids {
-		set id [string trim $id]
+		set id [string trim $id "\"\' "]
 		lappend neededfields sequenced-$id alleleSeq1-$id alleleSeq2-$id
 		lappend seqlist "\$\{sequenced-$id\} != \"u\""
 		lappend temp "samegeno(\$\{alleleSeq1-$id1\},\$\{alleleSeq2-$id1\},\$\{alleleSeq1-$id\},\$\{alleleSeq2-$id\})"
@@ -62,7 +62,7 @@ proc tsv_select_df {ids neededfieldsVar} {
 	set temp2 {}
 	set seqlist {}
 	foreach id $ids {
-		set id [string trim $id]
+		set id [string trim $id "\"\' "]
 		lappend neededfields sequenced-$id
 		lappend seqlist "(\$\{sequenced-$id\} != \"u\")"
 		lappend temp1 "(\$\{sequenced-$id\} == \"v\")"
@@ -78,7 +78,7 @@ proc tsv_select_mm {header ids neededfieldsVar} {
 	set list {}
 	set seqlist {}
 	foreach id $ids {
-		set id [string trim $id]
+		set id [string trim $id "\"\' "]
 		lappend seqlist "(\$\{sequenced-$id\} == \"v\")"
 		lappend list [list \{alleleSeq1-$id\} \{alleleSeq2-$id\}]
 		lappend neededfields sequenced-$id alleleSeq1-$id alleleSeq2-$id
@@ -104,7 +104,7 @@ proc tsv_select_un {ids neededfieldsVar} {
 	set temp1 {}
 	set temp2 {}
 	foreach id $ids {
-		set id [string trim $id]
+		set id [string trim $id "\"\' "]
 		foreach {a1 a2 sequenced} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
 		lappend temp1 "(\$\{sequenced-$id\} == \"v\")"
 		lappend temp2 "(\$\{sequenced-$id\} == \"u\")"
