@@ -274,11 +274,10 @@ proc cg_tomonetdb {args} {
 	# cg_monetdb_sql $db "select count(*) from \"$table\""
 	cg_monetdb_sql $db [subst {alter table "$table" add column "rowid" serial}]
 	foreach {key value} [list file $tsvfile time [file mtime $tsvfile] fieldtrans $fieldtrans] {
-		if {[catch {
-			cg_monetdb_sql $db [subst {insert into "genomecomb_info" ("table","key","value") values('$table','$key','$value')}]
-		}]} {
-			cg_monetdb_sql $db [subst {update "genomecomb_info" set "value" = '$value' where "table" = '$table' and "key" = '$key'}]
+		catch {
+			cg_monetdb_sql $db [subst {delete from "genomecomb_info" where "table" = '$table' and "key" = '$key'}]
 		}
+		cg_monetdb_sql $db [subst {insert into "genomecomb_info" ("table","key","value") values('$table','$key','$value')}]
 	}
 	# cg_monetdb_sql $db [subst {select * from "genomecomb_info" where "table" = '$table'}]
 	file delete $tsvfile.temp

@@ -84,7 +84,7 @@ proc mselect_same {header ids trans} {
 	set temp "([join $seqlist " && "] && [join $temp " && "])"
 }
 
-proc mselect_df {header ids} {
+proc mselect_df {header ids trans} {
 	set temp1 {}
 	set temp2 {}
 	set seqlist {}
@@ -100,12 +100,13 @@ proc mselect_df {header ids} {
 	set temp "(([join $seqlist " and " ]) and ([join $temp1 " or " ]) and ([join $temp2 " or "]))"
 }
 
-proc mselect_mm {header ids} {
+proc mselect_mm {header ids trans} {
 	set temp1 {}
 	set temp2 {}
 	set list {}
 	set seqlist {}
 	foreach id $ids {
+		set id [string trim $id "\"\' "]
 		set a1 \"[trans $trans alleleSeq1-$id]\"
 		set a2 \"[trans $trans alleleSeq2-$id]\"
 		set sequenced \"[trans $trans sequenced-$id]\"
@@ -128,7 +129,7 @@ proc mselect_mm {header ids} {
 	set temp "(([join $seqlist " and " ]) and ([join $temp1 " and " ]) and ([join $temp2 " or "]))"
 }
 
-proc mselect_un {header ids} {
+proc mselect_un {header ids trans} {
 	set temp1 {}
 	set temp2 {}
 	foreach id $ids {
@@ -141,16 +142,28 @@ proc mselect_un {header ids} {
 }
 
 proc mselect_count {arguments header trans} {
+	# We do *1 to force to a correct type (otherwise we get an error in monetdb)
 	set test [list_pop arguments]
 	set temp {}
 	foreach q $arguments {
 		lappend q {*}$test
 		set q [tsv_select_precedence $q]
-		lappend temp "([mselect_detokenize $q $header neededfields $trans])"
+		lappend temp "([mselect_detokenize $q $header neededfields $trans])*1"
 	}
 	return "([join $temp " + "])"
 }
 # cg select -q 'count($alleleSeq1,$alleleSeq2, == "G") == 1' annotvar.tsv
+
+proc mselect_if {arguments header trans} {
+	if {[llength $arguments] != 3} {
+		error "wrong # args for function if, must be: if(condition,true,false)"
+	}
+	foreach field {condition true false} q $arguments {
+		set q [tsv_select_precedence $q]
+		set $field "([mselect_detokenize $q $header neededfields $trans])"
+	}
+	return "(case when ($condition) then $true else $false end)"
+}
 
 #proc mselect_lmin {} {
 #	upvar awkfunctions awkfunctions
@@ -474,6 +487,9 @@ proc mselect_detokenize {tokens header neededfieldsVar trans} {
 					count {
 						set temp [mselect_count $arguments $header $trans]
 					}
+					if {
+						set temp [mselect_if $arguments $header $trans]
+					}
 					region {
 						set temp [mselect_region $ids $header]
 					}
@@ -537,106 +553,18 @@ proc mselect_detokenize {tokens header neededfieldsVar trans} {
 	return [join $result " "]
 }
 
-proc mselect_expandcode {header code trans} {
-	# variable preprocessor first, to expand *
-	# check and exchange variables needed
-	set tokens [tsv_select_tokenize $header $code neededfields]
-	# detokenize, making necessary changes
-	mselect_detokenize $tokens $header neededfields $trans
-}
-
-proc mselect_expandcode.old {header code} {
-	upvar tsv_funcnum tsv_funcnum
-	set indices [list_unmerge [regexp -all -indices -inline {["]?([*a-zA-z0-9_.-]*[*][*a-zA-z0-9_.-]*)["]?} $code]]
-	set indices [list_reverse $indices]
-	list_foreach {start end} $indices {
-		set field [string trim [string range $code $start $end] \"]
-		set temp [mselect_expandfield $header $field tposs]
-		if {![llength $temp]} {error "field \"$field\" not present"}
-		set new {}
-		foreach pos $tposs {
-			lappend new {}
-		}
-		set code [string_replace $code $start $end \"[join $temp \",\"]\"]
-	}
-	set indices [list_unmerge [regexp -all -indices -inline {([a-zA-z0-9_]+)\([^)]+\)} $code]]
-	set indices [list_reverse $indices]
-	list_foreach {start end} $indices {
-		set full [string range $code [expr {$start}] $end]
-		if {[regexp {^(.*)\((.*)\)$} $full temp func args]} {
-			switch $func {
-				sm {
-					set ids [split $args ,]
-					set temp [mselect_sm $header $ids]
-				}
-				same {
-					set ids [split $args ,]
-					set temp [mselect_same $header $ids]
-				}
-				df {
-					set ids [split $args ,]
-					set temp [mselect_df $header $ids]
-				}
-				mm {
-					set ids [split $args ,]
-					set temp [mselect_mm $header $ids]
-				}
-				un {
-					set ids [split $args ,]
-					set temp [mselect_un $header $ids]
-				}
-				compare {
-					set ids [split $args ,]
-					set temp [mselect_compare $header $ids]
-				}
-				count {
-					set ids [split $args ,]
-					set temp [mselect_count $ids]
-				}
-				counthasone {
-					set ids [split $args ,]
-					set temp [mselect_counthasone $ids]
-				}
-				counthasall {
-					set ids [split $args ,]
-					set temp [mselect_counthasall $ids]
-				}
-				lmin {
-					mselect_lmin
-				}
-				lmax {
-					mselect_lmax
-				}
-				cmin {
-					set num [regexp -all , $args]
-				}
-				cmax {
-					set num [regexp -all , $args]
-				}
-			}
-			set code [string_replace $code $start $end $temp]
-		} else {
-			set pos [lsearch $header $field]
-			if {$pos == -1} {error "field \"$field\" not present"}
-			incr pos
-			set code [string_replace $code $start $end \$$pos]
-		}
-	}
-	return $code
-}
-
-proc monetdb_makesql {table header query qfieldsVar {sortfields {}} {inverse 0} {trans {}} {offset {}} {limit {}}} {
-putsvars table header query qfieldsVar sortfields inverse trans offset limit
+proc monetdb_makesql {table theader query qfieldsVar {sortfields {}} {inverse 0} {trans {}} {offset {}} {limit {}}} {
 	upvar $qfieldsVar qfields
+# putsvars table theader query qfieldsVar sortfields inverse trans offset limit qfields
 	set sqlfields {}
 	set sqlwhere {}
 	set sqlsort {}
 	if {$qfields eq ""} {
-		set sqlfields $header
+		set sqlfields $theader
 	}
-	set qfields [mselect_expandfields $header $qfields qcode $trans]
+	set qfields [mselect_expandfields $theader $qfields qcode $trans]
 	if {$inverse} {
-		set qfields [list_lremove $header $qfields]
+		set qfields [list_lremove $theader $qfields]
 	}
 	foreach field $qfields code $qcode {
 		if {$code ne ""} {
@@ -650,7 +578,7 @@ putsvars table header query qfieldsVar sortfields inverse trans offset limit
 		set sqlsort "order by \"[join $sortfields "\",\""]\""
 	}
 	if {$query ne ""} {
-		set tquery [mselect_expandcode $header $query $trans]
+		set tquery [mselect_expandcode $theader $query $trans]
 		set sqlwhere "where $tquery"
 	}
 	set sql "select $sqlfields from \"$table\" $sqlwhere $sqlsort"
@@ -663,8 +591,17 @@ putsvars table header query qfieldsVar sortfields inverse trans offset limit
 	return $sql
 }
 
-proc monetdb_select {db table header query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {out stdout} {hc 0} {inverse 0}} {
-#putsvars db table header query qfields sortfields newheader sepheader out hc inverse
+proc monetdb_select {db table query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}}} {
+#putsvars db table header query qfields sortfields newheader sepheader out hc inverse group groupcols
+	set theader [list_remove [cg_monetdb_fields $db $table] rowid]
+	if {![catch {
+		set trans [cg_monetdb_sql $db [subst {select "value" from "genomecomb_info" where "table" = '$table' and "key" = 'fieldtrans'}]]
+	}]} {
+		set header [dict keys $trans]
+	} else {
+		set trans {}
+		set header $theader
+	}
 	if {$out ne ""} {
 		fconfigure $out -buffering none
 	}
@@ -682,28 +619,39 @@ proc monetdb_select {db table header query {qfields {}} {sortfields {}} {newhead
 	if {![inlist $sortfields rowid]} {
 		lappend sortfields rowid
 	}
-	set sql [monetdb_makesql $table $header $query qfields $sortfields $inverse]
-#putslog -------------sql--------------------
-#putslog sql:\n$sql
-#putslog ------------------------------------
-	if {$qfields ne ""} {
-		set nh $qfields
-	} else {
-		set nh $header
-	}
-	if {[llength $newheader]} {
-		if {[llength $newheader] != [llength $nh]} {error "new header (-nh) of wrong length for query results"}
-		set nh $newheader
-	}
-	if {$out ne ""} {
+	if {$group ne ""} {
+		foreach {resultheader result} [monetdb_makesql_group $db $table $header $theader $query qfields $inverse $trans $group $groupcols] break
+		set nh ""
 		if {$sepheader ne ""} {
-			file_write $sepheader ${keepheader}[join $nh \t]\n
+			file_write $sepheader [join $resultheader \t]\n
 		} else {
-			puts $out ${keepheader}[join $nh \t]
+			puts $out [join $resultheader \t]
 		}
-		exec mclient -d $db -f tab -s $sql >@ $out
+		puts $out $result
 	} else {
-		exec mclient -d $db -f tab -s $sql
+		set sql [monetdb_makesql $table $theader $query qfields $sortfields $inverse $trans]
+		if {$qfields ne ""} {
+			set nh $qfields
+		} else {
+			set nh $header
+		}
+		if {[llength $newheader]} {
+			if {[llength $newheader] != [llength $nh]} {error "new header (-nh) of wrong length for query results"}
+			set nh $newheader
+		}
+		#putslog -------------sql--------------------
+		#putslog sql:\n$sql
+		#putslog ------------------------------------
+		if {$out ne ""} {
+			if {$sepheader ne ""} {
+				file_write $sepheader ${keepheader}[join $nh \t]\n
+			} else {
+				puts $out ${keepheader}[join $nh \t]
+			}
+			exec mclient -d $db -f tab -s $sql >@ $out
+		} else {
+			exec mclient -d $db -f tab -s $sql
+		}
 	}
 }
 
@@ -712,7 +660,7 @@ proc cg_mselect {args} {
 		errorformat mselect
 		exit 1
 	}
-	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0; set inverse 0; set printheader 0
+	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0; set inverse 0; set printheader 0; set group {}; set groupcols {}
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -740,6 +688,8 @@ proc cg_mselect {args} {
 				set fields $value
 				set inverse 1
 			}
+			-g {set group $value}
+			-gc {lappend groupcols $value}
 			-nh {set newheader $value}
 			-sh {set sepheader $value}
 			-hc {set hc 1}
@@ -758,7 +708,17 @@ proc cg_mselect {args} {
 				exit 0
 			}
 			-h {
-				set printheader 1
+				incr pos
+				set args [lrange $args $pos end]
+				set len [llength $args]
+				if {$len < 2 || $len > 3} {
+					errorformat mselect
+					exit 1
+				}
+				foreach {db table outfile} $args break
+				set header [cg_monetdb_fields $db $table]
+				puts stdout [join $header \n]
+				exit 0
 			}
 			-- break
 			default {
@@ -767,18 +727,16 @@ proc cg_mselect {args} {
 		}
 		incr pos 2
 	}
+	if {[llength $groupcols] && ![llength $group]} {
+		error "cannot use -gc option without -g option"
+	}
 	set args [lrange $args $pos end]
 	set len [llength $args]
 	if {$len < 2 || $len > 3} {
-		errorformat select
+		errorformat mselect
 		exit 1
 	}
 	foreach {db table outfile} $args break
-	set header [cg_monetdb_fields $db $table]
-	if {$printheader} {
-		puts stdout [join $header \n]
-		exit 0
-	}
 	regsub -all {\n#[^\n]*} $fields {} fields
 	regsub -all {\n#[^\n]*} $query {} query
 	regsub -all {\n|\t} $query { } query
@@ -789,13 +747,13 @@ proc cg_mselect {args} {
 	} else {
 		set o stdout
 	}
-	set error [catch {monetdb_select $db $table $header $query $fields $sortfields $newheader $sepheader $o $hc $inverse} result]
-	if {$o ne "stdout"} {catch {close $o}}
-	if {$error} {
-		puts stderr $result
-return
-		exit 1
-	}
+	monetdb_select $db $table $query $fields $sortfields $newheader $sepheader $o $hc $inverse $group $groupcols
+#	set error [catch {monetdb_select $db $table $query $fields $sortfields $newheader $sepheader $o $hc $inverse $group $groupcols} result]
+#	if {$o ne "stdout"} {catch {close $o}}
+#	if {$error} {
+#		puts stderr $result
+#		exit 1
+#	}
 }
 
 if 0 {

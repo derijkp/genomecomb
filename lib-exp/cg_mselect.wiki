@@ -1,0 +1,10 @@
+= Mselect =
+
+== Format ==
+cg mselect ?options? database table ?outfile?
+
+== Summary ==
+like "cg select" for monetdb database
+
+== Category ==
+Query

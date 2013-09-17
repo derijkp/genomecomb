@@ -22,27 +22,27 @@ test mselect {-f} {
 test mselect {-rf} {
 	mselect_load data/table.tsv
 	exec cg mselect -rf "mixed other" test test
-} {num	text	rowid
-4	a	1
-10	b	2
-2	c	3
-100	d	4}
+} {num	text
+4	a
+10	b
+2	c
+100	d}
 
 test mselect {-q} {
 	mselect_load data/table.tsv
-	exec cg mselect -q {"num" <= 4} test test
-} {num	text	mixed	other	rowid
-4	a	a4	aaaa	1
-2	c	a2	cc	2}
+	exec cg mselect -q {$num <= 4} test test
+} {num	text	mixed	other
+4	a	a4	aaaa
+2	c	a2	cc}
 
 test mselect {-s} {
 	mselect_load data/table.tsv
 	exec cg mselect -s num test test
-} {num	text	mixed	other	rowid
-2	c	a2	cc	3
-4	a	a4	aaaa	1
-10	b	b2	bbbbbbbbbb	2
-100	d	aa3	dd..	4}
+} {num	text	mixed	other
+2	c	a2	cc
+4	a	a4	aaaa
+10	b	b2	bbbbbbbbbb
+100	d	aa3	dd..}
 
 test mselect {-s -f} {
 	mselect_load data/table.tsv
@@ -55,21 +55,21 @@ test mselect {-s -f} {
 
 test mselect {-s -q} {
 	mselect_load data/table.tsv
-	exec cg mselect -s num -q {"num" <= 4} test test
-} {num	text	mixed	other	rowid
-2	c	a2	cc	3
-4	a	a4	aaaa	1}
+	exec cg mselect -s num -q {$num <= 4} test test
+} {num	text	mixed	other
+2	c	a2	cc
+4	a	a4	aaaa}
 
 test mselect {-q -f} {
 	mselect_load data/table.tsv
-	exec cg mselect -f "num mixed" -q {"num" <= 4} test test
+	exec cg mselect -f "num mixed" -q {$num <= 4} test test
 } {num	mixed
 4	a4
 2	a2}
 
 test mselect {-s -f -q} {
 	mselect_load data/table.tsv
-	exec cg mselect -s num  -f "num mixed" -q {"num" <= 4} test test
+	exec cg mselect -s num  -f "num mixed" -q {$num <= 4} test test
 } {num	mixed
 2	a2
 4	a4}
@@ -77,15 +77,15 @@ test mselect {-s -f -q} {
 test mselect {-q multiple lines, tabs} {
 mselect_load data/table.tsv
 exec cg mselect -s num  -f "num mixed" -q {
-	"num" <= 4
-	and "text" = 'c'
+	$num <= 4
+	and $text == "c"
 } test test
 } {num	mixed
 2	a2}
 
 test mselect {-f *} {
 	mselect_load data/vars1.sft
-	exec cg mselect -f {chromosome begin end alleleSeq1_*} -q {"begin" = 4000} test test
+	exec cg mselect -f {chromosome begin end alleleSeq1_*} -q {$begin == 4000} test test
 } {chromosome	begin	end	alleleSeq1_sample1	alleleSeq1_sample2
 chr1	4000	4001	A	A
 chr2	4000	4001	G	G}
@@ -99,7 +99,7 @@ chr2	4000	4001	G/G}
 
 test mselect {-f calculated functions} {
 	mselect_load data/vars1.sft
-	exec cg mselect -f {chromosome begin end {countG=count("alleleSeq*", = 'G')}} -q {"begin" = 4000} test test
+	exec cg mselect -f {chromosome begin end {countG=count($alleleSeq*, = "G")}} -q {$begin = 4000} test test
 } {chromosome	begin	end	countG
 chr1	4000	4001	2
 chr2	4000	4001	4}
