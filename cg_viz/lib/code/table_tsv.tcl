@@ -303,11 +303,16 @@ table_tsv method fields {args} {
 		} else {
 			set header $tdata(tfields)
 			set tdata(qfields) [tsv_select_expandfields $header $tdata(fields) tdata(qcode)]
-			if {$tdata(qfields) eq $header} {
+			set pos 0
+			set poss {}
+			foreach el $tdata(qcode) {
+				if {![isint $el]} {lappend poss $pos}
+				incr pos
+			}
+			if {$tdata(qfields) eq $header && ![llength $poss]} {
 				set tdata(fieldscor) {}
 			} else {
 				set cor [list_cor $header $tdata(qfields)]
-				set poss [list_find $cor -1]
 				if {![llength $poss]} {
 					set tdata(fieldscor) [list $cor]
 				} else {
