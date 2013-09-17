@@ -147,7 +147,11 @@ int main(int argc, char *argv[]) {
 		fprintf(o->rf,"# default %s\n","0");
 		fprintf(o->rf,"begin\ttype\toffset\n");
 		fprintf(o->rf,"%llu\t%s\t%d\n",(long long int)o->start,type,0);
-		fprintf(o->rf,"%llu\tend\t%d\n",(long long int)(o->start + o->lastpos),0);
+		if (o->lastpos != -1) {
+			fprintf(o->rf,"%llu\tend\t%d\n",(long long int)(o->start + o->lastpos),0);
+		} else {
+			fprintf(o->rf,"-1\tend\t%d\n",0);
+		}
 		fclose(o->rf);
 		DStringDestroy(ds);
 		free(o);
