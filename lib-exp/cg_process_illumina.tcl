@@ -541,7 +541,7 @@ proc process_illumina {destdir dbdir} {
 			lappend todo [string range $target 4 end-4]
 		}
 		# job_logdir $dir/log_jobs
-		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
+		set files [ssort -natural [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
 		if {![llength $files]} continue
 		# quality and adapter clipping
 		set files [fastq_clipadapters_job $files]
