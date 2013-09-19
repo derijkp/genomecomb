@@ -16,16 +16,17 @@
 #include "debug.h"
 #include "hash.h"
 
-DString *extractID(DString *string) {
-	DString *result;
+DString *extractID(DString *string,DString *id) {
 	char *str, *end;
 	str = strstr(string->string,"ID=");
-	if (str == NULL) return DStringNew();
+	if (str == NULL) {
+		DStringSetS(id,"",0);
+		return id;
+	}
 	str+= 3;
 	end = strstr(str,",");
-	result = DStringNew();
-	DStringSetS(result,str,end-str);
-	return result;
+	DStringSetS(id,str,end-str);
+	return id;
 }
 
 int main(int argc, char *argv[]) {
@@ -36,6 +37,8 @@ int main(int argc, char *argv[]) {
 	DString *geno = NULL, *outinfo = NULL;
 	DStringArray *header=NULL, *format=NULL, *info=NULL, *samples=NULL;
 	DStringArray *formatfields=NULL, *headerfields=NULL, *infofields=NULL, *linea=NULL;
+	DString *ref=DStringNew(), *alt=DStringNew(), *id=DStringNew();
+	int *order = NULL;
 	int read,i,j,pos,maxtab,igeno,isample,linenr=0;
 	line = DStringNew();
 	if (argc >= 2) {fd = fopen(argv[1],"r");} else {fd = stdin;}
@@ -98,8 +101,8 @@ int main(int argc, char *argv[]) {
 		DStringArrayAppend(headerfields,"phased",6);
 		DStringArrayAppend(headerfields,"genotypes",9);
 		for (i = 0 ; i < format->size ; i ++) {
-			DString *id,*ds;
-			id = extractID(DStringArrayGet(format,i));
+			DString *ds;
+			id = extractID(DStringArrayGet(format,i),id);
 			if (strcmp(id->string,"GT") == 0) continue;
 			DStringArrayAppend(formatfields,id->string,id->size);
 			ds = (DString *)dstring_hash_get(conv_formata,id);
@@ -108,7 +111,6 @@ int main(int argc, char *argv[]) {
 			} else {
 				DStringArrayAppend(headerfields,id->string,id->size);
 			}
-			DStringDestroy(id);
 		}
 		NODPRINT("==== Parsing header/samples ====")
 		if (samples->size <= 1) {
@@ -131,8 +133,8 @@ int main(int argc, char *argv[]) {
 	NODPRINT("\n\n==== Parsing info ====")
 	infofields = DStringArrayNew(10);
 	for (i = 0 ; i < info->size ; i ++) {
-		DString *id,*ds;
-		id = extractID(DStringArrayGet(info,i));
+		DString *ds;
+		id = extractID(DStringArrayGet(info,i),id);
 		DStringArrayAppend(infofields,id->string,id->size);
 		if (id->string[0] == 'D' && id->string[1] == 'P' && id->string[2] == '\0') {
 			fprintf(fo,"\ttotalcoverage");
@@ -144,7 +146,6 @@ int main(int argc, char *argv[]) {
 				fprintf(fo,"\t%*.*s",id->size,id->size,id->string);
 			}
 		}
-		DStringDestroy(id);
 	}
 	fprintf(fo,"\n");
 	maxtab = 9+samples->size;
@@ -162,13 +163,12 @@ int main(int argc, char *argv[]) {
 	linea = DStringArrayNew(maxtab+2);
 	NODPRINT("==== Parsing data ====")
 	while ((read = DStringGetTab(line,fd,maxtab,linea,1,NULL)) != -1) {
-		DStringArray *format,*alts;
-		DString *type, *ref, *alt;
+		DStringArray *lineformat,*alts;
+		DString *type;
 		char *genotypecur,zyg;
-		int *order = NULL;
 		int l1,l2,begin,end,len,diff;
 		linenr++;
-		format = DStringArrayFromChar(a_format(linea)->string,':');
+		lineformat = DStringArrayFromChar(a_format(linea)->string,':');
 		/* set genos [lrange $line 9 end] */
 		l1 = a_ref(linea)->size;
 		l2 = 0;
@@ -196,11 +196,11 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		if (l1 > 20) {
-			ref = DStringNewFromInt(l1 - 1);
+			DStringPrintf(ref,"%d",l1 - 1);
 		} else {
-			ref = DStringNewFromCharS(a_ref(linea)->string+diff,a_ref(linea)->size-diff);
+			DStringSetS(ref,a_ref(linea)->string+diff,a_ref(linea)->size-diff);
 		}
-		alt = DStringNewFromCharS(DStringArrayGet(alts,0)->string+diff,DStringArrayGet(alts,0)->size-diff);
+		DStringSetS(alt,DStringArrayGet(alts,0)->string+diff,DStringArrayGet(alts,0)->size-diff);
 		for (i = 1; i < alts->size ; i++) {
 			DString *temp = DStringArrayGet(alts,i);
 			DStringAppendS(alt, ",",1);
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
 			NODPRINT("==== Process genos ====")
 			order = realloc(order,formatfields->size*sizeof(int));
 			for (i = 0 ; i < formatfields->size ; i++) {
-				order[i] = DStringArraySearch(format,DStringArrayGet(formatfields,i)->string,DStringArrayGet(formatfields,i)->size);
+				order[i] = DStringArraySearch(lineformat,DStringArrayGet(formatfields,i)->string,DStringArrayGet(formatfields,i)->size);
 			}
 			igeno = 9; /* genos start at col 9 */
 			for (isample = 0 ; isample < samples->size ; isample++) {
@@ -336,6 +336,8 @@ int main(int argc, char *argv[]) {
 			}
 			fprintf(fo,"\n");
 		}
+		DStringArrayDestroy(lineformat);
+		DStringArrayDestroy(alts);
 	}
 	if (fd != stdin) {fclose(fd);}
 	/* free dstrings */
@@ -346,12 +348,17 @@ int main(int argc, char *argv[]) {
 	DStringDestroy(sub);
 	DStringDestroy(string);
 	DStringDestroy(temp);
+	DStringDestroy(ref);
+	DStringDestroy(alt);
+	DStringDestroy(id);
 	/* free arrays */
 	DStringArrayDestroy(linea);
 	DStringArrayDestroy(format);
 	DStringArrayDestroy(samples);
 	DStringArrayDestroy(formatfields);
 	DStringArrayDestroy(headerfields);
-	hash_destroy(conv_formata,NULL,NULL);
+	hash_destroy(conv_formata,(hash_free_func *)DStringDestroy,(hash_free_func *)DStringDestroy);
+	/* free other */
+	free(order);
 	exit(EXIT_SUCCESS);
 }
