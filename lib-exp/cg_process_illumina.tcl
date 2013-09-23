@@ -280,7 +280,7 @@ proc bam_clean_job {bamfile refseq sample args} {
 	}
 	if {$realign} {
 		# realign around indels
-		job bamrealign-$root -deps {$dir/$pre-$root.bam $dict} -targets {$dir/$pre-r$root.bam} \
+		job bamrealign-$root -deps {$dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict} -targets {$dir/$pre-r$root.bam} \
 		-vars {gatkrefseq gatk pre} -code {
 			exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals 2>@ stderr >@ stdout
 			exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp 2>@ stderr >@ stdout
