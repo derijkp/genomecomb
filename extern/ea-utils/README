@@ -1,0 +1,5 @@
+The fastq-mcf program was obtained from
+https://code.google.com/p/ea-utils/
+A small change has been made to the original: The extra option -a 
+will adjust qualities in the output to the standard Sanger encoding.
+

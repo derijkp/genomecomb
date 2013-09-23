@@ -45,7 +45,7 @@ proc fastq_clipadapters {files targets {adapterfile {}}} {
 		file mkdir [file dir $target]
 		lappend out -o $target.temp
 	}
-	exec fastq-mcf {*}$out $adapterfile {*}$files 2>@ stderr
+	exec fastq-mcf -a {*}$out $adapterfile {*}$files 2>@ stderr
 	foreach target $targets {
 		file rename $target.temp $target
 	}
