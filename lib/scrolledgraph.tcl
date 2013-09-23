@@ -94,6 +94,8 @@ scrolledgraph method destroy {} {
 
 scrolledgraph chainoptions {$object.g}
 
+scrolledgraph addoption -datafile {DataFile dataFile plot} {}
+
 catch {PushZoom}
 rename PushZoom ori.PushZoom
 
@@ -770,18 +772,21 @@ scrolledgraph method yview {args} {
 
 scrolledgraph method print {args} {
 	global printdialog
-	private $object region
+	private $object region options
 	if {![llength $args]} {
 		destroy $object.ps
-		set file $region(xrange)
+		set file [file root [file tail [get options(-datafile) plot]]]__[$object.g axis cget y -title]_vs_[$object.g axis cget x -title]__$region(xmin)-$region(xmax).ps
+		regsub -all {[:\?\*/]} $file _ file
+		set printdialog(file) [file dir [get options(-datafile) [pwd]]]/$file
 		Classy::Dialog $object.ps -title "Print to postscript"
 		$object.ps option file "Filename" printdialog(file)
 		$object.ps add print "Print" "[list $object] print \$printdialog(file)" default
 		$object.ps persistent remove print
+	} else {
+		foreach {file} $args break
+		$object.g postscript configure -landscape yes -maxpect yes
+		$object.g postscript output $file
 	}
-	foreach {file} $args break
-	$object.g postscript configure -landscape yes -maxpect yes
-	$object.g postscript output $file
 }
 
 scrolledgraph method point {x y} {

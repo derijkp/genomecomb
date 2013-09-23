@@ -559,7 +559,7 @@ mainw method view {newview} {
 		}
 		summarygraph {
 			destroy $object.graph
-			scrolledgraph $object.graph
+			scrolledgraph $object.graph -datafile $view(file)
 			# Extral::event listen $object.graph selchanged [list Classy::todo $object summarygraph_redrawselect]
 			Extral::event listen $object.graph querychanged [list Classy::todo $object summarygraph_redraw querychanged]
 			grid $object.graph -row 5 -column 2 -sticky nesw
