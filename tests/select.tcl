@@ -448,6 +448,28 @@ test select {group calc col, multiple cols} {
 	exec diff data/expected-selectgroup.tsv tmp/result.tsv
 } {}
 
+test select {group calc col in groupcol, multiple cols} {
+	cg select -g test_gene \
+	-gc {type {snp del} {coding=if($test_impact regexp "CDS","coding","noncoding")} {} count,min(begin),max(begin),max(end),avg(begin)} \
+	data/expected-annotate-vars_annottest-gene_test.tsv tmp/result.tsv
+	exec diff data/expected-selectgroup.tsv tmp/result.tsv
+} {}
+
+test select {group calc col used in group, multiple cols} {
+	cg select -f {{coding=if($test_impact regexp "CDS","coding","noncoding")} *} \
+	-g {coding} \
+	-gc {type {snp del} count,min(begin),max(begin),max(end),avg(begin)} \
+	data/expected-annotate-vars_annottest-gene_test.tsv tmp/result.tsv
+	exec diff data/expected-selectgroupcoding.tsv tmp/result.tsv
+} {}
+
+test select {group calc col defined in group, multiple cols} {
+	cg select -g {{coding=if($test_impact regexp "CDS","coding","noncoding")}} \
+	-gc {type {snp del} count,min(begin),max(begin),max(end),avg(begin)} \
+	data/expected-annotate-vars_annottest-gene_test.tsv tmp/result.tsv
+	exec diff data/expected-selectgroupcoding.tsv tmp/result.tsv
+} {}
+
 test select {group distinct} {
 	cg select -g type -gc {sample {} count,distinct(coverage)} data/expected_near-vars1-reg_annot.sft
 } {type	sample1-count	sample1-distinct_coverage	sample2-count	sample2-distinct_coverage

@@ -193,6 +193,55 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	regsub -all \n [string trim $group] { } group
 	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list}
 	unset -nocomplain calccols
+	# more than one groupcol not supported (yet)
+	set groupcol [lindex $groupcols 0]
+	regsub -all \n [string trim $groupcol] { } groupcol
+	if {![llength $groupcol]} {
+		set groupcol count
+	}
+	set grouptypelist [split [list_pop groupcol] ,]
+	# check groupcol for presence of sample field
+	set gsamples [select_parse_for_samples $groupcol $header]
+	# parse grouptypes (aggregate results), and see which functions are needed
+	set grouptypes [select_parse_grouptypes $grouptypelist]
+	# check for calculated fields in group and groupcol, add to qposs and qfields for making precalc
+	set curpos 0
+	foreach el $group {
+		set pos [string first = $el]
+		if {$pos != -1} {
+			set field [string range $el 0 [expr {$pos-1}]]
+			set code [string range $el [expr {$pos+1}] end]
+			lset group $curpos $field
+			lappend qposs [list code $code]
+			lappend qfields $field
+		}
+		incr curpos
+	}
+	set curpos 0
+	foreach {el values} $groupcol {
+		set pos [string first = $el]
+		if {$pos != -1} {
+			set field [string range $el 0 [expr {$pos-1}]]
+			set code [string range $el [expr {$pos+1}] end]
+			lset groupcol $curpos $field
+			lappend qposs [list code $code]
+			lappend qfields $field
+		}
+		incr curpos 2
+	}
+	set curpos 1
+	foreach {func el} $grouptypes {
+		set pos [string first = $el]
+		if {$pos != -1} {
+			set field [string range $el 0 [expr {$pos-1}]]
+			set code [string range $el [expr {$pos+1}] end]
+			lset grouptypes $curpos $field
+			lappend qposs [list code $code]
+			lappend qfields $field
+		}
+		incr curpos 2
+	}
+	# make precalc, add functions for calculated columns
 	set precalc {}
 	set num 0
 	set tclcode "package require genomecomb\n"
@@ -208,18 +257,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		}
 		incr num
 	}
-	# more than one groupcol not supported (yet)
-	set groupcol [lindex $groupcols 0]
-	regsub -all \n [string trim $groupcol] { } groupcol
-	if {![llength $groupcol]} {
-		set groupcol count
-	}
-	set grouptypelist [split [list_pop groupcol] ,]
-	# check groupcol for presence of sample field
-	set gsamples [select_parse_for_samples $groupcol $header]
-	# parse grouptypes (aggregate results), and see which functions are needed
-	set grouptypes [select_parse_grouptypes $grouptypelist]
-	# colactions will be executed only when the colquery fits
+	# make colactions, which will be executed only when the colquery fits
 	set addcols {}
 	foreach sample $gsamples {
 		# also make query for skipping data for which no cols will be made (colquery)
@@ -237,7 +275,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 				lappend groupname $field
 			}
 		}
-		append colactions \t\t\t\t\t "set _groupname \[list [join $groupname { }]\]" \n
+#		append colactions \t\t\t\t\t "set _groupname \[list [join $groupname { }]\]" \n
+		append colactions \t\t\t\t\t "set _groupname \"[join $groupname \t]\"" \n
 		# first see what I need to calculate requested aggregates
 		unset -nocomplain todoa
 		foreach {func field} $grouptypes {
@@ -303,7 +342,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			foreach col $cols {
 				@calcresults@
 			}
-			puts "[join $_groupname \t]\t[join $result \t]"
+			puts "$_groupname\t[join $result \t]"
 		}
 		exit
 	} [list @neededfields@ $neededfields @pquery@ $pquery \
