@@ -258,7 +258,7 @@ scrolledgraph method add {table {xtitle {}} {ytitle {}}} {
 		set ys [list_subindex $table $pos]
 		::$object.$vnum.y set $ys
 		set amin [min [lmath_min [list_lremove $ys {Inf -Inf NaN ""}]] $amin]
-		set amax [max [lmath_max [list_lremove $ys {Inf -Inf NaN} ""]] $amax]
+		set amax [max [lmath_max [list_lremove $ys {Inf -Inf NaN ""}]] $amax]
 		set basecolor [lindex $dcolors $vnum]
 		if {$basecolor eq ""} {set basecolor blue}
 		lappend data(entries) $name
