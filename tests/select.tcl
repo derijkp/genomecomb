@@ -71,8 +71,8 @@ exec cg select -s num  -f "num mixed" -q {
 2	a2}
 
 test select {default -s -} {
-	exec cg select -s - data/expected-test1000glow.vcf2sft tmp/result.tsv
-	exec diff data/expected-test1000glow.vcf2sft tmp/result.tsv
+	exec cg select -s - data/expected-test1000glow.vcf2tsv tmp/result.tsv
+	exec diff data/expected-test1000glow.vcf2tsv tmp/result.tsv
 } {}
 
 test select {-f *} {
@@ -414,17 +414,31 @@ snp	8}
 
 test select {group 2 fields} {
 	cg select -g {type alt} data/expected-annotate-vars_annottest-gene_test.tsv
-} {type-alt	count
-del-	4
-ins-GG	1
-snp-A	11
-snp-A,T	1
-snp-C	6
-snp-C,T	1
-snp-G	5
-snp-T	15
-snp-T,C,A	1
-sub-GGG	1}
+} {type	alt	count
+del		4
+ins	GG	1
+snp	A	11
+snp	A,T	1
+snp	C	6
+snp	C,T	1
+snp	G	5
+snp	T	15
+snp	T,C,A	1
+sub	GGG	1}
+
+test select {group 2 fields, one calculated} {
+	cg select -g {type altx="${alt}x"} data/expected-annotate-vars_annottest-gene_test.tsv
+} {type	altx	count
+del	x	4
+ins	GGx	1
+snp	A,Tx	1
+snp	Ax	11
+snp	C,Tx	1
+snp	Cx	6
+snp	Gx	5
+snp	T,C,Ax	1
+snp	Tx	15
+sub	GGGx	1}
 
 test select {group calc col, multiple cols} {
 	cg select -f {{coding=if($test_impact regexp "CDS","coding","noncoding")} *} \
@@ -492,16 +506,16 @@ test select {group where -g has sample} {
 
 test select {group where -g has sample and non-sample field} {
 	cg select -g {coverage type} -gc {sample {} count} data/expected_near-vars1-reg_annot.sft
-} {coverage-type	sample1-count	sample2-count
-0-snp	0	4
-1-snp	4	0
-32-del	1	0
-32-ins	1	0
-35-snp	0	2
-41-del	0	1
-41-ins	0	1
-47-snp	2	0
-52-snp	0	6
-54-snp	6	0}
+} {coverage	type	sample1-count	sample2-count
+0	snp	0	4
+1	snp	4	0
+32	del	1	0
+32	ins	1	0
+35	snp	0	2
+41	del	0	1
+41	ins	0	1
+47	snp	2	0
+52	snp	0	6
+54	snp	6	0}
 
 testsummarize

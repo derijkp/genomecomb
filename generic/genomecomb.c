@@ -50,17 +50,17 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 		Tcl_WrongNumArgs(interp, 1, argv, "queryproc varcolumns outcolumns ?verbose?");
 		return TCL_ERROR;
 	}
-	if (Tcl_ListObjGetElements(interp, argv[2], &listobjc, &listobjv) != TCL_OK) {
-		return TCL_ERROR;
-	}
-	if (Tcl_ListObjGetElements(interp, argv[3], &listoutc, &listoutv) != TCL_OK) {
-		return TCL_ERROR;
-	}
 	if (argc == 5) {
 		if (Tcl_GetIntFromObj(interp, argv[4], &verbose) != TCL_OK) {
 			return TCL_ERROR;
 		}
 		next = verbose;
+	}
+	if (Tcl_ListObjGetElements(interp, argv[2], &listobjc, &listobjv) != TCL_OK) {
+		return TCL_ERROR;
+	}
+	if (Tcl_ListObjGetElements(interp, argv[3], &listoutc, &listoutv) != TCL_OK) {
+		return TCL_ERROR;
 	}
 	cols = (int *)Tcl_Alloc(listobjc*sizeof(int));
 	for (i = 0 ; i < listobjc ; i++) {
