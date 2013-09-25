@@ -181,7 +181,7 @@ proc job_finddep {pattern idsVar timeVar checkcompressed} {
 	lappend ids {*}[list_fill [llength $files] {}]
 	foreach file [array names cgjob_id $pattern] {
 		if {[info exists cgjob_rm($file)]} continue
-		if {[inlist $files $file]} {
+		if {![job_running $cgjob_id($file)]} {
 			unset cgjob_id($file)
 			continue
 		}
@@ -225,7 +225,7 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 	foreach file [array names cgjob_id [file normalize $glob]] {
 		if {[info exists cgjob_rm($file)]} continue
 		if {![regexp ^[file normalize $pattern]\$ $file]} continue
-		if {[inlist $files $file]} {
+		if {![job_running $cgjob_id($file)]} {
 			unset cgjob_id($file)
 			continue
 		}
@@ -724,10 +724,12 @@ proc job_init {args} {
 	set cgjob(force) 0
 	set cgjob(queue) {}
 	set cgjob(id) 1
+	set cgjob(debug) 0
 	set cgjob(resubmit) 1
 	set cgjob(runcmd) {cg source}
 	set job_logdir [file normalize [pwd]/log_jobs]
 	interp alias {} job_process {} job_process_direct
+	interp alias {} job_running {} job_running_direct
 	interp alias {} job_wait {} job_process_direct_wait
 	job_args $args
 }

@@ -20,7 +20,7 @@ proc job_process_par_marktargets {targets ptargets rmtargets id} {
 		}
 	}
 	foreach ptarget $ptargets {
-		if {[get cgjob_id($ptarget) q] eq "q"} {
+		if {[get cgjob_ptargets($ptarget) q] eq "q"} {
 			set cgjob_ptargets($ptarget) $id
 		}
 	}
@@ -34,7 +34,7 @@ proc job_process_par_checkptargetsfinished {} {
 	set done 0
 	foreach ptarget [array names cgjob_ptargets] {
 		set jobid $cgjob_ptargets($ptarget)
-		if {![job_process_par_checkjobid $jobid]} {
+		if {![job_running $jobid]} {
 			unset -nocomplain cgjob_ptargets($ptarget)
 			incr done
 		}

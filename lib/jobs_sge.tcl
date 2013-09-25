@@ -2,12 +2,12 @@ proc job_process_sge_init {} {
 	# we will use par (parallel) code with some specifics for sge
 	if {[info commands job_process_par] eq ""} {auto_load job_process_par}
 	interp alias {} job_process {} job_process_par
+	interp alias {} job_running {} job_running_sge
 	interp alias {} job_wait {} job_process_sge_wait
 	interp alias {} job_process_par_submit {} job_process_sge_submit
-	interp alias {} job_process_par_checkjobid {} job_process_sge_checkjobid
 }
 
-proc job_process_sge_checkjobid {jobid} {
+proc job_running_sge {jobid} {
 	expr {[isint $jobid] && ![catch {exec qstat -j $jobid}]} 
 }
 

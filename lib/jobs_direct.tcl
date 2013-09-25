@@ -1,6 +1,11 @@
 proc job_process_direct_init {} {
 	interp alias {} job_process {} job_process_direct
+	interp alias {} job_running {} job_running_direct
 	interp alias {} job_wait {} job_process_direct_wait
+}
+
+proc job_running_direct {job} {
+	return 0
 }
 
 proc stderr2file {fileout {fileerr {}}} {

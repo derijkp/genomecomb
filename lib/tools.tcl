@@ -356,6 +356,14 @@ proc gzfile {args} {
 	return [lindex $args 0]
 }
 
+proc gzexists {filename {checkcompressed 1}} {
+	if {$checkcompressed} {
+		expr {[file exists $filename] || [file exists $filename.rz] || [file exists $filename.gz] ||[file exists $filename.bgz] || [file exists $filename.bz2]}
+	} else {
+		file exists $filename
+	}
+}
+
 proc checkfile {args} {
 	foreach filename $args {
 		if {![catch {glob $filename} list]} {

@@ -7,12 +7,12 @@ proc job_process_distr_init {} {
 	# we will use par (parallel) code with some specifics for distr
 	if {[info commands job_process_par] eq ""} {auto_load job_process_par}
 	interp alias {} job_process {} job_process_par
+	interp alias {} job_running {} job_running_distr
 	interp alias {} job_wait {} job_process_distr_wait
 	interp alias {} job_process_par_submit {} job_process_distr_submit
-	interp alias {} job_process_par_checkjobid {} job_process_distr_checkjobid
 }
 
-proc job_process_distr_checkjobid {jobnum} {
+proc job_running_distr {jobnum} {
 	global cgjob_distr_running
 	info exists cgjob_distr_running($jobnum)
 }
