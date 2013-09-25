@@ -62,10 +62,10 @@ proc job_args {jobargs} {
 				job_distribute [lindex $jobargs $pos]
 				incr pos
 			}
-			-s - -silent - --silent {
+			-silent {
 				set cgjob(silent) 1
 			}
-			-r - -runcmd {
+			-runcmd {
 				set cgjob(runcmd) [lindex $jobargs $pos]
 				incr pos
 			}
