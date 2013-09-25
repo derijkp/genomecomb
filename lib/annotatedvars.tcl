@@ -433,8 +433,6 @@ proc var2annotvar {file genefile outfile} {
 		}
 		set cache(cor1) $cor1
 		set cache($f1) [list_sub $cache($f1) $cache(cor1)]
-		
-		error "header error in $file (change in CG format?)"
 	}
 	set cache(extrapos) $extrapos
 	set cache(extranum) $extranum
