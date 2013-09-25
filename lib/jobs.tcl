@@ -274,8 +274,8 @@ proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar checkcom
 		} else {
 			job_lognf $job "dependency ok ($pattern): $files"
 		}
-		lappend finaldeps {*}$files
-		foreach file $files {
+		foreach file [list_remdup $files] {
+			lappend finaldeps $file
 			set targets [lrange [regexp -all -inline ^[file normalize $pattern]\$ $file] 1 end]
 			if {!$targetvarslist} {
 				lappend targetvars {*}$targets
