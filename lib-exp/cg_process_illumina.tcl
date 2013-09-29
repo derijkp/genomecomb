@@ -105,7 +105,7 @@ proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
 		-S $target.temp >@ stdout 2>@ stderr
 		file rename $target.temp $target
 	}
-	job bowtie2_bam -deps $result.sam -targets $result.bam -vars {result} -code {
+	job bowtie2_bam-$sample -deps $result.sam -targets $result.bam -vars {result} -code {
 		puts "making $target"
 		catch {exec samtools view -S -h -b -o $result.ubam $result.sam >@ stdout 2>@ stderr}
 		catch {exec samtools sort $result.ubam $result.temp >@ stdout 2>@ stderr}
@@ -113,14 +113,14 @@ proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
 		file delete $result.ubam
 		file delete $result.sam
 	}
-	job bowtie2_index -deps $result.bam -targets $result.bam.bai -code {
+	job bowtie2_index-$sample -deps $result.bam -targets $result.bam.bai -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
-#	job bowtie2_coverage -deps $result.bam -targets {coverage coverage/coverage-$sample-.FINISHED} -vars {sample} -code {
+#	job bowtie2_coverage-$sample -deps $result.bam -targets {coverage coverage/coverage-$sample-.FINISHED} -vars {sample} -code {
 #		cg bam2coverage $dep coverage-bowtie2-$sample/coverage-bowtie2-$sample
 #	}
-#	job bowtie2_coverage -deps $result.bam -targets sreg-$sample.tsv -vars {sample} -code {
+#	job bowtie2_coverage-$sample -deps $result.bam -targets sreg-$sample.tsv -vars {sample} -code {
 #		cg regextract -above 1 7 $dep > $target.temp
 #		file rename $target.temp $target
 #	}
@@ -148,7 +148,7 @@ proc map_bwa_job {refseq files sample {readgroupdata {}} {pre {}}} {
 	set result ${pre}map-bwa-$sample
 	set readgroupdata [array get a]
 	set bwarefseq [bwarefseq_job $refseq]
-	job bwa -deps [list $bwarefseq {*}$files] -targets $result.sam -vars {readgroupdata sample} -skip $result.bam -code {
+	job bwa-$sample -deps [list $bwarefseq {*}$files] -targets $result.sam -vars {readgroupdata sample} -skip $result.bam -code {
 		puts "making $target"
 		set bwarefseq [list_shift deps]
 		set rg {}
@@ -173,7 +173,7 @@ proc map_bwa_job {refseq files sample {readgroupdata {}} {pre {}}} {
 		file rename $target.temp $target
 		file delete bwa1.fastq bwa2.fastq
 	}
-	job bwa_bam -deps $result.sam -targets $result.bam -vars {result} -code {
+	job bwa2bam-$sample -deps $result.sam -targets $result.bam -vars {result} -code {
 		puts "making $target"
 		catch {exec samtools view -S -h -b -o $result.ubam $result.sam >@ stdout 2>@ stderr}
 		catch {exec samtools sort $result.ubam $result.temp >@ stdout 2>@ stderr}
@@ -181,14 +181,14 @@ proc map_bwa_job {refseq files sample {readgroupdata {}} {pre {}}} {
 		file delete $result.ubam
 		file delete $result.sam
 	}
-	job bwa_index -deps $result.bam -targets $result.bam.bai -code {
+	job bwa_index-$sample -deps $result.bam -targets $result.bam.bai -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
-#	job bwa_coverage -deps $result.bam -targets {coverage coverage/coverage-$sample-.FINISHED} -vars {sample} -code {
+#	job bwa_coverage-$sample -deps $result.bam -targets {coverage coverage/coverage-$sample-.FINISHED} -vars {sample} -code {
 #		cg bam2coverage $dep coverage-bwa-$sample/coverage-bwa-$sample
 #	}
-#	job bwa_coverage -deps $result.bam -targets sreg-$sample.tsv -vars {sample} -code {
+#	job bwa_coverage-$sample -deps $result.bam -targets sreg-$sample.tsv -vars {sample} -code {
 #		cg regextract -above 1 7 $dep > $target.temp
 #		file rename $target.temp $target
 #	}
@@ -294,7 +294,8 @@ proc bam_clean_job {bamfile refseq sample args} {
 			puts "making $target"
 		}
 	}
-	job bamclean_remtemp-$root -deps {$dir/$pre-$root.bam} -vars {cleanup} -code {
+	job bamclean_remtemp-$root -deps [list $dir/$pre-$root.bam {*}$cleanup] -vars {cleanup} \
+		-rmtargets $cleanup -code {
 		foreach file $cleanup {
 			catch {file delete $file}
 		}
@@ -345,7 +346,7 @@ proc var_sam_job {bamfile refseq args} {
 		exec samtools mpileup -uDS -f $refseq $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
 		file rename $target.temp $target
 	}
-	job ${pre}varall-sam_2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv \
+	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv \
 	-vars {regselect} -code {
 		cg vcf2tsv $dep $target.temp
 		if {$regselect eq ""} {
@@ -369,7 +370,7 @@ proc var_sam_job {bamfile refseq args} {
 	# find regions
 	sreg_sam_job ${pre}sreg-sam-$root ${pre}varall-sam-$root.tsv ${pre}sreg-sam-$root.tsv
 	# cleanup
-	job clean_${pre}var-sam-$root -deps {${pre}var-sam-$root.tsv} -vars {pre root} -targets {} \
+	job clean_${pre}var-sam-$root -deps {${pre}var-sam-$root.tsv ${pre}varall-sam-$root.tsv} -vars {pre root} -targets {} \
 	-rmtargets {${pre}uvar-sam-$root.tsv ${pre}varall-sam-$root.vcf ${pre}varall-sam-$root.vcf.idx} -code {
 		catch {file delete ${pre}uvar-sam-$root.tsv}
 		catch {file delete ${pre}varall-sam-$root.vcf}
@@ -402,7 +403,7 @@ proc var_gatk_job {bamfile refseq args} {
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	set gatkrefseq [gatk_refseq_job $refseq]
-	job ${pre}varall-gatk-$root -deps [list $file $gatkrefseq] \
+	job ${pre}varall-gatk-$root -deps [list $file $gatkrefseq $file.bai] \
 	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk args} -code {
 		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
 			{*}$args -R $dep2 -I $dep -o $target.temp \
@@ -525,7 +526,7 @@ proc process_illumina {destdir dbdir} {
 		cd $dir
 		job_logdir $dir/log_jobs
 		# convert existing vcfs
-		set files [gzfiles *.vcf]
+		set files [gzfiles var-*.vcf]
 		foreach file $files {
 			set target [file root [gzroot $file]].tsv
 			job vcf2sft-$file -deps $file -targets $target -code {
