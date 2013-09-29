@@ -407,19 +407,19 @@ proc gztemp {filename} {
 	set ext [file extension $filename]
 	switch $ext {
 		.gz {
-			set tempfile [tempfile]
+			set tempfile [scratchfile get]
 			exec gunzip -d -c $filename > $tempfile
 			set ::gztemp_files($tempfile) 1
 			return $tempfile
 		}
 		.rz {
-			set tempfile [tempfile]
+			set tempfile [scratchfile get]
 			exec razip -d -c $filename > $tempfile
 			set ::gztemp_files($tempfile) 1
 			return $tempfile
 		}
 		.bz2 {
-			set tempfile [tempfile]
+			set tempfile [scratchfile get]
 			exec bzcat $filename > $tempfile
 			set ::gztemp_files($tempfile) 1
 			return $tempfile
