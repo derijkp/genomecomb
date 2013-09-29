@@ -7,6 +7,24 @@ source tools.tcl
 # use these for trying out individual tests
 set testname direct
 proc test_job_init {} {uplevel job_init}
+proc gridwait {} {}
+if 0 {
+	set testname "-d 30"
+	proc test_job_init {} {uplevel job_init -silent -d 30}
+	proc gridwait {} {}
+
+	set testname "-d sge"
+	proc test_job_init {} {uplevel job_init -silent -d sge}
+	proc gridwait {} {
+		while 1 {
+			after 500
+			puts -nonewline .
+			flush stdout
+			if {[exec qstat] eq ""} break
+		}
+	}
+
+}
 
 catch {file delete -force {*}[glob tmp/*]}
 
@@ -261,6 +279,31 @@ test job "basic $testname" {
 } {6+7+8=21
 2
 } {Intentional job error}}
+
+test job "basic status $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	jobtest ../data test testh
+	job_wait
+	gridwait
+	set result [list \
+		[lsort -dict [glob test/*]] \
+		[glob test/log_jobs/all.txt.log] \
+		[file_read test/all.txt] \
+		[file_read test/sum2-test3.txt] \
+		[string range [file_read test/log_jobs/joberror.err] 0 20] \
+	]
+	cd $::testdir
+	set result
+	# status
+	cd $::testdir/tmp
+	job_init -d status
+	jobtest ../data test testh
+	job_wait
+	glob jobdeps.dot jobdeps.ps
+} {jobdeps.dot jobdeps.ps}
 
 test job "--force 0 $testname" {
 	cd $::testdir
@@ -596,6 +639,29 @@ test job "rmtargets $testname" {
 	cd $::testdir
 	set result
 } {{data2.txt log_jobs} 1}
+
+test job "do not run if deps not done $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	job data1 -targets data1.txt -code {
+		after 1000
+		file_write data1.txt test1
+	}
+	job data2 -deps {data1.txt} -targets data2.txt -code {
+		# intentional error: target not made
+	}
+	job rmdata1 -deps {data1.txt data2.txt} -rmtargets data1.txt -code {
+		after 1000
+		file delete data1.txt
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]]]
+	cd $::testdir
+	set result
+} {{data1.txt log_jobs}}
 
 # end of block
 }

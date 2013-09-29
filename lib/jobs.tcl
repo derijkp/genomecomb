@@ -523,9 +523,13 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 	append cmd "[list set checkcompressed $checkcompressed]\n"
 	set num 1
 	foreach dep $adeps {
-		append cmd "[list set dep$num $dep]\n"
+		if {$num <= 10} {
+			append cmd "[list set dep$num $dep]\n"
+		}
 		incr num
-		if {$num > 10} break
+		if {$dep ne ""} {
+			append cmd "if \{!\[[list file exists $dep]\]\} \{error \"dependency $dep not found\"\}\n"
+		}
 	}
 	set num 1
 	foreach targetvar $targetvars {
