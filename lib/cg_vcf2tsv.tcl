@@ -13,18 +13,24 @@ exec tclsh "$0" ${1+"$@"}
 
 proc cg_vcf2tsv {args} {
 	set len [llength $args]
+	set tempfile [scratchfile get]
 	if {$len == 0} {
-		exec vcf2tsv | cg select -s - <@ stdin >@ stdout
+		exec vcf2tsv <@ stdin > $tempfile
+		cg select -s - $tempfile >@ stdout
 	} elseif {$len == 1} {
 		set infile [lindex $args 0]
-		exec {*}[gzcat $infile] $infile | vcf2tsv | cg select -s - >@ stdout
+		exec vcf2tsv [gztemp $infile] $tempfile
+		cg select -s - $tempfile >@ stdout
 	} elseif {$len == 2} {
 		set infile [lindex $args 0]
-		exec {*}[gzcat $infile] $infile | vcf2tsv | cg select -s - > [lindex $args 1]
+		exec vcf2tsv [gztemp $infile] $tempfile
+		cg_select -s - $tempfile [lindex $args 1]
 	} else {
 		errorformat vcf2tsv
 		exit 1
 	}
+#	file delete $tempfile
+#	gzrmtemp $infile
 }
 
 proc cg_vcf2sft {args} {
