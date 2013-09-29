@@ -72,6 +72,8 @@ proc job_process_sge_submit {job runfile args} {
 	}
 	set dir [file dir $job]
 	catch {file delete $job.finished}
+	catch {file delete $job.out}
+	catch {file delete $job.err}
 	set jnum [exec qsub -N j$name -q all.q -o $job.out -e $job.err {*}$options $runfile]
 	regexp {[0-9]+} $jnum jobnum
 	return $jobnum

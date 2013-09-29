@@ -114,6 +114,8 @@ proc job_process_distr_submit {job runfile args} {
 	catch {file delete $job.finished}
 	if {![info exists cgjob_distr(num)]} {set cgjob_distr(num) 0}
 	set jobnum [incr cgjob_distr(num)]
+	catch {file delete $job.out}
+	catch {file delete $job.err}
 	lappend cgjob_distr(queue) [list $jobnum $deps $name $job $runfile $options]
 	job_process_distr_jobmanager
 	return $jobnum
