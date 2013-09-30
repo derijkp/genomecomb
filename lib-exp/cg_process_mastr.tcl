@@ -1,16 +1,31 @@
-proc tsv2bed {file bedfile chromname args} {
-	if {$chromname eq ""} {
-		cg select -f "$args" $file $bedfile.temp
+proc tsv2bed {file bedfile args} {
+	if {[llength $args]} {
+		set chromname [list_shift args]
+		if {$chromname eq ""} {
+			file_write $bedfile.temp \#[join $args \t]\n
+			cg select -sh /dev/null -f "$args" $file >> $bedfile.temp
+		} else {
+			file_write $bedfile.temp \#chrom\t[join $args \t]\n
+			cg select -sh /dev/null -f "\{chrom=\"$chromname\"\} $args" $file >> $bedfile.temp
+		}
 	} else {
-		cg select -f "\{chrom=\"$chromname\"\} $args" $file $bedfile.temp
+		set f [gzopen $file]
+		set header [tsv_open $f]
+		close $f
+		set poss [tsv_basicfields $header 3]
+		set fields [list_sub $header $poss]
+		file_write $bedfile.temp \#[join $fields \t]\n
+		cg select -sh /dev/null -f "$fields" $file >> $bedfile.temp		
 	}
-	set f [open $bedfile.temp]
-	set o [open $bedfile w]
-	set header [gets $f]
-	puts $o #$header
-	fcopy $f $o
-	close $f; close $o
-	file delete $bedfile.temp
+	file rename $bedfile.temp $bedfile
+}
+
+proc tsv2bed_job {file} {
+	upvar job_logdir job_logdir
+	job tsv2bed-[file tail $file] -deps $file -targets [file root $file].bed -code {
+		tsv2bed $dep $target
+	}
+	return [file root $file].bed
 }
 
 proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTGACGATCGCAAGACTCGGCAGCATCTCCA}} {

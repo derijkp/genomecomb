@@ -117,13 +117,24 @@ proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
-#	job bowtie2_coverage-$sample -deps $result.bam -targets {coverage coverage/coverage-$sample-.FINISHED} -vars {sample} -code {
-#		cg bam2coverage $dep coverage-bowtie2-$sample/coverage-bowtie2-$sample
+}
+
+
+proc bam2reg_job {bamfile {mincoverage 5}} {
+	upvar job_logdir job_logdir
+	set bamfile [file normalize $bamfile]
+	set pre [lindex [split $bamfile -] 0]
+	set dir [file dir $bamfile]
+	set file [file tail $bamfile]
+	set root [join [lrange [split [file root $file] -] 1 end] -]
+#	job bam2coverage-$root -deps $bamfile -targets {$dir/coverage-$root $dir/coverage-$root/coverage-$root.FINISHED} -vars {root} -code {
+#		cg bam2coverage $dep $target/coverage-$root
 #	}
-#	job bowtie2_coverage-$sample -deps $result.bam -targets sreg-$sample.tsv -vars {sample} -code {
-#		cg regextract -above 1 7 $dep > $target.temp
-#		file rename $target.temp $target
-#	}
+	job cov$mincoverage-$root -deps $bamfile -targets $dir/sreg-cov$mincoverage-$root.tsv -vars {mincoverage} -code {
+		cg regextract -above 1 [expr {$mincoverage-1}] $dep > $target.temp
+		file rename $target.temp $target
+	}
+	return $dir/sreg-cov$mincoverage-$root.tsv
 }
 
 proc bwarefseq_job {refseq} {
@@ -420,7 +431,7 @@ proc var_gatk_job {bamfile refseq args} {
 	}
 	job ${pre}uvar-gatk-$root -deps ${pre}varall-gatk-$root.tsv -targets ${pre}uvar-gatk-$root.tsv \
 	-skip {${pre}var-gatk-$root.tsv} -code {
-		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 3} \
+		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
 			-f {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 {sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))} *} \
 			$dep $target.temp
 		file rename $target.temp $target
@@ -566,7 +577,9 @@ proc process_illumina {destdir dbdir} {
 		var_sam_job $cleanedbam $refseq
 		lappend todo sam-dsbwa-$sample
 		# gatk variant calling on map-rdsbwa
-		var_gatk_job $cleanedbam $refseq
+		set cov5reg [bam2reg_job $cleanedbam 5]
+		set cov5bed [tsv2bed_job $cov5reg]
+		var_gatk_job $cleanedbam $refseq {} -L $cov5bed
 		lappend todo gatk-dsbwa-$sample
 	}
 	job_logdir $destdir/log_jobs
