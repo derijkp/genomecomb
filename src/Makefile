@@ -1,6 +1,6 @@
 # ARCH should be defined by caller
-CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/completegnomics/src
-#CFLAGS=-Wall -O2
+#CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/completegnomics/src
+CFLAGS=-Wall -O2
 TOOLS= tools.c tools.h debug.h
 HASHTOOLS=hash.h hash.c
 BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h
