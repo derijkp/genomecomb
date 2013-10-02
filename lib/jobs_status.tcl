@@ -18,24 +18,28 @@ proc job_running_status {job} {
 	return 1
 }
 
-proc job_process_pargraph {job status checkcompressed adeps ids targets ptargets} {
-	global graph job_name graphid curgraphid
+proc job_process_pargraph {job jobname status duration checkcompressed adeps ids targets ptargets} {
+	global graph job_name graphid curgraphid graphdone
 #	set adeps [list_remdup $adeps]
 #	set ids [list_remdup $ids]
 #	set targets [list_remdup $targets]
 #	set ptargets [list_remdup $ptargets]
 	if {![info exists graphid($job)]} {
+		set args {}
 		set graphid($job) [incr curgraphid]
-		if {$status eq "running"} {
-			set color "color=green,"
-		} elseif {$status eq "skipped"} {
-			set color "color=orange,"
-		} elseif {$status ne "ok"} {
-			set color "color=red,"
-		} else {
-			set color {}
+		set label [file tail $jobname]
+		if {$duration ne "" && ![inlist {skpped error} $status]} {
+			append label "\\n$duration"
 		}
-		lappend graph "$graphid($job) \[${color}label=\"[file tail $job]\"\]"
+		if {$status eq "running"} {
+			lappend args "color=green"
+		} elseif {$status eq "skipped"} {
+			lappend args "color=orange"
+		} elseif {$status ne "ok"} {
+			lappend args "color=red"
+		}
+		lappend args "label=\"$label\""
+		lappend graph "$graphid($job) \[[join $args ,]\]"
 	}
 	set jobid $graphid($job)
 	foreach file $adeps {
@@ -50,7 +54,10 @@ proc job_process_pargraph {job status checkcompressed adeps ids targets ptargets
 	foreach id $ids {
 		if {$id eq ""} continue
 		set id $job_name($id)
-		lappend graph "$graphid($id) -> $jobid \[color=grey\]"
+		if {![info exists graphdone($graphid($id),$jobid)]} {
+			lappend graph "$graphid($id) -> $jobid \[color=grey\]"
+			set graphdone($graphid($id),$jobid) 1
+		}
 	}
 	foreach file $targets {
 		if {$file eq ""} continue
@@ -153,6 +160,32 @@ proc job_process_parstatus {} {
 			continue
 		}
 		cd $pwd
+		# get job log information -> duration
+		set duration {}
+		if {[file exists $job.log]} {
+			set temp [split [file_read $job.log] \n]
+			unset -nocomplain time ; unset -nocomplain endtime
+			foreach line $temp {
+				if {[regexp {(.*)[ \t]starting} $line temp time]} {
+					unset -nocomplain endtime
+				} else {
+					regexp {(.*)[ \t]ending} $line temp endtime
+				}
+			}
+			if {[info exists time]} {
+				set time [time_scan $time]
+				if {[info exists endtime]} {
+					set endtime [time_scan $endtime]
+					set extratime {}
+				} else {
+					set endtime [time_scan [clock format [clock seconds]]]
+					set extratime ...
+				}
+				set diff [lmath_calc $endtime - $time]
+				set tduration [time_format [list 0 [lindex $diff end]] "%H %M %S"]
+				set duration "[expr {24*[lindex $diff 0]+[lindex $tduration 0]}]:[lindex $tduration 1]:[lindex $tduration 2]$extratime"
+			}
+		}
 		# check if job is already running, if so, mark targets with jobid
 		set jobnum [job_process_par_jobid $job]
 		if {[isint $jobnum]} {
@@ -175,15 +208,15 @@ proc job_process_parstatus {} {
 				set tempptargets {}
 			}
 			job_process_par_marktargets $temptargets $tempptargets $temprmtargets $jobnum
-			puts "running\t$jobname\t$jobnum"
+			puts "running\t$jobname\t$jobnum\t$duration"
 			lappend jobsrunning $jobnum
 			catch {job_finddeps $job $deps newtargetvars 0 ids time $checkcompressed $ftargetvars} adeps
-			set job_name($jobnum) $jobname
-			job_process_pargraph $jobname running $checkcompressed $adeps $ids $temptargets $tempptargets
+			set job_name($jobnum) $job
+			job_process_pargraph $job $jobname running $duration $checkcompressed $adeps $ids $temptargets $tempptargets
 			continue
 		} else {
 			set jobnum [incr curjobnum]
-			set job_name($jobnum) $jobname
+			set job_name($jobnum) $job
 		}
 		# check deps, skip if not fullfilled
 		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $checkcompressed $ftargetvars} adeps]} {
@@ -236,17 +269,17 @@ proc job_process_parstatus {} {
 		# indicate targets
 		job_process_par_marktargets [list_concat $targets $temp] $ptargets $rmtargets $jobnum
 		if {!$newtargets} {
-			puts "ok\t$jobname\t$jobnum\ttargets found"
-			job_process_pargraph $jobname ok $checkcompressed $adeps $ids $targets $ptargets
+			puts "ok\t$jobname\t$jobnum\t$duration\ttargets found"
+			job_process_pargraph $job $jobname ok $duration $checkcompressed $adeps $ids $targets $ptargets
 			continue
 		}
 		# job_log $job "-------------------- submitting $jobname --------------------"
 		if {[file exists $job.err]} {
-			puts "error\t$jobname\t$jobnum\terror file available"
-			job_process_pargraph $jobname error $checkcompressed $adeps $ids $targets $ptargets
+			puts "error\t$jobname\t$jobnum\t\terror file available"
+			job_process_pargraph $job $jobname error $duration $checkcompressed $adeps $ids $targets $ptargets
 		} else {
-			puts "wrong\t$jobname\t$jobnum\ttargets not ok, no error file"
-			job_process_pargraph $jobname wrong $checkcompressed $adeps $ids $targets $ptargets
+			puts "wrong\t$jobname\t$jobnum\t\ttargets not ok, no error file"
+			job_process_pargraph $job $jobname wrong $duration $checkcompressed $adeps $ids $targets $ptargets
 		}
 		set cgjob_running($job) $jobnum
 	}
