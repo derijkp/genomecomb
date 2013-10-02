@@ -414,7 +414,11 @@ proc var_gatk_job {bamfile refseq args} {
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	set gatkrefseq [gatk_refseq_job $refseq]
-	job ${pre}varall-gatk-$root -deps [list $file $gatkrefseq $file.bai] \
+	set deps [list $file $gatkrefseq $file.bai]
+	foreach {key value} $args {
+		if {$key eq "-L"} {lappend deps $value}
+	}
+	job ${pre}varall-gatk-$root -deps $deps \
 	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk args} -code {
 		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
 			{*}$args -R $dep2 -I $dep -o $target.temp \
