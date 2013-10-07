@@ -9,6 +9,7 @@ proc tcl::mathfunc::lmin args {
 			}
 		}
 	}
+	if {$min == Inf} {return NaN}
 	return $min
 }
 
@@ -23,6 +24,7 @@ proc tcl::mathfunc::lmax args {
 			}
 		}
 	}
+	if {$min == -Inf} {return NaN}
 	return $max
 }
 

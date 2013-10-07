@@ -92,11 +92,11 @@ If the chromosome value in the query or the data file starts with chr, this part
 ; **between(value,{min max})**: true of value is >= min and <= max (e.g. "between($begin,1000,2000)")
 This function can also be used as an operand, eg "$field between {1 2}"
 ; **min(a1,a2,...)**: returns the minimum of a1, a2, ...
-a1, etc. can be a list of numbers (separated by commas, spaces or ;).
-If one of the args is not a number it will be replaced by Inf
+min will return an error if one of the values is not a number. Use lmin if some values are
+list of numbers, or not numbers.
 ; **max(a1,a2,...)**: returns the maximum of a1, a2, ...
-a1, etc. can be a list of numbers (separated by commas, spaces or ;).
-If one of the args is not a number it will be replaced by -Inf
+max will return an error if one of the values is not a number. Use lmax if some values are
+list of numbers, or not numbers.
 ; **avg(value,...)**: returns the average of the values given. Non-number values are ignored.
 If no number was given, the answer will be NaN
 ; **isnum(value)**: true if value is a valid number
@@ -108,11 +108,11 @@ Some fields can contain multiple values in the form of a comma (or ; or space) s
 list (further called vector).
 The following functions allow use of vectors in queries
 
-; **lmin(vector, ...)**: the minimum of the list of numbers in vector(s). A default value (Inf) is given for non-numeric characters (-)
+; **lmin(vector, ...)**: the minimum of the list of numbers in vector(s). A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
+; **lmax(vector, ...)**: the maximum of the vector. A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
 ; **lmind(vector, ..., def)**: same as lmin, but you can set the default value for non-numeric characters is given as the last parameter
-; **lminpos(vector, ...)**: position (within the index) of the minimum value. If more than one vector is given, the position of the minimum of all vectors is given
-; **lmax(vector, ...)**: the maximum of the vector. A default value (-Inf) is given for non-numeric characters (-)
 ; **lmaxd(vector, ..., def)**: same as lmax, but you can set the default value for non-numeric characters is given as the last parameter
+; **lminpos(vector, ...)**: position (within the index) of the minimum value. If more than one vector is given, the position of the minimum of all vectors is given
 ; **lmaxpos(vector, ...)**: position (within the index) of the maximum value. If more than one vector is given, the position of the maximum of all vectors is given
 This can also be used as an operand: vector shares valuelist
 
