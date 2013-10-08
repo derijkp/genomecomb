@@ -22,7 +22,7 @@ proc cg_extracthomopolymers {args} {
 		set indices [regexp -all -inline -indices {A{6,}|G{6,}|C{6,}|T{6,}} $seq]
 		putslog Writing
 		list_foreach {begin end} $indices {
-			puts $o $chr\t$begin\t$end\t[string index $seq $begin]\t[expr {$end-$begin+1}]
+			puts $o $chr\t$begin\t[expr {$end+1}]\t[string index $seq $begin]\t[expr {$end-$begin+1}]
 		}
 	}
 }
