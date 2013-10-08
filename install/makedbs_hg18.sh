@@ -115,6 +115,8 @@ if [ -f "reg_${build}_homopolymer.tsv" ]; then
 else
 	cg extracthomopolymers genome_${build}.ifas > reg_${build}_homopolymer.tsv.temp
 	mv reg_${build}_homopolymer.tsv.temp reg_${build}_homopolymer.tsv
+        cg maketabix reg_${build}_homopolymer.tsv
+        gunzip -c reg_${build}_homopolymer.tsv.gz > reg_${build}_homopolymer.tsv
 fi
 echo -e "fields\t{base size}" > reg_${build}_homopolymer.tsv.opt
 
