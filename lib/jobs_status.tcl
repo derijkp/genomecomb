@@ -183,7 +183,8 @@ proc job_process_parstatus {} {
 				}
 				set diff [lmath_calc $endtime - $time]
 				set tduration [time_format [list 0 [lindex $diff end]] "%H %M %S"]
-				set duration "[expr {24*[lindex $diff 0]+[lindex $tduration 0]}]:[lindex $tduration 1]:[lindex $tduration 2]$extratime"
+				regexp {[1-9]*[0-9]$} [lindex $tduration 0] hours
+				set duration "[expr {24*[lindex $diff 0]+$hours}]:[lindex $tduration 1]:[lindex $tduration 2]$extratime"
 			}
 		}
 		# check if job is already running, if so, mark targets with jobid
