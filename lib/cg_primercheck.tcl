@@ -39,7 +39,7 @@ proc primercheck_merge {d1 d2} {
 
 proc primercheck_epcr {hits1 hits2 rhits1 rhits2 maxsize maxamplicons} {
 	# return [list [list 10 10000 10200 1 2]]
-	if {$hits1 eq "many" || $hits1 eq "many" || $hits1 eq "many" || $hits1 eq "many"} {
+	if {$hits1 eq "many" || $hits2 eq "many" || $rhits1 eq "many" || $rhits2 eq "many"} {
 		return many
 	}
 	set flist [primercheck_merge $hits1 $hits2]
