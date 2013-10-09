@@ -235,8 +235,8 @@ scrolledgraph method add {table {xtitle {}} {ytitle {}}} {
 	}
 #	set amin [min [lmath_min $xs] [::$object.ends.x index 0]]
 #	set amax [max [lmath_max $xs] [::$object.ends.x index 1]]
-	set amin [lmath_min [list_lremove $xs {Inf -Inf NaN}]]
-	set amax [lmath_max [list_lremove $xs {Inf -Inf NaN}]]
+	set amin [lmath_min [list_lremove $xs {Inf -Inf NaN "" "?" "-"}]]
+	set amax [lmath_max [list_lremove $xs {Inf -Inf NaN "" "?" "-"}]]
 	if {[info exists labels]} {
 		set amin [expr {$amin - 1}]
 		set amax [expr {$amax + 1}]
@@ -259,8 +259,8 @@ scrolledgraph method add {table {xtitle {}} {ytitle {}}} {
 		}
 		set ys [list_subindex $table $pos]
 		::$object.$vnum.y set $ys
-		set amin [min [lmath_min [list_lremove $ys {Inf -Inf NaN ""}]] $amin]
-		set amax [max [lmath_max [list_lremove $ys {Inf -Inf NaN ""}]] $amax]
+		set amin [min [lmath_min [list_lremove $ys {Inf -Inf NaN "" "?" "-"}]] $amin]
+		set amax [max [lmath_max [list_lremove $ys {Inf -Inf NaN "" "?" "-"}]] $amax]
 		set basecolor [lindex $dcolors $vnum]
 		if {$basecolor eq ""} {set basecolor blue}
 		lappend data(entries) $name
@@ -309,8 +309,8 @@ scrolledgraph method addscatter {table xcol ycol datacols} {
 	if {[catch {::$object.x set $xs}]} {
 		error "x column may only contain numbers"
 	}
-	set amin [lmath_min [list_lremove $xs {Inf -Inf NaN}]]
-	set amax [lmath_max [list_lremove $xs {Inf -Inf NaN}]]
+	set amin [lmath_min [list_lremove $xs {Inf -Inf NaN "" "?" "-"}]]
+	set amax [lmath_max [list_lremove $xs {Inf -Inf NaN "" "?" "-"}]]
 	if {![isdouble $amin]} {set amin 0}
 	if {![isdouble $amax]} {set amax 0}
 	::$object.ends.x set [list $amin $amax]
@@ -321,8 +321,8 @@ scrolledgraph method addscatter {table xcol ycol datacols} {
 	if {[catch {::$object.y set $ys}]} {
 		error "y column may only contain numbers"
 	}
-	set amin [lmath_min [list_lremove $ys {Inf -Inf NaN}]]
-	set amax [lmath_max [list_lremove $ys {Inf -Inf NaN}]]
+	set amin [lmath_min [list_lremove $ys {Inf -Inf NaN "" "?" "-"}]]
+	set amax [lmath_max [list_lremove $ys {Inf -Inf NaN "" "?" "-"}]]
 	if {![isdouble $amin]} {set amin 0}
 	if {![isdouble $amax]} {set amax 0}
 	::$object.ends.y set [list $amin $amax]
@@ -343,8 +343,8 @@ scrolledgraph method addscatter {table xcol ycol datacols} {
 			set name $field
 			vector create ::$object.$vnum.w
 			set ws [list_subindex $table $datapos]
-			set min [lmath_min [list_lremove $ws {Inf -Inf NaN}]]
-			set max [lmath_max [list_lremove $ws {Inf -Inf NaN}]]
+			set min [lmath_min [list_lremove $ws {Inf -Inf NaN "" "?" "-"}]]
+			set max [lmath_max [list_lremove $ws {Inf -Inf NaN "" "?" "-"}]]
 			::$object.$vnum.w set $ws
 			set basecolor [lindex $dcolors $vnum]
 			if {$basecolor eq ""} {set basecolor blue}
