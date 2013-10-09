@@ -187,8 +187,8 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		# clean bamfile (do not mark duplicates, realign)
 		set cleanbam [bam_clean_job ${pre}map-${aligner}-$name.bam $refseq $sample -removeduplicates 0]
 		# samtools variant calling on map-rs${aligner}
-		var_sam_job $cleanbam $refseq $pre -r $mastrdir/reg-inner-$mastrname.tsv
 		if {$useminigenome} {
+			var_sam_job $cleanbam $refseq -pre $pre
 			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets varall-sam-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
@@ -197,11 +197,13 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 			}
 			sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv
 			job_razip varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv
+		} else {
+			var_sam_job $cleanbam $refseq -pre $pre -bed $mastrdir/reg-inner-$mastrname.bed
 		}
 		lappend todo sam-rs${aligner}-$sample
 		if {$useminigenome} {
 			# gatk variant calling on map-rs${aligner}
-			var_gatk_job $cleanbam $refseq $pre -dt NONE
+			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE
 			job remapgatk-varall-$name -deps {reg_varall-gatk-rs${aligner}-$name.tsv $mapfile} -targets varall-gatk-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
@@ -212,7 +214,7 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 			job_razip varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv 
 		} else {
 			# gatk variant calling on map-rs${aligner}
-			var_gatk_job $cleanbam $refseq $pre -dt NONE -L $mastrdir/reg-inner-$mastrname.bed
+			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE -bed $mastrdir/reg-inner-$mastrname.bed
 		}
 		lappend todo gatk-rs${aligner}-$sample
 	}

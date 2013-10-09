@@ -214,7 +214,7 @@ proc gatk_refseq_job refseq {
 	}
 	file mkdir $refseq.gatk
 	set picard [picard]
-	job bam_clean_sam_faidx-[file tail $nrefseq] -deps $nrefseq -targets {$nrefseq.fai} -code {
+	job gatkrefseq_faidx-[file tail $nrefseq] -deps $nrefseq -targets {$nrefseq.fai} -code {
 		exec samtools faidx $dep
 	}
 	set dict [file root $nrefseq].dict
@@ -339,9 +339,19 @@ proc sreg_sam_job {job varallfile resultfile} {
 
 proc var_sam_job {bamfile refseq args} {
 	upvar job_logdir job_logdir
-	set pre [list_shift args]
-	array set a $args
-	set regselect [get a(-r) ""]
+	set pre ""
+	set opts {}
+	foreach {key value} $args {
+		if {$key eq "-l"} {lappend deps $value}
+		if {$key eq "-bed"} {
+			lappend opts -l $value
+			lappend deps $value
+		} elseif {$key eq "-pre"} {
+			set pre $value
+		} else {
+			lappend opts $key $value
+		}
+	}
 	set dir [file normalize [file dir $bamfile]]
 	set keeppwd [pwd]
 	cd $dir
@@ -351,22 +361,16 @@ proc var_sam_job {bamfile refseq args} {
 	job ${pre}var_sam_faidx -deps $refseq -targets {$refseq.fai} -code {
 		exec samtools faidx $dep
 	}
+	set deps [list $file $refseq $refseq.fai {*}$deps]
 	job ${pre}varall-sam-$root -deps {$file $refseq.fai} -targets {${pre}varall-sam-$root.vcf} \
-		-vars {refseq} -skip ${pre}varall-sam-$root.tsv -code {
+		-vars {refseq opts} -skip ${pre}varall-sam-$root.tsv -code {
 		# bcftools -v for variant only
-		exec samtools mpileup -uDS -f $refseq $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
+		exec samtools mpileup -uDS -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
 		file rename $target.temp $target
 	}
-	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv \
-	-vars {regselect} -code {
+	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv -code {
 		cg vcf2tsv $dep $target.temp
-		if {$regselect eq ""} {
-			file rename $target.temp $target
-		} else {
-			cg regselect $target.temp $regselect > $target.temp2
-			file delete $target.temp
-			file rename $target.temp2 $target
-		}
+		file rename $target.temp $target
 	}
 	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \
@@ -405,7 +409,19 @@ proc sreg_gatk_job {job varallfile resultfile} {
 
 proc var_gatk_job {bamfile refseq args} {
 	upvar job_logdir job_logdir
-	set pre [list_shift args]
+	set pre ""
+	set opts {}
+	foreach {key value} $args {
+		if {$key eq "-L"} {lappend deps $value}
+		if {$key eq "-bed"} {
+			lappend opts -L $value
+			lappend deps $value
+		} elseif {$key eq "-pre"} {
+			set pre $value
+		} else {
+			lappend opts $key $value
+		}
+	}
 	set gatk [gatk]
 	## Produce gatk SNP calls
 	set dir [file dir $bamfile]
@@ -414,14 +430,11 @@ proc var_gatk_job {bamfile refseq args} {
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	set gatkrefseq [gatk_refseq_job $refseq]
-	set deps [list $file $gatkrefseq $file.bai]
-	foreach {key value} $args {
-		if {$key eq "-L"} {lappend deps $value}
-	}
+	set deps [list $file $gatkrefseq $file.bai {*}$deps]
 	job ${pre}varall-gatk-$root -deps $deps \
-	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk args} -code {
+	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk opts} -code {
 		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
-			{*}$args -R $dep2 -I $dep -o $target.temp \
+			{*}$opts -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 50.0 -stand_emit_conf 10.0 -dcov 1000 \
 			--annotateNDA \
 			-glm BOTH --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr
@@ -596,13 +609,14 @@ proc process_illumina {destdir {dbdir {}}} {
 		map_bwa_job $refseq $files $sample
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign 0]
-		# samtools variant calling on map-dsbwa
-		var_sam_job $cleanedbam $refseq
-		lappend todo sam-dsbwa-$sample
-		# gatk variant calling on map-rdsbwa
+		# extract regions with coverage >= 5
 		set cov5reg [bam2reg_job $cleanedbam 5]
 		set cov5bed [tsv2bed_job $cov5reg]
-		var_gatk_job $cleanedbam $refseq {} -L $cov5bed
+		# samtools variant calling on map-dsbwa
+		var_sam_job $cleanedbam $refseq -bed $cov5bed
+		lappend todo sam-dsbwa-$sample
+		# gatk variant calling on map-rdsbwa
+		var_gatk_job $cleanedbam $refseq -bed $cov5bed
 		lappend todo gatk-dsbwa-$sample
 	}
 	job_logdir $destdir/log_jobs
