@@ -24,7 +24,7 @@ proc tcl::mathfunc::lmax args {
 			}
 		}
 	}
-	if {$min == -Inf} {return NaN}
+	if {$max == -Inf} {return NaN}
 	return $max
 }
 
