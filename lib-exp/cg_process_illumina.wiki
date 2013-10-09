@@ -1,7 +1,7 @@
 = Process_illumina =
 
 == Format ==
-cg process_illumina ?options? dir dbdir
+cg process_illumina ?options? dir ?dbdir?
 
 == Summary ==
 process an illumina sequencing project, results in genomecomb dir with multicompar, etc.
@@ -11,9 +11,11 @@ Variants are called using gatk and samtools.
 == Description ==
 
 == Arguments ==
-; **dir**: directory with illumina data for different samples, each sample in a sub directory.
+; **dir**: project directory with illumina data for different samples, each sample in a sub directory.
 The proc will search for fastq files in dir/samplename/fastq/
-; **dbdir**: directory containing reference data (genome sequence, annotation, ...)
+; **dbdir**: directory containing reference data (genome sequence, annotation, ...).
+dbdir can also be given in a projectinfo.tsv file in the project directory. process_illumina 
+called with the dbdir parameter will create the projectinfo.tsv file.
 
 == Options ==
 supports job options (-d)

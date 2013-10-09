@@ -520,9 +520,28 @@ proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 	}
 }
 
-proc process_illumina {destdir dbdir} {
-	set refseq [glob $dbdir/genome_*.ifas]
+proc process_illumina {destdir {dbdir {}}} {
 	set destdir [file normalize $destdir]
+	# check projectinfo
+	if {[file exists $destdir/projectinfo.tsv]} {
+		set infod [infofile_read $destdir/projectinfo.tsv]
+	} else {
+		set infod {}
+	}
+	if {$dbdir eq {}} {
+		if {![dict exists $infod dbdir]} {
+			error "error: no dbdir parameter given, and it is also not in the projectinfo.tsv"
+		}
+		set dbdir [dict get $infod dbdir]
+	} else {
+		if {[dict exists $infod dbdir] && $dbdir ne [dict get $infod dbdir]} {
+			error "error: The dbdir parameter given differs from the one in the projectinfo.tsv"
+		}
+	}
+	dict set infod dbdir $dbdir
+	infofile_write $destdir/projectinfo.tsv $infod
+	# start
+	set refseq [glob $dbdir/genome_*.ifas]
 	set samples {}
 	set experiment [file tail $destdir]
 	foreach dir [dirglob $destdir */fastq] {
@@ -596,7 +615,7 @@ proc process_illumina {destdir dbdir} {
 
 proc cg_process_illumina {args} {
 	set args [job_init {*}$args]
-	if {[llength $args] < 2} {
+	if {[llength $args] < 1} {
 		errorformat process_illumina
 		exit 1
 	}
