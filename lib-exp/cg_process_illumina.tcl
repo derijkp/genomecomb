@@ -40,12 +40,13 @@ proc fastq_clipadapters {files targets {adapterfile {}}} {
 		set adapterfile $::externdir/adaptors.fa
 	}
 	# clip primers, quality
-	set out {}
-	foreach target $targets {
-		file mkdir [file dir $target]
-		lappend out -o $target.temp
+	if {[llength $files] == 1} {
+		exec fastq-mcf -a -o [lindex $targets 0].temp $adapterfile [lindex $files 0] 2>@ stderr
+	} else {
+		foreach {f1 f2} $files {t1 t2} $targets {
+			exec fastq-mcf -a -o $t1.temp -o $t2.temp $adapterfile $f1 $f2 2>@ stderr
+		}
 	}
-	exec fastq-mcf -a {*}$out $adapterfile {*}$files 2>@ stderr
 	foreach target $targets {
 		file rename $target.temp $target
 	}
@@ -54,6 +55,7 @@ proc fastq_clipadapters {files targets {adapterfile {}}} {
 proc fastq_clipadapters_job {files {adapterfile {}}} {
 	upvar job_logdir job_logdir
 	set targets {}
+	set files [ssort -natural $files]
 	foreach file $files {
 		set file [file normalize [gzroot $file]]
 		set root [file root $file]
