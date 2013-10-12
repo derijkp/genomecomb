@@ -235,10 +235,12 @@ proc bam_clean_job {bamfile refseq sample args} {
 	array set opt $args
 	set removeduplicates 1
 	set realign 1
+	set realignopts {}
 	foreach {key value} $args {
 		switch -- $key {
 			-removeduplicates {set removeduplicates $value}
 			-realign {set realign $value}
+			-bed {lappend realignopts -L $value}
 			default {error "bam_clean_job: unknown option $key"}
 		}
 	}
@@ -294,8 +296,8 @@ proc bam_clean_job {bamfile refseq sample args} {
 	if {$realign} {
 		# realign around indels
 		job bamrealign-$root -deps {$dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict} -targets {$dir/$pre-r$root.bam} \
-		-vars {gatkrefseq gatk pre} -code {
-			exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals 2>@ stderr >@ stdout
+		-vars {gatkrefseq gatk pre realignopts} -code {
+			exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
 			exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp 2>@ stderr >@ stdout
 			catch {file rename $target.temp.bai $target.bai}
 			catch {file delete $target.intervals}
@@ -609,15 +611,15 @@ proc process_illumina {destdir {dbdir {}}} {
 		#
 		# map using bwa
 		map_bwa_job $refseq $files $sample
-		# clean bamfile (mark duplicates, realign)
-		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign 0]
 		# extract regions with coverage >= 5
-		set cov5reg [bam2reg_job $cleanedbam 5]
+		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
 		set cov5bed [tsv2bed_job $cov5reg]
-		# samtools variant calling on map-dsbwa
+		# clean bamfile (mark duplicates, realign)
+		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign 0 -bed $cov5bed]
+		# samtools variant calling on map-rdsbwa
 		var_sam_job $cleanedbam $refseq -bed $cov5bed
 		lappend todo sam-dsbwa-$sample
-		# gatk variant calling on map-rdsbwa
+		# gatk variant calling on map-dsbwa
 		var_gatk_job $cleanedbam $refseq -bed $cov5bed
 		lappend todo gatk-dsbwa-$sample
 	}
