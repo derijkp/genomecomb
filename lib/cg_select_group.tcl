@@ -20,9 +20,9 @@ proc select_parse_grouptypes {grouptypelist} {
 	return $grouptypes
 }
 
-proc select_parse_for_samples {groupcol header} {
+proc select_parse_for_samples {group groupcol header} {
 	set gsamples {}
-	foreach {field values} $groupcol {
+	foreach {field values} [list_concat $group $groupcol] {
 		if {$field eq "sample"} {
 			if {[llength $values]} {
 				if {[string first * $values] == -1} {
@@ -30,7 +30,7 @@ proc select_parse_for_samples {groupcol header} {
 				} else {
 					set gsamples {} 
 					foreach pattern $values {
-						lappend gsamples [samples $header $pattern]
+						lappend gsamples {*}[samples $header $pattern]
 					}
 					set gsamples [list_remdup $gsamples]
 				}
@@ -199,6 +199,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	# these are gathered in precalc
 	# precalc is run for every match (sets some variables used in query, etc.)
 	regsub -all \n [string trim $group] { } group
+	if {[llength $group] == 1} {lappend group {}}
 	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list}
 	unset -nocomplain calccols
 	# more than one groupcol not supported (yet)
@@ -209,12 +210,12 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	}
 	set grouptypelist [split [list_pop groupcol] ,]
 	# check groupcol for presence of sample field
-	set gsamples [select_parse_for_samples $groupcol $header]
+	set gsamples [select_parse_for_samples $group $groupcol $header]
 	# parse grouptypes (aggregate results), and see which functions are needed
 	set grouptypes [select_parse_grouptypes $grouptypelist]
-	# check for calculated fields in group and groupcol, add to qposs and qfields for making precalc
+	# check for calculated fields in group, groupcol and grouptypes, add to qposs and qfields for making precalc
 	set curpos 0
-	foreach el $group {
+	foreach {el values} $group {
 		set pos [string first = $el]
 		if {$pos != -1} {
 			set field [string range $el 0 [expr {$pos-1}]]
@@ -265,19 +266,34 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		}
 		incr num
 	}
-	# make colactions, which will be executed only when the colquery fits
+	# make colactions, which will be executed only when the colquery and rowquery is true
 	set addcols {}
 	foreach sample $gsamples {
 		# also make query for skipping data for which no cols will be made (colquery)
 		set groupname {}
 		set col {}
+		set rowquery {}
 		set colquery {}
 		set colactions {}
 		# calculate groupname
-		foreach field $group {
-			set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
+		foreach {field filter} $group {
+			if {$field eq "sample"} {
+				lappend groupname $sample
+				continue
+			} else {
+				set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
+			}
 			if {$fieldused ne ""} {
 				lappend groupname \$\{$fieldused\}
+				if {[llength $filter]} {
+					if {[string first * $filter] == -1} {
+						lappend rowquery "\[inlist \{$filter\} \$\{$fieldused\}\]"
+					} else {
+						foreach temp $filter {
+							lappend rowquery "\[string match \{$temp\} \$\{$fieldused\}\]"
+						}
+					}
+				}
 			} else {
 				lappend groupname $field
 			}
@@ -327,8 +343,9 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		append colactions [tsv_select_addaggregatecalc $todolist]
 		# create calcresults, that calculate the final agregate results for each group (runs after looping through the file)
 		set calcresults [tsv_select_addaggregateresult $grouptypes $header $sample calccols]
-		if {[llength $colquery]} {
-			append addcols \t\t\t\t "if \{[join $colquery { && }]\} \{\n[string trimright $colactions]\n\t\t\t\t\}\n"
+		set q [list_concat $rowquery $colquery]
+		if {[llength $q]} {
+			append addcols \t\t\t\t "if \{[join $q { && }]\} \{\n[string trimright $colactions]\n\t\t\t\t\}\n"
 		} else {
 			append addcols $colactions
 		}
@@ -366,7 +383,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	} [list @neededfields@ $neededfields @pquery@ $pquery \
 		@precalc@ [join [list_remdup $precalc] \n] @addcols@ $addcols \
 		@neededcols@ $neededcols @calcresults@ $calcresults \
-		@grouptypes@ [list $grouptypes] @grouph@ $group @verbose@ $verbose]
+		@grouptypes@ [list $grouptypes] @grouph@ [list_unmerge $group] @verbose@ $verbose]
 	]]
 	return $tclcode
 }

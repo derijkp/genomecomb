@@ -35,13 +35,16 @@ This will also accept name variations of the fields, such as chrom instead of ch
 ; **-h**: return header fields in file
 ; **-n**: return sample names in file
 ; **-g groupfields**: with this option a summary table is returned. This will contain one line with 
-information for each value or combination of values in the given groupfield(s). If hte -gc option is not given,
-the table will contain one extra column showing the number of lines in the data file containing the group 
-value. Other columns can be added using the -gc option.
-Fields used in groupfields may be calculated columns; these shoud be defined in the -f option.
+information for each value or combination of values in the given groupfield(s).  **groupfields** has the 
+following format: "field1 filter1 field2 filter2 ...". Only values given in 
+the filters (is a lists) will be shown. If a filter is empty, all values are retained. The filters can 
+contain wildcards (*)
+If the -gc option is not given, the table will contain one extra column showing the number of lines in 
+the data file containing the group value. Other columns can be added using the -gc option.
+Fields used in groupfields may be calculated columns.
 This option will use memory proportional to the size of the result set!
 ; **-gc groupcols**: show other columns instead of count when using the -g option. **groupcols** has the 
-following format: "field1 values1 field2 values2 ... functions". A different column will be made in the 
+following format: "field1 filter1 field2 filter2 ... functions". A different column will be made in the 
 summary table for each combination of values in field1,field2,... Only values given in 
 values1,... (a space separated list) will be included. If value1, ... is empty (e.g. type {}), all values for this 
 field in the file will be included.
@@ -57,7 +60,7 @@ values in group and column. Supported functions are
 ; stddev(field): standard deviation
 ; distinct(field): lists (comma separated) all distinct values found in the field
 ; list(field): lists (comma separated) all values found in the field (the same one can occur multiple times)
-The field sample in groupcols is interpreted specially: If sample is present in groupcols, you can
+The field sample in groups or groupcols is interpreted specially: If sample is present, you can
 give fieldnames without the sample suffix (in both -gc and -g), and the sample name (of the current 
 column) will be automatically added where fields in the form field-sample are available.
 
