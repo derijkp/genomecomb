@@ -845,13 +845,16 @@ proc infofile_write {file data} {
 	file rename -force $file.temp $file
 }
 
-proc samples {header} {
+proc samples {header {pattern *}} {
 	set names {}
 	foreach col $header {
 		set pos [string first - $col]
 		if {$pos != -1} {
 			incr pos
-			lappend names [string range $col $pos end]
+			set name [string range $col $pos end]
+			if {[string match $pattern $name]} {
+				lappend names $name
+			}
 		}
 	}
 	list_remdup $names

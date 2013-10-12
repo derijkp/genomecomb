@@ -25,7 +25,15 @@ proc select_parse_for_samples {groupcol header} {
 	foreach {field values} $groupcol {
 		if {$field eq "sample"} {
 			if {[llength $values]} {
-				set gsamples $values
+				if {[string first * $values] == -1} {
+					set gsamples $values
+				} else {
+					set gsamples {} 
+					foreach pattern $values {
+						lappend gsamples [samples $header $pattern]
+					}
+					set gsamples [list_remdup $gsamples]
+				}
 			} else {
 				set gsamples [samples $header]
 			}
@@ -303,7 +311,13 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			if {$fieldused ne ""} {
 				lappend col \$\{$fieldused\}
 				if {[llength $filter]} {
-					lappend colquery "\[inlist \{$filter\} \$\{$fieldused\}\]"
+					if {[string first * $filter] == -1} {
+						lappend colquery "\[inlist \{$filter\} \$\{$fieldused\}\]"
+					} else {
+						foreach temp $filter {
+							lappend colquery "\[string match \{$temp\} \$\{$fieldused\}\]"
+						}
+					}
 				}
 			}
 		}
