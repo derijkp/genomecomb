@@ -67,7 +67,7 @@ proc tsv_select_sampleusefield {header field sample calccolsVar {neededfieldsVar
 		set fieldused ${field}-$sample
 		lappend neededfields $fieldused
 	} else {
-		error "unknown field \"$field\""
+		return ""
 	}
 	return $fieldused
 }
@@ -267,9 +267,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		set colactions {}
 		# calculate groupname
 		foreach field $group {
-			if {![catch {
-				set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
-			}]} {
+			set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
+			if {$fieldused ne ""} {
 				lappend groupname \$\{$fieldused\}
 			} else {
 				lappend groupname $field
@@ -283,10 +282,13 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			foreach item [dict get $typetodoa $func] {
 				if {[inlist {percent gpercent} $func]} {
 					set fieldused {}
+					list_addnew todoa([list $field $fieldused]) $item
 				} else {
 					set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
+					if {$fieldused ne ""} {
+						list_addnew todoa([list $field $fieldused]) $item
+					}
 				}
-				list_addnew todoa([list $field $fieldused]) $item
 			}
 		}
 		set todolist [array get todoa]
@@ -298,9 +300,11 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			} else {
 				set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
 			}
-			lappend col \$\{$fieldused\}
-			if {[llength $filter]} {
-				lappend colquery "\[inlist \{$filter\} \$\{$fieldused\}\]"
+			if {$fieldused ne ""} {
+				lappend col \$\{$fieldused\}
+				if {[llength $filter]} {
+					lappend colquery "\[inlist \{$filter\} \$\{$fieldused\}\]"
+				}
 			}
 		}
 		append colactions \t\t\t\t\t {set resultgroups($_groupname) 1} \n
