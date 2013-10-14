@@ -109,7 +109,8 @@ proc job_process_distr_submit {job runfile args} {
 		}
 	}
 	set name "[file tail $job] $job"
-	regsub -all / $name __ name
+	# replace all invalid chars and replace invisible chars 
+	regsub -all {[^A-Za-z0-9_.-]} $name __ name
 	set dir [file dir $job]
 	catch {file delete $job.finished}
 	if {![info exists cgjob_distr(num)]} {set cgjob_distr(num) 0}
