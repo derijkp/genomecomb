@@ -82,7 +82,7 @@ Queries support all operators and functions provided by Tcl expr.
 Some extra functions are available:
 
 === Logical functions ===
-; **if(condition,true,false)**: if **condition** is true, the value for "true" will be returned, 
+; **if(condition,true,?condition2,true2, ...?false)**: if **condition** is true, the value for "true" will be returned, 
 otherwise the last parameter (**false**) is returned
 
 === Bio functions ===

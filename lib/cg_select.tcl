@@ -138,14 +138,22 @@ proc tsv_select_count {arguments header neededfieldsVar} {
 
 proc tsv_select_if {arguments header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
-	if {[llength $arguments] != 3} {
-		error "wrong # args for function if, must be: if(condition,true,false)"
+	if {[llength $arguments] < 3} {
+		error "wrong # args for function if, must be: if(condition1,true1,?condition2?,?true2?,...,false)"
 	}
-	foreach field {condition true false} q $arguments {
-		set q [tsv_select_precedence $q]
-		set $field "([tsv_select_detokenize $q $header neededfields])"
+	set q [list_pop arguments]
+	set q [tsv_select_precedence $q]
+	set false "([tsv_select_detokenize $q $header neededfields])"
+	set result {}
+	foreach {true condition} [list_reverse $arguments] {
+		set true [tsv_select_precedence $true]
+		set true "([tsv_select_detokenize $true $header neededfields])"
+		set condition [tsv_select_precedence $condition]
+		set condition "([tsv_select_detokenize $condition $header neededfields])"
+		set result "($condition ? $true : $false)"
+		set false $result
 	}
-	return "($condition ? $true : $false)"
+	return $result
 }
 
 proc tsv_select_catch {arguments header neededfieldsVar} {
