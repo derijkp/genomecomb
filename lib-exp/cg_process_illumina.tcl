@@ -67,6 +67,37 @@ proc fastq_clipadapters_job {files {adapterfile {}}} {
 	return $targets
 }
 
+proc gatkworkaround_tsv2bed_job {file refseq} {
+	upvar job_logdir job_logdir
+	job tsv2bed-[file tail $file] -deps {$file $refseq.index} -targets [file root $file].bed -code {
+		set f [open $dep2]
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			set chr [lindex $line 0]
+			set chr [chr_clip $chr]
+			set maxa($chr) [lindex $line 1 1]
+		}
+		close $f
+		set f [gzopen $dep]
+		set header [tsv_open $f]
+		set poss [tsv_basicfields $header 3]
+		set o [open $target.temp w]
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			set line [list_sub $line $poss]
+			foreach {chr begin end} $line break
+			set cchr [chr_clip $chr]
+			if {$end > $maxa($cchr)} {set end $maxa($cchr)}
+			if {$end == $begin} continue
+			puts $o $chr\t$begin\t$end
+		}
+		close $o
+		close $f
+		file rename $target.temp $target
+	}
+	return [file root $file].bed
+}
+
 proc bowtie2refseq_job {refseq} {
 	upvar job_logdir job_logdir
 	set bowtie2refseq $refseq.bowtie2/[file tail $refseq]
@@ -236,11 +267,15 @@ proc bam_clean_job {bamfile refseq sample args} {
 	set removeduplicates 1
 	set realign 1
 	set realignopts {}
+	set realigndeps {}
 	foreach {key value} $args {
 		switch -- $key {
 			-removeduplicates {set removeduplicates $value}
 			-realign {set realign $value}
-			-bed {lappend realignopts -L $value}
+			-bed {
+				lappend realignopts -L $value
+				lappend realigndeps $value
+			}
 			default {error "bam_clean_job: unknown option $key"}
 		}
 	}
@@ -295,7 +330,8 @@ proc bam_clean_job {bamfile refseq sample args} {
 	}
 	if {$realign} {
 		# realign around indels
-		job bamrealign-$root -deps {$dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict} -targets {$dir/$pre-r$root.bam} \
+		set deps [list $dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict {*}$realigndeps]
+		job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
 		-vars {gatkrefseq gatk pre realignopts} -code {
 			exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
 			exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp 2>@ stderr >@ stdout
@@ -613,15 +649,15 @@ proc process_illumina {destdir {dbdir {}}} {
 		map_bwa_job $refseq $files $sample
 		# extract regions with coverage >= 5
 		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
-		set cov5bed [tsv2bed_job $cov5reg]
+		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
 		# clean bamfile (mark duplicates, realign)
-		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign 0 -bed $cov5bed]
+		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign 1 -bed $cov5bed]
 		# samtools variant calling on map-rdsbwa
 		var_sam_job $cleanedbam $refseq -bed $cov5bed
-		lappend todo sam-dsbwa-$sample
-		# gatk variant calling on map-dsbwa
+		lappend todo sam-rdsbwa-$sample
+		# gatk variant calling on map-rdsbwa
 		var_gatk_job $cleanedbam $refseq -bed $cov5bed
-		lappend todo gatk-dsbwa-$sample
+		lappend todo gatk-rdsbwa-$sample
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
