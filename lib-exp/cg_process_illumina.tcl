@@ -35,6 +35,14 @@ proc gatk {} {
 	return $gatk
 }
 
+proc srma {} {
+	global srma
+	if {![info exists srma]} {
+		set srma [searchpath SRMA srma srma*]/srma.jar
+	}
+	return $srma
+}
+
 proc fastq_clipadapters {files targets {adapterfile {}}} {
 	if {$adapterfile eq ""} {
 		set adapterfile $::externdir/adaptors.fa
@@ -273,10 +281,19 @@ proc bam_clean_job {bamfile refseq sample args} {
 			-removeduplicates {set removeduplicates $value}
 			-realign {set realign $value}
 			-bed {
-				lappend realignopts -L $value
 				lappend realigndeps $value
+				# add to realignopts afterwards (if we know the realign method)
 			}
 			default {error "bam_clean_job: unknown option $key"}
+		}
+	}
+	if {$realign eq "srma"} {
+		foreach value $realigndeps {
+			lappend realignopts RANGES=$value
+		}
+	} else {
+		foreach value $realigndeps {
+			lappend realignopts -L $value
 		}
 	}
 	set pre [lindex [split $bamfile -] 0]
@@ -292,12 +309,12 @@ proc bam_clean_job {bamfile refseq sample args} {
 	if {$removeduplicates} {
 		lappend skips -skip $dir/$pre-ds$root.bam
 		lappend cleanup $dir/$pre-s$root.bam $dir/$pre-s$root.bam.bai
-		if {$realign} {
+		if {$realign ne "0"} {
 			lappend skips -skip $dir/$pre-rds$root.bam
 			lappend cleanup $dir/$pre-ds$root.bam $dir/$pre-ds$root.bam.bai
 		}
 	} else {
-		if {$realign} {
+		if {$realign ne "0"} {
 			lappend skips -skip $dir/$pre-rs$root.bam
 			lappend cleanup $dir/$pre-s$root.bam $dir/$pre-s$root.bam.bai
 		}
@@ -328,16 +345,27 @@ proc bam_clean_job {bamfile refseq sample args} {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
-	if {$realign} {
+	if {$realign ne "0"} {
 		# realign around indels
 		set deps [list $dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict {*}$realigndeps]
-		job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
-		-vars {gatkrefseq gatk pre realignopts} -code {
-			exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
-			exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp 2>@ stderr >@ stdout
-			catch {file rename $target.temp.bai $target.bai}
-			catch {file delete $target.intervals}
-			file rename $target.temp $target
+		if {$realign eq "srma"} {
+			set srma [srma]
+			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
+			-vars {gatkrefseq srma pre realignopts} -code {
+				exec java -jar $srma I=$dep O=$target.temp R=$gatkrefseq {*}$realignopts 2>@ stderr >@ stdout
+				catch {file rename $target.temp.bai $target.bai}
+				catch {file delete $target.intervals}
+				file rename $target.temp $target
+			}
+		} else {
+			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
+			-vars {gatkrefseq gatk pre realignopts} -code {
+				exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
+				exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp 2>@ stderr >@ stdout
+				catch {file rename $target.temp.bai $target.bai}
+				catch {file delete $target.intervals}
+				file rename $target.temp $target
+			}
 		}
 		set root r$root
 		job bamrealign_index-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai -code {
