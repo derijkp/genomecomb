@@ -402,7 +402,7 @@ proc var_sam_job {bamfile refseq args} {
 		exec samtools faidx $dep
 	}
 	set deps [list $file $refseq $refseq.fai {*}$deps]
-	job ${pre}varall-sam-$root -deps {$file $refseq.fai} -targets {${pre}varall-sam-$root.vcf} \
+	job ${pre}varall-sam-$root -deps $deps -targets {${pre}varall-sam-$root.vcf} \
 		-vars {refseq opts} -skip ${pre}varall-sam-$root.tsv -code {
 		# bcftools -v for variant only
 		exec samtools mpileup -uDS -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
