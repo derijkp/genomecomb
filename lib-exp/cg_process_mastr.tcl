@@ -72,7 +72,9 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 	}
 	set files [glob $illsrc/*.fastq*]
 	foreach file $files {
-		set sample [lindex [split [file tail $file] _] 0]
+		set sample [file tail $file]
+		regsub {_[^_]+_[^_]+_[^_]+_[^_]+\.fastq.*} $sample {} sample
+		regsub -all -- - $sample _ sample 
 		file mkdir $destdir/$sample/ori
 		file mkdir $destdir/$sample/ori/fastq
 		file mkdir $destdir/$sample
@@ -85,6 +87,7 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 	foreach file $files {
 		set tail [file tail $file]
 		foreach {sample barcode} [split $tail _.] break
+		regsub -all -- - $sample _ sample
 		file mkdir $destdir/$sample
 		file mkdir $destdir/$sample/ori
 		if {[file ext $file] eq ".bam"} {set ext bam} else {set ext bam.bai}
@@ -95,6 +98,7 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 	foreach file $files {
 		set tail [file tail $file]
 		foreach {sample barcode} [split $tail _.] break
+		regsub -all -- - $sample _ sample
 		if {$sample eq "tempvariants"} continue
 		file mkdir $destdir/$sample
 		file mkdir $destdir/$sample/ori
