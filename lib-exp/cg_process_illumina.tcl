@@ -339,7 +339,7 @@ proc bam_clean_job {bamfile refseq sample args} {
 		set root d$root
 	}
 	# index intermediate result
-	job bam_index-$pre-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai \
+	job bamindex-$pre-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai \
 	-skip {$dir/$pre-ds$root.bam} -skip {$dir/$pre-rs$root.bam} -skip {$dir/$pre-rds$root.bam} \
 	-code {
 		exec samtools index $dep >@ stdout 2>@ stderr
