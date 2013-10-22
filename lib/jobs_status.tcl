@@ -233,6 +233,7 @@ proc job_process_parstatus {} {
 		}
 		set targetvars $ftargetvars
 		lappend targetvars {*}$newtargetvars
+		if {$cgjob(force)} {set time force}
 		# check targets, if already done or running, skip
 		if {$ftargets ne ""} {
 			set targets [job_targetsreplace $ftargets $targetvars]

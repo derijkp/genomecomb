@@ -56,6 +56,7 @@ proc job_process_par_onepass {} {
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 		file mkdir [file dir $job]
+		set time 0
 		# If this job was previously blocked because of ptargets deps,
 		# the ptargets set to stop further processing are cleared here
 		# (They can still be reapplied later if they depend on ptargets that are not finished yet)
@@ -158,6 +159,7 @@ proc job_process_par_onepass {} {
 		file_write $job.deps $adeps
 		set targetvars $ftargetvars
 		lappend targetvars {*}$newtargetvars
+		if {$cgjob(force)} {set time force}
 		# check skip targets, if already done or running, skip
 		if {!$cgjob(force) && [llength $fskip]} {
 			set doskip 0

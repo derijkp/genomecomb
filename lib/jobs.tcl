@@ -181,13 +181,17 @@ proc job_finddep {pattern idsVar timeVar checkcompressed} {
 	lappend ids {*}[list_fill [llength $files] {}]
 	foreach file [array names cgjob_id $pattern] {
 		if {[info exists cgjob_rm($file)]} continue
-		if {![job_running $cgjob_id($file)]} {
-			unset cgjob_id($file)
-			continue
-		}
+# do not remove job, we want to keep the dependency chain intact,
+# even if one job stops prematurely
+#		if {![job_running $cgjob_id($file)]} {
+#			unset cgjob_id($file)
+#			continue
+#		}
 		lappend files $file
 		lappend ids $cgjob_id($file)
-		set time now
+		if {[job_running $cgjob_id($file)]} {
+			set time now
+		}
 	}
 	return $files
 }
@@ -195,6 +199,7 @@ proc job_finddep {pattern idsVar timeVar checkcompressed} {
 proc maxfiletime {file timeVar} {
 	upvar $timeVar time
 	if {$time eq "now"} {return $time}
+	if {$time eq "force"} {return $time}
 	set ftime [file mtime $file]
 	if {$ftime > $time} {set time $ftime}
 }
@@ -225,13 +230,17 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 	foreach file [array names cgjob_id [file normalize $glob]] {
 		if {[info exists cgjob_rm($file)]} continue
 		if {![regexp ^[file normalize $pattern]\$ $file]} continue
-		if {![job_running $cgjob_id($file)]} {
-			unset cgjob_id($file)
-			continue
-		}
+# do not remove job, we want to keep the dependency chain intact,
+# even if one job stops prematurely
+#		if {![job_running $cgjob_id($file)]} {
+#			unset cgjob_id($file)
+#			continue
+#		}
 		lappend files $file
 		lappend ids $cgjob_id($file)
-		set time now
+		if {[job_running $cgjob_id($file)]} {
+			set time now
+		}
 	}
 	return $files
 }
@@ -352,7 +361,7 @@ proc job_checktarget {job target time checkcompressed {newidsVar {}}} {
 		set files [checkfiles $target]
 	}
 	if {[llength $files]} {
-		if {$time ne "now"} {
+		if {$time ne "now" && $time ne "force"} {
 			foreach file $files {
 				if {[file mtime $file] < $time} {
 					set time now
@@ -369,6 +378,10 @@ proc job_checktarget {job target time checkcompressed {newidsVar {}}} {
 				file rename -force $file $file.old
 			}
 			return 0
+		} elseif {$time eq "force"} {
+			job_lognf $job "target overwrite (force): $target"
+			unset -nocomplain cgjob_id($target)
+			return 1
 		} else {		
 			job_lognf $job "target ok: $target"
 			unset -nocomplain cgjob_id($target)

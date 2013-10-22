@@ -66,7 +66,7 @@ proc job_process_sge_submit {job runfile args} {
 		lappend options -hard {*}$hard
 	}
 	set name "[file tail $job] $job"
-	regsub -all / $name __ name
+	regsub -all {[^A-Za-z0-9_.-]} $name __ name
 	if {[string length $name] > 200} {
 		set name [string range $name 0 100]....[string range $name end-100 end]
 	}

@@ -95,6 +95,7 @@ proc job_process_direct {} {
 		}
 		set targetvars $ftargetvars
 		lappend targetvars {*}$newtargetvars
+		if {$cgjob(force)} {set time force}
 		# check skip targets, if already done or running, skip
 		if {!$cgjob(force) && [llength $fskip]} {
 			set doskip 0

@@ -23,7 +23,6 @@ if 0 {
 			if {[exec qstat] eq ""} break
 		}
 	}
-
 }
 
 catch {file delete -force {*}[glob tmp/*]}
@@ -113,6 +112,7 @@ proc jobtest {args} {
 		file rename $target.temp $target
 	}
 	job allp2.txt -vars header -deps {^$destdir/sumpattern2-(.*)\.txt$} -targets {$destdir/allp2.txt} -code {
+		after 500
 		file_write $target.temp $header\n
 		exec cat {*}$deps >> $target.temp
 		file rename -force $target.temp $target
@@ -254,6 +254,157 @@ if {$testname eq "-d sge"} {
 }
 
 proc test_job_init {} $initcode
+
+test job "basic chain $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write test1.txt test1\n
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job job2 -deps {test2.txt} -targets {test3.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test3\n
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read test3.txt]]
+	cd $::testdir
+	set result
+} {{log_jobs test1.txt test2.txt test3.txt} {test1
+test2
+test3
+}}
+
+test job "foreach $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write test1.txt test1\n
+	file_write test2.txt test2\n
+	job job1 -foreach {^test(.*)\.txt$} -targets {rtest\1.txt} -code {
+		set c [file_read $dep]
+		file_write $target r${c}
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read rtest1.txt]]
+	cd $::testdir
+	set result
+} {{log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {rtest1
+}}
+
+test job "chained foreach $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	job init -deps {} -targets {test1.txt test2.txt} -code {
+		file_write test1.txt test1\n
+		file_write test2.txt test2\n
+	}
+	job job1 -foreach {^test(.*)\.txt$} -targets {rtest\1.txt} -code {
+		set c [file_read $dep]
+		file_write $target r${c}
+	}
+	job job2 -deps {rtest1.txt} -targets {final1.txt} -code {
+		set c [file_read $dep]
+		file_write $target f${c}
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read final1.txt]]
+	cd $::testdir
+	set result
+} {{final1.txt log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
+}}
+
+test job "basic chain --force 0 $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	job_args {--force 0}
+	file_write test1.txt test1\n
+	file_write test2.txt error2\n
+	file_write test3.txt error3\n
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job job2 -deps {test2.txt} -targets {test3.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test3\n
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read test3.txt]]
+	cd $::testdir
+	set result
+} {{log_jobs test1.txt test2.txt test3.txt} {error3
+}}
+
+test job "basic chain --force 1 $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	job_args {--force 1}
+	file_write test1.txt test1\n
+	file_write test2.txt error2\n
+	file_write test3.txt error3\n
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job job2 -deps {test2.txt} -targets {test3.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test3\n
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read test2.txt] [file_read test3.txt]]
+	cd $::testdir
+	set result
+} {{log_jobs test1.txt test2.txt test3.txt} {test1
+test2
+} {test1
+test2
+test3
+}}
+
+test job "time chain $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write test1.txt test1\n
+	after 1000
+	file_write test3.txt error3\n
+	after 1000
+	file_write test2.txt error2\n
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job job2 -deps {test2.txt} -targets {test3.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test3\n
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read test2.txt] [file_read test3.txt] [file_read test3.txt.old]]
+	cd $::testdir
+	set result
+} {{log_jobs test1.txt test2.txt test3.txt test3.txt.old} {error2
+} {error2
+test3
+} {error3
+}}
 
 test job "basic $testname" {
 	cd $::testdir
@@ -592,7 +743,7 @@ test job {no -checkcompressed 1 (default), dep} {
 	set result
 } {dep.txt log_jobs result.txt target.txt target.txt.rz}
 
-test job "rmtargets $testname" {
+test job "rmtargets1 $testname" {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
@@ -613,7 +764,7 @@ test job "rmtargets $testname" {
 	set result
 } {log_jobs 1}
 
-test job "rmtargets $testname" {
+test job "rmtargets2 $testname" {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp

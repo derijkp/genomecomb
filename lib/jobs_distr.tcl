@@ -18,13 +18,14 @@ proc job_running_distr {jobnum} {
 }
 
 proc job_process_distr_jobmanager {} {
-	global cgjob cgjob_distr cgjob_distr_running cgjob_exit
+	global cgjob cgjob_distr cgjob_distr_running cgjob_exit cgjob_distr_queue
 	after cancel job_process_distr_jobmanager
 	set pids [exec ps -eo pid]
-	foreach jobnum [array names cgjob_distr_running] {
+	foreach jobnum [ssort -natural [array names cgjob_distr_running]] {
 		if {![inlist $pids [lindex $cgjob_distr_running($jobnum) 0]]} {
 			if {!$cgjob(silent)} {puts "   -=- ending [lindex $cgjob_distr_running($jobnum) 1] ($jobnum)"}
 			unset cgjob_distr_running($jobnum)
+			unset cgjob_distr_queue($jobnum)
 		}
 	}
 	set running [array names cgjob_distr_running]
@@ -41,6 +42,11 @@ proc job_process_distr_jobmanager {} {
 	foreach line $cgjob_distr(queue) {
 		incr pos
 		foreach {jobnum deps name job runfile options} $line break
+		set do 1
+		foreach dep $deps {
+			if {[info exists cgjob_distr_queue($dep)]} {set do 0 ; break}
+		}
+		if {!$do} continue
 		if {[llength [list_common $deps $running]]} continue
 		if {!$cgjob(silent)} {puts "   -=- starting $name"}
 		set cgjob_pid [lindex [exec $runfile > $job.out 2> $job.err &] end]
@@ -68,7 +74,9 @@ proc job_process_distr_jobmanager {} {
 }
 
 proc job_process_distr_submit {job runfile args} {
-	global cgjob_distr
+#set jobnum [incr cgjob_distr(num)]
+#return $jobnum
+	global cgjob_distr cgjob_distr_queue
 	set options {}
 	set deps {}
 	set cores 1
@@ -118,6 +126,7 @@ proc job_process_distr_submit {job runfile args} {
 	catch {file delete $job.out}
 	catch {file delete $job.err}
 	lappend cgjob_distr(queue) [list $jobnum $deps $name $job $runfile $options]
+	set cgjob_distr_queue($jobnum) 1
 	job_process_distr_jobmanager
 	return $jobnum
 }
