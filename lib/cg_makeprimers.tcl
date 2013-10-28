@@ -238,7 +238,7 @@ proc cindex_searchgenome {db pseq {add 0} {nummax {}} {verbose 0}} {
 	return [list $numresults $results]
 }
 
-proc makeprimers_cindex {name left right {db /complgen/refseq/hg18/genome_hg18.ssa}} {
+proc makeprimers_cindex {name left right {db /complgen/refseq/hg18/genome_hg18.ssa} {verbose 0}} {
 	global rscore cachedir a maxnum
 	unset -nocomplain a
 	set list [list_concat $left $right]
@@ -272,7 +272,7 @@ proc makeprimers_cindex {name left right {db /complgen/refseq/hg18/genome_hg18.s
 			set a(${pseq}+) [list $maxnum {}]
 		}
 		if {![catch {
-			foreach {numhits hits} [cindex_searchgenome $db [seq_complement $endseq] 0] break
+			foreach {numhits hits} [cindex_searchgenome $db [seq_complement $endseq] 0 {} $verbose] break
 		}]} {
 			set a(${pseq}-) [list $numhits $hits]
 		} else {
