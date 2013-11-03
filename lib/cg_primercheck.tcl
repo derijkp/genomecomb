@@ -252,7 +252,7 @@ proc cg_primercheck {args} {
 		}
 		set resultline {}
 		lappend resultline $targetchrom $targetbegin $targetend \
-			$name $primer1 $primer2 $numamplicons $resultamplicons \
+			$name $primer1 $primer2 $numamplicons [lsort -dict $resultamplicons] \
 			$numhits(1) $maxfreq(1) [join $primersnps(1) " "] \
 			$numhits(2) $maxfreq(2) [join $primersnps(2) " "] \
 			[join $ampliconfts " "] \
