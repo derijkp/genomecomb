@@ -67,6 +67,7 @@ proc fastq_clipadapters_job {files {adapterfile {}}} {
 	foreach file $files {
 		set file [file normalize [gzroot $file]]
 		set root [file root $file]
+		file mkdir [file dir $root].clipped
 		lappend targets [file dir $root].clipped/[file tail $root].clipped.fastq
 	}
 	job clip-[file dir [file dir $root]] -deps $files -targets $targets -code {
