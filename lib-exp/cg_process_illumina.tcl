@@ -611,7 +611,32 @@ proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 	}
 }
 
-proc process_illumina {destdir {dbdir {}}} {
+proc process_illumina {args} {
+	set dbdir {}
+	set realign 1
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-realign {
+				set realign $value
+			}
+			-dbdir {
+				set dbdir $value
+			}
+			default break
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
+	set len [llength $args]
+	if {$len == 1} {
+		set destdir [lindex $args 0]
+	} elseif {$len == 2} {
+		foreach {destdir dbdir} $args break
+	} else {
+		errorformat process_illumina
+		exit 1
+	}
 	set destdir [file normalize $destdir]
 	# check projectinfo
 	if {[file exists $destdir/projectinfo.tsv]} {
@@ -689,7 +714,7 @@ proc process_illumina {destdir {dbdir {}}} {
 		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
 		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
 		# clean bamfile (mark duplicates, realign)
-		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign 1 -bed $cov5bed]
+		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
 		# samtools variant calling on map-rdsbwa
 		var_sam_job $cleanedbam $refseq -bed $cov5bed
 		lappend todo sam-rdsbwa-$sample
