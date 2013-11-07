@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
 	while ((read = DStringGetTab(line,fd,maxtab,linea,1,NULL)) != -1) {
 		DStringArray *lineformat,*alts;
 		DString *type;
-		char *genotypecur,zyg;
+		char zyg;
 		int l1,l2,begin,end,len,diff;
 		linenr++;
 		lineformat = DStringArrayFromChar(a_format(linea)->string,':');
@@ -217,27 +217,29 @@ int main(int argc, char *argv[]) {
 			for (isample = 0 ; isample < samples->size ; isample++) {
 				DStringArray *genoa;
 				DString *genotype, *temp;
+				char *genotypestring,*genotypecur;
 				int phased,i,a1,a2;
 				geno = DStringArrayGet(linea,igeno++);
 				genoa = DStringArrayFromChar(geno->string,':');
 				if (order[0] == -1) {
-					genotype = DStringEmtpy();
+					genotypestring = "0/0";
 				} else {
 					genotype = DStringArrayGet(genoa,order[0]);
+					genotypestring = genotype->string;
 				}
-				genotypecur = genotype->string;
+				genotypecur = genotypestring;
 				while (*genotypecur != '|' && *genotypecur != '/' && *genotypecur != '\0') {
 					genotypecur++;
 				}
 				if (*genotypecur == '/') {phased = 0;} else {phased = 1;}
-				if (genotype->string[0] == '.') {
+				if (genotypestring[0] == '.') {
 					fprintf(fo,"\t?");
 					a1 = -2;
-				} else if (genotype->string == genotypecur) {
+				} else if (genotypestring == genotypecur) {
 					fprintf(fo,"\t-");
 					a1 = -1;
 				} else {
-					a1 = atol(genotype->string);
+					a1 = atol(genotypestring);
 					if (a1 == 0) {
 						fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
 					} else {
@@ -261,23 +263,25 @@ int main(int argc, char *argv[]) {
 						fprintf(fo,"\t%*.*s",temp->size-diff,temp->size-diff,temp->string+diff);
 					}
 				}
-				if (a1 != 0) {
+				if (a1 < 0 || a2 < 0) {
+					zyg = '?';
+				} else if (a1 > 0) {
 					if (a2 == a1) {
 						zyg = 'm';
-					} else if (a2 != 0) {
+					} else if (a2 > 0) {
 						zyg = 'c';
 					} else {
 						zyg = 't';
 					}
-				} else if (a2 != 0) {
+				} else if (a2 > 0) {
 					zyg = 't';
 				} else {
 					zyg = 'r';
 				}
 				fprintf(fo,"\t%c",zyg);
 				fprintf(fo,"\t%d",phased);
-				genotypecur = genotype->string;
-				/* fprintf(fo,"\t%s",genotype->string); */
+				genotypecur = genotypestring;
+				/* fprintf(fo,"\t%s",genotypestring); */
 				fputc_unlocked('\t',fo);
 				while (*genotypecur != '\0') {
 					if (*genotypecur == '|') {
