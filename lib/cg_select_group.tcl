@@ -215,6 +215,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	set grouptypes [select_parse_grouptypes $grouptypelist]
 	# check for calculated fields in group, groupcol and grouptypes, add to qposs and qfields for making precalc
 	set curpos 0
+	set newgroup {}
 	foreach {el values} $group {
 		set pos [string first = $el]
 		if {$pos != -1} {
@@ -223,9 +224,13 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			lset group $curpos $field
 			lappend qposs [list code $code]
 			lappend qfields $field
+			lappend newgroup $field $values
+		} else {
+			lappend newgroup $el $values
 		}
 		incr curpos
 	}
+	set group $newgroup
 	set curpos 0
 	foreach {el values} $groupcol {
 		set pos [string first = $el]
