@@ -73,6 +73,7 @@ proc tcl::mathfunc::lmind {args} {
 			}
 		}
 	}
+	if {$min == Inf} {set min $def}
 	return $min
 }
 
@@ -89,5 +90,6 @@ proc tcl::mathfunc::lmaxd {args} {
 			}
 		}
 	}
+	if {$max == -Inf} {set max $def}
 	return $max
 }
