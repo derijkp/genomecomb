@@ -142,7 +142,6 @@ proc ucscwiggle2reg {ucsc_file resultfile {precision 1} {formula {}} {addnum {}}
 	}
 	catch {close $f}; catch {close $b}; catch {close $o}
 	file rename $resultfile.temp $resultfile
-
 }
 
 proc cg_ucscwiggle2reg {args} {
@@ -180,8 +179,111 @@ proc cg_ucscwiggle2reg {args} {
 		set resultfile reg_$file
 	}
 	if {[file exists $resultfile]} {
-		puts stderr "Skipping $resultfile: file exists"
+		puts "Skipping $resultfile: file exists"
 		return
 	}
 	ucscwiggle2reg $file $resultfile $precision $formula $addnum
 }
+
+proc ucscwb2reg {file resultfile {precision 1} {formula {}} {addnum {}}} {
+	if {$formula eq ""} {
+		proc formula {value} {return $value}
+	} else {
+		proc formula {value} "return \[expr \{$formula\}\]"
+	}
+	if {$addnum ne ""} {
+		proc putsresult {o args} {
+			puts $o [join $args \t]
+		}
+		set useaddnum 1
+	} else {
+		proc putsresult {o args} {
+			puts $o [join [lrange $args 0 3] \t]
+		}
+		set useaddnum 0
+	}
+	set dir [file dir [file normalize $file]]
+	set f [open $file]
+	gets $f
+	set wbfile [gets $f]
+	close $f
+	puts "Making $resultfile"
+	set wbfile [ucsc_wibfile $wbfile $dir]
+	if {![file exists $wbfile.bedgraph]} {
+		exec bigWigToBedGraph $wbfile $wbfile.bedgraph.temp
+		file rename $wbfile.bedgraph.temp $wbfile.bedgraph
+	}
+	set f [gzopen $wbfile.bedgraph]
+	set o [open $resultfile.temp w]
+	putsresult $o chromosome begin end score num
+	set num {}
+	set format "%.${precision}f"
+	set pvalue NaN
+	set pbegin NaN
+	set pend NaN
+	while 1 {
+		if {[eof $f]} break
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		foreach {chrom begin end value} $line break
+		if {$value >= $addnum} {set num 1} else {set num 0}
+		set value [formula $value]
+		set value [format $format $value]
+		if {$begin != $pend || $value ne $pvalue} {
+			if {$pvalue ne NaN} {
+				putsresult $o $chrom $pbegin $pend $pvalue $pnum
+			}
+			set pbegin $begin
+			set pvalue $value
+			set pnum $num
+		}
+		set pend $end
+	}
+	if {$pvalue ne NaN} {
+		putsresult $o $chrom $pbegin $pend $pvalue $pnum
+	}
+	catch {close $f}; catch {close $o}
+	file rename $resultfile.temp $resultfile
+}
+
+proc cg_ucscwb2reg {args} {
+	set len [llength $args]
+	set precision 1
+	set formula {$value}
+	set addnum {}
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-p {
+				set precision $value
+			}
+			-f {
+				set formula $value
+			}
+			-n {
+				set addnum $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
+	if {($len < 1) && ($len > 2)} {
+		puts "Wrong number of arguments"
+		errorformat ucscwiggle2reg
+		exit 1
+	}
+	foreach {file resultfile} $args break
+	if {$resultfile eq ""} {
+		set resultfile [file join [file dir $file] reg_[file tail $file]]
+	}
+	if {[file exists $resultfile]} {
+		puts "Skipping $resultfile: file exists"
+		return
+	}
+	ucscwb2reg $file $resultfile $precision $formula $addnum
+}
+

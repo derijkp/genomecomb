@@ -518,7 +518,7 @@ proc gunzip {file args} {
 	} else {
 		set resultfile [file root $file]
 	}
-	set error [catch {exec gunzip -S [file ext $file] -c $file > $resultfile.temp} result]
+	set error [catch {exec zcat $file > $resultfile.temp} result]
 	if $error {
 		if {![regexp "decompression OK, trailing garbage ignored" $result]} {
 			error $result
