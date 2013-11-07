@@ -72,12 +72,10 @@ mainw method summarybuilder_add_row {} {
 	private $object.summarybuilder fieldsw valuew rowsw
 	private $object view
 	set fields [$fieldsw get]
-	if {[string trim $view(summary_rows)] eq ""} {
-		set view(summary_rows) $fields
-		return
+	set values [$valuew get]
+	foreach field $fields value $values {
+		$rowsw insert "end" [list $field $value]\n
 	}
-	$rowsw insert "insert wordend" \n[join $fields \n]
-	
 }
 
 mainw method summarybuilder_add_col {} {
@@ -85,12 +83,9 @@ mainw method summarybuilder_add_col {} {
 	private $object view
 	set fields [$fieldsw get]
 	set values [$valuew get]
-	if {[string trim $view(summary_cols)] eq ""} {
-		set view(summary_cols) [list $fields $values]
-		return
+	foreach field $fields value $values {
+		$colsw insert "end" [list $field $value]\n
 	}
-	$colsw insert "insert lineend" \n[list $fields $values]
-	
 }
 
 mainw method summarybuilder_add_cell {aggr} {
