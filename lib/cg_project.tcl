@@ -254,7 +254,7 @@ proc project {args} {
 		# untested ! 
 		cd $resultdir
 		foreach {cgdir name} $data {
-			file mkdir -force $resultdir/$name/bam
+			file mkdir $resultdir/$name/bam
 			set destprefix $resultdir/$name/bam/bam_$name
 			job cg2bam-$name -deps {$cgdir} -targets {$destprefix-chr$_chrs.bam} -vars {cgdir destprefix refseqdir build} {
 				cg cg2bam $cgdir $destprefix $refseqdir/$build

@@ -91,7 +91,7 @@ proc cg_cg2bam {args} {
 	set deps {}
 	set files [glob $cgdir/MAP/*/mapping_*]
 	set todo {}
-	file mkdir -force $destdir/temp
+	file mkdir $destdir/temp
 	foreach mapfile $files {
 		set tail [file tail $mapfile]
 		regexp {mapping_([^.]*)} $tail temp name

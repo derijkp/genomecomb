@@ -55,7 +55,7 @@ proc downloaddb_dbsnp {path build dbname} {
 		puts "file $filename exists: skipping"
 		return
 	}
-	catch {file mkdir -force [file dir $filename]}
+	catch {file mkdir [file dir $filename]}
 	if {![file exists $ufilename]} {
 		downloaddb $path/tmp $build $dbname
 	}
