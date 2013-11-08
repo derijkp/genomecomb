@@ -190,6 +190,8 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		map_${aligner}_job $refseq $files $name {PL illumina LB solexa-123} $pre
 		# clean bamfile (do not mark duplicates, realign)
 		set cleanbam [bam_clean_job ${pre}map-${aligner}-$name.bam $refseq $sample -removeduplicates 0 -bed $mastrdir/reg-inner-$mastrname.bed]
+		# coverage statistics
+		bam2covstats_job $cleanbam $mastrdir/reg-inner-$mastrname.tsv
 		# samtools variant calling on map-rs${aligner}
 		if {$useminigenome} {
 			var_sam_job $cleanbam $refseq -pre $pre

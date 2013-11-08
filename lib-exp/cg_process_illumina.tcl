@@ -1,3 +1,20 @@
+proc bam2covstats_job {bamfile regionfile} {
+	upvar job_logdir job_logdir
+	set bamfile [file normalize $bamfile]
+	set dir [file dir $bamfile]
+	set file [file tail $bamfile]
+	set root [join [lrange [split [file root $file] -] 1 end] -]
+	job bam2coverage-$root -deps $bamfile -targets {$dir/coverage-$root $dir/coverage-$root/coverage-$root.FINISHED} -vars {root} -code {
+		cg bam2coverage $dep $target/coverage-$root
+	}
+	
+	job make_histo-$root -deps {$dir/coverage-$root/coverage-$root.FINISHED $regionfile} -targets $dir/$root.histo -vars {regionfile dir root} -code {
+		cg bcol histo $regionfile $dir/coverage-$root/coverage-$root {0 5 10 20 50 100 200 500 1000} > $target.temp
+		file rename $target.temp $target
+	}
+}
+
+
 proc searchpath {envvar args} {
 	set name [lindex $args 0]
 	if {[info exists ::env($envvar)]} {
@@ -33,14 +50,6 @@ proc gatk {} {
 		set gatk [searchpath GATK gatk GenomeAnalysisTK*]/GenomeAnalysisTK.jar
 	}
 	return $gatk
-}
-
-proc srma {} {
-	global srma
-	if {![info exists srma]} {
-		set srma [searchpath SRMA srma srma*]/srma.jar
-	}
-	return $srma
 }
 
 proc fastq_clipadapters {files targets {adapterfile {}}} {

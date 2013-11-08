@@ -503,9 +503,10 @@ proc cg_bcol_histo {args} {
 	set prevname [lindex $line 3]
 	while {1} {
 		foreach {chr begin end name} [list_sub $line $poss] break
+		set chr [chr_clip $chr]
 		if {$prefix && $chr ne $pchr} {
 			catch {bcol_close $bcol}
-			set file [lindex [gzfile $bcolfile-$chr-*.bcol $bcolfile-chr$chr-*.bcol] 0]
+			set file [lindex [gzfile $bcolfile-chr$chr-*.bcol $bcolfile-chr$chr.bcol $bcolfile-$chr-*.bcol $bcolfile-$chr.bcol] 0]
 			set bcol [bcol_open $file]
 		}
 		if {[eof $f] || $name ne $prevname} {
