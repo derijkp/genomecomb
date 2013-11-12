@@ -76,6 +76,7 @@ proc help {action} {
 	set cyan "\033\[1;36m"
 	set normal "\033\[0m"
 #	regsub -all {(^|\n)\; *([^:\n]+):} $help "\n${cyan}\\2$normal:" help
+	regsub -all {(^|\n)\; *([^:\n]+): *} $help "\n* \\2: " help
 	regsub -all {\*\*([^\n*]+)\*\*} $help "${cyan}\\1$normal" help
 	regsub -all {(^|\n)\{\{\{([^\n*]+)\}\}\}} $help "\\1${yellow}\\2$normal" help
 	regsub -all {(^|\n)== ([^\n*]+) ==} $help "\\1${underline}\\2$normal" help

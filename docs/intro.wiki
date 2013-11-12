@@ -7,7 +7,7 @@ GenomeComb provides import facilities for Complete Genomics
 VariantCallFormat (VCF) variant files ([[cg_vcf2sft|vcf2sft command]]).
 Multiple genomes can be compared within one single, annotated file using
 the  [[howto_multicompar|multicompar protocol]]. Fast querying of this
-outputfile is achieved with an awk-based querying language, of which several
+outputfile is achieved using the [[cg_select|cg select]] tool, of which several
 examples can be seen in the [[howto_query|Howto::Query]] section.
 
 You can find info on each separate command in the [[reference]] section.
@@ -19,7 +19,7 @@ The standard file format used in GenomeComb is a simple tab delimited file
 names. This is very flexible and allows for fast parsing. Depending on the
 columns present, files can be used for various purposes. Usually the files
 are used to describe features on a reference genome sequence. The file
-extension .sft (simple feature table) can be used to refer to this format.
+extension .sft (simple feature table) or plain tsv can be used to refer to this format.
 In this context, genomecomb gives following columns specific meanings:
 
 ; **chromosome** or **chrom**: chromosome name. Many genomecomb tools allow mixing chr1 and 1 notations
@@ -43,7 +43,7 @@ column name. Some examples of (minimal) columns present for various genomecomb f
 
 ; **region file**: chromosome begin end.
 ; **variant file**: chromosome begin end type ref alt ?alleleSeq1? ?alleleSeq2?
-; **multigenome file**: chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 alleleSeq1-sample2 alleleSeq2-sample2 ...
+; **multicompar file**: chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 alleleSeq1-sample2 alleleSeq2-sample2 ...
 
 These files can easily be queried using the [[cg_select]] functionality or can
 be loaded into a local database.

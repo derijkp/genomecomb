@@ -1,24 +1,86 @@
 = Process_illumina =
 
 == Format ==
-cg process_illumina ?options? dir ?dbdir?
+cg process_illumina ?options? projectdir ?dbdir?
 
 == Summary ==
-process an illumina sequencing project, results in genomecomb dir with multicompar, etc.
-By default alignment is done using bwa, duplicates removed (using picard), realigned (using gatk).
-Variants are called using gatk and samtools.
+process an illumina sequencing project directory. 
+This starts from fastq read data and results in a genomecomb directory
+with annotated variant comparisons.
 
 == Description ==
+As input, the command expects a basic genomecomb project directory with
+illumina sequencing data (projectdir).
+
+The projectdir will contain a subdirectory for each sample (sampledir) in
+the project. Each sampledir contains a subdirectory named fastq that
+contains the fastq files for that sample. The namems of matching fastq
+files of paired reads should be consecutive when sorted naturaly,the
+forward reads first. The usual naming of these files (same name, except
+for a 1 and 2) is ok. Only subdirectories containing these fastq dirs are
+considered sampledirs. The name of each sample is taken from the sampledir
+name. The sample name should not contain hyphens (-)
+
+By default reads are clipped using fastq-mcf, aligned to the reference
+genome in dbdir using bwa, duplicates removed (using picard) and realigned
+(using gatk). Variants are called using gatk and samtools.
+The resulting files use hyphens
+All files generated have names following the convention of using hyphens
+to separate different elements about the file. The first element is the
+type of file. The last element (before the extension) is the sample name.
+There can be several steps in between. Each sampledir will contain results 
+for this individual sample of the following type:
+
+; map-rdsbwa-sample1.bam: bam file created by aligning the reads of sample1
+to the reference genome in dbdir using bwa. The bam file has been sorted
+(s), duplicate marked (d), and realigned (r).
+; var-gatk-rdsbwa-sample1.tsv: variants called by gatk based on
+map-rdsbwa-sample1.bam.
+; sreg-gatk-rdsbwa-sample1.tsv: A region file with all regions that can be
+considered sequenced using the same methods and quality measures as
+var-gatk-rdsbwa-sample1.tsv
+; varall-gatk-rdsbwa-sample1.tsv: variant calling data by gatk for all
+positions with >= 5 coverage (also reference pcalled positions). This file
+is used to create the sreg files, and to update data in making multicompar 
+files later.
+; reg_cluster-gatk-rdsbwa-S0489.tsv: regions with many clustered variants
+(which are less reliable)
+
+For samtools variant calling on the same bamfile (map-rdsbwa-sample1.bam),
+these result files are named var-sam-rdsbwa-sample1.tsv,
+sreg-sam-rdsbwa-sample1.tsv, varall-sam-rdsbwa-sample1.tsv,
+reg_cluster-sam-rdsbwa-S0489.tsv
+
+The sampledir may contain precalculated data data from other pipelines.
+If these are in the correct format, they will be integrated in the
+project. vcf files (var-*.vcf) will be converted to tsv files, and their
+variants included in the multicompar.
+
+In projectdir a subdirectory compar will be made. This will contain 
+comparisons of all samples:
+; annot_compar-projectname.tsv: multicompar file containing information for
+all variants in all samples (and all methods). If a variant is not present
+in one of the samples, the information at the position of the variant will
+be completed (is the position sequenced or not, coverage, ...) The file is
+also annotated with all databases in dbdir (impact on genes, regions of
+interest, known variant data)
+; sreg-project.tsv: sequenced region multicompar file containing for all
+regions whether they are sequenced (1) or nor (0) for each sample.
 
 == Arguments ==
-; **dir**: project directory with illumina data for different samples, each sample in a sub directory.
-The proc will search for fastq files in dir/samplename/fastq/
-; **dbdir**: directory containing reference data (genome sequence, annotation, ...).
-dbdir can also be given in a projectinfo.tsv file in the project directory. process_illumina 
-called with the dbdir parameter will create the projectinfo.tsv file.
+; **projectdir**: project directory with illumina data for different
+samples, each sample in a sub directory. The proc will search for fastq
+files in dir/samplename/fastq/
+; **dbdir**: directory containing reference data (genome sequence,
+annotation, ...). dbdir can also be given in a projectinfo.tsv file in the
+project directory. process_illumina called with the dbdir parameter will
+create the projectinfo.tsv file.
 
 == Options ==
 supports job options (-d)
+; **-realign value**: If **value** is 0, realignment will not be performed, 
+if 1, bam files are realigned using gatk, use **value** srma to align using srma.
+; **-dbdir dbdir**: **dbdir** can also be given as an option (instead of second parameter)
 
 == Category ==
 Conversion
