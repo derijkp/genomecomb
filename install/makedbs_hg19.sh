@@ -186,7 +186,7 @@ job reg_hg19_mirbase -targets {$dest/hg19/reg_hg19_mirbase.tsv $dest/hg19/reg_hg
 }
 
 # GERP
-job GERP -targets {extra/reg_${build}_allHg19RS_BW.tsv extra/reg_${build}_allHg19RS_BW.info} -vars {dest build tables} -code {
+job GERP -targets {extra/reg_${build}_GERP.tsv extra/reg_${build}_GERP.info} -vars {dest build tables} -code {
 	cd ${dest}/tmp/${build}
 	set table allHg19RS_BW
 	cg downloaddb ${dest}/tmp ${build} $table
