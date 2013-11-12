@@ -1,12 +1,12 @@
-chromosome	begin	end	type	ref	alt	alleleSeq1-var_annot	alleleSeq2-var_annot	name-var_annot	freq-var_annot	sequenced-var_annot	alleleSeq1-var_annot2	alleleSeq2-var_annot2	name-var_annot2	freq-var_annot2	sequenced-var_annot2
-1	259	260	snp	N	T	T	C	test1	0.1	v	T	C	test1	0.1	v
-1	4001	4002	snp	A	C	A	C	test2	0.2	v	A	C	test2	0.2	v
-1	4050	4060	snp	N	T	T	T	test3	0.3	v	?	?	?	?	?
-1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		test4	0.4	v	AGCGTGGCAA		test4	0.4	v
-1	5020	5021	snp	G	A,C	A	A	test5	0.5	v	G	C	test5	0.5	v
-2	4000	4001	snp	G	A	A	A	test6	0.6	v	A	A	test6	0.6	v
-2	4001	4002	snp	A	G,C	G	C	test7,test8	0.7,0.8	v	?	?	?	?	?
-2	4010	4011	snp	A	G,C	?	?	?	?	?	G	C	test7,test8	0.7,0.8	v
-2	5010	5012	del	NN				test9	0.9	v		N	test9	0.9	v
-2	10000	10001	snp	N	A,C	A	N	test9b	0.9	v	C	N	test9b	0.9	v
-3	876	877	snp	N	A	A	A	test10	1	v	A	A	test10	1	v
+chromosome	begin	end	type	ref	alt	sequenced-var_annot	alleleSeq1-var_annot	alleleSeq2-var_annot	name-var_annot	freq-var_annot	sequenced-var_annot2	alleleSeq1-var_annot2	alleleSeq2-var_annot2	name-var_annot2	freq-var_annot2
+1	259	260	snp	N	T	v	T	C	test1	0.1	v	T	C	test1	0.1
+1	4001	4002	snp	A	C	v	A	C	test2	0.2	v	A	C	test2	0.2
+1	4050	4060	snp	N	T	v	T	T	test3	0.3	?	?	?	?	?
+1	5000	5010	del	AGCGTGGCAA		v	AGCGTGGCAA		test4	0.4	v	AGCGTGGCAA		test4	0.4
+1	5020	5021	snp	G	A,C	v	A	A	test5	0.5	v	G	C	test5	0.5
+2	4000	4001	snp	G	A	v	A	A	test6	0.6	v	A	A	test6	0.6
+2	4001	4002	snp	A	G,C	v	G	C	test7,test8	0.7,0.8	?	?	?	?	?
+2	4010	4011	snp	A	G,C	?	?	?	?	?	v	G	C	test7,test8	0.7,0.8
+2	5010	5012	del	NN		v			test9	0.9	v		N	test9	0.9
+2	10000	10001	snp	N	A,C	v	A	N	test9b	0.9	v	C	N	test9b	0.9
+3	876	877	snp	N	A	v	A	A	test10	1	v	A	A	test10	1

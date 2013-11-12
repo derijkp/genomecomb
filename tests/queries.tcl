@@ -22,7 +22,7 @@ test query {query 2} {
 } {}
 
 test query {query 3} {
-	exec cg select -q {$type=="ins"&&$coverage-testNA19240chr2122cg>=20} annottestcompar.tsv.rz temp.tsv
+	exec cg select -q {$type=="ins" && def($coverage-testNA19240chr2122cg,0)>=20} annottestcompar.tsv.rz temp.tsv
 	exec diff temp.tsv answers/query3.tsv
 } {}
 

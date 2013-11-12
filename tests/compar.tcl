@@ -76,17 +76,17 @@ test multicompar {basic, sequenced already present} {
 	catch {exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft} e
 	set e
 } {1c1
-< chromosome	begin	end	type	ref	alt	alleleSeq1-var_annot	alleleSeq2-var_annot	name-var_annot	freq-var_annot	sequenced-var_annot	alleleSeq1-var_annot2seq	alleleSeq2-var_annot2seq	name-var_annot2seq	freq-var_annot2seq	sequenced-var_annot2seq
+< chromosome	begin	end	type	ref	alt	sequenced-var_annot	alleleSeq1-var_annot	alleleSeq2-var_annot	name-var_annot	freq-var_annot	sequenced-var_annot2seq	alleleSeq1-var_annot2seq	alleleSeq2-var_annot2seq	name-var_annot2seq	freq-var_annot2seq
 ---
-> chromosome	begin	end	type	ref	alt	alleleSeq1-var_annot	alleleSeq2-var_annot	name-var_annot	freq-var_annot	sequenced-var_annot	alleleSeq1-var_annot2	alleleSeq2-var_annot2	name-var_annot2	freq-var_annot2	sequenced-var_annot2
+> chromosome	begin	end	type	ref	alt	sequenced-var_annot	alleleSeq1-var_annot	alleleSeq2-var_annot	name-var_annot	freq-var_annot	sequenced-var_annot2	alleleSeq1-var_annot2	alleleSeq2-var_annot2	name-var_annot2	freq-var_annot2
 3c3
-< 1	4001	4002	snp	A	C	A	C	test2	0.2	v	A	C	test2	0.2	r
+< 1	4001	4002	snp	A	C	v	A	C	test2	0.2	r	A	C	test2	0.2
 ---
-> 1	4001	4002	snp	A	C	A	C	test2	0.2	v	A	C	test2	0.2	v
+> 1	4001	4002	snp	A	C	v	A	C	test2	0.2	v	A	C	test2	0.2
 5c5
-< 1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		test4	0.4	v	AGCGTGGCAA		test4	0.4	r
+< 1	5000	5010	del	AGCGTGGCAA		v	AGCGTGGCAA		test4	0.4	r	AGCGTGGCAA		test4	0.4
 ---
-> 1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		test4	0.4	v	AGCGTGGCAA		test4	0.4	v
+> 1	5000	5010	del	AGCGTGGCAA		v	AGCGTGGCAA		test4	0.4	v	AGCGTGGCAA		test4	0.4
 child process exited abnormally} 
 
 test multicompar {noalt} {
@@ -138,7 +138,7 @@ test multicompar {var and mapper naming convention} {
 		var_annot varcaller1-mapper1-sample1 var_annot varcaller2-mapper2-sample1
 		var_annot2 varcaller1-mapper1-sample2 var_annot2 varcaller2-mapper2-sample2
 	} {
-		foreach field {alleleSeq1 alleleSeq2 name freq sequenced} {
+		foreach field {sequenced alleleSeq1 alleleSeq2 name freq} {
 			lappend fields $field-$to=\$$field-$from
 		}
 	}

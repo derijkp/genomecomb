@@ -86,13 +86,7 @@ M	10
 X	100
 Y	1000
 
-total	1460
-1-10
-2-100
-3-1000
-M-10
-X-100
-Y-1000} error
+total	1460}
 
 test covered {basic 2} {
 	exec cg covered data/reg2.tsv
@@ -104,13 +98,7 @@ M	15
 X	110
 Y	890
 
-total	1355
-1-15
-2-150
-3-1000
-M-10
-X-90
-Y-1010} error
+total	1355}
 
 test covered {name} {
 	cg select -f {name=$chromosome test begin end} data/reg1.tsv temp.tsv
@@ -123,13 +111,7 @@ M	10
 X	100
 Y	1000
 
-total	1460
-1-10
-2-100
-3-1000
-M-10
-X-100
-Y-1000} error
+total	1460}
 
 test covered {name error} {
 	cg select -f {name=$chromosome test begin end} data/reg1.tsv temp.tsv
