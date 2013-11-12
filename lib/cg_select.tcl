@@ -287,6 +287,7 @@ array set tsv_select_tokenize_opsa {
 }
 
 array set tsv_select_tokenize_newopsa {
+	> gtchecked >= gtechecked < ltchecked <= ltechecked
 	@** vpower
 	@* vtimes @/ vdivide @% vmod
 	@- vminus @+ vplus 

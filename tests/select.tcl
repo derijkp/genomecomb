@@ -235,11 +235,11 @@ chr2	4001	4002	G	G	G	G}
 
 test select {lmin column} {
 	split [exec cg select -f {chromosome begin {lmin=lmin($list)}} < data/vars1.sft] \n
-} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	Inf} {chr2	8000	Inf}}
+} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	NaN} {chr2	8000	NaN}}
 
 test select {lmind column} {
 	split [exec cg select -f {chromosome begin {lmin=lmind($list,10)}} < data/vars1.sft] \n
-} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	10} {chr2	5011	10} {chr2	8000	Inf}}
+} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	10} {chr2	5011	10} {chr2	8000	10}}
 
 test select {lmind select} {
 	split [exec cg select -f {chromosome begin} -q {lmind($list,10) == 2} < data/vars1.sft] \n
@@ -247,11 +247,11 @@ test select {lmind select} {
 
 test select {lmax column} {
 	split [exec cg select -f {chromosome begin {lmax=lmax($list)}} < data/vars1.sft] \n
-} {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	-Inf} {chr2	8000	-Inf}}
+} {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	NaN} {chr2	8000	NaN}}
 
 test select {lmaxd column} {
 	split [exec cg select -f {chromosome begin {lmax=lmaxd($list,0)}} < data/vars1.sft] \n
-} {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	0} {chr2	8000	-Inf}}
+} {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	0} {chr2	8000	0}}
 
 test select {lmaxd select} {
 	split [exec cg select -f {chromosome begin} -q {lmaxd($list,10) == 2} < data/vars1.sft] \n
@@ -413,7 +413,7 @@ ins	1
 snp	8}
 
 test select {group 2 fields} {
-	cg select -g {type alt} data/expected-annotate-vars_annottest-gene_test.tsv
+	cg select -g {type {} alt {}} data/expected-annotate-vars_annottest-gene_test.tsv
 } {type	alt	count
 del		4
 ins	GG	1
@@ -427,7 +427,7 @@ snp	T,C,A	1
 sub	GGG	1}
 
 test select {group 2 fields, one calculated} {
-	cg select -g {type altx="${alt}x"} data/expected-annotate-vars_annottest-gene_test.tsv
+	cg select -g {type {} {altx="${alt}x"} {}} data/expected-annotate-vars_annottest-gene_test.tsv
 } {type	altx	count
 del	x	4
 ins	GGx	1
@@ -527,7 +527,7 @@ test select {group where -g has sample} {
 54	6	0}
 
 test select {group where -g has sample and non-sample field} {
-	cg select -g {coverage type} -gc {sample {} count} data/expected_near-vars1-reg_annot.sft
+	cg select -g {coverage {} type {}} -gc {sample {} count} data/expected_near-vars1-reg_annot.sft
 } {coverage	type	sample1-count	sample2-count
 0	snp	0	4
 1	snp	4	0
@@ -539,5 +539,9 @@ test select {group where -g has sample and non-sample field} {
 47	snp	2	0
 52	snp	0	6
 54	snp	6	0}
+
+test select {-q error on non number <} {
+	exec cg select -q {$mixed < 4} data/table.tsv
+} {a4 is not a number} regexp error
 
 testsummarize
