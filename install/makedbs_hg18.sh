@@ -300,7 +300,7 @@ job pre_var_hg19_dbnsfp -targets {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -skip {e
 	if {![file exists dbNSFP2.0b4.zip]} {
 		exec -ignorestderr wget -c http://dbnsfp.houstonbioinformatics.org/dbNSFPzip/dbNSFPv2.1.zip
 	}
-	exec unzip dbNSFPv2.1.zip >@ stdout 2>@ stderr
+	exec unzip -o dbNSFPv2.1.zip >@ stdout 2>@ stderr
 	file_write pre_var_dbnsfp.tsv [join {
 		chromosome pos ref alt aaref aaalt hg18_pos genename Uniprot_acc Uniprot_id Uniprot_aapos
 		Interpro_domain cds_strand refcodon SLR_test_statistic codonpos fold-degenerate Ancestral_allele

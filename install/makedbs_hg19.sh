@@ -257,7 +257,10 @@ job enc_RegTfbsClustered -targets {reg_${build}_wgEncodeRegTfbsClusteredV3.tsv} 
 
 # link local data in dir
 catch {
-	cplinked {*}[glob ../hg19-local/*] .
+	foreach file [glob ../hg19-local/*] {
+		file delete extra/[file tail $file]
+		cplinked $file [file tail $file]
+	}
 }
 
 # extra dir
@@ -279,7 +282,7 @@ job pre_var_hg19_dbnsfp -targets {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -skip {e
 	if {![file exists dbNSFP2.0b4.zip]} {
 		exec -ignorestderr wget -c http://dbnsfp.houstonbioinformatics.org/dbNSFPzip/dbNSFPv2.1.zip
 	}
-	exec unzip dbNSFPv2.1.zip >@ stdout 2>@ stderr
+	exec unzip -o dbNSFPv2.1.zip >@ stdout 2>@ stderr
 	file_write pre_var_dbnsfp.tsv [join {
 		chromosome pos ref alt aaref aaalt hg18_pos genename Uniprot_acc Uniprot_id Uniprot_aapos
 		Interpro_domain cds_strand refcodon SLR_test_statistic codonpos fold-degenerate Ancestral_allele
@@ -338,12 +341,18 @@ job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${
 	exec ln -s genome_${build}.ssa extra/genome_${build}.ssa
 }
 
+# genome in extra
+catch {
+	foreach file [glob genome_*] {
+		file delete extra/[file tail $file]
+		mklink $file extra/[file tail $file]
+	}
+}
+
 job_wait
 
 # todo
-# cd /complgen/refseq/backup2013-10/hg19/extra
+# cd /complgen/refseq/backup/hg19/extra
 # cp reg_hg19_conserved.tsv reg_hg19_consnoncoding.tsv reg_hg19_refgene.tsv /complgen/refseq/hg19/extra
-# cp reg_exome_SureSelectV4.tsv /complgen/refseq/hg19/extra/reg_hg19_exome_SureSelectV4.tsv
-# cp reg_exome_targetseq.tsv /complgen/refseq/hg19/extra/reg_hg19_exome_targetseq.tsv
-# rs genome_hg19* /complgen/refseq/hg19
-# rs extra/genome_hg19* /complgen/refseq/hg19/extra
+# cp reg_hg19_exome_SureSelectV4.tsv reg_hg19_exome_targetseq.tsv /complgen/refseq/hg19/extra/
+# rs genome_hg19* /complgen/refseq/hg19/extra
