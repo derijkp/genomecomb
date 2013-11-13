@@ -727,9 +727,19 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 	set fields [list_sub $header $poss]
 	set df [gzopen $dbfile]
 	set header [tsv_open $df]
-	set deffields {chrom start end strand cdsStart cdsEnd exonCount exonStarts exonEnds}
+	set deffields {strand cdsStart cdsEnd exonCount exonStarts exonEnds}
 	lappend deffields $transcriptcol $genecol
-	set dposs [list_cor $header $deffields]
+	set dposs [tsv_basicfields $header 3]
+	lappend dposs {*}[list_cor $header $deffields]
+	if {[lindex $dposs end] == -1} {
+		foreach testfield {gene_name gene_id name} {
+			set pos [lsearch $header $testfield]
+			if {$pos != -1} {
+				lset dposs end $pos
+				break
+			}
+		}
+	}
 	set dbposs [lrange $dposs 0 2]
 	if {[lsearch [lrange $dposs 0 end-2] -1] != -1} {
 		puts stderr "error: gene file $dbfile misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
