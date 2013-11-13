@@ -753,8 +753,8 @@ proc getline f {
 }
 
 proc mklink {src dest} {
-	set src [file normalize $src]
-	set dest [file normalize $dest]
+	set src [file join [pwd] $src]
+	set dest [file join [pwd] $dest]
 	set pos 0
 	set ssrc [file split $src]
 	set sdest [file split $dest]
@@ -766,6 +766,9 @@ proc mklink {src dest} {
 	if {$pos > 1} {
 		set prelen [expr {[llength $sdest]-$pos -1}]
 		set src [file join {*}[list_fill $prelen ..] {*}[lrange $ssrc $pos end]]
+	}
+	if {[file exists $dest] && [file link -symbolic $dest] ne "$dest"} {
+		file delete $dest
 	}
 	file link -symbolic $dest $src
 }
