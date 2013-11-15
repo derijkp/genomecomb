@@ -525,7 +525,7 @@ proc job_backup {file {rename 0}} {
 proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompressed code} {
 	set cmd ""
 	set jobname [file tail $job]
-	append cmd "file_add \{$job.log\} \"[job_timestamp]\\tstarting $jobname\"\n"
+	append cmd "file_add \{$job.log\} \"\[job_timestamp\]\\tstarting $jobname\"\n"
 	append cmd "[list cd $pwd]\n"
 	append cmd "[list set rootdir $pwd]\n"
 	append cmd "[list set job $job]\n"
