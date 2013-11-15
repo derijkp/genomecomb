@@ -9,7 +9,7 @@ proc bam2covstats_job {bamfile regionfile} {
 	}
 	
 	job make_histo-$root -deps {$dir/coverage-$root/coverage-$root.FINISHED $regionfile} -targets $dir/$root.histo -vars {regionfile dir root} -code {
-		cg bcol histo $regionfile $dir/coverage-$root/coverage-$root {0 5 10 20 50 100 200 500 1000} > $target.temp
+		cg bcol histo $regionfile $dir/coverage-$root/coverage-$root {1 5 10 20 50 100 200 500 1000} > $target.temp
 		file rename $target.temp $target
 	}
 }
