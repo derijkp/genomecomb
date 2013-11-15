@@ -81,7 +81,7 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 	}
 }
 
-proc bcol_open indexfile {
+proc bcol_open {indexfile {ra 0}} {
 	set result [dict create objtype bcol file $indexfile binfile $indexfile.bin compressedbin 0]
 	set f [open $indexfile]
 	set header [tsv_open $f comment]
@@ -117,6 +117,8 @@ proc bcol_open indexfile {
 		set fi [open $indexfile.bin]
 		fconfigure $fi -encoding binary -translation binary
 		dict set result fi $fi
+	} elseif {$ra} {
+		dict set result fi {}
 	} elseif {[file exists $indexfile.bin.rz]} {
 		dict set result binfile $indexfile.bin.rz
 		set tempfile [tempfile]
@@ -145,7 +147,10 @@ proc bcol_last bcol {
 }
 
 proc bcol_close bcol {
-	catch {close [dict get $bcol fi]}
+	set fi [dict get $bcol fi]
+	if {$fi ne ""} {
+		catch {close $fi}
+	}
 	dict set bcol fi {}
 	if {[dict exists $bcol tempfile]} {
 		file delete [dict get $bcol tempfile]
@@ -202,9 +207,16 @@ proc bcol_get {bcol start {end {}}} {
 	set binfile [dict get $bcol binfile]
 	# get data from already opened file
 	set f [dict get $bcol fi]
-	seek $f $pos
-	fconfigure $f -encoding binary -translation binary
-	set b [read $f [expr {$typesize*$len}]]
+	if {$f ne ""} {
+		seek $f $pos
+		fconfigure $f -encoding binary -translation binary
+		set b [read $f [expr {$typesize*$len}]]
+	} else {
+		set tf [gzopen [gzfile $binfile] $pos]
+		fconfigure $tf -encoding binary -translation binary
+		set b [read $tf [expr {$typesize*$len}]]
+		catch {close $tf}
+	}
 	binary scan $b $type$len sresult
 	if {![info exists sresult]} {
 		error "error getting data from $binfile for position $start-$end"
@@ -266,7 +278,12 @@ proc bcol_table {bcol {start {}} {end {}}} {
 	set pos [expr {$typesize*($start-$num)}]
 	# get data from already opened file
 	set f [dict get $bcol fi]
-	seek $f $pos
+	set f [dict get $bcol fi]
+	if {$f ne ""} {
+		seek $f $pos
+	} else {
+		set f [gzopen [gzfile $binfile] $pos]
+	}
 	fconfigure $f -encoding binary -translation binary
 	while {$curpos <= $end} {
 		catch {set offset [dict get $tabled $start]}
@@ -276,6 +293,9 @@ proc bcol_table {bcol {start {}} {end {}}} {
 		set value [expr {$value + $offset}]
 		puts $o $curpos\t$value
 		incr curpos
+	}
+	if {[dict get $bcol fi] eq ""} {
+		close $f
 	}
 	while {$uend < $end} {
 		puts $o $curpos\t$default
@@ -472,7 +492,7 @@ proc cg_bcol_histo {args} {
 		set pchr {}
 	} else {
 		set prefix 0
-		set bcol [bcol_open $bcolfile]
+		set bcol [bcol_open $bcolfile 1]
 	}
 	set biv <[lindex $intervals 0]
 	set iv $biv
@@ -507,7 +527,7 @@ proc cg_bcol_histo {args} {
 		if {$prefix && $chr ne $pchr} {
 			catch {bcol_close $bcol}
 			set file [lindex [gzfile $bcolfile-chr$chr-*.bcol $bcolfile-chr$chr.bcol $bcolfile-$chr-*.bcol $bcolfile-$chr.bcol] 0]
-			set bcol [bcol_open $file]
+			set bcol [bcol_open $file 1]
 		}
 		if {[eof $f] || $name ne $prevname} {
 			incr tota($biv) $a($biv)
@@ -585,7 +605,7 @@ proc cg_bcol {cmd args} {
 
 proc cg_size file {
 	set indexfile [cg_index $file]
-	set bcol [bcol_open $indexfile]
+	set bcol [bcol_open $indexfile 1]
 	set size [bcol_size $bcol]
 	bcol_close $bcol
 	puts $size
