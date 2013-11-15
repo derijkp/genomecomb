@@ -379,7 +379,7 @@ proc cg_annotate {args} {
 			putslog "Adding $dbfile"
 			set outfields [dict get $dbinfo outfields]
 			annotatereg $file $dbfile $name $resultfile.${name}_annot.temp $near $outfields
-			file rename $resultfile.${name}_annot.temp $resultfile.${name}_annot
+			file rename -force $resultfile.${name}_annot.temp $resultfile.${name}_annot
 		}
 	}
 	if {$replace} {

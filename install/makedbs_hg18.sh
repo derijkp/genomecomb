@@ -59,7 +59,7 @@ foreach db {
 		cg downloaddb $dest ${build} $db
 		cg regjoin ucsc_${build}_${db}.tsv > reg_${build}_${db}.tsv.temp
 		file delete ucsc_${build}_${db}.tsv
-		file rename reg_${build}_${db}.tsv.temp reg_${build}_${db}.tsv
+		file rename -force reg_${build}_${db}.tsv.temp reg_${build}_${db}.tsv
 	}
 }
 
@@ -69,7 +69,7 @@ foreach db {
 } {
 	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {dest build db} -code {
 		cg downloaddb $dest ${build} $db
-		file rename ucsc_${build}_${db}.tsv reg_${build}_${db}.tsv
+		file rename -force ucsc_${build}_${db}.tsv reg_${build}_${db}.tsv
 	}
 }
 
@@ -197,7 +197,7 @@ job reg_hg19_mirbase -targets {$dest/hg19/reg_hg19_mirbase.tsv $dest/hg19/reg_hg
 # mirbase hg18 liftover
 job reg_hg18_mirbase_liftover -deps {${dest}/hg19/reg_hg19_mirbase.tsv ${dest}/hg19/reg_hg19_mirbase.info} -targets {reg_${build}_mirbase.tsv reg_${build}_mirbase.info} -vars {dest build db} -code {
 	cg liftover ${dest}/hg19/reg_hg19_mirbase.tsv ${dest}/liftover/hg19ToHg18.over.chain ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2
-	file rename ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2 reg_${build}_mirbase.tsv
+	file rename -force ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2 reg_${build}_mirbase.tsv
 	file copy ${dest}/hg19/reg_hg19_mirbase.info reg_${build}_mirbase.info
 }
 
@@ -229,7 +229,7 @@ job enc_transcription_info -targets {reg_${build}_wgEncodeCaltechRnaSeq.info} -v
 	fcopy $f $o
 	close $f
 	close $o
-	file rename ${dest}/${build}/reg_${build}_wgEncodeCaltechRnaSeq.info.temp ${dest}/${build}/reg_${build}_wgEncodeCaltechRnaSeq.info
+	file rename -force ${dest}/${build}/reg_${build}_wgEncodeCaltechRnaSeq.info.temp ${dest}/${build}/reg_${build}_wgEncodeCaltechRnaSeq.info
 }
 
 foreach {jobname resultname infosrc tables} {
@@ -264,7 +264,7 @@ foreach {jobname resultname infosrc tables} {
 		fcopy $f $o
 		close $f
 		close $o
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 }
 
@@ -273,7 +273,7 @@ job enc_RegDnaseClustered -targets {reg_${build}_wgEncodeRegDnaseClustered.tsv r
 	cd ${dest}/tmp/${build}
 	cg downloaddb ${dest}/tmp ${build} wgEncodeRegDnaseClustered
 	cg collapseoverlap ucsc_${build}_wgEncodeRegDnaseClustered.tsv
-	file rename reg_${build}_wgEncodeRegDnaseClustered.info ${dest}/${build}
+	file rename -force reg_${build}_wgEncodeRegDnaseClustered.info ${dest}/${build}
 	file rename -force reg_${build}_wgEncodeRegDnaseClustered.tsv ${dest}/${build}
 }
 

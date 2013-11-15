@@ -71,7 +71,7 @@ proc cplinked_file {file destfile} {
 				incr num
 			}
 			puts "destfile $destfile exists, renamed to $renamefile$num"
-			file rename $destfile $renamefile$num
+			file rename -force $destfile $renamefile$num
 		}
 	}
 	mklink $file $destfile

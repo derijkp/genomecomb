@@ -36,7 +36,7 @@ proc multireg {compar_file file} {
 	# putslog "multireg $compar_file $poss1 $dummy1 $file $poss2 >> $compar_file.temp"
 	exec multireg $compar_file {*}$poss1 [join $dummy1 \t] $file {*}$poss2 >> $compar_file.temp 2>@stderr
 	catch {file rename -force $compar_file $compar_file.old}
-	file rename $compar_file.temp $compar_file	
+	file rename -force $compar_file.temp $compar_file	
 }
 
 proc cg_multireg {args} {

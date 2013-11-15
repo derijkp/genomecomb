@@ -59,7 +59,7 @@ foreach db {
 		cg downloaddb $dest ${build} $db
 		cg regjoin ucsc_${build}_${db}.tsv > reg_${build}_${db}.tsv.temp
 		file delete ucsc_${build}_${db}.tsv
-		file rename reg_${build}_${db}.tsv.temp reg_${build}_${db}.tsv
+		file rename -force reg_${build}_${db}.tsv.temp reg_${build}_${db}.tsv
 	}
 }
 
@@ -193,7 +193,7 @@ job GERP -targets {extra/reg_${build}_GERP.tsv extra/reg_${build}_GERP.info} -va
 	cg ucscwb2reg -p 1 -f {} ucsc_${build}_$table.tsv
 	file rename -force reg_ucsc_${build}_$table.tsv ${dest}/${build}/extra/reg_${build}_GERP.tsv
 	cg downloaddbinfo ${dest}/tmp ${build} $table
-	file rename reg_${build}_$table.info ${dest}/extra/${build}/reg_${build}_GERP.info
+	file rename -force reg_${build}_$table.info ${dest}/extra/${build}/reg_${build}_GERP.info
 
 }
 
@@ -231,7 +231,7 @@ foreach {jobname resultname infosrc tables} {
 		fcopy $f $o
 		close $f
 		close $o
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 }
 
@@ -242,7 +242,7 @@ job enc_RegDnaseClustered -targets {reg_${build}_wgEncodeRegDnaseClusteredV2.tsv
 	cg collapseoverlap ucsc_${build}_wgEncodeRegDnaseClusteredV2.tsv
 	file rename -force reg_${build}_wgEncodeRegDnaseClusteredV2.tsv ${dest}/${build}
 	cg downloaddbinfo ${dest}/tmp ${build} wgEncodeRegDnaseClusteredV2
-	file rename reg_${build}_wgEncodeRegDnaseClusteredV2.info ${dest}/${build}/reg_${build}_wgEncodeRegDnaseClusteredV2.info
+	file rename -force reg_${build}_wgEncodeRegDnaseClusteredV2.info ${dest}/${build}/reg_${build}_wgEncodeRegDnaseClusteredV2.info
 }
 
 job enc_RegTfbsClustered -targets {reg_${build}_wgEncodeRegTfbsClusteredV3.tsv} -vars {dest build} -code {
@@ -252,7 +252,7 @@ job enc_RegTfbsClustered -targets {reg_${build}_wgEncodeRegTfbsClusteredV3.tsv} 
 	cg collapseoverlap pucsc_${build}_wgEncodeRegTfbsClusteredV3.tsv
 	file rename -force reg_pucsc_${build}_wgEncodeRegTfbsClusteredV3.tsv ${dest}/${build}/reg_${build}_wgEncodeRegTfbsClusteredV3.tsv
 	cg downloaddbinfo ${dest}/tmp ${build} wgEncodeRegTfbsClusteredV3
-	file rename reg_${build}_wgEncodeRegTfbsClusteredV3.info ${dest}/${build}/reg_${build}_wgEncodeRegTfbsClusteredV3.info
+	file rename -force reg_${build}_wgEncodeRegTfbsClusteredV3.info ${dest}/${build}/reg_${build}_wgEncodeRegTfbsClusteredV3.info
 }
 
 # link local data in dir

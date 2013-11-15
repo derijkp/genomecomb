@@ -63,7 +63,7 @@ proc jobtest {args} {
 			set calc [join [lrange $line 1 end] +]
 			puts $o $calc=[expr $calc]
 			close $o
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 			lappend targets $target
 		}
 		close $f
@@ -109,7 +109,7 @@ proc jobtest {args} {
 		}
 		file copy $dep $target.temp
 		exec echo 2 >> $target.temp
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	job allp2.txt -vars header -deps {^$destdir/sumpattern2-(.*)\.txt$} -targets {$destdir/allp2.txt} -code {
 		after 500
@@ -134,7 +134,7 @@ proc jobtest {args} {
 		}
 		file copy $dep $target.temp
 		exec echo 2 >> $target.temp
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	job error_all.txt -deps {$srcdir/notpresent.txt} -targets {$destdir/all.txt} -code {
 		error "This should not be executed, as the dependencies are not fullfilled, the other target is used"

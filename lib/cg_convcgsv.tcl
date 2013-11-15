@@ -74,5 +74,5 @@ proc cg_convcgsv {args} {
 	}
 	foreach {srcfile dstfile} $args break
 	convcgsv $srcfile $dstfile.temp
-	file rename $dstfile.temp $dstfile
+	file rename -force $dstfile.temp $dstfile
 }

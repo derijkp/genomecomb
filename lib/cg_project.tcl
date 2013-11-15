@@ -128,13 +128,13 @@ proc project {args} {
 			if {[llength $names]} {
 				cg multicompar $reannot $target.temp {*}$names
 			}
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 		job compar_annotate \
 		-deps {compar/compar-$project.tsv} \
 		-targets {compar/annot_compar-$project.tsv} -vars {refseqdir build} -code {
 			cg annotate $dep $target.temp $refseqdir/$build
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 		job compar_annotate_index \
 		-deps {compar/annot_compar-$project.tsv} \
@@ -162,7 +162,7 @@ proc project {args} {
 				}
 				cg multireg $target.temp {*}$files
 			}
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 		job multireg_index \
 		-deps {compar/reg-$project.tsv} \
@@ -195,13 +195,13 @@ proc project {args} {
 			if {[llength $files]} {
 				cg svmulticompar $target.temp {*}$files
 			}
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 		job cgsv_annotate \
 		-deps {compar/cgsv-$project.tsv} \
 		-targets {compar/annot_cgsv-$project.tsv} -vars {refseqdir build} -code {
 			cg annotate $dep $target.temp $refseqdir/$build
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 		job cgsv_annotate_index \
 		-deps {compar/annot_cgsv-$project.tsv} \
@@ -234,13 +234,13 @@ proc project {args} {
 			if {[llength $files]} {
 				cg svmulticompar $target.temp {*}$files
 			}
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 		job cgcnv_annotate \
 		-deps {compar/cgcnv-$project.tsv} \
 		-targets {compar/annot_cgcnv-$project.tsv} -vars {refseqdir build} -code {
 			cg annotate $dep $target.temp $refseqdir/$build
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 		job cgcnv_annotate_index \
 		-deps {compar/annot_cgcnv-$project.tsv} \
@@ -300,13 +300,13 @@ proc project {args} {
 			if {[llength $files]} {
 				cg svmulticompar $target.temp {*}$files
 			}
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 		job sv_annotate \
 		-deps {compar/sv-$project.tsv} \
 		-targets {compar/annot_sv-$project.tsv} -vars {refseqdir build} -code {
 			cg annotate $dep $target.temp $refseqdir/$build
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 		job sv_annotate_index \
 		-deps {compar/annot_sv-$project.tsv} \

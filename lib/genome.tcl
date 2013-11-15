@@ -25,7 +25,7 @@ proc cg_downloadgenome {build result} {
 		}
 		putslog "Converting and indexing"
 		exec zcat {*}$files | cg genome_indexfasta [file tail $result]
-		file rename {*}[glob [file tail $result]*] ..
+		file rename -force {*}[glob [file tail $result]*] ..
 	}
 	set rfile [file dir $result]/reg_[file root [file tail $result]].tsv
 	if {[file exists $rfile]} {
@@ -238,7 +238,7 @@ proc cg_make_genomecindex {ifasfile} {
 			set o [cindex create $seq]
 			puts "saving index $result"
 			cindex save $o $result.temp
-			file rename $result.temp.ssa $result.ssa
+			file rename -force $result.temp.ssa $result.ssa
 		}
 	}
 	close $f

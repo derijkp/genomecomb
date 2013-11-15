@@ -25,7 +25,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 		set error [string trim $error]
 		if {$error ne {}} {error $error}
 	}
-	file rename $samfile.temp $samfile
+	file rename -force $samfile.temp $samfile
 	# read header
 	if {[catch {
 		set header [exec samtools view -S -H $samfile 2> /dev/null]

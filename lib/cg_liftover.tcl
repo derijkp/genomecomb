@@ -87,6 +87,6 @@ proc cg_liftover {args} {
 	#
 	# rename result, cleanup
 	#
-	file rename $resultfile.temp4 $resultfile
+	file rename -force $resultfile.temp4 $resultfile
 	file delete $resultfile.temph $resultfile.temp $resultfile.temp2 $resultfile.temp3
 }

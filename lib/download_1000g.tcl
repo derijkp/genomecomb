@@ -19,9 +19,9 @@ proc downloaddb_1000glow {path build} {
 	# catch {exec wget -c --tries=45 --directory-prefix=$tempdir/ ftp://ftp.ncbi.nlm.nih.gov/1000genomes/ftp/release/20110521/ALL.wgs.phase1_release_v2.20101123.snps_indels_sv.sites.vcf.gz >@stdout 2>@stderr} errmsg
 	catch {exec wget -c --tries=45 --directory-prefix=$tempdir/ ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20110521/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.vcf.gz >@stdout 2>@stderr} errmsg
 	cg vcf2sft $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.vcf.gz $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv.temp
-	file rename $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv.temp $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv
+	file rename -force $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv.temp $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv
 	cg select -s - -f {chromosome begin end type ref alt {freq=format("%.2f",double($allelecount)/$totalallelecount)} quality filter totalallelecount AMR_AF ASN_AF AFR_AF EUR_AF} $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv $resultfile.temp
-	file rename $resultfile.temp $resultfile
+	file rename -force $resultfile.temp $resultfile
 }
 
 proc downloaddb_1000g {path build} {
@@ -77,6 +77,6 @@ proc downloaddb_1000g {path build} {
 		close $f
 		puts "Sorting $resultfile"
 		cg select -s {chrom start end type alt} $tempdir/var_${build}_1000g$pop.tsv $resultfile.temp
-		file rename $resultfile.temp $resultfile
+		file rename -force $resultfile.temp $resultfile
 	}
 }

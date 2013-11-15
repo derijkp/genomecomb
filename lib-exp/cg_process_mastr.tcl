@@ -17,7 +17,7 @@ proc tsv2bed {file bedfile args} {
 		file_write $bedfile.temp \#[join $fields \t]\n
 		cg select -sh /dev/null -f "$fields" $file >> $bedfile.temp		
 	}
-	file rename $bedfile.temp $bedfile
+	file rename -force $bedfile.temp $bedfile
 }
 
 proc tsv2bed_job {file} {

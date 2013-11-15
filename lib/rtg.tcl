@@ -104,7 +104,7 @@ proc process_rtgsample {dir destdir {force 0}} {
 		putslog "Create annotated varfile annotvar-$name.tsv from $varfile"
 		if {$force || ![file exists uannotvar-$name.tsv]} {
 			rtg2annotvar $varfile uannotvar-$name.tsv.temp
-			file rename uannotvar-$name.tsv.temp uannotvar-$name.tsv
+			file rename -force uannotvar-$name.tsv.temp uannotvar-$name.tsv
 		}
 		putslog "Sorting"
 		cg select -s "chromosome begin end" uannotvar-$name.tsv > annotvar-$name.tsv.temp
@@ -152,7 +152,7 @@ proc process_rtgsample {dir destdir {force 0}} {
 			fcopy $f $o
 			close $o
 			exec bgzip $allposfile.temp
-			file rename $allposfile.temp.gz $allposfile.gz
+			file rename -force $allposfile.temp.gz $allposfile.gz
 		}
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {
@@ -261,7 +261,7 @@ proc rtgregions {cgdir comparfile rtgdir} {
 	if {![file exists $cgdir/filteredrtg-$cgsample.covered]} {
 		putslog "$cgdir/filteredrtg-$cgsample.covered"
 		cg covered $cgdir/filteredrtg-$cgsample.tsv > $cgdir/filteredrtg-$cgsample.covered.temp
-		file rename $cgdir/filteredrtg-$cgsample.covered.temp $cgdir/filteredrtg-$cgsample.covered
+		file rename -force $cgdir/filteredrtg-$cgsample.covered.temp $cgdir/filteredrtg-$cgsample.covered
 	}
 }
 

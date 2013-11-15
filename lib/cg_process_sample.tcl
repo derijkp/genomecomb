@@ -163,7 +163,7 @@ proc process_sample {args} {
 		set files [ssort -natural $deps]
 		cg regextract -above 1 7 {*}$files > $target.temp
 		cg select -s {chromosome begin end} $target.temp $target.temp2
-		file rename $target.temp2 $target
+		file rename -force $target.temp2 $target
 		file delete $target.temp
 	}
 
@@ -248,7 +248,7 @@ proc process_sample {args} {
 					puts $f $chr\t[file tail $dep]
 				}
 				close $f
-				file rename $target.temp $target
+				file rename -force $target.temp $target
 			}
 		}
 	}
@@ -266,7 +266,7 @@ proc process_sample {args} {
 		file delete -force $targetdir
 		file delete -force $targetdir.temp
 		file copy $dep $targetdir.temp
-		file rename $targetdir.temp $targetdir
+		file rename -force $targetdir.temp $targetdir
 	}
 
 	job cg_cgsv-$sample {SV/allJunctionsBeta-*.tsv*} {cgsv-$sample.tsv} {
@@ -283,7 +283,7 @@ proc process_sample {args} {
 		file delete -force $targetdir
 		file delete -force $targetdir.temp
 		file copy $dep $targetdir.temp
-		file rename $targetdir.temp $targetdir
+		file rename -force $targetdir.temp $targetdir
 	}
 
 	job cg_cgcnv {CNV/cnvSegmentsBeta-*.tsv*} {cgcnv-$sample.tsv} {

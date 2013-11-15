@@ -401,7 +401,7 @@ proc svmulticompar {svfile1 svfile2} {
 	# cg select -s {chr1 start1} $svfile1.temp $svfile1.temp2
 	# file delete $svfile1.temp
 	file rename -force $svfile1 $svfile1.old
-	file rename $svfile1.temp $svfile1
+	file rename -force $svfile1.temp $svfile1
 	putslog "finished adding $name to $svfile1"
 
 }
@@ -481,6 +481,6 @@ if 0 {
 	}
 	close $o
 	cg select -q {$type != "ins" && !($type == "del" && $size < 250)} $file msv-a$base.tsv
-	file rename msv-a$base.tsv /complgen/1.8/svcg/msv-a$base.tsv
+	file rename -force msv-a$base.tsv /complgen/1.8/svcg/msv-a$base.tsv
 
 }

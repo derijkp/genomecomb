@@ -237,7 +237,7 @@ proc multicompar {compar_file dir {listfields {}}} {
 
 	close $f1; close $f2; close $o
 	catch {file rename -force $compar_file $compar_file.old}
-	file rename $compar_file.temp $compar_file
+	file rename -force $compar_file.temp $compar_file
 }
 
 proc multicompar_reannot_find {basedir sample args} {
@@ -443,7 +443,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 		}
 	}
 	file rename -force $compar_file $compar_file.old
-	file rename $compar_file.temp $compar_file
+	file rename -force $compar_file.temp $compar_file
 }
 
 proc cg_multicompar {args} {

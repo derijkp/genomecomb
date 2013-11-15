@@ -61,7 +61,7 @@ proc map2sv {files prefix} {
 				puts "doing: $file"
 				set cat [gzcat $file]
 				exec {*}$cat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $scratchprefix$root-
-				file rename {*}[glob $scratchprefix$root-*] $scratchdir
+				file rename -force {*}[glob $scratchprefix$root-*] $scratchdir
 			}
 			incr num
 		}
@@ -88,7 +88,7 @@ proc map2sv {files prefix} {
 			puts $f [join {chromosome bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
 			close $f
 			exec cat {*}$a($chr) | gnusort8 -T $scratchdir/tmp -t \t -n -s -k5 >> $rfile.temp
-			file rename $rfile.temp $rfile
+			file rename -force $rfile.temp $rfile
 		}
 		file delete -force $scratchdir/tmp {*}$files
 	}
@@ -306,7 +306,7 @@ proc svhisto {pairfile} {
 	puts $f $total
 	close $f
 	catch {file rename -force $out $out.old}
-	file rename $out.temp $out
+	file rename -force $out.temp $out
 	# draw histo
 	set tempfile [tempfile]
 	file_write $tempfile [subst -nocommands {
@@ -1920,8 +1920,8 @@ proc svfind {pairfile trffile} {
 	close $o
 	catch {close $f}
 	catch {file delete $outfile.old}
-	catch {file rename $outfile $outfile.old}
-	file rename $outfile.temp $outfile
+	catch {file rename -force $outfile $outfile.old}
+	file rename -force $outfile.temp $outfile
 	putslog "Made svfind $outfile"
 
 }

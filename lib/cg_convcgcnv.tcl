@@ -18,5 +18,5 @@ proc cg_convcgcnv {args} {
 	}
 	foreach {srcfile dstfile} $args break
 	convcgcnv $srcfile $dstfile.temp
-	file rename $dstfile.temp $dstfile
+	file rename -force $dstfile.temp $dstfile
 }

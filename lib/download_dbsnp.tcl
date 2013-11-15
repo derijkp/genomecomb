@@ -109,6 +109,6 @@ proc downloaddb_dbsnp {path build dbname} {
 	close $f ; close $o
 	puts "Sorting $filename"
 	cg select -s - $filename.temp $filename.temp2
-	file rename $filename.temp2 $filename
+	file rename -force $filename.temp2 $filename
 	file delete $filename.temp
 }

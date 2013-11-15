@@ -10,7 +10,7 @@ proc bam2covstats_job {bamfile regionfile} {
 	
 	job make_histo-$root -deps {$dir/coverage-$root/coverage-$root.FINISHED $regionfile} -targets $dir/$root.histo -vars {regionfile dir root} -code {
 		cg bcol histo $regionfile $dir/coverage-$root/coverage-$root {1 5 10 20 50 100 200 500 1000} > $target.temp
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 }
 
@@ -65,7 +65,7 @@ proc fastq_clipadapters {files targets {adapterfile {}}} {
 		}
 	}
 	foreach target $targets {
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 }
 
@@ -111,7 +111,7 @@ proc gatkworkaround_tsv2bed_job {file refseq} {
 		}
 		close $o
 		close $f
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	return [file root $file].bed
 }
@@ -124,7 +124,7 @@ proc bowtie2refseq_job {refseq} {
 		file mkdir $refseq.bowtie2.temp
 		mklink $refseq $refseq.bowtie2.temp/[file tail $refseq]
 		exec bowtie2-build $refseq $refseq.bowtie2.temp/[file tail $refseq]
-		file rename $refseq.bowtie2.temp $refseq.bowtie2
+		file rename -force $refseq.bowtie2.temp $refseq.bowtie2
 	}
 	return $bowtie2refseq
 }
@@ -154,13 +154,13 @@ proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
 		exec bowtie2 -p 2 --sensitive -x $bowtie2refseq -1 [join $files1 ,] -2 [join $files2 ,] \
 		--rg-id "$sample" {*}$rg \
 		-S $target.temp >@ stdout 2>@ stderr
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	job bowtie2_bam-$sample -deps $result.sam -targets $result.bam -vars {result} -code {
 		puts "making $target"
 		catch {exec samtools view -S -h -b -o $result.ubam $result.sam >@ stdout 2>@ stderr}
 		catch {exec samtools sort $result.ubam $result.temp >@ stdout 2>@ stderr}
-		file rename $result.temp.bam $result.bam
+		file rename -force $result.temp.bam $result.bam
 		file delete $result.ubam
 		file delete $result.sam
 	}
@@ -183,7 +183,7 @@ proc bam2reg_job {bamfile {mincoverage 5}} {
 #	}
 	job cov$mincoverage-$root -deps $bamfile -targets $dir/sreg-cov$mincoverage-$root.tsv -vars {mincoverage} -code {
 		cg regextract -above 1 [expr {$mincoverage-1}] $dep > $target.temp
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	return $dir/sreg-cov$mincoverage-$root.tsv
 }
@@ -196,7 +196,7 @@ proc bwarefseq_job {refseq} {
 		file mkdir $target.temp
 		mklink $dep $target.temp/[file tail $dep]
 		exec bwa index $target.temp/[file tail $dep] 2>@ stderr
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	return $bwarefseq
 }
@@ -232,14 +232,14 @@ proc map_bwa_job {refseq files sample {readgroupdata {}} {pre {}}} {
 			mklink $file2 bwa2.fastq
 		}
 		exec bwa mem -t 2 -a -M -R @RG\tID:$sample\t[join $rg \t] $bwarefseq bwa1.fastq bwa2.fastq > $target.temp 2>@ stderr
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 		file delete bwa1.fastq bwa2.fastq
 	}
 	job bwa2bam-$sample -deps $result.sam -targets $result.bam -vars {result} -code {
 		puts "making $target"
 		catch {exec samtools view -S -h -b -o $result.ubam $result.sam >@ stdout 2>@ stderr}
 		catch {exec samtools sort $result.ubam $result.temp >@ stdout 2>@ stderr}
-		file rename $result.temp.bam $result.bam
+		file rename -force $result.temp.bam $result.bam
 		file delete $result.ubam
 		file delete $result.sam
 	}
@@ -252,7 +252,7 @@ proc map_bwa_job {refseq files sample {readgroupdata {}} {pre {}}} {
 #	}
 #	job bwa_coverage-$sample -deps $result.bam -targets sreg-$sample.tsv -vars {sample} -code {
 #		cg regextract -above 1 7 $dep > $target.temp
-#		file rename $target.temp $target
+#		file rename -force $target.temp $target
 #	}
 }
 
@@ -272,7 +272,7 @@ proc gatk_refseq_job refseq {
 	job gatkrefseq-[file tail $nrefseq] -deps $nrefseq -targets {$dict} -vars {nrefseq picard} -code {
 		file delete $target.temp
 		exec java -jar $picard/CreateSequenceDictionary.jar R= $nrefseq O= $target.temp 2>@ stderr > stdout
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	return $nrefseq
 }
@@ -333,10 +333,10 @@ proc bam_clean_job {bamfile refseq sample args} {
 	-vars {removeduplicates sample picard} {*}$skips -code {
 		file delete $target.temp
 		exec java -jar $picard/SortSam.jar	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr > stdout
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	#	# exec java -jar $picard/AddOrReplaceReadGroups.jar	I=$src	O=$target.temp3	RGID=$sample	RGLB=solexa-123	RGPL=illumina	RGPU=$sample RGSM=$sample 2>@ stderr > stdout
 	#	# file delete $target.temp $target.temp2
-	#	# file rename $target.temp3 $target
+	#	# file rename -force $target.temp3 $target
 	}
 	set root s$root
 	if {$removeduplicates} {
@@ -344,7 +344,7 @@ proc bam_clean_job {bamfile refseq sample args} {
 		-vars {sample picard} -skip {$dir/$pre-rd$root.bam} -code {
 			puts "removing duplicates"
 			exec java -jar $picard/MarkDuplicates.jar	I=$dep	O=$target.temp METRICS_FILE=$target.dupmetrics 2>@ stderr > stdout
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 		set root d$root
 	}
@@ -363,18 +363,18 @@ proc bam_clean_job {bamfile refseq sample args} {
 			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
 			-vars {gatkrefseq srma pre realignopts} -code {
 				exec java -jar $srma I=$dep O=$target.temp R=$gatkrefseq {*}$realignopts 2>@ stderr >@ stdout
-				catch {file rename $target.temp.bai $target.bai}
+				catch {file rename -force $target.temp.bai $target.bai}
 				catch {file delete $target.intervals}
-				file rename $target.temp $target
+				file rename -force $target.temp $target
 			}
 		} else {
 			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
 			-vars {gatkrefseq gatk pre realignopts} -code {
 				exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
 				exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp 2>@ stderr >@ stdout
-				catch {file rename $target.temp.bai $target.bai}
+				catch {file rename -force $target.temp.bai $target.bai}
 				catch {file delete $target.intervals}
-				file rename $target.temp $target
+				file rename -force $target.temp $target
 			}
 		}
 		set root r$root
@@ -410,7 +410,7 @@ proc sreg_sam_job {job varallfile resultfile} {
 		cg select -q {$quality >= 20 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $target.temp
 		file_write $target.temp2 "# regions selected from $dep: \$quality >= 20 && \$totalcoverage >= 5\n"
 		cg regjoin $target.temp >> $target.temp2
-		file rename $target.temp2 $target
+		file rename -force $target.temp2 $target
 		file delete $target.temp
 	}
 }
@@ -444,11 +444,11 @@ proc var_sam_job {bamfile refseq args} {
 		-vars {refseq opts} -skip ${pre}varall-sam-$root.tsv -code {
 		# bcftools -v for variant only
 		exec samtools mpileup -uDS -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv -code {
 		cg vcf2tsv $dep $target.temp
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \
@@ -456,7 +456,7 @@ proc var_sam_job {bamfile refseq args} {
 		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 5 && $totalcoverage > 3} \
 			-f {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 {sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))} *} \
 			$dep $target.temp
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job ${pre}uvar-sam-$root.tsv ${pre}var-sam-$root.tsv
@@ -480,7 +480,7 @@ proc sreg_gatk_job {job varallfile resultfile} {
 		cg select -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $target.temp
 		file_write $target.temp2 "# regions selected from $dep: \$quality >= 30 && \$totalcoverage >= 5\n"
 		cg regjoin $target.temp >> $target.temp2
-		file rename $target.temp2 $target
+		file rename -force $target.temp2 $target
 		file delete $target.temp
 	}
 }
@@ -516,20 +516,20 @@ proc var_gatk_job {bamfile refseq args} {
 			-stand_call_conf 50.0 -stand_emit_conf 10.0 -dcov 1000 \
 			--annotateNDA \
 			-glm BOTH --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr
-		file rename $target.temp $target
-		catch {file rename $target.temp.idx $target.idx}
+		file rename -force $target.temp $target
+		catch {file rename -force $target.temp.idx $target.idx}
 		# file delete $target.temp
 	}
 	job ${pre}varall-gatk2sft-$root -deps [list ${pre}varall-gatk-$root.vcf] -targets ${pre}varall-gatk-$root.tsv -vars {sample} -code {
 		cg vcf2sft $dep $target.temp
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	job ${pre}uvar-gatk-$root -deps ${pre}varall-gatk-$root.tsv -targets ${pre}uvar-gatk-$root.tsv \
 	-skip {${pre}var-gatk-$root.tsv} -code {
 		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
 			-f {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 {sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))} *} \
 			$dep $target.temp
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job ${pre}uvar-gatk-$root.tsv ${pre}var-gatk-$root.tsv
@@ -567,7 +567,7 @@ proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 	if {[llength $stilltodo]} {
 		file delete compar/compar-$experiment.tsv.temp
 		if {[file exists compar/compar-$experiment.tsv]} {
-			file rename compar/compar-$experiment.tsv compar/compar-$experiment.tsv.temp
+			file rename -force compar/compar-$experiment.tsv compar/compar-$experiment.tsv.temp
 		}
 		job multicompar-$experiment -deps [list_concat $stilltodo $deps] -targets compar/compar-$experiment.tsv \
 		-vars {stilltodo skipincomplete} -code {
@@ -578,13 +578,13 @@ proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 			} else {
 				cg multicompar_reannot $target.temp
 			}
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 	}
 	job annotcompar-$experiment -deps compar/compar-$experiment.tsv \
 	-targets compar/annot_compar-$experiment.tsv -vars dbdir -code {
 		cg annotate $dep $target.temp $dbdir
-		file rename $target.temp $target
+		file rename -force $target.temp $target
 	}
 	job indexannotcompar-$experiment \
 	-deps compar/annot_compar-$experiment.tsv \
@@ -602,11 +602,11 @@ proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 	if {[llength $stilltodo]} {
 		file delete compar/sreg-$experiment.tsv.temp
 		if {[file exists compar/sreg-$experiment.tsv]} {
-			file rename compar/sreg-$experiment.tsv compar/sreg-$experiment.tsv.temp
+			file rename -force compar/sreg-$experiment.tsv compar/sreg-$experiment.tsv.temp
 		}
 		job sreg-$experiment -deps $stilltodo -targets compar/sreg-$experiment.tsv -vars stilltodo -code {
 			cg multireg $target.temp {*}[list_remove $deps {}]
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 	}
 }
@@ -681,7 +681,7 @@ proc process_illumina {args} {
 			set target [file root [gzroot $file]].tsv
 			job vcf2sft-$file -deps $file -targets $target -code {
 				cg vcf2sft $dep $target.temp
-				file rename $target.temp $target
+				file rename -force $target.temp $target
 			}
 			lappend todo [string range $target 4 end-4]
 		}

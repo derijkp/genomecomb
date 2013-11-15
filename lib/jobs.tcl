@@ -516,7 +516,7 @@ proc job_backup {file {rename 0}} {
 		incr num
 	}
 	if {$rename} {
-		file rename $file $file.old$num
+		file rename -force $file $file.old$num
 	} else {
 		file copy $file $file.old$num
 	}
@@ -587,7 +587,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 		if {$ok} {
 			file_add $job.log "[job_timestamp]\t$jobname finished\n"
 			file_write $job.finished [job_timestamp]\n
-			catch {file rename $job.err $job.msgs}
+			catch {file rename -force $job.err $job.msgs}
 		} else {
 			file_add $job.log "[job_timestamp]\tjob $jobname failed\n"
 		}

@@ -218,7 +218,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 			file delete -force $workfile.temp
 			file delete -force $workfile
 			gunzip $file $workfile.temp
-			file rename $workfile.temp $workfile
+			file rename -force $workfile.temp $workfile
 			set uncompressed 1
 			set remove 1
 		}
@@ -229,7 +229,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 	if {![file exists $indexname]} {
 		tsv_index $field $workfile
 		if {$workfile ne $file} {
-			file rename [gzroot $workfile].${field}_index $indexname
+			file rename -force [gzroot $workfile].${field}_index $indexname
 		}
 	}
 	set o [open $indexname]
