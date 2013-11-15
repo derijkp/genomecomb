@@ -19,7 +19,7 @@ proc cg_bam2coverage {bamfile destprefix} {
 		set temp [lindex $line 0]
 		lset line 0 [incr temp -1]
 		lset c end [join $line \t]
-		write_file $file [join $c \n]
+		file_write $file [join $c \n]
 	}
 	file rename -force {*}[glob $destprefix.temp/$prefix*.bcol*] $dir
 	file delete $destprefix.temp
