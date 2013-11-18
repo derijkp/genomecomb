@@ -29,7 +29,7 @@ proc cg_exportplink {args} {
 	set alleleposs [list_find -glob $header alleleSeq*]
 	set temp {}
 	foreach field [list_sub $header $alleleposs] p $alleleposs {
-		foreach {an name} [split $field -] break
+		regexp {^([^-]+)-(.*)$} $field unused an name
 		lappend temp [list $name $an $p]
 	}
 	set temp [ssort -natural $temp]
