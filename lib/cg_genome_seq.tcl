@@ -22,6 +22,7 @@ proc cg_genome_seq {args} {
 	set delsize 5
 	set repeats s
 	set gc -1
+	set gcsplit {}
 	set id {}
 	set pos 0
 	set makemap 0
@@ -48,6 +49,11 @@ proc cg_genome_seq {args} {
 			}
 			-g - --gc {
 				set gc $value
+			}
+			-gs - --gcsplit {
+				if {![isdouble $value]} {error "$value is not a number"}
+				set gcsplit $value
+				if {$gc == -1} {set gc 100}
 			}
 			-c - --concat {
 				set concat $value
@@ -79,13 +85,27 @@ proc cg_genome_seq {args} {
 		incr pos 2
 	}
 	set args [lrange $args $pos end]
-	if {([llength $args] != 2)} {
+	if {([llength $args] != 2 && [llength $args] != 3)} {
 		errorformat genome_seq
 		exit 1
 	}
-	foreach {regionfile dbdir} $args break
+	foreach {regionfile dbdir outfile} $args break
+	if {[isdouble $gcsplit]} {
+		if {$outfile eq ""} {error "In order to use the gcsplit option, you have to provide outfile"}
+		if {$concatlen != -1} {error "Cannot combine concat and gcsplit options"}
+	}
 	#
-	catch {close $f}; catch {close $fg}
+	catch {close $f}; catch {close $fg}; catch {close $fo}; catch {close $foh}
+	if {$outfile eq ""} {
+		set fo stdout
+	} else {
+		if {![isdouble $gcsplit]} {
+			set fo [open $outfile w]
+		} else {
+			set fo [open [file root $outfile]-lowgc[file ext $outfile] w]
+			set foh [open [file root $outfile]-highgc[file ext $outfile] w]
+		}
+	}
 	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]
 	set f [gzopen $regionfile]
 	set header [tsv_open $f]
@@ -109,7 +129,7 @@ proc cg_genome_seq {args} {
 	}
 	if {$concatlen >= 0} {
 		if {[info exists concatname]} {set name $concatname} else {set name [file root [file tail $regionfile]]}
-		puts "\>$name concatenated"
+		puts $fo "\>$name concatenated"
 		set firstline 1
 	} else {
 		set name concat
@@ -120,11 +140,14 @@ proc cg_genome_seq {args} {
 	}
 	set fstart 0
 	if {$concatlen >= 0 && $econcatlen} {
-		puts -nonewline $econcat
+		puts -nonewline $fo $econcat
 		incr fstart $econcatlen
 	}
 	set pchr {}
 	set pend {}
+	set nextrecord ""
+	set nextrecordh ""
+	set outf $fo
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
@@ -134,32 +157,40 @@ proc cg_genome_seq {args} {
 		set chr [chr_clip $chr]
 		set seq [genome_get $fg $chr [expr {$estart}] [expr {$eend}]]
 		set seq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
-		
 		if {$concatlen == -1} {
 			set name [join [list_sub $sub {0 1 2}] -]
 			if {$idpos != -1} {
 				set name "[lindex $line $idpos] $name"
 				if {$gc == 0} {
-					append name " GC:[format %.1f [seq_gc $seq]]"
+					set gcval [seq_gc $seq]
+					append name " GC:[format %.1f $gc]"
 				} elseif {$gc != -1} {
-					set maxgc [lmath_max [seq_gc $seq $gc]]
-					append name " GC:[format %.1f [seq_gc $seq]] maxGC($gc):[format %.1f $maxgc]"
+					set gcval [lmath_max [seq_gc $seq $gc]]
+					append name " GC:[format %.1f [seq_gc $seq]] maxGC($gc):[format %.1f $gcval]"
 				}
 			}
-			puts \n\>$name
+			if {[isdouble $gcsplit] && $gcval >= $gcsplit} {
+				set outf $foh
+				puts $outf $nextrecordh\>$name
+				set nextrecordh \n
+			} else {
+				set outf $fo
+				puts $outf $nextrecord\>$name
+				set nextrecord \n
+			}
 		} elseif {!$firstline} {
 			foreach {chr begin end} $sub break
 			if {[chr_compare $chr $pchr] == 0 && $begin == $pend} {
-				puts -nonewline $aconcat
+				puts -nonewline $outf $aconcat
 				incr fstart $aconcatlen
 			} else {
-				puts -nonewline $concat
+				puts -nonewline $outf $concat
 				incr fstart $concatlen
 			}
 			set pchr $chr
 			set pend $end
 		}
-		puts -nonewline $seq
+		puts -nonewline $outf $seq
 		if {$makemap} {
 			puts $fm $name\t$fstart\t[expr {$fstart+[string length $seq]}]\t[join $sub \t]\t[lindex $line $namepos]
 		}
@@ -167,10 +198,11 @@ proc cg_genome_seq {args} {
 		set firstline 0
 	}
 	if {$concatlen >= 0 && $econcatlen} {
-		puts -nonewline $econcat
+		puts -nonewline $fo $econcat
 		incr fstart $econcatlen
 	}
-	puts ""
+	puts $fo ""
+	if {[isdouble $gcsplit] && $gcval >= $gcsplit} {puts $foh ""}
 	if {$makemap} {
 		close $fm
 	}

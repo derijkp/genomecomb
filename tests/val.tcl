@@ -30,13 +30,25 @@ test makesequenom {basic} {
 } {} 
 
 test genome_seq {basic} {
-	exec cg genome_seq -i name data/reg_genome_seq.tsv /complgen/refseq/hg19_test > tmp/temp.sft  2> /dev/null
-	exec diff tmp/temp.sft data/expected-reg_genome_seq.tsv
+	exec cg genome_seq -i name data/reg_genome_seq.tsv /complgen/refseq/hg19_test > tmp/temp.fas  2> /dev/null
+	exec diff tmp/temp.fas data/expected-reg_genome_seq.fas
 } {} 
 
-test genome_seq {basic} {
-	exec cg genome_seq -f -1 -n -1 data/reg_genome_seq.tsv /complgen/refseq/hg19_test > tmp/temp.sft  2> /dev/null
-	exec diff tmp/temp.sft data/expected-reg_genome_seq-1-1.tsv
+test genome_seq {outfile} {
+	exec cg genome_seq -i name data/reg_genome_seq.tsv /complgen/refseq/hg19_test tmp/temp.fas  2> /dev/null
+	exec diff tmp/temp.fas data/expected-reg_genome_seq.fas
+} {} 
+
+test genome_seq {concat and makemap} {
+	exec cg genome_seq -c "" -m tmp/temp.map -i name data/reg_genome_seq.tsv /complgen/refseq/hg19_test > tmp/temp.fas  2> /dev/null
+	exec diff tmp/temp.fas data/expected-reg_genome_seq.ifas
+	exec diff tmp/temp.map data/expected-reg_genome_seq.map
+} {} 
+
+test genome_seq {gcsplit} {
+	exec cg genome_seq -g 50 -gs 60 -i name data/reg_genome_seq.tsv /complgen/refseq/hg19_test tmp/temp.fas  2> /dev/null
+	exec diff tmp/temp-lowgc.fas data/expected-reg_genome_seq-lowgc.fas
+	exec diff tmp/temp-highgc.fas data/expected-reg_genome_seq-highgc.fas
 } {} 
 
 test primercheck {basic} {

@@ -1,16 +1,18 @@
 = genome_seq =
 
 == Format ==
-cg genome_seq ?options? regionfile dbdir
+cg genome_seq ?options? regionfile dbdir ?outfile?
 
 == Summary ==
 Returns sequences of regions in the genome (fasta file), optionally masked for snps/repeats
 
 == Description ==
-This command returns the sequences of the genomic regions given in the file regionfile in fasta 
-format (to stdout). Regionfile is a tab delimited file with at least following columns: chromosome begin end.
-Repeatmasker repeats are softmasked (lower case) in the output sequences. Optionally you can 
-hardmask repeats, and soft or hardmask known (dbsnp) variants based on frequency.
+This command returns the sequences of the genomic regions given in the
+file regionfile in fasta format (to stdout or to a file outfile).
+Regionfile is a tab delimited file with at least following columns:
+chromosome begin end. Repeatmasker repeats are softmasked (lower case) in
+the output sequences. Optionally you can hardmask repeats, and soft or
+hardmask known (dbsnp) variants based on frequency.
 
 == Arguments ==
 ; **regionfile**: tab delimited file containing targets with at least following columns: chromosome begin end
@@ -29,6 +31,9 @@ hardmask repeats, and soft or hardmask known (dbsnp) variants based on frequency
 ; **-cn concatname** (--concatname): The concatname wil be the name of sequence in the fasta file generated (if not given, the name will be based on the file)
 ; **-e concatend** (--concatend): The sequence given by concatend will be added to start and end of the final sequence (only if -c  option was used)
 ; **-ca concatadj** (--concatadj): The concatseq (-c option) will only be added if regions are separated by at least one base. concatadj will be used to concat adjoining regions (and is '' by default)
-
+; **-gs gccontent** (--gcsplit): Split the result in low and high gc (high has gc >= **gccontent**).
+The gc used depends on the -gc option. If -gc is not given, the maxgc at a windowsize of 100 is used.
+This option cannot be combined with concatenating sequences, and outfile has to be specified. 
+2 files will be generated with lowgc and highgc added in the given outfile name.
 == Category ==
 Validation
