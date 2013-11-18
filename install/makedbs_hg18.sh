@@ -18,7 +18,7 @@ cd ${dest}/${build}
 file mkdir extra
 file mkdir ${dest}/tmp/hg18
 
-job_logdir job_logdir
+job_logdir log_jobs
 
 # download genome
 job genome_${build} -vars build -targets {genome_${build}.ifas extra/reg_${build}_fullgenome.tsv} -code {

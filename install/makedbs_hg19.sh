@@ -18,7 +18,7 @@ file mkdir ${dest}/${build}
 cd ${dest}/${build}
 file mkdir extra
 
-job_logdir job_logdir
+job_logdir log_jobs
 
 # download genome
 job genome_${build} -vars build -targets {genome_${build}.ifas extra/reg_${build}_fullgenome.tsv} -code {
@@ -95,12 +95,12 @@ foreach db {
 
 # 1000 genomes
 # 1000g (hg18)
-job 1000g -targets {$dest/hg18/var_hg18_1000gCHBxJPT.tsv $dest/hg18/var_hg18_1000gCEU.tsv $dest/hg18/var_hg18_1000gYRI.tsv} -vars {dest} -code {
+job 1000gh18 -targets {$dest/hg18/var_hg18_1000gCHBxJPT.tsv $dest/hg18/var_hg18_1000gCEU.tsv $dest/hg18/var_hg18_1000gYRI.tsv} -vars {dest} -code {
 	cd ${dest}/hg18
 	cg downloaddb ${dest} hg18 1000g
 }
 
-job 1000g -deps {var_hg18_1000gCHBxJPT.tsv var_hg18_1000gCEU.tsv var_hg18_1000gYRI.tsv} -targets {var_${build}_1000gCHBxJPT.tsv var_${build}_1000gCEU.tsv var_${build}_1000gYRI.tsv} -vars {dest build} -code {
+job 1000gliftover -deps {$dest/hg18/var_hg18_1000gCHBxJPT.tsv $dest/hg18/var_hg18_1000gCEU.tsv $dest/hg18/var_hg18_1000gYRI.tsv} -targets {var_${build}_1000gCHBxJPT.tsv var_${build}_1000gCEU.tsv var_${build}_1000gYRI.tsv} -vars {dest build} -code {
 	cg liftover ${dest}/hg18/var_hg18_1000gCHBxJPT.tsv ${dest}/liftover/hg18ToHg19.over.chain var_${build}_1000gCHBxJPT.tsv
 	cg liftover ${dest}/hg18/var_hg18_1000gCEU.tsv ${dest}/liftover/hg18ToHg19.over.chain var_${build}_1000gCEU.tsv
 	cg liftover ${dest}/hg18/var_hg18_1000gYRI.tsv ${dest}/liftover/hg18ToHg19.over.chain var_${build}_1000gYRI.tsv

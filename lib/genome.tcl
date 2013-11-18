@@ -52,6 +52,7 @@ proc cg_genome_indexfasta {resultfile} {
 	set pos 0
 	while {![eof $f]} {
 		set len [string length $line]
+		if {$len == 0} continue
 		set name [string range $line 1 end]
 		if {![regexp {chromosome ([^ ,]+)[ ,]} $name temp chr]} {
 			if {![regexp {chr([^ ,]+)} $name temp chr]} {
@@ -61,7 +62,7 @@ proc cg_genome_indexfasta {resultfile} {
 		puts $name
 		set line ">chr$chr $name"
 		puts $o $line
-		incr pos $len
+		incr pos [string length $line]
 		incr pos 1
 		set seqlen 0
 		while {![eof $f]} {
@@ -74,13 +75,13 @@ proc cg_genome_indexfasta {resultfile} {
 			puts -nonewline $o $line
 		}
 		puts $o ""
-		set a($name) [list $pos $seqlen]
-		puts $oi "$name\t$pos $seqlen"
+		puts $oi "$chr\t$pos $seqlen"
 		flush $oi
 		flush $o
 		incr pos $seqlen
 		incr pos 1
 	}
+	puts $oi "\t$pos 0"
 	close $oi
 	close $o
 	close $f
