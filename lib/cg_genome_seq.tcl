@@ -78,6 +78,9 @@ proc cg_genome_seq {args} {
 				set mapfile $value
 				set makemap 1
 			}
+			-l - --limitchars {
+				set limitchars $value
+			}
 			--namefield {
 				set namefield $value
 			}
@@ -187,6 +190,9 @@ proc cg_genome_seq {args} {
 					set gcval [lmath_max [seq_gc $seq $gc]]
 					append name " GC:[format %.1f [seq_gc $seq]] maxGC($gc):[format %.1f $gcval]"
 				}
+			}
+			if {[info exists limitchars]} {
+				regsub -all {[^A-Za-z0-9_.-]} $name $limitchars name
 			}
 			if {$split} {
 				if {[isdouble $gcsplit]} {

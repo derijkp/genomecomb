@@ -51,6 +51,11 @@ test genome_seq {gcsplit} {
 	exec diff tmp/temp-highgc.fas data/expected-reg_genome_seq-highgc.fas
 } {} 
 
+test genome_seq {gcsplit and -l} {
+	exec cg genome_seq -g 50 -gs 60 -l _ -i name data/reg_genome_seq.tsv /complgen/refseq/hg19_test tmp/temp.fas  2> /dev/null
+	exec diff tmp/temp-highgc.fas data/expected-reg_genome_seq-highgc-l.fas
+} {} 
+
 test genome_seq {split} {
 	file delete {*}[glob tmp/*.fas]
 	exec cg genome_seq -g 50 -s 1 -i name data/reg_genome_seq.tsv /complgen/refseq/hg19_test tmp/  2> /dev/null
