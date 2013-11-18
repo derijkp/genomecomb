@@ -117,7 +117,11 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	set refseq seq-$mastrname.fa
 	set mapfile reg-$mastrname.map
 	job makeminigenome-$mastrname -deps amplicons-$mastrname.tsv \
-	-targets {$refseq reg-$mastrname.bed $mapfile reg-$mastrname.tsv} \
+	-targets {
+		$refseq reg-$mastrname.bed reg-$mastrname.tsv
+		inner_amplicons-$mastrname.tsv reg-inner-$mastrname.tsv reg-inner-$mastrname.bed
+		reg-mini_$mastrname.bed $mapfile
+	} \
 	-vars {dbdir mastrname} -code {
 		puts stderr "makeminigenome $dbdir $mastrname $dep name"
 		makeminigenome $dbdir $mastrname $dep name
@@ -259,6 +263,19 @@ proc cg_process_mastr {args} {
 	}
 	foreach {mastrdir destdir dbdir} $args break
 	process_mastr_job $mastrdir $destdir $dbdir $useminigenome $aligner
+	job_wait
+}
+
+proc cg_process_mastrdesign {args} {
+	set args [job_init {*}$args]
+	# useminigenome is only important for which reference sequence is returned by mastr_refseq_job
+	set useminigenome 0
+	if {[llength $args] < 2} {
+		puts "Wrong number of arguments, should be cg process_mastrdesign mastrdir dbdir"
+		exit 1
+	}
+	foreach {mastrdir dbdir} $args break
+	mastr_refseq_job $mastrdir $dbdir $useminigenome
 	job_wait
 }
 
