@@ -23,6 +23,7 @@ proc cg_genome_seq {args} {
 	set repeats s
 	set gc -1
 	set gcsplit {}
+	set split 0
 	set id {}
 	set pos 0
 	set makemap 0
@@ -54,6 +55,9 @@ proc cg_genome_seq {args} {
 				if {![isdouble $value]} {error "$value is not a number"}
 				set gcsplit $value
 				if {$gc == -1} {set gc 100}
+			}
+			-s - --split {
+				set split [true $value]
 			}
 			-c - --concat {
 				set concat $value
@@ -90,21 +94,37 @@ proc cg_genome_seq {args} {
 		exit 1
 	}
 	foreach {regionfile dbdir outfile} $args break
+	if {$outfile ne ""} {
+		set root [file root $outfile]
+		set ext [file extension $outfile]
+		set tail [file root [file tail $outfile]]
+	}
 	if {[isdouble $gcsplit]} {
 		if {$outfile eq ""} {error "In order to use the gcsplit option, you have to provide outfile"}
 		if {$concatlen != -1} {error "Cannot combine concat and gcsplit options"}
+	}
+	if {$split} {
+		if {$outfile eq ""} {error "In order to use the split option, you have to provide outfile"}
+		if {$concatlen != -1} {error "Cannot combine concat and split options"}
+		if {[isdouble $gcsplit]} {
+			file mkdir $root-lowgc
+			file mkdir $root-highgc
+		}
 	}
 	#
 	catch {close $f}; catch {close $fg}; catch {close $fo}; catch {close $foh}
 	if {$outfile eq ""} {
 		set fo stdout
+	} elseif {$split} {
+		set filenum 1
 	} else {
 		if {![isdouble $gcsplit]} {
 			set fo [open $outfile w]
 		} else {
-			set fo [open [file root $outfile]-lowgc[file ext $outfile] w]
-			set foh [open [file root $outfile]-highgc[file ext $outfile] w]
+			set fo [open $root-lowgc$ext w]
+			set foh [open $root-highgc$ext w]
 		}
+		set outf $fo
 	}
 	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]
 	set f [gzopen $regionfile]
@@ -147,7 +167,6 @@ proc cg_genome_seq {args} {
 	set pend {}
 	set nextrecord ""
 	set nextrecordh ""
-	set outf $fo
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
@@ -169,7 +188,19 @@ proc cg_genome_seq {args} {
 					append name " GC:[format %.1f [seq_gc $seq]] maxGC($gc):[format %.1f $gcval]"
 				}
 			}
-			if {[isdouble $gcsplit] && $gcval >= $gcsplit} {
+			if {$split} {
+				if {[isdouble $gcsplit]} {
+					if {$gcval >= $gcsplit} {
+						set outf [open $root-highgc/[lindex $name 0].fas w]
+					} else {
+						set outf [open $root-lowgc/[lindex $name 0].fas w]
+					}
+				} else {
+					set outf [open $root[lindex $name 0].fas w]
+				}
+				incr filenum
+				puts $outf \>$name
+			} elseif {[isdouble $gcsplit] && $gcval >= $gcsplit} {
 				set outf $foh
 				puts $outf $nextrecordh\>$name
 				set nextrecordh \n
@@ -190,7 +221,12 @@ proc cg_genome_seq {args} {
 			set pchr $chr
 			set pend $end
 		}
-		puts -nonewline $outf $seq
+		if {$split} {
+			puts $outf $seq
+			close $outf
+		} else {
+			puts -nonewline $outf $seq
+		}
 		if {$makemap} {
 			puts $fm $name\t$fstart\t[expr {$fstart+[string length $seq]}]\t[join $sub \t]\t[lindex $line $namepos]
 		}
@@ -201,8 +237,10 @@ proc cg_genome_seq {args} {
 		puts -nonewline $fo $econcat
 		incr fstart $econcatlen
 	}
-	puts $fo ""
-	if {[isdouble $gcsplit] && $gcval >= $gcsplit} {puts $foh ""}
+	if {!$split} {
+		puts $fo ""
+		if {[isdouble $gcsplit] && $gcval >= $gcsplit} {puts $foh ""}
+	}
 	if {$makemap} {
 		close $fm
 	}
