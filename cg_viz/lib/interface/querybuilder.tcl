@@ -132,7 +132,13 @@ mainw method querybuilder_add {command {join and}} {
 		set compare(type) [lindex $compare(types) 0]
 		set compare(samples) [cg select -n $tdata(file)]
 		$object.compare option listbox Sample1 [privatevar $object compare(selsamples)] [privatevar $object compare(samples)] -selectmode multiple
-		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(type) \] 0\]\(\[join \[getprivate $object compare(selsamples) \] ,\]\)\" $join" default
+#		$object.compare add go Go "$object querybuilder_insert \"\[lindex \[getprivate $object compare(type) \] 0\]\(\"\[join \[getprivate $object compare(selsamples) \] \",\"\]\)\" $join" default
+		$object.compare add go Go [list invoke {object} {
+			set type [lindex [getprivate $object compare(type)] 0]
+			set samples [getprivate $object compare(selsamples)]
+			$object querybuilder_insert "${type}(\"[join $samples \",\"]\")"
+			$object.compare destroy
+		} $object]
 	} elseif {$command in {min max lmin lmax avg sum}} {
 		if {![llength $fields]} {error "Select some fields first"}
 		set insert "${command}(\$[join $fields ",\$"])"
