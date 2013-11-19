@@ -8,7 +8,7 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc tsv_select_compare {ids neededfieldsVar} {
+proc tsv_select_compare {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set id1 [string trim [list_pop ids] "\"\' "]
 	set fields [list sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1]
@@ -16,62 +16,92 @@ proc tsv_select_compare {ids neededfieldsVar} {
 		set id [string trim $id "\"\' "]
 		lappend fields sequenced-$id alleleSeq1-$id alleleSeq2-$id
 	}
-	lappend neededfields {*}$fields
+	lappend needed {*}$fields
+	set needed [list_remdup $needed]
+	set poss [list_find [list_cor $header $needed] -1]
+	if {[llength $poss]} {
+		error "Could not find fields needed for compare(\"$id1\",[join $ids ,]): [list_sub $needed $poss]"
+	}
+	lappend neededfields {*}$needed
 	set temp "\[compare \$\{[join $fields "\} \$\{"]\}\]"
 }
 
-proc tsv_select_zyg {ids neededfieldsVar} {
+proc tsv_select_zyg {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
-	set id1 [string trim [list_pop ids]]
+	set id1 [string trim [list_pop ids] "\"\' "]
 	set fields [list sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1 ref alt]
-	lappend neededfields {*}$fields
+	lappend needed {*}$fields
+	set needed [list_remdup $needed]
+	set poss [list_find [list_cor $header $needed] -1]
+	if {[llength $poss]} {
+		error "Could not find fields needed for zyg(\"$id1\",[join $ids ,]): [list_sub $needed $poss]"
+	}
+	lappend neededfields {*}$needed
 	set temp "\[zyg \$\{[join $fields "\} \$\{"]\}\]"
 }
 
-proc tsv_select_sm {ids neededfieldsVar} {
+proc tsv_select_sm {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set id1 [string trim [list_pop ids] "\"\' "]
 	set temp [list "(\$\{sequenced-$id1\} == \"v\")"]
-	lappend neededfields sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1
+	lappend needed sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1
 	foreach id $ids {
 		set id [string trim $id "\"\' "]
-		lappend neededfields sequenced-$id alleleSeq1-$id alleleSeq2-$id
+		lappend needed sequenced-$id alleleSeq1-$id alleleSeq2-$id
 		lappend temp "(\$\{sequenced-$id\} == \"v\")"  "samegeno(\$\{alleleSeq1-$id1\},\$\{alleleSeq2-$id1\},\$\{alleleSeq1-$id\},\$\{alleleSeq2-$id\})"
 	}
+	set needed [list_remdup $needed]
+	set poss [list_find [list_cor $header $needed] -1]
+	if {[llength $poss]} {
+		error "Could not find fields needed for sm(\"$id1\",[join $ids ,]): [list_sub $needed $poss]"
+	}
+	lappend neededfields {*}$needed
 	set temp "([join $temp " && "])"
 }
 
-proc tsv_select_same {ids neededfieldsVar} {
+proc tsv_select_same {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set id1 [string trim [list_pop ids] "\"\' "]
 	set seqlist [list "\$\{sequenced-$id1\} != \"u\""]
-	lappend neededfields sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1
+	lappend needed sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1
 	set temp {}
 	foreach id $ids {
 		set id [string trim $id "\"\' "]
-		lappend neededfields sequenced-$id alleleSeq1-$id alleleSeq2-$id
+		lappend needed sequenced-$id alleleSeq1-$id alleleSeq2-$id
 		lappend seqlist "\$\{sequenced-$id\} != \"u\""
 		lappend temp "samegeno(\$\{alleleSeq1-$id1\},\$\{alleleSeq2-$id1\},\$\{alleleSeq1-$id\},\$\{alleleSeq2-$id\})"
 	}
+	set needed [list_remdup $needed]
+	set poss [list_find [list_cor $header $needed] -1]
+	if {[llength $poss]} {
+		error "Could not find fields needed for same(\"$id1\",[join $ids ,]): [list_sub $needed $poss]"
+	}
+	lappend neededfields {*}$needed
 	set temp "([join $seqlist " && "] && [join $temp " && "])"
 }
 
-proc tsv_select_df {ids neededfieldsVar} {
+proc tsv_select_df {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set temp1 {}
 	set temp2 {}
 	set seqlist {}
 	foreach id $ids {
 		set id [string trim $id "\"\' "]
-		lappend neededfields sequenced-$id
+		lappend needed sequenced-$id
 		lappend seqlist "(\$\{sequenced-$id\} != \"u\")"
 		lappend temp1 "(\$\{sequenced-$id\} == \"v\")"
 		lappend temp2 "(\$\{sequenced-$id\} == \"r\")"
 	}
+	set needed [list_remdup $needed]
+	set poss [list_find [list_cor $header $needed] -1]
+	if {[llength $poss]} {
+		error "Could not find fields needed for df([join $ids ,]): [list_sub $needed $poss]"
+	}
+	lappend neededfields {*}$needed
 	set temp "(([join $seqlist " && " ]) && ([join $temp1 " || " ]) && ([join $temp2 " || "]))"
 }
 
-proc tsv_select_mm {header ids neededfieldsVar} {
+proc tsv_select_mm {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set temp1 {}
 	set temp2 {}
@@ -81,14 +111,14 @@ proc tsv_select_mm {header ids neededfieldsVar} {
 		set id [string trim $id "\"\' "]
 		lappend seqlist "(\$\{sequenced-$id\} == \"v\")"
 		lappend list [list \{alleleSeq1-$id\} \{alleleSeq2-$id\}]
-		lappend neededfields sequenced-$id alleleSeq1-$id alleleSeq2-$id
+		lappend needed sequenced-$id alleleSeq1-$id alleleSeq2-$id
 	}
 	if {[lsearch $header reference] != -1} {
 		set ref reference
 	} else {
 		set ref ref
 	}
-	lappend neededfields $ref
+	lappend needed $ref
 	while {[llength $list]} {
 		foreach {a1 a2} [list_pop list] break
 		lappend temp1 "((\$$a1 != \$$ref) || (\$$a2 != \$$ref))"
@@ -96,30 +126,49 @@ proc tsv_select_mm {header ids neededfieldsVar} {
 			lappend temp2 "!samegeno(\$$a1,\$$a2,\$$a12,\$$a22)"
 		}
 	}
+	set needed [list_remdup $needed]
+	set poss [list_find [list_cor $header $needed] -1]
+	if {[llength $poss]} {
+		error "Could not find fields needed for mm([join $ids ,]): [list_sub $needed $poss]"
+	}
+	lappend neededfields {*}$needed
 	set temp "(([join $seqlist " && " ]) && ([join $temp1 " && " ]) && ([join $temp2 " || "]))"
 }
 
-proc tsv_select_un {ids neededfieldsVar} {
+proc tsv_select_un {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set temp1 {}
 	set temp2 {}
 	foreach id $ids {
 		set id [string trim $id "\"\' "]
-		foreach {a1 a2 sequenced} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
+		# foreach {a1 a2 sequenced} [tsv_select_idtopos $header $id [list alleleSeq1-$id alleleSeq2-$id sequenced-$id]] break
 		lappend temp1 "(\$\{sequenced-$id\} == \"v\")"
 		lappend temp2 "(\$\{sequenced-$id\} == \"u\")"
-		lappend neededfields sequenced-$id
+		lappend needed sequenced-$id
 	}
+	set needed [list_remdup $needed]
+	set poss [list_find [list_cor $header $needed] -1]
+	if {[llength $poss]} {
+		error "Could not find fields needed for un([join $ids ,]): [list_sub $needed $poss]"
+	}
+	lappend neededfields {*}$needed
 	set temp "(([join $temp2 " || "]) && ([join $temp1 " || " ]))"
 }
 
-proc tsv_select_hovar {ids neededfieldsVar} {
+proc tsv_select_hovar {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set temp {}
 	foreach id $ids {
-		lappend neededfields sequenced-$id alleleSeq1-$id alleleSeq2-$id
+		set id [string trim $id "\"\' "]
+		lappend needed sequenced-$id alleleSeq1-$id alleleSeq2-$id
 		lappend temp "\$\{sequenced-$id\} == \"v\" && \$\{alleleSeq1-$id\} == \$\{alleleSeq2-$id\}"
 	}
+	set needed [list_remdup $needed]
+	set poss [list_find [list_cor $header $needed] -1]
+	if {[llength $poss]} {
+		error "Could not find fields needed for hovar([join $ids ,]): [list_sub $needed $poss]"
+	}
+	lappend neededfields {*}$needed
 	set temp "([join $temp {) && (}])"
 	return $temp
 }
@@ -613,28 +662,28 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 				}
 				switch $val {
 					sm {
-						set temp [tsv_select_sm $ids neededfields]
+						set temp [tsv_select_sm $ids $header neededfields]
 					}
 					same {
-						set temp [tsv_select_same $ids neededfields]
+						set temp [tsv_select_same $ids $header neededfields]
 					}
 					df {
-						set temp [tsv_select_df $ids neededfields]
+						set temp [tsv_select_df $ids $header neededfields]
 					}
 					mm {
-						set temp [tsv_select_mm $header $ids neededfields]
+						set temp [tsv_select_mm $ids $header neededfields]
 					}
 					un {
-						set temp [tsv_select_un $ids neededfields]
+						set temp [tsv_select_un $ids $header neededfields]
 					}
 					hovar {
-						set temp [tsv_select_hovar $ids neededfields]
+						set temp [tsv_select_hovar $ids $header neededfields]
 					}
 					compare {
-						set temp [tsv_select_compare $ids neededfields]
+						set temp [tsv_select_compare $ids $header neededfields]
 					}
 					zyg {
-						set temp [tsv_select_zyg $ids neededfields]
+						set temp [tsv_select_zyg $ids $header neededfields]
 					}
 					count {
 						set temp [tsv_select_count $arguments $header neededfields]
