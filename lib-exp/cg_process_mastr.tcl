@@ -48,8 +48,10 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	if {[inlist $list upprobelen] && [inlist $list downprobelen]} {
 		# clipped files
 		cg select -f {chromosome {begin=$begin+$upprobelen} {end=$end - $downprobelen} name} $ampliconsfile $dir/inner_$tail.temp
-	} else {
+	} elseif {[inlist $list primer1_end] && [inlist $list primer2_begin]} {
 		cg select -f {chromosome begin=$primer1_end end=$primer2_begin name} $ampliconsfile $dir/inner_$tail.temp
+	} else {
+		cg select -f {chromosome begin end name} $ampliconsfile $dir/inner_$tail.temp
 	}
 	cg select -s - $dir/inner_$tail.temp $dir/inner_$tail.temp2
 	file delete $dir/inner_$tail.temp
