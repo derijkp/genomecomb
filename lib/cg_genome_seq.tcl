@@ -118,6 +118,7 @@ proc cg_genome_seq {args} {
 	catch {close $f}; catch {close $fg}; catch {close $fo}; catch {close $foh}
 	if {$outfile eq ""} {
 		set fo stdout
+		set outf $fo
 	} elseif {$split} {
 		set filenum 1
 	} else {

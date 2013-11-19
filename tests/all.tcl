@@ -17,3 +17,4 @@ source misc.tcl
 source job.tcl
 source queries.tcl
 source val.tcl
+source genome_seq.tcl
