@@ -133,6 +133,7 @@ proc cg_primercheck {args} {
 		set o stdout
 	}
 	puts $o [join [list chromosome begin end name \
+		outer_begin outer_end strand \
 		primer1 primer2 numamplicons amplicons \
 		primer1_hits primer1_snpsmaxfreq primer1_snps \
 		primer2_hits primer2_snpsmaxfreq primer2_snps \
@@ -251,8 +252,20 @@ proc cg_primercheck {args} {
 			}
 		}
 		set resultline {}
-		lappend resultline $targetchrom $targetbegin $targetend \
-			$name $primer1 $primer2 $numamplicons [lsort -dict $resultamplicons] \
+		if {[isint $targetbegin]} {
+			set outer_begin [expr {$targetbegin-[string length $primer1]}]
+		} else {
+			set outer_begin ?
+		}
+		if {[isint $targetend]} {
+			set outer_end [expr {$targetend+[string length $primer2]}]
+		} else {
+			set outer_end ?
+		}
+		if {$targetfwd == 1} {set strand +} elseif {$targetfwd == 2} {set strand -} else {set strand ?}
+		lappend resultline $targetchrom $targetbegin $targetend $name \
+			$outer_begin $outer_end $strand \
+			$primer1 $primer2 $numamplicons [lsort -dict $resultamplicons] \
 			$numhits(1) $maxfreq(1) [join $primersnps(1) " "] \
 			$numhits(2) $maxfreq(2) [join $primersnps(2) " "] \
 			[join $ampliconfts " "] \
