@@ -70,7 +70,9 @@ proc cg_index {args} {
 		set f [gzopen $file]
 		set header [tsv_open $f]
 		catch {close $f}
-		set size [cg_size $bcol]
+		set bcol [bcol_open $indexfile]
+		set size [bcol_size $bcol]
+		bcol_close $bcol
 		dict set info file $file
 		dict set info lineindexfile [file tail $indexfile]
 		dict set info header $header
