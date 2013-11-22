@@ -15,8 +15,12 @@ proc primercheck_search {db searchseq add maxnum} {
 	if {[catch {
 		foreach {numhits hits} [cindex_searchgenome $db $searchseq $add $maxnum] break
 	} errmsg]} {
-		set numhits many
-		set hits many
+		if {[regexp {^found [0-9]+$} $errmsg]} {
+			set numhits many
+			set hits many
+		} else {
+			return -errorcode error -errorinfo $::errorInfo $errmsg
+		}
 	}
 	return [list $numhits $hits]
 }
@@ -192,7 +196,7 @@ proc cg_primercheck {args} {
 				set maxfreq($p) -
 				set primersnps($p) {}
 				foreach snpposs $dbsnpposs dbsnp $dbsnpfiles {
-					set temp [split [exec tabix $dbsnp chr$targetchrom:$primerpos($p,start)-$primerpos($p,end)] \n]
+					set temp [tabix $dbsnp chr$targetchrom $primerpos($p,start) $primerpos($p,end)]
 					foreach line $temp {
 						set line [split $line \t]
 						foreach {chrom begin end type snpname freq valid weight func submitterCount submitters bitfields} [list_sub $line $snpposs] break
@@ -208,7 +212,7 @@ proc cg_primercheck {args} {
 			# annotate amplicon
 			set ampliconfts {}
 			foreach db [glob -nocomplain $dbdir/reg_*_homopolymer.tsv.gz] {
-				set temp [split [exec tabix $db $targetchrom:$targetbegin-$targetend] \n]
+				set temp [tabix $db $targetchrom $targetbegin $targetend]
 				set type [lindex [split [file root [gzroot [file tail $db]]] _] 2]
 				foreach line $temp {
 					foreach {c b e base num} $line break

@@ -405,6 +405,13 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	return $poss
 }
 
+proc tabix {file chromosome begin end} {
+	# tabix thinks a variant x-$begin overlaps the interval $begin-$end
+	# incr begin to stop these from (incorrectly) appearing
+	incr begin
+	set temp [split [exec tabix $file $chromosome:$begin-$end] \n]
+}
+
 proc cg_maketabix {args} {
 	foreach file $args {
 		set ext [file extension $file]

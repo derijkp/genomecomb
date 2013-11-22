@@ -514,7 +514,7 @@ proc makeprimers_region {name maxsize prefsize temperature dbdir db extraseq min
 		set poss [tsv_basicfields $dbsnpheader 3]
 		lappend poss [lsearch $dbsnpheader name]
 		lappend poss [lsearch $dbsnpheader freq]
-		set temp [split [exec tabix $dbsnpfile chr$cchr:$regstart-$regend] \n]
+		set temp [tabix $dbsnpfile chr$cchr $regstart $regend]
 		foreach dbsnpline $temp {
 			set dbsnpline [split $dbsnpline \t]
 			foreach {chr start end name freq} [list_sub $dbsnpline $poss] break
@@ -530,7 +530,7 @@ proc makeprimers_region {name maxsize prefsize temperature dbdir db extraseq min
 		}
 	}
 	foreach repeatfile [gzfiles $dbdir/reg_*rmsk.tsv.gz $dbdir/reg_*simpleRepeat.tsv.gz] {
-		set temp [split [exec tabix $repeatfile chr$cchr:$regstart-$regend] \n]
+		set temp [tabix $repeatfile chr$cchr $regstart $regend]
 		set tempheader [cg select -h $repeatfile]
 		set poss [tsv_basicfields $tempheader 3]
 		lappend poss [lsearch $tempheader name]

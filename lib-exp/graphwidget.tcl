@@ -723,7 +723,7 @@ putsvars data($name,lstart) data($name,lend) start end
 			set line [split [gets $f] \t]
 			set chr [lindex $line $chrpos]
 			catch {close $f}
-			set f [open "| tabix [list $data($name,file)] $chr:$start-$end"]
+			set f [open "| tabix [list $data($name,file)] $chr:[expr {$start+1}]-$end"]
 			set data($name,bgzregion) $chr:$start-$end
 		} elseif {$ext eq ".rz"} {
 			set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]

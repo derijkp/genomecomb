@@ -6,3 +6,5 @@ test1.5	CTAGGCCACTTCCCGGTTGTAA	ACCCATTGCAGGCGAGGAG	"2-895210-895621, pairhits 1.
 testsnp	GCTGGGTGGGTTGACAGAGGT	CAGCCCTCACTAGCTGCACTCAC	"17-78606549-78607126, pairhits 1 hits ? fts {{repeat 0 20 completerepeat,low trf} {repeat 0 20 completerepeat,low trf} {dbsnp 5 5 dbSNP:rs12603376}}, pairhits 1 hits 2"
 repeat	cctcacctgcttccatcctccctgg	CTGAGGCTGCTCTGCACGTGGAGTG	"1:18906-19240, repeat+snps"
 bad	AAAAAAAAAAAAAAAAAAAA	GGGGGGGGGGGGGGGGGGGG	bad
+testsnpends	GCCTCTCTCGAGACCCTCG	GAGCCACAGGAAGGGCAGG	"1:12921272-12921575 snps on all sides included"
+testnosnpends	CCTCTCTCGAGACCCTC	AGCCACAGGAAGGGCAG	"1:12921271-12921576 snps on all sides excluded"

@@ -183,7 +183,7 @@ proc genome_mask {dbdir seq chr estart eend {freql 0} {freqN 0.2} {delsize 5} {r
 	# mask snps
 	set list {}
 	foreach snpposs $dbsnpposs dbsnp $dbsnpfiles {
-		set temp [split [exec tabix $dbsnp chr$chr:$estart-$eend] \n]
+		set temp [tabix $dbsnp chr$chr $estart $eend]
 		lappend list {*}[list_subindex $temp $snpposs]
 	}
 	set list [ssort -natural -decreasing $list]
