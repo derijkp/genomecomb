@@ -189,11 +189,13 @@ job reg_hg19_mirbase -targets {$dest/hg19/reg_hg19_mirbase.tsv $dest/hg19/reg_hg
 job GERP -targets {extra/reg_${build}_GERP.tsv extra/reg_${build}_GERP.info} -vars {dest build tables} -code {
 	cd ${dest}/tmp/${build}
 	set table allHg19RS_BW
-	cg downloaddb ${dest}/tmp ${build} $table
-	cg ucscwb2reg -p 1 -f {} ucsc_${build}_$table.tsv
-	file rename -force reg_ucsc_${build}_$table.tsv ${dest}/${build}/extra/reg_${build}_GERP.tsv
 	cg downloaddbinfo ${dest}/tmp ${build} $table
 	file rename -force reg_${build}_$table.info ${dest}/extra/${build}/reg_${build}_GERP.info
+	cg downloaddb ${dest}/tmp ${build} $table
+	cg ucscwb2reg -p 1 -f {} ucsc_${build}_$table.tsv
+	cg select -s - reg_ucsc_${build}_$table.tsv ${dest}/${build}/extra/reg_${build}_GERP.tsv.temp
+	mv ${dest}/${build}/extra/reg_${build}_GERP.tsv.temp ${dest}/${build}/extra/reg_${build}_GERP.tsv
+#	file rename -force reg_ucsc_${build}_$table.tsv ${dest}/${build}/extra/reg_${build}_GERP.tsv
 
 }
 
