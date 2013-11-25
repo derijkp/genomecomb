@@ -234,7 +234,7 @@ test query {query 23 b} {
 	exec diff temp.tsv answers/query23.tsv
 } {}
 
-test select {liftover} {
+test query {liftover} {
 	file delete temp.tsv
 	exec cg liftover annottestcompar.tsv.rz /complgen/refseq/liftover/hg18ToHg19.over.chain temp.tsv
 	cg select -q {$ROW < 100} temp.tsv temp2.tsv
