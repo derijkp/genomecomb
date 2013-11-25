@@ -194,7 +194,7 @@ job GERP -targets {extra/reg_${build}_GERP.tsv extra/reg_${build}_GERP.info} -va
 	cg downloaddb ${dest}/tmp ${build} $table
 	cg ucscwb2reg -p 1 -f {} ucsc_${build}_$table.tsv
 	cg select -s - reg_ucsc_${build}_$table.tsv ${dest}/${build}/extra/reg_${build}_GERP.tsv.temp
-	mv ${dest}/${build}/extra/reg_${build}_GERP.tsv.temp ${dest}/${build}/extra/reg_${build}_GERP.tsv
+	file rename -force ${dest}/${build}/extra/reg_${build}_GERP.tsv.temp ${dest}/${build}/extra/reg_${build}_GERP.tsv
 #	file rename -force reg_ucsc_${build}_$table.tsv ${dest}/${build}/extra/reg_${build}_GERP.tsv
 
 }
