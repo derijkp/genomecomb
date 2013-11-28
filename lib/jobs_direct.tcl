@@ -162,13 +162,13 @@ proc job_process_direct {} {
 			file_add $job.err $result\n$::errorInfo
 		}
 		if {![file exists $job.finished]} {
-			job_log $job "-----> job $jobname failed: did not finish\nerror:\n$result\n"
+			job_log $job "$jobname failed: did not finish\nerror:\n$result\n"
 		} elseif {$error} {
 			file delete $job.finished
-			job_log $job "-----> job $job failed: error processing job\nerror:\n$result\n"
+			job_log $job "$jobname failed: error processing job\nerror:\n$result\n"
 		} else {
 			job_log $job "-------------------- end $jobname --------------------"
-			job_log $job "-----> job $jobname finished successfully\n"
+			job_log $job "$jobname finished successfully\n"
 		}
 		job_logclose $job
 	}
