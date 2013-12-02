@@ -35,7 +35,7 @@ proc cg_index {args} {
 			-- break
 			default {
 				if {[string index $opt 0] ne "-"} break
-				puts stderr "ERROR: Unkown option $opt: should be one of -cols, -db, -refdir, -v"
+				puts stderr "ERROR: Unkown option $opt: should be one of -cols, -db, -colinfo, -refdir, -v"
 				exit 1
 			}
 		}

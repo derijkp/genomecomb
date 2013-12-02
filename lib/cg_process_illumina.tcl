@@ -589,7 +589,7 @@ proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 	job indexannotcompar-$experiment \
 	-deps compar/annot_compar-$experiment.tsv \
 	-targets compar/annot_compar-$experiment.tsv.index/info.tsv -vars dbdir -code {
-		cg index $dep
+		cg index -colinfo $dep
 	}
 	if {[catch {cg select -n compar/sreg-$experiment.tsv} done]} {set done {}}
 	set stilltodo {}

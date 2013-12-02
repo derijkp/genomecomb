@@ -139,7 +139,7 @@ proc project {args} {
 		job compar_annotate_index \
 		-deps {compar/annot_compar-$project.tsv} \
 		-targets {compar/annot_compar-$project.tsv.index/info.tsv} -code {
-			cg index $dep
+			cg index -colinfo $dep
 		}
 
 		# multireg
@@ -167,7 +167,7 @@ proc project {args} {
 		job multireg_index \
 		-deps {compar/reg-$project.tsv} \
 		-targets {compar/reg-$project.tsv.index/info.tsv} -code {
-			cg index $dep
+			cg index -colinfo $dep
 		}
 
 		# cgsv
@@ -206,7 +206,7 @@ proc project {args} {
 		job cgsv_annotate_index \
 		-deps {compar/annot_cgsv-$project.tsv} \
 		-targets {compar/annot_cgsv-$project.tsv.index/info.tsv} -code {
-			cg index $dep
+			cg index -colinfo $dep
 		}
 
 		# cgcnv
@@ -245,7 +245,7 @@ proc project {args} {
 		job cgcnv_annotate_index \
 		-deps {compar/annot_cgcnv-$project.tsv} \
 		-targets {compar/annot_cgcnv-$project.tsv.index/info.tsv} -code {
-			cg index $dep
+			cg index -colinfo $dep
 		}
 	}
 	# make bam files
@@ -311,7 +311,7 @@ proc project {args} {
 		job sv_annotate_index \
 		-deps {compar/annot_sv-$project.tsv} \
 		-targets {compar/annot_sv-$project.tsv.index/info.tsv} -code {
-			cg index $dep
+			cg index -colinfo $dep
 		}
 	}
 
