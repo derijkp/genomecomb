@@ -257,13 +257,17 @@ mainw method querybuilder {args} {
 	# query
 	frame $w.query -borderwidth 0 -highlightthickness 0
 	frame $w.query.buttons -borderwidth 0 -highlightthickness 0
+	button $w.query.buttons.clear -text clear -command "[list set $var {}]"
+	pack $w.query.buttons.clear -side left
+	frame $w.query.buttons.sep -width 4
+	pack $w.query.buttons.sep -side left
 	foreach command $funcbuttons {
 		button $w.query.buttons.$command -text $command -command [list $object querybuilder_add $command $join]
 		pack $w.query.buttons.$command -side left
 	}
 	set queryw $w.query.query
 	Classy::ScrolledText $w.query.query -textvariable $var
-	pack $w.query.buttons -fill both -expand yes
+	pack $w.query.buttons -fill x -expand no
 	pack $w.query.query -fill both -expand yes
 	# fill paned
 	set w $object.querybuilder.options.paned
