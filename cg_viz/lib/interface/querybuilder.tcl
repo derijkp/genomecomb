@@ -143,10 +143,13 @@ mainw method querybuilder_add {command {join and}} {
 		if {![llength $fields]} {error "Select some fields first"}
 		set insert "${command}(\$[join $fields ",\$"])"
 		$object querybuilder_insert $insert $join
-	} elseif {$command in {percent}} {
+	} elseif {$command in {percent isnum}} {
 		if {![llength $fields]} {error "Select some fields first"}
-		set insert "${command}(\$[lindex $fields 0])"
-		$object querybuilder_insert $insert $join
+		set insert {}
+		foreach field $fields {
+			lappend insert "${command}(\$$field)"
+		}
+		$object querybuilder_insert [join $insert " $join "] $join
 	} else {
 		if {![llength $fields]} {error "Select some fields first"}
 		set insert {}
