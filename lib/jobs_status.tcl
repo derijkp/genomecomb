@@ -86,7 +86,7 @@ proc job_process_pargraph {job jobname status duration checkcompressed adeps ids
 proc patternglob {pattern checkcompressed} {
 	if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
 		set pattern [string range $pattern 1 end-1]
-		set pattern [file normalize $pattern]
+		set pattern [file_absolute $pattern]
 		set glob [regexp2glob $pattern]
 		set files {}
 		if {$checkcompressed} {
@@ -100,7 +100,7 @@ proc patternglob {pattern checkcompressed} {
 			}
 		}
 	} else {
-		set pattern [file normalize $pattern]
+		set pattern [file_absolute $pattern]
 		if {$checkcompressed} {
 			set files [lsort -dict [gzfiles $pattern]]
 		} else {

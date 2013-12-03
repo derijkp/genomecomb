@@ -36,7 +36,7 @@ proc stderr2file {fileout {fileerr {}}} {
 			} err]} {
 				return -code error $err
 			}
-		} [list @FILEOUT@ [file normalize $fileout] @FILEERR@ [file normalize $fileerr]]]
+		} [list @FILEOUT@ [file_absolute $fileout] @FILEERR@ [file_absolute $fileerr]]]
 	} else {
 		unset -nocomplain ::stderr_redirect
 		if {[llength [info command __puts] ]} {

@@ -917,3 +917,7 @@ proc job_razip {file args} {
 		cg_razip $dep
 	}]
 }
+
+proc file_absolute {file} {
+	file join [pwd] $file
+}

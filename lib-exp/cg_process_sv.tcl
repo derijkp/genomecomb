@@ -7,9 +7,9 @@
 proc process_sv {cgdir dir dbdir {force 0}} {
 	job_logdir $dir/log_jobs
 	set keepdir [pwd]
-	set cgdir [file normalize $cgdir]
-	set dir [file normalize $dir]
-	set dbdir [file normalize $dbdir]
+	set cgdir [file_absolute $cgdir]
+	set dir [file_absolute $dir]
+	set dbdir [file_absolute $dbdir]
 	set name [file tail $dir]
 	file mkdir $dir/sv.temp
 	file mkdir $dir/sv

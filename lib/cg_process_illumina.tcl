@@ -1,6 +1,6 @@
 proc bam2covstats_job {bamfile regionfile} {
 	upvar job_logdir job_logdir
-	set bamfile [file normalize $bamfile]
+	set bamfile [file_absolute $bamfile]
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
@@ -74,7 +74,7 @@ proc fastq_clipadapters_job {files {adapterfile {}}} {
 	set targets {}
 	set files [ssort -natural $files]
 	foreach file $files {
-		set file [file normalize [gzroot $file]]
+		set file [file_absolute [gzroot $file]]
 		set root [file root $file]
 		file mkdir [file dir $root].clipped
 		lappend targets [file dir $root].clipped/[file tail $root].clipped.fastq
@@ -173,7 +173,7 @@ proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
 
 proc bam2reg_job {bamfile {mincoverage 5}} {
 	upvar job_logdir job_logdir
-	set bamfile [file normalize $bamfile]
+	set bamfile [file_absolute $bamfile]
 	set pre [lindex [split $bamfile -] 0]
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
@@ -430,7 +430,7 @@ proc var_sam_job {bamfile refseq args} {
 			lappend opts $key $value
 		}
 	}
-	set dir [file normalize [file dir $bamfile]]
+	set dir [file_absolute [file dir $bamfile]]
 	set keeppwd [pwd]
 	cd $dir
 	set file [file tail $bamfile]
@@ -637,7 +637,7 @@ proc process_illumina {args} {
 		errorformat process_illumina
 		exit 1
 	}
-	set destdir [file normalize $destdir]
+	set destdir [file_absolute $destdir]
 	# check projectinfo
 	if {[file exists $destdir/projectinfo.tsv]} {
 		set infod [infofile_read $destdir/projectinfo.tsv]

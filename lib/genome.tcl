@@ -6,7 +6,7 @@
 
 proc cg_downloadgenome {build result} {
 	set keepdir [pwd]
-	set result [file normalize $result]
+	set result [file_absolute $result]
 	set files {}
 	file mkdir $result.temp
 	cd $result.temp
@@ -216,7 +216,7 @@ proc genome_mask {dbdir seq chr estart eend {freql 0} {freqN 0.2} {delsize 5} {r
 
 proc cg_make_genomecindex {ifasfile} {
 	package require cindex
-	set ifasfile [file normalize $ifasfile]
+	set ifasfile [file_absolute $ifasfile]
 	set f [open $ifasfile]
 	set base [file root $ifasfile]
 	file mkdir $base.ssa

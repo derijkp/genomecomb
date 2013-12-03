@@ -161,7 +161,7 @@ proc job_finddep {pattern idsVar timeVar checkcompressed} {
 	global cgjob_id cgjob_ptargets cgjob_rm
 	upvar $idsVar ids
 	upvar $timeVar time
-	set pattern [file normalize $pattern]
+	set pattern [file_absolute $pattern]
 	set ptargethits [array names cgjob_ptargets $pattern]
 	if {[llength $ptargethits]} {
 		error "ptargets hit $pattern: wait till ptarget deps have finished"
@@ -208,7 +208,7 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 	global cgjob_id cgjob_ptargets cgjob_rm
 	upvar $idsVar ids
 	upvar $timeVar time
-	set pattern [file normalize $pattern]
+	set pattern [file_absolute $pattern]
 	set glob [regexp2glob $pattern]
 	if {[llength [array names cgjob_ptargets $glob]]} {
 		error "ptargets hit $pattern: wait till ptarget deps have finished"
@@ -227,9 +227,9 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 			lappend ids {}
 		}
 	}
-	foreach file [array names cgjob_id [file normalize $glob]] {
+	foreach file [array names cgjob_id [file_absolute $glob]] {
 		if {[info exists cgjob_rm($file)]} continue
-		if {![regexp ^[file normalize $pattern]\$ $file]} continue
+		if {![regexp ^[file_absolute $pattern]\$ $file]} continue
 # do not remove job, we want to keep the dependency chain intact,
 # even if one job stops prematurely
 #		if {![job_running $cgjob_id($file)]} {
@@ -285,7 +285,7 @@ proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar checkcom
 		}
 		foreach file [list_remdup $files] {
 			lappend finaldeps $file
-			set targets [lrange [regexp -all -inline ^[file normalize $pattern]\$ $file] 1 end]
+			set targets [lrange [regexp -all -inline ^[file_absolute $pattern]\$ $file] 1 end]
 			if {!$targetvarslist} {
 				lappend targetvars {*}$targets
 			} else {
@@ -329,7 +329,7 @@ proc job_targetreplace {string targetvars {expandVar {}}} {
 		set expandlist [list_reverse $expandlist]
 		set expand {}
 		foreach t $targetvars {
-			lappend expand [file normalize [join $expandlist $t]]
+			lappend expand [file_absolute [join $expandlist $t]]
 		}
 		return {}
 	} else {
@@ -344,7 +344,7 @@ proc job_targetsreplace {list targetvars} {
 		if {[llength $expand]} {
 			lappend result {*}$expand
 		} else {
-			lappend result [file normalize $temp]
+			lappend result [file_absolute $temp]
 		}
 	}
 	return $result
@@ -451,13 +451,13 @@ proc job_logdir {{logdir {}}} {
 	if {$logdir eq ""} {
 		set logdir [file join [pwd] log_jobs]
 	}
-	set job_logdir [file normalize $logdir]
+	set job_logdir [file_absolute $logdir]
 	file mkdir $job_logdir
 }
 
 proc job_logname {job_logdir name} {
 	set name [string_change $name {/ __ : _ \" _ \' _}]
-	return [file normalize $job_logdir/$name]
+	return [file_absolute $job_logdir/$name]
 }
 
 proc job_logclear {job} {
@@ -744,7 +744,7 @@ proc job_init {args} {
 	set cgjob(debug) 0
 	set cgjob(resubmit) 1
 	set cgjob(runcmd) {cg source}
-	set job_logdir [file normalize [pwd]/log_jobs]
+	set job_logdir [file_absolute [pwd]/log_jobs]
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_running {} job_running_direct
 	interp alias {} job_wait {} job_process_direct_wait

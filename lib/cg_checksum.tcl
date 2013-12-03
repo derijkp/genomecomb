@@ -25,7 +25,7 @@ proc cg_checksum {args} {
 			}
 			-o {
 				incr pos
-				set outdir [file normalize [lindex $args $pos]]
+				set outdir [file_absolute [lindex $args $pos]]
 				incr pos
 			}
 			-- break
@@ -41,7 +41,7 @@ proc cg_checksum {args} {
 	}
 	set files {}
 	foreach file $args {
-		set file [file normalize $file]
+		set file [file_absolute $file]
 		if {[file isdir $file]} {
 			set temp [glob $file/manifest.all $file/*/manifest.all $file/*/*/manifest.all]
 			if {[llength $files] == 0} {

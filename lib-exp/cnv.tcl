@@ -49,8 +49,8 @@ proc cg_cnv-seq {args} {
 		exit 1
 	}
 	foreach {ref test outdir} $args break
-	set ref [file normalize $ref]
-	set test [file normalize $test]
+	set ref [file_absolute $ref]
+	set test [file_absolute $test]
 	file mkdir $outdir
 	cd $outdir
 	foreach {chr size} {

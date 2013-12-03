@@ -2,8 +2,8 @@
 # -------------------------
 
 proc cg_distribute {projectfile srcdir destdir {subdir {}} {postfix {}}} {
-	set srcdir [file normalize $srcdir]
-	set destdir [file normalize $destdir]
+	set srcdir [file_absolute $srcdir]
+	set destdir [file_absolute $destdir]
 	set c [split [string trim [file_read $projectfile]] \n]
 	set header [split [list_shift c] \t]
 	if {[lrange $header 0 3] ne "project experiment sample barcode"} {

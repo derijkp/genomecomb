@@ -382,9 +382,9 @@ table_tsv method index {file} {
 	set result [infofile_read $indexdir/info.tsv]
 	dict set result indexdir $indexdir
 	dict set result lineindex [bcol_open $indexfile]
-	dict set result file [file normalize $file]
+	dict set result file [file_absolute $file]
 	dict set result compressed $compressed
-	dict set result lineindexfile [file normalize $indexfile]
+	dict set result lineindexfile [file_absolute $indexfile]
 	dict set result file $file
 	return $result
 }
@@ -409,7 +409,7 @@ table_tsv method close {} {
 table_tsv method open {file parent} {
 	private $object tdata cache
 	$object close
-	set file [file normalize $file]
+	set file [file_absolute $file]
 	set info [$object index $file]
 	unset -nocomplain tdata
 	# tdata(query) is linked to entry, so clear it explicitely

@@ -60,13 +60,13 @@ proc project {args} {
 	if {[llength [list_lremove $actions $knownactions]]} {
 		error "unkown action(s) [join [list_lremove $actions $knownactions] ,], must be one or more of: samples compar sv clean users"
 	}
-	set projectfile [file normalize $projectfile]
+	set projectfile [file_absolute $projectfile]
 	if {[file isdir $projectfile]} {set projectfile [lindex [glob $projectfile/*.cgprj] 0]}
 	puts "Projectfile $projectfile"
 	set projectdir [file dir $projectfile]
 	job_logdir [file dir $projectfile]/log_jobs
 	set project [file root [file tail $projectfile]]
-	set resultdir [file dir [file normalize $projectfile]]
+	set resultdir [file dir [file_absolute $projectfile]]
 	set c [split [file_read $projectfile] \n]
 	set pos [lsearch $c {}]
 	array set a [list_concat [lrange $c 0 [expr {$pos-1}]]]

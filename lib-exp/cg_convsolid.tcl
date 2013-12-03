@@ -8,7 +8,7 @@
 #		exiterror "wrong # args: should be cg convsolid ?options? projectfile"
 #	}
 #	foreach {projectfile} $args break
-#	set projectfile [file normalize $projectfile]
+#	set projectfile [file_absolute $projectfile]
 #	cd [file dir $projectfile]
 #	cgmake solid_conv
 #}
@@ -20,7 +20,7 @@ proc cg_convsolid {args} {
 		exiterror "wrong # args: should be cg convsolid ?options? projectfile"
 	}
 	foreach {projectfile} $args break
-	set projectfile [file normalize $projectfile]
+	set projectfile [file_absolute $projectfile]
 	cd [file dir $projectfile]
 
 	# get projectsamples from projectfile

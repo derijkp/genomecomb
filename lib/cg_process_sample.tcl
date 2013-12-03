@@ -52,17 +52,17 @@ proc process_sample {args} {
 	set srcdir ""
 	if {[llength $args] == 1} {
 		foreach {destdir} $args break
-		set workdir [file normalize $destdir]
+		set workdir [file_absolute $destdir]
 		putslog "Making $workdir"
 		file mkdir $workdir
 	} elseif {[llength $args] == 2} {
 		foreach {srcdir destdir} $args break
-		set workdir [file normalize $destdir]
+		set workdir [file_absolute $destdir]
 		putslog "Making $workdir"
 		file mkdir $workdir
-		set srcdir [file normalize $srcdir]
+		set srcdir [file_absolute $srcdir]
 		if {[file exists $srcdir]} {
-			set srcdir [file normalize $srcdir]
+			set srcdir [file_absolute $srcdir]
 			file delete $workdir/ori
 			cplinked_file $srcdir $workdir/ori
 		}

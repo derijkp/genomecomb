@@ -97,8 +97,8 @@ proc map2sv {files prefix} {
 
 proc bam2sv {bamfile prefix} {
 	global appdir
-	set bamfile [file normalize $bamfile]
-	set prefix [file normalize $prefix]
+	set bamfile [file_absolute $bamfile]
+	set prefix [file_absolute $prefix]
 	file mkdir [file dir $prefix]
 	if {![file exists ${prefix}_map2sv_sort_FINISHED]} {
 
@@ -209,7 +209,7 @@ proc sv2db {files} {
 				fnum integer,
 				side integer)
 		}
-		exec sqlite3 -separator \t $dbfile ".import \"[file normalize $file]\" hits"
+		exec sqlite3 -separator \t $dbfile ".import \"[file_absolute $file]\" hits"
 		exec sqlite3 $dbfile "create index hits_type on hits(type)"
 		exec sqlite3 $dbfile "create index hits_bin on hits(bin)"
 		svdbinfo $dbfile
@@ -1777,7 +1777,7 @@ proc svfind {pairfile trffile} {
 #set f [svtools_aprgoto $pairfile $dbgstart]
 #set outfile test-sv.tsv
 #check
-	set dir [file dir [file normalize $outfile]]
+	set dir [file dir [file_absolute $outfile]]
 	set o [open $outfile.temp w]
 	puts $o [join {check chromosome begin end type size zyg quality problems start1 end1 chr2 start2 end2 gapsize numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum} \t]
 	set list {}

@@ -65,7 +65,7 @@ proc ucscwiggle2reg {ucsc_file resultfile {precision 1} {formula {}} {addnum {}}
 	}
 	puts "Making $resultfile"
 	catch {close $f}; catch {close $b}; catch {close $o}; 
-	set dir [file dir [file normalize $ucsc_file]]
+	set dir [file dir [file_absolute $ucsc_file]]
 	set f [gzopen $ucsc_file]
 	set o [open $resultfile.temp w]
 	putsresult $o chromosome begin end score num
@@ -202,7 +202,7 @@ proc ucscwb2reg {file resultfile {precision 1} {formula {}} {addnum {}}} {
 		}
 		set useaddnum 0
 	}
-	set dir [file dir [file normalize $file]]
+	set dir [file dir [file_absolute $file]]
 	set f [open $file]
 	gets $f
 	set wbfile [gets $f]

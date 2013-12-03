@@ -30,8 +30,8 @@ catch {file delete -force {*}[glob tmp/*]}
 proc jobtest {args} {
 	set args [job_args $args]
 	foreach {srcdir destdir header} $args break
-	set srcdir [file normalize $srcdir]
-	set destdir [file normalize $destdir]
+	set srcdir [file_absolute $srcdir]
+	set destdir [file_absolute $destdir]
 	set job_logdir $destdir/log_jobs
 	global test_names
 	file mkdir $destdir

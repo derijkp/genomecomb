@@ -9,10 +9,10 @@ exec tclsh "$0" ${1+"$@"}
 #
 
 # see where we are, add the lib dir in the original location to auto_path, load extension
-set script [file normalize [info script]]
+set script [file join [pwd] [info script]]
 set scriptname [file tail $script]
 while 1 {
-	if {[catch {set script [file normalize [file readlink $script]]}]} break
+	if {[catch {set script [file join [pwd] [file readlink $script]]}]} break
 }
 
 set appdir [file dir $script]

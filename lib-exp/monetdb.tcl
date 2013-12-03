@@ -21,7 +21,7 @@ proc monetdbinit {} {
 monetdbinit
 
 proc monetdb_getinfo {dbfarm} {
-	set dbfarm [file normalize $dbfarm]
+	set dbfarm [file_absolute $dbfarm]
 	set data [exec monetdbd get all $dbfarm]
 	set result {}
 	foreach line [split $data \n] {
@@ -135,7 +135,7 @@ proc cg_monetdb {args} {
 		}
 		startdbfarm {
 			foreach {dbfarm port} $args break
-			set dbfarm [file normalize $dbfarm]
+			set dbfarm [file_absolute $dbfarm]
 			if {[llength $args] > 1} {
 				exec monetdbd set port=$port $dbfarm
 			}
@@ -245,7 +245,7 @@ proc cg_tomonetdb {args} {
 	}
 	foreach {db table tsvfile} $args break
 
-	set tsvfile [file normalize $tsvfile]
+	set tsvfile [file_absolute $tsvfile]
 	set num [lindex [exec wc -l $tsvfile] 0]
 	set f [gzopen $tsvfile]
 	set header [tsv_open $f comment]

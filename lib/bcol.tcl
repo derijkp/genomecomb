@@ -16,8 +16,8 @@ puts "progress: $args"
 }
 
 proc bcol_indexlines {file indexfile {colinfo 0}} {
-	set file [file normalize $file]
-	set indexfile [file normalize $indexfile]
+	set file [file_absolute $file]
+	set indexfile [file_absolute $indexfile]
 	set time [file mtime $file]
 	set ext [file extension $file]
 	if {[inlist {.rz .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
@@ -355,7 +355,7 @@ proc cg_bcol_make {args} {
 		exiterror "wrong # args: should be \"cg bcol make ?options? bcolprefix column\""
 	}
 	foreach {prefix valuecolumn} $args break
-	set prefix [file normalize $prefix]
+	set prefix [file_absolute $prefix]
 	set tail [file tail $prefix]
 	file mkdir $prefix.bcol.temp
 	if {[info exists bcol_typea($type,mx)]} {

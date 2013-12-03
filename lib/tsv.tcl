@@ -197,13 +197,13 @@ proc cg_tsv_index {args} {
 
 proc tsv_index_header {file} {
 	global cache
-	set file [file normalize $file]
+	set file [file_absolute $file]
 	return [get cache(tsv_index,$file,header)]
 }
 
 proc tsv_index_open {file field {uncompress 0}} {
 	global cache
-	set file [file normalize $file]
+	set file [file_absolute $file]
 	if {[info exists cache(tsv_index,$file,$field,step)]} return
 	set ext [file extension $file]
 	if {$ext eq ".gz" || $ext eq ".rz" || $ext eq ".bgz"} {set uncompress 1}
@@ -255,7 +255,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 
 proc tsv_index_close {file field} {
 	global cache
-	set file [file normalize $file]
+	set file [file_absolute $file]
 	if {[info exists cache(tsv_index,$file,$field,workfile)] && [get cache(tsv_index,$file,$field,remove) 0] && ($cache(tsv_index,$file,$field,workfile) ne $file)} {
 		close $cache(tsv_index,$file,$field,channel)
 		# puts "remove $cache(tsv_index,$file,$field,workfile)"
@@ -285,7 +285,7 @@ proc tsv_index_apprstop {file field} {
 
 proc tsv_index_apprgoto {file field pos} {
 	global cache
-	set file [file normalize $file]
+	set file [file_absolute $file]
 	set index $cache(tsv_index,$file,$field,index)
 	set step $cache(tsv_index,$file,$field,step)
 	set start [expr {round($pos)-round($pos)%$step}]
@@ -305,7 +305,7 @@ proc tsv_index_apprgoto {file field pos} {
 
 proc tsv_index_get {file field pos} {
 	global cache
-	set file [file normalize $file]
+	set file [file_absolute $file]
 	set header $cache(tsv_index,$file,header)
 	set fieldpos [lsearch $header $field]
 	set uncompressed [get cache(tsv_index,$file,$field,uncompressed) 0]

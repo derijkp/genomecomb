@@ -2,7 +2,7 @@
 # the next line restarts using tclsh \
 exec tclsh "$0" "$@"
 
-lappend auto_path [file join [file normalize [file dirname [info script]]] lib]
+lappend auto_path [file join [file join [pwd] [file dirname [info script]]] lib]
 package require Tclx
 signal -restart error SIGINT
 package require Extral

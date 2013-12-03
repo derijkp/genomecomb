@@ -278,7 +278,7 @@ proc multicompar_reannot_find {basedir sample args} {
 
 proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} {
 
-	set compar_file [file normalize $compar_file]
+	set compar_file [file_absolute $compar_file]
 	set basedir [file dir $compar_file]
 	catch {close $f}; catch {close $o}
 	set f [gzopen $compar_file]
@@ -483,7 +483,7 @@ proc cg_multicompar {args} {
 	foreach {compar_file} $args break
 	set dirs [lrange $args 1 end]
 	foreach dir $dirs {
-		set dir [file normalize $dir]
+		set dir [file_absolute $dir]
 		if {![file isdir $dir] && [llength [cg select -n $dir]]} {
 			set header [cg select -h $dir]
 			set samples [samples $header]

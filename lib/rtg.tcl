@@ -92,8 +92,8 @@ proc rtg_line {cline poss} {
 
 proc process_rtgsample {dir destdir {force 0}} {
 	set keepdir [pwd]
-	set dir [file normalize $dir]
-	set destdir [file normalize $destdir]
+	set dir [file_absolute $dir]
+	set destdir [file_absolute $destdir]
 	file mkdir $destdir
 	cd $destdir
 	putslog "Processing sample $dir"
@@ -232,8 +232,8 @@ proc annot_rtg_close {dir} {
 }
 
 proc rtgregions {cgdir comparfile rtgdir} {
-	set cgdir [file normalize $cgdir]
-	set rtgdir [file normalize $rtgdir]
+	set cgdir [file_absolute $cgdir]
+	set rtgdir [file_absolute $rtgdir]
 	set cgsample [file tail $cgdir]
 	set rtgsample [file tail $rtgdir]
 	if {![file exists $cgdir/reg_rtgnotsame-$cgsample.tsv]} {

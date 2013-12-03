@@ -846,7 +846,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				exit
 			}]
 		} else {
-			set index [file normalize $index]
+			set index [file_absolute $index]
 			set indexcols [list_remove $neededcols -1]
 			foreach el $outcols {
 				if {[isint $el]} {lappend indexcols $el}

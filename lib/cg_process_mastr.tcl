@@ -61,8 +61,8 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 }
 
 proc cg_process_conv_illmastr {illsrc destdir} {
-	set illsrc [file normalize $illsrc]
-	set destdir [file normalize $destdir]
+	set illsrc [file_absolute $illsrc]
+	set destdir [file_absolute $destdir]
 	file mkdir $destdir
 	set keeppwd [pwd]
 	cd $destdir
@@ -144,9 +144,9 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} {
 	#
 #	# make minigenome
-	set mastrdir [file normalize $mastrdir]
-	set destdir [file normalize $destdir]
-	set dbdir [file normalize $dbdir]
+	set mastrdir [file_absolute $mastrdir]
+	set destdir [file_absolute $destdir]
+	set dbdir [file_absolute $dbdir]
 	if {$useminigenome} {set pre reg_} else {set pre {}}
 	# make sure mastrdir contains everything needed
 	foreach {mastrname refseq mapfile} [mastr_refseq_job $mastrdir $dbdir $useminigenome] break

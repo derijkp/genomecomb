@@ -183,7 +183,7 @@ graphwidget method opendialog {{file {}}} {
 		set header [tsv_open $f]
 		catch {close $f}
 	}
-	set graphd(file) [file normalize $file]
+	set graphd(file) [file_absolute $file]
 	set graphd(header) $header
 	lappend graphd(header) {}
 	set graphd(region) 0
@@ -260,7 +260,7 @@ graphwidget method open {file settingsVar} {
 	set data($name,vnum) $vnum
 	set data($name,lstart) 0
 	set data($name,lend) 0
-	set data($name,file) [file normalize $file]
+	set data($name,file) [file_absolute $file]
 	set data($name,header) $header
 	set data($name,elements) $elements
 	set data($name,region) $graphd(region)

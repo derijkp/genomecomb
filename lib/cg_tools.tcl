@@ -19,7 +19,7 @@ proc cg_hardsync {args} {
 		exit 1
 	}
 	foreach src $args {
-		set src [file normalize $src]
+		set src [file_absolute $src]
 		set src [string trimright $src /]
 		set project [file tail $src]
 		set finaldest $dest/$project

@@ -138,7 +138,7 @@ proc annotatebcol {file dbfile name annotfile} {
 		error "bcol database ($dbfile) should have a header of the type: chromosome file"
 	}
 	set bcollist {}
-	set dir [file dir [file normalize $dbfile]]
+	set dir [file dir [file_absolute $dbfile]]
 	while {![eof $f]} {
 		set line [gets $f]
 		if {$line eq ""} continue
@@ -332,7 +332,7 @@ proc cg_annotate {args} {
 		if {$dbtype eq "gene"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}
 			if {$dbdir eq ""} {
-				set dbdir [file dir [file normalize $dbfile]]
+				set dbdir [file dir [file_absolute $dbfile]]
 			}
 			set genomefile [lindex [glob -nocomplain $dbdir/genome_*.ifas] 0]
 			if {![file exists $genomefile]} {

@@ -262,7 +262,7 @@ mainw method opentsv {args} {
 	set file [$object.tb open $file $object]
 	wm title $object $file
 	# find root and start tree
-	set file [file normalize $file]
+	set file [file_absolute $file]
 	set view(file) $file
 	if {[file isdir $file]} {
 		set root $file
@@ -316,7 +316,7 @@ mainw method open {args} {
 	} else {
 		set file [Classy::selectfile -title Open -selectmode persistent]
 	}
-	set file [file normalize $file]
+	set file [file_absolute $file]
 	set tdata(file) $file
 	$object view data
 	$object opentsv $file
