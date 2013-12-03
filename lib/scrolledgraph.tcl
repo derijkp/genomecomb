@@ -67,14 +67,24 @@ scrolledgraph method init {args} {
 	foreach type {xmin xmax ymin ymax} {
 		destroy $object.b.$type
 		Classy::NumEntry $object.b.$type -width 10 -label $type -orient horizontal \
-			-textvariable [privatevar $object region($type)] -command [list Classy::todo $object redraw]
+			-textvariable [privatevar $object graphsettings($type)] -command [list Classy::todo $object redraw]
 		pack $object.b.$type -side left
 	}
+	button $object.b.x  -text "X" -command [list Classy::todo $object changeX]
+	pack $object.b.x -side left
+	button $object.b.y  -text "Ys" -command [list Classy::todo $object changeYs]
+	pack $object.b.y -side left
+	button $object.b.w  -text "Weights" -command [list Classy::todo $object changeWs]
+	pack $object.b.w -side left
+	Classy::NumEntry $object.b.linew -width 2 -label lw -orient horizontal \
+		-textvariable [privatevar $object graphsettings(linew)] -command [list Classy::todo $object rearrange]
+	pack $object.b.linew -side left
 	foreach type {xlog ylog} {
 		checkbutton $object.b.$type  -text $type -onvalue 1 -offvalue 0 \
-			-variable [privatevar $object region($type)] -command [list Classy::todo $object redraw]
+			-variable [privatevar $object graphsettings($type)] -command [list Classy::todo $object redraw]
 		pack $object.b.$type -side left
 	}
+
 #	Classy::ProgressWidget $object.progress
 #	grid $object.progress -sticky nwse -columnspan 2
 #	Classy::Progress display $object.progress
@@ -96,8 +106,10 @@ scrolledgraph chainoptions {$object.g}
 
 scrolledgraph addoption -datafile {DataFile dataFile plot} {}
 
-catch {PushZoom}
-rename PushZoom ori.PushZoom
+if {[info commands ori.PushZoom] eq ""} {
+	catch {PushZoom}
+	rename PushZoom ori.PushZoom
+}
 
 proc PushZoom {graph} {
 	ori.PushZoom $graph
@@ -105,8 +117,10 @@ proc PushZoom {graph} {
 	[winfo parent $graph] _setvars
 }
 
-catch {PopZoom}
-rename PopZoom ori.PopZoom
+if {[info commands ori.PopZoom] eq ""} {
+	catch {PopZoom}
+	rename PopZoom ori.PopZoom
+}
 
 proc PopZoom {graph} {
 	ori.PopZoom $graph
@@ -115,13 +129,20 @@ proc PopZoom {graph} {
 }
 
 scrolledgraph method paste {} {
-	private $object region
-	set region(xrange) [::tk::GetSelection $object PRIMARY]
+	private $object graphsettings
+	set graphsettings(xrange) [::tk::GetSelection $object PRIMARY]
 	Classy::todo $object redraw
 }
 
 scrolledgraph method start {} {
-	private $object region
+	private $object graphsettings
+	set graphsettings(xmin) 0
+	set graphsettings(xmax) 1
+	set graphsettings(ymin) 0
+	set graphsettings(ymax) 1
+	set graphsettings(xlog) 0
+	set graphsettings(ylog) 0
+	set graphsettings(linew) 1
 	Classy::todo $object redraw
 }
 
@@ -197,10 +218,10 @@ scrolledgraph method gradientstyle {basecolor {min 0} {max 100} {null 0} {symbol
 }
 
 scrolledgraph method _configureevent {} {
-	private $object data region
+	private $object graphsettings
 	event generate $object.g <Configure>
-	set region(status) ""
-	set region(cancel) 0
+	set graphsettings(status) ""
+	set graphsettings(cancel) 0
 }
 
 scrolledgraph method getlabel {win num} {
@@ -214,89 +235,34 @@ putsvars win num
 }
 
 scrolledgraph method add {table {xtitle {}} {ytitle {}}} {
-	private $object xv yv wv data colors labels region
+	private $object xv yv wv data colors labels graphsettings header coldata
 	set showregion 0
 	# we will add to existing (data(entries) already there)
-	set vnum [llength $data(entries)]
 	set header [list_shift table]
-	set table [ssort -natural -index 0 $table]
-	set xs [list_subindex $table 0]
-	vector create ::$object.x
-	$object.g axis configure y -title $ytitle
-	if {[catch {::$object.x set $xs}]} {
-		set labels $xs
-		set xs [list_fill [llength $xs] 0 1]
-		::$object.x set $xs
-		$object.g axis configure x -command [list $object getlabel] -title $xtitle
-		# -subdivisions 0 -stepsize 1
-	} else {
-		unset -nocomplain labels
-		$object.g axis configure x -command {} -title $xtitle
-	}
-#	set amin [min [lmath_min $xs] [::$object.ends.x index 0]]
-#	set amax [max [lmath_max $xs] [::$object.ends.x index 1]]
-	set amin [lmath_min [list_lremove $xs {Inf -Inf NaN "" "?" "-"}]]
-	set amax [lmath_max [list_lremove $xs {Inf -Inf NaN "" "?" "-"}]]
-	if {[info exists labels]} {
-		set amin [expr {$amin - 1}]
-		set amax [expr {$amax + 1}]
-	}
-	if {$region(xmax) == Inf} {
-		set region(xmax) [::$object.ends.x index 1]
-	}
-	::$object.ends.x set [list $amin $amax]
-	set pos 0
-	set symbols {cross circle square diamond plus splus scross triangle}
-	# set dcolors {blue red gray orange yellow green violet}
-	set dcolors [distinctColors [expr {[llength $header]-1}]]
-	set amin {}
-	set amax {}
-	foreach field [lrange $header 1 end] {
-		incr pos
-		set name $field
-		foreach field {y w i} {
-			vector create ::$object.$vnum.$field
+	unset -nocomplain coldata
+	set vnum 0
+	foreach colname $header {
+		vector create ::$object.col$vnum
+		set col [list_subindex $table $vnum]
+		if {[catch {::$object.col$vnum set $col}]} {
+			set tempcol [list_regsub -all {^(NaN||[?-])$} $col -Inf]
+			if {[catch {::$object.col$vnum set $tempcol}]} {
+				set coldata($colname) [list labels ::$object.col$vnum $col]
+				set scol [ssort -natural $col]
+				::$object.col$vnum set [list_cor $scol $col]
+			} else {
+				set coldata($colname) [list vectsub ::$object.col$vnum $col]
+			}
+		} else {
+			set coldata($colname) [list vect ::$object.col$vnum {}]
 		}
-		set ys [list_subindex $table $pos]
-		::$object.$vnum.y set $ys
-		set amin [min [lmath_min [list_lremove $ys {Inf -Inf NaN "" "?" "-"}]] $amin]
-		set amax [max [lmath_max [list_lremove $ys {Inf -Inf NaN "" "?" "-"}]] $amax]
-		set basecolor [lindex $dcolors $vnum]
-		if {$basecolor eq ""} {set basecolor blue}
-		lappend data(entries) $name
-		set data($name,vnum) $vnum
-		set data($name,lstart) 0
-		set data($name,lend) 0
-		set data($name,header) $header
-		set xv ::$object.x
-		set yv ::$object.$vnum.y
-		set wv ::$object.$vnum.w
-		$object.g element create e$name -label $name -xdata $xv -ydata $yv -symbol none
-		# $object.g element configure e$name -weights ::$wv
-		set style [$object gradientstyle $basecolor $amin $amax 0]
-		set color $basecolor
-		# $object.g element configure e$name -linewidth 1 -fill $color -outlinewidth 1 -pixels 1 -symbol circle
-		$object.g element configure e$name -linewidth 1 -color $basecolor -outline $basecolor -outlinewidth 1 -pixels 2 -symbol plus \
-			-styles $style
-		if {$showregion} {
-			$object.g element configure e$name -linewidth 10 -trace decreasing
-		}
-		set data($name,color) $color
-		$object.g legend bind $name <1> [list $object elconf $name]
 		incr vnum
 	}
-	if {![isdouble $amin]} {set amin 0}
-	if {![isdouble $amax]} {set amax 0}
-	::$object.ends.y set [list $amin $amax]
-	set region(xmin) [::$object.ends.x index 0]
-	set region(xmax) [::$object.ends.x index 1]
-	set region(ymin) [::$object.ends.y index 0]
-	set region(ymax) [::$object.ends.y index 1]
-	Classy::todo $object redraw
+	Classy::todo $object rearrange
 }
 
 scrolledgraph method addscatter {table xcol ycol datacols} {
-	private $object xv yv wv data colors labels region
+	private $object xv yv wv data colors labels graphsettings
 	# we will add to existing (data(entries) already there)
 	set vnum [llength $data(entries)]
 	set header [list_shift table]
@@ -384,12 +350,12 @@ scrolledgraph method addscatter {table xcol ycol datacols} {
 		$object.g legend bind $name <1> [list $object elconf $name]
 		incr vnum
 	}
-	set region(xmin) [::$object.ends.x index 0]
-	set region(xmax) [::$object.ends.x index 1]
-	set region(ymin) [::$object.ends.y index 0]
-	set region(ymax) [::$object.ends.y index 1]
-	set region(xlog) [get region(xlog) 0]
-	set region(ylog) [get region(ylog) 0]
+	set graphsettings(xmin) [::$object.ends.x index 0]
+	set graphsettings(xmax) [::$object.ends.x index 1]
+	set graphsettings(ymin) [::$object.ends.y index 0]
+	set graphsettings(ymax) [::$object.ends.y index 1]
+	set graphsettings(xlog) [get graphsettings(xlog) 0]
+	set graphsettings(ylog) [get graphsettings(ylog) 0]
 	Classy::todo $object redraw
 }
 
@@ -434,17 +400,112 @@ proc ::tk::MouseWheel {wFired X Y D {shifted 0}} {
     }
 }
 
+scrolledgraph method rearrange {args} {
+	private $object data colors labels graphsettings header coldata xcol ycols wcols
+	set showregion 0
+	set linew [get graphsettings(linew) 1]
+	foreach el [list_remove [$object.g element names] legend] {
+		$object.g element delete $el
+	}
+	set xpos [lsearch $header [get xcol ""]]
+	if {$xpos == -1} {
+		set xcol [lindex $header 0]
+		set xpos 0
+	}
+	set yposs [list_remove [list_cor $header [get ycols ""]] -1 $xpos]
+	if {![llength $yposs]} {
+		set ycols {}
+		foreach field [list_sub $header -exclude $xpos] {
+			if {[lindex $coldata($field) 0] ne "label"} {
+				lappend ycols $field
+			}
+		}
+	} else {
+		set ycols [list_sub $header $yposs]
+	}
+	set wposs [list_remove [list_cor $header [get wcols ""]] -1]
+	set wcols [list_sub $header $wposs]
+	# sort according to x
+	set others {}
+	foreach col [list_sub $header -exclude $xpos] {
+		lappend others [lindex $coldata($col) 1]
+	}
+	set xs [lindex $coldata($xcol) 1]
+	$xs sort {*}$others
+	
+	$object.g axis configure y -title [join $ycols ,]
+	if {[lindex $coldata($xcol) 0] eq "labels"} {
+		set labels [lindex $coldata($xcol) end]
+		$object.g axis configure x -command [list $object getlabel] -title $xcol
+	} else {
+		unset -nocomplain labels
+		$object.g axis configure x -command {} -title $xcol
+	}
+	set amin [get ${xs}(min)]
+	set amax [get ${xs}(max)]
+#	if {[info exists labels]} {
+#		set amin [expr {$amin - 1}]
+#		set amax [expr {$amax + 1}]
+#	}
+	if {$graphsettings(xmax) == Inf} {
+		set graphsettings(xmax) [::$object.ends.x index 1]
+	}
+	::$object.ends.x set [list $amin $amax]
+	set vnum 0
+	set pos 0
+	set symbols {cross circle square diamond plus splus scross triangle}
+	# set dcolors {blue red gray orange yellow green violet}
+	set dcolors [distinctColors [expr {[llength $header]-1}]]
+	set amin {}
+	set amax {}
+	foreach field $ycols {
+		incr pos
+		set name $field
+		set ys [lindex $coldata($field) 1]
+		set amin [min $amin [get ${ys}(min)]]
+		set amax [max $amax [get ${ys}(max)]]
+		set basecolor [lindex $dcolors $vnum]
+		if {$basecolor eq ""} {set basecolor blue}
+		lappend data(entries) $name
+		set data($name,vnum) $vnum
+		set data($name,lstart) 0
+		set data($name,lend) 0
+		set data($name,header) $header
+		$object.g element create e$name -label $name -xdata $xs -ydata $ys -symbol none
+		# $object.g element configure e$name -weights ::$ws
+		set style [$object gradientstyle $basecolor $amin $amax 0]
+		set color $basecolor
+		# $object.g element configure e$name -linewidth $linew -fill $color -outlinewidth 1 -pixels 1 -symbol circle
+		$object.g element configure e$name -linewidth $linew -color $basecolor -outline $basecolor -outlinewidth 1 -pixels 2 -symbol plus \
+			-styles $style
+		if {$showregion} {
+			$object.g element configure e$name -linewidth 10 -trace decreasing
+		}
+		set data($name,color) $color
+		$object.g legend bind $name <1> [list $object elconf $name]
+		incr vnum
+	}
+	if {![isdouble $amin]} {set amin 0}
+	if {![isdouble $amax]} {set amax 0}
+	::$object.ends.y set [list $amin $amax]
+	set graphsettings(xmin) [::$object.ends.x index 0]
+	set graphsettings(xmax) [::$object.ends.x index 1]
+	set graphsettings(ymin) [::$object.ends.y index 0]
+	set graphsettings(ymax) [::$object.ends.y index 1]
+	Classy::todo $object redraw
+}
+
 scrolledgraph method redraw {args} {
 puts "----------redraw $object----------"
-	private $object region
+	private $object graphsettings
 	set w $object.g
 	Classy::canceltodo $object redraw
 	# $object _xrange
-	if {$region(xmax) <= $region(xmin)} {set region(xmax) [expr {$region(xmin)+1}]}
-	if {$region(ymax) <= $region(ymin)} {set region(ymax) [expr {$region(ymin)+1}]}
-	$w axis configure x -min $region(xmin) -max $region(xmax) -logscale $region(xlog)
-	$w axis configure y -min $region(ymin) -max $region(ymax) -logscale $region(ylog)
-	if {$region(xlog)} {
+	if {$graphsettings(xmax) <= $graphsettings(xmin)} {set graphsettings(xmax) [expr {$graphsettings(xmin)+1}]}
+	if {$graphsettings(ymax) <= $graphsettings(ymin)} {set graphsettings(ymax) [expr {$graphsettings(ymin)+1}]}
+	$w axis configure x -min $graphsettings(xmin) -max $graphsettings(xmax) -logscale $graphsettings(xlog)
+	$w axis configure y -min $graphsettings(ymin) -max $graphsettings(ymax) -logscale $graphsettings(ylog)
+	if {$graphsettings(xlog)} {
 		$object.scx configure -command {}
 		$object.g axis configure x -scrollcommand {}
 		grid forget $object.scx
@@ -453,7 +514,7 @@ puts "----------redraw $object----------"
 		$object.g axis configure x -scrollcommand [list $object xset]
 		grid $object.scx -row 2 -sticky nwse
 	}
-	if {$region(ylog)} {
+	if {$graphsettings(ylog)} {
 		$object.scy configure -command {}
 		$object.g axis configure y -scrollcommand {}
 		grid forget $object.scy
@@ -467,32 +528,32 @@ puts "----------redraw $object----------"
 }
 
 scrolledgraph method _setvars {} {
-	private $object region
+	private $object graphsettings
 	set w $object.g
 	set xmin [expr {round([$w axis cget x -min])}]
 	set xmax [expr {round([$w axis cget x -max])}]
 	if {[isdouble $xmin] && [isdouble $xmax]} {
-		set region(xmin) $xmin
-		set region(xmax) $xmax
+		set graphsettings(xmin) $xmin
+		set graphsettings(xmax) $xmax
 	}
 	set ymin [$w axis cget y -min]
 	set ymax [$w axis cget y -max]
 	catch {set ymin [format %.0f $ymin]}
 	catch {set ymax [format %.0f $ymax]}
-	set region(ymin) $ymin
-	set region(ymax) $ymax
+	set graphsettings(ymin) $ymin
+	set graphsettings(ymax) $ymax
 	Classy::todo $object _configureevent
 }
 
 scrolledgraph method _fillregion {args} {
-	private $object region
+	private $object graphsettings
 	set w $object.g
 	foreach type {xmin xmax ymin ymax} {
 		set val [$w axis cget [string index $type 0] -[string range $type 1 end]]
 		if {[isdouble $val]} {
 			set val [format %.1f $val]
 		}
-		set region($type) $val
+		set graphsettings($type) $val
 	}
 }
 
@@ -688,7 +749,7 @@ scrolledgraph method xset {args} {
 }
 
 scrolledgraph method xview {args} {
-	private $object data region
+	private $object data graphsettings
 	set w $object.g
 	set amin [::$object.ends.x index 0]
 	set amax [::$object.ends.x index 1]
@@ -735,7 +796,7 @@ scrolledgraph method yset {args} {
 }
 
 scrolledgraph method yview {args} {
-	private $object data region
+	private $object data graphsettings
 	set w $object.g
 	set amin [::$object.ends.y index 0]
 	set amax [::$object.ends.y index 1]
@@ -772,10 +833,10 @@ scrolledgraph method yview {args} {
 
 scrolledgraph method print {args} {
 	global printdialog
-	private $object region options
+	private $object graphsettings options
 	if {![llength $args]} {
 		destroy $object.ps
-		set file [file root [file tail [get options(-datafile) plot]]]__[$object.g axis cget y -title]_vs_[$object.g axis cget x -title]__$region(xmin)-$region(xmax).ps
+		set file [file root [file tail [get options(-datafile) plot]]]__[$object.g axis cget y -title]_vs_[$object.g axis cget x -title]__$graphsettings(xmin)-$graphsettings(xmax).ps
 		regsub -all {[:\?\*/]} $file _ file
 		set printdialog(file) [file dir [get options(-datafile) [pwd]]]/$file
 		Classy::Dialog $object.ps -title "Print to postscript"
@@ -822,4 +883,22 @@ scrolledgraph method point {x y} {
 	lappend points $line
 	$ptable.editor configure -variable [privatevar $object points]
 	$ptable.editor autosize
+}
+
+scrolledgraph method changeX {} {
+	private $object xcol header
+	set xcol [Classy::select "Select X axis" $header -initialvalue $xcol]
+	$object rearrange
+}
+
+scrolledgraph method changeYs {} {
+	private $object ycols header
+	set ycols [Classy::select "Select Y axis" $header -selectmode multiple -initialvalue $ycols]
+	$object rearrange
+}
+
+scrolledgraph method changeWs {} {
+	private $object wcols header
+	set ycols [Classy::select "Select weight columns" $header -selectmode multiple -initialvalue $wcols]
+	$object rearrange
 }

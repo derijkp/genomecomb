@@ -300,8 +300,8 @@ mainw method opentsv {args} {
 	}
 	set fields [$object.tb fields]
 	set sample [lindex [samples $fields] 0]
-	set view(summary_rows) {chromosome}
-	set view(summary_cols) [list sample {} sequenced {v}]
+	set view(summary_rows) {}
+	set view(summary_cols) {}
 	set view(summary_cells) [list count]
 }
 
