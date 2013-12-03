@@ -357,7 +357,7 @@ proc bam_clean_job {bamfile refseq sample args} {
 	}
 	if {$realign ne "0"} {
 		# realign around indels
-		set deps [list $dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict {*}$realigndeps]
+		set deps [list $dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict $gatkrefseq {*}$realigndeps]
 		if {$realign eq "srma"} {
 			set srma [srma]
 			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
