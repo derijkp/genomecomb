@@ -35,8 +35,27 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	# sort and collapse regions
 	set dir [file dir $ampliconsfile]
 	set tail [file tail $ampliconsfile]
-	cg select -s {chromosome begin end} $ampliconsfile $dir/s$tail
-	cg regcollapse $dir/s$tail > $dir/reg-$name.tsv
+	set header [cg select -h $ampliconsfile]
+	if {[inlist $header upprobelen] && [inlist $header downprobelen]} {
+		# clipped files
+		cg select -f {chromosome {begin=$begin+$upprobelen} {end=$end - $downprobelen} name {outer_begin=$begin} {outer_end=$end} *} $ampliconsfile $dir/$dir/s$tail.temp
+	} elseif {[inlist $header primer1_end] && [inlist $header primer2_begin]} {
+		cg select -f {chromosome begin=$primer1_end end=$primer2_begin name outer_begin=$begin outer_end=$end *} $ampliconsfile $dir/inner_$tail.temp
+	} elseif {![inlist $header outer_begin] || ![inlist $header outer_end]} {
+	} else {
+		set fields {chromosome begin end name}
+		if {![inlist $header outer_begin]} {lappend fields outer_begin=$begin} else {lappend fields outer_begin}
+		if {![inlist $header outer_end]} {lappend fields outer_end=$end} else {lappend fields outer_end}
+		cg select -f {chromosome begin end name} $ampliconsfile $dir/inner_$tail.temp
+	}
+	cg select -s {chromosome begin end} $dir/s$tail.temp $dir/s$tail.temp2
+	file rename $dir/s$tail.temp2 $dir/s$tail
+	file delete $dir/s$tail.temp
+	set ampliconsfile $dir/s$tail
+	cg select -f {chromosome begin=$outer_begin end=$outer_end name} $ampliconsfile $dir/reg-$name.tsv.temp
+	cg select -s {chromosome begin end} $dir/reg-$name.tsv.temp $dir/reg-$name.tsv.temp2
+	cg regcollapse $dir/reg-$name.tsv.temp2 > $dir/reg-$name.tsv
+	file delete $dir/reg-$name.tsv.temp $dir/reg-$name.tsv.temp2
 	# the resulting reg file is used to make minigenome
 	# The reg file should contain chromosome,begin,end and $namefield
 	# data of the mapping is stored to reg-$name.map, for later remapping to genomic coordinates
@@ -44,15 +63,8 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	# make bed files
 	tsv2bed $dir/reg-$name.tsv $dir/reg-$name.bed {} chromosome begin end $namefield
 	tsv2bed $dir/reg-$name.map $dir/reg-mini_$name.bed $name begin end name
-	set list [cg select -h $ampliconsfile]
-	if {[inlist $list upprobelen] && [inlist $list downprobelen]} {
-		# clipped files
-		cg select -f {chromosome {begin=$begin+$upprobelen} {end=$end - $downprobelen} name} $ampliconsfile $dir/inner_$tail.temp
-	} elseif {[inlist $list primer1_end] && [inlist $list primer2_begin]} {
-		cg select -f {chromosome begin=$primer1_end end=$primer2_begin name} $ampliconsfile $dir/inner_$tail.temp
-	} else {
-		cg select -f {chromosome begin end name} $ampliconsfile $dir/inner_$tail.temp
-	}
+	set header [cg select -h $ampliconsfile]
+	cg select -f {chromosome begin end name} $ampliconsfile $dir/inner_$tail.temp
 	cg select -s - $dir/inner_$tail.temp $dir/inner_$tail.temp2
 	file delete $dir/inner_$tail.temp
 	file rename -force $dir/inner_$tail.temp2 $dir/inner_$tail
