@@ -72,7 +72,7 @@ mainw method summarybuilder_add_row {} {
 	private $object.summarybuilder fieldsw valuew rowsw
 	private $object view
 	set fields [$fieldsw get]
-	set values [$valuew get]
+	set values [list [$valuew get]]
 	foreach field $fields value $values {
 		$rowsw insert "end" [list $field $value]\n
 	}
@@ -82,7 +82,7 @@ mainw method summarybuilder_add_col {} {
 	private $object.summarybuilder fieldsw valuew colsw
 	private $object view
 	set fields [$fieldsw get]
-	set values [$valuew get]
+	set values [list [$valuew get]]
 	foreach field $fields value $values {
 		$colsw insert "end" [list $field $value]\n
 	}
