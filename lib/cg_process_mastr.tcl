@@ -176,7 +176,8 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		foreach file $files {
 			set target [file root [gzroot $file]].tsv
 			job vcf2sft-$file -deps $file -targets $target -code {
-				cg vcf2sft $dep $target
+				cg vcf2sft $dep $target.temp
+				file rename -force $target.temp $target
 			}
 			lappend todo [string range $target 4 end-4]
 		}
