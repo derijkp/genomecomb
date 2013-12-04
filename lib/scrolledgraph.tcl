@@ -169,6 +169,56 @@ if 0 {
 	event generate $object.g <Configure>
 }
 
+scrolledgraph method _retable {} {
+	private $object coldata header
+	set len [[lindex $coldata([lindex $header 0]) 1] length]
+	set lastpos [expr {$len-1}]
+	set result [list_fill $len {}]
+	foreach col $header {
+		if {[lindex $coldata($col) 0] eq "labels"} {
+			set temp [lindex $coldata($col) 2]
+		} else {
+			set v [lindex $coldata($col) 1]
+			set temp [$v range 0 $lastpos]
+		}
+		set pos 0
+		foreach v $temp {
+			lset result $pos [list {*}[lindex $result $pos] $v]
+			incr pos
+		}
+	}
+	return $result
+}
+
+scrolledgraph method sort {sortcol} {
+	private $object coldata header
+	set type [lindex $coldata($sortcol) 0]
+	set sortv [lindex $coldata($sortcol) 1]
+	set lastpos [expr {[$sortv length]-1}]
+	if {$type eq "labels"} {
+		set list [lindex $coldata($sortcol) 2]
+	} else {
+		set list [$sortv range 0 $lastpos]
+	}
+	set slist [ssort -natural $list]
+	if {$list eq $slist} return
+	set neworder [list_cor $list $slist]
+	set others {}
+	foreach col $header {
+		if {[lindex $coldata($col) 0] eq "labels"} {
+			set list [lindex $coldata($col) 2]
+			lset coldata($col) 2 [list_sub $list $neworder]
+		} else {
+			lappend others [lindex $coldata($col) 1]
+		}
+	}
+	if {[llength $others]} {
+		vector create $object.sortvector
+		$object.sortvector set [list_cor $slist $list]
+		eval {$object.sortvector sort} $others
+	}
+}
+
 scrolledgraph method gradientstyle {basecolor {wv {}} {null 0} {symbol plus}} {
 	private $object colors
 	if {![llength [$object.g pen names $basecolor-0]]} {
@@ -268,8 +318,7 @@ scrolledgraph method add {table {xtitle {}} {ytitle {}}} {
 			set tempcol [list_regsub -all {^(NaN||[?-])$} $col -Inf]
 			if {[catch {::$object.col$vnum set $tempcol}]} {
 				set coldata($colname) [list labels ::$object.col$vnum $col]
-				set scol [ssort -natural $col]
-				::$object.col$vnum set [list_cor $scol $col]
+				::$object.col$vnum set [list_cor $col $col]
 			} else {
 				set coldata($colname) [list vectsub ::$object.col$vnum $col]
 			}
@@ -449,18 +498,12 @@ scrolledgraph method rearrange {args} {
 	set scols [list_sub $header $sposs]
 	# sort according to x or scols
 	set others {}
-	set othercols [list_sub $header -exclude $xpos]
+putsvars scols xcol
 	if {[llength $scols]} {
-		set othercols [list_lremove $othercols $scols]
-		set sortcol [lindex $coldata($scols) 1]
+		$object sort $scols
 	} else {
-		set othercols [list_lremove $othercols $xcol]
-		set sortcol $xcol
+		$object sort $xcol
 	}
-	foreach col $othercols {
-		lappend others [lindex $coldata($col) 1]
-	}
-	$sortcol sort {*}$others
 	# create axis
 	set xs [lindex $coldata($xcol) 1]
 	$object.g axis configure y -title [join $ycols ,]
