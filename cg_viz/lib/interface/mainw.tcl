@@ -80,9 +80,7 @@ mainw method init args {
 		-list {data
 summary
 summarygraph
-summaryscatter
-graph
-scatter}
+graph}
 	grid $object.buttons.view -row 0 -column 5 -sticky nesw
 	button $object.buttons.settings \
 		-text Summaries

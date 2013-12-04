@@ -283,8 +283,9 @@ mainw method summarybuilder {args} {
 	set w $object.summarybuilder.options.paned
 	$object.summarybuilder add summary "Summary" [list $object view summary]
 	$object.summarybuilder add graph "Graph" [list $object view summarygraph]
-	$object.summarybuilder add scatter "Scatterplot" [list $object view summaryscatter]
+#	$object.summarybuilder add scatter "Scatterplot" [list $object view summaryscatter]
 	$object summarybuilder_fillvalues
+	$object.summarybuilder persistent remove summary graph
 	update
 	set field [$w.fields.fields get 0]
 	if {$field ne ""} {
