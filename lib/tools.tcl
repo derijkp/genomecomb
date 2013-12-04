@@ -919,5 +919,9 @@ proc job_razip {file args} {
 }
 
 proc file_absolute {file} {
-	file join [pwd] $file
+	if {[string range $file 0 1] eq "~/"} {
+		file join $::env(HOME) [string range $file 2 end]
+	} else {
+		file join [pwd] $file
+	}
 }
