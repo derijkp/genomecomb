@@ -465,10 +465,15 @@ mainw method summaryscatter_redraw {args} {
 
 mainw method graph_redraw {args} {
 	private $object view
-	if {[file size $view(file)] > 10000000} {
-		error "File too large to make graph, make a summary first?"
+	set fields [$object.tb qfields]
+	set rows [$object.tb info len]
+	if {[expr {$rows*[llength $fields]}] > 100000} {
+		set yorn [Classy::yorn "Result is large for making a graph ($rows rows,[llength $fields] fields). This may be (very) slow or even crash, continue anyway?"]
+		if {!$yorn} return
 	}
-	set f [open $view(file)]
+	set indexdir [$object.tb info indexdir]
+	$object.tb save $indexdir/graphtempfile.tsv
+	set f [open $indexdir/graphtempfile.tsv]
 	set header [tsv_open $f]
 	set summary [csv_file $f \t {}]
 	close $f

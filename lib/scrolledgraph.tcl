@@ -70,22 +70,19 @@ scrolledgraph method init {args} {
 			-textvariable [privatevar $object graphsettings($type)] -command [list Classy::todo $object redraw]
 		pack $object.b.$type -side left
 	}
-	button $object.b.x  -text "X" -command [list Classy::todo $object changeX]
-	pack $object.b.x -side left
-	button $object.b.y  -text "Ys" -command [list Classy::todo $object changeYs]
-	pack $object.b.y -side left
-	button $object.b.w  -text "Weights" -command [list Classy::todo $object changeWs]
-	pack $object.b.w -side left
-	button $object.b.sort  -text "Sort" -command [list Classy::todo $object changesort]
-	pack $object.b.sort -side left
+	button $object.b.conf  -text "Configure" -command [list Classy::todo $object graphconfigure]
+	pack $object.b.conf -side left
 	Classy::NumEntry $object.b.linew -width 2 -label lw -orient horizontal \
 		-textvariable [privatevar $object graphsettings(linew)] -command [list Classy::todo $object rearrange]
 	pack $object.b.linew -side left
-	foreach type {xlog ylog} {
-		checkbutton $object.b.$type  -text $type -onvalue 1 -offvalue 0 \
-			-variable [privatevar $object graphsettings($type)] -command [list Classy::todo $object redraw]
-		pack $object.b.$type -side left
-	}
+	button $object.b.max  -text "Maxview" -command [subst {
+		setprivate $object graphsettings(xmin) {}
+		setprivate $object graphsettings(xmax) {}
+		setprivate $object graphsettings(ymin) {}
+		setprivate $object graphsettings(ymax) {}
+		$object redraw
+	}]
+	pack $object.b.max -side left
 #	Classy::ProgressWidget $object.progress
 #	grid $object.progress -sticky nwse -columnspan 2
 #	Classy::Progress display $object.progress
@@ -144,6 +141,8 @@ scrolledgraph method start {} {
 	set graphsettings(xlog) 0
 	set graphsettings(ylog) 0
 	set graphsettings(linew) 1
+	$object.g axis bind x <1> [list $object graphconfigure x]
+	$object.g axis bind y <1> [list $object graphconfigure y]
 	Classy::todo $object redraw
 }
 
@@ -498,7 +497,6 @@ scrolledgraph method rearrange {args} {
 	set scols [list_sub $header $sposs]
 	# sort according to x or scols
 	set others {}
-putsvars scols xcol
 	if {[llength $scols]} {
 		$object sort $scols
 	} else {
@@ -781,14 +779,40 @@ scrolledgraph method shift {name {shift 1}} {
 }
 
 scrolledgraph method reconf {args} {
-	private $object data conf
-	set name $conf(entry)
-	set data($name,color) [get conf(color) gray]
-	set style [$object gradientstyle $data($name,color)]
-	set color [get colors($data($name,color)-0) $data($name,color)]
-	$object.g element configure e$name -linewidth $conf(linewidth) -fill $color -outline $color -color $color \
-		-outlinewidth 1 -pixels 2 -symbol $conf(symbol) \
-		-styles $style
+	private $object data conf graphsettings
+	if {[info exists conf(entry)]} {
+		set name $conf(entry)
+		set data($name,color) [get conf(color) gray]
+		set style [$object gradientstyle $data($name,color)]
+		set color [get colors($data($name,color)-0) $data($name,color)]
+		$object.g element configure e$name -linewidth $conf(linewidth) -fill $color -outline $color -color $color \
+			-outlinewidth 1 -pixels 2 -symbol $conf(symbol) \
+			-styles $style
+	}
+	# x axis settings
+	if {[isint $graphsettings(xrotate)]} {
+		$object.g axis configure x -rotate $graphsettings(xrotate)
+	}
+	if {[isint $graphsettings(xstep)]} {
+		$object.g axis configure x -stepsize $graphsettings(xstep)
+	}
+	if {[isint $graphsettings(xsubdivisions)]} {
+		$object.g axis configure x -subdivisions $graphsettings(xsubdivisions)
+	}
+	if {[get graphsettings(xfont) ""] eq ""} {set graphsettings(xfont) {helvetica -12}}
+	$object.g axis configure x -tickfont $graphsettings(xfont)
+	# y axis settings
+	if {[isint $graphsettings(yrotate)]} {
+		$object.g axis configure y -rotate $graphsettings(yrotate)
+	}
+	if {[isint $graphsettings(ystep)]} {
+		$object.g axis configure y -stepsize $graphsettings(ystep)
+	}
+	if {[isint $graphsettings(ysubdivisions)]} {
+		$object.g axis configure y -subdivisions $graphsettings(ysubdivisions)
+	}
+	if {[get graphsettings(yfont) ""] eq ""} {set graphsettings(yfont) {helvetica -12}}
+	$object.g axis configure y -tickfont $graphsettings(yfont)
 	Classy::todo $object _configureevent
 }
 
@@ -1014,6 +1038,7 @@ scrolledgraph method point {x y} {
 
 scrolledgraph method changeX {} {
 	private $object xcol header graphsettings
+puts changex
 	set xcol [Classy::select "Select X axis" $header -initialvalue $xcol]
 	set graphsettings(xmin) {}
 	set graphsettings(xmax) {}
@@ -1039,4 +1064,52 @@ scrolledgraph method changesort {} {
 	set scols [get scols ""]
 	set scols [Classy::select "Select sort column" $header -initialvalue $scols]
 	$object rearrange
+}
+
+scrolledgraph method graphconfigure {{axis x}} {
+	private $object graphsettings
+	destroy $object.graphconfigure
+	Classy::Dialog $object.graphconfigure -title "configure axis"
+	$object.graphconfigure tab "X Axis"
+	$object.graphconfigure option listbox "X column" [privatevar $object xcol] [privatevar $object header] -selectmode single \
+		-browsecommand [subst {
+			invoke args {
+				setprivate $object graphsettings(xmin) {}
+				setprivate $object graphsettings(xmax) {}
+			}}]
+	$object.graphconfigure option check "Scale" [privatevar $object graphsettings(xlog)] "use log scale" -- -command [list Classy::todo $object rearrange]
+	$object.graphconfigure option numentry "Rotate" [privatevar $object graphsettings(xrotate)] -command [list Classy::todo $object reconf]
+	$object.graphconfigure option numentry "Major stepsize" [privatevar $object graphsettings(xstep)] -command [list Classy::todo $object reconf]
+	$object.graphconfigure option numentry "Subdivisions" [privatevar $object graphsettings(xsubdivisions)] -command [list Classy::todo $object reconf]
+	#
+	$object.graphconfigure tab "Y Axis"
+	$object.graphconfigure option listbox "Y columns" [privatevar $object ycols] [privatevar $object header] -selectmode multiple \
+		-browsecommand [subst {
+			invoke args {
+				setprivate $object graphsettings(ymin) {}
+				setprivate $object graphsettings(ymax) {}
+			}}]
+	$object.graphconfigure option check "Scale" [privatevar $object graphsettings(ylog)] "use log scale" -- -command [list Classy::todo $object rearrange]
+	$object.graphconfigure option numentry "Rotate" [privatevar $object graphsettings(yrotate)] -command [list Classy::todo $object reconf]
+	$object.graphconfigure option numentry "Major stepsize" [privatevar $object graphsettings(ystep)] -command [list Classy::todo $object reconf]
+	$object.graphconfigure option numentry "Subdivisions" [privatevar $object graphsettings(ysubdivisions)] -command [list Classy::todo $object reconf]
+	#
+	$object.graphconfigure tab "Weights"
+	$object.graphconfigure option listbox "Weight columns" [privatevar $object wcols] [privatevar $object header] -selectmode multiple
+	$object.graphconfigure tab "Sort"
+	$object.graphconfigure option listbox "Sort column" [privatevar $object scols] [privatevar $object header] -selectmode single
+	#
+	$object.graphconfigure tab "Display"
+	if {[get graphsettings(xfont) ""] eq ""} {set graphsettings(xfont) {helvetica -12}}
+	$object.graphconfigure option font "X tick font" [privatevar $object graphsettings(xfont)] -command [list Classy::todo $object reconf]
+	if {[get graphsettings(yfont) ""] eq ""} {set graphsettings(yfont) {helvetica -12}}
+	$object.graphconfigure option font "Y tick font" [privatevar $object graphsettings(yfont)] -command [list Classy::todo $object reconf]
+	if {$axis eq "x"} {
+		$object.graphconfigure tab "X Axis"
+	}
+	if {$axis eq "y"} {
+		$object.graphconfigure tab "Y Axis"
+	}
+	#
+	$object.graphconfigure add go Go [list $object rearrange]
 }
