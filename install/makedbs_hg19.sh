@@ -175,8 +175,9 @@ job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}
 }
 
 # mirbase
-job reg_hg19_mirbase -targets {$dest/hg19/reg_hg19_mirbase.tsv $dest/hg19/reg_hg19_mirbase.info} -vars {dest build db} -code {
+job reg_hg19_mirbase -targets {$dest/hg19/reg_hg19_mirbase.tsv $dest/hg19/reg_hg19_mirbase.tsv.opt $dest/hg19/reg_hg19_mirbase.info} -vars {dest build db} -code {
 	cd $dest/hg19
+	file_write $dest/hg19/reg_hg19_mirbase.tsv.opt "fields\t{ID}\n"
 	exec -ignorestderr wget -c --tries=45 --directory-prefix=${dest}/tmp/hg19 ftp://mirbase.org/pub/mirbase/20/genomes/hsa.gff2
 	cg gff2sft ${dest}/tmp/hg19/hsa.gff2 ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp
 	cg select -s - ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp2

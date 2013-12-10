@@ -184,8 +184,9 @@ job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}
 }
 
 # mirbase (hg19)
-job reg_hg19_mirbase -targets {$dest/hg19/reg_hg19_mirbase.tsv $dest/hg19/reg_hg19_mirbase.info} -vars {dest build db} -code {
+job reg_hg19_mirbase -targets {$dest/hg19/reg_hg19_mirbase.tsv $dest/hg19/reg_hg19_mirbase.tsv.opt $dest/hg19/reg_hg19_mirbase.info} -vars {dest build db} -code {
 	cd $dest/hg19
+	file_write $dest/hg19/reg_hg19_mirbase.tsv.opt "fields\t{ID}\n"
 	exec -ignorestderr wget -c --tries=45 --directory-prefix=${dest}/tmp/hg19 ftp://mirbase.org/pub/mirbase/20/genomes/hsa.gff2
 	cg gff2sft ${dest}/tmp/hg19/hsa.gff2 ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp
 	cg select -s - ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp2
@@ -195,7 +196,9 @@ job reg_hg19_mirbase -targets {$dest/hg19/reg_hg19_mirbase.tsv $dest/hg19/reg_hg
 }
 
 # mirbase hg18 liftover
-job reg_hg18_mirbase_liftover -deps {${dest}/hg19/reg_hg19_mirbase.tsv ${dest}/hg19/reg_hg19_mirbase.info} -targets {reg_${build}_mirbase.tsv reg_${build}_mirbase.info} -vars {dest build db} -code {
+job reg_hg18_mirbase_liftover -deps {${dest}/hg19/reg_hg19_mirbase.tsv ${dest}/hg19/reg_hg19_mirbase.info} \
+-targets {reg_${build}_mirbase.tsv reg_${build}_mirbase.tsv.opt reg_${build}_mirbase.info} -vars {dest build db} -code {
+	file_write reg_${build}_mirbase.tsv.opt "fields\t{ID}\n"
 	cg liftover ${dest}/hg19/reg_hg19_mirbase.tsv ${dest}/liftover/hg19ToHg18.over.chain ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2
 	file rename -force ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2 reg_${build}_mirbase.tsv
 	file copy ${dest}/hg19/reg_hg19_mirbase.info reg_${build}_mirbase.info
