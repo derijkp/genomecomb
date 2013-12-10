@@ -15,7 +15,7 @@ proc primercheck_search {db searchseq add maxnum} {
 	if {[catch {
 		foreach {numhits hits} [cindex_searchgenome $db $searchseq $add $maxnum] break
 	} errmsg]} {
-		if {[regexp {^found [0-9]+$} $errmsg]} {
+		if {[regexp {^found >? *[0-9]+} $errmsg]} {
 			set numhits many
 			set hits many
 		} else {
@@ -153,9 +153,9 @@ proc cg_primercheck {args} {
 	}
 	set db [lindex [glob $dbdir/genome_*.ssa] 0]
 	while {![eof $f]} {
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		set sub [list_sub $line $poss]
+		set inputline [split [gets $f] \t]
+		if {![llength $inputline]} continue
+		set sub [list_sub $inputline $poss]
 		putslog $sub
 		foreach {name primer1 primer2} $sub break
 		set primer1 [string toupper $primer1]
