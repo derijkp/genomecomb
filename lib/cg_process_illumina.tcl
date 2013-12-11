@@ -4,12 +4,11 @@ proc bam2covstats_job {bamfile regionfile} {
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
-	job bam2coverage-$root -deps $bamfile -targets {$dir/coverage-$root $dir/coverage-$root/coverage-$root.FINISHED} -vars {root} -code {
-		cg bam2coverage $dep $target/coverage-$root
-	}
-	
-	job make_histo-$root -deps {$dir/coverage-$root/coverage-$root.FINISHED $regionfile} -targets $dir/$root.histo -vars {regionfile dir root} -code {
-		cg bcol histo $regionfile $dir/coverage-$root/coverage-$root {1 5 10 20 50 100 200 500 1000} > $target.temp
+#	job bam2coverage-$root -deps $bamfile -targets {$dir/coverage-$root $dir/coverage-$root/coverage-$root.FINISHED} -vars {root} -code {
+#		cg bam2coverage $dep $target/coverage-$root
+#	}
+	job make_histo-$root -deps {$bamfile $regionfile} -targets $dir/$root.histo -vars {regionfile dir root} -code {
+		cg bam_histo $regionfile $bamfile {1 5 10 20 50 100 200 500 1000} > $target.temp
 		file rename -force $target.temp $target
 	}
 }
