@@ -191,6 +191,7 @@ proc bam2reg_job {bamfile {mincoverage 5}} {
 proc bwarefseq_job {refseq} {
 	upvar job_logdir job_logdir
 	set bwarefseq $refseq.bwa/[file tail $refseq]
+	if {[file exists $bwarefseq]} {return $bwarefseq}
 	job bwa2refseq-[file tail $refseq] -deps $refseq -targets {$refseq.bwa} -code {
 		file delete -force $target.temp
 		file mkdir $target.temp
