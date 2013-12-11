@@ -767,10 +767,13 @@ proc mklink {src dest} {
 		set prelen [expr {[llength $sdest]-$pos -1}]
 		set src [file join {*}[list_fill $prelen ..] {*}[lrange $ssrc $pos end]]
 	}
-	if {[file exists $dest] && [file link -symbolic $dest] ne "$dest"} {
+	set err [catch {file link $dest} link]
+	if {!$err || $link ne "$src"} {
 		file delete $dest
 	}
-	file link -symbolic $dest $src
+	if {![file exists $dest]} {
+		file link -symbolic $dest $src
+	}
 }
 
 proc gzmklink {src dest} {
