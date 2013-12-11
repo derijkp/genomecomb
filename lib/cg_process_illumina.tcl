@@ -270,7 +270,7 @@ proc gatk_refseq_job refseq {
 	set dict [file root $nrefseq].dict
 	job gatkrefseq-[file tail $nrefseq] -deps $nrefseq -targets {$dict} -vars {nrefseq picard} -code {
 		file delete $target.temp
-		exec java -jar $picard/CreateSequenceDictionary.jar R= $nrefseq O= $target.temp 2>@ stderr > stdout
+		exec java -jar $picard/CreateSequenceDictionary.jar R= $nrefseq O= $target.temp 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
 	}
 	return $nrefseq
@@ -331,9 +331,9 @@ proc bam_clean_job {bamfile refseq sample args} {
 	job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
 	-vars {removeduplicates sample picard} {*}$skips -code {
 		file delete $target.temp
-		exec java -jar $picard/SortSam.jar	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr > stdout
+		exec java -jar $picard/SortSam.jar	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
-	#	# exec java -jar $picard/AddOrReplaceReadGroups.jar	I=$src	O=$target.temp3	RGID=$sample	RGLB=solexa-123	RGPL=illumina	RGPU=$sample RGSM=$sample 2>@ stderr > stdout
+	#	# exec java -jar $picard/AddOrReplaceReadGroups.jar	I=$src	O=$target.temp3	RGID=$sample	RGLB=solexa-123	RGPL=illumina	RGPU=$sample RGSM=$sample 2>@ stderr >@ stdout
 	#	# file delete $target.temp $target.temp2
 	#	# file rename -force $target.temp3 $target
 	}
@@ -342,7 +342,7 @@ proc bam_clean_job {bamfile refseq sample args} {
 		job bamremdup-$root -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-d$root.bam} \
 		-vars {sample picard} -skip {$dir/$pre-rd$root.bam} -code {
 			puts "removing duplicates"
-			exec java -jar $picard/MarkDuplicates.jar	I=$dep	O=$target.temp METRICS_FILE=$target.dupmetrics 2>@ stderr > stdout
+			exec java -jar $picard/MarkDuplicates.jar	I=$dep	O=$target.temp METRICS_FILE=$target.dupmetrics 2>@ stderr >@ stdout
 			file rename -force $target.temp $target
 		}
 		set root d$root
