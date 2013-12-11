@@ -175,6 +175,34 @@ test distr2chr {many} {
 chr2	2-2
 }} 
 
+test file_absolute {relative path} {
+	set keep [pwd]
+	cd /tmp
+	set result [file_absolute abc]
+	cd $keep
+	set result
+} /tmp/abc
+
+test file_absolute {relative path with ..} {
+	set keep [pwd]
+	cd /usr/bin
+	set result [file_absolute ../abc]
+	cd $keep
+	set result
+} /usr/abc
+
+test file_absolute {absolute with .. and .} {
+	file_absolute /abc/def/../ghi/./j
+} /abc/ghi/j
+
+test file_absolute {empty} {
+	file_absolute /abc//def
+} /abc/def
+
+test file_absolute {error} {
+	file_absolute /abc/def/../../../ghi/./j
+} {file_absolute error: cannot .. past root} error
+
 cd $keepdir
 file delete -force {*}[glob tmp/*]
 

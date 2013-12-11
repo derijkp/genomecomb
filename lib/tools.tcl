@@ -922,6 +922,15 @@ proc file_absolute {file} {
 	if {[string range $file 0 1] eq "~/"} {
 		file join $::env(HOME) [string range $file 2 end]
 	} else {
-		file join [pwd] $file
+		set result {}
+		foreach el [file split [file join [pwd] $file]] {
+			if {$el eq ".."} {
+				if {[llength $result] <= 1} {error "file_absolute error: cannot .. past root"}
+				list_pop result
+			} elseif {$el ne "." && $el ne ""} {
+				lappend result $el
+			}
+		}
 	}
+	file join {*}$result
 }
