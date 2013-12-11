@@ -223,15 +223,15 @@ proc map_bwa_job {refseq files sample {readgroupdata {}} {pre {}}} {
 			lappend files1 $file1
 			lappend files2 $file2
 		}
-		file delete bwa1.fastq bwa2.fastq
+		set tempdir [scratchdir]
 		if {[llength $files1] > 1} {
-			exec cat {*}$files1 > bwa1.fastq
-			exec cat {*}$files2 > bwa2.fastq
+			exec cat {*}$files1 > $tempdir/bwa1.fastq
+			exec cat {*}$files2 > $tempdir/bwa2.fastq
 		} else {
-			mklink $file1 bwa1.fastq
-			mklink $file2 bwa2.fastq
+			mklink $file1 $tempdir/bwa1.fastq
+			mklink $file2 $tempdir/bwa2.fastq
 		}
-		exec bwa mem -t 2 -a -M -R @RG\tID:$sample\t[join $rg \t] $bwarefseq bwa1.fastq bwa2.fastq > $target.temp 2>@ stderr
+		exec bwa mem -t 2 -a -M -R @RG\tID:$sample\t[join $rg \t] $bwarefseq $tempdir/bwa1.fastq $tempdir/bwa2.fastq > $target.temp 2>@ stderr
 		file rename -force $target.temp $target
 		file delete bwa1.fastq bwa2.fastq
 	}
