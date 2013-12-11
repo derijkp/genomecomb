@@ -20,6 +20,7 @@
 chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1-NA00001	alleleSeq2-NA00001	zyg-NA00001	phased-NA00001	genotypes-NA00001	genoqual-NA00001	coverage-NA00001	haploqual-NA00001	alleleSeq1-NA00002	alleleSeq2-NA00002	zyg-NA00002	phased-NA00002	genotypes-NA00002	genoqual-NA00002	coverage-NA00002	haploqual-NA00002	alleleSeq1-NA00003	alleleSeq2-NA00003	zyg-NA00003	phased-NA00003	genotypes-NA00003	genoqual-NA00003	coverage-NA00003	haploqual-NA00003	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
 20	14369	14370	snp	G	A	rs6054257	29	PASS	G	G	r	1	0,0	48	1	51,51	A	G	t	1	1,0	48	8	51,51	A	A	m	0	1;1	43	5	.,.	3	14	0.5		1	1
 20	17329	17330	snp	T	A	.	3	q10	T	T	r	1	0,0	49	3	58,50	T	A	t	1	0,1	3	5	65,3	T	T	r	0	0;0	41	3		3	11	0.017			
+20	1000000	1000099	del	99		longdel	50	PASS	99		t	0	0;1	35	4		99	99	r	0	0;0	17	2				m	0	1;1	40	3		3	9		G		
 20	1110695	1110696	snp	A	G,T	rs6040355	67	PASS	G	T	c	1	1,2	21	6	23,27	T	G	c	1	2,1	2	0	18,2	T	T	m	0	2;2	35	4		2	10	0.333,0.667	T	1	
 20	1230236	1230237	snp	T	.	.	47	PASS	T	T	r	1	0,0	54	7	56,60	T	T	r	1	0,0	48	4	51,51	T	T	r	0	0;0	61	2		3	13		T		
 20	1234567	1234570	sub	TCT	,TACT	microsat1	50	PASS	TCT		t	0	0;1	35	4		TCT	TACT	t	0	0;2	17	2				m	0	1;1	40	3		3	9		G		

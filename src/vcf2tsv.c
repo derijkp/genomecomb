@@ -196,6 +196,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		if (l1 > 20) {
+			DStringClear(ref);
 			DStringPrintf(ref,"%d",l1 - 1);
 		} else {
 			DStringSetS(ref,a_ref(linea)->string+diff,a_ref(linea)->size-diff);

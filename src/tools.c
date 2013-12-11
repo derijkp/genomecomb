@@ -129,6 +129,7 @@ void DStringPrintf(DString *dstring, char *format, ...) {
 	DStringSetSize(dstring,dstring->size+size);
 	va_start(args, format);
 	vsprintf(dstring->string+dstring->size, format, args);
+	dstring->size += size;
 	va_end(args);
 }
 
