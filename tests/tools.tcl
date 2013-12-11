@@ -9,8 +9,8 @@ package require Extral
 
 set keeppath $::env(PATH)
 set script [info script] ; if {$script eq ""} {set script ./t}
-set testdir [file dir [file_absolute $script]]
-set appdir [file dir [file dir [file_absolute $script]]]
+set testdir [file dir [file normalize $script]]
+set appdir [file dir [file dir [file normalize $script]]]
 append ::env(PATH) :$appdir/bin
 # putsvars ::env(PATH)
 set env(SCRATCHDIR) [file dir [tempdir]]

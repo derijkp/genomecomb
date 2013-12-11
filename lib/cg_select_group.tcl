@@ -1,5 +1,5 @@
 proc select_parse_grouptypes {grouptypelist} {
-	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list}
+	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list sum sum}
 	set grouptypes {}
 	foreach grouptype $grouptypelist {
 		if {$grouptype eq "count"} {
@@ -135,6 +135,17 @@ proc tsv_select_addaggregatecalc {todolist} {
 					lappend resultdata($_groupname,$_colname,$_val,d) ${@val@}
 			} [list @val@ $fieldused]]
 		}
+		if {[inlist $todo sum]} {
+			append colactions [string_change {
+					if {[isdouble ${@val@}]} {
+						if {![info exists resultdata($_groupname,$_colname,$_val,s)]} {
+							set resultdata($_groupname,$_colname,$_val,s) ${@val@}
+						} else {
+							set resultdata($_groupname,$_colname,$_val,s) [expr {$resultdata($_groupname,$_colname,$_val,s) + ${@val@}}]
+						}
+					}
+			} [list @val@ $fieldused]]
+		}
 	}
 	#	set stddev [expr {sqrt($m2/($n - 1))}]
 	#	set stddev [expr {sqrt($m2/$n)}]
@@ -185,6 +196,10 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 			append calcresults [string_change {
 				lappend result [join [get resultdata($_groupname,$col,@field@,d) ""] ,]
 			} [list @field@ $field]]
+		} elseif {$func eq "sum"} {
+			append calcresults [string_change {
+				lappend result [get resultdata($_groupname,$col,@field@,s) ""]
+			} [list @field@ $field]]
 		}
 	}
 	return $calcresults
@@ -200,7 +215,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	# precalc is run for every match (sets some variables used in query, etc.)
 	regsub -all \n [string trim $group] { } group
 	if {[llength $group] == 1} {lappend group {}}
-	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list}
+	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list sum sum}
 	unset -nocomplain calccols
 	# more than one groupcol not supported (yet)
 	set groupcol [lindex $groupcols 0]

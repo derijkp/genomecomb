@@ -484,11 +484,11 @@ del	32	41
 ins	32	41
 snp	1,1,47,54,1,1,47,54,54,54,54,54	0,0,35,52,0,0,35,52,52,52,52,52}
 
-test select {group sample} {
-	cg select -g chromosome -gc {sample {} sequenced v count} data/expected_near-vars1-reg_annot.sft
-} {chromosome	sample1-v-count	sample2-v-count
-chr1	5	3
-chr2	9	5}
+test select {group sample sum} {
+	cg select -g chromosome -gc {sample {} sequenced v sum(coverage)} data/expected_near-vars1-reg_annot.sft
+} {chromosome	sample1-v-sum_coverage	sample2-v-sum_coverage
+chr1	135	35
+chr2	351	139}
 
 test select {group sample percent} {
 	cg select -g chromosome -gc {sample {} sequenced v percent} data/expected_near-vars1-reg_annot.sft
