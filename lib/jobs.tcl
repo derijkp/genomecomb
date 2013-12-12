@@ -179,7 +179,7 @@ proc job_finddep {pattern idsVar timeVar checkcompressed} {
 		maxfiletime $file time
 	}
 	lappend ids {*}[list_fill [llength $files] {}]
-	foreach file [array names cgjob_id $pattern] {
+	foreach file [gzarraynames cgjob_id $pattern] {
 		if {[info exists cgjob_rm($file)]} continue
 # do not remove job, we want to keep the dependency chain intact,
 # even if one job stops prematurely
@@ -227,9 +227,9 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 			lappend ids {}
 		}
 	}
-	foreach file [array names cgjob_id [file_absolute $glob]] {
+	foreach file [gzarraynames cgjob_id [file_absolute $glob]] {
 		if {[info exists cgjob_rm($file)]} continue
-		if {![regexp ^[file_absolute $pattern]\$ $file]} continue
+		if {![regexp ^[file_absolute $pattern](\.gz|\.rz|\.bz2|\.bgz)?\$ $file]} continue
 # do not remove job, we want to keep the dependency chain intact,
 # even if one job stops prematurely
 #		if {![job_running $cgjob_id($file)]} {

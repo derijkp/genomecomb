@@ -383,6 +383,20 @@ proc gzfiles {args} {
 	return $result
 }
 
+proc gzarraynames {aVar pattern} {
+	upvar $aVar a
+	set result [array names a $pattern]
+	if {[llength $result]} {return $result}
+	set result [array names a $pattern.rz]
+	if {[llength $result]} {return $result}
+	set result [array names a $pattern.gz]
+	if {[llength $result]} {return $result}
+	set result [array names a $pattern.bgz]
+	if {[llength $result]} {return $result}
+	set result [array names a $pattern.bz2]
+	return $result
+}
+
 proc checkfiles {args} {
 	set result {}
 	foreach filename $args {

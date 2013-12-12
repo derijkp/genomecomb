@@ -43,7 +43,7 @@ proc job_process_par_checkptargetsfinished {} {
 }
 
 proc job_process_par_onepass {} {
-	global cgjob cgjob_id cgjob_running cgjob_ptargets cgjob_blocked cgjob_rm
+	global cgjob cgjob_id cgjob_running cgjob_ptargets cgjob_blocked
 	set queue $cgjob(queue)
 	# join [list_subindex $queue 1] \n
 	update

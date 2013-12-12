@@ -6,7 +6,7 @@ source tools.tcl
 
 # use these for trying out individual tests
 set testname direct
-proc test_job_init {} {uplevel job_init}
+proc test_job_init {} {uplevel job_init -d 4}
 proc gridwait {} {}
 if 0 {
 	set testname "-d 30"
@@ -813,6 +813,54 @@ test job "do not run if deps not done $testname" {
 	cd $::testdir
 	set result
 } {{data1.txt log_jobs}}
+
+test job "rmtargets with gzip" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	job makedata -targets data.txt -code {
+		after 1000
+		file_write data.txt test1
+	}
+	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
+		exec gzip data.txt
+	}
+	job result -deps {data.txt} -targets result.txt -code {
+		after 1000
+		exec {*}[gzcat $dep] $dep > result.txt
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read result.txt]]
+	cd $::testdir
+	set result
+} {{data.txt.gz log_jobs result.txt} test1}
+
+test job "rmtargets with gzip exists" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write data.txt testpre
+	exec gzip data.txt
+	job makedata -targets data.txt -skip data.txt -code {
+		after 1000
+		file_write data.txt test1
+	}
+	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
+		exec gzip data.txt
+	}
+	job result -deps {data.txt} -targets result.txt -code {
+		after 1000
+		exec {*}[gzcat $dep] $dep > result.txt
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read result.txt]]
+	cd $::testdir
+	set result
+} {{data.txt.gz log_jobs result.txt} testpre}
 
 # end of block
 }

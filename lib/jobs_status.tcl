@@ -111,7 +111,7 @@ proc patternglob {pattern checkcompressed} {
 }
 
 proc job_process_parstatus {} {
-	global cgjob cgjob_id cgjob_running cgjob_ptargets cgjob_blocked cgjob_rm curjobid curjobnum jobsrunning graph job_name totalduration
+	global cgjob cgjob_id cgjob_running cgjob_ptargets cgjob_blocked curjobid curjobnum jobsrunning graph job_name totalduration
 	set queue $cgjob(queue)
 	# join [list_subindex $queue 1] \n
 	update
