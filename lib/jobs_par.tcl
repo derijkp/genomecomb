@@ -16,6 +16,8 @@ proc job_process_par_marktargets {targets ptargets rmtargets id} {
 	global cgjob_id cgjob_ptargets cgjob_rm
 	foreach target $targets {
 		if {[get cgjob_id($target) q] eq "q"} {
+			set gzfile [gzfiles $target]
+			if {$gzfile ne ""} {set target $gzfile}
 			set cgjob_id($target) $id
 		}
 	}

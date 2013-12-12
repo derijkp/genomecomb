@@ -159,6 +159,10 @@ proc job_expandvarslist {list {level 1}} {
 
 proc job_finddep {pattern idsVar timeVar checkcompressed} {
 	global cgjob_id cgjob_ptargets cgjob_rm
+#puts *****************
+#putsvars pattern checkcompressed
+#puts cgjob_id:[array names cgjob_id]
+#puts cgjob_rm:[array names cgjob_rm]
 	upvar $idsVar ids
 	upvar $timeVar time
 	set pattern [file_absolute $pattern]

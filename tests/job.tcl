@@ -814,7 +814,7 @@ test job "do not run if deps not done $testname" {
 	set result
 } {{data1.txt log_jobs}}
 
-test job "rmtargets with gzip" {
+test job "rmtargets with gzip $testname" {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
@@ -837,7 +837,7 @@ test job "rmtargets with gzip" {
 	set result
 } {{data.txt.gz log_jobs result.txt} test1}
 
-test job "rmtargets with gzip exists" {
+test job "rmtargets with gzip exists $testname" {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
@@ -854,6 +854,79 @@ test job "rmtargets with gzip exists" {
 	job result -deps {data.txt} -targets result.txt -code {
 		after 1000
 		exec {*}[gzcat $dep] $dep > result.txt
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read result.txt]]
+	cd $::testdir
+	set result
+} {{data.txt.gz log_jobs result.txt} testpre}
+
+test job "rmtargets and -checkcompressed 0 on previous targets $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	job makedata -targets data.txt -code {
+		after 1000
+		file_write data.txt test1
+	}
+	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
+		cg_razip data.txt
+	}
+	job result -checkcompressed 0 -deps {data.txt} -targets result.txt -code {
+		after 1000
+		exec {*}[gzcat $dep] $dep > result.txt
+	}
+	job_wait
+	gridwait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {data.txt.rz log_jobs}
+
+test job "rmtargets and -checkcompressed 0 on previous targets, write one first $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write data.txt testpre
+	cg_razip data.txt
+	job makedata -targets data.txt -code {
+		after 1000
+		file_write data.txt test1
+	}
+	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
+		cg_razip data.txt
+	}
+	job result -checkcompressed 0 -deps {data.txt} -targets result.txt -code {
+		after 1000
+		exec {*}[gzcat $dep] $dep > result.txt
+	}
+	job_wait
+	gridwait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {data.txt.rz log_jobs}
+
+test job "rmtargets afterwards with gzip exists $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	file_write data.txt testpre
+	exec gzip data.txt
+	test_job_init
+	job makedata -targets data.txt -code {
+		after 1000
+		file_write data.txt test1
+	}
+	job result -deps {data.txt} -targets result.txt -code {
+		after 1000
+		exec {*}[gzcat $dep] $dep > result.txt
+	}
+	job compress -checkcompressed 0 -deps {data.txt result.txt} -targets data.txt.gz -rmtargets data.txt -code {
+		exec gzip data.txt
 	}
 	job_wait
 	gridwait
