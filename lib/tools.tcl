@@ -385,15 +385,7 @@ proc gzfiles {args} {
 
 proc gzarraynames {aVar pattern} {
 	upvar $aVar a
-	set result [array names a $pattern]
-	if {[llength $result]} {return $result}
-	set result [array names a $pattern.rz]
-	if {[llength $result]} {return $result}
-	set result [array names a $pattern.gz]
-	if {[llength $result]} {return $result}
-	set result [array names a $pattern.bgz]
-	if {[llength $result]} {return $result}
-	set result [array names a $pattern.bz2]
+	set result [list_concat [array names a $pattern] [array names a $pattern.rz] [array names a $pattern.gz] [array names a $pattern.bgz] [array names a $pattern.bz2]]
 	return $result
 }
 
