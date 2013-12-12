@@ -473,7 +473,7 @@ proc var_sam_job {bamfile refseq args} {
 		catch {file delete ${pre}varall-sam-$root.vcf}
 		catch {file delete ${pre}varall-sam-$root.vcf.idx}
 	}
-	job_razip ${pre}varall-sam-$root.tsv ${pre}var-sam-$root.tsv ${pre}sreg-sam-$root.tsv
+	razip_job ${pre}varall-sam-$root.tsv ${pre}var-sam-$root.tsv ${pre}sreg-sam-$root.tsv
 	cd $keeppwd
 	return [file join $dir var-sam-$root.tsv]
 }
@@ -551,7 +551,7 @@ proc var_gatk_job {bamfile refseq args} {
 		catch {file delete ${pre}varall-gatk-$root.vcf}
 		catch {file delete ${pre}varall-gatk-$root.vcf.idx}
 	}
-	job_razip ${pre}varall-gatk-$root.tsv ${pre}var-gatk-$root.tsv ${pre}sreg-gatk-$root.tsv
+	razip_job ${pre}varall-gatk-$root.tsv ${pre}var-gatk-$root.tsv ${pre}sreg-gatk-$root.tsv
 	cd $keeppwd
 	return [file join $dir ${pre}var-gatk-$root.tsv]
 }
