@@ -339,9 +339,9 @@ job var_hg19_dbnsfp -deps {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -targets {extra
 
 job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${build}.ssa} -vars build \
 -targets {extra/genome_${build}.ifas extra/genome_${build}.ifas.index extra/genome_${build}.ssa} -code {
-	exec ln -s genome_${build}.ifas extra/genome_${build}.ifas
-	exec ln -s genome_${build}.ifas.index extra/genome_${build}.ifas.index 
-	exec ln -s genome_${build}.ssa extra/genome_${build}.ssa
+	mklink genome_${build}.ifas extra/genome_${build}.ifas
+	mklink genome_${build}.ifas.index extra/genome_${build}.ifas.index 
+	mklink genome_${build}.ssa extra/genome_${build}.ssa
 }
 
 # genome in extra

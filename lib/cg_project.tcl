@@ -363,7 +363,7 @@ proc project {args} {
 			}
 			cd /home/MOLGEN/$user/complgen
 			if {![file exists docs]} {	
-				exec ln -s /complgen/projects/docs .
+				mklink /complgen/projects/docs docs
 			}
 			if {![catch {file link $destdir}]} {
 				file delete $destdir

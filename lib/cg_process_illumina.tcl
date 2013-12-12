@@ -260,7 +260,7 @@ proc gatk_refseq_job refseq {
 	upvar job_logdir job_logdir
 	set nrefseq [file root $refseq].fa
 	if {![file exists $nrefseq] && $refseq ne $nrefseq} {
-		exec ln -s $refseq $nrefseq
+		mklink $refseq $nrefseq
 	}
 	set picard [picard]
 	job gatkrefseq_faidx-[file tail $nrefseq] -deps $nrefseq -targets {$nrefseq.fai} -code {
