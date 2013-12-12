@@ -8,11 +8,10 @@ proc bam2covstats_job {bamfile regionfile} {
 #		cg bam2coverage $dep $target/coverage-$root
 #	}
 	job make_histo-$root -deps {$bamfile $regionfile} -targets $dir/$root.histo -vars {regionfile dir root} -code {
-		cg bam_histo $regionfile $bamfile {1 5 10 20 50 100 200 500 1000} > $target.temp
+		cg bam_histo $regionfile $dep {1 5 10 20 50 100 200 500 1000} > $target.temp
 		file rename -force $target.temp $target
 	}
 }
-
 
 proc searchpath {envvar args} {
 	set name [lindex $args 0]
@@ -451,8 +450,15 @@ proc var_sam_job {bamfile refseq args} {
 	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \
 	-code {
-		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 5 && $totalcoverage > 3} \
-			-f {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 {sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))} *} \
+		cg select -q {
+				$alt ne "." && $alleleSeq1 ne "." && $quality >= 10 && $totalcoverage > 4
+				&& $zyg != "r"
+			} \
+			-f {
+				chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2
+				{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
+				*
+			} \
 			$dep $target.temp
 		file rename -force $target.temp $target
 	}
@@ -525,7 +531,11 @@ proc var_gatk_job {bamfile refseq args} {
 	job ${pre}uvar-gatk-$root -deps ${pre}varall-gatk-$root.tsv -targets ${pre}uvar-gatk-$root.tsv \
 	-skip {${pre}var-gatk-$root.tsv} -code {
 		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
-			-f {chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 {sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))} *} \
+		-f {
+			chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 
+			{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
+			*
+		} \
 			$dep $target.temp
 		file rename -force $target.temp $target
 	}
