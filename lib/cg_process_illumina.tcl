@@ -447,6 +447,7 @@ proc var_sam_job {bamfile refseq args} {
 		cg vcf2tsv $dep $target.temp
 		file rename -force $target.temp $target
 	}
+	razip_job ${pre}varall-sam-$root.tsv
 	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \
 	-code {
@@ -473,7 +474,6 @@ proc var_sam_job {bamfile refseq args} {
 		catch {file delete ${pre}varall-sam-$root.vcf}
 		catch {file delete ${pre}varall-sam-$root.vcf.idx}
 	}
-	razip_job ${pre}varall-sam-$root.tsv ${pre}var-sam-$root.tsv ${pre}sreg-sam-$root.tsv
 	cd $keeppwd
 	return [file join $dir var-sam-$root.tsv]
 }
@@ -528,6 +528,7 @@ proc var_gatk_job {bamfile refseq args} {
 		cg vcf2sft $dep $target.temp
 		file rename -force $target.temp $target
 	}
+	razip_job ${pre}varall-gatk-$root.tsv
 	job ${pre}uvar-gatk-$root -deps ${pre}varall-gatk-$root.tsv -targets ${pre}uvar-gatk-$root.tsv \
 	-skip {${pre}var-gatk-$root.tsv} -code {
 		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
@@ -551,7 +552,6 @@ proc var_gatk_job {bamfile refseq args} {
 		catch {file delete ${pre}varall-gatk-$root.vcf}
 		catch {file delete ${pre}varall-gatk-$root.vcf.idx}
 	}
-	razip_job ${pre}varall-gatk-$root.tsv ${pre}var-gatk-$root.tsv ${pre}sreg-gatk-$root.tsv
 	cd $keeppwd
 	return [file join $dir ${pre}var-gatk-$root.tsv]
 }
