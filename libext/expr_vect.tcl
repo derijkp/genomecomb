@@ -57,6 +57,63 @@ proc tcl::mathfunc::llen {args} {
 	return $result
 }
 
+proc tcl::mathfunc::vector {args} {
+	join $args ,
+}
+
+proc tcl::mathfunc::lavg args {
+	set data {}
+	foreach v $args {
+		if {[isdouble $v]} {
+			lappend data $v
+		} else {
+			foreach v [split $v ";, "] {
+				if {[isdouble $v]} {lappend data $v}
+			}
+		}
+	}
+	lmath_average $data
+}
+
+proc tcl::mathfunc::lsum args {
+	set data {}
+	foreach v $args {
+		if {[isdouble $v]} {
+			lappend data $v
+		} else {
+			foreach v [split $v ";, "] {
+				if {[isdouble $v]} {lappend data $v}
+			}
+		}
+	}
+	lmath_sum $data
+}
+
+proc tcl::mathfunc::vif {args} {
+	if {[llength $args] < 3 || [expr {[llength $args]%2}] != 1} {
+		error "wrong # args for function vif, must be: vif(condition1,true1,?condition2?,?true2?,...,false)"
+	}
+	set args [matchlistsize {*}$args]
+	set len [llength [::lindex $args 0]]
+	set result {}
+	for {set pos 0} {$pos < $len} {incr pos} {
+		set line [list_subindex $args $pos]
+		unset -nocomplain value
+		foreach {cond true} $line {
+			if {[true $cond]} {
+				set value $true
+				break
+			}
+		}
+		if {[info exists value]} {
+			lappend result $value
+		} else {
+			lappend result [::lindex $line end]
+		}
+	}
+	return [join $result ,]
+}
+
 proc tcl::mathfunc::vavg {args} {
 	set result [split [::lindex $args 0] ";, "]
 	set result [list_fill [expr {[llength $result]*2}] 0]

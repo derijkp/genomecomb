@@ -1,18 +1,28 @@
-proc matchlistsize {v1 v2} {
-	set v1 [split $v1 ";, "]
-	set len1 [llength $v1]
-	set v2 [split $v2 ";, "]
-	set len2 [llength $v2]
-	if {$len1 != $len2} {
-		if {$len1 == 1} {
-			set v1 [list_fill $len2 $v1]
-		} elseif {$len2 == 1} {
-			set v2 [list_fill $len1 $v2]
-		} else {
-			error "lists of different length: $v1 and $v2"
-		}
+proc matchlistsize {args} {
+	set data {}
+	set lengths {}
+	foreach v $args {
+		set line [split $v ";, "]
+		lappend lengths [llength $line]
+		lappend data $line
 	}
-	list $v1 $v2	
+	set size [list_remove [list_remdup $lengths] 1]
+	if {[llength $size] > 1} {
+		error "some lists of different length: $args"
+	}
+	set result {}
+	if {[llength $size] == 0} {
+		return $data
+	} else {
+		foreach line $data len $lengths {
+			if {$len == 1} {
+				lappend result [list_fill $size $line]
+			} else {
+				lappend result $line
+			}
+		}
+		return $result
+	}
 }
 
 proc tcl::mathfunc::vminus {v1 v2} {

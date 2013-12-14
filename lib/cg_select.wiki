@@ -117,12 +117,14 @@ The following functions allow use of vectors in queries
 ; **lmaxd(vector, ..., def)**: same as lmax, but you can set the default value for non-numeric characters is given as the last parameter
 ; **lminpos(vector, ...)**: position (within the index) of the minimum value. If more than one vector is given, the position of the minimum of all vectors is given
 ; **lmaxpos(vector, ...)**: position (within the index) of the maximum value. If more than one vector is given, the position of the maximum of all vectors is given
-This can also be used as an operand: vector shares valuelist
-
+; **lsum(vector, ...)**: the minimum of the list of numbers in vector(s). A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
+; **lavg(vector, ...)**: the maximum of the vector. A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
+; **vector(value1,value2, ...)**: creates a vector from a number of values. If some elements are vectors themselves, they will be concatenated
 ; **lindex(vector, position)**: the value of the element at the given **position** in the list. The first element is at position 0!
-; **contains(vector, value)**; true if the list in **field** contains **value**. 
+; **contains(vector, value)**; true if **vector** contains **value**. 
 This can also be used as an operand: vector contains value
-; **shares(vector, valuelist)**; true if the list in **field** and the list in **valuelist** (a SPACE separated list!) share a value.
+; **shares(vector, valuelist)**; true if **vector** and the list in **valuelist** (a SPACE separated list!) share a value.
+This can also be used as an operand: vector shares valuelist
 ; **lone(vector)**: true if one of elements of the vector is true
 ; **lall(vector)**: true if all elements of the vector are true
 ; **lcount(vector)**: number of elements in vector that are true
@@ -134,7 +136,7 @@ lists (vectors). The result of such an operator is also a vector. The arguments
 to such an operator must be of the same length, or one of them must be of 
 length 1. If one of them is of length 1, the same element will be used versus
 all elements in the other vector. Supported operators are:
-@**, @*, @/, @%, @-, @+, @>, @<, @>=, @<=, @==, @!=
+@**, @*, @/, @%, @-, @+, @>, @<, @>=, @<=, @==, @!=, @&&, @||, vand, vor, vin, vni
 
 === vector functions (that return vectors) ===
 ; **vabs(vector)**: returns vector of absolute values of given vector
@@ -142,6 +144,8 @@ all elements in the other vector. Supported operators are:
 ; **vmax(vector1,vector2,...)**: returns vector with maximum value for each position in the vector
 ; **vmin(vector1,vector2,...)**: returns vector with minimum value for each position in the vector
 ; **vdef(vector,default)**: returns the given vector, but with all non numbers replaced by default
+; **vif(condition,true,?condition2,true2, ...?false)**: like if, but conditions, true1, ... and 
+false may be vectors, and a vector is returned
 
 === String functions ===
 ; **oneof($field,value1,cvalue2,...)**: returns true if the given field matches one of the values

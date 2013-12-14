@@ -92,6 +92,10 @@ test libext {llen} {
 	expr {llen("1,0,0","1,1,1")}
 } 6
 
+test libext {vector} {
+	expr {vector("1","2,3","4,5")}
+} {1,2,3,4,5}
+
 test libext {contains} {
 	expr {contains("1,2,3","2")}
 } 1
@@ -151,5 +155,9 @@ test libext {vin} {
 test libext {vni} {
 	expr {vni("1,2,3","4,3,2")}
 } {1,0,0}
+
+test libext {vif} {
+	expr {vif("1,0,0","a,a,a","1,1,0","b,b,b","c,c,c")}
+} {a,b,c}
 
 testsummarize
