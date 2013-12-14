@@ -325,10 +325,17 @@ fieldsdialog method editfields {} {
 }
 
 fieldsdialog method fieldbuilder {} {
-	set data [split [$object.options.calc get] =]
 	set p [winfo parent $object]
 	private $p fieldname fieldcalc
-	foreach {fieldname fieldcalc} $data break
+	set data [$object.options.calc get]
+	set pos [string first = $data]
+	if {$pos != -1} {
+		set fieldname [string range $data 0 [expr {$pos-1}]]
+		set fieldcalc [string range $data [expr {$pos+1}] end]
+	} else {
+		set fieldname $data
+		set fieldcalc {}
+	}
 	$p querybuilder $object
 }
 
