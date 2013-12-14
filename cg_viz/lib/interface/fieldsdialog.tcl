@@ -88,7 +88,7 @@ fieldsdialog method init args {
 	if {"$args" == "___Classy::Builder__create"} {return $object}
 	# Parse this
 	$object configure  \
-		-title Toplevel
+		-title "Field selection"
 	$object.options.paned configure \
 		-window [varsubst object {$object.options.selfields}]
 	$object.options.buttons.addfields configure \
