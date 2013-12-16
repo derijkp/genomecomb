@@ -37,13 +37,15 @@ proc cg_splitalleles {args} {
 		if {![llength $line]} continue
 		set ref [lindex $line $rpos]
 		set alleles [split [lindex $line $apos] ,]
+		if {![llength $alleles]} {set alleles [list {}]}
 		if {[llength $alleles] == 1} {
-			set a($alleles) $line
+			set a([lindex $alleles 0]) $line
 		} else {
 			unset -nocomplain a
+			set alen [llength $alleles]
 			foreach vs $line {
-				set vs [split $vs ,]
-				if {[llength $vs] == 1} {
+				set svs [split $vs ,]
+				if {[llength $svs] <= 1 || [llength $svs] != $alen} {
 					foreach allele $alleles {
 						lappend a($allele) $vs
 					}
