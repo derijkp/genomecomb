@@ -50,11 +50,12 @@ proc cg_splitalleles {args} {
 						lappend a($allele) $vs
 					}
 				} else {
-					foreach allele $alleles v $vs {
+					foreach allele $alleles v $svs {
 						lappend a($allele) $v
 					}
 				}
 			}
+			# foreach all $alleles {puts "$all [lrange $a($all) 0 8]"}
 		}
 		foreach alt [ssort -natural $alleles] {
 			set line $a($alt)
