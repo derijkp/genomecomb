@@ -519,7 +519,7 @@ proc var_gatk_job {bamfile refseq args} {
 			{*}$opts -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 50.0 -stand_emit_conf 10.0 -dcov 1000 \
 			--annotateNDA \
-			-glm BOTH --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr
+			-glm SNP --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
 		catch {file rename -force $target.temp.idx $target.idx}
 		# file delete $target.temp
@@ -529,16 +529,44 @@ proc var_gatk_job {bamfile refseq args} {
 		file rename -force $target.temp $target
 	}
 	razip_job ${pre}varall-gatk-$root.tsv
-	job ${pre}uvar-gatk-$root -deps ${pre}varall-gatk-$root.tsv -targets ${pre}uvar-gatk-$root.tsv \
+	# predict deletions separately, because gatk will not predict snps in a region where a deletion
+	# was predicted in the varall
+	job ${pre}delvar-gatk-$root -deps $deps \
+	-targets ${pre}delvar-gatk-$root.vcf -skip ${pre}delvar-gatk-$root.tsv -skip ${pre}var-gatk-$root.tsv -vars {gatk opts} -code {
+		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
+			{*}$opts -R $dep2 -I $dep -o $target.temp \
+			-stand_call_conf 50.0 -stand_emit_conf 10.0 -dcov 1000 \
+			--annotateNDA \
+			-glm INDEL 2>@ stderr >@ stdout
+		file rename -force $target.temp $target
+		catch {file rename -force $target.temp.idx $target.idx}
+		# file delete $target.temp
+	}
+	job ${pre}delvar-gatk2sft-$root -deps [list ${pre}delvar-gatk-$root.vcf] -targets ${pre}delvar-gatk-$root.tsv -vars {sample} -code {
+		cg vcf2sft $dep $target.temp
+		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
+		-f {
+			chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 
+			{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
+			*
+		} $target.temp $target.temp2
+		file rename -force $target.temp2 $target
+		file delete $target.temp
+	}
+	job ${pre}uvar-gatk-$root -deps {${pre}varall-gatk-$root.tsv ${pre}delvar-gatk-$root.tsv} \
+	-targets ${pre}uvar-gatk-$root.tsv \
 	-skip {${pre}var-gatk-$root.tsv} -code {
 		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
 		-f {
 			chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 
 			{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
 			*
-		} \
-			$dep $target.temp
-		file rename -force $target.temp $target
+		} $dep $target.temp
+		cg cat $target.temp $dep2 > $target.temp2
+		cg select -s - $target.temp2 $target.temp3
+		file rename -force $target.temp3 $target
+		file delete $target.temp
+		file delete $target.temp2
 	}
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job ${pre}uvar-gatk-$root.tsv ${pre}var-gatk-$root.tsv
@@ -546,12 +574,14 @@ proc var_gatk_job {bamfile refseq args} {
 	## filter SNPs (according to seqanswers exome guide)
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup
-	job clean_${pre}var-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} \
-	-rmtargets {${pre}uvar-gatk-$root.tsv ${pre}varall-gatk-$root.vcf ${pre}varall-gatk-$root.vcf.idx} -code {
-		catch {file delete ${pre}uvar-gatk-$root.tsv}
-		catch {file delete ${pre}varall-gatk-$root.vcf}
-		catch {file delete ${pre}varall-gatk-$root.vcf.idx}
-	}
+#	job clean_${pre}var-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} \
+#	-rmtargets {${pre}uvar-gatk-$root.tsv ${pre}varall-gatk-$root.vcf ${pre}varall-gatk-$root.vcf.idx  ${pre}delvar-gatk-$root.vcf ${pre}delvar-gatk-$root.tsv} -code {
+#		catch {file delete ${pre}uvar-gatk-$root.tsv}
+#		catch {file delete ${pre}varall-gatk-$root.vcf}
+#		catch {file delete ${pre}varall-gatk-$root.vcf.idx}
+#		catch {file delete ${pre}delvar-gatk-$root.vcf}
+#		catch {file delete ${pre}delvar-gatk-$root.tsv}
+#	}
 	cd $keeppwd
 	return [file join $dir ${pre}var-gatk-$root.tsv]
 }
