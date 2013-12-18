@@ -90,6 +90,14 @@ test var_annot {basic} {
 	exec diff tmp/temp2.sft data/expected-vars1-var_annot.sft
 } {} 
 
+test var_annot {basic splitvar} {
+	exec cg splitalleles data/vars1.sft > tmp/vars1.tsv
+	exec cg annotate tmp/vars1.tsv tmp/temp.tsv data/var_annot.sft 2> /dev/null
+	exec cg select -rf {list} tmp/temp.tsv tmp/temp2.tsv
+	exec cg splitalleles data/expected-vars1-var_annot.sft > tmp/expected.tsv
+	exec diff tmp/temp2.tsv tmp/expected.tsv
+} {} 
+
 test var_annot {basic multi} {
 	file mkdir tmp
 	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
