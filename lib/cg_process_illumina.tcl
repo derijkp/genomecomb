@@ -458,6 +458,7 @@ proc var_sam_job {bamfile refseq args} {
 			-f {
 				chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2
 				{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
+				{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 				*
 			} \
 			$dep $target.temp
@@ -548,6 +549,7 @@ proc var_gatk_job {bamfile refseq args} {
 		-f {
 			chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 
 			{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
+			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 			*
 		} $target.temp $target.temp2
 		file rename -force $target.temp2 $target
@@ -560,6 +562,7 @@ proc var_gatk_job {bamfile refseq args} {
 		-f {
 			chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 
 			{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
+			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 			*
 		} $dep $target.temp
 		cg cat $target.temp $dep2 > $target.temp2
