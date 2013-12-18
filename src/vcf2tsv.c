@@ -39,10 +39,18 @@ int main(int argc, char *argv[]) {
 	DStringArray *formatfields=NULL, *headerfields=NULL, *infofields=NULL, *linea=NULL;
 	DString *ref=DStringNew(), *alt=DStringNew(), *id=DStringNew();
 	int *order = NULL;
-	int read,i,j,pos,maxtab,igeno,isample,linenr=0;
+	int read,i,j,pos,maxtab,igeno,isample,linenr=0,split,numalleles=1,curallele;
 	line = DStringNew();
-	if (argc >= 2) {fd = fopen(argv[1],"r");} else {fd = stdin;}
-	if (argc == 3) {fo = fopen(argv[2],"w");} else {fo = stdout;}
+	if (argc < 2) {
+		fprintf(stderr,"Format is: vcf2tsv splitalt ?infile? ?outfile?\n");
+		exit(EXIT_FAILURE);
+	}
+	split=atoi(argv[1]);
+	if (argc >= 3) {
+		fd = fopen(argv[2],"r");
+		if (fd == NULL) {fprintf(stderr,"file %s does not exists\n",argv[2]);exit(1);}
+	} else {fd = stdin;}
+	if (argc == 4) {fo = fopen(argv[3],"w");} else {fo = stdout;}
 	NODPRINT("==== Reading header ====")
 	DStringGetLine(line, fd);
 	if (line->size < 16 || strncmp(line->string,"##fileformat=VCF",16) != 0) {
@@ -201,145 +209,184 @@ int main(int argc, char *argv[]) {
 		} else {
 			DStringSetS(ref,a_ref(linea)->string+diff,a_ref(linea)->size-diff);
 		}
-		DStringSetS(alt,DStringArrayGet(alts,0)->string+diff,DStringArrayGet(alts,0)->size-diff);
-		for (i = 1; i < alts->size ; i++) {
-			DString *temp = DStringArrayGet(alts,i);
-			DStringAppendS(alt, ",",1);
-			DStringAppendS(alt, temp->string+diff, temp->size-diff);
+		if (split) {
+			numalleles = alts->size;
+		} else {
+			DStringClear(alt);
+			DStringSetS(alt,DStringArrayGet(alts,0)->string+diff,DStringArrayGet(alts,0)->size-diff);
+			for (i = 1; i < alts->size ; i++) {
+				DString *temp = DStringArrayGet(alts,i);
+				DStringAppendS(alt, ",",1);
+				DStringAppendS(alt, temp->string+diff, temp->size-diff);
+			}
 		}
-		fprintf(fo,"%s\t%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s", a_chrom(linea)->string, begin, end, type->string, ref->string, alt->string, a_id(linea)->string, a_qual(linea)->string, a_filter(linea)->string);
 		if (header->size >= 9) {
-			NODPRINT("==== Process genos ====")
+			NODPRINT("==== Determine geno fields order ====")
 			order = realloc(order,formatfields->size*sizeof(int));
 			for (i = 0 ; i < formatfields->size ; i++) {
 				order[i] = DStringArraySearch(lineformat,DStringArrayGet(formatfields,i)->string,DStringArrayGet(formatfields,i)->size);
 			}
-			igeno = 9; /* genos start at col 9 */
-			for (isample = 0 ; isample < samples->size ; isample++) {
-				DStringArray *genoa;
-				DString *genotype, *temp;
-				char *genotypestring,*genotypecur;
-				int phased,i,a1,a2;
-				geno = DStringArrayGet(linea,igeno++);
-				genoa = DStringArrayFromChar(geno->string,':');
-				if (order[0] == -1) {
-					genotypestring = "0/0";
-				} else {
-					genotype = DStringArrayGet(genoa,order[0]);
-					genotypestring = genotype->string;
-				}
-				genotypecur = genotypestring;
-				while (*genotypecur != '|' && *genotypecur != '/' && *genotypecur != '\0') {
-					genotypecur++;
-				}
-				if (*genotypecur == '/') {phased = 0;} else {phased = 1;}
-				if (genotypestring[0] == '.') {
-					fprintf(fo,"\t?");
-					a1 = -2;
-				} else if (genotypestring == genotypecur) {
-					fprintf(fo,"\t-");
-					a1 = -1;
-				} else {
-					a1 = atol(genotypestring);
-					if (a1 == 0) {
-						fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
-					} else {
-						temp = DStringArrayGet(alts,a1-1);
-						fprintf(fo,"\t%*.*s",temp->size-diff,temp->size-diff,temp->string+diff);
-					}
-				}
-				if (*genotypecur != '\0') {genotypecur++;}
-				if (*genotypecur == '.') {
-					fprintf(fo,"\t?");
-					a2 = -2;
-				} else if (*genotypecur == '\0') {
-					fprintf(fo,"\t-");
-					a2 = -1;
-				} else {
-					a2 = atol(genotypecur);
-					if (a2 == 0) {
-						fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
-					} else {
-						temp = DStringArrayGet(alts,a2-1);
-						fprintf(fo,"\t%*.*s",temp->size-diff,temp->size-diff,temp->string+diff);
-					}
-				}
-				if (a1 < 0 || a2 < 0) {
-					zyg = '?';
-				} else if (a1 > 0) {
-					if (a2 == a1) {
-						zyg = 'm';
-					} else if (a2 > 0) {
-						zyg = 'c';
-					} else {
-						zyg = 't';
-					}
-				} else if (a2 > 0) {
-					zyg = 't';
-				} else {
-					zyg = 'r';
-				}
-				fprintf(fo,"\t%c",zyg);
-				fprintf(fo,"\t%d",phased);
-				genotypecur = genotypestring;
-				/* fprintf(fo,"\t%s",genotypestring); */
-				fputc_unlocked('\t',fo);
-				while (*genotypecur != '\0') {
-					if (*genotypecur == '|') {
-						fputc_unlocked(',',fo);
-					} else if (*genotypecur == '/') {
-						fputc_unlocked(';',fo);
-					} else {
-						fputc_unlocked(*genotypecur,fo);
-					}
-					genotypecur++;
-				}
-				for (i = 1 ; i < formatfields->size; i++) {
-					if (order[i] <= 0) {
-						fprintf(fo,"\t");
-					} else {
-						fprintf(fo,"\t%s",DStringArrayGet(genoa,order[i])->string);
-					}
-				}
-				if (genoa != NULL) DStringArrayDestroy(genoa);
-			}
 		}
-		/* info output */
-		{
-			char *cur,*curend;
-			DString *info = a_info(linea);
-			for (i = 0 ; i< infofields->size ; i++) {
-				outinfo[i].size = -1;
+		for (curallele = 1 ; curallele <= numalleles; curallele++) {
+			if (split) {
+				DStringClear(alt);
+				DStringSetS(alt,DStringArrayGet(alts,curallele-1)->string+diff,DStringArrayGet(alts,curallele-1)->size-diff);
 			}
-			cur = info->string;
-			curend = cur;
-			while (1) {
-				while (*curend != '=' && *curend != ';' && *curend != '\0') curend++;
-				if (curend == cur) {
+			fprintf(fo,"%s\t%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s", a_chrom(linea)->string, begin, end, type->string, ref->string, alt->string, a_id(linea)->string, a_qual(linea)->string, a_filter(linea)->string);
+			if (header->size >= 9) {
+				NODPRINT("==== Process genos ====")
+				igeno = 9; /* genos start at col 9 */
+				for (isample = 0 ; isample < samples->size ; isample++) {
+					DStringArray *genoa;
+					DString *genotype, *temp;
+					char *genotypestring,*genotypecur;
+					int phased,i,a1,a2;
+					geno = DStringArrayGet(linea,igeno++);
+					genoa = DStringArrayFromChar(geno->string,':');
+					if (order[0] == -1) {
+						genotypestring = "0/0";
+					} else {
+						genotype = DStringArrayGet(genoa,order[0]);
+						genotypestring = genotype->string;
+					}
+					genotypecur = genotypestring;
+					while (*genotypecur != '|' && *genotypecur != '/' && *genotypecur != '\0') {
+						genotypecur++;
+					}
+					if (*genotypecur == '/') {phased = 0;} else {phased = 1;}
+					if (genotypestring[0] == '.') {
+						fprintf(fo,"\t?");
+						a1 = -2;
+					} else if (genotypestring == genotypecur) {
+						/* empty genotype */
+						fprintf(fo,"\t-");
+						a1 = -1;
+					} else {
+						a1 = atol(genotypestring);
+						if (a1 == 0) {
+							fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
+						} else {
+							temp = DStringArrayGet(alts,a1-1);
+							fprintf(fo,"\t%*.*s",temp->size-diff,temp->size-diff,temp->string+diff);
+						}
+					}
+					if (*genotypecur != '\0') {genotypecur++;}
+					if (*genotypecur == '.') {
+						fprintf(fo,"\t?");
+						a2 = -2;
+					} else if (*genotypecur == '\0') {
+						fprintf(fo,"\t-");
+						a2 = -1;
+					} else {
+						a2 = atol(genotypecur);
+						if (a2 == 0) {
+							fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
+						} else {
+							temp = DStringArrayGet(alts,a2-1);
+							fprintf(fo,"\t%*.*s",temp->size-diff,temp->size-diff,temp->string+diff);
+						}
+					}
+					if (!split) {
+						if (a1 < 0 || a2 < 0) {
+							zyg = '?';
+						} else if (a1 > 0) {
+							if (a2 == a1) {
+								zyg = 'm';
+							} else if (a2 > 0) {
+								zyg = 'c';
+							} else {
+								zyg = 't';
+							}
+						} else if (a2 > 0) {
+							zyg = 't';
+						} else {
+							zyg = 'r';
+						}
+					} else {
+						if (a1 < 0 || a2 < 0) {
+							zyg = '?';
+						} else if (a1 == curallele) {
+							if (a2 == a1) {
+								zyg = 'm';
+							} else if (a2 > 0) {
+								zyg = 'c';
+							} else {
+								zyg = 't';
+							}
+						} else if (a2 == curallele) {
+							if (a1 > 0) {
+								zyg = 'c';
+							} else {
+								zyg = 't';
+							}
+						} else if (a1 > 0 || a2 > 0) {
+							zyg = 'o';
+						} else {
+							zyg = 'r';
+						}
+					}
+					fprintf(fo,"\t%c",zyg);
+					fprintf(fo,"\t%d",phased);
+					genotypecur = genotypestring;
+					/* fprintf(fo,"\t%s",genotypestring); */
+					fputc_unlocked('\t',fo);
+					while (*genotypecur != '\0') {
+						if (*genotypecur == '|') {
+							fputc_unlocked(',',fo);
+						} else if (*genotypecur == '/') {
+							fputc_unlocked(';',fo);
+						} else {
+							fputc_unlocked(*genotypecur,fo);
+						}
+						genotypecur++;
+					}
+					for (i = 1 ; i < formatfields->size; i++) {
+						if (order[i] <= 0) {
+							fprintf(fo,"\t");
+						} else {
+							fprintf(fo,"\t%s",DStringArrayGet(genoa,order[i])->string);
+						}
+					}
+					if (genoa != NULL) DStringArrayDestroy(genoa);
+				}
+			}
+			/* info output */
+			{
+				char *cur,*curend;
+				DString *info = a_info(linea);
+				for (i = 0 ; i< infofields->size ; i++) {
+					outinfo[i].size = -1;
+				}
+				cur = info->string;
+				curend = cur;
+				while (1) {
+					while (*curend != '=' && *curend != ';' && *curend != '\0') curend++;
+					if (curend == cur) {
+						cur = ++curend;
+						continue;
+					}
+					pos = DStringArraySearch(infofields,cur,curend-cur);
+					if (pos == -1) {fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur);}
+					if (*curend == '=') {curend++;}
+					cur = curend;
+					if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
+					outinfo[pos].string = cur;
+					outinfo[pos].size = curend-cur;
+					if (*curend == '\0') break;
 					cur = ++curend;
-					continue;
 				}
-				pos = DStringArraySearch(infofields,cur,curend-cur);
-				if (pos == -1) {fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur);}
-				if (*curend == '=') {curend++;}
-				cur = curend;
-				if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
-				outinfo[pos].string = cur;
-				outinfo[pos].size = curend-cur;
-				if (*curend == '\0') break;
-				cur = ++curend;
-			}
-			for (i = 0 ; i< infofields->size ; i++) {
-				len  = outinfo[i].size;
-				if (len == -1) {
-					fprintf(fo,"\t");
-				} else if (len == 0) {
-					fprintf(fo,"\t1");
-				} else {
-					fprintf(fo,"\t%*.*s",len,len,outinfo[i].string);
+				for (i = 0 ; i< infofields->size ; i++) {
+					len  = outinfo[i].size;
+					if (len == -1) {
+						fprintf(fo,"\t");
+					} else if (len == 0) {
+						fprintf(fo,"\t1");
+					} else {
+						fprintf(fo,"\t%*.*s",len,len,outinfo[i].string);
+					}
 				}
+				fprintf(fo,"\n");
 			}
-			fprintf(fo,"\n");
 		}
 		DStringArrayDestroy(lineformat);
 		DStringArrayDestroy(alts);

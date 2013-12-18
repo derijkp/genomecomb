@@ -1,5 +1,5 @@
 # ARCH should be defined by caller
-#CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/completegnomics/src
+#CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
 CFLAGS=-Wall -O2
 TOOLS= tools.c tools.h debug.h
 HASHTOOLS=hash.h hash.c

@@ -12,16 +12,31 @@ exec tclsh "$0" ${1+"$@"}
 # genotype in haploid calls (Y chromosome)
 
 proc cg_vcf2tsv {args} {
+	set splitalt 0
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-s {
+				set splitalt [true $value]
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
 	set len [llength $args]
 	set tempfile [scratchfile get]
 	if {$len == 0} {
-		exec vcf2tsv | cg select -s - <@ stdin >@ stdout
+		exec vcf2tsv $splitalt | cg select -s - <@ stdin >@ stdout
 	} elseif {$len == 1} {
 		set infile [lindex $args 0]
-		exec vcf2tsv [gztemp $infile] | cg select -s - >@ stdout
+		exec vcf2tsv $splitalt [gztemp $infile] | cg select -s - >@ stdout
 	} elseif {$len == 2} {
 		set infile [lindex $args 0]
-		exec vcf2tsv [gztemp $infile] | cg select -s - > [lindex $args 1]
+		exec vcf2tsv $splitalt [gztemp $infile] | cg select -s - > [lindex $args 1]
 	} else {
 		errorformat vcf2tsv
 		exit 1

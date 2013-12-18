@@ -14,9 +14,19 @@ test select {vcf2tsv ins and del} {
 	exec diff tmp/temp.tsv data/expected-test2.vcf2tsv
 } {}
 
-test select {vcf2tsv} {
+test select {vcf2tsv 1000glow} {
 	exec cg vcf2tsv data/test1000glow.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
+} {}
+
+test select {vcf2tsv split} {
+	exec cg vcf2tsv -s 1 data/test.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-tests.vcf2tsv
+} {}
+
+test select {vcf2tsv ins and del split} {
+	exec cg vcf2tsv -s 1 data/test2.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
 } {}
 
 test select {bed2sft} {
