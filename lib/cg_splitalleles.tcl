@@ -84,7 +84,9 @@ proc cg_splitalleles {args} {
 				} else {
 					set seq o
 				}
-				lset line $seqpos $seq
+				if {$seqpos != -1} {
+					lset line $seqpos $seq
+				}
 			} 
 		} 
 		foreach allele [ssort -natural $alleles] {
