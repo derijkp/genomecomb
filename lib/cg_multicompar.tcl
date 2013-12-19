@@ -5,9 +5,9 @@
 #
 
 proc multicompar_annot_join {cur1 cur2} {
-	global comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2 sequenced2pos
+	global joinposs1 mergeposs1 joinposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2 sequenced2pos
 	if {[inlist {{} -} $cur1]} {
-		set region [list_sub $cur2 $comparposs2]
+		set region [list_sub $cur2 $joinposs2]
 		set merge [list_sub $cur2 $mergeposs2]
 		if {$cur1 eq "-"} {
 			set cur1 $dummy1
@@ -20,7 +20,7 @@ proc multicompar_annot_join {cur1 cur2} {
 			set sequenced v
 		}
 	} elseif {[inlist {{} -} $cur2]} {
-		set region [list_sub $cur1 $comparposs1]
+		set region [list_sub $cur1 $joinposs1]
 		set merge [list_sub $cur1 $mergeposs1]
 		if {$cur2 eq "-"} {
 			set cur2 $dummy2
@@ -29,7 +29,7 @@ proc multicompar_annot_join {cur1 cur2} {
 		}
 		set sequenced ?
 	} else {
-		set region [list_sub $cur1 $comparposs1]
+		set region [list_sub $cur1 $joinposs1]
 		set merge {}
 		foreach el1 [list_sub $cur1 $mergeposs1] el2 [list_sub $cur2 $mergeposs2] {
 			lappend merge [list_union $el1 $el2]
@@ -107,11 +107,9 @@ proc multicompar_annot_join {cur1 cur2} {
 	return [join $result \t]
 }
 
-proc multicompar {compar_file dir {listfields {}}} {
-	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2 sequenced2pos
+proc multicompar {compar_file dir {split 0} {listfields {}}} {
+	global cache joinposs1 joinposs2 comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2 sequenced2pos
 	catch {close $f1}; catch {close $f2}; catch {close $o}
-	set comparfields {chromosome begin end type}
-	# set nonmergefields {chromosome begin end type alt ref reference locus alleleSeq1 alleleSeq2 totalScore1 totalScore2 refscore coverage refcons nocall cluster}
 	set mergefields {xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam}
 	set allelefields {alleleSeq1 alleleSeq2}
 	#
@@ -141,7 +139,12 @@ proc multicompar {compar_file dir {listfields {}}} {
 	if {$altpos1 == -1} {
 		set alleleposs1 [list_find -glob $header1 alleleSeq*]
 	}
-	set comparposs1 [lrange $comparposs1 0 3]
+	set joinposs1 [lrange $comparposs1 0 3]
+	if {$split} {
+		set comparposs1 [list_sub $comparposs1 {0 1 2 3 5}]
+	} else {
+		set comparposs1 $joinposs1
+	}
 	set tp1 [lindex $comparposs1 0]
 	set dummy1 [list_fill [llength $header1] ?]
 	set f2 [gzopen $file2]
@@ -156,7 +159,12 @@ proc multicompar {compar_file dir {listfields {}}} {
 	if {$altpos2 == -1} {
 		set alleleposs2 [list_find -glob $header2 alleleSeq*]
 	}
-	set comparposs2 [lrange $comparposs2 0 3]
+	set joinposs2 [lrange $comparposs2 0 3]
+	if {$split} {
+		set comparposs2 [list_sub $comparposs2 {0 1 2 3 5}]
+	} else {
+		set comparposs2 $joinposs2
+	}
 	set tp2 [lindex $comparposs2 0]
 	set mergefields [list_common $mergefields $header2]
 	set nonmergefields [list_lremove $header2 $mergefields]
@@ -193,9 +201,15 @@ proc multicompar {compar_file dir {listfields {}}} {
 	set cur1 [split [gets $f1] \t]
 	if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
 	set comp1 [list_sub $cur1 $comparposs1]
+	if {[regexp , [lindex $comp1 end]]} {
+		error "split mode does not allow multiallelic variants: $comp1 in file $compar_file"
+	}
 	set cur2 [split [gets $f2] \t]
 	if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
 	set comp2 [list_sub $cur2 $comparposs2]
+	if {[regexp , [lindex $comp2 end]]} {
+		error "split mode does not allow multiallelic variants: $comp2 in file $file2"
+	}
 	set num 1; set next 100000
 	while {![eof $f1] || ![eof $f2]} {
 		incr num
@@ -206,9 +220,15 @@ proc multicompar {compar_file dir {listfields {}}} {
 			set cur1 [compare_annot_getline $f1]
 			if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
 			set comp1 [list_sub $cur1 $comparposs1]
+			if {[regexp , [lindex $comp1 end]]} {
+				error "split mode does not allow multiallelic variants: $comp1 in file $compar_file"
+			}
 			set cur2 [compare_annot_getline $f2]
 			if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
 			set comp2 [list_sub $cur2 $comparposs2]
+			if {[regexp , [lindex $comp2 end]]} {
+				error "split mode does not allow multiallelic variants: $comp2 in file $file2"
+			}
 		} elseif {$d < 0} {
 			while {[loc_compare $comp1 $comp2] < 0} {
 				puts $o [multicompar_annot_join $cur1 -]
@@ -216,6 +236,9 @@ proc multicompar {compar_file dir {listfields {}}} {
 				set cur1 [compare_annot_getline $f1]
 				if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
 				set comp1 [list_sub $cur1 $comparposs1]
+				if {[regexp , [lindex $comp1 end]]} {
+					error "split mode does not allow multiallelic variants: $comp1 in file $compar_file"
+				}
 				if {![llength $cur1]} break
 				incr num
 				if {![expr {$num % 100000}]} {putslog $num}
@@ -227,6 +250,9 @@ proc multicompar {compar_file dir {listfields {}}} {
 				set cur2 [compare_annot_getline $f2]
 				if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
 				set comp2 [list_sub $cur2 $comparposs2]
+				if {[regexp , [lindex $comp2 end]]} {
+					error "split mode does not allow multiallelic variants: $comp2 in file $file2"
+				}
 				if {![llength $cur2]} break
 				incr num
 				if {![expr {$num % 100000}]} {putslog $num}
@@ -449,6 +475,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 proc cg_multicompar {args} {
 	set reannot 0
 	set regonly 0
+	set split 0
 	set listfields {}
 	set pos 0
 	while 1 {
@@ -462,6 +489,10 @@ proc cg_multicompar {args} {
 				putslog "Also reannot"
 				set reannot 1
 				set regonly 1
+			}
+			-split {
+				incr pos
+				set split [true [lindex $args $pos]]
 			}
 			-listfields {
 				incr pos
@@ -499,13 +530,13 @@ proc cg_multicompar {args} {
 					lappend fields $nfield=\$$field
 				}
 				cg select -f $fields $dir $dir.temp/vars-$sample.tsv
-				multicompar $compar_file $dir.temp/vars-$sample.tsv $listfields
+				multicompar $compar_file $dir.temp/vars-$sample.tsv $split $listfields
 				file delete $dir.temp/vars-$sample.tsv
 			}
 			file delete -force $dir.temp
 		} else {
 			putslog "Adding $dir"
-			multicompar $compar_file $dir $listfields
+			multicompar $compar_file $dir $split $listfields
 		}
 	}
 	if {$reannot} {
