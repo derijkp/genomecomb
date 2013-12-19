@@ -416,6 +416,7 @@ proc var_sam_job {bamfile refseq args} {
 	upvar job_logdir job_logdir
 	set pre ""
 	set opts {}
+	set split 0
 	foreach {key value} $args {
 		if {$key eq "-l"} {lappend deps $value}
 		if {$key eq "-bed"} {
@@ -423,6 +424,8 @@ proc var_sam_job {bamfile refseq args} {
 			lappend deps $value
 		} elseif {$key eq "-pre"} {
 			set pre $value
+		} elseif {$key eq "-split"} {
+			set split $value
 		} else {
 			lappend opts $key $value
 		}
@@ -443,8 +446,8 @@ proc var_sam_job {bamfile refseq args} {
 		exec samtools mpileup -uDS -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
 		file rename -force $target.temp $target
 	}
-	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv -code {
-		cg vcf2tsv $dep $target.temp
+	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv -vars split -code {
+		cg vcf2tsv -split $split $dep $target.temp
 		file rename -force $target.temp $target
 	}
 	razip_job ${pre}varall-sam-$root.tsv
@@ -494,6 +497,7 @@ proc var_gatk_job {bamfile refseq args} {
 	upvar job_logdir job_logdir
 	set pre ""
 	set opts {}
+	set split 0
 	foreach {key value} $args {
 		if {$key eq "-L"} {lappend deps $value}
 		if {$key eq "-bed"} {
@@ -501,6 +505,8 @@ proc var_gatk_job {bamfile refseq args} {
 			lappend deps $value
 		} elseif {$key eq "-pre"} {
 			set pre $value
+		} elseif {$key eq "-split"} {
+			set split $value
 		} else {
 			lappend opts $key $value
 		}
@@ -525,8 +531,8 @@ proc var_gatk_job {bamfile refseq args} {
 		catch {file rename -force $target.temp.idx $target.idx}
 		# file delete $target.temp
 	}
-	job ${pre}varall-gatk2sft-$root -deps [list ${pre}varall-gatk-$root.vcf] -targets ${pre}varall-gatk-$root.tsv -vars {sample} -code {
-		cg vcf2sft $dep $target.temp
+	job ${pre}varall-gatk2sft-$root -deps [list ${pre}varall-gatk-$root.vcf] -targets ${pre}varall-gatk-$root.tsv -vars {sample split} -code {
+		cg vcf2tsv -split $split $dep $target.temp
 		file rename -force $target.temp $target
 	}
 	razip_job ${pre}varall-gatk-$root.tsv
@@ -543,8 +549,8 @@ proc var_gatk_job {bamfile refseq args} {
 		catch {file rename -force $target.temp.idx $target.idx}
 		# file delete $target.temp
 	}
-	job ${pre}delvar-gatk2sft-$root -deps [list ${pre}delvar-gatk-$root.vcf] -targets ${pre}delvar-gatk-$root.tsv -vars {sample} -code {
-		cg vcf2sft $dep $target.temp
+	job ${pre}delvar-gatk2sft-$root -deps [list ${pre}delvar-gatk-$root.vcf] -targets ${pre}delvar-gatk-$root.tsv -vars {sample split} -code {
+		cg vcf2tsv -split $split $dep $target.temp
 		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
 		-f {
 			chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 
@@ -577,20 +583,31 @@ proc var_gatk_job {bamfile refseq args} {
 	## filter SNPs (according to seqanswers exome guide)
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup
-#	job clean_${pre}var-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} \
-#	-rmtargets {${pre}uvar-gatk-$root.tsv ${pre}varall-gatk-$root.vcf ${pre}varall-gatk-$root.vcf.idx  ${pre}delvar-gatk-$root.vcf ${pre}delvar-gatk-$root.tsv} -code {
-#		catch {file delete ${pre}uvar-gatk-$root.tsv}
-#		catch {file delete ${pre}varall-gatk-$root.vcf}
-#		catch {file delete ${pre}varall-gatk-$root.vcf.idx}
-#		catch {file delete ${pre}delvar-gatk-$root.vcf}
-#		catch {file delete ${pre}delvar-gatk-$root.tsv}
-#	}
+	job clean_${pre}var-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} \
+	-rmtargets {${pre}uvar-gatk-$root.tsv ${pre}varall-gatk-$root.vcf ${pre}varall-gatk-$root.vcf.idx  ${pre}delvar-gatk-$root.vcf ${pre}delvar-gatk-$root.tsv} -code {
+		catch {file delete ${pre}uvar-gatk-$root.tsv}
+		catch {file delete ${pre}varall-gatk-$root.vcf}
+		catch {file delete ${pre}varall-gatk-$root.vcf.idx}
+		catch {file delete ${pre}delvar-gatk-$root.vcf}
+		catch {file delete ${pre}delvar-gatk-$root.tsv}
+	}
 	cd $keeppwd
 	return [file join $dir ${pre}var-gatk-$root.tsv]
 }
 
-proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
+proc multicompar_job {experiment dbdir todo args} {
 	upvar job_logdir job_logdir
+	set skipincomplete 1
+	set split 0
+	foreach {key value} $args {
+		if {$key eq "-skipincomplete"} {
+			set skipincomplete $value
+		} elseif {$key eq "-split"} {
+			set split $value
+		} else {
+			lappend opts $key $value
+		}
+	}
 	file mkdir compar
 	if {[catch {cg select -n compar/compar-$experiment.tsv} done]} {set done {}}
 	set stilltodo {}
@@ -611,9 +628,9 @@ proc multicompar_job {experiment dbdir todo {skipincomplete 1}} {
 			file rename -force compar/compar-$experiment.tsv compar/compar-$experiment.tsv.temp
 		}
 		job multicompar-$experiment -deps [list_concat $stilltodo $deps] -targets compar/compar-$experiment.tsv \
-		-vars {stilltodo skipincomplete} -code {
+		-vars {stilltodo skipincomplete split} -code {
 			# should maybe better recheck todo here
-			cg multicompar $target.temp {*}$stilltodo
+			cg multicompar -split $split $target.temp {*}$stilltodo
 			if {$skipincomplete} {
 				cg multicompar_reannot $target.temp skipincomplete
 			} else {
@@ -656,6 +673,7 @@ proc process_illumina {args} {
 	set dbdir {}
 	set realign 1
 	set pos 0
+	set split 1
 	foreach {key value} $args {
 		switch -- $key {
 			-realign {
@@ -663,6 +681,9 @@ proc process_illumina {args} {
 			}
 			-dbdir {
 				set dbdir $value
+			}
+			-split {
+				set split $value
 			}
 			default break
 		}
@@ -721,8 +742,8 @@ proc process_illumina {args} {
 		foreach file $files {
 			set target [file root [gzroot $file]].tsv
 			if {![file exists $target]} {
-				job vcf2sft-$file -deps $file -targets $target -code {
-					cg vcf2sft $dep $target.temp
+				job vcf2tsv-$file -deps $file -targets $target -vars split -code {
+					cg vcf2tsv -split $split $dep $target.temp
 					file rename -force $target.temp $target
 				}
 				lappend todo [string range $target 4 end-4]
@@ -768,7 +789,7 @@ proc process_illumina {args} {
 	job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo [list_remdup $todo]
-	multicompar_job $experiment $dbdir $todo 1
+	multicompar_job $experiment $dbdir $todo -skipincomplete 1 -split $split
 	cd $keeppwd
 
 }

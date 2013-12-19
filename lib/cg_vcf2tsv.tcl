@@ -16,7 +16,7 @@ proc cg_vcf2tsv {args} {
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
-			-s {
+			-s - -split {
 				set splitalt [true $value]
 			}
 			-- break
@@ -247,7 +247,7 @@ if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
 	package require Extral
 	set ::base $scriptname
-	cg_vcf2sft {*}$argv
+	cg_vcf2tsv {*}$argv
 }
 
 if 0 {
@@ -257,5 +257,5 @@ if 0 {
 	set f [gzopen $filename]
 	set o stdout
 
-	cg vcf2sft $filename temp.tsv
+	cg vcf2tsv $filename temp.tsv
 }

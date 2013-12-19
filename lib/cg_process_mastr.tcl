@@ -152,7 +152,7 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	return [list $mastrname $refseq $mastrdir/reg-$mastrname.map]
 }
 
-proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} {
+proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa} {split 0}} {
 	#
 #	# make minigenome
 	set mastrdir [file_absolute $mastrdir]
@@ -187,8 +187,8 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		foreach file $files {
 			set target [file root [gzroot $file]].tsv
 			if {![file exists $target]} {
-				job vcf2sft-$file -deps $file -targets $target -code {
-					cg vcf2sft $dep $target.temp
+				job vcf2tsv-$file -deps $file -targets $target -vars split -code {
+					cg vcf2tsv -split $split $dep $target.temp
 					file rename -force $target.temp $target
 				}
 				lappend todo [string range $target 4 end-4]
@@ -214,7 +214,7 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 		bam2covstats_job $cleanbam $mastrdir/reg-inner-$mastrname.tsv
 		# samtools variant calling on map-rs${aligner}
 		if {$useminigenome} {
-			var_sam_job $cleanbam $refseq -pre $pre
+			var_sam_job $cleanbam $refseq -pre $pre -split $split
 			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets varall-sam-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
@@ -224,12 +224,12 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 			}
 			sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv
 		} else {
-			var_sam_job $cleanbam $refseq -pre $pre -bed $mastrdir/reg-inner-$mastrname.bed
+			var_sam_job $cleanbam $refseq -pre $pre -bed $mastrdir/reg-inner-$mastrname.bed -split $split
 		}
 		lappend todo sam-rs${aligner}-$sample
 		if {$useminigenome} {
 			# gatk variant calling on map-rs${aligner}
-			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE
+			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE -split $split
 			job remapgatk-varall-$name -deps {reg_varall-gatk-rs${aligner}-$name.tsv $mapfile} -targets varall-gatk-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
@@ -240,14 +240,14 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa}} 
 			sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv
 		} else {
 			# gatk variant calling on map-rs${aligner}
-			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE -bed $mastrdir/reg-inner-$mastrname.bed
+			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE -bed $mastrdir/reg-inner-$mastrname.bed -split $split
 		}
 		lappend todo gatk-rs${aligner}-$sample
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo [list_remdup $todo]
-	multicompar_job $experiment $dbdir $todo
+	multicompar_job $experiment $dbdir $todo -split $split
 	cd $keeppwd
 }
 
@@ -256,6 +256,7 @@ proc cg_process_mastr {args} {
 	set useminigenome 0
 	set aligner bwa
 	set pos 0
+	set split 1
 	foreach {key value} $args {
 		switch -- $key {
 			-m - --minigenome {
@@ -263,6 +264,9 @@ proc cg_process_mastr {args} {
 			}
 			-a - --aligner {
 				set aligner $value
+			}
+			-split {
+				set split $value
 			}
 			-- break
 			default {
@@ -278,7 +282,7 @@ proc cg_process_mastr {args} {
 		exit 1
 	}
 	foreach {mastrdir destdir dbdir} $args break
-	process_mastr_job $mastrdir $destdir $dbdir $useminigenome $aligner
+	process_mastr_job $mastrdir $destdir $dbdir $useminigenome $aligner $split
 	job_wait
 }
 
