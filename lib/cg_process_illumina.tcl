@@ -780,10 +780,10 @@ proc process_illumina {args} {
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
 		# samtools variant calling on map-rdsbwa
-		var_sam_job $cleanedbam $refseq -bed $cov5bed
+		var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
 		lappend todo sam-rdsbwa-$sample
 		# gatk variant calling on map-rdsbwa
-		var_gatk_job $cleanedbam $refseq -bed $cov5bed
+		var_gatk_job $cleanedbam $refseq -bed $cov5bed -split $split
 		lappend todo gatk-rdsbwa-$sample
 	}
 	job_logdir $destdir/log_jobs
