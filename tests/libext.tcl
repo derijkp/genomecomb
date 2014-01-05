@@ -160,4 +160,12 @@ test libext {vif} {
 	expr {vif("1,0,0","a,a,a","1,1,0","b,b,b","c,c,c")}
 } {a,b,c}
 
+test libext {regexp} {
+	list [expr {regexp("abbb","ab+")}] [expr {regexp("abbb","aB+")}] [expr {regexp("-nocase","abbb","aB*")}]
+} {1 0 1}
+
+test libext {matches} {
+	list [expr {matches("abbb","a*")}] [expr {matches("abbb","A*")}] [expr {matches("-nocase","abbb","A*")}]
+} {1 0 1}
+
 testsummarize

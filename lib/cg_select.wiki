@@ -161,6 +161,8 @@ false may be vectors, and a vector is returned
 ; **oneof($field,value1,cvalue2,...)**: returns true if the given field is equal to one of the values
 The default value for non-numeric arguments can be set e.g. to 1000 by giving def=1000 as the first argument
 ; **regexp(value,pattern)**: true if value matches the regular expression given by **pattern**
+; **matches(value,pattern)**:  true if value matches the glob pattern given by **pattern** 
+(using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
 
 === multifield functions ===
 The following functions address multiple fields.
