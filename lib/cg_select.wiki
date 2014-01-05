@@ -77,9 +77,19 @@ first line after the header/comments.
 e.g.:
 $ROW == 1000
 will select data line 1000 in the file.
-Queries support all operators and functions provided by Tcl expr.
 
-Some extra functions are available:
+== Operators ==
+Queries support all operators provided by Tcl expr, with some extra added:
+; condition1 **and** condition2: condition is true if both condition1 and condition2 are true (same as &&)
+; condition1 **or** condition2: condition is true if either condition1 or condition2 is true (same as ||)
+; value **~** /pattern/: true if value matches the regular expression given by pattern
+Several functions (see further: matches, regexp, oneof, shares, ...) can also be used as operators, e.g.
+; value **matches** pattern: true if value matches the glob pattern given by **pattern**
+(using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
+; value **regexp** pattern: true if value matches the regular expression given by **pattern**
+
+== Functions ==
+Queries support all functions provided by Tcl expr, with several extra available:
 
 === Logical functions ===
 ; **if(condition,true,?condition2,true2, ...?false)**: if **condition** is true, the value for "true" will be returned, 
@@ -93,7 +103,7 @@ If the chromosome value in the query or the data file starts with chr, this part
 
 === Number functions ===
 ; **between(value,{min max})**: true of value is >= min and <= max (e.g. "between($begin,1000,2000)")
-This function can also be used as an operand, eg "$field between {1 2}"
+This function can also be used as an operator, eg "$field between {1 2}"
 ; **min(a1,a2,...)**: returns the minimum of a1, a2, ...
 min will return an error if one of the values is not a number. Use lmin if some values are
 list of numbers, or not numbers.
@@ -122,9 +132,9 @@ The following functions allow use of vectors in queries
 ; **vector(value1,value2, ...)**: creates a vector from a number of values. If some elements are vectors themselves, they will be concatenated
 ; **lindex(vector, position)**: the value of the element at the given **position** in the list. The first element is at position 0!
 ; **contains(vector, value)**; true if **vector** contains **value**. 
-This can also be used as an operand: vector contains value
+This can also be used as an operator: vector contains value
 ; **shares(vector, valuelist)**; true if **vector** and the list in **valuelist** (a SPACE separated list!) share a value.
-This can also be used as an operand: vector shares valuelist
+This can also be used as an operator: vector shares valuelist
 ; **lone(vector)**: true if one of elements of the vector is true
 ; **lall(vector)**: true if all elements of the vector are true
 ; **lcount(vector)**: number of elements in vector that are true
@@ -148,7 +158,7 @@ all elements in the other vector. Supported operators are:
 false may be vectors, and a vector is returned
 
 === String functions ===
-; **oneof($field,value1,cvalue2,...)**: returns true if the given field matches one of the values
+; **oneof($field,value1,cvalue2,...)**: returns true if the given field is equal to one of the values
 The default value for non-numeric arguments can be set e.g. to 1000 by giving def=1000 as the first argument
 ; **regexp(value,pattern)**: true if value matches the regular expression given by **pattern**
 

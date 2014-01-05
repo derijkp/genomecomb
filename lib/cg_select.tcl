@@ -213,18 +213,18 @@ proc tsv_select_catch {arguments header neededfieldsVar} {
 	return "\[catch \{expr \{[tsv_select_detokenize [lindex $arguments 0] $header neededfields]\}\}\]"
 }
 
-proc tsv_select_counthasone {ids operand value} {
+proc tsv_select_counthasone {ids operator value} {
 	set temp {}
 	foreach id $ids {
-		lappend temp "hasone($id, \"$operand\", $value)"
+		lappend temp "hasone($id, \"$operator\", $value)"
 	}
 	return "([join $temp " + "])"
 }
 
-proc tsv_select_counthasall {ids operand value} {
+proc tsv_select_counthasall {ids operator value} {
 	set temp {}
 	foreach id $ids {
-		lappend temp "hasall($id, \"$operand\", $value)"
+		lappend temp "hasall($id, \"$operator\", $value)"
 	}
 	return "([join $temp " + "])"
 }
@@ -448,13 +448,13 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 			set pos [lindex [regexp -start $pos -inline -indices {[^0-9.]|$} $code] 0 0]
 			lappend curstack [list @num [string range $code $prevpos [expr {$pos-1}]]]
 		} elseif {[regexp {[+!*/%<>&^|@?:=-]} $char]} {
-			# operand
+			# operator
 			incr pos
 			set pos [lindex [regexp -start $pos -inline -indices {[^+!*/%<>&^|?@:=-]|$} $code] 0 0]
 			set op [string range $code $prevpos [expr {$pos-1}]]
 			lappend curstack [tsv_select_tokenize_opsdata $op]
 		} elseif {[regexp {[A-Za-z]} $char]} {
-			# function or text operand
+			# function or text operator
 			set pos [lindex [regexp -start $pos -inline -indices {[^A-Za-z0-9_]|$} $code] 0 0]
 			set char [string index $code $pos]
 			if {$char eq "\("} {
@@ -464,7 +464,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 				set curstack {}
 				incr pos
 			} else {
-				# text operand
+				# text operator
 				set op [string range $code $prevpos [expr {$pos-1}]]
 				lappend curstack [tsv_select_tokenize_opsdata $op]
 			}
@@ -698,23 +698,23 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 						set temp [tsv_select_region $ids $header neededfields]
 					}
 					counthasone {
-						foreach {operand value} [lindex $line end] break
-						set operand [tsv_select_detokenize [list $operand] $header neededfields]
+						foreach {operator value} [lindex $line end] break
+						set operator [tsv_select_detokenize [list $operator] $header neededfields]
 						set value [tsv_select_detokenize [list $value] $header neededfields]
-						set temp [tsv_select_counthasone [lrange $ids 0 end-1] $operand $value]
+						set temp [tsv_select_counthasone [lrange $ids 0 end-1] $operator $value]
 					}
 					counthasall {
-						foreach {operand value} [lindex $line end] break
-						set operand [tsv_select_detokenize [list $operand] $header neededfields]
+						foreach {operator value} [lindex $line end] break
+						set operator [tsv_select_detokenize [list $operator] $header neededfields]
 						set value [tsv_select_detokenize [list $value] $header neededfields]
-						set temp [tsv_select_counthasall [lrange $ids 0 end-1] $operand $value]
+						set temp [tsv_select_counthasall [lrange $ids 0 end-1] $operator $value]
 					}
 					hasone {
 						if {[llength $ids] == 2} {
-							foreach {operand value} [lindex $line end] break
-							set operand [tsv_select_detokenize [list $operand] $header neededfields]
+							foreach {operator value} [lindex $line end] break
+							set operator [tsv_select_detokenize [list $operator] $header neededfields]
 							set value [tsv_select_detokenize [list $value] $header neededfields]
-							set temp "${val}\([lindex $ids 0], \"$operand\", $value\)"
+							set temp "${val}\([lindex $ids 0], \"$operator\", $value\)"
 						} else {
 							set temp "${val}\([join $ids ", "]\)"
 						}
