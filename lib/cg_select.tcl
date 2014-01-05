@@ -264,7 +264,8 @@ proc tsv_select_expandfield {header field} {
 	if {$field eq "ROW"} {return "ROW"}
 	set qposs [list_find -glob $header $field]
 	if {![llength $qposs]} {
-		error "no fields matched \"$field\""
+#		error "no fields matched \"$field\""
+return [list $field]
 	}
 	set result [list_sub $header $qposs]
 	return [list_remdup $result]
@@ -278,8 +279,9 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 	foreach field $qfields {
 		if {$field eq "ROW"} {
 			lappend rfields ROW
-			lappend qposs {}
-			# empty for code will output ROW directly later
+#			lappend qposs {}
+#			# empty for code will output ROW directly later
+			lappend qposs ROW
 			continue
 		}
 		set pos [string first = $field]
@@ -398,7 +400,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 				error "field \"$field\" not present"
 			}
 			append newcode \{[join $fields \},\$\{]\}
-			lappend neededfields {*}$fields
+#			lappend neededfields {*}$fields
 			set prevpos [expr {$pos+1}]
 		} else {
 			while 1 {
@@ -415,7 +417,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 				error "field \"$field\" not present"
 			}
 			append newcode \{[join $fields \},\$\{]\}
-			lappend neededfields {*}$fields
+#			lappend neededfields {*}$fields
 			set prevpos $pos
 		}
 	}
@@ -644,6 +646,7 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 			}
 			@var {
 				lappend result \$\{$val\}
+				lappend neededfields $val
 			}
 			@op {
 				if {$val eq "="} {
@@ -656,6 +659,18 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 			}
 			@function {
 				set arguments [lrange $line 2 end]
+				switch $val {
+					scount {
+						set temp [tsv_select_scount $arguments $header neededfields]
+						lappend result $temp
+						continue
+					}
+					slist {
+						set temp [tsv_select_slist $arguments $header neededfields]
+						lappend result $temp
+						continue
+					}
+				}
 				set ids {}
 				foreach el $arguments {
 					lappend ids [tsv_select_detokenize $el $header neededfields]
@@ -822,9 +837,11 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		foreach el $qposs field $qfields {
 			if {[isint $el]} {
 				lappend outcols $el
-			} elseif {$el eq ""} {
+			} elseif {$el eq "ROW"} {
 				# empty instead of code or int will directly output ROW
 				lappend outcols {}
+			} elseif {$el eq ""} {
+				error "field $field not present"
 			} elseif {[info exists calccols($field)]} {
 				lappend outcols $calccols($field)
 			} else {
@@ -836,7 +853,12 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			incr num
 		}
 		# neededcols contains the column numbers used to supply neededfields by tsv_selectc to the run proc
+		set neededfields [list_remdup $neededfields]
 		set neededcols [list_cor $header $neededfields]
+		set missing [list_remove [list_sub $neededfields [list_find $neededcols -1]] ROW]
+		if {[llength $missing]} {
+			error "field(s) \"[join $missing \",\"]\" not present in file"
+		}
 		if {$index eq ""} {
 			append tclcode [subst {
 				proc tsv_selectc_query {$neededfields} {
