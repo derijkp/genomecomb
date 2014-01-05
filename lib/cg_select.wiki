@@ -163,7 +163,7 @@ The default value for non-numeric arguments can be set e.g. to 1000 by giving de
 ; **regexp(value,pattern)**: true if value matches the regular expression given by **pattern**
 ; **matches(value,pattern)**:  true if value matches the glob pattern given by **pattern** 
 (using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
-
+; **concat(separator,value,...)**: makes one long string by appending all values, separated by **separator**.
 === multifield functions ===
 The following functions address multiple fields.
 
@@ -192,6 +192,12 @@ Following sample aggregates are available:
 ; **sdistinct(?condition?,value)**: returns a non-redundant (comma separated) list of the results of value for each sample for which (if given) **condition** is true
 ; **smin(?condition?,value)**: returns the minimum of results of value for each sample for which (if given) **condition** is true
 ; **smax(?condition?,value)**: returns the maximum of results of value for each sample for which (if given) **condition** is true
+; **ssum(?condition?,value)**: returns the sum of results of value for each sample for which (if given) **condition** is true
+; **savg(?condition?,value)**: returns the average of results of value for each sample for which (if given) **condition** is true
+; **sstddev(?condition?,value)**: returns the standard deviation of results of value for each sample for which (if given) **condition** is true
+; **smedian(?condition?,value)**: returns the median of results of value for each sample for which (if given) **condition** is true
+; **smode(?condition?,value)**: returns the mode of results of value for each sample for which (if given) **condition** is true
+; **percent(condition1,condition2)**: returns 100.0*(number of samples for which condition1 and condition2 are true)/(number of samples for which condition1 is true)
 
 === comparing samples ===
 
