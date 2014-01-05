@@ -188,8 +188,10 @@ scount($sample match "gatk-*" and $sequenced == "v") will count the number of
 gatk samples (sample name matches gatk-*) for which sequenced-<sample> is equal to "v"
 Following sample aggregates are available:
 ; **scount(condition)**: number of samples for which **condition** is true
-; **slist(value)**: returns a (comma separated) list with result of the formula given by value for each sample
-; **slist(condition,value)**: returns a (comma separated) list with result of value for each sample for which **condition** is true
+; **slist(?condition?,value)**: returns a (comma separated) list with results of value for each sample for which (if given) **condition** is true
+; **sdistinct(?condition?,value)**: returns a non-redundant (comma separated) list of the results of value for each sample for which (if given) **condition** is true
+; **smin(?condition?,value)**: returns the minimum of results of value for each sample for which (if given) **condition** is true
+; **smax(?condition?,value)**: returns the maximum of results of value for each sample for which (if given) **condition** is true
 
 === comparing samples ===
 

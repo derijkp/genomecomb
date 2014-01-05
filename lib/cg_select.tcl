@@ -666,7 +666,22 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 						continue
 					}
 					slist {
-						set temp [tsv_select_slist $arguments $header neededfields]
+						set temp [tsv_select_saggr vector slist_cond_ $arguments $header neededfields]
+						lappend result $temp
+						continue
+					}
+					sdistinct {
+						set temp [tsv_select_saggr distinct sdistinct_cond_ $arguments $header neededfields]
+						lappend result $temp
+						continue
+					}
+					smin {
+						set temp [tsv_select_saggr lmin smin_cond_ $arguments $header neededfields]
+						lappend result $temp
+						continue
+					}
+					smax {
+						set temp [tsv_select_saggr lmax smax_cond_ $arguments $header neededfields]
 						lappend result $temp
 						continue
 					}

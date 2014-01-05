@@ -61,6 +61,10 @@ proc tcl::mathfunc::vector {args} {
 	join $args ,
 }
 
+proc tcl::mathfunc::distinct {args} {
+	join [list_remdup $args] ,
+}
+
 proc tcl::mathfunc::lavg args {
 	set data {}
 	foreach v $args {

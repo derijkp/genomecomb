@@ -169,10 +169,12 @@ proc histogram {list aVar} {
 }
 
 proc max {args} {
+	if {[llength $args] == 1} {set args [lindex $args 0]}
 	lmath_max [list_remove $args {} - ?]
 }
 
 proc min {args} {
+	if {[llength $args] == 1} {set args [lindex $args 0]}
 	lmath_min [list_remove $args {} - ?]
 }
 

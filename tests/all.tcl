@@ -12,6 +12,8 @@ source tsv.tcl
 source remap.tcl
 source libext.tcl
 source select.tcl
+source select_group.tcl
+source select_saggregates.tcl
 source analysis.tcl
 source misc.tcl
 source job.tcl

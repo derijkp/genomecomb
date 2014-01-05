@@ -50,26 +50,26 @@ proc tsv_select_scount {arguments header neededfieldsVar} {
 	return [join $result " + "]
 }
 
-proc tsv_select_slist {arguments header neededfieldsVar} {
+proc tsv_select_saggr {func1 func2 arguments header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
+# putsvars func1 func2 arguments header
 	if {[llength $arguments] == 1} {
-		set argument [lindex $arguments 0]
-		set samples [samples $header]
-		set result {}
-		foreach sample $samples {
-			set temp [tsv_select_replacevars $argument $header $sample]
-			lappend result \[expr\ \{[tsv_select_detokenize $temp $header neededfields]\}\]
-		}
-		return \"[join $result ","]\"
+		set values [lindex $arguments 0]
+		set ifs {}
+		set func $func1
 	} else {
 		foreach {ifs values} $arguments break
-		set samples [samples $header]
-		set result {}
-		foreach sample $samples {
-			set tempif [tsv_select_replacevars $ifs $header $sample]
-			set tempvalue [tsv_select_replacevars $values $header $sample]
-			lappend result [tsv_select_detokenize $tempif $header neededfields] \[expr\ \{[tsv_select_detokenize $tempvalue $header neededfields]\}\]
-		}
-		return "slist_if_\([join $result ,]\)"
+		set func $func2
 	}
+	set samples [samples $header]
+	set result {}
+	foreach sample $samples {
+		if {$ifs ne ""} {
+			set tempif [tsv_select_replacevars $ifs $header $sample]
+			lappend result [tsv_select_detokenize $tempif $header neededfields]
+		}
+		set tempvalue [tsv_select_replacevars $values $header $sample]
+		lappend result [tsv_select_detokenize $tempvalue $header neededfields]
+	}
+	return "$func\([join $result ,]\)"
 }
