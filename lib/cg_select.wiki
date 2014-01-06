@@ -57,7 +57,7 @@ values in group and column. Supported functions are
 ; min(field): minimum of all values in the field (for the given group and column)
 ; max(field): maximum
 ; avg(field): average
-; stddev(field): standard deviation
+; stdev(field): standard deviation
 ; distinct(field): lists (comma separated) all distinct values found in the field
 ; list(field): lists (comma separated) all values found in the field (the same one can occur multiple times)
 The field sample in groups or groupcols is interpreted specially: If sample is present, you can
@@ -121,16 +121,19 @@ Some fields can contain multiple values in the form of a comma (or ; or space) s
 list (further called vector).
 The following functions allow use of vectors in queries
 
+; **vector(value1,value2, ...)**: creates a vector from a number of values. If some elements are vectors themselves, they will be concatenated
+; **lindex(vector, position)**: the value of the element at the given **position** in the list. The first element is at position 0!
 ; **lmin(vector, ...)**: the minimum of the list of numbers in vector(s). A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
 ; **lmax(vector, ...)**: the maximum of the vector. A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
 ; **lmind(vector, ..., def)**: same as lmin, but you can set the default value for non-numeric characters is given as the last parameter
 ; **lmaxd(vector, ..., def)**: same as lmax, but you can set the default value for non-numeric characters is given as the last parameter
 ; **lminpos(vector, ...)**: position (within the index) of the minimum value. If more than one vector is given, the position of the minimum of all vectors is given
 ; **lmaxpos(vector, ...)**: position (within the index) of the maximum value. If more than one vector is given, the position of the maximum of all vectors is given
-; **lsum(vector, ...)**: the minimum of the list of numbers in vector(s). A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
-; **lavg(vector, ...)**: the maximum of the vector. A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
-; **vector(value1,value2, ...)**: creates a vector from a number of values. If some elements are vectors themselves, they will be concatenated
-; **lindex(vector, position)**: the value of the element at the given **position** in the list. The first element is at position 0!
+; **lsum(vector, ...)**: the sum of the list of numbers in vector(s). Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
+; **lavg(vector, ...)**: the average of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
+; **lstdev(vector, ...)**: the standard deviation of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
+; **lmedian(vector, ...)**: the median of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
+; **lmode(vector, ...)**: the mode (element that is most abundant) of the vector. The result can be a new vector (if multiple values occur at the same count)
 ; **contains(vector, value)**; true if **vector** contains **value**. 
 This can also be used as an operator: vector contains value
 ; **shares(vector, valuelist)**; true if **vector** and the list in **valuelist** (a SPACE separated list!) share a value.
@@ -194,10 +197,10 @@ Following sample aggregates are available:
 ; **smax(?condition?,value)**: returns the maximum of results of value for each sample for which (if given) **condition** is true
 ; **ssum(?condition?,value)**: returns the sum of results of value for each sample for which (if given) **condition** is true
 ; **savg(?condition?,value)**: returns the average of results of value for each sample for which (if given) **condition** is true
-; **sstddev(?condition?,value)**: returns the standard deviation of results of value for each sample for which (if given) **condition** is true
+; **sstdev(?condition?,value)**: returns the standard deviation of results of value for each sample for which (if given) **condition** is true
 ; **smedian(?condition?,value)**: returns the median of results of value for each sample for which (if given) **condition** is true
 ; **smode(?condition?,value)**: returns the mode of results of value for each sample for which (if given) **condition** is true
-; **percent(condition1,condition2)**: returns 100.0*(number of samples for which condition1 and condition2 are true)/(number of samples for which condition1 is true)
+; **spercent(condition1,condition2)**: returns 100.0*(number of samples for which condition1 and condition2 are true)/(number of samples for which condition1 is true)
 
 === comparing samples ===
 

@@ -1,5 +1,5 @@
 proc select_parse_grouptypes {grouptypelist} {
-	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list sum sum}
+	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} stdev {avg m2} distinct distinct list list sum sum}
 	set grouptypes {}
 	foreach grouptype $grouptypelist {
 		if {$grouptype eq "count"} {
@@ -180,7 +180,7 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 			append calcresults [string_change {
 				lappend result [get resultdata($_groupname,$col,@field@,avg) ""]
 			} [list @field@ $field]]
-		} elseif {$func eq "stddev"} {
+		} elseif {$func eq "stddev" || $func eq "stdev"} {
 			append calcresults [string_change {
 				if {[info exists resultdata($_groupname,$col,@field@,m2)} {
 					lappend result [expr {$resultdata($_groupname,$col,@field@,m2)/$resultcount($_groupname,$col)}]
@@ -215,7 +215,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	# precalc is run for every match (sets some variables used in query, etc.)
 	regsub -all \n [string trim $group] { } group
 	if {[llength $group] == 1} {lappend group {}}
-	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} distinct distinct list list sum sum}
+	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} stdev {avg m2} distinct distinct list list sum sum}
 	unset -nocomplain calccols
 	# more than one groupcol not supported (yet)
 	set groupcol [lindex $groupcols 0]

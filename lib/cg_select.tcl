@@ -400,7 +400,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 				error "field \"$field\" not present"
 			}
 			append newcode \{[join $fields \},\$\{]\}
-#			lappend neededfields {*}$fields
+			lappend neededfields {*}[list_common $header $fields]
 			set prevpos [expr {$pos+1}]
 		} else {
 			while 1 {
@@ -417,7 +417,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 				error "field \"$field\" not present"
 			}
 			append newcode \{[join $fields \},\$\{]\}
-#			lappend neededfields {*}$fields
+			lappend neededfields {*}[list_common $header $fields]
 			set prevpos $pos
 		}
 	}
@@ -521,17 +521,32 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 			lappend curstack [list @val [string range $code $prevpos $pos]]
 			incr pos
 		} elseif {$char eq "\""} {
+			set prevpos $pos
 			incr pos
-			set pos [string first \" $code $pos]
-			lappend curstack [list @val [string range $code $prevpos $pos]]
+			while {1} {
+				set pos [string first \" $code $pos]
+				if {$pos == -1} {
+					set quoted [string range $code $prevpos end]
+					break
+				}
+				set quoted [string range $code $prevpos $pos]
+				if {[info complete $quoted]} break
+				incr pos
+			}
+			if {![info complete $quoted]} {
+				error "error: incomplete quoted expression: $quoted"
+			}
+			lappend curstack [list @val $quoted]
 			incr pos
 		} elseif {$char eq "\["} {
 			incr pos
 			set prevpos $pos
-			while {$pos < $len} {
+			while {1} {
 				set pos [string first \] $code $pos]
+				if {$pos == -1} break
 				set command [string range $code $prevpos [expr {$pos-1}]]
 				if {[info complete $command]} break
+				incr pos
 			}
 			if {![info complete $command]} {
 				error "error: incomplete command in expression"
@@ -624,16 +639,6 @@ proc tsv_select_precedence {curstack} {
 	return $curstack
 }
 
-#	upvar $neededfieldsVar neededfields
-#	if {[llength $tokens] >= 3} {
-#		set ops [list_subindex $tokens 0]
-#		set poss [lsort -integer -decreasing [list_find $ops @newop]]
-#		foreach pos $poss {
-#			foreach {pre op post} [lrange $tokens [expr {$pos-1}] [expr {$pos+1}]] break
-#			set tokens [lreplace $tokens [expr {$pos-1}] [expr {$pos+1}] [list @function [lindex $op end] [list $pre] [list $post]]]
-#		}
-#	}
-
 proc tsv_select_detokenize {tokens header neededfieldsVar} {
 	global newoptransa
 	upvar $neededfieldsVar neededfields
@@ -658,32 +663,37 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 				lappend result $val
 			}
 			@function {
+				set saggra {
+					scount {}
+					slist {vector slist_cond_}
+					sdistinct {distinct sdistinct_cond_}
+					smin {lmin smin_cond_}
+					smax {lmax smax_cond_}
+					ssum {lsum ssum_cond_}
+					savg {lavg savg_cond_}
+					sstdev {lstdev sstdev_cond_}
+					smedian {lmedian smedian_cond_}
+					smode {lmode smode_cond_}
+					spercent {}
+				}
 				set arguments [lrange $line 2 end]
-				switch $val {
-					scount {
-						set temp [tsv_select_scount $arguments $header neededfields]
-						lappend result $temp
-						continue
-					}
-					slist {
-						set temp [tsv_select_saggr vector slist_cond_ $arguments $header neededfields]
-						lappend result $temp
-						continue
-					}
-					sdistinct {
-						set temp [tsv_select_saggr distinct sdistinct_cond_ $arguments $header neededfields]
-						lappend result $temp
-						continue
-					}
-					smin {
-						set temp [tsv_select_saggr lmin smin_cond_ $arguments $header neededfields]
-						lappend result $temp
-						continue
-					}
-					smax {
-						set temp [tsv_select_saggr lmax smax_cond_ $arguments $header neededfields]
-						lappend result $temp
-						continue
+				if {[dict exists $saggra $val]} {
+					switch $val {
+						scount {
+							set temp [tsv_select_scount $arguments $header neededfields]
+							lappend result $temp
+							continue
+						}
+						spercent {
+							set temp [tsv_select_spercent $arguments $header neededfields]
+							lappend result $temp
+							continue
+						}
+						default {
+							set temp [tsv_select_saggr {*}[dict get $saggra $val] $arguments $header neededfields]
+							lappend result $temp
+							continue
+						}
 					}
 				}
 				set ids {}

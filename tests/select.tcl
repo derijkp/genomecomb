@@ -61,12 +61,10 @@ test select {-s -f -q} {
 4	a4}
 
 test select {-q multiple lines, tabs} {
-
 exec cg select -s num  -f "num mixed" -q {
 	$num <= 4
 	&& $text == "c"
 } data/table.tsv
-
 } {num	mixed
 2	a2}
 
@@ -401,5 +399,13 @@ test select {empty first field bug check} {
 test select {-q error on non number <} {
 	exec cg select -q {$mixed < 4} data/table.tsv
 } {a4 is not a number} regexp error
+
+test select {error missing quote} {
+	exec cg select -q {$regtest != "aa} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} ../tests/data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
+} {error: incomplete quoted expression: "aa} error
+
+test select {error missing quote empty} {
+	exec cg select -q {$regtest != "} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} ../tests/data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
+} {error: incomplete quoted expression: "} error
 
 testsummarize

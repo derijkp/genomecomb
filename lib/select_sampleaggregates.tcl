@@ -50,6 +50,22 @@ proc tsv_select_scount {arguments header neededfieldsVar} {
 	return [join $result " + "]
 }
 
+proc tsv_select_spercent {arguments header neededfieldsVar} {
+#	putsvars arguments
+	upvar $neededfieldsVar neededfields
+	foreach {cond1 cond2} $arguments break
+	set samples [samples $header]
+	set selection {}
+	set total {}
+	foreach sample $samples {
+		set tempcond1 [tsv_select_replacevars $cond1 $header $sample]
+		set tempcond2 [tsv_select_replacevars $cond2 $header $sample]
+		lappend result \([tsv_select_detokenize $tempcond1 $header neededfields]\)
+		lappend result \([tsv_select_detokenize $tempcond2 $header neededfields]\)
+	}
+	return "spercent_\([join $result ,]\)"
+}
+
 proc tsv_select_saggr {func1 func2 arguments header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 # putsvars func1 func2 arguments header

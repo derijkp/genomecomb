@@ -76,4 +76,70 @@ test select {smax condition} {
 	} data/vars-saggr.tsv] \t
 } {{chromosome begin test sequenced-sample1 sequenced-sample2 sequenced-sample3 freq-sample1 freq-sample2 freq-sample3} {1 259 0.11 v v v 0.1 0.11 0.2} {1 4001 0.1 v v r 0.2 0.1 0.2} {1 4050 NaN v u u 0.3 ? ?} {1 5000 NaN v v r 0.4 0.6 0.6} {1 5020 NaN v r r 0.5 ? ?} {1 5020 NaN r v v ? 0.4 0.5} {2 4000 NaN v v v 0.6 0.6 0.6} {2 4001 NaN v r r 0.8 ? ?} {2 4001 0.01 v r r 0.7 0.01 ?} {2 4010 NaN u v v ? 0.8 0.8} {2 4010 NaN u v v ? 0.7 0.7} {2 5010 NaN v v v 0.9 0.9 0.9} {2 10000 NaN v r r 0.9 ? ?} {2 10000 NaN r v v ? 0.9 0.9} {3 876 NaN v v v 1 1 1}}
 
+test select {ssum} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=ssum($freq)} freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.41000000000000003 0.1 0.11 0.2} {1 4001 0.5 0.2 0.1 0.2} {1 4050 0.3 0.3 ? ?} {1 5000 1.6 0.4 0.6 0.6} {1 5020 0.5 0.5 ? ?} {1 5020 0.9 ? 0.4 0.5} {2 4000 1.7999999999999998 0.6 0.6 0.6} {2 4001 0.8 0.8 ? ?} {2 4001 0.71 0.7 0.01 ?} {2 4010 1.6 ? 0.8 0.8} {2 4010 1.4 ? 0.7 0.7} {2 5010 2.7 0.9 0.9 0.9} {2 10000 0.9 0.9 ? ?} {2 10000 1.8 ? 0.9 0.9} {3 876 3.0 1 1 1}}
+
+test select {ssum condition} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=ssum($sequenced == "v", $freq)} sequenced-* freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test sequenced-sample1 sequenced-sample2 sequenced-sample3 freq-sample1 freq-sample2 freq-sample3} {1 259 0.41000000000000003 v v v 0.1 0.11 0.2} {1 4001 0.30000000000000004 v v r 0.2 0.1 0.2} {1 4050 0.3 v u u 0.3 ? ?} {1 5000 1.0 v v r 0.4 0.6 0.6} {1 5020 0.5 v r r 0.5 ? ?} {1 5020 0.9 r v v ? 0.4 0.5} {2 4000 1.7999999999999998 v v v 0.6 0.6 0.6} {2 4001 0.8 v r r 0.8 ? ?} {2 4001 0.7 v r r 0.7 0.01 ?} {2 4010 1.6 u v v ? 0.8 0.8} {2 4010 1.4 u v v ? 0.7 0.7} {2 5010 2.7 v v v 0.9 0.9 0.9} {2 10000 0.9 v r r 0.9 ? ?} {2 10000 1.8 r v v ? 0.9 0.9} {3 876 3.0 v v v 1 1 1}}
+
+test select {savg} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=savg($freq)} freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.1366666666666667 0.1 0.11 0.2} {1 4001 0.16666666666666669 0.2 0.1 0.2} {1 4050 0.3 0.3 ? ?} {1 5000 0.5333333333333333 0.4 0.6 0.6} {1 5020 0.5 0.5 ? ?} {1 5020 0.45 ? 0.4 0.5} {2 4000 0.6 0.6 0.6 0.6} {2 4001 0.8 0.8 ? ?} {2 4001 0.355 0.7 0.01 ?} {2 4010 0.8 ? 0.8 0.8} {2 4010 0.7 ? 0.7 0.7} {2 5010 0.9 0.9 0.9 0.9} {2 10000 0.9 0.9 ? ?} {2 10000 0.9 ? 0.9 0.9} {3 876 1.0 1 1 1}}
+
+test select {savg cond allways} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=savg(1,$freq)} freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.1366666666666667 0.1 0.11 0.2} {1 4001 0.16666666666666669 0.2 0.1 0.2} {1 4050 0.3 0.3 ? ?} {1 5000 0.5333333333333333 0.4 0.6 0.6} {1 5020 0.5 0.5 ? ?} {1 5020 0.45 ? 0.4 0.5} {2 4000 0.6 0.6 0.6 0.6} {2 4001 0.8 0.8 ? ?} {2 4001 0.355 0.7 0.01 ?} {2 4010 0.8 ? 0.8 0.8} {2 4010 0.7 ? 0.7 0.7} {2 5010 0.9 0.9 0.9 0.9} {2 10000 0.9 0.9 ? ?} {2 10000 0.9 ? 0.9 0.9} {3 876 1.0 1 1 1}}
+
+test select {sstdev} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=sstdev($freq)} freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.044969125210773474 0.1 0.11 0.2} {1 4001 0.04714045207910317 0.2 0.1 0.2} {1 4050 0.0 0.3 ? ?} {1 5000 0.09428090415820632 0.4 0.6 0.6} {1 5020 0.0 0.5 ? ?} {1 5020 0.04999999999999999 ? 0.4 0.5} {2 4000 0.0 0.6 0.6 0.6} {2 4001 0.0 0.8 ? ?} {2 4001 0.345 0.7 0.01 ?} {2 4010 0.0 ? 0.8 0.8} {2 4010 0.0 ? 0.7 0.7} {2 5010 0.0 0.9 0.9 0.9} {2 10000 0.0 0.9 ? ?} {2 10000 0.0 ? 0.9 0.9} {3 876 0.0 1 1 1}}
+
+test select {sstdev cond allways} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=sstdev(1,$freq)} freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.044969125210773474 0.1 0.11 0.2} {1 4001 0.04714045207910317 0.2 0.1 0.2} {1 4050 0.0 0.3 ? ?} {1 5000 0.09428090415820632 0.4 0.6 0.6} {1 5020 0.0 0.5 ? ?} {1 5020 0.04999999999999999 ? 0.4 0.5} {2 4000 0.0 0.6 0.6 0.6} {2 4001 0.0 0.8 ? ?} {2 4001 0.345 0.7 0.01 ?} {2 4010 0.0 ? 0.8 0.8} {2 4010 0.0 ? 0.7 0.7} {2 5010 0.0 0.9 0.9 0.9} {2 10000 0.0 0.9 ? ?} {2 10000 0.0 ? 0.9 0.9} {3 876 0.0 1 1 1}}
+
+test select {smedian} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=smedian($freq)} freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.11 0.1 0.11 0.2} {1 4001 0.2 0.2 0.1 0.2} {1 4050 0.3 0.3 ? ?} {1 5000 0.6 0.4 0.6 0.6} {1 5020 0.5 0.5 ? ?} {1 5020 0.45 ? 0.4 0.5} {2 4000 0.6 0.6 0.6 0.6} {2 4001 0.8 0.8 ? ?} {2 4001 0.355 0.7 0.01 ?} {2 4010 0.8 ? 0.8 0.8} {2 4010 0.7 ? 0.7 0.7} {2 5010 0.9 0.9 0.9 0.9} {2 10000 0.9 0.9 ? ?} {2 10000 0.9 ? 0.9 0.9} {3 876 1 1 1 1}}
+
+test select {smedian cond allways} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=smedian(1,$freq)} freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.11 0.1 0.11 0.2} {1 4001 0.2 0.2 0.1 0.2} {1 4050 0.3 0.3 ? ?} {1 5000 0.6 0.4 0.6 0.6} {1 5020 0.5 0.5 ? ?} {1 5020 0.45 ? 0.4 0.5} {2 4000 0.6 0.6 0.6 0.6} {2 4001 0.8 0.8 ? ?} {2 4001 0.355 0.7 0.01 ?} {2 4010 0.8 ? 0.8 0.8} {2 4010 0.7 ? 0.7 0.7} {2 5010 0.9 0.9 0.9 0.9} {2 10000 0.9 0.9 ? ?} {2 10000 0.9 ? 0.9 0.9} {3 876 1 1 1 1}}
+
+test select {smode} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=smode($freq)} freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.2,0.11,0.1 0.1 0.11 0.2} {1 4001 0.2 0.2 0.1 0.2} {1 4050 ? 0.3 ? ?} {1 5000 0.6 0.4 0.6 0.6} {1 5020 ? 0.5 ? ?} {1 5020 0.4,0.5,? ? 0.4 0.5} {2 4000 0.6 0.6 0.6 0.6} {2 4001 ? 0.8 ? ?} {2 4001 0.7,?,0.01 0.7 0.01 ?} {2 4010 0.8 ? 0.8 0.8} {2 4010 0.7 ? 0.7 0.7} {2 5010 0.9 0.9 0.9 0.9} {2 10000 ? 0.9 ? ?} {2 10000 0.9 ? 0.9 0.9} {3 876 1 1 1 1}}
+
+test select {smode cond allways} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=smode(1,$freq)} freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.2,0.11,0.1 0.1 0.11 0.2} {1 4001 0.2 0.2 0.1 0.2} {1 4050 ? 0.3 ? ?} {1 5000 0.6 0.4 0.6 0.6} {1 5020 ? 0.5 ? ?} {1 5020 0.4,0.5,? ? 0.4 0.5} {2 4000 0.6 0.6 0.6 0.6} {2 4001 ? 0.8 ? ?} {2 4001 0.7,?,0.01 0.7 0.01 ?} {2 4010 0.8 ? 0.8 0.8} {2 4010 0.7 ? 0.7 0.7} {2 5010 0.9 0.9 0.9 0.9} {2 10000 ? 0.9 ? ?} {2 10000 0.9 ? 0.9 0.9} {3 876 1 1 1 1}}
+
+test select {spercent} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=spercent($sequenced == "v", lmax($freq) > 0.1)} sequenced-* freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test sequenced-sample1 sequenced-sample2 sequenced-sample3 freq-sample1 freq-sample2 freq-sample3} {1 259 66.66666666666667 v v v 0.1 0.11 0.2} {1 4001 50.0 v v r 0.2 0.1 0.2} {1 4050 100.0 v u u 0.3 ? ?} {1 5000 100.0 v v r 0.4 0.6 0.6} {1 5020 100.0 v r r 0.5 ? ?} {1 5020 100.0 r v v ? 0.4 0.5} {2 4000 100.0 v v v 0.6 0.6 0.6} {2 4001 100.0 v r r 0.8 ? ?} {2 4001 100.0 v r r 0.7 0.01 ?} {2 4010 100.0 u v v ? 0.8 0.8} {2 4010 100.0 u v v ? 0.7 0.7} {2 5010 100.0 v v v 0.9 0.9 0.9} {2 10000 100.0 v r r 0.9 ? ?} {2 10000 100.0 r v v ? 0.9 0.9} {3 876 100.0 v v v 1 1 1}}
+
 testsummarize

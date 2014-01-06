@@ -66,31 +66,27 @@ proc tcl::mathfunc::distinct {args} {
 }
 
 proc tcl::mathfunc::lavg args {
-	set data {}
-	foreach v $args {
-		if {[isdouble $v]} {
-			lappend data $v
-		} else {
-			foreach v [split $v ";, "] {
-				if {[isdouble $v]} {lappend data $v}
-			}
-		}
-	}
-	lmath_average $data
+	lmath_average [concat_numericvect $args]
+}
+
+proc tcl::mathfunc::lstddev args {
+	lmath_stdev [concat_numericvect $args]
+}
+
+proc tcl::mathfunc::lstdev args {
+	lmath_stdev [concat_numericvect $args]
 }
 
 proc tcl::mathfunc::lsum args {
-	set data {}
-	foreach v $args {
-		if {[isdouble $v]} {
-			lappend data $v
-		} else {
-			foreach v [split $v ";, "] {
-				if {[isdouble $v]} {lappend data $v}
-			}
-		}
-	}
-	lmath_sum $data
+	lmath_sum [concat_numericvect $args]
+}
+
+proc tcl::mathfunc::lmedian args {
+	median [concat_numericvect $args]
+}
+
+proc tcl::mathfunc::lmode args {
+	join [mode [concat_vect $args]] ,
 }
 
 proc tcl::mathfunc::vif {args} {

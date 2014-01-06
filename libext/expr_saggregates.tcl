@@ -30,11 +30,55 @@ proc tcl::mathfunc::smax_cond_ {args} {
 	::tcl::mathfunc::lmax $result
 }
 
-#; **smin(?condition?,value)**: returns the minimum of results of value for each sample for which (if given) **condition** is true
-#; **smax(?condition?,value)**: returns the maximum of results of value for each sample for which (if given) **condition** is true
-#; **ssum(?condition?,value)**: returns the sum of results of value for each sample for which (if given) **condition** is true
-#; **savg(?condition?,value)**: returns the average of results of value for each sample for which (if given) **condition** is true
-#; **sstddev(?condition?,value)**: returns the standard deviation of results of value for each sample for which (if given) **condition** is true
-#; **smedian(?condition?,value)**: returns the median of results of value for each sample for which (if given) **condition** is true
-#; **smode(?condition?,value)**: returns the mode of results of value for each sample for which (if given) **condition** is true
-#; **percent(condition1,condition2)**: returns 100.0*(number of samples for which condition1 and condition2 are true)/(number of samples for which condition1 is true)
+proc tcl::mathfunc::ssum_cond_ {args} {
+	set result {}
+	foreach {if value} $args {
+		if {$if} {lappend result $value}
+	}
+	::tcl::mathfunc::lsum $result
+}
+
+proc tcl::mathfunc::savg_cond_ {args} {
+	set result {}
+	foreach {if value} $args {
+		if {$if} {lappend result $value}
+	}
+	::tcl::mathfunc::lavg $result
+}
+
+proc tcl::mathfunc::sstdev_cond_ {args} {
+	set result {}
+	foreach {if value} $args {
+		if {$if} {lappend result $value}
+	}
+	::tcl::mathfunc::lstddev $result
+}
+
+proc tcl::mathfunc::smedian_cond_ {args} {
+	set result {}
+	foreach {if value} $args {
+		if {$if} {lappend result $value}
+	}
+	::tcl::mathfunc::lmedian $result
+}
+
+proc tcl::mathfunc::smode_cond_ {args} {
+	set result {}
+	foreach {if value} $args {
+		if {$if} {lappend result $value}
+	}
+	::tcl::mathfunc::lmode $result
+}
+
+proc tcl::mathfunc::spercent_ {args} {
+	set total 0
+	set selected 0
+	foreach {tot sel} $args {
+		if {$tot} {
+			incr total
+			if {$sel} {incr selected}
+		}
+	}
+	if {$total == 0} {return NaN}
+	expr {100.0*$selected/$total}
+}
