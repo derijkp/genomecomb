@@ -102,7 +102,7 @@ If the chromosome value in the query or the data file starts with chr, this part
 ; **hovar(samplename)**: true if the given sample is a homozygous variant. This is equivalent to ($sequenced-samplename == "v" && $alleleSeq1-samplename == $alleleSeq2-samplename)
 
 === Number functions ===
-; **between(value,{min max})**: true of value is >= min and <= max (e.g. "between($begin,1000,2000)")
+; **between(value,{min max})** or **between(value,min,max)**: true of value is >= min and <= max (e.g. "between($begin,1000,2000)")
 This function can also be used as an operator, eg "$field between {1 2}"
 ; **min(a1,a2,...)**: returns the minimum of a1, a2, ...
 min will return an error if one of the values is not a number. Use lmin if some values are
