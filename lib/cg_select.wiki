@@ -152,6 +152,7 @@ all elements in the other vector. Supported operators are:
 @**, @*, @/, @%, @-, @+, @>, @<, @>=, @<=, @==, @!=, @&&, @||, vand, vor, vin, vni
 
 === vector functions (that return vectors) ===
+; **vdistinct(vector, ...)**: returns a vector in which each element in one of the vectors occurs only once
 ; **vabs(vector)**: returns vector of absolute values of given vector
 ; **vavg(vector1,vector2,...)**: returns vector with average value for each position in the vector
 ; **vmax(vector1,vector2,...)**: returns vector with maximum value for each position in the vector

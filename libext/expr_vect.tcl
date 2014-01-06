@@ -65,6 +65,10 @@ proc tcl::mathfunc::distinct {args} {
 	join [list_remdup $args] ,
 }
 
+proc tcl::mathfunc::vdistinct args {
+	join [distinct {*}[concat_vect $args]] ,
+}
+
 proc tcl::mathfunc::lavg args {
 	lmath_average [concat_numericvect $args]
 }
