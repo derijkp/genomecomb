@@ -1,3 +1,3 @@
-proc tcl::mathfunc::concat {separator args} {
-	join $args $separator
+proc tcl::mathfunc::concat {args} {
+	join $args ""
 }
