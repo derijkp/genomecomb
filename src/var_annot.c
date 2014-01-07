@@ -154,14 +154,15 @@ fprintf(stdout,"----- %d\t%s\t%d\t%d\n",1,Loc_ChrString(chromosome1),start1,end1
 fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,Loc_ChrString(chromosome2),start2,end2);
 */
 	 	comp = DStringLocCompare(chromosome1,prevchromosome1);
-		comptype = DStringLocCompare(type1,prevtype1);
-		compalt = DStringLocCompare(alt1,prevalt1);
+		comptype = DStringCompare(type1,prevtype1);
+		compalt = DStringCompare(alt1,prevalt1);
 		if (comp < 0 || (comp == 0 && 
 			(start1 < prevstart1 || (start1 == prevstart1 && 
 			(end1 < prevend1 || (end1 == prevend1 &&
 			(comptype < 0 || (comptype == 0 && compalt < 0)
 		))))))) {
 			fprintf(stderr,"Cannot annotate because the variant file (%s) is not correctly sorted (sort correctly using \"cg select -s -\")\n",argv[1]);
+			fprintf(stderr,"%s:%d-%d:%s:%s came before %s:%d-%d:%s:%s\n",prevchromosome1->string,prevstart1,prevend1,prevtype1->string,prevalt1->string, chromosome1->string,start1,end1,type1->string,alt1->string);
 			exit(1);
 		} else if (comp > 0) {
 			/* prevchromosome1 = chromosome1; */
@@ -210,6 +211,7 @@ NODPRINT("line2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),prevstart2,preven
 NODPRINT("prevline2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),prevstart2,prevend2,prevtype2->string,prevalt2->string)
 NODPRINT("line2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),start2,end2,type2->string,alt2->string)
 				fprintf(stderr,"Cannot annotate because the database file is not correctly sorted (sort correctly using \"cg select -s -\")\n");
+				fprintf(stderr,"%s:%d-%d:%s:%s came before %s:%d-%d:%s:%s\n",prevchromosome2->string,prevstart2,prevend2,prevtype2->string,prevalt2->string, chromosome2->string,start2,end2,type2->string,alt2->string);
 				exit(1);
 			} else if (comp > 0) {
 				/* prevchromosome2 = chromosome2; */

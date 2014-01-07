@@ -57,12 +57,12 @@ Dest *bcol_make_getout(Hash_table *hashtable,char *pre,DString *chromosome) {
 
 int main(int argc, char *argv[]) {
 	Hash_table *hashtable;
-	Dest *o,*po = NULL;
+	Dest *o = NULL,*po = NULL;
 	DStringArray *result = NULL;
 	DString *line = NULL,*chromosome = NULL;
 	Hash_iter iter;
 	Hash_bucket *bucket;
-	char *pre,*type,*defaultvalue = "";
+	char *pre,*type = "u",*defaultvalue = "";
 	uint64_t offset, poffset = -1, size;
 	int reverse = 0, isunsigned = 0, header = 0;
 	int col = 0,max = 0,offsetcol = -1,chrcol = -1;

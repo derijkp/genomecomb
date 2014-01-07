@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
 	DString line;
 	char curchr[1000], *linepos = NULL, *scanpos = NULL;
 	ssize_t read;
-	int chrcol,poscol,valuecol,above,shift,maxcol,pos,prev,value,cutoff,accept,header;
+	int chrcol,poscol,valuecol,above,shift,maxcol,pos,prev=0,value,cutoff,accept,header;
 	int status,begin=0,count;
 	if ((argc != 9)) {
 		fprintf(stderr,"Format is: getregions chromosome chrpos poscol valuecol cutoff above shift header");

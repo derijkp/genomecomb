@@ -164,12 +164,13 @@ DString *DStringNewFromInt(int i) {
  */
 #define UCHAR(c) ((unsigned char) (c))
 #define NATDIGIT(c) (isdigit(UCHAR(*(c))))
+#define blank(char) (char == ' ' || char == '\t')
 int naturalcompare (char const *a, char const *b,int alen,int blen) {
 	int diff, digitleft,digitright;
 	int secondaryDiff = 0,prezero,invert,comparedigits;
 	char *left=NULL,*right=NULL,*keep=NULL;
-	while (isblank(*a) && alen) {a++; alen--;}
-	while (isblank(*b) && blen) {b++; blen--;}
+	while (alen && blank(*a)) {a++; alen--;}
+	while (blen && blank(*b)) {b++; blen--;}
 	left = (char *)a;
 	right = (char *)b;
 	/* fprintf(stdout,"%s <> %s\n",a,b);fflush(stdout); */
@@ -333,6 +334,11 @@ int naturalcompare (char const *a, char const *b,int alen,int blen) {
 
 int DStringCompare(DString *a, DString *b) {
 	if (a == b) {return 0;}
+	if (a == NULL) {
+		return 1;
+	} else if (b == NULL) {
+		return -1;
+	}
 	return naturalcompare(a->string,b->string,a->size,b->size);
 }
 

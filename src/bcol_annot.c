@@ -56,6 +56,7 @@ int main(int argc, char *argv[]) {
 	 	comp = DStringLocCompare(chromosome1,curchromosome);
 		if (comp < 0 || (comp == 0 && (start1 < prevstart1 || (start1 == prevstart1 && end1 < prevend1)))) {
 			fprintf(stderr,"Cannot annotate because the variant file (%s) is not correctly sorted (sort correctly using \"cg select -s -\")",argv[1]);
+			fprintf(stderr,"%s:%d-%d came before %s:%d-%d\n",curchromosome->string,prevstart1,prevend1, chromosome1->string,start1,end1);
 			exit(1);
 		} else if (comp > 0) {
 			DStringCopy(curchromosome,chromosome1);
@@ -92,6 +93,7 @@ int main(int argc, char *argv[]) {
 			DStringDestroy(chromosomekeep);
 			if (comp < 0) {
 				fprintf(stderr,"Cannot annotate because the bcol file arguments are not correctly sorted");
+				fprintf(stderr,"%s came before %s\n",chromosomekeep->string, chromosome2->string);
 				exit(1);
 			}
 			comp = DStringLocCompare(chromosome2, chromosome1);
