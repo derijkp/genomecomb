@@ -20,3 +20,8 @@ proc tcl::mathfunc::shares {list valuelist} {
 	}
 	return 0
 }
+
+proc tcl::mathfunc::oneof args {
+	set value [list_shift args]
+	::inlist $args $value
+}

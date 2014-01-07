@@ -229,15 +229,6 @@ proc tsv_select_counthasall {ids operator value} {
 	return "([join $temp " + "])"
 }
 
-proc tsv_select_oneof {ids} {
-	set value [list_shift ids]
-	set temp {}
-	foreach id $ids {
-		lappend temp "$value == $id"
-	}
-	return "([join $temp " || "])"
-}
-
 proc tsv_select_region {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set ids [split $ids ":-_ ,\{\}\""]
@@ -758,9 +749,6 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 						} else {
 							set temp "${val}\([join $ids ", "]\)"
 						}
-					}
-					oneof {
-						set temp [tsv_select_oneof $ids]
 					}
 					default {
 						set temp "${val}\([join $ids ", "]\)"
