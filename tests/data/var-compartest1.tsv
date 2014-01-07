@@ -1,0 +1,2 @@
+chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	genoqual	loglikelihood	coverage	DV	SP	PL	totalcoverage	DP4	MQ	FQ	AF1	AC1	totalallelecount	IS	allelecount	G3	HWE	CLR	UGT	CGT	PV4	INDEL	PC2	PCHI2	QCHI2	PR	QBD	RPB	MDV	VDB	cluster
+chr6	1048	1052	sub	caaa	a	.	67.5	.	a	a	v	m	0	1;1	75		22		0	255,186,147	70	0,0,0,22	60	-73.5	1	2		15,0.208333								1								2.733519e-04	

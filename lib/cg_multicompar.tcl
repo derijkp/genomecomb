@@ -107,6 +107,15 @@ proc multicompar_annot_join {cur1 cur2} {
 	return [join $result \t]
 }
 
+proc multicompar_getcomp {line poss split file} {
+	set comp1 [list_sub $line $poss]
+	if {![llength $line]} {return ~}
+	if {$split && [regexp , [lindex $comp1 end]]} {
+		error "split mode does not allow multiallelic variants: $comp1 in file $file"
+	}
+	join $comp1 " "
+}
+
 proc multicompar {compar_file dir {split 0} {listfields {}}} {
 	global cache joinposs1 joinposs2 comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2 refpos1 refpos2 altpos1 altpos2 alleleposs1 alleleposs2 listfields1 listfields2 sequenced2pos
 	catch {close $f1}; catch {close $f2}; catch {close $o}
@@ -200,16 +209,10 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 	puts $o [join $oheader \t]
 	set cur1 [split [gets $f1] \t]
 	if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
-	set comp1 [list_sub $cur1 $comparposs1]
-	if {[regexp , [lindex $comp1 end]]} {
-		error "split mode does not allow multiallelic variants: $comp1 in file $compar_file"
-	}
+	set comp1 [multicompar_getcomp $cur1 $comparposs1 $split $compar_file]
 	set cur2 [split [gets $f2] \t]
 	if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
-	set comp2 [list_sub $cur2 $comparposs2]
-	if {[regexp , [lindex $comp2 end]]} {
-		error "split mode does not allow multiallelic variants: $comp2 in file $file2"
-	}
+	set comp2 [multicompar_getcomp $cur2 $comparposs2 $split $file2]
 	set num 1; set next 100000
 	while {![eof $f1] || ![eof $f2]} {
 		incr num
@@ -219,26 +222,17 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 			puts $o [multicompar_annot_join $cur1 $cur2]
 			set cur1 [compare_annot_getline $f1]
 			if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
-			set comp1 [list_sub $cur1 $comparposs1]
-			if {[regexp , [lindex $comp1 end]]} {
-				error "split mode does not allow multiallelic variants: $comp1 in file $compar_file"
-			}
+			set comp1 [multicompar_getcomp $cur1 $comparposs1 $split $compar_file]
 			set cur2 [compare_annot_getline $f2]
 			if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
-			set comp2 [list_sub $cur2 $comparposs2]
-			if {[regexp , [lindex $comp2 end]]} {
-				error "split mode does not allow multiallelic variants: $comp2 in file $file2"
-			}
+			set comp2 [multicompar_getcomp $cur2 $comparposs2 $split $file2]
 		} elseif {$d < 0} {
 			while {[loc_compare $comp1 $comp2] < 0} {
 				puts $o [multicompar_annot_join $cur1 -]
 				if {[eof $f1]} break
 				set cur1 [compare_annot_getline $f1]
 				if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
-				set comp1 [list_sub $cur1 $comparposs1]
-				if {[regexp , [lindex $comp1 end]]} {
-					error "split mode does not allow multiallelic variants: $comp1 in file $compar_file"
-				}
+				set comp1 [multicompar_getcomp $cur1 $comparposs1 $split $compar_file]
 				if {![llength $cur1]} break
 				incr num
 				if {![expr {$num % 100000}]} {putslog $num}
@@ -249,10 +243,7 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 				if {[eof $f2]} break
 				set cur2 [compare_annot_getline $f2]
 				if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
-				set comp2 [list_sub $cur2 $comparposs2]
-				if {[regexp , [lindex $comp2 end]]} {
-					error "split mode does not allow multiallelic variants: $comp2 in file $file2"
-				}
+				set comp2 [multicompar_getcomp $cur2 $comparposs2 $split $file2]
 				if {![llength $cur2]} break
 				incr num
 				if {![expr {$num % 100000}]} {putslog $num}

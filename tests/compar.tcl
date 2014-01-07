@@ -207,6 +207,13 @@ test multicompar {merge} {
 	exec diff tmp/mcompar.tsv data/expected-multicompar-merge.tsv
 } {}
 
+test multicompar {sort empty bug} {
+	test_cleantmp
+	# this gave an incorrectly sorted file
+	cg multicompar -split 1 tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
+	cg checksort tmp/temp.tsv
+} {}
+
 test_cleantmp
 
 set ::env(PATH) $keeppath
