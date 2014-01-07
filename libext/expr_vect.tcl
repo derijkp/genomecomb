@@ -49,6 +49,10 @@ proc tcl::mathfunc::lcount {args} {
 	return $result
 }
 
+proc tcl::mathfunc::lindex {list pos} {
+	::lindex [split $list ";, "] $pos
+}
+
 proc tcl::mathfunc::llen {args} {
 	set result 0
 	foreach value $args {
