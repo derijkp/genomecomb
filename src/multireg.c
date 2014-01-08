@@ -39,9 +39,11 @@ int main(int argc, char *argv[]) {
 	DStringArray *result1=NULL,*result2=NULL;
 	DString *line1 = NULL,*line2 = NULL,*cur1 = NULL;
 	DString *chromosome1 = NULL, *chromosome2 = NULL, *curchromosome = NULL;
+	DString *prevchromosome1 = NULL, *prevchromosome2 = NULL;
 	char *nulldata;
 	int comp1,comp2,comp;
 	int chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2;
+	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
 	int start1=-1,end1=-1,start2=-1,end2=-1;
 	int error1,error2,nextpos=0;
 	if ((argc != 10)) {
@@ -57,6 +59,7 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	nulldata = argv[5];
+	prevchromosome1 = DStringNew();	prevchromosome2 = DStringNew();
 	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
 	f2 = fopen64_or_die(argv[6],"r");
 	chr2pos = atoi(argv[7]);
@@ -91,9 +94,11 @@ NODPRINT("%s:%d-%d",chromosome2.string,start2,end2)
 		if ((comp < 0) || (comp == 0 && end2 <= start1)) {
 			fprintf(stdout,"%s\t%d\t%d\t%s\t%d\n",Loc_ChrString(chromosome2),start2,end2,nulldata,1);
 			error2 = multireg_next(f2,line2,chr2pos,start2pos,end2pos,max2,result2,&chromosome2,&start2,&end2,NULL);
+			checksortreg(prevchromosome2,&prevstart2,&prevend2,chromosome2,start2,end2,argv[6]);
 		} else if ((comp > 0) || (comp == 0 && end1 <= start2)) {
 			fprintf(stdout,"%s\t%d\t%d\t%s\t%d\n",Loc_ChrString(chromosome1),start1,end1,cur1->string,0);
 			error1 = multireg_next(f1,line1,chr1pos,start1pos,end1pos,max1,result1,&chromosome1,&start1,&end1,&cur1);
+			checksortreg(prevchromosome1,&prevstart1,&prevend1,chromosome1,start1,end1,argv[1]);
 		} else {
 			if (start1 < start2) {
 				fprintf(stdout,"%s\t%d\t%d\t%s\t%d\n",Loc_ChrString(chromosome1),start1,start2,cur1->string,0);
@@ -107,14 +112,18 @@ NODPRINT("%s:%d-%d",chromosome2.string,start2,end2)
 				fprintf(stdout,"%s\t%d\t%d\t%s\t%d\n",Loc_ChrString(chromosome1),start1,end2,cur1->string,1);
 				start1 = end2;
 				error2 = multireg_next(f2,line2,chr2pos,start2pos,end2pos,max2,result2,&chromosome2,&start2,&end2,NULL);
+				checksortreg(prevchromosome2,&prevstart2,&prevend2,chromosome2,start2,end2,argv[6]);
 			} else if (end1 < end2) {
 				fprintf(stdout,"%s\t%d\t%d\t%s\t%d\n",Loc_ChrString(chromosome1),start1,end1,cur1->string,1);
 				start2 = end1;
 				error1 = multireg_next(f1,line1,chr1pos,start1pos,end1pos,max1,result1,&chromosome1,&start1,&end1,&cur1);
+				checksortreg(prevchromosome1,&prevstart1,&prevend1,chromosome1,start1,end1,argv[1]);
 			} else {
 				fprintf(stdout,"%s\t%d\t%d\t%s\t%d\n",Loc_ChrString(chromosome1),start1,end1,cur1->string,1);
 				error1 = multireg_next(f1,line1,chr1pos,start1pos,end1pos,max1,result1,&chromosome1,&start1,&end1,&cur1);
+				checksortreg(prevchromosome1,&prevstart1,&prevend1,chromosome1,start1,end1,argv[1]);
 				error2 = multireg_next(f2,line2,chr2pos,start2pos,end2pos,max2,result2,&chromosome2,&start2,&end2,NULL);
+				checksortreg(prevchromosome2,&prevstart2,&prevend2,chromosome2,start2,end2,argv[6]);
 			}
 		}
 	}
@@ -122,6 +131,8 @@ NODPRINT("%s:%d-%d",chromosome2.string,start2,end2)
 	fclose(f2);
 	if (line1) {DStringDestroy(line1);}
 	if (line2) {DStringDestroy(line2);}
+	if (prevchromosome1) {DStringDestroy(prevchromosome1);}
+	if (prevchromosome2) {DStringDestroy(prevchromosome2);}
 	if (result1) {DStringArrayDestroy(result1);}
 	if (result2) {DStringArrayDestroy(result2);}
 	exit(EXIT_SUCCESS);

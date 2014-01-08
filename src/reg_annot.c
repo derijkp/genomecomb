@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
 	DString *line1 = NULL,*line2 = NULL,*linekeep = NULL,*linetemp = NULL,*empty=NULL;
 	DString **data = NULL;
 	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
+	DString *prevchromosome1 = NULL, *prevchromosome2 = NULL;
 	int comp,chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2;
 	int datalen=0,*datapos=NULL;
 	unsigned int numfields1,numfields2,numfields,pos1,pos2;
@@ -60,6 +61,7 @@ NODPRINT("%d",datapos[i])
 	}
 	/* allocate */
 	line1 = DStringNew(); line2=DStringNew(); linekeep=DStringNew(); empty = DStringNew();
+	prevchromosome1 = DStringNew();	prevchromosome2 = DStringNew();
 	curchromosome = DStringEmtpy();
 	/* we add 2 to max because we need to have the column itself, and an extra space for the remainder */
 	result1 = DStringArrayNew(max1+2);
@@ -86,16 +88,9 @@ NODPRINT("%d",datapos[i])
 NODPRINT("%d\t%s\t%d\t%d",1,Loc_ChrString(chromosome1),start1,end1)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
-	 	comp = DStringLocCompare(chromosome1,curchromosome);
-		if (comp < 0 || (comp == 0 && (start1 < prevstart1 || (start1 == prevstart1 && end1 < prevend1)))) {
-			fprintf(stderr,"Cannot annotate because the variant file (%s) is not correctly sorted (sort correctly using \"cg select -s -\")",argv[1]);
-			fprintf(stderr,"%s:%d-%d came before %s:%d-%d\n",curchromosome->string,prevstart1,prevend1, chromosome1->string,start1,end1);
-			exit(1);
-		} else if (comp > 0) {
-			DStringCopy(curchromosome,chromosome1);
+		if (checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,end1,argv[1])) {
 			nextpos = 0;
 		}
-		prevstart1 = start1; prevend1 = end1;
 		if (start1 >= nextpos) {
 			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
 			fflush(stderr);
@@ -124,13 +119,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 			chromosome2 = result2->data+chr2pos;
 			sscanf(result2->data[start2pos].string,"%d",&start2);
 			sscanf(result2->data[end2pos].string,"%d",&end2);
-			comp = DStringLocCompare(chromosome2, chromosomekeep);
-			if (comp < 0 || (comp == 0 && (start2 < prevstart2 || (start2 == prevstart2 && end2 < prevend2)))) {
-				fprintf(stderr,"Cannot annotate because the database file is not correctly sorted (sort correctly using \"cg select -s -\")");
-				fprintf(stderr,"%s:%d-%d came before %s:%d-%d\n",chromosomekeep->string,prevstart2,prevend2, chromosome2->string,start2,end2);
-				exit(1);
-			}
-			prevstart2 = start2; prevend2 = end2;
+			checksortreg(prevchromosome2,&prevstart2,&prevend2,chromosome2,start2,end2,"database file");
 			for (i = 0 ; i < datalen ; i++) {
 				if (datapos[i] != -1) {data[i] = result2->data+datapos[i];}
 			}
@@ -223,6 +212,9 @@ DPRINT("data[%d] %d %s",i,data[i]->size,data[i]->string)
 	if (line2) {DStringDestroy(line2);}
 	if (linekeep) {DStringDestroy(linekeep);}
 	if (empty) {DStringDestroy(empty);}
+	if (curchromosome) {DStringDestroy(curchromosome);}
+	if (prevchromosome1) {DStringDestroy(prevchromosome1);}
+	if (prevchromosome2) {DStringDestroy(prevchromosome2);}
 	if (result1) {DStringArrayDestroy(result1);}
 	if (result2) {DStringArrayDestroy(result2);}
 	if (resultkeep) {DStringArrayDestroy(resultkeep);}

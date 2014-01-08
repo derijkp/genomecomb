@@ -861,3 +861,23 @@ FILE *fopen64_or_die(char *filename,char *mode) {
 	}
 	return(f);
 }
+
+int checksortreg(DString *prevchromosome,int *prevstart,int *prevend,DString *chromosome,int start,int end,char *file) {
+	int comp;
+	if (!prevchromosome || !chromosome) {
+		return 0;
+	}
+ 	comp = DStringLocCompare(chromosome,prevchromosome);
+	if (comp < 0 || (comp == 0 && (start < *prevstart || (start == *prevstart && end < *prevend)))) {
+		fprintf(stderr,"File (%s) is not correctly sorted (sort correctly using \"cg select -s -\")\n",file);
+		fprintf(stderr,"%s:%d-%d came before %s:%d-%d\n",prevchromosome->string,*prevstart,*prevend, chromosome->string,start,end);
+		exit(1);
+	}
+	*prevstart = start; *prevend = end;
+	if (comp > 0) {
+		DStringCopy(prevchromosome,chromosome);
+		return 1;
+	} else {
+		return 0;
+	}
+}

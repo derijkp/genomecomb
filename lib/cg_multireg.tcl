@@ -19,6 +19,7 @@ proc multireg {compar_file file} {
 	if {![file exists $compar_file]} {
 		close $f2
 		set h2base [list_sub $h2 $poss2]
+		cg checksort $file
 		cg select \
 			-f "chromosome=\$[lindex $h2base 0] begin=\$[lindex $h2base 1] end=\$[lindex $h2base 2] $name=1" \
 			$file $compar_file

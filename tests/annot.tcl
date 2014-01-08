@@ -51,15 +51,15 @@ test reg_annot {near indels} {
 
 test reg_annot {sort error 1 in vars} {
 	exec cg annotate data/vars_sorterror1.sft tmp/temp.sft data/reg_annot.sft
-} {*Cannot annotate because the variant file (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+} {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test reg_annot {sort error 2 in vars} {
 	exec cg annotate data/vars_sorterror2.sft tmp/temp.sft data/reg_annot.sft
-} {*Cannot annotate because the variant file (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+} {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test reg_annot {sort error 3 in vars} {
 	exec cg annotate data/vars_sorterror3.sft tmp/temp.sft data/reg_annot.sft
-} {*Cannot annotate because the variant file (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+} {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test reg_annot {no sort error 4 in vars (not relevant for reg)} {
 	catch {exec cg annotate data/vars_sorterror4.sft tmp/temp.sft data/reg_annot.sft 2> /dev/null}
@@ -72,17 +72,17 @@ test reg_annot {no sort error 5 in vars (not relevant for reg)} {
 test reg_annot {sort error 1 in database file} {
 	file copy -force data/vars_sorterror1.sft tmp/reg_annot.sft
 	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/reg_annot.sft
-} {*Cannot annotate because the database file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+} {*File (database file) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test reg_annot {sort error 2 in database file} {
 	file copy -force data/vars_sorterror2.sft tmp/reg_annot.sft
 	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/reg_annot.sft
-} {*Cannot annotate because the database file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+} {*File (database file) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test reg_annot {sort error 3 in database file} {
 	file copy -force data/vars_sorterror3.sft tmp/reg_annot.sft
 	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/reg_annot.sft
-} {*Cannot annotate because the database file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+} {*File (database file) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test var_annot {basic} {
 	exec cg annotate data/vars1.sft tmp/temp.sft data/var_annot.sft 2> /dev/null

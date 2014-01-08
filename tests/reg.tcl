@@ -51,6 +51,36 @@ test multireg {different chromosome naming} {
 	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg4.sft
 } {}
 
+test multireg {sort error 1 in compar_file file} {
+	file delete tmp/temp.tsv
+	file copy data/vars_sorterror1.sft tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv
+} {*File (tmp/temp.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test multireg {sort error 1 in added file from new} {
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/vars_sorterror1.sft
+} {*error in file data/vars_sorterror1.sft: file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test multireg {sort error 1 in added file} {
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/vars_sorterror1.sft
+} {*File (data/vars_sorterror1.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test multireg {sort error 2 in database file} {
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/vars_sorterror2.sft
+} {*File (data/vars_sorterror2.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test multireg {sort error 3 in database file} {
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/vars_sorterror3.sft
+} {*File (data/vars_sorterror3.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+
 test regsubtract {basic} {
 	exec cg regsubtract data/reg1.tsv data/reg2.tsv
 } {chromosome	begin	end
