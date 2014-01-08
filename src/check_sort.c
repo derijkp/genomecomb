@@ -76,6 +76,13 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,Loc_ChrString(chromosome2),start2,
 			(comptype < 0 || (comptype == 0 && compalt < 0)
 		))))))) {
 			fprintf(stderr,"file is not correctly sorted (sort correctly using \"cg select -s -\")\n");
+			if (alt1pos != -1) {
+				fprintf(stderr,"%s:%d-%d:%s:%s came before %s:%d-%d:%s:%s\n",prevchromosome1->string,prevstart1,prevend1,prevtype1->string,prevalt1->string, chromosome1->string,start1,end1,type1->string,alt1->string);
+			} else if (type1pos != -1) {
+				fprintf(stderr,"%s:%d-%d:%s came before %s:%d-%d:%s\n",prevchromosome1->string,prevstart1,prevend1,prevtype1->string, chromosome1->string,start1,end1,type1->string);
+			} else {
+				fprintf(stderr,"%s:%d-%d came before %s:%d-%d\n",prevchromosome1->string,prevstart1,prevend1, chromosome1->string,start1,end1);
+			}
 			exit(1);
 		} else if (comp > 0) {
 			DStringCopy(prevchromosome1,chromosome1);

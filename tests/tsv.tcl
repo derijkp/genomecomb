@@ -171,19 +171,23 @@ set ::env(PATH) $keeppath
 
 test check_sort {sort error 1 in vars} {
 	exec cg checksort data/vars_sorterror1.sft
-} {error in file data/vars_sorterror1.sft: file is not correctly sorted (sort correctly using "cg select -s -")} error
+} {error in file data/vars_sorterror1.sft: file is not correctly sorted (sort correctly using "cg select -s -")
+chr10:43198434-43198435:del: came before chr3:52847042-52847060:del:} error
 
 test check_sort {sort error 2 in vars} {
 	exec cg checksort data/vars_sorterror2.sft
-} {error in file data/vars_sorterror2.sft: file is not correctly sorted (sort correctly using "cg select -s -")} error
+} {error in file data/vars_sorterror2.sft: file is not correctly sorted (sort correctly using "cg select -s -")
+chr3:52847303-52847304:del: came before chr3:52847042-52847060:del:} error
 
 test check_sort {sort error 3 in vars} {
 	exec cg checksort data/vars_sorterror3.sft
-} {error in file data/vars_sorterror3.sft: file is not correctly sorted (sort correctly using "cg select -s -")} error
+} {error in file data/vars_sorterror3.sft: file is not correctly sorted (sort correctly using "cg select -s -")
+chr3:52847303-52847310:snp:G came before chr3:52847303-52847304:snp:G} error
 
 test check_sort {sort error 4 in vars} {
 	exec cg checksort data/vars_sorterror4.sft
-} {error in file data/vars_sorterror4.sft: file is not correctly sorted (sort correctly using "cg select -s -")} error
+} {error in file data/vars_sorterror4.sft: file is not correctly sorted (sort correctly using "cg select -s -")
+chr3:52847303-52847304:ins:G came before chr3:52847303-52847304:ins:G} error
 
 test check_sort {sort error 5 in vars} {
 	cg checksort data/vars_sorterror5.sft
