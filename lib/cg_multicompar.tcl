@@ -107,13 +107,22 @@ proc multicompar_annot_join {cur1 cur2} {
 	return [join $result \t]
 }
 
-proc multicompar_getcomp {line poss split file} {
+proc multicompar_getcomp {line poss split file prevcomp1} {
 	set comp1 [list_sub $line $poss]
 	if {![llength $line]} {return ~}
 	if {$split && [regexp , [lindex $comp1 end]]} {
 		error "split mode does not allow multiallelic variants: $comp1 in file $file"
 	}
-	join $comp1 " "
+	set comp1 [join $comp1 " "]
+	set prevcheck [loc_compare $prevcomp1 $comp1]
+	if {$prevcheck >= 0} {
+		if {$prevcheck > 0} {
+			error "sorting error in \"$file\": \"$prevcomp1\" comes before \"$comp1\""
+		} elseif {$prevcheck == 0 && !$split} {
+			error "error in \"$file\": file uses split alleles (\"$prevcomp1\" occurs more than once and you are not running multicompar with the -split option)"
+		}
+	}
+	return $comp1
 }
 
 proc multicompar {compar_file dir {split 0} {listfields {}}} {
@@ -205,14 +214,16 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 	}
 	set oheader [list_concat $oheader $mergefields]
 	# start
+	set prevcomp1 {}
+	set prevcomp2 {}
 	set o [open $compar_file.temp w]
 	puts $o [join $oheader \t]
 	set cur1 [split [gets $f1] \t]
 	if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
-	set comp1 [multicompar_getcomp $cur1 $comparposs1 $split $compar_file]
+	set comp1 [multicompar_getcomp $cur1 $comparposs1 $split $compar_file $prevcomp1]
 	set cur2 [split [gets $f2] \t]
 	if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
-	set comp2 [multicompar_getcomp $cur2 $comparposs2 $split $file2]
+	set comp2 [multicompar_getcomp $cur2 $comparposs2 $split $file2 $prevcomp2]
 	set num 1; set next 100000
 	while {![eof $f1] || ![eof $f2]} {
 		incr num
@@ -222,17 +233,20 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 			puts $o [multicompar_annot_join $cur1 $cur2]
 			set cur1 [compare_annot_getline $f1]
 			if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
-			set comp1 [multicompar_getcomp $cur1 $comparposs1 $split $compar_file]
+			set comp1 [multicompar_getcomp $cur1 $comparposs1 $split $compar_file $prevcomp1]
+			set prevcomp1 $comp1
 			set cur2 [compare_annot_getline $f2]
 			if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
-			set comp2 [multicompar_getcomp $cur2 $comparposs2 $split $file2]
+			set comp2 [multicompar_getcomp $cur2 $comparposs2 $split $file2 $prevcomp2]
+			set prevcomp2 $comp2
 		} elseif {$d < 0} {
 			while {[loc_compare $comp1 $comp2] < 0} {
 				puts $o [multicompar_annot_join $cur1 -]
 				if {[eof $f1]} break
 				set cur1 [compare_annot_getline $f1]
 				if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
-				set comp1 [multicompar_getcomp $cur1 $comparposs1 $split $compar_file]
+				set comp1 [multicompar_getcomp $cur1 $comparposs1 $split $compar_file $prevcomp1]
+				set prevcomp1 $comp1
 				if {![llength $cur1]} break
 				incr num
 				if {![expr {$num % 100000}]} {putslog $num}
@@ -243,8 +257,8 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 				if {[eof $f2]} break
 				set cur2 [compare_annot_getline $f2]
 				if {[llength $cur2]} {lset cur2 $tp2 [chr_clip [lindex $cur2 $tp2]]}
-				set comp2 [multicompar_getcomp $cur2 $comparposs2 $split $file2]
-				if {![llength $cur2]} break
+				set comp2 [multicompar_getcomp $cur2 $comparposs2 $split $file2 $prevcomp2]
+				set prevcomp2 $comp2
 				incr num
 				if {![expr {$num % 100000}]} {putslog $num}
 				set d [loc_compare $comp1 $comp2]

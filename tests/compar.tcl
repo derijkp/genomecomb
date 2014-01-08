@@ -207,12 +207,25 @@ test multicompar {merge} {
 	exec diff tmp/mcompar.tsv data/expected-multicompar-merge.tsv
 } {}
 
-test multicompar {sort empty bug} {
+test multicompar {sort empty bug split} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
 	cg multicompar -split 1 tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
 	cg checksort tmp/temp.tsv
 } {}
+
+test multicompar {error on split files without split option} {
+	test_cleantmp
+	# this gave an incorrectly sorted file
+	cg multicompar tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
+	cg checksort tmp/temp.tsv
+} {*error in "*var-compartest2.tsv": file uses split alleles ("1 207806142 207806170 sub" occurs more than once and you are not running multicompar with the -split option)*} match error
+
+test multicompar {error on badly sorted files} {
+	test_cleantmp
+	# this gave an incorrectly sorted file
+	cg multicompar tmp/temp.tsv data/vars_sorterror1.sft data/vars_sorterror2.sft
+} {*sorting error in "*vars_sorterror1.sft": "10 43198434 43198435 snp" comes before "3 52847042 52847060 del"*} match error
 
 test_cleantmp
 
