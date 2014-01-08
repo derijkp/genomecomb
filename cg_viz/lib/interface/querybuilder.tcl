@@ -106,6 +106,9 @@ mainw method querybuilder_fillvalues {args} {
 		if {[lindex $list end 1] ne "incomplete"} {
 			set text [list "All values"]
 		}
+	} elseif {$field eq "sample"} {
+		set list [samples [$object.tb qfields]]
+		set text [list "All values"]
 	} else {
 		set pos [lsearch -glob $fields $field-*]
 		if {$pos != -1} {
@@ -116,14 +119,15 @@ mainw method querybuilder_fillvalues {args} {
 			set text [list "not found"]
 		}
 	}
-	while {![isint [lindex $list end 1]]} {
-		if {![llength $list]} break
-		set line [list_pop list]
-		lappend text "[lindex $line 1]: [lindex $line 0]"
+	if {[llength [lindex $list end]] > 1} {
+		while {![isint [lindex $list end 1]]} {
+			if {![llength $list]} break
+			set line [list_pop list]
+			lappend text "[lindex $line 1]: [lindex $line 0]"
+		}
+		set list [list_subindex $list 0]
 	}
 	set qvaluestext [join $text \n]
-	set qnums [list_subindex $list 1]
-	set list [list_subindex $list 0]
 	if {[llength $list]} {
 		# found the values, do nothing else
 	} elseif {[regexp ^sequenced- $field]} {
@@ -141,10 +145,6 @@ mainw method querybuilder_fillvalues {args} {
 		$valuesw set [$valuew get]
 	}
 	$valuew set [$valuesw get]
-#	set qvalues {}
-#	foreach value $list num $qnums {
-#		lappend qvalues "$value ($num)"
-#	}
 	return $qvalues
 }
 
@@ -215,7 +215,8 @@ mainw method querybuilder_makecondition {fields operator values {join " or "}} {
 	foreach field $fields {
 		set temp {}
 		if {[inlist {shares in ni} $operator]} {
-			lappend insert "\$$field $operator [list $values]"
+			set temp [$object querybuilder_quotevalues $values]
+			lappend insert "\$$field $operator \{[join $temp " "]\}"
 		} else { 
 			foreach value $values {
 				set value [$object querybuilder_quotevalue $value]
@@ -227,6 +228,9 @@ mainw method querybuilder_makecondition {fields operator values {join " or "}} {
 				lappend insert "[join $temp $join]"
 			}
 		}
+	}
+	if {[llength $insert] == 1 && [string index $insert 0] eq "\(" && [string index $insert end] eq "\)"} {
+		set insert [string range $insert 1 end-1]
 	}
 	return $insert
 }
@@ -258,7 +262,7 @@ mainw method querybuilder_add {command {join and}} {
 			if {[isdouble $v]} {lappend temp $v} else {lappend temp \"$v\"}
 		}
 		$queryw insert insert "[join $temp ,]"
-	} elseif {$command eq "cond"} {
+	} elseif {$command eq "comp"} {
 		if {![llength $values]} {error "Select some values first"}
 		set value [$object querybuilder_quotevalue [lindex $values 0]]
 		$queryw insert insert " $operator $value"
@@ -313,11 +317,15 @@ mainw method querybuilder_add {command {join and}} {
 		$object.if option entry Truevalue [privatevar $object if(true)]
 		$object.if option entry FalseValue [privatevar $object if(false)]
 		$object.if add go Go "$object querybuilder_insert if(\[getprivate $object if(if) \],\[getprivate $object if(true) \],\[getprivate $object if(false) \]) $join" default
-	} elseif {$command in {and or}} {
+	} elseif {$command in {and or condition}} {
 		if {![llength $fields]} {error "Select some fields first"}
-		set insert [join [$object querybuilder_makecondition $fields $operator $values] "\n    $command "]
-		set join $command
-		$object querybuilder_insert $insert $join
+		set condition [$object querybuilder_makecondition $fields $operator $values]
+		set insert [join $condition "\n    $command "]
+		if {$command eq "condition"} {
+			$object querybuilder_insert $insert ""
+		} else {
+			$object querybuilder_insert $insert $command
+		}
 	} else {
 		global select_functions_insert
 		if {![llength $fields]} {error "Select some fields first"}
@@ -397,17 +405,18 @@ mainw method querybuilder_add {command {join and}} {
 				}
 			}
 			set condition [$object querybuilder_makecondition $sfields $operator $values]
+# putsvars ssamples command sfields operator values
 			if {[llength $ssamples] == 1} {
 				set pre "\$sample == \"[list $ssamples]\" and "
 			} elseif {[llength $ssamples]} {
-				set pre "\$sample in [list $ssamples] and "
+				set pre "\$sample in \{\"[join $ssamples \" \"]\"\} and "
 			} else {
 				set pre ""
 			}
-			if {![llength $condition] > 1} {
-				set condition "${pre}$condition"
-			} else {
+			if {[llength $condition] > 1} {
 				set condition "${pre}([join $condition " and "])"
+			} else {
+				set condition "${pre}[lindex $condition 0]"
 			}
 			if {$command eq "scount"} {
 				set insert "${command}($condition)"
@@ -476,7 +485,7 @@ mainw method querybuilder_functions {{join and} {starttype all}} {
 mainw method querybuilder_fieldsreset {type} {
 	private $object qfieldsfilter qfields
 	if {$type eq "samplefields"} {
-		set list {}
+		set list {sample}
 		foreach field [$object.tb tfields] {
 			if {[regexp {^([^-]+)-} $field temp field]} {
 				lappend list $field
@@ -504,12 +513,12 @@ mainw method querybuilder {args} {
 		set var [privatevar $object fieldcalc]
 		Classy::Entry $object.querybuilder.options.fieldname -label Fieldname -textvariable [privatevar $object fieldname]
 		pack $object.querybuilder.options.fieldname -side top -expand yes -fill x
-		set funcbuttons {_blank field value _blank if count lmin lmax avg sum compare percent and or region isnum}
+		set funcbuttons {_blank condition field value and or _blank if count lmin lmax avg sum compare percent region isnum}
 		set join ""
 	} else {
 		set fieldbuilder 0
 		set var [$object.buttons.query cget -textvariable]
-		set funcbuttons {_blank and or field value cond _blank count region compare lmin lmax avg sum if isnum percent}
+		set funcbuttons {_blank and or condition field value comp _blank count region compare lmin lmax avg sum if isnum percent}
 		set join and
 	}
 	set w $object.querybuilder.options.paned
