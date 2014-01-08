@@ -6,7 +6,7 @@ proc tsv_select_replacevars {tokens header sample} {
 		switch -exact $type {
 			@var {
 				if {$val eq "sample"} {
-					lappend result [list @val $sample]
+					lappend result [list @val \"$sample\"]
 				} elseif {[lsearch $header $val-$sample] != -1} {
 					lappend result [list @var $val-$sample]
 				} elseif {[lsearch $header $val] != -1} {
