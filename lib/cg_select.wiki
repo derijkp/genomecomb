@@ -68,28 +68,80 @@ The query or field lines can contain more than one line (enclose in '').
 Lines starting with a # are comments
 
 == Query ==
-In queries, the value of a field for the line can be accessed using a $ followed by the name of the field.
-e.g.:
+In queries, the value of a field for the line can be accessed using a $ followed by 
+the name of the field, e.g.:
 $start > 10000
 will only return lines where the field start is larger than 10000.
-The special variable ROW will contain the row number of the current line. $ROW starts at 0 for this 
-first line after the header/comments.
+The special variable ROW will contain the row number of the current line.
+$ROW starts at 0 for this first line after the header/comments.
 e.g.:
 $ROW == 1000
 will select data line 1000 in the file.
 
 == Operators ==
-Queries support all operators provided by Tcl expr, with some extra added:
+Queries support all operators provided by Tcl expr:
+; **== !=** : Boolean equal and not equal. Each operator produces a zero/one result. Valid for all operand types.
+; **< > <= >=** : Boolean less, greater, less than or equal, and greater than or equal. Each operator produces 1 if the condition is true, 0 otherwise. These operators may be applied to strings as well as numeric operands, in which case string comparison is used.
+; **+ -** : Add and subtract. Valid for any numeric operands.
+; * / % : Multiply, divide, remainder. None of these operands may be applied to string operands, and remainder may be applied only to integers. The remainder will always have the same sign as the divisor and an absolute value smaller than the divisor.
+; **&&** : Logical AND. Produces a 1 result if both operands are non-zero, 0 otherwise. Valid for numeric operands only (integers or floating-point).
+; **||** : Logical OR. Produces a 0 result if both operands are zero, 1 otherwise. Valid for numeric operands only (integers or floating-point).
+; **- + ~ !** : Unary minus, unary plus, bit-wise NOT, logical NOT. None of these operands may be applied to string operands, and bit-wise NOT may be applied only to integers.
+; **<< >>** : Left and right shift. Valid for integer operands only. A right shift always propagates the sign bit.
+; **&** : Bit-wise AND. Valid for integer operands only.
+; **^** : Bit-wise exclusive OR. Valid for integer operands only.
+; **|** : Bit-wise OR. Valid for integer operands only.
+; **x?y:z** : If-then-else, as in C. If x evaluates to non-zero, then the result is the value of y. Otherwise the result is the value of z. The x operand must have a numeric value.
+
+Some extra operators are added:
 ; condition1 **and** condition2: condition is true if both condition1 and condition2 are true (same as &&)
 ; condition1 **or** condition2: condition is true if either condition1 or condition2 is true (same as ||)
 ; value **~** /pattern/: true if value matches the regular expression given by pattern
+
 Several functions (see further: matches, regexp, oneof, shares, ...) can also be used as operators, e.g.
 ; value **matches** pattern: true if value matches the glob pattern given by **pattern**
 (using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
 ; value **regexp** pattern: true if value matches the regular expression given by **pattern**
 
 == Functions ==
-Queries support all functions provided by Tcl expr, with several extra available:
+Queries support all functions provided by Tcl expr
+; **exp(arg)** : exponential of arg.
+; **fmod(x,y)** : floating-point remainder of the division of x by y.
+; **isqrt(arg)** : Computes the integer part of the square root of arg.
+; **log(arg)** : natural logarithm of arg. Arg must be a positive value.
+; **log10(arg)** : base 10 logarithm of arg. Arg must be a positive value.
+; **pow(x,y)** : Computes the value of x raised to the power y.
+; **sqrt(arg)** : The argument may be any non-negative numeric value.
+
+; **ceil(arg)** : smallest integral floating-point value (i.e. with a zero fractional part) not less than arg. The argument may be any numeric value.
+; **floor(arg)** : largest integral floating-point value (i.e. with a zero fractional part) not greater than arg. The argument may be any numeric value.
+; **round(arg)** : If arg is an integer value, returns arg, otherwise converts arg to integer by rounding and returns the converted value.
+
+; **abs(arg)** : absolute value of arg.
+; **double(arg)** : The argument may be any numeric value, If arg is a floating-point value, returns arg, otherwise converts arg to floating-point and returns the converted value. May return Inf or -Inf when the argument is a numeric value that exceeds the floating-point range.
+; **entier(arg)** : The argument may be any numeric value. The integer part of arg is determined and returned. The integer range returned by this function is unlimited, unlike int and wide which truncate their range to fit in particular storage widths.
+; **int(arg)** : The argument may be any numeric value. The integer part of arg is determined, and then the low order bits of that integer value up to the machine word size are returned as an integer value. For reference, the number of bytes in the machine word are stored in tcl_platform(wordSize).
+; **bool(arg)** : Accepts any numeric value, or any string acceptable to string is boolean, and returns the corresponding boolean value 0 or 1. Non-zero numbers are true. Other numbers are false. Non-numeric strings produce boolean value in agreement with string is true and string is false.
+; **wide(arg)** : The argument may be any numeric value. The integer part of arg is determined, and then the low order 64 bits of that integer value are returned as an integer value.
+
+; **max(arg,...)** : argument with the greatest value.
+; **min(arg,...)** : argument with the least value.
+; **rand()** : Returns a pseudo-random floating-point value in the range (0,1). The generator algorithm is a simple linear congruential generator that is not cryptographically secure. Each result from rand completely determines all future results from subsequent calls to rand, so rand should not be used to generate a sequence of secrets, such as one-time passwords. The seed of the generator is initialized from the internal clock of the machine or may be set with the srand function.
+; **srand(arg)** : The arg, which must be an integer, is used to reset the seed for the random number generator of rand. Returns the first random number (see rand) from that seed. Each interpreter has its own seed.
+
+; **acos(arg)** : arc cosine of arg, in the range [0,pi] radians. Arg should be in the range [-1,1].
+; **asin(arg)** : arc sine of arg, in the range [-pi/2,pi/2] radians. Arg should be in the range [-1,1].
+; **atan(arg)** : arc tangent of arg, in the range [-pi/2,pi/2] radians.
+; **atan2(y,x)** : arc tangent of y/x, in the range [-pi,pi] radians. x and y cannot both be 0. If x is greater than 0, this is equivalent to âatan [expr {y/x}]â.
+; **cos(arg)** : cosine of arg, measured in radians.
+; **cosh(arg)** : hyperbolic cosine of arg. If the result would cause an overflow, an error is returned.
+; **hypot(x,y)** : Computes the length of the hypotenuse of a right-angled triangle âsqrt [expr {x*x+y*y}]â.
+; **sin(arg)** : sine of arg, measured in radians.
+; **sinh(arg)** : hyperbolic sine of arg. If the result would cause an overflow, an error is returned.
+; **tan(arg)** : tangent of arg, measured in radians.
+; **tanh(arg)** : hyperbolic tangent of arg.
+
+Several extra functions have been added:
 
 === Logical functions ===
 ; **if(condition,true,?condition2,true2, ...?false)**: if **condition** is true, the value for "true" will be returned, 
@@ -123,6 +175,7 @@ The following functions allow use of vectors in queries
 
 ; **vector(value1,value2, ...)**: creates a vector from a number of values. If some elements are vectors themselves, they will be concatenated
 ; **lindex(vector, position)**: the value of the element at the given **position** in the list. The first element is at position 0!
+; **llen(vector)**: number of elements in the vector
 ; **lmin(vector, ...)**: the minimum of the list of numbers in vector(s). A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
 ; **lmax(vector, ...)**: the maximum of the vector. A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
 ; **lmind(vector, ..., def)**: same as lmin, but you can set the default value for non-numeric characters is given as the last parameter
@@ -134,14 +187,11 @@ The following functions allow use of vectors in queries
 ; **lstdev(vector, ...)**: the standard deviation of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
 ; **lmedian(vector, ...)**: the median of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
 ; **lmode(vector, ...)**: the mode (element that is most abundant) of the vector. The result can be a new vector (if multiple values occur at the same count)
-; **contains(vector, value)**; true if **vector** contains **value**. 
-This can also be used as an operator: vector contains value
-; **shares(vector, valuelist)**; true if **vector** and the list in **valuelist** (a SPACE separated list!) share a value.
-This can also be used as an operator: vector shares valuelist
+; **contains(vector, value)**; true if **vector** contains **value**. This can also be used as an operator: vector contains value
+; **shares(vector, valuelist)**; true if **vector** and the list in **valuelist** (a SPACE separated list!) share a value. This can also be used as an operator: vector shares valuelist
 ; **lone(vector)**: true if one of elements of the vector is true
 ; **lall(vector)**: true if all elements of the vector are true
 ; **lcount(vector)**: number of elements in vector that are true
-; **llen(vector)**: number of elements in the vector
 
 === vector operators ===
 Several special operators are added that work on comma (or ; or space) separated
@@ -162,8 +212,7 @@ all elements in the other vector. Supported operators are:
 false may be vectors, and a vector is returned
 
 === String functions ===
-; **oneof($field,value1,cvalue2,...)**: returns true if the given field is equal to one of the values
-The default value for non-numeric arguments can be set e.g. to 1000 by giving def=1000 as the first argument
+; **oneof($field,value1,value2,...)**: returns true if the given field is equal to one of the values
 ; **regexp(value,pattern)**: true if value matches the regular expression given by **pattern**
 ; **matches(value,pattern)**:  true if value matches the glob pattern given by **pattern** 
 (using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
@@ -205,6 +254,11 @@ Following sample aggregates are available:
 
 === comparing samples ===
 
+; **compare(samplename1,samplename2, ...)**: compares the variant in the given samples, and returns one of:
+sm (variant with the same genotype in all given samples, with all sequenced)
+df (different: variant in some, reference in other, with all sequenced)
+mm (mismatch; variant in all, but different genotypes, with all sequenced)
+un (unsequenced in some samples, variant in one of the others)
 ; **same(sample1,sample2, ...)**: same: all samples have the same genotype (does not have to be a variant) (all sequenced)
 ; **sm(sample1,sample2, ...)**: same: variant with the same genotype in all given samples (all sequenced)
 ; **df(sample1,sample2, ...)**: different: variant in some, reference in other (all sequenced)

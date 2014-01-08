@@ -158,7 +158,7 @@ mainw method summarybuilder_add {command {join and}} {
 		set insert {}
 		foreach field $fields {
 			set temp {}
-			if {[inlist {oneof shares} $operator]} {
+			if {[inlist {shares} $operator]} {
 				lappend insert "\$$field $operator [list $values]"
 			} else { 
 				foreach value $values {
