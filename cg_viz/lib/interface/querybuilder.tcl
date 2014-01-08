@@ -100,9 +100,21 @@ mainw method querybuilder_fillvalues {args} {
 	set w $object.querybuilder.options.paned
 	set field [lindex [$fieldsw get] 0]
 	if {$field eq ""} return
-	set list [$object.tb values $field]
-	if {[lindex $list end 1] ne "incomplete"} {
-		set text [list "All values"]
+	set fields [$object.tb fields]
+	if {[inlist $fields $field]} {
+		set list [$object.tb values $field]
+		if {[lindex $list end 1] ne "incomplete"} {
+			set text [list "All values"]
+		}
+	} else {
+		set pos [lsearch -glob $fields $field-*]
+		if {$pos != -1} {
+			set list [$object.tb values [lindex $fields $pos]]
+			set text [list "sampled"]
+		} else {
+			set list {}
+			set text [list "not found"]
+		}
 	}
 	while {![isint [lindex $list end 1]]} {
 		if {![llength $list]} break
