@@ -298,6 +298,7 @@ proc cg_annotate {args} {
 	set names {}
 	set newh {}
 	foreach dbfile $dbfiles {
+		putslog "Checking $dbfile"
 		set dbinfo [cg_annotatedb_info $dbfile $near]
 		lappend names [dict get $dbinfo name]
 		lappend newh {*}[dict get $dbinfo newh]
