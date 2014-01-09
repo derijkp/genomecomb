@@ -47,6 +47,7 @@ char *Loc_ChrString(DString *ds);
 void DStringAppend(DString *dstring, char *string);
 void DStringAppendS(DString *dstring, char *string,int size);
 ssize_t DStringGetLine(DString *dstring,	FILE *f1);
+void SkipLine(FILE *f1);
 
 void InitBuffer(Buffer *buffer,int size);
 void DelBuffer(Buffer *buffer);

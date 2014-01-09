@@ -443,6 +443,13 @@ int DStringGetLine(DString *linePtr,	FILE *f1) {
 	return cnt;
 }
 
+void SkipLine(FILE *f1) {
+	register int c;
+	while ((c=getc_unlocked(f1))!=EOF) {
+		if (c == '\n') break;
+	}
+}
+
 void InitBuffer(Buffer *buffer,int size) {
 	buffer->memsize = size;
 	buffer->data = (char *)malloc(size+1);

@@ -44,17 +44,22 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	DStringArray *array = NULL;
 	DString *line = NULL;
 	ssize_t read;
-	int maxtab=0,objc,show,i,error,verbose = INT_MAX,next = INT_MAX;
+	int maxtab=0,objc,show,i,error,verbose = INT_MAX,next = INT_MAX,sample=0;
 	unsigned int line_nr=0;
-	if ((argc < 4)||(argc > 5)) {
-		Tcl_WrongNumArgs(interp, 1, argv, "queryproc varcolumns outcolumns ?verbose?");
+	if ((argc < 4)||(argc > 6)) {
+		Tcl_WrongNumArgs(interp, 1, argv, "queryproc varcolumns outcolumns ?verbose? ?sampleskip?");
 		return TCL_ERROR;
 	}
-	if (argc == 5) {
+	if (argc >= 5) {
 		if (Tcl_GetIntFromObj(interp, argv[4], &verbose) != TCL_OK) {
 			return TCL_ERROR;
 		}
 		next = verbose;
+	}
+	if (argc >= 6) {
+		if (Tcl_GetIntFromObj(interp, argv[5], &sample) != TCL_OK) {
+			return TCL_ERROR;
+		}
 	}
 	if (Tcl_ListObjGetElements(interp, argv[2], &listobjc, &listobjv) != TCL_OK) {
 		return TCL_ERROR;
@@ -161,6 +166,12 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 			}
 		}
 		line_nr++;
+		if (sample) {
+			i = sample;
+			while(i--) {
+				SkipLine(stdin);
+			}
+		}
 	}
 	for (i = 1 ; i <= listobjc ; i++) {
 		Tcl_DecrRefCount(objv[i]);
