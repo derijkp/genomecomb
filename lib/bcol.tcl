@@ -59,10 +59,15 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 				set indexdir [file dir $indexfile]
 				file mkdir $indexdir/colinfo.temp/
 				# exec bcol_indexfile_all $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@ stderr
-				Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
-					bcol_indexfile_all $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@1
-				catch {file delete -force $indexdir/colinfo}
-				file rename -force $indexdir/colinfo.temp/ $indexdir/colinfo
+				if {[catch {
+					Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
+						bcol_indexfile_all $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@1
+					catch {file delete -force $indexdir/colinfo}
+					file rename -force $indexdir/colinfo.temp/ $indexdir/colinfo
+				}]} {
+					Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
+						bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss 2>@1
+				}
 			} else {
 				Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
 					bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss 2>@1
