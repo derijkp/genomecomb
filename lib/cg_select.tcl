@@ -779,7 +779,7 @@ proc tsv_select_expandcode {header code neededfieldsVar} {
 	tsv_select_detokenize $tokens $header neededfields
 }
 
-proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {verbose -1} {sampleskip 0}} {
+proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {verbose -1} {samplingskip 0}} {
 # putsvars query qfields sortfields newheader sepheader f stdin out stdout h inverse group groupcols index
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
@@ -877,7 +877,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				proc tsv_selectc_query {$neededfields} {
 					expr {$pquery}
 				}
-				tsv_selectc tsv_selectc_query [list $neededcols] [list $outcols] $verbose $sampleskip
+				tsv_selectc tsv_selectc_query [list $neededcols] [list $outcols] $verbose $samplingskip
 				exit
 			}]
 		} else {
@@ -960,7 +960,7 @@ proc cg_select {args} {
 		errorformat select
 		exit 1
 	}
-	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0; set inverse 0; set group {}; set groupcols {} ; set verbose -1; set sampleskip 0
+	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0; set inverse 0; set group {}; set groupcols {} ; set verbose -1; set samplingskip 0
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -1021,8 +1021,8 @@ proc cg_select {args} {
 			-v {
 				set verbose $value
 			}
-			-sampleskip {
-				set sampleskip $value
+			-samplingskip {
+				set samplingskip $value
 			}
 			-- break
 			default {
@@ -1034,8 +1034,8 @@ proc cg_select {args} {
 	if {[llength $groupcols] && ![llength $group]} {
 		error "cannot use -gc option without -g option"
 	}
-	if {[llength $group] && $sampleskip} {
-		error "cannot use -sampleskip option with -g option"
+	if {[llength $group] && $samplingskip} {
+		error "cannot use -samplingskip option with -g option"
 	}
 	set args [lrange $args $pos end]
 	# clean fields and query: remove comments \n anf \t to space
@@ -1058,7 +1058,7 @@ proc cg_select {args} {
 	} else {
 		set o stdout
 	}
-	set error [catch {tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $verbose $sampleskip} result]
+	set error [catch {tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $verbose $samplingskip} result]
 	if {$f ne "stdin"} {catch {close $f}}
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$error} {
@@ -1076,5 +1076,3 @@ if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	set ::base [file tail [info script]]
 	cg_select {*}$argv
 }
-
-

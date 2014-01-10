@@ -44,10 +44,10 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	DStringArray *array = NULL;
 	DString *line = NULL;
 	ssize_t read;
-	int maxtab=0,objc,show,i,error,verbose = INT_MAX,next = INT_MAX,sample=0;
+	int maxtab=0,objc,show,i,error,verbose = INT_MAX,next = INT_MAX,sampling=0;
 	unsigned int line_nr=0;
 	if ((argc < 4)||(argc > 6)) {
-		Tcl_WrongNumArgs(interp, 1, argv, "queryproc varcolumns outcolumns ?verbose? ?sampleskip?");
+		Tcl_WrongNumArgs(interp, 1, argv, "queryproc varcolumns outcolumns ?verbose? ?samplingskip?");
 		return TCL_ERROR;
 	}
 	if (argc >= 5) {
@@ -57,7 +57,7 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 		next = verbose;
 	}
 	if (argc >= 6) {
-		if (Tcl_GetIntFromObj(interp, argv[5], &sample) != TCL_OK) {
+		if (Tcl_GetIntFromObj(interp, argv[5], &sampling) != TCL_OK) {
 			return TCL_ERROR;
 		}
 	}
@@ -166,8 +166,8 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 			}
 		}
 		line_nr++;
-		if (sample) {
-			i = sample;
+		if (sampling) {
+			i = sampling;
 			while(i--) {
 				SkipLine(stdin);
 			}

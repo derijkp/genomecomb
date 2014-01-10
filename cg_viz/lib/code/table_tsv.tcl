@@ -212,7 +212,7 @@ table_tsv method qfields {} {
 	return $tdata(qfields)
 }
 
-table_tsv method values {field {max 2000}} {
+table_tsv method values {field {max 4000}} {
 	private $object tdata
 	set histofile $tdata(indexdir)/colinfo/$field.colinfo
 	if (![file exists $histofile]) {
@@ -221,15 +221,44 @@ table_tsv method values {field {max 2000}} {
 			set compressed $tdata(compressed)
 			set lineindex $tdata(lineindex)
 			set filelen [dict get $lineindex max]
-			set step [expr {int(($filelen-$max)/double($max))}]
-			set list [list_remdup [lrange [split [cg select -f $field -sampleskip $step $tdata(file)] \n] 1 end]]
-			histogram $list a
+			if {!$compressed} {
+				set filesize [file size $tdata(file)]
+				set skip [expr {int($filesize/double($max))}]
+			} else {
+				set skip 0
+			}
+			catch {close $f} ; set f [gzopen $tdata(file)]
+			set header [tsv_open $f]
+			set pos [lsearch $header $field]
+			set num 0
+			set row 0
+			set break 0
+			unset -nocomplain a
+			while {![eof $f]} {
+				set line [split [gets $f] \t]
+				set v [lindex $line $pos]
+				if {![info exists a($v)]} {
+					set a($v) 1
+				} else {
+					incr a($v)
+				}
+				incr num
+				if {$num >= $max} {
+					set break 1
+					break
+				}
+				if {$skip} {
+					seek $f $skip current
+					gets $f
+				}
+			}
+			catch {close $f}
 			set result {}
 			foreach v [array names a] {
 				lappend result [list $v $a($v)]
 			}
 			set result [ssort -natural -index 1 -decreasing $result]
-			if {$max > $filelen} {lappend result {sampled incomplete}}
+			if {$max > $filelen || $skip} {lappend result {sampled incomplete}}
 			set values($field) $result
 		}
 		return $values($field)
