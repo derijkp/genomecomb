@@ -910,9 +910,15 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			}]
 		}
 		set tclcode [string_change $tclcode [list @neededfield@ $neededfields]]
-		#file_write /tmp/temp.tcl $tclcode\n
-		#putsvars tclcode
-		lappend pipe [list cg exec $tclcode]
+		if {[string length $tclcode] > 1000} {
+			set tempfile [tempfile]
+			file_write $tempfile $tclcode\n
+			#file copy $tempfile /tmp/temp.txt
+			lappend pipe [list cg source $tempfile]
+		} else {
+			#putsvars tclcode
+			lappend pipe [list cg exec $tclcode]
+		}
 	}
 #putslog -------------pipe-------------------
 #putslog pipe:[join $pipe " | "]
