@@ -4,14 +4,20 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc cg {args} {
+proc cg {cmd args} {
 	# puts "cg $args"
 	if {[info exists ::stderr_redirect]} {
 		set tempfile $::stderr_redirect
 	} else {
 		set tempfile [tempfile]
 	}
-	set error [catch {exec cg {*}$args 2> $tempfile} result]
+	if {[string length $args] < 2000} {
+		set error [catch {exec cg $cmd {*}$args 2> $tempfile} result]
+	} else {
+		set temprunfile [tempfile]
+		file_write $temprunfile [list cg_$cmd {*}$args]\n
+		set error [catch {exec cg source $temprunfile 2> $tempfile} result]
+	}
 	if {$error} {
 		set errmessage [file_read $tempfile]
 		if {[info exists ::stderr_redirect]} {file delete $tempfile}
@@ -19,6 +25,24 @@ proc cg {args} {
 	} else {
 		if {[info exists ::stderr_redirect]} {file delete $tempfile}
 		return $result
+	}
+}
+
+proc bgcg {progresscommand channelvar cmd args} {
+	# puts "progresscommand cg $args"
+	if {[info exists ::stderr_redirect]} {
+		set tempfile $::stderr_redirect
+	} else {
+		set tempfile [tempfile]
+	}
+	if {[string length $args] < 2000} {
+		Extral::bgexec -progresscommand $progresscommand -no_error_redir -channelvar $channelvar \
+				cg $cmd {*}$args 2>@1
+	} else {
+		set temprunfile [tempfile]
+		file_write $temprunfile [list cg_$cmd {*}$args]\n
+		Extral::bgexec -progresscommand $progresscommand -no_error_redir -channelvar $channelvar \
+				cg source $temprunfile 2>@1
 	}
 }
 
