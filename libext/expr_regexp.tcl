@@ -19,6 +19,9 @@ proc tcl::mathfunc::matches {args} {
 	::string match {*}$args $pattern $value
 }
 
+# same as matches
+interp alias {} tcl::mathfunc::match {} tcl::mathfunc::matches
+
 proc tcl::mathfunc::ncmatches {args} {
 	if {[llength $args] < 2} {error "function matches must have at least 2 arguments"}
 	foreach {value pattern} [lrange $args end-1 end] break
