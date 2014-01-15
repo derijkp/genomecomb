@@ -15,8 +15,16 @@ proc cg {cmd args} {
 		set error [catch {exec cg $cmd {*}$args 2> $tempfile} result]
 	} else {
 		set temprunfile [tempfile]
-		file_write $temprunfile [list cg_$cmd {*}$args]\n
-		set error [catch {exec cg source $temprunfile 2> $tempfile} result]
+		set poss [list_concat [list_find -glob $args ">*"] [list_find -glob $args "<*"]]
+		if {[llength $poss]} {
+			set pos [min $poss]
+			set redirect [lrange $args $pos end]
+			set code [lrange $args 0 [expr {$pos-1}]]
+		} else {
+			set code $args
+		}
+		file_write $temprunfile [list cg_$cmd {*}$code]\n
+		set error [catch {exec cg source $temprunfile {*}$redirect 2> $tempfile} result]
 	}
 	if {$error} {
 		set errmessage [file_read $tempfile]
