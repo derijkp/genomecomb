@@ -52,10 +52,19 @@ proc bgcg {progresscommand channelvar cmd args} {
 		Extral::bgexec -progresscommand $progresscommand -no_error_redir -channelvar $channelvar \
 				cg $cmd {*}$args 2>@1
 	} else {
+		set poss [list_concat [list_find -glob $args ">*"] [list_find -glob $args "<*"]]
+		if {[llength $poss]} {
+			set pos [min $poss]
+			set redirect [lrange $args $pos end]
+			set code [lrange $args 0 [expr {$pos-1}]]
+		} else {
+			set code $args
+			set redirect {}
+		}
 		set temprunfile [tempfile]
-		file_write $temprunfile [list cg_$cmd {*}$args]\n
+		file_write $temprunfile [list cg_$cmd {*}$code]\n
 		Extral::bgexec -progresscommand $progresscommand -no_error_redir -channelvar $channelvar \
-				cg source $temprunfile 2>@1
+				cg source $temprunfile {*}$redirect 2>@1
 	}
 }
 
