@@ -181,11 +181,28 @@ mainw method redrawselection {args} {
 	$object query $query
 }
 
+mainw method redrawlineinfo {} {
+	private $object view
+	set text ""
+	if {$view(cur) in "summary summarygraph"} {
+		private $object summary
+		append text "[llength $summary] line summary "
+	}
+	if {[catch {
+		set len [$object.tb info len]
+		set total [$object.tb info tlen]
+	}]} {
+		set len 0
+		set total 0
+	}
+	append text "[commify $len] / [commify $total] lines"
+	$object.buttons.label1 configure -text $text
+}
+
 mainw method redrawquery {args} {
 puts "redrawquery $args"
+	$object redrawlineinfo
 	set len [$object.tb info len]
-	set total [$object.tb info tlen]
-	$object.buttons.label1 configure -text "[commify $len] / [commify $total] lines"
 	$object.table.data configure -command [$object.table.data cget -command] -usecommand 1
 	$object.table.data configure -rows [expr {$len+1}] -cols [llength [$object.tb info qfields]]
 }
@@ -407,7 +424,7 @@ mainw method summary_redraw {args} {
 	} message]
 	set errorInfo $::errorInfo
 	$object.summary.data configure -variable [privatevar $object summary] -variabletype list
-	$object.summary.data configure -rows [llength $summary] -cols [llength [lindex $summary 0]]	
+	$object.summary.data configure -rows [llength [get summary ""]] -cols [llength [lindex [get summary ""] 0]]	
 	if {$error} {error $message $errorInfo}
 }
 
@@ -593,4 +610,5 @@ mainw method view {newview} {
 			$object scatter_redraw
 		}
 	}
+	$object redrawlineinfo
 }
