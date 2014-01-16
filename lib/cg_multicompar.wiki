@@ -41,6 +41,8 @@ to be treated this way.
 == Options ==
 ; **-reannot**: Also do reannotation (see cg multicompar_reannot)
 ; **-reannotregonly**: Also do reannotation, but only region data (sequenced) will be updated
+; **-split**: if 1, multiple alternative alleles will be on a separate lines, treated mostly as a separate variant
+Use 0 for the default (alternatives alleles are on the same line, separated by comma in the alt field)
 ; **-listfields listfields**: fields given by listfields will be regarded as lists (comma separated) dependend on the different alt genotypes
 
 == Category ==

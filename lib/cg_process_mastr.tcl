@@ -256,7 +256,6 @@ proc cg_process_mastr {args} {
 	set useminigenome 0
 	set aligner bwa
 	set pos 0
-	set split 1
 	foreach {key value} $args {
 		switch -- $key {
 			-m - --minigenome {
@@ -276,12 +275,18 @@ proc cg_process_mastr {args} {
 		incr pos 2
 	}
 	set args [lrange $args $pos end]
-	if {[llength $args] < 3} {
-		puts "Wrong number of arguments"
+	set len [llength $args]
+	if {$len == 2} {
+		foreach {mastrdir destdir} $args break
+	} elseif {$len == 3} {
+		foreach {mastrdir destdir dbdir} $args break
+	} else {
+		puts stderr "Wrong number of arguments"
 		errorformat process_mastr
 		exit 1
 	}
-	foreach {mastrdir destdir dbdir} $args break
+	# check projectinfo
+	projectinfo $destdir dbdir mastrdir {split 1}
 	process_mastr_job $mastrdir $destdir $dbdir $useminigenome $aligner $split
 	job_wait
 }

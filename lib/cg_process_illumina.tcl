@@ -673,7 +673,6 @@ proc process_illumina {args} {
 	set dbdir {}
 	set realign 1
 	set pos 0
-	set split 1
 	foreach {key value} $args {
 		switch -- $key {
 			-realign {
@@ -701,23 +700,7 @@ proc process_illumina {args} {
 	}
 	set destdir [file_absolute $destdir]
 	# check projectinfo
-	if {[file exists $destdir/projectinfo.tsv]} {
-		set infod [infofile_read $destdir/projectinfo.tsv]
-	} else {
-		set infod {}
-	}
-	if {$dbdir eq {}} {
-		if {![dict exists $infod dbdir]} {
-			error "error: no dbdir parameter given, and it is also not in the projectinfo.tsv"
-		}
-		set dbdir [dict get $infod dbdir]
-	} else {
-		if {[dict exists $infod dbdir] && $dbdir ne [dict get $infod dbdir]} {
-			error "error: The dbdir parameter given differs from the one in the projectinfo.tsv"
-		}
-	}
-	dict set infod dbdir $dbdir
-	infofile_write $destdir/projectinfo.tsv $infod
+	projectinfo $destdir dbdir split
 	# start
 	set refseq [glob $dbdir/genome_*.ifas]
 	set samples {}
