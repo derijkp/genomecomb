@@ -22,14 +22,19 @@ proc cg {cmd args} {
 			set code [lrange $args 0 [expr {$pos-1}]]
 		} else {
 			set code $args
+			set redirect {}
 		}
 		file_write $temprunfile [list cg_$cmd {*}$code]\n
 		set error [catch {exec cg source $temprunfile {*}$redirect 2> $tempfile} result]
 	}
 	if {$error} {
-		set errmessage [file_read $tempfile]
+		if {[file exists $tempfile]} {
+			set errmessage [file_read $tempfile]\n
+		} else {
+			set errmessage {}
+		}
 		if {[info exists ::stderr_redirect]} {file delete $tempfile}
-		return -code error $errmessage\n$result
+		return -code error $errmessage$result
 	} else {
 		if {[info exists ::stderr_redirect]} {file delete $tempfile}
 		return $result
