@@ -718,8 +718,12 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 	set f [gzopen $file]
 	set header [tsv_open $f comment]
 	if {[catch {set poss [tsv_basicfields $header]}]} {
-		set poss [tsv_basicfields $header 4]
-		lappend poss -1 -1
+		if {[catch {set poss [tsv_basicfields $header 4]}]} {
+			set poss [tsv_basicfields $header 3]
+			lappend poss -1 -1 -1
+		} else {
+			lappend poss -1 -1
+		}
 		set noref 1
 	} else {
 		set noref 0
@@ -777,6 +781,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 		}
 		set prevloc $ploc
 		foreach {chr start end type ref alt} $loc break
+		if {$type eq ""} {set type del}
 		if {$start > $end} {
 			puts stderr "location start > end error: $loc"
 			exit 1
