@@ -19,7 +19,10 @@ int main(int argc, char *argv[]) {
 	DString *chromosome1 = NULL,*chromosome2 = NULL,curchromosome;
 	int chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2,comp;
 	int start1,end1,start2,end2;
-	int error,error2,nextpos=0;
+	int error,error2;
+#ifdef SHOWPROGRESS
+	int nextpos=0;
+#endif
 	DStringInit(&line);
 	chromosome1 = DStringNew();
 	chromosome2 = DStringNew();
@@ -53,13 +56,17 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 	 	comp = DStringLocCompare(chromosome1,&curchromosome);
 		if (comp > 0) {
 			DStringCopy(&curchromosome,chromosome1);
+#ifdef SHOWPROGRESS
 			nextpos = 0;
+#endif
 		}
+#ifdef SHOWPROGRESS
 		if (chromosome1 != NULL && start1 >= nextpos) {
 			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
 			fflush(stderr);
 			nextpos += 10000000;
 		}
+#endif
 	 	comp = DStringLocCompare(chromosome2,chromosome1);
 		if ((comp < 0) || ((comp == 0) && (end2 <= start1))) {
 			error2 = get_region(f2,&line,chr2pos,start2pos,end2pos,max2,&chromosome2,&start2,&end2);

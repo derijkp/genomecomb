@@ -20,7 +20,9 @@ int main(int argc, char *argv[]) {
 	int chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2;
 	int start1,end1,start2,end2,finished1 = 0, finished2 = 0,comp;
 	int curstart,curend,cursamechr;
+#ifdef SHOWPROGRESS
 	int nextpos=0;
+#endif
 	DStringInit(&line);
 	chromosome1 = DStringNew();
 	chromosome2 = DStringNew();
@@ -70,18 +72,22 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,Loc_ChrString(chromosome2),start2,
 		if (finished1 && finished2) break;
 	 	comp = DStringLocCompare(chromosome1,&curchromosome);
 		if (comp > 0) {
-			nextpos = 0;
+#ifdef SHOWPROGRESS
+			int nextpos=0;
+#endif
 			cursamechr = 0;
 		} else if (comp == 0) {
 			cursamechr = 1;
 		} else {
 			cursamechr = 0;
 		}
+#ifdef SHOWPROGRESS
 		if (!finished1 && start1 >= nextpos) {
 			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
 			fflush(stderr);
 			nextpos += 10000000;
 		}
+#endif
 /*
 fprintf(stderr,"# --------------\n");
 fprintf(stderr,"# %s\t%d\t%d\n", curchromosome.string,curstart,curend);
