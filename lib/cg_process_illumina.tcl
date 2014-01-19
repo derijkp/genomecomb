@@ -404,8 +404,8 @@ proc annotvar_clusters_job {file resultfile} {
 proc sreg_sam_job {job varallfile resultfile} {
 	upvar job_logdir job_logdir
 	job $job -deps {$varallfile} -targets {$resultfile} -code {
-		cg select -q {$quality >= 20 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $target.temp
-		file_write $target.temp2 "# regions selected from $dep: \$quality >= 20 && \$totalcoverage >= 5\n"
+		cg select -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $target.temp
+		file_write $target.temp2 "# regions selected from $dep: \$quality >= 30 && \$totalcoverage >= 5\n"
 		cg regjoin $target.temp >> $target.temp2
 		file rename -force $target.temp2 $target
 		file delete $target.temp
