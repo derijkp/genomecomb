@@ -18,13 +18,13 @@ if 0 {
 	set binfile /complgen/projects/kr1270/compar/annot_sv-kr1270.tsv.index/query_results.bincol
 }
 
-proc _table_tsv_calcline {object line cor} {
+proc _table_tsv_calcline {object line cor row} {
 	if {[llength $cor] == 1} {
 		return [list_sub $line [lindex $cor 0]]
 	} elseif {[llength $cor]} {
 		# $object.calcline is a function defined by method fields
 		# when there are calculated fields
-		return [$object.calcline $cor $line]
+		return [$object.calcline $cor $line $row]
 	} else {
 		return $line
 	}
@@ -57,7 +57,7 @@ proc _table_tsv_get {object row col args} {
 			for {set i 0} {$i < $limit} {incr i} {
 				if {[eof $f]} break
 				set line [split [gets $f] \t]
-				set cache($r) [_table_tsv_calcline $object $line $cor]
+				set cache($r) [_table_tsv_calcline $object $line $cor $r]
 				incr r
 			}
 			if {$tdata(compressed)} {
@@ -75,7 +75,7 @@ proc _table_tsv_get {object row col args} {
 					seek $f $filepos
 				}
 				set line [split [gets $f] \t]
-				set cache($r) [_table_tsv_calcline $object $line $cor]
+				set cache($r) [_table_tsv_calcline $object $line $cor $qrow]
 				if {$tdata(compressed)} {
 					catch {close $f}
 				}
@@ -348,11 +348,15 @@ table_tsv method fields {args} {
 					}
 					# make main proc
 					set neededcols [list_cor $header $neededfields]
-					append tclcode "\nproc $object.calcline {cor line} \{\n"
+					append tclcode "\nproc $object.calcline {cor line ROW} \{\n"
 					append tclcode "set result \[list_sub \$line [list $cor]\]\n"
 					append tclcode "set neededfields \[list_sub \$line [list $neededcols]\]\n"
 					foreach {name code} $todo pos $poss {
 						append tclcode "lset result $pos \[$name {*}\$neededfields\]\n"
+					}
+					set rowpos [lsearch $neededfields ROW]
+					if {$rowpos != -1} {
+						append tclcode "lset result $rowpos \$ROW\n"
 					}
 					append tclcode "return \$result\n\}\n"
 					uplevel #0 $tclcode
@@ -500,7 +504,7 @@ table_tsv method save {file} {
 			}
 			if {[llength $cor]} {
 				set line [split [gets $f] \t]
-				puts $o [join [_table_tsv_calcline $object $line $cor] \t]
+				puts $o [join [_table_tsv_calcline $object $line $cor $row] \t]
 			} else {
 				puts $o [gets $f]
 			}
