@@ -96,14 +96,14 @@ proc tsv_select_addaggregatecalc {todolist} {
 		}
 		if {[inlist $todo max]} {
 			append colactions [string_change {
-					if {![info exists resultdata($_groupname,$_colname,$_val,max)] || ${@val@} > $resultdata($_groupname,$_colname,$_val,max)} {
+					if {[isdouble ${@val@}] && (![info exists resultdata($_groupname,$_colname,$_val,max)] || ${@val@} > $resultdata($_groupname,$_colname,$_val,max))} {
 						set resultdata($_groupname,$_colname,$_val,max) ${@val@}
 					}
 			} [list @val@ $fieldused]]
 		}
 		if {[inlist $todo min]} {
 			append colactions [string_change {
-					if {![info exists resultdata($_groupname,$_colname,$_val,min)] || ${@val@} < $resultdata($_groupname,$_colname,$_val,min)} {
+					if {[isdouble ${@val@}] && (![info exists resultdata($_groupname,$_colname,$_val,min)] || ${@val@} < $resultdata($_groupname,$_colname,$_val,min))} {
 						set resultdata($_groupname,$_colname,$_val,min) ${@val@}
 					}
 			} [list @val@ $fieldused]]
@@ -113,8 +113,10 @@ proc tsv_select_addaggregatecalc {todolist} {
 					if {![info exists resultdata($_groupname,$_colname,$_val,avg)]} {
 						set resultdata($_groupname,$_colname,$_val,avg) 0.0
 					}
-					set _delta [expr {${@val@}-$resultdata($_groupname,$_colname,$_val,avg)}]
-					set resultdata($_groupname,$_colname,$_val,avg) [expr {$resultdata($_groupname,$_colname,$_val,avg) + $_delta/$resultcount($_groupname,$_colname)}]
+					if {[string is double ${@val@}]} {
+						set _delta [expr {${@val@}-$resultdata($_groupname,$_colname,$_val,avg)}]
+						set resultdata($_groupname,$_colname,$_val,avg) [expr {$resultdata($_groupname,$_colname,$_val,avg) + $_delta/$resultcount($_groupname,$_colname)}]
+					}
 			} [list @val@ $fieldused]]
 		}
 		if {[inlist $todo m2]} {
@@ -122,7 +124,9 @@ proc tsv_select_addaggregatecalc {todolist} {
 					if {![info exists resultdata($_groupname,$_colname,$_val,m2)]} {
 						set resultdata($_groupname,$_colname,$_val,m2) 0.0
 					}
-					set resultdata($_groupname,$_colname,$_val,m2) [expr {$resultdata($_groupname,$_colname,$_val,m2) + $delta*(${@val@}-$resultdata($_groupname,$_colname,$_val,avg))}]
+					if {[string is double ${@val@}]} {
+						set resultdata($_groupname,$_colname,$_val,m2) [expr {$resultdata($_groupname,$_colname,$_val,m2) + $delta*(${@val@}-$resultdata($_groupname,$_colname,$_val,avg))}]
+					}
 			} [list @val@ $fieldused]]
 		}
 		if {[inlist $todo distinct]} {
