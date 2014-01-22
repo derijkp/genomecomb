@@ -216,7 +216,7 @@ proc annot_varall_annot {varallfile sample loc force lineVar} {
 	set loc2 [dict get $info loc2]
 	set loc2poss [dict get $info loc2poss]
 	while {![eof $af]} {
-		set d [loc_compare $loc $loc2]
+		set d [lloc_compare $loc $loc2]
 		if {$d == 0} {
 			set poss1 [dict get $info poss1]
 			set cur [list_sub $line $poss1]	

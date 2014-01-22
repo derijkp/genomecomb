@@ -13,6 +13,10 @@ proc chr_compare {chr1 chr2} {
 	loc_compare $chr1 $chr2
 }
 
+proc lloc_compare {loc1 loc2} {
+	loc_compare [join $loc1 " "] [join $loc2 " "]
+}
+
 proc compare_annot_getline {f} {
 	set cur1 {}
 	while {![eof $f]} {

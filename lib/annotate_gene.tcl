@@ -776,7 +776,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 		}
 		set loc [list_sub $line $poss]
 		set ploc [lrange $loc 0 2]
-		if {[loc_compare $prevloc $ploc] > 0} {
+		if {[lloc_compare $prevloc $ploc] > 0} {
 			error "Cannot annotate because the variant file is not correctly sorted (sort correctly using \"cg select -s -\")"
 		}
 		set prevloc $ploc
@@ -825,7 +825,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 				}
 			}
 			set pdbloc [lrange $dbloc 0 2]
-			if {[loc_compare $prevdbloc $pdbloc] > 0} {
+			if {[lloc_compare $prevdbloc $pdbloc] > 0} {
 				error "Cannot annotate because the database file ($dbfile) is not correctly sorted (sort correctly using \"cg select -s -\")"
 			}
 			set prevdbloc $pdbloc
