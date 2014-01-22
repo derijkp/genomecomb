@@ -39,6 +39,9 @@ proc cg_splitalleles {args} {
 		if {![llength $line]} continue
 		set ref [lindex $line $rpos]
 		set alleles [split [lindex $line $apos] ,]
+		# redundancy in alleles is an error, but I have come across it, so dedup
+		set alleles [list_remdup $alleles]
+		lset line $apos [join $alleles ,]
 		if {![llength $alleles]} {set alleles [list {}]}
 		if {[llength $alleles] == 1} {
 			set a([lindex $alleles 0]) $line
