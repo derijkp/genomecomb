@@ -91,20 +91,13 @@ test regsubtract {basic} {
 2	180	200
 3	2000	2100
 Y	1000	1010
-Y	1900	2000
-1-10
-2-100
-3-1000
-M-10
-X-100
-Y-1000} error
+Y	1900	2000}
 
 test regsubtract {bugfix: hang on file2 longer} {
 	exec cg regsubtract data/reg1b.tsv data/reg4.tsv
 } {chromosome	begin	end
 1	10	15
-1	55	60
-1-10} error
+1	55	60}
 
 test covered {basic} {
 	exec cg covered data/reg1.tsv
