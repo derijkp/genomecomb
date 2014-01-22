@@ -137,9 +137,7 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 					if (!first) {putc_unlocked('\t',stdout);}
 					first = 0;
 					if (out != -1) {
-						cur = array->data[out].string;
-						size = array->data[out].size;
-						while(size--) {putc_unlocked(*cur++,stdout);}
+						DStringputs(array->data+out,stdout);
 					} else {
 						char *string;
 						int len;

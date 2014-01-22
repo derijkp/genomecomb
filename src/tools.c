@@ -120,6 +120,16 @@ void DStringCopy(DString *dest, DString *src) {
 	dest->size = src->size;
 }
 
+void DStringputs(DString *string,FILE *f) {
+	char *cur;
+	int size;
+	cur = string->string;
+	size = string->size;
+	if (size > 0) {
+		while(size--) {putc_unlocked(*cur++,stdout);}
+	}
+}
+
 void DStringPrintf(DString *dstring, char *format, ...) {
 	va_list args;
 	int size;

@@ -41,6 +41,7 @@ void DStringSet(DString *dstring, char *string);
 void DStringSetS(DString *dstring, char *string,int size);
 void DStringPrintf(DString *dstring, ...);
 void DStringCopy(DString *dest, DString *src);
+void DStringputs(DString *string,FILE *f);
 int DStringCompare(DString *a, DString *b);
 int DStringLocCompare(DString *a, DString *b);
 char *Loc_ChrString(DString *ds);
