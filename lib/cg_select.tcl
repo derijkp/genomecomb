@@ -658,6 +658,7 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 					scount {}
 					slist {vector slist_cond_}
 					sdistinct {distinct sdistinct_cond_}
+					sucount {ucount sucount_cond_}
 					smin {lmin smin_cond_}
 					smax {lmax smax_cond_}
 					ssum {lsum ssum_cond_}

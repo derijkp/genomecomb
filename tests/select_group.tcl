@@ -83,6 +83,13 @@ del	1	32	1	41
 ins	1	32	1	41
 snp	12	1,47,54	12	0,35,52}
 
+test select {group ucount} {
+	cg select -g type -gc {sample {} count,ucount(coverage)} data/expected_near-vars1-reg_annot.sft
+} {type	sample1-count	sample1-ucount_coverage	sample2-count	sample2-ucount_coverage
+del	1	1	1	1
+ins	1	1	1	1
+snp	12	3	12	3}
+
 test select {group list} {
 	cg select -g type -gc {sample {} list(coverage)} data/expected_near-vars1-reg_annot.sft
 } {type	sample1-list_coverage	sample2-list_coverage

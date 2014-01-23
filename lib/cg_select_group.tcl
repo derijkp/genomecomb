@@ -1,5 +1,7 @@
+set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} stdev {avg m2} distinct distinct ucount distinct list list sum sum}
+
 proc select_parse_grouptypes {grouptypelist} {
-	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} stdev {avg m2} distinct distinct list list sum sum}
+	global typetodoa
 	set grouptypes {}
 	foreach grouptype $grouptypelist {
 		if {$grouptype eq "count"} {
@@ -196,6 +198,10 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 			append calcresults [string_change {
 				lappend result [join [ssort -natural [dict keys [get resultdata($_groupname,$col,@field@,d) ""]]] ,]
 			} [list @field@ $field]]
+		} elseif {$func eq "ucount"} {
+			append calcresults [string_change {
+				lappend result [join [llength [dict keys [get resultdata($_groupname,$col,@field@,d) ""]]] ,]
+			} [list @field@ $field]]
 		} elseif {$func eq "list"} {
 			append calcresults [string_change {
 				lappend result [join [get resultdata($_groupname,$col,@field@,d) ""] ,]
@@ -211,6 +217,7 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 
 proc tsv_select_group {header pquery qposs qfields group groupcols neededfields {verbose 0}} {
 # putsvars header pquery qposs qfields group groupcols neededfields
+	global typetodoa
 	# outcols not used in group
 	# start making code
 	# neededfields will contain all fields needed by the query proc and calculated fields
@@ -219,7 +226,6 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	# precalc is run for every match (sets some variables used in query, etc.)
 	regsub -all \n [string trim $group] { } group
 	if {[llength $group] == 1} {lappend group {}}
-	set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} stdev {avg m2} distinct distinct list list sum sum}
 	unset -nocomplain calccols
 	# more than one groupcol not supported (yet)
 	set groupcol [lindex $groupcols 0]

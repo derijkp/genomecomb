@@ -58,6 +58,7 @@ values in group and column. Supported functions are
 ; max(field): maximum
 ; avg(field): average
 ; stdev(field): standard deviation
+; ucount(field): number of unique values in field
 ; distinct(field): lists (comma separated) all distinct values found in the field
 ; list(field): lists (comma separated) all values found in the field (the same one can occur multiple times)
 The field sample in groups or groupcols is interpreted specially: If sample is present, you can
@@ -243,6 +244,7 @@ Following sample aggregates are available:
 ; **scount(condition)**: number of samples for which **condition** is true
 ; **slist(?condition?,value)**: returns a (comma separated) list with results of value for each sample for which (if given) **condition** is true
 ; **sdistinct(?condition?,value)**: returns a non-redundant (comma separated) list of the results of value for each sample for which (if given) **condition** is true
+; **sucount(?condition?,value)**: number of unique values in field
 ; **smin(?condition?,value)**: returns the minimum of results of value for each sample for which (if given) **condition** is true
 ; **smax(?condition?,value)**: returns the maximum of results of value for each sample for which (if given) **condition** is true
 ; **ssum(?condition?,value)**: returns the sum of results of value for each sample for which (if given) **condition** is true

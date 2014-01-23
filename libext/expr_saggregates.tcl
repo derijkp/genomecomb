@@ -3,15 +3,27 @@ proc tcl::mathfunc::slist_cond_ {args} {
 	foreach {if value} $args {
 		if {$if} {lappend result $value}
 	}
-	return [join $result ,]
+	join $result ,
 }
 
 proc tcl::mathfunc::sdistinct_cond_ {args} {
 	set result {}
 	foreach {if value} $args {
-		if {$if} {lappend result $value}
+		if {$if} {set a($value) 1}
 	}
-	return [join [list_remdup $result] ,]
+	join [array names a] ,
+}
+
+proc tcl::mathfunc::ucount {args} {
+	llength [list_remdup $args]
+}
+
+proc tcl::mathfunc::sucount_cond_ {args} {
+	set result {}
+	foreach {if value} $args {
+		if {$if} {set a($value) 1}
+	}
+	llength [array names a]
 }
 
 proc tcl::mathfunc::smin_cond_ {args} {

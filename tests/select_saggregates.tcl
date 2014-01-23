@@ -40,6 +40,12 @@ test select {sdistinct} {
 	} data/vars-saggr.tsv] \t
 } {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.1,0.11,0.2 0.1 0.11 0.2} {1 4001 0.2,0.1,u 0.2 0.1 0.2} {1 4050 0.3,u 0.3 ? ?} {1 5000 0.4,0.6,u 0.4 0.6 0.6} {1 5020 0.5,u 0.5 ? ?} {1 5020 u,0.4,0.5 ? 0.4 0.5} {2 4000 0.6 0.6 0.6 0.6} {2 4001 0.8,u 0.8 ? ?} {2 4001 0.7,u 0.7 0.01 ?} {2 4010 u,0.8 ? 0.8 0.8} {2 4010 u,0.7 ? 0.7 0.7} {2 5010 0.9 0.9 0.9 0.9} {2 10000 0.9,u 0.9 ? ?} {2 10000 u,0.9 ? 0.9 0.9} {3 876 1 1 1 1}}
 
+test select {sucount} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=sucount(if($sequenced != "v","u",$freq))} freq-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 3 0.1 0.11 0.2} {1 4001 3 0.2 0.1 0.2} {1 4050 2 0.3 ? ?} {1 5000 3 0.4 0.6 0.6} {1 5020 2 0.5 ? ?} {1 5020 3 ? 0.4 0.5} {2 4000 1 0.6 0.6 0.6} {2 4001 2 0.8 ? ?} {2 4001 2 0.7 0.01 ?} {2 4010 2 ? 0.8 0.8} {2 4010 2 ? 0.7 0.7} {2 5010 1 0.9 0.9 0.9} {2 10000 2 0.9 ? ?} {2 10000 2 ? 0.9 0.9} {3 876 1 1 1 1}}
+
 test select {sdistinct condition} {
 	csv_parse [exec cg select -f {chromosome begin 
 		{test=sdistinct($sequenced == "v" and $freq > 0.5,if($sequenced != "v","u",$freq))} freq-*

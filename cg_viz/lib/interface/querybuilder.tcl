@@ -79,6 +79,7 @@ invoke {} {
 		list	vdef	field_value	{vdef(vector,default)} {returns the given vector, but with all non numbers replaced by default}
 		list	vif	special	{vif(condition,true,?condition2,true2, ...?false)} {like if, but conditions, true1, ... and false may be vectors, and a vector is returned}
 		sample_aggregates	scount	saggr	{scount(condition)} {number of samples for which **condition** is true}
+		sample_aggregates	sucount	saggr	{sucount(condition,value)} {number of unique values for samples for which (if given) **condition** is true}
 		sample_aggregates	slist	saggr	{slist(?condition?,value)} {returns a (comma separated) list with results of value for each sample for which (if given) **condition** is true}
 		sample_aggregates	sdistinct	saggr	{sdistinct(?condition?,value)} {returns a non-redundant (comma separated) list of the results of value for each sample for which (if given) **condition** is true}
 		sample_aggregates	smin	saggr	{smin(?condition?,value)} {returns the minimum of results of value for each sample for which (if given) **condition** is true}

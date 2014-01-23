@@ -67,6 +67,8 @@ proc tsv_select_spercent {arguments header neededfieldsVar} {
 }
 
 proc tsv_select_saggr {func1 func2 arguments header neededfieldsVar} {
+	# func1: function to be used if there is only 1 argument
+	# func2: function to be used for 2 arguments (condition and value)
 	upvar $neededfieldsVar neededfields
 # putsvars func1 func2 arguments header
 	if {[llength $arguments] == 1} {
