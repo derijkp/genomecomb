@@ -49,8 +49,10 @@ proc bgcg {progresscommand channelvar cmd args} {
 		set tempfile [tempfile]
 	}
 	if {[string length $args] < 2000} {
+		set ::bgerror {}
 		Extral::bgexec -progresscommand $progresscommand -no_error_redir -channelvar $channelvar \
 				cg $cmd {*}$args 2>@1
+		if {$::bgerror ne ""} {error $::bgerror}
 	} else {
 		set poss [list_concat [list_find -glob $args ">*"] [list_find -glob $args "<*"]]
 		if {[llength $poss]} {
@@ -63,8 +65,10 @@ proc bgcg {progresscommand channelvar cmd args} {
 		}
 		set temprunfile [tempfile]
 		file_write $temprunfile [list cg_$cmd {*}$code]\n
+		set ::bgerror {}
 		Extral::bgexec -progresscommand $progresscommand -no_error_redir -channelvar $channelvar \
 				cg source $temprunfile {*}$redirect 2>@1
+		if {$::bgerror ne ""} {error $::bgerror}
 	}
 }
 
