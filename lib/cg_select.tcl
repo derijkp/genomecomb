@@ -838,7 +838,15 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		append tclcode \n [tsv_select_group $header $pquery $qposs $qfields $group $groupcols $neededfields $verbose]
 		#file_write /tmp/temp.tcl $tclcode\n
 		#putsvars tclcode
-		lappend pipe [list cg exec $tclcode]
+		if {[string length $tclcode] > 2000} {
+			set tempfile [tempfile]
+			file_write $tempfile $tclcode\n
+			#file copy $tempfile /tmp/temp.txt
+			lappend pipe [list cg source $tempfile]
+		} else {
+			#putsvars tclcode
+			lappend pipe [list cg exec $tclcode]
+		}
 	} elseif {$query ne "" || [llength $qfields]} {
 		set outcols {}
 		set num 0
@@ -911,7 +919,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			}]
 		}
 		set tclcode [string_change $tclcode [list @neededfield@ $neededfields]]
-		if {[string length $tclcode] > 1000} {
+		if {[string length $tclcode] > 2000} {
 			set tempfile [tempfile]
 			file_write $tempfile $tclcode\n
 			#file copy $tempfile /tmp/temp.txt
