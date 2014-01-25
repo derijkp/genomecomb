@@ -76,6 +76,20 @@ test select {group calc col defined in group, multiple cols} {
 	exec diff data/expected-selectgroupcoding.tsv tmp/result.tsv
 } {}
 
+test select {group calc col in func} {
+	cg select -f {{size=$end - $begin}} -g type -gc {count,distinct(size)} data/expected_near-vars1-reg_annot.sft
+} {type	count	distinct_size
+del	1	10
+ins	1	10
+snp	12	1,901}
+
+test select {group calc col in func extra space in def} {
+	cg select -f {{size =$end - $begin}} -g type -gc {count,distinct(size)} data/expected_near-vars1-reg_annot.sft
+} {type	count	distinct_size
+del	1	10
+ins	1	10
+snp	12	1,901}
+
 test select {group distinct} {
 	cg select -g type -gc {sample {} count,distinct(coverage)} data/expected_near-vars1-reg_annot.sft
 } {type	sample1-count	sample1-distinct_coverage	sample2-count	sample2-distinct_coverage

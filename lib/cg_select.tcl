@@ -277,7 +277,7 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 		}
 		set pos [string first = $field]
 		if {$pos != -1} {
-			set fieldname [string range $field 0 [expr {$pos-1}]]
+			set fieldname [string trim [string range $field 0 [expr {$pos-1}]]]
 			set fpos [lsearch $rfields $fieldname]
 			set code [string range $field [expr {$pos+1}] end]
 			if {$fpos == -1} {
