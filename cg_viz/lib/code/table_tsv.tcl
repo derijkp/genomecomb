@@ -137,16 +137,29 @@ table_tsv method query {args} {
 			set info [infofile_read $tdata(indexdir)/info.tsv]
 			catch {set numlines [dict get $info size]}
 		}
+		set fieldopt [list {rowid=$ROW}]
+		if {$query ne ""} {
+			set header $tdata(header)
+			set fields $tdata(fields)
+			tsv_select_expandcode $header $query neededfields
+			set neededfields [list_lremove [list_remdup $neededfields] $header]
+			foreach field $neededfields {
+				set pos [lsearch -regexp $fields " *-?$field *="]
+				set temp [lindex $fields $pos]
+				if {[string index $temp 0] != "-"} {set temp -$temp}
+				lappend fieldopt $temp
+			}
+		}
 		if {![info exists numlines]} {
 			progress message "Running query, please be patient (no progress shown)"
-			exec cg select -q $query -f {rowid=$ROW} $tdata(file) $tdata(indexdir)/query_results.tsv
+			exec cg select -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv
 		} else {
 			set step [expr {$numlines/10}]
 			if {$step > 50000} {set step 50000} elseif {$step < 1} {set step 1}
 			progress start $numlines "Running query" "Running query"
 			set ::bgerror {}
 			Extral::bgexec -progresscommand [list $object queryprogress] -no_error_redir -channelvar [privatevar $object bgexechandle] \
-				cg select -v $step -q $query -f {rowid=$ROW} $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
+				cg select -v $step -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
 			if {$::bgerror ne ""} {error $::bgerror}
 			progress stop
 		}
