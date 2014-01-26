@@ -408,4 +408,8 @@ test select {error missing quote empty} {
 	exec cg select -q {$regtest != "} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} ../tests/data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
 } {error: incomplete quoted expression: "} error
 
+test select {brokentable} {
+	exec cg select -q {$other == "cc"} data/brokentable.tsv
+} {wrong number of fields for line} regexp error
+
 testsummarize

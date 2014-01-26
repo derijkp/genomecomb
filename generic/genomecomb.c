@@ -94,6 +94,11 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	objv[i] = NULL;
 	objc = listobjc+1;
 	while ((read = DStringGetTab(line,stdin,maxtab,array,1,NULL)) != -1) {
+		NODPRINT("%d,%d %s",maxtab, array->size, line->string);
+		if (array->size <= maxtab) {
+			fprintf(stderr, "wrong number of fields for line: %*.*s\n",line->size,line->size,line->string);
+			exit(1);
+		}
 		if (line_nr >= next) {
 			fprintf(stderr,"%d\n",line_nr);
 			next += verbose;
