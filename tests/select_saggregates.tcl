@@ -56,7 +56,7 @@ test select {sdistinct condition} {
 	csv_parse [exec cg select -f {chromosome begin 
 		{test=sdistinct($alleleSeq2 == "N",$sequenced)} alleleSeq2-* sequenced-*
 	} data/vars-saggr.tsv] \t
-} {{chromosome begin test alleleSeq2-sample1 alleleSeq2-sample2 alleleSeq2-sample3 sequenced-sample1 sequenced-sample2 sequenced-sample3} {1 259 {} C C C v v v} {1 4001 {} C C C v v r} {1 4050 {} T - - v u u} {1 5000 {} {} {} {} v v r} {1 5020 {} A G G v r r} {1 5020 {} G C C r v v} {2 4000 {} A A A v v v} {2 4001 {} C A A v r r} {2 4001 {} C A A v r r} {2 4010 {} - C C u v v} {2 4010 {} - C C u v v} {2 5010 v {} N N v v v} {2 10000 v,r N N N v r r} {2 10000 r,v N N N r v v} {3 876 {} A A A v v v}}
+} {{chromosome begin test alleleSeq2-sample1 alleleSeq2-sample2 alleleSeq2-sample3 sequenced-sample1 sequenced-sample2 sequenced-sample3} {1 259 {} C C C v v v} {1 4001 {} C C C v v r} {1 4050 {} T - - v u u} {1 5000 {} {} {} {} v v r} {1 5020 {} A G G v r r} {1 5020 {} G C C r v v} {2 4000 {} A A A v v v} {2 4001 {} C A A v r r} {2 4001 {} C A A v r r} {2 4010 {} - C C u v v} {2 4010 {} - C C u v v} {2 5010 v {} N N v v v} {2 10000 r,v N N N v r r} {2 10000 v,r N N N r v v} {3 876 {} A A A v v v}}
 
 test select {smin} {
 	csv_parse [exec cg select -f {chromosome begin 
