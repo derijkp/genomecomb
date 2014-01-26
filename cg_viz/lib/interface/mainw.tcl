@@ -612,3 +612,43 @@ mainw method view {newview} {
 	}
 	$object redrawlineinfo
 }
+
+mainw method showcmdline {} {
+	private $object view
+	set var [$object.buttons.query cget -textvariable]
+	set query [get $var ""]
+	set fields [$object.tb info fields]
+	regsub -all \n $fields " " fields
+	set resultdata "cg select"
+	if {$fields ne ""} {
+		append resultdata " -f \'$fields\'"
+	}
+	if {$query ne ""} {
+		append resultdata " -q \'$query\'"
+	}
+	append resultdata " $view(file)\n"
+	if {$view(summary_rows) ne ""} {
+		set resultsummary "cg select"
+		if {$fields ne ""} {
+			append resultsummary " -f \'$fields\'"
+		}
+		if {$query ne ""} {
+			append resultsummary " -q \'$query\'"
+		}
+		append resultsummary " -g \'$view(summary_rows)\'"
+		if {$view(summary_cols) ne "" || $view(summary_cells) ne ""} {
+			append resultsummary " -gc \'$view(summary_cols) $view(summary_cells)\'"
+		}
+		append resultsummary " $view(file)\n"
+	} else {
+		set resultsummary ""
+	}
+	set ::$object.cmdline.data $resultdata
+	set ::$object.cmdline.summary $resultsummary
+	destroy $object.cmdline
+	Classy::Dialog $object.cmdline -title "Show cmdline"
+	$object.cmdline option text "Data query" $object.cmdline.data "Data query"
+	$object.cmdline option text "Summary query" $object.cmdline.summary "Summary query"
+	Classy::todo	$object.cmdline.options.col1.entry1.value.text configure -wrap word
+	Classy::todo	$object.cmdline.options.col1.entry2.value.text configure -wrap word
+}

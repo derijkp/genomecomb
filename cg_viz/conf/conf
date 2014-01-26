@@ -14,6 +14,11 @@ menu,MainMenu {menu "File" {
 menu "Edit" {
 	action "Copy" {error "copy not implemented yet"} <<Copy>>
 }
+menu "Tools" {
+	action "Fields" {%W fields}
+	action "Summaries" {%W summarybuilder}
+	action "cmdline" {%W showcmdline}
+}
 menu "Help" {
 	action "Application" {Classy::help application} <<Help>>
 	separator
