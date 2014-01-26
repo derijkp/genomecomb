@@ -412,4 +412,14 @@ test select {brokentable} {
 	exec cg select -q {$other == "cc"} data/brokentable.tsv
 } {wrong number of fields for line} regexp error
 
+test select {-q use calculated column from -f} {
+	exec cg select -f {{calc=$num+1} *} -q {$calc <= 4} data/table.tsv
+} {calc	num	text	mixed	other
+3	2	c	a2	cc}
+
+test select {-q use calculated column from -f without it being in the output (using -)} {
+	exec cg select -f {{-calc=$num+1} *} -q {$calc <= 4} data/table.tsv
+} {num	text	mixed	other
+2	c	a2	cc}
+
 testsummarize

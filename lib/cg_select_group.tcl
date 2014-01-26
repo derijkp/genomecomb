@@ -280,8 +280,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		}
 		incr curpos 2
 	}
-	# make precalc, add functions for calculated columns
-	set precalc {}
+	# add functions needed for calculated columns to calccols, will be put later into precalc (or prequery)
 	set num 0
 	set tclcode "package require genomecomb\n"
 	foreach el $qposs field $qfields {
@@ -290,9 +289,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			set tempneededfields [list_remdup $tempneededfields]
 			lappend neededfields {*}$tempneededfields
 			lappend outcols make_col$num
-			append tclcode [tsv_select_makecol make_col$num $code $tempneededfields]
-			lappend precalc "\t\t\t\tset \{$field\} \[make_col$num \$\{[join $tempneededfields \}\ \$\{]\}\]"
-			set calccols($field) "make_col$num"
+			set calccols($field) [list make_col$num $code]
 		}
 		incr num
 	}
@@ -381,10 +378,32 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		}
 	}
 	set neededfields [list_remdup $neededfields]
+	# see what we need of calculated fields
+	set calcfieldsquery [list_lremove $neededfields $header]
+	set calcfieldsquery [list_remove $calcfieldsquery ROW]
+	set neededfields [list_lremove $neededfields $calcfieldsquery]
+	set prequery {}
+	foreach field $calcfieldsquery {
+		if {![info exists calccols($field)]} {
+			error "field \"$field\" not present in file"
+		}
+		foreach {procname code} $calccols($field) break
+		append tclcode [tsv_select_makecol $procname $code $neededfields]\n
+		append prequery "\t\t\tset \{$field\} \[$procname \$\{[join $neededfields \}\ \$\{]\}\]\n"
+		unset calccols($field)
+	}
+	# actually make precalc: all calculated fields needed for group, but not for query (these are already in prequery)
+	set precalc {}
+	foreach field [array names calccols] {
+		foreach {procname code} $calccols($field) break
+		append tclcode [tsv_select_makecol $procname $code $neededfields]\n
+		append precalc "\t\t\t\tset \{$field\} \[$procname \$\{[join $neededfields \}\ \$\{]\}\]\n"
+	}
 	set neededcols [list_cor $header $neededfields]
 	append tclcode [string_change {
 		proc tsv_selectc_query {@neededfields@} {
 			global resultdata resultgroups resultcount resultdatacols
+			@prequery@
 			if {@pquery@} {
 @precalc@
 @addcols@
@@ -410,8 +429,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			puts "$_groupname\t[join $result \t]"
 		}
 		exit
-	} [list @neededfields@ $neededfields @pquery@ $pquery \
-		@precalc@ [join [list_remdup $precalc] \n] @addcols@ $addcols \
+	} [list @neededfields@ $neededfields @pquery@ $pquery @prequery@ $prequery\
+		@precalc@ $precalc @addcols@ $addcols \
 		@neededcols@ $neededcols @calcresults@ $calcresults \
 		@grouptypes@ [list $grouptypes] @grouph@ [list_unmerge $group] @verbose@ $verbose]
 	]]

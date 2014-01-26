@@ -167,4 +167,11 @@ test select {group where -g has sample and non-sample field} {
 52	snp	0	6
 54	snp	6	0}
 
+test select {group query use calculated column in query} {
+	cg select -f {cov=$coverage-sample1} -q {$cov > 2} -g type data/expected_near-vars1-reg_annot.sft
+} {type	count
+del	1
+ins	1
+snp	8}
+
 testsummarize

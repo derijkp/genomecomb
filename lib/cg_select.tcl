@@ -781,7 +781,7 @@ proc tsv_select_expandcode {header code neededfieldsVar} {
 }
 
 proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {verbose -1} {samplingskip 0}} {
-# putsvars query qfields sortfields newheader sepheader f stdin out stdout h inverse group groupcols index
+#putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index verbose samplingskip
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	if {$hc ne "0" && $hc ne "1"} {
@@ -857,33 +857,44 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		# outcols contains the column number for plain fields and a proc name for calculated fields
 		set tclcode "package require genomecomb\n"
 		foreach el $qposs field $qfields {
+			if {[string index $field 0] eq "-"} {set rfield [string range $field 1 end]} else {set rfield $field}
 			if {[isint $el]} {
 				lappend outcols $el
 			} elseif {$el eq "ROW"} {
 				# empty instead of code or int will directly output ROW
 				lappend outcols {}
 			} elseif {$el eq ""} {
-				error "field $field not present"
-			} elseif {[info exists calccols($field)]} {
-				lappend outcols $calccols($field)
+				error "field $rfield not present"
+			} elseif {[info exists calccols($rfield)]} {
+				if {$rfield eq $field} {lappend outcols $calccols($rfield)}
 			} else {
 				set code [tsv_select_expandcode $header [lindex $el 1] neededfields]
-				lappend outcols make_col$num
+				if {$rfield eq $field} {lappend outcols make_col$num}
 				append tclcode [tsv_select_makecol make_col$num $code]
-				set calccols($field) make_col$num
+				set calccols($rfield) make_col$num
 			}
 			incr num
 		}
 		# neededcols contains the column numbers used to supply neededfields by tsv_selectc to the run proc
 		set neededfields [list_remdup $neededfields]
-		set neededcols [list_cor $header $neededfields]
-		set missing [list_remove [list_sub $neededfields [list_find $neededcols -1]] ROW]
-		if {[llength $missing]} {
-			error "field(s) \"[join $missing \",\"]\" not present in file"
+		# see what we need of calculated fields
+		set calcfieldsquery [list_lremove $neededfields $header]
+		set calcfieldsquery [list_remove $calcfieldsquery ROW]
+		set neededfields [list_lremove $neededfields $calcfieldsquery]
+		set prequery {}
+		foreach field $calcfieldsquery {
+			if {[info exists calccols($field)]} {
+				append prequery "\t\t\tset \{$field\} \[$calccols($field) \$\{[join $neededfields \}\ \$\{]\}\]\n"
+			} else {
+				error "field \"$field\" not present in file"
+			}
+			
 		}
+		set neededcols [list_cor $header $neededfields]
 		if {$index eq ""} {
 			append tclcode [subst {
 				proc tsv_selectc_query {$neededfields} {
+					$prequery
 					expr {$pquery}
 				}
 				tsv_selectc tsv_selectc_query [list $neededcols] [list $outcols] $verbose $samplingskip
@@ -912,6 +923,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			}
 			append tclcode [subst {
 				proc tsv_selectc_query {$neededfields} {
+					$prequery
 					expr {$pquery}
 				}
 				tsv_selectc_indexed tsv_selectc_query [list $neededcols] [list $outcols] [list $indexfiles]
@@ -933,7 +945,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 #putslog pipe:[join $pipe " | "]
 #putslog ------------------------------------
 	if {$qfields ne ""} {
-		set nh $qfields
+		set nh [list_sub $qfields -exclude [list_find -glob $qfields -*]]
 	} else {
 		set nh $header
 	}
