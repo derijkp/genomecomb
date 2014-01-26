@@ -265,7 +265,7 @@ mainw method summarybuilder {args} {
 	pack $w.query.summary_cells_buttons.add -side left
 	button $w.query.summary_cells_buttons.clear -text "Clear" -command [list set [privatevar $object view(summary_cells)] {}]
 	pack $w.query.summary_cells_buttons.clear -side left
-	foreach aggr {count min max avg sum percent gpercent distinct list} {
+	foreach aggr {count ucount min max avg sum percent gpercent distinct list} {
 		button $w.query.summary_cells_buttons.$aggr -text $aggr -command [list $object summarybuilder_add_cell $aggr]
 		pack $w.query.summary_cells_buttons.$aggr -side left
 	}
