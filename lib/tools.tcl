@@ -960,7 +960,7 @@ proc razip_job {file args} {
 
 proc file_absolute {file} {
 	if {[string range $file 0 1] eq "~/"} {
-		file join $::env(HOME) [string range $file 2 end]
+		set result [file join $::env(HOME) [string range $file 2 end]]
 	} else {
 		set result {}
 		foreach el [file split [file join [pwd] $file]] {
