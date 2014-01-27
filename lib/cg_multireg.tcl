@@ -15,9 +15,9 @@ proc multireg {compar_file file} {
 	catch {close $f1}; catch {close $f2}; catch {close $o}
 	set f2 [gzopen $file]
 	set poss2 [open_region $f2 h2]
+	close $f2
 	set num 0
 	if {![file exists $compar_file]} {
-		close $f2
 		set h2base [list_sub $h2 $poss2]
 		cg checksort $file
 		cg select \
@@ -27,6 +27,7 @@ proc multireg {compar_file file} {
 	}
 	set f1 [open $compar_file]
 	set poss1 [open_region $f1 h1]
+	close $f1
 	if {[inlist $h1 $name]} {
 		error "$name already present in $compar_file"
 	}
