@@ -29,6 +29,7 @@ proc testmultitarget {target names args} {
 			foreach pattern $args {
 				set testfile [subst $pattern]
 				if {![file exists $testfile] || ([file mtime $target] < [file mtime $testfile])} {
+					putslog "$testfile is newer than $target"
 					file rename -force $target $target.old
 					break
 				}
