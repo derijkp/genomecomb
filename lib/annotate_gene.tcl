@@ -825,6 +825,8 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 				}
 			}
 			set pdbloc [lrange $dbloc 0 2]
+			#break if eof
+			if {[eof $df]} break
 			if {[lloc_compare $prevdbloc $pdbloc] > 0} {
 				error "Cannot annotate because the database file ($dbfile) is not correctly sorted (sort correctly using \"cg select -s -\")"
 			}
