@@ -179,7 +179,7 @@ proc cg_genome_seq {args} {
 		foreach {chr estart eend} $sub break
 		set chr [chr_clip $chr]
 		set seq [genome_get $fg $chr [expr {$estart}] [expr {$eend}]]
-		set seq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
+		set mseq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
 		if {$concatlen == -1} {
 			set name [join [list_sub $sub {0 1 2}] -]
 			if {$idpos != -1} {
@@ -229,15 +229,15 @@ proc cg_genome_seq {args} {
 			set pend $end
 		}
 		if {$split} {
-			puts $outf $seq
+			puts $outf $mseq
 			close $outf
 		} else {
-			puts -nonewline $outf $seq
+			puts -nonewline $outf $mseq
 		}
 		if {$makemap} {
-			puts $fm $name\t$fstart\t[expr {$fstart+[string length $seq]}]\t[join $sub \t]\t[lindex $line $namepos]
+			puts $fm $name\t$fstart\t[expr {$fstart+[string length $mseq]}]\t[join $sub \t]\t[lindex $line $namepos]
 		}
-		incr fstart [string length $seq]
+		incr fstart [string length $mseq]
 		set firstline 0
 	}
 	if {$concatlen >= 0 && $econcatlen} {
