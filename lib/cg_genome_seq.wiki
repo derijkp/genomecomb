@@ -21,6 +21,8 @@ hardmask known (dbsnp) variants based on frequency.
 == Options ==
 ; **-f freq** (--freq): only softmask (lowercase) dbsnp variants if they have a frequency > freq (default is 0, use -1 to include all)
 ; **-n freqn** (--freqn): only mask (using N) dbsnp variants if they have a frequency > freqn (default is 0.2, use -1 to include all)
+; **-p snpdbpattern** (--snpdbpattern): determines which variant databases are used (dbdir/var_*snpdbpattern*.tsv.gz). default is "snp" for dbsnp.
+you can e.g. use "Common" for the common variants in dbsnp
 ; **-d delsize** (--delsize): only mask (using N) dbsnp variants if they are smaller than delsize (default is 5, use -1 to include all)
 ; **-r repeatmasker** (--repeatmasker): how to mask repeatmasker repeats: "s" means softmask (lowercase), use "N" to mask using Ns, and 0 for no repeatmasking (default is "s")
 ; **-i idcolumn** (--id): The ids for the fasta file will be taken from the given column (location will be added after a space)

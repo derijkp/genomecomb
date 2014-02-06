@@ -28,6 +28,7 @@ proc cg_makesequenom {args} {
 	set extraseq 124
 	set freql 0
 	set freqN 0.2
+	set snpdbpatterns snp
 	set delsize 5
 	set repeats s
 	set pos 0
@@ -38,6 +39,9 @@ proc cg_makesequenom {args} {
 			}
 			-n - --freqn {
 				set freqN $value
+			}
+			-p - --snpdbpattern {
+				set snpdbpatterns $value
 			}
 			-d - --delsize {
 				set delsize $value
@@ -92,7 +96,7 @@ proc cg_makesequenom {args} {
 		if {[string toupper $ref] ne [string toupper $test]} {
 			error "ref in vars ($ref) different from ref in genome ($test) for:\n$sub"
 		}
-		set seq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
+		set seq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats $snpdbpatterns]
 		if {$ref eq ""} {set ref -}
 		if {$alt eq ""} {set alt -}
 		set list [list $ref {*}[split $alt ,]]

@@ -9,6 +9,21 @@ test genome_seq {basic} {
 	exec diff tmp/temp.fas data/expected-reg_genome_seq.fas
 } {} 
 
+test genome_seq {basic -f -1 -n -1} {
+	exec cg genome_seq -i name -f -1 -n -1 data/reg_genome_seq.tsv /complgen/refseq/hg19_test > tmp/temp.fas  2> /dev/null
+	exec diff tmp/temp.fas data/expected-reg_genome_seq_fullmasked.fas
+} {} 
+
+test genome_seq {basic -p {snp 1000g}} {
+	exec cg genome_seq -i name -f -1 -n -1 -p {snp 1000g} data/reg_genome_seq.tsv /complgen/refseq/hg19_test > tmp/temp.fas  2> /dev/null
+	exec diff tmp/temp.fas data/expected-reg_genome_seq_fullmasked.fas
+} {} 
+
+test genome_seq {basic -p {1000g}} {
+	exec cg genome_seq -i name -f -1 -n -1 -p {1000g} data/reg_genome_seq2.tsv /complgen/refseq/hg19_test > tmp/temp.fas  2> /dev/null
+	exec diff tmp/temp.fas data/expected-reg_genome_seq2.fas
+} {} 
+
 test genome_seq {outfile} {
 	exec cg genome_seq -i name data/reg_genome_seq.tsv /complgen/refseq/hg19_test tmp/temp.fas  2> /dev/null
 	exec diff tmp/temp.fas data/expected-reg_genome_seq.fas

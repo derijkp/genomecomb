@@ -19,6 +19,8 @@ chromosome begin end ref alt
 == Options ==
 ; **-f freq**: only softmask (lowercase) dbsnp variants if they have a frequency > freq (default is 0, use -1 to include all)
 ; **-n freq**: only mask (using N) dbsnp variants if they have a frequency > freq (default is 0.2, use -1 to include all)
+; **-p snpdbpattern**: determines which variant databases are used (dbdir/var_*snpdbpattern*.tsv.gz). default is "snp" for dbsnp.
+you can e.g. use "Common" for the common variants in dbsnp
 ; **-d delsize**: only mask (using N) dbsnp variants if they are smaller than delsize (default is 5, use -1 to include all)
 ; **-r 0/s/N**: if 0, repeatmasker repeats are not masked, N will hardmask (replace by N) them. Default is to softmask (s).
 

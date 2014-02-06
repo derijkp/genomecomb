@@ -19,6 +19,7 @@ proc cg_genome_seq {args} {
 	set extraseq 124
 	set freql 0
 	set freqN 0.2
+	set snpdbpatterns snp
 	set delsize 5
 	set repeats s
 	set gc -1
@@ -38,6 +39,9 @@ proc cg_genome_seq {args} {
 			}
 			-n - --freqn {
 				set freqN $value
+			}
+			-p - --snpdbpattern {
+				set snpdbpatterns $value
 			}
 			-d - --delsize {
 				set delsize $value
@@ -179,7 +183,7 @@ proc cg_genome_seq {args} {
 		foreach {chr estart eend} $sub break
 		set chr [chr_clip $chr]
 		set seq [genome_get $fg $chr [expr {$estart}] [expr {$eend}]]
-		set mseq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats]
+		set mseq [genome_mask $dbdir $seq $chr [expr {$estart}] [expr {$eend}] $freql $freqN $delsize $repeats $snpdbpatterns]
 		if {$concatlen == -1} {
 			set name [join [list_sub $sub {0 1 2}] -]
 			if {$idpos != -1} {

@@ -157,11 +157,14 @@ proc genome_get {f chr start end {correctend 0}} {
 	read $f [expr {$end-$start}]
 }
 
-proc genome_mask {dbdir seq chr estart eend {freql 0} {freqN 0.2} {delsize 5} {repeats s}} {
+proc genome_mask {dbdir seq chr estart eend {freql 0} {freqN 0.2} {delsize 5} {repeats s} {snpdbpatterns snp}} {
 	global dbsnpdata
 	# init dbsnpdata
 	if {![info exists dbsnpdata($dbdir)]} {
-		set dbsnpfiles [gzfiles $dbdir/var_*snp*.tsv.gz]
+		set dbsnpfiles {}
+		foreach snpdbpattern $snpdbpatterns {
+			lappend dbsnpfiles {*}[gzfiles $dbdir/var_*$snpdbpattern*.tsv.gz]
+		}
 		set dbsnpposs {}
 		foreach dbsnp $dbsnpfiles {
 			set dbsnpheader [cg select -h $dbsnp]
