@@ -107,9 +107,11 @@ job 1000gliftover -deps {$dest/hg18/var_hg18_1000gCHBxJPT.tsv $dest/hg18/var_hg1
 	file delete var_hg19_1000gCEU.tsv.unmapped var_hg19_1000gCHBxJPT.tsv.unmapped var_hg19_1000gYRI.tsv.unmapped
 }
 
-job 1000glow -targets {${dest}/hg19/var_hg19_1000glow.tsv} -vars {dest} -code {
+job 1000glow -targets {${dest}/hg19/var_hg19_1000glow.tsv ${dest}/hg19/extra/var_hg19_1000glow.tsv.opt} -vars {dest} -code {
 	cd $dest/hg19
 	cg downloaddb ${dest} hg19 1000glow
+	cplinked $target $dest/$build/extra/var_${build}_1000glow.tsv
+	file_write $dest/$build/extra/var_${build}_1000glow.tsv.opt "fields\t{AMR_AF ASN_AF AFR_AF EUR_AF}\n"
 }
 
 # dbsnp
