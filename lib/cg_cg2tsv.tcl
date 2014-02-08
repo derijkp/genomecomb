@@ -58,7 +58,7 @@ proc var2annotvar_readonevar_merge {list} {
 	set seq(1) {}; set seq(2) {}; set seq(1,i) {}; set seq(2,i) {}; set seq(1,q) {}; set seq(2,q) {}; set seq(1,e) {}; set seq(2,e) {}
 	set i 0
 	list_foreach {bin hp chr start end type ref oalt score} $list {
-		if {$start == $end} {
+		if {$start == $end && $type ne "no-call" && $oalt ne ""} {
 			lset list $i 5 ins
 		}
 		set len [expr {$end-$start}]
@@ -213,7 +213,28 @@ proc var2annotvar_readonevar f {
 #		}
 		if {$alleleSeq eq "?"} {set alleleSeq -}
 		if {$alleleSeq2 eq "?"} {set alleleSeq2 -}
-		set result [list $locus $chromosome $begin $end [join $type _] $reference $alleleSeq $alleleSeq2 $totalScore $totalScore2 $xRef]
+		set alt {}
+		set refcount 0
+		if {$alleleSeq ne $reference} {
+			lappend alt $alleleSeq
+		} else {
+			incr refcount
+		}
+		if {$alleleSeq2 ne $reference} {
+			lappend alt $alleleSeq2
+		} else {
+			incr refcount
+		}
+		if {$refcount == 0} {
+			if {$alleleSeq ne $alleleSeq2} {set zyg c} else {set zyg m}
+		} elseif {$refcount == 1} {
+			set zyg t
+		} else {
+			set zyg r
+		}
+		if {[inlist $alt -]} {set zyg u}
+		set alt [list_remove [list_remdup $alt] -]
+		set result [list $locus $chromosome $begin $end [join $type _] $reference $alt $zyg $alleleSeq $alleleSeq2 $totalScore $totalScore2 $xRef]
 		if {$extranum} {
 			foreach v1 [lrange $line1 $extrapos end] v2 [lrange $line2 $extrapos end] {
 				lappend result $v1 $v2
@@ -381,7 +402,7 @@ proc readgeneset {g} {
 	return $list
 }
 
-proc var2annotvar {file genefile outfile} {
+proc var2annotvar {file genefile outfile {split 1}} {
 	global cache
 
 	catch {close $f1}
@@ -390,7 +411,7 @@ proc var2annotvar {file genefile outfile} {
 	unset -nocomplain cache
 	set f1 [opencgifile $file header]
 	set header1 [split $header \t]
-	set newheader {locus chromosome begin end type reference alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef}
+	set newheader {locus chromosome begin end type reference alt zyg alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef}
 	set extrapos 11
 	set extranum 0
 	if {$header1 eq "locus haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef"} {
@@ -456,6 +477,7 @@ proc var2annotvar {file genefile outfile} {
 	lappend newheader {*}$remheader2
 	set o [open $outfile w]
 	puts $o [join $newheader \t]
+
 	set cur [var2annotvar_readonevar $f1]
 	set curgene [readgeneset $g]
 	set gchr [lindex $curgene 0 3]
@@ -475,20 +497,40 @@ proc var2annotvar {file genefile outfile} {
 			set gchr [lindex $curgene 0 3]
 			set gbegin [lindex $curgene 0 4]
 		}
-		set annot $empty
-		if {($gchr eq $fchr) && ($gbegin == $fbegin)} {
-			set fcomp [lrange $cur 3 4]
-			foreach gline $curgene {
-				set gcomp [lrange $gline 5 6]
-				if {$fcomp eq $gcomp} {
-					set annot [lrange $gline 10 $lastpos2]
-					break
+		set alt [lindex $cur 6]
+		if {$split || [llength $alt] == 1} {
+				set fcomp [list_sub $cur {3 4 6}]
+				foreach var $alt {
+					lset fcomp 2 $var
+					set annot $empty
+					if {($gchr eq $fchr) && ($gbegin == $fbegin)} {
+						foreach gline $curgene {
+							set gcomp [list_sub $gline {5 6 8}]
+							if {$fcomp eq $gcomp} {
+								set annot [lrange $gline 10 $lastpos2]
+								break
+							}
+						}
+					}
+					lset cur 6 $var
+					puts $o [join $cur \t]\t[join $annot \t]
+				}
+		} else {
+			set annot $empty
+			if {($gchr eq $fchr) && ($gbegin == $fbegin)} {
+				set fcomp [lrange $cur 3 4]
+				foreach gline $curgene {
+					set gcomp [lrange $gline 5 6]
+					if {$fcomp eq $gcomp} {
+						set annot [lrange $gline 10 $lastpos2]
+						break
+					}
 				}
 			}
+			lset cur 6 [join $alt ,]
+			puts $o [join $cur \t]\t[join $annot \t]
 		}
-		puts $o [join $cur \t]\t[join $annot \t]
 		set cur [var2annotvar_readonevar $f1]
-#if {[lindex $cur 0] == 19411} {error STOP}
 	}
 
 	close $o
@@ -499,11 +541,26 @@ proc var2annotvar {file genefile outfile} {
 
 proc cg_var2annot {args} {
 	global scriptname action
+	set split 1
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-split {
+				set split [true $value]
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
 	if {[llength $args] != 3} {
 		puts stderr "format is: $scriptname $action variation_file sorted_gene_file output_file"
 		puts stderr " - makes a new variation file, where the gene information is included"
 		exit 1
 	}
 	foreach {file genefile outfile} $args break
-	var2annotvar $file $genefile $outfile
+	var2annotvar $file $genefile $outfile $split
 }
