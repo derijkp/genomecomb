@@ -1,3 +1,18 @@
+#genomecomb	0.9
+#split	0
+#ref	hg19
+#
+#ASSEMBLY_ID	NA19238-L2-200-37-ASM
+#COSMIC	COSMIC v48
+#DBSNP_BUILD	dbSNP build 132
+#GENOME_REFERENCE	NCBI build 37
+#SAMPLE	GS00706-DNA_A01
+#GENERATED_BY	cgatools
+#GENERATED_AT	2011-Oct-08 07:46:42.884765
+#SOFTWARE_VERSION	2.0.0.26
+#FORMAT_VERSION	2.0
+#GENERATED_BY	dbsnptool
+#TYPE	VAR-ANNOTATION
 locus	chromosome	begin	end	type	reference	alt	zyg	alleleSeq1	alleleSeq2	totalScore1	totalScore2	xRef	geneId	mrnaAcc	proteinAcc	symbol	orientation	component	componentIndex	hasCodingRegion	impact	nucleotidePos	proteinPos	annotationRefSequence	sampleSequence	genomeRefSequence	pfam
 15949986	chr21	9425146	9425147	snp	G	T	m	T	T	434	141	VQHIGH															
 15964169	chr21	9907270	9907271	snp	A	G	u	G	-	515		VQHIGH	100132288	NM_001033515.1	NP_001028687.1	LOC100132288	-	UTR3	3	Y	UNKNOWN-INC	1521					

@@ -402,15 +402,25 @@ proc readgeneset {g} {
 	return $list
 }
 
-proc var2annotvar {file genefile outfile {split 1}} {
+proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 	global cache
 
 	catch {close $f1}
 	catch {close $g}
 	catch {close $o}
+	if {!$sorted} {
+		set tempfile [tempfile]
+		set tempgenefile [tempfile]
+		cg select -s "chromosome begin end varType" $file $tempfile
+		cg select -s "chromosome begin end" $genefile $tempgenefile
+		set f1 [gzopen $tempfile]
+		set g [gzopen $tempgenefile]
+	} else {
+		set f1 [gzopen $file]
+		set g [gzopen $genefile]
+	}
 	unset -nocomplain cache
-	set f1 [opencgifile $file header]
-	set header1 [split $header \t]
+	set header1 [tsv_open $f1 comment]
 	set newheader {locus chromosome begin end type reference alt zyg alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef}
 	set extrapos 11
 	set extranum 0
@@ -420,15 +430,12 @@ proc var2annotvar {file genefile outfile {split 1}} {
 	} elseif {$header1 eq "locus ploidy haplotype chromosome begin end varType reference alleleSeq totalScore hapLink xRef"} {
 		set cgv1 1.7
 		set cache(cor1) {0 2 3 4 5 6 7 8 9 10 11}
-		set cache($f1) [list_sub $cache($f1) $cache(cor1)]
 	} elseif {$header1 eq "locus ploidy allele chromosome begin end varType reference alleleSeq totalScore hapLink xRef"} {
 		set cgv1 1.8
 		set cache(cor1) {0 2 3 4 5 6 7 8 9 10 11}
-		set cache($f1) [list_sub $cache($f1) $cache(cor1)]
 	} elseif {$header1 eq "locus ploidy allele chromosome begin end varType reference alleleSeq varScoreVAF varScoreEAF varQuality hapLink xRef"} {
 		set cgv1 2.0
 		set cache(cor1) {0 2 3 4 5 6 7 8 9 12 13 10 11}
-		set cache($f1) [list_sub $cache($f1) $cache(cor1)]
 		lappend newheader varScoreEAF1 varScoreEAF2 varQuality1 varQuality2
 		set extranum 2
 	} else {
@@ -453,12 +460,13 @@ proc var2annotvar {file genefile outfile {split 1}} {
 			incr extranum
 		}
 		set cache(cor1) $cor1
-		set cache($f1) [list_sub $cache($f1) $cache(cor1)]
 	}
+	set line [split [gets $f1] \t]
+	if {[llength $cache(cor1)]} {set cache($f1) [list_sub $line $cache(cor1)]}
+	set cache($g) [split [gets $g] \t]
 	set cache(extrapos) $extrapos
 	set cache(extranum) $extranum
-	set g [opencgifile $genefile header]
-	set header2 [split $header \t]
+	set header2 [tsv_open $g]
 	set remheader2 {}
 	if {$header2 eq "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
 		set cgv2 1.4
@@ -476,6 +484,19 @@ proc var2annotvar {file genefile outfile {split 1}} {
 	set lastpos2 [expr {[llength $header2]-1}]
 	lappend newheader {*}$remheader2
 	set o [open $outfile w]
+	puts $o "#genomecomb\t$genomecomb::version"
+	puts $o "#split\t$split"
+	if {$ref ne ""} {
+		puts $o "#ref\t$ref"
+	} elseif {[regexp "#GENOME_REFERENCE	NCBI build 37" $comment]} {
+		puts $o "#ref\thg19"
+	} elseif {[regexp "#GENOME_REFERENCE	NCBI build 36" $comment]} {
+		puts $o "#ref\thg18"
+	}
+	puts $o "#"
+	if {$comment ne ""} {
+		puts $o [string trim $comment]
+	}
 	puts $o [join $newheader \t]
 
 	set cur [var2annotvar_readonevar $f1]
@@ -540,13 +561,25 @@ proc var2annotvar {file genefile outfile {split 1}} {
 }
 
 proc cg_var2annot {args} {
+	cg_cg2tsv {*}$args
+}
+
+proc cg_cg2tsv {args} {
 	global scriptname action
-	set split 1
+	set split 0
+	set sorted 0
 	set pos 0
+	set ref {}
 	foreach {key value} $args {
 		switch -- $key {
 			-split {
 				set split [true $value]
+			}
+			-sorted {
+				set sorted [true $value]
+			}
+			-ref {
+				set ref $value
 			}
 			-- break
 			default {
@@ -557,10 +590,9 @@ proc cg_var2annot {args} {
 	}
 	set args [lrange $args $pos end]
 	if {[llength $args] != 3} {
-		puts stderr "format is: $scriptname $action variation_file sorted_gene_file output_file"
-		puts stderr " - makes a new variation file, where the gene information is included"
+		errorformat cg2tsv
 		exit 1
 	}
 	foreach {file genefile outfile} $args break
-	var2annotvar $file $genefile $outfile $split
+	var2annotvar $file $genefile $outfile $split $ref $sorted
 }

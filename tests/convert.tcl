@@ -4,6 +4,46 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
+test select {cg2tsv} {
+	exec cg cg2tsv -split 0 data/var-cgtest.tsv data/gene-cgtest.tsv tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-cgtest.tsv
+} {}
+
+test select {cg2tsv (var2annot)} {
+	exec cg var2annot -split 0 data/var-cgtest.tsv data/gene-cgtest.tsv tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-cgtest.tsv
+} {}
+
+test select {cg2tsv -split 1} {
+	exec cg cg2tsv -split 1 data/var-cgtest.tsv data/gene-cgtest.tsv tmp/temp.tsv
+	catch {exec diff tmp/temp.tsv data/expected-cgtest.tsv} result
+	set result
+} {2c2
+< #split	1
+---
+> #split	0
+21,22c21
+< 15979836	chr21	10701846	10701847	snp	C	G	c	G	T	433	1017	VQHIGH															
+< 15979836	chr21	10701846	10701847	snp	C	T	c	G	T	433	1017	VQHIGH															
+---
+> 15979836	chr21	10701846	10701847	snp	C	G,T	c	G	T	433	1017	VQHIGH															
+29,30c28
+< 16185771	chr21	43169356	43169357	snp	C	G	c	G	T	511	534	VQHIGH	54101	NM_020639.2	NP_065690.2	RIPK4	-	CDS	3	Y	SYNONYMOUS	677	209	A	A	A	PFAM:PF00069:Pkinase
+< 16185771	chr21	43169356	43169357	snp	C	T	c	G	T	511	534	VQHIGH	54101	NM_020639.2	NP_065690.2	RIPK4	-	CDS	3	Y	SYNONYMOUS	677	209	A	A	A	PFAM:PF00069:Pkinase
+---
+> 16185771	chr21	43169356	43169357	snp	C	G,T	c	G	T	511	534	VQHIGH	54101	NM_020639.2	NP_065690.2	RIPK4	-	CDS	3	Y	SYNONYMOUS	677	209	A	A	A	PFAM:PF00069:Pkinase
+child process exited abnormally}
+
+test select {cg2tsv -ref} {
+	exec cg cg2tsv -ref test -split 0 data/var-cgtest.tsv data/gene-cgtest.tsv tmp/temp.tsv
+	catch {exec diff tmp/temp.tsv data/expected-cgtest.tsv} result
+	set result
+} {3c3
+< #ref	test
+---
+> #ref	hg19
+child process exited abnormally}
+
 test select {vcf2tsv} {
 	exec cg vcf2tsv data/test.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test.vcf2tsv
