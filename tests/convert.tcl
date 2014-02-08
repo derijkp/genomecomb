@@ -9,6 +9,12 @@ test select {cg2tsv} {
 	exec diff tmp/temp.tsv data/expected-cgtest.tsv
 } {}
 
+test select {cg2tsv without genefile} {
+	exec cg cg2tsv -split 0 data/var-cgtest.tsv tmp/temp.tsv
+	exec cg select -f {locus chromosome begin end type reference alt zyg alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef} data/expected-cgtest.tsv tmp/expected.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
 test select {cg2tsv (var2annot)} {
 	exec cg var2annot -split 0 data/var-cgtest.tsv data/gene-cgtest.tsv tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-cgtest.tsv

@@ -408,16 +408,21 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 	catch {close $f1}
 	catch {close $g}
 	catch {close $o}
+	if {$genefile eq ""} {set usegenefile 0} else {set usegenefile 1}
 	if {!$sorted} {
 		set tempfile [tempfile]
-		set tempgenefile [tempfile]
 		cg select -s "chromosome begin end varType" $file $tempfile
-		cg select -s "chromosome begin end" $genefile $tempgenefile
 		set f1 [gzopen $tempfile]
-		set g [gzopen $tempgenefile]
+		if {$usegenefile} {
+			set tempgenefile [tempfile]
+			cg select -s "chromosome begin end" $genefile $tempgenefile
+			set g [gzopen $tempgenefile]
+		}
 	} else {
 		set f1 [gzopen $file]
-		set g [gzopen $genefile]
+		if {$genefile ne ""} {
+			set g [gzopen $genefile]
+		}
 	}
 	unset -nocomplain cache
 	set header1 [tsv_open $f1 comment]
@@ -463,26 +468,32 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 	}
 	set line [split [gets $f1] \t]
 	if {[llength $cache(cor1)]} {set cache($f1) [list_sub $line $cache(cor1)]}
-	set cache($g) [split [gets $g] \t]
+	if {$usegenefile} {set cache($g) [split [gets $g] \t]}
 	set cache(extrapos) $extrapos
 	set cache(extranum) $extranum
-	set header2 [tsv_open $g]
 	set remheader2 {}
-	if {$header2 eq "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
-		set cgv2 1.4
-	} elseif {$header2 eq "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
-		set cgv2 1.7
-	} elseif {$header2 eq "index locus allele chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex codingRegionKnown impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence"} {
-		set cgv2 1.8
-		set remheader2 [lrange $header2 10 end]
-	} elseif {$header2 eq "index locus allele chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam"} {
-		set cgv2 1.9
-		set remheader2 [lrange $header2 10 end]
+	if {$usegenefile} {
+		set header2 [tsv_open $g]
+		if {$header2 eq "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
+			set cgv2 1.4
+		} elseif {$header2 eq "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
+			set cgv2 1.7
+		} elseif {$header2 eq "index locus allele chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex codingRegionKnown impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence"} {
+			set cgv2 1.8
+			set remheader2 [lrange $header2 10 end]
+		} elseif {$header2 eq "index locus allele chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam"} {
+			set cgv2 1.9
+			set remheader2 [lrange $header2 10 end]
+		} else {
+			error "header error in $genefile (change in CG format?)"
+		}
+		set lastpos2 [expr {[llength $header2]-1}]
+		lappend newheader {*}$remheader2
+		set empty [list_fill [llength $remheader2] {}]
 	} else {
-		error "header error in $genefile (change in CG format?)"
+		set empty {}
+
 	}
-	set lastpos2 [expr {[llength $header2]-1}]
-	lappend newheader {*}$remheader2
 	set o [open $outfile w]
 	puts $o "#genomecomb\t$genomecomb::version"
 	puts $o "#split\t$split"
@@ -500,24 +511,23 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 	puts $o [join $newheader \t]
 
 	set cur [var2annotvar_readonevar $f1]
-	set curgene [readgeneset $g]
+	if {$usegenefile} {set curgene [readgeneset $g]} else {set curgene {}}
 	set gchr [lindex $curgene 0 3]
 	set gbegin [lindex $curgene 0 4]
-	set empty [list_fill [llength $remheader2] {}]
 	set next 100000; set num 0
 	while {![eof $f1]} {
 		set fchr [lindex $cur 1]
 		set fbegin [lindex $cur 2]
 		incr num
 		if {$num >= $next} {putsprogress $num; incr next 100000}
-		while {![eof $g]} {
+		if {$usegenefile} {	while {![eof $g]} {
 			set chrcomp [chr_compare $gchr $fchr]
 			if {$chrcomp > 0} break
 			if {($chrcomp == 0) && ($gbegin >= $fbegin)} break
 			set curgene [readgeneset $g]
 			set gchr [lindex $curgene 0 3]
 			set gbegin [lindex $curgene 0 4]
-		}
+		}}
 		set alt [lindex $cur 6]
 		if {$split || [llength $alt] == 1} {
 				set fcomp [list_sub $cur {3 4 6}]
@@ -534,7 +544,11 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 						}
 					}
 					lset cur 6 $var
-					puts $o [join $cur \t]\t[join $annot \t]
+					if {$usegenefile} {
+						puts $o [join $cur \t]\t[join $annot \t]
+					} else {
+						puts $o [join $cur \t]
+					}
 				}
 		} else {
 			set annot $empty
@@ -549,13 +563,17 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 				}
 			}
 			lset cur 6 [join $alt ,]
-			puts $o [join $cur \t]\t[join $annot \t]
+			if {$usegenefile} {
+				puts $o [join $cur \t]\t[join $annot \t]
+			} else {
+				puts $o [join $cur \t]
+			}
 		}
 		set cur [var2annotvar_readonevar $f1]
 	}
 
 	close $o
-	close $g
+	if {$usegenefile} {close $g}
 	close $f1
 
 }
@@ -589,10 +607,14 @@ proc cg_cg2tsv {args} {
 		incr pos 2
 	}
 	set args [lrange $args $pos end]
-	if {[llength $args] != 3} {
+	if {[llength $args] == 2} {
+		foreach {file outfile} $args break
+		set genefile {}
+	} elseif {[llength $args] != 3} {
 		errorformat cg2tsv
 		exit 1
+	} else {
+		foreach {file genefile outfile} $args break
 	}
-	foreach {file genefile outfile} $args break
 	var2annotvar $file $genefile $outfile $split $ref $sorted
 }
