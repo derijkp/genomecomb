@@ -321,6 +321,13 @@ mainw method opentsv {args} {
 }
 
 mainw method savetsv {file} {
+	if {[file exists $file]} {
+		set overwrite [Classy::yorn "file \"$file\" exists, overwrite?"]
+		if {!$overwrite} {
+			return
+		}
+		file delete $file
+	}
 	$object.tb save $file
 }
 
@@ -489,6 +496,7 @@ mainw method graph_redraw {args} {
 		if {!$yorn} return
 	}
 	set indexdir [$object.tb info indexdir]
+	catch {file delete $indexdir/graphtempfile.tsv}
 	$object.tb save $indexdir/graphtempfile.tsv
 	set f [open $indexdir/graphtempfile.tsv]
 	set header [tsv_open $f]
