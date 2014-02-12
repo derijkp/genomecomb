@@ -207,15 +207,24 @@ int main(int argc, char *argv[]) {
 			DStringClear(ref);
 			DStringPrintf(ref,"%d",l1 - 1);
 		} else {
+			if (a_ref(linea)->size == 0 && diff > 0) {
+				fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+			}
 			DStringSetS(ref,a_ref(linea)->string+diff,a_ref(linea)->size-diff);
 		}
 		if (split) {
 			numalleles = alts->size;
 		} else {
 			DStringClear(alt);
+			if (DStringArrayGet(alts,0)->size == 0 && diff > 0) {
+				fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+			}
 			DStringSetS(alt,DStringArrayGet(alts,0)->string+diff,DStringArrayGet(alts,0)->size-diff);
 			for (i = 1; i < alts->size ; i++) {
 				DString *temp = DStringArrayGet(alts,i);
+				if (temp->size == 0 && diff > 0) {
+					fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+				}
 				DStringAppendS(alt, ",",1);
 				DStringAppendS(alt, temp->string+diff, temp->size-diff);
 			}
@@ -230,6 +239,9 @@ int main(int argc, char *argv[]) {
 		for (curallele = 1 ; curallele <= numalleles; curallele++) {
 			if (split) {
 				DStringClear(alt);
+				if (DStringArrayGet(alts,curallele-1)->size == 0 && diff > 0) {
+					fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+				}
 				DStringSetS(alt,DStringArrayGet(alts,curallele-1)->string+diff,DStringArrayGet(alts,curallele-1)->size-diff);
 			}
 			fprintf(fo,"%s\t%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s", a_chrom(linea)->string, begin, end, type->string, ref->string, alt->string, a_id(linea)->string, a_qual(linea)->string, a_filter(linea)->string);
@@ -267,6 +279,9 @@ int main(int argc, char *argv[]) {
 							fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
 						} else {
 							temp = DStringArrayGet(alts,a1-1);
+							if (temp->size == 0 && diff > 0) {
+								fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+							}
 							fprintf(fo,"\t%*.*s",temp->size-diff,temp->size-diff,temp->string+diff);
 						}
 					}
@@ -283,6 +298,9 @@ int main(int argc, char *argv[]) {
 							fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
 						} else {
 							temp = DStringArrayGet(alts,a2-1);
+							if (temp->size == 0 && diff > 0) {
+								fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+							}
 							fprintf(fo,"\t%*.*s",temp->size-diff,temp->size-diff,temp->string+diff);
 						}
 					}

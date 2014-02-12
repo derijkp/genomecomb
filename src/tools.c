@@ -754,6 +754,13 @@ NODPRINT("final count=%d size=%d %s",count, result->data[count].size,result->dat
 	return 0;
 }
 
+void DStringPrintTab(FILE *f, DString *linePtr) {
+	int i;
+	for(i = 0 ; i < linePtr->size ; i++) {
+		if (linePtr->string[i] == '\0') {fputc('\t',stderr);} else {fputc(linePtr->string[i],stderr);}
+	}
+}
+
 int parse_pos(char *arg, int **rresult, int *rnum) {
 	char *pch;
 	int *result;

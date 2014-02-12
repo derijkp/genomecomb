@@ -124,7 +124,7 @@ proc process_sample {args} {
 	# annotated vars file
 	job cg_annotvar-$sample {svar-$sample.tsv sgene-$sample.tsv} {annotvar-$sample.tsv} {
 		putslog "Create annotated varfile $target"
-		cg var2annot $dep1 $dep2 $target.temp
+		cg cg2tsv -sorted 1 $dep1 $dep2 $target.temp
 		file rename -force $target.temp $target
 	}
 
