@@ -23,7 +23,7 @@ proc tsv_open {f {keepheaderVar {}}} {
 	}
 	while {![eof $f]} {
 		if {![string length $line]} {
-			lappend keepheader {}
+			lappend keepheader \#
 			set line [gets $f]
 			break
 		}
@@ -45,7 +45,7 @@ proc tsv_open {f {keepheaderVar {}}} {
 	fconfigure $f -buffering $buffering
 	set fchar [string index $line 0]
 	if {[inlist {# >} $fchar]} {
-		set keepheader [join $keepheader \n]\n$fchar
+		set keepheader [join $keepheader \n]\n
 		if {!$split} {
 			return [string range $line 1 end]
 		} else {
