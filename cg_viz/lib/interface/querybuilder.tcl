@@ -141,9 +141,9 @@ mainw method querybuilder_fillvalues {args} {
 	set qvalues $list
 	if {![inlist $qvalues [$valuew get]]} {
 		$valuesw activate [lindex $qvalues 0]
-		$valuesw set [lindex $qvalues 0]
+		catch {$valuesw set [lindex $qvalues 0]}
 	} else {
-		$valuesw set [$valuew get]
+		catch {$valuesw set [$valuew get]}
 	}
 	$valuew set [$valuesw get]
 	return $qvalues
