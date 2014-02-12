@@ -313,7 +313,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 	set basedir [file dir $compar_file]
 	catch {close $f}; catch {close $o}
 	set f [gzopen $compar_file]
-	set header [split [gets $f] \t]
+	set header [tsv_open $f]
 	set pos -1
 	unset -nocomplain samplea
 	set samples {}
@@ -329,6 +329,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 	}
 	set referencepos [lsearch $header reference]
 	if {$referencepos == -1} {set referencepos [lsearch $header ref]}
+	putslog "file contains samples: $samples"
 	foreach sample $samples {
 		set samplea(a1,$sample) [lsearch $header alleleSeq1-$sample]
 		set samplea(a2,$sample) [lsearch $header alleleSeq2-$sample]
@@ -350,8 +351,10 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 		} elseif {[file exists $samplea(regionfile,$sample)]} {
 			set samplea(type,$sample) cg
 			if {!$regonly} {
+				putslog "Using $samplea(dir,$sample) to reannot"
 				annot_coverage_init $samplea(dir,$sample) $sample
 			}
+			putslog "Using $samplea(regionfile,$sample) to reannot"
 			annot_region_init $samplea(regionfile,$sample)
 		} else {
 			if {!$skipincomplete} {
@@ -362,6 +365,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 		set samplea(varall,$sample) [multicompar_reannot_find $basedir $sample varall-$sample.tsv]
 		if {$samplea(varall,$sample) ne ""} {
 			if {!$regonly} {
+				putslog "Using $samplea(varall,$sample) to reannot"
 				annot_varall_init $samplea(varall,$sample) $sample $header
 			}
 		}
