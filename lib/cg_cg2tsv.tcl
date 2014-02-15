@@ -106,7 +106,7 @@ proc var2annotvar_readonevar_merge {list} {
 	while {[llength $wlist]} {
 		set line [list_shift wlist]
 		foreach {bin hp chr begin end type ref} $line break
-		if {$line ne "" && $chr eq $chr1 && $begin == $begin1 && $end == $end1} {
+		if {$line ne "" && $chr eq $chr1 && $begin == $begin1 && $end == $end1 && $type == $type1} {
 			lappend rlist $line1 $line
 			set line1 [list_shift wlist]
 			foreach {bin1 hp1 chr1 begin1 end1 type1 ref1} $line1 break
@@ -233,7 +233,11 @@ proc var2annotvar_readonevar f {
 			set zyg r
 		}
 		if {[inlist $alt -]} {set zyg u}
-		set alt [list_remove [list_remdup $alt] -]
+		if {$type ne "del"} {
+			set alt [list_remove [list_remdup $alt] - {}]
+		} else {
+			set alt {{}}
+		}
 		set result [list $locus $chromosome $begin $end [join $type _] $reference $alt $zyg $alleleSeq $alleleSeq2 $totalScore $totalScore2 $xRef]
 		if {$extranum} {
 			foreach v1 [lrange $line1 $extrapos end] v2 [lrange $line2 $extrapos end] {
