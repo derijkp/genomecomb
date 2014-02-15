@@ -886,6 +886,35 @@ FILE *fopen64_or_die(char *filename,char *mode) {
 	return(f);
 }
 
+int checksort(DString *prevchromosome1,int *prevstart1,int *prevend1,DString *prevtype1,DString *prevalt1,DString *chromosome1,int start1,int end1,DString *type1,DString *alt1,char *filename,int *nextpos) {
+	int comp,comptype,compalt;
+ 	comp = DStringLocCompare(chromosome1,prevchromosome1);
+	comptype = DStringCompare(type1,prevtype1);
+	compalt = DStringCompare(alt1,prevalt1);
+	if (comp < 0 || (comp == 0 && 
+		(start1 < *prevstart1 || (start1 == *prevstart1 && 
+		(end1 < *prevend1 || (end1 == *prevend1 &&
+		(comptype < 0 || (comptype == 0 && compalt < 0)
+	))))))) {
+		fprintf(stderr,"File (%s) is not correctly sorted (sort correctly using \"cg select -s -\")\n",filename);
+		fprintf(stderr,"%s:%d-%d:%s:%s came before %s:%d-%d:%s:%s\n",prevchromosome1->string,*prevstart1,*prevend1,prevtype1->string,prevalt1->string, chromosome1->string,start1,end1,type1->string,alt1->string);
+		exit(1);
+	} else if (comp > 0) {
+		/* prevchromosome1 = chromosome1; */
+		DStringCopy(prevchromosome1,chromosome1);
+		if (nextpos) {*nextpos = 0;}
+	}
+	*prevstart1 = start1; *prevend1 = end1;
+	if (comptype != 0) {DStringCopy(prevtype1,type1);}
+	if (compalt != 0) {DStringCopy(prevalt1,alt1);}
+	if (comp > 0 || comptype != 0 || compalt != 0) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+/* checksortreg(prevchromosome1,prevstart1,prevend1,chromosome1,start1,end1,argv[1]); */
 int checksortreg(DString *prevchromosome,int *prevstart,int *prevend,DString *chromosome,int start,int end,char *file) {
 	int comp;
 	if (!prevchromosome || !chromosome) {

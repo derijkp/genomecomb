@@ -73,14 +73,7 @@ NODPRINT("reg_select %s %d %d %d %s %d %d %d %d",argv[1],chr1pos,start1pos,end1p
 NODPRINT("%d\t%s\t%d\t%d",1,Loc_ChrString(chromosome1),start1,end1)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
-	 	comp = DStringLocCompare(chromosome1,curchromosome);
-		if (comp < 0 || (comp == 0 && (start1 < prevstart1 || (start1 == prevstart1 && end1 < prevend1)))) {
-			fprintf(stderr,"Cannot annotate because the variant file (%s) is not correctly sorted (sort correctly using \"cg select -s -\")",argv[1]);
-			exit(1);
-		} else if (comp > 0) {
-			DStringCopy(curchromosome,chromosome1);
-		}
-		prevstart1 = start1; prevend1 = end1;
+		checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,end1,argv[1]);
 		fpos = ftello(f1);
 		if (fpos > progress) {
 			fprintf(stderr,"filepos: %llu\n",(unsigned long long)fpos);
@@ -109,6 +102,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 			chromosome2 = result2->data+chr2pos;
 			sscanf(result2->data[start2pos].string,"%d",&start2);
 			sscanf(result2->data[end2pos].string,"%d",&end2);
+			
 			comp = DStringLocCompare(chromosome2, chromosomekeep);
 			if (comp < 0 || (comp == 0 && (start2 < prevstart2 || (start2 == prevstart2 && end2 < prevend2)))) {
 				fprintf(stderr,"Cannot annotate because the database file is not correctly sorted (sort correctly using \"cg select -s -\")");

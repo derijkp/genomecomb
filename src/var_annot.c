@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
 	int chr1pos,start1pos,end1pos,type1pos,alt1pos,max1;
 	int chr2pos,start2pos,end2pos,type2pos,alt2pos,max2;
-	int comp,comptype,compalt;
+	int comp;
 	int datalen=0,*datapos=NULL;
 	int start1,end1;
 	int start2,end2;
@@ -153,25 +153,7 @@ NODPRINT("line1 (a=%3.3s) %s,%d,%d %s",type1->string,chromosome1->string,start1,
 fprintf(stdout,"----- %d\t%s\t%d\t%d\n",1,Loc_ChrString(chromosome1),start1,end1);
 fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,Loc_ChrString(chromosome2),start2,end2);
 */
-	 	comp = DStringLocCompare(chromosome1,prevchromosome1);
-		comptype = DStringCompare(type1,prevtype1);
-		compalt = DStringCompare(alt1,prevalt1);
-		if (comp < 0 || (comp == 0 && 
-			(start1 < prevstart1 || (start1 == prevstart1 && 
-			(end1 < prevend1 || (end1 == prevend1 &&
-			(comptype < 0 || (comptype == 0 && compalt < 0)
-		))))))) {
-			fprintf(stderr,"Cannot annotate because the variant file (%s) is not correctly sorted (sort correctly using \"cg select -s -\")\n",argv[1]);
-			fprintf(stderr,"%s:%d-%d:%s:%s came before %s:%d-%d:%s:%s\n",prevchromosome1->string,prevstart1,prevend1,prevtype1->string,prevalt1->string, chromosome1->string,start1,end1,type1->string,alt1->string);
-			exit(1);
-		} else if (comp > 0) {
-			/* prevchromosome1 = chromosome1; */
-			DStringCopy(prevchromosome1,chromosome1);
-			nextpos = 0;
-		}
-		prevstart1 = start1; prevend1 = end1;
-		if (comptype != 0) {DStringCopy(prevtype1,type1);}
-		if (compalt != 0) {DStringCopy(prevalt1,alt1);}
+		checksort(prevchromosome1,&prevstart1,&prevend1,prevtype1,prevalt1,chromosome1,start1,end1,type1,alt1,argv[1],&nextpos);
 		if (start1 >= nextpos) {
 			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
 			fflush(stderr);
@@ -200,27 +182,7 @@ NODPRINT("line2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),prevstart2,preven
 			sscanf(result2->data[end2pos].string,"%d",&end2);
 			type2 = result2->data+type2pos;
 			alt2 = result2->data+alt2pos;
-			comp = DStringLocCompare(chromosome2, prevchromosome2);
-			comptype = DStringLocCompare(type2,prevtype2);
-			compalt = DStringLocCompare(alt2,prevalt2);
-			if (comp < 0 || (comp == 0 && 
-				(start2 < prevstart2 || (start2 == prevstart2 && 
-				(end2 < prevend2 || (end2 == prevend2 &&
-				(comptype < 0 || (comptype == 0 && compalt < 0)
-			))))))) {
-NODPRINT("prevline2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),prevstart2,prevend2,prevtype2->string,prevalt2->string)
-NODPRINT("line2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),start2,end2,type2->string,alt2->string)
-				fprintf(stderr,"Cannot annotate because the database file is not correctly sorted (sort correctly using \"cg select -s -\")\n");
-				fprintf(stderr,"%s:%d-%d:%s:%s came before %s:%d-%d:%s:%s\n",prevchromosome2->string,prevstart2,prevend2,prevtype2->string,prevalt2->string, chromosome2->string,start2,end2,type2->string,alt2->string);
-				exit(1);
-			} else if (comp > 0) {
-				/* prevchromosome2 = chromosome2; */
-				DStringCopy(prevchromosome2,chromosome2);
-				nextpos = 0;
-			}
-			prevstart2 = start2; prevend2 = end2;
-			if (comptype != 0) {DStringCopy(prevtype2,type2);}
-			if (compalt != 0) {DStringCopy(prevalt2,alt2);}
+			checksort(prevchromosome2,&prevstart2,&prevend2,prevtype2,prevalt2,chromosome2,start2,end2,type2,alt2,argv[7],&nextpos);
 		}
 		if (error2 || (DStringLocCompare(chromosome2,chromosome1) != 0) || (start2 != start1) || (end2 != end1) || !sametype) {
 			if (!datalen) {

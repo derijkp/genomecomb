@@ -53,16 +53,7 @@ int main(int argc, char *argv[]) {
 		sscanf(result1->data[start1pos].string,"%d",&start1);
 		sscanf(result1->data[end1pos].string,"%d",&end1);
 		NODPRINT("%d\t%s\t%d\t%d",1,Loc_ChrString(chromosome1),start1,end1)
-	 	comp = DStringLocCompare(chromosome1,curchromosome);
-		if (comp < 0 || (comp == 0 && (start1 < prevstart1 || (start1 == prevstart1 && end1 < prevend1)))) {
-			fprintf(stderr,"Cannot annotate because the variant file (%s) is not correctly sorted (sort correctly using \"cg select -s -\")",argv[1]);
-			fprintf(stderr,"%s:%d-%d came before %s:%d-%d\n",curchromosome->string,prevstart1,prevend1, chromosome1->string,start1,end1);
-			exit(1);
-		} else if (comp > 0) {
-			DStringCopy(curchromosome,chromosome1);
-			nextpos = 0;
-		}
-		prevstart1 = start1; prevend1 = end1;
+		checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,end1,argv[1]);
 		if (start1 >= nextpos) {
 			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
 			fflush(stderr);
