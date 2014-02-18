@@ -22,7 +22,16 @@ data on the project
 ; **dbdir**: directory containing reference data (genome sequence, annotation, ...)
 
 == Options ==
-supports job options (-d <num> or -d sge)
+supports job options:
+; **-d x**: distribute subjobs of command over x processes
+; **-d sge**: use grid engine to distribute subjobs
+
+== Dependencies ==
+Some of the programs needed in this workflow are not distributed with genomecomb. 
+gatk and picard should be installed separately. Their installation location can be given
+using the environment variables GATK and PICARD. These should point to the installation
+directory that contains the jar files. If these environment variables are not set, a directory
+named gatk and picard will be searched in the PATH.
 
 == Example ==
 {{{

@@ -77,10 +77,27 @@ project directory. process_illumina called with the dbdir parameter will
 create the projectinfo.tsv file.
 
 == Options ==
-supports job options (-d)
 ; **-realign value**: If **value** is 0, realignment will not be performed, 
 if 1, bam files are realigned using gatk, use **value** srma to align using srma.
 ; **-dbdir dbdir**: **dbdir** can also be given as an option (instead of second parameter)
+supports job options:
+; **-d x**: distribute subjobs of command over x processes
+; **-d sge**: use grid engine to distribute subjobs
+
+== Dependencies ==
+Some of the programs needed in this workflow are not distributed with genomecomb. 
+gatk and picard should be installed separately. Their installation location can be given
+using the environment variables GATK and PICARD. These should point to the installation
+directory that contains the jar files. If these environment variables are not set, a directory
+named gatk and picard will be searched in the PATH.
+
+== Example ==
+{{{
+export GATK=/opt/bio/GenomeAnalysisTK-2.4-9-g532efad/
+export PICARD=/opt/bio/picard-tools-1.87
+cg process_conv_illmastr 130625_M01318_0013_000000000-A546C testproject
+cg process_mastr -d 2 test.mastr testproject /complgen/refseq/hg19
+}}}
 
 == Category ==
 Conversion
