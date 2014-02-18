@@ -77,8 +77,16 @@ proc makeprimers_primer3 {seq rstart rend {size 600} {temperature 60}} {
 			}
 		}
 	}
-	set left [lrange [split [string trim [file_read temp.for]] \n] 3 end]
-	set right [lrange [split [string trim [file_read temp.rev]] \n] 3 end]
+	if {[file exists temp.for]} {
+		set left [lrange [split [string trim [file_read temp.for]] \n] 3 end]
+	} else {
+		set left {}
+	}
+	if {[file exists temp.rev]} {
+		set right [lrange [split [string trim [file_read temp.rev]] \n] 3 end]
+	} else {
+		set right {}
+	}
 	set primerlist {}
 	set result {}
 	set min [expr {$rend - $size}]
