@@ -1083,7 +1083,7 @@ scrolledgraph method graphconfigure {{axis x}} {
 	$object.graphconfigure option numentry "Subdivisions" [privatevar $object graphsettings(xsubdivisions)] -command [list Classy::todo $object reconf]
 	#
 	$object.graphconfigure tab "Y Axis"
-	$object.graphconfigure option listbox "Y columns" [privatevar $object ycols] [privatevar $object header] -selectmode multiple \
+	$object.graphconfigure option listbox "Y columns" [privatevar $object ycols] [privatevar $object header] -selectmode extended \
 		-browsecommand [subst {
 			invoke args {
 				setprivate $object graphsettings(ymin) {}
