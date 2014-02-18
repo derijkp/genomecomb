@@ -1,115 +1,124 @@
-cd ~/complgen
-mkdir ftld1.work
-cd  ~/complgen/ftld1.work
-cg select -h ../ftld1/compar/annot_compar-ftld1.tsv
-cg select -h ../ftld1/compar/annot_compar-ftld1.tsv | less
+# info
+# ----
 
-cg select -f 'chromosome begin end type ref alt alleleSeq1-ftld_e_d5945 alleleSeq2-ftld_e_d5945 alleleSeq1-ftld_f_d6846 alleleSeq2-ftld_f_d6846 alleleSeq1-ftld_g_d6843 alleleSeq2-ftld_g_d6843 alleleSeq1-ftld_h_d7114 alleleSeq2-ftld_h_d7114' \
-	../ftld1/compar/annot_compar-ftld1.tsv | less -S
+# which fields are present in the file (cg select -h)
+cg select -h compar-test.tsv | less
+cg select -h compar-test.tsv | grep impact
 
-# how many of each refGene_impact
-cg select -f refGene_impact ../ftld1/compar/annot_compar-ftld1.tsv | sort | uniq -c > refgeneimpact.tsv
-less refgeneimpact.tsv
+# which samples are present in the file (cg select -n)
+cg select -n compar-test.tsv | less
+# gatk only
+cg select -n compar-test.tsv | grep gatk | less
+# how many gatk only
+cg select -n compar-test.tsv | grep gatk | wc -l
 
-# extract exome
-cg select \
-	-q '$refGene_impact ~/CDS|UTR/ || $knownGene_impact ~/CDS|UTR/ || $ensGene_impact ~/CDS|UTR/' \
-../ftld1/compar/annot_compar-ftld1.tsv > exome.tsv
+# fields
+# ------
+
+# show only some fields (-f option) and save to a new file
+# use \ to escape newline (continue on next line)
+cg select -f 'chromosome begin end type ref alt sequenced-*' compar-test.tsv temp.tsv
+# Show this new file
+less -S temp.tsv
+
+# query
+# -----
+# show only some lines (-q)
+
+# extract region (chromosome has to be correct as in the file)
+cg select -q '$chromosome == "21" && $end > 44000000 && $begin < 50000000' compar-test.tsv | less -S
+# extract region, a bit easier, and chromosome can have extra chr or not
+cg select -q 'region("chr21",44000000,50000000)' compar-test.tsv | less -S
+
+# select only coding variants (according to refgene only)
+cg select -q '$refGene_impact regexp "CDS"' compar-test.tsv exome.tsv
 # number of lines in file (including header)
 wc exome.tsv
+# let's try with some more gene sets
+cg select -q '$refGene_impact regexp "CDS" or $knownGene_impact regexp "CDS" or $ensGene_impact regexp "CDS" or $gencode_impact regexp "CDS"' compar-test.tsv | wc
+# we can do this shorter using count
+cg select -q 'count($refGene_impact, $knownGene_impact, $ensGene_impact, $gencode_impact, regexp "CDS") > 0' compar-test.tsv | wc
+# lets get everything transcribed and save to a file
+cg select -q 'count($refGene_impact, $knownGene_impact, $ensGene_impact, $gencode_impact, regexp "CDS|UTR|RNA") > 0' compar-test.tsv exome.tsv
+wc -l exome.tsv
 
-# extract region
-cg select \
-	-q '$chromosome == "chr2" && $end > 20000000 && $begin < 34000000' \
-../ftld1/compar/annot_compar-ftld1.tsv > chr2-20M-34M.tsv
-wc chr2-20M-34M.tsv
+# The new file is also a tsv file, we can again use cg select on it
+# lets use the group option to count immediately (defaults to counts)
+cg select -q '$refGene_impact regexp "CDS"' -g all exome.tsv
 
-# exome
-cg select \
-	-q '$refGene_impact ~/CDS|UTR/ || $knownGene_impact ~/CDS|UTR/ || $ensGene_impact ~/CDS|UTR/' \
-chr2-20M-34M.tsv > regexome.tsv
+# How many of each type of variant do we have
+cg select -g type exome.tsv
 
-# show part
-cg select \
-	-f 'chromosome begin end type ref alt refGene_impact refGene_gene refGene_descr' \
-regexome.tsv | less -S
+# check which lines have the variant for certain samples
+cg select -q '$sequenced-testNA19238chr2122cg == "v" or $sequenced-testNA19239chr2122cg == "v"' compar-test.tsv | wc -l
+# I would like to find which variants are present in more than 2 samples whose names start with test.
+# You can do this using count and wildcards
+cg select -q 'count($sequenced-test*, == "v") > 2' -g all compar-test.tsv
+# You can do the same using sample aggregates
+cg select -q 'scount($sample matches "test*" and $sequenced == "v") > 2' -g all compar-test.tsv
+# sample aggregates are more flexible (you cannot do the next easily with count and wildcards)
+cg select -q 'scount($sample matches "test*" and $sequenced == "v" and $coverage > 20) > 2' -g all compar-test.tsv
 
-cg select \
-	-f 'chromosome begin end type ref alt refGene_impact refGene_gene ensGene_impact ensGene_gene' \
-regexome.tsv | less -S
+# We can add this info as a new column in the file
+cg select -f 'chromosome begin end type ref alt {vcount=scount($sample matches "test*" and $sequenced == "v" and $coverage > 200)} *' compar-test.tsv temp.tsv
 
-# variant in all 4
-cg select \
-	-q '$sequenced-ftld_e_d5945 == "v" && $sequenced-ftld_f_d6846 == "v" && $sequenced-ftld_g_d6843 == "v" && $sequenced-ftld_h_d7114 == "v"' \
-chr2-20M-34M.tsv > regshared.tsv
-wc regshared.tsv
 
-# variant in all 4 using count
-cg select \
-	-q 'count($sequenced-*, == "v")  == 4' \
-chr2-20M-34M.tsv > regshared2.tsv
-diff regshared.tsv regshared2.tsv
+# select based on previously calculated count and 1000g
+cg select -q '$vcount > 2 && lmax($1000glow,0) < 0.05' \
+    -f 'chromosome begin end type alt 1000glow snp138_name snp138_freq' temp.tsv | less -S -x 12
 
-# select based on 1000g and exome
-cg select \
-	-q 'count($sequenced-*, == "v")  == 4 && lmin($1000gCEU,"0") < 0.05 && ($refGene_impact ~/CDS|UTR/ || $knownGene_impact ~/CDS|UTR/ || $ensGene_impact ~/CDS|UTR/)' \
-regshared.tsv > regsel.tsv
-wc regsel.tsv
-
-# only 1000g
-cg select \
-	-q 'count($sequenced-*, == "v")  == 4 && lmin($1000gCEU,"0") < 0.05' \
-regshared.tsv > regsel.tsv
-cg select -f 'chromosome begin end type ref alt snp130_name snp130_freq 1000gCEU' regsel.tsv | less -S -x 15
-
-# more filtering
+# more filtering: higher quality variant in more than 10 samples
 cg select -q '
-    count($sequenced-*, == "v")  == 4 
-    && $type == "snp" 
-    && count($refcons-*, != "")  != 4 
-    && count($totalScore1-*,$totalScore2-*, >=60) == 4 
-    && count($coverage-*, <20) == 0 
-    && count($coverage-*, > 100) == 0 
-    && count($cluster-*, != "") == 0 
-    && $simpleRepeat == "" && $microsat == "" && $genomicSuperDups == "" 
-    && lmin($1000gCEU,"0") < 0.05 
-' regshared.tsv > regsel.tsv
-wc regsel.tsv
-cg select -f 'chromosome begin end type ref alt coverage-* cluster-* simpleRepeat microsat genomicSuperDups' regsel.tsv | less -S -x 15
+    $type == "snp" 
+    and scount($sample matches "test*" and $sequenced == "v" and $coverage >= 15 and $totalScore1 >= 60 and $totalScore2 >= 60 and $cluster == "") > 2 
+    and $simpleRepeat == "" && $microsat == "" && $genomicSuperDups == "" 
+    and lmax($1000glow,0) < 0.01 
+' compar-test.tsv > tempsel.tsv
+wc tempsel.tsv
+cg select -f 'chromosome begin end type ref alt simpleRepeat microsat genomicSuperDups cluster-*' tempsel.tsv | less -S -x 15
 
-cg select -q '
-	count($sequenced-*, == "v")  == 4 
-	&& $type == "snp" 
-	&& count($refcons-*, != "")  != 4 
-	&& count($totalScore1-*,$totalScore2-*, >=60) == 4 
-	&& count($coverage-*, <20) == 0 
-	&& count($coverage-*, > 100) == 0 
-	&& count($cluster-*, != "") == 0 
-	&& $simpleRepeat == "" && $microsat == "" && $genomicSuperDups == "" 
-	&& (min($1000gCEU,0) < 0.05 || $1000gCEU == "-") 
-' ../ftld1/compar/annot_compar-ftld1.tsv > sel.tsv
-wc sel.tsv
+# multireg queries
+# ----------------
 
-# how much region sequenced in at least one sample
-cg select -q 'count($sreg-*, == 1) >= 1' ../ftld1/compar/reg-ftld1.tsv > reg1.tsv
-cg covered reg1.tsv > reg1.covered
 # how much region sequenced in all samples
-cg select -q 'count($sreg-*, == 1) == 4' ../ftld1/compar/reg-ftld1.tsv > reg4.tsv
-cg covered reg4.tsv > reg4.covered
-# find regions of "sequenced" genome missing in at least one of the samples (i.e. not in all 4)
-cg regsubtract /complgen/refseq/hg18/extra/reg_hg18_sequencedgenome.tsv reg4.tsv > missing.tsv
-cg covered missing.tsv 2> /dev/null
-# annotate these regions
-cg annotate missing.tsv annot_missing.tsv /complgen/refseq/hg18/
-# other region tools
-cg regjoin -h
-cg regcommon -h
+cg select -q 'count($sreg-t*, == 1) == 3' reg-test.tsv | cg covered
+# How much bases covered in > 1 samples
+cg select -q 'count($sreg-*, == 1) > 1' reg-test.tsv > reg2.tsv
+cg covered reg2.tsv
 
-# make sequencing primers
-cg makeregions regsel.tsv 200 > valreg.tsv
-cg makeprimers valreg.tsv may2009 600 500 /complgen/refseq/hg18 1 > primers-valreg.tsv
+# covered in at least 2 using -g and calculated column
+cg select -q 'count($sreg-*, == 1) >= 2' -f '{size= $end - $begin}' -g all -gc 'sum(size)' reg-test.tsv
+# covered using -g and calculated column, per sample
+cg select -f '{size= $end - $begin}' -g 'sample {testNA1923*} sreg 1' -gc 'sum(size)' reg-test.tsv | less -S
 
-# group on gene name (for CG annotation = symbol field)
-cg groupby symbol temp gtemp
-# find the genes
-cg select -q 'counthasone($sequenced-*, == "v") >= 3' gtemp result
+# what is missing in gatk-testNA19238chr2122cg, that is in at least 100 others
+cg select -q '$sreg-testNA19238chr2122cg == 1' reg-test.tsv small.tsv
+cg regsubtract reg2.tsv small.tsv > missing.tsv
+cg covered missing.tsv | grep total
+
+# summary (group) queries
+# -----------------------
+cg select -g 'sample {} sequenced v' -gc 'type {} count' test.tsv
+
+
+# Annotation
+# ----------
+
+# annotate these missing regions
+cg annotate missing.tsv annot_missing.tsv /complgen/refseq/hg19/reg_*.tsv /complgen/refseq/hg19/gene_*.tsv
+
+# Validation
+# ----------
+# select first 20 variants
+cg select -q '$ROW < 20' tempsel.tsv > ptempsel.tsv
+# make sequencing primers (first 20 regions)
+cg makeregions ptempsel.tsv 200 > valreg.tsv
+cg makeprimers valreg.tsv 600 500 /complgen/refseq/hg18 > primers-valreg.tsv
+# or prepare making a sequenom assay
+cg makesequenom ptempsel.tsv seqnom.tsv /complgen/refseq/hg19
+
+# group on gene name (gencode)
+cg groupby gencode_gene compar-test.tsv gtemp.tsv
+# find the genes (gencode) that contain a variant in at least 2 samples
+cg select -f '{gene=vdistinct($gencode_gene)} {count=scount($sequenced contains "v")}' \
+    -q 'scount($sequenced contains "v") >= 2 and $gencode_impact ~ /CDS|RNA|UTR/' gtemp.tsv | less -S
