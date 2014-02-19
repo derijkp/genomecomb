@@ -20,4 +20,4 @@ e.g. hg18/hg18ToHg19.over.chain to convert from hg18 to hg19, and hg19/hg19ToHg1
 ; **resultfile**: resulting converted file
 
 == Category ==
-Convert
+Conversion

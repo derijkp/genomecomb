@@ -23,4 +23,4 @@ alt wil be updated if alleleSeq* fields are present in the variant file.
   alt and alleleSeq* are also changed to complement if ref is complement.
 
 == Category ==
-Convert
+Conversion

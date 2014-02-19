@@ -100,4 +100,4 @@ cg process_mastr -d 2 test.mastr testproject /complgen/refseq/hg19
 }}}
 
 == Category ==
-Conversion
+Process
