@@ -91,7 +91,9 @@ proc process_sample {args} {
 	}
 
 	# start from CGI data
-	job cg_svar-$sample -deps {ori/ASM/var-*-ASM*.tsv} -targets {svar-$sample.tsv} -code {
+	job cg_svar-$sample -deps {ori/ASM/var-*-ASM*.tsv} -targets {svar-$sample.tsv} \
+	-skip {fannotvar-$sample.tsv sreg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} \
+	-code {
 		set varfile $dep
 		set f [gzopen $varfile]
 		set info {}
@@ -113,7 +115,7 @@ proc process_sample {args} {
 		file rename -force $target.temp $target
 	}
 
-	job cg_sgene-$sample {ori/ASM/gene-*-ASM*.tsv*} {sgene-$sample.tsv} {
+	job cg_sgene-$sample {ori/ASM/gene-*-ASM*.tsv} {sgene-$sample.tsv} {
 		set genefile $dep
 		if {[llength $genefile] != 1} {error "could not identify genefile"}
 		putslog "Sort gene file ($genefile)"
@@ -122,7 +124,8 @@ proc process_sample {args} {
 	}
 
 	# annotated vars file
-	job cg_annotvar-$sample {svar-$sample.tsv (sgene-$sample.tsv)} {annotvar-$sample.tsv} {
+	job cg_annotvar-$sample -deps {svar-$sample.tsv (sgene-$sample.tsv)} -targets {annotvar-$sample.tsv} \
+	-skip {fannotvar-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} -code {
 		putslog "Create annotated varfile $target"
 		if {[file exists $dep2]} {
 			cg cg2tsv -sorted 1 $dep1 $dep2 $target.temp
@@ -144,7 +147,7 @@ proc process_sample {args} {
 	}
 
 	# only if reg file exists, otherwise extract from svar (next)
-	job cg_sreg-$sample {ori/ASM/reg-*-ASM*.tsv*} {sreg-$sample.tsv} {
+	job cg_sreg-$sample {ori/ASM/reg-*-ASM*.tsv} {sreg-$sample.tsv} {
 		set regfile [gzfile $dep]
 		putslog "Sort region file ($regfile)"
 		cg select -s "chromosome begin end" $regfile $target.temp
@@ -273,11 +276,11 @@ proc process_sample {args} {
 		file rename -force $targetdir.temp $targetdir
 	}
 
-	job cg_cgsv-$sample {SV/allJunctionsBeta-*.tsv*} {cgsv-$sample.tsv} {
+	job cg_cgsv-$sample {SV/allJunctionsBeta-*.tsv} {cgsv-$sample.tsv} {
 		cg convcgsv $dep $target
 	}
 
-	job cg_cgsv_alpha-$sample {SV/annotatedJunctionsAlpha-*.tsv*} {cgsv-$sample.tsv} {
+	job cg_cgsv_alpha-$sample {SV/annotatedJunctionsAlpha-*.tsv} {cgsv-$sample.tsv} {
 		cg convcgsv $dep $target
 	}
 
@@ -290,15 +293,15 @@ proc process_sample {args} {
 		file rename -force $targetdir.temp $targetdir
 	}
 
-	job cg_cgcnv {CNV/cnvSegmentsBeta-*.tsv*} {cgcnv-$sample.tsv} {
+	job cg_cgcnv {CNV/cnvSegmentsBeta-*.tsv} {cgcnv-$sample.tsv} {
 		cg convcgcnv $dep $target
 	}
 
-	job cg_cgcnv_diploid-$sample {CNV/cnvSegmentsDiploidBeta-*.tsv*} {cgcnv-$sample.tsv} {
+	job cg_cgcnv_diploid-$sample {CNV/cnvSegmentsDiploidBeta-*.tsv} {cgcnv-$sample.tsv} {
 		cg convcgcnv $dep $target
 	}
 
-	job cg_cgcnv_alpha-$sample {CNV/cnvSegmentsAlpha-*.tsv*} {cgcnv-$sample.tsv} {
+	job cg_cgcnv_alpha-$sample {CNV/cnvSegmentsAlpha-*.tsv} {cgcnv-$sample.tsv} {
 		cg convcgcnv [gzfile $dep] $target
 	}
 
@@ -391,6 +394,11 @@ proc process_sample {args} {
 		putslog "Making $target"
 		cg covered $dep > $target.temp
 		file rename -force $target.temp $target
+	}
+	job cg_process_cleanup-$sample -deps {(svar-$sample.tsv) (annotvar-$sample.tsv) fannotvar-$sample.tsv sreg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} \
+		-vars {sample} -rmtargets {svar-$sample.tsv annotvar-$sample.tsv} -code {
+			catch {file delete svar-$sample.tsv}
+			catch {file delete annotvar-$sample.tsv}
 	}
 	job cg_process_summary-$sample -deps {
 		annotvar-$sample.tsv
