@@ -1,0 +1,83 @@
+proc cg_collapsealleles {args} {
+	if {([llength $args] < 1)} {
+		errorformat collapse_alleles
+		exit 1
+	}
+	foreach file $args break
+	set f [gzopen $file]
+	set header [tsv_open $f comment]
+	set poss [tsv_basicfields $header]
+	set apos [lindex $poss 5]
+	set rpos [lindex $poss 4]
+	set poss [lrange $poss 0 4]
+	set samples [samples $header]
+	if {[llength $samples]} {
+		set sposs {}
+		foreach sample $samples {
+			lappend sposs {*}[list_cor $header [list sequenced-$sample zyg-$sample]]
+		}
+	} else {
+		set sposs [list_cor $header [list sequenced zyg]]
+	}
+	if {[string length $comment]} {
+		puts $comment
+	}
+	puts [join $header \t]
+	set prevline [split [gets $f] \t]
+	set prevloc [list_sub $prevline $poss]
+	set cur [list $prevline]
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		set loc [list_sub $line $poss]
+		if {$prevloc ne $loc} {
+			if {[llength $cur] > 1} {
+				set len [llength $line]
+				set resultline {}
+				for {set i 0} {$i < $len} {incr i} {
+					set v [list_subindex $cur $i]
+					set temp [list_remove $v ?]
+					if {[llength $temp]} {set v $temp}
+					set cv [list_remdup $v]
+					if {[llength $cv] > 1} {
+						lappend resultline [join $v ,] 
+					} else {
+						lappend resultline $cv
+					}
+				}
+				set ref [lindex $resultline $rpos]
+				foreach {seqpos zygpos} $sposs {
+					if {$seqpos != -1} {
+						set seq [lindex $resultline $seqpos]
+						if {[inlist $seq v]} {set seq v} elseif {[inlist $seq u]} {set seq u} else {set seq r}
+						lset resultline $seqpos $seq
+					}
+					if {$zygpos != -1} {
+						set zyg [list_remdup [lindex $resultline $zygpos]]
+						if {[inlist $zyg u]} {
+							set zyg u
+						} elseif {[inlist $zyg m]} {
+							set zyg m
+						} elseif {[inlist $zyg t]} {
+							set zyg t
+						} elseif {[inlist $zyg c]} {
+							set zyg c
+						} elseif {[inlist $zyg o]} {
+							set zyg c
+						} else {
+							set zyg r
+						}
+						lset resultline $zygpos $zyg
+					}
+				}
+				puts [join $resultline \t]
+			} else {
+				puts [join [lindex $cur 0] \t]
+			}
+			set cur {}
+			set prevloc $loc
+		}
+		lappend cur $line
+	}
+	close $f
+}
