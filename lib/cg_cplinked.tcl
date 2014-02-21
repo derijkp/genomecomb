@@ -36,11 +36,11 @@ proc cg_rmlinked {args} {
 
 # cplinked copies a directory, but by making (soft)links to the original directory for all files
 # existing files (that are not links) will be backed up
-proc cplinked {src dest} {
+proc cplinked {src dest {absolute 0}} {
 	set src [file join [pwd] $src]
 	set dest [file join [pwd] $dest]
 	if {![file isdir $src] || ![catch {file link $src} link]} {
-		cplinked_file $src $dest
+		cplinked_file $src $dest $absolute
 		return
 	}
 	if {[file exists $dest]} {
@@ -52,14 +52,14 @@ proc cplinked {src dest} {
 	foreach file $files {
 		set destfile $dest/[file tail $file]
 		if {[file isdir $file]} {
-			cplinked $file $destfile
+			cplinked $file $destfile $absolute
 		} else {
-			cplinked_file $file $destfile
+			cplinked_file $file $destfile $absolute
 		}
 	}
 }
 
-proc cplinked_file {file destfile} {
+proc cplinked_file {file destfile {absolute 0}} {
 	puts "$file -> $destfile"
 	if {[file exists $destfile]} {
 		if {![catch {file link $destfile} link]} {
@@ -74,10 +74,20 @@ proc cplinked_file {file destfile} {
 			file rename -force $destfile $renamefile$num
 		}
 	}
-	mklink $file $destfile
+	if {!$absolute} {
+		mklink $file $destfile
+	} else {
+		file link -symbolic $destfile [file_absolute $file]
+	}
 }
 
 proc cg_cplinked {args} {
+	if {[lindex $args 0] eq "-absolute"} {
+		set absolute 1
+		set args [lrange $args 1 end]
+	} else {
+		set absolute 1
+	}
 	if {[llength $args] != 2} {
 		exiterror {wrong # args: should be "cg cplinked src dest"}
 	}
@@ -86,5 +96,5 @@ proc cg_cplinked {args} {
 		set tail [file tail $src]
 		set dest $dest/$tail
 	}
-	cplinked $src $dest
+	cplinked $src $dest $absolute
 }
