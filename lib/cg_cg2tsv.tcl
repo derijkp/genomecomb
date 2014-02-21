@@ -233,10 +233,12 @@ proc var2annotvar_readonevar f {
 			set zyg r
 		}
 		if {[inlist $alt -]} {set zyg u}
-		if {$type ne "del"} {
+		if {$type eq "ins"} {
 			set alt [list_remove [list_remdup $alt] - {}]
-		} else {
+		} elseif {$type eq "del"} {
 			set alt {{}}
+		} else {
+			set alt [list_remove [list_remdup $alt] - {} N]
 		}
 		set result [list $locus $chromosome $begin $end [join $type _] $reference $alt $zyg $alleleSeq $alleleSeq2 $totalScore $totalScore2 $xRef]
 		if {$extranum} {
