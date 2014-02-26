@@ -203,8 +203,8 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa} {
 		# do own alignment
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
 		if {![llength $files]} continue
-#		# quality and adapter clipping
-#		set files [fastq_clipadapters_job $files]
+		# quality and adapter clipping
+		set files [fastq_clipadapters_job $files]
 		#
 		# map using $aligner
 		map_${aligner}_job $refseq $files $name {PL illumina LB solexa-123} $pre

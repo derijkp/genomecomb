@@ -50,13 +50,26 @@ proc gatk {} {
 	return $gatk
 }
 
-proc fastq_clipadapters {files targets {adapterfile {}}} {
+proc fastq_clipadapters {files targets args} {
+	set adapterfile {}
+	set paired 1
+	foreach {key value} $args {
+		if {$key eq "-adapterfile"} {
+			set adapterfile $value
+		} elseif {$key eq "-paired"} {
+			set paired $value
+		} else {
+			lappend opts $key $value
+		}
+	}
 	if {$adapterfile eq ""} {
 		set adapterfile $::externdir/adaptors.fa
 	}
 	# clip primers, quality
-	if {[llength $files] == 1} {
-		exec fastq-mcf -a -o [lindex $targets 0].temp $adapterfile [lindex $files 0] 2>@ stderr
+	if {[llength $files] == 1 || !$paired} {
+		foreach {f1} $files {t1} $targets {
+			exec fastq-mcf -a -o $t1.temp $adapterfile $f1 2>@ stderr
+		}
 	} else {
 		foreach {f1 f2} $files {t1 t2} $targets {
 			exec fastq-mcf -a -o $t1.temp -o $t2.temp $adapterfile $f1 $f2 2>@ stderr
@@ -67,18 +80,29 @@ proc fastq_clipadapters {files targets {adapterfile {}}} {
 	}
 }
 
-proc fastq_clipadapters_job {files {adapterfile {}}} {
+proc fastq_clipadapters_job {files args} {
 	upvar job_logdir job_logdir
 	set targets {}
+	set adapterfile {}
+	set paired 1
 	set files [ssort -natural $files]
+	foreach {key value} $args {
+		if {$key eq "-adapterfile"} {
+			set adapterfile $value
+		} elseif {$key eq "-paired"} {
+			set paired $value
+		} else {
+			lappend opts $key $value
+		}
+	}
 	foreach file $files {
 		set file [file_absolute [gzroot $file]]
 		set root [file root $file]
 		file mkdir [file dir $root].clipped
 		lappend targets [file dir $root].clipped/[file tail $root].clipped.fastq
 	}
-	job clip-[file dir [file dir $root]] -deps $files -targets $targets -code {
-		fastq_clipadapters $deps $targets
+	job clip-[file dir [file dir $root]] -deps $files -targets $targets -vars {adapterfile paired} -code {
+		fastq_clipadapters $deps $targets -adapterfile $adapterfile -paired $paired
 	}
 	return $targets
 }
@@ -200,7 +224,7 @@ proc bwarefseq_job {refseq} {
 	return $bwarefseq
 }
 
-proc map_bwa_job {refseq files sample {readgroupdata {}} {pre {}}} {
+proc map_bwa_job {refseq files sample {paired 1} {readgroupdata {}} {pre {}}} {
 	upvar job_logdir job_logdir
 	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
 	if {$readgroupdata ne ""} {
@@ -209,28 +233,37 @@ proc map_bwa_job {refseq files sample {readgroupdata {}} {pre {}}} {
 	set result ${pre}map-bwa-$sample
 	set readgroupdata [array get a]
 	set bwarefseq [bwarefseq_job $refseq]
-	job bwa-$sample -deps [list $bwarefseq {*}$files] -targets $result.sam -vars {readgroupdata sample} -skip $result.bam -code {
+	job bwa-$sample -deps [list $bwarefseq {*}$files] -targets $result.sam -vars {readgroupdata sample paired} -skip $result.bam -code {
 		puts "making $target"
 		set bwarefseq [list_shift deps]
 		set rg {}
 		foreach {key value} $readgroupdata {
 			lappend rg "$key:$value"
 		}
-		set files1 {}
-		set files2 {}
-		foreach {file1 file2} $deps {
-			lappend files1 $file1
-			lappend files2 $file2
-		}
 		set tempdir [scratchdir]
-		if {[llength $files1] > 1} {
-			exec cat {*}$files1 > $tempdir/bwa1.fastq
-			exec cat {*}$files2 > $tempdir/bwa2.fastq
+		if {!$paired} {
+			if {[llength $deps] > 1} {
+				exec cat {*}$deps > $tempdir/bwa1.fastq
+			} else {
+				mklink $deps $tempdir/bwa1.fastq
+			}
+			exec bwa mem -t 2 -a  -R @RG\tID:$sample\t[join $rg \t] $bwarefseq $tempdir/bwa1.fastq > $target.temp 2>@ stderr
 		} else {
-			mklink $file1 $tempdir/bwa1.fastq
-			mklink $file2 $tempdir/bwa2.fastq
+			set files1 {}
+			set files2 {}
+			foreach {file1 file2} $deps {
+				lappend files1 $file1
+				lappend files2 $file2
+			}
+			if {[llength $files1] > 1} {
+				exec cat {*}$files1 > $tempdir/bwa1.fastq
+				exec cat {*}$files2 > $tempdir/bwa2.fastq
+			} else {
+				mklink $file1 $tempdir/bwa1.fastq
+				mklink $file2 $tempdir/bwa2.fastq
+			}
+			exec bwa mem -t 2 -a -M -R @RG\tID:$sample\t[join $rg \t] $bwarefseq $tempdir/bwa1.fastq $tempdir/bwa2.fastq > $target.temp 2>@ stderr
 		}
-		exec bwa mem -t 2 -a -M -R @RG\tID:$sample\t[join $rg \t] $bwarefseq $tempdir/bwa1.fastq $tempdir/bwa2.fastq > $target.temp 2>@ stderr
 		file rename -force $target.temp $target
 		file delete bwa1.fastq bwa2.fastq
 	}
@@ -599,11 +632,14 @@ proc multicompar_job {experiment dbdir todo args} {
 	upvar job_logdir job_logdir
 	set skipincomplete 1
 	set split 0
+	set dbfiles {}
 	foreach {key value} $args {
 		if {$key eq "-skipincomplete"} {
 			set skipincomplete $value
 		} elseif {$key eq "-split"} {
 			set split $value
+		} elseif {$key eq "-dbfiles"} {
+			set dbfiles $value
 		} else {
 			lappend opts $key $value
 		}
@@ -640,8 +676,8 @@ proc multicompar_job {experiment dbdir todo args} {
 		}
 	}
 	job annotcompar-$experiment -deps compar/compar-$experiment.tsv \
-	-targets compar/annot_compar-$experiment.tsv -vars dbdir -code {
-		cg annotate $dep $target.temp $dbdir
+	-targets compar/annot_compar-$experiment.tsv -vars {dbdir dbfiles} -code {
+		cg annotate $dep $target.temp $dbdir $dbfiles
 		file rename -force $target.temp $target
 	}
 	job indexannotcompar-$experiment \
@@ -671,7 +707,10 @@ proc multicompar_job {experiment dbdir todo args} {
 
 proc process_illumina {args} {
 	set dbdir {}
+	set dbfiles {}
 	set realign 1
+	set paired 1
+	set adapterfile {}
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -683,6 +722,15 @@ proc process_illumina {args} {
 			}
 			-split {
 				set split $value
+			}
+			-dbfile {
+				lappend dbfiles $value
+			}
+			-paired {
+				set paired $value
+			}
+			-adapterfile {
+				set adapterfile $value
 			}
 			default break
 		}
@@ -698,6 +746,7 @@ proc process_illumina {args} {
 		errorformat process_illumina
 		exit 1
 	}
+	lappend dbfiles [glob $dbdir/extra/*dbnsfp*.tsv]
 	set destdir [file_absolute $destdir]
 	# check projectinfo
 	projectinfo $destdir dbdir split
@@ -742,7 +791,7 @@ proc process_illumina {args} {
 		set files [ssort -natural [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
 		if {![llength $files]} continue
 		# quality and adapter clipping
-		set files [fastq_clipadapters_job $files]
+		set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired]
 		#
 #		# map using bowtie2
 #		map_bowtie2_job $refseq $sample $files
@@ -756,7 +805,7 @@ proc process_illumina {args} {
 #		var_gatk_job map-rdsbowtie2-$sample.bam $refseq
 		#
 		# map using bwa
-		map_bwa_job $refseq $files $sample
+		map_bwa_job $refseq $files $sample $paired
 		# extract regions with coverage >= 5
 		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
 		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
@@ -772,7 +821,7 @@ proc process_illumina {args} {
 	job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo [list_remdup $todo]
-	multicompar_job $experiment $dbdir $todo -skipincomplete 1 -split $split
+	multicompar_job $experiment $dbdir $todo -skipincomplete 1 -split $split -dbfiles $dbfiles
 	cd $keeppwd
 
 }
