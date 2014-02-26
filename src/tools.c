@@ -130,6 +130,12 @@ void DStringputs(DString *string,FILE *f) {
 	}
 }
 
+void charputs(char *cur,int size,FILE *f) {
+	if (size > 0) {
+		while(size--) {putc_unlocked(*cur++,stdout);}
+	}
+}
+
 void DStringPrintf(DString *dstring, char *format, ...) {
 	va_list args;
 	int size;
@@ -887,7 +893,7 @@ FILE *fopen64_or_die(char *filename,char *mode) {
 }
 
 int checksort(DString *prevchromosome1,int *prevstart1,int *prevend1,DString *prevtype1,DString *prevalt1,DString *chromosome1,int start1,int end1,DString *type1,DString *alt1,char *filename,int *nextpos) {
-	int comp,comptype,compalt;
+	int comp,comptype,compalt, result = 2;
  	comp = DStringLocCompare(chromosome1,prevchromosome1);
 	comptype = DStringCompare(type1,prevtype1);
 	compalt = DStringCompare(alt1,prevalt1);
@@ -904,14 +910,17 @@ int checksort(DString *prevchromosome1,int *prevstart1,int *prevend1,DString *pr
 		DStringCopy(prevchromosome1,chromosome1);
 		if (nextpos) {*nextpos = 0;}
 	}
+	if (comp == 0 && comptype == 0 && start1 == *prevstart1 && end1 == *prevend1) {
+		if (compalt == 0) {
+			result = 0;
+		} else {
+			result = 1;
+		}
+	}
 	*prevstart1 = start1; *prevend1 = end1;
 	if (comptype != 0) {DStringCopy(prevtype1,type1);}
 	if (compalt != 0) {DStringCopy(prevalt1,alt1);}
-	if (comp > 0 || comptype != 0 || compalt != 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return result;
 }
 
 /* checksortreg(prevchromosome1,prevstart1,prevend1,chromosome1,start1,end1,argv[1]); */

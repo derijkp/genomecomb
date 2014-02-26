@@ -240,7 +240,7 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 			set comp2 [multicompar_getcomp $cur2 $comparposs2 $split $file2 $prevcomp2]
 			set prevcomp2 $comp2
 		} elseif {$d < 0} {
-			while {[loc_compare $comp1 $comp2] < 0} {
+			while {$d < 0} {
 				puts $o [multicompar_annot_join $cur1 -]
 				if {[eof $f1]} break
 				set cur1 [compare_annot_getline $f1]
@@ -250,6 +250,7 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 				if {![llength $cur1]} break
 				incr num
 				if {![expr {$num % 100000}]} {putslog $num}
+				set d [loc_compare $comp1 $comp2]
 			}
 		} else {
 			while {$d > 0} {
@@ -481,7 +482,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 	file rename -force $compar_file.temp $compar_file
 }
 
-proc cg_multicompar {args} {
+proc cg_multicompar.old {args} {
 	set reannot 0
 	set regonly 0
 	set split 0

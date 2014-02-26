@@ -59,11 +59,17 @@ test multicompar {basic} {
 	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft
 } {} 
 
+test multicompar {basic with 3} {
+	test_cleantmp
+	cg multicompar tmp/temp.sft data/var_annot.sft data/var_annot2.sft data/var_annot3.sft
+	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot3.sft
+} {} 
+
 test multicompar {basic split} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
 	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/var-sample3.tsv
+	cg splitalleles data/var_annot3.sft > tmp/var-sample3.tsv
 	cg multicompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
 	exec diff tmp/temp.sft data/expected-multicompar-split.sft
 } {} 
@@ -83,7 +89,8 @@ test multicompar {basic split reannot} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
 	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/var-sample3.tsv
+	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
+	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
 	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
@@ -111,11 +118,11 @@ test multicompar {basic, sequenced already present} {
 > 1	5000	5010	del	AGCGTGGCAA		v	AGCGTGGCAA		test4	0.4	v	AGCGTGGCAA		test4	0.4
 child process exited abnormally} 
 
-test multicompar {noalt} {
-	test_cleantmp
-	cg multicompar tmp/temp.sft data/var_annotnoalt.sft data/var_annot2noalt.sft
-	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2noalt.sft
-} {} 
+#test multicompar {noalt} {
+#	test_cleantmp
+#	cg multicompar tmp/temp.sft data/var_annotnoalt.sft data/var_annot2noalt.sft
+#	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2noalt.sft
+#} {} 
 
 test svmulticompar {basic} {
 	test_cleantmp
@@ -196,16 +203,16 @@ test multicompar {basic reannot var-all} {
 	exec diff tmp/temp.tsv data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft
 } {} 
 
-test multicompar {merge} {
-	test_cleantmp
-	file copy data/vars1.sft tmp/mcompar.tsv
-	set c [file_read data/vars3.sft]
-	regsub -all sample1 $c sample3 c
-	regsub -all sample2 $c sample4 c
-	file_write tmp/merge.tsv $c
-	cg multicompar -listfields list tmp/mcompar.tsv tmp/merge.tsv
-	exec diff tmp/mcompar.tsv data/expected-multicompar-merge.tsv
-} {}
+#test multicompar {merge} {
+#	test_cleantmp
+#	file copy data/vars1.sft tmp/mcompar.tsv
+#	set c [file_read data/vars3.sft]
+#	regsub -all sample1 $c sample3 c
+#	regsub -all sample2 $c sample4 c
+#	file_write tmp/merge.tsv $c
+#	cg multicompar -listfields list tmp/mcompar.tsv tmp/merge.tsv
+#	exec diff tmp/mcompar.tsv data/expected-multicompar-merge.tsv
+#} {}
 
 test multicompar {sort empty bug split} {
 	test_cleantmp
@@ -219,13 +226,21 @@ test multicompar {error on split files without split option} {
 	# this gave an incorrectly sorted file
 	cg multicompar tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
 	cg checksort tmp/temp.tsv
-} {*error in "*var-compartest2.tsv": file uses split alleles ("1 207806142 207806170 sub" occurs more than once and you are not running multicompar with the -split option)*} match error
+} {*error in "*var-compartest2.tsv": file uses split alleles ("*1 207806142 207806170 sub" occurs more than once and you are not running multicompar with the -split option)*} match error
 
 test multicompar {error on badly sorted files} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
+	cg multicompar tmp/temp.tsv data/vars_sorterror1.sft data/vars3.sft
+} {File (*vars_sorterror1.sft) is not correctly sorted (sort correctly using "cg select -s -")
+chr10:43198434-43198435:snp:G came before chr3:52847042-52847060:del:*} match error
+
+test multicompar {error on badly sorted files 2} {
+	test_cleantmp
+	# this gave an incorrectly sorted file
 	cg multicompar tmp/temp.tsv data/vars_sorterror1.sft data/vars_sorterror2.sft
-} {*sorting error in "*vars_sorterror1.sft": "10 43198434 43198435 snp" comes before "3 52847042 52847060 del"*} match error
+} {File (*vars_sorterror2.sft) is not correctly sorted (sort correctly using "cg select -s -")
+chr3:52847303-52847304:snp:G came before chr3:52847042-52847060:del:*} match error
 
 test_cleantmp
 

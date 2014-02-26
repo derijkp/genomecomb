@@ -1,6 +1,6 @@
 # ARCH should be defined by caller
-#CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
-CFLAGS=-Wall -O2
+CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
+# CFLAGS=-Wall -O2
 TOOLS= tools.c tools.h debug.h
 HASHTOOLS=hash.h hash.c
 BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h
@@ -10,7 +10,7 @@ all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../b
      ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby \
      ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile ../bin$(ARCH)/bcol_indexfile_all \
      ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_annot ../bin$(ARCH)/vcf2tsv ../bin$(ARCH)/reg_select \
-     ../bin$(ARCH)/check_sort
+     ../bin$(ARCH)/check_sort ../bin$(ARCH)/multi_merge ../bin$(ARCH)/multi_join
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -77,3 +77,9 @@ clean:
 
 ../bin$(ARCH)/check_sort: check_sort.c $(TOOLS)
 	gcc check_sort.c tools.c $(CFLAGS) -o ../bin$(ARCH)/check_sort
+
+../bin$(ARCH)/multi_merge: multi_merge.c $(TOOLS)
+	gcc multi_merge.c tools.c $(CFLAGS) -o ../bin$(ARCH)/multi_merge
+
+../bin$(ARCH)/multi_join: multi_join.c $(TOOLS)
+	gcc multi_join.c tools.c $(CFLAGS) -o ../bin$(ARCH)/multi_join
