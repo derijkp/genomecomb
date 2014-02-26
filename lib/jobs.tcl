@@ -63,7 +63,13 @@ proc job_args {jobargs} {
 				incr pos
 			}
 			-silent {
-				set cgjob(silent) 1
+				set val [lindex $jobargs $pos]
+				if {[inlist {0 1} $val]} {
+					set cgjob(silent) $val
+					incr pos
+				} else {
+					set cgjob(silent) 1
+				}
 			}
 			-runcmd {
 				set cgjob(runcmd) [lindex $jobargs $pos]
