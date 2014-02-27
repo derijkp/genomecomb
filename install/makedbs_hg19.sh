@@ -3,6 +3,7 @@
 exec cg source "$0" "$@"
 
 set build hg19
+if {![info exists argv]} {set argv {}}
 set argv [job_init {*}$argv]
 if {[llength $argv]} {
 	set dest [lindex $argv 0]
@@ -284,48 +285,44 @@ job reg_exome_targetseq -targets {extra/reg_hg19_exome_targetseq.tsv} -code {
 file mkdir ${dest}/tmp/hg19
 job pre_var_hg19_dbnsfp -targets {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -skip {extra/var_hg19_dbnsfp.tsv extra/var_hg19_dbnsfp.tsv.opt} -vars {dest} -code {
 	cd ${dest}/tmp/hg19
-	if {![file exists dbNSFP2.0b4.zip]} {
-		exec -ignorestderr wget -c http://dbnsfp.houstonbioinformatics.org/dbNSFPzip/dbNSFPv2.1.zip
+	if {![file exists dbNSFP2.3.zip]} {
+		exec -ignorestderr wget -c http://dbnsfp.houstonbioinformatics.org/dbNSFPzip/dbNSFPv2.3.zip
 	}
-	exec unzip -o dbNSFPv2.1.zip >@ stdout 2>@ stderr
-	file_write pre_var_dbnsfp.tsv [join {
-		chromosome pos ref alt aaref aaalt hg18_pos genename Uniprot_acc Uniprot_id Uniprot_aapos
-		Interpro_domain cds_strand refcodon SLR_test_statistic codonpos fold-degenerate Ancestral_allele
-		Ensembl_geneid Ensembl_transcriptid aapos 
-		SIFT_score SIFT_score_converted SIFT_pred
-		Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred 
-		LRT_score LRT_score_converted LRT_pred
-		MutationTaster_score MutationTaster_score_converted MutationTaster_pred 
-		FATHMM_score FATHMM_score_converted FATHMM_pred
-		GERP_NR GERP_RS PhyloP_score 29way_pi 29way_logOdds LRT_Omega UniSNP_ids 
-		1000Gp1_AC 1000Gp1_AF 1000Gp1_AFR_AC 1000Gp1_AFR_AF 1000Gp1_EUR_AC 1000Gp1_EUR_AF
-		1000Gp1_AMR_AC 1000Gp1_AMR_AF 1000Gp1_ASN_AC 1000Gp1_ASN_AF 
-		ESP_AA_AF ESP_EA_AF
-	} \t]\n
-	exec cat {*}[lsort -dict [glob dbNSFP2.1_variant.chr*]] | grep -v ^# >> pre_var_dbnsfp.tsv
+	exec unzip -o dbNSFPv2.3.zip >@ stdout 2>@ stderr
+	set f [open dbNSFP2.3_variant.chr1]
+	set header [split [string range [gets $f] 1 end] \t]
+	close $f
+	set header [list_change $header {
+		chr chromosome pos(1-coor) end
+		hg18_pos(1-coor) hg18_pos {SLR_test_statistic } SLR_test_statistic
+		GERP++_NR GERP_NR GERP++_RS GERP_RS phyloP PhyloP_score 
+		ESP6500_AA_AF ESP_AA_AF ESP6500_EA_AF ESP_EA_AF
+	}]
+	file_write pre_var_dbnsfp.tsv.temp [join $header \t]\n
+	exec cat {*}[lsort -dict [glob dbNSFP2.3_variant.chr*]] | grep -v ^# >> pre_var_dbnsfp.tsv.temp
+	file rename -force pre_var_dbnsfp.tsv.temp pre_var_dbnsfp.tsv
 }
 
 job var_hg19_dbnsfp -deps {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -targets {extra/var_hg19_dbnsfp.tsv extra/var_hg19_dbnsfp.tsv.opt} -vars {dest} -code {
 	cd ${dest}/tmp/hg19
-	cg select -s {chromosome pos} -f {
-		chromosome {begin=$pos - 1} {end=$pos} {type="snp"} ref alt 
-		aaref aaalt hg18_pos genename Uniprot_acc Uniprot_id Uniprot_aapos 
-		Interpro_domain cds_strand refcodon SLR_test_statistic codonpos fold-degenerate Ancestral_allele 
-		Ensembl_geneid Ensembl_transcriptid aapos 
-		SIFT_score SIFT_pred 
+	cg select -s {chromosome end} -f {
+		chromosome {begin=$end - 1} end {type="snp"} ref alt
+		RadialSVM_score RadialSVM_pred LR_score LR_pred
+		SIFT_score SIFT_pred
 		Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred 
 		LRT_score LRT_pred 
 		MutationTaster_score MutationTaster_pred 
 		FATHMM_score FATHMM_pred
-		GERP_NR GERP_RS PhyloP_score 29way_pi 29way_logOdds LRT_Omega UniSNP_ids 
-		1000Gp1_AC 1000Gp1_AF 1000Gp1_AFR_AC 1000Gp1_AFR_AF 1000Gp1_EUR_AC 1000Gp1_EUR_AF 
-		1000Gp1_AMR_AC 1000Gp1_AMR_AF 1000Gp1_ASN_AC 1000Gp1_ASN_AF 
+		GERP_NR GERP_RS PhyloP_score 29way_pi 29way_logOdds LRT_Omega 
 		ESP_AA_AF ESP_EA_AF
-	} pre_var_dbnsfp.tsv pre2_var_hg19_dbnsfp.tsv
-	cg groupby {chromosome begin end type} pre2_var_hg19_dbnsfp.tsv pre3_var_hg19_dbnsfp.tsv
+	} pre_var_dbnsfp.tsv pre2_var_hg19_dbnsfp.tsv.temp
+	file rename -force pre2_var_hg19_dbnsfp.tsv.temp pre2_var_hg19_dbnsfp.tsv
+	cg groupby {chromosome begin end type} pre2_var_hg19_dbnsfp.tsv pre3_var_hg19_dbnsfp.tsv.temp
+	file rename -force pre3_var_hg19_dbnsfp.tsv.temp pre3_var_hg19_dbnsfp.tsv
 	cg select -f {
 		chromosome begin end type {ref=lindex($ref,0)} alt 
-		SIFT_score  SIFT_pred
+		RadialSVM_score RadialSVM_pred LR_score LR_pred
+		SIFT_score SIFT_pred
 		Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred 
 		LRT_score LRT_pred 
 		MutationTaster_score MutationTaster_pred 
@@ -334,9 +331,9 @@ job var_hg19_dbnsfp -deps {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -targets {extra
 		ESP_AA_AF ESP_EA_AF
 	} pre3_var_hg19_dbnsfp.tsv var_hg19_dbnsfp.tsv.temp
 	# move dbNSFPzip files to target
-	file copy -force var_hg19_dbnsfp.tsv.temp ${dest}/hg19/extra/var_hg19_dbnsfp.tsv
-	file_write ${dest}/hg19/extra/var_hg19_dbnsfp.tsv.opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score GERP_NR GERP_RS PhyloP_score 29way_pi 29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
-	file copy dbNSFP2.1.readme.txt ${dest}/hg19/extra/var_hg19_dbnsfp.info
+	file rename -force var_hg19_dbnsfp.tsv.temp ${dest}/hg19/extra/var_hg19_dbnsfp.tsv
+	file_write ${dest}/hg19/extra/var_hg19_dbnsfp.tsv.opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred RadialSVM_score RadialSVM_pred LR_score LR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score GERP_NR GERP_RS PhyloP_score 29way_pi 29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
+	file copy -force dbNSFP2.3.readme.txt ${dest}/hg19/extra/var_hg19_dbnsfp.info
 }
 
 job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${build}.ssa} -vars build \

@@ -301,9 +301,9 @@ file mkdir ${dest}/hg19
 job pre_var_hg19_dbnsfp -targets {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -skip {extra/var_hg19_dbnsfp.tsv extra/var_hg19_dbnsfp.tsv.opt} -vars {dest} -code {
 	cd ${dest}/tmp/hg19
 	if {![file exists dbNSFP2.0b4.zip]} {
-		exec -ignorestderr wget -c http://dbnsfp.houstonbioinformatics.org/dbNSFPzip/dbNSFPv2.1.zip
+		exec -ignorestderr wget -c http://dbnsfp.houstonbioinformatics.org/dbNSFPzip/dbNSFPv2.3.zip
 	}
-	exec unzip -o dbNSFPv2.1.zip >@ stdout 2>@ stderr
+	exec unzip -o dbNSFPv2.3.zip >@ stdout 2>@ stderr
 	file_write pre_var_dbnsfp.tsv [join {
 		chromosome pos ref alt aaref aaalt hg18_pos genename Uniprot_acc Uniprot_id Uniprot_aapos
 		Interpro_domain cds_strand refcodon SLR_test_statistic codonpos fold-degenerate Ancestral_allele
@@ -318,7 +318,8 @@ job pre_var_hg19_dbnsfp -targets {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -skip {e
 		1000Gp1_AMR_AC 1000Gp1_AMR_AF 1000Gp1_ASN_AC 1000Gp1_ASN_AF 
 		ESP_AA_AF ESP_EA_AF
 	} \t]\n
-	exec cat {*}[lsort -dict [glob dbNSFP2.1_variant.chr*]] | grep -v ^# >> pre_var_dbnsfp.tsv
+	exec cat {*}[lsort -dict [glob dbNSFP2.3_variant.chr*]] | grep -v ^# >> pre_var_dbnsfp.tsv.temp
+	file rename pre_var_dbnsfp.tsv.temp pre_var_dbnsfp.tsv
 }
 
 job var_hg19_dbnsfp -deps {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -targets {extra/var_hg19_dbnsfp.tsv extra/var_hg19_dbnsfp.tsv.opt} -vars {dest} -code {
@@ -337,8 +338,10 @@ job var_hg19_dbnsfp -deps {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -targets {extra
 		1000Gp1_AC 1000Gp1_AF 1000Gp1_AFR_AC 1000Gp1_AFR_AF 1000Gp1_EUR_AC 1000Gp1_EUR_AF 
 		1000Gp1_AMR_AC 1000Gp1_AMR_AF 1000Gp1_ASN_AC 1000Gp1_ASN_AF 
 		ESP_AA_AF ESP_EA_AF
-	} pre_var_dbnsfp.tsv pre2_var_hg19_dbnsfp.tsv
-	cg groupby {chromosome begin end type} pre2_var_hg19_dbnsfp.tsv pre3_var_hg19_dbnsfp.tsv
+	} pre_var_dbnsfp.tsv pre2_var_hg19_dbnsfp.tsv.temp
+	file rename -force pre2_var_hg19_dbnsfp.tsv.temp pre2_var_hg19_dbnsfp.tsv
+	cg groupby {chromosome begin end type} pre2_var_hg19_dbnsfp.tsv pre3_var_hg19_dbnsfp.tsv.temp
+	file rename -force pre3_var_hg19_dbnsfp.tsv.temp pre3_var_hg19_dbnsfp.tsv
 	cg select -f {
 		chromosome begin end type {ref=lindex($ref,0)} alt 
 		SIFT_score  SIFT_pred
@@ -350,17 +353,19 @@ job var_hg19_dbnsfp -deps {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -targets {extra
 		ESP_AA_AF ESP_EA_AF
 	} pre3_var_hg19_dbnsfp.tsv var_hg19_dbnsfp.tsv.temp
 	# move dbNSFPzip files to target
-	file copy -force var_hg19_dbnsfp.tsv.temp ${dest}/hg19/extra/var_hg19_dbnsfp.tsv
+	file copy -force var_hg19_dbnsfp.tsv.temp ${dest}/hg19/extra/var_hg19_dbnsfp.tsv.temp
+	file rename -force ${dest}/hg19/extra/var_hg19_dbnsfp.tsv.temp ${dest}/hg19/extra/var_hg19_dbnsfp.tsv
 	file_write ${dest}/hg19/extra/var_hg19_dbnsfp.tsv.opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score GERP_NR GERP_RS PhyloP_score 29way_pi 29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
-	file copy dbNSFP2.1.readme.txt ${dest}/hg19/extra/var_hg19_dbnsfp.info
+	file copy -force dbNSFP2.3.readme.txt ${dest}/hg19/extra/var_hg19_dbnsfp.info
 }
 
 # move dbNSFP hg19 files to target hg18
 job dbNSFP_hg18_liftover -deps {$dest/hg19/extra/var_hg19_dbnsfp.tsv} -targets {extra/var_${build}_dbnsfp.tsv extra/var_${build}_dbnsfp.tsv.opt extra/var_${build}_dbnsfp.info} -vars {dest build db} -code {
+	file delete ${dest}/tmp/${build}/var_${build}_dbnsfp.tsv.temp
 	cg liftover $dest/hg19/extra/var_hg19_dbnsfp.tsv ${dest}/liftover/hg19ToHg18.over.chain ${dest}/tmp/${build}/var_${build}_dbnsfp.tsv.temp
-	file rename -force ${dest}/tmp/${build}/var_${build}_dbnsfp.tsv.temp ${dest}/${build}/extra/var_${build}_dbnsfp.tsv
 	file copy -force $dest/hg19/extra/var_hg19_dbnsfp.tsv.opt ${dest}/${build}/extra/var_${build}_dbnsfp.tsv.opt
 	file copy -force $dest/hg19/extra/var_hg19_dbnsfp.info ${dest}/${build}/extra/var_${build}_dbnsfp.info
+	file rename -force ${dest}/tmp/${build}/var_${build}_dbnsfp.tsv.temp ${dest}/${build}/extra/var_${build}_dbnsfp.tsv
 }
 
 job_wait
