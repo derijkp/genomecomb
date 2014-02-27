@@ -677,7 +677,7 @@ proc multicompar_job {experiment dbdir todo args} {
 	}
 	job annotcompar-$experiment -deps compar/compar-$experiment.tsv \
 	-targets compar/annot_compar-$experiment.tsv -vars {dbdir dbfiles} -code {
-		cg annotate $dep $target.temp $dbdir $dbfiles
+		cg annotate $dep $target.temp $dbdir {*}$dbfiles
 		file rename -force $target.temp $target
 	}
 	job indexannotcompar-$experiment \
