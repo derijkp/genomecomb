@@ -152,7 +152,7 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	return [list $mastrname $refseq $mastrdir/reg-$mastrname.map]
 }
 
-proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa} {split 0}} {
+proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa} {split 0} {paired 1}} {
 	#
 #	# make minigenome
 	set mastrdir [file_absolute $mastrdir]
@@ -207,7 +207,7 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa} {
 		set files [fastq_clipadapters_job $files]
 		#
 		# map using $aligner
-		map_${aligner}_job $refseq $files $name {PL illumina LB solexa-123} $pre
+		map_${aligner}_job $refseq $files $name $paired {PL illumina LB solexa-123} $pre
 		# clean bamfile (do not mark duplicates, realign)
 		set cleanbam [bam_clean_job ${pre}map-${aligner}-$name.bam $refseq $sample -removeduplicates 0 -bed $mastrdir/reg-inner-$mastrname.bed]
 		# coverage statistics
