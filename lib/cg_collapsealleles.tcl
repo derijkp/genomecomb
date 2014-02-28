@@ -20,19 +20,18 @@ proc cg_collapsealleles {args} {
 		set sposs [list_cor $header [list sequenced zyg]]
 	}
 	if {[string length $comment]} {
-		puts $comment
+		puts [string trim $comment]
 	}
 	puts [join $header \t]
 	set prevline [split [gets $f] \t]
 	set prevloc [list_sub $prevline $poss]
 	set cur [list $prevline]
-	while {![eof $f]} {
+	while {1} {
 		set line [split [gets $f] \t]
-		if {![llength $line]} continue
 		set loc [list_sub $line $poss]
 		if {$prevloc ne $loc} {
 			if {[llength $cur] > 1} {
-				set len [llength $line]
+				set len [llength [lindex $cur 0]]
 				set resultline {}
 				for {set i 0} {$i < $len} {incr i} {
 					set v [list_subindex $cur $i]
@@ -42,7 +41,7 @@ proc cg_collapsealleles {args} {
 					if {[llength $cv] > 1} {
 						lappend resultline [join $v ,] 
 					} else {
-						lappend resultline $cv
+						lappend resultline [lindex $cv 0]
 					}
 				}
 				set ref [lindex $resultline $rpos]
@@ -77,6 +76,7 @@ proc cg_collapsealleles {args} {
 			set cur {}
 			set prevloc $loc
 		}
+		if {![llength $line] && [eof $f]} break
 		lappend cur $line
 	}
 	close $f

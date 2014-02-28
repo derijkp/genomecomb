@@ -21,6 +21,15 @@ proc test_cleantmp {} {
 	}
 }
 
+proc write_tab {file data} {
+	set data [split [string trim $data] \n]
+	set f [open $file w]
+	foreach line $data {
+		puts $f [join $line \t]
+	}
+	close $f
+}
+
 lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
 
 file mkdir tmp

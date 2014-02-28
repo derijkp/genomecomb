@@ -103,4 +103,82 @@ test select {sft2gff} {
 	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
 } {}
 
+test select {splitalleles} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4000 4001 snp G A 0.5
+	 	chr1 4001 4002 snp A G,C 0.5,0.1
+	 	chr1 4100 4101 del A {} 0.5
+	 	chr1 4200 4200 ins {} A 0.5
+	 	chr1 4208 4208 ins {} A,AA 0.8,0.9
+	}
+	exec cg splitalleles tmp/test.tsv > tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4000 4001 snp G A 0.5
+	 	chr1 4001 4002 snp A C 0.1
+	 	chr1 4001 4002 snp A G 0.5
+	 	chr1 4100 4101 del A {} 0.5
+	 	chr1 4200 4200 ins {} A 0.5
+	 	chr1 4208 4208 ins {} A 0.8
+	 	chr1 4208 4208 ins {} AA 0.9
+	}
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test select {splitalleles2} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4001 4002 snp A G,C 0.5,0.1
+	 	chr1 4008 4009 snp G C 0.9
+	}
+	exec cg splitalleles tmp/test.tsv > tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4001 4002 snp A C 0.1
+	 	chr1 4001 4002 snp A G 0.5
+	 	chr1 4008 4009 snp G C 0.9
+	}
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test select {collapsealleles} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4000 4001 snp G A 0.5
+	 	chr1 4001 4002 snp A C 0.1
+	 	chr1 4001 4002 snp A G 0.5
+	 	chr1 4100 4101 del A {} 0.5
+	 	chr1 4200 4200 ins {} A 0.5
+	 	chr1 4208 4208 ins {} A 0.8
+	 	chr1 4208 4208 ins {} AA 0.9
+	}
+	exec cg collapsealleles tmp/test.tsv > tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4000 4001 snp G A 0.5
+	 	chr1 4001 4002 snp A C,G 0.1,0.5
+	 	chr1 4100 4101 del A {} 0.5
+	 	chr1 4200 4200 ins {} A 0.5
+	 	chr1 4208 4208 ins {} A,AA 0.8,0.9
+	}
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test select {collapsealleles2} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 ins {} A 0.5
+	 	chr1 4200 4200 ins {} A 0.8
+	 	chr1 5000 5001 snp G A 0.5
+	}
+	exec cg collapsealleles tmp/test.tsv > tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 ins {} A 0.5,0.8
+	 	chr1 5000 5001 snp G A 0.5
+	}
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
 testsummarize
