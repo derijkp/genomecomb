@@ -136,6 +136,22 @@ foreach db {
 	}
 }
 
+job clinvar -targets {${dest}/hg19/var_hg19_clinvar.tsv} -vars {dest build} -code {
+	cd $dest/tmp/hg19
+	exec wget ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf/clinvar_00-latest.vcf.gz
+	cg vcf2tsv clinvar_00-latest.vcf.gz clinvar_00-latest.tsv
+	set f [open clinvar_00-latest.tsv]
+	set header [tsv_open $f comment]
+	close $f
+	if {![regexp reference=GRCh37 $comment]} {
+		error "clinvar_00-latest.vcf.gz is from a different reference genome version"
+	}
+	cg collapsealleles clinvar_00-latest.tsv > $target.temp
+	file_write [gzroot $target].opt.temp "fields\t{CLNACC CLNDBN}\nheaderfields\t{clinvar_acc clinvar_disease}\n"
+	file rename -force [gzroot $target].opt.temp [gzroot $target].opt
+	file rename -force $target.temp $target
+}
+
 # genes
 foreach db {
 	refGene ensGene knownGene genscan acembly
@@ -342,7 +358,6 @@ job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${
 	mklink genome_${build}.ifas.index extra/genome_${build}.ifas.index 
 	mklink genome_${build}.ssa extra/genome_${build}.ssa
 }
-
 # genome in extra
 catch {
 	foreach file [glob genome_*] {
