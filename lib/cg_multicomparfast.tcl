@@ -192,28 +192,16 @@ proc cg_multicompar {args} {
 	}
 	close $ftodo
 	set len [expr {[llength $allfiles]+1}]
-	job multi_join -deps [list $todofile {*}$allfiles] -vars {split len reannotheader} -targets $workdir/multicompar.tsv -code {
+	job multi_join -deps [list $todofile {*}$allfiles] -vars {split len reannotheader} -targets $compar_file -code {
 		file_write $target.temp [join $reannotheader \t]\n
 		exec multi_join $dep1 $len $split >> $target.temp
 		file rename -force $target.temp $target
 	}
 	if {$reannot} {
-		job multicompar_reannot -deps [list $workdir/multicompar.tsv] -vars {regonly} -targets $workdir/reannot -code {
-			putslog "Reannotating $compar_file"
+		job multicompar_reannot -deps {$compar_file} -vars {regonly} -targets {$compar_file $compar_file.reannot} -code {
+			putslog "Reannotating $dep"
 			multicompar_reannot $dep 0 $regonly
-			if {[file exists $compar_file]} {
-				file rename -force $compar_file $compar_file.old
-			}
-			file rename $workdir/multicompar.tsv $compar_file
-			file_write $workdir/reannot [timestamp]
-		}
-	} else {
-		job multicompar_move -deps [list $workdir/multicompar.tsv] -vars {regonly compar_file workdir} -targets $workdir/move -code {
-			if {[file exists $compar_file]} {
-				file rename -force $compar_file $compar_file.old
-			}
-			file rename $workdir/multicompar.tsv $compar_file
-			file_write $workdir/move [timestamp]
+			file_write $dep.reannot [timestamp]
 		}
 	}
 	job_wait

@@ -79,7 +79,7 @@ clean:
 	gcc check_sort.c tools.c $(CFLAGS) -o ../bin$(ARCH)/check_sort
 
 ../bin$(ARCH)/multi_merge: multi_merge.c $(TOOLS)
-	gcc multi_merge.c tools.c $(CFLAGS) -o ../bin$(ARCH)/multi_merge
+	gcc multi_merge.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multi_merge
 
 ../bin$(ARCH)/multi_join: multi_join.c $(TOOLS)
-	gcc multi_join.c tools.c $(CFLAGS) -o ../bin$(ARCH)/multi_join
+	gcc multi_join.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multi_join

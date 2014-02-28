@@ -11,60 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tools.h"
+#include "tools_var.h"
 #include "debug.h"
-
-typedef struct VariantPos {
-	int chr;
-	int start;
-	int end;
-	int type;
-	int ref;
-	int alt;
-	int max;
-} VariantPos;
-
-typedef struct Variant {
-	DString *chr;
-	int start;
-	int end;
-	DString *type;
-	DString *ref;
-	DString *alt;
-} Variant;
-
-/* returns 0 if equal, 1 if equal not including alt, 2 if different */
-int varchecksort(Variant *prev,Variant *var,char *filename,int *nextpos) {
-	return checksort(prev->chr,&(prev->start),&(prev->end),prev->type,prev->alt,var->chr,var->start,var->end,var->type,var->alt,filename,nextpos);
-}
-
-void varputs(Variant var,FILE *f) {
-	if (var.chr->size > 3) {
-		char *a = var.chr->string;
-		if ((a[0] == 'C' || a[0] == 'c') && (a[1] == 'H' || a[1] == 'h') && (a[2] == 'R' || a[2] == 'r')) {
-			charputs(a+3,var.chr->size-3,f);
-		} else {
-			DStringputs(var.chr,f);
-		}
-	} else {
-		DStringputs(var.chr,f);
-	}
-	fprintf(f,"\t%d\t%d\t",var.start,var.end);
-	DStringputs(var.type,f);
-	putc_unlocked('\t',f);
-	DStringputs(var.ref,f);
-	putc_unlocked('\t',f);
-	DStringputs(var.alt,f);
-	putc_unlocked('\n',f);
-}
-
-void result2var(DStringArray *result,VariantPos varpos, Variant *var) {
-	var->chr = result->data+varpos.chr;
-	sscanf(result->data[varpos.start].string,"%d",&(var->start));
-	sscanf(result->data[varpos.end].string,"%d",&(var->end));
-	var->type = result->data+varpos.type;
-	var->ref = result->data+varpos.ref;
-	var->alt = result->data+varpos.alt;
-}
 
 void mergealts(
 	DString *alt1ds,DString *alt2ds
@@ -114,14 +62,15 @@ int main(int argc, char *argv[]) {
 	unsigned int numfields1,numfields2,numfields,pos1,pos2;
 	int split = 1;
 	int comp,comptype,compalt = 0,compcheck;
-	int error2,nextpos=0,same = 0;
+	int error2,nextpos=0,same = 0,i;
 	prev1.chr = DStringNew(); prev1.start = -1; prev1.end = -1; prev1.type = DStringNew(); prev1.ref = DStringNew(); prev1.alt = DStringNew();
 	prev2.chr = DStringNew(); prev2.start = -1; prev2.end = -1; prev2.type = DStringNew(); prev2.ref = DStringNew(); prev2.alt = DStringNew();
 	var1.ref = NULL; var2.ref = NULL;
 	var1.chr=NULL,var2.chr=NULL,var1.type = NULL,var2.type = NULL,var1.alt = NULL,var2.alt = NULL;
 
-	if ((argc != 16)) {
+	if ((argc != 16) && (argc != 18)) {
 		fprintf(stderr,"Format is: multi_merge file1 chrpos1 startpos1 endpos1 type1pos ref1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos ref2pos alt2pos split");
+		fprintf(stderr,"or: multi_merge file1 chrpos1 startpos1 endpos1 type1pos ref1pos allelseq11pos alleleseq12pos file2 chrpos2 startpos2 endpos2 type2pos ref2pos allelseq21pos alleleseq22pos split");
 		exit(EXIT_FAILURE);
 	}
 	filename1 = argv[1];
@@ -131,33 +80,43 @@ int main(int argc, char *argv[]) {
 	var1pos.end = atoi(argv[4]);
 	var1pos.type = atoi(argv[5]);
 	var1pos.ref = atoi(argv[6]);
-	var1pos.alt = atoi(argv[7]);
-	var1pos.max = var1pos.chr;
-	if (var1pos.start > var1pos.max) {var1pos.max = var1pos.start;} ; if (var1pos.end > var1pos.max) {var1pos.max = var1pos.end;} ;
-	if (var1pos.type > var1pos.max) {var1pos.max = var1pos.type;} ;
-	if (var1pos.ref > var1pos.max) {var1pos.max = var1pos.ref;} ; 
-	if (var1pos.alt > var1pos.max) {var1pos.max = var1pos.alt;} ;
+	i = 7;
+	if (argc == 16) {
+		var1pos.alt = atoi(argv[i++]);
+		var1pos.a1 = -1;
+		var1pos.a2 = -1;
+	} else {
+		var1pos.alt = -1;
+		var1pos.a1 = atoi(argv[i++]);
+		var1pos.a2 = atoi(argv[i++]);
+	}
+	varpos_max(&var1pos);
 	line1 = DStringNew(); line2=DStringNew();
 	/* The following allocation is not destroyed at end as it may point to something else */
 	/* This will leak mem, but as the prog is finished anyway ... */
 	result1 = DStringArrayNew(var1pos.max+2);
-	filename2 = argv[8];
+	filename2 = argv[i++];
 	f2 = fopen64_or_die(filename2,"r");
-	var2pos.chr = atoi(argv[9]);
-	var2pos.start = atoi(argv[10]);
-	var2pos.end = atoi(argv[11]);
-	var2pos.type = atoi(argv[12]);
-	var2pos.ref = atoi(argv[13]);
-	var2pos.alt = atoi(argv[14]);
-	split = atoi(argv[15]);
+	var2pos.chr = atoi(argv[i++]);
+	var2pos.start = atoi(argv[i++]);
+	var2pos.end = atoi(argv[i++]);
+	var2pos.type = atoi(argv[i++]);
+	var2pos.ref = atoi(argv[i++]);
+	if (argc == 16) {
+		var2pos.alt = atoi(argv[i++]);
+		var2pos.a1 = -1;
+		var2pos.a2 = -1;
+	} else {
+		var2pos.alt = -1;
+		var2pos.a1 = atoi(argv[i++]);
+		var2pos.a2 = atoi(argv[i++]);
+	}
+	split = atoi(argv[i++]);
 NODPRINT("var_annot %s %d %d %d %d %d %s %d %d %d %d %d ...",
 	filename1,var1pos.chr,var1pos.start,var1pos.end,var1pos.type,var1pos.alt,
 	filename2,var2pos.chr,var2pos.start,var2pos.end,var2pos.type,var2pos.alt
 );
-	var2pos.max = var2pos.chr ; if (var2pos.start > var2pos.max) {var2pos.max = var2pos.start;} ; if (var2pos.end > var2pos.max) {var2pos.max = var2pos.end;} ;
-	if (var2pos.type > var2pos.max) {var2pos.max = var2pos.type;} ;
-	if (var2pos.ref > var2pos.max) {var2pos.max = var2pos.ref;} ; 
-	if (var2pos.alt > var2pos.max) {var2pos.max = var2pos.alt;} ;
+	varpos_max(&var2pos);
 	result2 = DStringArrayNew(var2pos.max+2);
 	skip_header(f1,line1,&numfields1,&pos1);
 	skip_header(f2,line2,&numfields2,&pos2);

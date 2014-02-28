@@ -11,26 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tools.h"
+#include "tools_var.h"
 #include "debug.h"
-
-typedef struct VariantPos {
-	int chr;
-	int start;
-	int end;
-	int type;
-	int ref;
-	int alt;
-	int max;
-} VariantPos;
-
-typedef struct Variant {
-	DString *chr;
-	int start;
-	int end;
-	DString *type;
-	DString *ref;
-	DString *alt;
-} Variant;
 
 typedef struct Todo {
 	DString *filename;
@@ -47,44 +29,6 @@ typedef struct Todo {
 	int keepsize;
 	int *keepposs;
 } Todo;
-
-int varcompare(Variant *var1, Variant *var2, int split) {
-	int comp;
-	comp = DStringLocCompare(var1->chr,var2->chr);
-	if  (comp != 0) {return comp;}
-	comp = var1->start - var2->start;
-	if (comp != 0) {return comp;}
-	comp = var1->end - var2->end;
-	if (comp != 0) {return comp;}
-	comp = DStringCompare(var1->type,var2->type);
-	if (comp != 0) {return comp;}
-	if (split) {
-		comp = DStringCompare(var1->alt,var2->alt);
-		if (comp != 0) {return comp;}
-	}
-	return 0;
-}
-
-void varputs(Variant var,FILE *f) {
-	DStringputs(var.chr,stdout);
-	fprintf(stdout,"\t%d\t%d\t",var.start,var.end);
-	DStringputs(var.type,stdout);
-	putc_unlocked('\t',stdout);
-	DStringputs(var.ref,stdout);
-	putc_unlocked('\t',stdout);
-	DStringputs(var.alt,stdout);
-	putc_unlocked('\n',stdout);
-}
-
-void result2var(DStringArray *result,VariantPos varpos, Variant *var) {
-	var->chr = result->data+varpos.chr;
-	sscanf(result->data[varpos.start].string,"%d",&(var->start));
-	sscanf(result->data[varpos.end].string,"%d",&(var->end));
-	var->type = result->data+varpos.type;
-	var->ref = result->data+varpos.ref;
-	var->alt = result->data+varpos.alt;
-}
-
 
 int main(int argc, char *argv[]) {
 	FILE *f;

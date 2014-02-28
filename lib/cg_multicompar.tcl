@@ -217,6 +217,7 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 	set prevcomp1 {}
 	set prevcomp2 {}
 	set o [open $compar_file.temp w]
+	# puts $o "#split: $split"
 	puts $o [join $oheader \t]
 	set cur1 [split [gets $f1] \t]
 	if {[llength $cur1]} {lset cur1 $tp1 [chr_clip [lindex $cur1 $tp1]]}
