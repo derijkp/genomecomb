@@ -48,7 +48,7 @@ proc joinvarlines list {
 
 proc var2annotvar_readonevar_merge {list} {
 	global cache
-	set list [lsort -integer -index 3 [lsort -integer -index 4 $list]]
+	set list [lsort -integer -index 3 [lsort -integer -index 4  [lsort -index 5 $list]]]
 
 	set keeplist $list
 	# make "ali"
