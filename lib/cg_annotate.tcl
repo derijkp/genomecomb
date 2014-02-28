@@ -8,9 +8,10 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc annotatereg {file dbfile name annotfile near {outfields {name score freq}}} {
-
-putslog [list annotatereg $file $dbfile $name $annotfile $near $outfields]
+proc annotatereg {file dbfile name annotfile near dbinfo} {
+# putslog [list annotatereg $file $dbfile $name $annotfile $near $outfields]
+	set newh [dict get $dbinfo newh]
+	set dataposs [dict get $dbinfo dataposs]
 	catch {close $f}
 	set f [gzopen $file]
 	set header [tsv_open $f comment]
@@ -23,31 +24,6 @@ putslog [list annotatereg $file $dbfile $name $annotfile $near $outfields]
 	set f [gzopen $dbfile]
 	set dbposs [open_region $f dbheader]
 	close $f
-	set dataposs [list_cor $dbheader $outfields]
-	set temp [list_find $dataposs -1]
-	set nh [list_sub $outfields -exclude $temp]
-	set dataposs [list_sub $dataposs -exclude $temp]
-	if {[llength $nh] == 0} {
-		set dataposs {}
-		if {$near != -1} {
-			set newh ${name}_dist
-		} else {
-			set newh $name
-		}
-	} elseif {[llength $nh] == 1} {
-		set newh $name
-		if {$near != -1} {
-			lappend newh ${name}_dist
-		}
-	} else {
-		set newh {}
-		foreach key $nh {
-			lappend newh ${name}_$key
-		}
-		if {$near != -1} {
-			lappend newh ${name}_dist
-		}
-	}
 	set o [open $annotfile.temp w]
 	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
 	puts $o [join $newh \t]
@@ -65,11 +41,11 @@ putslog [list annotatereg $file $dbfile $name $annotfile $near $outfields]
 
 }
 
-proc annotatevar {file dbfile name annotfile {outfields {name score freq}}} {
-#putsvars file dbfile name annotfile outfields
+proc annotatevar {file dbfile name annotfile dbinfo} {
+#putsvars file dbfile name annotfile
+	set newh [dict get $dbinfo newh]
+	set dataposs [dict get $dbinfo dataposs]
 	catch {close $f}
-#	set f [open $file]
-#	set poss [open_region $f header]
 	set f [gzopen $file]
 	set header [tsv_open $f comment]
 	set poss [tsv_basicfields $header 3]
@@ -96,21 +72,6 @@ proc annotatevar {file dbfile name annotfile {outfields {name score freq}}} {
 	set alt2pos [lsearch $dbheader alt]
 	if {$alt2pos == -1} {
 		error "$dbfile has no alt field"
-	}
-	set dataposs [list_cor $dbheader $outfields]
-	set temp [list_find $dataposs -1]
-	set nh [list_sub $outfields -exclude $temp]
-	set dataposs [list_sub $dataposs -exclude $temp]
-	if {[llength $nh] == 0} {
-		set dataposs {}
-		set newh $name
-	} elseif {[llength $nh] == 1} {
-		set newh $name
-	} else {
-		set newh {}
-		foreach key $nh {
-			lappend newh ${name}_$key
-		}
 	}
 	set o [open $annotfile.temp w]
 	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
@@ -183,7 +144,6 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 	set header [tsv_open $f comment]
 	close $f
 	dict set a header $header
-	set newh $name
 	if {$dbtype eq "gene"} {
 		set outfields {}
 		set dataposs {}
@@ -215,34 +175,48 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 		set dataposs [list_cor $header $outfields]
 		set poss [tsv_basicfields $header 3]
 	}
-	if {$dbtype eq "gene"} {
-		set newh [list ${name}_impact ${name}_gene ${name}_descr]
-	} elseif {$dbtype eq "bcol"} {
-		set newh [list $name]
+	if {[dict exists $a headerfields]} {
+		set headerfields [dict get $a headerfields]
+		set olen [llength $outfields]
+		set hlen [llength $headerfields]
+		if {$olen != $hlen && !($olen == 0 && $hlen == 1)} {
+			error "error: number of headerfields in opt file differs from number of outfields"
+		}
+		set newh $headerfields
+		if {$near != -1} {
+			lappend newh ${name}_dist
+		}
 	} else {
-		switch [llength $outfields] {
-		0 {
-			if {$near != -1} {
-				set newh ${name}_dist
-			} else {
+		set newh $name
+		if {$dbtype eq "gene"} {
+			set newh [list ${name}_impact ${name}_gene ${name}_descr]
+		} elseif {$dbtype eq "bcol"} {
+			set newh [list $name]
+		} else {
+			switch [llength $outfields] {
+			0 {
+				if {$near != -1} {
+					set newh ${name}_dist
+				} else {
+					set newh $name
+				}
+			}
+			1 {
 				set newh $name
+				if {$near != -1} {
+					lappend newh ${name}_dist
+				}
 			}
-		}
-		1 {
-			set newh $name
-			if {$near != -1} {
-				lappend newh ${name}_dist
+			default {
+				set newh {}
+				foreach key $outfields {
+					lappend newh ${name}_$key
+				}
+				if {$near != -1} {
+					lappend newh ${name}_dist
+				}
 			}
-		}
-		default {
-			set newh {}
-			foreach key $outfields {
-				lappend newh ${name}_$key
 			}
-			if {$near != -1} {
-				lappend newh ${name}_dist
-			}
-		}
 		}
 	}
 	dict set a outfields $outfields
@@ -361,7 +335,7 @@ proc cg_annotate {args} {
 				continue
 			}
 			set outfields [dict get $dbinfo outfields]
-			annotatevar $file $dbfile $name $resultfile.${name}_annot $outfields
+			annotatevar $file $dbfile $name $resultfile.${name}_annot $dbinfo
 		} elseif {$dbtype eq "bcol"} {
 			if {$near != -1} {error "-near option does not work with bcol dbfiles"}
 			lappend afiles $resultfile.${name}_annot
@@ -369,7 +343,6 @@ proc cg_annotate {args} {
 				putslog "$resultfile.${name}_annot exists: skipping scan"
 				continue
 			}
-			set outfields [dict get $dbinfo outfields]
 			annotatebcol $file $dbfile $name $resultfile.${name}_annot
 		} else {
 			lappend afiles $resultfile.${name}_annot
@@ -379,7 +352,7 @@ proc cg_annotate {args} {
 			}
 			putslog "Adding $dbfile"
 			set outfields [dict get $dbinfo outfields]
-			annotatereg $file $dbfile $name $resultfile.${name}_annot.temp $near $outfields
+			annotatereg $file $dbfile $name $resultfile.${name}_annot.temp $near $dbinfo
 			file rename -force $resultfile.${name}_annot.temp $resultfile.${name}_annot
 		}
 	}
