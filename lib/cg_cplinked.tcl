@@ -86,7 +86,7 @@ proc cg_cplinked {args} {
 		set absolute 1
 		set args [lrange $args 1 end]
 	} else {
-		set absolute 1
+		set absolute 0
 	}
 	if {[llength $args] != 2} {
 		exiterror {wrong # args: should be "cg cplinked src dest"}
