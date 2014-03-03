@@ -60,12 +60,13 @@ proc var2annotvar_readonevar_merge {list} {
 	list_foreach {bin hp chr start end type ref oalt score} $list {
 		if {$start == $end && $type ne "no-call" && $oalt ne ""} {
 			lset list $i 5 ins
+			set type ins
 		}
 		set len [expr {$end-$start}]
 		set alt $oalt
 		if {[regexp {\?} $alt]} {
 			set alt ?
-		} elseif {[string length $oalt] != [string length $ref]} {
+		} elseif {$type ne "ins" && [string length $oalt] != [string length $ref]} {
 			regsub -all . $alt \@ alt
 		}
 		if {$len > [string length $alt]} {
@@ -76,7 +77,8 @@ proc var2annotvar_readonevar_merge {list} {
 			lappend seq($hp,i) [expr {$end-$firstpos}] [string range $alt $len end]
 			set alt [string range $alt 0 [expr {$len-1}]]
 		}
-		if {[string length $alt]} {
+		set alen [string length $alt]
+		if {$alen} {
 			set s [expr {$start-$firstpos}]
 			set e [expr {$end-1-$firstpos}]
 			set seq($hp) [string_replace $seq($hp) $s $e $alt]
@@ -91,6 +93,8 @@ proc var2annotvar_readonevar_merge {list} {
 				}
 				set seq($hp,e) [lreplace $seq($hp,e) $s $e {*}[list_fill [expr {$e-$s+1}] $extra]]
 			}
+		} elseif {$alen == $len} {
+			set seq($hp,q) $score
 		}
 		incr i
 	}
@@ -185,7 +189,6 @@ proc var2annotvar_readonevar f {
 				set list $temp
 			}
 			if {$type eq ""} {return {}}
-#putsvars list
 			set rlist [var2annotvar_readonevar_merge $list]
 			set line1 [list_shift rlist]
 			set line2 [list_shift rlist]
@@ -238,7 +241,7 @@ proc var2annotvar_readonevar f {
 		} elseif {$type eq "del"} {
 			set alt {{}}
 		} else {
-			set alt [list_remove [list_remdup $alt] - {} N]
+			set alt [list_remove [list_remdup $alt] - {} N @]
 		}
 		set result [list $locus $chromosome $begin $end [join $type _] $reference $alt $zyg $alleleSeq $alleleSeq2 $totalScore $totalScore2 $xRef]
 		if {$extranum} {
@@ -521,7 +524,7 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 	set gchr [lindex $curgene 0 3]
 	set gbegin [lindex $curgene 0 4]
 	set next 100000; set num 0
-	while {![eof $f1]} {
+	while {[llength $cur] || ![eof $f1]} {
 		set fchr [lindex $cur 1]
 		set fbegin [lindex $cur 2]
 		incr num
