@@ -2,6 +2,7 @@
 CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
 # CFLAGS=-Wall -O2
 TOOLS= tools.c tools.h debug.h
+TOOLS_VAR= tools_var.c tools_var.h
 HASHTOOLS=hash.h hash.c
 BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h
 
@@ -78,8 +79,8 @@ clean:
 ../bin$(ARCH)/check_sort: check_sort.c $(TOOLS)
 	gcc check_sort.c tools.c $(CFLAGS) -o ../bin$(ARCH)/check_sort
 
-../bin$(ARCH)/multi_merge: multi_merge.c $(TOOLS)
+../bin$(ARCH)/multi_merge: multi_merge.c $(TOOLS) $(TOOLS_VAR)
 	gcc multi_merge.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multi_merge
 
-../bin$(ARCH)/multi_join: multi_join.c $(TOOLS)
+../bin$(ARCH)/multi_join: multi_join.c $(TOOLS) $(TOOLS_VAR)
 	gcc multi_join.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multi_join

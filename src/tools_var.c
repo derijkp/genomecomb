@@ -88,9 +88,20 @@ int varcompare(Variant *var1, Variant *var2, int split) {
 	return 0;
 }
 
+void varpos_init(VariantPos *varpos) {
+	varpos->max = 0;
+	varpos->start = -1;
+	varpos->end = -1;
+	varpos->type = -1;
+	varpos->ref = -1;
+	varpos->alt = -1;
+	varpos->a1 = -1;
+	varpos->a2 = -1;
+}
+
 int varpos_max(VariantPos *varpos) {
 	int i;
-	varpos->max = varpos->chr;
+	i = varpos->chr;
 	if (varpos->start > i) {i = varpos->start;} ;
 	if (varpos->end > i) {i = varpos->end;} ;
 	if (varpos->type > i) {i = varpos->type;} ;

@@ -73,6 +73,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"or: multi_merge file1 chrpos1 startpos1 endpos1 type1pos ref1pos allelseq11pos alleleseq12pos file2 chrpos2 startpos2 endpos2 type2pos ref2pos allelseq21pos alleleseq22pos split");
 		exit(EXIT_FAILURE);
 	}
+	varpos_init(&var1pos); varpos_init(&var2pos);
 	filename1 = argv[1];
 	f1 = fopen64_or_die(filename1,"r");
 	var1pos.chr = atoi(argv[2]);

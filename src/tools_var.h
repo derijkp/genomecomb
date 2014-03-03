@@ -24,4 +24,5 @@ int varchecksort(Variant *prev,Variant *var,char *filename,int *nextpos);
 void varputs(Variant var,FILE *f);
 void result2var(DStringArray *result,VariantPos varpos, Variant *var);
 int varcompare(Variant *var1, Variant *var2, int split);
+void varpos_init(VariantPos *varpos);
 int varpos_max(VariantPos *varpos);
