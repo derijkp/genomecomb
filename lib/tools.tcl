@@ -238,6 +238,15 @@ proc cg_bgzip args {
 				file rename -force $result.temp $result
 				if {!$keep} {file delete $file}
 			}
+			.lz4 {
+				putslog "bgzip $file"
+				set result [file root $file].gz
+				exec lz4c -d -c $file > $result.temp2
+				exec bgzip -c $result.temp2 > $result.temp
+				file delete $result.temp2
+				file rename -force $result.temp $result
+				if {!$keep} {file delete $file}
+			}
 			.bz2 {
 				putslog "bgzip $file"
 				set result [file root $file].gz
@@ -287,6 +296,15 @@ proc cg_razip args {
 			.rz {
 				putslog "$file already razip"
 			}
+			.lz4 {
+				putslog "razip $file"
+				set result [file root $file].rz
+				exec lz4c -d $file > $result.temp2
+				exec razip -c $result.temp2 > $result.temp
+				file delete $result.temp2
+				file rename -force $result.temp $result
+				if {!$keep} {file delete $file}
+			}
 			.bz2 {
 				putslog "razip $file"
 				set result [file root $file].rz
@@ -323,6 +341,12 @@ proc gzopen {file {pos -1}} {
 		} else {
 			set f [open "| razip -d -c -b $pos $file"]
 		}
+	} elseif {[inlist {.lz4} [file extension $file]]} {
+		if {$pos == -1} {
+			set f [open "| lz4c -d $file"]
+		} else {
+			error "positioning not supported in lz4 files"
+		}
 	} elseif {[inlist {.bgz .gz} [file extension $file]]} {
 		if {$pos == -1} {
 			set f [open "| zcat $file"]
@@ -352,7 +376,7 @@ proc gzclose {f} {
 }
 
 proc gzroot filename {
-	if {[inlist {.rz .gz .bgz .bz2} [file extension $filename]]} {
+	if {[inlist {.rz .lz4 .gz .bgz .bz2} [file extension $filename]]} {
 		return [file root $filename]
 	} else {
 		return $filename
@@ -360,7 +384,7 @@ proc gzroot filename {
 }
 
 proc gziscompressed filename {
-	if {[inlist {.rz .gz .bgz .bz2} [file extension $filename]]} {
+	if {[inlist {.rz .lz4 .gz .bgz .bz2} [file extension $filename]]} {
 		return 1
 	} else {
 		return 0
@@ -369,7 +393,7 @@ proc gziscompressed filename {
 
 proc gzfile {args} {
 	foreach filename $args {
-		if {![catch {glob $filename $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
+		if {![catch {glob $filename $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
 			return [lindex $list 0]
 		}
 	}
@@ -378,7 +402,7 @@ proc gzfile {args} {
 
 proc gzexists {filename {checkcompressed 1}} {
 	if {$checkcompressed} {
-		expr {[file exists $filename] || [file exists $filename.rz] || [file exists $filename.gz] ||[file exists $filename.bgz] || [file exists $filename.bz2]}
+		expr {[file exists $filename] || [file exists $filename.rz] || [file exists $filename.lz4] || [file exists $filename.gz] ||[file exists $filename.bgz] || [file exists $filename.bz2]}
 	} else {
 		file exists $filename
 	}
@@ -396,7 +420,7 @@ proc checkfile {args} {
 proc gzfiles {args} {
 	set result {}
 	foreach filename $args {
-		if {![catch {glob $filename $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
+		if {![catch {glob $filename $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
 			lappend result {*}$list
 		}
 	}
@@ -405,7 +429,7 @@ proc gzfiles {args} {
 
 proc gzarraynames {aVar pattern} {
 	upvar $aVar a
-	set result [list_concat [array names a $pattern] [array names a $pattern.rz] [array names a $pattern.gz] [array names a $pattern.bgz] [array names a $pattern.bz2]]
+	set result [list_concat [array names a $pattern] [array names a $pattern.rz] [array names a $pattern.lz4] [array names a $pattern.gz] [array names a $pattern.bgz] [array names a $pattern.bz2]]
 	return $result
 }
 
@@ -422,6 +446,7 @@ proc checkfiles {args} {
 proc gzcat {filename} {
 	switch [file extension $filename] {
 		.rz {set cat "razip -d -c"}
+		.lz4 {set cat "lz4c -d -c"}
 		.gz - .bgz {set cat zcat}
 		.bz2 {set cat bzcat}
 		default {set cat cat}
@@ -441,6 +466,12 @@ proc gztemp {filename} {
 		.rz {
 			set tempfile [scratchfile get]
 			exec razip -d -c $filename > $tempfile
+			set ::gztemp_files($tempfile) 1
+			return $tempfile
+		}
+		.lz4 {
+			set tempfile [scratchfile get]
+			exec lz4c -d -c $filename $tempfile
 			set ::gztemp_files($tempfile) 1
 			return $tempfile
 		}
@@ -536,6 +567,29 @@ proc ifcatch {command varName args} {
 		lappend switchlist default "error [list $result]"
 	}
 	uplevel switch $args [list $result $switchlist]
+}
+
+proc decompress {file args} {
+	if {[llength $args]} {
+		set resultfile [lindex $args 0]
+	} else {
+		set resultfile [file root $file]
+	}
+	if {[file extension $file] eq ".lz4"} {
+		set error [catch {exec lz4c -d $file > $resultfile.temp} result]
+	} else {
+		set error [catch {exec zcat $file > $resultfile.temp} result]
+	}
+	if $error {
+		if {![regexp "decompression OK, trailing garbage ignored" $result]} {
+			error $result
+		}
+	}
+	file rename -force $resultfile.temp $resultfile
+	if {![llength $args]} {
+		file delete $file
+	}
+	return $result
 }
 
 proc gunzip {file args} {
@@ -761,6 +815,9 @@ proc catprog file {
 		.rz - .gz - .bgz {
 			return zcat
 		}
+		.lz4 {
+			return {lz4c -d}
+		}
 		.bz2 {
 			return bzcat
 		}
@@ -806,7 +863,7 @@ proc gzmklink {src dest} {
 	set src [gzfile $src]
 	set ext_s [file extension $src]
 	set ext_d [file extension $dest]
-	if {$ext_s ne $ext_d && [inlist {.gz .bgz .rz .bz2} $ext_s]} {
+	if {$ext_s ne $ext_d && [inlist {.gz .bgz .rz .lz4 .bz2} $ext_s]} {
 		mklink $src $dest$ext_s
 	} else {
 		mklink $src $dest

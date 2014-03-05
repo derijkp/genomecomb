@@ -49,7 +49,7 @@ proc cg_index {args} {
 	set time [file mtime $file]
 	set indexdir [gzroot $file].index
 	set ext [file extension $file]
-	if {[inlist {.rz .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
+	if {[inlist {.rz .lz4 .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
 	if {[file exists $indexdir/info.tsv]} {
 		set info [infofile_read $indexdir/info.tsv]
 	} else {

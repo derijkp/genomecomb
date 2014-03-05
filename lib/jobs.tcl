@@ -249,7 +249,7 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 	}
 	foreach file $filelist {
 		if {[info exists cgjob_rm($file)]} continue
-		if {![regexp ^[file_absolute $pattern](\.gz|\.rz|\.bz2|\.bgz)?\$ $file]} continue
+		if {![regexp ^[file_absolute $pattern](\.gz|\.rz|\.lz4|\.bz2|\.bgz)?\$ $file]} continue
 # do not remove job, we want to keep the dependency chain intact,
 # even if one job stops prematurely
 #		if {![job_running $cgjob_id($file)]} {

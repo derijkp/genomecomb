@@ -170,8 +170,8 @@ proc process_rtgsample {dir destdir {force 0}} {
 			catch {close $f}
 			set poscol [lsearch $header position]
 			set coveragecol [lsearch $header coverage]
-			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
-			exec $cat $file | getregions $chr $poscol $coveragecol 9 1 -1 >> sreg-$name.tsv.temp
+			set cat [gzcat $file]
+			exec {*}$cat $file | getregions $chr $poscol $coveragecol 9 1 -1 >> sreg-$name.tsv.temp
 		}
 		file rename -force sreg-$name.tsv.temp sreg-$name.tsv
 	}

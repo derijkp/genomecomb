@@ -397,7 +397,7 @@ table_tsv method index {file} {
 	file mkdir $indexdir
 	set indexfile $indexdir/lines.bcol
 	set ext [file extension $file]
-	if {[inlist {.rz .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
+	if {[inlist {.rz .lz4 .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
 	cg_index -colinfo $file
 	set result [infofile_read $indexdir/info.tsv]
 	dict set result indexdir $indexdir

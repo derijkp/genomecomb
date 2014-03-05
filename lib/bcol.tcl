@@ -20,7 +20,7 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 	set indexfile [file_absolute $indexfile]
 	set time [file mtime $file]
 	set ext [file extension $file]
-	if {[inlist {.rz .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
+	if {[inlist {.rz .lz4 .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
 	if {![file exists $indexfile] || [file mtime $indexfile] < $time} {
 		file mkdir [file dir $indexfile]
 		if {$compressed} {
@@ -33,7 +33,7 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 					gunzip $file $tempfile
 				}
 			} else {
-				gunzip $file
+				decompress $file
 				set file [file root $file]
 				set tempfile $file
 			}

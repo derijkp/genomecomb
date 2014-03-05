@@ -40,10 +40,10 @@ proc cg_regextract {args} {
 			set max [dict get $bcol max]
 			set type [dict get $bcol type]
 			set file [gzfile $file.bin]
-			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
+			set cat [gzcat $file]
 			set error [catch {
 				# puts "$cat $file | getregionsbcol $chr $type $start $cutoff $above $shift"
-				exec $cat $file | getregionsbcol $chr $type $start $cutoff $above $shift >@ $o
+				exec {*}$cat $file | getregionsbcol $chr $type $start $cutoff $above $shift >@ $o
 			} errmessage]
 			if {$error} {
 				set errmessage [split [string trim $errmessage] \n]
@@ -86,9 +86,9 @@ proc cg_regextract {args} {
 			if {$qcol == -1} {
 				error "no query column (one of [join $qfields ,]) found in $file"
 			}
-			if {[inlist {.rz .gz .bgz} [file extension $file]]} {set cat zcat} else {set cat cat}
+			set cat [gzcat $file]
 			set error [catch {
-				exec $cat $file | getregions $chr $chrcol $poscol $qcol $cutoff $above $shift 1 >@ $o
+				exec {*}$cat $file | getregions $chr $chrcol $poscol $qcol $cutoff $above $shift 1 >@ $o
 			} errmessage]
 			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
 				error $errmessage
