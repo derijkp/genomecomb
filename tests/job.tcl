@@ -5,10 +5,14 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 # use these for trying out individual tests
-set testname direct
-proc test_job_init {} {uplevel job_init -d 4}
+set testname "-d direct"
+proc test_job_init {} {uplevel job_init -silent -job_skiperrors}
 proc gridwait {} {}
 if 0 {
+	set testname "-d direct"
+	proc test_job_init {} {uplevel job_init -silent -job_skiperrors}
+	proc gridwait {} {}
+
 	set testname "-d 30"
 	proc test_job_init {} {uplevel job_init -silent -d 30}
 	proc gridwait {} {}
@@ -140,7 +144,7 @@ proc jobtest {args} {
 		error "This should not be executed, as the dependencies are not fullfilled, the other target is used"
 	}
 	job joberror -deps {^$srcdir/cgdata\.tsv$} -targets {$destdir/joberror.txt} -code {
-		# this (intentionally) causes an error, and should by identified by an error in the logs
+		# this (intentionally) causes an error, and should be identified by an error in the logs
 		error "Intentional job error"
 	}
 	job error_notdone.txt -deps {^$srcdir/cgdata\.tsv$} -targets {$destdir/error_notdone.txt} -code {
@@ -229,7 +233,7 @@ test job {job_expandvars} {
 # test in different "processing modes"
 # ------------------------------------
 foreach {testname initcode} {
-	"direct" {uplevel job_init -silent}
+	"direct" {uplevel job_init -silent -job_skiperrors}
 	"-d 4" {uplevel job_init -silent -d 4}
 	"-d 30" {uplevel job_init -silent -d 30}
 	"-d sge" {uplevel job_init -silent -d sge}
@@ -461,7 +465,7 @@ test job "--force 0 $testname" {
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
 	file mkdir test
-	job_init -silent
+	job_init -silent -job_skiperrors
 	jobtest --force 0 ../data test testh
 	job_wait
 	gridwait
@@ -487,7 +491,7 @@ test job "--force 1 $testname" {
 	catch {file delete -force {*}[glob tmp/*]}
 	cd $::testdir/tmp
 	file mkdir test
-	job_init -silent
+	job_init -silent -job_skiperrors
 	jobtest --force 0 ../data test testh
 	job_wait
 	gridwait

@@ -158,9 +158,12 @@ proc job_process_direct {} {
 		set error [catch {job_run} result]
 		stderr2file {}
 		if {$error} {
-			# puts stderr $result
 			file_add $job.err $result\n$::errorInfo
-			error $result $::errorInfo
+			if ($cgjob(job_skiperrors)) {
+				puts stderr $result
+			} else {
+				error $result $::errorInfo
+			}
 		}
 		if {![file exists $job.finished]} {
 			job_log $job "$jobname failed: did not finish\nerror:\n$result\n"

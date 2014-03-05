@@ -47,6 +47,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(resubmit)]} {
 		set cgjob(resubmit) 1
 	}
+	if {![info exists cgjob(job_skiperrors)]} {
+		set cgjob(job_skiperrors) 0
+	}
 	if {![llength $jobargs]} {return {}}
 	set newargs {}
 	set pos 0
@@ -80,6 +83,15 @@ proc job_args {jobargs} {
 			}
 			-noresubmit {
 				set cgjob(resubmit) 0
+			}
+			-job_skiperrors {
+				set val [lindex $jobargs $pos]
+				if {[inlist {0 1} $val]} {
+					set cgjob(job_skiperrors) $val
+					incr pos
+				} else {
+					set cgjob(job_skiperrors) 1
+				}
 			}
 			-- break
 			default {
