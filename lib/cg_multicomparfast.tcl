@@ -95,8 +95,8 @@ proc cg_multicompar {args} {
 	# should take into account existing instead of deleting and starting all over -> not now
 	if {[file exists $workdir]} {file delete -force $workdir}
 	file mkdir $workdir
-	set files {}
 	set dirs [lrange $args 1 end]
+	set files {}
 	foreach dir $dirs {
 		set dir [file_absolute $dir]
 		if {[file isdir $dir]} {
@@ -147,7 +147,8 @@ proc cg_multicompar {args} {
 	# todo: check for concurrency
 	set multi_merge_num 0
 	if {[file exists $compar_file]} {
-		set allfiles [list_concat $compar_file $files]
+		file rename -force $compar_file $compar_file.old
+		set allfiles [list_concat $compar_file.old $files]
 	} else {
 		set allfiles $files
 	}
