@@ -24,7 +24,7 @@ locus	chromosome	begin	end	type	reference	alt	zyg	alleleSeq1	alleleSeq2	totalSco
 15979828	chr21	10701615	10701616	snp	C	T	t	T	C	1012	211	VQHIGH															
 15979836	chr21	10701846	10701847	snp	C	G,T	c	G	T	433	1017	VQHIGH															
 15979838	chr21	10701859	10701860	snp	T	A	t	A	T	88	1084	VQHIGH															
-15979878	chr21	10702236	10702236	ins		G	t	G		49		VQHIGH															
+15979878	chr21	10702236	10702236	ins		G	t	G		49	288	VQHIGH															
 15980022	chr21	10703465	10703466	snp	G	C	u	C	-	774		VQHIGH															
 15980024	chr21	10703495	10703496	snp	G	A	t	A	G	162	382	VQHIGH															
 15980024	chr21	10703496	10703497	snp	A	G	t	G	A	162	382	VQHIGH															
