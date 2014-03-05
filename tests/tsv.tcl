@@ -5,35 +5,51 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 test tsv_open {sft} {
+	catch {close $f}
 	set f [open data/reg1.tsv]
 	set header [tsv_open $f keepheader]
+	set line [gets $f]
 	close $f
-	list $header $keepheader
-} {{chromosome test begin end} {}}
+	list $header $keepheader $line
+} {{chromosome test begin end} {} {1	t	10	20}}
 
-#test tsv_open {cg} {
-#	set f [open data/]
-#	set header [tsv_open $f keepheader]
-#	close $f
-#	list $header $keepheader
-#} {{chromosome test begin end} {}}
+test tsv_open {cg} {
+	catch {close $f}
+	set f [open data/cgtest.tsv]
+	set header [tsv_open $f keepheader]
+	set line [gets $f]
+	close $f
+	list $header $keepheader $line
+} {{offset refScore uniqueSequenceCoverage weightSumSequenceCoverage gcCorrectedCoverage grossWeightSumSequenceCoverage} {#ASSEMBLY_ID	GS19240-1100-37-ASM
+#CHROMOSOME	chr22
+#FORMAT_VERSION	1.5
+#GENERATED_AT	2010-Oct-29 08:59:22.556619
+#GENERATED_BY	ExportReferenceSupport
+#SAMPLE	GS00028-DNA_C01
+#SOFTWARE_VERSION	1.10.0.17
+#TYPE	REFMETRICS
+#
+} {16050000	0	0	0	0	0}}
 
 test tsv_open {rtg} {
+	catch {close $f}
 	set f [open data/rtgsnps.tsv]
 	set header [tsv_open $f keepheader]
-	close $f
 	tsv_hcheader $f keepheader header
-	list $header $keepheader
+	set line [gets $f]
+	close $f
+	list $header $keepheader $line
 } {{name position type reference prediction posterior coverage correction support_statistics} {#Version v2.0-RC build 27737 (2010-05-06), SNP output v2.0
 #CL	snp -t /rtgshare/data/human/sdf/hg18 -o snps_GS00102-DNA-D06_m4_u4 --max-as-mated=4 --max-as-unmated=4 --max-ih=1 -m cg_errors --no-complex-calls /rtgshare3/users/richard/vib_20100324_GS00102-DNA-D06-hg18ref/map_GS000004945/mated.sam.gz /rtgshare3/users/richard/vib_20100324_GS00102-DNA-D06-hg18ref/map_GS000004945/unmated.sam.gz ...
-}}
+} {chr1	231	e	C	A:C	1.5	109	4.982	A	17	0.655	C	91	4.004	T	1	0.323}}
 
 test tsv_open {vcf} {
 	catch {close $f}
 	set f [open data/test.vcf]
 	set header [tsv_open $f keepheader]
+	set line [gets $f]
 	close $f
-	list $header $keepheader
+	list $header $keepheader $line
 } {{CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003} {##fileformat=VCFv4.0
 ##fileDate=20090805
 ##source=myImputationProgramV3.1
@@ -51,7 +67,7 @@ test tsv_open {vcf} {
 ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
-#}}
+#} {20	14370	rs6054257	G	A	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.}}
 
 test tsv_cat {one} {
 	cg cat data/reg1b.tsv

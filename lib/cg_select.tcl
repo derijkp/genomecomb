@@ -976,7 +976,13 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 proc tsv_hcheader {f keepheaderVar headerVar} {
 	upvar $keepheaderVar keepheader
 	upvar $headerVar header
-	set ::filebuffer($f) [list [join $header \t]]
+	if {[catch {
+		# this does not work on a stream
+		seek $f [expr {-[string length $header] - 1}] current
+	}]} {
+		# this has to be explicitely supported downstream, only tsv_select does this!
+		set ::filebuffer($f) [list [join $header \t]]
+	}
 	set temp [split [string trimright $keepheader] \n]
 	set header [split [string range [list_pop temp] 1 end] \t]
 	set keepheader [join $temp \n]\n

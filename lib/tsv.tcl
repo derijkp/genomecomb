@@ -46,6 +46,7 @@ proc tsv_open {f {keepheaderVar {}}} {
 	set fchar [string index $line 0]
 	if {[inlist {# >} $fchar]} {
 		set keepheader [join $keepheader \n]\n
+		if {$vcf} {append keepheader \#}
 		if {!$split} {
 			return [string range $line 1 end]
 		} else {
