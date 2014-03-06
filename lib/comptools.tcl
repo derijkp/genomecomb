@@ -76,19 +76,34 @@ compare v A C v A A
 }
 
 proc zyg {args} {
-	if {[llength $args]  != 5} {error "wrong # of args for zyg: only one allowed"}
-	foreach {seq1 a1 a2 ref alt} $args break
+	if {[llength $args]  == 4} {
+		foreach {a1 a2 ref alt} $args break
+		set seq1 v
+	} elseif {[llength $args]  == 5} {
+		foreach {seq1 a1 a2 ref alt} $args break
+	} else {error "wrong # of args for zyg: only one allowed"}
 	if {$seq1 eq "r"} {
 		return r
 	} elseif {$seq1 eq "u"} {
 		return u
 	} elseif {$seq1 eq "v"} {
-		if {$a1 eq $alt && $a2 eq $alt} {
-			return m
-		} elseif {($a1 eq $ref && $a2 eq $alt) || ($a1 eq $alt && $a2 eq $ref)} {
-			return t
-		} elseif {$a1 eq $alt || $a2 eq $alt} {
-			return c
+		set alt [split $alt ,]
+		if {$a1 in $alt} {
+			if {$a1 eq $a2} {
+				return m
+			} elseif {$a2 eq $ref} {
+				return t
+			} else {
+				return c
+			}
+		} elseif {$a2 in $alt} {
+			if {$a1 eq $ref} {
+				return t
+			} else {
+				return c
+			}
+		} elseif {$a1 eq $ref && $a2 eq $ref} {
+			return r
 		} else {
 			return o
 		}

@@ -76,8 +76,8 @@ test multicompar {basic split} {
 
 test multicompar {basic reannot} {
 	test_cleantmp
-	file copy data/var_annot.sft tmp/var-annot1.tsv
-	file copy data/var_annot2.sft tmp/var-annot2.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/var-annot1.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/var-annot2.tsv
 	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
 	cg multicompar tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv

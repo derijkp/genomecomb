@@ -338,6 +338,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 		set samplea(rpos,$sample) [lsearch $header refscore-$sample]
 		set samplea(cpos,$sample) [lsearch $header coverage-$sample]
 		set samplea(seq,$sample) [lsearch $header sequenced-$sample]
+		set samplea(zyg,$sample) [lsearch $header zyg-$sample]
 		set samplea(dir,$sample) [multicompar_reannot_find $basedir $sample]
 		set samplea(regionfile,$sample) [multicompar_reannot_find $basedir $sample sreg-$sample.tsv]
 		if {[file exists $samplea(dir,$sample)/allpos]} {
@@ -415,16 +416,19 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 					lset line $samplea(cpos,$sample) $c
 				}
 				set seq [lindex $line $samplea(seq,$sample)]
-				if {$seq eq "?"} {
+				set zyg [lindex $line $samplea(zyg,$sample)]
+				if {$seq eq "?" || $zyg eq "?"} {
 					set r [annot_region_in $samplea(regionfile,$sample) $chr $begin $end]
 					set a1 [inlist [list - ?] [lindex $line $samplea(a1,$sample)]]
 					set a2 [inlist [list - ?] [lindex $line $samplea(a2,$sample)]]
 					if {$r} {
 						lset line $samplea(seq,$sample) r
+						if {$samplea(zyg,$sample) != -1} {lset line $samplea(zyg,$sample) r}
 						if {$a1} {lset line $samplea(a1,$sample) $reference}
 						if {$a2} {lset line $samplea(a2,$sample) $reference}
 					} else {
 						lset line $samplea(seq,$sample) u
+						if {$samplea(zyg,$sample) != -1} {lset line $samplea(zyg,$sample) u}
 						if {$a1} {lset line $samplea(a1,$sample) -}
 						if {$a2} {lset line $samplea(a2,$sample) -}
 					}
