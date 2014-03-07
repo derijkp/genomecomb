@@ -29,15 +29,22 @@ proc tsv_select_compare {ids header neededfieldsVar} {
 proc tsv_select_zyg {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set id1 [string trim [list_pop ids] "\"\' "]
-	set fields [list sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1 ref alt]
-	lappend needed {*}$fields
-	set needed [list_remdup $needed]
-	set poss [list_find [list_cor $header $needed] -1]
+	if {$id1 eq ""} {
+		set needed [list sequenced alleleSeq1 alleleSeq2 ref alt]
+	} else {
+		set needed [list sequenced-$id1 alleleSeq1-$id1 alleleSeq2-$id1 ref alt]
+	}
+	set poss [list_cor $header $needed]
+	if {[lindex $poss 0] == -1} {
+		set needed [lrange $needed 1 end]
+		set poss [lrange $poss 1 end]
+	}
+	set poss [list_find $poss -1]
 	if {[llength $poss]} {
 		error "Could not find fields needed for zyg(\"$id1\",[join $ids ,]): [list_sub $needed $poss]"
 	}
 	lappend neededfields {*}$needed
-	set temp "\[zyg \$\{[join $fields "\} \$\{"]\}\]"
+	set temp "\[zyg \$\{[join $needed "\} \$\{"]\}\]"
 }
 
 proc tsv_select_sm {ids header neededfieldsVar} {
