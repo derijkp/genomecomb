@@ -468,8 +468,13 @@ proc ::tk::MouseWheel {wFired X Y D {shifted 0}} {
     }
 }
 
+# change display according to settings (x, y, ...)
 scrolledgraph method rearrange {args} {
 	private $object data colors labels graphsettings header coldata xcol ycols wcols scols
+	if {[get graphsettings(roc) 0]} {
+		$object rearrange_roc
+		return
+	}
 	set showregion 0
 	set linew [get graphsettings(linew) 1]
 	foreach el [list_remove [$object.g element names] legend] {
@@ -592,6 +597,113 @@ putsvars curmin curmax style
 	if {![isdouble $ymin]} {set ymin 0}
 	if {![isdouble $ymax]} {set ymax 1}
 	::$object.ends.y set [list $ymin $ymax]
+	Classy::todo $object redraw
+}
+
+scrolledgraph method rearrange_roc {args} {
+	private $object data colors labels graphsettings header coldata xcol wcols scols poscol negcol roccol
+	set showregion 0
+	set linew [get graphsettings(linew) 1]
+	foreach el [list_remove [$object.g element names] legend] {
+		$object.g element delete $el
+	}
+	foreach el [list_remove [$object.g marker names] legend] {
+		$object.g marker delete $el
+	}
+	set pospos [lsearch $header [get poscol ""]]
+	set negpos [lsearch $header [get negcol ""]]
+	set yposs [list_remove [list_cor $header [get roccol ""]] -1]
+	if {![llength $yposs]} {
+		set roccol {}
+		foreach field [list_sub $header -exclude [list $pospos $negpos]] {
+			if {[lindex $coldata($field) 0] ne "label"} {
+				lappend roccol $field
+			}
+		}
+	} else {
+		set roccol [list_sub $header $yposs]
+	}
+	# create axis
+	$object.g axis configure x -title "1-Specificity (%)"
+	$object.g axis configure y -title "Sensitivity (%)"
+	::$object.ends.x set [list 0 100]
+	::$object.ends.y set [list 0 100]
+	$object.g element create diagonal -label "" -xdata ::$object.ends.x -ydata ::$object.ends.y -symbol none -color gray
+	set vnum 0
+	set pos 0
+	set symbols {cross circle square diamond plus splus scross triangle}
+	# set dcolors {blue red gray orange yellow green violet}
+	set dcolors [distinctColors [expr {[llength $header]-2}]]
+	# calculate roc curve
+	set negatives [lindex $coldata($negcol) 1]
+	set positives [lindex $coldata($poscol) 1]
+	set realpos [vector expr {sum($positives)}]
+	set realneg [vector expr {sum($negatives)}]
+	set todo {}
+	set vnum 1
+	foreach field $roccol {
+		set ys [lindex $coldata($field) 1]
+		$object sort $field
+		set fn 0
+		set tn 0
+		set fp 0
+		set tp 0
+		set fprs {}
+		set tprs {}
+		set prev [$ys index 0]
+		foreach p [$positives range 0 end] n [$negatives range 0 end] y [$ys range 0 end] {
+			if {$y != $prev} {
+				lappend tprs $tpr
+				lappend fprs $fpr
+				if {$graphsettings(roclabels)} {
+					$object.g marker create text -coords [list $fpr $tpr] -text $prev -fill {} -anchor nw -yoffset -5
+				}
+				set prev $y
+			}
+			if {$graphsettings(rocabove)} {
+				set fn [expr {$fn + $p}]
+				set tn [expr {$tn + $n}]
+				set tpr [expr {100.0*($realpos - $fn)/$realpos}]
+				# lappend fpr [expr {100.0-100.0*$tn/$totalneg}]
+				set fpr [expr {100.0*($realneg - $tn)/$realneg}]
+			} else {
+				set tp [expr {$tp + $p}]
+				set fp [expr {$fp + $n}]
+				set tpr [expr {100.0*$tp/$realpos}]
+				set fpr [expr {100.0*$fp/$realneg}]
+			}
+		}
+		lappend tprs $tpr
+		lappend fprs $fpr
+		if {$graphsettings(roclabels)} {
+			$object.g marker create text -coords [list $fpr $tpr] -text $y -fill {} -anchor nw -yoffset -5
+		}
+		set name $field
+		set tprv [vector create ::$object.cor.$name.tpr]
+		$tprv set $tprs
+		set fprv [vector create ::$object.cor.$name.fpr]
+		$fprv set $fprs
+		set ys [lindex $coldata($field) 1]
+		set basecolor [lindex $dcolors $vnum]
+		if {$basecolor eq ""} {set basecolor blue}
+		lappend data(entries) $name
+		set data($name,vnum) $vnum
+		set data($name,lstart) 0
+		set data($name,lend) 0
+		set data($name,header) $header
+		$object.g element create e$name -label $name -xdata $fprv -ydata $tprv -symbol none
+		# $object.g element configure e$name -weights ::$ws
+		set color $basecolor
+		# $object.g element configure e$name -linewidth $linew -fill $color -outlinewidth 1 -pixels 1 -symbol circle
+		$object.g element configure e$name -linewidth $linew -color $basecolor -outline $basecolor -outlinewidth 1 -pixels 2 -symbol plus
+		set data($name,color) $color
+		$object.g legend bind $name <1> [list $object elconf $name]
+		incr vnum
+	}
+	set graphsettings(xmin) 0
+	set graphsettings(xmax) 100
+	set graphsettings(ymin) 0
+	set graphsettings(ymax) 100
 	Classy::todo $object redraw
 }
 
@@ -813,6 +925,13 @@ scrolledgraph method reconf {args} {
 	}
 	if {[get graphsettings(yfont) ""] eq ""} {set graphsettings(yfont) {helvetica -12}}
 	$object.g axis configure y -tickfont $graphsettings(yfont)
+	if {[get graphsettings(legendfont) ""] eq ""} {set graphsettings(legendfont) {helvetica -12}}
+	$object.g legend configure -font $graphsettings(legendfont)
+	if {$graphsettings(legend)} {
+		$object.g legend configure -hide yes
+	} else {
+		$object.g legend configure -hide no
+	}
 	Classy::todo $object _configureevent
 }
 
@@ -1038,7 +1157,6 @@ scrolledgraph method point {x y} {
 
 scrolledgraph method changeX {} {
 	private $object xcol header graphsettings
-puts changex
 	set xcol [Classy::select "Select X axis" $header -initialvalue $xcol]
 	set graphsettings(xmin) {}
 	set graphsettings(xmax) {}
@@ -1067,7 +1185,7 @@ scrolledgraph method changesort {} {
 }
 
 scrolledgraph method graphconfigure {{axis x}} {
-	private $object graphsettings
+	private $object graphsettings header poscol negcol roccol
 	destroy $object.graphconfigure
 	Classy::Dialog $object.graphconfigure -title "configure axis"
 	$object.graphconfigure tab "X Axis"
@@ -1104,12 +1222,45 @@ scrolledgraph method graphconfigure {{axis x}} {
 	$object.graphconfigure option font "X tick font" [privatevar $object graphsettings(xfont)] -command [list Classy::todo $object reconf]
 	if {[get graphsettings(yfont) ""] eq ""} {set graphsettings(yfont) {helvetica -12}}
 	$object.graphconfigure option font "Y tick font" [privatevar $object graphsettings(yfont)] -command [list Classy::todo $object reconf]
+	if {[get graphsettings(legendfont) ""] eq ""} {set graphsettings(legendfont) {helvetica -12}}
+	$object.graphconfigure option font "Legend font" [privatevar $object graphsettings(legendfont)] -command [list Classy::todo $object reconf]
+	if {[get graphsettings(legend) ""] eq ""} {set graphsettings(legend) 1}
+	$object.graphconfigure option check "Legend" [privatevar $object graphsettings(legend)] "Show legend" -- -command [list Classy::todo $object reconf]
+	#
+	$object.graphconfigure tab "ROC"
+	if {[get graphsettings(roc) ""] eq ""} {set graphsettings(roc) 0}
+	$object.graphconfigure option check "ROC" [privatevar $object graphsettings(roc)] "Draw a roc curve" -- -command [list Classy::todo $object rearrange]
+	if {[get poscol ""] eq "" || ![inlist $header $poscol]} {set poscol [lindex $header end-1]}
+	$object.graphconfigure option listbox "column with number of positives" [privatevar $object poscol] [privatevar $object header] -selectmode single \
+		-browsecommand [subst {
+			invoke args {
+				setprivate $object graphsettings(xmin) {}
+				setprivate $object graphsettings(xmax) {}
+			}}]
+	if {[get negcol ""] eq "" || ![inlist $header $negcol]} {set negcol [lindex $header end]}
+	$object.graphconfigure option listbox "column with number of negatives" [privatevar $object negcol] [privatevar $object header] -selectmode single \
+		-browsecommand [subst {
+			invoke args {
+				setprivate $object graphsettings(xmin) {}
+				setprivate $object graphsettings(xmax) {}
+			}}]
+	if {[get roccol ""] eq "" || ![llength [list_common $header $roccol]]} {set roccol [lrange $header 1 end-2]}
+	$object.graphconfigure option listbox "Cutoff columns" [privatevar $object roccol] [privatevar $object header] -selectmode multiple \
+		-browsecommand [subst {
+			invoke args {
+				setprivate $object graphsettings(xmin) {}
+				setprivate $object graphsettings(xmax) {}
+			}}]
+	#
+	if {[get graphsettings(rocabove) ""] eq ""} {set graphsettings(rocabove) 1}
+	$object.graphconfigure option check "Direction" [privatevar $object graphsettings(rocabove)] "Values above cutoff test positive" -- -command [list Classy::todo $object rearrange]
+	if {[get graphsettings(roclabels) ""] eq ""} {set graphsettings(roclabels) 1}
+	$object.graphconfigure option check "Labels" [privatevar $object graphsettings(roclabels)] "Show cutoffs as labels" -- -command [list Classy::todo $object rearrange]
+	$object.graphconfigure add go Go [list $object rearrange]
 	if {$axis eq "x"} {
 		$object.graphconfigure tab "X Axis"
 	}
 	if {$axis eq "y"} {
 		$object.graphconfigure tab "Y Axis"
 	}
-	#
-	$object.graphconfigure add go Go [list $object rearrange]
 }
