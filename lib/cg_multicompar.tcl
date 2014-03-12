@@ -542,7 +542,7 @@ proc cg_multicompar.old {args} {
 				set fields $basicfields
 				foreach field [list_sub $header [list_find -regexp $header -$sample]] {
 					set nfield [join [lrange [split $field -] 0 end-1] -]
-					lappend fields $nfield=\$$field
+					lappend fields $nfield=\$\{$field\}
 				}
 				cg select -f $fields $dir $dir.temp/vars-$sample.tsv
 				multicompar $compar_file $dir.temp/vars-$sample.tsv $split $listfields
