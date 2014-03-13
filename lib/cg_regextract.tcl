@@ -90,7 +90,7 @@ proc cg_regextract {args} {
 			set error [catch {
 				exec {*}$cat $file | getregions $chr $chrcol $poscol $qcol $cutoff $above $shift 1 >@ $o
 			} errmessage]
-			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage]} {
+			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage] && ![regexp {Successfully decoded} $errmessage]} {
 				error $errmessage
 			}
 		}

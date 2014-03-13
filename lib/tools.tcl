@@ -581,7 +581,7 @@ proc decompress {file args} {
 		set error [catch {exec zcat $file > $resultfile.temp} result]
 	}
 	if $error {
-		if {![regexp "decompression OK, trailing garbage ignored" $result]} {
+		if {![regexp "decompression OK, trailing garbage ignored" $result] && ![regexp {Successfully decoded} $errmessage]} {
 			error $result
 		}
 	}
@@ -600,7 +600,7 @@ proc gunzip {file args} {
 	}
 	set error [catch {exec zcat $file > $resultfile.temp} result]
 	if $error {
-		if {![regexp "decompression OK, trailing garbage ignored" $result]} {
+		if {![regexp "decompression OK, trailing garbage ignored" $result] && ![regexp {Successfully decoded} $errmessage]} {
 			error $result
 		}
 	}
