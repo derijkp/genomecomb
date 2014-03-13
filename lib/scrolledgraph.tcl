@@ -468,18 +468,25 @@ proc ::tk::MouseWheel {wFired X Y D {shifted 0}} {
     }
 }
 
+scrolledgraph method rearrange_clear {args} {
+	foreach el [list_remove [$object.g element names] legend] {
+		$object.g element delete $el
+	}
+	foreach el [list_remove [$object.g marker names] legend] {
+		$object.g marker delete $el
+	}
+}
+
 # change display according to settings (x, y, ...)
 scrolledgraph method rearrange {args} {
 	private $object data colors labels graphsettings header coldata xcol ycols wcols scols
-	if {[get graphsettings(roc) 0]} {
+	if {[get graphsettings(type)] in {roc pr}} {
 		$object rearrange_roc
 		return
 	}
 	set showregion 0
 	set linew [get graphsettings(linew) 1]
-	foreach el [list_remove [$object.g element names] legend] {
-		$object.g element delete $el
-	}
+	$object rearrange_clear
 	set xpos [lsearch $header [get xcol ""]]
 	if {$xpos == -1} {
 		set xcol [lindex $header 0]
@@ -554,7 +561,6 @@ scrolledgraph method rearrange {args} {
 			lappend todo $ycol $wcol
 		}
 	}
-putsvars todo
 	foreach {field wcol} $todo {
 		incr pos
 		if {![llength $wcol]} {
@@ -584,7 +590,6 @@ putsvars todo
 			set wmin [get ${wv}(min)]
 			set wmax [get ${wv}(max)]
 			set style [$object gradientstyle $basecolor $wv 0]
-putsvars curmin curmax style
 			$object.g element configure e$name -weight $wv -styles $style
 		}
 		if {$showregion} {
@@ -602,14 +607,10 @@ putsvars curmin curmax style
 
 scrolledgraph method rearrange_roc {args} {
 	private $object data colors labels graphsettings header coldata xcol wcols scols poscol negcol roccol
+	if {$graphsettings(type) eq "roc"} {set roc 1} else {set roc 0}
 	set showregion 0
 	set linew [get graphsettings(linew) 1]
-	foreach el [list_remove [$object.g element names] legend] {
-		$object.g element delete $el
-	}
-	foreach el [list_remove [$object.g marker names] legend] {
-		$object.g marker delete $el
-	}
+	$object rearrange_clear
 	set pospos [lsearch $header [get poscol ""]]
 	set negpos [lsearch $header [get negcol ""]]
 	set yposs [list_remove [list_cor $header [get roccol ""]] -1]
@@ -624,11 +625,16 @@ scrolledgraph method rearrange_roc {args} {
 		set roccol [list_sub $header $yposs]
 	}
 	# create axis
-	$object.g axis configure x -title "1-Specificity (%)"
-	$object.g axis configure y -title "Sensitivity (%)"
 	::$object.ends.x set [list 0 100]
 	::$object.ends.y set [list 0 100]
-	$object.g element create diagonal -label "" -xdata ::$object.ends.x -ydata ::$object.ends.y -symbol none -color gray
+	if {$roc} {
+		$object.g axis configure x -title "1-Specificity (%)"
+		$object.g axis configure y -title "Sensitivity (%)"
+		$object.g element create diagonal -label "" -xdata ::$object.ends.x -ydata ::$object.ends.y -symbol none -color gray
+	} else {
+		$object.g axis configure x -title "Recal (%)"
+		$object.g axis configure y -title "Precision (%)"
+	}
 	set vnum 0
 	set pos 0
 	set symbols {cross circle square diamond plus splus scross triangle}
@@ -648,41 +654,60 @@ scrolledgraph method rearrange_roc {args} {
 		set tn 0
 		set fp 0
 		set tp 0
-		set fprs {}
-		set tprs {}
+		set xlist {}
+		set ylist {}
 		set prev [$ys index 0]
 		foreach p [$positives range 0 end] n [$negatives range 0 end] y [$ys range 0 end] {
 			if {$y != $prev} {
-				lappend tprs $tpr
-				lappend fprs $fpr
+				lappend ylist $yval
+				lappend xlist $xval
 				if {$graphsettings(roclabels)} {
-					$object.g marker create text -coords [list $fpr $tpr] -text $prev -fill {} -anchor nw -yoffset -5
+					$object.g marker create text -coords [list $xval $yval] -text $prev -fill {} -anchor nw -yoffset -5
 				}
 				set prev $y
 			}
 			if {$graphsettings(rocabove)} {
 				set fn [expr {$fn + $p}]
 				set tn [expr {$tn + $n}]
-				set tpr [expr {100.0*($realpos - $fn)/$realpos}]
-				# lappend fpr [expr {100.0-100.0*$tn/$totalneg}]
-				set fpr [expr {100.0*($realneg - $tn)/$realneg}]
+				if {$roc} {
+					# true positive rate
+					set yval [expr {100.0*($realpos - $fn)/$realpos}]
+					# false positive rate
+					set xval [expr {100.0*($realneg - $tn)/$realneg}]
+				} else {
+					# precision
+					if {[catch {
+						set yval [expr {100.0*($realpos - $fn)/($realneg - $tn + $realpos - $fn)}]
+					}]} continue
+					# recall (= true positive rate)
+					set xval [expr {100.0*($realpos - $fn)/$realpos}]
+				}
 			} else {
 				set tp [expr {$tp + $p}]
 				set fp [expr {$fp + $n}]
-				set tpr [expr {100.0*$tp/$realpos}]
-				set fpr [expr {100.0*$fp/$realneg}]
+				if {$roc} {
+					# true positive rate
+					set yval [expr {100.0*$tp/$realpos}]
+					# false positive rate
+					set xval [expr {100.0*$fp/$realneg}]
+				} else {
+					# precision
+					set yval [expr {100.0*$tp/($tp+$fp)}]
+					# recall (= true positive rate)
+					set xval [expr {100.0*$tp/$realpos}]
+				}
 			}
 		}
-		lappend tprs $tpr
-		lappend fprs $fpr
+		lappend ylist $yval
+		lappend xlist $xval
 		if {$graphsettings(roclabels)} {
-			$object.g marker create text -coords [list $fpr $tpr] -text $y -fill {} -anchor nw -yoffset -5
+			$object.g marker create text -coords [list $xval $yval] -text $y -fill {} -anchor nw -yoffset -5
 		}
 		set name $field
-		set tprv [vector create ::$object.cor.$name.tpr]
-		$tprv set $tprs
-		set fprv [vector create ::$object.cor.$name.fpr]
-		$fprv set $fprs
+		set yvalv [vector create ::$object.cor.$name.yval]
+		$yvalv set $ylist
+		set xvalv [vector create ::$object.cor.$name.xval]
+		$xvalv set $xlist
 		set ys [lindex $coldata($field) 1]
 		set basecolor [lindex $dcolors $vnum]
 		if {$basecolor eq ""} {set basecolor blue}
@@ -691,10 +716,9 @@ scrolledgraph method rearrange_roc {args} {
 		set data($name,lstart) 0
 		set data($name,lend) 0
 		set data($name,header) $header
-		$object.g element create e$name -label $name -xdata $fprv -ydata $tprv -symbol none
+		$object.g element create e$name -label $name -xdata $xvalv -ydata $yvalv -symbol none
 		# $object.g element configure e$name -weights ::$ws
 		set color $basecolor
-		# $object.g element configure e$name -linewidth $linew -fill $color -outlinewidth 1 -pixels 1 -symbol circle
 		$object.g element configure e$name -linewidth $linew -color $basecolor -outline $basecolor -outlinewidth 1 -pixels 2 -symbol plus
 		set data($name,color) $color
 		$object.g legend bind $name <1> [list $object elconf $name]
@@ -1228,8 +1252,8 @@ scrolledgraph method graphconfigure {{axis x}} {
 	$object.graphconfigure option check "Legend" [privatevar $object graphsettings(legend)] "Show legend" -- -command [list Classy::todo $object reconf]
 	#
 	$object.graphconfigure tab "ROC"
-	if {[get graphsettings(roc) ""] eq ""} {set graphsettings(roc) 0}
-	$object.graphconfigure option check "ROC" [privatevar $object graphsettings(roc)] "Draw a roc curve" -- -command [list Classy::todo $object rearrange]
+	if {[get graphsettings(type) ""] eq "" || ![inlist {graph roc pr} $graphsettings(type)]} {set graphsettings(type) graph}
+	$object.graphconfigure option radio "Graph type" [privatevar $object graphsettings(type)] "Roc curve" roc "Precision-Recal curve" pr "Normal graph" graph -- -command [list Classy::todo $object rearrange]
 	if {[get poscol ""] eq "" || ![inlist $header $poscol]} {set poscol [lindex $header end-1]}
 	$object.graphconfigure option listbox "column with number of positives" [privatevar $object poscol] [privatevar $object header] -selectmode single \
 		-browsecommand [subst {
