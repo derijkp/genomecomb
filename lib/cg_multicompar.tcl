@@ -276,34 +276,14 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 proc multicompar_reannot_find {basedir sample args} {
 	if {![llength $args]} {set args [list {}]}
 	set sampledir [lindex [split $sample -] end]
-	foreach pattern $args {
-		set test [gzfile [file join $basedir $sample $pattern]]
-		if {[file exists $test]} {
-			return $test
-		}
-	}
-	foreach pattern $args {
-		set test [gzfile [file join [file dir $basedir] $sample $pattern]]
-		if {[file exists $test]} {
-			return $test
-		}
-	}
-	foreach pattern $args {
-		set test [gzfile [file join $basedir $sampledir $pattern]]
-		if {[file exists $test]} {
-			return $test
-		}
-	}
-	foreach pattern $args {
-		set test [gzfile [file join [file dir $basedir] $sampledir $pattern]]
-		if {[file exists $test]} {
-			return $test
-		}
-	}
-	foreach pattern $args {
-		set test [gzfile [file join $basedir $pattern]]
-		if {[file exists $test]} {
-			return $test
+	foreach startdir [list $basedir/samples $basedir [file dir $basedir]/samples [file dir $basedir]] {
+		foreach usesample [list $sample $sampledir {}] {
+			foreach pattern $args {
+				set test [gzfile [file join $startdir $usesample $pattern]]
+				if {[file exists $test]} {
+					return $test
+				}
+			}
 		}
 	}
 	return {}
