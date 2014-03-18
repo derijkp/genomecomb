@@ -72,6 +72,7 @@ int main(int argc, char *argv[]) {
 		varpos_max(&(todo->varpos));
 		todo->max = atoi(result1->data[7].string);
 		todo->seqpos = atoi(result1->data[8].string);
+		/* keepsize contains the size of the next line, the number of positions to keep in the output */
 		todo->keepsize = atoi(result1->data[9].string);
 		/* het keepposs, allocate todo->result first and use to get poss: it will be large enough; max must be > keepsize */
 		todo->line = DStringNew();

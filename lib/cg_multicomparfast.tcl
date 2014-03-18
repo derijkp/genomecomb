@@ -170,7 +170,7 @@ proc cg_multicompar {args} {
 		set samples [samples $header]
 		if {[llength $samples] > 0} {
 			set keepposs [list_find -glob $header *-*]
-			set seqpos -1
+			set seqpos -2
 			lappend reannotheader {*}[list_sub $header $keepposs]
 		} else {
 			set sample [sourcename $filebase]
