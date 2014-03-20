@@ -169,6 +169,83 @@ proc cg_downloaddbinfo {args} {
 	}
 }
 
+proc downloaddb_evs {path build {url {}}} {
+	if {$url eq ""} {
+		set url http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
+	}
+	file mkdir ${path}/tmp/$build/evs
+	cd $path/$build/evs
+	exec -ignorestderr wget -c --tries=45 --directory-prefix=$path/$build/evs $url
+	exec tar xvzf [file tail $url]
+	foreach file [glob *.vcf] {
+		cg vcf2tsv $file [file root $file].tsv
+	}
+	set files [lsort -dict [glob ESP6500SI-V2-SSA137.updatedProteinHgvs.*.snps_indels.tsv]]
+	if {[llength $files] != 24} {error "not enough files found"}
+	cg cat {*}$files > var_${build}_evs.tsv.temp
+#	cg select -f {chromosome begin end type 
+#		{ea_freqp=lrange(vformat("%.3f",(100.0 @* $EA_AC) @/ lsum($EA_AC)),0,"end-1")} 
+#		{aa_freqp=lrange(vformat("%.3f",(100.0 @* $AA_AC) @/ lsum($AA_AC)),0,"end-1")}
+#		*
+#	} var_${build}_evs.tsv.temp var_${build}_evs.tsv.temp2
+	set f [open var_${build}_evs.tsv.temp]
+	set header [tsv_open $f]
+	set bposs [tsv_basicfields $header]
+	set o [open var_${build}_evs.tsv.temp2 w]
+	set nheader [list {*}[list_sub $header $bposs] ea_freqp aa_freqp ea_mfreqp aa_mfreqp {*}[list_sub $header -exclude $bposs]]
+	puts $o [join $nheader \t]
+	set poss [list_cor $header {alt EA_AC AA_AC GTS EA_GTC AA_GTC}]
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		if {![llength $line]} continue
+		foreach {alt EA_AC AA_AC GTS EA_GTC AA_GTC} [list_sub $line $poss] break
+		set EA_AC [split $EA_AC ,]
+		set AA_AC [split $AA_AC ,]
+		set GTS [split $GTS ,]
+		set EA_GTC [split $EA_GTC ,]
+		set AA_GTC [split $AA_GTC ,]
+		set sum [lmath_sum $EA_AC]
+		set ea_freqp {}
+		foreach el [lrange $EA_AC 0 end-1] {
+			lappend ea_freqp [trimformat %.3f [expr {(100.0*$el)/$sum}]]
+		}
+		set sum [lmath_sum $AA_AC]
+		set aa_freqp {}
+		foreach el [lrange $AA_AC 0 end-1] {
+			lappend aa_freqp [trimformat %.3f [expr {(100.0*$el)/$sum}]]
+		}
+		set alt [split $alt ,]
+		set apos 1
+		set ea_mfreqp {}
+		set aa_mfreqp {}
+		set easum [lmath_sum $EA_GTC]
+		set aasum [lmath_sum $AA_GTC]
+		foreach a $alt {
+			set pos [lsearch $GTS ${a}${a}]
+			if {$pos == -1} {
+				set pos [lsearch $GTS A${apos}A${apos}]
+			}
+			if {$pos == -1} {
+				lappend ea_mfreqp .
+				lappend aa_mfreqp .
+			} else {
+				lappend ea_mfreqp [trimformat %.3f [expr {100.0*[lindex $EA_GTC $pos]/$easum}]]
+				lappend aa_mfreqp [trimformat %.3f [expr {100.0*[lindex $AA_GTC $pos]/$aasum}]]
+			}
+			incr apos
+		}
+		set result [list_sub $line $bposs]
+		lappend result [join $ea_freqp ,] [join $aa_freqp ,] [join $ea_mfreqp ,] [join $aa_mfreqp ,]
+		lappend result {*}[list_sub $line -exclude $bposs]
+		puts $o [join $result \t]
+	}
+	close $o
+	close $f
+	file_write $path/$build/extra/reg_${build}_evs.tsv.opt "fields\t{ea_freqp aa_freqp ea_mfreqp aa_mfreqp}\n"
+	file_write $path/$build/extra/reg_${build}_evs.tsv.info "more information on http://evs.gs.washington.edu/EVS/"
+	file rename var_${build}_evs.tsv.temp2 $path/$build/extra/var_${build}_evs.tsv
+}
+
 proc cg_downloaddb {args} {
 	if {([llength $args] < 2)} {
 		puts stderr "format is: $::base resultdir build database ?...?"
@@ -176,6 +253,10 @@ proc cg_downloaddb {args} {
 		exit 1
 	}
 	foreach {path build dbname} $args break
+	if {$dbname eq "evs"} {
+		downloaddb_evs $path $build [lindex $args 3]
+		return
+	}
 	set dbnames [lrange $args 2 end]
 	puts "----------------------------------------------------"
 	file mkdir $path

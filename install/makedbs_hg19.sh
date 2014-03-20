@@ -205,6 +205,11 @@ job reg_hg19_mirbase -targets {$dest/hg19/reg_hg19_mirbase.tsv $dest/hg19/reg_hg
 	file rename -force README reg_hg19_mirbase.info
 }
 
+# exome variant server
+job reg_hg19_esp -targets {$dest/hg19/extra/var_hg19_esv.tsv $dest/hg19/extra/var_hg19_esv.tsv.opt $dest/hg19/extra/var_hg19_esv.info} -vars {dest build db} -code {
+	cg downloaddb $dest/tmp hg19 esv http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
+}
+
 # GERP
 job GERP -targets {extra/reg_${build}_GERP.tsv extra/reg_${build}_GERP.info} -vars {dest build tables} -code {
 	cd ${dest}/tmp/${build}
