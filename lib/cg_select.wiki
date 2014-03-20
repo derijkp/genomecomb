@@ -168,6 +168,9 @@ If no number was given, the answer will be NaN
 ; **isnum(value)**: true if value is a valid number
 ; **percent(value)**: returns a fraction as a percent 
 ; **def(value,default)**: if value is not a number, it returns the given default, otherwise value
+; **format(formatstring, arg, ...)**: format the given arguments according to the given **formatstring**. 
+**formatstring** follows the ANSI C sprintf specification, e.g. use "%.2f" to print a floating point number
+with two digits after the decimel point
 
 === vector functions (comma separated lists) ===
 Some fields can contain multiple values in the form of a comma (or ; or space) separated 
@@ -176,6 +179,7 @@ The following functions allow use of vectors in queries
 
 ; **vector(value1,value2, ...)**: creates a vector from a number of values. If some elements are vectors themselves, they will be concatenated
 ; **lindex(vector, position)**: the value of the element at the given **position** in the list. The first element is at position 0!
+; **lrange(vector, start, end)**: the a sublist of vector from element at position **start** up to and including the element at **end**. The first element is at position 0!
 ; **llen(vector)**: number of elements in the vector
 ; **lmin(vector, ...)**: the minimum of the list of numbers in vector(s). A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
 ; **lmax(vector, ...)**: the maximum of the vector. A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
@@ -211,7 +215,7 @@ all elements in the other vector. Supported operators are:
 ; **vdef(vector,default)**: returns the given vector, but with all non numbers replaced by default
 ; **vif(condition,true,?condition2,true2, ...?false)**: like if, but conditions, true1, ... and 
 false may be vectors, and a vector is returned
-
+; **vformat(formatstring, arg, ...)**: same as format, but arg may be a vector, and the result is a vector
 === String functions ===
 ; **oneof($field,value1,value2,...)**: returns true if the given field is equal to one of the values
 ; **regexp(value,pattern)**: true if value matches the regular expression given by **pattern**
