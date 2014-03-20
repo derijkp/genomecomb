@@ -190,3 +190,34 @@ proc tcl::mathfunc::vmin args {
 	}
 	return [join $min ,]
 }
+
+proc tcl::mathfunc::vformat {args} {
+	set format [list_shift args]
+	set result {}
+	set len 1
+	set todo {}
+	foreach el $args {
+		set el [split $el ";, "]
+		set testlen [llength $el]
+		if {$testlen != 1} {
+			if {$len == 1} {set len $testlen} elseif {$testlen != $len} {error "args of vformat are vectors of different size (not 1)"}
+		}
+		lappend todo $el
+	}
+	if {$len != 1} {
+		set pos 0
+		foreach el $todo {
+			set testlen [llength $el]
+			if {$testlen == 1} {
+				lset todo $pos [list_fill $len $el]
+			}
+			incr pos
+		}
+	}
+	for {set pos 0} {$pos < $len} {incr pos} {
+		set args [list_subindex $todo $pos]
+		lappend result [::format $format {*}$args]
+	}
+	::join  $result ,
+}
+
