@@ -53,6 +53,10 @@ proc tcl::mathfunc::lindex {list pos} {
 	::lindex [split $list ";, "] $pos
 }
 
+proc tcl::mathfunc::lrange {list start end} {
+	::join [::lrange [split $list ";, "] $start $end] ,
+}
+
 proc tcl::mathfunc::llen {args} {
 	set result 0
 	foreach value $args {
