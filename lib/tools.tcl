@@ -999,3 +999,7 @@ proc file_absolute {file} {
 	}
 	file join {*}$result
 }
+
+proc trimformat args {
+	string trimright [string trimright [::format {*}$args] 0] .
+}

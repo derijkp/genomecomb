@@ -6,6 +6,10 @@ proc tcl::mathfunc::format args {
 	::format {*}$args
 }
 
+proc tcl::mathfunc::trimformat args {
+	string trimright [string trimright [::format {*}$args] 0] .
+}
+
 proc tcl::mathfunc::percent args {
 	foreach {value prec} $args break
 	if {![isint $prec]} {set prec 1}
