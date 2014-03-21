@@ -241,8 +241,27 @@ proc downloaddb_evs {path build {url {}}} {
 	}
 	close $o
 	close $f
-	file_write $path/$build/extra/reg_${build}_evs.tsv.opt "fields\t{ea_freqp aa_freqp ea_mfreqp aa_mfreqp}\n"
-	file_write $path/$build/extra/reg_${build}_evs.tsv.info "more information on http://evs.gs.washington.edu/EVS/"
+	file_write $path/$build/extra/var_${build}_evs.tsv.opt "fields\t{ea_freqp aa_freqp ea_mfreqp aa_mfreqp}\n"
+file_write $path/$build/extra/var_${build}_evs.tsv.info [string trim {
+Exome variant server variants
+
+Data Usage
+----------
+We request that any use of data obtained from the NHLBI GO ESP Exome Variant Server be cited in publications.
+
+Citation
+--------
+Exome Variant Server, NHLBI GO Exome Sequencing Project (ESP), Seattle, WA (URL: http://evs.gs.washington.edu/EVS/) [date (month, yr) accessed].
+
+Annotation fields added
+-----------------------
+ea_freqp: frequency (as percentage!) of alt aleles in european american population
+aa_freqp: frequency (as percentage!) of alt aleles in african american population
+ea_mfreqp: frequency (as percentage!) of homozygous alt alele genotype in european american population
+aa_mfreqp: frequency (as percentage!) of homozygous alt alele genotype in african american population
+
+more information on http://evs.gs.washington.edu/EVS/
+}]
 	file rename var_${build}_evs.tsv.temp2 $path/$build/extra/var_${build}_evs.tsv
 }
 
