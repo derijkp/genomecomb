@@ -260,7 +260,7 @@ test collapsealleles {collapsealleles2} {
 	 	chr1 4200 4200 ins {} A 0.8
 	 	chr1 5000 5001 snp G A 0.5
 	}
-	exec cg collapsealleles tmp/test.tsv > tmp/temp.tsv
+	exec cg collapsealleles < tmp/test.tsv > tmp/temp.tsv
 	write_tab tmp/expected.tsv {
 		chromosome begin end type ref alt freq-sample
 	 	chr1 4200 4200 ins {} A 0.5,0.8

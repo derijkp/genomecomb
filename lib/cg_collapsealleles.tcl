@@ -1,10 +1,20 @@
 proc cg_collapsealleles {args} {
-	if {([llength $args] < 1)} {
-		errorformat collapse_alleles
+	if {([llength $args] > 2)} {
+		errorformat collapsealleles
 		exit 1
 	}
-	foreach file $args break
-	set f [gzopen $file]
+	foreach {file outfile} {{} {}} break
+	foreach {file outfile} $args break
+	if {$file eq ""} {
+		set f stdin
+	} else {
+		set f [gzopen $file]
+	}
+	if {$outfile eq ""} {
+		set o stdout
+	} else {
+		set o [open $outfile w]
+	}
 	set header [tsv_open $f comment]
 	set poss [tsv_basicfields $header]
 	set apos [lindex $poss 5]
