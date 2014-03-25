@@ -791,14 +791,17 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 #putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index verbose samplingskip
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
-	if {$hc ne "0" && $hc ne "1"} {
+	if {$hc ni {0 1 2}} {
 		set hf [gzopen $hc]
 		set header [tsv_open $hf keepheader]
 		close $hf
 	} else {
 		set header [tsv_open $f keepheader]
-		if {$hc eq "1"} {
+		if {$hc > 0} {
 			tsv_hcheader $f keepheader header
+			if {$hc == 2} {
+				append keepheader \#
+			}
 		}
 	}
 	set neededfields {}
@@ -1033,7 +1036,10 @@ proc cg_select {args} {
 			-gc {lappend groupcols $value}
 			-nh {set newheader $value}
 			-sh {set sepheader $value}
-			-hc {set hc 1}
+			-hc {
+				if {$value ni {0 1 2}} {error "-hc must be 0, 1 or 2"}
+				set hc $value
+			}
 			-hf {set hc $value}
 			-s {set sortfields $value}
 			-n {

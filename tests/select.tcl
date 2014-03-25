@@ -114,6 +114,13 @@ test select {keep header info and format rtg: -hc} {
 > #name	position	type	reference	prediction	posterior	coverage	correction	support_statistics
 }
 
+test select {keep header info and format rtg: -hc} {
+	exec cg select -hc 2 -s position data/rtgsnps.tsv tmp/temp.tsv
+	file delete temp
+	catch {exec diff tmp/temp.tsv data/rtgsnps.tsv > temp}
+	file_read temp
+} {}
+
 test select {keep header info and format vcf} {
 	exec cg select -s POS data/test.vcf tmp/temp.tsv
 	file delete temp

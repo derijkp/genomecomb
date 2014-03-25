@@ -30,7 +30,8 @@ if **sortfields** is "-", the default sort fields will be used (chromosome,begin
 This will also accept name variations of the fields, such as chrom instead of chromosome.
 ; **-nh newheader**: replace header in output with fields given by this option
 ; **-sh sepheader**: write a resultfile without header, and write the header into the file **sepheader**
-; **-hc headerincomment**: if 1, the last of the starting comment lines will be used for the header instead of the first non-comment line
+; **-hc headerincomment**: if 1, the last of the starting comment lines will be used for the header instead of the first non-comment line. 
+If 2, the result file will also hav the header in the last comment.
 ; **-hf headerfile: infile does not have a header, the header will be read from **headerfile** instead
 ; **-h**: return header fields in file
 ; **-n**: return sample names in file
