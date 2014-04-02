@@ -15,12 +15,22 @@ proc cg_splitalleles {args} {
 #		}
 #	}
 #	set args [lrange $args $pos end]
-	if {[llength $args] != 1} {
-		error "format is: cg splitalleles file"
+	if {([llength $args] > 2)} {
+		errorformat splitalleles
 		exit 1
 	}
-	foreach file $args break
-	set f [gzopen $file]
+	foreach {file outfile} {{} {}} break
+	foreach {file outfile} $args break
+	if {$file eq ""} {
+		set f stdin
+	} else {
+		set f [gzopen $file]
+	}
+	if {$outfile eq ""} {
+		set o stdout
+	} else {
+		set o [open $outfile w]
+	}
 	set header [tsv_open $f comment]
 	set poss [tsv_basicfields $header]
 	set apos [lindex $poss 5]
@@ -31,9 +41,9 @@ proc cg_splitalleles {args} {
 		lappend sposs {*}[list_cor $header [list alleleSeq1-$sample alleleSeq2-$sample sequenced-$sample]]
 	}
 	if {[string length $comment]} {
-		puts $comment
+		puts $o $comment
 	}
-	puts [join $header \t]
+	puts $o [join $header \t]
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
@@ -60,7 +70,7 @@ proc cg_splitalleles {args} {
 					}
 				}
 			}
-			# foreach all $alleles {puts "$all [lrange $a($all) 0 8]"}
+			# foreach all $alleles {puts $o "$all [lrange $a($all) 0 8]"}
 		}
 		foreach alt [ssort -natural $alleles] {
 			set line $a($alt)
@@ -95,7 +105,7 @@ proc cg_splitalleles {args} {
 			} 
 		} 
 		foreach allele [ssort -natural $alleles] {
-			puts [join $a($allele) \t]
+			puts $o [join $a($allele) \t]
 		}
 	}
 	close $f
