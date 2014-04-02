@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 	DString *prevchromosome1 = NULL, *prevchromosome2 = NULL;
 	int comp,chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2;
 	int datalen=0,*datapos=NULL;
-	unsigned int numfields1,numfields2,numfields,pos1,pos2;
+	unsigned int numfields1,numfields2,numfields,pos1=0,pos2=0;
 	int endkeep=-1,near,near2;
 	int start1,end1,start2,end2;
 	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;

@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
 	DString *prevtype1 = DStringNew(), *prevtype2 = DStringNew();
 	DString *prevalt1 = DStringNew(), *prevalt2 = DStringNew();
 	DString *chromosome1=NULL,*chromosome2=NULL,*type1 = NULL,*type2 = NULL,*alt1 = NULL,*alt2 = NULL;
-	unsigned int numfields1,numfields2,numfields,pos1,pos2;
+	unsigned int numfields1,numfields2,numfields,pos1 = 0,pos2 = 0;
 	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
 	int chr1pos,start1pos,end1pos,type1pos,alt1pos,max1;
 	int chr2pos,start2pos,end2pos,type2pos,alt2pos,max2;
@@ -105,7 +105,11 @@ int main(int argc, char *argv[]) {
 	/* The following allocation is not destroyed at end as it may point to something else */
 	/* This will leak mem, but as the prog is finished anyway ... */
 	result1 = DStringArrayNew(max1+2);
-	f2 = fopen64_or_die(argv[7],"r");
+	if (strlen(argv[7]) == 1 && argv[7][0] == '-') {
+		f2 = stdin;
+	} else {
+		f2 = fopen64_or_die(argv[7],"r");
+	}
 	chr2pos = atoi(argv[8]);
 	start2pos = atoi(argv[9]);
 	end2pos = atoi(argv[10]);
@@ -132,7 +136,7 @@ NODPRINT("\n");
 	skip_header(f2,line2,&numfields2,&pos2);
 	error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields); pos2++;
 	if (!error2) {
-		check_numfieldserror(numfields,numfields2,line2,argv[7],&pos2);
+		check_numfieldserror(numfields2,numfields,line2,argv[7],&pos2);
 		chromosome2 = result2->data+chr2pos;
 		type2 = result2->data+type2pos;
 		alt2 = result2->data+alt2pos;

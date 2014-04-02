@@ -9,7 +9,7 @@ exec tclsh "$0" ${1+"$@"}
 #
 
 proc annotatereg {file dbfile name annotfile near dbinfo} {
-# putslog [list annotatereg $file $dbfile $name $annotfile $near $outfields]
+# putslog [list annotatereg $file $dbfile $name $annotfile $near $dbinfo]
 	set newh [dict get $dbinfo newh]
 	set dataposs [dict get $dbinfo dataposs]
 	catch {close $f}
@@ -31,11 +31,13 @@ proc annotatereg {file dbfile name annotfile near dbinfo} {
 	if {[gziscompressed $file]} {
 		set file "|[gzcat $file] '$file'"
 	}
-	# puts [list {*}[gzcat $dbfile] $dbfile | reg_annot $file {*}$poss - {*}$dbposs $near {*}$dataposs]
-	if {[catch {
-		exec {*}[gzcat $dbfile] $dbfile | reg_annot $file {*}$poss - {*}$dbposs $near {*}$dataposs >> $annotfile.temp 2>@ stderr
-	} error]} {
-		if {$error ne "child killed: write on pipe with no readers"} {error $error}
+	# putslog [list {*}[gzcat $dbfile] $dbfile | reg_annot $file {*}$poss - {*}$dbposs $near {*}$dataposs]
+	if {[gziscompressed $dbfile]} {
+		gzcatch {
+			exec {*}[gzcat $dbfile] $dbfile | reg_annot $file {*}$poss - {*}$dbposs $near {*}$dataposs >> $annotfile.temp 2>@ stderr
+		}
+	} else {
+		exec reg_annot $file {*}$poss $dbfile {*}$dbposs $near {*}$dataposs >> $annotfile.temp 2>@ stderr
 	}
 	file rename -force $annotfile.temp $annotfile
 
@@ -49,7 +51,7 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 	set f [gzopen $file]
 	set header [tsv_open $f comment]
 	set poss [tsv_basicfields $header 3]
-	close $f
+	gzclose $f
 	set fields [list_sub $header $poss]
 	if {[inlist $poss -1]} {
 		error "Cannot annotate $file: wrong fields"
@@ -62,14 +64,16 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 	if {$alt1pos == -1} {
 		error "$file has no alt field"
 	}
-	set f [open $dbfile]
-	set dbposs [open_region $f dbheader]
-	close $f
-	set type2pos [lsearch $dbheader type]
+	set f [gzopen $dbfile]
+	set header [tsv_open $f]
+	gzclose $f
+	set tempdbposs [tsv_basicfields $header 6 0]
+	set dbposs [lrange $poss 0 2]
+	set type2pos [lindex $tempdbposs 3]
 	if {$type2pos == -1} {
 		error "$dbfile has no type field"
 	}
-	set alt2pos [lsearch $dbheader alt]
+	set alt2pos [lindex $tempdbposs 5]
 	if {$alt2pos == -1} {
 		error "$dbfile has no alt field"
 	}
@@ -77,8 +81,17 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
 	puts $o [join $newh \t]
 	close $o
+	if {[gziscompressed $file]} {
+		set file "|[gzcat $file] '$file'"
+	}
 	# puts [list var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs]
-	exec var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp 2>@ stderr
+	if {[gziscompressed $dbfile]} {
+		gzcatch { 
+			exec {*}[gzcat $dbfile] $dbfile | var_annot $file {*}$poss $type1pos $alt1pos - {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp 2>@ stderr
+		}
+	} else {
+		exec var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp 2>@ stderr
+	}
 	file rename -force $annotfile.temp $annotfile
 }
 
@@ -142,7 +155,7 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 	dict set a dbtype $dbtype
 	set f [gzopen $dbfile]
 	set header [tsv_open $f comment]
-	close $f
+	gzclose $f
 	dict set a header $header
 	if {$dbtype eq "gene"} {
 		set outfields {}

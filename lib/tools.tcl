@@ -343,7 +343,7 @@ proc gzopen {file {pos -1}} {
 		}
 	} elseif {[inlist {.lz4} [file extension $file]]} {
 		if {$pos == -1} {
-			set f [open "| lz4c -d $file"]
+			set f [open "| lz4c -d -c $file"]
 		} else {
 			error "positioning not supported in lz4 files"
 		}
@@ -371,6 +371,15 @@ proc gzopen {file {pos -1}} {
 proc gzclose {f} {
 	if {[catch {close $f} error]} {
 		if {$error eq "child killed: write on pipe with no readers"} return
+		if {[regexp {Successfully decoded [0-9]+ bytes} $error]} return
+		error $error
+	}
+}
+
+proc gzcatch {cmd} {
+	if {[catch {uplevel $cmd} error]} {
+		if {$error eq "child killed: write on pipe with no readers"} return
+		if {[regexp {Successfully decoded [0-9]+ bytes} $error]} return
 		error $error
 	}
 }
