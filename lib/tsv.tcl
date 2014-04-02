@@ -16,7 +16,7 @@ proc tsv_open {f {keepheaderVar {}}} {
 	set line [gets $f]
 	set fchar [string index $line 0]
 	set fchar2 [string index $line 1]
-	if {$fchar eq "#" && $fchar2 eq "#"} {
+	if {[regexp {##fileformat=VCF} $line]} {
 		set vcf 1
 	} else {
 		set vcf 0

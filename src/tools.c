@@ -845,7 +845,7 @@ void skip_header(FILE *f1, DString *linePtr, unsigned int *numfields,unsigned in
 	if (pos != NULL) {curpos=*pos;}
 	read = DStringGetLine(linePtr, f1);
 	if (read == -1) return;
-	if (linePtr->string[0] == '#' && linePtr->string[1] == '#') {
+	if (strlen(linePtr->string) >= 16 && strncmp(linePtr->string,"##fileformat=VCF",16) == 0) {
 		/* vcf style header */
 		while (read != -1) {
 			if (linePtr->string[0] == '\0') {
