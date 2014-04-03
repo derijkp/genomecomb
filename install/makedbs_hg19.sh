@@ -210,6 +210,16 @@ job reg_hg19_esp -targets {$dest/hg19/extra/var_hg19_esv.tsv $dest/hg19/extra/va
 	cg downloaddb $dest/tmp hg19 esv http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
 }
 
+# CADD
+job reg_hg19_esp -targets {$dest/hg19/extra/var_hg19_cadd.tsv $dest/hg19/extra/var_hg19_cadd.tsv.opt $dest/hg19/extra/var_hg19_cadd.info} -vars {dest build db} -code {
+	exec -ignorestderr wget -c --tries=45 --directory-prefix=${dest}/tmp/hg19 http://krishna.gs.washington.edu/download/CADD/v1.0/whole_genome_SNVs.tsv.gz
+	exec -ignorestderr wget -c --tries=45 --directory-prefix=${dest}/tmp/hg19 http://cadd.gs.washington.edu/home
+	file rename ${dest}/tmp/hg19/home ${dest}/$build/extra/var_hg19_cadd.tsv.info
+	file_write $dest/$build/extra/var_${build}_cadd.tsv.opt "fields\t{score pscore}\n"
+	exec cg select -f {chromosome=$Chrom {begin=$Pos - 1} end=$Pos type="snp" ref=$Ref alt=$Alt score=$RawScore pscore=$PHRED} ${dest}/tmp/hg19/whole_genome_SNVs.tsv.gz | cg collapsealleles | lz4c - > $dest/tmp/hg19/var_hg19_cadd.tsv.lz4.temp
+	file rename $dest/tmp/hg19/var_hg19_cadd.tsv.lz4.temp $dest/hg19/extra/var_hg19_cadd.tsv.lz4
+}
+
 # GERP
 job GERP -targets {extra/reg_${build}_GERP.tsv extra/reg_${build}_GERP.info} -vars {dest build tables} -code {
 	cd ${dest}/tmp/${build}
