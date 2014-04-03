@@ -95,29 +95,29 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 		exec cp -al $file $destdir/$sample/ori/fastq
 		cplinked $destdir/$sample/ori/fastq $destdir/$sample/fastq
 	}
-	set alidir [lindex [ssort -natural [glob $illsrc/Alignment*]] end]
-	set files [glob $alidir/*.bam $alidir/*.bam.bai]
-	foreach file $files {
-		set tail [file tail $file]
-		foreach {sample barcode} [split $tail _.] break
-		regsub -all -- - $sample _ sample
-		file mkdir $destdir/$sample
-		file mkdir $destdir/$sample/ori
-		if {[file ext $file] eq ".bam"} {set ext bam} else {set ext bam.bai}
-		exec cp -al $file $destdir/$sample/ori/map-ill-$sample.$ext
-		cplinked $destdir/$sample/ori/map-ill-$sample.$ext $destdir/$sample/map-ill-$sample.$ext
-	}
-	set files [glob $alidir/*.vcf]
-	foreach file $files {
-		set tail [file tail $file]
-		foreach {sample barcode} [split $tail _.] break
-		regsub -all -- - $sample _ sample
-		if {$sample eq "tempvariants"} continue
-		file mkdir $destdir/$sample
-		file mkdir $destdir/$sample/ori
-		exec cp -al $file $destdir/$sample/ori/var-ill-ill-$sample.vcf
-		cplinked $destdir/$sample/ori/var-ill-ill-$sample.vcf $destdir/$sample/var-ill-ill-$sample.vcf
-	}
+	#set alidir [lindex [ssort -natural [glob $illsrc/Alignment*]] end]
+	#set files [glob $alidir/*.bam $alidir/*.bam.bai]
+	#foreach file $files {
+		#set tail [file tail $file]
+		#foreach {sample barcode} [split $tail _.] break
+		#regsub -all -- - $sample _ sample
+		#file mkdir $destdir/$sample
+		#file mkdir $destdir/$sample/ori
+		#if {[file ext $file] eq ".bam"} {set ext bam} else {set ext bam.bai}
+		#exec cp -al $file $destdir/$sample/ori/map-ill-$sample.$ext
+		#cplinked $destdir/$sample/ori/map-ill-$sample.$ext $destdir/$sample/map-ill-$sample.$ext
+	#}
+	#set files [glob $alidir/*.vcf]
+	#foreach file $files {
+		#set tail [file tail $file]
+		#foreach {sample barcode} [split $tail _.] break
+		#regsub -all -- - $sample _ sample
+		#if {$sample eq "tempvariants"} continue
+		#file mkdir $destdir/$sample
+		#file mkdir $destdir/$sample/ori
+		#exec cp -al $file $destdir/$sample/ori/var-ill-ill-$sample.vcf
+		#cplinked $destdir/$sample/ori/var-ill-ill-$sample.vcf $destdir/$sample/var-ill-ill-$sample.vcf
+	#}
 	cd $keeppwd
 }
 
