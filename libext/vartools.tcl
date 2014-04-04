@@ -27,7 +27,7 @@ proc median {list} {
 		lindex $list [expr {$len/2}]
 	} else {
 		set pos [expr {$len/2}]
-		lmath_average [lrange $list [expr {$pos-1}] $pos]
+		lmath_average [::lrange $list [expr {$pos-1}] $pos]
 	}
 }
 
