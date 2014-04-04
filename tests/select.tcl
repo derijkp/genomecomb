@@ -429,4 +429,25 @@ test select {-q use calculated column from -f without it being in the output (us
 } {num	text	mixed	other
 2	c	a2	cc}
 
+test select {calculated column with wildcard} {
+	exec cg select -f {test-*="$alleleSeq1-*/$alleleSeq2-*"} -q {$ROW <= 4} data/expected-multicompar_reannot-var_annotvar_annot2.sft
+} {test-annot1	test-annot2
+T/C	T/C
+A/C	A/C
+T/T	-/-
+AGCGTGGCAA/	AGCGTGGCAA/
+A/A	G/C}
+
+test select {calculated column with wildcard also outside var} {
+	exec cg select -f {{test-*="*: $alleleSeq1-*/$alleleSeq2-*"}} -q {$ROW < 2} data/expected-multicompar_reannot-var_annotvar_annot2.sft
+} {test-annot1	test-annot2
+annot1: T/C	annot2: T/C
+annot1: A/C	annot2: A/C}
+
+test select {calculated column with multiple wildcards} {
+	exec cg select -f {a*-**="$alleleSeq*-**"} -q {$ROW < 2} data/expected-multicompar_reannot-var_annotvar_annot2.sft
+} {a1-annot1	a1-annot2	a2-annot1	a2-annot2
+T	T	C	C
+A	A	C	C}
+
 testsummarize

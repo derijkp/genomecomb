@@ -24,6 +24,12 @@ An asterix can be used to indicated several fields matching a pattern.
 A field starting with fieldname=formula will add a field with the given fieldname. The value in 
 the column will be calculated using the given formula. If the formula is complex (includes spaces), add
 braces around the entire field=formula.
+You can create multiple calculated fields in one go using wildcards (*,**,***,...), e.g.
+{{{freq-**=$count-**/double($total)}}} to calculate columns freq-sample1, freq-sample2, ... 
+for each sample for which a count-sample1, count-sample2, ... exists. Different patterns can be 
+combined using different number of asterisks. The example uses 2 asterisks. You can use 1, but have 
+to be careful; if the definition contains a multiplication (an asterisk), it would also be replaced 
+by the pattern.
 ; **-rf removefields**: write all, except given fields to result.
 ; **-s sortfields**: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
 if **sortfields** is "-", the default sort fields will be used (chromosome,begin,end,type,alt).

@@ -269,6 +269,53 @@ return [list $field]
 	return [list_remdup $result]
 }
 
+proc tsv_select_expandcalcfield {header fielddef} {
+	set pos [string first = $fielddef]
+	set calcfield [string trim [string range $fielddef 0 [expr {$pos-1}]]]
+	set code [string range $fielddef [expr {$pos+1}] end]
+	set fields [tsv_select_extractvars $code]
+	unset -nocomplain ha
+	foreach field $fields {
+		set wildvars [regexp -inline -all {\*+} $field]
+		if {![llength $wildvars]} continue
+		set poss [list_find -glob $header $field]
+		set hfields [list_sub $header $poss]
+		regsub -all {\*+} $field {(.+)} pattern
+		set pattern ^$pattern\$
+		unset -nocomplain a
+		foreach hfield $hfields {
+			set vals [lrange [regexp -inline $pattern $hfield] 1 end]
+			foreach var $wildvars val $vals {
+				lappend a($var) $val
+			}
+		}
+		foreach var [array names a] {
+			if {![info exists ha($var)]} {
+				set ha($var) [list_remdup $a($var)]
+			} else {
+				set ha($var) [list_common $ha($var) [list_remdup $a($var)]]
+			}
+		}
+	}
+	set wildvars [regexp -inline -all {\*+} $calcfield]
+	set vars [array names ha]
+	set notpresent [list_lremove $wildvars $vars]
+	if {[llength $notpresent]} {
+		error "some patterns ([join $notpresent ,]) in calcfield were not matched in code"
+	}
+	set result [list $fielddef]
+	foreach var [lsort -decreasing $wildvars] {
+		set newresult {}
+		foreach val $ha($var) {
+			foreach line $result {
+				lappend newresult [string_change $line [list $var $val]]
+			}
+		}
+		set result $newresult
+	}
+	return $result
+}
+
 proc tsv_select_expandfields {header qfields qpossVar} {
 	upvar $qpossVar qposs
 	upvar tsv_funcnum tsv_funcnum
@@ -285,13 +332,22 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 		set pos [string first = $field]
 		if {$pos != -1} {
 			set fieldname [string trim [string range $field 0 [expr {$pos-1}]]]
-			set fpos [lsearch $rfields $fieldname]
-			set code [string range $field [expr {$pos+1}] end]
-			if {$fpos == -1} {
-				lappend rfields $fieldname
-				lappend qposs [list code $code]
+			if {[string first * $fieldname] != -1} {
+				set list [tsv_select_expandcalcfield $header $field]
 			} else {
-				lset qposs $fpos [list code $code]
+				set list [list $field]
+			}
+			foreach field $list {
+				set pos [string first = $field]
+				set fieldname [string trim [string range $field 0 [expr {$pos-1}]]]
+				set fpos [lsearch $rfields $fieldname]
+				set code [string range $field [expr {$pos+1}] end]
+				if {$fpos == -1} {
+					lappend rfields $fieldname
+					lappend qposs [list code $code]
+				} else {
+					lset qposs $fpos [list code $code]
+				}
 			}
 		} elseif {[string first * $field] != -1} {
 			set efields [list_lremove [tsv_select_expandfield $header $field] $rfields]
@@ -366,6 +422,37 @@ proc tsv_select_tokenize_opsdata op {
 	list $type $op $prec
 }
 
+proc tsv_select_extractvars {code} {
+	set len [string length $code]
+	set prevpos 0
+	set pos 0
+	set result {}
+	while {$pos < $len} {
+		set pos [lindex [regexp -start $pos -inline -indices {\$} $code] 0 0]
+		if {$pos eq ""} break
+		incr pos
+		set prevpos $pos
+		set char [string index $code $pos]
+		if {$char eq "\{"} {
+			set pos [lindex [regexp -start $pos -inline -indices \} $code] 0 0]
+			lappend result [string range $code [expr {$prevpos+1}] [expr {$pos-1}]]
+			set prevpos [expr {$pos+1}]
+		} else {
+			while 1 {
+				set pos [lindex [regexp -start $pos -inline -indices {[^A-Za-z0-9._*]|$} $code] 0 0]
+				set char [string index $code $pos]
+				if {$char ne "-"} break
+				incr pos
+				set char [string index $code $pos]
+				if {![regexp {[A-Za-z.*]} $char]} break
+			}
+			lappend result [string range $code $prevpos [expr {$pos-1}]]
+			set prevpos $pos
+		}
+	}
+	return $result
+}
+
 proc tsv_select_tokenize {header code neededfieldsVar} {
 	global tsv_select_tokenize_opsa
 	upvar $neededfieldsVar neededfields
@@ -376,7 +463,6 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 	# subsequent code expects this quoting!
 	set code [string trim $code]
 	set newcode {}
-	set escape 0
 	set len [string length $code]
 	set prevpos 0
 	set pos 0
