@@ -58,7 +58,7 @@ proc cg_liftover {args} {
 	set f [gzopen $varfile]
 	set header [tsv_open $f comment]
 	set fl [open $resultfile.temp2]
-	set temp [tsv_open $fl]
+	#set temp [tsv_open $fl]
 	set o [open $resultfile.temp3 w]
 	lappend header beforeliftover
 	puts $o "# liftover from $varfile"
@@ -74,8 +74,23 @@ proc cg_liftover {args} {
 			if {$name eq $lname} break
 			if {[eof $f]} {error "$lname not found"}
 		}
-		set rline [lrange $lline 0 2]
-		lappend rline {*}[list_sub $line -exclude $poss] [join [lrange [split $lname -] 0 2] -]
+		#build new liftover line
+		set rline {}
+			#1)add fields step by step until counter > max of $poss
+		set max [lindex [lsort -integer $poss] end]
+		set exclude {}
+		set i 0
+		while {$i <= $max} { 
+			if {![inlist $poss $i]} {
+				lappend rline [lindex $line $i] 
+			} else {
+				lappend rline [lindex $lline [list_cor $poss $i]]
+			}
+			list_append exclude $i
+			set  i [expr $i + 1] 
+		} 
+			#2)add rest of old line
+		lappend rline {*}[list_sub $line -exclude $exclude] [join [lrange [split $lname -] 0 2] -]
 		puts $o [join $rline \t]
 	}
 	close $o
