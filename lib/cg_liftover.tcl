@@ -26,9 +26,10 @@ proc cg_liftover {args} {
 	set f [gzopen $varfile]
 	set header [tsv_open $f comment]
 	set line [split [gets $f] \t]
-	if {![regexp ^chr [lindex $line 0]]} {set addchr 1} else {set addchr 0}
-	gzclose $f
 	set poss [tsv_basicfields $header 3]
+	if {![regexp ^chr [lindex $line [lindex $poss 0]]]} {set addchr 1} else {set addchr 0}
+	gzclose $f
+	
 	# if {$poss ne "0 1 2 3 4 5"} {error "Rearranged header not supported yet, start header should be: chromosome begin end type ref alt"}
 	#
 	# make input file ($resultfile.temp) for liftover
