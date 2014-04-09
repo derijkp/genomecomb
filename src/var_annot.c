@@ -16,7 +16,7 @@
 void connectalt(
 	char *alt1, char *alt2, char *data
 ) {
-	char *alt1keep,*alt2keep,*alt2move,*datakeep;
+	char *alt1keep,*alt2keep,*alt2move,*datakeep,*prevdata;
 	int alt2num,found,i,pre = 0;
 	alt1keep = alt1;
 	while (1) {
@@ -40,20 +40,27 @@ void connectalt(
 			if ((alt1-alt1keep == alt2move-alt2keep) && (strncmp(alt1keep,alt2keep,alt1-alt1keep) == 0)) {
 				found = 1;
 				datakeep = data;
+				prevdata = data;
 				while (alt2num) {
 					if (*datakeep == '\0') break;
-					if (*datakeep == ',') alt2num--;
+					if (*datakeep == ',') {
+						alt2num--;
+						prevdata = datakeep;
+					}
 					datakeep++;
 				}
-				if (!alt2num) {
+				if (*datakeep == '\0') {
+					i = datakeep-prevdata;
+					datakeep = prevdata;
+				} else {
 					if (*datakeep == ',') datakeep++;
 					i = 0;
 					while (datakeep[i] != ',' && datakeep[i] != '\0') {i++;}
-					if (i == 0) {
-						fprintf(stdout,"-");
-					} else {
-						fprintf(stdout,"%.*s",i,datakeep);
-					}
+				}
+				if (i == 0) {
+					fprintf(stdout,"-");
+				} else {
+					fprintf(stdout,"%.*s",i,datakeep);
 				}
 				break;
 			}

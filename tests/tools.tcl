@@ -30,6 +30,16 @@ proc write_tab {file data} {
 	close $f
 }
 
+proc diff_tab {file data} {
+	set tempfile [tempfile]
+	set data [split [string trim $data] \n]
+	set f [open $tempfile w]
+	foreach line $data {
+		puts $f [join $line \t]
+	}
+	close $f
+}
+
 lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
 
 file mkdir tmp

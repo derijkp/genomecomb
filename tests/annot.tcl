@@ -110,6 +110,46 @@ test var_annot {basic multi} {
 test var_annot {different types on same pos} {
 	exec cg annotate data/vars2.tsv tmp/temp.tsv data/var_annot3.tsv 2> /dev/null
 	exec diff tmp/temp.tsv data/expected-vars2-var_annot3.tsv
+} {}
+
+test var_annot {multi alt, one value in vardb} {
+	file mkdir tmp
+	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
+	write_tab tmp/vars.sft {
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A G,C
+	}
+	write_tab tmp/var_annot.sft {
+		chrom start end type ref alt name freq
+		chr1 4001 4002 snp A G,C test2 0.2
+	}
+	file_write tmp/var_annot.sft.opt "fields\t{name freq alt}\n"
+	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/var_annot.sft 2> /dev/null
+	diff_tab tmp/temp.sft {
+		chromosome begin end type ref alt annot_name annot_freq annot_alt
+		chr1 4001 4002 snp A G,C test2 0.2 G,C
+	}
+} {}
+
+test var_annot {multi alt split, one value in vardb} {
+	file mkdir tmp
+	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
+	write_tab tmp/vars.sft {
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A C
+		chr1 4001 4002 snp A G
+	}
+	write_tab tmp/var_annot.sft {
+		chrom start end type ref alt name freq
+		chr1 4001 4002 snp A G,C test2 0.2
+	}
+	file_write tmp/var_annot.sft.opt "fields\t{name freq alt}\n"
+	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/var_annot.sft 2> /dev/null
+	diff_tab tmp/temp.sft {
+		chromosome begin end type ref alt annot_name annot_freq annot_alt
+		chr1 4001 4002 snp A C test2 0.2 C
+		chr1 4001 4002 snp A G test2 0.2 G
+	}
 } {} 
 
 test var_annot {sort error 1 in vars} {
