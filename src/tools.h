@@ -67,6 +67,7 @@ void DStringArrayDestroy(DStringArray *dstringarray);
 void check_numfieldserror(int numfields,int numfields2,DString *line,char *filename,unsigned int *linenum);
 int DStringGetTab(DString *line,	FILE *f1, int max, DStringArray *result, int setzero,unsigned int *numfields);
 void DStringPrintTab(FILE *f, DString *linePtr);
+int DStringSplitTab(DString *line, int max, DStringArray *result, int setzero,unsigned int *numfields);
 FILE *fopen64_or_die(char *filename,char *mode);
 int checksort(DString *prevchromosome1,int *prevstart1,int *prevend1,DString *prevtype1,DString *prevalt1,DString *chromosome1,int start1,int end1,DString *type1,DString *alt1,char *filename,int *nextpos);
 int checksortreg(DString *prevchromosome1,int *prevstart1,int *prevend1,DString *chromosome1,int start1,int end1,char *file);

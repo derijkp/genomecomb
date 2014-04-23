@@ -693,7 +693,7 @@ NODPRINT("maxtab=%d result->memsize=%d",maxtab,result->memsize)
 		if  (c == '\t') {
 			if (count < maxtab) {
 				result->data[count].size = size;
-				//fprintf(stdout,"count=%d size=%d\n",count, result->data[count].size);
+				/* fprintf(stdout,"count=%d size=%d\n",count, result->data[count].size); */
 				count++;
 			} else {
 				othertab++;
@@ -765,6 +765,77 @@ void DStringPrintTab(FILE *f, DString *linePtr) {
 	for(i = 0 ; i < linePtr->size ; i++) {
 		if (linePtr->string[i] == '\0') {fputc('\t',stderr);} else {fputc(linePtr->string[i],stderr);}
 	}
+}
+
+int DStringSplitTab(
+	DString *linePtr,	int maxtab, DStringArray *result, int setzero,unsigned int *numfields
+) {
+	register char *cur = linePtr->string;
+	register int c;
+	register unsigned int count=0,othertab=0;
+	ssize_t size = 0;
+NODPRINT("maxtab=%d result->memsize=%d",maxtab,result->memsize)
+	maxtab += 1;
+	if (maxtab > result->memsize) {
+		fprintf(stderr,"cannot DStringGetTab, array memsize < maxtab+1\n");
+		exit(1);
+	}
+	result->data[count].string = cur;
+	result->data[count].memsize = -1;
+	/* fill current pos (size) in the array for now, convert to array element sizes later */
+	while (1) {
+		c = *cur;
+		if  (c == '\t') {
+			if (count < maxtab) {
+				result->data[count].size = size;
+				/* fprintf(stdout,"count=%d size=%d\n",count, result->data[count].size); */
+				count++;
+			} else {
+				othertab++;
+			}
+		} else if (size >= linePtr->size) {
+			if (count < maxtab) {
+				result->data[count].size = size;
+			}
+			break;
+		}
+		cur++;
+		++size;
+	}
+	if (numfields != NULL) {
+		*numfields = count+othertab+1;
+	}
+	if (count < maxtab) {
+		count++;
+		result->size = count;
+	} else {
+		result->size = maxtab;
+	}
+	/* fill rest of tab separated elements in array */
+	while (count <= maxtab) {
+		result->data[count++].size = size;
+	}
+	/* make array */
+	{
+	register int prevsize;
+	count = 0;
+	prevsize = 0;
+	while (count <= maxtab) {
+		int pos = result->data[count].size;
+		result->data[count].size = result->data[count].size-prevsize;
+		result->data[count].string = linePtr->string + prevsize;
+		if (setzero) {
+			result->data[count].string[result->data[count].size] = '\0';
+		}
+		result->data[count].memsize = -1;
+NODPRINT("final count=%d size=%d %s",count, result->data[count].size,result->data[count].string)
+		prevsize = pos+1;
+		count++;
+	}
+	}
+	NODPRINT("\n==== result ====\n%d %s",size,linePtr->string);
+	NODPRINT("==================== getline finished ====================");
+	return 0;
 }
 
 int parse_pos(char *arg, int **rresult, int *rnum) {

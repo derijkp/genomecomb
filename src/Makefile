@@ -11,7 +11,8 @@ all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../b
      ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby \
      ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile ../bin$(ARCH)/bcol_indexfile_all \
      ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_annot ../bin$(ARCH)/vcf2tsv ../bin$(ARCH)/reg_select \
-     ../bin$(ARCH)/check_sort ../bin$(ARCH)/multi_merge ../bin$(ARCH)/multi_join
+     ../bin$(ARCH)/check_sort ../bin$(ARCH)/multi_merge ../bin$(ARCH)/multi_join \
+     ../bin$(ARCH)/sam_clipamplicons
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -84,3 +85,6 @@ clean:
 
 ../bin$(ARCH)/multi_join: multi_join.c $(TOOLS) $(TOOLS_VAR)
 	gcc multi_join.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multi_join
+
+../bin$(ARCH)/sam_clipamplicons: sam_clipamplicons.c $(TOOLS)
+	gcc sam_clipamplicons.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam_clipamplicons
