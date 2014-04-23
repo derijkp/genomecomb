@@ -214,7 +214,7 @@ proc cg_regcollapse {args} {
 	}
 	set args [lrange $args $pos end]
 	if {([llength $args] < 1)} {
-		errorformat reg_collapse
+		errorformat regcollapse
 		exit 1
 	}
 	if {$resultfile ne "stdout"} {

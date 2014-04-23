@@ -1,0 +1,35 @@
+= Regcollapse =
+
+== Format ==
+cg regcollapse ?options? region_file1 ...
+
+== Summary ==
+list regions collapse between region_file1 and region_file2
+
+== Description ==
+Collapses overlapping regions in one (sorted) or more region files,
+resulting in a region file (written to stdout) with non-overlapping regions covering
+the same total region as the source file(s). Overlaps between regions are cut at the overlap.
+Non overlapping regions keep the annotation (columns other than the ones indicated the region)
+of the original. Overlap regions get the annotation of the highest scoring region if a score 
+column is available. If not, overlap regions are annotated with a (comma separated) list of
+the distinct values in the original annotations of the overlapping regions.
+
+makes a new file with reg_ prepended to the original filename
+Removal of overlap can be done by taking only the highest
+scoring region (this is always done when score is available)
+or taking all regions in 1 line (if score is not available)
+for a field with then name num all values will be added
+use the -o option to collapse multiple files into one new file (the filename given with the option -o)
+
+== Options ==
+; **-o filename**: write result to filename instead of stdout
+; **-s scorefield**: name of the column to use as scores.
+; **-n numfield**: name of a numfield: overlap regions will get the sum of the original values in this field as annotation
+
+== Arguments ==
+; **region_file1**: region file
+
+== Category ==
+Regions
+
