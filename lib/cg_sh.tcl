@@ -35,6 +35,19 @@ proc cg_sh {args} {
 		proc el::echo {msg} {return $msg}
 		set ::el::prompt1 {el::echo "cg% "}
 		set ::el::prompt2 {el::echo ""}
+		# change so tab just gives a tab character, ^O will still do completion
+		auto_load el::matches
+		rename el::matches el::matches.ori
+		proc el::matches {string type} {
+			if {$type == 1} {
+				# tab returns \t
+				set len [string length $string]
+				return [list $len $len [list \t {} {}]]
+			} else {
+				# do expansion on ^O
+				el::matches.ori $string $type
+			}
+		}
 		uplevel #0 interactive
 	} elseif {[lsearch $args nox] == -1 && ![catch {package require Tclx}]} {
 		signal -restart error SIGINT

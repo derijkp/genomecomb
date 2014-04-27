@@ -1,0 +1,22 @@
+= sh =
+
+== Format ==
+cg sh ?options?
+
+== Summary ==
+runs a shell in which genomecomb commands can be input and executed interactively.
+
+== Description ==
+cg sh makes it possible to test out tcl code interactively, with all genomecomb commands/extensions available.
+Commands can be entered and are imediately executed.
+By default, the editline library is used (through eltclsh) to allow the use pf arrow keys to go back in history,
+catch signals (Control-C) and complete commands/variables/files. Completion will not happen by using the
+tab key (which will just enter a tab character) but by usin Control-o.
+
+== Options ==
+supports job options:
+; **nox**: Do not use tclx (or editline) for the shell. You will not be able to use arrow keys, etc.
+; **console**: Use tcl console for input (and output)
+
+== Category ==
+Dev
