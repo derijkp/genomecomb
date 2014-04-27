@@ -1,0 +1,18 @@
+= sh =
+
+== Format ==
+cg source scriptfile
+
+== Summary ==
+runs a script (Tcl) with all commands/extensions from genomecomb available.
+
+== Description ==
+If you start a genomecomb script with the following lines
+{{{
+# the next line restarts using tclsh \
+exec cg source "$0" "$@"
+}}}
+and make it executable to make it can be run directly.
+
+== Category ==
+Dev
