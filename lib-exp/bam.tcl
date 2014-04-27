@@ -45,7 +45,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 	putslog "Making and sorting sam per chromosome for $name"
 	foreach chr $chrs {
 		file_write $scratchbase-chr$chr.sam [join $header \n]\n
-		exec gnusort8 -T $scratchdir -t \t -N -s -k3 -k4 $scratchbase-$chr >> $scratchbase-chr$chr.sam
+		exec gnusort8 -T $scratchdir -t \t -N -s -k3,3 -k4,4 $scratchbase-$chr >> $scratchbase-chr$chr.sam
 		file delete $scratchbase-$chr
 	}
 	putslog "Making bams for $name"
