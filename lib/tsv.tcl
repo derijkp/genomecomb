@@ -14,6 +14,27 @@ proc tsv_open {f {keepheaderVar {}}} {
 	fconfigure $f -buffering line
 	set split 1
 	set line [gets $f]
+	if {[regexp {^@HD[\t]VN} $line]} {
+		# sam file
+		while {![eof $f]} {
+			set fchar [string index $line 0]
+			if {$fchar ne "@"} {
+				break
+			}
+			lappend keepheader \#$line
+			set pos [tell $f]
+			set line [gets $f]
+		}
+		set keepheader [join $keepheader \n]\n
+		seek $f $pos start
+		set len [llength [split $line \t]]
+		set header {qname flag rname pos mapq cigar rnext pnext tlen seq qual}
+		set size [expr {$len-11}]
+		for {set i 1} {$i <= $size} {incr i} {
+			lappend header opt$i
+		}
+		return $header
+	}
 	set fchar [string index $line 0]
 	set fchar2 [string index $line 1]
 	if {[regexp {##fileformat=VCF} $line]} {
