@@ -21,3 +21,4 @@ source queries.tcl
 source val.tcl
 source varia.tcl
 source genome_seq.tcl
+source clip.tcl

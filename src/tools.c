@@ -1003,7 +1003,12 @@ int checksortreg(DString *prevchromosome,int *prevstart,int *prevend,DString *ch
  	comp = DStringLocCompare(chromosome,prevchromosome);
 	if (comp < 0 || (comp == 0 && (start < *prevstart || (start == *prevstart && end < *prevend)))) {
 		fprintf(stderr,"File (%s) is not correctly sorted (sort correctly using \"cg select -s -\")\n",file);
-		fprintf(stderr,"%s:%d-%d came before %s:%d-%d\n",prevchromosome->string,*prevstart,*prevend, chromosome->string,start,end);
+		fprintf(stderr,"%*.*s:%d-%d came before %*.*s:%d-%d\n",
+			prevchromosome->size,prevchromosome->size,prevchromosome->string,
+			*prevstart,*prevend,
+			chromosome->size,chromosome->size,chromosome->string,
+			start,end
+		);
 		exit(1);
 	}
 	*prevstart = start; *prevend = end;

@@ -11,27 +11,156 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include "tools.h"
 #include "debug.h"
 
+inline int min ( int a, int b ) { return a < b ? a : b; }
+
+inline int max ( int a, int b ) { return a > b ? a : b; }
+
+
+/*! @abstract the read is paired in sequencing, no matter whether it is mapped in a pair */
+#define BAM_FPAIRED        1
+/*! @abstract the read is mapped in a proper pair */
+#define BAM_FPROPER_PAIR   2
+/*! @abstract the read itself is unmapped; conflictive with BAM_FPROPER_PAIR */
+#define BAM_FUNMAP         4
+/*! @abstract the mate is unmapped */
+#define BAM_FMUNMAP        8
+/*! @abstract the read is mapped to the reverse strand */
+#define BAM_FREVERSE      16
+/*! @abstract the mate is mapped to the reverse strand */
+#define BAM_FMREVERSE     32
+/*! @abstract this is read1 */
+#define BAM_FREAD1        64
+/*! @abstract this is read2 */
+#define BAM_FREAD2       128
+/*! @abstract not primary alignment */
+#define BAM_FSECONDARY   256
+/*! @abstract QC failure */
+#define BAM_FQCFAIL      512
+/*! @abstract optical or PCR duplicate */
+#define BAM_FDUP        1024
+
+typedef struct Amplicon {
+	DString *chr2;
+	int start2;
+	int end2;
+	int outerstart2;
+	int outerend2;
+} Amplicon;
+
+typedef struct Cigar {
+	int size;
+	int memsize;
+	int *num;
+	char *action;
+} Cigar;
+
+int parse_cigar(Cigar *cigar,char *string) {
+	if (cigar->memsize == 0) {
+		cigar->size = 0;
+		cigar->memsize = 5;
+		cigar->num = malloc(cigar->memsize*sizeof(int));
+		cigar->action = malloc(cigar->memsize*sizeof(char));
+	}
+	cigar->size = 0;
+	while (*string && *string != '\t') {
+		if (cigar->size >= cigar->memsize) {
+			cigar->memsize += 5;
+			cigar->num = realloc(cigar->num,cigar->memsize*sizeof(int));
+			cigar->action = realloc(cigar->action,cigar->memsize*sizeof(char));
+		}
+		cigar->num[cigar->size] = (int)strtol(string,&string,10);
+		cigar->action[cigar->size++] = *string++;
+	}
+	return(cigar->size);
+}
+
+int cigar_refend(Cigar *cigar,int begin) {
+	int count = cigar->size;
+	int *num = cigar->num;
+	char *action = cigar->action;
+	while(count--) {
+		if (*action == 'M' || *action == 'D' || *action == 'N' || *action == '=' || *action == 'X') {
+			begin += *num;
+		}
+		action++;
+		num++;
+	}
+	return begin;
+}
+
+int cigar_ref2seq(Cigar *cigar,int begin, int pos) {
+	int count = cigar->size;
+	int *num = cigar->num, cur = 0, prev = 0, prevbegin = begin;
+	char *action = cigar->action;
+	if (begin > pos) {
+		fprintf(stderr,"error in cigar_ref2seq: begin > pos");
+		exit(EXIT_FAILURE);
+	}
+	while(count--) {
+		if (*action == 'M' || *action == '=' || *action == 'X') {
+			begin += *num;
+			cur += *num;
+		} else if (*action == 'D' || *action == 'N') {
+			begin += *num;
+		} else if (*action == 'I' || *action == 'S') {
+			cur += *num;
+		}
+		if (begin > pos) break;
+		prevbegin = begin;
+		prev = cur;
+		action++;
+		num++;
+	}
+	if (*action == 'M' || *action == '=' || *action == 'X') {
+		return prev+(pos-prevbegin);
+	} else {
+		return prev;
+	}
+}
+
+int amp_clip_read(DString *seq,DString *qual,int from, int to) {
+	char *stringseq = seq->string+from;
+	char *stringqual = qual->string+from;
+	int count;
+	if (from >= seq->size) {return 0;}
+	if (to > seq->size) {to = seq->size;}
+	count = (seq->size<to) ? seq->size : to - from;
+	while (count--) {
+		*stringseq++ = 'N';
+		*stringqual++ = '!';
+	}
+	return 1;
+}
+
 int main(int argc, char *argv[]) {
 	FILE *f1=stdin,*f2;
+	Amplicon amplicon[4];
+	int close,maxclose,closepos;
+	Cigar cigar;
 	DStringArray *result1=NULL,*result2=NULL,*resultkeep=NULL,*resulttemp=NULL;
-	DString *line1 = NULL,*line2 = NULL,*linekeep = NULL,*linetemp = NULL,*empty=NULL,*cigar=NULL,*qual=NULL,*seq=NULL;
-	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
-	char *cur;
+	DString *line1 = NULL,*line2 = NULL,*linekeep = NULL,*linetemp = NULL,*empty=NULL,*qual=NULL,*seq=NULL;
+	DString *chromosome1 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
 	ssize_t read;
-	unsigned int curpos=0;
-	int comp,chr2pos,start2pos,end2pos,outerstart2pos,outerend2pos,max2;
+	unsigned int curpos=0, flag;
+	int comp,chr2pos,start2pos,end2pos,outerstart2pos,outerend2pos,max2,i;
 	unsigned int numfields2,numfields,pos1,pos2;
-	int endkeep=-1,count;
-	int start1,end1,start2,end2,outerstart2,outerend2;
+	int count;
+	int start1,end1,amppos=0,ampnum=0,ampcur=0,found;
 	int prevstart1 = -1, prevend1 = -1, prevstart2 = -1,prevend2 = -1;
-	int error2;
+	int error2,reverse;
 	if ((argc != 7)) {
 		fprintf(stderr,"Format is: sam_clipamplicons ampliconsfile chrpos startpos endpos outerstartpos outerendpos");
 		exit(EXIT_FAILURE);
 	}
+	for (i = 0 ; i < 4 ; i++) {
+		amplicon[i].chr2 = DStringNew();
+	}
+	cigar.size = 0;
+	cigar.memsize = 0;
 	f2 = fopen64_or_die(argv[1],"r");
 	chr2pos = atoi(argv[2]);
 	start2pos = atoi(argv[3]);
@@ -58,95 +187,138 @@ int main(int argc, char *argv[]) {
 	error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields);	pos2++;
 	if (!error2) {
 		check_numfieldserror(numfields,numfields2,line2,argv[1],&pos2);
-		chromosome2 = result2->data+chr2pos;
-		sscanf(result2->data[start2pos].string,"%d",&start2);
-		sscanf(result2->data[end2pos].string,"%d",&end2);
-		sscanf(result2->data[start2pos].string,"%d",&outerstart2);
-		sscanf(result2->data[outerend2pos].string,"%d",&outerend2);
+		DStringCopy(amplicon[0].chr2,result2->data+chr2pos);
+		sscanf(result2->data[start2pos].string,"%d",&(amplicon[0].start2));
+		sscanf(result2->data[end2pos].string,"%d",&(amplicon[0].end2));
+		sscanf(result2->data[outerstart2pos].string,"%d",&(amplicon[0].outerstart2));
+		sscanf(result2->data[outerend2pos].string,"%d",&(amplicon[0].outerend2));
+		ampnum = 1;
 	}
 	DStringSplitTab(line1,10,result1,0,&numfields);
 	while (1) {
 		pos1++;
 		/* check_numfieldserror(numfields,15,line1,"stdin",&pos1); */
+		sscanf(result1->data[1].string,"%d",&(flag));
 		chromosome1 = result1->data+2;
-		sscanf(result1->data[3].string,"%d",&start1);
-		end1 = start1;
-		cigar = result1->data+5;
-		seq = result1->data+9;
-		qual = result1->data+10;
 		if (chromosome1->string[0] == '*') {
+			/* skip unmapped reads */
 			NODPRINT("unmapped")
 			fprintf(stdout,"%s\n",line1->string); 
-		} else {
-			checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,end1,"stdin");
-			comp = DStringLocCompare(chromosome2, chromosome1);
-			while (!error2 && ((comp < 0) || ((comp == 0) && (start1 < outerstart2)))) {
-				/* keep data of previous */
-				/* to avoid allocating new memory everytime, reuse linekeep and associated data */
-				chromosomekeep = chromosome2; endkeep = end2;
-				linetemp = linekeep;
-				linekeep = line2;
-				line2 = linetemp;
-				resulttemp = resultkeep;
-				resultkeep = result2;
-				result2 = resulttemp;
-				/* get new line */
-				error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields); pos2++;
-				if (error2)  {
-					chromosome2 = NULL;
-					comp = -1;
-					break;
-				} else {
-					check_numfieldserror(numfields,numfields2,line2,argv[1],&pos2);
-				}
-				chromosome2 = result2->data+chr2pos;
-				sscanf(result2->data[start2pos].string,"%d",&start2);
-				sscanf(result2->data[end2pos].string,"%d",&end2);
-				sscanf(result2->data[start2pos].string,"%d",&outerstart2);
-				sscanf(result2->data[outerend2pos].string,"%d",&outerend2);
-				
-				comp = DStringLocCompare(chromosome2, chromosomekeep);
-				if (comp < 0 || (comp == 0 && (start2 < prevstart2 || (start2 == prevstart2 && end2 < prevend2)))) {
-					fprintf(stderr,"Cannot annotate because the database file is not correctly sorted (sort correctly using \"cg select -s -\")");
-					exit(1);
-				}
-				prevstart2 = start2; prevend2 = end2;
-				comp = DStringLocCompare(chromosome2, chromosome1);
-			}
-			if (comp == 0) {
-				NODPRINT("overlap")
-			}
-			cur = seq->string;
-			if (*cur != '*') {
-				count = 30;
-				while (count--) {*cur++ = 'N';}
-			}
-			cur = qual->string;
-			if (*cur != '*') {
-				count = 30;
-				while (count--) {*cur++ = '!';}
-			}
-			fprintf(stdout,"%s\n",line1->string);
-/*
-			if (error2 || (comp > 0) || ((comp == 0) && (end1 <= start2))) {
-				NODPRINT("no overlap")
-				fprintf(stdout,"%s\n",line1->string);
-			} else {
-				int i
-				NODPRINT("overlap")
-				fprintf(stdout,"%s\n",line1->string);
-				fprintf(stdout,"%*.*s\t%*.*s\t%*.*s\t%d\t%*.*s\t%*.*s\t%*.*s\n",
-					result1->data[0].size,result1->data[0].size,result1->data[0].string,
-					result1->data[1].size,result1->data[1].size,result1->data[1].string,
-					chromosome1->size,chromosome1->size,chromosome1->string,
-					start1,
-					result1->data[4].size,result1->data[4].size,result1->data[4].string,
-					cigar->size,cigar->size,cigar->string,
-					result1->data[6].size,result1->data[6].size,result1->data[6].string
-				);
-			}
-*/
+			if (DStringGetTab(line1,f1,10,result1,0,&numfields)) break;
+			continue;
 		}
+		sscanf(result1->data[3].string,"%d",&start1);
+		checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,start1,"input sam file");
+		parse_cigar(&cigar,result1->data[5].string);
+		end1 = cigar_refend(&cigar,start1);
+		seq = result1->data+9;
+		qual = result1->data+10;
+		reverse = flag & BAM_FREVERSE;
+		ampcur = amppos+ampnum-1; if (ampcur >= 4) {ampcur = 0;}
+		while (!error2) {
+			comp = DStringLocCompare(amplicon[ampcur].chr2, chromosome1);
+			if (comp > 0) break;
+			if (reverse) {
+				if (end1 < amplicon[ampcur].outerend2) break;
+			} else {
+				if (start1 < amplicon[ampcur].start2) break;
+			}
+			/* add new ones to end */
+			ampcur++; if (ampcur >= 4) {ampcur = 0;}
+			/* add next amplicon to stack */
+			/* keep data of previous */
+			/* to avoid allocating new memory everytime, reuse linekeep and associated data */
+			chromosomekeep = amplicon[ampcur].chr2;
+			linetemp = linekeep;
+			linekeep = line2;
+			line2 = linetemp;
+			resulttemp = resultkeep;
+			resultkeep = result2;
+			result2 = resulttemp;
+			/* get new line */
+			error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields); pos2++;
+			if (error2)  {
+				comp = -1;
+				break;
+			} else {
+				check_numfieldserror(numfields,numfields2,line2,argv[1],&pos2);
+			}
+			DStringCopy(amplicon[ampcur].chr2,result2->data+chr2pos);
+			sscanf(result2->data[start2pos].string,"%d",&(amplicon[ampcur].start2));
+			sscanf(result2->data[end2pos].string,"%d",&(amplicon[ampcur].end2));
+			sscanf(result2->data[outerstart2pos].string,"%d",&(amplicon[ampcur].outerstart2));
+			sscanf(result2->data[outerend2pos].string,"%d",&(amplicon[ampcur].outerend2));
+			if (ampnum < 4) {ampnum++;} else {amppos++;}
+			
+			comp = DStringLocCompare(amplicon[ampcur].chr2, chromosomekeep);
+			if (comp < 0 || (comp == 0 && (amplicon[ampcur].start2 < prevstart2 || (amplicon[ampcur].start2 == prevstart2 && amplicon[ampcur].end2 < prevend2)))) {
+				fprintf(stderr,"Cannot annotate because the amplicon file is not correctly sorted (sort correctly using \"cg select -s -\")");
+				exit(1);
+			}
+			prevstart2 = amplicon[ampcur].start2; prevend2 = amplicon[ampcur].end2;
+		}
+		while (ampnum) {
+			comp = DStringLocCompare(amplicon[amppos].chr2, chromosome1);
+			if (comp > 0) break;
+			if (comp == 0 && amplicon[amppos].outerend2 >= start1) break;
+			amppos++; if (amppos >= 4) {amppos = 0;} ampnum--;
+		}
+		ampcur = amppos;
+		count = ampnum;
+		if (reverse) {
+			found = 0;
+			close = -1; maxclose = LONG_MAX; closepos = -1;
+			while (count--) {
+				comp = DStringLocCompare(amplicon[ampcur].chr2, chromosome1);
+				if (comp == 0) {
+					if (end1 > amplicon[ampcur].end2 && end1 <= amplicon[ampcur].outerend2) {
+						found=1;
+						break;
+					}
+					close = abs(amplicon[ampcur].outerend2 - end1);
+					if (close < maxclose) {maxclose = close; closepos = ampcur;}
+				}
+				ampcur++; if (ampcur >= 4) {ampcur = 0;}
+			}
+			if (!found && closepos != -1) {
+				found=1; ampcur = closepos;
+			}
+			if (found) {
+				if (amplicon[ampcur].start2 > start1) {
+					amp_clip_read(seq,qual,0,cigar_ref2seq(&cigar,start1,amplicon[ampcur].start2));
+				}
+				if (amplicon[ampcur].end2 > start1 && amplicon[ampcur].end2 < end1) {
+					amp_clip_read(seq,qual,cigar_ref2seq(&cigar,start1,amplicon[ampcur].end2),seq->size);
+				}
+			}
+		} else {
+			found = 0;
+			close = -1; maxclose = LONG_MAX; closepos = -1;
+			while (count--) {
+				comp = DStringLocCompare(amplicon[ampcur].chr2, chromosome1);
+				if (comp == 0) {
+					if (start1 < amplicon[ampcur].start2 && start1 >= amplicon[ampcur].outerstart2) {
+						found = 1;
+						break;
+					}
+					close = abs(amplicon[ampcur].outerstart2-start1);
+					if (close < maxclose) {maxclose = close; closepos = ampcur;}
+				}
+				ampcur++; if (ampcur >= 4) {ampcur = 0;}
+			}
+			if (!found && closepos != -1) {
+				found=1; ampcur = closepos;
+			}
+			if (found) {
+				if (amplicon[ampcur].start2 > start1) {
+					amp_clip_read(seq,qual,0,cigar_ref2seq(&cigar,start1,amplicon[ampcur].start2));
+				}
+				if (amplicon[ampcur].end2 > start1 && end1 >= amplicon[ampcur].end2) {
+					amp_clip_read(seq,qual,cigar_ref2seq(&cigar,start1,amplicon[ampcur].end2),seq->size);
+				}
+			}
+		}
+		fprintf(stdout,"%s\n",line1->string);
 		if (DStringGetTab(line1,f1,10,result1,0,&numfields)) break;
 	}
 	fclose(f1);
