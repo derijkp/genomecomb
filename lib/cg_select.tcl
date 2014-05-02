@@ -316,6 +316,24 @@ proc tsv_select_expandcalcfield {header fielddef} {
 	return $result
 }
 
+proc expandfields {header fields} {
+	set rfields {}
+	foreach field $fields {
+		if {[string first * $field] != -1} {
+			set qposs [list_find -glob $header $field]
+			lappend rfields {*}[list_sub $header $qposs]
+		} else {
+			set pos [lsearch $header $field]
+			if {$pos == -1} {
+				error "field \"$field\" not present"
+			}
+			lappend rfields $field
+		}
+	}
+	set rfields [list_remdup $rfields]
+	return $rfields
+}
+
 proc tsv_select_expandfields {header qfields qpossVar} {
 	upvar $qpossVar qposs
 	upvar tsv_funcnum tsv_funcnum

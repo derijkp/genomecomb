@@ -1,0 +1,28 @@
+= wide =
+
+== Format ==
+cg wide ?options? ?infile? ?outfile?
+
+== Summary ==
+Converts data in tsv format from long format (data for each sample in separate lines) to
+wide format (data for each sample in separate columns)
+
+== Description ==
+Genomecomb usually expects data in tsv files in wide format, where some fields are common/general
+for all samples (e.g. chromosome, begin, end, .. for variants) and some fields have specific
+values for each sample (e.g. quality, coverage, ...). In wide format these columns are named by
+adding "-samplename" to the fieldname. In the long format, sample specific data is on separate
+lines (the common fields are repeated in each line). 
+"cg wide" converts from long to wide format.
+"[[cg_long]]" can be used for the reverse.
+
+== Arguments ==
+; **infile**: file to be converted, if not given, uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Options ==
+; **-f commonfields** (--fields): set which fields will be used as common fields. Wildcards may be used in defining the fielnames. (default is the variant fields chromosome, begin, ... present in the file).
+; **-s samplefields** (--samplefields): set which fields will be used as fields to define the sample. Wildcards may be used in defining the fielnames. (default is all of sample,sample1,sample2,sample3,mapping,varcall present in the file).
+
+== Category ==
+Conversion
