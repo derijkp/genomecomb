@@ -53,6 +53,10 @@ proc tcl::mathfunc::lindex {list pos} {
 	::lindex [split $list ";, "] $pos
 }
 
+proc tcl::mathfunc::lsearch {list item args} {
+	::lsearch {*}$args [split $list ";, "] $item
+}
+
 proc tcl::mathfunc::lrange {list start end} {
 	::join [::lrange [split $list ";, "] $start $end] ,
 }
