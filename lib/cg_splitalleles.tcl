@@ -40,9 +40,7 @@ proc cg_splitalleles {args} {
 	foreach sample $samples {
 		lappend sposs {*}[list_cor $header [list alleleSeq1-$sample alleleSeq2-$sample sequenced-$sample]]
 	}
-	if {[string length $comment]} {
-		puts $o $comment
-	}
+	puts -nonewline $o $comment
 	puts $o [join $header \t]
 	while {![eof $f]} {
 		set line [split [gets $f] \t]

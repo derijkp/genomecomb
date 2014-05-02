@@ -21,19 +21,21 @@ proc test_cleantmp {} {
 	}
 }
 
-proc write_tab {file data} {
+proc write_tab {file data {comment {}}} {
 	set data [split [string trim $data] \n]
 	set f [open $file w]
+	if {$comment ne ""} {puts $f $comment}
 	foreach line $data {
 		puts $f [join $line \t]
 	}
 	close $f
 }
 
-proc diff_tab {file data} {
+proc diff_tab {file data {comment {}}} {
 	set tempfile [tempfile]
 	set data [split [string trim $data] \n]
 	set f [open $tempfile w]
+	if {$comment ne ""} {puts $f $comment}
 	foreach line $data {
 		puts $f [join $line \t]
 	}

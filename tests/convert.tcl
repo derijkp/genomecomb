@@ -230,6 +230,22 @@ test splitalleles {splitalleles2} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 
+test splitalleles {splitalleles comment} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4000 4001 snp G A 0.5
+	 	chr1 4001 4002 snp A G,C 0.5,0.1
+	} {#comment line}
+	exec cg splitalleles tmp/test.tsv > tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4000 4001 snp G A 0.5
+	 	chr1 4001 4002 snp A C 0.1
+	 	chr1 4001 4002 snp A G 0.5
+	} {#comment line}
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
 test collapsealleles {collapsealleles} {
 	write_tab tmp/test.tsv {
 		chromosome begin end type ref alt freq-sample
@@ -267,6 +283,85 @@ test collapsealleles {collapsealleles2} {
 	 	chr1 5000 5001 snp G A 0.5
 	}
 	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test format {long} {
+	write_tab tmp/wide.tsv {
+		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleseq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleseq2-sample2 zyg-sample2
+	 	chr1 4200 4200 snp G A 0.5 v G A t 0.8 v A A m
+	 	chr1 4200 4200 ins {} A 0.8 v {} A t 0.1 r {} {} r
+	 	chr1 5000 5001 snp G T 0.9 v T T m 0.0 v G G r
+	}
+	exec cg long tmp/wide.tsv tmp/long.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt sample freq sequenced alleleSeq1 alleleseq2 zyg
+	 	chr1 sample1 4200 4200 snp G A 0.5 v G A t
+	 	chr1 sample2 4200 4200 snp G A 0.8 v A A m
+	 	chr1 4200 4200 ins {} A 0.8 v {} A t
+	 	chr1 4200 4200 ins {} A 0.1 r {} {} r
+	 	chr1 5000 5001 snp G T 0.9 v T T m
+	 	chr1 5000 5001 snp G T 0.0 v G G r
+	}
+	exec diff tmp/long.tsv tmp/expected.tsv
+} {}
+
+test format {wide} {
+	write_tab tmp/long.tsv {
+		chromosome sample begin end type ref alt freq sequenced alleleSeq1 alleleseq2 zyg
+	 	chr1 sample1 4200 4200 snp G A 0.5 v G A t
+	 	chr1 sample2 4200 4200 snp G A 0.8 v A A m
+	 	chr1 sample1 4200 4200 ins {} A 0.8 v {} A t
+	 	chr1 sample2 4200 4200 ins {} A 0.1 r {} {} r
+	 	chr1 sample1 5000 5001 snp G T 0.9 v T T m
+	 	chr1 sample2 5000 5001 snp G T 0.0 v G G r
+	}
+	exec cg wide tmp/long.tsv tmp/wide.tsv 2>/dev/null
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleseq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleseq2-sample2 zyg-sample2
+	 	chr1 4200 4200 snp G A 0.5 v G A t 0.8 v A A m
+	 	chr1 4200 4200 ins {} A 0.8 v {} A t 0.1 r {} {} r
+	 	chr1 5000 5001 snp G T 0.9 v T T m 0.0 v G G r
+	} {#type	wide tsv
+#samplefields	sample}
+	exec diff tmp/wide.tsv tmp/expected.tsv
+} {}
+
+test format {wide other} {
+	write_tab tmp/long.tsv {
+		id sample samplea data
+	 	1 s1 sa1 i1d11
+	 	1 s1 sa2 i1d12
+	 	1 s2 sa1 i1d21
+	 	2 s1 sa1 i2d11
+	 	2 s2 sa1 i2d21
+	}
+	exec cg wide -s {sample samplea} -f id tmp/long.tsv tmp/wide.tsv 2>/dev/null
+	write_tab tmp/expected.tsv {
+		id data-s1-sa1 data-s1-sa2 data-s2-sa1
+	 	1 i1d11 i1d12 i1d21
+	 	2 i2d11 ? i2d21 
+	} {#type	wide tsv
+#samplefields	sample samplea}
+	exec diff tmp/wide.tsv tmp/expected.tsv
+} {}
+
+test format {wide other unsorted} {
+	write_tab tmp/long.tsv {
+		id sample samplea data
+	 	1 s1 sa1 i1d11
+	 	2 s1 sa1 i2d11
+	 	1 s1 sa2 i1d12
+	 	2 s2 sa1 i2d21
+	 	1 s2 sa1 i1d21
+	}
+	exec cg wide -s {sample samplea} -f id tmp/long.tsv tmp/wide.tsv 2>/dev/null
+	write_tab tmp/expected.tsv {
+		id data-s1-sa1 data-s1-sa2 data-s2-sa1
+	 	1 i1d11 i1d12 i1d21
+	 	2 i2d11 ? i2d21 
+	} {#type	wide tsv
+#samplefields	sample samplea}
+	exec diff tmp/wide.tsv tmp/expected.tsv
 } {}
 
 testsummarize

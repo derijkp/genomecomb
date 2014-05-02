@@ -22,7 +22,7 @@ proc cg_sft2gff {args} {
 	lappend poss [lindex [list_cor $header {score}] 0]
 	lappend poss [lindex [list_cor $header {strand dir}] 0]
 	lappend poss [lindex [list_cor $header {phase}] 0]
-	# puts $o $comment
+	# puts -nonewline $o $comment
 	# puts $o "# converted to gff from $tsvfile"
 	set transmap [list \; %3B = %3D % %25 & %26 , %2C \t %09 \n %0A]
 	while {![eof $f]} {
