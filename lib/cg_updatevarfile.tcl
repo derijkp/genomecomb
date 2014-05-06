@@ -14,13 +14,24 @@ package require BioTcl
 proc cg_updatevarfile {args} {
 	set force 0
 	set complement 0
-	if {[lindex $args 0] eq "-c"} {
-		set complement 1
-		set args [lrange $args 1 end]
-	} elseif {[lindex $args 0] eq "-f"} {
-		set force 1
-		set args [lrange $args 1 end]
+	set pos 0
+	while 1 {
+		set key [lindex $args $pos]
+		switch -- $key {
+			-c {
+				set complement 1
+			}
+			-f {
+				set force 1
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos
 	}
+	set args [lrange $args $pos end]
 	if {([llength $args] != 3)} {
 		errorformat updatevarfile
 		exit 1
@@ -28,9 +39,9 @@ proc cg_updatevarfile {args} {
 	foreach {file resultfile dbdir} $args break
 	if {[file exists $resultfile]} {error "$resultfile exists"}
 	catch {close $o} ; catch	{close $f}
-	set f [open $file]
+	set f [gzopen $file]
 	set o [open $resultfile.temp w]
-	set header [split [gets $f] \t]
+	set header [tsv_open $f comment]
 	set nheader [list_concat {chromosome begin end type ref alt} [list_remove $header chromosome begin end type ref alt]]
 	set fposs [tsv_basicfields $header 3]
 	set poss [list_cor $header $nheader]
