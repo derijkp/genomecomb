@@ -81,9 +81,8 @@ test tsv_cat {two same header} {
 # comments added
 #
 # ++++ data/reg4.tsv ++++
-## vcf style header
+## header
 ##
-#
 test	chromosome	begin	end	test2
 t	1	15	25	t2
 t	1	45	55	t2

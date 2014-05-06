@@ -3,14 +3,14 @@ chromosome	begin	end	type	ref	alt	sequenced-sample1	alleleSeq1-sample1	alleleSeq
 1	4001	4002	snp	A	C	v	A	C	test2	0.2	v	A	C	test2	0.2	r	A	C	test2	0.2
 1	4050	4060	snp	N	T	v	T	T	test3	0.3	u	-	-	?	?	u	-	-	?	?
 1	5000	5010	del	AGCGTGGCAA		v	AGCGTGGCAA		test4	0.4	v	AGCGTGGCAA		test4	0.4	r	AGCGTGGCAA		test4	0.4
-1	5020	5021	snp	G	A	v	A	A	test5	0.5	r	G	G	?	?	r	G	G	?	?
-1	5020	5021	snp	G	C	r	G	G	?	?	v	G	C	test5	0.5	v	G	C	test5	0.5
+1	5020	5021	snp	G	A	v	A	A	test5	0.5	r	G	C	?	?	r	G	C	?	?
+1	5020	5021	snp	G	C	r	A	A	?	?	v	G	C	test5	0.5	v	G	C	test5	0.5
 2	4000	4001	snp	G	A	v	A	A	test6	0.6	v	A	A	test6	0.6	v	A	A	test6	0.6
 2	4001	4002	snp	A	C	v	G	C	test8	0.8	r	A	A	?	?	r	A	A	?	?
 2	4001	4002	snp	A	G	v	G	C	test7	0.7	r	A	A	?	?	r	A	A	?	?
 2	4010	4011	snp	A	C	u	-	-	?	?	v	G	C	test8	0.8	v	G	C	test8	0.8
 2	4010	4011	snp	A	G	u	-	-	?	?	v	G	C	test7	0.7	v	G	C	test7	0.7
 2	5010	5012	del	NN		v			test9	0.9	v		N	test9	0.9	v		N	test9	0.9
-2	10000	10001	snp	N	A	v	A	N	test9b	0.9	r	N	N	?	?	r	N	N	?	?
-2	10000	10001	snp	N	C	r	N	N	?	?	v	C	N	test9b	0.9	v	C	N	test9b	0.9
+2	10000	10001	snp	N	A	v	A	N	test9b	0.9	r	C	N	?	?	r	C	N	?	?
+2	10000	10001	snp	N	C	r	A	N	?	?	v	C	N	test9b	0.9	v	C	N	test9b	0.9
 3	876	877	snp	N	A	v	A	A	test10	1	v	A	A	test10	1	v	A	A	test10	1

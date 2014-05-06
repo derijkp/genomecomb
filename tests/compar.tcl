@@ -175,7 +175,7 @@ test multicompar {var and mapper naming convention} {
 	exec diff tmp/temp.sft tmp/expected.sft
 } {} 
 
-test multicompar {basic reannot var-all} {
+test multicompar {basic reannot varall} {
 	test_cleantmp
 	file copy data/var_annot.sft tmp/var-annot1.tsv
 	file copy data/var_annot2.sft tmp/var-annot2.tsv
@@ -201,6 +201,37 @@ test multicompar {basic reannot var-all} {
 	cg multicompar tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	cg multicompar_reannot tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft
+} {} 
+
+test multicompar {basic reannot varall split} {
+	test_cleantmp
+	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
+	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	catch {file delete temp.tsv}
+	# make tmp/varall-annot1.tsv
+	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp1.tsv
+	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
+	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 r} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
+	# make tmp/varall-annot2.tsv
+	catch {file delete temp.tsv}
+	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp1.tsv
+	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr1 4050 4060 snp N T T T test3e 0.3 r} \t]
+	puts $f [join {chr2 4001 4002 snp A C G C test8e 0.2 r} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
+	cg splitalleles data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft tmp/expected.tsv
+	file delete tmp/temp.tsv
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
+	cg multicompar_reannot tmp/temp.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
 #test multicompar {merge} {
@@ -241,6 +272,109 @@ test multicompar {error on badly sorted files 2} {
 	cg multicompar tmp/temp.tsv data/vars_sorterror1.sft data/vars_sorterror2.sft
 } {File (*vars_sorterror2.sft) is not correctly sorted (sort correctly using "cg select -s -")
 chr3:52847303-52847304:snp:G came before chr3:52847042-52847060:del:*} match error
+
+test multicompar {split reannot split multiallelic varall,no sreg,zyg} {
+	test_cleantmp
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	101	snp	T	C	t	T	C	40
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	101	snp	T	G	m	G	G	30
+	}
+	file copy tmp/var-sample1.tsv tmp/varall-sample1.tsv
+	file copy tmp/var-sample2.tsv tmp/varall-sample2.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	score-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	score-sample2
+		1	100	101	snp	T	C	v	t	T	C	40	r	o	G	G	30
+		1	100	101	snp	T	G	r	o	T	C	40	v	m	G	G	30
+	}
+	catch {file delete tmp/temp.tsv}
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg multicompar_reannot tmp/temp.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test multicompar {split reannot split multiallelic varall,sreg,zyg} {
+	test_cleantmp
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	101	snp	T	C	t	T	C	40
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	101	snp	T	G	m	G	G	30
+	}
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	file copy tmp/var-sample1.tsv tmp/varall-sample1.tsv
+	file copy tmp/var-sample2.tsv tmp/varall-sample2.tsv
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	score-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	score-sample2
+		1	100	101	snp	T	C	v	t	T	C	40	r	o	G	G	30
+		1	100	101	snp	T	G	r	o	T	C	40	v	m	G	G	30
+	}
+	catch {file delete tmp/temp.tsv}
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg multicompar_reannot tmp/temp.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test multicompar {split reannot split multiallelic only sreg,zyg} {
+	test_cleantmp
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	101	snp	T	C	t	T	C	40
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	101	snp	T	G	m	G	G	30
+	}
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	score-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	score-sample2
+		1	100	101	snp	T	C	v	t	T	C	40	r	o	G	G	?
+		1	100	101	snp	T	G	r	o	T	C	?	v	m	G	G	30
+	}
+	catch {file delete tmp/temp.tsv}
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg multicompar_reannot tmp/temp.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test multicompar {split reannot split multiallelic, only sreg} {
+	test_cleantmp
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	alleleSeq1	alleleSeq2
+		chr1	100	101	snp	T	C	T	C
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	alleleSeq1	alleleSeq2
+		chr1	100	101	snp	T	G	G	G
+	}
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	alleleSeq1-sample2	alleleSeq2-sample2
+		1	100	101	snp	T	C	v	T	C	r	G	G
+		1	100	101	snp	T	G	r	T	C	v	G	G
+	}
+	catch {file delete tmp/temp.tsv}
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg multicompar_reannot tmp/temp.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
 
 test_cleantmp
 

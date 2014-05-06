@@ -38,7 +38,7 @@ proc cg_splitalleles {args} {
 	set samples [samples $header]
 	set sposs {}
 	foreach sample $samples {
-		lappend sposs {*}[list_cor $header [list alleleSeq1-$sample alleleSeq2-$sample sequenced-$sample]]
+		lappend sposs {*}[list_cor $header [list alleleSeq1-$sample alleleSeq2-$sample sequenced-$sample zyg-$sample]]
 	}
 	puts -nonewline $o $comment
 	puts $o [join $header \t]
@@ -46,7 +46,8 @@ proc cg_splitalleles {args} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		set ref [lindex $line $rpos]
-		set alleles [split [lindex $line $apos] ,]
+		set alt [lindex $line $apos]
+		set alleles [split $alt ,]
 		# redundancy in alleles is an error, but I have come across it, so dedup
 		set alleles [list_remdup $alleles]
 		lset line $apos [join $alleles ,]
@@ -72,36 +73,25 @@ proc cg_splitalleles {args} {
 		}
 		foreach alt [ssort -natural $alleles] {
 			set line $a($alt)
-			foreach {a1pos a2pos seqpos} $sposs {
+			foreach {a1pos a2pos seqpos zygpos} $sposs {
 				set a1 [lindex $line $a1pos]
 				set a2 [lindex $line $a2pos]
 				set seq [lindex $line $seqpos]
 				if {$seq eq "u"} {
-					set seq u
-				} elseif {$a1 eq $alt} {
-					if {$a2 eq $alt} {
-						set seq m
-					} elseif {$a2 eq $ref} {
-						set seq t
-					} else {
-						set seq c
-					}
-				} elseif {$a2 eq $alt} {
-					if {$a2 eq $ref} {
-						set seq t
-					} else {
-						set seq c
-					}
-				} elseif {$a1 eq $ref && $a2 eq $ref} {
-					set seq r
+					set zyg u
 				} else {
-					set seq o
+					set zyg [zyg $a1 $a2 $ref $alt]
+					if {$zyg in "r o"} {set seq r} else {set seq v}
+				}
+				if {$zygpos != -1} {
+					lset line $zygpos $zyg
 				}
 				if {$seqpos != -1} {
 					lset line $seqpos $seq
 				}
-			} 
-		} 
+			}
+			set a($alt) $line
+		}
 		foreach allele [ssort -natural $alleles] {
 			puts $o [join $a($allele) \t]
 		}

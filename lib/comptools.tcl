@@ -86,8 +86,18 @@ proc zyg {args} {
 		return r
 	} elseif {$seq1 eq "u"} {
 		return u
+	} elseif {$alt eq "?"} {
+		if {$a1 == "?" || $a2 == "?"} {return ?}
+		if {$a1 ne $a2} {
+			return t
+		} elseif {$a1 eq $ref} {
+			return r
+		} else {
+			return m
+		}
 	} elseif {$seq1 eq "v"} {
-		set alt [split $alt ,]
+		if {$a1 == "?" || $a2 == "?"} {return ?}
+		if {$alt eq ""} {set alt {{}}} else {set alt [split $alt ,]}
 		if {$a1 in $alt} {
 			if {$a1 eq $a2} {
 				return m

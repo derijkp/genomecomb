@@ -201,20 +201,25 @@ proc annot_varall_init {varallfile sample header} {
 		}
 		incr i
 	}
-	set loc2poss [lrange $loc2poss 0 2]
+	set loc2poss [lrange $loc2poss 0 3]
 	set line2 [split [gets $af] \t]
 	set loc2 [list_sub $line2 $loc2poss]
 	set annot(varallinfo,$varallfile,$sample) [dict create af $af poss1 $poss1 poss2 $poss2 line2 $line2 loc2 $loc2 loc2poss $loc2poss]
 }
 
-proc annot_varall_annot {varallfile sample loc force lineVar} {
+proc annot_varall_annot {sampleaVar sample loc force lineVar} {
 	global annot
 	upvar $lineVar line
+	upvar $sampleaVar samplea
+	foreach {chr begin end} $loc break
+	set varallfile $samplea(varall,$sample)
 	set info $annot(varallinfo,$varallfile,$sample)
 	set af [dict get $info af]
 	set line2 [dict get $info line2]
 	set loc2 [dict get $info loc2]
 	set loc2poss [dict get $info loc2poss]
+	set seq [lindex $line $samplea(seq,$sample)]
+	set zyg [lindex $line $samplea(zyg,$sample)]
 	while {![eof $af]} {
 		set d [lloc_compare $loc $loc2]
 		if {$d == 0} {
@@ -225,8 +230,34 @@ proc annot_varall_annot {varallfile sample loc force lineVar} {
 				if {(!$force) && $c ne "?"} continue
 				lset line $pos $newvalue
 			}
+			if {($seq eq "?" || $zyg eq "?")} {
+				if {$samplea(annot_regionfile,$sample)} {
+					set r [annot_region_in $samplea(regionfile,$sample) $chr $begin $end]
+					if {!$r} {set seq u}
+				} else {
+					set seq ?
+				}
+				if {$seq eq "u"} {
+					set zyg u
+				} elseif {$samplea(ref,$sample) != -1} {
+					set ref [lindex $line $samplea(ref,$sample)]
+					set alt [lindex $line $samplea(alt,$sample)]
+					set a1 [lindex $line $samplea(a1,$sample)]
+					set a2 [lindex $line $samplea(a2,$sample)]
+					set zyg [zyg $a1 $a2 $ref $alt]
+					if {$zyg in "r o"} {set seq r} else {set seq v}
+				} else {
+					set zyg ?
+				}
+				lset line $samplea(seq,$sample) $seq
+				if {$samplea(zyg,$sample) != -1} {lset line $samplea(zyg,$sample) $zyg}
+			}
 			break
 		} elseif {$d < 0} {
+			if {$seq eq "?" || $zyg eq "?"} {
+				lset line $samplea(seq,$sample) u
+				if {$samplea(zyg,$sample) != -1} {lset line $samplea(zyg,$sample) u}
+			}
 			break
 		}
 		set line2 [split [gets $af] \t]
