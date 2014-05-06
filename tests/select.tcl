@@ -424,6 +424,11 @@ test select {-q use calculated column from -f} {
 } {calc	num	text	mixed	other
 3	2	c	a2	cc}
 
+test select {-f use calculated column in other calculated column} {
+	exec cg select -f {{calc=$num+1} {calc2=$calc+1} *} -q {$calc <= 4} data/table.tsv
+} {calc	calc2	num	text	mixed	other
+3	4	2	c	a2	cc}
+
 test select {-q use calculated column from -f without it being in the output (using -)} {
 	exec cg select -f {{-calc=$num+1} *} -q {$calc <= 4} data/table.tsv
 } {num	text	mixed	other

@@ -258,12 +258,15 @@ proc tsv_select_region {ids header neededfieldsVar} {
 	return "(([join $result "\) || \("]))"
 }
 
-proc tsv_select_expandfield {header field} {
+proc tsv_select_expandfield {header field {giveerror 0}} {
 	if {$field eq "ROW"} {return "ROW"}
 	set qposs [list_find -glob $header $field]
 	if {![llength $qposs]} {
-#		error "no fields matched \"$field\""
-return [list $field]
+		if {$giveerror} {
+			error "no fields matched \"$field\""
+		} else {
+			return [list $field]
+		}
 	}
 	set result [list_sub $header $qposs]
 	return [list_remdup $result]
@@ -368,7 +371,7 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 				}
 			}
 		} elseif {[string first * $field] != -1} {
-			set efields [list_lremove [tsv_select_expandfield $header $field] $rfields]
+			set efields [list_lremove [tsv_select_expandfield $header $field 1] $rfields]
 			lappend rfields {*}$efields
 			foreach pos [list_cor $header $efields] {
 				lappend qposs $pos
@@ -982,10 +985,23 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			} elseif {[info exists calccols($rfield)]} {
 				if {$rfield eq $field} {lappend outcols $calccols($rfield)}
 			} else {
-				set code [tsv_select_expandcode $header [lindex $el 1] neededfields]
+				set tempneededfields {}
+				set code [tsv_select_expandcode $header [lindex $el 1] tempneededfields]
 				if {$rfield eq $field} {lappend outcols make_col$num}
-				append tclcode [tsv_select_makecol make_col$num $code]
+				set calcfieldsquery [list_lremove $tempneededfields $header]
+				set calcfieldsquery [list_remove $calcfieldsquery ROW]
+				set tempneededfields [list_lremove $tempneededfields $calcfieldsquery]
+				set prequery {}
+				foreach field $calcfieldsquery {
+					if {[info exists calccols($field)]} {
+						append prequery "\t\t\tset \{$field\} \[$calccols($field) @neededfieldsvals@\]\n"
+					} else {
+						error "field \"$field\" not present in file"
+					}
+				}
+				append tclcode [tsv_select_makecol make_col$num $code @neededfields@ $prequery]
 				set calccols($rfield) make_col$num
+				lappend neededfields {*}$tempneededfields
 			}
 			incr num
 		}
@@ -1002,7 +1018,6 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			} else {
 				error "field \"$field\" not present in file"
 			}
-			
 		}
 		set neededcols [list_cor $header $neededfields]
 		if {$index eq ""} {
@@ -1044,7 +1059,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				exit
 			}]
 		}
-		set tclcode [string_change $tclcode [list @neededfield@ $neededfields]]
+		set tclcode [string_change $tclcode [list @neededfields@ $neededfields @neededfieldsvals@ \$\{[join $neededfields \}\ \$\{]\}]]
 		if {[string length $tclcode] > 2000} {
 			set tempfile [tempfile]
 			file_write $tempfile $tclcode\n

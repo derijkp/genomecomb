@@ -49,9 +49,10 @@ proc select_parse_for_samples {group groupcol header} {
 	return $gsamples
 }
 
-proc tsv_select_makecol {name code {arg @neededfield@}} {
+proc tsv_select_makecol {name code {arg @neededfield@} {prequery {}}} {
 	subst -nocommands {
 		proc $name {$arg} {
+			$prequery
 			if {[catch {expr {$code}} e]} {
 				switch \$e {
 					{domain error: argument not in valid range} {return NaN}
@@ -429,7 +430,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			puts "$_groupname\t[join $result \t]"
 		}
 		exit
-	} [list @neededfields@ $neededfields @pquery@ $pquery @prequery@ $prequery\
+	} [list @neededfields@ $neededfields @neededfieldsvals@ \$\{[join $neededfields \}\ \$\{]\} \
+		@pquery@ $pquery @prequery@ $prequery\
 		@precalc@ $precalc @addcols@ $addcols \
 		@neededcols@ $neededcols @calcresults@ $calcresults \
 		@grouptypes@ [list $grouptypes] @grouph@ [list_unmerge $group] @verbose@ $verbose]
