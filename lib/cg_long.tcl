@@ -1,6 +1,6 @@
-proc cg_vertical {args} {
+proc cg_long {args} {
 	if {[llength $args] > 2} {
-		puts stderr "format is cg vertical ?tsvfile? ?outfile?"
+		puts stderr "format is cg long ?tsvfile? ?outfile?"
 		# errorformat select
 		exit 1
 	}
@@ -21,6 +21,10 @@ proc cg_vertical {args} {
 	unset -nocomplain posa
 	unset -nocomplain afieldsa
 	unset -nocomplain aposa
+	set aposa(post) {}
+	set aposa(pre) {}
+	set afieldsa(post) {}
+	set afieldsa(pre) {}
 	set samples {}
 	set samplecols {}
 	set fpos pre
