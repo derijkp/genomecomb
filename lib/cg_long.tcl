@@ -65,7 +65,7 @@ proc cg_long {args} {
 	}
 	if {$o ne "stdout"} {
 		close $o
-		file rename $outfile.temp $outfile
+		file rename -force $outfile.temp $outfile
 	}
 	if {$f ne "stdout"} {close $f}
 }
