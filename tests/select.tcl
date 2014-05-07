@@ -91,6 +91,10 @@ test select {-f calculated functions} {
 chr1	4000	4001	2
 chr2	4000	4001	4}
 
+test select {-f wildcard error} {
+	exec cg select -f {chromosome begin end {countG=count($alleleSeq-*, == "G")}} -q {$begin == 4000} [gzfile data/vars1.sft]
+} {field "alleleSeq-*" not present in file} error
+
 test select {-f calculated if} {
 	exec cg select -f {chromosome begin end {countG=if(($alleleSeq1-sample1 == "A" || $alleleSeq2-sample1 == "A"),"hasA","noA")}} -q {$begin == 4000} [gzfile data/vars1.sft]
 } {chromosome	begin	end	countG
