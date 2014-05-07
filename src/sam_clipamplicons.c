@@ -115,7 +115,7 @@ int cigar_ref2seq(Cigar *cigar,int begin, int pos) {
 		action++;
 		num++;
 	}
-	if (*action == 'M' || *action == '=' || *action == 'X') {
+	if (action > cigar->action+cigar->size-1 || *action == 'M' || *action == '=' || *action == 'X') {
 		return prev+(pos-prevbegin);
 	} else {
 		return prev;
@@ -192,6 +192,8 @@ int main(int argc, char *argv[]) {
 		sscanf(result2->data[end2pos].string,"%d",&(amplicon[0].end2));
 		sscanf(result2->data[outerstart2pos].string,"%d",&(amplicon[0].outerstart2));
 		sscanf(result2->data[outerend2pos].string,"%d",&(amplicon[0].outerend2));
+		amplicon[0].start2++; amplicon[0].end2++; amplicon[0].outerstart2++; amplicon[0].outerend2++;
+		chromosomekeep = amplicon[ampcur].chr2;
 		ampnum = 1;
 	}
 	DStringSplitTab(line1,10,result1,0,&numfields);
@@ -200,7 +202,9 @@ int main(int argc, char *argv[]) {
 		/* check_numfieldserror(numfields,15,line1,"stdin",&pos1); */
 		sscanf(result1->data[1].string,"%d",&(flag));
 		chromosome1 = result1->data+2;
-		if (chromosome1->string[0] == '*') {
+		seq = result1->data+9;
+		qual = result1->data+10;
+		if (chromosome1->string[0] == '*' || seq->string[0] == '*') {
 			/* skip unmapped reads */
 			NODPRINT("unmapped")
 			fprintf(stdout,"%s\n",line1->string); 
@@ -211,24 +215,23 @@ int main(int argc, char *argv[]) {
 		checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,start1,"input sam file");
 		parse_cigar(&cigar,result1->data[5].string);
 		end1 = cigar_refend(&cigar,start1);
-		seq = result1->data+9;
-		qual = result1->data+10;
 		reverse = flag & BAM_FREVERSE;
 		ampcur = amppos+ampnum-1; if (ampcur >= 4) {ampcur = 0;}
 		while (!error2) {
 			comp = DStringLocCompare(amplicon[ampcur].chr2, chromosome1);
 			if (comp > 0) break;
-			if (reverse) {
-				if (end1 < amplicon[ampcur].outerend2) break;
-			} else {
-				if (start1 < amplicon[ampcur].start2) break;
+			if (comp == 0) {
+				if (reverse) {
+					if (end1 < amplicon[ampcur].outerend2) break;
+				} else {
+					if (start1 < amplicon[ampcur].start2) break;
+				}
 			}
 			/* add new ones to end */
 			ampcur++; if (ampcur >= 4) {ampcur = 0;}
 			/* add next amplicon to stack */
 			/* keep data of previous */
 			/* to avoid allocating new memory everytime, reuse linekeep and associated data */
-			chromosomekeep = amplicon[ampcur].chr2;
 			linetemp = linekeep;
 			linekeep = line2;
 			line2 = linetemp;
@@ -248,20 +251,31 @@ int main(int argc, char *argv[]) {
 			sscanf(result2->data[end2pos].string,"%d",&(amplicon[ampcur].end2));
 			sscanf(result2->data[outerstart2pos].string,"%d",&(amplicon[ampcur].outerstart2));
 			sscanf(result2->data[outerend2pos].string,"%d",&(amplicon[ampcur].outerend2));
-			if (ampnum < 4) {ampnum++;} else {amppos++;}
+			amplicon[ampcur].start2++; amplicon[ampcur].end2++; amplicon[ampcur].outerstart2++; amplicon[ampcur].outerend2++;
+			if (ampnum < 4) {ampnum++;} else {
+				amppos++; if (amppos >= 4) {amppos = 0;}
+			}
 			
 			comp = DStringLocCompare(amplicon[ampcur].chr2, chromosomekeep);
 			if (comp < 0 || (comp == 0 && (amplicon[ampcur].start2 < prevstart2 || (amplicon[ampcur].start2 == prevstart2 && amplicon[ampcur].end2 < prevend2)))) {
-				fprintf(stderr,"Cannot annotate because the amplicon file is not correctly sorted (sort correctly using \"cg select -s -\")");
+				fprintf(stderr,"Cannot annotate because the amplicon file is not correctly sorted (sort correctly using \"cg select -s -\"):\n");
+				fprintf(stderr,"%*.*s:%d-%d came before %*.*s:%d-%d\n",
+					chromosomekeep->size,chromosomekeep->size,chromosomekeep->string,
+					prevstart2,prevend2,
+					amplicon[ampcur].chr2->size,amplicon[ampcur].chr2->size,amplicon[ampcur].chr2->string,
+					amplicon[ampcur].start2,amplicon[ampcur].end2
+				);
 				exit(1);
 			}
 			prevstart2 = amplicon[ampcur].start2; prevend2 = amplicon[ampcur].end2;
+			chromosomekeep = amplicon[ampcur].chr2;
 		}
 		while (ampnum) {
 			comp = DStringLocCompare(amplicon[amppos].chr2, chromosome1);
 			if (comp > 0) break;
 			if (comp == 0 && amplicon[amppos].outerend2 >= start1) break;
-			amppos++; if (amppos >= 4) {amppos = 0;} ampnum--;
+			amppos++; if (amppos >= 4) {amppos = 0;}
+			ampnum--;
 		}
 		ampcur = amppos;
 		count = ampnum;
@@ -284,7 +298,7 @@ int main(int argc, char *argv[]) {
 				found=1; ampcur = closepos;
 			}
 			if (found) {
-				if (amplicon[ampcur].start2 > start1) {
+				if (amplicon[ampcur].start2 > start1 && amplicon[ampcur].start2 < end1) {
 					amp_clip_read(seq,qual,0,cigar_ref2seq(&cigar,start1,amplicon[ampcur].start2));
 				}
 				if (amplicon[ampcur].end2 > start1 && amplicon[ampcur].end2 < end1) {
@@ -310,7 +324,7 @@ int main(int argc, char *argv[]) {
 				found=1; ampcur = closepos;
 			}
 			if (found) {
-				if (amplicon[ampcur].start2 > start1) {
+				if (amplicon[ampcur].start2 > start1 && amplicon[ampcur].start2 < end1) {
 					amp_clip_read(seq,qual,0,cigar_ref2seq(&cigar,start1,amplicon[ampcur].start2));
 				}
 				if (amplicon[ampcur].end2 > start1 && end1 >= amplicon[ampcur].end2) {

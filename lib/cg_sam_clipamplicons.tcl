@@ -21,5 +21,10 @@ proc cg_sam_clipamplicons {args} {
 	} else {
 		lappend pipe > $outfile
 	}
-	exec {*}$pipe
+putsvars pipe
+	if {[catch {
+		exec {*}$pipe
+	} result]} {
+		
+	}
 }
