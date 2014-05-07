@@ -1,5 +1,5 @@
 proc cg_wide {args} {
-	set samplefields {sample sample1 sample2 sample3 mapping varcall}
+	set samplefields {}
 	set commonfields {}
 	set pos 0
 	foreach {key value} $args {
@@ -42,6 +42,9 @@ proc cg_wide {args} {
 	} else {
 		set commonfields [expandfields $header $commonfields]
 		set poss [list_cor $header $commonfields]
+	}
+	if {$samplefields eq ""} {
+		set samplefields [list_common $header {sample sample1 sample2 sample3 mapping varcall}]
 	}
 	set poss [list_remove $poss -1]
 	set commonfields [list_sub $header $poss]
