@@ -287,39 +287,59 @@ test collapsealleles {collapsealleles2} {
 
 test format {long} {
 	write_tab tmp/wide.tsv {
-		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleseq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleseq2-sample2 zyg-sample2
+		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleSeq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleSeq2-sample2 zyg-sample2
 	 	chr1 4200 4200 snp G A 0.5 v G A t 0.8 v A A m
 	 	chr1 4200 4200 ins {} A 0.8 v {} A t 0.1 r {} {} r
-	 	chr1 5000 5001 snp G T 0.9 v T T m 0.0 v G G r
+	 	chr1 5000 5001 snp G T 0.9 v T T m 0.0 r G G r
 	}
 	exec cg long tmp/wide.tsv tmp/long.tsv
 	write_tab tmp/expected.tsv {
-		chromosome begin end type ref alt sample freq sequenced alleleSeq1 alleleseq2 zyg
-	 	chr1 sample1 4200 4200 snp G A 0.5 v G A t
-	 	chr1 sample2 4200 4200 snp G A 0.8 v A A m
-	 	chr1 4200 4200 ins {} A 0.8 v {} A t
-	 	chr1 4200 4200 ins {} A 0.1 r {} {} r
-	 	chr1 5000 5001 snp G T 0.9 v T T m
-	 	chr1 5000 5001 snp G T 0.0 v G G r
+		sample chromosome begin end type ref alt sequenced zyg alleleSeq1 alleleSeq2 freq
+	 	sample1 chr1 4200 4200 snp G A v t G A 0.5
+	 	sample2 chr1 4200 4200 snp G A v m A A 0.8
+	 	sample1 chr1 4200 4200 ins {} A v t {} A 0.8
+	 	sample2 chr1 4200 4200 ins {} A r r {} {} 0.1
+	 	sample1 chr1 5000 5001 snp G T v m T T 0.9
+	 	sample2 chr1 5000 5001 snp G T r r G G 0.0
 	}
+	exec diff tmp/long.tsv tmp/expected.tsv
+} {}
+
+test format {long with post, multialt} {
+	write_tab tmp/wide.tsv {
+		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleSeq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleSeq2-sample2 zyg-sample2 post
+	 	chr1 4200 4200 snp G A 0.5 v G A t 0.8 v A A m 1
+	 	chr1 4200 4200 ins {} A 0.8 v {} A t 0.1 r {} {} r 2
+	 	chr1 5000 5001 snp G T,C 0.9 v T T m 0.0 v C C m 3,4
+	}
+	write_tab tmp/expected.tsv {
+		sample chromosome begin end type ref alt sequenced zyg alleleSeq1 alleleSeq2 freq post
+	 	sample1 chr1 4200 4200 snp G A v t G A 0.5 1
+	 	sample2 chr1 4200 4200 snp G A v m A A 0.8 1
+	 	sample1 chr1 4200 4200 ins {} A v t {} A 0.8 2
+	 	sample2 chr1 4200 4200 ins {} A r r {} {} 0.1 2
+	 	sample1 chr1 5000 5001 snp G T,C v m T T 0.9 3,4
+	 	sample2 chr1 5000 5001 snp G T,C v m C C 0.0 3,4
+	}
+	exec cg long tmp/wide.tsv tmp/long.tsv
 	exec diff tmp/long.tsv tmp/expected.tsv
 } {}
 
 test format {wide} {
 	write_tab tmp/long.tsv {
 		chromosome sample begin end type ref alt freq sequenced alleleSeq1 alleleseq2 zyg
-	 	chr1 sample1 4200 4200 snp G A 0.5 v G A t
-	 	chr1 sample2 4200 4200 snp G A 0.8 v A A m
 	 	chr1 sample1 4200 4200 ins {} A 0.8 v {} A t
 	 	chr1 sample2 4200 4200 ins {} A 0.1 r {} {} r
+	 	chr1 sample1 4200 4200 snp G A 0.5 v G A t
+	 	chr1 sample2 4200 4200 snp G A 0.8 v A A m
 	 	chr1 sample1 5000 5001 snp G T 0.9 v T T m
 	 	chr1 sample2 5000 5001 snp G T 0.0 v G G r
 	}
 	exec cg wide tmp/long.tsv tmp/wide.tsv 2>/dev/null
 	write_tab tmp/expected.tsv {
 		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleseq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleseq2-sample2 zyg-sample2
-	 	chr1 4200 4200 snp G A 0.5 v G A t 0.8 v A A m
 	 	chr1 4200 4200 ins {} A 0.8 v {} A t 0.1 r {} {} r
+	 	chr1 4200 4200 snp G A 0.5 v G A t 0.8 v A A m
 	 	chr1 5000 5001 snp G T 0.9 v T T m 0.0 v G G r
 	} {#type	wide tsv
 #samplefields	sample}
