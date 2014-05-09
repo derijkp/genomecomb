@@ -130,7 +130,7 @@ test sam_clipamplicons {basic 2} {
 		chr1 129 139 159 169
 	}
 	write_tab tmp/expected.tsv {
-		A1	99	chr1	85	WWWWWWWWWWWWWWWWWWWW	--------------------
+		A1	99	chr1	85	NNNNNNNNNNNNNNNNNNNN	!!!!!!!!!!!!!!!!!!!!
 		A2	99	chr1	99	NNNNNNNNNNNAAAAAAAAA	!!!!!!!!!!!---------
 		A1	147	chr1	100	NNNNNNNNNNWWWWWWWWWW	!!!!!!!!!!----------
 		A4	99	chr1	100	NNNNNNNNNNAAAAAAAAAA	!!!!!!!!!!----------
@@ -192,6 +192,23 @@ test sam_clipamplicons {skip chromosome in sam} {
 		A2	147	chr2	60	AAAAAAAAAAAAAAAAAAAA	--------------------
 		A3	99	chr2	100	NNNNNNNNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNN	!!!!!!!!----------------------------------!!!!!!!!
 		A3	147	chr2	100	NNNNNNNNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNN	!!!!!!!!----------------------------------!!!!!!!!
+	}
+	cg sam_clipamplicons tmp/samplicons.tsv tmp/temp.sam tmp/out.sam
+	cg select -sh /dev/null -f {qname flag rname pos seq qual} tmp/out.sam > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test sam_clipamplicons {completely in primer} {
+	write_sam tmp/temp.sam {
+		chr2	100	8M	8	chr2	142	8M	8
+	}
+	write_tab tmp/samplicons.tsv {
+		chromosome outer_begin begin end outer_end
+		chr2 99 107 141 149
+	}
+	write_tab tmp/expected.tsv {
+		A1	99	chr2	100	NNNNNNNN	!!!!!!!!
+		A1	147	chr2	142	NNNNNNNN	!!!!!!!!
 	}
 	cg sam_clipamplicons tmp/samplicons.tsv tmp/temp.sam tmp/out.sam
 	cg select -sh /dev/null -f {qname flag rname pos seq qual} tmp/out.sam > tmp/result.tsv

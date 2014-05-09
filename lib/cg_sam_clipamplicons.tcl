@@ -25,6 +25,8 @@ putsvars pipe
 	if {[catch {
 		exec {*}$pipe
 	} result]} {
-		
+		if {![regexp {^\[samopen\] SAM header is present: [0-9]+ sequences.$} $result]} {
+			error $result
+		}
 	}
 }

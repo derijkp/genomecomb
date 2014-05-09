@@ -97,8 +97,7 @@ int cigar_ref2seq(Cigar *cigar,int begin, int pos) {
 	int *num = cigar->num, cur = 0, prev = 0, prevbegin = begin;
 	char *action = cigar->action;
 	if (begin > pos) {
-		fprintf(stderr,"error in cigar_ref2seq: begin > pos");
-		exit(EXIT_FAILURE);
+		return 0;
 	}
 	while(count--) {
 		if (*action == 'M' || *action == '=' || *action == 'X') {
@@ -301,7 +300,7 @@ int main(int argc, char *argv[]) {
 				if (amplicon[ampcur].start2 > start1 && amplicon[ampcur].start2 < end1) {
 					amp_clip_read(seq,qual,0,cigar_ref2seq(&cigar,start1,amplicon[ampcur].start2));
 				}
-				if (amplicon[ampcur].end2 > start1 && amplicon[ampcur].end2 < end1) {
+				if (amplicon[ampcur].outerend2 > start1 && amplicon[ampcur].end2 < end1) {
 					amp_clip_read(seq,qual,cigar_ref2seq(&cigar,start1,amplicon[ampcur].end2),seq->size);
 				}
 			}
@@ -324,7 +323,7 @@ int main(int argc, char *argv[]) {
 				found=1; ampcur = closepos;
 			}
 			if (found) {
-				if (amplicon[ampcur].start2 > start1 && amplicon[ampcur].start2 < end1) {
+				if (amplicon[ampcur].start2 > start1 && amplicon[ampcur].outerstart2 < end1) {
 					amp_clip_read(seq,qual,0,cigar_ref2seq(&cigar,start1,amplicon[ampcur].start2));
 				}
 				if (amplicon[ampcur].end2 > start1 && end1 >= amplicon[ampcur].end2) {
