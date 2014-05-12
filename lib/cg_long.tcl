@@ -4,6 +4,8 @@ proc cg_long {args} {
 		# errorformat select
 		exit 1
 	}
+	set file {}
+	set outfile {}
 	foreach {file outfile} $args break
 	if {$file eq ""} {
 		set f stdin

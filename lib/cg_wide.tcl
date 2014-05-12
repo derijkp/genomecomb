@@ -1,6 +1,8 @@
 proc cg_wide {args} {
 	set samplefields {}
 	set commonfields {}
+	set file {}
+	set outfile {}
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
