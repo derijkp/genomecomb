@@ -404,4 +404,10 @@ test format {wide other unsorted} {
 	exec diff tmp/wide.tsv tmp/expected.tsv
 } {}
 
+test gene2reg {gene2reg basic} {
+	cg select -q {$name2 == "HES4"} data/gene_test.tsv tmp/genetmp.tsv
+	cg gene2reg tmp/genetmp.tsv tmp/result.tsv
+	exec diff tmp/result.tsv data/expected-gene2reg.tsv
+} {}
+
 testsummarize
