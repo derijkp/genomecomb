@@ -63,7 +63,7 @@ test cg2tsv {cg2tsv ome ins} {
 	}
 	cg cg2tsv -split 0 tmp/testvar.tsv tmp/temp.tsv
 	write_tab tmp/expected.tsv {
-		#genomecomb 0.9
+		#genomecomb 0.10
 		#split 0
 		#
 		locus chromosome begin end type reference alt zyg alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef
@@ -92,7 +92,7 @@ test cg2tsv {cg2tsv various ins, snp and del} {
 	}
 	cg cg2tsv -split 0 tmp/testvar.tsv tmp/temp.tsv
 	write_tab tmp/expected.tsv {
-		#genomecomb 0.9
+		#genomecomb 0.10
 		#split 0
 		#
 		locus chromosome begin end type reference alt zyg alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef
@@ -127,7 +127,7 @@ test cg2tsv {cg2tsv various ins, snp and del -split 1} {
 	}
 	cg cg2tsv -split 1 tmp/testvar.tsv tmp/temp.tsv
 	write_tab tmp/expected.tsv {
-		#genomecomb 0.9
+		#genomecomb 0.10
 		#split 1
 		#
 		locus chromosome begin end type reference alt zyg alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef
