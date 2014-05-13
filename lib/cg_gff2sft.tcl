@@ -75,7 +75,7 @@ proc cg_gff2sft {args} {
 	catch {close $fb} ; catch {close $fa}
 
 	putsprogress "Assembling file"
-	puts $o $comment
+	puts -nonewline $o $comment
 	puts $o [join [list_concat $nheader $attrheader] \t]
 	set fb [open $tempbase]
 	set fa [open $tempattr]

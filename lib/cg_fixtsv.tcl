@@ -1,14 +1,14 @@
 proc cg_fixtsv {file outfile} {
 	set f [gzopen $file]
 	set header [tsv_open $f comment]
-	set poss [tsv_basicfields $header 4 0]
+	# set poss [tsv_basicfields $header 4 0]
 	set o [open $outfile.temp w]
-	puts $o $comment
+	puts -nonewline $o $comment
 	puts $o [join $header \t]
 	set tline [gets $f]
 	set line [split $tline \t]
 	# foreach {pchr pbegin pend ptype} [list_sub $line $poss] break
-	set prev [list_sub $line $poss]
+	# set prev [list_sub $line $poss]
 	set len [llength $header]
 	set llen [llength $line]
 	set linenr 0
@@ -31,6 +31,6 @@ proc cg_fixtsv {file outfile} {
 	}
 	close $f
 	close $o
-	if {[file exists $outfile]} {catch {file rename $file $file.old}}
+	if {[file exists $outfile]} {catch {file rename $outfile $outfile.old}}
 	file rename -force $outfile.temp $outfile
 }

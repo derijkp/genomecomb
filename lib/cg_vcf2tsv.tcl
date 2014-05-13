@@ -98,7 +98,7 @@ proc cg_vcf2sft.old {args} {
 		}
 	}
 	append comment "\n# ----"
-	puts $o $comment
+	puts -nonewline $o $comment
 	set samples [lrange $header 9 end]
 	set nheader {chromosome begin end type ref alt name quality filter}
 	set formatfields {GT}
