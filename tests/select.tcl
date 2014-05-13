@@ -125,6 +125,21 @@ test select {keep header info and format rtg: -hc} {
 	file_read temp
 } {}
 
+test select {-hc with chars that must be escaped} {
+	write_tab tmp/temp.tsv {
+		{# a comment with ;}
+		#a {b c}
+		1 {2 3}
+	}
+	write_tab tmp/expected.tsv {
+		{# a comment with ;}
+		{b c}
+		{2 3}
+	}
+	exec cg select -hc 1 -f {{b c}} tmp/temp.tsv tmp/out.tsv
+	exec diff tmp/out.tsv tmp/expected.tsv
+} {}
+
 test select {keep header info and format vcf} {
 	exec cg select -s POS data/test.vcf tmp/temp.tsv
 	file delete temp

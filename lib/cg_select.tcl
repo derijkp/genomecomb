@@ -1107,7 +1107,7 @@ proc tsv_hcheader {f keepheaderVar headerVar} {
 	upvar $headerVar header
 	if {[catch {
 		# this does not work on a stream
-		seek $f [expr {-[string length $header] - 1}] current
+		seek $f [expr {-[string length [join $header \t]] - 1}] current
 	}]} {
 		# this has to be explicitely supported downstream, only tsv_select does this!
 		set ::filebuffer($f) [list [join $header \t]]
