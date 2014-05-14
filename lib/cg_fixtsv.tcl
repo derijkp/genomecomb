@@ -17,6 +17,8 @@ proc cg_fixtsv {file outfile} {
 			puts "line $linenr is of wrong length: [llength $line] iso $len\t$line, fixing"
 			if {$llen < $len} {
 				lappend line {*}[list_fill [expr {$len-$llen}] {}]
+			} else {
+				set line [lrange $line 0 [expr {$len-1}]]
 			}
 			puts $o [join $line \t]
 		} else {
