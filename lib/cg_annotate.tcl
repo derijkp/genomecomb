@@ -68,7 +68,7 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 	set header [tsv_open $f]
 	gzclose $f
 	set tempdbposs [tsv_basicfields $header 6 0]
-	set dbposs [lrange $poss 0 2]
+	set dbposs [lrange $tempdbposs 0 2]
 	set type2pos [lindex $tempdbposs 3]
 	if {$type2pos == -1} {
 		error "$dbfile has no type field"
@@ -90,6 +90,7 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 			exec {*}[gzcat $dbfile] $dbfile | var_annot $file {*}$poss $type1pos $alt1pos - {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp 2>@ stderr
 		}
 	} else {
+		# puts "var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp"
 		exec var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp 2>@ stderr
 	}
 	file rename -force $annotfile.temp $annotfile
