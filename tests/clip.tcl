@@ -215,4 +215,24 @@ test sam_clipamplicons {completely in primer} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test sam_clipamplicons {completely in primer wrong end} {
+	write_sam tmp/temp.sam {
+		chr2	100	8M	8	chr2	100	8M	8
+		chr2	142	8M	8	chr2	142	8M	8
+	}
+	write_tab tmp/samplicons.tsv {
+		chromosome outer_begin begin end outer_end
+		chr2 99 107 141 149
+	}
+	write_tab tmp/expected.tsv {
+		A1	99	chr2	100	NNNNNNNN	!!!!!!!!
+		A1	147	chr2	100	NNNNNNNN	!!!!!!!!
+		A2	99	chr2	142	NNNNNNNN	!!!!!!!!
+		A2	147	chr2	142	NNNNNNNN	!!!!!!!!
+	}
+	cg sam_clipamplicons tmp/samplicons.tsv tmp/temp.sam tmp/out.sam
+	cg select -sh /dev/null -f {qname flag rname pos seq qual} tmp/out.sam > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 testsummarize

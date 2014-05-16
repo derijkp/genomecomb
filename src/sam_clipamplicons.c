@@ -19,6 +19,7 @@ inline int min ( int a, int b ) { return a < b ? a : b; }
 
 inline int max ( int a, int b ) { return a > b ? a : b; }
 
+#define AMPLICONSBUFFERSIZE 4
 
 /*! @abstract the read is paired in sequencing, no matter whether it is mapped in a pair */
 #define BAM_FPAIRED        1
@@ -137,7 +138,7 @@ int amp_clip_read(DString *seq,DString *qual,int from, int to) {
 
 int main(int argc, char *argv[]) {
 	FILE *f1=stdin,*f2;
-	Amplicon amplicon[4];
+	Amplicon amplicon[AMPLICONSBUFFERSIZE];
 	int close,maxclose,closepos;
 	Cigar cigar;
 	DStringArray *result1=NULL,*result2=NULL,*resultkeep=NULL,*resulttemp=NULL;
@@ -155,7 +156,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"Format is: sam_clipamplicons ampliconsfile chrpos startpos endpos outerstartpos outerendpos");
 		exit(EXIT_FAILURE);
 	}
-	for (i = 0 ; i < 4 ; i++) {
+	for (i = 0 ; i < AMPLICONSBUFFERSIZE ; i++) {
 		amplicon[i].chr2 = DStringNew();
 	}
 	cigar.size = 0;
@@ -215,7 +216,7 @@ int main(int argc, char *argv[]) {
 		parse_cigar(&cigar,result1->data[5].string);
 		end1 = cigar_refend(&cigar,start1);
 		reverse = flag & BAM_FREVERSE;
-		ampcur = amppos+ampnum-1; if (ampcur >= 4) {ampcur = 0;}
+		ampcur = amppos+ampnum-1; if (ampcur >= AMPLICONSBUFFERSIZE) {ampcur -= AMPLICONSBUFFERSIZE;}
 		while (!error2) {
 			comp = DStringLocCompare(amplicon[ampcur].chr2, chromosome1);
 			if (comp > 0) break;
@@ -227,7 +228,7 @@ int main(int argc, char *argv[]) {
 				}
 			}
 			/* add new ones to end */
-			ampcur++; if (ampcur >= 4) {ampcur = 0;}
+			ampcur++; if (ampcur >= AMPLICONSBUFFERSIZE) {ampcur -= AMPLICONSBUFFERSIZE;}
 			/* add next amplicon to stack */
 			/* keep data of previous */
 			/* to avoid allocating new memory everytime, reuse linekeep and associated data */
@@ -251,8 +252,8 @@ int main(int argc, char *argv[]) {
 			sscanf(result2->data[outerstart2pos].string,"%d",&(amplicon[ampcur].outerstart2));
 			sscanf(result2->data[outerend2pos].string,"%d",&(amplicon[ampcur].outerend2));
 			amplicon[ampcur].start2++; amplicon[ampcur].end2++; amplicon[ampcur].outerstart2++; amplicon[ampcur].outerend2++;
-			if (ampnum < 4) {ampnum++;} else {
-				amppos++; if (amppos >= 4) {amppos = 0;}
+			if (ampnum < AMPLICONSBUFFERSIZE) {ampnum++;} else {
+				amppos++; if (amppos >= AMPLICONSBUFFERSIZE) {amppos = 0;}
 			}
 			
 			comp = DStringLocCompare(amplicon[ampcur].chr2, chromosomekeep);
@@ -273,7 +274,7 @@ int main(int argc, char *argv[]) {
 			comp = DStringLocCompare(amplicon[amppos].chr2, chromosome1);
 			if (comp > 0) break;
 			if (comp == 0 && amplicon[amppos].outerend2 >= start1) break;
-			amppos++; if (amppos >= 4) {amppos = 0;}
+			amppos++; if (amppos >= AMPLICONSBUFFERSIZE) {amppos = 0;}
 			ampnum--;
 		}
 		ampcur = amppos;
@@ -288,10 +289,15 @@ int main(int argc, char *argv[]) {
 						found=1;
 						break;
 					}
+					if (start1 >= amplicon[ampcur].outerstart2 && end1 <= amplicon[ampcur].start2) {
+						amp_clip_read(seq,qual,0,cigar_ref2seq(&cigar,start1,amplicon[ampcur].start2));
+						found = 0; closepos = -1;
+						break;
+					}
 					close = abs(amplicon[ampcur].outerend2 - end1);
 					if (close < maxclose) {maxclose = close; closepos = ampcur;}
 				}
-				ampcur++; if (ampcur >= 4) {ampcur = 0;}
+				ampcur++; if (ampcur >= AMPLICONSBUFFERSIZE) {ampcur -= AMPLICONSBUFFERSIZE;}
 			}
 			if (!found && closepos != -1) {
 				found=1; ampcur = closepos;
@@ -314,10 +320,15 @@ int main(int argc, char *argv[]) {
 						found = 1;
 						break;
 					}
+					if (start1 >= amplicon[ampcur].end2 && end1 <= amplicon[ampcur].outerend2) {
+						amp_clip_read(seq,qual,0,cigar_ref2seq(&cigar,start1,amplicon[ampcur].outerend2));
+						found = 0; closepos = -1;
+						break;
+					}
 					close = abs(amplicon[ampcur].outerstart2-start1);
 					if (close < maxclose) {maxclose = close; closepos = ampcur;}
 				}
-				ampcur++; if (ampcur >= 4) {ampcur = 0;}
+				ampcur++; if (ampcur >= AMPLICONSBUFFERSIZE) {ampcur -= AMPLICONSBUFFERSIZE;}
 			}
 			if (!found && closepos != -1) {
 				found=1; ampcur = closepos;
