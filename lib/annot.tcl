@@ -184,9 +184,49 @@ proc annot_coverage_close {dir sample} {
 	unset annot(cov,$dir,$sample)
 }
 
+proc annot_varall_getline {infoVar} {
+	upvar $infoVar info
+	set af [dict get $info af]
+	set dchr [dict get $info dchr]
+	set dend [dict get $info dend]
+	set loc2poss [dict get $info loc2poss]
+	set type2pos [dict get $info type2pos]
+	if {[dict exists $info cache]} {
+		set line2 [dict get $info cache]
+	} else {
+		set line2 [split [gets $af] \t]
+	}
+	set loc2 [list_sub $line2 $loc2poss]
+	foreach {chr2 begin2} $loc2 break
+	foreach {pchr pbegin} $loc2 break
+	set result {}
+	while 1 {
+		set type2 [lindex $line2 $type2pos]
+		if {$type2 in "del sub"} {
+			foreach {dchr dbegin dend} $loc2 break
+			dict set info dchr $dchr
+			dict set info dend $dend
+		} elseif {$type2 eq "snp"} {
+			set result $line2
+		}
+		set line2 [split [gets $af] \t]
+		if {[eof $af]} {
+			if {![llength $line2]} break
+		} elseif {![llength $line2]} continue
+		set loc2 [list_sub $line2 $loc2poss]
+		foreach {chr2 begin2} $loc2 break
+		if {[loc_compare $chr2 $pchr] != 0 || $begin2 != $pbegin} {
+			if {[llength $result]} break
+		}
+	}
+	dict set info cache $line2
+	return $result
+}
+
 proc annot_varall_init {varallfile sample header} {
 	global annot
-	set af [gzopen $varallfile]
+
+	catch {close $af} ; set af [gzopen $varallfile]
 	set aheader [tsv_open $af]
 	set loc2poss [tsv_basicfields $aheader 6 0]
 	set poss1 {}
@@ -201,28 +241,55 @@ proc annot_varall_init {varallfile sample header} {
 		}
 		incr i
 	}
-	set loc2poss [lrange $loc2poss 0 3]
-	set line2 [split [gets $af] \t]
-	set loc2 [list_sub $line2 $loc2poss]
-	set annot(varallinfo,$varallfile,$sample) [dict create af $af poss1 $poss1 poss2 $poss2 line2 $line2 loc2 $loc2 loc2poss $loc2poss]
+	set type2pos [lindex $loc2poss 3]
+	set loc2poss [lrange $loc2poss 0 2]
+	set info [dict create af $af poss1 $poss1 poss2 $poss2 loc2poss $loc2poss type2pos $type2pos dend -1 dchr ""]
+	set line2 [annot_varall_getline info]
+	dict set info line2 $line2
+	set annot(varallinfo,$varallfile,$sample) $info
+
+#	annot_varall_getline info
+	return $info
 }
 
 proc annot_varall_annot {sampleaVar sample loc force lineVar} {
 	global annot
 	upvar $lineVar line
 	upvar $sampleaVar samplea
-	foreach {chr begin end} $loc break
+	foreach {chr begin end type} $loc break
 	set varallfile $samplea(varall,$sample)
 	set info $annot(varallinfo,$varallfile,$sample)
+	if {$type eq "snp"} {
+		set loc [lrange $loc 0 2]
+	} else {
+		set loc [list $chr $begin [expr {$begin+1}]]
+	}
+	set dend [dict get $info dend]
+	if {$dend != -1} {
+		set dchr [dict get $info dchr]
+		if {[loc_compare $dchr $chr] != 0} {
+			set dend -1
+			dict set info dend -1
+		}
+	}
 	set af [dict get $info af]
 	set line2 [dict get $info line2]
-	set loc2 [dict get $info loc2]
 	set loc2poss [dict get $info loc2poss]
 	set seq [lindex $line $samplea(seq,$sample)]
 	set zyg [lindex $line $samplea(zyg,$sample)]
-	while {![eof $af]} {
-		set d [lloc_compare $loc $loc2]
+	while 1 {
+		if {[llength $line2]} {
+			set loc2 [list_sub $line2 $loc2poss]
+			set d [lloc_compare $loc $loc2]
+		} else {
+			# no more data in varall
+			set d -1
+		}
 		if {$d == 0} {
+#puts ------
+#putsvars loc sample line line2 info
+			set a1 [lindex $line $samplea(a1,$sample)]
+			set a2 [lindex $line $samplea(a2,$sample)]
 			set poss1 [dict get $info poss1]
 			set cur [list_sub $line $poss1]	
 			set newvalues [list_sub $line2 [dict get $info poss2]]
@@ -239,11 +306,37 @@ proc annot_varall_annot {sampleaVar sample loc force lineVar} {
 				}
 				if {$seq eq "u"} {
 					set zyg u
+				} elseif {$type ne "snp"} {
+					# for simplicity, we indicate for indels reference
+					# to be completely correct, we should find out potential 
+					# differences in the deletion to annotate o
+					# but this is (currently) not done
+					set ref [lindex $line $samplea(ref,$sample)]
+					if {$a1 == "?" || $a2 == "?"} {
+						set a1 $ref
+						lset line $samplea(a1,$sample) $ref
+						lset line $samplea(a2,$sample) $ref
+						set seq r ; set zyg r
+					} else {
+						set alt [lindex $line $samplea(alt,$sample)]
+						set zyg [zyg $a1 $a2 $ref $alt]
+						if {$zyg in "r o"} {set seq r} else {set seq v}
+					}
 				} elseif {$samplea(ref,$sample) != -1} {
 					set ref [lindex $line $samplea(ref,$sample)]
 					set alt [lindex $line $samplea(alt,$sample)]
 					set a1 [lindex $line $samplea(a1,$sample)]
 					set a2 [lindex $line $samplea(a2,$sample)]
+					if {$end <= $dend} {
+						# overlapping a deletion
+						if {$a1 eq $ref} {
+							set a2 @
+							lset line $samplea(a2,$sample) @
+						} else {
+							set a1 @
+							lset line $samplea(a1,$sample) @
+						}
+					}
 					set zyg [zyg $a1 $a2 $ref $alt]
 					if {$zyg in "r o"} {set seq r} else {set seq v}
 				} else {
@@ -252,19 +345,39 @@ proc annot_varall_annot {sampleaVar sample loc force lineVar} {
 				lset line $samplea(seq,$sample) $seq
 				if {$samplea(zyg,$sample) != -1} {lset line $samplea(zyg,$sample) $zyg}
 			}
+#putsvars line
 			break
 		} elseif {$d < 0} {
 			if {$seq eq "?" || $zyg eq "?"} {
-				lset line $samplea(seq,$sample) u
-				if {$samplea(zyg,$sample) != -1} {lset line $samplea(zyg,$sample) u}
+#puts ------d<0
+#putsvars loc sample line line2 info
+				if {$end < $dend} {
+					# in a deletion
+					lset line $samplea(a1,$sample) @
+					lset line $samplea(a2,$sample) @
+					lset line $samplea(seq,$sample) r
+					if {$samplea(zyg,$sample) != -1} {lset line $samplea(zyg,$sample) o}
+				} else {
+					lset line $samplea(seq,$sample) u
+					if {$samplea(zyg,$sample) != -1} {lset line $samplea(zyg,$sample) u}
+				}
+#putsvars line
 			}
 			break
 		}
-		set line2 [split [gets $af] \t]
-		set loc2 [list_sub $line2 $loc2poss]
+		if {![llength $line2]} break
+		set line2 [annot_varall_getline info]
+		set dend [dict get $info dend]
+		if {$dend != -1} {
+			set dchr [dict get $info dchr]
+			if {[loc_compare $dchr $chr] != 0} {
+				set dend -1
+				dict set info dend -1
+			}
+		}
 	}
-	dict set annot(varallinfo,$varallfile,$sample) line2 $line2
-	dict set annot(varallinfo,$varallfile,$sample) loc2 $loc2
+	dict set info line2 $line2
+	set annot(varallinfo,$varallfile,$sample) $info
 }
 
 proc annot_varall_close {varallfile sample} {
@@ -273,3 +386,4 @@ proc annot_varall_close {varallfile sample} {
 	catch {close [dict get $info af]}
 	unset annot(varallinfo,$varallfile,$sample)
 }
+
