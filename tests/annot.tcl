@@ -225,6 +225,40 @@ test gene_annot {gene} {
 	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
 } {} 
 
+test gene_annot {gene exon deletion} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	2499	2601	del	102	{}
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	name	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2
+		chr1	2000	3000	test	+	2050	2950	3	2000,2500,2900,	2100,2600,3000,	testgene
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		chr1	2499	2601	del	102	{}	CDSDELSPLICE	testgene	+test:intron1:0-intron2:0:p.C17Xsd
+	}
+	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv 2> /dev/null
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {} 
+
+test gene_annot {gene exon deletion with no type given} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end
+		chr1	2499	2601
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	name	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2
+		chr1	2000	3000	test	+	2050	2950	3	2000,2500,2900,	2100,2600,3000,	testgene
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	test_impact	test_gene	test_descr
+		chr1	2499	2601	CDSDELSPLICE	testgene	+test:intron1:0-intron2:0:p.C17Xsd
+	}
+	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv 2> /dev/null
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {} 
+
 test reg_annot {basic, extra comments} {
 	file_write tmp/temp2.sft "# a comment\n"
 	exec cat data/vars1.sft >> tmp/temp2.sft

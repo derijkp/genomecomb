@@ -732,6 +732,7 @@ proc open_genefile {df dpossVar {genecol name2} {transcriptcol name}} {
 }
 
 proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transcriptcol name}} {
+#putsvars file genomefile dbfile name annotfile genecol transcriptcol
 	global genomef
 	annot_init
 
@@ -807,7 +808,10 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 		}
 		set prevloc $ploc
 		foreach {chr start end type ref alt} $loc break
-		if {$type eq ""} {set type del}
+		if {$type eq ""} {
+			lset loc 3 del
+			set type del
+		}
 		if {$start > $end} {
 			puts stderr "location start > end error: $loc"
 			exit 1
@@ -828,7 +832,6 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 			set counter 0
 		}
 		# add all overlapping to dblist
-# if {$start == 43198434} {error STOPPED}
 		while {![eof $df]} {
 			set chrcompar [chr_compare $dbchr $chr]
 			if {$chrcompar > 0} break
