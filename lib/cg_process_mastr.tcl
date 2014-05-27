@@ -28,6 +28,23 @@ proc tsv2bed_job {file} {
 	return [file root $file].bed
 }
 
+proc make_alternative_compar_job {experiment} {
+	upvar job_logdir job_logdir
+	job altcompar-$experiment -deps compar/annot_compar-$experiment.tsv -targets [list compar/annot_compar_gatk-${experiment}.tsv compar/annot_compar_gatk-${experiment}_long.tsv] -code {
+		set target1 [lindex $targets 0]
+		set target2 [lindex $targets 1]
+		##remove samtools analysis & move specific annotfields forwards		
+		set fields {chromosome begin end type ref alt amplicons dbnsfp_SIFT_score dbnsfp_Polyphen2_HDIV_score dbnsfp_Polyphen2_HDIV_pred dbnsfp_Polyphen2_HVAR_score dbnsfp_Polyphen2_HVAR_pred snp138_name 1000gCEU refGene_impact refGene_gene refGene_descr dbnsfp_MutationTaster_score dbnsfp_MutationTaster_pred *}
+		cg select -rf {*-sam-*} $dep $target1.temp1
+		cg select -f $fields $target1.temp1 $target1.temp2
+		file delete $target1.temp1
+		file rename -force $target1.temp2 $target1
+		##depivot compar file
+		cg long $target1 $target2.temp
+		file rename -force $target2.temp $target2
+	}
+}
+
 proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTGACGATCGCAAGACTCGGCAGCATCTCCA}} {
 	# using the real adaptorseq leads to false positives near the adaptor
 	# better to have a bit lower coverage in these regions
@@ -166,6 +183,10 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa} {
 	cd $destdir
 	catch {mklink $mastrdir [file tail $mastrdir]}
 	set experiment [file tail $destdir]
+	#set additional annotation files 
+	set dbfiles {}
+	lappend dbfiles [glob *.mastr/inner_amplicons-*]
+	lappend dbfiles [glob $dbdir/extra/*dbnsfp*.tsv]
 	# which samples are there
 	job_logdir $destdir/log_jobs
 	set samples {}
@@ -247,7 +268,8 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa} {
 	job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo [list_remdup $todo]
-	multicompar_job $experiment $dbdir $todo -split $split
+	multicompar_job $experiment $dbdir $todo -split $split -dbfiles $dbfiles
+	make_alternative_compar_job $experiment 
 	cd $keeppwd
 }
 
