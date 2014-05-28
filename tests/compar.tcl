@@ -197,7 +197,7 @@ test multicompar {basic reannot varall} {
 	puts $f [join {chr2 4001 4002 snp A C G C test8e 0.2 r} \t]
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
-	file delete tmp/temp.tsv
+	catch {file delete tmp/temp.tsv}
 	cg multicompar tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	cg multicompar_reannot tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft
@@ -369,6 +369,129 @@ test multicompar {split reannot split multiallelic, only sreg} {
 		chromosome	begin	end	type	ref	alt	sequenced-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	alleleSeq1-sample2	alleleSeq2-sample2
 		1	100	101	snp	T	C	v	T	C	r	G	G
 		1	100	101	snp	T	G	r	T	C	v	G	G
+	}
+	catch {file delete tmp/temp.tsv}
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg multicompar_reannot tmp/temp.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test multicompar {split reannot split multiallelic varall,sreg,zyg, check ref indels} {
+	test_cleantmp
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	100	ins	{}	C	t	{}	C	30
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+	}
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	write_tab tmp/varall-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	100	ins	{}	C	t	{}	C	30
+		chr1	100	101	snp	A	G	r	G	G	31
+	}
+	write_tab tmp/varall-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	101	snp	A	G	r	G	G	40
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	score-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	score-sample2
+		1	100	100	ins	{}	C	v	t	{}	C	30	r	r	{}	{}	40
+	}
+	catch {file delete tmp/temp.tsv}
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg multicompar_reannot tmp/temp.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test multicompar {split reannot split multiallelic ins,sreg,zyg} {
+	test_cleantmp
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	100	ins	{}	C	t	{}	C	40
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	100	ins	{}	CC	t	{}	CC	40
+	}
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	write_tab tmp/varall-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	100	ins	{}	C	t	{}	C	40
+		chr1	100	101	snp	A	G	r	G	G	40
+	}
+	write_tab tmp/varall-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	100	ins	{}	CC	t	{}	CC	40
+		chr1	100	101	snp	A	G	r	G	G	40
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	score-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	score-sample2
+		1	100	100	ins	{}	C	v	t	{}	C	40	r	o	{}	CC	40
+		1	100	100	ins	{}	CC	r	o	{}	C	40	v	t	{}	CC	40
+	}
+	catch {file delete tmp/temp.tsv}
+	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg multicompar_reannot tmp/temp.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test multicompar {split reannot split multiallelic varall,sreg,zyg, check ref indels, overlapping snp} {
+
+	test_cleantmp
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	100	ins	{}	C	t	{}	C	40
+		chr1	151	152	snp	A	T	t	A	T	32
+		chr1	160	162	del	NN	{}	m	{}	{}	33
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	150	152	del	GT	{}	t	GT	{}	30
+		chr1	160	161	snp	A	C	t	A	C	33
+		chr1	160	161	snp	A	T	t	A	T	33
+	}
+	write_tab tmp/varall-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2	score
+		chr1	100	100	ins	{}	C	t	{}	C	40
+		chr1	100	101	snp	G	G	r	G	G	41
+		chr1	150	151	snp	G	G	r	G	G	30
+		chr1	151	152	snp	A	T	t	A	T	32
+		chr1	152	153	snp	T	T	r	T	T	31
+		chr1	160	162	del	NN	{}	m	{}	{}	33
+	}
+	write_tab tmp/varall-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2	score
+		chr1	100	101	snp	G	G	r	G	G	41
+		chr1	150	152	del	GT	{}	t	GT	{}	30
+		chr1	150	151	snp	G	G	r	G	G	30
+		chr1	151	152	snp	A	A	r	A	A	31
+		chr1	152	153	snp	A	A	r	A	A	32
+		chr1	160	161	snp	A	C	t	A	C	33
+		chr1	160	161	snp	A	T	t	A	T	33
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	score-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	score-sample2
+		1	100	100	ins	{}	C	v	t	{}	C	40	r	r	{}	{}	41
+		1	150	152	del	GT	{}	r	r	GT	GT	30	v	t	GT	{}	30
+		1	151	152	snp	A	T	v	t	A	T	32	r	o	A	@	31
+		1	160	161	snp	A	C	r	o	@	@	?	v	t	A	C	33
+		1	160	161	snp	A	T	r	o	@	@	?	v	t	A	T	33
+		1	160	162	del	NN	{}	v	m	{}	{}	33	r	r	NN	NN	33
 	}
 	catch {file delete tmp/temp.tsv}
 	cg multicompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
