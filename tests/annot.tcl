@@ -259,6 +259,24 @@ test gene_annot {gene exon deletion with no type given} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {} 
 
+test gene_annot {gene and coding gene deletion} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	1000	2000	del	1000	{}
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	name	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2
+		chr1	1500	1800	test	+	{}	{}	1	1500,	1800,	testgene
+		chr1	1500	1800	cdstest	+	1500	1800	1	1500,	1800,	cdstestgene
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		chr1	1000	2000	del	1000	{}	GENEDEL;GENEDEL	testgene;cdstestgene	testgene:del;cdstestgene:del
+	}
+	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv 2> /dev/null
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {} 
+
 test reg_annot {basic, extra comments} {
 	file_write tmp/temp2.sft "# a comment\n"
 	exec cat data/vars1.sft >> tmp/temp2.sft
