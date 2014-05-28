@@ -67,15 +67,15 @@ proc tsv_select_makecol {name code {arg @neededfield@} {prequery {}}} {
 proc tsv_select_sampleusefield {header field sample calccolsVar {neededfieldsVar {}}} {
 	if {$neededfieldsVar ne ""} {upvar $neededfieldsVar neededfields}
 	upvar $calccolsVar calccols
-	if {[info exists calccols($field)]} {
-		set fieldused $field
-	} elseif {$sample ne "" && [info exists calccols($field-$sample)]} {
+	if {$sample ne "" && [info exists calccols($field-$sample)]} {
 		set fieldused ${field}-$sample
-	} elseif {[inlist $header $field]} {
-		set fieldused $field
-		lappend neededfields $fieldused
 	} elseif {$sample ne "" && [inlist $header ${field}-$sample]} {
 		set fieldused ${field}-$sample
+		lappend neededfields $fieldused
+	} elseif {[info exists calccols($field)]} {
+		set fieldused $field
+	} elseif {[inlist $header $field]} {
+		set fieldused $field
 		lappend neededfields $fieldused
 	} else {
 		return ""

@@ -174,4 +174,18 @@ del	1
 ins	1
 snp	8}
 
+test select {group query field with and without sample preference} {
+	write_tab tmp/temp.tsv {
+		id	val	val-s1	val-s2
+		i1	1	0	1
+		i2	1	1	0
+		i3	2	1	1
+		i4	0	0	0
+		i5	1	0	1
+	}
+	cg select -q {$val == 1} -g {sample {} val 1} -gc count tmp/temp.tsv
+} {sample	val	count
+s1	1	1
+s2	1	2}
+
 testsummarize
