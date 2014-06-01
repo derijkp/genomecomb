@@ -89,7 +89,7 @@ proc tsv_select_addaggregatecalc {todolist} {
 	append colactions \t\t\t\t\t {set resultdatacols($_colname) 1} \n
 	append colactions \t\t\t\t\t {incr resultcount($_groupname,$_colname)} \n
 	foreach {item todo} $todolist {
-		foreach {field fieldused} $item break
+		foreach {field fieldused valuetype} $item break
 		append colactions \t\t\t\t\t [string_change {set _val {@val@}} [list @val@ $field]] \n
 		if {[inlist $todo total]} {
 			append colactions \t\t\t\t\t {incr resultdata($_colname,t)} \n
@@ -98,52 +98,110 @@ proc tsv_select_addaggregatecalc {todolist} {
 			append colactions \t\t\t\t\t {incr resultdata($_groupname,gt)} \n
 		}
 		if {[inlist $todo max]} {
-			append colactions [string_change {
+			if {$valuetype} {
+				if {[isdouble $fieldused]} {
+					append colactions [string_change {
+						if {![info exists resultdata($_groupname,$_colname,$_val,max)] || @val@ > $resultdata($_groupname,$_colname,$_val,max)} {
+							set resultdata($_groupname,$_colname,$_val,max) @val@
+						}
+					} [list @val@ $fieldused]]
+				}
+			} else {
+				append colactions [string_change {
 					if {[isdouble ${@val@}] && (![info exists resultdata($_groupname,$_colname,$_val,max)] || ${@val@} > $resultdata($_groupname,$_colname,$_val,max))} {
 						set resultdata($_groupname,$_colname,$_val,max) ${@val@}
 					}
-			} [list @val@ $fieldused]]
+				} [list @val@ $fieldused]]
+			}
 		}
 		if {[inlist $todo min]} {
-			append colactions [string_change {
+			if {$valuetype} {
+				if {[isdouble $fieldused]} {
+					append colactions [string_change {
+						if {![info exists resultdata($_groupname,$_colname,$_val,min)] || @val@ < $resultdata($_groupname,$_colname,$_val,min)} {
+							set resultdata($_groupname,$_colname,$_val,min) @val@
+						}
+					} [list @val@ $fieldused]]
+				}
+			} else {
+				append colactions [string_change {
 					if {[isdouble ${@val@}] && (![info exists resultdata($_groupname,$_colname,$_val,min)] || ${@val@} < $resultdata($_groupname,$_colname,$_val,min))} {
 						set resultdata($_groupname,$_colname,$_val,min) ${@val@}
 					}
-			} [list @val@ $fieldused]]
+				} [list @val@ $fieldused]]
+			}
 		}
 		if {[inlist $todo avg]} {
-			append colactions [string_change {
+			append colactions {
 					if {![info exists resultdata($_groupname,$_colname,$_val,avg)]} {
 						set resultdata($_groupname,$_colname,$_val,avg) 0.0
 					}
+			}
+			if {$valuetype} {
+				if {[isdouble $fieldused]} {
+					append colactions [string_change {
+						set _delta [expr {@val@-$resultdata($_groupname,$_colname,$_val,avg)}]
+						set resultdata($_groupname,$_colname,$_val,avg) [expr {$resultdata($_groupname,$_colname,$_val,avg) + $_delta/$resultcount($_groupname,$_colname)}]
+					} [list @val@ $fieldused]]
+				}
+			} else {
+				append colactions [string_change {
 					if {[string is double ${@val@}]} {
 						set _delta [expr {${@val@}-$resultdata($_groupname,$_colname,$_val,avg)}]
 						set resultdata($_groupname,$_colname,$_val,avg) [expr {$resultdata($_groupname,$_colname,$_val,avg) + $_delta/$resultcount($_groupname,$_colname)}]
 					}
-			} [list @val@ $fieldused]]
+				} [list @val@ $fieldused]]
+			}
 		}
 		if {[inlist $todo m2]} {
-			append colactions [string_change {
+			append colactions {
 					if {![info exists resultdata($_groupname,$_colname,$_val,m2)]} {
 						set resultdata($_groupname,$_colname,$_val,m2) 0.0
 					}
+			}
+			if {$valuetype} {
+				if {[isdouble $fieldused]} {
+					append colactions [string_change {
+						set resultdata($_groupname,$_colname,$_val,m2) [expr {$resultdata($_groupname,$_colname,$_val,m2) + $delta*(@val@-$resultdata($_groupname,$_colname,$_val,avg))}]
+					} [list @val@ $fieldused]]
+				}
+			} else {
+				append colactions [string_change {
 					if {[string is double ${@val@}]} {
 						set resultdata($_groupname,$_colname,$_val,m2) [expr {$resultdata($_groupname,$_colname,$_val,m2) + $delta*(${@val@}-$resultdata($_groupname,$_colname,$_val,avg))}]
 					}
-			} [list @val@ $fieldused]]
+				} [list @val@ $fieldused]]
+			}
 		}
 		if {[inlist $todo distinct]} {
+			if {!$valuetype} {
+				set fieldused \$\{$fieldused\}
+			}
 			append colactions [string_change {
-					dict set resultdata($_groupname,$_colname,$_val,d) ${@val@} 1
+					dict set resultdata($_groupname,$_colname,$_val,d) @val@ 1
 			} [list @val@ $fieldused]]
 		}
 		if {[inlist $todo list]} {
+			if {!$valuetype} {
+				set fieldused \$\{$fieldused\}
+			}
 			append colactions [string_change {
-					lappend resultdata($_groupname,$_colname,$_val,d) ${@val@}
+					lappend resultdata($_groupname,$_colname,$_val,d) @val@
 			} [list @val@ $fieldused]]
 		}
 		if {[inlist $todo sum]} {
-			append colactions [string_change {
+			if {$valuetype} {
+				if {[isdouble $fieldused]} {
+					append colactions [string_change {
+						if {![info exists resultdata($_groupname,$_colname,$_val,s)]} {
+							set resultdata($_groupname,$_colname,$_val,s) @val@
+						} else {
+							set resultdata($_groupname,$_colname,$_val,s) [expr {$resultdata($_groupname,$_colname,$_val,s) + @val@}]
+						}
+					} [list @val@ $fieldused]]
+				}
+			} else {
+				append colactions [string_change {
 					if {[isdouble ${@val@}]} {
 						if {![info exists resultdata($_groupname,$_colname,$_val,s)]} {
 							set resultdata($_groupname,$_colname,$_val,s) ${@val@}
@@ -151,7 +209,8 @@ proc tsv_select_addaggregatecalc {todolist} {
 							set resultdata($_groupname,$_colname,$_val,s) [expr {$resultdata($_groupname,$_colname,$_val,s) + ${@val@}}]
 						}
 					}
-			} [list @val@ $fieldused]]
+				} [list @val@ $fieldused]]
+			}
 		}
 	}
 	#	set stddev [expr {sqrt($m2/($n - 1))}]
@@ -319,6 +378,21 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 						}
 					}
 				}
+			} elseif {![catch {tsv_select_sampledata $field-$sample} value] || ![catch {tsv_select_sampledata $field} value]} {
+				lappend groupname $value
+				if {[llength $filter]} {
+					if {[string first * $filter] == -1} {
+						if {![inlist $filter $value]} {lappend rowquery 0}
+					} else {
+						set final 1
+						foreach temp $filter {
+							if {![string match $temp $value]} {
+								set final 0; break
+							}
+						}
+						if {$final == 0} {lappend rowquery 0}
+					}
+				}
 			} else {
 				lappend groupname $field
 			}
@@ -335,7 +409,9 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 				} else {
 					set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
 					if {$fieldused ne ""} {
-						list_addnew todoa([list $field $fieldused]) $item
+						list_addnew todoa([list $field $fieldused 0]) $item
+					} elseif {![catch {tsv_select_sampledata $field-$sample} value] || ![catch {tsv_select_sampledata $field} value]} {
+						list_addnew todoa([list $field $value 1]) $item
 					}
 				}
 			}
@@ -358,6 +434,21 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 						foreach temp $filter {
 							lappend colquery "\[string match \{$temp\} \$\{$fieldused\}\]"
 						}
+					}
+				}
+			} elseif {![catch {tsv_select_sampledata $field-$sample} value] || ![catch {tsv_select_sampledata $field} value]} {
+				lappend col $value
+				if {[llength $filter]} {
+					if {[string first * $filter] == -1} {
+						if {![inlist $filter $value]} {lappend colquery 0}
+					} else {
+						set final 1
+						foreach temp $filter {
+							if {![string match $temp $value]} {
+								set final 0; break
+							}
+						}
+						if {$final == 0} {lappend colquery 0}
 					}
 				}
 			}

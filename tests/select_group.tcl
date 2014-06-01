@@ -200,4 +200,128 @@ sample1	Ax	1
 sample1	Bx	1
 sample2	Bx	2}
 
+test select {group with wildcard calc col and sampledata} {
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2
+		1	A	B
+		2	B	B
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+	}
+	exec cg select -f {{typex-*="${type-*}${gender-*}"}} -g {sample {} typex {}} -gc {count} tmp/temp.tsv
+} {sample	typex	count
+sample1	Am	1
+sample1	Bm	1
+sample2	Bf	2}
+
+test select {sampledata in group} {
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -g {type {} gender {}} -gc {sample {} count} tmp/temp.tsv
+} {type	gender	sample1-count	sample2-count	sample3-count
+A	f	0	0	1
+A	m	1	0	0
+B	f	0	2	1
+B	m	1	0	0}
+
+test select {sampledata in group, filter} {
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -g {type {} gender f} -gc {sample {} count} tmp/temp.tsv
+} {type	gender	sample2-count	sample3-count
+A	f	0	1
+B	f	2	1}
+
+test select {sampledata in gc} {
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -g {type {}} -gc {sample {} gender f count} tmp/temp.tsv
+} {type	sample2-f-count	sample3-f-count
+A	0	1
+B	2	1}
+
+test select {sampledata in gc, sample in g} {
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -g {sample {}} -gc {type {} gender {} count} tmp/temp.tsv
+} {sample	A-f-count	A-m-count	B-f-count	B-m-count
+sample1	0	1	0	1
+sample2	0	0	2	0
+sample3	1	0	1	0}
+
+test select {sampledata in agregate, sample in g} {
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -g {sample {}} -gc {type {} list(gender)} tmp/temp.tsv
+} {sample	A-list_gender	B-list_gender
+sample1	m	m
+sample2		f,f
+sample3	f	f}
+
+test select {sampledata in agregate, sample in g} {
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	num
+		sample1	1
+		sample2	2
+		sample3	3
+	}
+	exec cg select -g {sample {}} -gc {type {} list(num),sum(num),avg(num)} tmp/temp.tsv
+} {sample	A-list_num	A-sum_num	A-avg_num	B-list_num	B-sum_num	B-avg_num
+sample1	1	1	1.0	1	1	1.0
+sample2				2,2	4	2.0
+sample3	3	3	3.0	3	3	3.0}
+
 testsummarize
