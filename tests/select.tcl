@@ -489,6 +489,22 @@ test select {sampledata in fields} {
 } {id	gender-sample1	gender-sample2	gender-sample3
 1	m	f	f}
 
+test select {sampledata in fields using -sd} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	freq-sample2	freq-sample3
+		1	0.4	0.8	1.0
+	}
+	write_tab tmp/sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -sd tmp/sampledata.tsv -f {id gender-sample1 gender-sample2 gender-sample3} tmp/temp.tsv
+} {id	gender-sample1	gender-sample2	gender-sample3
+1	m	f	f}
+
 test select {sampledata in code of calculated column} {
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3

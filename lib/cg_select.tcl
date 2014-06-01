@@ -9,16 +9,16 @@ exec tclsh "$0" ${1+"$@"}
 #
 
 proc tsv_select_sampledata {field} {
-	global tsv_select_filename tsv_select_sampledata
+	global tsv_select_sampledatafile tsv_select_sampledata
 	if {![info exists tsv_select_sampledata]} {
-		if {![info exists tsv_select_filename]} {
-			error "field \"$field\" not present and no sampledata file found"
-		}
-		set sampledatafile [file root [gzroot $tsv_select_filename]].sampledata.tsv
-		if {![file exists $sampledatafile]} {
+		if {[get tsv_select_sampledatafile ""] eq ""} {
 			error "field \"$field\" not present in file and no sampledata file found"
 		}
-		set f [gzopen $sampledatafile]
+		if {![file exists $tsv_select_sampledatafile]} {
+			error "field \"$field\" not present in file and no sampledata file found"
+		}
+		set tsv_select_sampledata() {}
+		set f [gzopen $tsv_select_sampledatafile]
 		set header [tsv_open $f]
 		set idpos [lsearch $header id]
 		if {$idpos == -1} {error "sampledata file must have an id field"}
@@ -38,7 +38,7 @@ proc tsv_select_sampledata {field} {
 	} else {
 		set fields [array names tsv_select_sampledata $field]
 		if {[llength $fields]} {return $fields}
-		error "field \"$field\" not present, also not in sampledata file [file root [gzroot $tsv_select_filename]].sampledata.tsv"
+		error "field \"$field\" not present, also not in sampledata file $tsv_select_sampledatafile"
 	}
 }
 
@@ -963,7 +963,7 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 }
 
 proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {verbose -1} {samplingskip 0}} {
-# putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index verbose samplingskip ::tsv_select_filename
+# putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index verbose samplingskip
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	if {$hc ni {0 1 2}} {
@@ -1190,6 +1190,12 @@ proc cg_select {args} {
 				if {[regexp {[^=!><\\]=[^=]} $query]} {puts stderr "you may have used = instead of == in query"}
 				regsub -all {\\=} $query = query
 			}
+			-sd {
+				set ::tsv_select_sampledatafile $value
+				if {![file exists $::tsv_select_sampledatafile]} {
+					error "sampledatafile \"$::tsv_select_sampledatafile\" does not exist"
+				}
+			}
 			-qf {
 				set f [gzopen $value]
 				set header [tsv_open $f]
@@ -1272,7 +1278,10 @@ proc cg_select {args} {
 		set filename [lindex $args 0]
 		set index $filename.index
 		set f [gzopen $filename]
-		set ::tsv_select_filename $filename
+		if {[get ::tsv_select_sampledatafile ""] eq ""} {
+			set ::tsv_select_sampledatafile [file root [gzroot $filename]].sampledata.tsv
+			if {![file exists $::tsv_select_sampledatafile]} {set ::tsv_select_sampledatafile ""}
+		}
 	} else {
 		set index {}
 		set f stdin
