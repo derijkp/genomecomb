@@ -188,4 +188,16 @@ test select {group query field with and without sample preference} {
 s1	1	1
 s2	1	2}
 
+test select {group with wildcard calc col} {
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2
+		1	A	B
+		2	B	B
+	}
+	exec cg select -f {{typex-*="${type-*}x"}} -g {sample {} typex {}} -gc {count} tmp/temp.tsv
+} {sample	typex	count
+sample1	Ax	1
+sample1	Bx	1
+sample2	Bx	2}
+
 testsummarize
