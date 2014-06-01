@@ -8,6 +8,40 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+proc tsv_select_sampledata {field} {
+	global tsv_select_filename tsv_select_sampledata
+	if {![info exists tsv_select_sampledata]} {
+		if {![info exists tsv_select_filename]} {
+			error "field \"$field\" not present and no sampledata file found"
+		}
+		set sampledatafile [file root [gzroot $tsv_select_filename]].sampledata.tsv
+		if {![file exists $sampledatafile]} {
+			error "field \"$field\" not present in file and no sampledata file found"
+		}
+		set f [gzopen $sampledatafile]
+		set header [tsv_open $f]
+		set idpos [lsearch $header id]
+		if {$idpos == -1} {error "sampledata file must have an id field"}
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			if {![llength $line]} continue
+			set id [lindex $line $idpos]
+			foreach val $line tempfield $header {
+				if {$tempfield eq "id"} continue
+				set tsv_select_sampledata(${tempfield}-$id) $val
+			}
+		}
+		close $f
+	}
+	if {[info exists tsv_select_sampledata($field)]} {
+		return $tsv_select_sampledata($field)
+	} else {
+		set fields [array names tsv_select_sampledata $field]
+		if {[llength $fields]} {return $fields}
+		error "field \"$field\" not present, also no in sampledata file [file root [gzroot $tsv_select_filename]].sampledata.tsv"
+	}
+}
+
 proc tsv_select_compare {ids header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set id1 [string trim [list_pop ids] "\"\' "]
@@ -283,6 +317,9 @@ proc tsv_select_expandcalcfield {header fielddef} {
 		if {![llength $wildvars]} continue
 		set poss [list_find -glob $header $field]
 		set hfields [list_sub $header $poss]
+		if {![catch {set sampledatafields [tsv_select_sampledata $field]}]} {
+			lappend hfields {*}$sampledatafields
+		}
 		regsub -all {\*+} $field {(.+)} pattern
 		set pattern ^$pattern\$
 		unset -nocomplain a
@@ -380,10 +417,17 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 			if {[inlist $rfields $field]} continue
 			set pos [lsearch $header $field]
 			if {$pos == -1} {
-				error "field \"$field\" not present"
+				if {[string first - $field] != -1} {
+					set value [tsv_select_sampledata $field]
+					lappend rfields $field
+					lappend qposs [list code \"$value\"]
+				} else {
+					error "field \"$field\" not present"
+				}
+			} else {
+				lappend rfields $field
+				lappend qposs $pos
 			}
-			lappend rfields $field
-			lappend qposs $pos
 		}
 	}
 	return $rfields
@@ -983,8 +1027,10 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			} elseif {$el eq ""} {
 				error "field $rfield not present"
 			} elseif {[info exists calccols($rfield)]} {
+				# calculated field, already defined earlier
 				if {$rfield eq $field} {lappend outcols $calccols($rfield)}
 			} else {
+				# field is calculated, add all needed fields to prequery
 				set tempneededfields {}
 				set code [tsv_select_expandcode $header [lindex $el 1] tempneededfields]
 				if {$rfield eq $field} {lappend outcols make_col$num}
@@ -996,7 +1042,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 					if {[info exists calccols($field)]} {
 						append prequery "\t\t\tset \{$field\} \[$calccols($field) @neededfieldsvals@\]\n"
 					} else {
-						error "field \"$field\" not present in file"
+						# tsv_select_sampledata gives not present error if field also not found in sampledata
+						set value [tsv_select_sampledata $field]
+						append prequery "\t\t\tset \{$field\} \"$value\"\n"
 					}
 				}
 				append tclcode [tsv_select_makecol make_col$num $code @neededfields@ $prequery]
@@ -1016,7 +1064,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			if {[info exists calccols($field)]} {
 				append prequery "\t\t\tset \{$field\} \[$calccols($field) \$\{[join $neededfields \}\ \$\{]\}\]\n"
 			} else {
-				error "field \"$field\" not present in file"
+				# tsv_select_sampledata gives not present error if field also not found in sampledata
+				set value [tsv_select_sampledata $field]
+				append prequery "\t\t\tset \{$field\} \"$value\"\n"
 			}
 		}
 		set neededcols [list_cor $header $neededfields]
@@ -1213,6 +1263,7 @@ proc cg_select {args} {
 		set filename [lindex $args 0]
 		set index $filename.index
 		set f [gzopen $filename]
+		set ::tsv_select_filename $filename
 	} else {
 		set index {}
 		set f stdin
@@ -1223,7 +1274,9 @@ proc cg_select {args} {
 	} else {
 		set o stdout
 	}
-	set error [catch {tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $verbose $samplingskip} result]
+	set error [catch {
+		tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $verbose $samplingskip
+	} result]
 	if {$f ne "stdin"} {catch {close $f}}
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$error} {

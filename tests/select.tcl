@@ -93,7 +93,7 @@ chr2	4000	4001	4}
 
 test select {-f wildcard error} {
 	exec cg select -f {chromosome begin end {countG=count($alleleSeq-*, == "G")}} -q {$begin == 4000} [gzfile data/vars1.sft]
-} {field "alleleSeq-*" not present in file} error
+} {field "alleleSeq-*" not present in file and no sampledata file found} error
 
 test select {-f calculated if} {
 	exec cg select -f {chromosome begin end {countG=if(($alleleSeq1-sample1 == "A" || $alleleSeq2-sample1 == "A"),"hasA","noA")}} -q {$begin == 4000} [gzfile data/vars1.sft]
@@ -473,5 +473,68 @@ test select {calculated column with multiple wildcards} {
 } {a1-annot1	a1-annot2	a2-annot1	a2-annot2
 T	T	C	C
 A	A	C	C}
+
+test select {sampledata in fields} {
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	freq-sample2	freq-sample3
+		1	0.4	0.8	1.0
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -f {id gender-sample1 gender-sample2 gender-sample3} tmp/temp.tsv
+} {id	gender-sample1	gender-sample2	gender-sample3
+1	m	f	f}
+
+test select {sampledata in code of calculated column} {
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	freq-sample2	freq-sample3
+		1	0.4	0.8	1.0
+		2	0.8	0.9	0.3
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -f {id {count=scount($freq > 0.5 and $gender eq "f")}} tmp/temp.tsv
+} {id	count
+1	2
+2	1}
+
+test select {sampledata in code of query} {
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	freq-sample2	freq-sample3
+		1	0.4	0.8	1.0
+		2	0.8	0.9	0.3
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -f id -q {scount($freq > 0.5 and $gender eq "f") > 1} tmp/temp.tsv
+} {id
+1}
+
+test select {sampledata in calc field wildcard} {
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	freq-sample2	freq-sample3
+		1	0.4	0.8	1.0
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -f {id {g-*=$gender-*}} tmp/temp.tsv
+} {id	g-sample1	g-sample2	g-sample3
+1	m	f	f}
 
 testsummarize
