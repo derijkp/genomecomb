@@ -175,6 +175,7 @@ ins	1
 snp	8}
 
 test select {group query field with and without sample preference} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	val	val-s1	val-s2
 		i1	1	0	1
@@ -189,6 +190,7 @@ s1	1	1
 s2	1	2}
 
 test select {group with wildcard calc col} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2
 		1	A	B
@@ -201,6 +203,7 @@ sample1	Bx	1
 sample2	Bx	2}
 
 test select {group with wildcard calc col and sampledata} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2
 		1	A	B
@@ -218,6 +221,7 @@ sample1	Bm	1
 sample2	Bf	2}
 
 test select {sampledata in group} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
@@ -237,6 +241,7 @@ B	f	0	2	1
 B	m	1	0	0}
 
 test select {sampledata in group, filter} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
@@ -254,6 +259,7 @@ A	f	0	1
 B	f	2	1}
 
 test select {sampledata in gc} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
@@ -271,6 +277,7 @@ A	0	1
 B	2	1}
 
 test select {sampledata in gc, sample in g} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
@@ -289,6 +296,7 @@ sample2	0	0	2	0
 sample3	1	0	1	0}
 
 test select {sampledata in agregate, sample in g} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
@@ -307,6 +315,7 @@ sample2		f,f
 sample3	f	f}
 
 test select {sampledata in agregate, sample in g} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
@@ -323,5 +332,96 @@ test select {sampledata in agregate, sample in g} {
 sample1	1	1	1.0	1	1	1.0
 sample2				2,2	4	2.0
 sample3	3	3	3.0	3	3	3.0}
+
+test select {hidden sample} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	exec cg select -g {type {}} -gc {count} tmp/temp.tsv
+} {type	count
+A	2
+B	4}
+
+test select {hidden sample, sampledata in gc} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -g {type {}} -gc {gender {} count} tmp/temp.tsv
+} {type	f-count	m-count
+A	1	1
+B	3	1}
+
+test select {hidden sample in sampledata} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -g {gender {}} -gc {count} tmp/temp.tsv
+} {gender	count
+f	4
+m	2}
+
+test select {hidden sample in sampledata, list} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -g {gender {}} -gc {list(type)} tmp/temp.tsv
+} {gender	list_type
+f	B,A,B,B
+m	A,B}
+
+test select {hidden sample in wildcard calc cols} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	exec cg select -f {{typex-*="x$type-*"}} -g {typex {}} -gc {count} tmp/temp.tsv
+} {typex	count
+xA	2
+xB	4}
+
+test select {hidden sample in wildcard calc cols in aggregate} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2	type-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	exec cg select -f {{typex-*="x$type-*"}} -g {sample {}} -gc {list(typex)} tmp/temp.tsv
+} {sample	list_typex
+sample1	xA,xB
+sample2	xB,xB
+sample3	xA,xB}
 
 testsummarize

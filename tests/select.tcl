@@ -475,6 +475,7 @@ T	T	C	C
 A	A	C	C}
 
 test select {sampledata in fields} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
@@ -506,6 +507,7 @@ test select {sampledata in fields using -sd} {
 1	m	f	f}
 
 test select {sampledata in code of calculated column} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
@@ -523,6 +525,7 @@ test select {sampledata in code of calculated column} {
 2	1}
 
 test select {sampledata in code of query} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
@@ -539,6 +542,7 @@ test select {sampledata in code of query} {
 1}
 
 test select {sampledata in calc field wildcard} {
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0

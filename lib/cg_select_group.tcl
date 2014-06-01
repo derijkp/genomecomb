@@ -22,7 +22,8 @@ proc select_parse_grouptypes {grouptypelist} {
 	return $grouptypes
 }
 
-proc select_parse_for_samples {group groupcol header} {
+proc select_parse_for_samples {group groupcol header {calccolsVar {}}} {
+	if {$calccolsVar ne ""} {upvar $calccolsVar calccols}
 	set gsamples {}
 	foreach {field values} [list_concat $group $groupcol] {
 		if {$field eq "sample"} {
@@ -40,6 +41,16 @@ proc select_parse_for_samples {group groupcol header} {
 				set gsamples [samples $header]
 			}
 			break
+		}
+		if {![inlist $header $field] && ![info exists calccols($field)]} {
+			if {[lsearch -glob $header ${field}-*] != -1
+				|| [llength [array names calccols ${field}-*]]
+				|| (![catch {tsv_select_sampledata ${field}-*} temp] && [llength $temp])
+			} {
+				# hidden sample
+				set gsamples [samples $header]
+				break
+			}
 		}
 	}
 	# if no sample field found, do not actually use samples by making gsamples a list with only one empty sample
@@ -294,8 +305,6 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		set groupcol count
 	}
 	set grouptypelist [split [list_pop groupcol] ,]
-	# check groupcol for presence of sample field
-	set gsamples [select_parse_for_samples $group $groupcol $header]
 	# parse grouptypes (aggregate results), and see which functions are needed
 	set grouptypes [select_parse_grouptypes $grouptypelist]
 	# check for calculated fields in group, groupcol and grouptypes, add to qposs and qfields for making precalc
@@ -350,6 +359,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		}
 		incr num
 	}
+	# check group and groupcol for presence of sample field
+	set gsamples [select_parse_for_samples $group $groupcol $header calccols]
 	# make colactions, which will be executed only when the colquery and rowquery is true
 	set addcols {}
 	foreach sample $gsamples {
