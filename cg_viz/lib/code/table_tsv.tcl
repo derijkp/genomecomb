@@ -225,12 +225,14 @@ table_tsv method qfields {} {
 	return $tdata(qfields)
 }
 
-table_tsv method values {field {max 4000}} {
+table_tsv method values {field {max 1000}} {
 	private $object tdata
 	set histofile $tdata(indexdir)/colinfo/$field.colinfo
 	if (![file exists $histofile]) {
 		private $object values
 		if {![info exists values($field)]} {
+			progress start $max "Sampling data"  "Sampling $tdata(file) to show example values for fields, please be patient"
+			catch {update idletasks}
 			set compressed $tdata(compressed)
 			set lineindex $tdata(lineindex)
 			set filelen [dict get $lineindex max]
@@ -264,6 +266,7 @@ table_tsv method values {field {max 4000}} {
 					seek $f $skip current
 					gets $f
 				}
+				progress next
 			}
 			catch {close $f}
 			set result {}
@@ -273,6 +276,7 @@ table_tsv method values {field {max 4000}} {
 			set result [ssort -natural -index 1 -decreasing $result]
 			if {$max > $filelen || $skip} {lappend result {sampled incomplete}}
 			set values($field) $result
+			progress stop
 		}
 		return $values($field)
 	}
@@ -391,14 +395,18 @@ table_tsv method link {tktable button} {
 	$button configure -textvariable [privatevar $object tdata(query)]
 }
 
-table_tsv method index {file} {
+table_tsv method index {file {colinfo 0}} {
 	set time [file mtime $file]
 	set indexdir [gzroot $file].index
 	file mkdir $indexdir
 	set indexfile $indexdir/lines.bcol
 	set ext [file extension $file]
 	if {[inlist {.rz .lz4 .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
-	cg_index -colinfo $file
+	if {$colinfo} {
+		cg_index -colinfo $file
+	} else {
+		cg_index $file
+	}
 	set result [infofile_read $indexdir/info.tsv]
 	dict set result indexdir $indexdir
 	dict set result lineindex [bcol_open $indexfile]
