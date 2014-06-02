@@ -57,6 +57,30 @@ proc cg_long {args} {
 		set cor [list_change $cor {{} -1}]
 		lappend todo [list_concat $aposa(pre) $cor $aposa(post)]
 	}
+	set common [list_common $samplecols $afieldsa(pre)]
+	if {[llength $common]} {
+		foreach field $common {
+			set newfield ${field}_global
+			set num 1
+			while {[inlist $samplecols $newfield]} {
+				set newfield ${field}_global$num
+				incr num
+			}
+			set afieldsa(pre) [list_change $afieldsa(pre) [list $field $newfield]]
+		}
+	}
+	set common [list_common $samplecols $afieldsa(post)]
+	if {[llength $common]} {
+		foreach field $common {
+			set newfield ${field}_global
+			set num 1
+			while {[inlist $samplecols $newfield]} {
+				set newfield ${field}_global$num
+				incr num
+			}
+			set afieldsa(post) [list_change $afieldsa(post) [list $field $newfield]]
+		}
+	}
 	puts $o [join [list_concat sample $afieldsa(pre) $samplecols $afieldsa(post)] \t]
 	while {![eof $f]} {
 		set line [split [gets $f] \t]

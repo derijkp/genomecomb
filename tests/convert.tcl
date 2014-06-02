@@ -345,6 +345,25 @@ test format {long with post, multialt} {
 	exec diff tmp/long.tsv tmp/expected.tsv
 } {}
 
+test format {long with overlapping field} {
+	write_tab tmp/wide.tsv {
+		id	validated validated-s1 validated-s2 validated-s3
+		1	2	1	0	1
+		2	0	0	0	0
+	}
+	write_tab tmp/expected.tsv {
+		sample	id	validated_global	validated
+		s1	1	2	1
+		s2	1	2	0
+		s3	1	2	1
+		s1	2	0	0
+		s2	2	0	0
+		s3	2	0	0
+	}
+	exec cg long tmp/wide.tsv tmp/long.tsv
+	exec diff tmp/long.tsv tmp/expected.tsv
+} {}
+
 test format {wide} {
 	write_tab tmp/long.tsv {
 		chromosome sample begin end type ref alt freq sequenced alleleSeq1 alleleseq2 zyg
