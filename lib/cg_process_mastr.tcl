@@ -34,8 +34,9 @@ proc make_alternative_compar_job {experiment} {
 		set target1 [lindex $targets 0]
 		set target2 [lindex $targets 1]
 		##remove samtools analysis & move specific annotfields forwards		
-		set fields {chromosome begin end type ref alt amplicons dbnsfp_SIFT_score dbnsfp_Polyphen2_HDIV_score dbnsfp_Polyphen2_HDIV_pred dbnsfp_Polyphen2_HVAR_score dbnsfp_Polyphen2_HVAR_pred snp138_name 1000gCEU refGene_impact refGene_gene refGene_descr dbnsfp_MutationTaster_score dbnsfp_MutationTaster_pred *}
 		cg select -rf {*-sam-*} $dep $target1.temp1
+		set cfields [cg select -h $target1.temp1]
+		set fields [list_common {chromosome begin end type ref alt amplicons dbnsfp_SIFT_score dbnsfp_Polyphen2_HDIV_score dbnsfp_Polyphen2_HDIV_pred dbnsfp_Polyphen2_HVAR_score dbnsfp_Polyphen2_HVAR_pred snp138_name 1000gCEU refGene_impact refGene_gene refGene_descr dbnsfp_MutationTaster_score dbnsfp_MutationTaster_pred *} $cfields]
 		cg select -f $fields $target1.temp1 $target1.temp2
 		file delete $target1.temp1
 		file rename -force $target1.temp2 $target1
