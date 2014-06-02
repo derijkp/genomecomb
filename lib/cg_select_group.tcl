@@ -297,6 +297,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	# precalc is run for every match (sets some variables used in query, etc.)
 	regsub -all \n [string trim $group] { } group
 	if {[llength $group] == 1} {lappend group {}}
+	# start making code
+	set tclcode "package require genomecomb\n"
 	unset -nocomplain calccols
 	# more than one groupcol not supported (yet)
 	set groupcol [lindex $groupcols 0]
@@ -353,9 +355,13 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	set num 0
 	foreach el $qposs field $qfields {
 		if {![isint $el] && $el ne "" && ![info exists calccols($field)]} {
-			set code [tsv_select_expandcode $header [lindex $el 1] neededfields prequery calccols]
-			set code [tsv_select_makecol make_col$num $code @neededfields@ $prequery]
-			set calccols($field) [list make_col$num $code]
+			set tempneededfields {}
+			set code [tsv_select_expandcode $header [lindex $el 1] tempneededfields prequery calccols]
+			set tempneededfields [list_remdup $tempneededfields]
+			set code [tsv_select_makecol make_col$num $code $tempneededfields $prequery]
+			lappend neededfields {*}$tempneededfields
+			append tclcode $code\n
+			set calccols($field) "\t\t\t\tset \{$field\} \[make_col$num \$\{[join $tempneededfields \}\ \$\{]\}\]\n"
 		}
 		incr num
 	}
@@ -478,8 +484,6 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		}
 	}
 	set neededfields [list_remdup $neededfields]
-	# start making code
-	set tclcode "package require genomecomb\n"
 	# see what we need of calculated fields
 	set calcfieldsquery [list_lremove $neededfields $header]
 	set calcfieldsquery [list_remove $calcfieldsquery ROW]
@@ -487,9 +491,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	set prequery {}
 	foreach field $calcfieldsquery {
 		if {[info exists calccols($field)]} {
-			foreach {procname code} $calccols($field) break
-			append tclcode $code\n
-			append prequery "\t\t\tset \{$field\} \[$procname \$\{[join $neededfields \}\ \$\{]\}\]\n"
+			append prequery $calccols($field)
 			unset calccols($field)
 		} else {
 			# tsv_select_sampledata gives not present error if field also not found in sampledata
@@ -500,9 +502,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	# actually make precalc: all calculated fields needed for group, but not for query (these are already in prequery)
 	set precalc {}
 	foreach field [array names calccols] {
-		foreach {procname code} $calccols($field) break
-		append tclcode $code\n
-		append precalc "\t\t\t\tset \{$field\} \[$procname \$\{[join $neededfields \}\ \$\{]\}\]\n"
+		append precalc $calccols($field)
 	}
 	set neededcols [list_cor $header $neededfields]
 	append tclcode {

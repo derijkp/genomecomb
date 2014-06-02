@@ -950,7 +950,7 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 		set prequery {}
 		foreach field $calcfieldsquery {
 			if {[info exists calccols($field)]} {
-				append prequery "\t\t\tset \{$field\} \[$calccols($field) @neededfieldsvals@\]\n"
+				append prequery $calccols($field)
 			} else {
 				# tsv_select_sampledata gives not present error if field also not found in sampledata
 				set value [tsv_select_sampledata $field]
@@ -1019,28 +1019,21 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		lappend pipe $sort
 	}
 # putslog stderr ----------\n$query\n----------
+	set tclcode {}
 	if {$group ne ""} {
 		append tclcode \n [tsv_select_group $header $pquery $qposs $qfields $group $groupcols $neededfields $verbose]
 		#file_write /tmp/temp.tcl $tclcode\n
 		#putsvars tclcode
-		if {[string length $tclcode] > 2000} {
-			set tempfile [tempfile]
-			file_write $tempfile $tclcode\n
-			#file copy $tempfile /tmp/temp.txt
-			lappend pipe [list cg source $tempfile]
-		} else {
-			#putsvars tclcode
-			lappend pipe [list cg exec $tclcode]
-		}
 	} elseif {$query ne "" || [llength $qfields]} {
 		set outcols {}
 		set num 0
 		# start making code
-		# neededfields will contain all fields needed by the query proc and by the output procs
-		# as the same args will be used for all, start with a placeholder (@neededfields@) here 
+		# outcols will contain the column number for plain fields, and a output proc name for calculated fields
+		# neededfields will contain all fields needed by the query proc (tsv_selectc_query) and by the output procs
+		# as the same args will be used for all these, start with a placeholder (@neededfields@) here 
 		# that will be filled in at the end
-		# outcols contains the column number for plain fields and a proc name for calculated fields
-		set tclcode "package require genomecomb\n"
+		append tclcode "package require genomecomb\n"
+		unset -nocomplain outcalccols
 		foreach el $qposs field $qfields {
 			if {[string index $field 0] eq "-"} {set rfield [string range $field 1 end]} else {set rfield $field}
 			if {[isint $el]} {
@@ -1052,13 +1045,23 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				error "field $rfield not present"
 			} elseif {[info exists calccols($rfield)]} {
 				# calculated field, already defined earlier
-				if {$rfield eq $field} {lappend outcols $calccols($rfield)}
+				if {$rfield eq $field} {lappend outcols [lindex $calccols($rfield) 0]}
 			} else {
 				# field is calculated, add all needed fields to prequery
-				set code [tsv_select_expandcode $header [lindex $el 1] neededfields prequery calccols]
-				if {$rfield eq $field} {lappend outcols make_col$num}
-				append tclcode [tsv_select_makecol make_col$num $code @neededfields@ $prequery]
-				set calccols($rfield) make_col$num
+				set tempneededfields {}
+				set code [tsv_select_expandcode $header [lindex $el 1] tempneededfields prequery calccols]
+				set tempneededfields [list_remdup $tempneededfields]
+				lappend neededfields {*}$tempneededfields
+				if {$rfield eq $field} {
+					# proc for output
+					append tclcode [tsv_select_makecol make_col$num $code @neededfields@ $prequery]
+					lappend outcols make_col$num
+					set outcalccols($field) make_col$num
+					incr num
+				}
+				# code for query
+				append tclcode [tsv_select_makecol make_col$num $code $tempneededfields $prequery]
+				set calccols($rfield) "\t\t\t\tset \{$rfield\} \[make_col$num \$\{[join $tempneededfields \}\ \$\{]\}\]\n"
 			}
 			incr num
 		}
@@ -1071,7 +1074,8 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		set prequery {}
 		foreach field $calcfieldsquery {
 			if {[info exists calccols($field)]} {
-				append prequery "\t\t\tset \{$field\} \[$calccols($field) \$\{[join $neededfields \}\ \$\{]\}\]\n"
+				append prequery $calccols($field)
+				incr num
 			} else {
 				# tsv_select_sampledata gives not present error if field also not found in sampledata
 				set value [tsv_select_sampledata $field]
@@ -1119,15 +1123,15 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			}]
 		}
 		set tclcode [string_change $tclcode [list @neededfields@ $neededfields @neededfieldsvals@ \$\{[join $neededfields \}\ \$\{]\}]]
-		if {[string length $tclcode] > 2000} {
-			set tempfile [tempfile]
-			file_write $tempfile $tclcode\n
-			#file copy $tempfile /tmp/temp.txt
-			lappend pipe [list cg source $tempfile]
-		} else {
-			#putsvars tclcode
-			lappend pipe [list cg exec $tclcode]
-		}
+	}
+	if {[string length $tclcode] > 2000} {
+		set tempfile [tempfile]
+		file_write $tempfile $tclcode\n
+		# file copy -force $tempfile /tmp/temp.txt
+		lappend pipe [list cg source $tempfile]
+	} elseif {[string length $tclcode]} {
+		#putsvars tclcode
+		lappend pipe [list cg exec $tclcode]
 	}
 #putslog -------------pipe-------------------
 #putslog pipe:[join $pipe " | "]

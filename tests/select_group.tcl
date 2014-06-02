@@ -444,4 +444,18 @@ test select_group {sampledata in code of query} {
 A	2
 B	1}
 
+test select_group {wildcard calc column used in gc} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type	val-sample1	val-sample2	val-sample3
+		1	A	2	0	1
+		2	B	5	0	2
+		3	A	0	1	3
+		4	B	1	9	4
+	}
+	exec cg select -f {{valb-*=if($val-* == 0,0,1)}} -g type -gc {valb {} count} tmp/temp.tsv
+} {type	0-count	1-count
+A	2	4
+B	1	5}
+
 testsummarize

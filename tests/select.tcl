@@ -587,4 +587,18 @@ test select {sampledata in calc field wildcard} {
 } {id	g-sample1	g-sample2	g-sample3
 1	m	f	f}
 
+test select_group {wildcard calc column in query} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	val-sample1	val-sample2	val-sample3
+		1	2	0	1
+		2	5	0	2
+		3	0	1	3
+		4	1	9	4
+	}
+	exec cg select -f {id {-valb-*=if($val-* == 0,0,1)}} -q {$valb-sample2} tmp/temp.tsv
+} {id
+3
+4}
+
 testsummarize
