@@ -316,6 +316,7 @@ proc bam_clean_job {bamfile refseq sample args} {
 	set realign 1
 	set realignopts {}
 	set realigndeps {}
+	set clipamplicons {}
 	foreach {key value} $args {
 		switch -- $key {
 			-removeduplicates {set removeduplicates $value}
@@ -323,6 +324,9 @@ proc bam_clean_job {bamfile refseq sample args} {
 			-bed {
 				lappend realigndeps $value
 				# add to realignopts afterwards (if we know the realign method)
+			}
+			-clipamplicons {
+				set clipamplicons $value
 			}
 			default {error "bam_clean_job: unknown option $key"}
 		}
@@ -336,29 +340,35 @@ proc bam_clean_job {bamfile refseq sample args} {
 			lappend realignopts -L $value
 		}
 	}
-	set pre [lindex [split $bamfile -] 0]
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
+	set pre [lindex [split $file -] 0]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	# make gatk refseq
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set dict [file root $gatkrefseq].dict
-	# sort using picard
+	# precalc skips and cleanup
 	set skips {}
 	set cleanup {}
+	set temproot s$root
 	if {$removeduplicates} {
-		lappend skips -skip $dir/$pre-ds$root.bam
-		lappend cleanup $dir/$pre-s$root.bam $dir/$pre-s$root.bam.bai
-		if {$realign ne "0"} {
-			lappend skips -skip $dir/$pre-rds$root.bam
-			lappend cleanup $dir/$pre-ds$root.bam $dir/$pre-ds$root.bam.bai
-		}
-	} else {
-		if {$realign ne "0"} {
-			lappend skips -skip $dir/$pre-rs$root.bam
-			lappend cleanup $dir/$pre-s$root.bam $dir/$pre-s$root.bam.bai
-		}
+		lappend skips -skip $dir/$pre-d$temproot.bam
+		lappend cleanup $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
+		set temproot d$temproot
 	}
+	if {$realign ne "0"} {
+		lappend skips -skip $dir/$pre-r$temproot.bam
+		lappend cleanup $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
+		set temproot r$temproot
+	}
+	if {$clipamplicons ne ""} {
+		lappend skips -skip $dir/$pre-c$temproot.bam
+		lappend cleanup $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
+		set temproot c$temproot
+	}
+	list_pop cleanup; list_pop cleanup;
+	# start jobs
+	# sort using picard
 	job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
 	-vars {removeduplicates sample picard} {*}$skips -code {
 		file delete $target.temp
@@ -370,8 +380,9 @@ proc bam_clean_job {bamfile refseq sample args} {
 	}
 	set root s$root
 	if {$removeduplicates} {
+		list_pop skips 0; list_pop skips 0;
 		job bamremdup-$root -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-d$root.bam} \
-		-vars {sample picard} -skip {$dir/$pre-rd$root.bam} -code {
+		-vars {sample picard} {*}$skips -code {
 			puts "removing duplicates"
 			exec java -jar $picard/MarkDuplicates.jar	I=$dep	O=$target.temp METRICS_FILE=$target.dupmetrics 2>@ stderr >@ stdout
 			file rename -force $target.temp $target
@@ -379,19 +390,18 @@ proc bam_clean_job {bamfile refseq sample args} {
 		set root d$root
 	}
 	# index intermediate result
-	job bamindex-$pre-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai \
-	-skip {$dir/$pre-ds$root.bam} -skip {$dir/$pre-rs$root.bam} -skip {$dir/$pre-rds$root.bam} \
-	-code {
+	job bamindex-$pre-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
 	if {$realign ne "0"} {
+		list_pop skips 0; list_pop skips 0;
 		# realign around indels
 		set deps [list $dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict $gatkrefseq {*}$realigndeps]
 		if {$realign eq "srma"} {
 			set srma [srma]
 			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
-			-vars {gatkrefseq srma pre realignopts} -code {
+			-vars {gatkrefseq srma pre realignopts} {*}$skips -code {
 				exec java -jar $srma I=$dep O=$target.temp R=$gatkrefseq {*}$realignopts 2>@ stderr >@ stdout
 				catch {file rename -force $target.temp.bai $target.bai}
 				catch {file delete $target.intervals}
@@ -399,7 +409,7 @@ proc bam_clean_job {bamfile refseq sample args} {
 			}
 		} else {
 			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
-			-vars {gatkrefseq gatk pre realignopts} -code {
+			-vars {gatkrefseq gatk pre realignopts} {*}$skips -code {
 				exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
 				exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp 2>@ stderr >@ stdout
 				catch {file rename -force $target.temp.bai $target.bai}
@@ -409,6 +419,18 @@ proc bam_clean_job {bamfile refseq sample args} {
 		}
 		set root r$root
 		job bamrealign_index-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai -code {
+			exec samtools index $dep >@ stdout 2>@ stderr
+			puts "making $target"
+		}
+	}
+	if {$clipamplicons ne ""} {
+		list_pop skips 0; list_pop skips 0;
+		job bamclean_clipamplicons-$root -deps {$dir/$pre-$root.bam $clipamplicons} -targets {$dir/$pre-c$root.bam} {*}$skips -code {
+			cg sam_clipamplicons $dep2 $dep $target.temp
+			file rename $target.temp $target
+		}
+		set root c$root
+		job bamclean_clipamplicons_index-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai -code {
 			exec samtools index $dep >@ stdout 2>@ stderr
 			puts "making $target"
 		}
