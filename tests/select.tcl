@@ -490,6 +490,36 @@ test select {sampledata in fields} {
 } {id	gender-sample1	gender-sample2	gender-sample3
 1	m	f	f}
 
+test select {sampledata in fields, missing sample} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	freq-sample2	freq-sample3
+		1	0.4	0.8	1.0
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+	}
+	exec cg select -f {id gender-sample1 gender-sample2 gender-sample3} tmp/temp.tsv
+} {field "gender-sample3" not present, also not in sampledata file tmp/temp.sampledata.tsv} error
+
+test select {sampledata in fields, empty} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	freq-sample2	freq-sample3
+		1	0.4	0.8	1.0
+	}
+	write_tab tmp/temp.sampledata.tsv {
+		id	gender
+		sample1	m
+		sample2	{}
+		sample3	f
+	}
+	exec cg select -f {id gender-sample1 gender-sample2 gender-sample3} tmp/temp.tsv
+} {id	gender-sample1	gender-sample2	gender-sample3
+1	m		f}
+
 test select {sampledata in fields using -sd} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {

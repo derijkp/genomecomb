@@ -1181,6 +1181,7 @@ proc cg_select {args} {
 		errorformat select
 		exit 1
 	}
+	unset -nocomplain ::tsv_select_sampledata
 	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0; set inverse 0; set group {}; set groupcols {} ; set verbose -1; set samplingskip 0
 	set pos 0
 	foreach {key value} $args {
