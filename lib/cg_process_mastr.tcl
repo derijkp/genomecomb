@@ -151,7 +151,7 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	-targets {
 		$refseq reg-$mastrname.bed reg-$mastrname.tsv
 		inner_amplicons-$mastrname.tsv reg-inner-$mastrname.tsv reg-inner-$mastrname.bed
-		reg-mini_$mastrname.bed $mapfile
+		reg-mini_$mastrname.bed $mapfile samplicons-$mastrname.tsv
 	} \
 	-vars {dbdir mastrname} -code {
 		puts stderr "makeminigenome $dbdir $mastrname $dep name"
@@ -170,9 +170,14 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	return [list $mastrname $refseq $mastrdir/reg-$mastrname.map]
 }
 
-proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa} {split 0} {paired 1}} {
-	#
-#	# make minigenome
+proc process_mastr_job {args} {
+	oargs process_mastr_job {mastrdir destdir dbdir
+		{useminigenome 0}
+		{aligner bwa}
+		{split 0}
+		{paired 1}
+		{cleanup 1}
+	} $args
 	set mastrdir [file_absolute $mastrdir]
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
@@ -225,16 +230,25 @@ proc process_mastr_job {mastrdir destdir dbdir {useminigenome 0} {aligner bwa} {
 		# do own alignment
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
 		if {![llength $files]} continue
+		# do not do any of preliminaries if end product is already there
+		set bamfile ${pre}map-${aligner}-$name.bam
+		set resultbamfile ${pre}map-crs${aligner}-$name.bam
 		# quality and adapter clipping
-		set files [fastq_clipadapters_job $files]
+		set files [fastq_clipadapters_job $files -skips [list -skip $bamfile -skip $resultbamfile]]
 		#
 		# map using $aligner
-		map_${aligner}_job $refseq $files $name $paired {PL illumina LB solexa-123} $pre
+		map_${aligner}_job $refseq $files $name $paired -readgroupdata {PL illumina LB solexa-123} -pre $pre -skips [list -skip $resultbamfile]
+		if {$cleanup} {
+			# clean clipped files
+			lappend files [file dir [lindex $files 0]]
+			cleanup_job bamclean_clipped-$name $files [list $resultbamfile] [list $bamfile]
+		}
 		# clean bamfile (do not mark duplicates, realign)
-		set cleanbam [bam_clean_job ${pre}map-${aligner}-$name.bam $refseq $sample \
+		set cleanbam [bam_clean_job $bamfile $refseq $sample \
 			-removeduplicates 0 \
 			-clipamplicons $mastrdir/samplicons-$mastrname.tsv \
-			-bed $mastrdir/reg-inner-$mastrname.bed]
+			-bed $mastrdir/reg-inner-$mastrname.bed \
+			-cleanup $cleanup]
 		# coverage statistics
 		bam2covstats_job $cleanbam $mastrdir/reg-inner-$mastrname.tsv
 		# samtools variant calling on map-rs${aligner}
@@ -281,6 +295,7 @@ proc cg_process_mastr {args} {
 	set args [job_init {*}$args]
 	set useminigenome 0
 	set aligner bwa
+	set cleanup 1
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -289,6 +304,9 @@ proc cg_process_mastr {args} {
 			}
 			-a - --aligner {
 				set aligner $value
+			}
+			-c - --cleanup {
+				set cleanup $value
 			}
 			-split {
 				set split $value
@@ -312,8 +330,10 @@ proc cg_process_mastr {args} {
 		exit 1
 	}
 	# check projectinfo
+	set mastrdir [file_absolute $mastrdir]
+	set dbdir [file_absolute $dbdir]
 	projectinfo $destdir dbdir mastrdir {split 1}
-	process_mastr_job $mastrdir $destdir $dbdir $useminigenome $aligner $split
+	process_mastr_job $mastrdir $destdir $dbdir -useminigenome $useminigenome -aligner $aligner -split $split -cleanup $cleanup
 	job_wait
 }
 

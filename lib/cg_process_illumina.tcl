@@ -83,6 +83,7 @@ proc fastq_clipadapters {files targets args} {
 proc fastq_clipadapters_job {files args} {
 	upvar job_logdir job_logdir
 	set targets {}
+	set skips {}
 	set adapterfile {}
 	set paired 1
 	set files [ssort -natural $files]
@@ -91,6 +92,8 @@ proc fastq_clipadapters_job {files args} {
 			set adapterfile $value
 		} elseif {$key eq "-paired"} {
 			set paired $value
+		} elseif {$key eq "-skips"} {
+			set skips $value
 		} else {
 			lappend opts $key $value
 		}
@@ -101,7 +104,8 @@ proc fastq_clipadapters_job {files args} {
 		file mkdir [file dir $root].clipped
 		lappend targets [file dir $root].clipped/[file tail $root].clipped.fastq
 	}
-	job clip-[file dir [file dir $root]] -deps $files -targets $targets -vars {adapterfile paired} -code {
+	job clip-[file dir [file dir $root]] -deps $files -targets $targets \
+	-vars {adapterfile paired} {*}$skips -code {
 		fastq_clipadapters $deps $targets -adapterfile $adapterfile -paired $paired
 	}
 	return $targets
