@@ -1012,3 +1012,82 @@ proc file_absolute {file} {
 proc trimformat args {
 	string trimright [string trimright [::format {*}$args] 0] .
 }
+
+proc oargserr {cmd def} {
+	set result [list $cmd]
+	foreach el $def {
+		set field [lindex $el 0]
+		if {[llength $el] > 1} {
+			lappend result ?$field?
+		} else {
+			lappend result $field
+		}
+	}
+	return [join $result " "]
+}
+
+proc oargs {cmd def arg} {
+	set parseopts 1
+	set pos 0
+	set len [llength $def]
+	if {[lindex $def end] eq "args"} {
+		set useargs 1
+		list_pop def
+		incr len -1
+	} else {
+		set useargs 0
+	}
+	foreach el $def {
+		if {[llength $el] > 1} {
+			set defa([lindex $el 0]) [lindex $el 1]
+		}
+	}
+	set todo {}
+	set optargs {}
+	foreach el $arg {
+		if {[info exists field]} {
+			set a($field) $el
+			if {![info exists defa($field)]} {
+				if {$useargs} {
+					lappend optargs -$field $el
+				} else {
+					error "unknown option -$field, cmd should be: [oargserr $cmd $def]"
+				}
+			}
+			unset field
+		} elseif {$parseopts && [string index $el 0] eq "-"} {
+			if {$el eq "--"} {
+				# no more options
+				set parseopts 0
+			} else {
+				set field [string range $el 1 end]
+			}
+		} else {
+			lappend todo $el
+		}
+	}
+	if {[info exists field]} {
+		error "option -$field without value, should be: [oargserr $cmd $def]"
+	}
+	set apos 0
+	set len [llength $todo]
+	foreach el $def {
+		set field [lindex $el 0]
+		if {[info exists a($field)]} {
+			uplevel [list set $field $a($field)]
+		} elseif {$apos < $len} {
+			uplevel [list set $field [lindex $todo $apos]]
+			incr apos
+		} elseif {[info exists defa($field)]} {
+			uplevel [list set $field $defa($field)]
+		} else {
+			error "missing arg(s): $field, should be: [oargserr $cmd $def]"
+		}
+	}
+	set todo [lrange $todo $apos end]
+	lappend todo {*}$optargs
+	if {[llength $todo] && !$useargs} {
+		error "too many args: [join $todo ,], should be: [oargserr $cmd $def]"
+	}
+	uplevel [list set args $todo]
+}

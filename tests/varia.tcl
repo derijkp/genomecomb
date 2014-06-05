@@ -35,6 +35,76 @@ test zyg {r} {
 	zyg v A A A C
 } r
 
+test oargs {basic} {
+	oargs test {a b} {1 2}
+	list $a $b
+} {1 2}
+
+test oargs {missing arg} {
+	oargs test {a b} {1}
+	list $a $b
+} {missing arg(s): b, should be: test a b} error
+
+test oargs {extra arg} {
+	oargs test {a b} {1 2 3}
+	list $a $b
+} {too many args: 3, should be: test a b} error
+
+test oargs {default not used} {
+	oargs test {a {b 5}} {1 2}
+	list $a $b
+} {1 2}
+
+test oargs {default used} {
+	oargs test {a {b 5}} {1}
+	list $a $b
+} {1 5}
+
+test oargs {option} {
+	oargs test {a {b 5}} {1 -b 2}
+	list $a $b
+} {1 2}
+
+test oargs {option reorder} {
+	oargs test {a {b 5}} {-b 2 1}
+	list $a $b
+} {1 2}
+
+test oargs {option --} {
+	oargs test {a {b 5} {c 10}} {-b 2 -- -1 -2}
+	list $a $b $c
+} {-1 2 -2}
+
+test oargs {wrong option} {
+	oargs test {a {b 5}} {1 2 -d 2}
+	list $a $b $c
+} {unknown option -d, cmd should be: test a ?b?} error
+
+test oargs {args} {
+	oargs test {a b args} {1 2 3 4}
+	list $a $b $args
+} {1 2 {3 4}}
+
+test oargs {empty values} {
+	oargs test {a b {c {}} {d {}}} {1 2 {} 4}
+	list $a $b $c $d
+} {1 2 {} 4}
+
+test oargs {error end option} {
+	oargs test {a {b {}}} {1 -b}
+	list $a $b
+} {option -b without value, should be: test a ?b?} error
+
+test oargs {args option} {
+	oargs test {a {b {}} args} {1 -b 2}
+	list $a $b
+} {1 2}
+
+test oargs {args option} {
+	oargs test {a {b {}} args} {1 -b 2 -c 3}
+	list $a $b $args
+} {1 2 {-c 3}}
+
 file delete -force tmp/temp.sft
 
 set ::env(PATH) $keeppath
