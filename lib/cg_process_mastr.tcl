@@ -265,7 +265,7 @@ proc process_mastr_job {args} {
 		} else {
 			var_sam_job $cleanbam $refseq -pre $pre -bed $mastrdir/reg-inner-$mastrname.bed -split $split
 		}
-		lappend todo sam-rs${aligner}-$sample
+		lappend todo sam-crs${aligner}-$sample
 		if {$useminigenome} {
 			# gatk variant calling on map-rs${aligner}
 			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE -split $split
@@ -281,7 +281,7 @@ proc process_mastr_job {args} {
 			# gatk variant calling on map-rs${aligner}
 			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE -bed $mastrdir/reg-inner-$mastrname.bed -split $split
 		}
-		lappend todo gatk-rs${aligner}-$sample
+		lappend todo gatk-crs${aligner}-$sample
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
