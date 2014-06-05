@@ -155,7 +155,13 @@ proc bowtie2refseq_job {refseq} {
 	return $bowtie2refseq
 }
 
-proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
+proc map_bowtie2_job {args} {
+	oargs map_bowtie2_job {refseq files sample 
+		{paired 1}
+		{readgroupdata {}}
+		{pre {}}
+		{skips {}}
+	} $args
 	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
 	if {$readgroupdata ne ""} {
 		array set a $readgroupdata
@@ -164,25 +170,33 @@ proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
 	set readgroupdata [array get a]
 	upvar job_logdir job_logdir
 	set bowtie2refseq [bowtie2refseq_job $refseq]
-	job bowtie2-$sample -deps [list $bowtie2refseq {*}$files] -targets $result.sam -vars {bowtie2refseq readgroupdata sample} -skip $result.bam -code {
+	job bowtie2-$sample -deps [list $bowtie2refseq {*}$files] -targets $result.sam \
+	-vars {paired bowtie2refseq readgroupdata sample} \
+	-skip $result.bam {*}$skips -code {
 		puts "making $target"
 		list_shift deps
 		set rg {}
 		foreach {key value} $readgroupdata {
 			lappend rg --rg "$key:$value"
 		}
-		set files1 {}
-		set files2 {}
-		foreach {file1 file2} $deps {
-			lappend files1 $file1
-			lappend files2 $file2
+		if {$paired} {
+			set files1 {}
+			set files2 {}
+			foreach {file1 file2} $deps {
+				lappend files1 $file1
+				lappend files2 $file2
+			}
+			exec bowtie2 -p 2 --sensitive -x $bowtie2refseq -1 [join $files1 ,] -2 [join $files2 ,] \
+			--rg-id "$sample" {*}$rg \
+			-S $target.temp >@ stdout 2>@ stderr
+		} else {
+			exec bowtie2 -p 2 --sensitive -x $bowtie2refseq -U [join $$deps ,] \
+			--rg-id "$sample" {*}$rg \
+			-S $target.temp >@ stdout 2>@ stderr
 		}
-		exec bowtie2 -p 2 --sensitive -x $bowtie2refseq -1 [join $files1 ,] -2 [join $files2 ,] \
-		--rg-id "$sample" {*}$rg \
-		-S $target.temp >@ stdout 2>@ stderr
 		file rename -force $target.temp $target
 	}
-	job bowtie2_bam-$sample -deps $result.sam -targets $result.bam -vars {result} -code {
+	job bowtie2_bam-$sample -deps $result.sam -targets $result.bam -vars {result} {*}$skips -code {
 		puts "making $target"
 		catch {exec samtools view -S -h -b -o $result.ubam $result.sam >@ stdout 2>@ stderr}
 		catch {exec samtools sort $result.ubam $result.temp >@ stdout 2>@ stderr}
@@ -190,7 +204,7 @@ proc map_bowtie2_job {refseq files sample {readgroupdata {}} {pre {}}} {
 		file delete $result.ubam
 		file delete $result.sam
 	}
-	job bowtie2_index-$sample -deps $result.bam -targets $result.bam.bai -code {
+	job bowtie2_index-$sample -deps $result.bam -targets $result.bam.bai {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
@@ -228,7 +242,13 @@ proc bwarefseq_job {refseq} {
 	return $bwarefseq
 }
 
-proc map_bwa_job {refseq files sample {paired 1} {readgroupdata {}} {pre {}}} {
+proc map_bwa_job {args} {
+	oargs map_bwa_job {refseq files sample
+		{paired 1}
+		{readgroupdata {}}
+		{pre {}}
+		{skips {}}
+	} $args
 	upvar job_logdir job_logdir
 	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
 	if {$readgroupdata ne ""} {
@@ -237,7 +257,8 @@ proc map_bwa_job {refseq files sample {paired 1} {readgroupdata {}} {pre {}}} {
 	set result ${pre}map-bwa-$sample
 	set readgroupdata [array get a]
 	set bwarefseq [bwarefseq_job $refseq]
-	job bwa-$sample -deps [list $bwarefseq {*}$files] -targets $result.sam -vars {readgroupdata sample paired} -skip $result.bam -code {
+	job bwa-$sample -deps [list $bwarefseq {*}$files] -targets $result.sam -vars {readgroupdata sample paired} \
+	-skip $result.bam {*}$skips -code {
 		puts "making $target"
 		set bwarefseq [list_shift deps]
 		set rg {}
@@ -271,7 +292,7 @@ proc map_bwa_job {refseq files sample {paired 1} {readgroupdata {}} {pre {}}} {
 		file rename -force $target.temp $target
 		file delete bwa1.fastq bwa2.fastq
 	}
-	job bwa2bam-$sample -deps $result.sam -targets $result.bam -vars {result} -code {
+	job bwa2bam-$sample -deps $result.sam -targets $result.bam {*}$skips -vars {result} -code {
 		puts "making $target"
 		catch {exec samtools view -S -h -b -o $result.ubam $result.sam >@ stdout 2>@ stderr}
 		catch {exec samtools sort $result.ubam $result.temp >@ stdout 2>@ stderr}
@@ -279,7 +300,7 @@ proc map_bwa_job {refseq files sample {paired 1} {readgroupdata {}} {pre {}}} {
 		file delete $result.ubam
 		file delete $result.sam
 	}
-	job bwa_index-$sample -deps $result.bam -targets $result.bam.bai -code {
+	job bwa_index-$sample -deps $result.bam -targets $result.bam.bai {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
@@ -311,30 +332,26 @@ proc gatk_refseq_job refseq {
 	return $nrefseq
 }
 
-proc bam_clean_job {bamfile refseq sample args} {
+proc bam_clean_job {args} {
+	oargs bam_clean_job {bamfile refseq sample
+		{removeduplicates 1}
+		{realign 1}
+		{realignopts {}}
+		{realigndeps {}}
+		{clipamplicons {}}
+		{cleanup 1}
+		{bed {}}
+		args
+	} $args
+	if {$bed ne ""} {
+		lappend realigndeps $bed
+	}
+	if {[llength $args]} {
+		array set opt $args
+	}
 	set gatk [gatk]
 	set picard [picard]
 	upvar job_logdir job_logdir
-	array set opt $args
-	set removeduplicates 1
-	set realign 1
-	set realignopts {}
-	set realigndeps {}
-	set clipamplicons {}
-	foreach {key value} $args {
-		switch -- $key {
-			-removeduplicates {set removeduplicates $value}
-			-realign {set realign $value}
-			-bed {
-				lappend realigndeps $value
-				# add to realignopts afterwards (if we know the realign method)
-			}
-			-clipamplicons {
-				set clipamplicons $value
-			}
-			default {error "bam_clean_job: unknown option $key"}
-		}
-	}
 	if {$realign eq "srma"} {
 		foreach value $realigndeps {
 			lappend realignopts RANGES=$value
@@ -351,26 +368,27 @@ proc bam_clean_job {bamfile refseq sample args} {
 	# make gatk refseq
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set dict [file root $gatkrefseq].dict
-	# precalc skips and cleanup
+	# precalc skips and cleanuplist
 	set skips {}
-	set cleanup {}
+	set cleanuplist {}
+	lappend cleanuplist $dir/$pre-$root.bam $dir/$pre-$root.bam.bai
 	set temproot s$root
+	lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai]
 	if {$removeduplicates} {
-		lappend skips -skip $dir/$pre-d$temproot.bam
-		lappend cleanup $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
+		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot d$temproot
+		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai]
 	}
 	if {$realign ne "0"} {
-		lappend skips -skip $dir/$pre-r$temproot.bam
-		lappend cleanup $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
+		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot r$temproot
+		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai]
 	}
 	if {$clipamplicons ne ""} {
-		lappend skips -skip $dir/$pre-c$temproot.bam
-		lappend cleanup $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
+		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot c$temproot
+		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai]
 	}
-	list_pop cleanup; list_pop cleanup;
 	# start jobs
 	# sort using picard
 	job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
@@ -439,11 +457,8 @@ proc bam_clean_job {bamfile refseq sample args} {
 			puts "making $target"
 		}
 	}
-	job bamclean_remtemp-$root -deps [list $dir/$pre-$root.bam {*}$cleanup] -vars {cleanup} \
-		-rmtargets $cleanup -code {
-		foreach file $cleanup {
-			catch {file delete $file}
-		}
+	if {$cleanup} {
+		cleanup_job bamclean_remtemp-$root $cleanuplist [list $dir/$pre-$root.bam]
 	}
 	return $dir/$pre-$root.bam
 }
