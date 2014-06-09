@@ -202,14 +202,14 @@ sample1	Ax	1
 sample1	Bx	1
 sample2	Bx	2}
 
-test select_group {group with wildcard calc col and sampledata} {
+test select_group {group with wildcard calc col and sampleinfo} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2
 		1	A	B
 		2	B	B
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -220,14 +220,14 @@ sample1	Am	1
 sample1	Bm	1
 sample2	Bf	2}
 
-test select_group {sampledata in group} {
+test select_group {sampleinfo in group} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
 		2	B	B	B
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -240,14 +240,14 @@ A	m	1	0	0
 B	f	0	2	1
 B	m	1	0	0}
 
-test select_group {sampledata in group, filter} {
+test select_group {sampleinfo in group, filter} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
 		2	B	B	B
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -258,14 +258,14 @@ test select_group {sampledata in group, filter} {
 A	f	0	1
 B	f	2	1}
 
-test select_group {sampledata in gc} {
+test select_group {sampleinfo in gc} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
 		2	B	B	B
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -276,14 +276,14 @@ test select_group {sampledata in gc} {
 A	0	1
 B	2	1}
 
-test select_group {sampledata in gc, sample in g} {
+test select_group {sampleinfo in gc, sample in g} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
 		2	B	B	B
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -295,14 +295,14 @@ sample1	0	1	0	1
 sample2	0	0	2	0
 sample3	1	0	1	0}
 
-test select_group {sampledata in agregate, sample in g} {
+test select_group {sampleinfo in agregate, sample in g} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
 		2	B	B	B
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -314,14 +314,14 @@ sample1	m	m
 sample2		f,f
 sample3	f	f}
 
-test select_group {sampledata in agregate, sample in g} {
+test select_group {sampleinfo in agregate, sample in g} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
 		2	B	B	B
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	num
 		sample1	1
 		sample2	2
@@ -345,14 +345,14 @@ test select_group {hidden sample} {
 A	2
 B	4}
 
-test select_group {hidden sample, sampledata in gc} {
+test select_group {hidden sample, sampleinfo in gc} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
 		2	B	B	B
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -363,14 +363,14 @@ test select_group {hidden sample, sampledata in gc} {
 A	1	1
 B	3	1}
 
-test select_group {hidden sample in sampledata} {
+test select_group {hidden sample in sampleinfo} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
 		2	B	B	B
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -381,14 +381,14 @@ test select_group {hidden sample in sampledata} {
 f	4
 m	2}
 
-test select_group {hidden sample in sampledata, list} {
+test select_group {hidden sample in sampleinfo, list} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-sample1	type-sample2	type-sample3
 		1	A	B	A
 		2	B	B	B
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -424,7 +424,7 @@ sample1	xA,xB
 sample2	xB,xB
 sample3	xA,xB}
 
-test select_group {sampledata in code of query} {
+test select_group {sampleinfo in code of query} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type	freq-sample1	freq-sample2	freq-sample3
@@ -433,7 +433,7 @@ test select_group {sampledata in code of query} {
 		3	A	0.9	0.9	0.8
 		4	B	0.8	0.9	0.7
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f

@@ -93,7 +93,7 @@ chr2	4000	4001	4}
 
 test select {-f wildcard error} {
 	exec cg select -f {chromosome begin end {countG=count($alleleSeq-*, == "G")}} -q {$begin == 4000} [gzfile data/vars1.sft]
-} {field "alleleSeq-*" not present in file and no sampledata file found} error
+} {field "alleleSeq-*" not present in file and no sampleinfo file found} error
 
 test select {-f calculated if} {
 	exec cg select -f {chromosome begin end {countG=if(($alleleSeq1-sample1 == "A" || $alleleSeq2-sample1 == "A"),"hasA","noA")}} -q {$begin == 4000} [gzfile data/vars1.sft]
@@ -474,13 +474,13 @@ test select {calculated column with multiple wildcards} {
 T	T	C	C
 A	A	C	C}
 
-test select {sampledata in fields} {
+test select {sampleinfo in fields} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.tsv.sampleinfo {
 		id	gender
 		sample1	m
 		sample2	f
@@ -490,27 +490,43 @@ test select {sampledata in fields} {
 } {id	gender-sample1	gender-sample2	gender-sample3
 1	m	f	f}
 
-test select {sampledata in fields, missing sample} {
+test select {sampleinfo (other filename convention) in fields} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -f {id gender-sample1 gender-sample2 gender-sample3} tmp/temp.tsv
+} {id	gender-sample1	gender-sample2	gender-sample3
+1	m	f	f}
+
+test select {sampleinfo in fields, missing sample} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	freq-sample2	freq-sample3
+		1	0.4	0.8	1.0
+	}
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
 	}
 	exec cg select -f {id gender-sample1 gender-sample2 gender-sample3} tmp/temp.tsv
-} {field "gender-sample3" not present, also not in sampledata file tmp/temp.sampledata.tsv} error
+} {field "gender-sample3" not present, also not in sampleinfo file tmp/temp.sampleinfo.tsv} error
 
-test select {sampledata in fields, empty} {
+test select {sampleinfo in fields, empty} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	{}
@@ -520,30 +536,30 @@ test select {sampledata in fields, empty} {
 } {id	gender-sample1	gender-sample2	gender-sample3
 1	m		f}
 
-test select {sampledata in fields using -sd} {
+test select {sampleinfo in fields using -si} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
 	}
-	write_tab tmp/sampledata.tsv {
+	write_tab tmp/sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
 		sample3	f
 	}
-	exec cg select -sd tmp/sampledata.tsv -f {id gender-sample1 gender-sample2 gender-sample3} tmp/temp.tsv
+	exec cg select -si tmp/sampleinfo.tsv -f {id gender-sample1 gender-sample2 gender-sample3} tmp/temp.tsv
 } {id	gender-sample1	gender-sample2	gender-sample3
 1	m	f	f}
 
-test select {sampledata in code of calculated column} {
+test select {sampleinfo in code of calculated column} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
 		2	0.8	0.9	0.3
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -554,14 +570,14 @@ test select {sampledata in code of calculated column} {
 1	2
 2	1}
 
-test select {sampledata in code of query} {
+test select {sampleinfo in code of query} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
 		2	0.8	0.9	0.3
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -571,13 +587,13 @@ test select {sampledata in code of query} {
 } {id
 1}
 
-test select {sampledata in calc field wildcard} {
+test select {sampleinfo in calc field wildcard} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
 	}
-	write_tab tmp/temp.sampledata.tsv {
+	write_tab tmp/temp.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f

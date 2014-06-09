@@ -8,37 +8,37 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc tsv_select_sampledata {field} {
-	global tsv_select_sampledatafile tsv_select_sampledata
-	if {![info exists tsv_select_sampledata]} {
-		if {[get tsv_select_sampledatafile ""] eq ""} {
-			error "field \"$field\" not present in file and no sampledata file found"
+proc tsv_select_sampleinfo {field} {
+	global tsv_select_sampleinfofile tsv_select_sampleinfo
+	if {![info exists tsv_select_sampleinfo]} {
+		if {[get tsv_select_sampleinfofile ""] eq ""} {
+			error "field \"$field\" not present in file and no sampleinfo file found"
 		}
-		if {![file exists $tsv_select_sampledatafile]} {
-			error "field \"$field\" not present in file and no sampledata file found"
+		if {![file exists $tsv_select_sampleinfofile]} {
+			error "field \"$field\" not present in file and no sampleinfo file found"
 		}
-		set tsv_select_sampledata() {}
-		set f [gzopen $tsv_select_sampledatafile]
+		set tsv_select_sampleinfo() {}
+		set f [gzopen $tsv_select_sampleinfofile]
 		set header [tsv_open $f]
 		set idpos [lsearch $header id]
-		if {$idpos == -1} {error "sampledata file must have an id field"}
+		if {$idpos == -1} {error "sampleinfo file must have an id field"}
 		while {![eof $f]} {
 			set line [split [gets $f] \t]
 			if {![llength $line]} continue
 			set id [lindex $line $idpos]
 			foreach val $line tempfield $header {
 				if {$tempfield eq "id"} continue
-				set tsv_select_sampledata(${tempfield}-$id) $val
+				set tsv_select_sampleinfo(${tempfield}-$id) $val
 			}
 		}
 		close $f
 	}
-	if {[info exists tsv_select_sampledata($field)]} {
-		return $tsv_select_sampledata($field)
+	if {[info exists tsv_select_sampleinfo($field)]} {
+		return $tsv_select_sampleinfo($field)
 	} else {
-		set fields [array names tsv_select_sampledata $field]
+		set fields [array names tsv_select_sampleinfo $field]
 		if {[llength $fields]} {return $fields}
-		error "field \"$field\" not present, also not in sampledata file $tsv_select_sampledatafile"
+		error "field \"$field\" not present, also not in sampleinfo file $tsv_select_sampleinfofile"
 	}
 }
 
@@ -317,8 +317,8 @@ proc tsv_select_expandcalcfield {header fielddef} {
 		if {![llength $wildvars]} continue
 		set poss [list_find -glob $header $field]
 		set hfields [list_sub $header $poss]
-		if {![catch {set sampledatafields [tsv_select_sampledata $field]}]} {
-			lappend hfields {*}$sampledatafields
+		if {![catch {set sampleinfofields [tsv_select_sampleinfo $field]}]} {
+			lappend hfields {*}$sampleinfofields
 		}
 		regsub -all {\*+} $field {(.+)} pattern
 		set pattern ^$pattern\$
@@ -418,7 +418,7 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 			set pos [lsearch $header $field]
 			if {$pos == -1} {
 				if {[string first - $field] != -1} {
-					set value [tsv_select_sampledata $field]
+					set value [tsv_select_sampleinfo $field]
 					lappend rfields $field
 					lappend qposs [list code \"$value\"]
 				} else {
@@ -568,7 +568,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 				# sample aggregates use fields without sample
 				# we put the actual ones needed in neededfields later, so do not do it here
 				if {[lsearch -glob $header $f-*] != -1} continue
-				if {![catch {tsv_select_sampledata $f-*} temp] && [llength $temp]} continue
+				if {![catch {tsv_select_sampleinfo $f-*} temp] && [llength $temp]} continue
 			}
 			lappend neededfields $f
 		}
@@ -952,8 +952,8 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 			if {[info exists calccols($field)]} {
 				append prequery $calccols($field)
 			} else {
-				# tsv_select_sampledata gives not present error if field also not found in sampledata
-				set value [tsv_select_sampledata $field]
+				# tsv_select_sampleinfo gives not present error if field also not found in sampleinfo
+				set value [tsv_select_sampleinfo $field]
 				append prequery "\t\t\tset \{$field\} \"$value\"\n"
 			}
 		}
@@ -1077,8 +1077,8 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				append prequery $calccols($field)
 				incr num
 			} else {
-				# tsv_select_sampledata gives not present error if field also not found in sampledata
-				set value [tsv_select_sampledata $field]
+				# tsv_select_sampleinfo gives not present error if field also not found in sampleinfo
+				set value [tsv_select_sampleinfo $field]
 				append prequery "\t\t\tset \{$field\} \"$value\"\n"
 			}
 		}
@@ -1185,7 +1185,7 @@ proc cg_select {args} {
 		errorformat select
 		exit 1
 	}
-	unset -nocomplain ::tsv_select_sampledata
+	unset -nocomplain ::tsv_select_sampleinfo
 	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0; set inverse 0; set group {}; set groupcols {} ; set verbose -1; set samplingskip 0
 	set pos 0
 	foreach {key value} $args {
@@ -1195,10 +1195,10 @@ proc cg_select {args} {
 				if {[regexp {[^=!><\\]=[^=]} $query]} {puts stderr "you may have used = instead of == in query"}
 				regsub -all {\\=} $query = query
 			}
-			-sd {
-				set ::tsv_select_sampledatafile $value
-				if {![file exists $::tsv_select_sampledatafile]} {
-					error "sampledatafile \"$::tsv_select_sampledatafile\" does not exist"
+			-si {
+				set ::tsv_select_sampleinfofile $value
+				if {![file exists $::tsv_select_sampleinfofile]} {
+					error "sampleinfofile \"$::tsv_select_sampleinfofile\" does not exist"
 				}
 			}
 			-qf {
@@ -1283,9 +1283,12 @@ proc cg_select {args} {
 		set filename [lindex $args 0]
 		set index $filename.index
 		set f [gzopen $filename]
-		if {[get ::tsv_select_sampledatafile ""] eq ""} {
-			set ::tsv_select_sampledatafile [file root [gzroot $filename]].sampledata.tsv
-			if {![file exists $::tsv_select_sampledatafile]} {set ::tsv_select_sampledatafile ""}
+		if {[get ::tsv_select_sampleinfofile ""] eq ""} {
+			set ::tsv_select_sampleinfofile [gzroot $filename].sampleinfo
+			if {![file exists $::tsv_select_sampleinfofile]} {
+				set ::tsv_select_sampleinfofile [file root [gzroot $filename]].sampleinfo.tsv
+			}
+			if {![file exists $::tsv_select_sampleinfofile]} {set ::tsv_select_sampleinfofile ""}
 		}
 	} else {
 		set index {}

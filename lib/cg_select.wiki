@@ -34,9 +34,10 @@ by the pattern.
 ; **-s sortfields**: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
 if **sortfields** is "-", the default sort fields will be used (chromosome,begin,end,type,alt).
 This will also accept name variations of the fields, such as chrom instead of chromosome.
-; **-sd sampledatafile**: a file in which extra information about the samples can be found (see further).
-If a file exists with the same root as the datafile, but with the extension .sampledata.tsv, it will be used
-as sampledatafile by default.
+; **-si sampleinfofile**: a file in which extra information about the samples can be found (see further).
+If a file exists with the same name as the datafile with .sampleinfo appended, 
+or with the same root as the datafile, but with the extension .sampleinfo.tsv, it will be used
+as sampleinfofile by default.
 ; **-nh newheader**: replace header in output with fields given by this option
 ; **-sh sepheader**: write a resultfile without header, and write the header into the file **sepheader**
 ; **-hc headerincomment**: if 1, the last of the starting comment lines will be used for the header instead of the first non-comment line. 
@@ -282,11 +283,11 @@ un (unsequenced in some samples, variant in one of the others)
 ; **mm(sample1,sample2, ...)**: mismatch; variant in all, but different genotypes (all sequenced)
 ; **un(sample1,sample2, ...)**: unsequenced in some samples, variant in one of the others
 
-== Sampledatafile ==
-A sampledatafile is a tab delimited file containing extra information about the samples in the datafile.
+== sampleinfofile ==
+A sampleinfofile is a tab delimited file containing extra information about the samples in the datafile.
 It should contain one column named id, that will contain the sample names. other fields contain the extra 
 data. You can use this information in most places where you use field values (queries, calculated fields, 
-grouping) using the $fieldname-sample construct, e.g. if there is a field gender in the sampledatafile (and not
+grouping) using the $fieldname-sample construct, e.g. if there is a field gender in the sampleinfofile (and not
 in the datafile, you can use $gender-sample1 to get the gender of sample1 in a query.
 
 == Queryfile ==
