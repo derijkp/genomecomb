@@ -462,7 +462,13 @@ table_tsv method open {file parent} {
 		set query [dict get $comment query]
 		if {[file mtime $tdata(indexdir)/query_results.bcol] < [file mtime $file]} {
 			puts "cache is older than file, redo query"
-			$object query $query
+			if {[catch {
+				$object query $query
+			}]} {
+				progress cancel
+				set query {}
+				$object query $query
+			}
 		} else {
 			set tdata(query) $query
 			set tdata(query_results) [bcol_open $tdata(indexdir)/query_results.bcol]

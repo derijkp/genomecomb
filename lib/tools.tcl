@@ -806,6 +806,9 @@ proc progress {cmd args} {
 				uplevel 1 [list Classy::Progress $cmd] $args
 				update idletasks
 			}
+			cancel {
+				Classy::Progress cancel
+			}
 			default {
 				uplevel 1 [list Classy::Progress $cmd] $args
 			}
