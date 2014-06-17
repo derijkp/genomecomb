@@ -833,23 +833,13 @@ proc process_illumina {args} {
 		}
 		# job_logdir $dir/log_jobs
 		set files [ssort -natural [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
-		if {![llength $files]} continue
-		# quality and adapter clipping
-		set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired]
-		#
-#		# map using bowtie2
-#		map_bowtie2_job $refseq $sample $files
-#		# clean bamfile (mark duplicates, realign)
-#		bam_clean_job map-bowtie2-$sample.bam $refseq $sample
-#		# samtools variant calling on map-bowtie2
-#		#var_sam_job map-bowtie2-$sample.bam $refseq
-#		# samtools variant calling on map-rdsbowtie2
-#		var_sam_job map-rdsbowtie2-$sample.bam $refseq
-#		# gatk variant calling on map-rdsbowtie2
-#		var_gatk_job map-rdsbowtie2-$sample.bam $refseq
-		#
-		# map using bwa
-		map_bwa_job $refseq $files $sample $paired
+		if {[llength $files]} {
+			# quality and adapter clipping
+			set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired]
+			#
+			# map using bwa
+			map_bwa_job $refseq $files $sample $paired
+		}
 		# extract regions with coverage >= 5
 		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
 		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
