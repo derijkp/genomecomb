@@ -14,7 +14,7 @@ illumina sequencing data (projectdir).
 
 The projectdir will contain a subdirectory for each sample (sampledir) in
 the project. Each sampledir contains a subdirectory named fastq that
-contains the fastq files for that sample. The namems of matching fastq
+contains the fastq files for that sample. The names of matching fastq
 files of paired reads should be consecutive when sorted naturaly,the
 forward reads first. The usual naming of these files (same name, except
 for a 1 and 2) is ok. Only subdirectories containing these fastq dirs are
@@ -78,8 +78,16 @@ create the projectinfo.tsv file.
 
 == Options ==
 ; **-realign value**: If **value** is 0, realignment will not be performed, 
+use 1 for (default) realignment with gatk, or srma for alignment with srma
 if 1, bam files are realigned using gatk, use **value** srma to align using srma.
+; **-split 1/0**: split multiple alternative genotypes over different line
 ; **-dbdir dbdir**: **dbdir** can also be given as an option (instead of second parameter)
+; **-paired 1/0**: sequenced are paired/unpaired
+; **-adapterfile file**: Use **file** for possible adapter sequences
+; **-dbfile file**: Use **file** for extra (files in **dbdir** are already used) annotation 
+of resulting variants. This option can be added multiple times (with different files)
+
+
 supports job options:
 ; **-d x**: distribute subjobs of command over x processes
 ; **-d sge**: use grid engine to distribute subjobs

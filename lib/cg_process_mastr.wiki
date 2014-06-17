@@ -22,6 +22,11 @@ data on the project
 ; **dbdir**: directory containing reference data (genome sequence, annotation, ...)
 
 == Options ==
+; **-c 1/0**: cleanup files produced in processing that are no longer needed after finishing
+; **-split 1/0**: split multiple alternative genotypes over different lines
+; **-a aligner**: alignment program used for mapping reads (bwa or bowtie2)
+; **-m 1/0**: create and align to minigenome
+
 supports job options:
 ; **-d x**: distribute subjobs of command over x processes
 ; **-d sge**: use grid engine to distribute subjobs
