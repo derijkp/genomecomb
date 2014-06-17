@@ -1,7 +1,16 @@
 proc cg_long {args} {
+	set norm 0
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-norm {set norm $value}
+			default break
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
 	if {[llength $args] > 2} {
-		puts stderr "format is cg long ?tsvfile? ?outfile?"
-		# errorformat select
+		errorformat long
 		exit 1
 	}
 	set file {}
@@ -13,9 +22,15 @@ proc cg_long {args} {
 		set f [gzopen $file]
 	}
 	if {$outfile eq ""} {
+		if {$norm} {
+			error "You cannot use the -norm option without giving an outfile"
+		}
 		set o stdout
 	} else {
 		set o [open $outfile.temp w]
+		if {$norm} {
+			set no [open [file root $outfile].sampledata.tsv.temp w]
+		}
 	}
 	set header [tsv_open $f comment]
 
@@ -51,11 +66,16 @@ proc cg_long {args} {
 	set samples [list_remdup $samples]
 	set samplecols [list_union [list_common {sequenced zyg quality totalScore1 totalScore2 alleleSeq1 alleleSeq2} $samplecols] $samplecols]
 	set todo {}
+	set maincor [list_concat $aposa(pre) $aposa(post)]
 	foreach sample $samples {
 		set cor [list_cor $fieldsa($sample) $samplecols]
 		set cor [list_sub $posa($sample) $cor]
 		set cor [list_change $cor {{} -1}]
-		lappend todo [list_concat $aposa(pre) $cor $aposa(post)]
+		if {!$norm} {
+			lappend todo [list_concat $aposa(pre) $cor $aposa(post)]
+		} else {
+			lappend todo $cor
+		}
 	}
 	set common [list_common $samplecols $afieldsa(pre)]
 	if {[llength $common]} {
@@ -81,17 +101,38 @@ proc cg_long {args} {
 			set afieldsa(post) [list_change $afieldsa(post) [list $field $newfield]]
 		}
 	}
-	puts $o [join [list_concat sample $afieldsa(pre) $samplecols $afieldsa(post)] \t]
-	while {![eof $f]} {
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		foreach sample $samples cor $todo {
-			puts $o $sample\t[join [list_sub $line $cor] \t]
+	if {!$norm} {
+		puts $o [join [list_concat sample $afieldsa(pre) $samplecols $afieldsa(post)] \t]
+	} else {
+		puts $o [join [list_concat id $afieldsa(pre) $afieldsa(post)] \t]
+		puts $no [join [list_concat id sample $samplecols] \t]
+	}
+	if {!$norm} {
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			if {![llength $line]} continue
+			foreach sample $samples cor $todo {
+				puts $o $sample\t[join [list_sub $line $cor] \t]
+			}
+		}
+	} else {
+		set id 1
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			if {![llength $line]} continue
+			puts $o $id\t[join [list_sub $line $maincor] \t]
+			foreach sample $samples cor $todo {
+				puts $no $id\t$sample\t[join [list_sub $line $cor] \t]
+			}
+			incr id
 		}
 	}
 	if {$o ne "stdout"} {
 		close $o
 		file rename -force $outfile.temp $outfile
+	}
+	if {$norm} {
+		file rename -force [file root $outfile].sampledata.tsv.temp [file root $outfile].sampledata.tsv
 	}
 	if {$f ne "stdout"} {close $f}
 }
