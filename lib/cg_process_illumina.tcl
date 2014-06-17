@@ -131,7 +131,9 @@ proc gatkworkaround_tsv2bed_job {file refseq} {
 			set line [list_sub $line $poss]
 			foreach {chr begin end} $line break
 			set cchr [chr_clip $chr]
-			if {$end > $maxa($cchr)} {set end $maxa($cchr)}
+			if {[info exists maxa($cchr)]} {
+				if {$end > $maxa($cchr)} {set end $maxa($cchr)}
+			}
 			if {$end == $begin} continue
 			puts $o $chr\t$begin\t$end
 		}
