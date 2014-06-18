@@ -950,7 +950,8 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 		set prequery {}
 		foreach field $calcfieldsquery {
 			if {[info exists calccols($field)]} {
-				append prequery $calccols($field)
+				append prequery [lindex $calccols($field) 0]
+				lappend neededfields {*}[lindex $calccols($field) 1]
 			} else {
 				# tsv_select_sampleinfo gives not present error if field also not found in sampleinfo
 				set value [tsv_select_sampleinfo $field]
@@ -1045,7 +1046,8 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				error "field $rfield not present"
 			} elseif {[info exists calccols($rfield)]} {
 				# calculated field, already defined earlier
-				if {$rfield eq $field} {lappend outcols [lindex $calccols($rfield) 0]}
+				regexp {make_col[0-9]+} [lindex $calccols($rfield) 0] func
+				if {$rfield eq $field} {lappend outcols $func}
 			} else {
 				# field is calculated, add all needed fields to prequery
 				set tempneededfields {}
@@ -1061,7 +1063,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				}
 				# code for query
 				append tclcode [tsv_select_makecol make_col$num $code $tempneededfields $prequery]
-				set calccols($rfield) "\t\t\t\tset \{$rfield\} \[make_col$num \$\{[join $tempneededfields \}\ \$\{]\}\]\n"
+				set calccols($rfield) [list "\t\t\t\tset \{$rfield\} \[make_col$num \$\{[join $tempneededfields \}\ \$\{]\}\]\n" $tempneededfields]
 			}
 			incr num
 		}
@@ -1074,7 +1076,8 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		set prequery {}
 		foreach field $calcfieldsquery {
 			if {[info exists calccols($field)]} {
-				append prequery $calccols($field)
+				append prequery [lindex $calccols($field) 0]
+				lappend neededfields {*}[lindex $calccols($field) 1]
 				incr num
 			} else {
 				# tsv_select_sampleinfo gives not present error if field also not found in sampleinfo

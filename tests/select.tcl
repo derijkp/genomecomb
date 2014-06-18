@@ -448,6 +448,16 @@ test select {-f use calculated column in other calculated column} {
 } {calc	calc2	num	text	mixed	other
 3	4	2	c	a2	cc}
 
+test select {-f use calculated column in other calculated column, using different vars} {
+	write_tab tmp/temp.tsv {
+		id	num1	num2
+		1	1	2
+		2	3	4
+	}
+	exec cg select -f {id {calc=$num1+1} {calc2=$calc+$num2}} -q {$calc2 > 5} tmp/temp.tsv
+} {id	calc	calc2
+2	4	8}
+
 test select {-q use calculated column from -f without it being in the output (using -)} {
 	exec cg select -f {{-calc=$num+1} *} -q {$calc <= 4} data/table.tsv
 } {num	text	mixed	other
