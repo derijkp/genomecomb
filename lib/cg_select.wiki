@@ -164,6 +164,15 @@ otherwise the last parameter (**false**) is returned
 Can also be given as region(chromosome,begin,end,...).
 If the chromosome value in the query or the data file starts with chr, this part is ignored: chr2 will match 2, as wel as Chr2.
 ; **hovar(samplename)**: true if the given sample is a homozygous variant. This is equivalent to ($sequenced-samplename == "v" && $alleleSeq1-samplename == $alleleSeq2-samplename)
+; **zyg(?sequenced?,alleleSeq1,alleleSeq2,ref,alt)**: returns the zygosity code given the parameters.
+The sequenced parameter is optional; if it is present, a "u" will cause the zygosity to also be "u".
+Possible result codes are: 
+m (homozygous, alleles are equal and in alt), 
+t (heterozygous, one of the alleles is in alt, the other is ref),
+r (reference, both alleles are ref)
+c (compound, at least one allele in alt, the other is not ref),
+o (other, at least one allele is not ref, but none are in alt)
+u (unsequenced)
 
 === Number functions ===
 ; **between(value,{min max})** or **between(value,min,max)**: true of value is >= min and <= max (e.g. "between($begin,1000,2000)")

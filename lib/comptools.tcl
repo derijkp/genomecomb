@@ -81,7 +81,7 @@ proc zyg {args} {
 		set seq1 v
 	} elseif {[llength $args]  == 5} {
 		foreach {seq1 a1 a2 ref alt} $args break
-	} else {error "wrong # of args for zyg: only one allowed"}
+	} else {error "wrong # of args for zyg, must be: ?sequenced? a1 a2 ref alt"}
 	if {$seq1 eq "r"} {
 		return r
 	} elseif {$seq1 eq "u"} {

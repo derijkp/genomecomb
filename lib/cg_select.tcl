@@ -876,7 +876,11 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 						set temp [tsv_select_compare $ids $header neededfields]
 					}
 					zyg {
-						set temp [tsv_select_zyg $ids $header neededfields]
+						if {[llength $ids] == 1} {
+							set temp [tsv_select_zyg $ids $header neededfields]
+						} else {
+							set temp "${val}\([join $ids ", "]\)"
+						}
 					}
 					count {
 						set temp [tsv_select_count $arguments $header neededfields]

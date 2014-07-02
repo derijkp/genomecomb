@@ -11,3 +11,8 @@ proc tcl::mathfunc::codingcat {args} {
 		return -
 	}
 }
+
+proc tcl::mathfunc::zyg args {
+	::zyg {*}$args
+}
+
