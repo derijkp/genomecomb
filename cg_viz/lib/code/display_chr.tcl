@@ -17,11 +17,11 @@ display_chr method init {args} {
 		height 100
 	}
 	set options(src) $src
-	Extral::event listen $object querychanged [list $object redraw]
+	Extral::event listen $object querychanged [list Classy::todo $object redraw]
 }
 
 display_chr method destroy {} {
-	Extral::event remove $object querychanged [list $object redraw]
+	Extral::event remove $object querychanged [list Classy::todo $object redraw]
 }
 
 display_chr method options {args} {

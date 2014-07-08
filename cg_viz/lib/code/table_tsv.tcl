@@ -464,10 +464,8 @@ table_tsv method open {file parent} {
 			puts "cache is older than file, redo query"
 			if {[catch {
 				$object query $query
-			}]} {
-				progress cancel
-				set query {}
-				$object query $query
+			} errormsg]} {
+				Classy::todo bgerror $errormsg
 			}
 		} else {
 			set tdata(query) $query
@@ -478,13 +476,17 @@ table_tsv method open {file parent} {
 	$object reset
 	if {[info exists tdata(sqlbackend_db)] && [info exists tdata(refdir)]} {
 		set tdata(monetfields) [split [cg_monetdb_fields $tdata(sqlbackend_db)  $tdata(sqlbackend_table)] \n]
-		set tdata(monetfieldtrans) [cg_monetdb_sql $tdata(sqlbackend_db) [subst {select "value" from "genomecomb_info" where "table" = '$tdata(sqlbackend_table)' and "key" = 'fieldtrans'}]]
+		set tdata(monetfieldtrans) [cg_monetdb_sql $tdata(sqlbackend_db) [subst {select "value" from "_genomecomb_info" where "table" = '$tdata(sqlbackend_table)' and "key" = 'fieldtrans'}]]
 		catch {$object.disp1 destroy}
 		display_chr new $object.disp1 $parent.canvas.data $object $tdata(refdir)
 		Classy::todo $object.disp1 redraw
 	}
 	if {[file exists $tdata(indexdir)/query_fields.txt]} {
-		$object fields [file_read $tdata(indexdir)/query_fields.txt]
+		if {[catch {
+			$object fields [file_read $tdata(indexdir)/query_fields.txt]
+		} errormsg]} {
+			Classy::todo bgerror $errormsg
+		}
 	}
 	Extral::event generate querychanged $object
 	return $file

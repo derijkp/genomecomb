@@ -159,8 +159,8 @@ mainw method start {args} {
 #	bind $object.canvas.data <1> [list $object select %x %y]
 	$object.buttons.querybuilder configure -command [list $object querybuilder]
 	set fields {}
-	Extral::event listen $object selchanged [list $object redrawselection]
-	Extral::event listen $object querychanged [list $object redrawquery]
+	Extral::event listen $object selchanged [list Classy::todo $object redrawselection]
+	Extral::event listen $object querychanged [list Classy::todo $object redrawquery]
 	$object.tree clearnode {}
 	$object.table.data configure -wrap 1 -resizeborders both -bordercursor crosshair -anchor n -justify right
 }
@@ -547,8 +547,8 @@ mainw method view {newview} {
 	set view(cur) $newview
 	catch {grid forget $object.table}
 	foreach w {summary graph} {
-		Extral::event remove $object.$w selchanged [list $object ${w}_redrawselect]
-		Extral::event remove $object.$w querychanged [list $object ${w}_redraw]
+		Extral::event remove $object.$w selchanged [list Classy::todo $object ${w}_redrawselect]
+		Extral::event remove $object.$w querychanged [list Classy::todo $object ${w}_redraw]
 		catch {grid forget $object.$w}
 		# destroy $object.$w
 	}
@@ -580,7 +580,7 @@ mainw method view {newview} {
 					-yscrollcommand "$object.summary.sv set"
 				$object.summary.data configure -wrap 1 -resizeborders both -bordercursor crosshair
 			}
-			Extral::event listen $object.summary selchanged [list $object summary_redrawselect]
+			Extral::event listen $object.summary selchanged [list Classy::todo $object summary_redrawselect]
 			Extral::event listen $object.summary querychanged [list Classy::todo $object summary_redraw querychanged]
 			grid $object.summary -row 5 -column 2 -sticky nesw
 			$object summary_redraw
