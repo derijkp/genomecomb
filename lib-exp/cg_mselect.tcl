@@ -595,7 +595,7 @@ proc monetdb_select {db table query {qfields {}} {sortfields {}} {newheader {}} 
 #putsvars db table header query qfields sortfields newheader sepheader out hc inverse group groupcols
 	set theader [list_remove [cg_monetdb_fields $db $table] rowid]
 	if {![catch {
-		set trans [cg_monetdb_sql $db [subst {select "value" from "genomecomb_info" where "table" = '$table' and "key" = 'fieldtrans'}]]
+		set trans [cg_monetdb_sql $db [subst {select "value" from "_genomecomb_info" where "table" = '$table' and "key" = 'fieldtrans'}]]
 	}]} {
 		set header [dict keys $trans]
 	} else {
@@ -741,7 +741,7 @@ proc cg_mselect {args} {
 	regsub -all {\n#[^\n]*} $query {} query
 	regsub -all {\n|\t} $query { } query
 	set query [string trim $query]
-#puts stderr [list fields=$fields query=$query]
+	#puts stderr [list fields=$fields query=$query]
 	if {$len == 3} {
 		set o [open $outfile w]
 	} else {

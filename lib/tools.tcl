@@ -1094,3 +1094,17 @@ proc oargs {cmd def arg} {
 	}
 	uplevel [list set args $todo]
 }
+
+proc file_resolve {file {lastlinkVar {}}} {
+	if {$lastlinkVar ne ""} {upvar $lastlinkVar lastlink}
+	if {$::tcl_platform(platform) eq "unix"} {
+		set file [file normalize $file]
+		while 1 {
+			if {[catch {set link [file readlink $file]}]} break
+			if {[file pathtype $link] ne "absolute"} {set link [file normalize [file join [file dir $file] $link]]}
+			set lastlink $file
+			set file [file normalize $link]
+		}
+	}
+	return $file
+}

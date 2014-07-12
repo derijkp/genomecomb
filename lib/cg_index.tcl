@@ -119,7 +119,7 @@ proc cg_index {args} {
 		dict set info user $user
 		dict set info pw $pw
 		set error [catch {
-			set dbtime [cg_monetdb_sql $db [subst {select "value" from "genomecomb_info" where "table" = '$table' and "key" = 'time'}]]
+			set dbtime [cg_monetdb_sql $db [subst {select "value" from "_genomecomb_info" where "table" = '$table' and "key" = 'time'}]]
 		}]
 		if {$error || ![isint $dbtime] || $dbtime < $time} {
 			if {$verbose} {

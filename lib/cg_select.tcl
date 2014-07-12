@@ -1193,7 +1193,8 @@ proc cg_select {args} {
 		exit 1
 	}
 	unset -nocomplain ::tsv_select_sampleinfo
-	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0; set inverse 0; set group {}; set groupcols {} ; set verbose -1; set samplingskip 0
+	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0
+	set inverse 0; set group {}; set groupcols {} ; set verbose -1; set samplingskip 0; set db {}
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -1229,6 +1230,7 @@ proc cg_select {args} {
 				set inverse 1
 			}
 			-g {set group $value}
+			-db {set db $value}
 			-gc {lappend groupcols $value}
 			-nh {set newheader $value}
 			-sh {set sepheader $value}
@@ -1300,6 +1302,9 @@ proc cg_select {args} {
 	} else {
 		set index {}
 		set f stdin
+		if {$db ne ""} {
+			error "cannot use -db option from stdin, you need to query from a file"
+		}
 	}
 	if {[llength $args] > 1} {
 		set outfile [lindex $args 1]
@@ -1307,9 +1312,16 @@ proc cg_select {args} {
 	} else {
 		set o stdout
 	}
-	set error [catch {
-		tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $verbose $samplingskip
-	} result]
+	if {$db ne ""} {
+		set table [monetdb_backend $db [file_resolve $filename]]
+		set error [catch {
+			monetdb_select $db $table $query $fields $sortfields $newheader $sepheader $o $hc $inverse $group $groupcols
+		} result]
+	} else {
+		set error [catch {
+			tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $verbose $samplingskip
+		} result]
+	}
 	if {$f ne "stdin"} {catch {close $f}}
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$error} {
