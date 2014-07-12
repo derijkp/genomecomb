@@ -24,7 +24,7 @@ lines (the common fields are repeated in each line).
 == Options ==
 ; **-norm 1/0**: If 1, output "normalized" long tables: The normal output will contain only variant 
 data with a numeric id, without the data specific for each sample. 
-An extra tsv file is generated (<out>.sampledata.tsv) that contains the sample specific data, one line
+An extra tsv file is generated (<outfile>.sampledata.tsv) that contains the sample specific data, one line
 per variant (identified by the id) and sample (identified by a "sample" column)
 
 == Category ==

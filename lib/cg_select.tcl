@@ -1293,7 +1293,11 @@ proc cg_select {args} {
 		set index $filename.index
 		set f [gzopen $filename]
 		if {[get ::tsv_select_sampleinfofile ""] eq ""} {
+			# Try different sources (older versions)
 			set ::tsv_select_sampleinfofile [gzroot $filename].sampleinfo
+			if {![file exists $::tsv_select_sampleinfofile]} {
+				set ::tsv_select_sampleinfofile [gzroot $filename].sampleinfo.tsv
+			}
 			if {![file exists $::tsv_select_sampleinfofile]} {
 				set ::tsv_select_sampleinfofile [file root [gzroot $filename]].sampleinfo.tsv
 			}

@@ -29,7 +29,7 @@ proc cg_long {args} {
 	} else {
 		set o [open $outfile.temp w]
 		if {$norm} {
-			set no [open [file root $outfile].sampledata.tsv.temp w]
+			set no [open $outfile.sampledata.tsv.temp w]
 		}
 	}
 	set header [tsv_open $f comment]
@@ -132,7 +132,7 @@ proc cg_long {args} {
 		file rename -force $outfile.temp $outfile
 	}
 	if {$norm} {
-		file rename -force [file root $outfile].sampledata.tsv.temp [file root $outfile].sampledata.tsv
+		file rename -force $outfile.sampledata.temp $outfile.sampledata.tsv
 	}
 	if {$f ne "stdout"} {close $f}
 }

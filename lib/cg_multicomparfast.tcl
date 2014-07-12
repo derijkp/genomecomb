@@ -207,4 +207,3 @@ proc cg_multicompar {args} {
 	}
 	job_wait
 }
-

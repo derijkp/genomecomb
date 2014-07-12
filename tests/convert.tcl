@@ -339,7 +339,7 @@ test format {long -norm} {
 	 	2 chr1 4200 4200 ins {} A
 	 	3 chr1 5000 5001 snp G T
 	}
-	write_tab tmp/expected.sampledata.tsv {
+	write_tab tmp/expected.tsv.sampledata.tsv {
 		id sample sequenced zyg alleleSeq1 alleleSeq2 freq
 	 	1 sample1 v t G A 0.5
 	 	1 sample2 v m A A 0.8
@@ -349,7 +349,7 @@ test format {long -norm} {
 	 	3 sample2 r r G G 0.0
 	}
 	exec diff tmp/long.tsv tmp/expected.tsv
-	exec diff tmp/long.sampledata.tsv tmp/expected.sampledata.tsv
+	exec diff tmp/long.tsv.sampledata.tsv tmp/expected.tsv.sampledata.tsv
 } {}
 
 test format {long with post, multialt} {

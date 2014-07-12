@@ -585,7 +585,7 @@ test select "sampleinfo (other filename convention) in fields$dboptt" {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
 	}
-	write_tab tmp/temp.sampleinfo.tsv {
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -602,13 +602,13 @@ test select "sampleinfo in fields, missing sample$dboptt" {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
 	}
-	write_tab tmp/temp.sampleinfo.tsv {
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
 	}
 	exec cg select {*}$dbopt -f {id gender-sample1 gender-sample2 gender-sample3} tmp/temp.tsv
-} {field "gender-sample3" not present, also not in sampleinfo file tmp/temp.sampleinfo.tsv} error
+} {field "gender-sample3" not present, also not in sampleinfo file tmp/temp.tsv.sampleinfo.tsv} error
 
 test select "sampleinfo in fields, empty$dboptt" {
 	global dbopt
@@ -617,7 +617,7 @@ test select "sampleinfo in fields, empty$dboptt" {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
 	}
-	write_tab tmp/temp.sampleinfo.tsv {
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	{}
@@ -652,7 +652,7 @@ test select "sampleinfo in code of calculated column$dboptt" {
 		1	0.4	0.8	1.0
 		2	0.8	0.9	0.3
 	}
-	write_tab tmp/temp.sampleinfo.tsv {
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -671,7 +671,7 @@ test select "sampleinfo in code of query$dboptt" {
 		1	0.4	0.8	1.0
 		2	0.8	0.9	0.3
 	}
-	write_tab tmp/temp.sampleinfo.tsv {
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
@@ -688,7 +688,7 @@ test select "sampleinfo in calc field wildcard$dboptt" {
 		id	freq-sample1	freq-sample2	freq-sample3
 		1	0.4	0.8	1.0
 	}
-	write_tab tmp/temp.sampleinfo.tsv {
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
 		id	gender
 		sample1	m
 		sample2	f
