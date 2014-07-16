@@ -120,7 +120,11 @@ int main(int argc, char *argv[]) {
 				j = todo->keepsize;
 				while (j--) {
 					putc_unlocked('\t',stdout);
-					DStringputs(todo->result->data+*cur,stdout);
+					if (*cur != -1) {
+						DStringputs(todo->result->data+*cur,stdout);
+					} else {
+						putc_unlocked('1',stdout);
+					}
 					cur++;
 				}
 				todo->error = DStringGetTab(todo->line,todo->f,todo->max,todo->result,1,&numfields);
@@ -136,7 +140,10 @@ int main(int argc, char *argv[]) {
 				j = todo->keepsize;
 				while (j--) {
 					putc_unlocked('\t',stdout);
-					putc_unlocked('?',stdout);
+					if (todo->seqpos != -2) {
+						/* for targets, return empty if not in target list */
+						putc_unlocked('?',stdout);
+					}
 				}
 			}
 			todo++;

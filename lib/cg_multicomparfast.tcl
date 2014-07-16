@@ -49,6 +49,8 @@ proc cg_multicompar {args} {
 	set regonly 0
 	set split 0
 	set listfields {}
+	set targetsfile {}
+	set targetsfield {}
 	set pos 0
 	while 1 {
 		set key [lindex $args $pos]
@@ -70,8 +72,14 @@ proc cg_multicompar {args} {
 				incr pos
 				set listfields [lindex $args $pos]
 			}
+			-targetsfile {
+				incr pos
+				set targetsfile [lindex $args $pos]
+				set targetsfield [lindex [split [file root [file tail $targetsfile]] -] end]
+			}
 			-- break
 			default {
+				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
 				break
 			}
 		}
@@ -100,6 +108,7 @@ proc cg_multicompar {args} {
 	foreach dir $dirs {
 		set dir [file_absolute $dir]
 		if {[file isdir $dir]} {
+			# a directory is given, look for the variant file(s)
 			set name [file tail $dir]
 			if {[file exists $dir/fannotvar-$name.tsv]} {
 				set file [gzfile $dir/fannotvar-$name.tsv]
@@ -152,12 +161,14 @@ proc cg_multicompar {args} {
 	} else {
 		set allfiles $files
 	}
-	multi_merge_job $workdir/vars.tsv $allfiles $split
+	# for calculating the varlines needed, we can treat targetsfile as just another variant file
+	set files $allfiles
+	if {$targetsfile ne ""} {lappend files $targetsfile}
+	multi_merge_job $workdir/vars.tsv $files $split
 	set todofile $workdir/multitodo.txt
 	set ftodo [open $todofile w]
 	puts $ftodo [join [list $workdir/vars.tsv 0 1 2 3 4 5 5 0] \t]
 	puts $ftodo ""
-	set mergefields {xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam}
 	set reannotheader {chromosome begin end type ref alt}
 	foreach file $allfiles {
 		set f [open $file]
@@ -179,6 +190,7 @@ proc cg_multicompar {args} {
 			if {[string match fannotvar-* [file tail $file]]} {
 				set keepfields [list_lremove $keepfields $mergefields]
 			}
+			set keepfields [list_remove $keepfields $targetsfield]
 			set keepposs [list_cor $header $keepfields]
 			if {$seqpos == -1} {
 				lappend reannotheader sequenced-$sample
@@ -191,9 +203,25 @@ proc cg_multicompar {args} {
 		puts $ftodo [join [list $file {*}$basicposs $max $seqpos [llength $keepposs]] \t]
 		puts $ftodo [join $keepposs \t]
 	}
-	close $ftodo
 	set len [expr {[llength $allfiles]+1}]
-	job multi_join -deps [list $todofile {*}$allfiles] -vars {split len reannotheader} -targets $compar_file -code {
+	if {$targetsfile ne ""} {
+		set f [open $targetsfile]
+		set header [tsv_open $f]
+		close $f
+		lappend reannotheader $targetsfield
+		set file [file_absolute $targetsfile]
+		set basicposs [tsv_basicfields $header]
+		# if seqpos != -1, no new calculated sequence column will be added
+		# -2 is used to indicate to put an empty field instead of a ? for no match
+		set seqpos -2
+		set keepposs [lsearch $header name]
+		set max [lmath_max [list_concat $keepposs $basicposs]]
+		puts $ftodo [join [list $file {*}$basicposs $max $seqpos [llength $keepposs]] \t]
+		puts $ftodo [join $keepposs \t]
+		incr len
+	}
+	close $ftodo
+	job multi_join -deps [list $todofile] -vars {split len reannotheader} -targets $compar_file -code {
 		file_write $target.temp [join $reannotheader \t]\n
 		exec multi_join $dep1 $len $split >> $target.temp
 		file rename -force $target.temp $target
