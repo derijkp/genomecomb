@@ -177,6 +177,7 @@ proc process_mastr_job {args} {
 		{split 0}
 		{paired 1}
 		{cleanup 1}
+		{clipamplicons {}}
 	} $args
 	set mastrdir [file_absolute $mastrdir]
 	set destdir [file_absolute $destdir]
@@ -201,6 +202,12 @@ proc process_mastr_job {args} {
 	}
 	set samples [ssort -natural $samples]
 	set todo {}
+	if {$clipamplicons ne ""} {
+		set resultbamprefix crs
+	} else {
+		set resultbamprefix rs
+	}
+
 	foreach sample $samples {
 		puts $sample
 		set name ${sample}
@@ -232,7 +239,7 @@ proc process_mastr_job {args} {
 		if {![llength $files]} continue
 		# do not do any of preliminaries if end product is already there
 		set bamfile ${pre}map-${aligner}-$name.bam
-		set resultbamfile ${pre}map-crs${aligner}-$name.bam
+		set resultbamfile ${pre}map-$resultbamprefix${aligner}-$name.bam
 		# quality and adapter clipping
 		set files [fastq_clipadapters_job $files -skips [list -skip $bamfile -skip $resultbamfile]]
 		#
@@ -246,7 +253,7 @@ proc process_mastr_job {args} {
 		# clean bamfile (do not mark duplicates, realign)
 		set cleanbam [bam_clean_job $bamfile $refseq $sample \
 			-removeduplicates 0 \
-			-clipamplicons $mastrdir/samplicons-$mastrname.tsv \
+			-clipamplicons $clipamplicons \
 			-bed $mastrdir/reg-inner-$mastrname.bed \
 			-cleanup $cleanup]
 		# coverage statistics
@@ -265,7 +272,7 @@ proc process_mastr_job {args} {
 		} else {
 			var_sam_job $cleanbam $refseq -pre $pre -bed $mastrdir/reg-inner-$mastrname.bed -split $split
 		}
-		lappend todo sam-crs${aligner}-$sample
+		lappend todo sam-$resultbamprefix${aligner}-$sample
 		if {$useminigenome} {
 			# gatk variant calling on map-rs${aligner}
 			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE -split $split
@@ -281,7 +288,7 @@ proc process_mastr_job {args} {
 			# gatk variant calling on map-rs${aligner}
 			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE -bed $mastrdir/reg-inner-$mastrname.bed -split $split
 		}
-		lappend todo gatk-crs${aligner}-$sample
+		lappend todo gatk-$resultbamprefix${aligner}-$sample
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
@@ -308,6 +315,9 @@ proc cg_process_mastr {args} {
 			-c - --cleanup {
 				set cleanup $value
 			}
+			-clipamplicons {
+				set clipamplicons $value
+			}
 			-split {
 				set split $value
 			}
@@ -329,11 +339,15 @@ proc cg_process_mastr {args} {
 		errorformat process_mastr
 		exit 1
 	}
+	set mastrname [file root [file tail $mastrdir]]
+	if {![info exists clipamplicons]} {set clipamplicons $mastrdir/samplicons-$mastrname.tsv}
 	# check projectinfo
 	set mastrdir [file_absolute $mastrdir]
 	set dbdir [file_absolute $dbdir]
 	projectinfo $destdir dbdir mastrdir {split 1}
-	process_mastr_job $mastrdir $destdir $dbdir -useminigenome $useminigenome -aligner $aligner -split $split -cleanup $cleanup
+	process_mastr_job $mastrdir $destdir $dbdir -useminigenome $useminigenome \
+		-aligner $aligner -split $split -cleanup $cleanup \
+		-clipamplicons $clipamplicons
 	job_wait
 }
 
