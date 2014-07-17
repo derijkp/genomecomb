@@ -35,9 +35,8 @@ by the pattern.
 if **sortfields** is "-", the default sort fields will be used (chromosome,begin,end,type,alt).
 This will also accept name variations of the fields, such as chrom instead of chromosome.
 ; **-si sampleinfofile**: a file in which extra information about the samples can be found (see further).
-If a file exists with the same name as the datafile with .sampleinfo appended, 
-or with the same root as the datafile, but with the extension .sampleinfo.tsv, it will be used
-as sampleinfofile by default.
+If a file exists with the same name as the datafile (without compression extension, if present) 
+with .sampleinfo or .sampleinfo.tsv appended, it will be used as sampleinfofile by default.
 ; **-nh newheader**: replace header in output with fields given by this option
 ; **-sh sepheader**: write a resultfile without header, and write the header into the file **sepheader**
 ; **-hc headerincomment**: if 1, the last of the starting comment lines will be used for the header instead of the first non-comment line. 
