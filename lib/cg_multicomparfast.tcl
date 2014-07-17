@@ -181,7 +181,9 @@ proc cg_multicompar {args} {
 		set samples [samples $header]
 		if {[llength $samples] > 0} {
 			set keepposs [list_find -glob $header *-*]
-			set seqpos -2
+			# in a multicompar file, sequenced columns should already be present
+			# put a value not -1 or -2, so no new one will be added
+			set seqpos 0
 			lappend reannotheader {*}[list_sub $header $keepposs]
 		} else {
 			set sample [sourcename $filebase]
