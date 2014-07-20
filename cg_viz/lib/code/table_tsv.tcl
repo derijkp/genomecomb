@@ -145,6 +145,7 @@ table_tsv method query {args} {
 			set neededfields [list_lremove [list_remdup $neededfields] $header]
 			foreach field $neededfields {
 				set pos [lsearch -regexp $fields " *-?$field *="]
+				if {$pos == -1} continue
 				set temp [lindex $fields $pos]
 				if {[string index $temp 0] != "-"} {set temp -$temp}
 				lappend fieldopt $temp
