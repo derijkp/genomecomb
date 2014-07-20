@@ -8,6 +8,23 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+proc tsv_select_sampleinfo_setfile {filename} {
+	# Try different sources (older versions)
+	set sampleinfofile [gzroot $filename].sampleinfo
+	if {![file exists $sampleinfofile]} {
+		set sampleinfofile [gzroot $filename].sampleinfo.tsv
+	}
+	if {![file exists $sampleinfofile]} {
+		set sampleinfofile [file root [gzroot $filename]].sampleinfo.tsv
+	}
+	if {![file exists $sampleinfofile]} {set sampleinfofile ""}
+	if {[info exists ::tsv_select_sampleinfo] && [get tsv_select_sampleinfofile ""] ne $sampleinfofile} {
+		unset -nocomplain ::tsv_select_sampleinfo
+	}
+	set ::tsv_select_sampleinfofile $sampleinfofile
+	return $sampleinfofile
+}
+
 proc tsv_select_sampleinfo {field} {
 	global tsv_select_sampleinfofile tsv_select_sampleinfo
 	if {![info exists tsv_select_sampleinfo]} {
@@ -17,11 +34,13 @@ proc tsv_select_sampleinfo {field} {
 		if {![file exists $tsv_select_sampleinfofile]} {
 			error "field \"$field\" not present in file and no sampleinfo file found"
 		}
-		set tsv_select_sampleinfo() {}
 		set f [gzopen $tsv_select_sampleinfofile]
 		set header [tsv_open $f]
 		set idpos [lsearch $header id]
-		if {$idpos == -1} {error "sampleinfo file must have an id field"}
+		if {$idpos == -1} {
+			error "sampleinfo file must have an id field"
+		}
+		set tsv_select_sampleinfo() {}
 		while {![eof $f]} {
 			set line [split [gets $f] \t]
 			if {![llength $line]} continue
@@ -40,6 +59,17 @@ proc tsv_select_sampleinfo {field} {
 		if {[llength $fields]} {return $fields}
 		error "field \"$field\" not present, also not in sampleinfo file $tsv_select_sampleinfofile"
 	}
+}
+
+proc cg_missing_sampleinfo {filename} {
+	set sampleinfofile [tsv_select_sampleinfo_setfile $filename]
+	set samples [split [cg select -n $filename] \n]
+	set infosamples [lrange [split [cg select -f id $sampleinfofile] \n] 0 end]
+	puts "missing in sampleinfo file $sampleinfofile"
+	puts [join [list_lremove $samples $infosamples] \n]
+	puts ""
+	puts "missing in file $filename"
+	puts [join [list_lremove $infosamples $samples] \n]
 }
 
 proc tsv_select_compare {ids header neededfieldsVar} {
@@ -1292,17 +1322,7 @@ proc cg_select {args} {
 		set filename [lindex $args 0]
 		set index $filename.index
 		set f [gzopen $filename]
-		if {[get ::tsv_select_sampleinfofile ""] eq ""} {
-			# Try different sources (older versions)
-			set ::tsv_select_sampleinfofile [gzroot $filename].sampleinfo
-			if {![file exists $::tsv_select_sampleinfofile]} {
-				set ::tsv_select_sampleinfofile [gzroot $filename].sampleinfo.tsv
-			}
-			if {![file exists $::tsv_select_sampleinfofile]} {
-				set ::tsv_select_sampleinfofile [file root [gzroot $filename]].sampleinfo.tsv
-			}
-			if {![file exists $::tsv_select_sampleinfofile]} {set ::tsv_select_sampleinfofile ""}
-		}
+		tsv_select_sampleinfo_setfile $filename
 	} else {
 		set index {}
 		set f stdin
