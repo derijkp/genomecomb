@@ -36,7 +36,8 @@ proc make_alternative_compar_job {experiment} {
 		##remove samtools analysis & move specific annotfields forwards		
 		cg select -rf {*-sam-*} $dep $target1.temp1
 		set cfields [cg select -h $target1.temp1]
-		set fields [list_common {chromosome begin end type ref alt amplicons dbnsfp_SIFT_score dbnsfp_Polyphen2_HDIV_score dbnsfp_Polyphen2_HDIV_pred dbnsfp_Polyphen2_HVAR_score dbnsfp_Polyphen2_HVAR_pred snp138_name 1000gCEU refGene_impact refGene_gene refGene_descr dbnsfp_MutationTaster_score dbnsfp_MutationTaster_pred *} $cfields]
+		set fields [list_common {chromosome begin end type ref alt amplicons dbnsfp_SIFT_score dbnsfp_Polyphen2_HDIV_score dbnsfp_Polyphen2_HDIV_pred dbnsfp_Polyphen2_HVAR_score dbnsfp_Polyphen2_HVAR_pred snp138_name 1000gCEU refGene_impact refGene_gene refGene_descr dbnsfp_MutationTaster_score dbnsfp_MutationTaster_pred} $cfields]
+		list_addnew fields  {*}$cfields
 		cg select -f $fields $target1.temp1 $target1.temp2
 		file delete $target1.temp1
 		file rename -force $target1.temp2 $target1
