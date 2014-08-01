@@ -15,17 +15,17 @@ proc tophat_job {sample files libtype outdir bowtie_index} {
 
 proc bam_sort_job {bam} {
 	upvar job_logdir job_logdir
-	#set picard [picard]
 	set pre [lindex [split $bam -] 0]
 	set root [join [lrange [split [file root $bam] -] 1 end] -]
 	set dir [file dir $bam]
-	job bamsort-$root -deps {$bam} -targets {$dir/$pre-s$root.bam} -vars {dir pre root} -code {
-		file delete $target.temp.bam
-		#exec java -jar $picard/SortSam.jar	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr >@ stdout
-		exec samtools sort -n $dep $target.temp 2>@ stderr >@ stdout
-		file rename -force $target.temp.bam $target
-	}
-	
+	job bamsort-$root -deps {$bam} -targets {$dir/$pre-s$root.bam $dir/$pre-sn$root.bam} -vars {dir pre root} -code {
+		file delete $target1.temp.bam
+		file delete $target2.temp.bam
+		exec samtools sort $dep $target1.temp 2>@ stderr >@ stdout
+		exec samtools sort -n $dep $target2.temp 2>@ stderr >@ stdout
+		file rename -force $target1.temp.bam $target1
+		file rename -force $target2.temp.bam $target2
+	}	
 }
 
 proc bam_index_job {bam} { 
@@ -46,7 +46,8 @@ proc htseqcount_job {bam gff} {
 	set dir [file dir $bam]
 	job htseqcount-$bam -deps $bam -targets $dir/$pre-$root.tsv -vars {gff} -code {
 		file delete $target.temp
-		exec htseq-count --format=bam --order=name --stranded=yes --mode=union $dep $gff > $target.temp
+		#exec htseq-count --format=bam --order=name --stranded=yes --mode=union $dep $gff > $target.temp
+		exec htseq-count --format=bam --order=name --stranded=reverse --mode=union $dep $gff > $target.temp
 		file rename -force $target.temp $target
 	}
 }
@@ -85,9 +86,10 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff} {
 		if {![llength $files]} continue
 		# tophat
 		tophat_job $sample $files $libtype $dir $bowtie_index
+		#sort by coordinate and by name -- latter is needed for htseqcount
 		bam_sort_job map-tophat-$sample.bam
 		bam_index_job map-stophat-$sample.bam
-		htseqcount_job map-stophat-$sample.bam $gff
+		htseqcount_job map-sntophat-$sample.bam $gff
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir

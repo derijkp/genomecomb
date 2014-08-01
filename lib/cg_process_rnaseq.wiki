@@ -1,0 +1,7 @@
+= process_rnaseq =
+
+== Format ==
+cg process_rnaseq destdir libtype bowtie_index gff
+
+== Summary ==
+processes rnaseq samples from fastq to count table 
