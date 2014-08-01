@@ -1,0 +1,7 @@
+= compar2vcf =
+
+== Format ==
+cg compar2vcf ?options? compar_file vcf_file
+
+== Summary ==
+converts a multicompar file to a multisample vcf 
