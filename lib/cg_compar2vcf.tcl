@@ -64,10 +64,10 @@ proc cg_compar2vcf {args} {
 	#####################################
 	###add data
 	#####################################
-	
-	set allele_pos [list_find -regexp $header {alleleSeq}]
+	set allele_pos1 [list_find -regexp $header {alleleSeq1}]
+	set allele_pos2 [list_find -regexp $header {alleleSeq2}]
+	set allele_pos [list_merge $allele_pos1 $allele_pos2]
 	set cov_pos [list_find -regexp $header {^coverage-}]
-	set sequenced_alleleSeq_coverage_pos [list_find -regexp $header {sequenced-|alleleSeq|^coverage-}]
 	set sequenced_pos [list_find -regexp $header {sequenced-}]
 	
 	if {$exportVAT} {
@@ -137,7 +137,7 @@ proc cg_compar2vcf {args} {
 						lappend new_line GT:DP
 						
 						#write sample specific part new line
-						foreach {s a1p a2p cp} $sequenced_alleleSeq_coverage_pos {
+						foreach s $sequenced_pos a1p $allele_pos1 a2p $allele_pos2 cp $cov_pos {
 							if {[lindex $line $s] == "u"} {
 								set GT ./.
 							} else {
