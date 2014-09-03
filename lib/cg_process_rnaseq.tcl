@@ -39,16 +39,33 @@ proc bam_index_job {bam} {
 	}
 }
 
-proc htseqcount_job {bam gff} {
+proc htseqcount_job {bam gff order stranded mode} {
 	upvar job_logdir job_logdir
 	set pre count
 	set root [join [lrange [split [file root $bam] -] 1 end] -]
 	set dir [file dir $bam]
-	job htseqcount-$bam -deps $bam -targets $dir/$pre-$root.tsv -vars {gff} -code {
+	job htseqcount-$bam -deps $bam -targets $dir/$pre-$root.tsv -vars {pre root gff order stranded mode} -code {
 		file delete $target.temp
-		#exec htseq-count --format=bam --order=name --stranded=yes --mode=union $dep $gff > $target.temp
-		exec htseq-count --format=bam --order=name --stranded=reverse --mode=union $dep $gff > $target.temp
+		#use -q quiet option? or redirect
+		exec echo "id\t$pre-$root" > $target.temp
+		exec htseq-count --quiet --format=bam --order=$order --stranded=$stranded --mode=$mode $dep $gff >> $target.temp
 		file rename -force $target.temp $target
+	}
+}
+
+proc make_count_table_job {dir experiment samples} {
+	upvar job_logdir job_logdir
+	job make_count_table -deps $samples -targets $dir/counts-$experiment.tsv  -code {
+		file delete $target.temp1
+		file delete $target.temp2
+		exec paste {*}$deps >  $target.temp1 
+		##keep 1st id column, remove empty ids, remove __no_feature __ambiguous __too_low_aQual __not_aligned __alignment_not_unique
+		cg select -q {$id != "" && regexp($id,"^\[^_\]+") } -f {id *-*} $target.temp1 $target.temp2
+		file rename -force $target.temp2 $target
+		file delete $target.temp1
+
+
+		
 	}
 }
 
@@ -57,7 +74,8 @@ proc htseqcount_job {bam gff} {
 ### 1) map with tophat (bowtie2)
 ### 2) sort bam
 ### 3) index bam file
-### 4) get count table using htseqcount
+### 4) get count table using htseqcount per sample
+### 5) create project count table
 #####
 
 proc process_rnaseq_job {destdir libtype bowtie_index gff} {
@@ -65,6 +83,34 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff} {
 	set keeppwd [pwd]
 	cd $destdir
 	set experiment [file tail $destdir]
+	
+	# set variables for htseqcount
+		#info on htseq stranded option
+		# fr-unstranded -> no ; fr-firststrand -> reverse; fr-secondstrand -> yes
+		# -s <yes/no/reverse>, --stranded=<yes/no/reverse>-
+  		# 		whether the data is from a strand-specific assay (default: yes)
+		#		For stranded=no, a read is considered overlapping with a feature regardless of whether it is mapped to the same or 
+		#		the opposite strand as the feature. For stranded=yes and single-end reads, the read has to be mapped to the same strand as the feature. 
+		#		For paired-end reads, the first read has to be on the same strand and the second read on the opposite strand. For stranded=reverse, these rules are reversed.
+		#
+		#		Important: The default for strandedness is yes. 
+		#			If your RNA-Seq data has not been made with a strand-specific protocol, this causes half of the reads to be lost. 
+		#			Hence, make sure to set the option --stranded=no unless you have strand-specific data!
+	switch -- $libtype  {
+		fr-unstranded
+			{set stranded no}
+		fr-firststrand
+			{set stranded reverse}
+		fr-secondstrand
+			{set stranded yes}
+		default 
+			{puts "$libtype :unknown library type"
+			 exit 1}
+	}
+	set mode union
+	#set order pos -- htseqcount gives error when file to big if sorted by pos
+	set order name
+	
 	# which samples are there
 	job_logdir $destdir/log_jobs
 	set samples {}
@@ -82,17 +128,20 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff} {
 		cd $dir
 		job_logdir $dir/log_jobs
 		# do own alignment
-		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq fastq/*.fastq.bz2]
+		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq fastq/*.fastq.bz2 fastq/*.slx.gz]
 		if {![llength $files]} continue
 		# tophat
 		tophat_job $sample $files $libtype $dir $bowtie_index
 		#sort by coordinate and by name -- latter is needed for htseqcount
 		bam_sort_job map-tophat-$sample.bam
 		bam_index_job map-stophat-$sample.bam
-		htseqcount_job map-sntophat-$sample.bam $gff
+		htseqcount_job map-sntophat-$sample.bam $gff $order $stranded $mode
+		lappend todo $dir/count-sntophat-$sample.tsv 
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
+	set todo [list_remdup $todo]
+	make_count_table_job $destdir $experiment $todo
 	cd $keeppwd
 }
 
