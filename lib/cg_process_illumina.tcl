@@ -13,6 +13,15 @@ proc bam2covstats_job {bamfile regionfile} {
 	}
 }
 
+proc cg_bcl2fastq {rundir outdir {rtr 6} {dtr 6} {ptr 6} {wtr 6} } {
+	#-r, --loading-threads Number of threads used for loading BCL data.
+	#-d, --demultiplexing-threads Number of threads used for demultiplexing.
+	#-p, --processing-threads  Number of threads used for processing demultiplexed data.
+	#-w, --writing-threads Number of threads used for writing FASTQ data. This must not be higher than number of samples.
+	exec nohup /complgen/bin/bcl2fastq --create-fastq-for-index-reads -r $rtr -d $dtr -p $ptr -w $wtr --runfolder-dir $rundir --output-dir $outdir  
+}
+
+
 proc searchpath {envvar args} {
 	set name [lindex $args 0]
 	if {[info exists ::env($envvar)]} {
@@ -75,6 +84,7 @@ proc fastq_clipadapters {files targets args} {
 			exec fastq-mcf -a -o $t1.temp -o $t2.temp $adapterfile $f1 $f2 2>@ stderr
 		}
 	}
+	
 	foreach target $targets {
 		file rename -force $target.temp $target
 	}
