@@ -21,6 +21,29 @@ proc cg_bcl2fastq {rundir outdir {rtr 6} {dtr 6} {ptr 6} {wtr 6} } {
 	exec nohup /complgen/bin/bcl2fastq --create-fastq-for-index-reads -r $rtr -d $dtr -p $ptr -w $wtr --runfolder-dir $rundir --output-dir $outdir  
 }
 
+proc cg_process_conv_illnextseq {illsrc destdir} {
+	set illsrc [file_absolute $illsrc]
+	set destdir [file_absolute $destdir]
+	file mkdir $destdir
+	set keeppwd [pwd]
+	cd $destdir
+	# copy files from illumina dir
+	set files [glob $illsrc/*_R*.fastq*]
+	foreach file $files {
+		set sample [file tail $file]
+		regsub {_[^_]+_[^_]+_[^_]+_[^_]+\.fastq.*} $sample {} sample
+		regsub -all -- - $sample _ sample 
+		if {$sample != "Undetermined"} {
+			file mkdir $destdir/$sample/ori
+			file mkdir $destdir/$sample/ori/fastq
+			file mkdir $destdir/$sample
+			file mkdir $destdir/$sample/fastq
+			exec cp -al $file $destdir/$sample/ori/fastq
+			cplinked $destdir/$sample/ori/fastq $destdir/$sample/fastq
+		}
+	}
+	cd $keeppwd
+}
 
 proc searchpath {envvar args} {
 	set name [lindex $args 0]
@@ -764,6 +787,7 @@ proc process_illumina {args} {
 	set realign 1
 	set paired 1
 	set adapterfile {}
+	set conv_nextseq 0
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -785,6 +809,9 @@ proc process_illumina {args} {
 			-adapterfile {
 				set adapterfile $value
 			}
+			-conv_nextseq {
+				set conv_nextseq $value
+			}
 			default break
 		}
 		incr pos 2
@@ -805,6 +832,12 @@ proc process_illumina {args} {
 	# check projectinfo
 	projectinfo $destdir dbdir split
 	# start
+	##in case of nextseq500 data - generate fastqs & distribute data
+	if {$conv_nextseq} {
+		set rundir [glob $destdir/*NS500*]
+		cg_bcl2fastq $rundir fastq 4 4 4 4
+		cg_process_conv_illnextseq	fastq $destdir
+	}
 	set refseq [glob $dbdir/genome_*.ifas]
 	set samples {}
 	set experiment [file tail $destdir]
