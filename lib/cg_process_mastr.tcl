@@ -193,7 +193,7 @@ proc process_mastr_job {args} {
 	set experiment [file tail $destdir]
 	#set additional annotation files 
 	set dbfiles {}
-	lappend dbfiles [glob *.mastr/inner_amplicons-*]
+	lappend dbfiles [glob *.mastr/reg-inner-*.tsv]
 	lappend dbfiles [glob $dbdir/extra/*dbnsfp*.tsv]
 	# which samples are there
 	job_logdir $destdir/log_jobs
