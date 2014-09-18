@@ -1,3 +1,5 @@
+package require tdom
+
 proc tsv2bed {file bedfile args} {
 	if {[llength $args]} {
 		set chromname [list_shift args]
@@ -90,12 +92,35 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	tsv2bed $dir/reg-inner-$name.tsv $dir/reg-inner-$name.bed {} chromosome begin end $namefield
 }
 
+proc generate_demultiplex_stats {xmlfile outfile} {
+	set o [open $outfile w]
+	set nodes {SampleNumber SampleID SampleName NumberOfClustersRaw NumberOfClustersPF}
+	puts $o [join $nodes \t]
+	set xml [read [open $xmlfile]]
+	set document [dom parse $xml]
+	set samplenodes [$document getElementsByTagName SummarizedSampleStatistics]
+	foreach samplenode $samplenodes {
+		set sampleinfo {}
+		foreach node $nodes {
+			lappend sampleinfo [[$samplenode getElementsByTagName $node] asText] 
+ 		}
+ 		puts $o [join $sampleinfo \t]
+	}
+
+	close $o
+}
+
 proc cg_process_conv_illmastr {illsrc destdir} {
 	set illsrc [file_absolute $illsrc]
 	set destdir [file_absolute $destdir]
 	file mkdir $destdir
 	set keeppwd [pwd]
 	cd $destdir
+	#generate demultiplex stats
+	set demultiplex_xml $illsrc/GenerateFASTQRunStatistics.xml
+	if {[file exists $demultiplex_xml]} {
+		generate_demultiplex_stats $demultiplex_xml $destdir/demultiplex_stats.tsv
+	}
 	# copy files from illumina dir
 	if {[file exists $illsrc/Data/Intensities/BaseCalls]} {
 		set illsrc $illsrc/Data/Intensities/BaseCalls
@@ -238,6 +263,12 @@ proc process_mastr_job {args} {
 		# do own alignment
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
 		if {![llength $files]} continue
+		#check if data are available for sample - fastq must have a minimum of 10 reads
+		set demultiplex_stats $destdir/demultiplex_stats.tsv
+		if {[file exists $demultiplex_stats]} {
+			set clusters [cg select -sh /dev/null -q "\$SampleID==\"$sample\"" -f {NumberOfClustersPF} $demultiplex_stats]
+			if {$clusters < 10} continue
+		}
 		# do not do any of preliminaries if end product is already there
 		set bamfile ${pre}map-${aligner}-$name.bam
 		set resultbamfile ${pre}map-$resultbamprefix${aligner}-$name.bam
