@@ -165,6 +165,13 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 	cd $keeppwd
 }
 
+proc make_targets_file {targetsfile} {
+	cg select -s - $targetsfile ${targetsfile}.temp1
+	cg collapsealleles ${targetsfile}.temp1 >${targetsfile}.temp2
+	file delete ${targetsfile}.temp1
+	file rename -force ${targetsfile}.temp2 [file dirname ${targetsfile}]/s[file tail $targetsfile]
+}
+
 proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	set keeppwd [pwd]
 	cd $mastrdir
@@ -185,6 +192,13 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	}
 	if {!$useminigenome} {
 		set refseq [glob $dbdir/genome_*.ifas]
+	}
+	# check if targetfile.tsv is present, if so generate sorted and collapsed stargetfile.tsv
+	set targetsfile [glob $mastrdir/targets-*.tsv]
+	if {[llength $targetsfile]} {
+			job  generate_targets-$mastrname -deps  [lindex $targetsfile  0] -targets  [file dirname ${targetsfile}]/s[file tail $targetsfile] -code {
+				make_targets_file $dep
+			}
 	}
 	# index refseq for bowtie2
 	# bowtie2refseq_job $refseq
@@ -220,6 +234,12 @@ proc process_mastr_job {args} {
 	set dbfiles {}
 	lappend dbfiles [glob *.mastr/reg-inner-*.tsv]
 	lappend dbfiles [glob $dbdir/extra/*dbnsfp*.tsv]
+	set addtargets 0
+	set targetsfile [glob *.mastr/stargets-*.tsv]
+	if {[llength $targetsfile]} {
+	 	set addtargets 1
+	 	set targetsfile [lindex $targetsfile 0]
+	 }
 	# which samples are there
 	job_logdir $destdir/log_jobs
 	set samples {}
@@ -325,7 +345,11 @@ proc process_mastr_job {args} {
 	job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo [list_remdup $todo]
-	multicompar_job $experiment $dbdir $todo -split $split -dbfiles $dbfiles
+	if $addtargets {
+		multicompar_job $experiment $dbdir $todo -split $split -dbfiles $dbfiles -targetsfile $targetsfile
+	} else {
+		multicompar_job $experiment $dbdir $todo -split $split -dbfiles $dbfiles
+	}
 	make_alternative_compar_job $experiment 
 	cd $keeppwd
 }

@@ -709,6 +709,7 @@ proc multicompar_job {experiment dbdir todo args} {
 	set skipincomplete 1
 	set split 0
 	set dbfiles {}
+	set addtargets 0
 	foreach {key value} $args {
 		if {$key eq "-skipincomplete"} {
 			set skipincomplete $value
@@ -716,6 +717,9 @@ proc multicompar_job {experiment dbdir todo args} {
 			set split $value
 		} elseif {$key eq "-dbfiles"} {
 			set dbfiles $value
+		} elseif {$key eq "-targetsfile"} {
+			set addtargets 1
+			set targetsfile $value
 		} else {
 			lappend opts $key $value
 		}
@@ -740,9 +744,13 @@ proc multicompar_job {experiment dbdir todo args} {
 			file rename -force compar/compar-$experiment.tsv compar/compar-$experiment.tsv.temp
 		}
 		job multicompar-$experiment -deps [list_concat $stilltodo $deps] -targets compar/compar-$experiment.tsv \
-		-vars {stilltodo skipincomplete split} -code {
+		-vars {stilltodo skipincomplete split addtargets targetsfile} -code {
 			# should maybe better recheck todo here
-			cg multicompar -split $split $target.temp {*}$stilltodo
+			if {$addtargets} {
+				cg multicompar -split $split -targetsfile $targetsfile $target.temp {*}$stilltodo
+			} else {
+				cg multicompar -split $split $target.temp {*}$stilltodo
+			}
 			if {$skipincomplete} {
 				cg multicompar_reannot $target.temp skipincomplete
 			} else {
