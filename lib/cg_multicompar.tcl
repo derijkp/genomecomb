@@ -142,7 +142,7 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 	if {![file exists $compar_file]} {
 		file_write $compar_file [join {chromosome begin end type ref alt} \t]
 	}
-	set f1 [open $compar_file]
+	set f1 [gzopen $compar_file]
 	set header1 [tsv_open $f1]
 	if {[inlist $header1 alleleSeq1-$name]} {
 		error "$name already present in $compar_file"
