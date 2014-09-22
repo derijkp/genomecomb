@@ -194,7 +194,7 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 		set refseq [glob $dbdir/genome_*.ifas]
 	}
 	# check if targetfile.tsv is present, if so generate sorted and collapsed stargetfile.tsv
-	set targetsfile [glob $mastrdir/targets-*.tsv]
+	set targetsfile [glob -nocomplain $mastrdir/targets-*.tsv]
 	if {[llength $targetsfile]} {
 			job  generate_targets-$mastrname -deps  [lindex $targetsfile  0] -targets  [file dirname ${targetsfile}]/s[file tail $targetsfile] -code {
 				make_targets_file $dep
@@ -235,7 +235,7 @@ proc process_mastr_job {args} {
 	lappend dbfiles [glob *.mastr/reg-inner-*.tsv]
 	lappend dbfiles [glob $dbdir/extra/*dbnsfp*.tsv]
 	set addtargets 0
-	set targetsfile [glob *.mastr/stargets-*.tsv]
+	set targetsfile [glob -nocomplain *.mastr/stargets-*.tsv]
 	if {[llength $targetsfile]} {
 	 	set addtargets 1
 	 	set targetsfile [lindex $targetsfile 0]
