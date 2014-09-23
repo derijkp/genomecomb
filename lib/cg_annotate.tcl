@@ -278,7 +278,7 @@ proc cg_annotate {args} {
 	set dbfiles {}
 	foreach testfile [lrange $args 2 end] {
 		if {[file isdir $testfile]} {
-			lappend dbfiles {*}[glob -nocomplain $testfile/var_*.tsv $testfile/gene_*.tsv $testfile/reg_*.tsv $testfile/bcol_*.tsv]
+			lappend dbfiles {*}[glob -nocomplain $testfile/var_*.tsv $testfile/gene_*.tsv $testfile/mir_*.tsv $testfile/reg_*.tsv $testfile/bcol_*.tsv]
 		} else {
 			lappend dbfiles $testfile
 		}
@@ -336,6 +336,24 @@ proc cg_annotate {args} {
 			set genecol [dict_get_default $dbinfo genecol name2]
 			set transcriptcol [dict_get_default $dbinfo transcriptcol name]
 			annotategene $file $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
+		} elseif {$dbtype eq "mir"} {
+			if {$near != -1} {error "-near option does not work with gene dbfiles"}
+			if {$dbdir eq ""} {
+				set dbdir [file dir [file_absolute $dbfile]]
+			}
+			set genomefile [lindex [glob -nocomplain $dbdir/genome_*.ifas] 0]
+			if {![file exists $genomefile]} {
+				puts stderr "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
+				exit 1
+			}
+			lappend afiles $resultfile.${name}_annot
+			if {[file exists $resultfile.${name}_annot]} {
+				putslog "$resultfile.${name}_annot exists: skipping scan"
+				continue
+			}
+			set genecol [dict_get_default $dbinfo genecol name]
+			set transcriptcol [dict_get_default $dbinfo transcriptcol isomir]
+			annotatemir $file $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
 			set altpos [lsearch $header alt]
@@ -390,3 +408,4 @@ if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	set ::base $scriptname
 	cg_annotate {*}$argv
 }
+
