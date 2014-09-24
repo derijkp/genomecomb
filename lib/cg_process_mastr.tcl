@@ -69,7 +69,7 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 		cg select -f $fields $ampliconsfile $dir/s$tail.temp
 	}
 	cg select -s {chromosome begin end} $dir/s$tail.temp $dir/s$tail.temp2
-	file rename $dir/s$tail.temp2 $dir/s$tail
+	file rename -force $dir/s$tail.temp2 $dir/s$tail
 	file delete $dir/s$tail.temp
 	set ampliconsfile $dir/s$tail
 	cg select -f {chromosome begin=$outer_begin end=$outer_end name} $ampliconsfile $dir/reg-$name.tsv.temp
