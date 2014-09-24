@@ -11,8 +11,8 @@ proc annotatemir_one {loc geneobj} {
 	unset -nocomplain adata
 	array set adata $geneobj
 	set complement $adata(complement)
-	set dbstart [lindex $adata(annotlist) 0 2]
-	set dbend [lindex $adata(annotlist) end 3]
+	set dbstart [lindex $adata(annotlist) 0 3]
+	set dbend [lindex $adata(annotlist) end 4]
 	set hstart $adata(start)
 	set hend $adata(end)
 	array set da {}
@@ -21,19 +21,42 @@ proc annotatemir_one {loc geneobj} {
 	} else {
 		set impact {}
 		set dist {}
-		list_foreach {annot distback b e} $adata(annotlist) {
-			if {$snpend > $b && $snpstart < $e} {
+		if {$snptype eq "del"} {set first 1} else {set first 0}
+		set snpsize [expr {$snpend - $snpstart - 1}]
+		list_foreach {annot ref distback b e} $adata(annotlist) {
+			if {$snpend >= $e && $snpstart <= $b} {
+				lappend impact $annot
+			} elseif {$snpend > $b && $snpstart < $e} {
 				set temp $annot
-				if {$distback == 1} {
-					if {!$complement} {append temp -} else {append temp +}
-					append temp [expr {$e - $snpend + 1}]
-				} elseif {$distback == 2} {
-					if {!$complement} {append temp +} else {append temp -}
-					append temp [expr {$snpstart - $b + 1}]
+				set snpto {}
+				if {$distback == -1} {
+					if {!$complement} {set sign -} else {set sign +}
+					set num1 [expr {$e - $snpstart}]
+					set num2 [expr {$e - $snpend + 1}]
+				} elseif {$distback == +1} {
+					if {!$complement} {set sign +} else {set sign -}
+					set num1 [expr {$snpstart - $b + 1}]
+					set num2 [expr {$snpend - $b}]
 				} elseif {!$complement} {
-					append temp +[expr {$snpstart - $b + 1}]
+					set sign +
+					set num1 [expr {$snpstart - $b + 1}]
+					set num2 [expr {$snpend - $b}]
 				} else {
-					append temp +[expr {$e - $snpend + 1}]
+					set sign +
+					set num1 [expr {$e - $snpstart}]
+					set num2 [expr {$e - $snpend + 1}]
+				}
+				if {$num1 == $num2} {
+					set temp $annot\($ref$sign$num1\)
+				} elseif {$snpstart <= $b} {
+					set temp $annot\(:$ref$sign$num2\)
+				} elseif {$snpend >= $e} {
+					set temp $annot\($ref$sign$num1:\)
+				} else {
+					set temp $annot\($ref$sign$num1:$num2\)
+				}
+				if {[regexp ^mature $annot] && $num2 >= 2 && $num1 <= 7} {
+					append temp seed
 				}
 				lappend impact $temp
 			}
@@ -108,6 +131,8 @@ proc annotatemir_dbgetlist {dbobjVar dblistVar chr start end} {
 
 proc annotatemir_makegeneobj {genomef dbline} {
 	global adata
+	set flank1 100
+	set flank2 100
 	foreach {
 		dchrom dstart dend geneobj strand mature1start mature1end loopstart loopend mature2start mature2end genename
 	} $dbline break
@@ -116,69 +141,45 @@ proc annotatemir_makegeneobj {genomef dbline} {
 	if {$strand eq "-"} {set complement 1} else {set complement 0}
 	set annotlist {}
 	if {!$complement} {
-		set temp {upstream 1}
+		set temp {upstream a -1}
 	} else {
-		set temp {downstream 1}
+		set temp {downstream a -1}
 	}
-	lappend temp [expr {$dstart-2000}] [expr {$dstart-100}]
+	lappend temp [expr {$dstart-2000}] [expr {$dstart-$flank1}]
 	lappend annotlist $temp
 	if {!$complement} {set side 5p} else {set side 3p}
-	lappend annotlist [list flank$side 1 [expr {$dstart-100}] $dstart]
+	lappend annotlist [list flank$side a -1 [expr {$dstart-$flank1}] $dstart]
 	if {$mature1start ne "" && $mature1end ne ""} {
 		if {$dstart < $mature1start} {
-			set code arm${side}
-			if {$complement} {append code -mt}
-			lappend annotlist [list $code 0 $dstart $mature1start]
+			lappend annotlist [list arm${side} m +1 $dstart $mature1start]
 		}
-		if {$strand eq "+"} {
-			lappend annotlist [list mature${side} 0 $mature1start [expr {$mature1start+1}]]
-			lappend annotlist [list seed$side 0 [expr {$mature1start+1}] [expr {$mature1start+7}]]
-			lappend annotlist [list mature${side}-sd 0[expr {$mature1start+7}] $mature1end]
-		} else {
-			lappend annotlist [list mature${side}-sd 0 $mature1start [expr {$mature1end-7}]]
-			lappend annotlist [list seed$side 0 [expr {$mature1end-7}] [expr {$mature1end-1}]]
-			lappend annotlist [list mature${side} 0 [expr {$mature1end-1}] $mature1end]
-		}
-		if {$mature1start < $mature1end} {
-			set code arm${side}
-			if {!$complement} {append code -mt}
-			lappend annotlist [list $code 0 $mature1end $loopstart]
+		lappend annotlist [list mature${side} a 0 $mature1start $mature1end]
+		if {$mature1end < $loopstart} {
+			lappend annotlist [list arm${side} m +1 $mature1end $loopstart]
 		}
 	} else {
-		lappend annotlist [list arm$side 0 $dstart $loopstart]
+		lappend annotlist [list arm$side l -1 $dstart $loopstart]
 	}
-	lappend annotlist [list loop 0 $loopstart $loopend]
+	lappend annotlist [list loop a 0 $loopstart $loopend]
 	if {$complement} {set side 5p} else {set side 3p}
 	if {$mature2start ne "" && $mature2end ne ""} {
-		if {$dstart < $mature2start} {
-			set code arm${side}
-			if {$complement} {append code -mt}
-			lappend annotlist [list $code 0 $loopend $mature2start]
+		if {$loopend < $mature2start} {
+			lappend annotlist [list arm${side} m -1 $loopend $mature2start]
 		}
-		if {$strand eq "+"} {
-			lappend annotlist [list mature${side} 0 $mature2start [expr {$mature2start+1}]]
-			lappend annotlist [list seed$side 0 [expr {$mature2start+1}] [expr {$mature2start+7}]]
-			lappend annotlist [list mature${side}-sd 0[expr {$mature2start+7}] $mature2end]
-		} else {
-			lappend annotlist [list mature${side}-sd 0 $mature2start [expr {$mature2end-7}]]
-			lappend annotlist [list seed$side 0 [expr {$mature2end-7}] [expr {$mature2end-1}]]
-			lappend annotlist [list mature${side} 0 [expr {$mature2end-1}] $mature2end]
-		}
-		if {$mature2start < $mature2end} {
-			set code arm${side}
-			if {!$complement} {append code -mt}
-			lappend annotlist [list $code 0 $mature2end $dend]
+		lappend annotlist [list mature${side} a 0 $mature2start $mature2end]
+		if {$mature2end < $dend} {
+			lappend annotlist [list arm${side} m +1 $mature2end $dend]
 		}
 	} else {
-		lappend annotlist [list arm$side 0 $loopend $dend]
+		lappend annotlist [list arm$side l +1 $loopend $dend]
 	}
-	lappend annotlist [list flank$side 2 $dend [expr {$dend+100}]]
+	lappend annotlist [list flank$side a +1 $dend [expr {$dend+$flank2}]]
 	if {$complement} {
-		set temp {upstream 2}
+		set temp {upstream a +1}
 	} else {
-		set temp {downstream 2}
+		set temp {downstream a +1}
 	}
-	lappend temp [expr {$dend+100}] [expr {$dend+2000}]
+	lappend temp [expr {$dend+$flank2}] [expr {$dend+2000}]
 	lappend annotlist $temp
 	unset -nocomplain adata
 	set adata(genomef) $genomef
@@ -188,8 +189,8 @@ proc annotatemir_makegeneobj {genomef dbline} {
 	set adata(genename) $genename
 	set adata(chrom) $dchrom
 	set adata(annotlist) $annotlist
-puts -----${genename}-----
-foreach a $adata(annotlist) {puts $a}
+	# puts -----${genename}-----
+	# foreach a $adata(annotlist) {puts $a}
 	return [array get adata]
 }
 
