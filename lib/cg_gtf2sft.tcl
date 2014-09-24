@@ -147,12 +147,13 @@ proc cg_gtf2sft {args} {
 	catch {close $fb} ; catch {close $fa}
 
 	putsprogress "Assembling file"
-	puts -nonewline $o $comment
+	puts $o $comment
 	puts $o [join [list_concat $nheader $attrheader] \t]
 	set fb [open $tempbase]
 	set fa [open $tempattr]
 	while {![eof $fa]} {
 		set linea [gets $fb]
+		if {![string length $linea]} break
 		set lineb [gets $fa]
 		puts $o $linea\t$lineb
 	}
