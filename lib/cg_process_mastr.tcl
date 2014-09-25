@@ -89,6 +89,7 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	file delete $dir/inner_$tail.temp
 	file rename -force $dir/inner_$tail.temp2 $dir/inner_$tail
 	cg regcollapse $dir/inner_$tail > $dir/reg-inner-$name.tsv
+	exec ln -s reg-inner-$name.tsv $dir/reg_amplicons-$name.tsv
 	tsv2bed $dir/reg-inner-$name.tsv $dir/reg-inner-$name.bed {} chromosome begin end $namefield
 }
 
@@ -184,7 +185,7 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	-targets {
 		$refseq reg-$mastrname.bed reg-$mastrname.tsv
 		inner_amplicons-$mastrname.tsv reg-inner-$mastrname.tsv reg-inner-$mastrname.bed
-		reg-mini_$mastrname.bed $mapfile samplicons-$mastrname.tsv
+		reg-mini_$mastrname.bed $mapfile samplicons-$mastrname.tsv reg_amplicons-$mastrname.tsv
 	} \
 	-vars {dbdir mastrname} -code {
 		puts stderr "makeminigenome $dbdir $mastrname $dep name"
@@ -232,7 +233,7 @@ proc process_mastr_job {args} {
 	set experiment [file tail $destdir]
 	#set additional annotation files 
 	set dbfiles {}
-	lappend dbfiles [glob *.mastr/reg-inner-*.tsv]
+	lappend dbfiles $mastrname.mastr/reg_amplicons-$mastrname.tsv
 	lappend dbfiles [glob $dbdir/extra/*dbnsfp*.tsv]
 	set addtargets 0
 	set targetsfile [glob -nocomplain *.mastr/stargets-*.tsv]
