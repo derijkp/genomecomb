@@ -4,10 +4,9 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-package require BioTcl
-
 proc annotatemir_one {loc geneobj} {
-	foreach {chrom snpstart snpend snptype ref alt} $loc break
+# putsvars loc geneobj
+	foreach {chrom snpstart snpend} $loc break
 	unset -nocomplain adata
 	array set adata $geneobj
 	set complement $adata(complement)
@@ -21,7 +20,6 @@ proc annotatemir_one {loc geneobj} {
 	} else {
 		set impact {}
 		set dist {}
-		if {$snptype eq "del"} {set first 1} else {set first 0}
 		set snpsize [expr {$snpend - $snpstart - 1}]
 		list_foreach {annot ref distback b e} $adata(annotlist) {
 			if {$snpend >= $e && $snpstart <= $b} {
@@ -52,8 +50,10 @@ proc annotatemir_one {loc geneobj} {
 					set temp $annot\(:$ref$sign$num2\)
 				} elseif {$snpend >= $e} {
 					set temp $annot\($ref$sign$num1:\)
-				} else {
+				} elseif {!$complement} {
 					set temp $annot\($ref$sign$num1:$num2\)
+				} else {
+					set temp $annot\($ref$sign$num2:$num1\)
 				}
 				if {[regexp ^mature $annot] && $num2 >= 2 && $num1 <= 7} {
 					append temp seed
@@ -66,9 +66,21 @@ proc annotatemir_one {loc geneobj} {
 }
 
 proc annotatemir_dbopen {dbfile genecol transcriptcol} {
-	set df [open_mirfile $dbfile header dposs $genecol $transcriptcol]
+	set df [gzopen $dbfile]
+	set header [tsv_open $df comment]
+	set dposs [tsv_basicfields $header 3]
+	set deffields {strand	mature1start mature1end	loopstart	loopend	mature2start mature2start}
+	lappend deffields $genecol $transcriptcol
+	lappend dposs {*}[list_cor $header $deffields]
+	if {[lsearch [lrange $dposs 0 end-2] -1] != -1} {
+		close $df
+		puts stderr "error: gene file $dbfile misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
+		exit 1
+	}
 	# insert empty space for genobj
-	set dposs [linsert $dposs 3 -1]
+	lappend dposs -1
+	set geneobjpos [llength $dposs]
+	incr geneobjpos -1
 	while {![eof $df]} {
 		set fdbline [split [gets $df] \t]
 		set fdbline [list_sub $fdbline $dposs]
@@ -76,7 +88,7 @@ proc annotatemir_dbopen {dbfile genecol transcriptcol} {
 		if {![isint $dbstart] || ![isint $dbend]} continue
 		break
 	}
-	set dbobj [dict create df $df dposs $dposs fdbline $fdbline prevdbloc [lrange $fdbline 0 2]]
+	set dbobj [dict create df $df dposs $dposs fdbline $fdbline prevdbloc [lrange $fdbline 0 2] geneobjpos $geneobjpos]
 	return $dbobj
 }
 
@@ -129,14 +141,16 @@ proc annotatemir_dbgetlist {dbobjVar dblistVar chr start end} {
 	return $dblist
 }
 
-proc annotatemir_makegeneobj {genomef dbline} {
+proc annotatemir_makegeneobj {genomef dbline {flanksizes 100}} {
+# putsvars genomef dbline flanksizes
 	global adata
-	set flank1 100
-	set flank2 100
+	set flank1 [lindex $flanksizes 0]
+	set flank2 [lindex $flanksizes 1]
+	if {$flank2 eq ""} {set flank2 $flank1}
 	foreach {
-		dchrom dstart dend geneobj strand mature1start mature1end loopstart loopend mature2start mature2end genename
+		dchrom dstart dend strand mature1start mature1end loopstart loopend mature2start mature2end genename
 	} $dbline break
-	set temp [list_remove [lrange $dbline 5 10] {}]
+	set temp [list_remove [lrange $dbline 4 9] {}]
 	if {$temp ne [lsort -integer $temp]} {error "error in $dbline: values not in correct order"}
 	if {$strand eq "-"} {set complement 1} else {set complement 0}
 	set annotlist {}
@@ -151,7 +165,7 @@ proc annotatemir_makegeneobj {genomef dbline} {
 	lappend annotlist [list flank$side a -1 [expr {$dstart-$flank1}] $dstart]
 	if {$mature1start ne "" && $mature1end ne ""} {
 		if {$dstart < $mature1start} {
-			lappend annotlist [list arm${side} m +1 $dstart $mature1start]
+			lappend annotlist [list arm${side} m -1 $dstart $mature1start]
 		}
 		lappend annotlist [list mature${side} a 0 $mature1start $mature1end]
 		if {$mature1end < $loopstart} {
@@ -194,27 +208,21 @@ proc annotatemir_makegeneobj {genomef dbline} {
 	return [array get adata]
 }
 
-proc open_mirfile {dbfile headerVar dpossVar {genecol name} {transcriptcol isomir}} {
-	upvar $headerVar header
-	upvar $dpossVar dposs
-	set df [gzopen $dbfile]
-	set header [tsv_open $df comment]
-	set dposs [tsv_basicfields $header 3]
-	set deffields {strand	mature1start mature1end	loopstart	loopend	mature2start mature2start}
-	lappend deffields $genecol $transcriptcol
-	lappend dposs {*}[list_cor $header $deffields]
-	if {[lsearch [lrange $dposs 0 end-2] -1] != -1} {
-		close $df
-		puts stderr "error: gene file $dbfile misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
-		exit 1
-	}
-	return $df
-}
-
-proc annotatemir {file genomefile dbfile name annotfile {genecol name} {transcriptcol isomir} {flanksize 100}} {
-# putsvars file genomefile dbfile name annotfile genecol
+# about the mirvas parameter:
+# for genomecomb the parameter must must be 0: 
+# for mirvas it will be 1 (table only) or 2 (include graphical results as well)
+# Although this piece of code is shared with mirvas, mirvas does several things differently.
+# genomecomb does not have all the tools to do the structural analysis.
+# 
+proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcriptcol isomir} {flanksizes 100} {mirvas 0}} {
+# putsvars file genomefile dbfile name resultfile genecol transcriptcol flanksizes mirvas
 	global genomef
-	annot_init
+	set file [file normalize $file]
+	set genomefile [file normalize $genomefile]
+	set dbfile [file normalize $dbfile]
+	set resultfile [file normalize $resultfile]
+	file mkdir [file dir $resultfile]
+	if {!$mirvas} {annot_init}
 	if {[catch {eof $genomef}]} {
 		set genomef [genome_open $genomefile]
 	}
@@ -234,9 +242,19 @@ proc annotatemir {file genomefile dbfile name annotfile {genecol name} {transcri
 	}
 	set fields [list_sub $header $poss]
 	set dbobj [annotatemir_dbopen $dbfile $genecol $transcriptcol]
-	set o [open $annotfile.temp w]
-	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
-	set nh [list ${name}_impact ${name}_mir]
+	set geneobjpos [dict get $dbobj geneobjpos]
+	set o [open $resultfile.temp w]
+	puts -nonewline $o $comment
+	if {$mirvas} {
+		set nh {chromosome begin end type ref alt mir_location mir_name}
+		set temp [annotatemir_one_struct_fields]
+		lappend nh {*}$temp
+		lappend nh {*}[list_sub $header -exclude $poss]
+		set mirvasempty [list_fill [llength $temp] {}]
+		set mo [mirvas_start $mirvas $file $resultfile]
+	} else {
+		set nh [list ${name}_impact ${name}_mir]
+	}
 	puts $o [join $nh \t]
 	set empty [join [list_fill [llength $nh] {}] \t]
 	set dblist {}
@@ -250,6 +268,10 @@ proc annotatemir {file genomefile dbfile name annotfile {genecol name} {transcri
 		}
 		set loc [list_sub $line $poss]
 		set ploc [lrange $loc 0 2]
+		if {$mirvas} {
+			progress_step 1.0
+			set restline [list_sub $line -exclude $poss]
+		}
 		if {[lloc_compare $prevloc $ploc] > 0} {
 			error "Cannot annotate because the variant file is not correctly sorted (sort correctly using \"cg select -s -\")"
 		}
@@ -295,13 +317,17 @@ proc annotatemir {file genomefile dbfile name annotfile {genecol name} {transcri
 		# separately for each alt allele
 		# check for overlap, mark genes from dblist for removal 
 		# that are before current var, annotate
+		if {$mirvas && [llength $alist] > 1} {progress_step [expr {1.0/[llength $alist]}]}
 		foreach loc $alist {
+			log "annotating $loc"
 			set num 0
 			set remove {}
 			set hitgenes ""
 			# join [list_subindex $dblist 4] \n\n
+			set found 0
+			set tododblist {}
 			foreach dbline $dblist {
-				foreach {dc ds de geneobj} $dbline break
+				foreach {dc ds de} $dbline break
 				incr ds -2000
 				incr de 2000
 				set chrcompar [chr_compare $dc $chr]
@@ -311,15 +337,33 @@ proc annotatemir {file genomefile dbfile name annotfile {genecol name} {transcri
 					if {$de <= $start} {
 						lappend remove $num
 					} elseif {$ds < $end} {
+						set geneobj [lindex $dbline $geneobjpos]
 						if {[catch {dict get $geneobj end}]} {
-							set geneobj [annotatemir_makegeneobj $genomef $dbline]
-							lset dblist $num 3 $geneobj
+							set geneobj [annotatemir_makegeneobj $genomef $dbline $flanksizes]
+							lset dbline $geneobjpos $geneobj
+							lset dblist $num $dbline
 						}
-						set result [annotatemir_one $loc $geneobj]
-						lappend hitgenes $result
+						lappend tododblist $dbline
+						set found 1
 					}
 				}
 				incr num
+			}
+			if {$mirvas && [llength $tododblist] > 1} {
+				progress_step [expr {[progress_step]/[llength $tododblist]}]
+			}
+			foreach dbline $tododblist {
+				set geneobj [lindex $dbline $geneobjpos]
+				set result [annotatemir_one $loc $geneobj]
+				if {$mirvas} {
+					lappend result {*}[annotatemir_one_struct $loc $geneobj $resultfile $mo $mirvas $result]
+					puts $o [join [list_concat $loc $result $restline] \t]
+				}
+				lappend hitgenes $result
+			}
+			if {$mirvas} {
+				if {!$found} {puts $o [join [list_concat $loc {{} {}} $mirvasempty $restline] \t]}
+				continue
 			}
 			set result {}
 			set impacts [list_subindex $hitgenes 0]
@@ -344,6 +388,7 @@ proc annotatemir {file genomefile dbfile name annotfile {genecol name} {transcri
 		if {[llength $remove]} {
 			set dblist [list_sub $dblist -exclude $remove]
 		}
+		if {$mirvas} continue
 		# join results to one line
 		if {[llength $ahitgenes] == 1} {
 			set line [lindex $ahitgenes 0]
@@ -371,7 +416,10 @@ proc annotatemir {file genomefile dbfile name annotfile {genecol name} {transcri
 		}
 		puts $o $result
 	}
-	close $genomef
+	# genome_close $genomef
+	if {$mirvas == 2} {
+		mirvas_draw_close $mo
+	}
 	close $o; catch {close $f};	catch {close $df}
-	file rename -force $annotfile.temp $annotfile
+	file rename -force $resultfile.temp $resultfile
 }
