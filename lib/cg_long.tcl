@@ -132,7 +132,7 @@ proc cg_long {args} {
 		file rename -force $outfile.temp $outfile
 	}
 	if {$norm} {
-		file rename -force $outfile.sampledata.temp $outfile.sampledata.tsv
+		file rename -force $outfile.sampledata.tsv.temp $outfile.sampledata.tsv
 	}
 	if {$f ne "stdout"} {close $f}
 }
