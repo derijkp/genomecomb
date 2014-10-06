@@ -173,17 +173,20 @@ int main(int argc, char *argv[]) {
 	while ((read = DStringGetTab(line,fd,maxtab,linea,1,NULL)) != -1) {
 		DStringArray *lineformat,*alts;
 		DString *type;
-		char zyg;
-		int l1,l2,begin,end,len,diff;
+		char zyg,refch;
+		int l1,l2,begin,end,len,diff,diffchar;
 		linenr++;
 		lineformat = DStringArrayFromChar(a_format(linea)->string,':');
 		/* set genos [lrange $line 9 end] */
 		l1 = a_ref(linea)->size;
+		refch = a_ref(linea)->string[0];
 		l2 = 0;
 		alts = DStringArrayFromChar(a_alt(linea)->string,',');
+		diffchar = 0;
 		for (i = 0 ; i < alts->size ; i ++) {
 			DString *temp = DStringArrayGet(alts,i);
 			if (temp->size > l2) {l2 = temp->size;}
+			if (temp->string[0] != refch) {diffchar = 1;}
 		}
 		pos = atoi(a_pos(linea)->string);
 		if (l1 == 1 && l2 == 1) {
@@ -191,6 +194,11 @@ int main(int argc, char *argv[]) {
 			begin = pos - 1;
 			end = pos;
 			type = snp;
+		} else if (diffchar) {
+			type = sub;
+			diff = 0;
+			begin = pos - 1;
+			end = pos + l1 - 1;
 		} else {
 			diff = 1;
 			begin = pos;
