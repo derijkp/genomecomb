@@ -1,16 +1,29 @@
 proc cg_long {args} {
 	set norm 0
+	set samplefields {}
+	set experiment {}
+	set sampledataid id
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
 			-norm {set norm $value}
+			-samplefields {
+				set samplefields $value
+				set samplefieldslen [llength $samplefields]
+			}
+			-experiment {set experiment $value}
+			-sampledataid {set sampledataid $value}
 			default break
 		}
 		incr pos 2
 	}
 	set args [lrange $args $pos end]
 	if {[llength $args] > 2} {
-		errorformat long
+		if {[string index [lindex $args 0] 0] eq "-"} {
+			pus stderr "unknown option [lindex $args 0]"
+		} else {
+			errorformat long
+		}
 		exit 1
 	}
 	set file {}
@@ -105,7 +118,14 @@ proc cg_long {args} {
 		puts $o [join [list_concat sample $afieldsa(pre) $samplecols $afieldsa(post)] \t]
 	} else {
 		puts $o [join [list_concat id $afieldsa(pre) $afieldsa(post)] \t]
-		puts $no [join [list_concat id sample $samplecols] \t]
+		set nh $sampledataid
+		if {$experiment ne ""} {lappend nh experiment}
+		if {!$samplefieldslen} {
+			lappend nh sample {*}$samplecols
+		} else {
+			lappend nh {*}$samplefields {*}$samplecols
+		}
+		puts $no [join $nh \t]
 	}
 	if {!$norm} {
 		while {![eof $f]} {
@@ -117,14 +137,28 @@ proc cg_long {args} {
 		}
 	} else {
 		set id 1
-		while {![eof $f]} {
-			set line [split [gets $f] \t]
-			if {![llength $line]} continue
-			puts $o $id\t[join [list_sub $line $maincor] \t]
-			foreach sample $samples cor $todo {
-				puts $no $id\t$sample\t[join [list_sub $line $cor] \t]
+		if {$experiment ne ""} {append experiment \t}
+		if {!$samplefieldslen || $samplefieldslen == 1} {
+			while {![eof $f]} {
+				set line [split [gets $f] \t]
+				if {![llength $line]} continue
+				puts $o $id\t[join [list_sub $line $maincor] \t]
+				foreach sample $samples cor $todo {
+					puts $no $id\t$experiment$sample\t[join [list_sub $line $cor] \t]
+				}
+				incr id
 			}
-			incr id
+		} else {
+			while {![eof $f]} {
+				set line [split [gets $f] \t]
+				if {![llength $line]} continue
+				puts $o $id\t[join [list_sub $line $maincor] \t]
+				foreach sample $samples cor $todo {
+					set sample [split $sample -]
+					puts $no $id\t$experiment[join $sample \t]\t[join [list_sub $line $cor] \t]
+				}
+				incr id
+			}
 		}
 	}
 	if {$o ne "stdout"} {
@@ -134,7 +168,7 @@ proc cg_long {args} {
 	if {$norm} {
 		file rename -force $outfile.sampledata.tsv.temp $outfile.sampledata.tsv
 	}
-	if {$f ne "stdout"} {close $f}
+	if {$f ne "stdout"} {gzclose $f}
 }
 
 if 0 {
