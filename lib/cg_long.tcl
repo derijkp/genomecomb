@@ -1,6 +1,7 @@
 proc cg_long {args} {
 	set norm 0
 	set samplefields {}
+	set samplefieldslen 0
 	set experiment {}
 	set sampledataid id
 	set pos 0
