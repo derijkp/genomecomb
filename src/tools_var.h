@@ -8,6 +8,7 @@ typedef struct VariantPos {
 	int a1;
 	int a2;
 	int max;
+	int id;
 } VariantPos;
 
 typedef struct Variant {
@@ -17,6 +18,7 @@ typedef struct Variant {
 	DString *type;
 	DString *ref;
 	DString *alt;
+	int id;
 } Variant;
 
 /* returns 0 if equal, 1 if equal not including alt, 2 if different */

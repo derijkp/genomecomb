@@ -126,7 +126,7 @@ void DStringputs(DString *string,FILE *f) {
 	cur = string->string;
 	size = string->size;
 	if (size > 0) {
-		while(size--) {putc_unlocked(*cur++,stdout);}
+		while(size--) {putc_unlocked(*cur++,f);}
 	}
 }
 
@@ -682,7 +682,7 @@ int DStringGetTab(
 NODPRINT("maxtab=%d result->memsize=%d",maxtab,result->memsize)
 	maxtab += 1;
 	if (maxtab > result->memsize) {
-		fprintf(stderr,"cannot DStringGetTab, array memsize < maxtab+1\n");
+		fprintf(stderr,"cannot DStringGetTab, size of allocated DStringArray must be >= maxtab+2\n");
 		exit(1);
 	}
 	result->data[count].string = cur;

@@ -130,8 +130,7 @@ proc cg_multicompar {args} {
 				}
 			}
 		} elseif {[llength [cg select -n $dir]]} {
-			set header [cg select -h $dir]
-			set samples [samples $header]
+			set samples [cg select -n $dir]
 			set file $dir
 			lappend files $file
 			foreach name $samples {
@@ -167,11 +166,13 @@ proc cg_multicompar {args} {
 	multi_merge_job $workdir/vars.tsv $files $split
 	set todofile $workdir/multitodo.txt
 	set ftodo [open $todofile w]
+	# line with: filename chrpos beginpos endpos typepos refpos altpos todomax todoseqpos
 	puts $ftodo [join [list $workdir/vars.tsv 0 1 2 3 4 5 5 0] \t]
+	# line with: data positioons that must go in the multicompar
 	puts $ftodo ""
 	set reannotheader {chromosome begin end type ref alt}
 	foreach file $allfiles {
-		set f [open $file]
+		set f [gzopen $file]
 		set header [tsv_open $f]
 		close $f
 		set file [file_absolute $file]
@@ -202,7 +203,9 @@ proc cg_multicompar {args} {
 			}
 		}
 		set max [lmath_max [list_concat $keepposs $basicposs]]
+		# line with: filename chrpos beginpos endpos typepos refpos altpos maxcoltoread todoseqpos sizeofnextline
 		puts $ftodo [join [list $file {*}$basicposs $max $seqpos [llength $keepposs]] \t]
+		# line with: data positioons that must go in the multicompar
 		puts $ftodo [join $keepposs \t]
 	}
 	set len [expr {[llength $allfiles]+1}]

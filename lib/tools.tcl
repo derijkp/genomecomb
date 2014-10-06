@@ -335,6 +335,7 @@ proc gzopen {file {pos -1}} {
 	if {![file exists $file]} {
 		exiterror "Error: couldn't open \"$file\": no such file or directory"
 	}
+	set file [file normalize $file]
 	if {[inlist {.rz} [file extension $file]]} {
 		if {$pos == -1} {
 			set f [open "| razip -d -c $file"]

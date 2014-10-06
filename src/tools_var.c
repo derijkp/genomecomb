@@ -23,6 +23,7 @@ typedef struct VariantPos {
 	int a1;
 	int a2;
 	int max;
+	int id;
 } VariantPos;
 
 typedef struct Variant {
@@ -32,6 +33,7 @@ typedef struct Variant {
 	DString *type;
 	DString *ref;
 	DString *alt;
+	int id;
 } Variant;
 
 /* returns 0 if equal, 1 if equal not including alt, 2 if different */
@@ -56,6 +58,13 @@ void varputs(Variant var,FILE *f) {
 	DStringputs(var.ref,f);
 	putc_unlocked('\t',f);
 	DStringputs(var.alt,f);
+	if (var.id != -2) {
+		if (var.id == -1) {
+			fprintf(f,"\t");
+		} else {
+			fprintf(f,"\t%d",var.id);
+		}
+	}
 	putc_unlocked('\n',f);
 }
 
@@ -67,7 +76,17 @@ void result2var(DStringArray *result,VariantPos varpos, Variant *var) {
 	var->ref = result->data+varpos.ref;
 	if (varpos.alt != -1) {
 		var->alt = result->data+varpos.alt;
+	}
+	if (varpos.id == -1) {
+		var->id = -1;
+	} else if (varpos.id == -2) {
+		var->id = -2;
 	} else {
+		if (result->data[varpos.id].size != 0) {
+			sscanf(result->data[varpos.id].string,"%d",&(var->id));
+		} else {
+			var->id = -1;
+		}
 	}
 }
 
@@ -109,6 +128,7 @@ int varpos_max(VariantPos *varpos) {
 	if (varpos->alt > i) {i = varpos->alt;} ;
 	if (varpos->a1 > i) {i = varpos->a1;} ;
 	if (varpos->a2 > i) {i = varpos->a2;} ;
+	if (varpos->id > i) {i = varpos->id;} ;
 	varpos->max = i;
 	return i;
 }

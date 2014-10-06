@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 
 	if ((argc != 16) && (argc != 18)) {
 		fprintf(stderr,"Format is: multi_merge file1 chrpos1 startpos1 endpos1 type1pos ref1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos ref2pos alt2pos split");
-		fprintf(stderr,"or: multi_merge file1 chrpos1 startpos1 endpos1 type1pos ref1pos allelseq11pos alleleseq12pos file2 chrpos2 startpos2 endpos2 type2pos ref2pos allelseq21pos alleleseq22pos split");
+		fprintf(stderr,"or: multi_merge file1 chrpos1 startpos1 endpos1 type1pos ref1pos alt1pos id1pos file2 chrpos2 startpos2 endpos2 type2pos ref2pos alt2pos id2pos split");
 		exit(EXIT_FAILURE);
 	}
 	varpos_init(&var1pos); varpos_init(&var2pos);
@@ -81,15 +81,14 @@ int main(int argc, char *argv[]) {
 	var1pos.end = atoi(argv[4]);
 	var1pos.type = atoi(argv[5]);
 	var1pos.ref = atoi(argv[6]);
-	i = 7;
-	if (argc == 16) {
-		var1pos.alt = atoi(argv[i++]);
-		var1pos.a1 = -1;
-		var1pos.a2 = -1;
+	var1pos.alt = atoi(argv[7]);
+	var1pos.a1 = -1;
+	var1pos.a2 = -1;
+	i = 8;
+	if (argc == 18) {
+		var1pos.id = atoi(argv[i++]);
 	} else {
-		var1pos.alt = -1;
-		var1pos.a1 = atoi(argv[i++]);
-		var1pos.a2 = atoi(argv[i++]);
+		var1pos.id = -2;
 	}
 	varpos_max(&var1pos);
 	line1 = DStringNew(); line2=DStringNew();
@@ -103,25 +102,28 @@ int main(int argc, char *argv[]) {
 	var2pos.end = atoi(argv[i++]);
 	var2pos.type = atoi(argv[i++]);
 	var2pos.ref = atoi(argv[i++]);
-	if (argc == 16) {
-		var2pos.alt = atoi(argv[i++]);
-		var2pos.a1 = -1;
-		var2pos.a2 = -1;
+	var2pos.alt = atoi(argv[i++]);
+	var2pos.a1 = -1;
+	var2pos.a2 = -1;
+	if (argc == 18) {
+		var2pos.id = atoi(argv[i++]);
 	} else {
-		var2pos.alt = -1;
-		var2pos.a1 = atoi(argv[i++]);
-		var2pos.a2 = atoi(argv[i++]);
+		var2pos.id = -2;
 	}
 	split = atoi(argv[i++]);
-NODPRINT("var_annot %s %d %d %d %d %d %s %d %d %d %d %d ...",
-	filename1,var1pos.chr,var1pos.start,var1pos.end,var1pos.type,var1pos.alt,
-	filename2,var2pos.chr,var2pos.start,var2pos.end,var2pos.type,var2pos.alt
+NODPRINT("var_annot %s %d %d %d %d %d $d %s %d %d %d %d %d %d ...",
+	filename1,var1pos.chr,var1pos.start,var1pos.end,var1pos.type,var1pos.alt,var1pos.id,
+	filename2,var2pos.chr,var2pos.start,var2pos.end,var2pos.type,var2pos.alt,var2pos.id
 );
 	varpos_max(&var2pos);
 	result2 = DStringArrayNew(var2pos.max+2);
 	skip_header(f1,line1,&numfields1,&pos1);
 	skip_header(f2,line2,&numfields2,&pos2);
-	fprintf(stdout,"chromosome\tbegin\tend\ttype\tref\talt\n");
+	if (argc == 16) {
+		fprintf(stdout,"chromosome\tbegin\tend\ttype\tref\talt\n");
+	} else {
+		fprintf(stdout,"chromosome\tbegin\tend\ttype\tref\talt\tid\n");
+	}
 	error2 = DStringGetTab(line2,f2,var2pos.max,result2,1,&numfields); pos2++;
 	if (!error2) {
 		check_numfieldserror(numfields,numfields2,line2,filename2,&pos2);
@@ -191,6 +193,7 @@ NODPRINT("line2 %s,%d,%d %s",Loc_ChrString(chromosome2),start2,end2,line2->strin
 			if (!split) {
 				mergealts(var1.alt,var2.alt);
 			}
+			if (var1.id < 0 && var2.id >=0) {var1.id = var2.id;}
 			error2 = DStringGetTab(line2,f2,var2pos.max,result2,1,&numfields); pos2++;
 			if (!error2) {
 				check_numfieldserror(numfields,numfields2,line2,filename2,&pos2);
