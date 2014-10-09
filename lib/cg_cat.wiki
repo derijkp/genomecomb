@@ -20,6 +20,7 @@ the same fields as the first, an error is given, unless the merge or force optio
 each field that occurs in at least one of the source files. If a given field is not present in one of the source files,
 it will be empty for each line coming from this file.
 ; **-f**: if the force option is given, tab files with different fields will still be concatenated without error.
+; **-c 0/1**: if -c is 1 (default), the files that are concatenated are added in the comment, if 0 no extra comments are added.
 
 == Category ==
 tsv

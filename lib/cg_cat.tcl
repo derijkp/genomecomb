@@ -1,13 +1,29 @@
 proc cg_cat {args} {
-	if {[lindex $args 0] eq "-f"} {
-		set force f
-		set args [lrange $args 1 end]
-	} elseif {[lindex $args 0] eq "-m"} {
-		set force m
-		set args [lrange $args 1 end]
-	} else {
-		set force ""
+	set force ""
+	set addcomment 1
+	set pos 0
+	while 1 {
+		set key [lindex $args $pos]
+		switch -- $key {
+			-f {
+				set force f
+			}
+			-m {
+				set force m
+			}
+			-c {
+				incr pos
+				set addcomment [lindex $args $pos]
+			}
+			-- break
+			default {
+				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
+				break
+			}
+		}
+		incr pos
 	}
+	set args [lrange $args $pos end]
 	if {[llength $args] == 0} {
 		errorformat cat
 		exit 1
@@ -24,9 +40,11 @@ proc cg_cat {args} {
 		set header [tsv_open $f comment]
 		lappend headers $header
 		close $f
-		lappend comments "# ++++ $file ++++"
-		if {[inlist {f m} $force]} {
-			lappend comments "# ++ $header"
+		if {$addcomment} {
+			lappend comments "# ++++ $file ++++"
+			if {[inlist {f m} $force]} {
+				lappend comments "# ++ $header"
+			}
 		}
 		foreach line [split $comment \n] {
 			if {[string index $line 0] ne "#"} continue
