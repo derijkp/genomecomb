@@ -4,6 +4,26 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+proc multidb_analysisinfo {sampleid file sample iscompar} {
+	foreach {experiment gentli_ngsseq reference mapper varcall individual samplenum} {? ? ? ? ? ? ?} break
+	set dirlist [file split [file dir $file]]
+	set filebase [file root [file tail $file]]
+	if {$iscompar} {
+		set experiment [lindex [split $filebase -] end]
+	} else {
+		set experiment [lindex $dirlist end-1]
+		if {$experiment eq "samples"} {
+			set experiment [lindex $dirlist end-2]
+		}
+	}
+	set split [split $sample -]
+	if {[llength $split] == 3} {
+		foreach {varcall mapper sample} $split break
+	}
+	regsub {_[0-9]+$} $sample {} individual
+	list $sampleid $experiment $sample $gentli_ngsseq $reference $mapper $varcall $individual $samplenum
+}
+
 proc multidb_merge_job {varsfile files {split 1}} {
 	global multi_merge_num
 	upvar job_logdir job_logdir
@@ -45,11 +65,45 @@ proc multidb_merge_job {varsfile files {split 1}} {
 	
 }
 
-proc multidb_getfileinfo {dirs targetsfield aVar datafilesVar genofieldsVar ngssequpdate_file} {
+proc multidb_dir_open {compar_dir database} {
+	if {![file exists $compar_dir/vars.tsv]} {
+		file_write $compar_dir/vars.tsv [join {chromosome begin end type ref alt id} \t]\n
+		file_write $compar_dir/vars.tsv.maxid 0
+		file_write $compar_dir/vars.tsv.count 0
+	} elseif {![file exists $compar_dir/vars.tsv.maxid] || ![file exists $compar_dir/vars.tsv.count]} {
+		set temp [cg select -g all -gc {max(id),count(id)} $compar_dir/vars.tsv]
+		set maxid [lindex $temp end-1]
+		if {![isint $maxid]} {set maxid 0}
+		set count [lindex $temp end]
+		if {![isint $count]} {set count 0}
+		file_write $compar_dir/vars.tsv.maxid $maxid
+		file_write $compar_dir/vars.tsv.count $count
+	}
+	if {![file exists $compar_dir/analysis.tsv]} {
+		set fields {id experiment ngsseq gentli_ngsseq reference mapper varcall individual sample}
+		file_write $compar_dir/analysis.tsv [join $fields \t]\n
+		file_write $compar_dir/analysis.tsv.maxid 0
+		file_write $compar_dir/analysis.tsv.count 0
+	} elseif {![file exists $compar_dir/analysis.tsv.maxid] || ![file exists $compar_dir/analysis.tsv.count]} {
+		set temp [cg select -g all -gc {max(id),count(id)} $compar_dir/analysis.tsv]
+		set maxid [lindex $temp end-1]
+		if {![isint $maxid]} {set maxid 0}
+		set count [lindex $temp end]
+		if {![isint $count]} {set count 0}
+		file_write $compar_dir/analysis.tsv.maxid $maxid
+		file_write $compar_dir/analysis.tsv.count $count
+	}
+	return {var analysis sequenced zyg alleleSeq1 alleleSeq2 quality coverage}
+}
+
+proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
 	upvar $aVar a
 	upvar $datafilesVar datafiles
 	upvar $genofieldsVar genofields
 	set datafiles {}
+	if {![info exists genofields]} {
+		set genofields {var analysis sequenced zyg alleleSeq1 alleleSeq2 quality coverage}
+	}
 	foreach dir $dirs {
 		set dir [file_absolute $dir]
 		if {[file isdir $dir]} {
@@ -96,10 +150,19 @@ proc multidb_getfileinfo {dirs targetsfield aVar datafilesVar genofieldsVar ngss
 		}
 	}
 	# check samples, find all fields
-	set fs [open $ngssequpdate_file w]
+	set fs [open $compar_dir/analysis.tsv.insert w]
+	puts $fs [join {id experiment ngsseq gentli_ngsseq reference mapper varcall individual sample} \t]
 	set varcols {id chomosome begin end type ref alt id}
-	set genofields {var ngsseq sequenced zyg alleleSeq1 alleleSeq2 genotypes quality coverage}
-	set sampleid 1
+	# get next sampleid
+	if {[file exists $compar_dir/analysis.tsv.maxid]} {
+		set sampleid [file_read $compar_dir/analysis.tsv.maxid]
+	} elseif {[file exists $compar_dir/analysis.tsv]} {
+		set sampleid [lindex [cg select -g all -gc {max(id)} $compar_dir/analysis.tsv] end]
+		if {$sampleid eq "all"} {set sampleid 0}
+	} else {
+		set sampleid 0
+	}
+	incr sampleid
 	foreach file $datafiles {
 		set f [gzopen $file]
 		set header [tsv_open $f]
@@ -109,6 +172,7 @@ proc multidb_getfileinfo {dirs targetsfield aVar datafilesVar genofieldsVar ngss
 		set dir [file dir $file]
 		set filebase [file root [file tail [gzroot $file]]]
 		set basicposs [tsv_basicfields $header]
+		set a(basicposs,$file) $basicposs
 		set samples [samples $header]
 		if {[llength $samples] > 0} {
 			set a(samples,$file) $samples
@@ -128,7 +192,7 @@ proc multidb_getfileinfo {dirs targetsfield aVar datafilesVar genofieldsVar ngss
 				# in a multicompar file, sequenced columns should already be present
 				# put a value not -1 or -2, so no new one will be added
 				set a(seqpos,$sample) 0
-				puts $fs [join [list $sampleid $sample] \t]
+				puts $fs [join [multidb_analysisinfo $sampleid $file $sample 1] \t]
 				incr sampleid
 			}
 		} else {
@@ -139,7 +203,6 @@ proc multidb_getfileinfo {dirs targetsfield aVar datafilesVar genofieldsVar ngss
 			if {[string match fannotvar-* [file tail $file]]} {
 				set fields [list_lremove $fields $mergefields]
 			}
-			set fields [list_remove $fields $targetsfield]
 			set poss [list_cor $header $fields]
 			lappend genofields {*}$fields
 			set a(id,$sample) $sampleid
@@ -147,7 +210,7 @@ proc multidb_getfileinfo {dirs targetsfield aVar datafilesVar genofieldsVar ngss
 			set a(fields,$sample) $fields
 			set a(poss,$sample) $poss
 			set a(seqpos,$sample) $seqpos
-			puts $fs [join [list $sampleid $sample] \t]
+			puts $fs [join [multidb_analysisinfo $sampleid $file $sample 0] \t]
 			incr sampleid
 		}
 	}
@@ -156,40 +219,22 @@ proc multidb_getfileinfo {dirs targetsfield aVar datafilesVar genofieldsVar ngss
 	return $datafiles
 }
 
-proc cg_multidb {args} {
-
-	set args [job_init -silent {*}$args]
+proc multidb_job {args} {
 	set reannot 0
 	set regonly 0
-	set split 0
-	set listfields {}
 	set targetsfile {}
 	set targetsfield {}
 	set pos 0
-	set varidstart 1
 	while 1 {
 		set key [lindex $args $pos]
 		switch -- $key {
-			-varidstart {
+			-monetdb {
 				incr pos
-				set varidstart [lindex $args $pos]
-			}
-			-reannot {
-				putslog "Also reannot"
-				set reannot 1
-			}
-			-reannotregonly {
-				putslog "Also reannot"
-				set reannot 1
-				set regonly 1
+				set monetdb [lindex $args $pos]
 			}
 			-split {
 				incr pos
 				set split [true [lindex $args $pos]]
-			}
-			-listfields {
-				incr pos
-				set listfields [lindex $args $pos]
 			}
 			-targetsfile {
 				incr pos
@@ -211,21 +256,31 @@ proc cg_multidb {args} {
 		exit 1
 	}
 	foreach {compar_dir} $args break
+	set dirs [lrange $args 1 end]
+	#
+	set compar_dir [file_absolute $compar_dir]
 	if {[file exists $compar_dir] && ![file isdir $compar_dir]} {file delete $compar_dir}
-	file mkdir $compar_dir
+	if {![file exists $compar_dir]} {
+		file mkdir $compar_dir
+	}
+	projectinfo $compar_dir {monetdb {}} {split 1}
+	if {$monetdb ne ""} {
+		set genofields [multidb_monet_open $compar_dir $monetdb]
+	} else {
+		set genofields [multidb_dir_open $compar_dir $monetdb]
+	}
 	set compar_file $compar_dir/vars.tsv
 	set workdir $compar_dir/work
 	# should take into account existing instead of deleting and starting all over -> not now
 	if {[file exists $workdir]} {file delete -force $workdir}
 	file mkdir $workdir
-	set dirs [lrange $args 1 end]
 	#
 	# get all datafiles to be processed from $dirs
 	# store file and sample info in array a
-	# genofields contains all fields used in any of the data files
-	# The file $compar_dir/ngsseq.tsv.update contain the ids of all ngsseq and additional data
+	# genofields contains all fields used in the database (from previous call) or in any of the data files
+	# The file $compar_dir/analysis.tsv.insert contain the ids of all analysis and additional data
 	unset -nocomplain a
-	multidb_getfileinfo $dirs $targetsfield a datafiles genofields $compar_dir/ngsseq.tsv.update
+	multidb_getfileinfo $dirs a datafiles genofields $compar_dir
 	#
 	# merge variants
 	# todo: check for concurrency
@@ -248,8 +303,9 @@ proc cg_multidb {args} {
 	# line with: data positions that must go in the multicompar
 	puts $ftodo ""
 	set reannotheader {chromosome begin end type ref alt}
-	set addfields [list_remove $genofields var ngsseq]
+	set addfields [list_remove $genofields var analysis]
 	foreach file $datafiles {
+		set basicposs $a(basicposs,$file)
 		set keepposs {}
 		foreach sample $a(samples,$file) {
 			if {$a(seqpos,$sample) != -1} {
@@ -270,23 +326,34 @@ proc cg_multidb {args} {
 	set len [expr {[llength $datafiles]+1}]
 	close $ftodo
 	#
-	# write headers of targets
-	file_write $compar_dir/vars.tsv.new [join {chromosome begin end type ref alt id} \t]\n
-	file_write $compar_dir/vars.tsv.update [join {chromosome begin end type ref alt id} \t]\n
-	file_write $compar_dir/geno.tsv.update [join $genofields \t]\n
 	# run
 	set deps [list $todofile $workdir/vars.tsv {*}$datafiles]
-	set targets [list $compar_dir/vars.tsv.new $compar_dir/vars.tsv.update $compar_dir/geno.tsv.update]
-	job multi_join -deps $deps -vars {split len varidstart} -targets $targets -code {
-		exec multidb_join [lindex $deps 0] $len $split {*}$targets $varidstart
-		file rename -force $target.temp $target
-	}
-	if {$reannot} {
-		job multicompar_reannot -deps {$compar_file} -vars {regonly} -targets {$compar_file $compar_file.reannot} -code {
-			putslog "Reannotating $dep"
-			multicompar_reannot $dep 0 $regonly
-			file_write $dep.reannot [timestamp]
+	set targets [list $compar_dir/vars.tsv.new $compar_dir/vars.tsv.insert $compar_dir/geno.tsv.insert]
+	job multi_join -deps $deps -vars {split len genofields compar_dir} -targets $targets -code {
+		set temptargets {}
+		if {[file exists $dep.maxid]} {
+			set varidstart [file_read $dep.maxid]
+		} else {
+			set varidstart [lindex [cg select -g all -gc {max(id)} $dep] end]
+			if {$varidstart eq "all"} {set varidstart 1}
 		}
+		incr varidstart
+		# write headers of targets
+		file_write $compar_dir/vars.tsv.new.temp [join {chromosome begin end type ref alt id} \t]\n
+		file_write $compar_dir/vars.tsv.insert.temp [join {chromosome begin end type ref alt id} \t]\n
+		file_write $compar_dir/geno.tsv.insert.temp [join $genofields \t]\n
+		foreach t $targets {lappend temptargets $t.temp}
+		exec multidb_join [lindex $deps 0] $len $split {*}$temptargets $varidstart
+		foreach t $targets {
+			file rename -force $t.temp $t
+		}
+		file rename $compar_dir/vars.tsv.new.temp.maxid $compar_dir/vars.tsv.new.maxid
+		file rename $compar_dir/vars.tsv.new.temp.count $compar_dir/vars.tsv.new.count
 	}
+}
+
+proc cg_multidb {args} {
+	set args [job_init -silent {*}$args]
+	multidb_job {*}$args
 	job_wait
 }

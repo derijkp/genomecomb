@@ -33,30 +33,35 @@ typedef struct Todo {
 } Todo;
 
 int main(int argc, char *argv[]) {
-	FILE *ftodo,*fvarsnew,*fvarsupdate,*fgeno;
+	FILE *ftodo,*fvarsnew,*fvarsinsert,*fgeno,*f;
+	char *fvarsnewfile,*fvarsinsertfile,*fgenofile;
 	DStringArray *result1=NULL;
+	DString *filename;
 	Todo *todolist = NULL,*todo,*tvars;
 	Variant *var;
 	DString *line = NULL;
 	char *todofile;
 	char varid[20];
 	unsigned int numfields,pos1,pos2;
-	int split = 1,first;
+	int split = 1,first,fvarsnewcount = 0;
 	int comp, size, newvarid;
 	register int i,j;
 
 	if ((argc != 8)) {
-		fprintf(stderr,"Format is: multi_join todofile number split varsfile.new varsfile.update genofile.update newvaridstart\n");
+		fprintf(stderr,"Format is: multi_join todofile number split varsfile.new varsfile.insert genofile.insert newvaridstart\n");
 		exit(EXIT_FAILURE);
 	}
 	todofile = argv[1];
-	ftodo = fopen64_or_die(todofile,"r");
 	size = atoi(argv[2]);
 	split = atoi(argv[3]);
-	fvarsnew = fopen64_or_die(argv[4],"a");
-	fvarsupdate = fopen64_or_die(argv[5],"a");
-	fgeno = fopen64_or_die(argv[6],"a");
+	fvarsnewfile = argv[4];
+	fvarsinsertfile = argv[5];
+	fgenofile = argv[6];
 	newvarid = atoi(argv[7]);
+	ftodo = fopen64_or_die(todofile,"r");
+	fvarsnew = fopen64_or_die(fvarsnewfile,"a");
+	fvarsinsert = fopen64_or_die(fvarsinsertfile,"a");
+	fgeno = fopen64_or_die(fgenofile,"a");
 	todolist = (Todo *)malloc(size*sizeof(Todo));
 	tvars = todolist;
 	todo = todolist;
@@ -114,19 +119,20 @@ int main(int argc, char *argv[]) {
 		putc_unlocked('\t',fvarsnew);
 		DStringputs(var->alt,fvarsnew);
 		if (var->id < 0) {
-			/* this is a new var, also write in update */
+			/* this is a new var, also write in insert */
 			var->id = newvarid++;
-			DStringputs(var->chr,fvarsupdate);
-			fprintf(fvarsupdate,"\t%d\t%d\t",var->start,var->end);
-			DStringputs(var->type,fvarsupdate);
-			putc_unlocked('\t',fvarsupdate);
-			DStringputs(var->ref,fvarsupdate);
-			putc_unlocked('\t',fvarsupdate);
-			DStringputs(var->alt,fvarsupdate);
-			fprintf(fvarsupdate,"\t%d\n",var->id);
+			DStringputs(var->chr,fvarsinsert);
+			fprintf(fvarsinsert,"\t%d\t%d\t",var->start,var->end);
+			DStringputs(var->type,fvarsinsert);
+			putc_unlocked('\t',fvarsinsert);
+			DStringputs(var->ref,fvarsinsert);
+			putc_unlocked('\t',fvarsinsert);
+			DStringputs(var->alt,fvarsinsert);
+			fprintf(fvarsinsert,"\t%d\n",var->id);
 		}
 		sprintf(varid,"%d",var->id);
 		fprintf(fvarsnew,"\t%s\n",varid);
+		fvarsnewcount++;
 		todo = todolist+1;
 		for (i = 1 ; i < size; i++) {
 			if (todo->error) {
@@ -183,5 +189,19 @@ int main(int argc, char *argv[]) {
 		fclose(todo->f);
 		todo++;
 	}
+	fclose(fvarsnew);
+	fclose(fvarsinsert);
+	fclose(fgeno);
+	filename = DStringNew();
+	DStringSet(filename,fvarsnewfile);
+	DStringAppend(filename,".maxid");
+	f = fopen(filename->string,"w");
+	fprintf(f,"%s",varid);
+	fclose(f);
+	DStringSet(filename,fvarsnewfile);
+	DStringAppend(filename,".count");
+	f = fopen(filename->string,"w");
+	fprintf(f,"%d",fvarsnewcount);
+	fclose(f);
 	exit(EXIT_SUCCESS);
 }

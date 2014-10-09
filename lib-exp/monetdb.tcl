@@ -195,6 +195,11 @@ proc cg_monetdb {args} {
 			cg_monetdb_initdb $database
 			exec monetdb {*}$args release $database
 		}
+		deletedb {
+			set database [list_pop args]
+			exec monetdb {*}$args stop $database
+			exec monetdb {*}$args destroy -f $database
+		}
 		initdb {
 			set result [cg_monetdb_initdb {*}$args]
 		}
