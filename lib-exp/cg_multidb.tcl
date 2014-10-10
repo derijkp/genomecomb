@@ -5,7 +5,7 @@
 #
 
 proc multidb_analysisinfo {sampleid file sample iscompar} {
-	foreach {experiment gentli_ngsseq reference mapper varcall individual samplenum} {? ? ? ? ? ? ?} break
+	foreach {experiment ngsseq mapper varcall gentli_ngsseq reference individual samplenum} {? ? ? ? ? ? ? ?} break
 	set dirlist [file split [file dir $file]]
 	set filebase [file root [file tail $file]]
 	if {$iscompar} {
@@ -21,7 +21,7 @@ proc multidb_analysisinfo {sampleid file sample iscompar} {
 		foreach {varcall mapper sample} $split break
 	}
 	regsub {_[0-9]+$} $sample {} individual
-	list $sampleid $experiment $sample $gentli_ngsseq $reference $mapper $varcall $individual $samplenum
+	list $sampleid $experiment $sample $mapper $varcall $gentli_ngsseq $reference $individual $samplenum
 }
 
 proc multidb_merge_job {varsfile files {split 1}} {
@@ -63,37 +63,6 @@ proc multidb_merge_job {varsfile files {split 1}} {
 		}
 	}
 	
-}
-
-proc multidb_dir_open {compar_dir database} {
-	if {![file exists $compar_dir/vars.tsv]} {
-		file_write $compar_dir/vars.tsv [join {chromosome begin end type ref alt id} \t]\n
-		file_write $compar_dir/vars.tsv.maxid 0
-		file_write $compar_dir/vars.tsv.count 0
-	} elseif {![file exists $compar_dir/vars.tsv.maxid] || ![file exists $compar_dir/vars.tsv.count]} {
-		set temp [cg select -g all -gc {max(id),count(id)} $compar_dir/vars.tsv]
-		set maxid [lindex $temp end-1]
-		if {![isint $maxid]} {set maxid 0}
-		set count [lindex $temp end]
-		if {![isint $count]} {set count 0}
-		file_write $compar_dir/vars.tsv.maxid $maxid
-		file_write $compar_dir/vars.tsv.count $count
-	}
-	if {![file exists $compar_dir/analysis.tsv]} {
-		set fields {id experiment ngsseq gentli_ngsseq reference mapper varcall individual sample}
-		file_write $compar_dir/analysis.tsv [join $fields \t]\n
-		file_write $compar_dir/analysis.tsv.maxid 0
-		file_write $compar_dir/analysis.tsv.count 0
-	} elseif {![file exists $compar_dir/analysis.tsv.maxid] || ![file exists $compar_dir/analysis.tsv.count]} {
-		set temp [cg select -g all -gc {max(id),count(id)} $compar_dir/analysis.tsv]
-		set maxid [lindex $temp end-1]
-		if {![isint $maxid]} {set maxid 0}
-		set count [lindex $temp end]
-		if {![isint $count]} {set count 0}
-		file_write $compar_dir/analysis.tsv.maxid $maxid
-		file_write $compar_dir/analysis.tsv.count $count
-	}
-	return {var analysis sequenced zyg alleleSeq1 alleleSeq2 quality coverage}
 }
 
 proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
@@ -151,7 +120,7 @@ proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
 	}
 	# check samples, find all fields
 	set fs [open $compar_dir/analysis.tsv.insert w]
-	puts $fs [join {id experiment ngsseq gentli_ngsseq reference mapper varcall individual sample} \t]
+	puts $fs [join {id experiment ngsseq mapper varcall gentli_ngsseq reference individual sample} \t]
 	set varcols {id chomosome begin end type ref alt id}
 	# get next sampleid
 	if {[file exists $compar_dir/analysis.tsv.maxid]} {
@@ -163,6 +132,7 @@ proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
 		set sampleid 0
 	}
 	incr sampleid
+	set insertcount 0
 	foreach file $datafiles {
 		set f [gzopen $file]
 		set header [tsv_open $f]
@@ -193,6 +163,7 @@ proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
 				# put a value not -1 or -2, so no new one will be added
 				set a(seqpos,$sample) 0
 				puts $fs [join [multidb_analysisinfo $sampleid $file $sample 1] \t]
+				incr insertcount
 				incr sampleid
 			}
 		} else {
@@ -211,10 +182,13 @@ proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
 			set a(poss,$sample) $poss
 			set a(seqpos,$sample) $seqpos
 			puts $fs [join [multidb_analysisinfo $sampleid $file $sample 0] \t]
+			incr insertcount
 			incr sampleid
 		}
 	}
 	close $fs
+	file_write $compar_dir/analysis.tsv.insert.maxid $sampleid
+	file_write $compar_dir/analysis.tsv.insert.count $insertcount
 	set genofields [list_remdup $genofields]
 	return $datafiles
 }
@@ -349,6 +323,8 @@ proc multidb_job {args} {
 		}
 		file rename $compar_dir/vars.tsv.new.temp.maxid $compar_dir/vars.tsv.new.maxid
 		file rename $compar_dir/vars.tsv.new.temp.count $compar_dir/vars.tsv.new.count
+		file rename $compar_dir/vars.tsv.insert.temp.count $compar_dir/vars.tsv.insert.count
+		file rename $compar_dir/geno.tsv.insert.temp.count $compar_dir/geno.tsv.insert.count
 	}
 }
 
@@ -356,4 +332,31 @@ proc cg_multidb {args} {
 	set args [job_init -silent {*}$args]
 	multidb_job {*}$args
 	job_wait
+}
+
+proc cg_multidb_import {args} {
+	set pos 0
+	while 1 {
+		set key [lindex $args $pos]
+		switch -- $key {
+			-monetdb {
+				incr pos
+				set monetdb [lindex $args $pos]
+			}
+			-- break
+			default {
+				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
+				break
+			}
+		}
+		incr pos
+	}
+	set args [lrange $args $pos end]
+	foreach {compar_dir} $args break
+	projectinfo $compar_dir {monetdb {}} {split 1}
+	if {$monetdb ne ""} {
+		multidb_monet_import $compar_dir
+	} else {
+		multidb_dir_import $compar_dir
+	}
 }

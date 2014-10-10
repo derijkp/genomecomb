@@ -43,7 +43,8 @@ int main(int argc, char *argv[]) {
 	char *todofile;
 	char varid[20];
 	unsigned int numfields,pos1,pos2;
-	int split = 1,first,fvarsnewcount = 0;
+	int fvarsnewcount = 0,fvarsinsertcount = 0,fgenocount = 0;
+	int split = 1,first;
 	int comp, size, newvarid;
 	register int i,j;
 
@@ -129,6 +130,7 @@ int main(int argc, char *argv[]) {
 			putc_unlocked('\t',fvarsinsert);
 			DStringputs(var->alt,fvarsinsert);
 			fprintf(fvarsinsert,"\t%d\n",var->id);
+			fvarsinsertcount++;
 		}
 		sprintf(varid,"%d",var->id);
 		fprintf(fvarsnew,"\t%s\n",varid);
@@ -169,6 +171,7 @@ int main(int argc, char *argv[]) {
 					cur++;
 				}
 				putc_unlocked('\n',fgeno);
+				fgenocount++;
 				todo->error = DStringGetTab(todo->line,todo->f,todo->max,todo->result,1,&numfields);
 				if (!todo->error) {
 					check_numfieldserror(numfields,todo->numfields,todo->line,todo->filename->string,&(todo->pos));
@@ -193,15 +196,30 @@ int main(int argc, char *argv[]) {
 	fclose(fvarsinsert);
 	fclose(fgeno);
 	filename = DStringNew();
+	#
 	DStringSet(filename,fvarsnewfile);
 	DStringAppend(filename,".maxid");
 	f = fopen(filename->string,"w");
 	fprintf(f,"%s",varid);
 	fclose(f);
+	#
 	DStringSet(filename,fvarsnewfile);
 	DStringAppend(filename,".count");
 	f = fopen(filename->string,"w");
 	fprintf(f,"%d",fvarsnewcount);
 	fclose(f);
+	#
+	DStringSet(filename,fvarsinsertfile);
+	DStringAppend(filename,".count");
+	f = fopen(filename->string,"w");
+	fprintf(f,"%d",fvarsinsertcount);
+	fclose(f);
+	#
+	DStringSet(filename,fgenofile);
+	DStringAppend(filename,".count");
+	f = fopen(filename->string,"w");
+	fprintf(f,"%d",fgenocount);
+	fclose(f);
+	#
 	exit(EXIT_SUCCESS);
 }

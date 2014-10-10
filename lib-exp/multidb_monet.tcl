@@ -102,16 +102,63 @@ proc multidb_monet_open {compar_dir database} {
 	cg_monetdb_fields $database geno
 }
 
-proc multidb_monet_import {compar_dir database} {
-	set file $compar_dir/vars.tsv.insert
-	set num [lindex [exec wc -l $file] 0]
-	incr num -1
+proc monetdb_type {typeaVar field} {
+	upvar $typeaVar typea
+	if {[info exists typea($field)]} {
+		set type $typea($field)
+		switch $type {
+			int {set type int}
+			float {set type float}
+			char {set type char(1)}
+			default {set type text}
+		}
+		set type $type
+	} else {
+		set type text
+	}
+	return $type
+}
+
+proc multidb_monet_importtable {compar_dir database table file} {
+	set file [file_absolute $file]
 	set f [open $file]
 	set header [tsv_open $f comment]
 	close $f
+	set fields [list {*}[cg_monetdb_fields $database $table]]
+	if {[lrange $header 0 [expr {[llength $fields]-1}]] ne $fields} {
+		error "incompatible file: first fields in $file must be: $fields"
+	}
+	if {[llength $header] > [llength $fields]} {
+		code2typevar typea
+		foreach field [lrange $header [llength $fields] end] {
+			set type [monetdb_type typea $field]
+			cg_monetdb_sql $database "alter table \"$table\" add \"$field\" $type"
+		}
+	}
 	set offset [expr {2+[llength [split $comment \n]]}]
-	cg_monetdb_sql $database "copy $num offset $offset records into \"var\" from '$compar_dir/vars.tsv.insert' delimiters '\t', '\n' null as '?';"
-	file rename -force $compar_dir/vars.tsv.insert $compar_dir/vars.tsv.insert.done
-#	cg_monetdb_sql $database "copy $num2 offset $offset2 records into \"geno\" from '$tempfile.sampledata.tsv' delimiters '\t', '\n' null as '?';"
+	if {[file exists $file.count]} {
+		set num [file_read $file.count]
+	} else {
+		set num [lindex [exec wc -l $file] 0]
+		set num [expr {$num - $offset + 1}]
+	}
+	cg_monetdb_sql $database "copy $num offset $offset records into \"$table\" from '$file' delimiters '\t', '\n' null as '?';"
+}
 
+proc multidb_monet_import {compar_dir database} {
+
+	file mkdir $compar_dir/old
+	set file $compar_dir/vars.tsv.insert
+	multidb_monet_importtable $compar_dir $database var $compar_dir/vars.tsv.insert
+	file rename $compar_dir/vars.tsv.insert $compar_dir/old
+	file rename $compar_dir/vars.tsv.insert.count $compar_dir/old
+	file rename $compar_dir/vars.tsv.new $compar_dir/vars.tsv
+	file rename $compar_dir/vars.tsv.new.count $compar_dir/vars.tsv.count
+	file rename $compar_dir/vars.tsv.new.maxid $compar_dir/vars.tsv.maxid
+	multidb_monet_importtable $compar_dir $database analysis $compar_dir/analysis.tsv.insert
+	file rename $compar_dir/analysis.tsv.insert $compar_dir/old
+	file rename $compar_dir/analysis.tsv.insert.count $compar_dir/old
+	multidb_monet_importtable $compar_dir $database geno $compar_dir/geno.tsv.insert
+	file rename $compar_dir/geno.tsv.insert $compar_dir/old
+	file rename $compar_dir/geno.tsv.insert.count $compar_dir/old
 }
