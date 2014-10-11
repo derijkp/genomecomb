@@ -156,6 +156,7 @@ int main(int argc, char *argv[]) {
 					} else if (*cur == -2) {
 						if (!first) {
 							putc_unlocked('\n',fgeno);
+							fgenocount++;
 						}
 						first = 0;
 						j--; cur++;

@@ -42,13 +42,20 @@ proc multidb_monet_create {database} {
 		"zyg" char(1)
 		"alleleSeq1" text
 		"alleleSeq2" text
-		"quality" float
-		"coverage" integer
+		"quality" text
+		"coverage" text
 		primary key ("var","analysis")
 	}
 	cg_monetdb_sql $database {create index "var_basicfields" on "var"("chromosome","begin","end","type")}
 	cg_monetdb_sql $database {create index "geno_zygosity" on "geno"("zyg")}
 	cg_monetdb_sql $database {create index "geno_sequenced" on "geno"("sequenced")}
+	cg_monetdb_sql $database {
+		create view "long" as (
+			select v."chromosome", v."begin", v."end", v."type", v."ref", v."alt", 
+			a.*, g.*
+			from "geno" g join "var" v on g."var" = v."id" join "analysis" a on g."analysis" = a."id"
+		)
+	}
 }
 
 proc multidb_monet_open {compar_dir database} {
@@ -131,7 +138,8 @@ proc multidb_monet_importtable {compar_dir database table file} {
 	if {[llength $header] > [llength $fields]} {
 		code2typevar typea
 		foreach field [lrange $header [llength $fields] end] {
-			set type [monetdb_type typea $field]
+			# set type [monetdb_type typea $field]
+			set type text
 			cg_monetdb_sql $database "alter table \"$table\" add \"$field\" $type"
 		}
 	}
@@ -146,19 +154,20 @@ proc multidb_monet_importtable {compar_dir database table file} {
 }
 
 proc multidb_monet_import {compar_dir database} {
+	multidb_monet_open $compar_dir $database
 
 	file mkdir $compar_dir/old
 	set file $compar_dir/vars.tsv.insert
 	multidb_monet_importtable $compar_dir $database var $compar_dir/vars.tsv.insert
-	file rename $compar_dir/vars.tsv.insert $compar_dir/old
-	file rename $compar_dir/vars.tsv.insert.count $compar_dir/old
-	file rename $compar_dir/vars.tsv.new $compar_dir/vars.tsv
-	file rename $compar_dir/vars.tsv.new.count $compar_dir/vars.tsv.count
-	file rename $compar_dir/vars.tsv.new.maxid $compar_dir/vars.tsv.maxid
+	file rename -force $compar_dir/vars.tsv.insert $compar_dir/old
+	file rename -force $compar_dir/vars.tsv.insert.count $compar_dir/old
+	file rename -force $compar_dir/vars.tsv.new $compar_dir/vars.tsv
+	file rename -force $compar_dir/vars.tsv.new.count $compar_dir/vars.tsv.count
+	file rename -force $compar_dir/vars.tsv.new.maxid $compar_dir/vars.tsv.maxid
 	multidb_monet_importtable $compar_dir $database analysis $compar_dir/analysis.tsv.insert
-	file rename $compar_dir/analysis.tsv.insert $compar_dir/old
-	file rename $compar_dir/analysis.tsv.insert.count $compar_dir/old
+	file rename -force $compar_dir/analysis.tsv.insert $compar_dir/old
+	file rename -force $compar_dir/analysis.tsv.insert.count $compar_dir/old
 	multidb_monet_importtable $compar_dir $database geno $compar_dir/geno.tsv.insert
-	file rename $compar_dir/geno.tsv.insert $compar_dir/old
-	file rename $compar_dir/geno.tsv.insert.count $compar_dir/old
+	file rename -force $compar_dir/geno.tsv.insert $compar_dir/old
+	file rename -force $compar_dir/geno.tsv.insert.count $compar_dir/old
 }
