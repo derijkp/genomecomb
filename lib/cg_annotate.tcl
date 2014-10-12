@@ -252,6 +252,7 @@ proc cg_annotate {args} {
 	set dbdir {}
 	set pos 0
 	set replace 0
+	set multidb 0
 	foreach {key value} $args {
 		switch -- $key {
 			-near {
@@ -265,6 +266,9 @@ proc cg_annotate {args} {
 			}
 			-replace {
 				set replace $value
+			}
+			-multidb {
+				set multidb $value
 			}
 			default {
 				break
@@ -388,7 +392,11 @@ proc cg_annotate {args} {
 			file rename -force $resultfile.${name}_annot.temp $resultfile.${name}_annot
 		}
 	}
-	if {$replace} {
+	if {$multidb} {
+		cg select -f id $file $resultfile.temp
+		exec paste $resultfile.temp {*}$afiles > $resultfile
+		file delete $resultfile.temp
+	} elseif {$replace} {
 		cg select -f [list_lremove $header $newh] $file $resultfile.temp
 		exec paste $resultfile.temp {*}$afiles > $resultfile
 		file delete $resultfile.temp
