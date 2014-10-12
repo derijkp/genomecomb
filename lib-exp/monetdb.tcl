@@ -190,6 +190,9 @@ proc cg_monetdb {args} {
 			foreach {dbfarm} $args break
 			exec monetdbd stop $dbfarm
 		}
+		discover {
+			return [exec monetdb discover]
+		}
 		port {
 			foreach {dbfarm} $args break
 			set result [dict get [monetdb_getinfo $dbfarm] port]
