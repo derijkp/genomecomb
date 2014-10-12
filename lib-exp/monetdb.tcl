@@ -1,21 +1,39 @@
 proc monetdbinit {} {
 	global monetdbdir
-	if {![catch {set monetdbdir [file dir [file dir [exec which mclient]]]} e]} {
-		return
-	}
-	foreach path [list \
-		$::appdir/../extern/monetdb \
-		$::appdir/../../extern/monetdb \
-		/home/peter/apps/monetdb \
-	] {
-		if {[file exists $path/bin/mclient]} {
-			set monetdbdir $path
-			set ::env(PATH) ${::env(PATH)}:$path/bin
-			break
+	if {[catch {
+		set file [exec which mclient]
+	}]} {
+		foreach path [list \
+			$::appdir/../extern/monetdb \
+			$::appdir/../../extern/monetdb \
+			/home/peter/apps/monetdb \
+		] {
+			set file $path/bin/mclient
+			if {[file exists $file]} {
+				break
+			}
 		}
 	}
-	if {![info exists monetdbdir]} {
+	while {1} {
+		if {[catch {
+			set link [file readlink $file]
+		}]} break
+		if {$link eq ""} break
+		if {[file pathtype $link] eq "absolute"} {
+			set file $link
+		} else {
+			set file [file normalize [file dir $file]/$link]
+		}
+	}
+	if {![file exists $file]} {
 		error "could not find monetdb installation"
+	}
+	set monetdbdir [file dir [file dir $file]]
+	set ::env(PATH) ${::env(PATH)}:$monetdbdir/bin
+	if {[info exists ::env(LD_LIBRARY_PATH)]} {
+		set ::env(LD_LIBRARY_PATH) ${::env(LD_LIBRARY_PATH)}:$monetdbdir/lib
+	} else {
+		set ::env(LD_LIBRARY_PATH) $monetdbdir/lib
 	}
 }
 monetdbinit
