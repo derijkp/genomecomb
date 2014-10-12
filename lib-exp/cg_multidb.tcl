@@ -198,6 +198,7 @@ proc multidb_job {args} {
 	set regonly 0
 	set targetsfile {}
 	set targetsfield {}
+	set dbdir /complgen/refseq/hg19
 	set pos 0
 	while 1 {
 		set key [lindex $args $pos]
@@ -205,6 +206,10 @@ proc multidb_job {args} {
 			-monetdb {
 				incr pos
 				set monetdb [lindex $args $pos]
+			}
+			-dbdir {
+				incr pos
+				set dbdir [lindex $args $pos]
 			}
 			-split {
 				incr pos
@@ -231,6 +236,15 @@ proc multidb_job {args} {
 	}
 	foreach {compar_dir} $args break
 	set dirs [lrange $args 1 end]
+
+	if {[file exists $compar_dir/vars.tsv.insert]
+		|| [file exists $compar_dir/analysis.tsv.insert]
+		|| [file exists $compar_dir/geno.tsv.insert]
+		|| [file exists $compar_dir/analysis.tsv.update]
+		|| [file exists $compar_dir/geno.tsv.update]
+	} {
+		error "unimported updates/inserts present in $compar_dir"
+	}
 	#
 	set compar_dir [file_absolute $compar_dir]
 	if {[file exists $compar_dir] && ![file isdir $compar_dir]} {file delete $compar_dir}
@@ -303,7 +317,7 @@ proc multidb_job {args} {
 	# run
 	set deps [list $todofile $workdir/vars.tsv {*}$datafiles]
 	set targets [list $compar_dir/vars.tsv.new $compar_dir/vars.tsv.insert $compar_dir/geno.tsv.insert]
-	job multi_join -deps $deps -vars {split len genofields compar_dir} -targets $targets -code {
+	job multidb_join -deps $deps -vars {split len genofields compar_dir} -targets $targets -code {
 		set temptargets {}
 		if {[file exists $dep.maxid]} {
 			set varidstart [file_read $dep.maxid]
@@ -325,6 +339,12 @@ proc multidb_job {args} {
 		file rename $compar_dir/vars.tsv.new.temp.count $compar_dir/vars.tsv.new.count
 		file rename $compar_dir/vars.tsv.insert.temp.count $compar_dir/vars.tsv.insert.count
 		file rename $compar_dir/geno.tsv.insert.temp.count $compar_dir/geno.tsv.insert.count
+	}
+	job multidb_annot -deps $compar_dir/vars.tsv.insert -vars {compar_dir dbdir} -targets $compar_dir/annot.tsv.insert -code {
+		cg annotate -multidb 1 $compar_dir/vars.tsv.insert $compar_dir/annot.tsv.insert.temp \
+			$dbdir {*}[glob -nocomplain $dbdir/extra/var_*_evs.tsv $dbdir/extra/var_*_dbnsfp.tsv]
+		file rename $compar_dir/annot.tsv.insert.temp $compar_dir/annot.tsv.insert
+		file copy -force $compar_dir/vars.tsv.insert.count $compar_dir/annot.tsv.insert.count
 	}
 }
 
@@ -355,7 +375,7 @@ proc cg_multidb_import {args} {
 	foreach {compar_dir} $args break
 	projectinfo $compar_dir {monetdb {}} {split 1}
 	if {$monetdb ne ""} {
-		multidb_monet_import $compar_dir
+		multidb_monet_import $compar_dir $monetdb
 	} else {
 		multidb_dir_import $compar_dir
 	}
