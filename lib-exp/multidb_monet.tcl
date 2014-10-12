@@ -106,7 +106,12 @@ proc multidb_monet_open {compar_dir database} {
 		set count [cg_monetdb_sql $database {select count("id") from "analysis"}]
 		file_write $compar_dir/analysis.tsv.count $count
 	}
-	cg_monetdb_fields $database geno
+	set genofields [cg_monetdb_fields $database geno]
+	if {[file exists $compar_dir/geno.tsv]} {
+		set fields [cg select -h $compar_dir/geno.tsv]
+		set genofields [list_union $genofields $fields]
+	}
+	return $genofields
 }
 
 proc monetdb_type {typeaVar field} {
