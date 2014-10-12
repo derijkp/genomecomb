@@ -435,9 +435,13 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 		lset poss 2 $pos
 		set pos [lsearch $poss -1]
 	}
-	if {$giveerror && ($pos != -1)} {
+	if {$giveerror ne "0" && ($pos != -1)} {
 		set notfound [list_sub {chromosome begin end type ref alt} [list_find $poss -1]]
-		error "header error: fields (or alternatives) not found: $notfound"
+		if {$giveerror eq "1"} {
+			error "header error: fields (or alternatives) not found: $notfound"
+		} else {
+			error "header error in $giveerror: fields (or alternatives) not found: $notfound"
+		}
 	}
 	return $poss
 }

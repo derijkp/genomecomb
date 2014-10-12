@@ -18,11 +18,11 @@ proc multi_merge_job {varsfile files {split 1}} {
 		job multi_merge-$multi_merge_num -deps [list $file1 $file2] -vars split -targets $varsfile.$multi_merge_num -code {
 			set f [gzopen $dep1]
 			set header [tsv_open $f]
-			set poss1 [tsv_basicfields $header 6 1]
+			set poss1 [tsv_basicfields $header 6 $dep1]
 			close $f
 			set f [gzopen $dep2]
 			set header [tsv_open $f]
-			set poss2 [tsv_basicfields $header 6 1]
+			set poss2 [tsv_basicfields $header 6 $dep2]
 			close $f
 			exec multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split > $target.temp
 			file rename -force $target.temp $target
@@ -178,7 +178,7 @@ proc cg_multicompar {args} {
 		set file [file_absolute $file]
 		set dir [file dir $file]
 		set filebase [file root [file tail [gzroot $file]]]
-		set basicposs [tsv_basicfields $header]
+		set basicposs [tsv_basicfields $header 6 $file]
 		set samples [samples $header]
 		if {[llength $samples] > 0} {
 			set keepposs [list_find -glob $header *-*]
@@ -215,7 +215,7 @@ proc cg_multicompar {args} {
 		close $f
 		lappend reannotheader $targetsfield
 		set file [file_absolute $targetsfile]
-		set basicposs [tsv_basicfields $header]
+		set basicposs [tsv_basicfields $header $file]
 		# if seqpos != -1, no new calculated sequence column will be added
 		# -2 is used to indicate to put an empty field instead of a ? for no match
 		set seqpos -2
