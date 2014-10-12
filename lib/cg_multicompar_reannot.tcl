@@ -66,7 +66,7 @@ proc multicompar_reannot_getline {f sampleaVar poss} {
 	}
 }
 
-proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} {
+proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {range {}}} {
 
 	set compar_file [file_absolute $compar_file]
 	set basedir [file dir $compar_file]
@@ -85,6 +85,10 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 			lappend samplea(fields,$sample) [lindex $temp 0]
 			list_addnew samples $sample
 		}
+	}
+	if {[llength $range]} {
+		set samples [lrange $samples {*}$range]
+		if {![llength $samples]} {return {}}
 	}
 	set referencepos [lsearch $header reference]
 	if {$referencepos == -1} {set referencepos [lsearch $header ref]}
@@ -275,26 +279,70 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0}} 
 	}
 	file rename -force $compar_file $compar_file.old
 	file rename -force $compar_file.temp $compar_file
+	return $samples
 }
 
 
 proc cg_multicompar_reannot {args} {
+	set force 0
+	set regonly 0
+	set skipincomplete 0
+	set paged 0
+	set pos 0
+	while 1 {
+		set key [lindex $args $pos]
+		switch -- $key {
+			-force {
+				incr pos
+				set force [lindex $args $pos]
+			}
+			-regonly {
+				incr pos
+				set regonly [lindex $args $pos]
+			}
+			-skipincomplete {
+				incr pos
+				set skipincomplete [lindex $args $pos]
+			}
+			-paged {
+				incr pos
+				set paged [lindex $args $pos]
+			}
+			-- break
+			default {
+				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
+				break
+			}
+		}
+		incr pos
+	}
+	set args [lrange $args $pos end]
 	if {[llength $args] < 1} {
 		errorformat multicompar_reannot
 		exit 1
 	}
 	set compar_file [list_shift args]
-	set force 0
-	set regonly 0
-	set skipincomplete 0
 	foreach option $args {
 		switch $option {
 			force {set force 1}
 			regonly {set regonly 1}
 			skipincomplete {set skipincomplete 1}
+			paged {set paged 1000}
 			default {error "unrecognized option $option"}
 		}
 	}
 	putslog "Reannotating $compar_file"
-	multicompar_reannot $compar_file $force $regonly $skipincomplete
+	if {!$paged} {
+		multicompar_reannot $compar_file $force $regonly $skipincomplete
+	} else {
+		set s 0
+		set pagedplus [expr {$paged-1}]
+		while 1 {
+			set e [expr {$s + $pagedplus}]
+			set samples [multicompar_reannot $compar_file $force $regonly $skipincomplete [list $s $e]]
+			if {![llength $samples]} break
+			puts "range $s-$e done"
+			incr s $paged
+		}
+	}
 }
