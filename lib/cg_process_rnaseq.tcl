@@ -158,9 +158,3 @@ proc process_rnaseq {args} {
 	process_rnaseq_job $destdir $libtype $bowtie_index $gff
 	job_wait
 }
-
-
-process_rnaseq -d sge NG7522 fr-firststrand /complgen3/refseq/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index/genome /complgen3/refseq/Homo_sapiens/UCSC/hg19/Annotation/Genes/genes.gtf
-
-
-
