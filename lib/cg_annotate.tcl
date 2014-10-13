@@ -297,8 +297,9 @@ proc cg_annotate {args} {
 	}
 	putslog "Annotating $file"
 	set f [gzopen $file]
-	set poss [open_region $f header]
+	set header [tsv_open $f]
 	catch {close $f}
+	set poss [tsv_basicfields $header 6 0]
 	set common [list_common $header $newh]
 	if {[llength $common]} {
 		if {!$replace} {
@@ -310,6 +311,15 @@ proc cg_annotate {args} {
 #		}
 	} else {
 		set replace 0
+	}
+	if {[llength $header] > 10 && [llength $dbfiles] > 4} {
+		puts "Using varfile $file.index/vars.tsv"
+		file mkdir $file.index
+		file delete $file.index/vars.tsv
+		cg select -f [list_sub $header [list_remove $poss -1]] $file $file.index/vars.tsv
+		set usefile $file.index/vars.tsv
+	} else {
+		set usefile $file 
 	}
 	set afiles {}
 	foreach dbfile $dbfiles {
@@ -339,7 +349,7 @@ proc cg_annotate {args} {
 			}
 			set genecol [dict_get_default $dbinfo genecol name2]
 			set transcriptcol [dict_get_default $dbinfo transcriptcol name]
-			annotategene $file $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
+			annotategene $usefile $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
 		} elseif {$dbtype eq "mir"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}
 			if {$dbdir eq ""} {
@@ -357,7 +367,7 @@ proc cg_annotate {args} {
 			}
 			set genecol [dict_get_default $dbinfo genecol name]
 			set transcriptcol [dict_get_default $dbinfo transcriptcol isomir]
-			annotatemir $file $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
+			annotatemir $usefile $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
 			set altpos [lsearch $header alt]
@@ -371,7 +381,7 @@ proc cg_annotate {args} {
 				continue
 			}
 			set outfields [dict get $dbinfo outfields]
-			annotatevar $file $dbfile $name $resultfile.${name}_annot $dbinfo
+			annotatevar $usefile $dbfile $name $resultfile.${name}_annot $dbinfo
 		} elseif {$dbtype eq "bcol"} {
 			if {$near != -1} {error "-near option does not work with bcol dbfiles"}
 			lappend afiles $resultfile.${name}_annot
@@ -379,7 +389,7 @@ proc cg_annotate {args} {
 				putslog "$resultfile.${name}_annot exists: skipping scan"
 				continue
 			}
-			annotatebcol $file $dbfile $name $resultfile.${name}_annot
+			annotatebcol $usefile $dbfile $name $resultfile.${name}_annot
 		} else {
 			lappend afiles $resultfile.${name}_annot
 			if {[file exists $resultfile.${name}_annot]} {
@@ -388,7 +398,7 @@ proc cg_annotate {args} {
 			}
 			putslog "Adding $dbfile"
 			set outfields [dict get $dbinfo outfields]
-			annotatereg $file $dbfile $name $resultfile.${name}_annot.temp $near $dbinfo
+			annotatereg $usefile $dbfile $name $resultfile.${name}_annot.temp $near $dbinfo
 			file rename -force $resultfile.${name}_annot.temp $resultfile.${name}_annot
 		}
 	}
