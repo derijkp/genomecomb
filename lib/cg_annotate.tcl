@@ -244,10 +244,6 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 }
 
 proc cg_annotate {args} {
-	if {([llength $args] < 3)} {
-		errorformat annotate
-		exit 1
-	}
 	set near -1
 	set dbdir {}
 	set pos 0
@@ -277,6 +273,10 @@ proc cg_annotate {args} {
 		incr pos 2
 	}
 	set args [lrange $args $pos end]
+	if {([llength $args] < 3)} {
+		errorformat annotate
+		exit 1
+	}
 	foreach {file resultfile} $args break
 	set file [gztemp $file]
 	set dbfiles {}
