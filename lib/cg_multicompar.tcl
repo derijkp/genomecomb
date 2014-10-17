@@ -92,17 +92,13 @@ proc cg_multicompar {args} {
 		exit 1
 	}
 	foreach {compar_file} $args break
+	set compar_file_root [gzroot $compar_file]
 	unset -nocomplain a
 	if {[file exists $compar_file]} {
 		foreach name [cg select -n $compar_file] {
 			set a($name) $compar_file
 		}
 	}
-	file mkdir $compar_file.index
-	set workdir $compar_file.index/multicompar
-	# should take into account existing instead of deleting and starting all over -> not now
-	if {[file exists $workdir]} {file delete -force $workdir}
-	file mkdir $workdir
 	set dirs [lrange $args 1 end]
 	set files {}
 	foreach dir $dirs {
@@ -150,9 +146,14 @@ proc cg_multicompar {args} {
 			set a($name) $file
 		}
 	}
-	job_logdir $workdir/log_jobs
 	# merge variants
 	# todo: check for concurrency
+	file mkdir $compar_file_root.index
+	set workdir $compar_file_root.index/multicompar
+	# should take into account existing instead of deleting and starting all over -> not now
+	if {[file exists $workdir]} {file delete -force $workdir}
+	file mkdir $workdir
+	job_logdir $workdir/log_jobs
 	set multi_merge_num 0
 	if {[file exists $compar_file]} {
 		file rename -force $compar_file $compar_file.old
@@ -226,13 +227,13 @@ proc cg_multicompar {args} {
 		incr len
 	}
 	close $ftodo
-	job multi_join -deps [list $todofile] -vars {split len reannotheader} -targets $compar_file -code {
+	job multi_join -deps [list $todofile] -vars {split len reannotheader} -targets $compar_file_root -code {
 		file_write $target.temp [join $reannotheader \t]\n
 		exec multi_join $dep1 $len $split >> $target.temp
 		file rename -force $target.temp $target
 	}
 	if {$reannot} {
-		job multicompar_reannot -deps {$compar_file} -vars {regonly} -targets {$compar_file $compar_file.reannot} -code {
+		job multicompar_reannot -deps {$compar_file_root} -vars {regonly} -targets {$compar_file_root $compar_file_root.reannot} -code {
 			putslog "Reannotating $dep"
 			multicompar_reannot $dep 0 $regonly
 			file_write $dep.reannot [timestamp]
