@@ -27,6 +27,9 @@ proc tsv_select_sampleinfo_setfile {filename} {
 
 proc tsv_select_sampleinfo {field} {
 	global tsv_select_sampleinfofile tsv_select_sampleinfo
+	if {[string range $field 0 6] eq "sample-"} {
+		return [string range $field 7 end]
+	}
 	if {![info exists tsv_select_sampleinfo]} {
 		if {[get tsv_select_sampleinfofile ""] eq ""} {
 			error "field \"$field\" not present in file and no sampleinfo file found"

@@ -148,4 +148,10 @@ test select {spercent} {
 	} data/vars-saggr.tsv] \t
 } {{chromosome begin test sequenced-sample1 sequenced-sample2 sequenced-sample3 freq-sample1 freq-sample2 freq-sample3} {1 259 66.66666666666667 v v v 0.1 0.11 0.2} {1 4001 50.0 v v r 0.2 0.1 0.2} {1 4050 100.0 v u u 0.3 ? ?} {1 5000 100.0 v v r 0.4 0.6 0.6} {1 5020 100.0 v r r 0.5 ? ?} {1 5020 100.0 r v v ? 0.4 0.5} {2 4000 100.0 v v v 0.6 0.6 0.6} {2 4001 100.0 v r r 0.8 ? ?} {2 4001 100.0 v r r 0.7 0.01 ?} {2 4010 100.0 u v v ? 0.8 0.8} {2 4010 100.0 u v v ? 0.7 0.7} {2 5010 100.0 v v v 0.9 0.9 0.9} {2 10000 100.0 v r r 0.9 ? ?} {2 10000 100.0 r v v ? 0.9 0.9} {3 876 100.0 v v v 1 1 1}}
 
+test select {scount sample} {
+	csv_parse [exec cg select -f {chromosome begin 
+		{test=scount(($sample eq "sample1" or $sample eq "sample2") and $sequenced == "v")} sequenced-*
+	} data/vars-saggr.tsv] \t
+} {{chromosome begin test sequenced-sample1 sequenced-sample2 sequenced-sample3} {1 259 2 v v v} {1 4001 2 v v r} {1 4050 1 v u u} {1 5000 2 v v r} {1 5020 1 v r r} {1 5020 1 r v v} {2 4000 2 v v v} {2 4001 1 v r r} {2 4001 1 v r r} {2 4010 1 u v v} {2 4010 1 u v v} {2 5010 2 v v v} {2 10000 1 v r r} {2 10000 1 r v v} {3 876 2 v v v}}
+
 testsummarize
