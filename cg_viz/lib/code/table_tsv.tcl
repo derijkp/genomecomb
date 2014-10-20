@@ -342,9 +342,10 @@ table_tsv method fields {args} {
 					# neededfields will be the same for all procs, so first gather all we need using todo list
 					# then make the procs from todo list later
 					set todo {}
+					set prequery {}
 					foreach pos $poss {
 						set el [lindex $tdata(qcode) $pos]
-						set code [tsv_select_expandcode $header [lindex $el 1] neededfields]
+						set code [tsv_select_expandcode $header [lindex $el 1] neededfields prequery]
 						lappend todo $object.make_col$num $code
 						incr num
 					}
@@ -353,6 +354,7 @@ table_tsv method fields {args} {
 					foreach {name code} $todo {
 						append tclcode [subst -nocommands {
 							proc $name {$neededfields} {
+								$prequery
 								if {[catch {expr {$code}} e]} {
 									switch \$e {
 										{domain error: argument not in valid range} {return NaN}
