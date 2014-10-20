@@ -216,7 +216,7 @@ proc cg_multicompar {args} {
 		close $f
 		lappend reannotheader $targetsfield
 		set file [file_absolute $targetsfile]
-		set basicposs [tsv_basicfields $header $file]
+		set basicposs [tsv_basicfields $header 6 $file]
 		# if seqpos != -1, no new calculated sequence column will be added
 		# -2 is used to indicate to put an empty field instead of a ? for no match
 		set seqpos -2
