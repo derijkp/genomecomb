@@ -752,9 +752,9 @@ proc multicompar_job {experiment dbdir todo args} {
 				cg multicompar -split $split $target.temp {*}$stilltodo
 			}
 			if {$skipincomplete} {
-				cg multicompar_reannot $target.temp skipincomplete
+				cg multicompar_reannot -paged 200 $target.temp skipincomplete
 			} else {
-				cg multicompar_reannot $target.temp
+				cg multicompar_reannot -paged 200 $target.temp
 			}
 			file rename -force $target.temp $target
 		}
