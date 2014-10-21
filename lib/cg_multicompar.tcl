@@ -148,8 +148,7 @@ proc cg_multicompar {args} {
 	}
 	# merge variants
 	# todo: check for concurrency
-	file mkdir $compar_file_root.index
-	set workdir $compar_file_root.index/multicompar
+	set workdir [indexdir_file $compar_file multicompar]
 	# should take into account existing instead of deleting and starting all over -> not now
 	if {[file exists $workdir]} {file delete -force $workdir}
 	file mkdir $workdir

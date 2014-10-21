@@ -313,11 +313,8 @@ proc cg_annotate {args} {
 		set replace 0
 	}
 	if {[llength $header] > 10 && [llength $dbfiles] > 4} {
-		puts "Using varfile $file.index/vars.tsv"
-		file mkdir $file.index
-		file delete $file.index/vars.tsv
-		cg select -f [list_sub $header [list_remove $poss -1]] $file $file.index/vars.tsv
-		set usefile $file.index/vars.tsv
+		set usefile [tsv_varsfile $file]
+		puts "Using varfile $usefile"
 	} else {
 		set usefile $file 
 	}

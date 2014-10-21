@@ -1026,7 +1026,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		set qfields [list_lremove $header $qfields]
 		set qfields [tsv_select_expandfields $header $qfields qposs]
 	}
-	if {![file exists $index/cols]} {set index {}}
+	if {![file exists $index]} {set index {}}
 	if {[llength $qfields] == [llength $header]} {set index {}}
 	if {[llength $sortfields]} {
 		set index {}
@@ -1151,7 +1151,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			set neededcols [list_cor $indexcols $neededcols]
 			set indexfiles {}
 			foreach col $indexcols {
-				lappend indexfiles $index/cols/[lindex $header $col].col
+				lappend indexfiles $index/[lindex $header $col].col
 			}
 			append tclcode [subst {
 				proc tsv_selectc_query {$neededfields} {
@@ -1323,7 +1323,8 @@ proc cg_select {args} {
 #puts stderr [list fields=$fields query=$query]
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]
-		set index $filename.index
+		set index [indexdir_file $filename cols ok]
+		if {$ok} {set index {}}
 		set f [gzopen $filename]
 		tsv_select_sampleinfo_setfile $filename
 	} else {

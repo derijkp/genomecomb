@@ -247,7 +247,6 @@ mainw method tree_browse {file} {
 }
 
 mainw method tree_open {dir} {
-putsvars dir
 	catch {$object.tree clearnode $dir}
 	set dirs {}
 	set files {}

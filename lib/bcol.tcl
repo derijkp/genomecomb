@@ -27,11 +27,7 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 			progress start 1 "uncompressing $file for indexing, please be patient"
 			progress message "uncompressing $file for indexing, please be patient (no progress shown)"
 			if {$ext eq ".rz"} {
-				set indexdir [gzroot $file].index
-				set tempfile $indexdir/[file root [file tail $file]]
-				if {![file exists $tempfile]} {
-					gunzip $file $tempfile
-				}
+				set tempfile [gztemp $compar_file]
 			} else {
 				decompress $file
 				set file [file root $file]
@@ -78,7 +74,7 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 		}
 		if {$compressed} {
 			if {$ext eq ".rz"} {
-				file delete $tempfile
+				gzrmtemp $tempfile
 			} else {
 				exec razip -c $file > $file.rz
 			}

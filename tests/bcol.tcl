@@ -7,14 +7,27 @@ source tools.tcl
 test_cleantmp
 
 test bcol_index {basic} {
+	test_cleantmp
 	file copy -force data/expected-annotate-vars_annottest-gene_test.tsv tmp/temp.sft
 	exec cg size tmp/temp.sft
 } {46} 
 
 test bcol_index {basic} {
+	test_cleantmp
 	file copy -force data/expected-annotate-vars_annottest-gene_test.tsv tmp/temp.sft
 	exec cg index tmp/temp.sft
 	exec cg bcol get tmp/temp.sft.index/lines.bcol 0 3
+} {76 103 228} 
+
+test bcol_index {basic sib index not writable} {
+	test_cleantmp
+	file copy -force data/expected-annotate-vars_annottest-gene_test.tsv tmp/temp.sft
+	file mkdir tmp/temp.sft.index
+	file_write tmp/temp.sft.index/lines.bcol error
+	file attributes tmp/temp.sft.index -permissions ugo-xw
+	exec cg index tmp/temp.sft
+	set bcolfile [indexdir_file tmp/temp.sft lines.bcol]
+	exec cg bcol get $bcolfile 0 3
 } {76 103 228} 
 
 test bcol_make {basic} {

@@ -208,4 +208,60 @@ test check_sort {sort error 5 in vars} {
 	cg checksort data/vars_sorterror5.sft
 } {error in file data/vars_sorterror5.sft: file is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
+test indexdir {basic same name different dirs} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	file mkdir tmp/tmp
+	write_tab tmp/tmp/vars1.tsv {
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A G,C
+	}
+	set result {}
+	set d1 [indexdir tmp/vars1.tsv]
+	set d2 [indexdir tmp/tmp/vars1.tsv]
+	set d12 [indexdir tmp/vars1.tsv]
+	set d22 [indexdir tmp/tmp/vars1.tsv]
+	list [expr {$d1 eq $d12}] [expr {$d2 eq $d22}]  [expr {$d1 eq $d2}]
+} {1 1 0}
+
+test indexdir_cache {tsv_varsfile} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	set varsfile [tsv_varsfile tmp/vars1.tsv]
+	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/test
+	exec diff $varsfile tmp/test
+} {}
+
+test indexdir_cache {tsv_count} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	tsv_count tmp/vars1.tsv
+} 14
+
+test indexdir_cache {tsv_count invalid cache} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	file mkdir tmp/vars1.tsv.index
+	file_write tmp/vars1.tsv.index/vars.tsv.count 10
+	after 1000
+	file mtime tmp/vars1.tsv [clock seconds]
+	list [tsv_count tmp/vars1.tsv] [file_read tmp/vars1.tsv.index/vars.tsv.count]
+} {14 14}
+
+test indexdir_cache {tsv_count invalid cache that cannot be overwritten in sib indexdir} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	file mkdir tmp/vars1.tsv.index
+	file_write tmp/vars1.tsv.index/vars.tsv.count 10
+	file mtime tmp/vars1.tsv [clock seconds]
+	file mtime tmp/vars1.tsv.index/vars.tsv.count [expr {[file mtime tmp/vars1.tsv] - 1000}]
+	file attributes tmp/vars1.tsv.index -permissions ugo-xw
+	set countfile [indexdir_file tmp/vars1.tsv vars.tsv.count ok]
+	set result {}
+	lappend result [tsv_count tmp/vars1.tsv]
+	file attributes tmp/vars1.tsv.index -permissions u+xw
+	lappend result [file_read tmp/vars1.tsv.index/vars.tsv.count]
+	set result  
+} {14 10}
+
 testsummarize

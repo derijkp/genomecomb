@@ -191,3 +191,35 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	return $poss
 }
 
+proc tsv_count {tsvfile} {
+	set countfile [indexdir_file $tsvfile vars.tsv.count ok]
+	if {!$ok} {
+		set varsfile [indexdir_file $tsvfile vars.tsv ok]
+		if {$ok} {
+			set count [lindex [cg select -g _all_ $varsfile] end]
+			file_write $countfile $count
+			return $count
+		} else {
+			set count [lindex [cg select -g _all_ $tsvfile] end]
+			file_write $countfile $count
+			return $count
+		}
+	}
+	return [file_read $countfile]
+}
+
+proc tsv_varsfile {tsvfile} {
+	set varsfile [indexdir_file $tsvfile vars.tsv ok]
+	if {!$ok} {
+		set f [gzopen $tsvfile]
+		set header [tsv_open $f]
+		close $f
+		set basicfields [list_sub $header [tsv_basicfields $header]]
+		if {[lsearch $header id] != -1} {
+			lappend basicfields id
+		}
+		cg select -f $basicfields $tsvfile $varsfile.temp
+		file rename $varsfile.temp $varsfile
+	}
+	return $varsfile
+}

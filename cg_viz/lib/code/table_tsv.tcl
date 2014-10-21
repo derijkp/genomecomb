@@ -12,12 +12,6 @@ table_tsv method destroy {} {
 	$object close
 }
 
-if 0 {
-	set file /complgen/projects/kr1270/compar/annot_sv-kr1270.tsv.index/query_results.txt
-	set field rowid
-	set binfile /complgen/projects/kr1270/compar/annot_sv-kr1270.tsv.index/query_results.bincol
-}
-
 proc _table_tsv_calcline {object line cor row} {
 	if {[llength $cor] == 1} {
 		return [list_sub $line [lindex $cor 0]]
@@ -400,9 +394,7 @@ table_tsv method link {tktable button} {
 
 table_tsv method index {file {colinfo 0}} {
 	set time [file mtime $file]
-	set indexdir [gzroot $file].index
-	file mkdir $indexdir
-	set indexfile $indexdir/lines.bcol
+	set indexfile [indexdir_file $file lines.bcol]
 	set ext [file extension $file]
 	if {[inlist {.rz .lz4 .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
 	if {$colinfo} {
@@ -410,7 +402,10 @@ table_tsv method index {file {colinfo 0}} {
 	} else {
 		cg_index $file
 	}
-	set result [infofile_read $indexdir/info.tsv]
+	set infofile [indexdir_file $file info.tsv]
+	set result [infofile_read $infofile]
+	set indexdir [indexdir $file]
+	puts "Using indexdir $indexdir"
 	dict set result indexdir $indexdir
 	dict set result lineindex [bcol_open $indexfile]
 	dict set result file [file_absolute $file]
