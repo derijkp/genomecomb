@@ -2,33 +2,12 @@
 # I do not create a separate object $object.summarybuilder, but I do use private variables to
 # $object.summarybuilder to keep them separate from similar variables in querybuilder
 
-mainw method summarybuilder_fillvalues {args} {
+mainw method summarybuilder_fillvalues {{samplevalues 0} args} {
 	private $object.summarybuilder qvalues qvaluestext fieldsw valuesw valuew
 	set w $object.summarybuilder.options.paned
 	set field [lindex [$fieldsw get] 0]
 	if {$field eq ""} return
-	set list [$object.tb values $field]
-	if {[lindex $list end 1] ne "incomplete"} {
-		set text [list "All values"]
-	}
-	while {![isint [lindex $list end 1]]} {
-		if {![llength $list]} break
-		set line [list_pop list]
-		lappend text "[lindex $line 1]: [lindex $line 0]"
-	}
-	set qvaluestext [join $text \n]
-	set qnums [list_subindex $list 1]
-	set list [list_subindex $list 0]
-	if {[llength $list]} {
-		# found the values, do nothing else
-	} elseif {[regexp ^sequenced- $field]} {
-		set list {r v u}
-	} elseif {[regexp _impact $field]} {
-		set list {CDS RNA}
-	} else {
-		set list {}
-	}
-	set qvalues $list
+	$object fieldvalues $field $samplevalues qvalues qvaluestext
 	$valuew set {}
 	return $qvalues
 }
@@ -227,6 +206,10 @@ mainw method summarybuilder {args} {
 	set valuew $w.values.value
 	Classy::Entry $w.values.value
 	pack $w.values.value -fill x
+	frame $w.values.buttons
+	pack $w.values.buttons -fill x
+	button $w.values.buttons.examples -text "Get Examples" -command [list $object summarybuilder_fillvalues 1]
+	pack $w.values.buttons.examples -side left
 	label $w.values.label -textvariable [privatevar $object.summarybuilder qvaluestext] -justify left -anchor w
 	pack $w.values.label -fill x
 	set valuesw $w.values.values

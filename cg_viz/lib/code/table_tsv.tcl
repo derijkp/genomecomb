@@ -220,59 +220,74 @@ table_tsv method qfields {} {
 	return $tdata(qfields)
 }
 
-table_tsv method values {field {max 1000}} {
-	private $object tdata
-	set histofile $tdata(indexdir)/colinfo/$field.colinfo
-	if (![file exists $histofile]) {
-		private $object values
-		if {![info exists values($field)]} {
-			progress start $max "Sampling data"  "Sampling $tdata(file) to show example values for fields, please be patient"
-			catch {update idletasks}
-			set compressed $tdata(compressed)
-			set lineindex $tdata(lineindex)
-			set filelen [dict get $lineindex max]
-			if {!$compressed} {
-				set filesize [file size $tdata(file)]
-				set skip [expr {int($filesize/double($max))}]
-			} else {
-				set skip 0
-			}
-			catch {close $f} ; set f [gzopen $tdata(file)]
-			set header [tsv_open $f]
-			set pos [lsearch $header $field]
-			set num 0
-			set row 0
-			set break 0
-			unset -nocomplain a
-			while {![eof $f]} {
-				set line [split [gets $f] \t]
-				set v [lindex $line $pos]
-				if {![info exists a($v)]} {
-					set a($v) 1
-				} else {
-					incr a($v)
-				}
-				incr num
-				if {$num >= $max} {
-					set break 1
-					break
-				}
-				if {$skip} {
-					seek $f $skip current
-					gets $f
-				}
-				progress next
-			}
-			catch {close $f}
-			set result {}
-			foreach v [array names a] {
-				lappend result [list $v $a($v)]
-			}
-			set result [ssort -natural -index 1 -decreasing $result]
-			if {$max > $filelen || $skip} {lappend result {sampled incomplete}}
-			set values($field) $result
-			progress stop
+proc tsv_defaultvalues {field {result {}}} {
+	if {[regexp ^sequenced- $field]} {
+		set result [list_union {r v u} $result]
+	} elseif {[regexp ^zyg- $field]} {
+		set result [list_union {m t c o r u} $result]
+	} elseif {[regexp _impact $field]} {
+		annot_init
+		set pre [list_subindex $::snp_annot_list 0]
+		set result [list_union $pre $result]
+	} elseif {$field eq "type"} {
+		annot_init
+		set result [list_union {snp del ins sub} $result]
+	}
+	return $result
+}
+
+table_tsv method sample_values {field {max 1000}} {
+	private $object tdata values
+	progress start $max "Sampling data"  "Sampling $tdata(file) to show example values for fields, please be patient"
+	catch {update idletasks}
+	set compressed $tdata(compressed)
+	set lineindex $tdata(lineindex)
+	set filelen [dict get $lineindex max]
+	if {!$compressed} {
+		set filesize [file size $tdata(file)]
+		set skip [expr {int($filesize/double($max))}]
+	} else {
+		set skip 0
+	}
+	catch {close $f} ; set f [gzopen $tdata(file)]
+	set header [tsv_open $f]
+	set pos [lsearch $header $field]
+	set num 0
+	set row 0
+	set break 0
+	unset -nocomplain a
+	while {![eof $f]} {
+		set line [split [gets $f] \t]
+		set v [lindex $line $pos]
+		set a($v) 1
+		incr num
+		if {$num >= $max} {
+			set break 1
+			break
 		}
+		if {$skip} {
+			seek $f $skip current
+			gets $f
+		}
+		progress next
+	}
+	catch {close $f}
+	set result [array names a]
+	set result [ssort -natural $result]
+	set result [tsv_defaultvalues $field $result]
+	if {$max > $filelen || $skip} {lappend result {sampled incomplete}}
+	set values($field) $result
+	progress stop
+	return $values($field)
+}
+
+table_tsv method values {field {samplevalues 0} {max 1000}} {
+	private $object tdata values
+	set histofile [indexdir_file $tdata(file) colinfo/$field.colinfo ok]
+	if (!$ok) {
+		if {[info exists values($field)]} {return $values($field)}
+		if {!$samplevalues} {return {}}
+		set values($field) [$object sample_values $field $max]
 		return $values($field)
 	}
 	set result {}
@@ -295,7 +310,7 @@ table_tsv method values {field {max 1000}} {
 	} else {
 		set a(incomplete) 0
 	}
-	set result [ssort -natural -index 1 -decreasing $result]
+	set result [ssort -natural [list_subindex $result 0]]
 	if {[isdouble [get a(min) {}]] && [isdouble [get a(max) {}]]} {
 		regsub {\.0+$} $a(min) {} min
 		regsub {\.0+$} $a(max) {} max

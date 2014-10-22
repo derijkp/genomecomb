@@ -96,15 +96,19 @@ invoke {} {
 	}
 }
 
-mainw method querybuilder_fillvalues {args} {
-	private $object qvalues qvaluestext fieldsw valuesw valuew
-	set w $object.querybuilder.options.paned
-	set field [lindex [$fieldsw get] 0]
-	if {$field eq ""} return
+mainw method fieldvalues {field samplevalues qvaluesVar qvaluestextVar} {
+	private $object qvalues qvaluestext
+	upvar $qvaluesVar qvalues
+	upvar $qvaluestextVar qvaluestext
+	catch {$object.querybuilder.options.paned.pane2.pane3.values.label configure -bg [$object.querybuilder.options.paned.pane2.pane3.values cget -bg]}
+	catch {$object.summarybuilder.options.paned.pane3.values.label configure -bg [$object.summarybuilder.options.paned.pane3.values cget -bg]}
+	if {$samplevalues} {
+		$object.tb sample_values $field
+	}
 	set fields [$object.tb fields]
 	if {[inlist $fields $field]} {
-		set list [$object.tb values $field]
-		if {[lindex $list end 1] ne "incomplete"} {
+		set list [$object.tb values $field $samplevalues]
+		if {[llength $list] && [lindex $list end 1] ne "incomplete"} {
 			set text [list "All values"]
 		}
 	} elseif {$field eq "sample"} {
@@ -113,7 +117,7 @@ mainw method querybuilder_fillvalues {args} {
 	} else {
 		set pos [lsearch -glob $fields $field-*]
 		if {$pos != -1} {
-			set list [$object.tb values [lindex $fields $pos]]
+			set list [$object.tb values [lindex $fields $pos] $samplevalues]
 			set text [list "sampled"]
 		} else {
 			set list {}
@@ -121,24 +125,46 @@ mainw method querybuilder_fillvalues {args} {
 		}
 	}
 	if {[llength [lindex $list end]] > 1} {
-		while {![isint [lindex $list end 1]]} {
+		set line [lindex $list end]
+		while {[llength $line] ==2 && ![isint [lindex $line 1]]} {
 			if {![llength $list]} break
 			set line [list_pop list]
-			lappend text "[lindex $line 1]: [lindex $line 0]"
+			if {$line eq "sampled incomplete"} {
+				lappend text "Examples incomplete (sampled)"
+				catch {$object.querybuilder.options.paned.pane2.pane3.values.label configure -bg red}
+				catch {$object.summarybuilder.options.paned.pane3.values.label configure -bg red}
+			} else {
+				lappend text "[lindex $line 1]: [lindex $line 0]"
+			}
+			set line [lindex $list end]
 		}
-		set list [list_subindex $list 0]
 	}
-	set qvaluestext [join $text \n]
+	set list [list_subindex $list 0]
 	if {[llength $list]} {
 		# found the values, do nothing else
-	} elseif {[regexp ^sequenced- $field]} {
-		set list {r v u}
-	} elseif {[regexp _impact $field]} {
-		set list {CDS RNA}
+		if {![info exists text]} {set text [list "No examples"]}
 	} else {
-		set list {}
+		set list [tsv_defaultvalues $field $list]
+		if {![info exists text]} {
+			if {[llength $list]} {
+				set text [list "Only default examples"]
+				catch {$object.querybuilder.options.paned.pane2.pane3.values.label configure -bg red}
+				catch {$object.summarybuilder.options.paned.pane3.values.label configure -bg red}
+			} else {
+				set text [list "No examples"]
+			}
+		}
 	}
+	set qvaluestext [join $text \n]
 	set qvalues $list
+}
+
+mainw method querybuilder_fillvalues {{samplevalues 0} args} {
+	private $object qvalues qvaluestext fieldsw valuesw valuew
+	set w $object.querybuilder.options.paned
+	set field [lindex [$fieldsw get] 0]
+	if {$field eq ""} return
+	$object fieldvalues $field $samplevalues qvalues qvaluestext
 	if {![inlist $qvalues [$valuew get]]} {
 		$valuesw activate [lindex $qvalues 0]
 		catch {$valuesw set [lindex $qvalues 0]}
@@ -560,6 +586,10 @@ mainw method querybuilder {args} {
 	set valuew $w.values.value
 	Classy::Entry $w.values.value
 	pack $w.values.value -fill x
+	frame $w.values.buttons
+	pack $w.values.buttons -fill x
+	button $w.values.buttons.examples -text "Get Examples" -command [list $object querybuilder_fillvalues 1]
+	pack $w.values.buttons.examples -side left
 	label $w.values.label -textvariable [privatevar $object qvaluestext] -justify left -anchor w
 	pack $w.values.label -fill x
 	set valuesw $w.values.values
