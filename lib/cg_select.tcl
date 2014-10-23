@@ -1000,7 +1000,7 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 	return $code
 }
 
-proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {verbose -1} {samplingskip 0}} {
+proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {verbose 0} {samplingskip 0}} {
 # putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index verbose samplingskip
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
@@ -1227,7 +1227,7 @@ proc cg_select {args} {
 	}
 	unset -nocomplain ::tsv_select_sampleinfo
 	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0
-	set inverse 0; set group {}; set groupcols {} ; set verbose -1; set samplingskip 0; set db {}
+	set inverse 0; set group {}; set groupcols {} ; set verbose 0; set samplingskip 0; set db {}
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
