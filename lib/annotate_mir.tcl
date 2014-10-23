@@ -14,6 +14,9 @@ proc annotatemir_one {loc geneobj} {
 	set dbend [lindex $adata(annotlist) end 4]
 	set hstart $adata(start)
 	set hend $adata(end)
+	set flank1 $adata(flank1)
+	set flank2 $adata(flank2)
+	if {$flank2 eq ""} {set flank2 $flank1}
 	array set da {}
 	if {$snpstart <= $hstart && $snpend >= $hend} {
 		set impact GENEDEL
@@ -43,6 +46,13 @@ proc annotatemir_one {loc geneobj} {
 					set sign +
 					set num1 [expr {$e - $snpstart}]
 					set num2 [expr {$e - $snpend + 1}]
+				}
+				if {$annot eq "upstream"} {
+					incr num1 $flank1
+					incr num2 $flank1
+				} elseif {$annot eq "downstream"} {
+					incr num1 $flank2
+					incr num2 $flank2
 				}
 				if {$num1 == $num2} {
 					set temp $annot\($ref$sign$num1\)
@@ -203,6 +213,8 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100}} {
 	set adata(genename) $genename
 	set adata(chrom) $dchrom
 	set adata(annotlist) $annotlist
+	set adata(flank1) $flank1
+	set adata(flank2) $flank2
 	# puts -----${genename}-----
 	# foreach a $adata(annotlist) {puts $a}
 	return [array get adata]
