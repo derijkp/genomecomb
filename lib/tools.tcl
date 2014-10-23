@@ -41,6 +41,21 @@ proc cg {cmd args} {
 	}
 }
 
+proc bgcg_progress {bgexechandleVar args} {
+	upvar #0 $bgexechandleVar bgexechandle
+	if {![isint $args]} {
+		append ::bgerror [lindex $args 0]\n
+		return
+	}
+	if {[catch {
+		progress next $args
+		progress set $args
+	}]} {
+		puts error
+		Extral::bgexec_cancel $bgexechandle
+	}
+}
+
 proc bgcg {progresscommand channelvar cmd args} {
 	# puts "progresscommand cg $args"
 	if {[info exists ::stderr_redirect]} {
@@ -50,7 +65,7 @@ proc bgcg {progresscommand channelvar cmd args} {
 	}
 	if {[string length $args] < 2000} {
 		set ::bgerror {}
-		Extral::bgexec -progresscommand $progresscommand -no_error_redir -channelvar $channelvar \
+		Extral::bgexec -progresscommand [list $progresscommand $channelvar] -no_error_redir -channelvar $channelvar \
 				cg $cmd {*}$args 2>@1
 		if {$::bgerror ne ""} {error $::bgerror}
 	} else {
@@ -66,7 +81,7 @@ proc bgcg {progresscommand channelvar cmd args} {
 		set temprunfile [tempfile]
 		file_write $temprunfile [list cg_$cmd {*}$code]\n
 		set ::bgerror {}
-		Extral::bgexec -progresscommand $progresscommand -no_error_redir -channelvar $channelvar \
+		Extral::bgexec -progresscommand [list $progresscommand $channelvar] -no_error_redir -channelvar $channelvar \
 				cg source $temprunfile {*}$redirect 2>@1
 		if {$::bgerror ne ""} {error $::bgerror}
 	}

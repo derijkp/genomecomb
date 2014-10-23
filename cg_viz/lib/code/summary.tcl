@@ -34,7 +34,7 @@ table_tsv method summary {definition {file {}}} {
 			set step [expr {$numlines/10}]
 			if {$step > 50000} {set step 50000} elseif {$step < 1} {set step 1}
 			progress start [expr {$numlines + 1}] "Making Summary" "Making Summary"
-			bgcg [list $object queryprogress] [privatevar $object bgexechandle] \
+			bgcg bgcg_progress [privatevar $object bgexechandle] \
 				select -v $step -f $tdata(fields) -q $tdata(query) -g $rowdef -gc $coldef $tdata(file) $tdata(indexdir)/summary_results.tsv
 			progress stop
 		}

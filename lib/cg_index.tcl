@@ -1,3 +1,93 @@
+proc cg_indexcol {args} {
+	set samplingnum 0
+	set pos 0
+	set len [llength $args]
+	while {$pos < $len} {
+		set opt [lindex $args $pos]
+		switch $opt {
+			-sample {
+				incr pos
+				set samplingnum [lindex $args $pos]
+				incr pos
+			}
+			-- break
+			default {
+				if {[string index $opt 0] ne "-"} break
+				puts stderr "ERROR: Unkown option $opt, should be one of: -sample"
+				exit 1
+			}
+		}
+	}
+	set args [lrange $args $pos end]
+	if {[llength $args] != 2} {
+		error "format is: cg indexcol file fieldname"
+		exit 1
+	}
+	foreach {file field} $args break
+	set histofile [indexdir_filewrite $file colinfo/$field.colinfo]
+	if {$samplingnum == 0} {
+		set fields [list "v=\[join \[split \$$field ,\\\\;\] \\\\n\]"]
+		set filesize [file size $file]
+		set step [expr {$filesize/10}]
+		if {$step > 100000} {set step 100000} elseif {$step < 1} {set step 10000}
+		progress start 2 "Indexing column" "Indexing column"
+		progress start $filesize "Indexing column $field of file $file" "Indexing column"
+		bgcg bgcg_progress bgexechandle \
+			select -v $step -f $fields -sh $histofile.temph $file $histofile.temp
+		progress stop
+		progress next "Sorting (no progress shown)"
+		exec gnusort8 -N $histofile.temp | uniq > $histofile.temp2
+		progress next "Sorting finished"
+		progress stop
+		file delete $histofile.temp $histofile.temph
+		file rename $histofile.temp2 $histofile
+	} else {
+		progress start $samplingnum "Sampling data"  "Sampling $file to show example values for fields, please be patient"
+		catch {update idletasks}
+		if {![gziscompressed $file]} {
+			set filesize [file size $file]
+			set skip [expr {int($filesize/double($samplingnum))}]
+		} else {
+			set skip 0
+		}
+		catch {close $f} ; set f [gzopen $file]
+		set header [tsv_open $f]
+		set pos [lsearch $header $field]
+		set num 0
+		set row 0
+		set break 0
+		unset -nocomplain a
+		set haslists 0
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			set valuelist [split [lindex $line $pos] {,;}]
+			if {[llength $valuelist] > 1} {set haslists 1}
+			foreach v $valuelist {
+				set a($v) 1
+			}
+			incr num
+			if {$num >= $samplingnum} {
+				set break 1
+				break
+			}
+			if {$skip} {
+				seek $f $skip current
+				gets $f
+			}
+			progress next
+		}
+		catch {close $f}
+		set result [array names a]
+		set result [ssort -natural $result]
+		set result [tsv_defaultvalues $field $result]
+		if {$haslists} {lappend result {present! lists}}
+		lappend result {...}
+		file_write $histofile.temp [join $result \n]
+		file rename -force $histofile.temp $histofile
+		progress stop
+	}
+}
+
 proc cg_index {args} {
 	set updated 0
 	set pos 0

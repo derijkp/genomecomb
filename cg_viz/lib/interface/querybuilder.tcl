@@ -102,9 +102,6 @@ mainw method fieldvalues {field samplevalues qvaluesVar qvaluestextVar} {
 	upvar $qvaluestextVar qvaluestext
 	catch {$object.querybuilder.options.paned.pane2.pane3.values.label configure -bg [$object.querybuilder.options.paned.pane2.pane3.values cget -bg]}
 	catch {$object.summarybuilder.options.paned.pane3.values.label configure -bg [$object.summarybuilder.options.paned.pane3.values cget -bg]}
-	if {$samplevalues} {
-		$object.tb sample_values $field
-	}
 	set fields [$object.tb fields]
 	if {[inlist $fields $field]} {
 		set list [$object.tb values $field $samplevalues]
@@ -129,8 +126,8 @@ mainw method fieldvalues {field samplevalues qvaluesVar qvaluestextVar} {
 		while {[llength $line] ==2 && ![isint [lindex $line 1]]} {
 			if {![llength $list]} break
 			set line [list_pop list]
-			if {$line eq "sampled incomplete"} {
-				lappend text "Examples incomplete (sampled)"
+			if {[lindex $line end] eq "incomplete"} {
+				lappend text "[lindex $line 1]: [lindex $line 0]"
 				catch {$object.querybuilder.options.paned.pane2.pane3.values.label configure -bg red}
 				catch {$object.summarybuilder.options.paned.pane3.values.label configure -bg red}
 			} else {
@@ -588,8 +585,9 @@ mainw method querybuilder {args} {
 	pack $w.values.value -fill x
 	frame $w.values.buttons
 	pack $w.values.buttons -fill x
-	button $w.values.buttons.examples -text "Get Examples" -command [list $object querybuilder_fillvalues 1]
-	pack $w.values.buttons.examples -side left
+	button $w.values.buttons.examples -text "Get Examples" -command [list $object querybuilder_fillvalues sample]
+	button $w.values.buttons.all -text "Get all" -command [list $object querybuilder_fillvalues all]
+	pack $w.values.buttons.examples $w.values.buttons.all -side left
 	label $w.values.label -textvariable [privatevar $object qvaluestext] -justify left -anchor w
 	pack $w.values.label -fill x
 	set valuesw $w.values.values

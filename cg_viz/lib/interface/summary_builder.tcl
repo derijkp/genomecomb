@@ -208,8 +208,9 @@ mainw method summarybuilder {args} {
 	pack $w.values.value -fill x
 	frame $w.values.buttons
 	pack $w.values.buttons -fill x
-	button $w.values.buttons.examples -text "Get Examples" -command [list $object summarybuilder_fillvalues 1]
-	pack $w.values.buttons.examples -side left
+	button $w.values.buttons.examples -text "Get Examples" -command [list $object summarybuilder_fillvalues sample]
+	button $w.values.buttons.all -text "Get all" -command [list $object summarybuilder_fillvalues all]
+	pack $w.values.buttons.examples $w.values.buttons.all -side left
 	label $w.values.label -textvariable [privatevar $object.summarybuilder qvaluestext] -justify left -anchor w
 	pack $w.values.label -fill x
 	set valuesw $w.values.values

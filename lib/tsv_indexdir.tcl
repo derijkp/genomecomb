@@ -53,6 +53,32 @@ proc indexdir_cache_check {mainfile indexdir indexfile} {
 	return 1
 }
 
+proc indexdir_filewrite {mainfile indexfile} {
+	set indexdir [file normalize [gzroot $mainfile]].index
+	# first try sib indexdir
+	if {[file exists $indexdir/$indexfile]} {
+		# if we can delete the obsolete file, we can also write the new one
+		if {![catch {
+			file delete $indexdir/$indexfile
+		}]} {
+			return $indexdir/$indexfile
+		}
+	} else {
+		# check if we can write in the sib indexdir
+		if {![catch {
+			file mkdir [file dir $indexdir/$indexfile.temp]
+			file delete $indexdir/$indexfile.temp
+			file_write $indexdir/$indexfile.temp {}
+			file delete $indexdir/$indexfile.temp
+		}]} {
+			return $indexdir/$indexfile
+		}
+	}
+	# not writable in sib indexdir, return user indexdir
+	set userindexdir [indexdir $mainfile]
+	return $userindexdir/$indexfile
+}
+
 proc indexdir_file {mainfile indexfile {okVar {}}} {
 	if {$okVar ne ""} {upvar $okVar ok}
 	set indexdir [file normalize [gzroot $mainfile]].index

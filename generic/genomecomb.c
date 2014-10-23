@@ -7,6 +7,7 @@
  *	 of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
@@ -44,8 +45,9 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	DStringArray *array = NULL;
 	DString *line = NULL;
 	ssize_t read;
-	int maxtab=0,objc,show,i,error,verbose = INT_MAX,next = INT_MAX,sampling=0;
+	int maxtab=0,objc,show,i,error,verbose = 0,sampling=0;
 	unsigned int line_nr=0;
+	uint64_t totalread = 0,next = 4294967296LL;
 	if ((argc < 4)||(argc > 6)) {
 		Tcl_WrongNumArgs(interp, 1, argv, "queryproc varcolumns outcolumns ?verbose? ?samplingskip?");
 		return TCL_ERROR;
@@ -54,7 +56,9 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 		if (Tcl_GetIntFromObj(interp, argv[4], &verbose) != TCL_OK) {
 			return TCL_ERROR;
 		}
-		next = verbose;
+		if (verbose != 0) {
+			next = abs(verbose);
+		}
 	}
 	if (argc >= 6) {
 		if (Tcl_GetIntFromObj(interp, argv[5], &sampling) != TCL_OK) {
@@ -93,15 +97,22 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	}
 	objv[i] = NULL;
 	objc = listobjc+1;
+	totalread = 0;
 	while ((read = DStringGetTab(line,stdin,maxtab,array,1,NULL)) != -1) {
 		NODPRINT("%d,%d %s",maxtab, array->size, line->string);
 		if (array->size <= maxtab) {
 			fprintf(stderr, "wrong number of fields for line (%d without comments): %*.*s\n",line_nr,line->size,line->size,line->string);
 			exit(1);
 		}
-		if (line_nr >= next) {
+		if (verbose < 0) {
+			totalread += line->size+1;
+			if (totalread >= next) {
+				fprintf(stderr,"%ld\n",totalread);
+				next += abs(verbose);
+			}
+		} else if (verbose != 0 && line_nr >= next) {
 			fprintf(stderr,"%d\n",line_nr);
-			next += verbose;
+			next += abs(verbose);
 		}
 		NODPRINT("line = %s",line->string);
 		for (i = 0 ; i < listobjc ; i++) {
@@ -183,7 +194,9 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	if (outs) {Tcl_Free((char *)outs);}
 	if (line) {DStringDestroy(line);}
 	if (array) {DStringArrayDestroy(array);}
-	if (verbose != -1) {
+	if (verbose < 0) {
+		fprintf(stderr,"%ld\n",totalread);
+	} else if (verbose > 0) {
 		fprintf(stderr,"%d\n",line_nr);
 	}
 	return TCL_OK;
