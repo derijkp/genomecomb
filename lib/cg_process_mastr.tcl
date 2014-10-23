@@ -105,7 +105,8 @@ proc generate_demultiplex_stats {xmlfile outfile} {
 		foreach node $nodes {
 			lappend sampleinfo [[$samplenode getElementsByTagName $node] asText] 
  		}
- 		puts $o [join $sampleinfo \t]
+ 		regsub -all {\.} [join $sampleinfo \t] "_" line
+ 		puts $o $line
 	}
 
 	close $o
