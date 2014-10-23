@@ -139,8 +139,9 @@ proc cg_index {args} {
 	set ext [file extension $file]
 	if {[inlist {.rz .lz4 .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
 	set indexdir [indexdir $file]
-	if {[file exists $indexdir/info.tsv]} {
-		set info [infofile_read $indexdir/info.tsv]
+	set infofile [indexdir_file $file info.tsv ok]
+	if {[file exists $infofile]} {
+		set info [infofile_read $infofile]
 	} else {
 		set info {}
 	}
@@ -149,6 +150,7 @@ proc cg_index {args} {
 		dict set info refdir $refdir
 	}
 	set indexfile [indexdir_file $file lines.bcol ok]
+	set infofile [indexdir_file $file info.tsv infook]
 	if {!$ok} {
 		if {$verbose} {
 			putslog "Creating lineindex"
@@ -161,6 +163,17 @@ proc cg_index {args} {
 		set bcol [bcol_open $indexfile]
 		set size [bcol_size $bcol]
 		bcol_close $bcol
+		dict set info file $file
+		dict set info lineindexfile [file tail $indexfile]
+		dict set info header $header
+		dict set info size $size
+		set updated 1
+	} elseif {!$infook} {
+		set f [gzopen $file]
+		set header [tsv_open $f]
+		catch {close $f}
+		set bcol [bcol_open $indexfile]
+		set size [bcol_size $bcol]
 		dict set info file $file
 		dict set info lineindexfile [file tail $indexfile]
 		dict set info header $header
@@ -230,7 +243,7 @@ proc cg_index {args} {
 		}
 	}
 	if {$updated} {
-		infofile_write $indexdir/info.tsv $info
+		infofile_write $infofile $info
 	}
 	return $indexfile
 }

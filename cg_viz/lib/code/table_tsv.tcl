@@ -371,8 +371,14 @@ table_tsv method index {file {colinfo 0}} {
 	} else {
 		cg_index $file
 	}
-	set infofile [indexdir_file $file info.tsv]
-	set result [infofile_read $infofile]
+	set infofile [indexdir_file $file info.tsv ok]
+	if {$ok} {
+		set result [infofile_read $infofile]
+	} else {
+		cg_index $file
+		set infofile [indexdir_file $file info.tsv ok]
+		set result [infofile_read $infofile]
+	}
 	set indexdir [indexdir $file]
 	puts "Using indexdir $indexdir"
 	dict set result indexdir $indexdir
