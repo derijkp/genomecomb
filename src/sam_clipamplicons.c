@@ -281,7 +281,7 @@ int main(int argc, char *argv[]) {
 		count = ampnum;
 		if (reverse) {
 			found = 0;
-			close = -1; maxclose = LONG_MAX; closepos = -1;
+			close = -1; maxclose = INT_MAX; closepos = -1;
 			while (count--) {
 				comp = DStringLocCompare(amplicon[ampcur].chr2, chromosome1);
 				if (comp == 0) {
@@ -312,7 +312,7 @@ int main(int argc, char *argv[]) {
 			}
 		} else {
 			found = 0;
-			close = -1; maxclose = LONG_MAX; closepos = -1;
+			close = -1; maxclose = INT_MAX; closepos = -1;
 			while (count--) {
 				comp = DStringLocCompare(amplicon[ampcur].chr2, chromosome1);
 				if (comp == 0) {
