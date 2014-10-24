@@ -102,7 +102,7 @@ mainw method fieldvalues {field samplevalues qvaluesVar qvaluestextVar} {
 	upvar $qvaluestextVar qvaluestext
 	catch {$object.querybuilder.options.paned.pane2.pane3.values.label configure -bg [$object.querybuilder.options.paned.pane2.pane3.values cget -bg]}
 	catch {$object.summarybuilder.options.paned.pane3.values.label configure -bg [$object.summarybuilder.options.paned.pane3.values cget -bg]}
-	set fields [$object.tb fields]
+	set fields [$object.tb tfields]
 	if {[inlist $fields $field]} {
 		set list [$object.tb values $field $samplevalues]
 		if {[llength $list] && [lindex $list end 1] ne "incomplete"} {
