@@ -225,7 +225,13 @@ table_tsv method values {field {samplevalues 0} {max 1000}} {
 	private $object tdata values
 	switch $samplevalues {
 		all {cg_indexcol $tdata(file) $field}
-		sample - 1 {cg_indexcol -sample $max $tdata(file) $field}
+		sample - 1 {
+			if {$tdata(size) < $max || $tdata(size) < 10000} {
+				cg_indexcol $tdata(file) $field
+			} else {
+				cg_indexcol -sample $max $tdata(file) $field
+			}
+		}
 	}
 	set histofile [indexdir_file $tdata(file) colinfo/$field.colinfo ok]
 	if (!$ok) {return {}}
