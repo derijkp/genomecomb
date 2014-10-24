@@ -1326,7 +1326,9 @@ proc cg_select {args} {
 		set index [indexdir_file $filename cols ok]
 		if {$ok} {set index {}}
 		set f [gzopen $filename]
-		tsv_select_sampleinfo_setfile $filename
+		if {![info exists ::tsv_select_sampleinfofile]} {
+			tsv_select_sampleinfo_setfile $filename
+		}
 	} else {
 		set index {}
 		set f stdin
