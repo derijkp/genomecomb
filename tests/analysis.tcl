@@ -5,7 +5,7 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 test exportplink {basic} {
-	file delete -force {*}[glob tmp/temp*]
+	test_cleantmp
 	exec cg exportplink data/vars3.sft tmp/temp
 	exec diff tmp/temp.tfam.pre data/expected-vars3.tfam.pre
 	exec diff tmp/temp.tped data/expected-vars3.tped

@@ -4,8 +4,6 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
-file mkdir tmp
-
 test reg_annot {basic} {
 	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft 2> /dev/null
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft

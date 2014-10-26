@@ -17,8 +17,10 @@ set env(SCRATCHDIR) [file dir [tempdir]]
 
 proc test_cleantmp {} {
 	foreach file [glob -nocomplain tmp/*] {
+		file attributes $file -permissions ugo+xw
 		file delete -force $file
 	}
+	cg indexclean
 }
 
 proc write_tab {file data {comment {}}} {
@@ -45,3 +47,4 @@ proc diff_tab {file data {comment {}}} {
 lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
 
 file mkdir tmp
+test_cleantmp

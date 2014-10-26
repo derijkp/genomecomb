@@ -4,8 +4,6 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
-test_cleantmp
-
 test bcol_index {basic} {
 	test_cleantmp
 	file copy -force data/expected-annotate-vars_annottest-gene_test.tsv tmp/temp.sft

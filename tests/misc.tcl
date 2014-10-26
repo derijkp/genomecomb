@@ -5,7 +5,6 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 set keepdir [pwd]
-test_cleantmp
 
 file mkdir tmp
 file mkdir tmp/test
