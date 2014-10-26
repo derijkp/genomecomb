@@ -19,73 +19,80 @@ proc cg_indexcol {args} {
 		}
 	}
 	set args [lrange $args $pos end]
-	if {[llength $args] != 2} {
-		error "format is: cg indexcol file fieldname"
+	if {[llength $args] < 2} {
+		error "format is: cg indexcol file fieldname ..."
 		exit 1
 	}
-	foreach {file field} $args break
-	set histofile [indexdir_filewrite $file colinfo/$field.colinfo]
-	if {$samplingnum == 0} {
-		set fields [list "v=\[join \[split \$$field ,\\\\;\] \\\\n\]"]
-		set filesize [file size $file]
-		set step [expr {$filesize/10}]
-		if {$step > 100000} {set step 100000} elseif {$step < 1} {set step 10000}
-		progress start 2 "Indexing column" "Indexing column"
-		progress start $filesize "Indexing column $field of file $file" "Indexing column"
-		bgcg bgcg_progress bgexechandle \
-			select -v $step -f $fields -sh $histofile.temph $file $histofile.temp
-		progress stop
-		progress next "Sorting (no progress shown)"
-		exec gnusort8 -N $histofile.temp | uniq > $histofile.temp2
-		progress next "Sorting finished"
-		progress stop
-		file delete $histofile.temp $histofile.temph
-		file rename $histofile.temp2 $histofile
-	} else {
-		progress start $samplingnum "Sampling data"  "Sampling $file to show example values for fields, please be patient"
-		catch {update idletasks}
-		if {![gziscompressed $file]} {
+	foreach {file} $args break
+	set todofields [lrange $args 1 end]
+	progress start [llength $todofields] "Indexing columns"
+	foreach field $todofields {
+		progress message "Indexing column $field"
+		set histofile [indexdir_filewrite $file colinfo/$field.colinfo]
+		if {$samplingnum == 0} {
+			set fields [list "v=\[join \[split \$$field ,\\\\;\] \\\\n\]"]
 			set filesize [file size $file]
-			set skip [expr {int($filesize/double($samplingnum))}]
+			set step [expr {$filesize/10}]
+			if {$step > 100000} {set step 100000} elseif {$step < 1} {set step 10000}
+			progress start 2 "Indexing column" "Indexing column"
+			progress start $filesize "Indexing column $field of file $file" "Indexing column $field"
+			bgcg bgcg_progress bgexechandle \
+				select -v $step -f $fields -sh $histofile.temph $file $histofile.temp
+			progress stop
+			progress next "Sorting (no progress shown)"
+			exec gnusort8 -N $histofile.temp | uniq > $histofile.temp2
+			progress next "Sorting finished"
+			progress stop
+			file delete $histofile.temp $histofile.temph
+			file rename $histofile.temp2 $histofile
 		} else {
-			set skip 0
+			progress start $samplingnum "Sampling data"  "Sampling $file to show example values for fields, please be patient"
+			catch {update idletasks}
+			if {![gziscompressed $file]} {
+				set filesize [file size $file]
+				set skip [expr {int($filesize/double($samplingnum))}]
+			} else {
+				set skip 0
+			}
+			catch {close $f} ; set f [gzopen $file]
+			set header [tsv_open $f]
+			set pos [lsearch $header $field]
+			set num 0
+			set row 0
+			set break 0
+			unset -nocomplain a
+			set haslists 0
+			while {![eof $f]} {
+				set line [split [gets $f] \t]
+				set valuelist [split [lindex $line $pos] {,;}]
+				if {[llength $valuelist] > 1} {set haslists 1}
+				foreach v $valuelist {
+					set a($v) 1
+				}
+				incr num
+				if {$num >= $samplingnum} {
+					set break 1
+					break
+				}
+				if {$skip} {
+					seek $f $skip current
+					gets $f
+				}
+				progress next
+			}
+			catch {close $f}
+			set result [array names a]
+			set result [ssort -natural $result]
+			set result [tsv_defaultvalues $field $result]
+			if {$haslists} {lappend result {present! lists}}
+			lappend result {...}
+			file_write $histofile.temp [join $result \n]
+			file rename -force $histofile.temp $histofile
+			progress stop
 		}
-		catch {close $f} ; set f [gzopen $file]
-		set header [tsv_open $f]
-		set pos [lsearch $header $field]
-		set num 0
-		set row 0
-		set break 0
-		unset -nocomplain a
-		set haslists 0
-		while {![eof $f]} {
-			set line [split [gets $f] \t]
-			set valuelist [split [lindex $line $pos] {,;}]
-			if {[llength $valuelist] > 1} {set haslists 1}
-			foreach v $valuelist {
-				set a($v) 1
-			}
-			incr num
-			if {$num >= $samplingnum} {
-				set break 1
-				break
-			}
-			if {$skip} {
-				seek $f $skip current
-				gets $f
-			}
-			progress next
-		}
-		catch {close $f}
-		set result [array names a]
-		set result [ssort -natural $result]
-		set result [tsv_defaultvalues $field $result]
-		if {$haslists} {lappend result {present! lists}}
-		lappend result {...}
-		file_write $histofile.temp [join $result \n]
-		file rename -force $histofile.temp $histofile
-		progress stop
+		progress next
 	}
+	progress stop
 }
 
 proc cg_index {args} {
