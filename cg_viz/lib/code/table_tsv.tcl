@@ -221,10 +221,15 @@ proc tsv_defaultvalues {field {result {}}} {
 	return $result
 }
 
-table_tsv method values {field {samplevalues 0} {max 1000}} {
+table_tsv method values {field {samplevalues 0} {max 1000} {valuesonly 0}} {
 	private $object tdata values
+putsvars field samplevalues
 	switch $samplevalues {
 		all {cg_indexcol $tdata(file) $field}
+		allif0 {
+			set histofile [indexdir_file $tdata(file) colinfo/$field.colinfo ok]
+			if (!$ok) {cg_indexcol $tdata(file) $field}
+		}
 		sample - 1 {
 			if {$tdata(size) < $max || $tdata(size) < 10000} {
 				cg_indexcol $tdata(file) $field
@@ -269,6 +274,7 @@ table_tsv method values {field {samplevalues 0} {max 1000}} {
 		set a(incomplete) 1
 	}
 	set result [ssort -natural [list_subindex $result 0]]
+	if {$valuesonly} {return $result}
 	if {[isdouble [get a(min) {}]] && [isdouble [get a(max) {}]]} {
 		regsub {\.0+$} $a(min) {} min
 		regsub {\.0+$} $a(max) {} max

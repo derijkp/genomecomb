@@ -605,6 +605,8 @@ mainw method querybuilder {args} {
 	pack $w.query.buttons.clear -side left
 	button $w.query.buttons.functions -text functions -command [list $object querybuilder_functions $join]
 	pack $w.query.buttons.functions -side left
+	button $w.query.buttons.qquery -text easyquery -command [list $object easyquery [list $object querybuilder_add]]
+	pack $w.query.buttons.qquery -side left
 	set sep 1
 	foreach command $funcbuttons {
 		if {$command eq "_blank"} {
