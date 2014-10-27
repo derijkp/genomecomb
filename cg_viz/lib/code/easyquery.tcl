@@ -201,52 +201,41 @@ mainw method easyquery_draw_frequency {args} {
 	private $object qqdata
 	set header [$object.tb tfields]
 	set fields [list_union {1000glow snp135_freq evs_ea_freqp evs_aa_freqp evs_ea_mfreqp evs_aa_mfreqp} [list_sub $header [list_find -regexp $header {_[mh]?(freq|var)}]]]
-	set fields [list_common $fields $header]
-	set num 0
-	foreach field $fields {
-		set total 0
-		if {[regsub {_[mh](freq|var).*$} $field _total totalfield]} {
-			if {[inlist $header $totalfield]} {set total 1}
-		}
-		if {![regexp {^snp[0-9]+_freq$} $field]} {
-			if {![info exists qqdata(sel,$field)]} {
-			} elseif {[regexp {_[hm]?freqp} $field]} {
-				set qqdata(sel,$field) 5
-			} else {
-				set qqdata(sel,$field) 0.05
-			}
-		}
-		if {!$total} {
-			$object easyquery_num $field ${num} 0-1+ "$field max"
-		} else {
-			$object easyquery_num $field ${num} 0+ "$field max ratio"
-			$object easyquery_num $totalfield ${num} 1+ "$field max number"
-			if {![info exists qqdata(sel,$totalfield)]} {set qqdata(sel,$totalfield) 2}
-		}
-		incr num
-	}
-	$object easyquery_refreshsel {*}$fields
+	set qqdata(list,freqfields) [list_common $fields $header]
+	if {![info exists qqdata(sel,freqp)]} {set qqdata(sel,freqp) 5}
+	if {![info exists qqdata(sel,freqnum)]} {set qqdata(sel,freqnum) 2}
+	if {![info exists qqdata(sel,freqfields)]} {set qqdata(sel,freqfields) $qqdata(list,freqfields)}
+	$object easyquery_list freqfields 0+ 0+ "frequency fields to check"
+	$object easyquery_num freqp 1 0+ "maximum freqp (frequency of alt allele in percent)"
+	$object easyquery_num freqnum 2 0+ "maximum number (only used if frequency is in numbers, as indicated by a total field)"
+	$object easyquery_refreshsel freqfields
 }
 
 mainw method easyquery_do_frequency {args} {
 	private $object qqdata
 	set header [$object.tb tfields]
-	set fields [list_union {1000glow snp135_freq evs_ea_freqp evs_aa_freqp evs_ea_mfreqp evs_aa_mfreqp} [list_sub $header [list_find -regexp $header {_[mh]?(freq|var)}]]]
-	set fields [list_common $fields $header]
+	set freqp [get qqdata(sel,freqp) ""]
+	set freq [expr {$freqp/100.0}]
+	set freqnum [get qqdata(sel,freqnum) ""]
+	if {![isdouble $freqp]} {error "freqp is not a number"}
+	set fields [get qqdata(sel,freqfields) ""]
 	set query {}
 	foreach field $fields {
-		set value [get qqdata(sel,$field) ""]
-		if {![isdouble $value]} continue
 		set total 0
 		if {[regsub {_(freq|var).*$} $field _total totalfield]} {
 			if {[inlist $header $totalfield]} {set total 1}
 		}
-		if {!$total} {
-			lappend query "lmaxd(\$$field,0) <= $value"
-		} elseif {![info exists qqdata(sel,$totalfield)]} {
-			lappend query "(double(lmaxd(\$$field,0)))/lmaxd(\$$totalfield,1) <= $value or lmaxd(\$$field,0) <= [get qqdata(sel,$totalfield) 2]"
+		if {[regexp freqp $field]} {
+			set cutoff $freqp
 		} else {
-			lappend query "(double(lmaxd(\$$field,0)))/lmaxd(\$$totalfield,1) <= $value or lmaxd(\$$field,0) <= [get qqdata(sel,$totalfield) 2]"
+			set cutoff $freq
+		}
+		if {!$total} {
+			lappend query "lmaxd(\$$field,0) <= $cutoff"
+		} elseif {![isdouble $freqnum]} {
+			lappend query "(double(lmaxd(\$$field,0)))/lmaxd(\$$totalfield,1) <= $cutoff"
+		} else {
+			lappend query "(double(lmaxd(\$$field,0)))/lmaxd(\$$totalfield,1) <= $cutoff or lmaxd(\$$field,0) <= $freqnum"
 		}
 	}
 	if {![llength $query]} {error "nothing selected"}
