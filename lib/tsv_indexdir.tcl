@@ -19,7 +19,9 @@ proc indexdir {mainfile} {
 	set indexdir $configdir/indexdirs/${tail}_$num
 	file mkdir $indexdir
 	file_write $indexdir/info.normfilename $file
-	file_write $indexdir/info.filesize [file size $file]
+	if {$file eq $mainfile} {
+		file_write $indexdir/info.filesize [file size $file]
+	}
 	set configdata(indexdir,$file) $indexdir
 }
 

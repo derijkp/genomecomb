@@ -200,7 +200,7 @@ proc tsv_count {tsvfile} {
 			file_write $countfile $count
 			return $count
 		} else {
-			set count [lindex [cg select -g _all_ $tsvfile] end]
+			set count [lindex [cg select -g _all_ [gzfile $tsvfile]] end]
 			file_write $countfile $count
 			return $count
 		}
@@ -211,14 +211,14 @@ proc tsv_count {tsvfile} {
 proc tsv_varsfile {tsvfile} {
 	set varsfile [indexdir_file $tsvfile vars.tsv ok]
 	if {!$ok} {
-		set f [gzopen $tsvfile]
+		set f [gzopen [gzfile $tsvfile]]
 		set header [tsv_open $f]
 		close $f
 		set basicfields [list_sub $header [tsv_basicfields $header]]
 		if {[lsearch $header id] != -1} {
 			lappend basicfields id
 		}
-		cg select -f $basicfields $tsvfile $varsfile.temp
+		cg select -f $basicfields [gzfile $tsvfile] $varsfile.temp
 		file rename $varsfile.temp $varsfile
 	}
 	return $varsfile

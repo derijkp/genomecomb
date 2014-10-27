@@ -224,6 +224,23 @@ test indexdir {basic same name different dirs} {
 	list [expr {$d1 eq $d12}] [expr {$d2 eq $d22}]  [expr {$d1 eq $d2}]
 } {1 1 0}
 
+test indexdir {basic same name different dirs compressed} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	file mkdir tmp/tmp
+	write_tab tmp/tmp/vars1.tsv {
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A G,C
+	}
+	cg razip tmp/vars1.tsv
+	set result {}
+	set d1 [indexdir tmp/vars1.tsv]
+	set d2 [indexdir tmp/tmp/vars1.tsv]
+	set d12 [indexdir tmp/vars1.tsv]
+	set d22 [indexdir tmp/tmp/vars1.tsv]
+	list [expr {$d1 eq $d12}] [expr {$d2 eq $d22}]  [expr {$d1 eq $d2}]
+} {1 1 0}
+
 test indexdir_cache {tsv_varsfile} {
 	test_cleantmp
 	file copy data/vars1.sft tmp/vars1.tsv
@@ -232,9 +249,41 @@ test indexdir_cache {tsv_varsfile} {
 	exec diff $varsfile tmp/test
 } {}
 
+test indexdir_cache {tsv_varsfile compressed} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	cg razip tmp/vars1.tsv
+	set varsfile [tsv_varsfile tmp/vars1.tsv.rz]
+	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/test
+	exec diff $varsfile tmp/test
+} {}
+
+test indexdir_cache {tsv_varsfile compressed gzfile} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	cg razip tmp/vars1.tsv
+	set varsfile [tsv_varsfile tmp/vars1.tsv]
+	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/test
+	exec diff $varsfile tmp/test
+} {}
+
 test indexdir_cache {tsv_count} {
 	test_cleantmp
 	file copy data/vars1.sft tmp/vars1.tsv
+	tsv_count tmp/vars1.tsv
+} 14
+
+test indexdir_cache {tsv_count compressed} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	cg razip tmp/vars1.tsv
+	tsv_count tmp/vars1.tsv.rz
+} 14
+
+test indexdir_cache {tsv_count compressed gzfile} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	cg razip tmp/vars1.tsv
 	tsv_count tmp/vars1.tsv
 } 14
 
