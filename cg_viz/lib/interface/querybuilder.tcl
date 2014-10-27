@@ -501,7 +501,8 @@ mainw method querybuilder_functions {{join and} {starttype all}} {
 	$object.functions option listbox Functions [privatevar $object functions(sel)] \
 		[privatevar $object functions(available)] -selectmode single \
 		-command [list invoke {object join sel} {
-			$object querybuilder_function_add [lindex $sel 0 0] $join
+			set selline [lindex $sel 0]
+			$object querybuilder_function_add [lindex [split $selline " -"] 0] $join
 			$object.functions destroy
 		} $object $join] -filtervariable select_functions(filter)
 }
@@ -542,7 +543,7 @@ mainw method querybuilder {args} {
 	} else {
 		set fieldbuilder 0
 		set var [$object.buttons.query cget -textvariable]
-		set funcbuttons {_blank and or condition field value comp _blank count region compare lmin lmax avg sum if isnum percent}
+		set funcbuttons {_blank and or condition field value comp _blank count compare lmin lmax avg sum if isnum percent}
 		set join and
 	}
 	set w $object.querybuilder.options.paned
