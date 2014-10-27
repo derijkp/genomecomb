@@ -656,7 +656,7 @@ proc makeprimers_region {name maxsize prefsize temperature dbdir db extraseq min
 
 proc makeprimers {regionfile dbdir maxsize prefsize db {minfreq -1} {numthreads 1} {o stdout}} {
 	global cachedir threads temperature extraseq
-	set cachedir [pwd]/cache 
+	set cachedir [indexdir_filewrite $regionfile makeprimers_cache]
 	set threads $numthreads
 	file mkdir $cachedir
 	catch {e destroy}
