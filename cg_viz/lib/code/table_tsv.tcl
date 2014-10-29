@@ -223,7 +223,6 @@ proc tsv_defaultvalues {field {result {}}} {
 
 table_tsv method values {field {samplevalues 0} {max 1000} {valuesonly 0}} {
 	private $object tdata values
-putsvars field samplevalues
 	switch $samplevalues {
 		all {cg_indexcol $tdata(file) $field}
 		allif0 {
@@ -240,7 +239,7 @@ putsvars field samplevalues
 	}
 	set histofile [indexdir_file $tdata(file) colinfo/$field.colinfo ok]
 	if (!$ok) {return {}}
-	if {[file size $histofile] > 100000000} {
+	if {[file size $histofile] > 1000000} {
 		set skip [expr {[file size $histofile]/$max}]
 		set sample 1
 	} else {

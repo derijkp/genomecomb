@@ -51,11 +51,16 @@ mainw method easyquery_list {key row col {label {}} {check {}}} {
 	} else {
 		checkbutton $w.$key.label -text $label -anchor w -variable [privatevar $object qqdata(check,${key})]
 	}
-	Classy::ListBox $w.$key.list \
-		-listvariable [privatevar $object qqdata(list,${key})] \
-		-filtervariable [privatevar $object qqdata(filter,${key})] \
-		-selvariable [privatevar $object qqdata(sel,${key})] \
-		-exportselection 0 -selectmode extended
+	if {[lindex $qqdata(list,${key}) end 1] ne "incomplete"} {
+		Classy::ListBox $w.$key.list \
+			-listvariable [privatevar $object qqdata(list,${key})] \
+			-filtervariable [privatevar $object qqdata(filter,${key})] \
+			-selvariable [privatevar $object qqdata(sel,${key})] \
+			-exportselection 0 -selectmode extended
+	} else {
+		Classy::Text $w.$key.list \
+			-textvariable [privatevar $object qqdata(sel,${key})]
+	}
 	pack $w.$key.label -side top -fill x
 	pack $w.$key.list -side top -fill both -expand yes
 	easyquery_grid $w $key $row $col
@@ -175,7 +180,7 @@ mainw method easyquery_draw_name {args} {
 	set fields [list_sub $header [list_find -regexp $header snp.*_name]]
 	set num 0
 	foreach field $fields {
-		set qqdata(list,$field) [$object.tb values $field allif0 1000 1]
+		set qqdata(list,$field) [$object.tb values $field allif0 1000 0]
 		$object easyquery_list $field 0+ ${num}+
 		incr num
 	}
@@ -188,7 +193,7 @@ mainw method easyquery_do_name {args} {
 	set fields [list_sub $header [list_find -regexp $header snp.*_name]]
 	set query {}
 	foreach field $fields {
-		set values $qqdata(sel,$field)
+		set values [get qqdata(sel,$field) ""]
 		if {[llength $values]} {
 			lappend query "\$$field [easyquery_q $values]"
 		}
