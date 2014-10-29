@@ -238,9 +238,9 @@ mainw method easyquery_do_frequency {args} {
 		if {!$total} {
 			lappend query "lmaxd(\$$field,0) <= $cutoff"
 		} elseif {![isdouble $freqnum]} {
-			lappend query "(double(lmaxd(\$$field,0)))/lmaxd(\$$totalfield,1) <= $cutoff"
+			lappend query "(double(lmaxd(\$$field,0)))/lmax(\$$totalfield,1) <= $cutoff"
 		} else {
-			lappend query "(double(lmaxd(\$$field,0)))/lmaxd(\$$totalfield,1) <= $cutoff or lmaxd(\$$field,0) <= $freqnum"
+			lappend query "(double(lmaxd(\$$field,0)))/lmax(\$$totalfield,1) <= $cutoff or lmaxd(\$$field,0) <= $freqnum"
 		}
 	}
 	if {![llength $query]} {error "nothing selected"}
