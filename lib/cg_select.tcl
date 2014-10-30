@@ -585,7 +585,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 				if {$char ne "-"} break
 				incr pos
 				set char [string index $code $pos]
-				if {![regexp {[A-Za-z.*]} $char]} break
+				if {![regexp {[A-Za-z0-9.*]} $char]} break
 			}
 			set field [string range $code $prevpos [expr {$pos-1}]]
 			set prevpos $pos
