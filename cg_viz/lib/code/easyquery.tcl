@@ -94,7 +94,10 @@ proc easyquery_q {list} {
 
 mainw method easyquery_draw_region {args} {
 	private $object qqdata
-	set qqdata(list,chromosome) [$object.tb values chromosome allif0 1000 1]
+	set header [$object.tb tfields]
+	set poss [tsv_basicfields $header 3]
+	foreach [list qqdata(col,chromosome) qqdata(col,begin) qqdata(col,end)] [list_sub $header $poss] break
+	set qqdata(list,chromosome) [$object.tb values $qqdata(col,chromosome) allif0 1000 1]
 	#
 	$object easyquery_entry locationstring 0 0-1+ "Location string"
 	$object easyquery_list chromosome 1-2+ 0
@@ -128,7 +131,9 @@ annot_init
 mainw method easyquery_draw_gene {args} {
 	private $object qqdata
 	set impactlist {}
+	set header [$object.tb tfields]
 	foreach db {refGene gencode knownGene ensGene} {
+		if {![inlist $header ${db}_impact] || ![inlist $header ${db}_gene]} continue
 		lappend impact_list {*}[$object.tb values ${db}_impact allif0]
 		set qqdata(list,${db}) [$object.tb values ${db}_gene allif0]
 	}
@@ -139,6 +144,7 @@ mainw method easyquery_draw_gene {args} {
 	$object easyquery_list impact 0+ 0+
 	set num 1
 	foreach db {refGene gencode knownGene ensGene} {
+		if {![inlist $header ${db}_impact] || ![inlist $header ${db}_gene]} continue
 		$object easyquery_list $db 0+ ${num}+ $db check
 		incr num
 	}
@@ -147,10 +153,12 @@ mainw method easyquery_draw_gene {args} {
 
 mainw method easyquery_do_gene {args} {
 	private $object qqdata
+	set header [$object.tb tfields]
 	set query {}
 	set impacts [get qqdata(sel,impact) ""]
 	set impactq [easyquery_q $impacts]
 	foreach db {refGene gencode knownGene ensGene} {
+		if {![inlist $header ${db}_impact] || ![inlist $header ${db}_gene]} continue
 		set lq {}
 		set genes [get qqdata(sel,$db) ""]
 		if {[llength $genes]} {
