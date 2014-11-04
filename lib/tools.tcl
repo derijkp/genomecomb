@@ -48,7 +48,6 @@ proc bgcg_progress {bgexechandleVar args} {
 		return
 	}
 	if {[catch {
-		progress next $args
 		progress set $args
 	}]} {
 		puts error

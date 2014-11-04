@@ -37,7 +37,7 @@ proc cg_indexcol {args} {
 			progress start 2 "Indexing column" "Indexing column"
 			progress start $filesize "Indexing column $field of file $file" "Indexing column $field"
 			bgcg bgcg_progress bgexechandle \
-				select -v $step -f $fields -sh $histofile.temph $file $histofile.temp
+				select -v -$step -f $fields -sh $histofile.temph $file $histofile.temp
 			progress stop
 			progress next "Sorting (no progress shown)"
 			exec gnusort8 -N $histofile.temp | uniq > $histofile.temp2

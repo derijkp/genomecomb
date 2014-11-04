@@ -107,7 +107,7 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 		if (verbose < 0) {
 			totalread += line->size+1;
 			if (totalread >= next) {
-				fprintf(stderr,"%ld\n",totalread);
+				fprintf(stderr,"%lld\n",(long long)totalread);
 				next += abs(verbose);
 			}
 		} else if (verbose != 0 && line_nr >= next) {
@@ -195,7 +195,7 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	if (line) {DStringDestroy(line);}
 	if (array) {DStringArrayDestroy(array);}
 	if (verbose < 0) {
-		fprintf(stderr,"%ld\n",totalread);
+		fprintf(stderr,"%lld\n",(long long)totalread);
 	} else if (verbose > 0) {
 		fprintf(stderr,"%d\n",line_nr);
 	}
