@@ -14,7 +14,7 @@ proc cg_extracthomopolymers {args} {
 		if {$name eq ""} continue
 		if {![regexp {chromosome ([0-9A-Z]+)} $name temp chr]} {
 			if {![regexp {chr([0-9A-Z]+)} $name temp chr]} {
-				error "no chromosome found in line $name"
+				set chr $name
 			}
 		}
 		putslog $name\n$chr

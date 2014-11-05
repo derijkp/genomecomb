@@ -4,17 +4,16 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc cg_downloadgenome {build result} {
+proc cg_downloadgenome {build result {chromosomes {}}} {
 	set keepdir [pwd]
 	set result [file_absolute $result]
-	set files {}
 	file mkdir $result.temp
 	cd $result.temp
-	set files {}
-	if {[file exists $result]} {
-		puts "skipping $result: exists"
-	} else {
-		foreach chr {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y} {
+	set tail [file tail $result]
+	putslog "Downloading $build genome"
+	if {[llength $chromosomes]} {
+		set files {}
+		foreach chr $chromosomes {
 			lappend files chr$chr.fa.gz
 			if {[file exists chr$chr.fa.gz]} {
 				puts "Skipping chromosome $chr: chr$chr.fa.gz already there"
@@ -26,24 +25,106 @@ proc cg_downloadgenome {build result} {
 		putslog "Converting and indexing"
 		exec zcat {*}$files | cg genome_indexfasta [file tail $result]
 		file rename -force {*}[glob [file tail $result]*] ..
-	}
-	set rfile [file dir $result]/reg_[file root [file tail $result]].tsv
-	if {[file exists $rfile]} {
-		puts "skipping $rfile: exists"
 	} else {
-		putslog "Making $rfile"
-		cd ..
-		set data [file_read $result.index]
-		set o [open $rfile w]
-		puts $o chromosome\tbegin\tend
-		list_foreach {chromosome begin len} [lrange [split [string trim $data] \n] 0 end-1] {
-			puts $o $chromosome\t0\t$len
+		if {![catch {
+			exec wget --tries=45 -c ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/*.fa.gz >@ stdout  2>@ stderr
+		} msg]} {
+			set files [ssort -natural [glob *.fa.gz]]
+			putslog "Converting and indexing"
+			exec zcat {*}$files | cg genome_indexfasta $tail
+			file rename -force {*}[glob [file tail $result]*] ..
+		} else {
+			exec wget --tries=45 ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/$build.fa.gz >@ stdout  2>@ stderr
+			cg_fas2ifas $build.fa.gz $tail
+			file rename -force $tail $tail.index ..
 		}
-		close $o
 	}
+	cd ..
+	catch {file delete -force $result.temp}
+	set rfile [file dir $result]/reg_[file root [file tail $result]].tsv
+	putslog "Making $rfile"
+	set data [file_read $result.index]
+	set o [open $rfile.temp w]
+	puts $o chromosome\tbegin\tend
+	list_foreach {chromosome begin len} [lrange [split [string trim $data] \n] 0 end-1] {
+		puts $o $chromosome\t0\t$len
+	}
+	close $o
+	file rename -force $rfile.temp $rfile
 	cd $keepdir
 }
 
+proc cg_fas2ifas {srcfile destfile} {
+	# make new one
+	set f [gzopen $srcfile]
+	set o [open $destfile.temp w]
+	set line [gets $f]
+	set ids {}
+	puts $o $line
+	set curid [string range $line 1 end]
+	lappend ids $curid
+	set a(s,$curid) [tell $o]
+	while {![eof $f]} {
+		set line [gets $f]
+		if {$line eq ""} continue
+		if {[string index $line 0] eq ">"} {
+			putslog "chromosome $curid finished"
+			set a(e,$curid) [tell $o]
+			puts $o \n$line
+			set curid [string range $line 1 end]
+			lappend ids $curid
+			set a(s,$curid) [tell $o]
+		} else {
+			puts -nonewline $o $line
+		}
+	}
+	puts $o ""
+	putslog "chromosome $curid finished"
+	set a(e,$curid) [tell $o]
+	close $o
+	close $f
+	# sort
+	set sids [ssort -natural $ids]
+	if {$sids ne $ids} {
+		set f [open $destfile.temp]
+		set o [open $destfile.temp2 w]
+		set oi [open $destfile.index.temp2 w]
+		foreach name $sids {
+			if {![regexp {chromosome ([^ ,]+)[ ,]} $name temp chr]} {
+				if {![regexp {chr([^ ,]+)} $name temp chr]} {
+					set chr [lindex $name end]
+				}
+			}
+			set len [expr {$a(e,$name) - $a(s,$name)}]
+			puts $o "\>$name"
+			puts $oi "$chr\t[tell $o] $len"
+			seek $f $a(s,$name)
+			fcopy $f $o -size [expr {$len+1}]
+		}
+ 		close $oi
+		close $o
+		close $f
+		file rename -force $destfile.temp2 $destfile
+		file rename -force $destfile.index.temp2 $destfile.index
+		file delete $destfile.temp
+	} else {
+		set oi [open $destfile.index.temp w]
+		foreach name $sids {
+			if {![regexp {chromosome ([^ ,]+)[ ,]} $name temp chr]} {
+				if {![regexp {chr([^ ,]+)} $name temp chr]} {
+					set chr [lindex $name end]
+				}
+			}
+			set len [expr {$a(e,$name) - $a(s,$name)}]
+			puts $oi "$chr\t$a(s,$name) $len"
+		}
+ 		close $oi
+		file rename $destfile.temp $destfile
+		file rename $destfile.index.temp $destfile.index
+	}
+}
+
+# index from stdin stream
 proc cg_genome_indexfasta {resultfile} {
 	set f stdin
 	set o [open $resultfile w]
@@ -232,17 +313,20 @@ proc cg_make_genomecindex {ifasfile} {
 				set chr [lindex $name end]
 			}
 		}
-		time {
-			set seq [gets $f]
-			set seq [string toupper $seq]
-		}
 		set result $base.ssa/[file tail $base]-$chr
 		if {![file exists $result.ssa]} {
 			puts "creating index $chr"
+			time {
+				set seq [gets $f]
+				set seq [string toupper $seq]
+			}
 			set o [cindex create $seq]
 			puts "saving index $result"
 			cindex save $o $result.temp
 			file rename -force $result.temp.ssa $result.ssa
+		} else {
+			puts "skipping $chr: already made"
+			time {gets $f}
 		}
 	}
 	close $f

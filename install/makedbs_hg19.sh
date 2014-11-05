@@ -23,7 +23,7 @@ job_logdir log_jobs
 
 # download genome
 job genome_${build} -vars build -targets {genome_${build}.ifas extra/reg_${build}_fullgenome.tsv} -code {
-	cg downloadgenome ${build} genome_${build}.ifas
+	cg downloadgenome ${build} genome_${build}.ifas {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
 	file rename -force reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
 }
 
@@ -168,14 +168,24 @@ foreach db {
 	}
 }
 
+if 0 {
+	cg downloaddb ${dest} ${build} ensemblToGeneName
+	cg select -f {id=$name genename=$value} ucsc_hg19_ensemblToGeneName.tsv extra/trans_hg19_ensGene2genename.tsv
+	file delete ucsc_hg19_ensemblToGeneName.tsv
+	cg downloaddb ${dest} ${build} kgXref
+	cg select -f {id=$kgID genename=$geneSymbol} ucsc_hg19_kgXref.tsv extra/trans_hg19_knownGene2genename.tsv
+	file delete ucsc_hg19_kgXref.tsv
+	
+}
+
 
 # gencode
 job gene_${build}_gencode -targets {gene_${build}_gencode.tsv gene_${build}_gencode.tsv.gz gene_${build}_gencode.tsv.gz.tbi gene_${build}_gencode.info} -vars {dest build db} -code {
 	exec -ignorestderr wget -c ftp://ftp.sanger.ac.uk/pub/gencode/release_18/gencode.v18.annotation.gtf.gz
 	cg gtf2sft gencode.v18.annotation.gtf.gz gene_${build}_gencode.tsv.temp
 	cg select -s - gene_${build}_gencode.tsv.temp gene_${build}_gencode.tsv.temp2
-	file delete gene_${build}_gencode.tsv.temp
 	file rename -force gene_${build}_gencode.tsv.temp2 gene_${build}_gencode.tsv
+	file delete gene_${build}_gencode.tsv.temp
 	file delete gene_${build}_gencode.tsv.gz
 	cg maketabix gene_${build}_gencode.tsv
 	exec gunzip -c gene_${build}_gencode.tsv.gz > gene_${build}_gencode.tsv

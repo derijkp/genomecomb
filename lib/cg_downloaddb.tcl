@@ -308,14 +308,14 @@ proc cg_calcsequencedgenome {args} {
 	set file $path/$build/genome_$build.ifas
 	set f [open $path/$build/genome_$build.ifas]
 	file mkdir $path/$build/extra/
-	set o [open $path/$build/extra/reg_${build}_sequencedgenome.tsv w]
+	set o [open $path/$build/extra/reg_${build}_sequencedgenome.tsv.temp w]
 	puts $o chromosome\tbegin\tend\tsize
 	while {![eof $f]} {
 		set name [gets $f]
 		if {$name eq ""} continue
 		if {![regexp {chromosome ([0-9A-Z]+)} $name temp chr]} {
 			if {![regexp {chr([0-9A-Z]+)} $name temp chr]} {
-				error "no chromosome found in line $name"
+				set chr $name
 			}
 		}
 		putslog $name\n$chr
@@ -335,6 +335,7 @@ proc cg_calcsequencedgenome {args} {
 	}
 	close $o
 	close $f
+	file rename $path/$build/extra/reg_${build}_sequencedgenome.tsv.temp $path/$build/extra/reg_${build}_sequencedgenome.tsv
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
