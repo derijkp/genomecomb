@@ -191,6 +191,7 @@ proc cg_multicompar {args} {
 			set seqpos [lsearch $header sequenced]
 			set keepfields [list_sub $header -exclude $basicposs]
 			if {[string match fannotvar-* [file tail $file]]} {
+				set mergefields {xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam}
 				set keepfields [list_lremove $keepfields $mergefields]
 			}
 			set keepfields [list_remove $keepfields $targetsfield]
