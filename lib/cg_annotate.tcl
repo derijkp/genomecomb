@@ -290,12 +290,10 @@ proc cg_annotate {args} {
 	set names {}
 	set newh {}
 	foreach dbfile $dbfiles {
-		putslog "Checking $dbfile"
 		set dbinfo [cg_annotatedb_info $dbfile $near]
 		lappend names [dict get $dbinfo name]
 		lappend newh {*}[dict get $dbinfo newh]
 	}
-	putslog "Annotating $file"
 	set f [gzopen $file]
 	set header [tsv_open $f]
 	catch {close $f}
@@ -320,7 +318,6 @@ proc cg_annotate {args} {
 	}
 	set afiles {}
 	foreach dbfile $dbfiles {
-		putslog "Adding $dbfile"
 		set dbinfo [cg_annotatedb_info $dbfile $near]
 		set name [dict get $dbinfo name]
 		if {[info exists namefield]} {set name $namefield}
