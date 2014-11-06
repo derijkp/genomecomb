@@ -116,14 +116,14 @@ job 1000glow -targets {${dest}/hg19/var_hg19_1000glow.tsv ${dest}/hg19/extra/var
 }
 
 # dbsnp
-job dbsnp138 -targets {${dest}/hg19/var_hg19_snp138.tsv} -vars {dest} -code {
-	cd $dest/hg19
-	cg downloaddb ${dest} hg19 snp138
+job dbsnp138 -targets {${dest}/$build/var_${build}_snp138.tsv} -vars {dest build} -code {
+	cd $dest/$build
+	cg downloaddb ${dest} $build snp138
 }
 
-job dbsnp138Common -targets {${dest}/hg19/var_hg19_snp138Common.tsv} -vars {dest build} -code {
-	cd $dest/hg19
-	cg downloaddb ${dest} hg19 snp138Common
+job dbsnp138Common -targets {${dest}/${build}/var_${build}_snp138Common.tsv} -vars {dest build} -code {
+	cd $dest/${build}
+	cg downloaddb ${dest} ${build} snp138Common
 }
 
 foreach db {
@@ -136,8 +136,8 @@ foreach db {
 	}
 }
 
-job clinvar -targets {${dest}/hg19/var_hg19_clinvar.tsv} -vars {dest build} -code {
-	cd $dest/tmp/hg19
+job clinvar -targets {${dest}/${build}/var_${build}_clinvar.tsv} -vars {dest build} -code {
+	cd $dest/tmp/${build}
 	exec wget ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf/clinvar_00-latest.vcf.gz
 	cg vcf2tsv clinvar_00-latest.vcf.gz clinvar_00-latest.tsv
 	set f [open clinvar_00-latest.tsv]
@@ -204,15 +204,16 @@ job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}
 }
 
 # mirbase
-job reg_hg19_mirbase -targets {$dest/hg19/reg_hg19_mirbase.tsv $dest/hg19/reg_hg19_mirbase.tsv.opt $dest/hg19/reg_hg19_mirbase.info} -vars {dest build db} -code {
-	cd $dest/hg19
-	file_write $dest/hg19/reg_hg19_mirbase.tsv.opt "fields\t{ID}\n"
-	exec -ignorestderr wget -c --tries=45 --directory-prefix=${dest}/tmp/hg19 ftp://mirbase.org/pub/mirbase/20/genomes/hsa.gff2
-	cg gff2sft ${dest}/tmp/hg19/hsa.gff2 ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp
-	cg select -s - ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp2
-	file rename -force ${dest}/tmp/hg19/reg_hg19_mirbase.tsv.temp2 reg_hg19_mirbase.tsv
+job reg_${build}_mirbase -targets {$dest/${build}/reg_${build}_mirbase.tsv $dest/${build}/reg_${build}_mirbase.tsv.opt $dest/${build}/reg_${build}_mirbase.info} -vars {dest build db} -code {
+	set organism hsa
+	cd $dest/${build}
+	file_write $dest/${build}/reg_${build}_mirbase.tsv.opt "fields\t{ID}\n"
+	exec -ignorestderr wget -c --tries=45 --directory-prefix=${dest}/tmp/${build} ftp://mirbase.org/pub/mirbase/20/genomes/$organism.gff2
+	cg gff2sft ${dest}/tmp/${build}/$organism.gff2 ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp
+	cg select -s - ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2
+	file rename -force ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2 reg_${build}_mirbase.tsv
 	exec -ignorestderr wget -c ftp://mirbase.org/pub/mirbase/20/README
-	file rename -force README reg_hg19_mirbase.info
+	file rename -force README reg_${build}_mirbase.info
 }
 
 # exome variant server
