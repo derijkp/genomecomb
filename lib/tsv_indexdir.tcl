@@ -55,6 +55,7 @@ proc indexdir_cache_check {mainfile indexdir indexfile} {
 	return 1
 }
 
+# use this if you want to write to the index file, regardless of whether an up to date version exists
 proc indexdir_filewrite {mainfile indexfile} {
 	set indexdir [file normalize [gzroot $mainfile]].index
 	# first try sib indexdir
@@ -81,11 +82,16 @@ proc indexdir_filewrite {mainfile indexfile} {
 	return $userindexdir/$indexfile
 }
 
+# returns the indexfile in the indexdir.
+# The var ok will be 1 if an up to date indexfile is present
+# if ok is 0 (indexfile is not up to date), the returned file location is writable
+# if okVar is not given, only an existing, up to date indefile will be returned,
+# if there is none, the result will be empty
 proc indexdir_file {mainfile indexfile {okVar {}}} {
 	if {$okVar ne ""} {upvar $okVar ok}
+	set ok 1
 	set indexdir [file normalize [gzroot $mainfile]].index
 	# is a good file existing in either user indexdir or sib indexdir (ok is 1 if we do find one)
-	set ok 1
 	set userindexdir [indexdir $mainfile]
 	if {[indexdir_cache_check $mainfile $userindexdir $indexfile]} {
 		return $userindexdir/$indexfile
@@ -93,6 +99,7 @@ proc indexdir_file {mainfile indexfile {okVar {}}} {
 	if {[indexdir_cache_check $mainfile $indexdir $indexfile]} {
 		return $indexdir/$indexfile
 	}
+	if {$okVar eq ""} {return {}}
 	# nothing found, see if we can create in sib indexdir
 	set ok 0
 	if {[file exists $indexdir/$indexfile]} {

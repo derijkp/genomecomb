@@ -147,7 +147,7 @@ proc cg_index {args} {
 	if {[inlist {.rz .lz4 .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
 	set indexdir [indexdir $file]
 	set infofile [indexdir_file $file info.tsv ok]
-	if {[file exists $infofile]} {
+	if {$ok} {
 		set info [infofile_read $infofile]
 	} else {
 		set info {}

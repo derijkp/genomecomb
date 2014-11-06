@@ -712,6 +712,15 @@ test select "wildcard calc column in query$dboptt" {
 } {id
 3
 4}
+
+test select "do not make index on select only$dboptt" {
+	test_cleantmp
+	global dbopt
+	file copy data/table.tsv tmp/table.tsv
+	exec cg select {*}$dbopt -f "num text" tmp/table.tsv
+	file exists tmp/table.tsv.index
+} 0
+
 }
 
 foreach dbopt {{}} {

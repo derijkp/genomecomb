@@ -374,7 +374,7 @@ table_tsv method link {tktable button} {
 
 table_tsv method index {file {colinfo 0}} {
 	set time [file mtime $file]
-	set indexfile [indexdir_file $file lines.bcol]
+	set indexfile [indexdir_file $file lines.bcol ok]
 	set ext [file extension $file]
 	if {[inlist {.rz .lz4 .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
 	if {$colinfo} {
