@@ -6,7 +6,6 @@ puts "progress: $args"
 		return
 	}
 	if {[catch {
-		progress next $pos
 		progress set $pos
 	}]} {
 		global bgexechandle

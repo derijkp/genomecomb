@@ -54,8 +54,8 @@ int main(int argc, char *argv[]) {
 	Hash_iter iter;
 	char *cur,*prefix;
 	off_t fpos;
-	uint64_t count = -1,next = 4294967296LL, offset = 0L, progress = 20000000L;
-	uint32_t data;
+	uint64_t count = -1, offset = 0L, progress = 20000000L;
+	uint64_t data;
 	double testd;
 	long int temp;
 	int chr1pos,start1pos,end1pos,type1pos,max1,i,isnum,new,testi,size;
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 	}
 	f2 = fopen64_or_die(argv[2],"w");
 	fprintf(f2,"# binary column\n");
-	fprintf(f2,"# type lineindex\n");
+	fprintf(f2,"# type wu\n");
 	fprintf(f2,"begin\ttype\toffset\n");
 	f3 = fopen64_or_die(argv[3],"w");
 NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
@@ -98,15 +98,11 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 	result1 = DStringArrayNew(max1+2); /* need one extra for the remainder */
 	skip_header(f1,line1,NULL,NULL);
 	fpos = ftello(f1);
-	if (fpos >= next) {
-		fprintf(stderr,"Header too long");
-		exit(EXIT_FAILURE);
-	}
-	fprintf(f2,"%d\t%s\t%d\n",0,"iu",0);
+	fprintf(f2,"%d\t%s\t%d\n",0,"wu",0);
 	while (!DStringGetTab(line1,f1,max1,result1,1,NULL)) {
 		count++;
-		data = (uint32_t)(fpos-offset);
-		fwrite(&data,4,1,f3);
+		data = (uint64_t)(fpos-offset);
+		fwrite(&data,8,1,f3);
 /*
 DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].string,result1->data[end1pos].string)
 		{
@@ -122,13 +118,6 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 		if (fpos > progress) {
 			fprintf(stderr,"filepos: %llu\n",(unsigned long long)fpos);
 			progress += 20000000L;
-		}
-		if (fpos >= next) {
-			while (fpos >= next) {
-				offset=next;
-				next = next << 1;
-			}
-			fprintf(f2,"%ju\t%s\t%ju\n",(uintmax_t)count,"iu",(uintmax_t)offset);
 		}
 		for(i = 0 ; i < max1 ; i++) {
 			if (i >= result1->size) break;
@@ -189,7 +178,7 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 		}
 	}
 	if (count == -1) {count = 0;}
-	fprintf(f2,"%ju\t%s\t%ju\n",(uintmax_t)count,"end",(uintmax_t)offset);
+	fprintf(f2,"%llu\tend\t0\n",(long long int)count);
 	fclose(f1);
 	fclose(f2);
 	fclose(f3);
