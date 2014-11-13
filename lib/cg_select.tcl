@@ -441,10 +441,20 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 				}
 			}
 		} elseif {[string first * $field] != -1} {
-			set efields [list_lremove [tsv_select_expandfield $header $field 1] $rfields]
-			lappend rfields {*}$efields
-			foreach pos [list_cor $header $efields] {
-				lappend qposs $pos
+			if {![catch {
+				set list [tsv_select_expandfield $header $field 1]
+			} msg]} {
+				set efields [list_lremove $list $rfields]
+				lappend rfields {*}$efields
+				foreach pos [list_cor $header $efields] {
+					lappend qposs $pos
+				}
+			} else {
+				set result [tsv_select_sampleinfo $field]
+				lappend rfields {*}$result
+				foreach tempfield $result {
+					lappend qposs [list code \$$tempfield]
+				}
 			}
 		} else {
 			if {[inlist $rfields $field]} continue
