@@ -24,6 +24,7 @@ proc cg_genome_seq {args} {
 	set repeats s
 	set gc -1
 	set gcsplit {}
+	set displaygc 1
 	set split 0
 	set id {}
 	set pos 0
@@ -59,6 +60,10 @@ proc cg_genome_seq {args} {
 				if {![isdouble $value]} {error "$value is not a number"}
 				set gcsplit $value
 				if {$gc == -1} {set gc 100}
+			}
+			-gd - --gcdisplay {
+				set displaygc [true $value]
+				if {$gc == -1} {set gc 0}
 			}
 			-s - --split {
 				set split [true $value]
@@ -188,9 +193,11 @@ proc cg_genome_seq {args} {
 			set name [join [list_sub $sub {0 1 2}] -]
 			if {$idpos != -1} {
 				set name "[lindex $line $idpos] $name"
+			}
+			if {$displaygc} {
 				if {$gc == 0} {
 					set gcval [seq_gc $seq]
-					append name " GC:[format %.1f $gc]"
+					append name " GC:[format %.1f $gcval]"
 				} elseif {$gc != -1} {
 					set gcval [lmath_max [seq_gc $seq $gc]]
 					append name " GC:[format %.1f [seq_gc $seq]] maxGC($gc):[format %.1f $gcval]"

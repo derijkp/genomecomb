@@ -37,6 +37,9 @@ you can e.g. use "Common" for the common variants in dbsnp
 The gc used depends on the -gc option. If -gc is not given, the maxgc at a windowsize of 100 is used.
 This option cannot be combined with concatenating sequences, and outfile has to be specified. 
 2 files will be generated with lowgc and highgc added in the given outfile name.
+; **-gd 0/1** (--gcdisplay): determines if the gc content is actually displayed on the name line.
+By setting this to 0, you can set a windowsize (using -g) to split the files on, without the gc content being displayed on the name line
+If you set -gd to 1 without setting -g, the total gc content will be shown
 ; **-s 0/1** (--split): If this option is 1, each region will be saved as a separate fasta file. The 
 ; **-l char** (--limitchars): Replace all but alphanumeric characters, _, . and - in the sequence names by **char**
 
