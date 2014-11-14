@@ -1,3 +1,4 @@
+
 package require tdom
 
 proc tsv2bed {file bedfile args} {
@@ -212,6 +213,21 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	return [list $mastrname $refseq $mastrdir/reg-$mastrname.map]
 }
 
+proc analysis_complete_job {experiment} {
+	upvar job_logdir job_logdir
+	job analysis_complete-$experiment -deps [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_50.tsv compar/annot_compar_gatk-${experiment}_long.tsv]  -targets analysis_complete -code {
+		file delete analysis_running
+		exec touch analysis_complete
+	}
+}
+
+proc generate_coverage_report_job {experiment regfile histofiles} {
+	upvar job_logdir job_logdir
+	job coverage_report-$experiment -deps [list $regfile {*}$histofiles] -targets [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_50.tsv ] -code {
+		exec python2.6 /complgen2/mastr-procedure/coverage_mastrs.py
+	}
+}
+
 proc process_mastr_job {args} {
 	oargs process_mastr_job {mastrdir destdir dbdir
 		{useminigenome 0}
@@ -250,6 +266,7 @@ proc process_mastr_job {args} {
 	}
 	set samples [ssort -natural $samples]
 	set todo {}
+	set histofiles {}
 	if {$clipamplicons ne ""} {
 		set resultbamprefix crs
 	} else {
@@ -312,6 +329,7 @@ proc process_mastr_job {args} {
 			-cleanup $cleanup]
 		# coverage statistics
 		bam2covstats_job $cleanbam $mastrdir/reg-inner-$mastrname.tsv
+		lappend histofiles $sample/[regsub {map-} [file tail [file root $cleanbam]] {}].histo
 		# samtools variant calling on map-rs${aligner}
 		if {$useminigenome} {
 			var_sam_job $cleanbam $refseq -pre $pre -split $split
@@ -353,6 +371,8 @@ proc process_mastr_job {args} {
 		multicompar_job $experiment $dbdir $todo -split $split -dbfiles $dbfiles
 	}
 	make_alternative_compar_job $experiment 
+	generate_coverage_report_job $experiment $mastrdir/reg-inner-$mastrname.tsv $histofiles
+	analysis_complete_job $experiment
 	cd $keeppwd
 }
 
