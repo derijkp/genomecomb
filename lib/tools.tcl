@@ -1027,6 +1027,13 @@ proc file_absolute {file} {
 	file join {*}$result
 }
 
+proc file_tempwrite {file} {
+	if {![file exists $file.temp]} {return $file.temp}
+	set num 2
+	while {[file exists $file.temp$num]} {incr num}
+	return $file.temp$num
+}
+
 proc trimformat args {
 	string trimright [string trimright [::format {*}$args] 0] .
 }

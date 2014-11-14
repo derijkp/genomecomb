@@ -347,14 +347,15 @@ proc cg_tomonetdb {args} {
 	catch {cg_monetdb_sql $db "drop table \"$table\""}
 	cg_monetdb_sql $db "create table \"$table\" ([join $sql ,\n]);\n"
 	# exec {*}[gzcat $tsvfile] $tsvfile | mclient -d$db -s "copy $num offset $offset records into \"$table\" from stdin delimiters '\t', '\n' null as '';"
-	set o [open $tsvfile.temp w]
+	set temptsvfile [file_tempwrite $tsvfile]
+	set o [open $temptsvfile w]
 	fconfigure $f -encoding binary -translation binary
 	fconfigure $o -encoding binary -translation binary
 	fcopy $f $o
 	flush $o
 	close $f
 	close $o
-	cg_monetdb_sql $db "copy $num records into \"$table\" from '$tsvfile.temp' delimiters '\t', '\n' null as '';"
+	cg_monetdb_sql $db "copy $num records into \"$table\" from '$temptsvfile' delimiters '\t', '\n' null as '';"
 	# cg_monetdb_sql $db "select count(*) from \"$table\""
 	cg_monetdb_sql $db [subst {alter table "$table" add column "rowid" serial}]
 	set time [file mtime $tsvfile]
@@ -370,7 +371,7 @@ proc cg_tomonetdb {args} {
 			where "table" = '$table'
 		}]
 	}
-	file delete $tsvfile.temp
+	file delete $temptsvfile
 }
 
 proc cg_genomecombinfo {cmd table args} {

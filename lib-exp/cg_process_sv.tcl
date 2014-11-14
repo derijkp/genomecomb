@@ -44,8 +44,9 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 #		}
 	}
 	job svfind-[file tail $dir] -deps $resultfiles -targets $dir/sv-$name.tsv -vars {dbdir} -code {
-		cg cat {*}$deps > $target.temp
-		file rename -force $target.temp $target
+		set temptarget [file_tempwrite $target]
+		cg cat {*}$deps > $temptarget
+		file rename -force $temptarget $target
 		putslog "Done: finished finding sv in $dir"
 	}
 	cd $keepdir

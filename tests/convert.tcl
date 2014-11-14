@@ -325,6 +325,26 @@ test format {long} {
 	exec diff tmp/long.tsv tmp/expected.tsv
 } {}
 
+test format {long from temp} {
+	write_tab tmp/test.tsv.temp {
+		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleSeq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleSeq2-sample2 zyg-sample2
+	 	chr1 4200 4200 snp G A 0.5 v G A t 0.8 v A A m
+	 	chr1 4200 4200 ins {} A 0.8 v {} A t 0.1 r {} {} r
+	 	chr1 5000 5001 snp G T 0.9 v T T m 0.0 r G G r
+	}
+	exec cg long tmp/test.tsv.temp tmp/test.tsv
+	write_tab tmp/expected.tsv {
+		sample chromosome begin end type ref alt sequenced zyg alleleSeq1 alleleSeq2 freq
+	 	sample1 chr1 4200 4200 snp G A v t G A 0.5
+	 	sample2 chr1 4200 4200 snp G A v m A A 0.8
+	 	sample1 chr1 4200 4200 ins {} A v t {} A 0.8
+	 	sample2 chr1 4200 4200 ins {} A r r {} {} 0.1
+	 	sample1 chr1 5000 5001 snp G T v m T T 0.9
+	 	sample2 chr1 5000 5001 snp G T r r G G 0.0
+	}
+	exec diff tmp/test.tsv tmp/expected.tsv
+} {}
+
 test format {long -norm} {
 	write_tab tmp/wide.tsv {
 		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleSeq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleSeq2-sample2 zyg-sample2

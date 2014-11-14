@@ -24,8 +24,9 @@ proc multi_merge_job {varsfile files {split 1}} {
 			set header [tsv_open $f]
 			set poss2 [tsv_basicfields $header 6 $dep2]
 			close $f
-			exec multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split > $target.temp
-			file rename -force $target.temp $target
+			set tempfile [file_tempwrite $target]
+			exec multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split > $tempfile
+			file rename -force $tempfile $target
 		}
 		lappend newfiles $varsfile.$multi_merge_num
 	}
@@ -228,9 +229,10 @@ proc cg_multicompar {args} {
 	}
 	close $ftodo
 	job multi_join -deps [list $todofile] -vars {split len reannotheader} -targets $compar_file_root -code {
-		file_write $target.temp [join $reannotheader \t]\n
-		exec multi_join $dep1 $len $split >> $target.temp
-		file rename -force $target.temp $target
+		set tempfile [file_tempwrite $target]
+		file_write $tempfile [join $reannotheader \t]\n
+		exec multi_join $dep1 $len $split >> $tempfile
+		file rename -force $tempfile $target
 	}
 	if {$reannot} {
 		job multicompar_reannot -deps {$compar_file_root} -vars {regonly} -targets {$compar_file_root $compar_file_root.reannot} -code {

@@ -18,14 +18,15 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 	set scratchbase $scratchdir/temp_[file tail $outfile]
 	set samfile $scratchbase.sam
 	putslog "Making sam from $mapfile"
+	set temptarget [file_tempwrite $samfile]
 	if {[catch {
-		exec cgatools map2sam -r $readfile -m $mapfile -s $reffile --mate-sv-candidates -o $samfile.temp
+		exec cgatools map2sam -r $readfile -m $mapfile -s $reffile --mate-sv-candidates -o $temptarget
 	} error]} {
 		regsub -all {IND_[^=]+=[0-9]+} $error {} error
 		set error [string trim $error]
 		if {$error ne {}} {error $error}
 	}
-	file rename -force $samfile.temp $samfile
+	file rename -force $temptarget $samfile
 	# read header
 	if {[catch {
 		set header [exec samtools view -S -H $samfile 2> /dev/null]
@@ -50,14 +51,15 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 	}
 	putslog "Making bams for $name"
 	foreach chr $chrs {
+		set temptarget [file_tempwrite $outfile-chr$chr.bam]
 		if {[catch {
-			exec samtools view -S -h -b -o $outfile-chr$chr.bam.temp $scratchbase-chr$chr.sam
+			exec samtools view -S -h -b -o $temptarget $scratchbase-chr$chr.sam
 		} error]} {
 			if {$error ne {[samopen] SAM header is present: 25 sequences.}} {error $error}
 		}
 		file delete $scratchbase-chr$chr.sam
 		catch {exec samtools index $scratchbase-chr$chr.sam}
-		file rename -force $outfile-chr$chr.bam.temp $outfile-chr$chr.bam
+		file rename -force $temptarget $outfile-chr$chr.bam
 	}
 }
 
@@ -67,8 +69,9 @@ proc cg_mergebam {outfile args} {
 		exit 1
 	}
 	putslog "Merging $outfile"
-	exec samtools merge $outfile.temp {*}$args
-	file rename -force $outfile.temp $outfile
+	set temptarget [file_tempwrite $outfile]
+	exec samtools merge $temptarget {*}$args
+	file rename -force $temptarget $outfile
 	putslog "Delete old files for building $outfile ($args)"
 	file delete {*}$args
 }

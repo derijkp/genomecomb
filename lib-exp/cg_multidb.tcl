@@ -46,8 +46,9 @@ proc multidb_merge_job {varsfile files {split 1}} {
 			set poss2 [tsv_basicfields $header 6 $dep2]
 			lappend poss2 [lsearch $header id]
 			close $f
-			exec multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split > $target.temp
-			file rename -force $target.temp $target
+			set temptarget [file_tempwrite $target]
+			exec multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split > $temptarget
+			file rename -force $temptarget $target
 		}
 		lappend newfiles $varsfile.$multi_merge_num
 	}

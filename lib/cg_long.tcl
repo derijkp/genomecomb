@@ -41,9 +41,11 @@ proc cg_long {args} {
 		}
 		set o stdout
 	} else {
-		set o [open $outfile.temp w]
+		set tempoutfile [file_tempwrite $outfile]
+		set o [open $tempoutfile w]
 		if {$norm} {
-			set no [open $outfile.sampledata.tsv.temp w]
+			set tempsampledatafile [file_tempwrite $outfile.sampledata.tsv]
+			set no [open $tempsampledatafile w]
 		}
 	}
 	set header [tsv_open $f comment]
@@ -164,10 +166,10 @@ proc cg_long {args} {
 	}
 	if {$o ne "stdout"} {
 		close $o
-		file rename -force $outfile.temp $outfile
+		file rename -force $tempoutfile $outfile
 	}
 	if {$norm} {
-		file rename -force $outfile.sampledata.tsv.temp $outfile.sampledata.tsv
+		file rename -force $tempsampledatafile $outfile.sampledata.tsv
 	}
 	if {$f ne "stdout"} {gzclose $f}
 }

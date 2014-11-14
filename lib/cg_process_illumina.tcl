@@ -8,8 +8,9 @@ proc bam2covstats_job {bamfile regionfile} {
 #		cg bam2coverage $dep $target/coverage-$root
 #	}
 	job make_histo-$root -deps {$bamfile $bamfile.bai $regionfile} -targets $dir/$root.histo -vars {regionfile} -code {
-		cg bam_histo $regionfile $dep {1 5 10 20 50 100 200 500 1000} > $target.temp
-		file rename -force $target.temp $target
+		set tempfile [file_tempwrite $target]
+		cg bam_histo $regionfile $dep {1 5 10 20 50 100 200 500 1000} > $tempfile
+		file rename -force $tempfile $target
 	}
 }
 
@@ -98,18 +99,23 @@ proc fastq_clipadapters {files targets args} {
 		set adapterfile $::externdir/adaptors.fa
 	}
 	# clip primers, quality
+	set temptargets {}
 	if {[llength $files] == 1 || !$paired} {
 		foreach {f1} $files {t1} $targets {
-			exec fastq-mcf -a -o $t1.temp $adapterfile $f1 2>@ stderr
+			set tempout1 [file_tempwrite $t1]
+			exec fastq-mcf -a -o $tempout1 $adapterfile $f1 2>@ stderr
+			lappend temptargets $tempout1
 		}
 	} else {
 		foreach {f1 f2} $files {t1 t2} $targets {
-			exec fastq-mcf -a -o $t1.temp -o $t2.temp $adapterfile $f1 $f2 2>@ stderr
+			set tempout1 [file_tempwrite $t1]
+			set tempout2 [file_tempwrite $t2]
+			exec fastq-mcf -a -o $tempout1 -o $tempout2 $adapterfile $f1 $f2 2>@ stderr
+			lappend temptargets $tempout1 $tempout2
 		}
 	}
-	
-	foreach target $targets {
-		file rename -force $target.temp $target
+	foreach target $targets temptarget $temptargets {
+		file rename -force $temptarget $target
 	}
 }
 
@@ -158,7 +164,8 @@ proc gatkworkaround_tsv2bed_job {file refseq} {
 		set f [gzopen $dep]
 		set header [tsv_open $f]
 		set poss [tsv_basicfields $header 3]
-		set o [open $target.temp w]
+		set temptarget [file_tempwrite $target]
+		set o [open $temptarget w]
 		while {![eof $f]} {
 			set line [split [gets $f] \t]
 			set line [list_sub $line $poss]
@@ -172,7 +179,7 @@ proc gatkworkaround_tsv2bed_job {file refseq} {
 		}
 		close $o
 		close $f
-		file rename -force $target.temp $target
+		file rename -force $temptarget $target
 	}
 	return [file root $file].bed
 }
@@ -214,6 +221,7 @@ proc map_bowtie2_job {args} {
 		foreach {key value} $readgroupdata {
 			lappend rg --rg "$key:$value"
 		}
+		set temptarget [file_tempwrite $target]
 		if {$paired} {
 			set files1 {}
 			set files2 {}
@@ -223,13 +231,13 @@ proc map_bowtie2_job {args} {
 			}
 			exec bowtie2 -p 2 --sensitive -x $bowtie2refseq -1 [join $files1 ,] -2 [join $files2 ,] \
 			--rg-id "$sample" {*}$rg \
-			-S $target.temp >@ stdout 2>@ stderr
+			-S $temptarget >@ stdout 2>@ stderr
 		} else {
 			exec bowtie2 -p 2 --sensitive -x $bowtie2refseq -U [join $$deps ,] \
 			--rg-id "$sample" {*}$rg \
-			-S $target.temp >@ stdout 2>@ stderr
+			-S $temptarget >@ stdout 2>@ stderr
 		}
-		file rename -force $target.temp $target
+		file rename -force $temptarget $target
 	}
 	job bowtie2_bam-$sample -deps $result.sam -targets $result.bam -vars {result} {*}$skips -code {
 		puts "making $target"
@@ -257,8 +265,9 @@ proc bam2reg_job {bamfile {mincoverage 5}} {
 #		cg bam2coverage $dep $target/coverage-$root
 #	}
 	job cov$mincoverage-$root -deps $bamfile -targets $dir/sreg-cov$mincoverage-$root.tsv -vars {mincoverage} -code {
-		cg regextract -above 1 [expr {$mincoverage-1}] $dep > $target.temp
-		file rename -force $target.temp $target
+		set temptarget [file_tempwrite $target]
+		cg regextract -above 1 [expr {$mincoverage-1}] $dep > $temptarget
+		file rename -force $temptarget $target
 	}
 	return $dir/sreg-cov$mincoverage-$root.tsv
 }
