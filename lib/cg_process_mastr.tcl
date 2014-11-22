@@ -418,11 +418,12 @@ proc cg_process_mastr {args} {
 		errorformat process_mastr
 		exit 1
 	}
+	set mastrdir [file_absolute $mastrdir]
+	set destdir [file_absolute $destdir]
+	set dbdir [file_absolute $dbdir]
 	set mastrname [file root [file tail $mastrdir]]
 	if {![info exists clipamplicons]} {set clipamplicons $mastrdir/samplicons-$mastrname.tsv}
 	# check projectinfo
-	set mastrdir [file_absolute $mastrdir]
-	set dbdir [file_absolute $dbdir]
 	projectinfo $destdir dbdir mastrdir {split 1}
 	process_mastr_job $mastrdir $destdir $dbdir -useminigenome $useminigenome \
 		-aligner $aligner -split $split -cleanup $cleanup \
