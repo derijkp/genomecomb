@@ -747,7 +747,15 @@ proc multicompar_job {experiment dbdir todo args} {
 			lappend deps \($name/reg_refcons-$sample.tsv\) \($name/reg_nocall-$sample.tsv\) \($name/reg_cluster-$sample.tsv\)
 		}
 	}
-	if {[llength $stilltodo]} {
+	if {$addtargets} {
+		if {[catch {cg select -n compar/compar-$experiment.tsv} header]} {set header {}}
+		if {![llength $stilltodo] && [inlist $header [lindex [split $targetsfile -] end]]} {
+			set addtargets 0
+		} else {
+			lappend deps $targetsfile
+		}
+	}
+	if {[llength $stilltodo] || $addtargets} {
 		file delete compar/compar-$experiment.tsv.temp
 		if {[file exists compar/compar-$experiment.tsv]} {
 			file rename -force compar/compar-$experiment.tsv compar/compar-$experiment.tsv.temp
