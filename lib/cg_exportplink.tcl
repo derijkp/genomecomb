@@ -1,9 +1,4 @@
 proc cg_exportplink {args} {
-	if {[llength $args] == 0} {
-		errorformat cg_export_plink
-		exit 1
-	}
-
 	set query {}
 	set pos 0
 	foreach {key value} $args {
@@ -19,6 +14,10 @@ proc cg_exportplink {args} {
 		incr pos 2
 	}
 	set args [lrange $args $pos end]
+	if {[llength $args] != 2} {
+		errorformat cg_export_plink
+		exit 1
+	}
 	foreach {varfile resultfile} $args break
 	if {$query ne ""} {
 		set f [open "|[list cg select -q $query $varfile]"]
