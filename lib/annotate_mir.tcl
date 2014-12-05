@@ -263,7 +263,7 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 		lappend nh {*}$temp
 		lappend nh {*}[list_sub $header -exclude $poss]
 		set mirvasempty [list_fill [llength $temp] {}]
-		set mo [mirvas_start $mirvas $file $resultfile]
+		set mo [mirvas_start $mirvas $file $resultfile $flanksizes]
 	} else {
 		set nh [list ${name}_impact ${name}_mir]
 	}
