@@ -214,9 +214,25 @@ proc tsv_varsfile {tsvfile} {
 		set f [gzopen [gzfile $tsvfile]]
 		set header [tsv_open $f]
 		close $f
-		set basicfields [list_sub $header [tsv_basicfields $header]]
+		set poss [tsv_basicfields $header 6 0]
+		if {-1 in [lrange $poss 0 2]} {
+			error "header error: basic variant fields not found in file $tsvfile"
+		}
+		set basicfields {}
+		foreach pos $poss field {chromosome begin end type ref alt} {
+			if {$pos == -1} {
+				lappend basicfields $field=\"\"
+			} else {
+				set hfield [lindex $header $pos]
+				if {$hfield ne $field} {
+					lappend basicfields $field=\$hfield
+				} else {
+					lappend basicfields $field
+				}
+			}
+		}
 		if {[lsearch $header id] != -1} {
-			lappend basicfields id
+			lappend basicfields id=\$id
 		}
 		cg select -f $basicfields [gzfile $tsvfile] $varsfile.temp
 		file rename $varsfile.temp $varsfile
