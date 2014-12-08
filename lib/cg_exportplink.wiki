@@ -32,6 +32,7 @@ You can use plink to recode to the default plink format (non-tansposed)
 == Options ==
 ; **-q query**: query (as can be given to cg_select). Only variants matching the query are 
 included in the result.
+; **-c 1/0**: code genotypes to numbers (reference = 1, alternative allele = 2).
 
 == Category ==
 Conversion

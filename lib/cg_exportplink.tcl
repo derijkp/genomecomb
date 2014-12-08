@@ -1,10 +1,14 @@
 proc cg_exportplink {args} {
 	set query {}
 	set pos 0
+	set codegeno 0
 	foreach {key value} $args {
 		switch -- $key {
 			-q {
 				set query $value
+			}
+			-c - --codegeno {
+				set codegeno $value
 			}
 			-- break
 			default {
@@ -15,10 +19,11 @@ proc cg_exportplink {args} {
 	}
 	set args [lrange $args $pos end]
 	if {[llength $args] != 2} {
-		errorformat cg_export_plink
+		errorformat cg_exportplink
 		exit 1
 	}
 	foreach {varfile resultfile} $args break
+	catch {close $f} ; catch {close $o}
 	if {$query ne ""} {
 		set f [open "|[list cg select -q $query $varfile]"]
 	} else {
@@ -38,53 +43,57 @@ proc cg_exportplink {args} {
 	}
 	close $o
 	set aposs [list_subindex $temp 2]
-	set poss [tsv_basicfields $header 4]
+	set poss [tsv_basicfields $header 6]
 	set o [open $resultfile.tped w]
-	array set trans {? 0 - 0 N 0 {} -}
+#	array set trans {? 0 - 0 N 0 {} -}
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {[llength $line] < 4} continue
-		foreach {chr b e type} [list_sub $line $poss] break
+		foreach {chr b e type ref alts} [list_sub $line $poss] break
 		if {![isint $b]} {
 			puts stderr "skipping var: error in line: $line"
 			continue
 		}
 		set chr [chr_clip $chr]
 		if {$chr eq "M"} {set chr MT}
-		set result [list $chr $chr-$b-$e-$type [format %.4f [expr {$b/1000000.0}]] $b]
-		set alleles {}
-		unset -nocomplain a
-		foreach {gt} [list_sub $line $aposs] {
-			set gt [get trans($gt) $gt]
-			lappend alleles $gt
-			incr a($gt)
+		set alts [split $alts ,]
+		if {$codegeno} {
+			set refcode 1
+		} else {
+			set refcode $ref
 		}
-		unset -nocomplain a(0)
-		set names [array names a]
-		if {[llength $names] > 2} {
-			set temp {}
-			foreach allele $names {
-				if {$type eq "del" && ($allele eq "-")} continue
-				lappend temp [list $a($allele) $allele]
+		if {[llength $alts] > 1} {
+			puts stderr "Warning: more than 2 alleles for $chr-$b-$e-$type: splitting"
+		}
+		foreach alt $alts {
+			if {$codegeno} {
+				set altcode 2
+			} else {
+				set altcode $alt
 			}
-			set temp [lsort -index 0 -integer -decreasing $temp]
-			if {$type eq "del"} {set s 1} else {set s 2}
-			set remove {}
-			foreach e [list_subindex [lrange $temp $s end] 1] {
-				lappend remove $e 0
+			set result [list $chr $chr-$b-$e-$type-$alt [format %.4f [expr {$b/1000000.0}]] $b]
+			foreach {gt1 gt2} [list_sub $line $aposs] {
+				if {$gt1 eq $ref} {
+					set gt1 $refcode
+				} elseif {$gt1 eq $alt} {
+					set gt1 $altcode
+				} else {
+					set gt1 0
+				}
+				if {$gt2 eq $ref} {
+					set gt2 $refcode
+				} elseif {$gt2 eq $alt} {
+					set gt2 $altcode
+				} else {
+					set gt2 0
+				}
+				if {$gt1 eq "0"} {set gt2 0}
+				if {$gt2 eq "0"} {set gt1 0}
+				lappend result $gt1 $gt2
 			}
-			set alleles [list_change $alleles $remove]
-			puts stderr "Warning: more than 2 alleles for $result: converted $remove"
-			continue
+			puts $o [join $result \t]
 		}
-		foreach {gt1 gt2} $alleles {
-			if {$gt1 eq "0"} {set gt2 0}
-			if {$gt2 eq "0"} {set gt1 0}
-			lappend result $gt1 $gt2
-		}
-		puts $o [join $result \t]
 	}
-
 	close $o
 	catch {close $f}
 }
