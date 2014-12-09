@@ -864,6 +864,7 @@ proc process_illumina {args} {
 		cg_process_conv_illnextseq	fastq $destdir
 	}
 	set refseq [glob $dbdir/genome_*.ifas]
+	set resultbamprefix rds
 	set samples {}
 	set experiment [file tail $destdir]
 	foreach dir [dirglob $destdir */fastq] {
@@ -902,11 +903,15 @@ proc process_illumina {args} {
 		# job_logdir $dir/log_jobs
 		set files [ssort -natural [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
 		if {[llength $files]} {
+			# do not do any of preliminaries if end product is already there
+			set bamfile map-bwa-$sample.bam
+			set resultbamfile map-${resultbamprefix}bwa-$sample.bam
+
 			# quality and adapter clipping
-			set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired]
+			set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired -skips [list -skip $bamfile -skip $resultbamfile]]]
 			#
 			# map using bwa
-			map_bwa_job $refseq $files $sample $paired
+			map_bwa_job $refseq $files $sample $paired -skips [list -skip $resultbamfile]
 		}
 		# extract regions with coverage >= 5
 		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
