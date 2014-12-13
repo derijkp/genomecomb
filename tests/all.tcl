@@ -3,6 +3,7 @@
 exec tclsh "$0" "$@"
 
 source annot.tcl
+source mirannot.tcl
 source bcol.tcl
 source compar.tcl
 source convert.tcl

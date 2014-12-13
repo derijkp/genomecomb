@@ -4,9 +4,13 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc annotatemir_one {loc geneobj} {
-# putsvars loc geneobj
-	foreach {chrom snpstart snpend} $loc break
+proc annotatemir_one {oneloc geneobj} {
+# putsvars oneloc geneobj
+	foreach {chrom snpstart snpend} $oneloc break
+	if {$snpstart == $snpend} {
+		incr snpstart -1
+		incr snpend
+	}
 	unset -nocomplain adata
 	array set adata $geneobj
 	set complement $adata(complement)
@@ -25,27 +29,39 @@ proc annotatemir_one {loc geneobj} {
 		set dist {}
 		set snpsize [expr {$snpend - $snpstart - 1}]
 		list_foreach {annot ref distback b e} $adata(annotlist) {
-			if {$snpend >= $e && $snpstart <= $b} {
-				lappend impact $annot
-			} elseif {$snpend > $b && $snpstart < $e} {
+			if {$snpend > $b && $snpstart < $e} {
+				if {$snpend >= $e} {
+					set tsnpend $e
+					set endend 1
+				} else {
+					set tsnpend $snpend
+					set endend 0
+				}
+				if {$snpstart <= $b} {
+					set tsnpstart $b
+					set startend 1
+				} else {
+					set tsnpstart $snpstart
+					set startend 0
+				}
 				set temp $annot
 				set snpto {}
 				if {$distback == -1} {
 					if {!$complement} {set sign -} else {set sign +}
-					set num1 [expr {$e - $snpstart}]
-					set num2 [expr {$e - $snpend + 1}]
+					set num1 [expr {$e - $tsnpstart}]
+					set num2 [expr {$e - $tsnpend + 1}]
 				} elseif {$distback == +1} {
 					if {!$complement} {set sign +} else {set sign -}
-					set num1 [expr {$snpstart - $b + 1}]
-					set num2 [expr {$snpend - $b}]
+					set num1 [expr {$tsnpstart - $b + 1}]
+					set num2 [expr {$tsnpend - $b}]
 				} elseif {!$complement} {
 					set sign +
-					set num1 [expr {$snpstart - $b + 1}]
-					set num2 [expr {$snpend - $b}]
+					set num1 [expr {$tsnpstart - $b + 1}]
+					set num2 [expr {$tsnpend - $b}]
 				} else {
 					set sign +
-					set num1 [expr {$e - $snpstart}]
-					set num2 [expr {$e - $snpend + 1}]
+					set num1 [expr {$e - $tsnpstart}]
+					set num2 [expr {$e - $tsnpend + 1}]
 				}
 				if {$annot eq "upstream"} {
 					incr num1 $flank1
@@ -54,17 +70,31 @@ proc annotatemir_one {loc geneobj} {
 					incr num1 $flank2
 					incr num2 $flank2
 				}
+				set unum1 $num1
+				set unum2 $num2
 				if {$num1 == $num2} {
-					set temp $annot\($ref$sign$num1\)
-				} elseif {$snpstart <= $b} {
-					set temp $annot\(:$ref$sign$num2\)
-				} elseif {$snpend >= $e} {
-					set temp $annot\($ref$sign$num1:\)
-				} elseif {!$complement} {
-					set temp $annot\($ref$sign$num1:$num2\)
+# putsvars snpstart snpend annot ref distback b e num1 num2 startend endend complement
+					if {$startend} {
+						if {!$complement} {set unum1 e$unum1} else {set unum1 ${unum1}e}
+					}
+					if {$endend} {
+						if {!$complement} {set unum1 ${unum1}e} else {set unum1 e${unum1}}
+					}
+					set temp $annot\($ref$sign$unum1\)
 				} else {
-					set temp $annot\($ref$sign$num2:$num1\)
+					if {$startend} {
+						if {!$complement} {set unum1 e$unum1} else {set unum1 ${unum1}e}
+					}
+					if {$endend} {
+						if {!$complement} {set unum2 ${unum2}e} else {set unum2 e${unum2}}
+					}
+					if {!$complement} {
+						set temp $annot\($ref$sign$unum1:$unum2\)
+					} else {
+						set temp $annot\($ref$sign$unum2:$unum1\)
+					}
 				}
+# putsvars snpstart snpend b e complement num1 num2 temp
 				if {[regexp ^mature $annot] && $num2 >= 2 && $num1 <= 7} {
 					append temp seed
 				}
@@ -72,6 +102,7 @@ proc annotatemir_one {loc geneobj} {
 			}
 		}
 	}
+	if {$complement} {set impact [list_reverse $impact]}
 	return [list [join $impact &] $adata(genename)]
 }
 
