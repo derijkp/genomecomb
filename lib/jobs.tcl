@@ -714,7 +714,7 @@ proc job {jobname args} {
 			-- break
 			default {
 				if {[string index $key 0] eq "-"} {
-					error "unkown option $key for target, must be one of: -deps, -targets, -code, -direct, -io"
+					error "unkown option $key for target, must be one of: -deps, -targets, -code, -vars, -foreach, -rmtargets, -skip, -ptargets, -direct, -io, -cores, -precode, -checkcompressed"
 				}
 				break
 			}
