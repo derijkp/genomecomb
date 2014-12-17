@@ -10,6 +10,9 @@ proc cg_exportplink {args} {
 			-c - --codegeno {
 				set codegeno $value
 			}
+			-s - --samples {
+				set samples $value
+			}
 			-- break
 			default {
 				break
@@ -30,19 +33,35 @@ proc cg_exportplink {args} {
 		set f [gzopen $varfile]
 	}
 	set header [tsv_open $f]
-	set alleleposs [list_find -glob $header alleleSeq*]
-	set temp {}
-	foreach field [list_sub $header $alleleposs] p $alleleposs {
-		regexp {^([^-]+)-(.*)$} $field unused an name
-		lappend temp [list $name $an $p]
+	if {![llength $header]} {
+		catch {close $f} msg
+		error "error querying file: $msg"
 	}
-	set temp [ssort -natural $temp]
+	if {![info exists samples]} {
+		set samples [samples $header]
+	}
+	set aposs {}
+	set samplepresents {}
+	foreach sample $samples {
+		if {$sample eq ""} {
+			lappend samplepresents 0
+			lappend aposs -1 -1
+			continue
+		} else {
+			lappend samplepresents 1
+		}
+		set pos [lsearch $header alleleSeq1-$sample]
+		if {$pos == -1} {error "no genotype (alleleSeq1-$sample) found for $sample"}
+		lappend aposs $pos
+		set pos [lsearch $header alleleSeq2-$sample]
+		if {$pos == -1} {error "no genotype (alleleSeq2-$sample) found for $sample"}
+		lappend aposs $pos
+	}
 	set o [open $resultfile.tfam.pre w]
-	foreach {name ignore} [list_subindex $temp 0] {
+	foreach name $samples {
 		puts $o [join [list fam $name 0 0 0 -9] \t]
 	}
 	close $o
-	set aposs [list_subindex $temp 2]
 	set poss [tsv_basicfields $header 6]
 	set o [open $resultfile.tped w]
 #	array set trans {? 0 - 0 N 0 {} -}
@@ -71,8 +90,12 @@ proc cg_exportplink {args} {
 			} else {
 				set altcode $alt
 			}
-			set result [list $chr $chr-$b-$e-$type-$alt [format %.4f [expr {$b/1000000.0}]] $b]
-			foreach {gt1 gt2} [list_sub $line $aposs] {
+			set result [list $chr $chr-$b-$e-$type-$ref-$alt [format %.4f [expr {$b/1000000.0}]] $b]
+			foreach {gt1 gt2} [list_sub $line $aposs] samplepresent $samplepresents {
+				if {!$samplepresent} {
+					lappend result 0 0
+					continue
+				}
 				if {$gt1 eq $ref} {
 					set gt1 $refcode
 				} elseif {$gt1 eq $alt} {
