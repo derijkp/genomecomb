@@ -11,6 +11,17 @@ test exportplink {basic} {
 	exec diff tmp/temp.tped data/expected-vars3.tped
 } {}
 
+test exportplink {del} {
+	test_cleantmp
+	set c [file_read data/vars3.sft]
+	append c "chr4\t4000\t4001\tdel\tG\t\t0.5\t\t\tv\t0.4\t\tG\tv\n"
+	file_write tmp/vars.tsv $c
+	exec cg exportplink tmp/vars.tsv tmp/temp 2> /dev/null
+	exec diff tmp/temp.tped data/expected-vars3.tped
+} {13d12
+< 4	4-4000-4001-del-G-	0.0040	4000				G
+child process exited abnormally} error
+
 test exportplink {codegeno} {
 	test_cleantmp
 	exec cg exportplink -c 1 data/vars3.sft tmp/temp 2> /dev/null

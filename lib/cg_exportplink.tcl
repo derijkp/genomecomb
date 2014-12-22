@@ -81,7 +81,9 @@ proc cg_exportplink {args} {
 		} else {
 			set refcode $ref
 		}
-		if {[llength $alts] > 1} {
+		if {[llength $alts] == 0} {
+			set alts {{}}
+		} elseif {[llength $alts] > 1} {
 			puts stderr "Warning: more than 2 alleles for $chr-$b-$e-$type: splitting"
 		}
 		foreach alt $alts {
