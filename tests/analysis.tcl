@@ -31,7 +31,8 @@ test exportplink {codegeno} {
 
 test exportplink {samples} {
 	test_cleantmp
-	cg select -nh {f1 f2 f3 f4 f5 f6 f7 f8} data/expected-vars3.tped tmp/temp.tsv
+	file_write tmp/h.tsv [join {f1 f2 f3 f4 f5 f6 f7 f8} \t]
+	cg select -hf tmp/h.tsv  data/expected-vars3.tped tmp/temp.tsv
 	cg select -f {f1 f2 f3 f4 f7 f8} -sh /dev/null tmp/temp.tsv tmp/expected.tsv
 	exec cg exportplink -s sample2 data/vars3.sft tmp/temp 2> /dev/null
 	exec diff tmp/temp.tped tmp/expected.tsv
@@ -56,6 +57,7 @@ test exportplink {names with -} {
 test exportplink {query} {
 	test_cleantmp
 	exec cg exportplink -q {$chromosome == "chr1"} data/vars3.sft tmp/temp 2> /dev/null
+	exec diff tmp/temp.tped data/expected-vars3.tped
 } {8a9,12
 > 2	2-4001-4002-snp-A-G	0.0040	4001	G	G	G	G
 > 2	2-4001-4002-snp-A-C	0.0040	4001	0	0	0	0
@@ -67,7 +69,7 @@ test exportplink {query error} {
 	test_cleantmp
 	exec cg exportplink -q {$bla == "chr1"} data/vars3.sft tmp/temp
 	exec diff tmp/temp.tped data/expected-vars3.tped
-} {} error
+} {error querying file: field "bla" not present in file and no sampleinfo file found*} error match
 
 file delete -force tmp/temp.tsv tmp/temp.tsv.old
 
