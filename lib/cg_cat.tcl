@@ -1,6 +1,7 @@
 proc cg_cat {args} {
 	set force ""
 	set addcomment 1
+	set sort 0
 	set pos 0
 	while 1 {
 		set key [lindex $args $pos]
@@ -10,6 +11,9 @@ proc cg_cat {args} {
 			}
 			-m {
 				set force m
+			}
+			-s {
+				set sort 1
 			}
 			-c {
 				incr pos
@@ -33,6 +37,7 @@ proc cg_cat {args} {
 		fcopy $f stdout
 		exit 0
 	}
+	if {$sort} {set args [lsort -dict $args]}
 	set headers {}
 	set comments {}
 	foreach file $args {
@@ -40,15 +45,18 @@ proc cg_cat {args} {
 		set header [tsv_open $f comment]
 		lappend headers $header
 		close $f
-		if {$addcomment} {
+		if {$addcomment eq "1"} {
 			lappend comments "# ++++ $file ++++"
 			if {[inlist {f m} $force]} {
 				lappend comments "# ++ $header"
 			}
 		}
-		foreach line [split $comment \n] {
-			if {[string index $line 0] ne "#"} continue
-			lappend comments $line
+		if {$addcomment in {f 0 1}} {
+			foreach line [split $comment \n] {
+				if {[string index $line 0] ne "#"} continue
+				lappend comments $line
+			}
+			if {$addcomment eq "f"} {set addcomment n}
 		}
 	}
 	set header [lindex $headers 0]

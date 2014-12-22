@@ -321,7 +321,13 @@ test tsv_split {split} {
 ##
 test	chromosome	begin	end	test2
 t	chr3	1000	1100	t2
-}
-}
+}}
+
+test tsv_split {split and cat} {
+	test_cleantmp
+	exec cg split data/reg4.tsv tmp/split- .tsv
+	exec cg cat -s -c f {*}[glob tmp/split-*.tsv] > tmp/cat.tsv
+	exec diff tmp/cat.tsv data/reg4.tsv
+} {}
 
 testsummarize
