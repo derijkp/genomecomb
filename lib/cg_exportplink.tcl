@@ -1,6 +1,7 @@
 proc cg_exportplink {args} {
 	set query {}
 	set pos 0
+	set nulllines 0
 	set codegeno 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -12,6 +13,9 @@ proc cg_exportplink {args} {
 			}
 			-s - --samples {
 				set samples $value
+			}
+			-n - --nulllines {
+				set nulllines $value
 			}
 			-- break
 			default {
@@ -92,7 +96,7 @@ proc cg_exportplink {args} {
 			} else {
 				set altcode $alt
 			}
-			set result [list $chr $chr-$b-$e-$type-$ref-$alt [format %.4f [expr {$b/1000000.0}]] $b]
+			set result {}
 			foreach {gt1 gt2} [list_sub $line $aposs] samplepresent $samplepresents {
 				if {!$samplepresent} {
 					lappend result 0 0
@@ -116,7 +120,10 @@ proc cg_exportplink {args} {
 				if {$gt2 eq "0"} {set gt1 0}
 				lappend result $gt1 $gt2
 			}
-			puts $o [join $result \t]
+			if {$nulllines == 0} {
+				if {![llength [list_remove $result 0]]} continue
+			}
+			puts $o [join [list $chr $chr-$b-$e-$type-$ref-$alt [format %.6f [expr {$b/1000000.0}]] $b {*}$result] \t]
 		}
 	}
 	close $o
