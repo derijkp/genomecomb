@@ -7,7 +7,10 @@ proc cg_split {args} {
 				incr pos
 				set field [lindex $args $pos]
 			}
-			-- break
+			-- {
+				incr pos
+				break
+			}
 			default {
 				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
 				break
@@ -22,7 +25,11 @@ proc cg_split {args} {
 	}
 	set postfix {}
 	foreach {file prefix postfix} $args break
-	set f [gzopen $file]
+	if {$file ne "-"} {
+		set f [gzopen $file]
+	} else {
+		set f stdin
+	}
 	set header [tsv_open $f comment]
 	if {[info exists field]} {
 		set pos [lsearch $header $field]
