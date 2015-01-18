@@ -721,6 +721,34 @@ test select "do not make index on select only$dboptt" {
 	file exists tmp/table.tsv.index
 } 0
 
+test select "catch$dboptt" {
+	global dbopt
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch(someerror)}} -q {$begin == 4000} [gzfile data/vars1.sft]
+} {chromosome	begin	end	countG
+chr1	4000	4001	1
+chr2	4000	4001	1}
+
+test select "catch$dboptt" {
+	global dbopt
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch($begin)}} -q {$begin == 4000} [gzfile data/vars1.sft]
+} {chromosome	begin	end	countG
+chr1	4000	4001	0
+chr2	4000	4001	0}
+
+test select "catch with errorvalue $dboptt" {
+	global dbopt
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch(someerror,"e")}} -q {$begin == 4000} [gzfile data/vars1.sft]
+} {chromosome	begin	end	countG
+chr1	4000	4001	e
+chr2	4000	4001	e}
+
+test select "catch with errorvalue $dboptt" {
+	global dbopt
+	exec cg select {*}$dbopt -f {chromosome begin end {countG=catch($begin,"e")}} -q {$begin == 4000} [gzfile data/vars1.sft]
+} {chromosome	begin	end	countG
+chr1	4000	4001	4000
+chr2	4000	4001	4000}
+
 }
 
 foreach dbopt {{}} {

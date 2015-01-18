@@ -157,6 +157,8 @@ Several extra functions have been added:
 === Logical functions ===
 ; **if(condition,true,?condition2,true2, ...?false)**: if **condition** is true, the value for "true" will be returned, 
 otherwise the last parameter (**false**) is returned
+; **catch(value,?errorvalue?)**: if an error is generated when calculating **value**, the function returns **errorvalue**.
+If **errorvalue** is not given, catch returns 1 on an error, and 0 on success (without catch, the error message is returned.)
 
 === Bio functions ===
 ; **region("chromosome:begin-end",...)**: is true for any region in dataset that overlaps the given regions.

@@ -279,12 +279,24 @@ proc tsv_select_if {arguments header neededfieldsVar} {
 	return $result
 }
 
+proc catchdef {cmd errorvalue} {
+	if {[catch {uplevel $cmd} result]} {
+		return $errorvalue
+	} else {
+		return $result
+	}
+}
+
 proc tsv_select_catch {arguments header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
-	if {[llength $arguments] != 1} {
-		error "wrong # args for function if, must be: catch(expression)"
+	set len [llength $arguments]
+	if {$len == 1} {
+		return "\[catch \{expr \{[tsv_select_detokenize [lindex $arguments 0] $header neededfields]\}\}\]"
+	} elseif {$len == 2} {
+		return "\[catchdef \{expr \{[tsv_select_detokenize [lindex $arguments 0] $header neededfields]\}\} \[expr \{[tsv_select_detokenize [lindex $arguments 1] $header neededfields]\}\]\]"
+	} else {
+		error "wrong # args for function catch, must be: catch(expression,)"
 	}
-	return "\[catch \{expr \{[tsv_select_detokenize [lindex $arguments 0] $header neededfields]\}\}\]"
 }
 
 proc tsv_select_counthasone {ids operator value} {
