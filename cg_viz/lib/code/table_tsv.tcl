@@ -434,6 +434,7 @@ table_tsv method open {file parent} {
 	set tdata(qfields) $tdata(tfields)
 	set tdata(fieldscor) {}
 	set tdata(f) [open $file]
+	tsv_select_sampleinfo_setfile $file
 	if {![file exists $tdata(indexdir)/query_results.bcol]} {
 		set tdata(query) {}
 		set tdata(query_results) {}
