@@ -226,7 +226,7 @@ proc cg_regcollapse {args} {
 	putslog "Collapsing file(s) to $resultfile"
 	set tempfile [tempfile]
 	set tempfile2 [tempfile]
-	if {[llength $args]} {
+	if {[llength $args] > 1} {
 		putslog "Concatenating files"
 		cg cat -m {*}$args > $tempfile
 		putslog "Sorting"
