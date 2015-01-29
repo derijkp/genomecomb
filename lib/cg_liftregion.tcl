@@ -23,11 +23,11 @@ proc cg_liftregion {args} {
 		error "file $resultfile already exists"
 	}
 	set unmappedfile $resultfile.unmapped
-	set tempfile [tempfile]
-	set unmappedtempfile [tempfile]
-	set tempfile2 [tempfile]
-	set tempfile3 [tempfile]
-	set tempfile4 [tempfile]
+	set tempfile [scratchfile]
+	set unmappedtempfile [scratchfile]
+	set tempfile2 [scratchfile]
+	set tempfile3 [scratchfile]
+	set tempfile4 [scratchfile]
 
 	catch {close $f} ; catch {close $fl} ; catch {close $o}
 	set f [gzopen $file]
@@ -163,7 +163,7 @@ proc cg_liftregion {args} {
 		if {$lline eq ""} continue
 		set lline [split $lline \t]
 		foreach {chr begin end lname} $lline break
-		if {$chr ne $prevchr || $break || $lname ne $prevname || $begin ne $prevend} {
+		if {$chr ne $prevchr || $lname ne $prevname || $begin ne $prevend} {
 			if {$prevname ne ""} {
 				puts $o $prevchr\t$prevbegin\t$prevend\t$prevname\t[join [list_sub $line -exclude $poss] \t]\t
 			}
@@ -205,5 +205,4 @@ proc cg_liftregion {args} {
 	#
 	file rename -force $unmappedfile.temp $unmappedfile
 	file delete $tempfile $unmappedtempfile $tempfile2 $tempfile3
-
 }
