@@ -1,0 +1,7 @@
+chromosome	test	begin	end	type	ref	alt	value1
+1	t	0	1	snp	N	A	A1
+1	t	700	701	snp	N	A	A2
+1	t	702	702	ins		A	A3
+1	1	1609710	1609711	snp	N	A	A4
+1	1	1609720	1609720	ins		A	A5
+15	t	26517559	26517560	snp	N	A	C

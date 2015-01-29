@@ -39,27 +39,34 @@ proc cg_liftover {args} {
 	foreach field $fields {
 		lappend id \$\{$field\}
 	}
+	foreach {chrfield bfield efield} $fields break
+	set fields {}
 	if {$addchr} {
-		set fields [lreplace $fields 0 0 "chromosome=\"chr\$chromosome\""]
+		lappend fields "chromosome=\"chr\$$chrfield\""
+	} else {
+		lappend fields "chromosome=\"\$$chrfield\""
 	}
+	lappend fields "begin=if(\$$bfield == \$$efield,\$$bfield - 1,\$$bfield)"
+	lappend fields "end=if(\$$bfield == \$$efield,\$$efield + 1,\$$efield)"
 	lappend fields id=\"[join $id -]\"
 	cg select -f $fields -sh $resultfile.temph $varfile $resultfile.temp
 	#
 	# do liftover -> $resultfile.temp2
 	#
 	# set dir [file dir [exec which liftOver]]
-	if {[catch {exec liftOver -bedPlus=3 -tab $resultfile.temp $liftoverfile $resultfile.temp2 $unmappedfile} errmsg]} {
+	if {[catch {exec liftOver -bedPlus=3 -tab $resultfile.temp $liftoverfile $resultfile.temp2 $unmappedfile.temp} errmsg]} {
 		puts "$errmsg"
 	}
 	#
 	# add original data back to liftovered file -> $resultfile.temp3
-	# we cannot just let lifover do it, as it only takes max 12 columns with it
+	# we cannot just let liftover do it, as it only takes max 12 columns with it
 	#
 	set f [gzopen $varfile]
 	set header [tsv_open $f comment]
 	set fl [open $resultfile.temp2]
 	#set temp [tsv_open $fl]
 	set o [open $resultfile.temp3 w]
+	set header [list_union [list_sub $header $poss] $header]
 	lappend header beforeliftover
 	puts $o "# liftover from $varfile"
 	puts $o "# using $liftoverfile"
@@ -67,31 +74,19 @@ proc cg_liftover {args} {
 	while {![eof $fl]} {
 		set lline [split [gets $fl] \t]
 		if {![llength $lline]} continue
-		set lname [lindex $lline 3]
+		foreach {chr begin end lname} $lline break
+		foreach {lchr lbegin lend} [split $lname -] break
 		while 1 {
 			set line [split [gets $f] \t]
-			set name [join [list_sub $line $poss] -]
+			set loc [list_sub $line $poss]
+			set name [join $loc -]
 			if {$name eq $lname} break
 			if {[eof $f]} {error "$lname not found"}
 		}
-		#build new liftover line
-		set rline {}
-			#1)add fields step by step until counter > max of $poss
-		set max [lindex [lsort -integer $poss] end]
-		set exclude {}
-		set i 0
-		while {$i <= $max} { 
-			if {![inlist $poss $i]} {
-				lappend rline [lindex $line $i] 
-			} else {
-				lappend rline [lindex $lline [list_cor $poss $i]]
-			}
-			list_append exclude $i
-			set  i [expr $i + 1] 
-		} 
-			#2)add rest of old line
-		lappend rline {*}[list_sub $line -exclude $exclude] [join [lrange [split $lname -] 0 2] -]
-		puts $o [join $rline \t]
+		if {$lbegin == $lend} {
+			incr begin ; incr end -1
+		}
+		puts $o $chr\t$begin\t$end\t[join [list_sub $line -exclude $poss] \t]\t$lname
 	}
 	close $o
 	close $fl
@@ -105,4 +100,47 @@ proc cg_liftover {args} {
 	#
 	file rename -force $resultfile.temp4 $resultfile
 	file delete $resultfile.temph $resultfile.temp $resultfile.temp2 $resultfile.temp3
+	#
+	# fo unmapped: add original data back
+	#
+	set f [gzopen $varfile]
+	set header [tsv_open $f comment]
+	set fl [open $unmappedfile.temp]
+	#set temp [tsv_open $fl]
+	set o [open $unmappedfile.temp3 w]
+	set header [list_union [list_sub $header $poss] $header]
+	puts $o "# unmapped by liftover from $varfile"
+	puts $o "# using $liftoverfile"
+	puts $o [join $header \t]
+	while {![eof $fl]} {
+		set lline [gets $fl]
+		if {[string index $lline 0] eq "\#"} continue
+		set lline [split $lline \t]
+		if {![llength $lline]} continue
+		foreach {chr begin end lname} $lline break
+		foreach {lchr lbegin lend} [split $lname -] break
+		while 1 {
+			set line [split [gets $f] \t]
+			set loc [list_sub $line $poss]
+			set name [join $loc -]
+			if {$name eq $lname} break
+			if {[eof $f]} {error "$lname not found"}
+		}
+		if {$lbegin == $lend} {
+			incr begin ; incr end -1
+		}
+		puts $o $chr\t$begin\t$end\t[join [list_sub $line -exclude $poss] \t]
+	}
+	close $o
+	close $fl
+	gzclose $f
+	#
+	# sort result -> $unmappedfile.temp4
+	#
+	cg select -s - $unmappedfile.temp3 $unmappedfile.temp4
+	#
+	# rename result, cleanup
+	#
+	file rename -force $unmappedfile.temp4 $unmappedfile
+	file delete $unmappedfile.temp2 $unmappedfile.temp3
 }

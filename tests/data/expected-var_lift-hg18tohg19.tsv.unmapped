@@ -1,0 +1,5 @@
+# unmapped by liftover from data/var_lift.tsv
+# using /complgen/refseq/liftover/hg18ToHg19.over.chain
+chromosome	begin	end	test	type	ref	alt	value1
+chr1	1609710	1609711	1	snp	N	A	A4
+chr1	1609720	1609720	1	ins		A	A5

@@ -1,0 +1,7 @@
+# liftover from data/var_lift.tsv
+# using /complgen/refseq/liftover/hg18ToHg19.over.chain
+chromosome	begin	end	test	type	ref	alt	value1	beforeliftover
+chr1	10000	10001	t	snp	N	A	A1	1-0-1
+chr1	10837	10838	t	snp	N	A	A2	1-700-701
+chr1	10839	10839	t	ins		A	A3	1-702-702
+chr15	28719531	28719532	t	snp	N	A	C	15-26517559-26517560

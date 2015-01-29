@@ -476,6 +476,13 @@ test gene2reg {gene2reg basic} {
 	exec diff tmp/result.tsv data/expected-gene2reg.tsv
 } {}
 
+test liftover {basic} {
+	file delete tmp/temp.tsv
+	exec cg liftover data/var_lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
+	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
+} {}
+
 test liftregion {basic} {
 	file delete tmp/temp.tsv
 	exec cg liftregion data/reg_lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain tmp/temp.tsv
