@@ -64,11 +64,21 @@ proc annotatemir_one {oneloc geneobj} {
 					set num2 [expr {$e - $tsnpend + 1}]
 				}
 				if {$annot eq "upstream"} {
-					incr num1 $flank1
-					incr num2 $flank1
+					if {!$complement} {
+						incr num1 $flank1
+						incr num2 $flank1
+					} else {
+						incr num1 $flank2
+						incr num2 $flank2
+					}
 				} elseif {$annot eq "downstream"} {
-					incr num1 $flank2
-					incr num2 $flank2
+					if {!$complement} {
+						incr num1 $flank2
+						incr num2 $flank2
+					} else {
+						incr num1 $flank1
+						incr num2 $flank1
+					}
 				}
 				set unum1 $num1
 				set unum2 $num2
@@ -399,6 +409,7 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 				set geneobj [lindex $dbline $geneobjpos]
 				set result [annotatemir_one $loc $geneobj]
 				if {$mirvas} {
+					# putsvars loc geneobj resultfile mo mirvas result
 					lappend result {*}[annotatemir_one_struct $loc $geneobj $resultfile $mo $mirvas $result]
 					puts $o [join [list_concat $loc $result $restline] \t]
 				}
