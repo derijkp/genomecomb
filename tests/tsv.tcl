@@ -323,6 +323,16 @@ test	chromosome	begin	end	test2
 t	chr3	1000	1100	t2
 }}
 
+test tsv_split {split stdin} {
+	test_cleantmp
+	exec cat data/reg4.tsv | cg split -- - tmp/split- .tsv
+	list [lsort -dict [glob tmp/*]] [file_read tmp/split-3.tsv]
+} {{tmp/split-1.tsv tmp/split-2.tsv tmp/split-3.tsv tmp/split-M.tsv tmp/split-X.tsv tmp/split-Y.tsv} {## header
+##
+test	chromosome	begin	end	test2
+t	chr3	1000	1100	t2
+}}
+
 test tsv_split {split and cat} {
 	test_cleantmp
 	exec cg split data/reg4.tsv tmp/split- .tsv
