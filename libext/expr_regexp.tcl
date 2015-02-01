@@ -12,6 +12,16 @@ proc tcl::mathfunc::ncregexp {args} {
 	::regexp -nocase {*}$args $pattern $value
 }
 
+proc tcl::mathfunc::regextract {args} {
+	if {[llength $args] < 2} {error "function regexp must have at least 2 arguments"}
+	foreach {value} $args break
+	foreach pattern [::lrange $args 1 end] {
+		set matches [::regexp -inline $pattern $value]
+		if {[llength $matches]} break
+	}
+	join [lrange $matches 1 end] ,
+}
+
 proc tcl::mathfunc::matches {args} {
 	if {[llength $args] < 2} {error "function matches must have at least 2 arguments"}
 	foreach {value pattern} [::lrange $args end-1 end] break
