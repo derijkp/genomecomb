@@ -15,7 +15,7 @@ available in resultfile.unmapped.
 
 
 == Arguments ==
-; **variantfile**: file in tsv format (with region data)
+; **regionfile**: file in tsv format (with region data)
 ; **liftoverfile**: liftover file guiding the conversion,
 e.g. hg18/hg18ToHg19.over.chain to convert from hg18 to hg19, and hg19/hg19ToHg18.over.chain to convert from hg19 to hg18
 ; **resultfile**: resulting converted file
