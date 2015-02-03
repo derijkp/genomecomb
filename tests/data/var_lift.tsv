@@ -1,7 +1,9 @@
-chromosome	test	begin	end	type	ref	alt	value1
-1	t	0	1	snp	N	A	A1
-1	t	700	701	snp	N	A	A2
-1	t	702	702	ins		A	A3
-1	1	1609710	1609711	snp	N	A	A4
-1	1	1609720	1609720	ins		A	A5
-15	t	26517559	26517560	snp	N	A	C
+chromosome	test	begin	end	type	ref	alt	value1	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2
+1	t	0	1	snp	T	A	A1	v	t	9	A	T	r	r	9	T	T
+1	t	700	701	snp	C	A	A2	r	r	10	C	C	v	m	10	A	A
+1	t	702	702	ins		A	A3	v	t	15		A	r	r	15	A	A
+1	t	1609710	1609711	snp	G	A	A4	v	m	16	A	A	v	t	16	G	A
+1	t	1609720	1609720	ins		A	A5	v	m	17			v	t	17		A
+1	t	2482141	2482142	snp	C	G	B	v	m	18	G	G	r	o	18	A	C
+1	t	2482141	2482142	snp	C	A	B	r	o	19	G	G	v	t	18	A	C
+15	t	26517559	26517560	snp	T	A	C	v	t	20	A	T	v	t	19	A	T

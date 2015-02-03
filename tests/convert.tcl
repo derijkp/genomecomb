@@ -476,10 +476,32 @@ test gene2reg {gene2reg basic} {
 	exec diff tmp/result.tsv data/expected-gene2reg.tsv
 } {}
 
+test correctvariants {basic} {
+	file delete tmp/temp.tsv
+	exec cg correctvariants -f 1 -s 1 data/var_lift.tsv tmp/temp.tsv /complgen/refseq/hg19
+	cg select -f {chromosome begin end type ref alt } tmp/temp.tsv
+} {chromosome	begin	end	type	ref	alt
+1	0	1	snp	N	A
+1	700	701	snp	N	A
+1	702	702	ins		A
+1	1609710	1609711	snp	C	A
+1	1609720	1609720	ins		A
+1	2482141	2482142	snp	A	G
+1	2482141	2482142	snp	A	C
+15	26517559	26517560	snp	A	T}
+
 test liftover {basic} {
 	file delete tmp/temp.tsv
 	exec cg liftover data/var_lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
+	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
+} {}
+
+test liftover {basic with correctvariants} {
+	file delete tmp/temp.tsv tmp/temp2.tsv
+	exec cg liftover data/var_lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain tmp/temp.tsv
+	exec cg correctvariants -f 1 -s 1 tmp/temp.tsv tmp/temp2.tsv /complgen/refseq/hg19
+	exec diff tmp/temp2.tsv data/expected-var_lift-hg18tohg19.tsv
 	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
 } {}
 

@@ -1,0 +1,36 @@
+= updatevarfile =
+
+== Format ==
+cg updatevarfile ?options? varfile resultfile dbdir
+
+== Summary ==
+Complete or correct a variants file
+
+== Description ==
+This command adds ref and alt fields to a variation file that misses them, and fills them.
+The alt field wil also be updated based on the alleleSeq* genotype fields if these are 
+present in the variant file.
+If a ref fields is already present, its contents will be checked, and an error given if there
+is a difference with the genome sequence in dbdir. 
+The -f (force) or -c (complement) option can be used to correct the ref column instead 
+of giving an error.
+
+== Arguments ==
+; **srcfile**: variations file
+; **dstfile**: resulting variations file
+; **dbdir**: database directory with reference sequence, etc.
+
+== Options ==
+; **-f 0/1/2**: if 1 (default 0), force overwrite of ref if it is different from the genome sequence in **dbdir**, 
+instead of giving an error. "alt", "sequenced" and "zyg" columns are also corrected to reflect the new reference. 
+Use "2" to give a warning on the changes
+; **-c 0/1**: if 1 (default 0), overwrite ref if it is different from the genome only when it is complement of ref, 
+  alt and alleleSeq* are also changed to complement if ref is complement.
+  This option is usefull for data originally coming from e.g. a snp array where variants are sometimes
+  given in the reverse strand.
+; **-s 0/1**: if 1 (default 0), the file is interpreted as a variant file with split alternative 
+alleles (i.e. each alternative allele of a SNV is on a separate line as a seperate variant). This 
+means e.g. that the alt column will not be updated based on genotypes present.
+
+== Category ==
+Conversion
