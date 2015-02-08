@@ -113,14 +113,14 @@ proc annotatemir_one {oneloc geneobj} {
 		}
 	}
 	if {$complement} {set impact [list_reverse $impact]}
-	return [list [join $impact &] $adata(genename)]
+	return [list $adata(transcriptname):[join $impact &] $adata(genename)]
 }
 
 proc annotatemir_dbopen {dbfile genecol transcriptcol} {
 	set df [gzopen $dbfile]
 	set header [tsv_open $df comment]
 	set dposs [tsv_basicfields $header 3]
-	set deffields {strand	mature1start mature1end	loopstart	loopend	mature2start mature2start}
+	set deffields {strand	mature1start mature1end	loopstart	loopend	mature2start mature2end}
 	lappend deffields $genecol $transcriptcol
 	lappend dposs {*}[list_cor $header $deffields]
 	if {[lsearch [lrange $dposs 0 end-2] -1] != -1} {
@@ -147,6 +147,7 @@ proc annotatemir_dbgetlist {dbobjVar dblistVar chr start end} {
 	upvar $dbobjVar dbobj
 	upvar $dblistVar dblist
 	set df [dict get $dbobj df]
+	if {[eof $df]} {return $dblist}
 	set prevdbloc [dict get $dbobj prevdbloc]
 	set fdbline [dict get $dbobj fdbline]
 	if {![llength $fdbline]} {return $dblist}
@@ -199,7 +200,7 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100}} {
 	set flank2 [lindex $flanksizes 1]
 	if {$flank2 eq ""} {set flank2 $flank1}
 	foreach {
-		dchrom dstart dend strand mature1start mature1end loopstart loopend mature2start mature2end genename
+		dchrom dstart dend strand mature1start mature1end loopstart loopend mature2start mature2end genename transcriptname
 	} $dbline break
 	set temp [list_remove [lrange $dbline 4 9] {}]
 	if {$temp ne [lsort -integer $temp]} {error "error in $dbline: values not in correct order"}
@@ -254,6 +255,11 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100}} {
 	set adata(start) $dstart
 	set adata(end) $dend
 	set adata(genename) $genename
+	if {$transcriptname ne ""} {
+		set adata(transcriptname) $transcriptname
+	} else {
+		set adata(transcriptname) $genename
+	}
 	set adata(chrom) $dchrom
 	set adata(annotlist) $annotlist
 	set adata(flank1) $flank1
@@ -269,7 +275,7 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100}} {
 # Although this piece of code is shared with mirvas, mirvas does several things differently.
 # genomecomb does not have all the tools to do the structural analysis.
 # 
-proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcriptcol isomir} {flanksizes 100} {mirvas 0}} {
+proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcriptcol transcript} {flanksizes 100} {mirvas 0}} {
 # putsvars file genomefile dbfile name resultfile genecol transcriptcol flanksizes mirvas
 	global genomef
 	set file [file normalize $file]
@@ -423,6 +429,7 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 			}
 			set result {}
 			set impacts [list_subindex $hitgenes 0]
+			set hitgenes [list_remdup $hitgenes]
 			if {[llength $hitgenes] == 1} {
 				set result [lindex $hitgenes 0]
 			} elseif {[llength $hitgenes]} {
