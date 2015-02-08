@@ -1,32 +1,32 @@
 chromosome	begin	end	type	ref	alt	name	small_impact	small_mir
 chr1	567603	567604	snp	G	C	pre	upstream(a-101e);downstream(a+e101);downstream(a+e101)	mir1+;mir1-;mir1b-
 chr1	567604	567605	snp	A	C	flank-5p	flank5p(a-e100);flank3p(a+100e);flank3p(a+100e)	mir1+;mir1-;mir1b-
-chr1	567704	567705	snp	A	C	arm-5p-1	arm5p(l-e45);arm3p(l+45e);mature3p(a+45e)	mir1+;mir1-;mir1b-
-chr1	567748	567749	snp	G	C	arm-5p-end	arm5p(l-1e);arm3p(l+e1);mature3p(a+e1)	mir1+;mir1-;mir1b-
+chr1	567704	567705	snp	A	C	arm-5p-1	arm5p(l-e45);arm3p(l+45e);mature3p1_46(a+45e)	mir1+;mir1-;mir1b-
+chr1	567748	567749	snp	G	C	arm-5p-end	arm5p(l-1e);arm3p(l+e1);mature3p1_46(a+e1)	mir1+;mir1-;mir1b-
 chr1	567749	567750	snp	C	G	loop-1	loop(a+e1);loop(a+5e);loop(a+5e)	mir1+;mir1-;mir1b-
 chr1	567753	567754	snp	T	C	loop-end	loop(a+5e);loop(a+e1);loop(a+e1)	mir1+;mir1-;mir1b-
-chr1	567754	567755	snp	C	A	arm-3p-1	arm3p(m-e7);arm5p(m+7e);mature5p(a+29e)	mir1+;mir1-;mir1b-
-chr1	567760	567761	snp	T	C	arm-3p-end	arm3p(m-1e);arm5p(m+e1);mature5p(a+23)	mir1+;mir1-;mir1b-
-chr1	567761	567762	snp	G	C	mature-3p-1	mature3p(a+e1);mature5p(a+22e);mature5p(a+22)	mir1+;mir1-;mir1b-
-chr1	567764	567765	snp	C	A	seed-3p	mature3p(a+4)seed;mature5p(a+19);mature5p(a+19)	mir1+;mir1-;mir1b-
-chr1	567782	567783	snp	T	C	mature-3p-end	mature3p(a+22e);mature5p(a+e1);mature5p(a+e1)	mir1+;mir1-;mir1b-
+chr1	567754	567755	snp	C	A	arm-3p-1	arm3p(m-e7);arm5p(m+7e);mature5p51_80(a+29e)	mir1+;mir1-;mir1b-
+chr1	567760	567761	snp	T	C	arm-3p-end	arm3p(m-1e);arm5p(m+e1);mature5p51_80(a+23)	mir1+;mir1-;mir1b-
+chr1	567761	567762	snp	G	C	mature-3p-1	mature3p58_80(a+e1);mature5p58_80(a+22e);mature5p51_80(a+22)	mir1+;mir1-;mir1b-
+chr1	567764	567765	snp	C	A	seed-3p	mature3p58_80(a+4)seed;mature5p58_80(a+19);mature5p51_80(a+19)	mir1+;mir1-;mir1b-
+chr1	567782	567783	snp	T	C	mature-3p-end	mature3p58_80(a+22e);mature5p58_80(a+e1);mature5p51_80(a+e1)	mir1+;mir1-;mir1b-
 chr1	567783	567784	snp	C	T	arm-3p-post2	arm3p(m+e1);arm5p(m-1e);arm5p(m-1e)	mir1+;mir1-;mir1b-
 chr1	567792	567793	snp	T	C	arm-3p-end2	arm3p(m+10e);arm5p(m-e10);arm5p(m-e10)	mir1+;mir1-;mir1b-
 chr1	567793	567794	snp	A	C	flank-3p	flank3p(a+e1);flank5p(a-1e);flank5p(a-1e)	mir1+;mir1-;mir1b-
 chr1	567893	567894	snp	A	C	post	downstream(a+e101);upstream(a-101e);upstream(a-101e)	mir1+;mir1-;mir1b-
 chr1	1102483	1102578	del	95		del mir2	GENEDEL	mir2
 chr1	1102502	1102503	snp	N	A	arm-5p-end1	arm5p(m-1e)	mir2
-chr1	1102503	1102504	snp	C	A	mature-5p-1	mature5p(a+e1)	mir2
-chr1	1102503	1102525	del	22		del seed,arm mir-200b	mature5p(a+e1:22e)seed	mir2
-chr1	1102504	1102505	snp	A	C	seed-5p-1	mature5p(a+2)seed	mir2
-chr1	1102505	1102508	del	3		seed-5p-2:4	mature5p(a+3:5)seed	mir2
-chr1	1102520	1102537	del	17		del mature arm loop arm	mature5p(a+18:22e)&arm5p(m+e1:4e)&loop(a+e1:6e)&arm3p(m-e4:3)	mir2
-chr1	1102524	1102525	snp	A	C	mature-5p-end	mature5p(a+22e)	mir2
+chr1	1102503	1102504	snp	C	A	mature-5p-1	mature5p21_43(a+e1)	mir2
+chr1	1102503	1102525	del	22		del seed,arm mir-200b	mature5p21_43(a+e1:22e)seed	mir2
+chr1	1102504	1102505	snp	A	C	seed-5p-1	mature5p21_43(a+2)seed	mir2
+chr1	1102505	1102508	del	3		seed-5p-2:4	mature5p21_43(a+3:5)seed	mir2
+chr1	1102520	1102537	del	17		del mature arm loop arm	mature5p21_43(a+18:22e)&arm5p(m+e1:4e)&loop(a+e1:6e)&arm3p(m-e4:3)	mir2
+chr1	1102524	1102525	snp	A	C	mature-5p-end	mature5p21_43(a+22e)	mir2
 chr1	1102525	1102526	snp	T	C	arm-5p2-1	arm5p(m+e1)	mir2
 chr1	1102529	1102535	del	GTCAGG		del loop mir-200b	loop(a+e1:6e)	mir2
 chr1	1102529	1102536	del	GTCAGGT		del loop,arm mir-200b	loop(a+e1:6e)&arm3p(m-e4)	mir2
 chr1	1102538	1102539	snp	C	A	arm-3p-end1	arm3p(m-1e)	mir2
-chr1	1102539	1102540	snp	T	C	mature-3p-1	mature3p(a+e1)	mir2
-chr1	1102560	1102561	snp	A	C	mature-3p-end	mature3p(a+22e)	mir2
+chr1	1102539	1102540	snp	T	C	mature-3p-1	mature3p57_79(a+e1)	mir2
+chr1	1102560	1102561	snp	A	C	mature-3p-end	mature3p57_79(a+22e)	mir2
 chr1	1102561	1102562	snp	C	G	arm-3p-1-1	arm3p(m+e1)	mir2
-chr8	101395038	101395039	snp	G	C	mir3 mature-3p	mature3p(a+e1)	mir3
+chr8	101395038	101395039	snp	G	C	mir3 mature-3p	mature3p49_71(a+e1)	mir3

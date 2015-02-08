@@ -218,7 +218,8 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100}} {
 		if {$dstart < $mature1start} {
 			lappend annotlist [list arm${side} m -1 $dstart $mature1start]
 		}
-		lappend annotlist [list mature${side} a 0 $mature1start $mature1end]
+		set isomir [expr {$mature1start-$dstart+1}]_[expr {$mature1end-$dstart+1}]
+		lappend annotlist [list mature${side}${isomir} a 0 $mature1start $mature1end]
 		if {$mature1end < $loopstart} {
 			lappend annotlist [list arm${side} m +1 $mature1end $loopstart]
 		}
@@ -231,7 +232,8 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100}} {
 		if {$loopend < $mature2start} {
 			lappend annotlist [list arm${side} m -1 $loopend $mature2start]
 		}
-		lappend annotlist [list mature${side} a 0 $mature2start $mature2end]
+		set isomir [expr {$mature2start-$dstart+1}]_[expr {$mature2end-$dstart+1}]
+		lappend annotlist [list mature${side}${isomir} a 0 $mature2start $mature2end]
 		if {$mature2end < $dend} {
 			lappend annotlist [list arm${side} m +1 $mature2end $dend]
 		}
