@@ -105,6 +105,20 @@ test var_annot {basic multi} {
 	exec diff tmp/temp.sft data/expected-vars1-var_annot-multi.sft
 } {} 
 
+test var_annot {lz4, opt, links} {
+	test_cleantmp
+	file mkdir tmp
+	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
+	exec lz4c -c data/var_annot.sft > tmp/var_annot.sft.lz4
+	file_write tmp/var_annot.sft.opt "fields\t{name freq alt}\n"
+	cd tmp
+	exec ln -s var_annot.sft.lz4 var_annot.tsv.lz4
+	exec ln -s var_annot.sft.opt var_annot.tsv.opt
+	cd ..
+	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/var_annot.tsv.lz4 2> /dev/null
+	exec diff tmp/temp.sft data/expected-vars1-var_annot-multi.sft
+} {} 
+
 test var_annot {different types on same pos} {
 	exec cg annotate data/vars2.tsv tmp/temp.tsv data/var_annot3.tsv 2> /dev/null
 	exec diff tmp/temp.tsv data/expected-vars2-var_annot3.tsv
@@ -194,6 +208,13 @@ test var_annot {sort error 5 in database file} {
 	file copy -force data/vars_sorterror5.sft tmp/var_annot.sft
 	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+
+test var_annot {lz4} {
+	exec lz4c -c data/var_annot.sft > tmp/var_annot.sft.lz4
+	exec cg annotate data/vars1.sft tmp/temp.sft tmp/var_annot.sft.lz4 2> /dev/null
+	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
+	exec diff tmp/temp2.sft data/expected-vars1-var_annot.sft
+} {} 
 
 test gene_annot {variant file sort error 1} {
 	exec cg annotate -dbdir /complgen/refseq/hg18 data/vars_sorterror1.sft tmp/temp.sft data/gene_test.tsv
@@ -354,6 +375,33 @@ test mir_annot {basic mir annotation} {
 	test_cleantmp
 	exec cg annotate -dbdir /complgen/refseq/hg19 data/vars_mirna.tsv tmp/annot_test.tsv data/mir_small.tsv 2> /dev/null
 	exec diff tmp/annot_test.tsv data/expected-vars_mirna_annot.tsv
+} {} 
+
+test mir_annot {basic mir annotation without transcript col} {
+	test_cleantmp
+	cg select -rf transcript data/mir_small.tsv tmp/mir_small.tsv
+	cg select -q {$ROW > 15} data/vars_mirna.tsv tmp/vars_mirna.tsv
+	cg select -q {$ROW > 15} data/expected-vars_mirna_annot.tsv tmp/expected.tsv
+	exec cg annotate -dbdir /complgen/refseq/hg19 tmp/vars_mirna.tsv tmp/annot_test.tsv tmp/mir_small.tsv
+	exec diff tmp/annot_test.tsv tmp/expected.tsv
+} {} 
+
+test mir_annot {basic mir annotation same name transcipt} {
+	test_cleantmp
+	write_tab tmp/mir_small.tsv {
+		chromosome	begin	end	strand	name	transcript	mature1start	mature1end	loopstart	loopend	mature2start	mature2end
+		chr1	567704	567793	+	mir1+	mir1+	{}	{}	567749	567754	567761	567783
+		chr1	567704	567793	+	mir1+	mir1+	567704	567749	567749	567754	567761	567783
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	name	small_impact	small_mir
+		chr1	567603	567604	snp	G	C	pre	mir1+:upstream(a-101e)	mir1+
+		chr1	567704	567705	snp	A	C	arm-5p-1	mir1+:arm5p(l-e45);mir1+:mature5p1_46(a+e1)	mir1+
+		chr1	567760	567761	snp	T	C	arm-3p-end	mir1+:arm3p(m-1e)	mir1+
+	}
+	cg select -q {$name in {pre arm-5p-1 arm-3p-end}} data/vars_mirna.tsv tmp/vars_mirna.tsv
+	exec cg annotate -dbdir /complgen/refseq/hg19 tmp/vars_mirna.tsv tmp/annot_test.tsv tmp/mir_small.tsv 2> /dev/null
+	exec diff tmp/annot_test.tsv tmp/expected.tsv
 } {} 
 
 file delete -force tmp/temp.sft

@@ -17,8 +17,8 @@ set env(SCRATCHDIR) [file dir [tempdir]]
 
 proc test_cleantmp {} {
 	foreach file [glob -nocomplain tmp/*] {
-		file attributes $file -permissions ugo+xw
-		file delete -force $file
+		catch {file attributes $file -permissions ugo+xw}
+		catch {file delete -force $file}
 	}
 	cg indexclean
 }
