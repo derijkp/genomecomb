@@ -87,7 +87,7 @@ proc cg_compar2vcf {args} {
 						
 						#get (alternative) alleles
 						set alleles_list [list_sub $line $allele_pos]
-						set alt_alleles_list [list_remove $alleles_list $ref -]
+						set alt_alleles_list [list_remove $alleles_list $ref - ?]
 						set alt_alleles [list_remdup $alt_alleles_list]
 						set alleles [list $ref {*}$alt_alleles]
 						
