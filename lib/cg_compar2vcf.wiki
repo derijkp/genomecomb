@@ -5,3 +5,5 @@ cg compar2vcf ?options? compar_file vcf_file
 
 == Summary ==
 converts a multicompar file to a multisample vcf 
+currently only supports conversion of genotype & coverage fields
+compar file should only contain results from one variant caller
