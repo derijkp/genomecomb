@@ -73,101 +73,131 @@ proc cg_correctvariants {args} {
 	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]
 	puts $o [join $nheader \t]
 	set count 0
+	set nextline [split [gets $f] \t]
+	set nextline [list_sub $nextline $poss]
+	set prevvar [lrange $nextline 0 3]
+	set lines [list $nextline]
 	while {![eof $f]} {
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		set line [list_sub $line $poss]
-		foreach {chr start end type ref alt} $line break
+		# gather all lines on same location: in case of split the may need to be resorted
+		while {![eof $f]} {
+			set nextline [split [gets $f] \t]
+			if {![llength $nextline]} continue
+			set nextline [list_sub $nextline $poss]
+			set var [lrange $nextline 0 3]
+			if {$var ne $prevvar} break
+			lappend lines $nextline
+		}
+		if {![llength $lines]} continue
 		incr count
 		if {$count > 1000000} {
 			putslog $chr:$start-$end
 			set count 0
 		}
+		foreach {chr start end type ref alt} [lindex $lines 0] break
 		set size [expr {$end-$start}]
 		if {![isint $ref] || $size <= 10} {
 			set gref [string toupper [genome_get $fg $chr $start $end]]
 		} else {
 			set gref $size
 		}
-		if {$ref eq "" && $size ne ""} {
-			lset line 4 $gref
-		} elseif {$gref ne $ref} {
-			set alts [split $alt ,]
-			if {$split && [llength $alts] > 1} {
-				error "error: split option is given and file contains multiallelic variants"
-			}
-			if {$complement && ([seq_complement $gref] eq $ref)} {
-				lset line 4 $gref
-				if {!$split && $doalt} {
-					set altlist {}
-					foreach a [list_remdup [list_sub $line $aposs]] {
-						lappend altlist [seq_complement $a]
-					}
-					lset line 5 [join [cg_correctvariants_alts $type $altlist $gref] ,]
-				} else {
-					set nalts {}
-					foreach a $alts {lappend nalts [seq_complement $a]}
-					set alt [join $nalts ,]
-					lset line 5 $alt
+		if {$gref ne $ref && !($ref eq "" && $size ne "")} {
+			set resultlines {}
+			foreach line $lines {
+putsvars line gref ref
+				foreach {chr start end type ref alt} $line break
+				set alts [split $alt ,]
+				if {$split && [llength $alts] > 1} {
+					error "error: the split option is given and file contains multiallelic variants"
 				}
-				foreach {a1pos a2pos seqpos zygpos} $sposs {
-					set a1 [seq_complement [lindex $line $a1pos]]
-					set a2 [seq_complement [lindex $line $a2pos]]
-					set altsa($a1) 1 ; set altsa($a2) 1
-					set seq [lindex $line $seqpos]
-					if {$seq eq "u"} {
-						set zyg u
+				if {$complement && ([seq_complement $gref] eq $ref)} {
+					lset line 4 $gref
+					if {!$split && $doalt} {
+						set altlist {}
+						foreach a [list_remdup [list_sub $line $aposs]] {
+							lappend altlist [seq_complement $a]
+						}
+						lset line 5 [join [cg_correctvariants_alts $type $altlist $gref] ,]
 					} else {
-						set zyg [zyg $a1 $a2 $ref $alt]
-						if {$zyg in "r o"} {set seq r} else {set seq v}
-					}
-					if {$zygpos != -1} {
-						lset line $zygpos $zyg
-					}
-					if {$seqpos != -1} {
-						lset line $seqpos $seq
-					}
-				}
-			} elseif {!$force} {
-				error "different ref ($ref) for line (ref should be $gref):\n$line"
-			} else {
-				if {$force == 2} {
-					puts stderr "different ref ($ref) for line (ref should be $gref):\n$line"
-				}
-				lset line 4 $gref
-				if {!$split && $doalt} {
-					set altlist [list_remdup [list_sub $line $aposs]]
-					lset line 5 [join [cg_correctvariants_alts $type $altlist $gref] ,]
-				} else {
-					if {[inlist $alts $gref]} {
-						set nalts [list_remove $alts $gref]
-						lappend nalts $ref
+						set nalts {}
+						foreach a $alts {lappend nalts [seq_complement $a]}
 						set alt [join $nalts ,]
 						lset line 5 $alt
 					}
-				}
-				foreach {a1pos a2pos seqpos zygpos} $sposs {
-					set a1 [lindex $line $a1pos]
-					set a2 [lindex $line $a2pos]
-					set seq [lindex $line $seqpos]
-					if {$seq eq "u"} {
-						set zyg u
+					foreach {a1pos a2pos seqpos zygpos} $sposs {
+						set a1 [seq_complement [lindex $line $a1pos]]
+						set a2 [seq_complement [lindex $line $a2pos]]
+						set altsa($a1) 1 ; set altsa($a2) 1
+						set seq [lindex $line $seqpos]
+						if {$seq eq "u"} {
+							set zyg u
+						} else {
+							set zyg [zyg $a1 $a2 $ref $alt]
+							if {$zyg in "r o"} {set seq r} else {set seq v}
+						}
+						if {$zygpos != -1} {
+							lset line $zygpos $zyg
+						}
+						if {$seqpos != -1} {
+							lset line $seqpos $seq
+						}
+					}
+				} elseif {!$force} {
+					error "different ref ($ref) for line (ref should be $gref):\n$line"
+				} else {
+					if {$force == 2} {
+						puts stderr "different ref ($ref) for line (ref should be $gref):\n$line"
+					}
+					lset line 4 $gref
+					if {!$split && $doalt} {
+						set altlist [list_remdup [list_sub $line $aposs]]
+						lset line 5 [join [cg_correctvariants_alts $type $altlist $gref] ,]
 					} else {
-						set zyg [zyg $a1 $a2 $gref $alt]
-						if {$zyg in "r o"} {set seq r} else {set seq v}
+putsvars alts gref
+						if {[inlist $alts $gref]} {
+							set nalts [list_remove $alts $gref]
+							lappend nalts $ref
+							set alt [join $nalts ,]
+							lset line 5 $alt
+						}
 					}
-					if {$zygpos != -1} {
-						lset line $zygpos $zyg
-					}
-					if {$seqpos != -1} {
-						lset line $seqpos $seq
+					foreach {a1pos a2pos seqpos zygpos} $sposs {
+						set a1 [lindex $line $a1pos]
+						set a2 [lindex $line $a2pos]
+						set seq [lindex $line $seqpos]
+						if {$seq eq "u"} {
+							set zyg u
+						} else {
+							set zyg [zyg $a1 $a2 $gref $alt]
+							if {$zyg in "r o"} {set seq r} else {set seq v}
+						}
+						if {$zygpos != -1} {
+							lset line $zygpos $zyg
+						}
+						if {$seqpos != -1} {
+							lset line $seqpos $seq
+						}
 					}
 				}
+putsvars line
+				lappend resultlines $line
 			}
-		} elseif {!$split && $doalt} {
-			lset line 5 [join [cg_correctvariants_alts $type [list_sub $line $aposs] $gref] ,]
+			if {[llength $resultlines] > 1} {
+				set resultlines [lsort -index 5 $resultlines]
+			}
+			foreach line $resultlines {
+				puts $o [join $line \t]
+			}
+		} else {
+			foreach line $lines {
+				lset line 4 $gref
+				if {!$split && $doalt} {
+					lset line 5 [join [cg_correctvariants_alts $type [list_sub $line $aposs] $gref] ,]
+				}
+				puts $o [join $line \t]
+			}
 		}
-		puts $o [join $line \t]
+		set prevvar [lrange $nextline 0 3]
+		set lines [list $nextline]
 	}
 	close $o
 	close $f

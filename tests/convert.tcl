@@ -479,16 +479,20 @@ test gene2reg {gene2reg basic} {
 test correctvariants {basic} {
 	file delete tmp/temp.tsv
 	exec cg correctvariants -f 1 -s 1 data/var_lift.tsv tmp/temp.tsv /complgen/refseq/hg19
-	cg select -f {chromosome begin end type ref alt } tmp/temp.tsv
-} {chromosome	begin	end	type	ref	alt
-1	0	1	snp	N	A
-1	700	701	snp	N	A
-1	702	702	ins		A
-1	1609710	1609711	snp	C	A
-1	1609720	1609720	ins		A
-1	2482141	2482142	snp	A	G
-1	2482141	2482142	snp	A	C
-15	26517559	26517560	snp	A	T}
+	cg select -f {chromosome begin end type ref alt sequenced-* zyg-*} tmp/temp.tsv tmp/part.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	sequenced-sample2	zyg-sample1	zyg-sample2
+		1	0	1	snp	N	A	v	r	c	o
+		1	700	701	snp	N	A	r	v	o	m
+		1	702	702	ins	{}	A	v	r	t	r
+		1	1609710	1609711	snp	C	A	v	v	m	c
+		1	1609720	1609720	ins	{}	A	v	v	m	t
+		1	2482141	2482142	snp	A	C	r	v	o	t
+		1	2482141	2482142	snp	A	G	v	r	m	o
+		15	26517559	26517560	snp	A	T	v	v	t	t
+	}
+	exec diff tmp/part.tsv tmp/expected.tsv
+} {}
 
 test liftover {basic} {
 	file delete tmp/temp.tsv
@@ -497,7 +501,7 @@ test liftover {basic} {
 	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
 } {}
 
-test liftover {basic with correctvariants} {
+test liftover {basic liftover with correctvariants} {
 	file delete tmp/temp.tsv tmp/temp2.tsv
 	exec cg liftover data/var_lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain tmp/temp.tsv
 	exec cg correctvariants -f 1 -s 1 tmp/temp.tsv tmp/temp2.tsv /complgen/refseq/hg19
