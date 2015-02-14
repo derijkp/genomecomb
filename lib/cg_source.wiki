@@ -9,6 +9,7 @@ runs a script (Tcl) with all commands/extensions from genomecomb available.
 == Description ==
 If you start a genomecomb script with the following lines
 {{{
+#!/bin/sh
 # the next line restarts using tclsh \
 exec cg source "$0" "$@"
 }}}
