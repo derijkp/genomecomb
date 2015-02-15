@@ -61,9 +61,17 @@ proc cg_correctvariants {args} {
 	set samples [samples $header]
 	set aposs {}
 	set sposs {}
-	foreach sample $samples {
-		lappend sposs {*}[list_cor $header [list alleleSeq1-$sample alleleSeq2-$sample sequenced-$sample zyg-$sample]]
-		lappend aposs {*}[lrange $sposs end-3 end-2]
+	if {[llength $samples]} {
+		foreach sample $samples {
+			lappend sposs {*}[list_cor $header [list alleleSeq1-$sample alleleSeq2-$sample sequenced-$sample zyg-$sample]]
+			lappend aposs {*}[lrange $sposs end-3 end-2]
+		}
+	} else {
+		set tempposs [list_cor $header [list alleleSeq1 alleleSeq2 sequenced zyg]]
+		if {[llength [list_remove $tempposs -1]]} {
+			lappend sposs {*}$tempposs
+			lappend aposs {*}[lrange $sposs end-3 end-2]
+		}
 	}
 	if {[llength $aposs]} {
 		set doalt 1
@@ -103,7 +111,6 @@ proc cg_correctvariants {args} {
 		if {$gref ne $ref && !($ref eq "" && $size ne "")} {
 			set resultlines {}
 			foreach line $lines {
-putsvars line gref ref
 				foreach {chr start end type ref alt} $line break
 				set alts [split $alt ,]
 				if {$split && [llength $alts] > 1} {
@@ -124,6 +131,7 @@ putsvars line gref ref
 						lset line 5 $alt
 					}
 					foreach {a1pos a2pos seqpos zygpos} $sposs {
+						if {$a1pos == -1 || $a2pos == -1} continue
 						set a1 [seq_complement [lindex $line $a1pos]]
 						set a2 [seq_complement [lindex $line $a2pos]]
 						set altsa($a1) 1 ; set altsa($a2) 1
@@ -152,7 +160,6 @@ putsvars line gref ref
 						set altlist [list_remdup [list_sub $line $aposs]]
 						lset line 5 [join [cg_correctvariants_alts $type $altlist $gref] ,]
 					} else {
-putsvars alts gref
 						if {[inlist $alts $gref]} {
 							set nalts [list_remove $alts $gref]
 							lappend nalts $ref
@@ -161,6 +168,7 @@ putsvars alts gref
 						}
 					}
 					foreach {a1pos a2pos seqpos zygpos} $sposs {
+						if {$a1pos == -1 || $a2pos == -1} continue
 						set a1 [lindex $line $a1pos]
 						set a2 [lindex $line $a2pos]
 						set seq [lindex $line $seqpos]
@@ -178,7 +186,6 @@ putsvars alts gref
 						}
 					}
 				}
-putsvars line
 				lappend resultlines $line
 			}
 			if {[llength $resultlines] > 1} {

@@ -1,19 +1,23 @@
 proc cg_liftover {args} {
-#	set pos 0
-#	set sumfields {}
-#	foreach {key value} $args {
-#		switch -- $key {
-#			-sumfields {
-#				set sumfields $value
-#			}
-#			-- break
-#			default {
-#				break
-#			}
-#		}
-#		incr pos 2
-#	}
-#	set args [lrange $args $pos end]
+	set pos 0
+	set dbdir {}
+	set split 1
+	foreach {key value} $args {
+		switch -- $key {
+			-dbdir {
+				set dbdir $value
+			}
+			-split - -s {
+				set split $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
 	if {([llength $args] < 3)} {
 		errorformat liftover
 		exit 1
@@ -30,7 +34,6 @@ proc cg_liftover {args} {
 	if {![regexp ^chr [lindex $line [lindex $poss 0]]]} {set addchr 1} else {set addchr 0}
 	gzclose $f
 	
-	# if {$poss ne "0 1 2 3 4 5"} {error "Rearranged header not supported yet, start header should be: chromosome begin end type ref alt"}
 	#
 	# make input file ($resultfile.temp) for liftover
 	#
@@ -98,7 +101,13 @@ proc cg_liftover {args} {
 	#
 	# rename result, cleanup
 	#
-	file rename -force $resultfile.temp4 $resultfile
+	if {$dbdir ne ""} {
+		cg correctvariants -f 1 -split $split $resultfile.temp4 $resultfile.temp5 $dbdir
+		file rename -force $resultfile.temp5 $resultfile
+		file delete $resultfile.temp4
+	} else {
+		file rename -force $resultfile.temp4 $resultfile
+	}
 	file delete $resultfile.temph $resultfile.temp $resultfile.temp2 $resultfile.temp3
 	#
 	# fo unmapped: add original data back
