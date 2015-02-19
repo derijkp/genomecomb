@@ -1,0 +1,23 @@
+= liftsample =
+
+== Format ==
+cg liftsample sampledir resultdir liftoverfile dbdir
+
+== Summary ==
+Use liftover to convert the files from a sample (variant, region, ...) from one build to another
+
+== Description ==
+Converts a sample from one build to another (using liftover from ucsc).
+A liftover conversion is likely to cause loss of information: not all variants/regions
+can be properly converted. Variants that were dropped in the conversion, will be
+available in resultfile.unmapped.
+
+
+== Arguments ==
+; **sampledir**: file in sft format (with variant data)
+; **resultdir**: resulting converted file
+; **liftoverfile**: liftover file guiding the conversion,
+e.g. hg18/hg18ToHg19.over.chain to convert from hg18 to hg19, and hg19/hg19ToHg18.over.chain to convert from hg19 to hg18
+
+== Category ==
+Conversion
