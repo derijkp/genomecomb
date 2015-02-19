@@ -15,7 +15,6 @@ but can take a significant amount of disc space
 
 == Arguments ==
 ; **tsvfile**: file to index
-; **-v**: Verbose: output progress information on stderr
 ; **-refdir filename**: filename of a directory that contains the reference databases (genome sequence, annotion, etc.) for the build the file is based on
 ; **-colinfo**: gather information on content of all columns, and save this into the index directory
 ; **-db 'databasename tablename'**

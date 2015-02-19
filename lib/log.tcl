@@ -12,19 +12,16 @@ proc logfile {logfile args} {
 	close $f
 }
 
+set ::verbose 0
+
 proc putslog {args} {
-	foreach message $args {
-		puts stderr "[timestamp] $message"
-	}
 }
 
 proc putsprogress {args} {
-	foreach message $args {
-		puts stderr "[timestamp] $message"
-	}
 }
 
 proc logverbose num {
+	set ::verbose $num
 	switch $num {
 		0 {
 			proc putslog {args} {

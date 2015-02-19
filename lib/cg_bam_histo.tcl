@@ -1,14 +1,10 @@
 proc cg_bam_histo {args} {
 	set pos 0
 	set namecol name
-	set verbose 0
 	foreach {key value} $args {
 		switch -- $key {
 			-n - --namecol {
 				set namecol $value
-			}
-			-v - --verbose {
-				set verbose 1
 			}
 			-- break
 			default {
@@ -89,9 +85,7 @@ proc cg_bam_histo {args} {
 			if {[eof $f]} break
 		}
 		incr end -1
-		if {$verbose} {
-			putslog $chr:$begin-$end
-		}
+		putslog $chr:$begin-$end
 		set data [split [string trim [exec samtools depth -r $chr:[expr {$begin+1}]-[expr {$end+1}] $bamfile]] \n]
 		set data [list_subindex $data 2]
 		set explen [expr {$end-$begin+1}]

@@ -286,7 +286,7 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 	return $calcresults
 }
 
-proc tsv_select_group {header pquery qposs qfields group groupcols neededfields {verbose 0}} {
+proc tsv_select_group {header pquery qposs qfields group groupcols neededfields} {
 # putsvars header pquery qposs qfields group groupcols neededfields
 	global typetodoa
 	# outcols not used in group
@@ -539,7 +539,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		@pquery@ $pquery @prequery@ $prequery\
 		@precalc@ $precalc @addcols@ $addcols \
 		@neededcols@ $neededcols @calcresults@ $calcresults \
-		@grouptypes@ [list $grouptypes] @grouph@ [list_unmerge $group] @verbose@ $verbose]
+		@grouptypes@ [list $grouptypes] @grouph@ [list_unmerge $group] @verbose@ [get ::verbose 0]]
 	]]
 	return $tclcode
 }

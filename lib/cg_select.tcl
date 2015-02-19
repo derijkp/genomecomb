@@ -1022,8 +1022,8 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 	return $code
 }
 
-proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {verbose 0} {samplingskip 0}} {
-# putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index verbose samplingskip
+proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {samplingskip 0}} {
+# putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index samplingskip
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	if {$hc ni {0 1 2}} {
@@ -1081,7 +1081,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 # putslog stderr ----------\n$query\n----------
 	set tclcode {}
 	if {$group ne ""} {
-		append tclcode \n [tsv_select_group $header $pquery $qposs $qfields $group $groupcols $neededfields $verbose]
+		append tclcode \n [tsv_select_group $header $pquery $qposs $qfields $group $groupcols $neededfields]
 		#file_write /tmp/temp.tcl $tclcode\n
 		#putsvars tclcode
 	} elseif {$query ne "" || [llength $qfields]} {
@@ -1151,7 +1151,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 					$prequery
 					expr {$pquery}
 				}
-				tsv_selectc tsv_selectc_query [list $neededcols] [list $outcols] $verbose $samplingskip
+				tsv_selectc tsv_selectc_query [list $neededcols] [list $outcols] [get ::verbose 0] $samplingskip
 				exit
 			}]
 		} else {
@@ -1249,7 +1249,7 @@ proc cg_select {args} {
 	}
 	unset -nocomplain ::tsv_select_sampleinfo
 	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0
-	set inverse 0; set group {}; set groupcols {} ; set verbose 0; set samplingskip 0; set db {}
+	set inverse 0; set group {}; set groupcols {} ; set samplingskip 0; set db {}
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -1317,9 +1317,6 @@ proc cg_select {args} {
 				puts stdout [join $header \n]
 				exit 0
 			}
-			-v {
-				set verbose $value
-			}
 			-samplingskip {
 				set samplingskip $value
 			}
@@ -1370,7 +1367,7 @@ proc cg_select {args} {
 		} result]
 	} else {
 		set error [catch {
-			tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $verbose $samplingskip
+			tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $samplingskip
 		} result]
 	}
 	if {$f ne "stdin"} {catch {close $f}}

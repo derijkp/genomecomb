@@ -37,7 +37,7 @@ if {[auto_load cg_$action]} {
 		exit 0
 	}
 	while 1 {
-		if {[lindex $args 0] eq "--verbose"} {
+		if {[lindex $args 0] in "--verbose -v"} {
 			logverbose [lindex $args 1]
 			set args [lrange $args 2 end]
 		} else {

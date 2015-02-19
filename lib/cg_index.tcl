@@ -103,7 +103,6 @@ proc cg_index {args} {
 	set colinfo 0
 	set dbstring {}
 	set refdir {}
-	set verbose 0
 	while {$pos < $len} {
 		set opt [lindex $args $pos]
 		switch $opt {
@@ -123,10 +122,6 @@ proc cg_index {args} {
 			-refdir {
 				incr pos
 				set refdir [lindex $args $pos]
-				incr pos
-			}
-			-v {
-				set verbose 1
 				incr pos
 			}
 			-- break
@@ -159,9 +154,7 @@ proc cg_index {args} {
 	set indexfile [indexdir_file $file lines.bcol ok]
 	set infofile [indexdir_file $file info.tsv infook]
 	if {!$ok} {
-		if {$verbose} {
-			putslog "Creating lineindex"
-		}
+		putslog "Creating lineindex"
 		bcol_indexlines $file $indexfile $colinfo
 		catch {file delete $indexdir/info.tsv}
 		set f [gzopen $file]
@@ -233,9 +226,7 @@ proc cg_index {args} {
 			set dbtime [cg_monetdb_sql $db [subst {select "value" from "_genomecomb_info" where "table" = '$table' and "key" = 'time'}]]
 		}]
 		if {$error || ![isint $dbtime] || $dbtime < $time} {
-			if {$verbose} {
-				putslog "Loading into database $db ($table)"
-			}
+			putslog "Loading into database $db ($table)"
 			cg_tomonetdb $db $table $file
 			if {$user ne ""} {
 				set o [open $indexdir/.monetdb w]

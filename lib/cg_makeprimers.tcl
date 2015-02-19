@@ -215,20 +215,16 @@ proc makeprimers_annotate {line shift} {
 # result will be a list with
 #   * the total number of hits
 #   * a dictionary with chromosomes as keys, and a list of the positions found on that chromosome in the value
-proc cindex_searchgenome {db pseq {add 0} {nummax {}} {verbose 0}} {
+proc cindex_searchgenome {db pseq {add 0} {nummax {}}} {
 	global cindex_genome maxnum
 	if {$nummax eq {}} {set nummax $maxnum}
 	if {![info exists cindex_genome]} {
-		if {$verbose} {
-			putslog "loading genome database"
-		}
+		putslog "loading genome database"
 		set cindex_genome {}
 		foreach file [ssort -natural [glob $db/*]] {
 			set file [file root $file]
 			set chr [lindex [split $file -] end]
-			if {$verbose} {
-				putslog "loading chr $chr"
-			}
+			putslog "loading chr $chr"
 			dict set cindex_genome $chr [cindex load $file]
 		}
 	}
@@ -246,7 +242,7 @@ proc cindex_searchgenome {db pseq {add 0} {nummax {}} {verbose 0}} {
 	return [list $numresults $results]
 }
 
-proc makeprimers_cindex {name left right {db /complgen/refseq/hg18/genome_hg18.ssa} {verbose 0}} {
+proc makeprimers_cindex {name left right {db /complgen/refseq/hg18/genome_hg18.ssa}} {
 	global rscore cachedir a maxnum
 	unset -nocomplain a
 	set list [list_concat $left $right]
@@ -273,14 +269,14 @@ proc makeprimers_cindex {name left right {db /complgen/refseq/hg18/genome_hg18.s
 			set endseq $pseq
 		}
 		if {![catch {
-			foreach {numhits hits} [cindex_searchgenome $db $endseq $prelen {} $verbose] break
+			foreach {numhits hits} [cindex_searchgenome $db $endseq $prelen {}] break
 		}]} {
 			set a(${pseq}+) [list $numhits $hits]
 		} else {
 			set a(${pseq}+) [list $maxnum {}]
 		}
 		if {![catch {
-			foreach {numhits hits} [cindex_searchgenome $db [seq_complement $endseq] 0 {} $verbose] break
+			foreach {numhits hits} [cindex_searchgenome $db [seq_complement $endseq] 0 {}] break
 		}]} {
 			set a(${pseq}-) [list $numhits $hits]
 		} else {
