@@ -1,7 +1,7 @@
 = liftregion =
 
 == Format ==
-cg liftregion regionfile liftoverfile resultfile
+cg liftregion regionfile resultfile liftoverfile
 
 == Summary ==
 Use liftover to convert a region file from one build to another
@@ -13,12 +13,11 @@ A liftover conversion is likely to cause loss of information: not all variants/r
 can be properly converted. Variants that were dropped in the conversion, will be
 available in resultfile.unmapped.
 
-
 == Arguments ==
 ; **regionfile**: file in tsv format (with region data)
+; **resultfile**: resulting converted file
 ; **liftoverfile**: liftover file guiding the conversion,
 e.g. hg18/hg18ToHg19.over.chain to convert from hg18 to hg19, and hg19/hg19ToHg18.over.chain to convert from hg19 to hg18
-; **resultfile**: resulting converted file
 
 == Category ==
 Conversion

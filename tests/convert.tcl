@@ -534,7 +534,7 @@ test correctvariants {basic multicompar} {
 
 test liftover {basic} {
 	file delete tmp/temp.tsv
-	exec cg liftover data/var_lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain tmp/temp.tsv
+	exec cg liftover data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
 	cg select -rf {test} tmp/temp.tsv tmp/temp2.tsv
 	cg select -rf {test} data/expected-var_lift-hg18tohg19.tsv tmp/expected.tsv
@@ -549,7 +549,7 @@ test liftover {basic} {
 
 test liftover {basic liftover with correctvariants} {
 	file delete tmp/temp.tsv tmp/temp2.tsv
-	exec cg liftover data/var_lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain tmp/temp.tsv
+	exec cg liftover data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	exec cg correctvariants -f 1 -s 1 tmp/temp.tsv tmp/temp2.tsv /complgen/refseq/hg19
 	exec diff tmp/temp2.tsv data/expected-var_lift-hg18tohg19.tsv
 	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
@@ -557,14 +557,14 @@ test liftover {basic liftover with correctvariants} {
 
 test liftover {basic liftover with correctvariants in liftover} {
 	file delete tmp/temp.tsv tmp/temp2.tsv
-	exec cg liftover -dbdir /complgen/refseq/hg19 -s 1 data/var_lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain tmp/temp.tsv
+	exec cg liftover -dbdir /complgen/refseq/hg19 -s 1 data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	exec diff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
 	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
 } {}
 
 test liftregion {basic} {
 	file delete tmp/temp.tsv
-	exec cg liftregion data/reg_lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain tmp/temp.tsv
+	exec cg liftregion data/reg_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	exec diff tmp/temp.tsv data/expected-reg_lift-hg18tohg19.tsv
 } {}
 

@@ -104,7 +104,12 @@ proc cg_correctvariants {args} {
 		foreach {chr start end type ref alt} [lindex $lines 0] break
 		set size [expr {$end-$start}]
 		if {![isint $ref] || $size <= 10} {
-			set gref [string toupper [genome_get $fg $chr $start $end]]
+			if {![catch {genome_get $fg $chr $start $end} gref]} {
+				set gref [string toupper $gref]
+			} else {
+				puts stderr "WARNING: Could not get reference sequence for $chr:$start-$end: not checked"
+				set gref $ref
+			}
 		} else {
 			set gref $size
 		}
@@ -114,7 +119,7 @@ proc cg_correctvariants {args} {
 				foreach {chr start end type ref alt} $line break
 				set alts [split $alt ,]
 				if {$split && [llength $alts] > 1} {
-					error "error: the split option is given and file contains multiallelic variants"
+					error "error: the split option is used and file contains multiallelic variants"
 				}
 				if {$complement && ([seq_complement $gref] eq $ref)} {
 					lset line 4 $gref

@@ -1,3 +1,93 @@
+proc cg_liftsample {args} {
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-split - -s {
+				set split $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
+	if {([llength $args] < 3)} {
+		errorformat liftover
+		exit 1
+	}
+	foreach {srcdir destdir liftoverfile dbdir} $args break
+	if {[file exists $destdir] && ![file isdir $destdir]} {
+		error "$destdir already exists and is not a directory"
+	}
+	if {![file isdir $srcdir]} {
+		error "$srcdir is not a (sample) directory"
+	}
+	unset -nocomplain infoa
+	if {[file exists $srcdir/sampleinfo.tsv]} {
+		array set infoa [infofile_read $srcdir/sampleinfo.tsv]
+	}
+	if {[file exists $srcdir/info.txt]} {
+		set c [split [file_read $srcdir/info.txt] \n]
+		foreach line $c {
+			foreach {key value} [split [string range $line 1 end] \t] break
+			set infoa($key) $value
+		}
+	}
+	if {[info exists infoa(split)]} {
+		if {$infoa(split) ne $split} {
+			error "split option $split given, but sample is $infoa(split) according to sampleinfo.tsv"
+		}
+	} elseif {![info exists split]} {
+		set split 1
+	}
+	set infoa(dbdir) $dbdir
+	set infoa(split) $split
+	lappend infoa(liftover) $liftoverfile
+	file mkdir $destdir
+	infofile_write $destdir/sampleinfo.tsv [array get infoa]
+	foreach file [gzfiles $srcdir/var-*.tsv $srcdir/fannotvar-*.tsv] {
+		set destfile $destdir/[file tail $file]
+		if {[file exists $destfile]} continue
+		if {![catch {file link $file} link]} {
+			puts stderr "Copying link $file"
+			file copy -force $file $destfile
+		} else {
+			puts stderr "converting $file"
+			cg liftover -split $split -dbdir $dbdir $file $destfile.temp $liftoverfile 2>@ stderr
+			file rename $destfile.temp $destfile
+			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
+		}
+	}
+	foreach file [gzfiles $srcdir/sreg-*.tsv $srcdir/reg_*.tsv] {
+		set destfile $destdir/[file tail $file]
+		if {[file exists $destfile]} continue
+		if {![catch {file link $file} link]} {
+			puts stderr "Copying link $file"
+			file copy -force $file $destfile
+		} else {
+			puts stderr "converting region $file"
+			cg liftregion $file $destfile.temp $liftoverfile
+			file rename $destfile.temp $destfile
+			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
+		}
+	}
+	foreach file [gzfiles $srcdir/cgcnv-*.tsv $srcdir/cgsv-*.tsv] {
+		set destfile $destdir/[file tail $file]
+		if {[file exists $destfile]} continue
+		if {![catch {file link $file} link]} {
+			puts stderr "Copying link $file"
+			file copy -force $file $destfile
+		} else {
+			puts stderr "converting $file"
+			cg liftover $file $destfile.temp $liftoverfile 2>@ stderr
+			file rename $destfile.temp $destfile
+			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
+		}
+	}
+}
+
 proc cg_liftover {args} {
 	set pos 0
 	set dbdir {}
@@ -22,9 +112,12 @@ proc cg_liftover {args} {
 		errorformat liftover
 		exit 1
 	}
-	foreach {varfile liftoverfile resultfile} $args break
+	foreach {varfile resultfile liftoverfile} $args break
 	if {[file exists $resultfile]} {
-		error "file $resultfile already exists"
+		error "file $resultfile already exists, format is (now): cg liftover varfile resultfile liftoverfile"
+	}
+	if {[file isdir $varfile]} {
+		cg_liftoversample {*}$args
 	}
 	set unmappedfile $resultfile.unmapped
 	set f [gzopen $varfile]
@@ -102,7 +195,8 @@ proc cg_liftover {args} {
 	# rename result, cleanup
 	#
 	if {$dbdir ne ""} {
-		cg correctvariants -f 1 -split $split $resultfile.temp4 $resultfile.temp5 $dbdir
+		file delete $resultfile.temp5
+		cg correctvariants -f 1 -split $split $resultfile.temp4 $resultfile.temp5 $dbdir 2>@ stderr
 		file rename -force $resultfile.temp5 $resultfile
 		file delete $resultfile.temp4
 	} else {

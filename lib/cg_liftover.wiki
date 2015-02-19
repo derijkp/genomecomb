@@ -1,7 +1,7 @@
 = liftover =
 
 == Format ==
-cg liftover variantfile liftoverfile resultfile
+cg liftover variantfile resultfile liftoverfile
 
 == Summary ==
 Use liftover to convert a variant file from one build to another
@@ -15,9 +15,9 @@ available in resultfile.unmapped.
 
 == Arguments ==
 ; **variantfile**: file in sft format (with variant data)
+; **resultfile**: resulting converted file
 ; **liftoverfile**: liftover file guiding the conversion,
 e.g. hg18/hg18ToHg19.over.chain to convert from hg18 to hg19, and hg19/hg19ToHg18.over.chain to convert from hg19 to hg18
-; **resultfile**: resulting converted file
 
 == Category ==
 Conversion

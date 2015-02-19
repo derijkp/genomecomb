@@ -18,7 +18,7 @@ proc cg_liftregion {args} {
 		errorformat liftregion
 		exit 1
 	}
-	foreach {file liftoverfile resultfile} $args break
+	foreach {file resultfile liftoverfile} $args break
 	if {[file exists $resultfile]} {
 		error "file $resultfile already exists"
 	}

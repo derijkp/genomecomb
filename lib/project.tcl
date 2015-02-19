@@ -54,4 +54,5 @@ proc projectinfo {dir args} {
 		dict set infod $varVar $var
 	}
 	infofile_write $projectinfofile $infod
+	return $infod
 }

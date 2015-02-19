@@ -117,7 +117,7 @@ job 1000glow -targets {${dest}/hg19/var_hg19_1000glow.tsv} -vars {dest} -code {
 }
 
 job 1000glow_liftover -deps {${dest}/hg19/var_hg19_1000glow.tsv} -targets {var_${build}_1000glow.tsv} -vars {dest build} -code {
-	cg liftover ${dest}/hg19/var_hg19_1000glow.tsv ${dest}/liftover/hg19ToHg18.over.chain var_${build}_1000glow.tsv
+	cg liftover ${dest}/hg19/var_hg19_1000glow.tsv var_${build}_1000glow.tsv ${dest}/liftover/hg19ToHg18.over.chain
 }
 
 # dbsnp
@@ -139,12 +139,12 @@ job dbsnp138Common -targets {${dest}/hg19/var_hg19_snp138Common.tsv} -vars {dest
 
 # liftover
 job dbsnp138lift -deps {${dest}/hg19/var_hg19_snp138.tsv} -targets {var_${build}_snp138lift.tsv} -vars {dest build} -code {
-	cg liftover ${dest}/hg19/var_hg19_snp138.tsv ${dest}/liftover/hg19ToHg18.over.chain ${dest}/${build}/var_${build}_snp138lift.tsv
+	cg liftover ${dest}/hg19/var_hg19_snp138.tsv ${dest}/${build}/var_${build}_snp138lift.tsv ${dest}/liftover/hg19ToHg18.over.chain
 	file delete ${dest}/${build}/var_${build}_snp138lift.tsv.unmapped
 }
 
 job dbsnp138Commonlift -deps {${dest}/hg19/var_hg19_snp138Common.tsv} -targets {var_${build}_snp138Commonlift.tsv} -vars {dest build} -code {
-	cg liftover ${dest}/hg19/var_hg19_snp138Common.tsv ${dest}/liftover/hg19ToHg18.over.chain ${dest}/${build}/var_${build}_snp138Commonlift.tsv
+	cg liftover ${dest}/hg19/var_hg19_snp138Common.tsv ${dest}/${build}/var_${build}_snp138Commonlift.tsv ${dest}/liftover/hg19ToHg18.over.chain
 	file delete ${dest}/${build}/var_${build}_snp138Commonlift.tsv.unmapped
 }
 
@@ -199,7 +199,7 @@ job reg_hg19_mirbase -targets {$dest/hg19/reg_hg19_mirbase.tsv $dest/hg19/reg_hg
 job reg_hg18_mirbase_liftover -deps {${dest}/hg19/reg_hg19_mirbase.tsv ${dest}/hg19/reg_hg19_mirbase.info} \
 -targets {reg_${build}_mirbase.tsv reg_${build}_mirbase.tsv.opt reg_${build}_mirbase.info} -vars {dest build db} -code {
 	file_write reg_${build}_mirbase.tsv.opt "fields\t{ID}\n"
-	cg liftover ${dest}/hg19/reg_hg19_mirbase.tsv ${dest}/liftover/hg19ToHg18.over.chain ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2
+	cg liftover ${dest}/hg19/reg_hg19_mirbase.tsv ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2 ${dest}/liftover/hg19ToHg18.over.chain
 	file rename -force ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2 reg_${build}_mirbase.tsv
 	file copy ${dest}/hg19/reg_hg19_mirbase.info reg_${build}_mirbase.info
 }
@@ -362,7 +362,7 @@ job var_hg19_dbnsfp -deps {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -targets {extra
 # move dbNSFP hg19 files to target hg18
 job dbNSFP_hg18_liftover -deps {$dest/hg19/extra/var_hg19_dbnsfp.tsv} -targets {extra/var_${build}_dbnsfp.tsv extra/var_${build}_dbnsfp.tsv.opt extra/var_${build}_dbnsfp.info} -vars {dest build db} -code {
 	file delete ${dest}/tmp/${build}/var_${build}_dbnsfp.tsv.temp
-	cg liftover $dest/hg19/extra/var_hg19_dbnsfp.tsv ${dest}/liftover/hg19ToHg18.over.chain ${dest}/tmp/${build}/var_${build}_dbnsfp.tsv.temp
+	cg liftover $dest/hg19/extra/var_hg19_dbnsfp.tsv ${dest}/tmp/${build}/var_${build}_dbnsfp.tsv.temp ${dest}/liftover/hg18ToHg19.over.chain
 	file copy -force $dest/hg19/extra/var_hg19_dbnsfp.tsv.opt ${dest}/${build}/extra/var_${build}_dbnsfp.tsv.opt
 	file copy -force $dest/hg19/extra/var_hg19_dbnsfp.info ${dest}/${build}/extra/var_${build}_dbnsfp.info
 	file rename -force ${dest}/tmp/${build}/var_${build}_dbnsfp.tsv.temp ${dest}/${build}/extra/var_${build}_dbnsfp.tsv

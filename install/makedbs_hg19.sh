@@ -102,9 +102,9 @@ job 1000gh18 -targets {$dest/hg18/var_hg18_1000gCHBxJPT.tsv $dest/hg18/var_hg18_
 }
 
 job 1000gliftover -deps {$dest/hg18/var_hg18_1000gCHBxJPT.tsv $dest/hg18/var_hg18_1000gCEU.tsv $dest/hg18/var_hg18_1000gYRI.tsv} -targets {var_${build}_1000gCHBxJPT.tsv var_${build}_1000gCEU.tsv var_${build}_1000gYRI.tsv} -vars {dest build} -code {
-	cg liftover ${dest}/hg18/var_hg18_1000gCHBxJPT.tsv ${dest}/liftover/hg18ToHg19.over.chain var_${build}_1000gCHBxJPT.tsv
-	cg liftover ${dest}/hg18/var_hg18_1000gCEU.tsv ${dest}/liftover/hg18ToHg19.over.chain var_${build}_1000gCEU.tsv
-	cg liftover ${dest}/hg18/var_hg18_1000gYRI.tsv ${dest}/liftover/hg18ToHg19.over.chain var_${build}_1000gYRI.tsv
+	cg liftover ${dest}/hg18/var_hg18_1000gCHBxJPT.tsv var_${build}_1000gCHBxJPT.tsv ${dest}/liftover/hg18ToHg19.over.chain
+	cg liftover ${dest}/hg18/var_hg18_1000gCEU.tsv var_${build}_1000gCEU.tsv ${dest}/liftover/hg18ToHg19.over.chain
+	cg liftover ${dest}/hg18/var_hg18_1000gYRI.tsv var_${build}_1000gYRI.tsv ${dest}/liftover/hg18ToHg19.over.chain
 	file delete var_hg19_1000gCEU.tsv.unmapped var_hg19_1000gCHBxJPT.tsv.unmapped var_hg19_1000gYRI.tsv.unmapped
 }
 
@@ -218,7 +218,7 @@ job reg_${build}_mirbase -targets {$dest/${build}/reg_${build}_mirbase.tsv $dest
 
 # exome variant server
 job reg_hg19_esp -targets {$dest/hg19/extra/var_hg19_esv.tsv $dest/hg19/extra/var_hg19_esv.tsv.opt $dest/hg19/extra/var_hg19_esv.info} -vars {dest build db} -code {
-	cg downloaddb $dest/tmp hg19 esv http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
+	cg downloaddb $dest/tmp hg19 evs http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
 }
 
 # CADD
