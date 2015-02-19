@@ -128,3 +128,35 @@ proc cg_bam_histo {args} {
 	puts Total\t[join $result \t]
 	puts Totalpercent\t[join $presult \t]
 }
+
+
+
+proc cg_coverage_report {args} {
+	set args [job_init {*}$args]
+	set pos 0
+	set suffix {}
+	foreach {key value} $args {
+		switch -- $key {
+			-s - --suffix {
+				set suffix $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
+	set regionfile [lindex $args 0]
+	set bams [lrange $args 1 end]
+	foreach b $bams {
+		bam2covstats_job $b $regionfile $suffix
+	}
+
+	#job coverage_report-$experiment -deps [list $regfile {*}$histofiles] -targets [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_50.tsv ] -code {
+	#	exec python2.6 /complgen2/mastr-procedure/coverage_mastrs.py
+	#}
+
+	job_wait
+}
