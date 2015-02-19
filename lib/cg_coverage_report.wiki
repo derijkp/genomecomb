@@ -1,0 +1,22 @@
+= coverage_report =
+
+== Format ==
+cg coverage_report ?options? ?regionfile? ?bamfiles?
+
+== Summary ==
+generates coverage report for region of interest
+A histo file is generated at the location of the bam file 
+
+== Arguments ==
+; **regionfile**: region file: tab separated file describing region of interest. Must contain fields: chr, begin, end & name
+; **bamfiles**: one or more bam files for which a coverage report should be generated
+
+== Options ==
+; **-s**: suffix to add to histo filename  - default empty
+
+supports job options:
+; **-d x**: distribute subjobs of command over x processes
+; **-d sge**: use grid engine to distribute subjobs
+
+== Category ==
+report
