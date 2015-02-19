@@ -6,13 +6,15 @@
 
 proc cg {cmd args} {
 	# puts "cg $args"
-	if {[info exists ::stderr_redirect]} {
+	if {[info exists ::stderr_redirect] && [lsearch -regexp $args 2>.?] == -1} {
 		set tempfile $::stderr_redirect
+		set redir [list 2> $::stderr_redirect]
 	} else {
 		set tempfile [tempfile]
+		set redir ""
 	}
 	if {[string length $args] < 2000} {
-		set error [catch {exec cg $cmd {*}$args 2> $tempfile} result]
+		set error [catch {exec cg $cmd {*}$args {*}$redir} result]
 	} else {
 		set temprunfile [tempfile]
 		set poss [list_concat [list_find -glob $args ">*"] [list_find -glob $args "<*"]]
@@ -25,7 +27,7 @@ proc cg {cmd args} {
 			set redirect {}
 		}
 		file_write $temprunfile [list cg_$cmd {*}$code]\n
-		set error [catch {exec cg source $temprunfile {*}$redirect 2> $tempfile} result]
+		set error [catch {exec cg source $temprunfile {*}$redirect {*}$redir} result]
 	}
 	if {$error} {
 		if {[file exists $tempfile]} {
