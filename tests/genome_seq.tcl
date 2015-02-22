@@ -43,76 +43,8 @@ test genome_seq {gcsplit} {
 
 test genome_seq {-g 0} {
 	exec cg genome_seq -g 0 data/reg_genome_seq.tsv /complgen/refseq/hg19_test tmp/temp.fas  2> /dev/null
-	exec diff tmp/temp.fas data/expected-reg_genome_seq-noid.fas
-} {1c1
-< >chr1-69328-69576 GC:48.0
----
-> >chr1-69328-69576
-3c3
-< >chr1-69386-69634 GC:47.2
----
-> >chr1-69386-69634
-5c5
-< >chr1-231830367-231830615 GC:59.7
----
-> >chr1-231830367-231830615
-7c7
-< >chr2-145425276-145425524 GC:46.4
----
-> >chr2-145425276-145425524
-9c9
-< >chr2-145427578-145427826 GC:37.1
----
-> >chr2-145427578-145427826
-11c11
-< >chr2-145671229-145671490 GC:41.4
----
-> >chr2-145671229-145671490
-13c13
-< >chr2-177497692-177497940 GC:31.5
----
-> >chr2-177497692-177497940
-15c15
-< >chr2-178087040-178087288 GC:41.1
----
-> >chr2-178087040-178087288
-17c17
-< >chr4-2069607-2069855 GC:54.0
----
-> >chr4-2069607-2069855
-19c19
-< >chr4-5526991-5527238 GC:38.9
----
-> >chr4-5526991-5527238
-21c21
-< >chr4-24981564-24981812 GC:36.3
----
-> >chr4-24981564-24981812
-23c23
-< >chr7-26416288-26416536 GC:69.8
----
-> >chr7-26416288-26416536
-25c25
-< >chr8-1949001-1949249 GC:56.5
----
-> >chr8-1949001-1949249
-27c27
-< >chr18-103887-104141 GC:47.2
----
-> >chr18-103887-104141
-29c29
-< >chr22-16108815-16109063 GC:41.1
----
-> >chr22-16108815-16109063
-31c31
-< >chrM-16047-16295 GC:46.8
----
-> >chrM-16047-16295
-33c33
-< >chrX-302322-302570 GC:65.3
----
-> >chrX-302322-302570
-}
+	exec diff tmp/temp.fas data/expected-reg_genome_seq-noid-g0.fas
+} {}
 
 test genome_seq {-g 0 -gd 0} {
 	exec cg genome_seq -g 0 -gd 0 data/reg_genome_seq.tsv /complgen/refseq/hg19_test tmp/temp.fas  2> /dev/null

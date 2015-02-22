@@ -18,8 +18,8 @@ test exportplink {del} {
 	file_write tmp/vars.tsv $c
 	exec cg exportplink tmp/vars.tsv tmp/temp 2> /dev/null
 	exec diff tmp/temp.tped data/expected-vars3.tped
-} {13d12
-< 4	4-4000-4001-del-G-	0.0040	4000				G
+} {9d8
+< 4	4-4000-4001-del-G-	0.004000	4000				G
 child process exited abnormally} error
 
 test exportplink {codegeno} {
@@ -58,11 +58,9 @@ test exportplink {query} {
 	test_cleantmp
 	exec cg exportplink -q {$chromosome == "chr1"} data/vars3.sft tmp/temp 2> /dev/null
 	exec diff tmp/temp.tped data/expected-vars3.tped
-} {8a9,12
-> 2	2-4001-4002-snp-A-G	0.0040	4001	G	G	G	G
-> 2	2-4001-4002-snp-A-C	0.0040	4001	0	0	0	0
-> 2	2-4099-5000-snp-C-T	0.0041	4099	T	T	T	T
-> 2	2-4099-5000-snp-C-G	0.0041	4099	0	0	0	0
+} {6a7,8
+> 2	2-4001-4002-snp-A-G	0.004001	4001	G	G	G	G
+> 2	2-4099-5000-snp-C-T	0.004099	4099	T	T	T	T
 child process exited abnormally} error
 
 test exportplink {query error} {
