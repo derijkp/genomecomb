@@ -12,6 +12,7 @@ if 0 {
 package require BioTcl
 
 proc cg_correctvariants_alts {type list gref} {
+	set list [list_remdup $list]
 	set alts [list_remove $list - ? N $gref {}]
 	if {([llength $alts] == 0) && ($type ne "del")} {set alts ?}
 	return $alts
@@ -128,17 +129,19 @@ proc cg_correctvariants {args} {
 						foreach a [list_remdup [list_sub $line $aposs]] {
 							lappend altlist [seq_complement $a]
 						}
-						lset line 5 [join [cg_correctvariants_alts $type $altlist $gref] ,]
+						set alt [join [cg_correctvariants_alts $type $altlist $gref] ,]
 					} else {
 						set nalts {}
 						foreach a $alts {lappend nalts [seq_complement $a]}
 						set alt [join $nalts ,]
-						lset line 5 $alt
 					}
+					lset line 5 $alt
 					foreach {a1pos a2pos seqpos zygpos} $sposs {
 						if {$a1pos == -1 || $a2pos == -1} continue
 						set a1 [seq_complement [lindex $line $a1pos]]
 						set a2 [seq_complement [lindex $line $a2pos]]
+						lset line $a1pos $a1
+						lset line $a2pos $a2
 						set altsa($a1) 1 ; set altsa($a2) 1
 						set seq [lindex $line $seqpos]
 						if {$seq eq "u"} {

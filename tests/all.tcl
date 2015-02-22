@@ -7,7 +7,6 @@ source mirannot.tcl
 source bcol.tcl
 source compar.tcl
 source convert.tcl
-source edit.tcl
 source reg.tcl
 source tsv.tcl
 source remap.tcl

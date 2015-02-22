@@ -532,6 +532,19 @@ test correctvariants {basic multicompar} {
 	exec diff tmp/part.tsv tmp/expected.tsv
 } {}
 
+test correctvariants {-c 1} {
+	file delete -force tmp/temp.tsv
+	exec cg correctvariants -c 1 data/updatavartest.tsv tmp/temp.tsv /complgen/refseq/hg18
+	exec diff tmp/temp.tsv data/expected-updatavartest.tsv
+} {}
+
+test correctvariants {-f} {
+	file delete -force tmp/temp2.tsv
+	exec cg select -f {chromosome begin end type ref alt} data/updatavartest.tsv tmp/temp.tsv
+	exec cg correctvariants -c 1 tmp/temp.tsv tmp/temp2.tsv /complgen/refseq/hg18
+	exec diff tmp/temp2.tsv data/expected-updatavartest2.tsv
+} {}
+
 test liftover {basic} {
 	file delete tmp/temp.tsv
 	exec cg liftover data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
