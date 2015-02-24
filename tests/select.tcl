@@ -749,6 +749,16 @@ test select "catch with errorvalue $dboptt" {
 chr1	4000	4001	4000
 chr2	4000	4001	4000}
 
+test select "chr_clip -$dboptt" {
+	global dbopt
+	exec cg select {*}$dbopt -q {chr_clip($chromosome) in {1 X Y}} data/allchr.tsv tmp/result.tsv
+	file_read tmp/result.tsv
+} {chromosome	pos	coverage
+chr1	1	1
+chrX	24	24
+chrY	25	25
+}
+
 }
 
 foreach dbopt {{}} {
