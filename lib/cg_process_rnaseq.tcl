@@ -58,32 +58,41 @@ proc make_count_table_job {dir experiment samples} {
 	job make_count_table -deps $samples -targets $dir/counts-$experiment.tsv  -code {
 		file delete $target.temp1
 		file delete $target.temp2
-		exec paste {*}$deps >  $target.temp1 
+		exec paste {*}$deps > $target.temp1
 		##keep 1st id column, remove empty ids, remove __no_feature __ambiguous __too_low_aQual __not_aligned __alignment_not_unique
 		cg select -q {$id != "" && regexp($id,"^\[^_\]+") } -f {id *-*} $target.temp1 $target.temp2
 		file rename -force $target.temp2 $target
 		file delete $target.temp1
-
-
+	}
+}
 		
+proc generate_fastqc {files outdir} {
+	upvar job_logdir job_logdir
+	catch {file mkdir $outdir}
+	job  generate_fastqc -deps $files -vars {outdir}  -code {
+		exec fastqc -q -o $outdir {*}$deps 2>@ stderr >@ stdout
 	}
 }
 
+
 #####
 ### Main RNA seq workflow
-### 1) map with tophat (bowtie2)
-### 2) sort bam
-### 3) index bam file
-### 4) get count table using htseqcount per sample
-### 5) create project count table
+### 1) generate fastqc (optional)
+### 2) clip adapters (optional)
+### 3) generate fastqc of clipped fastq  (optional)
+### 4) map with tophat (bowtie2)
+### 5) sort bam
+### 6) index bam file
+### 7) get count table using htseqcount per sample
+### 8) create project count table
 #####
 
-proc process_rnaseq_job {destdir libtype bowtie_index gff} {
+proc process_rnaseq_job {destdir libtype bowtie_index gff fastqc adapterfile paired} {
 	set destdir [file_absolute $destdir]
 	set keeppwd [pwd]
 	cd $destdir
 	set experiment [file tail $destdir]
-	
+	if {$adapterfile == ""} {set clip 0} else {set clip 1}
 	# set variables for htseqcount
 		#info on htseq stranded option
 		# fr-unstranded -> no ; fr-firststrand -> reverse; fr-secondstrand -> yes
@@ -108,7 +117,7 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff} {
 			 exit 1}
 	}
 	set mode union
-	#set order pos -- htseqcount gives error when file to big if sorted by pos
+		#set order pos -- htseqcount gives error when file to big if sorted by pos
 	set order name
 	
 	# which samples are there
@@ -127,11 +136,26 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff} {
 		puts $dir
 		cd $dir
 		job_logdir $dir/log_jobs
-		# do own alignment
+		# do alignment
 		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq fastq/*.fastq.bz2 fastq/*.slx.gz]
 		if {![llength $files]} continue
-		# tophat
-		tophat_job $sample $files $libtype $dir $bowtie_index
+		if $clip { 
+			#clip_adapters
+			set files_clipped [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired]
+			#tophat
+			tophat_job $sample $files_clipped $libtype $dir $bowtie_index 
+		} else {
+			tophat_job $sample $files $libtype $dir $bowtie_index
+		}
+		if $fastqc {
+			#fastqc
+			generate_fastqc $files $dir/fastqc
+			if $clip {
+				#fastqc clipped files 
+				generate_fastqc $files_clipped $dir/fastqc
+			}
+		}
+
 		#sort by coordinate and by name -- latter is needed for htseqcount
 		bam_sort_job map-tophat-$sample.bam
 		bam_index_job map-stophat-$sample.bam
@@ -145,16 +169,45 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff} {
 	cd $keeppwd
 }
 
-proc process_rnaseq {args} {
+proc cg_process_rnaseq {args} {
 	set args [job_init {*}$args]
+	#set default values for optional args
+	set adapterfile {}
+	set fastqc 0
+	set paired 1
+	#parse options
 	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-adapterfile {
+				set adapterfile $value
+			}
+			-fastqc {
+				set fastqc $value
+			}
+			-paired {
+				set paired $value
+			}
+			default break
+		}
+		incr pos 2
+	}
 	set args [lrange $args $pos end]
+
 	if {[llength $args] < 4} {
 		puts "Wrong number of arguments"
 		errorformat process_rnaseq
 		exit 1
 	}
+	#get required arguments
 	foreach {destdir libtype bowtie_index gff} $args break
-	process_rnaseq_job $destdir $libtype $bowtie_index $gff
+	process_rnaseq_job $destdir $libtype $bowtie_index $gff $fastqc $adapterfile $paired
 	job_wait
+}
+
+
+
+if {0} {
+#process_rnaseq -d sge NG7522 fr-firststrand /complgen3/refseq/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index/genome /complgen3/refseq/Homo_sapiens/UCSC/hg19/Annotation/Genes/genes.gtf
+#process_rnaseq -d sge -fastqc 1 -adapterfile /complgen3/project-work/rnaseq/adaptors.fa test_pipeline fr-secondstrand /complgen3/project-work/rnaseq/refseq/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index/genome /complgen3/project-work/rnaseq/refseq/Homo_sapiens/UCSC/hg19/Annotation/Genes/genes.gtf
 }
