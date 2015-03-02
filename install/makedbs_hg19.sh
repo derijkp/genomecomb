@@ -221,6 +221,11 @@ job reg_hg19_esp -targets {$dest/hg19/extra/var_hg19_esv.tsv $dest/hg19/extra/va
 	cg downloaddb $dest/tmp hg19 evs http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
 }
 
+# exac
+job reg_hg19_exac -targets {$dest/hg19/extra/var_hg19_exac.tsv $dest/hg19/extra/var_hg19_exac.tsv.opt $dest/hg19/extra/var_hg19_exac.info} -vars {dest build db} -code {
+	cg downloaddb $dest/tmp hg19 exac ftp://ftp.broadinstitute.org/pub/ExAC_release/release0.3/ExAC.r0.3.sites.vep.vcf.gz
+}
+
 # CADD
 job reg_hg19_esp -targets {$dest/hg19/extra/var_hg19_cadd.tsv $dest/hg19/extra/var_hg19_cadd.tsv.opt $dest/hg19/extra/var_hg19_cadd.info} -vars {dest build db} -code {
 	exec -ignorestderr wget -c --tries=45 --directory-prefix=${dest}/tmp/hg19 http://krishna.gs.washington.edu/download/CADD/v1.0/whole_genome_SNVs.tsv.gz

@@ -174,8 +174,8 @@ proc downloaddb_evs {path build {url {}}} {
 		set url http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
 	}
 	file mkdir ${path}/tmp/$build/evs
-	cd $path/$build/evs
-	exec -ignorestderr wget -c --tries=45 --directory-prefix=$path/$build/evs $url
+	cd ${path}/tmp/$build/evs
+	exec -ignorestderr wget -c --tries=45 --directory-prefix=${path}/tmp/$build/evs $url
 	exec tar xvzf [file tail $url]
 	foreach file [glob *.vcf] {
 		cg vcf2tsv $file [file root $file].tsv
@@ -275,6 +275,9 @@ proc cg_downloaddb {args} {
 	if {$dbname eq "evs"} {
 		downloaddb_evs $path $build [lindex $args 3]
 		return
+	} elseif {$dbname eq "exac"} {
+		downloaddb_exac $path $build [lindex $args 3]
+		return
 	}
 	set dbnames [lrange $args 2 end]
 	puts "----------------------------------------------------"
@@ -295,7 +298,7 @@ proc cg_downloaddb {args} {
 
 if 0 {
 	set path /media/663d83bb-851c-4dbb-8c03-e8815d28e483/refseq
-	set nuild hg18
+	set build hg18
 }
 
 proc cg_calcsequencedgenome {args} {
