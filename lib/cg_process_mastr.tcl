@@ -190,7 +190,7 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 		reg-mini_$mastrname.bed $mapfile samplicons-$mastrname.tsv reg_amplicons-$mastrname.tsv
 	} \
 	-vars {dbdir mastrname} -code {
-		puts stderr "makeminigenome $dbdir $mastrname $dep name"
+		putslog "makeminigenome $dbdir $mastrname $dep name"
 		makeminigenome $dbdir $mastrname $dep name
 	}
 	if {!$useminigenome} {

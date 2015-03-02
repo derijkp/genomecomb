@@ -85,11 +85,11 @@ NODPRINT("%s:%d-%d",chromosome2.string,start2,end2)
 		if (comp1 > 0 && comp2 > 0) {
 			curchromosome = (comp > 0)?chromosome1:chromosome2; nextpos = 0;
 		}
-		if (start1 >= nextpos || start2 >= nextpos) {
+		/* if (start1 >= nextpos || start2 >= nextpos) {
 			fprintf(stderr, "%s-%d\n",curchromosome->string,nextpos);
 			fflush(stderr);
 			nextpos += 10000000;
-		}
+		} */
 		if ((chromosome1 == NULL) && (chromosome2 == NULL)) break;
 		if ((comp < 0) || (comp == 0 && end2 <= start1)) {
 			fprintf(stdout,"%s\t%d\t%d\t%s\t%d\n",Loc_ChrString(chromosome2),start2,end2,nulldata,1);

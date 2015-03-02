@@ -109,7 +109,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 	if {[inlist {.rz .gz .bgz} $ext]} {
 		if {$uncompress} {
 			set workfile [scratchfile]
-			puts stderr "temporarily uncompressing $file to $workfile"
+			putslog "temporarily uncompressing $file to $workfile"
 			file delete -force $workfile.temp
 			file delete -force $workfile
 			gunzip $file $workfile.temp
@@ -120,7 +120,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 	} elseif {[inlist {.lz4} $ext]} {
 		if {$uncompress} {
 			set workfile [scratchfile]
-			puts stderr "temporarily uncompressing $file to $workfile"
+			putslog "temporarily uncompressing $file to $workfile"
 			file delete -force $workfile.temp
 			file delete -force $workfile
 			exec lz4c -d $file $workfile.temp

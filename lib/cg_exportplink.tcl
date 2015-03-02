@@ -74,7 +74,7 @@ proc cg_exportplink {args} {
 		if {[llength $line] < 4} continue
 		foreach {chr b e type ref alts} [list_sub $line $poss] break
 		if {![isint $b]} {
-			puts stderr "skipping var: error in line: $line"
+			putslog "skipping var: error in line: $line"
 			continue
 		}
 		set chr [chr_clip $chr]
@@ -88,7 +88,7 @@ proc cg_exportplink {args} {
 		if {[llength $alts] == 0} {
 			set alts {{}}
 		} elseif {[llength $alts] > 1} {
-			puts stderr "Warning: more than 2 alleles for $chr-$b-$e-$type: splitting"
+			putslog "Warning: more than 2 alleles for $chr-$b-$e-$type: splitting"
 		}
 		foreach alt $alts {
 			if {$codegeno} {

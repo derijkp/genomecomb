@@ -64,11 +64,11 @@ proc cg_commonvars args {
 		set base [list_sub $line $bposs]
 		foreach {chromosome begin} $base break
 		if {$chromosome != $prevchromosome} {
-			puts stderr $chromosome:1
+			putslog $chromosome:1
 			set next 10000000
 			set prevchromosome $chromosome
 		} elseif {$begin > $next} {
-			puts stderr $chromosome-$next
+			putslog $chromosome-$next
 			incr next 10000000
 		}
 		set alleles [split [lindex $base end] ,]

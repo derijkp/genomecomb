@@ -54,11 +54,13 @@ int main(int argc, char *argv[]) {
 		sscanf(result1->data[end1pos].string,"%d",&end1);
 		NODPRINT("%d\t%s\t%d\t%d",1,Loc_ChrString(chromosome1),start1,end1)
 		checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,end1,argv[1]);
+/*
 		if (start1 >= nextpos) {
 			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
 			fflush(stderr);
 			nextpos += 50000000;
 		}
+*/
 		comp = DStringLocCompare(chromosome2, chromosome1);
 		while (comp < 0) {
 			if (loaded2) {

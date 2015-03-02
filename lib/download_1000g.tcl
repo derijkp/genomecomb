@@ -10,7 +10,7 @@ proc downloaddb_1000glow {path build} {
 	}
 	set resultfile $path/$build/var_${build}_1000glow.tsv
 	if {[file exists $resultfile]} {
-		puts stderr "skipping file $resultfile: exists"
+		putslog "skipping file $resultfile: exists"
 		return
 	}
 	set tempdir $path/tmp/$build

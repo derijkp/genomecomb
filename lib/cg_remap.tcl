@@ -99,7 +99,7 @@ proc cg_remap {file remapfile resultfile} {
 			foreach {rchr rbegin rend rdestchr rdestbegin rdestend} $rline break
 		}
 		if {$chrcomp != 0 || $begin < $rbegin || $end > $rend} {
-			puts stderr "cannot remap $line: outside of regions in remap file"
+			putslog "cannot remap $line: outside of regions in remap file"
 			puts $u [join $line \t]
 		} else {
 			lset line $chrpos $rdestchr

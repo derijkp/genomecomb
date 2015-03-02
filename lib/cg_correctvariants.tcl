@@ -108,7 +108,7 @@ proc cg_correctvariants {args} {
 			if {![catch {genome_get $fg $chr $start $end} gref]} {
 				set gref [string toupper $gref]
 			} else {
-				puts stderr "WARNING: Could not get reference sequence for $chr:$start-$end: not checked"
+				putslog "WARNING: Could not get reference sequence for $chr:$start-$end: not checked"
 				set gref $ref
 			}
 		} else {
@@ -161,7 +161,7 @@ proc cg_correctvariants {args} {
 					error "different ref ($ref) for line (ref should be $gref):\n$line"
 				} else {
 					if {$force == 2} {
-						puts stderr "different ref ($ref) for line (ref should be $gref):\n$line"
+						putslog "different ref ($ref) for line (ref should be $gref):\n$line"
 					}
 					lset line 4 $gref
 					if {!$split && $doalt} {

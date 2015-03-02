@@ -91,11 +91,11 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 		if (checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,end1,argv[1])) {
 			nextpos = 0;
 		}
-		if (start1 >= nextpos) {
+		/* if (start1 >= nextpos) {
 			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
 			fflush(stderr);
 			nextpos += 50000000;
-		}
+		} */
 		comp = DStringLocCompare(chromosome2, chromosome1);
 		while (!error2 && ((comp < 0) || ((comp == 0) && (end2 <= start1)))) {
 			/* keep data of previous */

@@ -453,7 +453,7 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 		lappend newheader varScoreEAF1 varScoreEAF2 varQuality1 varQuality2
 		set extranum 2
 	} else {
-		puts stderr "WARNING: unrecognised header (unsupported CG version), trying to interpret anayway"
+		putslog "WARNING: unrecognised header (unsupported CG version), trying to interpret anyway"
 		set cgv1 ?
 		set cor1 [list_cor $header1 {locus allele chromosome begin end varType reference alleleSeq totalScore hapLink xRef}]
 		if {[lindex $cor1 8] == -1} {

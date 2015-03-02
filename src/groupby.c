@@ -110,10 +110,12 @@ int main(int argc, char *argv[]) {
 	/* ----- loop ----- */
 	while (!DStringGetTab(line2,f1,max,result2,1,NULL)) {
 		count++;
+/*
 		if (count >= next) {
 			fprintf(stderr,"%d\n",count);
 			next += 1000000;
 		}
+*/
 		/* ----- check if matches ----- */
 		match = 1;
 		for(i = 0 ; i < groupnum ; i++) {

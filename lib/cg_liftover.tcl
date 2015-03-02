@@ -51,10 +51,10 @@ proc cg_liftsample {args} {
 		set destfile $destdir/[file tail $file]
 		if {[file exists $destfile]} continue
 		if {![catch {file link $file} link]} {
-			puts stderr "Copying link $file"
+			putslog "Copying link $file"
 			file copy -force $file $destfile
 		} else {
-			puts stderr "converting $file"
+			putslog "converting $file"
 			cg liftover -split $split -dbdir $dbdir $file $destfile.temp $liftoverfile 2>@ stderr
 			file rename $destfile.temp $destfile
 			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
@@ -64,10 +64,10 @@ proc cg_liftsample {args} {
 		set destfile $destdir/[file tail $file]
 		if {[file exists $destfile]} continue
 		if {![catch {file link $file} link]} {
-			puts stderr "Copying link $file"
+			putslog "Copying link $file"
 			file copy -force $file $destfile
 		} else {
-			puts stderr "converting region $file"
+			putslog "converting region $file"
 			cg liftregion $file $destfile.temp $liftoverfile
 			file rename $destfile.temp $destfile
 			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
@@ -77,10 +77,10 @@ proc cg_liftsample {args} {
 		set destfile $destdir/[file tail $file]
 		if {[file exists $destfile]} continue
 		if {![catch {file link $file} link]} {
-			puts stderr "Copying link $file"
+			putslog "Copying link $file"
 			file copy -force $file $destfile
 		} else {
-			puts stderr "converting $file"
+			putslog "converting $file"
 			cg liftover $file $destfile.temp $liftoverfile 2>@ stderr
 			file rename $destfile.temp $destfile
 			catch {file rename $destfile.temp.unmapped $destfile.unmapped}

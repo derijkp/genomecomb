@@ -124,7 +124,7 @@ proc annot_coverage_get {dir sample chr begin {force 0}} {
 		} elseif {[inlist {Y chrY} $chr]} {
 			set present 0
 		} else {
-			puts stderr "coverage(RefScore) file not found ($dir/coverage/coverage(RefScore)-*-$nchr.(tsv|bcol))"
+			putslog "coverage(RefScore) file not found ($dir/coverage/coverage(RefScore)-*-$nchr.(tsv|bcol))"
 			set present 0
 		}
 		if {!$present} {
