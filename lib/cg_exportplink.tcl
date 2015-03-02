@@ -26,7 +26,7 @@ proc cg_exportplink {args} {
 	}
 	set args [lrange $args $pos end]
 	if {[llength $args] != 2} {
-		errorformat cg_exportplink
+		errorformat exportplink
 		exit 1
 	}
 	foreach {varfile resultfile} $args break
@@ -118,11 +118,14 @@ proc cg_exportplink {args} {
 				}
 				if {$gt1 eq "0"} {set gt2 0}
 				if {$gt2 eq "0"} {set gt1 0}
+				if {$gt1 eq ""} {set gt1 -}
+				if {$gt2 eq ""} {set gt2 -}
 				lappend result $gt1 $gt2
 			}
 			if {$nulllines == 0} {
 				if {![llength [list_remove $result 0]]} continue
 			}
+			# puts $o [join [list $chr $chr-$b-$e-$type [format %.4f [expr {$b/1000000.0}]] $b {*}$result] \t]
 			puts $o [join [list $chr $chr-$b-$e-$type-$ref-$alt [format %.6f [expr {$b/1000000.0}]] $b {*}$result] \t]
 		}
 	}
