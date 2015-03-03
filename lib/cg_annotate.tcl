@@ -360,8 +360,8 @@ proc cg_annotate {args} {
 				continue
 			}
 			set genecol [dict_get_default $dbinfo genecol name]
-			set transcriptcol [dict_get_default $dbinfo transcriptcol isomir]
-			annotatemir $usefile $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
+			set transcriptcol [dict_get_default $dbinfo transcriptcol transcript]
+			annotatemir $usefile $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol 100 1 0
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
 			set altpos [lsearch $header alt]
