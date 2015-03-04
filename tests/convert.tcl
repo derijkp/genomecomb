@@ -554,6 +554,25 @@ test correctvariants {basic multicompar} {
 	exec diff tmp/part.tsv tmp/expected.tsv
 } {}
 
+test correctvariants {basic multicompar doubles} {
+	file delete tmp/temp.tsv tmp/result.tsv
+	write_tab tmp/temp.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1 alleleSeq2-sample1 sequenced-sample2	zyg-sample2	alleleSeq1-sample2 alleleSeq2-sample2
+		1	2482141	2482142	snp	A	G	v	m	G	G	v	r	A	A
+		1	2482141	2482142	snp	A	G	v	m	G	G	v	r	A	A
+		15	26517559	26517560	snp	G	T,A	v	t	T	A	v	o	A	A
+		15	26517559	26517560	snp	G	T,A	v	m	T	T	v	o	A	A
+	}
+	exec cg correctvariants -f 1 -s 0 tmp/temp.tsv tmp/result.tsv /complgen/refseq/hg19
+	cg select -f {chromosome begin end type ref alt sequenced-* zyg-*} tmp/temp.tsv tmp/part.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1 alleleSeq2-sample1 sequenced-sample2	zyg-sample2	alleleSeq1-sample2 alleleSeq2-sample2
+		1	2482141	2482142	snp	A	G	v	m	G	G	v	r	A	A
+		15	26517559	26517560	snp	A	T	v	t	T	A	r	r	A	A
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test correctvariants {-c 1} {
 	file delete -force tmp/temp.tsv
 	exec cg correctvariants -c 1 data/updatavartest.tsv tmp/temp.tsv /complgen/refseq/hg18

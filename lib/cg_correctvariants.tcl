@@ -172,7 +172,8 @@ proc cg_correctvariants {args} {
 					lset line 4 $gref
 					if {!$split && $doalt} {
 						set altlist [list_remdup [list_sub $line $aposs]]
-						lset line 5 [join [cg_correctvariants_alts $type $altlist $gref] ,]
+						set alt [join [cg_correctvariants_alts $type $altlist $gref] ,]
+						lset line 5 $alt
 					} else {
 						if {[inlist $alts $gref]} {
 							set nalts [list_remove $alts $gref]
@@ -209,7 +210,11 @@ proc cg_correctvariants {args} {
 				puts $o [join $line \t]
 			}
 		} else {
+			set prevalt ___
 			foreach line $lines {
+				set alt [lindex $line 5]
+				if {$alt eq $prevalt} continue
+				set prevalt $alt
 				lset line 4 $gref
 				if {!$split && $doalt} {
 					lset line 5 [join [cg_correctvariants_alts $type [list_sub $line $aposs] $gref] ,]
