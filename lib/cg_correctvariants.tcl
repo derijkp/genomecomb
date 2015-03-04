@@ -96,6 +96,9 @@ proc cg_correctvariants {args} {
 			if {$var ne $prevvar} break
 			lappend lines $nextline
 		}
+		if {[llength $lines] > 1} {
+			set lines [lsort -index 5 $lines]
+		}
 		if {![llength $lines]} continue
 		incr count
 		if {$count > 1000000} {
@@ -116,8 +119,11 @@ proc cg_correctvariants {args} {
 		}
 		if {$gref ne $ref && !($ref eq "" && $size ne "")} {
 			set resultlines {}
+			set prevalt ___
 			foreach line $lines {
 				foreach {chr start end type ref alt} $line break
+				if {$alt eq $prevalt} continue
+				set prevalt $alt
 				set alts [split $alt ,]
 				if {$split && [llength $alts] > 1} {
 					error "error: the split option is used and file contains multiallelic variants"

@@ -495,6 +495,28 @@ test correctvariants {basic} {
 	exec diff tmp/part.tsv tmp/expected.tsv
 } {}
 
+test correctvariants {basic with doubles} {
+	file delete tmp/temp.tsv
+	cg select -f {chromosome begin end type ref alt sequenced=$sequenced-sample1 zyg=$zyg-sample1 alleleSeq1=$alleleSeq1-sample1 alleleSeq2=$alleleSeq2-sample1} data/var_lift.tsv tmp/vars.tsv
+	set f [open tmp/vars.tsv a]
+	puts $f [join {15 26517559 26517560 snp T A v t A T} \t]
+	close $f
+	exec cg correctvariants -f 1 -s 1 tmp/vars.tsv tmp/temp.tsv /complgen/refseq/hg19
+	cg select -f {chromosome begin end type ref alt sequenced zyg} tmp/temp.tsv tmp/part.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	zyg
+		1	0	1	snp	N	A	v	c
+		1	700	701	snp	N	A	r	o
+		1	702	702	ins	{}	A	v	t
+		1	1609710	1609711	snp	C	A	v	m
+		1	1609720	1609720	ins	{}	A	v	m
+		1	2482141	2482142	snp	A	C	r	o
+		1	2482141	2482142	snp	A	G	v	m
+		15	26517559	26517560	snp	A	T	v	t
+	}
+	exec diff tmp/part.tsv tmp/expected.tsv
+} {}
+
 test correctvariants {basic missing zyg col} {
 	file delete tmp/temp.tsv
 	cg select -f {chromosome begin end type ref alt sequenced=$sequenced-sample1 alleleSeq1=$alleleSeq1-sample1 alleleSeq2=$alleleSeq2-sample1} data/var_lift.tsv tmp/vars.tsv
