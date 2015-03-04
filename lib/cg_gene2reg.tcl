@@ -38,6 +38,7 @@ proc cg_gene2reg {args} {
 		set rest [list_sub $line $restposs]
 		set ftlist [lrange [dict get $geneobj ftlist] 1 end-1]
 		foreach dline $ftlist {
+			lset dline 1 [expr {[lindex $dline 1]+1}]
 			puts $o [join [list $chr {*}$dline $gene $transcript {*}$rest] \t]
 		}
 	}
