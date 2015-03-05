@@ -1022,7 +1022,7 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 	return $code
 }
 
-proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {samplingskip 0}} {
+proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {samplingskip 0} {removecomment 0}} {
 # putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index samplingskip
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
@@ -1039,6 +1039,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			}
 		}
 	}
+	if {$removecomment} {set keepheader ""}
 	set neededfields {}
 	set sort ""
 	set cut ""
@@ -1249,7 +1250,7 @@ proc cg_select {args} {
 	}
 	unset -nocomplain ::tsv_select_sampleinfo
 	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0
-	set inverse 0; set group {}; set groupcols {} ; set samplingskip 0; set db {}
+	set inverse 0; set group {}; set groupcols {} ; set samplingskip 0; set db {} ; set removecomment 0
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -1320,6 +1321,9 @@ proc cg_select {args} {
 			-samplingskip {
 				set samplingskip $value
 			}
+			-rc {
+				set removecomment $value
+			}
 			-- break
 			default {
 				break
@@ -1367,7 +1371,7 @@ proc cg_select {args} {
 		} result]
 	} else {
 		set error [catch {
-			tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $samplingskip
+			tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $samplingskip $removecomment
 		} result]
 	}
 	if {$f ne "stdin"} {catch {close $f}}
