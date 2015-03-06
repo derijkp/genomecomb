@@ -46,6 +46,8 @@ proc cg_correctvariants {args} {
 		errorformat correctvariants
 		exit 1
 	}
+	set countdoubles 0
+	set countcorrected 0
 	foreach {file resultfile dbdir} $args break
 	if {[file exists $resultfile]} {error "$resultfile exists"}
 	catch {close $o} ; catch	{close $f}
@@ -87,7 +89,9 @@ proc cg_correctvariants {args} {
 	set prevvar [lrange $nextline 0 3]
 	set lines [list $nextline]
 	while {![eof $f]} {
-		# gather all lines on same location: in case of split the may need to be resorted
+		# gather all lines on same location:
+		# in case of split the may need to be resorted
+		# in case of non-split the may need to be gathered
 		while {![eof $f]} {
 			set nextline [split [gets $f] \t]
 			if {![llength $nextline]} continue
@@ -97,7 +101,18 @@ proc cg_correctvariants {args} {
 			lappend lines $nextline
 		}
 		if {[llength $lines] > 1} {
-			set lines [lsort -index 5 $lines]
+			if {$split} {
+				set lines [lsort -index 5 $lines]
+			} else {
+				# better would be choose best/real merge, but not now
+				set line [lindex $lines 0]
+				set alts {}
+				foreach as [list_subindex $lines 5] {
+					lappend alts {*}[split $as ,]
+				}
+				lset line 5 [join [lsort -dict [list_remdup $alts]] ,]
+				set lines [list $line]
+			}
 		}
 		if {![llength $lines]} continue
 		incr count
@@ -122,7 +137,8 @@ proc cg_correctvariants {args} {
 			set prevalt ___
 			foreach line $lines {
 				foreach {chr start end type ref alt} $line break
-				if {$alt eq $prevalt} continue
+				if {$alt eq $prevalt} {incr countdoubles ; continue}
+				incr countcorrected
 				set prevalt $alt
 				set alts [split $alt ,]
 				if {$split && [llength $alts] > 1} {
@@ -213,7 +229,7 @@ proc cg_correctvariants {args} {
 			set prevalt ___
 			foreach line $lines {
 				set alt [lindex $line 5]
-				if {$alt eq $prevalt} continue
+				if {$alt eq $prevalt} {incr countdoubles ; continue}
 				set prevalt $alt
 				lset line 4 $gref
 				if {!$split && $doalt} {
@@ -227,6 +243,8 @@ proc cg_correctvariants {args} {
 	}
 	close $o
 	close $f
+	putslog "removed $countdoubles doubles"
+	putslog "corrected $countcorrected refs"
 	file rename -force $resultfile.temp $resultfile
 }
 

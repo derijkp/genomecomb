@@ -622,4 +622,39 @@ test liftregion {basic} {
 	exec diff tmp/temp.tsv data/expected-reg_lift-hg18tohg19.tsv
 } {}
 
+test liftover {variants with different ref ending up in same spot -s 1} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		chromosome	begin	end	type	ref	alt
+		2       109820576       109820577       snp     G       T
+		2	110858379	110858380	snp	A	T
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	beforeliftover
+		chr2       110463287       110463288       snp     G       T	2-109820576-109820577
+	}
+	exec cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
+	exec cg correctvariants -f 1 -s 1 tmp/lifted.tsv tmp/result.tsv.temp /complgen/refseq/hg19
+	cg select -rc 1 tmp/result.tsv.temp tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test liftover {variants with different alt ending up in same spot -s 0} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		chromosome	begin	end	type	ref	alt
+		2       109820576       109820577       snp     G       C
+		2	110858379	110858380	snp	A	T
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	beforeliftover
+		chr2       110463287       110463288       snp     G       C,T	2-109820576-109820577
+	}
+	exec cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
+	file delete tmp/result.tsv.temp
+	exec cg correctvariants -f 1 -s 0 tmp/lifted.tsv tmp/result.tsv.temp /complgen/refseq/hg19
+	cg select -rc 1 tmp/result.tsv.temp tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 testsummarize
