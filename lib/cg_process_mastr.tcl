@@ -107,6 +107,7 @@ proc generate_demultiplex_stats {xmlfile outfile} {
 			lappend sampleinfo [[$samplenode getElementsByTagName $node] asText] 
  		}
  		regsub -all {\.} [join $sampleinfo \t] "_" line
+ 		regsub -all {\-} [join $sampleinfo \t] "_" line
  		puts $o $line
 	}
 
@@ -307,7 +308,7 @@ proc process_mastr_job {args} {
 		set demultiplex_stats $destdir/demultiplex_stats.tsv
 		if {[file exists $demultiplex_stats]} {
 			set clusters [cg select -sh /dev/null -q "\$SampleID==\"$sample\"" -f {NumberOfClustersPF} $demultiplex_stats]
-			if {$clusters < 10} continue
+			if {$clusters < 10} continue			
 		}
 		# do not do any of preliminaries if end product is already there
 		set bamfile ${pre}map-${aligner}-$name.bam
