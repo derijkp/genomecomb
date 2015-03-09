@@ -224,7 +224,7 @@ proc analysis_complete_job {experiment} {
 
 proc generate_coverage_report_job {experiment regfile histofiles} {
 	upvar job_logdir job_logdir
-	job coverage_report-$experiment -deps [list $regfile {*}$histofiles] -targets [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_50.tsv ] -code {
+	job coverage_report-$experiment -deps [list $regfile {*}$histofiles] -targets [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv ] -code {
 		exec python2.6 /complgen2/mastr-procedure/coverage_mastrs.py
 	}
 }
