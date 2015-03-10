@@ -219,7 +219,7 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 
 proc analysis_complete_job {experiment} {
 	upvar job_logdir job_logdir
-	job analysis_complete-$experiment -deps [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv compar/annot_compar_gatk-${experiment}_long.tsv]  -targets analysis_complete -code {
+	job analysis_complete-$experiment -deps [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv compar/annot_compar_gatk-${experiment}_long.tsv ${experiment}.html]  -targets analysis_complete -code {
 		file delete analysis_running
 		exec touch analysis_complete
 	}
@@ -229,6 +229,14 @@ proc generate_coverage_report_job {experiment regfile histofiles} {
 	upvar job_logdir job_logdir
 	job coverage_report-$experiment -deps [list $regfile {*}$histofiles] -targets [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv ] -code {
 		exec python2.6 /complgen2/mastr-procedure/coverage_mastrs.py
+	}
+}
+
+proc generate_html_report_job {experiment} {
+	upvar job_logdir job_logdir
+	job html_report -deps [list compar/compar-${experiment}.tsv coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv demultiplex_stats.tsv] -targets {$experiment.html} -code {
+		exec R3.1.2 -e {library(knitr); library(stringr); mastrdir=getwd(); mastr <- str_replace(mastrdir,".*/([^/]*)","\\1");knit2html("/complgen2/mastr-procedure/mastrreport.Rmd", output=paste(mastr,"temp",sep="."))}
+		file rename -force $target.temp $target
 	}
 }
 
@@ -377,6 +385,7 @@ proc process_mastr_job {args} {
 	}
 	make_alternative_compar_job $experiment 
 	generate_coverage_report_job $experiment $mastrdir/reg-inner-$mastrname.tsv $histofiles
+	generate_html_report_job $experiment
 	analysis_complete_job $experiment
 	cd $keeppwd
 }
