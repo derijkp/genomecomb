@@ -31,8 +31,14 @@ proc logverbose num {
 		}
 		1 {
 			proc putslog {args} {
-				foreach message $args {
-					puts stderr "[timestamp] $message"
+				if {[lindex $args 0] eq "-nonewline"} {
+					foreach message [lrange $args 1 end] {
+						puts -nonewline stderr $message
+					}
+				} else {
+					foreach message $args {
+						puts stderr "[timestamp] $message"
+					}
 				}
 			}
 			proc putsprogress {args} {
@@ -40,13 +46,25 @@ proc logverbose num {
 		}
 		2 {
 			proc putslog {args} {
-				foreach message $args {
-					puts stderr "[timestamp] $message"
+				if {[lindex $args 0] eq "-nonewline"} {
+					foreach message [lrange $args 1 end] {
+						puts -nonewline stderr $message
+					}
+				} else {
+					foreach message $args {
+						puts stderr "[timestamp] $message"
+					}
 				}
 			}
 			proc putsprogress {args} {
-				foreach message $args {
-					puts stderr "[timestamp] $message"
+				if {[lindex $args 0] eq "-nonewline"} {
+					foreach message [lrange $args 1 end] {
+						puts -nonewline stderr $message
+					}
+				} else {
+					foreach message $args {
+						puts stderr "[timestamp] $message"
+					}
 				}
 			}
 		}

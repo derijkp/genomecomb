@@ -259,7 +259,7 @@ proc makeprimers_cindex {name left right {db /complgen/refseq/hg18/genome_hg18.s
 	}
 	putslog "search [llength $new]"
 	foreach pseq $new {
-		puts -nonewline stderr .
+		putslog -nonewline .
 		if {[string length $pseq] >= 15} {
 			# prelen is the size that was cut off
 			set prelen [expr {[string length $pseq]-14}]
