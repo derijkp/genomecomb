@@ -19,7 +19,7 @@ test exportplink {del} {
 	exec cg exportplink tmp/vars.tsv tmp/temp 2> /dev/null
 	exec diff tmp/temp.tped data/expected-vars3.tped
 } {9d8
-< 4	4-4000-4001-del-G-	0.004000	4000				G
+< 4	4-4000-4001-del-G-	0.004000	4000	-	-	-	G
 child process exited abnormally} error
 
 test exportplink {codegeno} {
