@@ -205,7 +205,7 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0}} {
 	foreach {
 		dchrom dstart dend strand mature1start mature1end loopstart loopend mature2start mature2end genename transcriptname
 	} $dbline break
-	set temp [list_remove [lrange $dbline 4 9] {}]
+	set temp [list_remove [list_sub $dbline {4 6 8}] {}]
 	if {$temp ne [lsort -integer $temp]} {error "error in $dbline: values not in correct order"}
 	if {$strand eq "-"} {set complement 1} else {set complement 0}
 	set annotlist {}
@@ -234,10 +234,13 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0}} {
 		lappend annotlist [list mature${side}${isomir} a 0 $mature1start $mature1end]
 		if {$mature1end < $loopstart} {
 			lappend annotlist [list arm${side} m +1 $mature1end $loopstart]
+		} elseif {$mature1end > $loopstart} {
+			set loopstart $mature1end
 		}
 	} else {
 		lappend annotlist [list arm$side l -1 $dstart $loopstart]
 	}
+	if {$mature2start ne "" && $loopend > $mature2start} {set loopend $mature2start}
 	lappend annotlist [list loop a 0 $loopstart $loopend]
 	if {$complement} {set side 5p} else {set side 3p}
 	if {$mature2start ne "" && $mature2end ne ""} {
