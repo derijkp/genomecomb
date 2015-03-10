@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 	chr2pos = atoi(argv[7]);
 	start2pos = atoi(argv[8]);
 	end2pos = atoi(argv[9]);
-DPRINT("multireg %s %d %d %d %s %s %d %d %d",argv[1],chr1pos,start1pos,end1pos,nulldata,argv[6],chr2pos,start2pos,end2pos)
+NODPRINT("multireg %s %d %d %d %s %s %d %d %d",argv[1],chr1pos,start1pos,end1pos,nulldata,argv[6],chr2pos,start2pos,end2pos)
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 	/* allocate */
 	line1 = DStringNew(); line2=DStringNew();
