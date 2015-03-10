@@ -9,7 +9,7 @@ proc annot_region_init {regfile} {
 	catch {annot_region_close $regfile}
 	set fr [gzopen [gzfile $regfile]]
 	set header [tsv_open $fr]
-	set poss [tsv_basicfields $header 3]
+	set poss [tsv_basicfields $header 3 $regfile]
 	if {[lsearch $poss -1] != -1} {
 		set poss [list_cor $header {chr patchstart pos}]
 	}
