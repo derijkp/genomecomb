@@ -219,7 +219,7 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 
 proc analysis_complete_job {experiment} {
 	upvar job_logdir job_logdir
-	job analysis_complete-$experiment -deps [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_50.tsv compar/annot_compar_gatk-${experiment}_long.tsv]  -targets analysis_complete -code {
+	job analysis_complete-$experiment -deps [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv compar/annot_compar_gatk-${experiment}_long.tsv]  -targets analysis_complete -code {
 		file delete analysis_running
 		exec touch analysis_complete
 	}
