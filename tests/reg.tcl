@@ -6,19 +6,19 @@ source tools.tcl
 
 test multireg {basic} {
 	file delete tmp/temp.tsv
-	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg2.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg2.tsv
 	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg2.sft
 } {}
 
 test multireg {same} {
 	file delete tmp/temp.tsv
-	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg1b.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg1b.tsv
 	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg1b.sft
 } {}
 
 test multireg {add empty} {
 	file delete tmp/temp.tsv
-	exec cg multireg tmp/temp.tsv data/reg1b.tsv data/regempty.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/reg1b.tsv data/regempty.tsv
 	file_read tmp/temp.tsv
 } {chromosome	begin	end	reg1b	regempty
 1	10	20	1	0
@@ -27,7 +27,7 @@ test multireg {add empty} {
 
 test multireg {add empty first} {
 	file delete tmp/temp.tsv
-	exec cg multireg tmp/temp.tsv data/regempty.tsv data/reg1b.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/regempty.tsv data/reg1b.tsv
 	file_read tmp/temp.tsv
 } {chromosome	begin	end	regempty	reg1b
 1	10	20	0	1
@@ -41,13 +41,13 @@ test multireg {add fully empty} {
 
 test multireg {3 adds} {
 	file delete tmp/temp.tsv
-	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg1b.tsv data/reg2.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg1b.tsv data/reg2.tsv
 	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg1b-reg2.sft
 } {}
 
 test multireg {different chromosome naming} {
 	file delete tmp/temp.tsv
-	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv
 	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg4.sft
 } {}
 
@@ -64,19 +64,19 @@ test multireg {sort error 1 in added file from new} {
 
 test multireg {sort error 1 in added file} {
 	file delete tmp/temp.tsv
-	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv
 	exec cg multireg tmp/temp.tsv data/vars_sorterror1.sft
 } {*File (data/vars_sorterror1.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test multireg {sort error 2 in database file} {
 	file delete tmp/temp.tsv
-	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv
 	exec cg multireg tmp/temp.tsv data/vars_sorterror2.sft
 } {*File (data/vars_sorterror2.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test multireg {sort error 3 in database file} {
 	file delete tmp/temp.tsv
-	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv 2> /dev/null
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv
 	exec cg multireg tmp/temp.tsv data/vars_sorterror3.sft
 } {*File (data/vars_sorterror3.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
@@ -160,7 +160,7 @@ chr1	27	30
 chr1	39	41}
 
 test cg_regextract {basic} {
-	exec cg regextract 10 data/coverage-chr1.tsv 2> /dev/null
+	exec cg regextract 10 data/coverage-chr1.tsv
 } {chromosome	begin	end
 chr1	20	24
 chr1	27	28
@@ -197,7 +197,7 @@ chr1	27	30
 chr1	39	41}
 
 test regjoin {basic} {
-	exec cg regjoin data/reg1.tsv data/reg2.tsv 2> /dev/null
+	exec cg regjoin data/reg1.tsv data/reg2.tsv
 } {chromosome	begin	end
 1	10	25
 1	45	60
@@ -210,7 +210,7 @@ X	90	200
 Y	1000	2000}
 
 test regjoin {basic} {
-	exec cg regjoin data/reg1.tsv data/reg3.tsv 2> /dev/null
+	exec cg regjoin data/reg1.tsv data/reg3.tsv
 } {chromosome	begin	end
 1	5	8
 1	10	25
@@ -226,7 +226,7 @@ X	100	200
 Y	1000	2000}
 
 test regjoin {self} {
-	exec cg regjoin data/reg3.tsv 2> /dev/null
+	exec cg regjoin data/reg3.tsv
 } {chromosome	begin	end
 1	5	8
 1	15	18
@@ -241,7 +241,7 @@ test regjoin {self} {
 3	2500	2600}
 
 test regcollapse {basic} {
-	exec cg regcollapse data/reg1.tsv data/reg2.tsv 2> /dev/null
+	exec cg regcollapse data/reg1.tsv data/reg2.tsv
 } {chromosome	test	begin	end	test2
 1	t	10	15	
 1	t	15	20	,t2
@@ -268,14 +268,14 @@ Y	t	1010	1900	t2,
 Y	t	1900	2000	}
 
 test regselect {basic} {
-	exec cg regselect data/vars1.sft data/reg_annot.sft > tmp/temp.tsv 2> /dev/null
+	exec cg regselect data/vars1.sft data/reg_annot.sft > tmp/temp.tsv
 	exec cg select -rf {list} tmp/temp.tsv tmp/temp2.tsv
 	exec cg select -q {$regtest != ""} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} ../tests/data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
 	exec diff tmp/temp2.tsv tmp/tempexpected.tsv
 } {}
 
 test regselect {basic2} {
-	exec cg regselect data/vars1.sft data/reg_annot.sft > tmp/temp.tsv 2> /dev/null
+	exec cg regselect data/vars1.sft data/reg_annot.sft > tmp/temp.tsv
 	exec cg select -f {chromosome begin end type} tmp/temp.tsv
 } {chromosome	begin	end	type
 chr1	4000	4001	snp
@@ -286,7 +286,7 @@ chr2	5000	5001	snp
 chr2	5000	5010	ins}
 
 test regselect {near} {
-	exec cg regselect data/vars1.sft data/reg_annot.sft 10 > tmp/temp.tsv 2> /dev/null
+	exec cg regselect data/vars1.sft data/reg_annot.sft 10 > tmp/temp.tsv
 	exec cg select -f {chromosome begin end type} tmp/temp.tsv
 } {chromosome	begin	end	type
 chr1	4000	4001	snp

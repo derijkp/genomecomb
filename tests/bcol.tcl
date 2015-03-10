@@ -213,7 +213,7 @@ test bcol_regextract {basic} {
 	test_cleantmp
 	catch {exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv} e
 	# exec cg bcol table tmp/temp-chr2.bcol > tmp/temp.test
-	cg regextract -above 1 10 {*}[lsort -dict [glob tmp/temp-*.bcol]] 2> /dev/null
+	cg regextract -above 1 10 {*}[lsort -dict [glob tmp/temp-*.bcol]]
 } {chromosome	begin	end
 chr1	22	49
 chr2	10	17
@@ -223,7 +223,7 @@ test bcol_regextract {su} {
 	test_cleantmp
 	catch {exec cg bcol make -p pos -c chromosome -t su tmp/temp- coverage < data/cov.tsv} e
 	# exec cg bcol table tmp/temp-chr2.bcol > tmp/temp.test
-	cg regextract -above 1 10 {*}[lsort -dict [glob tmp/temp-*.bcol]] 2> /dev/null
+	cg regextract -above 1 10 {*}[lsort -dict [glob tmp/temp-*.bcol]]
 } {chromosome	begin	end
 chr1	22	49
 chr2	10	17

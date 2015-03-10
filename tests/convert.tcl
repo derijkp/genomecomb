@@ -421,7 +421,7 @@ test format {wide} {
 	 	chr1 sample1 5000 5001 snp G T 0.9 v T T m
 	 	chr1 sample2 5000 5001 snp G T 0.0 v G G r
 	}
-	exec cg wide tmp/long.tsv tmp/wide.tsv 2>/dev/null
+	exec cg wide tmp/long.tsv tmp/wide.tsv
 	write_tab tmp/expected.tsv {
 		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleseq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleseq2-sample2 zyg-sample2
 	 	chr1 4200 4200 ins {} A 0.8 v {} A t 0.1 r {} {} r
@@ -441,7 +441,7 @@ test format {wide other} {
 	 	2 s1 sa1 i2d11
 	 	2 s2 sa1 i2d21
 	}
-	exec cg wide -s {sample samplea} -f id tmp/long.tsv tmp/wide.tsv 2>/dev/null
+	exec cg wide -s {sample samplea} -f id tmp/long.tsv tmp/wide.tsv
 	write_tab tmp/expected.tsv {
 		id data-s1-sa1 data-s1-sa2 data-s2-sa1
 	 	1 i1d11 i1d12 i1d21
@@ -460,7 +460,7 @@ test format {wide other unsorted} {
 	 	2 s2 sa1 i2d21
 	 	1 s2 sa1 i1d21
 	}
-	exec cg wide -s {sample samplea} -f id tmp/long.tsv tmp/wide.tsv 2>/dev/null
+	exec cg wide -s {sample samplea} -f id tmp/long.tsv tmp/wide.tsv
 	write_tab tmp/expected.tsv {
 		id data-s1-sa1 data-s1-sa2 data-s2-sa1
 	 	1 i1d11 i1d12 i1d21

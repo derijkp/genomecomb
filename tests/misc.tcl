@@ -85,7 +85,7 @@ test cplinked {backup existing} {
 	file delete -force tmp/out
 	file mkdir tmp/out/test
 	file_write tmp/out/test/test1 pre
-	exec cg cplinked tmp/test tmp/out 2> /dev/null
+	exec cg cplinked tmp/test tmp/out
 	set result [dirinfo tmp/out/test]
 	file delete -force tmp/out/test
 	set result
@@ -96,7 +96,7 @@ test cplinked {backup existing 2} {
 	file mkdir tmp/out/test
 	file_write tmp/out/test/test1 pre
 	file_write tmp/out/test/test1.old1 old
-	exec cg cplinked tmp/test tmp/out 2> /dev/null
+	exec cg cplinked tmp/test tmp/out
 	set result [dirinfo tmp/out/test]
 	file delete -force tmp/out/test
 	set result
