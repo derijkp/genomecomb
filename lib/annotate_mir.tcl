@@ -83,7 +83,7 @@ proc annotatemir_one {oneloc geneobj {addtranscriptname 1}} {
 				set unum1 $num1
 				set unum2 $num2
 				if {$num1 == $num2} {
-# putsvars snpstart snpend annot ref distback b e num1 num2 startend endend complement
+					# putsvars snpstart snpend annot ref distback b e num1 num2 startend endend complement
 					if {$startend} {
 						if {!$complement} {set unum1 e$unum1} else {set unum1 ${unum1}e}
 					}
@@ -104,7 +104,7 @@ proc annotatemir_one {oneloc geneobj {addtranscriptname 1}} {
 						set temp $annot\($ref$sign$unum2:$unum1\)
 					}
 				}
-# putsvars snpstart snpend b e complement num1 num2 temp
+				# putsvars snpstart snpend b e complement num1 num2 temp
 				if {[regexp ^mature $annot] && $num2 >= 2 && $num1 <= 7} {
 					append temp seed
 				}
@@ -114,18 +114,24 @@ proc annotatemir_one {oneloc geneobj {addtranscriptname 1}} {
 	}
 	if {$complement} {set impact [list_reverse $impact]}
 	if {$addtranscriptname} {
-		return [list $adata(transcriptname):[join $impact &] $adata(genename)]
+		set result [list $adata(transcriptname):[join $impact &] $adata(genename)]
 	} else {
-		return [list [join $impact &] $adata(genename)]
+		set result [list [join $impact &] $adata(genename)]
 	}
+	if {[llength [get adata(extracols) ""]]} {
+		lappend result {*}$adata(extracols)
+	}
+	return $result
 }
 
-proc annotatemir_dbopen {dbfile genecol transcriptcol} {
+proc annotatemir_dbopen {dbfile genecol transcriptcol extracols} {
 	set df [gzopen $dbfile]
 	set header [tsv_open $df comment]
+	set extracols [list_common $extracols $header]
 	set dposs [tsv_basicfields $header 3]
 	set deffields {strand	mature1start mature1end	loopstart	loopend	mature2start mature2end}
 	lappend deffields $genecol $transcriptcol
+	lappend deffields {*}$extracols
 	lappend dposs {*}[list_cor $header $deffields]
 	if {[lsearch [lrange $dposs 0 end-2] -1] != -1} {
 		close $df
@@ -142,7 +148,7 @@ proc annotatemir_dbopen {dbfile genecol transcriptcol} {
 		if {![isint $dbstart] || ![isint $dbend]} continue
 		break
 	}
-	set dbobj [dict create df $df dposs $dposs fdbline $fdbline prevdbloc [lrange $fdbline 0 2] geneobjpos $geneobjpos]
+	set dbobj [dict create df $df dposs $dposs fdbline $fdbline prevdbloc [lrange $fdbline 0 2] geneobjpos $geneobjpos extracols $extracols]
 	return $dbobj
 }
 
@@ -205,8 +211,9 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0}} {
 	foreach {
 		dchrom dstart dend strand mature1start mature1end loopstart loopend mature2start mature2end genename transcriptname
 	} $dbline break
-	set temp [list_remove [list_sub $dbline {4 6 8}] {}]
-	if {$temp ne [lsort -integer $temp]} {error "error in $dbline: values not in correct order"}
+	if {$mature2start ne "" && $mature2start < $mature1end} {
+		error "error in $dbline: values not in correct order"
+	}
 	if {$strand eq "-"} {set complement 1} else {set complement 0}
 	set annotlist {}
 	if {!$complement} {
@@ -241,7 +248,9 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0}} {
 		lappend annotlist [list arm$side l -1 $dstart $loopstart]
 	}
 	if {$mature2start ne "" && $loopend > $mature2start} {set loopend $mature2start}
-	lappend annotlist [list loop a 0 $loopstart $loopend]
+	if {$loopend > $loopstart} {
+		lappend annotlist [list loop a 0 $loopstart $loopend]
+	}
 	if {$complement} {set side 5p} else {set side 3p}
 	if {$mature2start ne "" && $mature2end ne ""} {
 		if {$loopend < $mature2start} {
@@ -286,6 +295,7 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0}} {
 	set adata(annotlist) $annotlist
 	set adata(flank1) $flank1
 	set adata(flank2) $flank2
+	set adata(extracols) [lrange $dbline 12 end-1]
 	# puts -----${genename}-----
 	# foreach a $adata(annotlist) {puts $a}
 	return [array get adata]
@@ -297,7 +307,7 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0}} {
 # Although this piece of code is shared with mirvas, mirvas does several things differently.
 # genomecomb does not have all the tools to do the structural analysis.
 # 
-proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcriptcol transcript} {flanksizes 100} {isomirname 0} {mirvas 0}} {
+proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcriptcol transcript} {extracols status} {flanksizes 100} {isomirname 0} {mirvas 0}} {
 # putsvars file genomefile dbfile name resultfile genecol transcriptcol flanksizes mirvas
 	global genomef
 	set file [file normalize $file]
@@ -324,7 +334,8 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 		set noref 0
 	}
 	set fields [list_sub $header $poss]
-	set dbobj [annotatemir_dbopen $dbfile $genecol $transcriptcol]
+	set dbobj [annotatemir_dbopen $dbfile $genecol $transcriptcol $extracols]
+	set extracols [dict get $dbobj extracols]
 	set geneobjpos [dict get $dbobj geneobjpos]
 	set o [open $resultfile.temp w]
 	puts -nonewline $o $comment
@@ -339,6 +350,9 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 	} else {
 		set addtranscriptname 1
 		set nh [list ${name}_impact ${name}_mir]
+		foreach col $extracols {
+			lappend nh ${name}_$col
+		}
 	}
 	puts $o [join $nh \t]
 	set empty [join [list_fill [llength $nh] {}] \t]

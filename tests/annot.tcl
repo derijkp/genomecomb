@@ -405,6 +405,24 @@ test mir_annot {basic mir annotation same name transcipt} {
 	exec diff tmp/annot_test.tsv tmp/expected.tsv
 } {} 
 
+test mir_annot {mir annotation with status} {
+	test_cleantmp
+	write_tab tmp/mir_small.tsv {
+		chromosome	begin	end	strand	name	transcript	mature1start	mature1end	loopstart	loopend	mature2start	mature2end status
+		chr1	567704	567793	+	mir1+	mir1+	{}	{}	567749	567754	567761	567783 v
+		chr1	567704	567793	+	mir1b+	mir1b+	567704	567749	567749	567754	567761	567783 p
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	name	small_impact	small_mir small_status
+		chr1	567603	567604	snp	G	C	pre	mir1+:upstream(a-101e);mir1b+:upstream(a-101e)	mir1+;mir1b+ v;p
+		chr1	567704	567705	snp	A	C	arm-5p-1	mir1+:arm5p(l-e45);mir1b+:mature5p1_46(a+e1)	mir1+;mir1b+ v;p
+		chr1	567760	567761	snp	T	C	arm-3p-end	mir1+:arm3p(m-1e);mir1b+:arm3p(m-1e)	mir1+;mir1b+ v;p
+	}
+	cg select -q {$name in {pre arm-5p-1 arm-3p-end}} data/vars_mirna.tsv tmp/vars_mirna.tsv
+	exec cg annotate -dbdir /complgen/refseq/hg19 tmp/vars_mirna.tsv tmp/annot_test.tsv tmp/mir_small.tsv
+	exec diff tmp/annot_test.tsv tmp/expected.tsv
+} {} 
+
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
 
