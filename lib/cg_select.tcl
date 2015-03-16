@@ -1208,7 +1208,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 	} elseif {$sepheader ne ""} {
 		file_write $sepheader ${keepheader}[join $header \t]\n
 	} elseif {[llength $newheader]} {
-		if {[llength $newheader] != [llength $nh]} {error "new header (-nh) of wrong length for query results"}
+		if {[llength $newheader] != [llength $nh]} {puts stderr "warning: new header (-nh) different length from original header"}
 		puts $out ${keepheader}[join $newheader \t]
 	} else	{
 		puts $out ${keepheader}[join $nh \t]
