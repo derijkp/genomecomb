@@ -30,6 +30,7 @@ invoke {} {
 		number	isnum	field	{isnum(value)} {true if value is a valid number}
 		number	def	field_value	{def(value,default)} {if value is not a number, it returns the given default, otherwise value}
 		number	percent	field	{percent(value)} {returns a fraction as a percent }
+		number	format	field	{format(formatstring, arg, ...)} {format the given arguments according to the given **formatstring**.  **formatstring** follows the ANSI C sprintf specification, e.g. use "%.2f" to print a floating point number with two digits after the decimel point}
 		convert	ceil	field	{ceil(arg)} {smallest integral floating-point value (i.e. with a zero fractional part) not less than arg. The argument may be any numeric value.}
 		convert	floor	field	{floor(arg)} {largest integral floating-point value (i.e. with a zero fractional part) not greater than arg. The argument may be any numeric value.}
 		convert	round	field	{round(arg)} {If arg is an integer value, returns arg, otherwise converts arg to integer by rounding and returns the converted value.}
@@ -39,8 +40,10 @@ invoke {} {
 		convert	int	field	{int(arg)} {The argument may be any numeric value. The integer part of arg is determined, and then the low order bits of that integer value up to the machine word size are returned as an integer value. For reference, the number of bytes in the machine word are stored in tcl_platform(wordSize).}
 		convert	bool	field	{bool(arg)} {Accepts any numeric value, or any string acceptable to string is boolean, and returns the corresponding boolean value 0 or 1. Non-zero numbers are true. Other numbers are false. Non-numeric strings produce boolean value in agreement with string is true and string is false.}
 		convert	wide	field	{wide(arg)} {The argument may be any numeric value. The integer part of arg is determined, and then the low order 64 bits of that integer value are returned as an integer value.}
-		logical	if	special {if(condition,true,?condition2,true2, ...?false}	{if condition is true, the value for "true" will be returned, otherwise the last parameter (false) is returned}
+		logical	if	special {if(condition,true,?condition2,true2, ...?false)}	{if condition is true, the value for "true" will be returned, otherwise the last parameter (false) is returned}
+		logical	catch	special {catch(value,?errorvalue?)}	{if an error is generated when calculating **value**, the function returns **errorvalue**. If **errorvalue** is not given, catch returns 1 on an error, and 0 on success (without catch, the error message is returned.)}
 		bio	region	special {region("chromosome:begin-end",...)}	{is true for any region in dataset that overlaps the given regions. Can also be given as region(chromosome,begin,end,...).}
+		bio	chr_clip	field {chr_clip(value)}	{Returns the chromosome name without "chr" in front (if present)}
 		bio	hovar	special {hovar(samplename)} {true if the given sample is a homozygous variant. This is equivalent to ($sequenced-samplename == "v" && $alleleSeq1-samplename == $alleleSeq2-samplename)}
 		bio	compare	special	{compare(samplename1,samplename2, ...)} {compares the variant in the given samples, and returns one of: sm (variant with the same genotype in all given samples, with all sequenced), df (different: variant in some, reference in other, with all sequenced), mm (mismatch; variant in all, but different genotypes, with all sequenced), un (unsequenced in some samples, variant in one of the others)}
 		bio	same	special	{same(sample1,sample2, ...)} {same: all samples have the same genotype (does not have to be a variant) (all sequenced)}
@@ -259,7 +262,11 @@ mainw method querybuilder_makecondition {fields operator values {join " or "}} {
 	return $insert
 }
 
-mainw method querybuilder_add {command {join and}} {
+mainw method querybuilder_add_easyquery {command} {
+}
+
+mainw method querybuilder_add {command {data {}} {join and}} {
+putsvars command data join
 	private $object fieldsw operatorsw valuew queryw
 	upvar #0 [$object.buttons.query cget -textvariable] query
 	set w $object.querybuilder.options.paned
@@ -350,6 +357,8 @@ mainw method querybuilder_add {command {join and}} {
 		} else {
 			$object querybuilder_insert $insert $command
 		}
+	} elseif {$command in {easyquery}} {
+		$object querybuilder_insert $data $join
 	} else {
 		global select_functions_insert
 		if {![llength $fields]} {error "Select some fields first"}
@@ -460,8 +469,7 @@ mainw method querybuilder_add {command {join and}} {
 
 mainw method querybuilder_function_add {function {join and}} {
 	private $object fieldsw operatorsw valuew functions
-putsvars function
-	$object querybuilder_add $function $join
+	$object querybuilder_add $function {} $join
 #	set fields [$fieldsw get]
 #	set operator [$operatorsw get]
 #	set values [$valuew get]
@@ -606,7 +614,7 @@ mainw method querybuilder {args} {
 	pack $w.query.buttons.clear -side left
 	button $w.query.buttons.functions -text functions -command [list $object querybuilder_functions $join]
 	pack $w.query.buttons.functions -side left
-	button $w.query.buttons.qquery -text easyquery -command [list $object easyquery [list $object querybuilder_add]]
+	button $w.query.buttons.qquery -text easyquery -command [list $object easyquery [list $object querybuilder_add easyquery]]
 	pack $w.query.buttons.qquery -side left
 	set sep 1
 	foreach command $funcbuttons {
@@ -615,7 +623,7 @@ mainw method querybuilder {args} {
 			pack $w.query.buttons.sep$sep -side left
 			incr sep
 		} else {
-			button $w.query.buttons.$command -text $command -command [list $object querybuilder_add $command $join]
+			button $w.query.buttons.$command -text $command -command [list $object querybuilder_add $command {} $join]
 			pack $w.query.buttons.$command -side left
 		}
 	}

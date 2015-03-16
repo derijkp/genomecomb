@@ -164,6 +164,7 @@ If **errorvalue** is not given, catch returns 1 on an error, and 0 on success (w
 ; **region("chromosome:begin-end",...)**: is true for any region in dataset that overlaps the given regions.
 Can also be given as region(chromosome,begin,end,...).
 If the chromosome value in the query or the data file starts with chr, this part is ignored: chr2 will match 2, as wel as Chr2.
+; **chr_clip(value)**: Returns the chromosome name without "chr" in front (if present)
 ; **hovar(samplename)**: true if the given sample is a homozygous variant. This is equivalent to ($sequenced-samplename == "v" && $alleleSeq1-samplename == $alleleSeq2-samplename)
 ; **zyg(?sequenced?,alleleSeq1,alleleSeq2,ref,alt)**: returns the zygosity code given the parameters.
 The sequenced parameter is optional; if it is present, a "u" will cause the zygosity to also be "u".
