@@ -262,9 +262,6 @@ mainw method querybuilder_makecondition {fields operator values {join " or "}} {
 	return $insert
 }
 
-mainw method querybuilder_add_easyquery {command} {
-}
-
 mainw method querybuilder_add {command {data {}} {join and}} {
 putsvars command data join
 	private $object fieldsw operatorsw valuew queryw
