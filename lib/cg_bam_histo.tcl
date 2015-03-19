@@ -86,7 +86,7 @@ proc cg_bam_histo {args} {
 		}
 		incr end -1
 		putslog $chr:$begin-$end
-		set data [split [string trim [exec samtools depth -r $chr:[expr {$begin+1}]-[expr {$end+1}] $bamfile]] \n]
+		set data [split [string trim [exec samtools depth -q 1 -r $chr:[expr {$begin+1}]-[expr {$end+1}] $bamfile]] \n]
 		set data [list_subindex $data 2]
 		set explen [expr {$end-$begin+1}]
 		set missing [expr {$explen-[llength $data]}]
