@@ -72,6 +72,10 @@ test genome_seq {gcsplit split} {
 	list [lsort -dict [glob tmp/temp-lowgc/*.fas]] [lsort -dict [glob tmp/temp-highgc/*.fas]]
 } {{tmp/temp-lowgc/r1.fas tmp/temp-lowgc/r2.fas tmp/temp-lowgc/r4.fas tmp/temp-lowgc/r5.fas tmp/temp-lowgc/r6.fas tmp/temp-lowgc/r7.fas tmp/temp-lowgc/r8.fas tmp/temp-lowgc/r10.fas tmp/temp-lowgc/r11.fas tmp/temp-lowgc/r15.fas tmp/temp-lowgc/r16.fas} {tmp/temp-highgc/r3.fas tmp/temp-highgc/r9.fas tmp/temp-highgc/r12.fas tmp/temp-highgc/r13.fas tmp/temp-highgc/r14.fas tmp/temp-highgc/r17.fas}} 
 
+test genome_seq {bugfix gcval error: -n 0.01 -p Common -r "N" -i "name" -gs 65 -gd 0} {
+	exec cg genome_seq -n 0.01 -p Common -r "N" -i "name" -gs 60 -gd 0 data/reg_genome_seq.tsv /complgen/refseq/hg19_test tmp/temp.fas
+} {}
+
 test primercheck {basic} {
 	exec cg primercheck data/primers.tsv /complgen/refseq/hg19_test tmp/primerinfo.tsv
 	exec diff tmp/primerinfo.tsv data/primercheck-results.tsv

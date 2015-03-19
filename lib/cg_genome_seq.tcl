@@ -194,14 +194,12 @@ proc cg_genome_seq {args} {
 			if {$idpos != -1} {
 				set name "[lindex $line $idpos] $name"
 			}
-			if {$displaygc} {
-				if {$gc == 0} {
-					set gcval [seq_gc $seq]
-					append name " GC:[format %.1f $gcval]"
-				} elseif {$gc != -1} {
-					set gcval [lmath_max [seq_gc $seq $gc]]
-					append name " GC:[format %.1f [seq_gc $seq]] maxGC($gc):[format %.1f $gcval]"
-				}
+			if {$gc == 0} {
+				set gcval [seq_gc $seq]
+				if {$displaygc} {append name " GC:[format %.1f $gcval]"}
+			} elseif {$gc != -1} {
+				set gcval [lmath_max [seq_gc $seq $gc]]
+				if {$displaygc} {append name " GC:[format %.1f [seq_gc $seq]] maxGC($gc):[format %.1f $gcval]"}
 			}
 			if {[info exists limitchars]} {
 				regsub -all {[^A-Za-z0-9_.-]} $name $limitchars name
