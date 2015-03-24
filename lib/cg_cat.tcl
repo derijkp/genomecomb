@@ -60,8 +60,15 @@ proc cg_cat {args} {
 		}
 	}
 	set header [lindex $headers 0]
+	set hlen [llength $header]
 	foreach testheader $headers {
 		set cor [list_cor $header $testheader]
+		if {[llength $testheader] != $hlen} {
+			if {$force eq ""} {
+				puts stderr "headers do not match, use -f to force or -m to merge"
+				exit 1
+			}
+		}
 		set poss [list_find $cor -1]
 		if {[llength $poss]} {
 			if {$force eq ""} {

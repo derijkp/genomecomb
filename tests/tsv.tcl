@@ -109,6 +109,14 @@ test tsv_cat {two diff header} {
 	exec cg cat data/reg1b.tsv data/reg2.tsv
 } {headers do not match, use -f to force or -m to merge} error
 
+test tsv_cat {two diff header} {
+	write_tab tmp/reg.tsv {
+		begin end
+		1 2
+	}
+	exec cg cat data/reg1b.tsv tmp/reg.tsv
+} {headers do not match, use -f to force or -m to merge} error
+
 test tsv_cat {two diff header -m} {
 	cg cat -m data/reg2.tsv data/reg1b.tsv
 } {# ++++ data/reg2.tsv ++++
