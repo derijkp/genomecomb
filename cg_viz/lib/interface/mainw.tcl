@@ -41,7 +41,7 @@ mainw method init args {
 		-height 10 \
 		-highlightthickness 0 \
 		-width 10
-	grid $object.canvas -row 2 -column 2 -sticky nesw
+#	grid $object.canvas -row 2 -column 2 -sticky nesw
 	canvas $object.canvas.data \
 		-height 50 \
 		-highlightthickness 0 \
@@ -123,7 +123,7 @@ $object start
 		-endnodecommand [varsubst object {$object tree_browse}] \
 		-opencommand [varsubst object {$object tree_open}] \
 		-closecommand [varsubst object {$object tree_close}]
-	$object.panedh configure \
+#	$object.panedh configure \
 		-window [varsubst object {$object.canvas}]
 	$object.panedv configure \
 		-window [varsubst object {$object.tree}]
