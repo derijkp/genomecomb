@@ -909,7 +909,7 @@ proc process_illumina {args} {
 			set resultbamfile map-${resultbamprefix}bwa-$sample.bam
 
 			# quality and adapter clipping
-			set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired -skips [list -skip $bamfile -skip $resultbamfile]]]
+			set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired -skips [list -skip $bamfile -skip $resultbamfile]]
 			#
 			# map using bwa
 			map_bwa_job $refseq $files $sample $paired -skips [list -skip $resultbamfile]
