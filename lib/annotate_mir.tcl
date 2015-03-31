@@ -124,7 +124,7 @@ proc annotatemir_one {oneloc geneobj {addtranscriptname 1}} {
 	return $result
 }
 
-proc annotatemir_dbopen {dbfile genecol transcriptcol extracols} {
+proc annotatemir_dbopen {dbfile genecol transcriptcol {extracols {}}} {
 	set df [gzopen $dbfile]
 	set header [tsv_open $df comment]
 	set extracols [list_common $extracols $header]
@@ -307,7 +307,7 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0}} {
 # Although this piece of code is shared with mirvas, mirvas does several things differently.
 # genomecomb does not have all the tools to do the structural analysis.
 # 
-proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcriptcol transcript} {extracols status} {flanksizes 100} {isomirname 0} {mirvas 0}} {
+proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcriptcol transcript} {flanksizes 100} {isomirname 0} {mirvas 0} {extracols status}} {
 # putsvars file genomefile dbfile name resultfile genecol transcriptcol flanksizes mirvas
 	global genomef
 	set file [file normalize $file]
@@ -418,7 +418,7 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 		# that are before current var, annotate
 		if {$mirvas && [llength $alist] > 1} {progress_step [expr {1.0/[llength $alist]}]}
 		foreach loc $alist {
-			log "annotating $loc"
+			# log "annotating $loc"
 			set num 0
 			set remove {}
 			set hitgenes ""
