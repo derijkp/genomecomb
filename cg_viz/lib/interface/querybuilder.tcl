@@ -55,6 +55,7 @@ invoke {} {
 		string	regexp	field_value	{regexp(value,pattern)} {true if value matches the regular expression given by **pattern**}
 		string	matches	field_value	{matches(value,pattern)} { true if value matches the glob pattern given by **pattern** (using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)}
 		string	concat	fields	{concat(value,...)} {makes one long string by appending all values.}
+		string	split	fields	{split(value,separator)} {extracts a list of elements from a string by appending all values.}
 		list	vector	fields	{vector(value1,value2, ...)} {creates a vector from a number of values. If some elements are vectors themselves, they will be concatenated}
 		list	lindex	field_value	{lindex(vector, position)} {the value of the element at the given **position** in the list. The first element is at position 0!}
 		list	llen	field	{llen(vector)} {number of elements in the vector}

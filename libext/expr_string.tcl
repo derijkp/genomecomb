@@ -5,3 +5,7 @@ proc tcl::mathfunc::concat {args} {
 proc tcl::mathfunc::length {string} {
 	string length $string
 }
+
+proc tcl::mathfunc::split {string {sep ,}} {
+	::split $string $sep
+}
