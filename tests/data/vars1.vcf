@@ -1,0 +1,21 @@
+##fileformat=VCFv4.0
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<ID=AC,Number=1,Type=Integer,Description="total number of alternate alleles in called genotypes">
+##INFO=<ID=AN,Number=1,Type=Integer,Description="total number of alleles in called genotypes">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth from MOSAIK BAM">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	sample1	sample2
+chr1	4001	.	G	A	.	PASS	AC=2;AN=4;DP=1	GT:DP	1/0:1	1/0:0
+chr1	4002	.	A	G,C	.	PASS	AC=4;AN=4;DP=1	GT:DP	1/1:1	1/1:0
+chr1	4100	.	C	T	.	PASS	AC=4;AN=4;DP=82	GT:DP	1/1:47	1/1:35
+chr1	5000	.	CAGCGTGGCAA	C	.	PASS	AC=4;AN=4;DP=73	GT:DP	0/1:32	1/1:41
+chr1	5021	.	G	C	.	PASS	AC=1;AN=4;DP=106	GT:DP	0/1:54	0/0:52
+chr2	4001	.	G	A	.	PASS	AC=;AN=4;DP=1	GT:DP	0/0:1	0/0:0
+chr2	4002	.	A	G,C	.	PASS	AC=4;AN=4;DP=1	GT:DP	1/1:1	1/1:0
+chr2	4100	.	C	T	.	PASS	AC=4;AN=4;DP=82	GT:DP	1/1:47	1/1:35
+chr2	5000	.	C	CAGCGTGGCAA	.	PASS	AC=4;AN=4;DP=73	GT:DP	1/0:32	0/0:41
+chr2	5001	.	G	C	.	PASS	AC=1;AN=4;DP=106	GT:DP	0/1:54	0/0:52
+chr2	5006	.	G	C,A	.	PASS	AC=1,1;AN=4;DP=106	GT:DP	0/1:54	0/2:52
+chr2	5011	.	G	C	.	PASS	AC=2;AN=4;DP=106	GT:DP	0/1:54	1/0:52
+chr2	5012	.	G	C	.	PASS	AC=1;AN=4;DP=106	GT:DP	0/1:54	0/0:52
+chr2	8001	.	G	C	.	PASS	AC=1;AN=4;DP=106	GT:DP	0/1:54	0/0:52

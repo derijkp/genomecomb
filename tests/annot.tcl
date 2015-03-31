@@ -423,6 +423,15 @@ test mir_annot {mir annotation with status} {
 	exec diff tmp/annot_test.tsv tmp/expected.tsv
 } {} 
 
+test var_annot {basic from vcf} {
+	exec cg annotate data/vars1.vcf tmp/annot.sft data/var_annot.sft
+	set fields {chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	annot_name	annot_freq}
+	exec cg select -rc 1 -f $fields tmp/annot.sft tmp/annot2.sft
+	cg splitalleles data/expected-vars1-var_annot.sft tmp/expected.sft.temp
+	exec cg select -rc 1 -f $fields tmp/expected.sft.temp tmp/expected.sft
+	exec diff tmp/annot2.sft tmp/expected.sft
+} {} 
+
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
 

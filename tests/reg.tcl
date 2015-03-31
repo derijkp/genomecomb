@@ -280,10 +280,9 @@ test regselect {basic2} {
 } {chromosome	begin	end	type
 chr1	4000	4001	snp
 chr1	4001	4002	snp
-chr1	4099	5000	snp
+chr1	4099	4100	snp
 chr1	5000	5010	del
-chr2	5000	5001	snp
-chr2	5000	5010	ins}
+chr2	5000	5001	snp}
 
 test regselect {near} {
 	exec cg regselect data/vars1.sft data/reg_annot.sft 10 > tmp/temp.tsv
@@ -291,12 +290,11 @@ test regselect {near} {
 } {chromosome	begin	end	type
 chr1	4000	4001	snp
 chr1	4001	4002	snp
-chr1	4099	5000	snp
+chr1	4099	4100	snp
 chr1	5000	5010	del
 chr1	5020	5021	snp
-chr2	4099	5000	snp
+chr2	5000	5000	ins
 chr2	5000	5001	snp
-chr2	5000	5010	ins
 chr2	5005	5006	snp
 chr2	5010	5011	snp
 chr2	5011	5012	snp}

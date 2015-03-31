@@ -137,8 +137,8 @@ test distr2chr {basic} {
 	list [lsort -dict [glob tmp/*]] [file_read tmp/distrvars1-chr1]
 } {{tmp/distrvars1-chr1 tmp/distrvars1-chr2 tmp/distrvars1-chromosome} {chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
 chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
-chr1	4099	5000	snp	C	T	T	T	47	v	T	T	35	v	1,2
-chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v	-	-	41	u	1;2
+chr1	4099	4100	snp	C	T	T	T	47	v	T	T	35	v	1,2
+chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v			41	u	1;2
 chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
 }} 
 
@@ -148,8 +148,8 @@ test distr2chr {header} {
 	list [lsort -dict [glob tmp/*]] [file_read tmp/distrvars1-chr1]
 } {{tmp/distrvars1-chr1 tmp/distrvars1-chr2} {chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
 chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
-chr1	4099	5000	snp	C	T	T	T	47	v	T	T	35	v	1,2
-chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v	-	-	41	u	1;2
+chr1	4099	4100	snp	C	T	T	T	47	v	T	T	35	v	1,2
+chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v			41	u	1;2
 chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
 }} 
 

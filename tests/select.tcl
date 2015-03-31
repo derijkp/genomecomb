@@ -295,12 +295,12 @@ chr2	4001	4002	G	G	G	G}
 test select "lmin column$dboptt" {
 	global dbopt
 	split [exec cg select {*}$dbopt -f {chromosome begin {lmin=lmin($list)}} < data/vars1.sft] \n
-} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	NaN} {chr2	8000	NaN}}
+} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	3} {chr2	5000	2} {chr2	5005	4} {chr2	5010	20} {chr2	5011	NaN} {chr2	8000	NaN}}
 
 test select "lmind column$dboptt" {
 	global dbopt
 	split [exec cg select {*}$dbopt -f {chromosome begin {lmin=lmind($list,10)}} < data/vars1.sft] \n
-} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	10} {chr2	5011	10} {chr2	8000	10}}
+} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	3} {chr2	5000	2} {chr2	5005	4} {chr2	5010	10} {chr2	5011	10} {chr2	8000	10}}
 
 test select "lmind select$dboptt" {
 	global dbopt
@@ -310,12 +310,12 @@ test select "lmind select$dboptt" {
 test select "lmax column$dboptt" {
 	global dbopt
 	split [exec cg select {*}$dbopt -f {chromosome begin {lmax=lmax($list)}} < data/vars1.sft] \n
-} {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	NaN} {chr2	8000	NaN}}
+} {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	3} {chr2	5000	2} {chr2	5005	4} {chr2	5010	20} {chr2	5011	NaN} {chr2	8000	NaN}}
 
 test select "lmaxd column$dboptt" {
 	global dbopt
 	split [exec cg select {*}$dbopt -f {chromosome begin {lmax=lmaxd($list,0)}} < data/vars1.sft] \n
-} {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	20} {chr2	5011	0} {chr2	8000	0}}
+} {{chromosome	begin	lmax} {chr1	4000	4} {chr1	4001	4} {chr1	4099	2} {chr1	5000	2} {chr1	5020	3} {chr2	4000	2} {chr2	4001	4} {chr2	4099	4} {chr2	5000	3} {chr2	5000	2} {chr2	5005	4} {chr2	5010	20} {chr2	5011	0} {chr2	8000	0}}
 
 test select "lmaxd select$dboptt" {
 	global dbopt
@@ -325,32 +325,32 @@ test select "lmaxd select$dboptt" {
 test select "counthasone column$dboptt" {
 	global dbopt
 	split [exec cg select {*}$dbopt -f {chromosome begin {lmin=counthasone($list, ==2)}} < data/vars1.sft] \n
-} {{chromosome	begin	lmin} {chr1	4000	0} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	0} {chr2	4000	1} {chr2	4001	1} {chr2	4099	1} {chr2	5000	1} {chr2	5000	0} {chr2	5005	0} {chr2	5010	0} {chr2	5011	0} {chr2	8000	0}}
+} {{chromosome	begin	lmin} {chr1	4000	0} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	0} {chr2	4000	1} {chr2	4001	1} {chr2	4099	1} {chr2	5000	0} {chr2	5000	1} {chr2	5005	0} {chr2	5010	0} {chr2	5011	0} {chr2	8000	0}}
 
 test select "ROW$dboptt" {
 	global dbopt
 	split [exec cg select {*}$dbopt -f {chromosome begin end} -q {$ROW == 2} < data/vars1.sft] \n
-} {{chromosome	begin	end} {chr1	4099	5000}}
+} {{chromosome	begin	end} {chr1	4099	4100}}
 
 test select "ROW$dboptt" {
 	global dbopt
 	split [exec cg select {*}$dbopt -f {chromosome begin end ROW} -q {$ROW >= 2 && $ROW <= 3} < data/vars1.sft] \n
-} {{chromosome	begin	end	ROW} {chr1	4099	5000	2} {chr1	5000	5010	3}}
+} {{chromosome	begin	end	ROW} {chr1	4099	4100	2} {chr1	5000	5010	3}}
 
 test select "shared objects bugcheck$dboptt" {
 	global dbopt
 	split [exec cg select {*}$dbopt -f {chromosome begin end {test=[set ::keep $begin]}} -q {$ROW between {2 3}} < data/vars1.sft] \n
-} {{chromosome	begin	end	test} {chr1	4099	5000	4099} {chr1	5000	5010	5000}}
+} {{chromosome	begin	end	test} {chr1	4099	4100	4099} {chr1	5000	5010	5000}}
 
 test select "shared objects bugcheck$dboptt" {
 	global dbopt
 	split [exec cg select {*}$dbopt -f {chromosome begin end {test="[get ::keep 1]-[set ::keep $begin]"}} -q {$ROW between {2 3}} < data/vars1.sft] \n
-} {{chromosome	begin	end	test} {chr1	4099	5000	1-4099} {chr1	5000	5010	4099-5000}}
+} {{chromosome	begin	end	test} {chr1	4099	4100	1-4099} {chr1	5000	5010	4099-5000}}
 
 test select "start brace bugcheck$dboptt" {
 	global dbopt
-	split [exec cg select {*}$dbopt -f {chromosome begin end {type=($type == "snp")? "Snp" : (($type == "del")? "Deletion" : $type)}} -q {$ROW in {2 3 9 10}} < data/vars1.sft] \n
-} {{chromosome	begin	end	type} {chr1	4099	5000	Snp} {chr1	5000	5010	Deletion} {chr2	5000	5010	ins} {chr2	5005	5006	Snp}}
+	split [exec cg select {*}$dbopt -f {chromosome begin end {type=($type == "snp")? "Snp" : (($type == "del")? "Deletion" : $type)}} -q {$ROW in {2 3 8 10}} < data/vars1.sft] \n
+} {{chromosome	begin	end	type} {chr1	4099	4100	Snp} {chr1	5000	5010	Deletion} {chr2	5000	5000	ins} {chr2	5005	5006	Snp}}
 
 test select "list @-$dboptt" {
 	global dbopt
@@ -695,6 +695,23 @@ test select "sampleinfo in calc field wildcard$dboptt" {
 		sample3	f
 	}
 	exec cg select {*}$dbopt -f {id {g-*=$gender-*}} tmp/temp.tsv
+} {id	g-sample1	g-sample2	g-sample3
+1	m	f	f}
+
+test select "sampleinfo in in -f and -q saggregate$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	freq-sample2	freq-sample3
+		1	0.4	0.8	1.0
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select {*}$dbopt -q {scount($gender eq "f" and $freq > 0.9) > 0} -f {id gender-sample1} tmp/temp.tsv
 } {id	g-sample1	g-sample2	g-sample3
 1	m	f	f}
 

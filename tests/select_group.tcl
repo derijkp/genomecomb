@@ -80,15 +80,15 @@ test select_group {group calc col in func} {
 	cg select -f {{size=$end - $begin}} -g type -gc {count,distinct(size)} data/expected_near-vars1-reg_annot.sft
 } {type	count	distinct_size
 del	1	10
-ins	1	10
-snp	12	1,901}
+ins	1	0
+snp	12	1}
 
 test select_group {group calc col in func extra space in def} {
 	cg select -f {{size =$end - $begin}} -g type -gc {count,distinct(size)} data/expected_near-vars1-reg_annot.sft
 } {type	count	distinct_size
 del	1	10
-ins	1	10
-snp	12	1,901}
+ins	1	0
+snp	12	1}
 
 test select_group {group distinct} {
 	cg select -g type -gc {sample {} count,distinct(coverage)} data/expected_near-vars1-reg_annot.sft

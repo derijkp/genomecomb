@@ -168,6 +168,19 @@ test vcf2tsv {vcf2tsv ins and del split} {
 	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
 } {}
 
+test vcf2tsv {vcf2tsv vars_mirna.vcf} {
+	exec cg vcf2tsv -s 1 data/vars_mirna.vcf tmp/temp.tsv
+	cg select -rc 1 -rf {name quality filter totalcoverage	allelecount	totalallelecount} tmp/temp.tsv tmp/temp2.tsv
+	cg select -rc 1 -rf {name} data/vars_mirna.tsv tmp/expected.tsv
+	exec diff tmp/temp2.tsv tmp/expected.tsv
+} {22,23c22,23
+< chr1	1102505	1102508	del	NNN	
+< chr1	1102520	1102537	del	NNNNNNNNNNNNNNNNN	
+---
+> chr1	1102505	1102508	del	3	
+> chr1	1102520	1102537	del	17	
+child process exited abnormally} error
+
 test bed2sft {bed2sft} {
 	exec cg bed2sft data/sample.bed
 } {#browser position chr7:127471196-127495720

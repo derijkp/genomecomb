@@ -231,7 +231,7 @@ chr2	4001	4002	G	G	G	G}
 
 test mselect {lmin column} {
 	split [exec cg mselect -f {chromosome begin {lmin=lmin($list,10)}} < data/vars1.sft] \n
-} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	2} {chr2	5000	3} {chr2	5005	4} {chr2	5010	} {chr2	5011	} {chr2	8000	}}
+} {{chromosome	begin	lmin} {chr1	4000	4} {chr1	4001	1} {chr1	4099	1} {chr1	5000	1} {chr1	5020	3} {chr2	4000	2} {chr2	4001	2} {chr2	4099	2} {chr2	5000	3} {chr2	5000	2} {chr2	5005	4} {chr2	5010	} {chr2	5011	} {chr2	8000	}}
 
 test mselect {lmin select} {
 	split [exec cg mselect -f {chromosome begin} -q {lmin($list,10) == 2} < data/vars1.sft] \n
