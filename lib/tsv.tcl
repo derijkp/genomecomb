@@ -4,16 +4,21 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc tsv_open {f {keepheaderVar {}}} {
-	if {$keepheaderVar ne ""} {
-		upvar $keepheaderVar keepheader
+proc tsv_open {f {commentVar {}} {lineVar {}}} {
+	if {$commentVar ne ""} {
+		upvar $commentVar comment
 	}
-	set keepheader {}
+	if {$lineVar ne ""} {
+		upvar $lineVar line
+	}
+	set comment {}
 	set keep 0
 	set buffering [fconfigure $f -buffering]
 	fconfigure $f -buffering line
 	set split 1
-	set line [gets $f]
+	if {![info exists line]} {
+		set line [gets $f]
+	}
 	if {[regexp {^@HD[\t]VN} $line]} {
 		# sam file
 		while {![eof $f]} {
@@ -21,11 +26,11 @@ proc tsv_open {f {keepheaderVar {}}} {
 			if {$fchar ne "@"} {
 				break
 			}
-			lappend keepheader \#$line
+			lappend comment \#$line
 			set pos [tell $f]
 			set line [gets $f]
 		}
-		set keepheader [join $keepheader \n]\n
+		set comment [join $comment \n]\n
 		seek $f $pos start
 		set len [llength [split $line \t]]
 		set header {qname flag rname pos mapq cigar rnext pnext tlen seq qual}
@@ -44,7 +49,7 @@ proc tsv_open {f {keepheaderVar {}}} {
 	}
 	while {![eof $f]} {
 		if {![string length $line]} {
-			lappend keepheader \#
+			lappend comment \#
 			set line [gets $f]
 			break
 		}
@@ -60,22 +65,22 @@ proc tsv_open {f {keepheaderVar {}}} {
 				break
 			}
 		}
-		lappend keepheader $line
+		lappend comment $line
 		set line [gets $f]
 	}
 	fconfigure $f -buffering $buffering
 	set fchar [string index $line 0]
 	if {[inlist {# >} $fchar]} {
-		set keepheader [join $keepheader \n]\n
-		if {$vcf} {append keepheader \#}
+		set comment [join $comment \n]\n
+		if {$vcf} {append comment \#}
 		if {!$split} {
 			return [string range $line 1 end]
 		} else {
 			return [split [string range $line 1 end] \t]
 		}
 	} else {
-		if {[llength $keepheader]} {
-			set keepheader [join $keepheader \n]\n
+		if {[llength $comment]} {
+			set comment [join $comment \n]\n
 		}
 		return [split $line \t]
 	}
@@ -238,4 +243,27 @@ proc tsv_varsfile {tsvfile} {
 		file rename $varsfile.temp $varsfile
 	}
 	return $varsfile
+}
+
+proc tsv_convert2var {file headerVar {commentVar {}}} {
+	upvar $headerVar header
+	if {$commentVar ne ""} {
+		upvar $commentVar comment
+	}
+	set comment ""
+	set f [gzopen $file]
+	set line [gets $f]
+	if {[regexp {##fileformat=VCF} $line]} {
+		catch {gzclose $f}
+		set tempfile [tempfile]
+		exec vcf2tsv 1 [gztemp $file] | cg select -s - > $tempfile
+		set f [open $tempfile]
+		set header [tsv_open $f comment]
+		close $f
+	} else {
+		set tempfile $file
+		set header [tsv_open $f comment line]
+		catch {gzclose $f}
+	}
+	return $tempfile
 }

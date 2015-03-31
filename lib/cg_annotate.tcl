@@ -278,7 +278,8 @@ proc cg_annotate {args} {
 		exit 1
 	}
 	foreach {file resultfile} $args break
-	set file [gztemp $file]
+	set gzfile [gztemp $file]
+	set file $gzfile
 	set dbfiles {}
 	foreach testfile [lrange $args 2 end] {
 		if {[file isdir $testfile]} {
@@ -294,9 +295,7 @@ proc cg_annotate {args} {
 		lappend names [dict get $dbinfo name]
 		lappend newh {*}[dict get $dbinfo newh]
 	}
-	set f [gzopen $file]
-	set header [tsv_open $f]
-	catch {close $f}
+	set file [tsv_convert2var $file header comment]
 	set poss [tsv_basicfields $header 6 0]
 	set common [list_common $header $newh]
 	if {[llength $common]} {
@@ -409,7 +408,7 @@ proc cg_annotate {args} {
 		exec paste $file {*}$afiles > $resultfile
 	}
 	if {[llength $afiles]} {file delete {*}$afiles}
-	gzrmtemp $file
+	gzrmtemp $gzfile
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
