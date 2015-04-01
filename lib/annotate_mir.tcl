@@ -311,13 +311,15 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 # putsvars file genomefile dbfile name resultfile genecol transcriptcol flanksizes mirvas
 	global genomef
 	set file [file normalize $file]
-	set genomefile [file normalize $genomefile]
 	set dbfile [file normalize $dbfile]
 	set resultfile [file normalize $resultfile]
 	file mkdir [file dir $resultfile]
 	if {!$mirvas} {annot_init}
-	if {[catch {eof $genomef}]} {
+	if {$genomefile ne "" && [catch {eof $genomef}]} {
+		set genomefile [file normalize $genomefile]
 		set genomef [genome_open $genomefile]
+	} else {
+		set genomef {}
 	}
 	catch {close $f}; catch {close $df}; catch {close [dict get $dbobj df]} ;catch {close $o};
 	set f [gzopen $file]
@@ -517,7 +519,9 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 		}
 		puts $o $result
 	}
-	# genome_close $genomef
+	if {$genomefile ne ""} {
+		genome_close $genomef
+	}
 	if {$mirvas == 2} {
 		mirvas_draw_close $mo
 	}

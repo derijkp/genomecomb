@@ -349,10 +349,8 @@ proc cg_annotate {args} {
 				set dbdir [file dir [file_absolute $dbfile]]
 			}
 			set genomefile [lindex [glob -nocomplain $dbdir/genome_*.ifas] 0]
-			if {![file exists $genomefile]} {
-				puts stderr "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
-				exit 1
-			}
+			# we do not need the genomefile for plain annotation
+			set genomefile {}
 			lappend afiles $resultfile.${name}_annot
 			if {[file exists $resultfile.${name}_annot]} {
 				putslog "$resultfile.${name}_annot exists: skipping scan"
