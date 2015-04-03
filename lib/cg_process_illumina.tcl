@@ -854,6 +854,7 @@ proc process_illumina {args} {
 	}
 	lappend dbfiles [glob $dbdir/extra/*dbnsfp*.tsv]
 	lappend dbfiles [glob $dbdir/extra/var_*_evs.tsv]
+	lappend dbfiles [glob $dbdir/extra/var_*_exac.tsv]
 	set destdir [file_absolute $destdir]
 	# check projectinfo
 	projectinfo $destdir dbdir split
