@@ -374,7 +374,7 @@ test bcol_annot {basic uncompressed bcol} {
 
 test mir_annot {basic mir annotation} {
 	test_cleantmp
-	exec cg annotate -dbdir /complgen/refseq/hg19 data/vars_mirna.tsv tmp/annot_test.tsv data/mir_small.tsv
+	exec cg annotate data/vars_mirna.tsv tmp/annot_test.tsv data/mir_small.tsv
 	exec diff tmp/annot_test.tsv data/expected-vars_mirna_annot.tsv
 } {} 
 
@@ -383,7 +383,7 @@ test mir_annot {basic mir annotation without transcript col} {
 	cg select -rf transcript data/mir_small.tsv tmp/mir_small.tsv
 	cg select -q {$ROW > 15} data/vars_mirna.tsv tmp/vars_mirna.tsv
 	cg select -q {$ROW > 15} data/expected-vars_mirna_annot.tsv tmp/expected.tsv
-	exec cg annotate -dbdir /complgen/refseq/hg19 tmp/vars_mirna.tsv tmp/annot_test.tsv tmp/mir_small.tsv
+	exec cg annotate tmp/vars_mirna.tsv tmp/annot_test.tsv tmp/mir_small.tsv
 	exec diff tmp/annot_test.tsv tmp/expected.tsv
 } {} 
 
@@ -401,7 +401,7 @@ test mir_annot {basic mir annotation same name transcipt} {
 		chr1	567760	567761	snp	T	C	arm-3p-end	mir1+:arm3p(m-1e)	mir1+
 	}
 	cg select -q {$name in {pre arm-5p-1 arm-3p-end}} data/vars_mirna.tsv tmp/vars_mirna.tsv
-	exec cg annotate -dbdir /complgen/refseq/hg19 tmp/vars_mirna.tsv tmp/annot_test.tsv tmp/mir_small.tsv
+	exec cg annotate tmp/vars_mirna.tsv tmp/annot_test.tsv tmp/mir_small.tsv
 	exec diff tmp/annot_test.tsv tmp/expected.tsv
 } {} 
 
@@ -419,7 +419,7 @@ test mir_annot {mir annotation with status} {
 		chr1	567760	567761	snp	T	C	arm-3p-end	mir1+:arm3p(m-1e);mir1b+:arm3p(m-1e)	mir1+;mir1b+ v;p
 	}
 	cg select -q {$name in {pre arm-5p-1 arm-3p-end}} data/vars_mirna.tsv tmp/vars_mirna.tsv
-	exec cg annotate -dbdir /complgen/refseq/hg19 tmp/vars_mirna.tsv tmp/annot_test.tsv tmp/mir_small.tsv
+	exec cg annotate tmp/vars_mirna.tsv tmp/annot_test.tsv tmp/mir_small.tsv
 	exec diff tmp/annot_test.tsv tmp/expected.tsv
 } {} 
 
