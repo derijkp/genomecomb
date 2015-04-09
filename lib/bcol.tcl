@@ -26,7 +26,7 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 			progress start 1 "uncompressing $file for indexing, please be patient"
 			progress message "uncompressing $file for indexing, please be patient (no progress shown)"
 			if {$ext eq ".rz"} {
-				set tempfile [gztemp $compar_file]
+				set tempfile [gztemp $file]
 			} else {
 				decompress $file
 				set file [file root $file]
