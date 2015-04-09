@@ -711,8 +711,8 @@ test select "sampleinfo in in -f and -q saggregate$dboptt" {
 		sample2	f
 		sample3	f
 	}
-	exec cg select {*}$dbopt -q {scount($gender eq "f" and $freq > 0.9) > 0} -f {id gender-sample1} tmp/temp.tsv
-} {id	g-sample1	g-sample2	g-sample3
+	exec cg select {*}$dbopt -q {scount($gender eq "f" and $freq > 0.9) > 0} -f {id gender-sample1 gender-sample2 gender-sample3} tmp/temp.tsv
+} {id	gender-sample1	gender-sample2	gender-sample3
 1	m	f	f}
 
 test select "wildcard calc column in query$dboptt" {

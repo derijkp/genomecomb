@@ -1123,7 +1123,11 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				}
 				# code for query
 				append tclcode [tsv_select_makecol make_col$num $code $tempneededfields $prequery]
-				set calccols($rfield) [list "\t\t\t\tset \{$rfield\} \[make_col$num \$\{[join $tempneededfields \}\ \$\{]\}\]\n" $tempneededfields]
+				if {[llength $tempneededfields]} {
+					set calccols($rfield) [list "\t\t\t\tset \{$rfield\} \[make_col$num \$\{[join $tempneededfields \}\ \$\{]\}\]\n" $tempneededfields]
+				} else {
+					set calccols($rfield) [list "\t\t\t\tset \{$rfield\} \[make_col$num\]\n" $tempneededfields]
+				}
 			}
 			incr num
 		}
@@ -1370,6 +1374,7 @@ proc cg_select {args} {
 			monetdb_select $db $table $query $fields $sortfields $newheader $sepheader $o $hc $inverse $group $groupcols
 		} result]
 	} else {
+		# putsvars query fields sortfields newheader sepheader f o hc inverse group groupcols index samplingskip removecomment
 		set error [catch {
 			tsv_select $query $fields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $samplingskip $removecomment
 		} result]
