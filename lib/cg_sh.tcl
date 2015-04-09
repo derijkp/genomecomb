@@ -30,7 +30,7 @@ proc cg_sh {args} {
 	}
 	if {[info commands "console"] == "console"} {
 		console show
-	} elseif {[lsearch $args nox] == -1 && ![catch {package require eltclsh}]} {
+	} elseif {[lsearch $args el] != -1 && ![catch {package require eltclsh}]} {
 		namespace eval el {}
 		proc el::echo {msg} {return $msg}
 		set ::el::prompt1 {el::echo "cg% "}
@@ -51,8 +51,13 @@ proc cg_sh {args} {
 		uplevel #0 interactive
 	} elseif {[lsearch $args nox] == -1 && ![catch {package require Tclx}]} {
 		signal -restart error SIGINT
+		rename cindex tclx_cindex
 		uplevel #0 {commandloop -prompt1 {puts -nonewline "% "} -prompt2 {puts -nonewline ""}}
 	} else {
+		if {![catch {package require Tclx}]} {
+			signal -restart error SIGINT
+			rename cindex tclx_cindex
+		}
 		package require TclReadLine
 		uplevel #0 TclReadLine::interact
 	}
