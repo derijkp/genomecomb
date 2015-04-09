@@ -779,7 +779,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 				lappend curstack [list @op ~]
 			}
 		} else {
-			error "????"
+			error "Error: Could not parse query at character $pos"
 		}
 	}
 	if {$stack ne ""} {
