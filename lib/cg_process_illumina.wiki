@@ -13,13 +13,14 @@ As input, the command expects a basic genomecomb project directory with
 illumina sequencing data (projectdir).
 
 The projectdir will contain a subdirectory for each sample (sampledir) in
-the project. Each sampledir contains a subdirectory named fastq that
-contains the fastq files for that sample. The names of matching fastq
-files of paired reads should be consecutive when sorted naturaly,the
-forward reads first. The usual naming of these files (same name, except
-for a 1 and 2) is ok. Only subdirectories containing these fastq dirs are
-considered sampledirs. The name of each sample is taken from the sampledir
-name. The sample name should not contain hyphens (-)
+the project. The sample directories may also be in a subdirectory called
+samples (which is more organized). Each sampledir contains a subdirectory
+named fastq that contains the fastq files for that sample. The names of
+matching fastq files of paired reads should be consecutive when sorted
+naturaly,the forward reads first. The usual naming of these files (same
+name, except for a 1 and 2) is ok. Only subdirectories containing these
+fastq dirs are considered sampledirs. The name of each sample is taken
+from the sampledir name. The sample name should not contain hyphens (-)
 
 By default reads are clipped using fastq-mcf, aligned to the reference
 genome in dbdir using bwa, duplicates removed (using picard) and realigned
@@ -90,7 +91,7 @@ of resulting variants. This option can be added multiple times (with different f
 
 
 supports job options:
-; **-d x**: distribute subjobs of command over x processes
+; **-d number**: distribute subjobs of command over **number** processes
 ; **-d sge**: use grid engine to distribute subjobs
 
 == Dependencies ==
@@ -104,8 +105,7 @@ named gatk and picard will be searched in the PATH.
 {{{
 export GATK=/opt/bio/GenomeAnalysisTK-2.4-9-g532efad/
 export PICARD=/opt/bio/picard-tools-1.87
-cg process_conv_illmastr 130625_M01318_0013_000000000-A546C testproject
-cg process_mastr -d 2 test.mastr testproject /complgen/refseq/hg19
+cg process_illumina -d sge testproject /complgen/refseq/hg19
 }}}
 
 == Category ==

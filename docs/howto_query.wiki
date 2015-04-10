@@ -1,90 +1,105 @@
 = Query =
 
+This howto illustrates some of the uses of the "cg select" command line to query tab-separated data files.
+More extensive information about the command can be found in the [[../cg_select|cg select help]].
+The same queries can be performed in a GUI with a query builder to aid using [[../cg_viz|cg viz]]
+
 == Example files ==
 
-To be able to demonstrate selected queries, we have made our annotations of the comparison of chr22 of the NA19240 individual sequenced with Illumina GAII and Complete Genomics available (available through the [[../install|install]] page). A detailed description of the columns present in this file are presented in the [[headers|Headers]] section.
+To be able to demonstrate selected queries, we have made our annotations
+of the comparison of chr22 of the NA19240 individual sequenced with
+Illumina GAII and Complete Genomics available (available through the
+[[../install|install]] page). A detailed description of the columns
+present in this file are presented in the [[headers|Headers]] section.
 
 == Select lines based on specific properties ==
 
-Select exome (very broad): Select all exonic variants, even if only predicited (genscan and augustusAbinitio).
+Select exome (very broad): Select all exonic variants.
 genesrc_impact will contain CDS ot UTR in the impact field if exonic.
 {{{
 cg select -q '
     $refGene_impact ~/CDS|UTR/ || $knownGene_impact ~/CDS|UTR/ || $ensGene_impact ~/CDS|UTR/
-    || $acembly_impact ~/CDS|UTR/ || $genscan_impact ~/CDS|UTR/ || $augustusAbinitio_impact ~ /CDS|UTR/
-' annotNA19240_chrom22.tsv.gz > annotNA19240_chrom22_exome.tsv
+    || $acembly_impact ~/CDS|UTR/
+' annotNA19240_chrom22.tsv.rz > annotNA19240_chrom22_exome.tsv
 }}}
 
 Same result, but shorter and more generic query using the **count** function
 {{{
-cg select -q 'count($*_impact, ~/CDS|UTR/) > 0' annotNA19240_chrom22.tsv.gz > annotNA19240_chrom22_exome.tsv
+cg select -q 'count($*_impact, ~/CDS|UTR/) > 0' annotNA19240_chrom22.tsv.rz > annotNA19240_chrom22_exome.tsv
 }}}
 
 Write all insert variant positions where the coverage of Complete Genomics is higher or equal to 20 to the file "plus20.sft"
 {{{
 cg select -q ' $type=="ins" && $coverage-cgNA19240 >= 20 ' \
-    NA19240_chrom22.tsv.gz > plus20.sft
+    NA19240_chrom22.tsv.rz > plus20.sft
 }}}
 
 List the genomic positions (chromosome, begin, end) of all missense SNPs (according to complete genomics 
 annotation) in NA19240 chromosome 22
 {{{
 cg select -q ' $type=="snp" && $impact == "MISSENSE" ' \
-    -f 'chromosome begin end' NA19240_chrom22.tsv.gz
+    -f 'chromosome begin end' NA19240_chrom22.tsv.rz
 }}}
 
-List the headers of the file NA19240_chrom22.tsv.gz
+List the headers of the file NA19240_chrom22.tsv.rz
 {{{
-cg select -h NA19240_chrom22.tsv.gz
+cg select -h NA19240_chrom22.tsv.rz
 }}}
 
 Show for each of the different impact types (e.g. missense snp) how many variants are present
 {{{
-cg select -f impact NA19240_chrom22.tsv.gz | sort | uniq -c > refgenetypes.tsv
+cg select -g impact NA19240_chrom22.tsv.rz > refgenetypes2.tsv
 }}}
 
 Extracts a specific region from the file
 {{{
 cg select \
     -q '$chromosome == "chr22" && $begin > 10000 && $end < 200000' \
-    NA19240_chrom22.tsv.gz > NA19240_chrom22_region.tsv
+    NA19240_chrom22.tsv.rz > NA19240_chrom22_region.tsv
 }}}
 
 Select all variants where the same genotype is called between CG and RTG callers on the CG genome 
 {{{
-cg select -q 'sm(cgNA19240, cgrtgNA19240)' NA19240_chrom22.tsv.gz
+cg select -q 'sm(cgNA19240, cgrtgNA19240)' NA19240_chrom22.tsv.rz
 }}}
 
 Select all positions where the same genotype is called between CG and RTG callers, can be reference calls if the Illumina genome calls a variant at that position
 {{{
-cg select -q 'same(cgNA19240, cgrtgNA19240)' NA19240_chrom22.tsv.gz
+cg select -q 'same(cgNA19240, cgrtgNA19240)' NA19240_chrom22.tsv.rz
 }}}
 
 Select mismatches between CG and RTG callers on the CG genome, i.e. a variant is called by both but with a different genotype
 {{{
-cg select -q 'mm(cgNA19240, cgrtgNA19240)' NA19240_chrom22.tsv.gz
+cg select -q 'mm(cgNA19240, cgrtgNA19240)' NA19240_chrom22.tsv.rz
 }}}
 
 Select all variants not in simple tandem repeats, microsatellites or segmental duplications
 {{{
-cg select -q '$type == "snp" \
+cg select -q '$type == "snp" 
     && $simpleRepeat == "" && $microsat == "" && $genomicSuperDups == "" ' \
-    NA19240_chrom22.tsv.gz > nonrepeat.tsv
+    NA19240_chrom22.tsv.rz > nonrepeat.tsv
 }}}
 
 Select all lines where all 4 technologies (Illumina and CG each with two SNV callers) call a variant
 {{{
 cg select \
-    -q '$sequenced-cgNA19240 == "v" && $sequenced-ilNA19240 == "v" \
+    -q '$sequenced-cgNA19240 == "v" && $sequenced-ilNA19240 == "v"
         && $sequenced-cgrtgNA19240 == "v" && $sequenced-ilrtgNA19240 == "v"' \
-        NA19240_chrom22.tsv.gz > allvariant.tsv
+        NA19240_chrom22.tsv.rz allvariant.tsv
 }}}
 
 Select all lines where all 4 technologies call a variant, but by using the **count** function
 {{{
 cg select \
     -q 'count($sequenced-*, == "v")  == 4' \
-    NA19240_chrom22.tsv.gz > allvariant2.tsv
+    NA19240_chrom22.tsv.rz > allvariant2.tsv
+}}}
+
+Select all lines where all 4 technologies call a variant, but by using the **scount** function
+{{{
+cg select \
+    -q 'scount($sequenced == "v")  == 4' \
+    NA19240_chrom22.tsv.rz > allvariant3.tsv
 }}}
 
 Select all SNVs with coverage between 20 and 100 and not in clustered SNV regions for the cgNA19240 genome
@@ -97,19 +112,16 @@ cg select \
     && $coverage-cgNA19240 <= 100
     && $cluster-cgNA19240 == ""
     ' \
-    NA19240_chrom22.tsv.gz > highconfidence.tsv
+    NA19240_chrom22.tsv.rz > highconfidence.tsv
 }}}
 
-Select all SNVs with coverage between 20 and 100 and not in clustered SNV regions for all 4 genomes (Illumina and CG each with two SNV callers)
+Select all SNVs with coverage between 20 and 100 and not in clustered SNV regions in at least 3 genomes (Illumina and CG each with two SNV callers)
 {{{
 cg select \
     -q '
-    count($sequenced-*, == "v")  == 4
+    scount($sequenced == "v" && $coverage >= 20 && $coverage <= 100 && $cluster == "")  >= 3
     && $type == "snp"
-    && count($coverage-*, <20) == 0
-    && count($coverage-*, > 100) == 0
-    && count($cluster-*, != "") == 0
     ' \
-    NA19240_chrom22.tsv.gz > highconfidence2.tsv
+    NA19240_chrom22.tsv.rz > highconfidence2.tsv
 }}}
 

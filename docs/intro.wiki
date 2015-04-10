@@ -1,15 +1,25 @@
 = Introduction =
 
 == GenomeComb ==
-GenomeComb provides import facilities for Complete Genomics
-([[cg_process_sample|cg_process_sample command]]), Real Time Genomics
-([[cg_process_rtgsample|cg_process_rtgsample command]]) and 
-VariantCallFormat (VCF) variant files ([[cg_vcf2sft|vcf2sft command]]).
-Multiple genomes can be compared within one single, annotated file using
-the  [[howto_multicompar|multicompar protocol]]. Fast querying of this
-outputfile is achieved using the [[cg_select|cg select]] tool, of which several
-examples can be seen in the [[howto_query|Howto::Query]] section.
+GenomeComb provides tools to generate, combine and analyze whole genome,
+exome or targetted sequencing data. Variant files in tab-separated format
+from different sequencing datasets can be [[cg_multicompar|combined]]
+taking into account which regions are actually sequenced (given as region
+files in tab-separated format), [[cg_annotate|annotated]] and
+[[cg_select|queried]] (several
+examples can be seen in the [[howto_query|Howto::Query]] section).
+A [[cg_viz|graphical user interface]] able to browse and query multi-million
+line tab-separated files is also included.
 
+The [[cg_process_illumina|cg process_illumina]] command can be
+used to generate annotated multisample data starting from fastq files,
+using tools such as bwa for alignment and GATK and samtools for variant calling.
+Sequencing data can also be imported from Complete Genomics
+([[cg_process_sample|cg_process_sample command]]), Real Time Genomics
+([[cg_process_rtgsample|cg_process_rtgsample command]]) and
+VariantCallFormat (VCF) variant files ([[cg_vcf2sft|vcf2sft command]]).
+Multiple genomes can then be compared within one single, annotated file using
+the  [[howto_multicompar|multicompar protocol]].
 You can find info on each separate command in the [[reference]] section.
 
 == File formats ==

@@ -1,8 +1,10 @@
 = Howtos =
 
 == Howtos ==
-* [[howto_multicompar|multicompar]]: How to process, compare, and annotate multiple genomes
+* [[cg_process_illumina|Illumina]]: How to process Illumina projects starting from fastq read data to an annotated multicompar file
+
+* [[howto_multicompar|multicompar]]: How to process, compare, and annotate multiple Complete Genomics genomes
 
 * [[howto_query|query]]: Fast querying of annotated files, provides additional functionality for comparing genotypes across multiple genomes
 
-* [[howto_functions|Other functions]]: Genome region operations, primer design, ...
+* [[howto_functions|Further functions]]: Genome region operations, summaries, primer design for validation, ...
