@@ -4,7 +4,7 @@
 cg cg2tsv ?options? cgvarfile ?cggenefile? outputfile
 
 == Summary ==
-Converts data in vcf format to tsv (tab separated, simple feature table) format.
+Converts data in Complete Genomics format to tsv (tab separated, simple feature table) format.
 The command will also sort the tsv appropriately.
 
 == Arguments ==
