@@ -95,16 +95,20 @@ test select {ssum condition} {
 } {{chromosome begin test sequenced-sample1 sequenced-sample2 sequenced-sample3 freq-sample1 freq-sample2 freq-sample3} {1 259 0.41000000000000003 v v v 0.1 0.11 0.2} {1 4001 0.30000000000000004 v v r 0.2 0.1 0.2} {1 4050 0.3 v u u 0.3 ? ?} {1 5000 1.0 v v r 0.4 0.6 0.6} {1 5020 0.5 v r r 0.5 ? ?} {1 5020 0.9 r v v ? 0.4 0.5} {2 4000 1.7999999999999998 v v v 0.6 0.6 0.6} {2 4001 0.8 v r r 0.8 ? ?} {2 4001 0.7 v r r 0.7 0.01 ?} {2 4010 1.6 u v v ? 0.8 0.8} {2 4010 1.4 u v v ? 0.7 0.7} {2 5010 2.7 v v v 0.9 0.9 0.9} {2 10000 0.9 v r r 0.9 ? ?} {2 10000 1.8 r v v ? 0.9 0.9} {3 876 3.0 v v v 1 1 1}}
 
 test select {savg} {
-	csv_parse [exec cg select -f {chromosome begin 
-		{test=savg($freq)} freq-*
-	} data/vars-saggr.tsv] \t
-} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.1366666666666667 0.1 0.11 0.2} {1 4001 0.16666666666666669 0.2 0.1 0.2} {1 4050 0.3 0.3 ? ?} {1 5000 0.5333333333333333 0.4 0.6 0.6} {1 5020 0.5 0.5 ? ?} {1 5020 0.45 ? 0.4 0.5} {2 4000 0.6 0.6 0.6 0.6} {2 4001 0.8 0.8 ? ?} {2 4001 0.355 0.7 0.01 ?} {2 4010 0.8 ? 0.8 0.8} {2 4010 0.7 ? 0.7 0.7} {2 5010 0.9 0.9 0.9 0.9} {2 10000 0.9 0.9 ? ?} {2 10000 0.9 ? 0.9 0.9} {3 876 1.0 1 1 1}}
+	file_write tmp/temp1 [join [csv_parse [exec cg select -f {chromosome begin 
+		{test=format("%.2f",savg($freq))} freq-*
+	} data/vars-saggr.tsv] \t] \n]
+	file_write tmp/temp2 [join {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.14 0.1 0.11 0.2} {1 4001 0.17 0.2 0.1 0.2} {1 4050 0.3 0.3 ? ?} {1 5000 0.53 0.4 0.6 0.6} {1 5020 0.5 0.5 ? ?} {1 5020 0.45 ? 0.4 0.5} {2 4000 0.6 0.6 0.6 0.6} {2 4001 0.8 0.8 ? ?} {2 4001 0.35 0.7 0.01 ?} {2 4010 0.8 ? 0.8 0.8} {2 4010 0.7 ? 0.7 0.7} {2 5010 0.9 0.9 0.9 0.9} {2 10000 0.9 0.9 ? ?} {2 10000 0.9 ? 0.9 0.9} {3 876 1.0 1 1 1}} \n]
+	exec diff tmp/temp1 tmp/temp2
+} {}
 
 test select {savg cond allways} {
-	csv_parse [exec cg select -f {chromosome begin 
-		{test=savg(1,$freq)} freq-*
-	} data/vars-saggr.tsv] \t
-} {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.1366666666666667 0.1 0.11 0.2} {1 4001 0.16666666666666669 0.2 0.1 0.2} {1 4050 0.3 0.3 ? ?} {1 5000 0.5333333333333333 0.4 0.6 0.6} {1 5020 0.5 0.5 ? ?} {1 5020 0.45 ? 0.4 0.5} {2 4000 0.6 0.6 0.6 0.6} {2 4001 0.8 0.8 ? ?} {2 4001 0.355 0.7 0.01 ?} {2 4010 0.8 ? 0.8 0.8} {2 4010 0.7 ? 0.7 0.7} {2 5010 0.9 0.9 0.9 0.9} {2 10000 0.9 0.9 ? ?} {2 10000 0.9 ? 0.9 0.9} {3 876 1.0 1 1 1}}
+	file_write tmp/temp1 [join [csv_parse [exec cg select -f {chromosome begin 
+		{test=format("%.2f",savg(1,$freq))} freq-*
+	} data/vars-saggr.tsv] \t] \n]
+	file_write tmp/temp2 [join {{chromosome begin test freq-sample1 freq-sample2 freq-sample3} {1 259 0.14 0.1 0.11 0.2} {1 4001 0.17 0.2 0.1 0.2} {1 4050 0.3 0.3 ? ?} {1 5000 0.53 0.4 0.6 0.6} {1 5020 0.5 0.5 ? ?} {1 5020 0.45 ? 0.4 0.5} {2 4000 0.6 0.6 0.6 0.6} {2 4001 0.8 0.8 ? ?} {2 4001 0.35 0.7 0.01 ?} {2 4010 0.8 ? 0.8 0.8} {2 4010 0.7 ? 0.7 0.7} {2 5010 0.9 0.9 0.9 0.9} {2 10000 0.9 0.9 ? ?} {2 10000 0.9 ? 0.9 0.9} {3 876 1.0 1 1 1}} \n]
+	exec diff tmp/temp1 tmp/temp2
+} {}
 
 test select {sstdev} {
 	csv_parse [exec cg select -f {chromosome begin 
