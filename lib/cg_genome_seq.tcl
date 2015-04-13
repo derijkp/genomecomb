@@ -255,7 +255,7 @@ proc cg_genome_seq {args} {
 	}
 	if {!$split} {
 		puts $fo ""
-		if {[isdouble $gcsplit] && $gcval >= $gcsplit} {puts $foh ""}
+		if {[isdouble $gcsplit]} {puts $foh ""}
 	}
 	if {$makemap} {
 		close $fm
