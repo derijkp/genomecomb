@@ -235,7 +235,7 @@ proc generate_coverage_report_job {experiment regfile histofiles} {
 proc generate_html_report_job {experiment} {
 	upvar job_logdir job_logdir
 	job html_report -deps [list compar/compar-${experiment}.tsv coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv demultiplex_stats.tsv] -targets {$experiment.html} -code {
-		exec R3.1.2 -e {library(knitr); library(stringr); mastrdir=getwd(); mastr <- str_replace(mastrdir,".*/([^/]*)","\\1");knit2html("/complgen2/mastr-procedure/mastrreport.Rmd", output=paste(mastr,"temp",sep="."))}
+		exec R3.1.2 -e {library(rmarkdown); library(stringr); mastrdir=getwd(); mastr <- str_replace(mastrdir,".*/([^/]*)","\\1");render("/complgen2/mastr-procedure/mastrreport.Rmd", output_file=paste(mastr,"temp",sep="."), output_dir = mastrdir)}
 		file rename -force $target.temp $target
 	}
 }
