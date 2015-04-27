@@ -528,6 +528,16 @@ proc overlap {start1 end1 start2 end2} {
 	expr {$end1-$start1}
 }
 
+proc reg_compare {loc1 loc2} {
+	foreach {chr1 start1 end1} $loc1 break
+	foreach {chr2 start2 end2} $loc2 break
+	set chrcomp [loc_compare $chr1 $chr2]
+	if {$chrcomp != 0} {return $chrcomp}
+	if {$start2 >= $end1} {return [expr {$end1-$start2}]}
+	if {$end2 < $start1} {return [expr {$end2-$start1}]}
+	return 0
+}
+
 proc timestamp {} {
 	clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"
 }
