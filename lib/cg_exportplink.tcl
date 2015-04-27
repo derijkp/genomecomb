@@ -73,6 +73,8 @@ proc cg_exportplink {args} {
 		set line [split [gets $f] \t]
 		if {[llength $line] < 4} continue
 		foreach {chr b e type ref alts} [list_sub $line $poss] break
+		set ref [string toupper $ref]
+		set alts [string toupper $alts]
 		if {![isint $b]} {
 			putslog "skipping var: error in line: $line"
 			continue
@@ -98,6 +100,8 @@ proc cg_exportplink {args} {
 			}
 			set result {}
 			foreach {gt1 gt2} [list_sub $line $aposs] samplepresent $samplepresents {
+				set gt1 [string toupper $gt1]
+				set gt2 [string toupper $gt2]
 				if {!$samplepresent} {
 					lappend result 0 0
 					continue
