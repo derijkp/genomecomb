@@ -75,13 +75,18 @@ proc help {action} {
 	set yellow "\033\[1;33m"
 	set cyan "\033\[1;36m"
 	set normal "\033\[0m"
+	set list [regexp -inline -all {\{\{\{.*?\}\}\}} $help]
+	regsub -all {\{\{\{.*?\}\}\}} $help {{{{}}}} help
 #	regsub -all {(^|\n)\; *([^:\n]+):} $help "\n${cyan}\\2$normal:" help
 	regsub -all {(^|\n)\; *([^:\n]+): *} $help "\n* \\2: " help
 	regsub -all {\*\*([^\n*]+)\*\*} $help "${cyan}\\1$normal" help
 	regsub -all {(^|\n)\{\{\{([^\n*]+)\}\}\}} $help "\\1${yellow}\\2$normal" help
 	regsub -all {(^|\n)== ([^\n*]+) ==} $help "\\1${underline}\\2$normal" help
 	regsub -all {(^|\n)= ([^\n*]+) =} $help "\\1${underline}${green}\\2$normal" help
-	regsub -all {_*?(^|\n)\{\{\{(.*?\n)\}\}\}} $help "\\1${green}\\2$normal" help
+	regsub -all {\\([^A-Za-z0-9])} $help {\1} help
+	foreach value $list {
+		regsub {\{\{\{.*?\}\}\}} $help ${green}[string range $value 3 end-3]$normal help
+	}
 	puts $help
 }
 
