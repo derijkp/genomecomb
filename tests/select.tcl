@@ -776,6 +776,19 @@ chrX	24	24
 chrY	25	25
 }
 
+test select "toupper$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	va
+		1	a
+		2	A
+	}
+	exec cg select {*}$dbopt -f {id {val=toupper($va)}} tmp/temp.tsv
+} {id	val
+1	A
+2	A}
+
 }
 
 foreach dbopt {{}} {

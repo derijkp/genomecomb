@@ -9,3 +9,7 @@ proc tcl::mathfunc::length {string} {
 proc tcl::mathfunc::split {string {sep ,}} {
 	::split $string $sep
 }
+
+proc tcl::mathfunc::toupper {string} {
+	::string toupper $string
+}
