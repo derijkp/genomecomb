@@ -44,6 +44,8 @@ proc cg_compar2vcf {args} {
 			{##INFO=<ID=AN,Number=1,Type=Integer,Description="total number of alleles in called genotypes">} 
 			{##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">}
 			{##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth from MOSAIK BAM">}
+			{##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">}
+			{##FORMAT=<ID=FT,Number=.,Type=String,Description="Filter">}
 		}
 			
 		foreach i $info {
@@ -64,11 +66,14 @@ proc cg_compar2vcf {args} {
 	#####################################
 	###add data
 	#####################################
+	set filter_pos [lsearch $header filter]
 	set allele_pos1 [list_find -regexp $header {alleleSeq1}]
 	set allele_pos2 [list_find -regexp $header {alleleSeq2}]
 	set allele_pos [list_merge $allele_pos1 $allele_pos2]
 	set cov_pos [list_find -regexp $header {^coverage-}]
 	set sequenced_pos [list_find -regexp $header {sequenced-}]
+	set genoqual_poss [list_find -regexp $header {genoqual-}]
+	set filter_poss [list_find -regexp $header {filter-}]
 	
 	if {$exportVAT} {
 		while {1} {
@@ -132,12 +137,23 @@ proc cg_compar2vcf {args} {
 						lappend new_line $ref
 						lappend new_line [join $alt_alleles ","]
 						lappend new_line .
-						lappend new_line PASS
+						if {$filter_pos == -1} {
+							lappend new_line PASS
+						} else {
+							lappend new_line [lindex $line $filter_pos]
+						}
 						lappend new_line $INFO
-						lappend new_line GT:DP
+						set formatstring GT:DP
+						if {[llength $genoqual_poss]} {
+							append formatstring :GQ
+						}
+						if {[llength $filter_poss]} {
+							append formatstring :FT
+						}
+						lappend new_line $formatstring
 						
 						#write sample specific part new line
-						foreach s $sequenced_pos a1p $allele_pos1 a2p $allele_pos2 cp $cov_pos {
+						foreach s $sequenced_pos a1p $allele_pos1 a2p $allele_pos2 cp $cov_pos gqpos $genoqual_poss filterpos $filter_poss {
 							if {[lindex $line $s] == "u"} {
 								set GT ./.
 							} else {
@@ -146,7 +162,18 @@ proc cg_compar2vcf {args} {
 								set GT $a1/$a2
 							}
 							if {![regexp {[0-9]+} [set c [lindex $line $cp]]] } {set c 0} 
-							lappend new_line $GT:$c
+							set format $GT:$c
+							if {[isint $gqpos]} {
+								set gq [lindex $line $gqpos]
+								if {$gq eq "?"} {set gq .}
+								append format :$gq
+							}
+							if {[isint $filterpos]} {
+								set filter [lindex $line $filterpos]
+								if {$filter eq "?"} {set filter .}
+								append format :$filter
+							}
+							lappend new_line $format
 						}
 						puts $o [join $new_line \t]
 					}
