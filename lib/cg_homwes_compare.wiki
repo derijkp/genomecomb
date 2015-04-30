@@ -1,0 +1,23 @@
+= homwes =
+
+== Format ==
+cg homwes_compare resultfile refhomwesfile ?homwesfile ...?
+
+== Summary ==
+finds regions of homozygosity based on a variant file
+
+== Description ==
+This command will create a multireg file (resultfile) comparing all homwes
+region files given. A file resultfile.summary.tsv will also be created
+with summary information about the files and comparison data with the
+first file (refhomwesfile)
+
+== Arguments ==
+; **resultfile**: multireg file that will compare the given regions.
+; **refhomwesfile**: resultfile with regions from a cg homwes analysis for one individual sample
+(not the multireg file), to be used as the reference
+; **homwesfile**: resultfile with regions from a cg homwes analysis for one individual sample
+(not the multireg file), to be used added
+
+== Category ==
+Analysis
