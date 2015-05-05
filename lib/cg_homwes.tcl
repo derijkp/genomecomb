@@ -8,6 +8,8 @@ proc findfield {fields pattern} {
 
 proc cg_homwes {args} {
 	set callers {gatk-rdsbwa- sam-rdsbwa-}
+	set filterrepeats 1
+	set genoqual 40
 	set allowedheterozygous 1
 	set homozygdensity 200
 	set homozyggap 4000
@@ -27,6 +29,12 @@ proc cg_homwes {args} {
 			}
 			-allowedheterozygous -- -htz {
 				set allowedheterozygous $value
+			}
+			-filterrepeats {
+				set filterrepeats $value
+			}
+			-genoqual {
+				set genoqual $value
 			}
 			-density {
 				set homozygdensity $value
@@ -151,9 +159,12 @@ proc cg_homwes {args} {
 		}
 		set field [findfield $header genoqual$postfix]
 		if {$field ne ""} {
-			lappend query "def(\$$field,100) > 40"
+			lappend query "def(\$$field,100) > $genoqual"
 		} else {
 			puts "warning: field \"genoqual$postfix\" is missing"
+		}
+		if {$filterrepeats} {
+			lappend query "\$microsat==\"\" && \$simpleRepeat==\"\""
 		}
 		if {$snpsonly} {
 			lappend query {$type eq "snp"}
@@ -190,7 +201,7 @@ proc cg_homwes {args} {
 		if {$query eq ""} {set query 1}
 		putslog "Quality filtering data"
 		cg select \
-			-q "\$microsat==\"\" && \$simpleRepeat==\"\" && (chr_clip(\$chromosome) ni {X Y M MT}) && [join $query &&]" \
+			-q "(chr_clip(\$chromosome) ni {X Y M MT}) && [join $query &&]" \
 			-f $fields \
 			$usefile ${sworkbase}-filtered.tsv
 		
