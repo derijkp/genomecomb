@@ -223,7 +223,7 @@ proc cg_regcollapse {args} {
 			exit 0
 		}
 	}
-	putslog "Collapsing file(s) to $resultfile"
+	putslog "Collapsing file(s) to $ "
 	set tempfile [tempfile]
 	set tempfile2 [tempfile]
 	if {[llength $args] > 1} {
@@ -241,7 +241,10 @@ proc cg_regcollapse {args} {
 	}
 	putslog "Collapsing"
 	collapseoverlap $tempfile2 $resultfile $scorefield $numfields
-	file delete $tempfile $tempfile2
+	file delete $tempfile
+	if {$tempfile2 ne [lindex $args 0]} {
+		file delete $tempfile2
+	}
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
