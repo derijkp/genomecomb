@@ -1,0 +1,18 @@
+= cg2sreg =
+
+== Format ==
+cg cg2sreg ?options? cgvarfile outputfile
+
+== Summary ==
+Extracts sequenced region data from a Complete Genomics format file in tsv (tab separated, simple feature table) format.
+The command will also sort the tsv appropriately.
+
+== Arguments ==
+; **cgvarfile**: Complete genomics var file to be converted. File may be compressed.
+; **outfile**: write results to outfile
+
+== Options ==
+; **-sorted 0/1**: Use 1 if the CG var is already sorted (so they are not sorted gain first)
+
+== Category ==
+Conversion
