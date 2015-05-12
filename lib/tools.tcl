@@ -533,8 +533,8 @@ proc reg_compare {loc1 loc2} {
 	foreach {chr2 start2 end2} $loc2 break
 	set chrcomp [loc_compare $chr1 $chr2]
 	if {$chrcomp != 0} {return $chrcomp}
-	if {$start2 >= $end1} {return [expr {$end1-$start2}]}
-	if {$end2 < $start1} {return [expr {$end2-$start1}]}
+	if {$start2 >= $end1} {return [expr {$end1 - $start2}]}
+	if {$end2 < $start1} {return [expr {$start1 - $end2}]}
 	return 0
 }
 

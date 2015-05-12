@@ -1,0 +1,15 @@
+= chain2tsv =
+
+== Format ==
+cg chain2tsv chainfile outputfile
+
+== Summary ==
+Converts data in UCSC chain file format (for liftOver) to a tsv (tab separated) format to be used
+in e.g. cg liftregion.
+
+== Arguments ==
+; **chainfile**: UCSC chain file as used in liftOver
+; **outputfile**: name of tsv file to be created, will contain corresponding regions in the to reference genomes
+
+== Category ==
+Conversion

@@ -633,6 +633,7 @@ test liftregion {basic} {
 	file delete tmp/temp.tsv
 	exec cg liftregion data/reg_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	exec diff tmp/temp.tsv data/expected-reg_lift-hg18tohg19.tsv
+	exec diff tmp/temp.tsv.unmapped data/expected-reg_lift-hg18tohg19.tsv.unmapped
 } {}
 
 test liftover {variants with different ref ending up in same spot -s 1} {
