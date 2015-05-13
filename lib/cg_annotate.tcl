@@ -340,8 +340,8 @@ proc cg_annotate {args} {
 				putslog "$resultfile.${name}_annot exists: skipping scan"
 				continue
 			}
-			set genecol [dict_get_default $dbinfo genecol name2]
-			set transcriptcol [dict_get_default $dbinfo transcriptcol name]
+			set genecol [dict_get_default $dbinfo genecol {}]
+			set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
 			annotategene $usefile $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
 		} elseif {$dbtype eq "mir"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}

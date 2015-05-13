@@ -3,6 +3,7 @@
 exec cg source "$0" "$@"
 
 set build hg18
+if {![info exists argv]} {set argv {}}
 set argv [job_init {*}$argv]
 if {[llength $argv]} {
 	set dest [lindex $argv 0]
@@ -160,17 +161,55 @@ foreach db {
 
 # genes
 foreach db {
-	refGene ensGene knownGene genscan augustusAbinitio acembly wgEncodeGencodeManualV3 wgEncodeGencodeAutoV3
+	refGene ensGene knownGene wgEncodeGencodeManualV3 wgEncodeGencodeAutoV3 genscan augustusAbinitio acembly
 } {
 	job gene_${build}_$db -targets {gene_${build}_${db}.tsv gene_${build}_${db}.tsv.gz.tbi gene_${build}_${db}.tsv.gz} -vars {dest build db} -code {
+		if {$db eq "wgEncodeGencodeCompV19"} {set dbname gencode} else {set dbname $db}
+		if {$db in "genscan acembly augustusAbinitio"} {set geneidcol name} else {set geneidcol name2}
 	        cg downloaddb ${dest} ${build} $db
-	        cg select -s - ucsc_${build}_${db}.tsv gene_${build}_${db}.tsv.temp
-		file rename -force gene_${build}_${db}.tsv.temp gene_${build}_${db}.tsv
-	        file rename -force reg_${build}_${db}.info gene_${build}_${db}.info
-	        cg maketabix gene_${build}_${db}.tsv
-	        exec gunzip -c gene_${build}_${db}.tsv.gz > gene_${build}_${db}.tsv.temp
-		file rename -force gene_${build}_${db}.tsv.temp gene_${build}_${db}.tsv
-		file delete ucsc_${build}_${db}.tsv
+		if {$db in "ensGene knownGene"} {
+			unset -nocomplain a
+			if {$db eq "ensGene"} {
+				cg downloaddb ${dest} ${build} knownToEnsembl
+				cg downloaddb ${dest} ${build} kgXref
+				unset -nocomplain kga
+				array set kga [split [string trim [cg select -f {kgID geneSymbol} ucsc_${build}_kgXref.tsv]] "\n\t"]
+				list_foreach {kg ens} [split [string trim [file_read ucsc_hg18_knownToEnsembl.tsv]] \n] {
+					set a($ens) [get kga($kg) $ens]
+				}
+				unset -nocomplain kga
+			} else {
+				cg downloaddb ${dest} ${build} kgXref
+				array set a [split [string trim [cg select -f {kgID geneSymbol} ucsc_${build}_kgXref.tsv]] "\n\t"]
+			}
+			catch {close $f} ; catch {close $o}
+			set f [open ucsc_${build}_${db}.tsv]
+			set o [open gene_${build}_${dbname}.tsv.temp2 w]
+			set header [split [gets $f] \t]
+			set namepos [lsearch $header name]
+			lappend header geneid
+			puts $o [join $header \t]
+			while {[gets $f line] != -1} {
+				set line [split $line \t]
+				set name [lindex $line $namepos]
+				set geneid [get a($name) $name]
+				lappend line $geneid
+				puts $o [join $line \t]
+			}
+			close $o
+			close $f
+		        cg select -s - -f {chrom start end strand geneid *} gene_${build}_${dbname}.tsv.temp2 gene_${build}_${dbname}.tsv.temp
+			file delete gene_${build}_${dbname}.tsv.temp2 ucsc_hg19_ensemblToGeneName.tsv
+		} else {
+		        cg select -s - -f [list chrom start end strand "geneid=\$$geneidcol" *] ucsc_${build}_${db}.tsv gene_${build}_${dbname}.tsv.temp
+		}
+		file rename -force gene_${build}_${dbname}.tsv.temp gene_${build}_${dbname}.tsv
+	        file rename -force reg_${build}_${db}.info gene_${build}_${dbname}.info
+	        cg maketabix gene_${build}_${dbname}.tsv
+	        exec gunzip -c gene_${build}_${dbname}.tsv.gz > gene_${build}_${dbname}.tsv.temp
+		file rename -force gene_${build}_${dbname}.tsv.temp gene_${build}_${dbname}.tsv
+		file delete ucsc_${build}_${dbname}.tsv
+		cg index gene_${build}_${dbname}.tsv
 	}
 }
 

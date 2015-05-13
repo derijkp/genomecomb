@@ -154,44 +154,50 @@ job clinvar -targets {${dest}/${build}/var_${build}_clinvar.tsv} -vars {dest bui
 
 # genes
 foreach db {
-	refGene ensGene knownGene genscan acembly
+	refGene ensGene knownGene wgEncodeGencodeCompV19 genscan acembly
 } {
 	job gene_${build}_$db -targets {gene_${build}_${db}.tsv gene_${build}_${db}.tsv.gz.tbi gene_${build}_${db}.tsv.gz} -vars {dest build db} -code {
+		if {$db eq "wgEncodeGencodeCompV19"} {set dbname gencode} else {set dbname $db}
+		if {$db in "genscan acembly"} {set geneidcol name} else {set geneidcol name2}
 	        cg downloaddb ${dest} ${build} $db
-	        cg select -s - ucsc_${build}_${db}.tsv gene_${build}_${db}.tsv.temp
-		file rename -force gene_${build}_${db}.tsv.temp gene_${build}_${db}.tsv
-	        file rename -force reg_${build}_${db}.info gene_${build}_${db}.info
-	        cg maketabix gene_${build}_${db}.tsv
-	        exec gunzip -c gene_${build}_${db}.tsv.gz > gene_${build}_${db}.tsv.temp
-		file rename -force gene_${build}_${db}.tsv.temp gene_${build}_${db}.tsv
-		file delete ucsc_${build}_${db}.tsv
+		if {$db in "ensGene knownGene"} {
+			unset -nocomplain a
+			if {$db eq "ensGene"} {
+				cg downloaddb ${dest} ${build} ensemblToGeneName
+				array set a [split [string trim [file_read ucsc_hg19_ensemblToGeneName.tsv]] "\n\t"]
+			} else {
+				cg downloaddb ${dest} ${build} kgXref
+				array set a [split [string trim [cg select -f {kgID geneSymbol} ucsc_hg19_kgXref.tsv]] "\n\t"]
+			}
+			catch {close $f} ; catch {close $o}
+			set f [open ucsc_${build}_${db}.tsv]
+			set o [open gene_${build}_${dbname}.tsv.temp2 w]
+			set header [split [gets $f] \t]
+			set namepos [lsearch $header name]
+			lappend header geneid
+			puts $o [join $header \t]
+			while {[gets $f line] != -1} {
+				set line [split $line \t]
+				set name [lindex $line $namepos]
+				set geneid [get a($name) $name]
+				lappend line $geneid
+				puts $o [join $line \t]
+			}
+			close $o
+			close $f
+		        cg select -s - -f {chrom start end strand geneid *} gene_${build}_${dbname}.tsv.temp2 gene_${build}_${dbname}.tsv.temp
+			file delete gene_${build}_${dbname}.tsv.temp2 ucsc_hg19_ensemblToGeneName.tsv
+		} else {
+		        cg select -s - -f [list chrom start end strand "geneid=\$$geneidcol" *] ucsc_${build}_${db}.tsv gene_${build}_${dbname}.tsv.temp
+		}
+		file rename -force gene_${build}_${dbname}.tsv.temp gene_${build}_${dbname}.tsv
+	        file rename -force reg_${build}_${db}.info gene_${build}_${dbname}.info
+	        cg maketabix gene_${build}_${dbname}.tsv
+	        exec gunzip -c gene_${build}_${dbname}.tsv.gz > gene_${build}_${dbname}.tsv.temp
+		file rename -force gene_${build}_${dbname}.tsv.temp gene_${build}_${dbname}.tsv
+		file delete ucsc_${build}_${dbname}.tsv
+		cg index gene_${build}_${dbname}.tsv
 	}
-}
-
-if 0 {
-	cg downloaddb ${dest} ${build} ensemblToGeneName
-	cg select -f {id=$name genename=$value} ucsc_hg19_ensemblToGeneName.tsv extra/trans_hg19_ensGene2genename.tsv
-	file delete ucsc_hg19_ensemblToGeneName.tsv
-	cg downloaddb ${dest} ${build} kgXref
-	cg select -f {id=$kgID genename=$geneSymbol} ucsc_hg19_kgXref.tsv extra/trans_hg19_knownGene2genename.tsv
-	file delete ucsc_hg19_kgXref.tsv
-	
-}
-
-
-# gencode
-job gene_${build}_gencode -targets {gene_${build}_gencode.tsv gene_${build}_gencode.tsv.gz gene_${build}_gencode.tsv.gz.tbi gene_${build}_gencode.info} -vars {dest build db} -code {
-	exec -ignorestderr wget -c ftp://ftp.sanger.ac.uk/pub/gencode/release_18/gencode.v18.annotation.gtf.gz
-	cg gtf2sft gencode.v18.annotation.gtf.gz gene_${build}_gencode.tsv.temp
-	cg select -s - gene_${build}_gencode.tsv.temp gene_${build}_gencode.tsv.temp2
-	file rename -force gene_${build}_gencode.tsv.temp2 gene_${build}_gencode.tsv
-	file delete gene_${build}_gencode.tsv.temp
-	file delete gene_${build}_gencode.tsv.gz
-	cg maketabix gene_${build}_gencode.tsv
-	exec gunzip -c gene_${build}_gencode.tsv.gz > gene_${build}_gencode.tsv
-	exec -ignorestderr wget -c ftp://ftp.sanger.ac.uk/pub/gencode/_README.TXT
-	file rename -force _README.TXT gene_${build}_gencode.info
-	file delete gencode.v18.annotation.gtf.gz
 }
 
 # homopolymer

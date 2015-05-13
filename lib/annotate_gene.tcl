@@ -707,22 +707,21 @@ proc annotategene_one {loc geneobj} {
 	return $result
 }
 
-proc open_genefile {df dpossVar {genecol name2} {transcriptcol name}} {
+proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 	upvar $dpossVar dposs
 	set header [tsv_open $df comment]
 	set deffields {strand cdsStart cdsEnd exonCount exonStarts exonEnds}
+	if {$transcriptcol eq ""} {
+		set transcriptcol name
+	}
+	foreach genecol [list $genecol geneid gene_name gene_id name2 name] {
+		if {$genecol eq ""} continue
+		set pos [lsearch $header $genecol]
+		if {$pos != -1} {break}
+	}
 	lappend deffields $transcriptcol $genecol
 	set dposs [tsv_basicfields $header 3]
 	lappend dposs {*}[list_cor $header $deffields]
-	if {[lindex $dposs end] == -1} {
-		foreach testfield {gene_name gene_id name} {
-			set pos [lsearch $header $testfield]
-			if {$pos != -1} {
-				lset dposs end $pos
-				break
-			}
-		}
-	}
 	set dbposs [lrange $dposs 0 2]
 	if {[lsearch [lrange $dposs 0 end-2] -1] != -1} {
 		puts stderr "error: gene file $dbfile misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
@@ -731,7 +730,7 @@ proc open_genefile {df dpossVar {genecol name2} {transcriptcol name}} {
 	return $header
 }
 
-proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transcriptcol name}} {
+proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcriptcol {}}} {
 #putsvars file genomefile dbfile name annotfile genecol transcriptcol
 	global genomef
 	annot_init
@@ -755,7 +754,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol name2} {transc
 	}
 	set fields [list_sub $header $poss]
 	set df [gzopen $dbfile]
-	set header [open_genefile $df dposs]
+	set header [open_genefile $df dposs $genecol $transcriptcol]
 #	set header [tsv_open $df]
 #	set deffields {strand cdsStart cdsEnd exonCount exonStarts exonEnds}
 #	lappend deffields $transcriptcol $genecol
