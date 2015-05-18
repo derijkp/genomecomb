@@ -24,7 +24,7 @@ proc collapseoverlap_join {cur scorepos {numpos -1}} {
 			lappend result [format %0.f [lmath_sum [list_subindex $cur $i]]]
 		} else {
 			set temp [list_subindex $cur $i]
-			set nodup [list_remdup $temp]
+			set nodup [lsort -dict [list_remdup $temp]]
 			if {[llength $nodup] < 2} {
 				lappend result $nodup
 			} else {
@@ -235,6 +235,7 @@ proc cg_regcollapse {args} {
 		set bposs [tsv_basicfields $header 3]
 		close $f
 		set sfields [list_sub $header $bposs]
+		lappend sfields {*}[list_sub $header -exclude $bposs]
 		cg select -s $sfields $tempfile $tempfile2
 	} else {
 		set tempfile2 [lindex $args 0]
