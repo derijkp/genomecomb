@@ -942,6 +942,35 @@ test job "rmtargets afterwards with gzip exists $testname" {
 # end of block
 }
 
+# only test in direct
+foreach {testname initcode} {
+	"direct" {uplevel job_init -silent -job_skiperrors}
+} break 
+
+test job {deps both compressed and uncompressed} {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	file_write dep.txt test
+	exec gzip -c dep.txt > dep.txt.gz
+	job_init
+	job test -deps {dep.txt} -targets result.txt -code {
+		foreach dep $deps {lappend result [file tail $dep]}
+		file_write $target $result
+	}
+	file_read result.txt
+} {dep.txt}
+
+test job {gzarraynames} {
+	array set a {dep.txt 1 dep.txt.gz 1 x 1}
+	gzarraynames a dep.*
+} {dep.txt}
+
+test job {gzarraynames} {
+	array set a {dep.txt 1 dep.txt2 1 x 1}
+	lsort [gzarraynames a dep.*]
+} {dep.txt dep.txt2}
+
 set ::env(PATH) $keeppath
 
 testsummarize

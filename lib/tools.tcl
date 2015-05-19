@@ -446,8 +446,12 @@ proc checkfile {args} {
 proc gzfiles {args} {
 	set result {}
 	foreach filename $args {
-		if {![catch {glob $filename $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
-			lappend result {*}$list
+		set list [glob -nocomplain $filename]
+		lappend result {*}$list
+		foreach file [glob -nocomplain $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2] {
+			if {[file root $file] ni $list} {
+				lappend result $file
+			}
 		}
 	}
 	return $result
@@ -455,7 +459,15 @@ proc gzfiles {args} {
 
 proc gzarraynames {aVar pattern} {
 	upvar $aVar a
-	set result [list_concat [array names a $pattern] [array names a $pattern.rz] [array names a $pattern.lz4] [array names a $pattern.gz] [array names a $pattern.bgz] [array names a $pattern.bz2]]
+	set result {}
+	foreach name [list_remdup [list_concat [array names a $pattern] [array names a $pattern.rz] [array names a $pattern.lz4] [array names a $pattern.gz] [array names a $pattern.bgz] [array names a $pattern.bz2]]] {
+		set ext [file extension $name]
+		if {$ext ni {.rz .lz4 .gz bgz .bz2}} {
+			lappend result $name
+		} elseif {![info exists a([file root $name])]} {
+			lappend result $name
+		}
+	}
 	return $result
 }
 
