@@ -35,10 +35,15 @@ proc collapseoverlap_join {cur scorepos {numpos -1}} {
 	return $result
 }
 
-proc collapseoverlap {file {resultfile stdout} {scorefield score} {numfield num}} {
+proc collapseoverlap {{infile stdin} {resultfile stdout} {scorefield score} {numfield num}} {
 	catch {close $f} ; catch {close $o}
-	if {[catch {open $file} f]} {
-		error "Could not open file $file"
+	if {$infile ne "stdin"} {
+		putslog "making $resultfile"
+		if {[catch {open $infile} f]} {
+			error "Could not open $infile"
+		}
+	} else {
+		set f stdin
 	}
 	set cor [open_region $f header]
 	foreach {chrpos startpos endpos} $cor break
@@ -213,17 +218,13 @@ proc cg_regcollapse {args} {
 		incr pos 2
 	}
 	set args [lrange $args $pos end]
-	if {([llength $args] < 1)} {
-		errorformat regcollapse
-		exit 1
-	}
 	if {$resultfile ne "stdout"} {
 		if {[file exists $resultfile]} {
 			puts "$resultfile already exists"
 			exit 0
 		}
 	}
-	putslog "Collapsing file(s) to $ "
+	putslog "Collapsing file(s) to $resultfile "
 	set tempfile [tempfile]
 	set tempfile2 [tempfile]
 	if {[llength $args] > 1} {
@@ -237,6 +238,8 @@ proc cg_regcollapse {args} {
 		set sfields [list_sub $header $bposs]
 		lappend sfields {*}[list_sub $header -exclude $bposs]
 		cg select -s $sfields $tempfile $tempfile2
+	} elseif {[llength $args] == 0} {
+		set tempfile2 stdin
 	} else {
 		set tempfile2 [lindex $args 0]
 	}
