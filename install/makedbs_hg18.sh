@@ -213,6 +213,13 @@ foreach db {
 	}
 }
 
+job reg_${build}_genes -targets {extra/reg_${build}_genes.tsv} \
+-deps {gene_${build}_refGene.tsv gene_${build}_ensGene.tsv gene_${build}_knownGene.tsv gene_${build}_wgEncodeGencodeAutoV3.tsv gene_${build}_wgEncodeGencodeManualV3.tsv} \
+-code {
+	exec cg cat -fields {chrom start end geneid} {*}$deps | cg select -s {chrom start end geneid} | cg regcollapse > $target.temp
+	file rename -force $target.temp $target
+}
+
 # homopolymer
 job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi reg_${build}_homopolymer.tsv.opt} -vars {dest build db} -code {
 	cg extracthomopolymers genome_${build}.ifas > reg_${build}_homopolymer.tsv.temp

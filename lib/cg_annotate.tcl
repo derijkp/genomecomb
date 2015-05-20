@@ -182,7 +182,7 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 				rnaGene {set outfields name}
 				simpleRepeat {set outfields score}
 				tRNAs {set outfields name}
-				default {set outfields {name freq score}}
+				default {set outfields {name freq score annotation}}
 			}
 		}
 		set outfields [list_common $outfields $header]

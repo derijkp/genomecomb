@@ -200,6 +200,29 @@ foreach db {
 	}
 }
 
+job reg_${build}_genes -targets {extra/reg_${build}_genes.tsv} \
+-deps {gene_${build}_refGene.tsv gene_${build}_ensGene.tsv gene_${build}_knownGene.tsv gene_${build}_gencode.tsv} \
+-code {
+	exec cg cat -fields {chrom start end geneid} {*}$deps | cg select -s {chrom start end geneid} -f {chrom {start=$start - 2000} {end=$end + 2000} geneid} | cg regcollapse > $target.temp
+	file rename -force $target.temp $target
+}
+
+job reg_${build}_phenotype -deps {extra/reg_${build}_genes.tsv} \
+-targets {extra/reg_${build}_phenotype.tsv extra/geneannot_${build}_phenotype.tsv} -code {
+	cg downloadmart $target2 hsapiens_gene_ensembl gene_ensembl_config {hgnc_symbol phenotype_description}
+	cg geneannot2reg $dep $target2 $target.temp
+	file rename -force $target.temp $target
+	file delete temp_phenotype.tsv.temp
+}
+
+job reg_${build}_phenotype -deps {extra/reg_${build}_genes.tsv} \
+-targets {extra/reg_${build}_go.tsv extra/geneannot_${build}_go.tsv} -code {
+	cg downloadmart $target2 hsapiens_gene_ensembl gene_ensembl_config {hgnc_symbol name_1006 namespace_1003}
+	cg geneannot2reg $dep $target2 $target.temp
+	file rename -force $target.temp $target
+	file delete temp_go.tsv.temp
+}
+
 # homopolymer
 job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi reg_${build}_homopolymer.tsv.opt} -vars {dest build db} -code {
 	cg extracthomopolymers genome_${build}.ifas > reg_${build}_homopolymer.tsv.temp

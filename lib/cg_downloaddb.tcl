@@ -296,6 +296,12 @@ proc cg_downloaddb {args} {
 	}
 }
 
+proc cg_downloadmart {file dataset config attributes} {
+	set attributesxml "<Attribute name=\"[join $attributes "\"/><Attribute name=\""]\"/>"
+	exec wget --quiet -O $file.temp "http://central.biomart.org/martservice/results?query=<!DOCTYPE Query><Query client=\"true\" processor=\"TSV\" limit=\"-1\" header=\"1\"><Dataset name=\"$dataset\" config=\"$config\">$attributesxml</Dataset></Query>"
+	file rename -force $file.temp $file
+}
+
 if 0 {
 	set path /media/663d83bb-851c-4dbb-8c03-e8815d28e483/refseq
 	set build hg18
