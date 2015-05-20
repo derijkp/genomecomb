@@ -190,6 +190,22 @@ t	Y	1010	1900	t2
 t	1	10	20	
 t	1	50	60	}
 
+test tsv_cat {two diff header -fields} {
+	write_tab tmp/reg.tsv {
+		test    chromosome      begin   end     test2
+		t       1       15      25      t2
+		t       1       45      55      t2
+	}
+	exec cg cat -fields {chromosome begin end test} data/reg1b.tsv tmp/reg.tsv
+} {# ++++ data/reg1b.tsv ++++
+# ++++ tmp/reg.tsv ++++
+chromosome	begin	end	test
+1	t	10	20
+1	t	50	60
+t	1	15	25	t2
+t	1	45	55	t2}
+
+
 set ::env(PATH) $keeppath
 
 test check_sort {sort error 1 in vars} {

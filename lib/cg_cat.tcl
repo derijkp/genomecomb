@@ -1,4 +1,5 @@
 proc cg_cat {args} {
+	set fields {}
 	set force ""
 	set addcomment 1
 	set sort 0
@@ -18,6 +19,10 @@ proc cg_cat {args} {
 			-c {
 				incr pos
 				set addcomment [lindex $args $pos]
+			}
+			-fields {
+				incr pos
+				set fields [lindex $args $pos]
 			}
 			-- break
 			default {
@@ -43,6 +48,9 @@ proc cg_cat {args} {
 	foreach file $args {
 		set f [gzopen $file]
 		set header [tsv_open $f comment]
+		if {-1 in [list_cor $header $fields]} {
+			error "$file does not have all fields: $fields"
+		}
 		lappend headers $header
 		close $f
 		if {$addcomment eq "1"} {
@@ -59,23 +67,27 @@ proc cg_cat {args} {
 			if {$addcomment eq "f"} {set addcomment n}
 		}
 	}
-	set header [lindex $headers 0]
-	set hlen [llength $header]
-	foreach testheader $headers {
-		set cor [list_cor $header $testheader]
-		if {[llength $testheader] != $hlen} {
-			if {$force eq ""} {
-				puts stderr "headers do not match, use -f to force or -m to merge"
-				exit 1
+	if {$fields ne ""} {
+		set header $fields
+	} else {
+		set header [lindex $headers 0]
+		set hlen [llength $header]
+		foreach testheader $headers {
+			set cor [list_cor $header $testheader]
+			if {[llength $testheader] != $hlen} {
+				if {$force eq ""} {
+					puts stderr "headers do not match, use -f to force or -m to merge"
+					exit 1
+				}
 			}
-		}
-		set poss [list_find $cor -1]
-		if {[llength $poss]} {
-			if {$force eq ""} {
-				puts stderr "headers do not match, use -f to force or -m to merge"
-				exit 1
+			set poss [list_find $cor -1]
+			if {[llength $poss]} {
+				if {$force eq ""} {
+					puts stderr "headers do not match, use -f to force or -m to merge"
+					exit 1
+				}
+				lappend header {*}[list_sub $testheader $poss]
 			}
-			lappend header {*}[list_sub $testheader $poss]
 		}
 	}
 	if {[llength $comments]} {
@@ -83,15 +95,16 @@ proc cg_cat {args} {
 	}
 	puts [join $header \t]
 	set defcor [list_cor $header $header]
+	set lh [llength $header]
 	foreach testheader $headers file $args {
 		set f [gzopen $file]
 		set testheader [tsv_open $f]
-		if {$force eq "f" || $force eq ""} {
+		if {($force eq "f" || $force eq "") && $fields eq ""} {
 			fcopy $f stdout
 		} else {
 			# merge
 			set cor [list_cor $testheader $header]
-			if {$cor eq $defcor} {
+			if {$cor eq $defcor && [llength $testheader] == $lh} {
 				fcopy $f stdout
 			} else {
 				while {![eof $f]} {

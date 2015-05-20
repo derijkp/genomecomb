@@ -23,6 +23,7 @@ it will be empty for each line coming from this file.
 ; **-s**: if the sort option is given, the files will be sorted (natural sort order) before being concatenated.
 This is usefull for e.g. concatenating files split over chromosomes in the correct order.
 ; **-c 0/1**: if -c is 1 (default), the names of the files that are concatenated are added in the comment, 
+; **-fields fields**: only return the given **fields** in the concatenated output
 if 0 no extra comments are added. You can use the value f to only display the comment of the first file, 
 or n to leave out comments completely.
 
