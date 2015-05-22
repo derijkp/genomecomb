@@ -299,7 +299,10 @@ proc cg_downloaddb {args} {
 proc cg_downloadmart {file dataset config attributes} {
 	set attributesxml "<Attribute name=\"[join $attributes "\"/><Attribute name=\""]\"/>"
 	exec wget --quiet -O $file.temp "http://central.biomart.org/martservice/results?query=<!DOCTYPE Query><Query client=\"true\" processor=\"TSV\" limit=\"-1\" header=\"1\"><Dataset name=\"$dataset\" config=\"$config\">$attributesxml</Dataset></Query>"
-	file rename -force $file.temp $file
+	set header [list_change $attributes {hgnc_symbol gene}]
+	cg select -nh $header $file.temp $file.temp2
+	file rename -force $file.temp2 $file
+	file delete $file.temp
 }
 
 if 0 {
