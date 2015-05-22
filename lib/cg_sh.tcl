@@ -10,6 +10,9 @@ exec tclsh "$0" ${1+"$@"}
 
 package require Extral
 
+auto_load exiterror
+proc exiterror {args} {error {*}$args}
+
 proc cg_wish {args} {
 	package require Tk
 	set tk 1
