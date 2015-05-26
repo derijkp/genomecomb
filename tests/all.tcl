@@ -17,8 +17,8 @@ source select_saggregates.tcl
 source analysis.tcl
 source misc.tcl
 source job.tcl
-source queries.tcl
 source val.tcl
 source varia.tcl
 source genome_seq.tcl
 source clip.tcl
+source queries.tcl

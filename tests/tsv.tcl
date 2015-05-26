@@ -200,10 +200,10 @@ test tsv_cat {two diff header -fields} {
 } {# ++++ data/reg1b.tsv ++++
 # ++++ tmp/reg.tsv ++++
 chromosome	begin	end	test
-1	t	10	20
-1	t	50	60
-t	1	15	25	t2
-t	1	45	55	t2}
+1	10	20	t
+1	50	60	t
+1	15	25	t
+1	45	55	t}
 
 
 set ::env(PATH) $keeppath

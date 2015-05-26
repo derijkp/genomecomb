@@ -3,6 +3,7 @@
 exec tclsh "$0" "$@"
 
 source tools.tcl
+set keepdir [pwd]
 
 # use these for trying out individual tests
 set testname "-d direct"
@@ -964,7 +965,7 @@ test job {deps both compressed and uncompressed} {
 test job {gzarraynames} {
 	array set a {dep.txt 1 dep.txt.gz 1 x 1}
 	gzarraynames a dep.*
-} {dep.txt}
+} {dep.txt dep.txt.gz}
 
 test job {gzarraynames} {
 	array set a {dep.txt 1 dep.txt2 1 x 1}
@@ -972,6 +973,8 @@ test job {gzarraynames} {
 } {dep.txt dep.txt2}
 
 set ::env(PATH) $keeppath
+
+cd $keepdir
 
 testsummarize
 

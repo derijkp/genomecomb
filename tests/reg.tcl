@@ -241,31 +241,35 @@ test regjoin {self} {
 3	2500	2600}
 
 test regcollapse {basic} {
-	exec cg regcollapse data/reg1.tsv data/reg2.tsv
-} {chromosome	test	begin	end	test2
-1	t	10	15	
-1	t	15	20	,t2
-1	t	20	25	t2
-1	t	45	50	t2
-1	t	50	55	t2,
-1	t	55	60	
-2	t	100	150	
-2	t	150	160	t2,
-2	t	160	170	
-2	t	170	180	t2,
-2	t	180	200	
-2	t	300	450	t2
-2	t	450	480	,t2
-2	t	480	500	t2
-3	t	1000	1100	,t2
-3	t	2000	2100	
-M	t	10	20	,t2
-M	t	20	25	t2
-X	t	90	100	t2
-X	t	100	200	t2,
-Y	t	1000	1010	
-Y	t	1010	1900	t2,
-Y	t	1900	2000	}
+	exec cg regcollapse data/reg1.tsv data/reg2.tsv > tmp/test.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	test	begin	end	test2
+		1	t	10	15	{}
+		1	t	15	20	,t2
+		1	t	20	25	t2
+		1	t	45	50	t2
+		1	t	50	55	,t2
+		1	t	55	60	{}
+		2	t	100	150	{}
+		2	t	150	160	,t2
+		2	t	160	170	{}
+		2	t	170	180	,t2
+		2	t	180	200	{}
+		2	t	300	450	t2
+		2	t	450	480	,t2
+		2	t	480	500	t2
+		3	t	1000	1100	,t2
+		3	t	2000	2100	{}
+		M	t	10	20	,t2
+		M	t	20	25	t2
+		X	t	90	100	t2
+		X	t	100	200	,t2
+		Y	t	1000	1010	{}
+		Y	t	1010	1900	,t2
+		Y	t	1900	2000	{}
+	}
+	exec diff tmp/test.tsv tmp/expected.tsv
+} {}
 
 test regselect {basic} {
 	exec cg regselect data/vars1.sft data/reg_annot.sft > tmp/temp.tsv
