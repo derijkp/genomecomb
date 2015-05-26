@@ -455,7 +455,7 @@ proc gzfiles {args} {
 
 proc gzarraynames {aVar pattern} {
 	upvar $aVar a
-	set result [list_concat [array names a $pattern] [array names a $pattern.rz] [array names a $pattern.lz4] [array names a $pattern.gz] [array names a $pattern.bgz] [array names a $pattern.bz2]]
+	set result [lsort [list_remdup [list_concat [array names a $pattern] [array names a $pattern.rz] [array names a $pattern.lz4] [array names a $pattern.gz] [array names a $pattern.bgz] [array names a $pattern.bz2]]]]
 	return $result
 }
 

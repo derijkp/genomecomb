@@ -188,19 +188,21 @@ proc job_finddep {pattern idsVar timeVar checkcompressed} {
 	if {[llength $ptargethits]} {
 		error "ptargets hit $pattern: wait till ptarget deps have finished"
 	}
+	unset -nocomplain filesa
 	if {$checkcompressed} {
-		set files [lsort -dict [gzfiles $pattern]]
+		set list [lsort -dict [gzfiles $pattern]]
 	} else {
-		set files [lsort -dict [checkfiles $pattern]]
+		set list [lsort -dict [checkfiles $pattern]]
 	}
-	foreach file $files {
-		if {[info exists cgjob_rm($file)]} {
-			set files [list_remove $files $file]
+	foreach file $list {
+		if {[info exists cgjob_rm($file)]} continue
+		if {[file extension $file] in {.rz .lz4 .gz bgz .bz2} && [info exists filesa([file root $file])]} {
 			continue
 		}
+		set filesa($file) 1
+		lappend ids {}
 		maxfiletime $file time
 	}
-	lappend ids {*}[list_fill [llength $files] {}]
 	if {$checkcompressed} {
 		set filelist [gzarraynames cgjob_id $pattern]
 	} else {
@@ -208,19 +210,22 @@ proc job_finddep {pattern idsVar timeVar checkcompressed} {
 	}
 	foreach file $filelist {
 		if {[info exists cgjob_rm($file)]} continue
+		if {[file extension $file] in {.rz .lz4 .gz bgz .bz2} && [info exists filesa([file root $file])]} {
+			continue
+		}
 # do not remove job, we want to keep the dependency chain intact,
 # even if one job stops prematurely
 #		if {![job_running $cgjob_id($file)]} {
 #			unset cgjob_id($file)
 #			continue
 #		}
-		lappend files $file
+		set filesa($file) 1
 		lappend ids $cgjob_id($file)
 		if {[job_running $cgjob_id($file)]} {
 			set time now
 		}
 	}
-	return $files
+	return [array names filesa]
 }
 
 proc maxfiletime {file timeVar} {
@@ -240,7 +245,7 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 	if {[llength [array names cgjob_ptargets $glob]]} {
 		error "ptargets hit $pattern: wait till ptarget deps have finished"
 	}
-	set files {}
+	unset -nocomplain filesa
 	if {$checkcompressed} {
 		set list [lsort -dict [gzfiles $glob]]
 	} else {
@@ -248,9 +253,12 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 	}
 	foreach file $list {
 		if {[info exists cgjob_rm($file)]} continue
+		if {[file extension $file] in {.rz .lz4 .gz bgz .bz2} && [info exists filesa([file root $file])]} {
+			continue
+		}
 		if {[regexp ^$pattern\$ $file]} {
 			maxfiletime $file time
-			lappend files $file
+			set filesa($file) 1
 			lappend ids {}
 		}
 	}
@@ -261,6 +269,9 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 	}
 	foreach file $filelist {
 		if {[info exists cgjob_rm($file)]} continue
+		if {[file extension $file] in {.rz .lz4 .gz bgz .bz2} && [info exists filesa([file root $file])]} {
+			continue
+		}
 		if {![regexp ^[file_absolute $pattern](\.gz|\.rz|\.lz4|\.bz2|\.bgz)?\$ $file]} continue
 # do not remove job, we want to keep the dependency chain intact,
 # even if one job stops prematurely
@@ -268,13 +279,13 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 #			unset cgjob_id($file)
 #			continue
 #		}
-		lappend files $file
+		set filesa($file) 1
 		lappend ids $cgjob_id($file)
 		if {[job_running $cgjob_id($file)]} {
 			set time now
 		}
 	}
-	return $files
+	return [array names filesa]
 }
 
 # dependencies between braces () are optional (braces must be at start and end of dependency)
