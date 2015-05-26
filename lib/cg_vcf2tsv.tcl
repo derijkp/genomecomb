@@ -30,17 +30,18 @@ proc cg_vcf2tsv {args} {
 	set len [llength $args]
 	set tempfile [scratchfile get]
 	if {$len == 0} {
-		exec vcf2tsv $splitalt | cg select -s - <@ stdin >@ stdout
+		set error [catch {exec vcf2tsv $splitalt | cg select -s - <@ stdin >@ stdout 2>@ stderr}]
 	} elseif {$len == 1} {
 		set infile [lindex $args 0]
-		exec vcf2tsv $splitalt [gztemp $infile] | cg select -s - >@ stdout
+		set error [catch {exec vcf2tsv $splitalt [gztemp $infile] | cg select -s - >@ stdout 2>@ stderr}]
 	} elseif {$len == 2} {
 		set infile [lindex $args 0]
-		exec vcf2tsv $splitalt [gztemp $infile] | cg select -s - > [lindex $args 1]
+		set error [catch {exec vcf2tsv $splitalt [gztemp $infile] | cg select -s - > [lindex $args 1] 2>@ stderr}]
 	} else {
 		errorformat vcf2tsv
 		exit 1
 	}
+	if {$error} {exiterror "error converting vcf file"}
 }
 
 proc cg_vcf2sft {args} {
