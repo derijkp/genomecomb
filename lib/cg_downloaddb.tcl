@@ -287,6 +287,8 @@ proc cg_downloaddb {args} {
 			downloaddb_1000g $path $build
 		} elseif {$dbname eq "1000glow"} {
 			downloaddb_1000glow $path $build
+		} elseif {$dbname eq "1000g3"} {
+			downloaddb_1000g3 $path $build
 		} elseif {[regexp {snp.*} $dbname]} {
 			downloaddb_dbsnp $path $build $dbname
 		} else {

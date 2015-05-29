@@ -4,6 +4,35 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+proc downloaddb_1000g3 {path build {phase 3}} {
+	if {$build ne "hg19"} {
+		error "only build hg19 supported"
+	}
+	set resultfile $path/$build/var_${build}_1000g3.tsv
+	if {[file exists $resultfile]} {
+		putslog "skipping file $resultfile: exists"
+		return
+	}
+	set tempdir $path/tmp/$build
+	set dir 20130502
+	set base ALL.wgs.phase3_shapeit2_mvncall_integrated_v5a.20130502.sites
+	catch {exec wget -c --tries=45 --directory-prefix=$tempdir/ ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/$dir/$base.vcf.gz >@stdout 2>@stderr} errmsg
+	set fields {chromosome begin end type ref alt {freq=vformat("%.3f",($allelecount @* 1.0) @/ $totalallelecount)} quality filter totalallelecount AMR_AF EAS_AF AFR_AF EUR_AF SAS_AF}
+	set error [catch {
+		exec cg vcf2tsv $tempdir/$base.vcf.gz $tempdir/$base.tsv.temp
+	} msg]
+	if {$error} {
+		set msg [split $msg \n]
+		set len [llength [list_find -regexp $msg {not described in header|broken pipe|child process exited abnormally}]]
+		if {$len ne [llength $msg]} {
+			error "error converting $tempdir/$base.vcf.gz:\n$msg"
+		}
+	}
+	file rename -force $tempdir/$base.tsv.temp $tempdir/$base.tsv
+	cg select -s - -f $fields $tempdir/$base.tsv $resultfile.temp
+	file rename -force $resultfile.temp $resultfile
+}
+
 proc downloaddb_1000glow {path build} {
 	if {$build ne "hg19"} {
 		error "only build hg19 supported"
