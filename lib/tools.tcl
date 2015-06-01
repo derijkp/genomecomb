@@ -799,7 +799,14 @@ proc wgetfile {url {resultfile {}}} {
 	if {$resultfile eq ""} {
 		set resultfile [file tail $url]
 	}
-	catch {exec wget --tries=45 -O $resultfile.temp $url} errmsg
+	if {[catch {
+		exec wget -c --tries=45 -O $resultfile.temp $url 2>@ stderr
+	} errmsg]} {
+		if {[file size $resultfile.temp] == 0} {
+			file delete $resultfile.temp
+		}
+		return {}
+	}
 	if {![file exists $resultfile.temp]} {
 		return {}
 	}
