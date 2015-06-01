@@ -105,6 +105,16 @@ test oargs {args option} {
 	list $a $b $args
 } {1 2 {-c 3}}
 
+test compression {lz4} {
+	test_cleantmp
+	file_write tmp/test1.txt a
+	file_write tmp/test2.txt b
+	cg lz4 {*}[glob tmp/test*.txt]
+	catch {exec lz4c -d tmp/test1.txt.lz4 2> /dev/null} c1
+	catch {exec lz4c -d tmp/test2.txt.lz4 2> /dev/null} c2
+	list [lsort -dict [glob tmp/test*]] $c1 $c2
+} {{tmp/test1.txt.lz4 tmp/test2.txt.lz4} a b}
+
 file delete -force tmp/temp.sft
 
 set ::env(PATH) $keeppath
