@@ -15,6 +15,25 @@ proc bam2covstats_job {bamfile regionfile {suffix {}}} {
 	}
 }
 
+proc calculate_hsmetrics_job {bamfile bedfile} {
+	#calculate hsmetrics with picard tools (=coverage statistics): input bamfile & bedfile
+	upvar job_logdir job_logdir
+	set bamfile [file_absolute $bamfile]
+	set dir [file dir $bamfile]
+	set file [file tail $bamfile]
+	set root [join [lrange [split [file root $file] -] 1 end] -]
+	job calc_hsmetrics-$root -deps {$bamfile $bamfile.bai $bedfile} -targets $dir/$root.hsmetrics -vars {bedfile} -code {
+		exec samtools view -H $dep1 > $dep1.bed.temp
+		#remove comment columns & add strand info - due to lack of correct strand info take + as default
+		exec awk {$0 ~ /^@SQ/ {print $0}} $dep1.bed.temp > $dep1.bed
+		exec awk {BEGIN {OFS="\t"} !/^($|#)/ {print $1,$2,$3,"+",$4 }} $bedfile >> $dep1.bed
+		exec java -jar [picard]/CalculateHsMetrics.jar BAIT_INTERVALS=$dep1.bed TARGET_INTERVALS=$dep1.bed I=$dep1 O=$target.temp 2>@ stderr
+		file rename -force $target.temp $target
+		file delete $dep1.bed
+		file delete $dep1.bed.temp
+	}
+}
+
 proc cg_bcl2fastq {rundir outdir {rtr 6} {dtr 6} {ptr 6} {wtr 6} } {
 	#-r, --loading-threads Number of threads used for loading BCL data.
 	#-d, --demultiplexing-threads Number of threads used for demultiplexing.
@@ -814,6 +833,7 @@ proc process_illumina {args} {
 	set paired 1
 	set adapterfile {}
 	set conv_nextseq 0
+	set hsmetrics 0
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -837,6 +857,10 @@ proc process_illumina {args} {
 			}
 			-conv_nextseq {
 				set conv_nextseq $value
+			}
+			-bedfile {
+				set bedfile $value
+				set hsmetrics 1
 			}
 			default break
 		}
@@ -920,6 +944,8 @@ proc process_illumina {args} {
 		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
+		#calculate hsmetrics
+		if {$hsmetrics} {calculate_hsmetrics_job $cleanedbam $bedfile}
 		# samtools variant calling on map-rdsbwa
 		var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
 		lappend todo sam-rdsbwa-$sample
