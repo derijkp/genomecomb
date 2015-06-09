@@ -157,6 +157,7 @@ set auto_index(primercheck_overlappingamplicons) [list source [file join $dir cg
 set auto_index(cg_primercheck) [list source [file join $dir cg_primercheck.tcl]]
 set auto_index(bam2covstats_job) [list source [file join $dir cg_process_illumina.tcl]]
 set auto_index(calculate_hsmetrics_job) [list source [file join $dir cg_process_illumina.tcl]]
+set auto_index(make_hsmetrics_report_job) [list source [file join $dir cg_process_illumina.tcl]]
 set auto_index(cg_bcl2fastq) [list source [file join $dir cg_process_illumina.tcl]]
 set auto_index(cg_process_conv_illnextseq) [list source [file join $dir cg_process_illumina.tcl]]
 set auto_index(searchpath) [list source [file join $dir cg_process_illumina.tcl]]
