@@ -34,6 +34,18 @@ proc calculate_hsmetrics_job {bamfile bedfile} {
 	}
 }
 
+proc make_hsmetrics_report_job {destdir files} {
+	upvar job_logdir job_logdir
+	set experiment [file tail $destdir]
+	job calc_hsmetrics-$experiment -deps $files -targets $destdir/${experiment}_hsmetrics_report.tsv -code {
+		exec tail -n4 $dep1 | head -n1 > $target.temp
+		foreach d $deps {
+			exec tail -n3 $d | head -n1 >> $target.temp
+		}
+		file rename -force $target.temp $target
+	}
+}
+
 proc cg_bcl2fastq {rundir outdir {rtr 6} {dtr 6} {ptr 6} {wtr 6} } {
 	#-r, --loading-threads Number of threads used for loading BCL data.
 	#-d, --demultiplexing-threads Number of threads used for demultiplexing.
@@ -861,6 +873,7 @@ proc process_illumina {args} {
 			-bedfile {
 				set bedfile $value
 				set hsmetrics 1
+				set hsmetrics_files {}
 			}
 			default break
 		}
@@ -887,7 +900,7 @@ proc process_illumina {args} {
 	if {$conv_nextseq} {
 		set rundir [glob $destdir/*NS500*]
 		cg_bcl2fastq $rundir fastq 4 4 4 4
-		cg_process_conv_illnextseq	fastq $destdir
+		cg_process_conv_illnextseq fastq $destdir
 	}
 	set refseq [glob $dbdir/genome_*.ifas]
 	set resultbamprefix rds
@@ -945,7 +958,12 @@ proc process_illumina {args} {
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
 		#calculate hsmetrics
-		if {$hsmetrics} {calculate_hsmetrics_job $cleanedbam $bedfile}
+		if {$hsmetrics} {
+			calculate_hsmetrics_job $cleanedbam $bedfile
+			set root [join [lrange [split [file root [file tail $cleanedbam]] -] 1 end] -]
+			lappend hsmetrics_files $dir/$root.hsmetrics
+
+		}
 		# samtools variant calling on map-rdsbwa
 		var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
 		lappend todo sam-rdsbwa-$sample
@@ -957,6 +975,7 @@ proc process_illumina {args} {
 	cd $destdir
 	set todo [list_remdup $todo]
 	multicompar_job $experiment $dbdir $todo -skipincomplete 1 -split $split -dbfiles $dbfiles
+	if {$hsmetrics} { make_hsmetrics_report_job $destdir $hsmetrics_files }
 	cd $keeppwd
 
 }

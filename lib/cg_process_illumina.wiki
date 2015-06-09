@@ -88,7 +88,7 @@ if 1, bam files are realigned using gatk, use **value** srma to align using srma
 ; **-dbfile file**: Use **file** for extra (files in **dbdir** are already used) annotation 
 ; **-conv_nextseq 1/0**: generate fastqs for nextseq run & create sample folders - rundir should be placed in projectdir
 of resulting variants. This option can be added multiple times (with different files)
-; **-bedfile bedfile: if bedfile is provided, coverage statistics will be calculated for this region using picard CalculateHsMetrics
+; **-bedfile bedfile**: if bedfile is provided, coverage statistics will be calculated for this region using picard CalculateHsMetrics
 
 
 supports job options:
