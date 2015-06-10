@@ -87,14 +87,6 @@ job reg_${build}_gwasCatalog -vars {build dest} -deps {ucsc_${build}_gwasCatalog
 }
 
 
-# other databases
-foreach db {kgXref refLink} {
-	job other_${build}_$db -vars {dest build db} -targets {other_${build}_${db}.tsv} -code {
-		cg downloaddb $dest ${build} $db
-		file rename -force ucsc_${build}_${db}.tsv other_${build}_${db}.tsv
-	}
-}
-
 foreach db {
 	rmsk simpleRepeat
 } {
@@ -104,21 +96,32 @@ foreach db {
 	}
 }
 
-# 1000 genomes
-job 1000g -targets {$dest/hg18/var_hg18_1000gCHBxJPT.tsv $dest/hg18/var_hg18_1000gCEU.tsv $dest/hg18/var_hg18_1000gYRI.tsv} -vars {dest} -code {
-	cd ${dest}/hg18
-	cg downloaddb ${dest} hg18 1000g
-}
+## 1000 genomes
+#job 1000g -targets {$dest/hg18/var_hg18_1000gCHBxJPT.tsv $dest/hg18/var_hg18_1000gCEU.tsv $dest/hg18/var_hg18_1000gYRI.tsv} -vars {dest} -code {
+#	cd ${dest}/hg18
+#	cg downloaddb ${dest} hg18 1000g
+#}
+#
+## 1000glow (hg19)
+#file mkdir ${dest}/hg19
+#job 1000glow -targets {${dest}/hg19/var_hg19_1000glow.tsv} -vars {dest} -code {
+#	cd $dest/hg19
+#	cg downloaddb ${dest} hg19 1000glow
+#}
+#
+#job 1000glow_liftover -deps {${dest}/hg19/var_hg19_1000glow.tsv} -targets {var_${build}_1000glow.tsv} -vars {dest build} -code {
+#	cg liftover ${dest}/hg19/var_hg19_1000glow.tsv var_${build}_1000glow.tsv ${dest}/liftover/hg19ToHg18.over.chain
+#}
 
-# 1000glow (hg19)
-file mkdir ${dest}/hg19
-job 1000glow -targets {${dest}/hg19/var_hg19_1000glow.tsv} -vars {dest} -code {
+job 1000g3 -targets {${dest}/hg19/var_hg19_1000g3.tsv ${dest}/hg19/extra/var_hg19_1000g3.tsv.opt} -vars {dest build} -code {
 	cd $dest/hg19
-	cg downloaddb ${dest} hg19 1000glow
+	cg downloaddb ${dest} hg19 1000g3
+	cplinked $target $dest/$build/extra/var_${build}_1000g3.tsv
+	file_write $dest/$build/extra/var_${build}_1000g3.tsv.opt "fields\t{EUR_AF AMR_AF EAS_AF SAS_AF AFR_AF}\n"
 }
 
-job 1000glow_liftover -deps {${dest}/hg19/var_hg19_1000glow.tsv} -targets {var_${build}_1000glow.tsv} -vars {dest build} -code {
-	cg liftover ${dest}/hg19/var_hg19_1000glow.tsv var_${build}_1000glow.tsv ${dest}/liftover/hg19ToHg18.over.chain
+job 1000g3_liftover -deps {${dest}/hg19/var_hg19_1000g3.tsv} -targets {var_${build}_1000g3.tsv} -vars {dest build} -code {
+	cg liftover ${dest}/hg19/var_hg19_1000g3.tsv var_${build}_1000g3.tsv ${dest}/liftover/hg19ToHg18.over.chain
 }
 
 # dbsnp

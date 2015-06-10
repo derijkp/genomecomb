@@ -17,7 +17,8 @@ package require Extral
 proc downloaddb {path build dbname} {
 	file mkdir $path
 	set filename $path/$build/ucsc_${build}_$dbname.tsv
-	set temp $path/tmp/$build
+	set temp $filename.temp
+	file delete -force $temp
 	file mkdir $temp
 	if {[file isfile $filename]} {
 		puts "The file '$filename' already exists..."
@@ -58,7 +59,7 @@ proc downloaddb {path build dbname} {
 	}
 	if {![file exists $temp/$sqlfile]} {
 		puts "Downloading $dbname.sql ....."
-		catch {exec wget --directory-prefix=$temp ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$sqlfile} errmsg
+		wgetfile ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/$sqlfile $temp/$sqlfile
 	} else {
 		puts "Skipping download $dbname.sql (already there)"
 	}
@@ -118,8 +119,8 @@ proc downloaddb {path build dbname} {
 	puts "Sorting $filename ...."
 	set fields [list_common {chrom chromosome begin start end stop name score strand thickStart thickEnd itemRgb blockCount blockSizes blockStarts} $header]
 	lappend fields {*}[list_lremove $header $fields]
-	cg select -s - -f $fields $temp/u_$dbname.tsv $filename.temp
-	file rename -force $filename.temp $filename
+	cg select -s - -f $fields $temp/u_$dbname.tsv $temp/su_$dbname.tsv
+	file rename -force $temp/su_$dbname.tsv $filename
 	puts "----------------------------------------------------"
 }
 
@@ -265,6 +266,66 @@ more information on http://evs.gs.washington.edu/EVS/
 	file rename var_${build}_evs.tsv.temp2 $path/$build/extra/var_${build}_evs.tsv
 }
 
+proc downloaddb_phenotype {path build {url {}}} {
+	set keeppwd [pwd]
+	set resultfile $path/${build}/geneannot_${build}_phenotype.tsv
+	cd $path/tmp
+	# hsapiens_gene_ensembl
+	cg downloadmart ens_pehnotype_hg19.tsv hsapiens_gene_ensembl gene_ensembl_config {hgnc_symbol phenotype_description}
+	# clinvar
+	wgetfile ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar.vcf.gz clinvar_hg19.vcf.gz
+	cg vcf2tsv clinvar_hg19.vcf.gz clinvar_hg19.tsv
+	unset -nocomplain a
+	# process hsapiens_gene_ensembl
+	set f [open ens_pehnotype_hg19.tsv]
+	set header [tsv_open $f]
+	while 1 {
+		if {[gets $f line] == -1} break
+		set line [split $line \t]
+		foreach {gene pheno} $line break
+		if {$gene eq "" || $pheno eq ""} continue
+		set pheno [string tolower $pheno]
+		set a($gene) [list_union [get a($gene) ""] [list $pheno]]
+	}
+	close $f
+	# process clinvar
+	set f [gzopen clinvar_hg19.tsv]
+	set header [tsv_open $f]
+	set poss [list_cor $header {GENEINFO CLNDBN}]
+	while 1 {
+		if {[gets $f line] == -1} break
+		set line [split $line \t]
+		foreach {name pheno} [list_sub $line $poss] break
+		set gene [lindex [split $name :] 0]
+		if {$gene eq ""} continue
+		set pheno [string_change $pheno {_ { } {\x2c} {-}}]
+		set pheno [string tolower $pheno]
+		set pheno [split $pheno |,]
+		set pheno [list_lremove $pheno {{not specified} {not provided}}]
+		if {![llength $pheno]} continue
+		set a($gene) [list_union [get a($gene) ""] $pheno]
+	}
+	close $f
+	set o [open $resultfile.temp w]
+	puts $o "gene\tphenotype_description"
+	foreach gene [lsort -dict [array names a]] {
+		foreach pheno $a($gene) {
+			puts $o $gene\t$pheno
+		}
+	}
+	close $o
+	# info
+	regsub -all \n\t\t {
+		Gene-phenotype data file
+		
+		These gene-phenotype correlations are extracted from the ensembl gene database 
+		using biomart combined with those found in the clinvar database.
+	} \n temp
+	file_write $path/$build/geneannot_${build}_phenotype.tsv.info [string trim $temp]
+	file rename -force $resultfile.temp $resultfile
+	cd $keeppwd
+}
+
 proc cg_downloaddb {args} {
 	if {([llength $args] < 2)} {
 		puts stderr "format is: $::base resultdir build database ?...?"
@@ -272,13 +333,6 @@ proc cg_downloaddb {args} {
 		exit 1
 	}
 	foreach {path build dbname} $args break
-	if {$dbname eq "evs"} {
-		downloaddb_evs $path $build [lindex $args 3]
-		return
-	} elseif {$dbname eq "exac"} {
-		downloaddb_exac $path $build [lindex $args 3]
-		return
-	}
 	set dbnames [lrange $args 2 end]
 	puts "----------------------------------------------------"
 	file mkdir $path
@@ -291,6 +345,12 @@ proc cg_downloaddb {args} {
 			downloaddb_1000g3 $path $build
 		} elseif {[regexp {snp.*} $dbname]} {
 			downloaddb_dbsnp $path $build $dbname
+		} elseif {$dbname eq "evs"} {
+			downloaddb_evs $path $build [lindex $args 3]
+		} elseif {$dbname eq "exac"} {
+			downloaddb_exac $path $build [lindex $args 3]
+		} elseif {$dbname eq "phenotype"} {
+			downloaddb_phenotype $path $build [lindex $args 3]
 		} else {
 			downloaddb $path $build $dbname
 			downloaddbinfo $path $build $dbname
