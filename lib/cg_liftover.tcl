@@ -1,101 +1,19 @@
-proc cg_liftsample {args} {
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-split - -s {
-				set split $value
-			}
-			-- break
-			default {
-				break
-			}
-		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] < 3)} {
-		errorformat liftover
-		exit 1
-	}
-	foreach {srcdir destdir liftoverfile dbdir} $args break
-	if {[file exists $destdir] && ![file isdir $destdir]} {
-		error "$destdir already exists and is not a directory"
-	}
-	if {![file isdir $srcdir]} {
-		error "$srcdir is not a (sample) directory"
-	}
-	unset -nocomplain infoa
-	if {[file exists $srcdir/sampleinfo.tsv]} {
-		array set infoa [infofile_read $srcdir/sampleinfo.tsv]
-	}
-	if {[file exists $srcdir/info.txt]} {
-		set c [split [file_read $srcdir/info.txt] \n]
-		foreach line $c {
-			foreach {key value} [split [string range $line 1 end] \t] break
-			set infoa($key) $value
-		}
-	}
-	if {[info exists infoa(split)]} {
-		if {$infoa(split) ne $split} {
-			error "split option $split given, but sample is $infoa(split) according to sampleinfo.tsv"
-		}
-	} elseif {![info exists split]} {
-		set split 1
-	}
-	set infoa(dbdir) $dbdir
-	set infoa(split) $split
-	lappend infoa(liftover) $liftoverfile
-	file mkdir $destdir
-	infofile_write $destdir/sampleinfo.tsv [array get infoa]
-	foreach file [gzfiles $srcdir/var-*.tsv $srcdir/fannotvar-*.tsv] {
-		set destfile $destdir/[file tail $file]
-		if {[file exists $destfile]} continue
-		if {![catch {file link $file} link]} {
-			putslog "Copying link $file"
-			file copy -force $file $destfile
-		} else {
-			putslog "converting $file"
-			cg liftover -split $split -dbdir $dbdir $file $destfile.temp $liftoverfile 2>@ stderr
-			file rename $destfile.temp $destfile
-			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
-		}
-	}
-	foreach file [gzfiles $srcdir/sreg-*.tsv $srcdir/reg_*.tsv] {
-		set destfile $destdir/[file tail $file]
-		if {[file exists $destfile]} continue
-		if {![catch {file link $file} link]} {
-			putslog "Copying link $file"
-			file copy -force $file $destfile
-		} else {
-			putslog "converting region $file"
-			cg liftregion $file $destfile.temp $liftoverfile
-			file rename $destfile.temp $destfile
-			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
-		}
-	}
-	foreach file [gzfiles $srcdir/cgcnv-*.tsv $srcdir/cgsv-*.tsv] {
-		set destfile $destdir/[file tail $file]
-		if {[file exists $destfile]} continue
-		if {![catch {file link $file} link]} {
-			putslog "Copying link $file"
-			file copy -force $file $destfile
-		} else {
-			putslog "converting $file"
-			cg liftover $file $destfile.temp $liftoverfile 2>@ stderr
-			file rename $destfile.temp $destfile
-			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
-		}
-	}
-}
-
 proc cg_liftover {args} {
 	set pos 0
 	set dbdir {}
+	set regionfile {}
+	set correctvars 0
 	set split 1
 	foreach {key value} $args {
 		switch -- $key {
 			-dbdir {
 				set dbdir $value
+			}
+			-regionfile - -r {
+				set regionfile $value
+			}
+			-correctvars - -c {
+				set correctvars $value
 			}
 			-split - -s {
 				set split $value
@@ -116,134 +34,100 @@ proc cg_liftover {args} {
 	if {[file exists $resultfile]} {
 		error "file $resultfile already exists, format is (now): cg liftover varfile resultfile liftoverfile"
 	}
+
+	set liftoverfile [liftoverfile $liftoverfile]
 	if {[file isdir $varfile]} {
 		cg_liftoversample {*}$args
 	}
-	set unmappedfile $resultfile.unmapped
-	set f [gzopen $varfile]
-	set header [tsv_open $f comment]
-	set line [split [gets $f] \t]
-	set poss [tsv_basicfields $header 3]
-	if {![regexp ^chr [lindex $line [lindex $poss 0]]]} {set addchr 1} else {set addchr 0}
-	gzclose $f
-	
-	#
-	# make input file ($resultfile.temp) for liftover
-	#
-	set fields [list_sub $header $poss]
-	set id {}
-	foreach field $fields {
-		lappend id \$\{$field\}
-	}
-	foreach {chrfield bfield efield} $fields break
-	set fields {}
-	if {$addchr} {
-		lappend fields "chromosome=\"chr\$$chrfield\""
+	set liftoverchangefile [file root $liftoverfile].refchanges.tsv
+	if {[file exists $liftoverchangefile]} {
+		# todo
 	} else {
-		lappend fields "chromosome=\"\$$chrfield\""
+		# todo
 	}
-	lappend fields "begin=if(\$$bfield == \$$efield,\$$bfield - 1,\$$bfield)"
-	lappend fields "end=if(\$$bfield == \$$efield,\$$efield + 1,\$$efield)"
-	lappend fields id=\"[join $id -]\"
-	cg select -f $fields -sh $resultfile.temph $varfile $resultfile.temp
-	#
-	# do liftover -> $resultfile.temp2
-	#
-	# set dir [file dir [exec which liftOver]]
-	if {[catch {exec liftOver -bedPlus=3 -tab $resultfile.temp $liftoverfile $resultfile.temp2 $unmappedfile.temp} errmsg]} {
-		puts "$errmsg"
-	}
-	#
-	# add original data back to liftovered file -> $resultfile.temp3
-	# we cannot just let liftover do it, as it only takes max 12 columns with it
-	#
+	set unmappedfile $resultfile.unmapped
+	catch {gzclose $f} ; catch {gzclose $fl} ; catch {close $o} ; catch {close $ou}
+	# open liftover file
+	set fl [gzopen $liftoverfile]
+	set lheader [tsv_open $fl comment]
+	set lposs [list_cor $lheader {chromosome begin end strand destchromosome destbegin destend deststrand}]
+	set lline [list_sub [split [gets $fl] \t] $lposs]
+	set fromloc [lrange $lline 0 2]
+	foreach {srcchromosome srcbegin srcend srcstrand destchromosome destbegin destend deststrand} $lline break
+	if {-1 in $lposs} {exiterror "error in liftoverfile ($liftoverfile): wrong header"}
+	# open varfile
 	set f [gzopen $varfile]
 	set header [tsv_open $f comment]
-	set fl [open $resultfile.temp2]
-	#set temp [tsv_open $fl]
-	set o [open $resultfile.temp3 w]
-	set header [list_union [list_sub $header $poss] $header]
-	lappend header beforeliftover
+	set poss [tsv_basicfields $header 3]
+	set strandpos [lsearch $header strand]
+	if {$strandpos != -1} {
+		lappend poss $strandpos
+	}
+	set strand {}
+	set newheader [list_union [list_sub $header $poss] $header]
+	lappend newheader beforeliftover
+	# open resultfile
+	set o [open $resultfile.temp w]
 	puts $o "# liftover from $varfile"
 	puts $o "# using $liftoverfile"
-	puts $o [join $header \t]
-	while {![eof $fl]} {
-		set lline [split [gets $fl] \t]
-		if {![llength $lline]} continue
-		foreach {chr begin end lname} $lline break
-		foreach {lchr lbegin lend} [split $lname -] break
+	puts $o [join $newheader \t]
+	# open unmappedfile
+	set ou [open $unmappedfile.temp w]
+	puts $ou "# unmapped by liftover from $varfile"
+	puts $ou "# using $liftoverfile"
+	puts $ou [join $header \t]
+	set ldone 0
+	while 1 {
+		if {[gets $f oline] == -1} break
+		set line [split $oline \t]
+		set loc [list_sub $line $poss]
+		foreach {chromosome begin end strand} $loc break
+		set restline [list_sub $line -exclude $poss]
+		set before ${chromosome}-${begin}-${end}
+		if {$strand ne ""} {append before -$strand}
+		lappend restline $before
+		set restline [join $restline \t]
 		while 1 {
-			set line [split [gets $f] \t]
-			set loc [list_sub $line $poss]
-			set name [join $loc -]
-			if {$name eq $lname} break
-			if {[eof $f]} {error "$lname not found"}
+			set comp [reg_compare $fromloc $loc]
+			if {$comp >= 0} {
+				break
+			}
+			if {$ldone} break
+			if {[gets $fl lline] == -1} {
+				set ldone 1
+				break
+			}
+			set lline [list_sub [split $lline \t] $lposs]
+			foreach {srcchromosome srcbegin srcend srcstrand destchromosome destbegin destend deststrand} $lline break
+			set fromloc [lrange $lline 0 2]
 		}
-		if {$lbegin == $lend} {
-			incr begin ; incr end -1
+		if {$comp == 0 && $begin >= $srcbegin && $end <= $srcend} {
+			if {$srcstrand eq $deststrand} {
+				set ustrand $strand
+				set ubegin [expr {$begin + $destbegin - $srcbegin}]
+				set uend [expr {$end + $destbegin - $srcbegin}]
+			} else {
+				if {$strand eq "+"} {set ustrand "-"} else {set ustrand "+"}
+				set uend [expr {$destend - $begin + $srcbegin}]
+				set ubegin [expr {$destend - $end + $srcbegin}]
+			}
+			if {$strandpos != -1} {
+				puts $o $destchromosome\t$ubegin\t$uend\t$ustrand\t$restline
+			} else {
+				puts $o $destchromosome\t$ubegin\t$uend\t$restline
+			}
+		} else {
+			puts $ou $oline
 		}
-		puts $o $chr\t$begin\t$end\t[join [list_sub $line -exclude $poss] \t]\t$lname
 	}
-	close $o
-	close $fl
-	gzclose $f
+	catch {gzclose $f} ; catch {gzclose $fl} ; catch {close $o} ; catch {close $ou}
 	#
-	# sort result -> $resultfile.temp4
-	#
-	cg select -s - $resultfile.temp3 $resultfile.temp4
+	# sort result
+	cg select -s {chromosome begin end beforeliftover} $resultfile.temp $resultfile.temp2
+	file rename -force $resultfile.temp2 $resultfile
+	file delete -force $resultfile.temp
 	#
 	# rename result, cleanup
 	#
-	if {$dbdir ne ""} {
-		file delete $resultfile.temp5
-		cg correctvariants -f 1 -split $split $resultfile.temp4 $resultfile.temp5 $dbdir 2>@ stderr
-		file rename -force $resultfile.temp5 $resultfile
-		file delete $resultfile.temp4
-	} else {
-		file rename -force $resultfile.temp4 $resultfile
-	}
-	file delete $resultfile.temph $resultfile.temp $resultfile.temp2 $resultfile.temp3
-	#
-	# fo unmapped: add original data back
-	#
-	set f [gzopen $varfile]
-	set header [tsv_open $f comment]
-	set fl [open $unmappedfile.temp]
-	#set temp [tsv_open $fl]
-	set o [open $unmappedfile.temp3 w]
-	set header [list_union [list_sub $header $poss] $header]
-	puts $o "# unmapped by liftover from $varfile"
-	puts $o "# using $liftoverfile"
-	puts $o [join $header \t]
-	while {![eof $fl]} {
-		set lline [gets $fl]
-		if {[string index $lline 0] eq "\#"} continue
-		set lline [split $lline \t]
-		if {![llength $lline]} continue
-		foreach {chr begin end lname} $lline break
-		foreach {lchr lbegin lend} [split $lname -] break
-		while 1 {
-			set line [split [gets $f] \t]
-			set loc [list_sub $line $poss]
-			set name [join $loc -]
-			if {$name eq $lname} break
-			if {[eof $f]} {error "$lname not found"}
-		}
-		if {$lbegin == $lend} {
-			incr begin ; incr end -1
-		}
-		puts $o $chr\t$begin\t$end\t[join [list_sub $line -exclude $poss] \t]
-	}
-	close $o
-	close $fl
-	gzclose $f
-	#
-	# sort result -> $unmappedfile.temp4
-	#
-	cg select -s - $unmappedfile.temp3 $unmappedfile.temp4
-	#
-	# rename result, cleanup
-	#
-	file rename -force $unmappedfile.temp4 $unmappedfile
-	file delete $unmappedfile.temp2 $unmappedfile.temp3
+	file rename -force $unmappedfile.temp $unmappedfile
 }

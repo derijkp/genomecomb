@@ -601,14 +601,14 @@ test correctvariants {-f} {
 
 test liftover {basic} {
 	file delete tmp/temp.tsv
-	exec cg liftover data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
-	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
-	cg select -rf {test} tmp/temp.tsv tmp/temp2.tsv
 	cg select -rf {test} data/expected-var_lift-hg18tohg19.tsv tmp/expected.tsv
+	exec cg liftover data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
+	cg select -rf {test} tmp/temp.tsv tmp/temp2.tsv
+	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
 	exec diff tmp/temp2.tsv tmp/expected.tsv
 } {7,8c7,8
-< chr1	2492275	2492276	snp	C	A	B	r	o	19	G	G	v	t	18	A	C	1-2482141-2482142
 < chr1	2492275	2492276	snp	C	G	B	v	m	18	G	G	r	o	18	A	C	1-2482141-2482142
+< chr1	2492275	2492276	snp	C	A	B	r	o	19	G	G	v	t	18	A	C	1-2482141-2482142
 ---
 > chr1	2492275	2492276	snp	G	A	B	r	r	19	G	G	v	c	18	A	C	1-2482141-2482142
 > chr1	2492275	2492276	snp	G	C	B	r	r	18	G	G	v	c	18	A	C	1-2482141-2482142

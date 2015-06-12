@@ -1,5 +1,5 @@
 # unmapped by liftover from data/var_lift.tsv
-# using /complgen/refseq/liftover/hg18ToHg19.over.chain
-chromosome	begin	end	test	type	ref	alt	value1	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2
-chr1	1609710	1609711	t	snp	G	A	A4	v	m	16	A	A	v	t	16	G	A
-chr1	1609720	1609720	t	ins		A	A5	v	m	17			v	t	17		A
+# using /complgen/refseq/liftover/hg18ToHg19.over.tsv
+chromosome	test	begin	end	type	ref	alt	value1	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2
+1	t	1609710	1609711	snp	G	A	A4	v	m	16	A	A	v	t	16	G	A
+1	t	1609720	1609720	ins		A	A5	v	m	17			v	t	17		A

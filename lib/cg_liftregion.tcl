@@ -20,13 +20,7 @@ proc cg_liftregion {args} {
 	}
 	foreach {file resultfile liftoverfile} $args break
 	set unmappedfile $resultfile.unmapped
-	if {[file ext $liftoverfile] eq ".chain"} {
-		set useliftoverfile [file root $liftoverfile].tsv
-		if {![file exists $useliftoverfile]} {
-			cg chain2tsv $liftoverfile $useliftoverfile
-		}
-		set liftoverfile $useliftoverfile
-	}
+	set liftoverfile [liftoverfile $liftoverfile]
 	if {[file exists $resultfile]} {
 		error "file $resultfile already exists"
 	}
