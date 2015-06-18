@@ -749,7 +749,7 @@ proc scratchdir {} {
 		}
 	}
 	if {![info exists ::Extral::scratchdir]} {
-		error "couldn't create temporary directory"
+		error "couldn't create scratch directory in $env(SCRATCHDIR) (defined by env variable SCRATCHDIR)"
 	}
 	return $::Extral::scratchdir
 }
