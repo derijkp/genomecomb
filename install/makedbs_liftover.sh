@@ -20,9 +20,11 @@ cd ${dest}
 job_logdir log_jobs
 
 # hg18ToHg19.over.tsv
-job hg18Tohg19 -deps {hg18ToHg19.over.chain} -targets {hg18ToHg19.over.tsv} -code {
-	cg chain2tsv $dep > $target.temp
-	file rename -force $target.temp $target
+foreach base {hg18ToHg19 hg19ToHg18 hg38ToHg19} {
+	job liftchain2tsv-$base -deps {$base.over.chain} -targets {$base.over.tsv} -code {
+		cg liftchain2tsv $dep > $target.temp
+		file rename -force $target.temp $target
+	}
 }
 
 # lift refchanges hg18Tohg19

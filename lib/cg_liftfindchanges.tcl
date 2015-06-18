@@ -1,3 +1,5 @@
+package require BioTcl
+
 proc cg_liftfindchanges {args} {
 	if {([llength $args] != 3)} {
 		exiterror "format is: cg liftfindchanges srcgenome destgenome liftoverfile"
@@ -7,7 +9,7 @@ proc cg_liftfindchanges {args} {
 	if {[file ext $liftoverfile] eq ".chain"} {
 		set useliftoverfile [file root $liftoverfile].tsv
 		if {![file exists $useliftoverfile]} {
-			cg chain2tsv $liftoverfile $useliftoverfile
+			cg liftchain2tsv $liftoverfile $useliftoverfile
 		}
 		set liftoverfile $useliftoverfile
 	}
@@ -19,11 +21,13 @@ proc cg_liftfindchanges {args} {
 	if {$header ne {chromosome begin end strand destchromosome destbegin destend deststrand}} {
 		exiterror "header of file $liftoverfile should be: chromosome begin end strand destchromosome destbegin destend deststrand"
 	}
-	puts [join {chromosome begin end ref destchromosome destbegin destend destref} \t]
+	puts [join {chromosome begin end ref destchromosome destbegin destend destref destcomplement} \t]
 	while 1 {
 		if {[gets $f line] == -1} break
 		set line [split $line \t]
 		foreach {chromosome begin end strand destchromosome destbegin destend deststrand} $line break
+		set chromosome [chr_clip $chromosome]
+		set destchromosome [chr_clip $destchromosome]
 		if {[catch {
 			set sseq [string toupper [genome_get $gs $chromosome $begin $end]]
 		} msg]} {
@@ -34,15 +38,29 @@ proc cg_liftfindchanges {args} {
 		} msg]} {
 			continue
 		}
+		if {$strand ne "+"} {exiterror "source strand should allways be +"}
+		if {$deststrand eq "-"} {
+			set rev 1
+			set dseq [seq_complement $dseq]
+		} else {
+			set rev 0
+		}
 		if {$sseq ne $dseq} {
  			if {[expr {($end-$begin)-($destend-$destbegin)}]} {
 				error "difference in length between matching blocks not supported"
 			}
+			if {!$rev} {
+				set step 1
+			} else {
+				set destbegin [expr {$destend - 1}]
+				set step -1
+			}
 			foreach s [split $sseq ""] d [split $dseq ""] {
 				if {$s ne $d} {
-					puts [join [list $chromosome $begin [expr {$begin+1}] $s $destchromosome $destbegin [expr {$destbegin+1}] $d]\t]
+					if {$rev} {set d [seq_complement $d]}
+					puts [join [list $chromosome $begin [expr {$begin+1}] $s $destchromosome $destbegin [expr {$destbegin+1}] $d $rev] \t]
 				}
-				incr begin ; incr destbegin
+				incr begin ; incr destbegin $step
 			}
 		}
 	}	

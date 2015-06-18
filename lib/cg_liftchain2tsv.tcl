@@ -4,7 +4,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc cg_chain2tsv {args} {
+proc cg_liftchain2tsv {args} {
 	global scriptname action
 	set ref {}
 	set pos 0
@@ -22,7 +22,7 @@ proc cg_chain2tsv {args} {
 	}
 	set args [lrange $args $pos end]
 	if {[llength $args] > 2} {
-		errorformat chain2tsv
+		errorformat liftchain2tsv
 		exit 1
 	}
 	foreach {srcfile destfile} $args break
@@ -44,6 +44,8 @@ proc cg_chain2tsv {args} {
 		}
 		if {[eof $f]} break
 		foreach {temp score tname tsize tstrand tstart tend qname qsize qstrand qstart qend id} $line break
+		set tname [chr_clip $tname]
+		set qname [chr_clip $tname]
 		if {$temp ne "chain"} {error "error in chain format: expected chain at start of: $line"}
 		if {$tstrand eq "-"} {
 			error "error: did not expect negative strand in header for reference sequence"

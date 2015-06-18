@@ -197,7 +197,7 @@ chr7	127478198  127479365  Neg3  0  -
 chr7	127479365  127480532  Pos5  0  +
 chr7	127480532  127481699  Neg4  0  -}
 
-file delete tmp/temp.tsv
+test_cleantmp
 
 test sft2gff {sft2gff} {
 	exec cg vcf2tsv data/test1000glow.vcf tmp/temp.tsv
@@ -490,8 +490,8 @@ test gene2reg {gene2reg basic} {
 } {}
 
 test correctvariants {basic} {
-	file delete tmp/temp.tsv
-	cg select -f {chromosome begin end type ref alt sequenced=$sequenced-sample1 zyg=$zyg-sample1 alleleSeq1=$alleleSeq1-sample1 alleleSeq2=$alleleSeq2-sample1} data/var_lift.tsv tmp/vars.tsv
+	test_cleantmp
+	cg select -f {chromosome begin end type ref alt sequenced=$sequenced-sample1 zyg=$zyg-sample1 alleleSeq1=$alleleSeq1-sample1 alleleSeq2=$alleleSeq2-sample1} data/var_h19referrors.tsv tmp/vars.tsv
 	exec cg correctvariants -f 1 -s 1 tmp/vars.tsv tmp/temp.tsv /complgen/refseq/hg19
 	cg select -f {chromosome begin end type ref alt sequenced zyg} tmp/temp.tsv tmp/part.tsv
 	write_tab tmp/expected.tsv {
@@ -509,8 +509,8 @@ test correctvariants {basic} {
 } {}
 
 test correctvariants {basic with doubles} {
-	file delete tmp/temp.tsv
-	cg select -f {chromosome begin end type ref alt sequenced=$sequenced-sample1 zyg=$zyg-sample1 alleleSeq1=$alleleSeq1-sample1 alleleSeq2=$alleleSeq2-sample1} data/var_lift.tsv tmp/vars.tsv
+	test_cleantmp
+	cg select -f {chromosome begin end type ref alt sequenced=$sequenced-sample1 zyg=$zyg-sample1 alleleSeq1=$alleleSeq1-sample1 alleleSeq2=$alleleSeq2-sample1} data/var_h19referrors.tsv tmp/vars.tsv
 	set f [open tmp/vars.tsv a]
 	puts $f [join {15 26517559 26517560 snp T A v t A T} \t]
 	close $f
@@ -531,8 +531,8 @@ test correctvariants {basic with doubles} {
 } {}
 
 test correctvariants {basic missing zyg col} {
-	file delete tmp/temp.tsv
-	cg select -f {chromosome begin end type ref alt sequenced=$sequenced-sample1 alleleSeq1=$alleleSeq1-sample1 alleleSeq2=$alleleSeq2-sample1} data/var_lift.tsv tmp/vars.tsv
+	test_cleantmp
+	cg select -f {chromosome begin end type ref alt sequenced=$sequenced-sample1 alleleSeq1=$alleleSeq1-sample1 alleleSeq2=$alleleSeq2-sample1} data/var_h19referrors.tsv tmp/vars.tsv
 	exec cg correctvariants -f 1 -s 1 tmp/vars.tsv tmp/temp.tsv /complgen/refseq/hg19
 	cg select -f {chromosome begin end type ref alt sequenced} tmp/temp.tsv tmp/part.tsv
 	write_tab tmp/expected.tsv {
@@ -550,8 +550,8 @@ test correctvariants {basic missing zyg col} {
 } {}
 
 test correctvariants {basic multicompar} {
-	file delete tmp/temp.tsv
-	exec cg correctvariants -f 1 -s 1 data/var_lift.tsv tmp/temp.tsv /complgen/refseq/hg19
+	test_cleantmp
+	exec cg correctvariants -f 1 -s 1 data/var_h19referrors.tsv tmp/temp.tsv /complgen/refseq/hg19
 	cg select -f {chromosome begin end type ref alt sequenced-* zyg-*} tmp/temp.tsv tmp/part.tsv
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced-sample1	sequenced-sample2	zyg-sample1	zyg-sample2
@@ -568,7 +568,7 @@ test correctvariants {basic multicompar} {
 } {}
 
 test correctvariants {basic multicompar doubles} {
-	file delete tmp/temp.tsv tmp/result.tsv
+	test_cleantmp
 	write_tab tmp/temp.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1 alleleSeq2-sample1 sequenced-sample2	zyg-sample2	alleleSeq1-sample2 alleleSeq2-sample2
 		1	2482141	2482142	snp	A	G	v	m	G	G	v	r	A	A
@@ -587,53 +587,105 @@ test correctvariants {basic multicompar doubles} {
 } {}
 
 test correctvariants {-c 1} {
-	file delete -force tmp/temp.tsv
+	test_cleantmp
 	exec cg correctvariants -c 1 data/updatavartest.tsv tmp/temp.tsv /complgen/refseq/hg18
 	exec diff tmp/temp.tsv data/expected-updatavartest.tsv
 } {}
 
 test correctvariants {-f} {
-	file delete -force tmp/temp2.tsv
+	test_cleantmp
 	exec cg select -f {chromosome begin end type ref alt} data/updatavartest.tsv tmp/temp.tsv
 	exec cg correctvariants -c 1 tmp/temp.tsv tmp/temp2.tsv /complgen/refseq/hg18
 	exec diff tmp/temp2.tsv data/expected-updatavartest2.tsv
 } {}
 
-test liftover {basic} {
-	file delete tmp/temp.tsv
+test liftover {basic no correctvariants} {
+	test_cleantmp
 	cg select -rf {test} data/expected-var_lift-hg18tohg19.tsv tmp/expected.tsv
-	exec cg liftover data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
+	exec cg liftover -correctvariants 0 data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	cg select -rf {test} tmp/temp.tsv tmp/temp2.tsv
 	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
 	exec diff tmp/temp2.tsv tmp/expected.tsv
 } {7,8c7,8
-< chr1	2492275	2492276	snp	C	G	B	v	m	18	G	G	r	o	18	A	C	1-2482141-2482142
-< chr1	2492275	2492276	snp	C	A	B	r	o	19	G	G	v	t	18	A	C	1-2482141-2482142
+< 1	2492275	2492276	snp	C	A	B2	r	o	19	G	G	v	t	18	A	C	1-2482141-2482142
+< 1	2492275	2492276	snp	C	G	B1	v	m	18	G	G	r	o	18	A	C	1-2482141-2482142
 ---
-> chr1	2492275	2492276	snp	G	A	B	r	r	19	G	G	v	c	18	A	C	1-2482141-2482142
-> chr1	2492275	2492276	snp	G	C	B	r	r	18	G	G	v	c	18	A	C	1-2482141-2482142
+> 1	2492275	2492276	snp	G	C	B1	v	m	18	C	C	r	o	18	T	G	1-2482141-2482142
+> 1	2492275	2492276	snp	G	T	B2	r	o	19	C	C	v	t	18	T	G	1-2482141-2482142
 } error regexp
 
 test liftover {basic liftover with correctvariants} {
-	file delete tmp/temp.tsv tmp/temp2.tsv
+	test_cleantmp
 	exec cg liftover data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
-	exec cg correctvariants -f 1 -s 1 tmp/temp.tsv tmp/temp2.tsv /complgen/refseq/hg19
-	exec diff tmp/temp2.tsv data/expected-var_lift-hg18tohg19.tsv
-	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
-} {}
-
-test liftover {basic liftover with correctvariants in liftover} {
-	file delete tmp/temp.tsv tmp/temp2.tsv
-	exec cg liftover -dbdir /complgen/refseq/hg19 -s 1 data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	exec diff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
 	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
 } {}
 
 test liftregion {basic} {
-	file delete tmp/temp.tsv
+	test_cleantmp
 	exec cg liftregion data/reg_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	exec diff tmp/temp.tsv data/expected-reg_lift-hg18tohg19.tsv
 	exec diff tmp/temp.tsv.unmapped data/expected-reg_lift-hg18tohg19.tsv.unmapped
+} {}
+
+test liftregion {changed refseq} {
+	test_cleantmp
+	# 1: alt becomes ref
+	# 2,3: two alleles (one becomes ref)
+	# 4: complement with refchange to complement!
+	# 5: complement with refchange to other base
+	write_tab tmp/temp.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2
+		1	1609629	1609630	snp	T	C	v	m	1	C	C	r	r	2	T	T
+		1	2474628	2474629	snp	G	C	v	t	2	G	C	r	o	4	T	T
+		1	2474628	2474629	snp	G	T	r	o	3	G	C	v	m	6	T	T
+		1	2489102	2489103	snp	A	T	v	m	4	T	T	r	r	5	A	A
+		2	89594172	89594173	snp	T	A	v	t	5	T	A	r	r	8	T	T
+		2	110743803	110743804	snp	A	T	v	t	6	A	T	r	r	10	A	A
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2	beforeliftover
+		1	1619766	1619767	snp	C	T	r	r	1	C	C	v	m	2	T	T	1-1609629-1609630
+		1	2484768	2484769	snp	T	C	v	c	2	G	C	r	r	4	T	T	1-2474628-2474629
+		1	2484768	2484769	snp	T	G	v	c	2	G	C	r	r	4	T	T	1-2474628-2474629
+		1	2499242	2499243	snp	C	A	r	o	4	T	T	v	m	5	A	A	1-2489102-2489103
+		1	2499242	2499243	snp	C	T	v	m	4	T	T	r	o	5	A	A	1-2489102-2489103
+		2	89563941	89563942	snp	T	A	v	t	5	A	T	v	m	8	A	A	2-89594172-89594173
+		2	110577444	110577445	snp	C	A	v	c	6	T	A	r	o	10	T	T	2-110743803-110743804
+		2	110577444	110577445	snp	C	T	v	c	6	T	A	v	m	10	T	T	2-110743803-110743804
+	}
+	file delete tmp/lifted.tsv
+	exec cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
+	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test liftregion {changed refseq, unsplit} {
+	test_cleantmp
+	# 1: alt becomes ref
+	# 2,3: two alleles (one becomes ref)
+	# 4: complement with refchange to complement!
+	# 5: complement with refchange to other base
+	write_tab tmp/temp.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2
+		1	1609629	1609630	snp	T	C	v	m	1	C	C	r	r	2	T	T
+		1	2474628	2474629	snp	G	C,T	v	t	2	G	C	v	m	4	T	T
+		1	2489102	2489103	snp	A	T	v	m	4	T	T	r	r	5	A	A
+		2	89594172	89594173	snp	T	A	v	t	5	T	A	r	r	8	T	T
+		2	110743803	110743804	snp	A	T	v	t	6	A	T	r	r	10	A	A
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2	beforeliftover
+		1	1619766	1619767	snp	C	T	r	r	1	C	C	v	m	2	T	T	1-1609629-1609630
+		1	2484768	2484769	snp	T	C,G	v	c	2	G	C	r	r	4	T	T	1-2474628-2474629
+		1	2499242	2499243	snp	C	A,T	v	m	4	T	T	v	m	5	A	A	1-2489102-2489103
+		2	89563941	89563942	snp	T	A	v	t	5	A	T	v	m	8	A	A	2-89594172-89594173
+		2	110577444	110577445	snp	C	A,T	v	c	6	T	A	v	m	10	T	T	2-110743803-110743804
+	}
+	file delete tmp/lifted.tsv
+	exec cg liftover -split 0 tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
+	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test liftover {variants with different ref ending up in same spot -s 1} {
@@ -641,11 +693,11 @@ test liftover {variants with different ref ending up in same spot -s 1} {
 	write_tab tmp/temp.tsv {
 		chromosome	begin	end	type	ref	alt
 		2       109820576       109820577       snp     G       T
-		2	110858379	110858380	snp	A	T
+		2	110858379	110858380	snp	A	A
 	}
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	beforeliftover
-		chr2       110463287       110463288       snp     G       T	2-109820576-109820577
+		2       110463287       110463288       snp     G       T	2-110858379-110858380
 	}
 	exec cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	exec cg correctvariants -f 1 -s 1 tmp/lifted.tsv tmp/result.tsv.temp /complgen/refseq/hg19
@@ -662,7 +714,7 @@ test liftover {variants with different alt ending up in same spot -s 0} {
 	}
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	beforeliftover
-		chr2       110463287       110463288       snp     G       C,T	2-109820576-109820577
+		2       110463287       110463288       snp     G       A,C,T	2-110858379-110858380
 	}
 	exec cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	file delete tmp/result.tsv.temp

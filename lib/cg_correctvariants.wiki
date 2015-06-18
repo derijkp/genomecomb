@@ -1,7 +1,7 @@
-= updatevarfile =
+= correctvariants =
 
 == Format ==
-cg updatevarfile ?options? varfile resultfile dbdir
+cg correctvariants ?options? varfile resultfile dbdir
 
 == Summary ==
 Complete or correct a variants file

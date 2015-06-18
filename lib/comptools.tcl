@@ -97,7 +97,11 @@ proc zyg {args} {
 		}
 	} elseif {$seq1 eq "v"} {
 		if {$a1 == "?" || $a2 == "?"} {return ?}
-		if {$alt eq ""} {set alt {{}}} else {set alt [split $alt ,]}
+		if {$alt eq ""} {
+			set alt {{}}
+		} elseif {[llength $alt] <= 1} {
+			set alt [split $alt ,]
+		}
 		if {$a1 in $alt} {
 			if {$a1 eq $a2} {
 				return m
