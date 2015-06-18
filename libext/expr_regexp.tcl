@@ -22,6 +22,14 @@ proc tcl::mathfunc::regextract {args} {
 	join [lrange $matches 1 end] ,
 }
 
+proc tcl::mathfunc::regsub {args} {
+	if {[llength $args] < 3} {error "function regsub must have at least 3 arguments"}
+	foreach {value pattern replace} [::lrange $args end-2 end] break
+	set args [::lrange $args 0 end-3]
+	::regsub {*}$args $pattern $value $replace temp
+	return $temp
+}
+
 proc tcl::mathfunc::matches {args} {
 	if {[llength $args] < 2} {error "function matches must have at least 2 arguments"}
 	foreach {value pattern} [::lrange $args end-1 end] break
