@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 	int endkeep=-1,near,near2;
 	int start1,end1,start2,end2;
 	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
-	int error2,nextpos=0,datanear=-1,i;
+	int error2,datanear=-1,i;
 	if ((argc < 10)) {
 		fprintf(stderr,"Format is: reg_annot file1 chrpos1 startpos1 endpos1 file2 chrpos2 startpos2 endpos2 datanear datapos1 ...");
 		exit(EXIT_FAILURE);
@@ -88,16 +88,9 @@ NODPRINT("%d",datapos[i])
 NODPRINT("%d\t%s\t%d\t%d",1,Loc_ChrString(chromosome1),start1,end1)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
-		if (checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,end1,argv[1])) {
-			nextpos = 0;
-		}
-		/* if (start1 >= nextpos) {
-			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
-			fflush(stderr);
-			nextpos += 50000000;
-		} */
+		checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,end1,argv[1]);
 		comp = DStringLocCompare(chromosome2, chromosome1);
-		while (!error2 && ((comp < 0) || ((comp == 0) && (end2 <= start1)))) {
+		while (!error2 && ((comp < 0) || ((comp == 0) && ((end2 < start1) || (end2 == start1 && start1 != end1))))) {
 			/* keep data of previous */
 			/* to avoid allocating new memory everytime, reuse linekeep and associated data */
 			chromosomekeep = chromosome2; endkeep = end2;
@@ -131,7 +124,7 @@ for (i = 0; i < datalen ; i++) {
 DPRINT("data[%d] %d %s",i,data[i]->size,data[i]->string)
 }
 */
-		if (error2 || (comp > 0) || ((comp == 0) && (end1 <= start2))) {
+		if (error2 || (comp > 0) || ((comp == 0) && ((end1 < start2) || (end1 == start2 && start1 != end1)))) {
 			NODPRINT("no overlap")
 			if (datanear != -1) {
 				near = datanear;
