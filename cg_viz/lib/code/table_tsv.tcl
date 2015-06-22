@@ -502,7 +502,8 @@ table_tsv method save {file} {
 	set lineindex $tdata(lineindex)
 	set o [open $file w]
 	puts $o "# [list orifile $tdata(file)]"
-	puts $o "# [list query $tdata(query)]"
+	regsub -all \n $tdata(query) { } q
+	puts $o "# [list query $q]"
 	puts $o [join $tdata(qfields) \t]
 	while {$row < $len} {
 		set end [expr {$row+19}]
