@@ -1,3 +1,7 @@
+#filetype	tsv/varfile
+#fileversion	0.10.0
+#ref	hg18
+#split	1
 chromosome	test	begin	end	type	ref	alt	value1	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2
 1	t	0	1	snp	T	A	A1	v	t	9	A	T	r	r	9	T	T
 1	t	700	701	snp	C	A	A2	r	r	10	C	C	v	m	10	A	A

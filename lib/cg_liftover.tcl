@@ -22,15 +22,11 @@ proc liftover_correctline {line ref altpos alts sposs slist} {
 
 proc cg_liftover {args} {
 	set pos 0
-	set dbdir {}
 	set regionfile {}
 	set correctvariants 1
 	unset -nocomplain split
 	foreach {key value} $args {
 		switch -- $key {
-			-dbdir {
-				set dbdir $value
-			}
 			-regionfile - -r {
 				set regionfile $value
 			}
@@ -57,13 +53,24 @@ proc cg_liftover {args} {
 		error "file $resultfile already exists, format is (now): cg liftover varfile resultfile liftoverfile"
 	}
 
+	set liftoverfilebase [lindex [split [file tail $liftoverfile] .] 0]
+	if {![regexp {^(.*)(To|2)(.*)} $liftoverfilebase temp oldrefname temp newrefname]} {
+		set newrefname $liftoverfilebase
+	}
+	set newrefname [string tolower $newrefname]
+	if {![info exists oldrefname]} {
+		set oldrefname old
+	} else {
+		set oldrefname [string tolower $oldrefname]
+	}
+	set pos [string first To $liftoverfile]
 	set liftoverfile [liftoverfile $liftoverfile]
 	if {[file isdir $varfile]} {
 		cg_liftoversample {*}$args
 	}
 	set unmappedfile $resultfile.unmapped
 	#
-	catch {gzclose $f} ; catch {gzclose $fl} ; catch {gzclose $fc} ; catch {close $o} ; catch {close $ou}
+	catch {gzclose $f} ; catch {gzclose $fl} ; catch {gzclose $fc} ; catch {gzclose $freg} ; catch {close $o} ; catch {close $ou}
 	#
 	# open liftover file
 	set fl [gzopen $liftoverfile]
@@ -114,7 +121,30 @@ proc cg_liftover {args} {
 	foreach {chrpos beginpos endpos typepos refpos altpos strandpos} $fposs break
 	set strand {}
 	set newheader $header
-	lappend newheader beforeliftover
+	lappend newheader ${oldrefname}_chromosome ${oldrefname}_begin ${oldrefname}_end ${oldrefname}_ref
+	#
+	# open regionfile
+	if {$regionfile ne ""} {
+		set doregions 1
+		set regtemplate [list_fill [expr {[llength $newheader]-4}] ?]
+		lset regtemplate $typepos snp
+		set freg [gzopen $regionfile]
+		set regheader [tsv_open $freg]
+		set regposs [tsv_basicfields $header]
+		set curreg [get_region $freg $regposs]
+		set samples [samples $header]
+		set regsampleposs {}
+		foreach sample $samples {
+			set pos [lsearch $regheader $sample]
+			if {$pos == -1} {set pos [lsearch $regheader sreg-$sample]}
+			if {$pos == -1} {set pos [lsearch $regheader reg-$sample]}
+			if {$pos == -1} {error "regionfile $regionfile does not contain region information for sample $sample in varfile"}
+			lappend regsampleposs $pos
+		}
+	} else {
+		set doregions 0
+	}
+	# go
 	set aposs {}
 	set sposs {}
 	if {$correctvariants} {
@@ -140,12 +170,21 @@ proc cg_liftover {args} {
 	#
 	# open resultfile
 	set o [open $resultfile.temp w]
-	puts -nonewline $o $comment
-	puts $o "#liftover_source\t$varfile"
-	puts $o "#liftover\t$liftoverfile"
+	set cinfo [comment2dict $comment]
+	dict set cinfo liftover_source $varfile
+	dict set cinfo liftover $liftoverfile
+	if {[dict exists $cinfo ref]} {
+		set oldref [dict get $cinfo ref]
+	} else {
+		set oldref $oldrefname
+	}
+	dict set cinfo oldref $oldref
+	dict set cinfo ref $newrefname
+	puts -nonewline $o [dict2comment $cinfo]
 	puts $o [join $newheader \t]
 	# open unmappedfile
 	set ou [open $unmappedfile.temp w]
+	puts -nonewline $ou $comment
 	puts $ou "#liftover_source\t$varfile"
 	puts $ou "#liftover_unmapped\t$liftoverfile"
 	puts $ou [join $header \t]
@@ -160,9 +199,8 @@ proc cg_liftover {args} {
 		set floc [list_sub $line $fposs]
 		foreach {chromosome begin end type ref alt strand} $floc break
 		set loc [lrange $floc 0 2]
-		set before ${chromosome}-${begin}-${end}
-		if {$strand ne ""} {append before -$strand}
-		lappend line $before
+		lappend line ${chromosome} ${begin} ${end} $ref
+		# if {$strand ne ""} {append before -$strand}
 		if {$correctvariants} {
 			# adapt clist to current var
 			set newclist {}
@@ -191,6 +229,40 @@ proc cg_liftover {args} {
 					lappend newclist $cline
 					if {$ccomp == 0} {
 						lappend coverlaps $cline
+					}
+				}
+				if {$doregions && $ccomp != 0} {
+					set regcomp 0
+					while 1 {
+						set regcomp [reg_compare $cloc $curreg]
+						if {$regcomp <= 0} {
+							# variant is in or before region
+							break
+						}
+						if {[eof $freg]} break
+						set curreg [get_region $freg $regposs]
+					}
+					if {$regcomp == 0} {
+						foreach {cchromosome cbegin cend srcref destchromosome destbegin destend destref destcomplement} $cline break
+						set temp $regtemplate
+						lset temp $chrpos $destchromosome
+						lset temp $beginpos $destbegin
+						lset temp $endpos $destend
+						lset temp $refpos $destref
+						lset temp $altpos $srcref
+						lappend temp $cchromosome $cbegin $cend $srcref
+						foreach {a1pos a2pos seqpos zygpos} $sposs sreg [list_sub $curreg $regsampleposs] {
+							if {$sreg} {
+								lset temp $a1pos $srcref
+								lset temp $a2pos $srcref
+								lset temp $seqpos v
+								lset temp $zygpos m
+							} else {
+								lset temp $seqpos u
+								lset temp $zygpos u
+							}
+						}
+						puts $o [join $temp \t]
 					}
 				}
 			}
@@ -248,7 +320,7 @@ proc cg_liftover {args} {
 			if {$correctvariants && [llength $coverlaps]} {
 				set newref $ref
 				foreach cline $coverlaps {
-					foreach {cchromosome cbegin cend cstrand srcref temp temp destref destcomplement} $cline break
+					foreach {cchromosome cbegin cend srcref destchromosome destbegin destend destref destcomplement} $cline break
 					set spos [expr {$cbegin-$begin}]
 					set newref [string replace $newref $spos $spos $destref]
 				}
@@ -290,7 +362,7 @@ proc cg_liftover {args} {
 	# sort result
 	set sortfields [list_sub $header [lrange $fposs 0 5]]
 	lappend sortfields beforeliftover
-	cg select -s {chromosome begin end type ref alt beforeliftover} $resultfile.temp $resultfile.temp2
+	cg select -s [list chromosome begin end type ref alt ${oldrefname}_chromosome ${oldrefname}_begin ${oldrefname}_end ${oldrefname}_ref] $resultfile.temp $resultfile.temp2
 	file rename -force $resultfile.temp2 $resultfile
 	file delete -force $resultfile.temp
 	#

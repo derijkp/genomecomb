@@ -1,9 +1,14 @@
+#filetype	tsv/varfile
+#fileversion	0.10.0
+#ref	hg19
+#split	1
 #liftover_source	data/var_lift.tsv
 #liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
-chromosome	test	begin	end	type	ref	alt	value1	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2	beforeliftover
-1	t	10000	10001	snp	T	A	A1	v	t	9	A	T	r	r	9	T	T	1-0-1
-1	t	10837	10838	snp	C	A	A2	r	r	10	C	C	v	m	10	A	A	1-700-701
-1	t	10839	10839	ins		A	A3	v	t	15		A	r	r	15	A	A	1-702-702
-1	t	2492275	2492276	snp	G	C	B1	v	m	18	C	C	r	o	18	T	G	1-2482141-2482142
-1	t	2492275	2492276	snp	G	T	B2	r	o	19	C	C	v	t	18	T	G	1-2482141-2482142
-15	t	28719531	28719532	snp	T	A	C	v	t	20	A	T	v	t	19	A	T	15-26517559-26517560
+#oldref	hg18
+chromosome	test	begin	end	type	ref	alt	value1	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2	hg18_chromosome	hg18_begin	hg18_end	hg18_ref
+1	t	10000	10001	snp	T	A	A1	v	t	9	A	T	r	r	9	T	T	1	0	1	T
+1	t	10837	10838	snp	C	A	A2	r	r	10	C	C	v	m	10	A	A	1	700	701	C
+1	t	10839	10839	ins		A	A3	v	t	15		A	r	r	15	A	A	1	702	702	
+1	t	2492275	2492276	snp	G	C	B1	v	m	18	C	C	r	o	18	T	G	1	2482141	2482142	C
+1	t	2492275	2492276	snp	G	T	B2	r	o	19	C	C	v	t	18	T	G	1	2482141	2482142	C
+15	t	28719531	28719532	snp	T	A	C	v	t	20	A	T	v	t	19	A	T	15	26517559	26517560	T

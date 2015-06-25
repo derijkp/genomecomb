@@ -1,3 +1,7 @@
+#filetype	tsv/varfile
+#fileversion	0.10.0
+#ref	hg18
+#split	1
 #liftover_source	data/var_lift.tsv
 #liftover_unmapped	/complgen/refseq/liftover/hg18ToHg19.over.tsv
 chromosome	test	begin	end	type	ref	alt	value1	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2
