@@ -1,4 +1,5 @@
-#genomecomb	0.10
+#filetype	tsv/varfile
+#fileversion	0.10.0
 #split	0
 #ref	hg19
 #

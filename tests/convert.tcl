@@ -24,21 +24,21 @@ test cg2tsv {cg2tsv -split 1} {
 	exec cg cg2tsv -split 1 data/var-cgtest.tsv data/gene-cgtest.tsv tmp/temp.tsv
 	catch {exec diff tmp/temp.tsv data/expected-cgtest.tsv} result
 	set result
-} {2c2
+} {3c3
 < #split	1
 ---
 > #split	0
-21,22c21
+22,23c22
 < 15950476	chr21	9438355	9438355	ins		CCCCAACGCCGCGGCTTTTTGT	c	CCCCAACGCCGCGGCTTTTTGT	CCCCAACGCCGCGGGTTTTTCT	39	262	VQLOW															
 < 15950476	chr21	9438355	9438355	ins		CCCCAACGCCGCGGGTTTTTCT	c	CCCCAACGCCGCGGCTTTTTGT	CCCCAACGCCGCGGGTTTTTCT	39	262	VQLOW															
 ---
 > 15950476	chr21	9438355	9438355	ins		CCCCAACGCCGCGGCTTTTTGT,CCCCAACGCCGCGGGTTTTTCT	c	CCCCAACGCCGCGGCTTTTTGT	CCCCAACGCCGCGGGTTTTTCT	39	262	VQLOW															
-26,27c25
+27,28c26
 < 15979836	chr21	10701846	10701847	snp	C	G	c	G	T	433	1017	VQHIGH															
 < 15979836	chr21	10701846	10701847	snp	C	T	c	G	T	433	1017	VQHIGH															
 ---
 > 15979836	chr21	10701846	10701847	snp	C	G,T	c	G	T	433	1017	VQHIGH															
-34,35c32
+35,36c33
 < 16185771	chr21	43169356	43169357	snp	C	G	c	G	T	511	534	VQHIGH	54101	NM_020639.2	NP_065690.2	RIPK4	-	CDS	3	Y	SYNONYMOUS	677	209	A	A	A	PFAM:PF00069:Pkinase
 < 16185771	chr21	43169356	43169357	snp	C	T	c	G	T	511	534	VQHIGH	54101	NM_020639.2	NP_065690.2	RIPK4	-	CDS	3	Y	SYNONYMOUS	677	209	A	A	A	PFAM:PF00069:Pkinase
 ---
@@ -49,7 +49,7 @@ test cg2tsv {cg2tsv -ref} {
 	exec cg cg2tsv -ref test -split 0 data/var-cgtest.tsv data/gene-cgtest.tsv tmp/temp.tsv
 	catch {exec diff tmp/temp.tsv data/expected-cgtest.tsv} result
 	set result
-} {3c3
+} {4c4
 < #ref	test
 ---
 > #ref	hg19
@@ -63,7 +63,8 @@ test cg2tsv {cg2tsv ome ins} {
 	}
 	cg cg2tsv -split 0 tmp/testvar.tsv tmp/temp.tsv
 	write_tab tmp/expected.tsv {
-		#genomecomb 0.10
+		#filetype	tsv/varfile
+		#fileversion	0.10.0
 		#split 0
 		#
 		locus chromosome begin end type reference alt zyg alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef
@@ -92,7 +93,8 @@ test cg2tsv {cg2tsv various ins, snp and del} {
 	}
 	cg cg2tsv -split 0 tmp/testvar.tsv tmp/temp.tsv
 	write_tab tmp/expected.tsv {
-		#genomecomb 0.10
+		#filetype	tsv/varfile
+		#fileversion	0.10.0
 		#split 0
 		#
 		locus chromosome begin end type reference alt zyg alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef
@@ -127,7 +129,8 @@ test cg2tsv {cg2tsv various ins, snp and del -split 1} {
 	}
 	cg cg2tsv -split 1 tmp/testvar.tsv tmp/temp.tsv
 	write_tab tmp/expected.tsv {
-		#genomecomb 0.10
+		#filetype	tsv/varfile
+		#fileversion	0.10.0
 		#split 1
 		#
 		locus chromosome begin end type reference alt zyg alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef
@@ -644,15 +647,15 @@ test liftregion {changed refseq} {
 		2	110743803	110743804	snp	A	T	v	t	6	A	T	r	r	10	A	A
 	}
 	write_tab tmp/expected.tsv {
-		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2	beforeliftover
-		1	1619766	1619767	snp	C	T	r	r	1	C	C	v	m	2	T	T	1-1609629-1609630
-		1	2484768	2484769	snp	T	C	v	c	2	G	C	r	r	4	T	T	1-2474628-2474629
-		1	2484768	2484769	snp	T	G	v	c	2	G	C	r	r	4	T	T	1-2474628-2474629
-		1	2499242	2499243	snp	C	A	r	o	4	T	T	v	m	5	A	A	1-2489102-2489103
-		1	2499242	2499243	snp	C	T	v	m	4	T	T	r	o	5	A	A	1-2489102-2489103
-		2	89563941	89563942	snp	T	A	v	t	5	A	T	v	m	8	A	A	2-89594172-89594173
-		2	110577444	110577445	snp	C	A	v	c	6	T	A	r	o	10	T	T	2-110743803-110743804
-		2	110577444	110577445	snp	C	T	v	c	6	T	A	v	m	10	T	T	2-110743803-110743804
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2	hg18_chromosome	hg18_begin	hg18_end	hg18_ref
+		1	1619766	1619767	snp	C	T	r	r	1	C	C	v	m	2	T	T	1	1609629	1609630	T
+		1	2484768	2484769	snp	T	C	v	c	2	G	C	r	r	4	T	T	1	2474628	2474629	G
+		1	2484768	2484769	snp	T	G	v	c	2	G	C	r	r	4	T	T	1	2474628	2474629	G
+		1	2499242	2499243	snp	C	A	r	o	4	T	T	v	m	5	A	A	1	2489102	2489103	A
+		1	2499242	2499243	snp	C	T	v	m	4	T	T	r	o	5	A	A	1	2489102	2489103	A
+		2	89563941	89563942	snp	T	A	v	t	5	A	T	v	m	8	A	A	2	89594172	89594173	T
+		2	110577444	110577445	snp	C	A	v	c	6	T	A	r	o	10	T	T	2	110743803	110743804	A
+		2	110577444	110577445	snp	C	T	v	c	6	T	A	v	m	10	T	T	2	110743803	110743804	A
 	}
 	file delete tmp/lifted.tsv
 	exec cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
@@ -675,12 +678,12 @@ test liftregion {changed refseq, unsplit} {
 		2	110743803	110743804	snp	A	T	v	t	6	A	T	r	r	10	A	A
 	}
 	write_tab tmp/expected.tsv {
-		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2	beforeliftover
-		1	1619766	1619767	snp	C	T	r	r	1	C	C	v	m	2	T	T	1-1609629-1609630
-		1	2484768	2484769	snp	T	C,G	v	c	2	G	C	r	r	4	T	T	1-2474628-2474629
-		1	2499242	2499243	snp	C	A,T	v	m	4	T	T	v	m	5	A	A	1-2489102-2489103
-		2	89563941	89563942	snp	T	A	v	t	5	A	T	v	m	8	A	A	2-89594172-89594173
-		2	110577444	110577445	snp	C	A,T	v	c	6	T	A	v	m	10	T	T	2-110743803-110743804
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	score-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	score-sample2	alleleSeq1-sample2	alleleSeq2-sample2	hg18_chromosome	hg18_begin	hg18_end hg18_ref
+		1	1619766	1619767	snp	C	T	r	r	1	C	C	v	m	2	T	T	1	1609629	1609630	T
+		1	2484768	2484769	snp	T	C,G	v	c	2	G	C	r	r	4	T	T	1	2474628	2474629	G
+		1	2499242	2499243	snp	C	A,T	v	m	4	T	T	v	m	5	A	A	1	2489102	2489103	A
+		2	89563941	89563942	snp	T	A	v	t	5	A	T	v	m	8	A	A	2	89594172	89594173	T
+		2	110577444	110577445	snp	C	A,T	v	c	6	T	A	v	m	10	T	T	2	110743803	110743804	A
 	}
 	file delete tmp/lifted.tsv
 	exec cg liftover -split 0 tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain

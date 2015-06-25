@@ -504,7 +504,8 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 
 	}
 	set o [open $outfile w]
-	puts $o "#genomecomb\t$genomecomb::version"
+	puts $o "#filetype\ttsv/varfile"
+	puts $o "#fileversion\t[fileversion]"
 	puts $o "#split\t$split"
 	if {$ref ne ""} {
 		puts $o "#ref\t$ref"
@@ -512,6 +513,9 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 		puts $o "#ref\thg19"
 	} elseif {[regexp "#GENOME_REFERENCE	NCBI build 36" $comment]} {
 		puts $o "#ref\thg18"
+	} elseif {[regexp "#GENOME_REFERENCE	NCBI build (\[0-9\]+)" $comment temp num]} {
+		if {$num < 38} {set num [expr {$num - 18}]}
+		puts $o "#ref\thg$num"
 	}
 	puts $o "#"
 	if {$comment ne ""} {

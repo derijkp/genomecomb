@@ -8,6 +8,41 @@ proc fileversion {} {
 	return 0.10.0
 }
 
+proc fileinfo {file args} {
+	set result {}
+	if {[file exists $file.info.tsv]} {
+		set result [dict merge $result [infofile_read $file.info.tsv]]
+	}
+	if {[file isdir $file]} {
+		set srcdir [file dir $file]
+	}
+	if {[file exists $srcdir/sampleinfo.tsv]} {
+		set result [dict merge $result [infofile_read $srcdir/sampleinfo.tsv]]
+	}
+	if {[file exists $srcdir/info.txt]} {
+		set c [split [file_read $srcdir/info.txt] \n]
+		foreach line $c {
+			foreach {key value} [split [string range $line 1 end] \t] break
+			dict set result $key $value
+		}
+	}
+	if {![file isdir $file]} {
+		set f [gzopen $file]
+		set header [tsv_open $f comment]
+		set result [dict merge $result [comment2dict $comment]]
+		dict set $result header $header
+		if {![dict exists $result ref]} {
+			if {[dict exists $result dbdir]} {
+				dict set result ref [dict get $result dbdir]
+			} elseif {[dict exists $result GENOME_REFERENCE]} {
+				set ref [lindex [dict get $result GENOME_REFERENCE] end]
+				if {$ref < 38} {set ref [expr {$ref - 18}]}
+				dict set result ref hg$ref
+			}
+		}
+	}
+	return $result
+}
 
 # potential values in 
 # key	examplevalue	meaning
@@ -16,6 +51,7 @@ proc fileversion {} {
 # split	1/0	variants with different alternative alleles are on separate lines (split = 1)
 # ref	hg19	reference database/genome
 # field	name 
+# header "chromosome begin end ..."	fields in tsv file
 
 # todo: convert vcf data
 proc comment2dict {comment} {
@@ -49,8 +85,9 @@ proc comment2dict {comment} {
 proc dict2comment {infodict} {
 	if {[dict exists $infodict order]} {
 		set order [dict get $infodict order]
+		set order [list_common {filetype fileversion} $order]
 	} else {
-		set order {}
+		set order {filetype fileversion}
 	}
 	set keys [dict keys $infodict]
 	set keys [list_remove $keys order]
@@ -58,8 +95,9 @@ proc dict2comment {infodict} {
 	set result {}
 	foreach key $keys {
 		foreach value [dict get $infodict $key] {
-			append result \n\#$key\t$value
+			append result \#$key\t$value\n
 		}
 	}
+	
 	return $result
 }

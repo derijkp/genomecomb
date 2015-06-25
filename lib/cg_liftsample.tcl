@@ -25,6 +25,7 @@ proc cg_liftsample {args} {
 		error "$srcdir is not a (sample) directory"
 	}
 	unset -nocomplain infoa
+	array set infoa [fileinfo $srcdir]
 	if {[file exists $srcdir/sampleinfo.tsv]} {
 		array set infoa [infofile_read $srcdir/sampleinfo.tsv]
 	}

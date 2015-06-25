@@ -1,4 +1,7 @@
-# -- tsv converted from vcf, original comments follow --
+#filetype	tsv/varfile
+#fileversion	0.10.0
+#split	0
+#info	tsv converted from vcf, original comments follow
 ##fileDate=20090805
 ##source=myImputationProgramV3.1
 ##reference=1000GenomesPilot-NCBI36

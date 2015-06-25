@@ -72,7 +72,10 @@ int main(int argc, char *argv[]) {
 	dstring_hash_set(conv_formata,DStringNewFromChar("AA"),(void *)DStringNewFromChar("Ancestralallele"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("DB"),(void *)DStringNewFromChar("dbsnp"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("H2"),(void *)DStringNewFromChar("Hapmap2"));
-	fprintf(fo,"# -- tsv converted from vcf, original comments follow --\n");
+	fprintf(fo,"#filetype\ttsv/varfile\n");
+	fprintf(fo,"#fileversion\t%s\n",FILEVERSION);
+	fprintf(fo,"#split\t%d\n",split);
+	fprintf(fo,"#info\ttsv converted from vcf, original comments follow\n");
 	info = DStringArrayNew(10);
 	format = DStringArrayNew(10);
 	while ((read = DStringGetLine(line, fd)) != -1) {
