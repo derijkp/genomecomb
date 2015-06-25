@@ -52,19 +52,6 @@ proc cg_liftover {args} {
 	if {[file exists $resultfile]} {
 		error "file $resultfile already exists, format is (now): cg liftover varfile resultfile liftoverfile"
 	}
-
-	set liftoverfilebase [lindex [split [file tail $liftoverfile] .] 0]
-	if {![regexp {^(.*)(To|2)(.*)} $liftoverfilebase temp oldrefname temp newrefname]} {
-		set newrefname $liftoverfilebase
-	}
-	set newrefname [string tolower $newrefname]
-	if {![info exists oldrefname]} {
-		set oldrefname old
-	} else {
-		set oldrefname [string tolower $oldrefname]
-	}
-	set pos [string first To $liftoverfile]
-	set liftoverfile [liftoverfile $liftoverfile]
 	if {[file isdir $varfile]} {
 		cg_liftoversample {*}$args
 	}
@@ -73,8 +60,7 @@ proc cg_liftover {args} {
 	catch {gzclose $f} ; catch {gzclose $fl} ; catch {gzclose $fc} ; catch {gzclose $freg} ; catch {close $o} ; catch {close $ou}
 	#
 	# open liftover file
-	set fl [gzopen $liftoverfile]
-	set lheader [tsv_open $fl comment]
+	set fl [openliftoverfile $liftoverfile lheader oldrefname newrefname]
 	set lposs [list_cor $lheader {chromosome begin end strand destchromosome destbegin destend deststrand}]
 	set lline [list_sub [split [gets $fl] \t] $lposs]
 	set fromloc [lrange $lline 0 2]
@@ -178,6 +164,7 @@ proc cg_liftover {args} {
 	} else {
 		set oldref $oldrefname
 	}
+	dict set cinfo split $split
 	dict set cinfo oldref $oldref
 	dict set cinfo ref $newrefname
 	puts -nonewline $o [dict2comment $cinfo]
@@ -357,7 +344,7 @@ proc cg_liftover {args} {
 			puts $ou $oline
 		}
 	}
-	catch {gzclose $f} ; catch {gzclose $fl} ; catch {gzclose $fc} ; catch {close $o} ; catch {close $ou}
+	catch {gzclose $f} ; catch {closeliftoverfile $fl} ; catch {gzclose $fc} ; catch {close $o} ; catch {close $ou}
 	#
 	# sort result
 	set sortfields [list_sub $header [lrange $fposs 0 5]]

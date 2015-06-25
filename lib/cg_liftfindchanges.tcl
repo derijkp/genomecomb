@@ -6,21 +6,12 @@ proc cg_liftfindchanges {args} {
 		exit 1
 	}
 	foreach {srcgenome destgenome liftoverfile} $args break
-	if {[file ext $liftoverfile] eq ".chain"} {
-		set useliftoverfile [file root $liftoverfile].tsv
-		if {![file exists $useliftoverfile]} {
-			cg liftchain2tsv $liftoverfile $useliftoverfile
-		}
-		set liftoverfile $useliftoverfile
-	}
 	set gs [genome_open $srcgenome]
 	set gd [genome_open $destgenome]
 	catch {close $fl}
-	set f [gzopen $liftoverfile]
-	set header [tsv_open $f]
-	if {$header ne {chromosome begin end strand destchromosome destbegin destend deststrand}} {
-		exiterror "header of file $liftoverfile should be: chromosome begin end strand destchromosome destbegin destend deststrand"
-	}
+	set f [openliftoverfile $liftoverfile header oldref newref]
+	puts "\#filetype\ttsv/liftover_refchanges"
+	puts "\#fileversion\t[fileversion]"
 	puts [join {chromosome begin end ref destchromosome destbegin destend destref destcomplement} \t]
 	while 1 {
 		if {[gets $f line] == -1} break
@@ -64,4 +55,7 @@ proc cg_liftfindchanges {args} {
 			}
 		}
 	}	
+	genome_close $gs
+	genome_close $gd
+	closeliftoverfile $f
 }

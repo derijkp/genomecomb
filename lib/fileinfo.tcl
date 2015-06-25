@@ -4,6 +4,10 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+proc varfileversion {} {
+	return 0.10.0
+}
+
 proc fileversion {} {
 	return 0.10.0
 }

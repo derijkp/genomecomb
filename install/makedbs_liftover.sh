@@ -19,8 +19,16 @@ cd ${dest}
 
 job_logdir log_jobs
 
-# hg18ToHg19.over.tsv
-foreach base {hg18ToHg19 hg19ToHg18 hg38ToHg19} {
+# get chain files
+foreach {base src} {hg18ToHg19 hg18 hg19ToHg18 hg19 hg38ToHg19 hg38 hg19ToHg38 hg19} {
+	job getchain-$base -vars {src base} -targets {$base.over.chain} -code {
+		wgetfile http://hgdownload.soe.ucsc.edu/goldenPath/$src/liftOver/$base.over.chain.gz
+	}
+}
+
+
+# make liftover files
+foreach base {hg18ToHg19 hg19ToHg18 hg38ToHg19 hg19ToHg38} {
 	job liftchain2tsv-$base -deps {$base.over.chain} -targets {$base.over.tsv} -code {
 		cg liftchain2tsv $dep > $target.temp
 		file rename -force $target.temp $target
@@ -28,9 +36,16 @@ foreach base {hg18ToHg19 hg19ToHg18 hg38ToHg19} {
 }
 
 # lift refchanges hg18Tohg19
-job refchanges_hg18Tohg19 \
--deps {../hg18/genome_hg18.ifas ../hg19/genome_hg19.ifas hg18ToHg19.over.tsv} \
--targets {hg18ToHg19.over.refchanges.tsv} -code {
-	cg liftfindchanges {*}$deps > $target.temp
-	file rename -force $target.temp $target
+foreach {base src dest} {
+	hg18ToHg19 hg18 hg19
+	hg19ToHg18 hg19 hg18
+	hg38ToHg19 hg38 hg19
+	hg19ToHg38 hg19 hg38
+} {
+	job refchanges_$base \
+	-deps {../$src/genome_$src.ifas ../$dest/genome_$dest.ifas $base.over.tsv} \
+	-targets {$base.over.refchanges.tsv} -code {
+		cg liftfindchanges {*}$deps > $target.temp
+		file rename -force $target.temp $target
+	}
 }

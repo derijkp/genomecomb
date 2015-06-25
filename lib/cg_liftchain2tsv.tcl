@@ -6,12 +6,14 @@
 
 proc cg_liftchain2tsv {args} {
 	global scriptname action
-	set ref {}
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
 			-ref {
 				set ref $value
+			}
+			-destref {
+				set destref $value
 			}
 			-- break
 			default {
@@ -26,6 +28,18 @@ proc cg_liftchain2tsv {args} {
 		exit 1
 	}
 	foreach {srcfile destfile} $args break
+	if {![info exists ref] || ![info exists destref]} {
+		set liftoverfilebase [lindex [split [file tail $srcfile] .] 0]
+		if {![regexp {^(.*)(To|2)(.*)} $liftoverfilebase temp oldrefname temp newrefname]} {
+			error "Cannot deduce source and destination genome from filename (expected to be <srcgenome>To<destgenome>.*).\nUse -ref and -destref options"
+		}
+		if {![info exists ref]} {
+			set ref [string tolower $oldrefname]
+		}
+		if {![info exists destref]} {
+			set destref [string tolower $newrefname]
+		}
+	}
 	if {$srcfile eq ""} {
 		set f stdin
 	} else {
@@ -36,6 +50,10 @@ proc cg_liftchain2tsv {args} {
 	} else {
 		set o [open $destfile.temp w]
 	}
+	puts $o "#filetype\ttsv/liftover"
+	puts $o "#fileversion\t[fileversion]"
+	puts $o "#ref\t$ref"
+	puts $o "#destref\t$destref"
 	puts $o [join {chromosome begin end strand destchromosome destbegin destend deststrand} \t]
 	while 1 {
 		while 1 {

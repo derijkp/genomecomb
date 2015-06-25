@@ -20,7 +20,6 @@ proc cg_liftregion {args} {
 	}
 	foreach {file resultfile liftoverfile} $args break
 	set unmappedfile $resultfile.unmapped
-	set liftoverfile [liftoverfile $liftoverfile]
 	if {[file exists $resultfile]} {
 		error "file $resultfile already exists"
 	}
@@ -34,14 +33,14 @@ proc cg_liftregion {args} {
 		lappend poss $strandpos
 	}
 	set strand {}
-	set fl [gzopen $liftoverfile]
-	set lheader [tsv_open $fl]
+	set fl [openliftoverfile $liftoverfile lheader oldref newref]
 	set lposs [list_cor $lheader {chromosome begin end strand destchromosome destbegin destend deststrand}]
 	if {"-1" in $lposs} {
 		error "liftoverfile $liftoverfile is missing following column(s): [list_sub {chromosome begin end strand destchromosome destbegin destend deststrand} [list_find $lposs -1]]"
 	}
 	set newheader [list_union [list_sub $header $poss] $header]
-	lappend newheader beforeliftover
+	lappend newheader ${oldref}_chromosome ${oldref}_begin ${oldref}_end
+	if {$strand ne ""} {lappend newheader ${oldref}_strand}
 	set tempfile [tempfile]
 	set o [open $tempfile w]
 	puts $o "# liftregion from $file"
@@ -62,9 +61,8 @@ proc cg_liftregion {args} {
 		foreach {chromosome begin end strand} $loc break
 		lset line $chrpos [chr_clip $chromosome]
 		set restline [list_sub $line -exclude $poss]
-		set before ${chromosome}-${begin}-${end}
-		if {$strand ne ""} {append before -$strand}
-		lappend restline $before
+		lappend restline ${chromosome} ${begin} ${end}
+		if {$strand ne ""} {lappend restline $strand}
 		set restline [join $restline \t]
 		set pos 0
 		set comp [reg_compare $lline $loc]
@@ -134,12 +132,12 @@ proc cg_liftregion {args} {
 		}
 		set liftregions [lrange $liftregions $pos end]
 	}
-	gzclose $f ; gzclose $fl ; close $o ; close $ou
+	gzclose $f ; closeliftoverfile $fl ; close $o ; close $ou
 	#
 	# sort result
 	#
 	set tempfile2 [tempfile]
-	cg select -s {chromosome begin end beforeliftover} $tempfile $tempfile2
+	cg select -s [list chromosome begin end ${oldref}_chromosome ${oldref}_begin ${oldref}_end] $tempfile $tempfile2
 	# collapse overlapping regions
 	set o [open $resultfile.temp w]
 	puts $o "# liftregion from $file"
