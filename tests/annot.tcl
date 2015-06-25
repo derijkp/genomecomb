@@ -432,6 +432,38 @@ test var_annot {basic from vcf} {
 	exec diff tmp/annot2.sft tmp/expected.sft
 } {} 
 
+test reg_annot {ins at end of reg} {
+	test_cleantmp
+	write_tab tmp/vars.tsv {
+		chromosome begin end	type	num
+		1	9	10	snp	1
+		1	10	10	ins	2
+		1	10	11	snp	3
+		1	11	11	ins	4
+		1	19	20	snp	5
+		1	20	20	ins	6
+		1	20	21	snp	7
+		1	21	21	ins	8
+	}
+	write_tab tmp/reg_test.tsv {
+		chromosome	begin	end	name
+		1	10	20	10-20
+	}
+	write_tab tmp/expected.tsv {
+		chromosome begin end	type	num	test
+		1	9	10	snp	1	{}
+		1	10	10	ins	2	10-20
+		1	10	11	snp	3	10-20
+		1	11	11	ins	4	10-20
+		1	19	20	snp	5	10-20
+		1	20	20	ins	6	10-20
+		1	20	21	snp	7	{}
+		1	21	21	ins	8	{}
+	}
+	exec cg annotate tmp/vars.tsv tmp/result.tsv tmp/reg_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {} 
+
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
 
