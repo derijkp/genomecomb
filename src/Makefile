@@ -1,6 +1,6 @@
 # ARCH should be defined by caller
-CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
-# CFLAGS=-Wall -O2
+# CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
+CFLAGS=-Wall -O2 -I~/dev/genomecomb/src
 TOOLS= tools.c tools.h debug.h
 TOOLS_VAR= tools_var.c tools_var.h
 HASHTOOLS=hash.h hash.c
