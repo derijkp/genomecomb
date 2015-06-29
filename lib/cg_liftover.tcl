@@ -1,7 +1,7 @@
 package require BioTcl
 
 proc liftover_correctline {line ref altpos alts sposs slist} {
-	lset line $altpos [join $alts ,]
+	if {$altpos != -1} {lset line $altpos [join $alts ,]}
 	foreach {a1pos a2pos seqpos zygpos} $sposs {a1 a2 seq zyg} $slist {
 		if {$a1pos == -1 || $a2pos == -1} continue
 		if {$seq eq "u"} {
@@ -107,12 +107,11 @@ proc cg_liftover {args} {
 	foreach {chrpos beginpos endpos typepos refpos altpos strandpos} $fposs break
 	set strand {}
 	set newheader $header
-	lappend newheader ${oldrefname}_chromosome ${oldrefname}_begin ${oldrefname}_end ${oldrefname}_ref
 	#
 	# open regionfile
 	if {$regionfile ne ""} {
 		set doregions 1
-		set regtemplate [list_fill [expr {[llength $newheader]-4}] ?]
+		set regtemplate [list_fill [llength $newheader] ?]
 		lset regtemplate $typepos snp
 		set freg [gzopen $regionfile]
 		set regheader [tsv_open $freg]
@@ -122,9 +121,13 @@ proc cg_liftover {args} {
 		set regsampleposs {}
 		foreach sample $samples {
 			set pos [lsearch $regheader $sample]
-			if {$pos == -1} {set pos [lsearch $regheader sreg-$sample]}
-			if {$pos == -1} {set pos [lsearch $regheader reg-$sample]}
-			if {$pos == -1} {error "regionfile $regionfile does not contain region information for sample $sample in varfile"}
+			if {$pos == -1} {
+				set pos [lsearch $regheader sreg-$sample]
+				if {$pos == -1} {
+					set pos [lsearch $regheader reg-$sample]
+					if {$pos == -1} {error "regionfile $regionfile does not contain region information for sample $sample in varfile"}
+				}
+			}
 			lappend regsampleposs $pos
 		}
 	} else {
@@ -147,12 +150,17 @@ proc cg_liftover {args} {
 				lappend aposs {*}[lrange $sposs end-3 end-2]
 			}
 		}
-		if {[llength $aposs]} {
-			set doalt 1
-		} else {
-			set doalt 0
-		}
 	}
+	if {[llength $aposs] && $altpos == -1} {
+		set doalt 1
+		set altpos [llength $header]
+		lappend header alt
+		lset fposs 5 $altpos
+		lappend newheader alt
+	} else {
+		set doalt 0
+	}
+	lappend newheader ${oldrefname}_chromosome ${oldrefname}_begin ${oldrefname}_end ${oldrefname}_ref
 	#
 	# open resultfile
 	set o [open $resultfile.temp w]
@@ -185,6 +193,12 @@ proc cg_liftover {args} {
 		set line [split $oline \t]
 		set floc [list_sub $line $fposs]
 		foreach {chromosome begin end type ref alt strand} $floc break
+		if {$doalt} {
+			set as [list_sub $line $aposs]
+			set alt [join [list_remove [list_remdup $as] $ref] ,]
+			lset floc 5 $alt
+			lappend line $alt
+		}
 		set loc [lrange $floc 0 2]
 		lappend line ${chromosome} ${begin} ${end} $ref
 		# if {$strand ne ""} {append before -$strand}
@@ -236,7 +250,7 @@ proc cg_liftover {args} {
 						lset temp $beginpos $destbegin
 						lset temp $endpos $destend
 						lset temp $refpos $destref
-						lset temp $altpos $srcref
+						if {$altpos != -1} {lset temp $altpos $srcref}
 						lappend temp $cchromosome $cbegin $cend $srcref
 						foreach {a1pos a2pos seqpos zygpos} $sposs sreg [list_sub $curreg $regsampleposs] {
 							if {$sreg} {
@@ -287,7 +301,7 @@ proc cg_liftover {args} {
 				set alts [lsort -dict [seq_complement $alts]]
 				if {$correctvariants} {
 					lset line $refpos $ref
-					lset line $altpos [join $alts ,]
+					if {$altpos != -1} {lset line $altpos [join $alts ,]}
 					foreach {a1pos a2pos seqpos zygpos} $sposs {a1 a2 seq zyg} $slist {
 						set a1 [seq_complement [lindex $line $a1pos]]
 						set a2 [seq_complement [lindex $line $a2pos]]
@@ -347,9 +361,10 @@ proc cg_liftover {args} {
 	catch {gzclose $f} ; catch {closeliftoverfile $fl} ; catch {gzclose $fc} ; catch {close $o} ; catch {close $ou}
 	#
 	# sort result
-	set sortfields [list_sub $header [lrange $fposs 0 5]]
-	lappend sortfields beforeliftover
-	cg select -s [list chromosome begin end type ref alt ${oldrefname}_chromosome ${oldrefname}_begin ${oldrefname}_end ${oldrefname}_ref] $resultfile.temp $resultfile.temp2
+	set sortfields [list_sub $header [list_remove [lrange $fposs 0 5] -1]]
+	lappend sortfields ${oldrefname}_chromosome ${oldrefname}_begin ${oldrefname}_end ${oldrefname}_ref
+	set fields [list_union [list_sub $newheader [list_remove $fposs -1]] $newheader]
+	cg select -f $fields -s $sortfields $resultfile.temp $resultfile.temp2
 	file rename -force $resultfile.temp2 $resultfile
 	file delete -force $resultfile.temp
 	#

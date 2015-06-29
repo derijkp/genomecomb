@@ -31,7 +31,7 @@ will obviously not have variants.
 ; **resultfile**: resulting converted file
 ; **liftoverfile**: liftover file guiding the conversion. Liftover files are normally in tsv format;
 If a (ucsc liftover) chainfile is given, it will be converted, saved next to the chain file and used.
-e.g. hg18/hg18ToHg19.over.chain to convert from hg18 to hg19, and hg19/hg19ToHg18.over.chain to convert from hg19 to hg18
+e.g. hg18/hg18ToHg19.over.tsv to convert from hg18 to hg19, and hg19/hg19ToHg18.over.tsv to convert from hg19 to hg18
 
 == Options ==
 ; **-regionfile file**: a regionfile is a tsv file indicating which regions of the genome are actually sequenced.
