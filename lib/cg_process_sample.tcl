@@ -49,6 +49,21 @@ proc cg_process_indexcompress {args} {
 }
 
 proc process_sample {args} {
+	set pos 0
+	set split 1
+	foreach {key value} $args {
+		switch -- $key {
+			-split - -s {
+				set split $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
 	set srcdir ""
 	if {[llength $args] == 1} {
 		foreach {destdir} $args break
@@ -124,13 +139,14 @@ proc process_sample {args} {
 	}
 
 	# annotated vars file
-	job cg_annotvar-$sample -deps {svar-$sample.tsv (sgene-$sample.tsv)} -targets {annotvar-$sample.tsv} \
+	job cg_annotvar-$sample -vars {split} \
+	-deps {svar-$sample.tsv (sgene-$sample.tsv)} -targets {annotvar-$sample.tsv} \
 	-skip {fannotvar-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} -code {
 		putslog "Create annotated varfile $target"
 		if {[file exists $dep2]} {
-			cg cg2tsv -sorted 1 $dep1 $dep2 $target.temp
+			cg cg2tsv -split $split -sorted 1 $dep1 $dep2 $target.temp
 		} else {
-			cg cg2tsv -sorted 1 $dep1 $target.temp
+			cg cg2tsv -split $split -sorted 1 $dep1 $target.temp
 		}
 		file rename -force $target.temp $target
 	}
