@@ -100,7 +100,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 			prevstart2 = start2; prevend2 = end2;
 			comp = DStringLocCompare(chromosome2, chromosome1);
 		}
-		if (error2 || (comp > 0) || ((comp == 0) && (end1 <= start2))) {
+		if (error2 || (comp > 0) || ((comp == 0) && (end1 <= start2 && start1 != start2))) {
 			NODPRINT("no overlap")
 			if (datanear != -1) {
 				near = datanear;

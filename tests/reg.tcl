@@ -286,6 +286,7 @@ chr1	4000	4001	snp
 chr1	4001	4002	snp
 chr1	4099	4100	snp
 chr1	5000	5010	del
+chr2	5000	5000	ins
 chr2	5000	5001	snp}
 
 test regselect {near} {
