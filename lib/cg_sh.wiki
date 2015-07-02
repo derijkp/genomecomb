@@ -14,7 +14,7 @@ catch signals (Control-C) and complete commands/variables/files. Completion will
 tab key (which will just enter a tab character) but by usin Control-o.
 
 == Options ==
-supports job options:
+supports options:
 ; **nox**: Do not use tclx (or editline) for the shell. You will not be able to use arrow keys, etc.
 ; **console**: Use tcl console for input (and output)
 

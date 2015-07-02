@@ -1,0 +1,31 @@
+= Joboptions =
+
+== Format ==
+cg command ?joboptions? ...
+
+== Summary ==
+Several commands understand these job options
+
+== Description ==
+Several genomecomb commands (indicated by "supports job options" in their help) consist
+of sub tasks (jobs) that can be run in parallel. If you have multiple
+cores/threads available, you can use the option -d (or -distribute or
+--distribute) with a number to distribute the jobs over the given number
+of processes (on the same computer). "sge" instead of a number can be used
+to distribute jobs on a cluster managed by Grid Engine.
+
+Without the -d option, jobs are run one after the other (using only 1
+core). However, if such a command is interupted, it can continue from the
+already processed data by giving the same command.
+
+Job enabled commands all support the following options:
+
+== Options ==
+; **-d value**: if value is a number, the job is distributed over the given number of processes. Use sge to distribute using Grid Engine  (also -distribute or --distribute)
+; **-f 0/1**: use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force or --force)
+; **-silent 0/1**: use -silent 1 to supress output with info on the processing
+; **-job_skiperrors 0/1**: When running directly (without -d), errors will
+cause the command to stop; use -skiperrors 1 to (also) skip over errors in this mode of running
+
+== Category ==
+Conversion

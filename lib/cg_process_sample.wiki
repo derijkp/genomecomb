@@ -1,7 +1,7 @@
 = Process =
 
 == Format ==
-cg process_sample ?joboptions? ?sampledir? destdir ?force?
+cg process_sample ?options? ?sampledir? destdir ?force?
 
 == Summary ==
 Convert Complete Genomics data to cg format and add several analysis files
@@ -9,6 +9,10 @@ Convert Complete Genomics data to cg format and add several analysis files
 == Description ==
 processes (sorting annotating, etc.) one Complete Genomics sample directory, and writes
 the adapted data into destdir. By default, only files that are not present already will be created."
+
+
+== Options ==
+supports job options (more info with cg help joboptions)
 
 == Arguments ==
 ; **sampledir**: data directory as it comes from Complete Genomics

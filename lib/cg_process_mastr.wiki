@@ -27,7 +27,7 @@ data on the project
 ; **-a aligner**: alignment program used for mapping reads (bwa or bowtie2)
 ; **-m 1/0**: create and align to minigenome
 
-supports job options:
+supports job options (more info with cg help joboptions):
 ; **-d x**: distribute subjobs of command over x processes
 ; **-d sge**: use grid engine to distribute subjobs
 
