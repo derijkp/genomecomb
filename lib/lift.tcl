@@ -15,8 +15,24 @@ proc openliftoverfile {liftoverfile {headerVar {}} {oldrefVar {}} {newrefVar {}}
 		exiterror "header of file $liftoverfile should be: chromosome begin end strand destchromosome destbegin destend deststrand"
 	}
 	set cinfo [comment2dict $comment]
-	set oldref [dict get $cinfo ref]
-	set newref [dict get $cinfo destref]
+	if {[dict exists $cinfo ref]} {
+		set oldref [dict get $cinfo ref]
+	} else {
+		set liftoverfilebase [lindex [split [file tail $liftoverfile] .] 0]
+		if {![regexp {^(.*)(To|2)(.*)} $liftoverfilebase temp oldrefname temp newrefname]} {
+			set oldref old
+		}
+		set oldref [string tolower $oldrefname]
+	}
+	if {[dict exists $cinfo ref]} {
+		set newref [dict get $cinfo destref]
+	} else {
+		set liftoverfilebase [lindex [split [file tail $liftoverfile] .] 0]
+		if {![regexp {^(.*)(To|2)(.*)} $liftoverfilebase temp oldrefname temp newrefname]} {
+			set newref new
+		}
+		set newref [string tolower $newrefname]
+	}
 	return $f
 }
 
