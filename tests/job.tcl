@@ -328,6 +328,60 @@ test job "chained foreach $testname" {
 } {{final1.txt log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
 }}
 
+test job "chained foreach with glob match $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	job init -deps {} -targets {test1.txt test2.txt} -code {
+		file_write test1.txt test1\n
+		file_write test2.txt test2\n
+	}
+	job job1 -foreach {test*.txt} -targets {rtest\1.txt} -code {
+		set c [file_read $dep]
+		file_write $target r${c}
+	}
+	job job2 -deps {rtest1.txt} -targets {final1.txt} -code {
+		set c [file_read $dep]
+		file_write $target f${c}
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read final1.txt]]
+	cd $::testdir
+	set result
+} {{final1.txt log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
+}}
+
+test job "chained jobglob $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	job init -deps {} -targets {test1.txt test2.txt} -code {
+		after 500
+		file_write test1.txt test1\n
+		file_write test2.txt test2\n
+	}
+	foreach dep [jobglob test*.txt] {
+		set target r$dep
+		job job1-[file tail $dep] -deps {$dep} -targets {$target} -code {
+			set c [file_read $dep]
+			file_write $target r${c}
+		}
+	}
+	job job2 -deps {rtest1.txt} -targets {final1.txt} -code {
+		set c [file_read $dep]
+		file_write $target f${c}
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read final1.txt]]
+	cd $::testdir
+	set result
+} {{final1.txt log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
+}}
+
 test job "basic chain --force 0 $testname" {
 	cd $::testdir
 	catch {file delete -force {*}[glob tmp/*]}

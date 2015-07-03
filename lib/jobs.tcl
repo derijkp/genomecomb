@@ -175,6 +175,100 @@ proc job_expandvarslist {list {level 1}} {
 	return $result
 }
 
+proc jobglob {args} {
+	set checkcompressed 1
+	set pos 0
+	while 1 {
+		set key [lindex $args $pos]
+		switch -- $key {
+			-checkcompressed {
+				incr pos
+				set checkcompressed [lindex $args $pos]
+			}
+			-- {
+				incr pos
+				break
+			}
+			default break
+		}
+		incr pos
+	}
+	set args [lrange $args $pos end]
+	set files {}
+	set ids {}
+	set time now
+	foreach pattern $args {
+		if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
+			set pattern [string range $pattern 1 end-1]
+			if {[file pathtype $pattern] eq "relative"} {set relative 1} else {set relative 0}
+			foreach file [job_findregexpdep $pattern ids time $checkcompressed] {
+				if {$relative} {regsub ^[pwd]/ $file {} file}
+				lappend files $file
+			}
+		} else {
+			if {[file pathtype $pattern] eq "relative"} {set relative 1} else {set relative 0}
+			foreach file [job_finddep $pattern ids time $checkcompressed] {
+				if {$relative} {regsub ^[pwd]/ $file {} file}
+				lappend files $file
+			}
+		}
+	}
+	list_remdup $files
+}
+
+proc glob2regexp {pattern} {
+	set regexp {}
+	set escape 0
+	set pos 0
+	set len [string length $pattern]
+	while {$pos < $len} {
+		set c [string index $pattern $pos]
+		incr pos
+		if {$escape} {
+			append regexp $c
+			set escape 0
+		} elseif {$c eq "\\"} {
+			append regexp $c
+			set escape 1
+		} elseif {$c eq "*"} {
+			append regexp {(.*)}
+		} elseif {$c eq "?"} {
+			append regexp {(.)}
+		} elseif {$c eq "\["} {
+			append regexp "\(\["
+		} elseif {$c eq "\]"} {
+			append regexp "\]\)"
+		} elseif {$c eq "\{"} {
+			append regexp "\("
+			while {$pos < $len} {
+				set c [string index $pattern $pos]
+				incr pos
+				if {$c eq "\}"} break
+				if {$c eq "\,"} {
+					append regexp "|"
+				} elseif {[regexp {[A-Za-z0-9 ]} $c]} {
+					append regexp "$c"
+				} else {
+					append regexp "\\$c"
+				}
+			}
+			append regexp "\)"
+		} elseif {[regexp {[A-Za-z0-9 ]} $c]} {
+			append regexp "$c"
+		} else {
+			append regexp "\\$c"
+		}
+	}
+	return $regexp
+}
+
+if 0 {
+	set p [glob2regexp ab*.cd{ab,cd}?f]
+	regexp $p abxx.cdcdef
+	regexp $p abxx.cdabef
+	regexp $p abxxcdcdef
+}
+
 proc job_finddep {pattern idsVar timeVar checkcompressed} {
 	global cgjob_id cgjob_ptargets cgjob_rm
 #puts *****************
@@ -310,9 +404,11 @@ proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar checkcom
 		}
 		set pattern [job_targetreplace $pattern $ftargetvars]
 		if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
+			set regexppattern 1
 			set pattern [string range $pattern 1 end-1]
 			set files [job_findregexpdep $pattern ids time $checkcompressed]
 		} else {
+			set regexppattern 0
 			set files [job_finddep $pattern ids time $checkcompressed]
 		}
 		if {![llength $files]} {
@@ -328,7 +424,12 @@ proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar checkcom
 		}
 		foreach file [list_remdup $files] {
 			lappend finaldeps $file
-			set targets [lrange [regexp -all -inline ^[file_absolute $pattern]\$ $file] 1 end]
+			if {$regexppattern} {
+				set targets [lrange [regexp -all -inline ^[file_absolute $pattern]\$ $file] 1 end]
+			} else {
+				# todo
+				set targets [lrange [regexp -all -inline ^[file_absolute [glob2regexp $pattern]]\$ $file] 1 end]
+			}
 			if {!$targetvarslist} {
 				lappend targetvars {*}$targets
 			} else {
