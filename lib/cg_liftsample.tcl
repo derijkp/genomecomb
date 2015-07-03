@@ -24,6 +24,7 @@ proc liftsample_job {args} {
 	if {![file isdir $srcdir]} {
 		error "$srcdir is not a (sample) directory"
 	}
+	job_logdir $destdir/log_jobs
 	unset -nocomplain infoa
 	array set infoa [fileinfo $srcdir]
 	if {[file exists $srcdir/sampleinfo.tsv]} {
@@ -49,46 +50,56 @@ proc liftsample_job {args} {
 	infofile_write $destdir/sampleinfo.tsv [array get infoa]
 	foreach file [jobglob $srcdir/var-*.tsv $srcdir/fannotvar-*.tsv] {
 		set destfile $destdir/[file tail $file]
-		if {[file exists $destfile]} continue
-		if {![catch {file link $file} link]} {
-			putslog "Copying link $file"
-			file copy -force $file $destfile
-		} else {
-			putslog "converting $file"
-			set regionfile [findregionfile $file]
-			if {[jobglob $regionfile] ne ""} {
-				cg liftover -regionfile $regionfile -split $split $file $destfile.temp $liftoverfile 2>@ stderr
+		set regionfile [findregionfile $file]
+		job liftvar-[file tail $file] -deps {$file $liftoverfile ($regionfile)} \
+		-vars {liftoverfile regionfile split} \
+		-targets {$destfile} -code {
+			if {![catch {file link $dep} link]} {
+				putslog "Copying link $dep"
+				file copy -force $dep $target
 			} else {
-				cg liftover -split $split $file $destfile.temp $liftoverfile 2>@ stderr
+				putslog "converting $dep"
+				file delete $target.temp
+				if {[jobglob $regionfile] ne ""} {
+					cg liftover -regionfile $dep2 -split $split $dep $target.temp $liftoverfile 2>@ stderr
+				} else {
+					cg liftover -split $split $dep $target.temp $liftoverfile 2>@ stderr
+				}
+				file rename -force $target.temp $target
+				catch {file rename -force $target.temp.unmapped $target.unmapped}
 			}
-			file rename $destfile.temp $destfile
-			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
 		}
 	}
 	foreach file [jobglob $srcdir/sreg-*.tsv $srcdir/reg_*.tsv] {
-		set destfile $destdir/[file tail $file]
-		if {[file exists $destfile]} continue
-		if {![catch {file link $file} link]} {
-			putslog "Copying link $file"
-			file copy -force $file $destfile
-		} else {
-			putslog "converting region $file"
-			cg liftregion $file $destfile.temp $liftoverfile
-			file rename $destfile.temp $destfile
-			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
+		set target $destdir/[file tail $file]
+		job liftreg-[file tail $file] -deps {$file $liftoverfile} \
+		-vars {file liftoverfile} \
+		-targets {$target} -code {
+			if {![catch {file link $file} link]} {
+				putslog "Copying link $file"
+				file copy -force $file $target
+			} else {
+				putslog "converting region $file"
+				cg liftregion $file $target.temp $liftoverfile
+				file rename -force $target.temp $target
+				catch {file rename -force $target.temp.unmapped $target.unmapped}
+			}
 		}
 	}
 	foreach file [jobglob $srcdir/cgcnv-*.tsv $srcdir/cgsv-*.tsv] {
-		set destfile $destdir/[file tail $file]
-		if {[file exists $destfile]} continue
-		if {![catch {file link $file} link]} {
-			putslog "Copying link $file"
-			file copy -force $file $destfile
-		} else {
-			putslog "converting $file"
-			cg liftover $file $destfile.temp $liftoverfile 2>@ stderr
-			file rename $destfile.temp $destfile
-			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
+		set target $destdir/[file tail $file]
+		job liftreg-[file tail $file] -deps {$file $liftoverfile} \
+		-vars {file liftoverfile} \
+		-targets {$target} -code {
+			if {![catch {file link $file} link]} {
+				putslog "Copying link $file"
+				file copy -force $file $target
+			} else {
+				putslog "converting $file"
+				cg liftover $file $target.temp $liftoverfile 2>@ stderr
+				file rename -force $target.temp $target
+				catch {file rename -force $target.temp.unmapped $target.unmapped}
+			}
 		}
 	}
 }
