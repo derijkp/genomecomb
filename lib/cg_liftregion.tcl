@@ -19,13 +19,15 @@ proc cg_liftregion {args} {
 		exit 1
 	}
 	foreach {file resultfile liftoverfile} $args break
+
 	set unmappedfile $resultfile.unmapped
 	if {[file exists $resultfile]} {
 		error "file $resultfile already exists"
 	}
 	catch {gzclose $f} ; catch {gzclose $fl} ; catch {close $o} ; catch {close $ou}
 	set f [gzopen $file]
-	set header [tsv_open $f]
+	set header [tsv_open $f comment]
+	set cinfo [comment2dict $comment]
 	set poss [tsv_basicfields $header 3]
 	set chrpos [lindex $poss 0]
 	set strandpos [lsearch $header strand]
@@ -43,13 +45,11 @@ proc cg_liftregion {args} {
 	if {$strand ne ""} {lappend newheader ${oldref}_strand}
 	set tempfile [tempfile]
 	set o [open $tempfile w]
-	puts $o "# liftregion from $file"
-	puts $o "# using $liftoverfile"
 	puts $o [join $newheader \t]
 	set ou [open $unmappedfile.temp w]
-	puts $ou "# unmapped liftregion from $file"
-	puts $ou "# using $liftoverfile"
-	puts $ou [join [list {*}[list_union [list_sub $header $poss] $header] oriregion] \t]
+	puts $ou "#liftover_source\t$file"
+	puts $ou "#liftover_unmapped\t$liftoverfile"
+	puts $ou [join [list_union [list_sub $header $poss] $header {old_begin old_end}] \t]
 	set liftregions {}
 	set lline [list_sub [split [gets $fl] \t] $lposs]
 	lset lline 4 [chr_clip [lindex $lline 4]]
@@ -61,9 +61,12 @@ proc cg_liftregion {args} {
 		foreach {chromosome begin end strand} $loc break
 		lset line $chrpos [chr_clip $chromosome]
 		set restline [list_sub $line -exclude $poss]
-		lappend restline ${chromosome} ${begin} ${end}
+		set urestline $restline
+		lappend urestline $begin $end
+		lappend restline $chromosome $begin $end
 		if {$strand ne ""} {lappend restline $strand}
 		set restline [join $restline \t]
+		set urestline [join $urestline \t]
 		set pos 0
 		set comp [reg_compare $lline $loc]
 		if {$comp <= 0} {
@@ -78,22 +81,23 @@ proc cg_liftregion {args} {
 				}
 			}
 		}
-		set pos 0
+		set newliftregions {}
 		foreach templline $liftregions {
 			set comp [reg_compare $templline [list $chromosome $begin $end]]
 			# putsvars templline begin end
 			if {$comp < 0} {
-				incr pos
 				continue
 			} elseif {$comp == 0} {
+				lappend newliftregions $templline
 				# overlap
 				foreach {srcchromosome srcbegin srcend srcstrand destchromosome destbegin destend deststrand} $templline break
 				if {$begin < $srcbegin} {
+					set temp $chromosome\t$begin\t$srcbegin
 					if {$strandpos != -1} {
-						puts $ou $chromosome\t$begin\t$srcbegin\t$strand\t$restline
-					} else {
-						puts $ou $chromosome\t$begin\t$srcbegin\t$restline
+						append temp \t$strand
 					}
+					append temp \t$urestline
+					puts $ou $temp
 					set begin $srcbegin
 				}
 				if {$end <= $srcend} {
@@ -130,7 +134,7 @@ proc cg_liftregion {args} {
 				puts $ou $chromosome\t$begin\t$end\t$restline
 			}
 		}
-		set liftregions [lrange $liftregions $pos end]
+		set liftregions $newliftregions
 	}
 	gzclose $f ; closeliftoverfile $fl ; close $o ; close $ou
 	#
@@ -140,8 +144,17 @@ proc cg_liftregion {args} {
 	cg select -s [list chromosome begin end ${oldref}_chromosome ${oldref}_begin ${oldref}_end] $tempfile $tempfile2
 	# collapse overlapping regions
 	set o [open $resultfile.temp w]
-	puts $o "# liftregion from $file"
-	puts $o "# using $liftoverfile"
+	# create new comment
+	dict set cinfo liftover_source $file
+	dict set cinfo liftover $liftoverfile
+	if {[dict exists $cinfo ref]} {
+		set oldref [dict get $cinfo ref]
+	} else {
+		set oldref $oldref
+	}
+	dict set cinfo oldref $oldref
+	dict set cinfo ref $newref
+	puts -nonewline $o [dict2comment $cinfo]
 	close $o
 	cg regcollapse $tempfile2 >> $resultfile.temp
 	#

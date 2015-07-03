@@ -56,3 +56,9 @@ proc nocallregions {varfile outfile} {
 	cg regjoin nctemp.tsv > $outfile
 	file delete nctemp.tsv
 }
+
+proc findregionfile {file} {
+	set tail [file tail $file]
+	regsub {^[^-]*-} $tail {} tail
+	return [file dir $file]/sreg-$tail
+}

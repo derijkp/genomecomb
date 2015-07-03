@@ -823,4 +823,71 @@ test liftover {no alt split, t} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test liftsample {basic} {
+	test_cleantmp
+	file mkdir tmp/sample
+	file mkdir tmp/esample
+	write_tab tmp/sample/var-t-t-sample.tsv {
+		chromosome	begin	end	type	ref	alt
+		1	1610084	1610085	snp	A	G
+	}
+	write_tab tmp/esample/var-t-t-sample.tsv {
+		#liftover_source	tmp/sample/var-t-t-sample.tsv
+		#liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
+		#split	1
+		#oldref	hg18
+		#ref	hg19
+		chromosome	begin	end	type	ref	alt	hg18_chromosome	hg18_begin	hg18_end	hg18_ref
+		1	1619766	1619767	snp	C	T	1	1609629	1609630	T
+		1	1620224	1620225	snp	G	A	1	1610084	1610085	A
+		1	1620884	1620885	snp	T	C	1	1610744	1610745	C
+	}
+	mklink tmp/sample/var-t-t-sample.tsv tmp/sample/fannotvar-sample.tsv
+	mklink tmp/esample/var-t-t-sample.tsv tmp/esample/fannotvar-sample.tsv
+	write_tab tmp/sample/sreg-t-t-sample.tsv {
+		chromosome	begin	end
+		1	609620	2474628
+	}
+	write_tab tmp/esample/sreg-t-t-sample.tsv {
+		#liftover_source	tmp/sample/sreg-t-t-sample.tsv
+		#liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
+		#oldref	hg18
+		#ref	hg19
+		chromosome	begin	end	hg18_chromosome	hg18_begin	hg18_end
+		1	619757	1619814	1	609620	2474628
+		1	1620086	1620859	1	609620	2474628
+		1	1620860	1620903	1	609620	2474628
+		1	1620904	2484768	1	609620	2474628
+	}
+	write_tab tmp/esample/sreg-t-t-sample.tsv.unmapped {
+		#liftover_source	tmp/sample/sreg-t-t-sample.tsv
+		#liftover_unmapped	/complgen/refseq/liftover/hg18ToHg19.over.tsv
+		chromosome	begin	end	old_begin	old_end
+		1	1609677	1609759	609620	2474628
+		1	1609849	1609946	609620	2474628
+		1	1610719	1610720	609620	2474628
+		1	1610763	1610764	609620	2474628
+	}
+	write_tab tmp/sample/reg_cluster-t-t-sample.tsv {
+		chromosome	begin	end
+		1	609620	609720
+		1	609820	609930
+	}
+	write_tab tmp/esample/reg_cluster-t-t-sample.tsv {
+		#liftover_source	tmp/sample/reg_cluster-t-t-sample.tsv
+		#liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
+		#oldref	hg18
+		#ref	hg19
+		chromosome	begin	end	hg18_chromosome	hg18_begin	hg18_end
+		1	619757	619857	1	609620	609720	
+		1	619957	620067	1	609820	609930
+	}
+	# test
+	exec cg liftsample tmp/sample tmp/liftedsample /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	file delete tmp/liftedsample/var-t-t-sample.tsv.unmapped
+	file delete tmp/liftedsample/reg_cluster-t-t-sample.tsv.unmapped
+	file delete tmp/liftedsample/sampleinfo.tsv
+	exec diff -r tmp/liftedsample tmp/esample
+} {}
+
 testsummarize

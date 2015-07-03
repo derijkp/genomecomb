@@ -1,4 +1,4 @@
-proc cg_liftsample {args} {
+proc liftsample_job {args} {
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -17,7 +17,7 @@ proc cg_liftsample {args} {
 		errorformat liftover
 		exit 1
 	}
-	foreach {srcdir destdir liftoverfile dbdir} $args break
+	foreach {srcdir destdir liftoverfile} $args break
 	if {[file exists $destdir] && ![file isdir $destdir]} {
 		error "$destdir already exists and is not a directory"
 	}
@@ -43,12 +43,11 @@ proc cg_liftsample {args} {
 	} elseif {![info exists split]} {
 		set split 1
 	}
-	set infoa(dbdir) $dbdir
 	set infoa(split) $split
 	lappend infoa(liftover) $liftoverfile
 	file mkdir $destdir
 	infofile_write $destdir/sampleinfo.tsv [array get infoa]
-	foreach file [gzfiles $srcdir/var-*.tsv $srcdir/fannotvar-*.tsv] {
+	foreach file [jobglob $srcdir/var-*.tsv $srcdir/fannotvar-*.tsv] {
 		set destfile $destdir/[file tail $file]
 		if {[file exists $destfile]} continue
 		if {![catch {file link $file} link]} {
@@ -56,12 +55,17 @@ proc cg_liftsample {args} {
 			file copy -force $file $destfile
 		} else {
 			putslog "converting $file"
-			cg liftover -split $split -dbdir $dbdir $file $destfile.temp $liftoverfile 2>@ stderr
+			set regionfile [findregionfile $file]
+			if {[jobglob $regionfile] ne ""} {
+				cg liftover -regionfile $regionfile -split $split $file $destfile.temp $liftoverfile 2>@ stderr
+			} else {
+				cg liftover -split $split $file $destfile.temp $liftoverfile 2>@ stderr
+			}
 			file rename $destfile.temp $destfile
 			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
 		}
 	}
-	foreach file [gzfiles $srcdir/sreg-*.tsv $srcdir/reg_*.tsv] {
+	foreach file [jobglob $srcdir/sreg-*.tsv $srcdir/reg_*.tsv] {
 		set destfile $destdir/[file tail $file]
 		if {[file exists $destfile]} continue
 		if {![catch {file link $file} link]} {
@@ -74,7 +78,7 @@ proc cg_liftsample {args} {
 			catch {file rename $destfile.temp.unmapped $destfile.unmapped}
 		}
 	}
-	foreach file [gzfiles $srcdir/cgcnv-*.tsv $srcdir/cgsv-*.tsv] {
+	foreach file [jobglob $srcdir/cgcnv-*.tsv $srcdir/cgsv-*.tsv] {
 		set destfile $destdir/[file tail $file]
 		if {[file exists $destfile]} continue
 		if {![catch {file link $file} link]} {
@@ -89,3 +93,8 @@ proc cg_liftsample {args} {
 	}
 }
 
+proc cg_liftsample {args} {
+	set args [job_init {*}$args]
+	liftsample_job {*}$args
+	job_wait
+}

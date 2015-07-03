@@ -1,5 +1,7 @@
-# liftregion from data/reg_lift.tsv
-# using /complgen/refseq/liftover/hg18ToHg19.over.tsv
+#liftover_source	data/reg_lift.tsv
+#liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
+#oldref	hg18
+#ref	hg19
 chromosome	begin	end	test	value1	hg18_chromosome	hg18_begin	hg18_end
 1	10000	10616	t	A	1	0	1000
 1	10753	11137	t	A	1	0	1000

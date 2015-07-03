@@ -86,17 +86,17 @@ proc cg_liftover {args} {
 	# open varfile
 	set f [gzopen $varfile]
 	set header [tsv_open $f comment]
-	set commentd [comment2dict $comment]
+	set cinfo [comment2dict $comment]
 	if {![info exists split]} {
-		if {[dict exists $commentd split]} {
-			set split [dict get $commentd split]
+		if {[dict exists $cinfo split]} {
+			set split [dict get $cinfo split]
 		} else {
 			set split 1
 		}
 	} else {
-		if {[dict exists $commentd split]} {
-			if {[dict get $commentd split] ne $split} {
-				exiterror "option -split $split was given, but file $varfile is indicated as [dict get $commentd split]"
+		if {[dict exists $cinfo split]} {
+			if {[dict get $cinfo split] ne $split} {
+				exiterror "option -split $split was given, but file $varfile is indicated as [dict get $cinfo split]"
 			}
 		}
 	}
@@ -164,7 +164,6 @@ proc cg_liftover {args} {
 	#
 	# open resultfile
 	set o [open $resultfile.temp w]
-	set cinfo [comment2dict $comment]
 	dict set cinfo liftover_source $varfile
 	dict set cinfo liftover $liftoverfile
 	if {[dict exists $cinfo ref]} {
