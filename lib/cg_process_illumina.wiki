@@ -23,9 +23,8 @@ fastq dirs are considered sampledirs. The name of each sample is taken
 from the sampledir name. The sample name should not contain hyphens (-)
 
 By default reads are clipped using fastq-mcf, aligned to the reference
-genome in dbdir using bwa, duplicates removed (using picard) and realigned
+genome in dbdir using bwa mem, duplicates removed (using picard) and realigned
 (using gatk). Variants are called using gatk and samtools.
-The resulting files use hyphens
 All files generated have names following the convention of using hyphens
 to separate different elements about the file. The first element is the
 type of file. The last element (before the extension) is the sample name.
@@ -35,13 +34,20 @@ for this individual sample of the following type:
 ; map-rdsbwa-sample1.bam: bam file created by aligning the reads of sample1
 to the reference genome in dbdir using bwa. The bam file has been sorted
 (s), duplicate marked (d), and realigned (r).
-; var-gatk-rdsbwa-sample1.tsv: variants called by gatk based on
-map-rdsbwa-sample1.bam.
+
+; var-gatk-rdsbwa-sample1.tsv: a [[intro|variant file]] that contains
+variants called by gatk based on map-rdsbwa-sample1.bam. Positions with a
+quality < 30 or coverage < 5 are considered unsequenced. Lower quality
+variants (but with quality >= 10) are still included in the variant list,
+but have the a "u" in the sequenced and zyg columns to indicate that they
+are considered unsequenced
 ; sreg-gatk-rdsbwa-sample1.tsv: A region file with all regions that can be
-considered sequenced using the same methods and quality measures as
-var-gatk-rdsbwa-sample1.tsv
+considered sequenced (quality >= 30 and coverage >= 5) using the same methods 
+and quality measures as var-gatk-rdsbwa-sample1.tsv. Any position in those 
+regions that is not in the variant file can be called reference with the same
+reliability as the variant calls.
 ; varall-gatk-rdsbwa-sample1.tsv: variant calling data by gatk for all
-positions with >= 5 coverage (also reference pcalled positions). This file
+positions with >= 5 coverage (also reference called positions). This file
 is used to create the sreg files, and to update data in making multicompar 
 files later.
 ; reg_cluster-gatk-rdsbwa-S0489.tsv: regions with many clustered variants
