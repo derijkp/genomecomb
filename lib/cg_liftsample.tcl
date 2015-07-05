@@ -49,21 +49,21 @@ proc liftsample_job {args} {
 	file mkdir $destdir
 	infofile_write $destdir/sampleinfo.tsv [array get infoa]
 	foreach file [jobglob $srcdir/var-*.tsv $srcdir/fannotvar-*.tsv] {
-		set destfile $destdir/[file tail $file]
+		set target $destdir/[file tail $file]
 		set regionfile [findregionfile $file]
 		job liftvar-[file tail $file] -deps {$file $liftoverfile ($regionfile)} \
-		-vars {liftoverfile regionfile split} \
-		-targets {$destfile} -code {
+		-vars {file liftoverfile regionfile split} \
+		-targets {$target} -code {
 			if {![catch {file link $dep} link]} {
 				putslog "Copying link $dep"
-				file copy -force $dep $target
+				file copy -force $file $target
 			} else {
-				putslog "converting $dep"
+				putslog "converting $file"
 				file delete $target.temp
 				if {[jobglob $regionfile] ne ""} {
-					cg liftover -regionfile $dep2 -split $split $dep $target.temp $liftoverfile 2>@ stderr
+					cg liftover -regionfile $liftoverfile -split $split $file $target.temp $liftoverfile 2>@ stderr
 				} else {
-					cg liftover -split $split $dep $target.temp $liftoverfile 2>@ stderr
+					cg liftover -split $split $file $target.temp $liftoverfile 2>@ stderr
 				}
 				file rename -force $target.temp $target
 				catch {file rename -force $target.temp.unmapped $target.unmapped}

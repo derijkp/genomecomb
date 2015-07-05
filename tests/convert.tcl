@@ -883,11 +883,13 @@ test liftsample {basic} {
 		1	619957	620067	1	609820	609930
 	}
 	# test
-	exec cg liftsample tmp/sample tmp/liftedsample /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftsample -silent 1 tmp/sample tmp/liftedsample /complgen/refseq/liftover/hg18ToHg19.over.tsv
 	file delete tmp/liftedsample/var-t-t-sample.tsv.unmapped
 	file delete tmp/liftedsample/reg_cluster-t-t-sample.tsv.unmapped
 	file delete tmp/liftedsample/sampleinfo.tsv
+	file delete -force tmp/liftedsample/log_jobs
 	exec diff -r tmp/liftedsample tmp/esample
 } {}
 
 testsummarize
+
