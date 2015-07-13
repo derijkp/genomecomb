@@ -945,8 +945,30 @@ proc getline f {
 	return $line
 }
 
+proc file_link {linkname linkdest} {
+	set dir [file dir $linkname]
+	if {[file pathtype $linkdest] eq "absolute"} {
+		set dest $linkdest
+	} else {
+		set dest [file join $dir $linkdest]
+	}
+	if {![file exists $dest]} {
+		file_write $dest temp
+		file link $linkname $linkdest
+		file delete $dest
+	} else {
+		file link $linkname $linkdest
+	}
+}
+
 proc mklink {src dest} {
 	set src [file join [pwd] $src]
+	if {![file exists $src]} {
+		set delsrc $src
+		file_write $src temp
+	} else {
+		set delsrc {}
+	}
 	set dest [file join [pwd] $dest]
 	set pos 0
 	set ssrc [file split $src]
@@ -967,6 +989,7 @@ proc mklink {src dest} {
 	if {![file exists $dest]} {
 		file link -symbolic $dest $src
 	}
+	if {$delsrc ne ""} {file delete $delsrc}
 }
 
 proc gzmklink {src dest} {

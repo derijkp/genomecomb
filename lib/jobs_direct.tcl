@@ -165,7 +165,7 @@ proc job_process_direct {} {
 				error $result $::errorInfo
 			}
 		}
-		if {![file exists $job.finished]} {
+		if {![job_file_exists $job.finished]} {
 			job_log $job "$jobname failed: did not finish\nerror:\n$result\n"
 		} elseif {$error} {
 			file delete $job.finished

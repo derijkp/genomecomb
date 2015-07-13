@@ -1,6 +1,6 @@
 proc job_process_par_jobid {job} {
 	global cgjob_running cgjob_running_par
-	if {![file exists $job.jobid]} {
+	if {![job_file_exists $job.jobid]} {
 		return ""
 	}
 	set jobid [file_read $job.jobid]
@@ -111,20 +111,20 @@ proc job_process_par_onepass {} {
 		# check if job is already running, if so, mark targets with jobid
 		set jobnum [job_process_par_jobid $job]
 		if {[isint $jobnum]} {
-			if {[file exists $job.targets]} {
+			if {[job_file_exists $job.targets]} {
 				set temptargets [file_read $job.targets]
 			} else {
 				set temptargets {}
 			}
-			if {[file exists $job.rmtargets]} {
+			if {[job_file_exists $job.rmtargets]} {
 				set temprmtargets [file_read $job.rmtargets]
 			} else {
 				set temprmtargets {}
 			}
-			if {![file exists $job.ptargets]} {
+			if {![job_file_exists $job.ptargets]} {
 				error "job $job ($jobnum) seems to be running, but there is no $job.ptargets"
 			}
-			if {[file exists $job.ptargets]} {
+			if {[job_file_exists $job.ptargets]} {
 				set tempptargets [file_read $job.ptargets]
 			} else {
 				set tempptargets {}

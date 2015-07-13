@@ -164,7 +164,7 @@ proc job_process_parstatus {} {
 		cd $pwd
 		# get job log information -> duration
 		set duration {}
-		if {[file exists $job.log]} {
+		if {[job_file_exists $job.log]} {
 			set logdata [split [file_read $job.log] \n]
 			unset -nocomplain time ; unset -nocomplain endtime
 			set failed 1
@@ -198,20 +198,20 @@ proc job_process_parstatus {} {
 		# check if job is already running, if so, mark targets with jobid
 		set jobnum [job_process_par_jobid $job]
 		if {[isint $jobnum]} {
-			if {[file exists $job.targets]} {
+			if {[job_file_exists $job.targets]} {
 				set temptargets [file_read $job.targets]
 			} else {
 				set temptargets {}
 			}
-			if {[file exists $job.rmtargets]} {
+			if {[job_file_exists $job.rmtargets]} {
 				set temprmtargets [file_read $job.rmtargets]
 			} else {
 				set temprmtargets {}
 			}
-			if {![file exists $job.ptargets]} {
+			if {![job_file_exists $job.ptargets]} {
 				error "job $job ($jobnum) seems to be running, but there is no $job.ptargets"
 			}
-			if {[file exists $job.ptargets]} {
+			if {[job_file_exists $job.ptargets]} {
 				set tempptargets [file_read $job.ptargets]
 			} else {
 				set tempptargets {}
@@ -284,7 +284,7 @@ proc job_process_parstatus {} {
 			continue
 		}
 		# job_log $job "-------------------- submitting $jobname --------------------"
-		if {[file exists $job.err]} {
+		if {[job_file_exists $job.err]} {
 			puts "error\t$jobname\t$jobnum\t\terror file available\t$job"
 			job_process_pargraph $job $jobname error $duration $checkcompressed $adeps $ids $targets $ptargets
 		} else {

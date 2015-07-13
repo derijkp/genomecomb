@@ -12,6 +12,16 @@ proc regexp2glob {pattern} {
 	return $glob
 }
 
+proc job_file_exists {file} {
+	if {[file exists $file]} {return 1}
+	if {[catch {file link $file}]} {return 0} else {return 1}
+}
+
+proc job_file_mtime {file} {
+	file lstat $file a
+	return $a(mtime)
+}
+
 proc job_distribute {type} {
 	global cgjob
 	set cgjob(distribute) $type
@@ -326,7 +336,7 @@ proc maxfiletime {file timeVar} {
 	upvar $timeVar time
 	if {$time eq "now"} {return $time}
 	if {$time eq "force"} {return $time}
-	set ftime [file mtime $file]
+	set ftime [job_file_mtime $file]
 	if {$ftime > $time} {set time $ftime}
 }
 
@@ -507,7 +517,7 @@ proc job_checktarget {job target time checkcompressed {newidsVar {}}} {
 	if {[llength $files]} {
 		if {$time ne "now" && $time ne "force"} {
 			foreach file $files {
-				if {[file mtime $file] < $time} {
+				if {[job_file_mtime $file] < $time} {
 					set time now
 					break
 				}
@@ -653,10 +663,10 @@ proc job_logclose {job args} {
 }
 
 proc job_backup {file {rename 0}} {
-	if {![file exists $file]} return
+	if {![job_file_exists $file]} return
 	set num 1
 	while 1 {
-		if {![file exists $file.old$num]} break
+		if {![job_file_exists $file.old$num]} break
 		incr num
 	}
 	if {$rename} {
@@ -685,7 +695,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 		}
 		incr num
 		if {$dep ne ""} {
-			append cmd "if \{!\[[list file exists $dep]\]\} \{error \"dependency $dep not found\"\}\n"
+			append cmd "if \{!\[[list job_file_exists $dep]\]\} \{error \"dependency $dep not found\"\}\n"
 		}
 	}
 	set num 1
