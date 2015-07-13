@@ -47,16 +47,23 @@ proc liftsample_job {args} {
 	set infoa(split) $split
 	lappend infoa(liftover) $liftoverfile
 	file mkdir $destdir
+	set newsample [file tail $destdir]
 	infofile_write $destdir/sampleinfo.tsv [array get infoa]
 	foreach file [jobglob $srcdir/var-*.tsv $srcdir/fannotvar-*.tsv] {
-		set target $destdir/[file tail $file]
-		set regionfile [findregionfile $file]
+		regsub -- {-[^-]+.tsv$} [file tail $file] -$newsample.tsv temp
+		set target $destdir/$temp
+		if {[regexp {(.*)fannotvar-(.*)\.tsv$} $file temp temp1 temp2]} {
+			set regionfile [findregionfile $temp1/var-cg-cg-$temp2.tsv]
+		} else {
+			set regionfile [findregionfile $file]
+		}
 		job liftvar-[file tail $file] -deps {$file $liftoverfile ($regionfile)} \
-		-vars {file liftoverfile regionfile split} \
+		-vars {file liftoverfile regionfile split newsample} \
 		-targets {$target} -code {
 			if {![catch {file link $dep} link]} {
 				putslog "Copying link $dep"
-				file copy -force $file $target
+				regsub -- {-[^-]+.tsv$} $link -$newsample.tsv newlink
+				file_link $target $newlink
 			} else {
 				putslog "converting $file"
 				file delete $target.temp
@@ -71,13 +78,15 @@ proc liftsample_job {args} {
 		}
 	}
 	foreach file [jobglob $srcdir/sreg-*.tsv $srcdir/reg_*.tsv] {
-		set target $destdir/[file tail $file]
+		regsub -- {-[^-]+.tsv$} [file tail $file] -$newsample.tsv temp
+		set target $destdir/$temp
 		job liftreg-[file tail $file] -deps {$file $liftoverfile} \
-		-vars {file liftoverfile} \
+		-vars {file liftoverfile newsample} \
 		-targets {$target} -code {
 			if {![catch {file link $file} link]} {
 				putslog "Copying link $file"
-				file copy -force $file $target
+				regsub -- {-[^-]+.tsv$} $link -$newsample.tsv newlink
+				file_link $target $newlink
 			} else {
 				putslog "converting region $file"
 				cg liftregion $file $target.temp $liftoverfile
@@ -87,13 +96,15 @@ proc liftsample_job {args} {
 		}
 	}
 	foreach file [jobglob $srcdir/cgcnv-*.tsv $srcdir/cgsv-*.tsv] {
-		set target $destdir/[file tail $file]
+		regsub -- {-[^-]+.tsv$} [file tail $file] -$newsample.tsv temp
+		set target $destdir/$temp
 		job liftreg-[file tail $file] -deps {$file $liftoverfile} \
-		-vars {file liftoverfile} \
+		-vars {file liftoverfile newsample} \
 		-targets {$target} -code {
 			if {![catch {file link $file} link]} {
 				putslog "Copying link $file"
-				file copy -force $file $target
+				regsub -- {-[^-]+.tsv$} $link -$newsample.tsv newlink
+				file_link $target $newlink
 			} else {
 				putslog "converting $file"
 				cg liftover $file $target.temp $liftoverfile 2>@ stderr

@@ -827,12 +827,12 @@ test liftsample {basic} {
 	test_cleantmp
 	file mkdir tmp/sample
 	file mkdir tmp/esample
-	write_tab tmp/sample/var-t-t-sample.tsv {
+	write_tab tmp/sample/fannotvar-sample.tsv {
 		chromosome	begin	end	type	ref	alt
 		1	1610084	1610085	snp	A	G
 	}
-	write_tab tmp/esample/var-t-t-sample.tsv {
-		#liftover_source	tmp/sample/var-t-t-sample.tsv
+	write_tab tmp/esample/fannotvar-liftedsample.tsv {
+		#liftover_source	tmp/sample/fannotvar-sample.tsv
 		#liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
 		#split	1
 		#oldref	hg18
@@ -842,14 +842,15 @@ test liftsample {basic} {
 		1	1620224	1620225	snp	G	A	1	1610084	1610085	A
 		1	1620884	1620885	snp	T	C	1	1610744	1610745	C
 	}
-	mklink tmp/sample/var-t-t-sample.tsv tmp/sample/fannotvar-sample.tsv
-	mklink tmp/esample/var-t-t-sample.tsv tmp/esample/fannotvar-sample.tsv
-	write_tab tmp/sample/sreg-t-t-sample.tsv {
+	mklink tmp/sample/fannotvar-sample.tsv tmp/sample/var-cg-cg-sample.tsv
+	mklink tmp/esample/fannotvar-liftedsample.tsv tmp/esample/var-cg-cg-liftedsample.tsv
+	mklink tmp/sample/doesnotexist.tsv tmp/sample/var-wronglink-sample.tsv
+	write_tab tmp/sample/sreg-cg-cg-sample.tsv {
 		chromosome	begin	end
 		1	609620	2474628
 	}
-	write_tab tmp/esample/sreg-t-t-sample.tsv {
-		#liftover_source	tmp/sample/sreg-t-t-sample.tsv
+	write_tab tmp/esample/sreg-cg-cg-liftedsample.tsv {
+		#liftover_source	tmp/sample/sreg-cg-cg-sample.tsv
 		#liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
 		#oldref	hg18
 		#ref	hg19
@@ -859,8 +860,8 @@ test liftsample {basic} {
 		1	1620860	1620903	1	609620	2474628
 		1	1620904	2484768	1	609620	2474628
 	}
-	write_tab tmp/esample/sreg-t-t-sample.tsv.unmapped {
-		#liftover_source	tmp/sample/sreg-t-t-sample.tsv
+	write_tab tmp/esample/sreg-cg-cg-liftedsample.tsv.unmapped {
+		#liftover_source	tmp/sample/sreg-cg-cg-sample.tsv
 		#liftover_unmapped	/complgen/refseq/liftover/hg18ToHg19.over.tsv
 		chromosome	begin	end	old_begin	old_end
 		1	1609677	1609759	609620	2474628
@@ -868,13 +869,13 @@ test liftsample {basic} {
 		1	1610719	1610720	609620	2474628
 		1	1610763	1610764	609620	2474628
 	}
-	write_tab tmp/sample/reg_cluster-t-t-sample.tsv {
+	write_tab tmp/sample/reg_cluster-cg-cg-sample.tsv {
 		chromosome	begin	end
 		1	609620	609720
 		1	609820	609930
 	}
-	write_tab tmp/esample/reg_cluster-t-t-sample.tsv {
-		#liftover_source	tmp/sample/reg_cluster-t-t-sample.tsv
+	write_tab tmp/esample/reg_cluster-cg-cg-liftedsample.tsv {
+		#liftover_source	tmp/sample/reg_cluster-cg-cg-sample.tsv
 		#liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
 		#oldref	hg18
 		#ref	hg19
@@ -884,10 +885,14 @@ test liftsample {basic} {
 	}
 	# test
 	exec cg liftsample -silent 1 tmp/sample tmp/liftedsample /complgen/refseq/liftover/hg18ToHg19.over.tsv
-	file delete tmp/liftedsample/var-t-t-sample.tsv.unmapped
-	file delete tmp/liftedsample/reg_cluster-t-t-sample.tsv.unmapped
+	file delete tmp/liftedsample/fannotvar-liftedsample.tsv.unmapped
+	file delete tmp/liftedsample/reg_cluster-cg-cg-liftedsample.tsv.unmapped
 	file delete tmp/liftedsample/sampleinfo.tsv
 	file delete -force tmp/liftedsample/log_jobs
+	if {[file link tmp/liftedsample/var-wronglink-liftedsample.tsv] ne "doesnotexist.tsv"} {
+		error "(dangling) links not correctly done"
+	}
+	file delete -force tmp/liftedsample/var-wronglink-liftedsample.tsv
 	exec diff -r tmp/liftedsample tmp/esample
 } {}
 
