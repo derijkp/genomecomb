@@ -1,4 +1,4 @@
-= wide =
+= gene2reg =
 
 == Format ==
 cg gene2reg ?infile? ?outfile?
