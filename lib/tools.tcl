@@ -592,6 +592,8 @@ proc overlap {start1 end1 start2 end2} {
 }
 
 proc reg_compare {loc1 loc2} {
+	if {![llength $loc1]} {return 1}
+	if {![llength $loc2]} {return -1}
 	foreach {chr1 start1 end1} $loc1 break
 	foreach {chr2 start2 end2} $loc2 break
 	set chrcomp [loc_compare $chr1 $chr2]
