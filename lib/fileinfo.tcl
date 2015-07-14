@@ -67,7 +67,7 @@ proc comment2dict {comment} {
 		set pos [string first \t $line]
 		if {$pos != -1} {
 			set key [string range $line 0 [expr {$pos-1}]]
-			set value [string range $line [expr {$pos+1}] end]
+			set value [string trim [string range $line [expr {$pos+1}] end]]
 		} else {
 			set pos [string first = $line]
 			if {$pos != -1} {
