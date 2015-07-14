@@ -48,6 +48,7 @@ proc cg_liftover {args} {
 		errorformat liftover
 		exit 1
 	}
+
 	foreach {varfile resultfile liftoverfile} $args break
 	if {[file exists $resultfile]} {
 		error "file $resultfile already exists, format is (now): cg liftover varfile resultfile liftoverfile"
@@ -299,7 +300,7 @@ proc cg_liftover {args} {
 				set ref [seq_complement $ref]
 				set alts [lsort -dict [seq_complement $alts]]
 				if {$correctvariants} {
-					lset line $refpos $ref
+					if {$refpos != -1} {lset line $refpos $ref}
 					if {$altpos != -1} {lset line $altpos [join $alts ,]}
 					foreach {a1pos a2pos seqpos zygpos} $sposs {a1 a2 seq zyg} $slist {
 						set a1 [seq_complement [lindex $line $a1pos]]
@@ -325,7 +326,7 @@ proc cg_liftover {args} {
 					set newref [string replace $newref $spos $spos $destref]
 				}
 				if {$newref ne $ref} {
-					lset line $refpos $newref
+					if {$refpos != -1} {lset line $refpos $newref}
 					if {!$split} {
 						set alts [list_remove $alts $newref]
 						lappend alts $ref
