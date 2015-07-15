@@ -304,7 +304,7 @@ test reg_annot {basic, extra comments} {
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
 } {1d0
-< # a comment	
+< # a comment
 child process exited abnormally} error
 
 test var_annot {different types on same pos, extra comments} {
@@ -313,7 +313,7 @@ test var_annot {different types on same pos, extra comments} {
 	exec cg annotate tmp/temp2.sft tmp/temp.tsv data/var_annot3.tsv
 	exec diff tmp/temp.tsv data/expected-vars2-var_annot3.tsv
 } {1d0
-< # a comment	
+< # a comment
 child process exited abnormally} error
 
 test gene_annot {gene, extra comments} {
@@ -322,8 +322,8 @@ test gene_annot {gene, extra comments} {
 	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/temp2.sft tmp/temp.sft data/gene_test.tsv
 	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
 } {1,2d0
-< # a comment	
-< # another comment	 
+< # a comment
+< # another comment
 child process exited abnormally} error
 
 test reg_annot {existing field error} {
@@ -459,6 +459,26 @@ test reg_annot {ins at end of reg} {
 		1	20	20	ins	6	10-20
 		1	20	21	snp	7	{}
 		1	21	21	ins	8	{}
+	}
+	exec cg annotate tmp/vars.tsv tmp/result.tsv tmp/reg_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {} 
+
+test reg_annot {comments} {
+	test_cleantmp
+	write_tab tmp/vars.tsv {
+		#a	b
+		chromosome begin end	type	num
+		1	19	20	snp	5
+	}
+	write_tab tmp/reg_test.tsv {
+		chromosome	begin	end	name
+		1	10	20	10-20
+	}
+	write_tab tmp/expected.tsv {
+		#a	b
+		chromosome begin end	type	num	test
+		1	19	20	snp	5	10-20
 	}
 	exec cg annotate tmp/vars.tsv tmp/result.tsv tmp/reg_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv

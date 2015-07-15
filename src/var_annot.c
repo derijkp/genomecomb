@@ -152,6 +152,7 @@ NODPRINT("\n");
 	sscanf(result2->data[end2pos].string,"%d",&end2);
 NODPRINT("line2 %s,%d,%d %s",Loc_ChrString(chromosome2),start2,end2,line2->string)
 	while (!DStringGetTab(line1,f1,max1,result1,1,&numfields)) {
+		fprintf(stdout,"\t");
 		pos1++;
 		check_numfieldserror(numfields,numfields1,line1,argv[1],&pos1);
 		chromosome1 = result1->data+chr1pos;

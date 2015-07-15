@@ -47,6 +47,7 @@ int main(int argc, char *argv[]) {
 	result1 = DStringArrayNew(max1+2);
 	skip_header(f1,line1,&numfields1,&pos1);
 	while (!DStringGetTab(line1,f1,max1,result1,1,&numfields)) {
+		fprintf(stdout,"\t");
 		pos1++;
 		check_numfieldserror(numfields,numfields1,line1,argv[1],&pos1);
 		chromosome1 = result1->data+chr1pos;

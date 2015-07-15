@@ -340,8 +340,8 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 	set extracols [dict get $dbobj extracols]
 	set geneobjpos [dict get $dbobj geneobjpos]
 	set o [open $resultfile.temp w]
-	puts -nonewline $o $comment
 	if {$mirvas} {
+		puts -nonewline $o $comment
 		set addtranscriptname 0
 		set nh {chromosome begin end type ref alt mir_location mir_name}
 		set temp [annotatemir_one_struct_fields]
@@ -349,14 +349,16 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 		lappend nh {*}[list_sub $header -exclude $poss]
 		set mirvasempty [list_fill [llength $temp] {}]
 		set mo [mirvas_start $mirvas $file $resultfile $flanksizes]
+		puts $o [join $nh \t]
 	} else {
+		puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
 		set addtranscriptname 1
 		set nh [list ${name}_impact ${name}_mir]
 		foreach col $extracols {
 			lappend nh ${name}_$col
 		}
+		puts $o \t[join $nh \t]
 	}
-	puts $o [join $nh \t]
 	set empty [join [list_fill [llength $nh] {}] \t]
 	set dblist {}
 	set counter 0
@@ -517,7 +519,7 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 		} else {
 			set result $empty
 		}
-		puts $o $result
+		puts $o \t$result
 	}
 	if {$genomefile ne ""} {
 		genome_close $genomef

@@ -25,8 +25,8 @@ proc annotatereg {file dbfile name annotfile near dbinfo} {
 	set dbposs [open_region $f dbheader]
 	close $f
 	set o [open $annotfile.temp w]
-	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
-	puts $o [join $newh \t]
+	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
+	puts $o \t[join $newh \t]
 	close $o
 	if {[gziscompressed $file]} {
 		set file "|[gzcat $file] '$file'"
@@ -78,8 +78,8 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 		error "$dbfile has no alt field"
 	}
 	set o [open $annotfile.temp w]
-	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
-	puts $o [join $newh \t]
+	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
+	puts $o \t[join $newh \t]
 	close $o
 	if {[gziscompressed $file]} {
 		set file "|[gzcat $file] '$file'"
@@ -124,8 +124,8 @@ proc annotatebcol {file dbfile name annotfile} {
 	set bcollist [ssort -natural -index 0 $bcollist]
 	set newh $name
 	set o [open $annotfile.temp w]
-	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
-	puts $o $newh
+	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
+	puts $o \t$newh
 	close $o
 	if {[gziscompressed $file]} {
 		error "bcol_annot not supported for compressed files"
@@ -396,14 +396,14 @@ proc cg_annotate {args} {
 	}
 	if {$multidb} {
 		cg select -f id $file $resultfile.temp
-		exec paste $resultfile.temp {*}$afiles > $resultfile
+		exec paste -d "" $resultfile.temp {*}$afiles > $resultfile
 		file delete $resultfile.temp
 	} elseif {$replace} {
 		cg select -f [list_lremove $header $newh] $file $resultfile.temp
-		exec paste $resultfile.temp {*}$afiles > $resultfile
+		exec paste -d "" $resultfile.temp {*}$afiles > $resultfile
 		file delete $resultfile.temp
 	} else {
-		exec paste $file {*}$afiles > $resultfile
+		exec paste -d "" $file {*}$afiles > $resultfile
 	}
 	if {[llength $afiles]} {file delete {*}$afiles}
 	gzrmtemp $gzfile

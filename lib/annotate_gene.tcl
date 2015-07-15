@@ -776,9 +776,9 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 #	}
 	set dbposs [lrange $dposs 0 2]
 	set o [open $annotfile.temp w]
-	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n]]
+	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
 	set nh [list ${name}_impact ${name}_gene ${name}_descr]
-	puts $o [join $nh \t]
+	puts $o \t[join $nh \t]
 	set empty [join [list_fill [llength $nh] {}] \t]
 	while {![eof $df]} {
 		set fdbline [split [gets $df] \t]
@@ -971,7 +971,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 		} else {
 			set result $empty
 		}
-		puts $o $result
+		puts $o \t$result
 	}
 
 	close $genomef
