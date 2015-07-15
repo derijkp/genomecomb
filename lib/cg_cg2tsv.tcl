@@ -544,7 +544,7 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 		set alt [lindex $cur 6]
 		if {$split || [llength $alt] == 1} {
 				set fcomp [list_sub $cur {3 4 6}]
-				foreach var $alt {
+				foreach var [lsort -dict $alt] {
 					lset fcomp 2 $var
 					set annot $empty
 					if {($gchr eq $fchr) && ($gbegin == $fbegin)} {
