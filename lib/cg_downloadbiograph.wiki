@@ -1,0 +1,22 @@
+= downloadbiograph =
+
+== Format ==
+cg downloadbiograph resultfile diseaseid ?genefile?
+
+== Summary ==
+download gene rank data from biograph.
+
+== Description ==
+Creates a tab separated file with gene names and their biograph rank wrt
+the given diseaseid. genes in the (optional) genefile are given rank 0,
+genes with a known relation in biograph will get a rank 1. Larger numbers
+indicate an inferred relationship, smaller numbers indicating a higher
+rank in the prioritisation wrt the disease.
+
+== Arguments ==
+; **resultfile**: file to write results to
+; **diseaseid**: umls id of disease
+; **genefile**: file containing a list of genes that gets rank 0
+
+== Category ==
+Annotation

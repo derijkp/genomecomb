@@ -1,0 +1,24 @@
+= downloadmart =
+
+== Format ==
+cg downloadmart resultfile dataset config attributes
+
+== Summary ==
+Download data from biomart)
+
+== Description ==
+
+
+== Arguments ==
+; **resultfile**: write results to this file
+; **dataset**: dataset
+; **config**: config
+; **attributes**: list of attributes
+
+== Example ==
+{{{
+cg downloadmart reg_hg19_go.tsv hsapiens_gene_ensembl gene_ensembl_config {hgnc_symbol name_1006 namespace_1003}
+}}}
+
+== Category ==
+Annotation

@@ -1,0 +1,21 @@
+= geneannot2reg =
+
+== Format ==
+cg geneannot2reg generegfile geneannotfile
+
+== Summary ==
+Creates a (region) annotation file based on a genelist with annotations.
+
+== Description ==
+Creates a (region) annotation file based on a genelist with annotations.
+The regions coverd by each gene are in generegfile (which is included, but
+can be generated from a desired geneset using cg gene2reg). The resulting 
+annotation file is written to stdout. The filename of the new annotation
+file should start with reg_ (for region annotation)
+
+== Arguments ==
+; **generegfile**: file containing the region covered by each gene
+; **geneannotfile**: tab separated file containing gene names and associated annotation data
+
+== Category ==
+Annotation
