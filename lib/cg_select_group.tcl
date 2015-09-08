@@ -392,7 +392,12 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 		# calculate groupname
 		foreach {field filter} $group {
 			if {$field eq "sample"} {
-				lappend groupname $sample
+				if {$sample ne ""} {
+					lappend groupname $sample
+				} else {
+					lappend groupname \$sample
+					lappend neededfields sample
+				}
 				continue
 			} else {
 				set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
@@ -449,7 +454,12 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 		# make col and colquery variable
 		foreach {field filter} $groupcol {
 			if {$field eq "sample"} {
-				lappend col $sample
+				if {$sample ne ""} {
+					lappend col $sample
+				} else {
+					lappend col \$sample
+					lappend neededfields sample
+				}
 				continue
 			} else {
 				set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]

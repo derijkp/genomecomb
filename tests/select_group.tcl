@@ -579,4 +579,71 @@ test select_group "long format -g and -gc with sampleinfo" {
 f	0.8	1.0
 m	0.4	0.5}
 
+test select_group "long format -g and -gc and filter with sampleinfo" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample exp
+		sample1	1
+		sample2	1
+		sample3	2
+		sample4	2
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender	freq
+		sample1	m	0.4
+		sample2	f	0.8
+		sample3	f	1.0
+		sample4	m	0.5
+	}
+	exec cg select -g {gender f} -gc {exp {} avg(freq)} tmp/temp.tsv
+} {gender	1-avg_freq	2-avg_freq
+f	0.8	1.0}
+
+test select_group "long format -g with sample with sampleinfo" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample exp
+		sample1	1
+		sample2	1
+		sample3	2
+		sample4	2
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender	freq
+		sample1	m	0.4
+		sample2	f	0.8
+		sample3	f	1.0
+		sample4	m	0.5
+	}
+	exec cg select -g {sample {} freq {0.*}} tmp/temp.tsv
+} {sample	freq	count
+sample1	0.4	1
+sample2	0.8	1
+sample4	0.5	1
+}
+
+test select_group "long format -gc with sample with sampleinfo" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample exp
+		sample1	1
+		sample2	1
+		sample3	2
+		sample4	2
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender	freq
+		sample1	m	0.4
+		sample2	f	0.8
+		sample3	f	1.0
+		sample4	m	0.5
+	}
+	exec cg select -g gender -gc {sample {} list(freq)} tmp/temp.tsv
+} {gender	sample1-list_freq	sample2-list_freq	sample3-list_freq	sample4-list_freq
+f		0.8	1.0	
+m	0.4			0.5}
+
 testsummarize
