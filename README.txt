@@ -10,8 +10,6 @@ complete genome sequencing.
 
 System requirements and Installation
 ------------------------------------
-This is a preliminary release, while I am still polishing up the package,
-adding documentation, cleanup, ...
 Updates and more information can be found on the website
 http://genomecomb.sourceforge.net/
 
@@ -43,7 +41,12 @@ License
 The use of this application is governed by the accompanying 
 license (license.txt).
 If you have used the program to obtain results, you should cite 
-the paper once it is published.
+the following paper:
+
+Reumers, J*, De Rijk, P*, Zhao, H, Liekens, A, Smeets, D, Cleary, J, Van Loo, P, Van Den Bossche, M, Catthoor, K, Sabbe, B, Despierre, E, Vergote, I, Hilbush, B, Lambrechts, D and Del-Favero, J
+Optimized filtering reduces the error rate in detecting genomic variants by short-read sequencing.
+Nature biotechnology, 30, 61-88
+pubmed 22178994
 
 How to contact me
 -----------------
