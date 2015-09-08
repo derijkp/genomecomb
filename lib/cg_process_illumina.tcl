@@ -922,7 +922,7 @@ proc process_illumina {args} {
 		cd $dir
 		job_logdir $dir/log_jobs
 		# convert existing vcfs
-		set files [gzfiles var-*.vcf]
+		set files [jobglob var-*.vcf]
 		foreach file $files {
 			set target [file root [gzroot $file]].tsv
 			if {![file exists $target]} {
@@ -934,13 +934,13 @@ proc process_illumina {args} {
 			}
 		}
 		# add existing var files to todo
-		set files [gzfiles var-*.tsv]
+		set files [jobglob var-*.tsv]
 		foreach file $files {
 			set target [file root [gzroot $file]].tsv
 			lappend todo [string range $target 4 end-4]
 		}
 		# job_logdir $dir/log_jobs
-		set files [ssort -natural [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
+		set files [ssort -natural [jobglob fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
 		if {[llength $files]} {
 			# do not do any of preliminaries if end product is already there
 			set bamfile map-bwa-$sample.bam
