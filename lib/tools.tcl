@@ -1238,3 +1238,13 @@ proc file_resolve {file {lastlinkVar {}}} {
 	}
 	return $file
 }
+
+proc multimatch {patterns value} {
+	set final 1
+	foreach temp $patterns {
+		if {![string match $temp $value]} {
+			set final 0; break
+		}
+	}
+	return $final
+}

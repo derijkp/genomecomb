@@ -789,7 +789,46 @@ test select "toupper$dboptt" {
 1	A
 2	A}
 
+test select "long format with sampleinfo $dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id	freq
+		sample1	1	0.4
+		sample2	1	0.8
+		sample3	1	1.0
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select {*}$dbopt -q {$gender eq "f" and $freq > 0.9} -f {sample freq gender} tmp/temp.tsv
+} {sample	freq	gender
+sample3	1.0	f}
+
+test select "long format with sampleinfo in calc $dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id	freq
+		sample1	1	0.4
+		sample2	1	0.8
+		sample3	1	1.0
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select {*}$dbopt -q {$gender eq "f" and $freq > 0.9} -f {{t=concat($sample,$gender)}} tmp/temp.tsv
+} {t
+sample3f}
+
 }
+
 
 foreach dbopt {{}} {
 	selecttests

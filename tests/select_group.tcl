@@ -458,4 +458,125 @@ test select_group {wildcard calc column used in gc} {
 A	2	4
 B	1	5}
 
+test select_group "long format -g with sampleinfo" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id	freq
+		sample1	1	0.4
+		sample2	1	0.8
+		sample3	1	1.0
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -q {$gender eq "f"} -g all tmp/temp.tsv
+} {all	count
+all	2}
+
+test select_group "long format -g with sampleinfo in calc" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id	freq
+		sample1	1	0.4
+		sample2	1	0.8
+		sample3	1	1.0
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -f {{t=concat($sample,$gender)}} -g t tmp/temp.tsv
+} {t	count
+sample1m	1
+sample2f	1
+sample3f	1}
+
+test select_group "long format -g with sampleinfo" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id	freq
+		sample1	1	0.4
+		sample2	1	0.8
+		sample3	1	1.0
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select -g gender tmp/temp.tsv
+} {gender	count
+f	2
+m	1}
+
+test select_group "long format -gc with sampleinfo" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id
+		sample1	1
+		sample2	1
+		sample3	1
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender	freq
+		sample1	m	0.4
+		sample2	f	0.8
+		sample3	f	1.0
+	}
+	exec cg select -g all -gc {gender {} count} tmp/temp.tsv
+} {all	f-count	m-count
+all	2	1}
+
+test select_group "long format -g and -gc aggregate with sampleinfo" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id
+		sample1	1
+		sample2	1
+		sample3	1
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender	freq
+		sample1	m	0.4
+		sample2	f	0.8
+		sample3	f	1.0
+	}
+	exec cg select -g gender -gc {list(freq)} tmp/temp.tsv
+} {gender	list_freq
+f	0.8,1.0
+m	0.4}
+
+test select_group "long format -g and -gc with sampleinfo" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample exp
+		sample1	1
+		sample2	1
+		sample3	2
+		sample4	2
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender	freq
+		sample1	m	0.4
+		sample2	f	0.8
+		sample3	f	1.0
+		sample4	m	0.5
+	}
+	exec cg select -g gender -gc {exp {} avg(freq)} tmp/temp.tsv
+} {gender	1-avg_freq	2-avg_freq
+f	0.8	1.0
+m	0.4	0.5}
+
 testsummarize

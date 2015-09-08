@@ -45,7 +45,7 @@ proc select_parse_for_samples {group groupcol header {calccolsVar {}}} {
 		if {![inlist $header $field] && ![info exists calccols($field)]} {
 			if {[lsearch -glob $header ${field}-*] != -1
 				|| [llength [array names calccols ${field}-*]]
-				|| (![catch {tsv_select_sampleinfo ${field}-*} temp] && [llength $temp])
+				|| (![catch {tsv_select_sampleinfo_wildcard ${field}-*} temp] && [llength $temp])
 			} {
 				# hidden sample
 				set gsamples [samples $header]
@@ -88,6 +88,11 @@ proc tsv_select_sampleusefield {header field sample calccolsVar {neededfieldsVar
 	} elseif {[inlist $header $field]} {
 		set fieldused $field
 		lappend neededfields $fieldused
+	} elseif {[inlist $header sample] && ![catch {tsv_select_sampleinfo $field}]} {
+		# long format sampleinfo
+		set calccols($field) "\t\t\t\tset \{$field\} \[tsv_select_sampleinfo_long \{$field\} \$sample\]\n"
+		lappend neededfields sample
+		set fieldused $field
 	} else {
 		return ""
 	}
@@ -113,7 +118,7 @@ proc tsv_select_addaggregatecalc {todolist} {
 				if {[isdouble $fieldused]} {
 					append colactions [string_change {
 						if {![info exists resultdata($_groupname,$_colname,$_val,max)] || @val@ > $resultdata($_groupname,$_colname,$_val,max)} {
-							set resultdata($_groupname,$_colname,$_val,max) @val@
+							set resultdata($_groupname,$_colname,$_val,max) {@val@}
 						}
 					} [list @val@ $fieldused]]
 				}
@@ -130,7 +135,7 @@ proc tsv_select_addaggregatecalc {todolist} {
 				if {[isdouble $fieldused]} {
 					append colactions [string_change {
 						if {![info exists resultdata($_groupname,$_colname,$_val,min)] || @val@ < $resultdata($_groupname,$_colname,$_val,min)} {
-							set resultdata($_groupname,$_colname,$_val,min) @val@
+							set resultdata($_groupname,$_colname,$_val,min) {@val@}
 						}
 					} [list @val@ $fieldused]]
 				}
@@ -187,6 +192,8 @@ proc tsv_select_addaggregatecalc {todolist} {
 		if {[inlist $todo distinct]} {
 			if {!$valuetype} {
 				set fieldused \$\{$fieldused\}
+			} elseif {$fieldused eq ""} {
+				set fieldused {{}}
 			}
 			append colactions [string_change {
 					dict set resultdata($_groupname,$_colname,$_val,d) @val@ 1
@@ -195,6 +202,8 @@ proc tsv_select_addaggregatecalc {todolist} {
 		if {[inlist $todo list]} {
 			if {!$valuetype} {
 				set fieldused \$\{$fieldused\}
+			} elseif {$fieldused eq ""} {
+				set fieldused {{}}
 			}
 			append colactions [string_change {
 					lappend resultdata($_groupname,$_colname,$_val,d) @val@
@@ -205,7 +214,7 @@ proc tsv_select_addaggregatecalc {todolist} {
 				if {[isdouble $fieldused]} {
 					append colactions [string_change {
 						if {![info exists resultdata($_groupname,$_colname,$_val,s)]} {
-							set resultdata($_groupname,$_colname,$_val,s) @val@
+							set resultdata($_groupname,$_colname,$_val,s) {@val@}
 						} else {
 							set resultdata($_groupname,$_colname,$_val,s) [expr {$resultdata($_groupname,$_colname,$_val,s) + @val@}]
 						}
@@ -355,13 +364,17 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 	set num 0
 	foreach el $qposs field $qfields {
 		if {![isint $el] && $el ne "" && ![info exists calccols($field)]} {
-			set tempneededfields {}
-			set code [tsv_select_expandcode $header [lindex $el 1] tempneededfields prequery calccols]
-			set tempneededfields [list_remdup $tempneededfields]
-			set code [tsv_select_makecol make_col$num $code $tempneededfields $prequery]
-			lappend neededfields {*}$tempneededfields
-			append tclcode $code\n
-			set calccols($field) "\t\t\t\tset \{$field\} \[make_col$num \$\{[join $tempneededfields \}\ \$\{]\}\]\n"
+			if {[lindex $el 0] eq "code"} {
+				set tempneededfields {}
+				set code [tsv_select_expandcode $header [lindex $el 1] tempneededfields prequery calccols]
+				set tempneededfields [list_remdup $tempneededfields]
+				set code [tsv_select_makecol make_col$num $code $tempneededfields $prequery]
+				lappend neededfields {*}$tempneededfields
+				append tclcode $code\n
+				set calccols($field) "\t\t\t\tset \{$field\} \[make_col$num \$\{[join $tempneededfields \}\ \$\{]\}\]\n"
+			} elseif {[lindex $el 0] eq "directcode"} {
+				set calccols($field) "\t\t\t\tset \{$field\} \[[lindex $el 1]\]\n"
+			}
 		}
 		incr num
 	}
@@ -414,7 +427,6 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 				lappend groupname $field
 			}
 		}
-#		append colactions \t\t\t\t\t "set _groupname \[list [join $groupname { }]\]" \n
 		append colactions \t\t\t\t\t "set _groupname \"[join $groupname \t]\"" \n
 		# first see what I need to calculate requested aggregates
 		unset -nocomplain todoa
@@ -484,6 +496,9 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 		}
 	}
 	set neededfields [list_remdup $neededfields]
+	if {[get ::tsv_select_sampleinfo() 0]} {
+		append tclcode "[list set ::tsv_select_sampleinfofile $::tsv_select_sampleinfofile]\n"
+	}
 	# see what we need of calculated fields
 	set calcfieldsquery [list_lremove $neededfields $header]
 	set calcfieldsquery [list_remove $calcfieldsquery ROW]
@@ -495,8 +510,14 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 			unset calccols($field)
 		} else {
 			# tsv_select_sampleinfo gives not present error if field also not found in sampleinfo
-			set value [tsv_select_sampleinfo $field]
-			append prequery "\t\t\tset \{$field\} \"$value\"\n"
+			if {[string first - $field] != -1} {
+				set value [tsv_select_sampleinfo $field]
+				append prequery "\t\t\tset \{$field\} \"$value\"\n"
+			} elseif {[inlist $header sample]} {
+				set value [tsv_select_sampleinfo $field]
+				append prequery "\t\t\tset \{$field\} \[tsv_select_sampleinfo_long $field \$sample\]\n"
+				lappend neededfields sample
+			}
 		}
 	}
 	# actually make precalc: all calculated fields needed for group, but not for query (these are already in prequery)
