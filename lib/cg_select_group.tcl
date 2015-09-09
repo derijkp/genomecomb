@@ -295,7 +295,7 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 	return $calcresults
 }
 
-proc tsv_select_group {header pquery qposs qfields group groupcols neededfields} {
+proc tsv_select_group {header pquery qposs qfields group groupcols neededfields sortfields} {
 # putsvars header pquery qposs qfields group groupcols neededfields
 	global typetodoa
 	# outcols not used in group
@@ -555,14 +555,24 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 				lappend header [join [list {*}${col} $func] -]
 			}
 		}
-		puts [join $header \t]
+		if {![llength @sortfields@]} {
+			set o stdout
+		} else {
+			set tempfile [tempfile]
+			set o [open $tempfile w]
+		}
+		puts $o [join $header \t]
 		foreach _groupname [ssort -natural [array names resultgroups]] {
 			set result {}
-			# puts "$name\t$resultdata($name)"
+			# puts $o "$name\t$resultdata($name)"
 			foreach col $cols {
 				@calcresults@
 			}
-			puts "$_groupname\t[join $result \t]"
+			puts $o "$_groupname\t[join $result \t]"
+		}
+		if {[llength @sortfields@]} {
+			close $o
+			cg select -s @sortfields@ $tempfile >@ stdout
 		}
 		exit
 	}
@@ -570,7 +580,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields}
 		@pquery@ $pquery @prequery@ $prequery\
 		@precalc@ $precalc @addcols@ $addcols \
 		@neededcols@ $neededcols @calcresults@ $calcresults \
-		@grouptypes@ [list $grouptypes] @grouph@ [list_unmerge $group] @verbose@ [get ::verbose 0]]
+		@grouptypes@ [list $grouptypes] @grouph@ [list_unmerge $group] @verbose@ [get ::verbose 0] \
+		@sortfields@ [list $sortfields]]
 	]]
 	return $tclcode
 }

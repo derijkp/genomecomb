@@ -1099,12 +1099,17 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 	}
 	if {![file exists $index]} {set index {}}
 	if {[llength $qfields] == [llength $header]} {set index {}}
-	if {[llength $sortfields]} {
+	if {[llength $sortfields] && $group eq ""} {
+		set reverse 0
 		set index {}
 		if {$sortfields eq "-"} {
 			set poss [list_sub [tsv_basicfields $header 6 0] -exclude 4]
 			set poss [list_remove $poss -1]
 		} else {
+			if {[string index $sortfields 0] eq "-"} {
+				set reverse 1
+				set sortfields [string range $sortfields 1 end]
+			}
 			set poss [list_cor $header $sortfields]
 		}
 		if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $sortfields [list_find $poss -1]] ,] not found"}
@@ -1114,7 +1119,11 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 			foreach pos $poss {
 				lappend keys $pos,$pos
 			}
-			set sort "gnusort8 -T \"[scratchdir]\" -t \\t -N -s -k[join $keys " -k"]"
+			if {!$reverse} {
+				set sort "gnusort8 -T \"[scratchdir]\" -t \\t -N -s -k[join $keys " -k"]"
+			} else {
+				set sort "gnusort8 -T \"[scratchdir]\" -t \\t -N -s -r -k[join $keys " -k"]"
+			}
 		}
 	}
 	set query [string trim $query]
@@ -1131,7 +1140,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 	set tclcode {}
 	set sampleinfo_long 0
 	if {$group ne ""} {
-		append tclcode \n [tsv_select_group $header $pquery $qposs $qfields $group $groupcols $neededfields]
+		append tclcode \n [tsv_select_group $header $pquery $qposs $qfields $group $groupcols $neededfields $sortfields]
 		#file_write /tmp/temp.tcl $tclcode\n
 		#putsvars tclcode
 	} elseif {$query ne "" || [llength $qfields]} {
@@ -1272,9 +1281,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		#putsvars tclcode
 		lappend pipe [list cg exec $tclcode]
 	}
-#putslog -------------pipe-------------------
-#putslog pipe:[join $pipe " | "]
-#putslog ------------------------------------
+putslog -------------pipe-------------------
+putslog pipe:[join $pipe " | "]
+putslog ------------------------------------
 	if {$qfields ne ""} {
 		set nh [list_sub $qfields -exclude [list_find -glob $qfields -*]]
 	} else {
@@ -1372,6 +1381,7 @@ proc cg_select {args} {
 			}
 			-hf {set hc $value}
 			-s {set sortfields $value}
+			-sr {set sortfields -$value}
 			-n {
 				if {$value eq ""} {
 					set header [tsv_open stdin]

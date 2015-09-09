@@ -46,6 +46,15 @@ test select "-s$dboptt" {
 10	b	b2	bbbbbbbbbb
 100	d	aa3	dd..}
 
+test select "-s$dboptt" {
+	global dbopt
+	exec cg select {*}$dbopt -sr num data/table.tsv
+} {num	text	mixed	other
+100	d	aa3	dd..
+10	b	b2	bbbbbbbbbb
+4	a	a4	aaaa
+2	c	a2	cc}
+
 test select "-s -f$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -s num -f "num mixed" data/table.tsv

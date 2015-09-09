@@ -34,6 +34,7 @@ by the pattern.
 ; **-s sortfields**: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
 if **sortfields** is "-", the default sort fields will be used (chromosome,begin,end,type,alt).
 This will also accept name variations of the fields, such as chrom instead of chromosome.
+; **-sr sortfields**: sort on given fields in reverse order
 ; **-si sampleinfofile**: a file in which extra information about the samples can be found (see further).
 If a file exists with the same name as the datafile (without compression extension, if present) 
 with .sampleinfo or .sampleinfo.tsv appended, it will be used as sampleinfofile by default.
@@ -300,6 +301,9 @@ It should contain one column named id, that will contain the sample names. other
 data. You can use this information in most places where you use field values (queries, calculated fields, 
 grouping) using the $fieldname-sample construct, e.g. if there is a field gender in the sampleinfofile (and not
 in the datafile, you can use $gender-sample1 to get the gender of sample1 in a query.
+If there are no $fieldname-sample fields, but there is a field named "sample" in the 
+file (e.g. in the long format), that sample filed will be used to make the link. In this case 
+the sampleinfo will be available by using the plain fieldnames in sampleinfo (without -sample added)
 
 == Queryfile ==
 A queryfile is a tab delimited file with a header describing a query. The output will contain 

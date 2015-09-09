@@ -18,6 +18,13 @@ del	1
 ins	1
 snp	8}
 
+test select_group {group query -sr} {
+	cg select -q {$coverage-sample1 > 2} -g type -sr count data/expected_near-vars1-reg_annot.sft
+} {type	count
+snp	8
+del	1
+ins	1}
+
 test select_group {group 2 fields} {
 	cg select -g {type {} alt {}} data/expected-annotate-vars_annottest-gene_test.tsv
 } {type	alt	count
