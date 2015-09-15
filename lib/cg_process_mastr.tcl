@@ -197,6 +197,13 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 		putslog "makeminigenome $dbdir $mastrname $dep name"
 		makeminigenome $dbdir $mastrname $dep name
 	}
+	job reg-inner-join-$mastrname \
+	-deps {reg-inner-$mastrname.tsv} \
+	-targets {reg-inner-joined-$mastrname.tsv reg-inner-joined-$mastrname.bed} \
+	-vars {dbdir mastrname} -code {
+		cg regjoin $dep > $target
+		tsv2bed $target $target2
+	}
 	if {!$useminigenome} {
 		set refseq [glob $dbdir/genome_*.ifas]
 	}
@@ -338,7 +345,7 @@ proc process_mastr_job {args} {
 		set cleanbam [bam_clean_job $bamfile $refseq $sample \
 			-removeduplicates 0 \
 			-clipamplicons $clipamplicons \
-			-bed $mastrdir/reg-inner-$mastrname.bed \
+			-bed $mastrdir/reg-inner-joined-$mastrname.bed \
 			-cleanup $cleanup]
 		# coverage statistics
 		bam2covstats_job $cleanbam $mastrdir/reg-inner-$mastrname.tsv
