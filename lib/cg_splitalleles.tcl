@@ -52,10 +52,10 @@ proc cg_splitalleles {args} {
 		set alleles [list_remdup $alleles]
 		lset line $apos [join $alleles ,]
 		if {![llength $alleles]} {set alleles [list {}]}
+		unset -nocomplain a
 		if {[llength $alleles] == 1} {
 			set a([lindex $alleles 0]) $line
 		} else {
-			unset -nocomplain a
 			set alen [llength $alleles]
 			foreach vs $line {
 				set svs [split $vs ,]
