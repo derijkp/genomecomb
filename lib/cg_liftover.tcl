@@ -244,18 +244,18 @@ proc cg_liftover {args} {
 						set curreg [get_region $freg $regposs]
 					}
 					if {$regcomp == 0} {
-						foreach {cchromosome cbegin cend srcref destchromosome destbegin destend destref destcomplement} $cline break
+						foreach {cchromosome cbegin cend csrcref cdestchromosome cdestbegin cdestend destref destcomplement} $cline break
 						set temp $regtemplate
-						lset temp $chrpos $destchromosome
-						lset temp $beginpos $destbegin
-						lset temp $endpos $destend
+						lset temp $chrpos $cdestchromosome
+						lset temp $beginpos $cdestbegin
+						lset temp $endpos $cdestend
 						lset temp $refpos $destref
-						if {$altpos != -1} {lset temp $altpos $srcref}
-						lappend temp $cchromosome $cbegin $cend $srcref
+						if {$altpos != -1} {lset temp $altpos $csrcref}
+						lappend temp $cchromosome $cbegin $cend $csrcref
 						foreach {a1pos a2pos seqpos zygpos} $sposs sreg [list_sub $curreg $regsampleposs] {
 							if {$sreg} {
-								lset temp $a1pos $srcref
-								lset temp $a2pos $srcref
+								lset temp $a1pos $csrcref
+								lset temp $a2pos $csrcref
 								lset temp $seqpos v
 								lset temp $zygpos m
 							} else {
@@ -321,9 +321,9 @@ proc cg_liftover {args} {
 			if {$correctvariants && [llength $coverlaps]} {
 				set newref $ref
 				foreach cline $coverlaps {
-					foreach {cchromosome cbegin cend srcref destchromosome destbegin destend destref destcomplement} $cline break
+					foreach {cchromosome cbegin cend csrcref cdestchromosome cdestbegin cdestend cdestref cdestcomplement} $cline break
 					set spos [expr {$cbegin-$begin}]
-					set newref [string replace $newref $spos $spos $destref]
+					set newref [string replace $newref $spos $spos $cdestref]
 				}
 				if {$newref ne $ref} {
 					if {$refpos != -1} {lset line $refpos $newref}
@@ -358,6 +358,7 @@ proc cg_liftover {args} {
 			puts $ou $oline
 		}
 	}
+
 	catch {gzclose $f} ; catch {closeliftoverfile $fl} ; catch {gzclose $fc} ; catch {close $o} ; catch {close $ou}
 	#
 	# sort result

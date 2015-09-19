@@ -225,6 +225,25 @@ test liftover {no alt split, t} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test liftover {bugcheck} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		locus	chromosome	begin	end	type	reference	alt	zyg	alleleSeq1	alleleSeq2	totalScore1	totalScore2	xRef	geneId	mrnaAcc	proteinAcc	symbol	orientation	component	componentIndex	hasCodingRegion	impact	nucleotidePos	proteinPos	annotationRefSequence	sampleSequence	genomeRefSequence	pfam	refcons	cluster	coverage	refscore
+		8706204	chr9	189398	189399	snp	T	C	m	C	C	45	45	dbsnp.83:rs478887	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	5	-316
+		8930452	chr9	35050127	35050129	del	AA	{}	t	{}	AA	118	162	dbsnp.126:rs35042918	7415	NM_007126.2	NP_009057.1	VCP	-	INTRON	12	Y	NO-CALL	1906	564	{}	{}	{}	{}	{}	{}	84	-674
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	reference	alt	locus	zyg	alleleSeq1	alleleSeq2	totalScore1	totalScore2	xRef	geneId	mrnaAcc	proteinAcc	symbol	orientation	component	componentIndex	hasCodingRegion	impact	nucleotidePos	proteinPos	annotationRefSequence	sampleSequence	genomeRefSequence	pfam	refcons	cluster	coverage	refscore	hg18_chromosome	hg18_begin	hg18_end	hg18_ref
+		9	199398	199399	snp	C	T	8706204	r	C	C	45	45	dbsnp.83:rs478887	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	5	-316	chr9	189398	189399	T
+		9	35060127	35060129	del	AA	{}	8930452	t	{}	AA	118	162	dbsnp.126:rs35042918	7415	NM_007126.2	NP_009057.1	VCP	-	INTRON	12	Y	NO-CALL	1906	564	{}	{}	{}	{}	{}	{}	84	-674	chr9	35050127	35050129	AA
+	}
+	file delete tmp/lifted.tsv
+	exec cg liftover -split 1 tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	# remove comments to compare
+	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test liftsample {basic} {
 	test_cleantmp
 	file mkdir tmp/sample
