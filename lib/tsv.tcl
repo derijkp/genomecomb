@@ -48,10 +48,9 @@ proc tsv_open {f {commentVar {}} {lineVar {}}} {
 		set vcf 0
 	}
 	while {![eof $f]} {
-		if {![string length $line]} {
+		while {![string length $line]} {
 			lappend comment \#
 			set line [gets $f]
-			break
 		}
 		set fchar [string index $line 0]
 		if {$fchar eq ">"} {
