@@ -485,8 +485,10 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 		set header2 [tsv_open $g]
 		if {$header2 eq "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
 			set cgv2 1.4
+			set remheader2 [lrange $header2 10 end]
 		} elseif {$header2 eq "index locus haplotype chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef"} {
 			set cgv2 1.7
+			set remheader2 [lrange $header2 10 end]
 		} elseif {$header2 eq "index locus allele chromosome begin end varType reference call xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex codingRegionKnown impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence"} {
 			set cgv2 1.8
 			set remheader2 [lrange $header2 10 end]
@@ -533,7 +535,7 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 		set fbegin [lindex $cur 2]
 		incr num
 		if {$num >= $next} {putsprogress $num; incr next 100000}
-		if {$usegenefile} {	while {![eof $g]} {
+		if {$usegenefile} {while {![eof $g]} {
 			set chrcomp [chr_compare $gchr $fchr]
 			if {$chrcomp > 0} break
 			if {($chrcomp == 0) && ($gbegin >= $fbegin)} break
