@@ -836,6 +836,45 @@ test select "long format with sampleinfo in calc $dboptt" {
 } {t
 sample3f}
 
+test select "old CGI gene format$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		#BUILD  1.4.2.7
+		#GENERATED_AT   2009-Oct-06 12:03:35.919080
+		#GENERATED_BY   callannotate
+		#GENE_SET       /REF/HUMAN-F_04-REF/gene_annotations.csv
+		#TYPE   GENE-ANNOTATION
+		#VARIATIONS     /ASM/GS000000078-ASM/callrpt/annotation/annotation_Variations20-40_ccf100.csv
+		#VAR_ANN_SET    /REF/HUMAN-F_04-REF/dbSNP.csv
+		#VAR_ANN_TYPE   dbSNP
+		#VERSION        0.2
+		
+		
+		>chromosome  begin   end
+		0       1       2
+		3       4       5
+	}
+	write_tab tmp/expected.tsv {
+		#BUILD  1.4.2.7
+		#GENERATED_AT   2009-Oct-06 12:03:35.919080
+		#GENERATED_BY   callannotate
+		#GENE_SET       /REF/HUMAN-F_04-REF/gene_annotations.csv
+		#TYPE   GENE-ANNOTATION
+		#VARIATIONS     /ASM/GS000000078-ASM/callrpt/annotation/annotation_Variations20-40_ccf100.csv
+		#VAR_ANN_SET    /REF/HUMAN-F_04-REF/dbSNP.csv
+		#VAR_ANN_TYPE   dbSNP
+		#VERSION        0.2
+		#
+		#
+		chromosome  begin   end
+		0       1       2
+		3       4       5
+	}
+	exec cg select {*}$dbopt -s {chromosome begin end} tmp/temp.tsv tmp/sorted.tsv
+	exec diff tmp/sorted.tsv tmp/expected.tsv
+} {}
+
 }
 
 
