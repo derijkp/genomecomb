@@ -100,81 +100,85 @@ proc multicompar_job {experiment dbdir todo args} {
 	#
 	# cgsv
 	# ----
-	set target compar/cgsv-${experiment}.tsv
 	set files [jobglob $sampledir/*/cgsv-*.tsv]
-	set names [list_regsub {.*/cgsv-(.*)\.tsv.*} $files {\1}]
-	testmultitarget $target $names "$sampledir/\$name/cgsv-\$name.tsv"
-	job cgsv_multicompar -deps $files -targets {$target} -code {
-		puts "Checking $target"
-		if {[file exists $target.temp]} {
-			set done [cg select -n $target.temp]
-		} else {
-			set done {}
-		}
-		set todo {}
-		foreach file $deps {
-			regexp {cgsv-(.*)\.tsv*} [file tail $file] temp name
-			if {![inlist $done $name]} {
-				lappend todo $file
+	if {[llength $files]} {
+		set target compar/cgsv-${experiment}.tsv
+		set names [list_regsub {.*/cgsv-(.*)\.tsv.*} $files {\1}]
+		testmultitarget $target $names "$sampledir/\$name/cgsv-\$name.tsv"
+		job cgsv_multicompar -deps $files -targets {$target} -code {
+			puts "Checking $target"
+			if {[file exists $target.temp]} {
+				set done [cg select -n $target.temp]
+			} else {
+				set done {}
 			}
+			set todo {}
+			foreach file $deps {
+				regexp {cgsv-(.*)\.tsv*} [file tail $file] temp name
+				if {![inlist $done $name]} {
+					lappend todo $file
+				}
+			}
+			if {[llength $done]} {
+				puts "Multicgsv already present: $done"
+			}
+			if {[llength $todo]} {
+				cg svmulticompar $target.temp {*}$todo
+			}
+			file rename -force $target.temp $target
 		}
-		if {[llength $done]} {
-			puts "Multicgsv already present: $done"
+		job cgsv_annotate \
+		-deps {compar/cgsv-$experiment.tsv} \
+		-targets {compar/annot_cgsv-$experiment.tsv} -vars {refseqdir build} -code {
+			cg annotate $dep $target.temp $refseqdir/$build
+			file rename -force $target.temp $target
 		}
-		if {[llength $todo]} {
-			cg svmulticompar $target.temp {*}$todo
+		job cgsv_annotate_index \
+		-deps {compar/annot_cgsv-$experiment.tsv} \
+		-targets {compar/annot_cgsv-$experiment.tsv.index/info.tsv} -code {
+			cg index $dep
 		}
-		file rename -force $target.temp $target
-	}
-	job cgsv_annotate \
-	-deps {compar/cgsv-$experiment.tsv} \
-	-targets {compar/annot_cgsv-$experiment.tsv} -vars {refseqdir build} -code {
-		cg annotate $dep $target.temp $refseqdir/$build
-		file rename -force $target.temp $target
-	}
-	job cgsv_annotate_index \
-	-deps {compar/annot_cgsv-$experiment.tsv} \
-	-targets {compar/annot_cgsv-$experiment.tsv.index/info.tsv} -code {
-		cg index $dep
 	}
 	# cgcnv
 	# ----
-	set target compar/cgcnv-${experiment}.tsv
 	set files [jobglob $sampledir/*/cgsv-*.tsv]
-	set names [list_regsub {.*/cgsv-(.*)\.tsv.*} $files {\1}]
-	testmultitarget $target $names "$sampledir/\$name/cgcnv-\$name.tsv"
-	job cgcnv_multicompar -deps $files -targets {compar/cgcnv-${experiment}.tsv} -code {
-		puts "Checking $target"
-		if {[file exists $target.temp]} {
-			set done [cg select -n $target.temp]
-		} else {
-			set done {}
-		}
-		set todo {}
-		foreach file $deps {
-			regexp {cgsv-(.*)\.tsv*} [file tail $file] temp name
-			if {![inlist $done $name]} {
-				lappend todo $file
+	if {[llength $files]} {
+		set target compar/cgcnv-${experiment}.tsv
+		set names [list_regsub {.*/cgsv-(.*)\.tsv.*} $files {\1}]
+		testmultitarget $target $names "$sampledir/\$name/cgcnv-\$name.tsv"
+		job cgcnv_multicompar -deps $files -targets {compar/cgcnv-${experiment}.tsv} -code {
+			puts "Checking $target"
+			if {[file exists $target.temp]} {
+				set done [cg select -n $target.temp]
+			} else {
+				set done {}
 			}
+			set todo {}
+			foreach file $deps {
+				regexp {cgsv-(.*)\.tsv*} [file tail $file] temp name
+				if {![inlist $done $name]} {
+					lappend todo $file
+				}
+			}
+			if {[llength $done]} {
+				puts "Multicgcnv already present: $done"
+			}
+			if {[llength $todo]} {
+				cg svmulticompar $target.temp {*}$todo
+			}
+			file rename -force $target.temp $target
 		}
-		if {[llength $done]} {
-			puts "Multicgcnv already present: $done"
+		job cgcnv_annotate \
+		-deps {compar/cgcnv-$experiment.tsv} \
+		-targets {compar/annot_cgcnv-$experiment.tsv} -vars {refseqdir build} -code {
+			cg annotate $dep $target.temp $refseqdir/$build
+			file rename -force $target.temp $target
 		}
-		if {[llength $todo]} {
-			cg svmulticompar $target.temp {*}$todo
+		job cgcnv_annotate_index \
+		-deps {compar/annot_cgcnv-$experiment.tsv} \
+		-targets {compar/annot_cgcnv-$experiment.tsv.index/info.tsv} -code {
+			cg index -colinfo $dep
 		}
-		file rename -force $target.temp $target
-	}
-	job cgcnv_annotate \
-	-deps {compar/cgcnv-$experiment.tsv} \
-	-targets {compar/annot_cgcnv-$experiment.tsv} -vars {refseqdir build} -code {
-		cg annotate $dep $target.temp $refseqdir/$build
-		file rename -force $target.temp $target
-	}
-	job cgcnv_annotate_index \
-	-deps {compar/annot_cgcnv-$experiment.tsv} \
-	-targets {compar/annot_cgcnv-$experiment.tsv.index/info.tsv} -code {
-		cg index -colinfo $dep
 	}
 }
 
