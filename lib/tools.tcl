@@ -947,6 +947,17 @@ proc getline f {
 	return $line
 }
 
+proc find_link file {
+	set file [file_absolute $file]
+	while 1 {
+		if {[catch {
+			set file [file join [file dir $file] [file readlink $file]]
+			set file [file_absolute $file]
+		}]} break
+	}
+	return $file
+}
+
 proc file_link {linkname linkdest} {
 	set dir [file dir $linkname]
 	if {[file pathtype $linkdest] eq "absolute"} {
@@ -964,14 +975,14 @@ proc file_link {linkname linkdest} {
 }
 
 proc mklink {src dest} {
-	set src [file join [pwd] $src]
+	set src [file_absolute $src]
+	set dest [file_absolute $dest]
 	if {![file exists $src]} {
 		set delsrc $src
 		file_write $src temp
 	} else {
 		set delsrc {}
 	}
-	set dest [file join [pwd] $dest]
 	set pos 0
 	set ssrc [file split $src]
 	set sdest [file split $dest]
