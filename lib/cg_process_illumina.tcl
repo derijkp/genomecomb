@@ -745,99 +745,6 @@ proc var_gatk_job {bamfile refseq args} {
 	return [file join $dir ${pre}var-gatk-$root.tsv]
 }
 
-proc multicompar_job {experiment dbdir todo args} {
-	upvar job_logdir job_logdir
-	set skipincomplete 1
-	set split 0
-	set dbfiles {}
-	set addtargets 0
-	foreach {key value} $args {
-		if {$key eq "-skipincomplete"} {
-			set skipincomplete $value
-		} elseif {$key eq "-split"} {
-			set split $value
-		} elseif {$key eq "-dbfiles"} {
-			set dbfiles $value
-		} elseif {$key eq "-targetsfile"} {
-			set addtargets 1
-			set targetsfile $value
-		} else {
-			lappend opts $key $value
-		}
-	}
-	file mkdir compar
-	if {[catch {cg select -n compar/compar-$experiment.tsv} done]} {set done {}}
-	set stilltodo {}
-	set deps {}
-	foreach sample $todo {
-		set name [lindex [split $sample -] end]
-		if {![inlist $done $sample]} {
-			lappend stilltodo $name/var-$sample.tsv
-			lappend deps \($name/sreg-$sample.tsv\) \($name/varall-$sample.tsv\)
-			lappend deps \($name/coverage/coverage-*.bcol\) \($name/coverage/refScore-*.bcol\)
-			lappend deps \($name/coverage/coverage-*.tsv\)
-			lappend deps \($name/reg_refcons-$sample.tsv\) \($name/reg_nocall-$sample.tsv\) \($name/reg_cluster-$sample.tsv\)
-		}
-	}
-	if {$addtargets} {
-		if {[catch {cg select -n compar/compar-$experiment.tsv} header]} {set header {}}
-		if {![llength $stilltodo] && [inlist $header [lindex [split $targetsfile -] end]]} {
-			set addtargets 0
-		} else {
-			lappend deps $targetsfile
-		}
-	}
-	if {[llength $stilltodo] || $addtargets} {
-		file delete compar/compar-$experiment.tsv.temp
-		if {[file exists compar/compar-$experiment.tsv]} {
-			file rename -force compar/compar-$experiment.tsv compar/compar-$experiment.tsv.temp
-		}
-		job multicompar-$experiment -deps [list_concat $stilltodo $deps] -targets compar/compar-$experiment.tsv \
-		-vars {stilltodo skipincomplete split addtargets targetsfile} -code {
-			# should maybe better recheck todo here
-			if {$addtargets} {
-				cg multicompar -split $split -targetsfile $targetsfile $target.temp {*}$stilltodo
-			} else {
-				cg multicompar -split $split $target.temp {*}$stilltodo
-			}
-			if {$skipincomplete} {
-				cg multicompar_reannot -paged 100 $target.temp skipincomplete
-			} else {
-				cg multicompar_reannot -paged 100 $target.temp
-			}
-			file rename -force $target.temp $target
-		}
-	}
-	job annotcompar-$experiment -deps [list compar/compar-$experiment.tsv {*}$dbfiles] \
-	-targets compar/annot_compar-$experiment.tsv -vars {dbdir dbfiles} -code {
-		cg annotate $dep $target.temp $dbdir {*}$dbfiles
-		file rename -force $target.temp $target
-	}
-	job indexannotcompar-$experiment \
-	-deps compar/annot_compar-$experiment.tsv \
-	-targets compar/annot_compar-$experiment.tsv.index/info.tsv -vars dbdir -code {
-		cg index -colinfo $dep
-	}
-	if {[catch {cg select -n compar/sreg-$experiment.tsv} done]} {set done {}}
-	set stilltodo {}
-	foreach sample $todo {
-		set name [lindex [split $sample -] end]
-		if {![inlist $done $sample]} {
-			lappend stilltodo \($name/sreg-$sample.tsv\)
-		}
-	}
-	if {[llength $stilltodo]} {
-		file delete compar/sreg-$experiment.tsv.temp
-		if {[file exists compar/sreg-$experiment.tsv]} {
-			file rename -force compar/sreg-$experiment.tsv compar/sreg-$experiment.tsv.temp
-		}
-		job sreg-$experiment -deps $stilltodo -targets compar/sreg-$experiment.tsv -vars stilltodo -code {
-			cg multireg $target.temp {*}[list_remove $deps {}]
-			file rename -force $target.temp $target
-		}
-	}
-}
-
 proc process_illumina {args} {
 	set dbdir {}
 	set dbfiles {}
@@ -906,7 +813,12 @@ proc process_illumina {args} {
 	set resultbamprefix rds
 	set samples {}
 	set experiment [file tail $destdir]
-	foreach dir [dirglob $destdir */fastq] {
+	if {[file exists $destdir/samples]} {
+		set sampledir $destdir/samples
+	} else {
+		set sampledir $destdir
+	}
+	foreach dir [dirglob $sampledir */fastq] {
 		lappend samples [file dir $dir]
 	}
 	set samples [ssort -natural $samples]
@@ -916,7 +828,7 @@ proc process_illumina {args} {
 	set todo {}
 	foreach sample $samples {
 		puts $sample
-		set dir $destdir/$sample
+		set dir $sampledir/$sample
 		catch {file mkdir $dir}
 		puts $dir
 		cd $dir

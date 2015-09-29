@@ -20,20 +20,24 @@ proc mcompar_samples {file} {
 	return $done
 }
 
+# args contains a pattern that is used (variable name can be used for sample name) to find dep files
 proc testmultitarget {target names args} {
 	file delete $target.temp
 	if {[file exists $target]} {
 		# test if existing target is already ok
-		set done [mcompar_samples $target]
+		set done [cg select -n $target]
 		foreach name $done {
+			set break 0
 			foreach pattern $args {
 				set testfile [subst $pattern]
 				if {![file exists $testfile] || ([file mtime $target] < [file mtime $testfile])} {
 					putslog "$testfile is newer than $target"
 					file rename -force $target $target.old
+					set break 1
 					break
 				}
 			}
+			if {$break} break
 		}
 		if {[file exists $target]} {
 			set names [list_lremove $names $done]

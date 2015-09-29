@@ -1,0 +1,35 @@
+= Process_illumina =
+
+== Format ==
+cg process_multicompar ?options? projectdir ?dbdir?
+
+== Summary ==
+process a sequencing project directory. 
+This expects a genomecomb directory with samples already processed and
+makes annotated multicompar data
+
+== Description ==
+This command runs only the multicomparison step of [[cg_process_illumina]].
+As input, the command expects a basic genomecomb project directory with
+sequencing data (projectdir) for which the samples have already been processed
+
+== Arguments ==
+; **projectdir**: project directory with illumina data for different
+samples, each sample in a sub directory. The proc will search for fastq
+files in dir/samplename/fastq/
+; **dbdir**: directory containing reference data (genome sequence,
+annotation, ...). dbdir can also be given in a projectinfo.tsv file in the
+project directory. process_illumina called with the dbdir parameter will
+create the projectinfo.tsv file.
+
+== Options ==
+; **-split 1/0**: split multiple alternative genotypes over different line
+; **-dbdir dbdir**: **dbdir** can also be given as an option (instead of second parameter)
+; **-dbfile file**: Use **file** for extra (files in **dbdir** are already used) annotation 
+
+supports job options (more info with cg help joboptions):
+; **-d number**: distribute subjobs of command over **number** processes
+; **-d sge**: use grid engine to distribute subjobs
+
+== Category ==
+Process
