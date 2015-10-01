@@ -100,11 +100,11 @@ proc multicompar_job {experiment dbdir todo args} {
 	#
 	# cgsv
 	# ----
-	set files [jobglob $sampledir/*/cgsv-*.tsv]
+	set files [jobglob $sampledir*/cgsv-*.tsv]
 	if {[llength $files]} {
 		set target compar/cgsv-${experiment}.tsv
 		set names [list_regsub {.*/cgsv-(.*)\.tsv.*} $files {\1}]
-		testmultitarget $target $names "$sampledir/\$name/cgsv-\$name.tsv"
+		testmultitarget $target $names "$sampledir\$name/cgsv-\$name.tsv"
 		job cgsv_multicompar -deps $files -targets {$target} -code {
 			puts "Checking $target"
 			if {[file exists $target.temp]} {
@@ -141,11 +141,11 @@ proc multicompar_job {experiment dbdir todo args} {
 	}
 	# cgcnv
 	# ----
-	set files [jobglob $sampledir/*/cgsv-*.tsv]
+	set files [jobglob $sampledir*/cgsv-*.tsv]
 	if {[llength $files]} {
 		set target compar/cgcnv-${experiment}.tsv
 		set names [list_regsub {.*/cgsv-(.*)\.tsv.*} $files {\1}]
-		testmultitarget $target $names "$sampledir/\$name/cgcnv-\$name.tsv"
+		testmultitarget $target $names "$sampledir\$name/cgcnv-\$name.tsv"
 		job cgcnv_multicompar -deps $files -targets {compar/cgcnv-${experiment}.tsv} -code {
 			puts "Checking $target"
 			if {[file exists $target.temp]} {
