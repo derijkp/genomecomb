@@ -1281,9 +1281,9 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		#putsvars tclcode
 		lappend pipe [list cg exec $tclcode]
 	}
-putslog -------------pipe-------------------
-putslog pipe:[join $pipe " | "]
-putslog ------------------------------------
+#putslog -------------pipe-------------------
+#putslog pipe:[join $pipe " | "]
+#putslog ------------------------------------
 	if {$qfields ne ""} {
 		set nh [list_sub $qfields -exclude [list_find -glob $qfields -*]]
 	} else {
