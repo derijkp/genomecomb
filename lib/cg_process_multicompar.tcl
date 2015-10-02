@@ -228,7 +228,7 @@ proc process_multicompar {args} {
 		set sampledir $destdir
 	}
 	set todo {}
-	foreach file [dirglob $sampledir */var-*] {
+	foreach file [jobglob ${sampledir}/*/var-*.tsv] {
 		lappend todo [string range [file root [file tail [gzroot $file]]] 4 end]
 	}
 	job_logdir $destdir/log_jobs
