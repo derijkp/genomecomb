@@ -1223,10 +1223,10 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 					append prequery "\t\t\tset \{$field\} \"$value\"\n"
 				} elseif {[inlist $header sample]} {
 					append prequery "\t\t\tset \{$field\} \[tsv_select_sampleinfo_long $field \$sample\]\n"
+					lappend neededfields sample
 				} else {
 					error "field \"$field\" not present"
 				}
-
 			}
 		}
 		set neededcols [list_cor $header $neededfields]
@@ -1271,10 +1271,10 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		}
 		set tclcode [string_change $tclcode [list @neededfields@ $neededfields @neededfieldsvals@ \$\{[join $neededfields \}\ \$\{]\}]]
 	}
+# file_write /tmp/temp.txt $tclcode\n
 	if {[string length $tclcode] > 2000} {
 		set tempfile [tempfile]
 		file_write $tempfile $tclcode\n
-		# file copy -force $tempfile /tmp/temp.txt
 		lappend pipe [list cg source $tempfile]
 	} elseif {[string length $tclcode]} {
 		# file_write /tmp/temp.txt $tclcode\n
