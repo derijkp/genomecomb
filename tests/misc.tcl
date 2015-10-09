@@ -21,7 +21,11 @@ proc dirinfo {dir} {
 		if {[file isdir $file]} {
 			set data [list dir [dirinfo $file]]
 		} else {
-			set data [file_read $file]
+			if {[file exists $file]} {
+				set data [file_read $file]
+			} else {
+				set data __file_does_not_exist__
+			}
 		}
 		lappend result [list $file $link $data]
 	}
@@ -130,6 +134,18 @@ test cplinked {file replace file} {
 	file delete -force tmp/out/test
 	set result
 } {{tmp/out/testl ../test/test1 1} {tmp/out/testl.old1 - pre}} 
+
+test cplinked {dangling link} {
+	file delete -force tmp/out
+	file mkdir tmp/out
+	file_write tmp/out/test1 pre
+	exec ln -s tmp/out/test1 tmp/out/testlink
+	file delete tmp/outresult
+	exec cg cplinked tmp/out tmp/outresult
+	set result [dirinfo tmp/outresult/]
+	file delete -force tmp/out tmp/outresult
+	set result
+} {{tmp/outresult/test1 ../out/test1 pre} {tmp/outresult/testlink ../out/testlink __file_does_not_exist__}}
 
 test distr2chr {basic} {
 	test_cleantmp

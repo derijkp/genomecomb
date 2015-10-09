@@ -977,12 +977,6 @@ proc file_link {linkname linkdest} {
 proc mklink {src dest} {
 	set src [file_absolute $src]
 	set dest [file_absolute $dest]
-	if {![file exists $src]} {
-		set delsrc $src
-		file_write $src temp
-	} else {
-		set delsrc {}
-	}
 	set pos 0
 	set ssrc [file split $src]
 	set sdest [file split $dest]
@@ -1000,9 +994,15 @@ proc mklink {src dest} {
 		file delete $dest
 	}
 	if {![file exists $dest]} {
-		file link -symbolic $dest $src
+		if {[file exists $src]} {
+			file link -symbolic $dest $src
+		} else {
+			set keeppwd [pwd]
+			cd [file dir $dest]
+			exec ln -s $src [file tail $dest]
+			cd $keeppwd
+		}
 	}
-	if {$delsrc ne ""} {file delete $delsrc}
 }
 
 proc gzmklink {src dest} {

@@ -37,8 +37,8 @@ proc cg_rmlinked {args} {
 # cplinked copies a directory, but by making (soft)links to the original directory for all files
 # existing files (that are not links) will be backed up
 proc cplinked {src dest {absolute 0}} {
-	set src [file join [pwd] $src]
-	set dest [file join [pwd] $dest]
+	set src [file_absolute $src]
+	set dest [file_absolute $dest]
 	if {![file isdir $src] || ![catch {file link $src} link]} {
 		cplinked_file $src $dest $absolute
 		return
@@ -51,7 +51,7 @@ proc cplinked {src dest {absolute 0}} {
 	set files [glob -nocomplain $src/*]
 	foreach file $files {
 		set destfile $dest/[file tail $file]
-		if {[file isdir $file]} {
+		if {[file isdir $file] || ![catch {file link $src} link]} {
 			cplinked $file $destfile $absolute
 		} else {
 			cplinked_file $file $destfile $absolute
