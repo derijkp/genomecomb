@@ -332,7 +332,7 @@ proc process_mastr_job {args} {
 		set bamfile ${pre}map-${aligner}-$name.bam
 		set resultbamfile ${pre}map-$resultbamprefix${aligner}-$name.bam
 		# quality and adapter clipping
-		set files [fastq_clipadapters_job $files -skips [list -skip $bamfile -skip $resultbamfile]]
+		set files [fastq_clipadapters_job $files -skips [list -skip $bamfile -skip $resultbamfile] -removeskew 0]
 		#
 		# map using $aligner
 		map_${aligner}_job $refseq $files $name $paired -readgroupdata {PL illumina LB solexa-123} -pre $pre -skips [list -skip $resultbamfile]

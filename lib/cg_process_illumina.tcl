@@ -117,12 +117,15 @@ proc gatk {} {
 
 proc fastq_clipadapters {files targets args} {
 	set adapterfile {}
+	set removeskew 1
 	set paired 1
 	foreach {key value} $args {
 		if {$key eq "-adapterfile"} {
 			set adapterfile $value
 		} elseif {$key eq "-paired"} {
 			set paired $value
+		} elseif {$key eq "-removeskew"} {
+			set removeskew $value
 		} else {
 			lappend opts $key $value
 		}
@@ -135,14 +138,14 @@ proc fastq_clipadapters {files targets args} {
 	if {[llength $files] == 1 || !$paired} {
 		foreach {f1} $files {t1} $targets {
 			set tempout1 [file_tempwrite $t1]
-			exec fastq-mcf -a -o $tempout1 $adapterfile $f1 2>@ stderr
+			exec fastq-mcf -k $removeskew -a -o $tempout1 $adapterfile $f1 2>@ stderr
 			lappend temptargets $tempout1
 		}
 	} else {
 		foreach {f1 f2} $files {t1 t2} $targets {
 			set tempout1 [file_tempwrite $t1]
 			set tempout2 [file_tempwrite $t2]
-			exec fastq-mcf -a -o $tempout1 -o $tempout2 $adapterfile $f1 $f2 2>@ stderr
+			exec fastq-mcf -k $removeskew -a -o $tempout1 -o $tempout2 $adapterfile $f1 $f2 2>@ stderr
 			lappend temptargets $tempout1 $tempout2
 		}
 	}
@@ -157,6 +160,7 @@ proc fastq_clipadapters_job {files args} {
 	set skips {}
 	set adapterfile {}
 	set paired 1
+	set removeskew 1
 	set files [ssort -natural $files]
 	foreach {key value} $args {
 		if {$key eq "-adapterfile"} {
@@ -165,6 +169,8 @@ proc fastq_clipadapters_job {files args} {
 			set paired $value
 		} elseif {$key eq "-skips"} {
 			set skips $value
+		} elseif {$key eq "-removeskew"} {
+			set removeskew $value
 		} else {
 			lappend opts $key $value
 		}
@@ -176,8 +182,8 @@ proc fastq_clipadapters_job {files args} {
 		lappend targets [file dir $root].clipped/[file tail $root].clipped.fastq
 	}
 	job clip-[file dir [file dir $root]] -deps $files -targets $targets \
-	-vars {adapterfile paired} {*}$skips -code {
-		fastq_clipadapters $deps $targets -adapterfile $adapterfile -paired $paired
+	-vars {adapterfile paired removeskew} {*}$skips -code {
+		fastq_clipadapters $deps $targets -removeskew $removeskew -adapterfile $adapterfile -paired $paired
 	}
 	return $targets
 }
