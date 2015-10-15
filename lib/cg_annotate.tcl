@@ -315,6 +315,7 @@ proc cg_annotate {args} {
 	} else {
 		set usefile $file 
 	}
+	set tempbasefile [indexdir_file $resultfile vars.tsv ok]
 	set afiles {}
 	foreach dbfile $dbfiles {
 		set dbinfo [cg_annotatedb_info $dbfile $near]
@@ -335,14 +336,14 @@ proc cg_annotate {args} {
 				puts stderr "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
 				exit 1
 			}
-			lappend afiles $resultfile.${name}_annot
-			if {[file exists $resultfile.${name}_annot]} {
-				putslog "$resultfile.${name}_annot exists: skipping scan"
+			lappend afiles $tempbasefile.${name}_annot
+			if {[file exists $tempbasefile.${name}_annot]} {
+				putslog "$tempbasefile.${name}_annot exists: skipping scan"
 				continue
 			}
 			set genecol [dict_get_default $dbinfo genecol {}]
 			set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
-			annotategene $usefile $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol
+			annotategene $usefile $genomefile $dbfile $name $tempbasefile.${name}_annot $genecol $transcriptcol
 		} elseif {$dbtype eq "mir"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}
 			if {$dbdir eq ""} {
@@ -351,15 +352,15 @@ proc cg_annotate {args} {
 			set genomefile [lindex [glob -nocomplain $dbdir/genome_*.ifas] 0]
 			# we do not need the genomefile for plain annotation
 			set genomefile {}
-			lappend afiles $resultfile.${name}_annot
-			if {[file exists $resultfile.${name}_annot]} {
-				putslog "$resultfile.${name}_annot exists: skipping scan"
+			lappend afiles $tempbasefile.${name}_annot
+			if {[file exists $tempbasefile.${name}_annot]} {
+				putslog "$tempbasefile.${name}_annot exists: skipping scan"
 				continue
 			}
 			set genecol [dict_get_default $dbinfo genecol name]
 			set transcriptcol [dict_get_default $dbinfo transcriptcol transcript]
 			set extracols [dict_get_default $dbinfo extracols status]
-			annotatemir $usefile $genomefile $dbfile $name $resultfile.${name}_annot $genecol $transcriptcol 100 1 0 $extracols
+			annotatemir $usefile $genomefile $dbfile $name $tempbasefile.${name}_annot $genecol $transcriptcol 100 1 0 $extracols
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
 			set altpos [lsearch $header alt]
@@ -367,43 +368,46 @@ proc cg_annotate {args} {
 				puts "Skipping: $file has no alt field"
 				continue
 			}
-			lappend afiles $resultfile.${name}_annot
-			if {[file exists $resultfile.${name}_annot]} {
-				putslog "$resultfile.${name}_annot exists: skipping scan"
+			lappend afiles $tempbasefile.${name}_annot
+			if {[file exists $tempbasefile.${name}_annot]} {
+				putslog "$tempbasefile.${name}_annot exists: skipping scan"
 				continue
 			}
 			set outfields [dict get $dbinfo outfields]
-			annotatevar $usefile $dbfile $name $resultfile.${name}_annot $dbinfo
+			annotatevar $usefile $dbfile $name $tempbasefile.${name}_annot $dbinfo
 		} elseif {$dbtype eq "bcol"} {
 			if {$near != -1} {error "-near option does not work with bcol dbfiles"}
-			lappend afiles $resultfile.${name}_annot
-			if {[file exists $resultfile.${name}_annot]} {
-				putslog "$resultfile.${name}_annot exists: skipping scan"
+			lappend afiles $tempbasefile.${name}_annot
+			if {[file exists $tempbasefile.${name}_annot]} {
+				putslog "$tempbasefile.${name}_annot exists: skipping scan"
 				continue
 			}
-			annotatebcol $usefile $dbfile $name $resultfile.${name}_annot
+			annotatebcol $usefile $dbfile $name $tempbasefile.${name}_annot
 		} else {
-			lappend afiles $resultfile.${name}_annot
-			if {[file exists $resultfile.${name}_annot]} {
-				putslog "$resultfile.${name}_annot exists: skipping scan"
+			lappend afiles $tempbasefile.${name}_annot
+			if {[file exists $tempbasefile.${name}_annot]} {
+				putslog "$tempbasefile.${name}_annot exists: skipping scan"
 				continue
 			}
 			putslog "Adding $dbfile"
 			set outfields [dict get $dbinfo outfields]
-			annotatereg $usefile $dbfile $name $resultfile.${name}_annot.temp $near $dbinfo
-			file rename -force $resultfile.${name}_annot.temp $resultfile.${name}_annot
+			annotatereg $usefile $dbfile $name $tempbasefile.${name}_annot.temp $near $dbinfo
+			file rename -force $tempbasefile.${name}_annot.temp $tempbasefile.${name}_annot
 		}
 	}
 	if {$multidb} {
-		cg select -f id $file $resultfile.temp
-		exec paste -d "" $resultfile.temp {*}$afiles > $resultfile
-		file delete $resultfile.temp
+		cg select -f id $file $resultfile.temp2
+		exec paste -d "" $resultfile.temp2 {*}$afiles > $resultfile.temp
+		file delete $resultfile.temp2
+		file rename -force $resultfile.temp $resultfile
 	} elseif {$replace} {
-		cg select -f [list_lremove $header $newh] $file $resultfile.temp
-		exec paste -d "" $resultfile.temp {*}$afiles > $resultfile
-		file delete $resultfile.temp
+		cg select -f [list_lremove $header $newh] $file $resultfile.temp2
+		exec paste -d "" $resultfile.temp2 {*}$afiles > $resultfile.temp
+		file delete $resultfile.temp2
+		file rename -force $resultfile.temp $resultfile
 	} else {
-		exec paste -d "" $file {*}$afiles > $resultfile
+		exec paste -d "" $file {*}$afiles > $resultfile.temp
+		file rename -force $resultfile.temp $resultfile
 	}
 	if {[llength $afiles]} {file delete {*}$afiles}
 	gzrmtemp $gzfile
