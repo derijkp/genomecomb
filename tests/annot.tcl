@@ -245,6 +245,12 @@ test gene_annot {gene} {
 	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
 } {} 
 
+test gene_annot {bug check empty _gene field with only name (used for transcript and gene)} {
+	cg select -f {chrom start end strand name cdsStart cdsEnd exonCount exonStarts exonEnds} data/gene_test.tsv tmp/gene_test.tsv
+	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/vars_annottest.sft tmp/temp.sft tmp/gene_test.tsv
+	lindex [cg select -g all -q {$test_gene ne ""} tmp/temp.sft] end
+} {45} 
+
 test gene_annot {gene exon deletion} {
 	write_tab tmp/vars.tsv {
 		chromosome	begin	end	type	ref	alt
