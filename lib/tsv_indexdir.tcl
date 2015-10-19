@@ -20,7 +20,9 @@ proc indexdir {mainfile} {
 	file mkdir $indexdir
 	file_write $indexdir/info.normfilename $file
 	if {$file eq $mainfile} {
-		file_write $indexdir/info.filesize [file size $file]
+		if {[file exists $file]} {
+			file_write $indexdir/info.filesize [file size $file]
+		}
 	}
 	set configdata(indexdir,$file) $indexdir
 }
