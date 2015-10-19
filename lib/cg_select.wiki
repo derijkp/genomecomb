@@ -243,6 +243,8 @@ false may be vectors, and a vector is returned
 === String functions ===
 ; **oneof($field,value1,value2,...)**: returns true if the given field is equal to one of the values
 ; **regexp(value,pattern)**: true if value matches the regular expression given by **pattern**
+; **regextract(value,pattern)**: extract the part matching the given **pattern** from **value**
+; **regsub(value,pattern,replace)**: substitutes values matched by **pattern** in **value** by **replace**
 ; **matches(value,pattern)**:  true if value matches the glob pattern given by **pattern** 
 (using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
 ; **concat(value,...)**: makes one long string by appending all values.
