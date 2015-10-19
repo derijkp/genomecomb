@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
 				comp = varcompare(var,&(todo->var),split);
 			}
 			if (comp > 0) {
-				fprintf(stderr,"This should not happen");
+				fprintf(stderr,"All variants should be in the variant file, so this should not happen");
 				exit(EXIT_FAILURE);
 			} else if (comp == 0) {
 				register int *cur = todo->keepposs;

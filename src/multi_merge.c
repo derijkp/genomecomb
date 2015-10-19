@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 	var1.chr=NULL,var2.chr=NULL,var1.type = NULL,var2.type = NULL,var1.alt = NULL,var2.alt = NULL;
 
 	if ((argc != 16) && (argc != 18)) {
-		fprintf(stderr,"Format is: multi_merge file1 chrpos1 startpos1 endpos1 type1pos ref1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos ref2pos alt2pos split");
+		fprintf(stderr,"Format is: multi_merge file1 chrpos1 startpos1 endpos1 type1pos ref1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos ref2pos alt2pos split\n");
 		fprintf(stderr,"or: multi_merge file1 chrpos1 startpos1 endpos1 type1pos ref1pos alt1pos id1pos file2 chrpos2 startpos2 endpos2 type2pos ref2pos alt2pos id2pos split");
 		exit(EXIT_FAILURE);
 	}
