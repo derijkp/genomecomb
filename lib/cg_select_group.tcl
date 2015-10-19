@@ -90,7 +90,7 @@ proc tsv_select_sampleusefield {header field sample calccolsVar {neededfieldsVar
 		lappend neededfields $fieldused
 	} elseif {[inlist $header sample] && ![catch {tsv_select_sampleinfo $field}]} {
 		# long format sampleinfo
-		set calccols($field) "\t\t\t\tset \{$field\} \[tsv_select_sampleinfo_long \{$field\} \$sample\]\n"
+		set calccols($field) [list "\t\t\t\tset \{$field\} \[tsv_select_sampleinfo_long \{$field\} \$sample\]\n"]
 		lappend neededfields sample
 		set fieldused $field
 	} else {
@@ -368,12 +368,16 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 				set tempneededfields {}
 				set code [tsv_select_expandcode $header [lindex $el 1] tempneededfields prequery calccols]
 				set tempneededfields [list_remdup $tempneededfields]
-				set code [tsv_select_makecol make_col$num $code $tempneededfields $prequery]
 				lappend neededfields {*}$tempneededfields
-				append tclcode $code\n
-				set calccols($field) "\t\t\t\tset \{$field\} \[make_col$num \$\{[join $tempneededfields \}\ \$\{]\}\]\n"
+				# code for query
+				append tclcode [tsv_select_makecol make_col$num $code $tempneededfields $prequery]
+				if {[llength $tempneededfields]} {
+					set calccols($field) [list "\t\t\t\tset \{$field\} \[make_col$num \$\{[join $tempneededfields \}\ \$\{]\}\]\n" $tempneededfields]
+				} else {
+					set calccols($field) [list "\t\t\t\tset \{$field\} \[make_col$num\]\n" $tempneededfields]
+				}
 			} elseif {[lindex $el 0] eq "directcode"} {
-				set calccols($field) "\t\t\t\tset \{$field\} \[[lindex $el 1]\]\n"
+				set calccols($field) [list "\t\t\t\tset \{$field\} \[[lindex $el 1]\]\n"]
 			}
 		}
 		incr num
@@ -516,24 +520,26 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	set prequery {}
 	foreach field $calcfieldsquery {
 		if {[info exists calccols($field)]} {
-			append prequery $calccols($field)
-			unset calccols($field)
+			append prequery [lindex $calccols($field) 0]
+			lappend neededfields {*}[lindex $calccols($field) 1]
+			incr num
 		} else {
 			# tsv_select_sampleinfo gives not present error if field also not found in sampleinfo
+			set value [tsv_select_sampleinfo $field]
 			if {[string first - $field] != -1} {
-				set value [tsv_select_sampleinfo $field]
 				append prequery "\t\t\tset \{$field\} \"$value\"\n"
 			} elseif {[inlist $header sample]} {
-				set value [tsv_select_sampleinfo $field]
 				append prequery "\t\t\tset \{$field\} \[tsv_select_sampleinfo_long $field \$sample\]\n"
 				lappend neededfields sample
+			} else {
+				error "field \"$field\" not present"
 			}
 		}
 	}
 	# actually make precalc: all calculated fields needed for group, but not for query (these are already in prequery)
 	set precalc {}
 	foreach field [array names calccols] {
-		append precalc $calccols($field)
+		append precalc [lindex $calccols($field) 0]
 	}
 	set neededcols [list_cor $header $neededfields]
 	append tclcode {

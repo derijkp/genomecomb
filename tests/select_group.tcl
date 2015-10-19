@@ -628,8 +628,7 @@ test select_group "long format -g with sample with sampleinfo" {
 } {sample	freq	count
 sample1	0.4	1
 sample2	0.8	1
-sample4	0.5	1
-}
+sample4	0.5	1}
 
 test select_group "long format -gc with sample with sampleinfo" {
 	global dbopt
