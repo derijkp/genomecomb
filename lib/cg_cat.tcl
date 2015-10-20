@@ -52,7 +52,7 @@ proc cg_cat {args} {
 			error "$file does not have all fields: $fields"
 		}
 		lappend headers $header
-		close $f
+		gzclose $f
 		if {$addcomment eq "1"} {
 			lappend comments "# ++++ $file ++++"
 			if {[inlist {f m} $force]} {
