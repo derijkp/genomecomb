@@ -382,8 +382,17 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		}
 		incr num
 	}
-	# check group and groupcol for presence of sample field
-	set gsamples [select_parse_for_samples $group $groupcol $header calccols]
+	if {[inlist $header sample]} {
+		# if the file contains a sample field, treat it as any other field
+		# gsamples is list of one (empty) element to go over the setup once, without incorporating sample specific code
+		set gsamples {{}}
+		set sampleinheader 1
+	} else {
+		# if no sample field, we have a wide format with sample info in field-sample format
+		# check group and groupcol for presence of sample field to handle the query using it
+		set gsamples [select_parse_for_samples $group $groupcol $header calccols]
+		set sampleinheader 0
+	}
 	# make colactions, which will be executed only when the colquery and rowquery is true
 	set addcols {}
 	foreach sample $gsamples {
@@ -395,7 +404,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		set colactions {}
 		# calculate groupname
 		foreach {field filter} $group {
-			if {$field eq "sample"} {
+			if {!$sampleinheader && $field eq "sample"} {
 				if {$sample ne ""} {
 					lappend groupname $sample
 				} else {
@@ -589,5 +598,6 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		@grouptypes@ [list $grouptypes] @grouph@ [list_unmerge $group] @verbose@ [get ::verbose 0] \
 		@sortfields@ [list $sortfields]]
 	]]
+	# file_write /tmp/temp.txt $tclcode\n
 	return $tclcode
 }

@@ -18,6 +18,22 @@ del	1
 ins	1
 snp	8}
 
+test select_group {group filter} {
+	cg select -g {type snp} data/expected_near-vars1-reg_annot.sft
+} {type	count
+snp	12}
+
+test select_group {group filter sample} {
+	write_tab tmp/temp.tsv {
+		sample	val
+		s1	1
+		s2	1
+		s1	2
+	}
+	cg select -g {sample s1} tmp/temp.tsv
+} {sample	count
+s1	2}
+
 test select_group {group query -sr} {
 	cg select -q {$coverage-sample1 > 2} -g type -sr count data/expected_near-vars1-reg_annot.sft
 } {type	count
