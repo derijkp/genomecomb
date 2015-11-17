@@ -39,6 +39,14 @@ resultfileroot-sample.tsv
 ; **-gap**: plink --homozyg-gap option (default 4000)
 ; **-window**: plink --homozyg-window-snp option (default 20)
 
+== reference ==
+The homwes tool is described in the following paper (which you should reference when the tool was used)
+{{{
+Kancheva,D, Atkinson,D, De Rijk,P, Zimon,M, Chamova,T, Mitev,V, Yaramis,A, Maria Fabrizi,G, Topaloglu,H, Tournev,I, Parma, Y, Battaloglu, E, Estrada-Cuzcano, A, Jordanova, A (2015)
+Novel mutations in genes causing hereditary spastic paraplegia and Charcot-Marie-Tooth neuropathy identified by an optimized protocol for homozygosity mapping based on whole-exome sequencing.
+Genet. Med., 10.1038
+}}}
+
 == Category ==
 Analysis
 
