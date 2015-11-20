@@ -662,6 +662,8 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 		# lappend neededfields {*}[list_common $header $fields]
 		foreach f $fields {
 			if {![inlist $header $f]} {
+				# sample does not have to be in the header for sample aggregates
+				if {$f eq "sample"} continue
 				# sample aggregates use fields without sample
 				# we put the actual ones needed in neededfields later, so do not do it here
 				if {[lsearch -glob $header $f-*] != -1} continue

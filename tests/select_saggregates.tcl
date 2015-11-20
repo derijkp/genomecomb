@@ -158,4 +158,36 @@ test select {scount sample} {
 	} data/vars-saggr.tsv] \t
 } {{chromosome begin test sequenced-sample1 sequenced-sample2 sequenced-sample3} {1 259 2 v v v} {1 4001 2 v v r} {1 4050 1 v u u} {1 5000 2 v v r} {1 5020 1 v r r} {1 5020 1 r v v} {2 4000 2 v v v} {2 4001 1 v r r} {2 4001 1 v r r} {2 4010 1 u v v} {2 4010 1 u v v} {2 5010 2 v v v} {2 10000 1 v r r} {2 10000 1 r v v} {3 876 2 v v v}}
 
+test select {scount sample in query} {
+	exec cg select \
+		-q {scount(($sample eq "sample1" or $sample eq "sample2") and $sequenced == "v") > 1} \
+		-f {chromosome begin sequenced-*} data/vars-saggr.tsv
+} {chromosome	begin	sequenced-sample1	sequenced-sample2	sequenced-sample3
+1	259	v	v	v
+1	4001	v	v	r
+1	5000	v	v	r
+2	4000	v	v	v
+2	5010	v	v	v
+3	876	v	v	v}
+
+test select {scount sample in query and fields} {
+	exec cg select \
+		-q {scount(($sample eq "sample1" or $sample eq "sample2") and $sequenced == "v") > 1} \
+		-f {chromosome begin {test=scount(($sample eq "sample1" or $sample eq "sample2") and $sequenced == "v")} sequenced-*
+	} data/vars-saggr.tsv
+} {chromosome	begin	test	sequenced-sample1	sequenced-sample2	sequenced-sample3
+1	259	2	v	v	v
+1	4001	2	v	v	r
+1	5000	2	v	v	r
+2	4000	2	v	v	v
+2	5010	2	v	v	v
+3	876	2	v	v	v}
+
+test select {incorrect use of sample outside sample aggregates} {
+	exec cg select \
+		-q {$sample eq "sample1"} \
+		-f {chromosome begin sequenced-*
+	} data/vars-saggr.tsv
+} {field "sample" not present in file and no sampleinfo file found} error
+
 testsummarize
