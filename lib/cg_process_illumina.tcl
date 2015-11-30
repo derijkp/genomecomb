@@ -22,7 +22,8 @@ proc calculate_hsmetrics_job {bamfile bedfile} {
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
-	job calc_hsmetrics-$root -deps {$bamfile $bamfile.bai $bedfile} -targets $dir/$root.hsmetrics -vars {bedfile} -code {
+	set target $dir/$root.hsmetrics
+	job calc_hsmetrics-$root -deps {$bamfile $bamfile.bai $bedfile} -targets [list $target] -vars {bedfile} -code {
 		exec samtools view -H $dep1 > $dep1.bed.temp
 		#remove comment columns & add strand info - due to lack of correct strand info take + as default
 		exec awk {$0 ~ /^@SQ/ {print $0}} $dep1.bed.temp > $dep1.bed
@@ -32,6 +33,7 @@ proc calculate_hsmetrics_job {bamfile bedfile} {
 		file delete $dep1.bed
 		file delete $dep1.bed.temp
 	}
+	return $target
 }
 
 proc make_hsmetrics_report_job {destdir files} {
@@ -877,9 +879,7 @@ proc process_illumina {args} {
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
 		#calculate hsmetrics
 		if {$hsmetrics} {
-			calculate_hsmetrics_job $cleanedbam $bedfile
-			set root [join [lrange [split [file root [file tail $cleanedbam]] -] 1 end] -]
-			lappend hsmetrics_files $dir/$root.hsmetrics
+			lappend hsmetrics_files [calculate_hsmetrics_job $cleanedbam $bedfile]
 
 		}
 		# samtools variant calling on map-rdsbwa
