@@ -235,7 +235,43 @@ proc analysis_complete_job {experiment} {
 proc generate_coverage_report_job {experiment regfile histofiles} {
 	upvar job_logdir job_logdir
 	job coverage_report-$experiment -deps [list $regfile {*}$histofiles] -targets [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv ] -code {
-		exec python2.6 /complgen2/mastr-procedure/coverage_mastrs.py
+		# exec python2.6 /complgen2/mastr-procedure/coverage_mastrs.py
+		set oheader {name chr begin end}
+		set names {}
+		foreach line [split [cg select -sh /dev/null -f {name chromosome begin end} $dep1] \n] {
+			set avga([lindex $line 0]) $line
+			set fraca([lindex $line 0]) $line
+			lappend names [lindex $line 0]
+		}
+		set histofiles [lrange $deps 1 end]
+		foreach file $histofiles {
+			lappend oheader [file dir $file]
+			set f [open $file]
+			set header [tsv_open $f]
+			set poss [list_cor $header {name avg size {r<1} {r1<5} {r5<10} {r10<20}}]
+			foreach expname $names {
+				if {[gets $f line] == -1} {error "file $file too short"}
+				set line [list_sub [split $line \t] $poss]
+				foreach {name avg size r1 r5 r10 r20} $line break
+				if {$name ne $expname} {error "wrong name (order) in file $file"}
+				set frac20 [format %.4g [expr {1-double($r1+$r5+$r10+$r20)/$size}]]
+				lappend avga($name) $avg
+				lappend fraca($name) $frac20
+			}
+			close $f
+		}
+		set o [open [lindex $targets 0] w]
+		puts $o [join $oheader \t]
+		foreach name $names {
+			puts $o [join $avga($name) \t]
+		}
+		close $o
+		set o [open [lindex $targets 1] w]
+		puts $o [join $oheader \t]
+		foreach name $names {
+			puts $o [join $fraca($name) \t]
+		}
+		close $o
 	}
 }
 
