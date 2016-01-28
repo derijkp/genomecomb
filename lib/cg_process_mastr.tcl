@@ -292,6 +292,7 @@ proc process_mastr_job {args} {
 		{cleanup 1}
 		{clipamplicons {}}
 	} $args
+	set hsmetrics_files {}
 	set mastrdir [file_absolute $mastrdir]
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
@@ -385,6 +386,8 @@ proc process_mastr_job {args} {
 			-cleanup $cleanup]
 		# coverage statistics
 		bam2covstats_job $cleanbam $mastrdir/reg-inner-$mastrname.tsv
+		#calculate hsmetrics
+		lappend hsmetrics_files [calculate_hsmetrics_job $cleanbam $mastrdir/reg-inner-$mastrname.bed]
 		lappend histofiles $sample/[regsub {map-} [file tail [file root $cleanbam]] {}].histo
 		# samtools variant calling on map-rs${aligner}
 		if {$useminigenome} {
@@ -426,6 +429,7 @@ proc process_mastr_job {args} {
 	} else {
 		multicompar_job $experiment $dbdir $todo -split $split -dbfiles $dbfiles
 	}
+	make_hsmetrics_report_job $destdir $hsmetrics_files
 	make_alternative_compar_job $experiment 
 	generate_coverage_report_job $experiment $mastrdir/reg-inner-$mastrname.tsv $histofiles
 	generate_html_report_job $experiment
