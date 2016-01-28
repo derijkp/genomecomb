@@ -170,6 +170,7 @@ set auto_index(cg_process_conv_illnextseq) [list source [file join $dir cg_proce
 set auto_index(searchpath) [list source [file join $dir cg_process_illumina.tcl]]
 set auto_index(picard) [list source [file join $dir cg_process_illumina.tcl]]
 set auto_index(gatk) [list source [file join $dir cg_process_illumina.tcl]]
+set auto_index(bcl2fastq) [list source [file join $dir cg_process_illumina.tcl]]
 set auto_index(fastq_clipadapters) [list source [file join $dir cg_process_illumina.tcl]]
 set auto_index(fastq_clipadapters_job) [list source [file join $dir cg_process_illumina.tcl]]
 set auto_index(gatkworkaround_tsv2bed_job) [list source [file join $dir cg_process_illumina.tcl]]
