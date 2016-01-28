@@ -271,13 +271,13 @@ proc downloaddb_phenotype {path build {url {}}} {
 	set resultfile $path/${build}/geneannot_${build}_phenotype.tsv
 	cd $path/tmp
 	# hsapiens_gene_ensembl
-	cg downloadmart ens_pehnotype_hg19.tsv hsapiens_gene_ensembl gene_ensembl_config {hgnc_symbol phenotype_description}
+	cg downloadmart ens_phenotype_hg19.tsv hsapiens_gene_ensembl gene_ensembl_config {hgnc_symbol phenotype_description}
 	# clinvar
 	wgetfile ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar.vcf.gz clinvar_hg19.vcf.gz
 	cg vcf2tsv clinvar_hg19.vcf.gz clinvar_hg19.tsv
 	unset -nocomplain a
 	# process hsapiens_gene_ensembl
-	set f [open ens_pehnotype_hg19.tsv]
+	set f [open ens_phenotype_hg19.tsv]
 	set header [tsv_open $f]
 	while 1 {
 		if {[gets $f line] == -1} break
@@ -360,11 +360,17 @@ proc cg_downloaddb {args} {
 
 proc cg_downloadmart {file dataset config attributes} {
 	set attributesxml "<Attribute name=\"[join $attributes "\"/><Attribute name=\""]\"/>"
-	exec wget --quiet -O $file.temp "http://central.biomart.org/martservice/results?query=<!DOCTYPE Query><Query client=\"true\" processor=\"TSV\" limit=\"-1\" header=\"1\"><Dataset name=\"$dataset\" config=\"$config\">$attributesxml</Dataset></Query>"
+	set query "query=<!DOCTYPE Query><Query client=\"true\" processor=\"TSV\" limit=\"-1\" header=\"1\"><Dataset name=\"$dataset\" config=\"$config\">$attributesxml</Dataset></Query>"
+	if {[catch {
+		exec wget --quiet -O $file.temp http://central.biomart.org/biomart/martview/results?$query
+	}]} {
+		exec wget --quiet -O $file.temp http://www.ensembl.org/biomart/martservice?$query
+	}
 	set header [list_change $attributes {hgnc_symbol gene}]
 	cg select -nh $header $file.temp $file.temp2
-	file rename -force $file.temp2 $file
-	file delete $file.temp
+	cg select -q {$gene ne ""} $file.temp2 $file.temp3
+	file rename -force $file.temp3 $file
+	file delete $file.temp $file.temp2
 }
 
 proc cg_downloadbiograph {file diseaseid {genefile {}}} {
