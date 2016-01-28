@@ -288,6 +288,7 @@ proc cg_multicompar_reannot {args} {
 	set regonly 0
 	set skipincomplete 0
 	set paged 0
+	set pagedstart 0
 	set pos 0
 	while 1 {
 		set key [lindex $args $pos]
@@ -307,6 +308,10 @@ proc cg_multicompar_reannot {args} {
 			-paged {
 				incr pos
 				set paged [lindex $args $pos]
+			}
+			-pagedstart {
+				incr pos
+				set pagedstart [lindex $args $pos]
 			}
 			-- break
 			default {
@@ -335,8 +340,8 @@ proc cg_multicompar_reannot {args} {
 	if {!$paged} {
 		multicompar_reannot $compar_file $force $regonly $skipincomplete
 	} else {
-		set s 0
-		set pagedplus [expr {$paged-1}]
+		set s $pagedstart
+		set pagedplus [expr {$pagedstart + $paged-1}]
 		while 1 {
 			set e [expr {$s + $pagedplus}]
 			set samples [multicompar_reannot $compar_file $force $regonly $skipincomplete [list $s $e]]

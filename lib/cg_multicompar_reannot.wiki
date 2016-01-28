@@ -39,6 +39,7 @@ containing the coverage and refscore for each position of the genome.
 ; **-skipincomplete 0/1**: go on even if data for some samples is not complete (skipping samples which are e.g. missing coverage data for some of the chromosomes)
 ; **-paged pagesize**: reannot needs to keep a lot of files open, too many for multicompar files with a lot of samples. Using this
 option reannotation is done per group of **pagesize** samples. New files have to be written for each group
+; **-pagedstart start**: Start paging from a given number (starts with 0). This is useful if a -paged run was interupted, you can restart from where it stopped.
 
 Some options can also be given as words after the argument
 ; **force**: if present, all data will be updated, otherwise only unfilled (indicated with a ?) cells will be updated

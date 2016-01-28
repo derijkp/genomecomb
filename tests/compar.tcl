@@ -113,6 +113,20 @@ test multicompar {basic split reannot paged} {
 	exec diff tmp/temp.sft data/expected-multicompar-split-reannot.sft
 } {} 
 
+test multicompar {basic split reannot paged with pagedstart} {
+	test_cleantmp
+	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
+	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
+	cg multicompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
+	cg multicompar_reannot -paged 2 -pagedstart 1 tmp/temp.sft
+	exec diff tmp/temp.sft data/expected-multicompar-split-reannot-pagedstart1.sft
+} {} 
+
 test multicompar {basic, sequenced already present} {
 	test_cleantmp
 	cg multicompar tmp/temp.sft data/var_annot.sft data/var_annot2seq.sft
