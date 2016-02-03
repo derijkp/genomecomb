@@ -264,7 +264,6 @@ mainw method querybuilder_makecondition {fields operator values {join " or "}} {
 }
 
 mainw method querybuilder_add {command {data {}} {join and}} {
-putsvars command data join
 	private $object fieldsw operatorsw valuew queryw
 	upvar #0 [$object.buttons.query cget -textvariable] query
 	set w $object.querybuilder.options.paned
@@ -303,7 +302,8 @@ putsvars command data join
 		$object.region option entry End [privatevar $object region(end)]
 		$object.region add go Go "$object querybuilder_insert region(\[getprivate $object region(chr) \]:\[getprivate $object region(begin) \]-\[getprivate $object region(end) \]) $join" default
 	} elseif {$command in {compare same sm df mm un}} {
-		private $object compare tdata
+		private $object compare
+		private $object.tb tdata
 		destroy $object.compare
 		Classy::Dialog $object.compare -title "Compare"
 		set compare(types) {

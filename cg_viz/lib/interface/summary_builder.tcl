@@ -103,7 +103,8 @@ mainw method summarybuilder_add {command {join and}} {
 		$object.region option entry End [privatevar $object region(end)]
 		$object.region add go Go "$object summarybuilder_insert region(\[getprivate $object region(chr) \]:\[getprivate $object region(begin) \]-\[getprivate $object region(end) \]) $join" default
 	} elseif {$command eq "compare"} {
-		private $object compare tdata
+		private $object compare
+		private $object.tb tdata
 		destroy $object.compare
 		Classy::Dialog $object.compare -title "Compare"
 		set compare(types) {
@@ -120,7 +121,8 @@ mainw method summarybuilder_add {command {join and}} {
 		$object.compare option listbox Sample1 [privatevar $object compare(selsamples)] [privatevar $object compare(samples)] -selectmode multiple
 		$object.compare add go Go "$object summarybuilder_insert \"\[lindex \[getprivate $object compare(type) \] 0\]\(\[join \[getprivate $object compare(selsamples) \] ,\]\)\" $join" default
 	} elseif {$command in {min max lmin lmax avg}} {
-		private $object compare tdata
+		private $object compare
+		private $object.tb tdata
 		destroy $object.compare
 		Classy::Dialog $object.compare -title "Functions"
 		set compare(functypes) {
