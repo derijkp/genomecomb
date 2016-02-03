@@ -341,9 +341,8 @@ proc cg_multicompar_reannot {args} {
 		multicompar_reannot $compar_file $force $regonly $skipincomplete
 	} else {
 		set s $pagedstart
-		set pagedplus [expr {$pagedstart + $paged-1}]
 		while 1 {
-			set e [expr {$s + $pagedplus}]
+			set e [expr {$s + $paged-1}]
 			set samples [multicompar_reannot $compar_file $force $regonly $skipincomplete [list $s $e]]
 			if {![llength $samples]} break
 			puts "range $s-$e done"
