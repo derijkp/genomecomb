@@ -66,6 +66,7 @@ foreach db {
 
 job reg_${build}_gwasCatalog -vars {build dest} -targets {reg_${build}_gwasCatalog.tsv} -code {
 	cg downloaddb $dest ${build} gwasCatalog
+	file delete -force ucsc_${build}_gwasCatalog.tsv.temp
 	cg select \
 		-f {chrom start end trait pValue pubMedID name bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv} \
 		-nh {chrom start end name score pubMedID dbsnp bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv} \
@@ -114,18 +115,18 @@ job 1000g3 -targets {${dest}/hg19/var_hg19_1000g3.tsv ${dest}/hg19/extra/var_hg1
 }
 
 # dbsnp
-job dbsnp142 -targets {${dest}/$build/var_${build}_snp142.tsv} -vars {dest build} -code {
+job dbsnp144 -targets {${dest}/$build/var_${build}_snp144.tsv} -vars {dest build} -code {
 	cd $dest/$build
-	cg downloaddb ${dest} $build snp142
+	cg downloaddb ${dest} $build snp144
 }
 
-job dbsnp142Common -targets {${dest}/${build}/var_${build}_snp142Common.tsv} -vars {dest build} -code {
+job dbsnp144Common -targets {${dest}/${build}/var_${build}_snp144Common.tsv} -vars {dest build} -code {
 	cd $dest/${build}
-	cg downloaddb ${dest} ${build} snp142Common
+	cg downloaddb ${dest} ${build} snp144Common
 }
 
 foreach db {
-	snp142 snp142Common
+	snp144 snp144Common
 } {
 	job maketabix_${build}_$db -deps {var_${build}_${db}.tsv} -targets {var_${build}_${db}.tsv.gz.tbi var_${build}_${db}.tsv.gz} -vars {dest build db} -code {
 		cg maketabix var_${build}_${db}.tsv
@@ -393,21 +394,25 @@ job reg_exome_targetseq -targets {extra/reg_hg19_exome_targetseq.tsv} -code {
 file mkdir ${dest}/tmp/hg19
 job pre_var_hg19_dbnsfp -targets {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -skip {extra/var_hg19_dbnsfp.tsv extra/var_hg19_dbnsfp.tsv.opt} -vars {dest} -code {
 	cd ${dest}/tmp/hg19
-	if {![file exists dbNSFPv2.9.zip]} {
-		wgetfile ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv2.9.zip
+	set url ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv3.1a.zip
+	set file [file tail $url]
+	if {![file exists $file]} {
+		wgetfile $url
 	}
-	exec unzip -o dbNSFPv2.9.zip >@ stdout 2>@ stderr
-	set f [open dbNSFP2.9_variant.chr1]
+	exec unzip -o $file >@ stdout 2>@ stderr
+	set files [glob dbNSFP*_variant.chr*]
+	set f [open [lindex $files 0]]
 	set header [split [string range [gets $f] 1 end] \t]
 	close $f
 	set header [list_change $header {
-		chr chromosome pos(1-coor) end
+		hg19_chr chromosome hg19_pos(1-based) end
+		chr hg38_chr pos(1-coor) hg38_pos
 		hg18_pos(1-coor) hg18_pos {SLR_test_statistic } SLR_test_statistic
-		GERP++_NR GERP_NR GERP++_RS GERP_RS phyloP PhyloP_score 
+		GERP++_NR GERP_NR GERP++_RS GERP_RS 
 		ESP6500_AA_AF ESP_AA_AF ESP6500_EA_AF ESP_EA_AF
 	}]
 	file_write pre_var_dbnsfp.tsv.temp [join $header \t]\n
-	exec cat {*}[lsort -dict [glob dbNSFP2.9_variant.chr*]] | grep -v ^# >> pre_var_dbnsfp.tsv.temp
+	exec cat {*}[lsort -dict $files] | grep -v ^# >> pre_var_dbnsfp.tsv.temp
 	file rename -force pre_var_dbnsfp.tsv.temp pre_var_dbnsfp.tsv
 }
 
@@ -415,33 +420,32 @@ job var_hg19_dbnsfp -deps {${dest}/tmp/hg19/pre_var_hg19_dbnsfp} -targets {extra
 	cd ${dest}/tmp/hg19
 	cg select -s {chromosome end} -f {
 		chromosome {begin=$end - 1} end {type="snp"} ref alt
-		RadialSVM_score RadialSVM_pred LR_score LR_pred
+		MetaSVM_score MetaSVM_pred
+		MetaSVM_score MetaSVM_pred MetaLR_score MetaLR_pred
 		SIFT_score SIFT_pred
 		Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred 
 		LRT_score LRT_pred 
 		MutationTaster_score MutationTaster_pred 
 		FATHMM_score FATHMM_pred
-		GERP_NR GERP_RS PhyloP_score 29way_pi 29way_logOdds LRT_Omega 
-		ESP_AA_AF ESP_EA_AF
+		GERP_NR GERP_RS phyloP7way_vertebrate SiPhy_29way_pi SiPhy_29way_logOdds LRT_Omega 
 	} pre_var_dbnsfp.tsv pre2_var_hg19_dbnsfp.tsv.temp
 	file rename -force pre2_var_hg19_dbnsfp.tsv.temp pre2_var_hg19_dbnsfp.tsv
 	cg groupby {chromosome begin end type} pre2_var_hg19_dbnsfp.tsv pre3_var_hg19_dbnsfp.tsv.temp
 	file rename -force pre3_var_hg19_dbnsfp.tsv.temp pre3_var_hg19_dbnsfp.tsv
 	cg select -f {
 		chromosome begin end type {ref=lindex($ref,0)} alt 
-		RadialSVM_score RadialSVM_pred LR_score LR_pred
+		MetaSVM_score MetaSVM_pred MetaLR_score MetaLR_pred
 		SIFT_score SIFT_pred
 		Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred 
 		LRT_score LRT_pred 
 		MutationTaster_score MutationTaster_pred 
 		FATHMM_score FATHMM_pred
-		GERP_NR GERP_RS PhyloP_score 29way_pi 29way_logOdds LRT_Omega 
-		ESP_AA_AF ESP_EA_AF
+		GERP_NR GERP_RS MetaLR_score MetaLR_pred SiPhy_29way_pi SiPhy_29way_logOdds LRT_Omega 
 	} pre3_var_hg19_dbnsfp.tsv var_hg19_dbnsfp.tsv.temp
 	# move dbNSFPzip files to target
 	file rename -force var_hg19_dbnsfp.tsv.temp ${dest}/hg19/extra/var_hg19_dbnsfp.tsv
-	file_write ${dest}/hg19/extra/var_hg19_dbnsfp.tsv.opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred RadialSVM_score RadialSVM_pred LR_score LR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score GERP_NR GERP_RS PhyloP_score 29way_pi 29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
-	file copy -force dbNSFP2.9.readme.txt ${dest}/hg19/extra/var_hg19_dbnsfp.info
+	file_write ${dest}/hg19/extra/var_hg19_dbnsfp.tsv.opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred MetaSVM_score MetaSVM_pred MetaLR_score MetaLR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score GERP_NR GERP_RS MetaLR_score MetaLR_pred SiPhy_29way_pi SiPhy_29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
+	file copy -force [glob dbNSFP*.readme.txt] ${dest}/hg19/extra/var_hg19_dbnsfp.info
 }
 
 job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${build}.ssa} -vars build \
