@@ -50,6 +50,10 @@ proc job_process_sge_submit {job runfile args} {
 				lappend soft -l io=$value
 				incr pos 2
 			}
+			-mem {
+				lappend hard -l mem_free=$value
+				incr pos 2
+			}
 			-- {
 				incr pos 1
 				break

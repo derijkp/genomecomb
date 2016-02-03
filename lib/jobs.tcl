@@ -821,6 +821,18 @@ proc job {jobname args} {
 				lappend submitopts -cores [lindex $args $pos]
 				incr pos
 			}
+			-mem {
+				lappend submitopts -mem [lindex $args $pos]
+				incr pos
+			}
+			-hard {
+				lappend submitopts -hard [lindex $args $pos]
+				incr pos
+			}
+			-soft {
+				lappend submitopts -soft [lindex $args $pos]
+				incr pos
+			}
 			-vars {
 				set vars [lindex $args $pos]
 				incr pos

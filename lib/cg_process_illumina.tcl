@@ -350,7 +350,7 @@ proc map_bwa_job {args} {
 	set result ${pre}map-bwa-$sample
 	set readgroupdata [array get a]
 	set bwarefseq [bwarefseq_job $refseq]
-	job bwa-$sample -deps [list $bwarefseq {*}$files] -targets $result.sam -vars {readgroupdata sample paired} \
+	job bwa-$sample -mem 4G -deps [list $bwarefseq {*}$files] -targets $result.sam -vars {readgroupdata sample paired} \
 	-skip $result.bam {*}$skips -code {
 		puts "making $target"
 		set bwarefseq [list_shift deps]
