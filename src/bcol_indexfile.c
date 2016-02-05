@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 	f2 = fopen64_or_die(argv[2],"w");
 	fprintf(f2,"# binary column\n");
 	fprintf(f2,"# type wu\n");
-	fprintf(f2,"begin\ttype\toffset\n");
+	fprintf(f2,"chromosome\tbegin\tend\n");
 	f3 = fopen64_or_die(argv[3],"w");
 NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 	/* allocate */
@@ -43,7 +43,6 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 	result1 = DStringArrayNew(max1+2);
 	skip_header(f1,line1,NULL,NULL);
 	fpos = ftello(f1);
-	fprintf(f2,"%d\t%s\t%d\n",0,"wu",0);
 	while (!DStringGetTab(line1,f1,max1,result1,1,NULL)) {
 		count++;
 		data = (uint64_t)fpos;
@@ -65,7 +64,7 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 		}
 	}
 	if (count == -1) {count = 0;}
-	fprintf(f2,"%llu\tend\t0\n",(long long int)count);
+	fprintf(f2,"\t0\t%llu\n",(long long int)(count+1));
 	fclose(f1);
 	fclose(f2);
 	fclose(f3);

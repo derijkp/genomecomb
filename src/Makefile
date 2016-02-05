@@ -1,6 +1,6 @@
 # ARCH should be defined by caller
-# CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
-CFLAGS=-Wall -O2 -I~/dev/genomecomb/src
+ CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
+#CFLAGS=-Wall -O2 -I~/dev/genomecomb/src
 TOOLS= tools.c tools.h debug.h
 TOOLS_VAR= tools_var.c tools_var.h
 HASHTOOLS=hash.h hash.c
@@ -8,7 +8,7 @@ BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h
 
 all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols \
      ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions \
-     ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby \
+     ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/getregionsbcol2 ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby \
      ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile ../bin$(ARCH)/bcol_indexfile_all \
      ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_annot ../bin$(ARCH)/vcf2tsv ../bin$(ARCH)/reg_select \
      ../bin$(ARCH)/check_sort ../bin$(ARCH)/multi_merge ../bin$(ARCH)/multi_join \
@@ -44,6 +44,9 @@ clean:
 
 ../bin$(ARCH)/getregionsbcol: getregionsbcol.c $(TOOLS)
 	gcc getregionsbcol.c tools.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol
+
+../bin$(ARCH)/getregionsbcol2: getregionsbcol2.c $(TOOLS)
+	gcc getregionsbcol2.c tools.c tools_bcol.c razf.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol2 -Wl,-Bstatic -lz -Wl,-Bdynamic
 
 ../bin$(ARCH)/reg_annot: reg_annot.c $(TOOLS)
 	gcc reg_annot.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_annot

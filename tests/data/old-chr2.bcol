@@ -1,0 +1,6 @@
+# binary column
+# type iu
+# default 0
+begin	type	offset
+10	iu	0
+50	end	0

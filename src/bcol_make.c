@@ -13,64 +13,25 @@
 #include <string.h>
 #include "tools.h"
 #include "debug.h"
-#include "hash.h"
 #include "tools_bcol.h"
 
-typedef struct Dest {
-	FILE *f;
-	FILE *rf;
-	uint64_t start;
-	uint64_t lastpos;
-} Dest;
-
-Dest *bcol_make_getout(Hash_table *hashtable,char *pre,DString *chromosome) {
-	DString *buffer = NULL;
-	Dest *o;
-	Hash_bucket *bucket;
-	int new;
-	bucket = hash_get(hashtable, (void *)chromosome, hash_DString_hash, hash_DString_compare, &new,1);
-	if (new == 0) {
-		/* key was already present in the hashtable */
-		o = hash_getvalue(bucket);
-	} else {
-		o = (Dest *)malloc(sizeof(Dest));
-		NODPRINT("new %s: %p",chromosome->string,o)
-		o->start = 0;
-		o->lastpos = -1;
-		buffer = DStringNew();
-		DStringAppend(buffer,pre);
-		if (chromosome->size > 0) {
-			DStringAppendS(buffer,chromosome->string,chromosome->size);
-		}
-		DStringAppend(buffer,".bcol");
-		o->rf = fopen64_or_die(buffer->string,"w");
-		DStringAppend(buffer,".bin");
-		o->f = fopen64_or_die(buffer->string,"w");
-		hash_setvalue(bucket,o)
-		DStringSetS(buffer,chromosome->string,chromosome->size);
-		bucket->key = (void *)buffer;
-		hash_setkey(bucket,buffer)
-		buffer = NULL;
-	}
-	return o;
-}
-
 int main(int argc, char *argv[]) {
-	Hash_table *hashtable;
-	Dest *o = NULL,*po = NULL;
+	DString *buffer = NULL, *prevchr = NULL;
+	FILE *obcol;
+	FILE *obin;
+	unsigned long long start;
+	unsigned long long lastpos;
 	DStringArray *result = NULL;
 	DString *line = NULL,*chromosome = NULL;
-	Hash_iter iter;
-	Hash_bucket *bucket;
-	char *pre,*type = "u",*defaultvalue = "";
+	char *outfile,*type = "u",*defaultvalue = "";
 	uint64_t offset, poffset = -1, size;
 	int reverse = 0, isunsigned = 0, header = 0;
-	int col = 0,max = 0,offsetcol = -1,chrcol = -1;
+	int col = 0,max = 0,offsetcol = -1,chrcol = -1,shift;
 	if ((argc < 2)||(argc > 9)) {
-		fprintf(stderr,"Format is: bcol_make output_pre type ?col? ?chromosomecol? ?offsetcol? ?default? ?header?\n");
+		fprintf(stderr,"Format is: bcol_make output_file type ?col? ?chromosomecol? ?offsetcol? ?default? ?header?\n");
 		exit(EXIT_FAILURE);
 	}
-	pre = argv[1];
+	outfile = argv[1];
 	if (argc >= 3) {
 		type = argv[2];
 	}
@@ -83,6 +44,7 @@ int main(int argc, char *argv[]) {
 		if (chrcol > max) {max = chrcol;}
 	}
 	if (argc >= 6) {
+		/* this col contains the position in the chromosome */
 		offsetcol = atoi(argv[5]);
 		if (offsetcol > max) {max = offsetcol;}
 	}
@@ -96,28 +58,50 @@ int main(int argc, char *argv[]) {
 			skip_header(stdin,line,NULL,NULL);
 		}
 	}
-	NODPRINT("bcol_make %s %s %d %d %d\n",pre,type,col,chrcol,offsetcol)
+	NODPRINT("bcol_make %s %s %d %d %d\n",outfile,type,col,chrcol,offsetcol)
+	/*
+		open files for writing
+	 */
+	start = 0;
+	lastpos = -1;
+	buffer = DStringNew();
+	DStringAppend(buffer,outfile);
+	obcol = fopen64_or_die(buffer->string,"w");
+	DStringAppend(buffer,".bin");
+	obin = fopen64_or_die(buffer->string,"w");
+
 	reverse = bcol_NeedReversing(type[0]);
 	if (type[1] == 'u') {isunsigned = 1;}
 	result = DStringArrayNew(max+2);
-	hashtable = hash_init();
-	if (chrcol == -1) {
-		o = bcol_make_getout(hashtable,pre,DStringEmtpy());
-		poffset = -1;
-	}
+	fprintf(obcol,"# binary column\n");
+	fprintf(obcol,"# type %s\n",type);
+	fprintf(obcol,"# default %s\n","0");
+	fprintf(obcol,"chromosome\tbegin\tend\n");
+	poffset = -1;
 	while (!DStringGetTab(line,stdin,max,result,0,NULL)) {
 		if (chrcol != -1) {
 			chromosome = result->data+chrcol;
-			o = bcol_make_getout(hashtable,pre,chromosome);
-			if (o != po) {
-				po = o;
+			if (DStringCompare(chromosome, prevchr) != 0) {
+				if (prevchr == NULL) {
+					prevchr = DStringDup(chromosome);
+				} else {
+					if (prevchr->size > 3 && prevchr->string[0] == 'c' && prevchr->string[1] == 'h' && prevchr->string[2] == 'r') {
+						shift = 3;
+					} else {
+						shift = 0;
+					}
+					fprintf(obcol,"%*.*s\t%lld\t%lld\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,start+lastpos+1);
+					DStringCopy(prevchr,chromosome);
+				}
 				poffset = -1;
+				start = 0;
+				lastpos = -1;
 			}
 		}
 		if (offsetcol != -1) {
 			offset = atoll(result->data[offsetcol].string);
 			if (poffset == -1) {
-				o->start = offset;
+				start = offset;
 			} else if (poffset != offset) {
 				size = offset - poffset;
 				if (size < 0) {
@@ -125,41 +109,27 @@ int main(int argc, char *argv[]) {
 					exit(EXIT_FAILURE);
 				}
 				while (poffset < offset) {
-					bcol_printbin(o->f,reverse,isunsigned,type,defaultvalue);
+					bcol_printbin(obin,reverse,isunsigned,type,defaultvalue);
 					poffset++;
 				}
-				o->lastpos = o->lastpos + size;
+				lastpos = lastpos + size;
 			}
 			poffset = offset+1;
 		}
 		NODPRINT("s=%s\n",result->data[col].string)
-		bcol_printbin(o->f,reverse,isunsigned,type,result->data[col].string);
-		o->lastpos ++;
+		bcol_printbin(obin,reverse,isunsigned,type,result->data[col].string);
+		lastpos ++;
 	}
-	bucket = hash_first(hashtable,&iter);
-	while(bucket != NULL) {
-		DString *ds = hash_getkey(bucket);
-		o = hash_getvalue(bucket);
-		NODPRINT("close %s: %p",ds->string,o)
-		fclose(o->f);
-		fprintf(o->rf,"# binary column\n");
-		fprintf(o->rf,"# type %s\n",type);
-		fprintf(o->rf,"# default %s\n","0");
-		fprintf(o->rf,"begin\ttype\toffset\n");
-		fprintf(o->rf,"%llu\t%s\t%d\n",(long long int)o->start,type,0);
-		if (o->lastpos != -1) {
-			fprintf(o->rf,"%llu\tend\t%d\n",(long long int)(o->start + o->lastpos),0);
-		} else {
-			fprintf(o->rf,"-1\tend\t%d\n",0);
-		}
-		fclose(o->rf);
-		DStringDestroy(ds);
-		free(o);
-		bucket = hash_next(&iter);
+	shift = 0;
+	if (prevchr == NULL) {
+		prevchr = DStringNew();
+	} else if (prevchr->size > 3 && prevchr->string[0] == 'c' && prevchr->string[1] == 'h' && prevchr->string[2] == 'r') {
+		shift = 3;
 	}
+	fprintf(obcol,"%*.*s\t%lld\t%lld\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,start+lastpos+1);
 	if (line) {DStringDestroy(line);}
 	if (result) {DStringArrayDestroy(result);}
-	hash_destroy(hashtable,NULL,NULL);
+	if (buffer) {DStringDestroy(buffer);}
+	if (prevchr) {DStringDestroy(prevchr);}
 	exit(EXIT_SUCCESS);
 }
-

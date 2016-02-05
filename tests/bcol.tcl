@@ -30,8 +30,8 @@ test bcol_index {basic sib index not writable} {
 
 test bcol_make {basic} {
 	test_cleantmp
-	exec cg bcol make tmp/temp coverage < data/cov.tsv
-	exec cg bcol table tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg bcol make tmp/temp.bcol coverage < data/cov.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
 	exec cg select -f coverage data/cov.tsv tmp/temp.test2
 	catch {exec diff tmp/temp.test tmp/temp.test2} e
 	regsub {child process exited abnormally} $e {} e
@@ -43,8 +43,8 @@ test bcol_make {basic} {
 
 test bcol_make {wide} {
 	test_cleantmp
-	exec cg bcol make -t w tmp/temp coverage < data/cov.tsv
-	exec cg bcol table tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg bcol make -t w tmp/temp.bcol coverage < data/cov.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
 	exec cg select -f coverage data/cov.tsv tmp/temp.test2
 	catch {exec diff tmp/temp.test tmp/temp.test2} e
 	regsub {child process exited abnormally} $e {} e
@@ -57,8 +57,8 @@ test bcol_make {wide} {
 test bcol_make {c met -p} {
 	test_cleantmp
 	cg select -q {$chromosome == "chr2" && $coverage < 129} data/cov.tsv tmp/temp.tsv
-	exec cg bcol make -p pos -t c tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 10 51 > tmp/temp.test
+	exec cg bcol make -p pos -t c tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 10 51 > tmp/temp.test
 	exec cg select -f {pos	coverage} tmp/temp.tsv tmp/temp.test2
 	catch {exec diff tmp/temp.test tmp/temp.test2} e
 	regsub {child process exited abnormally} $e {} e
@@ -88,15 +88,13 @@ test bcol_make {c met -p} {
 < 36	0
 < 37	0
 < 38	0
-< 39	0
-43d22
-<}
+< 39	0}
 
 test bcol_make {-p} {
 	test_cleantmp
 	cg select -q {$chromosome == "chr1"} data/cov.tsv tmp/temp.tsv
-	cg bcol make -p pos tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 0 50 > tmp/temp.test
+	cg bcol make -p pos tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 50 > tmp/temp.test
 	exec cg select -f {pos	coverage} tmp/temp.tsv tmp/temp.test2
 	catch {exec diff tmp/temp.test tmp/temp.test2} e
 	regsub {child process exited abnormally} $e {} e
@@ -104,15 +102,13 @@ test bcol_make {-p} {
 } {1c1
 < pos	value
 ---
-> pos	coverage
-52d51
-<}
+> pos	coverage}
 
 test bcol_make {-p with gaps} {
 	test_cleantmp
 	cg select -q {$chromosome == "chr1" && $pos != 10} data/cov.tsv tmp/temp.tsv
-	cg bcol make -p pos tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 0 50 > tmp/temp.test
+	cg bcol make -p pos tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 50 > tmp/temp.test
 	exec cg select -f {pos	coverage} tmp/temp.tsv tmp/temp.test2
 	catch {exec diff tmp/temp.test tmp/temp.test2} e
 	regsub {child process exited abnormally} $e {} e
@@ -122,15 +118,13 @@ test bcol_make {-p with gaps} {
 ---
 > pos	coverage
 12d11
-< 10	0
-52d50
-<}
+< 10	0}
 
 test bcol_make {-p with gaps and -d} {
 	test_cleantmp
 	cg select -q {$chromosome == "chr1" && $pos != 10} data/cov.tsv tmp/temp.tsv
-	cg bcol make -p pos -d 10 tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 0 50 > tmp/temp.test
+	cg bcol make -p pos -d 10 tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 50 > tmp/temp.test
 	exec cg select -f {pos	coverage} tmp/temp.tsv tmp/temp.test2
 	catch {exec diff tmp/temp.test tmp/temp.test2} e
 	regsub {child process exited abnormally} $e {} e
@@ -140,14 +134,12 @@ test bcol_make {-p with gaps and -d} {
 ---
 > pos	coverage
 12d11
-< 10	10
-52d50
-<}
+< 10	10}
 
 test bcol_make {-c} {
 	test_cleantmp
-	catch {exec cg bcol make -c chromosome tmp/temp- coverage < data/cov.tsv}
-	exec cg bcol table tmp/temp-chr2.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg bcol make -c chromosome tmp/temp.bcol coverage < data/cov.tsv
+	exec cg bcol table -s 0 -c 2 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
 	exec cg select -f coverage -q {$chromosome == "chr2"} data/cov.tsv tmp/temp.test2
 	catch {exec diff tmp/temp.test tmp/temp.test2} e
 	regsub {child process exited abnormally} $e {} e
@@ -159,8 +151,8 @@ test bcol_make {-c} {
 
 test bcol_make {-p and -c} {
 	test_cleantmp
-	catch {exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv}
-	exec cg bcol table tmp/temp-chr2.bcol > tmp/temp.test
+	catch {exec cg bcol make -p pos -c chromosome tmp/temp.bcol coverage < data/cov.tsv}
+	exec cg bcol table -s 0 -c 2 tmp/temp.bcol 0 > tmp/temp.test
 	exec cg select -f {pos	coverage} -q {$chromosome == "chr2"} data/cov.tsv tmp/temp.test2
 	catch {exec diff tmp/temp.test tmp/temp.test2} e
 	regsub {child process exited abnormally} $e {} e
@@ -195,39 +187,44 @@ test bcol_make {-p and -c} {
 < 29	0
 < 30	0
 < 31	0
-< 32	0
-53d26
-<}
+< 32	0}
 
-test bcol_make {-p and -c allchr: check bug} {
+test bcol_make {-p and -c allchr} {
 	test_cleantmp
-	catch {exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/allchr.tsv} e
-	set files [glob tmp/temp-*.bcol]
-	foreach file $files {
-		if {[file size $file] == 0} {error "file $file has size 0"}
-	}
-	set result {}
+	exec cg bcol make -p pos -c chromosome tmp/temp.bcol coverage < data/allchr.tsv
+	exec cg bcol table -c all tmp/temp.bcol > tmp/temp.tsv
+	cg select -f {chromosome=chr_clip($chromosome) pos value=$coverage} data/allchr.tsv tmp/expected.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 
 test bcol_regextract {basic} {
 	test_cleantmp
-	catch {exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv} e
-	# exec cg bcol table tmp/temp-chr2.bcol > tmp/temp.test
-	cg regextract -above 1 10 {*}[lsort -dict [glob tmp/temp-*.bcol]]
+	cg select -q {$chromosome eq "chr2"} data/cov.tsv tmp/tempcov.tsv
+	exec cg bcol make -p pos -c chromosome tmp/temp.bcol coverage < tmp/tempcov.tsv
+	# exec cg bcol table -s 0 tmp/temp-chr2.bcol > tmp/temp.test
+	cg regextract -above 1 10 tmp/temp.bcol
 } {chromosome	begin	end
-chr1	22	49
-chr2	10	17
-chr2	33	51}
+2	10	17
+2	33	51}
+
+test bcol_regextract {multiple chromosomes} {
+	test_cleantmp
+	exec cg bcol make -p pos -c chromosome tmp/temp.bcol coverage < data/cov.tsv
+	cg regextract -above 1 10 tmp/temp.bcol
+} {chromosome	begin	end
+1	22	49
+2	10	17
+2	33	51}
 
 test bcol_regextract {su} {
 	test_cleantmp
-	catch {exec cg bcol make -p pos -c chromosome -t su tmp/temp- coverage < data/cov.tsv} e
-	# exec cg bcol table tmp/temp-chr2.bcol > tmp/temp.test
-	cg regextract -above 1 10 {*}[lsort -dict [glob tmp/temp-*.bcol]]
+	exec cg bcol make -p pos -c chromosome -t su tmp/temp.bcol coverage < data/cov.tsv
+	# cg bcol table tmp/temp.bcol
+	cg regextract -above 1 10 tmp/temp.bcol
 } {chromosome	begin	end
-chr1	22	49
-chr2	10	17
-chr2	33	51}
+1	22	49
+2	10	17
+2	33	51}
 
 test bcol_regextract {s error} {
 	test_cleantmp
@@ -237,9 +234,9 @@ test bcol_regextract {s error} {
 
 test bcol_histo {basic} {
 	test_cleantmp
-	catch {exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv}
+	exec cg bcol make -p pos -c chromosome tmp/temp.bcol coverage < data/cov.tsv
 	file_write tmp/reg.tsv "chromosome\tbegin\tend\tname\nchr1\t4\t20\tt1\nchr1\t40\t60\tt2\n"
-	cg bcol_histo tmp/reg.tsv tmp/temp-chr1.bcol {1 8 10}
+	cg bcol_histo tmp/reg.tsv tmp/temp.bcol {1 8 10}
 } {name	r<1	r1<8	r8<10	r10<	size	avg	min	max
 t1	0	11	5	0	16	5.81	2	9
 t2	10	0	0	10	20	6.25	0	14
@@ -247,121 +244,161 @@ t2	10	0	0	10	20	6.25	0	14
 Total	10	11	5	10	36	6.06	0	14
 Totalpercent	27.78	30.56	13.89	27.78}
 
+test bcol_histo {2 chromosomes} {
+	test_cleantmp
+	exec cg bcol make -p pos -c chromosome tmp/temp.bcol coverage < data/cov.tsv
+	file_write tmp/reg.tsv "chromosome\tbegin\tend\tname\nchr1\t4\t20\tt1\nchr1\t40\t60\tt2\nchr2\t30\t40\tt3\n"
+	cg bcol_histo tmp/reg.tsv tmp/temp.bcol {1 8 10}
+} {name	r<1	r1<8	r8<10	r10<	size	avg	min	max
+t1	0	11	5	0	16	5.81	2	9
+t2	10	0	0	10	20	6.25	0	14
+t3	3	0	0	7	10	7749.80	0	60000
+----------
+Total	13	11	5	17	46	1689.48	0	60000
+Totalpercent	28.26	23.91	10.87	36.96
+}
+
+test bcol_histo {old multifile format} {
+	test_cleantmp
+	file copy {*}[glob data/old*bcol*] tmp
+	file_write tmp/reg.tsv "chromosome\tbegin\tend\tname\nchr1\t4\t20\tt1\nchr1\t40\t60\tt2\n"
+	cg bcol_histo tmp/reg.tsv tmp/old {1 8 10}
+} {name	r<1	r1<8	r8<10	r10<	size	avg	min	max
+t1	0	11	5	0	16	5.81	2	9
+t2	10	0	0	10	20	6.25	0	14
+----------
+Total	10	11	5	10	36	6.06	0	14
+Totalpercent	27.78	30.56	13.89	27.78}
+
+test bcol_histo {old multifile format 2 chromosomes} {
+	test_cleantmp
+	file copy {*}[glob data/old*bcol*] tmp
+	file_write tmp/reg.tsv "chromosome\tbegin\tend\tname\nchr1\t4\t20\tt1\nchr1\t40\t60\tt2\nchr2\t30\t40\tt3\n"
+	cg bcol_histo tmp/reg.tsv tmp/old {1 8 10}
+} {name	r<1	r1<8	r8<10	r10<	size	avg	min	max
+t1	0	11	5	0	16	5.81	2	9
+t2	10	0	0	10	20	6.25	0	14
+t3	3	0	0	7	10	7749.80	0	60000
+----------
+Total	13	11	5	17	46	1689.48	0	60000
+Totalpercent	28.26	23.91	10.87	36.96
+}
+
 test bcol_make {c too large error} {
 	test_cleantmp
-	exec cg bcol make -t c tmp/temp coverage < data/cov.tsv
+	exec cg bcol make -t c tmp/temp.bcol coverage < data/cov.tsv
 } {conversion error for type c: value 129 too large.
 } error
 
 test bcol_make {c too large error limits.tsv} {
 	test_cleantmp
-	exec cg bcol make -t c tmp/temp coverage < data/limits.tsv
+	exec cg bcol make -t c tmp/temp.bcol coverage < data/limits.tsv
 } {conversion error for type c: value 128 too large.
 } error
 
 test bcol_make {c too small error} {
 	test_cleantmp
 	cg select -q {$coverage < 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t c tmp/temp coverage < tmp/temp.tsv
+	exec cg bcol make -t c tmp/temp.bcol coverage < tmp/temp.tsv
 } {conversion error for type c: value -128 too small.
 } error
 
 test bcol_make {cu too large error limits.tsv} {
 	test_cleantmp
-	exec cg bcol make -t cu tmp/temp coverage < data/limits.tsv
+	exec cg bcol make -t cu tmp/temp.bcol coverage < data/limits.tsv
 } {conversion error for type cu: value 256 too large.
 } error
 
 test bcol_make {cu too small error} {
 	test_cleantmp
 	cg select -q {$coverage < 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t cu tmp/temp coverage < tmp/temp.tsv
+	exec cg bcol make -t cu tmp/temp.bcol coverage < tmp/temp.tsv
 } {conversion error for type cu: value -1 too small.
 } error
 
 test bcol_make {s too large error} {
 	test_cleantmp
-	exec cg bcol make -t s tmp/temp coverage < data/limits.tsv
+	exec cg bcol make -t s tmp/temp.bcol coverage < data/limits.tsv
 } {conversion error for type s: value 32768 too large.
 } error
 
 test bcol_make {s too small error} {
 	test_cleantmp
 	cg select -q {$coverage < 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t s tmp/temp coverage < tmp/temp.tsv
+	exec cg bcol make -t s tmp/temp.bcol coverage < tmp/temp.tsv
 } {conversion error for type s: value -32769 too small.
 } error
 
 test bcol_make {su too large error} {
 	test_cleantmp
-	exec cg bcol make -t su tmp/temp coverage < data/limits.tsv
+	exec cg bcol make -t su tmp/temp.bcol coverage < data/limits.tsv
 } {conversion error for type su: value 65536 too large.
 } error
 
 test bcol_make {su too small error} {
 	test_cleantmp
 	cg select -q {$coverage < 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t su tmp/temp coverage < tmp/temp.tsv
+	exec cg bcol make -t su tmp/temp.bcol coverage < tmp/temp.tsv
 } {conversion error for type su: value -1 too small.
 } error
 
 test bcol_make {i too large error} {
 	test_cleantmp
-	exec cg bcol make -t i tmp/temp coverage < data/limits.tsv
+	exec cg bcol make -t i tmp/temp.bcol coverage < data/limits.tsv
 } {conversion error for type i, value 2147483648: Numerical result out of range.
 } error
 
 test bcol_make {i too small error} {
 	test_cleantmp
 	cg select -q {$coverage < 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t i tmp/temp coverage < tmp/temp.tsv
+	exec cg bcol make -t i tmp/temp.bcol coverage < tmp/temp.tsv
 } {conversion error for type i, value -2147483649: Numerical result out of range.
 } error
 
 test bcol_make {iu too large error} {
 	test_cleantmp
-	exec cg bcol make -t iu tmp/temp coverage < data/limits.tsv
+	exec cg bcol make -t iu tmp/temp.bcol coverage < data/limits.tsv
 } {conversion error for type iu, value 4294967296: Numerical result out of range.
 } error
 
 test bcol_make {iu too small error} {
 	test_cleantmp
 	cg select -q {$coverage < 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t iu tmp/temp coverage < tmp/temp.tsv
+	exec cg bcol make -t iu tmp/temp.bcol coverage < tmp/temp.tsv
 } {conversion error for type iu, value -1: Numerical result out of range.
 } error
 
 test bcol_make {w too large error} {
 	test_cleantmp
-	exec cg bcol make -t w tmp/temp coverage < data/limits.tsv
+	exec cg bcol make -t w tmp/temp.bcol coverage < data/limits.tsv
 } {conversion error for type w, value 9223372036854775808: Numerical result out of range.
 } error
 
 test bcol_make {w too small error} {
 	test_cleantmp
 	cg select -q {$coverage < 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t w tmp/temp coverage < tmp/temp.tsv
+	exec cg bcol make -t w tmp/temp.bcol coverage < tmp/temp.tsv
 } {conversion error for type w, value -9223372036854775809: Numerical result out of range.
 } error
 
 test bcol_make {wu too large error} {
 	test_cleantmp
-	exec cg bcol make -t wu tmp/temp coverage < data/limits.tsv
+	exec cg bcol make -t wu tmp/temp.bcol coverage < data/limits.tsv
 } {conversion error for type wu, value 18446744073709551616: Numerical result out of range.
 } error
 
 test bcol_make {wu too small error} {
 	test_cleantmp
 	cg select -q {$coverage < 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t wu tmp/temp coverage < tmp/temp.tsv
+	exec cg bcol make -t wu tmp/temp.bcol coverage < tmp/temp.tsv
 } {conversion error for type wu, value -1: Numerical result out of range.
 } error
 
 test bcol_make {types c} {
 	test_cleantmp
 	cg select -q {$coverage <= 127 && $coverage >= -127} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t c tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg bcol make -t c tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
 	exec cg select -f {value=$coverage} tmp/temp.tsv tmp/temp.test2
 	exec diff tmp/temp.test tmp/temp.test2
 } {}
@@ -369,8 +406,8 @@ test bcol_make {types c} {
 test bcol_make {types cu} {
 	test_cleantmp
 	cg select -q {$coverage <= 255 && $coverage >= 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t cu tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg bcol make -t cu tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
 	exec cg select -f {value=$coverage} tmp/temp.tsv tmp/temp.test2
 	exec diff tmp/temp.test tmp/temp.test2
 } {}
@@ -378,8 +415,8 @@ test bcol_make {types cu} {
 test bcol_make {types s} {
 	test_cleantmp
 	cg select -q {$coverage <= 32767 && $coverage >= -32768} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t s tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg bcol make -t s tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
 	exec cg select -f {value=$coverage} tmp/temp.tsv tmp/temp.test2
 	exec diff tmp/temp.test tmp/temp.test2
 } {}
@@ -387,8 +424,8 @@ test bcol_make {types s} {
 test bcol_make {types su} {
 	test_cleantmp
 	cg select -q {$coverage <= 65535 && $coverage >= 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t su tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg bcol make -t su tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
 	exec cg select -f {value=$coverage} tmp/temp.tsv tmp/temp.test2
 	exec diff tmp/temp.test tmp/temp.test2
 } {}
@@ -396,8 +433,8 @@ test bcol_make {types su} {
 test bcol_make {types i} {
 	test_cleantmp
 	cg select -q {$coverage <= 2147483647 && $coverage >= -2147483648} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t i tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg bcol make -t i tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
 	exec cg select -f {value=$coverage} tmp/temp.tsv tmp/temp.test2
 	exec diff tmp/temp.test tmp/temp.test2
 } {}
@@ -405,8 +442,8 @@ test bcol_make {types i} {
 test bcol_make {types iu} {
 	test_cleantmp
 	cg select -q {$coverage <= 4294967295 && $coverage >= 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t iu tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg bcol make -t iu tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
 	exec cg select -f {value=$coverage} tmp/temp.tsv tmp/temp.test2
 	exec diff tmp/temp.test tmp/temp.test2
 } {}
@@ -414,8 +451,8 @@ test bcol_make {types iu} {
 test bcol_make {types w} {
 	test_cleantmp
 	cg select -q {$coverage <= 9223372036854775807 && $coverage >= -9223372036854775808} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t w tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg bcol make -t w tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
 	exec cg select -f {value=$coverage} tmp/temp.tsv tmp/temp.test2
 	exec diff tmp/temp.test tmp/temp.test2
 } {}
@@ -423,11 +460,38 @@ test bcol_make {types w} {
 test bcol_make {types wu} {
 	test_cleantmp
 	cg select -q {$coverage <= 18446744073709551615 && $coverage >= 0} data/limits.tsv tmp/temp.tsv
-	exec cg bcol make -t wu tmp/temp coverage < tmp/temp.tsv
-	exec cg bcol table tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg bcol make -t wu tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
 	exec cg select -f {value=$coverage} tmp/temp.tsv tmp/temp.test2
 	exec diff tmp/temp.test tmp/temp.test2
 } {}
+
+test bcol_update {update and join old bcols} {
+	test_cleantmp
+	exec cg bcol update tmp/new.bcol data/old-chr1.bcol data/old-chr2.bcol
+	exec cg bcol table -s 0 -c all tmp/new.bcol > tmp/cov.tsv.new
+	exec cg select -f {{chromosome=chr_clip($chromosome)} pos value=$coverage} data/cov.tsv tmp/cov.tsv.ori
+	exec diff tmp/cov.tsv.new tmp/cov.tsv.ori
+} {59,74d58
+< 2	17	0
+< 2	18	0
+< 2	19	0
+< 2	20	0
+< 2	21	0
+< 2	22	0
+< 2	23	0
+< 2	24	0
+< 2	25	0
+< 2	26	0
+< 2	27	0
+< 2	28	0
+< 2	29	0
+< 2	30	0
+< 2	31	0
+< 2	32	0
+93d76
+< 
+child process exited abnormally} error
 
 test_cleantmp
 

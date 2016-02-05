@@ -544,61 +544,6 @@ int bcol_printtext(FILE *f,int reverse,int isunsigned,char type,unsigned char *b
 	}
 }
 
-BCol *bcol_open(char *bcolfile) {
-	FILE *f;
-	BCol *result;
-	DString *line = DStringNew();
-	int typesize,len=strlen(bcolfile);
-	result = (BCol *)malloc(sizeof(BCol));
-	result->type = 'i';
-	result->isunsigned = 1;
-	f = fopen64_or_die(bcolfile, "r");
-	while (DStringGetLine(line,f) != -1) {
-		if (line->string[0] != '#') break;
-		if (line->size > 7 && strncmp(line->string,"# type ",7) == 0) {
-			result->type = line->string[7];
-			if (line->string[8] == 'u') {
-				result->isunsigned = 1;
-			} else {
-				result->isunsigned = 0;
-			}
-		}
-	}
-	DStringGetLine(line,f);
-	result->start = atoi(line->string);
-	fclose(f);
-	DStringDestroy(line);
-	result->file = (char *)malloc((len+8)*sizeof(char));
-	strncpy(result->file,bcolfile,len);
-	sprintf(result->file+len,".bin");
-	result->f = fopen64(result->file, "r");
-	if (result->f == NULL) {
-		sprintf(result->file+len,".bin.rz");
-		result->rz = razf_open(result->file, "r");
-	} else {
-		result->rz = NULL;
-	}
-	switch (result->type) {
-		case 'c':
-			typesize = 1;
-			break;
-		case 's':
-			typesize = 2;
-			break;
-		case 'i':
-			typesize = 4;
-			break;
-		default:
-			fprintf(stderr,"Unsupported bcol type: %c\n",result->type);
-			exit(EXIT_FAILURE);
-	}
-	result->reverse = bcol_NeedReversing(result->type);
-	result->typesize = typesize;
-	result->buffer = (unsigned char *)malloc(typesize);
-	result->buffersize = typesize;
-	return(result);
-}
-
 void bcol_close(BCol *bcol) {
 	if (bcol->rz != NULL) {
 		razf_close(bcol->rz);
@@ -643,4 +588,218 @@ int bcol_getbin(BCol *fbcol,int start,int end) {
 		memset(fbcol->buffer+c,0,rsize-c);
 	}
 	return(c);
+}
+
+int bcol_readbin(BCol *fbcol,int rsize,unsigned char *buffer) {
+	RAZF *rz = fbcol->rz;
+	FILE *f = fbcol->f;
+	int c;
+	if (rz != NULL) {
+		c = razf_read(rz, buffer, rsize);
+	} else {
+		c = read_unlocked(f, buffer, rsize);
+	}
+	if (c < rsize) {
+		memset(fbcol->buffer+c,0,rsize-c);
+	}
+	return(c);
+}
+
+int bcol_readdouble(BCol *fbcol,long double *result) {
+	unsigned char buffer[9];
+	long long value;
+	float fvalue;
+	double dvalue;
+	int isunsigned = fbcol->isunsigned;
+	int i, v;
+	
+	bcol_readbin(fbcol,fbcol->typesize,buffer);
+	switch(fbcol->type) {
+	case 'c':
+		value = buffer[0];
+		if (!isunsigned) {
+			if (value & 0x80) {
+				value |= -0x100;
+			}
+		}
+		*result = (long double)value;
+		break;
+	case 's':
+		if (fbcol->reverse) {
+			value = (long long) (buffer[0] + (buffer[1] << 8));
+		} else {
+			value = (long long) (buffer[1] + (buffer[0] << 8));
+		}
+		if (!isunsigned) {
+			if (value & 0x8000) {
+				value |= -0x10000;
+			}
+		}
+		*result = (long double)value;
+		break;
+	case 'i':
+		if (fbcol->reverse) {
+		value = (long long) (buffer[0]
+			+ (buffer[1] << 8)
+			+ (buffer[2] << 16)
+			+ (((long long)buffer[3]) << 24));
+		} else {
+		value = (long long) (buffer[3]
+			+ (buffer[2] << 8)
+			+ (buffer[1] << 16)
+			+ (((long long)buffer[0]) << 24));
+		}
+		if (!isunsigned) {
+			if ((value & (((unsigned int)1)<<31)) && (value > 0)) {
+			    value -= (((unsigned int)1)<<31);
+			    value -= (((unsigned int)1)<<31);
+			}
+		}
+		*result = (long double)value;
+		break;
+	case 'w':
+		for(i = 0 ; i < 8 ; i++) {
+			v = fgetc(stdin);
+			if (v == EOF) {return 0;}
+			buffer[i] = v;
+		}
+		if (fbcol->reverse) {
+		value = ((long long) buffer[0])
+			| (((long long) buffer[1]) << 8)
+			| (((long long) buffer[2]) << 16)
+			| (((long long) buffer[3]) << 24)
+			| (((long long) buffer[4]) << 32)
+			| (((long long) buffer[5]) << 40)
+			| (((long long) buffer[6]) << 48)
+			| (((long long) buffer[7]) << 56);
+		} else {
+		value = ((long long) buffer[7])
+			| (((long long) buffer[6]) << 8)
+			| (((long long) buffer[5]) << 16)
+			| (((long long) buffer[4]) << 24)
+			| (((long long) buffer[3]) << 32)
+			| (((long long) buffer[2]) << 40)
+			| (((long long) buffer[1]) << 48)
+			| (((long long) buffer[0]) << 56);
+		}
+		*result = (long double)value;
+		break;
+	case 'f':
+		for(i = 0 ; i < 4 ; i++) {
+			v = fgetc(stdin);
+			if (v == EOF) {return 0;}
+			buffer[i] = v;
+		}
+		bcol_CopyNumber(buffer, &fvalue, sizeof(float), fbcol->reverse);
+		*result = (long double)fvalue;
+		break;
+	case 'd':
+		for(i = 0 ; i < 8 ; i++) {
+			v = fgetc(stdin);
+			if (v == EOF) {return 0;}
+			buffer[i] = v;
+		}
+		bcol_CopyNumber(buffer, &dvalue, sizeof(double), fbcol->reverse);
+		*result = (long double)dvalue;
+		break;
+	}
+	return 1;
+}
+
+BCol *bcol_open(char *bcolfile) {
+	FILE *f;
+	BCol *result;
+	DString *line = DStringNew();
+	int typesize,len=strlen(bcolfile),i;
+	result = (BCol *)malloc(sizeof(BCol));
+	result->type = 'i';
+	result->isunsigned = 1;
+	result->table = NULL;
+	result->tablesize = 0;
+	f = fopen64_or_die(bcolfile, "r");
+	while (DStringGetLine(line,f) != -1) {
+		if (line->string[0] != '#') break;
+		if (line->size > 7 && strncmp(line->string,"# type ",7) == 0) {
+			result->type = line->string[7];
+			if (line->string[8] == 'u') {
+				result->isunsigned = 1;
+			} else {
+				result->isunsigned = 0;
+			}
+		}
+	}
+	if (naturalcompare(line->string,"chromosome\tbegin\tend",line->size,20) == 0) {
+		result->version = 1;
+		result->tablesize = 0;
+		if (result->table == NULL) {
+			result->table = malloc(result->tablesize*sizeof(BCol_table));
+		} else {
+			result->table = realloc(result->table,result->tablesize*sizeof(BCol_table));
+		}
+		i = 0;
+		while (DStringGetLine(line,f) != -1) {
+			int strpos;
+			result->tablesize++;
+			result->table = realloc(result->table,result->tablesize*sizeof(BCol_table));
+			strpos = 0; while (strpos < line->size) {
+				if (line->string[strpos] == '\t') break;
+				strpos++;
+			}
+			result->table[i].chr = DStringNewFromCharS(line->string,strpos);
+			if (sscanf(line->string+strpos+1,"%lld\t%lld",&(result->table[i].begin),&(result->table[i].end)) != 2) {
+				fprintf(stderr,"error in bcol format");
+				exit(1);
+			}
+			if (i == 0) {
+				result->table[i].pos = 0;
+			} else {
+				result->table[i].pos = result->table[i-1].pos + result->table[i-1].end  - result->table[i-1].begin;
+			}
+			i++;
+		}
+	} else {
+		result->version = 0;
+		DStringGetLine(line,f);
+		result->start = atoi(line->string);
+		fclose(f);
+	}
+	DStringDestroy(line);
+	result->file = (char *)malloc((len+8)*sizeof(char));
+	strncpy(result->file,bcolfile,len);
+	sprintf(result->file+len,".bin");
+	result->f = fopen64(result->file, "r");
+	if (result->f == NULL) {
+		sprintf(result->file+len,".bin.rz");
+		result->rz = razf_open(result->file, "r");
+	} else {
+		result->rz = NULL;
+	}
+	switch (result->type) {
+		case 'c':
+			typesize = 1;
+			break;
+		case 's':
+			typesize = 2;
+			break;
+		case 'i':
+			typesize = 4;
+			break;
+		case 'w':
+			typesize = 8;
+			break;
+		case 'f':
+			typesize = 4;
+			break;
+		case 'd':
+			typesize = 8;
+			break;
+		default:
+			fprintf(stderr,"Unsupported bcol type: %c\n",result->type);
+			exit(EXIT_FAILURE);
+	}
+	result->reverse = bcol_NeedReversing(result->type);
+	result->typesize = typesize;
+	result->buffer = (unsigned char *)malloc(typesize);
+	result->buffersize = typesize;
+	return(result);
 }

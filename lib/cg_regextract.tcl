@@ -36,21 +36,26 @@ proc cg_regextract {args} {
 		set ext [file extension $file]
 		if {$ext eq ".bcol"} {
 			set bcol [bcol_open $file]
-			set start [lindex [dict get $bcol table] 0 0]
-			set max [dict get $bcol max]
-			set type [dict get $bcol type]
-			set file [gzfile $file.bin]
-			set cat [gzcat $file]
-			set error [catch {
-				# puts "$cat $file | getregionsbcol $chr $type $start $cutoff $above $shift"
-				exec {*}$cat $file | getregionsbcol $chr $type $start $cutoff $above $shift >@ $o
-			} errmessage]
-			if {$error} {
-				set errmessage [split [string trim $errmessage] \n]
-				set errmessage [list_sub $errmessage -exclude [list_find -glob $errmessage {*decompression OK, trailing garbage ignored*}]]
-				if {[llength $errmessage]} {
-					error [join $errmessage \n]
+			if {[dict get $bcol version] == 0} {
+				set start [lindex [dict get $bcol table] 0 0]
+				set max [dict get $bcol max]
+				set type [dict get $bcol type]
+				set file [gzfile $file.bin]
+				set cat [gzcat $file]
+				set error [catch {
+					# puts "$cat $file | getregionsbcol $chr $type $start $cutoff $above $shift"
+					exec {*}$cat $file | getregionsbcol $chr $type $start $cutoff $above $shift >@ $o
+				} errmessage]
+				if {$error} {
+					set errmessage [split [string trim $errmessage] \n]
+					set errmessage [list_sub $errmessage -exclude [list_find -glob $errmessage {*decompression OK, trailing garbage ignored*}]]
+					if {[llength $errmessage]} {
+						error [join $errmessage \n]
+					}
 				}
+			} else {
+				# puts "getregionsbcol2 $file $cutoff $above $shift"
+				exec getregionsbcol2 $file $cutoff $above $shift >@ $o
 			}
 		} elseif {$ext eq ".bam"} {
 			set chrcol 0

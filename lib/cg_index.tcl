@@ -138,8 +138,7 @@ proc cg_index {args} {
 		exit 1
 	}
 	set file [lindex $args 0]
-	set ext [file extension $file]
-	if {[inlist {.rz .lz4 .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
+	set compressed [gziscompressed $file]
 	set indexdir [indexdir $file]
 	set infofile [indexdir_file $file info.tsv ok]
 	if {$ok} {

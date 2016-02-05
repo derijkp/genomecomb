@@ -19,7 +19,7 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 	set indexfile [file_absolute $indexfile]
 	set time [file mtime $file]
 	set ext [file extension $file]
-	if {[inlist {.rz .lz4 .bgz .gz} $ext]} {set compressed 1} else {set compressed 0}
+	set compressed [gziscompressed $file]
 	if {![file exists $indexfile] || [file mtime $indexfile] < $time} {
 		file mkdir [file dir $indexfile]
 		if {$compressed} {
@@ -81,6 +81,7 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 	}
 }
 
+# if ra == 1 , a compressed bin file will not be unzipped and opened (fi == "")
 proc bcol_open {indexfile {ra 0}} {
 	set result [dict create objtype bcol file $indexfile binfile $indexfile.bin compressedbin 0]
 	set f [open $indexfile]
@@ -90,10 +91,16 @@ proc bcol_open {indexfile {ra 0}} {
 		close $f
 		error "file \"$indexfile\" is not a binary column file"
 	}
-	if {$header ne "begin type offset"} {
+	# offset support was removed (complicates things, and was never actually used)
+	if {$header eq "begin type offset"} {
+		set version 0
+	} elseif {$header eq "chromosome begin end"} {
+		set version 1
+	} else {
 		close $f
 		error "file \"$indexfile\" has an incorrect table header"
 	}
+	dict set result version $version
 	foreach line $comment {
 		set line [string range $line 1 end]
 		dict set result [lindex $line 0] [lindex $line 1]
@@ -105,37 +112,54 @@ proc bcol_open {indexfile {ra 0}} {
 		lappend table [split $line \t]
 	}
 	close $f
-	set tabled [dict create]
-	list_foreach {num type offset} $table {
-		if {$type eq "end"} break
-		dict set tabled [expr {$num+1}] $offset
+	if {$version == 0} {
+		set begin [lindex $table 0 0]
+		set end [lindex $table end 0]
+		# end is not included for half open
+		incr end
+		set table [list [list {} $begin $end]]
 	}
+	set newtable {}
+	set totalnum 0
+	list_foreach {chromosome begin end} $table {
+		dict set tablechr $chromosome [list $begin $end]
+		lappend newtable [list $chromosome $begin $end $totalnum]
+		set totalnum [expr {$totalnum + $end - $begin}]
+	}
+	set table $newtable
 	dict set result table $table
-	dict set result tabled $tabled
-	dict set result max [lindex $table end 0]
-	if {[file exists $indexfile.bin]} {
-		set fi [open $indexfile.bin]
+	dict set result totalnum $totalnum
+	set tablechr [dict create]
+	foreach line $table {
+		set chromosome [lindex $line 0]
+		dict set tablechr $chromosome $line
+	}
+	dict set result tablechr $tablechr
+	set binfile [lindex [glob -nocomplain $indexfile.bin [file root $indexfile].bin $indexfile.bin.rz [file root $indexfile].bin.rz] 0]
+	if {$binfile eq ""} {set binfile [lindex [gzfiles $indexfile.bin [file root $indexfile].bin] 0]}
+	if {$binfile eq ""} {exiterror "binfile $indexfile.bin not found"}
+	dict set result binfile $binfile
+	set ext [file extension $binfile]
+	if {![gziscompressed $binfile]} {
+		set fi [open $binfile]
 		fconfigure $fi -encoding binary -translation binary
 		dict set result fi $fi
 	} elseif {$ra} {
 		dict set result fi {}
-	} elseif {[file exists $indexfile.bin.rz]} {
-		dict set result binfile $indexfile.bin.rz
+	} else {
 		set tempfile [tempfile]
-		exec razip -d -c $indexfile.bin.rz > $tempfile
+		exec razip -d -c $binfile > $tempfile
 		dict set result tempfile $tempfile
 		set fi [open $tempfile]
 		fconfigure $fi -encoding binary -translation binary
 		dict set result fi $fi
 		dict set result compressedbin 1
-	} else {
-		exiterror "binfile $indexfile.bin not found"
 	}
 	return $result
 }
 
 proc bcol_size bcol {
-	expr {[dict get $bcol max]+1}
+	dict get $bcol totalnum
 }
 
 proc bcol_first bcol {
@@ -160,7 +184,8 @@ proc bcol_close bcol {
 # Warning:
 # while cg bcol get follows the half-open convention, end position is not included
 # the procedure bcol_get follows the Tcl lrange convention: end position is included!
-proc bcol_get {bcol start {end {}}} {
+# chromosome "" will take the empty chromosome, or else the first in the list
+proc bcol_get {bcol start {end {}} {chromosome {}}} {
 	if {[dict get $bcol objtype] ne "bcol"} {error "This is not a bcol object: $bcol"}
 	if {$end eq ""} {
 		set end $start
@@ -170,9 +195,10 @@ proc bcol_get {bcol start {end {}}} {
 	set btype [string index $type 0]
 	array set typesizea {c 1 s 2 i 4 w 8 f 4 d 8}
 	set typesize $typesizea($btype)
-	set max [dict get $bcol max]
- 	set table [dict get $bcol table]
-	set tabled [dict get $bcol tabled]
+	set chrline [lindex [bcol_chrlines $bcol $chromosome] 0]
+	foreach {chr min max chrstart} $chrline break
+	# chrline is in half open, we are using (Tcl style) closed interval here
+	incr max -1
 	if {[catch {dict get $bcol default} default]} {
 		set default 0
 	}
@@ -181,29 +207,17 @@ proc bcol_get {bcol start {end {}}} {
 	if {$start > $max} {return [list_fill $len $default]}
 	if {$end > $max} {set uend $max} else {set uend $end}
 	set result {}
-	set offset 0
-	if {[llength $table] > 2} {
-		list_foreach {num temp noffset} $table {
-			if {$start <= $num} {
-				break
-			}
-			set offset $noffset
-		}
-		set num [lindex $table 0 0]
-	} else {
-		set num [lindex $table 0 0]
-	}
-	if {$start < $num} {
-		if {$end < $num} {
+	if {$start < $min} {
+		if {$end < $min} {
 			return [list_fill [expr {$end-$start+1}] $default]
 		} else {
-			set result [list_fill [expr {$num-$start}] $default]
+			set result [list_fill [expr {$min-$start}] $default]
 		}
-		set start $num
+		set start $min
 	}
 	set len [expr {$uend-$start+1}]
 	if {$len <= 0} {return $result}
-	set pos [expr {$typesize*($start-$num)}]
+	set pos [expr {$typesize*($chrstart + $start-$min)}]
 	set binfile [dict get $bcol binfile]
 	# get data from already opened file
 	set f [dict get $bcol fi]
@@ -222,90 +236,140 @@ proc bcol_get {bcol start {end {}}} {
 		error "error getting data from $binfile for position $start-$end"
 	}
 	foreach v $sresult {
-		catch {set offset [dict get $tabled $start]}
 		incr start
-		lappend result [expr {$v + $offset}]
+		lappend result $v
 	}
 	if {$uend < $end} {lappend result {*}[list_fill [expr {$end-$uend}] $default]}
 	return $result
 }
 
-# Warning:
-# while cg table get follows the half-open convention, end position is not included
-# the procedure bcol_table follows the Tcl lrange convention: end position is included!
-proc bcol_table {bcol {start {}} {end {}}} {
+proc bcol_chrlines {bcol chromosome} {
+	set tablechr [dict get $bcol tablechr]
+	if {$chromosome eq "all"} {
+		set chrlines [dict get $bcol table]
+	} elseif {[dict exists $tablechr $chromosome]} {
+		set chrlines [list [dict get $bcol tablechr $chromosome]]
+	} elseif {$chromosome eq ""} {
+		set table [dict get $bcol table]
+		set chrlines [list [lindex $table 0]]
+	} else {
+		error "chromosome \"$chromosome\" not found in bcol file [dict get $bcol file]"
+	}
+	return $chrlines
+}
+
+# bcol_table now also follows the half-open convention, end position is not included
+# offset support was removed (complicates things, and was never actually used)
+proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 0}} {
 	if {[dict get $bcol objtype] ne "bcol"} {error "This is not a bcol object: $bcol"}
 	set type [dict get $bcol type]
 	if {$type eq "lineindex"} {set type iu}
 	set btype [string index $type 0]
 	array set typesizea {c 1 s 2 i 4 w 8 f 4 d 8}
 	set typesize $typesizea($btype)
-	set max [dict get $bcol max]
- 	set table [dict get $bcol table]
-	set tabled [dict get $bcol tabled]
-	if {[catch {dict get $bcol default} default]} {
-		set default 0
-	}
-	if {$start eq ""} {set start 0}
-	if {$end eq ""} {set end $max}
-	set len [expr {$end-$start+1}]
-	if {$len <= 0} {return {}}
-	if {$start > $max} {return [list_fill $len $default]}
-	if {$end > $max} {set uend $max} else {set uend $end}
-	set offset 0
-	set curpos $start
+	set table [dict get $bcol table]
+	set tablechr [dict get $bcol tablechr]
+	set chrlines [bcol_chrlines $bcol $chromosome]
 	set o stdout
-	set name [file root [file tail [dict get $bcol file]]]
-	puts $o "pos\tvalue"
-	if {[llength $table] > 2} {
-		list_foreach {num type noffset} $table {
-			if {$start <= $num} {
-				break
-			}
-			set offset $noffset
+	if {$showchr} {
+		puts $o "chromosome\tpos\tvalue"
+	} else {
+		puts $o "pos\tvalue"
+	}
+	set ostart $start
+	set oend $end
+	foreach chrline $chrlines {
+		foreach {chr min max chrstart} $chrline break
+		if {[catch {dict get $bcol default} default]} {
+			set default 0
 		}
-	} else {
-		set num [lindex $table 0 0]
-	}
-	while {$start < $num} {
-		if {$start > $end} {return}
-		puts $o $curpos\t$default
-		incr start
-		incr curpos
-	}
-	set len [expr {$uend-$start+1}]
-	if {$len <= 0} {return {}}
-	set pos [expr {$typesize*($start-$num)}]
-	# get data from already opened file
-	set f [dict get $bcol fi]
-	set f [dict get $bcol fi]
-	if {$f ne ""} {
-		seek $f $pos
-	} else {
-		set f [gzopen [gzfile $binfile] $pos]
-	}
-	fconfigure $f -encoding binary -translation binary
-	while {$curpos <= $end} {
-		catch {set offset [dict get $tabled $start]}
-		incr start
-		set b [read $f $typesize]
-		binary scan $b $type value
-		set value [expr {$value + $offset}]
-		puts $o $curpos\t$value
-		incr curpos
-	}
-	if {[dict get $bcol fi] eq ""} {
-		close $f
-	}
-	while {$uend < $end} {
-		puts $o $curpos\t$default
-		incr curpos
-		incr uend
+		if {$start eq ""} {set start $min}
+		if {$end eq ""} {set end $max}
+		set len [expr {$end-$start}]
+		if {$len <= 0} {return {}}
+		if {$end > $max} {set uend $max} else {set uend $end}
+		set curpos $start
+		while {$start < $min} {
+			if {$start >= $end} {return}
+			if {$showchr} {
+				puts $o $chr\t$curpos\t$default
+			} {
+				puts $o $curpos\t$default
+			}
+			incr start
+			incr curpos
+		}
+		set len [expr {$uend-$start}]
+		if {$len <= 0} {return {}}
+		set pos [expr {$typesize*($chrstart + $start-$min)}]
+		# get data from already opened file
+		set f [dict get $bcol fi]
+		if {$f ne ""} {
+			seek $f $pos
+		} else {
+			set f [gzopen [gzfile $binfile] $pos]
+		}
+		fconfigure $f -encoding binary -translation binary
+		while {$curpos < $uend} {
+			incr start
+			set b [read $f $typesize]
+			binary scan $b $type value
+			if {$showchr} {
+				puts $o $chr\t$curpos\t$value
+			} else {
+				puts $o $curpos\t$value
+			}
+			incr curpos
+		}
+		if {[dict get $bcol fi] eq ""} {
+			close $f
+		}
+		while {$curpos < $end} {
+			puts $o $curpos\t$default
+			incr curpos
+			incr uend
+		}
+		set start $ostart
+		set end $oend
 	}
 }
 
 array set bcol_typea {c,mn -127 s,mn -32768 i,mn -2147483648 w,mn -9223372036854775808 cu,mn 0 su,mn 0 iu,mn 0}
 array set bcol_typea {c,mx  127 s,mx  32767 i,mx  2147483647 w,mx  9223372036854775807 cu,mx 255 su,mx 65535 iu,mx 4294967295}
+
+proc cg_bcol_update {newbcol oldbcol args} {
+	set newbinfile $newbcol.bin
+	set bcol [bcol_open $oldbcol 1]
+	set type [dict get $bcol type]
+	set default [dict get $bcol default]
+	bcol_close $bcol
+	set o [open $newbcol w]
+	puts $o "\# binary column"
+	puts $o "\# type $type"
+	puts $o "\# default $default"
+	puts $o "chromosome\tbegin\tend"
+	set args [list $oldbcol {*}$args]
+	foreach file $args {
+		set bcol [bcol_open $file 1]
+		set table [dict get $bcol table]
+		set version [dict get $bcol version]
+		set binfile [dict get $bcol binfile]
+		exec {*}[gzcat $binfile] $binfile >> $newbinfile
+		if {$version == 0} {
+			set line [lindex $table 0]
+			if {[regexp -- {-c?h?r?([0-9XYM]+)-[^-]+.bcol$} [gzfile $file] temp chr]
+			||[regexp -- {-([^-]+).bcol$} [gzfile $file] temp chr]} {
+				lset line 0 [chr_clip $chr]
+			}
+			puts $o [join $line \t]
+		} else {
+			foreach line $table {
+				puts $o [join $line \t]
+			}
+		}
+	}
+	cg razip $newbinfile
+}
 
 proc cg_bcol_make {args} {
 	global bcol_typea
@@ -352,12 +416,11 @@ proc cg_bcol_make {args} {
 	}
 	set args [lrange $args $pos end]
 	if {[llength $args] != 2} {
-		exiterror "wrong # args: should be \"cg bcol make ?options? bcolprefix column\""
+		exiterror "wrong # args: should be \"cg bcol make ?options? bcolfile column\""
 	}
-	foreach {prefix valuecolumn} $args break
-	set prefix [file_absolute $prefix]
-	set tail [file tail $prefix]
-	file mkdir $prefix.bcol.temp
+	foreach {bcolfile valuecolumn} $args break
+	set bcolfile [file_absolute $bcolfile]
+	set tail [file tail $bcolfile]
 	if {[info exists bcol_typea($type,mx)]} {
 		set max $bcol_typea($type,mx)
 		set min $bcol_typea($type,mn)
@@ -404,8 +467,8 @@ proc cg_bcol_make {args} {
 		set offsetpos $offsetcol
 		set colpos $valuecolumn
 	}
-# puts "bcol_make [list $prefix.bcol.temp/$tail] $type $colpos $chrompos $offsetpos $defaultvalue"
-	set pipe [open "| bcol_make [list $prefix.bcol.temp/$tail] $type $colpos $chrompos $offsetpos $defaultvalue >@ stdout 2>@ stderr" w]
+# puts "bcol_make $bcolfile.temp $type $colpos $chrompos $offsetpos $defaultvalue"
+	set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $defaultvalue >@ stdout 2>@ stderr" w]
 	fconfigure $f -encoding binary -translation binary
 	fconfigure $pipe -encoding binary -translation binary
 	fcopy $f $pipe
@@ -415,13 +478,11 @@ proc cg_bcol_make {args} {
 		exit 1
 	}
 	if {$compress} {
-		foreach file [glob $prefix.bcol.temp/${tail}*.bin] {
-			exec razip -c $file > $file.rz
-			file delete $file
-		}
+		exec razip -c $bcolfile.temp.bin > $bcolfile.temp.bin.rz
+		file delete $bcolfile.temp.bin
 	}
-	file rename -force {*}[glob $prefix.bcol.temp/*] [file dir $prefix]
-	file delete -force $prefix.bcol.temp
+	file rename -force $bcolfile.temp $bcolfile
+	file rename -force $bcolfile.temp.bin.rz $bcolfile.bin.rz
 }
 
 proc cg_bcol_get {args} {
@@ -438,16 +499,36 @@ proc cg_bcol_get {args} {
 }
 
 proc cg_bcol_table {args} {
+	set chromosome {}
+	set showchr 1
+	set byrownum 0
+	set pos 0
+	foreach {key value} $args {
+		switch -- $key {
+			-c - --chromosome {
+				set chromosome $value
+			}
+			-s - --showchromosome {
+				set showchr $value
+			}
+			-r - --byrownum {
+				set byrownum $value
+			}
+			-- break
+			default {
+				break
+			}
+		}
+		incr pos 2
+	}
+	set args [lrange $args $pos end]
 	if {[llength $args] < 1 || [llength $args] > 3} {
-		exiterror "wrong # args: should be \"cg bcol table file ?start? ?end?\""
+		exiterror "wrong # args: should be \"cg bcol table ?-c chromosome? ?-s showchr? file ?start? ?end?\""
 	}
 	foreach {indexfile begin end} $args break
 	set bcol [bcol_open $indexfile]
-	if {[isint $end]} {incr end -1}
-	set result [bcol_table $bcol $begin $end]
+	bcol_table $bcol $begin $end $chromosome $showchr $byrownum
 	bcol_close $bcol
-	puts $result
-	return $result
 }
 
 proc cg_bcol_size {args} {
