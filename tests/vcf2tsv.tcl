@@ -42,4 +42,24 @@ test vcf2tsv {vcf2tsv vars_mirna.vcf} {
 > chr1	1102520	1102537	del	17	
 child process exited abnormally} error
 
+test vcf2tsv {cg_vcf2tsv info handling} {
+	exec head -8 data/test2.vcf > tmp/temp.vcf
+	exec tail -n+11 data/test2.vcf >> tmp/temp.vcf
+	set o [open tmp/msgs.txt w]
+	cg vcf2tsv -s 1 tmp/temp.vcf tmp/temp.tsv 2>@ $o
+	close $o
+	file_read tmp/msgs.txt
+} {line 16: info field DB not described in header, skipping
+line 18: info field AA not described in header, skipping
+line 19: info field AA not described in header, skipping
+line 19: info field DB not described in header, skipping
+line 19: info field AA not described in header, skipping
+line 19: info field DB not described in header, skipping
+line 20: info field AA not described in header, skipping
+line 21: info field AA not described in header, skipping
+line 21: info field AA not described in header, skipping
+line 22: info field AA not described in header, skipping
+line 23: info field AA not described in header, skipping
+}
+
 testsummarize
