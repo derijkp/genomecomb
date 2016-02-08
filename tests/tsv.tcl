@@ -105,6 +105,34 @@ t	chrM	10	25	t2
 t	chrX	90	200	t2
 t	chrY	1010	1900	t2}
 
+test tsv_cat {two same header -n file -c 0} {
+	cg cat -c 0 -n file data/reg2.tsv data/reg4.tsv
+} {# comments added
+#
+## header
+##
+test	chromosome	begin	end	test2	file
+t	1	15	25	t2	reg2.tsv
+t	1	45	55	t2	reg2.tsv
+t	2	150	160	t2	reg2.tsv
+t	2	170	180	t2	reg2.tsv
+t	2	300	400	t2	reg2.tsv
+t	2	400	500	t2	reg2.tsv
+t	3	1000	1100	t2	reg2.tsv
+t	M	10	25	t2	reg2.tsv
+t	X	90	200	t2	reg2.tsv
+t	Y	1010	1900	t2	reg2.tsv
+t	chr1	15	25	t2	reg4.tsv
+t	chr1	45	55	t2	reg4.tsv
+t	chr2	150	160	t2	reg4.tsv
+t	chr2	170	180	t2	reg4.tsv
+t	chr2	300	400	t2	reg4.tsv
+t	chr2	400	500	t2	reg4.tsv
+t	chr3	1000	1100	t2	reg4.tsv
+t	chrM	10	25	t2	reg4.tsv
+t	chrX	90	200	t2	reg4.tsv
+t	chrY	1010	1900	t2	reg4.tsv}
+
 test tsv_cat {two diff header} {
 	exec cg cat data/reg1b.tsv data/reg2.tsv
 } {headers do not match, use -f to force or -m to merge} error
@@ -138,6 +166,24 @@ t	X	90	200	t2
 t	Y	1010	1900	t2
 t	1	10	20	
 t	1	50	60	}
+
+test tsv_cat {two diff header -m, -n -c 0} {
+	cg cat -n file -c 0 -m data/reg2.tsv data/reg1b.tsv
+} {# comments added
+#
+test	chromosome	begin	end	test2	file
+t	1	15	25	t2		reg2.tsv
+t	1	45	55	t2		reg2.tsv
+t	2	150	160	t2		reg2.tsv
+t	2	170	180	t2		reg2.tsv
+t	2	300	400	t2		reg2.tsv
+t	2	400	500	t2		reg2.tsv
+t	3	1000	1100	t2		reg2.tsv
+t	M	10	25	t2		reg2.tsv
+t	X	90	200	t2		reg2.tsv
+t	Y	1010	1900	t2		reg2.tsv
+t	1	10	20			reg1b.tsv
+t	1	50	60			reg1b.tsv}
 
 test tsv_cat {two diff header -m} {
 	cg cat -m data/reg1.tsv data/reg2.tsv

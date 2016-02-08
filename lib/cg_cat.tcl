@@ -2,6 +2,7 @@ proc cg_cat {args} {
 	set fields {}
 	set force ""
 	set addcomment 1
+	set namefield {}
 	set sort 0
 	set pos 0
 	while 1 {
@@ -19,6 +20,10 @@ proc cg_cat {args} {
 			-c {
 				incr pos
 				set addcomment [lindex $args $pos]
+			}
+			-n {
+				incr pos
+				set namefield [lindex $args $pos]
 			}
 			-fields {
 				incr pos
@@ -90,6 +95,9 @@ proc cg_cat {args} {
 			}
 		}
 	}
+	if {$namefield ne ""} {
+		lappend header $namefield
+	}
 	if {[llength $comments]} {
 		puts [join $comments \n]
 	}
@@ -97,10 +105,19 @@ proc cg_cat {args} {
 	set defcor [list_cor $header $header]
 	set lh [llength $header]
 	foreach testheader $headers file $args {
+		set fname [file tail $file]
 		set f [gzopen $file]
 		set testheader [tsv_open $f]
 		if {($force eq "f" || $force eq "") && $fields eq ""} {
-			fcopy $f stdout
+			if {$namefield ne ""} {
+				while {![eof $f]} {
+					set line [gets $f]
+					if {$line eq ""} continue
+					puts $line\t$fname
+				}
+			} else {
+				fcopy $f stdout
+			}
 		} else {
 			# merge
 			set cor [list_cor $testheader $header]
@@ -110,7 +127,9 @@ proc cg_cat {args} {
 				while {![eof $f]} {
 					set line [split [gets $f] \t]
 					if {![llength $line]} continue
-					puts [join [list_sub $line $cor] \t]
+					set line [list_sub $line $cor]
+					if {$namefield ne ""} {lappend line $fname}
+					puts [join $line \t]
 				}
 			}
 		}
