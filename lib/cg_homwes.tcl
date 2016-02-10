@@ -146,11 +146,11 @@ proc cg_homwes {args} {
 		}
 		set field [findfield $header filter$postfix]
 		if {$field ne ""} {
-			lappend query "\$$field in {. PASS}"
+			lappend query "\$$field in {. PASS Pass pass}"
 		} elseif {$postfix ne ""} {
 			set field [findfield $header filter]
 			if {$field ne ""} {
-				lappend query "\$$field in {. PASS}"
+				lappend query "\$$field in {. PASS Pass pass}"
 			} else {
 				puts "warning: field \"filter$postfix\" is missing"
 			}
