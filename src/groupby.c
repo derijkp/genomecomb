@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 	DString *line1 = NULL,*line2 = NULL,*templine = NULL;
 	DStringArray *result1=NULL,*result2=NULL,*tempresult;
 	size_t len1=0,len2=0;
-	int error1,i,max=0,match,count=0,next=1000000;
+	int error1,i,max=0,match,count=0;
 	f1 = stdin; f2 = stdout;
 	if (argc != 5) {
 		fprintf(stderr,"Format is: groupby grouppos listpos sumpos statspos\n");
@@ -110,12 +110,6 @@ int main(int argc, char *argv[]) {
 	/* ----- loop ----- */
 	while (!DStringGetTab(line2,f1,max,result2,1,NULL)) {
 		count++;
-/*
-		if (count >= next) {
-			fprintf(stderr,"%d\n",count);
-			next += 1000000;
-		}
-*/
 		/* ----- check if matches ----- */
 		match = 1;
 		for(i = 0 ; i < groupnum ; i++) {
