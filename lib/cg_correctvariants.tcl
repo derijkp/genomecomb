@@ -66,11 +66,11 @@ proc cg_correctvariants {args} {
 	set sposs {}
 	if {[llength $samples]} {
 		foreach sample $samples {
-			lappend sposs {*}[list_cor $header [list alleleSeq1-$sample alleleSeq2-$sample sequenced-$sample zyg-$sample]]
+			lappend sposs {*}[list_cor $nheader [list alleleSeq1-$sample alleleSeq2-$sample sequenced-$sample zyg-$sample]]
 			lappend aposs {*}[lrange $sposs end-3 end-2]
 		}
 	} else {
-		set tempposs [list_cor $header [list alleleSeq1 alleleSeq2 sequenced zyg]]
+		set tempposs [list_cor $nheader [list alleleSeq1 alleleSeq2 sequenced zyg]]
 		if {[llength [list_remove $tempposs -1]]} {
 			lappend sposs {*}$tempposs
 			lappend aposs {*}[lrange $sposs end-3 end-2]
