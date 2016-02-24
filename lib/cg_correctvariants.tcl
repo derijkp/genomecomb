@@ -132,7 +132,7 @@ proc cg_correctvariants {args} {
 		} else {
 			set gref $size
 		}
-		if {$gref ne $ref && !($ref eq "" && $size ne "")} {
+		if {$force == 3 || ($gref ne $ref && !($ref eq "" && $size ne ""))} {
 			set resultlines {}
 			set prevalt ___
 			foreach line $lines {
