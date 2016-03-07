@@ -48,3 +48,5 @@ lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
 
 file mkdir tmp
 test_cleantmp
+set dbopt {}
+set dboptt {}

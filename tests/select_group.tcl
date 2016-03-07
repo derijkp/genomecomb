@@ -243,6 +243,24 @@ sample1	Am	1
 sample1	Bm	1
 sample2	Bf	2}
 
+test select_group {group with wildcard calc col and sampleinfo, ignoring sample prefix} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-gatk-crsbwa-sample1	type-gatk-crsbwa-sample2
+		1	A	B
+		2	B	B
+	}
+	write_tab tmp/temp.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+	}
+	exec cg select -f {{typex-*="${type-*}${gender-*}"}} -g {sample {} typex {}} -gc {count} tmp/temp.tsv
+} {sample	typex	count
+gatk-crsbwa-sample1	Am	1
+gatk-crsbwa-sample1	Bm	1
+gatk-crsbwa-sample2	Bf	2}
+
 test select_group {sampleinfo in group} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {

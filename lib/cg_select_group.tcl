@@ -45,7 +45,7 @@ proc select_parse_for_samples {group groupcol header {calccolsVar {}}} {
 		if {![inlist $header $field] && ![info exists calccols($field)]} {
 			if {[lsearch -glob $header ${field}-*] != -1
 				|| [llength [array names calccols ${field}-*]]
-				|| (![catch {tsv_select_sampleinfo_wildcard ${field}-*} temp] && [llength $temp])
+				|| (![catch {tsv_select_sampleinfo_wildcard ${field}-* $header} temp] && [llength $temp])
 			} {
 				# hidden sample
 				set gsamples [samples $header]
@@ -88,7 +88,7 @@ proc tsv_select_sampleusefield {header field sample calccolsVar {neededfieldsVar
 	} elseif {[inlist $header $field]} {
 		set fieldused $field
 		lappend neededfields $fieldused
-	} elseif {[inlist $header sample] && ![catch {tsv_select_sampleinfo $field}]} {
+	} elseif {[inlist $header sample] && ![catch {tsv_select_sampleinfo $field $header}]} {
 		# long format sampleinfo
 		set calccols($field) [list "\t\t\t\tset \{$field\} \[tsv_select_sampleinfo_long \{$field\} \$sample\]\n"]
 		lappend neededfields sample
@@ -426,7 +426,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 						}
 					}
 				}
-			} elseif {![catch {tsv_select_sampleinfo $field-$sample} value] || ![catch {tsv_select_sampleinfo $field} value]} {
+			} elseif {![catch {tsv_select_sampleinfo $field-$sample $header} value] || ![catch {tsv_select_sampleinfo $field $header} value]} {
 				lappend groupname $value
 				if {[llength $filter]} {
 					if {[string first * $filter] == -1} {
@@ -457,7 +457,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 					set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
 					if {$fieldused ne ""} {
 						list_addnew todoa([list $field $fieldused 0]) $item
-					} elseif {![catch {tsv_select_sampleinfo $field-$sample} value] || ![catch {tsv_select_sampleinfo $field} value]} {
+					} elseif {![catch {tsv_select_sampleinfo $field-$sample $header} value] || ![catch {tsv_select_sampleinfo $field $header} value]} {
 						list_addnew todoa([list $field $value 1]) $item
 					}
 				}
@@ -488,7 +488,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 						}
 					}
 				}
-			} elseif {![catch {tsv_select_sampleinfo $field-$sample} value] || ![catch {tsv_select_sampleinfo $field} value]} {
+			} elseif {![catch {tsv_select_sampleinfo $field-$sample $header} value] || ![catch {tsv_select_sampleinfo $field $header} value]} {
 				lappend col $value
 				if {[llength $filter]} {
 					if {[string first * $filter] == -1} {
@@ -534,7 +534,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			incr num
 		} else {
 			# tsv_select_sampleinfo gives not present error if field also not found in sampleinfo
-			set value [tsv_select_sampleinfo $field]
+			set value [tsv_select_sampleinfo $field $header]
 			if {[string first - $field] != -1} {
 				append prequery "\t\t\tset \{$field\} \"$value\"\n"
 			} elseif {[inlist $header sample]} {

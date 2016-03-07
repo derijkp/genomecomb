@@ -724,6 +724,23 @@ test select "sampleinfo in in -f and -q saggregate$dboptt" {
 } {id	gender-sample1	gender-sample2	gender-sample3
 1	m	f	f}
 
+test select "sampleinfo ignoring prefix in in -f and -q saggregate$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-gatk-crsbwa-sample1	freq-gatk-crsbwa-sample2	freq-gatk-crsbwa-sample3
+		1	0.4	0.8	1.0
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select {*}$dbopt -q {scount($gender eq "f" and $freq > 0.9) > 0} -f {id gender-gatk-crsbwa-sample1 gender-gatk-crsbwa-sample2 gender-gatk-crsbwa-sample3} tmp/temp.tsv
+} {id	gender-gatk-crsbwa-sample1	gender-gatk-crsbwa-sample2	gender-gatk-crsbwa-sample3
+1	m	f	f}
+
 test select "wildcard calc column in query$dboptt" {
 	global dbopt
 	test_cleantmp
