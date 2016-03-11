@@ -163,11 +163,11 @@ proc bcol_size bcol {
 }
 
 proc bcol_first bcol {
-	lindex [dict get $bcol tabled] 0
+	lindex [dict get $bcol table] 0 1
 }
 
 proc bcol_last bcol {
-	dict get $bcol max
+	lindex [dict get $bcol table] 0 2
 }
 
 proc bcol_close bcol {
@@ -480,9 +480,11 @@ proc cg_bcol_make {args} {
 	if {$compress} {
 		exec razip -c $bcolfile.temp.bin > $bcolfile.temp.bin.rz
 		file delete $bcolfile.temp.bin
+		file rename -force $bcolfile.temp.bin.rz $bcolfile.bin.rz
+	} else {
+		file rename -force $bcolfile.temp.bin $bcolfile.bin
 	}
 	file rename -force $bcolfile.temp $bcolfile
-	file rename -force $bcolfile.temp.bin.rz $bcolfile.bin.rz
 }
 
 proc cg_bcol_get {args} {
@@ -609,6 +611,9 @@ proc cg_bcol_histo {args} {
 			catch {bcol_close $bcol}
 			set file [lindex [gzfile $bcolfile-chr$chr-*.bcol $bcolfile-chr$chr.bcol $bcolfile-$chr-*.bcol $bcolfile-$chr.bcol] 0]
 			set bcol [bcol_open $file 1]
+			set getchr {}
+		} else {
+			set getchr $chr
 		}
 		if {[eof $f] || $name ne $prevname} {
 			incr tota($biv) $a($biv)
@@ -643,7 +648,7 @@ proc cg_bcol_histo {args} {
 			if {[eof $f]} break
 		}
 		incr end -1
-		set data [bcol_get $bcol $begin $end]
+		set data [bcol_get $bcol $begin $end $getchr]
 		foreach v $data {
 			set iv $biv
 			foreach limit $intervals {

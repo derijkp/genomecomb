@@ -255,8 +255,7 @@ t2	10	0	0	10	20	6.25	0	14
 t3	3	0	0	7	10	7749.80	0	60000
 ----------
 Total	13	11	5	17	46	1689.48	0	60000
-Totalpercent	28.26	23.91	10.87	36.96
-}
+Totalpercent	28.26	23.91	10.87	36.96}
 
 test bcol_histo {old multifile format} {
 	test_cleantmp
@@ -281,8 +280,7 @@ t2	10	0	0	10	20	6.25	0	14
 t3	3	0	0	7	10	7749.80	0	60000
 ----------
 Total	13	11	5	17	46	1689.48	0	60000
-Totalpercent	28.26	23.91	10.87	36.96
-}
+Totalpercent	28.26	23.91	10.87	36.96}
 
 test bcol_make {c too large error} {
 	test_cleantmp
@@ -469,7 +467,7 @@ test bcol_make {types wu} {
 test bcol_update {update and join old bcols} {
 	test_cleantmp
 	exec cg bcol update tmp/new.bcol data/old-chr1.bcol data/old-chr2.bcol
-	exec cg bcol table -s 0 -c all tmp/new.bcol > tmp/cov.tsv.new
+	exec cg bcol table -s 1 -c all tmp/new.bcol > tmp/cov.tsv.new
 	exec cg select -f {{chromosome=chr_clip($chromosome)} pos value=$coverage} data/cov.tsv tmp/cov.tsv.ori
 	exec diff tmp/cov.tsv.new tmp/cov.tsv.ori
 } {59,74d58
@@ -489,8 +487,6 @@ test bcol_update {update and join old bcols} {
 < 2	30	0
 < 2	31	0
 < 2	32	0
-93d76
-< 
 child process exited abnormally} error
 
 test_cleantmp
