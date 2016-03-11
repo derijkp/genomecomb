@@ -235,7 +235,6 @@ proc analysis_complete_job {experiment} {
 proc generate_coverage_report_job {experiment regfile histofiles} {
 	upvar job_logdir job_logdir
 	job coverage_report-$experiment -deps [list $regfile {*}$histofiles] -targets [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv ] -code {
-		# exec python2.6 /complgen2/mastr-procedure/coverage_mastrs.py
 		set oheader {name chr begin end}
 		set names {}
 		foreach line [split [cg select -sh /dev/null -f {name chromosome begin end} $dep1] \n] {
@@ -245,7 +244,8 @@ proc generate_coverage_report_job {experiment regfile histofiles} {
 		}
 		set histofiles [lrange $deps 1 end]
 		foreach file $histofiles {
-			lappend oheader [file dir $file]
+			set file [file normalize $file]
+			lappend oheader [file tail [file dir $file]]
 			set f [open $file]
 			set header [tsv_open $f]
 			set poss [list_cor $header {name avg size {r<1} {r1<5} {r5<10} {r10<20}}]
