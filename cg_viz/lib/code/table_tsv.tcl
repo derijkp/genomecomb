@@ -153,15 +153,14 @@ table_tsv method query {args} {
 	}
 	progress next "Converting results"
 	putslog "Converting results"
-	cg bcol make -t iu -co 0 $tdata(indexdir)/tempquery_results rowid < $tdata(indexdir)/query_results.tsv
+	cg bcol make -t iu -co 0 $tdata(indexdir)/tempquery_results.bcol rowid < $tdata(indexdir)/query_results.tsv
 	set c [file_read $tdata(indexdir)/tempquery_results.bcol]
 	file_write $tdata(indexdir)/tempquery_results.bcol [string_change $c [list "\# default 0" "\# default 0\n\# [list query $query]"]]
-	set len [expr {[lindex [split [string trim $c] \n] end 0]+1}]
 	file rename -force $tdata(indexdir)/tempquery_results.bcol.bin $tdata(indexdir)/query_results.bcol.bin
 	file rename -force $tdata(indexdir)/tempquery_results.bcol $tdata(indexdir)/query_results.bcol
-	set tdata(len) $len
 	$object reset
 	set tdata(query_results) [bcol_open $tdata(indexdir)/query_results.bcol]
+	set tdata(len) [bcol_size $tdata(query_results)]
 	putslog "query done"
 	progress stop
 	Extral::event generate querychanged $object
