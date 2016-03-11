@@ -151,7 +151,7 @@ proc cg_primercheck {args} {
 		lappend temp {*}[list_cor $dbsnpheader {name freq valid weight func submitterCount submitters bitfields}]
 		lappend dbsnpposs $temp
 	}
-	set db [lindex [glob $dbdir/genome_*.ssa] 0]
+	set genomedb [lindex [glob $dbdir/genome_*.ssa] 0]
 	while {![eof $f]} {
 		set inputline [split [gets $f] \t]
 		if {![llength $inputline]} continue
@@ -169,8 +169,8 @@ proc cg_primercheck {args} {
 		foreach {maxfreq(1) maxfreq(2) primersnps(1) primersnps(2) primerrep(1) primerrep(2) ampliconfts} {? ? ? ? ? ? ?} break
 		set analysis {}
 		foreach p {1 2} {
-			foreach [list fnumhits($p,f) fhits($p,f)] [primercheck_search $db $primer($p) $plen($p) $maxnum] break
-			foreach [list fnumhits($p,r) fhits($p,r)] [primercheck_search $db [seq_complement $primer($p)] 0 $maxnum] break
+			foreach [list fnumhits($p,f) fhits($p,f)] [primercheck_search $genomedb $primer($p) $plen($p) $maxnum] break
+			foreach [list fnumhits($p,r) fhits($p,r)] [primercheck_search $genomedb [seq_complement $primer($p)] 0 $maxnum] break
 		}
 		set amplicons [primercheck_epcr $fhits(1,f) $fhits(2,f) $fhits(1,r) $fhits(2,r) $maxsize $maxamplicons]
 		set overlap 0
@@ -229,8 +229,8 @@ proc cg_primercheck {args} {
 				set prelen($p) $plen($p)
 				set endseq($p) $primer($p)
 			}
-			foreach [list numhits($p,f) hits($p,f)] [primercheck_search $db $endseq($p) $prelen($p) $maxnum] break
-			foreach [list numhits($p,r) hits($p,r)] [primercheck_search $db [seq_complement $endseq($p)] 0 $maxnum] break
+			foreach [list numhits($p,f) hits($p,f)] [primercheck_search $genomedb $endseq($p) $prelen($p) $maxnum] break
+			foreach [list numhits($p,r) hits($p,r)] [primercheck_search $genomedb [seq_complement $endseq($p)] 0 $maxnum] break
 			if {$numhits($p,f) eq "many" || $numhits($p,r) eq "many"} {
 				set numhits($p) many
 				lappend analysis "primer$p has too many hits for further analysis (> $maxnum)"
