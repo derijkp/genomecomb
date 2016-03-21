@@ -5,13 +5,17 @@ exec tclsh "$0" "$@"
 source tools.tcl
 package require genomecomb
 
-test nat_compare {chr1 1} {
+test nat_compare {chr10 chr2} {
 	nat_compare chr10 chr2
 } 1
 
 test nat_compare {chr1 1} {
 	nat_compare chr1 1
 } 50
+
+test nat_compare {test-100 test-1-1} {
+	nat_compare test-100 test-1-1
+} -1 
 
 test loc_compare {2 2} {
 	loc_compare 2 2

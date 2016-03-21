@@ -892,6 +892,19 @@ test select "old CGI gene format$dboptt" {
 	exec diff tmp/sorted.tsv tmp/expected.tsv
 } {}
 
+test select "check bug in -s$dboptt" {
+	global dbopt
+	write_tab tmp/testsort.tsv {
+		name
+		test-100
+		test-1-1
+	}
+	exec cg select {*}$dbopt -s name tmp/testsort.tsv
+} {name
+test-100
+test-1-1
+}
+
 }
 
 

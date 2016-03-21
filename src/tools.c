@@ -183,15 +183,16 @@ DString *DStringNewFromInt(int i) {
 #define blank(char) (char == ' ' || char == '\t')
 int naturalcompare (char const *a, char const *b,int alen,int blen) {
 	int diff, digitleft,digitright;
-	int secondaryDiff = 0,prezero,invert,comparedigits;
+	int secondaryDiff = 0,prezero,invert,comparedigits,prevdigit=0;
 	char *left=NULL,*right=NULL,*keep=NULL;
 	while (alen && blank(*a)) {a++; alen--;}
 	while (blen && blank(*b)) {b++; blen--;}
 	left = (char *)a;
 	right = (char *)b;
-	/* fprintf(stdout,"%s <> %s\n",a,b);fflush(stdout); */
+	/* fprintf(stdout,"---------- %s <> %s ----------\n",a,b);fflush(stdout); */
 	while (1) {
 		diff = *left - *right;
+		/* fprintf(stdout,"diff %c <> %c: %d\n", *left, *right, diff);fflush(stdout); */
 		if (!alen || *left == '\0') {
 			if (!blen || *right == '\0') {return secondaryDiff;} else {break;}
 		}
@@ -234,20 +235,30 @@ int naturalcompare (char const *a, char const *b,int alen,int blen) {
 				}
 			}
 		}
+		prevdigit = NATDIGIT(right);
 		left++; alen--;
 		right++; blen--;
 	}
 	digitright = blen && NATDIGIT(right);
 	digitleft = alen && NATDIGIT(left);
+	/* fprintf(stdout,"digit %d <> %d\n", digitleft, digitright, diff);fflush(stdout); */
 	if (*left == '-') {
 		if (digitright) {
-			return -1;
+			if (!prevdigit) {
+				return -1;
+			} else {
+				return 1;
+			}
 		} else {
 			return(*left - *right);
 		}
 	} else if (*right == '-' && digitleft) {
 		if (digitleft) {
-			return 1;
+			if (!prevdigit) {
+				return 1;
+			} else {
+				return -1;
+			}
 		} else {
 			return(*left - *right);
 		}
