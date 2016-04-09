@@ -140,7 +140,7 @@ scrolledgraph method start {} {
 	set graphsettings(ymax) {}
 	set graphsettings(xlog) 0
 	set graphsettings(ylog) 0
-	set graphsettings(linew) 1
+	set graphsettings(linew) 0
 	$object.g axis bind x <1> [list $object graphconfigure x]
 	$object.g axis bind y <1> [list $object graphconfigure y]
 	Classy::todo $object redraw
@@ -304,7 +304,9 @@ scrolledgraph method getlabel {win num} {
 }
 
 scrolledgraph method add {table {xtitle {}} {ytitle {}}} {
-	private $object xv yv wv data colors labels graphsettings header coldata
+#set ::table $table
+#putsvars object
+	private $object data colors labels graphsettings header coldata
 	set showregion 0
 	# we will add to existing (data(entries) already there)
 	set header [list_shift table]
@@ -479,29 +481,38 @@ scrolledgraph method rearrange_clear {args} {
 
 # change display according to settings (x, y, ...)
 scrolledgraph method rearrange {args} {
-	private $object data colors labels graphsettings header coldata xcol ycols wcols scols
+	private $object data colors labels graphsettings header coldata xcol ycols fcols wcols scols
 	if {[get graphsettings(type)] in {roc pr}} {
 		$object rearrange_roc
 		return
 	}
 	set showregion 0
-	set linew [get graphsettings(linew) 1]
+	set linew [get graphsettings(linew) 0]
 	$object rearrange_clear
+	set numcols {}
+	foreach field $header {
+		if {[lindex $coldata($field) 0] ne "labels"} {
+			lappend numcols $field
+		}
+	}
 	set xpos [lsearch $header [get xcol ""]]
 	if {$xpos == -1} {
-		set xcol [lindex $header 0]
-		set xpos 0
+		if {[llength $numcols] > 1} {
+			set xcol [lindex $numcols 0]
+		}
 	}
+	set xpos [lsearch $header $xcol]
 	set yposs [list_remove [list_cor $header [get ycols ""]] -1 $xpos]
 	if {![llength $yposs]} {
-		set ycols {}
-		foreach field [list_sub $header -exclude $xpos] {
-			if {[lindex $coldata($field) 0] ne "label"} {
-				lappend ycols $field
-			}
-		}
+		set ycols [list_remove $numcols $xcol]
 	} else {
 		set ycols [list_sub $header $yposs]
+	}
+	set fposs [list_remove [list_cor $header [get fcols ""]] -1 $xpos]
+	if {![llength $fposs]} {
+		set fcols [list_remove $header $xcol {*}$ycols {*}$numcols]
+	} else {
+		set fcols [list_sub $header $fposs]
 	}
 	set wposs [list_remove [list_cor $header [get wcols ""]] -1]
 	set wcols [list_sub $header $wposs]
@@ -536,9 +547,6 @@ scrolledgraph method rearrange {args} {
 	}
 	set vnum 0
 	set pos 0
-	set symbols {cross circle square diamond plus splus scross triangle}
-	# set dcolors {blue red gray orange yellow green violet}
-	set dcolors [distinctColors [expr {[llength $header]-1}]]
 	set ymin {}
 	set ymax {}
 	set todo {}
@@ -561,43 +569,95 @@ scrolledgraph method rearrange {args} {
 			lappend todo $ycol $wcol
 		}
 	}
-	foreach {field wcol} $todo {
-		incr pos
-		if {![llength $wcol]} {
-			set name $field
+	if {$fcols eq ""} {
+		set fcolvals {{}}
+		set dcolors [distinctColors [llength $todo]]
+	} else {
+		set fcol [lindex $fcols 0]
+		if {[lindex $coldata($fcol) 0] eq "labels"} {
+			set temp [lindex $coldata($fcol) end]
 		} else {
-			set name ${field}-$wcol
+			set temp [[lindex $coldata($fcol) 1] range 0 end]
 		}
-		set ys [lindex $coldata($field) 1]
-		set curmin [get ${ys}(min)]
-		set ymin [min $ymin $curmin]
-		set curmax [get ${ys}(max)]
-		set ymax [max $ymax $curmax]
-		set basecolor [lindex $dcolors $vnum]
-		if {$basecolor eq ""} {set basecolor blue}
-		lappend data(entries) $name
-		set data($name,vnum) $vnum
-		set data($name,lstart) 0
-		set data($name,lend) 0
-		set data($name,header) $header
-		$object.g element create e$name -label $name -xdata $xs -ydata $ys -symbol none
-		# $object.g element configure e$name -weights ::$ws
-		set color $basecolor
-		# $object.g element configure e$name -linewidth $linew -fill $color -outlinewidth 1 -pixels 1 -symbol circle
-		$object.g element configure e$name -linewidth $linew -color $basecolor -outline $basecolor -outlinewidth 1 -pixels 2 -symbol plus
-		if {[llength $wcol]} {
-			set wv [lindex $coldata($wcol) 1]
-			set wmin [get ${wv}(min)]
-			set wmax [get ${wv}(max)]
-			set style [$object gradientstyle $basecolor $wv 0]
-			$object.g element configure e$name -weight $wv -styles $style
+		foreach fcol [lrange $fcols 1 end] {
+			set newtemp {}
+			if {[lindex $coldata($fcol) 0] eq "labels"} {
+				set vals [lindex $coldata($fcol) end]
+			} else {
+				set vals [[lindex $coldata($fcol) 1] range 0 end]
+			}
+			foreach f $temp v $vals {
+				lappend f $v
+				lappend newtemp $f
+			}
+			set temp $newtemp
 		}
-		if {$showregion} {
-			$object.g element configure e$name -linewidth 10 -trace decreasing
+		set allfcolvals $temp
+		set fcolvals [list_remdup $allfcolvals]
+		set dcolors [distinctColors [expr {[llength $todo]*[llength $fcolvals]}]]
+	}
+	set symbols {cross circle square diamond plus splus scross triangle}
+	foreach {field wcol} $todo {
+		foreach fcolval $fcolvals {
+			incr pos
+			set name $field
+			if {[llength $wcol]} {
+				append name -$wcol
+			}
+			if {[llength $fcols]} {
+				append name -$fcolval
+			}
+			set ys [lindex $coldata($field) 1]
+			if {[llength $fcols]} {
+				# split out xs, ys and ws for this value of fill
+				set poss [list_find $allfcolvals $fcolval]
+				set uxs [vector create ::$object.fxs$vnum]
+				$uxs set [list_sub [$xs range 0 end] $poss]
+				set uys [vector create ::$object.fys$vnum]
+				$uys set [list_sub [$ys range 0 end] $poss]
+				if {[llength $wcol]} {
+					set wv [lindex $coldata($wcol) 1]
+					set uwv [vector create ::$object.fwv$vnum]
+					$uwv set [list_sub [$wv range 0 end] $poss]
+				}
+				set elementlabel $fcolval
+			} else {
+				set uxs $xs
+				set uys $ys
+				if {[llength $wcol]} {
+					set wv [lindex $coldata($wcol) 1]
+				}
+				set elementlabel $field
+			}			
+			set curmin [get ${uys}(min)]
+			set ymin [min $ymin $curmin]
+			set curmax [get ${uys}(max)]
+			set ymax [max $ymax $curmax]
+			set basecolor [lindex $dcolors $vnum]
+			if {$basecolor eq ""} {set basecolor blue}
+			lappend data(entries) $name
+			set data($name,vnum) $vnum
+			set data($name,lstart) 0
+			set data($name,lend) 0
+			set data($name,header) $header
+			$object.g element create e$name -label $elementlabel -xdata $uxs -ydata $uys -symbol none
+			set color $basecolor
+			# $object.g element configure e$name -linewidth $linew -fill $color -outlinewidth 1 -pixels 1 -symbol circle
+			set symbol plus
+			$object.g element configure e$name -linewidth $linew -color $basecolor -outline $basecolor -outlinewidth 1 -pixels 2 -symbol $symbol
+			if {[llength $wcol]} {
+				set wmin [get ${uwv}(min)]
+				set wmax [get ${uwv}(max)]
+				set style [$object gradientstyle $basecolor $uwv 0]
+				$object.g element configure e$name -weight $uwv -styles $style
+			}
+			if {$showregion} {
+				$object.g element configure e$name -linewidth 10 -trace decreasing
+			}
+			set data($name,color) $color
+			$object.g legend bind $name <1> [list $object elconf $name]
+			incr vnum
 		}
-		set data($name,color) $color
-		$object.g legend bind $name <1> [list $object elconf $name]
-		incr vnum
 	}
 	if {![isdouble $ymin]} {set ymin 0}
 	if {![isdouble $ymax]} {set ymax 1}
@@ -1201,6 +1261,12 @@ scrolledgraph method changeWs {} {
 	$object rearrange
 }
 
+scrolledgraph method changeFs {} {
+	private $object fcols header
+	set wcols [Classy::select "Select Element columns" $header -selectmode multiple -initialvalue $fcols]
+	$object rearrange
+}
+
 scrolledgraph method changesort {} {
 	private $object scols header
 	set scols [get scols ""]
@@ -1209,7 +1275,7 @@ scrolledgraph method changesort {} {
 }
 
 scrolledgraph method graphconfigure {{axis x}} {
-	private $object graphsettings header poscol negcol roccol
+	private $object graphsettings header poscol negcol roccol xcol ycols fcols scols wcols
 	destroy $object.graphconfigure
 	Classy::Dialog $object.graphconfigure -title "configure axis"
 	$object.graphconfigure tab "X Axis"
@@ -1236,8 +1302,12 @@ scrolledgraph method graphconfigure {{axis x}} {
 	$object.graphconfigure option numentry "Major stepsize" [privatevar $object graphsettings(ystep)] -command [list Classy::todo $object reconf]
 	$object.graphconfigure option numentry "Subdivisions" [privatevar $object graphsettings(ysubdivisions)] -command [list Classy::todo $object reconf]
 	#
+	$object.graphconfigure tab "Elements"
+	$object.graphconfigure option listbox "Element columns" [privatevar $object fcols] [privatevar $object header] -selectmode multiple
+	#
 	$object.graphconfigure tab "Weights"
 	$object.graphconfigure option listbox "Weight columns" [privatevar $object wcols] [privatevar $object header] -selectmode multiple
+	#
 	$object.graphconfigure tab "Sort"
 	$object.graphconfigure option listbox "Sort column" [privatevar $object scols] [privatevar $object header] -selectmode single
 	#
@@ -1287,4 +1357,10 @@ scrolledgraph method graphconfigure {{axis x}} {
 	if {$axis eq "y"} {
 		$object.graphconfigure tab "Y Axis"
 	}
+	update
+	set xcol $xcol
+	set ycols $ycols
+	set fcols $fcols
+	set wcols $wcols
+	set scols $scols
 }
