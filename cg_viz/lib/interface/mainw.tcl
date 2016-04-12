@@ -665,3 +665,7 @@ mainw method showcmdline {} {
 	Classy::todo	$object.cmdline.options.col1.entry1.value.text configure -wrap word
 	Classy::todo	$object.cmdline.options.col1.entry2.value.text configure -wrap word
 }
+
+mainw method cur_row {} {
+	lindex [split [$object.table.data index active] ,] 0
+}

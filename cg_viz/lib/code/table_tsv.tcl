@@ -199,6 +199,23 @@ table_tsv method tfields {} {
 	return $tdata(tfields)
 }
 
+table_tsv method trow {row} {
+	private $object tdata
+	set lineindex $tdata(lineindex)
+	set filepos [bcol_get $lineindex $row $row]
+	if {$tdata(compressed)} {
+		set f [gzopen $tdata(file) $filepos]
+	} else {
+		set f $tdata(f)
+		seek $f $filepos
+	}
+	set line [split [gets $f] \t]
+	if {$tdata(compressed)} {
+		catch {close $f}
+	}
+	return $line
+}
+
 table_tsv method qfields {} {
 	private $object tdata
 	return $tdata(qfields)
