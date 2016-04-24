@@ -216,6 +216,17 @@ table_tsv method trow {row} {
 	return $line
 }
 
+table_tsv method getline {row} {
+	private $object tdata
+	set lineindex $tdata(lineindex)
+	if {$tdata(query) ne ""} {
+		set qrow [bcol_get $tdata(query_results) $row $row]
+	} else {
+		set qrow $row
+	}
+	$object trow $qrow
+}
+
 table_tsv method qfields {} {
 	private $object tdata
 	return $tdata(qfields)

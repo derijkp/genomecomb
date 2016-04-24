@@ -667,5 +667,14 @@ mainw method showcmdline {} {
 }
 
 mainw method cur_row {} {
-	lindex [split [$object.table.data index active] ,] 0
+	expr {[lindex [split [$object.table.data index active] ,] 0] -1 }
+}
+
+mainw method cur_col {} {
+	lindex [split [$object.table.data index active] ,] 1
+}
+
+mainw method curline {} {
+	set wtable $object.table.data
+	$object.tb getline [$object cur_row]
 }
