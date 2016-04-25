@@ -23,13 +23,16 @@ proc calculate_hsmetrics_job {bamfile bedfile} {
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	set target $dir/$root.hsmetrics
-	job calc_hsmetrics-$root -deps {$bamfile $bamfile.bai $bedfile} -targets [list $target] -vars {bedfile} -code {
+	job calc_hsmetrics-$root -deps {$bamfile $bamfile.bai $bedfile} -targets [list $target] -vars {bamfile bedfile} -code {
 		exec samtools view -H $dep1 > $dep1.bed.temp
 		#remove comment columns & add strand info - due to lack of correct strand info take + as default
 		exec awk {$0 ~ /^@SQ/ {print $0}} $dep1.bed.temp > $dep1.bed
 		exec awk {BEGIN {OFS="\t"} !/^($|#)/ {print $1,$2,$3,"+",$4 }} $bedfile >> $dep1.bed
 		exec java -jar [picard]/CalculateHsMetrics.jar BAIT_INTERVALS=$dep1.bed TARGET_INTERVALS=$dep1.bed I=$dep1 O=$target.temp 2>@ stderr
-		file rename -force $target.temp $target
+		set sample [file tail [file root $bamfile]]
+		cg select -f [list sample=\"$sample\" *] $target.temp $target.temp2
+		file rename -force $target.temp2 $target
+		file delete $target.temp
 		file delete $dep1.bed
 		file delete $dep1.bed.temp
 	}
@@ -40,10 +43,7 @@ proc make_hsmetrics_report_job {destdir files} {
 	upvar job_logdir job_logdir
 	set experiment [file tail $destdir]
 	job calc_hsmetrics-$experiment -deps $files -targets $destdir/${experiment}_hsmetrics_report.tsv -code {
-		exec tail -n4 $dep1 | head -n1 > $target.temp
-		foreach d $deps {
-			exec tail -n3 $d | head -n1 >> $target.temp
-		}
+		cg cat {*}$deps > $target.temp
 		file rename -force $target.temp $target
 	}
 }
@@ -868,7 +868,22 @@ proc process_illumina {args} {
 			set target [file root [gzroot $file]].tsv
 			lappend todo [string range $target 4 end-4]
 		}
-		# job_logdir $dir/log_jobs
+		# check if there are bam files in ori to extract fastq from
+		set files [ssort -natural [jobglob ori/*.bam]]
+		foreach file $files {
+			set base fastq/[file tail [file root $file]]
+			set target $base-R1.fastq
+			set target2 $base-R2.fastq
+			job bam2fastq-[file tail $file] -deps {$file} \
+			-targets {$target $target2} -code {
+				cg bam2fastq $dep $target.temp $target2.temp
+				exec gzip $target.temp
+				exec gzip $target2.temp
+				file rename -force $target.temp.gz $target.gz
+				file rename -force $target2.temp.gz $target2.gz
+			}
+		}		
+		# find fastq files, and process them
 		set files [ssort -natural [jobglob fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
 		if {[llength $files]} {
 			# do not do any of preliminaries if end product is already there
