@@ -1059,14 +1059,14 @@ proc dict_get_default {d key {default {}}} {
 	}
 }
 
-proc samples {header {pattern *}} {
+proc samples {header {pattern {}}} {
 	set names {}
 	foreach col $header {
 		set pos [string first - $col]
 		if {$pos != -1} {
 			incr pos
 			set name [string range $col $pos end]
-			if {[string match $pattern $name]} {
+			if {$pattern eq "" || [string match $pattern $name]} {
 				lappend names $name
 			}
 		}
