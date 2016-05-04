@@ -66,26 +66,34 @@ proc multicompar_reannot_getline {f sampleaVar poss} {
 	}
 }
 
-proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {range {}}} {
+proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {range {}} {sampleaVar {}}} {
 
+	if {$sampleaVar ne ""} {upvar $sampleaVar samplea}
 	set compar_file [file_absolute $compar_file]
 	set basedir [file dir $compar_file]
 	catch {close $f}; catch {close $o}
 	set f [gzopen $compar_file]
 	set header [tsv_open $f]
 	set pos -1
-	unset -nocomplain samplea
-	set samples {}
-	foreach field $header {
-		incr pos
-		set temp [split $field -]
-		if {[llength $temp] > 1} {
-			set sample [join [lrange $temp 1 end] -]
-			lappend samplea(poss,$sample) $pos
-			lappend samplea(fields,$sample) [lindex $temp 0]
-			list_addnew samples $sample
+	# allow reuse of cached samplea for paging
+	# unset -nocomplain samplea
+	if {![info exists samplea(samples)]} {
+		set samples {}
+		foreach field $header {
+			incr pos
+			set splitpos [string first - $field]
+			if {$splitpos != -1} {
+				set temp [string range $field 0 [expr {$splitpos-1}]]
+				incr splitpos
+				set sample [string range $field $splitpos end]
+				lappend samplea(poss,$sample) $pos
+				lappend samplea(fields,$sample) $temp
+				lappend samples $sample
+			}
 		}
+		set samplea(samples) [list_remdup $samples]
 	}
+	set samples $samplea(samples)
 	if {[llength $range]} {
 		set samples [lrange $samples {*}$range]
 		if {![llength $samples]} {return {}}
@@ -93,7 +101,6 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {
 	set referencepos [lsearch $header reference]
 	if {$referencepos == -1} {set referencepos [lsearch $header ref]}
 	putslog "file contains samples: $samples"
-	set samplea(samples) $samples
 	set samplea(aposs) {}
 	foreach sample $samples {
 		set poss [tsv_basicfields $header 6 0]
@@ -144,6 +151,8 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {
 		if {!$okinfo} {
 			if {!$skipincomplete} {
 				error "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found: not properly processed sample"
+			} else {
+				putslog "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found: not properly processed sample"
 			}
 			set samples [list_remove $samples $sample]
 		}
@@ -341,11 +350,12 @@ proc cg_multicompar_reannot {args} {
 		multicompar_reannot $compar_file $force $regonly $skipincomplete
 	} else {
 		set s $pagedstart
+		unset -nocomplain samplea
 		while 1 {
 			set e [expr {$s + $paged-1}]
-			set samples [multicompar_reannot $compar_file $force $regonly $skipincomplete [list $s $e]]
+			set samples [multicompar_reannot $compar_file $force $regonly $skipincomplete [list $s $e] samplea]
 			if {![llength $samples]} break
-			puts "range $s-$e done"
+			putslog "range $s-$e done"
 			incr s $paged
 		}
 	}
