@@ -1,4 +1,5 @@
 
+#include "tools.h"
 #include "razf.h"
 
 typedef struct BCol_table {
@@ -16,6 +17,7 @@ typedef struct BCol {
 	int typesize;
 	int start;
 	int version;
+	DString *def;
 	BCol_table *table;
 	int tablesize;
 	unsigned char *buffer;

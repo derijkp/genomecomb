@@ -1,3 +1,5 @@
+#ifndef TOOLS_H_LOADED
+
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
@@ -84,3 +86,6 @@ void skip_header(FILE *f1, DString *linePtr,unsigned int *numfields,unsigned int
 
 int naturalcompare (char const *a, char const *b,int alen,int blen);
 int loccompare (char const *a, char const *b,int alen,int blen);
+
+#endif
+#define TOOLS_H_LOADED 1

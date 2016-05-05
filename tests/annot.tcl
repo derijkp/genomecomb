@@ -346,37 +346,63 @@ test reg_annot {replace} {
 
 test bcol_annot {basic} {
 	test_cleantmp
-	exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv
-	file_write tmp/bcol_coverage.tsv "chromosome\tfile\nchr1\ttemp-chr1.bcol\nchr2\ttemp-chr2.bcol\n"
+	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
 	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
 } {} 
 
 test bcol_annot {header error} {
 	test_cleantmp
-	exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv
+	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
 	file_write tmp/bcol_coverage.tsv "chr1\ttemp-chr1.bcol\nchr2\ttemp-chr2.bcol\n"
 	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
-} {*bcol database (tmp/bcol_coverage.tsv) should have a header of the type: chromosome file*} error match
+} {*bcol database (tmp/bcol_coverage.tsv) should have a header of the type: chromosome begin end, old style bcols (single chr not supported)*} error match
 
-#test bcol_annot {basic compressed} {
-#	test_cleantmp
-#	exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv
-#	file_write tmp/bcol_coverage.tsv "chromosome\tfile\nchr1\ttemp-chr1.bcol\nchr2\ttemp-chr2.bcol\n"
-#	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
-#	cg razip tmp/bcol_annot-test.tsv
-#	exec cg annotate tmp/bcol_annot-test.tsv.gz tmp/annot_test.tsv tmp/bcol_coverage.tsv
-#	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
-#} {} 
-
-test bcol_annot {basic uncompressed bcol} {
+test bcol_annot {basic compressed bcol} {
 	test_cleantmp
-	exec cg bcol make -p pos -c chromosome tmp/temp- coverage < data/cov.tsv
-	cg unzip {*}[glob tmp/*.rz]
-	file_write tmp/bcol_coverage.tsv "chromosome\tfile\nchr1\ttemp-chr1.bcol\nchr2\ttemp-chr2.bcol\n"
+	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
 	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
 } {} 
+
+test bcol_annot {basic uncompressed bcol} {
+	test_cleantmp
+	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
+	cg unzip {*}[glob tmp/*.rz]
+	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
+	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
+} {} 
+
+test bcol_annot {only chr1} {
+	test_cleantmp
+	cg select -q {$chromosome eq "chr1"} data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
+	cg select -q {$chromosome eq "chr1"} data/expected-bcol_annot-test.tsv tmp/expected.tsv
+	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
+	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
+	exec diff tmp/annot_test.tsv tmp/expected.tsv
+} {} 
+
+test bcol_annot {only chr2} {
+	test_cleantmp
+	cg select -q {$chromosome eq "chr2"} data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
+	cg select -q {$chromosome eq "chr2"} data/expected-bcol_annot-test.tsv tmp/expected.tsv
+	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
+	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
+	exec diff tmp/annot_test.tsv tmp/expected.tsv
+} {} 
+
+test bcol_annot {added chr3} {
+	test_cleantmp
+	file cop data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
+	set f [open tmp/bcol_annot-test.tsv a]
+	puts $f "chr3\t9\t10"
+	close $f
+	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
+	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
+	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
+} {11d10
+< chr3	9	10	0
+child process exited abnormally} error 
 
 test mir_annot {basic mir annotation} {
 	test_cleantmp

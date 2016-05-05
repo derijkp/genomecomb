@@ -550,6 +550,7 @@ void bcol_close(BCol *bcol) {
 	} else {
 		fclose(bcol->f);
 	}
+	DStringDestroy(bcol->def);
 	free(bcol->file);
 	free(bcol->buffer);
 	free(bcol);
@@ -710,14 +711,17 @@ BCol *bcol_open(char *bcolfile) {
 	FILE *f;
 	BCol *result;
 	DString *line = DStringNew();
-	int typesize,len=strlen(bcolfile),i;
+	int typesize,len=strlen(bcolfile),i,cnt;
 	result = (BCol *)malloc(sizeof(BCol));
 	result->type = 'i';
 	result->isunsigned = 1;
 	result->table = NULL;
 	result->tablesize = 0;
+	result->def = DStringNew();
 	f = fopen64_or_die(bcolfile, "r");
-	while (DStringGetLine(line,f) != -1) {
+	while (1) {
+		cnt = DStringGetLine(line,f);
+		if (cnt == -1) break;
 		if (line->string[0] != '#') break;
 		if (line->size > 7 && strncmp(line->string,"# type ",7) == 0) {
 			result->type = line->string[7];
@@ -726,6 +730,8 @@ BCol *bcol_open(char *bcolfile) {
 			} else {
 				result->isunsigned = 0;
 			}
+		} else if (line->size > 10 && strncmp(line->string,"# default ",10) == 0) {
+			DStringSetS(result->def,line->string+10,line->size-10);
 		}
 	}
 	if (naturalcompare(line->string,"chromosome\tbegin\tend",line->size,20) == 0) {
@@ -737,8 +743,10 @@ BCol *bcol_open(char *bcolfile) {
 			result->table = realloc(result->table,result->tablesize*sizeof(BCol_table));
 		}
 		i = 0;
-		while (DStringGetLine(line,f) != -1) {
+		while (1) {
 			int strpos;
+			cnt = DStringGetLine(line,f);
+			if (cnt == -1) break;
 			result->tablesize++;
 			result->table = realloc(result->table,result->tablesize*sizeof(BCol_table));
 			strpos = 0; while (strpos < line->size) {

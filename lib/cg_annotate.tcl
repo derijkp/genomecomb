@@ -96,49 +96,6 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 	file rename -force $annotfile.temp $annotfile
 }
 
-proc annotatebcol {file dbfile name annotfile} {
-#putslog [list annotatebcol $file $dbfile $name $annotfile]
-	catch {close $f}
-	set f [gzopen $file]
-	set header [tsv_open $f comment]
-	set poss [tsv_basicfields $header 3]
-	close $f
-	set fields [list_sub $header $poss]
-	if {[inlist $poss -1]} {
-		error "Cannot annotate $file: wrong fields"
-	}
-	set f [open $dbfile]
-	set header [tsv_open $f]
-	if {$header ne {chromosome file}} {
-		error "bcol database ($dbfile) should have a header of the type: chromosome file"
-	}
-	set bcollist {}
-	set dir [file dir [file_absolute $dbfile]]
-	while {![eof $f]} {
-		set line [gets $f]
-		if {$line eq ""} continue
-		foreach {chr dbfile} [split $line \t] break
-		lappend bcollist [list $chr $dir/$dbfile]
-	}
-	close $f
-	set bcollist [ssort -natural -index 0 $bcollist]
-	set newh $name
-	set o [open $annotfile.temp w]
-	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
-	puts $o \t$newh
-	close $o
-	if {[gziscompressed $file]} {
-		error "bcol_annot not supported for compressed files"
-	}
-	# puts "bcol_annot $file $poss [list_concat $bcollist]"
-	if {[catch {
-		exec bcol_annot $file {*}$poss {*}[list_concat $bcollist] >> $annotfile.temp 2>@ stderr
-	} error]} {
-		if {$error ne "child killed: write on pipe with no readers"} {error $error}
-	}
-	file rename -force $annotfile.temp $annotfile
-}
-
 proc cg_annotatedb_info {dbfile {near -1}} {
 	if {[file exists [gzroot $dbfile].opt]} {
 		set a [dict create {*}[file_read [gzroot $dbfile].opt]]

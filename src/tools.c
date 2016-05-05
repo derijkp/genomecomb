@@ -1,3 +1,5 @@
+#ifndef TOOLS_LOADED
+
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
@@ -1030,3 +1032,5 @@ int checksortreg(DString *prevchromosome,int *prevstart,int *prevend,DString *ch
 		return 0;
 	}
 }
+#endif
+#define TOOLS_LOADED 1
