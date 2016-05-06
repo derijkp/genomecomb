@@ -24,13 +24,17 @@ You can find info on each separate command in the [[reference]] section.
 
 == File formats ==
 
-The standard file format used in GenomeComb is a simple tab delimited file
-(without quoting), where the first (non comment) line contains column
-names. This is very flexible and allows for fast parsing. Depending on the
-columns present, files can be used for various purposes. Usually the files
-are used to describe features on a reference genome sequence. The file
-extension .sft (simple feature table) or plain .tsv can be used to refer to this format.
-In this context, genomecomb gives following columns specific meanings:
+The standard file format used in GenomeComb is the widely supported,
+simple, yet flexible [[format_tsv|tab-separated values file (tsv)]]. This
+text format contains tabular data, where each line is a record, and each
+field is separated from the next by a TAB character. The first line is a
+header indicating the names of each column
+
+Depending on which columns are present, files can be used for various
+purposes. Usually the files are used to describe features on a reference
+genome sequence. The file extension .sft (simple feature table) or plain
+.tsv can be used to refer to this format. Depending on context, genomecomb
+gives following columns specific meanings:
 
 ; **chromosome** or **chrom**: chromosome name. Many genomecomb tools allow mixing chr1 and 1 notations
 ; **begin** or **start**: start of feature. half-open coordinates as used by UCSC bed files and
@@ -61,6 +65,12 @@ be loaded into a local database.
 The format does not use quoting, so values in the table cannot contain tabs or newlines,
 unless by coding them using escape characters (\t,\n)
 
+== Project directories ==
+While not necessary for many of the commands, using the specific organisation of files in
+a [[format_project|Genomecomb project directory]] is useful: The overview
+commands (process_*) will generate or expect this structure.
+
 == How to start ==
 
-In the [[howto|Howto]] section we give some extended examples on how to process genome files and query the results.
+In the [[howto|Howto]] section we give some extended examples on how to
+process genome files and query the results.

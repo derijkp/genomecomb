@@ -1,0 +1,85 @@
+= genome project directory =
+
+Data is preferentially organised in a specific way in a genome project
+directory or projectdir for short. Some of the commands (especially the
+process_* ones) expect or generate this type of analysis directories.
+The preferred organisation is described here.
+
+The name of the projectdir is the name of the project. The projectdir can
+contain the following:
+
+; **samples directory**: contains a separate sample directory for each sample
+; **compar directory**: contains files that combine and compare data from all samples (multicompar files)
+; **projectinfo.tsv**: a file with some meta data about the analysis/data in the projectdir
+
+== samples directory ==
+This directory contains a subdirectory for each sample in the project.
+Each sample subdirectory (sampledir) has the name of the sample.
+
+=== sampledir ===
+Each sampledir contains a subdirectory named fastq that contains the fastq
+files for that sample. The names of matching fastq files of paired reads
+should be consecutive when sorted naturaly,the forward reads first. The
+usual naming of these files (same name, except for a 1 and 2) is ok. The
+name of each sample is taken from the sampledir name. The sample name
+should not contain hyphens (-)
+
+All files generated have names following the convention of using hyphens
+to separate different elements of the file. The first element indicates
+what is in the file. The last element (before the extension) is the sample
+name. There can be several steps in between. Each sampledir can contain
+results for this individual sample of the following type:
+
+; map-rdsbwa-sample1.bam: bam file created by aligning the reads of sample1
+to the reference genome in dbdir using bwa. The bam file has been sorted
+(s), duplicate marked (d), and realigned (r).
+; var-gatk-rdsbwa-sample1.tsv: a [[format_tsv|tsv variant file]] that contains
+variants called by gatk based on map-rdsbwa-sample1.bam. 
+; sreg-gatk-rdsbwa-sample1.tsv: A region file with all regions that can be
+considered sequenced using the same methods and quality measures as
+var-gatk-rdsbwa-sample1.tsv. Any position in those regions that is not in
+the variant file can be called reference with the same reliability as the
+variant calls.
+; varall-gatk-rdsbwa-sample1.tsv: variant calling data by gatk for all
+positions with >= 5 coverage (also reference called positions). This file
+is used to create the sreg files, and to update data in making multicompar 
+files later.
+; reg_cluster-gatk-rdsbwa-S0489.tsv: regions with many clustered variants
+(which are less reliable)
+
+For samtools variant calling on the same bamfile (map-rdsbwa-sample1.bam),
+these result files are named var-sam-rdsbwa-sample1.tsv,
+sreg-sam-rdsbwa-sample1.tsv, varall-sam-rdsbwa-sample1.tsv,
+reg_cluster-sam-rdsbwa-S0489.tsv
+
+For Complete Genomics alignment and variant calling the files
+are named var-cg-cg-sample1.tsv,
+sreg-cg-cg-sample1.tsv, reg_cluster-cg-cg-S0489.tsv
+
+The sampledir may contain precalculated data data from other pipelines.
+If these are in the correct format, they will be integrated in the
+project. vcf files (var-*.vcf) will be converted to tsv files, and their
+variants included in the multicompar.
+
+== compar dir ==
+The subdirectory compar contains comparisons of all samples, e.g.:
+
+; annot_compar-projectname.tsv: multicompar file containing information for
+all variants in all samples (and all methods). If a variant is not present
+in one of the samples, the information at the position of the variant will
+be completed (is the position sequenced or not, coverage, ...) The file is
+also annotated with all databases in dbdir (impact on genes, regions of
+interest, known variant data)
+; sreg-projectname.tsv: sequenced region multicompar file containing for all
+regions whether they are sequenced (1) or nor (0) for each sample.
+
+== projectinfo.tsv ==
+projectinfo.tsv is a [[format_tsv|tsv file]] containing data about the project.
+It must have 2 columns: key and value. The following keys can be found:
+
+; dbdir: directory containing reference data (genome sequence,
+annotation, ...). projectinfo.tsv file.
+; split: if 1, each alternative allele is on a separate line. If 0,
+multiple alternative alleles in the sample location and allele specific data 
+are on one line, the relevant fields containing (comma separated) lists.
+

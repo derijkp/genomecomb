@@ -1,0 +1,50 @@
+= bcol format =
+
+The bcol format stores one column of data in an efficient binary format.
+All data must be of the same type (list of supported types below).
+The (new) bcol format consists of two files, one in a text format
+describing the bcol data (bcolfile.tsv) and one containing the actual
+binary data.
+
+== bcolfile.tsv ==
+bcolfile.tsv is a [[format_tsv|tab-separated file]] with the following format
+
+{{{
+# binary column
+# type iu
+# default 0
+chromosome      begin   end
+1       0       50
+2       10      51
+}}}
+
+The fields "chromosome begin end" must be present, and indicate for which
+regions data is present in the binary file. They folow the same zero-based
+half-open indexing scheme as all genomecomb tsv files.
+
+The comments before the table must contain the following information:
+
+* The first comment line "# binary column" indicates it is a bcol file.
+* The "# type" comment line indicates the type of data in the binary file (supported types listed below)
+* The "# default" indicates the default value: the return value for any position not in the file.
+
+=== Supported types ===
+; d: double-precision floating point (64 bit) in machine native byte order
+; q: double-precision floating point (64 bit) in little-endian byte order
+; Q: double-precision floating point (64 bit) in big-endian byte order
+; f: Single-precision floating point (32 bit) in machine native byte order
+; r: Single-precision floating point (32 bit) in little-endian byte order
+; R: Single-precision floating point (32 bit) in big-endian byte order
+; w: wide integer (64-bit) in little-endian byte order
+; W: wide integer (64-bit) in big-endian byte order
+; m: wide integer (64-bit) in machine native byte order
+; i: integer (32-bit) in little-endian byte order
+; I: integer (32-bit) in big-endian byte order
+; n: integer (32-bit) in machine native byte order
+; s: small integer (16 bit) in little-endian byte order
+; S: small integer (16 bit) in big-endian byte order
+; t: small integer (16 bit) in machine native byte order
+; c: 8 bit integer (1 byte or character)
+
+== bcolfile.tsv ==
+bcolfile.tsv.bin.rz is a (compressed) binary file containing the actual data
