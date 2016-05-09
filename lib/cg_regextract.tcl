@@ -32,11 +32,11 @@ proc cg_regextract {args} {
 	puts $o "chromosome\tbegin\tend"
 	foreach file $files {
 		putslog "Processing $file"
-		set chr [lindex [file root [split [gzroot $file] -]] 1]
 		set ext [file extension $file]
 		if {$ext eq ".bcol"} {
 			set bcol [bcol_open $file]
 			if {[dict get $bcol version] == 0} {
+				set chr [lindex [file root [split [gzroot $file] -]] 1]
 				set start [lindex [dict get $bcol table] 0 0]
 				set max [dict get $bcol max]
 				set type [dict get $bcol type]
@@ -76,6 +76,8 @@ proc cg_regextract {args} {
 				catch {close $f}
 				set f [gzopen $file]
 				set header [tsv_open $f]
+			} else {
+				set chr [lindex [file root [split [gzroot $file] -]] 1]
 			}
 			foreach field $posfields {
 				set poscol [lsearch $header $field]
