@@ -1,0 +1,19 @@
+= bgzip =
+
+== Format ==
+cg bgzip ?options? file ...
+
+== Summary ==
+Compresses files using bgzip
+
+== Description ==
+The given files are compressed using bgzip, and the original uncompressed files
+are removed (by default). Files already compressed using another method,
+are recompressed using bgzip.
+
+== Options ==
+supports options:
+; **-k**: keep the original uncompressed file if 1 (default 0)
+
+== Category ==
+Tools

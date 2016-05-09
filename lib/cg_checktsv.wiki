@@ -1,0 +1,16 @@
+= checktsv =
+
+== Format ==
+cg checktsv file ...
+
+== Summary ==
+Checks the given tsv file for errors
+
+== Description ==
+The given tsv file will be checked for two types of "errors":
+* Wrong number of fields in a data line (different number from the header)
+* Wrong sort order: If the fields  chromosome, begin, end, type are present in a tsv file,
+lines that are not correctly sorted according to those fields a reported.
+
+== Category ==
+tsv

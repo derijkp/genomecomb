@@ -1,0 +1,21 @@
+= razip =
+
+== Format ==
+cg razip ?options? file ...
+
+== Summary ==
+Compresses files using razip
+
+== Description ==
+The given files are compressed using razip, and the original uncompressed files
+are removed (by default). Files already compressed using another method,
+are recompressed using razip.
+razip is a compression method that is compatible with gzip, but allows
+random access to compressed files.
+
+== Options ==
+supports options:
+; **-k**: keep the original uncompressed file if 1 (default 0)
+
+== Category ==
+Tools

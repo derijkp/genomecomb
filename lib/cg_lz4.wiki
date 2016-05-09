@@ -1,0 +1,23 @@
+= lz4 =
+
+== Format ==
+cg lz4 ?options? file ...
+
+== Summary ==
+Compresses files using lz4
+
+== Description ==
+The given files are compressed using lz4, and the original uncompressed files
+are removed (by default). Files already compressed using another method,
+are recompressed using lz4. lz4 is a fast compression method, it compresses
+and decompresses an order of magnitude faster than gzip, at the cost of
+some compression.
+
+== Options ==
+supports options:
+; **-k**: keep the original uncompressed file if 1 (default 0)
+; **-c**: compression level, where 1 = fast compression and 9 = high compression (default 1)
+At high compression (9), compression is slower than gzip, but decompression is still much faster
+
+== Category ==
+Tools
