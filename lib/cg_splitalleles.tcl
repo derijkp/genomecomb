@@ -32,8 +32,9 @@ proc cg_splitalleles {args} {
 		set o [open $outfile w]
 	}
 	set header [tsv_open $f comment]
-	set poss [tsv_basicfields $header]
+	set poss [tsv_basicfields $header 6 0]
 	set apos [lindex $poss 5]
+	if {$apos == -1} {error "alt filed not found"}
 	set rpos [lindex $poss 4]
 	set samples [samples $header]
 	set sposs {}

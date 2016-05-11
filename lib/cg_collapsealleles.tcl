@@ -16,7 +16,7 @@ proc cg_collapsealleles {args} {
 		set o [open $outfile w]
 	}
 	set header [tsv_open $f comment]
-	set poss [tsv_basicfields $header]
+	set poss [tsv_basicfields $header 6 0]
 	set apos [lindex $poss 5]
 	set rpos [lindex $poss 4]
 	set poss [lrange $poss 0 4]

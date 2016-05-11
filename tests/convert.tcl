@@ -121,6 +121,12 @@ test collapsealleles {collapsealleles2} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 
+test collapsealleles {splitalleles and collapsealleles without all fields} {
+	cg splitalleles data/var-annot.tsv tmp/split.tsv
+	cg collapsealleles tmp/split.tsv > tmp/collapsed.tsv
+	exec diff data/var-annot.tsv tmp/collapsed.tsv
+} {}
+
 test format {long} {
 	write_tab tmp/wide.tsv {
 		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleSeq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleSeq2-sample2 zyg-sample2
