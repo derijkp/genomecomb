@@ -21,8 +21,9 @@ int main(int argc, char *argv[]) {
 	BCol_table *table;
 	int tablepos = 0,tablesize;
 	FILE *f1;
-	DString *defaultvalue;
+	DStringArray *mvalues = NULL;
 	DStringArray *result1=NULL;
+	DString *defaultvalue;
 	DString *line1 = NULL;
 	DString *prevchromosome1 = DStringNew(), *prevchromosome2 = DStringNew();
 	DString *prevtype1 = DStringNew();
@@ -60,6 +61,13 @@ int main(int argc, char *argv[]) {
 	/* This will leak mem, but as the prog is finished anyway ... */
 	result1 = DStringArrayNew(max1+2);
 	bcol = bcol_open(argv[7]);
+	if (alt1pos != -1) {
+		if (bcol->multi->size == 0) {
+			fprintf(stderr,"bcol_annot var analysis needs a multivalue bcol file");
+			exit(EXIT_FAILURE);
+		}
+		mvalues = DStringArrayFromChar(bcol->multi->string,',');
+	}
 	table = bcol->table;
 	tablesize = bcol->tablesize;
 	defaultvalue = bcol->def;
@@ -101,11 +109,63 @@ int main(int argc, char *argv[]) {
 		}
 		if (tablepos >= tablesize || (comp > 0) || ((comp == 0) && ((end1 < start2) || (end1 == start2 && start1 != end1)))) {
 			NODPRINT("no overlap")
-			fprintf(stdout,"%s\n",defaultvalue->string);
+			if (alt1pos == -1) {
+				fprintf(stdout,"%s\n",defaultvalue->string);
+			} else {
+				char *str = alt1->string;
+				int cursize,c;
+				while (1) {
+					c = str[cursize];
+					if (c == ',' || c =='\0' || c =='\t') {
+						if (str != alt1->string) {
+							fprintf(stdout,",");
+						}
+						fprintf(stdout,"%s",defaultvalue->string);
+						if (c =='\0' || c =='\t') break;
+						str += cursize + 1;
+						cursize = 0;
+					} else {
+						cursize++;
+					}
+				}
+				fprintf(stdout,"\n");
+			}
 		} else {
-			binpos = curstartpos + start1 - start2;
-			bcol_getbin(bcol,binpos,binpos);
-			bcol_printtext(stdout,bcol->reverse,bcol->isunsigned,bcol->type,bcol->buffer);
+			if (alt1pos == -1) {
+				binpos = curstartpos + start1 - start2;
+				bcol_getbin(bcol,binpos,binpos);
+				bcol_printtext(stdout,bcol->reverse,bcol->isunsigned,bcol->type,bcol->buffer,-1);
+			} else {
+				char *str = alt1->string;
+				int cursize,found,c,i;
+				binpos = mvalues->size * (curstartpos + start1 - start2);
+				while (1) {
+					c = str[cursize];
+					if (c == ',' || c =='\0' || c =='\t') {
+						found = -1;
+						for (i=0 ; i < mvalues->size ; i++) {
+							DString *m = mvalues->data+i;
+							if (cursize == m->size && strncmp(m->string,str,cursize) == 0) {
+								found = i; break;
+							}
+						}
+						if (str != alt1->string) {
+							fprintf(stdout,",");
+						}
+						if (found == -1) {
+							fprintf(stdout,"%s",defaultvalue->string);
+						} else {
+							bcol_getbin(bcol,binpos + found,binpos + found);
+							bcol_printtext(stdout,bcol->reverse,bcol->isunsigned,bcol->type,bcol->buffer,-1);
+						}
+						if (c =='\0' || c =='\t') break;
+						str += cursize + 1;
+						cursize = 0;
+					} else {
+						cursize++;
+					}
+				}
+			}
 			fprintf(stdout,"\n");
 		}
 	}

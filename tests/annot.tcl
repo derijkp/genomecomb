@@ -516,6 +516,150 @@ test reg_annot {comments} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {} 
 
+test bcol_var_annot {basic} {
+	test_cleantmp
+	cg bcol make -t f --multicol alt --multilist A,C,T,G -p begin -c chromosome tmp/var_annot.bcol score < data/var-annot.tsv
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	alt
+		chr1	0	1	snp	A
+		chr1	0	1	snp	C
+		chr1	1	2	snp	A
+		chr1	1	2	snp	C
+		chr1	1	2	snp	T
+		chr1	4	5	snp	T
+		chr1	10	20	snp	T
+		chr2	22	23	snp	G
+		chr2	26	27	snp	A
+		chr2	29	30	snp	C
+	}
+	exec cg annotate tmp/vars.tsv tmp/results.tsv tmp/var_annot.bcol
+	# first = 0 because type f is rounded to 6 decimal places (precision)
+	# latest = 3000000 because type f cannot store 3000000.1 
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	alt	annot
+		chr1	0	1	snp	A	0
+		chr1	0	1	snp	C	0.1
+		chr1	1	2	snp	A	2
+		chr1	1	2	snp	C	0
+		chr1	1	2	snp	T	2.1
+		chr1	4	5	snp	T	6.1
+		chr1	10	20	snp	T	0
+		chr2	22	23	snp	G	0
+		chr2	26	27	snp	A	0
+		chr2	29	30	snp	C	3000000
+	}
+	exec diff tmp/results.tsv tmp/expected.tsv
+} {}
+
+test bcol_var_annot {basic type d} {
+	test_cleantmp
+	cg bcol make -t d --multicol alt --multilist A,C,T,G -p begin -c chromosome tmp/var_annot.bcol score < data/var-annot.tsv
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	alt
+		chr1	0	1	snp	A
+		chr1	0	1	snp	C
+		chr1	1	2	snp	A
+		chr1	1	2	snp	C
+		chr1	1	2	snp	T
+		chr1	4	5	snp	T
+		chr1	10	20	snp	T
+		chr2	22	23	snp	G
+		chr2	26	27	snp	A
+		chr2	29	30	snp	C
+	}
+	exec cg annotate tmp/vars.tsv tmp/results.tsv tmp/var_annot.bcol
+	# first is ok because type d is rounded to 9 decimal places (precision)
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	alt	annot
+		chr1	0	1	snp	A	0.0000001
+		chr1	0	1	snp	C	0.1
+		chr1	1	2	snp	A	2
+		chr1	1	2	snp	C	0
+		chr1	1	2	snp	T	2.1
+		chr1	4	5	snp	T	6.1
+		chr1	10	20	snp	T	0
+		chr2	22	23	snp	G	0
+		chr2	26	27	snp	A	0
+		chr2	29	30	snp	C	3000000.1
+	}
+	exec diff tmp/results.tsv tmp/expected.tsv
+} {}
+
+test bcol_var_annot {basic uncompressed} {
+	test_cleantmp
+	cg bcol make -t f --multicol alt --multilist A,C,T,G --compress 0 -p begin -c chromosome tmp/var_annot.bcol score < data/var-annot.tsv
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	alt
+		chr1	0	1	snp	A
+		chr1	1	2	snp	A
+		chr1	1	2	snp	C
+		chr1	1	2	snp	T
+		chr1	4	5	snp	T
+		chr1	10	20	snp	T
+		chr2	22	23	snp	G
+		chr2	26	27	snp	A
+		chr2	29	30	snp	C
+	}
+	exec cg annotate tmp/vars.tsv tmp/results.tsv tmp/var_annot.bcol
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	alt	annot
+		chr1	0	1	snp	A	0
+		chr1	1	2	snp	A	2
+		chr1	1	2	snp	C	0
+		chr1	1	2	snp	T	2.1
+		chr1	4	5	snp	T	6.1
+		chr1	10	20	snp	T	0
+		chr2	22	23	snp	G	0
+		chr2	26	27	snp	A	0
+		chr2	29	30	snp	C	3000000
+	}
+	exec diff tmp/results.tsv tmp/expected.tsv
+} {}
+
+test bcol_var_annot {split 0} {
+	test_cleantmp
+	cg bcol make -t f --multicol alt --multilist A,C,T,G -p begin -c chromosome tmp/var_annot.bcol score < data/var-annot.tsv
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	alt
+		chr1	1	2	snp	A,C,T
+		chr1	4	5	snp	T
+		chr1	10	20	snp	T
+		chr2	22	23	snp	C,G
+		chr2	26	27	snp	A
+		chr2	29	30	snp	C,T
+	}
+	exec cg annotate tmp/vars.tsv tmp/results.tsv tmp/var_annot.bcol
+	# 30.200001 because of float
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	alt	annot
+		chr1	1	2	snp	A,C,T	2,0,2.1
+		chr1	4	5	snp	T	6.1
+		chr1	10	20	snp	T	0
+		chr2	22	23	snp	C,G	0,0
+		chr2	26	27	snp	A	0
+		chr2	29	30	snp	C,T	3000000.1,30.200001
+	}
+	exec diff tmp/results.tsv tmp/expected.tsv
+} {}
+
+test bcol_var_annot {split 0, precision} {
+	test_cleantmp
+	write_tab tmp/var_annot.tsv {
+		chromosome	begin	end	type	alt	score
+		chr1	1	2	snp	A,C,T	0.1,0.01,0.001
+		chr1	2	3	snp	A,C,T	0.0001,0.00001,0.000001
+		chr1	4	5	snp	A,C,T	0.0000001,0.00000001,0.000000001
+	}
+	cg bcol make -t f --multicol alt --multilist A,C,T,G -p begin -c chromosome tmp/var_score.bcol score < tmp/var_annot.tsv
+	cg select -rf score tmp/var_annot.tsv tmp/vars.tsv
+	exec cg annotate tmp/vars.tsv tmp/results.tsv tmp/var_score.bcol
+	exec diff tmp/results.tsv tmp/var_annot.tsv
+} {4c4
+< chr1	4	5	snp	A,C,T	0,0,0
+---
+> chr1	4	5	snp	A,C,T	0.0000001,0.00000001,0.000000001
+child process exited abnormally} error
+
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
 

@@ -412,10 +412,27 @@ int bcol_printbin(FILE *f,int reverse,int isunsigned,char *type,char *string) {
 	}
 }
 
-int bcol_printtext(FILE *f,int reverse,int isunsigned,char type,unsigned char *buffer) {
+char *clipzeros(char *sbuffer) {
+	char *spointer, *end;
+	spointer = sbuffer;
+	while (*spointer != '\0' && *spointer != '.') {
+		spointer++;
+	}
+	end = spointer;
+	spointer++;
+	while (*spointer != '\0') {
+		if (*spointer != '0') {end=spointer+1;}
+		spointer++;
+	}
+	*end = '\0';
+	return sbuffer;
+}
+
+int bcol_printtext(FILE *f,int reverse,int isunsigned,char type,unsigned char *buffer,int precision) {
 	long value;
 	double dvalue;
 	uint64_t wvalue;
+	char *sbuffer[100];
 	float fvalue;
 	switch (type) {
 	    case 'c':
@@ -527,7 +544,9 @@ int bcol_printtext(FILE *f,int reverse,int isunsigned,char type,unsigned char *b
 		 * 32-bit IEEE single-precision floating point.
 		 */
 		bcol_CopyNumber(buffer, &fvalue, sizeof(float), reverse);
-		fprintf(f,"%f",fvalue);
+		if (precision == -1) {precision = 6;}
+		sprintf((char *)sbuffer,"%.*f",precision,fvalue);
+		fprintf(f,"%s",clipzeros((char *)sbuffer));
 		return 1;
 	    case 'd':
 	    case 'Q':
@@ -536,7 +555,9 @@ int bcol_printtext(FILE *f,int reverse,int isunsigned,char type,unsigned char *b
 		 * 64-bit IEEE double-precision floating point.
 		 */
 		bcol_CopyNumber(buffer, &dvalue, sizeof(double), reverse);
-		fprintf(f,"%f",fvalue);
+		if (precision == -1) {precision = 9;}
+		sprintf((char *)sbuffer,"%.*f",precision,dvalue);
+		fprintf(f,"%s",clipzeros((char *)sbuffer));
 		return 1;
 	    default:
 		fprintf(stderr,"unknown type %s\n",&type);
@@ -716,8 +737,10 @@ BCol *bcol_open(char *bcolfile) {
 	result->type = 'i';
 	result->isunsigned = 1;
 	result->table = NULL;
+	result->multi = NULL;
 	result->tablesize = 0;
 	result->def = DStringNew();
+	result->multi = DStringNew();
 	f = fopen64_or_die(bcolfile, "r");
 	while (1) {
 		cnt = DStringGetLine(line,f);
@@ -732,6 +755,8 @@ BCol *bcol_open(char *bcolfile) {
 			}
 		} else if (line->size > 10 && strncmp(line->string,"# default ",10) == 0) {
 			DStringSetS(result->def,line->string+10,line->size-10);
+		} else if (line->size > 10 && strncmp(line->string,"# multi ",8) == 0) {
+			DStringSetS(result->multi,line->string+8,line->size-8);
 		}
 	}
 	if (naturalcompare(line->string,"chromosome\tbegin\tend",line->size,20) == 0) {

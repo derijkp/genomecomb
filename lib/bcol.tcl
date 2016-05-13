@@ -567,7 +567,7 @@ proc cg_bcol_get {args} {
 }
 
 proc cg_bcol_table {args} {
-	set chromosome {}
+	set chromosome all
 	set showchr 1
 	set byrownum 0
 	set pos 0

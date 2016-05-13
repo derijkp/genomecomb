@@ -320,10 +320,12 @@ proc cg_annotate {args} {
 			annotatemir $usefile $genomefile $dbfile $name $tempbasefile.${name}_annot $genecol $transcriptcol 100 1 0 $extracols
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
-			set altpos [lsearch $header alt]
-			if {$altpos == -1} {
-				puts "Skipping: $file has no alt field"
-				continue
+			if {[file extension $dbfile] ne ".bcol"} {
+				set altpos [lsearch $header alt]
+				if {$altpos == -1} {
+					puts "Skipping: $file has no alt field"
+					continue
+				}
 			}
 			lappend afiles $tempbasefile.${name}_annot
 			if {[file exists $tempbasefile.${name}_annot]} {
@@ -331,7 +333,11 @@ proc cg_annotate {args} {
 				continue
 			}
 			set outfields [dict get $dbinfo outfields]
-			annotatevar $usefile $dbfile $name $tempbasefile.${name}_annot $dbinfo
+			if {[file extension $dbfile] eq ".bcol"} {
+				annotatebcolvar $usefile $dbfile $name $tempbasefile.${name}_annot
+			} else {
+				annotatevar $usefile $dbfile $name $tempbasefile.${name}_annot $dbinfo
+			}
 		} elseif {$dbtype eq "bcol"} {
 			if {$near != -1} {error "-near option does not work with bcol dbfiles"}
 			lappend afiles $tempbasefile.${name}_annot
