@@ -10,7 +10,7 @@ all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../b
      ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions \
      ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/getregionsbcol2 ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby \
      ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile ../bin$(ARCH)/bcol_indexfile_all \
-     ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_annot ../bin$(ARCH)/vcf2tsv ../bin$(ARCH)/reg_select \
+     ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_make_multi ../bin$(ARCH)/bcol_annot ../bin$(ARCH)/vcf2tsv ../bin$(ARCH)/reg_select \
      ../bin$(ARCH)/check_sort ../bin$(ARCH)/multi_merge ../bin$(ARCH)/multi_join \
      ../bin$(ARCH)/multidb_join \
      ../bin$(ARCH)/sam_clipamplicons
@@ -68,6 +68,9 @@ clean:
 
 ../bin$(ARCH)/bcol_make: bcol_make.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
 	gcc bcol_make.c tools.c tools_bcol.c hash.c razf.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make -Wl,-Bstatic -lz -Wl,-Bdynamic
+
+../bin$(ARCH)/bcol_make_multi: bcol_make_multi.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
+	gcc bcol_make_multi.c tools.c tools_bcol.c hash.c razf.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make_multi -Wl,-Bstatic -lz -Wl,-Bdynamic
 
 ../bin$(ARCH)/bcol_annot: bcol_annot.c $(TOOLS) $(BCOL_TOOLS)
 	gcc bcol_annot.c tools.c tools_bcol.c razf.c $(CFLAGS) -o ../bin$(ARCH)/bcol_annot -Wl,-Bstatic -lz -Wl,-Bdynamic

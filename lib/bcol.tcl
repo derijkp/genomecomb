@@ -105,6 +105,12 @@ proc bcol_open {indexfile {ra 0}} {
 		set line [string range $line 1 end]
 		dict set result [lindex $line 0] [lindex $line 1]
 	}
+	if {[catch {dict get $bcol multi} multi]} {
+		set multi {}
+	}
+	set multilist [split $multi ,]
+	set multilen [llength $multilist]
+	dict set bcol multilen $multilen
 	set table {}
 	while {![eof $f]} {
 		set line [gets $f]
@@ -260,9 +266,14 @@ proc bcol_chrlines {bcol chromosome} {
 
 # bcol_table now also follows the half-open convention, end position is not included
 # offset support was removed (complicates things, and was never actually used)
-proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 0}} {
+proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 0} {precision {}}} {
 	if {[dict get $bcol objtype] ne "bcol"} {error "This is not a bcol object: $bcol"}
 	set type [dict get $bcol type]
+	if {[catch {dict get $bcol multi} multi]} {
+		set multi {}
+	}
+	set multilist [split $multi ,]
+	set multilen [llength $multilist]
 	if {$type eq "lineindex"} {set type iu}
 	set btype [string index $type 0]
 	array set typesizea {c 1 s 2 i 4 w 8 f 4 d 8}
@@ -271,10 +282,18 @@ proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 
 	set tablechr [dict get $bcol tablechr]
 	set chrlines [bcol_chrlines $bcol $chromosome]
 	set o stdout
-	if {$showchr} {
-		puts $o "chromosome\tpos\tvalue"
+	if {!$multilen} {
+		if {$showchr} {
+			puts $o "chromosome\tpos\tvalue"
+		} else {
+			puts $o "pos\tvalue"
+		}
 	} else {
-		puts $o "pos\tvalue"
+		if {$showchr} {
+			puts $o "chromosome\tpos\talt\tvalue"
+		} else {
+			puts $o "pos\talt\tvalue"
+		}
 	}
 	set ostart $start
 	set oend $end
@@ -301,7 +320,11 @@ proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 
 		}
 		set len [expr {$uend-$start}]
 		if {$len <= 0} {return {}}
-		set pos [expr {$typesize*($chrstart + $start-$min)}]
+		if {!$multilen} {
+			set pos [expr {$typesize*($chrstart + $start-$min)}]
+		} else {
+			set pos [expr {$typesize*$multilen*($chrstart + $start-$min)}]
+		}
 		# get data from already opened file
 		set f [dict get $bcol fi]
 		if {$f ne ""} {
@@ -310,16 +333,38 @@ proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 
 			set f [gzopen [gzfile $binfile] $pos]
 		}
 		fconfigure $f -encoding binary -translation binary
-		while {$curpos < $uend} {
-			incr start
-			set b [read $f $typesize]
-			binary scan $b $type value
-			if {$showchr} {
-				puts $o $chr\t$curpos\t$value
-			} else {
-				puts $o $curpos\t$value
+		if {!$multilen} {
+			while {$curpos < $uend} {
+				incr start
+				set b [read $f $typesize]
+				binary scan $b $type value
+				if {$showchr} {
+					puts $o $chr\t$curpos\t$value
+				} else {
+					puts $o $curpos\t$value
+				}
+				incr curpos
 			}
-			incr curpos
+		} else {
+			set readsize [expr {$typesize*$multilen}]
+			while {$curpos < $uend} {
+					incr start
+					set b [read $f $readsize]
+					binary scan $b $type$multilen value
+					if {$precision ne ""} {
+						set tempvalue {}
+						foreach v $value {
+							lappend tempvalue [format %.${precision}f $v $precision]
+						}
+						set value $tempvalue
+					}
+					if {$showchr} {
+						puts $o $chr\t$curpos\t$multi\t[join $value ,]
+					} else {
+						puts $o $curpos\t$multi\t[join $value ,]
+					}
+					incr curpos
+				}
 		}
 		if {[dict get $bcol fi] eq ""} {
 			close $f
@@ -379,6 +424,8 @@ proc cg_bcol_make {args} {
 	set chrompos -1
 	set offsetcol {}
 	set defaultvalue 0
+	set multicol {}
+	set multilist {}
 	set distribute 0
 	set start 0
 	set pos 0
@@ -406,6 +453,12 @@ proc cg_bcol_make {args} {
 			}
 			-h - --header {
 				set header $value
+			}
+			-m - --multicol {
+				set multicol $value
+			}
+			-l - --multilist {
+				set multilist $value
 			}
 			-- break
 			default {
@@ -460,15 +513,28 @@ proc cg_bcol_make {args} {
 				exiterror "error: chromosome column $chromosomecol not found"
 			}
 		}
+		if {$multicol ne ""} {
+			set multipos [lsearch $header $multicol]
+			if {$multipos == -1} {
+				exiterror "error: multicolumn $multicol not found"
+			}
+		}
 	} else {
 		if {$distribute && [isint $chromosomecol]} {
 			set chrompos $chromosomecol
 		}
 		set offsetpos $offsetcol
 		set colpos $valuecolumn
+		set multipos $multicol
 	}
-# puts "bcol_make $bcolfile.temp $type $colpos $chrompos $offsetpos $defaultvalue"
-	set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $defaultvalue >@ stdout 2>@ stderr" w]
+	if {$multicol eq ""} {
+		# puts "bcol_make $bcolfile.temp $type $colpos $chrompos $offsetpos $defaultvalue"
+		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $defaultvalue >@ stdout 2>@ stderr" w]
+	} else {
+		# putsvars bcolfile type colpos multipos multilist chrompos offsetpos defaultvalue
+		# puts "bcol_make_multi $bcolfile.temp $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue"
+		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue >@ stdout 2>@ stderr" w]
+	}
 	fconfigure $f -encoding binary -translation binary
 	fconfigure $pipe -encoding binary -translation binary
 	fcopy $f $pipe
@@ -505,6 +571,7 @@ proc cg_bcol_table {args} {
 	set showchr 1
 	set byrownum 0
 	set pos 0
+	set precision {}
 	foreach {key value} $args {
 		switch -- $key {
 			-c - --chromosome {
@@ -515,6 +582,9 @@ proc cg_bcol_table {args} {
 			}
 			-r - --byrownum {
 				set byrownum $value
+			}
+			-p - --precision {
+				set precision $value
 			}
 			-- break
 			default {
@@ -529,7 +599,7 @@ proc cg_bcol_table {args} {
 	}
 	foreach {indexfile begin end} $args break
 	set bcol [bcol_open $indexfile]
-	bcol_table $bcol $begin $end $chromosome $showchr $byrownum
+	bcol_table $bcol $begin $end $chromosome $showchr $byrownum $precision
 	bcol_close $bcol
 }
 
