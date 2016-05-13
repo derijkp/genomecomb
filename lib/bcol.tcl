@@ -529,11 +529,11 @@ proc cg_bcol_make {args} {
 	}
 	if {$multicol eq ""} {
 		# puts "bcol_make $bcolfile.temp $type $colpos $chrompos $offsetpos $defaultvalue"
-		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $defaultvalue >@ stdout 2>@ stderr" w]
+		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $defaultvalue > [list $bcolfile.temp.bin] 2>@ stderr" w]
 	} else {
 		# putsvars bcolfile type colpos multipos multilist chrompos offsetpos defaultvalue
 		# puts "bcol_make_multi $bcolfile.temp $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue"
-		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue >@ stdout 2>@ stderr" w]
+		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue > [list $bcolfile.temp.bin] 2>@ stderr" w]
 	}
 	fconfigure $f -encoding binary -translation binary
 	fconfigure $pipe -encoding binary -translation binary

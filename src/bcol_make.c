@@ -67,8 +67,7 @@ int main(int argc, char *argv[]) {
 	buffer = DStringNew();
 	DStringAppend(buffer,outfile);
 	obcol = fopen64_or_die(buffer->string,"w");
-	DStringAppend(buffer,".bin");
-	obin = fopen64_or_die(buffer->string,"w");
+	obin = stdout;
 
 	reverse = bcol_NeedReversing(type[0]);
 	if (type[1] == 'u') {isunsigned = 1;}
