@@ -14,10 +14,10 @@ proc multidb_monet_create {database} {
 		"type" char(3)
 		"ref" text
 		"alt" text
-		"id" integer not null primary key
+		"id" integer
 	}
 	multidb_monet_createtable $database experiment {
-		"id" text not null primary key
+		"id" text
 		"gentli_id" integer
 		"technology" text
 		"provider" text
@@ -36,16 +36,19 @@ proc multidb_monet_create {database} {
 		unique("experiment","ngsseq","mapper","varcall")
 	}
 	multidb_monet_createtable $database geno {
-		"var" integer not null references "var"("id") on update cascade
-		"analysis" integer not null references "analysis"("id") on update cascade
+		"var" integer
+		"analysis" integer
 		"sequenced" char(1)
 		"zyg" char(1)
 		"alleleSeq1" text
 		"alleleSeq2" text
 		"quality" text
 		"coverage" text
-		primary key ("var","analysis")
 	}
+	cg_monetdb_sql $database {alter table "var" add constraint primary key ("id")}
+	cg_monetdb_sql $database {alter table "analysis" add constraint primary key ("id")}
+	cg_monetdb_sql $database {alter table "geno" add constraint foreign key ("var") references "var"("id")}
+	cg_monetdb_sql $database {alter table "geno" add constraint foreign key ("analysis") references "analysis"("id")}
 	cg_monetdb_sql $database {create index "var_basicfields" on "var"("chromosome","begin","end","type")}
 	cg_monetdb_sql $database {create index "geno_zygosity" on "geno"("zyg")}
 	cg_monetdb_sql $database {create index "geno_sequenced" on "geno"("sequenced")}
@@ -155,6 +158,7 @@ proc multidb_monet_importtable {compar_dir database table file} {
 		set num [lindex [exec wc -l $file] 0]
 		set num [expr {$num - $offset + 1}]
 	}
+	puts "Importing into $table: size $num, file $file"
 	cg_monetdb_sql $database "copy $num offset $offset records into \"$table\" from '$file' delimiters '\t', '\n' null as '?';"
 }
 
@@ -162,7 +166,7 @@ proc multidb_monet_import {compar_dir database} {
 	multidb_monet_open $compar_dir $database
 
 	file mkdir $compar_dir/old
-	set file $compar_dir/vars.tsv.insert
+	# set file $compar_dir/vars.tsv.insert
 	multidb_monet_importtable $compar_dir $database var $compar_dir/vars.tsv.insert
 	file rename -force $compar_dir/vars.tsv.insert $compar_dir/old
 	file rename -force $compar_dir/vars.tsv.insert.count $compar_dir/old

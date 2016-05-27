@@ -70,6 +70,7 @@ proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
 	upvar $aVar a
 	upvar $datafilesVar datafiles
 	upvar $genofieldsVar genofields
+	set mergefields {xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam}
 	set datafiles {}
 	if {![info exists genofields]} {
 		set genofields {var analysis sequenced zyg alleleSeq1 alleleSeq2 quality coverage}
@@ -196,7 +197,6 @@ proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
 
 proc multidb_job {args} {
 	set reannot 0
-	set regonly 0
 	set targetsfile {}
 	set targetsfield {}
 	set dbdir /complgen/refseq/hg19
