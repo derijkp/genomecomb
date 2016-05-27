@@ -44,6 +44,27 @@ proc diff_tab {file data {comment {}}} {
 	close $f
 }
 
+proc test_genomecombdir {} {
+	set expdir tmp/test
+	file mkdir $expdir/samples
+	file mkdir $expdir/compar
+	set samplesdir $expdir/samples
+	foreach n {1 2 3} {
+		file mkdir $samplesdir/sample$n
+	}
+	cg splitalleles data/var_annot.sft > $samplesdir/sample1/var-sample1.tsv
+	cg splitalleles data/var_annot2.sft > $samplesdir/sample2/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.sft > $samplesdir/sample3/prevar-sample3.tsv
+	cg select -f {sequenced *} $samplesdir/sample3/prevar-sample3.tsv $samplesdir/sample3/var-sample3.tsv
+	file copy data/sreg-annot1.sft $samplesdir/sample1/sreg-sample1.tsv
+	file copy data/sreg-annot2.sft $samplesdir/sample2/sreg-sample2.tsv
+	file copy data/sreg-annot2.sft $samplesdir/sample3/sreg-sample3.tsv
+	cg multicompar -reannot -split 1 $expdir/compar/compar-test.tsv {*}[lsort -dict [glob $samplesdir/*/var-*.tsv]]
+	file delete $expdir/compar/compar-test.tsv.reannot
+	file delete $expdir/compar/compar-test.tsv.old
+	# exec diff $expdir/compar/compar-test.tsv data/expected-multicompar-split-reannot.sft
+}
+
 lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
 
 file mkdir tmp

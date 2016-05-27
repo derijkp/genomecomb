@@ -216,30 +216,50 @@ proc opensqlite3 {dbfile query} {
 	set f [open "| sqlite3 -separator \"\t\" $dbfile \"$query\""]
 }
 
+proc compress {file {ext .lz4}} {
+	set file [file normalize $file]
+	if {[file exists $file$ext]} {file delete $file$ext}
+	if {[inlist {.rz} $ext]} {
+		exec razip $file
+	} elseif {[inlist {.lz4} $ext]} {
+		exec lz4c -9 -c $file > $file.lz4.temp
+		file rename -force $file.lz4.temp $file.lz4
+	} elseif {[inlist {.gz} $ext]} {
+		exec gzip $file
+	} elseif {[inlist {.bgz} $ext]} {
+		exec bgzip $file
+	} elseif {[inlist {.bz2} $ext]} {
+		exec bzip2 $file
+	} else {
+		error "Unknown extension $ext"
+	}
+}
+
 proc gzopen {file {pos -1}} {
 	if {![file exists $file]} {
 		exiterror "Error: couldn't open \"$file\": no such file or directory"
 	}
 	set file [file normalize $file]
-	if {[inlist {.rz} [file extension $file]]} {
+	set ext [file extension $file]
+	if {[inlist {.rz} $ext]} {
 		if {$pos == -1} {
 			set f [open "| razip -d -c $file"]
 		} else {
 			set f [open "| razip -d -c -b $pos $file"]
 		}
-	} elseif {[inlist {.lz4} [file extension $file]]} {
+	} elseif {[inlist {.lz4} $ext]} {
 		if {$pos == -1} {
 			set f [open "| lz4c -d -c $file"]
 		} else {
 			error "positioning not supported in lz4 files"
 		}
-	} elseif {[inlist {.bgz .gz} [file extension $file]]} {
+	} elseif {[inlist {.bgz .gz} $ext]} {
 		if {$pos == -1} {
 			set f [open "| zcat $file"]
 		} else {
 			error "positioning not supported in (b)gz files"
 		}
-	} elseif {[inlist {.bz2} [file extension $file]]} {
+	} elseif {[inlist {.bz2} $ext]} {
 		if {$pos == -1} {
 			set f [open "| bzcat $file"]
 		} else {

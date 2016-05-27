@@ -1,0 +1,21 @@
+= renamesamples =
+
+== Format ==
+cg renamesamples dir/file samplename newsamplename ...
+
+== Summary ==
+Converts the sample names in a file or entire directory to other names.
+
+== Description ==
+The command converts the sample names in a file or entire directory to
+other names. This includes changing the header in multicompar files (tsv
+or sft extension), or renaming the files or directories that contain the
+sample name in the file name.
+
+== Arguments ==
+; **dir/file**: file or directory to be converted.
+; **samplename**: current name of sample
+; **newsamplename**: new name of sample
+
+== Category ==
+Conversion
