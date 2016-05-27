@@ -43,8 +43,10 @@ with .sampleinfo or .sampleinfo.tsv appended, it will be used as sampleinfofile 
 ; **-hc headerincomment**: if 1, the last of the starting comment lines will be used for the header instead of the first non-comment line. 
 If 2, the result file will also have the header in the last comment.
 ; **-hf headerfile: datafile does not have a header, the header will be read from **headerfile** instead
-; **-h**: return header fields in file
-; **-n**: return sample names in file
+; **-rc 0/1**: remove comment
+; **-h 0/1**: return header fields in file
+; **-n 0/1**: return sample names in file
+; **-samplingskip number**: sample data, skipping **number** rows
 ; **-g groupfields**: with this option a summary table is returned. This will contain one line with 
 information for each value or combination of values in the given groupfield(s).  **groupfields** has the 
 following format: "field1 filter1 field2 filter2 ...". Only values given in 
