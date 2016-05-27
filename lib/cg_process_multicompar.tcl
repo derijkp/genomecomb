@@ -23,6 +23,7 @@ proc multicompar_job {experiment dbdir todo args} {
 	# multicompar
 	if {[file exists samples]} {set sampledir samples/} else {set sampledir {}}
 	if {[catch {cg select -n compar/compar-$experiment.tsv} done]} {set done {}}
+	set done [split $done \n]
 	set stilltodo {}
 	set deps {}
 	foreach sample $todo {
