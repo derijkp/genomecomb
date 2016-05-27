@@ -43,8 +43,10 @@ proc make_hsmetrics_report_job {destdir files} {
 	upvar job_logdir job_logdir
 	set experiment [file tail $destdir]
 	job calc_hsmetrics-$experiment -deps $files -targets $destdir/${experiment}_hsmetrics_report.tsv -code {
-		cg cat {*}$deps > $target.temp
-		file rename -force $target.temp $target
+		cg cat -c 0 {*}$deps > $target.temp
+		cg select -rc 1 $target.temp $target.temp2
+		file rename -force $target.temp2 $target
+		file delete $target.temp
 	}
 }
 
