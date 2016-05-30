@@ -406,7 +406,7 @@ proc cg_bcol_update {newbcol oldbcol args} {
 proc cg_bcol_make {args} {
 	global bcol_typea
 	set type iu
-	set compress 1
+	set compress 9
 	set chromosomecol coverage
 	set chrompos -1
 	set offsetcol {}
@@ -515,7 +515,7 @@ proc cg_bcol_make {args} {
 		set multipos $multicol
 	}
 	if {$compress} {
-		set compresspipe "| lz4c -9 -c "
+		set compresspipe "| lz4c -$compress -c "
 		set tempbinfile $bcolfile.temp.bin.lz4
 	} else {
 		set compresspipe ""

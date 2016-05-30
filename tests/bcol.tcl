@@ -464,6 +464,15 @@ test bcol_make {types wu} {
 	exec diff tmp/temp.test tmp/temp.test2
 } {}
 
+test bcol_make {-compress 1} {
+	test_cleantmp
+	cg select -q {$coverage <= 9223372036854775807 && $coverage >= -9223372036854775808} data/limits.tsv tmp/temp.tsv
+	exec cg bcol make --compress 1 -t w tmp/temp.bcol coverage < tmp/temp.tsv
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg select -f {value=$coverage} tmp/temp.tsv tmp/temp.test2
+	exec diff tmp/temp.test tmp/temp.test2
+} {}
+
 test bcol_update {update and join old bcols} {
 	test_cleantmp
 	exec cg bcol update tmp/new.bcol data/old-chr1.bcol data/old-chr2.bcol
