@@ -514,13 +514,20 @@ proc cg_bcol_make {args} {
 		set colpos $valuecolumn
 		set multipos $multicol
 	}
+	if {$compress} {
+		set compresspipe "| lz4c -9 -c "
+		set tempbinfile $bcolfile.temp.bin.lz4
+	} else {
+		set compresspipe ""
+		set tempbinfile $bcolfile.temp.bin
+	}
 	if {$multicol eq ""} {
 		# puts "bcol_make $bcolfile.temp $type $colpos $chrompos $offsetpos $defaultvalue"
-		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $defaultvalue > [list $bcolfile.temp.bin] 2>@ stderr" w]
+		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $defaultvalue $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	} else {
 		# putsvars bcolfile type colpos multipos multilist chrompos offsetpos defaultvalue
 		# puts "bcol_make_multi $bcolfile.temp $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue"
-		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue > [list $bcolfile.temp.bin] 2>@ stderr" w]
+		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	}
 	fconfigure $f -encoding binary -translation binary
 	fconfigure $pipe -encoding binary -translation binary
@@ -531,11 +538,9 @@ proc cg_bcol_make {args} {
 		exit 1
 	}
 	if {$compress} {
-		exec lz4c -9 -c $bcolfile.temp.bin > $bcolfile.temp.bin.lz4
-		file delete $bcolfile.temp.bin
-		file rename -force $bcolfile.temp.bin.lz4 $bcolfile.bin.lz4
+		file rename -force $tempbinfile $bcolfile.bin.lz4
 	} else {
-		file rename -force $bcolfile.temp.bin $bcolfile.bin
+		file rename -force $tempbinfile $bcolfile.bin
 	}
 	file rename -force $bcolfile.temp $bcolfile
 }
