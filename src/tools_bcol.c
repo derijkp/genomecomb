@@ -5,7 +5,7 @@
  */
 
 #define _FILE_OFFSET_BITS 64
-#define _LARGEFILE64_SOURCE
+#define _LARGEFILE64_SOURCE 1
 
 #include <stdio.h>
 #include <stdint.h>
@@ -566,7 +566,9 @@ int bcol_printtext(FILE *f,int reverse,int isunsigned,char type,unsigned char *b
 }
 
 void bcol_close(BCol *bcol) {
-	if (bcol->rz != NULL) {
+	if (bcol->lz4 != NULL) {
+		lz4_close(bcol->lz4);
+	} else if (bcol->rz != NULL) {
 		razf_close(bcol->rz);
 	} else {
 		fclose(bcol->f);
@@ -588,6 +590,7 @@ int read_unlocked(FILE *f,unsigned char *buffer,int size) {
 }
 
 int bcol_getbin(BCol *fbcol,int start,int end) {
+	LZ4res *lz4 = fbcol->lz4;
 	RAZF *rz = fbcol->rz;
 	FILE *f = fbcol->f;
 	int rsize,c;
@@ -599,6 +602,9 @@ int bcol_getbin(BCol *fbcol,int start,int end) {
 	start = (start-fbcol->start)*fbcol->typesize;
 	if (start < 0) {
 		c = 0;
+	} else if (lz4 != NULL) {
+		lz4_seek(lz4, start, SEEK_SET);
+		c = lz4_read(lz4, fbcol->buffer, rsize);
 	} else if (rz != NULL) {
 		razf_seek(rz, start, SEEK_SET);
 		c = razf_read(rz, fbcol->buffer, rsize);
@@ -613,10 +619,13 @@ int bcol_getbin(BCol *fbcol,int start,int end) {
 }
 
 int bcol_readbin(BCol *fbcol,int rsize,unsigned char *buffer) {
+	LZ4res *lz4 = fbcol->lz4;
 	RAZF *rz = fbcol->rz;
 	FILE *f = fbcol->f;
 	int c;
-	if (rz != NULL) {
+	if (lz4 != NULL) {
+		c = lz4_read(lz4, buffer, rsize);
+	} else if (rz != NULL) {
 		c = razf_read(rz, buffer, rsize);
 	} else {
 		c = read_unlocked(f, buffer, rsize);
@@ -797,15 +806,19 @@ BCol *bcol_open(char *bcolfile) {
 		fclose(f);
 	}
 	DStringDestroy(line);
-	result->file = (char *)malloc((len+8)*sizeof(char));
+	result->file = (char *)malloc((len+9)*sizeof(char));
 	strncpy(result->file,bcolfile,len);
 	sprintf(result->file+len,".bin");
 	result->f = fopen64(result->file, "r");
 	if (result->f == NULL) {
-		sprintf(result->file+len,".bin.rz");
-		result->rz = razf_open(result->file, "r");
-	} else {
-		result->rz = NULL;
+		sprintf(result->file+len,".bin.lz4");
+		result->lz4 = lz4_openfile(result->file);
+		if (result->lz4 == NULL) {
+			sprintf(result->file+len,".bin.rz");
+			result->rz = razf_open(result->file, "r");
+		} else {
+			result->rz = NULL;
+		}
 	}
 	switch (result->type) {
 		case 'c':

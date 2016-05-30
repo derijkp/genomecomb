@@ -25,18 +25,10 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 		if {$compressed} {
 			progress start 1 "uncompressing $file for indexing, please be patient"
 			progress message "uncompressing $file for indexing, please be patient (no progress shown)"
-			if {$ext eq ".rz"} {
-				set tempfile [gztemp $file]
-			} else {
-				decompress $file
-				set file [file root $file]
-				set tempfile $file
-			}
+			set file [gztemp $file]
 			progress stop
-		} else {
-			set tempfile $file
 		}
-		set f [open $tempfile]
+		set f [open $file]
 		set header [tsv_open $f comment]
 		close $f
 		if {[catch {tsv_basicfields $header 4} poss]} {
@@ -47,36 +39,32 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 			}
 		}
 		if {![file exists $indexfile] || [file mtime $indexfile] < $time} {
-			progress start [file size $tempfile] "Indexing $file, please be patient"
+			progress start [file size $file] "Indexing $file, please be patient"
 			progress message "Indexing $file, please be patient"
-			# putslog "bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss"
+			# putslog "bcol_indexfile $file $indexfile.temp $indexfile.bin.temp {*}$poss"
 			if {$colinfo} {
 				set indexdir [file dir $indexfile]
 				file mkdir $indexdir/colinfo.temp/
-				# exec bcol_indexfile_all $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@ stderr
+				# exec bcol_indexfile_all $file $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@ stderr
 				if {[catch {
 					Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
-						bcol_indexfile_all $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@1
+						bcol_indexfile_all $file $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@1
 					catch {file delete -force $indexdir/colinfo}
 					file rename -force $indexdir/colinfo.temp/ $indexdir/colinfo
 				}]} {
 					Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
-						bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss 2>@1
+						bcol_indexfile $file $indexfile.temp $indexfile.bin.temp {*}$poss 2>@1
 				}
 			} else {
 				Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
-					bcol_indexfile $tempfile $indexfile.temp $indexfile.bin.temp {*}$poss 2>@1
+					bcol_indexfile $file $indexfile.temp $indexfile.bin.temp {*}$poss 2>@1
 			}
 			file rename -force $indexfile.bin.temp $indexfile.bin
 			file rename -force $indexfile.temp $indexfile
 			progress stop
 		}
 		if {$compressed} {
-			if {$ext eq ".rz"} {
-				gzrmtemp $tempfile
-			} else {
-				exec razip -c $file > $file.rz
-			}
+			gzrmtemp $file
 		}
 	}
 }
@@ -141,7 +129,7 @@ proc bcol_open {indexfile {ra 0}} {
 		dict set tablechr $chromosome $line
 	}
 	dict set result tablechr $tablechr
-	set binfile [lindex [glob -nocomplain $indexfile.bin [file root $indexfile].bin $indexfile.bin.rz [file root $indexfile].bin.rz] 0]
+	set binfile [lindex [glob -nocomplain $indexfile.bin [file root $indexfile].bin $indexfile.bin.lz4 [file root $indexfile].bin.lz4 $indexfile.bin.rz [file root $indexfile].bin.rz] 0]
 	if {$binfile eq ""} {set binfile [lindex [gzfiles $indexfile.bin [file root $indexfile].bin] 0]}
 	if {$binfile eq ""} {exiterror "binfile $indexfile.bin not found"}
 	dict set result binfile $binfile
@@ -153,8 +141,7 @@ proc bcol_open {indexfile {ra 0}} {
 	} elseif {$ra} {
 		dict set result fi {}
 	} else {
-		set tempfile [tempfile]
-		exec razip -d -c $binfile > $tempfile
+		set tempfile [gztemp $binfile]
 		dict set result tempfile $tempfile
 		set fi [open $tempfile]
 		fconfigure $fi -encoding binary -translation binary
@@ -413,7 +400,7 @@ proc cg_bcol_update {newbcol oldbcol args} {
 			}
 		}
 	}
-	cg razip $newbinfile
+	cg lz4 -c 9 $newbinfile
 }
 
 proc cg_bcol_make {args} {
@@ -544,9 +531,9 @@ proc cg_bcol_make {args} {
 		exit 1
 	}
 	if {$compress} {
-		exec razip -c $bcolfile.temp.bin > $bcolfile.temp.bin.rz
+		exec lz4c -9 -c $bcolfile.temp.bin > $bcolfile.temp.bin.lz4
 		file delete $bcolfile.temp.bin
-		file rename -force $bcolfile.temp.bin.rz $bcolfile.bin.rz
+		file rename -force $bcolfile.temp.bin.lz4 $bcolfile.bin.lz4
 	} else {
 		file rename -force $bcolfile.temp.bin $bcolfile.bin
 	}

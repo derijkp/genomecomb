@@ -489,6 +489,16 @@ test bcol_update {update and join old bcols} {
 < 2	32	0
 child process exited abnormally} error
 
+test bcol_make_multi {var-annot type d} {
+	test_cleantmp
+	cg bcol make -t d --multicol alt --multilist A,C,T,G -p begin -c chromosome tmp/temp.bcol score < data/var-annot.tsv
+	cg bcol table -c all tmp/temp.bcol > tmp/result.tsv
+	cg splitalleles tmp/result.tsv tmp/split.tsv
+	cg select -f {chromosome begin=$pos end=$pos+1 alt {score=regsub($value,"\\.0","")}} -q {$value ne "0.0"} tmp/split.tsv tmp/temp.tsv
+	cg collapsealleles tmp/temp.tsv > tmp/test.tsv
+	exec diff tmp/test.tsv data/var-annot.tsv
+} {}
+
 test bcol_make_multi {var-annot type f} {
 	test_cleantmp
 	cg bcol make -t f --multicol alt --multilist A,C,T,G --compress 0 -p begin -c chromosome tmp/temp.bcol score < data/var-annot.tsv
@@ -497,17 +507,15 @@ test bcol_make_multi {var-annot type f} {
 	cg select -f {chromosome begin=$pos end=$pos+1 alt {score=regsub($value,"\\.0","")}} -q {$value ne "0.0"} tmp/split.tsv tmp/temp.tsv
 	cg collapsealleles tmp/temp.tsv > tmp/test.tsv
 	exec diff tmp/test.tsv data/var-annot.tsv
-} {}
-
-test bcol_make_multi {var-annot type d} {
-	test_cleantmp
-	cg bcol make -t d --multicol alt --multilist A,C,T,G -p begin -c chromosome tmp/temp.bcol score < data/var-annot.tsv
-	cg bcol table -p 1 -c all tmp/temp.bcol > tmp/result.tsv
-	cg splitalleles tmp/result.tsv tmp/split.tsv
-	cg select -f {chromosome begin=$pos end=$pos+1 alt {score=regsub($value,"\\.0","")}} -q {$value ne "0.0"} tmp/split.tsv tmp/temp.tsv
-	cg collapsealleles tmp/temp.tsv > tmp/test.tsv
-	exec diff tmp/test.tsv data/var-annot.tsv
-} {}
+} {2c2
+< 1	0	1	C,G	0.1,1.1
+---
+> 1	0	1	A,C,G	1e-7,0.1,1.1
+13c13
+< 2	29	30	A,C,T	30,3000000,30.2
+---
+> 2	29	30	A,C,T	30,3000000.1,30.21
+*} error match
 
 test_cleantmp
 

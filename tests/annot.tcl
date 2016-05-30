@@ -368,7 +368,7 @@ test bcol_annot {basic compressed bcol} {
 test bcol_annot {basic uncompressed bcol} {
 	test_cleantmp
 	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
-	cg unzip {*}[glob tmp/*.rz]
+	cg unzip {*}[glob tmp/*.rz tmp/*.lz4]
 	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
 } {} 
@@ -618,7 +618,7 @@ test bcol_var_annot {basic uncompressed} {
 
 test bcol_var_annot {split 0} {
 	test_cleantmp
-	cg bcol make -t f --multicol alt --multilist A,C,T,G -p begin -c chromosome tmp/var_annot.bcol score < data/var-annot.tsv
+	cg bcol make -t d --multicol alt --multilist A,C,T,G -p begin -c chromosome tmp/var_annot.bcol score < data/var-annot.tsv
 	write_tab tmp/vars.tsv {
 		chromosome	begin	end	type	alt
 		chr1	1	2	snp	A,C,T
@@ -637,7 +637,7 @@ test bcol_var_annot {split 0} {
 		chr1	10	20	snp	T	0
 		chr2	22	23	snp	C,G	0,0
 		chr2	26	27	snp	A	0
-		chr2	29	30	snp	C,T	3000000.1,30.200001
+		chr2	29	30	snp	C,T	3000000.1,30.21
 	}
 	exec diff tmp/results.tsv tmp/expected.tsv
 } {}

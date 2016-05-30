@@ -251,7 +251,7 @@ proc gzopen {file {pos -1}} {
 		if {$pos == -1} {
 			set f [open "| lz4c -d -c $file"]
 		} else {
-			error "positioning not supported in lz4 files"
+			set f [open "| lz4ra $file $pos"]
 		}
 	} elseif {[inlist {.bgz .gz} $ext]} {
 		if {$pos == -1} {
@@ -386,7 +386,7 @@ proc gztemp {filename} {
 		}
 		.lz4 {
 			set tempfile [scratchfile get]
-			exec lz4c -d -c $filename $tempfile
+			exec lz4c -d -c $filename > $tempfile
 			set ::gztemp_files($tempfile) 1
 			return $tempfile
 		}

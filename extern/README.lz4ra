@@ -1,0 +1,59 @@
+lz4ra
+=====
+    by Peter De Rijk (VIB / University of Antwerp)
+
+NAME
+----
+lz4ra - a random access decompressor for the lz4 format. 
+
+SYNOPSIS
+--------
+lz4ra filename.lz4 ?start? ?size? ...
+
+DESCRIPTION
+-----------
+lz4ra can decompress an lz4 file starting from a given (uncompressed)
+position, and continue up to a given (uncompressed) size. The uncompressed
+data is sent to stdout. lz4ra with only the filename as parameter will decompress the
+entire file to stdout. Multiple start size ranges can be given: the ranges
+will be concatenated in the output
+
+For faster access, an index file (with the name filename.lz4i) can be made using:
+lz4index filename.lz4
+
+DETAILS
+-------
+lz4ra works by skipping compressed blocks up to the one containing the
+start site; this block is decompressed entirely, and output starts from
+the given start size. This works only for lz4 files with independent
+blocks (default).
+
+The lz4i file contains a list of the starting positions of the blocks in a
+binary format (prepended with a yaml header describing the binary data.
+With this index the position of the start block can be obtained directly
+without parsing and skipping blocks in the lz4 file.
+
+LICENSE
+-------
+
+The author hereby grant permission to use, copy, modify, distribute, and
+license this software and its documentation for any purpose, provided that
+existing copyright notices are retained in all copies and that this notice
+is included verbatim in any distributions. No written agreement, license, or
+royalty fee is required for any of the authorized uses. Modifications to
+this software may be copyrighted by their authors and need not follow the
+licensing terms described here, provided that the new terms are clearly
+indicated on the first page of each file where they apply.
+
+IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
+OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
+EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. THIS SOFTWARE IS
+PROVIDED ON AN "AS IS" BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO
+OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
+MODIFICATIONS.
+
