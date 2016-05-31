@@ -265,16 +265,11 @@ job reg_${build}_mirdmg -targets {$dest/${build}/mir_${build}_mirdmg.tsv $dest/$
 }
 
 # mirbase
-#job reg_${build}_mirbase -targets {$dest/${build}/reg_${build}_mirbase.tsv $dest/${build}/reg_${build}_mirbase.tsv.opt $dest/${build}/reg_${build}_mirbase.info} -vars {dest build db} -code {
+#job reg_${build}_mirbase -targets {$dest/${build}/mir_${build}_mirbase20.tsv $dest/${build}/mir_${build}_mirbase20.info} -vars {dest build db} -code {
+#	set organism ssc
 #	set organism hsa
-#	cd $dest/${build}
-#	file_write $dest/${build}/reg_${build}_mirbase.tsv.opt "fields\t{ID}\n"
-#	exec -ignorestderr wget -c --tries=45 --directory-prefix=${dest}/tmp/${build} ftp://mirbase.org/pub/mirbase/20/genomes/$organism.gff2
-#	cg gff2sft ${dest}/tmp/${build}/$organism.gff2 ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp
-#	cg select -s - ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2
-#	file rename -force ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2 reg_${build}_mirbase.tsv
-#	exec -ignorestderr wget -c ftp://mirbase.org/pub/mirbase/20/README
-#	file rename -force README reg_${build}_mirbase.info
+#	set release 20
+#	cg downloadmirbase $dest/${build}/mir_${build}_mirbase$release.tsv $organism $release
 #}
 
 # exome variant server

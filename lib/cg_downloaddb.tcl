@@ -462,6 +462,20 @@ proc cg_calcsequencedgenome {args} {
 	file rename $path/$build/extra/reg_${build}_sequencedgenome.tsv.temp $path/$build/extra/reg_${build}_sequencedgenome.tsv
 }
 
+proc cg_downloadmirbase {resultfile species {release 21}} {
+	set resultfile [file_absolute $resultfile]
+	file mkdir $resultfile.index
+	set gff3file $resultfile.index/$species.gff3
+	set structfile $resultfile.index/miRNA.str.gz
+	set genomefile [glob [file dir $resultfile]/genome_*.ifas]
+	wgetfile ftp://mirbase.org/pub/mirbase/$release/genomes/$species.gff3 $gff3file
+	wgetfile ftp://mirbase.org/pub/mirbase/$release/miRNA.str.gz $structfile.gz
+	wgetfile ftp://mirbase.org/pub/mirbase/$release/README [file root $resultfile].info
+	cg unzip $structfile.gz
+	convertmirbase $gff3file $resultfile $genomefile $structfile
+	file delete -force $resultfile.index
+}
+
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
 	package require pkgtools
 	set appdir [file dir [pkgtools::startdir]]

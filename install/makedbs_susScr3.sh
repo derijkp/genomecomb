@@ -121,16 +121,10 @@ job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}
 }
 
 # mirbase
-job reg_${build}_mirbase -targets {$dest/${build}/reg_${build}_mirbase.tsv $dest/${build}/reg_${build}_mirbase.tsv.opt $dest/${build}/reg_${build}_mirbase.info} -vars {dest build db} -code {
+job reg_${build}_mirbase -targets {$dest/${build}/mir_${build}_mirbase21.tsv $dest/${build}/mir_${build}_mirbase.info} -vars {dest build db} -code {
 	set organism ssc
-	cd $dest/${build}
-	file_write $dest/${build}/reg_${build}_mirbase.tsv.opt "fields\t{ID}\n"
-	exec -ignorestderr wget -c --tries=45 --directory-prefix=${dest}/tmp/${build} ftp://mirbase.org/pub/mirbase/20/genomes/$organism.gff2
-	cg gff2sft ${dest}/tmp/${build}/$organism.gff2 ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp
-	cg select -s - ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2
-	file rename -force ${dest}/tmp/${build}/reg_${build}_mirbase.tsv.temp2 reg_${build}_mirbase.tsv
-	exec -ignorestderr wget -c ftp://mirbase.org/pub/mirbase/20/README
-	file rename -force README reg_${build}_mirbase.info
+	set release 21
+	cg downloadmirbase $dest/${build}/mir_${build}_mirbase$release.tsv $organism $release
 }
 
 job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${build}.ssa} -vars build \
