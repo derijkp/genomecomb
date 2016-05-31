@@ -15,4 +15,5 @@ proc main args {
 	} else {
 		.mainw opendb {*}$args
 	}
+	loadplugins
 }
