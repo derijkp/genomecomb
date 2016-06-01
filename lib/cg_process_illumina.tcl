@@ -28,7 +28,7 @@ proc calculate_hsmetrics_job {bamfile bedfile} {
 		#remove comment columns & add strand info - due to lack of correct strand info take + as default
 		exec awk {$0 ~ /^@SQ/ {print $0}} $dep1.bed.temp > $dep1.bed
 		exec awk {BEGIN {OFS="\t"} !/^($|#)/ {print $1,$2,$3,"+",$4 }} $bedfile >> $dep1.bed
-		exec java -jar [picard]/CalculateHsMetrics.jar BAIT_INTERVALS=$dep1.bed TARGET_INTERVALS=$dep1.bed I=$dep1 O=$target.temp 2>@ stderr
+		picard CalculateHsMetrics BAIT_INTERVALS=$dep1.bed TARGET_INTERVALS=$dep1.bed I=$dep1 O=$target.temp 2>@ stderr
 		set sample [file tail [file root $bamfile]]
 		cg select -f [list sample=\"$sample\" *] $target.temp $target.temp2
 		file rename -force $target.temp2 $target
@@ -103,12 +103,12 @@ proc searchpath {envvar args} {
 	}
 }
 
-proc picard {} {
+proc picard {cmd args} {
 	global picard
 	if {![info exists picard]} {
 		set picard [searchpath PICARD picard picard*]
 	}
-	return $picard
+	exec java -jar $picard/$cmd.jar {*}$args
 }
 
 proc gatk {} {
@@ -418,14 +418,13 @@ proc gatk_refseq_job refseq {
 	if {![file exists $nrefseq] && $refseq ne $nrefseq} {
 		mklink $refseq $nrefseq
 	}
-	set picard [picard]
 	job gatkrefseq_faidx-[file tail $nrefseq] -deps $nrefseq -targets {$nrefseq.fai} -code {
 		exec samtools faidx $dep
 	}
 	set dict [file root $nrefseq].dict
-	job gatkrefseq-[file tail $nrefseq] -deps $nrefseq -targets {$dict} -vars {nrefseq picard} -code {
+	job gatkrefseq-[file tail $nrefseq] -deps $nrefseq -targets {$dict} -vars {nrefseq} -code {
 		file delete $target.temp
-		exec java -jar $picard/CreateSequenceDictionary.jar R= $nrefseq O= $target.temp 2>@ stderr >@ stdout
+		picard CreateSequenceDictionary R= $nrefseq O= $target.temp 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
 	}
 	return $nrefseq
@@ -449,7 +448,6 @@ proc bam_clean_job {args} {
 		array set opt $args
 	}
 	set gatk [gatk]
-	set picard [picard]
 	upvar job_logdir job_logdir
 	if {$realign eq "srma"} {
 		foreach value $realigndeps {
@@ -491,11 +489,11 @@ proc bam_clean_job {args} {
 	# start jobs
 	# sort using picard
 	job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
-	-vars {removeduplicates sample picard} {*}$skips -code {
+	-vars {removeduplicates sample} {*}$skips -code {
 		file delete $target.temp
-		exec java -jar $picard/SortSam.jar	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr >@ stdout
+		picard SortSam	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
-	#	# exec java -jar $picard/AddOrReplaceReadGroups.jar	I=$src	O=$target.temp3	RGID=$sample	RGLB=solexa-123	RGPL=illumina	RGPU=$sample RGSM=$sample 2>@ stderr >@ stdout
+	#	# picard AddOrReplaceReadGroups	I=$src	O=$target.temp3	RGID=$sample	RGLB=solexa-123	RGPL=illumina	RGPU=$sample RGSM=$sample 2>@ stderr >@ stdout
 	#	# file delete $target.temp $target.temp2
 	#	# file rename -force $target.temp3 $target
 	}
@@ -503,9 +501,9 @@ proc bam_clean_job {args} {
 	if {$removeduplicates} {
 		list_pop skips 0; list_pop skips 0;
 		job bamremdup-$root -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-d$root.bam} \
-		-vars {sample picard} {*}$skips -code {
+		-vars {sample} {*}$skips -code {
 			puts "removing duplicates"
-			exec java -jar $picard/MarkDuplicates.jar	I=$dep	O=$target.temp METRICS_FILE=$target.dupmetrics 2>@ stderr >@ stdout
+			picard MarkDuplicates	I=$dep	O=$target.temp METRICS_FILE=$target.dupmetrics 2>@ stderr >@ stdout
 			file rename -force $target.temp $target
 		}
 		set root d$root
