@@ -55,8 +55,7 @@ proc cg_bcl2fastq {rundir outdir {rtr 6} {dtr 6} {ptr 6} {wtr 6} } {
 	#-d, --demultiplexing-threads Number of threads used for demultiplexing.
 	#-p, --processing-threads  Number of threads used for processing demultiplexed data.
 	#-w, --writing-threads Number of threads used for writing FASTQ data. This must not be higher than number of samples.
-	set bcl2fastq [bcl2fastq]
-	exec $bcl2fastq --create-fastq-for-index-reads -r $rtr -d $dtr -p $ptr -w $wtr --runfolder-dir $rundir --output-dir $outdir 2>@ stderr >@ stdout
+	exec [bcl2fastq] --create-fastq-for-index-reads -r $rtr -d $dtr -p $ptr -w $wtr --runfolder-dir $rundir --output-dir $outdir 2>@ stderr >@ stdout
 }
 
 proc cg_process_conv_illnextseq {illsrc destdir} {
@@ -123,7 +122,12 @@ proc gatk {} {
 proc bcl2fastq {} {
 	global bcl2fastq
 	if {![info exists bcl2fastq]} {
-		set bcl2fastq [searchpath bcl2fastq bcl2fastq*]/bin/bcl2fastq
+		set path [searchpath bcl2fastq bcl2fastq*]
+		if {[file isdir $path]} {
+			set bcl2fastq $path/bin/bcl2fastq
+		} else {
+			set bcl2fastq $path
+		}
 	}
 	return $bcl2fastq
 }
