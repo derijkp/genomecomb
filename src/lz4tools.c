@@ -11,15 +11,7 @@ unsigned LZ4IO_readLE32 (const void* s) {
 
 char *lz4_findindex(char *filename) {
 	char *outfile = (char *)malloc(strlen(filename) + 5);
-	int len=strlen(filename);
-	while (--len > 0) {
-		if (filename[len] == '.') break;
-	}
-	if (len == 0) {
-		sprintf(outfile,"%s.lz4i",filename);
-	} else {
-		sprintf(outfile,"%*.*s.lz4i",len,len,filename);
-	}
+	sprintf(outfile,"%s.lz4i",filename);
 	return outfile;
 }
 
