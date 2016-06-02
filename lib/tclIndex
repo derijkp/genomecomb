@@ -69,6 +69,7 @@ set auto_index(cg_bam2coverage) [list source [file join $dir cg_bam2coverage.tcl
 set auto_index(cg_bam2fastq) [list source [file join $dir cg_bam2fastq.tcl]]
 set auto_index(cg_bam_histo) [list source [file join $dir cg_bam_histo.tcl]]
 set auto_index(cg_coverage_report) [list source [file join $dir cg_bam_histo.tcl]]
+set auto_index(cg_bamreorder) [list source [file join $dir cg_bamreorder.tcl]]
 set auto_index(cg_bed2sft) [list source [file join $dir cg_bed2sft.tcl]]
 set auto_index(cg_bgzip) [list source [file join $dir cg_bgzip.tcl]]
 set auto_index(cg_cat) [list source [file join $dir cg_cat.tcl]]

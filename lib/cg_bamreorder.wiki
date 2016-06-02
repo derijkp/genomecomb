@@ -1,0 +1,22 @@
+= bamreorder =
+
+== Format ==
+cg bamreorder bamfile resultbamfile referencegenome
+
+== Summary ==
+Changes the order of the contigs/chromosomes in a bam file 
+
+== Description ==
+This command uses picard's ReorderSam to change the order of the
+contigs/chromosomes in a bam file to that of the given genome reference.
+It first checks the contigs in each, adapting the names (e.g. 1 to chr1)
+where needed and checking if sizes match. Contigs with matching names, but
+different size are dropped from the bam.
+
+== Arguments ==
+; **bamfile**: bamfile
+; **resultbamfile**: name of resulting reordered bamfile
+; **referencegenome**: a indexed fasta file of the genome. If the file is not indexed, the command will try to create the index (using samtools)
+
+== Category ==
+Conversion
