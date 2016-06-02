@@ -90,6 +90,7 @@ int main(int argc, char *argv[]) {
 						shift = 0;
 					}
 					fprintf(obcol,"%*.*s\t%lld\t%lld\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,start+lastpos+1);
+					fflush(obcol);
 					DStringCopy(prevchr,chromosome);
 				}
 				poffset = -1;
@@ -126,6 +127,7 @@ int main(int argc, char *argv[]) {
 		shift = 3;
 	}
 	fprintf(obcol,"%*.*s\t%lld\t%lld\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,start+lastpos+1);
+	fflush(obcol);
 	if (line) {DStringDestroy(line);}
 	if (result) {DStringArrayDestroy(result);}
 	if (buffer) {DStringDestroy(buffer);}
