@@ -406,7 +406,7 @@ proc cg_bcol_update {newbcol oldbcol args} {
 proc cg_bcol_make {args} {
 	global bcol_typea
 	set type iu
-	set compress 9
+	set compress 3
 	set chromosomecol coverage
 	set chrompos -1
 	set offsetcol {}
