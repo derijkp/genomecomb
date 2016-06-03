@@ -1,13 +1,16 @@
 = bcol format =
 
-The bcol format stores one column of data in an efficient binary format.
-All data must be of the same type (list of supported types below).
-The (new) bcol format consists of two files, one in a text format
-describing the bcol data (bcolfile.tsv) and one containing the actual
-binary data.
+The bcol format stores one (or more) column(s) of data in an efficient
+binary format. All data must be of the same type (list of supported types
+below). bcol files can e.g. used to store a score for each position
+of the genome and use this for annotation.
 
-== bcolfile.tsv ==
-bcolfile.tsv is a [[format_tsv|tab-separated file]] with the following format
+The (new) bcol format consists of two files, one in a text format
+describing the bcol data (bcolfile.bcol) and one containing the actual
+binary data (bcolfile.bcol.bin.lz4).
+
+== bcolfile.bcol ==
+bcolfile.bcol is a [[format_tsv|tab-separated file]] with the following format
 
 {{{
 # binary column
@@ -46,5 +49,9 @@ The comments before the table must contain the following information:
 ; t: small integer (16 bit) in machine native byte order
 ; c: 8 bit integer (1 byte or character)
 
-== bcolfile.tsv ==
-bcolfile.tsv.bin.rz is a (compressed) binary file containing the actual data
+== bcolfile.bcol.bin.lz4 ==
+bcolfile.bcol.bin.lz4 is the (compressed) binary file containing the
+actual data. The uncompressed binary file (bcolfile.bcol.bin) is also
+recognized, but by default the binaries are compressed.
+A lz4 index file bcolfile.bcol.bin.lz4.lz4i may also exists to speed up
+random access to the compressed binary.

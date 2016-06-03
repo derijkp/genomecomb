@@ -406,7 +406,7 @@ proc cg_bcol_update {newbcol oldbcol args} {
 proc cg_bcol_make {args} {
 	global bcol_typea
 	set type iu
-	set compress 3
+	set compress 9
 	set chromosomecol coverage
 	set chrompos -1
 	set offsetcol {}
@@ -427,9 +427,6 @@ proc cg_bcol_make {args} {
 			}
 			-d - --default {
 				set defaultvalue $value
-			}
-			-n - --nan {
-				set nanvalue $value
 			}
 			-c - --chromosomecol {
 				set chromosomecol $value
@@ -456,7 +453,8 @@ proc cg_bcol_make {args} {
 	}
 	set args [lrange $args $pos end]
 	if {[llength $args] != 2} {
-		exiterror "wrong # args: should be \"cg bcol make ?options? bcolfile column\""
+		errorformat bcol_make
+		exit 1
 	}
 	foreach {bcolfile valuecolumn} $args break
 	set bcolfile [file_absolute $bcolfile]
