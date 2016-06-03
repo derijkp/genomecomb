@@ -53,7 +53,15 @@ proc cg_bamreorder {src dest ref} {
 	} else {
 		set tempsrc $src
 	}
-	picard ReorderSam R=$ref I=$tempsrc O=$dest.temp2 ALLOW_INCOMPLETE_DICT_CONCORDANCE=true VALIDATION_STRINGENCY=LENIENT 2>@ stderr >@ stdout
+	if {[file exentsion $ref] ne ".fa"} {
+		set nref [tempfile].fa
+		file mklink $nref [file normalize $ref]
+		file mklink $nref.fai [file normalize $ref].fai
+	} else {
+		set nref $ref
+	}
+	picard ReorderSam R=$nref I=$tempsrc O=$dest.temp2 ALLOW_INCOMPLETE_DICT_CONCORDANCE=true VALIDATION_STRINGENCY=LENIENT 2>@ stderr >@ stdout
+	if {$nref ne $ref} {file delete $nref}
 	exec samtools index $dest.temp2
 	file delete $dest.temp  $dest.temp.bai
 	file rename $dest.temp2 $dest
