@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
 				fprintf(stdout,"%s\n",defaultvalue->string);
 			} else {
 				char *str = alt1->string;
-				int cursize,c;
+				int cursize = 0,c;
 				while (1) {
 					c = str[cursize];
 					if (c == ',' || c =='\0' || c =='\t') {
@@ -130,14 +130,14 @@ int main(int argc, char *argv[]) {
 				}
 				fprintf(stdout,"\n");
 			}
-		} else {
+		} else { /* start1 = start position of query, start2 = start position of db block */
 			if (alt1pos == -1) {
 				binpos = curstartpos + start1 - start2;
 				bcol_getbin(bcol,binpos,binpos);
 				bcol_printtext(stdout,bcol->reverse,bcol->isunsigned,bcol->type,bcol->buffer,-1);
 			} else {
 				char *str = alt1->string;
-				int cursize,found,c,i;
+				int cursize=0,found,c,i;
 				binpos = mvalues->size * (curstartpos + start1 - start2);
 				while (1) {
 					c = str[cursize];

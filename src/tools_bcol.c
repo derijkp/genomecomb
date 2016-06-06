@@ -771,6 +771,7 @@ BCol *bcol_open(char *bcolfile) {
 	if (naturalcompare(line->string,"chromosome\tbegin\tend",line->size,20) == 0) {
 		result->version = 1;
 		result->tablesize = 0;
+		result->start = 0;
 		if (result->table == NULL) {
 			result->table = malloc(result->tablesize*sizeof(BCol_table));
 		} else {

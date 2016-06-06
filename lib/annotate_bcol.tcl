@@ -24,7 +24,7 @@ putsvars file dbfile name annotfile
 	if {[gziscompressed $file]} {
 		error "bcol_annot not supported for compressed files"
 	}
-	# puts "bcol_annot $file $poss [list_concat $bcollist]"
+	# puts "bcol_annot $file {*}$poss -1 -1 $dbfile"
 	if {[catch {
 		exec bcol_annot $file {*}$poss -1 -1 $dbfile >> $annotfile.temp 2>@ stderr
 	} error]} {
