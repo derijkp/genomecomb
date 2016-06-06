@@ -245,6 +245,12 @@ test gene_annot {gene} {
 	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
 } {} 
 
+test gene_annot {gene -upstreamsize option} {
+	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate -upstreamsize 1000 -dbdir /complgen/refseq/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv
+	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
+} {} 
+
 test gene_annot {bug check empty _gene field with only name (used for transcript and gene)} {
 	cg select -f {chrom start end strand name cdsStart cdsEnd exonCount exonStarts exonEnds} data/gene_test.tsv tmp/gene_test.tsv
 	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/vars_annottest.sft tmp/temp.sft tmp/gene_test.tsv

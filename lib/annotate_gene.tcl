@@ -98,7 +98,7 @@ proc calc_rpos {rsnppos} {
 	}
 }
 
-proc annotatevar_gene_makegeneobj {genomef dbline dposs} {
+proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
 	global adata
 	# splice 8 bases, essentialsplice 2 bases intron, upstream,downstream -> 2k bases
 	foreach {dchrom dstart dend strand cdsStart cdsEnd exonCount exonStarts exonEnds transcriptname genename} [list_sub $dbline $dposs] break
@@ -124,10 +124,13 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs} {
 	# use code coming from novoSNP:
 	# transform to ft addressing used in novoSNP previously (ft endpos is included, so -1)
 
+	# ftlist wil contain lines for each element of the form
+	# gbegin gend type element rnabegin rnaend cdsbegin cdsend
+	# where element: exon$nr or intron$nr or pre (for variants before RNA)
 	set ftlist {}
 	if {!$complement} {set type upstream} else  {set type downstream}
-	lappend ftlist [list 0 [expr {$dstart-2001}] pre]
-	lappend ftlist [list [expr {$dstart-2000}] [expr {$dstart-1}] $type]
+	lappend ftlist [list 0 [expr {$dstart- $upstreamsize - 1}] pre]
+	lappend ftlist [list [expr {$dstart-$upstreamsize}] [expr {$dstart-1}] $type]
 	set prev -1
 	if {$cds} {set type UTR} else {set type RNA}
 	foreach s $exonStarts e $exonEnds {
@@ -171,8 +174,8 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs} {
 	}
 
 	if {$complement} {set type upstream} else  {set type downstream}
-	lappend ftlist [list [expr {$e}] [expr {$e+1999}] $type]
-	lappend ftlist [list [expr {$e+2000}] 9000000000 post]
+	lappend ftlist [list [expr {$e}] [expr {$e + $upstreamsize - 1}] $type]
+	lappend ftlist [list [expr {$e + $upstreamsize}] 9000000000 post]
 	# add info to ftlist so data will be: begin end type exon rnabegin rnaend cdsbegin cdsend
 	set adata(grefstart) 0
 	set adata(rrefstart) 0
@@ -333,34 +336,41 @@ proc annotatevar_gene_getprnaseq {qstart qend {line {}}} {
 	annotatevar_gene_getrnaseq $qstart $qend $line
 }
 
+# input
+#   line: line for element from ftlist, contains: gbegin gend type exon rnabegin rnaend cdsbegin cdsend
+# return values
+#   rpos: position relative to RNA
+#   element: exon$nr or intron$nr or pre (for variants before RNA)
+#   eipos: position relative to genome coordinates for element
 proc annotategene_one_getsnpcoords {line snppos} {
 	global adata
 	set complement $adata(complement)
-	foreach {gs ge t el rs re ps pe} $line break
+	foreach {gbegin gend eltype element rnabegin rnaend cdsbegin cdsend} $line break
 	if {!$complement} {
 		# position in intron/exon
-		set eipos [expr {$snppos-$gs}]
+		set eipos [expr {$snppos-$gbegin}]
 		# position in rna
-		if {$rs == $re} {
+		if {$rnabegin == $rnaend} {
 			# in intron
-			set rpos $rs
+			set rpos $rnabegin
 		} else {
-			set rpos [expr {$rs+$eipos}]
+			set rpos [expr {$rnabegin+$eipos}]
 		}
 	} else {
 		# position in intron/exon
-		set eipos [expr {$ge-$snppos}]
+		set eipos [expr {$gend-$snppos}]
 		# position in rna
-		if {$rs == $re} {
+		if {$rnabegin == $rnaend} {
 			# in intron
-			set rpos $rs
+			set rpos $rnabegin
 		} else {
-			set rpos [expr {$rs+$eipos}]
+			set rpos [expr {$rnabegin+$eipos}]
 		}
 	}
 	# position on protein (in nucl)
-	return [list $rpos $el $eipos]
+	return [list $rpos $element $eipos]
 }
+
 
 proc annotategene_one_del {snppos snptype ref alt} {
 #putsvars snppos snptype ref alt
@@ -731,7 +741,7 @@ proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 	return $header
 }
 
-proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcriptcol {}}} {
+proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcriptcol {}} {upstreamsize 2000}} {
 #putsvars file genomefile dbfile name annotfile genecol transcriptcol
 	global genomef
 	annot_init
@@ -788,8 +798,8 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 		if {![isint $dbstart] || ![isint $dbend]} continue
 		break
 	}
-	incr dbstart -2000
-	incr dbend 2000
+	set dbstart [expr {$dbstart - $upstreamsize}]
+	incr dbend $upstreamsize
 	lset dbloc 0 $dbchr
 	set dblist {}
 	set counter 0
@@ -862,8 +872,8 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 			set prevdbloc $pdbloc
 			lset dbloc 0 $dbchr
 			if {!$ok} break
-			incr dbstart -2000
-			incr dbend 2000
+			set dbstart [expr {$dbstart - $upstreamsize}]
+			incr dbend $upstreamsize
 		}
 		# join [list_subindex $dblist 4] \n\n
 		# check for multiple alleles, process these separately (alist contains >1 loc)
@@ -876,9 +886,11 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 		} else {
 			set alist [list $loc]
 		}
-		# check for overlap, remove genes from dblist that are before current var
+		# go over each allele (alist), collect results per allele in ahitgenes
 		set ahitgenes {}
 		foreach loc $alist {
+			# check for overlap, remove genes from dblist that are before current var in remove
+			# annotate overlapping with annotategene_one, collect results in hitgenes
 			set num 0
 			set remove {}
 			set hitgenes ""
@@ -892,7 +904,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 						lappend remove $num
 					} elseif {$ds < $end} {
 						if {[catch {dict get $geneobj end}]} {
-							set geneobj [annotatevar_gene_makegeneobj $genomef $dbline $dposs]
+							set geneobj [annotatevar_gene_makegeneobj $genomef $dbline $dposs $upstreamsize]
 							lset dblist $num 3 $geneobj
 						}
 						set genename [dict get $geneobj genename]
@@ -902,6 +914,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 				}
 				incr num
 			}
+			# create result for this allele
 			set result {}
 			set impacts [list_subindex $hitgenes 0]
 			set udspos [list_union [list_find $impacts upstream] [list_find $impacts downstream]]
@@ -948,6 +961,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 		if {[llength $remove]} {
 			set dblist [list_sub $dblist -exclude $remove]
 		}
+		# create final result
 		if {[llength $ahitgenes] == 1} {
 			set line [lindex $ahitgenes 0]
 			if {[llength $line]} {

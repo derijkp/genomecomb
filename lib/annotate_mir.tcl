@@ -152,7 +152,7 @@ proc annotatemir_dbopen {dbfile genecol transcriptcol {extracols {}}} {
 	return $dbobj
 }
 
-proc annotatemir_dbgetlist {dbobjVar dblistVar chr start end} {
+proc annotatemir_dbgetlist {dbobjVar dblistVar chr start end {upstreamsize 2000}} {
 	upvar $dbobjVar dbobj
 	upvar $dblistVar dblist
 	set df [dict get $dbobj df]
@@ -162,8 +162,8 @@ proc annotatemir_dbgetlist {dbobjVar dblistVar chr start end} {
 	if {![llength $fdbline]} {return $dblist}
 	set dposs [dict get $dbobj dposs]
 	foreach {dbchr dbstart dbend} $fdbline break
-	incr dbstart -2000
-	incr dbend 2000
+	set dbstart [expr {$dbstart - $upstreamsize}]
+	incr dbend $upstreamsize
 	while {![eof $df]} {
 		set chrcompar [chr_compare $dbchr $chr]
 		if {$chrcompar > 0} break
@@ -194,15 +194,15 @@ proc annotatemir_dbgetlist {dbobjVar dblistVar chr start end} {
 		}
 		set prevdbloc $dbloc
 		if {!$ok} break
-		incr dbstart -2000
-		incr dbend 2000
+		set dbstart [expr {$dbstart - $upstreamsize}]
+		incr dbend $upstreamsize
 	}
 	dict set dbobj prevdbloc $prevdbloc
 	dict set dbobj fdbline $fdbline
 	return $dblist
 }
 
-proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0}} {
+proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0} {upstreamsize 2000}} {
 # putsvars genomef dbline flanksizes
 	global adata
 	set flank1 [lindex $flanksizes 0]
@@ -221,7 +221,7 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0}} {
 	} else {
 		set temp {downstream a -1}
 	}
-	lappend temp [expr {$dstart-2000}] [expr {$dstart-$flank1}]
+	lappend temp [expr {$dstart-$upstreamsize}] [expr {$dstart-$flank1}]
 	lappend annotlist $temp
 	if {!$complement} {set side 5p} else {set side 3p}
 	lappend annotlist [list flank$side a -1 [expr {$dstart-$flank1}] $dstart]
@@ -278,7 +278,7 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0}} {
 	} else {
 		set temp {downstream a +1}
 	}
-	lappend temp [expr {$dend+$flank2}] [expr {$dend+2000}]
+	lappend temp [expr {$dend+$flank2}] [expr {$dend+$upstreamsize}]
 	lappend annotlist $temp
 	unset -nocomplain adata
 	set adata(genomef) $genomef
@@ -307,9 +307,10 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0}} {
 # Although this piece of code is shared with mirvas, mirvas does several things differently.
 # genomecomb does not have all the tools to do the structural analysis.
 # 
-proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcriptcol transcript} {flanksizes 100} {isomirname 0} {mirvas 0} {extracols status}} {
+proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcriptcol transcript} {flanksizes 100} {isomirname 0} {mirvas 0} {extracols status} {upstreamsize 2000}} {
 # putsvars file genomefile dbfile name resultfile genecol transcriptcol flanksizes mirvas
 	global genomef
+	if {$upstreamsize < [max $flanksizes]} {set upstreamsize [max $flanksizes]}
 	set file [file normalize $file]
 	set dbfile [file normalize $dbfile]
 	set resultfile [file normalize $resultfile]
@@ -404,7 +405,7 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 			set counter 0
 		}
 		# add all overlapping to dblist
-		annotatemir_dbgetlist dbobj dblist $chr $start $end
+		annotatemir_dbgetlist dbobj dblist $chr $start $end $upstreamsize
 		# join [list_subindex $dblist 4] \n\n
 		# check for multiple alleles, process these separately (alist contains >1 loc)
 		set malt [split $alt ,]
@@ -431,8 +432,8 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 			set tododblist {}
 			foreach dbline $dblist {
 				foreach {dc ds de} $dbline break
-				incr ds -2000
-				incr de 2000
+				set ds [expr {$ds - $upstreamsize}]
+				incr de $upstreamsize
 				set chrcompar [chr_compare $dc $chr]
 				if {$chrcompar < 0} {
 					lappend remove $num
@@ -442,7 +443,7 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 					} elseif {$ds < $end} {
 						set geneobj [lindex $dbline $geneobjpos]
 						if {[catch {dict get $geneobj end}]} {
-							set geneobj [annotatemir_makegeneobj $genomef $dbline $flanksizes $isomirname]
+							set geneobj [annotatemir_makegeneobj $genomef $dbline $flanksizes $isomirname $upstreamsize]
 							lset dbline $geneobjpos $geneobj
 							lset dblist $num $dbline
 						}

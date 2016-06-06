@@ -203,31 +203,36 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 proc cg_annotate {args} {
 	set near -1
 	set dbdir {}
-	set pos 0
 	set replace 0
 	set multidb 0
-	foreach {key value} $args {
+	set upstreamsize 2000
+	set pos 0
+	while 1 {
+		set key [lindex $args $pos]
 		switch -- $key {
 			-near {
-				set near $value
+				set near [lindex $args [incr pos]]
 			}
 			-dbdir {
-				set dbdir $value
+				set dbdir [lindex $args [incr pos]]
 			}
 			-name {
-				set namefield $value
+				set namefield [lindex $args [incr pos]]
 			}
 			-replace {
-				set replace $value
+				set replace [lindex $args [incr pos]]
 			}
 			-multidb {
-				set multidb $value
+				set multidb [lindex $args [incr pos]]
+			}
+			-u - -upstreamsize {
+				set upstreamsize [lindex $args [incr pos]]
 			}
 			default {
 				break
 			}
 		}
-		incr pos 2
+		incr pos
 	}
 	set args [lrange $args $pos end]
 	if {([llength $args] < 3)} {
@@ -300,7 +305,7 @@ proc cg_annotate {args} {
 			}
 			set genecol [dict_get_default $dbinfo genecol {}]
 			set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
-			annotategene $usefile $genomefile $dbfile $name $tempbasefile.${name}_annot $genecol $transcriptcol
+			annotategene $usefile $genomefile $dbfile $name $tempbasefile.${name}_annot $genecol $transcriptcol $upstreamsize
 		} elseif {$dbtype eq "mir"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}
 			if {$dbdir eq ""} {
@@ -317,7 +322,7 @@ proc cg_annotate {args} {
 			set genecol [dict_get_default $dbinfo genecol name]
 			set transcriptcol [dict_get_default $dbinfo transcriptcol transcript]
 			set extracols [dict_get_default $dbinfo extracols status]
-			annotatemir $usefile $genomefile $dbfile $name $tempbasefile.${name}_annot $genecol $transcriptcol 100 1 0 $extracols
+			annotatemir $usefile $genomefile $dbfile $name $tempbasefile.${name}_annot $genecol $transcriptcol 100 1 0 $extracols $upstreamsize
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
 			if {[file extension $dbfile] ne ".bcol"} {

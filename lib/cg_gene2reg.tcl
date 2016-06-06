@@ -30,7 +30,7 @@ proc cg_gene2reg {args} {
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
-		set geneobj [annotatevar_gene_makegeneobj {} $line $dposs]
+		set geneobj [annotatevar_gene_makegeneobj {} $line $dposs 2000]
 		set ftlist [dict get $geneobj ftlist]
 		set chr [lindex $line [lindex $dposs 0]]
 		set gene [dict get $geneobj genename]
