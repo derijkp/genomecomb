@@ -9,6 +9,9 @@ The (new) bcol format consists of two files, one in a text format
 describing the bcol data (bcolfile.bcol) and one containing the actual
 binary data (bcolfile.bcol.bin.lz4).
 
+bcol files can be created based on a [[format_tsv|tab-separated file]] file using the
+command [[cg_bcol_make|cg bcol make]]
+
 == bcolfile.bcol ==
 bcolfile.bcol is a [[format_tsv|tab-separated file]] with the following format
 

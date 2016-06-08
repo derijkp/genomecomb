@@ -42,7 +42,7 @@ with .sampleinfo or .sampleinfo.tsv appended, it will be used as sampleinfofile 
 ; **-sh sepheader**: write a resultfile without header, and write the header into the file **sepheader**
 ; **-hc headerincomment**: if 1, the last of the starting comment lines will be used for the header instead of the first non-comment line. 
 If 2, the result file will also have the header in the last comment.
-; **-hf headerfile: datafile does not have a header, the header will be read from **headerfile** instead
+; **-hf headerfile**: datafile does not have a header, the header will be read from **headerfile** instead
 ; **-rc 0/1**: remove comment
 ; **-h 0/1**: return header fields in file
 ; **-n 0/1**: return sample names in file
@@ -218,8 +218,8 @@ The following functions allow use of vectors in queries
 ; **lstdev(vector, ...)**: the standard deviation of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
 ; **lmedian(vector, ...)**: the median of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
 ; **lmode(vector, ...)**: the mode (element that is most abundant) of the vector. The result can be a new vector (if multiple values occur at the same count)
-; **contains(vector, value)**; true if **vector** contains **value**. This can also be used as an operator: vector contains value
-; **shares(vector, valuelist)**; true if **vector** and the list in **valuelist** (a SPACE separated list!) share a value. This can also be used as an operator: vector shares valuelist
+; **contains(vector, value)**: true if **vector** contains **value**. This can also be used as an operator: vector contains value
+; **shares(vector, valuelist)**: true if **vector** and the list in **valuelist** (a SPACE separated list!) share a value. This can also be used as an operator: vector shares valuelist
 ; **lone(vector)**: true if one of elements of the vector is true
 ; **lall(vector)**: true if all elements of the vector are true
 ; **lcount(vector)**: number of elements in vector that are true

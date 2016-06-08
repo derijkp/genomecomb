@@ -1,0 +1,19 @@
+= help =
+
+== Format ==
+cg help ?options? ?topic?
+
+== Summary ==
+display help
+
+== Description ==
+cg help displays help about a speific topic, or a general help overview if no topic is given
+
+== Options ==
+; **-format 0/1**: if 0 output help as ascii text to stdout; if 1 put in color and output via less
+
+== Arguments ==
+; **topic**: display help about this specific topic
+
+== Category ==
+Dev
