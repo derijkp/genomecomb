@@ -199,25 +199,17 @@ proc cg_regcollapse {args} {
 	set resultfile stdout
 	set scorefield score
 	set numfields num
-	foreach {key value} $args {
-		switch -- $key {
-			-s {
-				set scorefield $value
-			}
-			-n {
-				set numfields $value
-			}
-			-o {
-				set resultfile $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options regcollapse args {
+		-s {
+			set scorefield $value
 		}
-		incr pos 2
+		-n {
+			set numfields $value
+		}
+		-o {
+			set resultfile $value
+		}
 	}
-	set args [lrange $args $pos end]
 	if {$resultfile ne "stdout"} {
 		if {[file exists $resultfile]} {
 			puts "$resultfile already exists"

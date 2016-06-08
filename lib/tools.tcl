@@ -43,6 +43,34 @@ proc cg {cmd args} {
 	}
 }
 
+proc cg_options {cmd argsVar def {minargs 0} {maxargs 2000000000}} {
+	set options [join [list_unmerge $def] ,]
+	set fullcmd [subst -nocommands {
+		set pos 0
+		foreach {key value} \$$argsVar {
+			switch -- \$key {
+				$def
+				-- break
+				default {
+					if {[string index \$key 0] eq "-"} {
+						puts stderr "unknown option \\"\$key\\", must be one of: $options"
+						exit 1
+					}
+					break
+				}
+			}
+			incr pos 2
+		}
+		set $argsVar [lrange \$$argsVar \$pos end]
+		set len [llength \$$argsVar]
+		if {(\$len < $minargs) || (\$len > $maxargs)} {
+			errorformat $cmd
+			exit 1
+		}
+	}]
+	uplevel $fullcmd
+}
+
 proc bgcg_progress {bgexechandleVar args} {
 	upvar #0 $bgexechandleVar bgexechandle
 	if {![isint $args]} {

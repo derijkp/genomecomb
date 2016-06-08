@@ -191,31 +191,22 @@ proc process_multicompar {args} {
 	set adapterfile {}
 	set conv_nextseq 0
 	set hsmetrics 0
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-dbdir {
-				set dbdir $value
-			}
-			-split {
-				set split $value
-			}
-			-dbfile {
-				lappend dbfiles $value
-			}
-			default break
+	cg_options process_multicompar args {
+		-dbdir {
+			set dbdir $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
+		-split {
+			set split $value
+		}
+		-dbfile {
+			lappend dbfiles $value
+		}
+	} 1 2
 	set len [llength $args]
 	if {$len == 1} {
 		set destdir [lindex $args 0]
 	} elseif {$len == 2} {
 		foreach {destdir dbdir} $args break
-	} else {
-		errorformat process_multicompar
-		exit 1
 	}
 	set destdir [file_absolute $destdir]
 	# check projectinfo

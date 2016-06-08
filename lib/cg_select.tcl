@@ -1357,85 +1357,78 @@ proc cg_select {args} {
 	set query {}; set qfields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0
 	set inverse 0; set group {}; set groupcols {} ; set samplingskip 0; set db {} ; set removecomment 0
 	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-q {
-				set query $value
-				if {[regexp {[^=!><\\]=[^=]} $query]} {puts stderr "you may have used = instead of == in query"}
-				regsub -all {\\=} $query = query
-			}
-			-si {
-				set ::tsv_select_sampleinfofile $value
-				if {![file exists $::tsv_select_sampleinfofile]} {
-					error "sampleinfofile \"$::tsv_select_sampleinfofile\" does not exist"
-				}
-			}
-			-qf {
-				set f [gzopen $value]
-				set header [tsv_open $f]
-				set data [csv_file $f \t]
-				close $f
-				set query {}
-				foreach line $data {
-					set el ""
-					foreach field $header v $line {
-						lappend el "\$$field == \"$v\""
-					}
-					lappend query "\( [join $el " && "] \)"
-				}
-				set query [join $query " || "]
-			}
-			-f {set qfields $value}
-			-rf {
-				set qfields $value
-				set inverse 1
-			}
-			-g {set group $value}
-			-db {set db $value}
-			-gc {lappend groupcols $value}
-			-nh {set newheader $value}
-			-sh {set sepheader $value}
-			-hc {
-				if {$value ni {0 1 2}} {error "-hc must be 0, 1 or 2"}
-				set hc $value
-			}
-			-hf {set hc $value}
-			-s {set sortfields $value}
-			-sr {set sortfields -$value}
-			-n {
-				if {$value eq ""} {
-					set header [tsv_open stdin]
-				} else {
-					set f [gzopen $value]
-					set header [tsv_open $f]
-					catch {close $f}
-				}
-				puts stdout [join [samples $header] \n]
-				exit 0
-			}
-			-h {
-				if {$value eq ""} {
-					set header [tsv_open stdin]
-				} else {
-					set f [gzopen $value]
-					set header [tsv_open $f]
-					catch {close $f}
-				}
-				puts stdout [join $header \n]
-				exit 0
-			}
-			-samplingskip {
-				set samplingskip $value
-			}
-			-rc {
-				set removecomment $value
-			}
-			-- break
-			default {
-				break
+	cg_options select args {
+		-q {
+			set query $value
+			if {[regexp {[^=!><\\]=[^=]} $query]} {puts stderr "you may have used = instead of == in query"}
+			regsub -all {\\=} $query = query
+		}
+		-si {
+			set ::tsv_select_sampleinfofile $value
+			if {![file exists $::tsv_select_sampleinfofile]} {
+				error "sampleinfofile \"$::tsv_select_sampleinfofile\" does not exist"
 			}
 		}
-		incr pos 2
+		-qf {
+			set f [gzopen $value]
+			set header [tsv_open $f]
+			set data [csv_file $f \t]
+			close $f
+			set query {}
+			foreach line $data {
+				set el ""
+				foreach field $header v $line {
+					lappend el "\$$field == \"$v\""
+				}
+				lappend query "\( [join $el " && "] \)"
+			}
+			set query [join $query " || "]
+		}
+		-f {set qfields $value}
+		-rf {
+			set qfields $value
+			set inverse 1
+		}
+		-g {set group $value}
+		-db {set db $value}
+		-gc {lappend groupcols $value}
+		-nh {set newheader $value}
+		-sh {set sepheader $value}
+		-hc {
+			if {$value ni {0 1 2}} {error "-hc must be 0, 1 or 2"}
+			set hc $value
+		}
+		-hf {set hc $value}
+		-s {set sortfields $value}
+		-sr {set sortfields -$value}
+		-n {
+			if {$value eq ""} {
+				set header [tsv_open stdin]
+			} else {
+				set f [gzopen $value]
+				set header [tsv_open $f]
+				catch {close $f}
+			}
+			puts stdout [join [samples $header] \n]
+			exit 0
+		}
+		-h {
+			if {$value eq ""} {
+				set header [tsv_open stdin]
+			} else {
+				set f [gzopen $value]
+				set header [tsv_open $f]
+				catch {close $f}
+			}
+			puts stdout [join $header \n]
+			exit 0
+		}
+		-samplingskip {
+			set samplingskip $value
+		}
+		-rc {
+			set removecomment $value
+		}
 	}
 	if {[llength $groupcols] && ![llength $group]} {
 		error "cannot use -gc option without -g option"
@@ -1443,7 +1436,6 @@ proc cg_select {args} {
 	if {[llength $group] && $samplingskip} {
 		error "cannot use -samplingskip option with -g option"
 	}
-	set args [lrange $args $pos end]
 	# clean fields and query: remove comments \n anf \t to space
 	regsub -all {\n#[^\n]*} $qfields {} qfields
 	regsub -all {\n#[^\n]*} $query {} query

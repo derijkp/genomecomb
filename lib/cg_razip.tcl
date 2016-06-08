@@ -1,18 +1,11 @@
 proc cg_razip args {
 	set pos 0
 	set keep 0
-	foreach {key value} $args {
-		switch -- $key {
-			-k {
-				set keep 1
-			}
-			default {
-				break
-			}
+	cg_options razip args {
+		-k {
+			set keep 1
 		}
-		incr pos 2
 	}
-	set args [lrange $args $pos end]
 	foreach file $args {
 		set ext [file extension $file]
 		switch $ext {
