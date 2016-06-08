@@ -32,13 +32,13 @@ int main(int argc, char *argv[]) {
 	unsigned int numfields1,numfields,pos1 = 0;
 	off_t binpos,curstartpos = 0;
 	int prevstart1 = -1,prevend1 = -1;
-	int chr1pos,start1pos,end1pos,type1pos,alt1pos,max1;
+	int chr1pos,start1pos,end1pos,type1pos,alt1pos,max1,precision;
 	int comp;
 	int start1,end1;
 	int start2,end2;
 	int nextpos=0;
-	if ((argc != 8)) {
-		fprintf(stderr,"Format is: bcol_annot file1 chrpos1 startpos1 endpos1 type1pos alt1pos bcolfile");
+	if ((argc != 9)) {
+		fprintf(stderr,"Format is: bcol_annot file1 chrpos1 startpos1 endpos1 type1pos alt1pos bcolfile precision");
 		exit(EXIT_FAILURE);
 	}
 	f1 = fopen64_or_die(argv[1],"r");
@@ -47,6 +47,7 @@ int main(int argc, char *argv[]) {
 	end1pos = atoi(argv[4]);
 	type1pos = atoi(argv[5]);
 	alt1pos = atoi(argv[6]);
+	precision = atoi(argv[8]);
 	if (type1pos == -1) {
 		type1 = DStringNew();
 	}
@@ -61,6 +62,7 @@ int main(int argc, char *argv[]) {
 	/* This will leak mem, but as the prog is finished anyway ... */
 	result1 = DStringArrayNew(max1+2);
 	bcol = bcol_open(argv[7]);
+	if (precision == -1) {precision = bcol->precision;}
 	if (alt1pos != -1) {
 		if (bcol->multi->size == 0) {
 			fprintf(stderr,"bcol_annot var analysis needs a multivalue bcol file");
@@ -134,7 +136,7 @@ int main(int argc, char *argv[]) {
 			if (alt1pos == -1) {
 				binpos = curstartpos + start1 - start2;
 				bcol_getbin(bcol,binpos,binpos);
-				bcol_printtext(stdout,bcol->reverse,bcol->isunsigned,bcol->type,bcol->buffer,-1);
+				bcol_printtext(stdout,bcol->reverse,bcol->isunsigned,bcol->type,bcol->buffer,precision);
 			} else {
 				char *str = alt1->string;
 				int cursize=0,found,c,i;
@@ -156,7 +158,7 @@ int main(int argc, char *argv[]) {
 							fprintf(stdout,"%s",defaultvalue->string);
 						} else {
 							bcol_getbin(bcol,binpos + found,binpos + found);
-							bcol_printtext(stdout,bcol->reverse,bcol->isunsigned,bcol->type,bcol->buffer,-1);
+							bcol_printtext(stdout,bcol->reverse,bcol->isunsigned,bcol->type,bcol->buffer,precision);
 						}
 						if (c =='\0' || c =='\t') break;
 						str += cursize + 1;

@@ -256,6 +256,7 @@ proc bcol_chrlines {bcol chromosome} {
 proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 0} {precision {}}} {
 	# putsvars start end chromosome showchr byrownum precision
 	if {[dict get $bcol objtype] ne "bcol"} {error "This is not a bcol object: $bcol"}
+	if {$precision eq ""} {catch {set precision [dict get $bcol precision]}}
 	set type [dict get $bcol type]
 	if {[catch {dict get $bcol multi} multi]} {
 		set multi {}
@@ -327,6 +328,13 @@ proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 
 				incr start
 				set b [read $f $typesize]
 				binary scan $b $type value
+				if {$precision ne ""} {
+					set tempvalue {}
+					foreach v $value {
+						lappend tempvalue [format %.${precision}f $v $precision]
+					}
+					set value $tempvalue
+				}
 				if {$showchr} {
 					puts $o $chr\t$curpos\t$value
 				} else {
@@ -417,6 +425,7 @@ proc cg_bcol_make {args} {
 	set multilist {}
 	set distribute 0
 	set start 0
+	set precision -1
 	set pos 0
 	set header 1
 	foreach {key value} $args {
@@ -445,6 +454,9 @@ proc cg_bcol_make {args} {
 			}
 			-l - --multilist {
 				set multilist $value
+			}
+			--precision {
+				set precision $value
 			}
 			-- break
 			default {
@@ -523,11 +535,11 @@ proc cg_bcol_make {args} {
 	}
 	if {$multicol eq ""} {
 		# puts "bcol_make $bcolfile.temp $type $colpos $chrompos $offsetpos $defaultvalue"
-		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $defaultvalue $compresspipe > [list $tempbinfile] 2>@ stderr" w]
+		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $defaultvalue $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	} else {
 		# putsvars bcolfile type colpos multipos multilist chrompos offsetpos defaultvalue
 		# puts "bcol_make_multi $bcolfile.temp $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue"
-		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue $compresspipe > [list $tempbinfile] 2>@ stderr" w]
+		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	}
 	fconfigure $f -encoding binary -translation binary
 	fconfigure $pipe -encoding binary -translation binary

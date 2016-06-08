@@ -526,6 +526,28 @@ test bcol_make_multi {var-annot type f} {
 > 2	29	30	A,C,T	30,3000000.1,30.21
 *} error match
 
+test bcol_make {--precision} {
+	test_cleantmp
+	write_tab tmp/varannot.tsv {
+		chromosome      begin   end     score
+		1       0       1   0.401
+	}
+	cg bcol make --precision 2 -t f -p begin -c chromosome tmp/temp.bcol score < tmp/varannot.tsv
+	cg bcol table -c all tmp/temp.bcol
+} {chromosome	pos	value
+1	0	0.40}
+
+test bcol_make_multi {--precision} {
+	test_cleantmp
+	write_tab tmp/varannot.tsv {
+		chromosome	begin	end	alt	score
+		1	0	1	A,C,G	0.401,0.1,0.999999
+	}
+	cg bcol make --precision 2 -t f --multicol alt --multilist A,C,T,G --compress 0 -p begin -c chromosome tmp/temp.bcol score < tmp/varannot.tsv
+	cg bcol table -c all tmp/temp.bcol
+} {chromosome	pos	alt	value
+1	0	A,C,T,G	0.40,0.10,0.00,1.00}
+
 test_cleantmp
 
 set ::env(PATH) $keeppath

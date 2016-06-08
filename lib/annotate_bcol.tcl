@@ -24,9 +24,9 @@ putsvars file dbfile name annotfile
 	if {[gziscompressed $file]} {
 		error "bcol_annot not supported for compressed files"
 	}
-	# puts "bcol_annot $file {*}$poss -1 -1 $dbfile"
+	# puts "bcol_annot $file {*}$poss -1 -1 $dbfile -1"
 	if {[catch {
-		exec bcol_annot $file {*}$poss -1 -1 $dbfile >> $annotfile.temp 2>@ stderr
+		exec bcol_annot $file {*}$poss -1 -1 $dbfile -1 >> $annotfile.temp 2>@ stderr
 	} error]} {
 		if {$error ne "child killed: write on pipe with no readers"} {error $error}
 	}
@@ -59,9 +59,9 @@ proc annotatebcolvar {file dbfile name annotfile} {
 	if {[gziscompressed $file]} {
 		error "bcol_annot not supported for compressed files"
 	}
-	# puts "bcol_annot $file [lrange $poss 0 2] -1 [lindex $poss 3] $dbfile"
+	 puts "bcol_annot $file [lrange $poss 0 2] -1 [lindex $poss 3] $dbfile -1"
 	if {[catch {
-		exec bcol_annot $file {*}[lrange $poss 0 2] -1 [lindex $poss 3] $dbfile >> $annotfile.temp 2>@ stderr
+		exec bcol_annot $file {*}[lrange $poss 0 2] -1 [lindex $poss 3] $dbfile -1 >> $annotfile.temp 2>@ stderr
 	} error]} {
 		if {$error ne "child killed: write on pipe with no readers"} {error $error}
 	}

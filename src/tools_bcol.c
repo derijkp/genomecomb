@@ -750,6 +750,7 @@ BCol *bcol_open(char *bcolfile) {
 	result->tablesize = 0;
 	result->def = DStringNew();
 	result->multi = DStringNew();
+	result->precision = -1;
 	f = fopen64_or_die(bcolfile, "r");
 	while (1) {
 		cnt = DStringGetLine(line,f);
@@ -764,8 +765,10 @@ BCol *bcol_open(char *bcolfile) {
 			}
 		} else if (line->size > 10 && strncmp(line->string,"# default ",10) == 0) {
 			DStringSetS(result->def,line->string+10,line->size-10);
-		} else if (line->size > 10 && strncmp(line->string,"# multi ",8) == 0) {
+		} else if (line->size > 8 && strncmp(line->string,"# multi ",8) == 0) {
 			DStringSetS(result->multi,line->string+8,line->size-8);
+		} else if (line->size > 12 && strncmp(line->string,"# precision ",12) == 0) {
+			result->precision = atoi(line->string+12);
 		}
 	}
 	if (naturalcompare(line->string,"chromosome\tbegin\tend",line->size,20) == 0) {

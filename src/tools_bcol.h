@@ -18,6 +18,7 @@ typedef struct BCol {
 	int typesize;
 	int start;
 	int version;
+	int precision;
 	DString *def;
 	DString *multi;
 	BCol_table *table;

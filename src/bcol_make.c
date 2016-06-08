@@ -25,10 +25,10 @@ int main(int argc, char *argv[]) {
 	DString *line = NULL,*chromosome = NULL;
 	char *outfile,*type = "u",*defaultvalue = "";
 	uint64_t offset, poffset = -1, size;
-	int reverse = 0, isunsigned = 0, header = 0;
-	int col = 0,max = 0,offsetcol = -1,chrcol = -1,shift;
+	int reverse = 0, isunsigned = 0;
+	int col = 0,max = 0,offsetcol = -1,chrcol = -1,shift, precision = -1;
 	if ((argc < 2)||(argc > 9)) {
-		fprintf(stderr,"Format is: bcol_make output_file type ?col? ?chromosomecol? ?offsetcol? ?default? ?header?\n");
+		fprintf(stderr,"Format is: bcol_make output_file type ?col? ?chromosomecol? ?offsetcol? ?default? ?precision?\n");
 		exit(EXIT_FAILURE);
 	}
 	outfile = argv[1];
@@ -53,10 +53,7 @@ int main(int argc, char *argv[]) {
 	}
 	line = DStringNew();
 	if (argc >= 8) {
-		header = atoi(argv[7]);
-		if (header) {
-			skip_header(stdin,line,NULL,NULL);
-		}
+		precision = atoi(argv[7]);
 	}
 	NODPRINT("bcol_make %s %s %d %d %d\n",outfile,type,col,chrcol,offsetcol)
 	/*
@@ -75,6 +72,7 @@ int main(int argc, char *argv[]) {
 	fprintf(obcol,"# binary column\n");
 	fprintf(obcol,"# type %s\n",type);
 	fprintf(obcol,"# default %s\n","0");
+	if (precision != -1) {fprintf(obcol,"# precision %d\n",precision);}
 	fprintf(obcol,"chromosome\tbegin\tend\n");
 	poffset = -1;
 	while (!DStringGetTab(line,stdin,max,result,0,NULL)) {

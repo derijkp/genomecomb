@@ -410,6 +410,25 @@ test bcol_annot {added chr3} {
 < chr3	9	10	0
 child process exited abnormally} error 
 
+test bcol_annot {--precision} {
+	test_cleantmp
+	write_tab tmp/annot.tsv {
+		chromosome	begin	score
+		chr1	0	0.421
+	}
+	cg bcol make --precision 2 -t f -p begin -c chromosome tmp/bcol_annot.bcol score < tmp/annot.tsv
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type
+		chr1	0	1	snp
+	}
+	exec cg annotate tmp/vars.tsv tmp/results.tsv tmp/bcol_annot.bcol
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	annot
+		chr1	0	1	snp	0.42
+	}
+	exec diff tmp/results.tsv tmp/expected.tsv
+} {}
+
 test mir_annot {basic mir annotation} {
 	test_cleantmp
 	exec cg annotate data/vars_mirna.tsv tmp/annot_test.tsv data/mir_small.tsv
@@ -667,6 +686,25 @@ test bcol_var_annot {split 0, precision} {
 ---
 > chr1	4	5	snp	A,C,T	0.0000001,0.00000001,0.000000001
 child process exited abnormally} error
+
+test bcol_var_annot {--precision} {
+	test_cleantmp
+	write_tab tmp/annot.tsv {
+		chromosome	begin	end	type	alt	score
+		chr1	0	1	snp	A,G	0.421,0.9
+	}
+	cg bcol make --precision 2 -t f --multicol alt --multilist A,C,T,G -p begin -c chromosome tmp/var_annot.bcol score < tmp/annot.tsv
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	alt
+		chr1	0	1	snp	A,G
+	}
+	exec cg annotate tmp/vars.tsv tmp/results.tsv tmp/var_annot.bcol
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	alt	annot
+		chr1	0	1	snp	A,G	0.42,0.9
+	}
+	exec diff tmp/results.tsv tmp/expected.tsv
+} {}
 
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
