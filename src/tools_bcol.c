@@ -589,7 +589,7 @@ int read_unlocked(FILE *f,unsigned char *buffer,int size) {
 	return(size-(count+1));
 }
 
-int bcol_getbin(BCol *fbcol,int start,int end) {
+int bcol_getbin(BCol *fbcol,uint64_t start,uint64_t end) {
 	LZ4res *lz4 = fbcol->lz4;
 	RAZF *rz = fbcol->rz;
 	FILE *f = fbcol->f;

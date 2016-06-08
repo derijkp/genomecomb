@@ -138,7 +138,7 @@ proc bcol_open {indexfile {ra 0}} {
 		set fi [open $binfile]
 		fconfigure $fi -encoding binary -translation binary
 		dict set result fi $fi
-	} elseif {$ra} {
+	} elseif {$ra || $ext eq ".lz4"} {
 		dict set result fi {}
 	} else {
 		set tempfile [gztemp $binfile]
@@ -254,6 +254,7 @@ proc bcol_chrlines {bcol chromosome} {
 # bcol_table now also follows the half-open convention, end position is not included
 # offset support was removed (complicates things, and was never actually used)
 proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 0} {precision {}}} {
+	# putsvars start end chromosome showchr byrownum precision
 	if {[dict get $bcol objtype] ne "bcol"} {error "This is not a bcol object: $bcol"}
 	set type [dict get $bcol type]
 	if {[catch {dict get $bcol multi} multi]} {
@@ -317,6 +318,7 @@ proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 
 		if {$f ne ""} {
 			seek $f $pos
 		} else {
+			set binfile [dict get $bcol binfile]
 			set f [gzopen [gzfile $binfile] $pos]
 		}
 		fconfigure $f -encoding binary -translation binary
@@ -354,7 +356,7 @@ proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 
 				}
 		}
 		if {[dict get $bcol fi] eq ""} {
-			close $f
+			catch {close $f}
 		}
 		while {$curpos < $end} {
 			puts $o $curpos\t$default

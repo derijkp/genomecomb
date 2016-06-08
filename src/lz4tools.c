@@ -130,6 +130,8 @@ int lz4_readblock(LZ4res *res, unsigned int startblock) {
 	if (startblock == res->currentblock) {
 		return 1;
 	}
+	NODPRINT("res->currentblock: %d",res->currentblock);
+	NODPRINT("startblock: %d",startblock);
 	if (res->writebuffer == NULL || startblock != res->currentblock+1) {
 		if (findex != NULL) {
 			/* find block using the index */
@@ -140,12 +142,12 @@ int lz4_readblock(LZ4res *res, unsigned int startblock) {
 			fseek(finput,pos,SEEK_SET);
 		} else {
 			/* find block by skipping */
+			count = startblock;
 			if (res->writebuffer == NULL || startblock < res->currentblock) {
 				fseek(finput,res->startblocks,SEEK_SET);
 			} else {
-				startblock -= res->currentblock;
+				count = count - res->currentblock - 1;
 			}
-			count = startblock;
 			while (1) {
 				if (!count) break;
 				NODPRINT("pos:       %ld",ftello(finput));
@@ -196,6 +198,7 @@ int lz4_readblock(LZ4res *res, unsigned int startblock) {
 		res->writesize = numdecompressed;
 	}
 	res->currentblock = startblock;
+	NODPRINT("after read res->currentblock: %d",res->currentblock);
 	return 1;
 }
 

@@ -633,6 +633,7 @@ test bcol_var_annot {split 0} {
 		chr2	22	23	snp	C,G
 		chr2	26	27	snp	A
 		chr2	29	30	snp	C,T
+		chr3	600000000	600000001	snp	G
 	}
 	exec cg annotate tmp/vars.tsv tmp/results.tsv tmp/var_annot.bcol
 	# 30.200001 because of float
@@ -644,6 +645,7 @@ test bcol_var_annot {split 0} {
 		chr2	22	23	snp	C,G	0,0
 		chr2	26	27	snp	A	0
 		chr2	29	30	snp	C,T	3000000.1,30.21
+		chr3	600000000	600000001	snp	G	0
 	}
 	exec diff tmp/results.tsv tmp/expected.tsv
 } {}
