@@ -4,54 +4,6 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc cg_help {args} {
-	global appdir
-	set format 1
-	cg_options help args {
-		-format {set format $value}
-	} 0 1
-	set item [lindex $args 0]
-	if {$item eq "distr"} {
-		set files [glob -nocomplain $appdir/lib/cg_*.wiki]
-	} elseif {$item ne ""} {
-		help $item $format
-		exit
-	} else {
-		set files [glob -nocomplain $appdir/lib/cg_*.wiki $appdir/lib-exp/cg_*.wiki]
-	}
-	puts "= Reference ="
-	puts ""
-	puts "== Format =="
-	puts "cg action ...."
-	puts ""
-	puts "== Actions =="
-	unset -nocomplain a
-	foreach file $files {
-		set action [string range [file root [file tail $file]] 3 end]
-		set h [helpparts $action]
-		set category {}
-		catch {dict get $h Category} category
-		set category [string trim $category]
-		set descr {}
-		set item " * $action"
-		if {![catch {dict get $h Summary} summary]} {
-			append item ": $summary"
-		}
-		lappend a($category) $item
-	}
-	set categories [array names a]
-	set pre {Conversion Annotation Compare Query Regions Structural}
-	set categories [list_concat [list_common $pre $categories] [list_lremove $categories $pre]]
-	foreach category $categories {
-		puts " === $category ==="
-		puts [join $a($category) \n]\n
-	}
-	
-	puts " === Other ==="
-	puts { * select, graph, multicompar, regsubtract, regjoin, regcommon, makeregions, makeprimers, ...
-	}
-}
-
 proc help_get {action} {
 	if {[file exists $::appdir/lib/cg_$action.wiki]} {
 		set help [file_read $::appdir/lib/cg_$action.wiki]
@@ -68,6 +20,42 @@ proc help_get {action} {
 		puts stderr "Use without arguments for overview"
 		exit 1
 	}
+}
+
+proc help_actions {} {
+	global appdir
+	set files [ssort -natural [list_concat [dirglob $appdir/lib/ cg_*.wiki] [dirglob $appdir/lib-exp/ cg_*.wiki]]]
+	set list {}
+	foreach file $files {
+		set action [string range [file root [file tail $file]] 3 end]
+		lappend list $action
+	}
+	return $list
+}
+
+proc help_docs {} {
+	global appdir
+	set files [ssort -natural [dirglob $appdir/docs/ *.wiki]]
+	set list {}
+	foreach file $files {
+		set action [string range [file root [file tail $file]] 0 end]
+		lappend list $action
+	}
+	return $list
+}
+
+proc errorformat {action} {
+	set help [helpparts $action]
+	puts stderr "\nERROR: Wrong number of arguments, correct format is:"
+	puts stderr [dict get $help Format]
+	puts stderr "\nFor more help, use:\ncg $action -h\n"
+}
+
+proc helpparts {action} {
+	set help [help_get $action]
+	regsub -all {[ \n\t]*== *([^=]+?) *==[ \n\t]*} $help {@@@@\1@@@@} help
+	set result [lrange [string_split $help @@@@] 1 end]
+	return $result
 }
 
 proc help_formatw {text width {indent 0} {format 1}} {
@@ -147,17 +135,19 @@ proc help {action {format 1}} {
 		if {$mode eq "l"} {
 			if {$line eq "\}\}\}"} {
 				puts -nonewline $foutput $normal
-				set mode {}
+				set mode $model
 			} else {
 				puts -nonewline $foutput [string_fill " " $indent]${line}\n
 			}
-		} elseif {$fchr eq "\n"} {
+		} elseif {$fchr eq ""} {
 			puts -nonewline $foutput [help_formatw $collect $width $indent $format]\n
 			set collect {}
+			set mode {}
 			set indent 0
 		} elseif {$fchr eq "="} {
 			puts -nonewline $foutput [help_formatw $collect $width $indent $format]
 			set collect {}
+			set mode {}
 			set indent 0
 			if {[string index $line 3] eq "="} {
 				# == heading4 ==
@@ -190,6 +180,7 @@ proc help {action {format 1}} {
 			# {{{literal}}}
 			puts -nonewline $foutput [help_formatw $collect $width $indent $format]
 			set collect {}
+			set model $mode
 			set mode l
 			puts -nonewline $foutput ${green}
 		} elseif {[string range $line end-1 end] eq "  "} {
@@ -206,38 +197,50 @@ proc help {action {format 1}} {
 	}
 }
 
-proc help_actions {} {
+proc cg_help {args} {
 	global appdir
-	set files [ssort -natural [list_concat [dirglob $appdir/lib/ cg_*.wiki] [dirglob $appdir/lib-exp/ cg_*.wiki]]]
-	set list {}
+	set format 1
+	cg_options help args {
+		-format {set format $value}
+	} 0 1
+	set item [lindex $args 0]
+	if {$item eq "distr"} {
+		set files [glob -nocomplain $appdir/lib/cg_*.wiki]
+	} elseif {$item ne ""} {
+		help $item $format
+		exit
+	} else {
+		set files [glob -nocomplain $appdir/lib/cg_*.wiki $appdir/lib-exp/cg_*.wiki]
+	}
+	puts "= Reference ="
+	puts ""
+	puts "== Format =="
+	puts "cg action ...."
+	puts ""
+	puts "== Actions =="
+	unset -nocomplain a
 	foreach file $files {
 		set action [string range [file root [file tail $file]] 3 end]
-		lappend list $action
+		set h [helpparts $action]
+		set category {}
+		catch {dict get $h Category} category
+		set category [string trim $category]
+		set descr {}
+		set item " * $action"
+		if {![catch {dict get $h Summary} summary]} {
+			append item ": $summary"
+		}
+		lappend a($category) $item
 	}
-	return $list
-}
-
-proc help_docs {} {
-	global appdir
-	set files [ssort -natural [dirglob $appdir/docs/ *.wiki]]
-	set list {}
-	foreach file $files {
-		set action [string range [file root [file tail $file]] 0 end]
-		lappend list $action
+	set categories [array names a]
+	set pre {Conversion Annotation Compare Query Regions Structural}
+	set categories [list_concat [list_common $pre $categories] [list_lremove $categories $pre]]
+	foreach category $categories {
+		puts " === $category ==="
+		puts [join $a($category) \n]\n
 	}
-	return $list
-}
-
-proc errorformat {action} {
-	set help [helpparts $action]
-	puts stderr "\nERROR: Wrong number of arguments, correct format is:"
-	puts stderr [dict get $help Format]
-	puts stderr "\nFor more help, use:\ncg $action -h\n"
-}
-
-proc helpparts {action} {
-	set help [help_get $action]
-	regsub -all {[ \n\t]*== *([^=]+?) *==[ \n\t]*} $help {@@@@\1@@@@} help
-	set result [lrange [string_split $help @@@@] 1 end]
-	return $result
+	
+	puts " === Other ==="
+	puts { * select, graph, multicompar, regsubtract, regjoin, regcommon, makeregions, makeprimers, ...
+	}
 }
