@@ -2,7 +2,7 @@ chromosome	begin	end	type	ref	alt	expected	test_impact	test_gene	test_descr
 chr1	2000	2001	snp	C	C				
 chr1	4099	4100	snp	C	T	downstream	downstream	LOC100288778;WASH7P	-NR_028269:post:124:g.4099G>A;-NR_024540:post:124:g.4099G>A
 chr1	751594	751595	snp	C	T	RNA	RNA	NCRNA00115	-NR_024321:exon1:1170:r.1171G>A
-chr1	850982	850983	snp	A	A,T	upstream	upstream	SAMD11	+NM_152486:pre:1999:g.-273A>A,+NM_152486:pre:1999:g.-273A>T
+chr1	850982	850983	snp	A	A,T	upstream	upstream	SAMD11	+NM_152486:pre:-1:g.-202A>A,+NM_152486:pre:-1:g.-202A>T
 chr1	850983	850984	snp	G	T	UTR5-0	UTR5	SAMD11	+NM_152486:exon1:0:r.-80G>T
 chr1	851163	851164	snp	G	A	ESPLICE	ESPLICE	SAMD11	+NM_152486:intron1:1:g.-92G>A
 chr1	851164	851165	snp	G	C	UTR5-e2-0	UTR5	SAMD11	+NM_152486:exon2:0:r.-20G>C

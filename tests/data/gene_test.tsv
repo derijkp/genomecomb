@@ -1,4 +1,4 @@
-chrom	start	end	name	strand	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	id	name2	cdsStartStat	cdsEndStat	exonFrames
+chromosome	start	end	name	strand	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	id	name2	cdsStartStat	cdsEndStat	exonFrames
 chr1	4224	7502	NR_028269	-	585	7502	7502	7	4224,4832,5658,6469,6719,7095,7468,	4692,4901,5810,6631,6918,7231,7502,	0	LOC100288778	unk	unk	-1,-1,-1,-1,-1,-1,-1,
 chr1	4224	19233	NR_024540	-	585	19233	19233	11	4224,4832,5658,6469,6720,7095,7468,7777,8130,14600,19183,	4692,4901,5810,6628,6918,7231,7605,7924,8229,14754,19233,	0	WASH7P	unk	unk	-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
 chr1	24473	25944	NR_026818	-	585	25944	25944	3	24473,25139,25583,	25037,25344,25944,	0	FAM138A	unk	unk	-1,-1,-1,

@@ -53,5 +53,91 @@ Possible keys are:
 ; **fields**: These fields will be extracted from the database and added to the annotated file in stead 
   of the defaults (one or more of name, name2, freq and score, depending on the type and name of the database)
 
+== Gene annotations ==
+Annotation with a gene database will add the three columns describing the
+effect of the variant on transcripts and resulting proteins. 
+; dbname_impact: short code indicating impact/severity of the effect
+; dbname_gene: name of the gene(s) according to the database.
+; dbname_descr: location and extensive description of the effect(s) of the variant on each transcript
+
+Each of the columns can contain a semicolon separated list to indicate different
+effects on different transcripts. If all values in such a list would be the 
+same (e.g. gene name in case of multiple transcripts of the same gene), only this one
+value is shown (not a list).
+
+Possible **impact** codes are:
+; downstream: downstream of gene (up to 2000 bases)
+; upstream: upstream of gene (up to 2000 bases)
+; intron: intronic
+; reg: regulatory
+; prom: promotor
+; splice: variant in splice region (3 up to 8 bases into the intron from the splice site)
+; RNA: in a transcript that is not coding
+; RNASPLICE: deletion containing at least one splice site (non-coding transcript)
+; UTR3: variant in the 3' UTR
+; UTR3SPLICE: deletion containing at least one splice site in the 3' UTR
+; RNAEND: deletion containing the end of transcription
+; ESPLICE: essential splice site (2 bases into the intron from the splice site)
+; CDSsilent: variant in coding region that has no effect on the protein sequence
+; UTR5: variant in the 5' UTR
+; UTR5SPLICE: deletion containing at least one splice site in the 5' UTR
+; RNASTART: transcription_start
+; CDSMIS: coding variant causing a change in the protein sequence
+; CDSDEL: deletion in the coding region (not affecting frame of translation)
+; CDSCOMP: complex variation (sub, inv, ...) in the coding region (not affecting frame of translation)
+; CDSINS: insertion in the coding region (not affecting frame of translation)
+; CDSNONSENSE: variation causing a premature stop codon in the protein sequence (nonsense)
+; CDSDELSPLICE: deletion in the coding region affecting a splice site
+; CDSCOMPSPLICE: complex variation in the coding region affecting a splice site
+; CDSSTOP: change of a stop codon to a normal codon causing readthrough
+; CDSFRAME: indel causing a frameshift
+; CDSSTART: variation  in the startcodon
+; CDSDELSTART: deletion affecting the startcodon
+; CDSCOMPSTART: complex variation affecting the startcodon
+; GENEDEL: deletion (also used for sub) of whole gene
+; GENECOMP: complex variation (sub, inv, ...) affecting the whole gene
+
+**dbname_descr** contains a description of the variant at multiple levels
+according to the HGVS variant nomenclature 
+(v 15.11 [[http://varnomen.hgvs.org/recommendations]],
+[[http://www.ncbi.nlm.nih.gov/pubmed/26931183]], 
+[[http://onlinelibrary.wiley.com/doi/10.1002/humu.22981/pdf]]).
+There are some (useful or necessary) deviations from from the recommendations:
+* The reference is allways the transcript name given in the database used;
+if a variant affects multiple transcripts, a separate description is given
+for each variant (with its own reference).
+* The reference is prefixed with the strand
+* An extra description is added (indicating the affected element e.g. which exon)
+* Multiple consequitive variants are not combined, e.g
+two consequitive substitutions (as genomecomb will usually create) are
+described as two separate snps instead of as the recommended delins.
+(One variant is adapted to shift to 3' or inserts changed to dup or rep
+as recommended.)
+* For brevity, protein changes are not parenthesised (even though they are
+all predictions)
+* For brevity, single letter AA codes are used.
+
+The description consists of the following elements, separated by colons
+; transcript: name or id of the affected transcript, prefixed with a + if
+the transcript is in the forward strand, - for reverse strand
+; element and element position: element indicates the gene element the
+variant is located in (e.g. exon1 for the first exon). The element is
+followed by the relative position of the variant in the given element,
+separated by either a + or a -.
+For deletions spanning several elements, element and element position for
+both start and end point of the deletion are given, separated by _
+- is used for the upstream element, giving the position in the upstream
+region relative to the start of transcription (-1 being the position just
+before the transcript start).
++ is used for all other elements, the position given is relative to the
+start of the element. The first base of exon2 would be given as exon2+1.
+(These positions are not shifted to 3' as in hgvs coding.)
+; DNA based description: description of the variant effect on de DNA level uses
+the coding (c.) or non-coding (n.) DNA reference. The genomic reference (g.) is 
+not given as it can be easily deduced from the variant fields.
+This is only present if the transcript is affected (so not for up/downstream)
+; protein based description: description of the variant effect at the
+protein level (p.). This is only present if the protein is affected.
+
 == Category ==
 Annotation

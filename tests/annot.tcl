@@ -245,9 +245,9 @@ test gene_annot {gene} {
 	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
 } {} 
 
-test gene_annot {gene -upstreamsize option} {
+test gene_annot {gene --upstreamsize option} {
 	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
-	exec cg annotate -upstreamsize 1000 -dbdir /complgen/refseq/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv
+	exec cg annotate --upstreamsize 1000 -dbdir /complgen/refseq/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv
 	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
 } {} 
 
@@ -309,6 +309,52 @@ test gene_annot {gene and coding gene deletion} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {} 
 
+test gene_annot {gene, extra comments} {
+	file_write tmp/temp2.sft "# a comment\n# another comment\n"
+	exec cg select -s - data/vars_annottest.sft >> tmp/temp2.sft
+	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/temp2.sft tmp/temp.sft data/gene_test.tsv
+	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
+} {1,2d0
+< # a comment
+< # another comment
+child process exited abnormally} error
+
+test gene_annot {hgvs + strand gene} {
+	# extra exon added to gene to test UT3 splice, short intron with only splice
+	set dbline {chr1 850983 869932 NM_152486e + 591 851184 869396 14 850983,851164,855397,856281,861014,864282,864517,866386,867378,867652,867801,868495,868940,869150,869832, 851043,851256,855579,856332,861139,864372,864703,866549,867494,867731,868301,868620,869051,869824,869932, 0 SAMD11 cmpl cmpl -1,0,0,2,2,1,1,1,2,1,2,1,0,0,0,}
+	file_write tmp/gene_part_test.tsv [join {chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames} \t]\n[join $dbline \t]\n
+	if 0 {
+		# just here for testing/debugging
+		set genomefile /complgen/refseq/hg18/genome_hg18.ifas
+		catch {genome_close $genomef} ; set genomef [genome_open $genomefile]
+		set dposs {0 1 2 4 6 7 8 9 10 3 12}
+		set upstreamsize 2000
+		set geneobj [annotatevar_gene_makegeneobj $genomef $dbline $dposs $upstreamsize]
+	}
+	cg select -s - data/annot_gene_tests_fw_coding.tsv tmp/sannot_gene_tests.tsv
+	cg annotate -dbdir /complgen/refseq/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
+	set errors {}
+	foreach line [split [cg select -sh /dev/null -q {$test_impact ne $expected_impact or $test_descr ne $expected_descr} tmp/annot_results.tsv] \n] {
+		set line [split $line \t]
+		append errors "[list set loc [lrange $line 0 5]]\n  r: [lindex $line 9] [lindex $line 11]\n  e: [lrange $line 6 7] \n"
+	}	
+	set errors
+} {}
+
+test gene_annot {hgvs + strand gene non-coding} {
+	# extra exon added to gene to test UT3 splice, short intron with only splice
+	set dbline {chr1 850983 869932 NM_152486n + 591 851184 851184 14 850983,851164,855397,856281,861014,864282,864517,866386,867378,867652,867801,868495,868940,869150,869832, 851043,851256,855579,856332,861139,864372,864703,866549,867494,867731,868301,868620,869051,869824,869932, 0 SAMD11 cmpl cmpl -1,0,0,2,2,1,1,1,2,1,2,1,0,0,0,}
+	file_write tmp/gene_part_test.tsv [join {chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames} \t]\n[join $dbline \t]\n
+	cg select -s - data/annot_gene_tests_fw_noncoding.tsv tmp/sannot_gene_tests.tsv
+	cg annotate -dbdir /complgen/refseq/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
+	set errors {}
+	foreach line [split [cg select -sh /dev/null -q {$test_impact ne $expected_impact or $test_descr ne $expected_descr} tmp/annot_results.tsv] \n] {
+		set line [split $line \t]
+		append errors "[list set loc [lrange $line 0 5]]\n  r: [lindex $line 9] [lindex $line 11]\n  e: [lrange $line 6 7] \n"
+	}	
+	set errors
+} {}
+
 test reg_annot {basic, extra comments} {
 	file_write tmp/temp2.sft "# a comment\n"
 	exec cat data/vars1.sft >> tmp/temp2.sft
@@ -326,16 +372,6 @@ test var_annot {different types on same pos, extra comments} {
 	exec diff tmp/temp.tsv data/expected-vars2-var_annot3.tsv
 } {1d0
 < # a comment
-child process exited abnormally} error
-
-test gene_annot {gene, extra comments} {
-	file_write tmp/temp2.sft "# a comment\n# another comment\n"
-	exec cg select -s - data/vars_annottest.sft >> tmp/temp2.sft
-	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/temp2.sft tmp/temp.sft data/gene_test.tsv
-	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
-} {1,2d0
-< # a comment
-< # another comment
 child process exited abnormally} error
 
 test reg_annot {existing field error} {

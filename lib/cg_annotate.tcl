@@ -225,7 +225,7 @@ proc cg_annotate {args} {
 			-multidb {
 				set multidb [lindex $args [incr pos]]
 			}
-			-u - -upstreamsize {
+			-u - --upstreamsize {
 				set upstreamsize [lindex $args [incr pos]]
 			}
 			default {

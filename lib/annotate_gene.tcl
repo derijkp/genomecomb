@@ -7,8 +7,8 @@
 package require BioTcl
 
 proc annot_init {} {
-	global snp_annot_list snp_annot_score snp_annot_loc
-	set snp_annot_list {
+	global impact_list impact_score impact_loc annotate_type2impact
+	set impact_list {
 		{downstream annot downstream} {upstream annot upstream}
 		{annot annot annotation_region} {A annot annotated}
 		{intron intron intron}
@@ -17,23 +17,37 @@ proc annot_init {} {
 		{UTR3 UTR3 3'UTR} {UTR3SPLICE UTR3 3'UTR_splice} {RNAEND transcript transcription_end}
 		{ESPLICE splice essentialsplice}
 		{CDSsilent CODING silent} {UTR5 UTR5 5'UTR} {UTR5SPLICE UTR5 5'UTR_splice} {RNASTART transcript transcription_start}
-		{CDSMIS CODING missense} {CDSDEL CODING deletion} {CDSINS CODING insertion} {CDSSPLICE CODING splice}
+		{CDSMIS CODING missense} {CDSCOMP CODING complex} {CDSDEL CODING deletion} {CDSINS CODING insertion} {CDSSPLICE CODING splice}
 		{CDSNONSENSE CODING nonsense}
-		{CDSDELSPLICE CODING splice deletion}
-		{CDSSTOP CODING readthrough} {CDSFRAME CODING frameshift} {CDSSTART CODING startcodon} {CDSDELSTART CODING startcodon}
+		{CDSCOMPSPLICE CODING splice complex} {CDSDELSPLICE CODING splice deletion}
+		{CDSSTOP CODING readthrough} {CDSFRAME CODING frameshift} {CDSSTART CODING startcodon} {CDSCOMPSTART CODING startcodon} {CDSDELSTART CODING startcodon}
+		{GENECOMP GENE genecomplex}
 		{GENEDEL GENE genedeletion}
 	}
-	unset -nocomplain snp_annot_score
+	unset -nocomplain impact_score
 	set num 1
-	list_foreach {code location name} $snp_annot_list {
-		set snp_annot_score($code) $num
-		set snp_annot_loc($code) $location
+	list_foreach {code location name} $impact_list {
+		set impact_score($code) $num
+		set impact_loc($code) $location
 		incr num
 	}
+	array set annotate_type2impact {
+		UTR UTR RNA RNA CDS CDS
+		intron intron
+		esplice ESPLICE
+		splice splice
+		promotor prom
+		regulatory reg
+		upstream upstream
+		downstream downstream
+		annotation_region annot
+	}
 }
+annot_init
 
 proc annotate_compl {seq} {
 	global adata
+	if {[isint $seq]} {return $seq}
 	if {!$adata(complement)} {
 		return $seq
 	} else {
@@ -41,30 +55,8 @@ proc annotate_compl {seq} {
 	}
 }
 
-proc eipos eiposVar {
-	upvar $eiposVar eipos
-	if {![info exists eipos]} {
-		return 0
-	} elseif {$eipos >= 0} {
-		return [expr {$eipos+1}]
-	} else {
-		return $eipos
-	}
-}
-
-proc annotate_type2annot {type} {
-	switch $type {
-		esplice {set snp_annot ESPLICE}
-		splice {set snp_annot splice}
-		promotor {set snp_annot prom}
-		regulatory {set snp_annot reg}
-		intron {set snp_annot intron}
-		upstream {set snp_annot upstream}
-		downstream {set snp_annot downstream}
-		annotation_region {set snp_annot annot}
-		default {set snp_annot A}
-	}
-	return $snp_annot
+proc annotate_type2impact {type} {
+	get ::annotate_type2impact($type) A
 }
 
 proc annotate_getregion {refseq start end} {
@@ -111,6 +103,7 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
 	set adata(transcriptname) $transcriptname
 	set adata(genename) $genename
 	set adata(chrom) $dchrom
+	set adata(upstreamsize) $upstreamsize
 	if {$cdsStart == $cdsEnd} {
 		set cdsStart -1
 		set cdsEnd -1
@@ -118,6 +111,7 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
 	} else {
 		set cds 1
 	}
+	set adata(cds) $cds
 	set exonStarts [split [string trim $exonStarts ,] ,]
 	set exonEnds [split [string trim $exonEnds ,] ,]
 	set adata(nrexons) [llength $exonStarts]
@@ -125,19 +119,22 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
 	# transform to ft addressing used in novoSNP previously (ft endpos is included, so -1)
 
 	# ftlist wil contain lines for each element of the form
-	# gbegin gend type element rnabegin rnaend cdsbegin cdsend
+	# gbegin gend type element rnabegin rnaend cdsbegin cdsend grnabegin grnaend
 	# where element: exon$nr or intron$nr or pre (for variants before RNA)
 	set ftlist {}
-	if {!$complement} {set type upstream} else  {set type downstream}
-	lappend ftlist [list 0 [expr {$dstart- $upstreamsize - 1}] pre]
+	if {!$complement} {set type upstream; set ptype pre} else  {set type downstream; set ptype post}
+	lappend ftlist [list 0 [expr {$dstart- $upstreamsize - 1}] $ptype]
 	lappend ftlist [list [expr {$dstart-$upstreamsize}] [expr {$dstart-1}] $type]
 	set prev -1
 	if {$cds} {set type UTR} else {set type RNA}
+	set intronnr 0; set exonnr 0
 	foreach s $exonStarts e $exonEnds {
 # puts --------\n[join $ftlist \n]\n
 # if {$s == 52847059} {error STOPPED}
 # putsvars s e type prev
+		set adata(exon[incr exonnr]) [list $s $e]
 		if {$prev != -1} {
+			set adata(intron[incr intronnr]) [list $prev $s]
 			# s and prev positions are not included -> -1
 			set isize [expr {$s-$prev-1}]
 			if {$isize >= 16} {
@@ -173,9 +170,9 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
 		}
 	}
 
-	if {$complement} {set type upstream} else  {set type downstream}
+	if {$complement} {set type upstream; set ptype pre} else  {set type downstream; set ptype post}
 	lappend ftlist [list [expr {$e}] [expr {$e + $upstreamsize - 1}] $type]
-	lappend ftlist [list [expr {$e + $upstreamsize}] 9000000000 post]
+	lappend ftlist [list [expr {$e + $upstreamsize}] 9000000000 $ptype]
 	# add info to ftlist so data will be: begin end type exon rnabegin rnaend cdsbegin cdsend
 	set adata(grefstart) 0
 	set adata(rrefstart) 0
@@ -209,7 +206,7 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
 			if {$t eq "CDS"} {
 				if {$cdsbegin == -1} {
 					set cdsbegin 0
-					set adata(gpstart) $e
+					if {!$complement} {set adata(gpstart) $s} else {set adata(gpstart) $e}
 					set adata(rpstart) $rnabegin
 					set adata(grefstart) $adata(gpstart)
 					set adata(rrefstart) $adata(rpstart)
@@ -230,20 +227,21 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
 				set prevcheck [expr {$s-1}]
 			}
 			lappend nums $num
+		} elseif {$t eq "upstream"} {
+			lappend tempftlist [list $s $e $t upstream [expr {$s-$e-1}] -1 $cdsend $cdsend]
+		} elseif {$t eq "downstream"} {
+			set rnabegin [expr {$rnaend+1}]
+			set rnaend [expr {$rnabegin+$e-$s}]
+			lappend tempftlist [list $s $e $t downstream $rnabegin $rnaend $cdsend $cdsend]
 		} else {
-			if {$exon == 0} {set temp pre} else {set temp intron$exon}
+			if {$exon == 0} {set temp $t} else {set temp intron$exon}
 			lappend tempftlist [list $s $e $t $temp $rnaend $rnaend $cdsend $cdsend]
 		}
 		incr num
 	}
-	set post [lindex $tempftlist end 3]
 	set num [llength $tempftlist]
-	while {$num > 0} {
-		incr num -1
-		set temp [lindex $tempftlist $num 3]
-		if {$temp ne $post} break
-		lset tempftlist $num 3 post
-	}
+	lset tempftlist end-1 3 downstream
+	lset tempftlist end 3 post
 	# join $tempftlist \n
 	set rnalist [list_sub $tempftlist $nums]
 	if {!$complement} {
@@ -255,7 +253,6 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
 	}
 	if {[info exists adata]} {
 		set adata(rrend) [lindex $adata(rnalist) end 5]
-		set adata(lastcodon) [expr {($adata(rrend)-1)/3}]
 		set adata(grstart) [lindex $adata(rnalist) 0 0]
 		set adata(grend) [lindex $adata(rnalist) end 1]
 	} else {
@@ -265,6 +262,33 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
 	# join $rnalist \n
 	# join $ftlist \n
 	return [array get adata]
+}
+
+proc annotatevar_gene_rnaseq {} {
+	global adata
+	if {[info exists adata(rnaseq)]} {return $adata(rnaseq)}
+	set genomef $adata(genomef)
+	set chr $adata(chrom)
+	set complement $adata(complement)
+	set result {}
+	# join $adata(rnalist) \n
+	list_foreach {gs ge t el rs re ps pe} $adata(rnalist) {
+		incr ge ;# genome_get works with half open coordinates
+		append result [genome_get $genomef $chr $gs $ge]
+	}
+	if {$complement} {
+		set result [seq_complement $result]
+	}
+	set adata(rnaseq) $result
+	return $result
+}
+
+proc annotatevar_gene_pseq {} {
+	global adata
+	if {[info exists adata(pseq)]} {return $adata(pseq)}
+	set seq [string range [annotatevar_gene_rnaseq] $adata(rpstart) $adata(rpend)]
+	set adata(pseq) [seq_translate $seq]
+	return $adata(pseq)
 }
 
 proc annotatevar_gene_getrnaseq {qstart qend {line {}}} {
@@ -333,16 +357,17 @@ proc annotatevar_gene_getprnaseq {qstart qend {line {}}} {
 	global adata
 	incr qstart $adata(rpstart)	
 	incr qend $adata(rpstart)	
+	if {[info exists adata(rnaseq)]} {
+		return [string range [annotatevar_gene_rnaseq] $qstart $qend]
+	}
 	annotatevar_gene_getrnaseq $qstart $qend $line
 }
 
 # input
 #   line: line for element from ftlist, contains: gbegin gend type exon rnabegin rnaend cdsbegin cdsend
 # return values
-#   rpos: position relative to RNA
-#   element: exon$nr or intron$nr or pre (for variants before RNA)
-#   eipos: position relative to genome coordinates for element
-proc annotategene_one_getsnpcoords {line snppos} {
+#   rpos: position relative to transcript
+proc annotategene_rpos {line snppos} {
 	global adata
 	set complement $adata(complement)
 	foreach {gbegin gend eltype element rnabegin rnaend cdsbegin cdsend} $line break
@@ -367,16 +392,60 @@ proc annotategene_one_getsnpcoords {line snppos} {
 			set rpos [expr {$rnabegin+$eipos}]
 		}
 	}
-	# position on protein (in nucl)
-	return [list $rpos $element $eipos]
+	return $rpos
 }
 
+proc annotategene_element {line snppos} {
+	global adata
+	set complement $adata(complement)
+	foreach {gbegin gend eltype element rnabegin rnaend cdsbegin cdsend} $line break
+	if {[info exists adata($element)]} {
+		# for esplice and splice, we need to calculate to intron bounderies iso within small splice element
+		# also for exons with UTR/CDS bounderies
+		foreach {is ie} $adata($element) break
+		if {!$complement} {
+			set elementpos [expr {$snppos-$is+1}]
+		} else {
+			set elementpos [expr {$ie - $snppos}]
+		}
+	} else {
+		# elementpos gives position in intron/exon
+		if {!$complement} {
+			set elementpos [expr {$snppos-$gbegin+1}]
+		} else {
+			set elementpos [expr {$gend-$snppos}]
+		}
+		if {$eltype eq "upstream"} {
+			set elementpos [expr {$elementpos - $adata(upstreamsize) - 1}]
+		}
+	}
+	if {$elementpos > 0} {set elementpos +$elementpos}
+	list $element $elementpos
+}
+
+proc annotategene_p_complex {snptype} {
+	if {$snptype eq "del"} {
+		return DEL
+	} else {
+		return COMP
+	}
+}
+
+proc annotategene_p_loc {AZ1 prstart {AZ2 {}} {prend {}}} {
+	if {$prend eq "" || $prstart == $prend} {
+		incr prstart
+		return p.${AZ1}${prstart}
+	} else {
+		incr prstart ; incr prend
+		return p.${AZ1}${prstart}_${AZ2}${prend}
+	}
+}
 
 proc annotategene_one_del {snppos snptype ref alt} {
-#putsvars snppos snptype ref alt
-	global adata snp_annot_score
-	set impacttype [string toupper $snptype]
+putsvars snppos snptype ref alt
+	global adata impact_score
 	set complement $adata(complement)
+	set chr $adata(chrom)
 	set dbstart $adata(start)
 	set dbend $adata(end)
 	set snp_descr {}
@@ -390,300 +459,584 @@ proc annotategene_one_del {snppos snptype ref alt} {
 	} else {
 		set rlen [string length $alt]
 	}
+	#
+	# reference
 	set snpend [expr {$snppos+$len-1}]
-	# find start and end location line in ftlist
+	if {$adata(complement)} {set strand -} else {set strand +}
+	set result $strand$adata(transcriptname)
+	# shift to 3'
 	set sline pre
 	set eline post
 	foreach line $adata(ftlist) {
 		foreach {ftstart ftend type} $line break
 		if {($snppos >= $ftstart) && ($snppos <= $ftend)} {set sline $line}
-		if {($snpend >= $ftstart) && ($snpend <= $ftend)} {set eline $line; break}
+		if {($snpend >= $ftstart) && ($snpend <= $ftend)} {set eline $line}
 	}
+	if {$snptype eq "del" && [lindex $sline 3] eq [lindex $eline 3]} {
+		# shift to 3'?
+		set genomef $adata(genomef)
+		if {!$complement} {
+			set gend [lindex $eline 1]
+			while {$snpend < $gend} {
+				set from [genome_get $genomef $chr $snppos [expr {$snppos+1}]]
+				set dest [genome_get $genomef $chr [expr {$snpend+1}] [expr {$snpend+2}]]
+				if {$from ne $dest} break
+				incr snppos; incr snpend
+			}
+		} else {
+			# for complement towards 3' is going back
+			set gend [lindex $eline 0]
+			while {$snppos > $gend} {
+				set from [genome_get $genomef $chr [expr {$snppos-1}] $snppos]
+				set dest [genome_get $genomef $chr $snpend [expr {$snpend+1}]]
+				if {$from ne $dest} break
+				incr snppos -1; incr snpend -1
+			}
+		}
+	}
+	#
+	# element
+	# find start and end location line in ftlist
 	if {!$complement} {
-		foreach {srpos sel seipos} [annotategene_one_getsnpcoords $sline $snppos] break
-		foreach {erpos eel eeipos} [annotategene_one_getsnpcoords $eline $snpend] break
+		set snp1 $snppos
+		set snp2 $snpend
+		foreach {element1 element1pos} [annotategene_element $sline $snp1] break
+		foreach {element2 element2pos} [annotategene_element $eline $snp2] break
+		set strand -
+	} else {
+		set snp1 $snpend
+		set snp2 $snppos
+		foreach {element1 element1pos} [annotategene_element $eline $snp1] break
+		foreach {element2 element2pos} [annotategene_element $sline $snp2] break
+		set strand +
+	}
+	if {$element1 eq $element2} {
+		if {$element1pos eq $element2pos} {
+			append result	:$element1${element1pos}
+		} else {
+			append result	:$element1${element1pos}_${element2pos}
+		}
+	} else {
+		append result	:$element1${element1pos}_$element2${element2pos}
+	}
+	#
+	# get snp_descr
+	#
+	# coding DNA level
+	foreach {reftype1 ref1 offset1 change} [annotategene_one_c $chr $snp1 $snptype $ref $alt $sline impact] break
+	foreach {reftype2 ref2 offset2 change} [annotategene_one_c $chr $snp2 $snptype $ref $alt $eline impact] break
+	# putsvars reftype1 ref1 offset1 reftype2 ref2 offset2 change
+	if {$ref1 eq $ref2} {
+		if {$offset1 eq $offset2} {
+			set snp_descr $reftype1$ref1${offset1}$change
+		} elseif {$offset1 ne "" && $offset2 ne ""} {
+			set snp_descr $reftype1$ref1${offset1}_${offset2}$change
+		} else {
+			set snp_descr $reftype1$ref1${offset1}_$ref2${offset2}$change
+		}
+	} else {
+		set snp_descr $reftype1$ref1${offset1}_$ref2${offset2}$change
+	}
+	#
+	set srpos [annotategene_rpos $sline $snp1]
+	set erpos [annotategene_rpos $eline $snp2]
+	if {!$complement} {
 		set gpos [expr {$snppos - $adata(grefstart)}]
 	} else {
-		foreach {srpos sel seipos} [annotategene_one_getsnpcoords $eline $snpend] break
-		foreach {erpos eel eeipos} [annotategene_one_getsnpcoords $sline $snppos] break
 		set gpos [expr {$adata(grefstart) - $snpend}]
 	}
+	if {$element1 == $element2} {set span 0} else {set span 1}
 	if {($snppos <= $dbstart) && ($snpend >= $dbend)} {
-		set snp_annot GENE$impacttype
-		set snp_descr $snptype
-	} elseif {([string index $sel 0] ne "e") && ($sel == $eel)} {
-		# both start and end are in the same intron, so just check which features are affected
-		# pick out the most intersting one
+		# gene completely affected
+		if {$snptype eq "inv"} {
+			set impact GENEINV
+		} elseif {$snptype eq "amp"} {
+			set impact GENEAMP
+		} else {
+			set impact GENEDEL
+		}
+	} elseif {!$span && [inlist {in sp es} [string range $element1 0 1]]} {
+		# both start and end are in the same intron (intron splice or esplice)
+		# just check which features are affected and pick out the most intersting one
 		set annlist {}
 		list_foreach {ts te ttype} $adata(ftlist) {
 			if {[inlist {post pre} $ttype]} continue
-			if {$snppos < $te && $snpend >= $ts} {
+			if {$snppos <= $te && $snpend >= $ts} {
 				lappend annlist $ts $te $ttype
 			}
 		}
-		if {[llength $annlist] == 0} {
-			if {(($snppos > $adata(grstart)) && ($snppos < $adata(grend))) || (($snpend > $adata(grstart)) && ($snpend < $adata(grend)))} {
-				set snp_annot intron
-			} else {
-				set snp_annot annot
-			}
-		} else {
-			set best_snp_annot_score -1
+		if {[llength $annlist] > 1} {
+			set best_impact_score -1
 			foreach {tempstart tempend temptype} $annlist {
-				set snp_annot [annotate_type2annot $temptype]
-				if {[get snp_annot_score($snp_annot) 0] > $best_snp_annot_score} {
-					set best_snp_annot $snp_annot
-					set best_snp_annot_score [get snp_annot_score($snp_annot) 0]
+				set impact [annotate_type2impact $temptype]
+				if {[get impact_score($impact) 0] > $best_impact_score} {
+					set best_impact $impact
+					set best_impact_score [get impact_score($impact) 0]
 					set dbstart $tempstart
 					set dbend $tempend
 				}
 			}
-			set snp_annot $best_snp_annot
+			set impact $best_impact
 		}
-		set indel [expr {$snpend-$snppos}]
-		if {!$rlen} {
-			if {!$complement} {
-				set snp_descr g.${gpos}_[expr {$gpos+$len-1}]$snptype$indel
-			} else {
-				set snp_descr g.[expr {$gpos-$len+1}]_${gpos}$snptype$indel
-			}
-		} else {
-			if {$rlen > 70} {set alt $rlen}
-			if {!$complement} {
-				set snp_descr g.${gpos}_[expr {$gpos+$len-1}]del$indel-ins$alt
-			} else {
-				set snp_descr g.[expr {$gpos-$len+1}]_${gpos}del$indel-ins$alt
-			}
-		}
+	} elseif {!$span && [inlist {u d p} [string index $element1 0]]} {
+		# single element, completely upstream or downstream, no further action needed
 	} elseif {![info exists adata(rpstart)] || ($srpos > $adata(rpend)) || ($erpos < $adata(rpstart))} {
 		# RNA deletion that does not overlap CDS
-		if {[string index $sel 0] ne "e"} {
+		if {[string index $element1 0] ni "e i"} {
 			# del includes start of transcription
-			set snp_annot RNASTART
-			set snp_descr r.[expr {- $adata(rrefstart)}]_[calc_rpos $erpos]ts
-		} elseif {[string index $eel 0] ne "e"} {
+			set impact RNASTART
+		} elseif {[string index $element2 0] ni "e i"} {
 			# del includes end of transcription
-			set snp_annot RNAEND
-			set snp_descr r.[calc_rpos $srpos]_[calc_rpos $adata(rrend)]te
-		} elseif {$sel != $eel} {
+			set impact RNAEND
+		} elseif {$element1 != $element2} {
 			# del includes at least one splicesite
 			if {[info exists adata(rpstart)]} {
 				if {$erpos < $adata(rpstart)} {
-					set snp_annot UTR5SPLICE
+					set impact UTR5SPLICE
 				} else {
-					set snp_annot UTR3SPLICE
+					set impact UTR3SPLICE
 				}
 			} else {
-				set snp_annot RNASPLICE
+				set impact RNASPLICE
 			}
-			set snp_descr r.[calc_rpos $srpos]_[calc_rpos $erpos]sd
 		} else {
 			if {[info exists adata(rpstart)]} {
 				if {$erpos < $adata(rpstart)} {
-					set snp_annot UTR5
+					set impact UTR5
 				} else {
-					set snp_annot UTR3
+					set impact UTR3
 				}
 			} else {
-				set snp_annot RNA
+				set impact RNA
 			}
-			set snp_descr r.[calc_rpos $srpos]_[calc_rpos $erpos]del[annotatevar_gene_getrnaseq $srpos $erpos]
-			if {$rlen} {append snp_descr -ins$alt}
 		}
 	} elseif {($srpos < [expr {$adata(rpstart)+3}]) && ($erpos >= $adata(rpstart))} {
 		# coding deletion overlaps start codon
-		set snp_annot CDS${impacttype}START
-		set snp_descr p.d?
-	} elseif {$sel != $eel} {
+		set impact CDS[annotategene_p_complex $snptype]START
+		append snp_descr :p.0?
+	} elseif {$span} {
 		# coding deletion overlapping splice site
-		set rps [expr {$srpos - $adata(rpstart)}]
-		set rpe [expr {$erpos - $adata(rpstart)}]
-		set codonpos [expr {$rps/3}]
-		set codonstart [expr {3*$codonpos}]
-		set fromcodon [annotatevar_gene_getprnaseq $codonstart [expr {$codonstart+2}]]
-		set fromAZ [seq_translate $fromcodon]
-		set snp_annot CDS${impacttype}SPLICE
-		set snp_descr p.${fromAZ}[expr {$codonpos+1}]Xsd
+#		set rps [expr {$srpos - $adata(rpstart)}]
+#		set rpe [expr {$erpos - $adata(rpstart)}]
+#		set prstart [expr {$rps/3}]
+#		set codonstart [expr {3*$prstart}]
+#		set fromcodon [annotatevar_gene_getprnaseq $codonstart [expr {$codonstart+2}]]
+#		set fromAZ [seq_translate $fromcodon]
+		set impact CDS[annotategene_p_complex $snptype]SPLICE
+#		append snp_descr :p.${fromAZ}[expr {$prstart+1}]Xsd?
+		append snp_descr :p.?
 	} else {
-		# coding deletion
-		set rps [expr {$srpos - $adata(rpstart)}]
-		set rpe [expr {$erpos - $adata(rpstart)}]
-		set codonpos [expr {$rps/3}]
-		set codonstart [expr {3*$codonpos}]
-		if {[expr {[expr {$len-$rlen}]%3}]} {
-			# frame shift
-			set fromcodon [annotatevar_gene_getprnaseq $codonstart [expr {$codonstart+2}] $sline]
-			set fromAZ [seq_translate $fromcodon]
-			set snp_annot CDSFRAME
-			set fromAZ [seq_translate $fromcodon]
-			set snp_descr p.${fromAZ}[expr {$codonpos+1}]Xfs
-		} else {
-			set snp_annot CDS${impacttype}
-			set cpos [expr {$rps-$codonstart}]
-			set endpos [expr {($rpe/3)*3 + 2}]
-			set fromcodon [annotatevar_gene_getprnaseq $codonstart $endpos $sline]
-			set fromAZ [seq_translate $fromcodon]
-			set tocodon [string range $fromcodon 0 [expr {$cpos-1}]]$alt[string range $fromcodon [expr {$cpos+$len}] end]
-			set toAZ [seq_translate $tocodon]
-			if {[string index $toAZ end] eq [string index $fromAZ end]} {
-				set toAZ [string range $toAZ 0 end-1]
-				set fromAZ [string range $fromAZ 0 end-1]
-			}
-			if {[string index $toAZ 0] eq [string index $fromAZ 0]} {
-				set toAZ [string range $toAZ 1 end]
-				set fromAZ [string range $fromAZ 1 end]
-				incr codonpos
-			}
-			if {[string length $fromAZ] == 1} {
-				set snp_descr p.${fromAZ}[expr {$codonpos+1}]del
-			} elseif {[string length $toAZ] == 0} {
-				set snp_descr p.[string index $fromAZ 0][expr {$codonpos+1}]_[string index $fromAZ end][expr {$codonpos+[string length $fromAZ]}]del
-			} else {
-				set snp_descr p.[string index $fromAZ 0][expr {$codonpos+1}]_[string index $fromAZ end][expr {$codonpos+[string length $fromAZ]}]delins$toAZ
-			}
-		}
+		# coding deletion (no splice site overlap, so sline == eline)
+		append snp_descr :[annotategene_one_p_del $snptype $srpos $ref $alt impact]
 	}
-	if {$adata(complement)} {set strand -} else {set strand +}
-	if {$snp_annot eq "GENE${impacttype}"} {
-		set p $strand$adata(transcriptname)
-	} elseif {$sel eq $eel} {
-		set p $strand$adata(transcriptname):$sel:$seipos
+	if {[regexp ^GENE $impact]} {
+		set result $strand$adata(transcriptname)
 	} else {
-		set p $strand$adata(transcriptname):$sel:$eeipos
-		append p -$eel:$eeipos
+		append result :$snp_descr
 	}
-	append p :$snp_descr
-	return [list $snp_annot $p]
+	return [list $impact $result]
 }
 
-proc annotategene_one_CDS {snppos snptype from to line} {
-#putsvars snppos snptype from to line
-	global adata snp_annot_score
+proc annotategene_one_p_snp {snppos from alt line impactVar} {
+# putsvars snppos from alt line
+	global adata
+	upvar $impactVar impact
 	set genomef $adata(genomef)
 	set complement $adata(complement)
 	set start $adata(grstart)
 	set end $adata(grend)
 	set chr $adata(chrom)
-	set snp_descr {}
-	foreach {rpos el eipos} [annotategene_one_getsnpcoords $line $snppos] break
-	# position on protein (in nucl)
-	set ppos [expr {$rpos - $adata(rpstart)}]
+	set rpos [annotategene_rpos $line $snppos]
+	# position on protein (in nucl), starting from 0
+	set pnpos [expr {$rpos - $adata(rpstart)}]
+	# position on protein (in AA), starting from 0
+	set prstart [expr {$pnpos/3}]
 	#
-	set csnp_descr c.[annotate_compl $from][calc_rpos $rpos][annotate_compl $to]
-	set codonpos [expr {$ppos/3}]
-	set codonstart [expr {3*$codonpos}]
+	if {$adata(complement)} {set strand -} else {set strand +}
+	set codonstart [expr {3*$prstart}]
 	set fromcodon [annotatevar_gene_getprnaseq $codonstart [expr {$codonstart+2}] $line]
-	set cpos [expr {$ppos-$codonstart}]
-	if {$complement} {set to [seq_complement $to]}
-	set snp_annot {}
-	set snp_descr {}
-	switch $snptype {
-		snp {
-			set tocodon [string replace $fromcodon $cpos $cpos $to]
-			set fromAZ [seq_translate $fromcodon]
-			set toAZ [seq_translate $tocodon]
-			if {[inlist {TAA TAG TGA} $tocodon]} {
-				lappend snp_annot CDSNONSENSE
-				lappend snp_descr "p.${fromAZ}[expr {$codonpos+1}]stop"
-			} elseif {$codonpos == 0} {
-				lappend snp_annot CDSSTART
-				lappend snp_descr "p.${fromAZ}[expr {$codonpos+1}]${toAZ}"
-			} elseif {($codonpos == $adata(lastcodon)) && ($fromAZ ne $toAZ)} {
-				lappend snp_annot CDSSTOP
-				lappend snp_descr "p.${fromAZ}[expr {$codonpos+1}]${toAZ}r"
-			} elseif {$fromAZ ne $toAZ} {
-				lappend snp_annot CDSMIS
-				lappend snp_descr "p.${fromAZ}[expr {$codonpos+1}]${toAZ}"
+	set cpos [expr {$pnpos-$codonstart}]
+	if {$complement} {set alt [seq_complement $alt]}
+	set fromAZ [seq_translate $fromcodon]
+	set from [string index $fromcodon $cpos]
+	set tocodon [string replace $fromcodon $cpos $cpos $alt]
+	set toAZ [seq_translate $tocodon]
+	if {$fromAZ eq "s"} {
+		set impact CDSSTOP
+		if {$fromAZ ne $toAZ} {
+			set fromseq [string range [annotatevar_gene_rnaseq] [expr {$adata(rpstart)+$codonstart+3}] end]
+			set topr [seq_translate $fromseq]
+			set pos [string first s $topr]
+			# add 2 to pos because first changed is not included in topr, and "string first" counts from 0
+			if {$pos < 0} {set tl ?} else {set tl [expr {$pos + 2}]}
+			set snp_descr "p.*[expr {$prstart+1}]${toAZ}ext*$tl"
+		} else {
+			set snp_descr "p.*[expr {$prstart+1}]*"
+		}
+	} elseif {[inlist {TAA TAG TGA} $tocodon]} {
+		set impact CDSNONSENSE
+		set snp_descr "p.${fromAZ}[expr {$prstart+1}]*"
+	} elseif {$prstart == 0} {
+		set impact CDSSTART
+		set snp_descr "p.${fromAZ}[expr {$prstart+1}]${toAZ}?"
+	} elseif {$fromAZ ne $toAZ} {
+		set impact CDSMIS
+		set snp_descr "p.${fromAZ}[expr {$prstart+1}]${toAZ}"
+	} else {
+		set impact CDSsilent
+		set snp_descr "p.${fromAZ}[expr {$prstart+1}]${toAZ}"
+	}
+	return $snp_descr
+}
+
+proc annotategene_one_p_ins {snppos from alt line impactVar} {
+ putsvars snppos from alt line
+	global adata
+	upvar $impactVar impact
+	set genomef $adata(genomef)
+	set complement $adata(complement)
+	set start $adata(grstart)
+	set end $adata(grend)
+	set chr $adata(chrom)
+	set rpos [annotategene_rpos $line $snppos]
+	# position on protein (in nucl), starting from 0
+	set pnpos [expr {$rpos - $adata(rpstart)}]
+	# position on protein (in AA), starting from 0
+	set prstart [expr {$pnpos/3}]
+	#
+	set codonstart [expr {3*$prstart}]
+	set cpos [expr {$pnpos-$codonstart}]
+	if {$complement} {set alt [seq_complement $alt]}
+	set len [string length $alt]
+	set pstart [expr {$codonstart/3}]
+	if {[isint $alt]} {
+		set len $alt
+		set fromcodon [annotatevar_gene_getprnaseq $codonstart [expr {$codonstart+2}] $line]
+		set fromAZ [seq_translate $fromcodon]
+		if {$fromAZ eq "s"} {
+			set impact CDSSTOP
+			set snp_descr p.*[expr {$prstart + 1}]Xext*?
+		} elseif {[expr {$len%3}]} {
+			set impact CDSFRAME
+			set snp_descr p.${fromAZ}[expr {$prstart + 1}]Xfs*?
+		} elseif {$cpos == 0} {
+			set impact CDSINS
+			set pseq [annotatevar_gene_pseq]
+			set prevAZ [string index $pseq [expr {$prstart-1}]]
+			set snp_descr p.${prevAZ}${prstart}_${fromAZ}[expr {$prstart + 1}]ins([expr {$alt/3}])
+		} else {
+			if {$prstart == 0} {
+				set impact CDSSTART
+				set snp_descr p.${fromAZ}[expr {$prstart + 1}]?
 			} else {
-				lappend snp_annot CDSsilent
-				lappend snp_descr "p.${fromAZ}[expr {$codonpos+1}]${toAZ}"
+				set impact CDSINS
+				set snp_descr p.${fromAZ}[expr {$prstart + 1}]delins([expr {$len/3+1}])
 			}
 		}
-		ins {
-			set len [string length $to]
-			if {[expr {$len%3}]} {
-				# frame shift
-				lappend snp_annot CDSFRAME
-				set fromAZ [seq_translate $fromcodon]
-				lappend snp_descr p.${fromAZ}[expr {$codonpos+1}]Xfs
-			} else {
-				lappend snp_annot CDSINS
-				set fromAZ [seq_translate $fromcodon]
-				if {$cpos != 0} {
-					set tocodon [string range $fromcodon 0 [expr {$cpos-1}]]$to[string range $fromcodon $cpos end]
-					set toAZ [seq_translate $tocodon]
-					if {[string index $toAZ 0] ne "$fromAZ"} {
-						lappend snp_descr p.${fromAZ}[expr {$codonpos+1}]delins$toAZ
-					} else {
-						set nextcodon [annotatevar_gene_getprnaseq [expr {$codonstart+3}] [expr {$codonstart+5}]]
-						set nextAZ [seq_translate $nextcodon]
-						lappend snp_descr p.${fromAZ}[expr {$codonpos+1}]_${nextAZ}[expr {$codonpos+2}]ins[string range $toAZ 1 end]
-					}
+		return $snp_descr
+	}
+	set frompr [string range [annotatevar_gene_pseq] $pstart end]
+	set fromseq [string range [annotatevar_gene_rnaseq] [expr {$adata(rpstart)+$codonstart}] end]
+	set toseq [string range $fromseq 0 [expr {$cpos-1}]]$alt[string range $fromseq $cpos end]
+	set topr [seq_translate $toseq]
+	# shift to 3'
+	set posfromdiff 0
+	string_foreach f $frompr t $topr {
+		if {$f eq "s"} break
+		if {$t ne $f} break
+		incr prstart
+		incr codonstart 3
+		incr numtostop -1
+		incr posfromdiff
+	}
+	if {$f eq "s"} {
+		set impact CDSSTOP
+		if {$t eq "s"} {
+			set snp_descr p.*[expr {$prstart + 1}]*
+		} else {
+			set toseq [string range $toseq [expr {3*$posfromdiff}] end]
+			set topr [seq_translate $toseq]
+			set pos [string first s $topr]
+			# add 2 to pos because first changed is not included in topr, and "string first" counts from 0
+			if {$pos < 0} {set tl ?} else {set tl [expr {$pos + 2}]}
+			set snp_descr p.*[expr {$prstart + 1}]${t}ext*$tl
+		}
+	} elseif {$t eq "s"} {
+		set impact CDSNONSENSE
+		set snp_descr p.${f}[expr {$prstart + 1}]*
+	} elseif {[expr {$len%3}]} {
+		# frame shift
+		set numtostop [string first s $topr]
+		if {$numtostop < 0} {set tl ?} else {set tl [expr {$numtostop - $posfromdiff}]}
+		set impact CDSFRAME
+		set snp_descr p.${f}[expr {$prstart + 1}]${t}fs*$tl
+	} else {
+		set toAZ [string range $topr $posfromdiff [expr {$posfromdiff + $len/3}]]
+		set pos [string first s $toAZ]
+		if {$pos == -1} {
+			set impact CDSINS
+		} else {
+			set impact CDSNONSENSE
+			regsub s $toAZ * toAZ
+		}
+		if {$f eq [string index $toAZ end]} {
+			set pseq [annotatevar_gene_pseq]
+			set toAZ [string range $toAZ 0 end-1] 
+			# check for dups/repeats
+			set fpos $prstart
+			set topos [string length $toAZ]
+			while {$topos >= 0} {
+				incr fpos -1
+				incr topos -1
+				set ftest [string index $pseq $fpos]
+				set totest [string index $toAZ $topos]
+				if {$ftest ne $totest} break
+			}
+			incr topos
+			set rep [string range $toAZ $topos end]
+			if {[regexp ^(${rep})+\$ $toAZ]} {
+				# dup or repeat
+				set repsize [string length $rep]
+				# does it go back (should find at least one anyway)
+				regexp (${rep})+\$ [string range $pseq 0 [expr {$prstart-1}]] temp
+				set repnum [expr {([string length $temp] + [string length $toAZ])/$repsize}]
+				if {$repnum == 2} {set type dup} else {set type rep\[$repnum\]}
+				if {$repsize == 1} {
+					set prevAZ [string index $pseq [expr {$prstart-1}]]
+					set snp_descr p.${prevAZ}${prstart}$type
 				} else {
-					set prevcodon [annotatevar_gene_getprnaseq [expr {$codonstart-3}] [expr {$codonstart-1}]]
-					set prevAZ [seq_translate $prevcodon]
-					set toAZ [seq_translate $to]
-					lappend snp_descr p.${prevAZ}[expr {$codonpos}]_${fromAZ}[expr {$codonpos+1}]ins$toAZ
+					set bpos [expr {$prstart-$repsize}]
+					set epos [expr {$prstart-1}]
+					set prevAZ [string index $pseq $bpos]
+					set snp_descr p.[string index $pseq $bpos][expr {$bpos + 1}]_[string index $pseq $epos][expr {$epos + 1}]$type
 				}
+			} else {
+				set prevAZ [string index $pseq [expr {$prstart-1}]]
+				set snp_descr p.${prevAZ}${prstart}_${f}[expr {$prstart + 1}]ins$toAZ
+			}
+		} else {
+			set snp_descr p.${f}[expr {$prstart + 1}]delins$toAZ
+			if {$prstart == 0} {append snp_descr ? ; set impact CDSSTART}
+		}
+	}
+	return $snp_descr
+}
+
+proc annotategene_one_p_del {snptype srpos ref alt impactVar} {
+ putsvars snptype srpos ref alt
+	global adata
+	upvar $impactVar impact
+	set genomef $adata(genomef)
+	set complement $adata(complement)
+#	set start $adata(grstart)
+#	set end $adata(grend)
+	set chr $adata(chrom)
+	if {[isint $ref]} {set len $ref} else {set len [string length $ref]}
+	if {[isint $alt]} {set alen $alt} else {set alen [string length $alt]}
+	# position on protein (in nucl), starting from 0
+	set pnpos [expr {$srpos - $adata(rpstart)}]
+	# position on protein (in AA), starting from 0
+	set pseq [annotatevar_gene_pseq]
+	set prstart [expr {$pnpos/3}]
+	set prend [expr {($pnpos+$len-1)/3}]
+	#
+	set codonstart [expr {3*$prstart}]
+	set cpos [expr {$pnpos-$codonstart}]
+	set pstart [expr {$codonstart/3}]
+	if {[isint $alt]} {
+		set frompr [string range $pseq $prstart $prend]
+		set AZ1 [string index $frompr 0]
+		set AZ2 [string index $frompr end]
+		if {[regexp s $frompr]} {
+			set impact CDSSTOP
+			set snp_descr [annotategene_p_loc * $prstart]Xext*?
+		} elseif {[expr {abs($alen-$len)%3}]} {
+			set impact CDSFRAME
+			set snp_descr [annotategene_p_loc $AZ1 $prstart]Xfs*?
+		} elseif {$cpos == 0} {
+			set impact CDS[annotategene_p_complex $snptype]
+			if {$alt == 3} {
+				set snp_descr [annotategene_p_loc $AZ1 $prstart $AZ2 $prend]X
+			} else {
+				set snp_descr [annotategene_p_loc $AZ1 $prstart $AZ2 $prend]delins([expr {$alt/3}])
+			}
+		} else {
+			if {$prstart == 0} {
+				set impact CDSSTART
+				set snp_descr [annotategene_p_loc $AZ1 $prstart]?
+			} else {
+				set impact CDS[annotategene_p_complex $snptype]
+				set snp_descr [annotategene_p_loc $AZ1 $prstart $AZ2 $prend]delins([expr {$len/3+1}])
+			}
+		}
+		return $snp_descr
+	}
+	set frompr [string range [annotatevar_gene_pseq] $pstart end]
+	set fromseq [string range [annotatevar_gene_rnaseq] [expr {$adata(rpstart)+$codonstart}] end]
+	set toseq [string range $fromseq 0 [expr {$cpos-1}]]$alt[string range $fromseq [expr {$cpos+$ref}] end]
+	set topr [seq_translate $toseq]
+	set posfromdiff 0
+	string_foreach f $frompr t $topr {
+		if {$f eq "s"} break
+		if {$t ne $f} break
+		incr prstart
+		incr codonstart 3
+		incr numtostop -1
+		incr posfromdiff
+	}
+puts [string range $fromseq 0 40]\n[string range $toseq 0 40]
+putsvars prstart cpos f t
+puts [string range $frompr 0 20]\n[string range $topr 0 20]
+	if {$f eq "s"} {
+		set impact CDSSTOP
+		if {$t eq "s"} {
+			set snp_descr [annotategene_p_loc * $prstart]*
+		} else {
+			set toseq [string range $toseq [expr {3*$posfromdiff}] end]
+			set topr [seq_translate $toseq]
+			set pos [string first s $topr]
+			# add 2 to pos because first changed is not included in topr, and "string first" counts from 0
+			if {$pos < 0} {set tl ?} else {set tl [expr {$pos + 2}]}
+			set snp_descr [annotategene_p_loc * $prstart]${t}ext*$tl
+		}
+	} elseif {$t eq "s"} {
+		set impact CDSNONSENSE
+		set snp_descr [annotategene_p_loc $f $prstart]*
+	} elseif {[expr {abs($alen-$len)%3}]} {
+		# frame shift
+		set numtostop [string first s $topr]
+		if {$numtostop < 0} {set tl ?} else {set tl [expr {$numtostop - $posfromdiff}]}
+		set impact CDSFRAME
+		set snp_descr [annotategene_p_loc $f $prstart]${t}fs*$tl
+	} else {
+		set impact CDS[annotategene_p_complex $snptype]
+		set prend [expr {$prstart + $len/3}]
+		set fromp [string range $pseq $prstart $prend]
+		set toend [expr {$posfromdiff + $alen/3}]
+		set top [string range $topr $posfromdiff $toend]
+		while {[string index $top end] eq [string index $fromp end]} {
+			incr prend -1
+			set top [string range $top 0 end-1]
+			set fromp [string range $fromp 0 end-1]
+		}
+		set snp_descr [annotategene_p_loc [string index $fromp 0] $prstart [string index $fromp end] $prend]
+		if {$top ne ""} {
+			if {[string length $top] == 1 && [string length $fromp] == 1} {
+				append snp_descr $top
+			} else {
+				append snp_descr delins$top
+			}
+		} else {
+			append snp_descr $snptype
+		}
+	}
+	return $snp_descr
+}
+
+proc annotategene_one_c {chrom snppos snptype from alt line {impactVar {}}} {
+#putsvars chrom snppos snptype from alt line
+	global adata
+	if {$impactVar ne ""} {upvar $impactVar impact}
+	foreach {gbegin gend eltype element rnabegin rnaend cdsbegin cdsend} $line break
+	set complement $adata(complement)
+	if {$snptype eq "ins" && ![isint $alt]} {
+		# shift to 3'?
+		set genomef $adata(genomef)
+		if {!$complement} {
+			set from [genome_get $genomef $chrom $snppos [expr {$snppos+1}]]
+			if {$from eq [string index $alt 0]} {
+				set ipos 0
+				set len [string length $alt]
+				while 1 {
+					incr ipos
+					incr snppos
+					if {$snppos > $gend} break
+					if {$ipos >= $len} {set ipos 0}
+					if {[catch {
+						set from [genome_get $genomef $chrom $snppos [expr {$snppos+1}]]
+					}]} break
+					set a [string index $alt $ipos]
+					if {$a ne $from} break
+				}
+				if {$ipos != 0} {set alt [string range $alt $ipos end][string range $alt 0 [expr {$ipos-1}]]}			
+			}
+		} else {
+			# for complement towards 3' is going back
+			set from [genome_get $genomef $chrom [expr {$snppos-1}] $snppos]
+			if {$from eq [string index $alt end]} {
+				set len [string length $alt]
+				incr len -1
+				set ipos $len
+				while {$snppos <= $gend} {
+					incr ipos -1
+					incr snppos -1
+					if {$ipos < 0} {set ipos $len}
+					if {[catch {
+						set from [genome_get $genomef $chrom $snppos [expr {$snppos+1}]]
+					}]} break
+					if {[string index $alt $ipos] ne $from} break
+				}
+				if {$ipos != $len} {set alt [string range $alt [expr {$ipos+1}] end][string range $alt 0 $ipos]}			
 			}
 		}
 	}
-	if {$adata(complement)} {set strand -} else {set strand +}
-	return [list ${snp_annot} $strand$adata(transcriptname):$el:$eipos:$csnp_descr:$snp_descr]
-}
-
-proc annotategene_one_rna {snppos snptype from to line} {
-	global adata snp_annot_score
-	set complement $adata(complement)
-	set snp_annot RNA
-	set snp_descr {}
-	foreach {rpos el eipos} [annotategene_one_getsnpcoords $line $snppos] break
-	# position on protein (in nucl)
+	set rpos [annotategene_rpos $line $snppos]
 	set rrefpos [calc_rpos $rpos]
-	if {[lindex $line 2] eq "RNA"} {
-		set snp_annot RNA
-	} elseif {$rrefpos > 0} {
-		set snp_annot UTR3
-	} else {
-		set snp_annot UTR5
-	}
-	if {$snptype eq "snp"} {
-		set snp_descr r.${rrefpos}[annotate_compl $from]>[annotate_compl $to]
-	} elseif {$snptype eq "ins"} {
-		if {!$complement} {
-			set snp_descr r.[expr {$rrefpos-1}]_${rrefpos}ins$to
+	set impact [annotate_type2impact $eltype]
+	# position on protein (in nucl)
+	if {$eltype eq "UTR"} {
+		if {$rrefpos > 0} {
+			set impact UTR3
 		} else {
-			set snp_descr r.${rrefpos}_[expr {$rrefpos+1}]ins[seq_complement $to]
+			set impact UTR5
+		}
+	}
+	if {$adata(cds)} {set snp_descr [list c.]} else {set snp_descr [list n.]}
+	if {[regexp ^intron $element]} {
+		# location for variants in introns
+		foreach {is ie} $adata($element) break
+		if {[expr {($ie-$snppos) - ($snppos-$is)}] > 0} {
+			set ref ${rrefpos}
+			set dir +
+			set ipos [expr {$snppos-$is+1}]
+		} else {
+			set ref [expr {$rrefpos + 1}]
+			set dir -
+			set ipos [expr {$ie - $snppos}]
+		}
+		if {$adata(complement)} {
+			if {$dir eq "+} {set dir -} else {set dir +}
+		}
+		lappend snp_descr ${ref}
+		if {$snptype eq "ins"} {
+			if {!$complement} {
+				lappend snp_descr ${dir}[expr {$ipos - 1}]_${ipos}
+			} else {
+				lappend snp_descr ${dir}${ipos}_[expr {$ipos + 1}]
+			}
+		} else {
+			lappend snp_descr ${dir}$ipos
 		}
 	} else {
-		set snp_descr ""
-	}
-	if {$adata(complement)} {set strand -} else {set strand +}
-	set p $strand$adata(transcriptname):$el:$eipos
-	return [list $snp_annot $p:$snp_descr]
-}
-
-proc annotategene_one_g {snppos snptype from to type line} {
-	global adata snp_annot_score
-	set complement $adata(complement)
-	# non spliced annotations
-	set snp_annot [annotate_type2annot $type]
-	foreach {rpos el eipos} [annotategene_one_getsnpcoords $line $snppos] break
-	set grefpos [expr {$snppos - $adata(grefstart)}]
-	if {$snptype eq "snp"} {
-		set snp_descr g.${grefpos}[annotate_compl $from]>[annotate_compl $to]
-	} elseif {$snptype eq "ins"} {
-		if {!$complement} {
-			set snp_descr g.[expr {$grefpos-1}]_${grefpos}ins$to
+		if {$snptype eq "ins"} {
+			if {!$adata(complement)} {
+				lappend snp_descr [expr {$rrefpos-1}]_${rrefpos} {}
+			} else {
+				lappend snp_descr ${rrefpos}_[expr {$rrefpos+1}] {}
+			}
 		} else {
-			set snp_descr g.${grefpos}_[expr {$grefpos+1}]ins[seq_complement $to]
+			lappend snp_descr ${rrefpos} {}
 		}
-	} else {
-		set snp_descr ""
 	}
-	if {$adata(complement)} {set strand -} else {set strand +}
-	set p $strand$adata(transcriptname):$el:$eipos
-	return [list $snp_annot $p:$snp_descr]
+	# add change
+	if {[isint $alt]} {set alt ($alt)}
+	if {$snptype eq "snp"} {
+		lappend snp_descr [annotate_compl $from]>[annotate_compl $alt]
+	} else {
+		if {$snptype eq "sub"} {set snptype delins}
+		lappend snp_descr $snptype[annotate_compl $alt]
+	}
+	return $snp_descr
 }
 
 proc annotategene_one {loc geneobj} {
@@ -692,29 +1045,34 @@ proc annotategene_one {loc geneobj} {
 	array set adata $geneobj
 	set complement $adata(complement)
 	foreach {chrom snppos snpend snptype ref alt} $loc break
-	if {[inlist {del sub inv amp} $snptype]} {
+	set size [expr {$snpend-$snppos}]
+	if {[inlist {del sub inv amp} $snptype] || $size > 1} {
 		# treat deletions and subs separately because they need special care (can span exons, the whole annotation, etc ...)
 		set ref [expr {$snpend-$snppos}]
-		set result [annotategene_one_del $snppos $snptype $ref $alt]
+		return [annotategene_one_del $snppos $snptype $ref $alt]
 	} else {
 		# other annotations
 		foreach line $adata(ftlist) {
 			foreach {ftstart ftend type} $line break
 			if {($snppos >= $ftstart) && ($snppos <= $ftend)} break
 		}
-		switch $type {
-			CDS {
-				set result [annotategene_one_CDS $snppos $snptype $ref $alt $line]
-			}
-			UTR - RNA {
-				set result [annotategene_one_rna $snppos $snptype $ref $alt $line]
-			}
-			default {
-				set result [annotategene_one_g $snppos $snptype $ref $alt $type $line]
+		set impact [lindex $line 2]
+		if {!$complement} {set strand +} else {set strand -}
+		set result $strand$adata(transcriptname)
+		foreach {element elementpos} [annotategene_element $line $snppos] break
+		append result :$element$elementpos
+		if {$type ni {pre upstream downstream post}} {
+			append result :[join [annotategene_one_c $chrom $snppos $snptype $ref $alt $line impact] {}]
+		}
+		if {$type eq "CDS"} {
+			if {$size == 0 || $snptype eq "ins"} {
+				append result :[annotategene_one_p_ins $snppos $ref $alt $line impact]
+			} else {
+				append result :[annotategene_one_p_snp $snppos $ref $alt $line impact]
 			}
 		}
+		return [list $impact $result]
 	}
-	return $result
 }
 
 proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
@@ -745,7 +1103,6 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 #putsvars file genomefile dbfile name annotfile genecol transcriptcol
 	global genomef
 	annot_init
-
 	if {[catch {eof $genomef}]} {
 		set genomef [genome_open $genomefile]
 	}
@@ -988,9 +1345,8 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 		}
 		puts $o \t$result
 	}
-
 	close $genomef
 	close $o; catch {close $f};	catch {close $df}
 	file rename -force $annotfile.temp $annotfile
-
 }
+

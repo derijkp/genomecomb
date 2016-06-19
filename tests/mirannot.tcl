@@ -12,7 +12,7 @@ test mir_annot {basic mir annotation} {
 
 test mir_annot {-upstream} {
 	test_cleantmp
-	exec cg annotate -upstreamsize 100 -dbdir /complgen/refseq/hg19 data/vars_mirna.tsv tmp/annot_test.tsv data/mir_small.tsv
+	exec cg annotate --upstreamsize 100 -dbdir /complgen/refseq/hg19 data/vars_mirna.tsv tmp/annot_test.tsv data/mir_small.tsv
 	exec diff tmp/annot_test.tsv data/expected-vars_mirna_annot.tsv
 } {2c2
 < chr1	567603	567604	snp	G	C	pre		
