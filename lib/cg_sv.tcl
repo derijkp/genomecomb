@@ -33,8 +33,16 @@ proc getmategap {libfile} {
 proc map2sv {files prefix} {
 	global appdir
 	if {[llength $files] == 1 && [file isdir [lindex $files 0]]} {
-		set files [glob [lindex $files 0]/MAP/*/mapping_*.tsv.bz2]
+		set cgdir [lindex $files 0]
+		set files [glob -nocomplain $cgdir/MAP/*/mapping_*.tsv.bz2]
+		if {![llength $files]} {
+			set files [glob -nocomplain $cgdir/mapping_*.tsv.bz2]
+		}
+		if {![llength $files]} {
+			error "No files found"
+		}
 	}
+
 	set rdir [file dir $prefix]
 	file mkdir $rdir
 	if {[file exists $rdir/working_in_scratch.txt]} {
@@ -1926,16 +1934,6 @@ proc svfind {pairfile trffile} {
 
 }
 
-proc cg_map2sv {args} {
-	global scriptname action
-	if {[llength $args] < 2} {
-		puts stderr "format is: $scriptname $action file ... out_prefix"
-		exit 1
-	}
-	set prefix [list_pop args]
-	map2sv $args $prefix
-}
-
 proc cg_bam2sv {args} {
 	global scriptname action
 	if {[llength $args] < 2} {
@@ -1952,6 +1950,36 @@ proc cg_sv2db {args} {
 		exit 1
 	}
 	sv2db $args
+}
+
+proc cg_svcompare {args} {
+	global scriptname action
+	if {[llength $args] != 2} {
+		puts stderr "format is: $scriptname $action svfile1 svfile2"
+		exit 1
+	}
+	foreach {svfile1 svfile2} $args break
+	svcompare $svfile1 $svfile2
+}
+
+proc cg_svrescore {args} {
+	global scriptname action
+	if {[llength $args] != 1} {
+		puts stderr "format is: $scriptname $action svfile"
+		exit 1
+	}
+	foreach {svfile} $args break
+	svrescore $svfile
+}
+
+proc cg_map2sv {args} {
+	global scriptname action
+	if {[llength $args] < 2} {
+		puts stderr "format is: $scriptname $action file ... out_prefix"
+		exit 1
+	}
+	set prefix [list_pop args]
+	map2sv $args $prefix
 }
 
 proc cg_svinfo {args} {
@@ -1979,22 +2007,28 @@ proc cg_svfind {args} {
 	}
 }
 
-proc cg_svcompare {args} {
-	global scriptname action
-	if {[llength $args] != 2} {
-		puts stderr "format is: $scriptname $action svfile1 svfile2"
+proc cg_sv {args} {
+	if {[llength $args] < 1} {
+		puts stderr "format is: cg sv subcmd ..."
+		puts stderr "  subcmds are: map2sv, find, info"
+		puts stderr "  find more extensive description using \"cg process_sv -h\""
 		exit 1
 	}
-	foreach {svfile1 svfile2} $args break
-	svcompare $svfile1 $svfile2
-}
-
-proc cg_svrescore {args} {
-	global scriptname action
-	if {[llength $args] != 1} {
-		puts stderr "format is: $scriptname $action svfile"
-		exit 1
+	set cmd [lindex $args 0]
+	set args [lrange $args 1 end]
+	switch $cmd {
+		map2sv {
+			cg_map2sv {*}$args
+		}
+		info {
+			cg_svinfo {*}$args
+		}
+		find {
+			cg_svfind {*}$args
+		}
+		default {
+			puts stderr "Unkown subcommand $cmd to sv, must be one of map2sv, info, find"
+			exit 1
+		}
 	}
-	foreach {svfile} $args break
-	svrescore $svfile
 }

@@ -607,18 +607,20 @@ proc timestamp {} {
 }
 
 proc chrindexseek {file f chr} {
-	set indexfile [gzroot $file].chrindex
-	if {![file exists $indexfile]} {
+	set root [gzroot $file]
+	file mkdir $root.index
+	set indexfile [indexdir_file $file chrindex ok]
+	if {!$ok} {
 		set tf [gzopen $file]
 		set header [gets $tf]
-		set chrpos [lsearch $header chromosome]
+		set chrpos [tsv_basicfields $header 1 0]
 		set prevchr {}
 		set list {}
 		set o [open $indexfile w]
 		while {![eof $tf]} {
 			set pos [tell $tf]
 			set line [gets $tf]
-			set chr [lindex $line $chrpos]
+			set chr [chr_clip [lindex $line $chrpos]]
 			if {$chr ne $prevchr} {
 				puts $o $chr\t$pos
 				set prevchr $chr
@@ -628,9 +630,7 @@ proc chrindexseek {file f chr} {
 		close $o
 	}
 	set trfchrpos [split [string trim [file_read $indexfile]] \n\t]
-	if {[dict exists $trfchrpos chr$chr]} {
-		set chr chr$chr
-	}
+	set chr [chr_clip $chr]
 	if {[catch {set fpos [dict get $trfchrpos $chr]}]} {
 		seek $f 0 end
 	} else {

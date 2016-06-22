@@ -1,0 +1,59 @@
+= Process_sv =
+
+== Format ==
+cg process_sv ?options? cgdir resultdir dbdir
+
+== Summary ==
+Do all steps on a Complete Genomics sample to generate structural variant calls
+
+== Description ==
+cg process_sv detects structural variants based on discordant read pairs
+in the Complete Genomics (CGI) mapping files. 
+This structural variant caller was developed on some of the earliest Complete
+Genomics samples, and has become a bit superfluous since Complete Genomics
+includes structural variant calls in their standard output. There are some
+reasons that it may stil be useful:
+* On the original data it was more sensitive, picking up smaller deletions
+and some small insertions. However, changes in the experimental setup of
+more recent runs have nullified this advantage, leading to a great
+number of false positives (The deletions < 600 and insertions that the CGI sv 
+caller does not detect have to be discarded anyway because of FDR).
+* Analysing samples that did not yet have CGI calls
+* The intermediate files provide a nice visualisation in combination with [[cg_viz]]
+
+cg process_sv successively runs the following steps:
+* **map2sv** creates tab-separated files containing the mapping locations of
+each mate pair sorted on the location of the first mate and distributed per chromosome.
+(sv/sample-chr-paired.tsv)
+* **tsv_index** is used indexes these files.
+* **svinfo** 
+* **svfind** is used for the actual detection of variants from the mate-pair files, 
+resulting in a sv prediction file per chromosome (sv/sample-chr-paired-sv.tsv)
+* **cg cat** adds all of these together in one result file (sv/svall-samplename.tsv)
+* **cg select** is used to produce the final result file (sv-samplename.tsv) by filtering out (very) low quality calls
+
+== Arguments ==
+; **cgdir**: directory conataing the CGI mapping files
+; **resultdir**: "sample directory" where results will be written. The resultfile
+will be named sv-samplename.tsv (where samplename is the name of the resultdir). All intermediate
+data is stored in a subdir sv in **resultdir**
+; **dbdir**: directory containing reference data (genome sequence, annotation, ...).
+
+== Options ==
+; **-force 0/1**: force full reanalysis even if some files already exist
+
+supports job options (more info with cg help joboptions):
+; **-d number**: distribute subjobs of command over **number** processes
+; **-d sge**: use grid engine to distribute subjobs
+
+== Resultfile ==
+
+
+== Example ==
+{{{
+cg process_sv GS27657-FS3-L01 NA19238cg /complgen/refseq/hg19
+}}}
+
+== Category ==
+Structural variants
+

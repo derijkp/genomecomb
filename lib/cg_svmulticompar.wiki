@@ -16,4 +16,4 @@ These are tab separated files indicating structural variants present in one or m
 More than one svfile can added in one command
 
 == Category ==
-Structural
+Structural variants

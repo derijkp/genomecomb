@@ -8,39 +8,15 @@ exec tclsh "$0" "$@"
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-if 0 {
-
-lappend auto_path /home/peter/bin/tcl
-lappend auto_path /home/peter/dev/genomecomb/lib
-
-set object .g
-
-graphwidget .g
-pack .g -fill both -expand yes
-
-set file /complgen/sv/chr20.smoothed.100
-set file /complgen/sv/chr1.smoothed.100
-set file /complgen/sv/sv79-20s.sv
-set file /complgen/sv/sv70-20s.sv
-if {[llength [get argv ""]]} {
-	set file [lindex $argv 0]
-}
-.g open $file
-
-}
-
 proc cg_graph {args} {
+	global graphd
 	package require Tk
 	set object .g
 	graphwidget .g
 	pack .g -fill both -expand yes
-	if {[lindex $args 0] eq "region"} {
-		list_shift args
-		set region 1
-	} else {
-		set region 0
-	}
 	foreach file $args {
-		.g open $file $region
+		if {![file exists $file]} {puts stderr "$file does not exist"}
+		$object defsettings $file
+		.g open $file
 	}
 }

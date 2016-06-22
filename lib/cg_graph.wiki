@@ -1,0 +1,22 @@
+= viz =
+
+== Format ==
+cg graph ?tsvfile? ...
+
+== Summary ==
+Visualization of large tsv files as a scatter plot
+
+== Description ==
+cg graph was made to visualize the large tsv files made by the structural variant caller
+as a scatter plot. It allows interactive scrolling through regions of the genome, without
+loading the entire file(s) into memory.
+You can also add/display other types of data (coverage plot, rough gene
+locations). The graph can only display one chromosome at the time, which
+you will have to select when loading the data (If you select different chromosomes
+for two files in the same display, they will be simply overlayed.)
+
+== Arguments ==
+; **tsvfile**: tsvfile to display
+
+== Category ==
+tsv

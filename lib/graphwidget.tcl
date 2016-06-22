@@ -91,7 +91,7 @@ graphwidget method init {args} {
 graphwidget chainoptions {$object.g}
 
 catch {PushZoom}
-rename PushZoom ori.PushZoom
+catch {rename PushZoom ori.PushZoom}
 
 proc PushZoom {graph} {
 	ori.PushZoom $graph
@@ -100,7 +100,7 @@ proc PushZoom {graph} {
 }
 
 catch {PopZoom}
-rename PopZoom ori.PopZoom
+catch {rename PopZoom ori.PopZoom}
 
 proc PopZoom {graph} {
 	ori.PopZoom $graph
@@ -131,6 +131,7 @@ graphwidget method clear {} {
 	unset -nocomplain data
 	lassign {0 0 0 0} xmin xmax ymin ymax
 	set data(entries) {}
+	set data(vnum) 0
 	::$object.ends.x set {0 1}
 	::$object.ends.y set {0 0}
 	$object.scx set 0 1
@@ -173,42 +174,64 @@ graphwidget method gradientstyle {basecolor} {
 	return $style
 }
 
-graphwidget method opendialog {{file {}}} {
+graphwidget method defsettings {file} {
 	global graphd
-	if {$file eq ""} {set file [Classy::selectfile]}
+	private $object region
+	if {![file exists $file]} {error "$file does not exist"}
 	if {[file extension $file] eq ".bcol"} {
 		set header {pos value}
 	} else {
 		set f [gzopen $file]
 		set header [tsv_open $f]
+		set line [split [gets $f] \t]
 		catch {close $f}
 	}
+	set poss [tsv_basicfields $header 6 0]
 	set graphd(file) [file_absolute $file]
 	set graphd(header) $header
-	lappend graphd(header) {}
-	set graphd(region) 0
+	lappend graphd(header) {} {} {}
 	set graphd(do) 0
 	set graphd(nan) -50
-	foreach {graphd(xfield) graphd(yfield) graphd(wfield)} $graphd(header) break
-	if {[lsearch $header begin] != -1} {
-		set graphd(xfield) begin
-		set graphd(region) 1
-	} elseif {[lsearch $header start] != -1} {
-		set graphd(xfield) start
-		set graphd(region) 1
-	} elseif {[lsearch $header end1] != -1} {
-		set graphd(xfield) end1
-		set graphd(yfield) dist
-		set graphd(region) 0
-		set graphd(wfield) "weight1"
+	foreach {graphd(xfield) graphd(yfield) graphd(wfield)} $header break
+	set num 0
+	foreach field {chrfield xfield yfield typefield reffield altfield} {
+		set $field [lindex $header [lindex $poss $num]]
+		incr num
+		set graphd($field) [get $field]
 	}
-	if {[lsearch $header end] != -1} {
-		set graphd(yfield) end
+	if {$chrfield ne ""} {
+		if {![info exists data(chr)]} {
+			set data(chr) [lindex $line [lindex $poss 0]]
+		}
+		set graphd(chr) $data(chr)
+	} else {
+		if {![regexp -- {-(chr[^-]+)-} [file tail $file] temp graphd(chr)]} {
+			if {![info exists data(chr)]} {
+				set data(chr) [lindex $line [lindex $poss 0]]
+			}
+			set graphd(chr) $data(chr)
+		}
+	}
+	set graphd(region) 0
+	if {$xfield eq "end1" && [lsearch $header dist] != -1} {
+		set graphd(yfield) dist
+		set graphd(wfield) "weight1"
+	} elseif {[lsearch $header quality] != -1} {
+		set graphd(yfield) quality
+	} elseif {[lsearch $header coverage] != -1} {
+		set graphd(yfield) coverage
+	} else {
 		set graphd(region) 1
 	}
 	if {$graphd(region) == 1} {
 		set graphd(wfield) ""
 	}
+}
+
+graphwidget method opendialog {{file {}}} {
+	global graphd
+	if {$file eq ""} {set file [Classy::selectfile]}
+	$object defsettings $file
 	Classy::Dialog $object.open -title "Open file $file"
 	$object.open option select "X" graphd(xfield) graphd(header)
 	$object.open option select "Y" graphd(yfield) graphd(header)
@@ -216,7 +239,7 @@ graphwidget method opendialog {{file {}}} {
 	$object.open option check "Regions" graphd(region) ""
 	$object.open option entry "Nan" graphd(nan)
 	$object.open option entry "Chromosome" graphd(chr)
-	$object.open add do Do [list $object open $file ::graphd] default
+	$object.open add do Do [list $object open $file] default
 }
 
 graphwidget method _configureevent {} {
@@ -226,10 +249,12 @@ graphwidget method _configureevent {} {
 	set region(cancel) 0
 }
 
-graphwidget method open {file settingsVar} {
+graphwidget method open {file} {
+	global graphd
 	private $object xv yv wv data colors
-	upvar $settingsVar graphd
-	set vnum [llength $data(entries)]
+	if {![file exists $file]} {error "$file does not exist"}
+	puts "Loading $file"
+	set vnum [incr data(vnum)]
 	foreach field {x y w i} {
 		vector create ::$object.$vnum.$field
 	}
@@ -245,6 +270,7 @@ graphwidget method open {file settingsVar} {
 		unset -nocomplain data($name,bcol)
 		set f [gzopen $file]
 		set header [tsv_open $f]
+		close $f
 	}
 	set showregion $graphd(region)
 	set poss {}
@@ -256,6 +282,7 @@ graphwidget method open {file settingsVar} {
 	set basecolor [lindex {blue red gray orange yellow green violet} $vnum]
 	if {$basecolor eq ""} {set basecolor blue}
 	lappend data(entries) $name
+	set data($name,chrfield) $graphd(chrfield)
 	set data($name,chr) $graphd(chr)
 	set data($name,vnum) $vnum
 	set data($name,lstart) 0
@@ -268,8 +295,7 @@ graphwidget method open {file settingsVar} {
 	set data($name,poss) $poss
 	# create index
 	if {$graphd(region)} {
-		$object loadregtype $file $f $name
-		catch {close $f}
+		$object loadregtype $file $name
 	} elseif {[info exists data($name,bcol)]} {
 		set data($name,xmin) [bcol_first $bcol]
 		set data($name,xmax) [bcol_last $bcol]
@@ -306,7 +332,6 @@ graphwidget method open {file settingsVar} {
 		::$object.ends.x set [list $amin $amax]
 		::$object.ends.y set {0 0}
 		set data($name,indexed) $indexed
-		catch {close $f}
 	}
 	set xv ::$object.$vnum.x
 	set yv ::$object.$vnum.y
@@ -409,7 +434,7 @@ graphwidget method _xrange {args} {
 }
 
 graphwidget method redraw {args} {
-puts ----------redraw----------
+# puts ----------redraw----------
 	private $object region data
 	set w $object.g
 	Classy::canceltodo $object redraw
@@ -635,7 +660,6 @@ graphwidget method delelement {name} {
 }
 
 graphwidget method loadregion {name} {
-putsvars object name
 	private $object region data
 	array set trans [get data($name,trans) ""]
 	if {[get region(cancel) 0]} return
@@ -643,7 +667,6 @@ putsvars object name
 	set end $region(xmax)
 	set start [expr {round([$object.g axis cget x -min])}]
 	set end [expr {round([$object.g axis cget x -max])}]
-putsvars data($name,lstart) data($name,lend) start end
 	if {($start >= $data($name,lstart)) && ($end <= $data($name,lend))} return
 	incr start -5000
 	incr end 5000
@@ -774,30 +797,41 @@ putsvars data($name,lstart) data($name,lend) start end
 	$object.progress configure -message "Finished loading $name"
 }
 
-graphwidget method loadregtype {file f name} {
+graphwidget method loadregtype {file name} {
 	private $object region data
 	if {![info exists data($name,vnum)]} return
 	set vnum $data($name,vnum)
 	set poss $data($name,poss)
-	set chr $data($name,chr)
-	set chrpos [lsearch $data($name,header) chromosome]
+	set chr [chr_clip $data($name,chr)]
+	set chrpos [lsearch $data($name,header) $data($name,chrfield)]
+	set f [gzopen $file]
+	set header [tsv_open $f]
 	chrindexseek $file $f $chr
 	list_pop poss
 	lappend poss $chrpos
 	set index ::$object.$vnum.i
 	::$object.$vnum.x set {}
 	::$object.$vnum.y set {}
+	set xmin -1
+	set xmax -1
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		foreach {begin endw cchr} [list_sub $line $poss] break
+		set cchr [chr_clip $cchr]
 		if {$cchr ne $chr} break
+		if {$begin < $xmin} {set xmin $begin}
+		if {$endw > $xmax} {set xmax $endw}
 		::$object.$vnum.x append $endw
 		::$object.$vnum.x append $begin
 		::$object.$vnum.y append 1
 		::$object.$vnum.y append 1
 	}
+	close $f
 	update
+	set data($name,xmin) $xmin
+	set data($name,xmax) $xmax
+	::$object.ends.x set [list $xmin $xmax]
 	$object.progress configure -message "Finished loading $name"
 }
 
@@ -1097,53 +1131,3 @@ graphwidget method point {x y} {
 	$ptable.editor autosize
 }
 
-if 0 {
-
-	package require Tclx
-	signal -restart error SIGINT
-lappend auto_path /home/peter/bin/tcl
-lappend auto_path /home/peter/dev/genomecomb/lib /home/peter/dev/genomecomb/lib-exp
-cd /complgen/sv
-set object .g
-	package require Tk
-	graphwidget .g
-	pack .g -fill both -expand yes
-set file sv79-20-pairs.tsv
-set file /complgen/sv/GS103/GS103-9-paired.tsv.rz
-set file /media/solid/kr1270/d818_6/sv/d818_6-22-paired.tsv.gz
-set file /media/solid/kr1270/d816_3/sv/d816_3-11-paired.tsv.gz
-.g opendialog $file
-
-cd /media/solid/kr1270/d818_6/sv
-set file d818_6-12-paired.tsv.gz
-set files [glob */sv/*.gz]
-foreach file $files {
-	puts $file
-#	cg select -s {chr1 start1 end1} -nh {chrom bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} $file $file.temp
-#	exec mv $file $file.save
-#	exec mv $file.temp $file
-	cg maketabix $file
-}
-
-
-.g clear
-set chr 20
-.g open /complgen/sv/GS103/GS103-$chr-paired.tsv.rz ::graphd
-.g open /complgen/sv/GS102/GS102-$chr-paired.tsv.rz ::graphd
-
-
-set file sv79-20-pairs.tsv
-set file sv78-20-pairs.tsv
-catch {close $f}
-catch {close $o}
-
-$object xview scroll 1 pages
-
-$object reload
-$object.scx configure -command [list $object xview]
-$object.scx configure -command {}
-
-$object.g axis configure x -scrollcommand [list $object xset]
-$object.g axis configure x -scrollcommand {}
-
-}

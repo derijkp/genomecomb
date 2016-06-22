@@ -43,10 +43,13 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 #			cg_razip $file
 #		}
 	}
-	job svfind-[file tail $dir] -deps $resultfiles -targets $dir/sv-$name.tsv -vars {dbdir} -code {
+	job svfind-[file tail $dir] -deps $resultfiles -targets {$dir/sv/svall-$name.tsv $dir/sv-$name.tsv} -vars {dbdir dir} -code {
 		set temptarget [file_tempwrite $target]
-		cg cat {*}$deps > $temptarget
+		cg cat {*}[lsort -dict $deps] > $temptarget
 		file rename -force $temptarget $target
+		set temptarget [file_tempwrite $target2]
+		cg select -q {$problems eq "" and $quality > 2} $target $temptarget
+		file rename -force $temptarget $target2
 		putslog "Done: finished finding sv in $dir"
 	}
 	cd $keepdir
@@ -56,10 +59,7 @@ proc cg_process_sv {args} {
 	global scriptname action
 	set args [job_args $args]
 	if {([llength $args] < 2) || ([llength $args] > 3)} {
-		puts stderr "format is: $scriptname $action sampledir destdir dbdir ?force?"
-		puts stderr " - processes sv for one sample directory."
-		puts stderr " - By default, only files that are not present already will be created."
-		puts stderr " -When force is given as a parameter, everything will be recalculated and overwritten."
+		errorformat process_sv
 		exit 1
 	}
 	foreach {dir destdir dbdir force} $args break
