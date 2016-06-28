@@ -486,7 +486,6 @@ proc expandfields {header fields} {
 
 proc tsv_select_expandfields {header qfields qpossVar} {
 	upvar $qpossVar qposs
-	upvar tsv_funcnum tsv_funcnum
 	set qposs {}
 	set rfields {}
 	foreach field $qfields {
@@ -1090,7 +1089,7 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 	return $code
 }
 
-proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {samplingskip 0} {removecomment 0}} {
+proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {samplingskip 0} {removecomment 0} {samples {}}} {
 #putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index samplingskip removecomment
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
@@ -1112,10 +1111,23 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 	set sort ""
 	set cut ""
 	set tsv_funcnum 1
+	if {[llength $samples] && ![llength $qfields]} {
+		set qfields $header
+	}
 	set qfields [tsv_select_expandfields $header $qfields qposs]
 	if {$inverse} {
 		set qfields [list_lremove $header $qfields]
 		set qfields [tsv_select_expandfields $header $qfields qposs]
+	}
+	if {[llength $samples]} {
+		if {![llength $qfields]} {set qfields $header}
+		set keepposs [list_find -regexp $qfields {^[^-]*$}]
+		foreach sample $samples {
+			lappend keepposs {*}[list_find -glob $qfields *-$sample]
+		}
+		set keepposs [lsort -integer $keepposs]
+		set qfields [list_sub $qfields $keepposs]
+		set qposs [list_sub $qposs $keepposs]
 	}
 	if {![file exists $index]} {set index {}}
 	if {[llength $qfields] == [llength $header]} {set index {}}
@@ -1356,6 +1368,7 @@ proc cg_select {args} {
 	unset -nocomplain ::tsv_select_sampleinfo
 	set query {}; set qfields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0
 	set inverse 0; set group {}; set groupcols {} ; set samplingskip 0; set db {} ; set removecomment 0
+	set samples {}
 	set pos 0
 	cg_options select args {
 		-q {
@@ -1385,6 +1398,7 @@ proc cg_select {args} {
 			set query [join $query " || "]
 		}
 		-f {set qfields $value}
+		-samples {set samples $value}
 		-rf {
 			set qfields $value
 			set inverse 1
@@ -1469,9 +1483,9 @@ proc cg_select {args} {
 			monetdb_select $db $table $query $qfields $sortfields $newheader $sepheader $o $hc $inverse $group $groupcols
 		} result]
 	} else {
-		# putsvars query qfields sortfields newheader sepheader f o hc inverse group groupcols index samplingskip removecomment
+		# putsvars query qfields sortfields newheader sepheader f o hc inverse group groupcols index samplingskip removecomment samples
 		set error [catch {
-			tsv_select $query $qfields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $samplingskip $removecomment
+			tsv_select $query $qfields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $samplingskip $removecomment $samples
 		} result]
 	}
 	if {$f ne "stdin"} {catch {close $f}}
