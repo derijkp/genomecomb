@@ -20,10 +20,13 @@ will be included in the result. Other types of headers are supported (CGI style,
 ; **-q query**: only lines fullfilling conditions in query will be written to outfile (see further)
 ; **-qf queryfile**: only lines fullfilling conditions in queryfile will be written to outfile (see further)
 ; **-f fields**: only write given fields to result.
-An asterix can be used to indicated several fields matching a pattern.
-A field starting with fieldname=formula will add a field with the given fieldname. The value in 
-the column will be calculated using the given formula. If the formula is complex (includes spaces), add
-braces around the entire field=formula.
+An asterix (wildcard) can be used to indicated several fields matching a pattern. If a field
+with wildcards is prefiexed with a minus, all fields not matching the pattern will be added.  
+A field starting with fieldname=formula will add a calculated field: a field with the given 
+fieldname for which the value will be calculated using the given formula. 
+If the formula is complex (includes spaces), add braces around the entire field=formula.
+If the fieldname in a formula is preceeded by a -, it is not included in the output (but can be
+used for queries.  
 You can create multiple calculated fields in one go using wildcards (*,\*\*,\*\*\*,...), e.g.
 {{{freq-**=$count-**/double($total)}}} to calculate columns freq-sample1, freq-sample2, ... 
 for each sample for which a count-sample1, count-sample2, ... exists. Different patterns can be 
@@ -31,8 +34,8 @@ combined using different number of asterisks. The example uses 2 asterisks. You 
 to be careful; if the definition contains a multiplication (an asterisk), it would also be replaced 
 by the pattern.
 ; **-rf removefields**: write all, except given fields to result.
-; **-samples**: Only the given list of samples (space separated) will be included in the output.
-All non-sample related fields (those without a -) will be included.
+; **-samples samples**: Only the given list of samples (space separated) will be included in the output.
+All non-sample related fields (those without a -) will be included. The sample nnames may contain wildcards (*)
 ; **-s sortfields**: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
 if **sortfields** is "-", the default sort fields will be used (chromosome,begin,end,type,alt).
 This will also accept name variations of the fields, such as chrom instead of chromosome.

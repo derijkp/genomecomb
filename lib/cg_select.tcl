@@ -397,13 +397,20 @@ proc tsv_select_region {ids header neededfieldsVar} {
 proc tsv_select_expandfield {header field {giveerror 0} {qpossVar {}}} {
 	if {$qpossVar ne ""} {upvar $qpossVar qposs}
 	if {$field eq "ROW"} {return "ROW"}
-	set poss [list_find -glob $header $field]
-	set hfields [list_sub $header $poss]
-	lappend qposs {*}[list_cor $header $hfields]
-	if {![catch {set sampleinfofields [tsv_select_sampleinfo_wildcard $field $header]}]} {
-		lappend hfields {*}$sampleinfofields
-		foreach tempfield $sampleinfofields {
-			lappend qposs [list code \$$tempfield]
+	if {[string index $field 0] eq "-"} {
+		set field [string range $field 1 end]
+		set poss [list_find -glob $header $field]
+		set hfields [list_sub $header -exclude $poss]
+		lappend qposs {*}[list_cor $header $hfields]
+	} else {
+		set poss [list_find -glob $header $field]
+		set hfields [list_sub $header $poss]
+		lappend qposs {*}[list_cor $header $hfields]
+		if {![catch {set sampleinfofields [tsv_select_sampleinfo_wildcard $field $header]}]} {
+			lappend hfields {*}$sampleinfofields
+			foreach tempfield $sampleinfofields {
+				lappend qposs [list code \$$tempfield]
+			}
 		}
 	}
 	if {![llength $hfields]} {
