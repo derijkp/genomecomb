@@ -89,6 +89,7 @@ proc cg_renamesamples {dir args} {
 	} else {
 		set changes $args
 	}
+	if {[expr {[llength $changes]%2}]} {error "renamesamples requires an even number of arguments after the file/dirname (oldname newname)"}
 	if {![file isdir $dir]} {
 		renamesamples_file $dir $changes
 	} else {
