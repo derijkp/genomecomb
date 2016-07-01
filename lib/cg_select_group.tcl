@@ -25,6 +25,7 @@ proc select_parse_grouptypes {grouptypelist} {
 proc select_parse_for_samples {group groupcol header {calccolsVar {}}} {
 	if {$calccolsVar ne ""} {upvar $calccolsVar calccols}
 	set gsamples {}
+	set usesamples 0
 	foreach {field values} [list_concat $group $groupcol] {
 		if {$field eq "sample"} {
 			if {[llength $values]} {
@@ -40,6 +41,7 @@ proc select_parse_for_samples {group groupcol header {calccolsVar {}}} {
 			} else {
 				set gsamples [samples $header]
 			}
+			set usesamples 1
 			break
 		}
 		if {![inlist $header $field] && ![info exists calccols($field)]} {
@@ -48,11 +50,11 @@ proc select_parse_for_samples {group groupcol header {calccolsVar {}}} {
 				|| (![catch {tsv_select_sampleinfo_wildcard ${field}-* $header} temp] && [llength $temp])
 			} {
 				# hidden sample
-				set gsamples [samples $header]
-				break
+				set usesamples 1
 			}
 		}
 	}
+	if {$usesamples && ![llength $gsamples]} {set gsamples [samples $header]}
 	# if no sample field found, do not actually use samples by making gsamples a list with only one empty sample
 	if {![llength $gsamples]} {
 		set gsamples {{}}
@@ -296,7 +298,7 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 }
 
 proc tsv_select_group {header pquery qposs qfields group groupcols neededfields sortfields} {
-# putsvars header pquery qposs qfields group groupcols neededfields
+# putsvars header pquery qposs qfields group groupcols neededfields sortfields
 	global typetodoa
 	# outcols not used in group
 	# start making code
@@ -395,6 +397,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	}
 	# make colactions, which will be executed only when the colquery and rowquery is true
 	set addcols {}
+	set oneok 0
+	set fieldsnotfound {}
 	foreach sample $gsamples {
 		# also make query for skipping data for which no cols will be made (colquery)
 		set groupname {}
@@ -403,6 +407,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		set colquery {}
 		set colactions {}
 		# calculate groupname
+		set found 1
 		foreach {field filter} $group {
 			if {!$sampleinheader && $field eq "sample"} {
 				if {$sample ne ""} {
@@ -412,9 +417,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 					lappend neededfields sample
 				}
 				continue
-			} else {
-				set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
 			}
+			set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
 			if {$fieldused ne ""} {
 				lappend groupname \$\{$fieldused\}
 				if {[llength $filter]} {
@@ -441,10 +445,16 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 						if {$final == 0} {lappend rowquery 0}
 					}
 				}
-			} else {
+			} elseif {$field in {all - _}} {
 				lappend groupname $field
+			} else {
+				lappend fieldsnotfound $field
+				set found 0
+				# error "field \"$field\" not present in file (or sampleinfo)"
 			}
 		}
+		if {!$found} continue
+		set oneok 1
 		append colactions \t\t\t\t\t "set _groupname \"[join $groupname \t]\"" \n
 		# first see what I need to calculate requested aggregates
 		unset -nocomplain todoa
@@ -517,6 +527,9 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		} else {
 			append addcols $colactions
 		}
+	}
+	if {!$oneok} {
+		error "some fields ([join [list_remdup $fieldsnotfound] ,]) needed were not found (in any of the samples)"
 	}
 	set neededfields [list_remdup $neededfields]
 	if {[get ::tsv_select_sampleinfo() 0]} {

@@ -59,8 +59,11 @@ the filters (is a lists) will be shown. If a filter is empty, all values are ret
 contain wildcards (*)
 If the -gc option is not given, the table will contain one extra column showing the number of lines in 
 the data file containing the group value. Other columns can be added using the -gc option.
-Fields used in groupfields may be calculated columns.
-This option will use memory proportional to the size of the result set!
+Fields used in groupfields may be calculated columns.  
+This option will use memory proportional to the size of the result set!  
+If you want a summary over all selected lines, you can use the special field all as a group field.
+The value of this field (unless it is actually present in the file) will be "all" for all lines.
+If the file contains an actual field "all", you can use "-" or "_" instead to get an overview summary.
 ; **-gc groupcols**: show other columns instead of count when using the -g option. **groupcols** has the 
 following format: "field1 filter1 field2 filter2 ... functions". A different column will be made in the 
 summary table for each combination of values in field1,field2,... Only values given in 

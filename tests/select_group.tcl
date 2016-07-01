@@ -120,6 +120,13 @@ del	1	32	1	41
 ins	1	32	1	41
 snp	12	1,47,54	12	0,35,52}
 
+test select_group {group distinct sample with list} {
+	cg select -g type -gc {sample {sample2} count,distinct(coverage)} data/expected_near-vars1-reg_annot.sft
+} {type	sample2-count	sample2-distinct_coverage
+del	1	41
+ins	1	41
+snp	12	0,35,52}
+
 test select_group {group ucount} {
 	cg select -g type -gc {sample {} count,ucount(coverage)} data/expected_near-vars1-reg_annot.sft
 } {type	sample1-count	sample1-ucount_coverage	sample2-count	sample2-ucount_coverage
@@ -224,6 +231,41 @@ test select_group {group with wildcard calc col} {
 sample1	Ax	1
 sample1	Bx	1
 sample2	Bx	2}
+
+test select_group {group with sample in -gc} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2
+		1	A	B
+		2	B	B
+	}
+	exec cg select -g {type} -gc {sample {} count} tmp/temp.tsv
+} {type	sample1-count	sample2-count
+A	1	0
+B	1	2}
+
+test select_group {group with sample in -gc where not all samples have the -g field} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2 other-sample3
+		1	A	B	a
+		2	B	B	b
+	}
+	exec cg select -g {type} -gc {sample {} count} tmp/temp.tsv
+} {type	sample1-count	sample2-count
+A	1	0
+B	1	2}
+
+test select_group {group with sample in -gc where not all samples have the -g field and limit sample} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-sample1	type-sample2 other-sample3
+		1	A	B	a
+		2	B	B	b
+	}
+	exec cg select -g {type} -gc {sample {sample2} count} tmp/temp.tsv
+} {type	sample2-count
+B	2}
 
 test select_group {group with wildcard calc col and sampleinfo} {
 	test_cleantmp
