@@ -98,23 +98,43 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 }
 
 proc generate_demultiplex_stats {xmlfile outfile} {
-	set o [open $outfile w]
-	set nodes {SampleNumber SampleID SampleName NumberOfClustersRaw NumberOfClustersPF}
-	puts $o [join $nodes \t]
-	set xml [read [open $xmlfile]]
-	set document [dom parse $xml]
-	set samplenodes [$document getElementsByTagName SummarizedSampleStatistics]
-	foreach samplenode $samplenodes {
-		set sampleinfo {}
-		foreach node $nodes {
-			lappend sampleinfo [[$samplenode getElementsByTagName $node] asText] 
- 		}
- 		regsub -all {\.} [join $sampleinfo \t] "_" line
- 		regsub -all {\-} $line "_" line
- 		puts $o $line
+	set xmlfile $illsrc/GenerateFASTQRunStatistics.xml
+	if {[file exists $xmlfile]} {
+		set o [open $outfile w]
+		set nodes {SampleNumber SampleID SampleName NumberOfClustersRaw NumberOfClustersPF}
+		puts $o [join $nodes \t]
+		set xml [read [open $xmlfile]]
+		set document [dom parse $xml]
+		set samplenodes [$document getElementsByTagName SummarizedSampleStatistics]
+		foreach samplenode $samplenodes {
+			set sampleinfo {}
+			foreach node $nodes {
+				lappend sampleinfo [[$samplenode getElementsByTagName $node] asText] 
+	 		}
+	 		regsub -all {\.} [join $sampleinfo \t] "_" line
+	 		regsub -all {\-} $line "_" line
+	 		puts $o $line
+		}
+		close $o
+	} else {
+		set fastqs [gzfiles $illsrc/Data/Intensities/BaseCalls/*_R1_*.fastq]
+		# join $fastqs \n
+		set o [open $outfile.temp w]
+		puts $o [join {SampleNumber SampleID SampleName NumberOfClustersRaw NumberOfClustersPF} \t]
+		foreach file $fastqs {
+			puts $file
+			if {![regexp {^(.*)_S([0-9]+)_L[0-9]+_R[12]_[0-9]+\.fastq$} [gzroot [file tail $file]] temp sample samplenr]} {
+				error "could not extract sample name from file $file"
+			}
+			if {$sample eq "Undetermined"} continue
+			set num [exec {*}[gzcat $file] $file | wc -l]
+			set num [expr {$num/4}]
+			puts $o [join [list $samplenr $sample $sample $num $num] \t]
+		}
+		close $o
+		cg select -s SampleNumber $outfile.temp $outfile
+		file delete $outfile.temp
 	}
-
-	close $o
 }
 
 proc cg_process_conv_illmastr {illsrc destdir} {
@@ -124,10 +144,7 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 	set keeppwd [pwd]
 	cd $destdir
 	#generate demultiplex stats
-	set demultiplex_xml $illsrc/GenerateFASTQRunStatistics.xml
-	if {[file exists $demultiplex_xml]} {
-		generate_demultiplex_stats $demultiplex_xml $destdir/demultiplex_stats.tsv
-	}
+	generate_demultiplex_stats $illsrc $destdir/demultiplex_stats.tsv
 	# copy files from illumina dir
 	if {[file exists $illsrc/Data/Intensities/BaseCalls]} {
 		set illsrc $illsrc/Data/Intensities/BaseCalls
