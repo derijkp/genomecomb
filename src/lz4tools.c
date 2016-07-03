@@ -125,8 +125,8 @@ void lz4close(LZ4res *res) {
 int lz4_readblock(LZ4res *res, unsigned int startblock) {
 	FILE *finput = res->finput, *findex = res->findex;
 	unsigned long long pos;
-	unsigned int compressedsize, uncompressed, count;
-	int readsize = 0, numdecompressed, r;
+	unsigned int compressedsize, count;
+	int readsize = 0, numdecompressed, uncompressed, r;
 	if (startblock == res->currentblock) {
 		return 1;
 	}
