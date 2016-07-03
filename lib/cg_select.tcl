@@ -21,13 +21,15 @@ proc tsv_select_sampleinfo_setfile {filename} {
 	if {![file exists $sampleinfofile]} {set sampleinfofile ""}
 	if {[info exists ::tsv_select_sampleinfo] && [get tsv_select_sampleinfofile ""] ne $sampleinfofile} {
 		unset -nocomplain ::tsv_select_sampleinfo
+		set ::tsv_select_sampleinfo_islong 0
+		unset -nocomplain ::tsv_select_sampleinfo_longfields
 	}
 	set ::tsv_select_sampleinfofile $sampleinfofile
 	return $sampleinfofile
 }
 
 proc tsv_select_sampleinfo_load {field {header {}}} {
-	global tsv_select_sampleinfofile tsv_select_sampleinfo
+	global tsv_select_sampleinfofile tsv_select_sampleinfo tsv_select_sampleinfo_islong tsv_select_sampleinfo_longfields
 	if {[get tsv_select_sampleinfofile ""] eq ""} {
 		error "field \"$field\" not present in file and no sampleinfo file found"
 	}
@@ -41,18 +43,17 @@ proc tsv_select_sampleinfo_load {field {header {}}} {
 		error "sampleinfo file must have an id field"
 	}
 	set samples [samples $header]
-	if {[get ::tsv_select_sampleinfo() 0] || ![llength $header] || ![llength $samples]} {
-		set longformat 1
+	if {[get tsv_select_sampleinfo_islong 0] || ![llength $header] || ![llength $samples]} {
+		set tsv_select_sampleinfo_islong 1
 	} else {
-		set longformat 0
+		set tsv_select_sampleinfo_islong 0
 	}
 	# this will be set to one if long format access is required
-	set tsv_select_sampleinfo() 0
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		set id [lindex $line $idpos]
-		if {$longformat || [inlist $samples $id]} {
+		if {$tsv_select_sampleinfo_islong || [inlist $samples $id]} {
 			set ids [list $id]
 		} else {
 			set poss [list_find -glob $samples *-$id]
@@ -63,7 +64,7 @@ proc tsv_select_sampleinfo_load {field {header {}}} {
 			foreach val $line tempfield $siheader {
 				if {$tempfield eq "id"} continue
 				set tsv_select_sampleinfo(${tempfield}-$id) $val
-				set tsv_select_sampleinfo(${tempfield}) {}
+				set tsv_select_sampleinfo_longfields(${tempfield}) {}
 			}
 		}
 	}
@@ -71,23 +72,26 @@ proc tsv_select_sampleinfo_load {field {header {}}} {
 }
 
 proc tsv_select_sampleinfo_wildcard {field header} {
-	global tsv_select_sampleinfofile tsv_select_sampleinfo
+	global tsv_select_sampleinfofile tsv_select_sampleinfo tsv_select_sampleinfo_longfields tsv_select_sampleinfo_islong
 #	if {[string range $field 0 6] eq "sample-"} {
 #		# should return field for all samples, do this later
 #	}
 	if {![info exists tsv_select_sampleinfo]} {
 		tsv_select_sampleinfo_load $field $header
 	}
-	set fields [array names tsv_select_sampleinfo $field]
+	set fields [array names tsv_select_sampleinfo_longfields $field]
+	if {![llength $fields]} {
+		set fields [array names tsv_select_sampleinfo $field]
+	}
 	if {[llength $fields]} {
-		if {[string first - $field] != -1} {set tsv_select_sampleinfo() 1}
+		if {[string first - $field] != -1} {set tsv_select_sampleinfo_islong 1}
 		return $fields
 	}
 	error "field \"$field\" not present, also not in sampleinfo file $tsv_select_sampleinfofile"
 }
 
 proc tsv_select_sampleinfo {field header} {
-	global tsv_select_sampleinfofile tsv_select_sampleinfo
+	global tsv_select_sampleinfofile tsv_select_sampleinfo tsv_select_sampleinfo_longfields
 	if {[string range $field 0 6] eq "sample-"} {
 		return [string range $field 7 end]
 	}
@@ -95,10 +99,13 @@ proc tsv_select_sampleinfo {field header} {
 		tsv_select_sampleinfo_load $field $header
 	}
 	if {[info exists tsv_select_sampleinfo($field)]} {
-		if {[string first - $field] == -1} {set tsv_select_sampleinfo() 1}
 		return $tsv_select_sampleinfo($field)
+	} elseif {[info exists tsv_select_sampleinfo_longfields($field)]} {
+		set tsv_select_sampleinfo_islong 1
+		return $tsv_select_sampleinfo_longfields($field)
 	} else {
 		if {[regsub -- {-.*-} $field - tempfield] && [info exists tsv_select_sampleinfo($tempfield)]} {
+			# the sample name has multiple levels (-*-sample), found when only looking at last level
 			return $tsv_select_sampleinfo($tempfield)
 		}
 		error "field \"$field\" not present, also not in sampleinfo file $tsv_select_sampleinfofile"
@@ -106,7 +113,7 @@ proc tsv_select_sampleinfo {field header} {
 }
 
 proc tsv_select_sampleinfo_long {field sample} {
-	# as this is only called to get values in real run, no need to detect long format anymore (set tsv_select_sampleinfo() 1)
+	# as this is only called to get values in real run, no need to detect long format anymore (set tsv_select_sampleinfo_islong 1)
 	global tsv_select_sampleinfofile tsv_select_sampleinfo
 	if {$field eq "sample"} {
 		return $sample
@@ -492,6 +499,7 @@ proc expandfields {header fields} {
 }
 
 proc tsv_select_expandfields {header qfields qpossVar} {
+# putsvars header qfields qpossVar
 	upvar $qpossVar qposs
 	set qposs {}
 	set rfields {}
@@ -524,8 +532,13 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 				}
 			}
 		} elseif {[string first * $field] != -1} {
-			set tempqposs {}
-			set list [tsv_select_expandfield $header $field 1 tempqposs]
+			if {$field eq "*"} {
+				set list $header
+				set tempqposs [list_cor $header $header]
+			} else {
+				set tempqposs {}
+				set list [tsv_select_expandfield $header $field 1 tempqposs]
+			}
 			set poss [list_cor $list $rfields]
 			set efields [list_sub $list -exclude $poss]
 			set tempqposs [list_sub $tempqposs -exclude $poss]
@@ -1086,7 +1099,7 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 					append prequery "\t\t\tset \{$field\} \"$value\"\n"
 				} elseif {[inlist $header sample]} {
 					set value [tsv_select_sampleinfo $field $header]
-					append prequery "\t\t\tset \{$field\} \[tsv_select_sampleinfo_long $field \$sample\]\n"
+					append prequery "\t\t\tset \{$field\} \[tsv_select_sampleinfo_long \"$field\" \$sample\]\n"
 					lappend neededfields sample
 				}
 			}
@@ -1097,7 +1110,7 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 }
 
 proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {samplingskip 0} {removecomment 0} {samples {}}} {
-#putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index samplingskip removecomment
+# putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index samplingskip removecomment
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	if {$hc ni {0 1 2}} {
@@ -1191,7 +1204,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 		# as the same args will be used for all these, start with a placeholder (@neededfields@) here 
 		# that will be filled in at the end
 		append tclcode "package require genomecomb\n"
-		if {[get ::tsv_select_sampleinfo() 0]} {
+		if {[get ::tsv_select_sampleinfo_islong 0]} {
 			append tclcode "[list set ::tsv_select_sampleinfofile $::tsv_select_sampleinfofile]\n"
 		}
 		unset -nocomplain outcalccols
@@ -1261,7 +1274,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}
 				if {[string first - $field] != -1} {
 					append prequery "\t\t\tset \{$field\} \"$value\"\n"
 				} elseif {[inlist $header sample]} {
-					append prequery "\t\t\tset \{$field\} \[tsv_select_sampleinfo_long $field \$sample\]\n"
+					append prequery "\t\t\tset \{$field\} \[tsv_select_sampleinfo_long \"$field\" \$sample\]\n"
 					lappend neededfields sample
 				} else {
 					error "field \"$field\" not present"

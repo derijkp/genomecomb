@@ -92,7 +92,7 @@ proc tsv_select_sampleusefield {header field sample calccolsVar {neededfieldsVar
 		lappend neededfields $fieldused
 	} elseif {[inlist $header sample] && ![catch {tsv_select_sampleinfo $field $header}]} {
 		# long format sampleinfo
-		set calccols($field) [list "\t\t\t\tset \{$field\} \[tsv_select_sampleinfo_long \{$field\} \$sample\]\n"]
+		set calccols($field) [list "\t\t\t\tset \{$field\} \[tsv_select_sampleinfo_long \"$field\" \$sample\]\n"]
 		lappend neededfields sample
 		set fieldused $field
 	} else {
@@ -532,7 +532,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		error "some fields ([join [list_remdup $fieldsnotfound] ,]) needed were not found (in any of the samples)"
 	}
 	set neededfields [list_remdup $neededfields]
-	if {[get ::tsv_select_sampleinfo() 0]} {
+	if {[get ::tsv_select_sampleinfo_islong 0]} {
 		append tclcode "[list set ::tsv_select_sampleinfofile $::tsv_select_sampleinfofile]\n"
 	}
 	# see what we need of calculated fields
@@ -551,7 +551,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			if {[string first - $field] != -1} {
 				append prequery "\t\t\tset \{$field\} \"$value\"\n"
 			} elseif {[inlist $header sample]} {
-				append prequery "\t\t\tset \{$field\} \[tsv_select_sampleinfo_long $field \$sample\]\n"
+				append prequery "\t\t\tset \{$field\} \[tsv_select_sampleinfo_long \"$field\" \$sample\]\n"
 				lappend neededfields sample
 			} else {
 				error "field \"$field\" not present"

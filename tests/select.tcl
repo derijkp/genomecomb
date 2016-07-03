@@ -834,6 +834,75 @@ test select "long format with sampleinfo $dboptt" {
 } {sample	freq	gender
 sample3	1.0	f}
 
+test select "long with * in -f" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id	freq
+		sample1	1	0.4
+	}
+	exec cg select {*}$dbopt -f {*} tmp/temp.tsv
+} {sample	id	freq
+sample1	1	0.4}
+
+
+test select "long with sampleinfo in -f with *" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id	freq
+		sample1	1	0.4
+		sample2	1	0.8
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select {*}$dbopt -f {*} tmp/temp.tsv
+} {sample	id	freq
+sample1	1	0.4
+sample2	1	0.8}
+
+test select "long with sampleinfo in -f with wildcards" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id	freq
+		sample1	1	0.4
+		sample2	1	0.8
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select {*}$dbopt -f {* gender} tmp/temp.tsv
+} {sample	id	freq	gender
+sample1	1	0.4	m
+sample2	1	0.8	f}
+
+test select "long with sampleinfo in -f with **" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id	freq
+		sample1	1	0.4
+		sample2	1	0.8
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select {*}$dbopt -f {**} tmp/temp.tsv
+} {sample	id	freq	gender
+sample1	1	0.4	m
+sample2	1	0.8	f}
+
 test select "long format with sampleinfo in calc $dboptt" {
 	global dbopt
 	test_cleantmp
