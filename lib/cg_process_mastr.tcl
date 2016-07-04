@@ -97,7 +97,7 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	tsv2bed $dir/reg-inner-$name.tsv $dir/reg-inner-$name.bed {} chromosome begin end $namefield
 }
 
-proc generate_demultiplex_stats {xmlfile outfile} {
+proc generate_demultiplex_stats {illsrc outfile} {
 	set xmlfile $illsrc/GenerateFASTQRunStatistics.xml
 	if {[file exists $xmlfile]} {
 		set o [open $outfile w]
