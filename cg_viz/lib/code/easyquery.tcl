@@ -138,7 +138,7 @@ mainw method easyquery_draw_gene {args} {
 		set qqdata(list,${db}) [$object.tb values ${db}_gene allif0]
 	}
 	set impact_list [ssort -natural [list_remdup $impact_list]]
-	set pre [list_reverse [list_subindex $::snp_annot_list 0]]
+	set pre [list_reverse [var_impact_list]]
 	set qqdata(list,impact) [list_concat [list_common $pre $impact_list] [list_lremove $impact_list $pre]]
 	#
 	$object easyquery_list impact 0+ 0+

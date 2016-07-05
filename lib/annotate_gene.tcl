@@ -45,6 +45,10 @@ proc annot_init {} {
 }
 annot_init
 
+proc var_impact_list {} {
+	list_subindex $::impact_list 0
+}
+
 proc annotate_compl {seq} {
 	global adata
 	if {[isint $seq]} {return $seq}
