@@ -1,12 +1,13 @@
-The entire pipeline was run using genomecomb (1) The pipeline used
-fastq-mcf (2) for adapter clipping. Reads were then aligned using bwa mem
-(3) and the resulting sam file converted to bam using samtools (4). The
-resulting bam file was sorted and duplicates were removed using picard (5).
-Realignment in the neighborhood of indels was performed with GATK (6).
-All positions with a coverage >= 5 were variant called using both GATK (6)
-and samtools (4). At this initial stage positions with a coverage < 5 or a
-score < 30 were considered unsequenced. The resulting variant sets of
-different individuals were combined and annotated using genomecomb (1).
+Analysis was performed in-house with a standardized pipeline integrated in
+genomecomb (1) The pipeline used fastq-mcf (2) for adapter clipping. Reads
+were then aligned using bwa mem (3) and the resulting sam file converted
+to bam using samtools (4). The resulting bam file was sorted and
+duplicates were removed using picard (5). Realignment in the neighborhood
+of indels was performed with GATK (6). All positions with a coverage >= 5
+were variant called using both GATK (6) and samtools (4). At this initial
+stage positions with a coverage < 5 or a score < 30 were considered
+unsequenced. The resulting variant sets of different individuals were
+combined and annotated using genomecomb (1).
 
 (1) Reumers, J*, De Rijk, P*, Zhao, H, Liekens, A, Smeets, D, Cleary, J, Van Loo, P, Van Den Bossche, M, Catthoor, K, Sabbe, B, Despierre, E, Vergote, I, Hilbush, B, Lambrechts, D and Del-Favero, J (2011) Optimized filtering reduces the error rate in detecting genomic variants by short-read sequencing. Nature biotechnology, 30, 61-88 [PMID: 22178994]
 (2) fastq-mcf version r534, Erik Aronesty (2011). ea-utils : "Command-line tools for processing biological sequencing data"; Expression Analysis, Durham, NC http://code.google.com/p/ea-utils
