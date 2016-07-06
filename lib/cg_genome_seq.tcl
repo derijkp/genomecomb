@@ -140,6 +140,19 @@ proc cg_genome_seq {args} {
 		set outf $fo
 	}
 	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]
+	if {![file exists $regionfile]} {
+		set regionlist [list_remove [split $regionfile {:-, \n}] {}]
+		set regionfile [tempfile]
+		set f [open $regionfile w]
+		puts $f [join {chromosome begin end} \t]
+		foreach {chr begin end} $regionlist {
+			if {![isint $begin] || ![isint $end]} {
+				error "file $regionfile does not exist, and the argument is also not a properly formatted regionlist"
+			}
+			puts $f $chr\t$begin\t$end
+		}
+		close $f
+	}
 	set f [gzopen $regionfile]
 	set header [tsv_open $f]
 	set poss [tsv_basicfields $header 3]

@@ -76,6 +76,16 @@ test genome_seq {bugfix gcval error: -n 0.01 -p Common -r "N" -i "name" -gs 65 -
 	exec cg genome_seq -n 0.01 -p Common -r "N" -i "name" -gs 60 -gd 0 data/reg_genome_seq.tsv /complgen/refseq/hg19_test tmp/temp.fas
 } {}
 
+test genome_seq {regionlist} {
+	exec cg genome_seq {chr1:69328-69576 chr18:103887-104141} /complgen/refseq/hg19_test tmp/result.fas
+	file_write tmp/expected.fas {>chr1-69328-69576
+GCCAGCGCAAAGTCATCTCTTTCAAGGGCTGCCTTGTTCAGATATTTCTCCTTCACTTCTTTGGTGGGAGTGAGATGGTGATNCTCATAGCCATGGGCTNTGACAGATATATAGCAATATGCAANCCCCTACACTACACTACAATTAtGTGTGGCAACGCATGTGTCgGCATTATGGCTGTCACATGGGGAATTGGCTTTCTCCATTCGGTGAGCCAGTTGGCNTTTGCCGTGCACTTACTCTTCTGT
+>chr18-103887-104141
+ctccagaggcNgaggcaggagaatggtgtgaacctgggaggaggagcttgcagtgagccgggatcatgccactgcattccagcccgggcaacagagcaagactccatctcaaaaaaaaaaaaaaaaaaaaaGGATCTCTGTTTAGAATGCTACCTATTGCCTTCTGGATAGAATCACAACTCTTTACCACAATCAACACAGCTTCAgccctgcttctatatccagcctcatctatttctgctcctcctccttat
+}
+	exec diff tmp/result.fas tmp/expected.fas
+} {}
+
 test primercheck {basic} {
 	exec cg primercheck data/primers.tsv /complgen/refseq/hg19_test tmp/primerinfo.tsv
 	exec diff tmp/primerinfo.tsv data/primercheck-results.tsv

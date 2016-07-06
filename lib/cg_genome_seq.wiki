@@ -1,7 +1,7 @@
 = genome_seq =
 
 == Format ==
-cg genome_seq ?options? regionfile dbdir ?outfile?
+cg genome_seq ?options? regionfile/regions dbdir ?outfile?
 
 == Summary ==
 Returns sequences of regions in the genome (fasta file), optionally masked for snps/repeats
@@ -15,7 +15,11 @@ the output sequences. Optionally you can hardmask repeats, and soft or
 hardmask known (dbsnp) variants based on frequency.
 
 == Arguments ==
-; **regionfile**: tab delimited file containing targets with at least following columns: chromosome begin end
+; **regionfile**: tab delimited file containing targets with at least following columns: chromosome begin end.
+; **regions**: If the string given for **regionfile/regions** does not exist as a file, it is parsed 
+as a list of regions, given by chromosome,begin,end that can be separated in a variety of 
+ways (colon, dash, comma, space or newlines), e.g., all of the following formats are accepted:
+'chr1:100-200,chr2:100-200' 'chr1 100 200 chr2 100 200' 'chr1-100-200 chr2-100-200'
 ; **dbdir**: directory containing reference genomes and variation data
 
 == Options ==
