@@ -1,13 +1,20 @@
 chromosome	begin	end	type	ref	alt	expected_impact	expected_descr	comment
-chr1	850882	850883	del	C		upstream	+NM_152486e:upstream-100:c.-180del	Shifts 1 base to3'
-chr1	850882	850883	snp	C	A	upstream	+NM_152486e:upstream-101	
+chr1	848982	848983	snp	G	C			
+chr1	848977	848983	del	6				
+chr1	848977	848984	del	7		upstream	+NM_152486e:up-2006_-2000:c.-2086_-2080del	
+chr1	848982	848984	del	2		upstream	+NM_152486e:up-1999_-1998:c.-2079_-2078del	shifts
+chr1	848983	848984	snp	G	C	upstream	+NM_152486e:up-2000:c.-2080G>C	
+chr1	850882	850883	del	C		upstream	+NM_152486e:up-100:c.-180del	Shifts 1 base to3'
+chr1	850882	850883	snp	C	A	upstream	+NM_152486e:up-101:c.-181C>A	
 chr1	850882	870000	del	19118		GENEDEL	-NM_152486e	
-chr1	850981	850982	del	C		upstream	+NM_152486e:upstream-2:c.-82del	
-chr1	850982	850983	del	A		upstream	+NM_152486e:upstream-1:c.-81del	
-chr1	850982	850983	snp	A	C	upstream	+NM_152486e:upstream-1	
-chr1	850982	850984	del	AG		RNASTART	+NM_152486e:upstream-1_exon1+1:c.-81_-80del	
-chr1	850982	850984	sub	AG	C	RNASTART	+NM_152486e:upstream-1_exon1+1:c.-81_-80delinsC	
-chr1	850982	851164	del	182		RNASTART	+NM_152486e:upstream-1_intron1+121:c.-81_-20-1del	
+chr1	850983	869931	del	18948		CDSSTARTDEL	+NM_152486e:exon1+1_exon15+99:c.-80_2573del:p.0?	
+chr1	850983	869932	del	18949		GENEDEL	-NM_152486e	
+chr1	850981	850982	del	C		upstream	+NM_152486e:up-2:c.-82del	
+chr1	850982	850983	del	A		upstream	+NM_152486e:up-1:c.-81del	
+chr1	850982	850983	snp	A	C	upstream	+NM_152486e:up-1:c.-81A>C	
+chr1	850982	850984	del	AG		RNASTART	+NM_152486e:up-1_exon1+1:c.-81_-80del	
+chr1	850982	850984	sub	AG	C	RNASTART	+NM_152486e:up-1_exon1+1:c.-81_-80delinsC	
+chr1	850982	851164	del	182		RNASTART	+NM_152486e:up-1_intron1+121:c.-81_-20-1del	
 chr1	850983	850984	del	G		UTR5	+NM_152486e:exon1+1:c.-80del	
 chr1	850983	850984	snp	G	C	UTR5	+NM_152486e:exon1+1:c.-80G>C	
 chr1	851042	851042	ins		C	UTR5	+NM_152486e:exon1+60:c.-22_-21insC	
@@ -28,20 +35,24 @@ chr1	851162	851163	del	N		ESPLICE	+NM_152486e:intron1+120:c.-20-2del
 chr1	851163	851163	ins		C	ESPLICE	+NM_152486e:intron1+121:c.-20-0_1insC	
 chr1	851163	851164	del	N		ESPLICE	+NM_152486e:intron1+121:c.-20-1del	
 chr1	851163	851164	snp	G	C	ESPLICE	+NM_152486e:intron1+121:c.-20-1G>C	
-chr1	851163	851165	del	2		UTR5SPLICE	+NM_152486e:intron1+121_exon2+1:c.-20-1_-20del	
-chr1	851163	851165	sub	2	C	UTR5SPLICE	+NM_152486e:intron1+121_exon2+1:c.-20-1_-20delinsC	
+chr1	851163	851165	del	2		UTR5SPLICE	+NM_152486e:intron1+121_exon2+1:c.-20-1_-20del:p.?	
+chr1	851163	851165	sub	2	C	UTR5SPLICE	+NM_152486e:intron1+121_exon2+1:c.-20-1_-20delinsC:p.?	
 chr1	851164	851165	snp	G	C	UTR5	+NM_152486e:exon2+1:c.-20G>C	
-chr1	851183	851184	del	T		UTR5	+NM_152486e:exon2+20:c.-1del	
-chr1	851183	851184	snp	T	C	UTR5	+NM_152486e:exon2+20:c.-1T>C	
-chr1	851183	851187	del	4		CDSDELSTART	+NM_152486e:exon2+21_+24:c.1_4del:p.0?	Shifts 1 to 3'
-chr1	851184	851187	del	3		CDSDELSTART	+NM_152486e:exon2+21_+23:c.1_3del:p.0?	
-chr1	851184	851185	sub	A	GC	CDSCOMPSTART	+NM_152486e:exon2+21:c.1delinsGC:p.0?	
-chr1	851184	851185	del	A		CDSDELSTART	+NM_152486e:exon2+21:c.1del:p.0?	
-chr1	851184	851185	snp	A	C	CDSSTART	+NM_152486e:exon2+21:c.1A>C:p.M1L?	
+chr1	851177	851179	del	2		UTR5KOZAK	+NM_152486e:exon2+14_+15:c.-7_-6del	
+chr1	851177	851178	snp	G	C	UTR5	+NM_152486e:exon2+14:c.-7G>C	
+chr1	851178	851179	snp	A	C	UTR5KOZAK	+NM_152486e:exon2+15:c.-6A>C	
+chr1	851183	851184	del	T		UTR5KOZAK	+NM_152486e:exon2+20:c.-1del	
+chr1	851183	851184	snp	T	C	UTR5KOZAK	+NM_152486e:exon2+20:c.-1T>C	
+chr1	851183	851187	del	4		CDSSTARTDEL	+NM_152486e:exon2+21_+24:c.1_4del:p.0?	Shifts 1 to 3'
+chr1	851184	851184	ins		3	UTR5KOZAK	+NM_152486e:exon2+21:c.-1_1ins(3)	
+chr1	851184	851187	del	3		CDSSTARTDEL	+NM_152486e:exon2+21_+23:c.1_3del:p.0?	
+chr1	851184	851185	sub	A	GC	CDSSTARTCOMP	+NM_152486e:exon2+21:c.1delinsGC:p.0?	
+chr1	851184	851185	del	A		CDSSTARTDEL	+NM_152486e:exon2+21:c.1del:p.0?	
+chr1	851184	851185	snp	A	C	CDSSTART	+NM_152486e:exon2+21:c.1A>C:p.M1?	
 chr1	851185	851185	ins		3	CDSSTART	+NM_152486e:exon2+22:c.1_2ins(3):p.M1?	
-chr1	851185	851185	ins		GGG	CDSSTART	+NM_152486e:exon2+22:c.1_2insGGG:p.M1delinsRV?	
-chr1	851185	851186	snp	T	C	CDSSTART	+NM_152486e:exon2+22:c.2T>C:p.M1T?	
-chr1	851186	851187	snp	G	C	CDSSTART	+NM_152486e:exon2+23:c.3G>C:p.M1I?	
+chr1	851185	851185	ins		GGG	CDSSTART	+NM_152486e:exon2+22:c.1_2insGGG:p.M1?	
+chr1	851185	851186	snp	T	C	CDSSTART	+NM_152486e:exon2+22:c.2T>C:p.M1?	
+chr1	851186	851187	snp	G	C	CDSSTART	+NM_152486e:exon2+23:c.3G>C:p.M1?	
 chr1	851187	851190	del	3		CDSDEL	+NM_152486e:exon2+24_+26:c.4_6del:p.S2del	
 chr1	851187	851187	ins		TCC	CDSINS	+NM_152486e:exon2+24:c.6_7insTCC:p.S2dup	
 chr1	851188	851191	del	3		CDSNONSENSE	+NM_152486e:exon2+25_+27:c.5_7del:p.S2*	
@@ -81,7 +92,7 @@ chr1	855585	855586	snp	A	C	splice	+NM_152486e:intron3+7:c.254+7A>C
 chr1	855590	855591	snp	A	C	intron	+NM_152486e:intron3+12:c.254+12A>C	
 chr1	856271	856272	snp	A	C	intron	+NM_152486e:intron3+693:c.255-10A>C	
 chr1	856280	856281	snp	A	C	ESPLICE	+NM_152486e:intron3+702:c.255-1A>C	
-chr1	856280	856282	del	2		CDSDELSPLICE	+NM_152486e:intron3+702_exon4+1:c.255-1_255del:p.?	
+chr1	856280	856282	del	2		CDSSPLICE	+NM_152486e:intron3+702_exon4+1:c.255-1_255del:p.?	
 chr1	856281	856282	snp	A	C	CDSMIS	+NM_152486e:exon4+1:c.255A>C:p.R85S	
 chr1	869392	869393	snp	T	C	CDSsilent	+NM_152486e:exon14+243:c.2043T>C:p.C681C	
 chr1	869392	869394	del	2		CDSFRAME	+NM_152486e:exon14+243_+244:c.2043_2044del:p.C681Wfs*58	
@@ -105,8 +116,11 @@ chr1	869823	869824	snp	G	C	UTR3	+NM_152486e:exon14+674:c.2474G>C
 chr1	869824	869825	snp	T	C	ESPLICE	+NM_152486e:intron14+1:c.2474+1T>C	
 chr1	869825	869826	snp	T	C	ESPLICE	+NM_152486e:intron14+2:c.2474+2T>C	
 chr1	869826	869827	snp	G	C	splice	+NM_152486e:intron14+3:c.2474+3G>C	
-chr1	869931	869933	sub	2	C	RNAEND	+NM_152486e:exon15+100_downstream+1:c.2574_2575delinsC	
-chr1	869931	869933	del	2		RNAEND	+NM_152486e:exon15+100_downstream+1:c.2574_2575del	
+chr1	869931	869933	sub	2	C	RNAEND	+NM_152486e:exon15+100_down+1:c.2574_2575delinsC	
+chr1	869931	869933	del	2		RNAEND	+NM_152486e:exon15+100_down+1:c.2574_2575del	
 chr1	869931	869932	snp	C	G	UTR3	+NM_152486e:exon15+100:c.2574C>G	
-chr1	869932	869933	snp	T	C	downstream	+NM_152486e:downstream+1	
-chr1	869933	869934	snp	G	C	downstream	+NM_152486e:downstream+2	
+chr1	869932	869933	snp	T	C	downstream	+NM_152486e:down+1:c.2575T>C	
+chr1	869933	869934	snp	G	C	downstream	+NM_152486e:down+2:c.2576G>C	
+chr1	871931	871932	snp	G	C	downstream	+NM_152486e:down+2000:c.4574G>C	
+chr1	871931	871933	del	2		downstream	+NM_152486e:down+2000_+2001:c.4574_4575del	
+chr1	871932	871933	snp	G	C			

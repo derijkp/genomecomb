@@ -75,25 +75,25 @@ Possible **impact** codes are:
 ; RNA: in a transcript that is not coding
 ; RNASPLICE: deletion containing at least one splice site (non-coding transcript)
 ; UTR3: variant in the 3' UTR
-; UTR3SPLICE: deletion containing at least one splice site in the 3' UTR
+; UTR3SPLICE: deletion or complext variant containing at least one splice site in the 3' UTR
 ; RNAEND: deletion containing the end of transcription
 ; ESPLICE: essential splice site (2 bases into the intron from the splice site)
 ; CDSsilent: variant in coding region that has no effect on the protein sequence
 ; UTR5: variant in the 5' UTR
-; UTR5SPLICE: deletion containing at least one splice site in the 5' UTR
+; UTR5SPLICE: deletion or complext variant containing at least one splice site in the 5' UTR
+; UTR5KOZAK: variant in the 5' UTR close (6 nts) to the start codon.
 ; RNASTART: transcription_start
 ; CDSMIS: coding variant causing a change in the protein sequence
 ; CDSDEL: deletion in the coding region (not affecting frame of translation)
 ; CDSCOMP: complex variation (sub, inv, ...) in the coding region (not affecting frame of translation)
 ; CDSINS: insertion in the coding region (not affecting frame of translation)
 ; CDSNONSENSE: variation causing a premature stop codon in the protein sequence (nonsense)
-; CDSDELSPLICE: deletion in the coding region affecting a splice site
-; CDSCOMPSPLICE: complex variation in the coding region affecting a splice site
+; CDSSPLICE: deletion or complext variant affecting a splice site in the coding region
 ; CDSSTOP: change of a stop codon to a normal codon causing readthrough
 ; CDSFRAME: indel causing a frameshift
 ; CDSSTART: variation  in the startcodon
-; CDSDELSTART: deletion affecting the startcodon
-; CDSCOMPSTART: complex variation affecting the startcodon
+; CDSSTARTDEL: deletion affecting the startcodon
+; CDSSTARTCOMP: complex variation affecting the startcodon
 ; GENEDEL: deletion (also used for sub) of whole gene
 ; GENECOMP: complex variation (sub, inv, ...) affecting the whole gene
 

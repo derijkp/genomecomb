@@ -1,13 +1,22 @@
 chromosome	begin	end	type	ref	alt	expected_impact	expected_descr	comment
-chr1	850882	850883	del	C		upstream	+NM_152486n:upstream-100:n.-100del	Shifts 1 base to3'
-chr1	850882	850883	snp	C	A	upstream	+NM_152486n:upstream-101	
+chr1	848982	848983	snp	G	C			
+chr1	848977	848983	del	6				
+chr1	848977	848984	del	7		upstream	+NM_152486n:up-2006_-2000:n.-2006_-2000del	
+chr1	848982	848984	del	2		upstream	+NM_152486n:up-1999_-1998:n.-1999_-1998del	shifts
+chr1	848983	848984	snp	G	C	upstream	+NM_152486n:up-2000:n.-2000G>C	
+chr1	850882	850883	del	C		upstream	+NM_152486n:up-100:n.-100del	Shifts 1 base to3'
+chr1	850882	850883	snp	C	A	upstream	+NM_152486n:up-101:n.-101C>A	
+chr1	850882	850883	del	C		upstream	+NM_152486n:up-100:n.-100del	Shifts 1 base to3'
+chr1	850882	850883	snp	C	A	upstream	+NM_152486n:up-101:n.-101C>A	
 chr1	850882	870000	del	19118		GENEDEL	-NM_152486n	
-chr1	850981	850982	del	C		upstream	+NM_152486n:upstream-2:n.-2del	
-chr1	850982	850983	del	A		upstream	+NM_152486n:upstream-1:n.-1del	
-chr1	850982	850983	snp	A	C	upstream	+NM_152486n:upstream-1	
-chr1	850982	850984	del	AG		RNASTART	+NM_152486n:upstream-1_exon1+1:n.-1_1del	
-chr1	850982	850984	sub	AG	C	RNASTART	+NM_152486n:upstream-1_exon1+1:n.-1_1delinsC	
-chr1	850982	851164	del	182		RNASTART	+NM_152486n:upstream-1_intron1+121:n.-1_61-1del	
+chr1	850983	869931	del	18948		RNASPLICE	+NM_152486n:exon1+1_exon15+99:n.1_2653del	
+chr1	850983	869932	del	18949		GENEDEL	-NM_152486n	
+chr1	850981	850982	del	C		upstream	+NM_152486n:up-2:n.-2del	
+chr1	850982	850983	del	A		upstream	+NM_152486n:up-1:n.-1del	
+chr1	850982	850983	snp	A	C	upstream	+NM_152486n:up-1:n.-1A>C	
+chr1	850982	850984	del	AG		RNASTART	+NM_152486n:up-1_exon1+1:n.-1_1del	
+chr1	850982	850984	sub	AG	C	RNASTART	+NM_152486n:up-1_exon1+1:n.-1_1delinsC	
+chr1	850982	851164	del	182		RNASTART	+NM_152486n:up-1_intron1+121:n.-1_61-1del	
 chr1	850983	850984	del	G		RNA	+NM_152486n:exon1+1:n.1del	
 chr1	850983	850984	snp	G	C	RNA	+NM_152486n:exon1+1:n.1G>C	
 chr1	851042	851042	ins		C	RNA	+NM_152486n:exon1+60:n.59_60insC	
@@ -105,8 +114,11 @@ chr1	869823	869824	snp	G	C	RNA	+NM_152486n:exon14+674:n.2554G>C
 chr1	869824	869825	snp	T	C	ESPLICE	+NM_152486n:intron14+1:n.2554+1T>C	
 chr1	869825	869826	snp	T	C	ESPLICE	+NM_152486n:intron14+2:n.2554+2T>C	
 chr1	869826	869827	snp	G	C	splice	+NM_152486n:intron14+3:n.2554+3G>C	
-chr1	869931	869933	sub	2	C	RNAEND	+NM_152486n:exon15+100_downstream+1:n.2654_2655delinsC	
-chr1	869931	869933	del	2		RNAEND	+NM_152486n:exon15+100_downstream+1:n.2654_2655del	
+chr1	869931	869933	sub	2	C	RNAEND	+NM_152486n:exon15+100_down+1:n.2654_2655delinsC	
+chr1	869931	869933	del	2		RNAEND	+NM_152486n:exon15+100_down+1:n.2654_2655del	
 chr1	869931	869932	snp	C	G	RNA	+NM_152486n:exon15+100:n.2654C>G	
-chr1	869932	869933	snp	T	C	downstream	+NM_152486n:downstream+1	
-chr1	869933	869934	snp	G	C	downstream	+NM_152486n:downstream+2	
+chr1	869932	869933	snp	T	C	downstream	+NM_152486n:down+1:n.2655T>C	
+chr1	869933	869934	snp	G	C	downstream	+NM_152486n:down+2:n.2656G>C	
+chr1	871931	871932	snp	G	C	downstream	+NM_152486n:down+2000:n.4654G>C	
+chr1	871931	871933	del	2		downstream	+NM_152486n:down+2000_+2001:n.4654_4655del	
+chr1	871932	871933	snp	G	C			
