@@ -92,8 +92,11 @@ proc help_formatw {text width {indent 0} {format 1}} {
 		}
 		if {$collect ne ""} {append collect " "}
 		append collect [string trim $line]
+		# format (separate lines and indent)
 		while {[string length $collect] >= $w} {
 			set pos [string last " " $collect $w]
+			if {$pos == -1} {set pos [string last "\t" $collect $w]}
+			if {$pos == -1} {set pos $w}
 			append newtemp "$pre[string range $collect 0 [expr {$pos-1}]]\n"
 			incr pos
 			set collect [string range $collect $pos end]
