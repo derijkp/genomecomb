@@ -14,7 +14,7 @@ proc annotatereg {file dbfile name annotfile near dbinfo} {
 	set dataposs [dict get $dbinfo dataposs]
 	catch {close $f}
 	set f [gzopen $file]
-	set header [tsv_open $f comment]
+	set header [tsv_open $f]
 	set poss [tsv_basicfields $header 3]
 	close $f
 	set fields [list_sub $header $poss]
@@ -25,8 +25,7 @@ proc annotatereg {file dbfile name annotfile near dbinfo} {
 	set dbposs [open_region $f dbheader]
 	close $f
 	set o [open $annotfile.temp w]
-	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
-	puts $o \t[join $newh \t]
+	puts $o [join $newh \t]
 	close $o
 	if {[gziscompressed $file]} {
 		set file "|[gzcat $file] '$file'"
@@ -49,7 +48,7 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 	set dataposs [dict get $dbinfo dataposs]
 	catch {close $f}
 	set f [gzopen $file]
-	set header [tsv_open $f comment]
+	set header [tsv_open $f]
 	set poss [tsv_basicfields $header 3]
 	gzclose $f
 	set fields [list_sub $header $poss]
@@ -78,8 +77,7 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 		error "$dbfile has no alt field"
 	}
 	set o [open $annotfile.temp w]
-	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
-	puts $o \t[join $newh \t]
+	puts $o [join $newh \t]
 	close $o
 	if {[gziscompressed $file]} {
 		set file "|[gzcat $file] '$file'"
@@ -365,16 +363,16 @@ proc cg_annotate {args} {
 	}
 	if {$multidb} {
 		cg select -f id $file $resultfile.temp2
-		exec paste -d "" $resultfile.temp2 {*}$afiles > $resultfile.temp
+		exec tsv_paste $resultfile.temp2 {*}$afiles > $resultfile.temp
 		file delete $resultfile.temp2
 		file rename -force $resultfile.temp $resultfile
 	} elseif {$replace} {
 		cg select -f [list_lremove $header $newh] $file $resultfile.temp2
-		exec paste -d "" $resultfile.temp2 {*}$afiles > $resultfile.temp
+		exec tsv_paste $resultfile.temp2 {*}$afiles > $resultfile.temp
 		file delete $resultfile.temp2
 		file rename -force $resultfile.temp $resultfile
 	} else {
-		exec paste -d "" $file {*}$afiles > $resultfile.temp
+		exec tsv_paste $file {*}$afiles > $resultfile.temp
 		file rename -force $resultfile.temp $resultfile
 	}
 	if {[llength $afiles]} {file delete {*}$afiles}

@@ -358,7 +358,7 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 		foreach col $extracols {
 			lappend nh ${name}_$col
 		}
-		puts $o \t[join $nh \t]
+		puts $o [join $nh \t]
 	}
 	set empty [join [list_fill [llength $nh] {}] \t]
 	set dblist {}
@@ -520,7 +520,7 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 		} else {
 			set result $empty
 		}
-		puts $o \t$result
+		puts $o $result
 	}
 	if {$genomefile ne ""} {
 		genome_close $genomef

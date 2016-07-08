@@ -3,7 +3,7 @@ proc annotatebcol {file dbfile name annotfile} {
 putsvars file dbfile name annotfile
 	catch {close $f}
 	set f [gzopen $file]
-	set header [tsv_open $f comment]
+	set header [tsv_open $f]
 	set poss [tsv_basicfields $header 3]
 	close $f
 	if {[inlist $poss -1]} {
@@ -18,8 +18,7 @@ putsvars file dbfile name annotfile
 	set binfile [gzfile $dbfile.bin]
 	set newh $name
 	set o [open $annotfile.temp w]
-	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
-	puts $o \t$newh
+	puts $o $newh
 	close $o
 	if {[gziscompressed $file]} {
 		error "bcol_annot not supported for compressed files"
@@ -37,7 +36,7 @@ proc annotatebcolvar {file dbfile name annotfile} {
 #putslog [list annotatebcol $file $dbfile $name $annotfile]
 	catch {close $f}
 	set f [gzopen $file]
-	set header [tsv_open $f comment]
+	set header [tsv_open $f]
 	close $f
 	set poss [tsv_basicfields $header 6 0]
 	set poss [list_sub $poss {0 1 2 5}]
@@ -53,8 +52,7 @@ proc annotatebcolvar {file dbfile name annotfile} {
 	set binfile [gzfile $dbfile.bin]
 	set newh $name
 	set o [open $annotfile.temp w]
-	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
-	puts $o \t$newh
+	puts $o $newh
 	close $o
 	if {[gziscompressed $file]} {
 		error "bcol_annot not supported for compressed files"

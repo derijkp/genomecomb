@@ -124,7 +124,6 @@ for (i = 0; i < datalen ; i++) {
 DPRINT("data[%d] %d %s",i,data[i]->size,data[i]->string)
 }
 */
-		fprintf(stdout,"\t");
 		if (error2 || (comp > 0) || ((comp == 0) && ((end1 < start2) || (end1 == start2 && start1 != end1)))) {
 			NODPRINT("no overlap")
 			if (datanear != -1) {

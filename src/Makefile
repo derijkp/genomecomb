@@ -13,6 +13,7 @@ all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../b
      ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_make_multi ../bin$(ARCH)/bcol_annot ../bin$(ARCH)/vcf2tsv ../bin$(ARCH)/reg_select \
      ../bin$(ARCH)/check_sort ../bin$(ARCH)/multi_merge ../bin$(ARCH)/multi_join \
      ../bin$(ARCH)/multidb_join \
+     ../bin$(ARCH)/tsv_paste \
      ../bin$(ARCH)/sam_clipamplicons
 
 clean:
@@ -95,6 +96,9 @@ clean:
 
 ../bin$(ARCH)/multidb_join: multidb_join.c $(TOOLS) $(TOOLS_VAR)
 	gcc multidb_join.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multidb_join
+
+../bin$(ARCH)/tsv_paste: tsv_paste.c $(TOOLS)
+	gcc tsv_paste.c tools.c $(CFLAGS) -o ../bin$(ARCH)/tsv_paste
 
 ../bin$(ARCH)/sam_clipamplicons: sam_clipamplicons.c $(TOOLS)
 	gcc sam_clipamplicons.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam_clipamplicons
