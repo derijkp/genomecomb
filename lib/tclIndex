@@ -37,6 +37,8 @@ set auto_index(annotategene_rpos) [list source [file join $dir annotate_gene.tcl
 set auto_index(annotategene_element) [list source [file join $dir annotate_gene.tcl]]
 set auto_index(annotategene_p_complex) [list source [file join $dir annotate_gene.tcl]]
 set auto_index(annotategene_p_loc) [list source [file join $dir annotate_gene.tcl]]
+set auto_index(annotategene_findreg) [list source [file join $dir annotate_gene.tcl]]
+set auto_index(annotategene_one_ins) [list source [file join $dir annotate_gene.tcl]]
 set auto_index(annotategene_one_del) [list source [file join $dir annotate_gene.tcl]]
 set auto_index(annotategene_one_p_snp) [list source [file join $dir annotate_gene.tcl]]
 set auto_index(annotategene_one_p_ins) [list source [file join $dir annotate_gene.tcl]]

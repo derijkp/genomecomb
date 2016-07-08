@@ -274,7 +274,7 @@ test gene_annot {gene exon deletion} {
 	}
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		chr1	2499	2601	del	102	{}	CDSSPLICEDEL	testgene	+test:intron1+400_intron2+1:c.51-1_150+1del:p.?
+		chr1	2499	2601	del	102	{}	CDSSPLICE	testgene	+test:intron1+400_intron2+1:c.51-1_150+1del:p.?
 	}
 	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
@@ -291,7 +291,7 @@ test gene_annot {gene exon deletion with no type given} {
 	}
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	test_impact	test_gene	test_descr
-		chr1	2499	2601	CDSSPLICEDEL	testgene	+test:intron1+400_intron2+1:c.51-1_150+1del:p.?
+		chr1	2499	2601	CDSSPLICE	testgene	+test:intron1+400_intron2+1:c.51-1_150+1del:p.?
 	}
 	exec cg annotate -dbdir /complgen/refseq/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv

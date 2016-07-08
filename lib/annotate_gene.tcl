@@ -439,19 +439,137 @@ proc annotategene_p_loc {AZ1 prstart {AZ2 {}} {prend {}}} {
 	}
 }
 
-proc annotategene_one_del {snppos snptype ref alt} {
- putsvars snppos snptype ref alt
+proc annotategene_findreg {snppos snpend} {
+	global adata
+	set sline pre
+	set eline post
+	foreach line $adata(ftlist) {
+		foreach {ftstart ftend type} $line break
+		if {($snppos >= $ftstart) && ($snppos <= $ftend)} {set sline $line}
+		if {($snpend >= $ftstart) && ($snpend <= $ftend)} {set eline $line}
+	}
+	return [list $sline $eline]
+}
+
+proc annotategene_one_ins {loc} {
 	global adata impact_score
+	foreach {chrom snppos snpend snptype ref alt} $loc break
 	set complement $adata(complement)
 	set chr $adata(chrom)
 	set dbstart $adata(start)
 	set dbend [expr {$adata(end)-1}]
 	set snp_descr {}
-	if {[isint $ref]} {
-		set len $ref
-	} else {
-		set len [string length $ref]
+	# use positions before and after insert (like in del), snpend is inclusive here (not half open)
+	set snpend $snppos
+	set snppos [expr {$snppos - 1}]
+	# reference
+	if {$adata(complement)} {set strand -} else {set strand +}
+	set result $strand$adata(transcriptname)
+	# get region(s)
+	foreach {sline eline} [annotategene_findreg $snppos $snpend] break
+	# shift to 3'?
+	if {![isint $alt] && [lindex $sline 2] eq [lindex $eline 2]} {
+		set genomef $adata(genomef)
+		if {!$complement} {
+			set gend [lindex $eline 1]
+			while {$snpend <= $gend} {
+				set from [string index $alt 0]
+				set dest [genome_get $genomef $chr $snpend [expr {$snpend+1}]]
+				if {$from ne $dest} break
+				incr snppos; incr snpend
+				set alt [string range $alt 1 end][string index $alt 0]
+			}
+			if {$snpend > $gend} {
+				foreach {sline eline} [annotategene_findreg $snppos $snpend] break
+			}
+		} else {
+			# for complement towards 3' is going back
+			set gbegin [lindex $sline 0]
+			while {$snppos >= $gbegin} {
+				set from [string index $alt end]
+				# get base just before (current) insert
+				set dest [genome_get $genomef $chr $snppos $snpend]
+				# puts [genome_get $genomef $chr $gbegin $snpend]\ $alt
+				if {$from ne $dest} break
+				incr snppos -1; incr snpend -1
+				set alt $from[string range $alt 0 end-1]
+			}
+			if {$snppos < $gbegin} {
+				foreach {sline eline} [annotategene_findreg $snppos $snpend] break
+			}
+		}
 	}
+	#
+	# element
+	# find start and end location line in ftlist
+	if {!$complement} {
+		set snp1 $snppos
+		set snp2 $snpend
+		set line1 $sline ; set line2 $eline
+		set strand -
+	} else {
+		set snp1 $snpend
+		set snp2 $snppos
+		set line2 $sline ; set line1 $eline
+		set strand +
+	}
+	foreach {element1 element1pos} [annotategene_element $line1 $snp1] break
+	foreach {element2 element2pos} [annotategene_element $line2 $snp2] break
+	# putsvars line1 snp1 line2 snp2 element1 element1pos element2 element2pos
+	if {$element1 eq $element2} {
+		if {$element1pos eq $element2pos} {
+			append result	:$element1${element1pos}
+		} else {
+			append result	:$element1${element1pos}_${element2pos}
+		}
+	} else {
+		append result	:$element1${element1pos}_$element2${element2pos}
+	}
+	#
+	# get snp_descr
+	#
+	# coding DNA level
+	foreach {reftype1 ref1 offset1 change} [annotategene_one_c $chr $snp1 ins $ref $alt $line1 impact] break
+	foreach {reftype2 ref2 offset2 change} [annotategene_one_c $chr $snp2 ins $ref $alt $line2 impact2] break
+	# putsvars line1 line2 reftype1 ref1 offset1 reftype2 ref2 offset2 change
+	if {$ref1 eq $ref2} {
+		if {$offset1 eq $offset2} {
+			set snp_descr $reftype1$ref1${offset1}$change
+		} elseif {$offset1 ne "" && $offset2 ne ""} {
+			set snp_descr $reftype1$ref1${offset1}_${offset2}$change
+		} else {
+			set snp_descr $reftype1$ref1${offset1}_$ref2${offset2}$change
+		}
+	} else {
+		set snp_descr $reftype1$ref1${offset1}_$ref2${offset2}$change
+	}
+	append result :$snp_descr
+	# impact
+	if {$impact eq "CDS" && [regexp UTR $impact]} {
+		set impact $impact2
+		set line $line2
+	} elseif {$impact eq "intron"} {
+		set impact $impact2
+		set line $line2
+	} else {
+		set line $line1
+	}
+	if {$impact eq "CDS"} {
+		append result :[annotategene_one_p_ins $snpend $ref $alt $line impact]
+	}
+	return [list $impact $result]
+}
+
+proc annotategene_one_del {loc} {
+	global adata impact_score
+	foreach {chrom snppos snpend snptype ref alt} $loc break
+	set ref [expr {$snpend-$snppos}]
+	set len $ref
+	set complement $adata(complement)
+	set chr $adata(chrom)
+	set dbstart $adata(start)
+	set dbend [expr {$adata(end)-1}]
+	set snp_descr {}
 	if {[isint $alt]} {
 		set rlen $alt
 	} else {
@@ -462,14 +580,16 @@ proc annotategene_one_del {snppos snptype ref alt} {
 	set snpend [expr {$snppos+$len-1}]
 	if {$adata(complement)} {set strand -} else {set strand +}
 	set result $strand$adata(transcriptname)
+	# find region
+	foreach {sline eline} [annotategene_findreg $snppos $snpend] break
+#	set sline pre
+#	set eline post
+#	foreach line $adata(ftlist) {
+#		foreach {ftstart ftend type} $line break
+#		if {($snppos >= $ftstart) && ($snppos <= $ftend)} {set sline $line}
+#		if {($snpend >= $ftstart) && ($snpend <= $ftend)} {set eline $line}
+#	}
 	# shift to 3'
-	set sline pre
-	set eline post
-	foreach line $adata(ftlist) {
-		foreach {ftstart ftend type} $line break
-		if {($snppos >= $ftstart) && ($snppos <= $ftend)} {set sline $line}
-		if {($snpend >= $ftstart) && ($snpend <= $ftend)} {set eline $line}
-	}
 	if {$snptype eq "del" && [lindex $sline 3] eq [lindex $eline 3]} {
 		# shift to 3'?
 		set genomef $adata(genomef)
@@ -653,8 +773,8 @@ proc annotategene_one_p_snp {snppos from alt line impactVar} {
 	return $snp_descr
 }
 
-proc annotategene_one_p_ins {snppos from alt line impactVar} {
-# putsvars snppos from alt line
+proc annotategene_one_p_ins {snpend from alt line impactVar} {
+# putsvars snpend from alt line
 	global adata
 	upvar $impactVar impact
 	set genomef $adata(genomef)
@@ -662,7 +782,7 @@ proc annotategene_one_p_ins {snppos from alt line impactVar} {
 	set start $adata(grstart)
 	set end $adata(grend)
 	set chr $adata(chrom)
-	set rpos [annotategene_rpos $line $snppos]
+	set rpos [annotategene_rpos $line $snpend]
 	# position on protein (in nucl), starting from 0
 	set pnpos [expr {$rpos - $adata(rpstart)}]
 	# position on protein (in AA), starting from 0
@@ -906,53 +1026,12 @@ proc annotategene_one_c {chrom snppos snptype from alt line {impactVar {}}} {
 	if {$impactVar ne ""} {upvar $impactVar impact}
 	foreach {gbegin gend eltype element rnabegin rnaend cdsbegin cdsend} $line break
 	set complement $adata(complement)
-	if {$snptype eq "ins" && ![isint $alt]} {
-		# shift to 3'?
-		set genomef $adata(genomef)
-		if {!$complement} {
-			set from [genome_get $genomef $chrom $snppos [expr {$snppos+1}]]
-			if {$from eq [string index $alt 0]} {
-				set ipos 0
-				set len [string length $alt]
-				while 1 {
-					incr ipos
-					incr snppos
-					if {$snppos > $gend} break
-					if {$ipos >= $len} {set ipos 0}
-					if {[catch {
-						set from [genome_get $genomef $chrom $snppos [expr {$snppos+1}]]
-					}]} break
-					set a [string index $alt $ipos]
-					if {$a ne $from} break
-				}
-				if {$ipos != 0} {set alt [string range $alt $ipos end][string range $alt 0 [expr {$ipos-1}]]}			
-			}
-		} else {
-			# for complement towards 3' is going back
-			set from [genome_get $genomef $chrom [expr {$snppos-1}] $snppos]
-			if {$from eq [string index $alt end]} {
-				set len [string length $alt]
-				incr len -1
-				set ipos $len
-				while {$snppos > $gbegin} {
-					incr ipos -1
-					incr snppos -1
-					if {$ipos < 0} {set ipos $len}
-					if {[catch {
-						set from [genome_get $genomef $chrom [expr {$snppos-1}] $snppos]
-					}]} break
-					if {[string index $alt $ipos] ne $from} break
-				}
-				if {$ipos != $len} {set alt [string range $alt [expr {$ipos+1}] end][string range $alt 0 $ipos]}			
-			}
-		}
-	}
 	set rpos [annotategene_rpos $line $snppos]
 	set rrefpos [calc_rpos $rpos]
 	set impact [annotate_type2impact $eltype]
 	# position on protein (in nucl)
 	if {$eltype eq "UTR"} {
-		if {$rrefpos > 0} {
+		if {$rrefpos > 1} {
 			set impact UTR3
 		} else {
 			set impact UTR5
@@ -966,12 +1045,12 @@ proc annotategene_one_c {chrom snppos snptype from alt line {impactVar {}}} {
 	if {[regexp ^intron $element]} {
 		# location for variants in introns
 		if {[expr {($gend-$snppos) - ($snppos-$gbegin)}] > 0} {
-			set ref ${rrefpos}
+			if {!$complement} {set ref ${rrefpos}} else {set ref [expr {$rrefpos + 1}]}
 			set dir +
 			set ipos [expr {$snppos-$gbegin+1}]
 			if {$ipos <= 2} {set impact ESPLICE} elseif {$ipos <= 8} {set impact splice}
 		} else {
-			set ref [expr {$rrefpos + 1}]
+			if {!$complement} {set ref [expr {$rrefpos + 1}]} else {set ref ${rrefpos}}
 			set dir -
 			set ipos [expr {$gend + 1 - $snppos}]
 			if {$ipos <= 2} {set impact ESPLICE} elseif {$ipos <= 8} {set impact splice}
@@ -980,29 +1059,9 @@ proc annotategene_one_c {chrom snppos snptype from alt line {impactVar {}}} {
 			if {$dir eq "+"} {set dir -} else {set dir +}
 		}
 		lappend snp_descr ${ref}
-		if {$snptype eq "ins"} {
-			if {!$complement} {
-				lappend snp_descr ${dir}[expr {$ipos - 1}]_${ipos}
-			} else {
-				lappend snp_descr ${dir}${ipos}_[expr {$ipos + 1}]
-			}
-		} else {
-			lappend snp_descr ${dir}$ipos
-		}
+		lappend snp_descr ${dir}$ipos
 	} else {
-		if {$snptype eq "ins"} {
-			if {!$adata(complement)} {
-				set temp [expr {$rrefpos-1}]
-				if {$temp == 0} {set temp -1}
-				lappend snp_descr ${temp}_${rrefpos} {}
-			} else {
-				set temp [expr {$rrefpos+1}]
-				if {$temp == 0} {set temp 1}
-				lappend snp_descr ${rrefpos}_$temp {}
-			}
-		} else {
-			lappend snp_descr ${rrefpos} {}
-		}
+		lappend snp_descr ${rrefpos} {}
 	}
 	# add change
 	if {[isint $alt]} {set alt ($alt)}
@@ -1016,6 +1075,7 @@ proc annotategene_one_c {chrom snppos snptype from alt line {impactVar {}}} {
 }
 
 proc annotategene_one {loc geneobj} {
+putsvars loc
 	global adata
 	unset -nocomplain adata
 	array set adata $geneobj
@@ -1024,10 +1084,11 @@ proc annotategene_one {loc geneobj} {
 	set size [expr {$snpend-$snppos}]
 	if {[inlist {del sub inv amp} $snptype] || $size > 1} {
 		# treat deletions and subs separately because they need special care (can span exons, the whole annotation, etc ...)
-		set ref [expr {$snpend-$snppos}]
-		return [annotategene_one_del $snppos $snptype $ref $alt]
+		return [annotategene_one_del $loc]
+	} elseif {$snptype eq "ins" || $size == 0} {
+		return [annotategene_one_ins $loc]
 	} else {
-		# other annotations
+		# snps
 		foreach line $adata(ftlist) {
 			foreach {ftstart ftend type} $line break
 			if {($snppos >= $ftstart) && ($snppos <= $ftend)} break
@@ -1038,11 +1099,7 @@ proc annotategene_one {loc geneobj} {
 		foreach {element elementpos} [annotategene_element $line $snppos] break
 		append result :$element$elementpos:[join [annotategene_one_c $chrom $snppos $snptype $ref $alt $line impact] {}]
 		if {$type eq "CDS"} {
-			if {$size == 0 || $snptype eq "ins"} {
-				append result :[annotategene_one_p_ins $snppos $ref $alt $line impact]
-			} else {
-				append result :[annotategene_one_p_snp $snppos $ref $alt $line impact]
-			}
+			append result :[annotategene_one_p_snp $snppos $ref $alt $line impact]
 		}
 		return [list $impact $result]
 	}
@@ -1081,7 +1138,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 	}
 	catch {close $f}; catch {close $df}; catch {close $o};
 	set f [gzopen $file]
-	set header [tsv_open $f comment]
+	set header [tsv_open $f]
 	if {[catch {set poss [tsv_basicfields $header]}]} {
 		if {[catch {set poss [tsv_basicfields $header 4]}]} {
 			set poss [tsv_basicfields $header 3]
@@ -1117,9 +1174,8 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 #	}
 	set dbposs [lrange $dposs 0 2]
 	set o [open $annotfile.temp w]
-	puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
 	set nh [list ${name}_impact ${name}_gene ${name}_descr]
-	puts $o \t[join $nh \t]
+	puts $o [join $nh \t]
 	set empty [join [list_fill [llength $nh] {}] \t]
 	while {![eof $df]} {
 		set fdbline [split [gets $df] \t]
@@ -1316,7 +1372,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 		} else {
 			set result $empty
 		}
-		puts $o \t$result
+		puts $o $result
 	}
 	close $genomef
 	close $o; catch {close $f};	catch {close $df}
