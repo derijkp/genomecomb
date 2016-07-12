@@ -17,16 +17,22 @@ after the last underscore)
 == Arguments ==
 ; **variantfile**: file in sft format with variant data
 ; **resultfile**: resulting file in sft format with new columns added
-; **dbfile**: files (sft format) with features used for annotation. If a directory is given for
+; **dbfile**: files (tsv format) with features used for annotation. If a directory is given for
 dbfile, all known anotation files in this directory will be used for annotation
 
 == Options ==
 ; **-near dist**: also annotate variants with the nearest feature in 
 the dbfile if it is closer than **dist** to it. A column name_dist will
-be added that contains the distance.
+be added that contains the distance. This option is only used for region annotation
 ; **-name namefield**: The name added as annotation normally is taken from a field called 
 name in the database file, or a field specified in the database opt file. Using -name you 
 can explicitely choose the field to be used.
+; **-u upstreamsize**: The number of nts that will be considered up/downstream for gene 
+annotation (default 2000)
+; **-dbdir dbdir**: can (optionally) be used to explicitely specify the directory containing the 
+reference databases (The genome sequence genome_*.ifas in it is used for
+gene annotation). By default the directory the gene annotation file is in
+will be used
 
 == database types ==
 ; **reg**: regions file that must at least contain the columns chromosome,start,end. 
@@ -35,10 +41,14 @@ Variants are checked for overlap with regions in the file.
 to annotate variants that match the given values. Typically, columns freq and id are present for annotation.
 Thus, only variants that match the alleles given in alt will be annotated. If there are multiple alt 
 values (separated by commas), the freq annotation will also contain multiple fields (separated by commas).
-var databases can also be a (multivalued) [[format_bcol|bcol formatted]] file instead of a [[format_tsv|tsv]]; this is indicated by the extension bcol
+var databases can also be a (multivalued) [[format_bcol|bcol formatted]] file instead of 
+a [[format_tsv|tsv]]; this is indicated by the extension bcol
 ; **gene**: gene files (in genepred-like format). Variants will be annotated with the effects they have on 
-the genes in these files.
-; **bcol**: bcol databases are used to annotate positions (e.g. snps) with a given value. Database files are in the [[format_bcol|bcol format]] (also extension bcol).
+the genes in these files as descibed below.
+; **mir**: The effect of variants on miRNA genes is annotated based on a tsv file of the miRNA 
+genes. (more detail below)
+; **bcol**: bcol databases are used to annotate positions (e.g. snps) with a given value. Database 
+files are in the [[format_bcol|bcol format]] (also extension bcol).
 
 If a database filename does not start with one of these types, 
 it will be considered a regions database.
@@ -51,9 +61,9 @@ value (separated by a tab)
 Possible keys are:
 ; **name**: this will be the base for names of added columns (in stead of extracting it from the filename)
 ; **fields**: These fields will be extracted from the database and added to the annotated file in stead 
-  of the defaults (one or more of name, name2, freq and score, depending on the type and name of the database)
+ of the defaults (one or more of name, name2, freq and score, depending on the type and name of the database)
 
-== Gene annotations ==
+== Gene annotation ==
 Annotation with a gene database will add the three columns describing the
 effect of the variant on transcripts and resulting proteins. 
 ; dbname_impact: short code indicating impact/severity of the effect
@@ -138,6 +148,53 @@ not given as it can be easily deduced from the variant fields.
 This is only present if the transcript is affected (so not for up/downstream)
 ; protein based description: description of the variant effect at the
 protein level (p.). This is only present if the protein is affected.
+
+== miRNA annotation ==
+A miRNA gene file is a tsv file containing the following fields: 
+; chromosome,begin,end,strand: indicate the location of the hairpin in the genome
+; name,transcript: name of the miRNA gene and transcript; Different
+isomiRs can be expressed from the same hairpin. These can be represented on different lines in the files
+as different "transcripts". It generally not necesary to give different transcript names, as the 
+location of isomiR affected is geven in the annotation.
+; loopstart,loopend: begin and end genomic coordinates of the loop of the hairpin
+; mature1start,mature1end: genomic coordinates of the mature miRNA before
+the loop (vs the genomic reference). These fields can be left empty if no mature miRNA derives from
+that arm.
+; mature2start,mature2end: genomic coordinates of the mature miRNA(s) after the loop (can be empty as well).
+; status: (optional) field indicating the status of the miRNA gene
+
+Based on this miRNA gene file, the genomecomb miRNA annotation adds the following fields:
+; dbname_impact: indicates which transcript is affected and the functional element of the 
+miRNA the variant is in, followed by the location of the variant in this element between braces.
+e.g. a variant in the mature sequence, especially the seed, is more likely to have an impact on the 
+function than one in the flank
+; dname_mir: name of the miRNA
+; dbname_status: optional field given when a status field is present in the annotation file
+If multiple miRNA genes are affected, the fields will contain a semi-colon separated list of impacts and genes.
+
+Potential annotation elements are
+; mature5p: variant in the sequence that ends up in the mature miRNA of the 5p arm.
+The location of the affected isomiR in the hairpin is added after the mature5p, and if 
+the variant is in the seed region (most important region in targetting) the word "seed" is added
+after the location, e.g. mature5p21_43(a+4)seed
+; mature3p: variant in the mature miRNA of the 3p arm. Same additions as for the mature5p are present.
+; loop: variant in the loop of the hairpin. Variants outside of the mature miRNA can affect the 
+expression of the miRNA through changes in secundary structure and biogenesis.
+; armp5: 5' arm variant.
+; arm3p: 3' arm variant
+; flank: Variants up to 100 nts from the hairpin. These are still likely to affect the biogenesis of the miRNA.
+; upstream: more than 100 nts (and less than 2000 by default) before from the hairpin. 
+If a variant affects a miRNA gene directly (up to flank), up/downstream annotations for 
+other miRNA genes are not given.
+; downstream: more than 100 nts (and less than 2000 by default) after from the hairpin
+
+The location in the element is given by a reference (a for arm, m mature, l for loop) and a number 
+indicating how many nts the variant is located away from the reference, e.g. loop(a+2) indicates 
+that the variant is in the loop, 2 nts away from the arm. Negative numbers are used to indicate 
+counting from the opposite direction, e.g. arm5p(m-5) is used to indicate a variant in the 5'
+arm 5 nts back from the mature sequence. An e can be added to the number to indicate that the location 
+is at either end of the given element. A deletion of the complete miRNA genes is indicated by the 
+impact GENEDEL. Deletions spanning several (but not all) elements list the affected elements joined by &.
 
 == Category ==
 Annotation

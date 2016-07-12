@@ -308,7 +308,7 @@ proc annotatemir_makegeneobj {genomef dbline {flanksizes 100} {isomirname 0} {up
 # genomecomb does not have all the tools to do the structural analysis.
 # 
 proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcriptcol transcript} {flanksizes 100} {isomirname 0} {mirvas 0} {extracols status} {upstreamsize 2000}} {
-# putsvars file genomefile dbfile name resultfile genecol transcriptcol flanksizes mirvas
+ putsvars file genomefile dbfile name resultfile genecol transcriptcol flanksizes isomirname mirvas extracols upstreamsize
 	global genomef
 	if {$upstreamsize < [max $flanksizes]} {set upstreamsize [max $flanksizes]}
 	set file [file normalize $file]
@@ -471,11 +471,15 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 				continue
 			}
 			set result {}
-			set impacts [list_subindex $hitgenes 0]
 			set hitgenes [list_remdup $hitgenes]
 			if {[llength $hitgenes] == 1} {
 				set result [lindex $hitgenes 0]
 			} elseif {[llength $hitgenes]} {
+				set impacts [list_subindex $hitgenes 0]
+				set updownposs [list_find -regexp $impacts {upstream|downstream}]
+				if {[llength $updownposs] < [llength $hitgenes]} {
+					set hitgenes [list_sub $hitgenes -exclude $updownposs]
+				}
 				set pos 0
 				foreach h $nh {
 					set list [list_subindex $hitgenes $pos]
