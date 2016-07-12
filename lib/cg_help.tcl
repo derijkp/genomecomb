@@ -58,7 +58,11 @@ proc helpparts {action} {
 	return $result
 }
 
-proc help_formatw {text width {indent 0} {format 1}} {
+proc help_formatw {foutput text width mode indent {format 1}} {
+# putsvars text width indent format mode
+#foreach var {text width indent format mode} {
+#	puts $foutput [list set $var [get $var]]
+#}
 	if {$text eq ""} {return ""}
 	if {$format} {
 		set green "\033\[1;32m"
@@ -100,10 +104,15 @@ proc help_formatw {text width {indent 0} {format 1}} {
 			append newtemp "$pre[string range $collect 0 [expr {$pos-1}]]\n"
 			incr pos
 			set collect [string range $collect $pos end]
+			if {$mode eq "l"} {
+				set w [expr {$width - $indent - 2}]
+				set pre "$pre  "
+				set mode {}
+			}
 		}
 	}
 	if {$collect ne ""} {append newtemp "$pre$collect\n"}
-	append newtemp \n
+	puts -nonewline $foutput $newtemp
 }
 
 proc help {action {format 1}} {
@@ -129,13 +138,15 @@ proc help {action {format 1}} {
 	if {![catch {exec stty -a} result] && [regexp {columns (\d+)} $result temp cols]} {
 		if {$cols > 10} {set width $cols}
 	}
+
 	set indent 0
 	set mode {}
 	set output {}
 	set collect {}
 	foreach line [split $help \n] {
+# puts $foutput [list set line [get line]]
 		set fchr [string index $line 0]
-		if {$mode eq "l"} {
+		if {$mode eq "b"} {
 			if {$line eq "\}\}\}"} {
 				puts -nonewline $foutput $normal
 				set mode $model
@@ -143,32 +154,32 @@ proc help {action {format 1}} {
 				puts -nonewline $foutput [string_fill " " $indent]${line}\n
 			}
 		} elseif {$fchr eq ""} {
-			puts -nonewline $foutput [help_formatw $collect $width $indent $format]\n
+			help_formatw $foutput $collect $width $mode $indent $format
+			puts -nonewline $foutput \n
 			set collect {}
 			set mode {}
 			set indent 0
 		} elseif {$fchr eq "="} {
-			puts -nonewline $foutput [help_formatw $collect $width $indent $format]
+			help_formatw $foutput $collect $width $mode $indent $format
 			set collect {}
 			set mode {}
 			set indent 0
 			if {[string index $line 3] eq "="} {
 				# == heading4 ==
-				puts -nonewline $foutput [string trim $line " ="]
+				puts -nonewline $foutput [string trim $line " ="]\n
 			} elseif {[string index $line 2] eq "="} {
 				# == heading3 ==
-				puts -nonewline $foutput ${cyan}[string trim $line " ="]$normal
+				puts -nonewline $foutput ${cyan}[string trim $line " ="]$normal\n
 			} elseif {[string index $line 1] eq "="} {
 				# == heading2 ==
-				puts -nonewline $foutput ${underline}[string trim $line " ="]$normal
+				puts -nonewline $foutput ${underline}[string trim $line " ="]$normal\n
 			} else {
 				# = heading1 =
-				puts -nonewline $foutput ${underline}${green}[string trim $line " ="]$normal
+				puts -nonewline $foutput ${underline}${green}[string trim $line " ="]$normal\n
 			}
-			puts -nonewline $foutput \n\n
-		} elseif {$fchr eq ";"} {
+		} elseif {[regexp {^\; } $line]} {
 			# ; terms : definitions
-			puts -nonewline $foutput [help_formatw $collect $width $indent $format]
+			help_formatw $foutput $collect $width $mode $indent $format
 			set collect {}
 			set indent 5
 			if {[regexp {;? *([^\n]+?) *: +(.*)} $line tmp term def]} {
@@ -179,22 +190,30 @@ proc help {action {format 1}} {
 			} else {
 				append collect "  * $line\n"
 			}
+		} elseif {[regexp {^\* } $line]} {
+			# ; terms : definitions
+			help_formatw $foutput $collect $width $mode $indent $format
+			set collect {}
+			set indent 2
+			set mode l
+			append collect $line\n
 		} elseif {$line eq "\{\{\{"} {
 			# {{{literal}}}
-			puts -nonewline $foutput [help_formatw $collect $width $indent $format]
+			help_formatw $foutput $collect $width $mode $indent $format
 			set collect {}
 			set model $mode
-			set mode l
+			set mode b
 			puts -nonewline $foutput ${green}
 		} elseif {[string range $line end-1 end] eq "  "} {
 			append collect $line\n
-			puts -nonewline $foutput [help_formatw $collect $width $indent $format]
+			help_formatw $foutput $collect $width $mode $indent $format
 			set collect {}
 		} else {
 			append collect $line\n
 		}
 	}
-	puts -nonewline $foutput [help_formatw $collect $width $indent $format]
+	help_formatw $foutput $collect $width $mode $indent $format
+
 	if {$format} {
 		close $foutput
 	}
