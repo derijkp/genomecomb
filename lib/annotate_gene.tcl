@@ -520,6 +520,8 @@ proc annotategene_one_ins {loc} {
 		if {$element1pos eq $element2pos} {
 			append result	:$element1${element1pos}
 		} else {
+			set temp [string index $element2pos 0]
+			if {$temp eq "+" && $temp eq [string index $element1pos 0]} {set element2pos [string range $element2pos 1 end]}
 			append result	:$element1${element1pos}_${element2pos}
 		}
 	} else {
@@ -531,24 +533,20 @@ proc annotategene_one_ins {loc} {
 	# coding DNA level
 	foreach {reftype1 ref1 offset1 change} [annotategene_one_c $chr $snp1 ins $ref $alt $line1 impact] break
 	foreach {reftype2 ref2 offset2 change} [annotategene_one_c $chr $snp2 ins $ref $alt $line2 impact2] break
-	# putsvars line1 line2 reftype1 ref1 offset1 reftype2 ref2 offset2 change
-	if {$ref1 eq $ref2} {
-		if {$offset1 eq $offset2} {
-			set snp_descr $reftype1$ref1${offset1}$change
-		} elseif {$offset1 ne "" && $offset2 ne ""} {
-			set snp_descr $reftype1$ref1${offset1}_${offset2}$change
-		} else {
-			set snp_descr $reftype1$ref1${offset1}_$ref2${offset2}$change
-		}
+	# putsvars line1 line2 reftype1 ref1 offset1 impact reftype2 ref2 offset2 impact2 change
+	if {$ref1 eq $ref2 && $offset1 eq $offset2} {
+		set snp_descr $reftype1$ref1${offset1}$change
 	} else {
 		set snp_descr $reftype1$ref1${offset1}_$ref2${offset2}$change
 	}
 	append result :$snp_descr
 	# impact
-	if {$impact eq "CDS" && [regexp UTR $impact]} {
-		set impact $impact2
-		set line $line2
-	} elseif {$impact eq "intron"} {
+	if {($impact eq "CDS" && [regexp UTR|RNA $impact2])
+		|| ($impact eq "ESPLICE" && ([regexp UTR|CDS|RNA $impact2]))
+		|| ($impact eq "ESPLICE" && $impact2 eq "splice")
+		|| ($impact eq "splice" && $impact2 eq "intron")
+		|| ([regexp UTR|RNA $impact] && $impact2 eq "downstream")
+	} {
 		set impact $impact2
 		set line $line2
 	} else {
@@ -582,13 +580,6 @@ proc annotategene_one_del {loc} {
 	set result $strand$adata(transcriptname)
 	# find region
 	foreach {sline eline} [annotategene_findreg $snppos $snpend] break
-#	set sline pre
-#	set eline post
-#	foreach line $adata(ftlist) {
-#		foreach {ftstart ftend type} $line break
-#		if {($snppos >= $ftstart) && ($snppos <= $ftend)} {set sline $line}
-#		if {($snpend >= $ftstart) && ($snpend <= $ftend)} {set eline $line}
-#	}
 	# shift to 3'
 	if {$snptype eq "del" && [lindex $sline 3] eq [lindex $eline 3]} {
 		# shift to 3'?
@@ -633,6 +624,8 @@ proc annotategene_one_del {loc} {
 		if {$element1pos eq $element2pos} {
 			append result	:$element1${element1pos}
 		} else {
+			set temp [string index $element2pos 0]
+			if {$temp eq "+" && $temp eq [string index $element1pos 0]} {set element2pos [string range $element2pos 1 end]}
 			append result	:$element1${element1pos}_${element2pos}
 		}
 	} else {
@@ -644,19 +637,13 @@ proc annotategene_one_del {loc} {
 	# coding DNA level
 	foreach {reftype1 ref1 offset1 change} [annotategene_one_c $chr $snp1 $snptype $ref $alt $line1 impact] break
 	foreach {reftype2 ref2 offset2 change} [annotategene_one_c $chr $snp2 $snptype $ref $alt $line2 impact2] break
-	# putsvars reftype1 ref1 offset1 reftype2 ref2 offset2 change
+	# putsvars reftype1 ref1 offset1 impact reftype2 ref2 offset2 impact2 change
 	if {[annotate_impact2score $impact2] > [annotate_impact2score $impact]} {
 		set impact $impact2
 	}
 	# putsvars reftype1 ref1 offset1 reftype2 ref2 offset2 change
-	if {$ref1 eq $ref2} {
-		if {$offset1 eq $offset2} {
-			set snp_descr $reftype1$ref1${offset1}$change
-		} elseif {$offset1 ne "" && $offset2 ne ""} {
-			set snp_descr $reftype1$ref1${offset1}_${offset2}$change
-		} else {
-			set snp_descr $reftype1$ref1${offset1}_$ref2${offset2}$change
-		}
+	if {$ref1 eq $ref2 && $offset1 eq $offset2} {
+		set snp_descr $reftype1$ref1${offset1}$change
 	} else {
 		set snp_descr $reftype1$ref1${offset1}_$ref2${offset2}$change
 	}
