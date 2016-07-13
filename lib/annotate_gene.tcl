@@ -1013,6 +1013,8 @@ proc annotategene_one_c {chrom snppos snptype from alt line {impactVar {}}} {
 	if {$impactVar ne ""} {upvar $impactVar impact}
 	foreach {gbegin gend eltype element rnabegin rnaend cdsbegin cdsend} $line break
 	set complement $adata(complement)
+	set cds $adata(cds)
+	if {$cds} {set psize [expr {$adata(rpend) - $adata(rpstart) + 1}]}
 	set rpos [annotategene_rpos $line $snppos]
 	set rrefpos [calc_rpos $rpos]
 	set impact [annotate_type2impact $eltype]
@@ -1045,9 +1047,11 @@ proc annotategene_one_c {chrom snppos snptype from alt line {impactVar {}}} {
 		if {$adata(complement)} {
 			if {$dir eq "+"} {set dir -} else {set dir +}
 		}
+		if {$cds && $ref > $psize} {set ref *[expr {$ref-$psize}]}
 		lappend snp_descr ${ref}
 		lappend snp_descr ${dir}$ipos
 	} else {
+		if {$cds && $rrefpos > $psize} {set rrefpos *[expr {$rrefpos-$psize}]}
 		lappend snp_descr ${rrefpos} {}
 	}
 	# add change
@@ -1062,7 +1066,7 @@ proc annotategene_one_c {chrom snppos snptype from alt line {impactVar {}}} {
 }
 
 proc annotategene_one {loc geneobj} {
-putsvars loc
+# putsvars loc
 	global adata
 	unset -nocomplain adata
 	array set adata $geneobj

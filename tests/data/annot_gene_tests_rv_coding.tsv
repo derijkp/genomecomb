@@ -47,189 +47,189 @@ chr1	1704585	1704588	del	3				post-2
 chr1	1704586	1704586	ins		A			post-1
 chr1	1704586	1704587	del	C				post-1
 chr1	1704586	1704587	snp	C	A			post-1
-chr1	1704586	1704589	del	3		downstream	-NM_002074:down+2001_2003:c.4797_4799del	post-1
-chr1	1704586	1704589	del	3		downstream	-NM_002074:down+2001_2003:c.4797_4799del	
+chr1	1704586	1704589	del	3		downstream	-NM_002074:down+2001_2003:c.*3774_*3776del	post-1
+chr1	1704586	1704589	del	3		downstream	-NM_002074:down+2001_2003:c.*3774_*3776del	
 chr1	1704587	1704587	ins		C			down+1
 chr1	1704587	1704588	del	A				down+1
 chr1	1704587	1704588	snp	A	C			down+1
-chr1	1704587	1704590	del	3		downstream	-NM_002074:down+1999_2001:c.4795_4797del	down+1
+chr1	1704587	1704590	del	3		downstream	-NM_002074:down+1999_2001:c.*3772_*3774del	down+1
 chr1	1704588	1704588	ins		C			down+2
-chr1	1704588	1704589	del	A		downstream	-NM_002074:down+2001:c.4797del	down+2
-chr1	1704588	1704589	snp	A	C	downstream	-NM_002074:down+2000:c.4796T>G	down+2
-chr1	1704588	1704591	del	3		downstream	-NM_002074:down+1998_2000:c.4794_4796del	down+2
-chr1	1704589	1704589	ins		C	downstream	-NM_002074:down+1999_2000:c.4795_4796insG	down+3
-chr1	1704589	1704590	del	G		downstream	-NM_002074:down+1999:c.4795del	down+3
-chr1	1704589	1704590	snp	G	C	downstream	-NM_002074:down+1999:c.4795C>G	down+3
-chr1	1704589	1704592	del	3		downstream	-NM_002074:down+1997_1999:c.4793_4795del	down+3
-chr1	1704590	1704590	ins		C	downstream	-NM_002074:down+1998_1999:c.4794_4795insG	down+4
-chr1	1704590	1704591	del	T		downstream	-NM_002074:down+1998:c.4794del	down+4
-chr1	1704590	1704591	snp	T	C	downstream	-NM_002074:down+1998:c.4794A>G	down+4
-chr1	1704590	1704593	del	3		downstream	-NM_002074:down+1996_1998:c.4792_4794del	down+4
-chr1	1704594	1704594	ins		C	downstream	-NM_002074:down+1994_1995:c.4790_4791insG	down+8
-chr1	1704594	1704595	del	A		downstream	-NM_002074:down+1995:c.4791del	down+8
-chr1	1704594	1704595	snp	A	C	downstream	-NM_002074:down+1994:c.4790T>G	down+8
-chr1	1704594	1704597	del	3		downstream	-NM_002074:down+1992_1994:c.4788_4790del	down+8
-chr1	1704595	1704595	ins		A	downstream	-NM_002074:down+1995_1996:c.4791_4792insT	down+9
-chr1	1704595	1704596	del	C		downstream	-NM_002074:down+1993:c.4789del	down+9
-chr1	1704595	1704596	snp	C	A	downstream	-NM_002074:down+1993:c.4789G>T	down+9
-chr1	1704595	1704598	del	3		downstream	-NM_002074:down+1991_1993:c.4787_4789del	down+9
-chr1	1706579	1706579	ins		A	downstream	-NM_002074:down+9_10:c.2805_2806insT	downstream-9
-chr1	1706579	1706580	del	C		downstream	-NM_002074:down+10:c.2806del	downstream-9
-chr1	1706579	1706580	snp	C	A	downstream	-NM_002074:down+9:c.2805G>T	downstream-9
-chr1	1706579	1706582	del	3		downstream	-NM_002074:down+7_9:c.2803_2805del	downstream-9
-chr1	1706580	1706580	ins		C	downstream	-NM_002074:down+10_11:c.2806_2807insG	downstream-8
-chr1	1706580	1706581	del	A		downstream	-NM_002074:down+8:c.2804del	downstream-8
-chr1	1706580	1706581	snp	A	C	downstream	-NM_002074:down+8:c.2804T>G	downstream-8
-chr1	1706580	1706583	del	3		downstream	-NM_002074:down+6_8:c.2802_2804del	downstream-8
-chr1	1706584	1706584	ins		C	downstream	-NM_002074:down+4_5:c.2800_2801insG	downstream-4
-chr1	1706584	1706585	del	T		downstream	-NM_002074:down+4:c.2800del	downstream-4
-chr1	1706584	1706585	snp	T	C	downstream	-NM_002074:down+4:c.2800A>G	downstream-4
-chr1	1706584	1706587	del	3		downstream	-NM_002074:down+2_4:c.2798_2800del	downstream-4
-chr1	1706585	1706585	ins		A	downstream	-NM_002074:down+3_4:c.2799_2800insT	downstream-3
-chr1	1706585	1706586	del	C		downstream	-NM_002074:down+3:c.2799del	downstream-3
-chr1	1706585	1706586	snp	C	A	downstream	-NM_002074:down+3:c.2799G>T	downstream-3
-chr1	1706585	1706588	del	3		downstream	-NM_002074:down+1_3:c.2797_2799del	downstream-3
-chr1	1706586	1706586	ins		A	downstream	-NM_002074:down+2_3:c.2798_2799insT	downstream-2
-chr1	1706586	1706587	del	C		downstream	-NM_002074:down+3:c.2799del	downstream-2
-chr1	1706586	1706587	snp	C	A	downstream	-NM_002074:down+2:c.2798G>T	downstream-2
-chr1	1706586	1706589	del	3		RNAEND	-NM_002074:exon12+1764_down+2:c.2796_2798del	downstream-2
-chr1	1706586	1706589	del	3		RNAEND	-NM_002074:exon12+1764_down+2:c.2796_2798del	
-chr1	1706587	1706587	ins		A	downstream	-NM_002074:down+1_2:c.2797_2798insT	downstream-1
-chr1	1706587	1706588	del	C		downstream	-NM_002074:down+3:c.2799del	downstream-1
-chr1	1706587	1706588	snp	C	A	downstream	-NM_002074:down+1:c.2797G>T	downstream-1
-chr1	1706587	1706590	del	3		RNAEND	-NM_002074:exon12+1763_down+1:c.2795_2797del	downstream-1
-chr1	1706588	1706588	ins		C	downstream	-NM_002074:exon12+1764_down+1:c.2796_2797insG	exon12+1
-chr1	1706588	1706589	del	T		UTR3	-NM_002074:exon12+1764:c.2796del	exon12+1
-chr1	1706588	1706589	snp	C	A	UTR3	-NM_002074:exon12+1764:c.2796G>T	
-chr1	1706588	1706589	snp	T	C	UTR3	-NM_002074:exon12+1764:c.2796A>G	exon12+1
-chr1	1706588	1706591	del	3		UTR3	-NM_002074:exon12+1762_1764:c.2794_2796del	exon12+1
-chr1	1706588	1812354	del	107766		CDSSTARTDEL	-NM_002074:exon1+2_exon12+1764:c.-331_2796del:p.0?	
+chr1	1704588	1704589	del	A		downstream	-NM_002074:down+2001:c.*3774del	down+2
+chr1	1704588	1704589	snp	A	C	downstream	-NM_002074:down+2000:c.*3773T>G	down+2
+chr1	1704588	1704591	del	3		downstream	-NM_002074:down+1998_2000:c.*3771_*3773del	down+2
+chr1	1704589	1704589	ins		C	downstream	-NM_002074:down+1999_2000:c.*3772_*3773insG	down+3
+chr1	1704589	1704590	del	G		downstream	-NM_002074:down+1999:c.*3772del	down+3
+chr1	1704589	1704590	snp	G	C	downstream	-NM_002074:down+1999:c.*3772C>G	down+3
+chr1	1704589	1704592	del	3		downstream	-NM_002074:down+1997_1999:c.*3770_*3772del	down+3
+chr1	1704590	1704590	ins		C	downstream	-NM_002074:down+1998_1999:c.*3771_*3772insG	down+4
+chr1	1704590	1704591	del	T		downstream	-NM_002074:down+1998:c.*3771del	down+4
+chr1	1704590	1704591	snp	T	C	downstream	-NM_002074:down+1998:c.*3771A>G	down+4
+chr1	1704590	1704593	del	3		downstream	-NM_002074:down+1996_1998:c.*3769_*3771del	down+4
+chr1	1704594	1704594	ins		C	downstream	-NM_002074:down+1994_1995:c.*3767_*3768insG	down+8
+chr1	1704594	1704595	del	A		downstream	-NM_002074:down+1995:c.*3768del	down+8
+chr1	1704594	1704595	snp	A	C	downstream	-NM_002074:down+1994:c.*3767T>G	down+8
+chr1	1704594	1704597	del	3		downstream	-NM_002074:down+1992_1994:c.*3765_*3767del	down+8
+chr1	1704595	1704595	ins		A	downstream	-NM_002074:down+1995_1996:c.*3768_*3769insT	down+9
+chr1	1704595	1704596	del	C		downstream	-NM_002074:down+1993:c.*3766del	down+9
+chr1	1704595	1704596	snp	C	A	downstream	-NM_002074:down+1993:c.*3766G>T	down+9
+chr1	1704595	1704598	del	3		downstream	-NM_002074:down+1991_1993:c.*3764_*3766del	down+9
+chr1	1706579	1706579	ins		A	downstream	-NM_002074:down+9_10:c.*1782_*1783insT	downstream-9
+chr1	1706579	1706580	del	C		downstream	-NM_002074:down+10:c.*1783del	downstream-9
+chr1	1706579	1706580	snp	C	A	downstream	-NM_002074:down+9:c.*1782G>T	downstream-9
+chr1	1706579	1706582	del	3		downstream	-NM_002074:down+7_9:c.*1780_*1782del	downstream-9
+chr1	1706580	1706580	ins		C	downstream	-NM_002074:down+10_11:c.*1783_*1784insG	downstream-8
+chr1	1706580	1706581	del	A		downstream	-NM_002074:down+8:c.*1781del	downstream-8
+chr1	1706580	1706581	snp	A	C	downstream	-NM_002074:down+8:c.*1781T>G	downstream-8
+chr1	1706580	1706583	del	3		downstream	-NM_002074:down+6_8:c.*1779_*1781del	downstream-8
+chr1	1706584	1706584	ins		C	downstream	-NM_002074:down+4_5:c.*1777_*1778insG	downstream-4
+chr1	1706584	1706585	del	T		downstream	-NM_002074:down+4:c.*1777del	downstream-4
+chr1	1706584	1706585	snp	T	C	downstream	-NM_002074:down+4:c.*1777A>G	downstream-4
+chr1	1706584	1706587	del	3		downstream	-NM_002074:down+2_4:c.*1775_*1777del	downstream-4
+chr1	1706585	1706585	ins		A	downstream	-NM_002074:down+3_4:c.*1776_*1777insT	downstream-3
+chr1	1706585	1706586	del	C		downstream	-NM_002074:down+3:c.*1776del	downstream-3
+chr1	1706585	1706586	snp	C	A	downstream	-NM_002074:down+3:c.*1776G>T	downstream-3
+chr1	1706585	1706588	del	3		downstream	-NM_002074:down+1_3:c.*1774_*1776del	downstream-3
+chr1	1706586	1706586	ins		A	downstream	-NM_002074:down+2_3:c.*1775_*1776insT	downstream-2
+chr1	1706586	1706587	del	C		downstream	-NM_002074:down+3:c.*1776del	downstream-2
+chr1	1706586	1706587	snp	C	A	downstream	-NM_002074:down+2:c.*1775G>T	downstream-2
+chr1	1706586	1706589	del	3		RNAEND	-NM_002074:exon12+1764_down+2:c.*1773_*1775del	downstream-2
+chr1	1706586	1706589	del	3		RNAEND	-NM_002074:exon12+1764_down+2:c.*1773_*1775del	
+chr1	1706587	1706587	ins		A	downstream	-NM_002074:down+1_2:c.*1774_*1775insT	downstream-1
+chr1	1706587	1706588	del	C		downstream	-NM_002074:down+3:c.*1776del	downstream-1
+chr1	1706587	1706588	snp	C	A	downstream	-NM_002074:down+1:c.*1774G>T	downstream-1
+chr1	1706587	1706590	del	3		RNAEND	-NM_002074:exon12+1763_down+1:c.*1772_*1774del	downstream-1
+chr1	1706588	1706588	ins		C	downstream	-NM_002074:exon12+1764_down+1:c.*1773_*1774insG	exon12+1
+chr1	1706588	1706589	del	T		UTR3	-NM_002074:exon12+1764:c.*1773del	exon12+1
+chr1	1706588	1706589	snp	C	A	UTR3	-NM_002074:exon12+1764:c.*1773G>T	
+chr1	1706588	1706589	snp	T	C	UTR3	-NM_002074:exon12+1764:c.*1773A>G	exon12+1
+chr1	1706588	1706591	del	3		UTR3	-NM_002074:exon12+1762_1764:c.*1771_*1773del	exon12+1
+chr1	1706588	1812354	del	107766		CDSSTARTDEL	-NM_002074:exon1+2_exon12+1764:c.-331_*1773del:p.0?	
 chr1	1706588	1812355	del	107767		GENEDEL	+NM_002074	
-chr1	1706589	1706589	ins		A	UTR3	-NM_002074:exon12+1763_1764:c.2795_2796insT	exon12+2
-chr1	1706589	1706590	del	C		UTR3	-NM_002074:exon12+1763:c.2795del	exon12+2
-chr1	1706589	1706590	snp	C	A	UTR3	-NM_002074:exon12+1763:c.2795G>T	exon12+2
-chr1	1706589	1706592	del	3		UTR3	-NM_002074:exon12+1762_1764:c.2794_2796del	exon12+2
-chr1	1706590	1706590	ins		C	UTR3	-NM_002074:exon12+1763_1764:c.2795_2796insG	exon12+3
-chr1	1706590	1706591	del	A		UTR3	-NM_002074:exon12+1762:c.2794del	exon12+3
-chr1	1706590	1706591	snp	A	C	UTR3	-NM_002074:exon12+1762:c.2794T>G	exon12+3
-chr1	1706590	1706593	del	3		UTR3	-NM_002074:exon12+1760_1762:c.2792_2794del	exon12+3
-chr1	1706591	1706591	ins		C	UTR3	-NM_002074:exon12+1761_1762:c.2793_2794insG	exon12+4
-chr1	1706591	1706592	del	T		UTR3	-NM_002074:exon12+1761:c.2793del	exon12+4
-chr1	1706591	1706592	snp	T	C	UTR3	-NM_002074:exon12+1761:c.2793A>G	exon12+4
-chr1	1706591	1706594	del	3		UTR3	-NM_002074:exon12+1759_1761:c.2791_2793del	exon12+4
-chr1	1706595	1706595	ins		C	UTR3	-NM_002074:exon12+1758_1759:c.2790_2791insG	exon12+8
-chr1	1706595	1706596	del	A		UTR3	-NM_002074:exon12+1757:c.2789del	exon12+8
-chr1	1706595	1706596	snp	A	C	UTR3	-NM_002074:exon12+1757:c.2789T>G	exon12+8
-chr1	1706595	1706598	del	3		UTR3	-NM_002074:exon12+1755_1757:c.2787_2789del	exon12+8
-chr1	1706596	1706596	ins		C	UTR3	-NM_002074:exon12+1756_1757:c.2788_2789insG	exon12+9
-chr1	1706596	1706597	del	A		UTR3	-NM_002074:exon12+1757:c.2789del	exon12+9
-chr1	1706596	1706597	snp	A	C	UTR3	-NM_002074:exon12+1756:c.2788T>G	exon12+9
-chr1	1706596	1706599	del	3		UTR3	-NM_002074:exon12+1754_1756:c.2786_2788del	exon12+9
-chr1	1708343	1708343	ins		C	UTR3	-NM_002074:exon12+10_11:c.1042_1043insG	exon12-9
-chr1	1708343	1708344	del	A		UTR3	-NM_002074:exon12+9:c.1041del	exon12-9
-chr1	1708343	1708344	snp	A	C	UTR3	-NM_002074:exon12+9:c.1041T>G	exon12-9
-chr1	1708343	1708346	del	3		UTR3	-NM_002074:exon12+8_10:c.1040_1042del	exon12-9
-chr1	1708344	1708344	ins		C	UTR3	-NM_002074:exon12+8_9:c.1040_1041insG	exon12-8
-chr1	1708344	1708345	del	T		UTR3	-NM_002074:exon12+8:c.1040del	exon12-8
-chr1	1708344	1708345	snp	T	C	UTR3	-NM_002074:exon12+8:c.1040A>G	exon12-8
-chr1	1708344	1708347	del	3		UTR3	-NM_002074:exon12+6_8:c.1038_1040del	exon12-8
-chr1	1708348	1708348	ins		A	UTR3	-NM_002074:exon12+5_6:c.1037_1038insT	exon12-4
-chr1	1708348	1708349	del	C		UTR3	-NM_002074:exon12+4:c.1036del	exon12-4
-chr1	1708348	1708349	snp	C	A	UTR3	-NM_002074:exon12+4:c.1036G>T	exon12-4
-chr1	1708348	1708351	del	3		UTR3	-NM_002074:exon12+2_4:c.1034_1036del	exon12-4
-chr1	1708349	1708349	ins		C	UTR3	-NM_002074:exon12+4_5:c.1036_1037insG	exon12-3
-chr1	1708349	1708350	del	A		UTR3	-NM_002074:exon12+3:c.1035del	exon12-3
-chr1	1708349	1708350	snp	A	C	UTR3	-NM_002074:exon12+3:c.1035T>G	exon12-3
-chr1	1708349	1708352	del	3		UTR3	-NM_002074:exon12+1_3:c.1033_1035del	exon12-3
-chr1	1708350	1708350	ins		C	UTR3	-NM_002074:exon12+2_3:c.1034_1035insG	exon12-2
-chr1	1708350	1708351	del	T		UTR3	-NM_002074:exon12+2:c.1034del	exon12-2
-chr1	1708350	1708351	snp	T	C	UTR3	-NM_002074:exon12+2:c.1034A>G	exon12-2
-chr1	1708350	1708353	del	3		UTR3SPLICE	-NM_002074:intron11+268_exon12+2:c.1033-1_1034del	exon12-2
-chr1	1708351	1708351	ins		C	UTR3	-NM_002074:exon12+1_2:c.1033_1034insG	exon12-1
-chr1	1708351	1708352	del	G		UTR3	-NM_002074:exon12+1:c.1033del	exon12-1
-chr1	1708351	1708352	snp	G	C	UTR3	-NM_002074:exon12+1:c.1033C>G	exon12-1
-chr1	1708351	1708354	del	3		UTR3SPLICE	-NM_002074:intron11+267_exon12+1:c.1033-2_1033del	exon12-1
-chr1	1708352	1708352	ins		A	UTR3	-NM_002074:intron11+268_exon12+1:c.1033-1_1033insT	intron11+1
-chr1	1708352	1708353	del	C		ESPLICE	-NM_002074:intron11+268:c.1033-1del	intron11+1
-chr1	1708352	1708353	snp	C	A	ESPLICE	-NM_002074:intron11+268:c.1033-1G>T	intron11+1
-chr1	1708352	1708355	del	3		ESPLICE	-NM_002074:intron11+266_268:c.1033-3_1033-1del	intron11+1
-chr1	1708353	1708353	ins		C	UTR3	-NM_002074:intron11+268_exon12+1:c.1033-1_1033insG	intron11+2
-chr1	1708353	1708354	del	T		ESPLICE	-NM_002074:intron11+267:c.1033-2del	intron11+2
-chr1	1708353	1708354	snp	T	C	ESPLICE	-NM_002074:intron11+267:c.1033-2A>G	intron11+2
-chr1	1708353	1708356	del	3		ESPLICE	-NM_002074:intron11+265_267:c.1033-4_1033-2del	intron11+2
-chr1	1708354	1708354	ins		C	splice	-NM_002074:intron11+266_267:c.1033-3_1033-2insG	intron11+3
-chr1	1708354	1708355	del	G		splice	-NM_002074:intron11+266:c.1033-3del	intron11+3
-chr1	1708354	1708355	snp	G	C	splice	-NM_002074:intron11+266:c.1033-3C>G	intron11+3
-chr1	1708354	1708357	del	3		ESPLICE	-NM_002074:intron11+265_267:c.1033-4_1033-2del	intron11+3
-chr1	1708355	1708355	ins		C	splice	-NM_002074:intron11+265_266:c.1033-4_1033-3insG	intron11+4
-chr1	1708355	1708356	del	T		splice	-NM_002074:intron11+265:c.1033-4del	intron11+4
-chr1	1708355	1708356	snp	T	C	splice	-NM_002074:intron11+265:c.1033-4A>G	intron11+4
-chr1	1708355	1708358	del	3		splice	-NM_002074:intron11+263_265:c.1033-6_1033-4del	intron11+4
-chr1	1708359	1708359	ins		C	splice	-NM_002074:intron11+261_262:c.1033-8_1033-7insG	intron11+8
-chr1	1708359	1708360	del	A		splice	-NM_002074:intron11+261:c.1033-8del	intron11+8
-chr1	1708359	1708360	snp	A	C	splice	-NM_002074:intron11+261:c.1033-8T>G	intron11+8
-chr1	1708359	1708362	del	3		splice	-NM_002074:intron11+259_261:c.1033-10_1033-8del	intron11+8
-chr1	1708360	1708360	ins		C	intron	-NM_002074:intron11+260_261:c.1033-9_1033-8insG	intron11+9
-chr1	1708360	1708361	del	A		splice	-NM_002074:intron11+261:c.1033-8del	intron11+9
-chr1	1708360	1708361	snp	A	C	intron	-NM_002074:intron11+260:c.1033-9T>G	intron11+9
-chr1	1708360	1708363	del	3		intron	-NM_002074:intron11+258_260:c.1033-11_1033-9del	intron11+9
-chr1	1708611	1708611	ins		A	intron	-NM_002074:intron11+9_10:c.1032+9_1032+10insT	intron11-9
-chr1	1708611	1708612	del	C		intron	-NM_002074:intron11+9:c.1032+9del	intron11-9
-chr1	1708611	1708612	snp	C	A	intron	-NM_002074:intron11+9:c.1032+9G>T	intron11-9
-chr1	1708611	1708614	del	3		intron	-NM_002074:intron11+11_13:c.1032+11_1032+13del	intron11-9
-chr1	1708612	1708612	ins		C	intron	-NM_002074:intron11+9_10:c.1032+9_1032+10insG	intron11-8
-chr1	1708612	1708613	del	T		splice	-NM_002074:intron11+8:c.1032+8del	intron11-8
-chr1	1708612	1708613	snp	T	C	splice	-NM_002074:intron11+8:c.1032+8A>G	intron11-8
-chr1	1708612	1708615	del	3		intron	-NM_002074:intron11+11_13:c.1032+11_1032+13del	intron11-8
-chr1	1708616	1708616	ins		C	splice	-NM_002074:intron11+4_5:c.1032+4_1032+5insG	intron11-4
-chr1	1708616	1708617	del	T		splice	-NM_002074:intron11+4:c.1032+4del	intron11-4
-chr1	1708616	1708617	snp	T	C	splice	-NM_002074:intron11+4:c.1032+4A>G	intron11-4
-chr1	1708616	1708619	del	3		splice	-NM_002074:intron11+3_5:c.1032+3_1032+5del	intron11-4
-chr1	1708617	1708617	ins		C	splice	-NM_002074:intron11+3_4:c.1032+3_1032+4insG	intron11-3
-chr1	1708617	1708618	del	T		splice	-NM_002074:intron11+4:c.1032+4del	intron11-3
-chr1	1708617	1708618	snp	T	C	splice	-NM_002074:intron11+3:c.1032+3A>G	intron11-3
-chr1	1708617	1708620	del	3		ESPLICE	-NM_002074:intron11+1_3:c.1032+1_1032+3del	intron11-3
-chr1	1708618	1708618	ins		C	splice	-NM_002074:intron11+2_3:c.1032+2_1032+3insG	intron11-2
-chr1	1708618	1708619	del	A		ESPLICE	-NM_002074:intron11+2:c.1032+2del	intron11-2
-chr1	1708618	1708619	snp	A	C	ESPLICE	-NM_002074:intron11+2:c.1032+2T>G	intron11-2
-chr1	1708618	1708621	del	3		UTR3SPLICE	-NM_002074:exon11+116_intron11+2:c.1032_1032+2del	intron11-2
-chr1	1708619	1708619	ins		A	splice	-NM_002074:intron11+2_3:c.1032+2_1032+3insT	intron11-1
-chr1	1708619	1708620	del	C		ESPLICE	-NM_002074:intron11+1:c.1032+1del	intron11-1
-chr1	1708619	1708620	snp	C	A	ESPLICE	-NM_002074:intron11+1:c.1032+1G>T	intron11-1
-chr1	1708619	1708622	del	3		UTR3SPLICE	-NM_002074:exon11+115_intron11+1:c.1031_1032+1del	intron11-1
-chr1	1708620	1708620	ins		A	UTR3	-NM_002074:exon11+116_intron11+1:c.1032_1032+1insT	exon11+1
-chr1	1708620	1708621	del	C		UTR3	-NM_002074:exon11+116:c.1032del	exon11+1
-chr1	1708620	1708621	snp	C	A	UTR3	-NM_002074:exon11+116:c.1032G>T	exon11+1
-chr1	1708620	1708623	del	3		UTR3	-NM_002074:exon11+114_116:c.1030_1032del	exon11+1
-chr1	1708621	1708621	ins		C	UTR3	-NM_002074:exon11+116_intron11+1:c.1032_1032+1insG	exon11+2
-chr1	1708621	1708622	del	T		UTR3	-NM_002074:exon11+115:c.1031del	exon11+2
-chr1	1708621	1708622	snp	T	C	UTR3	-NM_002074:exon11+115:c.1031A>G	exon11+2
-chr1	1708621	1708624	del	3		UTR3	-NM_002074:exon11+114_116:c.1030_1032del	exon11+2
-chr1	1708622	1708622	ins		C	UTR3	-NM_002074:exon11+114_115:c.1030_1031insG	exon11+3
-chr1	1708622	1708623	del	A		UTR3	-NM_002074:exon11+114:c.1030del	exon11+3
-chr1	1708622	1708623	snp	A	C	UTR3	-NM_002074:exon11+114:c.1030T>G	exon11+3
-chr1	1708622	1708625	del	3		UTR3	-NM_002074:exon11+114_116:c.1030_1032del	exon11+3
-chr1	1708623	1708623	ins		A	UTR3	-NM_002074:exon11+114_115:c.1030_1031insT	exon11+4
-chr1	1708623	1708624	del	C		UTR3	-NM_002074:exon11+113:c.1029del	exon11+4
-chr1	1708623	1708624	snp	C	A	UTR3	-NM_002074:exon11+113:c.1029G>T	exon11+4
-chr1	1708623	1708626	del	3		UTR3	-NM_002074:exon11+111_113:c.1027_1029del	exon11+4
-chr1	1708625	1708625	ins		C	UTR3	-NM_002074:exon11+111_112:c.1027_1028insG	exon11-4
-chr1	1708625	1708626	del	G		UTR3	-NM_002074:exon11+111:c.1027del	exon11-4
-chr1	1708625	1708626	snp	G	C	UTR3	-NM_002074:exon11+111:c.1027C>G	exon11-4
-chr1	1708625	1708628	del	3		UTR3	-NM_002074:exon11+109_111:c.1025_1027del	exon11-4
-chr1	1708626	1708626	ins		C	UTR3	-NM_002074:exon11+110_111:c.1026_1027insG	exon11-3
-chr1	1708626	1708627	del	G		UTR3	-NM_002074:exon11+111:c.1027del	exon11-3
-chr1	1708626	1708627	snp	G	C	UTR3	-NM_002074:exon11+110:c.1026C>G	exon11-3
-chr1	1708626	1708629	del	3		UTR3	-NM_002074:exon11+109_111:c.1025_1027del	exon11-3
-chr1	1708627	1708627	ins		A	UTR3	-NM_002074:exon11+109_110:c.1025_1026insT	exon11-2
-chr1	1708627	1708628	del	C		UTR3	-NM_002074:exon11+109:c.1025del	exon11-2
-chr1	1708627	1708628	snp	C	A	UTR3	-NM_002074:exon11+109:c.1025G>T	exon11-2
-chr1	1708627	1708630	del	3		CDSSTOP	-NM_002074:exon11+107_109:c.1023_1025del:p.*341Yext*4	exon11-2
-chr1	1708628	1708628	ins		C	UTR3	-NM_002074:exon11+109_110:c.1025_1026insG	exon11-1
-chr1	1708628	1708629	del	G		UTR3	-NM_002074:exon11+108:c.1024del	exon11-1
-chr1	1708628	1708629	snp	G	C	UTR3	-NM_002074:exon11+108:c.1024C>G	exon11-1
-chr1	1708628	1708631	del	3		CDSSTOP	-NM_002074:exon11+106_108:c.1022_1024del:p.*341Cext*4	exon11-1
-chr1	1708629	1708629	ins		C	UTR3	-NM_002074:exon11+107_108:c.1023_1024insG	exon11+1
+chr1	1706589	1706589	ins		A	UTR3	-NM_002074:exon12+1763_1764:c.*1772_*1773insT	exon12+2
+chr1	1706589	1706590	del	C		UTR3	-NM_002074:exon12+1763:c.*1772del	exon12+2
+chr1	1706589	1706590	snp	C	A	UTR3	-NM_002074:exon12+1763:c.*1772G>T	exon12+2
+chr1	1706589	1706592	del	3		UTR3	-NM_002074:exon12+1762_1764:c.*1771_*1773del	exon12+2
+chr1	1706590	1706590	ins		C	UTR3	-NM_002074:exon12+1763_1764:c.*1772_*1773insG	exon12+3
+chr1	1706590	1706591	del	A		UTR3	-NM_002074:exon12+1762:c.*1771del	exon12+3
+chr1	1706590	1706591	snp	A	C	UTR3	-NM_002074:exon12+1762:c.*1771T>G	exon12+3
+chr1	1706590	1706593	del	3		UTR3	-NM_002074:exon12+1760_1762:c.*1769_*1771del	exon12+3
+chr1	1706591	1706591	ins		C	UTR3	-NM_002074:exon12+1761_1762:c.*1770_*1771insG	exon12+4
+chr1	1706591	1706592	del	T		UTR3	-NM_002074:exon12+1761:c.*1770del	exon12+4
+chr1	1706591	1706592	snp	T	C	UTR3	-NM_002074:exon12+1761:c.*1770A>G	exon12+4
+chr1	1706591	1706594	del	3		UTR3	-NM_002074:exon12+1759_1761:c.*1768_*1770del	exon12+4
+chr1	1706595	1706595	ins		C	UTR3	-NM_002074:exon12+1758_1759:c.*1767_*1768insG	exon12+8
+chr1	1706595	1706596	del	A		UTR3	-NM_002074:exon12+1757:c.*1766del	exon12+8
+chr1	1706595	1706596	snp	A	C	UTR3	-NM_002074:exon12+1757:c.*1766T>G	exon12+8
+chr1	1706595	1706598	del	3		UTR3	-NM_002074:exon12+1755_1757:c.*1764_*1766del	exon12+8
+chr1	1706596	1706596	ins		C	UTR3	-NM_002074:exon12+1756_1757:c.*1765_*1766insG	exon12+9
+chr1	1706596	1706597	del	A		UTR3	-NM_002074:exon12+1757:c.*1766del	exon12+9
+chr1	1706596	1706597	snp	A	C	UTR3	-NM_002074:exon12+1756:c.*1765T>G	exon12+9
+chr1	1706596	1706599	del	3		UTR3	-NM_002074:exon12+1754_1756:c.*1763_*1765del	exon12+9
+chr1	1708343	1708343	ins		C	UTR3	-NM_002074:exon12+10_11:c.*19_*20insG	exon12-9
+chr1	1708343	1708344	del	A		UTR3	-NM_002074:exon12+9:c.*18del	exon12-9
+chr1	1708343	1708344	snp	A	C	UTR3	-NM_002074:exon12+9:c.*18T>G	exon12-9
+chr1	1708343	1708346	del	3		UTR3	-NM_002074:exon12+8_10:c.*17_*19del	exon12-9
+chr1	1708344	1708344	ins		C	UTR3	-NM_002074:exon12+8_9:c.*17_*18insG	exon12-8
+chr1	1708344	1708345	del	T		UTR3	-NM_002074:exon12+8:c.*17del	exon12-8
+chr1	1708344	1708345	snp	T	C	UTR3	-NM_002074:exon12+8:c.*17A>G	exon12-8
+chr1	1708344	1708347	del	3		UTR3	-NM_002074:exon12+6_8:c.*15_*17del	exon12-8
+chr1	1708348	1708348	ins		A	UTR3	-NM_002074:exon12+5_6:c.*14_*15insT	exon12-4
+chr1	1708348	1708349	del	C		UTR3	-NM_002074:exon12+4:c.*13del	exon12-4
+chr1	1708348	1708349	snp	C	A	UTR3	-NM_002074:exon12+4:c.*13G>T	exon12-4
+chr1	1708348	1708351	del	3		UTR3	-NM_002074:exon12+2_4:c.*11_*13del	exon12-4
+chr1	1708349	1708349	ins		C	UTR3	-NM_002074:exon12+4_5:c.*13_*14insG	exon12-3
+chr1	1708349	1708350	del	A		UTR3	-NM_002074:exon12+3:c.*12del	exon12-3
+chr1	1708349	1708350	snp	A	C	UTR3	-NM_002074:exon12+3:c.*12T>G	exon12-3
+chr1	1708349	1708352	del	3		UTR3	-NM_002074:exon12+1_3:c.*10_*12del	exon12-3
+chr1	1708350	1708350	ins		C	UTR3	-NM_002074:exon12+2_3:c.*11_*12insG	exon12-2
+chr1	1708350	1708351	del	T		UTR3	-NM_002074:exon12+2:c.*11del	exon12-2
+chr1	1708350	1708351	snp	T	C	UTR3	-NM_002074:exon12+2:c.*11A>G	exon12-2
+chr1	1708350	1708353	del	3		UTR3SPLICE	-NM_002074:intron11+268_exon12+2:c.*10-1_*11del	exon12-2
+chr1	1708351	1708351	ins		C	UTR3	-NM_002074:exon12+1_2:c.*10_*11insG	exon12-1
+chr1	1708351	1708352	del	G		UTR3	-NM_002074:exon12+1:c.*10del	exon12-1
+chr1	1708351	1708352	snp	G	C	UTR3	-NM_002074:exon12+1:c.*10C>G	exon12-1
+chr1	1708351	1708354	del	3		UTR3SPLICE	-NM_002074:intron11+267_exon12+1:c.*10-2_*10del	exon12-1
+chr1	1708352	1708352	ins		A	UTR3	-NM_002074:intron11+268_exon12+1:c.*10-1_*10insT	intron11+1
+chr1	1708352	1708353	del	C		ESPLICE	-NM_002074:intron11+268:c.*10-1del	intron11+1
+chr1	1708352	1708353	snp	C	A	ESPLICE	-NM_002074:intron11+268:c.*10-1G>T	intron11+1
+chr1	1708352	1708355	del	3		ESPLICE	-NM_002074:intron11+266_268:c.*10-3_*10-1del	intron11+1
+chr1	1708353	1708353	ins		C	UTR3	-NM_002074:intron11+268_exon12+1:c.*10-1_*10insG	intron11+2
+chr1	1708353	1708354	del	T		ESPLICE	-NM_002074:intron11+267:c.*10-2del	intron11+2
+chr1	1708353	1708354	snp	T	C	ESPLICE	-NM_002074:intron11+267:c.*10-2A>G	intron11+2
+chr1	1708353	1708356	del	3		ESPLICE	-NM_002074:intron11+265_267:c.*10-4_*10-2del	intron11+2
+chr1	1708354	1708354	ins		C	splice	-NM_002074:intron11+266_267:c.*10-3_*10-2insG	intron11+3
+chr1	1708354	1708355	del	G		splice	-NM_002074:intron11+266:c.*10-3del	intron11+3
+chr1	1708354	1708355	snp	G	C	splice	-NM_002074:intron11+266:c.*10-3C>G	intron11+3
+chr1	1708354	1708357	del	3		ESPLICE	-NM_002074:intron11+265_267:c.*10-4_*10-2del	intron11+3
+chr1	1708355	1708355	ins		C	splice	-NM_002074:intron11+265_266:c.*10-4_*10-3insG	intron11+4
+chr1	1708355	1708356	del	T		splice	-NM_002074:intron11+265:c.*10-4del	intron11+4
+chr1	1708355	1708356	snp	T	C	splice	-NM_002074:intron11+265:c.*10-4A>G	intron11+4
+chr1	1708355	1708358	del	3		splice	-NM_002074:intron11+263_265:c.*10-6_*10-4del	intron11+4
+chr1	1708359	1708359	ins		C	splice	-NM_002074:intron11+261_262:c.*10-8_*10-7insG	intron11+8
+chr1	1708359	1708360	del	A		splice	-NM_002074:intron11+261:c.*10-8del	intron11+8
+chr1	1708359	1708360	snp	A	C	splice	-NM_002074:intron11+261:c.*10-8T>G	intron11+8
+chr1	1708359	1708362	del	3		splice	-NM_002074:intron11+259_261:c.*10-10_*10-8del	intron11+8
+chr1	1708360	1708360	ins		C	intron	-NM_002074:intron11+260_261:c.*10-9_*10-8insG	intron11+9
+chr1	1708360	1708361	del	A		splice	-NM_002074:intron11+261:c.*10-8del	intron11+9
+chr1	1708360	1708361	snp	A	C	intron	-NM_002074:intron11+260:c.*10-9T>G	intron11+9
+chr1	1708360	1708363	del	3		intron	-NM_002074:intron11+258_260:c.*10-11_*10-9del	intron11+9
+chr1	1708611	1708611	ins		A	intron	-NM_002074:intron11+9_10:c.*9+9_*9+10insT	intron11-9
+chr1	1708611	1708612	del	C		intron	-NM_002074:intron11+9:c.*9+9del	intron11-9
+chr1	1708611	1708612	snp	C	A	intron	-NM_002074:intron11+9:c.*9+9G>T	intron11-9
+chr1	1708611	1708614	del	3		intron	-NM_002074:intron11+11_13:c.*9+11_*9+13del	intron11-9
+chr1	1708612	1708612	ins		C	intron	-NM_002074:intron11+9_10:c.*9+9_*9+10insG	intron11-8
+chr1	1708612	1708613	del	T		splice	-NM_002074:intron11+8:c.*9+8del	intron11-8
+chr1	1708612	1708613	snp	T	C	splice	-NM_002074:intron11+8:c.*9+8A>G	intron11-8
+chr1	1708612	1708615	del	3		intron	-NM_002074:intron11+11_13:c.*9+11_*9+13del	intron11-8
+chr1	1708616	1708616	ins		C	splice	-NM_002074:intron11+4_5:c.*9+4_*9+5insG	intron11-4
+chr1	1708616	1708617	del	T		splice	-NM_002074:intron11+4:c.*9+4del	intron11-4
+chr1	1708616	1708617	snp	T	C	splice	-NM_002074:intron11+4:c.*9+4A>G	intron11-4
+chr1	1708616	1708619	del	3		splice	-NM_002074:intron11+3_5:c.*9+3_*9+5del	intron11-4
+chr1	1708617	1708617	ins		C	splice	-NM_002074:intron11+3_4:c.*9+3_*9+4insG	intron11-3
+chr1	1708617	1708618	del	T		splice	-NM_002074:intron11+4:c.*9+4del	intron11-3
+chr1	1708617	1708618	snp	T	C	splice	-NM_002074:intron11+3:c.*9+3A>G	intron11-3
+chr1	1708617	1708620	del	3		ESPLICE	-NM_002074:intron11+1_3:c.*9+1_*9+3del	intron11-3
+chr1	1708618	1708618	ins		C	splice	-NM_002074:intron11+2_3:c.*9+2_*9+3insG	intron11-2
+chr1	1708618	1708619	del	A		ESPLICE	-NM_002074:intron11+2:c.*9+2del	intron11-2
+chr1	1708618	1708619	snp	A	C	ESPLICE	-NM_002074:intron11+2:c.*9+2T>G	intron11-2
+chr1	1708618	1708621	del	3		UTR3SPLICE	-NM_002074:exon11+116_intron11+2:c.*9_*9+2del	intron11-2
+chr1	1708619	1708619	ins		A	splice	-NM_002074:intron11+2_3:c.*9+2_*9+3insT	intron11-1
+chr1	1708619	1708620	del	C		ESPLICE	-NM_002074:intron11+1:c.*9+1del	intron11-1
+chr1	1708619	1708620	snp	C	A	ESPLICE	-NM_002074:intron11+1:c.*9+1G>T	intron11-1
+chr1	1708619	1708622	del	3		UTR3SPLICE	-NM_002074:exon11+115_intron11+1:c.*8_*9+1del	intron11-1
+chr1	1708620	1708620	ins		A	UTR3	-NM_002074:exon11+116_intron11+1:c.*9_*9+1insT	exon11+1
+chr1	1708620	1708621	del	C		UTR3	-NM_002074:exon11+116:c.*9del	exon11+1
+chr1	1708620	1708621	snp	C	A	UTR3	-NM_002074:exon11+116:c.*9G>T	exon11+1
+chr1	1708620	1708623	del	3		UTR3	-NM_002074:exon11+114_116:c.*7_*9del	exon11+1
+chr1	1708621	1708621	ins		C	UTR3	-NM_002074:exon11+116_intron11+1:c.*9_*9+1insG	exon11+2
+chr1	1708621	1708622	del	T		UTR3	-NM_002074:exon11+115:c.*8del	exon11+2
+chr1	1708621	1708622	snp	T	C	UTR3	-NM_002074:exon11+115:c.*8A>G	exon11+2
+chr1	1708621	1708624	del	3		UTR3	-NM_002074:exon11+114_116:c.*7_*9del	exon11+2
+chr1	1708622	1708622	ins		C	UTR3	-NM_002074:exon11+114_115:c.*7_*8insG	exon11+3
+chr1	1708622	1708623	del	A		UTR3	-NM_002074:exon11+114:c.*7del	exon11+3
+chr1	1708622	1708623	snp	A	C	UTR3	-NM_002074:exon11+114:c.*7T>G	exon11+3
+chr1	1708622	1708625	del	3		UTR3	-NM_002074:exon11+114_116:c.*7_*9del	exon11+3
+chr1	1708623	1708623	ins		A	UTR3	-NM_002074:exon11+114_115:c.*7_*8insT	exon11+4
+chr1	1708623	1708624	del	C		UTR3	-NM_002074:exon11+113:c.*6del	exon11+4
+chr1	1708623	1708624	snp	C	A	UTR3	-NM_002074:exon11+113:c.*6G>T	exon11+4
+chr1	1708623	1708626	del	3		UTR3	-NM_002074:exon11+111_113:c.*4_*6del	exon11+4
+chr1	1708625	1708625	ins		C	UTR3	-NM_002074:exon11+111_112:c.*4_*5insG	exon11-4
+chr1	1708625	1708626	del	G		UTR3	-NM_002074:exon11+111:c.*4del	exon11-4
+chr1	1708625	1708626	snp	G	C	UTR3	-NM_002074:exon11+111:c.*4C>G	exon11-4
+chr1	1708625	1708628	del	3		UTR3	-NM_002074:exon11+109_111:c.*2_*4del	exon11-4
+chr1	1708626	1708626	ins		C	UTR3	-NM_002074:exon11+110_111:c.*3_*4insG	exon11-3
+chr1	1708626	1708627	del	G		UTR3	-NM_002074:exon11+111:c.*4del	exon11-3
+chr1	1708626	1708627	snp	G	C	UTR3	-NM_002074:exon11+110:c.*3C>G	exon11-3
+chr1	1708626	1708629	del	3		UTR3	-NM_002074:exon11+109_111:c.*2_*4del	exon11-3
+chr1	1708627	1708627	ins		A	UTR3	-NM_002074:exon11+109_110:c.*2_*3insT	exon11-2
+chr1	1708627	1708628	del	C		UTR3	-NM_002074:exon11+109:c.*2del	exon11-2
+chr1	1708627	1708628	snp	C	A	UTR3	-NM_002074:exon11+109:c.*2G>T	exon11-2
+chr1	1708627	1708630	del	3		CDSSTOP	-NM_002074:exon11+107_109:c.1023_*2del:p.*341Yext*4	exon11-2
+chr1	1708628	1708628	ins		C	UTR3	-NM_002074:exon11+109_110:c.*2_*3insG	exon11-1
+chr1	1708628	1708629	del	G		UTR3	-NM_002074:exon11+108:c.*1del	exon11-1
+chr1	1708628	1708629	snp	G	C	UTR3	-NM_002074:exon11+108:c.*1C>G	exon11-1
+chr1	1708628	1708631	del	3		CDSSTOP	-NM_002074:exon11+106_108:c.1022_*1del:p.*341Cext*4	exon11-1
+chr1	1708629	1708629	ins		C	UTR3	-NM_002074:exon11+107_108:c.1023_*1insG	exon11+1
 chr1	1708629	1708630	del	T		CDSSTOP	-NM_002074:exon11+107:c.1023del:p.*341Yext*23	exon11+1
 chr1	1708629	1708630	snp	T	C	CDSSTOP	-NM_002074:exon11+107:c.1023A>G:p.*341*	exon11+1
 chr1	1708629	1708632	del	3		CDSSTOP	-NM_002074:exon11+105_107:c.1021_1023del:p.*341Rext*4	exon11+1
@@ -282,7 +282,7 @@ chr1	1708736	1708737	del	C		ESPLICE	-NM_002074:intron10+1615:c.917-1del	intron10
 chr1	1708736	1708737	snp	C	A	ESPLICE	-NM_002074:intron10+1615:c.917-1G>T	intron10+1
 chr1	1708736	1708739	del	3		ESPLICE	-NM_002074:intron10+1613_1615:c.917-3_917-1del	intron10+1
 chr1	1708736	1708739	del	3		ESPLICE	-NM_002074:intron10+1613_1615:c.917-3_917-1del	
-chr1	1708737	1708737	ins		A	ESPLICE	-NM_002074:intron10+1614_1615:c.917-2_917-1insT
+chr1	1708737	1708737	ins		A	ESPLICE	-NM_002074:intron10+1614_1615:c.917-2_917-1insT	
 chr1	1708737	1708738	del	T		ESPLICE	-NM_002074:intron10+1614:c.917-2del	intron10+2
 chr1	1708737	1708738	snp	T	C	ESPLICE	-NM_002074:intron10+1614:c.917-2A>G	intron10+2
 chr1	1708737	1708740	del	3		ESPLICE	-NM_002074:intron10+1612_1614:c.917-4_917-2del	intron10+2
