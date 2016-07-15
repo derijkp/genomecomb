@@ -199,52 +199,68 @@ int naturalcompare (char const *a, char const *b,int alen,int blen) {
 			if (!blen || *right == '\0') {return secondaryDiff;} else {break;}
 		}
 		if (!blen || *right == '\0') {break;}
-		if (*left != *right) {
-			if (diff) {	
-				/* only sort on case if no other diff -> keep secondaryDiff for case diff */
-				if (isupper(UCHAR(*left)) && islower(UCHAR(*right))) {
-					diff = tolower(*left) - *right;
-					if (diff) {
-						break;
-					} else if (secondaryDiff == 0) {
-						secondaryDiff = -1;
-					}
-				} else if (isupper(UCHAR(*right)) && islower(UCHAR(*left))) {
-					diff = *left - tolower(UCHAR(*right));
-					if (diff) {
-						break;
-					} else if (secondaryDiff == 0) {
-						secondaryDiff = 1;
-					}
-				} else if (*right == '+') {
-					if (*left == '-') {
-						if (NATDIGIT(left+1) && NATDIGIT(right+1)) {return -1;} else {return 1;}
-					} else if (NATDIGIT(right+1) && NATDIGIT(left)) {
-						secondaryDiff = -1;
-						right++; blen--;
-						continue;
-					}
-				} else if (*left == '+') {
-					if (*right == '-') {
-						if (NATDIGIT(left+1) && NATDIGIT(right+1)) {return 1;} else {return -1;}
-					} else if (NATDIGIT(left+1) && NATDIGIT(right)) {
-						secondaryDiff = 1;
-						left++; alen--;
-						continue;
-					}
-				} else {
+		if (diff != 0) {	
+			/* only sort on case if no other diff -> keep secondaryDiff for case diff */
+			if (isupper(UCHAR(*left)) && islower(UCHAR(*right))) {
+				diff = tolower(*left) - *right;
+				if (diff) {
 					break;
+				} else if (secondaryDiff == 0) {
+					secondaryDiff = -1;
 				}
+			} else if (isupper(UCHAR(*right)) && islower(UCHAR(*left))) {
+				diff = *left - tolower(UCHAR(*right));
+				if (diff) {
+					break;
+				} else if (secondaryDiff == 0) {
+					secondaryDiff = 1;
+				}
+			} else {
+				break;
 			}
 		}
-		prevdigit = NATDIGIT(right);
 		left++; alen--;
 		right++; blen--;
 	}
+	if (diff == 0) {return secondaryDiff;}
+	if (left == a) {
+		prevdigit = 0;
+	} else {
+		/* previous is the same for left and right! */
+		prevdigit = NATDIGIT(right-1);
+	}
 	digitright = blen && NATDIGIT(right);
 	digitleft = alen && NATDIGIT(left);
-	/* fprintf(stdout,"digit %d <> %d\n", digitleft, digitright, diff);fflush(stdout); */
-	if (*left == '-') {
+	/* fprintf(stdout,"%c <> %c    digit %d <> %d    diff %d\n", *left, *right, digitleft, digitright, diff);fflush(stdout); */
+	if (*right == '+') {
+		if (*left == '-') {
+			if (NATDIGIT(left+1) && NATDIGIT(right+1)) {return -1;} else {return 1;}
+		} else if (digitleft) {
+			if (prevdigit) {return 1;}
+			right++; blen--;
+			digitright = blen && NATDIGIT(right);
+			if (!digitright) {
+				return (diff<0)?-1:1;
+			}
+			if (secondaryDiff == 0) {secondaryDiff = -1;}
+		} else {
+			return (diff<0)?-1:1;
+		}
+	} else if (*left == '+') {
+		if (*right == '-') {
+			if (NATDIGIT(right+1) && NATDIGIT(left+1)) {return 1;} else {return -1;}
+		} else if (digitright) {
+			if (prevdigit) {return 1;}
+			left++; alen--;
+			digitleft = alen && NATDIGIT(left);
+			if (!digitleft) {
+				return (diff<0)?-1:1;
+			}
+			if (secondaryDiff == 0) {secondaryDiff = 1;}
+		} else {
+			return (diff<0)?-1:1;
+		}
+	} else if (*left == '-') {
 		if (digitright) {
 			if (!prevdigit) {
 				return -1;
@@ -252,7 +268,7 @@ int naturalcompare (char const *a, char const *b,int alen,int blen) {
 				return 1;
 			}
 		} else {
-			return(*left - *right);
+			return ((*left - *right)<0)?-1:1;
 		}
 	} else if (*right == '-' && digitleft) {
 		if (digitleft) {
@@ -262,7 +278,7 @@ int naturalcompare (char const *a, char const *b,int alen,int blen) {
 				return -1;
 			}
 		} else {
-			return(*left - *right);
+			return ((*left - *right)<0)?-1:1;
 		}
 	}
 	/* fprintf(stdout,"digit %s <> %s: %d, %d\n",left,right,digitleft,digitright);fflush(stdout); */
@@ -276,7 +292,7 @@ int naturalcompare (char const *a, char const *b,int alen,int blen) {
 	}
 
 	if (!comparedigits) {
-		if (diff == 0) {return secondaryDiff;} else {return diff;}
+		if (diff == 0) {return secondaryDiff;} else {return (diff<0)?-1:1;}
 	}
 	/*
 	 * There are decimal numbers embedded in the two

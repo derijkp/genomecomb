@@ -11,11 +11,66 @@ test nat_compare {chr10 chr2} {
 
 test nat_compare {chr1 1} {
 	nat_compare chr1 1
-} 50
+} 1
 
 test nat_compare {test-100 test-1-1} {
 	nat_compare test-100 test-1-1
+} -1
+
+test nat_compare {-100 -1} {
+	nat_compare -100 -1
+} -1
+
+test nat_compare {{a -100} {a -1}} {
+	nat_compare {a -100} {a -1}
 } -1 
+
+test nat_compare {a-100 a-1} {
+	nat_compare a-100 a-1
+} -1
+
+test nat_compare {+1 -1} {
+	nat_compare +1 -1
+} 1
+
+test nat_compare {a+b aa} {
+	nat_compare a+b aa
+} -1
+
+test nat_compare {a +} {
+	nat_compare + a
+} -1
+
+test nat_compare {a aa} {
+	nat_compare a aa
+} -1
+
+test nat_compare {multiple} {
+	set error {}
+	foreach {a b result} {
+		+	-	-1
+		-	+	1
+		+1	1	1
+		-1	1	-1
+		-1	2	-1
+		-1	+1	-1
+		a-1	a+1	-1
+		10	+1	1
+		100	+1-1	1
+		100	1+1	1
+		1	+1	-1
+		a+1	a1	1
+		1	-1	1
+		+1	-1	1
+		a+1	a-1	1
+		a1	a-1	1
+		a+2	a1	1
+	} {
+		set temp [nat_compare $a $b]
+		if {$temp ne $result} {lappend error "$a $b  =  $temp instead of $result"}
+	}
+	join $error \n
+} {}
 
 test loc_compare {2 2} {
 	loc_compare 2 2
