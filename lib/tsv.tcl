@@ -200,11 +200,11 @@ proc tsv_count {tsvfile} {
 	if {!$ok} {
 		set varsfile [indexdir_file $tsvfile vars.tsv ok]
 		if {$ok} {
-			set count [lindex [cg select -g _all_ $varsfile] end]
+			set count [lindex [cg select -g - $varsfile] end]
 			file_write $countfile $count
 			return $count
 		} else {
-			set count [lindex [cg select -g _all_ [gzfile $tsvfile]] end]
+			set count [lindex [cg select -g - [gzfile $tsvfile]] end]
 			file_write $countfile $count
 			return $count
 		}
