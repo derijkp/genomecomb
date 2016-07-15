@@ -24,8 +24,6 @@ proc cg_gene2reg {args} {
 	set header [open_genefile $f dposs]
 	set rest [list_sub $header -exclude $dposs]
 	set restposs [list_cor $header $rest]
-	
-
 	puts $o [join [list_concat {chromosome begin end type element rna_start rna_end protein_start protein_end gene transcript} $rest] \t]
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
