@@ -8,7 +8,7 @@ test bcol_index {basic} {
 	test_cleantmp
 	file copy -force data/expected-annotate-vars_annottest-gene_test.tsv tmp/temp.sft
 	exec cg size tmp/temp.sft
-} {46} 
+} {47}
 
 test bcol_index {basic} {
 	test_cleantmp

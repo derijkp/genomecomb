@@ -50,7 +50,7 @@ snp	A	11
 snp	A,T	1
 snp	C	6
 snp	C,T	1
-snp	G	5
+snp	G	6
 snp	T	15
 snp	T,C,A	1
 sub	GGG	1}
@@ -64,7 +64,7 @@ snp	A,Tx	1
 snp	Ax	11
 snp	C,Tx	1
 snp	Cx	6
-snp	Gx	5
+snp	Gx	6
 snp	T,C,Ax	1
 snp	Tx	15
 sub	GGGx	1}
