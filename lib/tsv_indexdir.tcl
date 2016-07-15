@@ -1,6 +1,6 @@
 proc indexdir {mainfile} {
 	global configdata
-	set file [file normalize [gzroot $mainfile]]
+	set file [file_absolute [gzroot $mainfile]]
 	if {[info exists configdata(indexdir,$file)]} {return $configdata(indexdir,$file)}
 	set configdir [configdir]
 	set tail [file tail $file]
@@ -59,7 +59,7 @@ proc indexdir_cache_check {mainfile indexdir indexfile} {
 
 # use this if you want to write to the index file, regardless of whether an up to date version exists
 proc indexdir_filewrite {mainfile indexfile} {
-	set indexdir [file normalize [gzroot $mainfile]].index
+	set indexdir [file_absolute [gzroot $mainfile]].index
 	# first try sib indexdir
 	if {[file exists $indexdir/$indexfile]} {
 		# if we can delete the obsolete file, we can also write the new one
@@ -92,7 +92,7 @@ proc indexdir_filewrite {mainfile indexfile} {
 proc indexdir_file {mainfile indexfile {okVar {}}} {
 	if {$okVar ne ""} {upvar $okVar ok}
 	set ok 1
-	set indexdir [file normalize [gzroot $mainfile]].index
+	set indexdir [file_absolute [gzroot $mainfile]].index
 	# is a good file existing in either user indexdir or sib indexdir (ok is 1 if we do find one)
 	set userindexdir [indexdir $mainfile]
 	if {[indexdir_cache_check $mainfile $userindexdir $indexfile]} {

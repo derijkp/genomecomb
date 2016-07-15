@@ -261,7 +261,7 @@ proc generate_coverage_report_job {experiment regfile histofiles} {
 		}
 		set histofiles [lrange $deps 1 end]
 		foreach file $histofiles {
-			set file [file normalize $file]
+			set file [file_absolute $file]
 			lappend oheader [file tail [file dir $file]]
 			set f [open $file]
 			set header [tsv_open $f]

@@ -245,7 +245,7 @@ proc opensqlite3 {dbfile query} {
 }
 
 proc compress {file {ext .lz4}} {
-	set file [file normalize $file]
+	set file [file_absolute $file]
 	if {[file exists $file$ext]} {file delete $file$ext}
 	if {[inlist {.rz} $ext]} {
 		exec razip $file
@@ -267,7 +267,7 @@ proc gzopen {file {pos -1}} {
 	if {![file exists $file]} {
 		exiterror "Error: couldn't open \"$file\": no such file or directory"
 	}
-	set file [file normalize $file]
+	set file [file_absolute $file]
 	set ext [file extension $file]
 	if {[inlist {.rz} $ext]} {
 		if {$pos == -1} {
@@ -955,17 +955,22 @@ proc razip_job {file args} {
 }
 
 proc file_absolute {file} {
-	if {[string range $file 0 1] eq "~/"} {
-		set result [file join $::env(HOME) [string range $file 2 end]]
-	} else {
-		set result {}
-		foreach el [file split [file join [pwd] $file]] {
-			if {$el eq ".."} {
-				if {[llength $result] <= 1} {error "file_absolute error: cannot .. past root"}
-				list_pop result
-			} elseif {$el ne "." && $el ne ""} {
-				lappend result $el
-			}
+	if {[string index $file 0] eq "~"} {
+		if {[string length $file] == 1} {
+			return $::env(HOME)
+		} elseif {[string index $file 1] eq "/"} {
+			set file [file join $::env(HOME) [string range $file 2 end]]
+		} else {
+			set file ./$file
+		}
+	}
+	set result {}
+	foreach el [file split [file join [pwd] $file]] {
+		if {$el eq ".."} {
+			if {[llength $result] <= 1} {error "file_absolute error: cannot .. past root"}
+			list_pop result
+		} elseif {$el ne "." && $el ne ""} {
+			lappend result $el
 		}
 	}
 	file join {*}$result
@@ -1064,12 +1069,12 @@ proc oargs {cmd def arg} {
 proc file_resolve {file {lastlinkVar {}}} {
 	if {$lastlinkVar ne ""} {upvar $lastlinkVar lastlink}
 	if {$::tcl_platform(platform) eq "unix"} {
-		set file [file normalize $file]
+		set file [file_absolute $file]
 		while 1 {
 			if {[catch {set link [file readlink $file]}]} break
-			if {[file pathtype $link] ne "absolute"} {set link [file normalize [file join [file dir $file] $link]]}
+			if {[file pathtype $link] ne "absolute"} {set link [file_absolute [file join [file dir $file] $link]]}
 			set lastlink $file
-			set file [file normalize $link]
+			set file [file_absolute $link]
 		}
 	}
 	return $file

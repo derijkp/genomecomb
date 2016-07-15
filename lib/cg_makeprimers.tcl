@@ -216,7 +216,7 @@ proc makeprimers_annotate {line shift} {
 #   * the total number of hits
 #   * a dictionary with chromosomes as keys, and a list of the positions found on that chromosome in the value
 proc cindex_searchgenome {db pseq {add 0} {nummax {}}} {
-	upvar #0 cindex_genome([file normalize $db]) cindex_genome
+	upvar #0 cindex_genome([file_absolute $db]) cindex_genome
 	if {$nummax eq {}} {set nummax [get ::maxnum 1000]}
 	if {![info exists cindex_genome]} {
 		putslog "loading genome database"

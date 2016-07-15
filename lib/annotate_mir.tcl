@@ -311,13 +311,13 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
  putsvars file genomefile dbfile name resultfile genecol transcriptcol flanksizes isomirname mirvas extracols upstreamsize
 	global genomef
 	if {$upstreamsize < [max $flanksizes]} {set upstreamsize [max $flanksizes]}
-	set file [file normalize $file]
-	set dbfile [file normalize $dbfile]
-	set resultfile [file normalize $resultfile]
+	set file [file_absolute $file]
+	set dbfile [file_absolute $dbfile]
+	set resultfile [file_absolute $resultfile]
 	file mkdir [file dir $resultfile]
 	if {!$mirvas} {annot_init}
 	if {$genomefile ne "" && [catch {eof $genomef}]} {
-		set genomefile [file normalize $genomefile]
+		set genomefile [file_absolute $genomefile]
 		set genomef [genome_open $genomefile]
 	} else {
 		set genomef {}

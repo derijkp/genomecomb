@@ -63,11 +63,11 @@ proc cg_homwes {args} {
 	}
 	set resultfile {}
 	foreach {annotcomparfile samples resultfile} $args break
-	set annotcomparfile [file normalize $annotcomparfile]
+	set annotcomparfile [file_absolute $annotcomparfile]
 	if {$resultfile eq ""} {
 		set resultfile [file root $annotcomparfile]-homwes.tsv
 	}
-	set resultfile [file normalize $resultfile]
+	set resultfile [file_absolute $resultfile]
 	set resultfilebase [file root $resultfile]
 	set workdir $resultfilebase.work
 	file mkdir $workdir

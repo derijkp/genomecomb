@@ -22,7 +22,7 @@ proc monetdbinit {} {
 		if {[file pathtype $link] eq "absolute"} {
 			set file $link
 		} else {
-			set file [file normalize [file dir $file]/$link]
+			set file [file_absolute [file dir $file]/$link]
 		}
 	}
 	if {![file exists $file]} {

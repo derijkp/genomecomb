@@ -55,8 +55,8 @@ proc cg_bamreorder {src dest ref} {
 	}
 	if {[file exentsion $ref] ne ".fa"} {
 		set nref [tempfile].fa
-		file mklink $nref [file normalize $ref]
-		file mklink $nref.fai [file normalize $ref].fai
+		file mklink $nref [file_absolute $ref]
+		file mklink $nref.fai [file_absolute $ref].fai
 	} else {
 		set nref $ref
 	}

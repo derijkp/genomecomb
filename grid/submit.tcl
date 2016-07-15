@@ -69,6 +69,6 @@ if {[info exists ra([list $name $tasknum])]} {
 } else {
 	file mkdir osge
 	file mkdir esge
-	set jnum [eval {exec qsub -N j$name -q all.q -o osge -e esge} $options [file normalize ~/bin/repeater.sh] [file normalize [pwd]] $argv]
+	set jnum [eval {exec qsub -N j$name -q all.q -o osge -e esge} $options [file_absolute ~/bin/repeater.sh] [file_absolute [pwd]] $argv]
 	puts "$jnum $name"
 }
