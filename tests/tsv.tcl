@@ -410,4 +410,35 @@ test tsv_split {split and cat} {
 	exec diff tmp/cat.tsv data/reg4.tsv
 } {}
 
+test tsv_histo {cg histo basic} {
+	test_cleantmp
+	exec cg histo coverage | cg select -s value < data/coverage.tsv
+} {value	count
+0	4
+1	7
+10	1
+11	2
+12	1
+20	2
+22	2
+30	2
+31	2
+39	1}
+
+test tsv_histo {cg histo -header} {
+	test_cleantmp
+	exec cg histo -header 0 2 | cg select -s value < data/coverage.tsv
+} {value	count
+0	4
+1	7
+10	1
+11	2
+12	1
+20	2
+22	2
+30	2
+31	2
+39	1
+coverage	1}
+
 testsummarize
