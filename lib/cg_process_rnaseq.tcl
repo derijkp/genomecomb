@@ -69,7 +69,7 @@ proc make_count_table_job {dir experiment samples} {
 proc generate_fastqc {files outdir} {
 	upvar job_logdir job_logdir
 	catch {file mkdir $outdir}
-	job  generate_fastqc -deps $files -vars {outdir}  -code {
+	job generate_fastqc-$outdir -deps $files -vars {outdir}  -code {
 		exec fastqc -q -o $outdir {*}$deps 2>@ stderr >@ stdout
 	}
 }
