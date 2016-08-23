@@ -10,6 +10,10 @@ test reg_annot {basic} {
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
 } {} 
 
+test reg_annot {error file does not exists} {
+	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_doesnotexist.tsv
+} {File data/reg_doesnotexist.tsv does not exist} error
+
 test reg_annot {compressed} {
 	file copy -force data/reg_annot.sft data/reg_annot.sft.opt tmp
 	exec cg razip tmp/reg_annot.sft

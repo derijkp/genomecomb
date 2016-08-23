@@ -244,6 +244,9 @@ proc cg_annotate {args} {
 	foreach testfile [lrange $args 2 end] {
 		if {[file isdir $testfile]} {
 			lappend dbfiles {*}[glob -nocomplain $testfile/var_*.tsv $testfile/gene_*.tsv $testfile/mir_*.tsv $testfile/reg_*.tsv $testfile/bcol_*.tsv]
+		} elseif {![file exists $testfile]} {
+			puts stderr "File $testfile does not exist"
+			exit 1
 		} else {
 			lappend dbfiles $testfile
 		}
