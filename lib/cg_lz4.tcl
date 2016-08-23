@@ -1,7 +1,7 @@
 proc cg_lz4 args {
 	set pos 0
 	set keep 0
-	set compressionlevel 1
+	set compressionlevel 9
 	foreach {key value} $args {
 		switch -- $key {
 			-k {
