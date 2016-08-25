@@ -154,9 +154,9 @@ int lz4_readblock(LZ4res *res, unsigned int startblock) {
 				READ(finput,4,res->buffer,"could not read block size")
 				compressedsize = LZ4IO_readLE32(res->buffer);
 				if (compressedsize == 0) break;
-				uncompressed = compressedsize >= 2147483648;
+				uncompressed = compressedsize >= 2147483648u;
 				if (uncompressed) {
-					compressedsize -= 2147483648;
+					compressedsize -= 2147483648u;
 				}
 				NODPRINT("compressedsize: %d (%d)",compressedsize,uncompressed);
 				if (res->blockChecksumFlag) {
@@ -173,9 +173,9 @@ int lz4_readblock(LZ4res *res, unsigned int startblock) {
 	READ(finput,4,res->buffer,"could not read block size")
 	compressedsize = LZ4IO_readLE32(res->buffer);
 	if (compressedsize == 0) {return 0;}
-	uncompressed = compressedsize >= 2147483648;
+	uncompressed = compressedsize >= 2147483648u;
 	if (uncompressed) {
-		compressedsize -= 2147483648;
+		compressedsize -= 2147483648u;
 	}
 	NODPRINT("compressedsize: %d (%d)",compressedsize,uncompressed);
 	if (res->blockChecksumFlag) {
