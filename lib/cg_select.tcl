@@ -1120,7 +1120,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {oldheader {}} {newheader {}
 				set header [tsv_open $hf keepheader]
 				close $hf
 			}
-			new {
+			parameter {
 				set keepheader ""
 				set header [lindex $oldheader 1]
 			}
@@ -1451,7 +1451,7 @@ proc cg_select {args} {
 			}
 		}
 		-hf {set oldheader [list file $value]}
-		-hn {set oldheader [list new $value]}
+		-hp {set oldheader [list parameter $value]}
 		-s {set sortfields $value}
 		-sr {set sortfields -$value}
 		-n {

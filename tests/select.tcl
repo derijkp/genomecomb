@@ -190,13 +190,13 @@ test select "-hf$dboptt" {
 1
 2}
 
-test select "-hn$dboptt" {
+test select "-hp$dboptt" {
 	global dbopt
 	write_tab tmp/temp.tsv {
 		a	1
 		b	2
 	}
-	exec cg select {*}$dbopt -hn "key value" -f {value} tmp/temp.tsv
+	exec cg select {*}$dbopt -hp "key value" -f {value} tmp/temp.tsv
 } {value
 1
 2}
