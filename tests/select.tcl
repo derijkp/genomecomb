@@ -176,6 +176,31 @@ test select "-hc with chars that must be escaped$dboptt" {
 	exec diff tmp/out.tsv tmp/expected.tsv
 } {}
 
+test select "-hf$dboptt" {
+	global dbopt
+	write_tab tmp/temp_header.tsv {
+		key	value
+	}
+	write_tab tmp/temp.tsv {
+		a	1
+		b	2
+	}
+	exec cg select {*}$dbopt -hf tmp/temp_header.tsv -f {value} tmp/temp.tsv
+} {value
+1
+2}
+
+test select "-hn$dboptt" {
+	global dbopt
+	write_tab tmp/temp.tsv {
+		a	1
+		b	2
+	}
+	exec cg select {*}$dbopt -hn "key value" -f {value} tmp/temp.tsv
+} {value
+1
+2}
+
 test select "keep header info and format vcf$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -s POS data/test.vcf tmp/temp.tsv

@@ -591,7 +591,7 @@ proc monetdb_makesql {table theader query qfieldsVar {sortfields {}} {inverse 0}
 	return $sql
 }
 
-proc monetdb_select {db table query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}}} {
+proc monetdb_select {db table query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {out stdout} {inverse 0} {group {}} {groupcols {}}} {
 #putsvars db table header query qfields sortfields newheader sepheader out hc inverse group groupcols
 	set theader [list_remove [cg_monetdb_fields $db $table] rowid]
 	if {![catch {
@@ -606,16 +606,6 @@ proc monetdb_select {db table query {qfields {}} {sortfields {}} {newheader {}} 
 		fconfigure $out -buffering none
 	}
 	set keepheader {}
-#	if {$hc ne "0" && $hc ne "1"} {
-#		set hf [gzopen $hc]
-#		set header [tsv_open $hf keepheader]
-#		close $hf
-#	} else {
-#		set header [tsv_open $f keepheader]
-#		if {$hc eq "1"} {
-#			tsv_hcheader $f keepheader header
-#		}
-#	}
 	if {![inlist $sortfields rowid]} {
 		lappend sortfields rowid
 	}

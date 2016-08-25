@@ -1109,22 +1109,34 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 	return $code
 }
 
-proc tsv_select {query {qfields {}} {sortfields {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {hc 0} {inverse 0} {group {}} {groupcols {}} {index {}} {samplingskip 0} {removecomment 0} {samples {}}} {
-# putsvars query qfields sortfields newheader sepheader f out hc inverse group groupcols index samplingskip removecomment
+proc tsv_select {query {qfields {}} {sortfields {}} {oldheader {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {inverse 0} {group {}} {groupcols {}} {index {}} {samplingskip 0} {removecomment 0} {samples {}}} {
+# putsvars query qfields sortfields oldheader newheader sepheader f out inverse group groupcols index samplingskip removecomment
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
-	if {$hc ni {0 1 2}} {
-		set hf [gzopen $hc]
-		set header [tsv_open $hf keepheader]
-		close $hf
-	} else {
-		set header [tsv_open $f keepheader]
-		if {$hc > 0} {
-			tsv_hcheader $f keepheader header
-			if {$hc == 2} {
+	if {[llength $oldheader]} {
+		switch [lindex $oldheader 0] {
+			file {
+				set hf [gzopen [lindex $oldheader 1]]
+				set header [tsv_open $hf keepheader]
+				close $hf
+			}
+			new {
+				set keepheader ""
+				set header [lindex $oldheader 1]
+			}
+			comment {
+				set header [tsv_open $f keepheader]
+				tsv_hcheader $f keepheader header
+			}
+			commentkeep {
+				set header [tsv_open $f keepheader]
+				tsv_hcheader $f keepheader header
 				append keepheader \#
 			}
+			default {error "internal error: unkown code [lindex $oldheader 0]"}
 		}
+	} else {
+		set header [tsv_open $f keepheader]
 	}
 	if {$removecomment} {set keepheader ""}
 	set neededfields {}
@@ -1386,7 +1398,7 @@ proc cg_select {args} {
 		exit 1
 	}
 	unset -nocomplain ::tsv_select_sampleinfo
-	set query {}; set qfields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0
+	set query {}; set qfields {}; set sortfields {}; set oldheader {}; set newheader {}; set sepheader ""
 	set inverse 0; set group {}; set groupcols {} ; set samplingskip 0; set db {} ; set removecomment 0
 	set samples {}
 	set pos 0
@@ -1429,10 +1441,17 @@ proc cg_select {args} {
 		-nh {set newheader $value}
 		-sh {set sepheader $value}
 		-hc {
-			if {$value ni {0 1 2}} {error "-hc must be 0, 1 or 2"}
-			set hc $value
+			if {$value eq "0"} {
+			} elseif {$value eq "1"} {
+				set oldheader comment
+			} elseif {$value eq "2"} {
+				set oldheader commentkeep
+			} else {
+				error "-hc must be 0, 1 or 2"
+			}
 		}
-		-hf {set hc $value}
+		-hf {set oldheader [list file $value]}
+		-hn {set oldheader [list new $value]}
 		-s {set sortfields $value}
 		-sr {set sortfields -$value}
 		-n {
@@ -1500,12 +1519,12 @@ proc cg_select {args} {
 	if {$db ne ""} {
 		set table [monetdb_backend $db [file_resolve $filename]]
 		set error [catch {
-			monetdb_select $db $table $query $qfields $sortfields $newheader $sepheader $o $hc $inverse $group $groupcols
+			monetdb_select $db $table $query $qfields $sortfields $newheader $sepheader $o $inverse $group $groupcols
 		} result]
 	} else {
-		# putsvars query qfields sortfields newheader sepheader f o hc inverse group groupcols index samplingskip removecomment samples
+		# putsvars query qfields sortfields oldheader newheader sepheader f o inverse group groupcols index samplingskip removecomment samples
 		set error [catch {
-			tsv_select $query $qfields $sortfields $newheader $sepheader $f $o $hc $inverse $group $groupcols $index $samplingskip $removecomment $samples
+			tsv_select $query $qfields $sortfields $oldheader $newheader $sepheader $f $o $inverse $group $groupcols $index $samplingskip $removecomment $samples
 		} result]
 	}
 	if {$f ne "stdin"} {catch {close $f}}
