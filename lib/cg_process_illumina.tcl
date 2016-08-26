@@ -723,7 +723,7 @@ proc process_illumina {args} {
 	set paired 1
 	set adapterfile {}
 	set conv_nextseq 0
-	set hsmetrics 0
+	set reports all
 	set pos 0
 	foreach {key value} $args {
 		switch -- $key {
@@ -748,10 +748,8 @@ proc process_illumina {args} {
 			-conv_nextseq {
 				set conv_nextseq $value
 			}
-			-bedfile {
-				set bedfile $value
-				set hsmetrics 1
-				set hsmetrics_files {}
+			-reports {
+				set reports $value
 			}
 			default break
 		}
@@ -767,12 +765,9 @@ proc process_illumina {args} {
 		errorformat process_illumina
 		exit 1
 	}
-	lappend dbfiles [glob $dbdir/extra/*dbnsfp*.tsv]
-	lappend dbfiles [glob $dbdir/extra/var_*_evs.tsv]
-	lappend dbfiles [glob $dbdir/extra/var_*_exac.tsv]
 	set destdir [file_absolute $destdir]
 	# check projectinfo
-	projectinfo $destdir dbdir split
+	projectinfo $destdir dbdir {split 1}
 	# start
 	##in case of nextseq500 data - generate fastqs & distribute data
 	if {$conv_nextseq} {
@@ -797,6 +792,7 @@ proc process_illumina {args} {
 	cd $destdir
 	job_logdir $destdir/log_jobs
 	set todo {}
+	set reportstodo {}
 	foreach sample $samples {
 		puts $sample
 		set dir $sampledir/$sample
@@ -855,10 +851,10 @@ proc process_illumina {args} {
 		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
-		#calculate hsmetrics
-		if {$hsmetrics} {
-			lappend hsmetrics_files [calculate_hsmetrics_job $cleanedbam $bedfile]
-
+		#calculate reports
+		if {[llength $reports]} {
+			proces_reports_job $sampledir/$sample $dbdir $reports
+			lappend reportstodo $sampledir/$sample/reports
 		}
 		# samtools variant calling on map-rdsbwa
 		var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
@@ -871,7 +867,9 @@ proc process_illumina {args} {
 	cd $destdir
 	set todo [list_remdup $todo]
 	multicompar_job $experiment $dbdir $todo -skipincomplete 1 -split $split -dbfiles $dbfiles
-	if {$hsmetrics} { make_hsmetrics_report_job $destdir $hsmetrics_files }
+	if {[llength $reports]} {
+		proces_reportscombine_job $ $reportstodo
+	}
 	cd $keeppwd
 
 }

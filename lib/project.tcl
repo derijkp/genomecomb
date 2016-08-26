@@ -23,6 +23,15 @@ proc infofile_write {file data} {
 	file rename -force $file.temp $file
 }
 
+# initialize variables (from) projectinfo.tsv file
+# dir is the project directory. The command will search for the file projectinfo.tsv in it. If it does not exist, it is created.
+# Further arguments a variables, that will be assigned values after projectinfo:
+# If a variable already has a value before projectinfo
+#   If the variable is already defined in projectinfo.tsv, and differs from the given value, an error is given
+#   If the variable is not in projectinfo.tsv yet, it is stored there
+# If the variable is not defined before projectinfo, it should have a default value (list of variable name and default value)
+#   It it is in projectinfo.tsv, the value in projectinfo.tsv will be assigned
+#   It it is not in projectinfo.tsv, the default value will be assigned and stored in projectinfo.tsv
 proc projectinfo {dir args} {
 	set projectinfofile $dir/projectinfo.tsv
 	# check projectinfo
