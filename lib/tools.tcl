@@ -801,20 +801,22 @@ proc file_link {linkname linkdest} {
 	}
 }
 
-proc mklink {src dest} {
+proc mklink {src dest {absolute 0}} {
 	set src [file_absolute $src]
 	set dest [file_absolute $dest]
-	set pos 0
-	set ssrc [file split $src]
-	set sdest [file split $dest]
-	# puts $ssrc\n$sdest
-	foreach s $ssrc d $sdest {
-		if {$s ne $d} break
-		incr pos
-	}
-	if {$pos > 1} {
-		set prelen [expr {[llength $sdest]-$pos -1}]
-		set src [file join {*}[list_fill $prelen ..] {*}[lrange $ssrc $pos end]]
+	if {!$absolute} {
+		set pos 0
+		set ssrc [file split $src]
+		set sdest [file split $dest]
+		# puts $ssrc\n$sdest
+		foreach s $ssrc d $sdest {
+			if {$s ne $d} break
+			incr pos
+		}
+		if {$pos > 1} {
+			set prelen [expr {[llength $sdest]-$pos -1}]
+			set src [file join {*}[list_fill $prelen ..] {*}[lrange $ssrc $pos end]]
+		}
 	}
 	set err [catch {file link $dest} link]
 	if {!$err || $link ne "$src"} {
