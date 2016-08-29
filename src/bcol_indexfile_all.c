@@ -46,19 +46,23 @@ int isdouble(char *string, double *test) {
 }
 
 int main(int argc, char *argv[]) {
-	ColInfo *colinfo;
+	/* bcol index vars */
 	FILE *f1,*f2,*f3;
 	DStringArray *result1=NULL;
-	DString *line1 = NULL, *buffer = NULL;
+	DString *line1 = NULL;
+	off_t fpos;
+	uint64_t count = -1, progress = 20000000L;
+	uint64_t data;
+	int chr1pos,start1pos,end1pos,type1pos,max1;
+	/* colinfo vars */
+	ColInfo *colinfo;
+	DString *buffer = NULL;
 	Hash_bucket *bucket;
 	Hash_iter iter;
 	char *cur,*prefix;
-	off_t fpos;
-	uint64_t count = -1, offset = 0L, progress = 20000000L;
-	uint64_t data;
 	double testd;
 	long int temp;
-	int chr1pos,start1pos,end1pos,type1pos,max1,i,isnum,new,testi,size;
+	int i,isnum,new,testi,size;
 	if ((argc != 10)) {
 		fprintf(stderr,"Format is: bcol_indexfile file indexfile indexfilebin chrpos startpos endpos typepos colinfoprefix columns");
 		exit(EXIT_FAILURE);
@@ -75,9 +79,7 @@ int main(int argc, char *argv[]) {
 		if (*cur == ' ' || *cur == '\n') {max1++;}
 		cur++;
 	}
-	if (start1pos > max1) {max1 = start1pos;}
-	if (end1pos > max1) {max1 = end1pos;}
-	if (type1pos > max1) {max1 = type1pos;} ;
+	/* colinfo init code */
 	colinfo = (ColInfo *)malloc(max1*sizeof(ColInfo));
 	for(i = 0 ; i < max1 ; i++) {
 		colinfo[i].type = 'i';
@@ -87,24 +89,25 @@ int main(int argc, char *argv[]) {
 		colinfo[i].max = -INFINITY;
 		colinfo[i].extra = 0;
 	}
+	/* bcol index code */
+	if (chr1pos > max1) {max1 = chr1pos;} ;
+	if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ; if (type1pos > max1) {max1 = type1pos;} ;
 	f2 = fopen64_or_die(argv[2],"w");
 	fprintf(f2,"# binary column\n");
 	fprintf(f2,"# type wu\n");
-	fprintf(f2,"begin\ttype\toffset\n");
+	fprintf(f2,"chromosome\tbegin\tend\n");
 	f3 = fopen64_or_die(argv[3],"w");
 NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 	/* allocate */
 	line1 = DStringNew();
-	result1 = DStringArrayNew(max1+2); /* need one extra for the remainder */
+	result1 = DStringArrayNew(max1+2);
 	skip_header(f1,line1,NULL,NULL);
 	fpos = ftello(f1);
-	fprintf(f2,"%d\t%s\t%d\n",0,"wu",0);
 	while (!DStringGetTab(line1,f1,max1,result1,1,NULL)) {
 		count++;
-		data = (uint64_t)(fpos-offset);
+		data = (uint64_t)fpos;
 		fwrite(&data,8,1,f3);
 /*
-DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].string,result1->data[end1pos].string)
 		{
 		char *chromosome1;
 		int start1,end1;
@@ -119,6 +122,7 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 			fprintf(stderr,"filepos: %llu\n",(unsigned long long)fpos);
 			progress += 20000000L;
 		}
+		/* colinfo code */
 		for(i = 0 ; i < max1 ; i++) {
 			if (i >= result1->size) break;
 			if (isint(result1->data[i].string,&testi)) {
@@ -178,13 +182,14 @@ DPRINT("poss: %s:%s-%s",result1->data[chr1pos].string,result1->data[start1pos].s
 		}
 	}
 	if (count == -1) {count = 0;}
-	fprintf(f2,"%llu\tend\t0\n",(long long int)count);
+	fprintf(f2,"\t0\t%llu\n",(long long int)(count+1));
 	fclose(f1);
 	fclose(f2);
 	fclose(f3);
+	if (line1) {DStringDestroy(line1);}
+	if (result1) {DStringArrayDestroy(result1);}
+	/* writing column data */
 	fprintf(stderr,"Writing columns\n");
-	if (line1 != NULL) {DStringDestroy(line1);}
-	if (result1 != NULL) {DStringArrayDestroy(result1);}
 	cur = argv[9];
 	buffer = DStringNew();
 	for(i = 0 ; i < max1 ; i++) {
