@@ -324,8 +324,8 @@ proc process_mastr_job {args} {
 	#set additional annotation files 
 	set dbfiles {}
 	lappend dbfiles $mastrname.mastr/reg_amplicons-$mastrname.tsv
-	lappend dbfiles [glob $dbdir/extra/*dbnsfp*.tsv]
-	lappend dbfiles [glob $dbdir/extra/var_*_evs.tsv]
+	catch {lappend dbfiles [glob $dbdir/extra/*dbnsfp*.tsv]}
+	catch {lappend dbfiles [glob $dbdir/extra/var_*_evs.tsv]}
 	set addtargets 0
 	set targetsfile [glob -nocomplain *.mastr/stargets-*.tsv]
 	if {[llength $targetsfile]} {
