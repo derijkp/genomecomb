@@ -25,6 +25,7 @@ variant annotation (a different score for each potential alternative allele).
 ; **-t type**: type of data, should be one given in the [[format_bcol|description of the format]]
 ; **-c chromosomecol** (--chromosomecol): name of the column that contains the chromosome
 ; **-p poscol**: name of the column that contains the positions
+; **-e endcol**: name of the column that contains the the end positions (in case of regions, this cannot be used with -m)
 ; **-d defaultvalue** (--default): value that will be given for positions not in the input file
 ; **-co compressionlevel** (--compress): compression level used (default 9): 1 is very fast; 9 is slow, but compresses better, 0 can be used for no compression
 ; **--precision precision**: default precision for display of data in bcol

@@ -548,6 +548,25 @@ test bcol_make_multi {--precision} {
 } {chromosome	pos	alt	value
 1	0	A,C,T,G	0.40,0.10,0.00,1.00}
 
+test bcol_make {-e (endpos) option} {
+	test_cleantmp
+	write_tab tmp/reg.tsv {
+		chromosome	begin	end	score
+		1	5	8	1
+		1	8	10	2
+		2	1	3	3
+	}
+	exec cg bcol make -t c -c chromosome -p begin -e end tmp/temp.bcol score < tmp/reg.tsv
+	cg bcol table tmp/temp.bcol
+} {chromosome	pos	value
+1	5	1
+1	6	1
+1	7	1
+1	8	2
+1	9	2
+2	1	3
+2	2	3}
+
 test_cleantmp
 
 set ::env(PATH) $keeppath

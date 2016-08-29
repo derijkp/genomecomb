@@ -20,15 +20,14 @@ int main(int argc, char *argv[]) {
 	FILE *obcol;
 	FILE *obin;
 	unsigned long long start;
-	unsigned long long lastpos;
 	DStringArray *result = NULL;
 	DString *line = NULL,*chromosome = NULL;
 	char *outfile,*type = "u",*defaultvalue = "";
-	uint64_t offset, poffset = -1, size;
+	uint64_t offset, poffset, size, endpos;
 	int reverse = 0, isunsigned = 0;
-	int col = 0,max = 0,offsetcol = -1,chrcol = -1,shift, precision = -1;
-	if ((argc < 2)||(argc > 9)) {
-		fprintf(stderr,"Format is: bcol_make output_file type ?col? ?chromosomecol? ?offsetcol? ?default? ?precision?\n");
+	int col = 0,max = 0,offsetcol = -1,endcol = -1,chrcol = -1,shift, precision = -1;
+	if ((argc < 2)||(argc > 10)) {
+		fprintf(stderr,"Format is: bcol_make output_file type ?col? ?chromosomecol? ?offsetcol? ?endcol? ?default? ?precision?\n");
 		exit(EXIT_FAILURE);
 	}
 	outfile = argv[1];
@@ -49,18 +48,22 @@ int main(int argc, char *argv[]) {
 		if (offsetcol > max) {max = offsetcol;}
 	}
 	if (argc >= 7) {
-		defaultvalue = argv[6];
+		/* this col contains the end position in the chromosome, -1 for not used */
+		endcol = atoi(argv[6]);
+		if (endcol > max) {max = endcol;}
+	}
+	if (argc >= 8) {
+		defaultvalue = argv[7];
 	}
 	line = DStringNew();
-	if (argc >= 8) {
-		precision = atoi(argv[7]);
+	if (argc >= 9) {
+		precision = atoi(argv[8]);
 	}
-	NODPRINT("bcol_make %s %s %d %d %d\n",outfile,type,col,chrcol,offsetcol)
+	NODPRINT("bcol_make %s %s %d %d %d %d\n",outfile,type,col,chrcol,offsetcol,endcol)
 	/*
 		open files for writing
 	 */
 	start = 0;
-	lastpos = -1;
 	buffer = DStringNew();
 	DStringAppend(buffer,outfile);
 	obcol = fopen64_or_die(buffer->string,"w");
@@ -87,36 +90,44 @@ int main(int argc, char *argv[]) {
 					} else {
 						shift = 0;
 					}
-					fprintf(obcol,"%*.*s\t%lld\t%lld\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,start+lastpos+1);
+					fprintf(obcol,"%*.*s\t%lld\t%lld\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,(unsigned long long)poffset);
 					fflush(obcol);
 					DStringCopy(prevchr,chromosome);
 				}
 				poffset = -1;
 				start = 0;
-				lastpos = -1;
 			}
 		}
 		if (offsetcol != -1) {
 			offset = atoll(result->data[offsetcol].string);
 			if (poffset == -1) {
 				start = offset;
+				poffset = offset;
 			} else if (poffset != offset) {
 				size = offset - poffset;
 				if (size < 0) {
-					fprintf(stderr, "error: cannot make position based bcol on unsorted data ($offset < $poffset sort on position first)\n");
+					fprintf(stderr, "error: cannot make position based bcol on unsorted or overlapping data ($offset < $poffset sort on position first)\n");
 					exit(EXIT_FAILURE);
 				}
 				while (poffset < offset) {
 					bcol_printbin(obin,reverse,isunsigned,type,defaultvalue);
 					poffset++;
 				}
-				lastpos = lastpos + size;
 			}
-			poffset = offset+1;
+		} else if (poffset == -1) {
+			poffset = 0;
 		}
-		NODPRINT("s=%s\n",result->data[col].string)
-		bcol_printbin(obin,reverse,isunsigned,type,result->data[col].string);
-		lastpos ++;
+		if (endcol != -1) {
+			endpos = atoll(result->data[endcol].string);
+			while (poffset < endpos) {
+				bcol_printbin(obin,reverse,isunsigned,type,result->data[col].string);
+				poffset++;
+			}
+		} else {
+			NODPRINT("s=%s\n",result->data[col].string)
+			bcol_printbin(obin,reverse,isunsigned,type,result->data[col].string);
+			poffset++;
+		}
 	}
 	shift = 0;
 	if (prevchr == NULL) {
@@ -124,7 +135,7 @@ int main(int argc, char *argv[]) {
 	} else if (prevchr->size > 3 && prevchr->string[0] == 'c' && prevchr->string[1] == 'h' && prevchr->string[2] == 'r') {
 		shift = 3;
 	}
-	fprintf(obcol,"%*.*s\t%lld\t%lld\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,start+lastpos+1);
+	fprintf(obcol,"%*.*s\t%lld\t%lld\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,(unsigned long long)poffset);
 	fflush(obcol);
 	if (line) {DStringDestroy(line);}
 	if (result) {DStringArrayDestroy(result);}

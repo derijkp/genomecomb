@@ -420,6 +420,7 @@ proc cg_bcol_make {args} {
 	set chromosomecol coverage
 	set chrompos -1
 	set offsetcol {}
+	set endcol {}
 	set defaultvalue 0
 	set multicol {}
 	set multilist {}
@@ -435,6 +436,9 @@ proc cg_bcol_make {args} {
 			}
 			-p - --poscol {
 				set offsetcol $value
+			}
+			-e - --endcol {
+				set endcol $value
 			}
 			-d - --default {
 				set defaultvalue $value
@@ -502,6 +506,16 @@ proc cg_bcol_make {args} {
 				exiterror "error: pos column $offsetcol not found"
 			}
 		}
+		if {$endcol eq ""} {
+			set endpos -1
+		} else {
+			if {$offsetpos == -1} {error "Cannit use -e (endcol) without -p (poscol)"}
+			if {$multicol ne ""} {error "Cannit use -e (endcol) with -m (multicol)"}
+			set endpos [lsearch $header $endcol]
+			if {$endpos == -1} {
+				exiterror "error: pos column $endcol not found"
+			}
+		}
 		if {$distribute} {
 			if {[isint $chromosomecol]} {
 				set chrompos $chromosomecol
@@ -525,6 +539,11 @@ proc cg_bcol_make {args} {
 		set offsetpos $offsetcol
 		set colpos $valuecolumn
 		set multipos $multicol
+		if {$endpos != -1} {
+			if {$offsetpos == -1} {error "Cannit use -e (endcol) without -p (poscol)"}
+			if {$multicol ne ""} {error "Cannit use -e (endcol) with -m (multicol)"}
+		}
+		set endpos $endcol
 	}
 	if {$compress} {
 		set compresspipe "| lz4c -$compress -c "
@@ -534,12 +553,12 @@ proc cg_bcol_make {args} {
 		set tempbinfile $bcolfile.temp.bin
 	}
 	if {$multicol eq ""} {
-		# puts "bcol_make $bcolfile.temp $type $colpos $chrompos $offsetpos $defaultvalue"
-		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $defaultvalue $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
+		# puts "bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $endpos $defaultvalue $precision"
+		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $endpos $defaultvalue $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	} else {
 		# putsvars bcolfile type colpos multipos multilist chrompos offsetpos defaultvalue
-		# puts "bcol_make_multi $bcolfile.temp $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue"
-		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos $offsetpos $defaultvalue $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
+		 puts "bcol_make_multi $bcolfile.temp $type $multipos $multilist $colpos $chrompos $offsetpos $endpos $defaultvalue $precision"
+		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos $offsetpos $endpos $defaultvalue $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	}
 	fconfigure $f -encoding binary -translation binary
 	fconfigure $pipe -encoding binary -translation binary
@@ -550,7 +569,9 @@ proc cg_bcol_make {args} {
 		exit 1
 	}
 	if {$compress} {
+		exec lz4index $tempbinfile
 		file rename -force $tempbinfile $bcolfile.bin.lz4
+		file rename -force $tempbinfile.lz4i $bcolfile.bin.lz4.lz4i
 	} else {
 		file rename -force $tempbinfile $bcolfile.bin
 	}
