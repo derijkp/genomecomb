@@ -242,7 +242,7 @@ int bcol_printbin(FILE *f,int reverse,int isunsigned,char *type,char *string) {
 		 * object's type pointer.
 		 */
 		errno = 0;
-		dvalue = strtof(string,NULL);
+		dvalue = strtod(string,NULL);
 		if (errno) {
 			fprintf(stderr,"conversion error for type %s, value %s: %s.\n", type, string, strerror(errno));
 			exit(EXIT_FAILURE);
