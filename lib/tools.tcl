@@ -303,6 +303,7 @@ proc gzopen {file {pos -1}} {
 }
 
 proc gzclose {f} {
+	if {$f in {stdin stdout}} return
 	if {[catch {close $f} error]} {
 		if {$error eq "child killed: write on pipe with no readers"} return
 		if {[regexp {Successfully decoded [0-9]+ bytes} $error]} return
@@ -482,7 +483,7 @@ proc chrindexseek {file f chr} {
 				set prevchr $chr
 			}
 		}
-		close $tf
+		gzclose $tf
 		close $o
 	}
 	set trfchrpos [split [string trim [file_read $indexfile]] \n\t]
@@ -631,11 +632,11 @@ proc scratchfile {{action {get}} {type file}} {
 }
 
 proc file_add {file args} {
-	set f [open $file a]
+	set o [open $file a]
 	foreach arg $args {
-		puts $f $arg
+		puts $o $arg
 	}
-	close $f
+	close $o
 }
 
 proc chanexec {in out pipe} {
@@ -647,7 +648,7 @@ proc chanexec {in out pipe} {
 		unset ::filebuffer($in)
 	}
 	fcopy $in $o
-	if {$in ne "stdin"} {catch {close $in}}
+	if {$in ne "stdin"} {catch {gzclose $in}}
 	if {$out ne "stdout"} {catch {close $out}}
 	close $o
 }

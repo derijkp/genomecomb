@@ -80,7 +80,7 @@ proc cg_indexcol {args} {
 				}
 				progress next
 			}
-			catch {close $f}
+			gzclose $f
 			set result [array names a]
 			set result [ssort -natural $result]
 			set result [tsv_defaultvalues $field $result]
@@ -158,7 +158,7 @@ proc cg_index {args} {
 		catch {file delete $indexdir/info.tsv}
 		set f [gzopen $file]
 		set header [tsv_open $f]
-		catch {close $f}
+		catch {gzclose $f}
 		set bcol [bcol_open $indexfile]
 		set size [bcol_size $bcol]
 		bcol_close $bcol
@@ -170,7 +170,7 @@ proc cg_index {args} {
 	} elseif {!$infook} {
 		set f [gzopen $file]
 		set header [tsv_open $f]
-		catch {close $f}
+		catch {gzclose $f}
 		set bcol [bcol_open $indexfile]
 		set size [bcol_size $bcol]
 		dict set info file $file
@@ -196,7 +196,7 @@ proc cg_index {args} {
 					puts $o $value
 				}
 			}
-			close $f
+			gzclose $f
 			foreach o $os {close $o}
 			foreach field $header {
 				exec gnusort8 -N $colsdir/$field.col | uniq -c | gnusort8 -n > $colsdir/$field.col.histo

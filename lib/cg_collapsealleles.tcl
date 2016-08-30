@@ -89,5 +89,5 @@ proc cg_collapsealleles {args} {
 		if {![llength $line] && [eof $f]} break
 		lappend cur $line
 	}
-	close $f
+	gzclose $f
 }

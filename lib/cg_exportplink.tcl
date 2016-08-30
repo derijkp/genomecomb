@@ -134,6 +134,6 @@ proc cg_exportplink {args} {
 		}
 	}
 	close $o
-	catch {close $f}
+	gzclose $f
 }
 

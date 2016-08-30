@@ -423,10 +423,10 @@ mainw method savesummary {args} {
 	} else {
 		set file [Classy::savefile -initialfile [file dir $view(file)]/summary\ [join $view(summary_rows) ,]\ [join [list_unmerge $view(summary_cols)] ,]\ $view(summary_cells).tsv -title "Save Summary"]
 	}
-	set f [open $file w]
-	puts $f "\# Summary definition: [get view(olddefintion) ""]"
-	csv_write $f $summary \t {}
-	close $f
+	set o [open $file w]
+	puts $o "\# Summary definition: [get view(olddefintion) ""]"
+	csv_write $o $summary \t {}
+	close $o
 }
 
 mainw method summary_redraw {args} {
@@ -503,10 +503,10 @@ mainw method graph_redraw {args} {
 	set indexdir [$object.tb info indexdir]
 	catch {file delete $indexdir/graphtempfile.tsv}
 	$object.tb save $indexdir/graphtempfile.tsv
-	set f [open $indexdir/graphtempfile.tsv]
+	set f [gzopen $indexdir/graphtempfile.tsv]
 	set header [tsv_open $f]
 	set summary [csv_file $f \t {}]
-	close $f
+	gzclose $f
 	set summary [list $header {*}[ssort -natural -index 0 $summary]]
 	if {[info exists view(graph_rows)]} {
 		set rows $view(graph_rows)
@@ -527,10 +527,10 @@ mainw method scatter_redraw {args} {
 	if {[file size $view(file)] > 10000000} {
 		error "File too large to make graph, make a summary first?"
 	}
-	set f [open $view(file)]
+	set f [gzopen $view(file)]
 	set header [tsv_open $f]
 	set summary [csv_file $f \t {}]
-	close $f
+	gzclose $f
 	set summary [list $header {*}[ssort -natural -index 0 $summary]]
 	if {[info exists view(graph_rows)]} {
 		set rows $view(graph_rows)

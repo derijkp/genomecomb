@@ -395,8 +395,8 @@ proc svmulticompar {svfile1 svfile2} {
 
 	flush $o
 	close $o
-	close $f1
-	close $f2
+	gzclose $f1
+	gzclose $f2
 	# file delete $tempfile2
 	# cg select -s {chr1 start1} $svfile1.temp $svfile1.temp2
 	# file delete $svfile1.temp

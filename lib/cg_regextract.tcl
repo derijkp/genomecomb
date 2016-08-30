@@ -65,7 +65,7 @@ proc cg_regextract {args} {
 		} else {
 			set f [gzopen $file]
 			set header [tsv_open $f]
-			catch {close $f}
+			catch {gzclose $f}
 			foreach field {chromosome chrom} {
 				set chrcol [lsearch $header $field]
 				if {$chrcol != -1} break

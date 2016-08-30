@@ -51,7 +51,7 @@ proc cg_split {args} {
 		}
 		puts $a($value) $line
 	}
-	close $f
+	gzclose $f
 	foreach value [array names a] {
 		close $a($value)
 	}

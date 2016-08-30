@@ -43,7 +43,7 @@ proc cg_bed2sft {args} {
 	fconfigure $o -translation binary
 	fcopy $f $o
 	if {$o ne "stdout"} {catch {close $o}}
-	if {$f ne "stdin"} {catch {close $f}}
+	if {$f ne "stdin"} {catch {gzclose $f}}
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {

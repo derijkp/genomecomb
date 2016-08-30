@@ -84,7 +84,7 @@ proc annot_region_in {regfile chr1 start1 end1} {
 proc annot_region_close {regfile} {
 	global annot
 	foreach {fr} $annot(reg,$regfile) break
-	catch {close $fr}
+	catch {gzclose $fr}
 	unset annot(reg,$regfile)
 }
 
@@ -226,7 +226,7 @@ proc annot_varall_getline {infoVar} {
 proc annot_varall_init {varallfile sample header} {
 	global annot
 
-	catch {close $af} ; set af [gzopen $varallfile]
+	catch {gzclose $af} ; set af [gzopen $varallfile]
 	set aheader [tsv_open $af]
 	set loc2poss [tsv_basicfields $aheader 6 0]
 	set poss1 {}
@@ -383,7 +383,7 @@ proc annot_varall_annot {sampleaVar sample loc force lineVar} {
 proc annot_varall_close {varallfile sample} {
 	global annot
 	set info $annot(varallinfo,$varallfile,$sample)
-	catch {close [dict get $info af]}
+	catch {gzclose [dict get $info af]}
 	unset annot(varallinfo,$varallfile,$sample)
 }
 

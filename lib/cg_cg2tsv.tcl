@@ -320,7 +320,7 @@ if 0 {
 proc annot_annotvar {source outfile todo {dir {}}} {
 	putslog "annotating $source -> $outfile"
 	catch {close $f} ; catch {close $o}
-	set f [open $source]
+	set f [gzopen $source]
 	set header [tsv_open $f]
 	set sample [file tail $dir]
 	if {$dir ne ""} {
@@ -379,7 +379,7 @@ proc annot_annotvar {source outfile todo {dir {}}} {
 	}
 	if {$addref} {annot_coverage_close $dir $sample}
 	close $o
-	close $f
+	gzclose $f
 	list_foreach {field value regfile} $wtodo {
 		annot_region_close $regfile
 	}
@@ -414,8 +414,8 @@ proc readgeneset {g} {
 proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 	global cache
 
-	catch {close $f1}
-	catch {close $g}
+	catch {gzclose $f1}
+	catch {gzclose $g}
 	catch {close $o}
 	if {$genefile eq ""} {set usegenefile 0} else {set usegenefile 1}
 	if {!$sorted} {
@@ -588,8 +588,8 @@ proc var2annotvar {file genefile outfile {split 1} {ref {}} {sorted 0}} {
 	}
 
 	close $o
-	if {$usegenefile} {close $g}
-	close $f1
+	if {$usegenefile} {gzclose $g}
+	gzclose $f1
 
 }
 

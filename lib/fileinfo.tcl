@@ -33,6 +33,7 @@ proc fileinfo {file args} {
 	if {![file isdir $file]} {
 		set f [gzopen $file]
 		set header [tsv_open $f comment]
+		gzclose $f
 		set result [dict merge $result [comment2dict $comment]]
 		dict set $result header $header
 		if {![dict exists $result ref]} {

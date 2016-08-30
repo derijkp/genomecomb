@@ -25,7 +25,7 @@ proc process_indexcompress {file} {
 	}
 	if {$fpos == -1} {error "no column offset, end1 in file $file"}
 	if {([gets $f] eq "") && [eof $f]} return
-	close $f
+	gzclose $f
 	if {![file exists $file.${field}_index]} {
 		tsv_index $field $file
 	}
@@ -117,7 +117,7 @@ proc process_sample {args} {
 			if {[string index $line 0] ne "#"} break
 			lappend info $line
 		}
-		catch {close $f}
+		catch {gzclose $f}
 		if {[file exists info.txt]} {
 			set test [split [file_read info.txt] \n]
 			if {$info ne $test} {

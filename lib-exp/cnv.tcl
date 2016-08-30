@@ -23,7 +23,7 @@ proc map2besthits {file outfile} {
 		}
 	}
 	close $o
-	close $f
+	gzclose $f
 }
 
 proc cg_cg2cnv {args} {
@@ -94,7 +94,7 @@ proc cg_cnv-seq {args} {
 		puts $f "sink(file=\"$cnvout.summary\")"
 		puts $f "cnv.summary(data)"
 		puts $f "sink()" 
-		catch {close $f} result
+		catch {gzclose $f} result
 		puts $result
 	}
 }
@@ -116,7 +116,7 @@ proc cnvmedian {} {
 		puts $o [lindex $line 0]\t[lindex $line 2]
 	}
 	close $o
-	close $f	
+	gzclose $f	
 
 # code
 package require Tclx
@@ -130,7 +130,7 @@ set filename GS00103/coverageRefScore-20-GS000000079-ASM.tsv.gz
 set outfile [gzroot $filename].med
 set windowsize 5000
 catch {close $o}
-catch {close $f}
+catch {gzclose $f}
 	set f [open "| zless $filename"]
 	set o [open $outfile w]
 	puts $o "offset\tmedcoverage"
@@ -169,7 +169,7 @@ catch {close $f}
 	}
 
 	close $o
-	close $f
+	gzclose $f
 
 }
 

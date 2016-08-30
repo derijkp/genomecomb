@@ -148,10 +148,10 @@ table_tsv method summary {definition {file {}}} {
 	}
 	set data [$object subsql $sql {*}$extrafields]
 	if {$file ne ""} {
-		set f [open $file w]
+		set f [gzopen $file w]
 		puts $f [join $colnames \t]
 		puts $f $data
-		close $f
+		gzclose $f
 	} else {
 		set result [list $colnames]
 		foreach line [ssort -natural [split $data \n]] {

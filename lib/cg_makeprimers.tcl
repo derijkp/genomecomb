@@ -659,11 +659,11 @@ proc makeprimers {regionfile dbdir maxsize prefsize db {minfreq -1} {numthreads 
 	catch {rename e {}}
 	EmblFile new e
 	puts $o [join {remark label sequence modification scale purification project pair species chromosome cyto target contig pos temperature mg} \t]
-	set f [gzopen  $regionfile]
+	set f [gzopen $regionfile]
 	set header [tsv_open $f]
 	set order [tsv_basicfields $header 3]
 	set regionlist [split [string trim [read $f]] \n]
-	close $f
+	gzclose $f
 	foreach region $regionlist {
 		foreach {cchr cstart cend} [list_sub $region $order] break
 		set cchr [chr_clip $cchr]

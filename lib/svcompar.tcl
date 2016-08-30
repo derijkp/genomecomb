@@ -28,8 +28,8 @@ cd /complgen/sv
 
 proc svcompare {svfile1 svfile2} {
 
-	catch {close $f1}
-	catch {close $f2}
+	catch {gzclose $f1}
+	catch {gzclose $f2}
 	catch {close $o}
 	set tempfile [tempfile]
 	set o [open $tempfile w]
@@ -37,10 +37,10 @@ proc svcompare {svfile1 svfile2} {
 	set name2 [lindex [split [file tail $svfile2] -] 0]
 	set tempfile1 [tempfile]
 	cg select -s "chr patchstart" < $svfile1 > $tempfile1
-	set f1 [open $tempfile1]
+	set f1 [gzopen $tempfile1]
 	set tempfile2 [tempfile]
 	cg select -s "chr patchstart" < $svfile2 > $tempfile2
-	set f2 [open $tempfile2]
+	set f2 [gzopen $tempfile2]
 	set header1 [split [gets $f1] \t]
 	set len [llength $header1]
 	set patchstartpos [lsearch $header1 patchstart]
@@ -180,8 +180,8 @@ proc svcompare {svfile1 svfile2} {
 		set line2 [split [gets $f2] \t]
 	}
 	flush $o
-	close $f1
-	close $f2
+	gzclose $f1
+	gzclose $f2
 	file delete $tempfile1
 	file delete $tempfile2
 	close $o

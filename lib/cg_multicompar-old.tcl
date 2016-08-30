@@ -268,7 +268,7 @@ proc multicompar {compar_file dir {split 0} {listfields {}}} {
 		}
 	}
 
-	close $f1; close $f2; close $o
+	gzclose $f1; gzclose $f2; close $o
 	catch {file rename -force $compar_file $compar_file.old}
 	file rename -force $compar_file.temp $compar_file
 }

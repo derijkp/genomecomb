@@ -37,7 +37,7 @@ proc cg_geneannot2reg {args} {
 			lappend a($key,$field) $value
 		}
 	}
-	close $f
+	gzclose $f
 	set f [gzopen $generegfile]
 	set header [tsv_open $f]
 	set poss [tsv_basicfields $header 3]
@@ -58,7 +58,7 @@ proc cg_geneannot2reg {args} {
 		if {[list_remove $annot {}] eq ""} continue
 		puts $o [join $line \t]\t[join $annot \t]
 	}
-	close $f
+	gzclose $f
 	if {$o ne "stdout"} {
 		close $o
 		file rename -force $outfile.temp $outfile

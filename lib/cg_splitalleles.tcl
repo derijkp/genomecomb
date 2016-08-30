@@ -97,5 +97,5 @@ proc cg_splitalleles {args} {
 			puts $o [join $a($allele) \t]
 		}
 	}
-	close $f
+	gzclose $f
 }

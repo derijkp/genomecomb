@@ -188,7 +188,7 @@ proc cg_compar2vcf {args} {
 	}
 	
 	if {$o ne "stdout"} {catch {close $o}}
-	if {$f ne "stdin"} {catch {close $f}}
+	if {$f ne "stdin"} {catch {gzclose $f}}
 	
 }	
 

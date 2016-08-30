@@ -40,12 +40,12 @@ proc multidb_merge_job {varsfile files {split 1}} {
 			set header [tsv_open $f]
 			set poss1 [tsv_basicfields $header 6 $dep1]
 			lappend poss1 [lsearch $header id]
-			close $f
+			gzclose $f
 			set f [gzopen $dep2]
 			set header [tsv_open $f]
 			set poss2 [tsv_basicfields $header 6 $dep2]
 			lappend poss2 [lsearch $header id]
-			close $f
+			gzclose $f
 			set temptarget [file_tempwrite $target]
 			exec multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split > $temptarget
 			file rename -force $temptarget $target
@@ -138,7 +138,7 @@ proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
 	foreach file $datafiles {
 		set f [gzopen $file]
 		set header [tsv_open $f]
-		close $f
+		gzclose $f
 		set file [file_absolute $file]
 		set a(header,$file) $header
 		set dir [file dir $file]
@@ -188,7 +188,7 @@ proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
 			incr sampleid
 		}
 	}
-	close $fs
+	gzclose $fs
 	file_write $compar_dir/analysis.tsv.insert.maxid $sampleid
 	file_write $compar_dir/analysis.tsv.insert.count $insertcount
 	set genofields [list_remdup $genofields]

@@ -15,7 +15,7 @@ proc multireg {compar_file file} {
 	catch {close $f1}; catch {close $f2}; catch {close $o}
 	set f2 [gzopen $file]
 	set poss2 [open_region $f2 h2]
-	close $f2
+	gzclose $f2
 	set num 0
 	if {![file exists $compar_file]} {
 		set h2base [list_sub $h2 $poss2]
@@ -50,7 +50,7 @@ proc cg_multireg {args} {
 	if {[file exists $compar_file]} {
 		set f [gzopen $compar_file]
 		set header [tsv_open $f]
-		close $f
+		gzclose $f
 	} else {
 		set header {chromosome begin end}
 	}

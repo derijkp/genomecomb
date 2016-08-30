@@ -82,7 +82,7 @@ proc cg_fas2ifas {srcfile destfile} {
 	putslog "chromosome $curid finished"
 	set a(e,$curid) [tell $o]
 	close $o
-	close $f
+	gzclose $f
 	# sort
 	set sids [ssort -natural $ids]
 	if {$sids ne $ids} {

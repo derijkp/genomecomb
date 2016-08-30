@@ -31,7 +31,7 @@ proc cg_fixtsv {file outfile} {
 		if {!$llen && [eof $f]} break
 		incr linenr
 	}
-	close $f
+	gzclose $f
 	close $o
 	if {[file exists $outfile]} {catch {file rename $outfile $outfile.old}}
 	file rename -force $outfile.temp $outfile

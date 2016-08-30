@@ -44,7 +44,7 @@ proc cg_gene2reg {args} {
 		close $o
 		file rename -force $outfile.temp $outfile
 	}
-	if {$f ne "stdout"} {close $f}
+	if {$f ne "stdout"} {gzclose $f}
 }
 
 if 0 {

@@ -160,7 +160,7 @@ proc cg_gtf2sft {args} {
 	catch {close $fb} ; catch {close $fa}
 	file delete $tempbase ; file delete $tempattr
 	if {$o ne "stdout"} {catch {close $o}}
-	if {$f ne "stdin"} {catch {close $f}}
+	if {$f ne "stdin"} {catch {gzclose $f}}
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {

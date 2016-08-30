@@ -6,7 +6,7 @@
 
 proc ucsc2annotvar {file outfile} {
 
-	set f [open $file]
+	set f [gzopen $file]
 	set header [gets $f]
 	set header [split [string range $header 1 end] \t]
 	if {$header ne "bin chrom chromStart chromEnd name alleleCount alleleFreq alleleScores"} {
@@ -32,7 +32,7 @@ proc ucsc2annotvar {file outfile} {
 		puts $o [join [list $bin $chrom $chromStart $chromEnd snp $a1 $a2] \t]
 	}
 	close $o
-	close $f
+	gzclose $f
 
 }
 

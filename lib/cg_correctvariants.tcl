@@ -50,7 +50,7 @@ proc cg_correctvariants {args} {
 	set countcorrected 0
 	foreach {file resultfile dbdir} $args break
 	if {[file exists $resultfile]} {error "$resultfile exists"}
-	catch {close $o} ; catch	{close $f}
+	catch {close $o} ; catch	{gzclose $f}
 	set f [gzopen $file]
 	set header [tsv_open $f comment]
 	# next line here to give error if first 3 are not present
@@ -242,7 +242,7 @@ proc cg_correctvariants {args} {
 		set lines [list $nextline]
 	}
 	close $o
-	close $f
+	gzclose $f
 	putslog "removed $countdoubles doubles"
 	putslog "corrected $countcorrected refs"
 	file rename -force $resultfile.temp $resultfile

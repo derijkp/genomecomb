@@ -107,7 +107,7 @@ proc cg_bam_histo {args} {
 		lappend maxs [lmath_max $data]
 		set line [getline $f]
 	}
-	close $f
+	gzclose $f
 	puts ----------
 	set result [list $tota($biv)]
 	foreach limit $intervals {

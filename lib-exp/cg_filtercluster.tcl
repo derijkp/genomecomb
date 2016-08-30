@@ -30,6 +30,6 @@ proc cg_filtercluster {args} {
 	}
 	if {$write} {puts $o [join $pline \t]}
 	close $o
-	close $f
+	gzclose $f
 
 }

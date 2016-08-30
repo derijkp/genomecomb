@@ -103,7 +103,7 @@ proc downloaddb_1000g {path build} {
 			set line [split [gets $f] \t]
 		}
 		close $o
-		close $f
+		gzclose $f
 		puts "Sorting $resultfile"
 		cg select -s {chrom start end type alt} $tempdir/var_${build}_1000g$pop.tsv $resultfile.temp
 		file rename -force $resultfile.temp $resultfile

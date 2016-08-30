@@ -238,7 +238,7 @@ proc cg_vcf2sft.old {args} {
 		puts $o [join $result \t]
 	}	
 	if {$o ne "stdout"} {catch {close $o}}
-	if {$f ne "stdin"} {catch {close $f}}
+	if {$f ne "stdin"} {catch {gzclose $f}}
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {

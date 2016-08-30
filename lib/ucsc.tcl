@@ -5,8 +5,8 @@
 #
 
 proc ucsc2region {ucsc_file} {
-	catch {close $f}
-	set f [open $ucsc_file]
+	catch {gzclose $f}
+	set f [gzopen $ucsc_file]
 	set temp [string range [gets $f] 1 end]
 	set header [split $temp \t]
 	set poss [list_cor $header {chrom chromStart chromEnd name}]
@@ -16,7 +16,7 @@ proc ucsc2region {ucsc_file} {
 		foreach {chrom chromStart chromEnd name} [list_sub $line $poss] break
 		puts [join [list $chrom $chromStart $chromEnd $name] \t]
 	}
-	close $f
+	gzclose $f
 }
 
 proc cg_ucsc2region {args} {
@@ -64,7 +64,7 @@ proc ucscwiggle2reg {ucsc_file resultfile {precision 1} {formula {}} {addnum {}}
 		set useaddnum 0
 	}
 	puts "Making $resultfile"
-	catch {close $f}; catch {close $b}; catch {close $o}; 
+	catch {gzclose $f}; catch {gzclose $b}; catch {close $o}; 
 	set dir [file dir [file_absolute $ucsc_file]]
 	set f [gzopen $ucsc_file]
 	set o [open $resultfile.temp w]
@@ -101,7 +101,7 @@ proc ucscwiggle2reg {ucsc_file resultfile {precision 1} {formula {}} {addnum {}}
 		}
 		incr progress
 		if {$file ne $ucsc_wib} {
-			catch {close $b}
+			catch {gzclose $b}
 			set ucsc_wib $file
 			set file [ucsc_wibfile $file $dir]
 			puts "Opening $file"
@@ -140,7 +140,7 @@ proc ucscwiggle2reg {ucsc_file resultfile {precision 1} {formula {}} {addnum {}}
 	if {$pvalue ne NaN} {
 		putsresult $o $chrom $pbegin $cur $pvalue $pnum
 	}
-	catch {close $f}; catch {close $b}; catch {close $o}
+	catch {gzclose $f}; catch {gzclose $b}; catch {close $o}
 	file rename -force $resultfile.temp $resultfile
 }
 
@@ -203,10 +203,10 @@ proc ucscwb2reg {file resultfile {precision 1} {formula {}} {addnum {}}} {
 		set useaddnum 0
 	}
 	set dir [file dir [file_absolute $file]]
-	set f [open $file]
+	set f [gzopen $file]
 	gets $f
 	set wbfile [gets $f]
-	close $f
+	gzclose $f
 	puts "Making $resultfile"
 	set wbfile [ucsc_wibfile $wbfile $dir]
 	if {![file exists $wbfile.bedgraph]} {
@@ -242,7 +242,7 @@ proc ucscwb2reg {file resultfile {precision 1} {formula {}} {addnum {}}} {
 	if {$pvalue ne NaN} {
 		putsresult $o $chrom $pbegin $pend $pvalue $pnum
 	}
-	catch {close $f}; catch {close $o}
+	catch {gzclose $f}; catch {close $o}
 	file rename -force $resultfile.temp $resultfile
 }
 

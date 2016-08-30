@@ -14,7 +14,7 @@ proc tsv2bed {file bedfile args} {
 	} else {
 		set f [gzopen $file]
 		set header [tsv_open $f]
-		close $f
+		gzclose $f
 		set poss [tsv_basicfields $header 3]
 		set fields [list_sub $header $poss]
 		file_write $bedfile.temp \#[join $fields \t]\n

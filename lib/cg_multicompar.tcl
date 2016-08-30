@@ -19,11 +19,11 @@ proc multi_merge_job {varsfile files {split 1}} {
 			set f [gzopen $dep1]
 			set header [tsv_open $f]
 			set poss1 [tsv_basicfields $header 6 $dep1]
-			close $f
+			gzclose $f
 			set f [gzopen $dep2]
 			set header [tsv_open $f]
 			set poss2 [tsv_basicfields $header 6 $dep2]
-			close $f
+			gzclose $f
 			set tempfile [file_tempwrite $target]
 			exec multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split > $tempfile
 			file rename -force $tempfile $target
@@ -169,13 +169,13 @@ proc cg_multicompar {args} {
 	set ftodo [open $todofile w]
 	# line with: filename chrpos beginpos endpos typepos refpos altpos todomax todoseqpos
 	puts $ftodo [join [list $workdir/vars.tsv 0 1 2 3 4 5 5 0] \t]
-	# line with: data positioons that must go in the multicompar
+	# line with: data positions that must go in the multicompar
 	puts $ftodo ""
 	set reannotheader {chromosome begin end type ref alt}
 	foreach file $allfiles {
 		set f [gzopen $file]
 		set header [tsv_open $f]
-		close $f
+		gzclose $f
 		set file [file_absolute $file]
 		set dir [file dir $file]
 		set filebase [file root [file tail [gzroot $file]]]

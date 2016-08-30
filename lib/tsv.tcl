@@ -217,7 +217,7 @@ proc tsv_varsfile {tsvfile} {
 	if {!$ok} {
 		set f [gzopen [gzfile $tsvfile]]
 		set header [tsv_open $f]
-		close $f
+		gzclose $f
 		set poss [tsv_basicfields $header 6 0]
 		if {-1 in [lrange $poss 0 2]} {
 			error "header error: basic variant fields not found in file $tsvfile"

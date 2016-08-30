@@ -1223,7 +1223,7 @@ scrolledgraph method point {x y} {
 		incr index -1
 		if {!$index} break
 	}
-	catch {close $f}
+	catch {gzclose $f}
 	if {![winfo exists [get ptable]]} {
 		unset -nocomplain points
 		set ptable [tableedit]

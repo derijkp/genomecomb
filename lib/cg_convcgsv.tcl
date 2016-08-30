@@ -5,7 +5,7 @@
 #
 
 proc convcgsv {srcfile dstfile} {
-	catch {close $o} ; catch {close $f}
+	catch {close $o} ; catch {gzclose $f}
 	set f [gzopen $srcfile]
 	set header [tsv_open $f comment]
 	regexp {#FORMAT_VERSION[\t ]+([0-9.]+)} $comment temp version
@@ -63,7 +63,7 @@ proc convcgsv {srcfile dstfile} {
 		puts $o [join $result \t]
 	}
 	close $o
-	close $f
+	gzclose $f
 	cg select -s - $dstfile.temp $dstfile
 }
 

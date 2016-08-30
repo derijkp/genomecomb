@@ -183,7 +183,7 @@ proc gatkworkaround_tsv2bed_job {file refseq} {
 			puts $o $chr\t$begin\t$end
 		}
 		close $o
-		close $f
+		gzclose $f
 		file rename -force $temptarget $target
 	}
 	return [file root $file].bed

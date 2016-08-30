@@ -55,7 +55,7 @@ proc _table_tsv_get {object row col args} {
 				incr r
 			}
 			if {$tdata(compressed)} {
-				catch {close $f}
+				catch {gzclose $f}
 			}
 		} else {
 			set qrows [bcol_get $tdata(query_results) $row [expr {$row+$limit}]]
@@ -71,7 +71,7 @@ proc _table_tsv_get {object row col args} {
 				set line [split [gets $f] \t]
 				set cache($r) [_table_tsv_calcline $object $line $cor $qrow]
 				if {$tdata(compressed)} {
-					catch {close $f}
+					catch {gzclose $f}
 				}
 				incr r
 			}
@@ -211,7 +211,7 @@ table_tsv method trow {row} {
 	}
 	set line [split [gets $f] \t]
 	if {$tdata(compressed)} {
-		catch {close $f}
+		catch {gzclose $f}
 	}
 	return $line
 }
@@ -273,7 +273,7 @@ table_tsv method values {field {samplevalues 0} {max 1000} {valuesonly 0}} {
 		set sample 0
 	}
 	set result {}
-	set f [open $histofile]
+	set f [gzopen $histofile]
 	while {![eof $f]} {
 		set line [gets $f]
 		if {![llength $line]} continue
@@ -289,7 +289,7 @@ table_tsv method values {field {samplevalues 0} {max 1000} {valuesonly 0}} {
 			}
 		}
 	}
-	close $f
+	gzclose $f
 	if {[lindex $result end] eq "..."} {
 		set a(incomplete) 1
 		list_pop result
@@ -439,7 +439,7 @@ table_tsv method close {} {
 		bcol_close $tdata(lineindex)
 		set tdata(lineindex) {}
 	}
-	catch {close $tdata(f)}
+	catch {gzclose $tdata(f)}
 	unset -nocomplain cache
 	unset -nocomplain tdata
 	set tdata(numcache) 0
@@ -467,9 +467,9 @@ table_tsv method open {file parent} {
 		set tdata(query_results) {}
 		set tdata(len) $tdata(tlen)
 	} else {
-		set f [open $tdata(indexdir)/query_results.bcol]
+		set f [gzopen $tdata(indexdir)/query_results.bcol]
 		set header [tsv_open $f comment]
-		close $f
+		gzclose $f
 		regsub -all {# } $comment { } comment
 		set query [dict get $comment query]
 		if {[file mtime $tdata(indexdir)/query_results.bcol] < [file mtime $file]} {
@@ -551,7 +551,7 @@ table_tsv method save {file} {
 				puts $o [gets $f]
 			}
 			if {$tdata(compressed)} {
-				catch {close $f}
+				catch {gzclose $f}
 			}
 			incr r
 		}

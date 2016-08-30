@@ -158,11 +158,11 @@ proc cg_collapseoverlap {args} {
 		set f [gzopen $ffile]
 		set header [tsv_open $f]
 		set bposs [tsv_basicfields $header 3]
-		close $f
+		gzclose $f
 		foreach file $args {
 			set f [gzopen $file]
 			set tempheader [tsv_open $f]
-			close $f
+			gzclose $f
 			if {$tempheader ne $header} {
 				error "for collapsing multiple files into one (-o option), all files must have the same columns"
 			}
@@ -226,7 +226,7 @@ proc cg_regcollapse {args} {
 		set f [gzopen $tempfile]
 		set header [tsv_open $f]
 		set bposs [tsv_basicfields $header 3]
-		close $f
+		gzclose $f
 		set sfields [list_sub $header $bposs]
 		lappend sfields {*}[list_sub $header -exclude $bposs]
 		cg select -s $sfields $tempfile $tempfile2

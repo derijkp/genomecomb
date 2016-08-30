@@ -305,7 +305,7 @@ proc downloaddb_phenotype {path build {url {}}} {
 		if {![llength $pheno]} continue
 		set a($gene) [list_union [get a($gene) ""] $pheno]
 	}
-	close $f
+	gzclose $f
 	set o [open $resultfile.temp w]
 	puts $o "gene\tphenotype_description"
 	foreach gene [lsort -dict [array names a]] {
@@ -379,7 +379,7 @@ proc cg_downloadbiograph {file diseaseid {genefile {}}} {
 		set f [gzopen $genefile]
 		set header [tsv_open $f]
 		set temp [split [string trim [read $f]] \n]
-		close $f
+		gzclose $f
 		set genes [list_subindex $temp 0]
 		foreach gene $genes {
 			set a($gene) 1

@@ -267,7 +267,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {
 	}
 
 	close $o
-	close $f
+	gzclose $f
 	foreach sample $samples {
 		list_foreach {field value regfile} $samplea(todo,$sample) {
 			annot_region_close $regfile

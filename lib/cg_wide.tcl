@@ -142,7 +142,7 @@ proc cg_wide {args} {
 		close $o
 		file rename -force $outfile.temp $outfile
 	}
-	if {$f ne "stdout"} {close $f}
+	if {$f ne "stdin"} {gzclose $f}
 }
 
 if 0 {

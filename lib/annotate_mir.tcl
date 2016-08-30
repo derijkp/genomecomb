@@ -322,7 +322,7 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 	} else {
 		set genomef {}
 	}
-	catch {close $f}; catch {close $df}; catch {close [dict get $dbobj df]} ;catch {close $o};
+	catch {gzclose $f}; catch {close $o};
 	set f [gzopen $file]
 	set header [tsv_open $f comment]
 	if {[catch {set poss [tsv_basicfields $header]}]} {
@@ -532,6 +532,6 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 	if {$mirvas == 2} {
 		mirvas_draw_close $mo
 	}
-	close $o; catch {close $f};	catch {close $df}
+	close $o; gzclose $f
 	file rename -force $resultfile.temp $resultfile
 }

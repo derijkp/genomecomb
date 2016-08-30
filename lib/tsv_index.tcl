@@ -6,25 +6,7 @@
 
 proc tsv_index {xfield file} {
 	set indexname [gzroot $file].${xfield}_index
-	if {[inlist {.rz} [file extension $file]]} {
-		set tempfile [scratchfile]
-		exec razip -d -c $file > $tempfile
-		set f [open $tempfile]
-	} elseif {[inlist {.lz4} [file extension $file]]} {
-		set tempfile [scratchfile]
-		exec lz4c -d -c $file > $tempfile
-		set f [open $tempfile]
-	} elseif {[inlist {.bgz} [file extension $file]]} {
-		set tempfile [scratchfile]
-		exec bgzip -d -c $file > $tempfile
-		set f [open $tempfile]
-	} elseif {[inlist {.gz} [file extension $file]]} {
-		set tempfile [scratchfile]
-		exec gunzip -c $file > $tempfile
-		set f [open $tempfile]
-	} else {
-		set f [open $file]
-	}
+	set f [gzopen $file]
 	set header [tsv_open $f]
 	set xpos [lsearch $header $xfield]
 	if {$xpos == -1} {error "field $xfield not present in file $file"}
@@ -50,9 +32,9 @@ proc tsv_index {xfield file} {
 		if {![expr $next%1000000]} {putslog $next}
 	}
 	catch {progress stop}
-	close $f
+	gzclose $f
 	set size [file size $file]
-	set f [open $file]
+	set f [gzopen $file]
 	seek $f [expr {$size-5000}] start
 	gets $f
 	while {![eof $f]} {
@@ -63,7 +45,7 @@ proc tsv_index {xfield file} {
 			set xmax $temp
 		}
 	}
-	close $f
+	gzclose $f
 	set o [open $indexname.temp w]
 	puts $o 10000
 	puts $o $findex
@@ -155,7 +137,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 	if {$uncompressed} {
 		set cache(tsv_index,$file,$field,channel) $f
 	} else {
-		catch {close $f}
+		catch {gzclose $f}
 	}
 }
 
@@ -262,7 +244,7 @@ proc cg_maketabix {args} {
 		putslog "making tabix for $file"
 		set f [gzopen $file]
 		set header [tsv_open $f comment]
-		catch {close $f}
+		catch {gzclose $f}
 		set skip [llength [split $comment \n]]
 		foreach {chrompos beginpos endpos} [lmath_calc [tsv_basicfields $header 3] + 1] break
 		exec tabix -s $chrompos -b $beginpos -e $endpos -0 -S $skip $file

@@ -38,7 +38,7 @@ proc cg_sft2gff {args} {
 		puts $o [join $result \t]
 	}
 	if {$o ne "stdout"} {close $o}
-	if {$f ne "stdout"} {close $f}
+	if {$f ne "stdout"} {gzclose $f}
 }
 
 if 0 {

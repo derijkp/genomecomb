@@ -12,18 +12,18 @@ proc annotatereg {file dbfile name annotfile near dbinfo} {
 # putslog [list annotatereg $file $dbfile $name $annotfile $near $dbinfo]
 	set newh [dict get $dbinfo newh]
 	set dataposs [dict get $dbinfo dataposs]
-	catch {close $f}
+	catch {gzclose $f}
 	set f [gzopen $file]
 	set header [tsv_open $f]
 	set poss [tsv_basicfields $header 3]
-	close $f
+	gzclose $f
 	set fields [list_sub $header $poss]
 	if {[inlist $poss -1]} {
 		error "Cannot annotate $file: wrong fields"
 	}
 	set f [gzopen $dbfile]
 	set dbposs [open_region $f dbheader]
-	close $f
+	gzclose $f
 	set o [open $annotfile.temp w]
 	puts $o [join $newh \t]
 	close $o
@@ -46,7 +46,7 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 #putsvars file dbfile name annotfile
 	set newh [dict get $dbinfo newh]
 	set dataposs [dict get $dbinfo dataposs]
-	catch {close $f}
+	catch {gzclose $f}
 	set f [gzopen $file]
 	set header [tsv_open $f]
 	set poss [tsv_basicfields $header 3]

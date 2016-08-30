@@ -68,7 +68,7 @@ proc tsv_select_sampleinfo_load {field {header {}}} {
 			}
 		}
 	}
-	close $f
+	gzclose $f
 }
 
 proc tsv_select_sampleinfo_wildcard {field header} {
@@ -1118,7 +1118,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {oldheader {}} {newheader {}
 			file {
 				set hf [gzopen [lindex $oldheader 1]]
 				set header [tsv_open $hf keepheader]
-				close $hf
+				gzclose $hf
 			}
 			parameter {
 				set keepheader ""
@@ -1418,7 +1418,7 @@ proc cg_select {args} {
 			set f [gzopen $value]
 			set header [tsv_open $f]
 			set data [csv_file $f \t]
-			close $f
+			gzclose $f
 			set query {}
 			foreach line $data {
 				set el ""
@@ -1460,7 +1460,7 @@ proc cg_select {args} {
 			} else {
 				set f [gzopen $value]
 				set header [tsv_open $f]
-				catch {close $f}
+				gzclose $f
 			}
 			puts stdout [join [samples $header] \n]
 			exit 0
@@ -1471,7 +1471,7 @@ proc cg_select {args} {
 			} else {
 				set f [gzopen $value]
 				set header [tsv_open $f]
-				catch {close $f}
+				gzclose $f
 			}
 			puts stdout [join $header \n]
 			exit 0
@@ -1527,7 +1527,7 @@ proc cg_select {args} {
 			tsv_select $query $qfields $sortfields $oldheader $newheader $sepheader $f $o $inverse $group $groupcols $index $samplingskip $removecomment $samples
 		} result]
 	}
-	if {$f ne "stdin"} {catch {close $f}}
+	if {$f ne "stdin"} {catch {gzclose $f}}
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$error} {
 		puts stderr $result

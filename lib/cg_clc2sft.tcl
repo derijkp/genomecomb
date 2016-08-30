@@ -34,7 +34,7 @@ proc cg_clc2sft {args} {
 		errorformat clc2sft
 		exit 1
 	}
-	catch {close $f} ; catch {close $0}
+	catch {gzclose $f} ; catch {close $o}
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]
 		set f [gzopen $filename]
@@ -132,7 +132,7 @@ proc cg_clc2sft {args} {
 		}
 	}	
 	if {$o ne "stdout"} {catch {close $o}}
-	if {$f ne "stdin"} {catch {close $f}}
+	if {$f ne "stdin"} {catch {gzclose $f}}
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {

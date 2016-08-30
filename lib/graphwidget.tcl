@@ -184,7 +184,7 @@ graphwidget method defsettings {file} {
 		set f [gzopen $file]
 		set header [tsv_open $f]
 		set line [split [gets $f] \t]
-		catch {close $f}
+		catch {gzclose $f}
 	}
 	set poss [tsv_basicfields $header 6 0]
 	set graphd(file) [file_absolute $file]
@@ -270,7 +270,7 @@ graphwidget method open {file} {
 		unset -nocomplain data($name,bcol)
 		set f [gzopen $file]
 		set header [tsv_open $f]
-		close $f
+		gzclose $f
 	}
 	set showregion $graphd(region)
 	set poss {}
@@ -745,7 +745,7 @@ graphwidget method loadregion {name} {
 			set chrpos [tsv_basicfields $header 1]
 			set line [split [gets $f] \t]
 			set chr [lindex $line $chrpos]
-			catch {close $f}
+			catch {gzclose $f}
 			set f [open "| tabix [list $data($name,file)] $chr:[expr {$start+1}]-$end"]
 			set data($name,bgzregion) $chr:$start-$end
 		} elseif {$ext eq ".rz"} {
@@ -785,7 +785,7 @@ graphwidget method loadregion {name} {
 				}
 			}
 		}
-		catch {close $f}
+		catch {gzclose $f}
 	}
 	set data($name,lstart) $start
 	set data($name,lend) $end
@@ -827,7 +827,7 @@ graphwidget method loadregtype {file name} {
 		::$object.$vnum.y append 1
 		::$object.$vnum.y append 1
 	}
-	close $f
+	gzclose $f
 	update
 	set data($name,xmin) $xmin
 	set data($name,xmax) $xmax
@@ -1115,7 +1115,7 @@ graphwidget method point {x y} {
 		incr index -1
 		if {!$index} break
 	}
-	catch {close $f}
+	catch {gzclose $f}
 	if {![winfo exists [get ptable]]} {
 		unset -nocomplain points
 		set ptable [tableedit]

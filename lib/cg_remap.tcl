@@ -112,6 +112,7 @@ proc cg_remap {file remapfile resultfile} {
 	}
 	close $o
 	close $u
+	gzclose $f ; gzclose $fr
 	cg select -s - $resultfile.temp $resultfile.temp2
 	file delete $resultfile.temp
 	file rename -force $resultfile.temp.unmapped $resultfile.unmapped

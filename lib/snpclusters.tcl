@@ -28,7 +28,7 @@ proc cg_clusters_distgraph {} {
 		foreach {pchr pbegin pend} [list $chr $begin $end] break
 	}
 	close $o
-	close $f
+	gzclose $f
 }
 
 proc clusters {} {

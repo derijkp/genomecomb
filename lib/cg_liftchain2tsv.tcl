@@ -95,7 +95,7 @@ proc cg_liftchain2tsv {args} {
 		}
 	}
 	if {$srcfile ne ""} {
-		close $f
+		gzclose $f
 	}
 	if {$destfile ne ""} {
 		close $o

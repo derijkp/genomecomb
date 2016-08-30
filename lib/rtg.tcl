@@ -48,7 +48,7 @@ proc rtg2annotvar {file {outfile {}}} {
 		set line [split [gets $f] \t]
 	}
 	close $o
-	close $f
+	gzclose $f
 	file rename -force $outfile.temp $outfile
 }
 
@@ -161,13 +161,13 @@ proc process_rtgsample {dir destdir {force 0}} {
 		file delete sreg-$name.tsv.temp
 		set f [open sreg-$name.tsv.temp w]
 		puts $f "chromosome\tbegin\tend"
-		close $f
+		gzclose $f
 		foreach file $files {
 			putslog "Processing $file"
 			set chr [lindex [split [file tail $file] _] 0]
 			set f [gzopen $file]
 			set header [tsv_open $f]
-			catch {close $f}
+			catch {gzclose $f}
 			set poscol [lsearch $header position]
 			set coveragecol [lsearch $header coverage]
 			set cat [gzcat $file]

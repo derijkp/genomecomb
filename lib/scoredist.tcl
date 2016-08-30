@@ -46,7 +46,7 @@ proc mcompar {sequenced1 sequenced2 allele11 allele21 allele12 allele22} {
 proc scoredist {file sample1 sample2} {
 	global compara scorea refa cova mcova
 
-	catch {close $f}
+	catch {gzclose $f}
 	set f [gzopen $file]
 	set header [split [gets $f] \t]
 #	set comparpos [lsearch $header compar]
@@ -101,7 +101,7 @@ proc scoredist {file sample1 sample2} {
 			}
 		}
 	}
-	close $f
+	gzclose $f
 
 #	# totals
 #	set totals {0 0 0 0 0 0 0 0}

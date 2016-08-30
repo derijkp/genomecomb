@@ -1127,7 +1127,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 	if {[catch {eof $genomef}]} {
 		set genomef [genome_open $genomefile]
 	}
-	catch {close $f}; catch {close $df}; catch {close $o};
+	catch {gzclose $f}; catch {gzclose $df}; catch {close $o};
 	set f [gzopen $file]
 	set header [tsv_open $f]
 	if {[catch {set poss [tsv_basicfields $header]}]} {
@@ -1366,7 +1366,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 		puts $o $result
 	}
 	close $genomef
-	close $o; catch {close $f};	catch {close $df}
+	close $o; gzclose $f;	gzclose $df
 	file rename -force $annotfile.temp $annotfile
 }
 

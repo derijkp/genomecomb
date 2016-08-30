@@ -662,7 +662,7 @@ proc cg_mselect {args} {
 				set f [gzopen $value]
 				set header [tsv_open $f]
 				set data [csv_file $f \t]
-				close $f
+				gzclose $f
 				set query {}
 				foreach line $data {
 					set el ""
