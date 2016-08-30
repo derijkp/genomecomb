@@ -9,13 +9,13 @@ source tools.tcl
 
 test makeprimers {basic} {
 	exec cg makeregions data/testvars.tsv 200 > tmp/valregs.tsv
-	exec cg makeprimers tmp/valregs.tsv 600 500 /complgen/refseq/hg18 > tmp/primersvalregs.tsv
+	exec cg makeprimers tmp/valregs.tsv 600 500 /complgen/refseq/hg18_test > tmp/primersvalregs.tsv
 	exec diff tmp/primersvalregs.tsv data/makeprimers-results.tsv
 } {} 
 
 test makeprimers {basic with minfreq} {
 	exec cg makeregions data/testvars.tsv 200 > tmp/valregs.tsv
-	exec cg makeprimers tmp/valregs.tsv 600 500 /complgen/refseq/hg18 0.5 > tmp/primersvalregs.tsv
+	exec cg makeprimers tmp/valregs.tsv 600 500 /complgen/refseq/hg18_test 0.5 > tmp/primersvalregs.tsv
 	exec diff tmp/primersvalregs.tsv data/makeprimers-results2.tsv
 } {} 
 
