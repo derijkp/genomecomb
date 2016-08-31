@@ -15,6 +15,13 @@ char *lz4_findindex(char *filename) {
 	return outfile;
 }
 
+#define yaml_checkparam(buffer,read,start,test,size) { \
+if (read < (start+size) || strncmp(buffer+start,test,size) != 0 || (buffer[start+size] != ' ' && buffer[start+size] != '\n')) { \
+	fprintf(stderr,"lz4i error: only %s supported\n",test); \
+	exit(1); \
+} \
+}
+
 LZ4res *lz4open(FILE* finput,FILE *findex) {
 	LZ4res *res = malloc(sizeof(LZ4res));
 	unsigned char MNstore[MAGICNUMBER_SIZE];
@@ -99,12 +106,30 @@ LZ4res *lz4open(FILE* finput,FILE *findex) {
 				exit(1);
 			}
 			if (read == 4 && strncmp(buffer,"...",3) == 0) break;
-			if (read <= 7) continue;
+			if (read < 6) continue;
 			if (read > 7 && strncmp(buffer,"usize: ",7) == 0) {
 				sscanf(buffer+7,"%llu",(long long unsigned int *)&(res->usize));
 			} else if (read > 9 && strncmp(buffer,"binsize: ",9) == 0) {
 				sscanf(buffer+9,"%llu",(long long unsigned int *)&(res->indexbsize));
+			} else if (read > 6 && strncmp(buffer,"name: ",6) == 0) {
+				yaml_checkparam(buffer,read,6,"lz4index",8);
+			} else if (read > 9 && strncmp(buffer,"version: ",9) == 0) {
+				yaml_checkparam(buffer,read,9,"0.1",3);
+			} else if (read > 10 && strncmp(buffer,"datatype: ",10) == 0) {
+				yaml_checkparam(buffer,read,10,"uint64",6);
+			} else if (read > 6 && strncmp(buffer,"type: ",6) == 0) {
+				yaml_checkparam(buffer,read,6,"array",5);
+			} else if (read > 11 && strncmp(buffer,"byteorder: ",11) == 0) {
+				yaml_checkparam(buffer,read,11,"l",1);
 			}
+		}
+		if (res->indexbsize == 0) {
+			fprintf(stderr,"lz4i error: binsize missing or 0\n");
+			exit(1);
+		}
+		if (res->usize == 0) {
+			fprintf(stderr,"lz4i error: usize missing or 0\n");
+			exit(1);
 		}
 		res->indexstart = ftell(findex);
 		NODPRINT("indexfile usize: %llu",(long long unsigned int)res->usize);
