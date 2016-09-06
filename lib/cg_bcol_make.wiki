@@ -22,7 +22,7 @@ variant annotation (a different score for each potential alternative allele).
 ; **column**: Name of the column containing the data
 
 == Options ==
-; **-t type**: type of data, should be one given in the [[format_bcol|description of the format]]
+; **-t type**: type of data, should be one described in the description of the format ([[format_bcol|format_bcol]])
 ; **-c chromosomecol** (--chromosomecol): name of the column that contains the chromosome
 ; **-p poscol**: name of the column that contains the positions
 ; **-e endcol**: name of the column that contains the the end positions (in case of regions, this cannot be used with -m)
