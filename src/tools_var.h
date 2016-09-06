@@ -5,6 +5,8 @@ typedef struct VariantPos {
 	int type;
 	int ref;
 	int alt;
+	int seq;
+	int zyg;
 	int a1;
 	int a2;
 	int max;
@@ -28,3 +30,4 @@ void result2var(DStringArray *result,VariantPos varpos, Variant *var);
 int varcompare(Variant *var1, Variant *var2, int split);
 void varpos_init(VariantPos *varpos);
 int varpos_max(VariantPos *varpos);
+void varpos_fromheader(VariantPos *varpos,DStringArray *header);

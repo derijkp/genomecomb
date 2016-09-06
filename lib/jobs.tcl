@@ -226,6 +226,46 @@ proc jobglob {args} {
 	list_remdup $files
 }
 
+proc jobfileexists {args} {
+	set checkcompressed 1
+	set pos 0
+	while 1 {
+		set key [lindex $args $pos]
+		switch -- $key {
+			-checkcompressed {
+				incr pos
+				set checkcompressed [lindex $args $pos]
+			}
+			-- {
+				incr pos
+				break
+			}
+			default break
+		}
+		incr pos
+	}
+	set args [lrange $args $pos end]
+	set files {}
+	set ids {}
+	set time now
+	foreach pattern $args {
+		if {[file exists $pattern]} {
+		} elseif {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
+			set pattern [string range $pattern 1 end-1]
+			if {[file pathtype $pattern] eq "relative"} {set relative 1} else {set relative 0}
+			if {![llength [job_findregexpdep $pattern ids time $checkcompressed]]} {
+				return 0
+			}
+		} else {
+			if {[file pathtype $pattern] eq "relative"} {set relative 1} else {set relative 0}
+			if {![llength [job_finddep $pattern ids time $checkcompressed]]} {
+				return 0
+			}
+		}
+	}
+	return 1
+}
+
 proc glob2regexp {pattern} {
 	set regexp {}
 	set escape 0

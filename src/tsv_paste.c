@@ -26,7 +26,7 @@ int copy_line_check(FILE *f, int numfields) {
 		if (c == '\t') {
 			numfields--;
 			if (numfields == 0) {
-				fprintf(stderr,"file has more columns in a line than header\n");
+				fprintf(stderr,"\nfile has more columns in a line than header\n");
 				exit(1);
 			}
 		}

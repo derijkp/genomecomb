@@ -62,11 +62,22 @@ proc indexdir_filewrite {mainfile indexfile} {
 	set indexdir [file_absolute [gzroot $mainfile]].index
 	# first try sib indexdir
 	if {[file exists $indexdir/$indexfile]} {
-		# if we can delete the obsolete file, we can also write the new one
-		if {![catch {
-			file delete $indexdir/$indexfile
-		}]} {
-			return $indexdir/$indexfile
+		# if it is a dir, check if we can write in it
+		if {[file isdir $indexdir/$indexfile]} {
+			if {![catch {
+				file_write $indexdir/$indexfile/indexdir_filewrite.test {}
+			}]} {
+				file delete $indexdir/$indexfile/indexdir_filewrite.test
+				return $indexdir/$indexfile
+			}
+			
+		} else {
+			# if we can delete the obsolete file, we can also write the new one
+			if {![catch {
+				file delete $indexdir/$indexfile
+			}]} {
+				return $indexdir/$indexfile
+			}
 		}
 	} else {
 		# check if we can write in the sib indexdir

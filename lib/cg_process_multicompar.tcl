@@ -1,4 +1,4 @@
-proc multicompar_job {experiment dbdir todo args} {
+proc process_multicompar_job {experiment dbdir todo args} {
 	upvar job_logdir job_logdir
 	set skipincomplete 1
 	set split 0
@@ -190,7 +190,6 @@ proc process_multicompar {args} {
 	set paired 1
 	set adapterfile {}
 	set conv_nextseq 0
-	set hsmetrics 0
 	cg_options process_multicompar args {
 		-dbdir {
 			set dbdir $value
@@ -227,7 +226,7 @@ proc process_multicompar {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set todo [list_remdup $todo]
-	multicompar_job $experiment $dbdir $todo -skipincomplete 1 -split $split -dbfiles $dbfiles
+	process_multicompar_job $experiment $dbdir $todo -skipincomplete 1 -split $split -dbfiles $dbfiles
 	cd $keeppwd
 
 }

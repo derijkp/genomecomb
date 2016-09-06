@@ -20,6 +20,8 @@ typedef struct VariantPos {
 	int type;
 	int ref;
 	int alt;
+	int seq;
+	int zyg;
 	int a1;
 	int a2;
 	int max;
@@ -114,8 +116,11 @@ void varpos_init(VariantPos *varpos) {
 	varpos->type = -1;
 	varpos->ref = -1;
 	varpos->alt = -1;
+	varpos->seq = -1;
+	varpos->zyg = -1;
 	varpos->a1 = -1;
 	varpos->a2 = -1;
+	varpos->id = -1;
 }
 
 int varpos_max(VariantPos *varpos) {
@@ -126,9 +131,73 @@ int varpos_max(VariantPos *varpos) {
 	if (varpos->type > i) {i = varpos->type;} ;
 	if (varpos->ref > i) {i = varpos->ref;} ; 
 	if (varpos->alt > i) {i = varpos->alt;} ;
+	if (varpos->seq > i) {i = varpos->seq;} ;
+	if (varpos->zyg > i) {i = varpos->zyg;} ;
 	if (varpos->a1 > i) {i = varpos->a1;} ;
 	if (varpos->a2 > i) {i = varpos->a2;} ;
 	if (varpos->id > i) {i = varpos->id;} ;
 	varpos->max = i;
 	return i;
 }
+
+/*
+int varpos_findheaderfield_string(char *header,int *lengths,int headersize,const char *array[]) {
+	DString *teststring;
+	char *string;
+	register char *test;
+	register int i,len,j,alen;
+	alen = (sizeof (array) / sizeof (const char *));
+	for (j = 0 ; j < alen ; j++) {
+		test = header;
+		string = array[j]
+		len = strlen(string);
+		for (i = 0 ; i < headersize ; i++) {
+			if (len == lengtsa[i] && strncmp(test,string,len)) {
+				return(i);
+			}
+			test += lengtsa[i] + 1;
+		}
+	}
+	return(-1);
+}
+*/
+
+int varpos_findheaderfield(DStringArray *header,const char *array[],int alen) {
+	const char *string;
+	register int i,len,j;
+	for (j = 0 ; j < alen ; j++) {
+		string = array[j];
+		len = strlen(string);
+		for (i = 0 ; i < header->size ; i++) {
+			if (header->data[i].size == len && strncmp(header->data[i].string,string,len) == 0) {
+				return(i);
+			}
+		}
+	}
+	return(-1);
+}
+
+void varpos_fromheader(VariantPos *varpos,DStringArray *header) {
+	const char * chra[] = {"chromosome","chrom","chr","chr1","genoName","contig"};
+	const char * begina[] = {"begin","start","end1","chromStart","genoStart","tStart","txStart"};
+	const char * enda[] = {"end","start2","chromEnd","genoEnd","tEnd","txEnd"};
+	const char * typea[] = {"type"};
+	const char * refa[] = {"ref","reference"};
+	const char * alta[] = {"alt","alternative"};
+	const char * seqa[] = {"sequenced"};
+	const char * zyga[] = {"zyg"};
+	const char * a1a[] = {"alleleSeq1"};
+	const char * a2a[] = {"alleleSeq2"};
+	varpos_init(varpos);
+	varpos->chr = varpos_findheaderfield(header,chra,(sizeof (chra) / sizeof (const char *)));
+	varpos->start = varpos_findheaderfield(header,begina,(sizeof (begina) / sizeof (const char *)));
+	varpos->end = varpos_findheaderfield(header,enda,(sizeof (enda) / sizeof (const char *)));
+	varpos->type = varpos_findheaderfield(header,typea,(sizeof (typea) / sizeof (const char *)));
+	varpos->ref = varpos_findheaderfield(header,refa,(sizeof (refa) / sizeof (const char *)));
+	varpos->alt = varpos_findheaderfield(header,alta,(sizeof (alta) / sizeof (const char *)));
+	varpos->seq = varpos_findheaderfield(header,seqa,(sizeof (seqa) / sizeof (const char *)));
+	varpos->zyg = varpos_findheaderfield(header,zyga,(sizeof (zyga) / sizeof (const char *)));
+	varpos->a1 = varpos_findheaderfield(header,a1a,(sizeof (a1a) / sizeof (const char *)));
+	varpos->a2 = varpos_findheaderfield(header,a2a,(sizeof (a2a) / sizeof (const char *)));
+}
+

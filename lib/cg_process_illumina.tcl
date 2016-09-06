@@ -866,7 +866,7 @@ proc process_illumina {args} {
 	job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo [list_remdup $todo]
-	multicompar_job $experiment $dbdir $todo -skipincomplete 1 -split $split -dbfiles $dbfiles
+	process_multicompar_job $experiment $dbdir $todo -skipincomplete 1 -split $split -dbfiles $dbfiles
 	if {[llength $reports]} {
 		proces_reportscombine_job $ $reportstodo
 	}

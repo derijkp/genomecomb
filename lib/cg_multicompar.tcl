@@ -165,9 +165,11 @@ proc cg_multicompar {args} {
 	set files $allfiles
 	if {$targetsfile ne ""} {lappend files $targetsfile}
 	multi_merge_job $workdir/vars.tsv $files $split
+	#
+	# make todofile used by multi_join to join all separate files together
 	set todofile $workdir/multitodo.txt
 	set ftodo [open $todofile w]
-	# line with: filename chrpos beginpos endpos typepos refpos altpos todomax todoseqpos
+	# line with: filename chrpos beginpos endpos typepos refpos altpos todomax todoseqpos ?numberof data positions?
 	puts $ftodo [join [list $workdir/vars.tsv 0 1 2 3 4 5 5 0] \t]
 	# line with: data positions that must go in the multicompar
 	puts $ftodo ""

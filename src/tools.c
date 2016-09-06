@@ -796,6 +796,15 @@ void DStringPrintTab(FILE *f, DString *linePtr) {
 	}
 }
 
+/* 
+ * Creates a Tab from a DString
+ * linePtr: DString to be converted
+ * maxtab: maximum number that can be converted (size of DStringArray)
+ * result: resulting DStringArray
+ * setzero: if 1, the tabs in the string are changed to \0, 
+ *          making the array strings compatible with C strings (but changes the original string)
+ * numfields: returns actual number of fields found (NULL if not needed)
+ */
 int DStringSplitTab(
 	DString *linePtr,	int maxtab, DStringArray *result, int setzero,unsigned int *numfields
 ) {
@@ -939,6 +948,11 @@ NODPRINT("%s",linePtr->string)
 	}
 }
 
+/*
+ * this skips the header (file position will be just after the header line),
+ * and returns the header line in linePtr.
+ * if numfields != NUL, it will contain the number of fields in the header
+ */
 void skip_header(FILE *f1, DString *linePtr, unsigned int *numfields,unsigned int *pos) {
 	ssize_t read;
 	unsigned int curpos=0;
