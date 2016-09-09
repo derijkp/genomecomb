@@ -15,6 +15,10 @@ proc reorder {file dest} {
 		if {$pos1 != -1} {lappend newheader sequenced-$sample}
 		set pos2 [lsearch $temp zyg-$sample]
 		if {$pos2 != -1} {lappend newheader zyg-$sample}
+		set pos3 [lsearch $temp alleleSeq1-$sample]
+		if {$pos3 != -1} {lappend newheader alleleSeq1-$sample}
+		set pos4 [lsearch $temp alleleSeq2-$sample]
+		if {$pos4 != -1} {lappend newheader alleleSeq2-$sample}
 		lappend newheader {*}[list_sub $temp -exclude [list $pos1 $pos2]]
 	}
 	set poss [tsv_basicfields $header 6 0]
@@ -67,36 +71,36 @@ test pmulticompar {basic split reannot} {
 	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
 	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
-	cg pmulticompar_reannot tmp/temp.sft
 	exec diff tmp/temp.sft data/expected-multicompar-split-reannot.sft
 } {} 
 
-test pmulticompar {basic split reannot paged} {
+test pmulticompar {split reannot test diff alleles} {
 	test_cleantmp
-	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
-	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
-	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
-	cg pmulticompar_reannot -paged 2 tmp/temp.sft
-	exec diff tmp/temp.sft data/expected-multicompar-split-reannot.sft
-} {} 
-
-test pmulticompar {basic split reannot paged with pagedstart} {
-	test_cleantmp
-	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
-	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
-	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
-	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
-	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
-	cg pmulticompar_reannot -paged 2 -pagedstart 1 tmp/temp.sft
-	exec diff tmp/temp.sft data/expected-multicompar-split-reannot-pagedstart1.sft
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	zyg alleleSeq1	alleleSeq2	name
+		1	10	11	snp	G	A	r	o	G	C	1A10
+		1	10	11	snp	G	C	v	t	G	C	1C10
+		1	10	11	snp	G	G	r	o	G	C	1G10
+		1	11	12	snp	T	A	v	m	A	A	1A11
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	zyg alleleSeq1	alleleSeq2	name
+		1	10	11	snp	G	C	v	m	C	C	2C10
+	}
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		1	0	20
+	}
+	write_tab tmp/expected.sft {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1 alleleSeq1-sample1	alleleSeq2-sample1	name-sample1	sequenced-sample2	zyg-sample2 alleleSeq1-sample2	alleleSeq2-sample2	name-sample2
+		1	10	11	snp	G	A	r	o	G	C	1A10	r	o	C	C	?
+		1	10	11	snp	G	C	v	t	G	C	1C10	v	m	C	C	2C10
+		1	10	11	snp	G	G	r	o	G	C	1G10	r	o	C	C	?
+		1	11	12	snp	T	A	v	m	A	A	1A11	r	r	T	T	?
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.sft tmp/expected.sft
 } {} 
 
 test pmulticompar {basic, sequenced already present} {
@@ -117,12 +121,6 @@ test pmulticompar {basic, sequenced already present} {
 ---
 > 1	5000	5010	del	AGCGTGGCAA		v	AGCGTGGCAA		test4	0.4	v	AGCGTGGCAA		test4	0.4
 child process exited abnormally} 
-
-#test pmulticompar {noalt} {
-#	test_cleantmp
-#	cg pmulticompar tmp/temp.sft data/var_annotnoalt.sft data/var_annot2noalt.sft
-#	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2noalt.sft
-#} {} 
 
 test pmulticompar {var and mapper naming convention} {
 	test_cleantmp

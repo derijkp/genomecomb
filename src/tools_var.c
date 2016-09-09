@@ -95,16 +95,16 @@ void result2var(DStringArray *result,VariantPos varpos, Variant *var) {
 int varcompare(Variant *var1, Variant *var2, int split) {
 	int comp;
 	comp = DStringLocCompare(var1->chr,var2->chr);
-	if  (comp != 0) {return comp;}
+	if  (comp != 0) {return comp<0?-2:2;}
 	comp = var1->start - var2->start;
-	if (comp != 0) {return comp;}
+	if (comp != 0) {return comp<0?-2:2;}
 	comp = var1->end - var2->end;
-	if (comp != 0) {return comp;}
+	if (comp != 0) {return comp<0?-2:2;}
 	comp = DStringCompare(var1->type,var2->type);
-	if (comp != 0) {return comp;}
+	if (comp != 0) {return comp<0?-2:2;}
 	if (split) {
 		comp = DStringCompare(var1->alt,var2->alt);
-		if (comp != 0) {return comp;}
+		if (comp != 0) {return comp<0?-1:1;}
 	}
 	return 0;
 }

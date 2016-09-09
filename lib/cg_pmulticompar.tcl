@@ -118,17 +118,20 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 	# 
 	# add extra var line to each sample file to get everything in vars.tsv
 	set pastefiles [list $workdir/vars.tsv]
-	set dep2 $workdir/vars.tsv
+	set allvarsfile $workdir/vars.tsv
 	foreach sample $samples {
-		set dep $samplesa($sample)
+		set samplevarsfile $samplesa($sample)
+		set sampledir [file dir $samplesa($sample)]
+		set sregfile $sampledir/sreg-$sample.tsv
 		set target $workdir/avars-$sample.tsv
 		lappend pastefiles $target
-		job multicompar_fill-$sample -deps {$dep $dep2} -targets {$target} -vars {sample split} -code {
-			set vf [open $dep2]
+		job multicompar_fill-$sample -deps {$allvarsfile $samplevarsfile ($sregfile)} -targets {$target} \
+		  -vars {allvarsfile samplevarsfile sregfile sample split} -code {
+			set vf [open $allvarsfile]
 			set vheader [tsv_open $vf]
 			close $vf
 			if {$vheader ne "chromosome begin end type ref alt"} {error "internal error: index vars.tsv in wrong format"}
-			set f [open $dep]
+			set f [open $samplevarsfile]
 			set header [tsv_open $f]
 			close $f
 			set basicposs [tsv_basicfields $header 6 0]
@@ -137,29 +140,33 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 			set a1pos [lsearch $header alleleSeq1]
 			set a2pos [lsearch $header alleleSeq2]
 			set keepfields [list_sub $header -exclude $basicposs]
-			if {[string match fannotvar-* [file tail $dep]]} {
+			if {[string match fannotvar-* [file tail $samplevarsfile]]} {
 				set mergefields {xRef geneId mrnaAcc proteinAcc symbol orientation component componentIndex hasCodingRegion impact nucleotidePos proteinPos annotationRefSequence sampleSequence genomeRefSequence pfam}
 				set keepfields [list_lremove $keepfields $mergefields]
 			}
-			set keepfields [list_remove $keepfields sequenced zyg]
+			set keepfields [list_remove $keepfields sequenced zyg alleleSeq1 alleleSeq2]
 			set keepposs [list_cor $header $keepfields]
 			if {$seqpos == -1} {
 				lappend reannotheader sequenced-$sample
 			}
 			set newheader [list sequenced-$sample]
 			if {$zygpos != -1} {lappend newheader zyg-$sample}
+			if {$a1pos != -1} {lappend newheader alleleSeq1-$sample}
+			if {$a2pos != -1} {lappend newheader alleleSeq2-$sample}
 			foreach field $keepfields {
 				lappend newheader ${field}-$sample
 			}
 			set o [open $target.temp w]
 			puts $o [join $newheader \t]
 			close $o
-			# puts "../bin/multicompar_addvars_simple $dep2 $dep $split $keepposs"
-			exec multicompar_addvars_simple $dep2 $dep $split {*}$keepposs >> $target.temp
+			if {![file exists $sregfile]} {set sregfile {}}
+			 puts [list ../bin/multicompar_addvars_simple $allvarsfile $samplevarsfile $split $sregfile {*}$keepposs]
+			exec multicompar_addvars_simple $allvarsfile $samplevarsfile $split $sregfile {*}$keepposs >> $target.temp
 			file rename $target.temp $target
 		}
 	}
-	putsvars target pastefiles
+	#
+	# paste all together for final multicompar
 	tsv_paste_job $newcompar_file $pastefiles
 }
 
