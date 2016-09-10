@@ -133,6 +133,7 @@ proc cg_cat {args} {
 				}
 			}
 		}
+		gzclose $f
 	}
 }
 
