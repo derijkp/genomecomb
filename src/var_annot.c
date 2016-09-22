@@ -14,7 +14,7 @@
 #include "debug.h"
 
 void connectalt(
-	char *alt1, char *alt2, char *data
+	char *alt1, char *alt2, char *data, char *notfound
 ) {
 	char *alt1keep,*alt2keep,*alt2move,*datakeep,*prevdata;
 	int alt2num,found,i,pre = 0;
@@ -58,7 +58,7 @@ void connectalt(
 					while (datakeep[i] != ',' && datakeep[i] != '\0') {i++;}
 				}
 				if (i == 0) {
-					fprintf(stdout,"-");
+					fprintf(stdout,"%s",notfound);
 				} else {
 					fprintf(stdout,"%.*s",i,datakeep);
 				}
@@ -70,7 +70,7 @@ void connectalt(
 			alt2keep = alt2move;
 		}
 		if (!found) {
-			fprintf(stdout,"-");
+			fprintf(stdout,"%s",notfound);
 		}
 		if (*alt1 == '\0') break;
 		alt1++;
@@ -87,6 +87,7 @@ int main(int argc, char *argv[]) {
 	DString *prevalt1 = DStringNew(), *prevalt2 = DStringNew();
 	DString *chromosome1=NULL,*chromosome2=NULL,*type1 = NULL,*type2 = NULL,*alt1 = NULL,*alt2 = NULL;
 	unsigned int numfields1,numfields2,numfields,pos1 = 0,pos2 = 0;
+	char *notfound = "-", **data;
 	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
 	int chr1pos,start1pos,end1pos,type1pos,alt1pos,max1;
 	int chr2pos,start2pos,end2pos,type2pos,alt2pos,max2;
@@ -95,16 +96,17 @@ int main(int argc, char *argv[]) {
 	int start1,end1;
 	int start2,end2;
 	int error2,nextpos=0,sametype,cmp,i;
-	if ((argc < 13)) {
-		fprintf(stderr,"Format is: var_annot file1 chrpos1 startpos1 endpos1 type1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos alt2pos datapos ...");
+	if ((argc < 14)) {
+		fprintf(stderr,"Format is: var_annot file1 chrpos1 startpos1 endpos1 type1pos alt1pos file2 chrpos2 startpos2 endpos2 type2pos alt2pos notfound datapos ...");
 		exit(EXIT_FAILURE);
 	}
-	f1 = fopen64_or_die(argv[1],"r");
-	chr1pos = atoi(argv[2]);
-	start1pos = atoi(argv[3]);
-	end1pos = atoi(argv[4]);
-	type1pos = atoi(argv[5]);
-	alt1pos = atoi(argv[6]);
+	i = 1;
+	f1 = fopen64_or_die(argv[i++],"r");
+	chr1pos = atoi(argv[i++]);
+	start1pos = atoi(argv[i++]);
+	end1pos = atoi(argv[i++]);
+	type1pos = atoi(argv[i++]);
+	alt1pos = atoi(argv[i++]);
 	max1 = chr1pos;
 	if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
 	if (type1pos > max1) {max1 = type1pos;} ; if (alt1pos > max1) {max1 = alt1pos;} ;
@@ -112,26 +114,29 @@ int main(int argc, char *argv[]) {
 	/* The following allocation is not destroyed at end as it may point to something else */
 	/* This will leak mem, but as the prog is finished anyway ... */
 	result1 = DStringArrayNew(max1+2);
-	if (strlen(argv[7]) == 1 && argv[7][0] == '-') {
+	if (strlen(argv[i]) == 1 && argv[i][0] == '-') {
 		f2 = stdin;
 	} else {
-		f2 = fopen64_or_die(argv[7],"r");
+		f2 = fopen64_or_die(argv[i],"r");
 	}
-	chr2pos = atoi(argv[8]);
-	start2pos = atoi(argv[9]);
-	end2pos = atoi(argv[10]);
-	type2pos = atoi(argv[11]);
-	alt2pos = atoi(argv[12]);
+	i++;
+	chr2pos = atoi(argv[i++]);
+	start2pos = atoi(argv[i++]);
+	end2pos = atoi(argv[i++]);
+	type2pos = atoi(argv[i++]);
+	alt2pos = atoi(argv[i++]);
 NODPRINT("var_annot %s %d %d %d %d %d %s %d %d %d %d %d ...",
 	argv[1],chr1pos,start1pos,end1pos,type1pos,alt1pos,
 	argv[7],chr2pos,start2pos,end2pos,type2pos,alt2pos
 );
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 	if (type2pos > max2) {max2 = type2pos;} ; if (alt2pos > max2) {max2 = alt2pos;} ;
-	datalen = argc-13;
+	notfound = argv[i++];
+	data = argv + i;
+	datalen = argc-i;
 	datapos = malloc(datalen*sizeof(int));
 	for (i = 0 ; i < datalen ; i++) {
-		datapos[i] = atoi(argv[13+i]);
+		datapos[i] = atoi(data[i]);
 NODPRINT(" %d",datapos[i]);
 	}
 NODPRINT("\n");
@@ -199,21 +204,22 @@ NODPRINT("line2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),prevstart2,preven
 		}
 		if (error2 || (DStringLocCompare(chromosome2,chromosome1) != 0) || (start2 != start1) || (end2 != end1) || !sametype) {
 			if (!datalen) {
-				fprintf(stdout,"\n");
+				fprintf(stdout,"%s\n",notfound);
 			} else {
 				for (i = 1 ; i < datalen ; i++) {
-					fprintf(stdout,"-\t");
+					fprintf(stdout,"%s\t",notfound);
 				}
-				fprintf(stdout,"-\n");
+				fprintf(stdout,"%s\n",notfound);
 			}
 		} else {
 			if (!datalen) {
-				fprintf(stdout,"1\n");
+				connectalt(alt1->string,alt2->string,"1",notfound);
+				putc_unlocked('\n',stdout);
 			} else {
-				connectalt(alt1->string,alt2->string,result2->data[datapos[0]].string);
+				connectalt(alt1->string,alt2->string,result2->data[datapos[0]].string,notfound);
 				for (i = 1 ; i < datalen ; i++) {
 					fprintf(stdout,"\t");
-					connectalt(alt1->string,alt2->string,result2->data[datapos[i]].string);
+					connectalt(alt1->string,alt2->string,result2->data[datapos[i]].string,notfound);
 				}
 				fprintf(stdout,"\n");
 			}

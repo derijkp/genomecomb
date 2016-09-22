@@ -82,14 +82,14 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 	if {[gziscompressed $file]} {
 		set file "|[gzcat $file] '$file'"
 	}
-	# puts [list var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs]
+	set notfound -
 	if {[gziscompressed $dbfile]} {
 		gzcatch { 
-			exec {*}[gzcat $dbfile] $dbfile | var_annot $file {*}$poss $type1pos $alt1pos - {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp 2>@ stderr
+			exec {*}[gzcat $dbfile] $dbfile | var_annot $file {*}$poss $type1pos $alt1pos - {*}$dbposs $type2pos $alt2pos $notfound {*}$dataposs >> $annotfile.temp 2>@ stderr
 		}
 	} else {
-		# puts "var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp"
-		exec var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos {*}$dataposs >> $annotfile.temp 2>@ stderr
+		# puts [list ../bin/var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos $notfound {*}$dataposs]
+		exec var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos $notfound {*}$dataposs >> $annotfile.temp 2>@ stderr
 	}
 	file rename -force $annotfile.temp $annotfile
 }

@@ -168,6 +168,50 @@ test var_annot {multi alt split, one value in vardb} {
 	}
 } {} 
 
+test var_annot {multi alt split, one value in vardb (split)} {
+	file mkdir tmp
+	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A C
+		chr1 4001 4002 snp A G
+	}
+	write_tab tmp/var_annot.tsv {
+		chrom start end type ref alt name freq
+		chr1 4001 4002 snp A G test2 0.2
+	}
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt annot_name annot_freq annot_alt
+		chr1 4001 4002 snp A C - - -
+		chr1 4001 4002 snp A G test2 0.2 G
+	}
+	file_write tmp/var_annot.tsv.opt "fields\t{name freq alt}\n"
+	exec cg annotate tmp/vars.tsv tmp/temp.tsv tmp/var_annot.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test var_annot {multi alt split, one value in vardb (split) no data} {
+	test_cleantmp
+	file mkdir tmp
+	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A C
+		chr1 4001 4002 snp A G
+	}
+	write_tab tmp/var_annot.tsv {
+		chrom start end type ref alt
+		chr1 4001 4002 snp A G
+	}
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt annot
+		chr1 4001 4002 snp A C -
+		chr1 4001 4002 snp A G 1
+	}
+	exec cg annotate tmp/vars.tsv tmp/temp.tsv tmp/var_annot.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
 test var_annot {sort error 1 in vars} {
 	exec cg annotate data/vars_sorterror1.sft tmp/temp.sft data/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
