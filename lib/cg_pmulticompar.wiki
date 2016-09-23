@@ -1,0 +1,92 @@
+= Pmulticompar =
+
+== Format ==
+cg pmulticompar ?options? multicomparfile sampledir/varfile ...
+
+== Summary ==
+Compare multiple variant files
+
+== Description ==
+
+This command combines multiple variant files into one **multicompar file**: a
+tab separated file containing a wide table used to compare variants
+between different samples. Each line in the table contains general variant
+info (position, type, annotation, etc.) and columns with variant info
+specific to each sample (genotype, coverage, etc.). The latter have a
+column heading of the form field-<sample>.
+
+The **<sample> name** used is extracted from the filename of the variant
+files by removing the file extension and the start of
+the filename up to and including the first -. (Variant files are
+expected to use the following convention: var-<sample>.tsv.)
+<sample> can be simply the samplename, but may also include information
+about e.g. the sequencing or analysis method in the form method-samplename, e.g.
+var-gatk-sample1.tsv and var-sam-sample1.tsv to indicate variants called
+using gatk and samtools respectively for the same sample (sample1), thus
+allowing comparison of different methods, etc.
+
+=== Completing missing information ===
+When some samples contain a variant that others do not, the information in
+the multicompar file cannot be complete by combining variant files alone:
+A variant missing in one variant file may either mean that it is reference
+or that it is not sequenced. Other information about coverage, etc. on the
+variant not present in the variant file will also be missing. 
+multicompar will try to **complete this missing info** based on files (if
+present) accompanying the variant file (in the same directory and having a
+similar filename). Folowing files can be used for completing multicompar data:
+
+* sreg-<sample>.tsv: a tab-separated region file indicating all regions
+that are sequenced. If the variant is located in such a region, the
+sequenced-sample value will be set to r (for reference).
+Outside of these regions it will be annotated as u (unsequenced).
+* varall-<sample>.tsv: an tsv file made by returning "variant" calling
+results for all positions. This must contain the same columns as
+the variant file. All fields can be completed from a varall file.
+If a variant is not in the varall file, it is set to u (unsequenced).
+
+If data can not be completed using accompanying files, the missing
+information will be indicated by a questing mark as a value in the table.
+
+=== Adding to an existing multicomnpar ===
+Using the same command, you can add new samples to an existing multicompar
+file. pmulticompar needs the original variant files and accompanying files
+for the existing multicompar file. It can find these files (based on
+filename) easily if everything is organised in a
+[[format_project|Genomecomb project directory]] (hint: You can add samples in
+another projectdir without duplication using symbolic links)
+pmulticompar will look however in various places relative to the
+multicompar file (same directory, samples directory in same dir, parent
+directory, samples directory in parent dir).
+
+=== compared to old multicompar ===
+cg pmulticompar is a parallel and much faster version of
+[[cg_multicompar|multicompar]]. It also integrates the reannot step in
+one. It is more finicky about e.g. directory structure (needs to find the original
+sample variant files) and does not support all accompanying information files
+that the old one does.
+
+== Arguments ==
+; **multicomparfile**: resultfile, will be created if it does not exist
+; **sampledir/varfile**: directory or file containing variants of new
+sample to be added. More than one can added in one command If a sample
+directory is given, all files in it of the format var-<sample>.tsv (or
+fannotvar-<sample>.tsv) will be added as variant files.
+
+== Options ==
+; **-r 0/1** (--reannotregonly): Also do reannotation, but only region data (sreg) will be updated
+; **-t variantfile** (--targetsfile): All variants in **variantfile** will be in the final multicompar, even if
+they are not present in any of the samples. 
+A column will be added to indicate for each variant if it was in the targetsfile. The name of the 
+column will be the part of the filename after the last dash. If **variantfile** contains a "name" column, 
+the content of this will be used in the targets column instead of a 1.
+; **-s 0/1** (-split --split): if 1, multiple alternative alleles will be on a separate lines, treated mostly as a separate variant
+Use 0 for the default (alternatives alleles are on the same line, separated by comma in the alt field)
+; **-e 0/1** (--erroronduplicates): if 1, multiple alternative alleles will be on a separate lines, treated mostly as a separate variant
+Use 0 for the default (alternatives alleles are on the same line, separated by comma in the alt field)
+
+supports job options (more info with cg help joboptions):
+; **-d number**: distribute subjobs of command over **number** processes
+; **-d sge**: use grid engine to distribute subjobs
+
+== Category ==
+Compare

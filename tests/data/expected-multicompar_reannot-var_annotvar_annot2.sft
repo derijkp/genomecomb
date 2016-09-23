@@ -1,7 +1,7 @@
 chromosome	begin	end	type	ref	alt	sequenced-annot1	alleleSeq1-annot1	alleleSeq2-annot1	name-annot1	freq-annot1	zyg-annot1	sequenced-annot2	alleleSeq1-annot2	alleleSeq2-annot2	name-annot2	freq-annot2	zyg-annot2
 1	259	260	snp	N	T	v	T	C	test1	0.1	c	v	T	C	test1	0.1	c
 1	4001	4002	snp	A	C	v	A	C	test2	0.2	t	v	A	C	test2	0.2	t
-1	4050	4060	snp	N	T	v	T	T	test3	0.3	m	u	-	-	?	?	u
+1	4050	4060	snp	G	T	v	T	T	test3	0.3	m	u	-	-	?	?	u
 1	5000	5010	del	AGCGTGGCAA		v	AGCGTGGCAA		test4	0.4	t	v	AGCGTGGCAA		test4	0.4	t
 1	5020	5021	snp	G	A,C	v	A	A	test5	0.5	m	v	G	C	test5	0.5	t
 2	4000	4001	snp	G	A	v	A	A	test6	0.6	m	v	A	A	test6	0.6	m

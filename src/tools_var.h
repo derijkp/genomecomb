@@ -28,6 +28,7 @@ int varchecksort(Variant *prev,Variant *var,char *filename,int *nextpos);
 void varputs(Variant var,FILE *f);
 void result2var(DStringArray *result,VariantPos varpos, Variant *var);
 int varcompare(Variant *var1, Variant *var2, int split);
+int regcompare(Variant *var1, Variant *var2);
 void varpos_init(VariantPos *varpos);
 int varpos_max(VariantPos *varpos);
 void varpos_fromheader(VariantPos *varpos,DStringArray *header);

@@ -109,6 +109,17 @@ int varcompare(Variant *var1, Variant *var2, int split) {
 	return 0;
 }
 
+int regcompare(Variant *var1, Variant *var2) {
+	int comp;
+	comp = DStringLocCompare(var1->chr,var2->chr);
+	if  (comp != 0) {return comp<0?-2:2;}
+	comp = var1->start - var2->start;
+	if (comp != 0) {return comp<0?-2:2;}
+	comp = var1->end - var2->end;
+	if (comp != 0) {return comp<0?-2:2;}
+	return 0;
+}
+
 void varpos_init(VariantPos *varpos) {
 	varpos->max = 0;
 	varpos->start = -1;

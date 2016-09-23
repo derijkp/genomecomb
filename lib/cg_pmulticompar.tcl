@@ -21,10 +21,12 @@ proc pmulticompar_findsample {basedir sample args} {
 }
 
 proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}} {erroronduplicates 0}} {
-
+# putsvars newcompar_file dirs regonly split targetsfile erroronduplicates
+	if {[jobfileexists $newcompar_file]} {
+		set dirs [list $newcompar_file {*}$dirs]
+	}
 	set newcompar_file [file_absolute $newcompar_file]
 	set basedir [file dir $newcompar_file]
-	set targetsfield [lindex [split [file root [file tail $targetsfile]] -] end]
 	set newcompar_file_root [gzroot $newcompar_file]
 	unset -nocomplain samplesa
 	set files {}
@@ -105,8 +107,8 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 	job_logdir $workdir/log_jobs
 	set multi_merge_num 0
 	if {[file exists $newcompar_file]} {
-		file rename -force $newcompar_file $newcompar_file.old
-		set allfiles [list_concat $newcompar_file.old $files]
+		# file rename -force $newcompar_file $newcompar_file.old
+		set allfiles [list_concat $newcompar_file $files]
 	} else {
 		set allfiles $files
 	}
@@ -123,10 +125,11 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 		set samplevarsfile $samplesa($sample)
 		set sampledir [file dir $samplesa($sample)]
 		set sregfile $sampledir/sreg-$sample.tsv
+		set varallfile $sampledir/varall-$sample.tsv
 		set target $workdir/avars-$sample.tsv
 		lappend pastefiles $target
-		job multicompar_fill-$sample -deps {$allvarsfile $samplevarsfile ($sregfile)} -targets {$target} \
-		  -vars {allvarsfile samplevarsfile sregfile sample split} -code {
+		job multicompar_addvars-$sample -deps {$allvarsfile $samplevarsfile ($sregfile) ($varallfile)} -targets {$target} \
+		  -vars {allvarsfile samplevarsfile sregfile varallfile sample split} -code {
 			set vf [open $allvarsfile]
 			set vheader [tsv_open $vf]
 			close $vf
@@ -160,14 +163,48 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 			puts $o [join $newheader \t]
 			close $o
 			if {![file exists $sregfile]} {set sregfile {}}
-			 puts [list ../bin/multicompar_addvars_simple $allvarsfile $samplevarsfile $split $sregfile {*}$keepposs]
-			exec multicompar_addvars_simple $allvarsfile $samplevarsfile $split $sregfile {*}$keepposs >> $target.temp
+			if {![file exists $varallfile]} {
+				set varallfile {}
+			}
+			 puts [list ../bin/multicompar_addvars_simple $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs]
+			exec multicompar_addvars_simple $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs >> $target.temp
+			file rename $target.temp $target
+		}
+	}
+	if {$targetsfile ne ""} {
+		# add targetsfile annotation
+		set target $workdir/targets_annot.tsv
+		lappend pastefiles $target
+		job multicompar_targets -deps {$allvarsfile $targetsfile} -targets {$target} \
+		  -vars {allvarsfile targetsfile split} -code {
+			set targetsfield [lindex [split [file root [file tail $targetsfile]] -] end]
+			set f [gzopen $targetsfile]
+			set header [tsv_open $f]
+			gzclose $f
+			set tempdbposs [tsv_basicfields $header 6 0]
+			set dbposs [lrange $tempdbposs 0 2]
+			set type2pos [lindex $tempdbposs 3]
+			if {$type2pos == -1} {
+				error "$targetsfile has no type field"
+			}
+			set alt2pos [lindex $tempdbposs 5]
+			if {$alt2pos == -1} {
+				error "$targetsfile has no alt field"
+			}
+			set keeppos [lsearch $header name]
+			if {$keeppos == -1} {set keeppos {}}
+			file_write $target.temp $targetsfield\n
+			 puts [list ../bin/var_annot $allvarsfile 0 1 2 3 5 $targetsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos]
+			exec var_annot $allvarsfile 0 1 2 3 5 $targetsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos >> $target.temp 2>@ stderr
 			file rename $target.temp $target
 		}
 	}
 	#
 	# paste all together for final multicompar
-	tsv_paste_job $newcompar_file $pastefiles
+	tsv_paste_job $newcompar_file.temp $pastefiles
+	catch {file rename -force $newcompar_file $newcompar_file.old}
+	file rename $newcompar_file.temp $newcompar_file
+	catch {file delete $newcompar_file.old}
 }
 
 proc cg_pmulticompar {args} {
@@ -176,7 +213,6 @@ proc cg_pmulticompar {args} {
 	set split 0
 	set erroronduplicates 0
 	set targetsfile {}
-	set targetsfield {}
 	cg_options pmulticompar args {
 		-r - -reannotregonly - --reannotregonly {
 			putslog "Reannot reg only"
@@ -185,13 +221,13 @@ proc cg_pmulticompar {args} {
 		-s - -split - --split {
 			set split $value
 		}
-		-d - --erroronduplicates {
+		-e - --erroronduplicates {
 			set erroronduplicates $value
 		}
 		-t - -targetsfile - --targetsfile {
 			set targetsfile $value
 		}
-	} 2
+	} 1
 	foreach {newcompar_file} $args break
 	pmulticompar_job $newcompar_file [lrange $args 1 end] $regonly $split $targetsfile $erroronduplicates
 	job_wait

@@ -120,8 +120,11 @@ test multicompar {basic} {
 
 test multicompar {basic with 3} {
 	test_cleantmp
-	cg multicompar tmp/temp.sft data/var_annot.sft data/var_annot2.sft data/var_annot3.sft
-	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot3.sft
+	foreach sample {annot annot2 annot3} {
+		file copy data/var_$sample.sft tmp/var-$sample.tsv
+	}
+	cg multicompar tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv tmp/var-annot3.tsv
+	exec diff tmp/temp.tsv data/expected-multicompar-var_annotvar_annot3.sft
 } {} 
 
 test multicompar {basic split} {
@@ -280,8 +283,7 @@ test multicompar {basic reannot varall} {
 	catch {file delete temp.tsv}
 	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
-	puts $f [join {chr1 4050 4060 snp N T T T test3e 0.3 r} \t]
-	puts $f [join {chr2 4001 4002 snp A C G C test8e 0.2 r} \t]
+	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
 	catch {file delete tmp/temp.tsv}
@@ -310,8 +312,7 @@ test multicompar {basic reannot varall split} {
 	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
-	puts $f [join {chr1 4050 4060 snp N T T T test3e 0.3 r} \t]
-	puts $f [join {chr2 4001 4002 snp A C G C test8e 0.2 r} \t]
+	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
 	cg splitalleles data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft tmp/expected.tsv
