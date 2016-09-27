@@ -463,4 +463,208 @@ test tsv_histo {cg histo -header} {
 39	1
 coverage	1}
 
+test tsv_paste {basic} {
+	test_cleantmp
+	write_tab tmp/vars1.tsv {
+		# varcomment
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A G,C
+		chr1 4002 4003 snp A T
+	}
+	write_tab tmp/sample1.tsv [subst {
+		# comment
+		zyg-sample2	value-sample2
+		m	2
+		t	x2
+	}]
+	exec cg paste tmp/vars1.tsv tmp/sample1.tsv
+} {#	varcomment
+chromosome	begin	end	type	ref	alt	zyg-sample2	value-sample2
+chr1	4001	4002	snp	A	G,C	m	2
+chr1	4002	4003	snp	A	T	t	x2}
+
+test tsv_paste {basic -o} {
+	test_cleantmp
+	write_tab tmp/vars1.tsv {
+		# varcomment
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A G,C
+		chr1 4002 4003 snp A T
+	}
+	write_tab tmp/sample1.tsv [subst {
+		# comment
+		zyg-sample2	value-sample2
+		m	2
+		t	x2
+	}]
+	exec cg paste -o tmp/result.tsv tmp/vars1.tsv tmp/sample1.tsv
+	file_read tmp/result.tsv
+} {#	varcomment
+chromosome	begin	end	type	ref	alt	zyg-sample2	value-sample2
+chr1	4001	4002	snp	A	G,C	m	2
+chr1	4002	4003	snp	A	T	t	x2
+}
+
+test tsv_paste {missing column} {
+	test_cleantmp
+	write_tab tmp/vars1.tsv {
+		# varcomment
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A G,C
+		chr1 4002 4003 snp A T
+	}
+	write_tab tmp/sample1.tsv [subst {
+		# comment
+		zyg-sample2	value-sample2
+		m	2
+		t
+	}]
+	exec cg paste tmp/vars1.tsv tmp/sample1.tsv
+} {#	varcomment
+chromosome	begin	end	type	ref	alt	zyg-sample2	value-sample2
+chr1	4001	4002	snp	A	G,C	m	2
+chr1	4002	4003	snp	A	T	t	}
+
+test tsv_paste {extra column error} {
+	test_cleantmp
+	write_tab tmp/vars1.tsv {
+		# varcomment
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A G,C
+		chr1 4002 4003 snp A T
+	}
+	write_tab tmp/sample1.tsv [subst {
+		# comment
+		zyg-sample2	value-sample2
+		m	2
+		t	x2	2
+	}]
+	exec cg paste tmp/vars1.tsv tmp/sample1.tsv > /dev/null
+} {*file has more columns in a line than header*} error match
+
+proc makepastetest {num} {
+	write_tab tmp/vars1.tsv {
+		# varcomment
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A G,C
+	}
+	set files tmp/vars1.tsv
+	for {set i 1} {$i < $num} {incr i} {
+		write_tab tmp/sample$i.tsv [subst {
+			#
+			# rc
+			zyg-sample$i	value-sample$i
+			m	$i
+		}]
+		lappend files tmp/sample$i.tsv
+	}
+	# expected
+	set f [open tmp/expected.tsv w]
+	puts $f "#	varcomment"
+	puts -nonewline $f "chromosome	begin	end	type	ref	alt"
+	for {set i 1} {$i < $num} {incr i} {
+		puts -nonewline $f "	zyg-sample$i	value-sample$i"
+	}
+	puts -nonewline $f "\nchr1	4001	4002	snp	A	G,C"
+	for {set i 1} {$i < $num} {incr i} {
+		puts -nonewline $f "	m	$i"
+	}
+	puts $f ""
+	close $f
+	return $files
+}
+
+test tsv_paste {multiple files} {
+	test_cleantmp
+	set files [makepastetest 4]
+	write_tab tmp/sample1.tsv [subst {
+		# comment
+		zyg-sample1	value-sample1
+		m	1
+	}]
+	exec cg paste {*}$files > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_paste {multiple files -o} {
+	test_cleantmp
+	set files [makepastetest 4]
+	write_tab tmp/sample1.tsv [subst {
+		# comment
+		zyg-sample1	value-sample1
+		m	1
+	}]
+	exec cg paste -o tmp/result.tsv {*}$files
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_paste {4 files > maxopenfiles -o} {
+	test_cleantmp
+	set files [makepastetest 4]
+	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_paste {7 files > maxopenfiles -o} {
+	test_cleantmp
+	set files [makepastetest 9]
+	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_paste {8 files > maxopenfiles -o} {
+	test_cleantmp
+	set files [makepastetest 9]
+	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_paste {9 files > maxopenfiles -o} {
+	test_cleantmp
+	set files [makepastetest 9]
+	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_paste {10 files > maxopenfiles -o} {
+	test_cleantmp
+	set files [makepastetest 10]
+	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_paste {11 files > maxopenfiles -o} {
+	test_cleantmp
+	set files [makepastetest 11]
+	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_paste {50 files > maxopenfiles -o} {
+	test_cleantmp
+	set files [makepastetest 50]
+	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_paste {max files == maxopenfiles -o} {
+	test_cleantmp
+	set maxfiles [exec sh -c {ulimit -n}]
+	# stdin, stdout and stderr are also file descriptors (and prog)
+	incr maxfiles -4
+	set files [makepastetest $maxfiles]
+	exec cg paste -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test tsv_paste {max files > maxopenfiles -o} {
+	test_cleantmp
+	set maxfiles [exec sh -c {ulimit -n}]
+	# stdin, stdout and stderr are also file descriptors
+	incr maxfiles -3
+	set files [makepastetest $maxfiles]
+	exec cg paste -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 testsummarize

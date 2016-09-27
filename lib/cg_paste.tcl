@@ -1,9 +1,60 @@
-proc tsv_paste_job {target files} {
-	set target [file_absolute $target]
-	job_logdir [file dir $target]/log_jobs
-	job paste-[file tail $target] -deps $files -targets {$target} -code {
-		exec tsv_paste {*}$deps > $target.temp 2>@ stderr
-		file rename -force $target.temp $target
+proc tsv_paste_job {outputfile files} {
+	set outputfile [file_absolute $outputfile]
+	job_logdir [file dir $outputfile]/log_jobs
+	set maxfiles [maxopenfiles]
+	if {$maxfiles < 2} {set maxfiles 2}
+	set len [llength $files]
+	if {$len <= $maxfiles} {
+		set target $outputfile
+		job paste-[file tail $outputfile] -deps $files -targets {$target} -code {
+			# puts [list ../bin/tsv_paste {*}$deps]
+			exec tsv_paste {*}$deps > $target.temp 2>@ stderr
+			file rename -force $target.temp $target
+		}
+		return
+	}
+	set workdir [indexdir_filewrite $outputfile paste]
+	file mkdir $workdir
+	catch {file delete {*}[glob -nocomplain $workdir/paste.temp*]}
+	set todo $files
+	set delete 0
+	set num 1
+	while 1 {
+		if {$len <= $maxfiles} {
+			set target $outputfile
+			job paste-[file tail $outputfile] -deps $todo -targets {$target} -vars {delete workdir} -code {
+				# puts [list ../bin/tsv_paste {*}$deps]
+				exec tsv_paste {*}$deps > $target.temp 2>@ stderr
+				file rename -force $target.temp $target
+				if {$delete} {file delete {*}$deps $workdir}
+			}
+			break
+		}
+		set pos 0
+		set newtodo {}
+		while {$pos < $len} {
+			set target $workdir/paste.temp$num
+			incr num
+			lappend newtodo $target
+			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
+			incr pos $maxfiles
+			job paste-[file tail $target] -deps $deps -targets {$target} -vars {delete} -code {
+				# puts [list ../bin/tsv_paste {*}$deps]
+				if {[llength $deps] > 1} {
+					exec tsv_paste {*}$deps > $target.temp 2>@ stderr
+				} elseif {!$delete} {
+					mklink $dep $target.temp
+				} else {
+					file rename $dep $target.temp
+				}
+				file rename -force $target.temp $target
+				if {$delete} {file delete {*}$deps}
+			}
+			
+		}
+		set delete 1
+		set todo $newtodo
+		set len [llength $todo]
 	}
 }
 
@@ -13,10 +64,14 @@ proc cg_paste {args} {
 		-o - --outputfile {
 			set outputfile $value
 		}
+		-m - --maxopenfiles {
+			set ::maxopenfiles $value
+		}
 	} 1
 	if {[info exists outputfile]} {
 		tsv_paste_job $outputfile $args
 	} else {
+		# puts [list ../bin/tsv_paste {*}$args]
 		exec tsv_paste {*}$args >@ stdout 2>@ stderr
 	}
 }

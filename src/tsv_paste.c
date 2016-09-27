@@ -47,7 +47,7 @@ int header(FILE *f,int writecomment) {
 	while (1) {
 		c=getc_unlocked(f);
 		if (c != '#') break;
-		putc_unlocked(c,stdout);
+		if (writecomment) putc_unlocked(c,stdout);
 		if (c == '\n') continue;
 		while ((c=getc_unlocked(f))!=EOF) {
 			if (writecomment) putc_unlocked(c,stdout);

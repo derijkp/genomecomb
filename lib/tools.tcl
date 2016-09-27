@@ -1101,3 +1101,27 @@ proc multimatch {patterns value} {
 	}
 	return $final
 }
+
+proc maxopenfiles {{force 0}} {
+	global maxopenfiles
+	if {$force} {unset -nocomplain maxopenfiles}
+	if {[info exists maxopenfiles]} {
+		if {$force} {
+			unset -nocomplain maxopenfiles
+		} else {
+			return $maxopenfiles
+		}
+	}
+	if {[file exists /proc/self/limits]} {
+		set c [file_read /proc/self/limits]
+		if {[regexp {Max open files  *([0-9]+)} $c temp maxopenfiles]} {
+			incr maxopenfiles -4
+			return $maxopenfiles
+		}
+	}
+	if {![catch {exec sh -c {ulimit -n}} temp] && [isint $temp]} {
+		set maxopenfiles [expr {$temp - 4}]
+		return $maxopenfiles
+	}
+	return 1000
+}

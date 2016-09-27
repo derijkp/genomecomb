@@ -1,0 +1,28 @@
+= paste =
+
+== Format ==
+cg paste ?options? file ?file? ...
+
+== Summary ==
+merge lines of tab separated files.
+
+== Description ==
+combines data of source tab delimited files line by line and outputs this
+to standard output or file. The commands starts merging lines starting
+from the header. The result will contain the comments in the first file
+only; comments (if present) in other files are stripped.
+All files should have the same number of data lines. If this is not the
+case, the command will stop at the first file running out of lines.
+
+With the -o options, the number of files to paste may exceed the maximum
+number of files that can be opened. In this case pasting is done in batches (creating
+temp files)
+
+== Arguments ==
+; **file** ...: files to be merged
+
+== Options ==
+; **-o outputfile** (--outputfile): write the results to this file instead of to stdout
+
+== Category ==
+tsv
