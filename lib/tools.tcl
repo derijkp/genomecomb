@@ -584,7 +584,12 @@ proc scratchdir {} {
 	global env
 	if {![info exists env(SCRATCHDIR)]} {
 		# putslog "Could not find SCRATCHDIR, using tempdir"
-		return [tempdir]
+		set tempdir [tempdir]
+		if {[file isdir [file dir $tempdir]/scratch]} {
+			set env(SCRATCHDIR) [file dir $tempdir]/scratch
+		} else {
+			return $tempdir
+		}
 	}
 	if {![info exists ::Extral::scratchdir]} {
 		for {set i 0} {$i < 20} {incr i} {
