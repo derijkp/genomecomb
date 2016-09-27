@@ -98,6 +98,34 @@ test pmulticompar {basic split reannot} {
 	exec diff tmp/temp.sft data/expected-multicompar-split-reannot.sft
 } {} 
 
+test pmulticompar {basic split reannot lz4} {
+	test_cleantmp
+	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
+	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
+	cg lz4 {*}[glob tmp/*]
+	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv.lz4 tmp/var-sample2.tsv.lz4 tmp/var-sample3.tsv.lz4
+	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.sft
+} {} 
+
+test pmulticompar {basic split reannot rz} {
+	test_cleantmp
+	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
+	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.sft > tmp/prevar-sample3.tsv
+	cg select -f {sequenced *} tmp/prevar-sample3.tsv tmp/var-sample3.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
+	cg razip {*}[glob tmp/*]
+	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv.rz tmp/var-sample2.tsv.rz tmp/var-sample3.tsv.rz
+	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.sft
+} {} 
+
 test pmulticompar {split reannot test diff alleles} {
 	test_cleantmp
 	write_tab tmp/var-sample1.tsv {
@@ -193,6 +221,60 @@ test pmulticompar {basic reannot varall} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
+test pmulticompar {basic reannot varall lz4 compressed} {
+	test_cleantmp
+	file copy data/var_annot.sft tmp/var-annot1.tsv
+	file copy data/var_annot2.sft tmp/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	catch {file delete temp.tsv}
+	# make tmp/varall-annot1.tsv
+	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
+	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
+	# make tmp/varall-annot2.tsv
+	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
+	catch {file delete tmp/temp.tsv}
+	cg lz4 {*}[glob tmp/*]
+	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
+	cg pmulticompar tmp/temp.tsv tmp/var-annot1.tsv.lz4 tmp/var-annot2.tsv.lz4
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar {basic reannot varall rz compressed} {
+	test_cleantmp
+	file copy data/var_annot.sft tmp/var-annot1.tsv
+	file copy data/var_annot2.sft tmp/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	catch {file delete temp.tsv}
+	# make tmp/varall-annot1.tsv
+	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
+	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
+	# make tmp/varall-annot2.tsv
+	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
+	catch {file delete tmp/temp.tsv}
+	cg razip {*}[glob tmp/*]
+	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
+	cg pmulticompar tmp/temp.tsv tmp/var-annot1.tsv.rz tmp/var-annot2.tsv.rz
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
 test pmulticompar {basic reannot varall split} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
@@ -220,6 +302,99 @@ test pmulticompar {basic reannot varall split} {
 	cg splitalleles data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
 	file delete tmp/temp.tsv
 	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar {basic reannot varall split lz4} {
+	test_cleantmp
+	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
+	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	catch {file delete temp.tsv}
+	# make tmp/varall-annot1.tsv
+	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp1.tsv
+	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
+	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
+	# make tmp/varall-annot2.tsv
+	catch {file delete temp.tsv}
+	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp1.tsv
+	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr1 4050 4060 snp G T G G test3e 0.3 r} \t]
+	# puts $f [join {chr2 4001 4002 snp A C A A test8e 0.2 r} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
+	file delete tmp/temp.tsv
+	cg lz4 {*}[glob tmp/*]
+	cg splitalleles data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
+	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-annot1.tsv.lz4 tmp/var-annot2.tsv.lz4
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar {basic reannot varall split rz} {
+	test_cleantmp
+	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
+	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	catch {file delete temp.tsv}
+	# make tmp/varall-annot1.tsv
+	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp1.tsv
+	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
+	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
+	# make tmp/varall-annot2.tsv
+	catch {file delete temp.tsv}
+	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp1.tsv
+	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr1 4050 4060 snp G T G G test3e 0.3 r} \t]
+	# puts $f [join {chr2 4001 4002 snp A C A A test8e 0.2 r} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
+	file delete tmp/temp.tsv
+	cg razip {*}[glob tmp/*]
+	cg splitalleles data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
+	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-annot1.tsv.rz tmp/var-annot2.tsv.rz
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar {basic reannot varall split gz} {
+	test_cleantmp
+	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
+	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	catch {file delete temp.tsv}
+	# make tmp/varall-annot1.tsv
+	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp1.tsv
+	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
+	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
+	# make tmp/varall-annot2.tsv
+	catch {file delete temp.tsv}
+	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp1.tsv
+	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr1 4050 4060 snp G T G G test3e 0.3 r} \t]
+	# puts $f [join {chr2 4001 4002 snp A C A A test8e 0.2 r} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
+	file delete tmp/temp.tsv
+	exec gzip {*}[glob tmp/*]
+	cg splitalleles data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
+	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-annot1.tsv.gz tmp/var-annot2.tsv.gz
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 

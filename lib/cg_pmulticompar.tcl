@@ -130,11 +130,11 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 		lappend pastefiles $target
 		job multicompar_addvars-$sample -deps {$allvarsfile $samplevarsfile ($sregfile) ($varallfile)} -targets {$target} \
 		  -vars {allvarsfile samplevarsfile sregfile varallfile sample split} -code {
-			set vf [open $allvarsfile]
+			set vf [gzopen $allvarsfile]
 			set vheader [tsv_open $vf]
 			close $vf
 			if {$vheader ne "chromosome begin end type ref alt"} {error "internal error: index vars.tsv in wrong format"}
-			set f [open $samplevarsfile]
+			set f [gzopen $samplevarsfile]
 			set header [tsv_open $f]
 			close $f
 			set basicposs [tsv_basicfields $header 6 0]
@@ -162,11 +162,9 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 			set o [open $target.temp w]
 			puts $o [join $newheader \t]
 			close $o
-			if {![file exists $sregfile]} {set sregfile {}}
-			if {![file exists $varallfile]} {
-				set varallfile {}
-			}
-			 puts [list ../bin/multicompar_addvars_simple $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs]
+			set sregfile [lindex [gzfiles $sregfile] 0]
+			set varallfile [lindex [gzfiles $varallfile] 0]
+			# puts [list ../bin/multicompar_addvars_simple $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs]
 			exec multicompar_addvars_simple $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs >> $target.temp
 			file rename $target.temp $target
 		}
@@ -194,7 +192,7 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 			set keeppos [lsearch $header name]
 			if {$keeppos == -1} {set keeppos {}}
 			file_write $target.temp $targetsfield\n
-			 puts [list ../bin/var_annot $allvarsfile 0 1 2 3 5 $targetsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos]
+			# puts [list ../bin/var_annot $allvarsfile 0 1 2 3 5 $targetsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos]
 			exec var_annot $allvarsfile 0 1 2 3 5 $targetsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos >> $target.temp 2>@ stderr
 			file rename $target.temp $target
 		}

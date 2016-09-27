@@ -2,9 +2,12 @@
  CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
 #CFLAGS=-Wall -O2 -I~/dev/genomecomb/src
 TOOLS= tools.c tools.h debug.h
+GZTOOLS_C= lz4.c lz4tools.c razf.c gztools.c
+GZTOOLS= $(GZTOOLS_C) gztools.h razf.h lz4.h lz4tools.h debug.h
 TOOLS_VAR= tools_var.c tools_var.h
 HASHTOOLS=hash.h hash.c
 BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h lz4.c lz4.h lz4tools.c lz4tools.h xxhash.c xxhash.h
+LIBZ=-Wl,-Bstatic -lz -Wl,-Bdynamic
 
 all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols \
      ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions \
@@ -48,7 +51,7 @@ clean:
 	gcc getregionsbcol.c tools.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol
 
 ../bin$(ARCH)/getregionsbcol2: getregionsbcol2.c $(TOOLS)
-	gcc getregionsbcol2.c tools.c tools_bcol.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol2 -Wl,-Bstatic -lz -Wl,-Bdynamic
+	gcc getregionsbcol2.c tools.c tools_bcol.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol2 $(LIBZ)
 
 ../bin$(ARCH)/reg_annot: reg_annot.c $(TOOLS)
 	gcc reg_annot.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_annot
@@ -69,13 +72,13 @@ clean:
 	gcc bcol_indexfile_all.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_indexfile_all
 
 ../bin$(ARCH)/bcol_make: bcol_make.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
-	gcc bcol_make.c tools.c tools_bcol.c hash.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make -Wl,-Bstatic -lz -Wl,-Bdynamic
+	gcc bcol_make.c tools.c tools_bcol.c hash.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make $(LIBZ)
 
 ../bin$(ARCH)/bcol_make_multi: bcol_make_multi.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
-	gcc bcol_make_multi.c tools.c tools_bcol.c hash.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make_multi -Wl,-Bstatic -lz -Wl,-Bdynamic
+	gcc bcol_make_multi.c tools.c tools_bcol.c hash.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make_multi $(LIBZ)
 
 ../bin$(ARCH)/bcol_annot: bcol_annot.c $(TOOLS) $(BCOL_TOOLS)
-	gcc bcol_annot.c tools.c tools_bcol.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_annot -Wl,-Bstatic -lz -Wl,-Bdynamic
+	gcc bcol_annot.c tools.c tools_bcol.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_annot $(LIBZ)
 
 ../bin$(ARCH)/test: test.c tools.c
 	gcc test.c tools.c $(CFLAGS) -o ../bin$(ARCH)/test
@@ -89,14 +92,14 @@ clean:
 ../bin$(ARCH)/check_sort: check_sort.c $(TOOLS)
 	gcc check_sort.c tools.c $(CFLAGS) -o ../bin$(ARCH)/check_sort
 
-../bin$(ARCH)/multi_merge: multi_merge.c $(TOOLS) $(TOOLS_VAR)
-	gcc multi_merge.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multi_merge
+../bin$(ARCH)/multi_merge: multi_merge.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
+	gcc multi_merge.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multi_merge $(LIBZ)
 
 ../bin$(ARCH)/multi_join: multi_join.c $(TOOLS) $(TOOLS_VAR)
 	gcc multi_join.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multi_join
 
-../bin$(ARCH)/multicompar_addvars_simple: multicompar_addvars_simple.c $(TOOLS) $(TOOLS_VAR)
-	gcc multicompar_addvars_simple.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multicompar_addvars_simple
+../bin$(ARCH)/multicompar_addvars_simple: multicompar_addvars_simple.c $(TOOLS) $(GZTOOLS) $(TOOLS_VAR)
+	gcc multicompar_addvars_simple.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multicompar_addvars_simple $(LIBZ)
 
 ../bin$(ARCH)/multidb_join: multidb_join.c $(TOOLS) $(TOOLS_VAR)
 	gcc multidb_join.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multidb_join

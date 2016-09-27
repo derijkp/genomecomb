@@ -12,6 +12,7 @@
 #include <string.h>
 #include "tools.h"
 #include "tools_var.h"
+#include "gztools.h"
 #include "debug.h"
 
 void mergealts(
@@ -52,7 +53,7 @@ void mergealts(
 }
 
 int main(int argc, char *argv[]) {
-	FILE *f1,*f2;
+	GZFILE *f1,*f2;
 	DStringArray *result1=NULL,*result2=NULL;
 	VariantPos var1pos,var2pos;
 	Variant prev1,prev2;
@@ -75,7 +76,7 @@ int main(int argc, char *argv[]) {
 	}
 	varpos_init(&var1pos); varpos_init(&var2pos);
 	filename1 = argv[1];
-	f1 = fopen64_or_die(filename1,"r");
+	f1 = gz_open(filename1);
 	var1pos.chr = atoi(argv[2]);
 	var1pos.start = atoi(argv[3]);
 	var1pos.end = atoi(argv[4]);
@@ -96,7 +97,7 @@ int main(int argc, char *argv[]) {
 	/* This will leak mem, but as the prog is finished anyway ... */
 	result1 = DStringArrayNew(var1pos.max+2);
 	filename2 = argv[i++];
-	f2 = fopen64_or_die(filename2,"r");
+	f2 = gz_open(filename2);
 	var2pos.chr = atoi(argv[i++]);
 	var2pos.start = atoi(argv[i++]);
 	var2pos.end = atoi(argv[i++]);
@@ -117,21 +118,21 @@ NODPRINT("var_annot %s %d %d %d %d %d $d %s %d %d %d %d %d %d ...",
 );
 	varpos_max(&var2pos);
 	result2 = DStringArrayNew(var2pos.max+2);
-	skip_header(f1,line1,&numfields1,&pos1);
-	skip_header(f2,line2,&numfields2,&pos2);
+	gz_skip_header(f1,line1,&numfields1,&pos1);
+	gz_skip_header(f2,line2,&numfields2,&pos2);
 	if (argc == 16) {
 		fprintf(stdout,"chromosome\tbegin\tend\ttype\tref\talt\n");
 	} else {
 		fprintf(stdout,"chromosome\tbegin\tend\ttype\tref\talt\tid\n");
 	}
-	error2 = DStringGetTab(line2,f2,var2pos.max,result2,1,&numfields); pos2++;
+	error2 = gz_DStringGetTab(line2,f2,var2pos.max,result2,1,&numfields); pos2++;
 	if (!error2) {
 		check_numfieldserror(numfields,numfields2,line2,filename2,&pos2);
 		result2var(result2,var2pos,&var2);
 		varchecksort(&prev2,&var2,filename2,&nextpos);
 	}
 NODPRINT("line2 %s,%d,%d %s",Loc_ChrString(chromosome2),start2,end2,line2->string)
-	while (!DStringGetTab(line1,f1,var1pos.max,result1,1,&numfields)) {
+	while (!gz_DStringGetTab(line1,f1,var1pos.max,result1,1,&numfields)) {
 		pos1++;
 		check_numfieldserror(numfields,numfields1,line1,filename1,&pos1);
 		result2var(result1,var1pos,&var1);
@@ -173,7 +174,7 @@ NODPRINT("line2 %s,%d,%d %s",Loc_ChrString(chromosome2),start2,end2,line2->strin
 				} else if (var2.start > var1.start) break;
 			} else if (comp > 0) break;
 			varputs(var2,stdout);
-			error2 = DStringGetTab(line2,f2,var2pos.max,result2,1,&numfields); pos2++;
+			error2 = gz_DStringGetTab(line2,f2,var2pos.max,result2,1,&numfields); pos2++;
 			if (error2)  {
 				same = 0;
 				break;
@@ -194,7 +195,7 @@ NODPRINT("line2 %s,%d,%d %s",Loc_ChrString(chromosome2),start2,end2,line2->strin
 				mergealts(var1.alt,var2.alt);
 			}
 			if (var1.id < 0 && var2.id >=0) {var1.id = var2.id;}
-			error2 = DStringGetTab(line2,f2,var2pos.max,result2,1,&numfields); pos2++;
+			error2 = gz_DStringGetTab(line2,f2,var2pos.max,result2,1,&numfields); pos2++;
 			if (!error2) {
 				check_numfieldserror(numfields,numfields2,line2,filename2,&pos2);
 				result2var(result2,var2pos,&var2);
@@ -210,7 +211,7 @@ NODPRINT("line2 %s,%d,%d %s",Loc_ChrString(chromosome2),start2,end2,line2->strin
 	}
 	while (!error2) {
 		varputs(var2,stdout);
-		error2 = DStringGetTab(line2,f2,var2pos.max,result2,1,&numfields); pos2++;
+		error2 = gz_DStringGetTab(line2,f2,var2pos.max,result2,1,&numfields); pos2++;
 		if (error2)  {
 			break;
 		} else {
@@ -224,8 +225,8 @@ NODPRINT("line2 %s,%d,%d %s",Loc_ChrString(chromosome2),start2,end2,line2->strin
 			exit(EXIT_FAILURE);
 		}
 	}
-	fclose(f1);
-	fclose(f2);
+	gz_close(f1);
+	gz_close(f2);
 	DStringDestroy(prev1.chr); DStringDestroy(prev1.type); DStringDestroy(prev1.alt);
 	DStringDestroy(prev2.chr); DStringDestroy(prev2.type); DStringDestroy(prev2.alt);
 	if (line1) {DStringDestroy(line1);}

@@ -13,10 +13,11 @@
 #include "tools.h"
 #include "tools_var.h"
 #include "debug.h"
+#include "gztools.h"
 
 typedef struct VarFile {
 	char *file;
-	FILE *f;
+	GZFILE *f;
 	DString *line;
 	DStringArray *result;
 	VariantPos varpos;
@@ -31,15 +32,15 @@ VarFile *OpenVarfile(char *filename) {
 	unsigned int numfields;
 	VarFile *varfile = malloc(sizeof(VarFile));
 	varfile->file = filename;
-	varfile->f = fopen64_or_die(filename,"r");
+	varfile->f = gz_open(filename);
 	varfile->line = DStringNew();
-	skip_header(varfile->f,varfile->line,&varfile->numfields,&varfile->pos);
+	gz_skip_header(varfile->f,varfile->line,&varfile->numfields,&varfile->pos);
 	varfile->result = DStringArrayNew(varfile->numfields+2);
 	DStringSplitTab(varfile->line, varfile->numfields, varfile->result, 0,NULL);
 	varpos_fromheader(&varfile->varpos,varfile->result);
 	varpos_max(&(varfile->varpos));
 	varfile->max = varfile->varpos.max;
-	varfile->error = DStringGetTab(varfile->line,varfile->f,varfile->max,varfile->result,1,&numfields);
+	varfile->error = gz_DStringGetTab(varfile->line,varfile->f,varfile->max,varfile->result,1,&numfields);
 	if (!varfile->error) {
 		check_numfieldserror(numfields,varfile->numfields,varfile->line,varfile->file,&varfile->pos);
 		result2var(varfile->result,varfile->varpos,&varfile->var);
@@ -61,7 +62,7 @@ int inregion(Variant *allvar,VarFile *sreg) {
 				break;
 			}
 		}
-		sreg->error = DStringGetTab(sreg->line,sreg->f,sreg->max,sreg->result,1,&numfields);
+		sreg->error = gz_DStringGetTab(sreg->line,sreg->f,sreg->max,sreg->result,1,&numfields);
 		if (!sreg->error) {
 			check_numfieldserror(numfields,sreg->numfields,sreg->line,sreg->file,&(sreg->pos));
 			result2var(sreg->result,sreg->varpos,&(sreg->var));
@@ -72,7 +73,7 @@ int inregion(Variant *allvar,VarFile *sreg) {
 
 int main(int argc, char *argv[]) {
 	VarFile *sreg = NULL;
-	FILE *orif, *allf, *varallf;
+	GZFILE *orif=NULL, *allf=NULL, *varallf=NULL;
 	DStringArray *oriresult=NULL, *allresult=NULL, *varallresult=NULL;
 	VariantPos orivarpos, allvarpos, varallvarpos;
 	Variant orivar, prevvar, allvar, varallvar;
@@ -119,9 +120,9 @@ int main(int argc, char *argv[]) {
 	prevvar.ref = DStringNew();
 	prevvar.alt = DStringNew();
 	/* orivarfile */
-	orif = fopen64_or_die(orivarsfile,"r");
+	orif = gz_open(orivarsfile);
 	oriline = DStringNew();
-	skip_header(orif,oriline,&orinumfields,&oripos);
+	gz_skip_header(orif,oriline,&orinumfields,&oripos);
 	oriresult = DStringArrayNew(orinumfields+2);
 	DStringSplitTab(oriline, orinumfields, oriresult, 0,NULL);
 	varpos_fromheader(&orivarpos,oriresult);
@@ -141,9 +142,9 @@ int main(int argc, char *argv[]) {
 	}
 	/* varallfile */
 	if (*varallfile != '\0') {
-		varallf = fopen64_or_die(varallfile,"r");
+		varallf = gz_open(varallfile);
 		varallline = DStringNew();
-		skip_header(varallf,varallline,&varallnumfields,&varallpos);
+		gz_skip_header(varallf,varallline,&varallnumfields,&varallpos);
 		varallresult = DStringArrayNew(varallnumfields+2);
 		DStringSplitTab(varallline, varallnumfields, varallresult, 0,NULL);
 		varpos_fromheader(&varallvarpos,varallresult);
@@ -158,7 +159,7 @@ int main(int argc, char *argv[]) {
 			if (orikeepposs[i] > varallmax) {varallmax = orikeepposs[i];}
 		}
 		/* get first var from varall */
-		varallerror = DStringGetTab(varallline,varallf,varallmax,varallresult,1,&numfields);
+		varallerror = gz_DStringGetTab(varallline,varallf,varallmax,varallresult,1,&numfields);
 		if (!varallerror) {
 			check_numfieldserror(numfields,varallnumfields,varallline,varallfile,&varallpos);
 			result2var(varallresult,varallvarpos,&varallvar);
@@ -167,7 +168,7 @@ int main(int argc, char *argv[]) {
 		varallerror = 1;
 	}
 	/* get first variant in ori */
-	orierror = DStringGetTab(oriline,orif,orimax,oriresult,1,&numfields);
+	orierror = gz_DStringGetTab(oriline,orif,orimax,oriresult,1,&numfields);
 	if (!orierror) {
 		check_numfieldserror(numfields,orinumfields,oriline,orivarsfile,&oripos);
 		result2var(oriresult,orivarpos,&orivar);
@@ -196,11 +197,11 @@ int main(int argc, char *argv[]) {
 	allvarpos.ref = 4;
 	allvarpos.alt = 5;
 	varpos_max(&(allvarpos));
-	allf = fopen64_or_die(allvarsfile,"r");
+	allf = gz_open(allvarsfile);
 	allline = DStringNew();
 	allresult = DStringArrayNew(8);
-	skip_header(allf,allline,&allnumfields,&allpos);
-	allerror = DStringGetTab(allline,allf,6,allresult,1,&numfields);
+	gz_skip_header(allf,allline,&allnumfields,&allpos);
+	allerror = gz_DStringGetTab(allline,allf,6,allresult,1,&numfields);
 	if (!allerror) {
 		check_numfieldserror(numfields,allnumfields,allline,allvarsfile,&allpos);
 		result2var(allresult,allvarpos,&allvar);
@@ -255,7 +256,7 @@ int main(int argc, char *argv[]) {
 				DStringCopy(preva1,oriresult->data+oria1pos);
 				DStringCopy(preva2,oriresult->data+oria2pos);
 			}
-			orierror = DStringGetTab(oriline,orif,orimax,oriresult,1,&numfields);
+			orierror = gz_DStringGetTab(oriline,orif,orimax,oriresult,1,&numfields);
 			if (!orierror) {
 				check_numfieldserror(numfields,orinumfields,oriline,orivarsfile,&(oripos));
 				result2var(oriresult,orivarpos,&orivar);
@@ -293,7 +294,7 @@ int main(int argc, char *argv[]) {
 					/* use only start match if snp */
 					if (comp <= 0) break;
 				}
-				varallerror = DStringGetTab(varallline,varallf,varallmax,varallresult,1,&numfields);
+				varallerror = gz_DStringGetTab(varallline,varallf,varallmax,varallresult,1,&numfields);
 				if (!varallerror) {
 					check_numfieldserror(numfields,varallnumfields,varallline,varallfile,&(varallpos));
 					result2var(varallresult,varallvarpos,&varallvar);
@@ -496,10 +497,13 @@ NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvar.ref->string, out_se
 		}
 		prevcomp = comp;
 		putc_unlocked('\n',stdout);
-		allerror = DStringGetTab(allline,allf,allvarpos.max,allresult,1,&numfields);
+		allerror = gz_DStringGetTab(allline,allf,allvarpos.max,allresult,1,&numfields);
 		if (allerror) break;
 		check_numfieldserror(numfields,allnumfields,allline,allvarsfile,&(allpos));
 		result2var(allresult,allvarpos,&allvar);
 	}
+	gz_close(orif);
+	gz_close(allf);
+	gz_close(varallf);
 	exit(EXIT_SUCCESS);
 }

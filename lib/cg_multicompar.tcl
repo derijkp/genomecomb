@@ -11,7 +11,7 @@ proc multi_merge_job {varsfile files {split 1}} {
 	if {[llength $files] < 2} {
 		mklink [lindex $files 0] $varsfile
 		return
-	} 
+	}
 	foreach {file1 file2} $files {
 		if {$file2 eq ""} continue
 		incr multi_merge_num
@@ -25,6 +25,7 @@ proc multi_merge_job {varsfile files {split 1}} {
 			set poss2 [tsv_basicfields $header 6 $dep2]
 			gzclose $f
 			set tempfile [file_tempwrite $target]
+			# puts [list ../bin/multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split]
 			exec multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split > $tempfile
 			file rename -force $tempfile $target
 		}

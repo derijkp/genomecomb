@@ -1,4 +1,5 @@
 #ifndef TOOLS_H_LOADED
+#define TOOLS_H_LOADED 1
 
 #define _FILE_OFFSET_BITS 64
 
@@ -10,6 +11,8 @@
 
 #define DSTRING_STATICLEN 5
 
+#define DStringArrayGet(dstringarray,pos) (dstringarray->data+pos)
+
 typedef struct DString {
 	int memsize;
 	int size;
@@ -20,6 +23,8 @@ typedef struct DString {
 typedef struct DStringArray {
 	DString *data;
 	int size;
+	int memsize;
+	DString *datablock;
 } DStringArray;
 
 typedef struct Buffer {
@@ -44,7 +49,7 @@ void DStringClear(DString *dstring);
 void DStringSetSize(DString *dstring, int size);
 void DStringSet(DString *dstring, char *string);
 void DStringSetS(DString *dstring, char *string,int size);
-void DStringPrintf(DString *dstring, ...);
+void DStringPrintf(DString *dstring, char *format, ...);
 void DStringCopy(DString *dest, DString *src);
 void DStringputs(DString *string,FILE *f);
 void charputs(char *cur,int size,FILE *f);
@@ -53,7 +58,7 @@ int DStringLocCompare(DString *a, DString *b);
 char *Loc_ChrString(DString *ds);
 void DStringAppend(DString *dstring, char *string);
 void DStringAppendS(DString *dstring, char *string,int size);
-ssize_t DStringGetLine(DString *dstring,	FILE *f1);
+int DStringGetLine(DString *dstring,	FILE *f1);
 void SkipLine(FILE *f1);
 
 void InitBuffer(Buffer *buffer,int size);
@@ -88,4 +93,3 @@ int naturalcompare (char const *a, char const *b,int alen,int blen);
 int loccompare (char const *a, char const *b,int alen,int blen);
 
 #endif
-#define TOOLS_H_LOADED 1

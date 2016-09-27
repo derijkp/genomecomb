@@ -1,4 +1,5 @@
 #ifndef TOOLS_LOADED
+#define TOOLS_LOADED 1
 
 #define _FILE_OFFSET_BITS 64
 
@@ -10,38 +11,8 @@
 #include <errno.h>
 #include <stdint.h>
 #include <ctype.h>
+#include "tools.h"
 #include "debug.h"
-
-#define DSTRING_STATICLEN 5
-#define FINISHED 1000000
-#define NOCHROM 100000
-#define CHROMMAX 9000
-#define CHROMM 9095
-#define CHROMX 9096
-#define CHROMY 9097
-
-#define DStringArrayGet(dstringarray,pos) (dstringarray->data+pos)
-
-typedef struct DString {
-	int memsize;
-	int size;
-	char *string;
-	char staticspace[DSTRING_STATICLEN];
-} DString;
-
-typedef struct DStringArray {
-	DString *data;
-	int size;
-	int memsize;
-	DString *datablock;
-} DStringArray;
-
-typedef struct Buffer {
-	int memsize;
-	int size;
-	char *data;
-	char *pos;
-} Buffer;
 
 void DStringInit(DString *dstring) {
 	dstring->memsize = DSTRING_STATICLEN-1;
@@ -1062,5 +1033,5 @@ int checksortreg(DString *prevchromosome,int *prevstart,int *prevend,DString *ch
 		return 0;
 	}
 }
+
 #endif
-#define TOOLS_LOADED 1

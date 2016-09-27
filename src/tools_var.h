@@ -1,3 +1,6 @@
+#ifndef TOOLS_VAR_H_LOADED
+#define TOOLS_VAR_H_LOADED 1
+
 typedef struct VariantPos {
 	int chr;
 	int start;
@@ -32,3 +35,5 @@ int regcompare(Variant *var1, Variant *var2);
 void varpos_init(VariantPos *varpos);
 int varpos_max(VariantPos *varpos);
 void varpos_fromheader(VariantPos *varpos,DStringArray *header);
+
+#endif
