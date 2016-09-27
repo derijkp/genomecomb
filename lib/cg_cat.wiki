@@ -16,20 +16,21 @@ the same fields as the first, an error is given, unless the merge or force optio
 ; **file** ...: files to be concatenated
 
 == Options ==
-; **-m**: if the merge option is given, tab files with different fields will be merged: The resulting tab file has
+; **-m 0/1** (--merge): if the merge option is given, tab files with different fields will be merged: The resulting tab file has
 each field that occurs in at least one of the source files. If a given field is not present in one of the source files,
 it will be empty for each line coming from this file.
-; **-f**: if the force option is given, tab files with different fields will still be concatenated without error.
-; **-s**: if the sort option is given, the files will be sorted (natural sort order) before being concatenated.
+; **-f 0/1** (--force): if the force option is given, tab files with different fields will still be concatenated without error.
+; **-s 0/1** (--sort): if the sort option is given, the files will be sorted (natural sort order) before being concatenated.
 This is usefull for e.g. concatenating files split over chromosomes in the correct order.
-; **-c 0/1**: if -c is 1 (default), the names of the files that are concatenated are added in the comment, 
-; **-n fieldname**: if -n is not empty, a column with the name fieldname will be added, that contains the filename where the line came from
-; **-fields fields**: only return the given **fields** in the concatenated output
-if 0 no extra comments are added. You can use the value f to only display the comment of the first file, 
+; **-c 0/1/f/n** (--comments): Determines what will be in the comments of the result file.
+if -c is 1 (default), the names of the files that are concatenated are added in the comment 
+in addition to the comments of all source files.
+if 0 the comments of all source files are there, but no extra comments (file names) are added. 
+You can use the value f to only display the comment of the first file, 
 or n to leave out comments completely.
+; **-n fieldname** (--fieldname): if -n is not empty, a column with the name fieldname will be added, that contains the filename where the line came from
+; **-fields fields** (--fields): only return the given **fields** in the concatenated output
 
-By default (3), the comments of all files are added, with an extra comments showing the source file.
-Use 0 to remove all comments, 1 to add the comments of the first file only, 2 to add comments of all files
 
 == Category ==
 tsv

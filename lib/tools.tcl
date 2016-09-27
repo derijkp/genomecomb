@@ -47,7 +47,11 @@ proc cg_options {cmd argsVar def {minargs 0} {maxargs 2000000000}} {
 	set options [join [list_unmerge $def] ,]
 	set fullcmd [subst -nocommands {
 		set pos 0
-		foreach {key value} \$$argsVar {
+		while 1 {
+			set key [lindex \$$argsVar \$pos]
+			incr pos
+			set value [lindex \$$argsVar \$pos]
+			incr pos
 			switch -- \$key {
 				$def
 				-- break
@@ -59,8 +63,8 @@ proc cg_options {cmd argsVar def {minargs 0} {maxargs 2000000000}} {
 					break
 				}
 			}
-			incr pos 2
 		}
+		incr pos -2
 		set $argsVar [lrange \$$argsVar \$pos end]
 		set len [llength \$$argsVar]
 		if {(\$len < $minargs) || (\$len > $maxargs)} {

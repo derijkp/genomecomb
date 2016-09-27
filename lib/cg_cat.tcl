@@ -1,47 +1,46 @@
 proc cg_cat {args} {
 	set fields {}
-	set force ""
+	set force 0
+	set merge 0
 	set addcomment 1
 	set namefield {}
 	set sort 0
-	set pos 0
-	while 1 {
-		set key [lindex $args $pos]
-		switch -- $key {
-			-f {
-				set force f
-			}
-			-m {
-				set force m
-			}
-			-s {
-				set sort 1
-			}
-			-c {
-				incr pos
-				set addcomment [lindex $args $pos]
-			}
-			-n {
-				incr pos
-				set namefield [lindex $args $pos]
-			}
-			-fields {
-				incr pos
-				set fields [lindex $args $pos]
-			}
-			-- break
-			default {
-				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
-				break
+	cg_options cat args {
+		-f - --force {
+			if {$value in "1 0"} {
+				set force $value
+			} else {
+				set force 1
+				incr pos -1
 			}
 		}
-		incr pos
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] == 0} {
-		errorformat cat
-		exit 1
-	}
+		-m - --merge {
+			if {$value in "1 0"} {
+				set merge $value
+			} else {
+				set merge 1
+				incr pos -1
+			}
+		}
+		-s - --sort {
+			if {$value in "1 0"} {
+				set sort $value
+			} else {
+				set sort 1
+				incr pos -1
+			}
+		}
+		-c - --comments {
+			set addcomment $value
+		}
+		-n - --fieldname {
+			set namefield $value
+		}
+		-fields - --fields {
+			set fields $value
+		}
+	} 1
+	if {$merge} {set force m} elseif {$force} {set force f} else {set force ""}
 	if {[llength $args] == 1} {
 		set f [gzopen [lindex $args 0]]
 		fcopy $f stdout
