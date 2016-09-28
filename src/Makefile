@@ -95,8 +95,8 @@ clean:
 ../bin$(ARCH)/multi_merge: multi_merge.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
 	gcc multi_merge.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multi_merge $(LIBZ)
 
-../bin$(ARCH)/multi_join: multi_join.c $(TOOLS) $(TOOLS_VAR)
-	gcc multi_join.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multi_join
+../bin$(ARCH)/multi_join: multi_join.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
+	gcc multi_join.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multi_join $(LIBZ)
 
 ../bin$(ARCH)/multicompar_addvars_simple: multicompar_addvars_simple.c $(TOOLS) $(GZTOOLS) $(TOOLS_VAR)
 	gcc multicompar_addvars_simple.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multicompar_addvars_simple $(LIBZ)

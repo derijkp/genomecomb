@@ -12,11 +12,12 @@
 #include <string.h>
 #include "tools.h"
 #include "tools_var.h"
+#include "gztools.h"
 #include "debug.h"
 
 typedef struct Todo {
 	DString *filename;
-	FILE *f;
+	GZFILE *f;
 	int max;
 	DString *line;
 	DStringArray *result;
@@ -61,7 +62,7 @@ int main(int argc, char *argv[]) {
 		DStringGetTab(line,f,10,result1,1,&numfields);
 		todo->filename = DStringNew();
 		DStringSetS(todo->filename,result1->data[0].string,result1->data[0].size);
-		todo->f = fopen64_or_die(result1->data[0].string,"r");
+		todo->f = gz_open(result1->data[0].string);
 		varpos_init(&(todo->varpos));
 		todo->varpos.chr = atoi(result1->data[1].string);
 		todo->varpos.start = atoi(result1->data[2].string);
@@ -82,8 +83,8 @@ int main(int argc, char *argv[]) {
 		for (j = 0 ; j < todo->keepsize ; j++) {
 			todo->keepposs[j] = atoi(todo->result->data[j].string);
 		}
-		skip_header(todo->f,todo->line,&(todo->numfields),&(todo->pos));
-		todo->error = DStringGetTab(todo->line,todo->f,todo->max,todo->result,1,&numfields); pos2++;
+		gz_skip_header(todo->f,todo->line,&(todo->numfields),&(todo->pos));
+		todo->error = gz_DStringGetTab(todo->line,todo->f,todo->max,todo->result,1,&numfields); pos2++;
 		if (!todo->error) {
 			check_numfieldserror(numfields,todo->numfields,todo->line,todo->filename->string,&(todo->pos));
 			result2var(todo->result,todo->varpos,&(todo->var));
@@ -127,7 +128,7 @@ int main(int argc, char *argv[]) {
 					}
 					cur++;
 				}
-				todo->error = DStringGetTab(todo->line,todo->f,todo->max,todo->result,1,&numfields);
+				todo->error = gz_DStringGetTab(todo->line,todo->f,todo->max,todo->result,1,&numfields);
 				if (!todo->error) {
 					check_numfieldserror(numfields,todo->numfields,todo->line,todo->filename->string,&(todo->pos));
 					result2var(todo->result,todo->varpos,&(todo->var));
@@ -149,14 +150,14 @@ int main(int argc, char *argv[]) {
 			todo++;
 		}
 		putc_unlocked('\n',stdout);
-		tvars->error = DStringGetTab(tvars->line,tvars->f,tvars->varpos.max,tvars->result,1,&numfields);
+		tvars->error = gz_DStringGetTab(tvars->line,tvars->f,tvars->varpos.max,tvars->result,1,&numfields);
 		if (tvars->error) break;
 		check_numfieldserror(numfields,tvars->numfields,tvars->line,tvars->filename->string,&(tvars->pos));
 		result2var(tvars->result,tvars->varpos,var);
 	}
 	todo = todolist;
 	for (i = 0 ; i < size; i++) {
-		fclose(todo->f);
+		gz_close(todo->f);
 		todo++;
 	}
 	exit(EXIT_SUCCESS);
