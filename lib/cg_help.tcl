@@ -5,7 +5,9 @@
 #
 
 proc help_get {action} {
-	if {[file exists $::appdir/lib/cg_$action.wiki]} {
+	if {$action eq ""} {
+		help_overview
+	} elseif {[file exists $::appdir/lib/cg_$action.wiki]} {
 		set help [file_read $::appdir/lib/cg_$action.wiki]
 	} elseif {[file exists $::appdir/lib-exp/cg_$action.wiki]} {
 		set help [file_read $::appdir/lib-exp/cg_$action.wiki]
@@ -13,6 +15,8 @@ proc help_get {action} {
 		set help [file_read $::appdir/plugins/cg_$action.wiki]
 	} elseif {[file exists $::appdir/docs/$action.wiki]} {
 		set help [file_read $::appdir/docs/$action.wiki]
+	} elseif {[auto_load helptext_$action]} {
+		set help [helptext_$action]
 	} else {
 		puts stderr "Unknown help topic \"$action\", known topics are:"
 		puts stderr "Docs:\n[help_docs]"
@@ -219,36 +223,43 @@ proc help {action {format 1}} {
 	}
 }
 
-proc cg_help {args} {
+proc helptext_overview {} {
 	global appdir
-	set format 1
-	cg_options help args {
-		-format {set format $value}
-	} 0 1
-	set item [lindex $args 0]
-	if {$item eq "distr"} {
-		set files [glob -nocomplain $appdir/lib/cg_*.wiki]
-	} elseif {$item ne ""} {
-		help $item $format
-		exit
-	} else {
-		set files [glob -nocomplain $appdir/lib/cg_*.wiki $appdir/lib-exp/cg_*.wiki]
-	}
-	puts "= Reference ="
-	puts ""
-	puts "== Format =="
-	puts "cg action ...."
-	puts ""
-	puts "== Actions =="
+	set help {}
+	append help [string trim {
+= Reference =
+== Format ==
+cg action ....
+
+== Description ==
+This help page gives a (reference style) overview of all genomecomb functions. For an 
+introductory text to genomecomb and its formats, use
+{{{
+cg help intro
+}}}
+All genomecombs functions are called using the cg command and a subcommand/action. 
+The available actions are listed on this page (in categories) with a short description.
+To get further info on how to use the subcommands and their parameters, use
+{{{
+cg help action
+}}}
+or 
+{{{
+cg action -h
+}}}
+
+== Actions ==
+}] \n
 	unset -nocomplain a
+	set files [glob -nocomplain $appdir/lib/cg_*.wiki $appdir/lib-exp/cg_*.wiki]
 	foreach file $files {
 		set action [string range [file root [file tail $file]] 3 end]
 		set h [helpparts $action]
 		set category {}
-		catch {dict get $h Category} category
+		if {[catch {dict get $h Category} category]} continue
 		set category [string trim $category]
 		set descr {}
-		set item " * $action"
+		set item "; $action"
 		if {![catch {dict get $h Summary} summary]} {
 			append item ": $summary"
 		}
@@ -258,11 +269,22 @@ proc cg_help {args} {
 	set pre {Conversion Annotation Compare Query Regions Structural}
 	set categories [list_concat [list_common $pre $categories] [list_lremove $categories $pre]]
 	foreach category $categories {
-		puts " === $category ==="
-		puts [join $a($category) \n]\n
+		append help "\n=== $category ===\n"
+		append help [join $a($category) \n]\n
 	}
-	
-	puts " === Other ==="
-	puts { * select, graph, multicompar, regsubtract, regjoin, regcommon, makeregions, makeprimers, ...
+	return $help
+}
+
+proc cg_help {args} {
+	global appdir
+	set format 1
+	cg_options help args {
+		-format {set format $value}
+	} 0 1
+	set item [lindex $args 0]
+	if {$item ne ""} {
+		help $item $format
+	} else {
+		help overview
 	}
 }
