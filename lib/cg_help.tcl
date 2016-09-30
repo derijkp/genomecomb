@@ -229,7 +229,7 @@ proc helptext_overview {} {
 	append help [string trim {
 = Reference =
 == Format ==
-cg action ....
+cg subcommand ?options? ....
 
 == Description ==
 This help page gives a (reference style) overview of all genomecomb functions. For an 
@@ -237,18 +237,27 @@ introductory text to genomecomb and its formats, use
 {{{
 cg help intro
 }}}
-All genomecombs functions are called using the cg command and a subcommand/action. 
-The available actions are listed on this page (in categories) with a short description.
+All genomecombs functions are called using the cg command and a subcommand. 
+The available subcommand are listed on this page (in categories) with a short description.
 To get further info on how to use the subcommands and their parameters, use
 {{{
-cg help action
+cg help subcommand
 }}}
 or 
 {{{
-cg action -h
+cg subcommand -h
 }}}
 
-== Actions ==
+== Options ==
+The following options are generic and available for all subcommands. They must however
+always preceed the subcommand specific options.
+; --verbose 0/1/2: Setting tis to 1 or 2 (instead of the default 0) makes some subcommands chattier about their progress.
+; --stack 0/1: When the program returns an error, by default only the error message is shown,
+which is normally ok to show errors in input format, etc.
+if --stack is set to 1, a full stack trace is shown on error (which may be useful to solve 
+errors caused by bugs in the program)
+
+== Available subcommands ==
 }] \n
 	unset -nocomplain a
 	set files [glob -nocomplain $appdir/lib/cg_*.wiki $appdir/lib-exp/cg_*.wiki]

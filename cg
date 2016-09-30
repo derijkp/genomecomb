@@ -36,16 +36,34 @@ if {[auto_load cg_$action]} {
 		help $action
 		exit 0
 	}
+	set stacktraceonerror 0
 	while 1 {
-		if {[lindex $args 0] in "--verbose -v"} {
+		set arg [lindex $args 0]
+		if {$arg in "--verbose"} {
 			logverbose [lindex $args 1]
 			set args [lrange $args 2 end]
+		} elseif {$arg in "--stack"} {
+			set value [lindex $args 1]
+			if {$value in {0 1}} {
+				set stacktraceonerror $value
+				set args [lrange $args 2 end]
+			} else {
+				set stacktraceonerror 1
+				set args [lrange $args 1 end]
+			}
 		} else {
 			break
 		}
 	}
 	set ::base "cg $action"
-	cg_$action {*}$args
+	if {[catch {cg_$action {*}$args} msg]} {
+		if {!$stacktraceonerror} {
+			puts stderr $msg
+		} else {
+			puts stderr "\twhile executing\n$::errorInfo"
+		}
+		exit 1
+	}
 } elseif {[file executable $::appdir/plugins/cg_$action]} {
 	if {[llength $args] == 1 && [inlist {-h --help} $args]} {
 		help $action
