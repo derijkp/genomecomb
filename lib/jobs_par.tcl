@@ -54,7 +54,7 @@ proc job_process_par_onepass {} {
 	set jobroot [pwd]
 	while {[llength $queue]} {
 		set line [list_shift queue]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 		file mkdir [file dir $job]
@@ -161,9 +161,10 @@ proc job_process_par_onepass {} {
 		file_write $job.deps $adeps
 		set targetvars $ftargetvars
 		lappend targetvars {*}$newtargetvars
+		if {$jobforce} {job_log $job "forcing $jobname"}
 		if {$cgjob(force)} {set time force}
 		# check skip targets, if already done or running, skip
-		if {!$cgjob(force) && [llength $fskip]} {
+		if {!$jobforce && !$cgjob(force) && [llength $fskip]} {
 			set doskip 0
 			foreach skip $fskip {
 				set skip [job_targetsreplace $skip $targetvars]
@@ -183,7 +184,7 @@ proc job_process_par_onepass {} {
 			set targets [job_targetsreplace $ftargets $targetvars]
 			file_write $job.targets $targets
 			set newtargets 0
-			if {![job_checktargets $job $targets $time $checkcompressed targetsrunning]} {
+			if {$jobforce || ![job_checktargets $job $targets $time $checkcompressed targetsrunning]} {
 				set newtargets 1
 			}
 		} else {
@@ -220,7 +221,7 @@ proc job_process_par_onepass {} {
 			}
 			set newtargets 1
 		}
-		if {!$newtargets} {
+		if {!$jobforce && !$newtargets} {
 			job_log $job "skipping $jobname: targets already completed or running"
 			job_logclose $job
 			continue

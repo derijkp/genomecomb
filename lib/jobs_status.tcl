@@ -120,7 +120,7 @@ proc job_process_parstatus {} {
 	set jobroot [pwd]
 	while {[llength $queue]} {
 		set line [list_shift queue]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 #		# If this job was previously blocked because of ptargets deps,
@@ -241,14 +241,15 @@ proc job_process_parstatus {} {
 		}
 		set targetvars $ftargetvars
 		lappend targetvars {*}$newtargetvars
-		if {$cgjob(force)} {set time force}
+		if {$jobforce} {job_log $job "forcing $jobname"}
+		if {$jobforce || $cgjob(force)} {set time force}
 		# check targets, if already done or running, skip
 		if {$ftargets ne ""} {
 			set targets [job_targetsreplace $ftargets $targetvars]
 			file_write $job.targets $targets
 			set newtargets 0
 			set time 0
-			if {![job_checktargets $job $targets $time $checkcompressed targetsrunning]} {
+			if {!$jobforce && ![job_checktargets $job $targets $time $checkcompressed targetsrunning]} {
 				set newtargets 1
 			}
 		} else {

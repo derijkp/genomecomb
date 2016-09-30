@@ -390,6 +390,7 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 		error "ptargets hit $pattern: wait till ptarget deps have finished"
 	}
 	unset -nocomplain filesa
+	# check file system
 	if {$checkcompressed} {
 		set list [lsort -dict [gzfiles $glob]]
 	} else {
@@ -406,6 +407,7 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 			lappend ids {}
 		}
 	}
+	# check files from running/submitted jobs (cgjob_id)
 	if {$checkcompressed} {
 		set filelist [gzarraynames cgjob_id [file_absolute $glob]]
 	} else {
@@ -817,6 +819,7 @@ proc job {jobname args} {
 	set ptargets {}
 	set submitopts {}
 	set checkcompressed 1
+	set jobforce 0
 	set len [llength $args]
 	while {$pos < $len} {
 		set key [lindex $args $pos]
@@ -851,7 +854,11 @@ proc job {jobname args} {
 				incr pos
 			}
 			-direct {
-				lappend submitopts -direct
+				set v [lindex $args $pos]
+				if {$v ne "0"} {
+					lappend submitopts -direct
+				}
+				if {[inlist {0 1} $v]} {incr pos}
 			}
 			-io {
 				lappend submitopts -io [lindex $args $pos]
@@ -883,6 +890,10 @@ proc job {jobname args} {
 			}
 			-checkcompressed {
 				set checkcompressed [lindex $args $pos]
+				incr pos
+			}
+			-force {
+				set jobforce [lindex $args $pos]
 				incr pos
 			}
 			-- break
@@ -927,7 +938,7 @@ proc job {jobname args} {
 		append newcode [list set $var [uplevel get $var]]\n
 	}
 	append newcode $code
-	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode]
+	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce]
 	incr cgjob(id)
 	if {!$cgjob(debug)} job_process
 }

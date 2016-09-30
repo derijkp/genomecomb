@@ -51,7 +51,7 @@ proc job_process_direct {} {
 	set jobroot [pwd]
 	while {[llength $cgjob(queue)]} {
 		set line [list_shift cgjob(queue)]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 		# check foreach deps, skip if not fullfilled
@@ -97,7 +97,8 @@ proc job_process_direct {} {
 		lappend targetvars {*}$newtargetvars
 		if {$cgjob(force)} {set time force}
 		# check skip targets, if already done or running, skip
-		if {!$cgjob(force) && [llength $fskip]} {
+		if {$jobforce} {job_log $job "forcing $jobname"}
+		if {!$cgjob(force) && !$jobforce && [llength $fskip]} {
 			set doskip 0
 			foreach skip $fskip {
 				set skip [job_targetsreplace $skip $targetvars]
@@ -115,7 +116,7 @@ proc job_process_direct {} {
 		set run 0
 		if {$ftargets ne ""} {
 			set targets [job_targetsreplace $ftargets $targetvars]
-			if {![job_checktargets $job $targets $time $checkcompressed running]} {
+			if {!$jobforce && ![job_checktargets $job $targets $time $checkcompressed running]} {
 				set run 1
 			}
 		} else {
@@ -124,7 +125,7 @@ proc job_process_direct {} {
 			set run 1
 		}
 		set ptargets [job_targetsreplace $fptargets $targetvars]
-		if {[llength $ptargets] && ![llength [job_findptargets $ptargets $checkcompressed]]} {
+		if {$jobforce || ([llength $ptargets] && ![llength [job_findptargets $ptargets $checkcompressed]])} {
 			set run 1
 		}
 		if {$cgjob(force)} {

@@ -994,6 +994,31 @@ test job "rmtargets afterwards with gzip exists $testname" {
 	set result
 } {{data.txt.gz log_jobs result.txt} testpre}
 
+test job "jobforce $testname" {
+	cd $::testdir
+	catch {file delete -force {*}[glob tmp/*]}
+	cd $::testdir/tmp
+	test_job_init
+	file_write data1.txt test1
+	job data1 -targets data1.txt -force 1 -code {
+		after 1000
+		set c [file_read $target]
+		file_write data1.txt $c\ntest2
+	}
+	job data2 -deps {data1.txt} -targets data2.txt -code {
+		set c [file_read $dep]
+		file_write $target $c\ntest3
+		
+	}
+	job_wait
+	gridwait
+	set result [file_read data2.txt]
+	cd $::testdir
+	set result
+} {test1
+test2
+test3}
+
 # end of block
 }
 
