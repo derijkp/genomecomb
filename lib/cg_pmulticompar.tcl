@@ -20,7 +20,7 @@ proc pmulticompar_findsample {basedir sample args} {
 	return {}
 }
 
-proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}} {erroronduplicates 0}} {
+proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}} {erroronduplicates 0} {skipincomplete 0}} {
 # putsvars newcompar_file dirs regonly split targetsfile erroronduplicates
 	if {[jobfileexists $newcompar_file]} {
 		set dirs [list $newcompar_file {*}$dirs]
@@ -128,6 +128,14 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 		set varallfile $sampledir/varall-$sample.tsv
 		set target $workdir/avars-$sample.tsv
 		lappend pastefiles $target
+		if {![jobfileexists $sregfile] && ![jobfileexists $varallfile]} {
+			set msg "no sorted region file ($sregfile) or varallfile ($varallfile) found: not properly processed sample"
+			if {!$skipincomplete} {
+				error $msg
+			} else {
+				puts stderr $msg
+			}
+		}
 		job multicompar_addvars-$sample -deps {$allvarsfile $samplevarsfile ($sregfile) ($varallfile)} -targets {$target} \
 		  -vars {allvarsfile samplevarsfile sregfile varallfile sample split} -code {
 			set vf [gzopen $allvarsfile]
@@ -211,6 +219,7 @@ proc cg_pmulticompar {args} {
 	set split 0
 	set erroronduplicates 0
 	set targetsfile {}
+	set skipincomplete 1
 	cg_options pmulticompar args {
 		-r - -reannotregonly - --reannotregonly {
 			putslog "Reannot reg only"
@@ -225,9 +234,12 @@ proc cg_pmulticompar {args} {
 		-t - -targetsfile - --targetsfile {
 			set targetsfile $value
 		}
+		-i - -skipincomplete - --skipincomplete {
+			set skipincomplete $value
+		}
 	} 1
 	foreach {newcompar_file} $args break
-	pmulticompar_job $newcompar_file [lrange $args 1 end] $regonly $split $targetsfile $erroronduplicates
+	pmulticompar_job $newcompar_file [lrange $args 1 end] $regonly $split $targetsfile $erroronduplicates $skipincomplete
 	job_wait
 }
 
