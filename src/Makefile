@@ -62,8 +62,8 @@ clean:
 ../bin$(ARCH)/groupby: groupby.c $(TOOLS)
 	gcc groupby.c tools.c $(CFLAGS) -o ../bin$(ARCH)/groupby
 
-../bin$(ARCH)/multireg: multireg.c $(TOOLS)
-	gcc multireg.c tools.c $(CFLAGS) -o ../bin$(ARCH)/multireg
+../bin$(ARCH)/multireg: multireg.c $(TOOLS) $(GZTOOLS) $(TOOLS_VAR)
+	gcc multireg.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multireg $(LIBZ)
 
 ../bin$(ARCH)/bcol_indexfile: bcol_indexfile.c $(TOOLS)
 	gcc bcol_indexfile.c tools.c $(CFLAGS) -o ../bin$(ARCH)/bcol_indexfile

@@ -8,70 +8,113 @@ exec tclsh "$0" ${1+"$@"}
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc multireg {compar_file file} {
-	global cache comparposs1 mergeposs1 comparposs2 mergeposs2 dummy1 dummy2 restposs1 restposs2
-
-	set name [file root [file tail [gzfile $file]]]
-	catch {close $f1}; catch {close $f2}; catch {close $o}
-	set f2 [gzopen $file]
-	set poss2 [open_region $f2 h2]
-	gzclose $f2
-	set num 0
-	if {![file exists $compar_file]} {
-		set h2base [list_sub $h2 $poss2]
-		cg checksort $file
-		cg select \
-			-f "chromosome=\$[lindex $h2base 0] begin=\$[lindex $h2base 1] end=\$[lindex $h2base 2] $name=1" \
-			$file $compar_file
-		return
-	}
-	set f1 [open $compar_file]
-	set poss1 [open_region $f1 h1]
-	close $f1
-	if {[inlist $h1 $name]} {
-		error "$name already present in $compar_file"
-	}
-	set o [open $compar_file.temp w]
-	puts $o [join $h1 \t]\t$name
-	set dummy1 [list_fill [expr {[llength $h1]-3}] 0]
-	close $o
-	# putslog "multireg $compar_file $poss1 $dummy1 $file $poss2 >> $compar_file.temp"
-	exec multireg $compar_file {*}$poss1 [join $dummy1 \t] $file {*}$poss2 >> $compar_file.temp 2>@stderr
-	catch {file rename -force $compar_file $compar_file.old}
-	file rename -force $compar_file.temp $compar_file	
-}
-
-proc cg_multireg {args} {
-	if {([llength $args] < 1)} {
-		errorformat multireg
-		exit 1
-	}
-	foreach {compar_file} $args break
+proc multireg_job {compar_file regfiles} {
+	set compar_file [file_absolute $compar_file]
+	job_logdir [file dir $compar_file]/log_jobs
+	set maxfiles [maxopenfiles]
+	if {$maxfiles < 2} {set maxfiles 2}
+	set fieldsneeded {}
+	set files {}
+	set todo {}
 	if {[file exists $compar_file]} {
+		set jobforce 1
 		set f [gzopen $compar_file]
 		set header [tsv_open $f]
 		gzclose $f
+		lappend files $compar_file
+		lappend isreg 1
 	} else {
-		set header {chromosome begin end}
+		set header {}
+		set jobforce 0
 	}
-	set files [lrange $args 1 end]
-	foreach file $files {
+	foreach file $regfiles {
 		set name [file root [file tail [gzfile $file]]]
 		if {[inlist $header $name]} {
 			putslog "*** Skipping $file: $name already in $compar_file ***"
 			continue
 		}
 		putslog "Adding $file to $compar_file"
-		multireg $compar_file $file
+		lappend files $file
+		lappend isreg 0
+		lappend fieldsneeded [file root [gzroot [file tail $file]]]
+	}
+	if {![llength $files]} return
+	set len [llength $files]
+	if {$len <= $maxfiles} {
+		set target $compar_file
+		job multireg-[file tail $compar_file] -force $jobforce -deps $files -targets {$target} -vars {isreg} -code {
+			set todo [list_merge $deps $isreg]
+			 puts [list ../bin/multireg {*}$todo]
+			exec multireg {*}$todo > $target.temp 2>@ stderr
+			file rename -force $target.temp $target
+		}
+		return
+	}
+	set workdir [indexdir_filewrite $compar_file multireg]
+	file mkdir $workdir
+	catch {file delete {*}[glob -nocomplain $workdir/multireg.temp*]}
+	set todo $files
+	set todoisreg $isreg
+	set delete 0
+	set num 1
+	while 1 {
+		if {$len <= $maxfiles} {
+			set target $compar_file
+			job multireg-[file tail $compar_file] -force $jobforce -deps $todo -targets {$target} -vars {todoisreg delete workdir} -code {
+				set todo [list_merge $deps $todoisreg]
+				# puts [list ../bin/multireg {*}$todo]
+				 puts [list ../bin/multireg {*}$todo]
+				exec multireg {*}$todo > $target.temp 2>@ stderr
+				file rename -force $target.temp $target
+				# if {$delete} {file delete {*}$deps $workdir}
+			}
+			break
+		}
+		set pos 0
+		set newtodo {}
+		while {$pos < $len} {
+			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
+			set partisreg [lrange $todoisreg $pos [expr {$pos+$maxfiles-1}]]
+			if {[llength $deps] > 1} {
+				set target $workdir/multireg.temp$num
+				incr num
+				lappend newtodo $target
+				lappend newisreg 1
+				job multireg-[file tail $target] -deps $deps -targets {$target} -vars {partisreg delete} -code {
+					# puts [list ../bin/multireg {*}$deps]
+					if {[llength $deps] > 1} {
+						set todo [list_merge $deps $partisreg]
+						 puts [list ../bin/multireg {*}$todo]
+						exec multireg {*}$todo > $target.temp 2>@ stderr
+					} elseif {!$delete} {
+						mklink $dep $target.temp
+					} else {
+						file rename $dep $target.temp
+					}
+					file rename -force $target.temp $target
+					#if {$delete} {file delete {*}$deps}
+				}
+			} else {
+				lappend newtodo [lindex $deps 0]
+				lappend newisreg [lindex $partisreg 0]
+			}
+			incr pos $maxfiles
+			
+		}
+		set delete 1
+		set todo $newtodo
+		set todoisreg $newisreg
+		set len [llength $todo]
 	}
 }
 
-if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
-	package require pkgtools
-	set appdir [file dir [pkgtools::startdir]]
-	lappend auto_path $appdir/lib
-	append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
-	package require Extral
-	set ::base [file tail [info script]]
-	cg_multireg {*}$argv
+proc cg_multireg {args} {
+	set args [job_init -silent {*}$args]
+	cg_options multireg args {
+		-m - --maxopenfiles {
+			set ::maxopenfiles [expr {$value - 4}]
+		}
+	} 2
+	foreach {compar_file} $args break
+	multireg_job $compar_file [lrange $args 1 end]
 }

@@ -39,6 +39,12 @@ test multireg {add fully empty} {
 	exec cg multireg tmp/temp.tsv data/reg1b.tsv data/empty.tsv
 } {header error: fields \(or alternatives\) not found: chromosome begin end} error regexp
 
+test multireg {add header error} {
+	file delete tmp/temp.tsv
+	file_write tmp/error.tsv "chromosome\ntest"
+	exec cg multireg tmp/temp.tsv data/reg1b.tsv tmp/error.tsv
+} {header error: fields \(or alternatives\) not found: chromosome begin end} error regexp
+
 test multireg {3 adds} {
 	file delete tmp/temp.tsv
 	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg1b.tsv data/reg2.tsv
@@ -55,31 +61,117 @@ test multireg {sort error 1 in compar_file file} {
 	file delete tmp/temp.tsv
 	file copy data/vars_sorterror1.sft tmp/temp.tsv
 	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv
-} {*File (tmp/temp.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+} {*File (*tmp/temp.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test multireg {sort error 1 in added file from new} {
 	file delete tmp/temp.tsv
 	exec cg multireg tmp/temp.tsv data/vars_sorterror1.sft
-} {*error in file data/vars_sorterror1.sft: file is not correctly sorted (sort correctly using "cg select -s -")*} error match
+} {*File (*data/vars_sorterror1.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test multireg {sort error 1 in added file} {
 	file delete tmp/temp.tsv
 	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv
 	exec cg multireg tmp/temp.tsv data/vars_sorterror1.sft
-} {*File (data/vars_sorterror1.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+} {*File (*data/vars_sorterror1.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test multireg {sort error 2 in database file} {
 	file delete tmp/temp.tsv
 	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv
 	exec cg multireg tmp/temp.tsv data/vars_sorterror2.sft
-} {*File (data/vars_sorterror2.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+} {*File (*data/vars_sorterror2.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test multireg {sort error 3 in database file} {
 	file delete tmp/temp.tsv
 	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg4.tsv
 	exec cg multireg tmp/temp.tsv data/vars_sorterror3.sft
-} {*File (data/vars_sorterror3.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
+} {*File (*data/vars_sorterror3.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
+proc multiregtest {num} {
+	set start 10
+	set files {}
+	for {set i 1} {$i <= $num} {incr i} {
+		lappend files tmp/sreg$i.tsv
+		set f [open tmp/sreg$i.tsv w]
+		puts $f chromosome\tbegin\tend
+		set pos $start
+		for {set j 1} {$j <= 5} {incr j} {
+			puts $f 1\t$pos\t[expr {$pos+10}]
+			incr pos 10
+		}
+		close $f
+		incr start 5
+	}
+	set f [open tmp/expected.tsv w]
+	set header {chromosome begin end}
+	for {set i 1} {$i <= $num} {incr i} {
+		lappend header sreg$i
+	}
+	puts $f [join $header \t]
+	set max [expr {$num*5+50}]
+	for {set start 10} {$start <= $max} {incr start 5} {
+		set line [list 1 $start [expr {$start+5}]]
+		for {set i 1} {$i <= $num} {incr i} {
+			set istart [expr {10 + ($i-1)*5}]
+			set iend [expr {$istart + 50}]
+			if {$start >= $istart && $start < $iend} {
+				lappend line 1
+			} else {
+				lappend line 0
+			}
+		}
+		puts $f [join $line \t]
+	}
+	close $f
+	return $files
+}
+
+test multireg {10 files} {
+	set files [multiregtest 10]
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv {*}$files
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test multireg {10 files distribute (maxopenfiles)} {
+	set files [multiregtest 10]
+	file delete tmp/temp.tsv
+	exec cg multireg -m 5 tmp/temp.tsv {*}$files
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test multireg {5 files 8 distribute 1 reg one not reg (maxopenfiles)} {
+	set files [multiregtest 5]
+	file delete tmp/temp.tsv
+	# 8 maximum open files means 4 files can be processed at the same time
+	# (-4 because stdout, etc. also count as "open files")
+	exec cg multireg -m 8 tmp/temp.tsv {*}$files
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test multireg {6 files 8 distribute all reg (maxopenfiles)} {
+	set files [multiregtest 6]
+	file delete tmp/temp.tsv
+	# 8 maximum open files means 4 files can be processed at the same time
+	# (-4 because stdout, etc. also count as "open files")
+	exec cg multireg -m 8 tmp/temp.tsv {*}$files
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test multireg {8 files 8 distribute all reg limit (maxopenfiles)} {
+	set files [multiregtest 6]
+	file delete tmp/temp.tsv
+	# 8 maximum open files means 4 files can be processed at the same time
+	# (-4 because stdout, etc. also count as "open files")
+	exec cg multireg -m 8 tmp/temp.tsv {*}$files
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test multireg {100 files multilevel distribute (maxopenfiles)} {
+	set files [multiregtest 100]
+	file delete tmp/temp.tsv
+	exec cg multireg -m 5 tmp/temp.tsv {*}$files
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
 
 test regsubtract {basic} {
 	exec cg regsubtract data/reg1.tsv data/reg2.tsv

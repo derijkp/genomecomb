@@ -182,7 +182,7 @@ set auto_index(multicompar_reannot_find) [list source [file join $dir cg_multico
 set auto_index(multicompar_reannot_getline) [list source [file join $dir cg_multicompar_reannot.tcl]]
 set auto_index(multicompar_reannot) [list source [file join $dir cg_multicompar_reannot.tcl]]
 set auto_index(cg_multicompar_reannot) [list source [file join $dir cg_multicompar_reannot.tcl]]
-set auto_index(multireg) [list source [file join $dir cg_multireg.tcl]]
+set auto_index(multireg_job) [list source [file join $dir cg_multireg.tcl]]
 set auto_index(cg_multireg) [list source [file join $dir cg_multireg.tcl]]
 set auto_index(tsv_paste_job) [list source [file join $dir cg_paste.tcl]]
 set auto_index(cg_paste) [list source [file join $dir cg_paste.tcl]]
