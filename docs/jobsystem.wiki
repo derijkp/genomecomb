@@ -18,13 +18,12 @@ The job system is used by including the following commands (example in job_examp
 == job_init ==
 job_init initializes the job system. It accept the following job options
 and returns the rest of the arguments:
-; **-d value** (--distribute)): if value is a number, the job is
-distributed over the given number of processes. Use sge to distribute
-using Grid Engine
-; **-f 0/1** (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished
-; **-silent 0/1**: use -silent 1 to supress output with info on the processing
-; **-job_skiperrors 0/1**: When running directly (without -d), errors will
-cause the command to stop; use -skiperrors 1 to (also) skip over errors in this mode of running.
+; **-d value** (--distribute): if value is a number, the job is distributed over the given number of processes. Use sge to distribute using Grid Engine  (also -distribute)
+; **-f 0/1** (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)
+; **--silent 0/1**: use -silent 1 to supress output with info on the processing
+; **--job_skiperrors 0/1**: When running directly (without -d), errors will
+cause the command to stop; use -skiperrors 1 to (also) skip over errors in this mode of running
+; **--runcmd cmd** (--runcommand): For distributed processing, the command used to run job scripts made (default is "cg source")
 
 Typical use:
 {{{

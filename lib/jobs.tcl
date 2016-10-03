@@ -75,7 +75,7 @@ proc job_args {jobargs} {
 				job_distribute [lindex $jobargs $pos]
 				incr pos
 			}
-			-silent {
+			-silent - --silent {
 				set val [lindex $jobargs $pos]
 				if {[inlist {0 1} $val]} {
 					set cgjob(silent) $val
@@ -84,17 +84,17 @@ proc job_args {jobargs} {
 					set cgjob(silent) 1
 				}
 			}
-			-runcmd {
+			-runcmd - --runcommand {
 				set cgjob(runcmd) [lindex $jobargs $pos]
 				incr pos
 			}
-			-debug {
+			-debug - --debug {
 				set cgjob(debug) 1
 			}
-			-noresubmit {
+			-noresubmit - --noresubmit {
 				set cgjob(resubmit) 0
 			}
-			-job_skiperrors {
+			-job_skiperrors - --job_skiperrors {
 				set val [lindex $jobargs $pos]
 				if {[inlist {0 1} $val]} {
 					set cgjob(job_skiperrors) $val

@@ -21,10 +21,10 @@ already processed data by giving the same command.
 Job enabled commands all support the following options:
 
 == Options ==
-; **-d value**: if value is a number, the job is distributed over the given number of processes. Use sge to distribute using Grid Engine  (also -distribute or --distribute)
-; **-f 0/1**: use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force or --force)
-; **-silent 0/1**: use -silent 1 to supress output with info on the processing
-; **-job_skiperrors 0/1**: When running directly (without -d), errors will
+; **-d value** (--distribute): if value is a number, the job is distributed over the given number of processes. Use sge to distribute using Grid Engine  (also -distribute)
+; **-f 0/1** (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)
+; **--silent 0/1**: use -silent 1 to supress output with info on the processing
+; **--job_skiperrors 0/1**: When running directly (without -d), errors will
 cause the command to stop; use -skiperrors 1 to (also) skip over errors in this mode of running
 
 == Category ==
