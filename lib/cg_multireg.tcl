@@ -44,7 +44,7 @@ proc multireg_job {compar_file regfiles} {
 		set target $compar_file
 		job multireg-[file tail $compar_file] -force $jobforce -deps $files -targets {$target} -vars {isreg} -code {
 			set todo [list_merge $deps $isreg]
-			 puts [list ../bin/multireg {*}$todo]
+			# puts [list ../bin/multireg {*}$todo]
 			exec multireg {*}$todo > $target.temp 2>@ stderr
 			file rename -force $target.temp $target
 		}
@@ -63,7 +63,6 @@ proc multireg_job {compar_file regfiles} {
 			job multireg-[file tail $compar_file] -force $jobforce -deps $todo -targets {$target} -vars {todoisreg delete workdir} -code {
 				set todo [list_merge $deps $todoisreg]
 				# puts [list ../bin/multireg {*}$todo]
-				 puts [list ../bin/multireg {*}$todo]
 				exec multireg {*}$todo > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
 				# if {$delete} {file delete {*}$deps $workdir}
@@ -84,7 +83,7 @@ proc multireg_job {compar_file regfiles} {
 					# puts [list ../bin/multireg {*}$deps]
 					if {[llength $deps] > 1} {
 						set todo [list_merge $deps $partisreg]
-						 puts [list ../bin/multireg {*}$todo]
+						# puts [list ../bin/multireg {*}$todo]
 						exec multireg {*}$todo > $target.temp 2>@ stderr
 					} elseif {!$delete} {
 						mklink $dep $target.temp

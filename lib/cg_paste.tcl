@@ -1,20 +1,22 @@
-proc tsv_paste_job {outputfile files} {
+proc tsv_paste_job {outputfile files {forcepaste 0} {endcmd {}}} {
 	set outputfile [file_absolute $outputfile]
-	job_logdir [file dir $outputfile]/log_jobs
+	set workdir $outputfile.index/paste
+	file delete -force $workdir
+	file mkdir $workdir
+	job_logdir $workdir/log_jobs
 	set maxfiles [maxopenfiles]
 	if {$maxfiles < 2} {set maxfiles 2}
 	set len [llength $files]
 	if {$len <= $maxfiles} {
 		set target $outputfile
-		job paste-[file tail $outputfile] -deps $files -targets {$target} -code {
+		job paste-[file tail $outputfile] -force $forcepaste -deps $files -targets {$target} -vars {endcmd} -code {
 			# puts [list ../bin/tsv_paste {*}$deps]
 			exec tsv_paste {*}$deps > $target.temp 2>@ stderr
 			file rename -force $target.temp $target
+			if {$endcmd ne ""} {eval $endcmd}
 		}
 		return
 	}
-	set workdir [indexdir_filewrite $outputfile paste]
-	file mkdir $workdir
 	catch {file delete {*}[glob -nocomplain $workdir/paste.temp*]}
 	set todo $files
 	set delete 0
@@ -22,11 +24,12 @@ proc tsv_paste_job {outputfile files} {
 	while 1 {
 		if {$len <= $maxfiles} {
 			set target $outputfile
-			job paste-[file tail $outputfile] -deps $todo -targets {$target} -vars {delete workdir} -code {
+			job paste-[file tail $outputfile] -force $forcepaste -deps $todo -targets {$target} -vars {endcmd delete workdir} -code {
 				# puts [list ../bin/tsv_paste {*}$deps]
 				exec tsv_paste {*}$deps > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
 				if {$delete} {file delete {*}$deps $workdir}
+				if {$endcmd ne ""} {eval $endcmd}
 			}
 			break
 		}

@@ -20,14 +20,14 @@ proc pmulticompar_findsample {basedir sample args} {
 	return {}
 }
 
-proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}} {erroronduplicates 0} {skipincomplete 0}} {
-# putsvars newcompar_file dirs regonly split targetsfile erroronduplicates
-	if {[jobfileexists $newcompar_file]} {
-		set dirs [list $newcompar_file {*}$dirs]
+proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {erroronduplicates 0} {skipincomplete 0}} {
+# putsvars compar_file dirs regonly split targetsfile erroronduplicates
+	if {[jobfileexists $compar_file]} {
+		set dirs [list $compar_file {*}$dirs]
 	}
-	set newcompar_file [file_absolute $newcompar_file]
-	set basedir [file dir $newcompar_file]
-	set newcompar_file_root [gzroot $newcompar_file]
+	set compar_file [file_absolute $compar_file]
+	set basedir [file dir $compar_file]
+	set compar_file_root [gzroot $compar_file]
 	unset -nocomplain samplesa
 	set files {}
 	set samples {}
@@ -100,15 +100,16 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 	#
 	# merge variants
 	# todo: check for concurrency
-	set workdir [indexdir_filewrite $newcompar_file multicompar]
+	set workdir $compar_file.index/multicompar
 	# should take into account existing instead of deleting and starting all over -> not now
 	if {[file exists $workdir]} {file delete -force $workdir}
+	file delete -force $workdir
 	file mkdir $workdir
 	job_logdir $workdir/log_jobs
 	set multi_merge_num 0
-	if {[file exists $newcompar_file]} {
-		# file rename -force $newcompar_file $newcompar_file.old
-		set allfiles [list_concat $newcompar_file $files]
+	if {[file exists $compar_file]} {
+		# file rename -force $compar_file $compar_file.old
+		set allfiles [list_concat $compar_file $files]
 	} else {
 		set allfiles $files
 	}
@@ -133,7 +134,7 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 			if {!$skipincomplete} {
 				error $msg
 			} else {
-				puts stderr $msg
+				putslog "warning: $msg"
 			}
 		}
 		job multicompar_addvars-$sample -deps {$allvarsfile $samplevarsfile ($sregfile) ($varallfile)} -targets {$target} \
@@ -207,10 +208,7 @@ proc pmulticompar_job {newcompar_file dirs {regonly 0} {split 1} {targetsfile {}
 	}
 	#
 	# paste all together for final multicompar
-	tsv_paste_job $newcompar_file.temp $pastefiles
-	catch {file rename -force $newcompar_file $newcompar_file.old}
-	file rename $newcompar_file.temp $newcompar_file
-	catch {file delete $newcompar_file.old}
+	tsv_paste_job $compar_file $pastefiles 1 [list file delete {*}$pastefiles]
 }
 
 proc cg_pmulticompar {args} {
@@ -238,8 +236,9 @@ proc cg_pmulticompar {args} {
 			set skipincomplete $value
 		}
 	} 1
-	foreach {newcompar_file} $args break
-	pmulticompar_job $newcompar_file [lrange $args 1 end] $regonly $split $targetsfile $erroronduplicates $skipincomplete
+	foreach {compar_file} $args break
+	set dirs [lrange $args 1 end]
+	pmulticompar_job $compar_file $dirs $regonly $split $targetsfile $erroronduplicates $skipincomplete
 	job_wait
 }
 

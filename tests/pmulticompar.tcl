@@ -29,7 +29,7 @@ proc reorder {file dest} {
 
 test pmulticompar {basic} {
 	test_cleantmp
-	cg pmulticompar tmp/temp.sft data/var_annot.sft data/var_annot2.sft
+	cg pmulticompar tmp/temp.sft data/var_annot.sft data/var_annot2.sft 2> tmp/warnings.log
 	reorder data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/temp.sft tmp/expected.tsv
 } {} 
@@ -46,7 +46,7 @@ test pmulticompar {basic with 3} {
 	foreach sample {annot annot2 annot3} {
 		file copy data/var_$sample.sft tmp/var-$sample.tsv
 	}
-	cg pmulticompar tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv tmp/var-annot3.tsv
+	cg pmulticompar tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv tmp/var-annot3.tsv 2> tmp/warnings.log
 	reorder data/expected-multicompar-var_annotvar_annot3.sft tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
@@ -56,8 +56,8 @@ test pmulticompar {add to existing} {
 	foreach sample {annot annot2 annot3} {
 		file copy data/var_$sample.sft tmp/var-$sample.tsv
 	}
-	cg pmulticompar tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv
-	cg pmulticompar tmp/temp.tsv tmp/var-annot3.tsv
+	exec cg pmulticompar tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv
+	exec cg pmulticompar tmp/temp.tsv tmp/var-annot3.tsv
 	reorder data/expected-multicompar-var_annotvar_annot3.sft tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
@@ -67,7 +67,7 @@ test pmulticompar {basic split} {
 	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
 	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
 	cg splitalleles data/var_annot3.sft > tmp/var-sample3.tsv
-	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
+	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv 2> tmp/warnings.log
 	exec diff tmp/temp.sft data/expected-multicompar-reannot-split.tsv
 } {} 
 
@@ -76,8 +76,8 @@ test pmulticompar {add to existsing split} {
 	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
 	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
 	cg splitalleles data/var_annot3.sft > tmp/var-sample3.tsv
-	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv
-	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample3.tsv
+	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv 2> tmp/warnings.log
+	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample3.tsv 2> tmp/warnings.log
 	exec diff tmp/temp.sft data/expected-multicompar-reannot-split.tsv
 } {} 
 
@@ -857,6 +857,115 @@ test pmulticompar {add targets only} {
 	}
 	cg pmulticompar -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test process_multicompar {process_multicompar} {
+	test_cleantmp
+	file mkdir tmp/samples/annot1
+	file mkdir tmp/samples/annot2
+	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/samples/annot2/sreg-annot2.tsv
+	cg process_multicompar -silent 1 -dbdir /complgen/refseq/hg19_test -split 0 tmp
+	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
+	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
+} {}
+
+test process_multicompar {process_multicompar missing sreg} {
+	test_cleantmp
+	file mkdir tmp/samples/annot1
+	file mkdir tmp/samples/annot2
+	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
+	cg process_multicompar -silent 1 -dbdir /complgen/refseq/hg19_test -split 0 tmp
+	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
+	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
+} {4c4
+< 1	4050	4060	snp	G	T	v	m	T	T	test3	0.3	?	?	?	?	?	?
+---
+> 1	4050	4060	snp	G	T	v	m	T	T	test3	0.3	u	u	-	-	?	?
+8c8
+< 2	4001	4002	snp	A	G,C	v	c	G	C	test7,test8	0.7,0.8	?	?	?	?	?	?
+---
+> 2	4001	4002	snp	A	G,C	v	c	G	C	test7,test8	0.7,0.8	r	r	A	A	?	?
+child process exited abnormally} error
+
+test process_multicompar {process_multicompar missing sreg} {
+	test_cleantmp
+	file mkdir tmp/samples/annot1
+	file mkdir tmp/samples/annot2
+	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
+	cg process_multicompar -silent 1 -skipincomplete 0 -dbdir /complgen/refseq/hg19_test -split 0 tmp
+	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
+	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
+} {*no sorted region file (*/sreg-annot2.tsv) or varallfile (*/varall-annot2.tsv) found: not properly processed sample*} error match
+
+test process_multicompar {process_multicompar split 3 samples} {
+	test_cleantmp
+	file mkdir tmp/samples/sample1
+	file mkdir tmp/samples/sample2
+	file mkdir tmp/samples/sample3
+	cg splitalleles data/var_annot.sft > tmp/samples/sample1/var-sample1.tsv
+	cg splitalleles data/var_annot2.sft > tmp/samples/sample2/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.sft > tmp/samples/sample3/prevar-sample3.tsv
+	cg select -f {sequenced *} tmp/samples/sample3/prevar-sample3.tsv tmp/samples/sample3/var-sample3.tsv
+	file copy data/sreg-annot1.sft tmp/samples/sample1/sreg-sample1.tsv
+	file copy data/sreg-annot2.sft tmp/samples/sample2/sreg-sample2.tsv
+	file copy data/sreg-annot2.sft tmp/samples/sample3/sreg-sample3.tsv
+	cg process_multicompar -silent 1 -dbdir /complgen/refseq/hg19_test -split 1 tmp
+	exec diff tmp/compar/compar-tmp.tsv data/expected-multicompar-split-reannot.sft
+	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-split-reannot.sft
+} {} 
+
+test process_multicompar {process_multicompar split 3 samples -d 10} {
+	test_cleantmp
+	file mkdir tmp/samples/sample1
+	file mkdir tmp/samples/sample2
+	file mkdir tmp/samples/sample3
+	cg splitalleles data/var_annot.sft > tmp/samples/sample1/var-sample1.tsv
+	cg splitalleles data/var_annot2.sft > tmp/samples/sample2/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.sft > tmp/samples/sample3/prevar-sample3.tsv
+	cg select -f {sequenced *} tmp/samples/sample3/prevar-sample3.tsv tmp/samples/sample3/var-sample3.tsv
+	file copy data/sreg-annot1.sft tmp/samples/sample1/sreg-sample1.tsv
+	file copy data/sreg-annot2.sft tmp/samples/sample2/sreg-sample2.tsv
+	file copy data/sreg-annot2.sft tmp/samples/sample3/sreg-sample3.tsv
+	cg process_multicompar -d 10 -silent 1 -dbdir /complgen/refseq/hg19_test -split 1 tmp
+	exec diff tmp/compar/compar-tmp.tsv data/expected-multicompar-split-reannot.sft
+	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-split-reannot.sft
+} {} 
+
+test process_multicompar {process_multicompar varall} {
+	test_cleantmp
+	file mkdir tmp/samples/annot1
+	file mkdir tmp/samples/annot2
+	file copy data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
+	file copy data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/samples/annot2/sreg-annot2.tsv
+	catch {file delete tmp.tsv}
+	# make tmp/samples/annot1/varall-annot1.tsv
+	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
+	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/samples/annot1/varall-annot1.tsv
+	mklink data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft tmp/expected.tsv
+	# make tmp/samples/annot2/varall-annot2.tsv
+	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/samples/annot2/varall-annot2.tsv
+	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
+	catch {file delete tmp/temp.tsv}
+	cg process_multicompar -silent 1 -dbdir /complgen/refseq/hg19_test -split 0 tmp
+	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
+	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-2sample.sft
 } {} 
 
 test_cleantmp

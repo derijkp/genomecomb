@@ -1,9 +1,13 @@
-proc process_multicompar_job {experiment dbdir todo args} {
+proc process_multicompar_job {destdir experiment dbdir todo args} {
+# putsvars destdir experiment dbdir todo args
 	upvar job_logdir job_logdir
+	set keeppwd [pwd]
+	cd $destdir
 	set skipincomplete 1
 	set split 0
 	set dbfiles {}
 	set addtargets 0
+	set targetsfile {}
 	foreach {key value} $args {
 		if {$key eq "-skipincomplete"} {
 			set skipincomplete $value
@@ -21,53 +25,24 @@ proc process_multicompar_job {experiment dbdir todo args} {
 	file mkdir compar
 	#
 	# multicompar
+	set compar_file compar/compar-$experiment.tsv
 	if {[file exists samples]} {set sampledir samples/} else {set sampledir {}}
-	if {[catch {cg select -n compar/compar-$experiment.tsv} done]} {set done {}}
+	if {[catch {cg select -n $compar_file} done]} {set done {}}
 	set done [split $done \n]
 	set stilltodo {}
-	set deps {}
 	foreach sample $todo {
 		set name [lindex [split $sample -] end]
 		if {![inlist $done $sample]} {
 			lappend stilltodo $sampledir$name/var-$sample.tsv
-			lappend deps \($sampledir$name/sreg-$sample.tsv\) \($sampledir$name/varall-$sample.tsv\)
-			lappend deps \($sampledir$name/coverage/coverage-*.bcol\) \($sampledir$name/coverage/refScore-*.bcol\)
-			lappend deps \($sampledir$name/coverage/coverage-*.tsv\)
-			lappend deps \($sampledir$name/reg_refcons-$sample.tsv\) \($sampledir$name/reg_nocall-$sample.tsv\) \($sampledir$name/reg_cluster-$sample.tsv\)
-		}
-	}
-	if {$addtargets} {
-		if {[catch {cg select -n compar/compar-$experiment.tsv} header]} {set header {}}
-		if {![llength $stilltodo] && [inlist $header [lindex [split $targetsfile -] end]]} {
-			set addtargets 0
-		} else {
-			lappend deps $targetsfile
 		}
 	}
 	if {[llength $stilltodo] || $addtargets} {
-		file delete compar/compar-$experiment.tsv.temp
-		if {[file exists compar/compar-$experiment.tsv]} {
-			file rename -force compar/compar-$experiment.tsv compar/compar-$experiment.tsv.temp
-		}
-		job multicompar-$experiment -deps [list_concat $stilltodo $deps] -targets compar/compar-$experiment.tsv \
-		-vars {stilltodo skipincomplete split addtargets targetsfile} -code {
-			# should maybe better recheck todo here
-			if {$addtargets} {
-				cg multicompar -split $split -targetsfile $targetsfile $target.temp {*}$stilltodo
-			} else {
-				cg multicompar -split $split $target.temp {*}$stilltodo
-			}
-			if {$skipincomplete} {
-				cg multicompar_reannot -paged 100 $target.temp skipincomplete
-			} else {
-				cg multicompar_reannot -paged 100 $target.temp
-			}
-			file rename -force $target.temp $target
-		}
+		pmulticompar_job $compar_file $stilltodo 0 $split $targetsfile 0 $skipincomplete
 	}
-	job annotcompar-$experiment -deps [list compar/compar-$experiment.tsv {*}$dbfiles] \
+	job annotcompar-$experiment -deps [list $compar_file {*}$dbfiles] \
 	-targets compar/annot_compar-$experiment.tsv -vars {dbdir dbfiles} -code {
 		cg annotate $dep $target.temp $dbdir {*}$dbfiles
+		file delete -force $target.temp.index
 		file rename -force $target.temp $target
 	}
 	job indexannotcompar-$experiment \
@@ -77,27 +52,21 @@ proc process_multicompar_job {experiment dbdir todo args} {
 	}
 	#
 	# multi sreg
-	if {[catch {cg select -n compar/sreg-$experiment.tsv} done]} {set done {}}
-	set stilltodo {}
+	set regfiles {}
 	foreach sample $todo {
 		set name [lindex [split $sample -] end]
-		if {![inlist $done $sample]} {
-			lappend stilltodo \($sampledir$name/sreg-$sample.tsv\)
+		set file $sampledir$name/sreg-$sample.tsv
+		if {![jobfileexists $file]} {
+			if {!$skipincomplete} {
+				error "file $file not found"
+			} else {
+				putslog "warning: file $file not found"
+				continue
+			}
 		}
+		lappend regfiles $file
 	}
-	if {[llength $stilltodo]} {
-		file delete compar/sreg-$experiment.tsv.temp
-		if {[file exists compar/sreg-$experiment.tsv]} {
-			file rename -force compar/sreg-$experiment.tsv compar/sreg-$experiment.tsv.temp
-		}
-		job sreg-$experiment -deps $stilltodo -targets compar/sreg-$experiment.tsv -vars stilltodo -code {
-			cg multireg $target.temp {*}[list_remove $deps {}]
-			file rename -force $target.temp $target
-		}
-		job sreg-index-$experiment -deps compar/sreg-$experiment.tsv -targets compar/sreg-$experiment.tsv.index -code {
-			cg index $dep
-		}
-	}
+	multireg_job compar/sreg-$experiment.tsv $regfiles
 	#
 	# cgsv
 	# ----
@@ -181,6 +150,7 @@ proc process_multicompar_job {experiment dbdir todo args} {
 			cg index -colinfo $dep
 		}
 	}
+	cd $keeppwd
 }
 
 proc process_multicompar {args} {
@@ -190,6 +160,8 @@ proc process_multicompar {args} {
 	set paired 1
 	set adapterfile {}
 	set conv_nextseq 0
+	set skipincomplete 1
+	set targetsfile {}
 	cg_options process_multicompar args {
 		-dbdir {
 			set dbdir $value
@@ -199,6 +171,12 @@ proc process_multicompar {args} {
 		}
 		-dbfile {
 			lappend dbfiles $value
+		}
+		-skipincomplete {
+			set skipincomplete $value
+		}
+		-targetsfile {
+			set targetsfile $value
 		}
 	} 1 2
 	set len [llength $args]
@@ -219,16 +197,14 @@ proc process_multicompar {args} {
 		set sampledir $destdir
 	}
 	set todo {}
-	foreach file [jobglob ${sampledir}/*/var-*.tsv] {
+	foreach file [lsort -dict [jobglob ${sampledir}/*/var-*.tsv]] {
 		lappend todo [string range [file root [file tail [gzroot $file]]] 4 end]
 	}
 	job_logdir $destdir/log_jobs
 	set keeppwd [pwd]
-	cd $destdir
 	set todo [list_remdup $todo]
-	process_multicompar_job $experiment $dbdir $todo -skipincomplete 1 -split $split -dbfiles $dbfiles
-	cd $keeppwd
-
+	process_multicompar_job $destdir $experiment $dbdir $todo \
+		-skipincomplete $skipincomplete -split $split -dbfiles $dbfiles -targetsfile $targetsfile
 }
 
 proc cg_process_multicompar {args} {
@@ -240,3 +216,4 @@ proc cg_process_multicompar {args} {
 	process_multicompar {*}$args
 	job_wait
 }
+

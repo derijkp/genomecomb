@@ -152,7 +152,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {
 			if {!$skipincomplete} {
 				error "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found: not properly processed sample"
 			} else {
-				putslog "no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found: not properly processed sample"
+				putslog "warning: no sorted region file (sreg-$sample.tsv) or allpos dir (for rtg) found: not properly processed sample"
 			}
 			set samples [list_remove $samples $sample]
 		}
