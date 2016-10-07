@@ -607,14 +607,14 @@ test tsv_paste {4 files > maxopenfiles -o} {
 
 test tsv_paste {7 files > maxopenfiles -o} {
 	test_cleantmp
-	set files [makepastetest 9]
+	set files [makepastetest 7]
 	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
 test tsv_paste {8 files > maxopenfiles -o} {
 	test_cleantmp
-	set files [makepastetest 9]
+	set files [makepastetest 8]
 	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}

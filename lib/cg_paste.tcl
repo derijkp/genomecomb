@@ -1,4 +1,5 @@
 proc tsv_paste_job {outputfile files {forcepaste 0} {endcmd {}}} {
+# putsvars outputfile files forcepaste endcmd
 	set outputfile [file_absolute $outputfile]
 	set workdir $outputfile.index/paste
 	file delete -force $workdir
@@ -28,7 +29,7 @@ proc tsv_paste_job {outputfile files {forcepaste 0} {endcmd {}}} {
 				# puts [list ../bin/tsv_paste {*}$deps]
 				exec tsv_paste {*}$deps > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
-				if {$delete} {file delete {*}$deps $workdir}
+				if {$delete} {file delete {*}$deps}
 				if {$endcmd ne ""} {eval $endcmd}
 			}
 			break
@@ -45,13 +46,13 @@ proc tsv_paste_job {outputfile files {forcepaste 0} {endcmd {}}} {
 				# puts [list ../bin/tsv_paste {*}$deps]
 				if {[llength $deps] > 1} {
 					exec tsv_paste {*}$deps > $target.temp 2>@ stderr
+					file delete {*}$deps
 				} elseif {!$delete} {
 					mklink $dep $target.temp
 				} else {
 					file rename $dep $target.temp
 				}
 				file rename -force $target.temp $target
-				if {$delete} {file delete {*}$deps}
 			}
 			
 		}
@@ -62,7 +63,7 @@ proc tsv_paste_job {outputfile files {forcepaste 0} {endcmd {}}} {
 }
 
 proc cg_paste {args} {
-	set args [job_init -silent {*}$args]
+	set args [job_init -silent 1 {*}$args]
 	cg_options paste args {
 		-o - --outputfile {
 			set outputfile $value
