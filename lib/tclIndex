@@ -274,6 +274,7 @@ set auto_index(renamesamples_newfilename) [list source [file join $dir cg_rename
 set auto_index(renamesamples_file) [list source [file join $dir cg_renamesamples.tcl]]
 set auto_index(renamesamples) [list source [file join $dir cg_renamesamples.tcl]]
 set auto_index(cg_renamesamples) [list source [file join $dir cg_renamesamples.tcl]]
+set auto_index(cg_rs) [list source [file join $dir cg_rs.tcl]]
 set auto_index(cg_sam_clipamplicons) [list source [file join $dir cg_sam_clipamplicons.tcl]]
 set auto_index(tsv_select_sampleinfo_setfile) [list source [file join $dir cg_select.tcl]]
 set auto_index(tsv_select_sampleinfo_load) [list source [file join $dir cg_select.tcl]]
