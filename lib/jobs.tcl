@@ -49,7 +49,11 @@ proc job_args {jobargs} {
 		set cgjob(force) 0
 	}
 	if {![info exists cgjob(silent)]} {
-		set cgjob(silent) 0
+		if {[get ::verbose 0] >= 1} {
+			set cgjob(silent) 0
+		} else {
+			set cgjob(silent) 1
+		}
 	}
 	if {![info exists cgjob(debug)]} {
 		set cgjob(debug) 0
@@ -57,8 +61,8 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(resubmit)]} {
 		set cgjob(resubmit) 1
 	}
-	if {![info exists cgjob(job_skiperrors)]} {
-		set cgjob(job_skiperrors) 0
+	if {![info exists cgjob(skipjoberrors)]} {
+		set cgjob(skipjoberrors) 0
 	}
 	if {![llength $jobargs]} {return {}}
 	set newargs {}
@@ -78,6 +82,7 @@ proc job_args {jobargs} {
 			-silent - --silent {
 				set val [lindex $jobargs $pos]
 				if {[inlist {0 1} $val]} {
+					if {$val == 0} {logverbose 0}
 					set cgjob(silent) $val
 					incr pos
 				} else {
@@ -94,13 +99,13 @@ proc job_args {jobargs} {
 			-noresubmit - --noresubmit {
 				set cgjob(resubmit) 0
 			}
-			-job_skiperrors - --job_skiperrors {
+			-skipjoberrors - --skipjoberrors {
 				set val [lindex $jobargs $pos]
 				if {[inlist {0 1} $val]} {
-					set cgjob(job_skiperrors) $val
+					set cgjob(skipjoberrors) $val
 					incr pos
 				} else {
-					set cgjob(job_skiperrors) 1
+					set cgjob(skipjoberrors) 1
 				}
 			}
 			-- break
@@ -820,6 +825,7 @@ proc job {jobname args} {
 	set submitopts {}
 	set checkcompressed 1
 	set jobforce 0
+	set optional 0
 	set len [llength $args]
 	while {$pos < $len} {
 		set key [lindex $args $pos]
@@ -835,6 +841,10 @@ proc job {jobname args} {
 			}
 			-targets {
 				set targets [lindex $args $pos]
+				incr pos
+			}
+			-optional {
+				set optional [lindex $args $pos]
 				incr pos
 			}
 			-rmtargets {
@@ -899,7 +909,7 @@ proc job {jobname args} {
 			-- break
 			default {
 				if {[string index $key 0] eq "-"} {
-					error "unkown option $key for target, must be one of: -deps, -targets, -code, -vars, -foreach, -rmtargets, -skip, -ptargets, -direct, -io, -cores, -precode, -checkcompressed"
+					error "unkown option $key for job, must be one of: -deps, -targets, -code, -vars, -foreach, -rmtargets, -skip, -ptargets, -direct, -io, -cores, -precode, -checkcompressed"
 				}
 				break
 			}
@@ -938,7 +948,7 @@ proc job {jobname args} {
 		append newcode [list set $var [uplevel get $var]]\n
 	}
 	append newcode $code
-	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce]
+	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional]
 	incr cgjob(id)
 	if {!$cgjob(debug)} job_process
 }
@@ -960,6 +970,7 @@ proc job_init {args} {
 	set cgjob(id) 1
 	set cgjob(debug) 0
 	set cgjob(resubmit) 1
+	set cgjob(skipjoberrors) 0
 	set cgjob(runcmd) {cg source}
 	set job_logdir [file_absolute [pwd]/log_jobs]
 	interp alias {} job_process {} job_process_direct

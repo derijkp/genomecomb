@@ -18,14 +18,16 @@ Without the -d option, jobs are run one after the other (using only 1
 core). However, if such a command is interupted, it can continue from the
 already processed data by giving the same command.
 
-Job enabled commands all support the following options:
+All job enabled commands support the following options:
 
 == Options ==
-; **-d value** (--distribute): if value is a number, the job is distributed over the given number of processes. Use sge to distribute using Grid Engine  (also -distribute)
-; **-f 0/1** (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)
-; **--silent 0/1**: use -silent 1 to supress output with info on the processing
-; **--job_skiperrors 0/1**: When running directly (without -d), errors will
-cause the command to stop; use -skiperrors 1 to (also) skip over errors in this mode of running
+; -d value (--distribute): if value is a number, the job is distributed over the given number of processes. Use sge to distribute using Grid Engine  (also -distribute)
+; -v number (--verbose): This general option has a big effect on job enabled commands:
+If it is > 0, they will output a lot of info (to stder) on dependencies, jobs started, etc.
+; -f 0/1 (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)
+; --skipjoberrors 0/1: Errors in one job cause the entire command to stop; 
+use --skipjoberrors 1 to skip over these errors and complete other jobs (as far as they are not
+dependent on the the job with an error) (also -skipjoberrors)
 
 == Category ==
 Conversion

@@ -867,7 +867,7 @@ test process_multicompar {process_multicompar} {
 	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
 	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
 	file copy data/sreg-annot2.sft tmp/samples/annot2/sreg-annot2.tsv
-	cg process_multicompar -silent 1 -dbdir /complgen/refseq/hg19_test -split 0 tmp
+	cg process_multicompar dbdir /complgen/refseq/hg19_test -split 0 tmp
 	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
 } {}
@@ -879,7 +879,7 @@ test process_multicompar {process_multicompar missing sreg} {
 	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
 	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
 	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
-	cg process_multicompar -silent 1 -dbdir /complgen/refseq/hg19_test -split 0 tmp
+	cg process_multicompar -dbdir /complgen/refseq/hg19_test -split 0 tmp
 	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
 } {4c4
@@ -899,7 +899,7 @@ test process_multicompar {process_multicompar missing sreg} {
 	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
 	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
 	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
-	cg process_multicompar -silent 1 -skipincomplete 0 -dbdir /complgen/refseq/hg19_test -split 0 tmp
+	cg process_multicompar -skipincomplete 0 -dbdir /complgen/refseq/hg19_test -split 0 tmp
 	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
 } {*no sorted region file (*/sreg-annot2.tsv) or varallfile (*/varall-annot2.tsv) found: not properly processed sample*} error match
@@ -916,7 +916,7 @@ test process_multicompar {process_multicompar split 3 samples} {
 	file copy data/sreg-annot1.sft tmp/samples/sample1/sreg-sample1.tsv
 	file copy data/sreg-annot2.sft tmp/samples/sample2/sreg-sample2.tsv
 	file copy data/sreg-annot2.sft tmp/samples/sample3/sreg-sample3.tsv
-	cg process_multicompar -silent 1 -dbdir /complgen/refseq/hg19_test -split 1 tmp
+	cg process_multicompar -dbdir /complgen/refseq/hg19_test -split 1 tmp
 	exec diff tmp/compar/compar-tmp.tsv data/expected-multicompar-split-reannot.sft
 	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-split-reannot.sft
 } {} 
@@ -933,7 +933,7 @@ test process_multicompar {process_multicompar split 3 samples -d 10} {
 	file copy data/sreg-annot1.sft tmp/samples/sample1/sreg-sample1.tsv
 	file copy data/sreg-annot2.sft tmp/samples/sample2/sreg-sample2.tsv
 	file copy data/sreg-annot2.sft tmp/samples/sample3/sreg-sample3.tsv
-	cg process_multicompar -d 10 -silent 1 -dbdir /complgen/refseq/hg19_test -split 1 tmp
+	cg process_multicompar -d 10 -dbdir /complgen/refseq/hg19_test -split 1 tmp
 	exec diff tmp/compar/compar-tmp.tsv data/expected-multicompar-split-reannot.sft
 	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-split-reannot.sft
 } {} 
@@ -963,7 +963,7 @@ test process_multicompar {process_multicompar varall} {
 	cg select -s - tmp/temp.tsv tmp/samples/annot2/varall-annot2.tsv
 	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
 	catch {file delete tmp/temp.tsv}
-	cg process_multicompar -silent 1 -dbdir /complgen/refseq/hg19_test -split 0 tmp
+	cg process_multicompar -dbdir /complgen/refseq/hg19_test -split 0 tmp
 	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
 	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-2sample.sft
 } {} 

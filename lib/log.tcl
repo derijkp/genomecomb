@@ -28,6 +28,7 @@ proc logverbose num {
 			}
 			proc putsprogress {args} {
 			}
+			set ::cgjob(silent) 1
 		}
 		1 {
 			proc putslog {args} {
@@ -43,6 +44,7 @@ proc logverbose num {
 			}
 			proc putsprogress {args} {
 			}
+			set ::cgjob(silent) 0
 		}
 		2 {
 			proc putslog {args} {
@@ -67,6 +69,7 @@ proc logverbose num {
 					}
 				}
 			}
+			set ::cgjob(silent) 0
 		}
 	}
 }

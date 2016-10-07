@@ -1,5 +1,16 @@
-proc tsv_paste_job {outputfile files {forcepaste 0} {endcmd {}}} {
-# putsvars outputfile files forcepaste endcmd
+proc tsv_paste_job {outputfile files args} {
+	set forcepaste 0
+	set endcmd {}
+	set optional 0
+	foreach {k v} $args {
+		switch $k {
+			-forcepaste {set forcepaste $v}
+			-endcmd {set endcmd $v}
+			-optional {set optional $v}
+			default {error "Unkown option $k"}
+		} 
+	}
+	# putsvars outputfile files forcepaste endcmd
 	set outputfile [file_absolute $outputfile]
 	set workdir $outputfile.index/paste
 	file delete -force $workdir
@@ -10,7 +21,7 @@ proc tsv_paste_job {outputfile files {forcepaste 0} {endcmd {}}} {
 	set len [llength $files]
 	if {$len <= $maxfiles} {
 		set target $outputfile
-		job paste-[file tail $outputfile] -force $forcepaste -deps $files -targets {$target} -vars {endcmd} -code {
+		job paste-[file tail $outputfile] -optional $optional -force $forcepaste -deps $files -targets {$target} -vars {endcmd} -code {
 			# puts [list ../bin/tsv_paste {*}$deps]
 			exec tsv_paste {*}$deps > $target.temp 2>@ stderr
 			file rename -force $target.temp $target
@@ -25,7 +36,7 @@ proc tsv_paste_job {outputfile files {forcepaste 0} {endcmd {}}} {
 	while 1 {
 		if {$len <= $maxfiles} {
 			set target $outputfile
-			job paste-[file tail $outputfile] -force $forcepaste -deps $todo -targets {$target} -vars {endcmd delete workdir} -code {
+			job paste-[file tail $outputfile] -optional $optional -force $forcepaste -deps $todo -targets {$target} -vars {endcmd delete workdir} -code {
 				# puts [list ../bin/tsv_paste {*}$deps]
 				exec tsv_paste {*}$deps > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
@@ -42,11 +53,11 @@ proc tsv_paste_job {outputfile files {forcepaste 0} {endcmd {}}} {
 			lappend newtodo $target
 			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
 			incr pos $maxfiles
-			job paste-[file tail $target] -deps $deps -targets {$target} -vars {delete} -code {
+			job paste-[file tail $target] -optional $optional -deps $deps -targets {$target} -vars {delete} -code {
 				# puts [list ../bin/tsv_paste {*}$deps]
 				if {[llength $deps] > 1} {
 					exec tsv_paste {*}$deps > $target.temp 2>@ stderr
-					file delete {*}$deps
+					if {$delete} {file delete {*}$deps}
 				} elseif {!$delete} {
 					mklink $dep $target.temp
 				} else {
@@ -54,7 +65,6 @@ proc tsv_paste_job {outputfile files {forcepaste 0} {endcmd {}}} {
 				}
 				file rename -force $target.temp $target
 			}
-			
 		}
 		set delete 1
 		set todo $newtodo
@@ -63,7 +73,7 @@ proc tsv_paste_job {outputfile files {forcepaste 0} {endcmd {}}} {
 }
 
 proc cg_paste {args} {
-	set args [job_init -silent 1 {*}$args]
+	set args [job_init {*}$args]
 	cg_options paste args {
 		-o - --outputfile {
 			set outputfile $value

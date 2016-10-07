@@ -106,7 +106,7 @@ proc process_sample {args} {
 	}
 
 	# start from CGI data
-	job cg_svar-$sample -deps {ori/ASM/var-*-ASM*.tsv} -targets {svar-$sample.tsv} \
+	job cg_svar-$sample -optional 1 -deps {ori/ASM/var-*-ASM*.tsv} -targets {svar-$sample.tsv} \
 	-skip {fannotvar-$sample.tsv sreg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} \
 	-code {
 		set varfile $dep
@@ -130,7 +130,7 @@ proc process_sample {args} {
 		file rename -force $target.temp $target
 	}
 
-	job cg_sgene-$sample {ori/ASM/gene-*-ASM*.tsv} {sgene-$sample.tsv} {
+	job cg_sgene-$sample -optional 1 {ori/ASM/gene-*-ASM*.tsv} {sgene-$sample.tsv} {
 		set genefile $dep
 		if {[llength $genefile] != 1} {error "could not identify genefile"}
 		putslog "Sort gene file ($genefile)"
@@ -139,7 +139,7 @@ proc process_sample {args} {
 	}
 
 	# annotated vars file
-	job cg_annotvar-$sample -vars {split} \
+	job cg_annotvar-$sample -optional 1 -vars {split} \
 	-deps {svar-$sample.tsv (sgene-$sample.tsv)} -targets {annotvar-$sample.tsv} \
 	-skip {fannotvar-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} -code {
 		putslog "Create annotated varfile $target"
@@ -152,25 +152,25 @@ proc process_sample {args} {
 	}
 
 	# if not from CGI, we do not have svar and sgene, take from first var_* file found
-	job cg_annotvar_var-$sample {vars_*.tsv} {annotvar-$sample.tsv} {
+	job cg_annotvar_var-$sample -optional 1 {vars_*.tsv} {annotvar-$sample.tsv} {
 		gzmklink $dep $target
 	}
 
 	# if we also do not find a var_* file, take from first variant* file found
-	job cg_annotvar_variant-$sample {variant*.tsv} {annotvar-$sample.tsv} {
+	job cg_annotvar_variant-$sample -optional 1 {variant*.tsv} {annotvar-$sample.tsv} {
 		set file [gzfile $dep]
 		gzmklink $file $target
 	}
 
 	# only if reg file exists, otherwise extract from svar (next)
-	job cg_sreg-$sample {ori/ASM/reg-*-ASM*.tsv} {sreg-$sample.tsv} {
+	job cg_sreg-$sample -optional 1 {ori/ASM/reg-*-ASM*.tsv} {sreg-$sample.tsv} {
 		set regfile [gzfile $dep]
 		putslog "Sort region file ($regfile)"
 		cg select -s "chromosome begin end" $regfile $target.temp
 		file rename -force $target.temp $target
 	}
 
-	job cg_regfromsvar-$sample {svar-$sample.tsv} {sreg-$sample.tsv} {
+	job cg_regfromsvar-$sample -optional 1 {svar-$sample.tsv} {sreg-$sample.tsv} {
 		set svarfile $dep
 		putslog "Extract $target from $svarfile"
 		cg select -q {$varType != "no-call" && $varType != "no-ref"} -f "chromosome begin end" $svarfile $target.temp
@@ -182,7 +182,7 @@ proc process_sample {args} {
 	# multiarch
 	# if we do not have an svar (CGI), try getting a region file from the coverage
 	# currently hardcoded at coverage > 7
-	job bam_regsfromscoverage-$sample {coverage/coverage-*-coverage-*.bcol} {sreg-$sample.tsv} {
+	job bam_regsfromscoverage-$sample -optional 1 {coverage/coverage-*-coverage-*.bcol} {sreg-$sample.tsv} {
 		set files [ssort -natural $deps]
 		cg regextract -above 1 7 {*}$files > $target.temp
 		cg select -s {chromosome begin end} $target.temp $target.temp2
@@ -190,13 +190,13 @@ proc process_sample {args} {
 		file delete $target.temp
 	}
 
-	job cg_reg_refcons-$sample {svar-$sample.tsv} {reg_refcons-$sample.tsv} {
+	job cg_reg_refcons-$sample -optional 1 {svar-$sample.tsv} {reg_refcons-$sample.tsv} {
 		putslog "Find refcons regions for $dep"
 		cg refconsregions $dep > $target.temp
 		file rename -force $target.temp $target
 	}
 
-	job cg_reg_nocall-$sample {svar-$sample.tsv} {reg_nocall-$sample.tsv} {
+	job cg_reg_nocall-$sample -optional 1 {svar-$sample.tsv} {reg_nocall-$sample.tsv} {
 		putslog "Find partial no-call regions for dep"
 		if {[catch {
 			nocallregions $dep $target.temp
@@ -207,7 +207,7 @@ proc process_sample {args} {
 		}
 	}
 
-	set files [glob -nocomplain ori/ASM/REF/coverage*-chr*]
+	set files [jobglob ori/ASM/REF/coverage*-chr*]
 	if {[llength $files]} {
 		# this will only work if ori/ASM/REF/coverage*-chr* already exist from the start
 		# maybe later make more flexible
@@ -278,12 +278,12 @@ proc process_sample {args} {
 
 	# multiarch
 	# if we are coming from bams, coverage file name looks different, use these by making link
-	job cg_bamcoverage-$sample {^coverage/coverage-(.*)-coverage-(.*)\.bcol ^coverage/coverage-(.*)-coverage-(.*)\.bcol\.bin$} {coverage/coverage-\1-\2.bcol coverage/coverage-\1-\2.bcol.bin} {
+	job cg_bamcoverage-$sample -optional 1 {^coverage/coverage-(.*)-coverage-(.*)\.bcol ^coverage/coverage-(.*)-coverage-(.*)\.bcol\.bin$} {coverage/coverage-\1-\2.bcol coverage/coverage-\1-\2.bcol.bin} {
 		gzmklink [lindex $dep 0] [lindex $target 0]
 		gzmklink [lindex $dep 1] [lindex $target 1]
 	}
 
-	job cg_cpSV-$sample {ori/ASM/SV ^ori/ASM/SV/(.*)$} {SV/\_} {
+	job cg_cpSV-$sample -optional 1 {ori/ASM/SV ^ori/ASM/SV/(.*)$} {SV/\_} {
 		putslog "Copying SV"
 		set targetdir [file dir $target]
 		file delete -force $targetdir
@@ -292,15 +292,15 @@ proc process_sample {args} {
 		file rename -force $targetdir.temp $targetdir
 	}
 
-	job cg_cgsv-$sample {SV/allJunctionsBeta-*.tsv} {cgsv-$sample.tsv} {
+	job cg_cgsv-$sample -optional 1 {SV/allJunctionsBeta-*.tsv} {cgsv-$sample.tsv} {
 		cg convcgsv $dep $target
 	}
 
-	job cg_cgsv_alpha-$sample {SV/annotatedJunctionsAlpha-*.tsv} {cgsv-$sample.tsv} {
+	job cg_cgsv_alpha-$sample -optional 1 {SV/annotatedJunctionsAlpha-*.tsv} {cgsv-$sample.tsv} {
 		cg convcgsv $dep $target
 	}
 
-	job cg_cpCNV-$sample {ori/ASM/CNV ^ori/ASM/CNV/(.*)$} {CNV/\_} {
+	job cg_cpCNV-$sample -optional 1 {ori/ASM/CNV ^ori/ASM/CNV/(.*)$} {CNV/\_} {
 		putslog "Copying CNV"
 		set targetdir [file dir $target]
 		file delete -force $targetdir
@@ -309,31 +309,31 @@ proc process_sample {args} {
 		file rename -force $targetdir.temp $targetdir
 	}
 
-	job cg_cgcnv {CNV/cnvSegmentsBeta-*.tsv} {cgcnv-$sample.tsv} {
+	job cg_cgcnv -optional 1 {CNV/cnvSegmentsBeta-*.tsv} {cgcnv-$sample.tsv} {
 		cg convcgcnv $dep $target
 	}
 
-	job cg_cgcnv_diploid-$sample {CNV/cnvSegmentsDiploidBeta-*.tsv} {cgcnv-$sample.tsv} {
+	job cg_cgcnv_diploid-$sample -optional 1 {CNV/cnvSegmentsDiploidBeta-*.tsv} {cgcnv-$sample.tsv} {
 		cg convcgcnv $dep $target
 	}
 
-	job cg_cgcnv_alpha-$sample {CNV/cnvSegmentsAlpha-*.tsv} {cgcnv-$sample.tsv} {
+	job cg_cgcnv_alpha-$sample -optional 1 {CNV/cnvSegmentsAlpha-*.tsv} {cgcnv-$sample.tsv} {
 		cg convcgcnv [gzfile $dep] $target
 	}
 
 	# multiarch
-	job reg_cluster-$sample {annotvar-$sample.tsv} {reg_cluster-$sample.tsv} {
+	job reg_cluster-$sample -optional 1 {annotvar-$sample.tsv} {reg_cluster-$sample.tsv} {
 		cg clusterregions < $dep > $target.temp
 		file rename -force $target.temp $target
 	}
 
-	job reg_ns-$sample {annotvar-$sample.tsv} {reg_ns-$sample.tsv} {
+	job reg_ns-$sample -optional 1 {annotvar-$sample.tsv} {reg_ns-$sample.tsv} {
 		putslog "Find regions with N's for $dep"
 		cg select -f {chromosome begin end} -q {$alleleSeq1 ~ /[N?]/ || $alleleSeq2 ~ /[N?]/} < $dep > $target.temp
 		file rename -force $target.temp $target
 	}
 
-	job reg_lowscore-$sample {annotvar-$sample.tsv} {reg_lowscore-$sample.tsv} {
+	job reg_lowscore-$sample -optional 1 {annotvar-$sample.tsv} {reg_lowscore-$sample.tsv} {
 		set header [cg select -h $dep]
 		if {[llength [list_common $header {totalScore1 totalScore2}]] == 2} {
 			putslog "Find regions with lowscores for $dep"
@@ -342,29 +342,29 @@ proc process_sample {args} {
 		}
 	}
 
-	job cg_fannotvar-$sample {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage/bcol_coverage-$sample.tsv) (coverage/bcol_refscore-$sample.tsv)} {fannotvar-$sample.tsv} {
+	job cg_fannotvar-$sample -optional 1 {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage/bcol_coverage-$sample.tsv) (coverage/bcol_refscore-$sample.tsv)} {fannotvar-$sample.tsv} {
 		cg annotate $dep $target {*}[list_remove [lrange $deps 1 end] {}]
 	}
 
-	job cg_multitechlink_var-$sample {fannotvar-$sample.tsv} {var-cg-cg-$sample.tsv} {
+	job cg_multitechlink_var-$sample -optional 1 {fannotvar-$sample.tsv} {var-cg-cg-$sample.tsv} {
 		gzmklink $dep $target
 	}
 
-	job cg_multitechlink_sreg-$sample {sreg-$sample.tsv} {sreg-cg-cg-$sample.tsv} {
+	job cg_multitechlink_sreg-$sample -optional 1 {sreg-$sample.tsv} {sreg-cg-cg-$sample.tsv} {
 		gzmklink $dep $target
 	}
 
-	job cg_multitechlink_coverage-$sample {coverage} {coverage-cg-$sample} {
+	job cg_multitechlink_coverage-$sample -optional 1 {coverage} {coverage-cg-$sample} {
 		gzmklink $dep $target
 	}
 
-	job reg_covered-$sample {sreg-$sample.tsv} {reg-$sample.covered} {
+	job reg_covered-$sample {sreg-$sample.tsv} -optional 1 {reg-$sample.covered} {
 		putslog "Genomic coverage of sequenced regions"
 		cg covered $dep > $target.temp
 		file rename -force $target.temp $target
 	}
 
-	job cg_filteredrefcons-$sample -vars sample {sreg-$sample.tsv reg_refcons-$sample.tsv} {filteredrefcons-$sample.tsv filteredrefcons-$sample.covered} {
+	job cg_filteredrefcons-$sample -optional 1 -vars sample {sreg-$sample.tsv reg_refcons-$sample.tsv} {filteredrefcons-$sample.tsv filteredrefcons-$sample.covered} {
 		putslog "Coverage of refcons region"
 		cg regsubtract $dep1 $dep2 > $target1.temp
 		file rename -force $target1.temp $target1
@@ -372,46 +372,46 @@ proc process_sample {args} {
 		file rename -force $target2.temp $target2
 	}
 
-	job cg_filteredns-$sample {sreg-$sample.tsv reg_ns-$sample.tsv} {filteredns-$sample.tsv} {
+	job cg_filteredns-$sample -optional 1 {sreg-$sample.tsv reg_ns-$sample.tsv} {filteredns-$sample.tsv} {
 		putslog "Coverage of ns region"
 		cg regsubtract $dep1 $dep2 > $target.temp
 		file rename -force $target.temp $target
 	}
 
-	job cg_filteredns_covered-$sample {filteredns-$sample.tsv} {filteredns-$sample.covered} {
+	job cg_filteredns_covered-$sample -optional 1 {filteredns-$sample.tsv} {filteredns-$sample.covered} {
 		putslog "Making $target"
 		cg covered $dep > $target.temp
 		file rename -force $target.temp $target
 	}
 
-	job cg_filteredlowscore-$sample {sreg-$sample.tsv reg_lowscore-$sample.tsv} {filteredlowscore-$sample.tsv} {
+	job cg_filteredlowscore-$sample -optional 1 {sreg-$sample.tsv reg_lowscore-$sample.tsv} {filteredlowscore-$sample.tsv} {
 		cg regsubtract $dep1 $dep2 > $target.temp
 		file rename -force $target.temp $target
 	}
 
-	job cg_filteredlowscore_covered-$sample {filteredlowscore-$sample.tsv} {filteredlowscore-$sample.covered} {
+	job cg_filteredlowscore_covered-$sample -optional 1 {filteredlowscore-$sample.tsv} {filteredlowscore-$sample.covered} {
 		cg covered $dep > $target.temp
 		file rename -force $target.temp $target
 	}
 
-	job cg_refcons_histo-$sample {reg_refcons-$sample.tsv} {histo-refcons-$sample.tsv} {
+	job cg_refcons_histo-$sample -optional 1 {reg_refcons-$sample.tsv} {histo-refcons-$sample.tsv} {
 		putslog "Making $target"
 		cg reghisto $dep > $target.temp
 		file rename -force $target.temp $target
 	}
 
-	job cg_filteredcluster-$sample {sreg-$sample.tsv reg_cluster-$sample.tsv} {filteredcluster-$sample.tsv} {
+	job cg_filteredcluster-$sample -optional 1 {sreg-$sample.tsv reg_cluster-$sample.tsv} {filteredcluster-$sample.tsv} {
 		putslog "Coverage of clusters region"
 		cg regsubtract $dep1 $dep2 > $target.temp
 		file rename -force $target.temp $target
 	}
 
-	job cg_filteredcluster_covered-$sample {filteredcluster-$sample.tsv} {filteredcluster-$sample.covered} {
+	job cg_filteredcluster_covered-$sample -optional 1 {filteredcluster-$sample.tsv} {filteredcluster-$sample.covered} {
 		putslog "Making $target"
 		cg covered $dep > $target.temp
 		file rename -force $target.temp $target
 	}
-	job cg_process_cleanup-$sample -deps {(svar-$sample.tsv) (annotvar-$sample.tsv) fannotvar-$sample.tsv sreg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} \
+	job cg_process_cleanup-$sample -optional 1 -deps {(svar-$sample.tsv) (annotvar-$sample.tsv) fannotvar-$sample.tsv sreg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} \
 		-vars {sample} -rmtargets {svar-$sample.tsv annotvar-$sample.tsv} -code {
 			catch {file delete svar-$sample.tsv}
 			catch {file delete annotvar-$sample.tsv}

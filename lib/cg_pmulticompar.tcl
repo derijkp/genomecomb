@@ -208,7 +208,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 	}
 	#
 	# paste all together for final multicompar
-	tsv_paste_job $compar_file $pastefiles 1 [list file delete {*}$pastefiles]
+	tsv_paste_job $compar_file $pastefiles -focepaste 1 -endcommand [list file delete {*}$pastefiles]
 }
 
 proc cg_pmulticompar {args} {

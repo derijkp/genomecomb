@@ -305,7 +305,7 @@ test liftsample {basic} {
 		1	619957	620067	1	609820	609930
 	}
 	# test
-	exec cg liftsample -silent 1 tmp/sample tmp/liftedsample /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	exec cg liftsample tmp/sample tmp/liftedsample /complgen/refseq/liftover/hg18ToHg19.over.tsv
 	file delete tmp/liftedsample/fannotvar-liftedsample.tsv.unmapped
 	file delete tmp/liftedsample/reg_cluster-cg-cg-liftedsample.tsv.unmapped
 	file delete tmp/liftedsample/sampleinfo.tsv

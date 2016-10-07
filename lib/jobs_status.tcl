@@ -120,7 +120,7 @@ proc job_process_parstatus {} {
 	set jobroot [pwd]
 	while {[llength $queue]} {
 		set line [list_shift queue]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 #		# If this job was previously blocked because of ptargets deps,
@@ -231,6 +231,9 @@ proc job_process_parstatus {} {
 		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $checkcompressed $ftargetvars} adeps]} {
 			# dependencies not found (or error) -> really skip job
 			if {[regexp {^missing dependency} $adeps]} {
+				if {!$optional} {
+					job_log "could not run job $jobname:\n$adeps"
+				}
 #				job_log $job "$adeps"
 			} elseif {[regexp {^ptargets hit} $adeps]} {
 			} else {

@@ -75,7 +75,7 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 		set target compar/cgsv-${experiment}.tsv
 		set names [list_regsub {.*/cgsv-(.*)\.tsv.*} $files {\1}]
 		testmultitarget $target $names "$sampledir\$name/cgsv-\$name.tsv"
-		job cgsv_multicompar -deps $files -targets {$target} -code {
+		job cgsv_multicompar -optional 1 -deps $files -targets {$target} -code {
 			puts "Checking $target"
 			if {[file exists $target.temp]} {
 				set done [cg select -n $target.temp]
@@ -97,13 +97,13 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 			}
 			file rename -force $target.temp $target
 		}
-		job cgsv_annotate \
+		job cgsv_annotate -optional 1 \
 		-deps {compar/cgsv-$experiment.tsv} \
 		-targets {compar/annot_cgsv-$experiment.tsv} -vars {refseqdir build} -code {
 			cg annotate $dep $target.temp $refseqdir/$build
 			file rename -force $target.temp $target
 		}
-		job cgsv_annotate_index \
+		job cgsv_annotate_index -optional 1 \
 		-deps {compar/annot_cgsv-$experiment.tsv} \
 		-targets {compar/annot_cgsv-$experiment.tsv.index/info.tsv} -code {
 			cg index $dep
@@ -116,7 +116,7 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 		set target compar/cgcnv-${experiment}.tsv
 		set names [list_regsub {.*/cgsv-(.*)\.tsv.*} $files {\1}]
 		testmultitarget $target $names "$sampledir\$name/cgcnv-\$name.tsv"
-		job cgcnv_multicompar -deps $files -targets {compar/cgcnv-${experiment}.tsv} -code {
+		job cgcnv_multicompar -optional 1 -deps $files -targets {compar/cgcnv-${experiment}.tsv} -code {
 			puts "Checking $target"
 			if {[file exists $target.temp]} {
 				set done [cg select -n $target.temp]
@@ -138,13 +138,13 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 			}
 			file rename -force $target.temp $target
 		}
-		job cgcnv_annotate \
+		job cgcnv_annotate -optional 1 \
 		-deps {compar/cgcnv-$experiment.tsv} \
 		-targets {compar/annot_cgcnv-$experiment.tsv} -vars {refseqdir build} -code {
 			cg annotate $dep $target.temp $refseqdir/$build
 			file rename -force $target.temp $target
 		}
-		job cgcnv_annotate_index \
+		job cgcnv_annotate_index -optional 1 \
 		-deps {compar/annot_cgcnv-$experiment.tsv} \
 		-targets {compar/annot_cgcnv-$experiment.tsv.index/info.tsv} -code {
 			cg index -colinfo $dep

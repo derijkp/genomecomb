@@ -18,12 +18,13 @@ The job system is used by including the following commands (example in job_examp
 == job_init ==
 job_init initializes the job system. It accept the following job options
 and returns the rest of the arguments:
-; **-d value** (--distribute): if value is a number, the job is distributed over the given number of processes. Use sge to distribute using Grid Engine  (also -distribute)
-; **-f 0/1** (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)
-; **--silent 0/1**: use -silent 1 to supress output with info on the processing
-; **--job_skiperrors 0/1**: When running directly (without -d), errors will
-cause the command to stop; use -skiperrors 1 to (also) skip over errors in this mode of running
-; **--runcmd cmd** (--runcommand): For distributed processing, the command used to run job scripts made (default is "cg source")
+; -d value (--distribute): if value is a number, the job is distributed over the given number of processes. Use sge to distribute using Grid Engine  (also -distribute)
+; -f 0/1 (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)
+; --silent 0/1: use -silent 1 to supress output with info on the processing
+; --skipjoberrors 0/1: Errors in one job can cause the command to stop; 
+use --skipjoberrors 1 to skip over these errors and complete other jobs (as far as they are not
+dependent on the the job with an error)
+; --runcmd cmd (--runcommand): For distributed processing, the command used to run job scripts made (default is "cg source")
 
 Typical use:
 {{{
@@ -86,17 +87,20 @@ target (first target), target2 (second target).
 It is advised (generally as well) to create **result files using a temporary name**
 (e.g. $target.temp), and rename them to $target when finished: This way, if a
 job crashes, there will never be a target file present that is incomplete.
-; **-vars varlist**: a list of variables that must be passed on to the job.
-; **-skip skiplist**: If all files in skiplist exist, the job will be skipped, 
+; -vars varlist: a list of variables that must be passed on to the job.
+; -optional 0/1: By default (0) an error will be given if the job cannot run because of missing
+dependencies. Set -optional to 1 to indicate that this job is optional, and can be simply skipped
+if not all dependencies are available.
+; -skip skiplist: If all files in skiplist exist, the job will be skipped, 
 even if some of the targets are not present. This can be used to avoid (re)running substeps
 to a final goal.
-; **-force 0/1**: If 1, this job will be run even if the target files already exist. This is usefull
+; -force 0/1: If 1, this job will be run even if the target files already exist. This is usefull
 if e.g. an existing files needs to be adapted.
-; **-checkcompressed 0/1**: dependencies (and targets) are normally
+; -checkcompressed 0/1: dependencies (and targets) are normally
 searched regardless of compression status (e.g. either test.tsv as
 test.tsv.lz4 will match test.tsv). Use this option for the job 
 specifically targetting compression
-; **-foreach pattern**: A separate job will be started for each dependency matching the pattern.
+; -foreach pattern: A separate job will be started for each dependency matching the pattern.
 This can also be handled (more flexibly) using jobglob and a foreach loop
 {{{
 foreach file [jobglob test*.tsv] {
@@ -104,18 +108,18 @@ foreach file [jobglob test*.tsv] {
 	}
 }
 }}}
-; **-rmtargets rmtargets**: This job will have the removal of given files as target
-; **-ptargets patterntargets**: If a job will make targets that cannot (easily) be determined when
+; -rmtargets rmtargets: This job will have the removal of given files as target
+; -ptargets patterntargets: If a job will make targets that cannot (easily) be determined when
 the (submission) program is run, the targets can be given using a wildcard matching all output.
 Try to avoid its use: On a cluster it means the submission program has to
 wait (keep running on the head node) until this job is finished before it can submit
 dependent jobs. (Normally all jobs are submitted in one go with dependencies between
 them given to the cluster managment system)
-; **-io io**: give value > 1 if job is heavy on io (in sge, translates to (soft) job options: -l io=$value) 
-; **-cores numcores**: give value > 1 if job uses more than 1 core (on sge hard option: "-pe local $value" if local_pe is defined)
-; **-mem memorysize**: indication of momory needed (on sge (hard): -l mem_free=$value)
-; **-hard hardlimits**: on sge: extra options passed on as hard limits
-; **-soft softlimits**: on sge: extra options passed on as soft limits
+; -io io: give value > 1 if job is heavy on io (in sge, translates to (soft) job options: -l io=$value) 
+; -cores numcores: give value > 1 if job uses more than 1 core (on sge hard option: "-pe local $value" if local_pe is defined)
+; -mem memorysize: indication of momory needed (on sge (hard): -l mem_free=$value)
+; -hard hardlimits: on sge: extra options passed on as hard limits
+; -soft softlimits: on sge: extra options passed on as soft limits
 
 == tools ==
 jobglob: same as glob, but takes into account files that will be available

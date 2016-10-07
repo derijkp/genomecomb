@@ -7,19 +7,19 @@ set keepdir [pwd]
 
 # use these for trying out individual tests
 set testname "-d direct"
-proc test_job_init {} {uplevel job_init -silent -job_skiperrors}
+proc test_job_init {args} {uplevel job_init {*}$args}
 proc gridwait {} {}
 if 0 {
 	set testname "-d direct"
-	proc test_job_init {} {uplevel job_init -silent -job_skiperrors}
+	proc test_job_init {args} {uplevel job_init -skipjoberrors 1 {*}$args}
 	proc gridwait {} {}
 
 	set testname "-d 30"
-	proc test_job_init {} {uplevel job_init -silent -d 30}
+	proc test_job_init {args} {uplevel job_init -d 30 {*}$args}
 	proc gridwait {} {}
 
 	set testname "-d sge"
-	proc test_job_init {} {uplevel job_init -silent -d sge}
+	proc test_job_init {args} {uplevel job_init -d sge {*}$args}
 	proc gridwait {} {
 		while 1 {
 			after 500
@@ -53,7 +53,7 @@ proc jobtest {args} {
 	-targets {$destdir/sum-$_names.txt} \
 	-vars destdir -code {
 		for {set i 1} {$i < 5} {incr i} {
-			puts "progress $target $i"
+			# puts "progress $target $i"
 			after 250
 		}
 		set targets {}
@@ -61,7 +61,7 @@ proc jobtest {args} {
 		while {![eof $f]} {
 			set line [split [gets $f] \t]
 			if {$line eq ""} continue
-			puts line=$line
+			# puts line=$line
 			set name [lindex $line 0]
 			set target $destdir/sum-$name.txt
 			set o [open $target.temp w]
@@ -83,7 +83,7 @@ proc jobtest {args} {
 		# var deps contains a list of all dependencies
 		# var dep contains the first element of the first dependency (so you do not have to do [lindex $deps 0] to get it)
 		for {set i 1} {$i < 5} {incr i} {
-			puts "progress $target $i"
+			# puts "progress $target $i"
 			after 250
 		}
 		set targets {}
@@ -91,7 +91,7 @@ proc jobtest {args} {
 		while {![eof $f]} {
 			set line [split [gets $f] \t]
 			if {$line eq ""} continue
-			puts line=$line
+			# puts line=$line
 			set name [lindex $line 0]
 			set target $destdir/sumpattern-$name.txt
 			set o [open $target.temp w]
@@ -109,7 +109,7 @@ proc jobtest {args} {
 	  -cores 2 \
 	  -targets {$destdir/sumpattern2-\1.txt} -code {
 		for {set i 1} {$i < 5} {incr i} {
-			puts "progress $i"
+			# puts "progress $i"
 			after 250
 		}
 		file copy $dep $target.temp
@@ -134,14 +134,14 @@ proc jobtest {args} {
 	  -skip {$destdir/all2.txt} \
 	  -targets {$destdir/sum2-\1.txt} -code {
 		for {set i 1} {$i < 5} {incr i} {
-			puts stderr "progress $i"
+			# puts stderr "progress $i"
 			after 250
 		}
 		file copy $dep $target.temp
 		exec echo 2 >> $target.temp
 		file rename -force $target.temp $target
 	}
-	job error_all.txt -deps {$srcdir/notpresent.txt} -targets {$destdir/all.txt} -code {
+	job error_all.txt -optional 1 -deps {$srcdir/notpresent.txt} -targets {$destdir/all.txt} -code {
 		error "This should not be executed, as the dependencies are not fullfilled, the other target is used"
 	}
 	job joberror -deps {^$srcdir/cgdata\.tsv$} -targets {$destdir/joberror.txt} -code {
@@ -174,9 +174,9 @@ proc jobtestnojobs {args} {
 	set args [job_args $args]
 	foreach destdir $args break
 	job_logdir $destdir/log_jobs
-	job nodeps1 -deps {abcd} -targets {abcde} -code {
+	job nodeps1 -optional 1 -deps {abcd} -targets {abcde} -code {
 	}
-	job nodeps2 -deps {abcde} -targets {abcdef} -code {
+	job nodeps2 -optional 1 -deps {abcde} -targets {abcdef} -code {
 	}
 }
 
@@ -189,7 +189,7 @@ proc jobtestlong {args} {
 	job long -deps {} -targets {long.txt} -code {
 		for {set i 0} {$i < 4} {incr i} {
 			after 1000
-			puts $i
+			# puts $i
 		}
 		file_write long.txt done
 	}
@@ -234,10 +234,10 @@ test job {job_expandvars} {
 # test in different "processing modes"
 # ------------------------------------
 foreach {testname initcode} {
-	"direct" {uplevel job_init -silent -job_skiperrors}
-	"-d 4" {uplevel job_init -silent -d 4}
-	"-d 30" {uplevel job_init -silent -d 30}
-	"-d sge" {uplevel job_init -silent -d sge}
+	"direct" {uplevel job_init -skipjoberrors 1 $args}
+	"-d 4" {uplevel job_init -d 4 $args}
+	"-d 30" {uplevel job_init -d 30 $args}
+	"-d sge" {uplevel job_init -d sge $args}
 } {
 # start of block
 
@@ -258,11 +258,11 @@ if {$testname eq "-d sge"} {
 	proc gridwait {} {}
 }
 
-proc test_job_init {} $initcode
+proc test_job_init {args} $initcode
 
 test job "basic chain $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write test1.txt test1\n
@@ -286,7 +286,7 @@ test3
 
 test job "foreach $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write test1.txt test1\n
@@ -305,7 +305,7 @@ test job "foreach $testname" {
 
 test job "chained foreach $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	job init -deps {} -targets {test1.txt test2.txt} -code {
@@ -330,7 +330,7 @@ test job "chained foreach $testname" {
 
 test job "chained foreach with glob match $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	job init -deps {} -targets {test1.txt test2.txt} -code {
@@ -355,7 +355,7 @@ test job "chained foreach with glob match $testname" {
 
 test job "chained jobglob $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	job init -deps {} -targets {test1.txt test2.txt} -code {
@@ -384,7 +384,7 @@ test job "chained jobglob $testname" {
 
 test job "basic chain --force 0 $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	job_args {--force 0}
@@ -409,7 +409,7 @@ test job "basic chain --force 0 $testname" {
 
 test job "basic chain --force 1 $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	job_args {--force 1}
@@ -438,7 +438,7 @@ test3
 
 test job "time chain $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write test1.txt test1\n
@@ -465,11 +465,74 @@ test3
 } {error3
 }}
 
+test job "missing dep, -optional 1 $testname" {
+	cd $::testdir
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -skipjoberrors 0
+	file_write test1.txt test1\n
+	job jobmissing -optional 1 -deps {missing.txt} -targets {test3.txt} -code {
+		file_write $target missing\n
+	}
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read test2.txt]]
+	cd $::testdir
+	set result
+} {{log_jobs test1.txt test2.txt} {test1
+test2
+}}
+
+test job "missing dep, -optional 0 $testname" {
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -skipjoberrors 0
+	file_write test1.txt test1\n
+	job jobmissing -optional 0 -deps {missing.txt} -targets {test3.txt} -code {
+		file_write $target missing\n
+	}
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read test2.txt]]
+	cd $::testdir
+	set result
+} {error trying to run job jobmissing:
+missing dependency missing.txt} error
+
+test job "missing dep, -optional 0 -skipjoberrors 1 $testname" {
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -skipjoberrors 1
+	file_write test1.txt test1\n
+	job jobmissing -optional 0 -deps {missing.txt} -targets {test3.txt} -code {
+		file_write $target missing\n
+	}
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read test2.txt]]
+	cd $::testdir
+	set result
+} {{log_jobs test1.txt test2.txt} {test1
+test2
+}}
+
 test job "basic $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
-	test_job_init
+	test_job_init -skipjoberrors 1
 	jobtest ../data test testh
 	job_wait
 	gridwait
@@ -492,7 +555,7 @@ test job "basic $testname" {
 
 test job "basic status $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	jobtest ../data test testh
@@ -517,10 +580,10 @@ test job "basic status $testname" {
 
 test job "--force 0 $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	file mkdir test
-	job_init -silent -job_skiperrors
+	job_init -skipjoberrors
 	jobtest --force 0 ../data test testh
 	job_wait
 	gridwait
@@ -543,10 +606,10 @@ test job "--force 0 $testname" {
 
 test job "--force 1 $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	file mkdir test
-	job_init -silent -job_skiperrors
+	job_init -skipjoberrors
 	jobtest --force 0 ../data test testh
 	job_wait
 	gridwait
@@ -573,7 +636,7 @@ test job "--force 1 $testname" {
 
 test job "time $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	jobtest ../data test testh
@@ -602,7 +665,7 @@ replaced
 
 test job "-skip: not present $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	job testskip -deps {} -targets result.txt -skip {skip1.txt skip2.txt} -code {
@@ -617,7 +680,7 @@ test job "-skip: not present $testname" {
 
 test job "-skip: only one present $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write skip1.txt test1
@@ -633,7 +696,7 @@ test job "-skip: only one present $testname" {
 
 test job "-skip: all present $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write skip1.txt test1
@@ -650,7 +713,7 @@ test job "-skip: all present $testname" {
 
 test job "-skip -skip: none present $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	job testskip -deps {} -targets result.txt -skip skip1.txt -skip skip2.txt -code {
@@ -665,7 +728,7 @@ test job "-skip -skip: none present $testname" {
 
 test job "-skip -skip: one present $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write skip2.txt test2
@@ -679,9 +742,9 @@ test job "-skip -skip: one present $testname" {
 	set result
 } {log_jobs skip2.txt}
 
-test job {jobtestnojobs} {
+test job "jobtestnojobs $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	jobtestnojobs $::testdir/tmp
@@ -689,9 +752,9 @@ test job {jobtestnojobs} {
 	gridwait
 } {}
 
-test job {jobtestlong} {
+test job "jobtestlong $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	jobtestlong $::testdir/tmp
@@ -699,9 +762,9 @@ test job {jobtestlong} {
 	gridwait
 } {}
 
-test job {no -targets} {
+test job "no -targets $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write dep.txt dep
@@ -715,12 +778,12 @@ test job {no -targets} {
 	set result
 } {dep.txt log_jobs result.txt}
 
-test job {no -targets, dep not found} {
+test job "no -targets, dep not found $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
-	job testnotarget -deps {dep.txt} -code {
+	job testnotarget -optional 1 -deps {dep.txt} -code {
 		file_write result.txt test
 	}
 	job_wait
@@ -730,9 +793,25 @@ test job {no -targets, dep not found} {
 	set result
 } {log_jobs}
 
-test job {no -checkcompressed 1 (default), dep} {
+test job "no -targets, dep not found, not optional $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -skipjoberrors 0
+	job testnotarget -deps {dep.txt} -code {
+		file_write result.txt test
+	}
+	job_wait
+	gridwait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {error trying to run job testnotarget:
+missing dependency dep.txt} error
+
+test job "no -checkcompressed 1 (default), dep $testname" {
+	cd $::testdir
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write dep.txt test
@@ -747,11 +826,11 @@ test job {no -checkcompressed 1 (default), dep} {
 	set result
 } {dep.txt.rz log_jobs result.txt}
 
-test job {no -checkcompressed 1 (default), dep} {
+test job "no -checkcompressed 0, dep $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
-	test_job_init
+	test_job_init -skipjoberrors 0
 	file_write dep.txt test
 	cg razip dep.txt
 	job testcheckcompressed -checkcompressed 0 -deps {dep.txt} -targets result.txt -code {
@@ -762,11 +841,12 @@ test job {no -checkcompressed 1 (default), dep} {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {dep.txt.rz log_jobs}
+} {error trying to run job testcheckcompressed:
+missing dependency dep.txt} error
 
-test job {no -checkcompressed 1 (default), targets} {
+test job "no -checkcompressed 1 (default), targets $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write dep.txt test
@@ -783,9 +863,9 @@ test job {no -checkcompressed 1 (default), targets} {
 	set result
 } {dep.txt log_jobs target.txt.rz}
 
-test job {no -checkcompressed 1 (default), dep} {
+test job "no -checkcompressed 1 (default), dep $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write dep.txt test
@@ -802,9 +882,9 @@ test job {no -checkcompressed 1 (default), dep} {
 	set result
 } {dep.txt log_jobs result.txt target.txt target.txt.rz}
 
-test job "rmtargets1 $testname" {
+test job "rmtargets1 $testname $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write data1.txt test1
@@ -812,7 +892,7 @@ test job "rmtargets1 $testname" {
 		after 1000
 		file delete data1.txt
 	}
-	job data2 -deps {data1.txt} -targets data2.txt -code {
+	job data2 -optional 1 -deps {data1.txt} -targets data2.txt -code {
 		file copy data1.txt data2.txt
 	}
 	job_wait
@@ -825,7 +905,7 @@ test job "rmtargets1 $testname" {
 
 test job "rmtargets2 $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	job data1 -targets data1.txt -code {
@@ -839,7 +919,7 @@ test job "rmtargets2 $testname" {
 		after 1000
 		file delete data1.txt
 	}
-	job data3 -deps {data1.txt} -targets data3.txt -code {
+	job data3 -optional 1 -deps {data1.txt} -targets data3.txt -code {
 		file copy data1.txt data3.txt
 	}
 	job_wait
@@ -852,7 +932,7 @@ test job "rmtargets2 $testname" {
 
 test job "do not run if deps not done $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	job data1 -targets data1.txt -code {
@@ -875,7 +955,7 @@ test job "do not run if deps not done $testname" {
 
 test job "rmtargets with gzip $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	job makedata -targets data.txt -code {
@@ -898,7 +978,7 @@ test job "rmtargets with gzip $testname" {
 
 test job "rmtargets with gzip exists $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write data.txt testpre
@@ -907,7 +987,7 @@ test job "rmtargets with gzip exists $testname" {
 		after 1000
 		file_write data.txt test1
 	}
-	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
+	job compress -optional 1 -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
 		exec gzip data.txt
 	}
 	job result -deps {data.txt} -targets result.txt -code {
@@ -923,7 +1003,7 @@ test job "rmtargets with gzip exists $testname" {
 
 test job "rmtargets and -checkcompressed 0 on previous targets $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	job makedata -targets data.txt -code {
@@ -933,7 +1013,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets $testname" {
 	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
 		cg_razip data.txt
 	}
-	job result -checkcompressed 0 -deps {data.txt} -targets result.txt -code {
+	job result -optional 1 -checkcompressed 0 -deps {data.txt} -targets result.txt -code {
 		after 1000
 		exec {*}[gzcat $dep] $dep > result.txt
 	}
@@ -946,7 +1026,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets $testname" {
 
 test job "rmtargets and -checkcompressed 0 on previous targets, write one first $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write data.txt testpre
@@ -955,10 +1035,10 @@ test job "rmtargets and -checkcompressed 0 on previous targets, write one first 
 		after 1000
 		file_write data.txt test1
 	}
-	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
+	job compress -optional 1 -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
 		cg_razip data.txt
 	}
-	job result -checkcompressed 0 -deps {data.txt} -targets result.txt -code {
+	job result -optional 1 -checkcompressed 0 -deps {data.txt} -targets result.txt -code {
 		after 1000
 		exec {*}[gzcat $dep] $dep > result.txt
 	}
@@ -971,7 +1051,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets, write one first 
 
 test job "rmtargets afterwards with gzip exists $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	file_write data.txt testpre
 	exec gzip data.txt
@@ -984,7 +1064,7 @@ test job "rmtargets afterwards with gzip exists $testname" {
 		after 1000
 		exec {*}[gzcat $dep] $dep > result.txt
 	}
-	job compress -checkcompressed 0 -deps {data.txt result.txt} -targets data.txt.gz -rmtargets data.txt -code {
+	job compress -optional 1 -checkcompressed 0 -deps {data.txt result.txt} -targets data.txt.gz -rmtargets data.txt -code {
 		exec gzip data.txt
 	}
 	job_wait
@@ -996,7 +1076,7 @@ test job "rmtargets afterwards with gzip exists $testname" {
 
 test job "jobforce $testname" {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write data1.txt test1
@@ -1024,12 +1104,14 @@ test3}
 
 # only test in direct
 foreach {testname initcode} {
-	"direct" {uplevel job_init -silent -job_skiperrors}
+	"direct" {uplevel job_init -skipjoberrors 1 $args}
 } break 
+proc test_job_init {args} $initcode
+proc gridwait {} {}
 
 test job {deps both compressed and uncompressed} {
 	cd $::testdir
-	catch {file delete -force {*}[glob tmp/*]}
+	test_cleantmp
 	cd $::testdir/tmp
 	file_write dep.txt test
 	exec gzip -c dep.txt > dep.txt.gz

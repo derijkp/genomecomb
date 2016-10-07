@@ -145,7 +145,7 @@ proc job_process_distr_wait {} {
 	if {[catch {vwait cgjob_exit} e]} {
 		puts "job_wait warning: $e"
 	}
-	puts "All jobs done"
+	# puts "All jobs done"
 	unset -nocomplain cgjob_exit
 }
 

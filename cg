@@ -39,7 +39,7 @@ if {[auto_load cg_$action]} {
 	set stacktraceonerror 0
 	while 1 {
 		set arg [lindex $args 0]
-		if {$arg in "--verbose"} {
+		if {$arg in "--verbose -v"} {
 			logverbose [lindex $args 1]
 			set args [lrange $args 2 end]
 		} elseif {$arg in "--stack"} {

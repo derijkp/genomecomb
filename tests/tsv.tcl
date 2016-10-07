@@ -610,7 +610,8 @@ test tsv_paste {7 files > maxopenfiles -o} {
 	set files [makepastetest 7]
 	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
 	exec diff tmp/result.tsv tmp/expected.tsv
-} {}
+	lsort -dict [glob tmp/*]
+} {tmp/expected.tsv tmp/result.tsv tmp/result.tsv.index tmp/sample1.tsv tmp/sample2.tsv tmp/sample3.tsv tmp/sample4.tsv tmp/sample5.tsv tmp/sample6.tsv tmp/vars1.tsv}
 
 test tsv_paste {8 files > maxopenfiles -o} {
 	test_cleantmp

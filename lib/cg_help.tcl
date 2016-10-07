@@ -251,7 +251,9 @@ cg subcommand -h
 == Options ==
 The following options are generic and available for all subcommands. They must however
 always preceed the subcommand specific options.
-; --verbose 0/1/2: Setting tis to 1 or 2 (instead of the default 0) makes some subcommands chattier about their progress.
+; -v number (--verbose): Setting this to 1 or 2 (instead of the default 0) makes some subcommands chattier about their progress.
+At the given number is 1, logging messages are shown (warnings, start of subtask, etc.)
+If the number >= 2, progress counters are also shown (for commands that support them)
 ; --stack 0/1: When the program returns an error, by default only the error message is shown,
 which is normally ok to show errors in input format, etc.
 if --stack is set to 1, a full stack trace is shown on error (which may be useful to solve 
