@@ -742,6 +742,25 @@ test job "-skip -skip: one present $testname" {
 	set result
 } {log_jobs skip2.txt}
 
+test job "-skip: chain $testname" {
+	cd $::testdir
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -skipjoberrors 0
+	file_write result.txt result
+	job step1 -deps {} -targets step1.txt -skip {result.txt} -code {
+		file_write step1.txt test
+	}
+	job result -deps step1.txt -targets result.txt -code {
+		file_write result.txt [file_read $dep]
+	}
+	job_wait
+	gridwait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {log_jobs result.txt}
+
 test job "jobtestnojobs $testname" {
 	cd $::testdir
 	test_cleantmp

@@ -50,6 +50,7 @@ proc job_process_direct {} {
 	global cgjob job_deps
 	set jobroot [pwd]
 	while {[llength $cgjob(queue)]} {
+		set joberror {}
 		set line [list_shift cgjob(queue)]
 		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional} $line break
 		cd $pwd
@@ -91,11 +92,11 @@ proc job_process_direct {} {
 			}
 			if {$optional || $cgjob(skipjoberrors)} {
 				job_log $job "-----> job $jobname skipped: dependencies not found"
+				job_logclose $job
+				continue
 			} else {
-				error "error trying to run job $jobname:\n$adeps"
+				set joberror "error trying to run job $jobname:\n$adeps"
 			}
-			job_logclose $job
-			continue
 		}
 		set targetvars $ftargetvars
 		lappend targetvars {*}$newtargetvars
@@ -147,6 +148,7 @@ proc job_process_direct {} {
 			job_logclose $job
 			continue
 		}
+		if {$joberror ne ""} {error $joberror}
 		job_log $job "-------------------- running $jobname --------------------"
 		# run code
 		set cmd "proc job_run {} \{\n"

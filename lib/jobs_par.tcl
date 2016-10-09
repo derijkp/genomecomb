@@ -53,6 +53,7 @@ proc job_process_par_onepass {} {
 	set cgjob(queue) {}
 	set jobroot [pwd]
 	while {[llength $queue]} {
+		set joberror {}
 		set line [list_shift queue]
 		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional} $line break
 		cd $pwd
@@ -140,7 +141,11 @@ proc job_process_par_onepass {} {
 			if {[regexp {^missing dependency} $adeps]} {
 				job_log $job "$adeps"
 				if {!$optional && !$cgjob(skipjoberrors)} {
-					error "error trying to run job $jobname:\n$adeps"
+					set joberror "error trying to run job $jobname:\n$adeps"
+				} else {
+					job_log $job "-----> job $jobname skipped: dependencies not found"
+					job_logclose $job
+					continue
 				}
 			} elseif {[regexp {^ptargets hit} $adeps]} {
 				# ptarget dependency means the job cannot yet be submitted
@@ -156,13 +161,14 @@ proc job_process_par_onepass {} {
 				continue
 			} else {
 				if {!$optional && !$cgjob(skipjoberrors)} {
-					error "error in dependencies for job $jobname:\n$adeps"
+					set joberror "error in dependencies for job $jobname:\n$adeps"
+				} else {
+					job_log $job "error in dependencies for $jobname: $adeps"
+					job_log $job "-----> job $jobname skipped: dependencies not found"
+					job_logclose $job
+					continue
 				}
-				job_log $job "error in dependencies for $jobname: $adeps"
 			}
-			job_log $job "-----> job $jobname skipped: dependencies not found"
-			job_logclose $job
-			continue
 		}
 		file_write $job.deps $adeps
 		set targetvars $ftargetvars
@@ -232,6 +238,7 @@ proc job_process_par_onepass {} {
 			job_logclose $job
 			continue
 		}
+		if {$joberror ne ""} {error $joberror}
 		# job_log $job "-------------------- submitting $jobname --------------------"
 		# run code
 		set cmd {#!/bin/sh}
