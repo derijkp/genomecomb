@@ -63,7 +63,11 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 				}
 			}
 		} else {
-			set filesamples [cg select -n $dir]
+			if {[file exists $dir]} {
+				set filesamples [cg select -n $dir]
+			} else {
+				set filesamples {}
+			}
 			if {[llength $filesamples]} {
 				# is a multicompar file
 				set file $dir
@@ -208,7 +212,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 	}
 	#
 	# paste all together for final multicompar
-	tsv_paste_job $compar_file $pastefiles -focepaste 1 -endcommand [list file delete {*}$pastefiles]
+	tsv_paste_job $compar_file $pastefiles -forcepaste 1 -endcommand [list file delete {*}$pastefiles]
 }
 
 proc cg_pmulticompar {args} {
