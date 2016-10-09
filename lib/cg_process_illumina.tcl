@@ -281,12 +281,16 @@ proc bwarefseq_job {refseq} {
 	upvar job_logdir job_logdir
 	set bwarefseq $refseq.bwa/[file tail $refseq]
 	if {[file exists $bwarefseq]} {return $bwarefseq}
-	job bwa2refseq-[file tail $refseq] -deps $refseq -targets {$refseq.bwa} -code {
+	set tail [file tail $refseq]
+	set targets [list $refseq.bwa $refseq.bwa/$tail]
+	foreach ext {amb ann bwt pac sa} {lappend targets $refseq.bwa/$tail.$ext}
+	job bwa2refseq-[file tail $refseq] -deps $refseq -targets $targets -code {
 		file delete -force $target.temp
 		file mkdir $target.temp
 		mklink $dep $target.temp/[file tail $dep]
 		exec bwa index $target.temp/[file tail $dep] 2>@ stderr
-		file rename -force $target.temp $target
+		file delete -force $target
+		file rename $target.temp $target
 	}
 	return $bwarefseq
 }
@@ -660,7 +664,8 @@ proc var_gatk_job {bamfile refseq args} {
 	# predict deletions separately, because gatk will not predict snps in a region where a deletion
 	# was predicted in the varall
 	job ${pre}delvar-gatk-$root -deps $deps \
-	-targets ${pre}delvar-gatk-$root.vcf -skip ${pre}delvar-gatk-$root.tsv -skip ${pre}var-gatk-$root.tsv -vars {gatk opts} -code {
+	-targets ${pre}delvar-gatk-$root.vcf -skip ${pre}delvar-gatk-$root.tsv \
+	-skip ${pre}var-gatk-$root.tsv -vars {gatk opts} -code {
 		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
 			{*}$opts -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 50.0 -stand_emit_conf 10.0 -dcov 1000 \
@@ -670,7 +675,9 @@ proc var_gatk_job {bamfile refseq args} {
 		catch {file rename -force $target.temp.idx $target.idx}
 		# file delete $target.temp
 	}
-	job ${pre}delvar-gatk2sft-$root -deps [list ${pre}delvar-gatk-$root.vcf] -targets ${pre}delvar-gatk-$root.tsv -vars {sample split} -code {
+	job ${pre}delvar-gatk2sft-$root -deps [list ${pre}delvar-gatk-$root.vcf] \
+	-targets ${pre}delvar-gatk-$root.tsv \
+	-skip ${pre}var-gatk-$root.tsv -vars {sample split} -code {
 		cg vcf2tsv -split $split $dep $target.temp
 		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
 		-f {
