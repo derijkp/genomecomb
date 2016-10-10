@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 	register int i,j;
 
 	if ((argc < 6)) {
-		fprintf(stderr,"Format is: pmulticompar_addvars_simple allvarsfile varsfile split sregfile varallfile keepfieldspos1 ...\n");
+		fprintf(stderr,"Format is: pmulticompar_addvars allvarsfile varsfile split sregfile varallfile keepfieldspos1 ...\n");
 		exit(EXIT_FAILURE);
 	}
 	DStringSetS(ds_r,"r",1); DStringSetS(ds_v,"v",1); DStringSetS(ds_u,"u",1);
@@ -151,12 +151,11 @@ int main(int argc, char *argv[]) {
 		varpos_max(&(varallvarpos));
 		if (varallvarpos.max > varallmax) {varallmax = varallvarpos.max;}
 		varallkeepposs = (unsigned int *)malloc(orikeepsize*sizeof(unsigned int));
-		varallmax = 0;
 		j = 0;
 		for (i = 0 ; i < orikeepsize ; i++) {
 			DString *el = oriresult->data+orikeepposs[i];
 			varallkeepposs[i] = DStringArraySearch(varallresult,el->string,el->size);
-			if (orikeepposs[i] > varallmax) {varallmax = orikeepposs[i];}
+			if (varallkeepposs[i] > varallmax) {varallmax = varallkeepposs[i];}
 		}
 		/* get first var from varall */
 		varallerror = gz_DStringGetTab(varallline,varallf,varallmax,varallresult,1,&numfields);

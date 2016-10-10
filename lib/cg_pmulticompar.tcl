@@ -105,9 +105,6 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 	# merge variants
 	# todo: check for concurrency
 	set workdir $compar_file.index/multicompar
-	# should take into account existing instead of deleting and starting all over -> not now
-	if {[file exists $workdir]} {file delete -force $workdir}
-	file delete -force $workdir
 	file mkdir $workdir
 	job_logdir $workdir/log_jobs
 	set multi_merge_num 0
@@ -177,8 +174,8 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 			close $o
 			set sregfile [lindex [gzfiles $sregfile] 0]
 			set varallfile [lindex [gzfiles $varallfile] 0]
-			# puts [list ../bin/multicompar_addvars_simple $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs]
-			exec multicompar_addvars_simple $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs >> $target.temp
+			# puts [list ../bin/multicompar_addvars $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs]
+			exec multicompar_addvars $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs >> $target.temp
 			file rename $target.temp $target
 		}
 	}
