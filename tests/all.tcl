@@ -2,26 +2,33 @@
 # the next line restarts using wish \
 exec tclsh "$0" "$@"
 
+source analysis.tcl
 source annot.tcl
-source mirannot.tcl
 source bcol.tcl
+source cg2tsv.tcl
+source clip.tcl
 source compar.tcl
 source convert.tcl
-source cg2tsv.tcl
-source vcf2tsv.tcl
-source lift.tcl
-source reg.tcl
-source tsv.tcl
-source remap.tcl
+source genome_seq.tcl
+source job.tcl
 source libext.tcl
+source lift.tcl
+source mirannot.tcl
+source misc.tcl
+source pmulticompar.tcl
+source queries.tcl
+source reg.tcl
+source remap.tcl
 source select.tcl
 source select_group.tcl
 source select_saggregates.tcl
-source analysis.tcl
-source misc.tcl
-source job.tcl
+source tsv.tcl
 source val.tcl
 source varia.tcl
-source genome_seq.tcl
-source clip.tcl
-source queries.tcl
+source vcf2tsv.tcl
+
+# long time, run separately
+# source process.tcl
+
+# not really used
+# source mselect.tcl
