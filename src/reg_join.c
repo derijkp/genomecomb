@@ -103,6 +103,11 @@ fprintf(stderr,"# %s\t%d\t%d\n", Loc_ChrString(chromosome2),start2,end2);
 				DStringCopy(&curchromosome,chromosome1); curstart = start1; curend = end1;
 			}
 			finished1 = get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&start1,&end1);
+		 	comp = DStringLocCompare(chromosome1,&curchromosome);
+			if (comp < 0 || (comp == 0 && start1 < curstart)) {
+				fprintf(stderr,"file1 is not correctly sorted (sort correctly using \"cg select -s -\")\n");
+				exit(1);
+			}
 		} else {
 		 	comp = DStringLocCompare(chromosome2,&curchromosome);
 			if ((comp == 0) && (start2 <= curend)) {
@@ -112,6 +117,11 @@ fprintf(stderr,"# %s\t%d\t%d\n", Loc_ChrString(chromosome2),start2,end2);
 				DStringCopy(&curchromosome,chromosome2); curstart = start2; curend = end2;
 			}
 			finished2 = get_region(f2,&line,chr2pos,start2pos,end2pos,max2,&chromosome2,&start2,&end2);
+		 	comp = DStringLocCompare(chromosome2,&curchromosome);
+			if (comp < 0 || (comp == 0 && start2 < curstart)) {
+				fprintf(stderr,"file2 is not correctly sorted (sort correctly using \"cg select -s -\")\n");
+				exit(1);
+			}
 		}
 	}
 	fprintf(stdout,"%s\t%d\t%d\n", curchromosome.string,curstart,curend);

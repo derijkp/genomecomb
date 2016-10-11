@@ -332,6 +332,58 @@ test regjoin {self} {
 3	1100	2000
 3	2500	2600}
 
+test regjoin {sort error chromosome} {
+	write_tab tmp/sorterror.tsv {
+		chromosome	begin	end
+		1	5	8
+		10	10	25
+		1	45	60
+	}
+	exec cg regjoin tmp/sorterror.tsv > tmp/result.tsv
+} {file1 is not correctly sorted (sort correctly using "cg select -s -")
+child process exited abnormally} error
+
+test regjoin {sort error chromosome file2} {
+	write_tab tmp/f1.tsv {
+		chromosome	begin	end
+		1	5	8
+	}
+	write_tab tmp/sorterror.tsv {
+		chromosome	begin	end
+		1	5	8
+		10	10	25
+		1	45	60
+	}
+	exec cg regjoin tmp/f1.tsv tmp/sorterror.tsv > tmp/result.tsv
+} {file2 is not correctly sorted (sort correctly using "cg select -s -")
+child process exited abnormally} error
+
+test regjoin {sort error begin} {
+	write_tab tmp/sorterror.tsv {
+		chromosome	begin	end
+		1	5	8
+		1	45	60
+		1	10	25
+	}
+	exec cg regjoin tmp/sorterror.tsv > tmp/result.tsv
+} {file1 is not correctly sorted (sort correctly using "cg select -s -")
+child process exited abnormally} error
+
+test regjoin {sort error begin file2} {
+	write_tab tmp/f1.tsv {
+		chromosome	begin	end
+		1	5	8
+	}
+	write_tab tmp/sorterror.tsv {
+		chromosome	begin	end
+		1	5	8
+		1	45	60
+		1	10	25
+	}
+	exec cg regjoin tmp/f1.tsv tmp/sorterror.tsv > tmp/result.tsv
+} {file2 is not correctly sorted (sort correctly using "cg select -s -")
+child process exited abnormally} error
+
 test regcollapse {basic} {
 	exec cg regcollapse data/reg1.tsv data/reg2.tsv > tmp/test.tsv
 	write_tab tmp/expected.tsv {
