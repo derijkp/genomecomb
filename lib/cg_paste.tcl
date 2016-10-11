@@ -53,7 +53,7 @@ proc tsv_paste_job {outputfile files args} {
 			lappend newtodo $target
 			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
 			incr pos $maxfiles
-			job paste-[file tail $target] -optional $optional -deps $deps -targets {$target} -vars {delete} -code {
+			job paste-[file tail $target] -optional $optional -deps $deps -force $forcepaste -targets {$target} -vars {delete} -code {
 				# puts [list ../bin/tsv_paste {*}$deps]
 				if {[llength $deps] > 1} {
 					exec tsv_paste {*}$deps > $target.temp 2>@ stderr

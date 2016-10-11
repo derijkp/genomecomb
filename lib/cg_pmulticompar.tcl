@@ -4,6 +4,74 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+proc multi_merge_job {varsfile files args} {
+	upvar job_logdir job_logdir
+	set force 0
+	set optional 0
+	set split 0
+	set force 1
+	foreach {k v} $args {
+		switch $k {
+			-split {set split $v}
+			-force {set force $v}
+			default {error "Unkown option $k"}
+		}
+	}
+	set varsfile [file_absolute $varsfile]
+	set maxfiles [maxopenfiles]
+	if {$maxfiles < 2} {set maxfiles 2}
+	set len [llength $files]
+	if {$len <= $maxfiles} {
+		set target $varsfile
+		job multi_merge-[file tail $varsfile] -force $force -deps $files -targets {$target} -vars {split} -code {
+			# puts [list ../bin/multi_merge $split {*}$deps]
+			exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
+			file rename -force $target.temp $target
+		}
+		return
+	}
+	catch {file delete {*}[glob -nocomplain $workdir/paste.temp*]}
+	set todo $files
+	set delete 0
+	set num 1
+	while 1 {
+		if {$len <= $maxfiles} {
+			set target $varsfile
+			job multi_merge-[file tail $varsfile] -optional $optional -force $force -deps $todo -targets {$target} -vars {split delete workdir} -code {
+				# puts [list ../bin/multi_merge $split {*}$deps]
+				exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
+				file rename -force $target.temp $target
+				if {$delete} {file delete {*}$deps}
+			}
+			break
+		}
+		set pos 0
+		set newtodo {}
+		while {$pos < $len} {
+			set target $workdir/paste.temp$num
+			incr num
+			lappend newtodo $target
+			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
+			incr pos $maxfiles
+			job multi_merge-[file tail $target] -optional $optional -force $force -deps $deps -targets {$target} -vars {split delete} -code {
+				if {[llength $deps] > 1} {
+					# puts [list ../bin/multi_merge $split {*}$deps]
+					exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
+					if {$delete} {file delete {*}$deps}
+				} elseif {!$delete} {
+					mklink $dep $target.temp
+				} else {
+					file rename -force $dep $target.temp
+				}
+				file rename -force $target.temp $target
+			}
+		}
+		set delete 1
+		set todo $newtodo
+		set len [llength $todo]
+	}
+}
+
 proc pmulticompar_findsample {basedir sample args} {
 	if {![llength $args]} {set args [list {}]}
 	set sampledir [lindex [split $sample -] end]
@@ -107,7 +175,6 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 	set workdir $compar_file.index/multicompar
 	file mkdir $workdir
 	job_logdir $workdir/log_jobs
-	set multi_merge_num 0
 	if {[file exists $compar_file]} {
 		# file rename -force $compar_file $compar_file.old
 		set allfiles [list_concat $compar_file $files]
@@ -117,10 +184,10 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 	# for calculating the varlines needed, we can treat targetsfile as just another variant file
 	set files $allfiles
 	if {$targetsfile ne ""} {lappend files $targetsfile}
-	multi_merge_job $workdir/vars.tsv $files $split
+	multi_merge_job $workdir/vars.tsv $files -split $split -force 1
 
 	# 
-	# add extra var line to each sample file to get everything in vars.tsv
+	# add extra var lines to each sample file to get all vars in vars.tsv
 	set pastefiles [list $workdir/vars.tsv]
 	set allvarsfile $workdir/vars.tsv
 	foreach sample $samples {
@@ -138,7 +205,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 				putslog "warning: $msg"
 			}
 		}
-		job multicompar_addvars-$sample -deps {$allvarsfile $samplevarsfile ($sregfile) ($varallfile)} -targets {$target} \
+		job multicompar_addvars-$sample -force 1 -deps {$allvarsfile $samplevarsfile ($sregfile) ($varallfile)} -targets {$target} \
 		  -vars {allvarsfile samplevarsfile sregfile varallfile sample split} -code {
 			set vf [gzopen $allvarsfile]
 			set vheader [tsv_open $vf]
@@ -176,14 +243,14 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 			set varallfile [lindex [gzfiles $varallfile] 0]
 			# puts [list ../bin/multicompar_addvars $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs]
 			exec multicompar_addvars $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs >> $target.temp
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 	}
 	if {$targetsfile ne ""} {
 		# add targetsfile annotation
 		set target $workdir/targets_annot.tsv
 		lappend pastefiles $target
-		job multicompar_targets -deps {$allvarsfile $targetsfile} -targets {$target} \
+		job multicompar_targets -force 1 -deps {$allvarsfile $targetsfile} -targets {$target} \
 		  -vars {allvarsfile targetsfile split} -code {
 			set targetsfield [lindex [split [file root [file tail $targetsfile]] -] end]
 			set f [gzopen $targetsfile]
@@ -204,7 +271,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 			file_write $target.temp $targetsfield\n
 			# puts [list ../bin/var_annot $allvarsfile 0 1 2 3 5 $targetsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos]
 			exec var_annot $allvarsfile 0 1 2 3 5 $targetsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos >> $target.temp 2>@ stderr
-			file rename $target.temp $target
+			file rename -force $target.temp $target
 		}
 	}
 	#

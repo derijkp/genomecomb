@@ -36,18 +36,8 @@ proc multidb_merge_job {varsfile files {split 1}} {
 		if {$file2 eq ""} continue
 		incr multi_merge_num
 		job multi_merge-$multi_merge_num -deps [list $file1 $file2] -vars split -targets $varsfile.$multi_merge_num -code {
-			set f [gzopen $dep1]
-			set header [tsv_open $f]
-			set poss1 [tsv_basicfields $header 6 $dep1]
-			lappend poss1 [lsearch $header id]
-			gzclose $f
-			set f [gzopen $dep2]
-			set header [tsv_open $f]
-			set poss2 [tsv_basicfields $header 6 $dep2]
-			lappend poss2 [lsearch $header id]
-			gzclose $f
 			set temptarget [file_tempwrite $target]
-			exec multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split > $temptarget
+			exec multi_merge $split $dep1 $dep2 > $temptarget
 			file rename -force $temptarget $target
 		}
 		lappend newfiles $varsfile.$multi_merge_num

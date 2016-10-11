@@ -15,48 +15,15 @@
 #include "debug.h"
 #include "gztools.h"
 
-typedef struct VarFile {
-	char *file;
-	GZFILE *f;
-	DString *line;
-	DStringArray *result;
-	VariantPos varpos;
-	Variant var;
-	int max;
-	unsigned int numfields;
-	unsigned int pos;
-	unsigned int error;
-} VarFile;
-
-VarFile *OpenVarfile(char *filename) {
-	unsigned int numfields;
-	VarFile *varfile = malloc(sizeof(VarFile));
-	varfile->file = filename;
-	varfile->f = gz_open(filename);
-	varfile->line = DStringNew();
-	gz_skip_header(varfile->f,varfile->line,&varfile->numfields,&varfile->pos);
-	varfile->result = DStringArrayNew(varfile->numfields+2);
-	DStringSplitTab(varfile->line, varfile->numfields, varfile->result, 0,NULL);
-	varpos_fromheader(&varfile->varpos,varfile->result);
-	varpos_max(&(varfile->varpos));
-	varfile->max = varfile->varpos.max;
-	varfile->error = gz_DStringGetTab(varfile->line,varfile->f,varfile->max,varfile->result,1,&numfields);
-	if (!varfile->error) {
-		check_numfieldserror(numfields,varfile->numfields,varfile->line,varfile->file,&varfile->pos);
-		result2var(varfile->result,varfile->varpos,&varfile->var);
-	}
-	return varfile;
-}
-
 int inregion(Variant *allvar,VarFile *sreg) {
 	unsigned int numfields;
 	int comp;
 	while (!sreg->error) {
-		comp = DStringLocCompare(sreg->var.chr,allvar->chr);
+		comp = DStringLocCompare(sreg->var->chr,allvar->chr);
 		if (comp > 0) break;
 		if (comp == 0) {
-			if (sreg->var.end > allvar->start) {
-				if (allvar->start >= sreg->var.start && allvar->end <= sreg->var.end) {
+			if (sreg->var->end > allvar->start) {
+				if (allvar->start >= sreg->var->start && allvar->end <= sreg->var->end) {
 					return 1;
 				}
 				break;
@@ -65,7 +32,7 @@ int inregion(Variant *allvar,VarFile *sreg) {
 		sreg->error = gz_DStringGetTab(sreg->line,sreg->f,sreg->max,sreg->result,1,&numfields);
 		if (!sreg->error) {
 			check_numfieldserror(numfields,sreg->numfields,sreg->line,sreg->file,&(sreg->pos));
-			result2var(sreg->result,sreg->varpos,&(sreg->var));
+			result2var(sreg->result,sreg->varpos,sreg->var);
 		}
 	}
 	return 0;
@@ -79,9 +46,9 @@ int main(int argc, char *argv[]) {
 	Variant orivar, prevvar, allvar, varallvar;
 	DString *oriline = NULL, *allline = NULL, *varallline = NULL;
 	DString *ds_q = DStringNew(), *ds_v = DStringNew(), *ds_r = DStringNew(), *ds_u = DStringNew(), *ds_d = DStringNew(), *ds_o = DStringNew(), *ds_c = DStringNew(), *ds_at = DStringNew();
-	DString *out_seq, *out_zyg, *out_a1, *out_a2, *preva1=DStringNew(), *preva2=DStringNew(), *oridchr = DStringNew();
+	DString *out_seq=NULL, *out_zyg=NULL, *out_a1=NULL, *out_a2=NULL, *preva1=DStringNew(), *preva2=DStringNew(), *oridchr = DStringNew();
 	DString *allref = NULL;
-	unsigned int *orikeepposs, *varallkeepposs;
+	int *orikeepposs, *varallkeepposs;
 	char *orivarsfile, *allvarsfile, *sregfile, *varallfile;
 	int oridstart = -1, oridend = -1, oridzyg = 2;
 	unsigned int orinumfields,oripos,orierror, numfields;
@@ -106,7 +73,7 @@ int main(int argc, char *argv[]) {
 	sregfile = argv[i++];
 	varallfile = argv[i++];
 	orikeepsize = argc - i;
-	orikeepposs = (unsigned int *)malloc(orikeepsize*sizeof(unsigned int));
+	orikeepposs = (int *)malloc(orikeepsize*sizeof(int));
 	orimax = 0;
 	j = 0;
 	while (i < argc) {
@@ -138,7 +105,7 @@ int main(int argc, char *argv[]) {
 	if (oria2pos > orimax) {orimax = oria2pos;}
 	/* sregfile */
 	if (*sregfile != '\0') {
-		sreg = OpenVarfile(sregfile);
+		sreg = OpenVarfile(sregfile,split);
 	}
 	/* varallfile */
 	if (*varallfile != '\0') {
@@ -150,7 +117,7 @@ int main(int argc, char *argv[]) {
 		varpos_fromheader(&varallvarpos,varallresult);
 		varpos_max(&(varallvarpos));
 		if (varallvarpos.max > varallmax) {varallmax = varallvarpos.max;}
-		varallkeepposs = (unsigned int *)malloc(orikeepsize*sizeof(unsigned int));
+		varallkeepposs = (int *)malloc(orikeepsize*sizeof(int));
 		j = 0;
 		for (i = 0 ; i < orikeepsize ; i++) {
 			DString *el = oriresult->data+orikeepposs[i];
@@ -207,6 +174,7 @@ int main(int argc, char *argv[]) {
 	}
 	/* go over all vars in allvar, add vars from ori if found, otherwise test sreg, etc. */
 	while (!allerror) {
+		out_seq = ds_q; out_zyg = ds_q; out_a1 = ds_q; out_a2 = ds_q;
 		if (orierror) {
 			comp = -2;
 		} else {
@@ -218,7 +186,7 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		} else if (comp == 0) {
 			/* allvar variant found in orivar, output this */
-			register unsigned int *cur = orikeepposs;
+			register int *cur = orikeepposs;
 			if (oriseqpos == -1) {
 				putc_unlocked('v',stdout);
 			} else {
@@ -338,37 +306,58 @@ int main(int argc, char *argv[]) {
 						if (comp != 0) {comp = 1;}
 					} else {comp = 1;}
 				}
-				if (comp == 0) {
+				if (comp <= 1) {
 					/* complete match of varall, also allele, so use varall seq and zyg */
-					out_seq = varallresult->data + varallvarpos.seq;
-					out_zyg = varallresult->data + varallvarpos.zyg;
-					out_a1 = varallresult->data + varallvarpos.a1;
-					out_a2 = varallresult->data + varallvarpos.a2;
-				} else if (comp == 1) {
-					/* partial match in varall, same location/type, but different allele */
-					out_a1 = varallresult->data+varallvarpos.a1;
-					out_a2 = varallresult->data+varallvarpos.a2;
-					if (varallvarpos.seq != -1 && varallresult->data[varallvarpos.seq].size == 1 && varallresult->data[varallvarpos.seq].string[0] == 'u') {
-						/* varall is u, so out_seq too */
-						out_seq = ds_u;
-					} else if (DStringCompare(out_a1,allresult->data + allvarpos.alt) != 0
-						&& DStringCompare(out_a1,ds_q) != 0
-						&& DStringCompare(out_a1,ds_d) != 0
-						&& DStringCompare(out_a2,allresult->data + allvarpos.alt) != 0
-						&& DStringCompare(out_a2,ds_q) != 0
-						&& DStringCompare(out_a2,ds_d) != 0
-						) {
-							out_seq = ds_r;
+					if (varallvarpos.seq != -1) {
+						if (varallvarpos.seq != -1 && varallresult->data[varallvarpos.seq].size == 1) {
+							if (varallresult->data[varallvarpos.seq].string[0] == 'u') {
+								/* varall is u, so out_seq too */
+								out_seq = ds_u;
+							} else if (varallresult->data[varallvarpos.seq].string[0] == 'r') {
+								out_seq = ds_r;
+							} else if (varallresult->data[varallvarpos.seq].string[0] == 'v') {
+								out_seq = ds_v;
+							} else {
+								out_seq = varallresult->data + varallvarpos.seq;
+							}
+						} else {
+							out_seq = varallresult->data + varallvarpos.seq;
+						}
 					} else if (out_seq == ds_q) {
 						/* if out_seq was not set based on sreg, set to r if varall (different allele) does not have u state */
 						out_seq = ds_r;
 					}
-					if (orizygpos != -1) {
+					if (varallvarpos.a1 != -1) {
+						out_a1 = varallresult->data + varallvarpos.a1;
+					}
+					if (varallvarpos.a2 != -1) {
+						out_a2 = varallresult->data + varallvarpos.a2;
+					}
+					if (comp == 0) {
+						if (varallvarpos.zyg != -1) {
+							out_zyg = varallresult->data + varallvarpos.zyg;
+						}
+					} else if (comp == 1) {
+						/* partial match in varall, same location/type, but different allele */
+						if (out_seq == ds_u) {
+							/* varall is u, so keep out_seq */
+						} else if (DStringCompare(out_a1,allresult->data + allvarpos.alt) != 0
+							&& DStringCompare(out_a1,ds_q) != 0
+							&& DStringCompare(out_a1,ds_d) != 0
+							&& DStringCompare(out_a2,allresult->data + allvarpos.alt) != 0
+							&& DStringCompare(out_a2,ds_q) != 0
+							&& DStringCompare(out_a2,ds_d) != 0
+							) {
+								out_seq = ds_r;
+						} else if (out_seq == ds_q) {
+							/* if out_seq was not set based on sreg, set to r if varall (different allele) does not have u state */
+							out_seq = ds_r;
+						}
 						if (DStringCompare(out_a1,allresult->data+allvarpos.ref) != 0) {
 							out_zyg = ds_o;
 						} else if (DStringCompare(out_a2,allresult->data+allvarpos.ref) != 0) {
 							out_zyg = ds_o;
-						} else {
+						} else if (out_zyg == ds_q) {
 							out_zyg = ds_r;
 						}
 					}
@@ -414,13 +403,13 @@ NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvar.ref->string, out_se
 			}
 			j = orikeepsize;
 			if (comp > -2) {
-				register unsigned int *cur = varallkeepposs;
+				register int *cur = varallkeepposs;
 				while (j--) {
 					putc_unlocked('\t',stdout);
 					if (*cur != -1) {
 						DStringputs(varallresult->data+*cur,stdout);
 					} else {
-						putc_unlocked('1',stdout);
+						putc_unlocked('?',stdout);
 					}
 					cur++;
 				}

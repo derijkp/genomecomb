@@ -4,47 +4,6 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc multi_merge_job {varsfile files {split 1}} {
-	global multi_merge_num
-	upvar job_logdir job_logdir
-	set newfiles {}
-	if {[llength $files] < 2} {
-		mklink [lindex $files 0] $varsfile
-		return
-	}
-	foreach {file1 file2} $files {
-		if {$file2 eq ""} continue
-		incr multi_merge_num
-		job multi_merge-$multi_merge_num -deps [list $file1 $file2] -vars split -targets $varsfile.$multi_merge_num -code {
-			set f [gzopen $dep1]
-			set header [tsv_open $f]
-			set poss1 [tsv_basicfields $header 6 $dep1]
-			gzclose $f
-			set f [gzopen $dep2]
-			set header [tsv_open $f]
-			set poss2 [tsv_basicfields $header 6 $dep2]
-			gzclose $f
-			set tempfile [file_tempwrite $target]
-			# puts [list ../bin/multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split]
-			exec multi_merge $dep1 {*}$poss1 $dep2 {*}$poss2 $split > $tempfile
-			file rename -force $tempfile $target
-		}
-		lappend newfiles $varsfile.$multi_merge_num
-	}
-	if {$file2 eq ""} {
-		lappend newfiles $file1
-	}
-	if {[llength $newfiles] > 1} {
-		multi_merge_job $varsfile $newfiles $split
-	} else {
-		incr multi_merge_num
-		job multi_merge-$multi_merge_num -deps $newfiles -vars split -targets $varsfile -code {
-			file rename -force $dep1 $target
-		}
-	}
-	
-}
-
 proc cg_multicompar {args} {
 	set args [job_init -silent {*}$args]
 	set reannot 0
@@ -165,7 +124,7 @@ proc cg_multicompar {args} {
 	# for calculating the varlines needed, we can treat targetsfile as just another variant file
 	set files $allfiles
 	if {$targetsfile ne ""} {lappend files $targetsfile}
-	multi_merge_job $workdir/vars.tsv $files $split
+	multi_merge_job $workdir/vars.tsv $files -split $split
 	#
 	# make todofile used by multi_join to join all separate files together
 	set todofile $workdir/multitodo.txt

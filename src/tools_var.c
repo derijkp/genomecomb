@@ -11,36 +11,25 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tools.h"
+#include "tools_var.h"
 #include "debug.h"
-
-typedef struct VariantPos {
-	int chr;
-	int start;
-	int end;
-	int type;
-	int ref;
-	int alt;
-	int seq;
-	int zyg;
-	int a1;
-	int a2;
-	int max;
-	int id;
-} VariantPos;
-
-typedef struct Variant {
-	DString *chr;
-	int start;
-	int end;
-	DString *type;
-	DString *ref;
-	DString *alt;
-	int id;
-} Variant;
 
 /* returns 0 if equal, 1 if equal not including alt, 2 if different */
 int varchecksort(Variant *prev,Variant *var,char *filename,int *nextpos) {
 	return checksort(prev->chr,&(prev->start),&(prev->end),prev->type,prev->alt,var->chr,var->start,var->end,var->type,var->alt,filename,nextpos);
+}
+
+void varputs_chr(DString *chr,FILE *f) {
+	if (chr->size > 3) {
+		char *a = chr->string;
+		if ((a[0] == 'C' || a[0] == 'c') && (a[1] == 'H' || a[1] == 'h') && (a[2] == 'R' || a[2] == 'r')) {
+			charputs(a+3,chr->size-3,f);
+		} else {
+			DStringputs(chr,f);
+		}
+	} else {
+		DStringputs(chr,f);
+	}
 }
 
 void varputs(Variant var,FILE *f) {
@@ -210,5 +199,85 @@ void varpos_fromheader(VariantPos *varpos,DStringArray *header) {
 	varpos->zyg = varpos_findheaderfield(header,zyga,(sizeof (zyga) / sizeof (const char *)));
 	varpos->a1 = varpos_findheaderfield(header,a1a,(sizeof (a1a) / sizeof (const char *)));
 	varpos->a2 = varpos_findheaderfield(header,a2a,(sizeof (a2a) / sizeof (const char *)));
+}
+
+VarFile *OpenVarfile(char *filename,int split) {
+	unsigned int numfields;
+	VarFile *varfile = malloc(sizeof(VarFile));
+	varfile->file = filename;
+	varfile->split = split;
+	varfile->f = gz_open(filename);
+	varfile->prevline = NULL;
+	varfile->line = DStringNew();
+	gz_skip_header(varfile->f,varfile->line,&varfile->numfields,&varfile->pos);
+	varfile->result = DStringArrayNew(varfile->numfields+2);
+	varfile->prevresult = DStringArrayNew(varfile->numfields+2);
+	DStringSplitTab(varfile->line, varfile->numfields, varfile->result, 0,NULL);
+	varpos_fromheader(&varfile->varpos,varfile->result);
+	varpos_max(&(varfile->varpos));
+	varfile->max = varfile->varpos.max;
+	varfile->var = (Variant *)malloc(sizeof(Variant));
+	varfile->prevvar = NULL;
+	varfile->error = gz_DStringGetTab(varfile->line,varfile->f,varfile->max,varfile->result,1,&numfields);
+	if (!varfile->error) {
+		check_numfieldserror(numfields,varfile->numfields,varfile->line,varfile->file,&varfile->pos);
+		result2var(varfile->result,varfile->varpos,varfile->var);
+	}
+	return varfile;
+}
+
+Variant *varfile_next(VarFile *varfile) {
+	Variant *tempvar;
+	DString *templine;
+	DStringArray *tempresult;
+	unsigned int numfields;
+	int compcheck,first = 0;
+	/* keep previous var
+           =================
+	   as var points to line and result, we need to keep these as wel
+	   in order to avoid many allocations and copying, we recycle them
+	*/
+	if (varfile->prevline == NULL) {
+		varfile->prevline = varfile->line;
+		varfile->line = DStringNew();
+		varfile->prevvar = varfile->var;
+		varfile->var = (Variant *)malloc(sizeof(Variant));
+		first = 1;
+	} else {
+		templine = varfile->prevline;
+		varfile->prevline = varfile->line;
+		varfile->line = templine;
+		tempvar = varfile->prevvar;
+		varfile->prevvar = varfile->var;
+		varfile->var = tempvar;
+	}
+	tempresult = varfile->prevresult;
+	varfile->prevresult = varfile->result;
+	varfile->result = tempresult;
+	/* get next line
+	   ============= */
+	varfile->error = gz_DStringGetTab(varfile->line,varfile->f,varfile->max,varfile->result,1,&numfields);
+	if (varfile->error) {return NULL;}
+	check_numfieldserror(numfields,varfile->numfields,varfile->line,varfile->file,&varfile->pos);
+	result2var(varfile->result,varfile->varpos,varfile->var);
+	if (!first) {
+		compcheck = varchecksort(varfile->prevvar,varfile->var,varfile->file,NULL);
+		if (!varfile->split && compcheck < 2) {
+			Variant *prev = varfile->prevvar;
+			fprintf(stderr,"error in \"%s\": file uses split alleles (\"%s %d %d %s\" occurs more than once and you are not running multicompar with the -split option)",
+				varfile->file,prev->chr->string,prev->start,prev->end,prev->type->string);
+			exit(EXIT_FAILURE);
+		}
+	}
+	return varfile->var;
+}
+
+void CloseVarfile(VarFile *varfile) {
+	gz_close(varfile->f);
+	DStringDestroy(varfile->line);
+	DStringArrayDestroy(varfile->result);
+	DStringArrayDestroy(varfile->prevresult);
+	free(varfile->var);
+	free(varfile);
 }
 

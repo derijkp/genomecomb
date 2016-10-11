@@ -29,7 +29,7 @@ proc reorder {file dest} {
 
 test pmulticompar {basic} {
 	test_cleantmp
-	cg pmulticompar tmp/temp.sft data/var_annot.sft data/var_annot2.sft 2> tmp/warnings.log
+	cg pmulticompar tmp/temp.sft data/var_annot.sft data/var_annot2.sft
 	reorder data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/temp.sft tmp/expected.tsv
 } {} 
@@ -859,6 +859,74 @@ test pmulticompar {add targets only} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
+test pmulticompar {different header for varall} {
+	test_cleantmp
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	165
+	}
+	write_tab tmp/sreg-sample2.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	# added sequenced, cluster not in varall; different order
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	new	alt	sequenced	zyg	alleleSeq1	alleleSeq2	score	cluster
+		chr1	100	100	ins	{}	0	C	v	t	{}	C	40	{}
+		chr1	151	152	snp	A	0	T	v	t	A	T	32	{}
+		chr1	160	162	del	NN	1	{}	v	m	{}	{}	33	1
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	150	152	del	GT	{}	t	GT	{}	30
+		chr1	160	161	snp	A	C	t	A	C	33
+		chr1	160	161	snp	A	T	t	A	T	33
+	}
+	write_tab tmp/varall-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	extra	score
+		chr1	100	100	ins	{}	C	t	{}	C	1	40
+		chr1	100	101	snp	G	G	r	G	G	2	41
+		chr1	150	151	snp	G	G	r	G	G	3	30
+		chr1	151	152	snp	A	T	t	A	T	4	32
+		chr1	152	153	snp	T	T	r	T	T	5	31
+		chr1	160	162	del	NN	{}	m	{}	{}	6	33
+	}
+	write_tab tmp/varall-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	100	101	snp	G	G	r	G	G	41
+		chr1	150	152	del	GT	{}	t	GT	{}	30
+		chr1	150	151	snp	G	G	r	G	G	30
+		chr1	151	152	snp	A	A	r	A	A	31
+		chr1	152	153	snp	A	A	r	A	A	32
+		chr1	160	161	snp	A	C	t	A	C	33
+		chr1	160	161	snp	A	T	t	A	T	33
+	}
+	write_tab tmp/targets-testsnps.tsv {
+		chromosome	begin	end	type	ref	alt	name
+		chr1	100	101	snp	G	C	snp1
+		chr1	150	152	del	GT	{}	snp2
+		chr1	160	161	snp	A	T	snp3
+		chr1	165	166	snp	N	G	snp4
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	new-sample1	score-sample1	cluster-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	score-sample2	testsnps
+		1	100	100	ins	{}	C	v	t	{}	C	0	40	{}	r	r	{}	{}	41	{}
+		1	100	101	snp	G	C	r	r	G	G	?	41	?	r	r	G	G	41	snp1
+		1	150	152	del	GT	{}	r	r	GT	GT	?	30	?	v	t	GT	{}	30	snp2
+		1	151	152	snp	A	T	v	t	A	T	0	32	{}	r	o	A	@	31	{}
+		1	160	161	snp	A	C	r	o	@	@	?	?	?	v	t	A	C	33	{}
+		1	160	161	snp	A	T	r	o	@	@	?	?	?	v	t	A	T	33	snp3
+		1	160	162	del	NN	{}	v	m	{}	{}	1	33	1	r	r	NN	NN	33	{}
+		1	165	166	snp	N	G	u	u	-	-	?	?	?	r	r	N	N	?	snp4
+	}
+	catch {file delete tmp/temp.tsv}
+	cg pmulticompar -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+# process_multicompar
+# ===================
+
 test process_multicompar {process_multicompar} {
 	test_cleantmp
 	file mkdir tmp/samples/annot1
@@ -867,7 +935,7 @@ test process_multicompar {process_multicompar} {
 	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
 	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
 	file copy data/sreg-annot2.sft tmp/samples/annot2/sreg-annot2.tsv
-	cg process_multicompar dbdir /complgen/refseq/hg19_test -split 0 tmp
+	cg process_multicompar -dbdir /complgen/refseq/hg19_test -split 0 tmp
 	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
 } {}

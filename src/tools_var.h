@@ -1,6 +1,8 @@
 #ifndef TOOLS_VAR_H_LOADED
 #define TOOLS_VAR_H_LOADED 1
 
+#include "gztools.h"
+
 typedef struct VariantPos {
 	int chr;
 	int start;
@@ -26,14 +28,35 @@ typedef struct Variant {
 	int id;
 } Variant;
 
+typedef struct VarFile {
+	char *file;
+	GZFILE *f;
+	DString *prevline;
+	DString *line;
+	DStringArray *prevresult;
+	DStringArray *result;
+	VariantPos varpos;
+	Variant *var;
+	Variant *prevvar;
+	int split;
+	int max;
+	unsigned int numfields;
+	unsigned int pos;
+	unsigned int error;
+} VarFile;
+
 /* returns 0 if equal, 1 if equal not including alt, 2 if different */
 int varchecksort(Variant *prev,Variant *var,char *filename,int *nextpos);
 void varputs(Variant var,FILE *f);
+void varputs_chr(DString *chr,FILE *f);
 void result2var(DStringArray *result,VariantPos varpos, Variant *var);
 int varcompare(Variant *var1, Variant *var2, int split);
 int regcompare(Variant *var1, Variant *var2);
 void varpos_init(VariantPos *varpos);
 int varpos_max(VariantPos *varpos);
 void varpos_fromheader(VariantPos *varpos,DStringArray *header);
+VarFile *OpenVarfile(char *filename, int split);
+Variant *varfile_next(VarFile *varfile);
+void CloseVarfile(VarFile *varfile);
 
 #endif

@@ -101,8 +101,8 @@ clean:
 ../bin$(ARCH)/multicompar_addvars: multicompar_addvars.c $(TOOLS) $(GZTOOLS) $(TOOLS_VAR)
 	gcc multicompar_addvars.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multicompar_addvars $(LIBZ)
 
-../bin$(ARCH)/multidb_join: multidb_join.c $(TOOLS) $(TOOLS_VAR)
-	gcc multidb_join.c tools.c tools_var.c $(CFLAGS) -o ../bin$(ARCH)/multidb_join
+../bin$(ARCH)/multidb_join: multidb_join.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
+	gcc multidb_join.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multidb_join $(LIBZ)
 
 ../bin$(ARCH)/tsv_paste: tsv_paste.c $(TOOLS)
 	gcc tsv_paste.c tools.c $(CFLAGS) -o ../bin$(ARCH)/tsv_paste
