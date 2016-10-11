@@ -17,8 +17,10 @@ int main(int argc, char *argv[]) {
 	FILE *f1,*f2;
 	DString line;
 	DString *chromosome1 = NULL,*chromosome2 = NULL,curchromosome;
+	DString *prevchromosome1 = DStringNew(),*prevchromosome2 = DStringNew();
 	int chr1pos,start1pos,end1pos,chr2pos,start2pos,end2pos,max1,max2,comp;
 	int start1,end1,start2,end2;
+	int prevstart1 = -1, prevend1 = -1, prevstart2 = -1,prevend2 = -1;
 	int error,error2;
 #ifdef SHOWPROGRESS
 	int nextpos=0;
@@ -74,10 +76,12 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 				fprintf(stdout,"%s\t%d\t%d\n", Loc_ChrString(chromosome1),start1,end1);
 				break;
 			}
+			checksortreg(prevchromosome2,&prevstart2,&prevend2,chromosome2,start2,start2,argv[5]);
 		} else if ((comp > 0) || ((comp == 0) && (end1 <= start2))) {
 			fprintf(stdout,"%s\t%d\t%d\n", Loc_ChrString(chromosome1),start1,end1);
 			error = get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&start1,&end1);
 			if (error) break;
+			checksortreg(prevchromosome1,&prevstart1,&prevend1,chromosome1,start1,start1,argv[1]);
 		} else {
 			if (start2 > start1) {
 				fprintf(stdout,"%s\t%d\t%d\n", Loc_ChrString(chromosome1),start1,start2);
@@ -85,6 +89,7 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 			if (end2 >= end1) {
 				error = get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&start1,&end1);
 				if (error) break;
+				checksortreg(prevchromosome1,&prevstart1,&prevend1,chromosome1,start1,start1,argv[1]);
 			} else {
 				start1 = end2;
 				error2 = get_region(f2,&line,chr2pos,start2pos,end2pos,max2,&chromosome2,&start2,&end2);
@@ -92,10 +97,12 @@ fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,chromosome2,start2,end2);
 					fprintf(stdout,"%s\t%d\t%d\n", Loc_ChrString(chromosome1),start1,end1);
 					break;
 				}
+				checksortreg(prevchromosome2,&prevstart2,&prevend2,chromosome2,start2,start2,argv[5]);
 			}
 		}
 	}
 	while (!get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&start1,&end1)) {
+		checksortreg(prevchromosome1,&prevstart1,&prevend1,chromosome1,start1,start1,argv[1]);
 		fprintf(stdout,"%s\t%d\t%d\n", Loc_ChrString(chromosome1),start1,end1);
 	}
 	fclose(f1);

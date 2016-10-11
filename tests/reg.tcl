@@ -191,6 +191,71 @@ test regsubtract {bugfix: hang on file2 longer} {
 1	10	15
 1	55	60}
 
+test regsubtract {sort error chromosome} {
+	write_tab tmp/sorterror.tsv {
+		chromosome	begin	end
+		1	5	8
+		10	10	25
+		1	45	60
+	}
+	write_tab tmp/sub.tsv {
+		chromosome	begin	end
+		1	50	80
+	}
+	exec cg regsubtract tmp/sorterror.tsv tmp/sub.tsv > tmp/result.tsv
+} {File (tmp/sorterror.tsv) is not correctly sorted (sort correctly using "cg select -s -")
+10:10-10 came before 1:45-45
+child process exited abnormally} error
+
+test regsubtract {sort error chromosome, file2 overlap} {
+	write_tab tmp/sorterror.tsv {
+		chromosome	begin	end
+		1	5	8
+		10	10	25
+		1	45	60
+	}
+	write_tab tmp/sub.tsv {
+		chromosome	begin	end
+		10	15	20
+	}
+	exec cg regsubtract tmp/sorterror.tsv tmp/sub.tsv > tmp/result.tsv
+} {File (tmp/sorterror.tsv) is not correctly sorted (sort correctly using "cg select -s -")
+10:10-10 came before 1:45-45
+child process exited abnormally} error
+
+test regsubtract {sort error chromosome, file2 later} {
+	write_tab tmp/sorterror.tsv {
+		chromosome	begin	end
+		1	5	8
+		10	10	25
+		1	45	60
+	}
+	write_tab tmp/sub.tsv {
+		chromosome	begin	end
+		10	50	80
+	}
+	exec cg regsubtract tmp/sorterror.tsv tmp/sub.tsv > tmp/result.tsv
+} {File (tmp/sorterror.tsv) is not correctly sorted (sort correctly using "cg select -s -")
+10:10-10 came before 1:45-45
+child process exited abnormally} error
+
+test regsubtract {sort error chromosome file2} {
+	write_tab tmp/f1.tsv {
+		chromosome	begin	end
+		1	5	8
+		20	10	25
+	}
+	write_tab tmp/sorterror.tsv {
+		chromosome	begin	end
+		1	5	8
+		10	10	25
+		1	45	60
+	}
+	exec cg regsubtract tmp/f1.tsv tmp/sorterror.tsv > tmp/result.tsv
+} {File (tmp/sorterror.tsv) is not correctly sorted (sort correctly using "cg select -s -")
+10:10-10 came before 1:45-45
+child process exited abnormally} error
+
 test covered {basic} {
 	exec cg covered data/reg1.tsv
 } {chromosome	bases
