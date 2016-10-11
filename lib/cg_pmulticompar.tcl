@@ -280,7 +280,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 }
 
 proc cg_pmulticompar {args} {
-	set args [job_init -silent {*}$args]
+	set args [job_init {*}$args]
 	set regonly 0
 	set split 0
 	set erroronduplicates 0

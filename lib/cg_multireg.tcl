@@ -108,7 +108,7 @@ proc multireg_job {compar_file regfiles} {
 }
 
 proc cg_multireg {args} {
-	set args [job_init -silent {*}$args]
+	set args [job_init {*}$args]
 	cg_options multireg args {
 		-m - --maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]

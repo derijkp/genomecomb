@@ -7,21 +7,34 @@ cg command ?joboptions? ...
 Several commands understand these job options
 
 == Description ==
-Several genomecomb commands (indicated by "supports job options" in their help) consist
-of sub tasks (jobs) that can be run in parallel. If you have multiple
-cores/threads available, you can use the option -d (or -distribute or
---distribute) with a number to distribute the jobs over the given number
-of processes (on the same computer). "sge" instead of a number can be used
-to distribute jobs on a cluster managed by Grid Engine.
+Several genomecomb commands (indicated by "supports job options" in their
+help) consist of sub tasks (jobs) that can be run in parallel. If such
+command is interupted, it can continue processing from the
+already processed data (completed subtasks) by running the same command.
 
-Without the -d option, jobs are run one after the other (using only 1
-core). However, if such a command is interupted, it can continue from the
-already processed data by giving the same command.
-
-All job enabled commands support the following options:
+The --distribute or -d option can be used to select following alternative processing methods:
+; direct: The command runs the subtasks sequentially, stopping when an
+error occurs in a subtask. (default)
+; local distribution: Use "-d number" to start local distribution, using multiple
+cores/threads on the local machine. The program will start up to **number**
+subtasks in separate processes managed by the running program. Even if an
+error occurs in a subtasks in this mode, the program will continue with
+other subtasks. Subsequent subtasks depending on the results of the failed
+subtask will also fail, but others may run succesfully. (In this way -d 1
+is different from -d direct). You can check for errors later using the
+same command with "-d status": Errors (and subtask scripts and output) are
+written to files in a log_jobs directory somewhere close to the results.
+; sge: distribute jobs on a cluster managed by Grid Engine. subtasks will be started
+as grid engine jobs with proper dependencies between the jobs. The program itself
+will stop when all jobs are submitted. As in -d number, you can check
+progress/errors using the same command with "-d status"
+; status: with "-d status" the program goes over all subtasks, but instead
+of running them, it checks their status (ok, error, etc.) and reports it.
+This way you can check for errors in subtasks that were run in parallel
 
 == Options ==
-; -d value (--distribute): if value is a number, the job is distributed over the given number of processes. Use sge to distribute using Grid Engine  (also -distribute)
+List of all options supported by job enabled commands:
+; -d value (--distribute): distribute method, see in description (also -distribute)
 ; -v number (--verbose): This general option has a big effect on job enabled commands:
 If it is > 0, they will output a lot of info (to stder) on dependencies, jobs started, etc.
 ; -f 0/1 (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)

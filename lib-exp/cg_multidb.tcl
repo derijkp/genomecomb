@@ -340,7 +340,7 @@ proc multidb_job {args} {
 }
 
 proc cg_multidb {args} {
-	set args [job_init -silent {*}$args]
+	set args [job_init {*}$args]
 	multidb_job {*}$args
 	job_wait
 }

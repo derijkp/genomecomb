@@ -244,7 +244,7 @@ proc job_process_parstatus {} {
 		}
 		set targetvars $ftargetvars
 		lappend targetvars {*}$newtargetvars
-		if {$jobforce} {job_log $job "forcing $jobname"}
+		if {$jobforce} {job_log $job "forced $jobname"}
 		if {$jobforce || $cgjob(force)} {set time force}
 		# check targets, if already done or running, skip
 		if {$ftargets ne ""} {
@@ -282,15 +282,13 @@ proc job_process_parstatus {} {
 		}
 		# indicate targets
 		job_process_par_marktargets [list_concat $targets $temp] $ptargets $rmtargets $jobnum
-		if {!$newtargets} {
+		if {[job_file_exists $job.err]} {
+			puts "error\t$jobname\t$jobnum\t\terror file available\t$job.err"
+			job_process_pargraph $job $jobname error $duration $checkcompressed $adeps $ids $targets $ptargets
+		} elseif {!$newtargets} {
 			puts "ok\t$jobname\t$jobnum\t$duration\ttargets found\t$job"
 			job_process_pargraph $job $jobname ok $duration $checkcompressed $adeps $ids $targets $ptargets
 			continue
-		}
-		# job_log $job "-------------------- submitting $jobname --------------------"
-		if {[job_file_exists $job.err]} {
-			puts "error\t$jobname\t$jobnum\t\terror file available\t$job"
-			job_process_pargraph $job $jobname error $duration $checkcompressed $adeps $ids $targets $ptargets
 		} else {
 			puts "wrong\t$jobname\t$jobnum\t\ttargets not ok, no error file\t$job"
 			job_process_pargraph $job $jobname wrong $duration $checkcompressed $adeps $ids $targets $ptargets

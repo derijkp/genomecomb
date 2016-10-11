@@ -12,7 +12,7 @@ the adapted data into destdir. By default, only files that are not present alrea
 
 
 == Options ==
-supports job options (more info with cg help joboptions)
+This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
 
 == Arguments ==
 ; **sampledir**: data directory as it comes from Complete Genomics

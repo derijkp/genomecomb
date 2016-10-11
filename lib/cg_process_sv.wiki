@@ -42,9 +42,7 @@ data is stored in a subdir sv in **resultdir**
 == Options ==
 ; **-force 0/1**: force full reanalysis even if some files already exist
 
-supports job options (more info with cg help joboptions):
-; **-d number**: distribute subjobs of command over **number** processes
-; **-d sge**: use grid engine to distribute subjobs
+This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
 
 == Resultfile ==
 

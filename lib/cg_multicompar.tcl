@@ -5,7 +5,7 @@
 #
 
 proc cg_multicompar {args} {
-	set args [job_init -silent {*}$args]
+	set args [job_init {*}$args]
 	set reannot 0
 	set regonly 0
 	set split 0
