@@ -305,6 +305,9 @@ proc cg_pmulticompar {args} {
 		-i - -skipincomplete - --skipincomplete {
 			set skipincomplete $value
 		}
+		-m - --maxopenfiles {
+			set ::maxopenfiles [expr {$value - 4}]
+		}
 	} 1
 	foreach {compar_file} $args break
 	set dirs [lrange $args 1 end]

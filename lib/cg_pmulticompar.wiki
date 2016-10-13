@@ -86,6 +86,12 @@ alread present in the multicompar file. The default (0) is to skip these.
 ; **-i 0/1** (--skipincomplete): if set to 0, pmulticompar will stop
 with an error if no sreg or varall file is found for a sample. If 1 (default), it will
 give a warning, but continue making the multicompar file (incomplete for this sample)
+; **-m maxopenfiles** (--maxopenfiles): The number of files that a program
+can keep open at the same time is limited. pmulticompar will distribute
+the subtasks thus, that the number of files open at the same time stays
+below this number. With this option, the maximum number of open files can
+be set manually (if the program e.g. does not deduce the proper limit, or
+you want to affect the distribution).
 
 This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
 
