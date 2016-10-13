@@ -25,6 +25,7 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 	file mkdir compar
 	#
 	# multicompar
+	putslog "Finding samples"
 	set compar_file compar/compar-$experiment.tsv
 	if {[file exists samples]} {set sampledir samples/} else {set sampledir {}}
 	if {[catch {cg select -n $compar_file} done]} {set done {}}
@@ -37,8 +38,10 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 		}
 	}
 	if {[llength $stilltodo] || $addtargets} {
+		putslog "Starting multicompar"
 		pmulticompar_job $compar_file $stilltodo 0 $split $targetsfile 0 $skipincomplete
 	}
+	putslog "Starting annotation"
 	job annotcompar-$experiment -deps [list $compar_file {*}$dbfiles] \
 	-targets compar/annot_compar-$experiment.tsv -vars {dbdir dbfiles} -code {
 		cg annotate $dep $target.temp $dbdir {*}$dbfiles
@@ -52,6 +55,7 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 	}
 	#
 	# multi sreg
+	putslog "Starting multisreg"
 	set regfiles {}
 	foreach sample $todo {
 		set name [lindex [split $sample -] end]
@@ -70,6 +74,7 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 	#
 	# cgsv
 	# ----
+	putslog "Starting cgsv"
 	set files [jobglob $sampledir*/cgsv-*.tsv]
 	if {[llength $files]} {
 		set target compar/cgsv-${experiment}.tsv
@@ -111,6 +116,7 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 	}
 	# cgcnv
 	# ----
+	putslog "Starting cgcnv"
 	set files [jobglob $sampledir*/cgsv-*.tsv]
 	if {[llength $files]} {
 		set target compar/cgcnv-${experiment}.tsv
@@ -178,6 +184,9 @@ proc process_multicompar {args} {
 		-targetsfile {
 			set targetsfile $value
 		}
+		-m - --maxopenfiles {
+			set ::maxopenfiles [expr {$value - 4}]
+		}
 	} 1 2
 	set len [llength $args]
 	if {$len == 1} {
@@ -208,6 +217,7 @@ proc process_multicompar {args} {
 }
 
 proc cg_process_multicompar {args} {
+	putslog "Running [list cg process_multicompar {*}$args]"
 	set args [job_init {*}$args]
 	if {[llength $args] < 1} {
 		errorformat process_multicompar
