@@ -5,6 +5,13 @@ exec tclsh "$0" "$@"
 source tools.tcl
 package require genomecomb
 
+set testname _direct
+set jobopts {}
+foreach {testname jobopts} {
+	_direct {}
+	_d4 {-d 4}
+} {
+
 proc reorder {file dest} {
 	set header [cg select -h $file]
 	set samples [samples $header]
@@ -27,72 +34,94 @@ proc reorder {file dest} {
 	cg select -f $header $file $dest
 }
 
-test pmulticompar {basic} {
+proc multicompartest {num} {
+	set start 10
+	set files {}
+	set resultheader {chromosome begin end type ref alt}
+	set resultline {1 100 101 snp A C}
+	for {set i 1} {$i <= $num} {incr i} {
+		lappend files tmp/var-sample$i.tsv
+		set f [open tmp/var-sample$i.tsv w]
+		set header {chromosome begin end type ref alt alleleSeq1 alleleSeq2}
+		puts $f [join $header \t]
+		puts $f [join {1 100 101 snp A C A C} \t]
+		close $f
+		lappend resultheader sequenced-sample$i alleleSeq1-sample$i alleleSeq2-sample$i
+		lappend resultline v A C
+	}
+	set f [open tmp/expected.tsv w]
+	puts $f [join $resultheader \t]
+	puts $f [join $resultline \t]
+	close $f
+	return $files
+}
+
+test pmulticompar$testname {basic} {
 	test_cleantmp
-	cg pmulticompar tmp/temp.sft data/var_annot.sft data/var_annot2.sft
+	cg pmulticompar {*}$::jobopts tmp/temp.sft data/var_annot.sft data/var_annot2.sft
 	reorder data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/temp.sft tmp/expected.tsv
 } {} 
 
-test pmulticompar {no sreg error} {
+test pmulticompar$testname {no sreg error} {
 	test_cleantmp
-	cg pmulticompar -i 0 tmp/temp.sft data/var_annot.sft data/var_annot2.sft
+	cg pmulticompar {*}$::jobopts -i 0 tmp/temp.sft data/var_annot.sft data/var_annot2.sft
 	reorder data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/temp.sft tmp/expected.tsv
 } {no sorted region file (*/sreg-var_annot.tsv) or varallfile (*/varall-var_annot.tsv) found: not properly processed sample} error match
 
-test pmulticompar {basic with 3} {
+test pmulticompar$testname {basic with 3} {
 	test_cleantmp
 	foreach sample {annot annot2 annot3} {
 		file copy data/var_$sample.sft tmp/var-$sample.tsv
 	}
-	cg pmulticompar tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv tmp/var-annot3.tsv 2> tmp/warnings.log
+	cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv tmp/var-annot3.tsv 2> tmp/warnings.log
 	reorder data/expected-multicompar-var_annotvar_annot3.sft tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {add to existing} {
+test pmulticompar$testname {add to existing} {
 	test_cleantmp
 	foreach sample {annot annot2 annot3} {
 		file copy data/var_$sample.sft tmp/var-$sample.tsv
 	}
-	exec cg pmulticompar tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv
-	exec cg pmulticompar tmp/temp.tsv tmp/var-annot3.tsv
+	exec cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv
+	exec cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot3.tsv
 	reorder data/expected-multicompar-var_annotvar_annot3.sft tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {basic split} {
+test pmulticompar$testname {basic split} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
 	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
 	cg splitalleles data/var_annot3.sft > tmp/var-sample3.tsv
-	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv 2> tmp/warnings.log
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv 2> tmp/warnings.log
 	exec diff tmp/temp.sft data/expected-multicompar-reannot-split.tsv
 } {} 
 
-test pmulticompar {add to existsing split} {
+test pmulticompar$testname {add to existsing split} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
 	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
 	cg splitalleles data/var_annot3.sft > tmp/var-sample3.tsv
-	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv 2> tmp/warnings.log
-	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample3.tsv 2> tmp/warnings.log
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv 2> tmp/warnings.log
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.sft tmp/var-sample3.tsv 2> tmp/warnings.log
 	exec diff tmp/temp.sft data/expected-multicompar-reannot-split.tsv
 } {} 
 
-test pmulticompar {basic reannot} {
+test pmulticompar$testname {basic reannot} {
 	test_cleantmp
 	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/var-annot1.tsv
 	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/var-annot2.tsv
 	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
-	cg pmulticompar tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
+	cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {basic split reannot} {
+test pmulticompar$testname {basic split reannot} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
 	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
@@ -101,11 +130,11 @@ test pmulticompar {basic split reannot} {
 	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
-	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv tmp/var-sample3.tsv
 	exec diff tmp/temp.sft data/expected-multicompar-split-reannot.sft
 } {} 
 
-test pmulticompar {basic split reannot lz4} {
+test pmulticompar$testname {basic split reannot lz4} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
 	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
@@ -115,11 +144,11 @@ test pmulticompar {basic split reannot lz4} {
 	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
 	cg lz4 {*}[glob tmp/*]
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv.lz4 tmp/var-sample2.tsv.lz4 tmp/var-sample3.tsv.lz4
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv.lz4 tmp/var-sample2.tsv.lz4 tmp/var-sample3.tsv.lz4
 	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.sft
 } {} 
 
-test pmulticompar {basic split reannot rz} {
+test pmulticompar$testname {basic split reannot rz} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
 	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
@@ -129,11 +158,11 @@ test pmulticompar {basic split reannot rz} {
 	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
 	cg razip {*}[glob tmp/*]
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv.rz tmp/var-sample2.tsv.rz tmp/var-sample3.tsv.rz
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv.rz tmp/var-sample2.tsv.rz tmp/var-sample3.tsv.rz
 	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.sft
 } {} 
 
-test pmulticompar {split reannot test diff alleles} {
+test pmulticompar$testname {split reannot test diff alleles} {
 	test_cleantmp
 	write_tab tmp/var-sample1.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced	zyg alleleSeq1	alleleSeq2	name
@@ -158,13 +187,13 @@ test pmulticompar {split reannot test diff alleles} {
 		1	11	12	snp	T	A	v	m	A	A	1A11	r	r	T	T	?
 	}
 	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
-	cg pmulticompar -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.sft tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.sft tmp/expected.sft
 } {} 
 
-test pmulticompar {basic, sequenced already present} {
+test pmulticompar$testname {basic, sequenced already present} {
 	test_cleantmp
-	cg pmulticompar tmp/temp.sft data/var_annot.sft data/var_annot2seq.sft
+	cg pmulticompar {*}$::jobopts tmp/temp.sft data/var_annot.sft data/var_annot2seq.sft
 	catch {exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft} e
 	set e
 } {1c1
@@ -181,13 +210,13 @@ test pmulticompar {basic, sequenced already present} {
 > 1	5000	5010	del	AGCGTGGCAA		v	AGCGTGGCAA		test4	0.4	v	AGCGTGGCAA		test4	0.4
 child process exited abnormally} 
 
-test pmulticompar {var and mapper naming convention} {
+test pmulticompar$testname {var and mapper naming convention} {
 	test_cleantmp
 	catch {file link tmp/var-varcaller1-mapper1-sample1.sft ../data/var_annot.sft}
 	catch {file link tmp/var-varcaller2-mapper2-sample1.sft ../data/var_annot.sft}
 	catch {file link tmp/var-varcaller1-mapper1-sample2.sft ../data/var_annot2.sft}
 	catch {file link tmp/var-varcaller2-mapper2-sample2.sft ../data/var_annot2.sft}
-	cg pmulticompar tmp/temp.sft tmp/var-varcaller1-mapper1-sample1.sft tmp/var-varcaller2-mapper2-sample1.sft tmp/var-varcaller1-mapper1-sample2.sft tmp/var-varcaller2-mapper2-sample2.sft
+	cg pmulticompar {*}$::jobopts tmp/temp.sft tmp/var-varcaller1-mapper1-sample1.sft tmp/var-varcaller2-mapper2-sample1.sft tmp/var-varcaller1-mapper1-sample2.sft tmp/var-varcaller2-mapper2-sample2.sft
 	set fields {chromosome	begin	end	type	ref	alt}
 	foreach {from to} {
 		var_annot varcaller1-mapper1-sample1 var_annot varcaller2-mapper2-sample1
@@ -201,7 +230,7 @@ test pmulticompar {var and mapper naming convention} {
 	exec diff tmp/temp.sft tmp/expected.sft
 } {} 
 
-test pmulticompar {basic reannot varall} {
+test pmulticompar$testname {basic reannot varall} {
 	test_cleantmp
 	file copy data/var_annot.sft tmp/var-annot1.tsv
 	file copy data/var_annot2.sft tmp/var-annot2.tsv
@@ -224,11 +253,11 @@ test pmulticompar {basic reannot varall} {
 	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
 	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
+	cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {basic reannot varall lz4 compressed} {
+test pmulticompar$testname {basic reannot varall lz4 compressed} {
 	test_cleantmp
 	file copy data/var_annot.sft tmp/var-annot1.tsv
 	file copy data/var_annot2.sft tmp/var-annot2.tsv
@@ -251,11 +280,11 @@ test pmulticompar {basic reannot varall lz4 compressed} {
 	catch {file delete tmp/temp.tsv}
 	cg lz4 {*}[glob tmp/*]
 	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
-	cg pmulticompar tmp/temp.tsv tmp/var-annot1.tsv.lz4 tmp/var-annot2.tsv.lz4
+	cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot1.tsv.lz4 tmp/var-annot2.tsv.lz4
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {basic reannot varall rz compressed} {
+test pmulticompar$testname {basic reannot varall rz compressed} {
 	test_cleantmp
 	file copy data/var_annot.sft tmp/var-annot1.tsv
 	file copy data/var_annot2.sft tmp/var-annot2.tsv
@@ -278,11 +307,11 @@ test pmulticompar {basic reannot varall rz compressed} {
 	catch {file delete tmp/temp.tsv}
 	cg razip {*}[glob tmp/*]
 	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
-	cg pmulticompar tmp/temp.tsv tmp/var-annot1.tsv.rz tmp/var-annot2.tsv.rz
+	cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot1.tsv.rz tmp/var-annot2.tsv.rz
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {basic reannot varall split} {
+test pmulticompar$testname {basic reannot varall split} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
 	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
@@ -308,11 +337,11 @@ test pmulticompar {basic reannot varall split} {
 	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
 	cg splitalleles data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
 	file delete tmp/temp.tsv
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {basic reannot varall split lz4} {
+test pmulticompar$testname {basic reannot varall split lz4} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
 	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
@@ -339,11 +368,11 @@ test pmulticompar {basic reannot varall split lz4} {
 	file delete tmp/temp.tsv
 	cg lz4 {*}[glob tmp/*]
 	cg splitalleles data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-annot1.tsv.lz4 tmp/var-annot2.tsv.lz4
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-annot1.tsv.lz4 tmp/var-annot2.tsv.lz4
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {basic reannot varall split rz} {
+test pmulticompar$testname {basic reannot varall split rz} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
 	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
@@ -370,11 +399,11 @@ test pmulticompar {basic reannot varall split rz} {
 	file delete tmp/temp.tsv
 	cg razip {*}[glob tmp/*]
 	cg splitalleles data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-annot1.tsv.rz tmp/var-annot2.tsv.rz
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-annot1.tsv.rz tmp/var-annot2.tsv.rz
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {basic reannot varall split gz} {
+test pmulticompar$testname {basic reannot varall split gz} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
 	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
@@ -401,7 +430,7 @@ test pmulticompar {basic reannot varall split gz} {
 	file delete tmp/temp.tsv
 	exec gzip {*}[glob tmp/*]
 	cg splitalleles data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-annot1.tsv.gz tmp/var-annot2.tsv.gz
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-annot1.tsv.gz tmp/var-annot2.tsv.gz
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
@@ -412,39 +441,47 @@ test pmulticompar {basic reannot varall split gz} {
 #	regsub -all sample1 $c sample3 c
 #	regsub -all sample2 $c sample4 c
 #	file_write tmp/merge.tsv $c
-#	cg pmulticompar -listfields list tmp/mcompar.tsv tmp/merge.tsv
+#	cg pmulticompar {*}$::jobopts -listfields list tmp/mcompar.tsv tmp/merge.tsv
 #	exec diff tmp/mcompar.tsv data/expected-multicompar-merge.tsv
 #} {}
 
-test pmulticompar {sort empty bug split} {
+test pmulticompar$testname {sort empty bug split} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg pmulticompar -split 1 tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
 	cg checksort tmp/temp.tsv
 } {}
 
-test pmulticompar {error on split files without split option} {
+test pmulticompar$testname {error on split files without split option} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg pmulticompar tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
-	cg checksort tmp/temp.tsv
+	cg pmulticompar {*}$::jobopts tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
+	# no error on command for -d num, check error file
+	set temp [file_read tmp/temp.tsv.index/multicompar/log_jobs/multi_merge-vars.tsv.err]
+	error $temp
 } {*error in "*var-compartest2.tsv": file uses split alleles ("*1 207806142 207806170 sub" occurs more than once and you are not running *multicompar with the -split option)*} match error
 
-test pmulticompar {error on badly sorted files} {
+test pmulticompar$testname {error on badly sorted files} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg pmulticompar tmp/temp.tsv data/vars_sorterror1.sft data/var_annot2.sft
+	cg pmulticompar {*}$::jobopts tmp/temp.tsv data/vars_sorterror1.sft data/var_annot2.sft
+	# no error on command for -d num, check error file
+	set temp [file_read tmp/temp.tsv.index/multicompar/log_jobs/multi_merge-vars.tsv.err]
+	error $temp
 } {File (*vars_sorterror1.sft) is not correctly sorted (sort correctly using "cg select -s -")
 chr10:43198434-43198435:snp:G came before chr3:52847042-52847060:del:*} match error
 
-test pmulticompar {error on badly sorted files 2} {
+test pmulticompar$testname {error on badly sorted files 2} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg pmulticompar tmp/temp.tsv data/vars_sorterror1.sft data/vars_sorterror2.sft
+	cg pmulticompar {*}$::jobopts tmp/temp.tsv data/vars_sorterror1.sft data/vars_sorterror2.sft
+	# no error on command for -d num, check error file
+	set temp [file_read tmp/temp.tsv.index/multicompar/log_jobs/multi_merge-vars.tsv.err]
+	error $temp
 } {File (*vars_sorterror2.sft) is not correctly sorted (sort correctly using "cg select -s -")
 chr3:52847303-52847304:snp:G came before chr3:52847042-52847060:del:*} match error
 
-test pmulticompar {split reannot split multiallelic varall,no sreg,zyg} {
+test pmulticompar$testname {split reannot split multiallelic varall,no sreg,zyg} {
 	test_cleantmp
 	write_tab tmp/var-sample1.tsv {
 		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
@@ -462,11 +499,11 @@ test pmulticompar {split reannot split multiallelic varall,no sreg,zyg} {
 		1	100	101	snp	T	G	r	o	T	C	40	v	m	G	G	30
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {split reannot split multiallelic varall,sreg,zyg} {
+test pmulticompar$testname {split reannot split multiallelic varall,sreg,zyg} {
 	test_cleantmp
 	write_tab tmp/var-sample1.tsv {
 		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
@@ -489,11 +526,11 @@ test pmulticompar {split reannot split multiallelic varall,sreg,zyg} {
 		1	100	101	snp	T	G	r	o	T	C	40	v	m	G	G	30
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {split reannot split multiallelic only sreg,zyg} {
+test pmulticompar$testname {split reannot split multiallelic only sreg,zyg} {
 	test_cleantmp
 	write_tab tmp/var-sample1.tsv {
 		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
@@ -514,11 +551,11 @@ test pmulticompar {split reannot split multiallelic only sreg,zyg} {
 		1	100	101	snp	T	G	r	o	T	C	?	v	m	G	G	30
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 
-test pmulticompar {split reannot split multiallelic, only sreg} {
+test pmulticompar$testname {split reannot split multiallelic, only sreg} {
 	test_cleantmp
 	write_tab tmp/var-sample1.tsv {
 		chromosome	begin	end	type	ref	alt	alleleSeq1	alleleSeq2
@@ -539,11 +576,11 @@ test pmulticompar {split reannot split multiallelic, only sreg} {
 		1	100	101	snp	T	G	r	T	C	v	G	G
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {split reannot split multiallelic varall,sreg,zyg, check ref indels} {
+test pmulticompar$testname {split reannot split multiallelic varall,sreg,zyg, check ref indels} {
 	test_cleantmp
 	write_tab tmp/var-sample1.tsv {
 		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
@@ -571,11 +608,11 @@ test pmulticompar {split reannot split multiallelic varall,sreg,zyg, check ref i
 		1	100	100	ins	{}	C	v	t	{}	C	30	r	r	{}	{}	40
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {split reannot split multiallelic ins,sreg,zyg} {
+test pmulticompar$testname {split reannot split multiallelic ins,sreg,zyg} {
 	test_cleantmp
 	write_tab tmp/var-sample1.tsv {
 		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
@@ -606,11 +643,11 @@ test pmulticompar {split reannot split multiallelic ins,sreg,zyg} {
 		1	100	100	ins	{}	CC	r	o	{}	C	40	v	t	{}	CC	40
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {split reannot split multiallelic varall,sreg,zyg, check ref indels, overlapping snp} {
+test pmulticompar$testname {split reannot split multiallelic varall,sreg,zyg, check ref indels, overlapping snp} {
 	test_cleantmp
 	write_tab tmp/sreg-sample1.tsv {
 		chromosome	begin	end
@@ -658,11 +695,11 @@ test pmulticompar {split reannot split multiallelic varall,sreg,zyg, check ref i
 		1	160	162	del	NN	{}	v	m	{}	{}	33	r	r	NN	NN	33
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {targets} {
+test pmulticompar$testname {targets} {
 	test_cleantmp
 	write_tab tmp/sreg-sample1.tsv {
 		chromosome	begin	end
@@ -719,14 +756,14 @@ test pmulticompar {targets} {
 		1	160	161	snp	A	C	r	o	@	@	?	v	t	A	C	33	{}
 		1	160	161	snp	A	T	r	o	@	@	?	v	t	A	T	33	snp3
 		1	160	162	del	NN	{}	v	m	{}	{}	33	r	r	NN	NN	33	{}
-		1	165	166	snp	N	G	u	u	-	-	?	r	r	N	N	?	snp4
+		1	165	166	snp	N	G	u	u	?	?	?	r	r	N	N	?	snp4
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {targets, no name} {
+test pmulticompar$testname {targets, no name} {
 	test_cleantmp
 	write_tab tmp/sreg-sample1.tsv {
 		chromosome	begin	end
@@ -783,14 +820,14 @@ test pmulticompar {targets, no name} {
 		1	160	161	snp	A	C	r	o	@	@	?	v	t	A	C	33	{}
 		1	160	161	snp	A	T	r	o	@	@	?	v	t	A	T	33	1
 		1	160	162	del	NN	{}	v	m	{}	{}	33	r	r	NN	NN	33	{}
-		1	165	166	snp	N	G	r	r	N	N	?	u	u	-	-	?	1
+		1	165	166	snp	N	G	r	r	N	N	?	u	u	?	?	?	1
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {add targets only} {
+test pmulticompar$testname {add targets only} {
 	test_cleantmp
 	write_tab tmp/sreg-sample1.tsv {
 		chromosome	begin	end
@@ -855,11 +892,11 @@ test pmulticompar {add targets only} {
 		1	160	161	snp	A	T	r	o	@	@	?	v	t	A	T	33
 		1	160	162	del	NN	{}	v	m	{}	{}	33	r	r	NN	NN	33
 	}
-	cg pmulticompar -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv
+	cg pmulticompar {*}$::jobopts -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar {different header for varall} {
+test pmulticompar$testname {different header for varall} {
 	test_cleantmp
 	write_tab tmp/sreg-sample1.tsv {
 		chromosome	begin	end
@@ -917,124 +954,99 @@ test pmulticompar {different header for varall} {
 		1	160	161	snp	A	C	r	o	@	@	?	?	?	v	t	A	C	33	{}
 		1	160	161	snp	A	T	r	o	@	@	?	?	?	v	t	A	T	33	snp3
 		1	160	162	del	NN	{}	v	m	{}	{}	1	33	1	r	r	NN	NN	33	{}
-		1	165	166	snp	N	G	u	u	-	-	?	?	?	r	r	N	N	?	snp4
+		1	165	166	snp	N	G	u	u	?	?	?	?	?	r	r	N	N	?	snp4
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test pmulticompar$testname {varall missing one snp} {
+	test_cleantmp
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	151	152	snp	A	T	t	A	T	31
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+	}
+	write_tab tmp/varall-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2	score
+		chr1	150	151	snp	G	G	r	G	G	30
+		chr1	151	152	snp	A	T	t	A	T	31
+		chr1	152	153	snp	T	T	r	T	T	32
+	}
+	write_tab tmp/varall-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2	score
+		chr1	150	151	snp	G	G	r	G	G	40
+		chr1	152	153	snp	A	A	r	A	A	42
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	score-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	score-sample2
+		1	151	152	snp	A	T	v	t	A	T	31	r	r	A	A	?
+	}
+	catch {file delete tmp/temp.tsv}
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-# process_multicompar
-# ===================
-
-test process_multicompar {process_multicompar} {
+test pmulticompar$testname {varall missing snp between chromsomes} {
 	test_cleantmp
-	file mkdir tmp/samples/annot1
-	file mkdir tmp/samples/annot2
-	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
-	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/samples/annot2/sreg-annot2.tsv
-	cg process_multicompar -dbdir /complgen/refseq/hg19_test -split 0 tmp
-	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
-	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
-} {}
-
-test process_multicompar {process_multicompar missing sreg} {
-	test_cleantmp
-	file mkdir tmp/samples/annot1
-	file mkdir tmp/samples/annot2
-	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
-	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
-	cg process_multicompar -dbdir /complgen/refseq/hg19_test -split 0 tmp
-	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
-	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
-} {4c4
-< 1	4050	4060	snp	G	T	v	m	T	T	test3	0.3	?	?	?	?	?	?
----
-> 1	4050	4060	snp	G	T	v	m	T	T	test3	0.3	u	u	-	-	?	?
-8c8
-< 2	4001	4002	snp	A	G,C	v	c	G	C	test7,test8	0.7,0.8	?	?	?	?	?	?
----
-> 2	4001	4002	snp	A	G,C	v	c	G	C	test7,test8	0.7,0.8	r	r	A	A	?	?
-child process exited abnormally} error
-
-test process_multicompar {process_multicompar missing sreg} {
-	test_cleantmp
-	file mkdir tmp/samples/annot1
-	file mkdir tmp/samples/annot2
-	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
-	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
-	cg process_multicompar -skipincomplete 0 -dbdir /complgen/refseq/hg19_test -split 0 tmp
-	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
-	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
-} {*no sorted region file (*/sreg-annot2.tsv) or varallfile (*/varall-annot2.tsv) found: not properly processed sample*} error match
-
-test process_multicompar {process_multicompar split 3 samples} {
-	test_cleantmp
-	file mkdir tmp/samples/sample1
-	file mkdir tmp/samples/sample2
-	file mkdir tmp/samples/sample3
-	cg splitalleles data/var_annot.sft > tmp/samples/sample1/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/samples/sample2/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/samples/sample3/prevar-sample3.tsv
-	cg select -f {sequenced *} tmp/samples/sample3/prevar-sample3.tsv tmp/samples/sample3/var-sample3.tsv
-	file copy data/sreg-annot1.sft tmp/samples/sample1/sreg-sample1.tsv
-	file copy data/sreg-annot2.sft tmp/samples/sample2/sreg-sample2.tsv
-	file copy data/sreg-annot2.sft tmp/samples/sample3/sreg-sample3.tsv
-	cg process_multicompar -dbdir /complgen/refseq/hg19_test -split 1 tmp
-	exec diff tmp/compar/compar-tmp.tsv data/expected-multicompar-split-reannot.sft
-	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-split-reannot.sft
-} {} 
-
-test process_multicompar {process_multicompar split 3 samples -d 10} {
-	test_cleantmp
-	file mkdir tmp/samples/sample1
-	file mkdir tmp/samples/sample2
-	file mkdir tmp/samples/sample3
-	cg splitalleles data/var_annot.sft > tmp/samples/sample1/var-sample1.tsv
-	cg splitalleles data/var_annot2.sft > tmp/samples/sample2/var-sample2.tsv
-	cg splitalleles data/var_annot2seq.sft > tmp/samples/sample3/prevar-sample3.tsv
-	cg select -f {sequenced *} tmp/samples/sample3/prevar-sample3.tsv tmp/samples/sample3/var-sample3.tsv
-	file copy data/sreg-annot1.sft tmp/samples/sample1/sreg-sample1.tsv
-	file copy data/sreg-annot2.sft tmp/samples/sample2/sreg-sample2.tsv
-	file copy data/sreg-annot2.sft tmp/samples/sample3/sreg-sample3.tsv
-	cg process_multicompar -d 10 -dbdir /complgen/refseq/hg19_test -split 1 tmp
-	exec diff tmp/compar/compar-tmp.tsv data/expected-multicompar-split-reannot.sft
-	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-split-reannot.sft
-} {} 
-
-test process_multicompar {process_multicompar varall} {
-	test_cleantmp
-	file mkdir tmp/samples/annot1
-	file mkdir tmp/samples/annot2
-	file copy data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
-	file copy data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
-	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
-	file copy data/sreg-annot2.sft tmp/samples/annot2/sreg-annot2.tsv
-	catch {file delete tmp.tsv}
-	# make tmp/samples/annot1/varall-annot1.tsv
-	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp.tsv
-	set f [open tmp/temp.tsv a]
-	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
-	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
-	close $f
-	cg select -s - tmp/temp.tsv tmp/samples/annot1/varall-annot1.tsv
-	mklink data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft tmp/expected.tsv
-	# make tmp/samples/annot2/varall-annot2.tsv
-	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
-	set f [open tmp/temp.tsv a]
-	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
-	close $f
-	cg select -s - tmp/temp.tsv tmp/samples/annot2/varall-annot2.tsv
-	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	write_tab tmp/sreg-sample2.tsv {
+		chromosome	begin	end
+		chr1	50	151
+	}
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	151	152	snp	A	T	t	A	T	31
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+	}
+	write_tab tmp/varall-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2	score
+		chr1	150	151	snp	G	G	r	G	G	30
+		chr1	151	152	snp	A	T	t	A	T	31
+		chr1	152	153	snp	T	T	r	T	T	32
+	}
+	write_tab tmp/varall-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2	score
+		chr1	150	151	snp	G	G	r	G	G	40
+		chr2	10	20	snp	A	A	r	A	A	42
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	score-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	score-sample2
+		1	151	152	snp	A	T	v	t	A	T	31	u	u	?	?	?
+	}
 	catch {file delete tmp/temp.tsv}
-	cg process_multicompar -dbdir /complgen/refseq/hg19_test -split 0 tmp
-	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
-	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-2sample.sft
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
+
+test pmulticompar$testname {20 samples} {
+	test_cleantmp
+	set files [multicompartest 100]
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv {*}$files
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar$testname {20 samples, -m 5} {
+	test_cleantmp
+	set files [multicompartest 20]
+	cg pmulticompar {*}$::jobopts -m 5 -split 1 tmp/temp.tsv {*}$files 2>@ stderr >@ stdout
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+}
 
 test_cleantmp
 

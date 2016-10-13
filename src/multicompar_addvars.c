@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 	VariantPos orivarpos, allvarpos, varallvarpos;
 	Variant orivar, prevvar, allvar, varallvar;
 	DString *oriline = NULL, *allline = NULL, *varallline = NULL;
-	DString *ds_q = DStringNew(), *ds_v = DStringNew(), *ds_r = DStringNew(), *ds_u = DStringNew(), *ds_d = DStringNew(), *ds_o = DStringNew(), *ds_c = DStringNew(), *ds_at = DStringNew();
+	DString *ds_q = DStringNew(), *ds_v = DStringNew(), *ds_r = DStringNew(), *ds_u = DStringNew(), *ds_o = DStringNew(), *ds_c = DStringNew(), *ds_at = DStringNew();
 	DString *out_seq=NULL, *out_zyg=NULL, *out_a1=NULL, *out_a2=NULL, *preva1=DStringNew(), *preva2=DStringNew(), *oridchr = DStringNew();
 	DString *allref = NULL;
 	int *orikeepposs, *varallkeepposs;
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
 	unsigned int varallnumfields,varallpos,varallerror;
 	int oriseqpos, orizygpos, oria1pos, oria2pos, orikeepsize, orimax = 0, varallmax = 0,prevcomp=-2;
 	int split = 1;
-	int comp;
+	int comp, match;
 	register int i,j;
 
 	if ((argc < 6)) {
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	DStringSetS(ds_r,"r",1); DStringSetS(ds_v,"v",1); DStringSetS(ds_u,"u",1);
-	DStringSetS(ds_q,"?",1); DStringSetS(ds_d,"-",1); DStringSetS(ds_o,"o",1);
+	DStringSetS(ds_q,"?",1); DStringSetS(ds_o,"o",1);
 	DStringSetS(ds_c,"c",1); DStringSetS(ds_at,"@",1);
 	i = 1;
 	allvarsfile = argv[i++];
@@ -182,9 +182,10 @@ int main(int argc, char *argv[]) {
 		}
 		/* comp is -1/1 for same loc/type, but different allele, -2/-2 for different loc/type */
 		if (comp > 0) {
-			fprintf(stderr,"All variants should be in the variant file, so this should not happen");
+			fprintf(stderr,"internal error: all variants should be in the (allvar) variant file, so this should not happen");
 			exit(EXIT_FAILURE);
 		} else if (comp == 0) {
+
 			/* allvar variant found in orivar, output this */
 			register int *cur = orikeepposs;
 			if (oriseqpos == -1) {
@@ -229,6 +230,7 @@ int main(int argc, char *argv[]) {
 				result2var(oriresult,orivarpos,&orivar);
 				if (DStringCompare(orivar.chr,oridchr) != 0) {
 					DStringCopy(oridchr,orivar.chr);
+					oridstart = -1;
 					oridend = -1;
 				}
 				if (orivar.type->size == 3 && (strncmp(orivar.type->string,"del",3) == 0 || strncmp(orivar.type->string,"sub",3) == 0)) {
@@ -245,29 +247,36 @@ int main(int argc, char *argv[]) {
 						}
 					}
 				}
+			} else {
+				oridstart = -1;
+				oridend = -1;
 			}
+
 		} else if (varallline != NULL) {
 			/* var is not in varfile, check in varall for adding data, sreg for u */
+			/* find next varall, first pos match for snp, full loc for other */
 			while (!varallerror) {
 				/* find varallvar with same start */
 				comp = DStringLocCompare(allvar.chr,varallvar.chr);
 				if (comp == 0) {
-					comp = allvar.start - varallvar.start;
+					comp = (allvar.start - varallvar.start);
 				}
-				if (varallvar.type->size != 3 || varallvar.type->string[0] != 's') {
-					/* for something other than a SNP in the varall, we need a full location match to stop */
-					if (comp <= 0 && allvar.end == varallvar.end && DStringCompare(allvar.type,varallvar.type) == 0) break;
-				} else {
-					/* use only start match if snp */
-					if (comp <= 0) break;
+				if (comp < 0) break;
+				if (comp == 0) {
+					if (varallvar.type->size != 3 || varallvar.type->string[0] != 's' || varallvar.type->string[1] != 'n' || varallvar.type->string[2] != 'p') {
+						/* for something other than a SNP in the varall, we need a full location match to stop */
+						if (allvar.end == varallvar.end && DStringCompare(allvar.type,varallvar.type) == 0) break;
+					} else {
+						break; /* use only start match if snp */
+					}
 				}
 				varallerror = gz_DStringGetTab(varallline,varallf,varallmax,varallresult,1,&numfields);
-				if (!varallerror) {
-					check_numfieldserror(numfields,varallnumfields,varallline,varallfile,&(varallpos));
-					result2var(varallresult,varallvarpos,&varallvar);
-				} else {
+				if (varallerror) {
 					comp = -2;
+					break;
 				}
+				check_numfieldserror(numfields,varallnumfields,varallline,varallfile,&(varallpos));
+				result2var(varallresult,varallvarpos,&varallvar);
 			}
 			if (sreg != NULL) {
 				/* search if in sreg sequenced region or not */
@@ -280,11 +289,12 @@ int main(int argc, char *argv[]) {
 				out_seq = ds_q;
 			}
 			allref = allresult->data + allvarpos.ref;
-			if (comp != 0) {
+			if (comp < 0) {
 				/* not in varall, -> unsequenced */
 				/* if out_seq was not set based on sreg, set to u */
+				match = 0;
 				if (out_seq == ds_q) {out_seq = ds_u;}
-				if (allvar.end <= oridend && allvar.start >= oridstart) {
+				if (allvar.start < oridend && allvar.end > oridstart && (DStringLocCompare(allvar.chr,oridchr) == 0)) {
 					/* overlapping a deletion */
 					out_zyg = ds_o;
 					if (oridzyg == 2) {out_a1 = ds_at;} else {out_a1 = allref;}
@@ -295,19 +305,21 @@ int main(int argc, char *argv[]) {
 					out_a2 = allref;
 				} else {
 					out_zyg = ds_u;
-					out_a1 = ds_d; out_a2 = ds_d;
+					out_a1 = ds_q; out_a2 = ds_q;
 				}
 			} else {
-				if (allvar.end != varallvar.end) {comp = 2;}
-				if (comp == 0) {
-					if (DStringCompare(allvar.type,varallvar.type) != 0) {comp = 2;}
-					if (comp == 0 && split) {
-						comp = DStringCompare(allvar.alt,varallvar.alt);
-						if (comp != 0) {comp = 1;}
-					} else {comp = 1;}
+				/* comp == 0: hit found in varall, check if it matches completely */
+				if (allvar.end != varallvar.end) {
+					match = 1;
+				} else if (DStringCompare(allvar.type,varallvar.type) != 0) {
+					match = 1;
+				} else if (split && DStringCompare(allvar.alt,varallvar.alt) != 0) {
+					match = 2; /* match except alt allele */
+				} else {
+					match = 3; /* full match */
 				}
-				if (comp <= 1) {
-					/* complete match of varall, also allele, so use varall seq and zyg */
+				if (match >= 2) {
+					/* full match of varall, also allele, so use varall seq and zyg */
 					if (varallvarpos.seq != -1) {
 						if (varallvarpos.seq != -1 && varallresult->data[varallvarpos.seq].size == 1) {
 							if (varallresult->data[varallvarpos.seq].string[0] == 'u') {
@@ -333,20 +345,19 @@ int main(int argc, char *argv[]) {
 					if (varallvarpos.a2 != -1) {
 						out_a2 = varallresult->data + varallvarpos.a2;
 					}
-					if (comp == 0) {
+					if (match == 3) {
 						if (varallvarpos.zyg != -1) {
 							out_zyg = varallresult->data + varallvarpos.zyg;
 						}
-					} else if (comp == 1) {
+					} else {
 						/* partial match in varall, same location/type, but different allele */
+						/* match == 2, only for split */
 						if (out_seq == ds_u) {
 							/* varall is u, so keep out_seq */
 						} else if (DStringCompare(out_a1,allresult->data + allvarpos.alt) != 0
 							&& DStringCompare(out_a1,ds_q) != 0
-							&& DStringCompare(out_a1,ds_d) != 0
 							&& DStringCompare(out_a2,allresult->data + allvarpos.alt) != 0
 							&& DStringCompare(out_a2,ds_q) != 0
-							&& DStringCompare(out_a2,ds_d) != 0
 							) {
 								out_seq = ds_r;
 						} else if (out_seq == ds_q) {
@@ -360,6 +371,7 @@ int main(int argc, char *argv[]) {
 						} else if (out_zyg == ds_q) {
 							out_zyg = ds_r;
 						}
+						if (out_seq == ds_u)	{out_zyg = ds_u;} /* temp */
 					}
 				} else {
 					/* no match in varall, different end or type  */
@@ -368,14 +380,14 @@ int main(int argc, char *argv[]) {
 						out_a1 = allref;
 						out_a2 = allref;
 					} else if (out_seq == ds_u) {
-						out_zyg = ds_u; out_a1 = ds_d; out_a2 = ds_d;
+						out_zyg = ds_u; out_a1 = ds_q; out_a2 = ds_q;
 					} else {
 						out_zyg = ds_u; out_a1 = ds_q; out_a2 = ds_q;
 					}
 				}
 NODPRINT("%d %d vs %d %d\n",allvar.start,allvar.end,oridstart,oridend)
 NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvar.ref->string, out_seq->string,out_zyg->string,out_a1->string,out_a2->string)
-				if (out_seq == ds_r && allvar.end <= oridend && allvar.start >= oridstart) {
+				if (out_seq == ds_r && allvar.start < oridend && allvar.end > oridstart && (DStringLocCompare(allvar.chr,oridchr) == 0)) {
 					/* overlapping a deletion */
 					if (out_a1 == ds_q || out_a1 == ds_u || DStringCompare(out_a1,varallvar.ref) == 0) {
 						out_zyg = ds_o;
@@ -386,7 +398,6 @@ NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvar.ref->string, out_se
 						if (oridzyg == 2 || (out_a1 != ds_at && oridzyg == 1)) {out_a2 = ds_at;} else {out_a2 = allref;}
 					}
 				}
-
 			}
 			DStringputs(out_seq,stdout);
 			if (orizygpos != -1) {
@@ -402,7 +413,7 @@ NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvar.ref->string, out_se
 				DStringputs(out_a2,stdout);
 			}
 			j = orikeepsize;
-			if (comp > -2) {
+			if (match) {
 				register int *cur = varallkeepposs;
 				while (j--) {
 					putc_unlocked('\t',stdout);
@@ -419,6 +430,7 @@ NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvar.ref->string, out_se
 					putc_unlocked('?',stdout);
 				}
 			}
+
 		} else {
 			/* no match in orivar and no varall present: */
 			/* check for same loc/diff allele, and if not found check sreg (if present) */
@@ -461,7 +473,7 @@ NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvar.ref->string, out_se
 					out_a1 = allresult->data+allvarpos.ref; out_a2 = allresult->data+allvarpos.ref;
 				} else {
 					out_seq = ds_u; out_zyg = ds_u;
-					out_a1 = ds_d; out_a2 = ds_d;
+					out_a1 = ds_q; out_a2 = ds_q;
 				}
 			}
 			DStringputs(out_seq,stdout);
@@ -482,6 +494,7 @@ NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvar.ref->string, out_se
 				putc_unlocked('\t',stdout);
 				putc_unlocked('?',stdout);
 			}
+
 		}
 		prevcomp = comp;
 		putc_unlocked('\n',stdout);

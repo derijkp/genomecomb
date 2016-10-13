@@ -16,6 +16,7 @@ source lift.tcl
 source mirannot.tcl
 source misc.tcl
 source pmulticompar.tcl
+source process_multicompar.tcl
 source queries.tcl
 source reg.tcl
 source remap.tcl
