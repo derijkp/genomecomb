@@ -1,7 +1,7 @@
 = Multireg =
 
 == Format ==
-cg multireg compar_file ?file? ...
+cg multireg ?options? compar_file ?file? ...
 
 == Summary ==
 Compare multiple regions files
@@ -18,6 +18,14 @@ is present in samplename and 0 if not.
 ; **compar_file**: file containing regions, and columns indicating the presence of the region
 ; **file**: region files to be added the compar_file.
   The name of the column is name of the file added without extension
+
+== Options ==
+; **-m maxopenfiles** (--maxopenfiles): The number of files that a program
+can keep open at the same time is limited. pmulticompar will distribute
+the subtasks thus, that the number of files open at the same time stays
+below this number. With this option, the maximum number of open files can
+be set manually (if the program e.g. does not deduce the proper limit, or
+you want to affect the distribution).
 
 == Category ==
 Regions
