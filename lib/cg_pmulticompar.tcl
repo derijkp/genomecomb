@@ -5,6 +5,8 @@
 #
 
 proc multi_merge_job {varsfile files args} {
+	set workdir $varsfile.index/paste
+	file mkdir $varsfile.index/paste
 	upvar job_logdir job_logdir
 	set force 0
 	set optional 0
