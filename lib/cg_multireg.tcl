@@ -10,7 +10,7 @@ exec tclsh "$0" ${1+"$@"}
 
 proc multireg_job {compar_file regfiles} {
 	set compar_file [file_absolute $compar_file]
-	job_logdir [file dir $compar_file]/log_jobs
+	job_logdir $compar_file.index/log_jobs
 	set maxfiles [maxopenfiles]
 	if {$maxfiles < 2} {set maxfiles 2}
 	set fieldsneeded {}
