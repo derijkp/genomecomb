@@ -412,7 +412,7 @@ proc tsv_select_expandfield {header field {giveerror 0} {qpossVar {}}} {
 	} else {
 		set poss [list_find -glob $header $field]
 		set hfields [list_sub $header $poss]
-		lappend qposs {*}[list_cor $header $hfields]
+		lappend qposs {*}[list_sub [list_fill [llength $header] 0 1] $poss]
 		if {![catch {set sampleinfofields [tsv_select_sampleinfo_wildcard $field $header]}]} {
 			lappend hfields {*}$sampleinfofields
 			foreach tempfield $sampleinfofields {
@@ -565,6 +565,26 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 		}
 	}
 	return $rfields
+}
+
+proc tsv_select_removefields {header qfields qpossVar} {
+# putsvars header qfields qpossVar
+	upvar $qpossVar qposs
+	set poss {}	
+	foreach field $qfields {
+		if {[string first * $field] != -1} {
+			if {$field eq "*"} {
+				set qposs {}
+				return {}
+			}
+			set tempqposs {}
+			lappend poss {*}[list_find -glob $header $field]
+		} else {
+			lappend poss [lsearch $header $field]
+		}
+	}
+	set qposs [list_sub [list_fill [llength $header] 0 1] -exclude $poss]
+	return [list_sub $header -exclude $poss]
 }
 
 array set tsv_select_tokenize_opsa {
@@ -1110,7 +1130,7 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 }
 
 proc tsv_select {query {qfields {}} {sortfields {}} {oldheader {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {inverse 0} {group {}} {groupcols {}} {index {}} {samplingskip 0} {removecomment 0} {samples {}}} {
-# putsvars query qfields sortfields oldheader newheader sepheader f out inverse group groupcols index samplingskip removecomment
+# putsvars query qfields sortfields oldheader newheader sepheader f out inverse group groupcols index samplingskip removecomment samples
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	if {[llength $oldheader]} {
@@ -1143,15 +1163,16 @@ proc tsv_select {query {qfields {}} {sortfields {}} {oldheader {}} {newheader {}
 	set sort ""
 	set cut ""
 	set tsv_funcnum 1
-	if {[llength $samples] && ![llength $qfields]} {
-		set qfields $header
-	}
-	set qfields [tsv_select_expandfields $header $qfields qposs]
-	if {$inverse} {
-		set qfields [list_lremove $header $qfields]
+	if {!$inverse} {
+		if {[llength $samples] && ![llength $qfields]} {
+			set qfields $header
+		}
 		set qfields [tsv_select_expandfields $header $qfields qposs]
+	} else {
+		set qfields [tsv_select_removefields $header $qfields qposs]
 	}
 	if {[llength $samples]} {
+		# only the given samples will be included
 		if {![llength $qfields]} {set qfields $header}
 		set keepposs [list_find -regexp $qfields {^[^-]*$}]
 		foreach sample $samples {

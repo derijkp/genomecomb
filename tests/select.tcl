@@ -577,7 +577,7 @@ test select "calculated column with wildcard$dboptt" {
 } {test-annot1	test-annot2
 T/C	T/C
 A/C	A/C
-T/T	-/-
+T/T	?/?
 AGCGTGGCAA/	AGCGTGGCAA/
 A/A	G/C}
 
