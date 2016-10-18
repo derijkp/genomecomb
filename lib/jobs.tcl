@@ -971,7 +971,7 @@ proc job_init {args} {
 	set cgjob(debug) 0
 	set cgjob(resubmit) 1
 	set cgjob(skipjoberrors) 0
-	set cgjob(runcmd) {cg source}
+	set cgjob(runcmd) [list $::genomecombdir/cg source]
 	set job_logdir [file_absolute [pwd]/log_jobs]
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_running {} job_running_direct

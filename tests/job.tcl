@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using wish \
-exec tclsh "$0" "$@"
+exec cg source "$0" "$@"
 
 source tools.tcl
 set keepdir [pwd]
