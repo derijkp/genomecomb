@@ -17,6 +17,7 @@ while 1 {
 
 set appdir [file dir $script]
 lappend auto_path $appdir/lib $appdir/lib-exp
+source $appdir/lib/file.tcl
 package require Extral
 package require genomecomb
 genomecombenv

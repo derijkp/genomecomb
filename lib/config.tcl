@@ -6,7 +6,7 @@ proc configdir {{app cg}} {
 	} elseif [info exists env(HOME)] {
 		set basedir $env(HOME)
 	} else {
-		set basedir [file normalize ~]
+		set basedir [file_absolute ~]
 	}
 	set configdir $basedir/.$app
 	set makedir_err [catch {file mkdir $configdir}]
