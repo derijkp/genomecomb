@@ -1,4 +1,3 @@
-
 proc convertmirbase_findloop {resultline mirnas seq structs} {
 	foreach {chr begin end strand name} $resultline break
 	if {[dict exists $structs $name]} {
@@ -58,6 +57,7 @@ proc convertmirbase_findloop {resultline mirnas seq structs} {
 }
 
 proc convertmirbase {gff3file resultfile genomefile {structfile {}}} {
+# putsvars gff3file resultfile genomefile structfile
 	if {[file exists $resultfile]} {error "File $resultfile exists"}
 	set gf [genome_open $genomefile]
 	set structs [dict create]
@@ -102,14 +102,21 @@ proc convertmirbase {gff3file resultfile genomefile {structfile {}}} {
 		incr begin -1
 		if {![llength $line] || $type eq "miRNA_primary_transcript"} {
 			if {[llength $resultline]} {
-				set resultline [convertmirbase_findloop $resultline $mirnas $seq $structs]
-				lappend result $resultline
+				if {$seq ne ""} {
+					set resultline [convertmirbase_findloop $resultline $mirnas $seq $structs]
+					lappend result $resultline
+				}
 				set mirnas {}
 			}
 			if {![llength $line]} continue
 			regexp {Name=([^;\n]+)} $attr temp name
 			if {![regexp {Name=([^;\n]+)} $attr temp name]} continue
-			set seq [string toupper [genome_get $gf $chr $begin $end]]
+			if {[catch {
+				set seq [string toupper [genome_get $gf $chr $begin $end]]
+			} msg]} {
+				puts stdout "skipping $name: Could not find $chr:${begin}-$end in genome"
+				set seq {}
+			}
 			set resultline [list $chr $begin $end $strand $name {} {} {} {} {} {}]
 			set curname $name
 		} elseif {$type eq "miRNA"} {

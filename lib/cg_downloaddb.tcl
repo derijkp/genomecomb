@@ -466,7 +466,7 @@ proc cg_downloadmirbase {resultfile species {release 21}} {
 	set resultfile [file_absolute $resultfile]
 	file mkdir $resultfile.index
 	set gff3file $resultfile.index/$species.gff3
-	set structfile $resultfile.index/miRNA.str.gz
+	set structfile $resultfile.index/miRNA.str
 	set genomefile [glob [file dir $resultfile]/genome_*.ifas]
 	wgetfile ftp://mirbase.org/pub/mirbase/$release/genomes/$species.gff3 $gff3file
 	wgetfile ftp://mirbase.org/pub/mirbase/$release/miRNA.str.gz $structfile.gz
