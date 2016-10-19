@@ -7,8 +7,14 @@
 proc multicompar_reannot_find {basedir sample args} {
 	if {![llength $args]} {set args [list {}]}
 	set sampledir [lindex [split $sample -] end]
+	if {![llength $args]} {
+		set args [list {}]
+		set samplelist [list $sample $sampledir]
+	} else {
+		set samplelist [list $sample $sampledir {}]
+	}
 	foreach startdir [list $basedir/samples $basedir [file dir $basedir]/samples [file dir $basedir]] {
-		foreach usesample [list $sample $sampledir {}] {
+		foreach usesample $samplelist {
 			foreach pattern $args {
 				set test [gzfile [file join $startdir $usesample $pattern]]
 				if {[file exists $test]} {
@@ -67,7 +73,7 @@ proc multicompar_reannot_getline {f sampleaVar poss} {
 }
 
 proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {range {}} {sampleaVar {}}} {
-
+# putsvars compar_file force regonly skipincomplete range sampleaVar
 	if {$sampleaVar ne ""} {upvar $sampleaVar samplea}
 	set compar_file [file_absolute $compar_file]
 	set basedir [file dir $compar_file]
@@ -232,8 +238,8 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {
 					} else {
 						lset line $samplea(seq,$sample) u
 						if {$samplea(zyg,$sample) != -1} {lset line $samplea(zyg,$sample) u}
-						if {[inlist {- ?} $a1]} {lset line $samplea(a1,$sample) -}
-						if {[inlist {- ?} $a2]} {lset line $samplea(a2,$sample) -}
+						# if {[inlist {- ?} $a1]} {lset line $samplea(a1,$sample) -}
+						# if {[inlist {- ?} $a2]} {lset line $samplea(a2,$sample) -}
 					}
 				}
 			} elseif {$samplea(type,$sample) eq "rtg"} {
