@@ -198,7 +198,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {
 				set r [annot_region_get $regfile $chr $begin $end]
 				if {$r} {lset line $field $value} else {lset line $field {}}
 			}
-			if {!$samplea(annot_coverage,$sample) && ($force || ([lindex $line $samplea(rpos,$sample)] eq "?") || ([lindex $line $samplea(cpos,$sample)] eq "?"))} {
+			if {$samplea(annot_coverage,$sample) && ($force || ([lindex $line $samplea(rpos,$sample)] eq "?") || ([lindex $line $samplea(cpos,$sample)] eq "?"))} {
 				# from cg, combined refscore and coverage (would be better separate if gotten from bcols, but can also be from one tsv file)
 				foreach {r c} [annot_coverage_get $samplea(dir,$sample) $sample $chr $begin] break
 				if {$samplea(rpos,$sample) != -1} {lset line $samplea(rpos,$sample) $r}
