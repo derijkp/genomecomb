@@ -29,33 +29,39 @@ if {[llength $argv] < 1} {
 	exit 1
 }
 
-set action [list_shift argv]
-set args $argv
-unset -nocomplain argv
-if {[auto_load cg_$action]} {
-	if {[llength $args] == 1 && [inlist {-h --help} $args]} {
-		help $action
+proc parse_generic_args {subcmd argslist} {
+	if {[llength $argslist] == 1 && [inlist {-h --help} $argslist]} {
+		help $subcmd
 		exit 0
 	}
-	set stacktraceonerror 0
+	set ::stacktraceonerror 0
 	while 1 {
-		set arg [lindex $args 0]
+		set arg [lindex $argslist 0]
 		if {$arg in "--verbose -v"} {
-			logverbose [lindex $args 1]
-			set args [lrange $args 2 end]
+			set value [lindex $argslist 1]
+			if {![isint $value]} {error "$value is not a number, only numbers are accepted as value for -v (--verbose)"}
+			logverbose $value
+			set argslist [lrange $argslist 2 end]
 		} elseif {$arg in "--stack"} {
-			set value [lindex $args 1]
+			set value [lindex $argslist 1]
 			if {$value in {0 1}} {
-				set stacktraceonerror $value
-				set args [lrange $args 2 end]
+				set ::stacktraceonerror $value
+				set argslist [lrange $argslist 2 end]
 			} else {
-				set stacktraceonerror 1
-				set args [lrange $args 1 end]
+				error "$value is not 0 or 1, the only accepted values for --stack"
 			}
 		} else {
 			break
 		}
 	}
+	return $argslist
+}
+
+set action [list_shift argv]
+set args $argv
+unset -nocomplain argv
+if {[auto_load cg_$action]} {
+	set args [parse_generic_args $action $args]
 	set ::base "cg $action"
 	if {[catch {cg_$action {*}$args} msg]} {
 		if {!$stacktraceonerror} {
