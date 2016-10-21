@@ -417,10 +417,7 @@ proc cg_bcol_make {args} {
 	global bcol_typea
 	set type iu
 	set compress 9
-	set chromosomecol {}
 	set chrompos -1
-	set offsetcol {}
-	set endcol {}
 	set defaultvalue 0
 	set multicol {}
 	set multilist {}
@@ -492,11 +489,14 @@ proc cg_bcol_make {args} {
 	set f stdin
 	if {$header} {
 		set header [tsv_open $f comment]
+		set poss [tsv_basicfields $header 3 0]
 		set colpos [lsearch $header $valuecolumn]
 		if {$colpos == -1} {
 			exiterror "error: valuecolumn $valuecolumn not found"
 		}
-		if {$offsetcol eq ""} {
+		if {![info exists offsetcol]} {
+			set offsetpos [lindex $poss 1]
+		} elseif {$offsetcol eq ""} {
 			set offsetpos -1
 		} else {
 			set offsetpos [lsearch $header $offsetcol]
@@ -504,7 +504,9 @@ proc cg_bcol_make {args} {
 				exiterror "error: pos column $offsetcol not found"
 			}
 		}
-		if {$endcol eq ""} {
+		if {![info exists endcol]} {
+			set endpos [lindex $poss 2]
+		} elseif {$endcol eq ""} {
 			set endpos -1
 		} else {
 			if {$offsetpos == -1} {error "Cannit use -e (endcol) without -p (poscol)"}
@@ -514,7 +516,9 @@ proc cg_bcol_make {args} {
 				exiterror "error: pos column $endcol not found"
 			}
 		}
-		if {$chromosomecol ne ""} {
+		if {![info exists chromosomecol]} {
+			set chrompos [lindex $poss 0]
+		} elseif {$chromosomecol ne ""} {
 			if {[isint $chromosomecol]} {
 				set chrompos $chromosomecol
 			} else {
@@ -533,13 +537,17 @@ proc cg_bcol_make {args} {
 	} else {
 		if {[isint $chromosomecol]} {
 			set chrompos $chromosomecol
+		} else {
+			set chromosomecol {}
 		}
+		if {![info exists offsetcol]} {set offsetcol {}}
+		if {![info exists endcol]} {set endcol {}}
 		set offsetpos $offsetcol
 		set colpos $valuecolumn
 		set multipos $multicol
 		if {$endpos != -1} {
-			if {$offsetpos == -1} {error "Cannit use -e (endcol) without -p (poscol)"}
-			if {$multicol ne ""} {error "Cannit use -e (endcol) with -m (multicol)"}
+			if {$offsetpos == -1} {error "Cannot use -e (endcol) without -p (poscol)"}
+			if {$multicol ne ""} {error "Cannot use -e (endcol) with -m (multicol)"}
 		}
 		set endpos $endcol
 	}
@@ -555,7 +563,7 @@ proc cg_bcol_make {args} {
 		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $endpos $defaultvalue $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	} else {
 		# putsvars bcolfile type colpos multipos multilist chrompos offsetpos defaultvalue
-		 puts "bcol_make_multi $bcolfile.temp $type $multipos $multilist $colpos $chrompos $offsetpos $endpos $defaultvalue $precision"
+		# puts "bcol_make_multi $bcolfile.temp $type $multipos $multilist $colpos $chrompos $offsetpos $endpos $defaultvalue $precision"
 		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos $offsetpos $endpos $defaultvalue $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	}
 	fconfigure $f -encoding binary -translation binary

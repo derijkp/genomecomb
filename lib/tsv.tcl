@@ -151,7 +151,7 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 				}
 			}
 			1 {
-				foreach name {start end1 chromStart genoStart tStart txStart} {
+				foreach name {start end1 chromStart genoStart tStart txStart pos offset} {
 					set v [lsearch $header $name]
 					if {$v != -1} break
 				}
@@ -177,13 +177,6 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 	incr num -1
 	set poss [lrange $poss 0 $num]
 	set pos [lsearch $poss -1]
-	if {$pos == 1} {
-		set pos [lsearch $header pos]
-		if {$poss == -1} {set pos [lsearch $header offset]}
-		lset poss 1 $pos
-		lset poss 2 $pos
-		set pos [lsearch $poss -1]
-	}
 	if {$giveerror ne "0" && ($pos != -1)} {
 		set notfound [list_sub {chromosome begin end type ref alt} [list_find $poss -1]]
 		if {$giveerror eq "1"} {

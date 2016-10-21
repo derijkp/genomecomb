@@ -10,12 +10,22 @@ Creates a [[format_bcol|bcol file]]
 The bcol_make commands creates a [[format_bcol|bcol file]] based on tab-separated data.
 The input data is given via stdin. The data in one of the columns (given as a parameter)
 in the file is converted to the binary format. 
-Optionally a chromosome and position column can be given; in this case, a
+
+Values in the input file can be assigned to specific positions using the
+poscol parameter, which indicates which field will contain the position. A
 default value will be added in the bcol file for positions skipped in the
-input file.
+input file. If the endcol parameter is also given, all values between
+first pos ition and end will be set to the value in the value column. The
+optional chromsomecol parameter can be used to indicate which field must
+be used to assign values to a specific chromosome.
+If the input file contains fields with names recognized for chromosome,
+begin or end, these will be automatically used for these parameters. If these
+fields are present, but you do not want to use them, set the parameters explicitely
+to empty
 
 Multiple columns (of the same type) can be stored in one bcol file, e.g. for
-variant annotation (a different score for each potential alternative allele).
+variant annotation (a different score for each potential alternative allele)
+using the -m and -l options.
 
 == Arguments ==
 ; **bcolfile**: name of bcolfile to be created
