@@ -6,9 +6,10 @@ proc infofile_read {file} {
 	}
 	set result {}
 	while {![eof $f]} {
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		dict set result [lindex $line 0] [lindex $line 1]
+		set line [gets $f]
+		if {[regexp {^([^\t]+)\t(.*)$} $line temp key value]} {
+			dict set result $key $value
+		}
 	}
 	return $result
 }
