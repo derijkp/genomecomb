@@ -1,0 +1,26 @@
+= Bcol_table =
+
+== Format ==
+cg bcol table ?options? bcolfile ?start? ?end?
+
+== Summary ==
+Outputs the data in a [format_bcol|bcol file]] as tab-separated
+
+== Description ==
+Outputs the tab delimited version of the data in the bcol file (to stdout).
+
+Multiple columns (of the same type) can be stored in one bcol file, e.g. for
+variant annotation (a different score for each potential alternative allele).
+
+== Arguments ==
+; **bcolfile**: name of bcolfile
+; **start**: starting position
+; **end**: end position
+
+== Options ==
+; **-c chromosome** (--chromosome): select only data from **chromosome**
+; **-s 0/1** (--showchromosome): set to 0 to suppress the chromosome column in the output (default 1)
+; **-p precision** (--precision): output precision for floating point data (default precision is stored in the bcol file)
+
+== Category ==
+Conversion

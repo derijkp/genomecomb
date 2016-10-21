@@ -253,8 +253,8 @@ proc bcol_chrlines {bcol chromosome} {
 
 # bcol_table now also follows the half-open convention, end position is not included
 # offset support was removed (complicates things, and was never actually used)
-proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {byrownum 0} {precision {}}} {
-	# putsvars start end chromosome showchr byrownum precision
+proc bcol_table {bcol {start {}} {end {}} {chromosome {}} {showchr 1} {precision {}}} {
+	# putsvars start end chromosome showchr precision
 	if {[dict get $bcol objtype] ne "bcol"} {error "This is not a bcol object: $bcol"}
 	if {$precision eq ""} {catch {set precision [dict get $bcol precision]}}
 	set type [dict get $bcol type]
@@ -390,7 +390,7 @@ proc cg_bcol_update {newbcol oldbcol args} {
 	puts $o "\# type $type"
 	puts $o "\# default $default"
 	puts $o "chromosome\tbegin\tend"
-	set args [list $oldbcol {*}$args]
+	set args [ssort -natural [list $oldbcol {*}$args]]
 	foreach file $args {
 		set bcol [bcol_open $file 1]
 		set table [dict get $bcol table]
@@ -417,14 +417,13 @@ proc cg_bcol_make {args} {
 	global bcol_typea
 	set type iu
 	set compress 9
-	set chromosomecol coverage
+	set chromosomecol {}
 	set chrompos -1
 	set offsetcol {}
 	set endcol {}
 	set defaultvalue 0
 	set multicol {}
 	set multilist {}
-	set distribute 0
 	set start 0
 	set precision -1
 	set pos 0
@@ -445,7 +444,6 @@ proc cg_bcol_make {args} {
 			}
 			-c - --chromosomecol {
 				set chromosomecol $value
-				set distribute 1
 			}
 			-co - --compress {
 				set compress $value
@@ -516,7 +514,7 @@ proc cg_bcol_make {args} {
 				exiterror "error: pos column $endcol not found"
 			}
 		}
-		if {$distribute} {
+		if {$chromosomecol ne ""} {
 			if {[isint $chromosomecol]} {
 				set chrompos $chromosomecol
 			} else {
@@ -533,7 +531,7 @@ proc cg_bcol_make {args} {
 			}
 		}
 	} else {
-		if {$distribute && [isint $chromosomecol]} {
+		if {[isint $chromosomecol]} {
 			set chrompos $chromosomecol
 		}
 		set offsetpos $offsetcol
@@ -579,13 +577,18 @@ proc cg_bcol_make {args} {
 }
 
 proc cg_bcol_get {args} {
-	if {[llength $args] != 3} {
-		exiterror "wrong # args: should be \"cg bcol get file start end\""
+	if {[llength $args] == 3} {
+		foreach {indexfile begin end} $args break
+		set chromosome {}
+	} elseif {[llength $args] == 4} {
+		foreach {indexfile chromosome begin end} $args break
+	} else {
+		errorformat bcol_get
+		exit 1
 	}
-	foreach {indexfile begin end} $args break
 	set bcol [bcol_open $indexfile]
 	if {[isint $end]} {incr end -1}
-	set result [bcol_get $bcol $begin $end]
+	set result [bcol_get $bcol $begin $end $chromosome]
 	bcol_close $bcol
 	puts $result
 	return $result
@@ -594,7 +597,6 @@ proc cg_bcol_get {args} {
 proc cg_bcol_table {args} {
 	set chromosome all
 	set showchr 1
-	set byrownum 0
 	set pos 0
 	set precision {}
 	foreach {key value} $args {
@@ -604,9 +606,6 @@ proc cg_bcol_table {args} {
 			}
 			-s - --showchromosome {
 				set showchr $value
-			}
-			-r - --byrownum {
-				set byrownum $value
 			}
 			-p - --precision {
 				set precision $value
@@ -620,11 +619,12 @@ proc cg_bcol_table {args} {
 	}
 	set args [lrange $args $pos end]
 	if {[llength $args] < 1 || [llength $args] > 3} {
-		exiterror "wrong # args: should be \"cg bcol table ?-c chromosome? ?-s showchr? file ?start? ?end?\""
+		errorformat bcol_table
+		exit 1
 	}
 	foreach {indexfile begin end} $args break
 	set bcol [bcol_open $indexfile]
-	bcol_table $bcol $begin $end $chromosome $showchr $byrownum $precision
+	bcol_table $bcol $begin $end $chromosome $showchr $precision
 	bcol_close $bcol
 }
 
@@ -776,6 +776,7 @@ proc cg_bcol_histo {args} {
 }
 
 proc cg_bcol {cmd args} {
+	set args [parse_generic_args bcol_$cmd $args]
 	if {![llength [info commands cg_bcol_$cmd]]} {
 		set list [info commands cg_bcol_*]
 		set list [list_regsub ^cg_bcol_ $list {}]

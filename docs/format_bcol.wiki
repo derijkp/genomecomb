@@ -5,12 +5,20 @@ binary format. All data must be of the same type (list of supported types
 below). bcol files can e.g. used to store a score for each position
 of the genome and use this for annotation.
 
-The (new) bcol format consists of two files, one in a text format
-describing the bcol data (bcolfile.bcol) and one containing the actual
-binary data (bcolfile.bcol.bin.lz4).
-
+The bcol format consists of two files, one in a text format
+describing the bcol data (bcolfile.bcol) and one containing the actual 
+binary data (bcolfile.bcol.bin.lz4). There may be a (third) index file 
+(bcolfile.bcol.bin.lz4i) for faster random access to the compressed binary data.
 bcol files can be created based on a [[format_tsv|tab-separated file]] file using the
-command [[cg_bcol_make|cg bcol make]]
+command [[cg_bcol_make|cg bcol make]]. 
+
+There was an older version of the bcol format (which did not support multiple 
+chromosomes or multiple alleles) that is not described here. Files (there
+were separate bcol files per chromsome) in this older format can be
+converted to the current using 
+{{{
+cg bcol_update newbcolfile oldbcolfile ?oldbcolfile2? ...
+}}}
 
 == bcolfile.bcol ==
 bcolfile.bcol is a [[format_tsv|tab-separated file]] with the following format

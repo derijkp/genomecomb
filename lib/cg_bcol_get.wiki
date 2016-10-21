@@ -1,0 +1,19 @@
+= Bcol_make =
+
+== Format ==
+cg bcol get bcolfile ?chromosome? begin end
+
+== Summary ==
+Get a list of values from a bcol file
+
+== Description ==
+bcol_get extracts the values in the given region from a [[format_bcol|bcol file]] and
+returns them as a (space separated) list.
+
+== Arguments ==
+; **chromosome**: if not given, data from the first chromosome in thje bcol file is returned
+; **begin**: start position (counts from 0, included)
+; **end**: end position (counts from 0, excluded)
+
+== Category ==
+Conversion

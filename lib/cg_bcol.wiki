@@ -1,0 +1,23 @@
+= Bcol =
+
+== Format ==
+cg bcol subcommand ?options? ...
+
+== Summary ==
+several commands for managing bcol files
+
+== Description ==
+The bcol command encompasses several subcommands for managing [[format_bcol|bcol files]] 
+(files for storing data (numbers) in an efficient binary format).
+The subcommands can be run using "cg bcol subcommand ?options? ..."
+as well as "cg bcol_subcommand ?options? ..."
+
+== Suboptions ==
+; [[bcol_make|make]]: make bcol files based on tab delimited data
+; [[bcol_get|get]]: get a number of values from a bcol file
+; [[bcol_table|table]]: output bcol files as tab delimited data
+; size: returns the size of a bcol file
+; [[bcol_update|update]]: converts the old bcol format to the new (that can contain data for different chromosomes or alleles)
+
+== Category ==
+Conversion
