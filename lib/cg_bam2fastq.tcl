@@ -24,7 +24,7 @@ proc cg_bam2fastq {args} {
 		errorformat bam2fastq
 		exit 1
 	}
-	set fastqfile2{}
+	set fastqfile2 {}
 	foreach {bamfile fastqfile1 fastqfile2} $args break
 	set destdir [file dir $fastqfile1]
 	set tempbam $destdir/[file tail $bamfile].temp_namesorted.bam
@@ -32,7 +32,7 @@ proc cg_bam2fastq {args} {
 	# Sorting based on name should avoid this
 	exec samtools sort -n $bamfile [file root $tempbam] >@ stdout 2>@ stderr
 #	if {[catch {
-#		exec java -jar [picard]/SortSam.jar	I=$bamfile	O=$tempbam	SO=queryname VALIDATION_STRINGENCY=SILENT 2>@ stderr >@ stdout
+#		picard SortSam	I=$bamfile	O=$tempbam	SO=queryname VALIDATION_STRINGENCY=SILENT 2>@ stderr >@ stdout
 #	} msg]} {
 #		if {![regexp "done. Elapsed time:" $msg]} {
 #			error $msg
@@ -41,9 +41,10 @@ proc cg_bam2fastq {args} {
 	if {$method eq "picard"} {
 		if {[catch {
 			if {$fastqfile2 ne ""} {
-				exec java -jar [picard]/SamToFastq.jar I=$tempbam F=$fastqfile1 F2=$fastqfile2 VALIDATION_STRINGENCY=SILENT >@ stdout
+				set picard [findpicard]
+				exec samtools view -hf 0x2 Sample.sorted.bam chr21 | java -jar $picard/SamToFastq.jar I=$tempbam F=$fastqfile1 F2=$fastqfile2 VALIDATION_STRINGENCY=SILENT >@ stdout
 			} else {
-				exec java -jar [picard]/SamToFastq.jar I=$tempbam F=$fastqfile1 VALIDATION_STRINGENCY=SILENT >@ stdout
+				picard SamToFastq I=$tempbam F=$fastqfile1 VALIDATION_STRINGENCY=SILENT >@ stdout
 			}
 		} msg]} {
 			if {![regexp "done. Elapsed time:" $msg]} {

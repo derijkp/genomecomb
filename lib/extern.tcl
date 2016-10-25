@@ -27,6 +27,14 @@ proc picard {cmd args} {
 	exec java -jar $picard/$cmd.jar {*}$args
 }
 
+proc findpicard {} {
+	global picard
+	if {![info exists picard]} {
+		set picard [searchpath PICARD picard picard*]
+	}
+	return $picard
+}
+
 proc gatk {} {
 	global gatk
 	if {![info exists gatk]} {

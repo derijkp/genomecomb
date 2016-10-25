@@ -1,7 +1,7 @@
 = bam2fastq =
 
 == Format ==
-cg bam2fastq bamfile fastqfile1 ?fastqfile2?
+cg bam2fastq bamfile fastqfile1 ?fastqfile2? ?fastqfile3?
 
 == Summary ==
 Extracts reads from a bamfile into fastq. 
@@ -11,6 +11,7 @@ The code actually calls picard's SamToFastq for the conversion
 ; **bamfile**: bamfile
 ; **fastqfile1**: name of the fastq file that will contain the first read of each pair
 ; **fastqfile2**: name of the fastq file that will contain the matching second read of each pair
+; **fastqfile3**: name of the fastq file that will contain unpaired reads (if present)
 
 == Category ==
 Conversion
