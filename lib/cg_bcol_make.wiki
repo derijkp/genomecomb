@@ -1,7 +1,7 @@
 = Bcol_make =
 
 == Format ==
-cg bcol make ?options? bcolfile column
+cg bcol make ?options? bcolfile column ?srcfile?
 
 == Summary ==
 Creates a [[format_bcol|bcol file]]
@@ -30,6 +30,7 @@ using the -m and -l options.
 == Arguments ==
 ; **bcolfile**: name of bcolfile to be created
 ; **column**: Name of the column containing the data
+; **srcfile**: Name of the file used for providing input data (if not given, default is from stdin)
 
 == Options ==
 ; **-t type**: type of data, should be one described in the description of the format ([[format_bcol|format_bcol]])
