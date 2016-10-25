@@ -9,7 +9,6 @@ proc cg_multicompar {args} {
 	set reannot 0
 	set regonly 0
 	set split 0
-	set listfields {}
 	set targetsfile {}
 	set targetsfield {}
 	set pos 0
@@ -28,10 +27,6 @@ proc cg_multicompar {args} {
 			-split {
 				incr pos
 				set split [true [lindex $args $pos]]
-			}
-			-listfields {
-				incr pos
-				set listfields [lindex $args $pos]
 			}
 			-targetsfile {
 				incr pos

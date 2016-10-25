@@ -34,10 +34,6 @@ the table; this missing information can be added by using the -reannot
 option or the multicompar_reannot command, if it is available in other
 files. (check cg multicompar_reannot help for more info)
 
-Fields starting with l: will be regarded as list dependend on different alt 
-genotypes (a comma separated list). The -listfields option can be used to define columns
-to be treated this way.
-
 == Arguments ==
 ; **multicomparfile**: resultfile, will be created if it does not exist
 ; **sampledir/varfile**: directory or file containing variants of new sample to be added
@@ -53,7 +49,6 @@ column will be the part of the filename after the last dash. If **variantfile** 
 the content of this will be used in the targets column instead of a 1.
 ; **-split**: if 1, multiple alternative alleles will be on a separate lines, treated mostly as a separate variant
 Use 0 for the default (alternatives alleles are on the same line, separated by comma in the alt field)
-; **-listfields listfields**: fields given by listfields will be regarded as lists (comma separated) dependend on the different alt genotypes
 
 == Category ==
 Compare
