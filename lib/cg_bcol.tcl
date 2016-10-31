@@ -611,9 +611,11 @@ proc cg_bcol_histo {args} {
 
 proc cg_bcol {cmd args} {
 	set args [parse_generic_args bcol_$cmd $args]
+	auto_load cg_bcol_$cmd
 	if {![llength [info commands cg_bcol_$cmd]]} {
 		set list [info commands cg_bcol_*]
-		set list [list_regsub ^cg_bcol_ $list {}]
+		lappend list {*}[array names ::auto_index cg_bcol_*]
+		set list [list_regsub ^cg_bcol_ [list_remdup $list] {}]
 		exiterror "cg bcol has no subcommand $cmd, must be one of: [join $list ,]"
 	}
 	cg_bcol_$cmd {*}$args
