@@ -207,8 +207,12 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 				putslog "warning: $msg"
 			}
 		}
-		job multicompar_addvars-$sample -force 1 -deps {$allvarsfile $samplevarsfile ($sregfile) ($varallfile)} -targets {$target} \
-		  -vars {allvarsfile samplevarsfile sregfile varallfile sample split} -code {
+		set deps [list $allvarsfile $samplevarsfile]
+		if {[jobfileexists $sregfile]} {lappend deps $sregfile}
+		if {[jobfileexists $varallfile]} {lappend deps $varallfile}
+		lappend deps {*}[jobglob $sampledir/*-$sample.bcol]
+		job multicompar_addvars-$sample -force 1 -deps $deps -targets {$target} \
+		  -vars {allvarsfile samplevarsfile sregfile varallfile sample split sampledir} -code {
 			set vf [gzopen $allvarsfile]
 			set vheader [tsv_open $vf]
 			close $vf
@@ -231,6 +235,13 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 			if {$seqpos == -1} {
 				lappend reannotheader sequenced-$sample
 			}
+			set bcolannot {}
+			foreach file [glob -nocomplain $sampledir/*-$sample.bcol] {
+				set field [string range [file tail $file] 0 end-[string length -$sample.bcol]]
+				set pos [lsearch $keepfields $field]
+				if {$pos != -1} {lappend bcolannot $pos $file}
+			}
+			set numbcolannot [expr {[llength $bcolannot]/2}]
 			set newheader [list sequenced-$sample]
 			if {$zygpos != -1} {lappend newheader zyg-$sample}
 			if {$a1pos != -1} {lappend newheader alleleSeq1-$sample}
@@ -243,8 +254,8 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 			close $o
 			set sregfile [lindex [gzfiles $sregfile] 0]
 			set varallfile [lindex [gzfiles $varallfile] 0]
-			# puts [list ../bin/multicompar_addvars $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs]
-			exec multicompar_addvars $allvarsfile $samplevarsfile $split $sregfile $varallfile {*}$keepposs >> $target.temp
+			# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot {*}$bcolannot {*}$keepposs]
+			exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot {*}$bcolannot {*}$keepposs >> $target.temp
 			file rename -force $target.temp $target
 		}
 	}
@@ -278,6 +289,8 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 	}
 	#
 	# paste all together for final multicompar
+	# set pastefiles {}
+	# putsvars pastefiles
 	tsv_paste_job $compar_file $pastefiles -forcepaste 1 -endcommand [list file delete {*}$pastefiles]
 }
 

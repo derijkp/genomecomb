@@ -589,6 +589,7 @@ int read_unlocked(FILE *f,unsigned char *buffer,int size) {
 	return(size-(count+1));
 }
 
+/* reads data from bcol, from position start to end (included): positions given in objects, so no need to * typesize */
 int bcol_getbin(BCol *fbcol,uint64_t start,uint64_t end) {
 	LZ4res *lz4 = fbcol->lz4;
 	RAZF *rz = fbcol->rz;
@@ -616,6 +617,38 @@ int bcol_getbin(BCol *fbcol,uint64_t start,uint64_t end) {
 		memset(fbcol->buffer+c,0,rsize-c);
 	}
 	return(c);
+}
+
+int bcol_getbinloc(BCol *bcol,DString *chromosome, uint64_t start,uint64_t end) {
+	BCol_table *table = bcol->table;
+	int tablesize = bcol->tablesize;
+	int tablepos = bcol->tablepos;
+	uint64_t binpos;
+	DString *chromosome2 = table[tablepos].chr;
+	int start2 = table[tablepos].begin;
+	int end2 = table[tablepos].end;
+	int comp;
+	comp = DStringLocCompare(chromosome2,chromosome);
+	while (tablepos < tablesize && ((comp < 0) || ((comp == 0) && ((end2 < start) || (end2 == start && start != end))))) {
+		tablepos += 1;
+		chromosome2 = table[tablepos].chr;
+		start2 = table[tablepos].begin;
+		end2 = table[tablepos].end;
+		comp = DStringLocCompare(chromosome2,chromosome);
+	}
+	if (tablepos == tablesize) {
+		tablepos = 0;
+		while (tablepos < bcol->tablepos && ((comp < 0) || ((comp == 0) && ((end2 < start) || (end2 == start && start != end))))) {
+			tablepos += 1;
+			chromosome2 = table[tablepos].chr;
+			start2 = table[tablepos].begin;
+			end2 = table[tablepos].end;
+			comp = DStringLocCompare(chromosome2,chromosome);
+		}
+		if (tablepos == bcol->tablepos) {return 0;}
+	}
+	binpos = table[tablepos].pos + start - start2;
+	return bcol_getbin(bcol,binpos,binpos+end-start);
 }
 
 int bcol_readbin(BCol *fbcol,int rsize,unsigned char *buffer) {
@@ -748,6 +781,7 @@ BCol *bcol_open(char *bcolfile) {
 	result->table = NULL;
 	result->multi = NULL;
 	result->tablesize = 0;
+	result->tablepos = 0;
 	result->def = DStringNew();
 	result->multi = DStringNew();
 	result->precision = -1;

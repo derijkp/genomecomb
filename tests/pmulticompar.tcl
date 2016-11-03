@@ -5,13 +5,6 @@ exec tclsh "$0" "$@"
 source tools.tcl
 package require genomecomb
 
-set testname _direct
-set jobopts {}
-foreach {testname jobopts} {
-	_direct {}
-	_d4 {-d 4}
-} {
-
 proc reorder {file dest} {
 	set header [cg select -h $file]
 	set samples [samples $header]
@@ -55,6 +48,14 @@ proc multicompartest {num} {
 	close $f
 	return $files
 }
+
+set testname _direct
+set jobopts {}
+
+foreach {testname jobopts} {
+	_direct {}
+	_d4 {-d 4}
+} {
 
 test pmulticompar$testname {basic} {
 	test_cleantmp
@@ -678,8 +679,8 @@ test pmulticompar$testname {split reannot split multiallelic varall,sreg,zyg, ch
 	write_tab tmp/varall-sample2.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2	score
 		chr1	100	101	snp	G	G	r	G	G	41
-		chr1	150	152	del	GT	{}	t	GT	{}	30
 		chr1	150	151	snp	G	G	r	G	G	30
+		chr1	150	152	del	GT	{}	t	GT	{}	30
 		chr1	151	152	snp	A	A	r	A	A	31
 		chr1	152	153	snp	A	A	r	A	A	32
 		chr1	160	161	snp	A	C	t	A	C	33
@@ -733,8 +734,8 @@ test pmulticompar$testname {targets} {
 	write_tab tmp/varall-sample2.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2	score
 		chr1	100	101	snp	G	G	r	G	G	41
-		chr1	150	152	del	GT	{}	t	GT	{}	30
 		chr1	150	151	snp	G	G	r	G	G	30
+		chr1	150	152	del	GT	{}	t	GT	{}	30
 		chr1	151	152	snp	A	A	r	A	A	31
 		chr1	152	153	snp	A	A	r	A	A	32
 		chr1	160	161	snp	A	C	t	A	C	33
@@ -797,8 +798,8 @@ test pmulticompar$testname {targets, no name} {
 	write_tab tmp/varall-sample2.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2	score
 		chr1	100	101	snp	G	G	r	G	G	41
-		chr1	150	152	del	GT	{}	t	GT	{}	30
 		chr1	150	151	snp	G	G	r	G	G	30
+		chr1	150	152	del	GT	{}	t	GT	{}	30
 		chr1	151	152	snp	A	A	r	A	A	31
 		chr1	152	153	snp	A	A	r	A	A	32
 		chr1	160	161	snp	A	C	t	A	C	33
@@ -858,8 +859,8 @@ test pmulticompar$testname {add targets only} {
 	write_tab tmp/varall-sample2.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced	zyg	alleleSeq1	alleleSeq2	score
 		chr1	100	101	snp	G	G	r	r	G	G	41
-		chr1	150	152	del	GT	{}	v	t	GT	{}	30
 		chr1	150	151	snp	G	G	r	r	G	G	30
+		chr1	150	152	del	GT	{}	v	t	GT	{}	30
 		chr1	151	152	snp	A	A	r	r	A	A	31
 		chr1	152	153	snp	A	A	r	r	A	A	32
 		chr1	160	161	snp	A	C	v	t	A	C	33
@@ -913,12 +914,6 @@ test pmulticompar$testname {different header for varall} {
 		chr1	151	152	snp	A	0	T	v	t	A	T	32	{}
 		chr1	160	162	del	NN	1	{}	v	m	{}	{}	33	1
 	}
-	write_tab tmp/var-sample2.tsv {
-		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
-		chr1	150	152	del	GT	{}	t	GT	{}	30
-		chr1	160	161	snp	A	C	t	A	C	33
-		chr1	160	161	snp	A	T	t	A	T	33
-	}
 	write_tab tmp/varall-sample1.tsv {
 		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	extra	score
 		chr1	100	100	ins	{}	C	t	{}	C	1	40
@@ -928,11 +923,17 @@ test pmulticompar$testname {different header for varall} {
 		chr1	152	153	snp	T	T	r	T	T	5	31
 		chr1	160	162	del	NN	{}	m	{}	{}	6	33
 	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
+		chr1	150	152	del	GT	{}	t	GT	{}	30
+		chr1	160	161	snp	A	C	t	A	C	33
+		chr1	160	161	snp	A	T	t	A	T	33
+	}
 	write_tab tmp/varall-sample2.tsv {
 		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
 		chr1	100	101	snp	G	G	r	G	G	41
-		chr1	150	152	del	GT	{}	t	GT	{}	30
 		chr1	150	151	snp	G	G	r	G	G	30
+		chr1	150	152	del	GT	{}	t	GT	{}	30
 		chr1	151	152	snp	A	A	r	A	A	31
 		chr1	152	153	snp	A	A	r	A	A	32
 		chr1	160	161	snp	A	C	t	A	C	33
@@ -1032,7 +1033,7 @@ test pmulticompar$testname {varall missing snp between chromsomes} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar$testname {20 samples} {
+test pmulticompar$testname {100 samples} {
 	test_cleantmp
 	set files [multicompartest 100]
 	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv {*}$files
@@ -1043,6 +1044,67 @@ test pmulticompar$testname {20 samples, -m 5} {
 	test_cleantmp
 	set files [multicompartest 20]
 	cg pmulticompar {*}$::jobopts -m 5 -split 1 tmp/temp.tsv {*}$files 2>@ stderr >@ stdout
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar$testname {split reannot, multiallelic, bcol, sreg,zyg, check ref indels, overlapping snp} {
+	test_cleantmp
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+		chr2	50	200
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage
+		chr1	100	100	ins	{}	C	t	{}	C	21
+		chr1	151	152	snp	A	T	t	A	T	33
+		chr1	160	162	del	NN	{}	m	{}	{}	35
+		chr2	151	152	snp	G	C	m	C	C	43
+	}
+	write_tab tmp/coverage-sample1.tsv {
+		chromosome	begin	end	coverage
+		chr1	100	101	31
+		chr1	150	151	32
+		chr1	151	152	33
+		chr1	152	153	34
+		chr1	160	162	35
+		chr2	100	101	41
+		chr2	150	151	42
+		chr2	151	152	43
+	}
+	cg bcol_make tmp/coverage-sample1.bcol coverage tmp/coverage-sample1.tsv
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage
+		chr1	150	152	del	GT	{}	t	GT	{}	22
+		chr1	160	161	snp	A	C	t	A	C	55
+		chr1	160	161	snp	A	T	t	A	T	55
+	}
+	write_tab tmp/coverage-sample2.tsv {
+		chromosome	begin	end	coverage
+		chr1	100	101	51
+		chr1	150	151	52
+		chr1	151	152	53
+		chr1	152	153	54
+		chr1	160	161	55
+		chr1	160	161	55
+		chr2	100	101	61
+		chr2	150	151	62
+		chr2	151	152	63
+	}
+	cg bcol_make tmp/coverage-sample2.bcol coverage tmp/coverage-sample2.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2
+		1	100	100	ins	{}	C	v	t	{}	C	21	r	r	{}	{}	51
+		1	150	152	del	GT	{}	r	r	GT	GT	32	v	t	GT	{}	22
+		1	151	152	snp	A	T	v	t	A	T	33	r	o	A	@	53
+		1	160	161	snp	A	C	r	o	@	@	35	v	t	A	C	55
+		1	160	161	snp	A	T	r	o	@	@	35	v	t	A	T	55
+		1	160	162	del	NN	{}	v	m	{}	{}	35	r	r	NN	NN	55
+		2	151	152	snp	G	C	v	m	C	C	43	r	r	G	G	63
+	}
+	catch {file delete tmp/temp.tsv}
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 

@@ -25,14 +25,18 @@ typedef struct Variant {
 	DString *type;
 	DString *ref;
 	DString *alt;
+	DString *a1;
+	DString *a2;
 	int id;
 } Variant;
 
 typedef struct VarFile {
 	char *file;
 	GZFILE *f;
+	DString *headerline;
 	DString *prevline;
 	DString *line;
+	DStringArray *header;
 	DStringArray *prevresult;
 	DStringArray *result;
 	VariantPos varpos;
@@ -40,6 +44,7 @@ typedef struct VarFile {
 	Variant *prevvar;
 	int split;
 	int max;
+	int linenr;
 	unsigned int numfields;
 	unsigned int pos;
 	unsigned int error;
@@ -53,6 +58,7 @@ void result2var(DStringArray *result,VariantPos varpos, Variant *var);
 int varcompare(Variant *var1, Variant *var2, int split);
 int regcompare(Variant *var1, Variant *var2);
 void varpos_init(VariantPos *varpos);
+void var_init(Variant *var);
 int varpos_max(VariantPos *varpos);
 void varpos_fromheader(VariantPos *varpos,DStringArray *header);
 VarFile *OpenVarfile(char *filename, int split);

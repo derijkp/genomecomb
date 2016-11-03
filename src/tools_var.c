@@ -16,7 +16,7 @@
 
 /* returns 0 if equal, 1 if equal not including alt, 2 if different */
 int varchecksort(Variant *prev,Variant *var,char *filename,int *nextpos) {
-	return checksort(prev->chr,&(prev->start),&(prev->end),prev->type,prev->alt,var->chr,var->start,var->end,var->type,var->alt,filename,nextpos);
+	return checksort(prev->chr,&(prev->start),&(prev->end),prev->type,prev->alt,var->chr,var->start,var->end,var->type,var->alt,filename,nextpos,0);
 }
 
 void varputs_chr(DString *chr,FILE *f) {
@@ -63,11 +63,11 @@ void result2var(DStringArray *result,VariantPos varpos, Variant *var) {
 	var->chr = result->data+varpos.chr;
 	sscanf(result->data[varpos.start].string,"%d",&(var->start));
 	sscanf(result->data[varpos.end].string,"%d",&(var->end));
-	var->type = result->data+varpos.type;
-	var->ref = result->data+varpos.ref;
-	if (varpos.alt != -1) {
-		var->alt = result->data+varpos.alt;
-	}
+	if (varpos.type != -1) {var->type = result->data+varpos.type;}
+	if (varpos.ref != -1) {var->ref = result->data+varpos.ref;}
+	if (varpos.a1 != -1) {var->a1 = result->data+varpos.a1;} else {var->a1 = NULL;}
+	if (varpos.a2 != -1) {var->a2 = result->data+varpos.a2;} else {var->a2 = NULL;}
+	if (varpos.alt != -1) {var->alt = result->data+varpos.alt;} else {var->alt = NULL;}
 	if (varpos.id == -1) {
 		var->id = -1;
 	} else if (varpos.id == -2) {
@@ -107,6 +107,17 @@ int regcompare(Variant *var1, Variant *var2) {
 	comp = var1->end - var2->end;
 	if (comp != 0) {return comp<0?-2:2;}
 	return 0;
+}
+
+void var_init(Variant *var) {
+	var->start = -1;
+	var->end = -1;
+	var->type = NULL;
+	var->ref = NULL;
+	var->alt = NULL;
+	var->a1 = NULL;
+	var->a2 = NULL;
+	var->id = -1;
 }
 
 void varpos_init(VariantPos *varpos) {
@@ -202,27 +213,28 @@ void varpos_fromheader(VariantPos *varpos,DStringArray *header) {
 }
 
 VarFile *OpenVarfile(char *filename,int split) {
-	unsigned int numfields;
 	VarFile *varfile = malloc(sizeof(VarFile));
+	varfile->linenr = 0;
 	varfile->file = filename;
 	varfile->split = split;
 	varfile->f = gz_open(filename);
 	varfile->prevline = NULL;
 	varfile->line = DStringNew();
-	gz_skip_header(varfile->f,varfile->line,&varfile->numfields,&varfile->pos);
+	varfile->headerline = DStringNew();
+	varfile->prevline = DStringNew();
+	gz_skip_header(varfile->f,varfile->headerline,&varfile->numfields,&varfile->pos);
+	varfile->header = DStringArrayNew(varfile->numfields+2);
 	varfile->result = DStringArrayNew(varfile->numfields+2);
 	varfile->prevresult = DStringArrayNew(varfile->numfields+2);
-	DStringSplitTab(varfile->line, varfile->numfields, varfile->result, 0,NULL);
-	varpos_fromheader(&varfile->varpos,varfile->result);
+	DStringSplitTab(varfile->headerline, varfile->numfields, varfile->header, 0,NULL);
+	varpos_fromheader(&varfile->varpos,varfile->header);
 	varpos_max(&(varfile->varpos));
 	varfile->max = varfile->varpos.max;
 	varfile->var = (Variant *)malloc(sizeof(Variant));
-	varfile->prevvar = NULL;
-	varfile->error = gz_DStringGetTab(varfile->line,varfile->f,varfile->max,varfile->result,1,&numfields);
-	if (!varfile->error) {
-		check_numfieldserror(numfields,varfile->numfields,varfile->line,varfile->file,&varfile->pos);
-		result2var(varfile->result,varfile->varpos,varfile->var);
-	}
+	var_init(varfile->var);
+	varfile->prevvar = (Variant *)malloc(sizeof(Variant));
+	var_init(varfile->prevvar);
+	varfile->error = 0;
 	return varfile;
 }
 
@@ -231,26 +243,19 @@ Variant *varfile_next(VarFile *varfile) {
 	DString *templine;
 	DStringArray *tempresult;
 	unsigned int numfields;
-	int compcheck,first = 0;
+	int compcheck = 0;
 	/* keep previous var
            =================
 	   as var points to line and result, we need to keep these as wel
 	   in order to avoid many allocations and copying, we recycle them
 	*/
-	if (varfile->prevline == NULL) {
-		varfile->prevline = varfile->line;
-		varfile->line = DStringNew();
-		varfile->prevvar = varfile->var;
-		varfile->var = (Variant *)malloc(sizeof(Variant));
-		first = 1;
-	} else {
-		templine = varfile->prevline;
-		varfile->prevline = varfile->line;
-		varfile->line = templine;
-		tempvar = varfile->prevvar;
-		varfile->prevvar = varfile->var;
-		varfile->var = tempvar;
-	}
+	if (varfile->error) {return NULL;}
+	templine = varfile->prevline;
+	varfile->prevline = varfile->line;
+	varfile->line = templine;
+	tempvar = varfile->prevvar;
+	varfile->prevvar = varfile->var;
+	varfile->var = tempvar;
 	tempresult = varfile->prevresult;
 	varfile->prevresult = varfile->result;
 	varfile->result = tempresult;
@@ -260,7 +265,8 @@ Variant *varfile_next(VarFile *varfile) {
 	if (varfile->error) {return NULL;}
 	check_numfieldserror(numfields,varfile->numfields,varfile->line,varfile->file,&varfile->pos);
 	result2var(varfile->result,varfile->varpos,varfile->var);
-	if (!first) {
+	varfile->linenr ++;
+	if (varfile->linenr > 1) {
 		compcheck = varchecksort(varfile->prevvar,varfile->var,varfile->file,NULL);
 		if (!varfile->split && compcheck < 2) {
 			Variant *prev = varfile->prevvar;
@@ -275,9 +281,11 @@ Variant *varfile_next(VarFile *varfile) {
 void CloseVarfile(VarFile *varfile) {
 	gz_close(varfile->f);
 	DStringDestroy(varfile->line);
+	DStringDestroy(varfile->prevline);
 	DStringArrayDestroy(varfile->result);
 	DStringArrayDestroy(varfile->prevresult);
 	free(varfile->var);
+	free(varfile->prevvar);
 	free(varfile);
 }
 

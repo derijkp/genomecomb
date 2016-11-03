@@ -169,7 +169,7 @@ NODPRINT("line1 (a=%3.3s) %s,%d,%d %s",type1->string,chromosome1->string,start1,
 fprintf(stdout,"----- %d\t%s\t%d\t%d\n",1,Loc_ChrString(chromosome1),start1,end1);
 fprintf(stdout,"--------- %d\t%s\t%d\t%d\n",2,Loc_ChrString(chromosome2),start2,end2);
 */
-		checksort(prevchromosome1,&prevstart1,&prevend1,prevtype1,prevalt1,chromosome1,start1,end1,type1,alt1,argv[1],&nextpos);
+		checksort(prevchromosome1,&prevstart1,&prevend1,prevtype1,prevalt1,chromosome1,start1,end1,type1,alt1,argv[1],&nextpos,1);
 /*
 		if (start1 >= nextpos) {
 			fprintf(stderr, "%s-%d\n",Loc_ChrString(chromosome1),start1);
@@ -200,7 +200,7 @@ NODPRINT("line2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),prevstart2,preven
 			sscanf(result2->data[end2pos].string,"%d",&end2);
 			type2 = result2->data+type2pos;
 			alt2 = result2->data+alt2pos;
-			checksort(prevchromosome2,&prevstart2,&prevend2,prevtype2,prevalt2,chromosome2,start2,end2,type2,alt2,argv[7],&nextpos);
+			checksort(prevchromosome2,&prevstart2,&prevend2,prevtype2,prevalt2,chromosome2,start2,end2,type2,alt2,argv[7],&nextpos,1);
 		}
 		if (error2 || (DStringLocCompare(chromosome2,chromosome1) != 0) || (start2 != start1) || (end2 != end1) || !sametype) {
 			if (!datalen) {

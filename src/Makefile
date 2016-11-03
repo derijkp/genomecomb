@@ -98,8 +98,8 @@ clean:
 ../bin$(ARCH)/multi_join: multi_join.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
 	gcc multi_join.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multi_join $(LIBZ)
 
-../bin$(ARCH)/multicompar_addvars: multicompar_addvars.c $(TOOLS) $(GZTOOLS) $(TOOLS_VAR)
-	gcc multicompar_addvars.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multicompar_addvars $(LIBZ)
+../bin$(ARCH)/multicompar_addvars: multicompar_addvars.c $(TOOLS) $(GZTOOLS) $(BCOL_TOOLS) $(TOOLS_VAR)
+	gcc multicompar_addvars.c tools.c tools_bcol.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multicompar_addvars $(LIBZ)
 
 ../bin$(ARCH)/multidb_join: multidb_join.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
 	gcc multidb_join.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multidb_join $(LIBZ)

@@ -23,6 +23,7 @@ typedef struct BCol {
 	DString *multi;
 	BCol_table *table;
 	int tablesize;
+	int tablepos;
 	unsigned char *buffer;
 	int buffersize;
 	LZ4res *lz4;
@@ -33,6 +34,7 @@ typedef struct BCol {
 int bcol_NeedReversing(char format);
 void bcol_CopyNumber(const void *from,	void *to,unsigned int length,	int reverse);
 
+int bcol_getbinloc(BCol *fbcol,DString *chromosome,uint64_t start,uint64_t end);
 int bcol_getbin(BCol *fbcol,uint64_t start,uint64_t end);
 int bcol_printbin(FILE *f,int reverse,int isunsigned,char *type,char *string);
 int bcol_printtext(FILE *f,int reverse,int isunsigned,char type,unsigned char *bin,int precision);

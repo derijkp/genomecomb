@@ -31,6 +31,7 @@ int main(int argc, char *argv[]) {
 	bestposlist = (int *)malloc(count*sizeof(int));
 	for (i = 0 ; i < count ; i++) {
 		varfiles[i] = OpenVarfile(argv[i+2],split);
+		varfile_next(varfiles[i]);
 	}
 	fprintf(stdout,"chromosome\tbegin\tend\ttype\tref\talt\n");
 	while (1) {

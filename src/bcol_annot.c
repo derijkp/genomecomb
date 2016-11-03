@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
 		}
 		NODPRINT("line1 %s,%d,%d (type=%3.3s) %s",chromosome1->string,start1,end1,type1->string,alt1->string)
 		NODPRINT("line2 %s,%d,%d",chromosome2->string,start2,end2)
-		checksort(prevchromosome1,&prevstart1,&prevend1,prevtype1,prevalt1,chromosome1,start1,end1,type1,alt1,argv[1],&nextpos);
+		checksort(prevchromosome1,&prevstart1,&prevend1,prevtype1,prevalt1,chromosome1,start1,end1,type1,alt1,argv[1],&nextpos,1);
 		comp = DStringLocCompare(chromosome2, chromosome1);
 		while (tablepos < tablesize && ((comp < 0) || ((comp == 0) && ((end2 < start1) || (end2 == start1 && start1 != end1))))) {
 			tablepos += 1;

@@ -158,6 +158,15 @@ int naturalcompare (char const *a, char const *b,int alen,int blen) {
 	int diff, digitleft,digitright;
 	int secondaryDiff = 0,prezero,invert,comparedigits,prevdigit=0;
 	char *left=NULL,*right=NULL,*keep=NULL;
+	if (a == NULL) {
+		if (b == NULL) {
+			return 0;
+		} else {
+			return 1;
+		}
+	} else if (b == NULL) {
+		return -1;
+	}
 	while (alen && blank(*a)) {a++; alen--;}
 	while (blen && blank(*b)) {b++; blen--;}
 	left = (char *)a;
@@ -977,7 +986,7 @@ FILE *fopen64_or_die(char *filename,char *mode) {
 	return(f);
 }
 
-int checksort(DString *prevchromosome1,int *prevstart1,int *prevend1,DString *prevtype1,DString *prevalt1,DString *chromosome1,int start1,int end1,DString *type1,DString *alt1,char *filename,int *nextpos) {
+int checksort(DString *prevchromosome1,int *prevstart1,int *prevend1,DString *prevtype1,DString *prevalt1,DString *chromosome1,int start1,int end1,DString *type1,DString *alt1,char *filename,int *nextpos,int fillprev) {
 	int comp,comptype,compalt, result = 2;
  	comp = DStringLocCompare(chromosome1,prevchromosome1);
 	comptype = DStringCompare(type1,prevtype1);
@@ -992,7 +1001,7 @@ int checksort(DString *prevchromosome1,int *prevstart1,int *prevend1,DString *pr
 		exit(1);
 	} else if (comp > 0) {
 		/* prevchromosome1 = chromosome1; */
-		DStringCopy(prevchromosome1,chromosome1);
+		if (fillprev) {DStringCopy(prevchromosome1,chromosome1);}
 		if (nextpos) {*nextpos = 0;}
 	}
 	if (comp == 0 && comptype == 0 && start1 == *prevstart1 && end1 == *prevend1) {
@@ -1002,9 +1011,11 @@ int checksort(DString *prevchromosome1,int *prevstart1,int *prevend1,DString *pr
 			result = 1;
 		}
 	}
-	*prevstart1 = start1; *prevend1 = end1;
-	if (comptype != 0) {DStringCopy(prevtype1,type1);}
-	if (compalt != 0) {DStringCopy(prevalt1,alt1);}
+	if (fillprev) {
+		*prevstart1 = start1; *prevend1 = end1;
+		if (comptype != 0) {DStringCopy(prevtype1,type1);}
+		if (compalt != 0) {DStringCopy(prevalt1,alt1);}
+	}
 	return result;
 }
 
