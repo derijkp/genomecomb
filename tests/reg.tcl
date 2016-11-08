@@ -366,6 +366,20 @@ M	10	25
 X	90	200
 Y	1000	2000}
 
+test regjoin {stdin} {
+	cg cat -m 1 data/reg1.tsv data/reg2.tsv | cg select -s - > tmp/reg.tsv
+	exec cg regjoin < tmp/reg.tsv
+} {chromosome	begin	end
+1	10	25
+1	45	60
+2	100	200
+2	300	500
+3	1000	1100
+3	2000	2100
+M	10	25
+X	90	200
+Y	1000	2000}
+
 test regjoin {basic} {
 	exec cg regjoin data/reg1.tsv data/reg3.tsv
 } {chromosome	begin	end

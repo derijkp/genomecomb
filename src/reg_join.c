@@ -31,7 +31,12 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr,"Format is: reg_join file1 chrpos1 startpos1 endpos1 file2 chrpos2 startpos2 endpos2");
 		exit(EXIT_FAILURE);
 	}
-	f1 = fopen64_or_die(argv[1],"r");
+	if (argv[1][0] == '-' && argv[1][1] == '\0') {
+		f1 = stdin;
+	} else {
+		f1 = fopen64_or_die(argv[1],"r");
+		skip_header(f1, &line,NULL,NULL);
+	}
 	chr1pos = atoi(argv[2]);
 	start1pos = atoi(argv[3]);
 	end1pos = atoi(argv[4]);
@@ -45,7 +50,6 @@ int main(int argc, char *argv[]) {
 	max2 = chr2pos ; if (start2pos > max2) {max2 = start2pos;} ; if (end2pos > max2) {max2 = end2pos;} ;
 NODPRINT("reg_join %s %d %d %d %s %d %d %d",argv[1],chr1pos,start1pos,end1pos,argv[5],chr2pos,start2pos,end2pos)
 	fprintf(stdout,"chromosome\tbegin\tend\n");
-	skip_header(f1, &line,NULL,NULL);
 	finished1 = get_region(f1,&line,chr1pos,start1pos,end1pos,max1,&chromosome1,&start1,&end1);
 	if (f2 != NULL) {
 		skip_header(f2, &line,NULL,NULL);
