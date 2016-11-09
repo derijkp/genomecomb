@@ -27,6 +27,7 @@ source tsv.tcl
 source val.tcl
 source varia.tcl
 source vcf2tsv.tcl
+source bam.tcl
 
 # long time, run separately
 # source process.tcl

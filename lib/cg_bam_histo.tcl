@@ -1,6 +1,5 @@
 proc cg_bam_histo {args} {
 	set pos 0
-	set namecol name
 	foreach {key value} $args {
 		switch -- $key {
 			-n - --namecol {
@@ -21,7 +20,14 @@ proc cg_bam_histo {args} {
 	set f [gzopen $regionfile]
 	set header [tsv_open $f]
 	set poss [tsv_basicfields $header 3]
-	set namepos [lsearch $header $namecol]
+	if {[info exists namecol]} {
+		set namepos [lsearch $header $namecol]
+	} else {
+		foreach namecol {name info} {
+			set namepos [lsearch $header $namecol]
+			if {$namepos != -1} break
+		}
+	}
 	lappend poss $namepos
 	set biv <[lindex $intervals 0]
 	set iv $biv
