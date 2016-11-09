@@ -14,4 +14,21 @@ test bam_histo {bam_histo} {
 	exec diff tmp/result.tsv genomecomb.testdata/expected/bam_histo-NA19240chr2122.tsv
 } {}
 
+test bam2fastq {bam2fastq} {
+	test_cleantmp
+	set bamfile genomecomb.testdata/exomes_yri_chr2122.reference/samples/NA19240chr2122/map-rdsbwa-NA19240chr2122.bam
+	cg bam2fastq $bamfile tmp/out_1.fq tmp/out_2.fq
+	exec gzip tmp/out_1.fq tmp/out_2.fq
+	exec diff tmp/out_1.fq.gz genomecomb.testdata/expected/NA19240chr2122_1.fq.gz
+	exec diff tmp/out_2.fq.gz genomecomb.testdata/expected/NA19240chr2122_2.fq.gz
+} {}
+
+test bam2fastq {bam2fastq} {
+	test_cleantmp
+	set bamfile genomecomb.testdata/exomes_yri_chr2122.reference/samples/NA19240chr2122/map-rdsbwa-NA19240chr2122.bam
+	cg bam2fastq $bamfile tmp/out_1.fq.gz tmp/out_2.fq.gz
+	exec diff tmp/out_1.fq.gz genomecomb.testdata/expected/NA19240chr2122_1.fq.gz
+	exec diff tmp/out_2.fq.gz genomecomb.testdata/expected/NA19240chr2122_2.fq.gz
+} {}
+
 testsummarize

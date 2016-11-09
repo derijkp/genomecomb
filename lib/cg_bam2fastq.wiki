@@ -1,17 +1,20 @@
 = bam2fastq =
 
 == Format ==
-cg bam2fastq bamfile fastqfile1 ?fastqfile2? ?fastqfile3?
+cg bam2fastq bamfile fastqfile1 ?fastqfile2?
 
 == Summary ==
 Extracts reads from a bamfile into fastq. 
-The code actually calls picard's SamToFastq for the conversion
+The actual extraction is based on picard's SamToFastq or samtools bam2fq, but the data is 
+prepared first (ao. sorted by name to avoid the problems caused by position sorted fq files)
+
+== Options ==
+; -m picard/sam (--method): which method is used underneath (default = picard)
 
 == Arguments ==
 ; **bamfile**: bamfile
-; **fastqfile1**: name of the fastq file that will contain the first read of each pair
+; **fastqfile1**: name of the fastq file that will contain the first read of each pair. If it has an extension .gz, the fastqs will be compressed
 ; **fastqfile2**: name of the fastq file that will contain the matching second read of each pair
-; **fastqfile3**: name of the fastq file that will contain unpaired reads (if present)
 
 == Category ==
 Conversion

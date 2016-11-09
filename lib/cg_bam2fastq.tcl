@@ -4,7 +4,7 @@ proc cg_bam2fastq {args} {
 	while 1 {
 		set key [lindex $args $pos]
 		switch -- $key {
-			-m {
+			-m - --method {
 				incr pos
 				set method [lindex $args $pos]
 			}
@@ -26,8 +26,17 @@ proc cg_bam2fastq {args} {
 	}
 	set fastqfile2 {}
 	foreach {bamfile fastqfile1 fastqfile2} $args break
+	set compress 0
+	if {[file extension $fastqfile1] eq ".gz"} {
+		set fastqfile1 [file root $fastqfile1]
+		set compress 1
+	}
+	if {[file extension $fastqfile2] eq ".gz"} {
+		set fastqfile2 [file root $fastqfile2]
+		set compress 1
+	}
 	set destdir [file dir $fastqfile1]
-	set tempbam $destdir/[file tail $bamfile].temp_namesorted.bam
+	set tempbam [tempfile]
 	# Aligning the generated fastq files may give problems/biases if the bam is sorted on position
 	# Sorting based on name should avoid this
 	exec samtools sort -n $bamfile [file root $tempbam] >@ stdout 2>@ stderr
@@ -60,6 +69,10 @@ proc cg_bam2fastq {args} {
 		file rename $fastqfile2.temp $fastqfile2
 	} else {
 		error "unknown method \"$method\", must be picard or sam"
+	}
+	if {$compress} {
+		exec gzip $fastqfile1
+		exec gzip $fastqfile2
 	}
 	file delete $tempbam
 }
