@@ -106,7 +106,7 @@ proc annot_coverage_get {dir sample chr begin {force 0}} {
 				}
 				bcol {
 					foreach {refbcol covbcol} $obj break
-					bcol_close $refbcol ; bcol_close $covbcol
+					catch {bcol_close $refbcol} ; catch {bcol_close $covbcol}
 				}
 			}
 		}
