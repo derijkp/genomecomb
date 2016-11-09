@@ -10,6 +10,7 @@ package require Extral
 set keeppath $::env(PATH)
 set script [info script] ; if {$script eq ""} {set script ./t}
 set testdir [file dir [file normalize $script]]
+set refseqdir $testdir/genomecomb.testdata/refseq
 set appdir [file dir [file dir [file normalize $script]]]
 append ::env(PATH) :$appdir/bin
 # putsvars ::env(PATH)
@@ -67,6 +68,8 @@ proc test_genomecombdir {} {
 
 lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
 
+# remove tmp if it is a unexisting link
+if {![file exists tmp]} {catch {file delete tmp}}
 file mkdir tmp
 test_cleantmp
 set dbopt {}
