@@ -32,5 +32,8 @@ source bam.tcl
 # long time, run separately
 # source process.tcl
 
+# large data
+# source homwes.tcl
+
 # not really used
 # source mselect.tcl

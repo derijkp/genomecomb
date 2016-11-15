@@ -19,48 +19,38 @@ proc cg_homwes {args} {
 	set vcf 0
 	set pos 0
 	set variantsonly 0
-	foreach {key value} $args {
-		switch -- $key {
-			-dbdir {
-				set dbdir $value
-			}
-			-callers {
-				set callers $value
-			}
-			-allowedheterozygous -- -htz {
-				set allowedheterozygous $value
-			}
-			-filterrepeats {
-				set filterrepeats $value
-			}
-			-genoqual {
-				set genoqual $value
-			}
-			-density {
-				set homozygdensity $value
-			}
-			-gap {
-				set homozyggap $value
-			}
-			-window {
-				set homozygwindowsnp $value
-			}
-			-variantsonly {
-				set variantsonly $value
-			}
-			-snpsonly {
-				set snpsonly $value
-			}
-			default break
+	cg_options homwes args {
+		-dbdir {
+			set dbdir $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	set len [llength $args]
-	if {$len < 2 || $len > 3} {
-		errorformat homwes
-		exit 1
-	}
+		-callers {
+			set callers $value
+		}
+		-allowedheterozygous -- -htz {
+			set allowedheterozygous $value
+		}
+		-filterrepeats {
+			set filterrepeats $value
+		}
+		-genoqual {
+			set genoqual $value
+		}
+		-density {
+			set homozygdensity $value
+		}
+		-gap {
+			set homozyggap $value
+		}
+		-window {
+			set homozygwindowsnp $value
+		}
+		-variantsonly {
+			set variantsonly $value
+		}
+		-snpsonly {
+			set snpsonly $value
+		}
+	} 2 3
 	set resultfile {}
 	foreach {annotcomparfile samples resultfile} $args break
 	set annotcomparfile [file_absolute $annotcomparfile]
@@ -217,8 +207,6 @@ proc cg_homwes {args} {
 			puts $o [join $line \t]
 		}
 		close $o
-		putslog "Recode"
-		exec plink --tfile $sworkbase --out temp --recode --transpose
 		putslog "Run homozygosity mapping"
 		exec plink --tfile $sworkbase --out $sworkbase --make-bed
 		exec plink --bfile $sworkbase --out $sworkbase --homozyg-window-snp $homozygwindowsnp  --homozyg-window-het $allowedheterozygous --homozyg-window-threshold 0.05 --homozyg-window-missing 10 --homozyg-snp 10  --homozyg-density $homozygdensity  --homozyg-gap $homozyggap --homozyg-group

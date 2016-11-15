@@ -34,7 +34,7 @@ resultfileroot-sample.tsv
 ; **-snpsonly**: only use variants of type snp (default 0)
 ; **-filterrepeats**: filter out variants in microsatelites or (other) simple repeats (default 1)
 ; **-genoqual**: filter out variants with a genoqual <= the given value (default 40)
-; **-htz**: numner of heterozygous snps allowed per window (default 1)
+; **-htz**: number of heterozygous snps allowed per window (default 1)
 ; **-density**: plink --homozyg-density option (default 200)
 ; **-gap**: plink --homozyg-gap option (default 4000)
 ; **-window**: plink --homozyg-window-snp option (default 20)
