@@ -1,0 +1,25 @@
+= hsmetrics =
+
+== Format ==
+cg hsmetrics ?options? bamfile targetfile resultfile
+
+== Summary ==
+Creates a hsmetrics file using picard CalculateHsMetrics 
+
+== Description ==
+This command makes the use of picard CalculateHsMetrics to calculates a
+set of Hybrid Selection specific metrics from an aligned BAM file a bit
+easier by autoconverting some of the input files, and adding a sample
+column. It does not support all the options of picard.
+
+== Options ==
+; -s sample (--sample): Give the name of the sample. If not given, it the name will be deduced from the bam filename
+; -b baitfile (--baitfile): tsv region file containing the bait regions. If not given, the target regions will also be used as bait regions.
+
+== Arguments ==
+; **bamfile**: bamfile
+; **targetfile**: tsv region file containing the target regions
+; **resultfile**: name of reulting file
+
+== Category ==
+Conversion

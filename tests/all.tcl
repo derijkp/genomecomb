@@ -27,6 +27,9 @@ source tsv.tcl
 source val.tcl
 source varia.tcl
 source vcf2tsv.tcl
+
+# next ones take longer, use larger data in genomecomb.testdata
+source reports.tcl
 source bam.tcl
 
 # long time, run separately
