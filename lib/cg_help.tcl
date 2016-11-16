@@ -18,11 +18,11 @@ proc help_get {action} {
 	} elseif {[auto_load helptext_$action]} {
 		set help [helptext_$action]
 	} else {
-		puts stderr "Unknown help topic \"$action\", known topics are:"
-		puts stderr "Docs:\n[help_docs]"
-		puts stderr "Commands:\n[help_actions]"
-		puts stderr "Use without arguments for overview"
-		exit 1
+		set msg "Unknown help topic \"$action\", known topics are:\n"
+		append msg "Docs:\n[help_docs]\n"
+		append msg "Commands:\n[help_actions]\n"
+		append msg "Use without arguments for overview"
+		error msg
 	}
 }
 
@@ -48,11 +48,36 @@ proc help_docs {} {
 	return $list
 }
 
-proc errorformat {action} {
-	set help [helpparts $action]
-	puts stderr "\nERROR: Wrong number of arguments, correct format is:"
-	puts stderr [dict get $help Format]
-	puts stderr "\nFor more help, use:\ncg $action -h\n"
+proc errorformat {action {options {}} {minargs {}} {maxargs {}} {parameters {}}} {
+	if {![catch {
+		set help [helpparts $action]
+	}]} {
+		puts stderr "\nERROR: Wrong number of arguments, correct format is:"
+		puts stderr [dict get $help Format]
+		puts stderr "\nFor more help, use:\ncg $action -h\n"
+	} else {
+		puts stderr "\nERROR: Wrong number of arguments, correct format is:"
+		set out "cg $action"
+		if {$options ne ""} {append out " ?options?"}
+		set pos 0
+		while {$pos < $minargs} {
+			set p [lindex $parameters $pos]
+			if {$p eq ""} {set p arg}
+			append out " $p"
+			incr pos
+		}
+		while {$pos < $maxargs} {
+			if {$pos >= [llength $parameters]} {
+				append out " ..."
+				break
+			}
+			set p [lindex $parameters $pos]
+			if {$p eq ""} {set p arg}
+			append out " ?$p?"
+			incr pos
+		}
+		puts stderr $out
+	}
 }
 
 proc helpparts {action} {

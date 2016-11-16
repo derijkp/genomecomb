@@ -43,8 +43,10 @@ proc cg {cmd args} {
 	}
 }
 
-proc cg_options {cmd argsVar def {minargs 0} {maxargs 2000000000}} {
+proc cg_options {cmd argsVar def {minargs 0} {maxargs 2000000000} {parameters {}}} {
+# putsvars cmd argsVar def minargs maxargs parameters
 	set options [join [list_unmerge $def] ,]
+	set parameters [list $parameters]
 	set fullcmd [subst -nocommands {
 		set pos 0
 		while 1 {
@@ -68,10 +70,13 @@ proc cg_options {cmd argsVar def {minargs 0} {maxargs 2000000000}} {
 		set $argsVar [lrange \$$argsVar \$pos end]
 		set len [llength \$$argsVar]
 		if {(\$len < $minargs) || (\$len > $maxargs)} {
-			errorformat $cmd
+			errorformat $cmd $options $minargs $maxargs $parameters
 			exit 1
 		}
 	}]
+	if {[llength [lindex $parameters 0]]} {
+		append fullcmd "foreach $parameters \$args break"
+	}
 	uplevel $fullcmd
 }
 
