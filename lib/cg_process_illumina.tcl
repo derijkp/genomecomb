@@ -138,40 +138,6 @@ proc fastq_clipadapters_job {files args} {
 	return $targets
 }
 
-proc gatkworkaround_tsv2bed_job {file refseq} {
-	upvar job_logdir job_logdir
-	job tsv2bed-[file tail $file] -deps {$file $refseq.index} -targets [file root $file].bed -code {
-		set f [open $dep2]
-		while {![eof $f]} {
-			set line [split [gets $f] \t]
-			set chr [lindex $line 0]
-			set chr [chr_clip $chr]
-			set maxa($chr) [lindex $line 1 1]
-		}
-		close $f
-		set f [gzopen $dep]
-		set header [tsv_open $f]
-		set poss [tsv_basicfields $header 3]
-		set temptarget [file_tempwrite $target]
-		set o [open $temptarget w]
-		while {![eof $f]} {
-			set line [split [gets $f] \t]
-			set line [list_sub $line $poss]
-			foreach {chr begin end} $line break
-			set cchr [chr_clip $chr]
-			if {[info exists maxa($cchr)]} {
-				if {$end > $maxa($cchr)} {set end $maxa($cchr)}
-			}
-			if {$end == $begin} continue
-			puts $o $chr\t$begin\t$end
-		}
-		close $o
-		gzclose $f
-		file rename -force $temptarget $target
-	}
-	return [file root $file].bed
-}
-
 proc bowtie2refseq_job {refseq} {
 	upvar job_logdir job_logdir
 	set bowtie2refseq $refseq.bowtie2/[file tail $refseq]
