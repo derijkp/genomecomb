@@ -35,6 +35,8 @@ proc cg_bam2fastq {args} {
 		set fastqfile2 [file root $fastqfile2]
 		set compress 1
 	}
+	set fastqfile1 [file_absolute $fastqfile1]
+	set fastqfile2 [file_absolute $fastqfile2]
 	set destdir [file dir $fastqfile1]
 	set tempbam [tempfile]
 	# Aligning the generated fastq files may give problems/biases if the bam is sorted on position
@@ -51,7 +53,7 @@ proc cg_bam2fastq {args} {
 		if {[catch {
 			if {$fastqfile2 ne ""} {
 				set picard [findpicard]
-				exec samtools view -hf 0x2 Sample.sorted.bam chr21 | java -jar $picard/SamToFastq.jar I=$tempbam F=$fastqfile1 F2=$fastqfile2 VALIDATION_STRINGENCY=SILENT >@ stdout
+				exec samtools view -hf 0x2 $tempbam | java -jar $picard/SamToFastq.jar I=/dev/stdin F=$fastqfile1.temp F2=$fastqfile2.temp VALIDATION_STRINGENCY=SILENT >@ stdout
 			} else {
 				picard SamToFastq I=$tempbam F=$fastqfile1 VALIDATION_STRINGENCY=SILENT >@ stdout
 			}
@@ -60,11 +62,13 @@ proc cg_bam2fastq {args} {
 				error $msg
 			}
 		}
+		file rename $fastqfile1.temp $fastqfile1
+		file rename $fastqfile2.temp $fastqfile2
 		puts stderr $msg
 	} elseif {$method eq "sam"} {
 		# just a try; this does not always keep mate pairs synced, so not very reliable
-		exec samtools view -uf64 x.bam | samtools bam2fq - > $fastqfile1.temp
-		exec samtools view -uf128 x.bam | samtools bam2fq - > $fastqfile2.temp
+		exec samtools view -uf64 $tempbam | samtools bam2fq - > $fastqfile1.temp
+		exec samtools view -uf128 $tempbam | samtools bam2fq - > $fastqfile2.temp
 		file rename $fastqfile1.temp $fastqfile1
 		file rename $fastqfile2.temp $fastqfile2
 	} else {
