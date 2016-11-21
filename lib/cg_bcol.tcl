@@ -109,9 +109,11 @@ proc bcol_open {indexfile {ra 0}} {
 	if {$version == 0} {
 		set begin [lindex $table 0 0]
 		set end [lindex $table end 0]
+		set chr [lindex [split [file tail $indexfile] -] end-1]
+		set chr [chr_clip $chr]
 		# end is not included for half open
 		incr end
-		set table [list [list {} $begin $end]]
+		set table [list [list $chr $begin $end]]
 	}
 	set newtable {}
 	set totalnum 0

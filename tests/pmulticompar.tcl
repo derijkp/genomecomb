@@ -101,7 +101,7 @@ test pmulticompar$testname {basic split} {
 	exec diff tmp/temp.sft data/expected-multicompar-reannot-split.tsv
 } {} 
 
-test pmulticompar$testname {add to existsing split} {
+test pmulticompar$testname {add to existing split} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
 	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
@@ -613,7 +613,7 @@ test pmulticompar$testname {split reannot split multiallelic varall,sreg,zyg, ch
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar$testname {split reannot split multiallelic ins,sreg,zyg} {
+test pmulticompar$testname {split reannot split multiallelic varall ins,sreg,zyg} {
 	test_cleantmp
 	write_tab tmp/var-sample1.tsv {
 		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	score
@@ -1074,6 +1074,7 @@ test pmulticompar$testname {split reannot, multiallelic, bcol, sreg,zyg, check r
 		chr2	151	152	43
 	}
 	cg bcol_make tmp/coverage-sample1.bcol coverage tmp/coverage-sample1.tsv
+	file delete tmp/coverage-sample1.tsv
 	write_tab tmp/var-sample2.tsv {
 		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage
 		chr1	150	152	del	GT	{}	t	GT	{}	22
@@ -1093,6 +1094,7 @@ test pmulticompar$testname {split reannot, multiallelic, bcol, sreg,zyg, check r
 		chr2	151	152	63
 	}
 	cg bcol_make tmp/coverage-sample2.bcol coverage tmp/coverage-sample2.tsv
+	file delete coverage tmp/coverage-sample2.tsv
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2
 		1	100	100	ins	{}	C	v	t	{}	C	21	r	r	{}	{}	51
@@ -1105,6 +1107,191 @@ test pmulticompar$testname {split reannot, multiallelic, bcol, sreg,zyg, check r
 	}
 	catch {file delete tmp/temp.tsv}
 	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar$testname {split, old bcol} {
+	test_cleantmp
+	# sample1
+	file mkdir tmp/sample1
+	write_tab tmp/sample1/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	20	50
+		chr2	20	50
+	}
+	write_tab tmp/sample1/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage
+		chr1	35	36	snp	A	T	m	T	T	15
+		chr1	40	41	snp	A	C	m	C	C	14
+		chr1	40	42	del	GT	{}	t	GT	{}	14
+	}
+	file mkdir tmp/sample1/coverage
+	file copy data/old-chr1.bcol tmp/sample1/coverage/coverage-1-sample1.bcol
+	file copy data/old-chr1.bcol.bin.rz tmp/sample1/coverage/coverage-1-sample1.bcol.bin.rz
+	file copy data/old-chr2.bcol tmp/sample1/coverage/coverage-2-sample1.bcol
+	file copy data/old-chr2.bcol.bin.rz tmp/sample1/coverage/coverage-2-sample1.bcol.bin.rz
+	# sample2
+	file mkdir tmp/sample2
+	write_tab tmp/sample2/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	zyg	alleleSeq1	alleleSeq2	coverage
+		chr1	35	35	ins	{}	C	v	t	{}	C	120
+		chr1	35	36	snp	A	T	v	t	A	T	120
+		chr1	160	161	snp	A	T	u	t	A	T	55
+		chr2	49	50	snp	A	T	v	t	A	T	10
+	}
+	file copy tmp/sample1/sreg-sample1.tsv tmp/sample2/sreg-sample2.tsv
+	file mkdir tmp/sample2/coverage
+	file copy data/old-chr2.bcol tmp/sample2/coverage/coverage-1-sample2.bcol
+	file copy data/old-chr2.bcol.bin.rz tmp/sample2/coverage/coverage-1-sample2.bcol.bin.rz
+	file copy data/old-chr1.bcol tmp/sample2/coverage/coverage-2-sample2.bcol
+	file copy data/old-chr1.bcol.bin.rz tmp/sample2/coverage/coverage-2-sample2.bcol.bin.rz
+	# old
+	# cg multicompar tmp/temp.tsv tmp/sample1/var-sample1.tsv tmp/sample2/var-sample2.tsv
+	# cg multicompar_reannot tmp/temp.tsv
+	# test vs expected
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2
+		1	35	35	ins	{}	C	r	r	{}	{}	15	v	t	{}	C	120
+		1	35	36	snp	A	T	v	m	T	T	15	v	t	A	T	120
+		1	40	41	snp	A	C	v	m	C	C	14	r	r	A	A	24
+		1	40	42	del	GT	{}	v	t	GT	{}	14	r	r	GT	GT	24
+		1	160	161	snp	A	T	u	u	?	?	0	u	t	A	T	55
+		2	49	50	snp	A	T	r	r	A	A	25	v	t	A	T	10
+	}
+	catch {file delete tmp/temp.tsv}
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/sample1/var-sample1.tsv tmp/sample2/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar$testname {split reannot, multiallelic, regfile} {
+	test_cleantmp
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+		chr2	50	200
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage
+		chr1	100	100	ins	{}	C	t	{}	C	1
+		chr1	151	152	snp	A	T	t	A	T	1
+		chr1	160	162	del	NN	{}	m	{}	{}	{}
+		chr2	150	151	snp	G	C	m	C	C	{}
+		chr2	151	152	snp	G	C	m	C	C	{}
+	}
+	write_tab tmp/reg_coverage-sample1.tsv {
+		chromosome	begin	end
+		chr1	100	155
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage
+		chr1	150	152	del	GT	{}	t	GT	{}	2
+		chr1	160	161	snp	A	C	t	A	C	{}
+		chr1	160	161	snp	A	T	t	A	T	{}
+	}
+	write_tab tmp/reg_coverage-sample2.tsv {
+		chromosome	begin	end	score
+		chr1	101	162	2
+		chr2	100	102	3
+		chr2	120	151	4
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2
+		1	100	100	ins	{}	C	v	t	{}	C	1	r	r	{}	{}	{}
+		1	150	152	del	GT	{}	r	r	GT	GT	1	v	t	GT	{}	2
+		1	151	152	snp	A	T	v	t	A	T	1	r	o	A	@	2
+		1	160	161	snp	A	C	r	o	@	@	{}	v	t	A	C	{}
+		1	160	161	snp	A	T	r	o	@	@	{}	v	t	A	T	{}
+		1	160	162	del	NN	{}	v	m	{}	{}	{}	r	r	NN	NN	2
+		2	150	151	snp	G	C	v	m	C	C	{}	r	r	G	G	4
+		2	151	152	snp	G	C	v	m	C	C	{}	r	r	G	G	{}
+	}
+	catch {file delete tmp/temp.tsv}
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar$testname {split reannot, multiallelic, regfile} {
+	test_cleantmp
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+		chr2	50	200
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage
+		chr1	100	100	ins	{}	C	t	{}	C	1
+		chr1	151	152	snp	A	T	t	A	T	1
+		chr1	160	162	del	NN	{}	m	{}	{}	{}
+		chr2	150	151	snp	G	C	m	C	C	{}
+		chr2	151	152	snp	G	C	m	C	C	{}
+	}
+	write_tab tmp/reg_coverage-sample1.tsv {
+		chromosome	begin	end
+		chr1	100	155
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage
+		chr1	150	152	del	GT	{}	t	GT	{}	2
+		chr1	160	161	snp	A	C	t	A	C	{}
+		chr1	160	161	snp	A	T	t	A	T	{}
+	}
+	write_tab tmp/reg_coverage-sample2.tsv {
+		chromosome	begin	end	score
+		chr1	101	162	2
+		chr2	100	102	3
+		chr2	120	151	4
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2
+		1	100	100	ins	{}	C	v	t	{}	C	1	r	r	{}	{}	{}
+		1	150	152	del	GT	{}	r	r	GT	GT	1	v	t	GT	{}	2
+		1	151	152	snp	A	T	v	t	A	T	1	r	o	A	@	2
+		1	160	161	snp	A	C	r	o	@	@	{}	v	t	A	C	{}
+		1	160	161	snp	A	T	r	o	@	@	{}	v	t	A	T	{}
+		1	160	162	del	NN	{}	v	m	{}	{}	{}	r	r	NN	NN	2
+		2	150	151	snp	G	C	v	m	C	C	{}	r	r	G	G	4
+		2	151	152	snp	G	C	v	m	C	C	{}	r	r	G	G	{}
+	}
+	catch {file delete tmp/temp.tsv}
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar$testname {coverageRefScore tsv file} {
+	test_cleantmp
+	file mkdir tmp/sample1/coverage
+	write_tab tmp/sample1/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage	refscore
+		chr21	16050007	16050008	snp	A	T	t	A	T	1	5
+	}
+	write_tab tmp/sample1/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr21	16050000	16050100
+		chr22	16050000	16050100
+	}
+	file copy data/cgtest.tsv tmp/sample1/coverage/coverageRefScore-21-sample1.tsv
+	exec gzip tmp/sample1/coverage/coverageRefScore-21-sample1.tsv
+	file copy data/cgtest.tsv tmp/sample1/coverage/coverageRefScore-22-sample1.tsv
+	exec gzip tmp/sample1/coverage/coverageRefScore-22-sample1.tsv
+	file mkdir tmp/sample2/coverage
+	write_tab tmp/sample2/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage
+		chr22	16050008	16050009	snp	G	C	t	G	C	4
+	}
+	file copy tmp/sample1/sreg-sample1.tsv tmp/sample2/sreg-sample2.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	refscore-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2
+		21	16050007	16050008	snp	A	T	v	t	A	T	1	5	r	r	A	A	3
+		22	16050008	16050009	snp	G	C	r	r	G	G	2	10	v	t	G	C	4
+	}
+	file copy data/cgtest.tsv tmp/sample2/coverage/coverageRefScore-21-sample2.tsv
+	exec gzip tmp/sample2/coverage/coverageRefScore-21-sample2.tsv
+	file copy data/cgtest.tsv tmp/sample2/coverage/coverageRefScore-22-sample2.tsv
+	exec gzip tmp/sample2/coverage/coverageRefScore-22-sample2.tsv
+	catch {file delete tmp/temp.tsv}
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/sample1 tmp/sample2
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 

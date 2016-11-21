@@ -90,6 +90,328 @@ proc pmulticompar_findsample {basedir sample args} {
 	return {}
 }
 
+proc multicompar_tcl_addvars_coverageRefScore {data restVar pos chromosome begin} {
+	upvar $restVar rest
+	foreach {covpos refscorepos cr_file f poss rchr rpos rcoverage rrefscore} $data break
+	if {$rchr ne $chromosome} {
+		if {$f ne ""} {gzclose $f}
+		set tail [split [file tail $cr_file] -]
+		set newfile [file dir $cr_file]/[join [lrange $tail 0 end-2] -]-$chromosome-[lindex $tail end]
+		if {[file exists $newfile]} {
+			set f [gzopen $newfile]
+			set rchr $chromosome
+			set h [tsv_open $f]
+			set poss [list_cor $h {offset uniqueSequenceCoverage refScore}]
+			set l [split [gets $f] \t]
+			foreach {cr_prevpos cr_prevcov cr_prevrefscore} $l break
+		} else {
+			if {![inlist {Y chrY} $chromosome]} {
+				putslog "coverage(RefScore) file not found ($newfile))"
+			}
+			set f ""
+			set rchr ""
+		}
+	}
+	if {$f ne ""} {
+		set match 0
+		while 1 {
+			if {$rpos > $begin} break
+			if {$rpos == $begin} {
+				set match 1 ; break
+			}
+			if {[gets $f line] == -1} break
+			set line [split $line \t]
+			foreach {rpos rcoverage rrefscore} [list_sub $line $poss] break
+		}
+		if {$match} {
+			if {$covpos != -1} {lset rest $covpos $rcoverage}
+			if {$refscorepos != -1} {lset rest $refscorepos $rrefscore}
+		} else {
+			lset rest $covpos 0
+		}
+	}
+	list $covpos $refscorepos $cr_file $f $poss $rchr $rpos $rcoverage $rrefscore
+}
+
+proc multicompar_tcl_addvars {sample target split allvarsfile samplevarsfile sregfile varallfile bcolannot oldbcolannot regfiles coverageRefScorefiles keepfields} {
+#puts "Using Tcl version"
+# putsvars sample target split allvarsfile samplevarsfile sregfile varallfile bcolannot oldbcolannot regfiles coverageRefScorefiles keepfields
+	catch {close $allvars} ; set allvars [gzopen $allvarsfile]
+	set allheader [tsv_open $allvars]
+	if {$allheader ne "chromosome begin end type ref alt"} {error "internal error: index vars.tsv in wrong format"}
+	set allposs [tsv_basicfields $allheader 6 0]
+	#
+	catch {close $orivars} ; set orivars [gzopen $samplevarsfile]
+	set oriheader [tsv_open $orivars]
+	set keepposs [list_cor $oriheader $keepfields]
+	set cposs [list_cor $oriheader {sequenced zyg alleleSeq1 alleleSeq2}]
+	foreach {oriseqpos orizygpos oria1pos oria2pos} $cposs break
+	set oriposs [tsv_basicfields $oriheader 6 0]
+	lappend oriposs {*}$cposs
+	# blanks will be used as a start for rest, see which sources we have to fil in the blanks
+	set blanks [list_fill [llength $keepposs] ?]
+	set todo {}
+	unset -nocomplain todoa
+	foreach {pos bcolfile} $bcolannot {
+		if {[info exists todoa($pos)]} continue
+		lappend todo $pos bcol
+		set todoa($pos) [bcol_open $bcolfile]
+	}
+	foreach {pos bcolfile} $oldbcolannot {
+		if {[info exists todoa($pos)]} continue
+		lappend todo $pos oldbcol
+		set todoa($pos) [bcol_open $bcolfile]
+	}
+	foreach {pos regfile regfield} $regfiles {
+		if {[info exists todoa($pos)]} continue
+		set f [gzopen $regfile]
+		set header [tsv_open $f]
+		set poss [tsv_basicfields $header 3]
+		set scorepos [lsearch $header $regfield]
+		lappend poss $scorepos
+		lappend todo $pos regfile
+		set line [gets $f]
+		foreach {rchr rbegin rend rscore} [list_sub $line $poss] break
+		set todoa($pos) [list $f $poss $scorepos $rchr $rbegin $rend $rscore]
+	}
+	if {$coverageRefScorefiles ne ""} {
+		set covpos [lsearch $keepfields coverage]
+		if {[info exists todoa($covpos)]} {set covpos -1}
+		set refscorepos [lsearch $keepfields refscore]
+		if {[info exists todoa($refscorepos)]} {set refscorepos -1}
+		if {$covpos != -1} {
+			lappend todo $covpos coverageRefScore
+			set todoa($covpos) [list $covpos $refscorepos $coverageRefScorefiles]
+		} elseif {$refscorepos != -1} {
+			lappend todo $refscorepos coverageRefScore
+			set todoa($refscorepos) [list $covpos $refscorepos $coverageRefScorefiles]
+		}
+	}
+	# first oriline
+	set oriline [split [gets $orivars] \t]
+	set oriloc [list_sub $oriline $oriposs]
+	foreach {orichromosome oribegin oriend oritype oriref orialt oriseq orizyg oria1 oria2} [list_sub $oriline $oriposs] break
+	set orichromosome [chr_clip $orichromosome]
+	if {$oritype eq "del"} {
+		set oridelchromosome $orichromosome; set oridelbegin $oribegin ; set oridelend $oriend ; set oridelzyg $orizyg
+	} else {
+		set oridelchromosome "" ; set oridelbegin -1 ; set oridelend -1 ; set oridelzyg m;
+	}
+	#
+	if {[file exists $sregfile]} {
+		catch {close $sreg} ; set sreg [gzopen $sregfile]
+		set sregheader [tsv_open $sreg]
+		set sregposs [tsv_basicfields $sregheader 3 0]
+		set sregline [split [gets $sreg] \t]
+		foreach {sregchromosome sregbegin sregend} [list_sub $sregline $sregposs] break
+		set sregchromosome [chr_clip $sregchromosome]
+	} else {
+		set sreg ""
+	}
+	#
+	catch {close $o} ; set o [open $target w]
+	set newheader [list sequenced-$sample]
+	if {$orizygpos != -1} {lappend newheader zyg-$sample}
+	if {$oria1pos != -1} {lappend newheader alleleSeq1-$sample}
+	if {$oria2pos != -1} {lappend newheader alleleSeq2-$sample}
+	foreach field $keepfields {
+		lappend newheader $field-$sample
+	}
+	puts $o [join $newheader \t]
+	#
+	set prevcomp -2
+	while 1 {
+		if {[gets $allvars line] == -1} break
+		set line [split $line \t]
+		foreach {chromosome begin end type ref alt} $line break
+		set chromosome [chr_clip $chromosome]
+# putsvars chromosome begin end type orichromosome oribegin oriend oritype
+		if {$orichromosome eq $chromosome && $oribegin == $begin && $oriend == $end && $oritype == $type} {
+			if {$orialt eq $alt} {
+				set comp 0
+			} else {
+				set comp -1
+			}
+		} else {
+			set comp -2
+		}
+		if {$comp == 0 || (!$split && $comp == -1)} {
+			# match, output
+			if {$oriseq eq ""} {set oriseq v}
+			set result $oriseq
+			if {$orizygpos != -1} {lappend result $orizyg}
+			if {$oria1pos != -1} {lappend result $oria1}
+			if {$oria2pos != -1} {lappend result $oria2}
+			lappend result {*}[list_sub $oriline $keepposs]
+			puts $o [join $result \t]
+			# next oriline
+			set prevline $oriline ; set prevcomp $comp ; set prevchromosome $chromosome ; set prevbegin $oribegin ; set prevend $oriend ; set prevtype $oritype ; set preva1 $oria1 ; set preva2 $oria2
+			if {[gets $orivars oriline] != -1} {
+				set oriline [split $oriline \t]
+				foreach {orichromosome oribegin oriend oritype oriref orialt oriseq orizyg oria1 oria2} [list_sub $oriline $oriposs] break
+				set orichromosome [chr_clip $orichromosome]
+				if {$oritype eq "del"} {
+					set oridelchromosome $orichromosome; set oridelbegin $oribegin ; set oridelend $oriend ; set oridelzyg $orizyg
+				} elseif {$orichromosome ne $oridelchromosome} {
+					set oridelchromosome "" ; set oridelbegin -1 ; set oridelend -1 ; set oridelzyg m;
+				}
+			} else {
+				set orichromosome {}
+				set oridelchromosome "" ; set oridelbegin -1 ; set oridelend -1 ; set oridelzyg m;
+			}
+			continue
+		}
+		set rest $blanks
+		if {$split && $comp == -1} {
+			set out_seq r
+			set out_a1 $oria1
+			set out_a2 $oria2
+			if {$out_a1 ne $ref || $out_a2 ne $ref} {
+				set out_zyg o
+			} else {
+				set out_zyg r
+			}
+			# do not take values from ori (some values are likely allele specific)
+			# set rest [list_sub $oriline $keepposs]
+		} elseif {$split && $prevcomp == 0 && $prevchromosome eq $chromosome && $prevbegin == $begin && $prevend == $end && $prevtype == $type} {
+			# if split and match to previous (except allele), take data of previous
+			# putsvars split prevcomp chromosome begin end type prevchromosome prevbegin prevend prevtype
+			set out_seq r
+			set out_a1 $preva1
+			set out_a2 $preva2
+			set out_zyg ?
+			if {$out_a1 ne $ref || $out_a2 ne $ref} {
+				set out_zyg o
+			} else {
+				set out_zyg r
+			}
+			# do not take values from ori (some values are likely allele specific)
+			# set rest [list_sub $prevline $keepposs]
+		} elseif {$sreg eq ""} {
+			set out_seq ?
+			set out_zyg ?
+			set out_a1 ?
+			set out_a2 ?
+		} else {
+			while 1 {
+				set chrcomp [loc_compare $sregchromosome $chromosome]
+				if {$chrcomp > 0} break
+				if {$chrcomp == 0 && $sregend > $begin} break
+				if {[gets $sreg sregline] == -1} {set chrcomp 2; break}
+				set sregline [split $sregline \t]
+				foreach {sregchromosome sregbegin sregend} [list_sub $sregline $sregposs] break
+				set sregchromosome [chr_clip $sregchromosome]
+			}
+			if {$chrcomp == 0 && $begin >= $sregbegin && $end <= $sregend} {
+				# putsvars chromosome begin end oridelchromosome oridelend oridelbegin
+				if {$oridelchromosome eq $chromosome && $begin < $oridelend && $end > $oridelbegin} {
+					set out_seq r
+					set out_zyg o
+					if {$oridelzyg == "m"} {
+						set out_a1 @ ; set out_a2 @
+					} elseif {$oridelzyg in "t c"} {
+						set out_a1 $ref ; set out_a2 @
+					} else {
+						set out_a1 $ref ; set out_a2 $ref
+					}
+				} else {
+					set out_seq r
+					set out_zyg r
+					set out_a1 $ref
+					set out_a2 $ref
+				}
+			} else {
+				set out_seq u
+				set out_zyg u
+				set out_a1 ?
+				set out_a2 ?
+			}
+		}
+#if {$begin == 150} {error stop}
+		foreach {pos type} $todo {
+			switch $type {
+				bcol {
+					set bcol $todoa($pos)
+					set value [bcol_get $bcol $begin $begin $chromosome]
+					lset rest $pos $value
+				}
+				oldbcol {
+					set bcol $todoa($pos)
+					if {[lindex [dict get $bcol tablechr] 0] ne $chromosome} {
+						set oldfile [dict get $bcol file]
+						set tail [split [file tail $oldfile] -]
+						set newfile [file dir $oldfile]/[join [lrange $tail 0 end-2] -]-$chromosome-[lindex $tail end]
+						bcol_close $bcol
+						if {[file exists $newfile]} {
+							set bcol [bcol_open $newfile]
+						} elseif {[inlist {Y chrY} $chr]} {
+							set bcol [dict create tablechr $chromosome notpresent 1]
+						} else {
+							putslog "bcol file not found ($newfile)"
+							set bcol [dict create tablechr $chromosome notpresent 1]
+						}
+						set todoa($pos) $bcol
+					}
+					if {![dict exists $bcol notpresent]} {
+						set value [bcol_get $bcol $begin $begin $chromosome]
+						lset rest $pos $value
+					}
+				}
+				regfile {
+					foreach {f poss scorepos rchr rbegin rend rscore} $todoa($pos) break
+					# putsvars chromosome begin end rchr rbegin rend rscore
+					set match 0
+					while 1 {
+						set chrcomp [loc_compare $rchr $chromosome]
+						if {$chrcomp > 0} break
+						if {$chrcomp == 0} {
+							if {$rbegin >= $end} break
+							if {$rend > $begin} {
+								set match 1 ; break
+							}
+						}
+						if {[gets $f line] == -1} break
+						set line [split $line \t]
+						foreach {rchr rbegin rend rscore} [list_sub $line $poss] break
+					}
+					if {$scorepos == -1} {set rscore 1}
+					if {$match} {
+						lset rest $pos $rscore
+					} else {
+						lset rest $pos {}
+					}
+					set todoa($pos) [list $f $poss $scorepos $rchr $rbegin $rend $rscore]
+				}
+				coverageRefScore {
+					set todoa($pos) [multicompar_tcl_addvars_coverageRefScore $todoa($pos) rest $pos $chromosome $begin]
+				}
+			}
+		}
+		set result $out_seq
+		if {$orizygpos != -1} {lappend result $out_zyg}
+		if {$oria1pos != -1} {lappend result $out_a1}
+		if {$oria2pos != -1} {lappend result $out_a2}
+		lappend result {*}$rest
+		puts $o [join $result \t]
+		set prevcomp $comp
+	}
+	foreach {pos type} $todo {
+		switch $type {
+			bcol {
+				bcol_close $todoa($pos)
+			}
+			oldbcol {
+				bcol_close $todoa($pos)
+			}
+			regfile {
+				foreach {f poss scorepos rchr rbegin rend rscore} $todoa($pos) break
+				gzclose $f
+			}
+		}
+	}
+	close $o; catch {close $allvars} ; catch {close $orivars}; catch {close $sreg}
+}
+
 proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {erroronduplicates 0} {skipincomplete 0}} {
 # putsvars compar_file dirs regonly split targetsfile erroronduplicates
 	if {[jobfileexists $compar_file]} {
@@ -117,9 +439,12 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 				set samplesa($sample) $file
 				lappend samples $sample
 			} else {
-				set files [jobglob $dir/var-*-$sample.tsv]
-				if {![llength $files]} {error "no variant files found in dir $dir"}
-				foreach file $files {
+				set tempfiles [jobglob $dir/var-*-$sample.tsv]
+				if {![llength $tempfiles]} {
+					set tempfiles [jobglob $dir/var-$sample.tsv]
+				}
+				if {![llength $tempfiles]} {error "no variant files found in dir $dir"}
+				foreach file $tempfiles {
 					set base [file root [file tail [gzroot $file]]]
 					set file [gzfile $file]
 					set sample [sourcename $base]
@@ -210,7 +535,10 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 		set deps [list $allvarsfile $samplevarsfile]
 		if {[jobfileexists $sregfile]} {lappend deps $sregfile}
 		if {[jobfileexists $varallfile]} {lappend deps $varallfile}
+		# add all possibly usefull files to deps, which ones are actually used is decided in the job
 		lappend deps {*}[jobglob $sampledir/*-$sample.bcol]
+		lappend deps {*}[jobglob $sampledir/coverage*/*-$sample.bcol]
+		lappend deps {*}[jobglob $sampledir/coverage*/*-$sample.tsv]
 		job multicompar_addvars-$sample -force 1 -deps $deps -targets {$target} \
 		  -vars {allvarsfile samplevarsfile sregfile varallfile sample split sampledir} -code {
 			set vf [gzopen $allvarsfile]
@@ -236,10 +564,44 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 				lappend reannotheader sequenced-$sample
 			}
 			set bcolannot {}
-			foreach file [glob -nocomplain $sampledir/*-$sample.bcol] {
-				set field [string range [file tail $file] 0 end-[string length -$sample.bcol]]
-				set pos [lsearch $keepfields $field]
-				if {$pos != -1} {lappend bcolannot $pos $file}
+			set oldbcolannot {}
+			set regfiles {}
+			set coverageRefScorefiles {}
+			set allfound 1
+			set pos 0
+			foreach field $keepfields {
+				if {$field eq "refscore"} {set field refScore}
+				set file $sampledir/${field}-$sample.bcol
+				if {[file exists $file]} {
+					lappend bcolannot $pos $file
+					incr pos ; continue
+				}
+				set allfound 0
+				set file [lindex [glob -nocomplain $sampledir/coverage*/${field}-*-$sample.bcol] 0]
+				if {$file ne ""} {
+					lappend oldbcolannot $pos $file
+					incr pos ; continue
+				}
+				set file [lindex [gzfiles $sampledir/reg_${field}-$sample.tsv] 0]
+				if {$file ne ""} {
+					set f [gzopen $file]
+					set header [tsv_open $f]
+					gzclose $f
+					set regfield {}
+					if {[lsearch $header $field] != -1} {
+						set regfield $field
+					} elseif {[lsearch $header score] != -1} {
+						set regfield score
+					} elseif {[lsearch $header name] != -1} {
+						set regfield name
+					}
+					lappend regfiles $pos $file $regfield
+					incr pos ; continue
+				}
+				if {$field in {coverage refscore}} {
+					set coverageRefScorefiles [lindex [gzfiles $sampledir/coverage*/coverageRefScore-*-$sample.tsv] 0]
+				}
+				incr pos
 			}
 			set numbcolannot [expr {[llength $bcolannot]/2}]
 			set newheader [list sequenced-$sample]
@@ -254,11 +616,17 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 			close $o
 			set sregfile [lindex [gzfiles $sregfile] 0]
 			set varallfile [lindex [gzfiles $varallfile] 0]
-			# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot {*}$bcolannot {*}$keepposs]
-			exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot {*}$bcolannot {*}$keepposs >> $target.temp
+#			exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot {*}$bcolannot {*}$keepposs >> $target.temp
+			if {1 && ($varallfile ne "" || $allfound || (![llength $oldbcolannot] && ![llength $regfiles] && ![llength $coverageRefScorefiles]))} {
+				# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot {*}$bcolannot {*}$keepposs]
+				exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot {*}$bcolannot {*}$keepposs >> $target.temp
+			} else {
+				multicompar_tcl_addvars $sample $target.temp $split $allvarsfile $samplevarsfile $sregfile $varallfile $bcolannot $oldbcolannot $regfiles $coverageRefScorefiles $keepfields
+			}
 			file rename -force $target.temp $target
 		}
 	}
+#error stopped
 	if {$targetsfile ne ""} {
 		# add targetsfile annotation
 		set target $workdir/targets_annot.tsv
@@ -289,9 +657,10 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 	}
 	#
 	# paste all together for final multicompar
-	# set pastefiles {}
 	# putsvars pastefiles
-	tsv_paste_job $compar_file $pastefiles -forcepaste 1 -endcommand [list file delete {*}$pastefiles]
+	set endcommand [list file delete {*}$pastefiles]
+	set endcommand {}
+	tsv_paste_job $compar_file $pastefiles -forcepaste 1 -endcommand $endcommand
 }
 
 proc cg_pmulticompar {args} {
