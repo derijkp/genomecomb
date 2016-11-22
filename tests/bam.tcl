@@ -6,12 +6,23 @@ source tools.tcl
 
 test bam_histo {bam_histo} {
 	test_cleantmp
-	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19_test/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/regfile.tsv
+	file copy data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
+	set namecol info
+	set regionfile tmp/regfile.tsv
+	set bamfile genomecomb.testdata/exomes_yri_chr2122.reference/samples/NA19240chr2122/map-rdsbwa-NA19240chr2122.bam
+	set intervals {1 5 10 20 50 100 200 500 1000}
+	cg bam_histo -n $namecol $regionfile $bamfile $intervals > tmp/result.tsv
+	exec diff tmp/result.tsv genomecomb.testdata/expected/bam_histo-NA19240_smallpartchr2122.tsv
+} {}
+
+test bam_histo {bam_histo chr_clipped} {
+	test_cleantmp
+	cg select -f {chromosome=chr_clip($chromosome) begin end info} data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
 	set regionfile tmp/regfile.tsv
 	set bamfile genomecomb.testdata/exomes_yri_chr2122.reference/samples/NA19240chr2122/map-rdsbwa-NA19240chr2122.bam
 	set intervals {1 5 10 20 50 100 200 500 1000}
 	cg bam_histo -n info $regionfile $bamfile $intervals > tmp/result.tsv
-	exec diff tmp/result.tsv genomecomb.testdata/expected/bam_histo-NA19240chr2122.tsv
+	exec diff tmp/result.tsv genomecomb.testdata/expected/bam_histo-NA19240_smallpartchr2122.tsv
 } {}
 
 test bam2fastq {bam2fastq} {

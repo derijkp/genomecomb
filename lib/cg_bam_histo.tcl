@@ -17,6 +17,11 @@ proc cg_bam_histo {args} {
 		exiterror "wrong # args: should be \"cg bam_histo regionfile bamfile intervals\""
 	}
 	foreach {regionfile bamfile intervals} $args break
+	set chrs [bam_chrs $bamfile]
+	if {[regexp ^chr [lindex $chrs 0]]} {set pre chr} else {set pre {}}
+	foreach bamchr $chrs {
+		set bamchrsa($bamchr) 1
+	}
 	set f [gzopen $regionfile]
 	set header [tsv_open $f]
 	set poss [tsv_basicfields $header 3]
@@ -91,8 +96,13 @@ proc cg_bam_histo {args} {
 			if {[eof $f]} break
 		}
 		incr end -1
+		set chr [chr_clip $chr]
 		putslog $chr:$begin-$end
-		set data [split [string trim [exec samtools depth -q 1 -r $chr:[expr {$begin+1}]-[expr {$end+1}] $bamfile]] \n]
+		if {![info exists bamchrsa($pre$chr)]} {
+			if {$chr eq "M"} {set chr MT} elseif {$chr eq "MT"} {set chr M}
+		}
+		set temp [exec samtools depth -q 1 -r $pre$chr:[expr {$begin+1}]-[expr {$end+1}] $bamfile]
+		set data [split [string trim $temp] \n]
 		set data [list_subindex $data 2]
 		set explen [expr {$end-$begin+1}]
 		set missing [expr {$explen-[llength $data]}]
