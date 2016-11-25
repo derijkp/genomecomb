@@ -43,6 +43,15 @@ proc gatk {} {
 	return $gatk
 }
 
+proc gatkversion {{minversion {}}} {
+	global gatkversion
+	set gatk [gatk]
+	if {![info exists gatkversion]} {
+		set gatkversion [exec java -jar $gatk --version]
+	}
+	return $gatkversion
+}
+
 proc bcl2fastq {} {
 	global bcl2fastq
 	if {![info exists bcl2fastq]} {

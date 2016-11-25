@@ -433,7 +433,12 @@ proc bam_clean_job {args} {
 			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
 			-vars {gatkrefseq gatk pre realignopts} {*}$skips -code {
 				exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
-				exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp 2>@ stderr >@ stdout
+				if {[loc_compare [gatkversion] 3] >= 0} {
+					set extra {--filter_bases_not_stored}
+				} else {
+					set extra {}
+				}
+				exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp $extra 2>@ stderr >@ stdout
 				catch {file rename -force $target.temp.bai $target.bai}
 				catch {file delete $target.intervals}
 				file rename -force $target.temp $target
