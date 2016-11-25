@@ -1,6 +1,8 @@
 package require Extral
 catch {tk appname test}
 
+set bigtestdir /data/genomecomb.testdata
+
 package require pkgtools
 namespace import pkgtools::*
 package require Extral
@@ -17,7 +19,7 @@ append ::env(PATH) :$appdir/bin
 set env(SCRATCHDIR) [file dir [tempdir]]
 
 proc test_cleantmp {} {
-	foreach file [glob -nocomplain tmp/*] {
+	foreach file [glob -nocomplain tmp/* $::bigtestdir/tmp/*] {
 		catch {file attributes $file -permissions ugo+xw}
 		catch {file delete -force $file}
 	}

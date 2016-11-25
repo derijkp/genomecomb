@@ -31,12 +31,13 @@ source vcf2tsv.tcl
 # next ones take longer, use larger data in genomecomb.testdata
 source reports.tcl
 source bam.tcl
+source homwes.tcl
+source process.tcl
 
 # long time, run separately
-# source process.tcl
+# source process_large.tcl
 
 # large data
-# source homwes.tcl
 
 # not really used
 # source mselect.tcl
