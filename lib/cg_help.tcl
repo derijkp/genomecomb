@@ -18,11 +18,11 @@ proc help_get {action} {
 	} elseif {[auto_load helptext_$action]} {
 		set help [helptext_$action]
 	} else {
-		set msg "Unknown help topic \"$action\", known topics are:\n"
-		append msg "Docs:\n[help_docs]\n"
-		append msg "Commands:\n[help_actions]\n"
+		set msg "Unknown help topic \"$action\", known topics are:\n\n"
+		append msg "Docs:\n[help_docs]\n\n"
+		append msg "Commands:\n[help_actions]\n\n"
 		append msg "Use without arguments for overview"
-		error msg
+		error $msg
 	}
 }
 
@@ -263,7 +263,7 @@ introductory text to genomecomb and its formats, use
 cg help intro
 }}}
 All genomecombs functions are called using the cg command and a subcommand. 
-The available subcommand are listed on this page (in categories) with a short description.
+The available subcommands are listed on this page (in categories) with a short description.
 To get further info on how to use the subcommands and their parameters, use
 {{{
 cg help subcommand
