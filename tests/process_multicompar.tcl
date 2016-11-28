@@ -29,6 +29,7 @@ proc reorder {file dest} {
 
 set testname _direct
 set jobopts {}
+
 foreach {testname jobopts} {
 	_direct {}
 	_d4 {-d 4}
@@ -124,6 +125,42 @@ test process_multicompar$testname {process_multicompar varall} {
 	cg process_multicompar {*}$::jobopts -dbdir /complgen/refseq/hg19_test -split 0 tmp
 	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
 	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-2sample.sft
+} {} 
+
+test process_multicompar$testname {process_multicompar -varfiles} {
+	test_cleantmp
+	file mkdir tmp/samples/sample1
+	file mkdir tmp/samples/sample2
+	file mkdir tmp/samples/sample3
+	cg splitalleles data/var_annot.sft > tmp/samples/sample1/var-sample1.tsv
+	cg splitalleles data/var_annot2.sft > tmp/samples/sample2/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.sft > tmp/samples/sample3/prevar-sample3.tsv
+	cg select -f {sequenced *} tmp/samples/sample3/prevar-sample3.tsv tmp/samples/sample3/var-sample3.tsv
+	file copy data/sreg-annot1.sft tmp/samples/sample1/sreg-sample1.tsv
+	file copy data/sreg-annot2.sft tmp/samples/sample2/sreg-sample2.tsv
+	file copy data/sreg-annot2.sft tmp/samples/sample3/sreg-sample3.tsv
+	cg process_multicompar {*}$::jobopts -dbdir /complgen/refseq/hg19_test -split 1 -varfiles {tmp/samples/sample1/var-sample1.tsv tmp/samples/sample2/var-sample2.tsv} tmp
+	cg select -rf {*-sample3} data/expected-multicompar-split-reannot.sft tmp/expected.tsv.temp
+	cg select -q {scount($sequenced eq "v") > 0} tmp/expected.tsv.temp tmp/expected.tsv
+	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
+} {} 
+
+test process_multicompar$testname {process_multicompar -varfiles pattern} {
+	test_cleantmp
+	file mkdir tmp/samples/sample1
+	file mkdir tmp/samples/sample2
+	file mkdir tmp/samples/s3
+	cg splitalleles data/var_annot.sft > tmp/samples/sample1/var-sample1.tsv
+	cg splitalleles data/var_annot2.sft > tmp/samples/sample2/var-sample2.tsv
+	cg splitalleles data/var_annot2seq.sft > tmp/samples/s3/prevar-s3.tsv
+	cg select -f {sequenced *} tmp/samples/s3/prevar-s3.tsv tmp/samples/s3/var-s3.tsv
+	file copy data/sreg-annot1.sft tmp/samples/sample1/sreg-sample1.tsv
+	file copy data/sreg-annot2.sft tmp/samples/sample2/sreg-sample2.tsv
+	file copy data/sreg-annot2.sft tmp/samples/s3/sreg-sample3.tsv
+	cg process_multicompar {*}$::jobopts -dbdir /complgen/refseq/hg19_test -split 1 -varfiles {tmp/samples/sample*/var-sample*.tsv} tmp
+	cg select -rf {*-sample3} data/expected-multicompar-split-reannot.sft tmp/expected.tsv.temp
+	cg select -q {scount($sequenced eq "v") > 0} tmp/expected.tsv.temp tmp/expected.tsv
+	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
 } {} 
 
 }

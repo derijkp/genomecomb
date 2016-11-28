@@ -184,6 +184,9 @@ proc process_multicompar {args} {
 		-targetsfile {
 			set targetsfile $value
 		}
+		-varfiles {
+			set varfiles $value
+		}
 		-m - --maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
@@ -206,7 +209,12 @@ proc process_multicompar {args} {
 		set sampledir $destdir
 	}
 	set todo {}
-	foreach file [lsort -dict [jobglob ${sampledir}/*/var-*.tsv]] {
+	if {![info exists varfiles]} {
+		set varfiles [jobglob ${sampledir}/*/var-*.tsv]
+	} elseif {[string first * $varfiles] != -1} {
+		set varfiles [jobglob $varfiles]
+	}
+	foreach file [lsort -dict $varfiles] {
 		lappend todo [string range [file root [file tail [gzroot $file]]] 4 end]
 	}
 	job_logdir $destdir/log_jobs
