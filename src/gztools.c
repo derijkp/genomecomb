@@ -23,7 +23,7 @@ GZFILE *gz_open(char *filename) {
 	char *cur;
 	result->filename = filename;
 	if (len == 1 && *filename == '-') {
-		type = STDIN;
+		type = IN;
 	} else if (len >= 3) {
 		cur = filename + len - 1;
 		if (len >= 4 && *cur == '4') {
@@ -39,8 +39,8 @@ GZFILE *gz_open(char *filename) {
 			}
 		}
 	}
-	if (type == STDIN) {
-		result->fun = (FILE *)STDIN;
+	if (type == IN) {
+		result->fun = (FILE *)stdin;
 		type = UNCOMPRESSED;
 	} else if (type == UNCOMPRESSED) {
 		result->fun = fopen64_or_die(filename,"r");
@@ -100,7 +100,7 @@ void gz_close(GZFILE *f) {
 	int type;
 	if (f == NULL) return;
 	type = f->type;
-	if (type == UNCOMPRESSED && f->fun != (FILE *)STDIN) {
+	if (type == UNCOMPRESSED && f->fun != (FILE *)stdin) {
 		fclose(f->fun);
 	} else if (type == LZ4) {
 		lz4_close(f->lz4);

@@ -18,7 +18,8 @@ all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../b
      ../bin$(ARCH)/multicompar_addvars \
      ../bin$(ARCH)/multidb_join \
      ../bin$(ARCH)/tsv_paste ../bin$(ARCH)/tsv_histo \
-     ../bin$(ARCH)/sam_clipamplicons
+     ../bin$(ARCH)/sam_clipamplicons \
+     ../bin$(ARCH)/tsv2bed
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -112,3 +113,7 @@ clean:
 
 ../bin$(ARCH)/sam_clipamplicons: sam_clipamplicons.c $(TOOLS)
 	gcc sam_clipamplicons.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam_clipamplicons
+
+../bin$(ARCH)/tsv2bed: tsv2bed.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
+	gcc tsv2bed.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/tsv2bed $(LIBZ)
+

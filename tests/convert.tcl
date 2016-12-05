@@ -438,4 +438,88 @@ test renamesamples {basic} {
 	lsort -dict [glob tmp/test/* tmp/test/*/* tmp/test/*/*/*]
 } {tmp/test/compar tmp/test/compar/annot_compar-test.tsv tmp/test/compar/compar-test.tsv.index tmp/test/compar/compar-test.tsv.index/multicompar tmp/test/compar/compar-test.tsv.rz tmp/test/samples tmp/test/samples/new1 tmp/test/samples/new1/sreg-new1.tsv tmp/test/samples/new1/var-new1.tsv.lz4 tmp/test/samples/new2 tmp/test/samples/new2/sreg-new2.tsv tmp/test/samples/new2/var-new2.tsv tmp/test/samples/new3 tmp/test/samples/new3/prevar-new3.tsv tmp/test/samples/new3/sreg-new3.tsv tmp/test/samples/new3/var-new3.tsv}
 
+test tsv2bed {basic} {
+	write_tab tmp/test.tsv {
+		chromosome begin test end name
+	 	chr1 4000 t1 4100 a
+	 	chr1 5000 t2 5500 b
+	}
+	exec cg tsv2bed tmp/test.tsv tmp/temp.bed
+	write_tab tmp/expected.bed {
+	 	chr1 4000 4100
+	 	chr1 5000 5500
+	}
+	exec diff tmp/temp.bed tmp/expected.bed
+} {}
+
+test tsv2bed {pipe 1} {
+	write_tab tmp/test.tsv {
+		chromosome begin test end name
+	 	chr1 4000 t1 4100 a
+	 	chr1 5000 t2 5500 b
+	}
+	exec cg tsv2bed tmp/test.tsv > tmp/temp.bed
+	write_tab tmp/expected.bed {
+	 	chr1 4000 4100
+	 	chr1 5000 5500
+	}
+	exec diff tmp/temp.bed tmp/expected.bed
+} {}
+
+test tsv2bed {pipe 2} {
+	write_tab tmp/test.tsv {
+		chromosome begin test end name
+	 	chr1 4000 t1 4100 a
+	 	chr1 5000 t2 5500 b
+	}
+	exec cg tsv2bed < tmp/test.tsv > tmp/temp.bed
+	write_tab tmp/expected.bed {
+	 	chr1 4000 4100
+	 	chr1 5000 5500
+	}
+	exec diff tmp/temp.bed tmp/expected.bed
+} {}
+
+test tsv2bed {fields} {
+	write_tab tmp/test.tsv {
+		con begin test end name
+	 	chr1 4000 t1 4100 a
+	 	chr1 5000 t2 5500 b
+	}
+	exec cg tsv2bed --fields {con begin end name} < tmp/test.tsv > tmp/temp.bed
+	write_tab tmp/expected.bed {
+	 	chr1 4000 4100 a
+	 	chr1 5000 5500 b
+	}
+	exec diff tmp/temp.bed tmp/expected.bed
+} {}
+
+test tsv2bed {fields poss defaults} {
+	write_tab tmp/test.tsv {
+		chromosome begin test end name
+	 	chr1 4000 t1 4100 a
+	 	chr1 5000 t2 5500 b
+	}
+	exec cg tsv2bed --fields {{} {} {} name} < tmp/test.tsv > tmp/temp.bed
+	write_tab tmp/expected.bed {
+	 	chr1 4000 4100 a
+	 	chr1 5000 5500 b
+	}
+	exec diff tmp/temp.bed tmp/expected.bed
+} {}
+
+test tsv2bed {fields poss other defaults} {
+	write_tab tmp/test.tsv {
+		chromosome begin test end score name
+	 	chr1 4000 t1 4100	1	a
+	 	chr1 5000 t2 5500	2	b
+	}
+	exec cg tsv2bed --fields {{} {} {} {} {}} < tmp/test.tsv > tmp/temp.bed
+	write_tab tmp/expected.bed {
+	 	chr1 4000 4100 a 1
+	 	chr1 5000 5500 b	2
+	}
+	exec diff tmp/temp.bed tmp/expected.bed
+} {}
+
 testsummarize

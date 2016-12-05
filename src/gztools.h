@@ -19,7 +19,7 @@
 #define LZ4 2
 #define GZ 3
 #define RZ 4
-#define STDIN 5
+#define IN 5
 
 typedef struct GZFILE {
 	char *filename;
