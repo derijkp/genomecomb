@@ -19,6 +19,8 @@
 typedef struct FieldAnnot {
 	char type;
 	BCol *bcol;
+	VarFile *regf;
+	int regfieldpos;
 } FieldAnnot;
 
 typedef struct DelInfo {
@@ -114,7 +116,7 @@ int main(int argc, char *argv[]) {
 	DString *ds_q = DStringNew(), *ds_v = DStringNew(), *ds_r = DStringNew(), *ds_u = DStringNew(), *ds_o = DStringNew(), *ds_c = DStringNew(), *ds_at = DStringNew();
 	DString *out_seq=NULL, *out_zyg=NULL, *out_a1=NULL, *out_a2=NULL;
 	DelInfo *orid = (DelInfo *)malloc(sizeof(DelInfo));
-	FieldAnnot *fieldannotlist = NULL; int checkfieldannot = 0, numbcolannot;
+	FieldAnnot *fieldannotlist = NULL; int checkfieldannot = 0, numbcolannot, numregfiles;
 	int *orikeepposs, *varallkeepposs;
 	char *orivarsfile, *allvarsfile, *sregfile, *varallfile;
 	int orizygpos, oria1pos, oria2pos, orikeepsize, prevcomp=-2;
@@ -138,7 +140,8 @@ int main(int argc, char *argv[]) {
 	sregfile = argv[i++];
 	varallfile = argv[i++];
 	numbcolannot = atoi(argv[i++]);
-	orikeepsize = argc - i - 2*numbcolannot;
+	numregfiles = atoi(argv[i++]);
+	orikeepsize = argc - i - 2*numbcolannot - 3*numregfiles;
 	fieldannotlist = (FieldAnnot *)malloc(orikeepsize*sizeof(FieldAnnot));
 	for (j = 0; j < orikeepsize; j++) {
 		fieldannotlist[j].type = '\0';
@@ -148,6 +151,19 @@ int main(int argc, char *argv[]) {
 		pos = atoi(argv[i++]);
 		fieldannotlist[pos].type = 'b';
 		fieldannotlist[pos].bcol = bcol_open(argv[i++]);
+	}
+	for (j = 0; j < numregfiles; j++) {
+		VarFile *regf;
+		checkfieldannot = 1;
+		pos = atoi(argv[i++]);
+		fieldannotlist[pos].type = 'r';
+		regf = OpenVarfile(argv[i++],1);
+		varfile_next(regf);
+		fieldannotlist[pos].regf = regf;
+		fieldannotlist[pos].regfieldpos = atoi(argv[i++]);
+		if (fieldannotlist[pos].regfieldpos > regf->max) {
+			regf->max = fieldannotlist[pos].regfieldpos;
+		}
 	}
 	orikeepposs = (int *)malloc(orikeepsize*sizeof(int));
 	/* orivarfile */
@@ -477,6 +493,16 @@ NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvars->var->ref->string,
 						bcol_printtext(stdout,bcol->reverse,bcol->isunsigned,bcol->type,bcol->buffer,bcol->precision);
 					} else {
 						putc_unlocked('?',stdout);
+					}
+				} else if (fieldannotlist[j].type == 'r') {
+					VarFile *regf = fieldannotlist[j].regf;
+					putc_unlocked('\t',stdout);
+					if (inregion(allvars->var,regf)) {
+						if (fieldannotlist[j].regfieldpos == -1) {
+							putc_unlocked('1',stdout);
+						} else {
+							DStringputs(regf->result->data + fieldannotlist[j].regfieldpos, stdout);
+						}
 					}
 				} else {
 					fprintf(stderr, "internal error: wrong fieldannottype\n");

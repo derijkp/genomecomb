@@ -162,12 +162,12 @@ proc multicompar_tcl_addvars {sample target split allvarsfile samplevarsfile sre
 		lappend todo $pos oldbcol
 		set todoa($pos) [bcol_open $bcolfile]
 	}
-	foreach {pos regfile regfield} $regfiles {
+	foreach {pos regfile scorepos} $regfiles {
 		if {[info exists todoa($pos)]} continue
 		set f [gzopen $regfile]
 		set header [tsv_open $f]
+		gzclose $f
 		set poss [tsv_basicfields $header 3]
-		set scorepos [lsearch $header $regfield]
 		lappend poss $scorepos
 		lappend todo $pos regfile
 		set line [gets $f]
@@ -539,6 +539,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 		lappend deps {*}[jobglob $sampledir/*-$sample.bcol]
 		lappend deps {*}[jobglob $sampledir/coverage*/*-$sample.bcol]
 		lappend deps {*}[jobglob $sampledir/coverage*/*-$sample.tsv]
+		lappend deps {*}[jobglob $sampledir/reg_*-$sample.tsv]
 		job multicompar_addvars-$sample -force 1 -deps $deps -targets {$target} \
 		  -vars {allvarsfile samplevarsfile sregfile varallfile sample split sampledir} -code {
 			set vf [gzopen $allvarsfile]
@@ -587,13 +588,15 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 					set f [gzopen $file]
 					set header [tsv_open $f]
 					gzclose $f
-					set regfield {}
-					if {[lsearch $header $field] != -1} {
-						set regfield $field
-					} elseif {[lsearch $header score] != -1} {
-						set regfield score
-					} elseif {[lsearch $header name] != -1} {
-						set regfield name
+					set regfield [lsearch $header $field]
+					if {$regfield == -1} {
+						set regfield [lsearch $header score]
+						if {$regfield == -1} {
+							set regfield [lsearch $header score]
+							if {$regfield == -1} {
+								set regfield [lsearch $header name]
+							}
+						}
 					}
 					lappend regfiles $pos $file $regfield
 					incr pos ; continue
@@ -604,6 +607,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 				incr pos
 			}
 			set numbcolannot [expr {[llength $bcolannot]/2}]
+			set numregfiles [expr {[llength $regfiles]/3}]
 			set newheader [list sequenced-$sample]
 			if {$zygpos != -1} {lappend newheader zyg-$sample}
 			if {$a1pos != -1} {lappend newheader alleleSeq1-$sample}
@@ -616,10 +620,9 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 			close $o
 			set sregfile [lindex [gzfiles $sregfile] 0]
 			set varallfile [lindex [gzfiles $varallfile] 0]
-#			exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot {*}$bcolannot {*}$keepposs >> $target.temp
-			if {1 && ($varallfile ne "" || $allfound || (![llength $oldbcolannot] && ![llength $regfiles] && ![llength $coverageRefScorefiles]))} {
-				# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot {*}$bcolannot {*}$keepposs]
-				exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot {*}$bcolannot {*}$keepposs >> $target.temp
+			if {$varallfile ne "" || $allfound || (![llength $oldbcolannot] && ![llength $coverageRefScorefiles])} {
+				 puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
+				exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs >> $target.temp
 			} else {
 				multicompar_tcl_addvars $sample $target.temp $split $allvarsfile $samplevarsfile $sregfile $varallfile $bcolannot $oldbcolannot $regfiles $coverageRefScorefiles $keepfields
 			}
