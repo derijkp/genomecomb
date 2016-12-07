@@ -29,27 +29,25 @@ proc proces_reports_job {sampledir refdir {reports all}} {
 			}
 		}
 		if {[inlist $reports hsmetrics]} {
+			set capturefile [lindex [jobglob $sampledir/info_capture.txt] 0]
 			set targetfile $sampledir/reg_${ref}_targets.tsv
-			if {![file exists $targetfile]} {
-				set capturefile [lindex [jobglob $sampledir/info_capture.txt] 0]
-				if {[file exists $capturefile]} {
-					set capture [string trim [file_read $capturefile]]
+			if {$capturefile ne ""} {
+				job reports_targetfile -optional 1 -deps {$capturefile} -targets {$targetfile} -vars {sample refdir ref} -code {
+					set capture [string trim [file_read $dep]]
 					set oritargetfile $refdir/extra/reg_${ref}_exome_$capture.tsv
 					if {![file exists $oritargetfile]} {
 						array set transa {seqcapv3 SeqCap_EZ_v3 sure4 SureSelectV4 sure5 SureSelectV5 sure5utr SureSelectV5UTR}
 						set capture [get transa($capture) $capture]
 						set oritargetfile $refdir/extra/reg_${ref}_exome_$capture.tsv
 					}
-					if {![file exists $sampledir/reg_${ref}_targets.tsv]} {
-						mklink $oritargetfile $targetfile 1
-					}
+					mklink $oritargetfile $target 1
 				}
 			}
 			set dep1 $bamfile
 			set dep2 $targetfile
 			set target $sampledir/reports/hsmetrics-$sample.hsmetrics
 			set target2 $sampledir/reports/report_hsmetrics-$sample.tsv
-			job reports_hsmetrics-[file tail $bamfile] -deps {$dep1 $dep2} -targets {$target $target2} -vars {sample} -code {
+			job reports_hsmetrics-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2} -targets {$target $target2} -vars {sample} -code {
 				exec samtools view -H $dep1 > $dep1.bed.temp
 				#remove comment columns & add strand info - due to lack of correct strand info take + as default
 				set f [open $dep1.bed.temp]
@@ -87,7 +85,7 @@ proc proces_reports_job {sampledir refdir {reports all}} {
 			set dep $fastqfile
 			set outdir $sampledir/reports/fastqc
 			file mkdir $outdir
-			set target $sampledir/reports/fastqc/${name}_fastqc
+			set target $sampledir/reports/fastqc/${name}.fq_fastqc
 			job reports_fastqc-[file tail $fastqfile] -deps {$dep} -targets {$target} -vars {outdir} -code {
 				exec fastqc -q -o $outdir $dep 2>@ stderr >@ stdout
 				file delete $target.zip
@@ -138,26 +136,30 @@ proc proces_reportscombine_job {destdir reportstodo} {
 	foreach dir $reportstodo {
 		lappend deps {*}[jobglob $dir/hsmetrics-*.hsmetrics]
 	}
-	set target $destdir/reports/report_hsmetrics-${experiment}.tsv
-	set target2 $destdir/${experiment}_hsmetrics_report.tsv
-	job reportscombine_hsmetrics-$experiment -deps $deps -targets {$target $target2} -code {
-		file mkdir [file dir $target]
-		cg cat -c 0 {*}$deps > $target.temp
-		cg select -rc 1 $target.temp $target.temp2
-		file rename -force $target.temp2 $target
-		file delete $target.temp
-		mklink $target $target2 1
+	if {[llength $deps]} {
+		set target $destdir/reports/report_hsmetrics-${experiment}.tsv
+		set target2 $destdir/${experiment}_hsmetrics_report.tsv
+		job reportscombine_hsmetrics-$experiment -deps $deps -targets {$target $target2} -code {
+			file mkdir [file dir $target]
+			cg cat -c 0 {*}$deps > $target.temp
+			cg select -rc 1 $target.temp $target.temp2
+			file rename -force $target.temp2 $target
+			file delete $target.temp
+			mklink $target $target2 1
+		}
 	}
 	set deps {}
 	foreach dir $reportstodo {
 		lappend deps {*}[jobglob $dir/report_*.tsv]
 	}
-	set target $destdir/reports/report_stats-${experiment}.tsv
-	job reportscombine_stats-$experiment -deps $deps -targets {$target} -code {
-		file mkdir [file dir $target]
-		cg cat -m -c 0 {*}$deps > $target.temp
-		cg select -rc 1 $target.temp $target.temp2
-		file rename -force $target.temp2 $target
-		file delete $target.temp
+	if {[llength $deps]} {
+		set target $destdir/reports/report_stats-${experiment}.tsv
+		job reportscombine_stats-$experiment -deps $deps -targets {$target} -code {
+			file mkdir [file dir $target]
+			cg cat -m -c 0 {*}$deps > $target.temp
+			cg select -rc 1 $target.temp $target.temp2
+			file rename -force $target.temp2 $target
+			file delete $target.temp
+		}
 	}
 }
