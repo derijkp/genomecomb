@@ -438,7 +438,7 @@ proc bam_clean_job {args} {
 				} else {
 					set extra {}
 				}
-				exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp $extra 2>@ stderr >@ stdout
+				exec java -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp {*}$extra 2>@ stderr >@ stdout
 				catch {file rename -force $target.temp.bai $target.bai}
 				catch {file delete $target.intervals}
 				file rename -force $target.temp $target
@@ -698,13 +698,13 @@ proc process_illumina {args} {
 				set split $value
 			}
 			-dbfile {
-				lappend dbfiles $value
+				lappend dbfiles [file_absolute $value]
 			}
 			-paired {
 				set paired $value
 			}
 			-adapterfile {
-				set adapterfile $value
+				set adapterfile [file_absolute $value]
 			}
 			-conv_nextseq {
 				set conv_nextseq $value
@@ -726,6 +726,7 @@ proc process_illumina {args} {
 		errorformat process_illumina
 	}
 	set destdir [file_absolute $destdir]
+	set dbdir [file_absolute $dbdir]
 	# check projectinfo
 	projectinfo $destdir dbdir {split 1}
 	# start
@@ -816,12 +817,12 @@ proc process_illumina {args} {
 			proces_reports_job $sampledir/$sample $dbdir $reports
 			lappend reportstodo $sampledir/$sample/reports
 		}
-		# samtools variant calling on map-rdsbwa
-		var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
-		lappend todo sam-rdsbwa-$sample
 		# gatk variant calling on map-rdsbwa
 		var_gatk_job $cleanedbam $refseq -bed $cov5bed -split $split
 		lappend todo gatk-rdsbwa-$sample
+		# samtools variant calling on map-rdsbwa
+		var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
+		lappend todo sam-rdsbwa-$sample
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir
