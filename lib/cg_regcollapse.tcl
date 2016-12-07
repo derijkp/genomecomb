@@ -137,15 +137,14 @@ proc cg_collapseoverlap {args} {
 	}
 	set args [lrange $args $pos end]
 	if {([llength $args] < 1)} {
-		puts stderr "format is: $::base file ..."
-		puts stderr " - Collapses overlapping regions in a region file."
-		puts stderr " - makes a new file with reg_ prepended to the original filename"
-		puts stderr " - Removal of overlap can be done by taking only the highest"
-		puts stderr " - scoring region (this is always done when score is available)"
-		puts stderr " - or taking all regions in 1 line (if score is not available)"
-		puts stderr " - for a field with then name num all values will be added"
-		puts stderr " - use the -o option to collapse multiple files into one new file (the filename given with the option -o)"
-		exit 1
+		error "format is: $::base file ...
+ - Collapses overlapping regions in a region file.
+ - makes a new file with reg_ prepended to the original filename
+ - Removal of overlap can be done by taking only the highest
+ - scoring region (this is always done when score is available)
+ - or taking all regions in 1 line (if score is not available)
+ - for a field with then name num all values will be added
+ - use the -o option to collapse multiple files into one new file (the filename given with the option -o)"
 	}
 	if {$resultfile ne ""} {
 		if {[file exists $resultfile]} {

@@ -10,8 +10,7 @@ proc ucsc2annotvar {file outfile} {
 	set header [gets $f]
 	set header [split [string range $header 1 end] \t]
 	if {$header ne "bin chrom chromStart chromEnd name alleleCount alleleFreq alleleScores"} {
-		puts stderr "error in header"
-		exit 1
+		error "error in header"
 	}
 	set o [open $outfile w]
 	puts $o [join {locus chromosome begin end type alleleSeq1 alleleSeq2 totalScore1 totalScore2 xRef geneId mrnaAcc proteinAcc orientation exonCategory exon codingRegionKnown aaCategory nucleotidePos proteinPos aaAnnot aaCall aaRef} \t]

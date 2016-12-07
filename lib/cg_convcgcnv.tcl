@@ -14,7 +14,6 @@ proc convcgcnv {srcfile dstfile} {
 proc cg_convcgcnv {args} {
 	if {[llength $args] != 2} {
 		errorformat convcgcnv
-		exit 1
 	}
 	foreach {srcfile dstfile} $args break
 	convcgcnv $srcfile $dstfile.temp

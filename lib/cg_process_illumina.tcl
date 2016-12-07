@@ -724,7 +724,6 @@ proc process_illumina {args} {
 		foreach {destdir dbdir} $args break
 	} else {
 		errorformat process_illumina
-		exit 1
 	}
 	set destdir [file_absolute $destdir]
 	# check projectinfo
@@ -839,7 +838,6 @@ proc cg_process_illumina {args} {
 	set args [job_init {*}$args]
 	if {[llength $args] < 1} {
 		errorformat process_illumina
-		exit 1
 	}
 	process_illumina {*}$args
 	job_wait

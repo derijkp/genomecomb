@@ -25,7 +25,6 @@ proc cg_liftchain2tsv {args} {
 	set args [lrange $args $pos end]
 	if {[llength $args] > 2} {
 		errorformat liftchain2tsv
-		exit 1
 	}
 	foreach {srcfile destfile} $args break
 	if {![info exists ref] || ![info exists destref]} {

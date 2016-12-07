@@ -627,7 +627,6 @@ proc cg_cg2tsv {args} {
 		set genefile {}
 	} elseif {[llength $args] != 3} {
 		errorformat cg2tsv
-		exit 1
 	} else {
 		foreach {file genefile outfile} $args break
 	}

@@ -14,7 +14,6 @@ proc regsubtract {regfile1 regfile2} {
 proc cg_regsubtract {args} {
 	if {[llength $args] != 2} {
 		errorformat regsubtract
-		exit 1
 	}
 	foreach {region_file1 region_file2} $args break
 	regsubtract $region_file1 $region_file2

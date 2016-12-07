@@ -37,9 +37,7 @@ proc refconsregions {varfile} {
 proc cg_refconsregions {args} {
 	global scriptname action
 	if {[llength $args] != 1} {
-		puts stderr "format is: $scriptname $action variation_file"
-		puts stderr " - outputs regions annotated as ref-(in)consistent from variation file"
-		exit 1
+		error "format is: $scriptname $action variation_file\n - outputs regions annotated as ref-(in)consistent from variation file"
 	}
 	foreach {varfile} $args break
 	refconsregions $varfile

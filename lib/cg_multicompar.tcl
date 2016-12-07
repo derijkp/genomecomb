@@ -43,9 +43,7 @@ proc cg_multicompar {args} {
 	}
 	set args [lrange $args $pos end]
 	if {([llength $args] < 1)} {
-		puts "Wrong number of arguments"
 		errorformat multicompar
-		exit 1
 	}
 	foreach {compar_file} $args break
 	set compar_file_root [gzroot $compar_file]

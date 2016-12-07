@@ -27,7 +27,6 @@ proc cg_exportplink {args} {
 	set args [lrange $args $pos end]
 	if {[llength $args] != 2} {
 		errorformat exportplink
-		exit 1
 	}
 	foreach {varfile resultfile} $args break
 	catch {close $f} ; catch {close $o}

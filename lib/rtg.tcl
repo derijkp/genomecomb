@@ -55,7 +55,6 @@ proc rtg2annotvar {file {outfile {}}} {
 proc cg_rtg2sft {args} {
 	if {[llength $args] != 2} {
 		errorformat rtg2sft
-		exit 1
 	}
 	foreach {file outfile} $args break
 	rtg2annotvar $file $outfile
@@ -181,7 +180,6 @@ proc process_rtgsample {dir destdir {force 0}} {
 proc cg_process_rtgsample {args} {
 	if {([llength $args] < 2) || ([llength $args] > 3)} {
 		errorformat process_rtgsample
-		exit 1
 	}
 	process_rtgsample {*}$args
 }
@@ -268,8 +266,7 @@ proc rtgregions {cgdir comparfile rtgdir} {
 proc cg_rtgregions {args} {
 	global scriptname action
 	if {[llength $args] != 3} {
-		puts stderr "format is: $scriptname $action cgdir comparfile rtgdir"
-		exit 1
+		error "format is: $scriptname $action cgdir comparfile rtgdir"
 	}
 	foreach {cgdir comparfile rtgdir} $args break
 	rtgregions $cgdir $comparfile $rtgdir

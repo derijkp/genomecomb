@@ -22,7 +22,6 @@ proc cg_homwes_compare args {
 	set len [llength $args]
 	if {$len < 2} {
 		errorformat homwes_compare
-		exit 1
 	}
 	set resultfile [lindex $args 0]
 	set args [lrange $args 1 end]

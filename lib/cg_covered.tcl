@@ -26,7 +26,6 @@ proc cg_covered args {
 	set args [lrange $args $pos end]
 	if {[llength $args] > 1} {
 		errorformat covered
-		exit 1
 	}
 	if {[llength $args] > 0} {
 		set regfile [lindex $args 0]

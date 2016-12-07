@@ -22,9 +22,7 @@ proc ucsc2region {ucsc_file} {
 proc cg_ucsc2region {args} {
 	global scriptname action
 	if {[llength $args] != 1} {
-		puts stderr "format is: $scriptname $action ucsc_file"
-		puts stderr "convert ucsc tab file to regionfile for further use in filtering"
-		exit 1
+		error "format is: $scriptname $action ucsc_file\nconvert ucsc tab file to regionfile for further use in filtering"
 	}
 	foreach {ucsc_file} $args break
 	ucsc2region $ucsc_file
@@ -170,9 +168,7 @@ proc cg_ucscwiggle2reg {args} {
 	}
 	set args [lrange $args $pos end]
 	if {($len < 1) && ($len > 2)} {
-		puts "Wrong number of arguments"
 		errorformat ucscwiggle2reg
-		exit 1
 	}
 	foreach {file resultfile} $args break
 	if {$resultfile eq ""} {
@@ -272,9 +268,7 @@ proc cg_ucscwb2reg {args} {
 	}
 	set args [lrange $args $pos end]
 	if {($len < 1) && ($len > 2)} {
-		puts "Wrong number of arguments"
 		errorformat ucscwiggle2reg
-		exit 1
 	}
 	foreach {file resultfile} $args break
 	if {$resultfile eq ""} {

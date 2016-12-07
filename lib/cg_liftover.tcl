@@ -46,7 +46,6 @@ proc cg_liftover {args} {
 	set args [lrange $args $pos end]
 	if {([llength $args] < 3)} {
 		errorformat liftover
-		exit 1
 	}
 
 	foreach {varfile resultfile liftoverfile} $args break

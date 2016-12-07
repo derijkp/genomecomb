@@ -60,7 +60,6 @@ proc cg_process_sv {args} {
 	set args [job_args $args]
 	if {([llength $args] < 2) || ([llength $args] > 3)} {
 		errorformat process_sv
-		exit 1
 	}
 	foreach {dir destdir dbdir force} $args break
 	switch $force {

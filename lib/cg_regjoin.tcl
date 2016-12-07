@@ -26,7 +26,6 @@ proc regjoin {regfile1 regfile2} {
 proc cg_regjoin {args} {
 	if {[llength $args] > 2} {
 		errorformat regjoin
-		exit 1
 	}
 	foreach {region_file1 region_file2} {{} {}} break
 	foreach {region_file1 region_file2} $args break

@@ -386,8 +386,7 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 			set type del
 		}
 		if {$start > $end} {
-			puts stderr "location start > end error: $loc"
-			exit 1
+			error "location start > end error: $loc"
 		}
 		if {$noref} {
 			switch $type {

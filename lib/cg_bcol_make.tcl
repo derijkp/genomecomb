@@ -55,7 +55,6 @@ proc cg_bcol_make {args} {
 	set args [lrange $args $pos end]
 	if {[llength $args] < 2 || [llength $args] > 3} {
 		errorformat bcol_make
-		exit 1
 	}
 	set srcfile {}
 	foreach {bcolfile valuecolumn srcfile} $args break
@@ -164,8 +163,7 @@ proc cg_bcol_make {args} {
 	fcopy $f $pipe
 	if {[catch {close $pipe} err]} {
 		regsub {child process exited abnormally} $err {} err
-		puts stderr $err
-		exit 1
+		error $err
 	}
 	if {$srcfile ne ""} {
 		close $f

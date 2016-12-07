@@ -65,8 +65,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 
 proc cg_mergebam {outfile args} {
 	if {![llength $args] > 0} {
-		puts stderr "format is: cg mergebam outfile bamfile1 ?bamfile2? ..."
-		exit 1
+		error "format is: cg mergebam outfile bamfile1 ?bamfile2? ..."
 	}
 	putslog "Merging $outfile"
 	set temptarget [file_tempwrite $outfile]
@@ -79,8 +78,7 @@ proc cg_mergebam {outfile args} {
 proc cg_cg2bam {args} {
 	set len [llength $args]
 	if {($len < 3) || ($len > 3)} {
-		puts stderr "format is: cg cg2bam cgdir destdir dbdir"
-		exit 1
+		error "format is: cg cg2bam cgdir destdir dbdir"
 	}	
 	foreach {cgdir destprefix dbdir} $args break
 	set destdir [file dir $destprefix]

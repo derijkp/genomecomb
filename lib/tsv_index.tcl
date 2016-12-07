@@ -62,8 +62,7 @@ proc tsv_index {xfield file} {
 proc cg_tsv_index {args} {
 	global scriptname action
 	if {[llength $args] < 2} {
-		puts stderr "format is: $scriptname $action field tsvfile ..."
-		exit 1
+		error "format is: $scriptname $action field tsvfile ..."
 	}
 	set field [list_shift args]
 	foreach tsvfile $args {

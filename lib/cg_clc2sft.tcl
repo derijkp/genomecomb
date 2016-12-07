@@ -32,7 +32,6 @@ proc cg_clc2sft {args} {
 	set args [lrange $args $pos end]	
 	if {([llength $args] < 0) || ([llength $args] > 2)} {
 		errorformat clc2sft
-		exit 1
 	}
 	catch {gzclose $f} ; catch {close $o}
 	if {[llength $args] > 0} {

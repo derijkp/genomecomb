@@ -1,7 +1,6 @@
 proc cg_collapsealleles {args} {
 	if {([llength $args] > 2)} {
 		errorformat collapsealleles
-		exit 1
 	}
 	foreach {file outfile} {{} {}} break
 	foreach {file outfile} $args break

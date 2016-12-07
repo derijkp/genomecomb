@@ -15,7 +15,6 @@ proc liftsample_job {args} {
 	set args [lrange $args $pos end]
 	if {([llength $args] < 3)} {
 		errorformat liftover
-		exit 1
 	}
 	foreach {srcdir destdir liftoverfile} $args break
 	if {[file exists $destdir] && ![file isdir $destdir]} {

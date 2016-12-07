@@ -6,7 +6,6 @@ proc cg_checksort {file} {
 	if {[catch {
 		exec {*}[gzcat $file] $file | check_sort {*}$poss
 	} result]} {
-		puts stderr "error in file $file: $result"
-		exit 1
+		error "error in file $file: $result"
 	}
 }

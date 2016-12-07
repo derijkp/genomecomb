@@ -705,7 +705,6 @@ proc cg_makeprimers {args} {
 	set len [llength $args]
 	if {$len < 4 || $len > 6} {
 		errorformat makeprimers
-		exit 1
 	}
 	set threads 1
 	set minfreq -1
@@ -754,8 +753,7 @@ proc makeprimers_makeregions {filteredfile maxsize {o stdout}} {
 proc cg_makeregions {args} {
 	global scriptname action
 	if {[llength $args] != 2} {
-		puts stderr "format is: $scriptname $action selvariationfile maxsize"
-		exit 1
+		error "format is: $scriptname $action selvariationfile maxsize"
 	}
 	foreach {selvariationfile maxsize} $args break
 	makeprimers_makeregions $selvariationfile $maxsize

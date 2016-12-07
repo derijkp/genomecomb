@@ -1114,8 +1114,7 @@ proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 	lappend dposs [lsearch $header $transcriptcol] [lsearch $header $genecol]
 	set dbposs [lrange $dposs 0 2]
 	if {[lsearch [lrange $dposs 0 end-2] -1] != -1} {
-		puts stderr "error: gene file $dbfile misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
-		exit 1
+		error "error: gene file $dbfile misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
 	}
 	return $header
 }
@@ -1160,8 +1159,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 #	}
 #	set dbposs [lrange $dposs 0 2]
 #	if {[lsearch [lrange $dposs 0 end-2] -1] != -1} {
-#		puts stderr "error: gene file $dbfile misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
-#		exit 1
+#		error "error: gene file $dbfile misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
 #	}
 	set dbposs [lrange $dposs 0 2]
 	set o [open $annotfile.temp w]
@@ -1200,8 +1198,7 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 			set type del
 		}
 		if {$start > $end} {
-			puts stderr "location start > end error: $loc"
-			exit 1
+			error "location start > end error: $loc"
 		}
 		if {$noref} {
 			switch $type {

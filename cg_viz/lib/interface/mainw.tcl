@@ -224,8 +224,7 @@ puts "redrawquery $args"
 
 mainw method opendb {args} {
 	if {[llength $args] < 3} {
-		puts stderr "format is cg viz database table refdir"
-		exit 1
+		error "format is cg viz database table refdir"
 	}
 	foreach {database table dbdir dbfarm} $args break
 	catch {$object.tb destroy}

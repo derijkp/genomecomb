@@ -1416,7 +1416,6 @@ proc tsv_hcheader {f keepheaderVar headerVar} {
 proc cg_select {args} {
 	if {[llength $args] == 0} {
 		errorformat select
-		exit 1
 	}
 	unset -nocomplain ::tsv_select_sampleinfo
 	set query {}; set qfields {}; set sortfields {}; set oldheader {}; set newheader {}; set sepheader ""
@@ -1552,7 +1551,6 @@ proc cg_select {args} {
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$error} {
 		puts stderr $result
-		exit 1
 	}
 }
 

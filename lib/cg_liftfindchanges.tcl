@@ -3,7 +3,6 @@ package require BioTcl
 proc cg_liftfindchanges {args} {
 	if {([llength $args] != 3)} {
 		exiterror "format is: cg liftfindchanges srcgenome destgenome liftoverfile"
-		exit 1
 	}
 	foreach {srcgenome destgenome liftoverfile} $args break
 	set gs [genome_open $srcgenome]

@@ -42,9 +42,7 @@ proc reghisto {regfile} {
 proc cg_reghisto {args} {
 	global scriptname action
 	if {[llength $args] != 1} {
-		puts stderr "format is: $scriptname $action region_file"
-		puts stderr ""
-		exit 1
+		error "format is: $scriptname $action region_file\n"
 	}
 	foreach {region_file} $args break
 	reghisto $region_file

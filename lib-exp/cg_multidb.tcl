@@ -221,9 +221,7 @@ proc multidb_job {args} {
 	}
 	set args [lrange $args $pos end]
 	if {([llength $args] < 1)} {
-		puts "Wrong number of arguments"
 		errorformat multidb
-		exit 1
 	}
 	foreach {compar_dir} $args break
 	set dirs [lrange $args 1 end]

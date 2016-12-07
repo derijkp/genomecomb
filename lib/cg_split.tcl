@@ -21,7 +21,6 @@ proc cg_split {args} {
 	set args [lrange $args $pos end]
 	if {[llength $args] < 2 || [llength $args] > 3} {
 		errorformat split
-		exit 1
 	}
 	set postfix {}
 	foreach {file prefix postfix} $args break

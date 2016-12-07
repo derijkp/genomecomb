@@ -167,9 +167,7 @@ proc scoredist {file sample1 sample2} {
 proc cg_scoredist {args} {
 	global scriptname action
 	if {[llength $args] != 3} {
-		puts stderr "format is: $scriptname $action compar_file sample1 sample2"
-		puts stderr " - calculates distribution of different scores"
-		exit 1
+		error "format is: $scriptname $action compar_file sample1 sample2\n - calculates distribution of different scores"
 	}
 	foreach {filename sample1 sample2} $args {
 		scoredist $filename $sample1 $sample2

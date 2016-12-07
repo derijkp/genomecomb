@@ -420,7 +420,6 @@ proc cg_bcol_get {args} {
 		foreach {indexfile chromosome begin end} $args break
 	} else {
 		errorformat bcol_get
-		exit 1
 	}
 	set bcol [bcol_open $indexfile]
 	if {[isint $end]} {incr end -1}
@@ -456,7 +455,6 @@ proc cg_bcol_table {args} {
 	set args [lrange $args $pos end]
 	if {[llength $args] < 1 || [llength $args] > 3} {
 		errorformat bcol_table
-		exit 1
 	}
 	foreach {indexfile begin end} $args break
 	set bcol [bcol_open $indexfile]

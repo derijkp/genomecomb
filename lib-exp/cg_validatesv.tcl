@@ -319,12 +319,10 @@ proc cg_validatesv_runFasta {list_seq_src EVAL} {
 	set tempL [tempfile get]
 	set tempR [tempfile get]
 	if {[catch "open $tempL w" fileid_outL]} {
-		puts "Could not open tempfile - $fileid_outL"
-		exit 1
+		error "Could not open tempfile - $fileid_outL"
 	}
 	if {[catch "open $tempR w" fileid_outR]} {
-		puts "Could not open tempfile - $fileid_outR"
-		exit 1
+		error "Could not open tempfile - $fileid_outR"
 	}
 	puts $fileid_outL ">SeqL\n$seqL"
 	close $fileid_outL
@@ -1016,9 +1014,7 @@ proc cg_validatesv args {
 	}
 	set args [lrange $args $pos end]
 	if {([llength $args] < 4) || ([llength $args] > 5)} {
-		puts stderr "Wrong number of arguments"
 		errorformat cg_validatesv
-		exit 1
 	}
 	foreach {file file_out dbdir archive MAX_SIZE} $args break
 	#
@@ -1045,8 +1041,7 @@ proc cg_validatesv args {
 	# setting header in outputfile
 	# ----------------------------
 	if {[catch {open $file_out w} fileid_out]} {
-		puts "Could not open output file - $fileid_out"
-		exit 1
+		error "Could not open output file - $fileid_out"
 	}
 	#new_output
 	set line_out "label sequence modification scale purification project pair species chromosome cyto target contig pos temperature mg size_amplicon "

@@ -117,8 +117,7 @@ proc sqlite_tablefromtsv {table tempfile {replace {}}} {
 proc cg_tosqlite {args} {
 	global scriptname action
 	if {[llength $args] != 3} {
-		puts stderr "format is: $scriptname $action dbfile table tsvfile"
-		exit 1
+		error "format is: $scriptname $action dbfile table tsvfile"
 	}
 	foreach {dbfile table tsvfile} $args break
 	set sql [sqlite_tablefromtsv $table $tsvfile]

@@ -21,7 +21,7 @@ proc help_get {action} {
 		set msg "Unknown help topic \"$action\", known topics are:\n\n"
 		append msg "Docs:\n[help_docs]\n\n"
 		append msg "Commands:\n[help_actions]\n\n"
-		append msg "Use without arguments for overview"
+		append msg "Use help without arguments for overview"
 		error $msg
 	}
 }
@@ -49,14 +49,16 @@ proc help_docs {} {
 }
 
 proc errorformat {action {options {}} {minargs {}} {maxargs {}} {parameters {}}} {
+# putsvars action options minargs maxargs parameters
 	if {![catch {
 		set help [helpparts $action]
 	}]} {
-		puts stderr "\nERROR: Wrong number of arguments, correct format is:"
-		puts stderr [dict get $help Format]
-		puts stderr "\nFor more help, use:\ncg $action -h\n"
+		set msg "\nERROR: Wrong number of arguments, correct format is:"
+		append msg \n[dict get $help Format]
+		append msg "\n\nFor more help, use:\ncg $action -h\n"
+		error $msg
 	} else {
-		puts stderr "\nERROR: Wrong number of arguments, correct format is:"
+		set msg "\nERROR: Wrong number of arguments, correct format is:"
 		set out "cg $action"
 		if {$options ne ""} {append out " ?options?"}
 		set pos 0
@@ -76,7 +78,8 @@ proc errorformat {action {options {}} {minargs {}} {maxargs {}} {parameters {}}}
 			append out " ?$p?"
 			incr pos
 		}
-		puts stderr $out
+		append msg \n$out
+		error $msg
 	}
 }
 

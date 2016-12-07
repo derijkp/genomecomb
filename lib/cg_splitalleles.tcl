@@ -17,7 +17,6 @@ proc cg_splitalleles {args} {
 #	set args [lrange $args $pos end]
 	if {([llength $args] > 2)} {
 		errorformat splitalleles
-		exit 1
 	}
 	foreach {file outfile} {{} {}} break
 	foreach {file outfile} $args break

@@ -28,8 +28,7 @@ proc map2besthits {file outfile} {
 
 proc cg_cg2cnv {args} {
 	if {[llength $argv] != 2} {
-		puts stderr "format is: $scriptname $action dir outdir"
-		exit 1
+		error "format is: $scriptname $action dir outdir"
 	}
 	foreach {dir outdir} $args break
 	cd $dir
@@ -45,8 +44,7 @@ proc cg_cg2cnv {args} {
 
 proc cg_cnv-seq {args} {
 	if {[llength $argv] != 3} {
-		puts stderr "format is: $scriptname $action refdir testdir outdir"
-		exit 1
+		error "format is: $scriptname $action refdir testdir outdir"
 	}
 	foreach {ref test outdir} $args break
 	set ref [file_absolute $ref]

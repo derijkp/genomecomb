@@ -47,31 +47,29 @@ proc cg_options {cmd argsVar def {minargs 0} {maxargs 2000000000} {parameters {}
 # putsvars cmd argsVar def minargs maxargs parameters
 	set options [join [list_unmerge $def] ,]
 	set parameters [list $parameters]
-	set fullcmd [subst -nocommands {
+	set fullcmd [subst {
 		set pos 0
 		while 1 {
-			set key [lindex \$$argsVar \$pos]
+			set key \[lindex \$$argsVar \$pos\]
 			incr pos
-			set value [lindex \$$argsVar \$pos]
+			set value \[lindex \$$argsVar \$pos\]
 			incr pos
 			switch -- \$key {
 				$def
 				-- break
 				default {
-					if {[string index \$key 0] eq "-"} {
-						puts stderr "unknown option \\"\$key\\", must be one of: $options"
-						exit 1
+					if {\[string index \$key 0\] eq "-"} {
+						error "unknown option \\"\$key\\", must be one of: $options"
 					}
 					break
 				}
 			}
 		}
 		incr pos -2
-		set $argsVar [lrange \$$argsVar \$pos end]
-		set len [llength \$$argsVar]
+		set $argsVar \[lrange \$$argsVar \$pos end\]
+		set len \[llength \$$argsVar\]
 		if {(\$len < $minargs) || (\$len > $maxargs)} {
-			errorformat $cmd $options $minargs $maxargs $parameters
-			exit 1
+			[list errorformat $cmd $options $minargs $maxargs $parameters]
 		}
 	}]
 	if {[llength [lindex $parameters 0]]} {

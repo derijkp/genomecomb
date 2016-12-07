@@ -2,9 +2,7 @@ proc cg_geneannot2reg {args} {
 	set genecol name2
 	set transcriptcol name
 	if {[llength $args] != 2 && [llength $args] != 3} {
-		puts stderr "format is cg geneannot2reg generegfile geneannotfile"
 		errorformat geneannot2reg
-		exit 1
 	}
 	set file {}
 	set outfile {}

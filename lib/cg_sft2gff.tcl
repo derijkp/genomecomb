@@ -1,8 +1,6 @@
 proc cg_sft2gff {args} {
 	if {[llength $args] > 2} {
-		puts stderr "format is cg sft2gff ?tsvfile? ?gfffile?"
-		# errorformat select
-		exit 1
+		error "format is cg sft2gff ?tsvfile? ?gfffile?"
 	}
 	foreach {tsvfile gfffile} $args break
 	if {$tsvfile eq ""} {

@@ -2,9 +2,7 @@ proc cg_gene2reg {args} {
 	set genecol name2
 	set transcriptcol name
 	if {[llength $args] > 2} {
-		puts stderr "format is cg gene2reg ?genefile? ?outfile?"
 		errorformat gene2reg
-		exit 1
 	}
 	set file {}
 	set outfile {}

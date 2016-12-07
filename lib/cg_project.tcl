@@ -52,10 +52,9 @@ proc project {args} {
 	set chrs {0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
 	set knownactions {samples compar compar_regonly bam sv clean users}
 	if {([llength $args] < 3)} {
-		puts stderr "format is: $::base project_file refseqdir action/option ..."
-		puts stderr " - processes project according to project file"
-		puts stderr " - actions: [join $knownactions {, }]"
-		exit 1
+		error "format is: $::base project_file refseqdir action/option ...
+ - processes project according to project file
+ - actions: [join $knownactions {, }]"
 	}
 	foreach {projectfile refseqdir} $args break
 	if {![file isdir $refseqdir]} {

@@ -43,11 +43,10 @@ proc downloaddb {path build dbname} {
 				wgetfile ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/chr${chr}_$dbname.txt.gz $temp/chr${chr}_$dbname.txt.gz
 				if {![file exists $temp/chr${chr}_$dbname.txt.gz]} {
 					if {$chr eq "1"} {
-						puts "Could not download $dbname.txt.gz"
+						error "Could not download $dbname.txt.gz"
 					} else {
-						puts "Could not download chr${chr}_$dbname.txt.gz"
+						error "Could not download chr${chr}_$dbname.txt.gz"
 					}
-					exit 1
 				}
 			}
 		}
@@ -64,15 +63,13 @@ proc downloaddb {path build dbname} {
 		puts "Skipping download $dbname.sql (already there)"
 	}
 	if {![file exists $temp/$sqlfile]} {
-		puts $errmsg
-		exit 1
+		error $errmsg
 	}
 	# header
 	# ------
 	puts "Finding header...."
 	if {[catch "open $temp/$sqlfile r" fileid]} {
-		puts "Could not open sql file - $fileid"
-		exit 1
+		error "Could not open sql file - $fileid"
 	}
 	set line [gets $fileid]
 	set header ""
@@ -157,9 +154,7 @@ proc downloaddbinfo {path build dbname} {
 
 proc cg_downloaddbinfo {args} {
 	if {([llength $args] < 2)} {
-		puts stderr "format is: $::base resultdir build database ?...?"
-		puts stderr " - downloads databases from ucsc, 1000g, ... and converts to useful format"
-		exit 1
+		error "format is: $::base resultdir build database ?...?\n - downloads databases from ucsc, 1000g, ... and converts to useful format"
 	}
 	foreach {path build dbname} $args break
 	set dbnames [lrange $args 2 end]
@@ -328,9 +323,7 @@ proc downloaddb_phenotype {path build {url {}}} {
 
 proc cg_downloaddb {args} {
 	if {([llength $args] < 2)} {
-		puts stderr "format is: $::base resultdir build database ?...?"
-		puts stderr " - downloads databases from ucsc, 1000g, ... and converts to useful format"
-		exit 1
+		error "format is: $::base resultdir build database ?...?\n - downloads databases from ucsc, 1000g, ... and converts to useful format"
 	}
 	foreach {path build dbname} $args break
 	set dbnames [lrange $args 2 end]
@@ -424,9 +417,7 @@ if 0 {
 
 proc cg_calcsequencedgenome {args} {
 	if {([llength $args] != 2)} {
-		puts stderr "format is: $::base resultdir build"
-		puts stderr " - calculate sequenced genome from genome ifas (regions without Ns)"
-		exit 1
+		error "format is: $::base resultdir build\n - calculate sequenced genome from genome ifas (regions without Ns)"
 	}
 	foreach {path build} $args break
 	set file $path/$build/genome_$build.ifas

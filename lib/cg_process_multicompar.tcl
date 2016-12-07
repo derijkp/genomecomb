@@ -229,7 +229,6 @@ proc cg_process_multicompar {args} {
 	set args [job_init {*}$args]
 	if {[llength $args] < 1} {
 		errorformat process_multicompar
-		exit 1
 	}
 	process_multicompar {*}$args
 	job_wait

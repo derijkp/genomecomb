@@ -37,7 +37,6 @@ proc cg_checksum {args} {
 	set args [lrange $args $pos end]
 	if {[llength $args] < 1} {
 		error "format is: cg checksum dir\n or: cg ?-n? checksum manifestfile manifestfile ...\n (-c option for dryrun: check existing checksum files only)"
-		exit 1
 	}
 	set files {}
 	foreach file $args {

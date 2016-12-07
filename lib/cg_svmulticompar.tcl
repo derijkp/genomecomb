@@ -408,9 +408,7 @@ proc svmulticompar {svfile1 svfile2} {
 
 proc cg_svmulticompar {args} {
 	if {[llength $args] < 2} {
-		puts "Wrong number of arguments"
 		errorformat svmulticompar
-		exit 1
 	}
 	set done {}
 	foreach {compar_file} $args break

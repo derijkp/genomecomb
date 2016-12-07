@@ -44,7 +44,6 @@ proc cg_correctvariants {args} {
 	set args [lrange $args $pos end]
 	if {([llength $args] != 3)} {
 		errorformat correctvariants
-		exit 1
 	}
 	set countdoubles 0
 	set countcorrected 0

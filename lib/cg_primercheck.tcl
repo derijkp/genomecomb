@@ -121,7 +121,6 @@ proc cg_primercheck {args} {
 	set args [lrange $args $pos end]
 	if {([llength $args] < 2 || [llength $args] > 3)} {
 		errorformat primercheck
-		exit 1
 	}
 	set resultfile {}
 	foreach {primerfile dbdir resultfile} $args break

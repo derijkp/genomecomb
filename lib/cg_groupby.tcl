@@ -38,7 +38,6 @@ proc cg_groupby {args} {
 	set args [lrange $args $pos end]
 	if {([llength $args] < 1)} {
 		errorformat groupby
-		exit 1
 	}
 	set fields [lindex $args 0]
 	set args [lrange $args 1 end]

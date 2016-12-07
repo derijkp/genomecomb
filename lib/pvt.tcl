@@ -22,7 +22,6 @@ proc cg_makepvt {args} {
 	set fields {}
 	if {([llength $args] < 2) || ([llength $args] > 3)} {
 		errorformat makepvt
-		exit 1
 	}
 	foreach {file resultfile fields} $args break
 	set h [cg select -h $file]

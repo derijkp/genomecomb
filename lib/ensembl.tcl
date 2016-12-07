@@ -54,9 +54,7 @@ proc ensembl_getregion {chr start end args} {
 proc cg_getembl {args} {
 	global scriptname action
 	if {[llength $args] < 2 && [llength $args] > 3} {
-		puts stderr "format is: $scriptname $action regionsfile archive ?extraseq?"
-		puts stderr " - get emblfiles"
-		exit 1
+		error "format is: $scriptname $action regionsfile archive ?extraseq?\n - get emblfiles"
 	}
 	foreach {regionsfile archive extraseq} $args break
 	if {![isint $extraseq]} {set extraseq 50000}
@@ -89,9 +87,7 @@ proc ncbi_getgene {id} {
 proc cg_addgeneinfo {args} {
 	global scriptname action
 	if {[llength $args] != 1} {
-		puts stderr "format is: $scriptname $action file"
-		puts stderr " - add gene description"
-		exit 1
+		error "format is: $scriptname $action file\n - add gene description"
 	}
 	foreach {filename} $args break
 	set f [open $filename]

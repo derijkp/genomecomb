@@ -66,8 +66,7 @@ proc cg_homwes {args} {
 	set tail [file tail $annotcomparfile]
 	if {[file ext $annotcomparfile] eq ".vcf"} {
 		if {$dbdir eq ""} {
-			puts stderr "No -dbdir option given, this is needed for analysing"
-			exit 1
+			error "No -dbdir option given, this is needed for analysing"
 		}
 		set vcf 1
 		set tsvfile $workdir/[file root [file tail $annotcomparfile]].tsv
@@ -80,8 +79,7 @@ proc cg_homwes {args} {
 		set usefile $tsvfile
 	} elseif {[llength [list_common [cg select -h $annotcomparfile] {microsat simpleRepeat}]] != 2} {
 		if {$dbdir eq ""} {
-			puts stderr "No -dbdir option given, this is needed for annotating the file"
-			exit 1
+			error "No -dbdir option given, this is needed for annotating the file"
 		}
 		set tsvfile $workdir/[file root [file tail $annotcomparfile]].tsv
 		putslog "annotating $tsvfile"
@@ -117,8 +115,7 @@ proc cg_homwes {args} {
 	} elseif {[llength $hsamples]} {
 		set notasample [list_lremove $samples $hsamples]
 		if {[llength $notasample]} {
-			puts stderr "error: not a sample: $notasample"
-			exit 1
+			error "error: not a sample: $notasample"
 		}
 	}
 	set resultfiles {}

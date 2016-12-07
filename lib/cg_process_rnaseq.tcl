@@ -197,7 +197,6 @@ proc cg_process_rnaseq {args} {
 	if {[llength $args] < 4} {
 		puts "Wrong number of arguments"
 		errorformat process_rnaseq
-		exit 1
 	}
 	#get required arguments
 	foreach {destdir libtype bowtie_index gff} $args break

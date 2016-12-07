@@ -16,7 +16,6 @@ proc cg_liftregion {args} {
 #	set args [lrange $args $pos end]
 	if {([llength $args] < 3)} {
 		errorformat liftregion
-		exit 1
 	}
 	foreach {file resultfile liftoverfile} $args break
 

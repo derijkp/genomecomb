@@ -39,7 +39,6 @@ proc cg_vcf2tsv {args} {
 		set error [catch {exec vcf2tsv $splitalt [gztemp $infile] | cg select -s - > [lindex $args 1] 2>@ stderr}]
 	} else {
 		errorformat vcf2tsv
-		exit 1
 	}
 	if {$error} {exiterror "error converting vcf file"}
 }
@@ -51,7 +50,6 @@ proc cg_vcf2sft {args} {
 proc cg_vcf2sft.old {args} {
 	if {([llength $args] < 0) || ([llength $args] > 2)} {
 		errorformat vcf2tsv
-		exit 1
 	}
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]

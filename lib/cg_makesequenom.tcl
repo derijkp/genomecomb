@@ -59,7 +59,6 @@ proc cg_makesequenom {args} {
 	set args [lrange $args $pos end]
 	if {([llength $args] != 3)} {
 		errorformat makesequenom
-		exit 1
 	}
 	foreach {compar_file resultfile dbdir} $args break
 	#

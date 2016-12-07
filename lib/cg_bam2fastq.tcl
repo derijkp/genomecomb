@@ -22,7 +22,6 @@ proc cg_bam2fastq {args} {
 	set args [lrange $args $pos end]
 	if {[llength $args] < 2 || [llength $args] > 3} {
 		errorformat bam2fastq
-		exit 1
 	}
 	set fastqfile2 {}
 	foreach {bamfile fastqfile1 fastqfile2} $args break

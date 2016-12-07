@@ -24,14 +24,15 @@ genomecombenv
 
 # generic help on no args
 if {[llength $argv] < 1} {
-	puts {No option given, format is:}
 	cg_help
-	exit 1
 }
 
 proc parse_generic_args {subcmd argslist} {
 	if {[llength $argslist] == 1 && [inlist {-h --help} $argslist]} {
-		help $subcmd
+		if {[catch {help $subcmd} msg]} {
+			puts stderr $msg
+			exit 1
+		}
 		exit 0
 	}
 	set ::stacktraceonerror 0
@@ -66,10 +67,11 @@ if {[auto_load cg_$action]} {
 	if {[catch {cg_$action {*}$args} msg]} {
 		if {!$stacktraceonerror} {
 			puts stderr $msg
+			exit 1
 		} else {
-			puts stderr "\twhile executing\n$::errorInfo"
+			puts stderr "$::errorInfo"
+			exit 1
 		}
-		exit 1
 	}
 } elseif {[file executable $::appdir/plugins/cg_$action]} {
 	if {[llength $args] == 1 && [inlist {-h --help} $args]} {

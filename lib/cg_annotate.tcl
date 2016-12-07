@@ -235,7 +235,6 @@ proc cg_annotate {args} {
 	set args [lrange $args $pos end]
 	if {([llength $args] < 3)} {
 		errorformat annotate
-		exit 1
 	}
 	foreach {file resultfile} $args break
 	set gzfile [gztemp $file]
@@ -245,8 +244,7 @@ proc cg_annotate {args} {
 		if {[file isdir $testfile]} {
 			lappend dbfiles {*}[glob -nocomplain $testfile/var_*.tsv $testfile/gene_*.tsv $testfile/mir_*.tsv $testfile/reg_*.tsv $testfile/bcol_*.tsv]
 		} elseif {![file exists $testfile]} {
-			puts stderr "File $testfile does not exist"
-			exit 1
+			error "File $testfile does not exist"
 		} else {
 			lappend dbfiles $testfile
 		}
@@ -263,8 +261,7 @@ proc cg_annotate {args} {
 	set common [list_common $header $newh]
 	if {[llength $common]} {
 		if {!$replace} {
-			puts stderr "Error: field(s) [join $common ,] already in file"
-			exit 1
+			error "Error: field(s) [join $common ,] already in file"
 		}
 #		foreach name $common {
 #			set skip($name) 1
@@ -296,8 +293,7 @@ proc cg_annotate {args} {
 			}
 			set genomefile [lindex [glob -nocomplain $dbdir/genome_*.ifas] 0]
 			if {![file exists $genomefile]} {
-				puts stderr "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
-				exit 1
+				error "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
 			}
 			lappend afiles $tempbasefile.${name}_annot
 			if {[file exists $tempbasefile.${name}_annot]} {

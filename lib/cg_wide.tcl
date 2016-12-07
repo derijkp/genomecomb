@@ -21,9 +21,7 @@ proc cg_wide {args} {
 	}
 	set args [lrange $args $pos end]
 	if {[llength $args] > 2} {
-		puts stderr "format is cg wide ?options? ?tsvfile? ?outfile?"
-		# errorformat select
-		exit 1
+		errorformat wide
 	}
 	foreach {file outfile} $args break
 	if {$file eq ""} {

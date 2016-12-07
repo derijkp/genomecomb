@@ -103,7 +103,6 @@ proc cg_genome_seq {args} {
 	set args [lrange $args $pos end]
 	if {([llength $args] != 2 && [llength $args] != 3)} {
 		errorformat genome_seq
-		exit 1
 	}
 	foreach {regionfile dbdir outfile} $args break
 	if {$outfile ne ""} {
@@ -167,8 +166,7 @@ proc cg_genome_seq {args} {
 	if {[info exists namefield]} {
 		set namepos [lsearch $header $namefield]
 		if {$namepos == -1} {
-			puts stderr "namefield $namefield not found"
-			exit 1
+			error "namefield $namefield not found"
 		}
 	} else {
 		set namepos [lsearch $header name]

@@ -40,9 +40,7 @@ proc process_indexcompress {file} {
 proc cg_process_indexcompress {args} {
 	global scriptname action
 	if {[llength $args] != 1} {
-		puts stderr "format is: $scriptname $action file"
-		puts stderr " - makes index, and compresses to bgzip"
-		exit 1
+		error "format is: $scriptname $action file\n - makes index, and compresses to bgzip"
 	}
 	foreach {file} $args break
 	process_indexcompress $file
@@ -83,7 +81,6 @@ proc process_sample {args} {
 		}
 	} else {
 		errorformat process_sample
-		exit 1
 	}
 	set sample [file tail $workdir]
 	# process_bam2cg $srcdir

@@ -1,7 +1,6 @@
 proc cg_hardsync {args} {
 	if {[llength $args] < 2} {
-		puts stderr "wrong # of arguments, correct format is: cg hardsync src ?...? dest"
-		exit 1
+		error "wrong # of arguments, correct format is: cg hardsync src ?...? dest"
 	}
 	set opts {}
 	set num 0
@@ -15,8 +14,7 @@ proc cg_hardsync {args} {
 	set dest [lindex $args end]
 	set args [lrange $args 0 end-1]
 	if {![file isdir $dest]} {
-		puts stderr "destination must be an existing directory"
-		exit 1
+		error "destination must be an existing directory"
 	}
 	foreach src $args {
 		set src [file_absolute $src]
@@ -33,8 +31,7 @@ proc cg_hardsync {args} {
 proc cg_rsync {args} {
 	set list {}
 	if {[llength $args] < 2} {
-		puts stderr "wrong # of arguments, correct format is: cg rsync src ?...? dest"
-		exit 1
+		error "wrong # of arguments, correct format is: cg rsync src ?...? dest"
 	}
 	foreach el $args {
 		lappend list [string trimright $el /]

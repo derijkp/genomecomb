@@ -20,7 +20,6 @@ proc regselect {regfile1 regfile2 {near -1}} {
 proc cg_regselect {args} {
 	if {([llength $args] < 1) || ([llength $args] > 3)} {
 		errorformat regselect
-		exit 1
 	}
 	foreach {region_file1 region_file2 near} $args break
 	if {$near eq ""} {set near -1}

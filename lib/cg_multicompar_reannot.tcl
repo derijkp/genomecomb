@@ -339,7 +339,6 @@ proc cg_multicompar_reannot {args} {
 	set args [lrange $args $pos end]
 	if {[llength $args] < 1} {
 		errorformat multicompar_reannot
-		exit 1
 	}
 	set compar_file [list_shift args]
 	foreach option $args {

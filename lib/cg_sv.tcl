@@ -1937,8 +1937,7 @@ proc svfind {pairfile trffile} {
 proc cg_bam2sv {args} {
 	global scriptname action
 	if {[llength $args] < 2} {
-		puts stderr "format is: $scriptname $action bamfile out_prefix"
-		exit 1
+		error "format is: $scriptname $action bamfile out_prefix"
 	}
 	bam2sv {*}$args
 }
@@ -1946,8 +1945,7 @@ proc cg_bam2sv {args} {
 proc cg_sv2db {args} {
 	global scriptname action
 	if {[llength $args] < 1} {
-		puts stderr "format is: $scriptname $action file ..."
-		exit 1
+		error "format is: $scriptname $action file ..."
 	}
 	sv2db $args
 }
@@ -1955,8 +1953,7 @@ proc cg_sv2db {args} {
 proc cg_svcompare {args} {
 	global scriptname action
 	if {[llength $args] != 2} {
-		puts stderr "format is: $scriptname $action svfile1 svfile2"
-		exit 1
+		error "format is: $scriptname $action svfile1 svfile2"
 	}
 	foreach {svfile1 svfile2} $args break
 	svcompare $svfile1 $svfile2
@@ -1965,8 +1962,7 @@ proc cg_svcompare {args} {
 proc cg_svrescore {args} {
 	global scriptname action
 	if {[llength $args] != 1} {
-		puts stderr "format is: $scriptname $action svfile"
-		exit 1
+		error "format is: $scriptname $action svfile"
 	}
 	foreach {svfile} $args break
 	svrescore $svfile
@@ -1975,8 +1971,7 @@ proc cg_svrescore {args} {
 proc cg_map2sv {args} {
 	global scriptname action
 	if {[llength $args] < 2} {
-		puts stderr "format is: $scriptname $action file ... out_prefix"
-		exit 1
+		error "format is: $scriptname $action file ... out_prefix"
 	}
 	set prefix [list_pop args]
 	map2sv $args $prefix
@@ -1985,8 +1980,7 @@ proc cg_map2sv {args} {
 proc cg_svinfo {args} {
 	global scriptname action
 	if {[llength $args] < 1} {
-		puts stderr "format is: $scriptname $action file ..."
-		exit 1
+		error "format is: $scriptname $action file ..."
 	}
 	foreach pairfile $args {
 		putslog $pairfile
@@ -1997,8 +1991,7 @@ proc cg_svinfo {args} {
 proc cg_svfind {args} {
 	global scriptname action
 	if {[llength $args] < 2} {
-		puts stderr "format is: $scriptname $action pairedfile ... trffile"
-		exit 1
+		error "format is: $scriptname $action pairedfile ... trffile"
 	}
 	set trffile [list_pop args]
 	foreach {pairfile} $args {
@@ -2009,10 +2002,9 @@ proc cg_svfind {args} {
 
 proc cg_sv {args} {
 	if {[llength $args] < 1} {
-		puts stderr "format is: cg sv subcmd ..."
-		puts stderr "  subcmds are: map2sv, find, info"
-		puts stderr "  find more extensive description using \"cg process_sv -h\""
-		exit 1
+		error "format is: cg sv subcmd ..."
+  subcmds are: map2sv, find, info"
+  find more extensive description using \"cg process_sv -h\""
 	}
 	set cmd [lindex $args 0]
 	set args [lrange $args 1 end]
@@ -2027,8 +2019,7 @@ proc cg_sv {args} {
 			cg_svfind {*}$args
 		}
 		default {
-			puts stderr "Unkown subcommand $cmd to sv, must be one of map2sv, info, find"
-			exit 1
+			error "Unkown subcommand $cmd to sv, must be one of map2sv, info, find"
 		}
 	}
 }

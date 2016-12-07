@@ -23,7 +23,6 @@ proc cg_regextract {args} {
 	set args [lrange $args $pos end]
 	if {[llength $args] < 2} {
 		errorformat regextract
-		exit 1
 	}
 	foreach {cutoff} $args break
 	set files [lrange $args 1 end]

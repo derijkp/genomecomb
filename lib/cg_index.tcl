@@ -13,15 +13,13 @@ proc cg_indexcol {args} {
 			-- break
 			default {
 				if {[string index $opt 0] ne "-"} break
-				puts stderr "ERROR: Unkown option $opt, should be one of: -sample"
-				exit 1
+				error "ERROR: Unkown option $opt, should be one of: -sample"
 			}
 		}
 	}
 	set args [lrange $args $pos end]
 	if {[llength $args] < 2} {
 		error "format is: cg indexcol file fieldname ..."
-		exit 1
 	}
 	foreach {file} $args break
 	set todofields [lrange $args 1 end]
@@ -127,15 +125,13 @@ proc cg_index {args} {
 			-- break
 			default {
 				if {[string index $opt 0] ne "-"} break
-				puts stderr "ERROR: Unkown option $opt: should be one of -cols, -db, -colinfo, -refdir, -v"
-				exit 1
+				error "ERROR: Unkown option $opt: should be one of -cols, -db, -colinfo, -refdir, -v"
 			}
 		}
 	}
 	set args [lrange $args $pos end]
 	if {[llength $args] != 1} {
 		errorformat index
-		exit 1
 	}
 	set file [lindex $args 0]
 	set compressed [gziscompressed $file]

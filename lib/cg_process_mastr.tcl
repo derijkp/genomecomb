@@ -461,9 +461,7 @@ proc cg_process_mastr {args} {
 	} elseif {$len == 3} {
 		foreach {mastrdir destdir dbdir} $args break
 	} else {
-		puts stderr "Wrong number of arguments"
 		errorformat process_mastr
-		exit 1
 	}
 	set mastrdir [file_absolute $mastrdir]
 	set destdir [file_absolute $destdir]
@@ -483,8 +481,7 @@ proc cg_process_mastrdesign {args} {
 	# useminigenome is only important for which reference sequence is returned by mastr_refseq_job
 	set useminigenome 0
 	if {[llength $args] < 2} {
-		puts "Wrong number of arguments, should be cg process_mastrdesign mastrdir dbdir"
-		exit 1
+		error "Wrong number of arguments, should be cg process_mastrdesign mastrdir dbdir"
 	}
 	foreach {mastrdir dbdir} $args break
 	mastr_refseq_job $mastrdir $dbdir $useminigenome

@@ -80,15 +80,13 @@ proc cg_cat {args} {
 			set cor [list_cor $header $testheader]
 			if {[llength $testheader] != $hlen} {
 				if {$force eq ""} {
-					puts stderr "headers do not match, use -f to force or -m to merge"
-					exit 1
+					error "headers do not match, use -f to force or -m to merge"
 				}
 			}
 			set poss [list_find $cor -1]
 			if {[llength $poss]} {
 				if {$force eq ""} {
-					puts stderr "headers do not match, use -f to force or -m to merge"
-					exit 1
+					error "headers do not match, use -f to force or -m to merge"
 				}
 				lappend header {*}[list_sub $testheader $poss]
 			}

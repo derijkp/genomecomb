@@ -21,11 +21,10 @@ proc cg_long {args} {
 	set args [lrange $args $pos end]
 	if {[llength $args] > 2} {
 		if {[string index [lindex $args 0] 0] eq "-"} {
-			pus stderr "unknown option [lindex $args 0]"
+			error "unknown option [lindex $args 0]"
 		} else {
 			errorformat long
 		}
-		exit 1
 	}
 	set file {}
 	set outfile {}

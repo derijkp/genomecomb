@@ -19,7 +19,6 @@ proc cg_cg2sreg {args} {
 		foreach {file outfile} $args break
 	} else {
 		errorformat cg2sreg
-		exit 1
 	}
 	putslog "Extract $outfile from $file"
 	if {$sorted} {

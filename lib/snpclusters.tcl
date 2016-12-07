@@ -166,10 +166,9 @@ proc clusters {} {
 proc cg_clusterregions {args} {
 	global scriptname action
 	if {[llength $args] != 0} {
-		puts stderr "format is: $scriptname $action"
-		puts stderr " - outputs regions with clusters of variations"
-		puts stderr " - input is an annotated variations file"
-		exit 1
+		error "format is: $scriptname $action
+ - outputs regions with clusters of variations"
+ - input is an annotated variations file"
 	}
 	clusters
 }

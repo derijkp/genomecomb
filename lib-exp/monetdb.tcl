@@ -324,8 +324,7 @@ proc monetdb_backend {db file} {
 proc cg_tomonetdb {args} {
 	global scriptname action
 	if {[llength $args] != 3} {
-		puts stderr "format is: $scriptname $action db table tsvfile"
-		exit 1
+		error "format is: $scriptname $action db table tsvfile"
 	}
 	foreach {db table tsvfile} $args break
 
@@ -394,8 +393,7 @@ proc cg_genomecombinfo {cmd table args} {
 #proc cg_tomonetdbnorm {args} {
 #	global scriptname action
 #	if {[llength $args] != 3} {
-#		puts stderr "format is: $scriptname $action db table tsvfile"
-#		exit 1
+#		error "format is: $scriptname $action db table tsvfile"
 #	}
 #	foreach {db table tsvfile} $args break
 #

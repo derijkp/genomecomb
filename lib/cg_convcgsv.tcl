@@ -70,7 +70,6 @@ proc convcgsv {srcfile dstfile} {
 proc cg_convcgsv {args} {
 	if {[llength $args] != 2} {
 		errorformat convcgsv
-		exit 1
 	}
 	foreach {srcfile dstfile} $args break
 	convcgsv $srcfile $dstfile.temp

@@ -648,7 +648,6 @@ proc monetdb_select {db table query {qfields {}} {sortfields {}} {newheader {}} 
 proc cg_mselect {args} {
 	if {[llength $args] == 0} {
 		errorformat mselect
-		exit 1
 	}
 	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0; set inverse 0; set printheader 0; set group {}; set groupcols {}
 	set pos 0
@@ -703,7 +702,6 @@ proc cg_mselect {args} {
 				set len [llength $args]
 				if {$len < 2 || $len > 3} {
 					errorformat mselect
-					exit 1
 				}
 				foreach {db table outfile} $args break
 				set header [cg_monetdb_fields $db $table]
@@ -724,7 +722,6 @@ proc cg_mselect {args} {
 	set len [llength $args]
 	if {$len < 2 || $len > 3} {
 		errorformat mselect
-		exit 1
 	}
 	foreach {db table outfile} $args break
 	regsub -all {\n#[^\n]*} $fields {} fields
@@ -741,8 +738,7 @@ proc cg_mselect {args} {
 #	set error [catch {monetdb_select $db $table $query $fields $sortfields $newheader $sepheader $o $hc $inverse $group $groupcols} result]
 #	if {$o ne "stdout"} {catch {close $o}}
 #	if {$error} {
-#		puts stderr $result
-#		exit 1
+#		error $result
 #	}
 }
 

@@ -1,7 +1,6 @@
 proc cg_sam_clipamplicons {args} {
 	if {([llength $args] != 3)} {
 		errorformat sam_clipamplicons
-		exit 1
 	}
 	foreach {ampliconsfile file outfile} {{} {} {}} break
 	foreach {ampliconsfile file outfile} $args break

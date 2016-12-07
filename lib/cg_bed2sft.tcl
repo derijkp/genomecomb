@@ -13,7 +13,6 @@ package require Extral
 proc cg_bed2sft {args} {
 	if {([llength $args] < 0) || ([llength $args] > 2)} {
 		errorformat bed2sft
-		exit 1
 	}
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]

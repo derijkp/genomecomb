@@ -2,7 +2,6 @@
 proc cg_filtercluster {args} {
 	if {[llength $args] != 3} {
 		error "format is: cg filtercluster file dist'
-		exit 1
 	}
 	foreach {file dist destfile} $args break
 
