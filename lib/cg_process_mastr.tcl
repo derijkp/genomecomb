@@ -55,8 +55,8 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	# data of the mapping is stored to reg-$name.map, for later remapping to genomic coordinates
 	cg genome_seq -n 1 --namefield $namefield -m $dir/reg-$name.map -c $adaptorseq -cn $name -e $adaptorseq $dir/reg-$name.tsv $dbdir > $dir/seq-$name.fa
 	# make bed files
-	tsv2bed $dir/reg-$name.tsv $dir/reg-$name.bed {} chromosome begin end $namefield
-	tsv2bed $dir/reg-$name.map $dir/reg-mini_$name.bed $name begin end name
+	tsv2bed $dir/reg-$name.tsv $dir/reg-$name.bed [list {} begin end $namefield]
+	tsv2bed $dir/reg-$name.map $dir/reg-mini_$name.bed [list $name begin end name]
 	set header [cg select -h $ampliconsfile]
 	cg select -f {chromosome begin end name} $ampliconsfile $dir/inner_$tail.temp
 	cg select -s - $dir/inner_$tail.temp $dir/inner_$tail.temp2
@@ -64,7 +64,7 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	file rename -force $dir/inner_$tail.temp2 $dir/inner_$tail
 	cg regcollapse $dir/inner_$tail > $dir/reg-inner-$name.tsv
 	exec ln -s reg-inner-$name.tsv $dir/reg_amplicons-$name.tsv
-	tsv2bed $dir/reg-inner-$name.tsv $dir/reg-inner-$name.bed {} chromosome begin end $namefield
+	tsv2bed $dir/reg-inner-$name.tsv $dir/reg-inner-$name.bed [list chromosome begin end $namefield]
 }
 
 proc generate_demultiplex_stats {illsrc outfile} {
