@@ -12,6 +12,7 @@ proc annotatebcol {file dbfile name annotfile} {
 	set fields [list_sub $header $poss]
 	set f [open $dbfile]
 	set header [tsv_open $f]
+	close $f
 	if {$header ne {chromosome begin end}} {
 		error "bcol database ($dbfile) should have a header of the type: chromosome begin end, old style bcols (single chr not supported)"
 	}
