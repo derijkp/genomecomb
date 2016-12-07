@@ -25,6 +25,7 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 	file mkdir compar
 	#
 	# multicompar
+	putslog "Making multicompar"
 	putslog "Finding samples"
 	set compar_file compar/compar-$experiment.tsv
 	if {[file exists samples]} {set sampledir samples/} else {set sampledir {}}

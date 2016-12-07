@@ -46,56 +46,20 @@ proc cg_process_indexcompress {args} {
 	process_indexcompress $file
 }
 
-proc process_sample {args} {
-	set pos 0
-	set split 1
-	foreach {key value} $args {
-		switch -- $key {
-			-split - -s {
-				set split $value
-			}
-			-- break
-			default {
-				break
-			}
-		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	set srcdir ""
-	if {[llength $args] == 1} {
-		foreach {destdir} $args break
-		set workdir [file_absolute $destdir]
-		putslog "Making $workdir"
-		file mkdir $workdir
-	} elseif {[llength $args] == 2} {
-		foreach {srcdir destdir} $args break
-		set workdir [file_absolute $destdir]
-		putslog "Making $workdir"
-		file mkdir $workdir
-		set srcdir [file_absolute $srcdir]
-		if {[file exists $srcdir]} {
-			set srcdir [file_absolute $srcdir]
-			file delete $workdir/ori
-			cplinked_file $srcdir $workdir/ori
-		}
-	} else {
-		errorformat process_sample
-	}
+proc process_sample_cgi_job {workdir split} {
 	set sample [file tail $workdir]
-	# process_bam2cg $srcdir
 	set keepdir [pwd]
 	cd $workdir
 	job_logdir $workdir/log_jobs
 	set chromosomes {}
-	set files [gzfiles $workdir/ori/ASM/REF/coverage*.tsv]
+	set files [jobglob $workdir/ori/ASM/REF/coverage*.tsv]
 	if {[llength $files]} {
 		foreach file $files {
 			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] 1]]
 		}
 		set chromosomes [ssort -natural [list_remdup $chromosomes]]
 	} else {
-		set files [gzfiles $workdir/coverage/coverage*.tsv]
+		set files [jobglob $workdir/coverage/coverage*.tsv]
 		foreach file $files {
 			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] end-1]]
 		}
@@ -238,9 +202,9 @@ proc process_sample {args} {
 					if {![file exists $base.bcol]} {
 						putslog "Making $base.bcol"
 						if {[catch {
-							exec [catprog $file] $file | cg bcol make -p $posfield -t s -n -1 $base $field
+							exec [catprog $file] $file | cg bcol make -p $posfield -t s $base.bcol $field
 						} e]} {
-							exec [catprog $file] $file | cg bcol make -p $posfield -t i -n -1 $base $field >@ stdout 2>@ stderr
+							exec [catprog $file] $file | cg bcol make -p $posfield -t i $base.bcol $field >@ stdout 2>@ stderr
 						}
 					}
 				}
@@ -248,9 +212,9 @@ proc process_sample {args} {
 				if {![file exists $base.bcol]} {
 					putslog "Making $base.bcol"
 						if {[catch {
-							exec [catprog $file] $file | cg bcol make -p $posfield -t su $base $covfield
+							exec [catprog $file] $file | cg bcol make -p $posfield -t su $base.bcol $covfield
 						} e]} {
-							exec [catprog $file] $file | cg bcol make -p $posfield -t iu $base $covfield >@ stdout 2>@ stderr
+							exec [catprog $file] $file | cg bcol make -p $posfield -t iu $base.bcol $covfield >@ stdout 2>@ stderr
 						}
 				}
 			}
@@ -473,8 +437,152 @@ proc process_sample {args} {
 	cd $keepdir
 }
 
+proc process_sample_job {args} {
+	set dbdir {}
+	set realign 1
+	set paired 1
+	set adapterfile {}
+	set reports all
+	cg_options process_sample args {
+		-oridir {
+			set oridir $value
+		}
+		-realign {
+			set realign $value
+		}
+		-dbdir - -refdir {
+			set dbdir $value
+		}
+		-split {
+			set split $value
+		}
+		-paired {
+			set paired $value
+		}
+		-adapterfile {
+			set adapterfile $value
+		}
+		-reports {
+			set reports $value
+		}
+		-todoVar {
+			upvar $value todo
+		}
+		-reportstodoVar {
+			upvar $value reportstodo
+		}
+	} 1 2
+	if {[llength $args] == 1} {
+		foreach {destdir} $args break
+	} elseif {[llength $args] == 2} {
+		foreach {oridir destdir} $args break
+	}
+	set dbdir [file_absolute $dbdir]
+	set dir [file_absolute $destdir]
+	set sample [file tail $dir]
+	putslog "Making $dir"
+	catch {file mkdir $dir}
+	# check projectinfo
+	projectinfo $dir dbdir {split 1}
+	if {[info exists oridir]} {
+		if {[file exists $oridir]} {
+			set oridir [file_absolute $oridir]
+			file delete $dir/ori
+			mklink $oridir $dir/ori
+		}
+	}
+	# check if ori is a cg dir, if so use process_sample_cgi_job
+	if {[jobglob $dir/ori/ASM/var-*-ASM*.tsv] ne ""} {
+		process_sample_cgi_job $dir $split
+		return
+	}
+	set keeppwd [pwd]
+	cd $dir
+	job_logdir $dir/log_jobs
+	set refseq [glob $dbdir/genome_*.ifas]
+	set resultbamprefix rds
+	# convert existing vcfs
+	set files [jobglob var-*.vcf]
+	foreach file $files {
+		set target [file root [gzroot $file]].tsv
+		if {![file exists $target]} {
+			job vcf2tsv-$file -deps $file -targets $target -vars split -code {
+				cg vcf2tsv -split $split $dep $target.temp
+				file rename -force $target.temp $target
+			}
+			lappend todo [string range $target 4 end-4]
+		}
+	}
+	# add existing var files to todo
+	set files [jobglob var-*.tsv]
+	foreach file $files {
+		set target [file root [gzroot $file]].tsv
+		lappend todo [string range $target 4 end-4]
+	}
+	# find fastq files in fastq dir
+	set files [ssort -natural [jobglob fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
+	if {![llength $files]} {
+		# if there are none in the fastq dir, check ori dir
+		set files [ssort -natural [jobglob ori/*.fastq.gz ori/*.fastq ori/*.fq.gz ori/*.fq]]
+		if {[llength $files]} {
+			set targets [list_regsub ^ori $files fastq]
+			job fastq_from_ori-$sample -deps $files -targets $targets -code {
+				foreach file $dep target $targets {
+					mklink $file $target
+				}
+			}
+		} else {
+			# check if there are bam files in ori to extract fastq from
+			set files [ssort -natural [jobglob ori/*.bam]]
+			foreach file $files {
+				set base fastq/[file tail [file root $file]]
+				set target $base-R1.fastq
+				set target2 $base-R2.fastq
+				job bam2fastq-[file tail $file] -deps {$file} \
+				-targets {$target $target2} -code {
+					cg bam2fastq $dep $target.temp $target2.temp
+					exec gzip $target.temp
+					exec gzip $target2.temp
+					file rename -force $target.temp.gz $target.gz
+					file rename -force $target2.temp.gz $target2.gz
+				}
+			}
+		}
+		set files [ssort -natural [jobglob fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
+	}
+	# process fastq files (if found)
+	if {[llength $files]} {
+		# do not do any of preliminaries if end product is already there
+		set bamfile map-bwa-$sample.bam
+		set resultbamfile map-${resultbamprefix}bwa-$sample.bam
+		# quality and adapter clipping
+		set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired -skips [list -skip $bamfile -skip $resultbamfile]]
+		#
+		# map using bwa
+		map_bwa_job $refseq $files $sample $paired -skips [list -skip $resultbamfile]
+	}
+	# extract regions with coverage >= 5
+	set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
+	set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
+	# clean bamfile (mark duplicates, realign)
+	set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
+	#calculate reports
+	if {[llength $reports]} {
+		proces_reports_job $sampledir/$sample $dbdir $reports
+		lappend reportstodo $sampledir/$sample/reports
+	}
+	# samtools variant calling on map-rdsbwa
+	var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
+	lappend todo sam-rdsbwa-$sample
+	# gatk variant calling on map-rdsbwa
+	var_gatk_job $cleanedbam $refseq -bed $cov5bed -split $split
+	lappend todo gatk-rdsbwa-$sample
+	cd $keeppwd
+	return $todo
+}
+
 proc cg_process_sample {args} {
 	set args [job_init {*}$args]
-	process_sample {*}$args
+	process_sample_job {*}$args
 	job_wait
 }

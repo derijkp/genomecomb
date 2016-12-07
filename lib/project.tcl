@@ -58,7 +58,7 @@ proc projectinfo {dir args} {
 			}
 		} else {
 			if {[dict exists $infod $varVar] && $var ne [dict get $infod $varVar]} {
-				error "error: The $varVar parameter given ($var) differs from the one in the projectinfo.tsv ([dict get $infod $varVar])"
+				error "error: The $varVar parameter given ($var) differs from the one in the projectinfo file $projectinfofile ([dict get $infod $varVar])"
 			}
 		}
 		dict set infod $varVar $var

@@ -1,23 +1,45 @@
 = Process =
 
 == Format ==
-cg process_sample ?options? ?sampledir? destdir ?force?
+cg process_sample ?options? ?oridir? sampledir
 
 == Summary ==
-Convert Complete Genomics data to cg format and add several analysis files
+Processes one sample into a full [[format_project|Genomecomb sample directory]]
 
 == Description ==
-processes (sorting annotating, etc.) one Complete Genomics sample directory, and writes
-the adapted data into destdir. By default, only files that are not present already will be created."
 
+Creates a full [[format_project|Genomecomb sample directory]] with all
+kinds of data, analyses and reports. The directory containing the original
+data (fastqs, Complete Genomics data directory) can be given as an option,
+an argument, or it can be present in a dir named ori in the sample dir (if
+given as an argument, a link named ori to the original data will be made).
+The results (which analyses, etc.) differ according to the type of original data.
+
+By default, only files that are not present or are older than files they
+are created from (e.g. because of updates in ori data) will be created.
 
 == Options ==
-This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
+This command can be distributed on a cluster or using multiple with
+[[joboptions|job options]] (more info with cg help joboptions)
+
+As different types of original data are processed differently, not all options
+are applicable. Options that are not applicable to the given type of data are 
+ignored.
+
+; -dbdir dbdir: Some of the analysis require a reference genome and databases; **dbdir** gives the directory where to find these
+; -oridir oridir: directory containing original data, this can be a data directory as it comes from Complete Genomics, or simply a directory containing fastq files or a bam file
+; -realign value: If **value** is 0, realignment will not be performed, 
+use 1 for (default) realignment with gatk, or srma for alignment with srma
+; -split 1/0: split multiple alternative genotypes over different line
+; -paired 1/0: sequenced are paired/unpaired
+; -adapterfile file: Use **file** for possible adapter sequences
+; -reports list: use all (default) for creating all reports. If you only
+want some made, give these as a space separated list. Possible reports are:
+flagstats fastqc vars hsmetrics covered
 
 == Arguments ==
-; **sampledir**: data directory as it comes from Complete Genomics
-; **destdir**: data directory to be created, containing data in the cg format
-; **force**: When force is given as a parameter, everything will be recalculated and overwritten."
+; oridir: directory containing original data, this can be a data directory as it comes from Complete Genomics, or simply a directory containing fastq files or a bam file
+; sampledir: name of the sample directory to be created (or completed if it already exists)
 
 == Category ==
 Conversion
