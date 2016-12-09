@@ -433,7 +433,7 @@ proc bam_clean_job {args} {
 			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
 			-vars {gatkrefseq gatk pre realignopts} {*}$skips -code {
 				exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
-				if {[loc_compare [gatkversion] 3] >= 0} {
+				if {[loc_compare [gatkversion] 2.7] >= 0} {
 					set extra {--filter_bases_not_stored}
 				} else {
 					set extra {}
@@ -445,7 +445,7 @@ proc bam_clean_job {args} {
 			}
 		}
 		set root r$root
-		job bamrealign_index-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai -code {
+		job bamrealign_index-$root -deps $dir/$pre-$root.bam {*}$skips -targets $dir/$pre-$root.bam.bai -code {
 			exec samtools index $dep >@ stdout 2>@ stderr
 			puts "making $target"
 		}
