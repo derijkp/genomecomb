@@ -219,7 +219,9 @@ NODPRINT("line2 %s,%d,%d %s %s",Loc_ChrString(prevchromosome2),prevstart2,preven
 				connectalt(alt1->string,alt2->string,result2->data[datapos[0]].string,notfound);
 				for (i = 1 ; i < datalen ; i++) {
 					fprintf(stdout,"\t");
-					connectalt(alt1->string,alt2->string,result2->data[datapos[i]].string,notfound);
+					if (datapos[i] != -1) {
+						connectalt(alt1->string,alt2->string,result2->data[datapos[i]].string,notfound);
+					}
 				}
 				fprintf(stdout,"\n");
 			}

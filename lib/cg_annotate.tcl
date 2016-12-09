@@ -43,7 +43,7 @@ proc annotatereg {file dbfile name annotfile near dbinfo} {
 }
 
 proc annotatevar {file dbfile name annotfile dbinfo} {
-#putsvars file dbfile name annotfile
+# putsvars file dbfile name annotfile dbinfo
 	set newh [dict get $dbinfo newh]
 	set dataposs [dict get $dbinfo dataposs]
 	catch {gzclose $f}
@@ -115,16 +115,12 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 	dict set a header $header
 	if {$dbtype eq "gene"} {
 		set outfields {}
-		set dataposs {}
 		set poss {}
 	} elseif {$dbtype eq "var"} {
 		set outfields [dict_get_default $a fields {name freq score}]
-		set outfields [list_common $outfields $header]
-		set dataposs [list_cor $header $outfields]
 		set poss [tsv_basicfields $header 3]
 	} elseif {$dbtype eq "bcol"} {
 		set outfields {}
-		set dataposs {}
 		set poss {}
 	} else {
 		if {[dict exists $a fields]} {
@@ -140,9 +136,13 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 				default {set outfields {name freq score annotation}}
 			}
 		}
-		set outfields [list_common $outfields $header]
-		set dataposs [list_cor $header $outfields]
 		set poss [tsv_basicfields $header 3]
+	}
+	set outfields [list_common [list_remdup $outfields] $header]
+	set dataposs [list_cor $header $outfields]
+	if {[inlist $dataposs -1]} {
+		set poss [list_find $dataposs -1]
+		error "required output field(s) [join [list_sub $outfields $poss] ,] not found in file $dbfile"
 	}
 	if {[dict exists $a headerfields]} {
 		set headerfields [dict get $a headerfields]

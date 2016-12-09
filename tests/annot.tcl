@@ -86,6 +86,14 @@ test reg_annot {sort error 3 in database file} {
 	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/reg_annot.sft
 } {*File (database file) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
+test reg_annot {bug fix deal with duplicate field in opt} {
+	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
+	file copy -force data/reg_annot.sft tmp/reg_annot.sft
+	file_write tmp/reg_annot.sft.opt "fields\t{type begin end begin}\n"
+	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/reg_annot.sft
+	exec diff tmp/temp.sft data/expected-vars1-reg_annot-multi.sft
+} {} 
+
 test var_annot {basic} {
 	exec cg annotate data/vars1.sft tmp/temp.sft data/var_annot.sft
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
