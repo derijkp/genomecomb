@@ -92,6 +92,14 @@ proc annot_coverage_init {dir sample} {
 	global annot
 	catch {annot_coverage_close $dir}
 	set annot(cov,$dir,$sample) [list -1 {} 0 {} {} {}]
+	set chrfile [multicompar_reannot_find $dir $sample coverage/coverage-*.bcol]
+	if {![file exists $chrfile]} {
+		set chrfile [multicompar_reannot_find $dir $sample coverage/coverageRefScore-*.tsv coverage/coverage-*.tsv]
+		if {![file exists $chrfile]} {
+			return 0
+		}
+	}
+	return 1
 }
 
 proc annot_coverage_get {dir sample chr begin {force 0}} {

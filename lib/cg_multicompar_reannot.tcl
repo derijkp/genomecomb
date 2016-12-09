@@ -140,8 +140,7 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {
 			set samplea(type,$sample) cg
 			if {!$regonly} {
 				putslog "Using $samplea(dir,$sample) to reannot"
-				annot_coverage_init $samplea(dir,$sample) $sample
-				set samplea(annot_coverage,$sample) 1
+				set samplea(annot_coverage,$sample) [annot_coverage_init $samplea(dir,$sample) $sample]
 			}
 			putslog "Using $samplea(regionfile,$sample) to reannot"
 			annot_region_init $samplea(regionfile,$sample)
