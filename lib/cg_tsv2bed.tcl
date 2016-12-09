@@ -55,6 +55,7 @@ proc tsv2bed_job {tsvfile {bedfile {}} {fields {}}} {
 proc cg_tsv2bed {args} {
 	set tsvfile {}
 	set bedfile {}
+	set fields {}
 	cg_options tsv2bed args {
 		-f - --fields {
 			set fields $value

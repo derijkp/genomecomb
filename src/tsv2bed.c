@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
 	}
 	varfile = OpenVarfile(argv[1],1);
 	numpos = argc - 2;
+	if (numpos < 3) {numpos = 3;}
 	poss = (int *)malloc(numpos*sizeof(int));
 	poss[0] = varfile->varpos.chr;
 	poss[1] = varfile->varpos.start;
