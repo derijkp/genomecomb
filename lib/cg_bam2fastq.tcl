@@ -37,7 +37,7 @@ proc cg_bam2fastq {args} {
 	set fastqfile1 [file_absolute $fastqfile1]
 	set fastqfile2 [file_absolute $fastqfile2]
 	set destdir [file dir $fastqfile1]
-	set tempbam [tempfile]
+	set tempbam [file root [tempfile]].bam
 	# Aligning the generated fastq files may give problems/biases if the bam is sorted on position
 	# Sorting based on name should avoid this
 	exec samtools sort -n $bamfile [file root $tempbam] >@ stdout 2>@ stderr
