@@ -20,11 +20,13 @@ proc searchpath {envvar args} {
 }
 
 proc picard {cmd args} {
-	global picard
-	if {![info exists picard]} {
-		set picard [searchpath PICARD picard picard*]
+	set picard [findpicard]
+	if {[catch {
+		exec java -jar $picard/$cmd.jar {*}$args
+	} msg] && ![regexp "done. Elapsed time:" $msg]} {
+		error $msg
 	}
-	exec java -jar $picard/$cmd.jar {*}$args
+	return $msg
 }
 
 proc findpicard {} {

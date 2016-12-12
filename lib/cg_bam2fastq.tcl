@@ -40,39 +40,31 @@ proc cg_bam2fastq {args} {
 	set tempbam [file root [tempfile]].bam
 	# Aligning the generated fastq files may give problems/biases if the bam is sorted on position
 	# Sorting based on name should avoid this
+	putslog "Sorting bam file on name"
 	exec samtools sort -n $bamfile [file root $tempbam] >@ stdout 2>@ stderr
-#	if {[catch {
-#		picard SortSam	I=$bamfile	O=$tempbam	SO=queryname VALIDATION_STRINGENCY=SILENT 2>@ stderr >@ stdout
-#	} msg]} {
-#		if {![regexp "done. Elapsed time:" $msg]} {
-#			error $msg
-#		}
-#	}
 	if {$method eq "picard"} {
-		if {[catch {
-			if {$fastqfile2 ne ""} {
-				set picard [findpicard]
-				exec samtools view -hf 0x2 $tempbam | java -jar $picard/SamToFastq.jar I=/dev/stdin F=$fastqfile1.temp F2=$fastqfile2.temp VALIDATION_STRINGENCY=SILENT >@ stdout
-			} else {
-				picard SamToFastq I=$tempbam F=$fastqfile1 VALIDATION_STRINGENCY=SILENT >@ stdout
-			}
-		} msg]} {
-			if {![regexp "done. Elapsed time:" $msg]} {
+		putslog "Using picard to convert bam to fastq"
+		if {$fastqfile2 ne ""} {
+			set picard [findpicard]
+			if {[catch {
+				exec samtools view -hf 0x2 $tempbam | java -jar $picard/SamToFastq.jar I=/dev/stdin F=$fastqfile1.temp F2=$fastqfile2.temp VALIDATION_STRINGENCY=SILENT
+			} msg] && ![regexp "done. Elapsed time:" $msg]} {
 				error $msg
 			}
+		} else {
+			picard SamToFastq I=$tempbam F=$fastqfile1 VALIDATION_STRINGENCY=SILENT >@ stdout
 		}
-		file rename $fastqfile1.temp $fastqfile1
-		file rename $fastqfile2.temp $fastqfile2
-		puts stderr $msg
+		putslog $msg
 	} elseif {$method eq "sam"} {
+		putslog "Using samtools to convert bam to fastq (mate pairs are not always kept synced!)"
 		# just a try; this does not always keep mate pairs synced, so not very reliable
 		exec samtools view -uf64 $tempbam | samtools bam2fq - > $fastqfile1.temp
 		exec samtools view -uf128 $tempbam | samtools bam2fq - > $fastqfile2.temp
-		file rename $fastqfile1.temp $fastqfile1
-		file rename $fastqfile2.temp $fastqfile2
 	} else {
 		error "unknown method \"$method\", must be picard or sam"
 	}
+	file rename -force $fastqfile1.temp $fastqfile1
+	file rename -force $fastqfile2.temp $fastqfile2
 	if {$compress} {
 		exec gzip $fastqfile1
 		exec gzip $fastqfile2
