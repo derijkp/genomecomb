@@ -16,8 +16,6 @@
 proc cg_checksum {args} {
 	set check 1; set outdir {}
 	cg_options checksum args {
-	set pos 0
-	while 1 {
 		-n {
 			if {[string index $value 0] eq "-"} {
 				set check 1; incr pos -1

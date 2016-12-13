@@ -2,7 +2,7 @@ proc cg_lz4 args {
 	set keep 0
 	set compressionlevel 9
 	set blocksize 5
-	cg_options tsv2bed args {
+	cg_options lz4 args {
 		-k {
 			set keep $value
 		}
