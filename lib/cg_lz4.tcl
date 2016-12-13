@@ -2,59 +2,70 @@ proc cg_lz4 args {
 	set keep 0
 	set compressionlevel 9
 	set blocksize 5
+	set index 0
+	set outputfile {}
 	cg_options lz4 args {
-		-k {
+		-k - --keep {
 			set keep $value
 		}
-		-c {
+		-c - --compressionlevel {
 			set compressionlevel $value
 		}
-		-b {
+		-b - --blocksize {
 			set blocksize $value
 		}
+		-i - --index {
+			set index $value
+		}
+		-o - --outputfile {
+			set outputfile $value
+		}
 	}
-	set args [lrange $args $pos end]
+	if {$outputfile ne "" && [llength $args] > 1} {
+		error "option -o can only be used for compressing one file"
+	}
 	foreach file $args {
 		set ext [file extension $file]
+		if {$outputfile eq ""} {
+			set result [file root $file].lz4
+		} else {
+			set result $outputfile
+		}
 		switch $ext {
 			.gz {
 				putslog "lz4 $file"
-				set result [file root $file].lz4
 				exec gunzip -d -c $file > $result.temp2
 				exec lz4c -$compressionlevel -B$blocksize -c $result.temp2 > $result.temp
-				file delete $result.temp2
-				file rename -force $result.temp $result
-				if {!$keep} {file delete $file}
 			}
 			.rz {
 				putslog "lz4 $file"
-				set result [file root $file].lz4
 				exec razip -d -c $file > $result.temp2
 				exec lz4c -$compressionlevel -B$blocksize -c $result.temp2 > $result.temp
-				file delete $result.temp2
-				file rename -force $result.temp $result
-				if {!$keep} {file delete $file}
-				putslog "$file already lz4"
 			}
 			.lz4 {
 				putslog "$file already lz4"
+				continue
 			}
 			.bz2 {
 				putslog "lz4c $file"
-				set result [file root $file].lz4
 				exec bzcat $file > $result.temp2
 				exec lz4c -$compressionlevel -B$blocksize -c $result.temp2 > $result.temp
-				file delete $result.temp2
-				file rename -force $result.temp $result
-				if {!$keep} {file delete $file}
 			}
 			default {
+				if {$outputfile eq ""} {
+					set result $file.lz4
+				} else {
+					set result $outputfile
+				}
 				putslog "lz4c $file"
-				exec lz4c -$compressionlevel -B$blocksize -c $file > $file.lz4.temp
-				file rename -force $file.lz4.temp $file.lz4
-				if {!$keep} {file delete $file}
+				exec lz4c -$compressionlevel -B$blocksize -c $file > $result.temp
 			}
 		}
+		if {$index} {exec lz4index $result.temp}
+		file delete $result.temp2
+		if {$index} {file rename -force $result.temp.lz4i [file root $result].lz4i}
+		file rename -force $result.temp $result
+		if {!$keep} {file delete $file}
 	}
 }
 

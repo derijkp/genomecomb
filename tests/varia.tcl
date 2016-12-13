@@ -115,6 +115,24 @@ test compression {lz4} {
 	list [lsort -dict [glob tmp/test*]] $c1 $c2
 } {{tmp/test1.txt.lz4 tmp/test2.txt.lz4} a b}
 
+test compression {lz4 -o} {
+	test_cleantmp
+	file_write tmp/test1.txt a
+	cg lz4 -o tmp/out.lz4 tmp/test1.txt
+	catch {exec lz4c -d tmp/out.lz4 2> /dev/null} c1
+	list [lsort -dict [glob tmp/out*]] $c1
+} {tmp/out.lz4 a}
+
+test compression {lz4 -i} {
+	test_cleantmp
+	file_write tmp/test1.txt a
+	file_write tmp/test2.txt b
+	cg lz4 -i 1 {*}[glob tmp/test*.txt]
+	catch {exec lz4c -d tmp/test1.txt.lz4 2> /dev/null} c1
+	catch {exec lz4c -d tmp/test2.txt.lz4 2> /dev/null} c2
+	list [lsort -dict [glob tmp/test*]] $c1 $c2
+} {{tmp/test1.txt.lz4 tmp/test1.txt.lz4i tmp/test2.txt.lz4 tmp/test2.txt.lz4i} a b}
+
 test cg_options {basic} {
 	set args {-opt o 1 2 3 4}
 	cg_options test args {
