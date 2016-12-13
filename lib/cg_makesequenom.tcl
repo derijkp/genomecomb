@@ -31,36 +31,23 @@ proc cg_makesequenom {args} {
 	set snpdbpatterns snp
 	set delsize 5
 	set repeats s
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-f - --freq {
-				set freql $value
-			}
-			-n - --freqn {
-				set freqN $value
-			}
-			-p - --snpdbpattern {
-				set snpdbpatterns $value
-			}
-			-d - --delsize {
-				set delsize $value
-			}
-			-r - --repeatmasker {
-				set repeats $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options makesequenom args {
+		-f - --freq {
+			set freql $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] != 3)} {
-		errorformat makesequenom
-	}
-	foreach {compar_file resultfile dbdir} $args break
+		-n - --freqn {
+			set freqN $value
+		}
+		-p - --snpdbpattern {
+			set snpdbpatterns $value
+		}
+		-d - --delsize {
+			set delsize $value
+		}
+		-r - --repeatmasker {
+			set repeats $value
+		}
+	} {compar_file resultfile dbdir} 3 3
 	#
 	catch {close $f}; catch {close $fg}
 	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]

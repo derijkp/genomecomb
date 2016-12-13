@@ -303,43 +303,23 @@ proc cg_multicompar_reannot {args} {
 	set skipincomplete 0
 	set paged 0
 	set pagedstart 0
-	set pos 0
-	while 1 {
-		set key [lindex $args $pos]
-		switch -- $key {
-			-force {
-				incr pos
-				set force [lindex $args $pos]
-			}
-			-regonly {
-				incr pos
-				set regonly [lindex $args $pos]
-			}
-			-skipincomplete {
-				incr pos
-				set skipincomplete [lindex $args $pos]
-			}
-			-paged {
-				incr pos
-				set paged [lindex $args $pos]
-			}
-			-pagedstart {
-				incr pos
-				set pagedstart [lindex $args $pos]
-			}
-			-- break
-			default {
-				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
-				break
-			}
+	cg_options multicompar_reannot args {
+		-force {
+			set force $value
 		}
-		incr pos
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] < 1} {
-		errorformat multicompar_reannot
-	}
-	set compar_file [list_shift args]
+		-regonly {
+			set regonly $value
+		}
+		-skipincomplete {
+			set skipincomplete $value
+		}
+		-paged {
+			set paged $value
+		}
+		-pagedstart {
+			set pagedstart $value
+		}
+	} compar_file
 	foreach option $args {
 		switch $option {
 			force {set force 1}

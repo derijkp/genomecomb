@@ -1,30 +1,12 @@
 proc cg_bam2fastq {args} {
 	set pos 0
 	set method picard
-	while 1 {
-		set key [lindex $args $pos]
-		switch -- $key {
-			-m - --method {
-				incr pos
-				set method [lindex $args $pos]
-			}
-			-- {
-				incr pos
-				break
-			}
-			default {
-				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
-				break
-			}
-		}
-		incr pos
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] < 2 || [llength $args] > 3} {
-		errorformat bam2fastq
-	}
 	set fastqfile2 {}
-	foreach {bamfile fastqfile1 fastqfile2} $args break
+	cg_options bam2fastq args {
+		-m - --method {
+			set method $value
+		}
+	} {bamfile fastqfile1 fastqfile2} 2 3
 	set compress 0
 	if {[file extension $fastqfile1] eq ".gz"} {
 		set fastqfile1 [file root $fastqfile1]

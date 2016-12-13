@@ -19,12 +19,8 @@ proc cg_homwes_compare args {
 #		incr pos 2
 #	}
 #	set args [lrange $args $pos end]
-	set len [llength $args]
-	if {$len < 2} {
-		errorformat homwes_compare
-	}
-	set resultfile [lindex $args 0]
-	set args [lrange $args 1 end]
+	cg_options homwes_compare args {
+	} {resultfile} 2
 	if {[file exists $resultfile]} {file rename -force $resultfile $resultfile.old}
 	if {[file exists $resultfile.summary.tsv]} {file rename -force $resultfile.summary.tsv $resultfile.summary.tsv.old}
 	cg multireg $resultfile {*}$args

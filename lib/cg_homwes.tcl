@@ -19,6 +19,7 @@ proc cg_homwes {args} {
 	set vcf 0
 	set pos 0
 	set variantsonly 0
+	set resultfile {}
 	cg_options homwes args {
 		-dbdir {
 			set dbdir $value
@@ -50,9 +51,7 @@ proc cg_homwes {args} {
 		-snpsonly {
 			set snpsonly $value
 		}
-	} 2 3
-	set resultfile {}
-	foreach {annotcomparfile samples resultfile} $args break
+	} {annotcomparfile samples resultfile} 2 3
 	set annotcomparfile [file_absolute $annotcomparfile]
 	if {$resultfile eq ""} {
 		set resultfile [file root $annotcomparfile]-homwes.tsv

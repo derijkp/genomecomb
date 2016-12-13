@@ -3,27 +3,14 @@ proc cg_wide {args} {
 	set commonfields {}
 	set file {}
 	set outfile {}
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-s - --samplefields {
-				set samplefields $value
-			}
-			-f - --fields {
-				set commonfields $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options wide args {
+		-s - --samplefields {
+			set samplefields $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] > 2} {
-		errorformat wide
-	}
-	foreach {file outfile} $args break
+		-f - --fields {
+			set commonfields $value
+		}
+	} {file outfile} 0 2
 	if {$file eq ""} {
 		set f stdin
 		set tempfile [tempfile]

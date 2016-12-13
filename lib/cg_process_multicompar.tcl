@@ -191,13 +191,7 @@ proc process_multicompar {args} {
 		-m - --maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
-	} 1 2
-	set len [llength $args]
-	if {$len == 1} {
-		set destdir [lindex $args 0]
-	} elseif {$len == 2} {
-		foreach {destdir dbdir} $args break
-	}
+	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	# check projectinfo
 	projectinfo $destdir dbdir split

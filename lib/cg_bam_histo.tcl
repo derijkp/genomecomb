@@ -1,22 +1,10 @@
 proc cg_bam_histo {args} {
 	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-n - --namecol {
-				set namecol $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options bam_histo args {
+		-n - --namecol {
+			set namecol $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] != 3} {
-		exiterror "wrong # args: should be \"cg bam_histo regionfile bamfile intervals\""
-	}
-	foreach {regionfile bamfile intervals} $args break
+	} {regionfile bamfile intervals}
 	set chrs [bam_chrs $bamfile]
 	if {[regexp ^chr [lindex $chrs 0]]} {set pre chr} else {set pre {}}
 	foreach bamchr $chrs {

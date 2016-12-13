@@ -11,53 +11,43 @@ proc cg_bcol_make {args} {
 	set multilist {}
 	set start 0
 	set precision -1
-	set pos 0
 	set header 1
-	foreach {key value} $args {
-		switch -- $key {
-			-t - --type {
-				set type $value
-			}
-			-p - --poscol {
-				set offsetcol $value
-			}
-			-e - --endcol {
-				set endcol $value
-			}
-			-d - --default {
-				set defaultvalue $value
-			}
-			-c - --chromosomecol {
-				set chromosomecol $value
-			}
-			-co - --compress {
-				set compress $value
-			}
-			-h - --header {
-				set header $value
-			}
-			-m - --multicol {
-				set multicol $value
-			}
-			-l - --multilist {
-				set multilist $value
-			}
-			--precision {
-				set precision $value
-			}
-			-- break
-			default {
-				break
-			}
-		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] < 2 || [llength $args] > 3} {
-		errorformat bcol_make
-	}
 	set srcfile {}
-	foreach {bcolfile valuecolumn srcfile} $args break
+	cg_options bcol_make args {
+		-t - --type {
+			set type $value
+		}
+		-p - --poscol {
+			set offsetcol $value
+		}
+		-e - --endcol {
+			set endcol $value
+		}
+		-d - --default {
+			set defaultvalue $value
+		}
+		-c - --chromosomecol {
+			set chromosomecol $value
+		}
+		-c - --chromosomename {
+			set chromosomename $value
+		}
+		-co - --compress {
+			set compress $value
+		}
+		-h - --header {
+			set header $value
+		}
+		-m - --multicol {
+			set multicol $value
+		}
+		-l - --multilist {
+			set multilist $value
+		}
+		--precision {
+			set precision $value
+		}
+	} {bcolfile valuecolumn srcfile} 2 3
 	set bcolfile [file_absolute $bcolfile]
 	set tail [file tail $bcolfile]
 	if {[info exists bcol_typea($type,mx)]} {

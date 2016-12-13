@@ -1,25 +1,11 @@
 proc cg_cg2sreg {args} {
 	global scriptname action
 	set sorted 0
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-sorted {
-				set sorted [true $value]
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options cg2sreg args {
+		-sorted {
+			set sorted [true $value]
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] == 2} {
-		foreach {file outfile} $args break
-	} else {
-		errorformat cg2sreg
-	}
+	} {file outfile}
 	putslog "Extract $outfile from $file"
 	if {$sorted} {
 		cg select -q {$varType != "no-call" && $varType != "no-ref"} -f "chromosome begin end" $file $outfile.temp

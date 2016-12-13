@@ -471,7 +471,7 @@ proc process_sample_job {args} {
 		-reportstodoVar {
 			upvar $value reportstodo
 		}
-	} 1 2
+	} {} 1 2
 	if {[llength $args] == 1} {
 		foreach {destdir} $args break
 	} elseif {[llength $args] == 2} {

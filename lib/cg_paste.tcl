@@ -81,7 +81,7 @@ proc cg_paste {args} {
 		-m - --maxopenfiles {
 			set ::maxopenfiles $value
 		}
-	} 1
+	} {} 1
 	if {[info exists outputfile]} {
 		tsv_paste_job $outputfile $args
 	} else {

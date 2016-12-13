@@ -34,15 +34,7 @@ proc process_project_job {args} {
 		-reports {
 			set reports $value
 		}
-	} 1 2
-	set len [llength $args]
-	if {$len == 1} {
-		set destdir [lindex $args 0]
-	} elseif {$len == 2} {
-		foreach {destdir dbdir} $args break
-	} else {
-		errorformat process_illumina
-	}
+	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
 	# check projectinfo

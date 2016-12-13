@@ -319,8 +319,7 @@ proc cg_help {args} {
 	set format 1
 	cg_options help args {
 		-format {set format $value}
-	} 0 1
-	set item [lindex $args 0]
+	} item 0 1
 	if {$item ne ""} {
 		help $item $format
 	} else {

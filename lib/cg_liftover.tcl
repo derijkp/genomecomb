@@ -21,39 +21,25 @@ proc liftover_correctline {line ref altpos alts sposs slist} {
 }
 
 proc cg_liftover {args} {
-	set pos 0
 	set regionfile {}
 	set correctvariants 1
 	unset -nocomplain split
-	foreach {key value} $args {
-		switch -- $key {
-			-regionfile - -r {
-				set regionfile $value
-			}
-			-correctvariants - -c {
-				set correctvariants $value
-			}
-			-split - -s {
-				set split $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options liftover args {
+		-regionfile - -r {
+			set regionfile $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] < 3)} {
-		errorformat liftover
-	}
-
-	foreach {varfile resultfile liftoverfile} $args break
+		-correctvariants - -c {
+			set correctvariants $value
+		}
+		-split - -s {
+			set split $value
+		}
+	} {varfile resultfile liftoverfile} 3
 	if {[file exists $resultfile]} {
 		error "file $resultfile already exists, format is (now): cg liftover varfile resultfile liftoverfile"
 	}
 	if {[file isdir $varfile]} {
-		cg_liftoversample {*}$args
+		cg_liftoversample $varfile $resultfile $liftoverfile {*}$args
 	}
 	set unmappedfile $resultfile.unmapped
 	#

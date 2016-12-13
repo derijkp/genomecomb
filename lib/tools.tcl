@@ -43,10 +43,12 @@ proc cg {cmd args} {
 	}
 }
 
-proc cg_options {cmd argsVar def {minargs 0} {maxargs 2000000000} {parameters {}}} {
+proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs 2000000000}} {
 # putsvars cmd argsVar def minargs maxargs parameters
 	set options [join [list_unmerge $def] ,]
-	set parameters [list $parameters]
+	set len [llength $parameters]
+	if {$minargs eq ""} {set minargs $len}
+	if {$maxargs eq "" || $maxargs eq "-1"} {set maxargs $len}
 	set fullcmd [subst {
 		set pos 0
 		while 1 {
@@ -56,7 +58,7 @@ proc cg_options {cmd argsVar def {minargs 0} {maxargs 2000000000} {parameters {}
 			incr pos
 			switch -- \$key {
 				$def
-				-- break
+				-- {incr pos ; break}
 				default {
 					if {\[string index \$key 0\] eq "-"} {
 						error "unknown option \\"\$key\\", must be one of: $options"
@@ -72,8 +74,10 @@ proc cg_options {cmd argsVar def {minargs 0} {maxargs 2000000000} {parameters {}
 			[list errorformat $cmd $options $minargs $maxargs $parameters]
 		}
 	}]
-	if {[llength [lindex $parameters 0]]} {
-		append fullcmd "foreach $parameters \$args break"
+	if {[llength $parameters]} {
+		append fullcmd "set ::_temp_max \[expr {\[llength \$args\] - 1}\]\n"
+		append fullcmd "if {\$::_temp_max >= 0} {foreach \[lrange [list $parameters] 0 \$::_temp_max\] \$args break}\n"
+		append fullcmd "set args \[lrange \$args $len end\]"
 	}
 	uplevel $fullcmd
 }

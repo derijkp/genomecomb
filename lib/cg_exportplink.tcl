@@ -1,34 +1,21 @@
 proc cg_exportplink {args} {
 	set query {}
-	set pos 0
 	set nulllines 0
 	set codegeno 0
-	foreach {key value} $args {
-		switch -- $key {
-			-q {
-				set query $value
-			}
-			-c - --codegeno {
-				set codegeno $value
-			}
-			-s - --samples {
-				set samples $value
-			}
-			-n - --nulllines {
-				set nulllines $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options exportplink args {
+		-q {
+			set query $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] != 2} {
-		errorformat exportplink
-	}
-	foreach {varfile resultfile} $args break
+		-c - --codegeno {
+			set codegeno $value
+		}
+		-s - --samples {
+			set samples $value
+		}
+		-n - --nulllines {
+			set nulllines $value
+		}
+	} {varfile resultfile} 2 2
 	catch {close $f} ; catch {close $o}
 	if {$query ne ""} {
 		set f [open "|[list cg select -q $query $varfile]"]

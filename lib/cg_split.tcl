@@ -1,29 +1,10 @@
 proc cg_split {args} {
-	set pos 0
-	while 1 {
-		set key [lindex $args $pos]
-		switch -- $key {
-			-f {
-				incr pos
-				set field [lindex $args $pos]
-			}
-			-- {
-				incr pos
-				break
-			}
-			default {
-				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
-				break
-			}
-		}
-		incr pos
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] < 2 || [llength $args] > 3} {
-		errorformat split
-	}
 	set postfix {}
-	foreach {file prefix postfix} $args break
+	cg_options split args {
+		-f {
+			set field $value
+		}
+	} {file prefix postfix} 2 3
 	if {$file ne "-"} {
 		set f [gzopen $file]
 	} else {

@@ -4,31 +4,17 @@ proc cg_long {args} {
 	set samplefieldslen 0
 	set experiment {}
 	set sampledataid id
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-norm {set norm $value}
-			-samplefields {
-				set samplefields $value
-				set samplefieldslen [llength $samplefields]
-			}
-			-experiment {set experiment $value}
-			-sampledataid {set sampledataid $value}
-			default break
-		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] > 2} {
-		if {[string index [lindex $args 0] 0] eq "-"} {
-			error "unknown option [lindex $args 0]"
-		} else {
-			errorformat long
-		}
-	}
 	set file {}
 	set outfile {}
-	foreach {file outfile} $args break
+	cg_options long args {
+		-norm {set norm $value}
+		-samplefields {
+			set samplefields $value
+			set samplefieldslen [llength $samplefields]
+		}
+		-experiment {set experiment $value}
+		-sampledataid {set sampledataid $value}
+	} {file outfile} 0 2
 	if {$file eq ""} {
 		set f stdin
 	} else {

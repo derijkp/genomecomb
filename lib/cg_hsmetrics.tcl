@@ -35,7 +35,7 @@ proc cg_hsmetrics {args} {
 		-b - --baitfile {
 			set baitfile $value
 		}
-	} 3 3 {bamfile targetfile resultfile}
+	} {bamfile targetfile resultfile} 3 3
 	if {![info exists sample]} {
 		set sample [file tail [file root $bamfile]]
 		regsub ^map- $sample {} sample

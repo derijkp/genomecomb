@@ -1,24 +1,6 @@
 proc cg_liftregion {args} {
-#	set pos 0
-#	set sumfields {}
-#	foreach {key value} $args {
-#		switch -- $key {
-#			-sumfields {
-#				set sumfields $value
-#			}
-#			-- break
-#			default {
-#				break
-#			}
-#		}
-#		incr pos 2
-#	}
-#	set args [lrange $args $pos end]
-	if {([llength $args] < 3)} {
-		errorformat liftregion
-	}
-	foreach {file resultfile liftoverfile} $args break
-
+	cg_options liftregion args {
+	} {file resultfile liftoverfile} 3 3
 	set unmappedfile $resultfile.unmapped
 	if {[file exists $resultfile]} {
 		error "file $resultfile already exists"

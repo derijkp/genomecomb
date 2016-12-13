@@ -685,46 +685,32 @@ proc process_illumina {args} {
 	set adapterfile {}
 	set conv_nextseq 0
 	set reports all
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-realign {
-				set realign $value
-			}
-			-dbdir {
-				set dbdir $value
-			}
-			-split {
-				set split $value
-			}
-			-dbfile {
-				lappend dbfiles [file_absolute $value]
-			}
-			-paired {
-				set paired $value
-			}
-			-adapterfile {
-				set adapterfile [file_absolute $value]
-			}
-			-conv_nextseq {
-				set conv_nextseq $value
-			}
-			-reports {
-				set reports $value
-			}
-			default break
+	cg_options process_illumina args {
+		-realign {
+			set realign $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	set len [llength $args]
-	if {$len == 1} {
-		set destdir [lindex $args 0]
-	} elseif {$len == 2} {
-		foreach {destdir dbdir} $args break
-	} else {
-		errorformat process_illumina
-	}
+		-dbdir {
+			set dbdir $value
+		}
+		-split {
+			set split $value
+		}
+		-dbfile {
+			lappend dbfiles [file_absolute $value]
+		}
+		-paired {
+			set paired $value
+		}
+		-adapterfile {
+			set adapterfile [file_absolute $value]
+		}
+		-conv_nextseq {
+			set conv_nextseq $value
+		}
+		-reports {
+			set reports $value
+		}
+	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
 	# check projectinfo

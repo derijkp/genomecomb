@@ -10,25 +10,12 @@ exec tclsh "$0" ${1+"$@"}
 package require Extral
 
 proc cg_covered args {
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-n - -namecol {
-				set namecol $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options covered args {
+		-n - -namecol {
+			set namecol $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] > 1} {
-		errorformat covered
-	}
-	if {[llength $args] > 0} {
-		set regfile [lindex $args 0]
+	} {regfile} 0 1
+	if {[info exists regfile]} {
 		set f [gzopen $regfile]
 	} else {
 		set f stdin

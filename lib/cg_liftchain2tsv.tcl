@@ -6,27 +6,14 @@
 
 proc cg_liftchain2tsv {args} {
 	global scriptname action
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-ref {
-				set ref $value
-			}
-			-destref {
-				set destref $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options liftchain2tsv args {
+		-ref {
+			set ref $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] > 2} {
-		errorformat liftchain2tsv
-	}
-	foreach {srcfile destfile} $args break
+		-destref {
+			set destref $value
+		}
+	} {srcfile destfile} 2 2
 	if {![info exists ref] || ![info exists destref]} {
 		set liftoverfilebase [lindex [split [file tail $srcfile] .] 0]
 		if {![regexp {^(.*)(To|2)(.*)} $liftoverfilebase temp oldrefname temp newrefname]} {

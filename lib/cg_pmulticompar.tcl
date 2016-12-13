@@ -693,9 +693,8 @@ proc cg_pmulticompar {args} {
 		-m - --maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
-	} 1
-	foreach {compar_file} $args break
-	set dirs [lrange $args 1 end]
+	} compar_file 1
+	set dirs $args
 	pmulticompar_job $compar_file $dirs $regonly $split $targetsfile $erroronduplicates $skipincomplete
 	job_wait
 }

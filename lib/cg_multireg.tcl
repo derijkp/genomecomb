@@ -113,7 +113,6 @@ proc cg_multireg {args} {
 		-m - --maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
-	} 2
-	foreach {compar_file} $args break
-	multireg_job $compar_file [lrange $args 1 end]
+	} compar_file 2
+	multireg_job $compar_file $args
 }

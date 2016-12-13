@@ -993,30 +993,17 @@ proc cg_validatesv args {
 #			"-o" "set file_out $value" \
 #			"-e" "set EVAL $value" ;
 #	}
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-r - --readsize {
-				set READSIZE $value
-			}
-			-m - --min {
-				set MIN $value
-			}
-			-e - --eval {
-				set EVAL $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options cg_validatesv args {
+		-r - --readsize {
+			set READSIZE $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] < 4) || ([llength $args] > 5)} {
-		errorformat cg_validatesv
-	}
-	foreach {file file_out dbdir archive MAX_SIZE} $args break
+		-m - --min {
+			set MIN $value
+		}
+		-e - --eval {
+			set EVAL $value
+		}
+	} {file file_out dbdir archive MAX_SIZE} 4 5
 	#
 	set searchGenomeDB [lindex [glob $dbdir/genome_*.ssa] 0]
 	if {[catch {gzopen $file} fileid]} {

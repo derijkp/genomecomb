@@ -147,30 +147,18 @@ proc cg_ucscwiggle2reg {args} {
 	set precision 1
 	set formula {$value}
 	set addnum {}
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-p {
-				set precision $value
-			}
-			-f {
-				set formula $value
-			}
-			-n {
-				set addnum $value
-			}
-			-- break
-			default {
-				break
-			}
+	set resultfile {}
+	cg_options ucscwiggle2reg args {
+		-p {
+			set precision $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {($len < 1) && ($len > 2)} {
-		errorformat ucscwiggle2reg
-	}
-	foreach {file resultfile} $args break
+		-f {
+			set formula $value
+		}
+		-n {
+			set addnum $value
+		}
+	} {file resultfile} 1 2
 	if {$resultfile eq ""} {
 		set resultfile reg_$file
 	}
@@ -247,30 +235,18 @@ proc cg_ucscwb2reg {args} {
 	set precision 1
 	set formula {$value}
 	set addnum {}
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-p {
-				set precision $value
-			}
-			-f {
-				set formula $value
-			}
-			-n {
-				set addnum $value
-			}
-			-- break
-			default {
-				break
-			}
+	set resultfile {}
+	cg_options ucscwb2reg args {
+		-p {
+			set precision $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {($len < 1) && ($len > 2)} {
-		errorformat ucscwiggle2reg
-	}
-	foreach {file resultfile} $args break
+		-f {
+			set formula $value
+		}
+		-n {
+			set addnum $value
+		}
+	} {file resultfile} 1 2
 	if {$resultfile eq ""} {
 		set resultfile [file join [file dir $file] reg_[file tail $file]]
 	}

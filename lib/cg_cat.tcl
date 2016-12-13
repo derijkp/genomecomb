@@ -39,7 +39,7 @@ proc cg_cat {args} {
 		-fields - --fields {
 			set fields $value
 		}
-	} 1
+	} {} 1
 	if {$merge} {set force m} elseif {$force} {set force f} else {set force ""}
 	if {[llength $args] == 1} {
 		set f [gzopen [lindex $args 0]]

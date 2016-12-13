@@ -115,6 +115,98 @@ test compression {lz4} {
 	list [lsort -dict [glob tmp/test*]] $c1 $c2
 } {{tmp/test1.txt.lz4 tmp/test2.txt.lz4} a b}
 
+test cg_options {basic} {
+	set args {-opt o 1 2 3 4}
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+	} {p1 p2}
+	list $opt $p1 $p2 $args
+} {o 1 2 {3 4}}
+
+test cg_options {args error (not enough)} {
+	set args {-opt o}
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+	} {p1 p2}
+} {
+ERROR: Wrong number of arguments, correct format is:
+cg test ?options? p1 p2 ...} error
+
+test cg_options {args option} {
+	set args {-opt o 1 2 3 4}
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+	} {p1 p2} 0 4
+	list $opt $p1 $p2 $args
+} {o 1 2 {3 4}}
+
+test cg_options {option error} {
+	set args {-unknown o 1 2 3 4}
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+	} {p1 p2} 0 4
+} {unknown option "-unknown", must be one of: -opt} error
+
+test cg_options {args error (not enough)} {
+	set args {-opt o}
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+	} {p1 p2} 1 4
+} {
+ERROR: Wrong number of arguments, correct format is:
+cg test ?options? p1 ?p2? ...} error
+
+test cg_options {args error (too much)} {
+	set args {-opt o 1 2 3 4}
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+	} {p1 p2} 1 2
+} {
+ERROR: Wrong number of arguments, correct format is:
+cg test ?options? p1 ?p2?} error
+
+test cg_options {args option} {
+	set args {-opt o 1 2 3 4}
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+	} {p1 p2 p3 p4} 0 4
+	list $opt $p1 $p2 $p3 $p4 $args
+} {o 1 2 3 4 {}}
+
+test cg_options {args no parameters given} {
+	set args {-opt o 1 2}
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+	} {} 1
+	set args
+} {1 2}
+
+test cg_options {do not set parameters not given} {
+	set args {-opt o 1}
+	cg_options test args {
+		-opt {
+			set opt $value
+		}
+	} {a b} 1 2
+	list $a [info exists b]
+} {1 0}
+
 file delete -force tmp/temp.sft
 
 set ::env(PATH) $keeppath

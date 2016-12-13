@@ -1,28 +1,11 @@
 proc cg_indexcol {args} {
 	set samplingnum 0
-	set pos 0
-	set len [llength $args]
-	while {$pos < $len} {
-		set opt [lindex $args $pos]
-		switch $opt {
-			-sample {
-				incr pos
-				set samplingnum [lindex $args $pos]
-				incr pos
-			}
-			-- break
-			default {
-				if {[string index $opt 0] ne "-"} break
-				error "ERROR: Unkown option $opt, should be one of: -sample"
-			}
+	cg_options tsv2bed args {
+		-sample {
+			set samplingnum $value
 		}
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] < 2} {
-		error "format is: cg indexcol file fieldname ..."
-	}
-	foreach {file} $args break
-	set todofields [lrange $args 1 end]
+	} {file fieldname} 2
+	set todofields [list $fieldname {*}$args]
 	progress start [llength $todofields] "Indexing columns"
 	foreach field $todofields {
 		progress message "Indexing column $field"
@@ -95,45 +78,26 @@ proc cg_indexcol {args} {
 
 proc cg_index {args} {
 	set updated 0
-	set pos 0
-	set len [llength $args]
 	set cols 0
 	set colinfo 0
 	set dbstring {}
 	set refdir {}
-	while {$pos < $len} {
-		set opt [lindex $args $pos]
-		switch $opt {
-			-cols {
-				set cols 1
-				incr pos
-			}
-			-colinfo {
-				set colinfo 1
-				incr pos
-			}
-			-db {
-				incr pos
-				set dbstring [lindex $args $pos]
-				incr pos
-			}
-			-refdir {
-				incr pos
-				set refdir [lindex $args $pos]
-				incr pos
-			}
-			-- break
-			default {
-				if {[string index $opt 0] ne "-"} break
-				error "ERROR: Unkown option $opt: should be one of -cols, -db, -colinfo, -refdir, -v"
-			}
+	cg_options index args {
+		-cols {
+			if {$value ni {0 1}} {set value 1; incr pos -1}
+			set cols $value
 		}
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] != 1} {
-		errorformat index
-	}
-	set file [lindex $args 0]
+		-colinfo {
+			if {$value ni {0 1}} {set value 1; incr pos -1}
+			set colinfo $value
+		}
+		-db {
+			set dbstring $value
+		}
+		-refdir {
+			set refdir $value
+		}
+	} {file} 1 1
 	set compressed [gziscompressed $file]
 	set indexdir [indexdir $file]
 	set infofile [indexdir_file $file info.tsv ok]

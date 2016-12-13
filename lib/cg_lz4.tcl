@@ -1,24 +1,17 @@
 proc cg_lz4 args {
-	set pos 0
 	set keep 0
 	set compressionlevel 9
 	set blocksize 5
-	foreach {key value} $args {
-		switch -- $key {
-			-k {
-				set keep $value
-			}
-			-c {
-				set compressionlevel $value
-			}
-			-b {
-				set blocksize $value
-			}
-			default {
-				break
-			}
+	cg_options tsv2bed args {
+		-k {
+			set keep $value
 		}
-		incr pos 2
+		-c {
+			set compressionlevel $value
+		}
+		-b {
+			set blocksize $value
+		}
 	}
 	set args [lrange $args $pos end]
 	foreach file $args {

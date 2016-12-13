@@ -190,40 +190,21 @@ proc multidb_job {args} {
 	set targetsfile {}
 	set targetsfield {}
 	set dbdir /complgen/refseq/hg19
-	set pos 0
-	while 1 {
-		set key [lindex $args $pos]
-		switch -- $key {
-			-monetdb {
-				incr pos
-				set monetdb [lindex $args $pos]
-			}
-			-dbdir {
-				incr pos
-				set dbdir [lindex $args $pos]
-			}
-			-split {
-				incr pos
-				set split [true [lindex $args $pos]]
-			}
-			-targetsfile {
-				incr pos
-				set targetsfile [lindex $args $pos]
-				set targetsfield [lindex [split [file root [file tail $targetsfile]] -] end]
-			}
-			-- break
-			default {
-				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
-				break
-			}
+	cg_options multidb args {
+		-monetdb {
+			set monetdb $value
 		}
-		incr pos
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] < 1)} {
-		errorformat multidb
-	}
-	foreach {compar_dir} $args break
+		-dbdir {
+			set dbdir $value
+		}
+		-split {
+			set split [true $value]
+		}
+		-targetsfile {
+			set targetsfile $value
+			set targetsfield [lindex [split [file root [file tail $targetsfile]] -] end]
+		}
+	} compar_dir 1
 	set dirs [lrange $args 1 end]
 
 	if {[file exists $compar_dir/vars.tsv.insert]
@@ -344,24 +325,11 @@ proc cg_multidb {args} {
 }
 
 proc cg_multidb_import {args} {
-	set pos 0
-	while 1 {
-		set key [lindex $args $pos]
-		switch -- $key {
-			-monetdb {
-				incr pos
-				set monetdb [lindex $args $pos]
-			}
-			-- break
-			default {
-				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
-				break
-			}
+	cg_options multidb_import args {
+		-monetdb {
+			set monetdb $value
 		}
-		incr pos
-	}
-	set args [lrange $args $pos end]
-	foreach {compar_dir} $args break
+	} compar_dir
 	projectinfo $compar_dir {monetdb {}} {split 1}
 	if {$monetdb ne ""} {
 		multidb_monet_import $compar_dir $monetdb

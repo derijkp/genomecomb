@@ -429,40 +429,23 @@ proc cg_process_mastr {args} {
 	set useminigenome 0
 	set aligner bwa
 	set cleanup 1
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-m - --minigenome {
-				set useminigenome $value
-			}
-			-a - --aligner {
-				set aligner $value
-			}
-			-c - --cleanup {
-				set cleanup $value
-			}
-			-clipamplicons {
-				set clipamplicons $value
-			}
-			-split {
-				set split $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options process_mastr args {
+		-m - --minigenome {
+			set useminigenome $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	set len [llength $args]
-	if {$len == 2} {
-		foreach {mastrdir destdir} $args break
-	} elseif {$len == 3} {
-		foreach {mastrdir destdir dbdir} $args break
-	} else {
-		errorformat process_mastr
-	}
+		-a - --aligner {
+			set aligner $value
+		}
+		-c - --cleanup {
+			set cleanup $value
+		}
+		-clipamplicons {
+			set clipamplicons $value
+		}
+		-split {
+			set split $value
+		}
+	} {mastrdir destdir dbdir} 2 3
 	set mastrdir [file_absolute $mastrdir]
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]

@@ -15,29 +15,21 @@
 
 proc cg_checksum {args} {
 	set check 1; set outdir {}
+	cg_options checksum args {
 	set pos 0
 	while 1 {
-		set key [lindex $args $pos]
-		switch -- $key {
-			-n {
-				set check 0
-				incr pos
-			}
-			-o {
-				incr pos
-				set outdir [file_absolute [lindex $args $pos]]
-				incr pos
-			}
-			-- break
-			default {
-				break
+		-n {
+			if {[string index $value 0] eq "-"} {
+				set check 1; incr pos -1
+			} else {
+				set check $value
 			}
 		}
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] < 1} {
-		error "format is: cg checksum dir\n or: cg ?-n? checksum manifestfile manifestfile ...\n (-c option for dryrun: check existing checksum files only)"
-	}
+		-o {
+			set outdir [file_absolute $value]
+		}
+	} manifestfile 1
+	set args [list $manifestfile {*}$args]
 	set files {}
 	foreach file $args {
 		set file [file_absolute $file]

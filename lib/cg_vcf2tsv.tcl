@@ -13,20 +13,11 @@ exec tclsh "$0" ${1+"$@"}
 
 proc cg_vcf2tsv {args} {
 	set splitalt 0
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-s - -split {
-				set splitalt [true $value]
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options vcf2tsv args {
+		-s - -split {
+			set splitalt [true $value]
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
+	} {} 0 2
 	set len [llength $args]
 	set tempfile [scratchfile get]
 	if {$len == 0} {

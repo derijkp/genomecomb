@@ -17,23 +17,13 @@ proc bam2covstats_job {bamfile regionfile {suffix {}}} {
 
 proc cg_coverage_report {args} {
 	set args [job_init {*}$args]
-	set pos 0
 	set suffix {}
-	foreach {key value} $args {
-		switch -- $key {
-			-s - --suffix {
-				set suffix $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options coverage_report args {
+		-s - --suffix {
+			set suffix $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	set regionfile [lindex $args 0]
-	set bams [lrange $args 1 end]
+	} {regionfile bamfile} 1
+	swet bams [list $bamfile {*}$args]
 	foreach b $bams {
 		bam2covstats_job $b $regionfile $suffix
 	}

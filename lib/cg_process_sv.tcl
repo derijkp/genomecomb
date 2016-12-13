@@ -58,10 +58,8 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 proc cg_process_sv {args} {
 	global scriptname action
 	set args [job_args $args]
-	if {([llength $args] < 2) || ([llength $args] > 3)} {
-		errorformat process_sv
-	}
-	foreach {dir destdir dbdir force} $args break
+	cg_options process_sv args {
+	} {dir destdir dbdir force} 2 3
 	switch $force {
 		force {set force 1}
 		"" {set force 0}

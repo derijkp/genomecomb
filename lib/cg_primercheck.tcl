@@ -99,31 +99,18 @@ proc cg_primercheck {args} {
 	set maxnum 5000
 	set maxsize 1000
 	set maxamplicons 100
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-m - --maxnum {
-				set maxnum $value
-			}
-			-s - --maxsize {
-				set maxsize $value
-			}
-			-a - --maxamplicons {
-				set maxamplicons $value
-			}
-			-- break
-			default {
-				break
-			}
-		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] < 2 || [llength $args] > 3)} {
-		errorformat primercheck
-	}
 	set resultfile {}
-	foreach {primerfile dbdir resultfile} $args break
+	cg_options primercheck args {
+		-m - --maxnum {
+			set maxnum $value
+		}
+		-s - --maxsize {
+			set maxsize $value
+		}
+		-a - --maxamplicons {
+			set maxamplicons $value
+		}
+	} {primerfile dbdir resultfile} 2 3
 	#
 	catch {close $f}; catch {close $fg}
 	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]

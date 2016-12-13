@@ -1,29 +1,16 @@
 proc cg_makepvt {args} {
-	set pos 0
 	set sumfields {}
 	set sorted 1
 	set tempfile [tempfile]
-	foreach {key value} $args {
-		switch -- $key {
-			-sumfields {
-				set sumfields $value
-			}
-			-sorted {
-				set sorted $value
-			}
-			-- break
-			default {
-				break
-			}
-		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
 	set fields {}
-	if {([llength $args] < 2) || ([llength $args] > 3)} {
-		errorformat makepvt
-	}
-	foreach {file resultfile fields} $args break
+	cg_options makepvt args {
+		-sumfields {
+			set sumfields $value
+		}
+		-sorted {
+			set sorted $value
+		}
+	} {file resultfile fields} 2 3
 	set h [cg select -h $file]
 	if {$fields eq ""} {
 		set fields [list_remove $h chromosome begin end]

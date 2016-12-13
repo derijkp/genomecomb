@@ -176,30 +176,18 @@ proc cg_process_rnaseq {args} {
 	set fastqc 0
 	set paired 1
 	#parse options
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-adapterfile {
-				set adapterfile $value
-			}
-			-fastqc {
-				set fastqc $value
-			}
-			-paired {
-				set paired $value
-			}
-			default break
+	cg_options process_rnaseq args {
+		-adapterfile {
+			set adapterfile $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-
-	if {[llength $args] < 4} {
-		puts "Wrong number of arguments"
-		errorformat process_rnaseq
-	}
+		-fastqc {
+			set fastqc $value
+		}
+		-paired {
+			set paired $value
+		}
+	} {destdir libtype bowtie_index gff} 4 4
 	#get required arguments
-	foreach {destdir libtype bowtie_index gff} $args break
 	process_rnaseq_job $destdir $libtype $bowtie_index $gff $fastqc $adapterfile $paired
 	job_wait
 }

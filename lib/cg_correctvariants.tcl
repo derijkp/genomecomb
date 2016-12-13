@@ -22,32 +22,19 @@ proc cg_correctvariants {args} {
 	set force 0
 	set complement 0
 	set split 0
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-c {
-				set complement $value
-			}
-			-f {
-				set force $value
-			}
-			-split - -s {
-				set split $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options correctvariants args {
+		-c {
+			set complement $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] != 3)} {
-		errorformat correctvariants
-	}
+		-f {
+			set force $value
+		}
+		-split - -s {
+			set split $value
+		}
+	} {file resultfile dbdir} 3 3
 	set countdoubles 0
 	set countcorrected 0
-	foreach {file resultfile dbdir} $args break
 	if {[file exists $resultfile]} {error "$resultfile exists"}
 	catch {close $o} ; catch	{gzclose $f}
 	set f [gzopen $file]

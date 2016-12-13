@@ -651,79 +651,66 @@ proc cg_mselect {args} {
 	}
 	set query {}; set fields {}; set sortfields {}; set newheader {}; set sepheader ""; set hc 0; set inverse 0; set printheader 0; set group {}; set groupcols {}
 	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-q {
-				set query $value
-			}
-			-qf {
-				error "not yet"
-				set f [gzopen $value]
-				set header [tsv_open $f]
-				set data [csv_file $f \t]
-				gzclose $f
-				set query {}
-				foreach line $data {
-					set el ""
-					foreach field $header v $line {
-						lappend el "\$$field == \"$v\""
-					}
-					lappend query "\( [join $el " && "] \)"
-				}
-				set query [join $query " || "]
-			}
-			-f {set fields $value}
-			-rf {
-				set fields $value
-				set inverse 1
-			}
-			-g {set group $value}
-			-gc {lappend groupcols $value}
-			-nh {set newheader $value}
-			-sh {set sepheader $value}
-			-hc {set hc 1}
-			-hf {set hc $value}
-			-s {set sortfields $value}
-			-n {
-				set header [cg_monetdb_fields $db $table]
-				set names {}
-				foreach col $header {
-					set split [split $col _]
-					if {[llength $split] > 1} {
-						lappend names [lindex $split end]
-					}
-				}
-				puts stdout [join [list_remdup $names] \n]
-				exit 0
-			}
-			-h {
-				incr pos
-				set args [lrange $args $pos end]
-				set len [llength $args]
-				if {$len < 2 || $len > 3} {
-					errorformat mselect
-				}
-				foreach {db table outfile} $args break
-				set header [cg_monetdb_fields $db $table]
-				puts stdout [join $header \n]
-				exit 0
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options mselect args {
+		-q {
+			set query $value
 		}
-		incr pos 2
-	}
+		-qf {
+			error "not yet"
+			set f [gzopen $value]
+			set header [tsv_open $f]
+			set data [csv_file $f \t]
+			gzclose $f
+			set query {}
+			foreach line $data {
+				set el ""
+				foreach field $header v $line {
+					lappend el "\$$field == \"$v\""
+				}
+				lappend query "\( [join $el " && "] \)"
+			}
+			set query [join $query " || "]
+		}
+		-f {set fields $value}
+		-rf {
+			set fields $value
+			set inverse 1
+		}
+		-g {set group $value}
+		-gc {lappend groupcols $value}
+		-nh {set newheader $value}
+		-sh {set sepheader $value}
+		-hc {set hc 1}
+		-hf {set hc $value}
+		-s {set sortfields $value}
+		-n {
+			set header [cg_monetdb_fields $db $table]
+			set names {}
+			foreach col $header {
+				set split [split $col _]
+				if {[llength $split] > 1} {
+					lappend names [lindex $split end]
+				}
+			}
+			puts stdout [join [list_remdup $names] \n]
+			exit 0
+		}
+		-h {
+			incr pos
+			set args [lrange $args $pos end]
+			set len [llength $args]
+			if {$len < 2 || $len > 3} {
+				errorformat mselect
+			}
+			foreach {db table outfile} $args break
+			set header [cg_monetdb_fields $db $table]
+			puts stdout [join $header \n]
+			exit 0
+		}
+	} {db table outfile} 2 3
 	if {[llength $groupcols] && ![llength $group]} {
 		error "cannot use -gc option without -g option"
 	}
-	set args [lrange $args $pos end]
-	set len [llength $args]
-	if {$len < 2 || $len > 3} {
-		errorformat mselect
-	}
-	foreach {db table outfile} $args break
 	regsub -all {\n#[^\n]*} $fields {} fields
 	regsub -all {\n#[^\n]*} $query {} query
 	regsub -all {\n|\t} $query { } query

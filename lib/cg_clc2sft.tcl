@@ -14,25 +14,14 @@ proc cg_clc2sft {args} {
 	set coveragecutoff 0
 	set pos 0
 	set minfreq 0.25
-	foreach {key value} $args {
-		switch -- $key {
-			-coverage {
-				set coveragecutoff $value
-			}
-			-minfreq {
-				set minfreq $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options clc2sft args {
+		-coverage {
+			set coveragecutoff $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]	
-	if {([llength $args] < 0) || ([llength $args] > 2)} {
-		errorformat clc2sft
-	}
+		-minfreq {
+			set minfreq $value
+		}
+	} {} 0 2
 	catch {gzclose $f} ; catch {close $o}
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]

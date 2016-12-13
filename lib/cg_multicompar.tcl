@@ -11,41 +11,26 @@ proc cg_multicompar {args} {
 	set split 0
 	set targetsfile {}
 	set targetsfield {}
-	set pos 0
-	while 1 {
-		set key [lindex $args $pos]
-		switch -- $key {
-			-reannot {
-				putslog "Also reannot"
-				set reannot 1
-			}
-			-reannotregonly {
-				putslog "Also reannot"
-				set reannot 1
-				set regonly 1
-			}
-			-split {
-				incr pos
-				set split [true [lindex $args $pos]]
-			}
-			-targetsfile {
-				incr pos
-				set targetsfile [lindex $args $pos]
-				set targetsfield [lindex [split [file root [file tail $targetsfile]] -] end]
-			}
-			-- break
-			default {
-				if {[string index $key 0] eq "-"} {error "unknown option \"$key\""}
-				break
-			}
+	cg_options multicompar args {
+		-reannot {
+			if {$value ni {0 1}} {set value 1; incr pos -1}
+			set reannot $value
 		}
-		incr pos
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] < 1)} {
-		errorformat multicompar
-	}
-	foreach {compar_file} $args break
+		-reannotregonly {
+			putslog "Also reannot"
+			if {$value ni {0 1}} {set value 1; incr pos -1}
+			set reannot $value
+			set regonly $value
+		}
+		-split {
+			set split [true $value]
+		}
+		-targetsfile {
+			set targetsfile $value
+			set targetsfield [lindex [split [file root [file tail $targetsfile]] -] end]
+		}
+	} compar_file
+	set dirs $args
 	set compar_file_root [gzroot $compar_file]
 	unset -nocomplain a
 	if {[file exists $compar_file]} {
@@ -53,7 +38,6 @@ proc cg_multicompar {args} {
 			set a($name) $compar_file
 		}
 	}
-	set dirs [lrange $args 1 end]
 	set files {}
 	foreach dir $dirs {
 		set dir [file_absolute $dir]

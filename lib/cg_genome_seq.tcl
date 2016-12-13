@@ -27,84 +27,72 @@ proc cg_genome_seq {args} {
 	set displaygc 1
 	set split 0
 	set id {}
-	set pos 0
 	set makemap 0
 	set concatlen -1
 	set econcatlen 0
 	set aconcat ""
 	set aconcatlen 0
-	foreach {key value} $args {
-		switch -- $key {
-			-f - --freq {
-				set freql $value
-			}
-			-n - --freqn {
-				set freqN $value
-			}
-			-p - --snpdbpattern {
-				set snpdbpatterns $value
-			}
-			-d - --delsize {
-				set delsize $value
-			}
-			-r - --repeatmasker {
-				set repeats $value
-			}
-			-i - --id {
-				set id $value
-			}
-			-g - --gc {
-				set gc $value
-			}
-			-gs - --gcsplit {
-				if {![isdouble $value]} {error "$value is not a number"}
-				set gcsplit $value
-				if {$gc == -1} {set gc 100}
-			}
-			-gd - --gcdisplay {
-				set displaygc [true $value]
-				if {$gc == -1} {set gc 0}
-			}
-			-s - --split {
-				set split [true $value]
-			}
-			-c - --concat {
-				set concat $value
-				set concatlen [string length $concat]
-			}
-			-e - -ce - --concatend {
-				set econcat $value
-				set econcatlen [string length $econcat]
-			}
-			-ca - --concatadj {
-				set aconcat $value
-				set aconcatlen [string length $econcat]
-			}
-			-cn - --concatname {
-				set concatname $value
-			}
-			-m - --mapfile {
-				set mapfile $value
-				set makemap 1
-			}
-			-l - --limitchars {
-				set limitchars $value
-			}
-			--namefield {
-				set namefield $value
-			}
-			-- break
-			default {
-				break
-			}
+	set outfile {}
+	cg_options genome_seq args {
+		-f - --freq {
+			set freql $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] != 2 && [llength $args] != 3)} {
-		errorformat genome_seq
-	}
-	foreach {regionfile dbdir outfile} $args break
+		-n - --freqn {
+			set freqN $value
+		}
+		-p - --snpdbpattern {
+			set snpdbpatterns $value
+		}
+		-d - --delsize {
+			set delsize $value
+		}
+		-r - --repeatmasker {
+			set repeats $value
+		}
+		-i - --id {
+			set id $value
+		}
+		-g - --gc {
+			set gc $value
+		}
+		-gs - --gcsplit {
+			if {![isdouble $value]} {error "$value is not a number"}
+			set gcsplit $value
+			if {$gc == -1} {set gc 100}
+		}
+		-gd - --gcdisplay {
+			set displaygc [true $value]
+			if {$gc == -1} {set gc 0}
+		}
+		-s - --split {
+			set split [true $value]
+		}
+		-c - --concat {
+			set concat $value
+			set concatlen [string length $concat]
+		}
+		-e - -ce - --concatend {
+			set econcat $value
+			set econcatlen [string length $econcat]
+		}
+		-ca - --concatadj {
+			set aconcat $value
+			set aconcatlen [string length $econcat]
+		}
+		-cn - --concatname {
+			set concatname $value
+		}
+		-m - --mapfile {
+			set mapfile $value
+			set makemap 1
+		}
+		-l - --limitchars {
+			set limitchars $value
+		}
+		--namefield {
+			set namefield $value
+		}
+	}  {regionfile dbdir outfile} 2 3
 	if {$outfile ne ""} {
 		set root [file root $outfile]
 		set ext [file extension $outfile]

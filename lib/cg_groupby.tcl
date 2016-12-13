@@ -9,46 +9,30 @@ exec tclsh "$0" ${1+"$@"}
 #
 
 proc cg_groupby {args} {
-	set pos 0
 	set sumfields {}
 	set statsfields {}
 	set sorted 1
 	set usefields {}
-	foreach {key value} $args {
-		switch -- $key {
-			-sumfields {
-				set sumfields $value
-			}
-			-stats {
-				set statsfields $value
-			}
-			-sorted {
-				set sorted $value
-			}
-			-f {
-				set usefields $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options groupby args {
+		-sumfields {
+			set sumfields $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] < 1)} {
-		errorformat groupby
-	}
-	set fields [lindex $args 0]
-	set args [lrange $args 1 end]
-	if {[llength $args] > 0} {
-		set filename [lindex $args 0]
+		-stats {
+			set statsfields $value
+		}
+		-sorted {
+			set sorted $value
+		}
+		-f {
+			set usefields $value
+		}
+	} {fields filename outfile} 1 3
+	if {[info exists filename]} {
 		set f [gzopen $filename]
 	} else {
 		set f stdin
 	}
-	if {[llength $args] > 1} {
-		set outfile [lindex $args 1]
+	if {[info exists outfile]} {
 		set o [open $outfile w]
 	} else {
 		set o stdout

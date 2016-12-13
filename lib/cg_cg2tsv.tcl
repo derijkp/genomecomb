@@ -601,32 +601,21 @@ proc cg_cg2tsv {args} {
 	global scriptname action
 	set split 0
 	set sorted 0
-	set pos 0
 	set ref {}
-	foreach {key value} $args {
-		switch -- $key {
-			-split {
-				set split [true $value]
-			}
-			-sorted {
-				set sorted [true $value]
-			}
-			-ref {
-				set ref $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options cg2tsv args {
+		-split {
+			set split [true $value]
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
+		-sorted {
+			set sorted [true $value]
+		}
+		-ref {
+			set ref $value
+		}
+	} {} 2 3
 	if {[llength $args] == 2} {
 		foreach {file outfile} $args break
 		set genefile {}
-	} elseif {[llength $args] != 3} {
-		errorformat cg2tsv
 	} else {
 		foreach {file genefile outfile} $args break
 	}

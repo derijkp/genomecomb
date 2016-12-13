@@ -8,24 +8,13 @@ proc cg_regextract {args} {
 	set qfields {coverage uniqueSequenceCoverage}
 	set posfields {offset pos position begin start}
 	set above 0; set shift 0
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-above {set above $value}
-			-shift {set shift $value}
-			-qfields {set qfields $value}
-			-posfields {set posfields $value}
-			-- break
-			default {break}
-		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] < 2} {
-		errorformat regextract
-	}
-	foreach {cutoff} $args break
-	set files [lrange $args 1 end]
+	cg_options regextract args {
+		-above {set above $value}
+		-shift {set shift $value}
+		-qfields {set qfields $value}
+		-posfields {set posfields $value}
+	} cutoff 2
+	set files $args
 	set files [lsort -dict $files]
 	set o stdout
 	puts $o "chromosome\tbegin\tend"

@@ -204,43 +204,30 @@ proc cg_annotate {args} {
 	set replace 0
 	set multidb 0
 	set upstreamsize 2000
-	set pos 0
-	while 1 {
-		set key [lindex $args $pos]
-		switch -- $key {
-			-near {
-				set near [lindex $args [incr pos]]
-			}
-			-dbdir {
-				set dbdir [lindex $args [incr pos]]
-			}
-			-name {
-				set namefield [lindex $args [incr pos]]
-			}
-			-replace {
-				set replace [lindex $args [incr pos]]
-			}
-			-multidb {
-				set multidb [lindex $args [incr pos]]
-			}
-			-u - --upstreamsize {
-				set upstreamsize [lindex $args [incr pos]]
-			}
-			default {
-				break
-			}
+	cg_options annotate args {
+		-near {
+			set near $value
 		}
-		incr pos
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] < 3)} {
-		errorformat annotate
-	}
-	foreach {file resultfile} $args break
+		-dbdir {
+			set dbdir $value
+		}
+		-name {
+			set namefield $value
+		}
+		-replace {
+			set replace $value
+		}
+		-multidb {
+			set multidb $value
+		}
+		-u - --upstreamsize {
+			set upstreamsize $value
+		}
+	} {file resultfile} 3
 	set gzfile [gztemp $file]
 	set file $gzfile
 	set dbfiles {}
-	foreach testfile [lrange $args 2 end] {
+	foreach testfile $args {
 		if {[file isdir $testfile]} {
 			lappend dbfiles {*}[glob -nocomplain $testfile/var_*.tsv $testfile/gene_*.tsv $testfile/mir_*.tsv $testfile/reg_*.tsv $testfile/bcol_*.tsv]
 		} elseif {![file exists $testfile]} {

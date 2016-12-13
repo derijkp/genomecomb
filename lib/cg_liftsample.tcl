@@ -1,22 +1,9 @@
 proc liftsample_job {args} {
-	set pos 0
-	foreach {key value} $args {
-		switch -- $key {
-			-split - -s {
-				set split $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options liftsample_job args {
+		-split - -s {
+			set split $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] < 3)} {
-		errorformat liftover
-	}
-	foreach {srcdir destdir liftoverfile} $args break
+	} {srcdir destdir liftoverfile} 3 3
 	if {[file exists $destdir] && ![file isdir $destdir]} {
 		error "$destdir already exists and is not a directory"
 	}

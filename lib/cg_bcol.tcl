@@ -432,31 +432,20 @@ proc cg_bcol_get {args} {
 proc cg_bcol_table {args} {
 	set chromosome all
 	set showchr 1
-	set pos 0
 	set precision {}
-	foreach {key value} $args {
-		switch -- $key {
-			-c - --chromosome {
-				set chromosome $value
-			}
-			-s - --showchromosome {
-				set showchr $value
-			}
-			-p - --precision {
-				set precision $value
-			}
-			-- break
-			default {
-				break
-			}
+	set begin {}
+	set end {}
+	cg_options bcol_table args {
+		-c - --chromosome {
+			set chromosome $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] < 1 || [llength $args] > 3} {
-		errorformat bcol_table
-	}
-	foreach {indexfile begin end} $args break
+		-s - --showchromosome {
+			set showchr $value
+		}
+		-p - --precision {
+			set precision $value
+		}
+	} {indexfile begin end} 1 3
 	set bcol [bcol_open $indexfile]
 	bcol_table $bcol $begin $end $chromosome $showchr $precision
 	bcol_close $bcol
@@ -475,25 +464,12 @@ proc cg_bcol_size {args} {
 }
 
 proc cg_bcol_histo {args} {
-	set pos 0
 	set namecol name
-	foreach {key value} $args {
-		switch -- $key {
-			-n - --namecol {
-				set namecol $value
-			}
-			-- break
-			default {
-				break
-			}
+	cg_options bcol_histo args {
+		-n - --namecol {
+			set namecol $value
 		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {[llength $args] != 3} {
-		exiterror "wrong # args: should be \"cg bcol histo regionfile bcolfile/prefix intervals\""
-	}
-	foreach {regionfile bcolfile intervals} $args break
+	} {regionfile bcolfile intervals}
 	set f [gzopen $regionfile]
 	set header [tsv_open $f]
 	set poss [tsv_basicfields $header 3]
