@@ -1,4 +1,4 @@
-= Bcol_make =
+= Bcol_get =
 
 == Format ==
 cg bcol get bcolfile ?chromosome? begin end
