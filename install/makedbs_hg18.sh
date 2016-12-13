@@ -47,7 +47,7 @@ foreach db {
 } {
 	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {dest build db} -code {
 		cg downloaddb $dest ${build} $db
-		cg collapseoverlap ucsc_${build}_${db}.tsv
+		cg regcollpase ucsc_${build}_${db}.tsv > reg_${build}_${db}.tsv
 		file delete ucsc_${build}_${db}.tsv
 	}
 }
@@ -80,7 +80,7 @@ job reg_${build}_gwasCatalog -vars {build dest} -deps {ucsc_${build}_gwasCatalog
 		-f {chrom start end trait pValue pubMedID name bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv} \
 		-nh {chrom start end name score pubMedID dbsnp bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv} \
 		ucsc_${build}_gwasCatalog.tsv ucsc_${build}_gwasCatalog.tsv.temp
-	cg collapseoverlap ucsc_${build}_gwasCatalog.tsv.temp
+	cg regcollapse ucsc_${build}_gwasCatalog.tsv.temp > reg_${build}_gwasCatalog.tsv.temp
 	file rename -force reg_${build}_gwasCatalog.tsv.temp $target
 	file delete ucsc_${build}_gwasCatalog.tsv
 	file delete ucsc_${build}_gwasCatalog.tsv.temp
@@ -264,7 +264,7 @@ job enc_transcription -targets {reg_${build}_wgEncodelogRnaSeq.tsv} -vars {dest 
 		cg ucscwiggle2reg -n 0.01 -p 1 -f {log10($value)} ucsc_${build}_$table.tsv
 		lappend todo reg_ucsc_${build}_$table.tsv
 	}
-	cg collapseoverlap -o ${dest}/${build}/reg_${build}_wgEncodelogRnaSeq.tsv {*}$todo
+	cg regcollapse -o ${dest}/${build}/reg_${build}_wgEncodelogRnaSeq.tsv {*}$todo
 }
 
 # make enc_transcription info file
@@ -299,7 +299,7 @@ foreach {jobname resultname infosrc tables} {
 			cg ucscwiggle2reg -n 10 -p 0 -f {5*(($value+4)/5)} ucsc_${build}_$table.tsv
 			lappend todo reg_ucsc_${build}_$table.tsv
 		}
-		cg collapseoverlap -o $target {*}$todo
+		cg regcollapse -o $target {*}$todo
 	}
 	# make info file
 	job ${jobname}_info -targets {${dest}/${build}/reg_${build}_$resultname.info} -vars {dest build infosrc tables} -code {
@@ -324,7 +324,7 @@ foreach {jobname resultname infosrc tables} {
 job enc_RegDnaseClustered -targets {reg_${build}_wgEncodeRegDnaseClustered.tsv reg_${build}_wgEncodeRegDnaseClustered.info} -vars {dest build} -code {
 	cd ${dest}/tmp/${build}
 	cg downloaddb ${dest}/tmp ${build} wgEncodeRegDnaseClustered
-	cg collapseoverlap ucsc_${build}_wgEncodeRegDnaseClustered.tsv
+	cg regcollapse ucsc_${build}_wgEncodeRegDnaseClustered.tsv >  reg_${build}_wgEncodeRegDnaseClustered.tsv
 	file rename -force reg_${build}_wgEncodeRegDnaseClustered.info ${dest}/${build}
 	file rename -force reg_${build}_wgEncodeRegDnaseClustered.tsv ${dest}/${build}
 }
@@ -332,7 +332,7 @@ job enc_RegDnaseClustered -targets {reg_${build}_wgEncodeRegDnaseClustered.tsv r
 job enc_RegTfbsClustered -targets {reg_${build}_wgEncodeRegTfbsClustered.tsv reg_${build}_wgEncodeRegTfbsClustered.info} -vars {dest build} -code {
 	cd ${dest}/tmp/${build}
 	cg downloaddb ${dest}/tmp ${build} wgEncodeRegTfbsClustered
-	cg collapseoverlap ucsc_${build}_wgEncodeRegTfbsClustered.tsv
+	cg regcollapse ucsc_${build}_wgEncodeRegTfbsClustered.tsv > reg_${build}_wgEncodeRegTfbsClustered.tsv
 	file rename -force reg_${build}_wgEncodeRegTfbsClustered.info ${dest}/${build}
 	file rename -force reg_${build}_wgEncodeRegTfbsClustered.tsv ${dest}/${build}
 }

@@ -47,7 +47,7 @@ foreach db {
 } {
 	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {dest build db} -code {
 		cg downloaddb $dest ${build} $db
-		cg collapseoverlap ucsc_${build}_${db}.tsv
+		cg regcollapse ucsc_${build}_${db}.tsv > reg_${build}_${db}.tsv
 		file delete ucsc_${build}_${db}.tsv
 	}
 }
@@ -71,7 +71,7 @@ job reg_${build}_gwasCatalog -vars {build dest} -targets {reg_${build}_gwasCatal
 		-f {chrom start end trait pValue pubMedID name bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv} \
 		-nh {chrom start end name score pubMedID dbsnp bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv} \
 		ucsc_${build}_gwasCatalog.tsv ucsc_${build}_gwasCatalog.tsv.temp
-	cg collapseoverlap ucsc_${build}_gwasCatalog.tsv.temp
+	cg regcollapse ucsc_${build}_gwasCatalog.tsv.temp > reg_${build}_gwasCatalog.tsv.temp
 	file rename -force reg_${build}_gwasCatalog.tsv.temp $target
 	file delete ucsc_${build}_gwasCatalog.tsv
 	file delete ucsc_${build}_gwasCatalog.tsv.temp
@@ -324,7 +324,7 @@ foreach {jobname resultname infosrc tables} {
 			cg ucscwb2reg -n 10 -p 0 -f {5*(($value+4)/5)} ucsc_${build}_$table.tsv
 			lappend todo reg_ucsc_${build}_$table.tsv
 		}
-		cg collapseoverlap -o $target {*}$todo
+		cg regcollapse -o reg_${build}_$resultname.tsv.temp {*}$todo
 	}
 	# make info file
 	job ${jobname}_info -targets {${dest}/${build}/reg_${build}_$resultname.info} -vars {dest build infosrc tables} -code {
@@ -349,7 +349,7 @@ foreach {jobname resultname infosrc tables} {
 job enc_RegDnaseClustered -targets {reg_${build}_wgEncodeRegDnaseClusteredV2.tsv} -vars {dest build} -code {
 	cd ${dest}/tmp/${build}
 	cg downloaddb ${dest}/tmp ${build} wgEncodeRegDnaseClusteredV2
-	cg collapseoverlap ucsc_${build}_wgEncodeRegDnaseClusteredV2.tsv
+	cg regcollapse ucsc_${build}_wgEncodeRegDnaseClusteredV2.tsv > reg_${build}_wgEncodeRegDnaseClusteredV2.tsv
 	file rename -force reg_${build}_wgEncodeRegDnaseClusteredV2.tsv ${dest}/${build}
 	cg downloaddbinfo ${dest}/tmp ${build} wgEncodeRegDnaseClusteredV2
 	file rename -force reg_${build}_wgEncodeRegDnaseClusteredV2.info ${dest}/${build}/reg_${build}_wgEncodeRegDnaseClusteredV2.info
@@ -359,7 +359,7 @@ job enc_RegTfbsClustered -targets {reg_${build}_wgEncodeRegTfbsClusteredV3.tsv} 
 	cd ${dest}/tmp/${build}
 	cg downloaddb ${dest}/tmp ${build} wgEncodeRegTfbsClusteredV3
 	cg select -s - -f {chrom	start	end	name	score} ucsc_${build}_wgEncodeRegTfbsClusteredV3.tsv pucsc_${build}_wgEncodeRegTfbsClusteredV3.tsv
-	cg collapseoverlap pucsc_${build}_wgEncodeRegTfbsClusteredV3.tsv
+	cg regcollapse pucsc_${build}_wgEncodeRegTfbsClusteredV3.tsv > reg_pucsc_${build}_wgEncodeRegTfbsClusteredV3.tsv
 	file rename -force reg_pucsc_${build}_wgEncodeRegTfbsClusteredV3.tsv ${dest}/${build}/reg_${build}_wgEncodeRegTfbsClusteredV3.tsv
 	cg downloaddbinfo ${dest}/tmp ${build} wgEncodeRegTfbsClusteredV3
 	file rename -force reg_${build}_wgEncodeRegTfbsClusteredV3.info ${dest}/${build}/reg_${build}_wgEncodeRegTfbsClusteredV3.info
@@ -380,7 +380,7 @@ job reg_exome_targetseq -targets {extra/reg_hg19_exome_targetseq.tsv} -code {
 	wgetfile http://tools.invitrogen.com/content/sfs/manuals/TargetSeq_exome_named_targets_hg19.bed
 	cg bed2sft TargetSeq_exome_named_targets_hg19.bed ureg_hg19_exome_targetseq.tsv
 	cg select -s {chromosome begin end} ureg_hg19_exome_targetseq.tsv sreg_hg19_exome_targetseq.tsv
-	cg collapseoverlap -o reg_hg19_exome_targetseq.tsv sreg_hg19_exome_targetseq.tsv
+	cg regcollapse -o reg_hg19_exome_targetseq.tsv sreg_hg19_exome_targetseq.tsv
 	file delete TargetSeq_exome_named_targets_hg19.bed sreg_hg19_exome_targetseq.tsv ureg_hg19_exome_targetseq.tsv
 }
 # cg select -f '* {id=NR "-" $name}' reg_hg19_exome_targetseq.tsv | less

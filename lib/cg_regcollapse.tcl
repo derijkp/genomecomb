@@ -120,79 +120,6 @@ proc collapseoverlap {{infile stdin} {resultfile stdout} {scorefield score} {num
 	}
 }
 
-proc cg_collapseoverlap {args} {
-	set pos 0
-	set resultfile {}
-	foreach {key value} $args {
-		switch -- $key {
-			-o {
-				set resultfile $value
-			}
-			-- break
-			default {
-				break
-			}
-		}
-		incr pos 2
-	}
-	set args [lrange $args $pos end]
-	if {([llength $args] < 1)} {
-		error "format is: $::base file ...
- - Collapses overlapping regions in a region file.
- - makes a new file with reg_ prepended to the original filename
- - Removal of overlap can be done by taking only the highest
- - scoring region (this is always done when score is available)
- - or taking all regions in 1 line (if score is not available)
- - for a field with then name num all values will be added
- - use the -o option to collapse multiple files into one new file (the filename given with the option -o)"
-	}
-	if {$resultfile ne ""} {
-		if {[file exists $resultfile]} {
-			puts "Skipping $resultfile: already exists"
-			exit 0
-		}
-		puts "Collapsing multiple files into $resultfile"
-		set ffile [lindex $args 0]
-		set args [lrange $args 1 end]
-		set f [gzopen $ffile]
-		set header [tsv_open $f]
-		set bposs [tsv_basicfields $header 3]
-		gzclose $f
-		foreach file $args {
-			set f [gzopen $file]
-			set tempheader [tsv_open $f]
-			gzclose $f
-			if {$tempheader ne $header} {
-				error "for collapsing multiple files into one (-o option), all files must have the same columns"
-			}
-		}
-		file copy -force $ffile $resultfile.temp1
-		foreach file $args {
-			exec tail -n +2 $file >> $resultfile.temp1
-		}
-		puts "Sorting"
-		set sfields [list_sub $header $bposs]
-		cg select -s $sfields $resultfile.temp1 $resultfile.temp2
-		puts "Collapsing"
-		collapseoverlap $resultfile.temp2 $resultfile
-		file delete $resultfile.temp1 $resultfile.temp2
-	} else {
-		foreach {path} $args break
-		puts "----------------------------------------------------"
-		foreach file $args {
-			set path [file dir $file]
-			set tail [file tail $file]
-			if {[string range $tail 0 4] eq "ucsc_"} {set tail [string range $tail 5 end]}
-			set resultfile ${path}/reg_$tail
-			if {[file exists $resultfile]} {
-				puts "Skipping $resultfile: already exists"
-				continue
-			}
-			collapseoverlap $file $resultfile
-		}
-	}
-}
-
 proc cg_regcollapse {args} {
 	set pos 0
 	set resultfile stdout
@@ -212,7 +139,7 @@ proc cg_regcollapse {args} {
 	if {$resultfile ne "stdout"} {
 		if {[file exists $resultfile]} {
 			puts "$resultfile already exists"
-			exit 0
+			exit 1
 		}
 	}
 	putslog "Collapsing file(s) to $resultfile "
