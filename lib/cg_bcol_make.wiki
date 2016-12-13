@@ -38,6 +38,7 @@ using the -m and -l options.
 ; **-d defaultvalue** (--default): value that will be given for positions not in the input file
 ; **-h header** (--header): set to 0 (default is 1) if the input data does not have a header (in this case chromosomecol and poscol must be given by number, starting from 0)
 ; **-c chromosomecol** (--chromosomecol): name of the column that contains the chromosome
+; **-n chromosomename** (--chromosomename): if no chromosomecol is present (no -c), this name will be given as chromosome (default is empty)
 ; **-p poscol**: name of the column that contains the positions
 ; **-e endcol**: name of the column that contains the the end positions (in case of regions, this cannot be used with -m)
 ; **-co compressionlevel** (--compress): compression level used (default 9): 1 is very fast; 9 is slow, but compresses better, 0 can be used for no compression

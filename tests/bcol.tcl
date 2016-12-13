@@ -587,6 +587,15 @@ test bcol_make {default reg type} {
 2	1	3
 2	2	3}
 
+test bcol_make {-n} {
+	test_cleantmp
+	cg select -q {$chromosome eq "chr2"} -f {coverage} data/cov.tsv tmp/cov.tsv
+	exec cg bcol make -n chrtest tmp/temp.bcol coverage < tmp/cov.tsv
+	exec cg bcol table tmp/temp.bcol 0 | cg select -f {chromosome value} > tmp/temp.test
+	exec cg select -f {chromosome="chrtest" value=$coverage} tmp/cov.tsv tmp/expected.tsv
+	exec diff tmp/temp.test tmp/expected.tsv
+} {}
+
 test_cleantmp
 
 set ::env(PATH) $keeppath

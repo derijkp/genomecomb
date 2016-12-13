@@ -6,6 +6,7 @@ proc cg_bcol_make {args} {
 	set type iu
 	set compress 9
 	set chrompos -1
+	set chromosomename {}
 	set defaultvalue 0
 	set multicol {}
 	set multilist {}
@@ -29,7 +30,7 @@ proc cg_bcol_make {args} {
 		-c - --chromosomecol {
 			set chromosomecol $value
 		}
-		-c - --chromosomename {
+		-n - --chromosomename {
 			set chromosomename $value
 		}
 		-co - --compress {
@@ -141,12 +142,12 @@ proc cg_bcol_make {args} {
 		set tempbinfile $bcolfile.temp.bin
 	}
 	if {$multicol eq ""} {
-		# puts "bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $endpos $defaultvalue $precision"
-		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos $offsetpos $endpos $defaultvalue $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
+		# puts "bcol_make [list $bcolfile.temp] $type $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision"
+		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	} else {
 		# putsvars bcolfile type colpos multipos multilist chrompos offsetpos defaultvalue
-		# puts "bcol_make_multi $bcolfile.temp $type $multipos $multilist $colpos $chrompos $offsetpos $endpos $defaultvalue $precision"
-		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos $offsetpos $endpos $defaultvalue $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
+		# puts "bcol_make_multi $bcolfile.temp $type $multipos $multilist $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision"
+		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	}
 	fconfigure $f -encoding binary -translation binary
 	fconfigure $pipe -encoding binary -translation binary

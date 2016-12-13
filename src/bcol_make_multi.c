@@ -23,47 +23,37 @@ int main(int argc, char *argv[]) {
 	unsigned long long start;
 	DStringArray *result = NULL, *mvalues = NULL;
 	DString *line = NULL,*chromosome = NULL;
-	char *outfile,*type = "u",*defaultvalue = "";
+	char *outfile,*type = "u",*defaultvalue = "",*chrname="";
 	uint64_t offset, poffset, size, endpos;
 	int fieldcursize, valuecursize;
 	int reverse = 0, isunsigned = 0, precision = -1;
 	int col = 0,max = 0,offsetcol = -1,endcol = -1, chrcol = -1,mcol=0,shift,i,c,vc;
 	#
-	if ((argc < 4)||(argc > 12)) {
-		fprintf(stderr,"Format is: bcol_make_multi output_file type mcol mvalues ?col? ?chromosomecol? ?offsetcol? ?endcol? ?default? ?precision?\n");
+	if (argc != 12) {
+		fprintf(stderr,"Format is: bcol_make_multi output_file type mcol mvalues col chromosomecol chromosomename offsetcol endcol default precision\n");
 		exit(EXIT_FAILURE);
 	}
-	outfile = argv[1];
-	type = argv[2];
-	mcol = atoi(argv[3]);
+	i = 1;
+	outfile = argv[i++];
+	type = argv[i++];
+	mcol = atoi(argv[i++]);
 	max = mcol;
-	mvalues = DStringArrayFromChar(argv[4],',');
+	mvalues = DStringArrayFromChar(argv[i++],',');
 	outputa = (char **)malloc(mvalues->size*sizeof(char *));
-	if (argc >= 6) {
-		col = atoi(argv[5]);
-		if (col > max) {max = col;}
-	}
-	if (argc >= 7) {
-		chrcol = atoi(argv[6]);
-		if (chrcol > max) {max = chrcol;}
-	}
-	if (argc >= 8) {
-		/* this col contains the position in the chromosome */
-		offsetcol = atoi(argv[7]);
-		if (offsetcol > max) {max = offsetcol;}
-	}
-	if (argc >= 9) {
-		/* this col contains the position in the chromosome */
-		endcol = atoi(argv[8]);
-		if (endcol > max) {max = endcol;}
-	}
-	if (argc >= 10) {
-		defaultvalue = argv[9];
-	}
+	col = atoi(argv[i++]);
+	if (col > max) {max = col;}
+	chrcol = atoi(argv[i++]);
+	if (chrcol > max) {max = chrcol;}
+	chrname = argv[i++];
+	/* this col contains the position in the chromosome */
+	offsetcol = atoi(argv[i++]);
+	if (offsetcol > max) {max = offsetcol;}
+	/* this col contains the position in the chromosome */
+	endcol = atoi(argv[i++]);
+	if (endcol > max) {max = endcol;}
+	defaultvalue = argv[i++];
+	precision = atoi(argv[i++]);
 	line = DStringNew();
-	if (argc >= 11) {
-		precision = atoi(argv[10]);
-	}
 	NODPRINT("bcol_make %s %s %d %d %d\n",outfile,type,col,chrcol,offsetcol)
 	/*
 		open files for writing
@@ -173,7 +163,7 @@ int main(int argc, char *argv[]) {
 	}
 	shift = 0;
 	if (prevchr == NULL) {
-		prevchr = DStringNew();
+		prevchr = DStringNewFromChar(chrname);
 	} else if (prevchr->size > 3 && prevchr->string[0] == 'c' && prevchr->string[1] == 'h' && prevchr->string[2] == 'r') {
 		shift = 3;
 	}
