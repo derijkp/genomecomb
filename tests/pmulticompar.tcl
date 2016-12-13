@@ -435,17 +435,6 @@ test pmulticompar$testname {basic reannot varall split gz} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-#test multicompar {merge} {
-#	test_cleantmp
-#	file copy data/vars1.sft tmp/mcompar.tsv
-#	set c [file_read data/vars3.sft]
-#	regsub -all sample1 $c sample3 c
-#	regsub -all sample2 $c sample4 c
-#	file_write tmp/merge.tsv $c
-#	cg pmulticompar {*}$::jobopts -listfields list tmp/mcompar.tsv tmp/merge.tsv
-#	exec diff tmp/mcompar.tsv data/expected-multicompar-merge.tsv
-#} {}
-
 test pmulticompar$testname {sort empty bug split} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
