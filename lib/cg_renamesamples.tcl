@@ -18,9 +18,16 @@ proc renamesamples_newfilename {file changes} {
 	}
 	set newfile $file
 	dict for {name newname} $changes {
-		if {[string match *-$name $file]} {
-			set newfile [string range $file 0 [expr {[string length $file] - [string length $name] - 1}]]$newname
+		if {[string match *-$name $tail]} {
+			set newfile $dir/[string range $tail 0 [expr {[string length $tail] - [string length $name] - 1}]]$newname
 			break
+		} else {
+			if {[string match *-$name. $tail]} {
+				set pos [string first -$name. $tail]
+				incr pos -1
+				set newfile $dir/[string range $tail 0 $pos]-$newname.[string range $tail [expr {$pos + [string length $name] + 3}] end]
+				break
+			}
 		}
 	}
 	return $newfile
@@ -36,7 +43,12 @@ proc renamesamples_file {file changes} {
 	set ext [file extension $gzroot]
 	set basefile [file root $gzroot]
 	set newbasefile [renamesamples_newfilename $basefile $changes]
-	if {[inlist {.tsv .sft .tab} $ext]} {
+	set newfile $newbasefile$ext$gzext
+	if {![catch {file link $file} link]} {
+		set newlink [renamesamples_newfilename $link $changes]
+		file delete $file
+		exec ln -s $newlink $newfile
+	} elseif {[inlist {.tsv .sft .tab} $ext]} {
 		set f [gzopen $file]
 		set header [tsv_open $f comment]
 		set newheader {}
@@ -60,14 +72,14 @@ proc renamesamples_file {file changes} {
 			gzclose $f
 			if {$gzext ne ""} {compress $newbasefile$ext.temp $gzext}
 			file delete $file
-			file_rename $newbasefile$ext.temp$gzext $newbasefile$ext$gzext
-			puts "Adapted $newbasefile$ext$gzext"
+			file_rename $newbasefile$ext.temp$gzext $newfile
+			puts "Adapted $newfile"
 		} else {
 			gzclose $f
-			file_rename $file $newbasefile$ext$gzext
+			file_rename $file $newfile
 		}
 	} else {
-		file_rename $file $newbasefile$ext$gzext
+		file_rename $file $newfile
 	}
 }
 
