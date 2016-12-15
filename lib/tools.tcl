@@ -443,9 +443,11 @@ proc gztemp {filename} {
 	}
 }
 
-proc gzrmtemp {filename} {
-	if {$::gztemp_files($filename)} {
-		file delete $filename
+proc gzrmtemp {args} {
+	foreach filename $args {
+		if {$::gztemp_files($filename)} {
+			file delete $filename
+		}
 	}
 }
 

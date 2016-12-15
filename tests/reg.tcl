@@ -185,6 +185,20 @@ test regsubtract {basic} {
 Y	1000	1010
 Y	1900	2000}
 
+test regsubtract {compressed} {
+	cg lz4 -o tmp/reg1.tsv.lz4 data/reg1.tsv
+	cg lz4 -o tmp/reg2.tsv.lz4 data/reg2.tsv
+	exec cg regsubtract tmp/reg1.tsv.lz4 tmp/reg2.tsv.lz4
+} {chromosome	begin	end
+1	10	15
+1	55	60
+2	100	150
+2	160	170
+2	180	200
+3	2000	2100
+Y	1000	1010
+Y	1900	2000}
+
 test regsubtract {bugfix: hang on file2 longer} {
 	exec cg regsubtract data/reg1b.tsv data/reg4.tsv
 } {chromosome	begin	end
@@ -355,6 +369,21 @@ chr1	39	41}
 
 test regjoin {basic} {
 	exec cg regjoin data/reg1.tsv data/reg2.tsv
+} {chromosome	begin	end
+1	10	25
+1	45	60
+2	100	200
+2	300	500
+3	1000	1100
+3	2000	2100
+M	10	25
+X	90	200
+Y	1000	2000}
+
+test regjoin {compressed} {
+	cg lz4 -o tmp/reg1.tsv.lz4 data/reg1.tsv
+	cg lz4 -o tmp/reg2.tsv.lz4 data/reg2.tsv
+	exec cg regjoin tmp/reg1.tsv.lz4 tmp/reg2.tsv.lz4
 } {chromosome	begin	end
 1	10	25
 1	45	60
