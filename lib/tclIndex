@@ -152,6 +152,7 @@ set auto_index(hsmetrics_tsv2interval) [list source [file join $dir cg_hsmetrics
 set auto_index(cg_hsmetrics) [list source [file join $dir cg_hsmetrics.tcl]]
 set auto_index(cg_indexcol) [list source [file join $dir cg_index.tcl]]
 set auto_index(cg_index) [list source [file join $dir cg_index.tcl]]
+set auto_index(cg_less) [list source [file join $dir cg_less.tcl]]
 set auto_index(cg_liftchain2tsv) [list source [file join $dir cg_liftchain2tsv.tcl]]
 set auto_index(cg_liftfindchanges) [list source [file join $dir cg_liftfindchanges.tcl]]
 set auto_index(liftover_correctline) [list source [file join $dir cg_liftover.tcl]]
