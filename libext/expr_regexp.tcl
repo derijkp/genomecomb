@@ -13,7 +13,7 @@ proc tcl::mathfunc::ncregexp {args} {
 }
 
 proc tcl::mathfunc::regextract {args} {
-	if {[llength $args] < 2} {error "function regexp must have at least 2 arguments"}
+	if {[llength $args] < 2} {error "function regextract must have at least 2 arguments"}
 	foreach {value} $args break
 	foreach pattern [::lrange $args 1 end] {
 		set matches [::regexp -inline -- $pattern $value]
