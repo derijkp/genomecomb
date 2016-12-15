@@ -317,6 +317,7 @@ errors caused by bugs in the program)
 proc cg_help {args} {
 	global appdir
 	set format 1
+	set item overview
 	cg_options help args {
 		-format {set format $value}
 	} item 0 1
