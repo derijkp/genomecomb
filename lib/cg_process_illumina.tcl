@@ -529,7 +529,7 @@ proc var_sam_job {bamfile refseq args} {
 		cg vcf2tsv -split $split $dep $target.temp
 		file rename -force $target.temp $target
 	}
-	razip_job ${pre}varall-sam-$root.tsv
+	lz4_job ${pre}varall-sam-$root.tsv
 	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \
 	-code {
@@ -564,11 +564,13 @@ proc var_sam_job {bamfile refseq args} {
 proc sreg_gatk_job {job varallfile resultfile} {
 	upvar job_logdir job_logdir
 	job $job -deps {$varallfile} -targets {$resultfile} -code {
-		cg select -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $target.temp
-		file_write $target.temp2 "# regions selected from $dep: \$quality >= 30 && \$totalcoverage >= 5\n"
-		cg regjoin $target.temp >> $target.temp2
-		file rename -force $target.temp2 $target
-		file delete $target.temp
+		set temp [filetemp $target]
+		set temp2 [filetemp $target]
+		cg select -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
+		file_write $temp2 "# regions selected from $dep: \$quality >= 30 && \$totalcoverage >= 5\n"
+		cg regjoin $temp >> $temp2
+		cg_lz4 -keep 0 -i 1 -o $target.lz4 $temp2
+		file delete $temp
 	}
 }
 
@@ -614,7 +616,7 @@ proc var_gatk_job {bamfile refseq args} {
 		cg vcf2tsv -split $split $dep $target.temp
 		file rename -force $target.temp $target
 	}
-	razip_job ${pre}varall-gatk-$root.tsv
+	lz4_job ${pre}varall-gatk-$root.tsv
 	# predict deletions separately, because gatk will not predict snps in a region where a deletion
 	# was predicted in the varall
 	job ${pre}delvar-gatk-$root -deps $deps \

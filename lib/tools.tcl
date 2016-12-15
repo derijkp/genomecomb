@@ -973,11 +973,25 @@ proc razip_job {file args} {
 	}]
 }
 
+proc lz4_job {file args} {
+	upvar job_logdir job_logdir
+	set deps [list $file]
+	job lz4-$file -checkcompressed 0 -deps $deps -targets $file.lz4 -rmtargets $file -vars args-code {
+		if {![file exists $dep]} {error "error compressing: file $dep does not exist"}
+		cg_lz4 -keep 0 {*}$args $dep
+	}
+}
+
 proc filetemp {file} {
-	if {![file exists $file.temp]} {return $file.temp}
-	set num 2
-	while {[file exists $file.temp$num]} {incr num}
-	return $file.temp$num
+	if {![file exists $file.temp]} {
+		set result $file.temp
+	} else {
+		set num 2
+		while {[file exists $file.temp$num]} {incr num}
+		set result $file.temp$num
+	}
+	file_write $result {}
+	return $result
 }
 
 proc trimformat args {

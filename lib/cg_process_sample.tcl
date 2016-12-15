@@ -304,7 +304,9 @@ proc process_sample_cgi_job {workdir split} {
 	}
 
 	job cg_fannotvar-$sample -optional 1 {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage/bcol_coverage-$sample.tsv) (coverage/bcol_refscore-$sample.tsv)} {fannotvar-$sample.tsv} {
-		cg annotate $dep $target {*}[list_remove [lrange $deps 1 end] {}]
+		set temp [filetemp $target]
+		cg annotate $dep $temp {*}[list_remove [lrange $deps 1 end] {}]
+		cg_lz4 -keep 0 -i 1 -o $target.lz4 $temp
 	}
 
 	job cg_multitechlink_var-$sample -optional 1 {fannotvar-$sample.tsv} {var-cg-cg-$sample.tsv} {
