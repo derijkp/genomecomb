@@ -346,7 +346,7 @@ proc cg_tomonetdb {args} {
 	catch {cg_monetdb_sql $db "drop table \"$table\""}
 	cg_monetdb_sql $db "create table \"$table\" ([join $sql ,\n]);\n"
 	# exec {*}[gzcat $tsvfile] $tsvfile | mclient -d$db -s "copy $num offset $offset records into \"$table\" from stdin delimiters '\t', '\n' null as '';"
-	set temptsvfile [file_tempwrite $tsvfile]
+	set temptsvfile [filetemp $tsvfile]
 	set o [open $temptsvfile w]
 	fconfigure $f -encoding binary -translation binary
 	fconfigure $o -encoding binary -translation binary

@@ -87,14 +87,14 @@ proc fastq_clipadapters {files targets args} {
 	set temptargets {}
 	if {[llength $files] == 1 || !$paired} {
 		foreach {f1} $files {t1} $targets {
-			set tempout1 [file_tempwrite $t1]
+			set tempout1 [filetemp $t1]
 			exec fastq-mcf -k $removeskew -a -o $tempout1 $adapterfile $f1 2>@ stderr
 			lappend temptargets $tempout1
 		}
 	} else {
 		foreach {f1 f2} $files {t1 t2} $targets {
-			set tempout1 [file_tempwrite $t1]
-			set tempout2 [file_tempwrite $t2]
+			set tempout1 [filetemp $t1]
+			set tempout2 [filetemp $t2]
 			exec fastq-mcf -k $removeskew -a -o $tempout1 -o $tempout2 $adapterfile $f1 $f2 2>@ stderr
 			lappend temptargets $tempout1 $tempout2
 		}
@@ -175,7 +175,7 @@ proc map_bowtie2_job {args} {
 		foreach {key value} $readgroupdata {
 			lappend rg --rg "$key:$value"
 		}
-		set temptarget [file_tempwrite $target]
+		set temptarget [filetemp $target]
 		if {$paired} {
 			set files1 {}
 			set files2 {}
@@ -219,7 +219,7 @@ proc bam2reg_job {bamfile {mincoverage 5}} {
 #		cg bam2coverage $dep $target/coverage-$root
 #	}
 	job cov$mincoverage-$root -deps $bamfile -targets $dir/sreg-cov$mincoverage-$root.tsv -vars {mincoverage} -code {
-		set temptarget [file_tempwrite $target]
+		set temptarget [filetemp $target]
 		cg regextract -above 1 [expr {$mincoverage-1}] $dep > $temptarget
 		file rename -force $temptarget $target
 	}

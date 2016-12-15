@@ -13,7 +13,7 @@ proc gatkworkaround_tsv2bed_job {file refseq} {
 		set f [gzopen $dep]
 		set header [tsv_open $f]
 		set poss [tsv_basicfields $header 3]
-		set temptarget [file_tempwrite $target]
+		set temptarget [filetemp $target]
 		set o [open $temptarget w]
 		while {![eof $f]} {
 			set line [split [gets $f] \t]

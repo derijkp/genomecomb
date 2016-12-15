@@ -26,10 +26,10 @@ proc cg_long {args} {
 		}
 		set o stdout
 	} else {
-		set tempoutfile [file_tempwrite $outfile]
+		set tempoutfile [filetemp $outfile]
 		set o [open $tempoutfile w]
 		if {$norm} {
-			set tempsampledatafile [file_tempwrite $outfile.sampledata.tsv]
+			set tempsampledatafile [filetemp $outfile.sampledata.tsv]
 			set no [open $tempsampledatafile w]
 		}
 	}

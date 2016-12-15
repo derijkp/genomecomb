@@ -44,10 +44,10 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 #		}
 	}
 	job svfind-[file tail $dir] -deps $resultfiles -targets {$dir/sv/svall-$name.tsv $dir/sv-$name.tsv} -vars {dbdir dir} -code {
-		set temptarget [file_tempwrite $target]
+		set temptarget [filetemp $target]
 		cg cat {*}[lsort -dict $deps] > $temptarget
 		file rename -force $temptarget $target
-		set temptarget [file_tempwrite $target2]
+		set temptarget [filetemp $target2]
 		cg select -q {$problems eq "" and $quality > 2} $target $temptarget
 		file rename -force $temptarget $target2
 		putslog "Done: finished finding sv in $dir"

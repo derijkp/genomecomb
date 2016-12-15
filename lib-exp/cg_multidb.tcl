@@ -36,7 +36,7 @@ proc multidb_merge_job {varsfile files {split 1}} {
 		if {$file2 eq ""} continue
 		incr multi_merge_num
 		job multi_merge-$multi_merge_num -deps [list $file1 $file2] -vars split -targets $varsfile.$multi_merge_num -code {
-			set temptarget [file_tempwrite $target]
+			set temptarget [filetemp $target]
 			exec multi_merge $split $dep1 $dep2 > $temptarget
 			file rename -force $temptarget $target
 		}

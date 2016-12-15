@@ -973,7 +973,7 @@ proc razip_job {file args} {
 	}]
 }
 
-proc file_tempwrite {file} {
+proc filetemp {file} {
 	if {![file exists $file.temp]} {return $file.temp}
 	set num 2
 	while {[file exists $file.temp$num]} {incr num}

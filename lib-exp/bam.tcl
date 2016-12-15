@@ -18,7 +18,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 	set scratchbase $scratchdir/temp_[file tail $outfile]
 	set samfile $scratchbase.sam
 	putslog "Making sam from $mapfile"
-	set temptarget [file_tempwrite $samfile]
+	set temptarget [filetemp $samfile]
 	if {[catch {
 		exec cgatools map2sam -r $readfile -m $mapfile -s $reffile --mate-sv-candidates -o $temptarget
 	} error]} {
@@ -51,7 +51,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 	}
 	putslog "Making bams for $name"
 	foreach chr $chrs {
-		set temptarget [file_tempwrite $outfile-chr$chr.bam]
+		set temptarget [filetemp $outfile-chr$chr.bam]
 		if {[catch {
 			exec samtools view -S -h -b -o $temptarget $scratchbase-chr$chr.sam
 		} error]} {
@@ -68,7 +68,7 @@ proc cg_mergebam {outfile args} {
 		error "format is: cg mergebam outfile bamfile1 ?bamfile2? ..."
 	}
 	putslog "Merging $outfile"
-	set temptarget [file_tempwrite $outfile]
+	set temptarget [filetemp $outfile]
 	exec samtools merge $temptarget {*}$args
 	file rename -force $temptarget $outfile
 	putslog "Delete old files for building $outfile ($args)"
