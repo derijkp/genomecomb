@@ -765,24 +765,6 @@ proc exiterror errormessage {
 	exit 1
 }
 
-proc catprog file {
-	set ext [file extension $file]
-	switch $ext {
-		.rz - .gz - .bgz {
-			return zcat
-		}
-		.lz4 {
-			return {lz4c -d}
-		}
-		.bz2 {
-			return bzcat
-		}
-		default {
-			return cat
-		}
-	}
-}
-
 proc getline f {
 	set line [split [gets $f] \t]
 	while {![llength $line] && ![eof $f]} {
