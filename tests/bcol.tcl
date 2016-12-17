@@ -198,30 +198,49 @@ test bcol_make {-p and -c allchr} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 
-test bcol_regextract {basic} {
+test bcol_regextract {basic -min} {
 	test_cleantmp
 	cg select -q {$chromosome eq "chr2"} data/cov.tsv tmp/tempcov.tsv
 	exec cg bcol make -p pos -c chromosome tmp/temp.bcol coverage < tmp/tempcov.tsv
-	# exec cg bcol table -s 0 tmp/temp-chr2.bcol > tmp/temp.test
-	cg regextract -above 1 10 tmp/temp.bcol
+	# exec cg bcol table -s 0 tmp/temp.bcol > tmp/temp.test
+	cg regextract -min 14 tmp/temp.bcol
 } {chromosome	begin	end
 2	10	17
 2	33	51}
 
-test bcol_regextract {multiple chromosomes} {
+test bcol_regextract {basic -min} {
+	test_cleantmp
+	cg select -q {$chromosome eq "chr2"} data/cov.tsv tmp/tempcov.tsv
+	exec cg bcol make -p pos -c chromosome tmp/temp.bcol coverage < tmp/tempcov.tsv
+	# exec cg bcol table -s 0 tmp/temp.bcol > tmp/temp.test
+	cg regextract -min 15 tmp/temp.bcol
+} {chromosome	begin	end
+2	11	17
+2	33	51}
+
+test bcol_regextract {multiple chromosomes -min} {
 	test_cleantmp
 	exec cg bcol make -p pos -c chromosome tmp/temp.bcol coverage < data/cov.tsv
-	cg regextract -above 1 10 tmp/temp.bcol
+	cg regextract -min 10 tmp/temp.bcol
 } {chromosome	begin	end
-1	22	49
+1	22	50
 2	10	17
 2	33	51}
+
+test bcol_regextract {multiple chromosomes -max} {
+	test_cleantmp
+	exec cg bcol make -p pos -c chromosome tmp/temp.bcol coverage < data/cov.tsv
+	cg regextract -max 10 tmp/temp.bcol
+} {chromosome	begin	end
+1	0	22
+1	49	50
+2	17	33}
 
 test bcol_regextract {su} {
 	test_cleantmp
 	exec cg bcol make -p pos -c chromosome -t su tmp/temp.bcol coverage < data/cov.tsv
 	# cg bcol table tmp/temp.bcol
-	cg regextract -above 1 10 tmp/temp.bcol
+	cg regextract -min 11 tmp/temp.bcol
 } {chromosome	begin	end
 1	22	49
 2	10	17

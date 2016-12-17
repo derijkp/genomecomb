@@ -671,6 +671,14 @@ proc chanexec {in out pipe} {
 	close $o
 }
 
+proc catchstderr_exec {args} {
+	if {[catch {
+		exec {*}$args 2>@1
+	} msg]} {
+		error $msg
+	}
+}
+
 proc wgetfile {url {resultfile {}}} {
 	if {$resultfile eq ""} {
 		set resultfile [file tail $url]

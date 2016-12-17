@@ -1,37 +1,53 @@
 = Regextract =
 
 == Format ==
-cg regextract ?options? cutoff file1 ?file2? ...
+cg regextract ?options? file1 ?file2? ...
 
 == Summary ==
-Find regions above or below a given cutoff in a bam, bcol or tsv file.
+Find regions with a minimum or maximum coverage in a bam, bcol or tsv file.
 
 == Description ==
-Write a regionsfile to stdout that contains all regions in the given file(s) that
-are above or below a given cutoff. 
+Write a regionsfile to stdout that contains all regions in the given bam, bcol or tsv file(s) that
+have given minimum or maximum coverage. 
+e.g. regions in file1 with a minimum coverage of 20 are extracted using
+{{{
+cg regextract -min 20 file1
+}}}
+
+Using the -max option will give all regions where the coverage in the
+file reaches at most the given maximum.
+WARNING: This will only check regions that have a actual given coverage in the file;
+Positions that are not present in the given file are not returned!
+For bam files (only), you can use the -all option to include these regions
+with no given coverage (in this case unused reference sequences).
 
 If there is no chromosome data in the input files (tsv without chromosome), the chromosome name is
 taken from the filename by splitting on "-", and taking the second
 element.
 
 == Arguments ==
-; **cutoff**: cutoff
 ; **file1**: file containing (chromosome,) position and value columns, or bcol file.
 ; **...**: other files
  
 == Options ==
-; **-qfields**: list (separated by spaces) of possible fieldnames to use as values
+; -qfields list: list (separated by spaces) of possible fieldnames to use as values
             for the cutoff; The first in the list that is in the header will be used
             (default = "coverage uniqueSequenceCoverage").
             This option is not used for bcol files, as they contain data for only one "column".
-; **-posfields**: list (separated by spaces) of possible fieldnames to use as position;
+; -posfields list: list (separated by spaces) of possible fieldnames to use as position;
             The first in the list that is in the header will be used
             (default = "offset pos position begin start").
             This option is not used for bcol files.
-; **-above**: 1 if regions should contain values > given cutoff.
-          defaults to 0, meaning values should be < the cutoff.
-; **-shift**: change the position by the given amount, e.g. -1 to change from
+; -min number: extract regions with coverage >= number.
+; -max number: extract regions with coverage <= number.
+; -shift: change the position by the given amount, e.g. -1 to change from
           1-based to 0-based coordinates
+; -q number: Minimum mapping quality for an alignment to be used (only used for bams)
+; -Q number: Minimum base quality for a base to be considered (only used for bams)
+; -f 0/1 (--filtered): (only used for bams) if 1, skip anomalous read pairs and low quality for 
+calculating depth. Low quality filtering in this option is achieved by setting -q and -Q at 20, unless
+you specifically define other values for these options. (default 0)
+; -all 0/1: (only for bams) Return all regions (<= max), including regions with no given coverage (unused reference sequences)
 
 == Category ==
 Regions

@@ -185,7 +185,7 @@ proc bam2reg_job {bamfile {mincoverage 5}} {
 #	}
 	job cov$mincoverage-$root -deps $bamfile -targets $dir/sreg-cov$mincoverage-$root.tsv -vars {mincoverage} -code {
 		set temptarget [filetemp $target]
-		cg regextract -above 1 [expr {$mincoverage-1}] $dep > $temptarget
+		cg regextract -min $mincoverage $dep > $temptarget
 		file rename -force $temptarget $target
 	}
 	return $dir/sreg-cov$mincoverage-$root.tsv
@@ -275,7 +275,7 @@ proc map_bwa_job {args} {
 #		cg bam2coverage $dep coverage-bwa-$sample/coverage-bwa-$sample
 #	}
 #	job bwa_coverage-$sample -deps $result.bam -targets sreg-$sample.tsv -vars {sample} -code {
-#		cg regextract -above 1 7 $dep > $target.temp
+#		cg regextract -min 8 $dep > $target.temp
 #		file rename -force $target.temp $target
 #	}
 }

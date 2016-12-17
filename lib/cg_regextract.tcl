@@ -8,12 +8,38 @@ proc cg_regextract {args} {
 	set qfields {coverage uniqueSequenceCoverage}
 	set posfields {offset pos position begin start}
 	set above 0; set shift 0
+	set filtered 0
+	set aa 0
 	cg_options regextract args {
-		-above {set above $value}
+		-min {set min $value}
+		-max {set max $value}
 		-shift {set shift $value}
 		-qfields {set qfields $value}
 		-posfields {set posfields $value}
-	} cutoff 2
+		-q {set q $value}
+		-Q {set Q $value}
+		-all {set aa 1}
+		-f - --filtered {
+			set filtered 1
+			if {![info exists q]} {set q 20}
+			if {![info exists Q]} {set Q 20}
+		}
+	} {} 1
+	if {[info exists min]} {
+		if {[info exists max]} {error "regextract does not support using -min and -max at the same time (yet)"}
+		set above 1
+		set cutoff [expr {$min - 1}]
+	} elseif {[info exists max]} {
+		set above 0
+		set cutoff [expr {$max + 1}]
+	} else {
+		# set cutoff [list_shift args]
+		error "The -min or -max option must be provided. The old use with cutoff as a parameter (and a default of below) is no longer supported becaus it was confusing (even to the author)"
+	}
+	set samtoolsargs {}
+	if {[info exists q]} {lappend samtoolsargs -q $q}
+	if {[info exists Q]} {lappend samtoolsargs -Q $Q}
+	if {$aa} {lappend samtoolsargs -aa}
 	set files $args
 	set files [lsort -dict $files]
 	set o stdout
@@ -48,8 +74,13 @@ proc cg_regextract {args} {
 		} elseif {$ext eq ".bam"} {
 			set chrcol 0
 			set poscol 1
-			set valuecol 2
-			exec samtools depth $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $shift 0 >@ $o
+			if {!$filtered} {
+				set valuecol 2
+				catchstderr_exec samtools depth -d$cutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $shift 0 >@ $o
+			} else {
+				set valuecol 3
+				catchstderr_exec samtools mpileup --ignore-overlaps -d$cutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $shift 0 >@ $o
+			}
 		} else {
 			set f [gzopen $file]
 			set header [tsv_open $f]
