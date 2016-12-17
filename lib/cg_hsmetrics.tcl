@@ -1,3 +1,28 @@
+proc calculate_hsmetrics_job {bamfile bedfile {optional 1}} {
+	#calculate hsmetrics with picard tools (=coverage statistics): input bamfile & bedfile
+	upvar job_logdir job_logdir
+	set bamfile [file_absolute $bamfile]
+	set dir [file dir $bamfile]
+	set file [file tail $bamfile]
+	set root [join [lrange [split [file root $file] -] 1 end] -]
+	set target $dir/$root.hsmetrics
+	job calc_hsmetrics-$root -optional $optional -deps {$bamfile $bamfile.bai $bedfile} -targets [list $target] -vars {bamfile bedfile} -code {
+		cg_hsmetrics $bamfile $targetfile $target
+	}
+	return $target
+}
+
+proc make_hsmetrics_report_job {destdir files {optional 1}} {
+	upvar job_logdir job_logdir
+	set experiment [file tail $destdir]
+	job calc_hsmetrics-$experiment -optional $optional -deps $files -targets $destdir/${experiment}_hsmetrics_report.tsv -code {
+		cg cat -c 0 {*}$deps > $target.temp
+		cg select -rc 1 $target.temp $target.temp2
+		file rename -force $target.temp2 $target
+		file delete $target.temp
+	}
+}
+
 proc hsmetrics_tsv2interval {regionfile resultfile bamfile} {
 	if {[file extension $regionfile] eq ".bed"} {
 		set tsvfile [tempfile]
@@ -10,9 +35,10 @@ proc hsmetrics_tsv2interval {regionfile resultfile bamfile} {
 	gzclose $f
 	set poss [tsv_basicfields $header 3]
 	set fields {}
-	foreach {field} [list_sub $header $poss] nfield {chromosome begin end} {
-		lappend fields "$nfield=\$$field"
-	}
+	set ffields [list_sub $header $poss]
+	lappend fields "chromosome=\$[lindex $ffields 0]"
+	lappend fields "begin=\$[lindex $ffields 1] + 1"
+	lappend fields "end=\$[lindex $ffields 2]"
 	lappend fields {strand="+"}
 	set pos [lsearch $header name]
 	if {$pos == -1} {
@@ -50,8 +76,10 @@ proc cg_hsmetrics {args} {
 		set bait_intervals [tempfile]
 		hsmetrics_tsv2interval $baitfile $bait_intervals $bamfile
 	}
-	picard CalculateHsMetrics BAIT_INTERVALS=$bait_intervals TARGET_INTERVALS=$target_intervals I=$bamfile O=$resultfile.temp 2>@ stderr
-	cg select -f [list sample=\"$sample\" *] $resultfile.temp $resultfile.temp2
-	file rename -force $resultfile.temp2 $resultfile
+	set temp [tempfile]
+	set temptarget [filetemp $resultfile]
+	picard CalculateHsMetrics BAIT_INTERVALS=$bait_intervals TARGET_INTERVALS=$target_intervals I=$bamfile O=$temp 2>@ stderr
+	cg select -f [list sample=\"$sample\" *] $temp $temptarget
+	file rename -force $temptarget $resultfile
 	file delete $target_intervals
 }

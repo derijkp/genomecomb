@@ -48,33 +48,19 @@ proc proces_reports_job {sampledir refdir {reports all}} {
 			set target $sampledir/reports/hsmetrics-$sample.hsmetrics
 			set target2 $sampledir/reports/report_hsmetrics-$sample.tsv
 			job reports_hsmetrics-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2} -targets {$target $target2} -vars {sample} -code {
-				exec samtools view -H $dep1 > $dep1.bed.temp
-				#remove comment columns & add strand info - due to lack of correct strand info take + as default
-				set f [open $dep1.bed.temp]
-				set o [open $dep1.bed w]
-				while {[gets $f line] != -1} {
-					if {[regexp ^@SQ $line]} {puts $o $line}
-				}
-				close $o
-				close $f
-				cg select -f {chromosome begin end strand="+" name=$ROW} -sh /dev/null $dep2 >> $dep1.bed
-				picard CalculateHsMetrics BAIT_INTERVALS=$dep1.bed TARGET_INTERVALS=$dep1.bed I=$dep1 O=$target.temp 2>@ stderr
-				cg select -f [list sample=\"$sample\" *] $target.temp $target.temp2
-				file rename -force $target.temp2 $target
-				file delete $target.temp
-				file delete $dep1.bed
-				file delete $dep1.bed.temp
+				cg_hsmetrics -sample $sample $bamfile $targetfile $target
 				set f [open $target]
 				set header [tsv_open $f]
 				set data [split [gets $f] \t]
 				close $f
-				set o [open $target2.temp w]
+				set target2temp [filetemp target2]
+				set o [open $target2temp w]
 				puts $o [join {sample source parameter value} \t]
 				foreach key [lrange $header 1 end] value [lrange $data 1 end] {
 					puts $o "$sample\thsmetrics\t$key\t$value"
 				}
 				close $o
-				file rename -force $target2.temp $target2
+				file rename -force $target2temp $target2
 			}
 		}
 	}

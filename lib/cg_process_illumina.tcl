@@ -1,38 +1,3 @@
-proc calculate_hsmetrics_job {bamfile bedfile {optional 1}} {
-	#calculate hsmetrics with picard tools (=coverage statistics): input bamfile & bedfile
-	upvar job_logdir job_logdir
-	set bamfile [file_absolute $bamfile]
-	set dir [file dir $bamfile]
-	set file [file tail $bamfile]
-	set root [join [lrange [split [file root $file] -] 1 end] -]
-	set target $dir/$root.hsmetrics
-	job calc_hsmetrics-$root -optional $optional -deps {$bamfile $bamfile.bai $bedfile} -targets [list $target] -vars {bamfile bedfile} -code {
-		exec samtools view -H $dep1 > $dep1.bed.temp
-		#remove comment columns & add strand info - due to lack of correct strand info take + as default
-		exec awk {$0 ~ /^@SQ/ {print $0}} $dep1.bed.temp > $dep1.bed
-		exec awk {BEGIN {OFS="\t"} !/^($|#)/ {print $1,$2,$3,"+",$4 }} $bedfile >> $dep1.bed
-		picard CalculateHsMetrics BAIT_INTERVALS=$dep1.bed TARGET_INTERVALS=$dep1.bed I=$dep1 O=$target.temp 2>@ stderr
-		set sample [file tail [file root $bamfile]]
-		cg select -f [list sample=\"$sample\" *] $target.temp $target.temp2
-		file rename -force $target.temp2 $target
-		file delete $target.temp
-		file delete $dep1.bed
-		file delete $dep1.bed.temp
-	}
-	return $target
-}
-
-proc make_hsmetrics_report_job {destdir files {optional 1}} {
-	upvar job_logdir job_logdir
-	set experiment [file tail $destdir]
-	job calc_hsmetrics-$experiment -optional $optional -deps $files -targets $destdir/${experiment}_hsmetrics_report.tsv -code {
-		cg cat -c 0 {*}$deps > $target.temp
-		cg select -rc 1 $target.temp $target.temp2
-		file rename -force $target.temp2 $target
-		file delete $target.temp
-	}
-}
-
 proc cg_bcl2fastq {rundir outdir {rtr 6} {dtr 6} {ptr 6} {wtr 6} } {
 	#-r, --loading-threads Number of threads used for loading BCL data.
 	#-d, --demultiplexing-threads Number of threads used for demultiplexing.
