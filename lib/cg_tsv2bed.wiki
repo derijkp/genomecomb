@@ -15,11 +15,17 @@ from the input using the default fields.
 == Options ==
 ; **-f fields** (--fields): list of fields in the tsv used for creating the bed file.
 You can use this option to add more than the three minimal fields and/or use other field names.
-If a field is empty (enclosed in {}), the/a default field name will be used. e.g.
+If a field is empty (enclosed in {}), the default field name will be used. e.g.
 {{{
 cg tsv2bed --fields '{} {} {} name score' tsvfile bedfile
 }}}
 will add the name and score fields, taking the default columns for chromosome,begin,end
+
+If the first (chromosome) field is not found in the header, it will be put as a value in the output, e.g.
+{{{
+cg tsv2bed --fields 'contig1 {} {} name score' tsvfile bedfile
+}}}
+will contain the value "contig1" for the first (chromosome) field in all output
 
 == Category ==
 Conversion

@@ -28,6 +28,7 @@ int findheaderfield(DStringArray *header,const char *string) {
 
 int main(int argc, char *argv[]) {
 	const char* fields[] = {"chrom","chromStart","chromEnd","name","score","strand","thickStart","thickEnd","itemRgb","blockCount","blockSizesblockStarts"};
+	char *defchr = NULL;
 	VarFile *varfile;
 	unsigned int numfields;
 	int *poss,numpos,p,pi;
@@ -56,8 +57,12 @@ int main(int argc, char *argv[]) {
 		}
 		p = findheaderfield(varfile->header,string);
 		if (p == -1) {
-			fprintf(stderr,"Field %s not found\n",string);
-			exit(EXIT_FAILURE);
+			if (i == 2) {
+				defchr = argv[i];
+			} else {
+				fprintf(stderr,"Field %s not found\n",string);
+				exit(EXIT_FAILURE);
+			}
 		}
 		poss[pi] = p;
 		i++; pi++;
@@ -70,7 +75,11 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		varfile->error = gz_DStringGetTab(varfile->line,varfile->f,varfile->max,varfile->result,1,&numfields);
 		if (varfile->error) break;
-		DStringputs(varfile->result->data + poss[0],stdout);
+		if (defchr != NULL) {
+			fprintf(stdout,"%s",defchr);
+		} else {
+			DStringputs(varfile->result->data + poss[0],stdout);
+		}
 		putc_unlocked('\t',stdout);
 		DStringputs(varfile->result->data + poss[1],stdout);
 		putc_unlocked('\t',stdout);
