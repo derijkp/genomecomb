@@ -1,6 +1,6 @@
 # ARCH should be defined by caller
- CFLAGS=-Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
-#CFLAGS=-Wall -O2 -I~/dev/genomecomb/src
+ CFLAGS=-D_FILE_OFFSET_BITS=64 -Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
+#CFLAGS=-D_FILE_OFFSET_BITS=64 -Wall -O2 -I~/dev/genomecomb/src
 TOOLS= tools.c tools.h debug.h
 GZTOOLS_C= lz4.c lz4tools.c razf.c gztools.c
 GZTOOLS= $(GZTOOLS_C) gztools.h razf.h lz4.h lz4tools.h debug.h
