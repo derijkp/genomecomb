@@ -522,4 +522,18 @@ test tsv2bed {fields poss other defaults} {
 	exec diff tmp/temp.bed tmp/expected.bed
 } {}
 
+test tsv2bed {fixed chr} {
+	write_tab tmp/test.tsv {
+		begin test end name
+	 	4000 t1 4100 a
+	 	5000 t2 5500 b
+	}
+	exec cg tsv2bed --fields {chr1 {} {} name} < tmp/test.tsv > tmp/temp.bed
+	write_tab tmp/expected.bed {
+	 	chr1 4000 4100 a
+	 	chr1 5000 5500 b
+	}
+	exec diff tmp/temp.bed tmp/expected.bed
+} {}
+
 testsummarize

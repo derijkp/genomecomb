@@ -998,8 +998,6 @@ test select "check bug in -s$dboptt" {
 test-100
 test-1-1}
 
-}
-
 test select "-samples$dboptt" {
 	global dbopt
 	test_cleantmp
@@ -1021,6 +1019,34 @@ test select "-f {-*-*}$dboptt" {
 	exec cg select {*}$dbopt -f {-*-*} tmp/temp.tsv
 } {id	annot
 1	a}
+
+test select "regextract $dboptt" {
+	global dbopt
+	write_tab tmp/testsort.tsv {
+		id	num
+		gatk-rdsbwa-test1	1
+		gatk-rdsbwa-test1	3
+	}
+#cg select -f {{id=regextract($id,{^[^-]+-[^-]+(.+)})} *} annot_seqcap_multireg-cov20.tsv.sampleinfo.pre annot_seqcap_multireg-cov20.tsv.sampleinfo
+#devcg select -f {{id=regsub($id,{^[^-]+-[^-]+-},"")} *} annot_seqcap_multireg-cov20.tsv.sampleinfo.pre annot_seqcap_multireg-cov20.tsv.sampleinfo
+	exec cg select {*}$dbopt -f {{id=regextract($id,{^[^-]+-[^-]+-(.+)})} *} tmp/testsort.tsv
+} {id	num
+test1	1
+test1	3}
+
+test select "regsub $dboptt" {
+	global dbopt
+	write_tab tmp/testsort.tsv {
+		id	num
+		gatk-rdsbwa-test1	1
+		gatk-rdsbwa-test1	3
+	}
+	exec cg select {*}$dbopt -f {{id=regsub($id,{^[^-]+-[^-]+-},"")} *} tmp/testsort.tsv
+} {id	num
+test1	1
+test1	3}
+
+}
 
 foreach dbopt {{}} {
 	selecttests

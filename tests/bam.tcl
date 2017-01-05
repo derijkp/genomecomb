@@ -46,4 +46,60 @@ test bam2fastq {bam2fastq gz} {
 	exec diff tmp/out_2.fq tmp/expected2.fq
 } {}
 
+test cg_regextract {regextract} {
+	test_cleantmp
+	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
+	cg regextract -min 20 $bamfile > tmp/reg-cov20.tsv
+	string_change [cg covered tmp/reg-cov20.tsv] [list \n\n \n]
+} {chromosome	bases
+chr21	495709
+chr22	1168356
+total	1664065}
+
+test cg_regextract {regextract -filtered 1 } {
+	test_cleantmp
+	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
+	cg regextract --filtered 1 -min 20 $bamfile > tmp/reg-cov20.tsv
+	string_change [cg covered tmp/reg-cov20.tsv] [list \n\n \n]
+} {chromosome	bases
+chr21	464015
+chr22	1004396
+total	1468411}
+
+test cg_regextract {--filtered 1 -q 1 -Q 0} {
+	test_cleantmp
+	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19_test/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/regfile.tsv
+	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
+	# TARGET_TERRITORY 2126556
+	# PCT_TARGET_BASES_20X	0.56393
+	# reg: 1199228.72508
+	# next settings come closest to hsmetrics?
+	cg regextract --filtered 1 -q 1 -Q 0 -min 20 $bamfile > tmp/reg-cov20.tsv
+	set regionfile tmp/regfile.tsv
+	file delete tmp/multireg.tsv
+	cg multireg tmp/multireg.tsv tmp/regfile.tsv tmp/reg-cov20.tsv
+	cg select -q {$regfile == 1} tmp/multireg.tsv tmp/selmultireg.tsv
+	set total [lindex [cg covered tmp/selmultireg.tsv] end]
+	set cov20 [lindex [exec cg select -q {$reg-cov20 == 1} tmp/selmultireg.tsv | cg covered] end]
+	format %.4f [expr 100.0*$cov20/$total]
+} {56.1604}
+
+test cg_regextract {-q 20 -Q 20} {
+	test_cleantmp
+	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19_test/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/regfile.tsv
+	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
+	# TARGET_TERRITORY 2126556
+	# PCT_TARGET_BASES_20X	0.56393
+	# reg: 1199228.72508
+	# next settings come closest to hsmetrics?
+	cg regextract -q 20 -Q 20 -min 20 $bamfile > tmp/reg-cov20.tsv
+	set regionfile tmp/regfile.tsv
+	file delete tmp/multireg.tsv
+	cg multireg tmp/multireg.tsv tmp/regfile.tsv tmp/reg-cov20.tsv
+	cg select -q {$regfile == 1} tmp/multireg.tsv tmp/selmultireg.tsv
+	set total [lindex [cg covered tmp/selmultireg.tsv] end]
+	set cov20 [lindex [exec cg select -q {$reg-cov20 == 1} tmp/selmultireg.tsv | cg covered] end]
+	format %.4f [expr 100.0*$cov20/$total]
+} {55.0057}
+
 testsummarize
