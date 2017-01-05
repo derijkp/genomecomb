@@ -58,6 +58,7 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	tsv2bed $dir/reg-$name.tsv $dir/reg-$name.bed [list {} begin end $namefield]
 	tsv2bed $dir/reg-$name.map $dir/reg-mini_$name.bed [list $name begin end name]
 	set header [cg select -h $ampliconsfile]
+	#
 	cg select -f {chromosome begin end name} $ampliconsfile $dir/inner_$tail.temp
 	cg select -s - $dir/inner_$tail.temp $dir/inner_$tail.temp2
 	file delete $dir/inner_$tail.temp
@@ -461,12 +462,13 @@ proc cg_process_mastr {args} {
 
 proc cg_process_mastrdesign {args} {
 	set args [job_init {*}$args]
-	# useminigenome is only important for which reference sequence is returned by mastr_refseq_job
 	set useminigenome 0
-	if {[llength $args] < 2} {
-		error "Wrong number of arguments, should be cg process_mastrdesign mastrdir dbdir"
-	}
-	foreach {mastrdir dbdir} $args break
+	cg_options process_mastrdesign args {
+		-m - --minigenome {
+			set useminigenome $value
+		}
+	} {mastrdir dbdir} 2 2
+	# useminigenome is only important for which reference sequence is returned by mastr_refseq_job
 	mastr_refseq_job $mastrdir $dbdir $useminigenome
 	job_wait
 }
