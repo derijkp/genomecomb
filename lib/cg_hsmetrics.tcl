@@ -1,13 +1,13 @@
-proc calculate_hsmetrics_job {bamfile bedfile {optional 1}} {
-	#calculate hsmetrics with picard tools (=coverage statistics): input bamfile & bedfile
+proc calculate_hsmetrics_job {bamfile targetsfile {optional 1}} {
+	#calculate hsmetrics with picard tools (=coverage statistics): input bamfile & targetsfile
 	upvar job_logdir job_logdir
 	set bamfile [file_absolute $bamfile]
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	set target $dir/$root.hsmetrics
-	job calc_hsmetrics-$root -optional $optional -deps {$bamfile $bamfile.bai $bedfile} -targets [list $target] -vars {bamfile bedfile} -code {
-		cg_hsmetrics $bamfile $targetfile $target
+	job calc_hsmetrics-$root -optional $optional -deps {$bamfile $bamfile.bai $targetsfile} -targets [list $target] -vars {bamfile targetsfile} -code {
+		cg_hsmetrics $bamfile $targetsfile $target
 	}
 	return $target
 }
@@ -23,7 +23,7 @@ proc make_hsmetrics_report_job {destdir files {optional 1}} {
 	}
 }
 
-proc hsmetrics_tsv2interval {regionfile resultfile bamfile} {
+proc hsmetrics_tsv2interval {regionfile bamfile resultfile} {
 	if {[file extension $regionfile] eq ".bed"} {
 		set tsvfile [tempfile]
 		cg bed2sft $regionfile $tsvfile
@@ -67,18 +67,18 @@ proc cg_hsmetrics {args} {
 		regsub ^map- $sample {} sample
 	}
 	set target_intervals [tempfile]
-	hsmetrics_tsv2interval $targetfile $target_intervals $bamfile
+	hsmetrics_tsv2interval $targetfile $bamfile $target_intervals
 	if {![info exists baitfile]} {
 		# We have to give a bait interval file, or CalculateHsMetrics wont run
 		# if we do not have actual bait regions, use target regions.
 		set bait_intervals $target_intervals
 	} else {
 		set bait_intervals [tempfile]
-		hsmetrics_tsv2interval $baitfile $bait_intervals $bamfile
+		hsmetrics_tsv2interval $baitfile $bamfile $bait_intervals
 	}
 	set temp [tempfile]
 	set temptarget [filetemp $resultfile]
-	picard CalculateHsMetrics BAIT_INTERVALS=$bait_intervals TARGET_INTERVALS=$target_intervals I=$bamfile O=$temp 2>@ stderr
+	picard CalculateHsMetrics BAIT_INTERVALS=$bait_intervals TARGET_INTERVALS=$target_intervals I=$bamfile O=$temp
 	cg select -f [list sample=\"$sample\" *] $temp $temptarget
 	file rename -force $temptarget $resultfile
 	file delete $target_intervals

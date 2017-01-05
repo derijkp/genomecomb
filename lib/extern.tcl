@@ -21,12 +21,7 @@ proc searchpath {envvar args} {
 
 proc picard {cmd args} {
 	set picard [findpicard]
-	if {[catch {
-		exec java -jar $picard/$cmd.jar {*}$args
-	} msg] && ![regexp "done. Elapsed time:" $msg]} {
-		error $msg
-	}
-	return $msg
+	catchstderr_exec java -jar $picard/$cmd.jar {*}$args
 }
 
 proc findpicard {} {

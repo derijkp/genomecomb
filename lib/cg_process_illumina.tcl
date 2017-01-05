@@ -173,7 +173,7 @@ proc map_bowtie2_job {args} {
 }
 
 
-proc bam2reg_job {bamfile {mincoverage 5}} {
+proc bam2reg_job {bamfile {mincoverage 5} {compress 0}} {
 	upvar job_logdir job_logdir
 	set bamfile [file_absolute $bamfile]
 	set pre [lindex [split $bamfile -] 0]
@@ -183,7 +183,7 @@ proc bam2reg_job {bamfile {mincoverage 5}} {
 #	job bam2coverage-$root -deps $bamfile -targets {$dir/coverage-$root $dir/coverage-$root/coverage-$root.FINISHED} -vars {root} -code {
 #		cg bam2coverage $dep $target/coverage-$root
 #	}
-	job cov$mincoverage-$root -deps $bamfile -targets $dir/sreg-cov$mincoverage-$root.tsv -vars {mincoverage} -code {
+	job cov$mincoverage-$root -deps $bamfile -targets $dir/sreg-cov$mincoverage-$root.tsv -vars {mincoverage compress} -code {
 		set temptarget [filetemp $target]
 		cg regextract -min $mincoverage $dep > $temptarget
 		file rename -force $temptarget $target
@@ -765,17 +765,18 @@ proc process_illumina {args} {
 		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
+		bam2reg_job $cleanedbam 20 1
 		#calculate reports
-		if {[llength $reports]} {
-			proces_reports_job $sampledir/$sample $dbdir $reports
-			lappend reportstodo $sampledir/$sample/reports
-		}
 		# gatk variant calling on map-rdsbwa
 		var_gatk_job $cleanedbam $refseq -bed $cov5bed -split $split
 		lappend todo gatk-rdsbwa-$sample
 		# samtools variant calling on map-rdsbwa
 		var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
 		lappend todo sam-rdsbwa-$sample
+		if {[llength $reports]} {
+			proces_reports_job $sampledir/$sample $dbdir $reports
+			lappend reportstodo $sampledir/$sample/reports
+		}
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir

@@ -56,6 +56,7 @@ proc multi_merge_job {varsfile files args} {
 			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
 			incr pos $maxfiles
 			job multi_merge-[file tail $target] -optional $optional -force $force -deps $deps -targets {$target} -vars {split delete} -code {
+				set deps [gzfile_m $deps]
 				if {[llength $deps] > 1} {
 					# puts [list ../bin/multi_merge $split {*}$deps]
 					exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
@@ -542,13 +543,17 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 		lappend deps {*}[jobglob $sampledir/reg_*-$sample.tsv]
 		job multicompar_addvars-$sample -force 1 -deps $deps -targets {$target} \
 		  -vars {allvarsfile samplevarsfile sregfile varallfile sample split sampledir} -code {
+			set allvarsfile [gzfile $allvarsfile]
+			set samplevarsfile [gzfile $samplevarsfile]
+			set sregfile [gzfile $sregfile]
+			set varallfile [gzfile $varallfile]
 			set vf [gzopen $allvarsfile]
 			set vheader [tsv_open $vf]
-			close $vf
+			gzclose $vf
 			if {$vheader ne "chromosome begin end type ref alt"} {error "internal error: index vars.tsv in wrong format"}
 			set f [gzopen $samplevarsfile]
 			set header [tsv_open $f]
-			close $f
+			gzclose $f
 			set basicposs [tsv_basicfields $header 6 0]
 			set seqpos [lsearch $header sequenced]
 			set zygpos [lsearch $header zyg]

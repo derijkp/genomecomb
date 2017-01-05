@@ -346,15 +346,6 @@ proc gziscompressed filename {
 	}
 }
 
-proc gzfile {args} {
-	foreach filename $args {
-		if {![catch {glob $filename $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
-			return [lindex $list 0]
-		}
-	}
-	return [lindex $args 0]
-}
-
 proc gzexists {filename {checkcompressed 1}} {
 	if {$checkcompressed} {
 		expr {[file exists $filename] || [file exists $filename.rz] || [file exists $filename.lz4] || [file exists $filename.gz] ||[file exists $filename.bgz] || [file exists $filename.bz2]}
@@ -366,6 +357,15 @@ proc gzexists {filename {checkcompressed 1}} {
 proc checkfile {args} {
 	foreach filename $args {
 		if {![catch {glob $filename} list]} {
+			return [lindex $list 0]
+		}
+	}
+	return [lindex $args 0]
+}
+
+proc gzfile {args} {
+	foreach filename $args {
+		if {![catch {glob $filename $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
 			return [lindex $list 0]
 		}
 	}
@@ -677,6 +677,7 @@ proc catchstderr_exec {args} {
 	} msg]} {
 		error $msg
 	}
+	return $msg
 }
 
 proc wgetfile {url {resultfile {}}} {
