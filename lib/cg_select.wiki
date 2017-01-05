@@ -78,6 +78,7 @@ values in group and column. Supported functions are
 ; gpercent: count as percent versus total count in given group (row)
 ; min(field): minimum of all values in the field (for the given group and column)
 ; max(field): maximum
+; sum(field): sum of values in this field
 ; avg(field): average
 ; stdev(field): standard deviation
 ; ucount(field): number of unique values in field
