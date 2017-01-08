@@ -959,7 +959,7 @@ proc sourcename base {
 }
 
 proc razip_job {file args} {
-	set deps [list $file {*}$args]
+	set deps [gzfiles $file {*}$args]
 	uplevel [list job razip-$file -checkcompressed 0 -deps $deps -targets $file.rz -rmtargets $file -code {
 		if {![file exists $dep]} {error "error compressing: file $dep does not exist"}
 		cg_razip $dep
@@ -968,8 +968,8 @@ proc razip_job {file args} {
 
 proc lz4_job {file args} {
 	upvar job_logdir job_logdir
-	set deps [list $file]
-	job lz4-$file -checkcompressed 0 -deps $deps -targets $file.lz4 -rmtargets $file -vars args-code {
+	set deps [gzfiles $file]
+	job lz4-$file -checkcompressed 0 -deps $deps -targets $file.lz4 -rmtargets $file -vars args -code {
 		if {![file exists $dep]} {error "error compressing: file $dep does not exist"}
 		cg_lz4 -keep 0 {*}$args $dep
 	}
