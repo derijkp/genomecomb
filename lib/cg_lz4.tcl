@@ -56,6 +56,9 @@ proc cg_lz4 args {
 				exec bzcat $file > $temp2
 				exec lz4c -$compressionlevel -B$blocksize -c $temp2 > $temp
 			}
+			.lz4i {
+				putslog "not compressin lz4 index file $file"
+			}
 			default {
 				if {$outputfile eq ""} {
 					set result $file.lz4
@@ -77,6 +80,7 @@ proc cg_lz4 args {
 proc cg_lz4index {args} {
 	foreach file $args {
 		exec lz4index $file
+		if {[file extension $file] eq ".lz4"} {file rename $file.lz4i [file root $file].lz4i}
 	}
 }
 
