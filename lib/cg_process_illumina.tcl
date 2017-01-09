@@ -183,7 +183,7 @@ proc bam2reg_job {bamfile {mincoverage 5} {compress 0}} {
 #	job bam2coverage-$root -deps $bamfile -targets {$dir/coverage-$root $dir/coverage-$root/coverage-$root.FINISHED} -vars {root} -code {
 #		cg bam2coverage $dep $target/coverage-$root
 #	}
-	job cov$mincoverage-$root -deps $bamfile -targets $dir/sreg-cov$mincoverage-$root.tsv -vars {mincoverage compress} -code {
+	job cov$mincoverage-$root -optional 1 -deps $bamfile -targets $dir/sreg-cov$mincoverage-$root.tsv -vars {mincoverage compress} -code {
 		set temptarget [filetemp $target]
 		cg regextract -min $mincoverage $dep > $temptarget
 		file rename -force $temptarget $target
@@ -338,24 +338,25 @@ proc bam_clean_job {args} {
 	set cleanuplist {}
 	lappend cleanuplist $dir/$pre-$root.bam $dir/$pre-$root.bam.bai
 	set temproot s$root
-	lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai]
+	lappend skips -skip [list $dir/$pre-$temproot.bam]
 	if {$removeduplicates} {
 		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot d$temproot
-		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai]
+		lappend skips -skip [list $dir/$pre-$temproot.bam]
 	}
 	if {$realign ne "0"} {
 		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot r$temproot
-		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai]
+		lappend skips -skip [list $dir/$pre-$temproot.bam]
 	}
 	if {$clipamplicons ne ""} {
 		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot c$temproot
-		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai]
+		lappend skips -skip [list $dir/$pre-$temproot.bam]
 	}
 	# start jobs
 	# sort using picard
+putsvars skips
 	job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
 	-vars {removeduplicates sample} {*}$skips -code {
 		file delete $target.temp
@@ -366,6 +367,7 @@ proc bam_clean_job {args} {
 	#	# file rename -force $target.temp3 $target
 	}
 	set root s$root
+	list_pop skips 0; list_pop skips 0;
 	if {$removeduplicates} {
 		list_pop skips 0; list_pop skips 0;
 		job bamremdup-$root -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-d$root.bam} \
@@ -377,7 +379,7 @@ proc bam_clean_job {args} {
 		set root d$root
 	}
 	# index intermediate result
-	job bamindex-$pre-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai {*}$skips -code {
+	job bamindex-$pre-$root -optional 1 -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
@@ -410,7 +412,7 @@ proc bam_clean_job {args} {
 			}
 		}
 		set root r$root
-		job bamrealign_index-$root -deps $dir/$pre-$root.bam {*}$skips -targets $dir/$pre-$root.bam.bai -code {
+		job bamrealign_index-$root -optional 1 -deps $dir/$pre-$root.bam {*}$skips -targets $dir/$pre-$root.bam.bai -code {
 			exec samtools index $dep >@ stdout 2>@ stderr
 			puts "making $target"
 		}
@@ -422,7 +424,7 @@ proc bam_clean_job {args} {
 			file rename $target.temp $target
 		}
 		set root c$root
-		job bamclean_clipamplicons_index-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai -code {
+		job bamclean_clipamplicons_index-$root -optional 1 -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai -code {
 			exec samtools index $dep >@ stdout 2>@ stderr
 			puts "making $target"
 		}
@@ -448,11 +450,13 @@ proc annotvar_clusters_job {file resultfile} {
 proc sreg_sam_job {job varallfile resultfile} {
 	upvar job_logdir job_logdir
 	job $job -deps {$varallfile} -targets {$resultfile} -code {
-		cg select -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $target.temp
-		file_write $target.temp2 "# regions selected from $dep: \$quality >= 30 && \$totalcoverage >= 5\n"
-		cg regjoin $target.temp >> $target.temp2
-		file rename -force $target.temp2 $target
-		file delete $target.temp
+		set temp [filetemp $target]
+		set temp2 [filetemp $target]
+		cg select -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
+		file_write $temp2 "# regions selected from [gzroot $dep]: \$quality >= 30 && \$totalcoverage >= 5\n"
+		cg regjoin $temp >> $temp2
+		cg_lz4 -keep 0 -i 1 -o $target.lz4 $temp2
+		file delete $temp
 	}
 }
 
@@ -494,7 +498,7 @@ proc var_sam_job {bamfile refseq args} {
 		cg vcf2tsv -split $split $dep $target.temp
 		file rename -force $target.temp $target
 	}
-	lz4_job ${pre}varall-sam-$root.tsv
+	lz4_job ${pre}varall-sam-$root.tsv -i 1
 	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \
 	-code {
@@ -532,7 +536,7 @@ proc sreg_gatk_job {job varallfile resultfile} {
 		set temp [filetemp $target]
 		set temp2 [filetemp $target]
 		cg select -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
-		file_write $temp2 "# regions selected from $dep: \$quality >= 30 && \$totalcoverage >= 5\n"
+		file_write $temp2 "# regions selected from [gzroot $dep]: \$quality >= 30 && \$totalcoverage >= 5\n"
 		cg regjoin $temp >> $temp2
 		cg_lz4 -keep 0 -i 1 -o $target.lz4 $temp2
 		file delete $temp
@@ -574,31 +578,31 @@ proc var_gatk_job {bamfile refseq args} {
 			--annotateNDA \
 			-glm SNP --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
-		catch {file rename -force $target.temp.idx $target.idx}
+		catch {file delete $target.temp.idx}
 		# file delete $target.temp
 	}
 	job ${pre}varall-gatk2sft-$root -deps [list ${pre}varall-gatk-$root.vcf] -targets ${pre}varall-gatk-$root.tsv -vars {sample split} -code {
 		cg vcf2tsv -split $split $dep $target.temp
 		file rename -force $target.temp $target
 	}
-	lz4_job ${pre}varall-gatk-$root.tsv
+	lz4_job ${pre}varall-gatk-$root.tsv -i 1
 	# predict deletions separately, because gatk will not predict snps in a region where a deletion
 	# was predicted in the varall
 	job ${pre}delvar-gatk-$root -deps $deps \
-	-targets ${pre}delvar-gatk-$root.vcf -skip ${pre}delvar-gatk-$root.tsv \
-	-skip ${pre}var-gatk-$root.tsv -vars {gatk opts} -code {
+	-targets ${pre}delvar-gatk-$root.vcf -skip {${pre}delvar-gatk-$root.tsv} \
+	-skip {${pre}var-gatk-$root.tsv} -vars {gatk opts} -code {
 		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
 			{*}$opts -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 50.0 -stand_emit_conf 10.0 -dcov 1000 \
 			--annotateNDA \
 			-glm INDEL 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
-		catch {file rename -force $target.temp.idx $target.idx}
+		catch {file delete $target.temp.idx}
 		# file delete $target.temp
 	}
 	job ${pre}delvar-gatk2sft-$root -deps [list ${pre}delvar-gatk-$root.vcf] \
 	-targets ${pre}delvar-gatk-$root.tsv \
-	-skip ${pre}var-gatk-$root.tsv -vars {sample split} -code {
+	-skip {${pre}var-gatk-$root.tsv} -vars {sample split} -code {
 		cg vcf2tsv -split $split $dep $target.temp
 		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
 		-f {
@@ -633,10 +637,9 @@ proc var_gatk_job {bamfile refseq args} {
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup
 	job clean_${pre}var-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} \
-	-rmtargets {${pre}uvar-gatk-$root.tsv ${pre}varall-gatk-$root.vcf ${pre}varall-gatk-$root.vcf.idx  ${pre}delvar-gatk-$root.vcf ${pre}delvar-gatk-$root.tsv} -code {
+	-rmtargets {${pre}uvar-gatk-$root.tsv ${pre}varall-gatk-$root.vcf ${pre}delvar-gatk-$root.vcf ${pre}delvar-gatk-$root.tsv} -code {
 		catch {file delete ${pre}uvar-gatk-$root.tsv}
 		catch {file delete ${pre}varall-gatk-$root.vcf}
-		catch {file delete ${pre}varall-gatk-$root.vcf.idx}
 		catch {file delete ${pre}delvar-gatk-$root.vcf}
 		catch {file delete ${pre}delvar-gatk-$root.tsv}
 	}
@@ -714,24 +717,6 @@ proc process_illumina {args} {
 		puts $dir
 		cd $dir
 		job_logdir $dir/log_jobs
-		# convert existing vcfs
-		set files [jobglob var-*.vcf]
-		foreach file $files {
-			set target [file root [gzroot $file]].tsv
-			if {![file exists $target]} {
-				job vcf2tsv-$file -deps $file -targets $target -vars split -code {
-					cg vcf2tsv -split $split $dep $target.temp
-					file rename -force $target.temp $target
-				}
-				lappend todo [string range $target 4 end-4]
-			}
-		}
-		# add existing var files to todo
-		set files [jobglob var-*.tsv]
-		foreach file $files {
-			set target [file root [gzroot $file]].tsv
-			lappend todo [string range $target 4 end-4]
-		}
 		# check if there are bam files in ori to extract fastq from
 		set files [ssort -natural [jobglob ori/*.bam]]
 		foreach file $files {
@@ -746,7 +731,7 @@ proc process_illumina {args} {
 				file rename -force $target.temp.gz $target.gz
 				file rename -force $target2.temp.gz $target2.gz
 			}
-		}		
+		}
 		# find fastq files, and process them
 		set files [ssort -natural [jobglob fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
 		if {[llength $files]} {
@@ -760,11 +745,15 @@ proc process_illumina {args} {
 			# map using bwa
 			map_bwa_job $refseq $files $sample $paired -skips [list -skip $resultbamfile]
 		}
-		# extract regions with coverage >= 5
+		# extract regions with coverage >= 5 (for cleaning)
 		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
 		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
+		# make 5x coverage regfile from cleanedbam
+		set cov5reg [bam2reg_job $cleanedbam 5]
+		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
+		# make 20x coverage regfile
 		bam2reg_job $cleanedbam 20 1
 		#calculate reports
 		# gatk variant calling on map-rdsbwa
@@ -773,6 +762,25 @@ proc process_illumina {args} {
 		# samtools variant calling on map-rdsbwa
 		var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
 		lappend todo sam-rdsbwa-$sample
+		# convert existing vcfs
+		set files [ssort -natural [jobglob var-*.vcf]]
+		foreach file $files {
+			set target [file root [gzroot $file]].tsv
+			if {![file exists $target]} {
+				job vcf2tsv-$file -deps $file -targets $target -vars split -code {
+					cg vcf2tsv -split $split $dep $target.temp
+					file rename -force $target.temp $target
+				}
+				lappend todo [string range $target 4 end-4]
+			}
+		}
+		# add existing var files to todo
+		# This may add duplicates (already existing var files from previous gatk,sam), but will be cleaned later by he list_remdup
+		set files [ssort -natural [jobglob var-*.tsv]]
+		foreach file $files {
+			set target [file root [gzroot $file]].tsv
+			lappend todo [string range $target 4 end-4]
+		}
 		if {[llength $reports]} {
 			proces_reports_job $sampledir/$sample $dbdir $reports
 			lappend reportstodo $sampledir/$sample/reports

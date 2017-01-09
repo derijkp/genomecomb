@@ -1,7 +1,7 @@
 # job, removes when end=begin, clips chromosome
 proc gatkworkaround_tsv2bed_job {file refseq} {
 	upvar job_logdir job_logdir
-	job tsv2bed-[file tail $file] -deps {$file $refseq.index} -targets [file root $file].bed -code {
+	job tsv2bed-[file tail $file] -optional 1 -deps {$file $refseq.index} -targets [file root $file].bed -code {
 		set f [open $dep2]
 		while {![eof $f]} {
 			set line [split [gets $f] \t]

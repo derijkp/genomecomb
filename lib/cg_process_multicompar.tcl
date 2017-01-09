@@ -35,6 +35,7 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 	foreach sample $todo {
 		set name [lindex [split $sample -] end]
 		if {![inlist $done $sample]} {
+			putslog "Still todo: $sample"
 			lappend stilltodo $sampledir$name/var-$sample.tsv
 		}
 	}

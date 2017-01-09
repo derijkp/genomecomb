@@ -525,11 +525,15 @@ proc process_sample_job {args} {
 			file delete {*}$deps
 		}
 	}
-	# extract regions with coverage >= 5
+	# extract regions with coverage >= 5 (for cleaning)
 	set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
 	set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
 	# clean bamfile (mark duplicates, realign)
 	set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
+	# make 5x coverage regfile from cleanedbam
+	set cov5reg [bam2reg_job $cleanedbam 5]
+	set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
+	# make 20x coverage regfile
 	bam2reg_job $cleanedbam 20 1
 	# samtools variant calling on map-rdsbwa
 	var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
