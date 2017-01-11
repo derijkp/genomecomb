@@ -34,7 +34,6 @@ proc cg_lz4 args {
 			set result $outputfile
 		}
 		set temp [filetemp $result]
-		set temp2 [filetemp $result]
 		switch $ext {
 			.gz {
 				putslog "lz4 $file"
@@ -44,6 +43,7 @@ proc cg_lz4 args {
 			}
 			.rz {
 				putslog "lz4 $file"
+				set temp2 [filetemp $result]
 				exec razip -d -c $file > $temp2
 				exec lz4c -$compressionlevel -B$blocksize -c $temp2 > $temp
 			}
@@ -53,6 +53,7 @@ proc cg_lz4 args {
 			}
 			.bz2 {
 				putslog "lz4c $file"
+				set temp2 [filetemp $result]
 				exec bzcat $file > $temp2
 				exec lz4c -$compressionlevel -B$blocksize -c $temp2 > $temp
 			}
@@ -70,7 +71,7 @@ proc cg_lz4 args {
 			}
 		}
 		if {$index} {exec lz4index $temp}
-		file delete $temp2
+		if {[info exists temp2]} {file delete $temp2}
 		if {$index} {file rename -force $temp.lz4i [file root $result].lz4i}
 		file rename -force $temp $result
 		if {!$keep} {file delete $file}
