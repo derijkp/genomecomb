@@ -46,7 +46,7 @@ proc indexdir_cache_check {mainfile indexdir indexfile} {
 	set depfile $indexdir/$indexfile
 	if {![file exists $depfile]} {return 0}
 	if {![file readable $depfile]} {return 0}
-	if {[file mtime $depfile] < [file mtime $mainfile]} {return 0}
+	if {![file exists $mainfile] || [file mtime $depfile] < [file mtime $mainfile]} {return 0}
 	if {[file exists $indexdir/info.filesize]} {
 		if {[file mtime $depfile] < [file mtime $indexdir/info.filesize]} {return 0}
 		set filesize [file_read $indexdir/info.filesize]

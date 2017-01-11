@@ -198,10 +198,10 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 	return $a
 }
 
-proc cg_annotate {args} {
+proc cg_annotate_job {args} {
 	set near -1
 	set dbdir {}
-	set replace 0
+	set replace e
 	set multidb 0
 	set upstreamsize 2000
 	cg_options annotate args {
@@ -215,6 +215,7 @@ proc cg_annotate {args} {
 			set namefield $value
 		}
 		-replace {
+			if {$value ni "y n e"} {error "invalid value $value for -replace, must be one of y n e"}
 			set replace $value
 		}
 		-multidb {
@@ -223,9 +224,7 @@ proc cg_annotate {args} {
 		-u - --upstreamsize {
 			set upstreamsize $value
 		}
-	} {file resultfile} 3
-	set gzfile [gztemp $file]
-	set file $gzfile
+	} {orifile resultfile} 3
 	set dbfiles {}
 	foreach testfile $args {
 		if {[file isdir $testfile]} {
@@ -243,26 +242,60 @@ proc cg_annotate {args} {
 		lappend names [dict get $dbinfo name]
 		lappend newh {*}[dict get $dbinfo newh]
 	}
-	set file [tsv_convert2var $file header comment]
-	set poss [tsv_basicfields $header 6 0]
-	set common [list_common $header $newh]
-	if {[llength $common]} {
-		if {!$replace} {
-			error "Error: field(s) [join $common ,] already in file"
+	if {[file exists $orifile]} {
+		# only check for existing columns if file already exists
+		set f [gzopen $orifile]
+		set line [gets $f]
+		if {[regexp {##fileformat=VCF} $line]} {
+			set header [vcf2sft_header $f]
+		} elseif {[string index $line 0] ne "#"} {
+			set header [split $line \t]
+		} else {
+			set header [tsv_open $f]
 		}
-#		foreach name $common {
-#			set skip($name) 1
-#		}
-	} else {
-		set replace 0
-	}
-	if {[llength $header] > 10 && [llength $dbfiles] > 4} {
-		set usefile [tsv_varsfile $file]
-		puts "Using varfile $usefile"
-	} else {
-		set usefile $file 
+		catch {gzclose $f}
+		set poss [tsv_basicfields $header 6 0]
+		set common [list_common $header $newh]
+		if {[llength $common]} {
+			if {$replace eq "e"} {
+				error "Error: field(s) [join $common ,] already in file"
+			}
+			if {$replace eq "n"} {
+				foreach name $common {
+					set skip($name) 1
+				}
+			}
+		}
 	}
 	set tempbasefile [indexdir_file $resultfile vars.tsv ok]
+	job_logdir $tempbasefile.log_jobs
+	# If $orifile is a vcf file, convert
+	set ext [file extension [gzroot $orifile]]
+	if {$ext eq ".vcf"} {
+		set convertedfile [indexdir_file $resultfile cvars.tsv ok]
+		job annot-vcf2tsv -deps {$orifile} -targets {$convertedfile} -code {
+			cg vcf2tsv -split 1 $dep $target
+		}
+		set orifile $convertedfile
+	}
+	# usefile: smaller file with only variants used for actual annotation; 
+	# if orifile is small, a link to it is made.
+	# If it contains to many extra columns a cut down version is made
+	set usefile [indexdir_file $orifile vars.tsv]
+	if {$usefile eq ""} {
+		set usefile [indexdir_file $resultfile vars.tsv ok]
+	}
+	job annot-createusefile -deps {$orifile} -targets {$usefile} -vars {orifile usefile dbfiles} -code {
+		set f [gzopen $orifile]
+		set header [tsv_open $f]
+		catch {gzclose $f}
+		if {([llength $header] > 10 && [llength $dbfiles] > 4) || [gziscompressed $orifile]} {
+			tsv_varsfile $orifile $usefile
+			puts "Using varfile $usefile"
+		} else {
+			mklink $orifile $target
+		}
+	}
 	set afiles {}
 	foreach dbfile $dbfiles {
 		set dbinfo [cg_annotatedb_info $dbfile $near]
@@ -273,6 +306,8 @@ proc cg_annotate {args} {
 			continue
 		}
 		set dbtype [lindex [split [file tail $dbfile] _] 0]
+		set target $tempbasefile.${name}_annot
+		lappend afiles $target
 		if {$dbtype eq "gene"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}
 			if {$dbdir eq ""} {
@@ -282,87 +317,89 @@ proc cg_annotate {args} {
 			if {![file exists $genomefile]} {
 				error "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
 			}
-			lappend afiles $tempbasefile.${name}_annot
-			if {[file exists $tempbasefile.${name}_annot]} {
-				putslog "$tempbasefile.${name}_annot exists: skipping scan"
-				continue
+			job annot-[file tail $dbfile] -deps {$usefile $genomefile $dbfile} -targets {$target} -vars {genomefile dbfile name dbinfo upstreamsize} -code {
+				set genecol [dict_get_default $dbinfo genecol {}]
+				set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
+				annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize
 			}
-			set genecol [dict_get_default $dbinfo genecol {}]
-			set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
-			annotategene $usefile $genomefile $dbfile $name $tempbasefile.${name}_annot $genecol $transcriptcol $upstreamsize
 		} elseif {$dbtype eq "mir"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}
 			if {$dbdir eq ""} {
 				set dbdir [file dir [file_absolute $dbfile]]
 			}
-			set genomefile [lindex [glob -nocomplain $dbdir/genome_*.ifas] 0]
-			# we do not need the genomefile for plain annotation
-			set genomefile {}
-			lappend afiles $tempbasefile.${name}_annot
-			if {[file exists $tempbasefile.${name}_annot]} {
-				putslog "$tempbasefile.${name}_annot exists: skipping scan"
-				continue
+			job annot-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo upstreamsize} -code {
+				set genecol [dict_get_default $dbinfo genecol name]
+				set transcriptcol [dict_get_default $dbinfo transcriptcol transcript]
+				set extracols [dict_get_default $dbinfo extracols status]
+				# we do not need the genomefile for plain annotation
+				set genomefile {}
+				annotatemir $dep $genomefile $dbfile $name $target $genecol $transcriptcol 100 1 0 $extracols $upstreamsize
 			}
-			set genecol [dict_get_default $dbinfo genecol name]
-			set transcriptcol [dict_get_default $dbinfo transcriptcol transcript]
-			set extracols [dict_get_default $dbinfo extracols status]
-			annotatemir $usefile $genomefile $dbfile $name $tempbasefile.${name}_annot $genecol $transcriptcol 100 1 0 $extracols $upstreamsize
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
-			if {[file extension $dbfile] ne ".bcol"} {
-				set altpos [lsearch $header alt]
-				if {$altpos == -1} {
-					puts "Skipping: $file has no alt field"
-					continue
+			job annot-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo upstreamsize} -code {
+				set f [gzopen $dep]
+				set header [tsv_open $f]
+				catch {gzclose $f}
+				if {[file extension $dbfile] ne ".bcol"} {
+					set altpos [lsearch $header alt]
+					if {$altpos == -1} {
+						puts "Skipping: $orifile has no alt field"
+						file_write $target ""
+					}
 				}
-			}
-			lappend afiles $tempbasefile.${name}_annot
-			if {[file exists $tempbasefile.${name}_annot]} {
-				putslog "$tempbasefile.${name}_annot exists: skipping scan"
-				continue
-			}
-			set outfields [dict get $dbinfo outfields]
-			if {[file extension $dbfile] eq ".bcol"} {
-				annotatebcolvar $usefile $dbfile $name $tempbasefile.${name}_annot
-			} else {
-				annotatevar $usefile $dbfile $name $tempbasefile.${name}_annot $dbinfo
+				set outfields [dict get $dbinfo outfields]
+				if {[file extension $dbfile] eq ".bcol"} {
+					annotatebcolvar $dep $dbfile $name $target
+				} else {
+					annotatevar $dep $dbfile $name $target $dbinfo
+				}
 			}
 		} elseif {$dbtype eq "bcol"} {
 			if {$near != -1} {error "-near option does not work with bcol dbfiles"}
-			lappend afiles $tempbasefile.${name}_annot
-			if {[file exists $tempbasefile.${name}_annot]} {
-				putslog "$tempbasefile.${name}_annot exists: skipping scan"
-				continue
+			job annot-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name} -code {
+				annotatebcol $dep $dbfile $name $target
 			}
-			annotatebcol $usefile $dbfile $name $tempbasefile.${name}_annot
 		} else {
-			lappend afiles $tempbasefile.${name}_annot
-			if {[file exists $tempbasefile.${name}_annot]} {
-				putslog "$tempbasefile.${name}_annot exists: skipping scan"
-				continue
+			job annot-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo near} -code {
+				set outfields [dict get $dbinfo outfields]
+				annotatereg $dep $dbfile $name $target.temp $near $dbinfo
+				file rename -force $target.temp $target
 			}
-			putslog "Adding $dbfile"
-			set outfields [dict get $dbinfo outfields]
-			annotatereg $usefile $dbfile $name $tempbasefile.${name}_annot.temp $near $dbinfo
-			file rename -force $tempbasefile.${name}_annot.temp $tempbasefile.${name}_annot
 		}
 	}
-	if {$multidb} {
-		cg select -f id $file $resultfile.temp2
-		exec tsv_paste $resultfile.temp2 {*}$afiles > $resultfile.temp
-		file delete $resultfile.temp2
-		file rename -force $resultfile.temp $resultfile
-	} elseif {$replace} {
-		cg select -f [list_lremove $header $newh] $file $resultfile.temp2
-		exec tsv_paste $resultfile.temp2 {*}$afiles > $resultfile.temp
-		file delete $resultfile.temp2
-		file rename -force $resultfile.temp $resultfile
-	} else {
-		exec tsv_paste $file {*}$afiles > $resultfile.temp
-		file rename -force $resultfile.temp $resultfile
+putsvars orifile header afiles
+	job annot-paste -deps [list $orifile {*}$afiles] -targets {$resultfile} -vars {orifile afiles multidb replace newh resultfile} -code {
+		if {$multidb} {
+			set temp2 [filetemp $resultfile]
+			cg select -f id $orifile $temp2
+			set temp [filetemp $resultfile]
+			exec tsv_paste $temp2 {*}$afiles > $temp
+			file delete $temp2
+			file rename -force $temp $resultfile
+		} elseif {$replace eq "y"} {
+			set temp2 [filetemp $resultfile]
+			set f [gzopen $orifile]
+			set header [tsv_open $f]
+			gzclose $f
+			cg select -f [list_lremove $header $newh] $orifile $temp2
+			set temp [filetemp $resultfile]
+			exec tsv_paste $temp2 {*}$afiles > $temp
+			file delete $temp2
+			file rename -force $temp $resultfile
+		} else {
+			set temp [filetemp $resultfile]
+			exec tsv_paste $orifile {*}$afiles > $temp
+			file rename -force $temp $resultfile
+		}
+		if {[llength $afiles]} {file delete {*}$afiles}
 	}
-	if {[llength $afiles]} {file delete {*}$afiles}
-	gzrmtemp $gzfile
+}
+
+proc cg_annotate {args} {
+	set args [job_init {*}$args]
+	cg_annotate_job {*}$args
+	job_wait
 }
 
 if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {

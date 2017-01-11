@@ -33,6 +33,10 @@ annotation (default 2000)
 reference databases (The genome sequence genome_*.ifas in it is used for
 gene annotation). By default the directory the gene annotation file is in
 will be used
+; **-replace y/n/e**: what to do if annotation fields to be added are already in the variantfile: 
+y - replace them with new annotation,
+n - keep the old annotation,
+e (default) - give an error
 
 == database types ==
 ; **reg**: regions file that must at least contain the columns chromosome,start,end. 

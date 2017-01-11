@@ -105,8 +105,8 @@ clean:
 ../bin$(ARCH)/multidb_join: multidb_join.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
 	gcc multidb_join.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multidb_join $(LIBZ)
 
-../bin$(ARCH)/tsv_paste: tsv_paste.c $(TOOLS)
-	gcc tsv_paste.c tools.c $(CFLAGS) -o ../bin$(ARCH)/tsv_paste
+../bin$(ARCH)/tsv_paste: tsv_paste.c $(TOOLS) $(GZTOOLS)
+	gcc tsv_paste.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/tsv_paste $(LIBZ)
 
 ../bin$(ARCH)/tsv_histo: tsv_histo.c $(TOOLS) $(HASHTOOLS)
 	gcc tsv_histo.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/tsv_histo

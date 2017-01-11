@@ -205,8 +205,12 @@ proc tsv_count {tsvfile} {
 	return [file_read $countfile]
 }
 
-proc tsv_varsfile {tsvfile} {
-	set varsfile [indexdir_file $tsvfile vars.tsv ok]
+proc tsv_varsfile {tsvfile {varsfile {}}} {
+	if {$varsfile eq ""} {
+		set varsfile [indexdir_file $tsvfile vars.tsv ok]
+	} else {
+		set ok 0
+	}
 	if {!$ok} {
 		set f [gzopen [gzfile $tsvfile]]
 		set header [tsv_open $f]
@@ -258,4 +262,16 @@ proc tsv_convert2var {file headerVar {commentVar {}}} {
 		catch {gzclose $f}
 	}
 	return $tempfile
+}
+
+proc vars_header {file} {
+	set f [gzopen $file]
+	set line [gets $f]
+	if {[string index $line 0] ne "#"} {
+		return [split $line \t]
+	} elseif {[regexp {##fileformat=VCF} $line]} {
+	} else {
+		set header [tsv_open $f]
+	}
+	gzclose $f
 }

@@ -38,26 +38,11 @@ proc cg_vcf2sft {args} {
 	cg_vcf2tsv {*}$args
 }
 
-proc cg_vcf2sft.old {args} {
-	if {([llength $args] < 0) || ([llength $args] > 2)} {
-		errorformat vcf2tsv
-	}
-	if {[llength $args] > 0} {
-		set filename [lindex $args 0]
-		set f [gzopen $filename]
-	} else {
-		set f stdin
-	}
-	if {[llength $args] > 1} {
-		set outfile [lindex $args 1]
-		set o [open $outfile w]
-	} else {
-		set o stdout
-	}
-	set line [gets $f]
-	if {![string match "##fileformat=VCF*" $line]} {
-		error "input is not a vcf file"
-	}
+proc vcf2sft_header {f {samplesVar {}} {commentVar {}} {formatfieldsVar {}} {infofieldsVar {}}} {
+	if {$samplesVar ne ""} {upvar $samplesVar samples}
+	if {$commentVar ne ""} {upvar $commentVar comment}
+	if {$formatfieldsVar ne ""} {upvar $formatfieldsVar formatfields}
+	if {$infofieldsVar ne ""} {upvar $infofieldsVar infofields}
 	array set conv_formata {
 		AD alleledepth
 		GT genotype
@@ -88,7 +73,6 @@ proc cg_vcf2sft.old {args} {
 		}
 	}
 	append comment "\n# ----"
-	puts -nonewline $o $comment
 	set samples [lrange $header 9 end]
 	set nheader {chromosome begin end type ref alt name quality filter}
 	set formatfields {GT}
@@ -120,7 +104,31 @@ proc cg_vcf2sft.old {args} {
 		}
 		incr num
 	}
-	set extract [list_fill $num 0 3]
+	return $nheader
+}
+
+proc cg_vcf2sft.old {args} {
+	if {([llength $args] < 0) || ([llength $args] > 2)} {
+		errorformat vcf2tsv
+	}
+	if {[llength $args] > 0} {
+		set filename [lindex $args 0]
+		set f [gzopen $filename]
+	} else {
+		set f stdin
+	}
+	if {[llength $args] > 1} {
+		set outfile [lindex $args 1]
+		set o [open $outfile w]
+	} else {
+		set o stdout
+	}
+	set line [gets $f]
+	if {![string match "##fileformat=VCF*" $line]} {
+		error "input is not a vcf file"
+	}
+	set nheader [vcf2sft_header $f samples comment formatfields infofields]
+	puts -nonewline $o $comment
 	puts $o [join $nheader \t]
 	set next 100000; set num 0
 	while {![eof $f]} {

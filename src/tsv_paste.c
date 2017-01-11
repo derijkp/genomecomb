@@ -16,10 +16,11 @@
 #include "tools.h"
 #include "tools_bcol.h"
 #include "debug.h"
+#include "gztools.h"
 
-int copy_line_check(FILE *f, int numfields) {
+int copy_line_check(GZFILE *f, int numfields) {
 	register int c;
-	c = getc_unlocked(f);
+	c = gz_get(f);
 	if (c == EOF) {return 0;}
 	while (1) {
 		if (c == '\n') break;
@@ -31,7 +32,7 @@ int copy_line_check(FILE *f, int numfields) {
 			}
 		}
 		putc_unlocked(c,stdout);
-		c = getc_unlocked(f);
+		c = gz_get(f);
 		if (c == EOF) break;
 	}
 	while(--numfields) {
@@ -40,16 +41,16 @@ int copy_line_check(FILE *f, int numfields) {
 	return 1;
 }
 
-int header(FILE *f,int writecomment) {
+int header(GZFILE *f,int writecomment) {
 	int numfields = 1;
 	register int c;
 	/* read comments */
 	while (1) {
-		c=getc_unlocked(f);
+		c=gz_get(f);
 		if (c != '#') break;
 		if (writecomment) putc_unlocked(c,stdout);
 		if (c == '\n') continue;
-		while ((c=getc_unlocked(f))!=EOF) {
+		while ((c=gz_get(f))!=EOF) {
 			if (writecomment) putc_unlocked(c,stdout);
 			if (c == '\n') break;
 		}	
@@ -60,13 +61,13 @@ int header(FILE *f,int writecomment) {
 		if (c == '\n') break;
 		if (c == '\t') numfields++;
 		putc_unlocked(c,stdout);
-		c=getc_unlocked(f);
+		c=gz_get(f);
 	}
 	return numfields;
 }
 
 int main(int argc, char *argv[]) {
-	FILE **fa=NULL;
+	GZFILE **fa=NULL;
 	int *numfieldsa, numfiles;
 	register int i;
 
@@ -75,10 +76,10 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	numfiles = argc -1;
-	fa = (FILE **)malloc(numfiles*sizeof(FILE *));
+	fa = (GZFILE **)malloc(numfiles*sizeof(FILE *));
 	numfieldsa = (int *)malloc(numfiles*sizeof(int));
 	for (i = 0 ; i < numfiles ; i++) {
-		fa[i] = fopen64_or_die(argv[i+1],"r");
+		fa[i] = gz_open(argv[i+1]);
 	}
 	numfieldsa[0] = header(fa[0],1);
 	for (i = 1 ; i < numfiles ; i++) {
@@ -95,7 +96,7 @@ int main(int argc, char *argv[]) {
 		putc_unlocked('\n',stdout);
 	}
 	for (i = 0 ; i < numfiles ; i++) {
-		fclose(fa[i]);
+		gz_close(fa[i]);
 	}
 	exit(EXIT_SUCCESS);
 }

@@ -28,7 +28,7 @@ test reg_annot {2 compressed} {
 	exec cg annotate tmp/vars1.sft.rz tmp/temp.sft tmp/reg_annot.sft.rz
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
-} {} 
+} {}
 
 test reg_annot {basic, multiple fields} {
 	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
@@ -481,12 +481,26 @@ test reg_annot {existing field error} {
 	exec cg annotate -near 1000 tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
 } {*Error: field(s) regtest already in file} match error
 
-test reg_annot {replace} {
+test reg_annot {-replace y} {
 	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft
-	exec cg annotate -near 1000 -replace 1 tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
+	exec cg annotate -near 1000 -replace y tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
 	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
 	exec diff tmp/temp3.sft data/expected_near-vars1-reg_annot.sft
 } {} 
+
+test reg_annot {-replace n} {
+	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft
+	exec cg annotate -near 1000 -replace n tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
+	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
+	split [cg select -f regtest tmp/temp3.sft] \n
+} {regtest reg1 reg1 reg1 reg1 {} {} {} {} reg3 reg3 {} {} {} {}} 
+
+test reg_annot {-replace e} {
+	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft
+	exec cg annotate -near 1000 -replace e tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
+	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
+	split [cg select -f regtest tmp/temp3.sft] \n
+} {Error: field(s) regtest already in file} error
 
 test bcol_annot {basic} {
 	test_cleantmp
@@ -861,6 +875,29 @@ test bcol_var_annot {--precision} {
 	}
 	exec diff tmp/results.tsv tmp/expected.tsv
 } {}
+
+test gene_annot {multiple dbs} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	1000	2000	del	1000	{}
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	name	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2
+		chr1	1500	1800	test	+	{}	{}	1	1500,	1800,	testgene
+		chr1	1500	1800	cdstest	+	1500	1800	1	1500,	1800,	cdstestgene
+	}
+	write_tab tmp/reg_rtest.tsv {
+		chrom	start	end	name	score
+		chr1	500	1000	test1	1
+		chr1	1000	2000	test2	2
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr	rtest_name	rtest_score
+		chr1	1000	2000	del	1000	{}	GENEDEL;GENEDEL	testgene;cdstestgene	testgene:del;cdstestgene:del	test2	2
+	}
+	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv tmp/reg_rtest.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {} 
 
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
