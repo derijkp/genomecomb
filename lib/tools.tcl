@@ -372,6 +372,18 @@ proc gzfile {args} {
 	return [lindex $args 0]
 }
 
+proc gzfile_multi {filelist} {
+	set result {}
+	foreach filename $filelist {
+		if {![catch {glob $filename $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
+			lappend result [lindex $list 0]
+		} else {
+			lappend result $filename
+		}
+	}
+	return $result
+}
+
 proc gzfiles {args} {
 	set result {}
 	foreach filename $args {

@@ -56,7 +56,7 @@ proc multi_merge_job {varsfile files args} {
 			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
 			incr pos $maxfiles
 			job multi_merge-[file tail $target] -optional $optional -force $force -deps $deps -targets {$target} -vars {split delete} -code {
-				set deps [gzfile_m $deps]
+				set deps [gzfile_multi $deps]
 				if {[llength $deps] > 1} {
 					# puts [list ../bin/multi_merge $split {*}$deps]
 					exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
