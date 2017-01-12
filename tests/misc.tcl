@@ -4,15 +4,15 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
-set keepdir [pwd]
-
-file mkdir tmp
-file mkdir tmp/test
-file_write tmp/test/test1 1
-file_write tmp/test/test2 2
-file mkdir tmp/test/subdir
-file_write tmp/test/subdir/test3 3
-file mkdir tmp/out
+proc misc_testfiles {} {
+	file mkdir tmp
+	file mkdir tmp/test
+	file_write tmp/test/test1 1
+	file_write tmp/test/test2 2
+	file mkdir tmp/test/subdir
+	file_write tmp/test/subdir/test3 3
+	file mkdir tmp/out
+}
 
 proc dirinfo {dir} {
 	set result {}
@@ -33,6 +33,7 @@ proc dirinfo {dir} {
 }
 
 test cplinked {relative} {
+	misc_testfiles
 	file delete -force tmp/out
 	file mkdir tmp/out
 	exec cg cplinked tmp/test tmp/out
@@ -42,6 +43,7 @@ test cplinked {relative} {
 } {{tmp/out/test/subdir - {dir {{tmp/out/test/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test2 ../../test/test2 2}} 
 
 test cplinked {over existing} {
+	misc_testfiles
 	file delete -force tmp/out
 	file mkdir tmp/out
 	exec cg cplinked tmp/test tmp/out
@@ -52,6 +54,7 @@ test cplinked {over existing} {
 } {{tmp/out/test/subdir - {dir {{tmp/out/test/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test2 ../../test/test2 2}} 
 
 test cplinked {relative, new dir} {
+	misc_testfiles
 	file delete -force tmp/out
 	file mkdir tmp/out
 	exec cg cplinked tmp/test tmp/out/test2
@@ -61,6 +64,7 @@ test cplinked {relative, new dir} {
 } {{tmp/out/test2/subdir - {dir {{tmp/out/test2/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test2/test1 ../../test/test1 1} {tmp/out/test2/test2 ../../test/test2 2}} 
 
 test cplinked {relative, new dir 2} {
+	misc_testfiles
 	file delete -force tmp/out
 	exec cg cplinked tmp/test tmp/out/test
 	set result [dirinfo tmp/out/test]
@@ -69,6 +73,7 @@ test cplinked {relative, new dir 2} {
 } {{tmp/out/test/subdir - {dir {{tmp/out/test/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test2 ../../test/test2 2}} 
 
 test cplinked {relative extra level} {
+	misc_testfiles
 	file delete -force tmp/out
 	file mkdir tmp/out/test2
 	exec cg cplinked tmp/test tmp/out/test2/testl
@@ -78,14 +83,16 @@ test cplinked {relative extra level} {
 } {{tmp/out/test2/testl/subdir - {dir {{tmp/out/test2/testl/subdir/test3 ../../../../test/subdir/test3 3}}}} {tmp/out/test2/testl/test1 ../../../test/test1 1} {tmp/out/test2/testl/test2 ../../../test/test2 2}} 
 
 test cplinked {absolute} {
+	misc_testfiles
 	file delete -force /tmp/test2
 	exec cg cplinked tmp/test /tmp/test2
 	set result [dirinfo /tmp/test2]
 	file delete -force /tmp/test2
 	set result
-} [list [list /tmp/test2/subdir - [list dir [list [list /tmp/test2/subdir/test3 $keepdir/tmp/test/subdir/test3 3]]]] [list /tmp/test2/test1 $keepdir/tmp/test/test1 1] [list /tmp/test2/test2 $keepdir/tmp/test/test2 2]]
+} [list [list /tmp/test2/subdir - [list dir [list [list /tmp/test2/subdir/test3 $testdir/tmp/test/subdir/test3 3]]]] [list /tmp/test2/test1 $testdir/tmp/test/test1 1] [list /tmp/test2/test2 $testdir/tmp/test/test2 2]]
 
 test cplinked {backup existing} {
+	misc_testfiles
 	file delete -force tmp/out
 	file mkdir tmp/out/test
 	file_write tmp/out/test/test1 pre
@@ -96,6 +103,7 @@ test cplinked {backup existing} {
 } {{tmp/out/test/subdir - {dir {{tmp/out/test/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test1.old1 - pre} {tmp/out/test/test2 ../../test/test2 2}} 
 
 test cplinked {backup existing 2} {
+	misc_testfiles
 	file delete -force tmp/out
 	file mkdir tmp/out/test
 	file_write tmp/out/test/test1 pre
@@ -107,6 +115,7 @@ test cplinked {backup existing 2} {
 } {{tmp/out/test/subdir - {dir {{tmp/out/test/subdir/test3 ../../../test/subdir/test3 3}}}} {tmp/out/test/test1 ../../test/test1 1} {tmp/out/test/test1.old1 - old} {tmp/out/test/test1.old2 - pre} {tmp/out/test/test2 ../../test/test2 2}} 
 
 test cplinked {file} {
+	misc_testfiles
 	file delete -force tmp/out
 	file mkdir tmp/out
 	exec cg cplinked tmp/test/test1 tmp/out/testl
@@ -116,6 +125,7 @@ test cplinked {file} {
 } {{tmp/out/testl ../test/test1 1}} 
 
 test cplinked {file replace link} {
+	misc_testfiles
 	file delete -force tmp/out
 	file mkdir tmp/out
 	exec cg cplinked tmp/test/test1 tmp/out/testl
@@ -126,6 +136,7 @@ test cplinked {file replace link} {
 } {{tmp/out/testl ../test/test2 2}} 
 
 test cplinked {file replace file} {
+	misc_testfiles
 	file delete -force tmp/out
 	file mkdir tmp/out
 	file_write tmp/out/testl pre
@@ -136,6 +147,7 @@ test cplinked {file replace file} {
 } {{tmp/out/testl ../test/test1 1} {tmp/out/testl.old1 - pre}} 
 
 test cplinked {dangling link} {
+	misc_testfiles
 	file delete -force tmp/out
 	file mkdir tmp/out
 	file_write tmp/out/test1 pre
@@ -191,19 +203,13 @@ chr2	2-2
 }} 
 
 test file_absolute {relative path} {
-	set keep [pwd]
 	cd /tmp
-	set result [file_absolute abc]
-	cd $keep
-	set result
+	file_absolute abc
 } /tmp/abc
 
 test file_absolute {relative path with ..} {
-	set keep [pwd]
 	cd /usr/bin
-	set result [file_absolute ../abc]
-	cd $keep
-	set result
+	file_absolute ../abc
 } /usr/abc
 
 test file_absolute {absolute with .. and .} {
@@ -217,8 +223,5 @@ test file_absolute {empty} {
 test file_absolute {error} {
 	file_absolute /abc/def/../../../ghi/./j
 } {file_absolute error: cannot .. past root} error
-
-cd $keepdir
-file delete -force {*}[glob tmp/*]
 
 testsummarize

@@ -57,7 +57,6 @@ test genome_seq {gcsplit and -l} {
 } {} 
 
 test genome_seq {split} {
-	file delete {*}[glob tmp/*.fas]
 	exec cg genome_seq -g 50 -s 1 -i name data/reg_genome_seq.tsv /complgen/refseq/hg19_test tmp/
 	exec diff tmp/r1.fas data/expected-reg_genome_seq-1.fas
 	exec diff tmp/r9.fas data/expected-reg_genome_seq-9.fas
@@ -65,7 +64,6 @@ test genome_seq {split} {
 } {tmp/r1.fas tmp/r2.fas tmp/r3.fas tmp/r4.fas tmp/r5.fas tmp/r6.fas tmp/r7.fas tmp/r8.fas tmp/r9.fas tmp/r10.fas tmp/r11.fas tmp/r12.fas tmp/r13.fas tmp/r14.fas tmp/r15.fas tmp/r16.fas tmp/r17.fas} 
 
 test genome_seq {gcsplit split} {
-	file delete -force {*}[glob tmp/*]
 	exec cg genome_seq -g 50 -s 1 -gs 60 -i name data/reg_genome_seq.tsv /complgen/refseq/hg19_test tmp/temp.fas
 	exec diff tmp/temp-lowgc/r1.fas data/expected-reg_genome_seq-1.fas
 	exec diff tmp/temp-highgc/r9.fas data/expected-reg_genome_seq-9.fas

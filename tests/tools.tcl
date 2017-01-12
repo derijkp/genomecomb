@@ -4,8 +4,14 @@ catch {tk appname test}
 set bigtestdir /data/genomecomb.testdata
 
 package require pkgtools
-namespace import pkgtools::*
+namespace import -force pkgtools::*
 package require Extral
+
+proc test {args} {
+	test_cleantmp
+	pkgtools::test {*}$args
+	cd $::testdir
+}
 
 # pkgtools::testleak 100
 
@@ -17,9 +23,10 @@ set appdir [file dir [file dir [file normalize $script]]]
 append ::env(PATH) :$appdir/bin
 # putsvars ::env(PATH)
 set env(SCRATCHDIR) [file dir [tempdir]]
+source $appdir/lib/file.tcl ; pwd
 
 proc test_cleantmp {} {
-	foreach file [glob -nocomplain tmp/* $::bigtestdir/tmp/*] {
+	foreach file [glob -nocomplain $::testdir/tmp/*] {
 		catch {file attributes $file -permissions ugo+xw}
 		catch {file delete -force $file}
 	}

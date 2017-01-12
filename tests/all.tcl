@@ -17,7 +17,6 @@ source mirannot.tcl
 source misc.tcl
 source pmulticompar.tcl
 source process_multicompar.tcl
-source queries.tcl
 source reg.tcl
 source remap.tcl
 source select.tcl
@@ -29,6 +28,7 @@ source varia.tcl
 source vcf2tsv.tcl
 
 # next ones take longer, use larger data in genomecomb.testdata
+source queries.tcl
 source reports.tcl
 source bam.tcl
 source homwes.tcl

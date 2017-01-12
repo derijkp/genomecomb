@@ -4,9 +4,9 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 set keepdir [pwd]
-cd /complgen/testqueries
 
 test query {query 1} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		$refGene_impact ~/CDS|UTR/ || $knownGene_impact ~/CDS|UTR/ || $ensGene_impact ~/CDS|UTR/
 		|| $acembly_impact ~/CDS|UTR/ || $genscan_impact ~/CDS|UTR/
@@ -15,6 +15,7 @@ test query {query 1} {
 } {}
 
 test query {query 2} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		count($*_impact, ~/CDS|UTR/) > 0
 	} annottestcompar.tsv.rz temp.tsv
@@ -22,11 +23,13 @@ test query {query 2} {
 } {}
 
 test query {query 3} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {$type=="ins" && def($coverage-testNA19240chr2122cg,0)>=20} annottestcompar.tsv.rz temp.tsv
 	exec diff temp.tsv answers/query3.tsv
 } {}
 
 test query {query 4} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q { $type=="snp" && $impact == "MISSENSE" } \
 		-f {chromosome begin end} \
 		annottestcompar.tsv.rz temp.tsv
@@ -34,11 +37,13 @@ test query {query 4} {
 } {}
 
 test query {query 5} {
+	cd $::bigtestdir/testqueries
 	exec cg select -h	annottestcompar.tsv.rz > temp.tsv
 	exec diff temp.tsv answers/query5.tsv
 } {}
 
 test query {query 6 region} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		$chromosome == "22" && $begin < 16434940 && $end > 16054739
 	} annottestcompar.tsv.rz temp.tsv
@@ -46,6 +51,7 @@ test query {query 6 region} {
 } {}
 
 test query {query 6 region 2} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		region("22:16054739-16434940")
 	} annottestcompar.tsv.rz temp.tsv
@@ -53,6 +59,7 @@ test query {query 6 region 2} {
 } {}
 
 test query {query 6 region 3} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		region(22:16054739:16434940)
 	} annottestcompar.tsv.rz temp.tsv
@@ -60,6 +67,7 @@ test query {query 6 region 3} {
 } {}
 
 test query {query 6 region 4} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		region("chr22",16054739,16434940)
 	} annottestcompar.tsv.rz temp.tsv
@@ -67,6 +75,7 @@ test query {query 6 region 4} {
 } {}
 
 test query {query regions} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		region("chr22:16054739-16434940",21,9415561,9417128)
 	} annottestcompar.tsv.rz temp.tsv
@@ -78,6 +87,7 @@ test query {query regions} {
 child process exited abnormally} error
 
 test query {query 7} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		sm(testNA19239chr2122cg, testNA19240chr2122cg)
 	} annottestcompar.tsv.rz temp.tsv
@@ -85,6 +95,7 @@ test query {query 7} {
 } {}
 
 test query {query 8} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		same(testNA19239chr2122cg, testNA19240chr2122cg)
 	} annottestcompar.tsv.rz temp.tsv
@@ -92,6 +103,7 @@ test query {query 8} {
 } {}
 
 test query {query 9} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		mm(testNA19239chr2122cg, testNA19240chr2122cg)
 	} annottestcompar.tsv.rz temp.tsv
@@ -99,6 +111,7 @@ test query {query 9} {
 } {}
 
 test query {query 10} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		$type == "snp" 
 		&& $simpleRepeat == "" && $microsat == "" && $genomicSuperDups == "" 
@@ -107,6 +120,7 @@ test query {query 10} {
 } {}
 
 test query {query 11} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		$sequenced-testNA19239chr2122cg == "v"
 		&& $sequenced-testNA19240chr2122cg == "v"
@@ -115,6 +129,7 @@ test query {query 11} {
 } {}
 
 test query {query 12} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		count($sequenced-*, == "v")  == 2
 	} annottestcompar.tsv.rz temp.tsv
@@ -122,6 +137,7 @@ test query {query 12} {
 } {}
 
 test query {query 13} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		$sequenced-testNA19239chr2122cg == "v"
 		&& $type == "snp"
@@ -133,6 +149,7 @@ test query {query 13} {
 } {}
 
 test query {query 14} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		count($sequenced-*, == "v")  == 4
 		&& $type == "snp"
@@ -144,6 +161,7 @@ test query {query 14} {
 } {}
 
 test query {query 15} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		count($*_impact, ~/CDS|UTR/) > 0
 	} annottestcompar.tsv.rz temp.tsv
@@ -151,6 +169,7 @@ test query {query 15} {
 } {}
 
 test query {query 16} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		$ensGene_impact ~ /CDS/
 	} annottestcompar.tsv.rz temp.tsv
@@ -158,6 +177,7 @@ test query {query 16} {
 } {}
 
 test query {query 17} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		counthasone($ensGene_impact, == "CDSMIS") > 0
 	} annottestcompar.tsv.rz temp.tsv
@@ -165,6 +185,7 @@ test query {query 17} {
 } {}
 
 test query {query 18} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		counthasone($*_impact, ~ /CDS/) > 0
 	} annottestcompar.tsv.rz temp.tsv
@@ -172,6 +193,7 @@ test query {query 18} {
 } {}
 
 test query {query 19} {
+	cd $::bigtestdir/testqueries
 	exec cg select -q {
 		counthasall($*_impact, ~ /CDS/) > 0
 	} annottestcompar.tsv.rz temp.tsv
@@ -179,6 +201,7 @@ test query {query 19} {
 } {}
 
 test query {query 20} {
+	cd $::bigtestdir/testqueries
 	exec cg select -f "chromosome begin end refGene_impact" -q {
 		oneof($refGene_impact, "CDSMIS", "CDSINS") > 0
 	} annottestcompar.tsv.rz temp.tsv
@@ -186,6 +209,7 @@ test query {query 20} {
 } {}
 
 test query {query 20 2} {
+	cd $::bigtestdir/testqueries
 	exec cg select -f "chromosome begin end refGene_impact" -q {
 		$refGene_impact in {"CDSMIS" "CDSINS"}
 	} annottestcompar.tsv.rz temp.tsv
@@ -193,6 +217,7 @@ test query {query 20 2} {
 } {}
 
 test query {query 21 combine} {
+	cd $::bigtestdir/testqueries
 	exec cg select -f "chromosome begin end 1000gCEU 1000glow" -q {
 		count(lmax($1000gCEU),lmax($1000glow), > 0.98) > 0
 	} annottestcompar.tsv.rz temp.tsv
@@ -200,6 +225,7 @@ test query {query 21 combine} {
 } {}
 
 test query {query 22} {
+	cd $::bigtestdir/testqueries
 	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
 		hasone($refGene_impact, "==", "CDSMIS") || hasone($knownGene_impact, "==", "CDSMIS")
 	} annottestcompar.tsv.rz temp.tsv
@@ -207,6 +233,7 @@ test query {query 22} {
 } {}
 
 test query {query 22 b} {
+	cd $::bigtestdir/testqueries
 	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
 		contains($refGene_impact, "CDSMIS") || ($knownGene_impact contains "CDSMIS")
 	} annottestcompar.tsv.rz temp.tsv
@@ -214,6 +241,7 @@ test query {query 22 b} {
 } {}
 
 test query {query 22 c} {
+	cd $::bigtestdir/testqueries
 	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
 		hasone($refGene_impact, == "CDSMIS") || hasone($knownGene_impact, == "CDSMIS")
 	} annottestcompar.tsv.rz temp.tsv
@@ -221,6 +249,7 @@ test query {query 22 c} {
 } {}
 
 test query {query 22 d} {
+	cd $::bigtestdir/testqueries
 	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
 		lone($refGene_impact @== "CDSMIS") || lone($knownGene_impact @== "CDSMIS")
 	} annottestcompar.tsv.rz temp.tsv
@@ -228,6 +257,7 @@ test query {query 22 d} {
 } {}
 
 test query {query 23 b} {
+	cd $::bigtestdir/testqueries
 	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
 		shares($refGene_impact, "CDSMIS CDSINS") && ($knownGene_impact shares "CDSMIS CDSINS")
 	} annottestcompar.tsv.rz temp.tsv
@@ -235,6 +265,7 @@ test query {query 23 b} {
 } {}
 
 test query {liftover} {
+	cd $::bigtestdir/testqueries
 	file delete temp.tsv
 	exec cg liftover annottestcompar.tsv.rz temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	cg select -q {$ROW < 100} temp.tsv temp2.tsv

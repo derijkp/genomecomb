@@ -30,8 +30,6 @@ if 0 {
 	}
 }
 
-catch {file delete -force {*}[glob tmp/*]}
-
 proc jobtest {args} {
 	set args [job_args $args]
 	foreach {srcdir destdir header} $args break
