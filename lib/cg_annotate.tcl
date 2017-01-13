@@ -242,18 +242,16 @@ proc cg_annotate_job {args} {
 		lappend names [dict get $dbinfo name]
 		lappend newh {*}[dict get $dbinfo newh]
 	}
+	set ext [file extension [gzroot $orifile]]
 	if {[file exists $orifile]} {
 		# only check for existing columns if file already exists
-		set f [gzopen $orifile]
-		set line [gets $f]
-		if {[regexp {##fileformat=VCF} $line]} {
+		if {$ext eq ".vcf"} {
+			set f [gzopen $orifile]
 			set header [vcf2sft_header $f]
-		} elseif {[string index $line 0] ne "#"} {
-			set header [split $line \t]
+			catch {gzclose $f}
 		} else {
-			set header [tsv_open $f]
+			set header [header $orifile]
 		}
-		catch {gzclose $f}
 		set poss [tsv_basicfields $header 6 0]
 		set common [list_common $header $newh]
 		if {[llength $common]} {
@@ -277,23 +275,27 @@ proc cg_annotate_job {args} {
 			cg vcf2tsv -split 1 $dep $target
 		}
 		set orifile $convertedfile
-	}
-	# usefile: smaller file with only variants used for actual annotation; 
-	# if orifile is small, a link to it is made.
-	# If it contains to many extra columns a cut down version is made
-	set usefile [indexdir_file $orifile vars.tsv]
-	if {$usefile eq ""} {
 		set usefile [indexdir_file $resultfile vars.tsv ok]
+		set ok 0
+	} else {
+		set usefile [indexdir_file $orifile vars.tsv ok]
 	}
-	job annot-createusefile -deps {$orifile} -targets {$usefile} -vars {orifile usefile dbfiles} -code {
-		set f [gzopen $orifile]
-		set header [tsv_open $f]
-		catch {gzclose $f}
-		if {([llength $header] > 10 && [llength $dbfiles] > 4) || [gziscompressed $orifile]} {
-			tsv_varsfile $orifile $usefile
-			puts "Using varfile $usefile"
-		} else {
-			mklink $orifile $target
+	if {!$ok} {
+		job annot-createusefile -deps {$orifile} -targets {$usefile} -vars {ok orifile usefile dbfiles} -code {
+			# usefile: smaller file with only variants used for actual annotation; 
+			# if orifile is small, a link to it is made.
+			# If it contains to many extra columns a cut down version is made
+			set f [gzopen $orifile]
+			set header [tsv_open $f]
+			catch {gzclose $f}
+			if {[gziscompressed $orifile] || [file dir $target] ne "$orifile.index" || ([llength $header] > 10 && [llength $dbfiles] >= 4)} {
+				tsv_varsfile $orifile $usefile
+				puts "Using varfile $usefile"
+			} else {
+				if {[file dir $target] eq "$orifile.index"} {
+					mklink $orifile $target
+				}
+			}
 		}
 	}
 	set afiles {}

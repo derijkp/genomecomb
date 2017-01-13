@@ -205,6 +205,8 @@ proc tsv_count {tsvfile} {
 	return [file_read $countfile]
 }
 
+# creates or updates (if needed) and returns a index file containing only the vars columns of $tsvfile
+# if varsfile is given, the index file will be created as $varsfile instead of at the usual location
 proc tsv_varsfile {tsvfile {varsfile {}}} {
 	if {$varsfile eq ""} {
 		set varsfile [indexdir_file $tsvfile vars.tsv ok]
@@ -236,7 +238,7 @@ proc tsv_varsfile {tsvfile {varsfile {}}} {
 			lappend basicfields id=\$id
 		}
 		cg select -f $basicfields [gzfile $tsvfile] $varsfile.temp
-		file rename $varsfile.temp $varsfile
+		file rename -force $varsfile.temp $varsfile
 	}
 	return $varsfile
 }
@@ -264,14 +266,9 @@ proc tsv_convert2var {file headerVar {commentVar {}}} {
 	return $tempfile
 }
 
-proc vars_header {file} {
+proc header {file} {
 	set f [gzopen $file]
-	set line [gets $f]
-	if {[string index $line 0] ne "#"} {
-		return [split $line \t]
-	} elseif {[regexp {##fileformat=VCF} $line]} {
-	} else {
-		set header [tsv_open $f]
-	}
+	set header [tsv_open $f]
 	gzclose $f
+	return $header
 }

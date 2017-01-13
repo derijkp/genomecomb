@@ -5,25 +5,29 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 test reg_annot {basic} {
-	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
 } {} 
 
 test reg_annot {error file does not exists} {
-	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_doesnotexist.tsv
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_doesnotexist.tsv
 } {File data/reg_doesnotexist.tsv does not exist} error
 
 test reg_annot {compressed} {
+	file copy data/vars1.sft tmp/vars1.sft
 	file copy -force data/reg_annot.sft data/reg_annot.sft.opt tmp
 	exec cg razip tmp/reg_annot.sft
-	exec cg annotate data/vars1.sft tmp/temp.sft tmp/reg_annot.sft.rz
+	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.sft.rz
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
 } {} 
 
 test reg_annot {2 compressed} {
-	file copy -force data/vars1.sft data/reg_annot.sft data/reg_annot.sft.opt tmp
+	file copy data/vars1.sft tmp/vars1.sft
+	file copy -force tmp/vars1.sft data/reg_annot.sft data/reg_annot.sft.opt tmp
 	exec cg razip tmp/reg_annot.sft tmp/vars1.sft
 	exec cg annotate tmp/vars1.sft.rz tmp/temp.sft tmp/reg_annot.sft.rz
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
@@ -31,7 +35,8 @@ test reg_annot {2 compressed} {
 } {}
 
 test reg_annot {basic, multiple fields} {
-	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
+	file copy data/vars1.sft tmp/vars1.sft
+	cg select -f {chromosome begin end type ref alt} tmp/vars1.sft tmp/vars.sft
 	file copy -force data/reg_annot.sft tmp/reg_annot.sft
 	file_write tmp/reg_annot.sft.opt "fields\t{type begin end}\n"
 	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/reg_annot.sft
@@ -39,55 +44,66 @@ test reg_annot {basic, multiple fields} {
 } {} 
 
 test reg_annot {near} {
-	exec cg annotate -near 1000 data/vars1.sft tmp/temp.sft data/reg_annot.sft
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate -near 1000 tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected_near-vars1-reg_annot.sft
 } {} 
 
 test reg_annot {near indels} {
-	exec cg select -q {$type == "del" || $type == "ins"} data/vars1.sft data/indels1.sft
-	exec cg annotate -near 50 data/vars1.sft tmp/temp.sft data/indels1.sft
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg select -q {$type == "del" || $type == "ins"} tmp/vars1.sft data/indels1.sft
+	exec cg annotate -near 50 tmp/vars1.sft tmp/temp.sft data/indels1.sft
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-indels.sft
 } {}
 
 test reg_annot {sort error 1 in vars} {
-	exec cg annotate data/vars_sorterror1.sft tmp/temp.sft data/reg_annot.sft
+	file copy data/vars_sorterror1.sft tmp/vars_sorterror1.sft
+	exec cg annotate tmp/vars_sorterror1.sft tmp/temp.sft data/reg_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test reg_annot {sort error 2 in vars} {
-	exec cg annotate data/vars_sorterror2.sft tmp/temp.sft data/reg_annot.sft
+	file copy data/vars_sorterror2.sft tmp/vars_sorterror2.sft
+	exec cg annotate tmp/vars_sorterror2.sft tmp/temp.sft data/reg_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test reg_annot {sort error 3 in vars} {
-	exec cg annotate data/vars_sorterror3.sft tmp/temp.sft data/reg_annot.sft
+	file copy data/vars_sorterror3.sft tmp/vars_sorterror3.sft
+	exec cg annotate tmp/vars_sorterror3.sft tmp/temp.sft data/reg_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test reg_annot {no sort error 4 in vars (not relevant for reg)} {
-	catch {exec cg annotate data/vars_sorterror4.sft tmp/temp.sft data/reg_annot.sft}
+	file copy data/vars_sorterror4.sft tmp/vars_sorterror4.sft
+	catch {exec cg annotate tmp/vars_sorterror4.sft tmp/temp.sft data/reg_annot.sft}
 } 0
 
 test reg_annot {no sort error 5 in vars (not relevant for reg)} {
-	catch {exec cg annotate data/vars_sorterror5.sft tmp/temp.sft data/reg_annot.sft}
+	file copy data/vars_sorterror5.sft tmp/vars_sorterror5.sft
+	catch {exec cg annotate tmp/vars_sorterror5.sft tmp/temp.sft data/reg_annot.sft}
 } 0
 
 test reg_annot {sort error 1 in database file} {
 	file copy -force data/vars_sorterror1.sft tmp/reg_annot.sft
-	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/reg_annot.sft
+	file copy data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate tmp/vars_annottest.sft tmp/temp.sft tmp/reg_annot.sft
 } {*File (database file) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test reg_annot {sort error 2 in database file} {
 	file copy -force data/vars_sorterror2.sft tmp/reg_annot.sft
-	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/reg_annot.sft
+	file copy data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate tmp/vars_annottest.sft tmp/temp.sft tmp/reg_annot.sft
 } {*File (database file) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test reg_annot {sort error 3 in database file} {
 	file copy -force data/vars_sorterror3.sft tmp/reg_annot.sft
-	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/reg_annot.sft
+	file copy data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate tmp/vars_annottest.sft tmp/temp.sft tmp/reg_annot.sft
 } {*File (database file) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test reg_annot {bug fix deal with duplicate field in opt} {
-	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
+	file copy data/vars1.sft tmp/vars1.sft
+	cg select -f {chromosome begin end type ref alt} tmp/vars1.sft tmp/vars.sft
 	file copy -force data/reg_annot.sft tmp/reg_annot.sft
 	file_write tmp/reg_annot.sft.opt "fields\t{type begin end begin}\n"
 	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/reg_annot.sft
@@ -95,13 +111,15 @@ test reg_annot {bug fix deal with duplicate field in opt} {
 } {} 
 
 test var_annot {basic} {
-	exec cg annotate data/vars1.sft tmp/temp.sft data/var_annot.sft
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft data/var_annot.sft
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-var_annot.sft
 } {} 
 
 test var_annot {basic splitvar} {
-	exec cg splitalleles data/vars1.sft > tmp/vars1.tsv
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg splitalleles tmp/vars1.sft > tmp/vars1.tsv
 	exec cg annotate tmp/vars1.tsv tmp/temp.tsv data/var_annot.sft
 	exec cg select -rf {list} tmp/temp.tsv tmp/temp2.tsv
 	exec cg splitalleles data/expected-vars1-var_annot.sft > tmp/expected.tsv
@@ -132,7 +150,8 @@ test var_annot {lz4, opt, links} {
 } {} 
 
 test var_annot {different types on same pos} {
-	exec cg annotate data/vars2.tsv tmp/temp.tsv data/var_annot3.tsv
+	file copy data/vars2.tsv tmp/vars2.tsv
+	exec cg annotate tmp/vars2.tsv tmp/temp.tsv data/var_annot3.tsv
 	exec diff tmp/temp.tsv data/expected-vars2-var_annot3.tsv
 } {}
 
@@ -221,68 +240,81 @@ test var_annot {multi alt split, one value in vardb (split) no data} {
 } {}
 
 test var_annot {sort error 1 in vars} {
-	exec cg annotate data/vars_sorterror1.sft tmp/temp.sft data/var_annot.sft
+	file copy data/vars_sorterror1.sft tmp/vars_sorterror1.sft
+	exec cg annotate	tmp/vars_sorterror1.sft tmp/temp.sft data/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test var_annot {sort error 2 in vars} {
-	exec cg annotate data/vars_sorterror2.sft tmp/temp.sft data/var_annot.sft
+	file copy data/vars_sorterror2.sft tmp/vars_sorterror2.sft
+	exec cg annotate tmp/vars_sorterror2.sft tmp/temp.sft data/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test var_annot {sort error 3 in vars} {
-	exec cg annotate data/vars_sorterror3.sft tmp/temp.sft data/var_annot.sft
+	file copy data/vars_sorterror3.sft tmp/vars_sorterror3.sft
+	exec cg annotate tmp/vars_sorterror3.sft tmp/temp.sft data/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test var_annot {sort error 4 in vars} {
-	exec cg annotate data/vars_sorterror4.sft tmp/temp.sft data/var_annot.sft
+	file copy data/vars_sorterror4.sft tmp/vars_sorterror4.sft
+	exec cg annotate tmp/vars_sorterror4.sft tmp/temp.sft data/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test var_annot {sort error 5 in vars} {
-	exec cg annotate data/vars_sorterror5.sft tmp/temp.sft data/var_annot.sft
+	file copy data/vars_sorterror5.sft tmp/vars_sorterror5.sft
+	exec cg annotate tmp/vars_sorterror5.sft tmp/temp.sft data/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test var_annot {sort error 1 in database file} {
 	file copy -force data/vars_sorterror1.sft tmp/var_annot.sft
-	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
+	file copy data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate tmp/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test var_annot {sort error 2 in database file} {
 	file copy -force data/vars_sorterror2.sft tmp/var_annot.sft
-	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
+	file copy data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate tmp/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test var_annot {sort error 3 in database file} {
 	file copy -force data/vars_sorterror3.sft tmp/var_annot.sft
-	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
+	file copy data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate tmp/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test var_annot {sort error 4 in database file} {
 	file copy -force data/vars_sorterror4.sft tmp/var_annot.sft
-	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
+	file copy data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate tmp/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test var_annot {sort error 5 in database file} {
 	file copy -force data/vars_sorterror5.sft tmp/var_annot.sft
-	exec cg annotate data/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
+	file copy data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate tmp/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test var_annot {lz4} {
-	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.sft
 	exec lz4c -c data/var_annot.sft > tmp/var_annot.sft.lz4
-	exec cg annotate data/vars1.sft tmp/temp.sft tmp/var_annot.sft.lz4
+	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/var_annot.sft.lz4
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-var_annot.sft
 } {} 
 
 test gene_annot {variant file sort error 1} {
-	exec cg annotate -dbdir $::refseqdir/hg18_test data/vars_sorterror1.sft tmp/temp.sft data/gene_test.tsv
+	file copy data/vars_sorterror1.sft tmp/vars_sorterror1.sft
+	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars_sorterror1.sft tmp/temp.sft data/gene_test.tsv
 } {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test gene_annot {variant file sort error 2} {
-	exec cg annotate -dbdir $::refseqdir/hg18_test data/vars_sorterror2.sft tmp/temp.sft data/gene_test.tsv
+	file copy data/vars_sorterror2.sft tmp/vars_sorterror2.sft
+	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars_sorterror2.sft tmp/temp.sft data/gene_test.tsv
 } {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test gene_annot {variant file sort error 3} {
-	exec cg annotate -dbdir $::refseqdir/hg18_test data/vars_sorterror3.sft tmp/temp.sft data/gene_test.tsv
+	file copy data/vars_sorterror3.sft tmp/vars_sorterror3.sft
+	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars_sorterror3.sft tmp/temp.sft data/gene_test.tsv
 } {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test gene_annot {gene wrongly sorted database file error} {
@@ -477,26 +509,30 @@ test var_annot {different types on same pos, extra comments} {
 child process exited abnormally} error
 
 test reg_annot {existing field error} {
-	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
 	exec cg annotate -near 1000 tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
 } {*Error: field(s) regtest already in file} match error
 
 test reg_annot {-replace y} {
-	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
 	exec cg annotate -near 1000 -replace y tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
 	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
 	exec diff tmp/temp3.sft data/expected_near-vars1-reg_annot.sft
 } {} 
 
 test reg_annot {-replace n} {
-	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
 	exec cg annotate -near 1000 -replace n tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
 	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
 	split [cg select -f regtest tmp/temp3.sft] \n
 } {regtest reg1 reg1 reg1 reg1 {} {} {} {} reg3 reg3 {} {} {} {}} 
 
 test reg_annot {-replace e} {
-	exec cg annotate data/vars1.sft tmp/temp.sft data/reg_annot.sft
+	file copy data/vars1.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
 	exec cg annotate -near 1000 -replace e tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
 	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
 	split [cg select -f regtest tmp/temp3.sft] \n
@@ -505,7 +541,8 @@ test reg_annot {-replace e} {
 test bcol_annot {basic} {
 	test_cleantmp
 	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
-	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
+	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
+	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
 } {} 
 
@@ -513,13 +550,15 @@ test bcol_annot {header error} {
 	test_cleantmp
 	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
 	file_write tmp/bcol_coverage.tsv "chr1\ttemp-chr1.bcol\nchr2\ttemp-chr2.bcol\n"
-	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
+	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
+	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 } {*bcol database (tmp/bcol_coverage.tsv) should have a header of the type: chromosome begin end, old style bcols (single chr not supported)*} error match
 
 test bcol_annot {basic compressed bcol} {
 	test_cleantmp
 	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
-	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
+	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
+	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
 } {} 
 
@@ -527,7 +566,8 @@ test bcol_annot {basic uncompressed bcol} {
 	test_cleantmp
 	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
 	cg unzip {*}[glob tmp/*.rz tmp/*.lz4]
-	exec cg annotate data/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
+	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
+	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
 } {} 
 
@@ -551,7 +591,7 @@ test bcol_annot {only chr2} {
 
 test bcol_annot {added chr3} {
 	test_cleantmp
-	file cop data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
+	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
 	set f [open tmp/bcol_annot-test.tsv a]
 	puts $f "chr3\t9\t10"
 	close $f
@@ -583,7 +623,8 @@ test bcol_annot {--precision} {
 
 test mir_annot {basic mir annotation} {
 	test_cleantmp
-	exec cg annotate data/vars_mirna.tsv tmp/annot_test.tsv data/mir_small.tsv
+	file copy data/vars_mirna.tsv tmp/vars_mirna.tsv
+	exec cg annotate tmp/vars_mirna.tsv tmp/annot_test.tsv data/mir_small.tsv
 	exec diff tmp/annot_test.tsv data/expected-vars_mirna_annot.tsv
 } {} 
 
@@ -651,7 +692,8 @@ test mir_annot {mir annotation with status} {
 } {}
 
 test var_annot {basic from vcf} {
-	exec cg annotate data/vars1.vcf tmp/annot.sft data/var_annot.sft
+	file copy data/vars1.vcf tmp/vars1.vcf
+	exec cg annotate tmp/vars1.vcf tmp/annot.sft data/var_annot.sft
 	set fields {chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	annot_name	annot_freq}
 	exec cg select -rc 1 -f $fields tmp/annot.sft tmp/annot2.sft
 	cg splitalleles data/expected-vars1-var_annot.sft tmp/expected.sft.temp
