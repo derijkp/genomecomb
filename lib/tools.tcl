@@ -823,6 +823,11 @@ proc file_link {linkname linkdest} {
 	}
 }
 
+proc hardlink {args} {
+	if {[llength $args] < 2} {error "wrong # args: should be \"hardlink src ... dest\""}
+	exec cp -al {*}$args
+}
+
 proc mklink {src dest {absolute 0}} {
 	set src [file_absolute $src]
 	set dest [file_absolute $dest]

@@ -21,7 +21,7 @@ proc cg_distribute {projectfile srcdir destdir {subdir {}} {postfix {}}} {
 		set files [list_sub $files $poss]
 		foreach file $files {
 			putslog "hardlinking $file/* to $dest"
-			exec cp -al {*}[glob $file/*] $dest
+			hardlink {*}[glob $file/*] $dest
 		}
 	}
 

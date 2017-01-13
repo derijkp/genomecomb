@@ -108,7 +108,7 @@ proc cg_renamesamples {dir args} {
 		cd [file dir $dir]
 		set dir [file tail $dir]
 		file delete -force $dir.temp
-		exec cp -al $dir $dir.temp
+		hardlink $dir $dir.temp
 		renamesamples $dir.temp $changes
 		file delete -force $dir.old
 		file rename $dir $dir.old

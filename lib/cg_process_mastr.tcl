@@ -131,7 +131,7 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 		file mkdir $destdir/$sample/ori/fastq
 		file mkdir $destdir/$sample
 		file mkdir $destdir/$sample/fastq
-		exec cp -al $file $destdir/$sample/ori/fastq
+		hardlink $file $destdir/$sample/ori/fastq
 		cplinked $destdir/$sample/ori/fastq $destdir/$sample/fastq
 	}
 	#set alidir [lindex [ssort -natural [glob $illsrc/Alignment*]] end]
@@ -143,7 +143,7 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 		#file mkdir $destdir/$sample
 		#file mkdir $destdir/$sample/ori
 		#if {[file ext $file] eq ".bam"} {set ext bam} else {set ext bam.bai}
-		#exec cp -al $file $destdir/$sample/ori/map-ill-$sample.$ext
+		#hardlink $file $destdir/$sample/ori/map-ill-$sample.$ext
 		#cplinked $destdir/$sample/ori/map-ill-$sample.$ext $destdir/$sample/map-ill-$sample.$ext
 	#}
 	#set files [glob $alidir/*.vcf]
@@ -154,7 +154,7 @@ proc cg_process_conv_illmastr {illsrc destdir} {
 		#if {$sample eq "tempvariants"} continue
 		#file mkdir $destdir/$sample
 		#file mkdir $destdir/$sample/ori
-		#exec cp -al $file $destdir/$sample/ori/var-ill-ill-$sample.vcf
+		#hardlink $file $destdir/$sample/ori/var-ill-ill-$sample.vcf
 		#cplinked $destdir/$sample/ori/var-ill-ill-$sample.vcf $destdir/$sample/var-ill-ill-$sample.vcf
 	#}
 	cd $keeppwd

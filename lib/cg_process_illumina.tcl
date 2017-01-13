@@ -23,7 +23,7 @@ proc cg_process_conv_illnextseq {illsrc destdir} {
 			file mkdir $destdir/$sample/ori/fastq
 			file mkdir $destdir/$sample
 			file mkdir $destdir/$sample/fastq
-			exec cp -al $file $destdir/$sample/ori/fastq
+			hardlink $file $destdir/$sample/ori/fastq
 			cplinked $destdir/$sample/ori/fastq $destdir/$sample/fastq
 		}
 	}

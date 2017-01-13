@@ -22,7 +22,7 @@ proc cg_hardsync {args} {
 		set project [file tail $src]
 		set finaldest $dest/$project
 		puts "cp -alf $src $dest"
-		exec cp -alf $src $dest >@ stdout 2>@ stderr
+		hardlink -f $src $dest >@ stdout 2>@ stderr
 		puts "rsync -av $opts --delete --link-dest=$src $src/ $finaldest"
 		eval exec rsync -av $opts [list --delete --link-dest=$src $src/ $finaldest >@ stdout 2>@ stderr]
 	}
