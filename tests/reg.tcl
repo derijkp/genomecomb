@@ -16,6 +16,19 @@ test multireg {same} {
 	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg1b.sft
 } {}
 
+test multireg {(try to add) add existing} {
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg2.tsv
+	exec cg multireg tmp/temp.tsv data/reg1.tsv
+	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg2.sft
+} {}
+
+test multireg {(try to add) add existing compressed} {
+	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg2.tsv
+	exec lz4c -c data/reg1.tsv > tmp/reg1.tsv.lz4
+	exec cg multireg tmp/temp.tsv tmp/reg1.tsv.lz4
+	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg2.sft
+} {}
+
 test multireg {add empty} {
 	file delete tmp/temp.tsv
 	exec cg multireg tmp/temp.tsv data/reg1b.tsv data/regempty.tsv

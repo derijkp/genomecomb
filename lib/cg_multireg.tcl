@@ -28,7 +28,7 @@ proc multireg_job {compar_file regfiles} {
 		set jobforce 0
 	}
 	foreach file $regfiles {
-		set name [file root [file tail [gzfile $file]]]
+		set name [file root [file tail [gzroot $file]]]
 		if {[inlist $header $name]} {
 			putslog "*** Skipping $file: $name already in $compar_file ***"
 			continue
@@ -36,7 +36,7 @@ proc multireg_job {compar_file regfiles} {
 		putslog "Adding $file to $compar_file"
 		lappend files $file
 		lappend isreg 0
-		lappend fieldsneeded [file root [gzroot [file tail $file]]]
+		lappend fieldsneeded $name
 	}
 	if {![llength $files]} return
 	set len [llength $files]
