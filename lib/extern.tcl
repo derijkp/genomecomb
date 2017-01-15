@@ -32,6 +32,20 @@ proc findpicard {} {
 	return $picard
 }
 
+proc picardversion {{minversion {}}} {
+	global picardversion
+	if {![info exists picardversion]} {
+		catch {picard MarkDuplicates --version} picardversion
+		set picardversion [lindex [split $picardversion \n] 0]
+	}
+	if {$minversion ne ""} {
+		if {[lindex [ssort -natural [list $minversion $picardversion]] 0] ne "$minversion"} {
+			error "picard version ($picardversion) smaller than $minversion"
+		}
+	}
+	return $picardversion
+}
+
 proc gatk {} {
 	global gatk
 	if {![info exists gatk]} {
@@ -46,7 +60,26 @@ proc gatkversion {{minversion {}}} {
 	if {![info exists gatkversion]} {
 		set gatkversion [exec java -jar $gatk --version]
 	}
+	if {$minversion ne ""} {
+		if {[lindex [ssort -natural [list $minversion $gatkversion]] 0] ne "$minversion"} {
+			error "gatk version ($gatkversion) smaller than $minversion"
+		}
+	}
 	return $gatkversion
+}
+
+proc samtoolsversion {{minversion {}}} {
+	global samtoolsversion
+	if {![info exists samtoolsversion]} {
+		catch {exec samtools} temp
+		regexp {Version: ([^\n]+)} $temp temp samtoolsversion
+	}
+	if {$minversion ne ""} {
+		if {[lindex [ssort -natural [list $minversion $samtoolsversion]] 0] ne "$minversion"} {
+			error "samtools version ($samtoolsversion) smaller than $minversion"
+		}
+	}
+	return $samtoolsversion
 }
 
 proc bcl2fastq {} {

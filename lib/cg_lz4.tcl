@@ -109,3 +109,18 @@ proc cg_lz4less {args} {
 		}
 	}
 }
+
+proc lz4version {{minversion {}}} {
+	global lz4version
+	if {![info exists lz4version]} {
+		catch {exec lz4c -h} temp
+		regexp { 32-bits ([^, \n\t]+)[, \n\t]} $temp temp lz4version
+		if {[string index $lz4version 0] eq "v"} {set lz4version [string range $lz4version  1 end]}
+	}
+	if {$minversion ne ""} {
+		if {[lindex [ssort -natural [list $minversion $lz4version]] 0] ne "$minversion"} {
+			error "lz4 version ($lz4version) smaller than $minversion"
+		}
+	}
+	return $lz4version
+}
