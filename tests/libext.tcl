@@ -168,4 +168,112 @@ test libext {matches} {
 	list [expr {matches("abbb","a*")}] [expr {matches("abbb","A*")}] [expr {matches("-nocase","abbb","A*")}]
 } {1 0 1}
 
+test libext {q1 1,2,3,4,5,6} {
+	expr {q1(1,2,3,4,5,6)}
+} 2
+
+test libext {median 1,2,3,4,5,6} {
+	expr {median(1,2,3,4,5,6)}
+} 3.5
+
+test libext {q3 1,2,3,4,5,6} {
+	expr {q3(1,2,3,4,5,6)}
+} 5
+
+test libext {q1 1,2,3,4,5,6} {
+	expr {q1(1,2,3,4,5,6)}
+} 2
+
+test libext {median 1,2,3,4,5,6} {
+	expr {median(1,2,3,4,5,6)}
+} 3.5
+
+test libext {q3 1,2,3,4,5,6} {
+	expr {q3(1,2,3,4,5,6)}
+} 5
+
+test libext {q1 1,2,3,4,5,6,7} {
+	expr {q1(1,2,3,4,5,6,7)}
+} 2
+
+test libext {median 1,2,3,4,5,6,7} {
+	expr {median(1,2,3,4,5,6,7)}
+} 4
+
+test libext {q3 1,2,3,4,5,6,7} {
+	expr {q3(1,2,3,4,5,6,7)}
+} 6
+
+test libext {q1 1,2,3,4,5,6,7,8} {
+	expr {q1(1,2,3,4,5,6,7,8)}
+} 2.5
+
+test libext {median 1,2,3,4,5,6,7,8} {
+	expr {median(1,2,3,4,5,6,7,8)}
+} 4.5
+
+test libext {q3 1,2,3,4,5,6,7,8} {
+	expr {q3(1,2,3,4,5,6,7,8)}
+} 6.5
+
+test libext {q1 1,2,3,4,5,6,7,8,9} {
+	expr {q1(1,2,3,4,5,6,7,8,9)}
+} 2.5
+
+test libext {median 1,2,3,4,5,6,7,8,9} {
+	expr {median(1,2,3,4,5,6,7,8,9)}
+} 5
+
+test libext {q3 1,2,3,4,5,6,7,8,9} {
+	expr {q3(1,2,3,4,5,6,7,8,9)}
+} 7.5
+
+test libext {q1 1,2,3,4,5,6,7,8,9,10} {
+	expr {q1(1,2,3,4,5,6,7,8,9,10)}
+} 3
+
+test libext {median 1,2,3,4,5,6,7,8,9,10} {
+	expr {median(1,2,3,4,5,6,7,8,9,10)}
+} 5.5
+
+test libext {q3 1,2,3,4,5,6,7,8,9,10} {
+	expr {q3(1,2,3,4,5,6,7,8,9,10)}
+} 8
+
+test libext {q1 1} {
+	expr {q1(1)}
+} 1.0
+
+test libext {median 1} {
+	expr {median(1)}
+} 1
+
+test libext {q3 1} {
+	expr {q3(1)}
+} 1.0
+
+test libext {q1 1,2} {
+	expr {q1(1,2)}
+} 1
+
+test libext {median 1,2} {
+	expr {median(1,2)}
+} 1.5
+
+test libext {q3 1,2} {
+	expr {q3(1,2)}
+} 2
+
+test libext {q1 1,2,3} {
+	expr {q1(1,2,3)}
+} 1
+
+test libext {median 1,2,3} {
+	expr {median(1,2,3)}
+} 2
+
+test libext {q3 1,2,3} {
+	expr {q3(1,2,3)}
+} 3
+
 testsummarize

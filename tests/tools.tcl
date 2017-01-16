@@ -11,6 +11,7 @@ proc test {args} {
 	test_cleantmp
 	pkgtools::test {*}$args
 	cd $::testdir
+	return {}
 }
 
 # pkgtools::testleak 100

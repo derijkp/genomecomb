@@ -80,6 +80,9 @@ values in group and column. Supported functions are
 ; max(field): maximum
 ; sum(field): sum of values in this field
 ; avg(field): average
+; median(field): median
+; q1(field): q1
+; q3(field): q3
 ; stdev(field): standard deviation
 ; ucount(field): number of unique values in field
 ; distinct(field): lists (comma separated) all distinct values found in the field

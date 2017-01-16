@@ -728,4 +728,20 @@ test select_group "long format -gc with sample with sampleinfo" {
 f		0.8	1.0	
 m	0.4			0.5}
 
+test select_group "median" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name v-sample1 v-sample2
+		n1	1	10
+		n2	2	20
+		n3	3	30
+		n4	4	40
+		n4	5	50
+	}
+	exec cg select -g sample -gc {q1(v),median(v),q3(v)} tmp/temp.tsv
+} {sample	q1_v	median_v	q3_v
+sample1	1.5	3	4.5
+sample2	15.0	30	45.0}
+
 testsummarize

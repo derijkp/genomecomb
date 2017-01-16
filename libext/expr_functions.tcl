@@ -29,3 +29,35 @@ proc tcl::mathfunc::sum args {
 		expr $tot
 	}
 }
+
+proc tcl::mathfunc::median args {
+	::median $args
+}
+
+proc tcl::mathfunc::q1 args {
+	set args [ssort -natural $args]
+	set len [llength $args]
+	set len [expr {$len/2}]
+	if {[expr {$len % 2}]} {
+		# uneven
+		set pos [expr {($len-1)/2}]
+		return [lindex $args $pos]
+	} else {
+		set pos [expr {$len/2-1}]
+		return [lmath_average [::lrange $args $pos [expr {$pos+1}]]]
+	}
+}
+
+proc tcl::mathfunc::q3 args {
+	set args [ssort -natural $args]
+	set len [llength $args]
+	set len [expr {$len/2}]
+	if {[expr {$len % 2}]} {
+		# uneven
+		set pos [expr {($len-1)/2}]
+		return [lindex $args end-$pos]
+	} else {
+		set pos [expr {$len/2}]
+		return [lmath_average [::lrange $args end-$pos end-[expr {$pos-1}]]]
+	}
+}

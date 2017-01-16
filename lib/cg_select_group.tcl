@@ -1,4 +1,4 @@
-set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} stdev {avg m2} distinct distinct ucount distinct list list sum sum}
+set typetodoa {max max min min count {} percent total gpercent gtotal avg {avg} stddev {avg m2} stdev {avg m2} distinct distinct ucount distinct list list sum sum median list q1 list q3 list}
 
 proc select_parse_grouptypes {grouptypelist} {
 	global typetodoa
@@ -287,6 +287,18 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 		} elseif {$func eq "list"} {
 			append calcresults [string_change {
 				lappend result [join [get resultdata($_groupname,$col,@field@,d) ""] ,]
+			} [list @field@ $field]]
+		} elseif {$func eq "median"} {
+			append calcresults [string_change {
+				lappend result [tcl::mathfunc::median {*}[get resultdata($_groupname,$col,@field@,d) ""]]
+			} [list @field@ $field]]
+		} elseif {$func eq "q1"} {
+			append calcresults [string_change {
+				lappend result [tcl::mathfunc::q1 {*}[get resultdata($_groupname,$col,@field@,d) ""]]
+			} [list @field@ $field]]
+		} elseif {$func eq "q3"} {
+			append calcresults [string_change {
+				lappend result [tcl::mathfunc::q3 {*}[get resultdata($_groupname,$col,@field@,d) ""]]
 			} [list @field@ $field]]
 		} elseif {$func eq "sum"} {
 			append calcresults [string_change {
