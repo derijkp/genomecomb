@@ -261,7 +261,7 @@ proc compress {file {ext .lz4}} {
 	if {[inlist {.rz} $ext]} {
 		exec razip $file
 	} elseif {[inlist {.lz4} $ext]} {
-		exec lz4c -9 -c $file > $file.lz4.temp
+		exec lz4c -q -9 -c $file > $file.lz4.temp
 		file rename -force $file.lz4.temp $file.lz4
 	} elseif {[inlist {.gz} $ext]} {
 		exec gzip $file
@@ -438,7 +438,7 @@ proc gztemp {filename} {
 		}
 		.lz4 {
 			set tempfile [scratchfile get]
-			exec lz4c -d -c $filename > $tempfile
+			exec lz4c -q -d -c $filename > $tempfile
 			set ::gztemp_files($tempfile) 1
 			return $tempfile
 		}
@@ -558,7 +558,7 @@ proc decompress {file args} {
 		set resultfile [file root $file]
 	}
 	if {[file extension $file] eq ".lz4"} {
-		set error [catch {exec lz4c -d $file > $resultfile.temp} result]
+		set error [catch {exec lz4c -q -d $file > $resultfile.temp} result]
 	} else {
 		set error [catch {exec zcat $file > $resultfile.temp} result]
 	}

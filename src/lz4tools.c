@@ -98,7 +98,7 @@ LZ4res *lz4open(FILE* finput,FILE *findex) {
 			fprintf(stderr,"not a lz4index file");
 			exit(1);
 		}
-		fseek(findex,0,SEEK_SET);
+		fseeko(findex,0,SEEK_SET);
 		while (1) {
 			read = getline(&buffer,&n,findex);
 			if (read == -1) {
@@ -161,15 +161,15 @@ int lz4_readblock(LZ4res *res, unsigned int startblock) {
 		if (findex != NULL) {
 			/* find block using the index */
 			NODPRINT("indexpos: %llu",(long long unsigned int)(res->indexstart + 8*startblock));
-			fseek(findex,res->indexstart + 8*startblock,SEEK_SET);
+			fseeko(findex,res->indexstart + 8*startblock,SEEK_SET);
 			pos = lz4index_read(findex);
 			NODPRINT("filepos: %llu",(long long unsigned int)pos);
-			fseek(finput,pos,SEEK_SET);
+			fseeko(finput,pos,SEEK_SET);
 		} else {
 			/* find block by skipping */
 			count = startblock;
 			if (res->writebuffer == NULL || startblock < res->currentblock) {
-				fseek(finput,res->startblocks,SEEK_SET);
+				fseeko(finput,res->startblocks,SEEK_SET);
 			} else {
 				count = count - res->currentblock - 1;
 			}
@@ -189,7 +189,7 @@ int lz4_readblock(LZ4res *res, unsigned int startblock) {
 				} else {
 					readsize = compressedsize;
 				}
-				fseek(finput,readsize,SEEK_CUR);
+				fseeko(finput,readsize,SEEK_CUR);
 				count--;
 			}
 		}
@@ -301,15 +301,4 @@ int lz4_read(LZ4res *res, void *data, uint64_t size) {
 	read = (dest - (char *)data);
 	res->currentpos += read;
 	return(read);
-}
-
-int lz4_get(LZ4res *res) {
-	uint64_t startblock;
-	unsigned int skip;
-	startblock = res->currentpos/res->blocksize;
-	skip = res->currentpos-(startblock*res->blocksize);
-	/* decompress */
-	if (!lz4_readblock(res,startblock++) || skip >= res->writesize) {return EOF;}
-	res->currentpos++;
-	return (res->writebuffer[skip]);
 }

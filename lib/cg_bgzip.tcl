@@ -31,7 +31,7 @@ proc cg_bgzip args {
 			.lz4 {
 				putslog "bgzip $file"
 				set result [file root $file].gz
-				exec lz4c -d -c $file > $result.temp2
+				exec lz4c -q -d -c $file > $result.temp2
 				exec bgzip -c $result.temp2 > $result.temp
 				file delete $result.temp2
 				file rename -force $result.temp $result

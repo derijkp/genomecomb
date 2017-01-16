@@ -139,7 +139,7 @@ test var_annot {lz4, opt, links} {
 	test_cleantmp
 	file mkdir tmp
 	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
-	exec lz4c -c data/var_annot.sft > tmp/var_annot.sft.lz4
+	exec lz4c -q -c data/var_annot.sft > tmp/var_annot.sft.lz4
 	file_write tmp/var_annot.sft.opt "fields\t{name freq alt}\n"
 	cd tmp
 	exec ln -s var_annot.sft.lz4 var_annot.tsv.lz4
@@ -296,7 +296,7 @@ test var_annot {sort error 5 in database file} {
 
 test var_annot {lz4} {
 	file copy data/vars1.sft tmp/vars1.sft
-	exec lz4c -c data/var_annot.sft > tmp/var_annot.sft.lz4
+	exec lz4c -q -c data/var_annot.sft > tmp/var_annot.sft.lz4
 	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/var_annot.sft.lz4
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-var_annot.sft

@@ -56,7 +56,7 @@ GZFILE *gz_open(char *filename) {
 void gz_seek(GZFILE *f, int64_t pos, int where) {
 	int type = f->type;
 	if (type == UNCOMPRESSED) {
-		fseek(f->fun, pos, where);
+		fseeko(f->fun, pos, where);
 	} else if (type == LZ4) {
 		lz4_seek(f->lz4, pos, where);
 	} else if (type == RZ || type == GZ) {

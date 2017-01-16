@@ -24,7 +24,7 @@ test multireg {(try to add) add existing} {
 
 test multireg {(try to add) add existing compressed} {
 	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg2.tsv
-	exec lz4c -c data/reg1.tsv > tmp/reg1.tsv.lz4
+	exec lz4c -q -c data/reg1.tsv > tmp/reg1.tsv.lz4
 	exec cg multireg tmp/temp.tsv tmp/reg1.tsv.lz4
 	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg2.sft
 } {}

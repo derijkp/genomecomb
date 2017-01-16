@@ -39,13 +39,13 @@ proc cg_lz4 args {
 				putslog "lz4 $file"
 				set temp2 [filetemp $result]
 				exec gunzip -d -c $file > $temp2
-				exec lz4c -$compressionlevel -B$blocksize -c $temp2 > $temp
+				exec lz4c -q -$compressionlevel -B$blocksize -c $temp2 > $temp
 			}
 			.rz {
 				putslog "lz4 $file"
 				set temp2 [filetemp $result]
 				exec razip -d -c $file > $temp2
-				exec lz4c -$compressionlevel -B$blocksize -c $temp2 > $temp
+				exec lz4c -q -$compressionlevel -B$blocksize -c $temp2 > $temp
 			}
 			.lz4 {
 				putslog "$file already lz4"
@@ -55,7 +55,7 @@ proc cg_lz4 args {
 				putslog "lz4c $file"
 				set temp2 [filetemp $result]
 				exec bzcat $file > $temp2
-				exec lz4c -$compressionlevel -B$blocksize -c $temp2 > $temp
+				exec lz4c -q -$compressionlevel -B$blocksize -c $temp2 > $temp
 			}
 			.lz4i {
 				putslog "not compressin lz4 index file $file"
@@ -67,7 +67,7 @@ proc cg_lz4 args {
 					set result $outputfile
 				}
 				putslog "lz4c $file"
-				exec lz4c -$compressionlevel -B$blocksize -c $file > $temp
+				exec lz4c -q -$compressionlevel -B$blocksize -c $file > $temp
 			}
 		}
 		if {$index} {exec lz4index $temp}
@@ -87,10 +87,10 @@ proc cg_lz4index {args} {
 
 proc cg_lz4cat {args} {
 	if {![llength $args]} {
-		exec lz4c -d -c <@ stdin >@ stdout
+		exec lz4c -q -d -c <@ stdin >@ stdout
 	} else {
 		foreach file $args {
-			exec lz4c -d -c $file >@ stdout
+			exec lz4c -q -d -c $file >@ stdout
 		}
 	}
 }

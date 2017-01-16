@@ -610,7 +610,7 @@ int bcol_getbin(BCol *fbcol,uint64_t start,uint64_t end) {
 		razf_seek(rz, start, SEEK_SET);
 		c = razf_read(rz, fbcol->buffer, rsize);
 	} else {
-		fseek(f, start, SEEK_SET);
+		fseeko(f, start, SEEK_SET);
 		c = read_unlocked(f, fbcol->buffer, rsize);
 	}
 	if (c < rsize) {

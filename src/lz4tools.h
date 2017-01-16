@@ -1,6 +1,3 @@
-#ifndef LZ4TOOLS_H_LOADED
-#define LZ4TOOLS_H_LOADED 1
-
 #define _FILE_OFFSET_BITS 64
 #define _LARGEFILE64_SOURCE 1
 
@@ -73,7 +70,4 @@ uint64_t lz4index_read(FILE *findex);
 LZ4res *lz4_openfile(char *file);
 void lz4_seek(LZ4res *res, int64_t pos, int where);
 int lz4_read(LZ4res *res, void *data, uint64_t size);
-int lz4_get(LZ4res *res);
 #define lz4_close(res) lz4close(res)
-
-#endif

@@ -104,7 +104,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 			putslog "temporarily uncompressing $file to $workfile"
 			file delete -force $workfile.temp
 			file delete -force $workfile
-			exec lz4c -d $file $workfile.temp
+			exec lz4c -q -d $file $workfile.temp
 			file rename -force $workfile.temp $workfile
 			set uncompressed 1
 			set remove 1

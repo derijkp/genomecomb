@@ -24,7 +24,7 @@ proc cg_razip args {
 			.lz4 {
 				putslog "razip $file"
 				set result [file root $file].rz
-				exec lz4c -d $file > $result.temp2
+				exec lz4c -q -d $file > $result.temp2
 				exec razip -c $result.temp2 > $result.temp
 				file delete $result.temp2
 				file rename -force $result.temp $result
