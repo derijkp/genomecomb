@@ -58,7 +58,7 @@ proc cg_lz4 args {
 				exec lz4c -q -$compressionlevel -B$blocksize -c $temp2 > $temp
 			}
 			.lz4i {
-				putslog "not compressin lz4 index file $file"
+				putslog "not compressing lz4 index file $file"
 			}
 			default {
 				if {$outputfile eq ""} {
@@ -71,8 +71,8 @@ proc cg_lz4 args {
 			}
 		}
 		if {$index} {exec lz4index $temp}
+		if {$index} {file rename -force $temp.lz4i $result.lz4i}
 		if {[info exists temp2]} {file delete $temp2}
-		if {$index} {file rename -force $temp.lz4i [file root $result].lz4i}
 		file rename -force $temp $result
 		if {!$keep} {file delete $file}
 	}
@@ -81,7 +81,6 @@ proc cg_lz4 args {
 proc cg_lz4index {args} {
 	foreach file $args {
 		exec lz4index $file
-		if {[file extension $file] eq ".lz4"} {file rename $file.lz4i [file root $file].lz4i}
 	}
 }
 

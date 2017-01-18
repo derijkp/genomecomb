@@ -131,7 +131,7 @@ test compression {lz4 -i} {
 	catch {exec lz4c -d tmp/test1.txt.lz4 2> /dev/null} c1
 	catch {exec lz4c -d tmp/test2.txt.lz4 2> /dev/null} c2
 	list [lsort -dict [glob tmp/test*]] $c1 $c2
-} {{tmp/test1.txt.lz4 tmp/test1.txt.lz4i tmp/test2.txt.lz4 tmp/test2.txt.lz4i} a b}
+} {{tmp/test1.txt.lz4 tmp/test1.txt.lz4.lz4i tmp/test2.txt.lz4 tmp/test2.txt.lz4.lz4i} a b}
 
 test cg_options {basic} {
 	set args {-opt o 1 2 3 4}

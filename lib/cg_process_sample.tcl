@@ -190,7 +190,7 @@ proc process_sample_cgi_job {workdir split} {
 				lappend tomergebins $target.bin
 				job cg_coverage-$outfield-$chr-$sample -deps $file \
 				   -vars {sample chr field posfield} \
-				   -skip {$finaltarget $finaltarget.bin.lz4 $finaltarget.bin.lz4i} \
+				   -skip {$finaltarget $finaltarget.bin.lz4 $finaltarget.bin.lz4.lz4i} \
 				   -targets {$target} -code {
 					# make coverage files
 					set file $dep
@@ -202,7 +202,7 @@ proc process_sample_cgi_job {workdir split} {
 			    -vars {tomerge tomergebins finaltarget} \
 			    -deps [list {*}$tomerge {*}$tomergebins] \
 			    -rmtargets [list {*}$tomerge {*}$tomergebins] \
-			    -targets {$finaltarget $finaltarget.bin.lz4 $finaltarget.bin.lz4i} -code {
+			    -targets {$finaltarget $finaltarget.bin.lz4 $finaltarget.bin.lz4.lz4i} -code {
 				cg cat -c f {*}$tomerge > $finaltarget.temp
 				exec cat {*}$tomergebins > $finaltarget.bin.temp
 				cg_lz4 -keep 0 -i 1 -o $finaltarget.bin.lz4 $finaltarget.bin.temp
