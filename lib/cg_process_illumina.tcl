@@ -521,8 +521,9 @@ proc var_sam_job {bamfile refseq args} {
 	sreg_sam_job ${pre}sreg-sam-$root ${pre}varall-sam-$root.tsv ${pre}sreg-sam-$root.tsv
 	# cleanup
 	job clean_${pre}var-sam-$root -deps {${pre}var-sam-$root.tsv ${pre}varall-sam-$root.tsv} -vars {pre root} -targets {} \
-	-rmtargets {${pre}uvar-sam-$root.tsv ${pre}varall-sam-$root.vcf ${pre}varall-sam-$root.vcf.idx} -code {
+	-rmtargets {${pre}uvar-sam-$root.tsv ${pre}uvar-sam-$root.tsv.index ${pre}varall-sam-$root.vcf ${pre}varall-sam-$root.vcf.idx} -code {
 		catch {file delete ${pre}uvar-sam-$root.tsv}
+		catch {file delete -force ${pre}uvar-sam-$root.tsv.index}
 		catch {file delete ${pre}varall-sam-$root.vcf}
 		catch {file delete ${pre}varall-sam-$root.vcf.idx}
 	}
@@ -637,8 +638,9 @@ proc var_gatk_job {bamfile refseq args} {
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup
 	job clean_${pre}var-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} \
-	-rmtargets {${pre}uvar-gatk-$root.tsv ${pre}varall-gatk-$root.vcf ${pre}delvar-gatk-$root.vcf ${pre}delvar-gatk-$root.tsv} -code {
+	-rmtargets {${pre}uvar-gatk-$root.tsv ${pre}uvar-gatk-$root.tsv.index ${pre}varall-gatk-$root.vcf ${pre}delvar-gatk-$root.vcf ${pre}delvar-gatk-$root.tsv} -code {
 		catch {file delete ${pre}uvar-gatk-$root.tsv}
+		catch {file delete -force ${pre}uvar-gatk-$root.tsv.index}
 		catch {file delete ${pre}varall-gatk-$root.vcf}
 		catch {file delete ${pre}delvar-gatk-$root.vcf}
 		catch {file delete ${pre}delvar-gatk-$root.tsv}

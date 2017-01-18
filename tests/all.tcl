@@ -32,12 +32,9 @@ source queries.tcl
 source reports.tcl
 source bam.tcl
 source homwes.tcl
-source process.tcl
 
 # long time, run separately
-# source process_large.tcl
-
-# large data
+# source process.tcl
 
 # not really used
 # source mselect.tcl

@@ -46,6 +46,7 @@ test process_multicompar$testname {process_multicompar} {
 	cg process_multicompar {*}$::jobopts -dbdir /complgen/refseq/hg19_test -split 0 tmp
 	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
+	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-multicompar.tsv
 } {}
 
 test process_multicompar$testname {process_multicompar missing sreg} {
