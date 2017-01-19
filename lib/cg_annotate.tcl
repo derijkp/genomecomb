@@ -226,6 +226,7 @@ proc cg_annotate_job {args} {
 		}
 	} {orifile resultfile} 3
 	set dbfiles {}
+	set resultname [file tail $resultfile]
 	foreach testfile $args {
 		if {[file isdir $testfile]} {
 			lappend dbfiles {*}[glob -nocomplain $testfile/var_*.tsv $testfile/gene_*.tsv $testfile/mir_*.tsv $testfile/reg_*.tsv $testfile/bcol_*.tsv]
@@ -281,7 +282,7 @@ proc cg_annotate_job {args} {
 		set usefile [indexdir_file $orifile vars.tsv ok]
 	}
 	if {!$ok} {
-		job annot-createusefile -deps {$orifile} -targets {$usefile} -vars {ok orifile usefile dbfiles} -code {
+		job annot-createusefile-$resultname -deps {$orifile} -targets {$usefile} -vars {ok orifile usefile dbfiles} -code {
 			# usefile: smaller file with only variants used for actual annotation; 
 			# if orifile is small, a link to it is made.
 			# If it contains to many extra columns a cut down version is made
@@ -319,7 +320,7 @@ proc cg_annotate_job {args} {
 			if {![file exists $genomefile]} {
 				error "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
 			}
-			job annot-[file tail $dbfile] -deps {$usefile $genomefile $dbfile} -targets {$target} -vars {genomefile dbfile name dbinfo upstreamsize} -code {
+			job annot-$resultname-[file tail $dbfile] -deps {$usefile $genomefile $dbfile} -targets {$target} -vars {genomefile dbfile name dbinfo upstreamsize} -code {
 				set genecol [dict_get_default $dbinfo genecol {}]
 				set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
 				annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize
@@ -329,7 +330,7 @@ proc cg_annotate_job {args} {
 			if {$dbdir eq ""} {
 				set dbdir [file dir [file_absolute $dbfile]]
 			}
-			job annot-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo upstreamsize} -code {
+			job annot-$resultname-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo upstreamsize} -code {
 				set genecol [dict_get_default $dbinfo genecol name]
 				set transcriptcol [dict_get_default $dbinfo transcriptcol transcript]
 				set extracols [dict_get_default $dbinfo extracols status]
@@ -339,7 +340,7 @@ proc cg_annotate_job {args} {
 			}
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
-			job annot-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo upstreamsize} -code {
+			job annot-$resultname-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo upstreamsize} -code {
 				set f [gzopen $dep]
 				set header [tsv_open $f]
 				catch {gzclose $f}
@@ -359,19 +360,18 @@ proc cg_annotate_job {args} {
 			}
 		} elseif {$dbtype eq "bcol"} {
 			if {$near != -1} {error "-near option does not work with bcol dbfiles"}
-			job annot-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name} -code {
+			job annot-$resultname-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name} -code {
 				annotatebcol $dep $dbfile $name $target
 			}
 		} else {
-			job annot-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo near} -code {
+			job annot-$resultname-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo near} -code {
 				set outfields [dict get $dbinfo outfields]
 				annotatereg $dep $dbfile $name $target.temp $near $dbinfo
 				file rename -force $target.temp $target
 			}
 		}
 	}
-putsvars orifile header afiles
-	job annot-paste -deps [list $orifile {*}$afiles] -targets {$resultfile} -vars {orifile afiles multidb replace newh resultfile} -code {
+	job annot-paste-$resultname -deps [list $orifile {*}$afiles] -targets {$resultfile} -vars {orifile afiles multidb replace newh resultfile} -code {
 		if {$multidb} {
 			set temp2 [filetemp $resultfile]
 			cg select -f id $orifile $temp2

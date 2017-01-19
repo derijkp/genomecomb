@@ -44,12 +44,13 @@ proc process_multicompar_job {destdir experiment dbdir todo args} {
 		pmulticompar_job $compar_file $stilltodo 0 $split $targetsfile 0 $skipincomplete
 	}
 	putslog "Starting annotation"
-	job annotcompar-$experiment -deps [list $compar_file {*}$dbfiles] \
-	-targets compar/annot_compar-$experiment.tsv -vars {dbdir dbfiles} -code {
-		cg annotate $dep $target.temp $dbdir {*}$dbfiles
-		file delete -force $target.temp.index
-		file rename -force $target.temp $target
-	}
+#	job annotcompar-$experiment -deps [list $compar_file {*}$dbfiles] \
+#	-targets compar/annot_compar-$experiment.tsv -vars {dbdir dbfiles} -code {
+#		cg annotate $dep $target.temp $dbdir {*}$dbfiles
+#		file delete -force $target.temp.index
+#		file rename -force $target.temp $target
+#	}
+	cg_annotate_job $compar_file compar/annot_compar-$experiment.tsv $dbdir {*}$dbfiles
 	job indexannotcompar-$experiment \
 	-deps compar/annot_compar-$experiment.tsv \
 	-targets compar/annot_compar-$experiment.tsv.index/info.tsv -vars dbdir -code {
