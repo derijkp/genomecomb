@@ -64,7 +64,7 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	file delete $dir/inner_$tail.temp
 	file rename -force $dir/inner_$tail.temp2 $dir/inner_$tail
 	cg regcollapse $dir/inner_$tail > $dir/reg-inner-$name.tsv
-	exec ln -s reg-inner-$name.tsv $dir/reg_amplicons-$name.tsv
+	mklink reg-inner-$name.tsv $dir/reg_amplicons-$name.tsv
 	tsv2bed $dir/reg-inner-$name.tsv $dir/reg-inner-$name.bed [list chromosome begin end $namefield]
 }
 
@@ -272,18 +272,39 @@ proc generate_html_report_job {experiment} {
 }
 
 proc process_mastr_job {args} {
-	oargs process_mastr_job {mastrdir destdir dbdir
-		{useminigenome 0}
-		{aligner bwa}
-		{split 0}
-		{paired 1}
-		{cleanup 1}
-		{clipamplicons {}}
-	} $args
-	set hsmetrics_files {}
+	set useminigenome 0
+	set aligner bwa
+	set cleanup 1
+	set paired 1
+	set samBQ 13
+	cg_options process_mastr args {
+		-m - --minigenome {
+			set useminigenome $value
+		}
+		-a - --aligner {
+			set aligner $value
+		}
+		-c - --cleanup {
+			set cleanup $value
+		}
+		--samBQ {
+			set samBQ $value
+		}
+		-clipamplicons {
+			set clipamplicons $value
+		}
+		-split {
+			set split $value
+		}
+	} {mastrdir destdir dbdir} 2 3
 	set mastrdir [file_absolute $mastrdir]
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
+	set mastrname [file root [file tail $mastrdir]]
+	if {![info exists clipamplicons]} {set clipamplicons $mastrdir/samplicons-$mastrname.tsv}
+	# check projectinfo
+	projectinfo $destdir dbdir mastrdir {split 1}
+	set hsmetrics_files {}
 	if {$useminigenome} {set pre reg_} else {set pre {}}
 	# make sure mastrdir contains everything needed
 	foreach {mastrname refseq mapfile} [mastr_refseq_job $mastrdir $dbdir $useminigenome] break
@@ -305,6 +326,11 @@ proc process_mastr_job {args} {
 	 }
 	# which samples are there
 	job_logdir $destdir/log_jobs
+	if {[file exists $destdir/samples]} {
+		set sampledir $destdir/samples
+	} else {
+		set sampledir $destdir
+	}
 	set samples {}
 	foreach file [dirglob $destdir */fastq] {
 		lappend samples [file dir $file]
@@ -379,7 +405,7 @@ proc process_mastr_job {args} {
 		lappend histofiles $sample/[regsub {map-} [file tail [file root $cleanbam]] {}].histo
 		# samtools variant calling on map-rs${aligner}
 		if {$useminigenome} {
-			var_sam_job $cleanbam $refseq -pre $pre -split $split
+			var_sam_job $cleanbam $refseq -pre $pre -split $split -BQ $samBQ
 			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets varall-sam-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
@@ -389,7 +415,7 @@ proc process_mastr_job {args} {
 			}
 			sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv
 		} else {
-			var_sam_job $cleanbam $refseq -pre $pre -bed $mastrdir/reg-inner-$mastrname.bed -split $split
+			var_sam_job $cleanbam $refseq -pre $pre -bed $mastrdir/reg-inner-$mastrname.bed -split $split -BQ $samBQ
 		}
 		lappend todo sam-$resultbamprefix${aligner}-$sample
 		if {$useminigenome} {
@@ -427,36 +453,7 @@ proc process_mastr_job {args} {
 
 proc cg_process_mastr {args} {
 	set args [job_init {*}$args]
-	set useminigenome 0
-	set aligner bwa
-	set cleanup 1
-	cg_options process_mastr args {
-		-m - --minigenome {
-			set useminigenome $value
-		}
-		-a - --aligner {
-			set aligner $value
-		}
-		-c - --cleanup {
-			set cleanup $value
-		}
-		-clipamplicons {
-			set clipamplicons $value
-		}
-		-split {
-			set split $value
-		}
-	} {mastrdir destdir dbdir} 2 3
-	set mastrdir [file_absolute $mastrdir]
-	set destdir [file_absolute $destdir]
-	set dbdir [file_absolute $dbdir]
-	set mastrname [file root [file tail $mastrdir]]
-	if {![info exists clipamplicons]} {set clipamplicons $mastrdir/samplicons-$mastrname.tsv}
-	# check projectinfo
-	projectinfo $destdir dbdir mastrdir {split 1}
-	process_mastr_job $mastrdir $destdir $dbdir -useminigenome $useminigenome \
-		-aligner $aligner -split $split -cleanup $cleanup \
-		-clipamplicons $clipamplicons
+	process_mastr_job {*}$args
 	job_wait
 }
 

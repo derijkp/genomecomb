@@ -465,6 +465,7 @@ proc var_sam_job {bamfile refseq args} {
 	set pre ""
 	set opts {}
 	set split 0
+	set BQ 13
 	foreach {key value} $args {
 		if {$key eq "-l"} {lappend deps $value}
 		if {$key eq "-bed"} {
@@ -474,6 +475,8 @@ proc var_sam_job {bamfile refseq args} {
 			set pre $value
 		} elseif {$key eq "-split"} {
 			set split $value
+		} elseif {$key eq "-BQ"} {
+			set BQ $value
 		} else {
 			lappend opts $key $value
 		}
@@ -489,9 +492,9 @@ proc var_sam_job {bamfile refseq args} {
 	}
 	set deps [list $file $refseq $refseq.fai {*}$deps]
 	job ${pre}varall-sam-$root -deps $deps -targets {${pre}varall-sam-$root.vcf} \
-		-vars {refseq opts} -skip ${pre}varall-sam-$root.tsv -code {
+		-vars {refseq opts BQ} -skip ${pre}varall-sam-$root.tsv -code {
 		# bcftools -v for variant only
-		exec samtools mpileup -uDS -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
+		exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
 		file rename -force $target.temp $target
 	}
 	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv -vars split -code {
