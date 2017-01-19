@@ -1284,6 +1284,44 @@ test pmulticompar$testname {coverageRefScore tsv file} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
+test pmulticompar$testname {varall coverage with del} {
+	test_cleantmp
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage	totalcoverage
+		chr1	100	101	snp	T	C	t	T	C	40	41
+	}
+	write_tab tmp/varall-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage	totalcoverage
+		chr1	100	101	snp	T	C	t	T	C	40	41
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage	totalcoverage
+		chr1	100	101	del	T	{}	m	{}	{}	30	31
+	}
+	write_tab tmp/varall-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2	coverage	totalcoverage
+		chr1	100	101	del	T	{}	m	{}	{}	30	31
+		chr1	100	101	snp	T	.	t	T	T	30	31
+	}
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	file copy -force tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	# deletions overlapping with a snp variant (sample2) are properly caught
+	# and assigned zyg=o and alleles @ (meaning something different from reference)
+	# for snps overlapping a deletion (sample1) this is not checked (would require lookahead)
+	# so the call for the del in sample1 is r T T instead of the more correct o T C
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	totalcoverage-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	totalcoverage-sample2
+		1	100	101	del	T	{}	r	r	T	T	40	41	v	m	{}	{}	30	31
+		1	100	101	snp	T	C	v	t	T	C	40	41	r	o	@	@	30	31
+	}
+	file delete tmp/temp.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
 }
 
 test_cleantmp

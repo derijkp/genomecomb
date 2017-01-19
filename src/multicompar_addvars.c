@@ -102,9 +102,6 @@ void orivarmatch(VarFile *orivars, int *orikeepposs, int orikeepsize, DelInfo *o
 				}
 			}
 		}
-	} else {
-		orid->start = -1;
-		orid->end = -1;
 	}
 }
 
