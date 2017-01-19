@@ -302,3 +302,14 @@ int lz4_read(LZ4res *res, void *data, uint64_t size) {
 	res->currentpos += read;
 	return(read);
 }
+
+int lz4_get(LZ4res *res) {
+	uint64_t startblock;
+	unsigned int skip;
+	startblock = res->currentpos/res->blocksize;
+	skip = res->currentpos-(startblock*res->blocksize);
+	/* decompress */
+	if (!lz4_readblock(res,startblock++) || skip >= res->writesize) {return EOF;}
+	res->currentpos++;
+	return (res->writebuffer[skip]);
+}

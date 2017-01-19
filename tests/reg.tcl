@@ -10,6 +10,15 @@ test multireg {basic} {
 	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg2.sft
 } {}
 
+test multireg {basic compressed} {
+	file delete tmp/temp.tsv
+	file copy data/reg1.tsv data/reg2.tsv tmp
+	cg lz4 {*}[glob tmp/*.tsv]
+	file delete tmp/temp.tsv
+	exec cg multireg tmp/temp.tsv tmp/reg1.tsv.lz4 tmp/reg2.tsv.lz4
+	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg2.sft
+} {}
+
 test multireg {same} {
 	file delete tmp/temp.tsv
 	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg1b.tsv
