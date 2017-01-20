@@ -25,6 +25,12 @@ if 0 {
 
 }
 
+proc checkdiff args {
+	global e
+	set err [catch {exec diff {*}$args} e]
+	if {$err && $e ne {child process exited abnormally}} {error $e}
+}
+
 test process {process_illumina exomes yri chr2122} {
 	cd $::bigtestdir	
 	file delete -force tmp/exomes_yri_chr2122
@@ -46,11 +52,9 @@ test process {process_illumina exomes yri chr2122} {
 	}
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseq/hg19_test tests/yri_exome
 	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir refseq/hg19_test tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
-	catch {exec diff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"} e
-	if {$e ne {child process exited abnormally}} {error $e}
-	catch {exec diff -qr tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122 | grep -v log_jobs | grep -v reports/fastqc | grep -v bam.dupmetrics} e
-	# file_write temp $e
-	if {$e ne {child process exited abnormally}} {error $e}
+	# check vs expected
+	checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"
+	checkdiff -qr -x *log_jobs -x fastqc_report* -x *bam.dupmetrics tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
 } {}
 
 if 0 {
@@ -62,19 +66,22 @@ tdiff temp1 temp2 | less
 
 test process {process_sample genome yri chr2122} {
 	cd $::bigtestdir
-	set ref /complgen/refseq/testdb2/hg19
-	file delete -force tmp/genomes_yri_chr2122_one
+	set ref $::bigtestdir/refseq/hg19_test
 	set dest tmp/genomes_yri_chr2122_one
+	file delete -force $dest
 	file mkdir $dest/samples/testNA19240chr2122cg
 	mklink ori/genomes_yritrio_chr2122.start/samples/testNA19240chr2122cg.ori $dest/samples/testNA19240chr2122cg/ori
-	cg process_sample --stack 1 --verbose 2 -split 1 -dbdir $ref $dest/samples/testNA19240chr2122cg
-	exec diff -r $dest/samples/testNA19240chr2122cg expected/genomes_yri_chr2122/samples/testNA19240chr2122cg
+	cg process_sample --stack 1 --verbose 2 -split 1 -dbdir $ref $dest/samples/testNA19240chr2122cg 2>@ stderr >@ stdout
+	# check vs expected
+	checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122_one/samples/testNA19240chr2122cg/summary-testNA19240chr2122cg.txt expected/genomes_yri_chr2122/samples/testNA19240chr2122cg/summary-testNA19240chr2122cg.txt | grep -v "finished.*finished"
+	checkdiff -qr -x log_jobs -x summary-testNA19240chr2122cg.txt tmp/genomes_yri_chr2122_one/samples/testNA19240chr2122cg expected/genomes_yri_chr2122/samples/testNA19240chr2122cg
+	# file_write temp $e
 } {}
 
 test process {genomes yri chr2122} {
 	cd $::bigtestdir	
-	file delete -force tmp/genomes_yri_chr2122
 	set dest tmp/genomes_yri_chr2122
+	file delete -force $dest
 	file mkdir $dest
 	foreach sample {
 		testNA19238chr2122cg testNA19239chr2122cg testNA19240chr2122cg
@@ -90,10 +97,14 @@ test process {genomes yri chr2122} {
 	# mklink ori/genomes_yritrio_chr2122.start/samples/testNA19240chr21il.ori/NA19240_GAIIx_100_chr21.bam $dest/samples/testNA19240chr21il/map-rdsbwa-testNA19240chr21il.bam
 	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/genomes_yri_chr2122
 	cg process_project --stack 1 --verbose 2 -split 1 -dbdir refseq/hg19_test $dest 2>@ stderr >@ stdout
-	# file delete -force tmp/genomes_yri_chr2122/log_jobs tmp/genomes_yri_chr2122/samples/*/log_jobs
-	catch {exec diff -qr tmp/genomes_yri_chr2122 expected/genomes_yri_chr2122 | grep -v log_jobs | grep -v fastqc_report} e
-	set e
-} {child process exited abnormally}
+	# check vs expected
+	foreach cgsample {testNA19238chr2122cg testNA19239chr2122cg testNA19240chr2122cg} {
+		checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_chr2122/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"
+	}
+	checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics expected/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics | grep -v "Started on"
+	checkdiff -qr -x *log_jobs -x fastqc_report* -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri_chr2122 expected/genomes_yri_chr2122
+	# file_write temp $e
+} {}
 
 cd $keepdir
 

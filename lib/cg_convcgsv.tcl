@@ -18,7 +18,8 @@ proc convcgsv {srcfile dstfile} {
 	}
 	set nheader {chromosome begin end type id strand1 start1 end1 size strand2 chr2 start2 end2 score scoretype transitionLength}
 	lappend nheader {*}[list_sub $header -exclude $poss]
-	set o [open $dstfile.temp w]
+	set tempfile [filetemp $dstfile]
+	set o [open $tempfile w]
 	puts $o [join $nheader \t]
 	set last [expr {[llength $header]-1}]
 	while {![eof $f]} {
@@ -64,7 +65,8 @@ proc convcgsv {srcfile dstfile} {
 	}
 	close $o
 	gzclose $f
-	cg select -s - $dstfile.temp $dstfile
+	cg select -s - $tempfile $dstfile
+	file delete $tempfile
 }
 
 proc cg_convcgsv {args} {
@@ -72,6 +74,7 @@ proc cg_convcgsv {args} {
 		errorformat convcgsv
 	}
 	foreach {srcfile dstfile} $args break
-	convcgsv $srcfile $dstfile.temp
-	file rename -force $dstfile.temp $dstfile
+	set tempfile [filetemp $dstfile]
+	convcgsv $srcfile $tempfile
+	file rename -force $tempfile $dstfile
 }

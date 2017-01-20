@@ -328,7 +328,6 @@ proc multicompar_tcl_addvars {sample target split allvarsfile samplevarsfile sre
 				set out_a2 ?
 			}
 		}
-#if {$begin == 150} {error stop}
 		foreach {pos type} $todo {
 			switch $type {
 				bcol {

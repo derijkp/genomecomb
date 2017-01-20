@@ -992,7 +992,7 @@ proc lz4_job {file args} {
 	}
 }
 
-proc filetemp {file} {
+proc filetemp {file {write 1}} {
 	if {![file exists $file.temp]} {
 		set result $file.temp
 	} else {
@@ -1000,7 +1000,7 @@ proc filetemp {file} {
 		while {[file exists $file.temp$num]} {incr num}
 		set result $file.temp$num
 	}
-	file_write $result {}
+	if {$write} {file_write $result {}}
 	return $result
 }
 

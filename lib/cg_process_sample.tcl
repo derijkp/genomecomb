@@ -215,33 +215,45 @@ proc process_sample_cgi_job {workdir split} {
 	job cg_cpSV-$sample -optional 1 {ori/ASM/SV ^ori/ASM/SV/(.*)$} {SV/\_} {
 		putslog "Copying SV"
 		set targetdir [file dir $target]
+		set tempdir [filetemp $targetdir]
+		file delete $tempdir
+		file copy $dep $tempdir
 		file delete -force $targetdir
-		file delete -force $targetdir.temp
-		file copy $dep $targetdir.temp
-		file rename -force $targetdir.temp $targetdir
+		file rename -force $tempdir $targetdir
 	}
 	job cg_cgsv-$sample -optional 1 {SV/allJunctionsBeta-*.tsv} {cgsv-$sample.tsv} {
-		cg convcgsv $dep $target
+		set tempfile [filetemp $target]
+		convcgsv $dep $tempfile
+		file rename -force $tempfile $target
 	}
 	job cg_cgsv_alpha-$sample -optional 1 {SV/annotatedJunctionsAlpha-*.tsv} {cgsv-$sample.tsv} {
-		cg convcgsv $dep $target
+		set tempfile [filetemp $target]
+		convcgsv $dep $tempfile
+		file rename -force $tempfile $target
 	}
 	job cg_cpCNV-$sample -optional 1 {ori/ASM/CNV ^ori/ASM/CNV/(.*)$} {CNV/\_} {
 		putslog "Copying CNV"
 		set targetdir [file dir $target]
+		set tempdir [filetemp $targetdir]
+		file delete $tempdir
+		file copy $dep $tempdir
 		file delete -force $targetdir
-		file delete -force $targetdir.temp
-		file copy $dep $targetdir.temp
-		file rename -force $targetdir.temp $targetdir
+		file rename -force $tempdir $targetdir
 	}
 	job cg_cgcnv -optional 1 {CNV/cnvSegmentsBeta-*.tsv} {cgcnv-$sample.tsv} {
-		cg convcgcnv $dep $target
+		set tempfile [filetemp $target]
+		convcgcnv $dep $tempfile
+		file rename -force $tempfile $target
 	}
 	job cg_cgcnv_diploid-$sample -optional 1 {CNV/cnvSegmentsDiploidBeta-*.tsv} {cgcnv-$sample.tsv} {
-		cg convcgcnv $dep $target
+		set tempfile [filetemp $target]
+		convcgcnv $dep $tempfile
+		file rename -force $tempfile $target
 	}
 	job cg_cgcnv_alpha-$sample -optional 1 {CNV/cnvSegmentsAlpha-*.tsv} {cgcnv-$sample.tsv} {
-		cg convcgcnv [gzfile $dep] $target
+		set tempfile [filetemp $target]
+		convcgcnv $dep $tempfile
+		file rename -force $tempfile $target
 	}
 	# multiarch
 	job reg_cluster-$sample -optional 1 {annotvar-$sample.tsv} {reg_cluster-$sample.tsv} {
@@ -262,12 +274,15 @@ proc process_sample_cgi_job {workdir split} {
 		}
 	}
 	job cg_fannotvar-$sample -optional 1 {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage/bcol_coverage-$sample.tsv) (coverage/bcol_refscore-$sample.tsv)} {fannotvar-$sample.tsv} {
-		set temp [filetemp $target]
+		set temp [filetemp $target 0]
 		cg annotate $dep $temp {*}[list_remove [lrange $deps 1 end] {}]
 		cg_lz4 -keep 0 -i 1 -o $target.lz4 $temp
+		file delete -force $temp.index
+		file delete -force $dep.index
 	}
-	job cg_multitechlink_var-$sample -optional 1 {fannotvar-$sample.tsv} {var-cg-cg-$sample.tsv} {
+	job cg_multitechlink_var-$sample -optional 1 {fannotvar-$sample.tsv.lz4} {var-cg-cg-$sample.tsv.lz4} {
 		gzmklink $dep $target
+		catch {mklink $dep.lz4i $target.lz4i}
 	}
 	job cg_multitechlink_sreg-$sample -optional 1 {sreg-$sample.tsv} {sreg-cg-cg-$sample.tsv} {
 		gzmklink $dep $target
