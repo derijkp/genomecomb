@@ -7,7 +7,7 @@ cg bcol get bcolfile ?chromosome? begin end
 Get a list of values from a bcol file
 
 == Description ==
-bcol_get extracts the values in the given region from a [[format_bcol|bcol file]] and
+bcol_get extracts the values in the given region from a [[bcol]] file and
 returns them as a (space separated) list.
 
 == Arguments ==

@@ -4,7 +4,7 @@
 cg tsv2bed ?infile? ?outfile?
 
 == Summary ==
-Converts data in [[format_tsv|tab-separated format]] format to bed format.
+Converts data in tab-separated format ([[tsv]]) format to bed format.
 By default it will create a minimal bed file by extracting chromosome,begin and end
 from the input using the default fields.
 

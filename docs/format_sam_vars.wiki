@@ -1,0 +1,42 @@
+= samtools based variant file =
+
+Variant files created by genomecomb using the samtools variant caller are in
+the usual genomecomb tab-separated variant file format ([[tsv]]).
+besides the usual fields of a variant tsv file, they (can) also contain
+the following columns:
+
+; totalcoverage: Raw read depth (DP in vcf INFO); samtools does not count all mapping reads for totalcoverage (bad reads are filtered out)
+; coverage: number of high-quality bases (DP in vcf FORMAT); bases with quality < 13 are filtered out as well
+; genoqual: genotype quality, encoded as a phred quality -10log_10p(genotype call is wrong)
+; phased: 1 if genotype is phased, 0 otherwise
+; genotypes: list of allele numbers (0 for ref, 1 for first alt, ...) (GT in vcf)
+The alleles are comma (,) separated for phased genotypes (| in vcf), and ";" separated for unphased (/ in vcf).
+In contrast to alleleSeq1 and alleleSe2, this field allows for ploidies other than 2
+; loglikelihood: Likelihoods for RR,RA,AA genotypes (R=ref,A=alt)
+; DV: number of high-quality non-reference bases
+; SP: Phred-scaled strand bias P-value
+; PL: List of Phred-scaled genotype likelihoods
+; DP4: number of high-quality ref-forward bases, ref-reverse, alt-forward and alt-reverse bases
+; MQ: Root-mean-square mapping quality of covering reads
+; FQ: Phred probability of all samples being the same
+; AF1: Max-likelihood estimate of the first ALT allele frequency (assuming HWE)
+; AC1: Max-likelihood estimate of the first ALT allele count (no HWE assumption)
+; totalallelecount: Total number of alleles in called genotypes
+; IS: Maximum number of reads supporting an indel and fraction of indel reads
+; allelecount: Allele count in genotypes for each ALT allele, in the same order as listed
+; G3: ML estimate of genotype frequencies
+; HWE: Chi^2 based HWE test P-value based on G3
+; CLR: Log ratio of genotype likelihoods with and without the constraint
+; UGT: The most probable constrained genotype configuration in the trio
+; CGT: P-values for strand bias, baseQ bias, mapQ bias and tail distance bias
+; PV4: P-values for strand bias, baseQ bias, mapQ bias and tail distance bias
+; INDEL: Indicates that the variant is an INDEL.
+; PC2: Phred probability of the nonRef allele frequency in group1 samples being larger (,smaller) than in group2.
+; PCHI2: Posterior weighted chi^2 P-value for testing the association between group1 and group2 samples.
+; QCHI2: Phred scaled PCHI2
+; PR: number of permutations yielding a smaller PCHI2.
+; QBD: Quality by Depth: QUAL/#reads
+; RPB: Read Position Bias
+; MDV: Maximum number of high-quality nonRef reads in samples
+; VDB: Variant Distance Bias (v2) for filtering splice-site artefacts in RNA-seq data. Note: this version may be broken.
+; cluster: variant is in a region containing many closeby variant calls

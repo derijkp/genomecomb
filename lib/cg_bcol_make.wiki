@@ -4,10 +4,10 @@
 cg bcol make ?options? bcolfile column ?srcfile?
 
 == Summary ==
-Creates a [[format_bcol|bcol file]]
+Creates a [[bcol]] file
 
 == Description ==
-The bcol_make commands creates a [[format_bcol|bcol file]] based on tab-separated data.
+The bcol_make commands creates a [[bcol]] file based on tab-separated data.
 The input data is given via stdin. The data in one of the columns (given as a parameter)
 in the file is converted to the binary format. 
 
@@ -33,7 +33,7 @@ using the -m and -l options.
 ; **srcfile**: Name of the file used for providing input data (if not given, default is from stdin)
 
 == Options ==
-; **-t type**: type of data, should be one described in the description of the format ([[format_bcol|format_bcol]])
+; **-t type**: type of data, should be one described in the description of the format ([[bcol]])
 ; **--precision precision**: default precision for display of data in bcol
 ; **-d defaultvalue** (--default): value that will be given for positions not in the input file
 ; **-h header** (--header): set to 0 (default is 1) if the input data does not have a header (in this case chromosomecol and poscol must be given by number, starting from 0)

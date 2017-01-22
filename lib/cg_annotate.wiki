@@ -45,14 +45,14 @@ Variants are checked for overlap with regions in the file.
 to annotate variants that match the given values. Typically, columns freq and id are present for annotation.
 Thus, only variants that match the alleles given in alt will be annotated. If there are multiple alt 
 values (separated by commas), the freq annotation will also contain multiple fields (separated by commas).
-var databases can also be a (multivalued) [[format_bcol|bcol formatted]] file instead of 
-a [[format_tsv|tsv]]; this is indicated by the extension bcol
+var databases can also be a (multivalued) bcol formatted ([[bcol]]) file instead of 
+a [[tsv]]; this is indicated by the extension bcol
 ; **gene**: gene files (in genepred-like format). Variants will be annotated with the effects they have on 
 the genes in these files as descibed below.
 ; **mir**: The effect of variants on miRNA genes is annotated based on a tsv file of the miRNA 
 genes. (more detail below)
 ; **bcol**: bcol databases are used to annotate positions (e.g. snps) with a given value. Database 
-files are in the [[format_bcol|bcol format]] (also extension bcol).
+files are in the [[bcol]] format (also extension bcol).
 
 If a database filename does not start with one of these types, 
 it will be considered a regions database.

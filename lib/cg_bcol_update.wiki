@@ -7,7 +7,7 @@ cg bcol update newbcolfile oldbcolfile ?oldbcolfile2? ...
 updates bcol file(s) in the old format to the new
 
 == Description ==
-There was an older version of the [[format_bcol|bcol format]] that did not support multiple 
+There was an older version of the [[bcol]] format that did not support multiple 
 chromosomes or multiple alleles.
 Files in this older format can be converted to the new using this command.
 Sometimes multiple bcol files were used for different chromosomes. To integrate thse into 

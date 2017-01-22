@@ -1,0 +1,38 @@
+= gatk based variant file =
+
+Variant files created by genomecomb using the GATK variant caller are in
+the usual genomecomb tab-separated variant file format ([[tsv]]).
+besides the usual fields of a variant tsv file, they (can) also contain
+the following fields:
+
+; totalcoverage: Total Depth, counting all reads (DP in vcf INFO)
+; coverage: Read Depth, counting only filtered reads used for calling, and only from one samples (DP in vcf FORMAT)
+; genoqual: genotype quality, encoded as a phred quality -10log_10p(genotype call is wrong)
+; haploqual: haplotype qualities, two phred qualities comma separated
+; phased: 1 if genotype is phased, 0 otherwise
+; genotypes: list of allele numbers (0 for ref, 1 for first alt, ...) (GT in vcf)
+The alleles are comma (,) separated for phased genotypes (| in vcf), and ";" separated for unphased (/ in vcf).
+In contrast to alleleSeq1 and alleleSe2, this field allows for ploidies other than 2
+; alleledepth: Allelic depths for the ref and alt alleles in the order listed
+; PL: Normalized, Phred-scaled likelihoods for AA,AB,BB genotypes where A=ref and B=alt; not applicable if site is not biallelic
+; allelecount: predicted allele count in genotypes, for each alt allele, in the same order as listed
+; frequency: predicted allele frequency for each alt allele in the same order as listed
+; totalallelecount: predicted total number of alleles in called genotypes
+; BaseQRankSum: Phred-scaled p-value From Wilcoxon Rank Sum Test of Alt Vs. Ref base qualities
+; DS: Were any of the samples downsampled?
+; Dels: Fraction of Reads Containing Spanning Deletions
+; FS: Phred-scaled p-value using Fisher's exact test to detect strand bias
+; HaplotypeScore: Consistency of the site with at most two segregating haplotypes
+; InbreedingCoeff: Inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation
+; MLEAC: Maximum likelihood expectation (MLE) for the allele counts (not necessarily the same as the AC), for each ALT allele, in the same order as listed
+; MLEAF: Maximum likelihood expectation (MLE) for the allele frequency (not necessarily the same as the AF), for each ALT allele, in the same order as listed
+; MQ: RMS Mapping Quality
+; MQ0: Total Mapping Quality Zero Reads
+; MQRankSum: Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities
+; NDA: Number of alternate alleles discovered (but not necessarily genotyped) at this site
+; QD: Variant Confidence/Quality by Depth
+; RPA: Number of times tandem repeat unit is repeated, for each allele (including reference)
+; RU: Tandem repeat unit (bases)
+; ReadPosRankSum: Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias
+; STR: Variant is a short tandem repeat
+; cluster: variant is in a region containing many closeby variant calls

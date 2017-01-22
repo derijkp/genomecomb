@@ -1,54 +1,84 @@
 = genome project directory =
 
-Data is preferentially organised in a specific way in a genome project
-directory or projectdir for short. Some of the commands (especially the
-process_* ones) expect or generate this type of analysis directories.
-The preferred organisation is described here.
+Although most genomecomb commands can be individually run on files located
+anywhere, some of the commands expect or generate data organised in a specific
+project structure: A genomecomb project directory or **projectdir** for short
+is a directory containing (links to) raw data and analysis in this 
+particular structure, which is described in this help.
 
-The name of the projectdir is the name of the project. The projectdir can
-contain the following:
+The [[cg_process_project|cg proccess_project]] command can e.g. be used
+to generate a projectdir with full analysis information (variant calls, 
+multicompar, reports, ...) starting from raw sample data from various sources.
 
-; **samples directory**: contains a separate sample directory for each sample
-; **compar directory**: contains files that combine and compare data from all samples (multicompar files)
-; **projectinfo.tsv**: a file with some meta data about the analysis/data in the projectdir
+== overview ==
+A projectdir basically contains individual sample directories (in the
+subdirectory samples) and overview data (samples comparisons) in the following structure:
+; samples: directory containing a separate sample directory for each sample
+; compar: directory containing files that combine and compare data from all samples (multicompar files)
+; projectinfo.tsv: a file with some meta data about the analysis/data in the projectdir
+As long as compatible analysis (same reference genome, split or unsplit
+variants) were used, the same sampledir can be used in multiple
+projects (e.g. using a soft link).
 
-== samples directory ==
-This directory contains a subdirectory for each sample in the project.
-Each sample subdirectory (sampledir) has the name of the sample.
+The **project name** is taken from the filename of the projectdir. The
+project name will be used (a.o.) in naming most of the overview files.
+These filenames will end with a hyphen-minus character followed by the
+projectsname. For this reason, the hyphen-minus character may not be used
+in the projectname.
 
-=== sampledir ===
-Each sampledir contains a subdirectory named fastq that contains the fastq
-files for that sample. The names of matching fastq files of paired reads
-should be consecutive when sorted naturaly,the forward reads first. The
-usual naming of these files (same name, except for a 1 and 2) is ok. The
-name of each sample is taken from the sampledir name. The sample name
-should not contain hyphens (-)
+Most of the result files in a projectdir/sampledir are tab-separated value
+files (file extension tsv) of various types (described in [[tsv]]).
+For space reasons, files are often compressed. genomecomb tools can generally
+handle compressed files transparently.
 
-All files generated have names following the convention of using hyphens
+== sample directory ==
+Indivual sample data is in subdirectories of the samples directory in the
+projectdir. Each of these sampledirs contains the raw data and analysed
+data from one sample. The **sample name** is taken from the filename of
+the sampledir. As hyphen-minus characters are used in naming the analysis
+results files ending with the sample name, this character (-) should not be
+present in the name.
+
+=== sample source data ===
+;ori: A sampledir can contain a (link to a) directory containing the
+original sequnencing data, named ori. The commands [[cg_process_sample]]
+or [[cg_process_project]] can be used to analyse the data and produce a
+fully filled sampledir/projectdir
+
+;fastq: If the original data is in the form of fastq files, the fastq
+files for that sample are present in a subdirectory named **fastq**. (If
+fastq files are found in the ori directory, a fastq dir is made, and the
+files linked.)
+The names of matching fastq files of paired reads should be consecutive
+when sorted naturaly,the forward reads first. The usual naming of these
+files (same name, except for a 1 and 2) is ok. 
+
+=== sample results ===
+All files generated have names following the convention of using hyphen-minus
 to separate different elements of the file. The first element indicates
 what is in the file. The last element (before the extension) is the sample
-name. There can be several steps in between. Each sampledir can contain
-results for this individual sample of the following type:
+name. There can be several steps in between.
 
+Each sampledir can contain results for this individual sample of the following type:
 ; map-rdsbwa-sample1.bam: bam file created by aligning the reads of sample1
 to the reference genome in dbdir using bwa. The bam file has been sorted
 (s), duplicate marked (d), and realigned (r).
-; var-gatk-rdsbwa-sample1.tsv: a [[format_tsv|tsv variant file]] that contains
+; var-gatk-rdsbwa-sample1.tsv: a [[tsv]] variant file that contains
 variants called by gatk based on map-rdsbwa-sample1.bam. 
 ; sreg-gatk-rdsbwa-sample1.tsv: A region file with all regions that can be
 considered sequenced using the same methods and quality measures as
 var-gatk-rdsbwa-sample1.tsv. Any position in those regions that is not in
 the variant file can be called reference with the same reliability as the
 variant calls.
-; varall-gatk-rdsbwa-sample1.tsv: variant calling data by gatk for all
+; varall-gatk-rdsbwa-sample1.tsv: variant file containing variant calls by gatk for all
 positions with >= 5 coverage (also reference called positions). This file
 is used to create the sreg files, and to update data in making multicompar 
 files later.
 ; reg_cluster-gatk-rdsbwa-S0489.tsv: regions with many clustered variants
 (which are less reliable)
 
-For samtools variant calling on the same bamfile (map-rdsbwa-sample1.bam),
-these result files are named var-sam-rdsbwa-sample1.tsv,
+The result files from samtools variant calling on the same bamfile
+(map-rdsbwa-sample1.bam), are named var-sam-rdsbwa-sample1.tsv,
 sreg-sam-rdsbwa-sample1.tsv, varall-sam-rdsbwa-sample1.tsv,
 reg_cluster-sam-rdsbwa-S0489.tsv
 
@@ -74,7 +104,7 @@ interest, known variant data)
 regions whether they are sequenced (1) or nor (0) for each sample.
 
 == projectinfo.tsv ==
-projectinfo.tsv is a [[format_tsv|tsv file]] containing data about the project.
+projectinfo.tsv is a [[tsv]] file containing data about the project.
 It must have 2 columns: key and value. The following keys can be found:
 
 ; dbdir: directory containing reference data (genome sequence,
@@ -82,4 +112,3 @@ annotation, ...). projectinfo.tsv file.
 ; split: if 1, each alternative allele is on a separate line. If 0,
 multiple alternative alleles in the sample location and allele specific data 
 are on one line, the relevant fields containing (comma separated) lists.
-

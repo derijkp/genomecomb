@@ -4,7 +4,7 @@
 cg bcol table ?options? bcolfile ?start? ?end?
 
 == Summary ==
-Outputs the data in a [format_bcol|bcol file]] as tab-separated
+Outputs the data in a [[bcol]] file as tab-separated
 
 == Description ==
 Outputs the tab delimited version of the data in the bcol file (to stdout).

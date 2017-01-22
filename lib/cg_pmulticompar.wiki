@@ -52,7 +52,7 @@ Using the same command, you can add new samples to an existing multicompar
 file. pmulticompar needs the original variant files and accompanying files
 for the existing multicompar file. It can find these files (based on
 filename) easily if everything is organised in a
-[[format_project|Genomecomb project directory]] (hint: You can add samples in
+[[projectdir]] (hint: You can add samples in
 another projectdir without duplication using symbolic links)
 pmulticompar will look however in various places relative to the
 multicompar file (same directory, samples directory in same dir, parent

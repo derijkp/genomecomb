@@ -25,7 +25,7 @@ You can find info on each separate command in the [[reference]] section.
 == File formats ==
 
 The standard file format used in GenomeComb is the widely supported,
-simple, yet flexible [[format_tsv|tab-separated values file (tsv)]]. This
+simple, yet flexible tab-separated values file ([[tsv]]). This
 text format contains tabular data, where each line is a record, and each
 field is separated from the next by a TAB character. The first line is a
 header indicating the names of each column
@@ -67,7 +67,7 @@ unless by coding them using escape characters (\t,\n)
 
 == Project directories ==
 While not necessary for many of the commands, using the specific organisation of files in
-a [[format_project|Genomecomb project directory]] is useful: The overview
+a Genomecomb project directory ([[projectdir]]) is useful: The overview
 commands (process_*) will generate or expect this structure.
 
 == How to start ==

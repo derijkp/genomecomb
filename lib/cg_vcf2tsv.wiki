@@ -4,12 +4,41 @@
 cg vcf2tsv ?infile? ?outfile?
 
 == Summary ==
-Converts data in vcf format to tsv (tab separated, simple feature table) format.
+Converts data in vcf format to genomecomb tab-separated variant file ([[tsv]]).
 The command will also sort the tsv appropriately.
 
 == Arguments ==
-; **infile**: file to be converted, if not given, uses stdin. File may be compressed.
-; **outfile**: write results to outfile, if not given, uses stdout
+; infile: file to be converted, if not given, uses stdin. File may be compressed.
+; outfile: write results to outfile, if not given, uses stdout
+
+== Results ==
+**outfile** is a tab-separated variant file ([[tsv]]). The header
+section of the vcf is included as comments in the tsv file. The fields
+describing the variant (chromosome, begin, end, type, ref, alt) are in the
+normal genomecomb conventions. The fields ID and QUAL in the vcf file are
+in the tsv as "name" and "quality" respectively. If genotype data is
+present, the normal genocomb fields (alleleSeq1, alleleSeq2, zyg,
+phased,genotypes) are added.
+
+All other information in the FORMAT or INFO data is converted into extra
+columns in the result file. These get a named by the ID code in the
+original vcf file, except for the following (common) fields that get a
+longer (more informative) name:
+
+; AD: alleledepth (Allelic depths for the ref and alt alleles in the order listed)
+; GT: genotype
+; DP in INFO: totalcoverage (Total Depth, counting all reads)
+; DP in FORMAT: coverage (Read Depth, counting only filtered reads used for calling, and only from one sample)
+; FT: filter
+; GL: loglikelihood (three floating point log10-scaled likelihoods for AA,AB,BB genotypes where A=ref and B=alt; not applicable if site is not biallelic)
+; GQ: genoqual (genotype quality, encoded as a phred quality -10log_10p(genotype call is wrong))
+; HQ: haploqual (haplotype qualities, two phred qualities comma separated)
+; AN: totalallelecount (total number of alleles in called genotypes)
+; AC: allelecount (allele count in genotypes, for each alt allele, in the same order as listed)
+; AF: frequency (allele frequency for each alt allele in the same order as listed)
+; AA: Ancestralallele
+; DB: dbsnp
+; H2: Hapmap2
 
 == Category ==
 Conversion

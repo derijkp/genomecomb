@@ -7,7 +7,7 @@ cg bcol subcommand ?options? ...
 several commands for managing bcol files
 
 == Description ==
-The bcol command encompasses several subcommands for managing [[format_bcol|bcol files]] 
+The bcol command encompasses several subcommands for managing [[bcol]] files.
 (files for storing data (numbers) in an efficient binary format).
 The subcommands can be run using "cg bcol subcommand ?options? ..."
 as well as "cg bcol_subcommand ?options? ..."

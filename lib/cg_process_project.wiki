@@ -1,0 +1,123 @@
+= Process_project =
+
+== Format ==
+cg process_project ?options? projectdir ?dbdir?
+
+== Summary ==
+process a sequencing project directory ([[projectdir]]), generating full
+analysis information (variant calls, multicompar, reports, ...) starting
+from raw sample data from various sources.
+
+== Description ==
+The main command expects a basic genomecomb project directory (as
+described extensively in [[projectdir]]) containing a number of
+samples with raw data (fastq, Complete genomics results, ...). It will
+analyse all samples in the projectdir, generating variant calls, reports,
+comparison of variants over samples, ...
+
+The projectdir should contain a subdirectory for each sample (sampledir) in
+the project. The sample directories may also be in a subdirectory called
+samples (which is more organized). Each sampledir contains a subdirectory
+named fastq that contains the fastq files for that sample. The names of
+matching fastq files of paired reads should be consecutive when sorted
+naturaly,the forward reads first. The usual naming of these files (same
+name, except for a 1 and 2) is ok. Only subdirectories containing these
+fastq dirs are considered sampledirs. The name of each sample is taken
+from the sampledir name. The sample name should not contain hyphens (-)
+
+== overview/comparison data ==
+In projectdir a subdirectory compar will be made. This will contain 
+comparisons of all samples:
+; annot_compar-projectname.tsv: multicompar file containing information for
+all variants in all samples (and all methods). If a variant is not present
+in one of the samples, the information at the position of the variant will
+be completed (is the position sequenced or not, coverage, ...) The file is
+also annotated with all databases in dbdir (impact on genes, regions of
+interest, known variant data)
+; sreg-project.tsv: sequenced region multicompar file containing for all
+regions whether they are sequenced (1) or nor (0) for each sample.
+
+== Arguments ==
+; **projectdir**: project directory with illumina data for different
+samples, each sample in a sub directory. The proc will search for fastq
+files in dir/samplename/fastq/
+; **dbdir**: directory containing reference data (genome sequence,
+annotation, ...). dbdir can also be given in a projectinfo.tsv file in the
+project directory. process_illumina called with the dbdir parameter will
+create the projectinfo.tsv file.
+
+== Options ==
+; **-realign value**: If **value** is 0, realignment will not be performed, 
+use 1 for (default) realignment with gatk, or srma for alignment with srma
+if 1, bam files are realigned using gatk, use **value** srma to align using srma.
+; **-split 1/0**: split multiple alternative genotypes over different line
+; **-dbdir dbdir**: **dbdir** can also be given as an option (instead of second parameter)
+; **-paired 1/0**: sequenced are paired/unpaired
+; **-adapterfile file**: Use **file** for possible adapter sequences
+; **-dbfile file**: Use **file** for extra (files in **dbdir** are already used) annotation 
+; **-conv_nextseq 1/0**: generate fastqs for nextseq run & create sample folders - rundir should be placed in projectdir
+of resulting variants. This option can be added multiple times (with different files)
+; **-bedfile bedfile**: if bedfile is provided, coverage statistics will be calculated for this region using picard CalculateHsMetrics
+
+This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
+
+
+== Samples from fastq ==
+By default reads are clipped using fastq-mcf, aligned to the reference
+genome in dbdir using bwa mem, duplicates removed (using picard) and realigned
+(using gatk). Variants are called using gatk and samtools.
+All files generated have names following the convention of using hyphens
+to separate different elements about the file. The first element is the
+type of file. The last element (before the extension) is the sample name.
+There can be several steps in between. Each sampledir will contain results 
+for this individual sample of the following type:
+
+; map-rdsbwa-sample1.bam: bam file created by aligning the reads of sample1
+to the reference genome in dbdir using bwa. The bam file has been sorted
+(s), duplicate marked (d), and realigned (r).
+
+; var-gatk-rdsbwa-sample1.tsv: a [[intro|variant file]] that contains
+variants called by gatk based on map-rdsbwa-sample1.bam. Positions with a
+quality < 30 or coverage < 5 are considered unsequenced. Lower quality
+variants (but with quality >= 10) are still included in the variant list,
+but have the a "u" in the sequenced and zyg columns to indicate that they
+are considered unsequenced
+; sreg-gatk-rdsbwa-sample1.tsv: A region file with all regions that can be
+considered sequenced (quality >= 30 and coverage >= 5) using the same methods 
+and quality measures as var-gatk-rdsbwa-sample1.tsv. Any position in those 
+regions that is not in the variant file can be called reference with the same
+reliability as the variant calls.
+; varall-gatk-rdsbwa-sample1.tsv: variant calling data by gatk for all
+positions with >= 5 coverage (also reference called positions). This file
+is used to create the sreg files, and to update data in making multicompar 
+files later.
+; reg_cluster-gatk-rdsbwa-S0489.tsv: regions with many clustered variants
+(which are less reliable)
+
+For samtools variant calling on the same bamfile (map-rdsbwa-sample1.bam),
+these result files are named var-sam-rdsbwa-sample1.tsv,
+sreg-sam-rdsbwa-sample1.tsv, varall-sam-rdsbwa-sample1.tsv,
+reg_cluster-sam-rdsbwa-S0489.tsv
+
+== Precalculated data ==
+The sampledir may contain precalculated data data from other pipelines.
+If these are in the correct format, they will be integrated in the
+project. vcf files (var-*.vcf) will be converted to tsv files, and their
+variants included in the multicompar.
+
+== Dependencies ==
+Some of the programs needed in this workflow are not distributed with genomecomb. 
+gatk and picard should be installed separately. Their installation location can be given
+using the environment variables GATK and PICARD. These should point to the installation
+directory that contains the jar files. If these environment variables are not set, a directory
+named gatk and picard will be searched in the PATH.
+
+== Example ==
+{{{
+export GATK=/opt/bio/GenomeAnalysisTK-2.4-9-g532efad/
+export PICARD=/opt/bio/picard-tools-1.87
+cg process_project -d sge testproject /complgen/refseq/hg19
+}}}
+
+== Category ==
+Process

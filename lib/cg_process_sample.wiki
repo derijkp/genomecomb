@@ -4,19 +4,19 @@
 cg process_sample ?options? ?oridir? sampledir
 
 == Summary ==
-Processes one sample into a full [[format_project|Genomecomb sample directory]]
+Processes one sample into a full Genomecomb sample directory ([[projectdir]])
 
 == Description ==
 
-Creates a full [[format_project|Genomecomb sample directory]] with all
+Creates a full Genomecomb sample directory(described in [[projectdir]]) with all
 kinds of data, analyses and reports. The directory containing the original
 data (fastqs, Complete Genomics data directory) can be given as an option,
 an argument, or it can be present in a dir named ori in the sample dir (if
 given as an argument, a link named ori to the original data will be made).
 The results (which analyses, etc.) differ according to the type of original data.
 
-By default, only files that are not present or are older than files they
-are created from (e.g. because of updates in ori data) will be created.
+By default, only files that are not present or that are older than files they
+are created from (e.g. because of updates in ori data) will be (re)made.
 
 == Options ==
 This command can be distributed on a cluster or using multiple with
