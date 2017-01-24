@@ -25,12 +25,6 @@ if 0 {
 
 }
 
-proc checkdiff args {
-	global e
-	set err [catch {exec diff {*}$args} e]
-	if {$err && $e ne {child process exited abnormally}} {error $e}
-}
-
 test process {process_illumina exomes yri chr2122} {
 	cd $::bigtestdir	
 	file delete -force tmp/exomes_yri_chr2122
@@ -58,10 +52,10 @@ test process {process_illumina exomes yri chr2122} {
 } {}
 
 if 0 {
-cg select -f 'chromosome begin end type ref alt zyg-gatk-* zyg-sam-*' tmp/exomes_yri_chr2122/compar/compar-exomes_yri_chr2122.tsv temp1
-cg select -f 'chromosome begin end type ref alt zyg-gatk-* zyg-sam-*' expected/exomes_yri_chr2122/compar/compar-exomes_yri_chr2122.tsv temp2
-kdiff3 temp1 temp2
-tdiff temp1 temp2 | less
+cg select -f 'chromosome begin end type ref alt zyg-gatk-* zyg-sam-*' tmp/exomes_yri_chr2122/compar/compar-exomes_yri_chr2122.tsv tmp/temp1
+cg select -f 'chromosome begin end type ref alt zyg-gatk-* zyg-sam-*' expected/exomes_yri_chr2122/compar/compar-exomes_yri_chr2122.tsv tmp/temp2
+kdiff3 tmp/temp1 tmp/temp2
+tdiff tmp/temp1 tmp/temp2 | less
 }
 
 test process {process_sample genome yri chr2122} {
@@ -75,7 +69,7 @@ test process {process_sample genome yri chr2122} {
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122_one/samples/testNA19240chr2122cg/summary-testNA19240chr2122cg.txt expected/genomes_yri_chr2122/samples/testNA19240chr2122cg/summary-testNA19240chr2122cg.txt | grep -v "finished.*finished"
 	checkdiff -qr -x log_jobs -x summary-testNA19240chr2122cg.txt tmp/genomes_yri_chr2122_one/samples/testNA19240chr2122cg expected/genomes_yri_chr2122/samples/testNA19240chr2122cg
-	# file_write temp $e
+	# file_write tmp/temp $e
 } {}
 
 test process {genomes yri chr2122} {
@@ -103,7 +97,7 @@ test process {genomes yri chr2122} {
 	}
 	checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics expected/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics | grep -v "Started on"
 	checkdiff -qr -x *log_jobs -x fastqc_report* -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri_chr2122 expected/genomes_yri_chr2122
-	# file_write temp $e
+	# file_write tmp/temp $e
 } {}
 
 cd $keepdir

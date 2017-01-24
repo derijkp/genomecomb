@@ -143,9 +143,9 @@ chr2	4000	4001	>=4}
 test select "keep header info and format rtg: -hc$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -hc 1 -s position data/rtgsnps.tsv tmp/temp.tsv
-	file delete temp
-	catch {exec diff tmp/temp.tsv data/rtgsnps.tsv > temp}
-	file_read temp
+	file delete tmp/temp
+	catch {exec diff tmp/temp.tsv data/rtgsnps.tsv > tmp/temp}
+	file_read tmp/temp
 } {3c3
 < name	position	type	reference	prediction	posterior	coverage	correction	support_statistics
 ---
@@ -155,9 +155,9 @@ test select "keep header info and format rtg: -hc$dboptt" {
 test select "keep header info and format rtg: -hc$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -hc 2 -s position data/rtgsnps.tsv tmp/temp.tsv
-	file delete temp
-	catch {exec diff tmp/temp.tsv data/rtgsnps.tsv > temp}
-	file_read temp
+	file delete tmp/temp
+	catch {exec diff tmp/temp.tsv data/rtgsnps.tsv > tmp/temp}
+	file_read tmp/temp
 } {}
 
 test select "-hc with chars that must be escaped$dboptt" {
@@ -204,9 +204,9 @@ test select "-hp$dboptt" {
 test select "keep header info and format vcf$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -s POS data/test.vcf tmp/temp.tsv
-	file delete temp
-	catch {exec diff tmp/temp.tsv data/test.vcf > temp}
-	file_read temp
+	file delete tmp/temp
+	catch {exec diff tmp/temp.tsv data/test.vcf > tmp/temp}
+	file_read tmp/temp
 } {18c18
 < #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003
 ---

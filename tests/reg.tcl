@@ -317,8 +317,8 @@ Y	890
 total	1355}
 
 test covered {name} {
-	cg select -f {name=$chromosome test begin end} data/reg1.tsv temp.tsv
-	exec cg covered -n name temp.tsv
+	cg select -f {name=$chromosome test begin end} data/reg1.tsv tmp/temp.tsv
+	exec cg covered -n name tmp/temp.tsv
 } {chromosome	bases
 1	20
 2	130
@@ -330,8 +330,8 @@ Y	1000
 total	1460}
 
 test covered {name error} {
-	cg select -f {name=$chromosome test begin end} data/reg1.tsv temp.tsv
-	exec cg covered temp.tsv
+	cg select -f {name=$chromosome test begin end} data/reg1.tsv tmp/temp.tsv
+	exec cg covered tmp/temp.tsv
 } {header error: some fields (or alternatives) not found} error
 
 test getregions {above} {

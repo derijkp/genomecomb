@@ -14,6 +14,12 @@ proc test {args} {
 	return {}
 }
 
+proc checkdiff args {
+	global e
+	set err [catch {exec diff {*}$args} e]
+	if {$err && $e ne {child process exited abnormally}} {error $e}
+}
+
 # pkgtools::testleak 100
 
 set keeppath $::env(PATH)
