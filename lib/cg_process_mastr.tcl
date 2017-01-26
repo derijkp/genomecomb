@@ -226,6 +226,7 @@ proc generate_coverage_report_job {experiment regfile histofiles} {
 		set oheader {name chr begin end}
 		set names {}
 		foreach line [split [cg select -sh /dev/null -f {name chromosome begin end} $dep1] \n] {
+			set line [split $line \t]
 			set avga([lindex $line 0]) $line
 			set fraca([lindex $line 0]) $line
 			lappend names [lindex $line 0]
