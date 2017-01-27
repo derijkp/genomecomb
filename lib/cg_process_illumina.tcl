@@ -356,7 +356,6 @@ proc bam_clean_job {args} {
 	}
 	# start jobs
 	# sort using picard
-putsvars skips
 	job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
 	-vars {removeduplicates sample} {*}$skips -code {
 		file delete $target.temp
