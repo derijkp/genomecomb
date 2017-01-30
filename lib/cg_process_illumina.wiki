@@ -95,6 +95,12 @@ if 1, bam files are realigned using gatk, use **value** srma to align using srma
 ; **-conv_nextseq 1/0**: generate fastqs for nextseq run & create sample folders - rundir should be placed in projectdir
 of resulting variants. This option can be added multiple times (with different files)
 ; **-bedfile bedfile**: if bedfile is provided, coverage statistics will be calculated for this region using picard CalculateHsMetrics
+; **-m maxopenfiles** (--maxopenfiles): The number of files that a program
+can keep open at the same time is limited. pmulticompar will distribute
+the subtasks thus, that the number of files open at the same time stays
+below this number. With this option, the maximum number of open files can
+be set manually (if the program e.g. does not deduce the proper limit, or
+you want to affect the distribution).
 
 This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
 

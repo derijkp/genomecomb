@@ -279,9 +279,6 @@ proc process_mastr_job {args} {
 	set paired 1
 	set samBQ 13
 	cg_options process_mastr args {
-		-m - --minigenome {
-			set useminigenome $value
-		}
 		-a - --aligner {
 			set aligner $value
 		}
@@ -296,6 +293,9 @@ proc process_mastr_job {args} {
 		}
 		-split {
 			set split $value
+		}
+		-m - --maxopenfiles {
+			set ::maxopenfiles [expr {$value - 4}]
 		}
 	} {mastrdir destdir dbdir} 2 3
 	set mastrdir [file_absolute $mastrdir]
