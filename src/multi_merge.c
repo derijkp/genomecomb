@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 	}
 	fprintf(stdout,"chromosome\tbegin\tend\ttype\tref\talt\n");
 	while (1) {
-		/* find best var */
+		/* find best var (first one) */
 		bestpos = -1;
 		bestposnum = 0;
 		for (i = 0 ; i < count ; i++) {
@@ -65,8 +65,9 @@ int main(int argc, char *argv[]) {
 		putc_unlocked('\t',stdout);
 		DStringputs(bestvar->ref,stdout);
 		putc_unlocked('\t',stdout);
-		DStringputs(bestvar->alt,stdout);
-		if (!split) {
+		if (split) {
+			DStringputs(bestvar->alt,stdout);
+		} else {
 			DStringCopy(alts,bestvar->alt);
 		}
 		/* move to next var for all files where current (best) var was found */
@@ -80,39 +81,46 @@ int main(int argc, char *argv[]) {
 				int found;
 				alt1keep = alt1;
 				while (1) {
+					int alt2len;
 					alt2keep = alt2;
 					while (*alt2 != ',' && *alt2 != '\0') {
 						alt2++;
 					}
-					/* check for presence in alt1 */
-					alt1keep = alts->string;
-					alt1 = alts->string;
-					found = 0;
-					while (1) { 
-						while (*alt1 != ',' && *alt1 != '\0') {
+					alt2len = alt2-alt2keep;
+					if (alt2len != 1 || *alt2keep != '.') {
+						/* check for presence in alt1 */
+						alt1keep = alts->string;
+						alt1 = alts->string;
+						found = 0;
+						while (1) { 
+							while (*alt1 != ',' && *alt1 != '\0') {
+								alt1++;
+							}
+							if ((alt1-alt1keep == alt2-alt2keep) && (strncmp(alt1keep,alt2keep,alt1-alt1keep) == 0)) {
+								found = 1;
+								break;
+							}
+							if (*alt1 == '\0') break;
 							alt1++;
+							alt1keep = alt1;
 						}
-						if ((alt1-alt1keep == alt2-alt2keep) && (strncmp(alt1keep,alt2keep,alt1-alt1keep) == 0)) {
-							found = 1;
-							break;
+						if (!found) {
+							if (alts->size == 1 && alts->string[0] == '.') {
+								DStringSetS(alts,alt2keep,alt2len);
+							} else {
+								DStringAppendS(alts,",",1);
+								DStringAppendS(alts,alt2keep,alt2len);
+							}
 						}
-						if (*alt1 == '\0') break;
-						alt1++;
-						alt1keep = alt1;
-					}
-					if (!found) {
-						char *temp = alt2keep;
-						int count = alt2-alt2keep;
-						putc_unlocked(',',stdout);
-						while(count--) {putc_unlocked(*temp,stdout);}
-						DStringAppendS(alts,",",1);
-						DStringAppendS(alts,alt2keep,alt2-alt2keep);
 					}
 					if (*alt2 == '\0') break;
 					alt2++;
 				}
 			}
 			varfile_next(varfile);
+		}
+		if (!split) {
+			DStringputs(alts,stdout);
 		}
 		putc_unlocked('\n',stdout);
 	}

@@ -1322,6 +1322,64 @@ test pmulticompar$testname {varall coverage with del} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 
+test pmulticompar$testname {unsplit, alt .} {
+	test_cleantmp
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2
+		chr1	100	101	snp	A	.	r	A	A
+		chr1	101	102	snp	G	.	r	G	G
+		chr1	104	105	snp	G	C	v	C	C
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced	alleleSeq1	alleleSeq2
+		chr1	100	101	snp	A	C	v	A	C
+		chr1	101	102	snp	G	.	r	G	G
+	}
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	alleleSeq1-sample2	alleleSeq2-sample2
+		1	100	101	snp	A	C	r	A	A	v	A	C
+		1	101	102	snp	G	.	r	G	G	r	G	G
+		1	104	105	snp	G	C	v	C	C	r	G	G
+	}
+	catch {file delete tmp/temp.tsv}
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar$testname {unsplit, target with alt .} {
+	test_cleantmp
+	write_tab tmp/targets.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	100	101	snp	A	.
+		chr1	101	102	snp	G	.
+	}
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	alleleSeq1	alleleSeq2
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	alleleSeq1	alleleSeq2
+		chr1	100	101	snp	A	C	A	C
+	}
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	alleleSeq1-sample2	alleleSeq2-sample2	targets
+		1	100	101	snp	A	C	r	A	A	v	A	C	{}
+		1	101	102	snp	G	.	r	G	G	r	G	G	1
+	}
+	catch {file delete tmp/temp.tsv}
+	cg pmulticompar {*}$::jobopts -split 0 -t tmp/targets.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
 }
 
 test_cleantmp
