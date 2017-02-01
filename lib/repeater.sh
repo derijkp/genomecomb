@@ -2,4 +2,6 @@
 #$ -S /bin/bash
 #$ -V
 #$ -cwd
-cg svrescore $1
+cd $1
+shift
+exec "$@"
