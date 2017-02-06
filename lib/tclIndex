@@ -395,6 +395,7 @@ set auto_index(gatkworkaround_tsv2bed_job) [list source [file join $dir cg_tsv2b
 set auto_index(tsv2bed) [list source [file join $dir cg_tsv2bed.tcl]]
 set auto_index(tsv2bed_job) [list source [file join $dir cg_tsv2bed.tcl]]
 set auto_index(cg_tsv2bed) [list source [file join $dir cg_tsv2bed.tcl]]
+set auto_index(cg_tsvdiff) [list source [file join $dir cg_tsvdiff.tcl]]
 set auto_index(cg_unzip) [list source [file join $dir cg_unzip.tcl]]
 set auto_index(cg_vcf2tsv) [list source [file join $dir cg_vcf2tsv.tcl]]
 set auto_index(cg_vcf2sft) [list source [file join $dir cg_vcf2tsv.tcl]]

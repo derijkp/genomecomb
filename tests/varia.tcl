@@ -225,6 +225,55 @@ test cg_options {do not set parameters not given} {
 	list $a [info exists b]
 } {1 0}
 
+test tsvdiff {basic} {
+	write_tab tmp/file1.tsv {
+		chromosome	begin	end
+		chr1	1	2
+		chr2	1	2
+	}
+	cg lz4 tmp/file1.tsv
+	write_tab tmp/file2.tsv {
+		chromosome	begin	end	test
+		chr1	1	2	t1
+		chr2	2	3	t2
+		chr3	3	4	t3
+	}
+	cg tsvdiff tmp/file1.tsv.lz4 tmp/file2.tsv
+} {header diff
+<extrafields: 
+---
+>extrafields: test
+header
+  chromosome	begin	end
+3c3,4
+< chr2	1	2
+---
+> chr2	2	3
+> chr3	3	4
+child process exited abnormally} error
+
+test tsvdiff {dir} {
+	file mkdir tmp/d1
+	file mkdir tmp/d2
+	write_tab tmp/d1/file1.tsv {
+		chromosome	begin	end
+		chr1	1	2
+		chr2	1	2
+	}
+	file copy -force tmp/d1/file1.tsv tmp/d1/same.tsv
+	file_write tmp/d1/only1 ""
+	# cg lz4 tmp/d1/file1.tsv
+	write_tab tmp/d2/file1.tsv {
+		chromosome	begin	end	test
+		chr1	1	2	t1
+		chr2	2	3	t2
+		chr3	3	4	t3
+	}
+	file copy -force tmp/d1/file1.tsv tmp/d2/same.tsv
+	file_write tmp/d2/only2 ""
+	cg tsvdiff tmp/d1 tmp/d2
+} {} error
+
 file delete -force tmp/temp.sft
 
 set ::env(PATH) $keeppath
