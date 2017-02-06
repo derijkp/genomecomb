@@ -1485,7 +1485,7 @@ proc cg_select {args} {
 			puts stdout [join [samples $header] \n]
 			exit 0
 		}
-		-h {
+		-h - --header {
 			if {$value eq ""} {
 				set header [tsv_open stdin]
 			} else {
@@ -1537,6 +1537,7 @@ proc cg_select {args} {
 		set o stdout
 	}
 	if {$db ne ""} {
+		# use monetdb source
 		set table [monetdb_backend $db [file_resolve $filename]]
 		set error [catch {
 			monetdb_select $db $table $query $qfields $sortfields $newheader $sepheader $o $inverse $group $groupcols
