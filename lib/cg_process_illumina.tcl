@@ -224,7 +224,7 @@ proc map_bwa_job {args} {
 	set result ${pre}map-bwa-$sample
 	set readgroupdata [array get a]
 	set bwarefseq [bwarefseq_job $refseq]
-	job bwa-$sample -mem 4G -deps [list $bwarefseq {*}$files] -targets $result.sam -vars {readgroupdata sample paired} \
+	job bwa-$sample -mem 4G -deps [list $bwarefseq {*}$files] -targets {$result.sam} -vars {readgroupdata sample paired} \
 	-skip $result.bam {*}$skips -code {
 		puts "making $target"
 		set bwarefseq [list_shift deps]
@@ -745,12 +745,14 @@ proc process_illumina {args} {
 			# do not do any of preliminaries if end product is already there
 			set bamfile map-bwa-$sample.bam
 			set resultbamfile map-${resultbamprefix}bwa-$sample.bam
-
-			# quality and adapter clipping
-			set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired -skips [list -skip $bamfile -skip $resultbamfile]]
-			#
-			# map using bwa
-			map_bwa_job $refseq $files $sample $paired -skips [list -skip $resultbamfile]
+			if {![jobtargetexists $resultbamfile [list $refseq {*}$files]]} {
+				if {![jobtargetexists $bamfile [list $refseq {*}$files]]} {
+					# quality and adapter clipping
+					set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired]
+				}
+				# map using bwa
+				map_bwa_job $refseq $files $sample $paired
+			}
 		}
 		# extract regions with coverage >= 5 (for cleaning)
 		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
