@@ -66,14 +66,14 @@ proc cg_hsmetrics {args} {
 		set sample [file tail [file root $bamfile]]
 		regsub ^map- $sample {} sample
 	}
-	set target_intervals [tempfile]
+	set target_intervals [tempdir]/[file root [file tail [gzroot $targetfile]]].intervals
 	hsmetrics_tsv2interval $targetfile $bamfile $target_intervals
 	if {![info exists baitfile]} {
 		# We have to give a bait interval file, or CalculateHsMetrics wont run
 		# if we do not have actual bait regions, use target regions.
 		set bait_intervals $target_intervals
 	} else {
-		set bait_intervals [tempfile]
+		set bait_intervals [tempdir]/[file root [file tail [gzroot $baitfile]]].intervals
 		hsmetrics_tsv2interval $baitfile $bamfile $bait_intervals
 	}
 	set temp [tempfile]

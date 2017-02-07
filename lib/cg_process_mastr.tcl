@@ -29,23 +29,6 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	regsub -all {.} $adaptorseq N adaptorseq
 	# sort and collapse regions
 	set dir [file dir $ampliconsfile]
-	set tail [file tail $ampliconsfile]
-	set header [cg select -h $ampliconsfile]
-	if {[inlist $header upprobelen] && [inlist $header downprobelen]} {
-		# clipped files
-		cg select -f {chromosome {begin=$begin+$upprobelen} {end=$end - $downprobelen} name {outer_begin=$begin} {outer_end=$end} *} $ampliconsfile $dir/s$tail.temp
-	} elseif {[inlist $header primer1_end] && [inlist $header primer2_begin]} {
-		cg select -f {chromosome begin=$primer1_end end=$primer2_begin name outer_begin=$begin outer_end=$end *} $ampliconsfile $dir/s$tail.temp
-	} else {
-		set fields {chromosome begin end name}
-		if {![inlist $header outer_begin]} {lappend fields outer_begin=\$begin} else {lappend fields outer_begin}
-		if {![inlist $header outer_end]} {lappend fields outer_end=\$end} else {lappend fields outer_end}
-		cg select -f $fields $ampliconsfile $dir/s$tail.temp
-	}
-	cg select -s {chromosome begin end} $dir/s$tail.temp $dir/s$tail.temp2
-	file rename -force $dir/s$tail.temp2 $dir/s$tail
-	file delete $dir/s$tail.temp
-	set ampliconsfile $dir/s$tail
 	cg select -f {chromosome begin=$outer_begin end=$outer_end name} $ampliconsfile $dir/reg-$name.tsv.temp
 	cg select -s {chromosome begin end} $dir/reg-$name.tsv.temp $dir/reg-$name.tsv.temp2
 	cg regcollapse $dir/reg-$name.tsv.temp2 > $dir/reg-$name.tsv
@@ -57,15 +40,6 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 	# make bed files
 	tsv2bed $dir/reg-$name.tsv $dir/reg-$name.bed [list {} begin end $namefield]
 	tsv2bed $dir/reg-$name.map $dir/reg-mini_$name.bed [list $name begin end name]
-	set header [cg select -h $ampliconsfile]
-	#
-	cg select -f {chromosome begin end name} $ampliconsfile $dir/inner_$tail.temp
-	cg select -s - $dir/inner_$tail.temp $dir/inner_$tail.temp2
-	file delete $dir/inner_$tail.temp
-	file rename -force $dir/inner_$tail.temp2 $dir/inner_$tail
-	cg regcollapse $dir/inner_$tail > $dir/reg-inner-$name.tsv
-	mklink reg-inner-$name.tsv $dir/reg_amplicons-$name.tsv
-	tsv2bed $dir/reg-inner-$name.tsv $dir/reg-inner-$name.bed [list chromosome begin end $namefield]
 }
 
 proc generate_demultiplex_stats {illsrc outfile} {
@@ -173,41 +147,80 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	set mastrname [file root [file tail $mastrdir]]
 	set genome [file tail $dbdir]
 	job_logdir log_jobs
-	set refseq seq-$mastrname.fa
-	set mapfile reg-$mastrname.map
-	job makeminigenome-$mastrname -deps amplicons-$mastrname.tsv \
-	-targets {
-		$refseq reg-$mastrname.bed reg-$mastrname.tsv
-		inner_amplicons-$mastrname.tsv reg-inner-$mastrname.tsv reg-inner-$mastrname.bed
-		reg-mini_$mastrname.bed $mapfile samplicons-$mastrname.tsv reg_amplicons-$mastrname.tsv
-	} \
+	job mastrdesign-sortamplicons-$mastrname \
+	-deps {amplicons-$mastrname.tsv} \
+	-targets {samplicons-$mastrname.tsv} \
 	-vars {dbdir mastrname} -code {
-		putslog "makeminigenome $dbdir $mastrname $dep name"
-		makeminigenome $dbdir $mastrname $dep name
+		# sort and collapse regions
+		set ampliconsfile $dep
+		set dir [file dir $ampliconsfile]
+		set tail [file tail $ampliconsfile]
+		set dir [file dir $ampliconsfile]
+		set tail [file tail $ampliconsfile]
+		set header [cg select -h $ampliconsfile]
+		if {[inlist $header upprobelen] && [inlist $header downprobelen]} {
+			# clipped files
+			cg select -f {chromosome {begin=$begin+$upprobelen} {end=$end - $downprobelen} name {outer_begin=$begin} {outer_end=$end} *} $ampliconsfile $dir/s$tail.temp
+		} elseif {[inlist $header primer1_end] && [inlist $header primer2_begin]} {
+			cg select -f {chromosome begin=$primer1_end end=$primer2_begin name outer_begin=$begin outer_end=$end *} $ampliconsfile $dir/s$tail.temp
+		} else {
+			set fields {chromosome begin end name}
+			if {![inlist $header outer_begin]} {lappend fields outer_begin=\$begin} else {lappend fields outer_begin}
+			if {![inlist $header outer_end]} {lappend fields outer_end=\$end} else {lappend fields outer_end}
+			cg select -f $fields $ampliconsfile $dir/s$tail.temp
+		}
+		cg select -s {chromosome begin end} $dir/s$tail.temp $dir/s$tail.temp2
+		file rename -force $dir/s$tail.temp2 $dir/s$tail
+		file delete $dir/s$tail.temp
 	}
-	job reg-inner-join-$mastrname \
-	-deps {reg-inner-$mastrname.tsv} \
-	-targets {reg-inner-joined-$mastrname.tsv reg-inner-joined-$mastrname.bed} \
-	-vars {dbdir mastrname} -code {
-		cg regjoin $dep > $target
-		tsv2bed $target $target2
-	}
-	if {!$useminigenome} {
+	if {$useminigenome} {
+		set refseq seq-$mastrname.fa
+		set mapfile reg-$mastrname.map
+		job mastrdesign-makeminigenome-$mastrname -deps amplicons-$mastrname.tsv \
+		-targets {
+			$refseq reg-$mastrname.bed reg-$mastrname.tsv
+			inner_amplicons-$mastrname.tsv
+			reg-mini_$mastrname.bed $mapfile samplicons-$mastrname.tsv reg_amplicons-$mastrname.tsv
+		} \
+		-vars {dbdir mastrname} -code {
+			putslog "makeminigenome $dbdir $mastrname $dep name"
+			makeminigenome $dbdir $mastrname $dep name
+		}
+	} else {
 		set refseq [glob $dbdir/genome_*.ifas]
+	}
+	job mastrdesign-reg-inner-$mastrname \
+	-deps {amplicons-$mastrname.tsv} \
+	-targets {reg-inner-$mastrname.tsv reg-inner-$mastrname.bed reg-inner-joined-$mastrname.tsv reg-inner-joined-$mastrname.bed} \
+	-vars {dbdir mastrname} -code {
+		set ampliconsfile $dep
+		set dir [file dir $ampliconsfile]
+		set tail [file tail $ampliconsfile]
+		cg select -f {chromosome begin end name} $ampliconsfile $dir/inner_$tail.temp
+		cg select -s - $dir/inner_$tail.temp $dir/inner_$tail.temp2
+		file delete $dir/inner_$tail.temp
+		file rename -force $dir/inner_$tail.temp2 $dir/inner_$tail
+		cg regcollapse $dir/inner_$tail > $dir/reg-inner-$mastrname.tsv
+		mklink reg-inner-$mastrname.tsv $dir/reg_amplicons-$mastrname.tsv
+		tsv2bed $dir/reg-inner-$mastrname.tsv $dir/reg-inner-$mastrname.bed [list chromosome begin end name]
+		cg regjoin reg-inner-$mastrname.tsv > reg-inner-joined-$mastrname.tsv
+		tsv2bed reg-inner-joined-$mastrname.tsv reg-inner-joined-$mastrname.bed
 	}
 	# check if targetfile.tsv is present, if so generate sorted and collapsed stargetfile.tsv
 	set targetsfile [glob -nocomplain $mastrdir/targets-*.tsv]
 	if {[llength $targetsfile]} {
-			job  generate_targets-$mastrname -deps  [lindex $targetsfile  0] -targets  [file dirname ${targetsfile}]/s[file tail $targetsfile] -code {
-				make_targets_file $dep
-			}
+		job mastrdesign-targets-$mastrname -deps  [lindex $targetsfile  0] -targets  [file dirname ${targetsfile}]/s[file tail $targetsfile] -code {
+			make_targets_file $dep
+		}
 	}
-	# index refseq for bowtie2
-	# bowtie2refseq_job $refseq
-	# index refseq for gatk
-	gatk_refseq_job $refseq
-	# index refseq for bwa
-	bwarefseq_job $refseq
+	if {$useminigenome} {
+		# index refseq for bowtie2
+		# bowtie2refseq_job $refseq
+		# index refseq for gatk
+		gatk_refseq_job $refseq
+		# index refseq for bwa
+		bwarefseq_job $refseq
+	}
 	cd $keeppwd
 	return [list $mastrname $refseq $mastrdir/reg-$mastrname.map]
 }
@@ -264,10 +277,14 @@ proc generate_coverage_report_job {experiment regfile histofiles} {
 	}
 }
 
+# Needs R to be installed together with some R packages:
+# install.packages("rmarkdown") ; install.packages("stringr") ; install.packages("dplyr") ; install.packages("tidyr") ; install.packages("googleVis") ; install.packages("DT")
 proc generate_html_report_job {experiment} {
 	upvar job_logdir job_logdir
 	job html_report -deps [list compar/compar-${experiment}.tsv coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv demultiplex_stats.tsv] -targets {$experiment.html} -code {
-		exec R3.1.2 -e {library(rmarkdown); library(stringr); mastrdir=getwd(); local_jsapi="/complgen2/mastr-procedure/displayChartHistogram.js"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1");render("/complgen2/mastr-procedure/mastrreport.Rmd", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} >@ stdout 2>@ stderr
+		set rmd $::genomecombdir/res/mastrreport.Rmd
+		set chartjs $::genomecombdir/res/displayChartHistogram.js
+		exec R -e [string_change {library(rmarkdown); library(stringr); mastrdir=getwd(); local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @rmd@ $rmd @chartjs@ $chartjs]] >@ stdout 2>@ stderr
 		file rename -force $target.temp $target
 	}
 }

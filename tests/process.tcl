@@ -100,6 +100,66 @@ test process {genomes yri chr2122} {
 	# file_write tmp/temp $e
 } {}
 
+test process {mastr mastr_120477_MT_private} {
+	cd $::bigtestdir	
+	set dest tmp/mastr_120477_MT_private
+	file delete -force $dest
+#	file copy ori/mastr_120477_MT_private tmp/
+	file mkdir tmp/mastr_120477_MT_private
+	file copy {*}[glob ori/mastr_120477_MT_private/samples/*] tmp/mastr_120477_MT_private
+	foreach dir [glob tmp/mastr_120477_MT_private/*] {
+		file mkdir $dir/fastq
+		foreach file [glob -nocomplain $dir/ori/*] {
+			file copy $file $dir/fastq
+		}
+	}
+	file delete -force tmp/MT.mastr
+	file mkdir tmp/MT.mastr
+	file copy ori/MT.mastr/amplicons-MT.tsv tmp/MT.mastr
+	file copy ori/mastr_120477_MT_private/demultiplex_stats.tsv $dest
+	# if you want to see output while running
+	cg process_mastr --stack 1 --verbose 2 -split 1 tmp/MT.mastr $dest refseq/hg19_test
+	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/MT.mastr $dest refseq/hg19_test 2>@ stderr >@ stdout
+	# check vs expected
+	checkdiff -qr -x *log_jobs -x *hsmetrics -x colinfo -x mastr_120477_MT_private.html tmp/mastr_120477_MT_private expected/mastr_120477_MT_private
+	checkdiff -y --suppress-common-lines tmp/mastr_120477_MT_private/mastr_120477_MT_private.html expected/mastr_120477_MT_private/mastr_120477_MT_private.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
+	foreach sample [dirglob $dest ceph*] {
+		checkdiff -y --suppress-common-lines tmp/mastr_120477_MT_private/$sample/crsbwa-$sample.hsmetrics expected/mastr_120477_MT_private/$sample/crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
+	}
+	# could have used this, but previous is faster
+	# cg tsvdiff -q 1 -x log_jobs -x mastr_120477_MT_private.html tmp/mastr_120477_MT_private expected/mastr_120477_MT_private
+} {}
+
+test process {mastr mastr_116068_116083} {
+	cd $::bigtestdir	
+	set dest tmp/mastr_116068_116083
+	file delete -force $dest
+#	file copy ori/mastr_116068_116083 tmp/
+	file mkdir tmp/mastr_116068_116083
+	file copy {*}[glob ori/mastr_116068_116083/samples/*] tmp/mastr_116068_116083
+	foreach dir [glob tmp/mastr_116068_116083/*] {
+		file mkdir $dir/fastq
+		foreach file [glob -nocomplain $dir/ori/*] {
+			file copy $file $dir/fastq
+		}
+	}
+	file delete -force tmp/wgs2.mastr
+	file mkdir tmp/wgs2.mastr
+	file copy ori/wgs2.mastr/amplicons-wgs2.tsv tmp/wgs2.mastr
+	file copy ori/mastr_116068_116083/demultiplex_stats.tsv $dest
+	# if you want to see output while running
+	#cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseq/hg19_test
+	 cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseq/hg19_test 2>@ stderr >@ stdout
+	# check vs expected
+	checkdiff -qr -x *log_jobs -x *hsmetrics -x colinfo -x mastr_116068_116083.html tmp/mastr_116068_116083 expected/mastr_116068_116083
+	checkdiff -y --suppress-common-lines tmp/mastr_116068_116083/mastr_116068_116083.html expected/mastr_116068_116083/mastr_116068_116083.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
+	foreach sample [dirglob $dest ceph*] {
+		checkdiff -y --suppress-common-lines tmp/mastr_116068_116083/$sample/crsbwa-$sample.hsmetrics expected/mastr_116068_116083/$sample/crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
+	}
+	# could have used this, but previous is faster
+	# cg tsvdiff -q 1 -x log_jobs -x mastr_116068_116083.html tmp/mastr_116068_116083 expected/mastr_116068_116083
+} {}
+
 cd $keepdir
 
 testsummarize

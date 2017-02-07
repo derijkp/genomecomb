@@ -7,6 +7,9 @@ proc indexdir {mainfile} {
 	set dirs [glob -nocomplain $configdir/indexdirs/${tail}_*]
 	set num 0
 	foreach indexdir $dirs {
+		if {![file exists $indexdir/info.normfilename]} {
+			continue
+		}
 		set normfilename [file_read $indexdir/info.normfilename]
 		if {$normfilename eq $file} {
 			set configdata(indexdir,$file) $indexdir

@@ -1,0 +1,160 @@
+---
+title: 
+author: 
+date: 
+output: html_document
+---
+
+```{r setOptions, message=FALSE, echo=FALSE}
+#script to generate mastr html report
+#script should be called as R -e 'library(rmarkdown); library(stringr); 
+#                                 mastrdir=getwd(); local_jsapi="/complgen2/mastr-procedure/displayChartHistogram.js" mastr <- str_replace(mastrdir,".*/([^/]*)","\\1");
+#                                 knit2html("/complgen2/mastr-procedure/mastrreport.Rmd",
+#                                             output=paste(mastr,"html",sep="."))'
+library('ggplot2')
+library('dplyr')
+library('tidyr')
+library('googleVis')
+library('stringr')
+library('DT')
+op <- options(gvis.plot.tag='chart')
+
+#aux function
+google_jsapi_local <- function(googleChart, local_jsapi) {
+  chartid <- googleChart$chartid
+  script <- paste(readLines(local_jsapi, warn=F), collapse="\n")
+  replacement <- paste('<script type="text/javascript">',
+                      paste(script, chartid, "()", sep =""), "</script>", sep = '\n')
+  googleChart$html$chart[c('jsChart')] <- replacement
+  return(googleChart)  
+}
+```
+
+```{r loaddata, results='asis', echo=FALSE}
+setwd(mastrdir)  
+demultiplex <- read.delim(paste(mastrdir, '/demultiplex_stats.tsv',sep=''))
+avg_cov <- read.delim(file=Sys.glob(paste(mastrdir,'/*coverage*avg*',sep=''))[1],sep='\t',header=T)
+frac_cov_file <- Sys.glob(paste(mastrdir,'/*coverage*frac*',sep=''))[1]
+frac_cov <- read.delim(file = frac_cov_file, sep='\t', header=T)
+
+frac <- sub('.+_above_([0-9]+).tsv', '\\1', frac_cov_file, perl = T)
+
+amplicons  <- read.delim(file=Sys.glob(paste(mastrdir,'/*.mastr/samplicons*.tsv', sep=''))[1], sep='\t', header=T) 
+
+#get number of variant/sample
+temp <- tempfile(tmpdir=mastrdir)
+compar <- paste(mastrdir,'/compar/compar-', mastr,'.tsv',sep='')
+system2('cg',c('select','-g','"sample"','-gc','"sequenced {v} count"',compar, '>', temp))
+vf <- read.delim(temp, sep='\t',header=T, stringsAsFactors=F)
+sys_output <- file.remove(temp)
+
+read_cutoff <- 10
+cov_cutoff <- 20
+```
+
+
+
+# `r mastr[1]` 
+## `r Sys.Date()`
+<br><br>
+
+## Sample statistics
+#### per sample statistics: # of reads per sample, fraction of target region covered > 20x per sample and # of variants per sample
+<br><br>
+
+```{r prepare_samples_data, echo=FALSE, message=FALSE, results='asis', warning=FALSE}
+rf <- demultiplex%>%filter(!grepl('blanco',tolower(SampleID)))%>%
+    mutate(sample=SampleID, reads=NumberOfClustersPF)%>%
+    select(sample,reads)
+
+vf <- vf%>%filter(!grepl('blanco|sam-crsbwa',tolower(sample)))%>%
+  mutate(sample = sub('gatk-crsbwa-','',sample))%>%
+  mutate(variants=v.count)%>%select(sample,variants)
+
+
+frac_cov$region_size<-sum(frac_cov%>%mutate(size=end-begin)%>%select(size))
+
+cf <- frac_cov%>%gather(sample,frac,-name,-chr,-begin,-end,-region_size)%>%filter(!grepl('blanco',tolower(sample)))%>%
+    mutate(weighted_frac=((end-begin)/region_size)*frac)%>%select(sample, weighted_frac)%>%
+    group_by(sample)%>%summarize(frac=sum(weighted_frac))
+
+df <- left_join(left_join(rf,vf),cf)  
+```
+
+```{r plot_samples, echo=FALSE, message=FALSE, results='asis', warning=FALSE}
+bucketsize <-as.character(signif((max(rf$reads) - min(rf$reads))/10, 1))
+
+plot(google_jsapi_local(gvisHistogram(rf%>%select(sample,reads),
+    options=list(title="Histogram of number of reads per sample",legend="none",
+    histogram=paste("{bucketSize:", bucketsize,"}", sep=" "), gvis.editor="Edit")), local_jsapi))
+
+plot(google_jsapi_local(gvisHistogram(cf%>%select(sample,frac),
+    options=list(title=paste("Histogram of fraction of target region covered above ", frac,"x per sample", sep=""),
+    legend="none", histogram="{bucketSize:0.1}", gvis.editor="Edit")), local_jsapi))
+
+plot(google_jsapi_local(gvisHistogram(vf%>%select(sample,variants),
+    options=list(title="Histogram of number of variants per sample",legend="none", gvis.editor="Edit")), local_jsapi))
+```
+<br><br>
+```{r table_samples, echo=FALSE, message=FALSE, results='asis', warning=FALSE}
+datatable(df%>%mutate(`fraction of target region covered > 20x` = round(frac,2), comments=ifelse(reads<read_cutoff,"not analyzed",""))%>%select(-frac), filter = 'top')
+```
+<br><br>
+
+## Skipped samples  
+#### these samples are not analyzed due to the low number of reads
+<br><br>
+
+```{r get_skipped_samples, echo=FALSE, message=FALSE, results='asis'}
+  skipped<-rf%>%filter(reads<read_cutoff)%>%select(sample,reads)
+```
+`r if (nrow(skipped)==0) {'No samples skipped'}`
+```{r skipped_samples_table, echo=FALSE, message=FALSE, results='asis'}
+  if (nrow(skipped)>0) {datatable(skipped, filter = 'top')}
+```
+
+<br><br><br><br>
+
+## Amplicon statistics
+#### per amplicon coverage statistics averaged over all samples within experiment (excluding blancos)
+<br><br>
+
+```{r prepare_amplicons_data, echo=FALSE, message=FALSE, results='asis'}
+ac <- avg_cov%>%gather(sample,coverage,-name,-chr,-begin,-end)%>%
+    filter(!grepl('blanco',tolower(sample)))%>%group_by(name)%>%
+    summarize(average_coverage=mean(coverage))
+fc <- frac_cov%>%gather(sample,coverage,-name,-chr,-begin,-end, -region_size)%>%
+    filter(!grepl('blanco',tolower(sample)))%>%group_by(name)%>%
+    summarize(frac=mean(coverage))
+
+afc <- left_join(ac,fc)
+```
+
+
+#### Design: `r strsplit(mastr, '_')[[1]][4]` - `r nrow(amplicons)` amplicons 
+<br>
+```{r table_design, echo=FALSE, message=FALSE, results='asis'}
+datatable(amplicons, filter = 'top')	
+```
+<br>
+```{r plot_amplicons, echo=FALSE, message=FALSE, results='asis'}
+
+bucketsize <-as.character(signif((max(afc$average_coverage) - min(afc$average_coverage))/10, 1))
+
+plot(google_jsapi_local(gvisHistogram(afc%>%select(name,average_coverage),
+    options=list(title="Histogram of average coverage per amplicon",
+    #hAxis="{title:'Average coverage of amplicon'}", vAxis="{title:'Frequency'}", 
+    legend="none",
+    histogram=paste("{bucketSize:", bucketsize,"}", sep=" "), gvis.editor="Edit")), local_jsapi))
+
+plot(google_jsapi_local(gvisHistogram(afc%>%select(name,frac), 
+    options=list(title=paste("Histogram of fraction covered above ", frac, "x per amplicon", sep=""),
+    #hAxis="{title:'Fraction of amplicon covered >20x'}", vAxis="{title:'Frequency'}",
+    legend="none", histogram="{bucketSize:0.1}", gvis.editor="Edit")), local_jsapi))
+```
+<br><br>
+```{r table_amplicon_coverage, echo=FALSE, message=FALSE, results='asis'}
+datatable(afc%>%mutate(`average coverage` = round(average_coverage, 2), `fraction above 20x` = round(frac,2))%>%select(-average_coverage, -frac) , filter = 'top')
+```
+<br><br><br><br>
+
