@@ -137,7 +137,7 @@ proc job_process_parstatus {} {
 		if {[llength $foreach]} {
 			# we assume ptarget locks are resolved
 			unset -nocomplain cgjob_ptargets
-			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time $checkcompressed} fadeps]} {
+			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time timefile $checkcompressed} fadeps]} {
 				if {[regexp {^missing dependency} $fadeps]} {
 #					job_log $job "$fadeps"
 				} elseif {[regexp {^ptargets hit} $fadeps]} {
@@ -219,7 +219,7 @@ proc job_process_parstatus {} {
 			job_process_par_marktargets $temptargets $tempptargets $temprmtargets $jobnum
 			puts "running\t$jobname\t$jobnum\t$duration\t\t$job"
 			lappend jobsrunning $jobnum
-			catch {job_finddeps $job $deps newtargetvars 0 ids time $checkcompressed $ftargetvars} adeps
+			catch {job_finddeps $job $deps newtargetvars 0 ids time timefile $checkcompressed $ftargetvars} adeps
 			set job_name($jobnum) $job
 			job_process_pargraph $job $jobname running $duration $checkcompressed $adeps $ids $temptargets $tempptargets
 			continue
@@ -228,7 +228,7 @@ proc job_process_parstatus {} {
 			set job_name($jobnum) $job
 		}
 		# check deps, skip if not fullfilled
-		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $checkcompressed $ftargetvars} adeps]} {
+		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time timefile $checkcompressed $ftargetvars} adeps]} {
 			# dependencies not found (or error) -> really skip job
 			if {[regexp {^missing dependency} $adeps]} {
 				if {!$optional} {
@@ -252,7 +252,8 @@ proc job_process_parstatus {} {
 			file_write $job.targets $targets
 			set newtargets 0
 			set time 0
-			if {!$jobforce && ![job_checktargets $job $targets $time $checkcompressed targetsrunning]} {
+			set timefile {}
+			if {!$jobforce && ![job_checktargets $job $targets $time $timefile $checkcompressed targetsrunning]} {
 				set newtargets 1
 			}
 		} else {

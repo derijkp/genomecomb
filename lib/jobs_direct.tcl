@@ -54,11 +54,12 @@ proc job_process_direct {} {
 		set line [list_shift cgjob(queue)]
 		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional} $line break
 		cd $pwd
+		set timefile {}
 		set job [job_logname $job_logdir $jobname]
 		# check foreach deps, skip if not fullfilled
 		# add all resulting (foreach) jobs in front of the queue, and go back to running the queue
 		if {[llength $foreach]} {
-			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time $checkcompressed} fadeps]} {
+			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time timefile $checkcompressed} fadeps]} {
 				if {![regexp {^missing dependency} $fadeps]} {
 					job_log $job "error in foreach dependencies for $jobname: $fadeps"
 				} else {
@@ -84,7 +85,7 @@ proc job_process_direct {} {
 		cd $pwd
 		job_log $job "==================== $jobname ===================="
 		# check deps, skip if not fullfilled
-		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $checkcompressed $ftargetvars} adeps]} {
+		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time timefile $checkcompressed $ftargetvars} adeps]} {
 			if {![regexp {^missing dependency} $adeps]} {
 				job_log $job "error in dependencies for $jobname: $adeps"
 			} else {
@@ -107,7 +108,7 @@ proc job_process_direct {} {
 			set doskip 0
 			foreach skip $fskip {
 				set skip [job_targetsreplace $skip $targetvars]
-				if {[llength $skip] && [job_checktargets $job $skip $time $checkcompressed running]} {
+				if {[llength $skip] && [job_checktargets $job $skip $time $timefile $checkcompressed running]} {
 					set doskip 1
 					break
 				}
@@ -121,7 +122,7 @@ proc job_process_direct {} {
 		set run 0
 		if {$ftargets ne ""} {
 			set targets [job_targetsreplace $ftargets $targetvars]
-			if {!$jobforce && ![job_checktargets $job $targets $time $checkcompressed running]} {
+			if {!$jobforce && ![job_checktargets $job $targets $time $timefile $checkcompressed running]} {
 				set run 1
 			}
 		} else {

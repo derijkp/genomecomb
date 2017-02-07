@@ -213,19 +213,14 @@ proc jobglob {args} {
 	set ids {}
 	set time now
 	foreach pattern $args {
-		if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
+		set files [job_finddep $pattern ids time timefile $checkcompressed regexppattern]
+		if {$regexppattern} {
 			set pattern [string range $pattern 1 end-1]
-			if {[file pathtype $pattern] eq "relative"} {set relative 1} else {set relative 0}
-			foreach file [job_findregexpdep $pattern ids time $checkcompressed] {
-				if {$relative} {regsub ^[pwd]/ $file {} file}
-				lappend files $file
-			}
-		} else {
-			if {[file pathtype $pattern] eq "relative"} {set relative 1} else {set relative 0}
-			foreach file [job_finddep $pattern ids time $checkcompressed] {
-				if {$relative} {regsub ^[pwd]/ $file {} file}
-				lappend files $file
-			}
+		}
+		if {[file pathtype $pattern] eq "relative"} {set relative 1} else {set relative 0}
+		foreach file $files {
+			if {$relative} {regsub ^[pwd]/ $file {} file}
+			lappend files $file
 		}
 	}
 	list_remdup $files
@@ -255,17 +250,57 @@ proc jobfileexists {args} {
 	set time now
 	foreach pattern $args {
 		if {[file exists $pattern]} {
-		} elseif {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
-			set pattern [string range $pattern 1 end-1]
-			if {[file pathtype $pattern] eq "relative"} {set relative 1} else {set relative 0}
-			if {![llength [job_findregexpdep $pattern ids time $checkcompressed]]} {
-				return 0
+		} elseif {![llength [job_finddep $pattern ids time timefile $checkcompressed]]} {
+			return 0
+		}
+	}
+	return 1
+}
+
+# jobtargetexists ?options? target deps
+# returns 1 if target exists, and non of the dependencies (args) is new than target (or being made)
+# if -checkdepexists is 0, dependencies are only checked if they exist
+proc jobtargetexists {args} {
+	set checkcompressed 1
+	set checkdepexists 0
+	set pos 0
+	while 1 {
+		set key [lindex $args $pos]
+		switch -- $key {
+			-checkcompressed {
+				incr pos
+				set checkcompressed [lindex $args $pos]
 			}
-		} else {
-			if {[file pathtype $pattern] eq "relative"} {set relative 1} else {set relative 0}
-			if {![llength [job_finddep $pattern ids time $checkcompressed]]} {
-				return 0
+			-checkdepexists {
+				incr pos
+				set checkdepexists [lindex $args $pos]
 			}
+			-- {
+				incr pos
+				break
+			}
+			default break
+		}
+		incr pos
+	}
+	set args [lrange $args $pos end]
+	foreach {targets deps} $args break
+	set targettime new
+	foreach target $targets {
+		if {![file exists $target]} {return 0}
+		if {$targettime eq "new" || [job_file_mtime $target] < $targettime} {
+			set targettime [job_file_mtime $target]
+		}
+	}
+	foreach pattern $deps {
+		set time 0
+		set files [job_finddep $pattern ids time timefile $checkcompressed]
+		if {($checkdepexists && ![llength $files]) || $time in "now force" || $time > $targettime} {
+			job_log targetexists-[file tail $target] "one of targets older than dep $timefile (renaming to .old): $targets"
+			foreach target $targets {
+				file rename -force $target $target.old
+			}
+			return 0
 		}
 	}
 	return 1
@@ -324,7 +359,7 @@ if 0 {
 	regexp $p abxxcdcdef
 }
 
-proc job_finddep {pattern idsVar timeVar checkcompressed} {
+proc job_finddep {pattern idsVar timeVar timefileVar checkcompressed {regexppatternVar {}}} {
 	global cgjob_id cgjob_ptargets cgjob_rm
 #puts *****************
 #putsvars pattern checkcompressed
@@ -332,6 +367,14 @@ proc job_finddep {pattern idsVar timeVar checkcompressed} {
 #puts cgjob_rm:[array names cgjob_rm]
 	upvar $idsVar ids
 	upvar $timeVar time
+	upvar $timefileVar timefile
+	if {$regexppatternVar ne ""} {upvar $regexppatternVar regexppattern}
+	if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
+		set regexppattern 1
+		set pattern [string range $pattern 1 end-1]
+		return [job_findregexpdep $pattern ids time timefile $checkcompressed]
+	}
+	set regexppattern 0
 	set pattern [file_absolute $pattern]
 	set ptargethits [array names cgjob_ptargets $pattern]
 	if {[llength $ptargethits]} {
@@ -350,7 +393,7 @@ proc job_finddep {pattern idsVar timeVar checkcompressed} {
 		}
 		set filesa($file) 1
 		lappend ids {}
-		maxfiletime $file time
+		maxfiletime $file time timefile
 	}
 	if {$checkcompressed} {
 		set filelist [gzarraynames cgjob_id $pattern]
@@ -372,23 +415,29 @@ proc job_finddep {pattern idsVar timeVar checkcompressed} {
 		lappend ids $cgjob_id($file)
 		if {[job_running $cgjob_id($file)]} {
 			set time now
+			set timefile $file
 		}
 	}
 	return [array names filesa]
 }
 
-proc maxfiletime {file timeVar} {
+proc maxfiletime {file timeVar timefileVar} {
 	upvar $timeVar time
+	upvar $timefileVar timefile
 	if {$time eq "now"} {return $time}
 	if {$time eq "force"} {return $time}
 	set ftime [job_file_mtime $file]
-	if {$ftime > $time} {set time $ftime}
+	if {$ftime > $time} {
+		set time $ftime
+		set timefile $file
+	}
 }
 
-proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
+proc job_findregexpdep {pattern idsVar timeVar timefileVar checkcompressed} {
 	global cgjob_id cgjob_ptargets cgjob_rm
 	upvar $idsVar ids
 	upvar $timeVar time
+	upvar $timefileVar timefile
 	set pattern [file_absolute $pattern]
 	set glob [regexp2glob $pattern]
 	if {[llength [array names cgjob_ptargets $glob]]} {
@@ -407,7 +456,7 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 			continue
 		}
 		if {[regexp ^$pattern\$ $file]} {
-			maxfiletime $file time
+			maxfiletime $file time timefile
 			set filesa($file) 1
 			lappend ids {}
 		}
@@ -434,6 +483,7 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 		lappend ids $cgjob_id($file)
 		if {[job_running $cgjob_id($file)]} {
 			set time now
+			set timefile $file
 		}
 	}
 	return [array names filesa]
@@ -442,13 +492,15 @@ proc job_findregexpdep {pattern idsVar timeVar checkcompressed} {
 # dependencies between braces () are optional (braces must be at start and end of dependency)
 # $targetvarsVar will contain the values extracted from () matches in the dep pattern, that will be filled in
 # for \1, ... in the target
-proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar checkcompressed {ftargetvars {}}} {
+proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar timefileVar checkcompressed {ftargetvars {}}} {
 	upvar $idsVar ids
 	if {$targetvarsVar ne ""} {
 		upvar $targetvarsVar targetvars
 	}
 	upvar $timeVar time
+	upvar $timefileVar timefile
 	set time 0
+	set timefile {}
 	set ids {}
 	set finaldeps {}
 	set targetvars {}
@@ -460,13 +512,9 @@ proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar checkcom
 			set opt 0
 		}
 		set pattern [job_targetreplace $pattern $ftargetvars]
-		if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
-			set regexppattern 1
+		set files [job_finddep $pattern ids time timefile $checkcompressed regexppattern]
+		if ($regexppattern) {
 			set pattern [string range $pattern 1 end-1]
-			set files [job_findregexpdep $pattern ids time $checkcompressed]
-		} else {
-			set regexppattern 0
-			set files [job_finddep $pattern ids time $checkcompressed]
 		}
 		if {![llength $files]} {
 			if {!$opt} {
@@ -551,7 +599,7 @@ proc job_targetsreplace {list targetvars} {
 	return $result
 }
 
-proc job_checktarget {job target time checkcompressed {newidsVar {}}} {
+proc job_checktarget {job target time timefile checkcompressed {newidsVar {}}} {
 	global cgjob_id
 	if {$newidsVar ne ""} {
 		upvar $newidsVar newids
@@ -571,7 +619,7 @@ proc job_checktarget {job target time checkcompressed {newidsVar {}}} {
 			}
 		}
 		if {$time eq "now"} {
-			job_lognf $job "target older than dep (removing): $target"
+			job_lognf $job "target older than dep $timefile (renaming to .old): $target"
 			# foreach file $files {
 			# 	job_backup $file 1
 			# }
@@ -597,14 +645,14 @@ proc job_checktarget {job target time checkcompressed {newidsVar {}}} {
 	return 0
 }
 
-proc job_checktargets {job targets time checkcompressed {runningVar {}}} {
+proc job_checktargets {job targets time timefile checkcompressed {runningVar {}}} {
 	if {$runningVar ne ""} {
 		upvar $runningVar running
 		set running {}
 	}
 	set ok 1
 	foreach target $targets {
-		set check [job_checktarget $job $target $time $checkcompressed]
+		set check [job_checktarget $job $target $time $timefile $checkcompressed]
 		if {!$check} {
 			set ok 0
 		}
@@ -690,6 +738,8 @@ proc job_log {job args} {
 	flush $f
 }
 
+# log to buffer only, only go to output at job_log
+# but can be cleared before output using job_logclear 
 proc job_lognf {job args} {
 	global cgjob
 	foreach message $args {

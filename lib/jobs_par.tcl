@@ -60,6 +60,7 @@ proc job_process_par_onepass {} {
 		set job [job_logname $job_logdir $jobname]
 		file mkdir [file dir $job]
 		set time 0
+		set timefile {}
 		# If this job was previously blocked because of ptargets deps,
 		# the ptargets set to stop further processing are cleared here
 		# (They can still be reapplied later if they depend on ptargets that are not finished yet)
@@ -72,7 +73,7 @@ proc job_process_par_onepass {} {
 		# check foreach deps, skip if not fullfilled
 		# check for foreach patterns, expand into one ore more entries in the queue
 		if {[llength $foreach]} {
-			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time $checkcompressed} fadeps]} {
+			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time timefile $checkcompressed} fadeps]} {
 				if {[regexp {^missing dependency} $fadeps]} {
 					job_log $job "$fadeps"
 				} elseif {[regexp {^ptargets hit} $fadeps]} {
@@ -136,7 +137,7 @@ proc job_process_par_onepass {} {
 			continue
 		}
 		# check deps, skip if not fullfilled
-		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time $checkcompressed $ftargetvars} adeps]} {
+		if {[catch {job_finddeps $job $deps newtargetvars 0 ids time timefile $checkcompressed $ftargetvars} adeps]} {
 			# dependencies not found (or error) -> really skip job
 			if {[regexp {^missing dependency} $adeps]} {
 				job_log $job "$adeps"
@@ -180,7 +181,7 @@ proc job_process_par_onepass {} {
 			set doskip 0
 			foreach skip $fskip {
 				set skip [job_targetsreplace $skip $targetvars]
-				if {[llength $skip] && [job_checktargets $job $skip $time $checkcompressed running]} {
+				if {[llength $skip] && [job_checktargets $job $skip $time $timefile $checkcompressed running]} {
 					set doskip 1
 					break
 				}
@@ -196,7 +197,7 @@ proc job_process_par_onepass {} {
 			set targets [job_targetsreplace $ftargets $targetvars]
 			file_write $job.targets $targets
 			set newtargets 0
-			if {$jobforce || ![job_checktargets $job $targets $time $checkcompressed targetsrunning]} {
+			if {$jobforce || ![job_checktargets $job $targets $time $timefile $checkcompressed targetsrunning]} {
 				set newtargets 1
 			}
 		} else {

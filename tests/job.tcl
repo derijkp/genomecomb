@@ -7,7 +7,7 @@ set keepdir [pwd]
 
 # use these for trying out individual tests
 set testname "-d direct"
-proc test_job_init {args} {uplevel job_init {*}$args}
+proc test_job_init {args} {uplevel job_init -skipjoberrors 1 {*}$args}
 proc gridwait {} {}
 if 0 {
 	set testname "-d direct"
@@ -587,7 +587,7 @@ test job "--force 0 $testname" {
 	gridwait
 	after 1000
 	file_write test/all.txt error
-	test_job_init
+	job_init -skipjoberrors
 	jobtest --force 0 ../data test testh
 	job_wait
 	gridwait
@@ -1115,6 +1115,78 @@ test job "jobforce $testname" {
 } {test1
 test2
 test3}
+
+proc writetestfiles {args} {
+	test_cleantmp
+	foreach file $args {
+		after 1000
+		file_write $file $file
+	}
+}
+
+test job "jobtargetexists 1 $testname" {
+	cd $::testdir/tmp
+	writetestfiles data1.txt data2.txt data3.txt
+	set result {}
+	lappend result [jobtargetexists data3.txt {data1.txt data2.txt}]
+	lappend result [glob -nocomplain *.old]
+} {1 {}}
+
+test job "jobtargetexists 2 $testname" {
+	cd $::testdir/tmp
+	writetestfiles data1.txt data2.txt data3.txt
+	set result {}
+	lappend result [jobtargetexists {data2.txt data3.txt} {data1.txt}]
+	lappend result [glob -nocomplain *.old]
+} {1 {}}
+
+test job "jobtargetexists 3 $testname" {
+	cd $::testdir/tmp
+	writetestfiles data2.txt data3.txt data1.txt
+	set result {}
+	lappend result [jobtargetexists data3.txt {data1.txt data2.txt}]
+	lappend result [glob -nocomplain *.old]
+} {0 data3.txt.old}
+
+test job "jobtargetexists 4 $testname" {
+	cd $::testdir/tmp
+	writetestfiles data2.txt data3.txt data1.txt
+	set result {}
+	lappend result [jobtargetexists {data2.txt data3.txt} {data1.txt}]
+	lappend result [glob -nocomplain *.old]
+} {0 {data2.txt.old data3.txt.old}}
+
+test job "jobtargetexists 5 $testname" {
+	cd $::testdir/tmp
+	writetestfiles data2.txt data1.txt data3.txt
+	set result {}
+	lappend result [jobtargetexists data3.txt {data1.txt data2.txt}]
+	lappend result [glob -nocomplain *.old]
+} {1 {}}
+
+test job "jobtargetexists 6 $testname" {
+	cd $::testdir/tmp
+	writetestfiles data2.txt data1.txt data3.txt
+	set result {}
+	lappend result [jobtargetexists {data2.txt data3.txt} {data1.txt}]
+	lappend result [glob -nocomplain *.old]
+} {0 {data2.txt.old data3.txt.old}}
+
+test job "jobtargetexists -checkdepexists 0 (default) $testname" {
+	cd $::testdir/tmp
+	writetestfiles data1.txt data3.txt
+	set result {}
+	lappend result [jobtargetexists data3.txt {data1.txt data2.txt}]
+	lappend result [glob -nocomplain *.old]
+} {1 {}}
+
+test job "jobtargetexists -checkdepexists 1 $testname" {
+	cd $::testdir/tmp
+	writetestfiles data1.txt data3.txt
+	set result {}
+	lappend result [jobtargetexists -checkdepexists 1 data3.txt {data1.txt data2.txt}]
+	lappend result [glob -nocomplain *.old]
+} {0 data3.txt.old}
 
 # end of block
 }
