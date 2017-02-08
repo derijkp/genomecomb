@@ -16,7 +16,7 @@ some compression.
 == Options ==
 supports options:
 ; -k 0/1 (--keep): keep the original uncompressed file if 1 (default 0)
-; -c number (--compressionlevel): compression level, where 1 = fast compression and 9 = high compression (default 9)
+; -c number (--compressionlevel): number between 1 and 12 indicating compression level, where 1 = fast compression, 9 = high compression (default 9)
 At high compression (9), compression level and speed is similar to gzip, but decompression is still an 
 order of magnitude faster
 ; -b number (--blocksize): number indicating the blocksize where: 4 = 64KB, 5 = 256KB, 6 = 1MB, 7 = 4MB (default 5)
