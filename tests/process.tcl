@@ -146,7 +146,7 @@ test process {mastr mastr_116068_116083} {
 	file delete -force tmp/wgs2.mastr
 	file mkdir tmp/wgs2.mastr
 	file copy ori/wgs2.mastr/amplicons-wgs2.tsv tmp/wgs2.mastr
-	file copy ori/mastr_116068_116083/demultiplex_stats.tsv $dest
+	# file copy ori/mastr_116068_116083/demultiplex_stats.tsv $dest
 	# if you want to see output while running
 	#cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseq/hg19_test
 	 cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseq/hg19_test 2>@ stderr >@ stdout

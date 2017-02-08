@@ -361,7 +361,31 @@ proc process_mastr_job {args} {
 	} else {
 		set resultbamprefix rs
 	}
-
+	# make demultiplex_stats.tsv if not present
+	set deps {}
+	foreach sample $samples {
+		lappend deps {*}[glob -nocomplain $sample/fastq/*.fastq.gz $sample/fastq/*.fastq]
+	}
+	job demultiplex_stats -deps $deps -targets $destdir/demultiplex_stats.tsv -vars samples -code {
+		set temptarget [filetemp $target]
+		set o [open $temptarget w]
+		puts $o [join {SampleNumber SampleID SampleName NumberOfClustersRaw NumberOfClustersPF} \t]
+		foreach sample $samples {
+			set files [lsort -dict [glob -nocomplain $sample/fastq/*.fastq.gz $sample/fastq/*.fastq]]
+			set file [lindex $files 0]
+			set samplenr 0
+			if {![regexp {^(.*)_S([0-9]+)_L[0-9]+_R[12]_[0-9]+\.fastq$} [gzroot [file tail $file]] temp temp samplenr]} {
+				putslog "could not extract sample name from file $file"
+			}
+			set numreads 0
+			foreach {file1 file2} $files {
+				incr numreads [expr {[lindex [eval exec [gzcat $file1] $file1 | wc -l] 0]/4}]
+			}
+			puts $o [join [list $samplenr $sample $sample $numreads $numreads] \t]
+		}
+		close $o
+		file rename -force $temptarget $target
+	}
 	foreach sample $samples {
 		puts $sample
 		set name ${sample}
