@@ -239,7 +239,8 @@ test tsvdiff {basic} {
 		chr3	3	4	t3
 	}
 	cg tsvdiff tmp/file1.tsv.lz4 tmp/file2.tsv
-} {header diff
+} {diff tmp/file1.tsv.lz4 tmp/file2.tsv
+header diff
 <extrafields: 
 ---
 >extrafields: test
@@ -272,7 +273,21 @@ test tsvdiff {dir} {
 	file copy -force tmp/d1/file1.tsv tmp/d2/same.tsv
 	file_write tmp/d2/only2 ""
 	cg tsvdiff tmp/d1 tmp/d2
-} {} error
+} {Only in tmp/d1: tmp/d1/only1
+Only in tmp/d2: tmp/d2/only2
+diff tmp/d1/file1.tsv tmp/d2/file1.tsv
+header diff
+<extrafields: 
+---
+>extrafields: test
+header
+  chromosome	begin	end
+3c3,4
+< chr2	1	2
+---
+> chr2	2	3
+> chr3	3	4
+child process exited abnormally} error
 
 file delete -force tmp/temp.sft
 
