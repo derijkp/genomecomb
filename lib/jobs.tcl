@@ -209,7 +209,7 @@ proc jobglob {args} {
 		incr pos
 	}
 	set args [lrange $args $pos end]
-	set files {}
+	set resultfiles {}
 	set ids {}
 	set time now
 	foreach pattern $args {
@@ -220,10 +220,10 @@ proc jobglob {args} {
 		if {[file pathtype $pattern] eq "relative"} {set relative 1} else {set relative 0}
 		foreach file $files {
 			if {$relative} {regsub ^[pwd]/ $file {} file}
-			lappend files $file
+			lappend resultfiles $file
 		}
 	}
-	list_remdup $files
+	list_remdup $resultfiles
 }
 
 proc jobfileexists {args} {
