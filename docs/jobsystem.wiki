@@ -130,6 +130,13 @@ at that stage of the program (targets of previous jobs)
 jobfileexists: same as "file exists", but takes into account files that will be available
 at that stage of the program (targets of previous jobs)
 
+jobtargetexists target deps: returns 1 if target already exists, taking
+into account dependencies: If one of the files/patterns in deps is newer
+than target or is in the queue or being made, target will be renamed to
+target.old and 0 will be returned. By default if a dep does not exist and is not
+being made, it will not be considered "newer". You can use the -checkdepexists 1
+option to also return 0 if a dep does not exist.
+
 == job_wait ==
 job_wait must be added at the end of the program. It will wait (if needed) for all jobs to finish.
 This does not actually do something for direct runs (jobs are executed directly) or on a cluster
