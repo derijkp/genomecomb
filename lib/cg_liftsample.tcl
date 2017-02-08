@@ -1,5 +1,5 @@
 proc liftsample_job {args} {
-	cg_options liftsample_job args {
+	cg_options liftsample args {
 		-split - -s {
 			set split $value
 		}
