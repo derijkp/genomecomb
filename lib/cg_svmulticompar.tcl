@@ -430,17 +430,6 @@ proc cg_svmulticompar {args} {
 	}
 }
 
-if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
-	package require pkgtools
-	set appdir [file dir [pkgtools::startdir]]
-	lappend auto_path $appdir/lib
-	append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
-	package require Extral
-	set ::base [file tail [info script]]
-	cg_svmulticompar {*}$argv
-}
-
-
 if 0 {
 	# convert old
 	set base GS103

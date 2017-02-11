@@ -1,7 +1,3 @@
-#!/bin/sh
-# the next line restarts using wish \
-exec tclsh "$0" ${1+"$@"}
-
 #
 # Copyright (c) by Peter De Rijk (VIB - University of Antwerp)
 # See the file "license.txt" for information on usage and redistribution of
@@ -76,15 +72,3 @@ proc cg_exec {commands args} {
 	set ::argv $args
 	uplevel #0 $commands
 }
-
-if {[info exists argv0] && [file tail [info script]] eq [file tail $argv0]} {
-	set scriptname [info script]
-	package require pkgtools
-	set appdir [file dir [pkgtools::startdir]]
-	lappend auto_path $appdir/lib
-	append env(PATH) :[file dir [file dir $appdir]]/bin:$appdir/bin
-	package require Extral
-	set ::base $scriptname
-	cg_sh {*}$argv
-}
-
