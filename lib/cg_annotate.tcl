@@ -221,6 +221,7 @@ proc cg_annotate_job {args} {
 			set upstreamsize $value
 		}
 	} {orifile resultfile} 3
+	set dbdir [file_absolute $dbdir]
 	set dbfiles {}
 	set resultname [file tail $resultfile]
 	foreach testfile $args {
@@ -312,6 +313,7 @@ proc cg_annotate_job {args} {
 			if {$dbdir eq ""} {
 				set dbdir [file dir [file_absolute $dbfile]]
 			}
+			set dbdir [dbdir $dbdir]
 			set genomefile [lindex [glob -nocomplain $dbdir/genome_*.ifas] 0]
 			if {![file exists $genomefile]} {
 				error "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
@@ -326,6 +328,7 @@ proc cg_annotate_job {args} {
 			if {$dbdir eq ""} {
 				set dbdir [file dir [file_absolute $dbfile]]
 			}
+			set dbdir [dbdir $dbdir]
 			job annot-$resultname-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo upstreamsize} -code {
 				set genecol [dict_get_default $dbinfo genecol name]
 				set transcriptcol [dict_get_default $dbinfo transcriptcol transcript]

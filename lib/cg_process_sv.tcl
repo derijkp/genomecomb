@@ -65,6 +65,7 @@ proc cg_process_sv {args} {
 		"" {set force 0}
 		default {error "unrecognized option $force"}
 	}
+	set dbdir [dbdir $dbdir]
 	process_sv $dir $destdir $dbdir $force
 	job_wait
 }

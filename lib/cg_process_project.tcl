@@ -42,6 +42,7 @@ proc process_project_job {args} {
 	set dbdir [file_absolute $dbdir]
 	# check projectinfo
 	projectinfo $destdir dbdir {split 1}
+	set dbdir [dbdir $dbdir]
 	# start
 	##in case of nextseq500 data - generate fastqs & distribute data
 	if {$conv_nextseq} {
@@ -73,7 +74,6 @@ proc process_project_job {args} {
 			-realign $realign -dbdir $dbdir -split $split -paired $paired \
 			-adapterfile $adapterfile -reports $reports \
 			$dir
-
 	}
 	job_logdir $destdir/log_jobs
 	cd $destdir

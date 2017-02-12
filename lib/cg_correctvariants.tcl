@@ -33,6 +33,7 @@ proc cg_correctvariants {args} {
 			set split $value
 		}
 	} {file resultfile dbdir} 3 3
+	set dbdir [dbdir $dbdir]
 	set countdoubles 0
 	set countcorrected 0
 	if {[file exists $resultfile]} {error "$resultfile exists"}

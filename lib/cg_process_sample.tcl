@@ -456,6 +456,7 @@ proc process_sample_job {args} {
 	catch {file mkdir $dir}
 	# check projectinfo
 	projectinfo $dir dbdir {split 1}
+	set dbdir [dbdir $dbdir]
 	if {[info exists oridir]} {
 		if {[file exists $oridir]} {
 			set oridir [file_absolute $oridir]

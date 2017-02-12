@@ -1134,13 +1134,3 @@ proc maxopenfiles {{force 0}} {
 	}
 	return 1000
 }
-
-proc genomecombversion {{minversion {}}} {
-	upvar #0 ::genomecomb::version genomecombversion
-	if {$minversion ne ""} {
-		if {[lindex [ssort -natural [list $minversion $genomecombversion]] 0] ne "$minversion"} {
-			error "genomecomb version ($genomecombversion) smaller than $minversion"
-		}
-	}
-	return $genomecombversion
-}

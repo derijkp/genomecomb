@@ -81,6 +81,7 @@ proc cg_cg2bam {args} {
 		error "format is: cg cg2bam cgdir destdir dbdir"
 	}	
 	foreach {cgdir destprefix dbdir} $args break
+	set dbdir [dbdir $dbdir]
 	set destdir [file dir $destprefix]
 	set chrs {0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y}
 	set chrstodo {}

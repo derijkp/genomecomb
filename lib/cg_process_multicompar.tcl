@@ -195,8 +195,10 @@ proc process_multicompar {args} {
 		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
+	set dbdir [file_absolute $dbdir]
 	# check projectinfo
 	projectinfo $destdir dbdir split
+	set dbdir [dbdir $dbdir]
 	set refseq [glob $dbdir/genome_*.ifas]
 	set samples {}
 	set experiment [file tail $destdir]

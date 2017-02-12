@@ -205,6 +205,7 @@ proc multidb_job {args} {
 			set targetsfield [lindex [split [file root [file tail $targetsfile]] -] end]
 		}
 	} compar_dir 1
+	set dbdir [dbdir $dbdir]
 	set dirs [lrange $args 1 end]
 
 	if {[file exists $compar_dir/vars.tsv.insert]

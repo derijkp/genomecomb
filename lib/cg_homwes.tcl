@@ -67,6 +67,7 @@ proc cg_homwes {args} {
 		if {$dbdir eq ""} {
 			error "No -dbdir option given, this is needed for analysing"
 		}
+		set dbdir [dbdir $dbdir]
 		set vcf 1
 		set tsvfile $workdir/[file root [file tail $annotcomparfile]].tsv
 		putslog "Converting vcf file $annotcomparfile to tsv $tsvfile"

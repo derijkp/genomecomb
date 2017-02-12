@@ -89,6 +89,7 @@ proc cg_genome_seq {args} {
 			set namefield $value
 		}
 	}  {regionfile dbdir outfile} 2 3
+	set dbdir [dbdir $dbdir]
 	if {$outfile ne ""} {
 		set root [file root $outfile]
 		set ext [file extension $outfile]

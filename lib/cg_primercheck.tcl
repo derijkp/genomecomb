@@ -107,6 +107,7 @@ proc cg_primercheck {args} {
 			set maxamplicons $value
 		}
 	} {primerfile dbdir resultfile} 2 3
+	set dbdir [dbdir $dbdir]
 	#
 	catch {close $f}; catch {close $fg}
 	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]

@@ -709,6 +709,7 @@ proc cg_makeprimers {args} {
 	set threads 1
 	set minfreq -1
 	foreach {regionfile maxsize prefsize dbdir minfreq threads} $args break
+	set dbdir [dbdir $dbdir]
 	set db [lindex [glob $dbdir/genome_*.ssa] 0]
 	makeprimers $regionfile $dbdir $maxsize $prefsize $db $minfreq $threads
 }

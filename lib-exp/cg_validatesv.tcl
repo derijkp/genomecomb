@@ -1005,6 +1005,7 @@ proc cg_validatesv args {
 		}
 	} {file file_out dbdir archive MAX_SIZE} 4 5
 	#
+	set dbdir [dbdir $dbdir]
 	set searchGenomeDB [lindex [glob $dbdir/genome_*.ssa] 0]
 	if {[catch {gzopen $file} fileid]} {
 		error "Could not open input file $file: $fileid"

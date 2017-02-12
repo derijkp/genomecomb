@@ -295,6 +295,7 @@ proc process_mastr_job {args} {
 	set cleanup 1
 	set paired 1
 	set samBQ 13
+	set dbdir {}
 	cg_options process_mastr args {
 		-a - --aligner {
 			set aligner $value
@@ -322,6 +323,7 @@ proc process_mastr_job {args} {
 	if {![info exists clipamplicons]} {set clipamplicons $mastrdir/samplicons-$mastrname.tsv}
 	# check projectinfo
 	projectinfo $destdir dbdir mastrdir {split 1}
+	set dbdir [dbdir $dbdir]
 	set hsmetrics_files {}
 	if {$useminigenome} {set pre reg_} else {set pre {}}
 	# make sure mastrdir contains everything needed
@@ -507,6 +509,7 @@ proc cg_process_mastrdesign {args} {
 			set useminigenome $value
 		}
 	} {mastrdir dbdir} 2 2
+	set dbdir [dbdir $dbdir]
 	# useminigenome is only important for which reference sequence is returned by mastr_refseq_job
 	mastr_refseq_job $mastrdir $dbdir $useminigenome
 	job_wait

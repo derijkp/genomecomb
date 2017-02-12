@@ -44,6 +44,7 @@ proc cg_makesequenom {args} {
 			set repeats $value
 		}
 	} {compar_file resultfile dbdir} 3 3
+	set dbdir [dbdir $dbdir]
 	#
 	catch {close $f}; catch {close $fg}
 	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]

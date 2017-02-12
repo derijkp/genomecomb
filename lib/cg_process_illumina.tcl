@@ -399,7 +399,7 @@ proc bam_clean_job {args} {
 			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
 			-vars {gatkrefseq gatk pre realignopts} {*}$skips -code {
 				exec java -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
-				if {[loc_compare [gatkversion] 2.7] >= 0} {
+				if {[loc_compare [version gatk] 2.7] >= 0} {
 					set extra {--filter_bases_not_stored}
 				} else {
 					set extra {}
@@ -692,6 +692,7 @@ proc process_illumina {args} {
 	set dbdir [file_absolute $dbdir]
 	# check projectinfo
 	projectinfo $destdir dbdir {split 1}
+	set dbdir [dbdir $dbdir]
 	# start
 	##in case of nextseq500 data - generate fastqs & distribute data
 	if {$conv_nextseq} {
@@ -803,7 +804,6 @@ proc process_illumina {args} {
 		proces_reportscombine_job $destdir $reportstodo
 	}
 	cd $keeppwd
-
 }
 
 proc cg_process_illumina {args} {
