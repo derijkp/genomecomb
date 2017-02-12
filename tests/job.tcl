@@ -232,10 +232,10 @@ test job {job_expandvars} {
 # test in different "processing modes"
 # ------------------------------------
 foreach {testname initcode} {
-	"direct" {uplevel job_init -skipjoberrors 1 $args}
-	"-d 4" {uplevel job_init -d 4 $args}
-	"-d 30" {uplevel job_init -d 30 $args}
-	"-d sge" {uplevel job_init -d sge $args}
+	"direct" {uplevel job_init -skipjoberrors 1 {*}$args}
+	"-d 4" {uplevel job_init -d 4 {*}$args}
+	"-d 30" {uplevel job_init -d 30 {*}$args}
+	"-d sge" {uplevel job_init -d sge {*}$args}
 } {
 # start of block
 
