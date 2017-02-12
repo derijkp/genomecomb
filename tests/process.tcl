@@ -26,29 +26,30 @@ if 0 {
 }
 
 test process {process_illumina exomes yri chr2122} {
-	cd $::bigtestdir	
-	file delete -force tmp/exomes_yri_chr2122
-	file mkdir tmp/exomes_yri_chr2122/samples
+	cd $::bigtestdir
+	set dest tmp/exomes_yri_chr2122
+	file delete -force $dest
+	file mkdir $dest/samples
 	foreach sample {
 		NA19238chr2122  NA19239chr2122  NA19240chr2122
 	} {
-		file mkdir tmp/exomes_yri_chr2122/samples/$sample/fastq
+		file mkdir $dest/samples/$sample/fastq
 		foreach file [glob ori/exomes_yri_chr2122.start/samples/$sample/fastq/*] {
-			file copy $file tmp/exomes_yri_chr2122/samples/$sample/fastq/[file tail $file]
+			file copy $file $dest/samples/$sample/fastq/[file tail $file]
 		}
 	}
 	if 0 {
 		foreach sample {NA19238chr2122 NA19239chr2122 NA19240chr2122} {
-			exec cp -a expected/exomes_yri_chr2122/samples/${sample}/map-rdsbwa-${sample}.bam tmp/exomes_yri_chr2122/samples/${sample}/
-			exec cp -a expected/exomes_yri_chr2122/samples/${sample}/map-rdsbwa-${sample}.bam.bai tmp/exomes_yri_chr2122/samples/${sample}/
+			exec cp -a expected/exomes_yri_chr2122/samples/${sample}/map-rdsbwa-${sample}.bam $dest/samples/${sample}/
+			exec cp -a expected/exomes_yri_chr2122/samples/${sample}/map-rdsbwa-${sample}.bam.bai $dest/samples/${sample}/
 		}
-		exec touch {*}[glob tmp/exomes_yri_chr2122/samples/*/map-*.bam*]
+		exec touch {*}[glob $dest/samples/*/map-*.bam*]
 	}
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
-	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
+	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 $dest 2>@ stderr >@ stdout
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"
-	checkdiff -qr -x *log_jobs -x fastqc_report* -x *bam.dupmetrics tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
+	checkdiff -qr -x *log_jobs -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
 } {}
 
 if 0 {
@@ -96,7 +97,7 @@ test process {genomes yri chr2122} {
 		checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_chr2122/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"
 	}
 	checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics expected/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics | grep -v "Started on"
-	checkdiff -qr -x *log_jobs -x fastqc_report* -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri_chr2122 expected/genomes_yri_chr2122
+	checkdiff -qr -x *log_jobs -x *_fastqc -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri_chr2122 expected/genomes_yri_chr2122
 	# file_write tmp/temp $e
 } {}
 
