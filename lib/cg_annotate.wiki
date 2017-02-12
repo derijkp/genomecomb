@@ -15,9 +15,9 @@ Each column will start with a base name (the part of the filename
 after the last underscore)
 
 == Arguments ==
-; **variantfile**: file in sft format with variant data
-; **resultfile**: resulting file in sft format with new columns added
-; **dbfile**: files (tsv format) with features used for annotation. If a directory is given for
+; **variantfile**: file in [[tsv]] format with variant data
+; **resultfile**: resulting file in [[tsv]] format with new columns added
+; **dbfile**: files ([[tsv]] format) with features used for annotation. If a directory is given for
 dbfile, all known anotation files in this directory will be used for annotation
 
 == Options ==
