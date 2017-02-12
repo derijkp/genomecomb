@@ -27,10 +27,5 @@ proc cg_coverage_report {args} {
 	foreach b $bams {
 		bam2covstats_job $b $regionfile $suffix
 	}
-
-	#job coverage_report-$experiment -deps [list $regfile {*}$histofiles] -targets [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_50.tsv ] -code {
-	#	exec python2.6 /complgen2/mastr-procedure/coverage_mastrs.py
-	#}
-
 	job_wait
 }
