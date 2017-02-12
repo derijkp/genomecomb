@@ -9,23 +9,23 @@ source tools.tcl
 
 test makeprimers {basic} {
 	exec cg makeregions data/testvars.tsv 200 > tmp/valregs.tsv
-	exec cg makeprimers tmp/valregs.tsv 600 500 $::refseqdir/hg18_test > tmp/primersvalregs.tsv
+	exec cg makeprimers tmp/valregs.tsv 600 500 $::refseqdir/hg18 > tmp/primersvalregs.tsv
 	exec diff tmp/primersvalregs.tsv data/makeprimers-results.tsv
 } {} 
 
 test makeprimers {basic with minfreq} {
 	exec cg makeregions data/testvars.tsv 200 > tmp/valregs.tsv
-	exec cg makeprimers tmp/valregs.tsv 600 500 $::refseqdir/hg18_test 0.5 > tmp/primersvalregs.tsv
+	exec cg makeprimers tmp/valregs.tsv 600 500 $::refseqdir/hg18 0.5 > tmp/primersvalregs.tsv
 	exec diff tmp/primersvalregs.tsv data/makeprimers-results2.tsv
 } {} 
 
 test makesequenom {basic} {
-	exec cg makesequenom data/testvars.tsv tmp/temp.sft $::refseqdir/hg19_test
+	exec cg makesequenom data/testvars.tsv tmp/temp.sft $::refseqdir/hg19
 	exec diff tmp/temp.sft data/expected-makesequenom-testvars.tsv
 } {} 
 
 test makesequenom {basic} {
-	exec cg makesequenom -f -1 -n -1 data/testvars.tsv tmp/temp.sft $::refseqdir/hg19_test
+	exec cg makesequenom -f -1 -n -1 data/testvars.tsv tmp/temp.sft $::refseqdir/hg19
 	exec diff tmp/temp.sft data/expected-makesequenom-1-1-testvars.tsv
 } {} 
 

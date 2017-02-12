@@ -304,39 +304,39 @@ test var_annot {lz4} {
 
 test gene_annot {variant file sort error 1} {
 	file copy data/vars_sorterror1.sft tmp/vars_sorterror1.sft
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars_sorterror1.sft tmp/temp.sft data/gene_test.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_sorterror1.sft tmp/temp.sft data/gene_test.tsv
 } {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test gene_annot {variant file sort error 2} {
 	file copy data/vars_sorterror2.sft tmp/vars_sorterror2.sft
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars_sorterror2.sft tmp/temp.sft data/gene_test.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_sorterror2.sft tmp/temp.sft data/gene_test.tsv
 } {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test gene_annot {variant file sort error 3} {
 	file copy data/vars_sorterror3.sft tmp/vars_sorterror3.sft
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars_sorterror3.sft tmp/temp.sft data/gene_test.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_sorterror3.sft tmp/temp.sft data/gene_test.tsv
 } {*Cannot annotate because the variant file is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test gene_annot {gene wrongly sorted database file error} {
 	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars_annottest.sft tmp/temp.sft data/gene_test-wrong1.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test-wrong1.tsv
 } {*Cannot annotate because the database file (data/gene_test-wrong1.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test gene_annot {gene wrongly sorted database file error} {
 	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars_annottest.sft tmp/temp.sft data/gene_test-wrong2.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test-wrong2.tsv
 } {*Cannot annotate because the database file (data/gene_test-wrong2.tsv) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
 test gene_annot {gene} {
 	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv
 	catch {exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv} result
 	set result
 } {}
 
 test gene_annot {gene --upstreamsize option} {
 	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
-	exec cg annotate --upstreamsize 1000 -dbdir $::refseqdir/hg18_test tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv
+	exec cg annotate --upstreamsize 1000 -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv
 	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
 } {44c44
 < chr1	43198434	43198435	snp	T	G	"upstream SLC2A1"			
@@ -347,7 +347,7 @@ child process exited abnormally} error
 test gene_annot {bug check empty _gene field with only name (used for transcript and gene)} {
 	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
 	cg select -f {chromosome start end strand name cdsStart cdsEnd exonCount exonStarts exonEnds} data/gene_test.tsv tmp/gene_test.tsv
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars_annottest.sft tmp/temp.sft tmp/gene_test.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft tmp/gene_test.tsv
 	lindex [cg select -g all -q {$test_gene ne ""} tmp/temp.sft] end
 } {46} 
 
@@ -364,7 +364,7 @@ test gene_annot {gene exon deletion} {
 		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
 		chr1	2499	2601	del	102	{}	CDSSPLICE	testgene	+test:intron1+400_intron2+1:c.51-1_150+1del:p.?
 	}
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {} 
 
@@ -381,7 +381,7 @@ test gene_annot {gene exon deletion with no type given} {
 		chromosome	begin	end	test_impact	test_gene	test_descr
 		chr1	2499	2601	CDSSPLICE	testgene	+test:intron1+400_intron2+1:c.51-1_150+1del:p.?
 	}
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {} 
 
@@ -399,14 +399,14 @@ test gene_annot {gene and coding gene deletion} {
 		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
 		chr1	1000	2000	del	1000	{}	GENEDEL;GENEDEL	testgene;cdstestgene	testgene:del;cdstestgene:del
 	}
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {} 
 
 test gene_annot {gene, extra comments} {
 	file_write tmp/temp2.sft "# a comment\n# another comment\n"
 	exec cg select -s - data/vars_annottest.sft >> tmp/temp2.sft
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/temp2.sft tmp/temp.sft data/gene_test.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/temp2.sft tmp/temp.sft data/gene_test.tsv
 	exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv
 } {1,2d0
 < # a comment
@@ -419,7 +419,7 @@ test gene_annot {wrong nr fields} {
 		chromosome	begin	end	type	ref	alt	comment
 		chr1	851164	851165	snp	G	C
 	}
-	cg annotate -dbdir $::refseqdir/hg18_test tmp/vars.tsv tmp/annot_results.tsv /complgen/refseq/hg18/gene_hg18_refGene.tsv
+	cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/annot_results.tsv /complgen/refseq/hg18/gene_hg18_refGene.tsv
 	cg select -sh /dev/null -q {$refGene_impact eq "UTR5"} tmp/annot_results.tsv
 } {chr1	851164	851165	snp	G	C		UTR5	SAMD11	+NM_152486:exon2+1:c.-20G>C}
 
@@ -438,7 +438,7 @@ test gene_annot {hgvs + strand gene coding} {
 		# join $adata(ftlist) \n
 	}
 	cg select -s - data/annot_gene_tests_fw_coding.tsv tmp/sannot_gene_tests.tsv
-	cg annotate -dbdir $::refseqdir/hg18_test tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
+	cg annotate -dbdir $::refseqdir/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
 	set errors {}
 	foreach line [split [cg select -sh /dev/null -q {$test_impact ne $expected_impact or $test_descr ne $expected_descr} tmp/annot_results.tsv] \n] {
 		set line [split $line \t]
@@ -452,7 +452,7 @@ test gene_annot {hgvs + strand gene non-coding} {
 	set dbline {chr1 850983 869932 NM_152486n + 591 851184 851184 14 850983,851164,855397,856281,861014,864282,864517,866386,867378,867652,867801,868495,868940,869150,869832, 851043,851256,855579,856332,861139,864372,864703,866549,867494,867731,868301,868620,869051,869824,869932, 0 SAMD11 cmpl cmpl -1,0,0,2,2,1,1,1,2,1,2,1,0,0,0,}
 	file_write tmp/gene_part_test.tsv [join {chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames} \t]\n[join $dbline \t]\n
 	cg select -s - data/annot_gene_tests_fw_noncoding.tsv tmp/sannot_gene_tests.tsv
-	cg annotate -dbdir $::refseqdir/hg18_test tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
+	cg annotate -dbdir $::refseqdir/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
 	set errors {}
 	foreach line [split [cg select -sh /dev/null -q {$test_impact ne $expected_impact or $test_descr ne $expected_descr} tmp/annot_results.tsv] \n] {
 		set line [split $line \t]
@@ -466,7 +466,7 @@ test gene_annot {hgvs - strand gene coding} {
 	set dbline {chr1	1706588	1812355	NM_002074	-	598	1708629	1746752	12	1706588,1708620,1710351,1711693,1714543,1725717,1727773,1737054,1739135,1746695,1760488,1812118,	1708352,1708736,1710568,1711895,1714610,1725880,1727837,1737161,1739174,1746798,1760537,1812355,	0	GNB1	cmpl	cmpl	-1,1,0,2,1,0,2,0,0,0,-1,-1,}
 	file_write tmp/gene_part_test.tsv [join {chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames} \t]\n[join $dbline \t]\n
 	cg select -s - data/annot_gene_tests_rv_coding.tsv tmp/sannot_gene_tests.tsv
-	cg annotate -dbdir $::refseqdir/hg18_test tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
+	cg annotate -dbdir $::refseqdir/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
 	set errors {}
 	foreach line [split [cg select -sh /dev/null -q {$test_impact ne $expected_impact or $test_descr ne $expected_descr} tmp/annot_results.tsv] \n] {
 		set line [split $line \t]
@@ -480,7 +480,7 @@ test gene_annot {hgvs - strand gene non-coding} {
 	set dbline {chr1	1706588	1812355	NM_002074	-	598	1706588	1706588	12	1706588,1708620,1710351,1711693,1714543,1725717,1727773,1737054,1739135,1746695,1760488,1812118,	1708352,1708736,1710568,1711895,1714610,1725880,1727837,1737161,1739174,1746798,1760537,1812355,	0	GNB1	cmpl	cmpl	-1,1,0,2,1,0,2,0,0,0,-1,-1,}
 	file_write tmp/gene_part_test.tsv [join {chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames} \t]\n[join $dbline \t]\n
 	cg select -s - data/annot_gene_tests_rv_noncoding.tsv tmp/sannot_gene_tests.tsv
-	cg annotate -dbdir $::refseqdir/hg18_test tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
+	cg annotate -dbdir $::refseqdir/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
 	set errors {}
 	foreach line [split [cg select -sh /dev/null -q {$test_impact ne $expected_impact or $test_descr ne $expected_descr} tmp/annot_results.tsv] \n] {
 		set line [split $line \t]
@@ -937,7 +937,7 @@ test gene_annot {multiple dbs} {
 		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr	rtest_name	rtest_score
 		chr1	1000	2000	del	1000	{}	GENEDEL;GENEDEL	testgene;cdstestgene	testgene:del;cdstestgene:del	test2	2
 	}
-	exec cg annotate -dbdir $::refseqdir/hg18_test tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv tmp/reg_rtest.tsv
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv tmp/reg_rtest.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {} 
 

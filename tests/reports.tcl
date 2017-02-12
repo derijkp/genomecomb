@@ -6,7 +6,7 @@ source tools.tcl
 
 test reports {hsmetrics} {
 	test_cleantmp
-	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19_test/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/regfile.tsv
+	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/regfile.tsv
 	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
 	set regionfile tmp/regfile.tsv
 	set resultfile tmp/result.hsmetrics

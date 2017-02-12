@@ -25,7 +25,7 @@ proc checkdiff args {
 set keeppath $::env(PATH)
 set script [info script] ; if {$script eq ""} {set script ./t}
 set testdir [file dir [file normalize $script]]
-set refseqdir $testdir/genomecomb.testdata/refseq
+set refseqdir $testdir/genomecomb.testdata/refseqtest
 set appdir [file dir [file dir [file normalize $script]]]
 append ::env(PATH) :$appdir/bin
 # putsvars ::env(PATH)

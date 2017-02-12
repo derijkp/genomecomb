@@ -68,7 +68,7 @@ total	1468411}
 
 test cg_regextract {--filtered 1 -q 1 -Q 0} {
 	test_cleantmp
-	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19_test/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/regfile.tsv
+	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/regfile.tsv
 	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
 	# TARGET_TERRITORY 2126556
 	# PCT_TARGET_BASES_20X	0.56393
@@ -86,7 +86,7 @@ test cg_regextract {--filtered 1 -q 1 -Q 0} {
 
 test cg_regextract {-q 20 -Q 20} {
 	test_cleantmp
-	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19_test/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/regfile.tsv
+	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/regfile.tsv
 	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
 	# TARGET_TERRITORY 2126556
 	# PCT_TARGET_BASES_20X	0.56393

@@ -44,8 +44,8 @@ test process {process_illumina exomes yri chr2122} {
 		}
 		exec touch {*}[glob tmp/exomes_yri_chr2122/samples/*/map-*.bam*]
 	}
-	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseq/hg19_test tests/yri_exome
-	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir refseq/hg19_test tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
+	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
+	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"
 	checkdiff -qr -x *log_jobs -x fastqc_report* -x *bam.dupmetrics tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
@@ -60,7 +60,7 @@ tdiff tmp/temp1 tmp/temp2 | less
 
 test process {process_sample genome yri chr2122} {
 	cd $::bigtestdir
-	set ref $::bigtestdir/refseq/hg19_test
+	set ref $::bigtestdir/refseqtest/hg19
 	set dest tmp/genomes_yri_chr2122_one
 	file delete -force $dest
 	file mkdir $dest/samples/testNA19240chr2122cg
@@ -90,7 +90,7 @@ test process {genomes yri chr2122} {
 #	}
 	# mklink ori/genomes_yritrio_chr2122.start/samples/testNA19240chr21il.ori/NA19240_GAIIx_100_chr21.bam $dest/samples/testNA19240chr21il/map-rdsbwa-testNA19240chr21il.bam
 	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/genomes_yri_chr2122
-	cg process_project --stack 1 --verbose 2 -split 1 -dbdir refseq/hg19_test $dest 2>@ stderr >@ stdout
+	cg process_project --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 $dest 2>@ stderr >@ stdout
 	# check vs expected
 	foreach cgsample {testNA19238chr2122cg testNA19239chr2122cg testNA19240chr2122cg} {
 		checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_chr2122/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"
@@ -118,8 +118,8 @@ test process {mastr mastr_120477_MT_private} {
 	file copy ori/MT.mastr/amplicons-MT.tsv tmp/MT.mastr
 	file copy ori/mastr_120477_MT_private/demultiplex_stats.tsv $dest
 	# if you want to see output while running
-	cg process_mastr --stack 1 --verbose 2 -split 1 tmp/MT.mastr $dest refseq/hg19_test
-	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/MT.mastr $dest refseq/hg19_test 2>@ stderr >@ stdout
+	cg process_mastr --stack 1 --verbose 2 -split 1 tmp/MT.mastr $dest refseqtest/hg19
+	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/MT.mastr $dest refseqtest/hg19 2>@ stderr >@ stdout
 	# check vs expected
 	checkdiff -qr -x *log_jobs -x *hsmetrics -x colinfo -x mastr_120477_MT_private.html tmp/mastr_120477_MT_private expected/mastr_120477_MT_private
 	checkdiff -y --suppress-common-lines tmp/mastr_120477_MT_private/mastr_120477_MT_private.html expected/mastr_120477_MT_private/mastr_120477_MT_private.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
@@ -148,8 +148,8 @@ test process {mastr mastr_116068_116083} {
 	file copy ori/wgs2.mastr/amplicons-wgs2.tsv tmp/wgs2.mastr
 	# file copy ori/mastr_116068_116083/demultiplex_stats.tsv $dest
 	# if you want to see output while running
-	#cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseq/hg19_test
-	 cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseq/hg19_test 2>@ stderr >@ stdout
+	#cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseqtest/hg19
+	 cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseqtest/hg19 2>@ stderr >@ stdout
 	# check vs expected
 	checkdiff -qr -x *log_jobs -x *hsmetrics -x colinfo -x mastr_116068_116083.html tmp/mastr_116068_116083 expected/mastr_116068_116083
 	checkdiff -y --suppress-common-lines tmp/mastr_116068_116083/mastr_116068_116083.html expected/mastr_116068_116083/mastr_116068_116083.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
