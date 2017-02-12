@@ -47,8 +47,8 @@ proc proces_reports_job {sampledir refdir {reports all}} {
 			set dep2 $targetfile
 			set target $sampledir/reports/hsmetrics-$sample.hsmetrics
 			set target2 $sampledir/reports/report_hsmetrics-$sample.tsv
-			job reports_hsmetrics-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2} -targets {$target $target2} -vars {sample} -code {
-				cg_hsmetrics -sample $sample $bamfile $targetfile $target
+			job reports_hsmetrics-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2} -targets {$target $target2} -vars {sample bamfile targetfile} -code {
+				cg_hsmetrics --sample $sample $bamfile $targetfile $target
 				set f [open $target]
 				set header [tsv_open $f]
 				set data [split [gets $f] \t]
