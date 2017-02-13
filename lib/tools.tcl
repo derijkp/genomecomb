@@ -43,12 +43,18 @@ proc cg {cmd args} {
 	}
 }
 
-proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs 2000000000}} {
+proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs 2000000000} {summary {}}} {
 # putsvars cmd argsVar def minargs maxargs parameters
 	set options [join [list_unmerge $def] ,]
 	set len [llength $parameters]
 	if {$minargs eq ""} {set minargs $len}
 	if {$maxargs eq "" || $maxargs eq "-1"} {set maxargs $len}
+	upvar $argsVar args
+	if {$args eq "-h"} {
+		set format [errorformat_calc $cmd $options $minargs $maxargs $parameters]
+		set help "= $cmd =\n\n== Format ==\n$format\n\n== Summary ==\n[string trim $summary]\n\n"
+		return -code return $help
+	}
 	set fullcmd [subst {
 		set pos 0
 		while 1 {

@@ -17,12 +17,17 @@ proc help_get {action} {
 		set help [file_read $::appdir/docs/$action.wiki]
 	} elseif {[auto_load helptext_$action]} {
 		set help [helptext_$action]
-	} else {
+	} elseif {[auto_load cg_$action]} {
+		catch {set help [cg_$action -h]} e
+	}
+	if {![info exists help]} {
 		set msg "Unknown help topic \"$action\", known topics are:\n\n"
 		append msg "Docs:\n[help_docs]\n\n"
 		append msg "Commands:\n[help_actions]\n\n"
 		append msg "Use help without arguments for overview"
 		error $msg
+	} else {
+		return $help
 	}
 }
 
@@ -48,6 +53,29 @@ proc help_docs {} {
 	return $list
 }
 
+proc errorformat_calc {action {options {}} {minargs {}} {maxargs {}} {parameters {}}} {
+	set out "cg $action"
+	if {$options ne ""} {append out " ?options?"}
+	set pos 0
+	while {$pos < $minargs} {
+		set p [lindex $parameters $pos]
+		if {$p eq ""} {set p arg}
+		append out " $p"
+		incr pos
+	}
+	while {$pos < $maxargs} {
+		if {$pos >= [llength $parameters]} {
+			append out " ..."
+			break
+		}
+		set p [lindex $parameters $pos]
+		if {$p eq ""} {set p arg}
+		append out " ?$p?"
+		incr pos
+	}
+	return $out
+}
+
 proc errorformat {action {options {}} {minargs {}} {maxargs {}} {parameters {}}} {
 # putsvars action options minargs maxargs parameters
 	if {![catch {
@@ -59,26 +87,7 @@ proc errorformat {action {options {}} {minargs {}} {maxargs {}} {parameters {}}}
 		error $msg
 	} else {
 		set msg "\nERROR: Wrong number of arguments, correct format is:"
-		set out "cg $action"
-		if {$options ne ""} {append out " ?options?"}
-		set pos 0
-		while {$pos < $minargs} {
-			set p [lindex $parameters $pos]
-			if {$p eq ""} {set p arg}
-			append out " $p"
-			incr pos
-		}
-		while {$pos < $maxargs} {
-			if {$pos >= [llength $parameters]} {
-				append out " ..."
-				break
-			}
-			set p [lindex $parameters $pos]
-			if {$p eq ""} {set p arg}
-			append out " ?$p?"
-			incr pos
-		}
-		append msg \n$out
+		append msg \n[errorformat_calc action $options $minargs $maxargs $parameters]
 		error $msg
 	}
 }
