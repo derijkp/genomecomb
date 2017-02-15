@@ -134,20 +134,21 @@ proc cg_bcol_make {args} {
 		}
 		set endpos $endcol
 	}
+	set tempfile [filetemp $bcolfile]
 	if {$compress} {
 		set compresspipe "| lz4c -$compress -c "
-		set tempbinfile $bcolfile.temp.bin.lz4
+		set tempbinfile $tempfile.bin.lz4
 	} else {
 		set compresspipe ""
-		set tempbinfile $bcolfile.temp.bin
+		set tempbinfile $tempfile.bin
 	}
 	if {$multicol eq ""} {
-		# puts "bcol_make [list $bcolfile.temp] $type $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision"
-		set pipe [open "| bcol_make [list $bcolfile.temp] $type $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
+		# puts "bcol_make [list $tempfile] $type $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision"
+		set pipe [open "| bcol_make [list $tempfile] $type $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	} else {
 		# putsvars bcolfile type colpos multipos multilist chrompos offsetpos defaultvalue
-		# puts "bcol_make_multi $bcolfile.temp $type $multipos $multilist $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision"
-		set pipe [open "| bcol_make_multi [list $bcolfile.temp] $type $multipos $multilist $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
+		# puts "bcol_make_multi $tempfile $type $multipos $multilist $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision"
+		set pipe [open "| bcol_make_multi [list $tempfile] $type $multipos $multilist $colpos $chrompos [list $chromosomename] $offsetpos $endpos [list $defaultvalue] $precision $compresspipe > [list $tempbinfile] 2>@ stderr" w]
 	}
 	fconfigure $f -encoding binary -translation binary
 	fconfigure $pipe -encoding binary -translation binary
@@ -166,5 +167,5 @@ proc cg_bcol_make {args} {
 	} else {
 		file rename -force $tempbinfile $bcolfile.bin
 	}
-	file rename -force $bcolfile.temp $bcolfile
+	file rename -force $tempfile $bcolfile
 }
