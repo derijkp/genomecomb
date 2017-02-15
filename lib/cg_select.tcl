@@ -1125,6 +1125,21 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 	return $code
 }
 
+proc tsv_skipcomments {f} {
+	while {![eof $f]} {
+		set line [gets $f]
+		while {![string length $line]} {
+			if {[gets $f line] == -1} break
+		}
+		set fchar [string index $line 0]
+		if {$fchar ne "#"} {
+			break
+		}
+	}
+	set temp {}
+	tsv_hcheader $f temp line
+}
+
 proc tsv_select {query {qfields {}} {sortfields {}} {oldheader {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {inverse 0} {group {}} {groupcols {}} {index {}} {samplingskip 0} {removecomment 0} {samples {}}} {
 # putsvars query qfields sortfields oldheader newheader sepheader f out inverse group groupcols index samplingskip removecomment samples
 	fconfigure $f -buffering none
@@ -1139,6 +1154,7 @@ proc tsv_select {query {qfields {}} {sortfields {}} {oldheader {}} {newheader {}
 			parameter {
 				set keepheader ""
 				set header [lindex $oldheader 1]
+				tsv_skipcomments $f
 			}
 			comment {
 				set header [tsv_open $f keepheader]

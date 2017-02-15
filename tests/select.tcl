@@ -201,6 +201,18 @@ test select "-hp$dboptt" {
 1
 2}
 
+test select "-hp with comments$dboptt" {
+	global dbopt
+	write_tab tmp/temp.tsv {
+		#test	test2
+		a	1
+		b	2
+	}
+	exec cg select {*}$dbopt -hp "key value" -f {value} tmp/temp.tsv
+} {value
+1
+2}
+
 test select "keep header info and format vcf$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -s POS data/test.vcf tmp/temp.tsv
