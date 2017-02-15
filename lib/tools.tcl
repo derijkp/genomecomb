@@ -1140,3 +1140,12 @@ proc maxopenfiles {{force 0}} {
 	}
 	return 1000
 }
+
+proc deindent {text} {
+	regsub "\n\t*\$" $text {} text
+	if {[string index $text 0] eq "\n"} {set start 1} else {set start 0}
+	set text [string range $text $start end]
+	if {[regexp {^[\t]*} $text temp]} {
+		set text [string_change [string range $text [string length $temp] end] [list \n$temp \n]]
+	}
+}
