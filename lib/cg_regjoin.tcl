@@ -1,3 +1,52 @@
+proc regjoin_fields {regfile1 fields} {
+	catch {close $f} ; catch {close $o}
+	if {$regfile1 ne "stdin"} {
+		if {[catch {gzopen $regfile1} f]} {
+			error "Could not open $regfile1"
+		}
+	} else {
+		set f stdin
+	}
+	set header [tsv_open $f]
+	set cor [tsv_basicfields $header 3]
+	foreach {chrpos startpos endpos} $cor break
+	if {$fields eq "*"} {
+		set fields [list_sub $header -exclude $cor]
+	} else {
+		set fields [list_common $fields $header]
+	}
+	lappend cor {*}[list_cor $header $fields]
+	set nh [list_sub $header $cor]
+	puts [join $nh \t]
+	set pline [split [gets $f] "\t"]
+	set pline [list_sub $pline $cor]
+	foreach {pchr pstart pend} $pline break
+	while {![eof $f]} {
+		if {[gets $f line] == -1} break
+		set line [split $line "\t"]
+		set line [list_sub $line $cor]
+		foreach {chr start end} $line break
+		set join 1
+		if {$chr ne $pchr} {
+			set join 0
+		} elseif {$start > $pend} {
+			set join 0
+		} elseif {[lrange $line 3 end] ne [lrange $pline 3 end]} {
+			set join 0
+		}
+		if {!$join} {
+			puts [join $pline \t]
+			set pline $line
+			foreach {pchr pstart pend} $pline break
+		} else {
+			lset pline 2 $end
+			set pend $end
+		}
+	}
+	puts [join $pline \t]
+	close $f
+}
+
 proc regjoin {regfile1 regfile2} {
 	global cache
 	# catch {close $f1}
@@ -29,10 +78,17 @@ proc regjoin {regfile1 regfile2} {
 }
 
 proc cg_regjoin {args} {
-	if {[llength $args] > 2} {
-		errorformat regjoin
-	}
 	foreach {region_file1 region_file2} {{} {}} break
-	foreach {region_file1 region_file2} $args break
-	regjoin $region_file1 $region_file2
+	set fields {}
+	cg_options regjoin args {
+		-fields {
+			set fields $value
+		}
+	} {region_file1 region_file2} 0 2
+	if {$fields ne ""} {
+		if {$region_file2 ne ""} {error "regjoin with -fields only supported for one file"}
+		regjoin_fields $region_file1 $fields
+	} else {
+		regjoin $region_file1 $region_file2
+	}
 }

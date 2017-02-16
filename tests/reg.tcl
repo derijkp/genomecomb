@@ -462,6 +462,39 @@ test regjoin {self} {
 3	1100	2000
 3	2500	2600}
 
+test regjoin {-fields *} {
+	write_tab tmp/test.tsv { 
+		chromosome	begin	end f1 f2
+		1	10	15	1	2
+		1	15	20	1	2
+		1	20	25	3	4
+		1	25	30	3	4
+		1	30	35	3	5
+		1	40	50	3	4
+	}
+	cg regjoin -fields * tmp/test.tsv
+} {chromosome	begin	end	f1	f2
+1	10	20	1	2
+1	20	30	3	4
+1	30	35	3	5
+1	40	50	3	4}
+
+test regjoin {-fields f1} {
+	write_tab tmp/test.tsv { 
+		chromosome	begin	end f1 f2
+		1	10	15	1	2
+		1	15	20	1	2
+		1	20	25	3	4
+		1	25	30	3	4
+		1	30	35	3	5
+		1	40	50	3	4
+	}
+	cg regjoin -fields {f1} tmp/test.tsv
+} {chromosome	begin	end	f1
+1	10	20	1
+1	20	35	3
+1	40	50	3}
+
 test regjoin {sort error chromosome} {
 	write_tab tmp/sorterror.tsv {
 		chromosome	begin	end
