@@ -289,8 +289,17 @@ header
 > chr3	3	4
 child process exited abnormally} error
 
-file delete -force tmp/temp.sft
-
-set ::env(PATH) $keeppath
+test cg_extracthomopolymers {basic} {
+	file_write tmp/genome_test.ifas [deindent {
+		>chr1
+		GCCGAAAAAAAAAGCC
+		>chr1_test
+		GCGAGGGGGGGCTGTGCAAAAAAAA
+	}]
+	cg extracthomopolymers tmp/genome_test.ifas
+} {chromosome	begin	end	base	size
+1	4	13	A	9
+1_test	4	11	G	7
+1_test	17	25	A	8}
 
 testsummarize
