@@ -101,15 +101,27 @@ foreach db $dbs_var {
 }
 
 # genes
+set genesets {}
 foreach db $dbs_gene {
 	set dbname [file tail $db]
 	set dir [file dir $db]
 	set target $dir/gene_${build}_${dbname}.tsv
+	lappend genesets $target
 	job gene_${build}_$dbname -targets {$target $target.gz.tbi $target.gz} -vars {dest build dbname} -code {
 		cg download_genes $target $build $dbname
 	        cg maketabix $target
 		cg index $target
 	}
+}
+
+set target gene_${build}_intGene.tsv
+job gene_${build}_intGene \
+-deps $genesets \
+-targets {$target $target.gz $target.gz.tbi} -vars {dest build db} -code {
+	cg intgene {*}$deps > $target.temp
+	file rename -force $target.temp $target
+	cg maketabix $target
+	cg index $target
 }
 
 # homopolymer

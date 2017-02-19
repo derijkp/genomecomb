@@ -162,22 +162,22 @@ foreach db {
 		set target extra/gene_${build}_${dbname}.tsv
 	}
 	job gene_${build}_$dbname -targets {$target $target.gz.tbi $target.gz} -vars {dest build db} -code {
+		file delete $target
 		cg download_genes $target $build $db
 	        cg maketabix $target
 		cg index $target
 	}
 }
 
-# todo
-#job gene_${build}_intGene \
-#-deps {} \
-#-targets {gene_${build}_intGene.tsv} -vars {dest build db} -code {
-#	
-#        cg maketabix $target
-#        exec gunzip -c $target.gz > $target.temp
-#	file rename -force $target.temp $target
-#	cg index $target
-#}
+set target gene_${build}_intGene.tsv
+job gene_${build}_intGene \
+-deps {gene_${build}_refGene.tsv extra/gene_${build}_gencode.tsv extra/gene_${build}_ensGene.tsv extra/gene_${build}_knownGene.tsv} \
+-targets {$target $target.gz $target.gz.tbi} -vars {dest build db} -code {
+	cg intgene {*}$deps > $target.temp
+	file rename -force $target.temp $target
+	cg maketabix $target
+	cg index $target
+}
 
 job reg_${build}_genes \
 -deps {gene_${build}_refGene.tsv extra/gene_${build}_ensGene.tsv extra/gene_${build}_knownGene.tsv extra/gene_${build}_gencode.tsv} \

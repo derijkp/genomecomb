@@ -173,6 +173,16 @@ foreach db {
 	}
 }
 
+set target gene_${build}_intGene.tsv
+job gene_${build}_intGene \
+-deps {gene_${build}_refGene.tsv extra/gene_${build}_gencode.tsv extra/gene_${build}_ensGene.tsv extra/gene_${build}_knownGene.tsv} \
+-targets {$target $target.gz $target.gz.tbi} -vars {dest build db} -code {
+	cg intgene {*}$deps > $target.temp
+	file rename -force $target.temp $target
+	cg maketabix $target
+	cg index $target
+}
+
 job reg_${build}_genes -targets {extra/reg_${build}_genes.tsv} \
 -deps {gene_${build}_refGene.tsv extra/gene_${build}_ensGene.tsv extra/gene_${build}_knownGene.tsv extra/gene_${build}_gencode.tsv extra/gene_${build}_gencodea.tsv} \
 -code {

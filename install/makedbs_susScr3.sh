@@ -116,6 +116,16 @@ foreach db {
 	}
 }
 
+set target gene_${build}_intGene.tsv
+job gene_${build}_intGene \
+-deps {gene_${build}_refGene.tsv extra/gene_${build}_gencode.tsv extra/gene_${build}_ensGene.tsv} \
+-targets {$target $target.gz $target.gz.tbi} -vars {dest build db} -code {
+	cg intgene {*}$deps > $target.temp
+	file rename -force $target.temp $target
+	cg maketabix $target
+	cg index $target
+}
+
 # homopolymer
 job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi reg_${build}_homopolymer.tsv.opt} -vars {dest build db} -code {
 	cg extracthomopolymers genome_${build}.ifas > reg_${build}_homopolymer.tsv.temp
