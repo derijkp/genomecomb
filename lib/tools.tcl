@@ -43,7 +43,7 @@ proc cg {cmd args} {
 	}
 }
 
-proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs 2000000000} {summary {}}} {
+proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {summary {}}} {
 # putsvars cmd argsVar def minargs maxargs parameters
 	set options [join [list_unmerge $def] ,]
 	set len [llength $parameters]
@@ -55,6 +55,7 @@ proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs 200000000
 		set help "= $cmd =\n\n== Format ==\n$format\n\n== Summary ==\n[string trim $summary]\n\n"
 		return -code return $help
 	}
+	if {$maxargs eq "..."} {set test ""} else {set test " || (\$len > $maxargs)"}
 	set fullcmd [subst {
 		set pos 0
 		while 1 {
@@ -76,7 +77,7 @@ proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs 200000000
 		incr pos -2
 		set $argsVar \[lrange \$$argsVar \$pos end\]
 		set len \[llength \$$argsVar\]
-		if {(\$len < $minargs) || (\$len > $maxargs)} {
+		if {(\$len < $minargs) $test} {
 			[list errorformat $cmd $options $minargs $maxargs $parameters]
 		}
 	}]

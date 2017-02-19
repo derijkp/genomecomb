@@ -63,7 +63,7 @@ proc errorformat_calc {action {options {}} {minargs {}} {maxargs {}} {parameters
 		append out " $p"
 		incr pos
 	}
-	while {$pos < $maxargs} {
+	while {$maxargs eq "..." || $pos < $maxargs} {
 		if {$pos >= [llength $parameters]} {
 			append out " ..."
 			break
