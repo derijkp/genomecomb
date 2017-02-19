@@ -1,10 +1,10 @@
-= downloadbiograph =
+= download_biograph =
 
 == Format ==
-cg downloadbiograph resultfile diseaseid ?genefile?
+cg download_biograph resultfile diseaseid ?genefile?
 
 == Summary ==
-download gene rank data from biograph.
+download_biograph gene rank data from biograph.
 
 == Description ==
 Creates a tab separated file with gene names and their biograph rank wrt

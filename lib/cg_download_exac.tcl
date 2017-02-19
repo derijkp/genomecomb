@@ -1,25 +1,33 @@
+if 0 {
 set build hg19
 set dest /complgen/refseq/
 set path $dest/tmp
 set url ftp://ftp.broadinstitute.org/pub/ExAC_release/release0.3/ExAC.r0.3.sites.vep.vcf.gz
-proc downloaddb_exac {path build {url {}}} {
-	if {$url eq ""} {
-		set url ftp://ftp.broadinstitute.org/pub/ExAC_release/release0.3/ExAC.r0.3.sites.vep.vcf.gz
+}
+
+proc cg_download_exac {args} {
+	set url ftp://ftp.broadinstitute.org/pub/ExAC_release/release0.3.1/ExAC.r0.3.1.sites.vep.vcf.gz
+	set keep 0
+	cg_options download_exac args {
+		-k {set keep $value}
+	} {resultfile build url} 2 3 {
+		download data from exac
 	}
-	file mkdir ${path}/tmp/$build
-	cd ${path}/tmp/$build
-	# exec -ignorestderr wget -c --tries=45 --directory-prefix=${path}/tmp/$build/exac http://exac.broadinstitute.org/about
-	exec -ignorestderr wget -c --tries=45 --directory-prefix=${path}/tmp/$build/exac $url
-	set file [file tail $url]
-	set tsvfile [file root $file].tsv
-	cg vcf2tsv $file $tsvfile
+	set tempdir $resultfile.temp
+	file mkdir $tempdir
+	set tail [file tail $url]
+	if {![regexp {[0-9][0-9.]+[0-9]} $tail version]} {error "could not get version from $tail"}
+	wgetfile $url $tempdir/$tail
+	set tsvfile $tempdir/[file root $tail].tsv
+	set tempresult $tempdir/var_${build}_exac.tsv
+	cg vcf2tsv $tempdir/$tail $tsvfile
 	#
 	catch {close $f} ; catch {close $o}
 	set f [open $tsvfile]
 	set header [tsv_open $f]
 	set bposs [tsv_basicfields $header]
 	set populations {AFR AMR EAS FIN NFE OTH SAS}
-	set o [open var_${build}_exac.tsv.temp w]
+	set o [open $tempresult.temp w]
 	set nheader [list {*}[list_sub $header $bposs] ]
 	foreach pop $populations {
 		lappend nheader freqp_${pop} mfreqp_${pop} nchrom_${pop}
@@ -58,11 +66,21 @@ proc downloaddb_exac {path build {url {}}} {
 	close $o
 	close $f
 # opt
-file_write $path/$build/extra/var_${build}_exac.tsv.opt "fields\t{freqp_AFR mfreqp_AFR freqp_AMR mfreqp_AMR freqp_EAS mfreqp_EAS freqp_FIN mfreqp_FIN freqp_NFE mfreqp_NFE freqp_OTH mfreqp_OTH freqp_SAS mfreqp_SAS}\n"
+file_write $tempresult.opt "fields\t{freqp_AFR mfreqp_AFR freqp_AMR mfreqp_AMR freqp_EAS mfreqp_EAS freqp_FIN mfreqp_FIN freqp_NFE mfreqp_NFE freqp_OTH mfreqp_OTH freqp_SAS mfreqp_SAS}\n"
 # info
-file_write $path/$build/extra/var_${build}_exac.tsv.info [string trim [subst {
-ExAC variants
+file_write $tempresult.info [string trim [subst {
+ExAC variants (version $version)
 =============
+
+Download info
+-------------
+dbname	evs (ExAC variants)
+version	$version
+citation	Exome Aggregation Consortium (ExAC), Cambridge, MA (URL: http://exac.broadinstitute.org) \[[clock format [clock seconds] -format "%b %Y"]\]
+website	http://exac.broadinstitute.org
+source	$url
+time	[timestamp]
+
 About ExAC
 ----------
 The Exome Aggregation Consortium (ExAC) is a coalition of investigators
@@ -122,6 +140,9 @@ If less than 20 chromosomes are sequenced, the frequency will be put as -
 
 more information on http://exac.broadinstitute.org/about
 }]]
-	file rename -force var_${build}_exac.tsv.temp $path/$build/extra/var_${build}_exac.tsv
+	file rename -force $tempresult.opt $resultfile.opt
+	file rename -force $tempresult.info $resultfile.info
+	file rename -force $tempresult.temp $resultfile
+	if {!$keep} {file delete -force $tempdir}
 }
 

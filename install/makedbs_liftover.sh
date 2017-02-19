@@ -2,14 +2,16 @@
 # the next line restarts using tclsh \
 exec cg source "$0" "$@"
 
+logverbose 2
+
 if {![info exists argv]} {set argv {}}
 set argv [job_init {*}$argv]
-if {[llength $argv]} {
-	set dest [lindex $argv 0]
-} else {
-	set dest /complgen/refseq
-}
-set dest [file join $dest liftover]
+foreach {dest webcache} $argv break
+if {![info exists dest]} {set dest /complgen/refseqnew}
+if {[info exists webcache]} {set env(webcache) $webcache}
+set dest [file_absolute $dest]
+
+putslog "Installing in $dest/$build"
 
 # liftchanges
 # ===========

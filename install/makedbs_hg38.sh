@@ -2,7 +2,7 @@
 # the next line restarts using tclsh \
 exec cg source "$0" "$@"
 
-set build hg19
+set build hg38
 set mirbasegenome hsa
 set mirbaserelease 20
 
@@ -17,19 +17,19 @@ set dest [file_absolute $dest]
 
 putslog "Installing in $dest/$build"
 
-# download hg19
-# =============
+# download
+# ========
 #
 file mkdir ${dest}/${build}
 cd ${dest}/${build}
 file mkdir extra
-file mkdir ${dest}/hg18
+file mkdir ${dest}/hg19
 
 job_logdir log_jobs
 
 # download genome
 job genome_${build} -vars build -targets {genome_${build}.ifas extra/reg_${build}_fullgenome.tsv} -code {
-	cg download_genome genome_${build}.ifas ${build}
+	cg download_genome genome_${build}.ifas ${build} 2>@ stderr
 	file rename -force reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
 }
 
@@ -47,9 +47,9 @@ job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas}
 
 # collapse regions
 foreach db {
-	cytoBand evofold microsat oreganno rmsk simpleRepeat targetScanS tfbsConsSites 
-	tRNAs wgRna vistaEnhancers gad
-	phastConsElements46way phastConsElements46wayPlacental phastConsElements46wayPrimates
+	cytoBand microsat oreganno rmsk simpleRepeat 
+	tRNAs wgRna
+	phastConsElements100way
 } {
 	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {dest build db} -code {
 		cg download_ucsc $target.ucsc ${build} $db
@@ -95,65 +95,66 @@ foreach db {
 }
 
 ## 1000 genomes
-job 1000g3 -targets {var_hg19_1000g3.tsv extra/var_hg19_1000g3.tsv.opt} -vars {dest} -code {
-	cg download_1000g3 $target hg19
-	cplinked $target extra/var_hg19_1000g3.tsv
-	file_write extra/var_hg19_1000g3.tsv.opt "fields\t{EUR_AF AMR_AF EAS_AF SAS_AF AFR_AF}\n"
+job 1000g3 -targets {$dest/hg19/var_hg19_1000g3.tsv $dest/hg19/extra/var_hg19_1000g3.tsv.opt} -vars {dest} -code {
+	cg download_1000g3 $dest/hg19/$target hg19
+	cplinked $target $dest/hg19/extra/var_hg19_1000g3.tsv
+	file_write $dest/hg19/extra/var_hg19_1000g3.tsv.opt "fields\t{EUR_AF AMR_AF EAS_AF SAS_AF AFR_AF}\n"
+}
+
+job 1000g3_liftover -deps {${dest}/hg19/var_hg19_1000g3.tsv} -targets {var_${build}_1000g3.tsv} -vars {dest build} -code {
+	cg liftover ${dest}/hg19/var_hg19_1000g3.tsv var_${build}_1000g3.tsv ${dest}/liftover/hg19ToHg38.over.tsv
 }
 
 # dbsnp
-job dbsnp147 -targets {var_hg19_snp147.tsv var_hg19_snp147.tsv.opt} -vars {dest} -code {
+job dbsnp147 -targets {var_${build}_snp147.tsv var_${build}_snp147.tsv.opt} -vars {dest build} -code {
 	file_write $target.opt "fields\t{name}\n"
-	cg download_ucsc $target.temp hg19 snp147
-	cg select -f {chrom start end type ref alt name freq} $target.temp $target.temp2
-	file rename -force $target.temp2 $target
-	file delete $target
+	cg download_dbsnp $target ${build} snp147 2>@ stderr
 }
 
-job dbsnp147Common -targets {var_hg19_snp147Common.tsv} -vars {dest} -code {
-	cg download_ucsc $target.temp hg19 snp147Common
-	cg select -f {chrom start end type ref alt name freq} $target.temp $target.temp2
-	file rename -force $target.temp2 $target
-	file delete $target
+job dbsnp147Common -targets {var_${build}_snp147Common.tsv} -vars {dest build} -code {
+	cg download_dbsnp $target ${build} snp147Common 2>@ stderr
 }
 
 foreach db {
 	snp147 snp147Common
 } {
+puts pwd=[pwd]
+puts "glob=[glob var_${build}_${db}.tsv]"
 	job maketabix_${build}_$db -deps {var_${build}_${db}.tsv} -targets {var_${build}_${db}.tsv.gz.tbi var_${build}_${db}.tsv.gz} -vars {dest build db} -code {
 		cg maketabix $dep
 	}
 }
 
 job clinvar -targets {var_${build}_clinvar.tsv} -vars {dest build} -code {
-	wgetfile ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar.vcf.gz
-	cg vcf2tsv clinvar.vcf.gz clinvar.tsv
-	set f [open clinvar.tsv]
+	set tempdir $target.temp
+	file mkdir $tempdir
+	wgetfile ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz $tempdir/clinvar.vcf.gz
+	cg vcf2tsv $tempdir/clinvar.vcf.gz $tempdir/clinvar.tsv
+	set f [open $tempdir/clinvar.tsv]
 	set header [tsv_open $f comment]
 	close $f
-	if {![regexp reference=GRCh37 $comment]} {
+	if {![regexp reference=GRCh38 $comment]} {
 		error "clinvar.vcf.gz is from a different reference genome version"
 	}
-	cg collapsealleles clinvar.tsv > $target.temp
-	file_write [gzroot $target].opt.temp "fields\t{CLNACC CLNDBN}\nheaderfields\t{clinvar_acc clinvar_disease}\n"
-	file rename -force [gzroot $target].opt.temp [gzroot $target].opt
-	file rename -force $target.temp $target
-	file delete clinvar.vcf.gz
+	cg collapsealleles $tempdir/clinvar.tsv > $tempdir/clinvar_collapsed.tsv
+	file_write [gzroot $target].opt "fields\t{CLNACC CLNDBN}\nheaderfields\t{clinvar_acc clinvar_disease}\n"
+	file rename -force $tempdir/clinvar_collapsed.tsv $target
+	file delete -force $tempdir
 }
 
-job kaviar -targets {var_hg19_kaviar.tsv var_hg19_kaviar.tsv.opt} -vars {dest build} -code {
-	cg download_kaviar $target hg19 http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-hg19-trim.vcf.tar
+job kaviar -targets {var_${build}_kaviar.tsv} -vars {dest build} -code {
+	cg download_kaviar $target ${build} http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-${build}-trim.vcf.tar
 }
 
 # genes
 foreach db {
-	refGene ensGene knownGene wgEncodeGencodeBasicV24lift37 wgEncodeGencodeCompV24lift37 genscan acembly
+	refGene knownGene wgEncodeGencodeBasicV24 wgEncodeGencodeCompV24 genscan augustusGene
 } {
 	if {$db eq "wgEncodeGencodeCompV19"} {
 		set dbname gencode
-	} elseif {$db eq "wgEncodeGencodeBasicV24lift37"} {
+	} elseif {$db eq "wgEncodeGencodeBasicV24"} {
 		set dbname gencode
-	} elseif {$db eq "wgEncodeGencodeCompV24lift37"} {
+	} elseif {$db eq "wgEncodeGencodeCompV24"} {
 		set dbname cgencode
 	} else {set dbname $db}
 	if {$db eq "refGene"} {
@@ -180,7 +181,7 @@ foreach db {
 #}
 
 job reg_${build}_genes \
--deps {gene_${build}_refGene.tsv extra/gene_${build}_ensGene.tsv extra/gene_${build}_knownGene.tsv extra/gene_${build}_gencode.tsv} \
+-deps {gene_${build}_refGene.tsv extra/gene_${build}_knownGene.tsv extra/gene_${build}_gencode.tsv} \
 -targets {extra/reg_${build}_genes.tsv} \
 -code {
 	exec cg cat -fields {chrom start end geneid} {*}$deps | cg select -s {chrom start end geneid} -f {chrom {start=$start - 2000} {end=$end + 2000} geneid} | cg regcollapse > $target.temp
@@ -190,7 +191,7 @@ job reg_${build}_genes \
 job reg_${build}_phenotype -deps {extra/reg_${build}_genes.tsv} \
 -targets {extra/reg_${build}_phenotype.tsv extra/geneannot_${build}_phenotype.tsv} -vars {dest build} -code {
 	# get target2, uses biomart (ensembl geneset) and clinvar for gene-phenotype correlations
-	cg download_phenotype $target2 ${build}
+	cg download_phenotype --stack 1 $target2 ${build}
 	# to reg file
 	cg geneannot2reg $dep $target2 $target.temp
 	file rename -force $target.temp $target
@@ -238,28 +239,34 @@ job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}
 }
 
 ## mirdmg
-#job reg_${build}_mirdmg -targets {mir_${build}_mirdmg.tsv mir_${build}_mirdmg.info} -vars {dest build db} -code {
-#	wgetfile http://mirna.bioinf.be/public/mir_hg19_mirdmg.tsv mir_hg19_mirdmg.tsv.temp
+#job reg_${build}_mirdmg -targets {$dest/${build}/mir_${build}_mirdmg.tsv $dest/${build}/mir_${build}_mirdmg.info} -vars {dest build db} -code {
+#	wgetfile http://mirna.bioinf.be/public/mir_${build}_mirdmg.tsv mir_hg19_mirdmg.tsv.temp
 #	file rename -force mir_hg19_mirdmg.tsv.temp mir_hg19_mirdmg.tsv
 #}
 
 # mirbase
-job mir_${build}_mirbase -targets {mir_${build}_mirbase$mirbaserelease.tsv mir_${build}_mirbase$mirbaserelease.tsv.info} -vars {mirbasegenome mirbaserelease dest build db} -code {
+job mir_${build}_mirbase -targets {mir_${build}_mirbase$mirbaserelease.tsv $dest/${build}/mir_${build}_mirbase$mirbaserelease.tsv.info} -vars {mirbasegenome mirbaserelease dest build db} -code {
 	cg download_mirbase $target $mirbasegenome $mirbaserelease
 }
 
 # exome variant server
-job var_hg19_evs -targets {extra/var_hg19_evs.tsv extra/var_hg19_evs.tsv.opt extra/var_hg19_evs.tsv.info} -vars {dest build db} -code {
-	cg download_evs $target hg19 http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
+job var_${build}_evs -targets {extra/var_${build}_evs.tsv extra/var_${build}_evs.tsv.opt extra/var_${build}_evs.tsv.info} -vars {dest build db} -code {
+	cg download_evs $target ${build} http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.GRCh38-liftover.snps_indels.vcf.tar.gz
 }
 
 # exac
-job reg_hg19_exac -targets {extra/var_hg19_exac.tsv extra/var_hg19_exac.tsv.opt extra/var_hg19_exac.tsv.info} -vars {dest build db} -code {
+job reg_hg19_exac -targets {${dest}/hg19/extra/var_hg19_exac.tsv ${dest}/hg19/extra/var_hg19_exac.tsv.info} -vars {dest build db} -code {
 	cg download_exac $target hg19 ftp://ftp.broadinstitute.org/pub/ExAC_release/release0.3.1/ExAC.r0.3.1.sites.vep.vcf.gz
 }
 
+job exac_${build}_liftover -deps {${dest}/hg19/extra/var_hg19_exac.tsv ${dest}/hg19/extra/var_hg19_exac.tsv.info} \
+	-targets {extra/var_${build}_exac.tsv extra/var_${build}_exac.tsv.info} -vars {dest build} -code {
+	file copy -force $dep2 $target2
+	cg liftover -split 0 $dep $target ${dest}/liftover/hg19ToHg38.over.tsv
+}
+
 # CADD
-job reg_hg19_cadd -targets {extra/var_hg19_cadd.bcol extra/var_hg19_cadd.bcol.bin.lz4 extra/var_hg19_cadd.bcol.bin.lz4.lz4i extra/var_hg19_cadd.bcol.info} -vars {dest db build} -code {
+job reg_${build}_cadd -targets {extra/var_${build}_cadd.bcol extra/var_${build}_cadd.bcol.bin.lz4 extra/var_${build}_cadd.bcol.bin.lz4.lz4.lz4i extra/var_${build}_cadd.bcol.info} -vars {dest db build} -code {
 	set tempdir $target.temp
 	file mkdir $tempdir
 	set url http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz
@@ -298,41 +305,31 @@ job reg_hg19_cadd -targets {extra/var_hg19_cadd.bcol extra/var_hg19_cadd.bcol.bi
 		putslog "Downloading $tail"
 		wgetfile $url $tempdir/$tail
 	}
+	putslog "Liftover to hg38"
+	if {![file exists $tempdir/hg38_whole_genome_SNVs.tsv]} {
+		cg select -hc 1 -rc 1 -s {Chrom Pos Alt} \
+			-f {{chrom=$Chrom} {begin = $Pos - 1} {end=$Pos} {ref=$Ref} {alt=$Alt} {rawscore=$RawScore} {score=$PHRED}} \
+			$tempdir/$tail $tempdir/whole_genome_SNVs.tsv.temp
+		cg liftover $tempdir/whole_genome_SNVs.tsv.temp $tempdir/hg38_whole_genome_SNVs.tsv ../liftover/hg19ToHg38.over.tsv
+	}
 	putslog "make bcol"
 	file_write extra/var_${build}_cadd.tsv.opt "fields\t{score pscore}\n"
-	cg select -hc 1 -rc 1 -s {Chrom Pos Alt} \
-		-f {{chrom=$Chrom} {begin = $Pos - 1} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
+	cg select -s {chrom begin alt} -f {chrom begin ref alt score} $tempdir/hg38_whole_genome_SNVs.tsv \
 		| cg collapsealleles \
 		| cg bcol make --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
+	file rename -force $tempdir/var_${build}_cadd.bcol.info extra/var_${build}_cadd.bcol.info
 	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4 extra/var_${build}_cadd.bcol.bin.lz4
 	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4.lz4i extra/var_${build}_cadd.bcol.bin.lz4.lz4i
 	file rename -force $tempdir/var_${build}_cadd.bcol extra/var_${build}_cadd.bcol
 	file delete -force $tempdir
 }
 
-# GERP
-job GERP -targets {extra/bcol_${build}_GERP.bcol extra/bcol_${build}_GERP.bcol.info} -vars {dest build tables} -code {
-	set table allHg19RS_BW
-	set tempdir $target.temp
-	file mkdir $tempdir
-	set tail [file tail $target]
-	cg download_ucsc $tempdir/ucsc_${build}_$table.tsv ${build} $table
-	cg ucscwb2reg -p 1 -f {} $tempdir/ucsc_${build}_$table.tsv $tempdir/reg_ucsc_${build}_$table.tsv
-	cg select -s - $tempdir/reg_ucsc_${build}_$table.tsv $tempdir/reg_${build}_GERP.tsv.temp
-	exec cg bcol make --precision 1 --compress 9 -t f -p begin -e end -c chromosome $tempdir/$tail score < $tempdir/reg_${build}_GERP.tsv.temp
-	file rename -force $tempdir/$tail.bin.lz4 $target.bin.lz4
-	file rename -force $tempdir/$tail.bin.lz4.lz4i $target.bin.lz4.lz4i
-	file rename -force $tempdir/$tail $target
-	file rename -force $tempdir/ucsc_${build}_$table.tsv.info $target.info
-	file delete -force $tempdir
-}
-
 # encode
 foreach {jobname resultname infosrc tables} {
-	enc_transcription wgEncodeCaltechRnaSeq wgEncodeCaltechRnaSeq {wgEncodeRegTxnCaltechRnaSeqGm12878R2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqH1hescR2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqHelas3R2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqHepg2R2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqHsmmR2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqHuvecR2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqK562R2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqNhekR2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqNhlfR2x75Il200SigPooled}
-	enc_H3K27Ac wgEncodeH3k27ac wgEncodeBroadHistone {wgEncodeBroadHistoneGm12878H3k27acStdSig wgEncodeBroadHistoneH1hescH3k27acStdSig wgEncodeBroadHistoneHsmmH3k27acStdSig wgEncodeBroadHistoneHuvecH3k27acStdSig wgEncodeBroadHistoneK562H3k27acStdSig wgEncodeBroadHistoneNhekH3k27acStdSig wgEncodeBroadHistoneNhlfH3k27acStdSig}
-	enc_H3K4Me1 wgEncodeH3k4me1 wgEncodeRegMarkH3k4me1 {wgEncodeBroadHistoneGm12878H3k4me1StdSig wgEncodeBroadHistoneH1hescH3k4me1StdSig wgEncodeBroadHistoneHsmmH3k4me1StdSig wgEncodeBroadHistoneHuvecH3k4me1StdSig wgEncodeBroadHistoneK562H3k4me1StdSig wgEncodeBroadHistoneNhekH3k4me1StdSig wgEncodeBroadHistoneNhlfH3k4me1StdSig}
-	enc_H3K4Me3	wgEncodeH3k4me3 wgEncodeRegMarkH3k4me3   {wgEncodeBroadHistoneGm12878H3k4me3StdSig wgEncodeBroadHistoneH1hescH3k4me3StdSig wgEncodeBroadHistoneHsmmH3k4me3StdSig wgEncodeBroadHistoneHuvecH3k4me3StdSig wgEncodeBroadHistoneK562H3k4me3StdSig wgEncodeBroadHistoneNhekH3k4me3StdSig wgEncodeBroadHistoneNhlfH3k4me3StdSig}
+	enc_transcription wgEncodeRegTxn wgEncodeRegTxn {wgEncodeRegTxnCaltechRnaSeqGm12878R2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqH1hescR2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqHelas3R2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqHepg2R2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqHsmmR2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqHuvecR2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqK562R2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqNhekR2x75Il200SigPooled wgEncodeRegTxnCaltechRnaSeqNhlfR2x75Il200SigPooled}
+	enc_RegMarkH3k27ac wgEncodeRegMarkH3k27ac wgEncodeRegMarkH3k27ac {wgEncodeBroadHistoneGm12878H3k27acStdSig wgEncodeBroadHistoneH1hescH3k27acStdSig wgEncodeBroadHistoneHsmmH3k27acStdSig wgEncodeBroadHistoneHuvecH3k27acStdSig wgEncodeBroadHistoneK562H3k27acStdSig wgEncodeBroadHistoneNhekH3k27acStdSig wgEncodeBroadHistoneNhlfH3k27acStdSig}
+	enc_RegMarkH3k4me1 wgEncodeRegMarkH3k4me1 wgEncodeRegMarkH3k4me1 {wgEncodeBroadHistoneGm12878H3k4me1StdSig wgEncodeBroadHistoneH1hescH3k4me1StdSig wgEncodeBroadHistoneHsmmH3k4me1StdSig wgEncodeBroadHistoneHuvecH3k4me1StdSig wgEncodeBroadHistoneK562H3k4me1StdSig wgEncodeBroadHistoneNhekH3k4me1StdSig wgEncodeBroadHistoneNhlfH3k4me1StdSig}
+	enc_RegMarkH3k4me3	wgEncodeRegMarkH3k4me3 wgEncodeRegMarkH3k4me3 {wgEncodeBroadHistoneGm12878H3k4me3StdSig wgEncodeBroadHistoneH1hescH3k4me3StdSig wgEncodeBroadHistoneHsmmH3k4me3StdSig wgEncodeBroadHistoneHuvecH3k4me3StdSig wgEncodeBroadHistoneK562H3k4me3StdSig wgEncodeBroadHistoneNhekH3k4me3StdSig wgEncodeBroadHistoneNhlfH3k4me3StdSig}
 } {
 	# make database
 	job $jobname -targets {bcol_${build}_$resultname.bcol} -vars {dest build tables resultname} -code {
@@ -381,19 +378,12 @@ foreach {jobname resultname infosrc tables} {
 job enc_RegDnaseClustered -targets {reg_${build}_wgEncodeRegDnaseClusteredV3.tsv reg_${build}_wgEncodeRegDnaseClusteredV3.tsv.info} -vars {dest build} -code {
 	cg download_ucsc $target.ucsc $build wgEncodeRegDnaseClusteredV3
 	cg regcollapse $target.ucsc > $target.temp
+	file rename -force $target.ucsc.info $target.info
 	file rename -force $target.temp $target
 	file delete $target.ucsc
-	cg download_ucscinfo $target.info ${build} wgEncodeRegDnaseClusteredV3
 }
 
-job enc_RegTfbsClustered -targets {reg_${build}_wgEncodeRegTfbsClusteredV3.tsv} -vars {dest build} -code {
-	cg download_ucsc $target.ucsc ${build} wgEncodeRegTfbsClusteredV3
-	cg select -s - -f {chrom	start	end	name	score} $target.ucsc $target.temp
-	cg regcollapse $target.temp > $target.temp2
-	file rename -force $target.temp2 $target
-	file rename -force $target.ucsc.info $target.info
-	file delete -force $target.ucsc $target.temp
-}
+# todo : wgEncodeRegDnaseWig wgEncodeRegDnase
 
 # link local data in dir
 foreach file [glob -nocomplain ../hg19-local/*] {
@@ -403,22 +393,24 @@ foreach file [glob -nocomplain ../hg19-local/*] {
 	}
 }
 
+if 0 {
 # extra dir
 # targetseq exome
 job reg_exome_targetseq -targets {extra/reg_hg19_exome_targetseq.tsv} -code {
-	cd extra
-	wgetfile http://tools.invitrogen.com/content/sfs/manuals/TargetSeq_exome_named_targets_hg19.bed
-	cg bed2sft TargetSeq_exome_named_targets_hg19.bed ureg_hg19_exome_targetseq.tsv
-	cg select -s {chromosome begin end} ureg_hg19_exome_targetseq.tsv sreg_hg19_exome_targetseq.tsv
-	cg regcollapse -o reg_hg19_exome_targetseq.tsv sreg_hg19_exome_targetseq.tsv
-	file delete TargetSeq_exome_named_targets_hg19.bed sreg_hg19_exome_targetseq.tsv ureg_hg19_exome_targetseq.tsv
+	wgetfile http://tools.invitrogen.com/content/sfs/manuals/TargetSeq_exome_named_targets_hg19.bed $target.bed
+	cg bed2sft $target.bed $target.temp
+	cg select -s {chromosome begin end} $target.temp $target.temp2
+	cg regcollapse -o reg_hg19_exome_targetseq.tsv $target.temp2
+	file delete $target.bed $target.temp $target.temp2
 }
 # cg select -f '* {id=NR "-" $name}' reg_hg19_exome_targetseq.tsv | less
 
 # dbNSFP
-job var_hg19_dbnsfp -targets {extra/var_hg19_dbnsfp.tsv extra/var_hg19_dbnsfp.tsv.opt} -vars {dest build} -code {
+job var_hg19_dbnsfp -targets {extra/var_hg19_dbnsfp.tsv extra/var_hg19_dbnsfp.tsv.opt} -vars {dest} -code {
 	cg download_dbnsfp $target $build ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv3.3a.zip
 }
+}
+
 
 job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${build}.ssa} -vars build \
 -targets {extra/genome_${build}.ifas extra/genome_${build}.ifas.index extra/genome_${build}.ssa} -code {
@@ -426,7 +418,6 @@ job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${
 	mklink genome_${build}.ifas.index extra/genome_${build}.ifas.index 
 	mklink genome_${build}.ssa extra/genome_${build}.ssa
 }
-
 # genome in extra
 foreach file [glob genome_*] {
 	catch {

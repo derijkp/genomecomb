@@ -1,10 +1,10 @@
-= downloadmart =
+= download_mart =
 
 == Format ==
-cg downloadmart resultfile dataset config attributes
+cg download_mart resultfile dataset config attributes
 
 == Summary ==
-Download data from biomart)
+Download data from biomart
 
 == Description ==
 
@@ -17,7 +17,7 @@ Download data from biomart)
 
 == Example ==
 {{{
-cg downloadmart reg_hg19_go.tsv hsapiens_gene_ensembl gene_ensembl_config {hgnc_symbol name_1006 namespace_1003}
+cg download_mart reg_hg19_go.tsv hsapiens_gene_ensembl gene_ensembl_config {hgnc_symbol name_1006 namespace_1003}
 }}}
 
 == Category ==

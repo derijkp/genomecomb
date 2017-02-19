@@ -113,7 +113,7 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 		set outfields {}
 		set poss {}
 	} elseif {$dbtype eq "var"} {
-		set outfields [dict_get_default $a fields {name freq score}]
+		set outfields [dict_get_default $a fields {name freqp freq score}]
 		set poss [tsv_basicfields $header 3]
 	} elseif {$dbtype eq "bcol"} {
 		set outfields {}

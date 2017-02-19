@@ -12,7 +12,7 @@ if 0 {
 
 package require BioTcl
 
-proc downloaddb_dbsnp_convline {line} {
+proc download_dbsnp_convline {line} {
 	foreach {chr begin end class ref observed name freq} $line break
 	set rest [lrange $line 8 end]
 	set observed [split $observed /]
@@ -47,33 +47,33 @@ proc downloaddb_dbsnp_convline {line} {
 	list $chr $begin $end $type $ref $observed $name $freq {*}$rest
 }
 
-proc downloaddb_dbsnp {path build dbname} {
-	set ufilename $path/tmp/$build/ucsc_${build}_$dbname.tsv
-	set filename $path/$build/var_${build}_$dbname.tsv
-	puts "Making $filename"
-	if {[file exists $filename]} {
-		puts "file $filename exists: skipping"
+proc cg_download_dbsnp {resultfile build dbname} {
+	set ufilename $resultfile.ucsc
+	puts "Making $resultfile"
+	if {[file exists $resultfile]} {
+		puts "file $resultfile exists: skipping"
 		return
 	}
-	catch {file mkdir [file dir $filename]}
+	catch {file mkdir [file dir $resultfile]}
 	if {![file exists $ufilename]} {
-		downloaddb $path/tmp $build $dbname
+		puts "Downloading $ufilename"
+		cg_download_ucsc $ufilename $build $dbname
 	}
 	puts "Converting $ufilename"
 	catch {close $f} ; catch {close $o}
 	set f [open $ufilename]
-	set o [open $filename.temp w]
+	set o [open $resultfile.temp w]
 	set header [split [gets $f] \t]
 	set poss [list_cor $header {chrom start end class refNCBI observed name avHet avHetSE strand molType valid func weight exceptions submitterCount submitters alleleFreqCount alleles alleleNs alleleFreqs bitfields}]
 	puts $o [join {chrom start end type ref alt name freq avHetSE strand molType valid func weight exceptions submitterCount submitters alleleFreqCount alleles alleleNs alleleFreqs bitfields} \t]
 	set pline [list_sub [split [gets $f] \t] $poss]
-	set pline [downloaddb_dbsnp_convline $pline]
+	set pline [download_dbsnp_convline $pline]
 	set num 0 ; set next 100000
 	while 1 {
 		incr num; if {$num >= $next} {puts $num; incr next 100000}
 		set line [split [gets $f] \t]
 		set line [list_sub $line $poss]
-		set line [downloaddb_dbsnp_convline $line]
+		set line [download_dbsnp_convline $line]
 		if {[lrange $pline 0 3] eq [lrange $line 0 3]} {
 			foreach {alt name freq} [list_sub $pline {5 6 7}] break
 			lappend alt {*}[lindex $line 5]
@@ -107,8 +107,8 @@ proc downloaddb_dbsnp {path build dbname} {
 		if {[eof $f]} break
 	}
 	close $f ; close $o
-	puts "Sorting $filename"
-	cg select -s - $filename.temp $filename.temp2
-	file rename -force $filename.temp2 $filename
-	file delete $filename.temp
+	puts "Sorting $resultfile"
+	cg select -s - $resultfile.temp $resultfile.temp2
+	file rename -force $resultfile.temp2 $resultfile
+	file delete $resultfile.temp $resultfile.ucsc
 }
