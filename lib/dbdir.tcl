@@ -19,3 +19,7 @@ proc dbdir {args} {
 	set dbdir [file_absolute $dbdir]
 	return $dbdir
 }
+
+proc dbdir_ref dbdir {
+	file tail $dbdir
+}

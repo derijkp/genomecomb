@@ -1,8 +1,20 @@
-proc proces_reports_job {sampledir refdir {reports all}} {
-	upvar job_logdir job_logdir
-	set ref [file tail $refdir]
+proc process_reports_job {args} {
+	set reports all
+	cg_options process_reports args {
+		-dbdir {
+			set dbdir $value
+		}
+		-r - -reports {
+			set reports $value
+		}
+	} {sampledir dbdir reports} 1 3
+	set dbdir [dbdir $dbdir]
+	set sampledir [file_absolute $sampledir]
+	set sample [file tail $sampledir]
+	job_logdir $sampledir/job_logdir
+	set ref [dbdir_ref $dbdir]
 	if {$reports eq "all"} {
-		set reports {flagstats fastqc vars hsmetrics covered}
+		set reports {flagstats fastqstats fastqc vars hsmetrics covered}
 	}
 	set bamfiles [jobglob $sampledir/*.bam]
 	file mkdir $sampledir/reports
@@ -32,13 +44,13 @@ proc proces_reports_job {sampledir refdir {reports all}} {
 			set capturefile [lindex [jobglob $sampledir/info_capture.txt] 0]
 			set targetfile $sampledir/reg_${ref}_targets.tsv
 			if {$capturefile ne ""} {
-				job reports_targetfile -optional 1 -deps {$capturefile} -targets {$targetfile} -vars {sample refdir ref} -code {
+				job reports_targetfile -optional 1 -deps {$capturefile} -targets {$targetfile} -vars {sample dbdir ref} -code {
 					set capture [string trim [file_read $dep]]
-					set oritargetfile $refdir/extra/reg_${ref}_exome_$capture.tsv
+					set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
 					if {![file exists $oritargetfile]} {
 						array set transa {seqcapv3 SeqCap_EZ_v3 sure4 SureSelectV4 sure5 SureSelectV5 sure5utr SureSelectV5UTR}
 						set capture [get transa($capture) $capture]
-						set oritargetfile $refdir/extra/reg_${ref}_exome_$capture.tsv
+						set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
 					}
 					mklink $oritargetfile $target 1
 				}
@@ -64,10 +76,10 @@ proc proces_reports_job {sampledir refdir {reports all}} {
 			}
 		}
 	}
-	set fastqfiles [jobglob $sampledir/fastq/*]
+	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*]]
 	if {[inlist $reports fastqc]} {
 		foreach fastqfile $fastqfiles {
-			set name [file root [file tail [gzroot $fastqfile]]]
+			set name [file root [file tail [gzroot $fastqfile]]]-$sample
 			set dep $fastqfile
 			set outdir $sampledir/reports/fastqc
 			file mkdir $outdir
@@ -75,6 +87,43 @@ proc proces_reports_job {sampledir refdir {reports all}} {
 			job reports_fastqc-[file tail $fastqfile] -deps {$dep} -targets {$target} -vars {outdir} -code {
 				exec fastqc -q -o $outdir $dep 2>@ stderr >@ stdout
 				file delete $target.zip
+			}
+		}
+	}
+	if {[inlist $reports fastqstats]} {
+		set fastqfiles_fw [list_unmerge $fastqfiles 1 fastqfiles_rev]
+		foreach deps [list $fastqfiles_fw $fastqfiles_rev] dir {fw rev} {
+			set target $sampledir/reports/report_fastq_$dir-$sample.tsv
+			set target2 $sampledir/reports/fastq_stats_$dir-$sample.txt
+			set target3 $sampledir/reports/fastx_$dir-$sample.tsv
+			job reports_fastq-stats-$dir -deps $deps -targets {$target $target2 $target3} -vars {sample dir} -code {
+				set gzcat [gzcat [lindex $deps 0]]
+				exec {*}$gzcat {*}$deps | fastq-stats -x $target3 > $target2
+				set o [open $target.temp w]
+				puts $o [join {sample source parameter value} \t]
+				set f [open $target2]
+				set dups {}
+				while {[gets $f line] != -1} {
+					set line [split $line \t]
+					foreach {parameter value} $line break
+					set parameter [string_change [string trim $parameter] {% pct_}]
+					regsub -all {[^a-zA-z]} $parameter _ parameter
+					switch $parameter {
+						reads {
+							puts $o [join [list $sample fastq-stats ${dir}_numreads $value] \t]
+						}
+						dup_seq {
+							lappend dups [lindex $line 2] [lindex $line 3]
+						}
+						default {
+							puts $o [join [list $sample fastq-stats ${dir}_$parameter $value] \t]
+						}
+					}
+				}
+				close $f
+				puts $o [join [list $sample fastq-stats ${dir}_dups $dups] \t]
+				close $o
+				file rename -force $target.temp $target
 			}
 		}
 	}
@@ -148,4 +197,13 @@ proc proces_reportscombine_job {destdir reportstodo} {
 			file delete $target.temp
 		}
 	}
+}
+
+proc cg_process_reports {args} {
+	set args [job_init {*}$args]
+	if {[llength $args] < 1} {
+		errorformat process_reports
+	}
+	process_reports_job {*}$args
+	job_wait
 }
