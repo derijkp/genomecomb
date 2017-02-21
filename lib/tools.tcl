@@ -824,6 +824,7 @@ proc getline f {
 	return $line
 }
 
+# returns absolute path of waht file is linking to
 proc find_link file {
 	set file [file_absolute $file]
 	while 1 {
@@ -835,6 +836,8 @@ proc find_link file {
 	return $file
 }
 
+# make softlink as in tcl (linkname (1st) points to linkdest),
+# but linkdest is adjusted relative to linkname, and does not have to exist
 proc file_link {linkname linkdest} {
 	set dir [file dir $linkname]
 	if {[file pathtype $linkdest] eq "absolute"} {
@@ -851,11 +854,14 @@ proc file_link {linkname linkdest} {
 	}
 }
 
+# copy recursively with permissions and dates using hardlinks
 proc hardlink {args} {
 	if {[llength $args] < 2} {error "wrong # args: should be \"hardlink src ... dest\""}
 	exec cp -al {*}$args
 }
 
+# create soft link (dest points to src) using relative path (unless absolute == 1)
+# allow links to non-exusting files
 proc mklink {src dest {absolute 0}} {
 	set src [file_absolute $src]
 	set dest [file_absolute $dest]
@@ -889,6 +895,7 @@ proc mklink {src dest {absolute 0}} {
 	}
 }
 
+# same as mklink, but add proper extension to dest if src is compressed (and dest does not have already the correct compression extension)
 proc gzmklink {src dest} {
 	set src [gzfile $src]
 	set ext_s [file extension $src]
