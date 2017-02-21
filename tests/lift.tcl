@@ -26,6 +26,22 @@ test liftover {basic liftover with correctvariants} {
 	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
 } {}
 
+test liftover {half pipe} {
+	test_cleantmp
+	exec cg liftover --stack 1 /complgen/refseq/liftover/hg18ToHg19.over.tsv data/var_lift.tsv > tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
+} {}
+
+test liftover {pipe} {
+	test_cleantmp
+	exec cg liftover --stack 1 /complgen/refseq/liftover/hg18ToHg19.over.tsv < data/var_lift.tsv > tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-var_lift-hg18tohg19.tsv
+} {5c5
+< #liftover_source	-
+---
+> #liftover_source	data/var_lift.tsv
+child process exited abnormally} error
+
 test liftregion {basic} {
 	test_cleantmp
 	exec cg liftregion data/reg_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv

@@ -1,7 +1,7 @@
 = liftover =
 
 == Format ==
-cg liftover variantfile resultfile liftoverfile
+cg liftover ?variantfile? ?resultfile? liftoverfile
 
 == Summary ==
 Use liftover to convert a variant file from one build to another
@@ -27,8 +27,8 @@ available in resultfile.unmapped. Regions that were not present in the source ge
 will obviously not have variants.
 
 == Arguments ==
-; **variantfile**: file in sft format (with variant data)
-; **resultfile**: resulting converted file
+; **variantfile**: file in [[tsv]] format (with variant data), if not given, will take data from stdin
+; **resultfile**: resulting converted file, if not given, will output data to stdout
 ; **liftoverfile**: liftover file guiding the conversion. Liftover files are normally in tsv format;
 If a (ucsc liftover) chainfile is given, it will be converted, saved next to the chain file and used.
 e.g. hg18/hg18ToHg19.over.tsv to convert from hg18 to hg19, and hg19/hg19ToHg18.over.tsv to convert from hg19 to hg18
@@ -42,6 +42,7 @@ in the specific sample)
 ; **-correctvariants 0/1**: normally cg liftover tries to correct variant data as far as possible,
 use 0 to skip this correction
 ; **-split 0/1**: indicate if variantfile (and resultfile) is split (multiline alt allele snps) or not (1 multiallelic line)
+; **-sort 0/1**: sort after liftover (default 1). Only set this to 0 if you will be sorting the file afterwards in a pipeline anyway
 
 == Category ==
 Conversion

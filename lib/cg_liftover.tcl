@@ -24,6 +24,7 @@ proc cg_liftover {args} {
 	set regionfile {}
 	set correctvariants 1
 	unset -nocomplain split
+	set sort 1
 	cg_options liftover args {
 		-regionfile - -r {
 			set regionfile $value
@@ -31,10 +32,22 @@ proc cg_liftover {args} {
 		-correctvariants - -c {
 			set correctvariants $value
 		}
+		-sort - -s {
+			set sort $value
+		}
 		-split - -s {
 			set split $value
 		}
-	} {varfile resultfile liftoverfile} 3
+	} {varfile resultfile liftoverfile} 1 3
+	if {![info exists resultfile]} {
+		set liftoverfile $varfile
+		set varfile -
+		set resultfile -
+	} elseif {![info exists liftoverfile]} {
+		set liftoverfile $varfile
+		set varfile $resultfile
+		set resultfile -
+	}
 	if {[file exists $resultfile]} {
 		error "file $resultfile already exists, format is (now): cg liftover varfile resultfile liftoverfile"
 	}
@@ -70,7 +83,11 @@ proc cg_liftover {args} {
 	}
 	#
 	# open varfile
-	set f [gzopen $varfile]
+	if {$varfile ne "-"} {
+		set f [gzopen $varfile]
+	} else {
+		set f stdin
+	}
 	set header [tsv_open $f comment]
 	set cinfo [comment2dict $comment]
 	if {![info exists split]} {
@@ -149,7 +166,18 @@ proc cg_liftover {args} {
 	lappend newheader ${oldrefname}_chromosome ${oldrefname}_begin ${oldrefname}_end ${oldrefname}_ref
 	#
 	# open resultfile
-	set o [open $resultfile.temp w]
+	if {$resultfile ne "-"} {
+		set tempout [filetemp $resultfile]
+		set o [open $tempout w]
+		set tempunmapped [filetemp $unmappedfile]
+	} elseif {$sort} {
+		set tempout [tempfile]
+		set o [open $tempout w]
+		set tempunmapped {}
+	} else {
+		set o stdout
+		set tempunmapped {}
+	}
 	dict set cinfo liftover_source $varfile
 	dict set cinfo liftover $liftoverfile
 	if {[dict exists $cinfo ref]} {
@@ -162,12 +190,14 @@ proc cg_liftover {args} {
 	dict set cinfo ref $newrefname
 	puts -nonewline $o [dict2comment $cinfo]
 	puts $o [join $newheader \t]
-	# open unmappedfile
-	set ou [open $unmappedfile.temp w]
-	puts -nonewline $ou $comment
-	puts $ou "#liftover_source\t$varfile"
-	puts $ou "#liftover_unmapped\t$liftoverfile"
-	puts $ou [join $header \t]
+	if {$tempunmapped ne ""} {
+		# open unmappedfile
+		set ou [open $tempunmapped w]
+		puts -nonewline $ou $comment
+		puts $ou "#liftover_source\t$varfile"
+		puts $ou "#liftover_unmapped\t$liftoverfile"
+		puts $ou [join $header \t]
+	}
 	set ldone 0
 	set todo {}
 	set doneloc {}
@@ -338,23 +368,38 @@ proc cg_liftover {args} {
 			} else {
 				puts $o [join $line \t]
 			}
-		} else {
+		} elseif {$tempunmapped ne ""} {
 			# no applicable transfer region found -> unmapped
 			puts $ou $oline
 		}
 	}
 
-	catch {gzclose $f} ; catch {closeliftoverfile $fl} ; catch {gzclose $fc} ; catch {close $o} ; catch {close $ou}
+	if {$varfile ne "-"} {catch {gzclose $f}} ; catch {closeliftoverfile $fl} ; catch {gzclose $fc} ; catch {close $ou}
 	#
-	# sort result
-	set sortfields [list_sub $header [list_remove [lrange $fposs 0 5] -1]]
-	lappend sortfields ${oldrefname}_chromosome ${oldrefname}_begin ${oldrefname}_end ${oldrefname}_ref
-	set fields [list_union [list_sub $newheader [list_remove $fposs -1]] $newheader]
-	cg select -f $fields -s $sortfields $resultfile.temp $resultfile.temp2
-	file rename -force $resultfile.temp2 $resultfile
-	file delete -force $resultfile.temp
+	if {$sort} {
+		catch {close $o}
+		# sort result
+		set sortfields [list_sub $header [list_remove [lrange $fposs 0 5] -1]]
+		lappend sortfields ${oldrefname}_chromosome ${oldrefname}_begin ${oldrefname}_end ${oldrefname}_ref
+		set fields [list_union [list_sub $newheader [list_remove $fposs -1]] $newheader]
+		if {$resultfile ne "-"} {
+			set tempresult [filetemp $resultfile]
+			cg select -f $fields -s $sortfields $tempout $tempresult
+			file rename -force $tempresult $resultfile
+			file delete -force $tempout
+		} else {
+			cg select -f $fields -s $sortfields $tempout >@ stdout
+		}
+	} else {
+		if {$resultfile ne "-"} {
+			catch {close $o}
+			file rename -force $tempout $resultfile
+		}
+	}
 	#
 	# rename result, cleanup
 	#
-	file rename -force $unmappedfile.temp $unmappedfile
+	if {$tempunmapped ne ""} {
+		file rename -force $tempunmapped $unmappedfile
+	}
 }
