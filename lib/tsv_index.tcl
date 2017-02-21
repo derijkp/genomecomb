@@ -190,6 +190,24 @@ proc tsv_index_apprgoto {file field pos} {
 	return $f
 }
 
+proc binsearch {table index value} {
+	set begin 0
+	set end [llength $table]
+	while 1 {
+		set mid [expr {($begin+$end)/2}]
+		if {$mid == $begin} break
+		set v [lindex $table $mid $index]
+		if {$value < $v} {
+			set end $mid
+		} elseif {$value > $v} {
+			set begin $mid
+		} else {
+			break
+		}
+	}
+	return $mid
+}
+
 proc tsv_index_get {file field pos} {
 	global cache
 	set file [file_absolute $file]
