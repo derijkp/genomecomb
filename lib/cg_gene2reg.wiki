@@ -7,7 +7,17 @@ cg gene2reg ?infile? ?outfile?
 Converts gene data in genepred-like format to a (tab separated) region file.
 
 == Description ==
-
+cg gene2reg outputs a [[tsv]] file with the location  and meta info about each element of a gene 
+on a separate line. The output is a region file (fields chromosome, begin, end) that typically 
+includes the following extra fields:
+; type: UTR, CDS, intron, RNA
+; element: exon1, intron1, exon2, intron1, ...
+; rna_start: start of the element on the RNA sequence
+; rna_end: end of the element on the RNA sequence
+; protein_start: start of the element on the RNA sequence relative to the protein start
+; protein_end: start of the element on the RNA sequence relative to the protein start
+; gene: gene name
+; transcript: transcript id
 
 == Arguments ==
 ; **infile**: file to be converted, if not given, uses stdin. File may be compressed.
