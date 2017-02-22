@@ -87,7 +87,7 @@ proc errorformat {action {options {}} {minargs {}} {maxargs {}} {parameters {}}}
 		error $msg
 	} else {
 		set msg "\nERROR: Wrong number of arguments, correct format is:"
-		append msg \n[errorformat_calc action $options $minargs $maxargs $parameters]
+		append msg \n[errorformat_calc $action $options $minargs $maxargs $parameters]
 		error $msg
 	}
 }
