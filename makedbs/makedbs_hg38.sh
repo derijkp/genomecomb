@@ -187,6 +187,14 @@ job reg_${build}_genes \
 	file rename -force $target.temp $target
 }
 
+job reg_refcoding \
+-deps {gene_${build}_refGene.tsv} \
+-targets {extra/reg_${build}_refcoding.tsv} \
+-code {
+	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin > $target.temp
+	file rename -force $target.temp $target
+}
+
 job reg_${build}_phenotype -deps {extra/reg_${build}_genes.tsv} \
 -targets {extra/reg_${build}_phenotype.tsv extra/geneannot_${build}_phenotype.tsv} -vars {dest build} -code {
 	# get target2, uses biomart (ensembl geneset) and clinvar for gene-phenotype correlations
@@ -262,65 +270,6 @@ job exac_${build}_liftover -deps {${dest}/hg19/extra/var_hg19_exac.tsv ${dest}/h
 	-targets {extra/var_${build}_exac.tsv extra/var_${build}_exac.tsv.info} -vars {dest build} -code {
 	file copy -force $dep2 $target2
 	cg liftover -split 0 $dep $target ${dest}/liftover/hg19ToHg38.over.tsv
-}
-
-# CADD
-job reg_${build}_cadd -targets {extra/var_${build}_cadd.bcol extra/var_${build}_cadd.bcol.bin.lz4 extra/var_${build}_cadd.bcol.bin.lz4.lz4.lz4i extra/var_${build}_cadd.bcol.info} -vars {dest db build} -code {
-	set tempdir $target.temp
-	file mkdir $tempdir
-	set url http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz
-	set tail [file tail $url]
-	file_write extra/var_${build}_cadd.bcol.info [subst [deindent {
-		= CADD (Combined Annotation Dependent Depletion) =
-		
-		== Download info ==
-		dbname	cadd
-		version	1.3
-		citation	Kircher M, Witten DM, Jain P, O'Roak BJ, Cooper GM, Shendure J. A general framework for estimating the relative pathogenicity of human genetic variants. Nat Genet. 2014 Feb 2. doi:10.1038/ng.2892 PubMed PMID:24487276
-		license	non-commercial
-		source	$url
-		time	[timestamp]
-		
-		== Description ==
-		CADD is a tool for scoring the deleteriousness of single nucleotide variants as well as
-		insertion/deletions variants in the human genome.
-		While many variant annotation and scoring tools are around, most annotations 
-		tend to exploit a single information type (e.g. conservation) and/or 
-		are restricted in scope (e.g. to missense changes). Thus, a broadly applicable metric 
-		that objectively weights and integrates diverse information is needed. 
-		Combined Annotation Dependent Depletion (CADD) is a framework that 
-		integrates multiple annotations into one metric by contrasting variants that 
-		survived natural selection with simulated mutations.
-		C-scores strongly correlate with allelic 
-		diversity, pathogenicity of both coding and non-coding variants, and 
-		experimentally measured regulatory effects, and also highly rank causal variants 
-		within individual genome sequences. 
-		More info on the CADD scores can be found on \[\[http://cadd.gs.washington.edu/home\]\]
-		
-		== Category ==
-		Annotation
-	}]]
-	if {![file exists $tempdir/$tail]} {
-		putslog "Downloading $tail"
-		wgetfile $url $tempdir/$tail
-	}
-	putslog "Liftover to hg38"
-	if {![file exists $tempdir/hg38_whole_genome_SNVs.tsv]} {
-		cg select -hc 1 -rc 1 -s {Chrom Pos Alt} \
-			-f {{chrom=$Chrom} {begin = $Pos - 1} {end=$Pos} {ref=$Ref} {alt=$Alt} {rawscore=$RawScore} {score=$PHRED}} \
-			$tempdir/$tail $tempdir/whole_genome_SNVs.tsv.temp
-		cg liftover $tempdir/whole_genome_SNVs.tsv.temp $tempdir/hg38_whole_genome_SNVs.tsv ../liftover/hg19ToHg38.over.tsv
-	}
-	putslog "make bcol"
-	file_write extra/var_${build}_cadd.tsv.opt "fields\t{score pscore}\n"
-	cg select -s {chrom begin alt} -f {chrom begin ref alt score} $tempdir/hg38_whole_genome_SNVs.tsv \
-		| cg collapsealleles \
-		| cg bcol make --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
-	file rename -force $tempdir/var_${build}_cadd.bcol.info extra/var_${build}_cadd.bcol.info
-	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4 extra/var_${build}_cadd.bcol.bin.lz4
-	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4.lz4i extra/var_${build}_cadd.bcol.bin.lz4.lz4i
-	file rename -force $tempdir/var_${build}_cadd.bcol extra/var_${build}_cadd.bcol
-	file delete -force $tempdir
 }
 
 # encode
@@ -423,6 +372,66 @@ foreach file [glob genome_*] {
 		file delete extra/[file tail $file]
 		mklink $file extra/[file tail $file]
 	}
+}
+
+# compress
+foreach file [jobglob *.tsv] {
+	job lz4_${build}_[file tail $file] -deps {$file} -targets {$file.lz4} -vars {dest build} -code {
+		cg lz4 -c 12 -i 1 $dep
+	}
+}
+
+# CADD
+job reg_${build}_cadd -targets {extra/var_${build}_cadd.bcol extra/var_${build}_cadd.bcol.bin.lz4 extra/var_${build}_cadd.bcol.bin.lz4.lz4.lz4i extra/var_${build}_cadd.bcol.info} -vars {dest db build} -code {
+	set tempdir $target.temp
+	file mkdir $tempdir
+	set url http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz
+	set tail [file tail $url]
+	file_write extra/var_${build}_cadd.bcol.info [subst [deindent {
+		= CADD (Combined Annotation Dependent Depletion) =
+		
+		== Download info ==
+		dbname	cadd
+		version	1.3
+		citation	Kircher M, Witten DM, Jain P, O'Roak BJ, Cooper GM, Shendure J. A general framework for estimating the relative pathogenicity of human genetic variants. Nat Genet. 2014 Feb 2. doi:10.1038/ng.2892 PubMed PMID:24487276
+		license	non-commercial
+		source	$url
+		time	[timestamp]
+		
+		== Description ==
+		CADD is a tool for scoring the deleteriousness of single nucleotide variants as well as
+		insertion/deletions variants in the human genome.
+		While many variant annotation and scoring tools are around, most annotations 
+		tend to exploit a single information type (e.g. conservation) and/or 
+		are restricted in scope (e.g. to missense changes). Thus, a broadly applicable metric 
+		that objectively weights and integrates diverse information is needed. 
+		Combined Annotation Dependent Depletion (CADD) is a framework that 
+		integrates multiple annotations into one metric by contrasting variants that 
+		survived natural selection with simulated mutations.
+		C-scores strongly correlate with allelic 
+		diversity, pathogenicity of both coding and non-coding variants, and 
+		experimentally measured regulatory effects, and also highly rank causal variants 
+		within individual genome sequences. 
+		More info on the CADD scores can be found on \[\[http://cadd.gs.washington.edu/home\]\]
+		
+		== Category ==
+		Annotation
+	}]]
+	if {![file exists $tempdir/$tail]} {
+		putslog "Downloading $tail"
+		wgetfile $url $tempdir/$tail
+	}
+	putslog "make bcol"
+	file_write extra/var_${build}_cadd.tsv.opt "fields\t{score pscore}\n"
+	cg select -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {end=$Pos} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
+		| cg collapsealleles \
+		| cg liftover ../liftover/hg19ToHg38.over.tsv
+		| cg bcol make --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
+	file rename -force $tempdir/var_${build}_cadd.bcol.info extra/var_${build}_cadd.bcol.info
+	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4 extra/var_${build}_cadd.bcol.bin.lz4
+	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4.lz4i extra/var_${build}_cadd.bcol.bin.lz4.lz4i
+	file rename -force $tempdir/var_${build}_cadd.bcol extra/var_${build}_cadd.bcol
+	file delete -force $tempdir
 }
 
 job_wait

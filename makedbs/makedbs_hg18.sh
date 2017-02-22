@@ -190,6 +190,14 @@ job reg_${build}_genes -targets {extra/reg_${build}_genes.tsv} \
 	file rename -force $target.temp $target
 }
 
+job reg_refcoding \
+-deps {gene_${build}_refGene.tsv} \
+-targets {extra/reg_${build}_refcoding.tsv} \
+-code {
+	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin > $target.temp
+	file rename -force $target.temp $target
+}
+
 # homopolymer
 job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi reg_${build}_homopolymer.tsv.opt} -vars {dest build db} -code {
 	cg extracthomopolymers genome_${build}.ifas > reg_${build}_homopolymer.tsv.temp
@@ -325,6 +333,13 @@ catch {
 # dbNSFPzip
 job var_${build}_dbnsfp -targets {extra/var_${build}_dbnsfp.tsv extra/var_${build}_dbnsfp.tsv.opt} -vars {dest build} -code {
 	cg download_dbnsfp $target $build ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv3.3a.zip 2>@ stderr
+}
+
+# compress
+foreach file [jobglob *.tsv] {
+	job lz4_${build}_[file tail $file] -deps {$file} -targets {$file.lz4} -vars {dest build} -code {
+		cg lz4 -c 12 -i 1 $dep
+	}
 }
 
 job_wait

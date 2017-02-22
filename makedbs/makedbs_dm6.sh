@@ -154,4 +154,11 @@ catch {
 	}
 }
 
+# compress
+foreach file [jobglob *.tsv] {
+	job lz4_${build}_[file tail $file] -deps {$file} -targets {$file.lz4} -vars {dest build} -code {
+		cg lz4 -c 12 -i 1 $dep
+	}
+}
+
 job_wait
