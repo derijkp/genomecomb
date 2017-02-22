@@ -302,4 +302,18 @@ test cg_extracthomopolymers {basic} {
 1_test	4	11	G	7
 1_test	17	25	A	8}
 
+test link {find_link} {
+	file_write tmp/1.txt 1
+	mklink tmp/1.txt tmp/2.txt
+	mklink tmp/2.txt tmp/3.txt
+	find_link tmp/3.txt
+} {*tmp/1.txt} match
+
+test link {find_link} {
+	file_write tmp/1.txt 1
+	mklink tmp/1.txt tmp/2.txt
+	mklink tmp/2.txt tmp/3.txt
+	find_link tmp/3.txt 1
+} {*tmp/2.txt} match
+
 testsummarize

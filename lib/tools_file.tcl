@@ -162,13 +162,14 @@ proc file_resolve {file {lastlinkVar {}}} {
 }
 
 # returns absolute path of what file is linking to
-proc find_link file {
+proc find_link {file {level {}}} {
 	set file [file_absolute $file]
 	while 1 {
 		if {[catch {
 			set file [file join [file dir $file] [file readlink $file]]
 			set file [file_absolute $file]
 		}]} break
+		if {$level ne "" && ![incr level -1]} break
 	}
 	return $file
 }
