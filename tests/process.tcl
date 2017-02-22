@@ -25,6 +25,25 @@ if 0 {
 
 }
 
+test process {process_sample exome yri chr2122} {
+	cd $::bigtestdir
+	set dest tmp/exomes_yri_chr2122_one
+	file delete -force $dest
+	file mkdir $dest/samples
+	foreach sample {
+		NA19240chr2122
+	} {
+		file mkdir $dest/samples/$sample/fastq
+		foreach file [glob ori/exomes_yri_chr2122.start/samples/$sample/fastq/*] {
+			file copy $file $dest/samples/$sample/fastq/[file tail $file]
+		}
+	}
+	cg process_sample --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 $dest/samples/NA19240chr2122 2>@ stderr >@ stdout
+	# check vs expected
+	checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"
+	checkdiff -qr -x *log_jobs -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
+} {}
+
 test process {process_illumina exomes yri chr2122} {
 	cd $::bigtestdir
 	set dest tmp/exomes_yri_chr2122
@@ -85,6 +104,7 @@ test process {genomes yri chr2122} {
 		file mkdir $dest/samples/$sample
 		mklink ori/genomes_yritrio_chr2122.start/samples/$sample.ori $dest/samples/$sample/ori
 	}
+	mklink refseqtest/hg19/extra/reg_hg19_exome_SureSelectV4.tsv $dest/reg_hg19_targets.tsv
 #	file mkdir $dest/samples/testNA19240chr21il/fastq
 #	foreach file [glob ori/genomes_yritrio_chr2122.start/samples/testNA19240chr21il.ori/*.fq*] {
 #		mklink $file $dest/samples/testNA19240chr21il/fastq/[file tail $file]
@@ -149,8 +169,9 @@ test process {mastr mastr_116068_116083} {
 	file copy ori/wgs2.mastr/amplicons-wgs2.tsv tmp/wgs2.mastr
 	# file copy ori/mastr_116068_116083/demultiplex_stats.tsv $dest
 	# if you want to see output while running
-	#cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseqtest/hg19
 	 cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseqtest/hg19 2>@ stderr >@ stdout
+	# no output while running
+	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseqtest/hg19
 	# check vs expected
 	checkdiff -qr -x *log_jobs -x *hsmetrics -x colinfo -x mastr_116068_116083.html tmp/mastr_116068_116083 expected/mastr_116068_116083
 	checkdiff -y --suppress-common-lines tmp/mastr_116068_116083/mastr_116068_116083.html expected/mastr_116068_116083/mastr_116068_116083.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
