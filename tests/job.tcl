@@ -30,6 +30,14 @@ if 0 {
 	}
 }
 
+proc writetestfiles {args} {
+	test_cleantmp
+	foreach file $args {
+		after 1000
+		file_write $file $file
+	}
+}
+
 proc jobtest {args} {
 	set args [job_args $args]
 	foreach {srcdir destdir header} $args break
@@ -1115,14 +1123,6 @@ test job "jobforce $testname" {
 } {test1
 test2
 test3}
-
-proc writetestfiles {args} {
-	test_cleantmp
-	foreach file $args {
-		after 1000
-		file_write $file $file
-	}
-}
 
 test job "jobtargetexists 1 $testname" {
 	cd $::testdir/tmp
