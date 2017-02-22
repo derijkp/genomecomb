@@ -411,31 +411,43 @@ proc process_sample_cgi_job {workdir split} {
 
 proc process_sample_job {args} {
 	set dbdir {}
+	set aligner bwa
+	set varcallers {gatk sam}
 	set realign 1
 	set paired 1
+	set samBQ 13
 	set adapterfile {}
 	set reports all
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
 		}
+		-a - --aligner {
+			set aligner $value
+		}
 		-realign {
 			set realign $value
+		}
+		-v - --varcallers {
+			set varcallers $value
 		}
 		-dbdir - -refdir {
 			set dbdir $value
 		}
-		-split {
+		-s - -split {
 			set split $value
 		}
-		-paired {
+		-p - -paired {
 			set paired $value
 		}
-		-adapterfile {
+		-a - -adapterfile {
 			set adapterfile $value
 		}
-		-reports {
+		-r - -reports {
 			set reports $value
+		}
+		--samBQ {
+			set samBQ $value
 		}
 		-todoVar {
 			upvar $value todo
@@ -531,36 +543,40 @@ proc process_sample_job {args} {
 	# process fastq files (if found)
 	if {[llength $files]} {
 		# do not do any of preliminaries if end product is already there
-		set bamfile map-bwa-$sample.bam
-		set resultbamfile map-${resultbamprefix}bwa-$sample.bam
+		set bamfile map-${aligner}-$sample.bam
+		set resultbamfile map-${resultbamprefix}${aligner}-$sample.bam
 		# quality and adapter clipping
 		set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired -skips [list -skip $bamfile -skip $resultbamfile]]
 		#
-		# map using bwa
-		map_bwa_job $refseq $files $sample $paired -skips [list -skip $resultbamfile]
+		# map using ${aligner}
+		map_${aligner}_job $refseq $files $sample $paired -skips [list -skip $resultbamfile]
 		job rmclipped-$sample -optional 1 -deps $files -rmtargets $files -code {
 			file delete {*}$deps
 		}
 	}
 	# extract regions with coverage >= 5 (for cleaning)
-	set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
+	set cov5reg [bam2reg_job map-${aligner}-$sample.bam 5]
 	set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
 	# clean bamfile (mark duplicates, realign)
-	set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
+	set cleanedbam [bam_clean_job map-${aligner}-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
 	# make 5x coverage regfile from cleanedbam
 	set cov5reg [bam2reg_job $cleanedbam 5]
 	set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
 	# make 20x coverage regfile
 	bam2reg_job $cleanedbam 20 1
-	# samtools variant calling on map-rdsbwa
-	var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
-	lappend todo sam-rdsbwa-$sample
-	# gatk variant calling on map-rdsbwa
-	var_gatk_job $cleanedbam $refseq -bed $cov5bed -split $split
-	lappend todo gatk-rdsbwa-$sample
+	if {"sam" in $varcallers} {
+		# samtools variant calling on map-rds${aligner}
+		var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split -BQ $samBQ
+		lappend todo sam-rds${aligner}-$sample
+	}
+	if {"gatk" in $varcallers} {
+		# gatk variant calling on map-rds${aligner}
+		var_gatk_job $cleanedbam $refseq -bed $cov5bed -split $split
+		lappend todo gatk-rds${aligner}-$sample
+	}
 	#calculate reports
 	if {[llength $reports]} {
-		proces_reports_job $dir $dbdir $reports
+		process_reports_job $dir $dbdir $reports
 		lappend reportstodo $dir/$sample/reports
 	}
 	cd $keeppwd
