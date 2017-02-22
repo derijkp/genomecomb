@@ -244,3 +244,11 @@ proc gzmklink {src dest} {
 		mklink $src $dest
 	}
 }
+
+proc mklink_job {dep target} {
+	upvar job_logdir job_logdir
+	job mklink-$target -checkcompressed 0 -deps {$dep} -targets {$target} -code {
+		mklink $dep $target
+	}
+}
+

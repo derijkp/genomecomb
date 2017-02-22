@@ -792,7 +792,7 @@ proc process_illumina {args} {
 			lappend todo [string range $target 4 end-4]
 		}
 		if {[llength $reports]} {
-			proces_reports_job $sampledir/$sample $dbdir $reports
+			process_reports_job $sampledir/$sample $dbdir $reports
 			lappend reportstodo $sampledir/$sample/reports
 		}
 	}

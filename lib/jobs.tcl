@@ -226,6 +226,10 @@ proc jobglob {args} {
 	list_remdup $resultfiles
 }
 
+proc jobglob1 {args} {
+	lindex [jobglob {*}$args] 0
+}
+
 proc jobfileexists {args} {
 	set checkcompressed 1
 	set pos 0

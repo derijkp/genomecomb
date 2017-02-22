@@ -1,3 +1,43 @@
+proc targetfile_job {sampledir {dbdir {}}} {
+	upvar job_logdir job_logdir
+	set dbdir [dbdir $dbdir]
+	set ref [dbdir_ref $dbdir]
+	set targetfile $sampledir/reg_${ref}_targets.tsv
+	if {[jobfileexists $targetfile]} {
+		return $targetfile
+	}
+	# get targetfile (if possible)
+	set capturefile $sampledir/info_capture.txt
+	if {![jobfileexists $capturefile]} {
+		if {[file tail [file dir $sampledir]] eq "samples"} {
+			set take2 [file dir [file dir $sampledir]]/reg_${ref}_targets.tsv
+			set capture [file dir [file dir $sampledir]]/info_capture.tsv
+		} else {
+			set take2 [file dir $sampledir]/reg_${ref}_targets.tsv
+			set capture [file dir $sampledir]/info_capture.tsv
+		}
+		if {[jobfileexists $take2]} {
+			set take2 [find_link $take2 1]
+			mklink_job $take2 $targetfile
+			return $targetfile
+		}
+	}
+	if {[jobfileexists $capturefile]} {
+		job reports_targetfile -deps {$capturefile} -targets {$targetfile} -vars {sample dbdir ref} -code {
+			set capture [string trim [file_read $dep]]
+			set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
+			if {![file exists $oritargetfile]} {
+				array set transa {seqcapv3 SeqCap_EZ_v3 sure4 SureSelectV4 sure5 SureSelectV5 sure5utr SureSelectV5UTR}
+				set capture [get transa($capture) $capture]
+				set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
+			}
+			mklink $oritargetfile $target 1
+		}
+		return $targetfile
+	}
+	return {}
+}
+
 proc process_reports_job {args} {
 	set reports all
 	cg_options process_reports args {
@@ -11,12 +51,13 @@ proc process_reports_job {args} {
 	set dbdir [dbdir $dbdir]
 	set sampledir [file_absolute $sampledir]
 	set sample [file tail $sampledir]
-	job_logdir $sampledir/job_logdir
+	job_logdir $sampledir/log_jobs
 	set ref [dbdir_ref $dbdir]
 	if {$reports eq "all"} {
 		set reports {flagstats fastqstats fastqc vars hsmetrics covered}
 	}
 	set bamfiles [jobglob $sampledir/*.bam]
+	set targetfile [targetfile_job $sampledir $dbdir]
 	file mkdir $sampledir/reports
 	foreach bamfile $bamfiles {
 		set sample [file root [file tail [gzroot $bamfile]]]
@@ -40,21 +81,7 @@ proc process_reports_job {args} {
 				file rename -force $target2.temp $target2
 			}
 		}
-		if {[inlist $reports hsmetrics]} {
-			set capturefile [lindex [jobglob $sampledir/info_capture.txt] 0]
-			set targetfile $sampledir/reg_${ref}_targets.tsv
-			if {$capturefile ne ""} {
-				job reports_targetfile -optional 1 -deps {$capturefile} -targets {$targetfile} -vars {sample dbdir ref} -code {
-					set capture [string trim [file_read $dep]]
-					set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
-					if {![file exists $oritargetfile]} {
-						array set transa {seqcapv3 SeqCap_EZ_v3 sure4 SureSelectV4 sure5 SureSelectV5 sure5utr SureSelectV5UTR}
-						set capture [get transa($capture) $capture]
-						set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
-					}
-					mklink $oritargetfile $target 1
-				}
-			}
+		if {[inlist $reports hsmetrics] && $targetfile ne ""} {
 			set dep1 $bamfile
 			set dep2 $targetfile
 			set target $sampledir/reports/hsmetrics-$sample.hsmetrics
@@ -79,7 +106,7 @@ proc process_reports_job {args} {
 	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*]]
 	if {[inlist $reports fastqc]} {
 		foreach fastqfile $fastqfiles {
-			set name [file root [file tail [gzroot $fastqfile]]]-$sample
+			set name [file root [file tail [gzroot $fastqfile]]]
 			set dep $fastqfile
 			set outdir $sampledir/reports/fastqc
 			file mkdir $outdir
@@ -128,17 +155,72 @@ proc process_reports_job {args} {
 		}
 	}
 	if {[inlist $reports vars]} {
-		foreach dep [jobglob $sampledir/var-*.tsv] {
-			set sample [file root [file tail [gzroot $dep]]]
+		set refcodingfile $dbdir/extra/reg_hg19_refcoding.tsv
+		foreach varfile [jobglob $sampledir/var-*.tsv] {
+			set sample [file root [file tail [gzroot $varfile]]]
 			regsub ^var- $sample {} sample
 			set target $sampledir/reports/report_vars-$sample.tsv
-			job reports_vars-$sample -deps {$dep} -targets {$target} -vars sample -code {
-				set qvars [lindex [exec cg select -q {$coverage >= 20 and $quality >= 50} -g all $dep] end]
-				set vars [lindex [exec cg select -q {$sequenced == "v"} -g all $dep] end]
+			set deps [list $varfile]
+			lappend deps "($refcodingfile)"
+			if {$targetfile ne ""} {lappend deps $targetfile}
+			job reports_vars-$sample -deps $deps -targets {$target} -vars {sample varfile targetfile refcodingfile dbdir build} -code {
+				set tempfile [tempfile]
+				set fields {}
+				lappend fields {hq=if($coverage >= 20 and $quality >= 50,1,0)}
+				set annotfiles {}
+				if {[file exists $targetfile]} {
+					lappend annotfiles $targetfile
+					lappend fields {target=if($targets ne "",1,0)}
+				} else {
+					lappend fields {target=0}
+				}
+				set refcodingfile [gzfile $refcodingfile]
+				if {[file exists $refcodingfile]} {
+					lappend annotfiles $refcodingfile
+					lappend fields {refcoding=if($refcoding ne "",1,0)}
+				} else {
+					lappend fields {refcoding=0}
+				}
+				if {[llength $annotfiles]} {
+					cg annotate $varfile $tempfile {*}$annotfiles
+				} else {
+					mklink $varfile $tempfile
+				}
+				set temp [exec cg select -q {$sequenced == "v"} \
+					-f $fields -g {hq {} target {} refcoding {} type} $tempfile]
+				set vars 0 ; set qvars 0 ; set qvars_target 0; set qvars_refcoding 0
+				set vars_snp 0 ; set qvars_snp 0 ; set qvars_target_snp 0; set qvars_refcoding_snp 0
+				foreach line [lrange [split [string trim $temp] \n] 1 end] {
+					foreach {hq ontarget refcoding type count} [split $line \t] break
+					if {$hq} {
+						incr qvars $count
+						if {$type eq "snp"} {incr qvars_snp $count}
+						if {$ontarget} {
+							incr qvars_target $count
+							if {$type eq "snp"} {incr qvars_target_snp $count}
+						}
+						if {$refcoding} {
+							incr qvars_refcoding $count
+							if {$type eq "snp"} {incr qvars_refcoding_snp $count}
+						}
+					}
+					incr vars $count
+					if {$type eq "snp"} {incr vars_snp $count}
+				}
 				set f [open $target.temp w]
 				puts $f [join {sample source parameter value} \t]
 				puts $f $sample\tgenomecomb\tvars\t$vars
+				puts $f $sample\tgenomecomb\tvars_snp\t$vars_snp
 				puts $f $sample\tgenomecomb\tqvars\t$qvars
+				puts $f $sample\tgenomecomb\tqvars_snp\t$qvars_snp
+				if {[file exists $targetfile]} {
+					puts $f $sample\tgenomecomb\tqvars_target\t$qvars_target
+					puts $f $sample\tgenomecomb\tqvars_target_snp\t$qvars_target_snp
+				}
+				if {[file exists $refcodingfile]} {
+					puts $f $sample\tgenomecomb\tqvars_refcoding\t$qvars_refcoding
+					puts $f $sample\tgenomecomb\tqvars_refcoding_snp\t$qvars_refcoding_snp
+				}
 				close $f
 				file rename -force $target.temp $target
 			}
