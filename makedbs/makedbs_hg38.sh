@@ -423,10 +423,13 @@ job reg_${build}_cadd -targets {extra/var_${build}_cadd.bcol extra/var_${build}_
 	}
 	putslog "make bcol"
 	file_write extra/var_${build}_cadd.tsv.opt "fields\t{score pscore}\n"
-	cg select -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {end=$Pos} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
-		| cg collapsealleles \
-		| cg liftover ../liftover/hg19ToHg38.over.tsv
-		| cg bcol make --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
+	if {![file exists $tempdir/collapsed.tsv.lz4]} {
+		cg select --stack 1 -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {end=$Pos} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
+			| cg collapsealleles --stack 1 | lz4c > $tempdir/collapsed.tsv.lz4.temp
+		file rename $tempdir/collapsed.tsv.lz4.temp $tempdir/collapsed.tsv.lz4
+	}
+	cg liftover --stack 1 -split 0 $tempdir/collapsed.tsv.lz4 ../liftover/hg19ToHg38.over.tsv
+		| cg bcol make --stack 1 --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
 	file rename -force $tempdir/var_${build}_cadd.bcol.info extra/var_${build}_cadd.bcol.info
 	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4 extra/var_${build}_cadd.bcol.bin.lz4
 	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4.lz4i extra/var_${build}_cadd.bcol.bin.lz4.lz4i
