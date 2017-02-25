@@ -233,6 +233,10 @@ proc cg_annotate_job {args} {
 			lappend dbfiles $testfile
 		}
 	}
+	if {[jobtargetexists $resultfile [list $orifile {*}$dbfiles]]} {
+		putslog "Skipping annotation to $resultfile: already made"
+		return
+	}
 	set names {}
 	set newh {}
 	foreach dbfile $dbfiles {

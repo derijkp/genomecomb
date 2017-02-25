@@ -32,7 +32,8 @@ annotation (default 2000)
 ; **-dbdir dbdir**: can (optionally) be used to explicitely specify the directory containing the 
 reference databases (The genome sequence genome_*.ifas in it is used for
 gene annotation). By default the directory the gene annotation file is in
-will be used
+will be used. Annotation databases in dbdir will not automatically be used to annotate by using 
+this option. (You will need to add dbdir as a **dbfile** parameter for that)
 ; **-replace y/n/e**: what to do if annotation fields to be added are already in the variantfile: 
 y - replace them with new annotation,
 n - keep the old annotation,
