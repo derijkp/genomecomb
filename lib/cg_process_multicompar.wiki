@@ -1,4 +1,4 @@
-= Process_illumina =
+= Process_multicompar =
 
 == Format ==
 cg process_multicompar ?options? projectdir ?dbdir?
@@ -32,8 +32,8 @@ the subtasks thus, that the number of files open at the same time stays
 below this number. With this option, the maximum number of open files can
 be set manually (if the program e.g. does not deduce the proper limit, or
 you want to affect the distribution).
-; **-varfiles files**: With this option you can limited the varfiles to be added to the given one. 
-They should be given as a list of files in this opne option, so if using wildcards, enclose in quotes.
+; **-varfiles files**: With this option you can limit the varfiles to be added to the given one.
+They should be given as a list of files in this option, so if using wildcards, enclose in quotes.
 
 This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
 

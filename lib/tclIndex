@@ -253,7 +253,6 @@ set auto_index(process_mastr_job) [list source [file join $dir cg_process_mastr.
 set auto_index(cg_process_mastr) [list source [file join $dir cg_process_mastr.tcl]]
 set auto_index(cg_process_mastrdesign) [list source [file join $dir cg_process_mastr.tcl]]
 set auto_index(process_multicompar_job) [list source [file join $dir cg_process_multicompar.tcl]]
-set auto_index(process_multicompar) [list source [file join $dir cg_process_multicompar.tcl]]
 set auto_index(cg_process_multicompar) [list source [file join $dir cg_process_multicompar.tcl]]
 set auto_index(process_project_job) [list source [file join $dir cg_process_project.tcl]]
 set auto_index(cg_process_project) [list source [file join $dir cg_process_project.tcl]]

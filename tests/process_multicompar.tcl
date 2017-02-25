@@ -164,6 +164,21 @@ test process_multicompar$testname {process_multicompar -varfiles pattern} {
 	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
 } {} 
 
+test process_project$testname {process_multicompar} {
+	test_cleantmp
+	# limited process_project test: starting van var and sreg files
+	file mkdir tmp/samples/annot1
+	file mkdir tmp/samples/annot2
+	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/samples/annot2/sreg-annot2.tsv
+	cg process_project -v 2 --stack 1 {*}$::jobopts -dbdir $::refseqdir/hg19 -split 0 tmp >@ stdout 2>@ stderr
+	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
+	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
+	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-multicompar.tsv
+} {}
+
 }
 
 test_cleantmp
