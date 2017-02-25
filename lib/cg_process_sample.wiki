@@ -28,14 +28,17 @@ ignored.
 
 ; -dbdir dbdir: Some of the analysis require a reference genome and databases; **dbdir** gives the directory where to find these
 ; -oridir oridir: directory containing original data, this can be a data directory as it comes from Complete Genomics, or simply a directory containing fastq files or a bam file
+; -aligner aligner: use the given aligner for mapping to the reference genome (default bwa)
 ; -realign value: If **value** is 0, realignment will not be performed, 
 use 1 for (default) realignment with gatk, or srma for alignment with srma
+; -varcallers varcallers: (space separated) list of variant callers to be used (default "gatk sam")
 ; -split 1/0: split multiple alternative genotypes over different line
 ; -paired 1/0: sequenced are paired/unpaired
 ; -adapterfile file: Use **file** for possible adapter sequences
 ; -reports list: use all (default) for creating all reports. If you only
 want some made, give these as a space separated list. Possible reports are:
 flagstats fastqc vars hsmetrics covered
+; -samBQ number: only for samtools; minimum base quality for a base to be considered (samtools --min-BQ option)
 
 == Arguments ==
 ; oridir: directory containing original data, this can be a data directory as it comes from Complete Genomics, or simply a directory containing fastq files or a bam file
