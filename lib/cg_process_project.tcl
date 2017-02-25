@@ -1,28 +1,40 @@
 proc process_project_job {args} {
 	set dbdir {}
 	set dbfiles {}
+	set aligner bwa
+	set varcallers {gatk sam}
 	set realign 1
 	set paired 1
 	set adapterfile {}
 	set conv_nextseq 0
 	set reports all
+	set samBQ 13
 	cg_options process_project_job args {
 		-ori {
 			set oridir $value
 		}
-		-realign {
-			set realign $value
-		}
 		-dbdir - -refdir {
 			set dbdir $value
 		}
-		-split {
+		-a - -aligner {
+			set aligner $value
+		}
+		-realign {
+			set realign $value
+		}
+		-v - -varcallers {
+			set varcallers $value
+		}
+		-s - -split {
 			set split $value
 		}
 		-dbfile {
 			lappend dbfiles $value
 		}
-		-paired {
+		-dbfiles {
+			lappend dbfiles {*}$value
+		}
+		-p - -paired {
 			set paired $value
 		}
 		-adapterfile {
@@ -31,11 +43,14 @@ proc process_project_job {args} {
 		-conv_nextseq {
 			set conv_nextseq $value
 		}
-		-reports {
+		-r - -reports {
 			set reports $value
 		}
-		-m - --maxopenfiles {
+		-m - -maxopenfiles - --maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
+		}
+		-samBQ {
+			set samBQ $value
 		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
@@ -52,18 +67,19 @@ proc process_project_job {args} {
 	}
 	set samples {}
 	set experiment [file tail $destdir]
+	unset -nocomplain a
 	if {[file exists $destdir/samples]} {
 		set sampledir $destdir/samples
+		foreach dir [jobglob $sampledir/*] {
+			set a([file tail $dir]) 1
+		}
 	} else {
 		set sampledir $destdir
-	}
-	unset -nocomplain a
-	foreach dir [jobglob $sampledir/*/fastq $sampledir/*/ori] {
-		set a([file tail [file dir $dir]]) 1
+		foreach dir [jobglob $sampledir/*/fastq $sampledir/*/ori] {
+			set a([file tail [file dir $dir]]) 1
+		}
 	}
 	set samples [ssort -natural [array names a]]
-	set keeppwd [pwd]
-	cd $destdir
 	job_logdir $destdir/log_jobs
 	set todo {}
 	set reportstodo {}
@@ -71,19 +87,18 @@ proc process_project_job {args} {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		process_sample_job -todoVar todo -reportstodoVar reportstodo \
-			-realign $realign -dbdir $dbdir -split $split -paired $paired \
-			-adapterfile $adapterfile -reports $reports \
+			-aligner $aligner -realign $realign --varcallers $varcallers \
+			-dbdir $dbdir -split $split -paired $paired \
+			-adapterfile $adapterfile -reports $reports -samBQ $samBQ \
 			$dir
 	}
 	job_logdir $destdir/log_jobs
-	cd $destdir
 	set todo [list_remdup $todo]
-	process_multicompar_job $destdir $experiment $dbdir $todo -skipincomplete 1 -split $split -dbfiles $dbfiles
+	process_multicompar_job -experiment $experiment -skipincomplete 1 -split $split -dbfiles $dbfiles $destdir $dbdir $todo
 	if {[llength $reports]} {
 		proces_reportscombine_job $destdir $reportstodo
 	}
-	cd $keeppwd
-	list $todo $
+	list $todo
 }
 
 proc cg_process_project {args} {

@@ -15,10 +15,10 @@ samples with raw data (fastq, Complete genomics results, ...). It will
 analyse all samples in the projectdir, generating variant calls, reports,
 comparison of variants over samples, ...
 
-The projectdir should contain a subdirectory for each sample (sampledir) in
-the project. The sample directories may also be in a subdirectory called
-samples (which is more organized). Each sampledir contains a subdirectory
-named fastq that contains the fastq files for that sample. The names of
+The projectdir should contain a subdirectory named **samples** that contains
+a separate subdirectory for each sample (**sampledir*).
+In case the starting raw data for the sample is fastq files, they should
+be in a subdirectory of the sampledir named fastq. The names of
 matching fastq files of paired reads should be consecutive when sorted
 naturaly,the forward reads first. The usual naming of these files (same
 name, except for a 1 and 2) is ok. Only subdirectories containing these
@@ -47,23 +47,38 @@ project directory. process_illumina called with the dbdir parameter will
 create the projectinfo.tsv file.
 
 == Options ==
-; **-realign value**: If **value** is 0, realignment will not be performed, 
+This command can be distributed on a cluster or using multiple with
+[[joboptions|job options]] (more info with cg help joboptions)
+
+As different types of original data are processed differently, not all options
+are applicable. Options that are not applicable to the given type of data are 
+ignored.
+
+; -dbdir dbdir: **dbdir** can also be given as an option (instead of second parameter)
+; -aligner aligner: use the given aligner for mapping to the reference genome (default bwa)
+; -realign value: If **value** is 0, realignment will not be performed, 
 use 1 for (default) realignment with gatk, or srma for alignment with srma
 if 1, bam files are realigned using gatk, use **value** srma to align using srma.
-; **-split 1/0**: split multiple alternative genotypes over different line
-; **-dbdir dbdir**: **dbdir** can also be given as an option (instead of second parameter)
-; **-paired 1/0**: sequenced are paired/unpaired
-; **-adapterfile file**: Use **file** for possible adapter sequences
-; **-dbfile file**: Use **file** for extra (files in **dbdir** are already used) annotation 
-; **-conv_nextseq 1/0**: generate fastqs for nextseq run & create sample folders - rundir should be placed in projectdir
+; -varcallers varcallers: (space separated) list of variant callers to be used (default "gatk sam")
+; -split 1/0: split multiple alternative genotypes over different line
+; -paired 1/0: sequenced are paired/unpaired
+; -adapterfile file: Use **file** for possible adapter sequences
+; -reports list: use all (default) for creating all reports. If you only
+want some made, give these as a space separated list. Possible reports are:
+flagstats fastqc vars hsmetrics covered
+; -dbfile file: Use the given **file** for extra (files in **dbdir** are already used) annotation. 
+This option can be given more than once; all given files will be added
+; -dbfiles files: Use **files** for extra (files in **dbdir** are already used) annotation. **files** should be a space separated list of files.
+; -conv_nextseq 1/0: generate fastqs for nextseq run & create sample folders - rundir should be placed in projectdir
 of resulting variants. This option can be added multiple times (with different files)
-; **-bedfile bedfile**: if bedfile is provided, coverage statistics will be calculated for this region using picard CalculateHsMetrics
-; **-m maxopenfiles** (--maxopenfiles): The number of files that a program
+; -bedfile bedfile: if bedfile is provided, coverage statistics will be calculated for this region using picard CalculateHsMetrics
+; -m maxopenfiles (--maxopenfiles): The number of files that a program
 can keep open at the same time is limited. pmulticompar will distribute
 the subtasks thus, that the number of files open at the same time stays
 below this number. With this option, the maximum number of open files can
 be set manually (if the program e.g. does not deduce the proper limit, or
 you want to affect the distribution).
+; -samBQ number: only for samtools; minimum base quality for a base to be considered (samtools --min-BQ option)
 
 This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
 

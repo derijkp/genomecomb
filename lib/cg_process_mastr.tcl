@@ -483,9 +483,9 @@ proc process_mastr_job {args} {
 	cd $destdir
 	set todo [list_remdup $todo]
 	if $addtargets {
-		process_multicompar_job $destdir $experiment $dbdir $todo -split $split -dbfiles $dbfiles -targetsfile $targetsfile
+		process_multicompar_job -experiment $experiment -split $split -dbfiles $dbfiles -targetsfile $targetsfile $destdir $dbdir $todo
 	} else {
-		process_multicompar_job $destdir $experiment $dbdir $todo -split $split -dbfiles $dbfiles
+		process_multicompar_job -experiment $experiment -split $split -dbfiles $dbfiles $destdir $dbdir $todo
 	}
 	make_hsmetrics_report_job $destdir $hsmetrics_files
 	make_alternative_compar_job $experiment 

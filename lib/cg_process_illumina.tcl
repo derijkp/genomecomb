@@ -96,6 +96,7 @@ proc fastq_clipadapters_job {files args} {
 		file mkdir [file dir $root].clipped
 		lappend targets [file dir $root].clipped/[file tail $root].clipped.fastq
 	}
+	# paired files need to be clipped together!
 	job clip-[file dir [file dir $root]] -deps $files -targets $targets \
 	-vars {adapterfile paired removeskew} {*}$skips -code {
 		fastq_clipadapters $deps $targets -removeskew $removeskew -adapterfile $adapterfile -paired $paired
@@ -684,7 +685,7 @@ proc process_illumina {args} {
 		-reports {
 			set reports $value
 		}
-		-m - --maxopenfiles {
+		-m - -maxopenfiles - --maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
 	} {destdir dbdir} 1 2
@@ -799,7 +800,7 @@ proc process_illumina {args} {
 	job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo [list_remdup $todo]
-	process_multicompar_job $destdir $experiment $dbdir $todo -skipincomplete 1 -split $split -dbfiles $dbfiles
+	process_multicompar_job -experiment $experiment -skipincomplete 1 -split $split -dbfiles $dbfiles $destdir $dbdir $todo
 	if {[llength $reports]} {
 		proces_reportscombine_job $destdir $reportstodo
 	}
