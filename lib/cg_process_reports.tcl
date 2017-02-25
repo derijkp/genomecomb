@@ -104,7 +104,7 @@ proc process_reports_job {args} {
 		}
 	}
 	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*]]
-	if {[inlist $reports fastqc]} {
+	if {[inlist $reports fastqc] && [llength $fastqfiles]} {
 		foreach fastqfile $fastqfiles {
 			set name [file root [file tail [gzroot $fastqfile]]]
 			set dep $fastqfile
@@ -117,7 +117,7 @@ proc process_reports_job {args} {
 			}
 		}
 	}
-	if {[inlist $reports fastqstats]} {
+	if {[inlist $reports fastqstats] && [llength $fastqfiles]} {
 		set fastqfiles_fw [list_unmerge $fastqfiles 1 fastqfiles_rev]
 		foreach deps [list $fastqfiles_fw $fastqfiles_rev] dir {fw rev} {
 			set target $sampledir/reports/report_fastq_$dir-$sample.tsv
@@ -166,7 +166,14 @@ proc process_reports_job {args} {
 			job reports_vars-$sample -deps $deps -targets {$target} -vars {sample varfile targetfile refcodingfile dbdir build} -code {
 				set tempfile [tempfile]
 				set fields {}
-				lappend fields {hq=if($coverage >= 20 and $quality >= 50,1,0)}
+				set header [cg select -h $varfile]
+				if {"coverage" in $header && "quality" in $header} {
+					set usehq 1
+					lappend fields {hq=if($coverage >= 20 and $quality >= 50,1,0)}
+				} else {
+					set usehq 0
+					lappend fields {hq=0}
+				}
 				set annotfiles {}
 				if {[file exists $targetfile]} {
 					lappend annotfiles $targetfile
@@ -186,7 +193,14 @@ proc process_reports_job {args} {
 				} else {
 					mklink $varfile $tempfile
 				}
-				set temp [exec cg select -q {$sequenced == "v"} \
+				if {[inlist $header sequenced]} {
+					set query {$sequenced == "v"}
+				} elseif {[inlist $header zyg]} {
+					set query {$zyg in "m t c"}
+				} else {
+					set query {}
+				}
+				set temp [exec cg select -q $query \
 					-f $fields -g {hq {} target {} refcoding {} type} $tempfile]
 				set vars 0 ; set qvars 0 ; set qvars_target 0; set qvars_refcoding 0
 				set vars_snp 0 ; set qvars_snp 0 ; set qvars_target_snp 0; set qvars_refcoding_snp 0
