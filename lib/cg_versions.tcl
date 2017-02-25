@@ -7,8 +7,8 @@ proc version {item {minversion {}}} {
 				set _versions($item) $::genomecomb::version.$::genomecomb::patchlevel
 			}
 			dbdir {
-				if {![catch {dbdir} dbdir] && [file exists $dbdir/README]} {
-					set temp [file_read $dbdir/README]
+				if {![catch {dbdir} dbdir] && [file exists $dbdir/README.txt]} {
+					set temp [file_read $dbdir/README.txt]
 					regexp {version: ([^\n]+)} $temp temp _versions($item)
 				}
 			}
