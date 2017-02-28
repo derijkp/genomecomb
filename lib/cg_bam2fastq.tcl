@@ -45,11 +45,14 @@ proc cg_bam2fastq {args} {
 	} else {
 		error "unknown method \"$method\", must be picard or sam"
 	}
-	file rename -force $fastqfile1.temp $fastqfile1
-	file rename -force $fastqfile2.temp $fastqfile2
 	if {$compress} {
-		exec gzip $fastqfile1
-		exec gzip $fastqfile2
+		exec gzip $fastqfile1.temp
+		exec gzip $fastqfile2.temp
+		file rename -force $fastqfile1.temp.gz $fastqfile1.gz
+		file rename -force $fastqfile2.temp.gz $fastqfile2.gz
+	} else {
+		file rename -force $fastqfile1.temp $fastqfile1
+		file rename -force $fastqfile2.temp $fastqfile2
 	}
 	file delete $tempbam
 }
