@@ -44,8 +44,7 @@ proc cg_liftover {args} {
 		set varfile -
 		set resultfile -
 	} elseif {![info exists liftoverfile]} {
-		set liftoverfile $varfile
-		set varfile $resultfile
+		set liftoverfile $resultfile
 		set resultfile -
 	}
 	if {[file exists $resultfile]} {
