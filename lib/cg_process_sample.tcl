@@ -410,6 +410,7 @@ proc process_sample_cgi_job {workdir split} {
 }
 
 proc process_sample_job {args} {
+	set keepargs $args
 	set dbdir {}
 	set aligner bwa
 	set varcallers {gatk sam}
@@ -480,6 +481,12 @@ proc process_sample_job {args} {
 	# check if ori is a cg dir, if so use process_sample_cgi_job
 	# ----------------------------------------------------------
 	if {[jobglob $destdir/ori/ASM/var-*-ASM*.tsv] ne ""} {
+		# analysis info
+		# -------------
+		info_analysis_file $destdir/info_analysis.tsv.temp $sample \
+			{dbdir reports} \
+			{genomecomb dbdir gnusort8 tabix lz4 os} \
+			command [list cg process_sample {*}$keepargs]
 		process_sample_cgi_job $destdir $split
 		lappend todo cg-cg-$sample
 		return

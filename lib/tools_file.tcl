@@ -252,3 +252,6 @@ proc mklink_job {dep target} {
 	}
 }
 
+proc file_timestamp {file} {
+	clock format [file mtime $file] -format "%Y-%m-%d_%H_%M_%S"
+}

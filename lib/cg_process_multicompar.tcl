@@ -1,4 +1,5 @@
 proc process_multicompar_job {args} {
+	set keepargs $args
 	set dbdir {}
 	set dbfiles {}
 	set realign 1
@@ -49,6 +50,12 @@ proc process_multicompar_job {args} {
 	projectinfo $destdir dbdir {split 0}
 	set dbdir [dbdir $dbdir]
 	set refseq [glob $dbdir/genome_*.ifas]
+	# analysis info
+	# -------------
+	info_analysis_file $destdir/info_analysis.tsv.temp {} \
+		{dbdir split dbfiles targetsfile ::maxopenfiles} \
+		{genomecomb dbdir gnusort8 lz4 os} \
+		command [list cg process_multicompar {*}$keepargs]
 
 	set samples {}
 	if {[file exists $destdir/samples]} {
