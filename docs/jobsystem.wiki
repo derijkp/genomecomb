@@ -127,6 +127,8 @@ after the ptargets job is finished.)
 jobglob: same as glob, but takes into account files that will be available
 at that stage of the program (targets of previous jobs)
 
+jobglob1: returns the first file in a jobglob
+
 jobfileexists: same as "file exists", but takes into account files that will be available
 at that stage of the program (targets of previous jobs)
 
