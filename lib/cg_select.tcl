@@ -1162,7 +1162,7 @@ proc cg_select {args} {
 	unset -nocomplain ::tsv_select_sampleinfo
 	set query {}; set qfields {}; set sortfields {}; set oldheader {}; set newheader {}; set sepheader ""
 	set inverse 0; set group {}; set groupcols {} ; set samplingskip 0; set db {} ; set removecomment 0
-	set samples {}
+	set samples {} ; set sortsamples 0
 	set pos 0
 	cg_options select args {
 		-q {
@@ -1192,7 +1192,8 @@ proc cg_select {args} {
 			set query [join $query " || "]
 		}
 		-f {set qfields $value}
-		-samples {set samples $value}
+		-samples {set samples $value; set sortsamples 0}
+		-ssamples {set samples $value; set sortsamples 1}
 		-rf {
 			set qfields $value
 			set inverse 1
@@ -1339,11 +1340,17 @@ proc cg_select {args} {
 	if {[llength $samples]} {
 		# only the given samples will be included
 		if {![llength $qfields]} {set qfields $header}
-		set keepposs [list_find -regexp $qfields {^[^-]*$}]
+		set keepposs {}
+		lappend keepposs {*}[list_remove [list_cor $qfields {id sample}] -1]
+		lappend keepposs {*}[list_remove [tsv_basicfields $qfields 6 0] -1]
 		foreach sample $samples {
 			lappend keepposs {*}[list_find -glob $qfields *-$sample]
 		}
-		set keepposs [lsort -integer $keepposs]
+		lappend keepposs {*}[list_find -regexp $qfields {^[^-]*$}]
+		set keepposs [list_remdup $keepposs]
+		if {!$sortsamples} {
+			set keepposs [lsort -integer $keepposs]
+		}
 		set qfields [list_sub $qfields $keepposs]
 		set qposs [list_sub $qposs $keepposs]
 	}

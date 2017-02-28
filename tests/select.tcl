@@ -1021,6 +1021,28 @@ test select "-samples$dboptt" {
 } {id	freq-sample2	v-sample2	freq-sample3	v-sample3	annot
 1	0.8	s2	1.0	s3	a}
 
+test select "-ssamples$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	v-sample1	freq-sample2	v-sample2	freq-sample3	v-sample3	annot
+		1	0.4	s1	0.8	s2	1.0	s3	a
+	}
+	exec cg select {*}$dbopt -ssamples {sample3 sample2} tmp/temp.tsv
+} {id	freq-sample3	v-sample3	freq-sample2	v-sample2	annot
+1	1.0	s3	0.8	s2	a}
+
+test select "-ssamples$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		chromosome	begin	end	freq-sample1	v-sample1	freq-sample2	v-sample2	freq-sample3	v-sample3	annot type
+		chr1	1	2	0.4	s1	0.8	s2	1.0	s3	a	snp
+	}
+	exec cg select {*}$dbopt -ssamples {sample3 sample2} tmp/temp.tsv
+} {chromosome	begin	end	type	freq-sample3	v-sample3	freq-sample2	v-sample2	annot
+chr1	1	2	snp	1.0	s3	0.8	s2	a}
+
 test select "-f {-*-*}$dboptt" {
 	global dbopt
 	test_cleantmp

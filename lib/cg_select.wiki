@@ -36,6 +36,7 @@ by the pattern.
 ; **-rf removefields**: write all, except given fields to result.
 ; **-samples samples**: Only the given list of samples (space separated) will be included in the output.
 All non-sample related fields (those without a -) will be included. The sample nnames may contain wildcards (*)
+; **-ssamples samples**: same as -samples, but the order of fields in the file will be changed, so that samples are sorted as in the parameter
 ; **-s sortfields**: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
 if **sortfields** is "-", the default sort fields will be used (chromosome,begin,end,type,alt).
 This will also accept name variations of the fields, such as chrom instead of chromosome.
