@@ -1140,8 +1140,161 @@ proc tsv_skipcomments {f} {
 	tsv_hcheader $f temp line
 }
 
-proc tsv_select {query {qfields {}} {sortfields {}} {oldheader {}} {newheader {}} {sepheader {}} {f stdin} {out stdout} {inverse 0} {group {}} {groupcols {}} {index {}} {samplingskip 0} {removecomment 0} {samples {}}} {
-# putsvars query qfields sortfields oldheader newheader sepheader f out inverse group groupcols index samplingskip removecomment samples
+proc tsv_hcheader {f keepheaderVar headerVar} {
+	upvar $keepheaderVar keepheader
+	upvar $headerVar header
+	if {[catch {
+		# this does not work on a stream
+		seek $f [expr {-[string length [join $header \t]] - 1}] current
+	}]} {
+		# this has to be explicitely supported downstream, only tsv_select does this!
+		set ::filebuffer($f) [list [join $header \t]]
+	}
+	set temp [split [string trimright $keepheader] \n]
+	set header [split [string range [list_pop temp] 1 end] \t]
+	set keepheader [join $temp \n]\n
+}
+
+proc cg_select {args} {
+	if {[llength $args] == 0} {
+		errorformat select
+	}
+	unset -nocomplain ::tsv_select_sampleinfo
+	set query {}; set qfields {}; set sortfields {}; set oldheader {}; set newheader {}; set sepheader ""
+	set inverse 0; set group {}; set groupcols {} ; set samplingskip 0; set db {} ; set removecomment 0
+	set samples {}
+	set pos 0
+	cg_options select args {
+		-q {
+			set query $value
+			if {[regexp {[^=!><\\]=[^=]} $query]} {puts stderr "you may have used = instead of == in query"}
+			regsub -all {\\=} $query = query
+		}
+		-si {
+			set ::tsv_select_sampleinfofile $value
+			if {![file exists $::tsv_select_sampleinfofile]} {
+				error "sampleinfofile \"$::tsv_select_sampleinfofile\" does not exist"
+			}
+		}
+		-qf {
+			set f [gzopen $value]
+			set header [tsv_open $f]
+			set data [csv_file $f \t]
+			gzclose $f
+			set query {}
+			foreach line $data {
+				set el ""
+				foreach field $header v $line {
+					lappend el "\$$field == \"$v\""
+				}
+				lappend query "\( [join $el " && "] \)"
+			}
+			set query [join $query " || "]
+		}
+		-f {set qfields $value}
+		-samples {set samples $value}
+		-rf {
+			set qfields $value
+			set inverse 1
+		}
+		-g {set group $value}
+		-db {set db $value}
+		-gc {lappend groupcols $value}
+		-nh {set newheader $value}
+		-sh {set sepheader $value}
+		-hc {
+			if {$value eq "0"} {
+			} elseif {$value eq "1"} {
+				set oldheader comment
+			} elseif {$value eq "2"} {
+				set oldheader commentkeep
+			} else {
+				error "-hc must be 0, 1 or 2"
+			}
+		}
+		-hf {set oldheader [list file $value]}
+		-hp {set oldheader [list parameter $value]}
+		-s {set sortfields $value}
+		-sr {set sortfields -$value}
+		-n {
+			if {$value eq ""} {
+				set header [tsv_open stdin]
+			} else {
+				set f [gzopen $value]
+				set header [tsv_open $f]
+				gzclose $f
+			}
+			puts stdout [join [samples $header] \n]
+			exit 0
+		}
+		-h - --header {
+			if {$value eq ""} {
+				set header [tsv_open stdin]
+			} else {
+				set f [gzopen $value]
+				set header [tsv_open $f]
+				gzclose $f
+			}
+			puts stdout [join $header \n]
+			exit 0
+		}
+		-samplingskip {
+			set samplingskip $value
+		}
+		-rc {
+			set removecomment $value
+		}
+	}
+	if {[llength $groupcols] && ![llength $group]} {
+		error "cannot use -gc option without -g option"
+	}
+	if {[llength $group] && $samplingskip} {
+		error "cannot use -samplingskip option with -g option"
+	}
+	# clean fields and query: remove comments \n anf \t to space
+	regsub -all {\n#[^\n]*} $qfields {} qfields
+	regsub -all {\n#[^\n]*} $query {} query
+	regsub -all {\n|\t} $query { } query
+	set query [string trim $query]
+#puts stderr [list qfields=$qfields query=$query]
+	if {[llength $args] > 0} {
+		set filename [lindex $args 0]
+		set index [indexdir_file $filename cols]
+		catch {close $f}
+		set f [gzopen $filename]
+		if {![info exists ::tsv_select_sampleinfofile]} {
+			tsv_select_sampleinfo_setfile $filename
+		}
+	} else {
+		set index {}
+		set f stdin
+		if {$db ne ""} {
+			error "cannot use -db option from stdin, you need to query from a file"
+		}
+	}
+	if {[llength $args] > 1} {
+		set outfile [lindex $args 1]
+		set out [open $outfile w]
+	} else {
+		set out stdout
+	}
+	if {$db ne ""} {
+		# select from monetdb
+		# ===================
+		set table [monetdb_backend $db [file_resolve $filename]]
+		set error [catch {
+			monetdb_select $db $table $query $qfields $sortfields $newheader $sepheader $out $inverse $group $groupcols
+		} result]
+		if {$f ne "stdin"} {catch {gzclose $f}}
+		if {$out ne "stdout"} {catch {close $out}}
+		if {$error} {
+			puts stderr $result
+		}
+		return
+	}
+	# select from file
+	# ================
+	# putsvars query qfields sortfields oldheader newheader sepheader f out inverse group groupcols index samplingskip removecomment samples
 	fconfigure $f -buffering none
 	fconfigure $out -buffering none
 	if {[llength $oldheader]} {
@@ -1408,161 +1561,6 @@ proc tsv_select {query {qfields {}} {sortfields {}} {oldheader {}} {newheader {}
 	} else {
 		chanexec $f $out [join $pipe " | "]
 	}
-}
-
-proc tsv_hcheader {f keepheaderVar headerVar} {
-	upvar $keepheaderVar keepheader
-	upvar $headerVar header
-	if {[catch {
-		# this does not work on a stream
-		seek $f [expr {-[string length [join $header \t]] - 1}] current
-	}]} {
-		# this has to be explicitely supported downstream, only tsv_select does this!
-		set ::filebuffer($f) [list [join $header \t]]
-	}
-	set temp [split [string trimright $keepheader] \n]
-	set header [split [string range [list_pop temp] 1 end] \t]
-	set keepheader [join $temp \n]\n
-}
-
-proc cg_select {args} {
-	if {[llength $args] == 0} {
-		errorformat select
-	}
-	unset -nocomplain ::tsv_select_sampleinfo
-	set query {}; set qfields {}; set sortfields {}; set oldheader {}; set newheader {}; set sepheader ""
-	set inverse 0; set group {}; set groupcols {} ; set samplingskip 0; set db {} ; set removecomment 0
-	set samples {}
-	set pos 0
-	cg_options select args {
-		-q {
-			set query $value
-			if {[regexp {[^=!><\\]=[^=]} $query]} {puts stderr "you may have used = instead of == in query"}
-			regsub -all {\\=} $query = query
-		}
-		-si {
-			set ::tsv_select_sampleinfofile $value
-			if {![file exists $::tsv_select_sampleinfofile]} {
-				error "sampleinfofile \"$::tsv_select_sampleinfofile\" does not exist"
-			}
-		}
-		-qf {
-			set f [gzopen $value]
-			set header [tsv_open $f]
-			set data [csv_file $f \t]
-			gzclose $f
-			set query {}
-			foreach line $data {
-				set el ""
-				foreach field $header v $line {
-					lappend el "\$$field == \"$v\""
-				}
-				lappend query "\( [join $el " && "] \)"
-			}
-			set query [join $query " || "]
-		}
-		-f {set qfields $value}
-		-samples {set samples $value}
-		-rf {
-			set qfields $value
-			set inverse 1
-		}
-		-g {set group $value}
-		-db {set db $value}
-		-gc {lappend groupcols $value}
-		-nh {set newheader $value}
-		-sh {set sepheader $value}
-		-hc {
-			if {$value eq "0"} {
-			} elseif {$value eq "1"} {
-				set oldheader comment
-			} elseif {$value eq "2"} {
-				set oldheader commentkeep
-			} else {
-				error "-hc must be 0, 1 or 2"
-			}
-		}
-		-hf {set oldheader [list file $value]}
-		-hp {set oldheader [list parameter $value]}
-		-s {set sortfields $value}
-		-sr {set sortfields -$value}
-		-n {
-			if {$value eq ""} {
-				set header [tsv_open stdin]
-			} else {
-				set f [gzopen $value]
-				set header [tsv_open $f]
-				gzclose $f
-			}
-			puts stdout [join [samples $header] \n]
-			exit 0
-		}
-		-h - --header {
-			if {$value eq ""} {
-				set header [tsv_open stdin]
-			} else {
-				set f [gzopen $value]
-				set header [tsv_open $f]
-				gzclose $f
-			}
-			puts stdout [join $header \n]
-			exit 0
-		}
-		-samplingskip {
-			set samplingskip $value
-		}
-		-rc {
-			set removecomment $value
-		}
-	}
-	if {[llength $groupcols] && ![llength $group]} {
-		error "cannot use -gc option without -g option"
-	}
-	if {[llength $group] && $samplingskip} {
-		error "cannot use -samplingskip option with -g option"
-	}
-	# clean fields and query: remove comments \n anf \t to space
-	regsub -all {\n#[^\n]*} $qfields {} qfields
-	regsub -all {\n#[^\n]*} $query {} query
-	regsub -all {\n|\t} $query { } query
-	set query [string trim $query]
-#puts stderr [list qfields=$qfields query=$query]
-	if {[llength $args] > 0} {
-		set filename [lindex $args 0]
-		set index [indexdir_file $filename cols]
-		catch {close $f}
-		set f [gzopen $filename]
-		if {![info exists ::tsv_select_sampleinfofile]} {
-			tsv_select_sampleinfo_setfile $filename
-		}
-	} else {
-		set index {}
-		set f stdin
-		if {$db ne ""} {
-			error "cannot use -db option from stdin, you need to query from a file"
-		}
-	}
-	if {[llength $args] > 1} {
-		set outfile [lindex $args 1]
-		set o [open $outfile w]
-	} else {
-		set o stdout
-	}
-	if {$db ne ""} {
-		# use monetdb source
-		set table [monetdb_backend $db [file_resolve $filename]]
-		set error [catch {
-			monetdb_select $db $table $query $qfields $sortfields $newheader $sepheader $o $inverse $group $groupcols
-		} result]
-	} else {
-		# putsvars query qfields sortfields oldheader newheader sepheader f o inverse group groupcols index samplingskip removecomment samples
-		set error [catch {
-			tsv_select $query $qfields $sortfields $oldheader $newheader $sepheader $f $o $inverse $group $groupcols $index $samplingskip $removecomment $samples
-		} result]
-	}
 	if {$f ne "stdin"} {catch {gzclose $f}}
-	if {$o ne "stdout"} {catch {close $o}}
-	if {$error} {
-		puts stderr $result
-	}
+	if {$out ne "stdout"} {catch {close $out}}
 }
