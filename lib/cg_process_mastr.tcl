@@ -14,7 +14,7 @@ proc make_alternative_compar_job {experiment} {
 		cg select -f $fields $target1.temp1 $target1.temp2
 		file delete $target1.temp1
 		#add log2_allele_ratio
-		cg select -f {* {log2_allele_ratio-gatk-crsbwa-*=if(llen($alleledepth-gatk-crsbwa-*)>1, log10(lindex($alleledepth-gatk-crsbwa-*,0))/log10(2) - log10(lindex($alleledepth-gatk-crsbwa-*,1))/log10(2), 0)}} $target1.temp2 $target1.temp3
+		cg select -f {* {log2_allele_ratio-gatk-crsbwa-*=if(llen(${alleledepth-gatk-crsbwa-*})>1, log10(lindex(${alleledepth-gatk-crsbwa-*},0))/log10(2) - log10(lindex(${alleledepth-gatk-crsbwa-*},1))/log10(2), 0)}} $target1.temp2 $target1.temp3
 		file delete $target1.temp2
 		file rename -force $target1.temp3 $target1
 		##depivot compar file
