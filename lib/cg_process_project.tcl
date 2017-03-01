@@ -8,7 +8,7 @@ proc process_project_job {args} {
 	set adapterfile {}
 	set conv_nextseq 0
 	set reports all
-	set samBQ 13
+	set samBQ 0
 	cg_options process_project_job args {
 		-ori {
 			set oridir $value

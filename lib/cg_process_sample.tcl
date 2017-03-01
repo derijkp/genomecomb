@@ -416,7 +416,7 @@ proc process_sample_job {args} {
 	set varcallers {gatk sam}
 	set realign 1
 	set paired 1
-	set samBQ 13
+	set samBQ 0
 	set adapterfile {}
 	set reports all
 	cg_options process_sample args {

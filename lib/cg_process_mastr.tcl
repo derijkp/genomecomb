@@ -294,7 +294,7 @@ proc process_mastr_job {args} {
 	set aligner bwa
 	set cleanup 1
 	set paired 1
-	set samBQ 13
+	set samBQ 0
 	set dbdir {}
 	cg_options process_mastr args {
 		-a - --aligner {

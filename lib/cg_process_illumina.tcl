@@ -465,7 +465,7 @@ proc var_sam_job {bamfile refseq args} {
 	set pre ""
 	set opts {}
 	set split 0
-	set BQ 13
+	set BQ 0
 	foreach {key value} $args {
 		if {$key eq "-l"} {lappend deps $value}
 		if {$key eq "-bed"} {
