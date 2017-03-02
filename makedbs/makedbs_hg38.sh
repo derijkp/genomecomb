@@ -423,14 +423,17 @@ job reg_${build}_cadd -targets {extra/var_${build}_cadd.bcol extra/var_${build}_
 	}
 	putslog "make bcol"
 	file_write extra/var_${build}_cadd.tsv.opt "fields\t{score pscore}\n"
-	if {![file exists $tempdir/collapsed.tsv.lz4]} {
-		cg select --stack 1 -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {end=$Pos} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
-			| cg collapsealleles --stack 1 | lz4c > $tempdir/collapsed.tsv.lz4.temp
-		file rename $tempdir/collapsed.tsv.lz4.temp $tempdir/collapsed.tsv.lz4
+	if {![file exists $tempdir/collapsedhg38.tsv.lz4]} {
+		if {![file exists $tempdir/collapsed.tsv.lz4]} {
+			cg select --stack 1 -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {end=$Pos} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
+				| cg collapsealleles --stack 1 | lz4c > $tempdir/collapsed.tsv.lz4.temp | lz4c > $tempdir/collapsed.tsv.lz4.temp
+			file rename $tempdir/collapsed.tsv.lz4.temp $tempdir/collapsed.tsv.lz4
+		}
+		cg liftover --stack 1 -split 0 -s 0 $tempdir/collapsed.tsv.lz4 ../liftover/hg19ToHg38.over.tsv | lz4c > $tempdir/collapsedhg38.tsv.lz4.temp
+		file rename $tempdir/collapsedhg38.tsv.lz4.temp $tempdir/collapsedhg38.tsv.lz4
+		file delete $tempdir/collapsed.tsv.lz4
 	}
-	cg liftover --stack 1 -split 0 $tempdir/collapsed.tsv.lz4 ../liftover/hg19ToHg38.over.tsv
-		| cg bcol make --stack 1 --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
-	file rename -force $tempdir/var_${build}_cadd.bcol.info extra/var_${build}_cadd.bcol.info
+	exec cg select -s - $tempdir/collapsedhg38.tsv.lz4 | cg bcol make --stack 1 --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
 	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4 extra/var_${build}_cadd.bcol.bin.lz4
 	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4.lz4i extra/var_${build}_cadd.bcol.bin.lz4.lz4i
 	file rename -force $tempdir/var_${build}_cadd.bcol extra/var_${build}_cadd.bcol
