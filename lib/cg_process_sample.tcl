@@ -465,6 +465,7 @@ proc process_sample_job {args} {
 	set dbdir [file_absolute $dbdir]
 	set destdir [file_absolute $destdir]
 	if {![info exists todo]} {set todo {}}
+	if {![info exists reportstodo]} {set reportstodo {}}
 	set sample [file tail $destdir]
 	putslog "Making $destdir"
 	catch {file mkdir $destdir}
@@ -489,7 +490,7 @@ proc process_sample_job {args} {
 			command [list cg process_sample {*}$keepargs]
 		process_sample_cgi_job $destdir $split
 		lappend todo cg-cg-$sample
-		return
+		return $todo
 	}
 	# analysis info
 	# -------------
@@ -527,11 +528,14 @@ proc process_sample_job {args} {
 	# find fastq files in fastq dir
 	set files [ssort -natural [jobglob $destdir/fastq/*.fastq.gz $destdir/fastq/*.fastq $destdir/fastq/*.fq.gz $destdir/fastq/*.fq]]
 	if {![llength $files]} {
-		file mkdir fastq
+		file mkdir $destdir/fastq
 		# if there are none in the fastq dir, check ori dir
 		set files [ssort -natural [jobglob $destdir/ori/*.fastq.gz $destdir/ori/*.fastq $destdir/ori/*.fq.gz $destdir/ori/*.fq]]
 		if {[llength $files]} {
-			set targets [list_regsub /ori $files /fastq]
+			set targets {}
+			foreach file $files {
+				lappend targets $destdir/fastq/[file tail $file]
+			}
 			job fastq_from_ori-$sample -deps $files -targets $targets -code {
 				foreach file $deps target $targets {
 					mklink $file $target
