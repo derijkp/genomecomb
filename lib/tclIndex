@@ -340,7 +340,6 @@ set auto_index(tsv_select_precedence) [list source [file join $dir cg_select.tcl
 set auto_index(tsv_select_detokenize) [list source [file join $dir cg_select.tcl]]
 set auto_index(tsv_select_expandcode) [list source [file join $dir cg_select.tcl]]
 set auto_index(tsv_skipcomments) [list source [file join $dir cg_select.tcl]]
-set auto_index(tsv_select) [list source [file join $dir cg_select.tcl]]
 set auto_index(tsv_hcheader) [list source [file join $dir cg_select.tcl]]
 set auto_index(cg_select) [list source [file join $dir cg_select.tcl]]
 set auto_index(select_parse_grouptypes) [list source [file join $dir cg_select_group.tcl]]
