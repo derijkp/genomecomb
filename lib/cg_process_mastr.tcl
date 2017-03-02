@@ -366,14 +366,14 @@ proc process_mastr_job {args} {
 	# make demultiplex_stats.tsv if not present
 	set deps {}
 	foreach sample $samples {
-		lappend deps {*}[glob -nocomplain $sample/fastq/*.fastq.gz $sample/fastq/*.fastq]
+		lappend deps {*}[glob -nocomplain $sample/fastq/*.fastq.gz $sample/fastq/*.fastq $sample/fastq/*.fq.gz $sample/fastq/*.fq]
 	}
 	job demultiplex_stats -deps $deps -targets $destdir/demultiplex_stats.tsv -vars samples -code {
 		set temptarget [filetemp $target]
 		set o [open $temptarget w]
 		puts $o [join {SampleNumber SampleID SampleName NumberOfClustersRaw NumberOfClustersPF} \t]
 		foreach sample $samples {
-			set files [lsort -dict [glob -nocomplain $sample/fastq/*.fastq.gz $sample/fastq/*.fastq]]
+			set files [lsort -dict [glob -nocomplain $sample/fastq/*.fastq.gz $sample/fastq/*.fastq $sample/fastq/*.fq.gz $sample/fastq/*.fq]]
 			set file [lindex $files 0]
 			set samplenr 0
 			if {![regexp {^(.*)_S([0-9]+)_L[0-9]+_R[12]_[0-9]+\.fastq$} [gzroot [file tail $file]] temp temp samplenr]} {
@@ -389,7 +389,7 @@ proc process_mastr_job {args} {
 		file rename -force $temptarget $target
 	}
 	foreach sample $samples {
-		puts $sample
+		puts "Processing sample $sample"
 		set name ${sample}
 		set dir $destdir/$name
 		catch {file mkdir $dir}
@@ -415,7 +415,7 @@ proc process_mastr_job {args} {
 			lappend todo [string range $target 4 end-4]
 		}
 		# do own alignment
-		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq]
+		set files [glob -nocomplain fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]
 		if {![llength $files]} continue
 		#check if data are available for sample - fastq must have a minimum of 10 reads
 		set demultiplex_stats $destdir/demultiplex_stats.tsv
