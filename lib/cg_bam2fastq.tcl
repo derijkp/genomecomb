@@ -23,7 +23,7 @@ proc cg_bam2fastq {args} {
 	# Aligning the generated fastq files may give problems/biases if the bam is sorted on position
 	# Sorting based on name should avoid this
 	putslog "Sorting bam file on name"
-	exec samtools sort -n $bamfile [file root $tempbam] >@ stdout 2>@ stderr
+	samtools_sort -n $bamfile $tempbam
 	if {$method eq "picard"} {
 		putslog "Using picard to convert bam to fastq"
 		if {$fastqfile2 ne ""} {

@@ -159,13 +159,13 @@ proc map_bowtie2_job {args} {
 		}
 		file rename -force $temptarget $target
 	}
-	job bowtie2_bam-$sample -deps $result.sam -targets $result.bam -vars {result} {*}$skips -code {
+	job bowtie2_bam-$sample -deps $resultbase.sam -targets $result -vars {resultbase} {*}$skips -code {
 		puts "making $target"
-		catch {exec samtools view -S -h -b -o $result.ubam $result.sam >@ stdout 2>@ stderr}
-		catch {exec samtools sort $result.ubam $result.temp >@ stdout 2>@ stderr}
-		file rename -force $result.temp.bam $result.bam
-		file delete $result.ubam
-		file delete $result.sam
+		catch {exec samtools view -S -h -b -o $resultbase.ubam $resultbase.sam >@ stdout 2>@ stderr}
+		catch {samtools_sort $resultbase.ubam $target.temp}
+		file rename -force $target.bam $target
+		file delete $resultbase.ubam
+		file delete $resultbase.sam
 	}
 	job bowtie2_index-$sample -deps $result.bam -targets $result.bam.bai {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
@@ -260,13 +260,13 @@ proc map_bwa_job {args} {
 		file rename -force $target.temp $target
 		file delete bwa1.fastq bwa2.fastq
 	}
-	job bwa2bam-$sample -deps $result.sam -targets $result.bam {*}$skips -vars {result} -code {
+	job bwa2bam-$sample -deps $resultbase.sam -targets $result {*}$skips -vars {resultbase} -code {
 		puts "making $target"
-		catch {exec samtools view -S -h -b -o $result.ubam $result.sam >@ stdout 2>@ stderr}
-		catch {exec samtools sort $result.ubam $result.temp >@ stdout 2>@ stderr}
-		file rename -force $result.temp.bam $result.bam
-		file delete $result.ubam
-		file delete $result.sam
+		exec samtools view -S -h -b -o $resultbase.ubam $resultbase.sam >@ stdout 2>@ stderr
+		samtools_sort $resultbase.ubam $target.temp
+		file rename -force $target.temp $target
+		file delete $resultbase.ubam
+		file delete $resultbase.sam
 	}
 	job bwa_index-$sample -deps $result.bam -targets $result.bam.bai {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
@@ -493,8 +493,14 @@ proc var_sam_job {bamfile refseq args} {
 	set deps [list $file $refseq $refseq.fai {*}$deps]
 	job ${pre}varall-sam-$root -deps $deps -targets {${pre}varall-sam-$root.vcf} \
 		-vars {refseq opts BQ} -skip ${pre}varall-sam-$root.tsv -code {
-		# bcftools -v for variant only
-		exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
+		if {[catch {version samtools 1}]} {
+			exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
+		} else {
+			# bcftools -v for variant only
+			# -t DP: Number of high-quality bases (per sample)
+			# -t SP: Phred-scaled strand bias P-value
+			exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call -c - > $target.temp 2>@ stderr
+		}
 		file rename -force $target.temp $target
 	}
 	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv -vars split -code {

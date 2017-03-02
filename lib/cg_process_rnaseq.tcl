@@ -21,8 +21,8 @@ proc bam_sort_job {bam} {
 	job bamsort-$root -deps {$bam} -targets {$dir/$pre-s$root.bam $dir/$pre-sn$root.bam} -vars {dir pre root} -code {
 		file delete $target1.temp.bam
 		file delete $target2.temp.bam
-		exec samtools sort $dep $target1.temp 2>@ stderr >@ stdout
-		exec samtools sort -n $dep $target2.temp 2>@ stderr >@ stdout
+		samtools_sort $dep $target1.temp
+		samtools_sort -n $dep $target2.temp
 		file rename -force $target1.temp.bam $target1
 		file rename -force $target2.temp.bam $target2
 	}	
