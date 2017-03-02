@@ -240,7 +240,7 @@ proc map_bwa_job {args} {
 			} else {
 				mklink $deps $tempdir/bwa1.fastq
 			}
-			exec bwa mem -t 2 -a  -R @RG\tID:$sample\t[join $rg \t] $bwarefseq $tempdir/bwa1.fastq > $target.temp 2>@ stderr
+			exec bwa mem -t 2 -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $tempdir/bwa1.fastq > $target.temp 2>@ stderr
 		} else {
 			set files1 {}
 			set files2 {}
@@ -255,7 +255,7 @@ proc map_bwa_job {args} {
 				mklink $file1 $tempdir/bwa1.fastq
 				mklink $file2 $tempdir/bwa2.fastq
 			}
-			exec bwa mem -t 2 -a -M -R @RG\tID:$sample\t[join $rg \t] $bwarefseq $tempdir/bwa1.fastq $tempdir/bwa2.fastq > $target.temp 2>@ stderr
+			exec bwa mem -t 2 -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $tempdir/bwa1.fastq $tempdir/bwa2.fastq > $target.temp 2>@ stderr
 		}
 		file rename -force $target.temp $target
 		file delete bwa1.fastq bwa2.fastq
