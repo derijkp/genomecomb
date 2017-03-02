@@ -559,7 +559,7 @@ proc process_sample_job {args} {
 		set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired -skips [list -skip $bamfile -skip $resultbamfile]]
 		#
 		# map using ${aligner}
-		map_${aligner}_job $refseq $files $sample $paired -skips [list -skip $resultbamfile]
+		map_${aligner}_job $bamfile $refseq $files $sample $paired -skips [list -skip $resultbamfile]
 		job rmclipped-$sample -optional 1 -deps $files -rmtargets $files -code {
 			file delete {*}$deps
 		}

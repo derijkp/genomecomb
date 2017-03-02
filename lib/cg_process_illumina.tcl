@@ -118,7 +118,7 @@ proc bowtie2refseq_job {refseq} {
 }
 
 proc map_bowtie2_job {args} {
-	oargs map_bowtie2_job {refseq files sample 
+	oargs map_bowtie2_job {result refseq files sample 
 		{paired 1}
 		{readgroupdata {}}
 		{pre {}}
@@ -128,13 +128,13 @@ proc map_bowtie2_job {args} {
 	if {$readgroupdata ne ""} {
 		array set a $readgroupdata
 	}
-	set result ${pre}map-bowtie2-$sample
+	set resultbase [file root $result]
 	set readgroupdata [array get a]
 	upvar job_logdir job_logdir
 	set bowtie2refseq [bowtie2refseq_job $refseq]
-	job bowtie2-$sample -deps [list $bowtie2refseq {*}$files] -targets $result.sam \
+	job bowtie2-$sample -deps [list $bowtie2refseq {*}$files] -targets $resultbase.sam \
 	-vars {paired bowtie2refseq readgroupdata sample} \
-	-skip $result.bam {*}$skips -code {
+	-skip $resultbase.bam {*}$skips -code {
 		puts "making $target"
 		list_shift deps
 		set rg {}
@@ -167,7 +167,7 @@ proc map_bowtie2_job {args} {
 		file delete $resultbase.ubam
 		file delete $resultbase.sam
 	}
-	job bowtie2_index-$sample -deps $result.bam -targets $result.bam.bai {*}$skips -code {
+	job bowtie2_index-$sample -deps $result -targets $result.bai {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
@@ -199,6 +199,7 @@ proc bwarefseq_job {refseq} {
 	set tail [file tail $refseq]
 	set targets [list $refseq.bwa $refseq.bwa/$tail]
 	foreach ext {amb ann bwt pac sa} {lappend targets $refseq.bwa/$tail.$ext}
+	if {[jobtargetexists $targets $refseq]} return
 	job bwa2refseq-[file tail $refseq] -deps $refseq -targets $targets -code {
 		file delete -force $target.temp
 		file mkdir $target.temp
@@ -211,7 +212,7 @@ proc bwarefseq_job {refseq} {
 }
 
 proc map_bwa_job {args} {
-	oargs map_bwa_job {refseq files sample
+	oargs map_bwa_job {result refseq files sample
 		{paired 1}
 		{readgroupdata {}}
 		{pre {}}
@@ -222,11 +223,11 @@ proc map_bwa_job {args} {
 	if {$readgroupdata ne ""} {
 		array set a $readgroupdata
 	}
-	set result ${pre}map-bwa-$sample
 	set readgroupdata [array get a]
 	set bwarefseq [bwarefseq_job $refseq]
-	job bwa-$sample -mem 4G -deps [list $bwarefseq {*}$files] -targets {$result.sam} -vars {readgroupdata sample paired} \
-	-skip $result.bam {*}$skips -code {
+	set resultbase [file root $result]
+	job bwa-$sample -mem 4G -deps [list $bwarefseq {*}$files] -targets {$resultbase.sam} -vars {readgroupdata sample paired} \
+	-skip $resultbase.bam {*}$skips -code {
 		puts "making $target"
 		set bwarefseq [list_shift deps]
 		set rg {}
@@ -268,17 +269,10 @@ proc map_bwa_job {args} {
 		file delete $resultbase.ubam
 		file delete $resultbase.sam
 	}
-	job bwa_index-$sample -deps $result.bam -targets $result.bam.bai {*}$skips -code {
+	job bwa_index-$sample -deps $result -targets $result.bai {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
-#	job bwa_coverage-$sample -deps $result.bam -targets {coverage coverage/coverage-$sample-.FINISHED} -vars {sample} -code {
-#		cg bam2coverage $dep coverage-bwa-$sample/coverage-bwa-$sample
-#	}
-#	job bwa_coverage-$sample -deps $result.bam -targets sreg-$sample.tsv -vars {sample} -code {
-#		cg regextract -min 8 $dep > $target.temp
-#		file rename -force $target.temp $target
-#	}
 }
 
 proc gatk_refseq_job refseq {
@@ -759,7 +753,7 @@ proc process_illumina {args} {
 					set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired]
 				}
 				# map using bwa
-				map_bwa_job $refseq $files $sample $paired
+				map_bwa_job $bamfile $refseq $files $sample $paired
 			}
 		}
 		# extract regions with coverage >= 5 (for cleaning)
