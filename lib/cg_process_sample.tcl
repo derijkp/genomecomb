@@ -483,7 +483,7 @@ proc process_sample_job {args} {
 	if {[jobglob $destdir/ori/ASM/var-*-ASM*.tsv] ne ""} {
 		# analysis info
 		# -------------
-		info_analysis_file $destdir/info_analysis.tsv.temp $sample \
+		info_analysis_file $destdir/info_analysis.tsv $sample \
 			{dbdir reports} \
 			{genomecomb dbdir gnusort8 tabix lz4 os} \
 			command [list cg process_sample {*}$keepargs]
@@ -491,6 +491,12 @@ proc process_sample_job {args} {
 		lappend todo cg-cg-$sample
 		return
 	}
+	# analysis info
+	# -------------
+	info_analysis_file $destdir/info_analysis.tsv $sample \
+		{dbdir aligner varcallers realign paired samBQ adapterfile reports} \
+		{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 tabix lz4 os} \
+		command [list cg process_sample {*}$keepargs]
 	# convert existing vcfs
 	# ----------------------
 	set files [jobglob $destdir/var-*.vcf]

@@ -38,6 +38,11 @@ proc version {item {minversion {}}} {
 				regexp {\(version ([^)]+)\)} $temp temp temp
 				set _versions($item) "$temp adapted"
 			}
+			fastq-stats {
+				set temp [file_read $::externdir/ea-utils/README]
+				regexp {\(version ([^)]+)\)} $temp temp temp
+				set _versions($item) "$temp adapted"
+			}
 			plink {
 				catch {exec plink --version --noweb} temp
 				regsub {^[^v]*v} $temp {\1 } temp
@@ -113,7 +118,7 @@ proc cg_versions {args} {
 	cg_options versions args {
 	} {} 0
 	if {![llength $args]} {
-		set args {genomecomb dbdir fastq-mcf bwa bowtie2 samtools gatk picard fastqc plink primer3 java R gnusort8 tabix lz4 os}
+		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard plink primer3 java R gnusort8 tabix lz4 os}
 	}
 	puts "item\tversion"
 	foreach item $args {

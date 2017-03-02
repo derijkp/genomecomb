@@ -52,7 +52,7 @@ proc process_multicompar_job {args} {
 	set refseq [glob $dbdir/genome_*.ifas]
 	# analysis info
 	# -------------
-	info_analysis_file $destdir/info_analysis.tsv.temp {} \
+	info_analysis_file $destdir/info_analysis.tsv {} \
 		{dbdir split dbfiles targetsfile ::maxopenfiles} \
 		{genomecomb dbdir gnusort8 lz4 os} \
 		command [list cg process_multicompar {*}$keepargs]

@@ -6,7 +6,7 @@ proc info_analysis_file {resultfile sample parameters versions args} {
 		puts $o [join [list $sample genomecomb $item $value] \t]
 	}
 	foreach param $parameters {
-		puts $o [join [list $sample genomecomb param_$param [get $param ?]] \t]
+		puts $o [join [list $sample genomecomb param_$param [uplevel get $param ?]] \t]
 	}
 	foreach item $versions {
 		puts $o [join [list $sample genomecomb version_$item [version $item]] \t]
