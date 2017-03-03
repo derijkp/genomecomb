@@ -1,4 +1,27 @@
-proc tsvdiff_file {file1 file2 rcomments} {
+proc xlong {file resultfile} {
+	set o [open $resultfile.temp w]
+	set f [gzopen $file]
+	set header [tsv_open $f comment1]
+	set poss [tsv_basicfields $header 6 0]
+	set poss [list_remove $poss -1]
+	set prefields [list_sub $header $poss]
+	set rest [list_lremove [list_fill [llength $header] 0 1] $poss]
+	set restfields [list_sub $header $rest]
+	while {[gets $f line] != -1} {
+		set line [split $line \t]
+		set pre [list_sub $line $poss]
+		set pre [join $pre -]
+		foreach field $restfields value [list_sub $line $rest] {
+			puts $o "$pre\t$field\t$value"
+		}
+	}
+	gzclose $f
+	close $o
+	file rename $resultfile.temp $resultfile
+	return 0
+}
+
+proc tsvdiff_file {file1 file2 rcomments type diffopts} {
 	if {![catch {exec diff -q $file1 $file2}]} return
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
@@ -16,23 +39,24 @@ proc tsvdiff_file {file1 file2 rcomments} {
 	}
 	set temp1 [tempfile]
 	set temp2 [tempfile]
-	if {[catch {
-		cg select -rc $rcomments -f $common $file1 $temp1
-	}]} {
+	if {$type eq "xl"} {
+		set error1 [xlong $file1 $temp1]
+		set error2 [xlong $file2 $temp2]
+	} else {
+		set error1 [catch {
+			cg select -rc $rcomments -f $common $file1 $temp1
+		}]
+		set error2 [catch {
+			cg select -rc $rcomments -f $common $file2 $temp2
+		}]
+	}
+	if {$error1 || $error2} {
 		if {[catch {exec diff $file1 $file2} msg]} {
 			puts stderr $msg
 			return
 		}
 	}
-	if {[catch {
-		cg select -rc $rcomments -f $common $file2 $temp2
-	}]} {
-		if {[catch {exec diff $file1 $file2} msg]} {
-			puts stderr $msg
-			return
-		}
-	}
-	if {[catch {exec diff $temp1 $temp2} result]} {
+	if {[catch {exec diff {*}$diffopts $temp1 $temp2} result]} {
 		append error "header\n  [join $common \t]\n"
 		append error $result
 	}
@@ -42,7 +66,7 @@ proc tsvdiff_file {file1 file2 rcomments} {
 	}
 }
 
-proc tsvdiff_file_brief {file1 file2 rcomments} {
+proc tsvdiff_file_brief {file1 file2 rcomments type diffopts} {
 	if {![catch {exec diff -q $file1 $file2}]} return
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
@@ -78,13 +102,13 @@ proc tsvdiff_file_brief {file1 file2 rcomments} {
 	}
 }
 
-proc tsvdiff {file1 file2 rcomments exclude brief} {
+proc tsvdiff {file1 file2 rcomments exclude brief type diffopts} {
 	if {![file isdir $file1] && ![file isdir $file1]} {
 		if {[file extension [gzroot $file1]] in ".tsv .sft .hsmetrics"} {
 			if {$brief} {
-				tsvdiff_file_brief $file1 $file2 $rcomments
+				tsvdiff_file_brief $file1 $file2 $rcomments $type $diffopts
 			} else {
-				tsvdiff_file $file1 $file2 $rcomments
+				tsvdiff_file $file1 $file2 $rcomments $type $diffopts
 			}
 		} else {
 			if {$brief} {
@@ -127,7 +151,7 @@ proc tsvdiff {file1 file2 rcomments exclude brief} {
 		puts stderr "Only in $file2: [file root [gzfile $file2/$file]]"
 	}
 	foreach file $common {
-		tsvdiff [gzfile $file1/$file] [gzfile $file2/$file] $rcomments $exclude $brief
+		tsvdiff [gzfile $file1/$file] [gzfile $file2/$file] $rcomments $exclude $brief $type $diffopts
 	}
 }
 
@@ -135,12 +159,26 @@ proc cg_tsvdiff args {
 	set rcomments 1
 	set exclude {}
 	set brief 0
+	set type diff
+	set diffopts {}
 	cg_options tsvdiff args {
 		-c {
 			if {[true $value]} {set rcomments 0} else {set rcomments 1}
 		}
 		-x - --exclude {
 			lappend exclude $value
+		}
+		-t - --type {
+			set type $value
+		}
+		-y - --side-by-side {
+			set side-by-side $value
+		}
+		-s - --suppress-common-lines {
+			set suppress-common-lines $value
+		}
+		-w - --width {
+			set width $value
 		}
 		-q - --brief {
 			if {$value in "1 0"} {
@@ -151,7 +189,15 @@ proc cg_tsvdiff args {
 			}
 		}
 	} {file1 file2}
-	tsvdiff $file1 $file2 $rcomments $exclude $brief
+	if {$type eq "xl"} {
+		if {![info exists side-by-side]} {set side-by-side 1}
+		if {![info exists suppress-common-lines]} {set suppress-common-lines 1}
+		if {![info exists width]} {set width 200}
+	}
+	if {[get side-by-side 0]} {lappend diffopts --side-by-side}
+	if {[get suppress-common-lines 0]} {lappend diffopts --suppress-common-lines}
+	if {[info exists width]} {lappend diffopts --width=$width}
+	tsvdiff $file1 $file2 $rcomments $exclude $brief $type $diffopts
 }
 
 if 0 {
