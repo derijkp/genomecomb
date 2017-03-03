@@ -21,7 +21,7 @@ proc xlong {file resultfile} {
 	return 0
 }
 
-proc tsvdiff_file {file1 file2 rcomments type diffopts} {
+proc tsvdiff_file {file1 file2 rcomments type diffopts splitlines} {
 	if {![catch {exec diff -q $file1 $file2}]} return
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
@@ -42,6 +42,13 @@ proc tsvdiff_file {file1 file2 rcomments type diffopts} {
 	if {$type eq "xl"} {
 		set error1 [xlong $file1 $temp1]
 		set error2 [xlong $file2 $temp2]
+	} elseif {$splitlines} {
+		set error1 [catch {
+			exec cg select -rc $rcomments -f $common $file1 | awk {{print $0"\n----"}} > $temp1
+		}]
+		set error2 [catch {
+			exec cg select -rc $rcomments -f $common $file2 | awk {{print $0"\n----"}} > $temp2
+		}]
 	} else {
 		set error1 [catch {
 			cg select -rc $rcomments -f $common $file1 $temp1
@@ -66,7 +73,7 @@ proc tsvdiff_file {file1 file2 rcomments type diffopts} {
 	}
 }
 
-proc tsvdiff_file_brief {file1 file2 rcomments type diffopts} {
+proc tsvdiff_file_brief {file1 file2 rcomments type diffopts splitlines} {
 	if {![catch {exec diff -q $file1 $file2}]} return
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
@@ -102,13 +109,13 @@ proc tsvdiff_file_brief {file1 file2 rcomments type diffopts} {
 	}
 }
 
-proc tsvdiff {file1 file2 rcomments exclude brief type diffopts} {
+proc tsvdiff {file1 file2 rcomments exclude brief type diffopts splitlines} {
 	if {![file isdir $file1] && ![file isdir $file1]} {
 		if {[file extension [gzroot $file1]] in ".tsv .sft .hsmetrics"} {
 			if {$brief} {
-				tsvdiff_file_brief $file1 $file2 $rcomments $type $diffopts
+				tsvdiff_file_brief $file1 $file2 $rcomments $type $diffopts $splitlines
 			} else {
-				tsvdiff_file $file1 $file2 $rcomments $type $diffopts
+				tsvdiff_file $file1 $file2 $rcomments $type $diffopts $splitlines
 			}
 		} else {
 			if {$brief} {
@@ -151,7 +158,7 @@ proc tsvdiff {file1 file2 rcomments exclude brief type diffopts} {
 		puts stderr "Only in $file2: [file root [gzfile $file2/$file]]"
 	}
 	foreach file $common {
-		tsvdiff [gzfile $file1/$file] [gzfile $file2/$file] $rcomments $exclude $brief $type $diffopts
+		tsvdiff [gzfile $file1/$file] [gzfile $file2/$file] $rcomments $exclude $brief $type $diffopts $splitlines
 	}
 }
 
@@ -160,6 +167,7 @@ proc cg_tsvdiff args {
 	set exclude {}
 	set brief 0
 	set type diff
+	set splitlines 0
 	set diffopts {}
 	cg_options tsvdiff args {
 		-c {
@@ -174,8 +182,11 @@ proc cg_tsvdiff args {
 		-y - --side-by-side {
 			set side-by-side $value
 		}
-		-s - --suppress-common-lines {
+		--suppress-common-lines {
 			set suppress-common-lines $value
+		}
+		-s - --splitlines {
+			set splitlines 1
 		}
 		-w - --width {
 			set width $value
@@ -197,7 +208,7 @@ proc cg_tsvdiff args {
 	if {[get side-by-side 0]} {lappend diffopts --side-by-side}
 	if {[get suppress-common-lines 0]} {lappend diffopts --suppress-common-lines}
 	if {[info exists width]} {lappend diffopts --width=$width}
-	tsvdiff $file1 $file2 $rcomments $exclude $brief $type $diffopts
+	tsvdiff $file1 $file2 $rcomments $exclude $brief $type $diffopts $splitlines
 }
 
 if 0 {
