@@ -27,7 +27,7 @@ if 0 {
 
 test process {process_sample exome yri chr2122} {
 	cd $::bigtestdir
-	set dest tmp/exomes_yri_chr2122_one
+	set dest tmp/one_exome_yri_chr2122
 	file delete -force $dest
 	file mkdir $dest/samples
 	foreach sample {
@@ -40,8 +40,8 @@ test process {process_sample exome yri chr2122} {
 	}
 	cg process_sample --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 $dest/samples/NA19240chr2122 2>@ stderr >@ stdout
 	# check vs expected
-	checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"
-	checkdiff -qr -x *log_jobs -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
+	checkdiff -y --suppress-common-lines tmp/one_exome_yri_chr2122/samples/NA19240chr2122/map-dsbwa-NA19240chr2122.bam.dupmetrics expected/one_exome_yri_chr2122/samples/NA19240chr2122/map-dsbwa-NA19240chr2122.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT"
+	checkdiff -qr -x *log_jobs -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/one_exome_yri_chr2122/samples/NA19240chr2122 expected/one_exome_yri_chr2122/samples/NA19240chr2122
 } {}
 
 test process {process_illumina exomes yri chr2122} {
@@ -69,6 +69,8 @@ test process {process_illumina exomes yri chr2122} {
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"
 	checkdiff -qr -x *log_jobs -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
+	# could have used this, but previous is faster
+	# cg tsvdiff -q 1 -x log_jobs -x colinfo -x _fastqc -x bam.dupmetrics tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
 } {}
 
 if 0 {
@@ -81,14 +83,15 @@ tdiff tmp/temp1 tmp/temp2 | less
 test process {process_sample genome yri chr2122} {
 	cd $::bigtestdir
 	set ref $::bigtestdir/refseqtest/hg19
-	set dest tmp/genomes_yri_chr2122_one
+	set dest tmp/one_genome_yri_chr2122
 	file delete -force $dest
 	file mkdir $dest/samples/testNA19240chr2122cg
-	mklink ori/genomes_yritrio_chr2122.start/samples/testNA19240chr2122cg.ori $dest/samples/testNA19240chr2122cg/ori
+	mklink ori/genomes_yri_chr2122.start/samples/testNA19240chr2122cg.ori $dest/samples/testNA19240chr2122cg/ori
 	cg process_sample --stack 1 --verbose 2 -split 1 -dbdir $ref $dest/samples/testNA19240chr2122cg 2>@ stderr >@ stdout
 	# check vs expected
-	checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122_one/samples/testNA19240chr2122cg/summary-testNA19240chr2122cg.txt expected/genomes_yri_chr2122/samples/testNA19240chr2122cg/summary-testNA19240chr2122cg.txt | grep -v "finished.*finished"
-	checkdiff -qr -x log_jobs -x summary-testNA19240chr2122cg.txt tmp/genomes_yri_chr2122_one/samples/testNA19240chr2122cg expected/genomes_yri_chr2122/samples/testNA19240chr2122cg
+	checkdiff -y --suppress-common-lines tmp/one_genome_yri_chr2122/samples/testNA19240chr2122cg/summary-testNA19240chr2122cg.txt expected/genomes_yri_chr2122/samples/testNA19240chr2122cg/summary-testNA19240chr2122cg.txt | grep -v "finished.*finished"
+	checkdiff -y --suppress-common-lines tmp/one_genome_yri_chr2122/samples/testNA19240chr2122cg/info_analysis.tsv expected/genomes_yri_chr2122/samples/testNA19240chr2122cg/info_analysis.tsv | grep -v "command"
+	checkdiff -qr -x info_analysis.tsv -x log_jobs -x summary-testNA19240chr2122cg.txt tmp/one_genome_yri_chr2122/samples/testNA19240chr2122cg expected/genomes_yri_chr2122/samples/testNA19240chr2122cg
 	# file_write tmp/temp $e
 } {}
 
@@ -102,14 +105,8 @@ test process {genomes yri chr2122} {
 		testNA19240chr21il
 	} {
 		file mkdir $dest/samples/$sample
-		mklink ori/genomes_yritrio_chr2122.start/samples/$sample.ori $dest/samples/$sample/ori
+		mklink ori/genomes_yri_chr2122.start/samples/$sample.ori $dest/samples/$sample/ori
 	}
-	mklink refseqtest/hg19/extra/reg_hg19_exome_SureSelectV4.tsv $dest/reg_hg19_targets.tsv
-#	file mkdir $dest/samples/testNA19240chr21il/fastq
-#	foreach file [glob ori/genomes_yritrio_chr2122.start/samples/testNA19240chr21il.ori/*.fq*] {
-#		mklink $file $dest/samples/testNA19240chr21il/fastq/[file tail $file]
-#	}
-	# mklink ori/genomes_yritrio_chr2122.start/samples/testNA19240chr21il.ori/NA19240_GAIIx_100_chr21.bam $dest/samples/testNA19240chr21il/map-rdsbwa-testNA19240chr21il.bam
 	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/genomes_yri_chr2122
 	cg process_project --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 $dest 2>@ stderr >@ stdout
 	# check vs expected
@@ -119,36 +116,6 @@ test process {genomes yri chr2122} {
 	checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics expected/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics | grep -v "Started on"
 	checkdiff -qr -x *log_jobs -x *_fastqc -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri_chr2122 expected/genomes_yri_chr2122
 	# file_write tmp/temp $e
-} {}
-
-test process {mastr mastr_120477_MT_private} {
-	cd $::bigtestdir	
-	set dest tmp/mastr_120477_MT_private
-	file delete -force $dest
-#	file copy ori/mastr_120477_MT_private tmp/
-	file mkdir tmp/mastr_120477_MT_private
-	file copy {*}[glob ori/mastr_120477_MT_private/samples/*] tmp/mastr_120477_MT_private
-	foreach dir [glob tmp/mastr_120477_MT_private/*] {
-		file mkdir $dir/fastq
-		foreach file [glob -nocomplain $dir/ori/*] {
-			file copy $file $dir/fastq
-		}
-	}
-	file delete -force tmp/MT.mastr
-	file mkdir tmp/MT.mastr
-	file copy ori/MT.mastr/amplicons-MT.tsv tmp/MT.mastr
-	file copy ori/mastr_120477_MT_private/demultiplex_stats.tsv $dest
-	# if you want to see output while running
-	cg process_mastr --stack 1 --verbose 2 -split 1 tmp/MT.mastr $dest refseqtest/hg19
-	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/MT.mastr $dest refseqtest/hg19 2>@ stderr >@ stdout
-	# check vs expected
-	checkdiff -qr -x *log_jobs -x *hsmetrics -x colinfo -x mastr_120477_MT_private.html tmp/mastr_120477_MT_private expected/mastr_120477_MT_private
-	checkdiff -y --suppress-common-lines tmp/mastr_120477_MT_private/mastr_120477_MT_private.html expected/mastr_120477_MT_private/mastr_120477_MT_private.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
-	foreach sample [dirglob $dest ceph*] {
-		checkdiff -y --suppress-common-lines tmp/mastr_120477_MT_private/$sample/crsbwa-$sample.hsmetrics expected/mastr_120477_MT_private/$sample/crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
-	}
-	# could have used this, but previous is faster
-	# cg tsvdiff -q 1 -x log_jobs -x mastr_120477_MT_private.html tmp/mastr_120477_MT_private expected/mastr_120477_MT_private
 } {}
 
 test process {mastr mastr_116068_116083} {
