@@ -4,6 +4,7 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 set keepdir [pwd]
+set dopts [get argv ""]
 
 if 0 {
 	# make exome testdata (done using seqcap v2?)
@@ -37,7 +38,8 @@ test process {process_sample exome yri chr2122} {
 			file copy $file tmp/one_exome_yri_chr2122/samples/$sample/fastq/[file tail $file]
 		}
 	}
-	cg process_sample --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 tmp/one_exome_yri_chr2122/samples/NA19240chr2122 2>@ stderr >@ stdout
+	cg process_sample --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/one_exome_yri_chr2122/samples/NA19240chr2122 2>@ stderr >@ stdout
+	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir refseqtest/hg19 tmp/one_exome_yri_chr2122/samples/NA19240chr2122 | less -S
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/one_exome_yri_chr2122/samples/NA19240chr2122/map-dsbwa-NA19240chr2122.bam.dupmetrics expected/one_exome_yri_chr2122/samples/NA19240chr2122/map-dsbwa-NA19240chr2122.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT"
 	checkdiff -qr -x *log_jobs -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/one_exome_yri_chr2122/samples/NA19240chr2122 expected/one_exome_yri_chr2122/samples/NA19240chr2122
@@ -63,7 +65,7 @@ test process {process_illumina exomes yri chr2122} {
 		exec touch {*}[glob tmp/exomes_yri_chr2122/samples/*/map-*.bam*]
 	}
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
-	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
+	cg process_illumina --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"
 	checkdiff -qr -x *log_jobs -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
@@ -84,7 +86,7 @@ test process {process_sample genome yri chr2122} {
 	file delete -force tmp/one_genome_yri_chr2122
 	file mkdir tmp/one_genome_yri_chr2122/samples/testNA19240chr2122cg
 	mklink ori/genomes_yri_chr2122.start/samples/testNA19240chr2122cg.ori tmp/one_genome_yri_chr2122/samples/testNA19240chr2122cg/ori
-	cg process_sample --stack 1 --verbose 2 -split 1 -dbdir $ref tmp/one_genome_yri_chr2122/samples/testNA19240chr2122cg 2>@ stderr >@ stdout
+	cg process_sample --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir $ref tmp/one_genome_yri_chr2122/samples/testNA19240chr2122cg 2>@ stderr >@ stdout
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/one_genome_yri_chr2122/samples/testNA19240chr2122cg/summary-testNA19240chr2122cg.txt expected/genomes_yri_chr2122/samples/testNA19240chr2122cg/summary-testNA19240chr2122cg.txt | grep -v "finished.*finished"
 	checkdiff -y --suppress-common-lines tmp/one_genome_yri_chr2122/samples/testNA19240chr2122cg/info_analysis.tsv expected/genomes_yri_chr2122/samples/testNA19240chr2122cg/info_analysis.tsv | grep -v "command"
@@ -104,7 +106,7 @@ test process {genomes yri chr2122} {
 		mklink ori/genomes_yri_chr2122.start/samples/$sample.ori tmp/genomes_yri_chr2122/samples/$sample/ori
 	}
 	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/genomes_yri_chr2122
-	cg process_project --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 tmp/genomes_yri_chr2122 2>@ stderr >@ stdout
+	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/genomes_yri_chr2122 2>@ stderr >@ stdout
 	# check vs expected
 	foreach cgsample {testNA19238chr2122cg testNA19239chr2122cg testNA19240chr2122cg} {
 		checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_chr2122/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"
@@ -131,7 +133,7 @@ test process {mastr mastr_116068_116083} {
 	file copy ori/wgs2.mastr/amplicons-wgs2.tsv tmp/wgs2.mastr
 	# file copy ori/mastr_116068_116083/demultiplex_stats.tsv tmp/mastr_116068_116083
 	# if you want to see output while running
-	 cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr tmp/mastr_116068_116083 refseqtest/hg19 2>@ stderr >@ stdout
+	 cg process_mastr --stack 1 --verbose 2 {*}$::dopts -split 1 tmp/wgs2.mastr tmp/mastr_116068_116083 refseqtest/hg19 2>@ stderr >@ stdout
 	# no output while running
 	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr tmp/mastr_116068_116083 refseqtest/hg19
 	# check vs expected
