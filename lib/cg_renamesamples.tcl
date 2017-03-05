@@ -43,6 +43,17 @@ proc renamesamples_file {file changes} {
 	set ext [file extension $gzroot]
 	set basefile [file root $gzroot]
 	set newbasefile [renamesamples_newfilename $basefile $changes]
+	if {$newbasefile eq $basefile} {
+		# try first . (if more than 2 exts)
+		set tbasefile [file root $basefile]
+		while {$tbasefile ne $basefile} {
+			set basefile $tbasefile
+			set tbasefile [file root $basefile]
+		}
+		set newbasefile [renamesamples_newfilename $basefile $changes]
+		if {$newbasefile eq $basefile} return
+		set ext [string range [gzroot $file] [string length $basefile] end]
+	}
 	set newfile $newbasefile$ext$gzext
 	if {![catch {file link $file} link]} {
 		set newlink [renamesamples_newfilename $link $changes]
@@ -84,14 +95,12 @@ proc renamesamples_file {file changes} {
 }
 
 proc renamesamples {dir changes} {
+	puts "----- Dir $dir -----"
 	foreach file [glob -nocomplain $dir/*] {
 		if {[file isdir $file]} {
 			renamesamples $file $changes
-			set newfile [renamesamples_newfilename $file $changes]
-			file_rename $file $newfile
-		} else {
-			renamesamples_file $file $changes
 		}
+		renamesamples_file $file $changes
 	}
 }
 
@@ -102,6 +111,7 @@ proc cg_renamesamples {dir args} {
 		set changes $args
 	}
 	if {[expr {[llength $changes]%2}]} {error "renamesamples requires an even number of arguments after the file/dirname (oldname newname)"}
+	set dir [file_absolute $dir]
 	if {![file isdir $dir]} {
 		renamesamples_file $dir $changes
 	} else {
