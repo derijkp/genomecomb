@@ -33,7 +33,7 @@ test process_small {mastr mastr_mx2} {
 	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
 		checkdiff -y --suppress-common-lines tmp/mastr_mx2/$sample/crsbwa-$sample.hsmetrics expected/mastr_mx2/$sample/crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
 	}
-	checkdiff -qr -x *log_jobs -x *hsmetrics -x colinfo -x mastr_mx2.html tmp/mastr_mx2 expected/mastr_mx2
+	checkdiff -qr -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x colinfo -x mastr_mx2.html tmp/mastr_mx2 expected/mastr_mx2
 	checkdiff -y --suppress-common-lines tmp/mastr_mx2/mastr_mx2.html expected/mastr_mx2/mastr_mx2.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
 	# could have used this, but previous is faster
 	# cg tsvdiff -q 1 -x log_jobs -x hsmetrics -x colinfo -x mastr_mx2.html tmp/mastr_mx2 expected/mastr_mx2 2> temp
@@ -53,7 +53,7 @@ test process_small {process_sample exome yri mx2} {
 	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir refseqtest/hg19 tmp/one_exome_yri_mx2/samples/NA19240mx2 | less -S
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics expected/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT"
-	checkdiff -qr -x *log_jobs -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/one_exome_yri_mx2/samples/NA19240mx2 expected/one_exome_yri_mx2/samples/NA19240mx2
+	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/one_exome_yri_mx2/samples/NA19240mx2 expected/one_exome_yri_mx2/samples/NA19240mx2
 } {}
 
 test process_small {process_illumina exomes yri mx2} {
@@ -70,7 +70,7 @@ test process_small {process_illumina exomes yri mx2} {
 	cg process_illumina --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_mx2 2>@ stderr >@ stdout
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on"
-	checkdiff -qr -x *log_jobs -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2
+	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2
 	# could have used this, but previous is faster
 	# cg tsvdiff -q 1 -x log_jobs -x colinfo -x _fastqc -x bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2
 } {}
@@ -106,7 +106,7 @@ test process_small {genomes yri mx2} {
 		checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"
 	}
 	checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics expected/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics | grep -v "Started on"
-	checkdiff -qr -x *log_jobs -x *_fastqc -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri_mx2 expected/genomes_yri_mx2
+	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri_mx2 expected/genomes_yri_mx2
 	# cg tsvdiff -q 1 -x log_jobs -x _fastqc -x summary- -x dupmetrics -x colinfo tmp/genomes_yri_mx2 expected/genomes_yri_mx2 2> temp
 	# cg tsvdiff -f 'chromosome begin end type ref alt zyg-*' -d kdiff3 tmp/genomes_yri_mx2/compar/annot_compar-genomes_yri_mx2.tsv expected/genomes_yri_mx2/compar/annot_compar-genomes_yri_mx2.tsv
 } {}
@@ -176,8 +176,8 @@ foreach s {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8
 cg select -q {region("chr1:175087565-175087840") or region("chr21:42732949-42781869") or region("chr22:41921049-41921405")} expected/mastr_116068_116083/compar/annot_compar-mastr_116068_116083.tsv \
 	| cg select -ssamples $samples \
 	| cg select -q {scount($sequenced eq "v") > 0} > expected.tsv
-# cg tsvdiff tmp/mastr_mx2/compar/annot_compar-mastr_mx2.tsv expected.tsv
 cg select -ssamples $samples tmp/mastr_mx2/compar/annot_compar-mastr_mx2.tsv test.tsv
+# cg tsvdiff -f 'chromosome begin end type ref alt zyg-*' test.tsv expected.tsv
 
 # exomes
 # ------
