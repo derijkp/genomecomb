@@ -20,10 +20,10 @@ proc cg_vcf2tsv {args} {
 		set error [catch {exec vcf2tsv $splitalt | cg select -s - <@ stdin >@ stdout 2>@ stderr}]
 	} elseif {$len == 1} {
 		set infile [lindex $args 0]
-		set error [catch {exec vcf2tsv $splitalt [gztemp $infile] | cg select -s - >@ stdout 2>@ stderr}]
+		set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt | cg select -s - >@ stdout 2>@ stderr}]
 	} elseif {$len == 2} {
 		set infile [lindex $args 0]
-		set error [catch {exec vcf2tsv $splitalt [gztemp $infile] | cg select -s - > [lindex $args 1] 2>@ stderr}]
+		set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt | cg select -s - > [lindex $args 1] 2>@ stderr}]
 	} else {
 		errorformat vcf2tsv
 	}
