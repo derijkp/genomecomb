@@ -21,7 +21,7 @@ proc xlong {file resultfile} {
 	return 0
 }
 
-proc tsvdiff_file {file1 file2 rcomments type diffopts splitlines diffprog} {
+proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog} {
 	if {![catch {exec diff -q $file1 $file2}]} return
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
@@ -30,12 +30,20 @@ proc tsvdiff_file {file1 file2 rcomments type diffopts splitlines diffprog} {
 	set header2 [tsv_open $f2 comment2]
 	catch {close $f2}
 	set common [list_common $header1 $header2]
+	if {[llength $fields]} {
+		set h1 [list_common $header1 [expandfields $header1 $fields]]
+		set h2 [list_common $header2 [expandfields $header2 $fields]]
+	} else {
+		set h1 $header1
+		set h2 $header2
+	}
+	set common [list_common $h1 $h2]
 	set error {}
-	if {[llength $common] != [llength $header1] || [llength $common] != [llength $header2]} {
+	if {[llength $common] != [llength $h1] || [llength $common] != [llength $h2]} {
 		append error "header diff\n"
-		append error "<extrafields: [list_lremove $header1 $common]\n"
+		append error "<extrafields: [list_lremove $h1 $common]\n"
 		append error "---\n"
-		append error ">extrafields: [list_lremove $header2 $common]\n"
+		append error ">extrafields: [list_lremove $h2 $common]\n"
 	}
 	set temp1 [tempfile]
 	set temp2 [tempfile]
@@ -77,7 +85,7 @@ proc tsvdiff_file {file1 file2 rcomments type diffopts splitlines diffprog} {
 	}
 }
 
-proc tsvdiff_file_brief {file1 file2 rcomments type diffopts splitlines diffprog} {
+proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines diffprog} {
 	if {![catch {exec diff -q $file1 $file2}]} return
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
@@ -113,13 +121,13 @@ proc tsvdiff_file_brief {file1 file2 rcomments type diffopts splitlines diffprog
 	}
 }
 
-proc tsvdiff {file1 file2 rcomments exclude brief type diffopts splitlines diffprog} {
+proc tsvdiff {file1 file2 rcomments exclude brief type fields diffopts splitlines diffprog} {
 	if {![file isdir $file1] && ![file isdir $file1]} {
 		if {[file extension [gzroot $file1]] in ".tsv .sft .hsmetrics"} {
 			if {$brief} {
-				tsvdiff_file_brief $file1 $file2 $rcomments $type $diffopts $splitlines $diffprog
+				tsvdiff_file_brief $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
 			} else {
-				tsvdiff_file $file1 $file2 $rcomments $type $diffopts $splitlines $diffprog
+				tsvdiff_file $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
 			}
 		} else {
 			if {$brief} {
@@ -162,12 +170,13 @@ proc tsvdiff {file1 file2 rcomments exclude brief type diffopts splitlines diffp
 		puts stderr "Only in $file2: [file root [gzfile $file2/$file]]"
 	}
 	foreach file $common {
-		tsvdiff [gzfile $file1/$file] [gzfile $file2/$file] $rcomments $exclude $brief $type $diffopts $splitlines $diffprog
+		tsvdiff [gzfile $file1/$file] [gzfile $file2/$file] $rcomments $exclude $brief $type $fields $diffopts $splitlines $diffprog
 	}
 }
 
 proc cg_tsvdiff args {
 	set rcomments 1
+	set fields {}
 	set exclude {}
 	set brief 0
 	set type diff
@@ -177,6 +186,9 @@ proc cg_tsvdiff args {
 	cg_options tsvdiff args {
 		-c {
 			if {[true $value]} {set rcomments 0} else {set rcomments 1}
+		}
+		-f - --fields {
+			set fields $value
 		}
 		-x - --exclude {
 			lappend exclude $value
@@ -212,11 +224,15 @@ proc cg_tsvdiff args {
 		if {![info exists side-by-side]} {set side-by-side 1}
 		if {![info exists suppress-common-lines]} {set suppress-common-lines 1}
 		if {![info exists width]} {set width 200}
+	} elseif {$type eq "sd"} {
+		set side-by-side 1
+		set suppress-common-lines 1
+		if {![info exists width]} {set width 200}
 	}
 	if {[get side-by-side 0]} {lappend diffopts --side-by-side}
 	if {[get suppress-common-lines 0]} {lappend diffopts --suppress-common-lines}
 	if {[info exists width]} {lappend diffopts --width=$width}
-	tsvdiff $file1 $file2 $rcomments $exclude $brief $type $diffopts $splitlines $diffprog
+	tsvdiff $file1 $file2 $rcomments $exclude $brief $type $fields $diffopts $splitlines $diffprog
 }
 
 if 0 {
