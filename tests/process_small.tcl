@@ -10,12 +10,11 @@ set keepdir [pwd]
 
 test process_small {mastr mastr_mx2} {
 	cd $::bigtestdir	
-	set dest tmp/mastr_mx2
-	file delete -force $dest
+	file delete -force tmp/mastr_mx2
 #	file copy ori/mastr_mx2 tmp/
-	file mkdir $dest
+	file mkdir tmp/mastr_mx2
 	foreach sample [glob ori/mastr_mx2.start/samples/*] {
-		set sdest $dest/[string range [file tail $sample] 0 end-3]/fastq
+		set sdest tmp/mastr_mx2/[string range [file tail $sample] 0 end-3]/fastq
 		file mkdir $sdest
 		foreach file [glob -nocomplain $sample/ori/*] {
 			file copy $file $sdest
@@ -24,34 +23,33 @@ test process_small {mastr mastr_mx2} {
 	file delete -force tmp/wgs2.mastr
 	file mkdir tmp/wgs2.mastr
 	file copy ori/wgs2.mastr/amplicons-wgs2.tsv tmp/wgs2.mastr
-	# file copy ori/mastr_mx2/demultiplex_stats.tsv $dest
+	# file copy ori/mastr_mx2/demultiplex_stats.tsv tmp/mastr_mx2
 	# if you want to see output while running
-	 cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseqtest/hg19 2>@ stderr >@ stdout
+	 cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr tmp/mastr_mx2 refseqtest/hg19 2>@ stderr >@ stdout
 	# no output while running
-	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr $dest refseqtest/hg19
+	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr tmp/mastr_mx2 refseqtest/hg19
 	# check vs expected
-	checkdiff -y --suppress-common-lines $dest/mastr_mx2.html expected/mastr_mx2/mastr_mx2.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
-	foreach sample {blanco2_8485 ceph1333_02:34_7220 ceph1347_02:34_7149 ceph1347_02:34_8446} {
-		checkdiff -y --suppress-common-lines $dest/$sample/crsbwa-$sample.hsmetrics expected/mastr_mx2/$sample/crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
+	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
+		checkdiff -y --suppress-common-lines tmp/mastr_mx2/$sample/crsbwa-$sample.hsmetrics expected/mastr_mx2/$sample/crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
 	}
-	checkdiff -qr -x *log_jobs -x *hsmetrics -x colinfo -x mastr_mx2.html $dest expected/mastr_mx2
+	checkdiff -qr -x *log_jobs -x *hsmetrics -x colinfo -x mastr_mx2.html tmp/mastr_mx2 expected/mastr_mx2
+	checkdiff -y --suppress-common-lines tmp/mastr_mx2/mastr_mx2.html expected/mastr_mx2/mastr_mx2.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
 	# could have used this, but previous is faster
-	# cg tsvdiff -q 1 -x log_jobs -x mastr_mx2.html $dest expected/mastr_mx2
+	# cg tsvdiff -q 1 -x log_jobs -x hsmetrics -x colinfo -x mastr_mx2.html tmp/mastr_mx2 expected/mastr_mx2 2> temp
 } {}
 
 test process_small {process_illumina exomes yri mx2} {
 	cd $::bigtestdir
-	set dest tmp/exomes_yri_mx2
-	file delete -force $dest
-	file mkdir $dest/samples
+	file delete -force tmp/exomes_yri_mx2
+	file mkdir tmp/exomes_yri_mx2/samples
 	foreach sample {
 		NA19238mx2  NA19239mx2  NA19240mx2
 	} {
-		file mkdir $dest/samples/$sample/fastq
-		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] $dest/samples/$sample/fastq
+		file mkdir tmp/exomes_yri_mx2/samples/$sample/fastq
+		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_yri_mx2/samples/$sample/fastq
 	}
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
-	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 $dest 2>@ stderr >@ stdout
+	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_mx2 2>@ stderr >@ stdout
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on"
 	checkdiff -qr -x *log_jobs -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2
@@ -62,17 +60,17 @@ test process_small {process_illumina exomes yri mx2} {
 test process_small {genomes yri mx2} {
 	cd $::bigtestdir	
 	set dest tmp/genomes_yri_mx2
-	file delete -force $dest
-	file mkdir $dest
+	file delete -force tmp/genomes_yri_mx2
+	file mkdir tmp/genomes_yri_mx2
 	foreach sample {
 		NA19238cgmx2 NA19239cgmx2 NA19240cgmx2
 		NA19240ilmx2
 	} {
-		file mkdir $dest/samples/$sample
-		mklink ori/genomes_yri_mx2.start/samples/$sample/ori $dest/samples/$sample/ori
+		file mkdir tmp/genomes_yri_mx2/samples/$sample
+		mklink ori/genomes_yri_mx2.start/samples/$sample/ori tmp/genomes_yri_mx2/samples/$sample/ori
 	}
 	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/genomes_yri_mx2
-	cg process_project --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 $dest 2>@ stderr >@ stdout
+	cg process_project --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 tmp/genomes_yri_mx2 2>@ stderr >@ stdout
 	# check vs expected
 	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
 		checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"
@@ -95,7 +93,7 @@ cd /data/genomecomb.testdata
 # ------
 set src expected/mastr_116068_116083
 set dest ori/mastr_mx2.start/samples
-foreach sample {blanco2_8485 ceph1331_01:34_8452 ceph1331_02:34_8455 ceph1347_02:34_8446 ceph1347_02:34_7149 ceph1333_02:34_7220} {
+foreach sample {blanco2_8485 ceph1331_01_34_8452 ceph1331_02_34_8455 ceph1347_02_34_8446 ceph1347_02_34_7149 ceph1333_02_34_7220} {
 	puts "---------- $sample ----------"
 	set sdest $dest/${sample}mx2
 	set bamfile $sdest/map-rsbwa-${sample}mx2.bam
@@ -103,10 +101,11 @@ foreach sample {blanco2_8485 ceph1331_01:34_8452 ceph1331_02:34_8455 ceph1347_02
 	set refseq [glob /data/genomecomb.testdata/refseqtest/hg19/genome_*.ifas]
 	file mkdir $sdest
 	map_bwa_job $bamfile.pre $refseq $fastqs sample 1
-	exec samtools view -F 0x100 -b $bamfile.pre "chr21:42732949-42781869" > $bamfile.temp1
-	exec samtools view -F 0x100 -b $bamfile.pre "chr22:41920849-41921805" > $bamfile.temp2
-	exec samtools merge -f $bamfile $bamfile.temp1 $bamfile.temp2
-	file delete $bamfile.temp1 $bamfile.temp2 $bamfile.pre
+	exec samtools view -F 0x100 -b $bamfile.pre "chr1:175087565-175087840" > $bamfile.temp1
+	exec samtools view -F 0x100 -b $bamfile.pre "chr21:42732949-42781869" > $bamfile.temp2
+	exec samtools view -F 0x100 -b $bamfile.pre "chr22:41920849-41921805" > $bamfile.temp3
+	exec samtools merge -f $bamfile $bamfile.temp1 $bamfile.temp2 $bamfile.temp3
+	file delete $bamfile.temp1 $bamfile.temp2 $bamfile.temp3 $bamfile.pre $bamfile.pre.bai
 	file mkdir $sdest/ori
 	file mkdir $sdest/tmp
 	cg bam2fastq $bamfile $sdest/tmp/${sample}mx2_R1.fq.gz $sdest/tmp/${sample}mx2_R2.fq.gz
@@ -134,10 +133,10 @@ foreach sample {blanco2_8485 ceph1331_01:34_8452 ceph1331_02:34_8455 ceph1347_02
 
 # test
 set samples {}
-foreach s {blanco2_8485 ceph1333_02:34_7220 ceph1347_02:34_7149 ceph1347_02:34_8446} {
+foreach s {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
 	lappend samples gatk-crsbwa-$s sam-crsbwa-$s
 }
-cg select -q {region("chr21:42732949-42781869") or region("chr22:41921049-41921405")} expected/mastr_116068_116083/compar/annot_compar-mastr_116068_116083.tsv \
+cg select -q {region("chr1:175087565-175087840") or region("chr21:42732949-42781869") or region("chr22:41921049-41921405")} expected/mastr_116068_116083/compar/annot_compar-mastr_116068_116083.tsv \
 	| cg select -ssamples $samples \
 	| cg select -q {scount($sequenced eq "v") > 0} > expected.tsv
 # cg tsvdiff tmp/mastr_mx2/compar/annot_compar-mastr_mx2.tsv expected.tsv
@@ -145,7 +144,7 @@ cg select -ssamples $samples tmp/mastr_mx2/compar/annot_compar-mastr_mx2.tsv tes
 
 # exomes
 # ------
-# extract small part of exome (MX2 gene : chr21:42732949-42781869 and ACO2 chr22:41921149-41921305)
+# extract small part of exome (TNN: chr1:175087565-175087840 , MX2 gene : chr21:42732949-42781869 and ACO2 chr22:41921149-41921305)
 set src ori/exomes_yri_chr2122.start/samples
 set dest ori/exomes_yri_mx2.start/samples
 foreach sample {NA19238 NA19239 NA19240} {
@@ -153,10 +152,10 @@ foreach sample {NA19238 NA19239 NA19240} {
 	set sdest $dest/${sample}mx2
 	set bamfile $sdest/map-rdsbwa-${sample}mx2.bam
 	file mkdir $sdest
-	exec samtools view -F 0x100 -b [glob $src/$sample*/*.bam] "chr21:42732949-42781869" > $bamfile.temp1
-	exec samtools view -F 0x100 -b [glob $src/$sample*/*.bam] "chr22:41921049-41921405" > $bamfile.temp2
-	exec samtools merge -f $bamfile $bamfile.temp1 $bamfile.temp2
-	file delete $bamfile.temp1 $bamfile.temp2
+	exec samtools view -F 0x100 -b [glob $src/$sample*/*.bam] "chr21:42732949-42781869" > $bamfile.temp2
+	exec samtools view -F 0x100 -b [glob $src/$sample*/*.bam] "chr22:41921049-41921405" > $bamfile.temp3
+	exec samtools merge -f $bamfile $bamfile.temp1 $bamfile.temp2 $bamfile.temp3
+	file delete $bamfile.temp1 $bamfile.temp2 $bamfile.temp3
 	file mkdir $sdest/ori
 	cg bam2fastq $bamfile $sdest/ori/${sample}mx2_R1.fq.gz $sdest/ori/${sample}mx2_R2.fq.gz
 }
