@@ -75,7 +75,7 @@ test process_small {process_illumina exomes yri mx2} {
 	# cg tsvdiff -q 1 -x log_jobs -x colinfo -x _fastqc -x bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2
 } {}
 
-test process {process_sample genome yri mx2} {
+test process_small {process_sample genome yri mx2} {
 	cd $::bigtestdir
 	set ref $::bigtestdir/refseqtest/hg19
 	file delete -force tmp/one_genome_yri_mx2
@@ -85,7 +85,6 @@ test process {process_sample genome yri mx2} {
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/one_genome_yri_mx2/samples/NA19240cgmx2/summary-NA19240cgmx2.txt expected/genomes_yri_mx2/samples/NA19240cgmx2/summary-NA19240cgmx2.txt | grep -v "finished.*finished"
 	checkdiff -qr -x info_analysis.tsv -x log_jobs -x summary-NA19240cgmx2.txt tmp/one_genome_yri_mx2/samples/NA19240cgmx2 expected/genomes_yri_mx2/samples/NA19240cgmx2
-	# file_write tmp/temp $e
 } {}
 
 test process_small {genomes yri mx2} {
@@ -108,7 +107,8 @@ test process_small {genomes yri mx2} {
 	}
 	checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics expected/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics | grep -v "Started on"
 	checkdiff -qr -x *log_jobs -x *_fastqc -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri_mx2 expected/genomes_yri_mx2
-	# file_write tmp/temp $e
+	# cg tsvdiff -q 1 -x log_jobs -x _fastqc -x summary- -x dupmetrics -x colinfo tmp/genomes_yri_mx2 expected/genomes_yri_mx2 2> temp
+	# cg tsvdiff -f 'chromosome begin end type ref alt zyg-*' -d kdiff3 tmp/genomes_yri_mx2/compar/annot_compar-genomes_yri_mx2.tsv expected/genomes_yri_mx2/compar/annot_compar-genomes_yri_mx2.tsv
 } {}
 
 testsummarize
@@ -118,10 +118,31 @@ if 0 {
 # create test data
 # ================
 
-cd /data/genomecomb.testdata
+proc extractfromfastq {fastq result names} {
+	unset -nocomplain a
+	foreach name $names {
+		set a([string range $name 0 end-2]) 1
+	}
+	set f [gzopen $fastq]
+	set o [open [gzroot $result] w]
+	while 1 {
+		if {[gets $f name] == -1} break
+		set seq $name
+		append seq \n[gets $f]
+		append seq \n[gets $f]
+		append seq \n[gets $f]
+		regsub {/[12]$} $name {} name
+		if {[info exists a([lindex $name 0])]} {puts $o $seq}
+	}
+	close $o
+	gzclose $f
+	exec gzip -f [file root $result]
+}
 
 # mastr
 # ------
+
+cd /data/genomecomb.testdata
 set src expected/mastr_116068_116083
 set dest ori/mastr_mx2.start/samples
 foreach sample {blanco2_8485 ceph1331_01_34_8452 ceph1331_02_34_8455 ceph1347_02_34_8446 ceph1347_02_34_7149 ceph1333_02_34_7220} {
@@ -141,24 +162,9 @@ foreach sample {blanco2_8485 ceph1331_01_34_8452 ceph1331_02_34_8455 ceph1347_02
 	file mkdir $sdest/tmp
 	cg bam2fastq $bamfile $sdest/tmp/${sample}mx2_R1.fq.gz $sdest/tmp/${sample}mx2_R2.fq.gz
 	set names [split [exec zcat $sdest/tmp/${sample}mx2_R1.fq.gz | grep ^@] \n]
-	unset -nocomplain a
-	foreach name $names {
-		set a([string range $name 0 end-2]) 1
-	}
 	foreach fastq $fastqs result [list $sdest/ori/${sample}mx2_R1.fq.gz $sdest/ori/${sample}mx2_R2.fq.gz] {
-		set f [gzopen $fastq]
-		set o [open [gzroot $result] w]
-		while 1 {
-			if {[gets $f name] == -1} break
-			set seq $name
-			append seq \n[gets $f]
-			append seq \n[gets $f]
-			append seq \n[gets $f]
-			if {[info exists a([lindex $name 0])]} {puts $o $seq}
-		}
-		close $o
-		gzclose $f
-		exec gzip -f [file root $result]
+		puts $result
+		extractfromfastq $fastq $result $names
 	}
 }
 
@@ -176,22 +182,30 @@ cg select -ssamples $samples tmp/mastr_mx2/compar/annot_compar-mastr_mx2.tsv tes
 # exomes
 # ------
 # extract small part of exome (TNN: chr1:175087565-175087840 , MX2 gene : chr21:42732949-42781869 and ACO2 chr22:41921149-41921305)
+cd /data/genomecomb.testdata
 set src ori/exomes_yri_chr2122.start/samples
 set dest ori/exomes_yri_mx2.start/samples
 foreach sample {NA19238 NA19239 NA19240} {
 	puts $sample
 	set sdest $dest/${sample}mx2
 	set bamfile $sdest/map-rdsbwa-${sample}mx2.bam
+	set fastqs [ssort -natural [glob $src/$sample*/fastq/*]]
 	file mkdir $sdest
-	exec samtools view -F 0x100 -b [glob $src/$sample*/*.bam] "chr21:42732949-42781869" > $bamfile.temp2
-	exec samtools view -F 0x100 -b [glob $src/$sample*/*.bam] "chr22:41921049-41921405" > $bamfile.temp3
-	exec samtools merge -f $bamfile $bamfile.temp1 $bamfile.temp2 $bamfile.temp3
-	file delete $bamfile.temp1 $bamfile.temp2 $bamfile.temp3
-	file mkdir $sdest/ori
-	cg bam2fastq $bamfile $sdest/ori/${sample}mx2_R1.fq.gz $sdest/ori/${sample}mx2_R2.fq.gz
+	exec samtools view -F 0x100 -b [glob $src/$sample*/*.bam] "chr21:42732949-42781869" > $bamfile.temp1
+	exec samtools view -F 0x100 -b [glob $src/$sample*/*.bam] "chr22:41921049-41923951" > $bamfile.temp2
+	exec samtools merge -f $bamfile $bamfile.temp1 $bamfile.temp2
+	file delete $bamfile.temp1 $bamfile.temp2
+	file mkdir $sdest/tmp
+	cg bam2fastq $bamfile $sdest/tmp/${sample}mx2_R1.fq.gz $sdest/tmp/${sample}mx2_R2.fq.gz
+	set names [split [exec zcat $sdest/tmp/${sample}mx2_R1.fq.gz | grep {^@.*/1$}] \n]
+	foreach fastq $fastqs result [list $sdest/ori/${sample}mx2_R1.fq.gz $sdest/ori/${sample}mx2_R2.fq.gz] {
+		puts $result
+		extractfromfastq $fastq $result $names
+	}
 }
+
 # test
-cg select -q {region("chr21:42732949-42781869") or region("chr22:41921049-41921405")} expected/exomes_yri_chr2122/compar/annot_compar-exomes_yri_chr2122.tsv \
+cg select -q {region("chr21:42732949-42781869") or region("chr22:41921049-41923951")} expected/exomes_yri_chr2122/compar/annot_compar-exomes_yri_chr2122.tsv \
 	| cg select -f {chromosome begin end type ref alt {*mx2=$*chr2122} homopolymer rmsk simpleRepeat snp135_name snp135_freq} > expected.tsv \
 	| cg select -q {scount($sequenced eq "v") > 0} > expected.tsv
 cg select tmp/exomes_yri_mx2/compar/annot_compar-exomes_yri_mx2.tsv test.tsv
@@ -200,6 +214,7 @@ cg tsvdiff -t xl test.tsv expected.tsv
 
 # illumina genome
 # ---------------
+cd /data/genomecomb.testdata
 set src ori/genomes_yritrio_chr2122.start/samples/testNA19240chr21il.ori/NA19240_GAIIx_100_chr21.bam
 set dest ori/genomes_yri_mx2.start/samples
 set sample NA19240il
