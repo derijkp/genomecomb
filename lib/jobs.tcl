@@ -262,8 +262,8 @@ proc jobfileexists {args} {
 }
 
 # jobtargetexists ?options? target deps
-# returns 1 if target exists, and non of the dependencies (args) is new than target (or being made)
-# if -checkdepexists is 0, dependencies are only checked if they exist
+# returns 1 if target exists, and non of the dependencies (args) is newer than target (or being made)
+# if -checkdepexists is 0 (default), dependencies are only checked if they exist
 proc jobtargetexists {args} {
 	set checkcompressed 1
 	set checkdepexists 0
@@ -300,10 +300,10 @@ proc jobtargetexists {args} {
 		set time 0
 		set files [job_finddep $pattern ids time timefile $checkcompressed]
 		if {($checkdepexists && ![llength $files]) || $time in "now force" || $time > $targettime} {
-			job_log targetexists-[file tail $target] "one of targets older than dep $timefile (renaming to .old): $targets"
-			foreach target $targets {
-				file rename -force $target $target.old
-			}
+#			job_log targetexists-[file tail $target] "one of targets older than dep $timefile (renaming to .old): $targets"
+#			foreach target $targets {
+#				file rename -force $target $target.old
+#			}
 			return 0
 		}
 	}

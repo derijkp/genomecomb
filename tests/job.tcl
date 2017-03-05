@@ -1100,8 +1100,6 @@ test job "rmtargets afterwards with gzip exists $testname" {
 } {{data.txt.gz log_jobs result.txt} testpre}
 
 test job "jobforce $testname" {
-	cd $::testdir
-	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init
 	file_write data1.txt test1
@@ -1126,67 +1124,67 @@ test3}
 
 test job "jobtargetexists 1 $testname" {
 	cd $::testdir/tmp
+	test_job_init
 	writetestfiles data1.txt data2.txt data3.txt
 	set result {}
-	lappend result [jobtargetexists data3.txt {data1.txt data2.txt}]
-	lappend result [glob -nocomplain *.old]
-} {1 {}}
+	jobtargetexists data3.txt {data1.txt data2.txt}
+} 1
 
 test job "jobtargetexists 2 $testname" {
 	cd $::testdir/tmp
+	test_job_init
 	writetestfiles data1.txt data2.txt data3.txt
 	set result {}
-	lappend result [jobtargetexists {data2.txt data3.txt} {data1.txt}]
-	lappend result [glob -nocomplain *.old]
-} {1 {}}
+	jobtargetexists {data2.txt data3.txt} {data1.txt}
+} 1
 
 test job "jobtargetexists 3 $testname" {
 	cd $::testdir/tmp
+	test_job_init
 	writetestfiles data2.txt data3.txt data1.txt
 	set result {}
-	lappend result [jobtargetexists data3.txt {data1.txt data2.txt}]
-	lappend result [glob -nocomplain *.old]
-} {0 data3.txt.old}
+	jobtargetexists data3.txt {data1.txt data2.txt}
+} 0
 
 test job "jobtargetexists 4 $testname" {
 	cd $::testdir/tmp
+	test_job_init
 	writetestfiles data2.txt data3.txt data1.txt
 	set result {}
-	lappend result [jobtargetexists {data2.txt data3.txt} {data1.txt}]
-	lappend result [glob -nocomplain *.old]
-} {0 {data2.txt.old data3.txt.old}}
+	jobtargetexists {data2.txt data3.txt} {data1.txt}
+} 0
 
 test job "jobtargetexists 5 $testname" {
 	cd $::testdir/tmp
+	test_job_init
 	writetestfiles data2.txt data1.txt data3.txt
 	set result {}
-	lappend result [jobtargetexists data3.txt {data1.txt data2.txt}]
-	lappend result [glob -nocomplain *.old]
-} {1 {}}
+	jobtargetexists data3.txt {data1.txt data2.txt}
+} 1
 
 test job "jobtargetexists 6 $testname" {
 	cd $::testdir/tmp
+	test_job_init
 	writetestfiles data2.txt data1.txt data3.txt
 	set result {}
-	lappend result [jobtargetexists {data2.txt data3.txt} {data1.txt}]
-	lappend result [glob -nocomplain *.old]
-} {0 {data2.txt.old data3.txt.old}}
+	jobtargetexists {data2.txt data3.txt} {data1.txt}
+} 0
 
 test job "jobtargetexists -checkdepexists 0 (default) $testname" {
 	cd $::testdir/tmp
+	test_job_init
 	writetestfiles data1.txt data3.txt
 	set result {}
-	lappend result [jobtargetexists data3.txt {data1.txt data2.txt}]
-	lappend result [glob -nocomplain *.old]
-} {1 {}}
+	jobtargetexists data3.txt {data1.txt data2.txt}
+} 1
 
 test job "jobtargetexists -checkdepexists 1 $testname" {
 	cd $::testdir/tmp
+	test_job_init
 	writetestfiles data1.txt data3.txt
 	set result {}
-	lappend result [jobtargetexists -checkdepexists 1 data3.txt {data1.txt data2.txt}]
-	lappend result [glob -nocomplain *.old]
-} {0 data3.txt.old}
+	jobtargetexists -checkdepexists 1 data3.txt {data1.txt data2.txt}
+} 0
 
 # end of block
 }
