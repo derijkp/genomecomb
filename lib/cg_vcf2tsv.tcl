@@ -9,23 +9,41 @@
 
 proc cg_vcf2tsv {args} {
 	set splitalt 0
+	set sort 1
 	cg_options vcf2tsv args {
 		-s - -split {
 			set splitalt [true $value]
 		}
+		-sort - --sort {
+			set sort [true $value]
+		}
 	} {} 0 2
 	set len [llength $args]
 	set tempfile [scratchfile get]
-	if {$len == 0} {
-		set error [catch {exec vcf2tsv $splitalt | cg select -s - <@ stdin >@ stdout 2>@ stderr}]
-	} elseif {$len == 1} {
-		set infile [lindex $args 0]
-		set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt | cg select -s - >@ stdout 2>@ stderr}]
-	} elseif {$len == 2} {
-		set infile [lindex $args 0]
-		set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt | cg select -s - > [lindex $args 1] 2>@ stderr}]
+	if {$sort} {
+		if {$len == 0} {
+			set error [catch {exec vcf2tsv $splitalt | cg select -s - <@ stdin >@ stdout 2>@ stderr}]
+		} elseif {$len == 1} {
+			set infile [lindex $args 0]
+			set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt | cg select -s - >@ stdout 2>@ stderr}]
+		} elseif {$len == 2} {
+			set infile [lindex $args 0]
+			set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt | cg select -s - > [lindex $args 1] 2>@ stderr}]
+		} else {
+			errorformat vcf2tsv
+		}
 	} else {
-		errorformat vcf2tsv
+		if {$len == 0} {
+			set error [catch {exec vcf2tsv $splitalt <@ stdin >@ stdout 2>@ stderr}]
+		} elseif {$len == 1} {
+			set infile [lindex $args 0]
+			set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt >@ stdout 2>@ stderr}]
+		} elseif {$len == 2} {
+			set infile [lindex $args 0]
+			set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt > [lindex $args 1] 2>@ stderr}]
+		} else {
+			errorformat vcf2tsv
+		}
 	}
 	if {$error} {exiterror "error converting vcf file"}
 }
