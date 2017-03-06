@@ -45,7 +45,7 @@ proc cg_download_1000g3 {args} {
 	
 	# data
 	wgetfile $url $tempdir/$tail
-	set fields {chromosome begin end type ref alt {freq=vformat("%.3f",($allelecount @* 1.0) @/ $totalallelecount)} quality filter totalallelecount AMR_AF EAS_AF AFR_AF EUR_AF SAS_AF}
+	set fields {chromosome begin end type ref alt {freqp=vformat("%.3f",($allelecount @* 100.0) @/ $totalallelecount)} quality filter totalallelecount AMR_AF EAS_AF AFR_AF EUR_AF SAS_AF}
 	set error [catch {
 		exec cg vcf2tsv $tempdir/$tail $tempdir/$base.tsv.temp
 	} msg]
