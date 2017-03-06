@@ -141,7 +141,8 @@ job kaviar -targets {var_hg19_kaviar.tsv var_hg19_kaviar.tsv.opt} -vars {dest bu
 
 # genes
 foreach db {
-	refGene ensGene knownGene wgEncodeGencodeBasicV24lift37 wgEncodeGencodeCompV24lift37 genscan acembly
+	refGene ensGene knownGene wgEncodeGencodeBasicV24lift37 wgEncodeGencodeCompV24lift37
+	genscan acembly lincRNAsTranscripts
 } {
 	if {$db eq "wgEncodeGencodeCompV19"} {
 		set dbname gencode
@@ -149,8 +150,10 @@ foreach db {
 		set dbname gencode
 	} elseif {$db eq "wgEncodeGencodeCompV24lift37"} {
 		set dbname cgencode
+	} elseif {$db eq "lincRNAsTranscripts"} {
+		set dbname lincRNA
 	} else {set dbname $db}
-	if {$db eq "refGene"} {
+	if {$db in "refGene lincRNAsTranscripts"} {
 		set target gene_${build}_${dbname}.tsv
 	} else {
 		set target extra/gene_${build}_${dbname}.tsv
