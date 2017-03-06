@@ -389,7 +389,7 @@ foreach file [glob genome_*] {
 }
 
 # compress
-foreach file [jobglob *.tsv] {
+foreach file [jobglob *.tsv extra/*.tsv] {
 	job lz4_${build}_[file tail $file] -deps {$file} -targets {$file.lz4} -vars {dest build} -code {
 		cg lz4 -c 12 -i 1 $dep
 	}
@@ -443,6 +443,76 @@ job reg_hg19_cadd -targets {extra/var_hg19_cadd.bcol extra/var_hg19_cadd.bcol.bi
 	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4 extra/var_${build}_cadd.bcol.bin.lz4
 	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4.lz4i extra/var_${build}_cadd.bcol.bin.lz4.lz4i
 	file rename -force $tempdir/var_${build}_cadd.bcol extra/var_${build}_cadd.bcol
+	file delete -force $tempdir
+}
+
+# gnomad
+job reg_hg19_gnomad -targets {var_hg19_gnomad.tsv extra/var_hg19_gnomad.tsv.info} -vars {dest db build} -code {
+	set tempdir $target.temp
+	file mkdir $tempdir
+	set version r2.0.1
+	set baseurl https://data.broadinstitute.org/gnomAD/release-170228/genomes/vcf
+	# set url https://data.broadinstitute.org/gnomAD/release-170228/genomes/vcf/gnomad.genomes.$version.sites.*.vcf.gz
+	file_write var_${build}_gnomad.tsv.info [subst [deindent {
+		= gnomAD (genome Aggregation Database) =
+		
+		== Download info ==
+		dbname	gnomad
+		version	$version
+		citation	Lek, M., Karczewski, K. J., Minikel, E. V., Samocha, K. E., Banks, E., Fennell, T., Exome Aggregation Consortium. (2016). Analysis of protein-coding genetic variation in 60,706 humans. Nature, 536(7616), 285-291. https://doi.org/10.1038/nature19057
+		source	http://gnomad.broadinstitute.org/downloads
+		time	[timestamp]
+		
+		== Description ==
+		The Genome Aggregation Database (gnomAD) is a resource developed by an
+		international coalition of investigators, with the goal of aggregating and
+		harmonizing both exome and genome sequencing data from a wide variety of
+		large-scale sequencing projects, and making summary data available for the
+		wider scientific community.
+		
+		The data set provided on this website spans 123,136 exome sequences and
+		15,496 whole-genome sequences from unrelated individuals sequenced as part
+		of various disease-specific and population genetic studies. The gnomAD
+		Principal Investigators and groups that have contributed data to the
+		current release are listed here.
+		
+		All data here are released for the benefit of the wider biomedical
+		community, without restriction on use - see the terms of use here.
+
+		== Category ==
+		Annotation
+	}]]
+	# multidownload does not work
+	# wgetfiles $url $tempdir
+	set fields {chromosome begin end type ref alt}
+	set nh $fields
+	lappend fields {max_freqp=if($AF_POPMAX eq ".","-",format("%.3f",100.0*$AF_POPMAX))}
+	lappend nh max_freqp
+	foreach {name field} {afr AFR amr AMR asj ASJ eas EAS fin FIN nfe NFE oth OTH male Male female Female} {
+		lappend fields "${name}_freqp=if(\$AN_$field < 8, \"-\", format(\"%.3f\",(100.0 * \$AC_$field)/\$AN_$field))"
+		lappend nh ${name}_freqp
+	}
+	set todo {}
+	foreach chromosome {
+		1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y
+	} {
+		puts chr$chromosome
+		set vcf gnomad.genomes.$version.sites.$chromosome.vcf.gz
+		if {![file exists $tempdir/$vcf]} continue
+		set chrtarget $tempdir/result$chromosome.tsv.lz4
+		if {![file exists $chrtarget]} {
+			if {![file exists $tempdir/$vcf]} {
+				putslog "Downloading $vcf"
+				wgetfile $baseurl/$vcf $tempdir/$vcf
+			}
+			cg vcf2tsv -split 0 $tempdir/$vcf | cg splitalleles | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles | lz4c > $chrtarget.temp
+			file rename $chrtarget.temp $chrtarget
+		}
+		if {[file exists $chrtarget]} {lappend todo $chrtarget}
+	}
+	exec cg cat {*}$todo | lz4c -9 > $tempdir/result.tsv.lz4
+	file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp}\n"
+	file rename -force $tempdir/result.tsv.lz4 var_${build}_gnomad.tsv.lz4
 	file delete -force $tempdir
 }
 
