@@ -112,10 +112,11 @@ proc cg_download_dbnsfp {args} {
 	}
 	putslog "joining files"
 	cg cat -c 0 {*}$todo > $tempdir/var_hg19_dbnsfp.tsv.temp
+	cg select -s - $tempdir/var_hg19_dbnsfp.tsv.temp $tempdir/var_hg19_dbnsfp.tsv.temp2
 	putslog "move result to target"
 	# move dbNSFPzip files to target
 	file_write $resultfile.opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred MetaSVM_score MetaSVM_pred MetaLR_score MetaLR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score GERP_NR GERP_RS MetaLR_score MetaLR_pred SiPhy_29way_pi SiPhy_29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
-	file rename -force $tempdir/var_hg19_dbnsfp.tsv.temp $resultfile
+	file rename -force $tempdir/var_hg19_dbnsfp.tsv.temp2 $resultfile
 	if {!$keep} {file delete -force $tempdir}
 }
 
