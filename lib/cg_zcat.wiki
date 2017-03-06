@@ -1,0 +1,21 @@
+= zcat =
+
+== Format ==
+cg zcat file ...
+
+== Summary ==
+pipe contents of one or more (potentially compressed) files to stdout.
+
+== Description ==
+This conveniance function works like zcat, taking a number of files and
+outputting there contents (concatenated) to stdout. If the file has an
+extension indicating it is compressed, it will be decompressed before
+piping to stdout. In contrast to zcat, cg zcat supports more types of
+compression (lz4, gz, bgz, rz, bz2), and files of different compression
+may be mixed.
+
+== Arguments ==
+; **file** ...: file to be sent to stdout
+
+== Category ==
+Tools
