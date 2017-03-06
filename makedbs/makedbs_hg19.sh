@@ -102,19 +102,13 @@ job 1000g3 -targets {var_hg19_1000g3.tsv extra/var_hg19_1000g3.tsv.opt} -vars {d
 }
 
 # dbsnp
-job dbsnp147 -targets {var_hg19_snp147.tsv var_hg19_snp147.tsv.opt} -vars {dest} -code {
+job dbsnp147 -targets {var_hg19_snp147.tsv var_hg19_snp147.tsv.opt} -vars {dest build} -code {
 	file_write $target.opt "fields\t{name}\n"
-	cg download_ucsc $target.temp hg19 snp147
-	cg select -f {chrom start end type ref alt name freq} $target.temp $target.temp2
-	file rename -force $target.temp2 $target
-	file delete $target
+	cg download_dbsnp $target ${build} snp147 2>@ stderr
 }
 
-job dbsnp147Common -targets {var_hg19_snp147Common.tsv} -vars {dest} -code {
-	cg download_ucsc $target.temp hg19 snp147Common
-	cg select -f {chrom start end type ref alt name freq} $target.temp $target.temp2
-	file rename -force $target.temp2 $target
-	file delete $target
+job dbsnp147Common -targets {var_hg19_snp147Common.tsv} -vars {dest build} -code {
+	cg download_dbsnp $target ${build} snp147Common 2>@ stderr
 }
 
 foreach db {
