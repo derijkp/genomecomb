@@ -39,7 +39,8 @@ job genome_${build}_cindex -deps {$ifasfile} -targets {genome_${build}.ssa} -cod
 }
 
 job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv} -code {
-	cg calcsequencedgenome $dest ${build}
+	exec cg calcsequencedgenome --stack 1 $dep | lz4c -12 > $target.temp
+	file rename -force $target.temp $target
 }
 
 # region databases (ucsc)

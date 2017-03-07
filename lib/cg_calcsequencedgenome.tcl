@@ -1,12 +1,10 @@
 proc cg_calcsequencedgenome {args} {
 	cg_options calcsequencedgenome args {
-	} {genomefile resultfile} 2 2 {
+	} {genomefile} 1 1 {
 		calculate sequenced genome from genome ifas (regions without Ns)
 	}
 	set f [open $genomefile]
-	file mkdir [file dir $resultfile]
-	set tempresult [filetemp $resultfile]
-	set o [open $tempresult w]
+	set o stdout
 	puts $o chromosome\tbegin\tend\tsize
 	while {![eof $f]} {
 		set name [gets $f]
@@ -27,7 +25,5 @@ proc cg_calcsequencedgenome {args} {
 		}
 		puts $o chr$chr\t$pbegin\t$pend\t[expr {$end-$begin}]
 	}
-	close $o
 	close $f
-	file rename -force $tempresult $resultfile
 }
