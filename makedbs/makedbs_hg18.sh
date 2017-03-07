@@ -28,7 +28,7 @@ file mkdir ${dest}/hg19
 job_logdir log_jobs
 
 # download genome
-job genome_${build} -vars build -targets {genome_${build}.ifas extra/reg_${build}_fullgenome.tsv} -code {
+job genome_${build} -vars build -targets {genome_${build}.ifas genome_${build}.ifas.fai extra/reg_${build}_fullgenome.tsv} -code {
 	cg download_genome genome_${build}.ifas ${build}
 	file rename -force reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
 }

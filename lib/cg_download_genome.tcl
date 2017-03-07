@@ -28,6 +28,7 @@ proc cg_download_genome {result build {chromosomes {}}} {
 	} elseif {![catch {
 		set url http://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/analysisSet/$build.analysisSet.chroms.tar.gz
 		wgetfile $url
+		if {![file exists $build.analysisSet.chroms.tar.gz]} {error "Could not download $build.analysisSet.chroms.tar.gz"}
 	} msg]} {
 		exec tar xvzf $build.analysisSet.chroms.tar.gz
 		set files [ssort -natural [glob */chr*.fa]]
@@ -36,6 +37,7 @@ proc cg_download_genome {result build {chromosomes {}}} {
 		file rename -force {*}[glob [file tail $result]*] ..
 	} elseif {![catch {
 		exec wget --tries=45 -c ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/*.fa.gz >@ stdout  2>@ stderr
+		if {![llength [glob *.fa.gz]]} {error "Could not download $build.analysisSet.chroms.tar.gz"}
 	} msg]} {
 		set files [ssort -natural [glob *.fa.gz]]
 		putslog "Converting and indexing"
@@ -48,6 +50,10 @@ proc cg_download_genome {result build {chromosomes {}}} {
 	}
 	cd ..
 	catch {file delete -force $result.temp}
+	#
+	# make samtools index
+	exec samtools faidx $result
+	#
 	set rfile [file dir $result]/reg_[file root [file tail $result]].tsv
 	putslog "Making $rfile"
 	set data [file_read $result.index]

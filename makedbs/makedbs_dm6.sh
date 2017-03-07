@@ -32,8 +32,8 @@ file mkdir extra
 job_logdir log_jobs
 
 # download genome
-job genome_${build} -vars build -targets {genome_${build}.ifas extra/reg_${build}_fullgenome.tsv} -code {
-	cg downloadgenome ${build} genome_${build}.ifas
+job genome_${build} -vars build -targets {genome_${build}.ifas genome_${build}.ifas.fai extra/reg_${build}_fullgenome.tsv} -code {
+	cg download_genome --stack 1 --verbose 2 genome_${build}.ifas ${build}
 	file rename -force reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
 }
 
