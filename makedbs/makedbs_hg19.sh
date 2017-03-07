@@ -448,7 +448,7 @@ job reg_hg19_cadd -targets {var_hg19_cadd.bcol var_hg19_cadd.bcol.bin.lz4 var_hg
 }
 
 # gnomad
-job reg_hg19_gnomad -targets {var_hg19_gnomad.tsv extra/var_hg19_gnomad.tsv.info} -vars {dest db build} -code {
+job reg_hg19_gnomad -targets {var_hg19_gnomad.tsv var_hg19_gnomad.tsv.info} -vars {dest db build} -code {
 	set tempdir $target.temp
 	file mkdir $tempdir
 	set version r2.0.1
@@ -514,6 +514,8 @@ job reg_hg19_gnomad -targets {var_hg19_gnomad.tsv extra/var_hg19_gnomad.tsv.info
 	exec cg cat {*}$todo | lz4c -9 > $tempdir/result.tsv.lz4
 	file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp}\n"
 	file rename -force $tempdir/result.tsv.lz4 var_${build}_gnomad.tsv.lz4
+	file_write extra/var_${build}_gnomad.tsv.opt "fields\t{afr_freqp amr_freqp asj_freqp eas_freqp fin_freqp nfe_freqp oth_freqp male_freqp female_freqp}\n"
+	mklink var_${build}_gnomad.tsv.lz4 extra/var_${build}_gnomad.tsv.lz4
 	file delete -force $tempdir
 }
 
