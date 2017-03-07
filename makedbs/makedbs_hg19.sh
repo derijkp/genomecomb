@@ -377,6 +377,7 @@ job var_hg19_dbnsfp -targets {extra/var_hg19_dbnsfp.tsv extra/var_hg19_dbnsfp.ts
 job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${build}.ssa} -vars build \
 -targets {extra/genome_${build}.ifas extra/genome_${build}.ifas.index extra/genome_${build}.ssa} -code {
 	mklink genome_${build}.ifas extra/genome_${build}.ifas
+	mklink genome_${build}.ifas.fai extra/genome_${build}.ifas.fai
 	mklink genome_${build}.ifas.index extra/genome_${build}.ifas.index 
 	mklink genome_${build}.ssa extra/genome_${build}.ssa
 }
