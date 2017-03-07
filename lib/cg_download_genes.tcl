@@ -42,7 +42,11 @@ proc cg_download_genes {args} {
 		}
 		close $o
 		close $f
-	        cg select -s - -f {chrom start end strand geneid *} $temp/$resulttail.temp2 $temp/$resulttail
+		if {[file extension $resulttail] eq ".lz4"} {
+		        cg select -s - -f {chrom start end strand geneid *} $temp/$resulttail.temp2 | lz4c -12 > $temp/$resulttail
+		} else {
+		        cg select -s - -f {chrom start end strand geneid *} $temp/$resulttail.temp2 $temp/$resulttail
+		}
 	} else {
 		if {![info exists geneidcol]} {
 			if {$geneset in "genscan acembly"} {
@@ -55,7 +59,11 @@ proc cg_download_genes {args} {
 		if {[lsearch $fields $geneidcol] == -1} {
 			set geneidcol [lindex [list_common {name2 name geneid id} $fields] 0]
 		}
-	        cg select -s - -f [list chrom start end strand "geneid=\$$geneidcol" *] $ucscfile $temp/$resulttail
+		if {[file extension $resulttail] eq ".lz4"} {
+		        cg select -s - -f [list chrom start end strand "geneid=\$$geneidcol" *] $ucscfile | lz4c -12 > $temp/$resulttail
+		} else {
+		        cg select -s - -f [list chrom start end strand "geneid=\$$geneidcol" *] $ucscfile $temp/$resulttail
+		}
 	}
 	# move to results
 	putslog "move results to $resultfile and $resultfile.info"
