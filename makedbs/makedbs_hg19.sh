@@ -397,12 +397,12 @@ foreach file [jobglob *.tsv extra/*.tsv] {
 }
 
 # CADD
-job reg_hg19_cadd -targets {extra/var_hg19_cadd.bcol extra/var_hg19_cadd.bcol.bin.lz4 extra/var_hg19_cadd.bcol.bin.lz4.lz4i extra/var_hg19_cadd.bcol.info} -vars {dest db build} -code {
+job reg_hg19_cadd -targets {var_hg19_cadd.bcol var_hg19_cadd.bcol.bin.lz4 var_hg19_cadd.bcol.bin.lz4.lz4i var_hg19_cadd.bcol.info} -vars {dest db build} -code {
 	set tempdir $target.temp
 	file mkdir $tempdir
 	set url http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz
 	set tail [file tail $url]
-	file_write extra/var_${build}_cadd.bcol.info [subst [deindent {
+	file_write var_${build}_cadd.bcol.info [subst [deindent {
 		= CADD (Combined Annotation Dependent Depletion) =
 		
 		== Download info ==
@@ -437,13 +437,13 @@ job reg_hg19_cadd -targets {extra/var_hg19_cadd.bcol extra/var_hg19_cadd.bcol.bi
 		wgetfile $url $tempdir/$tail
 	}
 	putslog "make bcol"
-	file_write extra/var_${build}_cadd.tsv.opt "fields\t{score pscore}\n"
+	file_write var_${build}_cadd.tsv.opt "fields\t{score pscore}\n"
 	cg select -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
 		| cg collapsealleles \
 		| cg bcol make --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
-	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4 extra/var_${build}_cadd.bcol.bin.lz4
-	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4.lz4i extra/var_${build}_cadd.bcol.bin.lz4.lz4i
-	file rename -force $tempdir/var_${build}_cadd.bcol extra/var_${build}_cadd.bcol
+	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4 var_${build}_cadd.bcol.bin.lz4
+	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4.lz4i var_${build}_cadd.bcol.bin.lz4.lz4i
+	file rename -force $tempdir/var_${build}_cadd.bcol var_${build}_cadd.bcol
 	file delete -force $tempdir
 }
 
