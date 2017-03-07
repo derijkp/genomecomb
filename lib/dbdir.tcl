@@ -13,7 +13,9 @@ proc dbdir {args} {
 			error "dbdir not specified, use options e.g. (-dbdir) or environment variable GENOMECOMB_DBDIR to set"
 		}
 	}
-	if {![file isdir $dbdir]} {
+	if {[file isfile $dbdir] && [file extension $dbdir] eq ".ifas"} {
+		set dbdir [file dir $dbdir]
+	} elseif {![file isdir $dbdir]} {
 		error "dbdir $dbdir does not exist, use options e.g. (-dbdir) or environment variable GENOMECOMB_DBDIR to change"
 	}
 	set dbdir [file_absolute $dbdir]
