@@ -44,7 +44,7 @@ proc cg {cmd args} {
 }
 
 proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {summary {}}} {
-# putsvars cmd argsVar def minargs maxargs parameters
+# putsvars cmd argsVar def parameters minargs maxargs summary
 	set options [join [list_unmerge $def] ,]
 	set len [llength $parameters]
 	if {$minargs eq ""} {set minargs $len}
@@ -82,9 +82,9 @@ proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {sum
 		}
 	}]
 	if {[llength $parameters]} {
-		append fullcmd "set ::_temp_max \[expr {\[llength \$args\] - 1}\]\n"
-		append fullcmd "if {\$::_temp_max >= 0} {foreach \[lrange [list $parameters] 0 \$::_temp_max\] \$args break}\n"
-		append fullcmd "set args \[lrange \$args $len end\]"
+		append fullcmd "set ::_temp_max \[expr {\[llength \$$argsVar\] - 1}\]\n"
+		append fullcmd "if {\$::_temp_max >= 0} {foreach \[lrange [list $parameters] 0 \$::_temp_max\] \$$argsVar break}\n"
+		append fullcmd "set $argsVar \[lrange \$args $len end\]"
 	}
 	uplevel $fullcmd
 }
