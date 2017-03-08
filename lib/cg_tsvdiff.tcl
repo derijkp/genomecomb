@@ -45,8 +45,10 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 		append error "---\n"
 		append error ">extrafields: [list_lremove $h2 $common]\n"
 	}
-	set temp1 [tempfile]
-	set temp2 [tempfile]
+	set tempdir [tempdir]
+	set temp1 $tempdir/[file tail $file1]
+	set temp2 $tempdir/[file tail $file2]
+	if {$temp2 eq $temp1} {append temp2 -b}
 	if {$type eq "xl"} {
 		set error1 [xlong $file1 $temp1]
 		set error2 [xlong $file2 $temp2]
