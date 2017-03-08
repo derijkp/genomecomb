@@ -193,6 +193,14 @@ job reg_refcoding \
 	file rename -force $target.temp $target
 }
 
+job reg_intcoding \
+-deps {gene_${build}_intGene.tsv} \
+-targets {extra/reg_${build}_intcoding.tsv} \
+-code {
+	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin > $target.temp
+	file rename -force $target.temp $target
+}
+
 job reg_${build}_phenotype -deps {extra/reg_${build}_genes.tsv} \
 -targets {extra/reg_${build}_phenotype.tsv extra/geneannot_${build}_phenotype.tsv} -vars {dest build} -code {
 	# get target2, uses biomart (ensembl geneset) and clinvar for gene-phenotype correlations
