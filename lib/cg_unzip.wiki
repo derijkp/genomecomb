@@ -11,4 +11,4 @@ cg unzip will decompress the files given. Input files can be in any of the suppo
 compression formats (lz4, gz, bgz, bz2, rz).
 
 == Category ==
-Tools
+Compression

@@ -25,4 +25,4 @@ order of magnitude faster
 If the --keep option is not explicitely given, using -o will change the "default" for -k to 1.
 
 == Category ==
-Tools
+Compression

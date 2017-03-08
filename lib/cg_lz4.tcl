@@ -94,6 +94,17 @@ proc cg_lz4cat {args} {
 	}
 }
 
+proc cg_lz4ra {args} {
+	set start 0
+	cg_options lz4ra args {
+	} {filename start size} 1 3
+	if {![info exists size]} {
+		exec lz4ra $filename $start >@ stdout
+	} else {
+		exec lz4ra $filename $start $size >@ stdout
+	}
+}
+
 proc cg_lz4less {args} {
 	if {![llength $args]} {
 		set f [open "| lz4c -d -c | less" w]

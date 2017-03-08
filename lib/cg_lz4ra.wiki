@@ -1,0 +1,16 @@
+= lz4ra =
+
+== Format ==
+cg lz4ra file ?start? ?size?
+
+== Summary ==
+decompresses part of a lz4 compressed file
+
+== Description ==
+lz4ra gives "randsom access" to a lz4 compressed file. It can decompress
+the given file and send the result to stdout starting from the given
+starting byte (within the uncompressed file) without having to decompress
+the entire file. size will limit the output to the given size (in bytes)
+
+== Category ==
+Compression

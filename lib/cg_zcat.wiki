@@ -18,4 +18,4 @@ may be mixed.
 ; **file** ...: file to be sent to stdout
 
 == Category ==
-Tools
+Compression

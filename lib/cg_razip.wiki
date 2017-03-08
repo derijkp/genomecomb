@@ -18,4 +18,4 @@ supports options:
 ; **-k**: keep the original uncompressed file if 1 (default 0)
 
 == Category ==
-Tools
+Compression
