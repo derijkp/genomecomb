@@ -17,34 +17,24 @@ proc cg_vcf2tsv {args} {
 		-sort - --sort {
 			set sort [true $value]
 		}
-	} {} 0 2
-	set len [llength $args]
-	set tempfile [scratchfile get]
-	if {$sort} {
-		if {$len == 0} {
-			set error [catch {exec vcf2tsv $splitalt | cg select -s - <@ stdin >@ stdout 2>@ stderr}]
-		} elseif {$len == 1} {
-			set infile [lindex $args 0]
-			set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt | cg select -s - >@ stdout 2>@ stderr}]
-		} elseif {$len == 2} {
-			set infile [lindex $args 0]
-			set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt | cg select -s - > [lindex $args 1] 2>@ stderr}]
-		} else {
-			errorformat vcf2tsv
-		}
+	} {infile outfile} 0 2
+	if {[info exists infile]} {
+		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv]
 	} else {
-		if {$len == 0} {
-			set error [catch {exec vcf2tsv $splitalt <@ stdin >@ stdout 2>@ stderr}]
-		} elseif {$len == 1} {
-			set infile [lindex $args 0]
-			set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt >@ stdout 2>@ stderr}]
-		} elseif {$len == 2} {
-			set infile [lindex $args 0]
-			set error [catch {exec {*}[gzcat $infile] $infile | vcf2tsv $splitalt > [lindex $args 1] 2>@ stderr}]
-		} else {
-			errorformat vcf2tsv
-		}
+		set pipe {exec vcf2tsv}
 	}
+	if {!$splitalt} {
+		lappend pipe | cg collapsealleles
+	}
+	if {$sort} {
+		lappend pipe | cg select -s -
+	}
+	if {[info exists outfile]} {
+		lappend pipe > $outfile 2>@ stderr
+	} else {
+		lappend pipe >@ stdout 2>@ stderr
+	}
+	set error [catch $pipe]
 	if {$error} {exiterror "error converting vcf file"}
 }
 

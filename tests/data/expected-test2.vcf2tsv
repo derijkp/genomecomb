@@ -26,6 +26,7 @@ chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1-NA00001	alleleS
 20	1000000	1000099	del	99		longdel	50	PASS	99		t	0	0;1	35	4		99	99	r	0	0;0	17	2				m	0	1;1	40	3		3	9		G		
 20	1110695	1110696	snp	A	G,T	rs6040355	67	PASS	G	T	c	1	1,2	21	6	23,27	T	G	c	1	2,1	2	0	18,2	T	T	m	0	2;2	35	4		2	10	0.333,0.667	T	1	
 20	1230236	1230237	snp	T	.	.	47	PASS	T	T	r	1	0,0	54	7	56,60	T	T	r	1	0,0	48	4	51,51	T	T	r	0	0;0	61	2		3	13		T		
-20	1234567	1234570	sub	TCT	,TACT	microsat1	50	PASS	TCT		t	0	0;1	35	4		TCT	TACT	t	0	0;2	17	2				m	0	1;1	40	3		3	9		G		
+20	1234567	1234568	sub	T	TA	microsat1	50	PASS	T	@	o	0	0;2	35	4		T	TA	t	0	0;1	17	2		@	@	o	0	2;2	40	3		3	9		G		
+20	1234567	1234570	del	TCT		microsat1	50	PASS	TCT		t	0	0;1	35	4		TCT	@	o	0	0;2	17	2				m	0	1;1	40	3		3	9		G		
 22	1234567	1234567	ins		CA	test2	50	PASS		CA	t	0	0;1	35	4				r	0	0;0	17	2		CA	CA	m	0	1;1	40	3		3	9		G		
 22	1234567	1234568	del	T		test	50	PASS	T		t	0	0;1	35	4		T	T	r	0	0;0	17	2				m	0	1;1	40	3		3	9		G		

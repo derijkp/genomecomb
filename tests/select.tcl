@@ -219,7 +219,7 @@ test select "keep header info and format vcf$dboptt" {
 	file delete tmp/temp
 	catch {exec diff tmp/temp.tsv data/test.vcf > tmp/temp}
 	file_read tmp/temp
-} {18c18
+} {20c20
 < #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003
 ---
 > #CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
