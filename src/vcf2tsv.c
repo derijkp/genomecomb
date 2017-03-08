@@ -58,6 +58,15 @@ void getfield(DString *result,char *list, int pos) {
 	result->size = size;
 }
 
+char numberfromid(DString *id) {
+	if (id->size >= 2 && (strncmp(id->string,"AD",2) == 0 || strncmp(id->string,"RP",2) == 0)) {
+		return('R');
+	}
+	if (id->size == 2 && (strncmp(id->string,"AC",2) == 0 || strncmp(id->string,"AF",2) == 0)) {
+		return('A');
+	}
+	return('.');
+}
 
 typedef struct altvar {
 	DString *type;
@@ -162,13 +171,18 @@ int main(int argc, char *argv[]) {
 			if (strcmp(id->string,"GT") == 0) continue;
 			DStringArrayAppend(formatfields,id->string,id->size);
 			num->string[0] = extractNumber(DStringArrayGet(format,i));
+			if (num->string[0] == '.') {
+				num->string[0] = numberfromid(id);
+			}
 			DStringAppendS(formatfieldsnumber,num->string,1);
 			ds = (DString *)dstring_hash_get(conv_formata,id);
-			if (ds != NULL) {
-				DStringArrayAppend(headerfields,ds->string,ds->size);
-			} else {
-				DStringArrayAppend(headerfields,id->string,id->size);
+			if (ds == NULL) {ds = id;}
+			if (num->string[0] == 'R') {
+				DStringSetS(temp,ds->string,ds->size);
+				DStringAppendS(temp,"_ref",4);
+				DStringArrayAppend(headerfields,temp->string,temp->size);
 			}
+			DStringArrayAppend(headerfields,ds->string,ds->size);
 		}
 		NODPRINT("==== Parsing header/samples ====")
 		if (samples->size <= 1) {
@@ -196,16 +210,19 @@ int main(int argc, char *argv[]) {
 		id = extractID(DStringArrayGet(info,i),id);
 		DStringArrayAppend(infofields,id->string,id->size);
 		num->string[0] = extractNumber(DStringArrayGet(info,i));
+		if (num->string[0] == '.') {
+			num->string[0] = numberfromid(id);
+		}
 		DStringAppendS(infofieldsnumber,num->string,1);
 		if (id->string[0] == 'D' && id->string[1] == 'P' && id->string[2] == '\0') {
 			fprintf(fo,"\ttotalcoverage");
 		} else {
 			ds = (DString *)dstring_hash_get(conv_formata,id);
-			if (ds != NULL) {
-				fprintf(fo,"\t%*.*s",ds->size,ds->size,ds->string);
-			} else {
-				fprintf(fo,"\t%*.*s",id->size,id->size,id->string);
-			}
+			if (ds == NULL) {ds = id;}
+			if (num->string[0] == 'R') {
+				fprintf(fo,"\t%*.*s_ref",ds->size,ds->size,ds->string);
+			}			
+			fprintf(fo,"\t%*.*s",ds->size,ds->size,ds->string);
 		}
 	}
 	fprintf(fo,"\n");
@@ -439,12 +456,17 @@ int main(int argc, char *argv[]) {
 					for (i = 1 ; i < formatfields->size; i++) {
 						if (order[i] <= 0) {
 							fprintf(fo,"\t");
+							if (formatfieldsnumber->string[i] == 'R') {
+								fprintf(fo,"\t");
+							}
 						} else if (formatfieldsnumber->string[i] == 'R') {
 							DString result, *value;
 							value = DStringArrayGet(genoa,order[i]);
+							getfield(&result,value->string,0);
+							fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
 							getfield(&result,value->string,curallele);
 							fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
-						} else if (formatfieldsnumber->string[i] == 'A' || formatfieldsnumber->string[i] == '.') {
+						} else if (formatfieldsnumber->string[i] == 'A') {
 							DString result, *value;
 							value = DStringArrayGet(genoa,order[i]);
 							getfield(&result,value->string,curallele-1);
@@ -485,13 +507,21 @@ int main(int argc, char *argv[]) {
 					len  = outinfo[i].size;
 					if (len == -1) {
 						fprintf(fo,"\t");
+						if (infofieldsnumber->string[i] == 'R') {
+							fprintf(fo,"\t");
+						}
 					} else if (len == 0) {
+						if (infofieldsnumber->string[i] == 'R') {
+							fprintf(fo,"\t");
+						}
 						fprintf(fo,"\t1");
 					} else if (infofieldsnumber->string[i] == 'R') {
 						DString result;
+						getfield(&result,outinfo[i].string,0);
+						fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
 						getfield(&result,outinfo[i].string,curallele);
 						fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
-					} else if (infofieldsnumber->string[i] == 'A' || infofieldsnumber->string[i] == '.') {
+					} else if (infofieldsnumber->string[i] == 'A') {
 						DString result;
 						getfield(&result,outinfo[i].string,curallele-1);
 						fprintf(fo,"\t%*.*s",result.size,result.size,result.string);

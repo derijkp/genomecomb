@@ -22,22 +22,22 @@
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
 #CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
 # ----
-chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1-NA00001	alleleSeq2-NA00001	zyg-NA00001	phased-NA00001	genotypes-NA00001	alleledepth-NA00001	TE-NA00001	genoqual-NA00001	coverage-NA00001	haploqual-NA00001	alleleSeq1-NA00002	alleleSeq2-NA00002	zyg-NA00002	phased-NA00002	genotypes-NA00002	alleledepth-NA00002	TE-NA00002	genoqual-NA00002	coverage-NA00002	haploqual-NA00002	alleleSeq1-NA00003	alleleSeq2-NA00003	zyg-NA00003	phased-NA00003	genotypes-NA00003	alleledepth-NA00003	TE-NA00003	genoqual-NA00003	coverage-NA00003	haploqual-NA00003	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
-20	14369	14370	snp	G	A	rs6054257	29	PASS	G	G	r	1	0,0			48	1	51,51	A	G	t	1	1,0			48	8	51,51	A	A	m	0	1;1			43	5	.,.	3	14	0.5		1	1
-20	17329	17330	snp	T	A	.	3	q10	T	T	r	1	0,0			49	3	58,50	T	A	t	1	0,1			3	5	65,3	T	T	r	0	0;0			41	3		3	11	0.017			
-20	1110695	1110696	snp	A	G,T	rs6040355	67	PASS	G	T	c	1	1,2			21	6	23,27	T	G	c	1	2,1			2	0	18,2	T	T	m	0	2;2			35	4		2	10	0.333,0.667	T	1	
-20	1230236	1230237	snp	T	.	.	47	PASS	T	T	r	1	0,0			54	7	56,60	T	T	r	1	0,0			48	4	51,51	T	T	r	0	0;0			61	2		3	13		T		
-20	1234567	1234568	sub	T	TA	microsat1	50	PASS	T	@	o	0	0;2			35	4		T	TA	t	0	0;1			17	2		@	@	o	0	2;2			40	3		3	9		G		
-20	1234567	1234570	del	TCT		microsat1	50	PASS	TCT		t	0	0;1			35	4		TCT	@	o	0	0;2			17	2				m	0	1;1			40	3		3	9		G		
-20	1234570	1234573	del	TCT		nodel	50	PASS	TCT	TCT	r	0	0;0				4		TCT	TCT	r	0	0;0				2		TCT	TCT	r	0	0;0				3		3	9		G		
-20	1234590	1234593	del	TCT		del	50	PASS	TCT		t	0	0;1			35	4				m	0	1;1			17	2		TCT	TCT	r	0	0;0			40	3		3	9		G		
-20	1234594	1234595	snp	A	T	ins_snp	51	PASS	A	@	o	0	0;2	30	2	35	4		A	T	t	0	0;1	60	4	17	2		@	@	o	0	2;2	90	6	40	3		3	9		G		
-20	1234595	1234595	ins		T	ins_snp	51	PASS		T	t	0	0;1	20	1	35	4			@	o	0	0;2	50	3	17	2		T	T	m	0	1;1	80	5	40	3		3	9		G		
-20	1234597	1234598	snp	G	T,C	mixed	52	PASS	G	T	t	0	0;1	20,30	1,2	10	20		T	C	c	0	1;2	60,70	4,5	15	15		T	@	c	0	1;-1	82,83	7,8	20	20		3	9	0.2,0.3	G		
-20	1234598	1234604	del	TGGTAC		mixed	52	PASS	TGGTAC	@	o	0	0;2	40	3	10	20		@	@	o	0	2;2	80	6	15	15		@		c	0	2;1	84	9	20	20		3	9	0.4	G		
-20	1234800	1234801	snp	G	T	mixed2	52	PASS	G	T	t	0	0;1	20	1	10	20		T	@	c	0	1;2	60	4	15	15		T	@	c	0	1;2	82	7	20	20		3	9	0.2	G		
-20	1234801	1234807	del	TGGTAC		mixed2	52	PASS	TGGTAC	@	o	0	0;2	40	3	10	20		@	@	o	0	2;2	80	6	15	15		@		c	0	2;1	84	9	20	20		3	9	0.4	G		
-20	1234801	1234807	sub	TGGTAC	TGG	mixed2	52	PASS	TGGTAC	@	o	0	0;2	30	2	10	20		@	TGG	c	0	2;1	70	5	15	15		@	@	o	0	2;2	83	8	20	20		3	9	0.3	G		
-20	1234820	1234821	snp	G	T	mixed3	52	PASS	G	T	t	0	0;1	20	1	10	20		T	@	c	0	1;2	60	4	15	15		T	@	c	0	1;2	82	7	20	20		3	9	0.2	G		
-20	1234821	1234821	ins		TTT	mixed3	52	PASS		@	o	0	0;2	30	2	10	20		@	TTT	c	0	2;1	70	5	15	15		@	@	o	0	2;2	83	8	20	20		3	9	0.3	G		
-20	1234821	1234827	del	TGGTAC		mixed3	52	PASS	TGGTAC	@	o	0	0;2	40	3	10	20		@	@	o	0	2;2	80	6	15	15		@		c	0	2;1	84	9	20	20		3	9	0.4	G		
+chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1-NA00001	alleleSeq2-NA00001	zyg-NA00001	phased-NA00001	genotypes-NA00001	alleledepth_ref-NA00001	alleledepth-NA00001	TE-NA00001	genoqual-NA00001	coverage-NA00001	haploqual-NA00001	alleleSeq1-NA00002	alleleSeq2-NA00002	zyg-NA00002	phased-NA00002	genotypes-NA00002	alleledepth_ref-NA00002	alleledepth-NA00002	TE-NA00002	genoqual-NA00002	coverage-NA00002	haploqual-NA00002	alleleSeq1-NA00003	alleleSeq2-NA00003	zyg-NA00003	phased-NA00003	genotypes-NA00003	alleledepth_ref-NA00003	alleledepth-NA00003	TE-NA00003	genoqual-NA00003	coverage-NA00003	haploqual-NA00003	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+20	14369	14370	snp	G	A	rs6054257	29	PASS	G	G	r	1	0,0				48	1	51,51	A	G	t	1	1,0				48	8	51,51	A	A	m	0	1;1				43	5	.,.	3	14	0.5		1	1
+20	17329	17330	snp	T	A	.	3	q10	T	T	r	1	0,0				49	3	58,50	T	A	t	1	0,1				3	5	65,3	T	T	r	0	0;0				41	3		3	11	0.017			
+20	1110695	1110696	snp	A	G,T	rs6040355	67	PASS	G	T	c	1	1,2				21	6	23,27	T	G	c	1	2,1				2	0	18,2	T	T	m	0	2;2				35	4		2	10	0.333,0.667	T	1	
+20	1230236	1230237	snp	T	.	.	47	PASS	T	T	r	1	0,0				54	7	56,60	T	T	r	1	0,0				48	4	51,51	T	T	r	0	0;0				61	2		3	13		T		
+20	1234567	1234568	sub	T	TA	microsat1	50	PASS	T	@	o	0	0;2				35	4		T	TA	t	0	0;1				17	2		@	@	o	0	2;2				40	3		3	9		G		
+20	1234567	1234570	del	TCT		microsat1	50	PASS	TCT		t	0	0;1				35	4		TCT	@	o	0	0;2				17	2				m	0	1;1				40	3		3	9		G		
+20	1234570	1234573	del	TCT		nodel	50	PASS	TCT	TCT	r	0	0;0					4		TCT	TCT	r	0	0;0					2		TCT	TCT	r	0	0;0					3		3	9		G		
+20	1234590	1234593	del	TCT		del	50	PASS	TCT		t	0	0;1				35	4				m	0	1;1				17	2		TCT	TCT	r	0	0;0				40	3		3	9		G		
+20	1234594	1234595	snp	A	T	ins_snp	51	PASS	A	@	o	0	0;2	10	30	2	35	4		A	T	t	0	0;1	40	60	4	17	2		@	@	o	0	2;2	70	90	6	40	3		3	9		G		
+20	1234595	1234595	ins		T	ins_snp	51	PASS		T	t	0	0;1	10	20	1	35	4			@	o	0	0;2	40	50	3	17	2		T	T	m	0	1;1	70	80	5	40	3		3	9		G		
+20	1234597	1234598	snp	G	C,T	mixed	52	PASS	G	T	t	0	0;2	10	30,20	2,1	10	20		T	C	c	0	2;1	50	70,60	5,4	15	15		T	@	c	0	2;-1	81	83,82	8,7	20	20		3	9	0.3,0.2	G		
+20	1234598	1234604	del	TGGTAC		mixed	52	PASS	TGGTAC	@	o	0	0;2	10	40	3	10	20		@	@	o	0	2;2	50	80	6	15	15		@		c	0	2;1	81	84	9	20	20		3	9	0.4	G		
+20	1234800	1234801	snp	G	T	mixed2	52	PASS	G	T	t	0	0;1	10	20	1	10	20		T	@	c	0	1;2	50	60	4	15	15		T	@	c	0	1;2	81	82	7	20	20		3	9	0.2	G		
+20	1234801	1234807	del	TGGTAC		mixed2	52	PASS	TGGTAC	@	o	0	0;2	10	40	3	10	20		@	@	o	0	2;2	50	80	6	15	15		@		c	0	2;1	81	84	9	20	20		3	9	0.4	G		
+20	1234801	1234807	sub	TGGTAC	TGG	mixed2	52	PASS	TGGTAC	@	o	0	0;2	10	30	2	10	20		@	TGG	c	0	2;1	50	70	5	15	15		@	@	o	0	2;2	81	83	8	20	20		3	9	0.3	G		
+20	1234820	1234821	snp	G	T	mixed3	52	PASS	G	T	t	0	0;1	10	20	1	10	20		T	@	c	0	1;2	50	60	4	15	15		T	@	c	0	1;2	81	82	7	20	20		3	9	0.2	G		
+20	1234821	1234821	ins		TTT	mixed3	52	PASS		@	o	0	0;2	10	30	2	10	20		@	TTT	c	0	2;1	50	70	5	15	15		@	@	o	0	2;2	81	83	8	20	20		3	9	0.3	G		
+20	1234821	1234827	del	TGGTAC		mixed3	52	PASS	TGGTAC	@	o	0	0;2	10	40	3	10	20		@	@	o	0	2;2	50	80	6	15	15		@		c	0	2;1	81	84	9	20	20		3	9	0.4	G		

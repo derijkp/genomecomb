@@ -23,11 +23,11 @@ proc cg_vcf2tsv {args} {
 	} else {
 		set pipe {exec vcf2tsv}
 	}
-	if {!$splitalt} {
-		lappend pipe | cg collapsealleles
-	}
 	if {$sort} {
 		lappend pipe | cg select -s -
+	}
+	if {!$splitalt} {
+		lappend pipe | cg collapsealleles
 	}
 	if {[info exists outfile]} {
 		lappend pipe > $outfile 2>@ stderr
