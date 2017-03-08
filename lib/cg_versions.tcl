@@ -110,7 +110,9 @@ proc version {item {minversion {}}} {
 proc cg_version {args} {
 	set item genomecomb
 	cg_options versions args {
-	} {item} 0 2
+	} {item} 0 2 {
+		returns the version of the given item/program
+	}
 	puts [version $item {*}$args]
 }
 
@@ -118,7 +120,9 @@ proc cg_versions {args} {
 	# extra commands used, but not in def list: {wget gzip gunzip zcat cat paste tail wc cp ln bigWigToBedGraph find grep chmod tar}
 	# give no version: bgzip bzcat razip
 	cg_options versions args {
-	} {} 0
+	} {} 0 ... {
+		returns the (current) versions of the given programs as a tsv file
+	}
 	if {![llength $args]} {
 		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard plink primer3 java R gnusort8 tabix lz4 os}
 	}
