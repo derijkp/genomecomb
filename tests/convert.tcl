@@ -105,7 +105,7 @@ test collapsealleles {collapsealleles} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 
-test collapsealleles {collapsealleles2} {
+test collapsealleles {collapsealleles 2} {
 	write_tab tmp/test.tsv {
 		chromosome begin end type ref alt freq-sample
 	 	chr1 4200 4200 ins {} A 0.5
@@ -117,6 +117,22 @@ test collapsealleles {collapsealleles2} {
 		chromosome begin end type ref alt freq-sample
 	 	chr1 4200 4200 ins {} A 0.5,0.8
 	 	chr1 5000 5001 snp G A 0.5
+	}
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test collapsealleles {collapsealleles 3} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt zyg-sample1 alleleSeq1-sample1 alleleSeq2-sample1 genotypes-sample1 freq-sample1 zyg-sample2 alleleSeq1-sample2 alleleSeq2-sample2 genotypes-sample2 freq-sample2
+	 	chr1 4000 4001 snp G A   t G A 0;1 0.5   t A A 0;0 0.5
+	 	chr1 4001 4002 snp A C   c C G 1;2 0.1   o A G 0;2 0.1
+	 	chr1 4001 4002 snp A G   c C G 2;1 0.5   t A G 0;1 0.5
+	}
+	exec cg collapsealleles tmp/test.tsv > tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt zyg-sample1 alleleSeq1-sample1 alleleSeq2-sample1 genotypes-sample1 freq-sample1 zyg-sample2 alleleSeq1-sample2 alleleSeq2-sample2 genotypes-sample2 freq-sample2
+	 	chr1 4000 4001 snp G A     t G A 0;1 0.5       t A A 0;0 0.5
+	 	chr1 4001 4002 snp A C,G   c C G 1;2 0.1,0.5   t A G 0;2 0.1,0.5
 	}
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}

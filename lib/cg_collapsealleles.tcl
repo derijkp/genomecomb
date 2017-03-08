@@ -19,16 +19,22 @@ proc cg_collapsealleles {args} {
 	set apos [lindex $poss 5]
 	set rpos [lindex $poss 4]
 	set poss [lrange $poss 0 4]
-	set samples [samples $header]
-	if {[llength $samples]} {
-		set sposs {}
-		foreach sample $samples {
-			lappend sposs {*}[list_cor $header [list sequenced-$sample zyg-$sample]]
+	unset -nocomplain typea
+	set pos 0
+	foreach field $header {
+		if {[regexp {^sequenced(-|$)} $field]} {
+			set typea($pos) s
+		} elseif {[regexp {^zyg(-|$)} $field]} {
+			set typea($pos) z
+		} elseif {[regexp {^genotypes(-|$)} $field]} {
+			set typea($pos) g
+		} else {
+			set typea($pos) n
 		}
-	} else {
-		set sposs [list_cor $header [list sequenced zyg]]
+		incr pos
 	}
 	if {[string length $comment]} {
+		regsub "#split\t1" $comment "#split\t0" comment
 		puts [string trim $comment]
 	}
 	puts [join $header \t]
@@ -39,48 +45,62 @@ proc cg_collapsealleles {args} {
 		set line [split [gets $f] \t]
 		set loc [list_sub $line $poss]
 		if {$prevloc ne $loc} {
-			if {[llength $cur] > 1} {
+			if {[llength $cur] == 1} {
+				puts [join [lindex $cur 0] \t]
+			} else {
 				set len [llength [lindex $cur 0]]
 				set resultline {}
 				for {set i 0} {$i < $len} {incr i} {
-					set v [list_subindex $cur $i]
-					set temp [list_remove $v ?]
-					if {[llength $temp]} {set v $temp}
-					set cv [list_remdup $v]
-					if {[llength $cv] > 1} {
-						lappend resultline [join $v ,] 
-					} else {
-						lappend resultline [lindex $cv 0]
-					}
-				}
-				set ref [lindex $resultline $rpos]
-				foreach {seqpos zygpos} $sposs {
-					if {$seqpos != -1} {
-						set seq [lindex $resultline $seqpos]
-						if {[inlist $seq v]} {set seq v} elseif {[inlist $seq u]} {set seq u} else {set seq r}
-						lset resultline $seqpos $seq
-					}
-					if {$zygpos != -1} {
-						set zyg [list_remdup [lindex $resultline $zygpos]]
-						if {[inlist $zyg u]} {
-							set zyg u
-						} elseif {[inlist $zyg m]} {
-							set zyg m
-						} elseif {[inlist $zyg t]} {
-							set zyg t
-						} elseif {[inlist $zyg c]} {
-							set zyg c
-						} elseif {[inlist $zyg o]} {
-							set zyg c
+					set list [list_subindex $cur $i]
+					set type $typea($i)
+					if {$type eq "n"} {
+						set temp [list_remove $list ?]
+						if {[llength $temp]} {set list $temp}
+						set clist [list_remdup $list]
+						if {[llength $clist] > 1} {
+							set list [join $list ,] 
 						} else {
-							set zyg r
+							set list [lindex $clist 0]
 						}
-						lset resultline $zygpos $zyg
+					} elseif {$type eq "s"} {
+						if {[inlist $seq v]} {set list v} elseif {[inlist $seq u]} {set list u} else {set list r}
+					} elseif {$type eq "z"} {
+						if {[inlist $list u]} {
+							set list u
+						} elseif {[inlist $list m]} {
+							set list m
+						} elseif {[inlist $list t]} {
+							set list t
+						} elseif {[inlist $list c]} {
+							set list c
+						} elseif {[inlist $list o]} {
+							set list c
+						} else {
+							set list r
+						}
+					} elseif {$type eq "g"} {
+						set first [lindex $list 0]
+						set connect ";"
+						regexp {[,;]} $first connect
+						set first [split $first ",;"]
+						set glen [llength $first]
+						set genotypes [list_fill $glen -1]
+						set apos 1
+						foreach pos [list_find $first 0] {
+							lset genotypes $pos 0
+						}
+						foreach g $list {
+							set g [split $g ",;"]
+							foreach pos [list_find $g 1] {
+								lset genotypes $pos $apos
+							}
+							incr apos
+						}
+						set list [join $genotypes $connect]
 					}
+					lappend resultline $list
 				}
 				puts [join $resultline \t]
-			} else {
-				puts [join [lindex $cur 0] \t]
 			}
 			set cur {}
 			set prevloc $loc
@@ -88,5 +108,6 @@ proc cg_collapsealleles {args} {
 		if {![llength $line] && [eof $f]} break
 		lappend cur $line
 	}
-	gzclose $f
+	if {$f ne "stdin"} {gzclose $f}
+	if {$o ne "stdout"} {close $o}
 }
