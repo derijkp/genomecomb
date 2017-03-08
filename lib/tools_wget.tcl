@@ -8,7 +8,9 @@ proc wgetfile {url {resultfile {}} {force 0}} {
 	set webcache [get ::env(webcache)]
 	if {$webcache ne "" && [file exists $webcache/$tail]} {
 		putslog "Getting from webcache: $tail"
-		file copy $webcache/$tail $resultfile.temp
+		if {[catch {hardlink $webcache/$tail $resultfile.temp}]} {
+			file copy $webcache/$tail $resultfile.temp
+		}
 	} else {
 		if {[catch {
 			exec wget -c --tries=45 -O $resultfile.temp $url 2>@ stderr
