@@ -652,7 +652,7 @@ test tsv_paste {max files == maxopenfiles -o} {
 	test_cleantmp
 	set maxfiles [exec sh -c {ulimit -n}]
 	# stdin, stdout and stderr are also file descriptors (and prog)
-	incr maxfiles -4
+	incr maxfiles -10
 	set files [makepastetest $maxfiles]
 	exec cg paste -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
 	exec diff tmp/result.tsv tmp/expected.tsv
@@ -661,8 +661,8 @@ test tsv_paste {max files == maxopenfiles -o} {
 test tsv_paste {max files > maxopenfiles -o} {
 	test_cleantmp
 	set maxfiles [exec sh -c {ulimit -n}]
+	incr maxfile 10
 	# stdin, stdout and stderr are also file descriptors
-	incr maxfiles -3
 	set files [makepastetest $maxfiles]
 	exec cg paste -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
 	exec diff tmp/result.tsv tmp/expected.tsv

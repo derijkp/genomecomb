@@ -91,13 +91,13 @@ proc maxopenfiles {{force 0}} {
 	if {[file exists /proc/self/limits]} {
 		set c [file_read /proc/self/limits]
 		if {[regexp {Max open files  *([0-9]+)} $c temp maxopenfiles]} {
-			incr maxopenfiles -4
-			return $maxopenfiles
+			incr maxopenfiles -10
+			return [max $maxopenfiles 10]
 		}
 	}
 	if {![catch {exec sh -c {ulimit -n}} temp] && [isint $temp]} {
-		set maxopenfiles [expr {$temp - 4}]
-		return $maxopenfiles
+		set maxopenfiles [expr {$temp - 10}]
+		return [max $maxopenfiles 10]
 	}
 	return 1000
 }
