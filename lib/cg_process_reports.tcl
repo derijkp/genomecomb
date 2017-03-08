@@ -47,7 +47,9 @@ proc process_reports_job {args} {
 		-r - -reports {
 			set reports $value
 		}
-	} {sampledir dbdir reports} 1 3
+	} {sampledir dbdir reports} 1 3 {
+		Calculates a number of statistics on a sample in the reports subdir
+	}
 	set dbdir [dbdir $dbdir]
 	set sampledir [file_absolute $sampledir]
 	set sample [file tail $sampledir]

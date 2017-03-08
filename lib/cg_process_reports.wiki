@@ -1,0 +1,44 @@
+= process_reports =
+
+== Format ==
+cg process_reports ?options? sampledir ?dbdir? ?reports?
+
+== Summary ==
+Calculates a number of statistics on a sample in the reports subdir
+
+== Description ==
+cg process_reports commands calculated a number of statistics on a sample
+and stores these in the subdir reports of the sample. If a type of report
+cannot be made (e.g. fastqstats if there are no fastqs for the sample), it
+will be skipped. Most reports are functional rather than fancy: a tsv file
+with sample, source (i.e. program used to make them), parameter and value
+
+Following report types can be selected:
+: fastqstats: stats about number, length, quality, ... of reads in the
+fastq files made using fastq-stats (files report_fastq_fw-source.tsv and
+report_fastq_rev-sample.tsv)
+; fastqc: fastqc analysis with graphs etc. per fastq file (in the fastqc subdir)
+; flagstats: stats about bamfiles in the sampledir made using samtools flagstat 
+(file report_bam-source.tsv)
+; vars: number of variants, quality variants ($coverage >= 20 and $quality >= 50), 
+etc in the various var files (file report_vars-source.tsv)
+; hsmetrics: picard hsmetrics analysis of target coverage
+; covered: how much bases are covered in the various region files (5x
+coverage, 20x coverage, gatk sequenced, ...), oper chromosome and in total
+(file report_covered-source.tsv)
+
+== Arguments ==
+; sampledir: processed sample directory (containing variant files, bam files, etc.)
+; dbdir: directory containing reference data (genome sequence, annotation, ...)
+; reports: select wich reports to make (can also be given as an option). Defaul is
+to try to create all possible reports
+
+== Options ==
+; -dbdir dbdir: dir containing the reference databases
+; -r reports (also --reports): list of reports to make
+
+This command can be distributed on a cluster or using multiple threads with
+[[joboptions|job options]] (more info with cg help joboptions)
+
+== Category ==
+report
