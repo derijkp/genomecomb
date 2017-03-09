@@ -29,6 +29,17 @@ test vcf2tsv {vcf2tsv ins and del split} {
 	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
 } {}
 
+test vcf2tsv {vcf2tsv ins and del split} {
+	exec cg vcf2tsv -typelist . -s 1 data/test2.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
+} {27,28c27,28
+< 20	1110695	1110696	snp	A	G	rs6040355	67	PASS	G	T	c	1	1,2	21	6	23,27	T	G	c	1	2,1	2	0	18,2	T	T	o	0	2;2	35	4		2	10	0.333,0.667	T	1	
+< 20	1110695	1110696	snp	A	T	rs6040355	67	PASS	G	T	c	1	2,1	21	6	23,27	T	G	c	1	1,2	2	0	18,2	T	T	m	0	1;1	35	4		2	10	0.333,0.667	T	1	
+---
+> 20	1110695	1110696	snp	A	G	rs6040355	67	PASS	G	T	c	1	1,2	21	6	23,27	T	G	c	1	2,1	2	0	18,2	T	T	o	0	2;2	35	4		2	10	0.333	T	1	
+> 20	1110695	1110696	snp	A	T	rs6040355	67	PASS	G	T	c	1	2,1	21	6	23,27	T	G	c	1	1,2	2	0	18,2	T	T	m	0	1;1	35	4		2	10	0.667	T	1	
+child process exited abnormally} error
+
 test vcf2tsv {vcf2tsv vars_mirna.vcf} {
 	exec cg vcf2tsv -s 1 data/vars_mirna.vcf tmp/temp.tsv
 	cg select -rc 1 -rf {name quality filter totalcoverage	allelecount	totalallelecount} tmp/temp.tsv tmp/temp2.tsv

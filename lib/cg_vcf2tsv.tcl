@@ -10,6 +10,7 @@
 proc cg_vcf2tsv {args} {
 	set splitalt 0
 	set sort 1
+	set typelist ". AD R RPA R AC A AF A"
 	cg_options vcf2tsv args {
 		-s - -split {
 			set splitalt [true $value]
@@ -17,11 +18,14 @@ proc cg_vcf2tsv {args} {
 		-sort - --sort {
 			set sort [true $value]
 		}
+		-t - -typelist {
+			set typelist $value
+		}
 	} {infile outfile} 0 2
 	if {[info exists infile]} {
-		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv]
+		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $typelist]
 	} else {
-		set pipe {exec vcf2tsv}
+		set pipe [list exec vcf2tsv $typelist]
 	}
 	if {$sort} {
 		lappend pipe | cg select -s -

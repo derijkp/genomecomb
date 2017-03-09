@@ -58,14 +58,39 @@ void getfield(DString *result,char *list, int pos) {
 	result->size = size;
 }
 
-char numberfromid(DString *id) {
-	if (id->size >= 2 && (strncmp(id->string,"AD",2) == 0 || strncmp(id->string,"RP",2) == 0)) {
-		return('R');
+char numberfromid(DString *id, char num, char *typelist) {
+	char *cur, *idc, def;
+	int idsize;
+	if (num != '.') {
+		return num;
 	}
-	if (id->size == 2 && (strncmp(id->string,"AC",2) == 0 || strncmp(id->string,"AF",2) == 0)) {
-		return('A');
+	cur = typelist;
+	def = *cur;
+	/* if typelist is empty, just return num (.) */
+	if (*cur++ == '\0') {return num;}
+	/* if typelist only contains a default, just return it */
+	if (*cur++ == '\0') {return def;}
+	idc = id->string;
+	idsize = id->size;
+	while (*cur != '\0') {
+		if (*idc != *cur || idsize == 0) {
+			if (idsize == 0 && *cur == ' ') {
+				return *(++cur);
+			}
+			while (*cur != '\0' && *cur != ' ') cur++;
+			if (*cur == '\0') break;
+			cur++;
+			if (*cur == '\0') break;
+			cur++;
+			if (*cur == '\0') break;
+			cur++;
+			idc = id->string;
+			idsize = id->size;
+		} else {
+			cur++; idc++; idsize--;
+		}
 	}
-	return('.');
+	return def ;
 }
 
 typedef struct altvar {
@@ -89,20 +114,26 @@ int main(int argc, char *argv[]) {
 	DStringArray *formatfields=NULL , *headerfields=NULL, *infofields=NULL, *linea=NULL;
 	DString *ref=DStringNew(), *alt=DStringNew(), *id=DStringNew();
 	DString *num=DStringNew();
+	char *typelist;
 	int *order = NULL;
 	int read,i,j,pos,maxtab,igeno,isample,linenr=0,numalleles=1,curallele, altvarsmax=0;
 	DStringSetS(num,".",1);
 	altvars = (AltVar *)malloc(5*sizeof(AltVar)); altvarsmax = 5;
 	line = DStringNew();
 	if (argc < 1) {
-		fprintf(stderr,"Format is: vcf2tsv ?infile? ?outfile?\n");
+		fprintf(stderr,"Format is: vcf2tsv typelist ?infile? ?outfile?\n");
 		exit(EXIT_FAILURE);
 	}
 	if (argc >= 2) {
-		fd = fopen(argv[1],"r");
-		if (fd == NULL) {fprintf(stderr,"file %s does not exists\n",argv[1]);exit(1);}
+		typelist = argv[1];
+	} else {
+		typelist = ". AD R RPA R AC A AF A";
+	}
+	if (argc >= 3) {
+		fd = fopen(argv[2],"r");
+		if (fd == NULL) {fprintf(stderr,"file %s does not exists\n",argv[2]);exit(1);}
 	} else {fd = stdin;}
-	if (argc == 3) {fo = fopen(argv[2],"w");} else {fo = stdout;}
+	if (argc == 4) {fo = fopen(argv[3],"w");} else {fo = stdout;}
 	NODPRINT("==== Reading header ====")
 	DStringGetLine(line, fd);
 	if (line->size < 16 || strncmp(line->string,"##fileformat=VCF",16) != 0) {
@@ -171,9 +202,7 @@ int main(int argc, char *argv[]) {
 			if (strcmp(id->string,"GT") == 0) continue;
 			DStringArrayAppend(formatfields,id->string,id->size);
 			num->string[0] = extractNumber(DStringArrayGet(format,i));
-			if (num->string[0] == '.') {
-				num->string[0] = numberfromid(id);
-			}
+			num->string[0] = numberfromid(id,num->string[0],typelist);
 			DStringAppendS(formatfieldsnumber,num->string,1);
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
@@ -210,9 +239,7 @@ int main(int argc, char *argv[]) {
 		id = extractID(DStringArrayGet(info,i),id);
 		DStringArrayAppend(infofields,id->string,id->size);
 		num->string[0] = extractNumber(DStringArrayGet(info,i));
-		if (num->string[0] == '.') {
-			num->string[0] = numberfromid(id);
-		}
+		num->string[0] = numberfromid(id,num->string[0],typelist);
 		DStringAppendS(infofieldsnumber,num->string,1);
 		if (id->string[0] == 'D' && id->string[1] == 'P' && id->string[2] == '\0') {
 			fprintf(fo,"\ttotalcoverage");
