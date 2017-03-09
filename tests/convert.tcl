@@ -115,7 +115,7 @@ test collapsealleles {collapsealleles 2} {
 	exec cg collapsealleles < tmp/test.tsv > tmp/temp.tsv
 	write_tab tmp/expected.tsv {
 		chromosome begin end type ref alt freq-sample
-	 	chr1 4200 4200 ins {} A 0.5,0.8
+	 	chr1 4200 4200 ins {} A,A 0.5,0.8
 	 	chr1 5000 5001 snp G A 0.5
 	}
 	exec diff tmp/temp.tsv tmp/expected.tsv
@@ -142,6 +142,87 @@ test collapsealleles {splitalleles and collapsealleles without all fields} {
 	cg collapsealleles tmp/split.tsv > tmp/collapsed.tsv
 	exec diff data/var-annot.tsv tmp/collapsed.tsv
 } {}
+
+test collapsealleles {collapsealleles -duplicates merge} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 snp G A 0.5
+	 	chr1 4200 4200 snp G A 0.8
+	}
+	exec cg collapsealleles -duplicates merge < tmp/test.tsv > tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 snp G A 0.5,0.8
+	}
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test collapsealleles {collapsealleles -duplicates keep} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 snp G A 0.5
+	 	chr1 4200 4200 snp G A 0.8
+	}
+	exec cg collapsealleles -duplicates keep < tmp/test.tsv > tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 snp G A,A 0.5,0.8
+	}
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test collapsealleles {collapsealleles -duplicates first} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 snp G A 0.5
+	 	chr1 4200 4200 snp G A 0.8
+	}
+	exec cg collapsealleles -duplicates first < tmp/test.tsv > tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 snp G A 0.5
+	}
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test collapsealleles {collapsealleles -duplicates max} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 snp G A 0.5
+	 	chr1 4200 4200 snp G A 0.8
+	}
+	exec cg collapsealleles -duplicates {max freq-sample} < tmp/test.tsv > tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 snp G A 0.8
+	}
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test collapsealleles {collapsealleles -duplicates min} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 snp G A 0.8
+	 	chr1 4200 4200 snp G A 0.5
+	}
+	exec cg collapsealleles -duplicates {min freq-sample} < tmp/test.tsv > tmp/temp.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 snp G A 0.5
+	}
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test collapsealleles {collapsealleles -duplicates error} {
+	write_tab tmp/test.tsv {
+		chromosome begin end type ref alt freq-sample
+	 	chr1 4200 4200 snp G A 0.5
+	 	chr1 4200 4200 snp G A 0.8
+	}
+	exec cg collapsealleles -duplicates error < tmp/test.tsv > tmp/temp.tsv
+} {duplicates found:
+chr1 4200 4200 snp G A 0.5
+chr1 4200 4200 snp G A 0.8} error
 
 test format {long} {
 	write_tab tmp/wide.tsv {

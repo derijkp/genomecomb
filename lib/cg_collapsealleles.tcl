@@ -1,9 +1,24 @@
 proc cg_collapsealleles {args} {
-	if {([llength $args] > 2)} {
-		errorformat collapsealleles
-	}
 	foreach {file outfile} {{} {}} break
-	foreach {file outfile} $args break
+	set duplicates k
+	array set duplicatesa {merge m keep k first f error e}
+	cg_options collapsealleles args {
+		-duplicates {
+			if {[lindex $value 0] eq "max"} {
+				set duplicates +
+				set duplicatesmax [lindex $value 1]
+			} elseif {[lindex $value 0] eq "min"} {
+				set duplicates -
+				set duplicatesmax [lindex $value 1]
+			} elseif {![info exists duplicatesa($value)]} {
+				error "wrong value for -duplicates: $value"
+			} else {
+				set duplicates $duplicatesa($value)
+			}
+		}
+	} {file outfile} 0 2 {
+		Convert a split variant file to unsplit by collapsing alleles of the same variant into one line.
+	}
 	if {$file eq ""} {
 		set f stdin
 	} else {
@@ -19,6 +34,7 @@ proc cg_collapsealleles {args} {
 	set apos [lindex $poss 5]
 	set rpos [lindex $poss 4]
 	set poss [lrange $poss 0 4]
+	if {[info exists duplicatesmax]} {set mpos [lsearch $header $duplicatesmax]}
 	unset -nocomplain typea
 	set pos 0
 	foreach field $header {
@@ -33,6 +49,9 @@ proc cg_collapsealleles {args} {
 		}
 		incr pos
 	}
+	if {$apos != -1 && $duplicates eq "k"} {
+		set typea($apos) a
+	}
 	if {[string length $comment]} {
 		regsub "#split\t1" $comment "#split\t0" comment
 		puts [string trim $comment]
@@ -45,6 +64,31 @@ proc cg_collapsealleles {args} {
 		set line [split [gets $f] \t]
 		set loc [list_sub $line $poss]
 		if {$prevloc ne $loc} {
+			set alts [list_subindex $cur $apos]
+			if {[llength $alts] > 1} {
+				set altsd [list_remdup $alts]
+				if {[llength $altsd] < [llength $alts]} {
+					if {$duplicates eq "f"} {
+						set cur [list_sub $cur [list_cor $alts $altsd]]
+					} elseif {$duplicates eq "+"} {
+						set list [list_subindex $cur $mpos]
+						set slist [lsort -dict -decreasing $list]
+						set cor [list_cor $list $slist]
+						set cur [list_sub $cur $cor]
+						set alts [list_sub $alts $cor]
+						set cur [list_sub $cur [list_cor $alts $altsd]]
+					} elseif {$duplicates eq "-"} {
+						set list [list_subindex $cur $mpos]
+						set slist [lsort -dict $list]
+						set cor [list_cor $list $slist]
+						set cur [list_sub $cur $cor]
+						set alts [list_sub $alts $cor]
+						set cur [list_sub $cur [list_cor $alts $altsd]]
+					} elseif {$duplicates eq "e"} {
+						error "duplicates found:\n[join $cur \n]"
+					}
+				}
+			}
 			if {[llength $cur] == 1} {
 				puts [join [lindex $cur 0] \t]
 			} else {
@@ -53,7 +97,9 @@ proc cg_collapsealleles {args} {
 				for {set i 0} {$i < $len} {incr i} {
 					set list [list_subindex $cur $i]
 					set type $typea($i)
-					if {$type eq "n"} {
+					if {$type eq "a"} {
+						set list [join $list ,] 
+					} elseif {$type eq "n"} {
 						set temp [list_remove $list ?]
 						if {[llength $temp]} {set list $temp}
 						set clist [list_remdup $list]

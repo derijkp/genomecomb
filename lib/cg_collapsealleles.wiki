@@ -1,0 +1,36 @@
+= collapsealleles =
+
+== Format ==
+cg collapsealleles ?options? ?file? ?outfile?
+
+== Summary ==
+Convert a split variant file to unsplit by collapsing alleles of the same variant into one line.
+
+== Description ==
+In a split [[tsv]] variant file, multiple alternative alleles of the same variant are
+on different lines. cg collapsealleles can join these lines to create an
+unsplit, multiallelic variant file. 
+If multiple lines are merged, most of the fields will contain a list
+(comma separated) of the values for that field on the original separate
+lines (one element per alternative allele). If they all have the same
+value, that single value is put in the result field instead of the list
+
+For some fields the correct value(s) are calculated based on the merged allele lines.
+; sequenced: one sequenced code (v if one of the allelles is v, u if one of them is u, ...)
+; zyg: one zyg code (e.g. m if one of the joined alleles was homozygous)
+; genotypes: list of genotypes (same number as in the individual alleles)
+
+== Arguments ==
+; file: file to be converted (from stdin if not given)
+; outfile: file to be written (write to stdout if not given)
+
+== Options ==
+; -duplicates method: method tells how to deal with situation when there
+are multiple lines that contain the same allele (from the same variant)
+* keep: keep all (default), the list in alt field can contain duplicate alleles
+* max field: pick the one that has the highest value for the given field
+* min field: pick the one that has the lowest value for the given field
+* first: pick the first one in the file
+
+== Category ==
+tsv
