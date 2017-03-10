@@ -22,6 +22,7 @@ proc xlong {file resultfile} {
 }
 
 proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog} {
+	global errors
 	if {![catch {exec diff -q $file1 $file2}]} return
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
@@ -69,7 +70,8 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	}
 	if {$error1 || $error2} {
 		if {[catch {exec diff $file1 $file2} msg]} {
-			puts stderr $msg
+			incr errors
+			puts $msg
 			return
 		}
 	}
@@ -81,13 +83,15 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 			append error $result
 		}
 		if {$error ne ""} {
-			puts stderr "diff $file1 $file2"
-			puts stderr $error
+			incr errors
+			puts "diff $file1 $file2"
+			puts $error
 		}
 	}
 }
 
 proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines diffprog} {
+	global errors
 	if {![catch {exec diff -q $file1 $file2}]} return
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
@@ -98,7 +102,8 @@ proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines d
 	set common [list_common $header1 $header2]
 	set error {}
 	if {[llength $common] != [llength $header1] || [llength $common] != [llength $header2]} {
-		puts stderr "Files differ: $file1 $file2"; return
+		incr errors
+		puts "Files differ: $file1 $file2"; return
 	}
 	set temp1 [tempfile]
 	set temp2 [tempfile]
@@ -106,7 +111,8 @@ proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines d
 		cg select -rc $rcomments -f $common $file1 $temp1
 	}]} {
 		if {[catch {exec diff -q $file1 $file2} msg]} {
-			puts stderr "Files differ: $file1 $file2"; return
+			incr errors
+			puts "Files differ: $file1 $file2"; return
 			return
 		}
 	}
@@ -114,16 +120,19 @@ proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines d
 		cg select -rc $rcomments -f $common $file2 $temp2
 	}]} {
 		if {[catch {exec diff -q $file1 $file2} msg]} {
-			puts stderr "Files differ: $file1 $file2"; return
+			incr errors
+			puts "Files differ: $file1 $file2"; return
 			return
 		}
 	}
 	if {[catch {exec diff -q $temp1 $temp2} result]} {
-		puts stderr "Files differ: $file1 $file2"; return
+		incr errors
+		puts "Files differ: $file1 $file2"; return
 	}
 }
 
 proc tsvdiff {file1 file2 rcomments exclude brief type fields diffopts splitlines diffprog} {
+	global errors
 	if {![file isdir $file1] && ![file isdir $file1]} {
 		if {[file extension [gzroot $file1]] in ".tsv .sft .hsmetrics"} {
 			if {$brief} {
@@ -134,19 +143,22 @@ proc tsvdiff {file1 file2 rcomments exclude brief type fields diffopts splitline
 		} else {
 			if {$brief} {
 				if {[catch {exec diff -q $file1 $file2} msg]} {
-					puts stderr "Files differ: $file1 $file2"
+					incr errors
+					puts "Files differ: $file1 $file2"
 				}
 			} else {
 				if {[catch {exec diff $file1 $file2} msg]} {
-					puts stderr "diff $file1 $file2"
-					puts stderr $msg
+					incr errors
+					puts "diff $file1 $file2"
+					puts $msg
 				}
 			}
 		}
 		return
 	}
 	if {![file isdir $file1] || ![file isdir $file1]} {
-		puts stderr "Dir vs file: $file1 $file2"
+		incr errors
+		puts "Dir vs file: $file1 $file2"
 	}
 	set files1 [lsort -dict [dirglob $file1 *]]
 	foreach pattern $exclude {
@@ -166,10 +178,12 @@ proc tsvdiff {file1 file2 rcomments exclude brief type fields diffopts splitline
 	}
 	set common [list_common $gzfiles1 $gzfiles2]
 	foreach file [list_lremove $gzfiles1 $common] {
-		puts stderr "Only in $file1: [file root [gzfile $file1/$file]]"
+		incr errors
+		puts "Only in $file1: [file root [gzfile $file1/$file]]"
 	}
 	foreach file [list_lremove $gzfiles2 $common] {
-		puts stderr "Only in $file2: [file root [gzfile $file2/$file]]"
+		incr errors
+		puts "Only in $file2: [file root [gzfile $file2/$file]]"
 	}
 	foreach file $common {
 		tsvdiff [gzfile $file1/$file] [gzfile $file2/$file] $rcomments $exclude $brief $type $fields $diffopts $splitlines $diffprog
@@ -177,6 +191,7 @@ proc tsvdiff {file1 file2 rcomments exclude brief type fields diffopts splitline
 }
 
 proc cg_tsvdiff args {
+	global errors
 	set rcomments 1
 	set fields {}
 	set exclude {}
@@ -234,7 +249,9 @@ proc cg_tsvdiff args {
 	if {[get side-by-side 0]} {lappend diffopts --side-by-side}
 	if {[get suppress-common-lines 0]} {lappend diffopts --suppress-common-lines}
 	if {[info exists width]} {lappend diffopts --width=$width}
+	set errors 0
 	tsvdiff $file1 $file2 $rcomments $exclude $brief $type $fields $diffopts $splitlines $diffprog
+	if {$errors} {exit 1}
 }
 
 if 0 {
