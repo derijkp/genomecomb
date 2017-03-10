@@ -6,10 +6,12 @@ proc wgetfile {url {resultfile {}} {force 0}} {
 	file delete -force $resultfile.temp
 	set tail [file tail $url]
 	set webcache [get ::env(webcache)]
-	if {$webcache ne "" && [file exists $webcache/$tail]} {
-		putslog "Getting from webcache: $tail"
-		if {[catch {hardlink $webcache/$tail $resultfile.temp}]} {
-			file copy $webcache/$tail $resultfile.temp
+	regsub -all {[:/]} $url _ temp
+	set webcachename $webcache/$temp
+	if {$webcache ne "" && [file exists $webcachename]} {
+		putslog "Getting from webcache: $tail$cachesuffix"
+		if {[catch {hardlink $webcachename $resultfile.temp}]} {
+			file copy $webcachename $resultfile.temp
 		}
 	} else {
 		if {[catch {
@@ -28,7 +30,9 @@ proc wgetfile {url {resultfile {}} {force 0}} {
 			return {}
 		}
 		if {$webcache ne ""} {
-			file copy $resultfile.temp $webcache/$tail
+			if {[catch {hardlink $resultfile.temp $webcachename}]} {
+				file copy $resultfile.temp $webcachename
+			}
 		}
 	}
 	file rename -force $resultfile.temp $resultfile
