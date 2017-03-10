@@ -3,9 +3,9 @@
 exec cg source "$0" "$@"
 
 set build dm6
-set dbs_reg_collapse {cytoBand rmsk simpleRepeat microsat cons27way}
+set dbs_reg_collapse {cytoBand rmsk simpleRepeat microsat}
 set dbs_reg_join {}
-set dbs_other {refLink}
+set dbs_other {}
 set dbs_tabix {rmsk simpleRepeat}
 set dbs_var {}
 set dbs_gene {refGene extra/ensGene extra/genscan}
@@ -14,10 +14,18 @@ set mirbaserelease 21
 
 logverbose 2
 
-if {![info exists argv]} {set argv {}}
-set argv [job_init {*}$argv]
-foreach {dest webcache} $argv break
-if {![info exists dest]} {set dest /complgen/refseqnew}
+if {![info exists argv]} {
+	set argv /complgen/refseqnew
+} else {
+	set argv [job_init {*}$argv]
+}
+cg_options makedbs_dm6 argv {
+	-webcache {set webcache $value}
+} {dest webcache} 1 2 {
+	Downloads and creates the dm6 reference genome and annotation databases
+}
+
+set dest [file_absolute $dest]
 if {[info exists webcache]} {set env(webcache) $webcache}
 
 putslog "Creating dir $dest/$build"
@@ -49,16 +57,14 @@ job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas}
 
 # region databases (ucsc)
 # you can explicitely download info on the databases using:
-# cg downloaddbinfo ${dest} ${build} simpleRepeat microsat rmsk genomicSuperDups chainSelf
+# cg download_ucscinfo resultfile ${build} dbname
 
 # collapse regions
-foreach db $dbs_reg_collapse
-	cytoBandIdeo rmsk simpleRepeat 
-} {
-	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {dest build db} -code {
+foreach db $dbs_reg_collapse {
+	job reg_${build}_$db -targets {reg_${build}_${db}.tsv.lz4} -vars {dest build db} -code {
 		cg download_ucsc $target.ucsc ${build} $db
-		cg regcollapse $target.ucsc > $target.temp
-		file rename -force $target.ucsc.info $target.info
+		cg regcollapse $target.ucsc | lz4c -12 > $target.temp
+		file rename -force $target.ucsc.info [file root $target].info
 		file rename -force $target.temp $target
 		file delete $target.ucsc
 	}
@@ -66,38 +72,38 @@ foreach db $dbs_reg_collapse
 
 # join regions
 foreach db $dbs_reg_join {
-	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {dest build db} -code {
+	job reg_${build}_$db -targets {reg_${build}_${db}.tsv.lz4} -vars {dest build db} -code {
 		cg download_ucsc $target.ucsc ${build} $db
-		cg regjoin $target.ucsc > $target.temp
+		cg regjoin $target.ucsc | lz4c -12 > $target.temp
 		file delete $target.ucsc
-		file rename -force $target.ucsc.info $target.info
+		file rename -force $target.ucsc.info [file root $target].info
 		file rename -force $target.temp $target
 	}
 }
 
 # other databases
 foreach db $dbs_other {
-	job other_${build}_$db -vars {dest build db} -targets {other_${build}_${db}.tsv} -code {
-		cg download_ucsc other_${build}_${db}.tsv ${build} $db
+	job other_${build}_$db -vars {dest build db} -targets {other_${build}_${db}.tsv.lz4} -code {
+		cg download_ucsc other_${build}_${db}.tsv.lz4 ${build} $db
 	}
 }
 
 foreach db $dbs_tabix {
 	job maketabix_${build}_$db -deps {reg_${build}_${db}.tsv} -targets {reg_${build}_${db}.tsv.gz.tbi reg_${build}_${db}.tsv.gz} -vars {build db} -code {
-		cg maketabix reg_${build}_${db}.tsv
+		cg maketabix $dep
 	}
 }
 
 # var dbs
 foreach db $dbs_var {
-	job $db -targets {var_${build}_${db}.tsv} -vars {dest build db} -code {
+	job $db -targets {var_${build}_${db}.tsv.lz4} -vars {dest build db} -code {
 		cg download_ucsc $target.temp $build $db
-		cg select -f {chrom start end type ref alt name freq} $target.temp $target.temp2
+		exec cg select -f {chrom start end type ref alt name freq} $target.temp | lz4c -12 > $target.temp2
 		file rename -force $target.temp2 $target
 		file delete $target.tmp
 	}
 	job maketabix_${build}_$db -deps {var_${build}_${db}.tsv} -targets {var_${build}_${db}.tsv.gz.tbi var_${build}_${db}.tsv.gz} -vars {dest build db} -code {
-		cg maketabix var_${build}_${db}.tsv
+		cg maketabix $dep
 	}
 }
 
@@ -107,8 +113,9 @@ foreach db $dbs_gene {
 	set dbname [file tail $db]
 	set dir [file dir $db]
 	set target $dir/gene_${build}_${dbname}.tsv
-	lappend genesets $target
-	job gene_${build}_$dbname -targets {$target $target.gz.tbi $target.gz} -vars {dest build dbname} -code {
+	lappend genesets $target.lz4
+	job gene_${build}_$dbname -targets {$target.lz4 $target.gz.tbi $target.gz} -vars {dest build dbname} -code {
+		file delete $target
 		cg download_genes $target $build $dbname
 	        cg maketabix $target
 		cg index $target
@@ -118,26 +125,28 @@ foreach db $dbs_gene {
 set target gene_${build}_intGene.tsv
 job gene_${build}_intGene \
 -deps $genesets \
--targets {$target $target.gz $target.gz.tbi} -vars {dest build db} -code {
-	cg intgene {*}$deps > $target.temp
+-targets {$target.lz4 $target.gz $target.gz.tbi} -vars {dest build db} -code {
+	cg intgene --stack 1 --verbose 2 {*}$deps | lz4c -12 > $target.temp
 	file rename -force $target.temp $target
 	cg maketabix $target
 	cg index $target
 }
 
 # homopolymer
-job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi reg_${build}_homopolymer.tsv.opt} -vars {dest build db} -code {
-	cg extracthomopolymers genome_${build}.ifas > reg_${build}_homopolymer.tsv.temp
-	file rename -force reg_${build}_homopolymer.tsv.temp reg_${build}_homopolymer.tsv
-        cg maketabix reg_${build}_homopolymer.tsv
-	file_write reg_${build}_homopolymer.tsv.opt "fields\t{base size}\n"
+job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv.lz4 reg_${build}_homopolymer.tsv.opt reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi} -vars {dest build db} -code {
+	cg extracthomopolymers genome_${build}.ifas | lz4c -12 > $target.temp
+	file rename -force $target.temp $target
+        cg maketabix $target
+	file_write $target2 "fields\t{base size}\n"
 }
 
 # mirbase
-job mir_${build}_mirbase -targets {$dest/${build}/mir_${build}_mirbase$mirbaserelease.tsv $dest/${build}/mir_${build}_mirbase.info} -vars {mirbasegenome mirbaserelease dest build db} -code {
-	set resultfile $dest/${build}/mir_${build}_mirbase$mirbaserelease.tsv
-	cg downloadmirbase $resultfile.temp $mirbasegenome $mirbaserelease
-	file rename -force $resultfile.temp $resultfile
+job mir_${build}_mirbase -targets {mir_${build}_mirbase$mirbaserelease.tsv.lz4 mir_${build}_mirbase$mirbaserelease.tsv.info} -vars {mirbasegenome mirbaserelease dest build db} -code {
+	set resultfile mir_${build}_mirbase$mirbaserelease.tsv
+	cg download_mirbase $resultfile.temp $mirbasegenome $mirbaserelease
+	cg lz4 $resultfile.temp
+	file rename -force $resultfile.temp.info $resultfile.info
+	file rename -force $resultfile.temp.lz4 $resultfile.lz4
 }
 
 job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${build}.ssa} -vars build \
@@ -160,13 +169,6 @@ catch {
 	foreach file [glob genome_*] {
 		file delete extra/[file tail $file]
 		mklink $file extra/[file tail $file]
-	}
-}
-
-# compress
-foreach file [jobglob *.tsv] {
-	job lz4_${build}_[file tail $file] -deps {$file} -targets {$file.lz4} -vars {dest build} -code {
-		cg lz4 -c 12 -i 1 $dep
 	}
 }
 
