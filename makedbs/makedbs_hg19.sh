@@ -121,19 +121,7 @@ foreach db {
 }
 
 job clinvar -targets {var_${build}_clinvar.tsv} -vars {dest build} -code {
-	wgetfile ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar.vcf.gz
-	cg vcf2tsv clinvar.vcf.gz clinvar.tsv
-	set f [open clinvar.tsv]
-	set header [tsv_open $f comment]
-	close $f
-	if {![regexp reference=GRCh37 $comment]} {
-		error "clinvar.vcf.gz is from a different reference genome version"
-	}
-	cg collapsealleles clinvar.tsv > $target.temp
-	file_write [gzroot $target].opt.temp "fields\t{CLNACC CLNDBN}\nheaderfields\t{clinvar_acc clinvar_disease}\n"
-	file rename -force [gzroot $target].opt.temp [gzroot $target].opt
-	file rename -force $target.temp $target
-	file delete clinvar.vcf.gz
+	cg download_clinvar --stack 1 $target $build ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar.vcf.gz
 }
 
 job kaviar -targets {var_hg19_kaviar.tsv var_hg19_kaviar.tsv.opt} -vars {dest build} -code {

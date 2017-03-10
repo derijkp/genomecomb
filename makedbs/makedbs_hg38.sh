@@ -127,20 +127,7 @@ puts "glob=[glob var_${build}_${db}.tsv]"
 }
 
 job clinvar -targets {var_${build}_clinvar.tsv} -vars {dest build} -code {
-	set tempdir $target.temp
-	file mkdir $tempdir
-	wgetfile ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz $tempdir/clinvar.vcf.gz
-	cg vcf2tsv $tempdir/clinvar.vcf.gz $tempdir/clinvar.tsv
-	set f [open $tempdir/clinvar.tsv]
-	set header [tsv_open $f comment]
-	close $f
-	if {![regexp reference=GRCh38 $comment]} {
-		error "clinvar.vcf.gz is from a different reference genome version"
-	}
-	cg collapsealleles $tempdir/clinvar.tsv > $tempdir/clinvar_collapsed.tsv
-	file_write [gzroot $target].opt "fields\t{CLNACC CLNDBN}\nheaderfields\t{clinvar_acc clinvar_disease}\n"
-	file rename -force $tempdir/clinvar_collapsed.tsv $target
-	file delete -force $tempdir
+	cg download_clinvar --stack 1 $target $build ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
 }
 
 job kaviar -targets {var_${build}_kaviar.tsv} -vars {dest build} -code {
