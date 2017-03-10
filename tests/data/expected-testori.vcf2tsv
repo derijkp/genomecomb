@@ -1,0 +1,37 @@
+#filetype	tsv/varfile
+#fileversion	0.10.0
+#split	0
+#info	tsv converted from vcf, original comments follow
+##fileDate=20090805
+##source=myImputationProgramV3.1
+##reference=1000GenomesPilot-NCBI36
+##phasing=partial
+##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
+##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele">
+##INFO=<ID=DB,Number=0,Type=Flag,Description="dbSNP membership, build 129">
+##INFO=<ID=H2,Number=0,Type=Flag,Description="HapMap2 membership">
+##FILTER=<ID=q10,Description="Quality below 10">
+##FILTER=<ID=s50,Description="Less than 50% of samples have data">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+##FORMAT=<ID=TE,Number=A,Type=Integer,Description="test for alt alleles in the order listed">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
+#CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+# ----
+chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1-NA00001	alleleSeq2-NA00001	zyg-NA00001	phased-NA00001	genotypes-NA00001	alleledepth_ref-NA00001	alleledepth-NA00001	TE-NA00001	genoqual-NA00001	coverage-NA00001	haploqual-NA00001	alleleSeq1-NA00002	alleleSeq2-NA00002	zyg-NA00002	phased-NA00002	genotypes-NA00002	alleledepth_ref-NA00002	alleledepth-NA00002	TE-NA00002	genoqual-NA00002	coverage-NA00002	haploqual-NA00002	alleleSeq1-NA00003	alleleSeq2-NA00003	zyg-NA00003	phased-NA00003	genotypes-NA00003	alleledepth_ref-NA00003	alleledepth-NA00003	TE-NA00003	genoqual-NA00003	coverage-NA00003	haploqual-NA00003	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+20	14369	14370	snp	G	A	rs6054257	29	PASS			r	1	0;0				48	1	51,51	A		t	1	1;0				48	8	51,51	A	A	m	0	1,1				43	5	.,.	3	14	0.5		1	1
+20	17329	17330	snp	T	A	.	3	q10			r	1	0;0				49	3	58,50		A	t	1	0;1				3	5	65,3			r	0	0,0				41	3		3	11	0.017			
+20	1110695	1110696	snp	A	G,T	rs6040355	67	PASS	G	T	c	1	1;2				21	6	23,27	T	G	c	1	2;1				2	0	18,2	T	T	m	0	2,2				35	4		2	10	0.333,0.667	T	1	
+20	1230236	1230237	snp	T	.	.	47	PASS			r	1	0;0				54	7	56,60			r	1	0;0				48	4	51,51			r	0	0,0				61	2		3	13		T		
+20	1234567	1234570	sub	TCT	,TACT	microsat1	50	PASS			t	0	0,1				35	4			TACT	t	0	0,2				17	2				m	0	1,1				40	3		3	9		G		
+20	1234570	1234573	del	TCT		nodel	50	PASS			r	0	0,0					4				r	0	0,0					2				r	0	0,0					3		3	9		G		
+20	1234590	1234593	del	TCT		del	50	PASS			t	0	0,1				35	4				m	0	1,1				17	2				r	0	0,0				40	3		3	9		G		
+20	1234594	1234595	sub	A	AT,T	ins_snp	51	PASS		AT	t	0	0,1	10	20,30	1,2	35	4			T	t	0	0,2	40	50,60	3,4	17	2		AT	AT	m	0	1,1	70	80,90	5,6	40	3		3	9		G		
+20	1234595	1234597	sub	AT	A,T,C,TT	del_snp	54	PASS		A	t	0	0,1	0	10,20,30,31	1,2,3.4	35	4			T	t	0	0,2	39	40,50,60.61	4,5,6,7	17	2		A	A	m	0	1,1	0	70,80,90,91	7,8,9,10	40	3		3	9		G		
+20	1234597	1234604	sub	GTGGTAC	TTGGTAC,CTGGTAC,G	mixed	52	PASS		TTGGTAC	t	0	0,1	10	20,30,40	1,2,3	10	20		TTGGTAC	CTGGTAC	c	0	1,2	50	60,70,80	4,5,6	15	15		TTGGTAC	G	c	0	1,3	81	82,83,84	7,8,9	20	20		3	9	0.2,0.3,0.4	G		
+20	1234800	1234807	sub	GTGGTAC	TTGGTAC,GTGG,G	mixed2	52	PASS		TTGGTAC	t	0	0,1	10	20,30,40	1,2,3	10	20		TTGGTAC	GTGG	c	0	1,2	50	60,70,80	4,5,6	15	15		TTGGTAC	G	c	0	1,3	81	82,83,84	7,8,9	20	20		3	9	0.2,0.3,0.4	G		
+20	1234820	1234827	sub	GTGGTAC	TTGGTAC,GTTTTGGTAC,G	mixed3	52	PASS		TTGGTAC	t	0	0,1	10	20,30,40	1,2,3	10	20		TTGGTAC	GTTTTGGTAC	c	0	1,2	50	60,70,80	4,5,6	15	15		TTGGTAC	G	c	0	1,3	81	82,83,84	7,8,9	20	20		3	9	0.2,0.3,0.4	G		
