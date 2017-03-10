@@ -19,17 +19,27 @@ test vcf2tsv {vcf2tsv 1000glow} {
 	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
 } {}
 
-test vcf2tsv {vcf2tsv split} {
+test vcf2tsv {vcf2tsv -split ori} {
+	exec cg vcf2tsv -split ori data/test.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-testori.vcf2tsv
+} {}
+
+test vcf2tsv {vcf2tsv ins and del -split ori} {
+	exec cg vcf2tsv -split ori data/test2.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test2ori.vcf2tsv
+} {}
+
+test vcf2tsv {vcf2tsv -split 1} {
 	exec cg vcf2tsv -s 1 data/test.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-tests.vcf2tsv
 } {}
 
-test vcf2tsv {vcf2tsv ins and del split} {
+test vcf2tsv {vcf2tsv ins and del -split 1} {
 	exec cg vcf2tsv -s 1 data/test2.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
 } {}
 
-test vcf2tsv {vcf2tsv ins and del split} {
+test vcf2tsv {vcf2tsv ins and del -split 1} {
 	exec cg vcf2tsv -typelist . -s 1 data/test2.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
 } {27,28c27,28

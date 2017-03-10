@@ -8,12 +8,22 @@
 # genotype in haploid calls (Y chromosome)
 
 proc cg_vcf2tsv {args} {
-	set splitalt 0
+	set split 1
 	set sort 1
 	set typelist ". AD R RPA R AC A AF A"
+	set collapse 1
 	cg_options vcf2tsv args {
 		-s - -split {
-			set splitalt [true $value]
+			if {$value eq "ori"} {
+				set split 0
+				set collapse 0
+			} elseif {[true $value]} {
+				set split 1
+				set collapse 0
+			} else {
+				set split 1
+				set collapse 1
+			}			
 		}
 		-sort - --sort {
 			set sort [true $value]
@@ -23,14 +33,14 @@ proc cg_vcf2tsv {args} {
 		}
 	} {infile outfile} 0 2
 	if {[info exists infile]} {
-		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $typelist]
+		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist]
 	} else {
-		set pipe [list exec vcf2tsv $typelist]
+		set pipe [list exec vcf2tsv $split $typelist]
 	}
 	if {$sort} {
 		lappend pipe | cg select -s -
 	}
-	if {!$splitalt} {
+	if {$collapse} {
 		lappend pipe | cg collapsealleles
 	}
 	if {[info exists outfile]} {

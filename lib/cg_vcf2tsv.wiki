@@ -17,9 +17,9 @@ is present, the normal genocomb fields (alleleSeq1, alleleSeq2, zyg,
 phased,genotypes) are added.
 
 All other information in the FORMAT or INFO data is converted into extra
-columns in the result file. These get a named by the ID code in the
-original vcf file, except for the following (common) fields that get a
-longer (more informative) name:
+columns in the result file. These get the ID code in the original vcf file 
+as a name, except for the following (common) fields that get a longer
+ (more informative) name:
 ; AD: alleledepth (Allelic depths for the ref and alt alleles in the order listed)
 ; GT: genotype
 ; DP in INFO: totalcoverage (Total Depth, counting all reads)
@@ -35,29 +35,43 @@ longer (more informative) name:
 ; DB: dbsnp
 ; H2: Hapmap2
 
-In the conversion vcf2tsv will split up multiple alternative alleles and
-try to untangle variants that are clumped together in the vcf file (e.g.
-snp just before indel/subst).
-Some vcf fields contain lists that have to be handled specially
-to assign values to the proper allele:
+In vcf files variants next to each other (such as e.g. a snp followed by a
+deletion) are described together, basically as a substition with several
+alleles. By default vcf2tsv will split these up into the separate types
+(and alleles) and adapt the resulting variant lines accordingly as far as
+possible (some fields contain lists correlated with the alleles).
+The way of handling this is set by the -split option
+;ori: Using ori for -split will recreate the orignal setup, creating exactly one
+line for each line in the vcf file. A combined variant line will be converted to a
+variant of type sub. For all fields the correlations with alleles will stay correct,
+but querying and annotation will be harder (e.g. missing a common snp
+because it is combined into a sub with an indel).
+;1: Each alternative allele will be on a seperate line. (split version of [[tsv]] format)
+;0: Different types will be on a seperate lines, but multiple alleles are
+on the same line. (multiallelic version of [[tsv]] format)
+
+The vcf fields containing lists that have to be handled specially are indicated in the
+vcf file with:
 ; Number=A: These contain a list of values corresponding to the alternative alleles in
-the vcf. Each value be assigned (as a single value) to their proper allele.
+the vcf. Each value will be assigned (as a single value) to their proper allele.
 ; Number=R: These contain a list of values corresponding to all alleles,
 starting with the reference allele and then the alternatives.
 An extra field (fieldname_ref) will be created that contains reference value, and the
 other values are assigned to their proper allele.
 ; Number=G: These fields contain a list of values for all potential genotypes. They cannot 
 be properly split up to the individual alleles (especially as the alleles may end up
-as different types). They are transfered as is.
-; Number=.: Unspecified, but in some programs they are related to alleles, either as A or R.
-You can use the -typelist option to specify what to do with them
+as different types). They are transfered as is, but the correlation in the resulting 
+file may be wrong.
+; Number=.: Unspecified; by default they are left as is, but in the
+results of some programs they are related to alleles, either as A or R.
+You can use the -typelist option to specify what to do with them.
 
 == Arguments ==
 ; infile: file to be converted, if not given, uses stdin. File may be compressed.
 ; outfile: write results to outfile, if not given, uses stdout
 
 == Options ==
-; -split 0/1: produce a [[tsv]] with split (1) alleles or alleles on one line (0)
+; -split 0/1/ori: produce a [[tsv]] with split (1), multiallelic (0) alleles or keep the original layout
 ; -sort 0/1: 1 (default) to produce a properly sorted tsv file. Can be set to 0 to save
 processing time if the result is sorted downstream anyway
 ; -t typelist (-typelist): Determines what to do with fields indicated with Number=. in the vcf.
