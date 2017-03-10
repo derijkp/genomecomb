@@ -257,7 +257,7 @@ job var_hg19_evs -targets {extra/var_hg19_evs.tsv extra/var_hg19_evs.tsv.opt ext
 
 # exac
 job reg_hg19_exac -targets {extra/var_hg19_exac.tsv extra/var_hg19_exac.tsv.opt extra/var_hg19_exac.tsv.info} -vars {dest build db} -code {
-	cg download_exac $target hg19 ftp://ftp.broadinstitute.org/pub/ExAC_release/release0.3.1/ExAC.r0.3.1.sites.vep.vcf.gz
+	cg download_exac --stack 1 --verbose 2 $target hg19 ftp://ftp.broadinstitute.org/pub/ExAC_release/release0.3.1/ExAC.r0.3.1.sites.vep.vcf.gz
 }
 
 # GERP
@@ -452,12 +452,15 @@ job reg_hg19_cadd -targets {var_hg19_cadd.bcol var_hg19_cadd.bcol.bin.lz4 var_hg
 }
 
 # gnomad
-job reg_hg19_gnomad -targets {var_hg19_gnomad.tsv var_hg19_gnomad.tsv.info} -vars {dest db build} -code {
-	set tempdir $target.temp
-	file mkdir $tempdir
-	set version r2.0.1
-	set baseurl https://data.broadinstitute.org/gnomAD/release-170228/genomes/vcf
-	# set url https://data.broadinstitute.org/gnomAD/release-170228/genomes/vcf/gnomad.genomes.$version.sites.*.vcf.gz
+# ------
+set finaltarget var_${build}_gnomad.tsv.lz4
+set tempdir $finaltarget.temp
+file mkdir $tempdir
+set version r2.0.1
+set baseurl https://data.broadinstitute.org/gnomAD/release-170228/genomes/vcf
+# set url https://data.broadinstitute.org/gnomAD/release-170228/genomes/vcf/gnomad.genomes.$version.sites.*.vcf.gz
+
+job var_hg19_gnomad-info -targets {var_hg19_gnomad.tsv.info} -vars {dest db build version} -code {
 	file_write var_${build}_gnomad.tsv.info [subst [deindent {
 		= gnomAD (genome Aggregation Database) =
 		
@@ -487,41 +490,48 @@ job reg_hg19_gnomad -targets {var_hg19_gnomad.tsv var_hg19_gnomad.tsv.info} -var
 		== Category ==
 		Annotation
 	}]]
-	# multidownload does not work
-	# wgetfiles $url $tempdir
-	set fields {chromosome begin end type ref alt}
-	set nh $fields
-	lappend fields {max_freqp=if($AF_POPMAX eq ".","-",format("%.3f",100.0*$AF_POPMAX))}
-	lappend nh max_freqp
-	foreach {name field} {afr AFR amr AMR asj ASJ eas EAS fin FIN nfe NFE oth OTH male Male female Female} {
-		lappend fields "${name}_freqp=if(\$AN_$field < 8, \"-\", format(\"%.3f\",(100.0 * \$AC_$field)/\$AN_$field))"
-		lappend nh ${name}_freqp
-	}
-	set todo {}
-	foreach chromosome {
-		1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 M X Y
-	} {
-		puts chr$chromosome
-		set vcf gnomad.genomes.$version.sites.$chromosome.vcf.gz
-		if {![file exists $tempdir/$vcf]} continue
-		set chrtarget $tempdir/result$chromosome.tsv.lz4
-		if {![file exists $chrtarget]} {
-			if {![file exists $tempdir/$vcf]} {
-				putslog "Downloading $vcf"
-				wgetfile $baseurl/$vcf $tempdir/$vcf
-			}
-			cg vcf2tsv -split 0 $tempdir/$vcf | cg splitalleles | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles | lz4c > $chrtarget.temp
-			file rename $chrtarget.temp $chrtarget
+}
+
+# multidownload does not work
+# wgetfiles $url $tempdir
+
+set fields {chromosome begin end type ref alt}
+set nh $fields
+lappend fields {max_freqp=if($AF_POPMAX eq ".","-",format("%.3f",100.0*$AF_POPMAX))}
+lappend nh max_freqp
+foreach {name field} {afr AFR amr AMR asj ASJ eas EAS fin FIN nfe NFE oth OTH male Male female Female} {
+	lappend fields "${name}_freqp=if(\$AN_$field < 8, \"-\", format(\"%.3f\",(100.0 * \$AC_$field)/\$AN_$field))"
+	lappend nh ${name}_freqp
+}
+
+set deps {}
+foreach chromosome {
+	1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X
+} {
+	puts chr$chromosome
+	set vcf gnomad.genomes.$version.sites.$chromosome.vcf.gz
+	set target $tempdir/result$chromosome.tsv.lz4
+	lappend deps $target
+	job reg_hg19_gnomad-$chromosome -targets {$target} -skip $finaltarget -vars {tempdir baseurl vcf fields dest db build} -code {
+		if {![file exists $tempdir/$vcf]} {
+			putslog "Downloading $vcf"
+			wgetfile $baseurl/$vcf $tempdir/$vcf
 		}
-		if {[file exists $chrtarget]} {lappend todo $chrtarget}
+		putslog "Converting $vcf"
+		cg vcf2tsv -split 1 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles | lz4c > $target.temp
+		file rename $target.temp $target
 	}
-	exec cg cat {*}$todo | lz4c -9 > $tempdir/result.tsv.lz4
+}
+
+job reg_hg19_gnomad-final -deps $deps -targets {$finaltarget var_${build}_gnomad.tsv.opt} -vars {tempdir fields dest db build} -code {
+	exec cg cat {*}$deps | lz4c -9 > $tempdir/result.tsv.lz4
 	file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp}\n"
 	file rename -force $tempdir/result.tsv.lz4 var_${build}_gnomad.tsv.lz4
 	file_write extra/var_${build}_gnomad.tsv.opt "fields\t{afr_freqp amr_freqp asj_freqp eas_freqp fin_freqp nfe_freqp oth_freqp male_freqp female_freqp}\n"
 	mklink var_${build}_gnomad.tsv.lz4 extra/var_${build}_gnomad.tsv.lz4
-	file delete -force $tempdir
+	# file delete -force $tempdir
 }
+
 
 job_wait
 

@@ -102,8 +102,12 @@ job 1000g3 -targets {$dest/hg19/var_hg19_1000g3.tsv $dest/hg19/extra/var_hg19_10
 	file_write $dest/hg19/extra/var_hg19_1000g3.tsv.opt "fields\t{EUR_AF AMR_AF EAS_AF SAS_AF AFR_AF}\n"
 }
 
-job 1000g3_liftover -deps {${dest}/hg19/var_hg19_1000g3.tsv} -targets {var_${build}_1000g3.tsv} -vars {dest build} -code {
+job 1000g3_liftover -deps {${dest}/hg19/var_hg19_1000g3.tsv ${dest}/hg19/var_hg19_1000g3.tsv.info} \
+-targets {var_${build}_1000g3.tsv var_${build}_1000g3.tsv.info} -vars {dest build} -code {
 	cg liftover ${dest}/hg19/var_hg19_1000g3.tsv var_${build}_1000g3.tsv ${dest}/liftover/hg19ToHg38.over.tsv
+	set c [file_read ${dest}/hg19/var_hg19_1000g3.tsv.info]
+	regsub citation $c "liftover\thg19toHg38\ncitation" c
+	file_write var_${build}_1000g3.tsv.info $c
 }
 
 # dbsnp
@@ -258,8 +262,10 @@ job reg_hg19_exac -targets {${dest}/hg19/extra/var_hg19_exac.tsv ${dest}/hg19/ex
 }
 
 job exac_${build}_liftover -deps {${dest}/hg19/extra/var_hg19_exac.tsv ${dest}/hg19/extra/var_hg19_exac.tsv.info} \
-	-targets {extra/var_${build}_exac.tsv extra/var_${build}_exac.tsv.info} -vars {dest build} -code {
-	file copy -force $dep2 $target2
+-targets {extra/var_${build}_exac.tsv extra/var_${build}_exac.tsv.info} -vars {dest build} -code {
+	set c [file_read $dep2]
+	regsub citation $c "liftover\thg19toHg38\ncitation" c
+	file_write $target2 $c
 	cg liftover -split 0 $dep $target ${dest}/liftover/hg19ToHg38.over.tsv
 }
 
