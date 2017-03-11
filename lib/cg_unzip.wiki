@@ -10,5 +10,11 @@ Decompresses
 cg unzip will decompress the files given. Input files can be in any of the supported
 compression formats (lz4, gz, bgz, bz2, rz).
 
+== Options ==
+-k 0/1 (-keep): keep the compressed version of the file
+-f 0/1 (-force): If 0 (default) an error is given if the target file
+(filename without the extension for the compression) already exists.
+With 1, an already existing uncompressed file will be overwritten.
+
 == Category ==
 Compression

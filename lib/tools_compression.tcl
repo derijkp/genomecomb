@@ -137,7 +137,7 @@ proc gzarraynames {aVar pattern} {
 proc gzcat {filename} {
 	switch [file extension $filename] {
 		.rz {set cat "razip -d -c"}
-		.lz4 {set cat "lz4c -d -c"}
+		.lz4 {set cat "lz4c -q -d -c"}
 		.gz - .bgz {set cat zcat}
 		.bz2 {set cat bzcat}
 		default {set cat cat}
