@@ -84,8 +84,8 @@ proc process_multicompar_job {args} {
 	#
 	# multicompar
 	putslog "Finding samples"
-	set compar_file compar/compar-$experiment.tsv
-	if {[catch {cg select -n $compar_file} done]} {set done {}}
+	set compar_file compar/compar-$experiment.tsv.lz4
+	if {[catch {cg select -n [gzfile compar/compar-$experiment.tsv]} done]} {set done {}}
 	set done [split $done \n]
 	set stilltodo {}
 	foreach sample $todo {
@@ -108,7 +108,7 @@ proc process_multicompar_job {args} {
 #		file delete -force $target.temp.index
 #		file rename -force $target.temp $target
 #	}
-	cg_annotate_job $compar_file compar/annot_compar-$experiment.tsv $dbdir {*}$dbfiles
+	cg_annotate_job $compar_file compar/annot_compar-$experiment.tsv.lz4 $dbdir {*}$dbfiles
 	job indexannotcompar-$experiment \
 	-deps compar/annot_compar-$experiment.tsv \
 	-targets compar/annot_compar-$experiment.tsv.index/info.tsv -vars dbdir -code {
@@ -131,7 +131,7 @@ proc process_multicompar_job {args} {
 		}
 		lappend regfiles $file
 	}
-	multireg_job compar/sreg-$experiment.tsv $regfiles
+	multireg_job compar/sreg-$experiment.tsv.lz4 $regfiles
 	#
 	# cgsv
 	# ----

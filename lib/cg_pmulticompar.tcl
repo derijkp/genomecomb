@@ -499,12 +499,13 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 	#
 	# merge variants
 	# todo: check for concurrency
-	set workdir $compar_file.index/multicompar
+	set workdir [indexdir $compar_file]/multicompar
 	file mkdir $workdir
 	job_logdir $workdir/log_jobs
 	if {[file exists $compar_file]} {
-		# file rename -force $compar_file $compar_file.old
 		set allfiles [list_concat $compar_file $files]
+	} elseif {[file exists [gzroot $compar_file]]} {
+		set allfiles [list_concat [gzroot $compar_file] $files]
 	} else {
 		set allfiles $files
 	}

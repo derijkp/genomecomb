@@ -12,7 +12,7 @@ proc tsv_paste_job {outputfile files args} {
 	}
 	# putsvars outputfile files forcepaste endcommand
 	set outputfile [file_absolute $outputfile]
-	set workdir $outputfile.index/paste
+	set workdir [indexdir $outputfile]/paste
 	file delete -force $workdir
 	file mkdir $workdir
 	job_logdir $workdir/log_jobs
@@ -22,8 +22,9 @@ proc tsv_paste_job {outputfile files args} {
 	if {$len <= $maxfiles} {
 		set target $outputfile
 		job paste-[file tail $outputfile] -optional $optional -force $forcepaste -deps $files -targets {$target} -vars {endcommand} -code {
+			set compress [compresspipe $target]
 			# puts [list ../bin/tsv_paste {*}$deps]
-			exec tsv_paste {*}$deps > $target.temp 2>@ stderr
+			exec tsv_paste {*}$deps {*}$compress > $target.temp 2>@ stderr
 			file rename -force $target.temp $target
 			if {$endcommand ne ""} {eval $endcommand}
 		}
@@ -37,8 +38,9 @@ proc tsv_paste_job {outputfile files args} {
 		if {$len <= $maxfiles} {
 			set target $outputfile
 			job paste-[file tail $outputfile] -optional $optional -force $forcepaste -deps $todo -targets {$target} -vars {endcommand delete workdir} -code {
+				set compress [compresspipe $target]
 				# puts [list ../bin/tsv_paste {*}$deps]
-				exec tsv_paste {*}$deps > $target.temp 2>@ stderr
+				exec tsv_paste {*}$deps {*}$compress > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
 				if {$delete} {file delete {*}$deps}
 				if {$endcommand ne ""} {eval $endcommand}

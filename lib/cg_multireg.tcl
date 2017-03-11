@@ -10,7 +10,7 @@ exec tclsh "$0" ${1+"$@"}
 
 proc multireg_job {compar_file regfiles} {
 	set compar_file [file_absolute $compar_file]
-	job_logdir $compar_file.index/log_jobs
+	job_logdir [gzroot $compar_file].index/log_jobs
 	set maxfiles [maxopenfiles]
 	if {$maxfiles < 2} {set maxfiles 2}
 	set fieldsneeded {}
@@ -43,9 +43,10 @@ proc multireg_job {compar_file regfiles} {
 	if {$len <= $maxfiles} {
 		set target $compar_file
 		job multireg-[file tail $compar_file] -force $jobforce -deps $files -targets {$target} -vars {isreg} -code {
+			set compress [compresspipe $target]
 			set todo [list_merge $deps $isreg]
 			# puts [list ../bin/multireg {*}$todo]
-			exec multireg {*}$todo > $target.temp 2>@ stderr
+			exec multireg {*}$todo {*}$compress > $target.temp 2>@ stderr
 			file rename -force $target.temp $target
 		}
 		return
@@ -61,9 +62,10 @@ proc multireg_job {compar_file regfiles} {
 		if {$len <= $maxfiles} {
 			set target $compar_file
 			job multireg-[file tail $compar_file] -force $jobforce -deps $todo -targets {$target} -vars {todoisreg delete workdir} -code {
+				set compress [compresspipe $target]
 				set todo [list_merge $deps $todoisreg]
 				# puts [list ../bin/multireg {*}$todo]
-				exec multireg {*}$todo > $target.temp 2>@ stderr
+				exec multireg {*}$todo {*}$compress > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
 				# if {$delete} {file delete {*}$deps $workdir}
 			}

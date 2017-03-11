@@ -136,13 +136,22 @@ proc gzarraynames {aVar pattern} {
 
 proc gzcat {filename} {
 	switch [file extension $filename] {
-		.rz {set cat "razip -d -c"}
-		.lz4 {set cat "lz4c -q -d -c"}
-		.gz - .bgz {set cat zcat}
-		.bz2 {set cat bzcat}
-		default {set cat cat}
+		.rz {return "razip -d -c"}
+		.lz4 {return "lz4c -q -d -c"}
+		.gz - .bgz {return zcat}
+		.bz2 {return bzcat}
+		default {return cat}
 	}
-	return $cat
+}
+
+proc compresspipe {target} {
+	switch [file extension $target] {
+		.rz {return "| razip -c"}
+		.lz4 {return "| lz4c -9"}
+		.gz - .bgz {return "| bgzip -c"}
+		.bz2 {return "| bzip2 -c"}
+		default {return {}}
+	}
 }
 
 proc gztemp {filename} {

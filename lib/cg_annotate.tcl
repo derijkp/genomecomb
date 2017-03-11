@@ -374,12 +374,14 @@ proc cg_annotate_job {args} {
 			}
 		}
 	}
-	job annot-paste-$resultname -deps [list $orifile {*}$afiles] -targets {$resultfile} -vars {orifile afiles multidb replace newh resultfile} -code {
+	job annot-paste-$resultname -deps [list $orifile {*}$afiles] \
+	-targets {$resultfile} -vars {orifile afiles multidb replace newh resultfile} -code {
+		set compress [compresspipe $target]
 		if {$multidb} {
 			set temp2 [filetemp $resultfile]
 			cg select -f id $orifile $temp2
 			set temp [filetemp $resultfile]
-			exec tsv_paste $temp2 {*}$afiles > $temp
+			exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
 			file delete $temp2
 			file rename -force $temp $resultfile
 		} elseif {$replace eq "y"} {
@@ -389,12 +391,12 @@ proc cg_annotate_job {args} {
 			gzclose $f
 			cg select -f [list_lremove $header $newh] $orifile $temp2
 			set temp [filetemp $resultfile]
-			exec tsv_paste $temp2 {*}$afiles > $temp
+			exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
 			file delete $temp2
 			file rename -force $temp $resultfile
 		} else {
 			set temp [filetemp $resultfile]
-			exec tsv_paste $orifile {*}$afiles > $temp
+			exec tsv_paste $orifile {*}$afiles {*}$compress > $temp
 			file rename -force $temp $resultfile
 		}
 		if {[llength $afiles]} {file delete {*}$afiles}
