@@ -111,6 +111,25 @@ test process_small {genomes yri mx2} {
 	# cg tsvdiff -f 'chromosome begin end type ref alt zyg-*' -d kdiff3 tmp/genomes_yri_mx2/compar/annot_compar-genomes_yri_mx2.tsv expected/genomes_yri_mx2/compar/annot_compar-genomes_yri_mx2.tsv
 } {}
 
+if 0 {
+
+test process_small {annotate refseqbuild/hg19} {
+	cd $::bigtestdir
+	file delete tmp/annot_exomes_yri_mx2.tsv
+	cg annotate --stack 1 --verbose 2 expected/exomes_yri_mx2/compar/compar-exomes_yri_mx2.tsv tmp/annot_exomes_yri_mx2.tsv /data/genomecomb.testdata/refseqbuild/hg19 /data/genomecomb.testdata/refseqbuild/hg19/extra 2>@ stderr >@ stdout
+	checkdiff tmp/annot_exomes_yri_mx2.tsv expected/annot_exomes_yri_mx2.tsv
+} {}
+
+test process_small {annotate refseqbuild/hg38} {
+	cd $::bigtestdir
+	# compar-exomes_yri_mx2.tsv is actually hg19, but we use it here anyway just to test if the hg38 works
+	cg annotate --stack 1 --verbose 2 expected/exomes_yri_mx2/compar/compar-exomes_yri_mx2.tsv tmp/annothg38_exomes_yri_mx2.tsv /data/genomecomb.testdata/refseqbuild/hg38 /data/genomecomb.testdata/refseqbuild/hg38/extra 2>@ stderr >@ stdout
+	chekdiff tmp/annothg38_exomes_yri_mx2.tsv expected/annothg38_exomes_yri_mx2.tsv
+}
+
+}
+
+
 testsummarize
 
 if 0 {
