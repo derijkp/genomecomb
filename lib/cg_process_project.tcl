@@ -80,6 +80,10 @@ proc process_project_job {args} {
 		}
 	}
 	set samples [ssort -natural [array names a]]
+	set poss [list_find -regexp $samples -]
+	if {[llength $poss]} {
+		error "- is not allowed in sample names. The following sample name(s) have a -: [list_sub $samples $poss]"
+	}
 	job_logdir $destdir/log_jobs
 	set todo {}
 	set reportstodo {}

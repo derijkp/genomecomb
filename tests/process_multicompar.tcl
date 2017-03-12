@@ -179,6 +179,15 @@ test process_project$testname {process_multicompar} {
 	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-multicompar.tsv
 } {}
 
+test process_project$testname {process_multicompar} {
+	test_cleantmp
+	# limited process_project test: starting van var and sreg files
+	file mkdir tmp/samples/annot-1
+	file mkdir tmp/samples/annot2
+	file mkdir tmp/samples/annot-3
+	cg process_project {*}$::jobopts -dbdir $::refseqdir/hg19 -split 0 tmp
+} {- is not allowed in sample names. The following sample name(s) have a -: annot-3 annot-1} error
+
 }
 
 test_cleantmp
