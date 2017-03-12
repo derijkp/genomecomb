@@ -45,6 +45,7 @@ mainw method easyquery_list {key row col {label {}} {check {}}} {
 	private $object qqdata
 	if {$label eq ""} {set label $key}
 	set w $object.easyquery.options.paned.dialog.frame
+	destroy $w.$key
 	frame $w.$key -borderwidth 0 -highlightthickness 0
 	if {$check eq ""} {
 		label $w.$key.label -text $label -anchor w
@@ -130,34 +131,34 @@ mainw method easyquery_do_region {args} {
 annot_init
 mainw method easyquery_draw_gene {args} {
 	private $object qqdata
-	set impactlist {}
+	set dbs {refGene intGene gencode knownGene ensGene}
 	set header [$object.tb tfields]
-	foreach db {refGene gencode knownGene ensGene} {
+	foreach db $dbs {
 		if {![inlist $header ${db}_impact] || ![inlist $header ${db}_gene]} continue
-		lappend impact_list {*}[$object.tb values ${db}_impact allif0]
-		set qqdata(list,${db}) [$object.tb values ${db}_gene allif0]
+		lappend dbs $db
+		set genelist [$object.tb values ${db}_gene allif0]
+		set qqdata(list,${db}) $genelist
 	}
-	set impact_list [ssort -natural [list_remdup $impact_list]]
-	set pre [list_reverse [var_impact_list]]
-	set qqdata(list,impact) [list_concat [list_common $pre $impact_list] [list_lremove $impact_list $pre]]
+	set qqdata(list,impact) [list_remdup [list_reverse [var_impact_list]]]
 	#
 	$object easyquery_list impact 0+ 0+
 	set num 1
-	foreach db {refGene gencode knownGene ensGene} {
+	foreach db $dbs {
 		if {![inlist $header ${db}_impact] || ![inlist $header ${db}_gene]} continue
 		$object easyquery_list $db 0+ ${num}+ $db check
 		incr num
 	}
-	$object easyquery_refreshsel impact refGene gencode knownGene ensGene
+	$object easyquery_refreshsel {*}$dbs
 }
 
 mainw method easyquery_do_gene {args} {
 	private $object qqdata
+	set dbs {refGene intGene gencode knownGene ensGene}
 	set header [$object.tb tfields]
 	set query {}
 	set impacts [get qqdata(sel,impact) ""]
 	set impactq [easyquery_q $impacts]
-	foreach db {refGene gencode knownGene ensGene} {
+	foreach db $dbs {
 		if {![inlist $header ${db}_impact] || ![inlist $header ${db}_gene]} continue
 		set lq {}
 		set genes [get qqdata(sel,$db) ""]
