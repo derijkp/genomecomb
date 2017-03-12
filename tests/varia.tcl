@@ -251,6 +251,7 @@ header
 ---
 > chr2	2	3
 > chr3	3	4
+child process exited abnormally
 child process exited abnormally} error
 
 test tsvdiff {dir} {
@@ -287,6 +288,7 @@ header
 ---
 > chr2	2	3
 > chr3	3	4
+child process exited abnormally
 child process exited abnormally} error
 
 test cg_extracthomopolymers {basic} {

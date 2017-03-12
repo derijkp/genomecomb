@@ -4,6 +4,38 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
+proc makepastetest {num} {
+	write_tab tmp/vars1.tsv {
+		# varcomment
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A G,C
+	}
+	set files tmp/vars1.tsv
+	for {set i 1} {$i < $num} {incr i} {
+		write_tab tmp/sample$i.tsv [subst {
+			#
+			# rc
+			zyg-sample$i	value-sample$i
+			m	$i
+		}]
+		lappend files tmp/sample$i.tsv
+	}
+	# expected
+	set f [open tmp/expected.tsv w]
+	puts $f "#	varcomment"
+	puts -nonewline $f "chromosome	begin	end	type	ref	alt"
+	for {set i 1} {$i < $num} {incr i} {
+		puts -nonewline $f "	zyg-sample$i	value-sample$i"
+	}
+	puts -nonewline $f "\nchr1	4001	4002	snp	A	G,C"
+	for {set i 1} {$i < $num} {incr i} {
+		puts -nonewline $f "	m	$i"
+	}
+	puts $f ""
+	close $f
+	return $files
+}
+
 test tsv_open {sft} {
 	catch {close $f}
 	set f [open data/reg1.tsv]
@@ -543,38 +575,6 @@ test tsv_paste {extra column error} {
 	}]
 	exec cg paste tmp/vars1.tsv tmp/sample1.tsv > /dev/null
 } {*file has more columns in a line than header*} error match
-
-proc makepastetest {num} {
-	write_tab tmp/vars1.tsv {
-		# varcomment
-		chromosome begin end type ref alt
-		chr1 4001 4002 snp A G,C
-	}
-	set files tmp/vars1.tsv
-	for {set i 1} {$i < $num} {incr i} {
-		write_tab tmp/sample$i.tsv [subst {
-			#
-			# rc
-			zyg-sample$i	value-sample$i
-			m	$i
-		}]
-		lappend files tmp/sample$i.tsv
-	}
-	# expected
-	set f [open tmp/expected.tsv w]
-	puts $f "#	varcomment"
-	puts -nonewline $f "chromosome	begin	end	type	ref	alt"
-	for {set i 1} {$i < $num} {incr i} {
-		puts -nonewline $f "	zyg-sample$i	value-sample$i"
-	}
-	puts -nonewline $f "\nchr1	4001	4002	snp	A	G,C"
-	for {set i 1} {$i < $num} {incr i} {
-		puts -nonewline $f "	m	$i"
-	}
-	puts $f ""
-	close $f
-	return $files
-}
 
 test tsv_paste {multiple files} {
 	test_cleantmp
