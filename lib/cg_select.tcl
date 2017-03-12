@@ -1140,8 +1140,8 @@ proc tsv_skipcomments {f} {
 	tsv_hcheader $f temp line
 }
 
-proc tsv_hcheader {f keepheaderVar headerVar} {
-	upvar $keepheaderVar keepheader
+proc tsv_hcheader {f keepcommentsVar headerVar} {
+	upvar $keepcommentsVar keepcomments
 	upvar $headerVar header
 	if {[catch {
 		# this does not work on a stream
@@ -1150,9 +1150,9 @@ proc tsv_hcheader {f keepheaderVar headerVar} {
 		# this has to be explicitely supported downstream, only tsv_select does this!
 		set ::filebuffer($f) [list [join $header \t]]
 	}
-	set temp [split [string trimright $keepheader] \n]
+	set temp [split [string trimright $keepcomments] \n]
 	set header [split [string range [list_pop temp] 1 end] \t]
-	set keepheader [join $temp \n]\n
+	set keepcomments [join $temp \n]\n
 }
 
 proc cg_select {args} {
@@ -1302,29 +1302,29 @@ proc cg_select {args} {
 		switch [lindex $oldheader 0] {
 			file {
 				set hf [gzopen [lindex $oldheader 1]]
-				set header [tsv_open $hf keepheader]
+				set header [tsv_open $hf keepcomments]
 				gzclose $hf
 			}
 			parameter {
-				set keepheader ""
+				set keepcomments ""
 				set header [lindex $oldheader 1]
 				tsv_skipcomments $f
 			}
 			comment {
-				set header [tsv_open $f keepheader]
-				tsv_hcheader $f keepheader header
+				set header [tsv_open $f keepcomments]
+				tsv_hcheader $f keepcomments header
 			}
 			commentkeep {
-				set header [tsv_open $f keepheader]
-				tsv_hcheader $f keepheader header
-				append keepheader \#
+				set header [tsv_open $f keepcomments]
+				tsv_hcheader $f keepcomments header
+				append keepcomments \#
 			}
 			default {error "internal error: unkown code [lindex $oldheader 0]"}
 		}
 	} else {
-		set header [tsv_open $f keepheader]
+		set header [tsv_open $f keepcomments]
 	}
-	if {$removecomment} {set keepheader ""}
+	if {$removecomment} {set keepcomments ""}
 	set neededfields {}
 	set sort ""
 	set cut ""
@@ -1548,12 +1548,12 @@ proc cg_select {args} {
 	}
 	if {$group ne ""} {
 	} elseif {$sepheader ne ""} {
-		file_write $sepheader ${keepheader}[join $header \t]\n
+		file_write $sepheader ${keepcomments}[join $header \t]\n
 	} elseif {[llength $newheader]} {
 		if {[llength $newheader] != [llength $nh]} {puts stderr "warning: new header (-nh) different length from original header"}
-		puts $out ${keepheader}[join $newheader \t]
+		puts $out ${keepcomments}[join $newheader \t]
 	} else	{
-		puts $out ${keepheader}[join $nh \t]
+		puts $out ${keepcomments}[join $nh \t]
 	}
 	if {![llength $pipe]} {
 		if {[info exists ::filebuffer($f)]} {
