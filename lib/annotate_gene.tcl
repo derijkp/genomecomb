@@ -992,6 +992,7 @@ proc annotategene_one_p_del {snptype srpos ref alt impactVar} {
 			incr prend -1
 			set top [string range $top 0 end-1]
 			set fromp [string range $fromp 0 end-1]
+			if {$top eq "" || $fromp eq ""} break
 		}
 		set snp_descr [annotategene_p_loc [string index $fromp 0] $prstart [string index $fromp end] $prend]
 		if {$top ne ""} {
@@ -1073,6 +1074,7 @@ proc annotategene_one {loc geneobj} {
 	set complement $adata(complement)
 	foreach {chrom snppos snpend snptype ref alt} $loc break
 	set size [expr {$snpend-$snppos}]
+	if {$snptype eq "sub" && $size == 1 && [string length $alt] == 1} {set snptype snp}
 	if {[inlist {del sub inv amp} $snptype] || $size > 1} {
 		# treat deletions and subs separately because they need special care (can span exons, the whole annotation, etc ...)
 		return [annotategene_one_del $loc]
@@ -1120,7 +1122,7 @@ proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 }
 
 proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcriptcol {}} {upstreamsize 2000}} {
-# putsvars file genomefile dbfile name annotfile genecol transcriptcol
+# putsvars file genomefile dbfile name annotfile genecol transcriptcol upstreamsize
 	global genomef
 	annot_init
 	if {[catch {eof $genomef}]} {
