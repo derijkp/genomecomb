@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
 #include "tools.h"
 #include "debug.h"
 #include "hash.h"
@@ -93,6 +94,17 @@ char numberfromid(DString *id, char num, char *typelist) {
 	return def ;
 }
 
+void changetoupper(DString *ds) {
+	char *cur = ds->string;
+	int count = ds->size;
+	while (count--) {
+		if (*cur > 96) {
+			*cur = toupper(*cur);
+		}
+		cur++;
+	}
+}
+
 typedef struct altvar {
 	DString *type;
 	int begin;
@@ -136,6 +148,7 @@ void process_line_unsplit(FILE *fo,DStringArray *linea) {
 	int l1,l2,len,igeno,isample,diffchar,diff,begin,end;
 	lineformat = DStringArrayFromChar(a_format(linea)->string,':');
 	/* set genos [lrange $line 9 end] */
+	changetoupper(a_alt(linea));
 	alts = DStringArrayFromChar(a_alt(linea)->string,',');
 	numalleles = alts->size;
 	/* determine type, ref, alt, ... for different alleles */
@@ -143,6 +156,7 @@ void process_line_unsplit(FILE *fo,DStringArray *linea) {
 	type = NULL;
 	pos = atoi(a_pos(linea)->string);
 	ref = a_ref(linea);
+	changetoupper(ref);
 	refch = ref->string[0];
 	l1 = ref->size;
 	l2 = 0;
@@ -396,7 +410,10 @@ void process_line_split(FILE *fo,DStringArray *linea) {
 	/* determine type, ref, alt, ... for different alleles */
 	lineformat = DStringArrayFromChar(a_format(linea)->string,':');
 	/* set genos [lrange $line 9 end] */
+	changetoupper(a_alt(linea));
 	alts = DStringArrayFromChar(a_alt(linea)->string,',');
+	ref = a_ref(linea);
+	changetoupper(ref);
 	numalleles = alts->size;
 	if (numalleles > altvarsmax) {
 		altvars = (AltVar *)realloc(altvars,numalleles*sizeof(AltVar));
@@ -408,8 +425,8 @@ void process_line_split(FILE *fo,DStringArray *linea) {
 		char *curref, *curalt;
 		/* determine type for this altallele */
 		pos = atoi(a_pos(linea)->string);
-		curref = a_ref(linea)->string;
-		l1 = a_ref(linea)->size;
+		curref = ref->string;
+		l1 = ref->size;
 		curalt = altallele->string;
 		l2 = altallele->size;
 		pos--; /* vcf 1 based */

@@ -4,6 +4,40 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
+proc write_vcf {file data {extracomment {}}} {
+	set data [split [string trim $data] \n]
+	set f [open $file w]
+	puts $f [deindent {
+		##fileformat=VCFv4.0
+		##fileDate=20090805
+		##source=myImputationProgramV3.1
+		##reference=1000GenomesPilot-NCBI36
+		##phasing=partial
+		##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
+		##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+		##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
+		##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele">
+		##INFO=<ID=DB,Number=0,Type=Flag,Description="dbSNP membership, build 129">
+		##INFO=<ID=H2,Number=0,Type=Flag,Description="HapMap2 membership">
+		##FILTER=<ID=q10,Description="Quality below 10">
+		##FILTER=<ID=s50,Description="Less than 50% of samples have data">
+		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+		##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+		##FORMAT=<ID=TE,Number=A,Type=Integer,Description="test for alt alleles in the order listed">
+		##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+		##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+		##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
+	}]
+	if {$extracomment ne ""} {puts -nonewline $f $extracomment}
+	set header [lindex $data 0]
+	set data [lrange $data 1 end]
+	puts $f \#[join $header \t]
+	foreach line $data {
+		puts $f [join $line \t]
+	}
+	close $f
+}
+
 test vcf2tsv {vcf2tsv} {
 	exec cg vcf2tsv data/test.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test.vcf2tsv
@@ -39,7 +73,7 @@ test vcf2tsv {vcf2tsv ins and del -split 1} {
 	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
 } {}
 
-test vcf2tsv {vcf2tsv ins and del -split 1} {
+test vcf2tsv {vcf2tsv ins and del -split 1 -typelist .} {
 	exec cg vcf2tsv -typelist . -s 1 data/test2.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
 } {27,28c27,28
@@ -63,24 +97,48 @@ test vcf2tsv {vcf2tsv vars_mirna.vcf} {
 > chr1	1102520	1102537	del	17	
 child process exited abnormally} error
 
-test vcf2tsv {cg_vcf2tsv info handling} {
-	exec head -8 data/test2.vcf > tmp/temp.vcf
-	exec tail -n+11 data/test2.vcf >> tmp/temp.vcf
-	set o [open tmp/msgs.txt w]
-	cg vcf2tsv -s 1 tmp/temp.vcf tmp/temp.tsv 2>@ $o
-	close $o
-	file_read tmp/msgs.txt
-} {line 16: info field DB not described in header, skipping
-line 18: info field AA not described in header, skipping
-line 19: info field AA not described in header, skipping
-line 19: info field DB not described in header, skipping
-line 19: info field AA not described in header, skipping
-line 19: info field DB not described in header, skipping
-line 20: info field AA not described in header, skipping
-line 21: info field AA not described in header, skipping
-line 21: info field AA not described in header, skipping
-line 22: info field AA not described in header, skipping
-line 23: info field AA not described in header, skipping
-}
+test vcf2tsv {vcf2tsv ins and del -split 1} {
+	exec cg vcf2tsv -s 1 data/test2.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
+} {}
+
+test vcf2tsv {cg_vcf2tsv make uppercase -split ori} {
+	write_vcf tmp/temp.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+		20	14370	rs6054257	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1-NA00001	alleleSeq2-NA00001	zyg-NA00001	phased-NA00001	genotypes-NA00001	alleledepth_ref-NA00001	alleledepth-NA00001	TE-NA00001	genoqual-NA00001	coverage-NA00001	haploqual-NA00001	alleleSeq1-NA00002	alleleSeq2-NA00002	zyg-NA00002	phased-NA00002	genotypes-NA00002	alleledepth_ref-NA00002	alleledepth-NA00002	TE-NA00002	genoqual-NA00002	coverage-NA00002	haploqual-NA00002	alleleSeq1-NA00003	alleleSeq2-NA00003	zyg-NA00003	phased-NA00003	genotypes-NA00003	alleledepth_ref-NA00003	alleledepth-NA00003	TE-NA00003	genoqual-NA00003	coverage-NA00003	haploqual-NA00003	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+		20	14369	14370	snp	G	A	rs6054257	29	PASS	G	G	r	1	0,0	{}	{}	{}	48	1	51,51	A	G	t	1	1,0	{}	{}	{}	48	8	51,51	A	A	m	0	1;1	{}	{}	{}	43	5	.,.	3	14	0.5	{}	1	1
+	}
+	cg vcf2tsv -split ori tmp/temp.vcf tmp/temp.tsv
+	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test vcf2tsv {cg_vcf2tsv make uppercase -split 1} {
+	write_vcf tmp/temp.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+		20	14370	rs6054257	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1-NA00001	alleleSeq2-NA00001	zyg-NA00001	phased-NA00001	genotypes-NA00001	alleledepth_ref-NA00001	alleledepth-NA00001	TE-NA00001	genoqual-NA00001	coverage-NA00001	haploqual-NA00001	alleleSeq1-NA00002	alleleSeq2-NA00002	zyg-NA00002	phased-NA00002	genotypes-NA00002	alleledepth_ref-NA00002	alleledepth-NA00002	TE-NA00002	genoqual-NA00002	coverage-NA00002	haploqual-NA00002	alleleSeq1-NA00003	alleleSeq2-NA00003	zyg-NA00003	phased-NA00003	genotypes-NA00003	alleledepth_ref-NA00003	alleledepth-NA00003	TE-NA00003	genoqual-NA00003	coverage-NA00003	haploqual-NA00003	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+		20	14369	14370	snp	G	A	rs6054257	29	PASS	G	G	r	1	0,0	{}	{}	{}	48	1	51,51	A	G	t	1	1,0	{}	{}	{}	48	8	51,51	A	A	m	0	1;1	{}	{}	{}	43	5	.,.	3	14	0.5	{}	1	1
+	}
+	cg vcf2tsv -split 1 tmp/temp.vcf tmp/temp.tsv
+	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test vcf2tsv {cg_vcf2tsv make uppercase -split 1} {
+	write_vcf tmp/temp.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+		20	14370	rs6054257	ttaa	t	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1-NA00001	alleleSeq2-NA00001	zyg-NA00001	phased-NA00001	genotypes-NA00001	alleledepth_ref-NA00001	alleledepth-NA00001	TE-NA00001	genoqual-NA00001	coverage-NA00001	haploqual-NA00001	alleleSeq1-NA00002	alleleSeq2-NA00002	zyg-NA00002	phased-NA00002	genotypes-NA00002	alleledepth_ref-NA00002	alleledepth-NA00002	TE-NA00002	genoqual-NA00002	coverage-NA00002	haploqual-NA00002	alleleSeq1-NA00003	alleleSeq2-NA00003	zyg-NA00003	phased-NA00003	genotypes-NA00003	alleledepth_ref-NA00003	alleledepth-NA00003	TE-NA00003	genoqual-NA00003	coverage-NA00003	haploqual-NA00003	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+		20	14370	14373	del	TAA	{}	rs6054257	29	PASS	TAA	TAA	r	1	0,0	{}	{}	{}	48	1	51,51	{}	TAA	t	1	1,0	{}	{}	{}	48	8	51,51	{}	{}	m	0	1;1	{}	{}	{}	43	5	.,.	3	14	0.5	{}	1	1
+	}
+	cg vcf2tsv -split 1 tmp/temp.vcf tmp/temp.tsv
+	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
+} {}
 
 testsummarize
