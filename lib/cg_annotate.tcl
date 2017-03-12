@@ -384,6 +384,7 @@ proc cg_annotate_job {args} {
 			exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
 			file delete $temp2
 			file rename -force $temp $resultfile
+			if {$compress ne ""} {cg_lz4index $resultfile}
 		} elseif {$replace eq "y"} {
 			set temp2 [filetemp $resultfile]
 			set f [gzopen $orifile]
@@ -394,10 +395,12 @@ proc cg_annotate_job {args} {
 			exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
 			file delete $temp2
 			file rename -force $temp $resultfile
+			if {$compress ne ""} {cg_lz4index $resultfile}
 		} else {
 			set temp [filetemp $resultfile]
 			exec tsv_paste $orifile {*}$afiles {*}$compress > $temp
 			file rename -force $temp $resultfile
+			if {$compress ne ""} {cg_lz4index $resultfile}
 		}
 		if {[llength $afiles]} {file delete {*}$afiles}
 	}

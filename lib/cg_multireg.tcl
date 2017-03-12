@@ -48,6 +48,7 @@ proc multireg_job {compar_file regfiles} {
 			# puts [list ../bin/multireg {*}$todo]
 			exec multireg {*}$todo {*}$compress > $target.temp 2>@ stderr
 			file rename -force $target.temp $target
+			if {$compress ne ""} {cg_lz4index $target}
 		}
 		return
 	}
@@ -67,6 +68,7 @@ proc multireg_job {compar_file regfiles} {
 				# puts [list ../bin/multireg {*}$todo]
 				exec multireg {*}$todo {*}$compress > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
+				if {$compress ne ""} {cg_lz4index $target}
 				# if {$delete} {file delete {*}$deps $workdir}
 			}
 			break

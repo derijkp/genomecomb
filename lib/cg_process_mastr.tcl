@@ -25,6 +25,7 @@ proc make_alternative_compar_job {experiment} {
 			exec cg long $target1 {*}$compress > $temp
 		}
 		file rename -force $temp $target2
+		if {$compress ne ""} {cg_lz4index $target}
 	}
 }
 

@@ -26,6 +26,7 @@ proc tsv_paste_job {outputfile files args} {
 			# puts [list ../bin/tsv_paste {*}$deps]
 			exec tsv_paste {*}$deps {*}$compress > $target.temp 2>@ stderr
 			file rename -force $target.temp $target
+			if {$compress ne ""} {cg_lz4index $target}
 			if {$endcommand ne ""} {eval $endcommand}
 		}
 		return
@@ -42,6 +43,7 @@ proc tsv_paste_job {outputfile files args} {
 				# puts [list ../bin/tsv_paste {*}$deps]
 				exec tsv_paste {*}$deps {*}$compress > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
+				if {$compress ne ""} {cg_lz4index $target}
 				if {$delete} {file delete {*}$deps}
 				if {$endcommand ne ""} {eval $endcommand}
 			}
