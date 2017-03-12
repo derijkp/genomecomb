@@ -42,9 +42,7 @@ frac <- sub('.+_above_([0-9]+).tsv', '\\1', frac_cov_file, perl = T)
 amplicons  <- read.delim(file=Sys.glob(paste(mastrdir,'/*.mastr/samplicons*.tsv', sep=''))[1], sep='\t', header=T) 
 
 #get number of variant/sample
-temp <- tempfile(tmpdir=mastrdir)
-compar <- paste(mastrdir,'/compar/compar-', mastr,'.tsv',sep='')
-system2('cg',c('select','-g','"sample"','-gc','"sequenced {v} count"',compar, '>', temp))
+temp <- paste(mastrdir,'/compar/summary-compar-', mastr,'.tsv',sep='')
 vf <- read.delim(temp, sep='\t',header=T, stringsAsFactors=F)
 sys_output <- file.remove(temp)
 

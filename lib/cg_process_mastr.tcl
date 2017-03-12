@@ -3,23 +3,28 @@ package require tdom
 
 proc make_alternative_compar_job {experiment} {
 	upvar job_logdir job_logdir
-	job altcompar-$experiment -deps compar/annot_compar-$experiment.tsv -targets [list compar/annot_compar_gatk-${experiment}.tsv compar/annot_compar_gatk-${experiment}_long.tsv] -code {
+	job altcompar-$experiment -deps compar/annot_compar-$experiment.tsv -targets [list compar/annot_compar_gatk-${experiment}.tsv.lz4 compar/annot_compar_gatk-${experiment}_long.tsv.lz4] -code {
 		set target1 [lindex $targets 0]
 		set target2 [lindex $targets 1]
 		##remove samtools analysis & move specific annotfields forwards		
-		cg select -rf {*-sam-*} $dep $target1.temp1
-		set cfields [cg select -h $target1.temp1]
+		set cfields [cg select -h $dep]
+		set cfields [list_sub $cfields -exclude [list_find -regexp $cfields -sam-]]
 		set fields [list_common {chromosome begin end type ref alt amplicons dbnsfp_SIFT_score dbnsfp_Polyphen2_HDIV_score dbnsfp_Polyphen2_HDIV_pred dbnsfp_Polyphen2_HVAR_score dbnsfp_Polyphen2_HVAR_pred snp138_name 1000gCEU refGene_impact refGene_gene refGene_descr dbnsfp_MutationTaster_score dbnsfp_MutationTaster_pred} $cfields]
-		list_addnew fields  {*}$cfields
-		cg select -f $fields $target1.temp1 $target1.temp2
-		file delete $target1.temp1
-		#add log2_allele_ratio
-		cg select -f {* {log2_allele_ratio-gatk-crsbwa-*=if(llen(${alleledepth-gatk-crsbwa-*})>1, log10(lindex(${alleledepth-gatk-crsbwa-*},0))/log10(2) - log10(lindex(${alleledepth-gatk-crsbwa-*},1))/log10(2), 0)}} $target1.temp2 $target1.temp3
-		file delete $target1.temp2
-		file rename -force $target1.temp3 $target1
+		list_addnew fields {*}$cfields
+		lappend fields {log2_allele_ratio-gatk-crsbwa-*=if(llen(${alleledepth-gatk-crsbwa-*})>1, log10(lindex(${alleledepth-gatk-crsbwa-*},0))/log10(2) - log10(lindex(${alleledepth-gatk-crsbwa-*},1))/log10(2), 0)}
+		set compress [compresspipe $target1]
+		set temp [filetemp $target1]
+		exec cg select -f $fields $dep {*}$compress > $temp
+		file rename -force $temp $target1
 		##depivot compar file
-		cg long $target1 $target2.temp
-		file rename -force $target2.temp $target2
+		set compress [compresspipe $target2]
+		set temp [filetemp $target2]
+		if {$compress eq ""} {
+			cg long $target1 $temp
+		} else {
+			exec cg long $target1 {*}$compress > $temp
+		}
+		file rename -force $temp $target2
 	}
 }
 
@@ -281,11 +286,14 @@ proc generate_coverage_report_job {experiment regfile histofiles} {
 # install.packages("rmarkdown") ; install.packages("stringr") ; install.packages("dplyr") ; install.packages("tidyr") ; install.packages("googleVis") ; install.packages("DT")
 proc generate_html_report_job {experiment} {
 	upvar job_logdir job_logdir
-	job html_report -deps [list compar/compar-${experiment}.tsv coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv demultiplex_stats.tsv] -targets {$experiment.html} -code {
+	job html_report -deps [list compar/compar-${experiment}.tsv coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv demultiplex_stats.tsv] \
+	-targets {$experiment.html} -vars {experiment} -code {
+		cg select -g sample -gc {sequenced {v} count} $dep compar/summary-compar-${experiment}.tsv
 		set rmd $::genomecombdir/res/mastrreport.Rmd
 		set chartjs $::genomecombdir/res/displayChartHistogram.js
 		exec R -e [string_change {library(rmarkdown); library(stringr); mastrdir=getwd(); local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @rmd@ $rmd @chartjs@ $chartjs]] >@ stdout 2>@ stderr
 		file rename -force $target.temp $target
+		file delete compar/summary-compar-${experiment}.tsv
 	}
 }
 
