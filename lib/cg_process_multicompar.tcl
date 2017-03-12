@@ -43,6 +43,7 @@ proc process_multicompar_job {args} {
 		}
 	} {destdir dbdir todo} 1 3
 	set destdir [file_absolute $destdir]
+	file mkdir $destdir/compar
 	if {![info exists experiment]} {
 		set experiment [file tail $destdir]
 	}
@@ -52,11 +53,13 @@ proc process_multicompar_job {args} {
 	set refseq [glob $dbdir/genome_*.ifas]
 	# analysis info
 	# -------------
-	info_analysis_file $destdir/info_analysis.tsv {} \
+	info_analysis_file $destdir/compar/info_analysis.tsv {} \
 		{dbdir split dbfiles targetsfile ::maxopenfiles} \
 		{genomecomb dbdir gnusort8 lz4 os} \
 		command [list cg process_multicompar {*}$keepargs]
 
+	# get samples todo
+	# ----------------
 	set samples {}
 	if {[file exists $destdir/samples]} {
 		set sampledir $destdir/samples
@@ -74,15 +77,17 @@ proc process_multicompar_job {args} {
 			lappend todo [string range [file root [file tail [gzroot $file]]] 4 end]
 		}
 	}
+	set todo [list_remdup $todo]
+	# set up job
 	job_logdir $destdir/log_jobs
 	set keeppwd [pwd]
-	set todo [list_remdup $todo]
 	# change to workdir
 	set keeppwd [pwd]
 	cd $destdir
 	file mkdir compar
 	#
 	# multicompar
+	# -----------
 	putslog "Finding samples"
 	set compar_file compar/compar-$experiment.tsv.lz4
 	if {[catch {cg select -n [gzfile compar/compar-$experiment.tsv]} done]} {set done {}}
@@ -101,13 +106,9 @@ proc process_multicompar_job {args} {
 		putslog "Starting multicompar"
 		pmulticompar_job $compar_file $stilltodo 0 $split $targetsfile 0 $skipincomplete
 	}
+	# annotate multicompar
+	# --------------------
 	putslog "Starting annotation"
-#	job annotcompar-$experiment -deps [list $compar_file {*}$dbfiles] \
-#	-targets compar/annot_compar-$experiment.tsv -vars {dbdir dbfiles} -code {
-#		cg annotate $dep $target.temp $dbdir {*}$dbfiles
-#		file delete -force $target.temp.index
-#		file rename -force $target.temp $target
-#	}
 	cg_annotate_job $compar_file compar/annot_compar-$experiment.tsv.lz4 $dbdir {*}$dbfiles
 	job indexannotcompar-$experiment \
 	-deps compar/annot_compar-$experiment.tsv \
@@ -116,6 +117,7 @@ proc process_multicompar_job {args} {
 	}
 	#
 	# multi sreg
+	# ----------
 	putslog "Starting multisreg"
 	set regfiles {}
 	foreach sample $todo {
