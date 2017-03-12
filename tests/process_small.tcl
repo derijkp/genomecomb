@@ -36,7 +36,7 @@ test process_small {mastr mastr_mx2} {
 	checkdiff -qr -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x colinfo -x mastr_mx2.html tmp/mastr_mx2 expected/mastr_mx2
 	checkdiff -y --suppress-common-lines tmp/mastr_mx2/mastr_mx2.html expected/mastr_mx2/mastr_mx2.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
 	# could have used this, but previous is faster
-	# cg tsvdiff -q 1 -x log_jobs -x hsmetrics -x colinfo -x mastr_mx2.html tmp/mastr_mx2 expected/mastr_mx2 2> temp
+	# cg tsvdiff -q 1 -x log_jobs -x hsmetrics -x \\.bam -x \\.bai -x colinfo -x mastr_mx2.html tmp/mastr_mx2 expected/mastr_mx2 > temp
 } {}
 
 test process_small {process_sample exome yri mx2} {
@@ -54,6 +54,7 @@ test process_small {process_sample exome yri mx2} {
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics expected/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT"
 	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/one_exome_yri_mx2/samples/NA19240mx2 expected/one_exome_yri_mx2/samples/NA19240mx2
+	# cg tsvdiff -q 1 -x log_jobs -x \\.bam -x \\.bai -x colinfo -x _fastqc -x bam.dupmetrics tmp/one_exome_yri_mx2/samples/NA19240mx2 expected/one_exome_yri_mx2/samples/NA19240mx2 > temp
 } {}
 
 test process_small {process_illumina exomes yri mx2} {
@@ -72,7 +73,7 @@ test process_small {process_illumina exomes yri mx2} {
 	checkdiff -y --suppress-common-lines tmp/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on"
 	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2
 	# could have used this, but previous is faster
-	# cg tsvdiff -q 1 -x log_jobs -x colinfo -x _fastqc -x bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2
+	# cg tsvdiff -q 1 -x log_jobs -x colinfo -x _fastqc -x bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2 > temp
 } {}
 
 test process_small {process_sample genome yri mx2} {
@@ -85,10 +86,11 @@ test process_small {process_sample genome yri mx2} {
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/one_genome_yri_mx2/samples/NA19240cgmx2/summary-NA19240cgmx2.txt expected/genomes_yri_mx2/samples/NA19240cgmx2/summary-NA19240cgmx2.txt | grep -v "finished.*finished"
 	checkdiff -qr -x info_analysis.tsv -x log_jobs -x summary-NA19240cgmx2.txt tmp/one_genome_yri_mx2/samples/NA19240cgmx2 expected/genomes_yri_mx2/samples/NA19240cgmx2
+	# cg tsvdiff -q 1 -x log_jobs -x info_analysis.tsv -x log_jobs -x summary-NA19240cgmx2.txt tmp/one_genome_yri_mx2/samples/NA19240cgmx2 expected/genomes_yri_mx2/samples/NA19240cgmx2 > temp
 } {}
 
 test process_small {genomes yri mx2} {
-	cd $::bigtestdir	
+	cd $::bigtestdir
 	set dest tmp/genomes_yri_mx2
 	file delete -force tmp/genomes_yri_mx2
 	file mkdir tmp/genomes_yri_mx2
@@ -107,8 +109,8 @@ test process_small {genomes yri mx2} {
 	}
 	checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics expected/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics | grep -v "Started on"
 	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri_mx2 expected/genomes_yri_mx2
-	# cg tsvdiff -q 1 -x log_jobs -x _fastqc -x summary- -x dupmetrics -x colinfo tmp/genomes_yri_mx2 expected/genomes_yri_mx2 2> temp
 	# cg tsvdiff -f 'chromosome begin end type ref alt zyg-*' -d kdiff3 tmp/genomes_yri_mx2/compar/annot_compar-genomes_yri_mx2.tsv expected/genomes_yri_mx2/compar/annot_compar-genomes_yri_mx2.tsv
+	# cg tsvdiff -q 1 -x log_jobs -x \\.bam -x \\.bai -x _fastqc -x summary- -x dupmetrics -x colinfo tmp/genomes_yri_mx2 expected/genomes_yri_mx2 > temp
 } {}
 
 if 0 {
