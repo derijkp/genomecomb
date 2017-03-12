@@ -35,7 +35,7 @@ typedef struct Buffer {
 } Buffer;
 
 /* $Format: "#define GENOMECOMB_VERSION \"$ProjectMajorVersion$.$ProjectMinorVersion$\""$ */
-#define GENOMECOMB_VERSION "0.90"
+#define GENOMECOMB_VERSION "0.98"
 #define FILEVERSION "0.10.0"
 void DStringInit(DString *dstring);
 DString *DStringNew();

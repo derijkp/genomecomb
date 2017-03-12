@@ -8,7 +8,7 @@
 # full path name of this file's directory.
 
 # $Format: "package ifneeded genomecomb $ProjectMajorVersion$.$ProjectMinorVersion$ \\"$
-package ifneeded genomecomb 0.90 \
+package ifneeded genomecomb 0.98 \
 [subst -nocommands {
 	namespace eval ::genomecomb {}
 	set ::genomecomb::dir [list $dir]
