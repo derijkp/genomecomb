@@ -9,6 +9,7 @@ package require Extral
 
 proc test {args} {
 	test_cleantmp
+	catch {job_init}
 	pkgtools::test {*}$args
 	cd $::testdir
 	return {}
