@@ -52,7 +52,7 @@ proc multireg_job {compar_file regfiles} {
 		}
 		return
 	}
-	set workdir [indexdir_filewrite $compar_file multireg]
+	set workdir [gzroot $compar_file].index/multicompar
 	file mkdir $workdir
 	catch {file delete {*}[glob -nocomplain $workdir/multireg.temp*]}
 	set todo $files

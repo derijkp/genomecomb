@@ -12,7 +12,7 @@ proc tsv_paste_job {outputfile files args} {
 	}
 	# putsvars outputfile files forcepaste endcommand
 	set outputfile [file_absolute $outputfile]
-	set workdir [indexdir $outputfile]/paste
+	set workdir [gzroot $outputfile].index/paste
 	file delete -force $workdir
 	file mkdir $workdir
 	job_logdir $workdir/log_jobs
