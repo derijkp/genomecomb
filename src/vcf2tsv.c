@@ -142,8 +142,9 @@ void process_line_unsplit(FILE *fo,DStringArray *linea) {
 	/* check first base */
 	type = NULL;
 	pos = atoi(a_pos(linea)->string);
-	refch = a_ref(linea)->string[0];
-	l1 = a_ref(linea)->size;
+	ref = a_ref(linea);
+	refch = ref->string[0];
+	l1 = ref->size;
 	l2 = 0;
 	diffchar = 0;
 	for (curallele = 0 ; curallele < numalleles; curallele++) {
@@ -177,10 +178,10 @@ void process_line_unsplit(FILE *fo,DStringArray *linea) {
 	if (l1 > 20) {
 		fprintf(fo,"\t%d", end - pos);
 	} else {
-		if (a_ref(linea)->size == 0 && diff > 0) {
+		if (ref->size == 0 && diff > 0) {
 			fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
 		}
-		fprintf(fo,"\t%*.*s", a_ref(linea)->size-diff, a_ref(linea)->size-diff, a_ref(linea)->string+diff);
+		fprintf(fo,"\t%*.*s", ref->size-diff, ref->size-diff, ref->string+diff);
 	}
 	if (DStringArrayGet(alts,0)->size == 0 && diff > 0) {
 		fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
@@ -283,6 +284,7 @@ void process_line_unsplit(FILE *fo,DStringArray *linea) {
 			/* print out genotypes */
 			/* ------------------- */
 			fputc_unlocked('\t',fo);
+			genotypecur = genotypestring;
 			while (*genotypecur != '\0') {
 				if (*genotypecur == '|') {
 					fputc_unlocked(',',fo);
@@ -694,7 +696,7 @@ int main(int argc, char *argv[]) {
 	geno = NULL; outinfo = NULL; formatfieldsnumber=NULL; infofieldsnumber=NULL;
 	header=NULL; format=NULL; info=NULL; samples=NULL;
 	formatfields=NULL ; headerfields=NULL; infofields=NULL; linea=NULL;
-	ref=DStringNew(); alt=DStringNew(); id=DStringNew();
+	ref=NULL; alt=DStringNew(); id=DStringNew();
 	num=DStringNew();
 	linenr=0; numalleles=1;
 	DStringSetS(num,".",1);
@@ -855,7 +857,6 @@ int main(int argc, char *argv[]) {
 	DStringDestroy(sub);
 	DStringDestroy(string);
 	DStringDestroy(temp);
-	DStringDestroy(ref);
 	DStringDestroy(alt);
 	DStringDestroy(id);
 	/* free arrays */
