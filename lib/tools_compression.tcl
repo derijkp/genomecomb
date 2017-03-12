@@ -73,8 +73,20 @@ proc gzcatch {cmd} {
 	}
 }
 
+array set gzexts {
+	.rz razip
+	.lz4 lz4
+	.gz gzip
+	.bgz bgzip
+	.bz2 bzip2
+}
+
+proc gzext ext {
+	info exists ::gzexts($ext)
+}
+
 proc gzroot filename {
-	if {[inlist {.rz .lz4 .gz .bgz .bz2} [file extension $filename]]} {
+	if {[gzext [file extension $filename]]} {
 		return [file root $filename]
 	} else {
 		return $filename
@@ -82,7 +94,7 @@ proc gzroot filename {
 }
 
 proc gziscompressed filename {
-	if {[inlist {.rz .lz4 .gz .bgz .bz2} [file extension $filename]]} {
+	if {[gzext [file extension $filename]]} {
 		return 1
 	} else {
 		return 0

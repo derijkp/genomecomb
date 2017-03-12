@@ -67,12 +67,14 @@ proc scratchfile {{action {get}} {type file}} {
 }
 
 proc filetemp {file {write 1}} {
-	if {![file exists $file.temp]} {
-		set result $file.temp
+	set ext [file extension $file]
+	if {![gzext $ext]} {set ext {}}
+	if {![file exists $file.temp$ext]} {
+		set result $file.temp$ext
 	} else {
 		set num 2
-		while {[file exists $file.temp$num]} {incr num}
-		set result $file.temp$num
+		while {[file exists $file.temp$num$ext]} {incr num}
+		set result $file.temp$num$ext
 	}
 	if {$write} {file_write $result {}}
 	return $result
@@ -238,7 +240,7 @@ proc gzmklink {src dest} {
 	set src [gzfile $src]
 	set ext_s [file extension $src]
 	set ext_d [file extension $dest]
-	if {$ext_s ne $ext_d && [inlist {.gz .bgz .rz .lz4 .bz2} $ext_s]} {
+	if {$ext_s ne $ext_d && [gzext $ext_s]} {
 		mklink $src $dest$ext_s
 	} else {
 		mklink $src $dest
