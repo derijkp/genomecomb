@@ -52,28 +52,29 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	if {$temp2 eq $temp1} {append temp2 -b}
 	if {$type eq "xl"} {
 		set error1 [xlong $file1 $temp1]
+		set msg1 "error in xl conversion"
 		set error2 [xlong $file2 $temp2]
+		set msg2 "error in xl conversion"
 	} elseif {$splitlines} {
 		set error1 [catch {
 			exec cg select -rc $rcomments -f $common $file1 | awk {{print $0"\n----"}} > $temp1
-		}]
+		} msg1]
 		set error2 [catch {
 			exec cg select -rc $rcomments -f $common $file2 | awk {{print $0"\n----"}} > $temp2
-		}]
+		} msg2]
 	} else {
 		set error1 [catch {
 			cg select -rc $rcomments -f $common $file1 $temp1
-		}]
+		} msg1]
 		set error2 [catch {
 			cg select -rc $rcomments -f $common $file2 $temp2
-		}]
+		} msg2]
 	}
-	if {$error1 || $error2} {
-		if {[catch {exec diff $file1 $file2} msg]} {
-			incr errors
-			puts $msg
-			return
-		}
+	if {$error1} {
+		error "Could not convert file $file1 for comparison: $msg1"
+	}
+	if {$error2} {
+		error "Could not convert file $file2 for comparison: $msg2"
 	}
 	if {$diffprog ne ""} {
 		exec {*}$diffprog $temp1 $temp2
