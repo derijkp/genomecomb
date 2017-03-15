@@ -103,7 +103,7 @@ proc process_project_job {args} {
 	job_logdir $destdir/log_jobs
 	set todo [list_remdup $todo]
 	process_multicompar_job -experiment $experiment -skipincomplete 1 \
-		-split $split -dbfiles $dbfiles $destdir -cleanup $cleanup $dbdir $todo
+		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir $todo
 	if {[llength $reports]} {
 		proces_reportscombine_job $destdir $reportstodo
 	}
