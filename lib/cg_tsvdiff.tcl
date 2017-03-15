@@ -23,14 +23,12 @@ proc xlong {file resultfile} {
 
 proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog} {
 	global errors
-	if {![catch {exec diff -q $file1 $file2}]} return
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
 	catch {close $f1}
 	set f2 [gzopen $file2]
 	set header2 [tsv_open $f2 comment2]
 	catch {close $f2}
-	set common [list_common $header1 $header2]
 	if {[llength $fields]} {
 		set h1 [list_common $header1 [expandfields $header1 $fields]]
 		set h2 [list_common $header2 [expandfields $header2 $fields]]
@@ -104,7 +102,8 @@ proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines d
 	set error {}
 	if {[llength $common] != [llength $header1] || [llength $common] != [llength $header2]} {
 		incr errors
-		puts "Files differ: $file1 $file2"; return
+		puts "Files differ: [string_change $file1 {{ } {\ }}] [string_change $file2 {{ } {\ }}]"
+		return
 	}
 	set temp1 [tempfile]
 	set temp2 [tempfile]
@@ -113,7 +112,7 @@ proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines d
 	}]} {
 		if {[catch {exec diff -q $file1 $file2} msg]} {
 			incr errors
-			puts "Files differ: $file1 $file2"; return
+			puts "Files differ: [string_change $file1 {{ } {\ }}] [string_change $file2 {{ } {\ }}]"
 			return
 		}
 	}
@@ -122,72 +121,14 @@ proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines d
 	}]} {
 		if {[catch {exec diff -q $file1 $file2} msg]} {
 			incr errors
-			puts "Files differ: $file1 $file2"; return
+			puts "Files differ: [string_change $file1 {{ } {\ }}] [string_change $file2 {{ } {\ }}]"
 			return
 		}
 	}
 	if {[catch {exec diff -q $temp1 $temp2} result]} {
 		incr errors
-		puts "Files differ: $file1 $file2"; return
-	}
-}
-
-proc tsvdiff {file1 file2 rcomments exclude brief type fields diffopts splitlines diffprog} {
-	global errors
-	if {![file isdir $file1] && ![file isdir $file1]} {
-		if {[file extension [gzroot $file1]] in ".tsv .sft .hsmetrics"} {
-			if {$brief} {
-				tsvdiff_file_brief $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
-			} else {
-				tsvdiff_file $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
-			}
-		} else {
-			if {$brief} {
-				if {[catch {exec diff -q $file1 $file2} msg]} {
-					incr errors
-					puts "Files differ: $file1 $file2"
-				}
-			} else {
-				if {[catch {exec diff $file1 $file2} msg]} {
-					incr errors
-					puts "diff $file1 $file2"
-					puts $msg
-				}
-			}
-		}
+		puts "Files differ: [string_change $file1 {{ } {\ }}] [string_change $file2 {{ } {\ }}]"
 		return
-	}
-	if {![file isdir $file1] || ![file isdir $file1]} {
-		incr errors
-		puts "Dir vs file: $file1 $file2"
-	}
-	set files1 [lsort -dict [dirglob $file1 *]]
-	foreach pattern $exclude {
-		set files1 [list_sub $files1 -exclude [list_find -regexp $files1 $pattern]]
-	}
-	set files2 [lsort -dict [dirglob $file2 *]]
-	foreach pattern $exclude {
-		set files2 [list_sub $files2 -exclude [list_find -regexp $files2 $pattern]]
-	}
-	set gzfiles1 {}
-	foreach file $files1 {
-		lappend gzfiles1 [gzroot $file]
-	}
-	set gzfiles2 {}
-	foreach file $files2 {
-		lappend gzfiles2 [gzroot $file]
-	}
-	set common [list_common $gzfiles1 $gzfiles2]
-	foreach file [list_lremove $gzfiles1 $common] {
-		incr errors
-		puts "Only in $file1: [file root [gzfile $file1/$file]]"
-	}
-	foreach file [list_lremove $gzfiles2 $common] {
-		incr errors
-		puts "Only in $file2: [file root [gzfile $file2/$file]]"
-	}
-	foreach file $common {
-		tsvdiff [gzfile $file1/$file] [gzfile $file2/$file] $rcomments $exclude $brief $type $fields $diffopts $splitlines $diffprog
 	}
 }
 
@@ -195,12 +136,12 @@ proc cg_tsvdiff args {
 	global errors
 	set rcomments 1
 	set fields {}
-	set exclude {}
 	set brief 0
 	set type diff
 	set splitlines 0
 	set diffprog {}
 	set diffopts {}
+	set excludeopts {}
 	cg_options tsvdiff args {
 		-c {
 			if {[true $value]} {set rcomments 0} else {set rcomments 1}
@@ -209,7 +150,7 @@ proc cg_tsvdiff args {
 			set fields $value
 		}
 		-x - --exclude {
-			lappend exclude $value
+			lappend excludeopts -x $value
 		}
 		-t - --type {
 			set type $value
@@ -237,7 +178,7 @@ proc cg_tsvdiff args {
 				incr pos -1
 			}
 		}
-	} {file1 file2}
+	} {dir1 dir2}
 	if {$type eq "xl"} {
 		if {![info exists side-by-side]} {set side-by-side 1}
 		if {![info exists suppress-common-lines]} {set suppress-common-lines 1}
@@ -251,7 +192,62 @@ proc cg_tsvdiff args {
 	if {[get suppress-common-lines 0]} {lappend diffopts --suppress-common-lines}
 	if {[info exists width]} {lappend diffopts --width=$width}
 	set errors 0
-	tsvdiff $file1 $file2 $rcomments $exclude $brief $type $fields $diffopts $splitlines $diffprog
+	if {![catch {exec diff -r {*}$diffopts {*}$excludeopts --brief $dir1 $dir2} diff]} {exit 0}
+	set len1 [string length $dir1]
+	set last1 [expr {$len1 - 1}]
+	set len2 [string length $dir2]
+	set last2 [expr {$len2 - 1}]
+	set diff [split [string trim $diff] \n]
+	foreach line $diff {
+		if {[regexp {^Only in (.*): (.*)$} $line temp dir file]} {
+			set file $dir/$file
+			if {[string range $dir 0 $last1] eq $dir1} {
+				set post [string range $file $len1 end]
+				set file2 [gzfile [gzroot $dir2$post]]
+				if {[file exists $file2]} {
+					if {!$brief} {
+						tsvdiff_file $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
+					} else {
+						tsvdiff_file_brief $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
+					}
+				} else {
+					incr errors
+					puts "Only in 1: $file"
+				}
+			} else {
+				set post [string range $file $len2 end]
+				set file1 [gzfile [gzroot $dir1$post]]
+				# skip if file exists (only compare if we come across it in 1)
+				if {![file exists $file1]} {
+					incr errors
+					puts "Only in 2: $file"
+				}
+			}
+		} elseif {[regexp {^Files (.*) and (.*) differ$} $line temp file1 file2]} {
+			if {[file extension [gzroot $file1]] in ".tsv .sft .hsmetrics"} {
+				if {$brief} {
+					tsvdiff_file_brief $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
+				} else {
+					tsvdiff_file $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
+				}
+			} else {
+				if {$brief} {
+					incr errors
+					puts "Files differ: [string_change $file1 {{ } {\ }}] [string_change $file2 {{ } {\ }}]"
+				} else {
+					if {[catch {exec diff $file1 $file2} msg]} {
+						incr errors
+						puts "diff $file1 $file2"
+						puts $msg
+					}
+				}
+			}
+		} elseif {$line eq "child process exited abnormally"} {
+		} else {
+			incr errors
+			puts $line
+		}
+	}
 	if {$errors} {exit 1}
 }
 
