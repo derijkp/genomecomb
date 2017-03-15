@@ -309,7 +309,7 @@ proc process_mastr_job {args} {
 		-a - --aligner {
 			set aligner $value
 		}
-		-c - --cleanup {
+		-c - -cleanup {
 			set cleanup $value
 		}
 		--samBQ {

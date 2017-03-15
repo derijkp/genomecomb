@@ -3,6 +3,7 @@ proc process_multicompar_job {args} {
 	set dbdir {}
 	set dbfiles {}
 	set realign 1
+	set cleanup 1
 	set paired 1
 	set adapterfile {}
 	set conv_nextseq 0
@@ -37,6 +38,9 @@ proc process_multicompar_job {args} {
 		}
 		-experiment {
 			set experiment $value
+		}
+		-c - -cleanup {
+			set cleanup $value
 		}
 		-m - --maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]

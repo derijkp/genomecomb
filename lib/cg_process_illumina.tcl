@@ -34,6 +34,8 @@ proc process_illumina {args} {
 	set dbdir {}
 	set dbfiles {}
 	set realign 1
+	set cleanup 1
+	set cleanupfiles {}
 	set paired 1
 	set adapterfile {}
 	set conv_nextseq 0
@@ -62,6 +64,9 @@ proc process_illumina {args} {
 		}
 		-reports {
 			set reports $value
+		}
+		-c - -cleanup {
+			set cleanup $value
 		}
 		-m - -maxopenfiles - --maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
@@ -125,23 +130,25 @@ proc process_illumina {args} {
 			# do not do any of preliminaries if end product is already there
 			set bamfile map-bwa-$sample.bam
 			set resultbamfile map-${resultbamprefix}bwa-$sample.bam
-			if {![jobtargetexists $resultbamfile [list $refseq {*}$files]]} {
-				if {![jobtargetexists $bamfile [list $refseq {*}$files]]} {
-					# quality and adapter clipping
-					set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired]
-				}
-				# map using bwa
-				map_bwa_job $bamfile $refseq $files $sample $paired
-			}
+			# quality and adapter clipping
+			set files [fastq_clipadapters_job $files \
+				-adapterfile $adapterfile -paired $paired \
+				-skips [list -skip $bamfile -skip $resultbamfile]]
+			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
+			# map using bwa
+			map_bwa_job $bamfile $refseq $files $sample $paired -skips [list -skip $resultbamfile]
 		}
 		# extract regions with coverage >= 5 (for cleaning)
 		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
 		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
+		lappend cleanupfiles $cov5bed
 		# clean bamfile (mark duplicates, realign)
-		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
+		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample \
+			-removeduplicates 1 -realign $realign -bed $cov5bed -cleanup $cleanup]
 		# make 5x coverage regfile from cleanedbam
 		set cov5reg [bam2reg_job $cleanedbam 5]
 		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
+		lappend cleanupfiles $cov5bed
 		# make 20x coverage regfile
 		bam2reg_job $cleanedbam 20 1
 		#calculate reports
@@ -151,6 +158,10 @@ proc process_illumina {args} {
 		# samtools variant calling on map-rdsbwa
 		var_sam_job -bed $cov5bed -split $split $cleanedbam $refseq
 		lappend todo sam-rdsbwa-$sample
+		if {$cleanup} {
+			# clean up no longer needed intermediate files
+			cleanup_job cleanupsample-$sample $cleanupfiles [list $resultbamfile var-gatk-rdsbwa-$sample.tsv var-sam-rdsbwa-$sample.tsv]
+		}
 		# convert existing vcfs
 		set files [ssort -natural [jobglob var-*.vcf]]
 		foreach file $files {

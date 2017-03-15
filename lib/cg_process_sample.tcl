@@ -409,6 +409,9 @@ proc process_sample_job {args} {
 	set aligner bwa
 	set varcallers {gatk sam}
 	set realign 1
+	set cleanup 1
+	set cleanupfiles {}
+	set cleanupdeps {}
 	set paired 1
 	set samBQ 0
 	set adapterfile {}
@@ -449,6 +452,12 @@ proc process_sample_job {args} {
 		}
 		-reportstodoVar {
 			upvar $value reportstodo
+		}
+		-c - -cleanup {
+			set cleanup $value
+		}
+		-m - -maxopenfiles - --maxopenfiles {
+			set ::maxopenfiles [expr {$value - 4}]
 		}
 	} {} 1 2
 	if {[llength $args] == 1} {
@@ -560,41 +569,48 @@ proc process_sample_job {args} {
 		# do not do any of preliminaries if end product is already there
 		set bamfile $destdir/map-${aligner}-$sample.bam
 		# quality and adapter clipping
-		set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired -skips [list -skip $bamfile -skip $resultbamfile]]
+		set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired \
+			-skips [list -skip $bamfile -skip $resultbamfile]]
+		lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
+		lappend cleanupdeps $resultbamfile
 		#
 		# map using ${aligner}
 		map_${aligner}_job $bamfile $refseq $files $sample $paired -skips [list -skip $resultbamfile]
-		job rmclipped-$sample -optional 1 -deps [list $bamfile {*}$files] -rmtargets $files -vars {files} -code {
-			file delete {*}$files
-		}
 		# extract regions with coverage >= 5 (for cleaning)
 		set cov5reg [bam2reg_job $destdir/map-${aligner}-$sample.bam 5]
 		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
+		lappend cleanupfiles $cov5bed
 		# clean bamfile (mark duplicates, realign)
-		set cleanedbam [bam_clean_job $destdir/map-${aligner}-$sample.bam $refseq $sample -removeduplicates 1 -realign $realign -bed $cov5bed]
+		set cleanedbam [bam_clean_job $destdir/map-${aligner}-$sample.bam $refseq $sample \
+			-removeduplicates 1 -realign $realign -bed $cov5bed -cleanup $cleanup]
 	}
 	# varcaller from bams
 	foreach cleanedbam [jobglob $destdir/map-*.bam] {
 		# make 5x coverage regfile from cleanedbam
 		set cov5reg [bam2reg_job $cleanedbam 5]
 		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
+		lappend cleanupfiles $cov5bed
 		# make 20x coverage regfile
 		bam2reg_job $cleanedbam 20 1
 		if {"sam" in $varcallers} {
 			# samtools variant calling on map-rds${aligner}
-			var_sam_job -bed $cov5bed -split $split -BQ $samBQ $cleanedbam $refseq
+			lappend cleanupdeps [var_sam_job -bed $cov5bed -split $split -BQ $samBQ $cleanedbam $refseq]
 			lappend todo sam-rds${aligner}-$sample
 		}
 		if {"gatk" in $varcallers} {
 			# gatk variant calling on map-rds${aligner}
-			var_gatk_job -bed $cov5bed -split $split $cleanedbam $refseq
+			lappend cleanupdeps [var_gatk_job -bed $cov5bed -split $split $cleanedbam $refseq]
 			lappend todo gatk-rds${aligner}-$sample
 		}
+	}
+	if {$cleanup} {
+		# clean up no longer needed intermediate files
+		cleanup_job cleanupsample-$sample $cleanupfiles $cleanupdeps
 	}
 	#calculate reports
 	if {[llength $reports]} {
 		process_reports_job $destdir $dbdir $reports
-		lappend reportstodo $destdir/$sample/reports
+		lappend reportstodo $destdir/reports
 	}
 	return $todo
 }

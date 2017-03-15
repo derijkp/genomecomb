@@ -4,6 +4,7 @@ proc process_project_job {args} {
 	set aligner bwa
 	set varcallers {gatk sam}
 	set realign 1
+	set cleanup 1
 	set paired 1
 	set adapterfile {}
 	set conv_nextseq 0
@@ -45,6 +46,9 @@ proc process_project_job {args} {
 		}
 		-r - -reports {
 			set reports $value
+		}
+		-c - -cleanup {
+			set cleanup $value
 		}
 		-m - -maxopenfiles - --maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
@@ -93,12 +97,13 @@ proc process_project_job {args} {
 		process_sample_job -todoVar todo -reportstodoVar reportstodo \
 			-aligner $aligner -realign $realign --varcallers $varcallers \
 			-dbdir $dbdir -split $split -paired $paired \
-			-adapterfile $adapterfile -reports $reports -samBQ $samBQ \
+			-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 			$dir
 	}
 	job_logdir $destdir/log_jobs
 	set todo [list_remdup $todo]
-	process_multicompar_job -experiment $experiment -skipincomplete 1 -split $split -dbfiles $dbfiles $destdir $dbdir $todo
+	process_multicompar_job -experiment $experiment -skipincomplete 1 \
+		-split $split -dbfiles $dbfiles $destdir -cleanup $cleanup $dbdir $todo
 	if {[llength $reports]} {
 		proces_reportscombine_job $destdir $reportstodo
 	}
