@@ -63,7 +63,7 @@ proc cg_tsv2bed {args} {
 	set bedfile {}
 	set fields {}
 	cg_options tsv2bed args {
-		-f - --fields {
+		-f - -fields {
 			set fields $value
 		}
 	} {tsvfile bedfile} 0 2

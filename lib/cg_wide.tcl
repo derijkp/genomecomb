@@ -4,10 +4,10 @@ proc cg_wide {args} {
 	set file {}
 	set outfile {}
 	cg_options wide args {
-		-s - --samplefields {
+		-s - -samplefields {
 			set samplefields $value
 		}
-		-f - --fields {
+		-f - -fields {
 			set commonfields $value
 		}
 	} {file outfile} 0 2

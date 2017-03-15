@@ -68,7 +68,7 @@ proc process_illumina {args} {
 		-c - -cleanup {
 			set cleanup $value
 		}
-		-m - -maxopenfiles - --maxopenfiles {
+		-m - -maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
 	} {destdir dbdir} 1 2

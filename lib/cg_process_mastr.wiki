@@ -25,7 +25,7 @@ data on the project
 ; **-c 1/0**: cleanup files produced in processing that are no longer needed after finishing
 ; **-split 1/0**: split multiple alternative genotypes over different lines
 ; **-a aligner**: alignment program used for mapping reads (bwa or bowtie2)
-; **-m maxopenfiles** (--maxopenfiles): The number of files that a program
+; **-m maxopenfiles** (-maxopenfiles): The number of files that a program
 can keep open at the same time is limited. pmulticompar will distribute
 the subtasks thus, that the number of files open at the same time stays
 below this number. With this option, the maximum number of open files can

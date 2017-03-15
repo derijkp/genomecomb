@@ -122,13 +122,13 @@ proc cg_regcollapse {args} {
 	set scorefield score
 	set numfields num
 	cg_options regcollapse args {
-		-s {
+		-s - -scorefield {
 			set scorefield $value
 		}
-		-n {
+		-n - -numfields {
 			set numfields $value
 		}
-		-o {
+		-o - -output {
 			set resultfile $value
 		}
 	}

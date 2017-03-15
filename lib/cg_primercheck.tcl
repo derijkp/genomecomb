@@ -97,13 +97,13 @@ proc cg_primercheck {args} {
 	set maxamplicons 100
 	set resultfile {}
 	cg_options primercheck args {
-		-m - --maxnum {
+		-m - -maxnum {
 			set maxnum $value
 		}
-		-s - --maxsize {
+		-s - -maxsize {
 			set maxsize $value
 		}
-		-a - --maxamplicons {
+		-a - -maxamplicons {
 			set maxamplicons $value
 		}
 	} {primerfile dbdir resultfile} 2 3

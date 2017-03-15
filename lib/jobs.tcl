@@ -89,7 +89,7 @@ proc job_args {jobargs} {
 					set cgjob(silent) 1
 				}
 			}
-			-runcmd - --runcommand {
+			-runcmd - --runcmd - -runcommand {
 				set cgjob(runcmd) [lindex $jobargs $pos]
 				incr pos
 			}

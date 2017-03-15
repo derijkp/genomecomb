@@ -28,7 +28,7 @@ if {[llength $argv] < 1} {
 }
 
 proc parse_generic_args {subcmd argslist} {
-	if {[llength $argslist] == 1 && [inlist {-h --help} $argslist]} {
+	if {[llength $argslist] == 1 && [inlist {-h -help --help} $argslist]} {
 		if {[catch {help $subcmd} msg]} {
 			puts stderr $msg
 			exit 1
@@ -38,12 +38,12 @@ proc parse_generic_args {subcmd argslist} {
 	set ::stacktraceonerror 0
 	while 1 {
 		set arg [lindex $argslist 0]
-		if {$arg in "--verbose -v"} {
+		if {$arg in "--verbose -verbose -v"} {
 			set value [lindex $argslist 1]
 			if {![isint $value]} {error "$value is not a number, only numbers are accepted as value for -v (--verbose)"}
 			logverbose $value
 			set argslist [lrange $argslist 2 end]
-		} elseif {$arg in "--stack"} {
+		} elseif {$arg in "--stack -stack"} {
 			set value [lindex $argslist 1]
 			if {$value in {0 1}} {
 				set ::stacktraceonerror $value

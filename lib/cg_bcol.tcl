@@ -436,13 +436,13 @@ proc cg_bcol_table {args} {
 	set begin {}
 	set end {}
 	cg_options bcol_table args {
-		-c - --chromosome {
+		-c - -chromosome {
 			set chromosome $value
 		}
-		-s - --showchromosome {
+		-s - -showchromosome {
 			set showchr $value
 		}
-		-p - --precision {
+		-p - -precision {
 			set precision $value
 		}
 	} {indexfile begin end} 1 3
@@ -466,7 +466,7 @@ proc cg_bcol_size {args} {
 proc cg_bcol_histo {args} {
 	set namecol name
 	cg_options bcol_histo args {
-		-n - --namecol {
+		-n - -namecol {
 			set namecol $value
 		}
 	} {regionfile bcolfile intervals}

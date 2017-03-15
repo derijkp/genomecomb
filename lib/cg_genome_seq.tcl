@@ -30,62 +30,62 @@ proc cg_genome_seq {args} {
 	set aconcatlen 0
 	set outfile {}
 	cg_options genome_seq args {
-		-f - --freq {
+		-f - -freq {
 			set freql $value
 		}
-		-n - --freqn {
+		-n - -freqn {
 			set freqN $value
 		}
-		-p - --snpdbpattern {
+		-p - -snpdbpattern {
 			set snpdbpatterns $value
 		}
-		-d - --delsize {
+		-d - -delsize {
 			set delsize $value
 		}
-		-r - --repeatmasker {
+		-r - -repeatmasker {
 			set repeats $value
 		}
-		-i - --id {
+		-i - -id {
 			set id $value
 		}
-		-g - --gc {
+		-g - -gc {
 			set gc $value
 		}
-		-gs - --gcsplit {
+		-gs - -gcsplit {
 			if {![isdouble $value]} {error "$value is not a number"}
 			set gcsplit $value
 			if {$gc == -1} {set gc 100}
 		}
-		-gd - --gcdisplay {
+		-gd - -gcdisplay {
 			set displaygc [true $value]
 			if {$gc == -1} {set gc 0}
 		}
-		-s - --split {
+		-s - -split {
 			set split [true $value]
 		}
-		-c - --concat {
+		-c - -concat {
 			set concat $value
 			set concatlen [string length $concat]
 		}
-		-e - -ce - --concatend {
+		-e - -ce - -concatend {
 			set econcat $value
 			set econcatlen [string length $econcat]
 		}
-		-ca - --concatadj {
+		-ca - -concatadj {
 			set aconcat $value
 			set aconcatlen [string length $econcat]
 		}
-		-cn - --concatname {
+		-cn - -concatname {
 			set concatname $value
 		}
-		-m - --mapfile {
+		-m - -mapfile {
 			set mapfile $value
 			set makemap 1
 		}
-		-l - --limitchars {
+		-l - -limitchars {
 			set limitchars $value
 		}
-		--namefield {
+		-namefield {
 			set namefield $value
 		}
 	}  {regionfile dbdir outfile} 2 3

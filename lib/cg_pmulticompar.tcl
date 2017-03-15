@@ -678,23 +678,23 @@ proc cg_pmulticompar {args} {
 	set targetsfile {}
 	set skipincomplete 1
 	cg_options pmulticompar args {
-		-r - -reannotregonly - --reannotregonly {
+		-r - -reannotregonly {
 			putslog "Reannot reg only"
 			set regonly $value
 		}
-		-s - -split - --split {
+		-s - -split {
 			set split $value
 		}
-		-e - --erroronduplicates {
+		-e - -erroronduplicates {
 			set erroronduplicates $value
 		}
-		-t - -targetsfile - --targetsfile {
+		-t - -targetsfile {
 			set targetsfile $value
 		}
-		-i - -skipincomplete - --skipincomplete {
+		-i - -skipincomplete {
 			set skipincomplete $value
 		}
-		-m - --maxopenfiles {
+		-m - -maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
 	} compar_file 1

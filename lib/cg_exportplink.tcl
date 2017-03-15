@@ -6,13 +6,13 @@ proc cg_exportplink {args} {
 		-q {
 			set query $value
 		}
-		-c - --codegeno {
+		-c - -codegeno {
 			set codegeno $value
 		}
-		-s - --samples {
+		-s - -samples {
 			set samples $value
 		}
-		-n - --nulllines {
+		-n - -nulllines {
 			set nulllines $value
 		}
 	} {varfile resultfile} 2 2

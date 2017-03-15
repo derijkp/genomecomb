@@ -20,7 +20,7 @@ is present in samplename and 0 if not.
   The name of the column is name of the file added without extension
 
 == Options ==
-; **-m maxopenfiles** (--maxopenfiles): The number of files that a program
+; **-m maxopenfiles** (-maxopenfiles): The number of files that a program
 can keep open at the same time is limited. pmulticompar will distribute
 the subtasks thus, that the number of files open at the same time stays
 below this number. With this option, the maximum number of open files can

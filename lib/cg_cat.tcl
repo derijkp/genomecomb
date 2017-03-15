@@ -6,7 +6,7 @@ proc cg_cat {args} {
 	set namefield {}
 	set sort 0
 	cg_options cat args {
-		-f - --force {
+		-f - -force {
 			if {$value in "1 0"} {
 				set force $value
 			} else {
@@ -14,7 +14,7 @@ proc cg_cat {args} {
 				incr pos -1
 			}
 		}
-		-m - --merge {
+		-m - -merge {
 			if {$value in "1 0"} {
 				set merge $value
 			} else {
@@ -22,7 +22,7 @@ proc cg_cat {args} {
 				incr pos -1
 			}
 		}
-		-s - --sort {
+		-s - -sort {
 			if {$value in "1 0"} {
 				set sort $value
 			} else {
@@ -30,13 +30,13 @@ proc cg_cat {args} {
 				incr pos -1
 			}
 		}
-		-c - --comments {
+		-c - -comments {
 			set addcomment $value
 		}
-		-n - --fieldname {
+		-n - -fieldname {
 			set namefield $value
 		}
-		-fields - --fields {
+		-fields {
 			set fields $value
 		}
 	} {} 1

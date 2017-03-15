@@ -306,7 +306,7 @@ proc process_mastr_job {args} {
 	set samBQ 0
 	set dbdir {}
 	cg_options process_mastr args {
-		-a - --aligner {
+		-a - -aligner {
 			set aligner $value
 		}
 		-c - -cleanup {
@@ -321,7 +321,7 @@ proc process_mastr_job {args} {
 		-split {
 			set split $value
 		}
-		-m - --maxopenfiles {
+		-m - -maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
 	} {mastrdir destdir dbdir} 2 3
@@ -515,7 +515,7 @@ proc cg_process_mastrdesign {args} {
 	set args [job_init {*}$args]
 	set useminigenome 0
 	cg_options process_mastrdesign args {
-		-m - --minigenome {
+		-m - -minigenome {
 			set useminigenome $value
 		}
 	} {mastrdir dbdir} 2 2

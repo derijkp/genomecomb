@@ -25,7 +25,7 @@ proc cg_vcf2tsv {args} {
 				set collapse 1
 			}			
 		}
-		-sort - --sort {
+		-sort {
 			set sort [true $value]
 		}
 		-t - -typelist {

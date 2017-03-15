@@ -42,7 +42,7 @@ proc process_multicompar_job {args} {
 		-c - -cleanup {
 			set cleanup $value
 		}
-		-m - --maxopenfiles {
+		-m - -maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
 	} {destdir dbdir todo} 1 3

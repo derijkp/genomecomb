@@ -11,10 +11,10 @@ proc cg_qsub {args} {
 		-io {
 			lappend options -l io=$value
 		}
-		-o - --outputfile {
+		-o - -outputfile {
 			set outputfile $value
 		}
-		-e - --errorfile {
+		-e - -errorfile {
 			set errorfile $value
 		}
 	} command	

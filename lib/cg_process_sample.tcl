@@ -429,7 +429,7 @@ proc process_sample_job {args} {
 		-realign - -realign {
 			set realign $value
 		}
-		-v - --varcallers {
+		-v - -varcallers {
 			set varcallers $value
 		}
 		-s - -split {
@@ -456,7 +456,7 @@ proc process_sample_job {args} {
 		-c - -cleanup {
 			set cleanup $value
 		}
-		-m - -maxopenfiles - --maxopenfiles {
+		-m - -maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
 	} {} 1 2

@@ -19,7 +19,7 @@ proc cg_coverage_report {args} {
 	set args [job_init {*}$args]
 	set suffix {}
 	cg_options coverage_report args {
-		-s - --suffix {
+		-s - -suffix {
 			set suffix $value
 		}
 	} {regionfile bamfile} 1

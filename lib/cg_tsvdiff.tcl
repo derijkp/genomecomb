@@ -146,31 +146,31 @@ proc cg_tsvdiff args {
 		-c {
 			if {[true $value]} {set rcomments 0} else {set rcomments 1}
 		}
-		-f - --fields {
+		-f - -fields {
 			set fields $value
 		}
-		-x - --exclude {
+		-x - -exclude {
 			lappend excludeopts -x $value
 		}
-		-t - --type {
+		-t - -type {
 			set type $value
 		}
-		-y - --side-by-side {
+		-y - -side-by-side {
 			set side-by-side $value
 		}
 		--suppress-common-lines {
 			set suppress-common-lines $value
 		}
-		-s - --splitlines {
+		-s - -splitlines {
 			set splitlines $value
 		}
-		-d - --diffprog {
+		-d - -diffprog {
 			set diffprog $value
 		}
-		-w - --width {
+		-w - -width {
 			set width $value
 		}
-		-q - --brief {
+		-q - -brief {
 			if {$value in "1 0"} {
 				set brief $value
 			} else {

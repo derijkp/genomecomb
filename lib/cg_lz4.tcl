@@ -5,19 +5,19 @@ proc cg_lz4 args {
 	set index 0
 	set outputfile {}
 	cg_options lz4 args {
-		-k - -keep - --keep {
+		-k - -keep {
 			set keep $value
 		}
-		-c - -compressionlevel - --compressionlevel {
+		-c - -compressionlevel {
 			set compressionlevel $value
 		}
-		-b - -blocksize - --blocksize {
+		-b - -blocksize {
 			set blocksize $value
 		}
-		-i - -index - --index {
+		-i - -index {
 			set index $value
 		}
-		-o - -outputfile - --outputfile {
+		-o - -outputfile {
 			set outputfile $value
 			if {$keep eq ""} {set keep 1}
 		}

@@ -3,7 +3,7 @@ proc cg_bam2fastq {args} {
 	set method picard
 	set fastqfile2 {}
 	cg_options bam2fastq args {
-		-m - --method {
+		-m - -method {
 			set method $value
 		}
 	} {bamfile fastqfile1 fastqfile2} 2 3

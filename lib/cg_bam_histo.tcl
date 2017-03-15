@@ -1,7 +1,7 @@
 proc cg_bam_histo {args} {
 	set pos 0
 	cg_options bam_histo args {
-		-n - --namecol {
+		-n - -namecol {
 			set namecol $value
 		}
 	} {regionfile bamfile intervals}

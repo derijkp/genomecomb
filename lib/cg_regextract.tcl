@@ -19,7 +19,7 @@ proc cg_regextract {args} {
 		-q {set q $value}
 		-Q {set Q $value}
 		-all {set aa 1}
-		-f - --filtered {
+		-f - -filtered {
 			set filtered 1
 			if {![info exists q]} {set q 20}
 			if {![info exists Q]} {set Q 20}

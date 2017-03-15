@@ -2,7 +2,7 @@ proc cg_razip args {
 	set pos 0
 	set keep 0
 	cg_options razip args {
-		-k {
+		-k - -keep {
 			set keep 1
 		}
 	}

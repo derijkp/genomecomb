@@ -217,7 +217,7 @@ proc cg_annotate_job {args} {
 		-multidb {
 			set multidb $value
 		}
-		-u - --upstreamsize {
+		-u - -upstreamsize {
 			set upstreamsize $value
 		}
 	} {orifile resultfile} 3

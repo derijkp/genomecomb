@@ -1228,7 +1228,7 @@ proc cg_select {args} {
 			puts stdout [join [samples $header] \n]
 			exit 0
 		}
-		-h - --header {
+		-h - -header {
 			if {$value eq ""} {
 				set header [tsv_open stdin]
 			} else {

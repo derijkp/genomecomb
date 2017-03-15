@@ -15,37 +15,37 @@ proc cg_bcol_make {args} {
 	set header 1
 	set srcfile {}
 	cg_options bcol_make args {
-		-t - --type {
+		-t - -type {
 			set type $value
 		}
-		-p - --poscol {
+		-p - -poscol {
 			set offsetcol $value
 		}
-		-e - --endcol {
+		-e - -endcol {
 			set endcol $value
 		}
-		-d - --default {
+		-d - -default {
 			set defaultvalue $value
 		}
-		-c - --chromosomecol {
+		-c - -chromosomecol {
 			set chromosomecol $value
 		}
-		-n - --chromosomename {
+		-n - -chromosomename {
 			set chromosomename $value
 		}
-		-co - --compress {
+		-co - -compress {
 			set compress $value
 		}
-		-h - --header {
+		-h - -header {
 			set header $value
 		}
-		-m - --multicol {
+		-m - -multicol {
 			set multicol $value
 		}
-		-l - --multilist {
+		-l - -multilist {
 			set multilist $value
 		}
-		--precision {
+		-precision {
 			set precision $value
 		}
 	} {bcolfile valuecolumn srcfile} 2 3

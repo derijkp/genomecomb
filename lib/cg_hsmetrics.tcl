@@ -56,10 +56,10 @@ proc hsmetrics_tsv2interval {regionfile bamfile resultfile} {
 
 proc cg_hsmetrics {args} {
 	cg_options hsmetrics args {
-		-s - --sample {
+		-s - -sample {
 			set sample $value
 		}
-		-b - --baitfile {
+		-b - -baitfile {
 			set baitfile $value
 		}
 	} {bamfile targetfile resultfile} 3 3

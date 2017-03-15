@@ -28,19 +28,19 @@ proc cg_makesequenom {args} {
 	set delsize 5
 	set repeats s
 	cg_options makesequenom args {
-		-f - --freq {
+		-f - -freq {
 			set freql $value
 		}
-		-n - --freqn {
+		-n - -freqn {
 			set freqN $value
 		}
-		-p - --snpdbpattern {
+		-p - -snpdbpattern {
 			set snpdbpatterns $value
 		}
-		-d - --delsize {
+		-d - -delsize {
 			set delsize $value
 		}
-		-r - --repeatmasker {
+		-r - -repeatmasker {
 			set repeats $value
 		}
 	} {compar_file resultfile dbdir} 3 3

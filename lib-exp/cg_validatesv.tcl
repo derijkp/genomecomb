@@ -994,13 +994,13 @@ proc cg_validatesv args {
 #			"-e" "set EVAL $value" ;
 #	}
 	cg_options cg_validatesv args {
-		-r - --readsize {
+		-r - -readsize {
 			set READSIZE $value
 		}
-		-m - --min {
+		-m - -min {
 			set MIN $value
 		}
-		-e - --eval {
+		-e - -eval {
 			set EVAL $value
 		}
 	} {file file_out dbdir archive MAX_SIZE} 4 5

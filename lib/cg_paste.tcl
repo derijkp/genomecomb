@@ -81,10 +81,10 @@ proc tsv_paste_job {outputfile files args} {
 proc cg_paste {args} {
 	set args [job_init {*}$args]
 	cg_options paste args {
-		-o - --outputfile {
+		-o - -outputfile {
 			set outputfile $value
 		}
-		-m - --maxopenfiles {
+		-m - -maxopenfiles {
 			set ::maxopenfiles $value
 		}
 	} {} 1

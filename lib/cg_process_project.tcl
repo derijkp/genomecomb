@@ -50,7 +50,7 @@ proc process_project_job {args} {
 		-c - -cleanup {
 			set cleanup $value
 		}
-		-m - -maxopenfiles - --maxopenfiles {
+		-m - -maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
 		-samBQ {
