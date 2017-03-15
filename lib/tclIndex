@@ -407,6 +407,7 @@ set auto_index(svmulticompar_write) [list source [file join $dir cg_svmulticompa
 set auto_index(svmulticompar_getlist) [list source [file join $dir cg_svmulticompar.tcl]]
 set auto_index(svmulticompar) [list source [file join $dir cg_svmulticompar.tcl]]
 set auto_index(cg_svmulticompar) [list source [file join $dir cg_svmulticompar.tcl]]
+set auto_index(gatkworkaround_tsv2bed) [list source [file join $dir cg_tsv2bed.tcl]]
 set auto_index(gatkworkaround_tsv2bed_job) [list source [file join $dir cg_tsv2bed.tcl]]
 set auto_index(tsv2bed) [list source [file join $dir cg_tsv2bed.tcl]]
 set auto_index(tsv2bed_job) [list source [file join $dir cg_tsv2bed.tcl]]
