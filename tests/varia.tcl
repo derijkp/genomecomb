@@ -251,7 +251,6 @@ header
 ---
 > chr2	2	3
 > chr3	3	4
-child process exited abnormally
 child process exited abnormally} error
 
 test tsvdiff {dir} {
@@ -274,9 +273,7 @@ test tsvdiff {dir} {
 	file copy -force tmp/d1/file1.tsv tmp/d2/same.tsv
 	file_write tmp/d2/only2 ""
 	cg tsvdiff tmp/d1 tmp/d2
-} {Only in tmp/d1: tmp/d1/only1
-Only in tmp/d2: tmp/d2/only2
-diff tmp/d1/file1.tsv tmp/d2/file1.tsv
+} {diff tmp/d1/file1.tsv tmp/d2/file1.tsv
 header diff
 <extrafields: 
 ---
@@ -288,7 +285,8 @@ header
 ---
 > chr2	2	3
 > chr3	3	4
-child process exited abnormally
+Only in 1: tmp/d1/only1
+Only in 2: tmp/d2/only2
 child process exited abnormally} error
 
 test cg_extracthomopolymers {basic} {

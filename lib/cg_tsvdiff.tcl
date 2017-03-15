@@ -78,6 +78,7 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 		exec {*}$diffprog $temp1 $temp2
 	} else {
 		if {[catch {exec diff {*}$diffopts $temp1 $temp2} result]} {
+			regsub "\nchild process exited abnormally\$" $result {} result
 			append error "header\n  [join $common \t]\n"
 			append error $result
 		}
