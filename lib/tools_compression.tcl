@@ -267,3 +267,11 @@ proc lz4_job {file args} {
 	}
 }
 
+proc lz4index_job {file args} {
+	upvar job_logdir job_logdir
+	job lz4index-$file -checkcompressed 0 -deps $file -targets $file.lz4i -code {
+		if {![file exists $dep]} {error "error indexing: file $dep does not exist"}
+		cg_lz4index $dep
+	}
+}
+

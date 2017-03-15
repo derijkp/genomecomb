@@ -19,11 +19,13 @@ proc gatk_refseq_job refseq {
 proc annotvar_clusters_job {file resultfile} {
 	upvar job_logdir job_logdir
 	set root [join [lrange [split [file root $file] -] 1 end] -]
-	job annotvar-clusters-$root -deps $file -targets reg_cluster-$root.tsv -code {
+	job annotvar-clusters-$root -deps $file -targets reg_cluster-$root.tsv.lz4 -code {
 		cg clusterregions < $dep > $target.temp
-		file rename -force $target.temp $target
+		cg lz4 $target.temp
+		file rename -force $target.temp.lz4 $target
+		cg lz4index $target
 	}
-	job annotvar-annotclusters-$root -deps {$file reg_cluster-$root.tsv} -targets {$resultfile} -code {
+	job annotvar-annotclusters-$root -deps {$file reg_cluster-$root.tsv.lz4} -targets {$resultfile} -code {
 		cg annotate $dep $target {*}[list_remove [lrange $deps 1 end] {}]
 	}
 }
@@ -36,29 +38,38 @@ proc sreg_gatk_job {job varallfile resultfile} {
 		cg select -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
 		file_write $temp2 "# regions selected from [gzroot $dep]: \$quality >= 30 && \$totalcoverage >= 5\n"
 		cg regjoin $temp >> $temp2
-		cg_lz4 -keep 0 -i 1 -o $target.lz4 $temp2
+		if {[file extension $target] eq ".lz4"} {
+			cg_lz4 -keep 0 -i 1 -o $target $temp2
+		} else {
+			file rename $temp2 $target
+		}
 		file delete $temp
 	}
 }
 
-proc var_gatk_job {bamfile refseq args} {
+proc var_gatk_job {args} {
 	upvar job_logdir job_logdir
 	set pre ""
 	set opts {}
 	set split 0
-	foreach {key value} $args {
-		if {$key eq "-L"} {lappend deps $value}
-		if {$key eq "-bed"} {
+	cg_options var_sam args {
+		-L {
+			lappend deps $value
+		}
+		-bed {
 			lappend opts -L $value
 			lappend deps $value
-		} elseif {$key eq "-pre"} {
+		}
+		-pre {
 			set pre $value
-		} elseif {$key eq "-split"} {
+		}
+		-split {
 			set split $value
-		} else {
+		}
+		default {
 			lappend opts $key $value
 		}
-	}
+	} {bamfile refseq}
 	set gatk [gatk]
 	## Produce gatk SNP calls
 	set dir [file dir $bamfile]
@@ -79,11 +90,12 @@ proc var_gatk_job {bamfile refseq args} {
 		catch {file delete $target.temp.idx}
 		# file delete $target.temp
 	}
-	job ${pre}varall-gatk2sft-$root -deps [list ${pre}varall-gatk-$root.vcf] -targets ${pre}varall-gatk-$root.tsv -vars {sample split} -code {
-		cg vcf2tsv -split $split $dep $target.temp
-		file rename -force $target.temp $target
+	job ${pre}varall-gatk2sft-$root -deps [list ${pre}varall-gatk-$root.vcf] -targets ${pre}varall-gatk-$root.tsv.lz4 -vars {sample split} -code {
+		cg vcf2tsv -split $split $dep $target.temp.lz4
+		file rename -force $target.temp.lz4 $target
 	}
-	lz4_job ${pre}varall-gatk-$root.tsv -i 1
+	# lz4_job ${pre}varall-gatk-$root.tsv -i 1
+	lz4index_job ${pre}varall-gatk-$root.tsv.lz4
 	# predict deletions separately, because gatk will not predict snps in a region where a deletion
 	# was predicted in the varall
 	job ${pre}delvar-gatk-$root -deps $deps \
@@ -129,8 +141,8 @@ proc var_gatk_job {bamfile refseq args} {
 		file delete $target.temp2
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job ${pre}uvar-gatk-$root.tsv ${pre}var-gatk-$root.tsv
-	sreg_gatk_job ${pre}sreg-gatk-$root ${pre}varall-gatk-$root.tsv ${pre}sreg-gatk-$root.tsv
+	annotvar_clusters_job ${pre}uvar-gatk-$root.tsv ${pre}var-gatk-$root.tsv.lz4
+	sreg_gatk_job ${pre}sreg-gatk-$root ${pre}varall-gatk-$root.tsv ${pre}sreg-gatk-$root.tsv.lz4
 	## filter SNPs (according to seqanswers exome guide)
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup
@@ -146,3 +158,8 @@ proc var_gatk_job {bamfile refseq args} {
 	return [file join $dir ${pre}var-gatk-$root.tsv]
 }
 
+proc cg_var_gatk {args} {
+	set args [job_init {*}$args]
+	var_gatk_job {*}$args
+	job_wait
+}

@@ -24,8 +24,9 @@ proc tsv_paste_job {outputfile files args} {
 		job paste-[file tail $outputfile] -optional $optional -force $forcepaste -deps $files -targets {$target} -vars {endcommand} -code {
 			set compress [compresspipe $target]
 			# puts [list ../bin/tsv_paste {*}$deps]
-			exec tsv_paste {*}$deps {*}$compress > $target.temp 2>@ stderr
-			file rename -force $target.temp $target
+			set temp [filetemp_ext $target]
+			exec tsv_paste {*}$deps {*}$compress > $temp 2>@ stderr
+			file rename -force $temp $target
 			if {$compress ne ""} {cg_lz4index $target}
 			if {$endcommand ne ""} {eval $endcommand}
 		}
@@ -41,8 +42,9 @@ proc tsv_paste_job {outputfile files args} {
 			job paste-[file tail $outputfile] -optional $optional -force $forcepaste -deps $todo -targets {$target} -vars {endcommand delete workdir} -code {
 				set compress [compresspipe $target]
 				# puts [list ../bin/tsv_paste {*}$deps]
-				exec tsv_paste {*}$deps {*}$compress > $target.temp 2>@ stderr
-				file rename -force $target.temp $target
+				set temp [filetemp_ext $target]
+				exec tsv_paste {*}$deps {*}$compress > $temp 2>@ stderr
+				file rename -force $temp $target
 				if {$compress ne ""} {cg_lz4index $target}
 				if {$delete} {file delete {*}$deps}
 				if {$endcommand ne ""} {eval $endcommand}

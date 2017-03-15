@@ -6,32 +6,42 @@ proc sreg_sam_job {job varallfile resultfile} {
 		cg select -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
 		file_write $temp2 "# regions selected from [gzroot $dep]: \$quality >= 30 && \$totalcoverage >= 5\n"
 		cg regjoin $temp >> $temp2
-		cg_lz4 -keep 0 -i 1 -o $target.lz4 $temp2
+		if {[file extension $target] eq ".lz4"} {
+			cg_lz4 -keep 0 -i 1 -o $target $temp2
+		} else {
+			file rename -force $temp2 $target
+		}
 		file delete $temp
 	}
 }
 
-proc var_sam_job {bamfile refseq args} {
+proc var_sam_job {args} {
 	upvar job_logdir job_logdir
 	set pre ""
 	set opts {}
 	set split 0
 	set BQ 0
-	foreach {key value} $args {
-		if {$key eq "-l"} {lappend deps $value}
-		if {$key eq "-bed"} {
+	cg_options var_sam args {
+		-l {
+			lappend deps $value
+		}
+		-bed {
 			lappend opts -l $value
 			lappend deps $value
-		} elseif {$key eq "-pre"} {
+		}
+		-pre {
 			set pre $value
-		} elseif {$key eq "-split"} {
+		}
+		-split {
 			set split $value
-		} elseif {$key eq "-BQ"} {
+		}
+		-BQ {
 			set BQ $value
-		} else {
+		}
+		default {
 			lappend opts $key $value
 		}
-	}
+	} {bamfile refseq}
 	set dir [file_absolute [file dir $bamfile]]
 	set keeppwd [pwd]
 	cd $dir
@@ -54,11 +64,12 @@ proc var_sam_job {bamfile refseq args} {
 		}
 		file rename -force $target.temp $target
 	}
-	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv -vars split -code {
-		cg vcf2tsv -split $split $dep $target.temp
-		file rename -force $target.temp $target
+	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv.lz4 -vars split -code {
+		cg vcf2tsv -split $split $dep $target.temp.lz4
+		file rename -force $target.temp.lz4 $target
 	}
-	lz4_job ${pre}varall-sam-$root.tsv -i 1
+	# lz4_job ${pre}varall-sam-$root.tsv -i 1
+	lz4index_job ${pre}varall-sam-$root.tsv.lz4
 	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \
 	-code {
@@ -76,9 +87,9 @@ proc var_sam_job {bamfile refseq args} {
 		file rename -force $target.temp $target
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job ${pre}uvar-sam-$root.tsv ${pre}var-sam-$root.tsv
+	annotvar_clusters_job ${pre}uvar-sam-$root.tsv ${pre}var-sam-$root.tsv.lz4
 	# find regions
-	sreg_sam_job ${pre}sreg-sam-$root ${pre}varall-sam-$root.tsv ${pre}sreg-sam-$root.tsv
+	sreg_sam_job ${pre}sreg-sam-$root ${pre}varall-sam-$root.tsv ${pre}sreg-sam-$root.tsv.lz4
 	# cleanup
 	job clean_${pre}var-sam-$root -deps {${pre}var-sam-$root.tsv ${pre}varall-sam-$root.tsv} -vars {pre root} -targets {} \
 	-rmtargets {${pre}uvar-sam-$root.tsv ${pre}uvar-sam-$root.tsv.index ${pre}varall-sam-$root.vcf ${pre}varall-sam-$root.vcf.idx} -code {
@@ -91,3 +102,8 @@ proc var_sam_job {bamfile refseq args} {
 	return [file join $dir var-sam-$root.tsv]
 }
 
+proc cg_var_sam {args} {
+	set args [job_init {*}$args]
+	var_sam_job {*}$args
+	job_wait
+}

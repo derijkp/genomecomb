@@ -67,6 +67,18 @@ proc scratchfile {{action {get}} {type file}} {
 }
 
 proc filetemp {file {write 1}} {
+	if {![file exists $file.temp]} {
+		set result $file.temp
+	} else {
+		set num 2
+		while {[file exists $file.temp$num]} {incr num}
+		set result $file.temp$num
+	}
+	if {$write} {file_write $result {}}
+	return $result
+}
+
+proc filetemp_ext {file {write 1}} {
 	set ext [file extension $file]
 	if {![gzext $ext]} {set ext {}}
 	if {![file exists $file.temp$ext]} {

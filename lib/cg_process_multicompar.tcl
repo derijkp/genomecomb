@@ -89,8 +89,8 @@ proc process_multicompar_job {args} {
 	# multicompar
 	# -----------
 	putslog "Finding samples"
-	set compar_file compar/compar-$experiment.tsv.lz4
 	if {[catch {cg select -n [gzfile compar/compar-$experiment.tsv]} done]} {set done {}}
+	set compar_file compar/compar-$experiment.tsv.lz4
 	set done [split $done \n]
 	set stilltodo {}
 	foreach sample $todo {
@@ -180,10 +180,10 @@ proc process_multicompar_job {args} {
 	# cgcnv
 	# ----
 	putslog "Starting cgcnv"
-	set files [jobglob $sampledir/*/cgsv-*.tsv]
+	set files [jobglob $sampledir/*/cgcnv-*.tsv]
 	if {[llength $files]} {
 		set target compar/cgcnv-${experiment}.tsv.lz4
-		set names [list_regsub {.*/cgsv-(.*)\.tsv.*} $files {\1}]
+		set names [list_regsub {.*/cgcnv-(.*)\.tsv.*} $files {\1}]
 		testmultitarget $target $names "$sampledir/\$name/cgcnv-\$name.tsv"
 		job cgcnv_multicompar -optional 1 -deps $files -targets {compar/cgcnv-${experiment}.tsv.lz4} -code {
 			puts "Checking $target"
@@ -194,7 +194,7 @@ proc process_multicompar_job {args} {
 			}
 			set todo {}
 			foreach file $deps {
-				regexp {cgsv-(.*)\.tsv*} [file tail $file] temp name
+				regexp {cgcnv-(.*)\.tsv*} [file tail $file] temp name
 				if {![inlist $done $name]} {
 					lappend todo $file
 				}

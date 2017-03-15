@@ -146,10 +146,10 @@ proc process_illumina {args} {
 		bam2reg_job $cleanedbam 20 1
 		#calculate reports
 		# gatk variant calling on map-rdsbwa
-		var_gatk_job $cleanedbam $refseq -bed $cov5bed -split $split
+		var_gatk_job -bed $cov5bed -split $split $cleanedbam $refseq
 		lappend todo gatk-rdsbwa-$sample
 		# samtools variant calling on map-rdsbwa
-		var_sam_job $cleanedbam $refseq -bed $cov5bed -split $split
+		var_sam_job -bed $cov5bed -split $split $cleanedbam $refseq
 		lappend todo sam-rdsbwa-$sample
 		# convert existing vcfs
 		set files [ssort -natural [jobglob var-*.vcf]]

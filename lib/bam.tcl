@@ -14,11 +14,13 @@ proc bam2reg_job {bamfile {mincoverage 5} {compress 0}} {
 #	job bam2coverage-$root -deps $bamfile -targets {$dir/coverage-$root $dir/coverage-$root/coverage-$root.FINISHED} -vars {root} -code {
 #		cg bam2coverage $dep $target/coverage-$root
 #	}
-	job cov$mincoverage-$root -optional 1 -deps $bamfile -targets $dir/sreg-cov$mincoverage-$root.tsv -vars {mincoverage compress} -code {
+	set target $dir/sreg-cov$mincoverage-$root.tsv.lz4
+	job cov$mincoverage-$root -optional 1 -deps $bamfile -targets $target -vars {mincoverage compress} -code {
 		set temptarget [filetemp $target]
-		cg regextract -min $mincoverage $dep > $temptarget
+		exec cg regextract -min $mincoverage $dep | lz4c -9 > $temptarget
 		file rename -force $temptarget $target
+		cg lz4index $target
 	}
-	return $dir/sreg-cov$mincoverage-$root.tsv
+	return $target
 }
 

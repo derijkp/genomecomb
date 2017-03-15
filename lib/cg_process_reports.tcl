@@ -247,7 +247,7 @@ proc process_reports_job {args} {
 			set sample [file root [file tail [gzroot $dep]]]
 			regsub ^sreg- $sample {} sample
 			set target $sampledir/reports/report_covered-$sample.tsv
-			job reports_vars-$sample -deps {$dep} -targets {$target} -vars sample -code {
+			job reports_covered-$sample -deps {$dep} -targets {$target} -vars sample -code {
 				set temp [split [exec cg covered $dep] \n]
 				set f [open $target.temp w]
 				puts $f [join {sample source parameter value} \t]

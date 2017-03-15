@@ -56,6 +56,20 @@ proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {sum
 		return -code return $help
 	}
 	if {$maxargs eq "..."} {set test ""} else {set test " || (\$len > $maxargs)"}
+	if {[lindex $def end-1] eq "default"} {
+		set default [subst {
+			if {\[string index \$key 0\] ne "-"} break
+			[lindex $def end]
+		}]
+		set def [lrange $def 0 end-2]
+	} else {
+		set default [subst {
+			if {\[string index \$key 0\] eq "-"} {
+				error "unknown option \\"\$key\\", must be one of: $options"
+			}
+			break
+		}]
+	}
 	set fullcmd [subst {
 		set pos 0
 		while 1 {
@@ -66,12 +80,7 @@ proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {sum
 			switch -- \$key {
 				$def
 				-- {incr pos ; break}
-				default {
-					if {\[string index \$key 0\] eq "-"} {
-						error "unknown option \\"\$key\\", must be one of: $options"
-					}
-					break
-				}
+				default \{$default\}
 			}
 		}
 		incr pos -2

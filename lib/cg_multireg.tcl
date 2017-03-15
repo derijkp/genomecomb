@@ -45,9 +45,10 @@ proc multireg_job {compar_file regfiles} {
 		job multireg-[file tail $compar_file] -force $jobforce -deps $files -targets {$target} -vars {isreg} -code {
 			set compress [compresspipe $target]
 			set todo [list_merge $deps $isreg]
+			set temp [filetemp_ext $target]
 			# puts [list ../bin/multireg {*}$todo]
-			exec multireg {*}$todo {*}$compress > $target.temp 2>@ stderr
-			file rename -force $target.temp $target
+			exec multireg {*}$todo {*}$compress > $temp 2>@ stderr
+			file rename -force $temp $target
 			if {$compress ne ""} {cg_lz4index $target}
 		}
 		return
@@ -66,8 +67,9 @@ proc multireg_job {compar_file regfiles} {
 				set compress [compresspipe $target]
 				set todo [list_merge $deps $todoisreg]
 				# puts [list ../bin/multireg {*}$todo]
-				exec multireg {*}$todo {*}$compress > $target.temp 2>@ stderr
-				file rename -force $target.temp $target
+				set temp [filetemp_ext $target]
+				exec multireg {*}$todo {*}$compress > $temp 2>@ stderr
+				file rename -force $temp $target
 				if {$compress ne ""} {cg_lz4index $target}
 				# if {$delete} {file delete {*}$deps $workdir}
 			}

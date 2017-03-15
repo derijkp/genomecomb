@@ -380,7 +380,7 @@ proc cg_annotate_job {args} {
 		if {$multidb} {
 			set temp2 [filetemp $resultfile]
 			cg select -f id $orifile $temp2
-			set temp [filetemp $resultfile]
+			set temp [filetemp_ext $resultfile]
 			exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
 			file delete $temp2
 			file rename -force $temp $resultfile
@@ -391,13 +391,13 @@ proc cg_annotate_job {args} {
 			set header [tsv_open $f]
 			gzclose $f
 			cg select -f [list_lremove $header $newh] $orifile $temp2
-			set temp [filetemp $resultfile]
+			set temp [filetemp_ext $resultfile]
 			exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
 			file delete $temp2
 			file rename -force $temp $resultfile
 			if {$compress ne ""} {cg_lz4index $resultfile}
 		} else {
-			set temp [filetemp $resultfile]
+			set temp [filetemp_ext $resultfile]
 			exec tsv_paste $orifile {*}$afiles {*}$compress > $temp
 			file rename -force $temp $resultfile
 			if {$compress ne ""} {cg_lz4index $resultfile}

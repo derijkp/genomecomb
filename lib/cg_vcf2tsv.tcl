@@ -44,6 +44,10 @@ proc cg_vcf2tsv {args} {
 		lappend pipe | cg collapsealleles
 	}
 	if {[info exists outfile]} {
+		set compress [compresspipe $outfile]
+		if {$compress ne ""} {
+			lappend pipe {*}$compress
+		}
 		lappend pipe > $outfile 2>@ stderr
 	} else {
 		lappend pipe >@ stdout 2>@ stderr

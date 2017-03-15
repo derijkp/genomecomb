@@ -13,12 +13,12 @@ proc make_alternative_compar_job {experiment} {
 		list_addnew fields {*}$cfields
 		lappend fields {log2_allele_ratio-gatk-crsbwa-*=if(llen(${alleledepth-gatk-crsbwa-*})>1, log10(lindex(${alleledepth-gatk-crsbwa-*},0))/log10(2) - log10(lindex(${alleledepth-gatk-crsbwa-*},1))/log10(2), 0)}
 		set compress [compresspipe $target1]
-		set temp [filetemp $target1]
+		set temp [filetemp_ext $target1]
 		exec cg select -f $fields $dep {*}$compress > $temp
 		file rename -force $temp $target1
 		##depivot compar file
 		set compress [compresspipe $target2]
-		set temp [filetemp $target2]
+		set temp [filetemp_ext $target2]
 		if {$compress eq ""} {
 			cg long $target1 $temp
 		} else {
@@ -372,12 +372,13 @@ proc process_mastr_job {args} {
 	} else {
 		set resultbamprefix rs
 	}
-	# make demultiplex_stats.tsv if not present
-	set deps {}
-	foreach sample $samples {
-		lappend deps {*}[glob -nocomplain $sample/fastq/*.fastq.gz $sample/fastq/*.fastq $sample/fastq/*.fq.gz $sample/fastq/*.fq]
-	}
-	job demultiplex_stats -deps $deps -targets $destdir/demultiplex_stats.tsv -vars samples -code {
+	if {![file exists $destdir/demultiplex_stats.tsv]} {
+		# make demultiplex_stats.tsv if not present
+		set deps {}
+		foreach sample $samples {
+			lappend deps {*}[glob -nocomplain $sample/fastq/*.fastq.gz $sample/fastq/*.fastq $sample/fastq/*.fq.gz $sample/fastq/*.fq]
+		}
+		set target $destdir/demultiplex_stats.tsv
 		set temptarget [filetemp $target]
 		set o [open $temptarget w]
 		puts $o [join {SampleNumber SampleID SampleName NumberOfClustersRaw NumberOfClustersPF} \t]
@@ -458,7 +459,7 @@ proc process_mastr_job {args} {
 		lappend histofiles $sample/[regsub {map-} [file tail [file root $cleanbam]] {}].histo
 		# samtools variant calling on map-rs${aligner}
 		if {$useminigenome} {
-			var_sam_job $cleanbam $refseq -pre $pre -split $split -BQ $samBQ
+			var_sam_job -pre $pre -split $split -BQ $samBQ $cleanbam $refseq
 			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets varall-sam-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
@@ -466,14 +467,14 @@ proc process_mastr_job {args} {
 			job remapsam-var-$name -deps {reg_var-sam-rs${aligner}-$name.tsv $mapfile} -targets var-sam-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
-			sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv
+			sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv.lz4
 		} else {
-			var_sam_job $cleanbam $refseq -pre $pre -bed $mastrdir/reg-inner-$mastrname.bed -split $split -BQ $samBQ
+			var_sam_job -pre $pre -bed $mastrdir/reg-inner-$mastrname.bed -split $split -BQ $samBQ $cleanbam $refseq
 		}
 		lappend todo sam-$resultbamprefix${aligner}-$sample
 		if {$useminigenome} {
 			# gatk variant calling on map-rs${aligner}
-			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE -split $split
+			var_gatk_job -pre $pre -dt NONE -split $split $cleanbam $refseq
 			job remapgatk-varall-$name -deps {reg_varall-gatk-rs${aligner}-$name.tsv $mapfile} -targets varall-gatk-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
@@ -481,10 +482,10 @@ proc process_mastr_job {args} {
 			job remapgatk-var-$name -deps {reg_var-gatk-rs${aligner}-$name.tsv $mapfile} -targets var-gatk-rs${aligner}-$name.tsv -code {
 				cg remap $dep1 $dep2 $target
 			}
-			sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv
+			sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv.lz4
 		} else {
 			# gatk variant calling on map-rs${aligner}
-			var_gatk_job $cleanbam $refseq -pre $pre -dt NONE -bed $mastrdir/reg-inner-$mastrname.bed -split $split
+			var_gatk_job -pre $pre -dt NONE -bed $mastrdir/reg-inner-$mastrname.bed -split $split $cleanbam $refseq
 		}
 		lappend todo gatk-$resultbamprefix${aligner}-$sample
 	}
