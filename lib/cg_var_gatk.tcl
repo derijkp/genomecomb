@@ -52,6 +52,7 @@ proc var_gatk_job {args} {
 	set pre ""
 	set opts {}
 	set split 0
+	set deps {}
 	cg_options var_sam args {
 		-L {
 			lappend deps $value
@@ -83,7 +84,7 @@ proc var_gatk_job {args} {
 	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk opts} -code {
 		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
 			{*}$opts -R $dep2 -I $dep -o $target.temp \
-			-stand_call_conf 50.0 -stand_emit_conf 10.0 -dcov 1000 \
+			-stand_call_conf 10.0 -dcov 1000 \
 			--annotateNDA \
 			-glm SNP --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
@@ -103,7 +104,7 @@ proc var_gatk_job {args} {
 	-skip {${pre}var-gatk-$root.tsv} -vars {gatk opts} -code {
 		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
 			{*}$opts -R $dep2 -I $dep -o $target.temp \
-			-stand_call_conf 50.0 -stand_emit_conf 10.0 -dcov 1000 \
+			-stand_call_conf 10.0 -dcov 1000 \
 			--annotateNDA \
 			-glm INDEL 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
