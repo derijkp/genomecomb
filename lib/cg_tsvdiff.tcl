@@ -1,4 +1,4 @@
-proc xlong {file resultfile} {
+proc xlong {file resultfile splitlines} {
 	set o [open $resultfile.temp w]
 	set f [gzopen $file]
 	set header [tsv_open $f comment1]
@@ -13,6 +13,24 @@ proc xlong {file resultfile} {
 		set pre [join $pre -]
 		foreach field $restfields value [list_sub $line $rest] {
 			puts $o "$pre\t$field\t$value"
+			if {$splitlines} {puts $o ""}
+		}
+	}
+	gzclose $f
+	close $o
+	file rename $resultfile.temp $resultfile
+	return 0
+}
+
+proc long {file resultfile splitlines} {
+	set o [open $resultfile.temp w]
+	set f [gzopen $file]
+	set header [tsv_open $f comment1]
+	while {[gets $f line] != -1} {
+		set line [split $line \t]
+		foreach field $header value $line {
+			puts $o "$field\t$value"
+			if {$splitlines} {puts $o ""}
 		}
 	}
 	gzclose $f
@@ -49,9 +67,18 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	set temp2 $tempdir/[file tail $file2]
 	if {$temp2 eq $temp1} {append temp2 -b}
 	if {$type eq "xl"} {
-		set error1 [xlong $file1 $temp1]
+		cg select -f [list {*}$common {*}$h1] $file1 $temp1.pre
+		set error1 [xlong $temp1.pre $temp1 $splitlines]
 		set msg1 "error in xl conversion"
-		set error2 [xlong $file2 $temp2]
+		cg select -f [list {*}$common {*}$h2] $file2 $temp2.pre
+		set error2 [xlong $temp2.pre $temp2 $splitlines]
+		set msg2 "error in xl conversion"
+	} elseif {$type eq "l"} {
+		cg select -f [list {*}$common {*}$h1] $file1 $temp1.pre
+		set error1 [long $temp1.pre $temp1 $splitlines]
+		set msg1 "error in xl conversion"
+		cg select -f [list {*}$common {*}$h2] $file2 $temp2.pre
+		set error2 [long $temp2.pre $temp2 $splitlines]
 		set msg2 "error in xl conversion"
 	} elseif {$splitlines} {
 		set error1 [catch {
@@ -159,7 +186,7 @@ proc cg_tsvdiff args {
 		-y - -side-by-side {
 			set side-by-side $value
 		}
-		--suppress-common-lines {
+		-sc - -suppress-common-lines {
 			set suppress-common-lines $value
 		}
 		-s - -splitlines {
