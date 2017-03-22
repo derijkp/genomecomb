@@ -82,7 +82,7 @@ proc var_gatk_job {args} {
 	set deps [list $file $gatkrefseq $file.bai {*}$deps]
 	job ${pre}varall-gatk-$root -deps $deps \
 	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk opts} -code {
-		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
+		exec [gatkjava] -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
 			{*}$opts -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 10.0 -dcov 1000 \
 			--annotateNDA \
@@ -102,7 +102,7 @@ proc var_gatk_job {args} {
 	job ${pre}delvar-gatk-$root -deps $deps \
 	-targets ${pre}delvar-gatk-$root.vcf -skip {${pre}delvar-gatk-$root.tsv} \
 	-skip {${pre}var-gatk-$root.tsv} -vars {gatk opts} -code {
-		exec java -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
+		exec [gatkjava] -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
 			{*}$opts -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 10.0 -dcov 1000 \
 			--annotateNDA \

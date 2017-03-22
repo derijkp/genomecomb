@@ -1,3 +1,10 @@
+proc gatkjava {} {
+	if {![info exists ::gatkjava]} {
+		version gatk
+	}
+	return $::gatkjava
+}
+
 proc version {item {minversion {}}} {
 	global _versions
 	if {![info exists _versions($item)]} {
@@ -18,7 +25,17 @@ proc version {item {minversion {}}} {
 			}
 			gatk {
 				set gatk [gatk]
-				set _versions($item) [exec java -jar $gatk --version]
+				if {![catch {exec java -jar $gatk --version} msg]} {
+					set version $msg
+					set ::gatkjava java
+				} elseif {![catch {exec java1.8 -jar $gatk --version} version]} {
+					set ::gatkjava java1.8
+				} elseif {![catch {exec java1.7 -jar $gatk --version} version]} {
+					set ::gatkjava java1.7
+				} else {
+					error "Cannot determine gatk version:\n$msg"
+				}
+				set _versions($item) $version
 			}
 			picard {
 				catch {picard MarkDuplicates --version} version_picard
@@ -30,6 +47,11 @@ proc version {item {minversion {}}} {
 			}
 			java {
 				catch {exec java -version} temp
+				regsub {java version "([^"]+)"} $temp {\1 } temp
+				set _versions($item) [join [split $temp \n] {, }]
+			}
+			gatkjava {
+				catch {exec [gatkjava] -version} temp
 				regsub {java version "([^"]+)"} $temp {\1 } temp
 				set _versions($item) [join [split $temp \n] {, }]
 			}
