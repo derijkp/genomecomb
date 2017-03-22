@@ -109,6 +109,7 @@ job dbsnp147 -targets {var_hg19_snp147.tsv var_hg19_snp147.tsv.opt} -vars {dest 
 }
 
 job dbsnp147Common -targets {var_hg19_snp147Common.tsv} -vars {dest build} -code {
+	file_write $target.opt "fields\t{freqp}\n"
 	cg download_dbsnp $target ${build} snp147Common 2>@ stderr
 }
 
@@ -525,7 +526,7 @@ foreach chromosome {
 
 job reg_hg19_gnomad-final -deps $deps -targets {$finaltarget var_${build}_gnomad.tsv.opt} -vars {tempdir fields dest db build} -code {
 	exec cg cat {*}$deps | lz4c -9 > $tempdir/result.tsv.lz4
-	file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp}\n"
+	file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
 	file rename -force $tempdir/result.tsv.lz4 var_${build}_gnomad.tsv.lz4
 	file_write extra/var_${build}_gnomad.tsv.opt "fields\t{afr_freqp amr_freqp asj_freqp eas_freqp fin_freqp nfe_freqp oth_freqp male_freqp female_freqp}\n"
 	mklink var_${build}_gnomad.tsv.lz4 extra/var_${build}_gnomad.tsv.lz4
