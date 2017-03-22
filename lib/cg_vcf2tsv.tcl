@@ -12,6 +12,7 @@ proc cg_vcf2tsv {args} {
 	set sort 1
 	set typelist ". AD R RPA R AC A AF A"
 	set collapse 1
+	set removefields {}
 	cg_options vcf2tsv args {
 		-s - -split {
 			if {$value eq "ori"} {
@@ -28,14 +29,17 @@ proc cg_vcf2tsv {args} {
 		-sort {
 			set sort [true $value]
 		}
+		-r - -removefields {
+			set removefields $value
+		}
 		-t - -typelist {
 			set typelist $value
 		}
 	} {infile outfile} 0 2
 	if {[info exists infile]} {
-		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist]
+		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields]
 	} else {
-		set pipe [list exec vcf2tsv $split $typelist]
+		set pipe [list exec vcf2tsv $split $typelist - - $removefields]
 	}
 	if {$sort} {
 		lappend pipe | cg select -s -

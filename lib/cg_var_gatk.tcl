@@ -92,7 +92,7 @@ proc var_gatk_job {args} {
 		# file delete $target.temp
 	}
 	job ${pre}varall-gatk2sft-$root -deps [list ${pre}varall-gatk-$root.vcf] -targets ${pre}varall-gatk-$root.tsv.lz4 -vars {sample split} -code {
-		cg vcf2tsv -split $split $dep $target.temp.lz4
+		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
 	# lz4_job ${pre}varall-gatk-$root.tsv -i 1
@@ -114,10 +114,10 @@ proc var_gatk_job {args} {
 	job ${pre}delvar-gatk2sft-$root -deps [list ${pre}delvar-gatk-$root.vcf] \
 	-targets ${pre}delvar-gatk-$root.tsv \
 	-skip {${pre}var-gatk-$root.tsv} -vars {sample split} -code {
-		cg vcf2tsv -split $split $dep $target.temp
+		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp
 		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
 		-f {
-			chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 
+			chromosome begin end type ref alt quality alleleSeq1 alleleSeq2 
 			{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
 			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 			*
@@ -130,7 +130,7 @@ proc var_gatk_job {args} {
 	-skip {${pre}var-gatk-$root.tsv} -code {
 		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
 		-f {
-			chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2 
+			chromosome begin end type ref alt quality alleleSeq1 alleleSeq2 
 			{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
 			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 			*

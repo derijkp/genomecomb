@@ -65,7 +65,7 @@ proc var_sam_job {args} {
 		file rename -force $target.temp $target
 	}
 	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv.lz4 -vars split -code {
-		cg vcf2tsv -split $split $dep $target.temp.lz4
+		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} $dep $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
 	# lz4_job ${pre}varall-sam-$root.tsv -i 1
@@ -78,7 +78,7 @@ proc var_sam_job {args} {
 				&& $zyg != "r"
 			} \
 			-f {
-				chromosome begin end type ref alt name quality filter alleleSeq1 alleleSeq2
+				chromosome begin end type ref alt quality alleleSeq1 alleleSeq2
 				{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
 				{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 				*

@@ -662,8 +662,10 @@ int DStringArraySearch(DStringArray *dstringarray,char *string,int size) {
 void DStringArrayDestroy(DStringArray *dstringarray) {
 	if (dstringarray == NULL) return;
 	int i=0;
-	for (i =0; i < dstringarray->memsize ; i++) {
-		DStringClear(dstringarray->data+i);
+	for (i =0; i < dstringarray->size ; i++) {
+		if (dstringarray->data[i].string != NULL) {
+			DStringClear(dstringarray->data+i);
+		}
 	}
 	free(dstringarray->data);
 	if (dstringarray->datablock) DStringDestroy(dstringarray->datablock);

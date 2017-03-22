@@ -140,7 +140,7 @@ static int linenr;
 #define a_format(array) (DStringArrayGet(array,8))
 #define a_geno(array) (DStringArrayGet(array,9))
 
-void process_line_unsplit(FILE *fo,DStringArray *linea) {
+void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int excludefilter) {
 	DStringArray *lineformat,*alts;
 	DString *ds,*type;
 	char zyg, refch;
@@ -209,7 +209,9 @@ void process_line_unsplit(FILE *fo,DStringArray *linea) {
 		}
 		fprintf(fo,",%*.*s", temp->size-diff, temp->size-diff, temp->string+diff);
 	}
-	fprintf(fo,"\t%s\t%s\t%s", a_id(linea)->string, a_qual(linea)->string, a_filter(linea)->string);
+	if (!excludename) fprintf(fo,"\t%s", a_id(linea)->string);
+	fprintf(fo,"\t%s", a_qual(linea)->string);
+	if (!excludefilter) fprintf(fo,"\t%s", a_filter(linea)->string);
 	if (header->size >= 9) {
 		NODPRINT("==== Determine geno fields order ====")
 		order = realloc(order,formatfields->size*sizeof(int));
@@ -358,7 +360,7 @@ void process_line_unsplit(FILE *fo,DStringArray *linea) {
 				continue;
 			}
 			pos = DStringArraySearch(infofields,cur,curend-cur);
-			if (pos == -1) {fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur);}
+			/* if (pos == -1) {fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur);}*/
 			if (*curend == '=') {curend++;}
 			cur = curend;
 			if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
@@ -403,7 +405,7 @@ void process_line_unsplit(FILE *fo,DStringArray *linea) {
 	DStringArrayDestroy(alts);
 }
 
-void process_line_split(FILE *fo,DStringArray *linea) {
+void process_line_split(FILE *fo,DStringArray *linea,int excludename,int excludefilter) {
 	DStringArray *lineformat,*alts;
 	char zyg;
 	int l1,l2,len,numalleles,curallele,pos,i,igeno,isample;
@@ -471,7 +473,9 @@ void process_line_split(FILE *fo,DStringArray *linea) {
 			fprintf(fo,"\t%*.*s", altvar->refsize, altvar->refsize, altvar->ref);
 		}
 		fprintf(fo,"\t%*.*s", altvar->altsize, altvar->altsize, altvar->alt);
-		fprintf(fo,"\t%s\t%s\t%s", a_id(linea)->string, a_qual(linea)->string, a_filter(linea)->string);
+		if (!excludename) fprintf(fo,"\t%s", a_id(linea)->string);
+		fprintf(fo,"\t%s", a_qual(linea)->string);
+		if (!excludefilter) fprintf(fo,"\t%s", a_filter(linea)->string);
 		if (header->size >= 9) {
 			NODPRINT("==== Determine geno fields order ====")
 			order = realloc(order,formatfields->size*sizeof(int));
@@ -659,7 +663,7 @@ void process_line_split(FILE *fo,DStringArray *linea) {
 					continue;
 				}
 				pos = DStringArraySearch(infofields,cur,curend-cur);
-				if (pos == -1) {fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur);}
+				/* if (pos == -1) {fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur);} */
 				if (*curend == '=') {curend++;}
 				cur = curend;
 				if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
@@ -707,7 +711,7 @@ int main(int argc, char *argv[]) {
 	DStringArray *headerfields, *linea;
 	altvars = NULL;
 	int *order = NULL;
-	int split,read,i,j,maxtab;
+	int split,read,i,j,maxtab, excludefilter = 0, excludename = 0;
 	line=NULL; string=NULL; temp=NULL;
 	snp=DStringNewFromChar("snp"); del=DStringNewFromChar("del"); ins=DStringNewFromChar("ins"); sub=DStringNewFromChar("sub");
 	geno = NULL; outinfo = NULL; formatfieldsnumber=NULL; infofieldsnumber=NULL;
@@ -720,7 +724,7 @@ int main(int argc, char *argv[]) {
 	altvars = (AltVar *)malloc(5*sizeof(AltVar)); altvarsmax = 5;
 	line = DStringNew();
 	if (argc < 2) {
-		fprintf(stderr,"Format is: vcf2tsv split typelist ?infile? ?outfile?\n");
+		fprintf(stderr,"Format is: vcf2tsv split typelist ?infile? ?outfile? ?removefields?\n");
 		exit(EXIT_FAILURE);
 	}
 	split = atoi(argv[1]);
@@ -729,11 +733,17 @@ int main(int argc, char *argv[]) {
 	} else {
 		typelist = ". AD R RPA R AC A AF A";
 	}
-	if (argc >= 4) {
+	if (argc < 4 || (argv[3][0] == '-' && argv[3][1] == '\0')) {
+		fd = stdin;
+	} else {
 		fd = fopen(argv[3],"r");
 		if (fd == NULL) {fprintf(stderr,"file %s does not exists\n",argv[2]);exit(1);}
-	} else {fd = stdin;}
-	if (argc == 5) {fo = fopen(argv[4],"w");} else {fo = stdout;}
+	}
+	if (argc < 5 || (argv[4][0] == '-' && argv[4][1] == '\0')) {
+		fo = stdout;
+	} else {
+		fo = fopen(argv[4],"w");
+	}
 	NODPRINT("==== Reading header ====")
 	DStringGetLine(line, fd);
 	if (line->size < 16 || strncmp(line->string,"##fileformat=VCF",16) != 0) {
@@ -755,6 +765,29 @@ int main(int argc, char *argv[]) {
 	dstring_hash_set(conv_formata,DStringNewFromChar("AA"),(void *)DStringNewFromChar("Ancestralallele"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("DB"),(void *)DStringNewFromChar("dbsnp"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("H2"),(void *)DStringNewFromChar("Hapmap2"));
+	if (argc == 6) {
+		char *start = argv[5];
+		char *cur = argv[5];
+		while (1) {
+			int len;
+			while (*cur != ' ' && *cur != '\0') {
+				cur++;
+			}
+			len = cur-start;
+			if (len == 6 && strncmp(start,"filter",6) == 0) {
+				excludefilter = 1;
+			} else if (len == 4 && strncmp(start,"name",4) == 0) {
+				excludename = 1;
+			} else if (len == 2 && strncmp(start,"DP",2) == 0) {
+				fprintf(stderr,"Cannot remove field DP\n");
+				exit(1);
+			} else {
+				dstring_hash_set(conv_formata,DStringNewFromCharS(start,len),(void *)DStringNew());
+			}
+			if (*cur == '\0') break;
+			start = ++cur;
+		}
+	}
 	fprintf(fo,"#filetype\ttsv/varfile\n");
 	fprintf(fo,"#fileversion\t%s\n",FILEVERSION);
 	fprintf(fo,"#split\t%d\n",split);
@@ -778,7 +811,10 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	fprintf(fo,"# ----\n");
-	fprintf(fo,"chromosome\tbegin\tend\ttype\tref\talt\tname\tquality\tfilter");
+	fprintf(fo,"chromosome\tbegin\tend\ttype\tref\talt");
+	if (!excludename) fprintf(fo,"\tname");
+	fprintf(fo,"\tquality");
+	if (!excludefilter) fprintf(fo,"\tfilter");
 	if (header->size >= 10) {
 		samples = DStringArrayRange(header,9,header->size-1);
 	} else {
@@ -800,12 +836,13 @@ int main(int argc, char *argv[]) {
 			DString *ds;
 			id = extractID(DStringArrayGet(format,i),id);
 			if (strcmp(id->string,"GT") == 0) continue;
+			ds = (DString *)dstring_hash_get(conv_formata,id);
+			if (ds == NULL) {ds = id;}
+			if (ds->size == 0) {continue;}
 			DStringArrayAppend(formatfields,id->string,id->size);
 			num->string[0] = extractNumber(DStringArrayGet(format,i));
 			num->string[0] = numberfromid(id,num->string[0],typelist);
 			DStringAppendS(formatfieldsnumber,num->string,1);
-			ds = (DString *)dstring_hash_get(conv_formata,id);
-			if (ds == NULL) {ds = id;}
 			if (num->string[0] == 'R') {
 				DStringSetS(temp,ds->string,ds->size);
 				DStringAppendS(temp,"_ref",4);
@@ -837,20 +874,21 @@ int main(int argc, char *argv[]) {
 	for (i = 0 ; i < info->size ; i ++) {
 		DString *ds;
 		id = extractID(DStringArrayGet(info,i),id);
-		DStringArrayAppend(infofields,id->string,id->size);
-		num->string[0] = extractNumber(DStringArrayGet(info,i));
-		num->string[0] = numberfromid(id,num->string[0],typelist);
-		DStringAppendS(infofieldsnumber,num->string,1);
 		if (id->string[0] == 'D' && id->string[1] == 'P' && id->string[2] == '\0') {
 			fprintf(fo,"\ttotalcoverage");
 		} else {
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
+			if (ds->size == 0) {continue;}
 			if (num->string[0] == 'R') {
 				fprintf(fo,"\t%*.*s_ref",ds->size,ds->size,ds->string);
 			}			
 			fprintf(fo,"\t%*.*s",ds->size,ds->size,ds->string);
 		}
+		DStringArrayAppend(infofields,id->string,id->size);
+		num->string[0] = extractNumber(DStringArrayGet(info,i));
+		num->string[0] = numberfromid(id,num->string[0],typelist);
+		DStringAppendS(infofieldsnumber,num->string,1);
 	}
 	fprintf(fo,"\n");
 	maxtab = 9+samples->size;
@@ -860,9 +898,9 @@ int main(int argc, char *argv[]) {
 	while ((read = DStringGetTab(line,fd,maxtab,linea,1,NULL)) != -1) {
 		linenr++;
 		if (split) {
-			process_line_split(fo,linea);
+			process_line_split(fo,linea,excludename,excludefilter);
 		} else {
-			process_line_unsplit(fo,linea);
+			process_line_unsplit(fo,linea,excludename,excludefilter);
 		}
 	}
 	if (fd != stdin) {fclose(fd);}
