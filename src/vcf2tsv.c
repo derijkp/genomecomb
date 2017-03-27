@@ -736,13 +736,13 @@ int main(int argc, char *argv[]) {
 	if (argc < 4 || (argv[3][0] == '-' && argv[3][1] == '\0')) {
 		fd = stdin;
 	} else {
-		fd = fopen(argv[3],"r");
+		fd = fopen64_or_die(argv[3],"r");
 		if (fd == NULL) {fprintf(stderr,"file %s does not exists\n",argv[2]);exit(1);}
 	}
 	if (argc < 5 || (argv[4][0] == '-' && argv[4][1] == '\0')) {
 		fo = stdout;
 	} else {
-		fo = fopen(argv[4],"w");
+		fo = fopen64_or_die(argv[4],"w");
 	}
 	NODPRINT("==== Reading header ====")
 	DStringGetLine(line, fd);

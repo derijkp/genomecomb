@@ -70,7 +70,7 @@ void lz4close(LZ4res *res);
 void lz4index_write(FILE *findex,off_t pos);
 uint64_t lz4index_read(FILE *findex);
 
-LZ4res *lz4_openfile(char *file);
+LZ4res *lz4_openfile(char *file, int useindex);
 void lz4_seek(LZ4res *res, int64_t pos, int where);
 int lz4_read(LZ4res *res, void *data, uint64_t size);
 int lz4_get(LZ4res *res);

@@ -200,25 +200,25 @@ int main(int argc, char *argv[]) {
 	#
 	DStringSet(filename,fvarsnewfile);
 	DStringAppend(filename,".maxid");
-	f = fopen(filename->string,"w");
+	f = fopen64_or_die(filename->string,"w");
 	fprintf(f,"%s",varid);
 	fclose(f);
 	#
 	DStringSet(filename,fvarsnewfile);
 	DStringAppend(filename,".count");
-	f = fopen(filename->string,"w");
+	f = fopen64_or_die(filename->string,"w");
 	fprintf(f,"%d",fvarsnewcount);
 	fclose(f);
 	#
 	DStringSet(filename,fvarsinsertfile);
 	DStringAppend(filename,".count");
-	f = fopen(filename->string,"w");
+	f = fopen64_or_die(filename->string,"w");
 	fprintf(f,"%d",fvarsinsertcount);
 	fclose(f);
 	#
 	DStringSet(filename,fgenofile);
 	DStringAppend(filename,".count");
-	f = fopen(filename->string,"w");
+	f = fopen64_or_die(filename->string,"w");
 	fprintf(f,"%d",fgenocount);
 	fclose(f);
 	#

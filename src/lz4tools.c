@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include "tools.h"
 #include "lz4tools.h"
 
 unsigned LZ4IO_readLE32 (const void* s) {
@@ -251,13 +253,17 @@ uint64_t lz4index_read(FILE *findex) {
 	return(pos);
 }
 
-LZ4res *lz4_openfile(char *file) {
+LZ4res *lz4_openfile(char *file, int useindex) {
 	LZ4res *res;
 	FILE *finput, *findex;
 	char *indexfile;
-	finput = fopen(file, "r");
-	indexfile = lz4_findindex(file);
-	findex = fopen(indexfile, "r");
+	finput = fopen64_or_die(file, "r");
+	if (useindex) {
+		indexfile = lz4_findindex(file);
+		findex = fopen64_or_die(indexfile, "r");
+	} else {
+		findex = NULL;
+	}
 	res = lz4open(finput,findex);
 	return(res);
 }

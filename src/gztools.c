@@ -45,7 +45,7 @@ GZFILE *gz_open(char *filename) {
 	} else if (type == UNCOMPRESSED) {
 		result->fun = fopen64_or_die(filename,"r");
 	} else if (type == LZ4) {
-		result->lz4 = lz4_openfile(filename);
+		result->lz4 = lz4_openfile(filename,0);
 	} else if (type == RZ || type == GZ) {
 		result->rz = razf_open(filename, "r");
 	}

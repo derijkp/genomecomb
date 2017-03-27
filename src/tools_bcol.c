@@ -850,7 +850,7 @@ BCol *bcol_open(char *bcolfile) {
 	result->f = fopen64(result->file, "r");
 	if (result->f == NULL) {
 		sprintf(result->file+len,".bin.lz4");
-		result->lz4 = lz4_openfile(result->file);
+		result->lz4 = lz4_openfile(result->file,0);
 		if (result->lz4 == NULL) {
 			sprintf(result->file+len,".bin.rz");
 			result->rz = razf_open(result->file, "r");
