@@ -10,11 +10,11 @@ proc make_alternative_compar_job {experiment} {
 		set cfields [cg select -h $dep]
 		set cfields [list_sub $cfields -exclude [list_find -regexp $cfields -sam-]]
 		set fields [list_common {chromosome begin end type ref alt amplicons dbnsfp_SIFT_score dbnsfp_Polyphen2_HDIV_score dbnsfp_Polyphen2_HDIV_pred dbnsfp_Polyphen2_HVAR_score dbnsfp_Polyphen2_HVAR_pred snp138_name 1000gCEU refGene_impact refGene_gene refGene_descr dbnsfp_MutationTaster_score dbnsfp_MutationTaster_pred} $cfields]
-		list_addnew fields {*}$cfields
+		lappend fields *
 		lappend fields {log2_allele_ratio-gatk-crsbwa-*=if(llen(${alleledepth-gatk-crsbwa-*})>1, log10(lindex(${alleledepth-gatk-crsbwa-*},0))/log10(2) - log10(lindex(${alleledepth-gatk-crsbwa-*},1))/log10(2), 0)}
 		set compress [compresspipe $target1]
 		set temp [filetemp_ext $target1]
-		exec cg select -f $fields $dep {*}$compress > $temp
+		exec cg select -rf {*-sam-*} $dep | cg select -f $fields {*}$compress > $temp
 		file rename -force $temp $target1
 		##depivot compar file
 		set compress [compresspipe $target2]
@@ -345,8 +345,8 @@ proc process_mastr_job {args} {
 	#set additional annotation files 
 	set dbfiles {}
 	lappend dbfiles $mastrname.mastr/reg_amplicons-$mastrname.tsv
-	catch {lappend dbfiles [glob $dbdir/extra/*dbnsfp*.tsv]}
-	catch {lappend dbfiles [glob $dbdir/extra/var_*_evs.tsv]}
+	catch {lappend dbfiles [jobglob $dbdir/extra/*dbnsfp*.tsv]}
+	catch {lappend dbfiles [jobglob $dbdir/extra/var_*_evs.tsv]}
 	set addtargets 0
 	set targetsfile [glob -nocomplain *.mastr/stargets-*.tsv]
 	if {[llength $targetsfile]} {
