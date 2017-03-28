@@ -607,7 +607,7 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 					} else if (*genotypecur == '/') {
 						fputc_unlocked(';',fo);
 						genotypecur++;
-					} else {
+					} else if (*genotypecur >= 48 && *genotypecur <= 57) {
 						a1 = atol(genotypecur);
 						if (a1 == 0) {
 							fprintf(fo,"0");
@@ -619,7 +619,9 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 						while (*genotypecur >= 48 && *genotypecur <= 57) {
 							genotypecur++;
 						}
+					} else {
 						fputc_unlocked(*genotypecur,fo);
+						genotypecur++;
 					}
 				}
 				for (i = 1 ; i < formatfields->size; i++) {
@@ -663,12 +665,15 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 					continue;
 				}
 				pos = DStringArraySearch(infofields,cur,curend-cur);
-				/* if (pos == -1) {fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur);} */
 				if (*curend == '=') {curend++;}
 				cur = curend;
 				if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
-				outinfo[pos].string = cur;
-				outinfo[pos].size = curend-cur;
+				if (pos == -1) {
+					/* fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur); */
+				} else {
+					outinfo[pos].string = cur;
+					outinfo[pos].size = curend-cur;
+				}
 				if (*curend == '\0') break;
 				cur = ++curend;
 			}

@@ -173,4 +173,18 @@ test vcf2tsv {cg_vcf2tsv -removefields only info} {
 	exec diff tmp/temp2.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {cg_vcf2tsv -removefields only info, ref} {
+	write_vcf tmp/temp.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001
+		20	14370	.	A	.	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:DP	0/0:48
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	TE	genoqual	coverage	haploqual totalcoverage
+		20	14369	14370	snp	A	.	.	29	PASS	A	A	r	0	0;0	{}	{}	{}	{}	48	{}	14
+	}
+	cg vcf2tsv -split 1 -removefields {AA NS AF DB H2} tmp/temp.vcf tmp/temp.tsv
+	cg select -rc 1 tmp/temp.tsv tmp/temp2.tsv
+	exec diff tmp/temp2.tsv tmp/expected.tsv
+} {}
+
 testsummarize
