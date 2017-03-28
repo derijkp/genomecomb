@@ -16,12 +16,13 @@ proc cg_qjobs {args} {
 		set a(tasks) ""
 		array set a [split $el \t\n]
 		set resultline $a(JB_job_number),$a(tasks)
-		foreach field {JB_job_number tasks state JB_name} {
-			lappend resultline $a($field)
+		foreach field {JB_job_number tasks state JB_submission_time JAT_start_time JAT_prio JB_owner queue_name slots JB_name} {
+			lappend resultline [get a($field) .]
 		}
 		lappend result $resultline
 	}
 	set result [lsort -dictionary -index 0 $result]
+	puts [join {id tasks state submissiontime starttime priority owner queue slots name} \t]
 	foreach line $result {
 		puts [join [lrange $line 1 end] \t]
 	}
