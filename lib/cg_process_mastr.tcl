@@ -290,9 +290,9 @@ proc generate_html_report_job {experiment} {
 	job html_report -deps [list compar/compar-${experiment}.tsv coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv demultiplex_stats.tsv] \
 	-targets {$experiment.html} -vars {experiment} -code {
 		cg select -g sample -gc {sequenced {v} count} $dep compar/summary-compar-${experiment}.tsv
-		set rmd $::genomecombdir/res/mastrreport.Rmd
-		set chartjs $::genomecombdir/res/displayChartHistogram.js
-		exec R -e [string_change {library(rmarkdown); library(stringr); mastrdir=getwd(); local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @rmd@ $rmd @chartjs@ $chartjs]] >@ stdout 2>@ stderr
+		set rmd $::appdir/res/mastrreport.Rmd
+		set chartjs $::appdir/res/displayChartHistogram.js
+		exec [findR] -e [string_change {library(rmarkdown); library(stringr); mastrdir=getwd(); local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @rmd@ $rmd @chartjs@ $chartjs]] >@ stdout 2>@ stderr
 		file rename -force $target.temp $target
 		file delete compar/summary-compar-${experiment}.tsv
 	}

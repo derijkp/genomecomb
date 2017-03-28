@@ -40,6 +40,14 @@ proc gatk {} {
 	return $gatk
 }
 
+proc findR {} {
+	global R
+	if {![info exists R]} {
+		set R [searchpath RCG Rcg R]
+	}
+	return $R
+}
+
 proc bcl2fastq {} {
 	global bcl2fastq
 	if {![info exists bcl2fastq]} {

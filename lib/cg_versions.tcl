@@ -55,6 +55,10 @@ proc version {item {minversion {}}} {
 				regsub {java version "([^"]+)"} $temp {\1 } temp
 				set _versions($item) [join [split $temp \n] {, }]
 			}
+			R {
+				catch {exec [findR] --version} temp
+				set _versions($item) [lindex [split $temp \n] 0]
+			}
 			fastq-mcf {
 				set temp [file_read $::externdir/ea-utils/README]
 				regexp {\(version ([^)]+)\)} $temp temp temp
