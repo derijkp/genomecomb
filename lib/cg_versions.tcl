@@ -42,7 +42,7 @@ proc version {item {minversion {}}} {
 				set _versions($item) [lindex [split $version_picard \n] 0]
 			}
 			fastqc {
-				set temp [exec fastqc -v]
+				catch {exec fastqc -v} temp
 				regsub {^[^0-9]*} $temp {} _versions($item)
 			}
 			java {
