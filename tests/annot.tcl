@@ -419,7 +419,7 @@ test gene_annot {wrong nr fields} {
 		chromosome	begin	end	type	ref	alt	comment
 		chr1	851164	851165	snp	G	C
 	}
-	cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/annot_results.tsv /complgen/refseq/hg18/gene_hg18_refGene.tsv
+	cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/annot_results.tsv $::refseqdir/hg18/gene_hg18_refGene.tsv
 	cg select -sh /dev/null -q {$refGene_impact eq "UTR5"} tmp/annot_results.tsv
 } {chr1	851164	851165	snp	G	C		UTR5	SAMD11	+NM_152486:exon2+1:c.-20G>C}
 
@@ -429,7 +429,7 @@ test gene_annot {hgvs + strand gene coding} {
 	file_write tmp/gene_part_test.tsv [join {chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames} \t]\n[join $dbline \t]\n
 	if 0 {
 		# just here for testing/debugging
-		set genomefile /complgen/refseq/hg18/genome_hg18.ifas
+		set genomefile $::refseqdir/hg18/genome_hg18.ifas
 		catch {genome_close $genomef} ; set genomef [genome_open $genomefile]
 		set dposs {0 1 2 4 6 7 8 9 10 3 12}
 		set upstreamsize 2000
