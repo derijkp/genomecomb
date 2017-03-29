@@ -191,7 +191,7 @@ proc tsv_basicfields {header {num 6} {giveerror 1}} {
 proc tsv_count {tsvfile} {
 	set countfile [indexdir_file $tsvfile vars.tsv.count ok]
 	if {!$ok} {
-		set varsfile [indexdir_file $tsvfile vars.tsv ok]
+		set varsfile [tsv_varsfile $tsvfile]
 		if {$ok} {
 			set count [lindex [cg select -g - $varsfile] end]
 			file_write $countfile $count

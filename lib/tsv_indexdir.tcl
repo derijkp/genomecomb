@@ -1,10 +1,33 @@
-proc indexdir {mainfile} {
+proc indexdirfind {mainfile} {
 	global configdata
 	set file [file_absolute [gzroot $mainfile]]
 	if {[info exists configdata(indexdir,$file)]} {return $configdata(indexdir,$file)}
 	set configdir [configdir]
 	set tail [file tail $file]
-	set dirs [glob -nocomplain $configdir/indexdirs/${tail}_*]
+	set dirs [glob -nocomplain $configdir/indexdirs/${tail}/*]
+	set num 0
+	foreach indexdir $dirs {
+		if {![file exists $indexdir/info.normfilename]} {
+			continue
+		}
+		set normfilename [file_read $indexdir/info.normfilename]
+		if {$normfilename eq $file} {
+			set configdata(indexdir,$file) $indexdir
+			return $indexdir
+		}
+		regexp {[0-9]+$} $indexdir dirnum
+		if {$dirnum > $num} {set num $dirnum}
+	}
+	return {}
+}
+
+proc indexdir {mainfile} {
+	global configdata
+	set file [file_absolute [gzroot $mainfile]]
+	# if {[info exists configdata(indexdir,$file)]} {return $configdata(indexdir,$file)}
+	set configdir [configdir]
+	set tail [file tail $file]
+	set dirs [glob -nocomplain $configdir/indexdirs/${tail}/*]
 	set num 0
 	foreach indexdir $dirs {
 		if {![file exists $indexdir/info.normfilename]} {
@@ -19,7 +42,7 @@ proc indexdir {mainfile} {
 		if {$dirnum > $num} {set num $dirnum}
 	}
 	incr num
-	set indexdir $configdir/indexdirs/${tail}_$num
+	set indexdir $configdir/indexdirs/${tail}/$num
 	file mkdir $indexdir
 	file_write $indexdir/info.normfilename $file
 	if {$file eq $mainfile} {
@@ -32,11 +55,15 @@ proc indexdir {mainfile} {
 
 proc indexdir_clean {} {
 	set configdir [configdir]
-	set dirs [glob -nocomplain $configdir/indexdirs/*]
+	set dirs [glob -nocomplain $configdir/indexdirs/*/*]
 	foreach indexdir $dirs {
 		set normfilename [file_read $indexdir/info.normfilename]
 		if {![file exists $normfilename]} {
 			file delete -force $indexdir
+			set dir [file dir $indexdir]
+			if {[catch {glob $dir/*}]} {
+				file delete $dir
+			}
 		}
 	}
 }
@@ -107,15 +134,20 @@ proc indexdir_file {mainfile indexfile {okVar {}}} {
 	if {$okVar ne ""} {upvar $okVar ok}
 	set ok 1
 	set indexdir [file_absolute [gzroot $mainfile]].index
-	# is a good file existing in either user indexdir or sib indexdir (ok is 1 if we do find one)
-	set userindexdir [indexdir $mainfile]
-	if {[indexdir_cache_check $mainfile $userindexdir $indexfile]} {
-		return $userindexdir/$indexfile
-	}
+	# if a good indexfile exists in indexdir, return it  (ok is 1 if we do find one)
 	if {[indexdir_cache_check $mainfile $indexdir $indexfile]} {
 		return $indexdir/$indexfile
 	}
-	if {$okVar eq ""} {return {}}
+	if {$okVar eq ""} {
+		# try to avoid using userindexdir (slow if it grows too much)
+		# -> prefer making a new one in indexdir
+		# only check for existing indexfile in userindexdir if creating a new indexdir is not allowed
+		set userindexdir [indexdirfind $mainfile]
+		if {$userindexdir ne "" && [indexdir_cache_check $mainfile $userindexdir $indexfile]} {
+			return $userindexdir/$indexfile
+		}
+		return {}
+	}
 	# nothing found, see if we can create in sib indexdir
 	set ok 0
 	if {[file exists $indexdir/$indexfile]} {
@@ -136,7 +168,11 @@ proc indexdir_file {mainfile indexfile {okVar {}}} {
 			return $indexdir/$indexfile
 		}
 	}
-	# sib indexdir does not work, use user local indexdir
+	# sib indexdir does not work, use user local indexdir, create if not found
+	set userindexdir [indexdir $mainfile]
+	if {$userindexdir ne "" && [indexdir_cache_check $mainfile $userindexdir $indexfile]} {
+		return $userindexdir/$indexfile
+	}
 	return $userindexdir/$indexfile
 }
 
