@@ -941,6 +941,13 @@ test gene_annot {multiple dbs} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {} 
 
+test reg_annot {bugcheck overwrite of .temp src} {
+	file copy data/vars1.sft tmp/vars1.tsv.temp
+	exec cg annotate tmp/vars1.tsv.temp tmp/vars1.tsv data/reg_annot.sft
+	exec cg select -rf {list} tmp/vars1.tsv tmp/temp2.tsv
+	exec diff tmp/temp2.tsv data/expected-vars1-reg_annot.sft
+} {}
+
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
 
