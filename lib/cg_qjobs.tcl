@@ -2,8 +2,9 @@ proc cg_qjobs {args} {
 	set basedir [file_absolute [pwd]]
 	set options {}
 	cg_options qjobs args {
-	} {} 0 0	
-	set xml [exec qstat -xml]
+		-u {lappend options -u $value}
+	} {} 0
+	set xml [exec qstat -xml -pri {*}$options]
 	set temp [string range $xml 21 end]
 	regsub -all {[ \t]} $temp {} temp
 	regsub -all {([ \n]*</?(job_|queue_info)[^>]*>[ \n]*)+} $temp # temp
@@ -16,13 +17,13 @@ proc cg_qjobs {args} {
 		set a(tasks) ""
 		array set a [split $el \t\n]
 		set resultline $a(JB_job_number),$a(tasks)
-		foreach field {JB_job_number tasks state JB_submission_time JAT_start_time JAT_prio JB_owner queue_name slots JB_name} {
+		foreach field {JB_job_number tasks state JB_submission_time JAT_start_time JB_priority JAT_prio JB_owner queue_name slots JB_name} {
 			lappend resultline [get a($field) .]
 		}
 		lappend result $resultline
 	}
 	set result [lsort -dictionary -index 0 $result]
-	puts [join {id tasks state submissiontime starttime priority owner queue slots name} \t]
+	puts [join {id tasks state submissiontime starttime priority JAT_prio owner queue slots name} \t]
 	foreach line $result {
 		puts [join [lrange $line 1 end] \t]
 	}

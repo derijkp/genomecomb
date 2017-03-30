@@ -64,6 +64,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(skipjoberrors)]} {
 		set cgjob(skipjoberrors) 0
 	}
+	if {![info exists cgjob(priority)]} {
+		set cgjob(priority) 0
+	}
 	if {![llength $jobargs]} {return {}}
 	set newargs {}
 	set pos 0
@@ -77,6 +80,10 @@ proc job_args {jobargs} {
 			}
 			-d - -distribute - --distribute {
 				job_distribute [lindex $jobargs $pos]
+				incr pos
+			}
+			-dpriority {
+				set cgjob(priority) [lindex $jobargs $pos]
 				incr pos
 			}
 			-silent - --silent {

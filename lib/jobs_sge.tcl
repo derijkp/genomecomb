@@ -12,9 +12,11 @@ proc job_running_sge {jobid} {
 }
 
 proc job_process_sge_submit {job runfile args} {
+	global cgjob
 	set options {}
 	set soft {}
 	set hard {}
+	set priority [get cgjob(priority) 0]
 	set pos 0
 	foreach {opt value} $args {
 		switch -- $opt {
@@ -24,6 +26,9 @@ proc job_process_sge_submit {job runfile args} {
 					lappend options -hold_jid [join $value ,]
 				}
 				incr pos 2
+			}
+			-priority {
+				set priority $value
 			}
 			-cores {
 				if {![info exists cgjob_distr(no_local_pe)]} {
@@ -78,7 +83,7 @@ proc job_process_sge_submit {job runfile args} {
 	catch {file delete $job.finished}
 	catch {file delete $job.out}
 	catch {file delete $job.err}
-	set jnum [exec qsub -N j$name -q all.q -o $job.out -e $job.err {*}$options $runfile]
+	set jnum [exec qsub -N j$name -q all.q -o $job.out -e $job.err -p $priority {*}$options $runfile]
 	regexp {[0-9]+} $jnum jobnum
 	return $jobnum
 }

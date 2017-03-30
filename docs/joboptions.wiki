@@ -35,6 +35,7 @@ This way you can check for errors in subtasks that were run in parallel
 == Options ==
 List of all options supported by job enabled commands:
 ; -d value (--distribute): distribute method, see in description (also -distribute)
+; -dpriority value: (only for sge) run jobs with the given priority (default is 0)
 ; -v number (--verbose): This general option has a big effect on job enabled commands:
 If it is > 0, they will output a lot of info (to stder) on dependencies, jobs started, etc.
 ; -f 0/1 (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)
