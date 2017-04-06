@@ -197,7 +197,7 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	}
 	job mastrdesign-reg-inner-$mastrname \
 	-deps {amplicons-$mastrname.tsv} \
-	-targets {reg-inner-$mastrname.tsv reg-inner-$mastrname.bed reg-inner-joined-$mastrname.tsv reg-inner-joined-$mastrname.bed} \
+	-targets {reg-inner-$mastrname.tsv reg-inner-$mastrname.bed reg-inner-joined-$mastrname.tsv reg-inner-joined-$mastrname.bed reg_amplicons-$mastrname.tsv} \
 	-vars {dbdir mastrname} -code {
 		set ampliconsfile $dep
 		set dir [file dir $ampliconsfile]
