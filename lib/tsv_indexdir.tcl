@@ -57,7 +57,11 @@ proc indexdir_clean {} {
 	set configdir [configdir]
 	set dirs [glob -nocomplain $configdir/indexdirs/*/*]
 	foreach indexdir $dirs {
-		set normfilename [file_read $indexdir/info.normfilename]
+		if {[file exists $indexdir/info.normfilename]} {
+			set normfilename [file_read $indexdir/info.normfilename]
+		} else {
+			set normfilename {}
+		}
 		if {![file exists $normfilename]} {
 			file delete -force $indexdir
 			set dir [file dir $indexdir]
