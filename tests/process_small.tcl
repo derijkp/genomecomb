@@ -10,7 +10,7 @@ set dopts [get argv ""]
 # =====
 
 test process_small {mastr mastr_mx2} {
-	cd $::bigtestdir	
+	cd $::bigtestdir
 	file delete -force tmp/mastr_mx2
 #	file copy ori/mastr_mx2 tmp/
 	file mkdir tmp/mastr_mx2
@@ -49,6 +49,7 @@ test process_small {process_sample exome yri mx2} {
 	} {
 		file mkdir tmp/one_exome_yri_mx2/samples/$sample/fastq
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/one_exome_yri_mx2/samples/$sample/fastq
+		mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/one_exome_yri_mx2/samples/$sample/reg_hg19_targets.tsv
 	}
 	cg process_sample --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/one_exome_yri_mx2/samples/NA19240mx2 2>@ stderr >@ stdout
 	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir refseqtest/hg19 tmp/one_exome_yri_mx2/samples/NA19240mx2 | less -S
@@ -70,6 +71,7 @@ test process_small {process_illumina exomes yri mx2} {
 	} {
 		file mkdir tmp/exomes_yri_mx2/samples/$sample/fastq
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_yri_mx2/samples/$sample/fastq
+		mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/one_exome_yri_mx2/samples/$sample/reg_hg19_targets.tsv
 	}
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
 	cg process_illumina --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_mx2 2>@ stderr >@ stdout
