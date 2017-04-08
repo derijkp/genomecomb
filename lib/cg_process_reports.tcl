@@ -3,6 +3,15 @@ proc targetfile_job {sampledir {dbdir {}}} {
 	set dbdir [dbdir $dbdir]
 	set ref [dbdir_ref $dbdir]
 	set targetfile $sampledir/reg_${ref}_targets.tsv
+	if {[file exists $targetfile]} {
+		return $targetfile
+	}
+	set link [gzlink $targetfile]
+	if {[file exists $link]} {
+		file delete $targetfile
+		gzmklink $link $targetfile
+		return [gzfile $targetfile]
+	}
 	if {[jobfileexists $targetfile]} {
 		return $targetfile
 	}

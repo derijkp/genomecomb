@@ -269,3 +269,13 @@ proc mklink_job {dep target} {
 proc file_timestamp {file} {
 	clock format [file mtime $file] -format "%Y-%m-%d_%H_%M_%S"
 }
+
+proc getlink {file} {
+	file_absolute [file join [file dir $file] [file link $file]]
+}
+
+proc gzlink {file} {
+	if {[file exists $file]} {return $file}
+	if {[catch {glob $file}]} {return ""}
+	gzfile [getlink $file]
+}
