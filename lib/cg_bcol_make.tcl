@@ -136,7 +136,7 @@ proc cg_bcol_make {args} {
 	}
 	set tempfile [filetemp $bcolfile]
 	if {$compress} {
-		set compresspipe "| lz4c -$compress -c "
+		set compresspipe [compresspipe .lz4 $compress]
 		set tempbinfile $tempfile.bin.lz4
 	} else {
 		set compresspipe ""

@@ -4,7 +4,7 @@ proc bam_chrs {bamfile} {
 	return $result
 }
 
-proc bam2reg_job {bamfile {mincoverage 5} {compress 0}} {
+proc bam2reg_job {bamfile {mincoverage 5} {compress 1}} {
 	upvar job_logdir job_logdir
 	set bamfile [file_absolute $bamfile]
 	set pre [lindex [split $bamfile -] 0]
@@ -14,10 +14,12 @@ proc bam2reg_job {bamfile {mincoverage 5} {compress 0}} {
 #	job bam2coverage-$root -deps $bamfile -targets {$dir/coverage-$root $dir/coverage-$root/coverage-$root.FINISHED} -vars {root} -code {
 #		cg bam2coverage $dep $target/coverage-$root
 #	}
-	set target $dir/sreg-cov$mincoverage-$root.tsv.lz4
+	set target $dir/sreg-cov$mincoverage-$root.tsv
+	if {$compress} {append target .lz4}
 	job cov$mincoverage-$root -optional 1 -deps $bamfile -targets $target -vars {mincoverage compress} -code {
+		set compress [compresspipe $target]
 		set temptarget [filetemp $target]
-		exec cg regextract -min $mincoverage $dep | lz4c -9 > $temptarget
+		exec cg regextract -min $mincoverage $dep {*}$compress > $temptarget
 		file rename -force $temptarget $target
 		cg lz4index $target
 	}

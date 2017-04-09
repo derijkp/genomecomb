@@ -151,11 +151,7 @@ proc cg_download_ucsc {args} {
 	set fields [list_common {chrom chromosome begin start end stop name score strand thickStart thickEnd itemRgb blockCount blockSizes blockStarts} $header]
 	lappend fields {*}[list_lremove $header $fields]
 	putslog "Writing $temp/$resulttail"
-	if {[file extension $resulttail] eq ".lz4"} {
-		exec cg select -s - -f $fields $temp/u_$dbname.tsv | lz4c -12 > $temp/$resulttail
-	} else {
-		cg select -s - -f $fields $temp/u_$dbname.tsv $temp/$resulttail
-	}
+	exec cg select -s - -f $fields $temp/u_$dbname.tsv {*}[compresspipe $resulttail 12] > $temp/$resulttail
 	# move to result
 	putslog "move results to $resultfile and $resultfile.info"
 	file rename -force $temp/$resulttail $resultfile

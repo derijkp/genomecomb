@@ -129,7 +129,7 @@ proc process_sample_cgi_job {workdir split} {
 		set svarfile $dep
 		putslog "Extract $target from $svarfile"
 		cg select -q {$varType != "no-call" && $varType != "no-ref"} -f "chromosome begin end" $svarfile $target.temp
-		exec cg regjoin $target.temp | lz4c -9 > $target.temp2
+		exec cg regjoin $target.temp {*}[compresspipe .lz4 9] > $target.temp2
 		file rename -force $target.temp2 $target
 		file delete $target.temp
 	}

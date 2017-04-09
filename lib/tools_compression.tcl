@@ -156,10 +156,10 @@ proc gzcat {filename} {
 	}
 }
 
-proc compresspipe {target} {
+proc compresspipe {target {compression 9}} {
 	switch [file extension $target] {
 		.rz {return "| razip -c"}
-		.lz4 {return "| lz4c -9"}
+		.lz4 {return "| lz4c -q -B5 -c -$compression"}
 		.gz - .bgz {return "| bgzip -c"}
 		.bz2 {return "| bzip2 -c"}
 		default {return {}}
