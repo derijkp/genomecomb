@@ -419,7 +419,7 @@ test gene_annot {wrong nr fields} {
 		chromosome	begin	end	type	ref	alt	comment
 		chr1	851164	851165	snp	G	C
 	}
-	cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/annot_results.tsv $::refseqdir/hg18/gene_hg18_refGene.tsv
+	cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/annot_results.tsv $::refseqdir/hg18/gene_hg18_refGene.tsv.lz4
 	cg select -sh /dev/null -q {$refGene_impact eq "UTR5"} tmp/annot_results.tsv
 } {chr1	851164	851165	snp	G	C		UTR5	SAMD11	+NM_152486:exon2+1:c.-20G>C}
 

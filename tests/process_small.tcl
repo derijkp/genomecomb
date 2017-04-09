@@ -31,7 +31,7 @@ test process_small {mastr mastr_mx2} {
 	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr tmp/mastr_mx2 refseqtest/hg19
 	# check vs expected
 	cg tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai \
-		-x colinfo -x mastr_mx2.html \
+		-x colinfo -x mastr_mx2.html -x *.lz4i \
 		tmp/mastr_mx2 expected/mastr_mx2
 	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
 		checkdiff -y --suppress-common-lines tmp/mastr_mx2/$sample/crsbwa-$sample.hsmetrics expected/mastr_mx2/$sample/crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
@@ -54,8 +54,8 @@ test process_small {process_sample exome yri mx2} {
 	cg process_sample --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/one_exome_yri_mx2/samples/NA19240mx2 2>@ stderr >@ stdout
 	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir refseqtest/hg19 tmp/one_exome_yri_mx2/samples/NA19240mx2 | less -S
 	# check vs expected
-	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x colinfo -x *_fastqc \
-		-x *bam.dupmetrics -x info_analysis.tsv \
+	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x *_fastqc \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i \
 		tmp/one_exome_yri_mx2/samples/NA19240mx2 expected/one_exome_yri_mx2/samples/NA19240mx2
 	checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics expected/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT"
 	checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv expected//one_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv | grep -v -E {version_os}
@@ -71,7 +71,7 @@ test process_small {process_illumina exomes yri mx2} {
 	} {
 		file mkdir tmp/exomes_yri_mx2/samples/$sample/fastq
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_yri_mx2/samples/$sample/fastq
-		mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/one_exome_yri_mx2/samples/$sample/reg_hg19_targets.tsv
+		mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/exomes_yri_mx2/samples/$sample/reg_hg19_targets.tsv
 	}
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
 	cg process_illumina --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_mx2 2>@ stderr >@ stdout
