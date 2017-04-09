@@ -53,12 +53,13 @@ proc var_gatk_job {args} {
 	set opts {}
 	set split 0
 	set deps {}
+	set regionfile {}
 	cg_options var_sam args {
 		-L {
 			lappend deps $value
 		}
 		-bed {
-			lappend opts -L $value
+			set regionfile $value
 			lappend deps $value
 		}
 		-pre {
@@ -81,7 +82,11 @@ proc var_gatk_job {args} {
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set deps [list $file $gatkrefseq $file.bai {*}$deps]
 	job ${pre}varall-gatk-$root -deps $deps \
-	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk opts} -code {
+	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk opts regionfile gatkrefseq refseq} -code {
+		if {$regionfile ne ""} {
+			set bedfile [tempbed $regionfile $refseq]
+			lappend opts -L $bedfile
+		}
 		exec [gatkjava] -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
 			{*}$opts -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 10.0 -dcov 1000 \
@@ -101,7 +106,11 @@ proc var_gatk_job {args} {
 	# was predicted in the varall
 	job ${pre}delvar-gatk-$root -deps $deps \
 	-targets ${pre}delvar-gatk-$root.vcf -skip {${pre}delvar-gatk-$root.tsv} \
-	-skip {${pre}var-gatk-$root.tsv} -vars {gatk opts} -code {
+	-skip {${pre}var-gatk-$root.tsv} -vars {gatk opts regionfile gatkrefseq refseq} -code {
+		if {$regionfile ne ""} {
+			set bedfile [tempbed $regionfile $refseq]
+			lappend opts -L $bedfile
+		}
 		exec [gatkjava] -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
 			{*}$opts -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 10.0 -dcov 1000 \

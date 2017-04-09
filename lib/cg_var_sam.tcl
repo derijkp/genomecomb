@@ -26,7 +26,7 @@ proc var_sam_job {args} {
 			lappend deps $value
 		}
 		-bed {
-			lappend opts -l $value
+			set regionfile $value
 			lappend deps $value
 		}
 		-pre {
@@ -53,7 +53,11 @@ proc var_sam_job {args} {
 	}
 	set deps [list $file $refseq $refseq.fai {*}$deps]
 	job ${pre}varall-sam-$root -deps $deps -targets {${pre}varall-sam-$root.vcf} \
-		-vars {refseq opts BQ} -skip ${pre}varall-sam-$root.tsv -code {
+		-vars {refseq opts BQ regionfile} -skip ${pre}varall-sam-$root.tsv -code {
+		if {$regionfile ne ""} {
+			set bedfile [tempbed $regionfile $refseq]
+			lappend opts -l $bedfile
+		}
 		if {[catch {version samtools 1}]} {
 			exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
 		} else {

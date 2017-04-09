@@ -578,28 +578,24 @@ proc process_sample_job {args} {
 		map_${aligner}_job $bamfile $refseq $files $sample $paired -skips [list -skip $resultbamfile]
 		# extract regions with coverage >= 5 (for cleaning)
 		set cov5reg [bam2reg_job $destdir/map-${aligner}-$sample.bam 5]
-		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
-		lappend cleanupfiles $cov5bed
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job $destdir/map-${aligner}-$sample.bam $refseq $sample \
-			-removeduplicates 1 -realign $realign -bed $cov5bed -cleanup $cleanup]
+			-removeduplicates 1 -realign $realign -bed $cov5reg -cleanup $cleanup]
 	}
 	# varcaller from bams
 	foreach cleanedbam [jobglob $destdir/map-*.bam] {
 		# make 5x coverage regfile from cleanedbam
 		set cov5reg [bam2reg_job $cleanedbam 5]
-		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
-		lappend cleanupfiles $cov5bed
 		# make 20x coverage regfile
 		bam2reg_job $cleanedbam 20 1
 		if {"sam" in $varcallers} {
 			# samtools variant calling on map-rds${aligner}
-			lappend cleanupdeps [var_sam_job -bed $cov5bed -split $split -BQ $samBQ $cleanedbam $refseq]
+			lappend cleanupdeps [var_sam_job -bed $cov5reg -split $split -BQ $samBQ $cleanedbam $refseq]
 			lappend todo sam-rds${aligner}-$sample
 		}
 		if {"gatk" in $varcallers} {
 			# gatk variant calling on map-rds${aligner}
-			lappend cleanupdeps [var_gatk_job -bed $cov5bed -split $split $cleanedbam $refseq]
+			lappend cleanupdeps [var_gatk_job -bed $cov5reg -split $split $cleanedbam $refseq]
 			lappend todo gatk-rds${aligner}-$sample
 		}
 	}

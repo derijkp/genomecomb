@@ -9,7 +9,9 @@ proc bam_clean_job {args} {
 		{bed {}}
 		args
 	} $args
+	set regionfile {}
 	if {$bed ne ""} {
+		set regionfile $bed
 		lappend realigndeps $bed
 	}
 	if {[llength $args]} {
@@ -17,15 +19,6 @@ proc bam_clean_job {args} {
 	}
 	set gatk [gatk]
 	upvar job_logdir job_logdir
-	if {$realign eq "srma"} {
-		foreach value $realigndeps {
-			lappend realignopts RANGES=$value
-		}
-	} else {
-		foreach value $realigndeps {
-			lappend realignopts -L $value
-		}
-	}
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
 	set pre [lindex [split $file -] 0]
@@ -85,11 +78,15 @@ proc bam_clean_job {args} {
 	if {$realign ne "0"} {
 		list_pop skips 0; list_pop skips 0;
 		# realign around indels
-		set deps [list $dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict $gatkrefseq {*}$realigndeps]
+		set deps [list $dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict $gatkrefseq $refseq {*}$realigndeps]
 		if {$realign eq "srma"} {
 			set srma [srma]
 			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
-			-vars {gatkrefseq srma pre realignopts} {*}$skips -code {
+			-vars {gatkrefseq refseq srma pre realignopts regionfile} {*}$skips -code {
+				if {$regionfile ne ""} {
+					set bedfile [tempbed $regionfile $refseq]
+					lappend realignopts RANGES=$bedfile
+				}
 				exec java -jar $srma I=$dep O=$target.temp R=$gatkrefseq {*}$realignopts 2>@ stderr >@ stdout
 				catch {file rename -force $target.temp.bai $target.bai}
 				catch {file delete $target.intervals}
@@ -97,7 +94,11 @@ proc bam_clean_job {args} {
 			}
 		} else {
 			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
-			-vars {gatkrefseq gatk pre realignopts} {*}$skips -code {
+			-vars {gatkrefseq refseq gatk pre realignopts regionfile} {*}$skips -code {
+				if {$regionfile ne ""} {
+					set bedfile [tempbed $regionfile $refseq]
+					lappend realignopts -L $bedfile
+				}
 				exec [gatkjava] -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
 				if {[loc_compare [version gatk] 2.7] >= 0} {
 					set extra {--filter_bases_not_stored}

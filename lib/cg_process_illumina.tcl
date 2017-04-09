@@ -140,23 +140,19 @@ proc process_illumina {args} {
 		}
 		# extract regions with coverage >= 5 (for cleaning)
 		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
-		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
-		lappend cleanupfiles $cov5bed
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample \
-			-removeduplicates 1 -realign $realign -bed $cov5bed -cleanup $cleanup]
+			-removeduplicates 1 -realign $realign -bed $cov5reg -cleanup $cleanup]
 		# make 5x coverage regfile from cleanedbam
 		set cov5reg [bam2reg_job $cleanedbam 5]
-		set cov5bed [gatkworkaround_tsv2bed_job $cov5reg $refseq]
-		lappend cleanupfiles $cov5bed
 		# make 20x coverage regfile
 		bam2reg_job $cleanedbam 20 1
 		#calculate reports
 		# gatk variant calling on map-rdsbwa
-		var_gatk_job -bed $cov5bed -split $split $cleanedbam $refseq
+		var_gatk_job -bed $cov5reg -split $split $cleanedbam $refseq
 		lappend todo gatk-rdsbwa-$sample
 		# samtools variant calling on map-rdsbwa
-		var_sam_job -bed $cov5bed -split $split $cleanedbam $refseq
+		var_sam_job -bed $cov5reg -split $split $cleanedbam $refseq
 		lappend todo sam-rdsbwa-$sample
 		if {$cleanup} {
 			# clean up no longer needed intermediate files

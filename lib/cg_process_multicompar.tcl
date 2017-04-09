@@ -46,6 +46,7 @@ proc process_multicompar_job {args} {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
 	} {destdir dbdir todo} 1 3
+	set dbfiles [list_remove [list_remdup $dbfiles] {}]
 	set destdir [file_absolute $destdir]
 	file mkdir $destdir/compar
 	if {![info exists experiment]} {

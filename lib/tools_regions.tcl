@@ -42,3 +42,15 @@ proc reg_compare {loc1 loc2} {
 	return 0
 }
 
+proc tempbed {regionfile {reffile {}}} {
+	if {[file extension $regionfile] eq ".bed"} {
+		set bedfile $regionfile
+	} elseif {$reffile eq ""} {
+		set bedfile [file root [tempfile]].bed
+		tsv2bed $regionfile $bedfile
+	} else {
+		set bedfile [file root [tempfile]].bed
+		gatkworkaround_tsv2bed $regionfile $reffile $bedfile
+	}
+	return $bedfile
+}
