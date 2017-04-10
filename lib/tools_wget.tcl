@@ -9,7 +9,7 @@ proc wgetfile {url {resultfile {}} {force 0}} {
 	regsub -all {[:/]} $url _ temp
 	set webcachename $webcache/$temp
 	if {$webcache ne "" && [file exists $webcachename]} {
-		putslog "Getting from webcache: $tail$cachesuffix"
+		putslog "Getting from webcache: $tail"
 		if {[catch {hardlink $webcachename $resultfile.temp}]} {
 			file copy $webcachename $resultfile.temp
 		}
