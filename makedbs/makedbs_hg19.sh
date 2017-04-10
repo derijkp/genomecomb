@@ -359,7 +359,7 @@ foreach file [glob -nocomplain ../hg19-local/*] {
 job reg_exome_targetseq -targets {extra/reg_hg19_exome_targetseq.tsv} -code {
 	cd extra
 	wgetfile http://tools.invitrogen.com/content/sfs/manuals/TargetSeq_exome_named_targets_hg19.bed
-	cg bed2sft TargetSeq_exome_named_targets_hg19.bed ureg_hg19_exome_targetseq.tsv
+	cg bed2tsv TargetSeq_exome_named_targets_hg19.bed ureg_hg19_exome_targetseq.tsv
 	cg select -s {chromosome begin end} ureg_hg19_exome_targetseq.tsv sreg_hg19_exome_targetseq.tsv
 	cg regcollapse -o reg_hg19_exome_targetseq.tsv sreg_hg19_exome_targetseq.tsv
 	file delete TargetSeq_exome_named_targets_hg19.bed sreg_hg19_exome_targetseq.tsv ureg_hg19_exome_targetseq.tsv

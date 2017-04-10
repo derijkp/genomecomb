@@ -4,8 +4,8 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
-test bed2sft {bed2sft} {
-	exec cg bed2sft data/sample.bed
+test bed2tsv {bed2tsv} {
+	exec cg bed2tsv data/sample.bed
 } {#browser position chr7:127471196-127495720
 #browser hide all
 #track name="ColorByStrandDemo" description="Color by strand demonstration" visibility=2 colorByStrand="255,0,0 0,0,255"

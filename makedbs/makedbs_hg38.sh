@@ -343,7 +343,7 @@ if 0 {
 # targetseq exome
 job reg_exome_targetseq -targets {extra/reg_hg19_exome_targetseq.tsv} -code {
 	wgetfile http://tools.invitrogen.com/content/sfs/manuals/TargetSeq_exome_named_targets_hg19.bed $target.bed
-	cg bed2sft $target.bed $target.temp
+	cg bed2tsv $target.bed $target.temp
 	cg select -s {chromosome begin end} $target.temp $target.temp2
 	cg regcollapse -o reg_hg19_exome_targetseq.tsv $target.temp2
 	file delete $target.bed $target.temp $target.temp2

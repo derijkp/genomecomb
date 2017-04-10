@@ -6,7 +6,7 @@
 
 package require Extral
 
-proc cg_bed2sft {args} {
+proc cg_bed2tsv {args} {
 	if {([llength $args] < 0) || ([llength $args] > 2)} {
 		errorformat bed2sft
 	}
@@ -39,4 +39,8 @@ proc cg_bed2sft {args} {
 	fcopy $f $o
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {gzclose $f}}
+}
+
+proc cg_bed2sft {args} {
+	cg_bed2tsv {*}$args
 }
