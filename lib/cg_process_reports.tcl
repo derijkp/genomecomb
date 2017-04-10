@@ -2,10 +2,11 @@ proc targetfile_job {sampledir {dbdir {}}} {
 	upvar job_logdir job_logdir
 	set dbdir [dbdir $dbdir]
 	set ref [dbdir_ref $dbdir]
-	set targetfile $sampledir/reg_${ref}_targets.tsv
+	set targetfile [gzfile $sampledir/reg_${ref}_targets.tsv]
 	if {[file exists $targetfile]} {
 		return $targetfile
 	}
+	set targetfile $sampledir/reg_${ref}_targets.tsv
 	set link [gzlink $targetfile]
 	if {[file exists $link]} {
 		file delete $targetfile
