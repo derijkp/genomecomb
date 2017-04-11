@@ -108,8 +108,8 @@ int main(int argc, char *argv[]) {
 			curstartpos = table[tablepos].pos;
 			comp = DStringLocCompare(chromosome2,chromosome1);
 		}
-		if (tablepos >= tablesize || (comp > 0) || ((comp == 0) && ((end1 < start2) || (end1 == start2 && start1 != end1)))) {
-			NODPRINT("no overlap")
+		if (tablepos >= tablesize || (comp > 0) || (alt1pos != -1 && end1 - start1 != 1) || ((comp == 0) && ((end1 < start2) || (end1 == start2 && start1 != end1)))) {
+			NODPRINT("no overlap or ref != 1")
 			if (alt1pos == -1) {
 				fprintf(stdout,"%s\n",defaultvalue->string);
 			} else {

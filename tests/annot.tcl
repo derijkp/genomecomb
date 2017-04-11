@@ -833,6 +833,7 @@ test bcol_var_annot {basic uncompressed} {
 		chr1	1	2	snp	T
 		chr1	4	5	snp	T
 		chr1	10	20	snp	T
+		chr1	10	20	sub	AT
 		chr2	22	23	snp	G
 		chr2	26	27	snp	A
 		chr2	29	30	snp	C
@@ -846,6 +847,7 @@ test bcol_var_annot {basic uncompressed} {
 		chr1	1	2	snp	T	2.1
 		chr1	4	5	snp	T	6.1
 		chr1	10	20	snp	T	0
+		chr1	10	20	sub	AT	0
 		chr2	22	23	snp	G	0
 		chr2	26	27	snp	A	0
 		chr2	29	30	snp	C	3000000

@@ -40,7 +40,7 @@ proc annotatebcolvar {file dbfile name annotfile} {
 	set header [tsv_open $f]
 	close $f
 	set poss [tsv_basicfields $header 6 0]
-	set poss [list_sub $poss {0 1 2 5}]
+	set poss [list_sub $poss {0 1 2 3 5}]
 	if {[inlist $poss -1]} {
 		error "Cannot annotate $file using $dbfile: wrong fields, must contain fields chromsome,begin,end,alt"
 	}
@@ -58,9 +58,9 @@ proc annotatebcolvar {file dbfile name annotfile} {
 	if {[gziscompressed $file]} {
 		error "bcol_annot not supported for compressed files"
 	}
-	# puts "bcol_annot $file [lrange $poss 0 2] -1 [lindex $poss 3] $dbfile -1"
+	 puts "bcol_annot $file $poss $dbfile -1"
 	if {[catch {
-		exec bcol_annot $file {*}[lrange $poss 0 2] -1 [lindex $poss 3] $dbfile -1 >> $annotfile.temp 2>@ stderr
+		exec bcol_annot $file {*}$poss $dbfile -1 >> $annotfile.temp 2>@ stderr
 	} error]} {
 		if {$error ne "child killed: write on pipe with no readers"} {error $error}
 	}
