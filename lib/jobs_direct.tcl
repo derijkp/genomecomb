@@ -58,12 +58,16 @@ proc job_process_direct {} {
 		set job [job_logname $job_logdir $jobname]
 		# check foreach deps, skip if not fullfilled
 		# add all resulting (foreach) jobs in front of the queue, and go back to running the queue
+		set submittime [timestamp]
 		if {[llength $foreach]} {
 			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time timefile $checkcompressed} fadeps]} {
 				if {![regexp {^missing dependency} $fadeps]} {
-					job_log $job "error in foreach dependencies for $jobname: $fadeps"
+					set errormsg "error in foreach dependencies for $jobname: $fadeps"
+					job_log $job $errormsg
+					job_logfile_add $job error $ftargets $errormsg $submittime
 				} else {
 					job_log $job "$fadeps"
+					job_logfile_add $job error $ftargets $fadeps $submittime
 				}
 				job_log $job "-----> job $jobname failed"
 				job_logclose $job
@@ -93,6 +97,7 @@ proc job_process_direct {} {
 			}
 			if {$optional || $cgjob(skipjoberrors)} {
 				job_log $job "-----> job $jobname skipped: dependencies not found"
+				job_logfile_add $job skipped $ftargets "dependencies not found" $submittime
 				job_logclose $job
 				continue
 			} else {
@@ -115,10 +120,12 @@ proc job_process_direct {} {
 			}
 			if {$doskip} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
+				job_logfile_add $job skipped $ftargets "skip targets ($skip) already completed or running" $submittime
 				continue
 			}
 		}
 		# check targets, if already done or running, skip
+		# =============
 		set run 0
 		if {$ftargets ne ""} {
 			set targets [job_targetsreplace $ftargets $targetvars]
@@ -146,12 +153,18 @@ proc job_process_direct {} {
 		}
 		if {!$run} {
 			job_log $job "skipping $jobname: targets already completed or running"
+			job_logfile_add $job skipped $targets "targets already completed or running" $submittime
 			job_logclose $job
 			continue
 		}
-		if {$joberror ne ""} {error $joberror}
+		if {$joberror ne ""} {
+			job_logfile_add $job error $ftargets $joberror $submittime
+			error $joberror
+		}
 		job_log $job "-------------------- running $jobname --------------------"
+		set starttime [timestamp]
 		# run code
+		# ========
 		set cmd "proc job_run {} \{\n"
 		append cmd [job_generate_code $job $pwd $adeps $targetvars $targets $ptargets $checkcompressed $code]
 		append cmd \}
@@ -166,21 +179,27 @@ proc job_process_direct {} {
 		set error [catch {job_run} result]
 		stderr2file {}
 		if {$error} {
-			file_add $job.err $result\n$::errorInfo
+			set errormessage $result\n$::errorInfo
+			file_add $job.err $errormessage
 			if ($cgjob(skipjoberrors)) {
 				puts stderr $result
 			} else {
 				error $result $::errorInfo
 			}
 		}
+		set endtime [timestamp]
+		# log results
+		# ===========
 		if {![job_file_exists $job.finished]} {
 			job_log $job "$jobname failed: did not finish\nerror:\n$result\n"
+			job_logfile_add $job error $targets "did not finish\nerror:\n$result" $submittime $starttime $endtime
 		} elseif {$error} {
 			file delete $job.finished
-			job_log $job "$jobname failed: error processing job\nerror:\n$result\n"
+			job_logfile_add $job error $targets $errormessage $submittime $starttime $endtime
 		} else {
 			job_log $job "-------------------- end $jobname --------------------"
 			job_log $job "$jobname finished successfully\n"
+			job_logfile_add $job finished $targets "" $submittime $starttime $endtime
 		}
 		job_logclose $job
 	}
@@ -188,4 +207,5 @@ proc job_process_direct {} {
 }
 
 proc job_process_direct_wait {} {
+	job_logfile_close
 }

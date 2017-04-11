@@ -37,7 +37,10 @@ proc opensqlite3 {dbfile query} {
 }
 
 proc timestamp {} {
-	clock format [clock seconds] -format "%Y-%m-%d %H:%M:%S"
+	set milliseconds [clock milliseconds]
+	set ms [expr {$milliseconds % 1000}]
+	set seconds [expr {$milliseconds / 1000}]
+	return [clock format $seconds -format "%Y-%m-%d %H:%M:%S"].$ms
 }
 
 proc chrindexseek {file f chr} {

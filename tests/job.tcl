@@ -7,19 +7,31 @@ set keepdir [pwd]
 
 # use these for trying out individual tests
 set testname "-d direct"
-proc test_job_init {args} {uplevel job_init -skipjoberrors 1 {*}$args}
+proc test_job_init {args} {
+	uplevel job_init -skipjoberrors 1 {*}$args
+	job_logfile log
+}
 proc gridwait {} {}
 if 0 {
 	set testname "-d direct"
-	proc test_job_init {args} {uplevel job_init -skipjoberrors 1 {*}$args}
+	proc test_job_init {args} {
+		uplevel job_init -skipjoberrors 1 {*}$args
+		job_logfile log
+	}
 	proc gridwait {} {}
 
 	set testname "-d 30"
-	proc test_job_init {args} {uplevel job_init -d 30 {*}$args}
+	proc test_job_init {args} {
+		uplevel job_init -d 30 {*}$args
+		job_logfile log
+	}
 	proc gridwait {} {}
 
 	set testname "-d sge"
-	proc test_job_init {args} {uplevel job_init -d sge {*}$args}
+	proc test_job_init {args} {
+		uplevel job_init -d sge {*}$args
+		job_logfile log
+	}
 	proc gridwait {} {
 		while 1 {
 			after 500
@@ -264,7 +276,7 @@ if {$testname eq "-d sge"} {
 	proc gridwait {} {}
 }
 
-proc test_job_init {args} $initcode
+proc test_job_init {args} "$initcode\njob_logfile log"
 
 test job "basic chain $testname" {
 	cd $::testdir
@@ -285,10 +297,10 @@ test job "basic chain $testname" {
 	set result [list [lsort -dict [glob *]] [file_read test3.txt]]
 	cd $::testdir
 	set result
-} {{log_jobs test1.txt test2.txt test3.txt} {test1
+} {{log.*.finished log_jobs test1.txt test2.txt test3.txt} {test1
 test2
 test3
-}}
+}} match
 
 test job "foreach $testname" {
 	cd $::testdir
@@ -306,8 +318,8 @@ test job "foreach $testname" {
 	set result [list [lsort -dict [glob *]] [file_read rtest1.txt]]
 	cd $::testdir
 	set result
-} {{log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {rtest1
-}}
+} {{log.*.finished log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {rtest1
+}} match
 
 test job "chained foreach $testname" {
 	cd $::testdir
@@ -331,8 +343,8 @@ test job "chained foreach $testname" {
 	set result [list [lsort -dict [glob *]] [file_read final1.txt]]
 	cd $::testdir
 	set result
-} {{final1.txt log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
-}}
+} {{final1.txt log.*.finished log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
+}} match
 
 test job "chained foreach with glob match $testname" {
 	cd $::testdir
@@ -356,8 +368,8 @@ test job "chained foreach with glob match $testname" {
 	set result [list [lsort -dict [glob *]] [file_read final1.txt]]
 	cd $::testdir
 	set result
-} {{final1.txt log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
-}}
+} {{final1.txt log.*.finished log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
+}} match
 
 test job "chained jobglob $testname" {
 	cd $::testdir
@@ -385,8 +397,8 @@ test job "chained jobglob $testname" {
 	set result [list [lsort -dict [glob *]] [file_read final1.txt]]
 	cd $::testdir
 	set result
-} {{final1.txt log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
-}}
+} {{final1.txt log.*.finished log_jobs rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
+}} match
 
 test job "basic chain --force 0 $testname" {
 	cd $::testdir
@@ -410,8 +422,8 @@ test job "basic chain --force 0 $testname" {
 	set result [list [lsort -dict [glob *]] [file_read test3.txt]]
 	cd $::testdir
 	set result
-} {{log_jobs test1.txt test2.txt test3.txt} {error3
-}}
+} {{log.*.finished log_jobs test1.txt test2.txt test3.txt} {error3
+}} match
 
 test job "basic chain --force 1 $testname" {
 	cd $::testdir
@@ -435,12 +447,12 @@ test job "basic chain --force 1 $testname" {
 	set result [list [lsort -dict [glob *]] [file_read test2.txt] [file_read test3.txt]]
 	cd $::testdir
 	set result
-} {{log_jobs test1.txt test2.txt test3.txt} {test1
+} {{log.*.finished log_jobs test1.txt test2.txt test3.txt} {test1
 test2
 } {test1
 test2
 test3
-}}
+}} match
 
 test job "time chain $testname" {
 	cd $::testdir
@@ -465,11 +477,11 @@ test job "time chain $testname" {
 	set result [list [lsort -dict [glob *]] [file_read test2.txt] [file_read test3.txt] [file_read test3.txt.old]]
 	cd $::testdir
 	set result
-} {{log_jobs test1.txt test2.txt test3.txt test3.txt.old} {error2
+} {{log.*.finished log_jobs test1.txt test2.txt test3.txt test3.txt.old} {error2
 } {error2
 test3
 } {error3
-}}
+}} match
 
 test job "missing dep, -optional 1 $testname" {
 	cd $::testdir
@@ -489,9 +501,9 @@ test job "missing dep, -optional 1 $testname" {
 	set result [list [lsort -dict [glob *]] [file_read test2.txt]]
 	cd $::testdir
 	set result
-} {{log_jobs test1.txt test2.txt} {test1
+} {{log.*.finished log_jobs test1.txt test2.txt} {test1
 test2
-}}
+}} match
 
 test job "missing dep, -optional 0 $testname" {
 	test_cleantmp
@@ -530,9 +542,9 @@ test job "missing dep, -optional 0 -skipjoberrors 1 $testname" {
 	set result [list [lsort -dict [glob *]] [file_read test2.txt]]
 	cd $::testdir
 	set result
-} {{log_jobs test1.txt test2.txt} {test1
+} {{log.*.finished log_jobs test1.txt test2.txt} {test1
 test2
-}}
+}} match
 
 test job "basic $testname" {
 	cd $::testdir
@@ -682,7 +694,7 @@ test job "-skip: not present $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {log_jobs result.txt}
+} {log.*.finished log_jobs result.txt} match
 
 test job "-skip: only one present $testname" {
 	cd $::testdir
@@ -698,7 +710,7 @@ test job "-skip: only one present $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {log_jobs result.txt skip1.txt}
+} {log.*.finished log_jobs result.txt skip1.txt} match
 
 test job "-skip: all present $testname" {
 	cd $::testdir
@@ -715,7 +727,7 @@ test job "-skip: all present $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {log_jobs skip1.txt skip2.txt}
+} {log.*.finished log_jobs skip1.txt skip2.txt} match
 
 test job "-skip -skip: none present $testname" {
 	cd $::testdir
@@ -730,7 +742,7 @@ test job "-skip -skip: none present $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {log_jobs result.txt}
+} {log.*.finished log_jobs result.txt} match
 
 test job "-skip -skip: one present $testname" {
 	cd $::testdir
@@ -746,7 +758,7 @@ test job "-skip -skip: one present $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {log_jobs skip2.txt}
+} {log.*.finished log_jobs skip2.txt} match
 
 test job "-skip: chain $testname" {
 	cd $::testdir
@@ -765,7 +777,7 @@ test job "-skip: chain $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {log_jobs result.txt}
+} {log.*.finished log_jobs result.txt} match
 
 test job "jobtestnojobs $testname" {
 	cd $::testdir
@@ -801,7 +813,7 @@ test job "no -targets $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {dep.txt log_jobs result.txt}
+} {dep.txt log.*.finished log_jobs result.txt} match
 
 test job "no -targets, dep not found $testname" {
 	cd $::testdir
@@ -816,7 +828,7 @@ test job "no -targets, dep not found $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {log_jobs}
+} {log.*.finished log_jobs} match
 
 test job "no -targets, dep not found, not optional $testname" {
 	cd $::testdir
@@ -849,7 +861,7 @@ test job "no -checkcompressed 1 (default), dep $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {dep.txt.rz log_jobs result.txt}
+} {dep.txt.rz log.*.finished log_jobs result.txt} match
 
 test job "no -checkcompressed 0, dep $testname" {
 	cd $::testdir
@@ -886,7 +898,7 @@ test job "no -checkcompressed 1 (default), targets $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {dep.txt log_jobs target.txt.rz}
+} {dep.txt log.*.finished log_jobs target.txt.rz} match
 
 test job "no -checkcompressed 1 (default), dep $testname" {
 	cd $::testdir
@@ -905,9 +917,9 @@ test job "no -checkcompressed 1 (default), dep $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {dep.txt log_jobs result.txt target.txt target.txt.rz}
+} {dep.txt log.*.finished log_jobs result.txt target.txt target.txt.rz} match
 
-test job "rmtargets1 $testname $testname" {
+test job "rmtargets1 $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
@@ -926,7 +938,7 @@ test job "rmtargets1 $testname $testname" {
 	set result [list [lsort -dict [glob *]] [regexp {missing dependency data1.txt} $temp]]
 	cd $::testdir
 	set result
-} {log_jobs 1}
+} {{log.*.finished log_jobs} 1} match
 
 test job "rmtargets2 $testname" {
 	cd $::testdir
@@ -953,7 +965,7 @@ test job "rmtargets2 $testname" {
 	set result [list [lsort -dict [glob *]] [regexp {missing dependency data1.txt} $temp]]
 	cd $::testdir
 	set result
-} {{data2.txt log_jobs} 1}
+} {{data2.txt log.*.finished log_jobs} 1} match
 
 test job "do not run if deps not done $testname" {
 	cd $::testdir
@@ -976,7 +988,7 @@ test job "do not run if deps not done $testname" {
 	set result [list [lsort -dict [glob *]]]
 	cd $::testdir
 	set result
-} {{data1.txt log_jobs}}
+} {{data1.txt log.*.error log_jobs}} match
 
 test job "rmtargets with gzip $testname" {
 	cd $::testdir
@@ -999,7 +1011,7 @@ test job "rmtargets with gzip $testname" {
 	set result [list [lsort -dict [glob *]] [file_read result.txt]]
 	cd $::testdir
 	set result
-} {{data.txt.gz log_jobs result.txt} test1}
+} {{data.txt.gz log.*.finished log_jobs result.txt} test1} match
 
 test job "rmtargets with gzip exists $testname" {
 	cd $::testdir
@@ -1024,7 +1036,7 @@ test job "rmtargets with gzip exists $testname" {
 	set result [list [lsort -dict [glob *]] [file_read result.txt]]
 	cd $::testdir
 	set result
-} {{data.txt.gz log_jobs result.txt} testpre}
+} {{data.txt.gz log.*.finished log_jobs result.txt} testpre} match
 
 test job "rmtargets and -checkcompressed 0 on previous targets $testname" {
 	cd $::testdir
@@ -1035,7 +1047,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets $testname" {
 		after 1000
 		file_write data.txt test1
 	}
-	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
+	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.rz -rmtargets data.txt -code {
 		cg_razip data.txt
 	}
 	job result -optional 1 -checkcompressed 0 -deps {data.txt} -targets result.txt -code {
@@ -1047,7 +1059,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets $testname" {
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {data.txt.rz log_jobs}
+} {data.txt.rz log.*.finished log_jobs} match
 
 test job "rmtargets and -checkcompressed 0 on previous targets, write one first $testname" {
 	cd $::testdir
@@ -1072,7 +1084,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets, write one first 
 	set result [lsort -dict [glob *]]
 	cd $::testdir
 	set result
-} {data.txt.rz log_jobs}
+} {data.txt.rz log.*.finished log_jobs} match
 
 test job "rmtargets afterwards with gzip exists $testname" {
 	cd $::testdir
@@ -1097,7 +1109,7 @@ test job "rmtargets afterwards with gzip exists $testname" {
 	set result [list [lsort -dict [glob *]] [file_read result.txt]]
 	cd $::testdir
 	set result
-} {{data.txt.gz log_jobs result.txt} testpre}
+} {{data.txt.gz log.*.finished log_jobs result.txt} testpre} match
 
 test job "jobforce $testname" {
 	cd $::testdir/tmp

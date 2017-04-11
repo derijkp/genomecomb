@@ -822,6 +822,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 	append cmd $code\n
 	append cmd [string_change {
 		set ok 1
+		set errormsg {}
 		cd {@PWD@}
 		foreach target $targets {
 			if {$checkcompressed} {
@@ -832,8 +833,10 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 			if {[llength $files]} {
 				file_add $job.log "[job_timestamp]\ttarget ok: $target"
 			} else {
-				file_add $job.log "[job_timestamp]\ttarget not found: $target"
-				puts stderr "[job_timestamp]\ttarget not found: $target"
+				set msg "target not found: $target"
+				file_add $job.log "[job_timestamp]\t$msg"
+				puts stderr "[job_timestamp]\t$msg"
+				lappend errormsg $msg
 				set ok 0
 			}
 		}
@@ -844,6 +847,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 				set ok 0
 				file_add $job.log "[job_timestamp]\tmissing ptargets"
 				puts stderr "[job_timestamp]\tmissing ptargets"
+				lappend errormsg "missing ptargets"
 			}
 		}
 		if {$ok} {
@@ -852,6 +856,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 			catch {file rename -force $job.err $job.msgs}
 		} else {
 			file_add $job.log "[job_timestamp]\tjob $jobname failed\n"
+			error $errormsg
 		}
 	} [list @PWD@ $pwd @PTARGETS@ [list $ptargets]]]
 	return $cmd
@@ -1014,6 +1019,61 @@ proc job {jobname args} {
 	if {!$cgjob(debug)} job_process
 }
 
+proc job_logfile {logfile {dir {}} {cmdline {}}} {
+	global cgjob
+	if {$cgjob(logfile) ne ""} {return $cgjob(logfile)}
+	set time [string_change [timestamp] {" " _ : -}]
+	set cgjob(logfile) [file_absolute $logfile].$time
+	file mkdir [file dir $cgjob(logfile)]
+	set cgjob(f_logfile) [open $cgjob(logfile).submitting w]
+	if {$dir ne ""} {
+		puts $cgjob(f_logfile) "\# dir: $cmdline"
+	}
+	if {$cmdline ne ""} {
+		puts $cgjob(f_logfile) "\# cmdline: $cmdline"
+	}
+	puts $cgjob(f_logfile) [join {job status submittime starttime endtime duration targets msg} \t]
+	set cgjob(totalduration) {0 0}
+	set cgjob(status) ok
+	set cgjob(starttime) [timestamp]
+	return $cgjob(logfile)
+}
+
+proc timediff2duration {diff} {
+	set tduration [time_format [list 0 [lindex $diff end]] "%H %M %S %s"]
+	regexp {[1-9]*[0-9]$} [lindex $tduration 0] hours
+	set duration "[expr {24*[lindex $diff 0]+$hours}]:[lindex $tduration 1]:[lindex $tduration 2].[lindex $tduration 3]"
+}
+
+proc job_logfile_add {job status {targets {}} {msg {}} {submittime {}} {starttime {}} {endtime {}}} {
+	global cgjob
+	if {![info exists cgjob(f_logfile)]} return
+	set cgjob(endtime) $endtime
+	set msg [string_change $msg [list \t \\t \n \\n]]
+	if {$starttime ne "" && $endtime ne ""} {
+		set diff [lmath_calc [time_scan $endtime] - [time_scan $starttime]]
+		set cgjob(totalduration) [lmath_calc $cgjob(totalduration) + $diff]
+		set duration [timediff2duration $diff]
+	} else {
+		set duration ""
+	}
+	puts $cgjob(f_logfile) [join [list $job $status $submittime $starttime $endtime $duration $targets $msg] \t]
+	flush $cgjob(f_logfile)
+	if {$status eq "error"} {set cgjob(status) error}
+}
+
+proc job_logfile_close {} {
+	global cgjob
+	if {![info exists cgjob(f_logfile)]} return
+	puts $cgjob(f_logfile) [join [list total finished $cgjob(starttime) "" $cgjob(endtime) [timediff2duration $cgjob(totalduration)] "" ""] \t]
+	close $cgjob(f_logfile)
+	if {$cgjob(status) eq "error"} {
+		file rename $cgjob(logfile).submitting $cgjob(logfile).error
+	} else {
+		file rename $cgjob(logfile).submitting $cgjob(logfile).finished
+	}
+}
+
 proc job_init {args} {
 	global cgjob cgjob_id cgjob_running cgjob_ptargets job_logdir_submit cgjob_info cgjob_rm
 	upvar job_logdir job_logdir
@@ -1033,6 +1093,10 @@ proc job_init {args} {
 	set cgjob(resubmit) 1
 	set cgjob(skipjoberrors) 0
 	set cgjob(runcmd) [list $::genomecombdir/cg source]
+	set cgjob(logfile) {}
+	set cgjob(starttime) {}
+	set cgjob(endtime) {}
+	set cgjob(totalduration) {0 0}
 	set job_logdir [file_absolute [pwd]/log_jobs]
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_running {} job_running_direct

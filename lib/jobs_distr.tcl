@@ -147,5 +147,6 @@ proc job_process_distr_wait {} {
 	}
 	# puts "All jobs done"
 	unset -nocomplain cgjob_exit
+	job_logfile_close
 }
 
