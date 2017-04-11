@@ -355,16 +355,47 @@ foreach file [glob -nocomplain ../hg19-local/*] {
 }
 
 # extra dir
-# targetseq exome
-job reg_exome_targetseq -targets {extra/reg_hg19_exome_targetseq.tsv} -code {
-	cd extra
-	wgetfile http://tools.invitrogen.com/content/sfs/manuals/TargetSeq_exome_named_targets_hg19.bed
-	cg bed2tsv TargetSeq_exome_named_targets_hg19.bed ureg_hg19_exome_targetseq.tsv
-	cg select -s {chromosome begin end} ureg_hg19_exome_targetseq.tsv sreg_hg19_exome_targetseq.tsv
-	cg regcollapse -o reg_hg19_exome_targetseq.tsv sreg_hg19_exome_targetseq.tsv
-	file delete TargetSeq_exome_named_targets_hg19.bed sreg_hg19_exome_targetseq.tsv ureg_hg19_exome_targetseq.tsv
+# exome target regions 
+# not done (same as truseq):	exome_truseqrapid_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/downloads/productfiles/truseq/truseq-exome-targeted-regions-manifest-v1-2-bed.zip
+foreach {targetname url file} {
+	targetseq http://tools.invitrogen.com/content/sfs/manuals/TargetSeq_exome_named_targets_hg19.bed {}
+	nextera https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions.bed {}
+	nextera_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions_v1.2.bed {}
+	truseq_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/downloads/productfiles/truseq/truseq-rapid-exome-targeted-regions-manifest-v1-2-bed.zip {}
+	SeqCap_EZ_v3 https://sftp.rch.cm/diagnostics/sequencing/literature/nimblegen/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip SeqCapEZ_Exome_v3.0_Design_Annotation_files/SeqCap_EZ_Exome_v3_hg19_capture_targets.bed
+	VCRome_V2_1 https://sftp.rch.cm/diagnostics/sequencing/nimblegen_annotations/ez_hgsc_vcrome/VCRome_2.1_design_files.zip VCRome_2_1_hg19_capture_targets.bed
+} {
+	job reg_exome_$targetname -targets {extra/reg_hg19_exome_$targetname.tsv.lz4} -vars {targetname url file} -code {
+		file delete -force $target.temp
+		file mkdir $target.temp
+		set keep [pwd]
+		cd $target.temp
+		if {[file extension $url] eq ".zip"} {
+			wgetfile $url temp.zip
+			exec unzip temp.zip
+			file delete temp.zip
+			if {$file eq ""} {
+				file rename [lindex [glob *] 0] temp.bed
+			} else {
+				file rename $file temp.bed
+			}
+		} else {
+			wgetfile $url temp.bed
+		}
+		cg bed2tsv temp.bed u$targetname.tsv
+		if {$targetname in "SeqCap_EZ_v3 VCRome_V2_1"} {
+			cg select -s {chromosome begin end} -f {chromosome begin end {gene=regextract($name,{=([^;]*)})}} u$targetname.tsv s$targetname.tsv
+		} else {
+			cg select -s {chromosome begin end} u$targetname.tsv s$targetname.tsv
+		}
+		cg regcollapse -o reg_hg19_exome_$targetname.tsv s$targetname.tsv
+		cg lz4 reg_hg19_exome_$targetname.tsv
+		file delete temp.bed s$targetname.tsv u$targetname.tsv
+		file rename -force reg_hg19_exome_$targetname.tsv.lz4 $keep/extra
+		cd $keep
+		file delete -force $target.temp
+	}
 }
-# cg select -f '* {id=NR "-" $name}' reg_hg19_exome_targetseq.tsv | less
 
 # dbNSFP
 job var_hg19_dbnsfp -targets {extra/var_hg19_dbnsfp.tsv extra/var_hg19_dbnsfp.tsv.opt} -vars {dest build} -code {
