@@ -239,7 +239,7 @@ proc tsv_defaultvalues {field {result {}}} {
 		set result [list_union {m t c o r u} $result]
 	} elseif {[regexp _impact $field]} {
 		annot_init
-		set pre [list_subindex $::snp_annot_list 0]
+		set pre [var_impact_list]
 		set result [list_union $pre $result]
 	} elseif {$field eq "type"} {
 		annot_init
