@@ -117,9 +117,7 @@ proc process_illumina {args} {
 			set target2 $base-R2.fastq
 			job bam2fastq-[file tail $file] -deps {$file} \
 			-targets {$target $target2} -code {
-				cg bam2fastq $dep $target.temp $target2.temp
-				exec gzip $target.temp
-				exec gzip $target2.temp
+				cg bam2fastq $dep $target.temp.gz $target2.temp.gz
 				file rename -force $target.temp.gz $target.gz
 				file rename -force $target2.temp.gz $target2.gz
 			}
