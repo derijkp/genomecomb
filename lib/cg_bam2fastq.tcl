@@ -47,12 +47,16 @@ proc cg_bam2fastq {args} {
 	}
 	if {$compress} {
 		exec gzip $fastqfile1.temp
-		exec gzip $fastqfile2.temp
 		file rename -force $fastqfile1.temp.gz $fastqfile1.gz
-		file rename -force $fastqfile2.temp.gz $fastqfile2.gz
+		if {$fastqfile2 ne ""} {
+			exec gzip $fastqfile2.temp
+			file rename -force $fastqfile2.temp.gz $fastqfile2.gz
+		}
 	} else {
 		file rename -force $fastqfile1.temp $fastqfile1
-		file rename -force $fastqfile2.temp $fastqfile2
+		if {$fastqfile2 ne ""} {
+			file rename -force $fastqfile2.temp $fastqfile2
+		}
 	}
 	file delete $tempbam
 }
