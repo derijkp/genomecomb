@@ -544,7 +544,7 @@ foreach chromosome {
 	set vcf gnomad.genomes.$version.sites.$chromosome.vcf.gz
 	set target $tempdir/result$chromosome.tsv.lz4
 	lappend deps $target
-	job reg_hg19_gnomad-$chromosome -targets {$target} -skip $finaltarget -vars {tempdir baseurl vcf fields dest db build} -code {
+	job var_hg19_gnomad-$chromosome -targets {$target} -skip $finaltarget -vars {tempdir baseurl vcf fields dest db build} -code {
 		if {![file exists $tempdir/$vcf]} {
 			putslog "Downloading $vcf"
 			wgetfile $baseurl/$vcf $tempdir/$vcf
@@ -555,7 +555,7 @@ foreach chromosome {
 	}
 }
 
-job reg_hg19_gnomad-final -deps $deps -targets {$finaltarget var_${build}_gnomad.tsv.opt} -vars {tempdir fields dest db build} -code {
+job var_hg19_gnomad-final -deps $deps -targets {$finaltarget var_${build}_gnomad.tsv.opt} -vars {tempdir fields dest db build} -code {
 	exec cg cat {*}$deps | lz4c -9 > $tempdir/result.tsv.lz4
 	file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
 	file rename -force $tempdir/result.tsv.lz4 var_${build}_gnomad.tsv.lz4
@@ -564,6 +564,21 @@ job reg_hg19_gnomad-final -deps $deps -targets {$finaltarget var_${build}_gnomad
 	# file delete -force $tempdir
 }
 
+set finaltarget extra/var_${build}_gnomadex.tsv.lz4
+set version r2.0.1
+set url https://data.broadinstitute.org/gnomAD/release-170228/exomes/vcf/gnomad.exomes.$version.sites.vcf.gz
+job var_hg19_gnomad_exomes -targets {$finaltarget extra/var_${build}_gnomadex.tsv.opt} -vars {url tempdir fields dest db build} -code {
+	file_write extra/var_${build}_gnomadex.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
+	set tempdir $finaltarget.temp
+	file mkdir $tempdir
+	set vcf [file tail $url]
+	wgetfile $url $tempdir/$vcf
+	putslog "Converting $vcf"
+	cg vcf2tsv -split 1 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles | lz4c > $tempdir/[file tail $target]
+	file rename $tempdir/[file tail $target] $target
+	cg lz4index $target
+	file delete -force $tempdir
+}
 
 job_wait
 
