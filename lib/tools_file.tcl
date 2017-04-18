@@ -212,6 +212,14 @@ proc hardlink {args} {
 	exec cp -al {*}$args
 }
 
+# copy recursively with permissions and dates using hardlinks, but if that does not work, copy normally
+proc hardcopy {args} {
+	if {[llength $args] < 2} {error "wrong # args: should be \"hardcopy src ... dest\""}
+	if {[catch {hardlink {*}$args}]} {
+		exec cp -a {*}$args
+	}
+}
+
 # create soft link (dest points to src) using relative path (unless absolute == 1)
 # allow links to non-exusting files
 proc mklink {src dest {absolute 0}} {

@@ -1,3 +1,17 @@
+proc timescan {time} {
+	if {$time eq ""} {return $time}
+	time_scan $time
+}
+
+proc time_comp {time1 time2} {
+	if {$time1 eq ""} {
+		if {$time2 eq ""} {return 0} else {return 1}
+	}
+	if {$time2 eq ""} {return -1}
+	set diff [expr {[lindex $time1 0] - [lindex $time2 0]}]
+	if {$diff != 0} {return $diff}
+	expr {[lindex $time1 1] - [lindex $time2 1]}
+}
 
 # set pattern (a|(bc|de))X(c|d)
 # set pattern adfg(ab)
@@ -770,6 +784,95 @@ proc job_logclose {job args} {
 	unset cgjob(buffer,$job)
 }
 
+proc job_logfile {logfile {dir {}} {cmdline {}}} {
+	global cgjob
+	if {$cgjob(logfile) ne ""} {return $cgjob(logfile)}
+	set time [string_change [timestamp] {" " _ : - . -}]
+	set cgjob(logfile) [file_absolute $logfile].$time
+	file mkdir [file dir $cgjob(logfile)]
+	set cgjob(f_logfile) [open $cgjob(logfile).submitting w]
+	if {$dir ne ""} {
+		puts $cgjob(f_logfile) "\# dir: $cmdline"
+	}
+	if {$cmdline ne ""} {
+		puts $cgjob(f_logfile) "\# cmdline: $cmdline"
+	}
+	puts $cgjob(f_logfile) "\# distribute: $cgjob(distribute)"
+	foreach {key value} $::job_method_info {
+		puts $cgjob(f_logfile) "\# $key: $value"
+	}
+	puts $cgjob(f_logfile) [join {job jobid status submittime starttime endtime duration targets msg} \t]
+	set cgjob(totalduration) {0 0}
+	set cgjob(status) ok
+	set cgjob(starttime) [timestamp]
+	return $cgjob(logfile)
+}
+
+proc timediff2duration {diff} {
+	set tduration [time_format [list 0 [lindex $diff end]] "%H %M %S %s"]
+	regexp {[1-9]*[0-9]$} [lindex $tduration 0] hours
+	set duration "[expr {24*[lindex $diff 0]+$hours}]:[lindex $tduration 1]:[lindex $tduration 2].[lindex $tduration 3]"
+}
+
+proc job_parse_log {job {totalduration {0 0}}} {
+	set starttime {} ; set endtime {} ; set duration {}
+	set logdata [split [file_read $job.log] \n]
+	set failed 0
+	set tail [file tail $job]
+	foreach line $logdata {
+		if {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail} on (.*)($|:)}] $line temp starttime host]} {
+			set endtime {}
+		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail}($|:)}] $line temp starttime]} {
+			set endtime {}
+		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} finished($|:)}] $line temp endtime]} {
+			break
+		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} failed($|:)}] $line temp endtime]} {
+			set failed 1
+		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]job ${tail} failed($|:)}] $line temp endtime]} {
+			set failed 1
+		}
+	}
+	set startcode [timescan $starttime]
+	set endcode [timescan $endtime]
+	if {$starttime ne ""} {
+		if {$endtime ne ""} {
+			set extratime {}
+			set diff [lmath_calc $endcode - $startcode]
+			set totalduration [lmath_calc $totalduration + $diff]
+		} else {
+			set endtime ""
+			set extratime ...
+			set endcode [time_scan [timestamp]]
+			set diff [lmath_calc $endcode - $startcode]
+		}
+		set tduration [time_format [list 0 [lindex $diff end]] "%H %M %S %s"]
+		regexp {[1-9]*[0-9]$} [lindex $tduration 0] hours
+		set duration "[expr {24*[lindex $diff 0]+$hours}]:[lindex $tduration 1]:[lindex $tduration 2].[lindex $tduration 3]$extratime"
+	}
+	return [list $failed $starttime $endtime $duration $totalduration]
+}
+
+proc job_cleanmsg {msg} {
+	string_change [string trim $msg] [list \t \\t \n \\n]
+}
+
+proc job_logfile_add {job jobid status {targets {}} {msg {}} {submittime {}} {starttime {}} {endtime {}}} {
+	global cgjob
+	if {![info exists cgjob(f_logfile)]} return
+	set cgjob(endtime) $endtime
+	set msg [job_cleanmsg $msg]
+	if {$starttime ne "" && $endtime ne ""} {
+		set diff [lmath_calc [time_scan $endtime] - [time_scan $starttime]]
+		set cgjob(totalduration) [lmath_calc $cgjob(totalduration) + $diff]
+		set duration [timediff2duration $diff]
+	} else {
+		set duration ""
+	}
+	puts $cgjob(f_logfile) [join [list $job $jobid $status $submittime $starttime $endtime $duration $targets $msg] \t]
+	flush $cgjob(f_logfile)
+	if {$status eq "error"} {set cgjob(status) error}
+}
+
 proc job_backup {file {rename 0}} {
 	if {![job_file_exists $file]} return
 	set num 1
@@ -854,6 +957,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 			file_add $job.log "[job_timestamp]\t$jobname finished\n"
 			file_write $job.finished [job_timestamp]\n
 			catch {file rename -force $job.err $job.msgs}
+			catch {file delete $job.pid}
 		} else {
 			file_add $job.log "[job_timestamp]\tjob $jobname failed\n"
 			error $errormsg
@@ -1019,61 +1123,6 @@ proc job {jobname args} {
 	if {!$cgjob(debug)} job_process
 }
 
-proc job_logfile {logfile {dir {}} {cmdline {}}} {
-	global cgjob
-	if {$cgjob(logfile) ne ""} {return $cgjob(logfile)}
-	set time [string_change [timestamp] {" " _ : -}]
-	set cgjob(logfile) [file_absolute $logfile].$time
-	file mkdir [file dir $cgjob(logfile)]
-	set cgjob(f_logfile) [open $cgjob(logfile).submitting w]
-	if {$dir ne ""} {
-		puts $cgjob(f_logfile) "\# dir: $cmdline"
-	}
-	if {$cmdline ne ""} {
-		puts $cgjob(f_logfile) "\# cmdline: $cmdline"
-	}
-	puts $cgjob(f_logfile) [join {job status submittime starttime endtime duration targets msg} \t]
-	set cgjob(totalduration) {0 0}
-	set cgjob(status) ok
-	set cgjob(starttime) [timestamp]
-	return $cgjob(logfile)
-}
-
-proc timediff2duration {diff} {
-	set tduration [time_format [list 0 [lindex $diff end]] "%H %M %S %s"]
-	regexp {[1-9]*[0-9]$} [lindex $tduration 0] hours
-	set duration "[expr {24*[lindex $diff 0]+$hours}]:[lindex $tduration 1]:[lindex $tduration 2].[lindex $tduration 3]"
-}
-
-proc job_logfile_add {job status {targets {}} {msg {}} {submittime {}} {starttime {}} {endtime {}}} {
-	global cgjob
-	if {![info exists cgjob(f_logfile)]} return
-	set cgjob(endtime) $endtime
-	set msg [string_change $msg [list \t \\t \n \\n]]
-	if {$starttime ne "" && $endtime ne ""} {
-		set diff [lmath_calc [time_scan $endtime] - [time_scan $starttime]]
-		set cgjob(totalduration) [lmath_calc $cgjob(totalduration) + $diff]
-		set duration [timediff2duration $diff]
-	} else {
-		set duration ""
-	}
-	puts $cgjob(f_logfile) [join [list $job $status $submittime $starttime $endtime $duration $targets $msg] \t]
-	flush $cgjob(f_logfile)
-	if {$status eq "error"} {set cgjob(status) error}
-}
-
-proc job_logfile_close {} {
-	global cgjob
-	if {![info exists cgjob(f_logfile)]} return
-	puts $cgjob(f_logfile) [join [list total finished $cgjob(starttime) "" $cgjob(endtime) [timediff2duration $cgjob(totalduration)] "" ""] \t]
-	close $cgjob(f_logfile)
-	if {$cgjob(status) eq "error"} {
-		file rename $cgjob(logfile).submitting $cgjob(logfile).error
-	} else {
-		file rename $cgjob(logfile).submitting $cgjob(logfile).finished
-	}
-}
-
 proc job_init {args} {
 	global cgjob cgjob_id cgjob_running cgjob_ptargets job_logdir_submit cgjob_info cgjob_rm
 	upvar job_logdir job_logdir
@@ -1084,6 +1133,7 @@ proc job_init {args} {
 	unset -nocomplain cgjob_ptargets
 	unset -nocomplain cgjob_info
 	unset -nocomplain job_logdir_submit
+	set ::job_method_info {}
 	set cgjob(debug) 0
 	set cgjob(distribute) 0
 	set cgjob(force) 0

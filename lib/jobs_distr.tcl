@@ -4,8 +4,10 @@ proc job_process_distr_init {} {
 	unset -nocomplain cgjob_distr_running
 	set cgjob_distr(queue) {}
 	set cgjob_distr(num) 0
+	set cgjob(pid) [pid]
 	# we will use par (parallel) code with some specifics for distr
 	if {[info commands job_process_par] eq ""} {auto_load job_process_par}
+	set ::job_method_info [list pid [pid]]
 	interp alias {} job_process {} job_process_par
 	interp alias {} job_running {} job_running_distr
 	interp alias {} job_wait {} job_process_distr_wait
@@ -13,20 +15,56 @@ proc job_process_distr_init {} {
 }
 
 proc job_running_distr {jobnum} {
+	global cgjob cgjob_distr_running cgjob_distr_queue
+	if {![info exists cgjob_distr_running($jobnum)]} {return 0}
+	set job [lindex $cgjob_distr_running($jobnum) 1]
+	if {![file exists $job.pid]} {
+		set notrunning 1
+	} else {
+		set pid [file_read $job.pid]
+		set notrunning [catch {exec ps $pid}]
+		if {$notrunning} {
+			if {!$cgjob(silent)} {puts "   -=- ending $job ($jobnum)"}
+			file delete $job.pid
+		}
+	}
+	if {$notrunning} {
+		unset cgjob_distr_running($jobnum)
+		unset cgjob_distr_queue($jobnum)
+	}
+	if {$notrunning} {return 0} else {return 1}
+}
+
+proc job_status_distr {job {jobloginfo {}}} {
 	global cgjob_distr_running
-	info exists cgjob_distr_running($jobnum)
+	set totalduration {0 0}
+	if {$jobloginfo eq ""} {
+		if {![file exists $job.log]} {return unkown}
+		set jobloginfo [job_parse_log $job $totalduration]
+	}
+	foreach {failed starttime endtime duration totalduration} $jobloginfo break
+	if {$failed} {
+		return error
+	} elseif {$endtime ne ""} {
+		return finished
+	} elseif {$starttime eq ""} {
+		return submitted
+	} elseif {[file exists $job.pid]} {
+		set pid [file_read $job.pid]
+		set notrunning [catch {exec ps $pid}]
+		if {$notrunning} {return error} else {return running}
+	} else {
+		return error
+	}
 }
 
 proc job_process_distr_jobmanager {} {
 	global cgjob cgjob_distr cgjob_distr_running cgjob_exit cgjob_distr_queue
 	after cancel job_process_distr_jobmanager
-	set pids [exec ps -eo pid]
 	foreach jobnum [ssort -natural [array names cgjob_distr_running]] {
-		if {![inlist $pids [lindex $cgjob_distr_running($jobnum) 0]]} {
-			if {!$cgjob(silent)} {puts "   -=- ending [lindex $cgjob_distr_running($jobnum) 1] ($jobnum)"}
-			unset cgjob_distr_running($jobnum)
-			unset cgjob_distr_queue($jobnum)
-		}
+		# job_running_distr checks whether the job is running
+		# if it is not, it will (a.o.) clear the entry in cgjob_distr_running
+		job_running_distr $jobnum
 	}
 	set running [array names cgjob_distr_running]
 	set countrunning [llength $running]
@@ -48,9 +86,10 @@ proc job_process_distr_jobmanager {} {
 		}
 		if {!$do} continue
 		if {[llength [list_common $deps $running]]} continue
-		if {!$cgjob(silent)} {puts "   -=- starting $name"}
+		if {!$cgjob(silent)} {puts "   -=- starting $job"}
 		set cgjob_pid [lindex [exec $runfile > $job.out 2> $job.err &] end]
-		set cgjob_distr_running($jobnum) [list $cgjob_pid $name]
+		file_write $job.pid $cgjob_pid
+		set cgjob_distr_running($jobnum) [list $cgjob_pid $job]
 		incr torun -1
 		lappend added $pos
 		if {$torun == 0} break
@@ -139,6 +178,7 @@ proc job_process_distr_submit {job runfile args} {
 proc job_process_distr_wait {} {
 	global cgjob cgjob_exit cgjob_running
 	update
+	job_logfile_par_close
 	unset -nocomplain cgjob_exit
 	after cancel job_process_distr_jobmanager
 	after 1000 job_process_distr_jobmanager
@@ -147,6 +187,8 @@ proc job_process_distr_wait {} {
 	}
 	# puts "All jobs done"
 	unset -nocomplain cgjob_exit
-	job_logfile_close
+	update
+	if {[file exists $cgjob(logfile).running]} {
+		job_update $cgjob(logfile).running
+	}
 }
-

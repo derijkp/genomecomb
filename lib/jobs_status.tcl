@@ -2,6 +2,7 @@ proc job_process_status_init {} {
 	global curjobnum jobsrunning graph curgraphid graphid totalduration
 	# we will use par (parallel) code with some specifics for status
 	if {[info commands job_process_par] eq ""} {auto_load job_process_par}
+	set ::job_method_info {}
 	interp alias {} job_process {} job_process_parstatus
 	interp alias {} job_running {} job_running_status
 	interp alias {} job_wait {} job_process_status_wait
@@ -30,7 +31,7 @@ proc job_process_pargraph {job jobname status duration checkcompressed adeps ids
 		set args {}
 		set graphid($job) [incr curgraphid]
 		set label [file tail $jobname]
-		if {$duration ne "" && ![inlist {skpped error} $status]} {
+		if {$duration ne "" && ![inlist {skipped error} $status]} {
 			append label "\\n$duration"
 		}
 		if {$status eq "running"} {
@@ -165,35 +166,10 @@ proc job_process_parstatus {} {
 		# get job log information -> duration
 		set duration {}
 		if {[job_file_exists $job.log]} {
-			set logdata [split [file_read $job.log] \n]
-			unset -nocomplain time ; unset -nocomplain endtime
-			set failed 1
-			set tail [file tail $job]
-			foreach line $logdata {
-				if {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail}($|:)}] $line temp time]} {
-					unset -nocomplain endtime
-				} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} finished($|:)}] $line temp endtime]} {
-					set failed 0
-				} else {
-					regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} failed($|:)}] $line temp endtime
-				}
-			}
-			if {[info exists time]} {
-				set time [time_scan $time]
-				if {[info exists endtime]} {
-					set endtime [time_scan $endtime]
-					set extratime {}
-					set diff [lmath_calc $endtime - $time]
-					set totalduration [lmath_calc $totalduration + $diff]
-				} else {
-					set endtime [time_scan [clock format [clock seconds]]]
-					set extratime ...
-					set diff [lmath_calc $endtime - $time]
-				}
-				set tduration [time_format [list 0 [lindex $diff end]] "%H %M %S %s"]
-				regexp {[1-9]*[0-9]$} [lindex $tduration 0] hours
-				set duration "[expr {24*[lindex $diff 0]+$hours}]:[lindex $tduration 1]:[lindex $tduration 2].[lindex $tduration 3]$extratime"
-			}
+			set jobloginfo [job_parse_log $job $totalduration]
+			foreach {failed time endtime duration totalduration} $jobloginfo break
+			if {$time eq ""} {unset time}
+			if {$endtime eq ""} {unset endtime}
 		}
 		# check if job is already running, if so, mark targets with jobid
 		set jobnum [job_process_par_jobid $job]

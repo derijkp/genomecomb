@@ -1,6 +1,7 @@
 proc job_process_sge_init {} {
 	# we will use par (parallel) code with some specifics for sge
 	if {[info commands job_process_par] eq ""} {auto_load job_process_par}
+	set ::job_method_info {}
 	interp alias {} job_process {} job_process_par
 	interp alias {} job_running {} job_running_sge
 	interp alias {} job_wait {} job_process_sge_wait
@@ -9,6 +10,31 @@ proc job_process_sge_init {} {
 
 proc job_running_sge {jobid} {
 	expr {[isint $jobid] && ![catch {exec qstat -j $jobid}]} 
+}
+
+proc job_status_sge {job {jobloginfo {}}} {
+	global cgjob_distr_running
+	if {$jobloginfo eq ""} {
+		if {![file exists $job.log]} {return unkown}
+		set jobloginfo [job_parse_log $job $totalduration]
+	}
+	foreach {failed starttime endtime duration totalduration} $jobloginfo break
+	if {$failed} {
+		return error
+	} elseif {$endtime ne ""} {
+		return finished
+	} else {
+		set jobnum [job_process_par_jobid $job]
+		if {[isint $jobnum]} {
+			if {$starttime ne ""} {
+				return running
+			} else {
+				return submitted
+			}
+		} else {
+			return error
+		}
+	}
 }
 
 proc job_process_sge_submit {job runfile args} {
@@ -99,5 +125,6 @@ if 0 {
 }
 
 proc job_process_sge_wait {} {
+	global cgjob
+	job_logfile_par_close
 }
-

@@ -253,6 +253,7 @@ test job {job_expandvars} {
 # ------------------------------------
 foreach {testname initcode} {
 	"direct" {uplevel job_init -skipjoberrors 1 {*}$args}
+	"-d 2" {uplevel job_init -d 2 {*}$args}
 	"-d 4" {uplevel job_init -d 4 {*}$args}
 	"-d 30" {uplevel job_init -d 30 {*}$args}
 	"-d sge" {uplevel job_init -d sge {*}$args}
@@ -546,7 +547,7 @@ test job "missing dep, -optional 0 -skipjoberrors 1 $testname" {
 test2
 }} match
 
-test job "basic $testname" {
+test job "basic jobtest $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
