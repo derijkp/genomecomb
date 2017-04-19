@@ -18,7 +18,7 @@ proc job_status_sge {job {jobloginfo {}}} {
 		if {![file exists $job.log]} {return unkown}
 		set jobloginfo [job_parse_log $job $totalduration]
 	}
-	foreach {failed starttime endtime duration totalduration} $jobloginfo break
+	foreach {failed starttime endtime run duration totalduration} $jobloginfo break
 	if {$failed} {
 		return error
 	} elseif {$endtime ne ""} {

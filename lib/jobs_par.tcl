@@ -45,6 +45,7 @@ proc job_process_par_checkptargetsfinished {} {
 
 proc job_process_par_onepass {} {
 	global cgjob cgjob_id cgjob_running cgjob_ptargets cgjob_blocked
+	set currentrun [file tail [get cgjob(logfile) ""]]
 	set queue $cgjob(queue)
 	# join [list_subindex $queue 1] \n
 	update
@@ -108,7 +109,7 @@ proc job_process_par_onepass {} {
 				lappend temp $line
 			}
 			set queue [list_concat $temp $queue]
-			job_logclose $job
+			job_logclear $job
 			continue
 		}
 		job_lognf $job "==================== $jobname ===================="
@@ -265,7 +266,7 @@ proc job_process_par_onepass {} {
 		# submit job
 		set ids [list_remove $ids {}]
 		set jobnum [job_process_par_submit $job $runfile -deps $ids {*}$submitopts]
-		job_log $job "-------------------- submitted $jobname ($jobnum <- $ids) --------------------"
+		job_log $job "-------------------- submitted $jobname ($jobnum <- $ids) (run $currentrun) --------------------"
 		job_logfile_add $job $jobnum submitted $targets "" $submittime
 		job_logclose $job
 		file_write $job.jobid $jobnum
@@ -296,6 +297,6 @@ proc job_logfile_par_close {} {
 	puts $cgjob(f_logfile) [join [list total . running $cgjob(starttime) "" "" "" "" ""] \t]
 	close $cgjob(f_logfile)
 	file rename $cgjob(logfile).submitting $cgjob(logfile).running
-	job_update $cgjob(logfile).running
+	job_update $cgjob(logfile).running $cgjob(cleanup)
 }
 

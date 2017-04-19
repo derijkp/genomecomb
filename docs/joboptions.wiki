@@ -8,38 +8,73 @@ Several commands understand these job options
 
 == Description ==
 Several genomecomb commands (indicated by "supports job options" in their
-help) consist of sub tasks (jobs) that can be run in parallel. If such
+help) consist of subtasks (jobs) that can be run in parallel. If such
 command is interupted, it can continue processing from the
 already processed data (completed subtasks) by running the same command.
+The --distribute or -d option can be used to select alternative processing methods.
 
-The --distribute or -d option can be used to select following alternative processing methods:
-; direct: The command runs the subtasks sequentially, stopping when an
-error occurs in a subtask. (default)
-; local distribution: Use "-d number" to start local distribution, using multiple
-cores/threads on the local machine. The program will start up to **number**
-subtasks in separate processes managed by the running program. Even if an
-error occurs in a subtasks in this mode, the program will continue with
-other subtasks. Subsequent subtasks depending on the results of the failed
-subtask will also fail, but others may run succesfully. (In this way -d 1
-is different from -d direct). You can check for errors later using the
-same command with "-d status": Errors (and subtask scripts and output) are
-written to files in a log_jobs directory somewhere close to the results.
-; sge: distribute jobs on a cluster managed by Grid Engine. subtasks will be started
-as grid engine jobs with proper dependencies between the jobs. The program itself
-will stop when all jobs are submitted. As in -d number, you can check
-progress/errors using the same command with "-d status"
-; status: with "-d status" the program goes over all subtasks, but instead
-of running them, it checks their status (ok, error, etc.) and reports it.
-This way you can check for errors in subtasks that were run in parallel
+== direct run ==
+Without a -d option (or -d direct) the command will run jobs sequentially,
+stopping when an error occurs in a job. It will skip any job where the
+targets were already completed (and the files it uses as input were not
+changed after this completion). The command produces a logfile containing
+one line with information for each job (such as job name, status, starttime,
+endtime, duration, target files).
+
+=== distributed run ===
+An analysis can be run faster by running multiple jobs at the same
+time using multiple cores/threads on one machine (by giving the number of
+cores/threads that may be used to the -d option) or nodes on a cluster
+managed by the grid engine (option **sge**)
+
+Some jobs depend on results of previous jobs, and have to wait for these
+to finish first, so the entire capacity is not allways filled. If an error
+occurs in a job, the program will still continue with other jobs.
+Subsequent jobs depending on the results of the failed job will also fail,
+but others may run succesfully. (In this way -d 1 is different from -d
+direct).
+
+The command used to start the analysis will produce a logfile (with the
+extension .submitting) while submitting the jobs. Each job gets a line
+in the logfile, and also produces a number of small files (runscript,
+logfile, error output) in directories called log_jobs. (The first column
+in the logfile refers to their location.) These small files are normally
+removed after a successfull analysis (but not when there were errors, as
+they may be useful for debugging). 
+When the command is finished submitting, the logfile is updated and gets
+the extension .running. When the run is completed, the logfile is again
+updated and gets the extension .finished if no jobs had errors, or .error
+if it did. You can update the logfile while jobs are running using the
+command:
+{{{
+cg job_update logfile
+}}}
+
+Using **-d number** starts up to **number** jobs in separate processes
+managed by the submitting command. The submitting command must keep
+running untill all jobs are finished. it will output some progress, but
+you can get more info by updating and checking the log file.
+
+Using "**-d sge**" the submitting command will submit all jobs to the Grid
+Engine as grid engine jobs with proper dependencies between the jobs. The
+program itself will stop when all jobs are submitted. You can check
+progress/errors by updating and checking the logfile.
+
+=== status run ===
+You can recreate the logfile and and a graph of dependencies from the log_jobs
+files by running the same command with "-d status".
 
 == Options ==
 List of all options supported by job enabled commands:
 ; -d value (--distribute): distribute method, see in description (also -distribute)
 ; -dpriority value: (only for sge) run jobs with the given priority (default is 0)
+; -dcleanup success/never/allways: Allows you to keep all run/log files in the log_jobs
+dirs even if a jub is successfull (**never**), or to allways delete them (**allways**)
+instead of only deleting them after a succesfull run (**success**)
 ; -v number (--verbose): This general option has a big effect on job enabled commands:
 If it is > 0, they will output a lot of info (to stder) on dependencies, jobs started, etc.
 ; -f 0/1 (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)
-; --skipjoberrors 0/1: Errors in one job cause the entire command to stop; 
+; --skipjoberrors 0/1: Errors in one job cause the entire command to stop (in direct mode); 
 use --skipjoberrors 1 to skip over these errors and complete other jobs (as far as they are not
 dependent on the the job with an error) (also -skipjoberrors)
 

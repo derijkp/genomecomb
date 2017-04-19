@@ -16,7 +16,7 @@ proc job_status_direct {job {jobloginfo {}}} {
 		if {![file exists $job.log]} {return unkown}
 		set jobloginfo [job_parse_log $job $totalduration]
 	}
-	foreach {failed starttime endtime duration totalduration} $jobloginfo break
+	foreach {failed starttime endtime run duration totalduration} $jobloginfo break
 	if {$failed} {
 		return error
 	} elseif {$endtime ne ""} {
@@ -101,7 +101,7 @@ proc job_process_direct {} {
 				lappend temp $line
 			}
 			set cgjob(queue) [list_concat $temp $cgjob(queue)]
-			job_logclose $job
+			job_logclear $job
 			continue
 		}
 		cd $pwd
@@ -230,9 +230,13 @@ proc job_logfile_direct_close {} {
 	puts $cgjob(f_logfile) [join [list total . finished $cgjob(starttime) "" $cgjob(endtime) [timediff2duration $cgjob(totalduration)] "" ""] \t]
 	close $cgjob(f_logfile)
 	if {$cgjob(status) eq "error"} {
-		file rename $cgjob(logfile).submitting $cgjob(logfile).error
+		set result $cgjob(logfile).error
 	} else {
-		file rename $cgjob(logfile).submitting $cgjob(logfile).finished
+		set result $cgjob(logfile).finished
+	}
+	file rename $cgjob(logfile).submitting $result
+	if {$cgjob(cleanup) eq "allways" || ($cgjob(cleanup) eq "success" && $cgjob(status) eq "ok")} {
+		job_cleanlogs $result
 	}
 }
 

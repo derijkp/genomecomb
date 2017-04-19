@@ -1,4 +1,32 @@
-proc job_update {logfile} {
+proc job_cleanlogs {logfile} {
+	putslog "cleaning up log_jobs for $logfile"
+	set f [open $logfile]
+	while 1 {
+		if {[gets $f line] == -1} break
+		if {[string index $line 0] ne {#}} break
+	}
+	if {[split $line \t] ne {job jobid status submittime starttime endtime duration targets msg run}} {
+		close $f
+		error "file $logfile is not a proper logfile (must be tsv with fields: job jobid status submittime starttime endtime duration targets msg run)"
+	}
+	while 1 {
+		if {[gets $f line] == -1} break
+		set sline [split $line \t]
+		foreach {job jobid status submittime starttime endtime duration targets msg run} $sline break
+		if {$job eq "total"} continue
+		set files [glob -nocomplain $job.*]
+		if {![llength $files]} continue
+		file delete {*}$files
+		set dirsa([file dir $job]) 1
+	}
+	foreach dir [array names dirsa] {
+		if {[catch {glob $dir/*}]} {
+			file delete $dir
+		}
+	}
+}
+
+proc job_update {logfile {cleanup success}} {
 	global cgjob
 	if {![file exists $logfile]} {
 		error "cannot update non(no longer)-existing logfile: $logfile"
@@ -31,9 +59,9 @@ proc job_update {logfile} {
 	} else {
 		set target $type
 	}
-	if {[split $line \t] ne {job jobid status submittime starttime endtime duration targets msg}} {
+	if {[split $line \t] ne {job jobid status submittime starttime endtime duration targets msg run}} {
 		close $o ; close $f
-		error "file $logfile is not a proper logfile (must be tsv with fields: job jobid status submittime starttime endtime duration targets msg)"
+		error "file $logfile is not a proper logfile (must be tsv with fields: job jobid status submittime starttime endtime duration targets msg run)"
 	}
 	puts $o $line
 	set endstartcode {}
@@ -45,11 +73,11 @@ proc job_update {logfile} {
 	while 1 {
 		if {[gets $f line] == -1} break
 		set sline [split $line \t]
-		foreach {job jobid status submittime starttime endtime duration targets msg} $sline break
+		foreach {job jobid status submittime starttime endtime duration targets msg run} $sline break
 		set startcode [timescan $starttime]
 		set endcode [timescan $endtime]
 		if {$job eq "total"} {
-			puts $o [join [list $job $jobid $endstatus $submittime $endstarttime $endendtime [timediff2duration $totalduration] $targets [job_cleanmsg [job_cleanmsg $msg]]] \t]
+			puts $o [join [list $job $jobid $endstatus $submittime $endstarttime $endendtime [timediff2duration $totalduration] $targets [job_cleanmsg $msg] $run] \t]
 			break
 		}
 		switch $status {
@@ -61,13 +89,13 @@ proc job_update {logfile} {
 					continue
 				}
 				set jobloginfo [job_parse_log $job $totalduration]
-				foreach {failed starttime endtime duration totalduration} $jobloginfo break
+				foreach {failed starttime endtime run duration totalduration} $jobloginfo break
 				if {$failed} {
 					if {[catch {set errormsg [file_read $job.err]}]} {set errormsg ""}
-					puts $o [join [list $job $jobid error $submittime $starttime $endtime $duration $targets $errormsg] \t]
+					puts $o [join [list $job $jobid error $submittime $starttime $endtime $duration $targets [job_cleanmsg $errormsg] $run] \t]
 					if {$endstatus ne "running"} {set endstatus error}
 				} elseif {$endtime ne ""} {
-					puts $o [join [list $job $jobid finished $submittime $starttime $endtime $duration $targets ""] \t]
+					puts $o [join [list $job $jobid finished $submittime $starttime $endtime $duration $targets "" $run] \t]
 				} else {
 					# still in queue, running or hang/error?
 					set status [job_status_$target $job $jobloginfo]
@@ -76,11 +104,12 @@ proc job_update {logfile} {
 						set endstatus running
 					} elseif {$status eq "error"} {
 						if {$endstatus ne "running"} {set endstatus error}
+						if {[string range $duration end-2 end] eq "..."} {set endtime "" ; set duration ""}
 						if {[catch {set msg [file_read $job.err]}]} {
 							set msg "job no longer running, but no error message found"
 						}
 					}
-					puts $o [join [list $job $jobid $status $submittime $starttime $endtime $duration $targets [job_cleanmsg $msg]] \t]
+					puts $o [join [list $job $jobid $status $submittime $starttime $endtime $duration $targets [job_cleanmsg $msg] $run] \t]
 				}
 			}
 			error {
@@ -110,19 +139,21 @@ proc job_update {logfile} {
 	}
 	file delete -force $tempfile
 	file rename -force $tempresult $result
+	if {$cleanup eq "allways" || ($cleanup eq "success" && $endstatus eq "finished")} {
+		job_cleanlogs $result
+	}
 	if {$logfile ne $result} {file delete $logfile}
 }
 
 proc cg_job_update args {
 	job_init
+	set cleanup success
 	cg_options job_update args {
+		-dcleanup -cleanup - -c {
+			if {$value ni {success never allways}} {error "$value not a valid option for -cleanup, should be one of: success, never, allways"}
+			set cleanup $value
+		}
 	} logfile 1 1
 	set logfile [file_absolute $logfile]
-#	if {[regexp {^(.*)\.[0-9_-]+\.([a-z]+)$} $logfile temp base filestatus]} {
-#	} elseif {[regexp {^(.*)\.[0-9_-]+$} $logfile temp base]} {
-#	} else {
-#		set base $logfile
-#	}
-#	set logfile [lindex [lsort -dict [glob -nocomplain $base.*.running]] end]
-	job_update $logfile
+	job_update $logfile $cleanup
 }

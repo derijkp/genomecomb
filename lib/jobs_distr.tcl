@@ -42,7 +42,7 @@ proc job_status_distr {job {jobloginfo {}}} {
 		if {![file exists $job.log]} {return unkown}
 		set jobloginfo [job_parse_log $job $totalduration]
 	}
-	foreach {failed starttime endtime duration totalduration} $jobloginfo break
+	foreach {failed starttime endtime run duration totalduration} $jobloginfo break
 	if {$failed} {
 		return error
 	} elseif {$endtime ne ""} {
@@ -189,6 +189,6 @@ proc job_process_distr_wait {} {
 	unset -nocomplain cgjob_exit
 	update
 	if {[file exists $cgjob(logfile).running]} {
-		job_update $cgjob(logfile).running
+		job_update $cgjob(logfile).running $cgjob(cleanup)
 	}
 }

@@ -62,6 +62,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(force)]} {
 		set cgjob(force) 0
 	}
+	if {![info exists cgjob(cleanup)]} {
+		set cgjob(cleanup) success
+	}
 	if {![info exists cgjob(silent)]} {
 		if {[get ::verbose 0] >= 1} {
 			set cgjob(silent) 0
@@ -99,6 +102,12 @@ proc job_args {jobargs} {
 			-dpriority {
 				set cgjob(priority) [lindex $jobargs $pos]
 				incr pos
+			}
+			-dcleanup {
+				set value [lindex $jobargs $pos]
+				incr pos
+				if {$value ni {success never allways}} {error "$value not a valid option for -dcleanup, should be one of: success, never, allways"}
+				set cgjob(cleanup) $value
 			}
 			-silent - --silent {
 				set val [lindex $jobargs $pos]
@@ -784,9 +793,9 @@ proc job_logclose {job args} {
 	unset cgjob(buffer,$job)
 }
 
-proc job_logfile {logfile {dir {}} {cmdline {}}} {
+proc job_logfile {{logfile {}} {dir {}} {cmdline {}} args} {
 	global cgjob
-	if {$cgjob(logfile) ne ""} {return $cgjob(logfile)}
+	if {$logfile eq "" && $cgjob(logfile) ne ""} {return $cgjob(logfile)}
 	set time [string_change [timestamp] {" " _ : - . -}]
 	set cgjob(logfile) [file_absolute $logfile].$time
 	file mkdir [file dir $cgjob(logfile)]
@@ -797,11 +806,16 @@ proc job_logfile {logfile {dir {}} {cmdline {}}} {
 	if {$cmdline ne ""} {
 		puts $cgjob(f_logfile) "\# cmdline: $cmdline"
 	}
+	puts $cgjob(f_logfile) "\# genomecomb log file"
+	puts $cgjob(f_logfile) "\# genomecomb_version: [version genomecomb]"
 	puts $cgjob(f_logfile) "\# distribute: $cgjob(distribute)"
 	foreach {key value} $::job_method_info {
 		puts $cgjob(f_logfile) "\# $key: $value"
 	}
-	puts $cgjob(f_logfile) [join {job jobid status submittime starttime endtime duration targets msg} \t]
+	foreach {key value} $args {
+		puts $cgjob(f_logfile) "\# $key: $value"
+	}
+	puts $cgjob(f_logfile) [join {job jobid status submittime starttime endtime duration targets msg run} \t]
 	set cgjob(totalduration) {0 0}
 	set cgjob(status) ok
 	set cgjob(starttime) [timestamp]
@@ -815,14 +829,19 @@ proc timediff2duration {diff} {
 }
 
 proc job_parse_log {job {totalduration {0 0}}} {
-	set starttime {} ; set endtime {} ; set duration {}
+	set starttime {} ; set endtime {} ; set duration {} ; set currentrun "" ; set currentsubmittime ""
 	set logdata [split [file_read $job.log] \n]
 	set failed 0
 	set tail [file tail $job]
 	foreach line $logdata {
-		if {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail} on (.*)($|:)}] $line temp starttime host]} {
+		if {[regexp {^([0-9:. -]+)[ \t]-+ submitted .* \(run (.*)\) --} $line temp currentsubmittime currentrun]} {
+		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail} on (.*)($|:)}] $line temp starttime host]} {
+			set run $currentrun
+			set submittime $currentsubmittime
 			set endtime {}
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail}($|:)}] $line temp starttime]} {
+			set run $currentrun
+			set submittime $currentsubmittime
 			set endtime {}
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} finished($|:)}] $line temp endtime]} {
 			break
@@ -831,6 +850,11 @@ proc job_parse_log {job {totalduration {0 0}}} {
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]job ${tail} failed($|:)}] $line temp endtime]} {
 			set failed 1
 		}
+	}
+	if {![info exists run]} {set run $currentrun}
+	if {![info exists submittime]} {set submittime $currentsubmittime}
+	if {$run eq ""} {
+		set run [clock format [file mtime $job.log] -format "%Y-%m-%d_%H-%M-%S"]
 	}
 	set startcode [timescan $starttime]
 	set endcode [timescan $endtime]
@@ -849,7 +873,7 @@ proc job_parse_log {job {totalduration {0 0}}} {
 		regexp {[1-9]*[0-9]$} [lindex $tduration 0] hours
 		set duration "[expr {24*[lindex $diff 0]+$hours}]:[lindex $tduration 1]:[lindex $tduration 2].[lindex $tduration 3]$extratime"
 	}
-	return [list $failed $starttime $endtime $duration $totalduration]
+	return [list $failed $starttime $endtime $run $duration $totalduration $submittime]
 }
 
 proc job_cleanmsg {msg} {
@@ -859,6 +883,7 @@ proc job_cleanmsg {msg} {
 proc job_logfile_add {job jobid status {targets {}} {msg {}} {submittime {}} {starttime {}} {endtime {}}} {
 	global cgjob
 	if {![info exists cgjob(f_logfile)]} return
+	set run [file tail [get cgjob(logfile) ""]]
 	set cgjob(endtime) $endtime
 	set msg [job_cleanmsg $msg]
 	if {$starttime ne "" && $endtime ne ""} {
@@ -868,7 +893,7 @@ proc job_logfile_add {job jobid status {targets {}} {msg {}} {submittime {}} {st
 	} else {
 		set duration ""
 	}
-	puts $cgjob(f_logfile) [join [list $job $jobid $status $submittime $starttime $endtime $duration $targets $msg] \t]
+	puts $cgjob(f_logfile) [join [list $job $jobid $status $submittime $starttime $endtime $duration $targets $msg $run] \t]
 	flush $cgjob(f_logfile)
 	if {$status eq "error"} {set cgjob(status) error}
 }
@@ -1147,6 +1172,7 @@ proc job_init {args} {
 	set cgjob(starttime) {}
 	set cgjob(endtime) {}
 	set cgjob(totalduration) {0 0}
+	set cgjob(cleanup) success
 	set job_logdir [file_absolute [pwd]/log_jobs]
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_running {} job_running_direct
