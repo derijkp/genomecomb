@@ -141,10 +141,13 @@ proc job_process_parstatus {} {
 			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time timefile $checkcompressed} fadeps]} {
 				if {[regexp {^missing dependency} $fadeps]} {
 #					job_log $job "$fadeps"
+					job_logfile_add $job . error $ftargets $errormsg $submittime
 				} elseif {[regexp {^ptargets hit} $fadeps]} {
 					error "cannot get status on unfinished ptargets hit"
 				} else {
+					set errormsg "error in foreach dependencies for $jobname: $fadeps"
 					puts "joberror\t$jobname\t\terror in foreach dependencies: $fadeps\t$job"
+					job_logfile_add $job . error $ftargets $errormsg $submittime
 				}
 				puts "skipped\t$jobname\t\tdependencies not found\t$job"
 				lappend graph $jobname
@@ -194,6 +197,7 @@ proc job_process_parstatus {} {
 			}
 			job_process_par_marktargets $temptargets $tempptargets $temprmtargets $jobnum
 			puts "running\t$jobname\t$jobnum\t$duration\t\t$job"
+			job_logfile_add $job $jobnum running $ftargets
 			lappend jobsrunning $jobnum
 			catch {job_finddeps $job $deps newtargetvars 0 ids time timefile $checkcompressed $ftargetvars} adeps
 			set job_name($jobnum) $job
@@ -216,6 +220,7 @@ proc job_process_parstatus {} {
 				puts "joberror\t$jobname\t\terror in dependencies: $adeps\t$job"
 			}
 			puts "skipped\t$jobname\t\tdependencies not found\t$job"
+			job_logfile_add $job . skipped $ftargets "dependencies not found" $submittime
 			continue
 		}
 		set targetvars $ftargetvars
@@ -261,13 +266,16 @@ proc job_process_parstatus {} {
 		job_process_par_marktargets [list_concat $targets $temp] $ptargets $rmtargets $jobnum
 		if {[job_file_exists $job.err]} {
 			puts "error\t$jobname\t$jobnum\t\terror file available\t$job.err"
+			job_logfile_add $job $jobnum error $targets [job_cleanmsg [file_read $job.err]] $submittime
 			job_process_pargraph $job $jobname error $duration $checkcompressed $adeps $ids $targets $ptargets
 		} elseif {!$newtargets} {
 			puts "ok\t$jobname\t$jobnum\t$duration\ttargets found\t$job"
+			job_logfile_add $job $jobnum finished $targets "" $submittime
 			job_process_pargraph $job $jobname ok $duration $checkcompressed $adeps $ids $targets $ptargets
 			continue
 		} else {
 			puts "wrong\t$jobname\t$jobnum\t\ttargets not ok, no error file\t$job"
+			job_logfile_add $job $jobnum error $targets "some error, no errorfile was left" $submittime
 			job_process_pargraph $job $jobname wrong $duration $checkcompressed $adeps $ids $targets $ptargets
 		}
 		set cgjob_running($job) $jobnum
@@ -276,7 +284,11 @@ proc job_process_parstatus {} {
 }
 
 proc job_process_status_wait {} {
-	global jobsrunning graph totalduration
+	global cgjob jobsrunning graph totalduration
+	job_logfile_par_close
+	if {[file exists $cgjob(logfile).running]} {
+		job_update $cgjob(logfile).running $cgjob(cleanup)
+	}
 	puts \n
 	set tduration [time_format [list 0 [lindex $totalduration end]] "%H %M %S %s"]
 	regexp {[1-9]*[0-9]$} [lindex $tduration 0] hours
