@@ -16,7 +16,7 @@ proc misc_testfiles {} {
 
 proc dirinfo {dir} {
 	set result {}
-	foreach file [lsort -dict [glob $dir/*]] {
+	foreach file [lsort -dict [glob -nocomplain $dir/*]] {
 		if {[catch {file link $file} link]} {set link -}
 		if {[file isdir $file]} {
 			set data [list dir [dirinfo $file]]
