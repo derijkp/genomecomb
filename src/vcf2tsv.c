@@ -405,7 +405,7 @@ void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int exclu
 	DStringArrayDestroy(alts);
 }
 
-void process_line_split(FILE *fo,DStringArray *linea,int excludename,int excludefilter) {
+void process_line_split(FILE *fo,DStringArray *linea,int excludename,int excludefilter,DString *genotypelist) {
 	DStringArray *lineformat,*alts;
 	char zyg;
 	int l1,l2,len,numalleles,curallele,pos,i,igeno,isample;
@@ -486,10 +486,10 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 			igeno = 9; /* genos start at col 9 */
 			for (isample = 0 ; isample < samples->size ; isample++) {
 				DStringArray *genoa;
-				DString *genotype, *genotypelist;
+				DString *genotype;
 				char *genotypestring,*genotypecur;
 				int phased,i,a1,a2;
-				genotypelist = DStringNew();
+				DStringSetS(genotypelist,"",0);
 				geno = DStringArrayGet(linea,igeno++);
 				genoa = DStringArrayFromChar(geno->string,':');
 				if (order[0] == -1) {
@@ -714,6 +714,7 @@ int main(int argc, char *argv[]) {
 	Hash_table *conv_formata;
 	FILE *fd = NULL,*fo = NULL;
 	DStringArray *headerfields, *linea;
+	DString *genotypelist=DStringNew();
 	altvars = NULL;
 	int *order = NULL;
 	int split,read,i,j,maxtab, excludefilter = 0, excludename = 0;
@@ -903,7 +904,7 @@ int main(int argc, char *argv[]) {
 	while ((read = DStringGetTab(line,fd,maxtab,linea,1,NULL)) != -1) {
 		linenr++;
 		if (split) {
-			process_line_split(fo,linea,excludename,excludefilter);
+			process_line_split(fo,linea,excludename,excludefilter,genotypelist);
 		} else {
 			process_line_unsplit(fo,linea,excludename,excludefilter);
 		}

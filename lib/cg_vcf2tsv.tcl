@@ -56,8 +56,8 @@ proc cg_vcf2tsv {args} {
 	} else {
 		lappend pipe >@ stdout 2>@ stderr
 	}
-	set error [catch $pipe]
-	if {$error} {exiterror "error converting vcf file"}
+	set error [catch $pipe msg]
+	if {$error} {exiterror "error converting vcf file: $msg"}
 }
 
 proc cg_vcf2sft {args} {
