@@ -53,6 +53,11 @@ proc process_illumina {args} {
 		-dbfile {
 			lappend dbfiles [file_absolute $value]
 		}
+		-dbfiles {
+			foreach v $value {
+				lappend dbfiles [file_absolute $value]
+			}
+		}
 		-paired {
 			set paired $value
 		}
@@ -69,11 +74,21 @@ proc process_illumina {args} {
 			set cleanup $value
 		}
 		-m - -maxopenfiles {
-			set ::maxopenfiles [expr {$value - 4}]
+			set maxopenfiles $value
+			set ::maxopenfiles [expr {$maxopenfiles - 4}]
 		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
+	set cmdline [list cg process_illumina]
+	foreach option {realign dbdir dbfiles paired adapterfile conv_nextseq reports cleanup maxopenfiles} {
+		if {[info exists $option]} {
+			lappend cmdline -$option [get $option]
+		}
+	}
+	lappend cmdline $destdir $dbdir
+	job_logfile $destdir/process_illumina $destdir $cmdline \
+		{*}[versions fastqc dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
 	# check projectinfo
 	projectinfo $destdir dbdir {split 1}
 	set dbdir [dbdir $dbdir]
