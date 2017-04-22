@@ -133,6 +133,17 @@ proc version {item {minversion {}}} {
 	return $_versions($item)
 }
 
+proc versions {args} {
+	if {![llength $args]} {
+		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard plink primer3 java R gnusort8 tabix lz4 os}
+	}
+	set result {}
+	foreach item $args {
+		lappend result $item [version $item]
+	}
+	return $result
+}
+
 proc cg_version {args} {
 	set item genomecomb
 	cg_options versions args {
