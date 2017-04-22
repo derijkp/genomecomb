@@ -3,7 +3,7 @@ proc cg_qsub {args} {
 	set options {}
 	cg_options qsub args {
 		-deps {
-			lappend options -hold_jid $value
+			lappend options -hold_jid [join $value ,]
 		}
 		-host {
 			lappend options -l hostname=$value
