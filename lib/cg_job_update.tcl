@@ -57,7 +57,7 @@ proc job_update {logfile {cleanup success}} {
 			set target distr
 		}
 	} else {
-		set target $type
+		set target $cgjob(distribute)
 	}
 	if {[split $line \t] ne {job jobid status submittime starttime endtime duration targets msg run}} {
 		close $o ; close $f
@@ -80,50 +80,34 @@ proc job_update {logfile {cleanup success}} {
 			puts $o [join [list $job $jobid $endstatus $submittime $endstarttime $endendtime [timediff2duration $totalduration] $targets [job_cleanmsg $msg] $run] \t]
 			break
 		}
-		switch $status {
-			submitted - running {
-				set duration {}
-				set starttime {} ; set endtime {}
-				if {![job_file_exists $job.log]} {
-					puts $o $line
-					continue
+		if {$status in {submitted running}} {set starttime {} ; set endtime {} ; set duration {}}
+		if {($starttime eq "" || $endtime eq "" | $duration eq "") && [job_file_exists $job.log]} {
+			set jobloginfo [job_parse_log $job $totalduration]
+			foreach {failed starttime endtime run duration totalduration} $jobloginfo break
+			if {$failed} {
+				set status error
+				if {[catch {set msg [file_read $job.err]}]} {set msg ""}
+			} elseif {$endtime ne ""} {
+				set status finished
+			} elseif {$status in {submitted running}} {
+				# still in queue, running or hang/error?
+				set status [job_status_$target $job $jobloginfo]
+				if {[string range $duration end-2 end] eq "..."} {set endtime "" ; set duration ""}
+				if {[catch {set msg [file_read $job.err]}]} {
+					set msg "job no longer running, but no error message found"
 				}
-				set jobloginfo [job_parse_log $job $totalduration]
-				foreach {failed starttime endtime run duration totalduration} $jobloginfo break
-				if {$failed} {
-					if {[catch {set errormsg [file_read $job.err]}]} {set errormsg ""}
-					puts $o [join [list $job $jobid error $submittime $starttime $endtime $duration $targets [job_cleanmsg $errormsg] $run] \t]
-					if {$endstatus ne "running"} {set endstatus error}
-				} elseif {$endtime ne ""} {
-					puts $o [join [list $job $jobid finished $submittime $starttime $endtime $duration $targets "" $run] \t]
-				} else {
-					# still in queue, running or hang/error?
-					set status [job_status_$target $job $jobloginfo]
-					set msg ""
-					if {$status in "running submitted"} {
-						set endstatus running
-					} elseif {$status eq "error"} {
-						if {$endstatus ne "running"} {set endstatus error}
-						if {[string range $duration end-2 end] eq "..."} {set endtime "" ; set duration ""}
-						if {[catch {set msg [file_read $job.err]}]} {
-							set msg "job no longer running, but no error message found"
-						}
-					}
-					puts $o [join [list $job $jobid $status $submittime $starttime $endtime $duration $targets [job_cleanmsg $msg] $run] \t]
-				}
-			}
-			error {
-				if {$endstatus ne "running"} {set endstatus error}
-				puts $o $line
-			}
-			default {
-				if {$startcode ne "" && $endcode ne ""} {
-					set diff [lmath_calc $endcode - $startcode]
-					set totalduration [lmath_calc $totalduration + $diff]
-				}
-				puts $o $line
 			}
 		}
+		if {$status in "running submitted"} {
+			set endstatus running
+		} elseif {$status eq "error" && $endstatus ne "running"} {
+			set endstatus error
+		}
+		if {$startcode ne "" && $endcode ne ""} {
+			set diff [lmath_calc $endcode - $startcode]
+			set totalduration [lmath_calc $totalduration + $diff]
+		}
+		puts $o [join [list $job $jobid $status $submittime $starttime $endtime $duration $targets [job_cleanmsg $msg] $run] \t]
 		if {$endstartcode eq "" || [time_comp $startcode $endstartcode] > 0} {set endstartcode $startcode ; set endstarttime $starttime}
 		if {$endendcode eq "" || ($endcode ne "" && [time_comp $endendcode $endcode] > 0)} {set endendcode $endcode ; set endendtime $endtime}
 	}
@@ -149,7 +133,7 @@ proc cg_job_update args {
 	job_init
 	set cleanup success
 	cg_options job_update args {
-		-dcleanup -cleanup - -c {
+		-dcleanup - -cleanup - -c {
 			if {$value ni {success never allways}} {error "$value not a valid option for -cleanup, should be one of: success, never, allways"}
 			set cleanup $value
 		}

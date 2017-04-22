@@ -19,6 +19,12 @@ The job system is used by including the following commands (example in job_examp
 job_init initializes the job system. It accept the following job options
 and returns the rest of the arguments:
 ; -d value (--distribute): if value is a number, the job is distributed over the given number of processes. Use sge to distribute using Grid Engine  (also -distribute)
+; -dpriority value: (only for sge) run jobs with the given priority (default is 0)
+; -dcleanup success/never/allways: Allows you to keep all run/log files in the log_jobs
+dirs even if a jub is successfull (**never**), or to allways delete them (**allways**)
+instead of only deleting them after a succesfull run (**success**)
+; -v number (--verbose): This general option has a big effect on job enabled commands:
+If it is > 0, they will output a lot of info (to stder) on dependencies, jobs started, etc.
 ; -f 0/1 (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)
 ; --silent 0/1: use -silent 1 to supress output with info on the processing
 ; --skipjoberrors 0/1: Errors in one job can cause the command to stop; 

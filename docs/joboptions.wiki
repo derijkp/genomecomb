@@ -60,10 +60,6 @@ Engine as grid engine jobs with proper dependencies between the jobs. The
 program itself will stop when all jobs are submitted. You can check
 progress/errors by updating and checking the logfile.
 
-=== status run ===
-You can recreate the logfile and and a graph of dependencies from the log_jobs
-files by running the same command with "-d status".
-
 == Options ==
 List of all options supported by job enabled commands:
 ; -d value (--distribute): distribute method, see in description (also -distribute)

@@ -135,6 +135,7 @@ proc job_process_parstatus {} {
 #		}
 		# check foreach deps, skip if not fullfilled
 		# check for foreach patterns, expand into one ore more entries in the queue
+		set submittime ""
 		if {[llength $foreach]} {
 			# we assume ptarget locks are resolved
 			unset -nocomplain cgjob_ptargets

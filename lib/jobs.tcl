@@ -793,33 +793,40 @@ proc job_logclose {job args} {
 	unset cgjob(buffer,$job)
 }
 
-proc job_logfile {{logfile {}} {dir {}} {cmdline {}} args} {
+proc job_logfile_set {logfile {dir {}} {cmdline {}} args} {
 	global cgjob
-	if {$logfile eq "" && $cgjob(logfile) ne ""} {return $cgjob(logfile)}
 	set time [string_change [timestamp] {" " _ : - . -}]
 	set cgjob(logfile) [file_absolute $logfile].$time
 	file mkdir [file dir $cgjob(logfile)]
 	set cgjob(f_logfile) [open $cgjob(logfile).submitting w]
+	puts $cgjob(f_logfile) "\# genomecomb log file"
 	if {$dir ne ""} {
 		puts $cgjob(f_logfile) "\# dir: $cmdline"
 	}
 	if {$cmdline ne ""} {
 		puts $cgjob(f_logfile) "\# cmdline: $cmdline"
 	}
-	puts $cgjob(f_logfile) "\# genomecomb log file"
-	puts $cgjob(f_logfile) "\# genomecomb_version: [version genomecomb]"
+	puts $cgjob(f_logfile) "\# version_genomecomb: [version genomecomb]"
 	puts $cgjob(f_logfile) "\# distribute: $cgjob(distribute)"
 	foreach {key value} $::job_method_info {
 		puts $cgjob(f_logfile) "\# $key: $value"
 	}
 	foreach {key value} $args {
-		puts $cgjob(f_logfile) "\# $key: $value"
+		puts $cgjob(f_logfile) "\# version_$key: $value"
 	}
 	puts $cgjob(f_logfile) [join {job jobid status submittime starttime endtime duration targets msg run} \t]
 	set cgjob(totalduration) {0 0}
 	set cgjob(status) ok
 	set cgjob(starttime) [timestamp]
 	return $cgjob(logfile)
+}
+
+proc job_logfile {{logfile {}} {dir {}} {cmdline {}} args} {
+	global cgjob
+	# This will only set the log file the first time it is called, allowing subcommans to set it if called separately
+	# but not when called from a larger workflow
+	if {$cgjob(logfile) ne ""} {return $cgjob(logfile)}
+	job_logfile_set $logfile $dir $cmdline {*}$args
 }
 
 proc timediff2duration {diff} {
