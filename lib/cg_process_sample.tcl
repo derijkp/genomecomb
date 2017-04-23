@@ -549,13 +549,13 @@ proc process_sample_job {args} {
 			set files [ssort -natural [jobglob $destdir/ori/*.bam]]
 			foreach file $files {
 				set base $destdir/fastq/[file tail [file root $file]]
-				set target $base-R1.fastq
-				set target2 $base-R2.fastq
+				set target $base-R1.fastq.gz
+				set target2 $base-R2.fastq.gz
 				job bam2fastq-[file tail $file] -deps {$file} \
 				-targets {$target $target2} -code {
 					cg bam2fastq $dep $target.temp.gz $target2.temp.gz
-					file rename -force $target.temp.gz $target.gz
-					file rename -force $target2.temp.gz $target2.gz
+					file rename -force $target.temp.gz $target
+					file rename -force $target2.temp.gz $target2
 				}
 			}
 		}
