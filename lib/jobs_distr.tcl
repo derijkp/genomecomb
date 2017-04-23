@@ -181,6 +181,7 @@ proc job_process_distr_wait {} {
 		puts "job_wait warning: $e"
 	}
 	# puts "All jobs done"
+	after cancel job_process_distr_jobmanager
 	unset -nocomplain cgjob_exit
 	update
 	if {[file exists $cgjob(logfile).running]} {
