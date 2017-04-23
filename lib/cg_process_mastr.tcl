@@ -312,7 +312,7 @@ proc process_mastr_job {args} {
 		-c - -cleanup {
 			set cleanup $value
 		}
-		--samBQ {
+		-samBQ {
 			set samBQ $value
 		}
 		-clipamplicons {
@@ -337,6 +337,18 @@ proc process_mastr_job {args} {
 	if {$useminigenome} {set pre reg_} else {set pre {}}
 	# make sure mastrdir contains everything needed
 	foreach {mastrname refseq mapfile} [mastr_refseq_job $mastrdir $dbdir $useminigenome] break
+	# logfile
+	set cmdline [list cg process_mastr]
+	foreach option {
+		aligner cleanup samBQ clipamplicons split maxopenfiles
+	} {
+		if {[info exists $option]} {
+			lappend cmdline -$option [get $option]
+		}
+	}
+	lappend cmdline $mastrdir $destdir $dbdir
+	job_logfile $destdir/process_mastr_[file tail $destdir] $destdir $cmdline \
+		{*}[versions fastqc dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
 	# start mastr analysis
 	set keeppwd [pwd]
 	cd $destdir

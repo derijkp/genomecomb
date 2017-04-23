@@ -68,6 +68,19 @@ proc process_reports_job {args} {
 	if {$reports eq "all"} {
 		set reports {flagstats fastqstats fastqc vars hsmetrics covered}
 	}
+	# logfile
+	set cmdline [list cg process_reports]
+	foreach option {
+		dbdir reports
+	} {
+		if {[info exists $option]} {
+			lappend cmdline -$option [get $option]
+		}
+	}
+	lappend cmdline $sampledir $dbdir
+	job_logfile $sampledir/process_reports_$sample $sampledir $cmdline \
+		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
+	# start
 	set bamfiles [jobglob $sampledir/*.bam]
 	set targetfile [targetfile_job $sampledir $dbdir]
 	file mkdir $sampledir/reports

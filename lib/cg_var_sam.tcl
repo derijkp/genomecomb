@@ -22,7 +22,7 @@ proc var_sam_job {args} {
 	set split 0
 	set BQ 0
 	cg_options var_sam args {
-		-l {
+		-l - deps {
 			lappend deps $value
 		}
 		-bed {
@@ -42,9 +42,22 @@ proc var_sam_job {args} {
 			lappend opts $key $value
 		}
 	} {bamfile refseq}
-	set dir [file_absolute [file dir $bamfile]]
+	set destdir [file_absolute [file dir $bamfile]]
+	# logfile
+	set cmdline [list cg var_sam]
+	foreach option {
+		split deps bed pre BQ
+	} {
+		if {[info exists $option]} {
+			lappend cmdline -$option [get $option]
+		}
+	}
+	lappend cmdline {*}$opts $bamfile $refseq
+	job_logfile $destdir/var_gatk_[file tail $bamfile] $destdir $cmdline \
+		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
+	# start
 	set keeppwd [pwd]
-	cd $dir
+	cd $destdir
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	# make sure reference sequence is indexed
@@ -103,7 +116,7 @@ proc var_sam_job {args} {
 		catch {file delete ${pre}varall-sam-$root.vcf.idx}
 	}
 	cd $keeppwd
-	return [file join $dir var-sam-$root.tsv]
+	return [file join $destdir var-sam-$root.tsv]
 }
 
 proc cg_var_sam {args} {

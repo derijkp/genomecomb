@@ -482,6 +482,18 @@ proc process_sample_job {args} {
 			mklink $oridir $destdir/ori
 		}
 	}
+	# logfile
+	set cmdline [list cg process_sample]
+	foreach option {
+		oridir dbdir refdir aligner realign realign varcallers split paired adapterfile reports samBQ todoVar reportstodoVar cleanup maxopenfiles
+	} {
+		if {[info exists $option]} {
+			lappend cmdline -$option [get $option]
+		}
+	}
+	lappend cmdline $destdir
+	job_logfile $destdir/process_sample_[file tail $destdir] $destdir $cmdline \
+		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
 	# check if ori is a cg dir, if so use process_sample_cgi_job
 	# ----------------------------------------------------------
 	if {[jobglob $destdir/ori/ASM/var-*-ASM*.tsv] ne ""} {

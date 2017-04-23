@@ -55,7 +55,7 @@ proc var_gatk_job {args} {
 	set deps {}
 	set regionfile {}
 	cg_options var_sam args {
-		-L {
+		-L - -deps {
 			lappend deps $value
 		}
 		-bed {
@@ -72,11 +72,26 @@ proc var_gatk_job {args} {
 			lappend opts $key $value
 		}
 	} {bamfile refseq}
+	set bamfile [file_absolute $bamfile]
+	set refseq [file_absolute $refseq]
+	set destdir [file dir $bamfile]
 	set gatk [gatk]
+	# logfile
+	set cmdline [list cg var_gatk]
+	foreach option {
+		split deps bed pre
+	} {
+		if {[info exists $option]} {
+			lappend cmdline -$option [get $option]
+		}
+	}
+	lappend cmdline {*}$opts $bamfile $refseq
+	job_logfile $destdir/var_gatk_[file tail $bamfile] $destdir $cmdline \
+		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
+	# start
 	## Produce gatk SNP calls
-	set dir [file dir $bamfile]
 	set keeppwd [pwd]
-	cd $dir
+	cd $destdir
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	set gatkrefseq [gatk_refseq_job $refseq]
@@ -165,7 +180,7 @@ proc var_gatk_job {args} {
 		catch {file delete ${pre}delvar-gatk-$root.tsv}
 	}
 	cd $keeppwd
-	return [file join $dir ${pre}var-gatk-$root.tsv]
+	return [file join $destdir ${pre}var-gatk-$root.tsv]
 }
 
 proc cg_var_gatk {args} {

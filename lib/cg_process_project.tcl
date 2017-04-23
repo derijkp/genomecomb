@@ -62,7 +62,21 @@ proc process_project_job {args} {
 	# check projectinfo
 	projectinfo $destdir dbdir {split 1}
 	set dbdir [dbdir $dbdir]
+	# logfile
+	# -------
+	set cmdline [list cg process_project]
+	foreach option {
+		ori dbdir refdir a aligner realign v varcallers split dbfile dbfiles paired adapterfile conv_nextseq reports cleanup maxopenfiles samBQ
+	} {
+		if {[info exists $option]} {
+			lappend cmdline -$option [get $option]
+		}
+	}
+	lappend cmdline $destdir $dbdir
+	job_logfile $destdir/process_project_[file tail $destdir] $destdir $cmdline \
+		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
 	# start
+	# -----
 	##in case of nextseq500 data - generate fastqs & distribute data
 	if {$conv_nextseq} {
 		set rundir [glob $destdir/*NS500*]

@@ -5,7 +5,7 @@
 #
 
 proc annotatereg {file dbfile name annotfile near dbinfo} {
-# putslog [list annotatereg $file $dbfile $name $annotfile $near $dbinfo]
+# putsvars annotatereg file dbfile name annotfile near dbinfo
 	set newh [dict get $dbinfo newh]
 	set dataposs [dict get $dbinfo dataposs]
 	catch {gzclose $f}
@@ -222,6 +222,8 @@ proc cg_annotate_job {args} {
 		}
 	} {orifile resultfile} 3
 	set dbdir [file_absolute $dbdir]
+	set orifile [file_absolute $orifile]
+	set resultfile [file_absolute $resultfile]
 	set dbfiles {}
 	set resultname [file tail $resultfile]
 	foreach testfile $args {
@@ -233,6 +235,7 @@ proc cg_annotate_job {args} {
 			lappend dbfiles $testfile
 		}
 	}
+	# start
 	if {[jobtargetexists $resultfile [list $orifile {*}$dbfiles]]} {
 		putslog "Skipping annotation to $resultfile: already made"
 		return
@@ -268,6 +271,19 @@ proc cg_annotate_job {args} {
 		}
 	}
 	set tempbasefile [indexdir_file $resultfile vars.tsv ok]
+	# logfile
+	set cmdline [list cg annotate]
+	foreach option {
+		dbdir near name replace multidb upstreamsize
+	} {
+		if {[info exists $option]} {
+			lappend cmdline -$option [get $option]
+		}
+	}
+	lappend cmdline $orifile $resultfile
+	job_logfile [file dir $tempbasefile]/annotate_[file tail $resultfile] [file dir $tempbasefile] $cmdline \
+		{*}[versions dbdir lz4 os]
+	# logdir
 	job_logdir $tempbasefile.log_jobs
 	# If $orifile is a vcf file, convert
 	set ext [file extension [gzroot $orifile]]

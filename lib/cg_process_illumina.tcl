@@ -80,19 +80,21 @@ proc process_illumina {args} {
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
+	# check projectinfo
+	projectinfo $destdir dbdir {split 1}
+	set dbdir [dbdir $dbdir]
 	# logfile
 	set cmdline [list cg process_illumina]
-	foreach option {realign dbdir dbfiles paired adapterfile conv_nextseq reports cleanup maxopenfiles} {
+	foreach option {
+		realign dbdir dbfiles paired adapterfile conv_nextseq reports cleanup maxopenfiles
+	} {
 		if {[info exists $option]} {
 			lappend cmdline -$option [get $option]
 		}
 	}
 	lappend cmdline $destdir $dbdir
 	job_logfile $destdir/process_illumina_[file tail $destdir] $destdir $cmdline \
-		{*}[versions fastqc dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
-	# check projectinfo
-	projectinfo $destdir dbdir {split 1}
-	set dbdir [dbdir $dbdir]
+		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
 	# start
 	##in case of nextseq500 data - generate fastqs & distribute data
 	if {$conv_nextseq} {
