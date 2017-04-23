@@ -27,6 +27,13 @@ proc main args {
 	file mkdir $dir
 	cd $dir
 	#
+	# set the job log file
+	# first argument is the base name of the logfile
+	# second is the base directory
+	# next is the commandline (to record in the logfile)
+	set cmdline [list job_example.tcl -num $num -max $max $dir]
+	job_logfile $dir/example_[file tail $dir] $dir $cmdline
+	#
 	# set the job log directory
 	# This is a directory where output, job scripts etc. will be stored
 	# The combination of log dir and jobname (see further) must be unique

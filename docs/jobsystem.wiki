@@ -37,6 +37,21 @@ Typical use:
 set argv [job_init {*}$argv]
 }}}
 
+== job_logfile ==
+job_logfile sets the (base) filename of the logfile. A timestamp and
+changing extension (.submitting, .running, .finished, .error according to
+status) will be added. The optional extra parameters are added as info in the comments
+of the log file: **basedir** sets a base directory in which most of the action
+will be going on. If jobfiles are within this directory, they are recorded as relative paths.
+**cmdline** is used to indicate with which parameters the command/run was started.
+Custom information can be added using extra key value pairs. (The keys
+distribute and pid are reserved for use by the job system)
+
+Typical use:
+{{{
+job_logfile logfile ?basedir? ?cmdline? ?key value? ... 
+}}}
+
 == job_logdir ==
 job_logdir sets the current job log directory.
 This is a directory where output, job scripts etc. will be stored.
