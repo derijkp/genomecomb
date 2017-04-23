@@ -800,8 +800,9 @@ proc job_logfile_set {logfile {dir {}} {cmdline {}} args} {
 	file mkdir [file dir $cgjob(logfile)]
 	set cgjob(f_logfile) [open $cgjob(logfile).submitting w]
 	puts $cgjob(f_logfile) "\# genomecomb log file"
+	set cgjob(basedir) $dir
 	if {$dir ne ""} {
-		puts $cgjob(f_logfile) "\# dir: $cmdline"
+		puts $cgjob(f_logfile) "\# basedir: $dir"
 	}
 	if {$cmdline ne ""} {
 		puts $cgjob(f_logfile) "\# cmdline: $cmdline"
@@ -899,6 +900,20 @@ proc job_logfile_add {job jobid status {targets {}} {msg {}} {submittime {}} {st
 		set duration [timediff2duration $diff]
 	} else {
 		set duration ""
+	}
+	if {$cgjob(basedir) ne ""} {
+		set pos [string length $cgjob(basedir)/]
+		if {[string match $cgjob(basedir)/* $job]} {
+			set job [string range $job $pos end]
+		}
+		set newtargets {}
+		foreach target $targets {
+			if {[string match $cgjob(basedir)/* $target]} {
+				set target [string range $target $pos end]
+			}
+			lappend newtargets $target
+		}
+		set targets $newtargets
 	}
 	puts $cgjob(f_logfile) [join [list $job $jobid $status $submittime $starttime $endtime $duration $targets $msg $run] \t]
 	flush $cgjob(f_logfile)

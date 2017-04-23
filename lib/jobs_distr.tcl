@@ -36,7 +36,8 @@ proc job_running_distr {jobnum} {
 }
 
 proc job_status_distr {job {jobloginfo {}}} {
-	global cgjob_distr_running
+	global cgjob cgjob_distr_running
+	if {[info exists cgjob(pid)] && [catch {exec ps $cgjob(pid)}]} {return error}
 	set totalduration {0 0}
 	if {$jobloginfo eq ""} {
 		if {![file exists $job.log]} {return unkown}
@@ -49,8 +50,7 @@ proc job_status_distr {job {jobloginfo {}}} {
 		return finished
 	} elseif {$starttime eq ""} {
 		return submitted
-	} elseif {[file exists $job.pid]} {
-		set pid [file_read $job.pid]
+	} elseif {![catch {file_read $job.pid} pid]} {
 		set notrunning [catch {exec ps $pid}]
 		if {$notrunning} {return error} else {return running}
 	} else {

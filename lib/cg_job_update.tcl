@@ -73,13 +73,14 @@ proc job_update {logfile {cleanup success}} {
 	while 1 {
 		if {[gets $f line] == -1} break
 		set sline [split $line \t]
-		foreach {job jobid status submittime starttime endtime duration targets msg run} $sline break
+		foreach {jobo jobid status submittime starttime endtime duration targets msg run} $sline break
 		set startcode [timescan $starttime]
 		set endcode [timescan $endtime]
-		if {$job eq "total"} {
+		if {$jobo eq "total"} {
 			puts $o [join [list $job $jobid $endstatus $submittime $endstarttime $endendtime [timediff2duration $totalduration] $targets [job_cleanmsg $msg] $run] \t]
 			break
 		}
+		if {$cgjob(basedir) ne "" && [file pathtype $jobo] ne "absolute"} {set job $cgjob(basedir)/$jobo} else {set job $jobo}
 		if {$status in {submitted running}} {set starttime {} ; set endtime {} ; set duration {}}
 		if {($starttime eq "" || $endtime eq "" | $duration eq "") && [job_file_exists $job.log]} {
 			set jobloginfo [job_parse_log $job $totalduration]
@@ -107,7 +108,7 @@ proc job_update {logfile {cleanup success}} {
 			set diff [lmath_calc $endcode - $startcode]
 			set totalduration [lmath_calc $totalduration + $diff]
 		}
-		puts $o [join [list $job $jobid $status $submittime $starttime $endtime $duration $targets [job_cleanmsg $msg] $run] \t]
+		puts $o [join [list $jobo $jobid $status $submittime $starttime $endtime $duration $targets [job_cleanmsg $msg] $run] \t]
 		if {$endstartcode eq "" || [time_comp $startcode $endstartcode] > 0} {set endstartcode $startcode ; set endstarttime $starttime}
 		if {$endendcode eq "" || ($endcode ne "" && [time_comp $endendcode $endcode] > 0)} {set endendcode $endcode ; set endendtime $endtime}
 	}

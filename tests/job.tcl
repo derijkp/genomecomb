@@ -16,28 +16,28 @@ if 0 {
 	set testname "-d direct"
 	proc test_job_init {args} {
 		uplevel job_init -skipjoberrors 1 {*}$args
-		job_logfile_set log
+		job_logfile_set log $::testdir/tmp
 	}
 	proc gridwait {} {}
 
 	set testname "-d 2"
 	proc test_job_init {args} {
 		uplevel job_init -d 2 {*}$args
-		job_logfile_set log
+		job_logfile_set log $::testdir/tmp
 	}
 	proc gridwait {} {}
 
 	set testname "-d 30"
 	proc test_job_init {args} {
 		uplevel job_init -d 30 {*}$args
-		job_logfile_set log
+		job_logfile_set log $::testdir/tmp
 	}
 	proc gridwait {} {}
 
 	set testname "-d sge"
 	proc test_job_init {args} {
 		uplevel job_init -d sge {*}$args
-		job_logfile_set log
+		job_logfile_set log $::testdir/tmp
 	}
 	proc gridwait {} {
 		while 1 {
@@ -284,7 +284,7 @@ if {$testname eq "-d sge"} {
 	proc gridwait {} {}
 }
 
-proc test_job_init {args} "$initcode\njob_logfile_set log"
+proc test_job_init {args} "$initcode\njob_logfile_set log \$::testdir/tmp"
 
 test job "basic chain $testname" {
 	cd $::testdir
