@@ -123,7 +123,11 @@ proc version {item {minversion {}}} {
 				}
 			}
 		}
-		if {$_versions($item) eq ""} {set _versions($item) ?}
+		if {$_versions($item) eq ""} {
+			set _versions($item) ?
+		} else  {
+			set _versions($item) [string_change $_versions($item) [list \t \\t \n \\n]]
+		}
 	}
 	if {$minversion ne ""} {
 		if {[lindex [ssort -natural [list $minversion $_versions($item)]] 0] ne "$minversion"} {
