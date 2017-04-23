@@ -37,22 +37,17 @@ proc job_running_distr {jobnum} {
 
 proc job_status_distr {job {jobloginfo {}}} {
 	global cgjob cgjob_distr_running
-	if {[info exists cgjob(pid)] && [catch {exec ps $cgjob(pid)}]} {return error}
 	set totalduration {0 0}
 	if {$jobloginfo eq ""} {
 		if {![file exists $job.log]} {return unkown}
 		set jobloginfo [job_parse_log $job $totalduration]
 	}
-	foreach {failed starttime endtime run duration totalduration} $jobloginfo break
-	if {$failed} {
-		return error
-	} elseif {$endtime ne ""} {
-		return finished
-	} elseif {$starttime eq ""} {
-		return submitted
-	} elseif {![catch {file_read $job.pid} pid]} {
-		set notrunning [catch {exec ps $pid}]
-		if {$notrunning} {return error} else {return running}
+	foreach {status starttime endtime run duration totalduration} $jobloginfo break
+	if {$status ni {submitted running}} {return $status}
+	if {[info exists cgjob(pid)] && [catch {exec ps $cgjob(pid)}]} {return error}
+	if {$status eq "submitted"} {return $status}
+	if {![catch {file_read $job.pid} pid] && ![catch {exec ps $pid}]} {
+		return running
 	} else {
 		return error
 	}

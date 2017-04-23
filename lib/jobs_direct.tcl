@@ -16,14 +16,8 @@ proc job_status_direct {job {jobloginfo {}}} {
 		if {![file exists $job.log]} {return unkown}
 		set jobloginfo [job_parse_log $job $totalduration]
 	}
-	foreach {failed starttime endtime run duration totalduration} $jobloginfo break
-	if {$failed} {
-		return error
-	} elseif {$endtime ne ""} {
-		return finished
-	} else {
-		return error
-	}
+	foreach {status starttime endtime run duration totalduration} $jobloginfo break
+	return $status
 }
 
 proc stderr2file {fileout {fileerr {}}} {

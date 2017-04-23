@@ -838,6 +838,7 @@ proc timediff2duration {diff} {
 
 proc job_parse_log {job {totalduration {0 0}}} {
 	set starttime {} ; set endtime {} ; set duration {} ; set currentrun "" ; set currentsubmittime ""
+	set status submitted
 	set logdata [split [file_read $job.log] \n]
 	set failed 0
 	set tail [file tail $job]
@@ -846,16 +847,31 @@ proc job_parse_log {job {totalduration {0 0}}} {
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail} on (.*)($|:)}] $line temp starttime host]} {
 			set run $currentrun
 			set submittime $currentsubmittime
+			set status running
 			set endtime {}
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail}($|:)}] $line temp starttime]} {
 			set run $currentrun
 			set submittime $currentsubmittime
+			set status running
 			set endtime {}
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} finished($|:)}] $line temp endtime]} {
+			set status finished
 			break
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} failed($|:)}] $line temp endtime]} {
+			set status error
 			set failed 1
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]job ${tail} failed($|:)}] $line temp endtime]} {
+			set status error
+			set failed 1
+		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t>-]+job ${tail} skipped($|:)}] $line temp skiptime]} {
+			if {$status ni {finished error}} {
+				set status skipped
+			}
+			set failed 1
+		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]skipping ${tail}($|:)}] $line temp skiptime]} {
+			if {$status ni {finished error}} {
+				set status skipped
+			}
 			set failed 1
 		}
 	}
@@ -881,7 +897,7 @@ proc job_parse_log {job {totalduration {0 0}}} {
 		regexp {[1-9]*[0-9]$} [lindex $tduration 0] hours
 		set duration "[expr {24*[lindex $diff 0]+$hours}]:[lindex $tduration 1]:[lindex $tduration 2].[lindex $tduration 3]$extratime"
 	}
-	return [list $failed $starttime $endtime $run $duration $totalduration $submittime]
+	return [list $status $starttime $endtime $run $duration $totalduration $submittime]
 }
 
 proc job_cleanmsg {msg} {

@@ -84,18 +84,17 @@ proc job_update {logfile {cleanup success}} {
 		if {$status in {submitted running}} {set starttime {} ; set endtime {} ; set duration {}}
 		if {($starttime eq "" || $endtime eq "" | $duration eq "") && [job_file_exists $job.log]} {
 			set jobloginfo [job_parse_log $job $totalduration]
-			foreach {failed starttime endtime run duration totalduration} $jobloginfo break
-			if {$failed} {
-				set status error
+			foreach {status starttime endtime run duration totalduration} $jobloginfo break
+			if {$status eq "error"} {
 				if {[catch {set msg [file_read $job.err]}]} {set msg ""}
-			} elseif {$endtime ne ""} {
-				set status finished
 			} elseif {$status in {submitted running}} {
 				# still in queue, running or hang/error?
 				set status [job_status_$target $job $jobloginfo]
 				if {[string range $duration end-2 end] eq "..."} {set endtime "" ; set duration ""}
-				if {[catch {set msg [file_read $job.err]}]} {
-					set msg "job no longer running, but no error message found"
+				if {$status eq "error"} {
+					if {[catch {set msg [file_read $job.err]}]} {
+						set msg "job no longer running, but no error message found"
+					}
 				}
 			}
 		}

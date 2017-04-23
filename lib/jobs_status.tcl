@@ -171,7 +171,7 @@ proc job_process_parstatus {} {
 		set duration {}
 		if {[job_file_exists $job.log]} {
 			set jobloginfo [job_parse_log $job $totalduration]
-			foreach {failed time endtime run duration totalduration submittime} $jobloginfo break
+			foreach {status time endtime run duration totalduration submittime} $jobloginfo break
 			if {$time eq ""} {unset time}
 			if {$endtime eq ""} {unset endtime}
 		}

@@ -19,22 +19,13 @@ proc job_status_sge {job {jobloginfo {}}} {
 		if {![file exists $job.log]} {return unkown}
 		set jobloginfo [job_parse_log $job]
 	}
-	foreach {failed starttime endtime run duration totalduration submittime} $jobloginfo break
-	if {$failed} {
-		return error
-	} elseif {$endtime ne ""} {
-		return finished
+	foreach {status starttime endtime run duration totalduration submittime} $jobloginfo break
+	if {$status ni {submitted running}} {return $status}
+	set jobnum [job_process_par_jobid $job]
+	if {[job_running_sge $jobnum]} {
+		return $status
 	} else {
-		set jobnum [job_process_par_jobid $job]
-		if {[job_running_sge $jobnum]} {
-			if {$starttime ne ""} {
-				return running
-			} else {
-				return submitted
-			}
-		} else {
-			return error
-		}
+		return error
 	}
 }
 
