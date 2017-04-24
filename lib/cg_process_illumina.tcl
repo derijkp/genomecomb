@@ -55,7 +55,7 @@ proc process_illumina {args} {
 		}
 		-dbfiles {
 			foreach v $value {
-				lappend dbfiles [file_absolute $value]
+				lappend dbfiles [file_absolute $v]
 			}
 		}
 		-paired {

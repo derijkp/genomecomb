@@ -18,10 +18,12 @@ proc process_multicompar_job {args} {
 			set split $value
 		}
 		-dbfile {
-			lappend dbfiles $value
+			lappend dbfiles [file_absolute $value]
 		}
 		-dbfiles {
-			lappend dbfiles {*}$value
+			foreach v $value {
+				lappend dbfiles [file_absolute $v]
+			}
 		}
 		-skipincomplete {
 			set skipincomplete $value
