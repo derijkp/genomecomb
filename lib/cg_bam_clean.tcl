@@ -105,7 +105,10 @@ proc bam_clean_job {args} {
 				} else {
 					set extra {}
 				}
-				exec [gatkjava] -jar $gatk -T IndelRealigner -R $gatkrefseq -targetIntervals $target.intervals -I $dep -o $target.temp {*}$extra 2>@ stderr >@ stdout
+				lappend extra --filter_mismatching_base_and_quals
+				exec [gatkjava] -jar $gatk -T IndelRealigner -R $gatkrefseq \
+					-targetIntervals $target.intervals -I $dep \
+					-o $target.temp {*}$extra 2>@ stderr >@ stdout
 				catch {file rename -force $target.temp.bai $target.bai}
 				catch {file delete $target.intervals}
 				file rename -force $target.temp $target
