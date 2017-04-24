@@ -15,4 +15,15 @@ test reports {hsmetrics} {
 	exec diff tmp/result.hsmetrics.nocomments genomecomb.testdata/expected/bam_histo-NA19240chr2122.hsmetrics
 } {}
 
+test reports {process_reports} {
+	cd $::bigtestdir
+	file delete -force {*}[glob tmp/test_reports/*]
+	file mkdir tmp/test_reports
+	file copy {*}[glob expected/exomes_yri_mx2/samples/NA19240mx2/*] tmp/test_reports
+	file delete -force tmp/test_reports/reports
+	mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/test_reports/reg_hg19_targets.tsv.lz4
+	cg process_reports -stack 1 tmp/test_reports refseqtest/hg19
+	cg tsvdiff -q 1 tmp/test_reports/reports expected/exomes_yri_mx2/samples/NA19240mx2/reports
+} {}
+
 testsummarize

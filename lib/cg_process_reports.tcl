@@ -137,8 +137,7 @@ proc process_reports_job {args} {
 			file mkdir $outdir
 			set target $sampledir/reports/fastqc/${name}.fq_fastqc
 			job reports_fastqc-[file tail $fastqfile] -deps {$dep} -targets {$target} -vars {outdir} -code {
-				exec fastqc -q -o $outdir $dep 2>@ stderr >@ stdout
-				file delete $target.zip
+				fastqc $target -q $dep 2>@ stderr >@ stdout
 			}
 		}
 	}
