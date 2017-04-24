@@ -80,7 +80,7 @@ proc job_update {logfile {cleanup success}} {
 			puts $o [join [list $job $jobid $endstatus $submittime $endstarttime $endendtime [timediff2duration $totalduration] $targets [job_cleanmsg $msg] $run] \t]
 			break
 		}
-		if {$cgjob(basedir) ne "" && [file pathtype $jobo] ne "absolute"} {set job $cgjob(basedir)/$jobo} else {set job $jobo}
+		if {[get cgjob(basedir) ""] ne "" && [file pathtype $jobo] ne "absolute"} {set job $cgjob(basedir)/$jobo} else {set job $jobo}
 		if {$status in {submitted running}} {set starttime {} ; set endtime {} ; set duration {}}
 		if {($starttime eq "" || $endtime eq "" | $duration eq "") && [job_file_exists $job.log]} {
 			set jobloginfo [job_parse_log $job $totalduration]
