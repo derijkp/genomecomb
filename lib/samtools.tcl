@@ -4,9 +4,13 @@ proc samtools_sort {args} {
 	set resultfile [lindex $args end]
 	set args [lrange $args 0 end-2]
 	if {[catch {version samtools 1}]} {
-		exec samtools sort {*}$args $bamfile $resultfile 2>@ stderr
+		if {[catch {exec samtools sort {*}$args $bamfile $resultfile 2>@ stdout} msg]} {
+			error $msg
+		}
 		file rename -force $resultfile.bam $resultfile
 	} else {
-		exec samtools sort {*}$args $bamfile > $resultfile 2>@ stderr
+		if {[catch {exec samtools sort {*}$args $bamfile > $resultfile 2>@ stdout} msg]} {
+			error $msg
+		}
 	}
 }
