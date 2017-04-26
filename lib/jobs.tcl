@@ -844,6 +844,8 @@ proc job_parse_log {job {totalduration {0 0}}} {
 	set tail [file tail $job]
 	foreach line $logdata {
 		if {[regexp {^([0-9:. -]+)[ \t]-+ submitted .* \(run (.*)\) --} $line temp currentsubmittime currentrun]} {
+			set status submitted
+			set starttime {} ; set endtime {}
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail} on (.*)($|:)}] $line temp starttime host]} {
 			set run $currentrun
 			set submittime $currentsubmittime
