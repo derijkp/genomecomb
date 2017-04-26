@@ -18,21 +18,16 @@ proc job_running_distr {jobnum} {
 	global cgjob cgjob_distr_running cgjob_distr_queue
 	if {![info exists cgjob_distr_running($jobnum)]} {return 0}
 	set job [lindex $cgjob_distr_running($jobnum) 1]
-	if {![file exists $job.pid]} {
-		set notrunning 1
-	} else {
-		set pid [file_read $job.pid]
-		set notrunning [catch {exec ps $pid}]
-		if {$notrunning} {
-			if {!$cgjob(silent)} {puts "   -=- ending $job ($jobnum)"}
-			file delete $job.pid
+	if {![catch {file_read $job.pid} pid]} {
+		if {![catch {exec ps $pid}]} {
+			return 1
 		}
+		if {!$cgjob(silent)} {puts "   -=- ending $job ($jobnum)"}
+		file delete $job.pid
+		unset -nocomplain cgjob_distr_running($jobnum)
+		unset -nocomplain cgjob_distr_queue($jobnum)
 	}
-	if {$notrunning} {
-		unset cgjob_distr_running($jobnum)
-		unset cgjob_distr_queue($jobnum)
-	}
-	if {$notrunning} {return 0} else {return 1}
+	return 0
 }
 
 proc job_status_distr {job {jobloginfo {}}} {
