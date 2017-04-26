@@ -77,7 +77,7 @@ proc job_update {logfile {cleanup success} {force 0}} {
 		set startcode [timescan $starttime]
 		set endcode [timescan $endtime]
 		if {$jobo eq "total"} {
-			puts $o [join [list $job $jobid $endstatus $submittime $endstarttime $endendtime [timediff2duration $totalduration] $targets [job_cleanmsg $msg] $run] \t]
+			puts $o [join [list total $jobid $endstatus $submittime $endstarttime $endendtime [timediff2duration $totalduration] $targets [job_cleanmsg $msg] $run] \t]
 			break
 		}
 		if {[get cgjob(basedir) ""] ne "" && [file pathtype $jobo] ne "absolute"} {set job $cgjob(basedir)/$jobo} else {set job $jobo}
