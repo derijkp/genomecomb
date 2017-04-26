@@ -112,8 +112,8 @@ proc process_multicompar_job {args} {
 	# multicompar
 	# -----------
 	putslog "Finding samples"
-	if {[catch {cg select -n [gzfile compar/compar-$experiment.tsv]} done]} {set done {}}
-	set compar_file compar/compar-$experiment.tsv.lz4
+	set compar_file [gzfile compar/compar-$experiment.tsv]
+	if {[catch {cg select -n $compar_file} done]} {set done {}}
 	set done [split $done \n]
 	set stilltodo {}
 	foreach sample $todo {
