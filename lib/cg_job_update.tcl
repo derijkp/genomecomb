@@ -26,7 +26,7 @@ proc job_cleanlogs {logfile} {
 	}
 }
 
-proc job_update {logfile {cleanup success}} {
+proc job_update {logfile {cleanup success} {force 0}} {
 	global cgjob
 	if {![file exists $logfile]} {
 		error "cannot update non(no longer)-existing logfile: $logfile"
@@ -132,12 +132,16 @@ proc job_update {logfile {cleanup success}} {
 proc cg_job_update args {
 	job_init
 	set cleanup success
+	set force 0
 	cg_options job_update args {
 		-dcleanup - -cleanup - -c {
 			if {$value ni {success never allways}} {error "$value not a valid option for -cleanup, should be one of: success, never, allways"}
 			set cleanup $value
 		}
+		-f - -force {
+			set force $value
+		}
 	} logfile 1 1
 	set logfile [file_absolute $logfile]
-	job_update $logfile $cleanup
+	job_update $logfile $cleanup $force
 }
