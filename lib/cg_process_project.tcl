@@ -30,15 +30,20 @@ proc process_project_job {args} {
 			set split $value
 		}
 		-dbfile {
-			lappend dbfiles $value
+			if {![file exists $value]} {error "dbfile $value does not exists"}
+			lappend dbfiles [file_absolute $value]
 		}
 		-dbfiles {
-			lappend dbfiles {*}$value
+			foreach v $value {
+				if {![file exists $v]} {error "dbfile $v does not exists"}
+				lappend dbfiles [file_absolute $v]
+			}
 		}
 		-p - -paired {
 			set paired $value
 		}
 		-adapterfile {
+			if {$value ne "" && ![file exists $value]} {error "adapterfile $value does not exists"}
 			set adapterfile $value
 		}
 		-conv_nextseq {

@@ -505,7 +505,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 	if {[file exists $compar_file]} {
 		set allfiles [list_concat $compar_file $files]
 	} elseif {[file exists [gzroot $compar_file]]} {
-		set allfiles [list_concat [gzroot $compar_file] $files]
+		set allfiles [list_concat $compar_file $files]
 	} else {
 		set allfiles $files
 	}

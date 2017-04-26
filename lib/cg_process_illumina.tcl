@@ -51,10 +51,12 @@ proc process_illumina {args} {
 			set split $value
 		}
 		-dbfile {
+			if {![file exists $value]} {error "dbfile $value does not exists"}
 			lappend dbfiles [file_absolute $value]
 		}
 		-dbfiles {
 			foreach v $value {
+				if {![file exists $v]} {error "dbfile $v does not exist"}
 				lappend dbfiles [file_absolute $v]
 			}
 		}
@@ -62,6 +64,7 @@ proc process_illumina {args} {
 			set paired $value
 		}
 		-adapterfile {
+			if {$value ne "" && ![file exists $value]} {error "adapterfile $value does not exists"}
 			set adapterfile [file_absolute $value]
 		}
 		-conv_nextseq {

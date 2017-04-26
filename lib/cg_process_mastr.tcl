@@ -292,7 +292,8 @@ proc generate_html_report_job {experiment} {
 		cg select -g sample -gc {sequenced {v} count} $dep compar/summary-compar-${experiment}.tsv
 		set rmd $::appdir/res/mastrreport.Rmd
 		set chartjs $::appdir/res/displayChartHistogram.js
-		exec [findR] -e [string_change {library(rmarkdown); library(stringr); mastrdir=getwd(); local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @rmd@ $rmd @chartjs@ $chartjs]] >@ stdout 2>@ stderr
+		set cmd [string_change {library(rmarkdown); library(stringr); mastrdir=getwd(); local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @rmd@ $rmd @chartjs@ $chartjs]]
+		exec [findR] -e $cmd >@ stdout 2>@ stderr
 		file rename -force $target.temp $target
 		file delete compar/summary-compar-${experiment}.tsv
 	}
@@ -504,6 +505,7 @@ proc process_mastr_job {args} {
 	job_logdir $destdir/log_jobs
 	cd $destdir
 	set todo [list_remdup $todo]
+	set dbfiles [list_remove $dbfiles {}]
 	if $addtargets {
 		process_multicompar_job -experiment $experiment -split $split -dbfiles $dbfiles -targetsfile $targetsfile $destdir $dbdir $todo
 	} else {
