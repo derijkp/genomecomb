@@ -130,27 +130,30 @@ proc process_illumina {args} {
 		puts $dir
 		cd $dir
 		job_logdir $dir/log_jobs
-		# check if there are bam files in ori to extract fastq from
-		set files [ssort -natural [jobglob ori/*.bam]]
-		foreach file $files {
-			set base fastq/[file tail [file root $file]]
-			set target $base-R1.fastq.gz
-			set target2 $base-R2.fastq.gz
-			job bam2fastq-[file tail $file] -deps {$file} \
-			-targets {$target $target2} -code {
-				cg bam2fastq $dep $target.temp.gz $target2.temp.gz
-				file rename -force $target.temp.gz $target
-				file rename -force $target2.temp.gz $target2
+		# find fastq files
+		set fastqfiles [ssort -natural [jobglob fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
+		if {![llength $fastqfiles]} {
+			# if there are no fastqfiles, check if there are bam files in ori to extract fastq from
+			set files [ssort -natural [jobglob ori/*.bam]]
+			foreach file $files {
+				set base fastq/[file tail [file root $file]]
+				set target $base-R1.fastq.gz
+				set target2 $base-R2.fastq.gz
+				job bam2fastq-[file tail $file] -deps {$file} \
+				-targets {$target $target2} -code {
+					cg bam2fastq $dep $target.temp.gz $target2.temp.gz
+					file rename -force $target.temp.gz $target
+					file rename -force $target2.temp.gz $target2
+				}
 			}
+			set fastqfiles [ssort -natural [jobglob fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
 		}
-		# find fastq files, and process them
-		set files [ssort -natural [jobglob fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
-		if {[llength $files]} {
+		if {[llength $fastqfiles]} {
 			# do not do any of preliminaries if end product is already there
 			set bamfile map-bwa-$sample.bam
 			set resultbamfile map-${resultbamprefix}bwa-$sample.bam
 			# quality and adapter clipping
-			set files [fastq_clipadapters_job $files \
+			set files [fastq_clipadapters_job $fastqfiles \
 				-adapterfile $adapterfile -paired $paired \
 				-skips [list -skip $bamfile -skip $resultbamfile]]
 			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
