@@ -842,7 +842,8 @@ proc job_parse_log {job {totalduration {0 0}}} {
 	set status submitted
 	set logdata [split [file_read $job.log] \n]
 	set failed 0
-	set tail [file tail $job]
+#	set tail [file tail $job]
+	set tail .*
 	foreach line $logdata {
 		if {[regexp {^([0-9:. -]+)[ \t]-+ submitted .* \(run (.*)\) --} $line temp currentsubmittime currentrun]} {
 			set status submitted
@@ -875,7 +876,6 @@ proc job_parse_log {job {totalduration {0 0}}} {
 			if {$status ni {finished error}} {
 				set status skipped
 			}
-			set failed 1
 		}
 	}
 	if {![info exists run]} {set run $currentrun}
