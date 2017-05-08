@@ -797,6 +797,7 @@ proc job_logfile_set {logfile {dir {}} {cmdline {}} args} {
 	global cgjob
 	set time [string_change [timestamp] {" " _ : - . -}]
 	set cgjob(logfile) [file_absolute $logfile].$time
+	set cgjob(prefix) [file tail $cgjob(logfile)]
 	file mkdir [file dir $cgjob(logfile)]
 	set cgjob(f_logfile) [open $cgjob(logfile).submitting w]
 	puts $cgjob(f_logfile) "\# genomecomb log file"
