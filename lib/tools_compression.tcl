@@ -131,11 +131,18 @@ proc gzfile_multi {filelist} {
 }
 
 proc gzfiles {args} {
-	set result {}
 	foreach filename $args {
-		if {![catch {glob $filename $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
-			lappend result {*}$list
+		if {![catch {glob $filename $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
+			foreach file $list {
+				set root [gzroot $file]
+				if {[info exists a($root)]} continue
+				set a($root) $file
+			}
 		}
+	}
+	set result {}
+	foreach file [array names a] {
+		lappend result $a($file)
 	}
 	return $result
 }

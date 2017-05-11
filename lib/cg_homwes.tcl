@@ -73,7 +73,7 @@ proc cg_homwes {args} {
 		putslog "Converting vcf file $annotcomparfile to tsv $tsvfile"
 		cg vcf2tsv $annotcomparfile $tsvfile.temp 2>@ stderr
 		putslog "annotating $tsvfile"
-		cg annotate $tsvfile.temp $tsvfile.temp2 {*}[glob $dbdir/reg_*_microsat.tsv $dbdir/reg_*_simpleRepeat.tsv]
+		cg annotate $tsvfile.temp $tsvfile.temp2 {*}[gzfiles $dbdir/reg_*_microsat.tsv $dbdir/reg_*_simpleRepeat.tsv]
 		file rename -force $tsvfile.temp2 $tsvfile
 		file delete $tsvfile.temp
 		set usefile $tsvfile
@@ -83,7 +83,7 @@ proc cg_homwes {args} {
 		}
 		set tsvfile $workdir/[file root [file tail $annotcomparfile]].tsv
 		putslog "annotating $tsvfile"
-		cg annotate $annotcomparfile $tsvfile.temp2 {*}[glob $dbdir/reg_*_microsat.tsv $dbdir/reg_*_simpleRepeat.tsv]
+		cg annotate $annotcomparfile $tsvfile.temp2 {*}[gzfiles $dbdir/reg_*_microsat.tsv $dbdir/reg_*_simpleRepeat.tsv]
 		file rename -force $tsvfile.temp2 $tsvfile
 		file delete $tsvfile.temp
 		set usefile $tsvfile
@@ -188,7 +188,7 @@ proc cg_homwes {args} {
 		if {$query eq ""} {set query 1}
 		putslog "Quality filtering data"
 		cg select \
-			-q "(chr_clip(\$chromosome) ni {X Y M MT}) && [join $query &&]" \
+			-q "(chr_clip(\$chromosome) ni {X Y M MT}) && [join $query " && "]" \
 			-f $fields \
 			$usefile ${sworkbase}-filtered.tsv
 		
