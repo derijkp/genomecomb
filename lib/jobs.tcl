@@ -860,7 +860,6 @@ proc job_parse_log {job {totalduration {0 0}}} {
 			set endtime {}
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} finished($|:)}] $line temp endtime]} {
 			set status finished
-			break
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} failed($|:)}] $line temp endtime]} {
 			set status error
 			set failed 1
