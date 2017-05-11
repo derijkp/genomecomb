@@ -18,13 +18,15 @@ proc process_multicompar_job {args} {
 			set split $value
 		}
 		-dbfile {
-			if {![file exists $value]} {error "dbfile $value does not exists"}
-			lappend dbfiles [file_absolute $value]
+			set file [gzfile $value]
+			if {![file exists $file]} {error "dbfile $value does not exists"}
+			lappend dbfiles [file_absolute $file]
 		}
 		-dbfiles {
 			foreach v $value {
-				if {![file exists $v]} {error "dbfile $v does not exist"}
-				lappend dbfiles [file_absolute $v]
+				set file [gzfile $v]
+				if {![file exists $file]} {error "dbfile $v does not exist"}
+				lappend dbfiles [file_absolute $file]
 			}
 		}
 		-skipincomplete {

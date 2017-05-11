@@ -230,7 +230,12 @@ proc cg_annotate_job {args} {
 		if {[file isdir $testfile]} {
 			lappend dbfiles {*}[ssort -natural [glob -nocomplain $testfile/var_*.tsv $testfile/var_*.tsv.lz4 $testfile/gene_*.tsv $testfile/gene_*.tsv.lz4 $testfile/mir_*.tsv $testfile/mir_*.tsv.lz4 $testfile/reg_*.tsv $testfile/reg_*.tsv.lz4 $testfile/*.bcol $testfile/bcol_*.tsv]]
 		} elseif {![file exists $testfile]} {
-			error "File $testfile does not exist"
+			set testfile [gzfile $testfile]
+			if {![file exists $testfile]} {
+				error "File $testfile does not exist"
+			} else {
+				lappend dbfiles $testfile
+			}
 		} else {
 			lappend dbfiles $testfile
 		}
