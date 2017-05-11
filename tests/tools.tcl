@@ -7,8 +7,10 @@ package require pkgtools
 namespace import -force pkgtools::*
 package require Extral
 
+set test_cleantmp 1
+
 proc test {args} {
-	test_cleantmp
+	if {[get ::test_cleantmp 1]} {test_cleantmp}
 	catch {job_init}
 	pkgtools::test {*}$args
 	cd $::testdir

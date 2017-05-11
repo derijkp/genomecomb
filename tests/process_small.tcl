@@ -5,6 +5,7 @@ exec tclsh "$0" "$@"
 source tools.tcl
 set keepdir [pwd]
 set dopts [get argv ""]
+set test_cleantmp 0
 
 # tests
 # =====
