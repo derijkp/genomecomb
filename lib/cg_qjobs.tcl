@@ -19,7 +19,9 @@ proc cg_qjobs {args} {
 		set resultline $a(JB_job_number),$a(tasks)
 		set a(run) ?
 		set a(runversion) ?
-		regexp {^j([^.]+)\.([0-9_-]+)\.} $a(JB_name) temp a(run) a(runversion)
+		if {![regexp {^j([^.]+)\.([0-9_-]+)\.} $a(JB_name) temp a(run) a(runversion)]} {
+			regexp {^j(.+)\.([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9])\.} $a(JB_name) temp a(run) a(runversion)
+		}
 		foreach field {JB_job_number tasks state JB_submission_time JAT_start_time JB_priority JAT_prio JB_owner queue_name slots run runversion JB_name} {
 			lappend resultline [get a($field) .]
 		}
