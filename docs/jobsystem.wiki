@@ -20,6 +20,7 @@ job_init initializes the job system. It accept the following job options
 and returns the rest of the arguments:
 ; -d value (--distribute): if value is a number, the job is distributed over the given number of processes. Use sge to distribute using Grid Engine  (also -distribute)
 ; -dpriority value: (only for sge) run jobs with the given priority (default is 0)
+; -dqueue value: (only for sge) Use this option if you want to run on another queue than the default all.q
 ; -dcleanup success/never/allways: Allows you to keep all run/log files in the log_jobs
 dirs even if a jub is successfull (**never**), or to allways delete them (**allways**)
 instead of only deleting them after a succesfull run (**success**)

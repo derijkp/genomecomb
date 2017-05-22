@@ -84,6 +84,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(priority)]} {
 		set cgjob(priority) 0
 	}
+	if {![info exists cgjob(dqueue)]} {
+		set cgjob(dqueue) all.q
+	}
 	if {![llength $jobargs]} {return {}}
 	set newargs {}
 	set pos 0
@@ -101,6 +104,10 @@ proc job_args {jobargs} {
 			}
 			-dpriority {
 				set cgjob(priority) [lindex $jobargs $pos]
+				incr pos
+			}
+			-dqueue {
+				set cgjob(dqueue) [lindex $jobargs $pos]
 				incr pos
 			}
 			-dcleanup {

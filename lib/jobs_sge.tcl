@@ -36,6 +36,7 @@ proc job_process_sge_submit {job runfile args} {
 	set hard {}
 	set priority [get cgjob(priority) 0]
 	set pos 0
+	set dqueue [get cgjob(dqueue) all.q]
 	foreach {opt value} $args {
 		switch -- $opt {
 			-deps {
@@ -77,6 +78,9 @@ proc job_process_sge_submit {job runfile args} {
 				lappend hard -l mem_free=$value
 				incr pos 2
 			}
+			-dqueue {
+				set dqueue $value
+			}
 			-- {
 				incr pos 1
 				break
@@ -103,7 +107,7 @@ proc job_process_sge_submit {job runfile args} {
 	catch {file delete $job.finished}
 	catch {file delete $job.out}
 	catch {file delete $job.err}
-	set jnum [exec qsub -N j$name -q all.q -o $job.out -e $job.err -p $priority {*}$options $runfile]
+	set jnum [exec qsub -N j$name -q $dqueue -o $job.out -e $job.err -p $priority {*}$options $runfile]
 	regexp {[0-9]+} $jnum jobnum
 	lappend cgjob(alljobids) $jobnum
 	return $jobnum
@@ -146,5 +150,5 @@ proc job_process_sge_wait {} {
 	if {[llength $cgjob(alljobids)]} {
 		lappend options -hold_jid [join $cgjob(alljobids) ,]
 	}
-	exec qsub -N j$name -q all.q -o $outfile -e $errfile -p $priority {*}$options $runfile
+	exec qsub -N j$name -q [get cgjob(dqueue) all.q] -o $outfile -e $errfile -p $priority {*}$options $runfile
 }

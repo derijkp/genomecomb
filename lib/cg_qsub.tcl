@@ -1,6 +1,7 @@
 proc cg_qsub {args} {
 	set basedir [file_absolute [pwd]]
 	set options {}
+	set dqueue all.q
 	cg_options qsub args {
 		-deps {
 			lappend options -hold_jid [join $value ,]
@@ -16,6 +17,9 @@ proc cg_qsub {args} {
 		}
 		-e - -errorfile {
 			set errorfile $value
+		}
+		-queue - -dqueue {
+			set dqueue $value
 		}
 	} command	
 	catch {exec qstat -xml} jobxml
@@ -48,7 +52,7 @@ proc cg_qsub {args} {
 	} else {
 		if {![info exists outputfile]} {set outputfile job_$name.out}
 		if {![info exists errorfile]} {set errorfile job_$name.err}
-		set jnum [exec qsub -N j$name -q all.q -o $outputfile -e $errorfile {*}$options $::genomecombdir/apps/cg/lib/repeater.sh $basedir $command {*}$args]
+		set jnum [exec qsub -N j$name -q $dqueue -o $outputfile -e $errorfile {*}$options $::genomecombdir/apps/cg/lib/repeater.sh $basedir $command {*}$args]
 		puts "$jnum $name"
 	}
 }

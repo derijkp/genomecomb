@@ -18,6 +18,7 @@ the filename job_$name.out will be used
 ; -e errorfile (-errorfile): stderr output of the command will be written
 to the given errorfile. By default, the filename job_$name.err will be
 used
+; -dqueue value: (only for sge) Use this option if you want to run on another queue than the default all.q
 ; -deps ids: job will only run when the jobs in ids (a comma separated list of job ids)
 
 
