@@ -1,31 +1,3 @@
-proc timescan {time} {
-	if {$time eq ""} {return $time}
-	time_scan $time
-}
-
-proc time_comp {time1 time2} {
-	if {$time1 eq ""} {
-		if {$time2 eq ""} {return 0} else {return 1}
-	}
-	if {$time2 eq ""} {return -1}
-	set diff [expr {[lindex $time1 0] - [lindex $time2 0]}]
-	if {$diff != 0} {return $diff}
-	expr {[lindex $time1 1] - [lindex $time2 1]}
-}
-
-# set pattern (a|(bc|de))X(c|d)
-# set pattern adfg(ab)
-proc regexp2glob {pattern} {
-	set glob $pattern
-	while {[regsub -all {\([^\(\)]*[|][^\(\)]*\)} $glob {*} glob]} {}
-	regsub -all {\(\[^\(\)]*|[^\(\)]*\)} $pattern {*} glob
-	regsub -all {\[[^]]*\]} $glob {*} glob
-	regsub -all {\{[^\}]*\}} $glob {*} glob
-	regsub -all {\\.} $glob {*} glob
-	regsub -all {[*+?.()]+} $glob {*} glob
-	return $glob
-}
-
 proc job_file_exists {file} {
 	if {[file exists $file]} {return 1}
 	if {[catch {file link $file}]} {return 0} else {return 1}

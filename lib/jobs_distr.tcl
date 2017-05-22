@@ -24,9 +24,9 @@ proc job_running_distr {jobnum} {
 		}
 		if {!$cgjob(silent)} {puts "   -=- ending $job ($jobnum)"}
 		file delete $job.pid
-		unset -nocomplain cgjob_distr_running($jobnum)
-		unset -nocomplain cgjob_distr_queue($jobnum)
 	}
+	unset -nocomplain cgjob_distr_running($jobnum)
+	unset -nocomplain cgjob_distr_queue($jobnum)
 	return 0
 }
 

@@ -4,6 +4,9 @@ proc job_cleanlogs {logfile} {
 	while 1 {
 		if {[gets $f line] == -1} break
 		if {[string index $line 0] ne {#}} break
+		if {[regexp {^# ([^:]+): (.*)$} $line temp key value]} {
+			set cgjob($key) $value
+		}
 	}
 	if {[split $line \t] ne {job jobid status submittime starttime endtime duration targets msg run}} {
 		close $f
@@ -12,8 +15,13 @@ proc job_cleanlogs {logfile} {
 	while 1 {
 		if {[gets $f line] == -1} break
 		set sline [split $line \t]
-		foreach {job jobid status submittime starttime endtime duration targets msg run} $sline break
-		if {$job eq "total"} continue
+		foreach {jobo jobid status submittime starttime endtime duration targets msg run} $sline break
+		if {$jobo eq "total"} continue
+		if {[get cgjob(basedir) ""] ne "" && [file pathtype $jobo] ne "absolute"} {
+			set job $cgjob(basedir)/$jobo
+		} else {
+			set job $jobo
+		}
 		set files [glob -nocomplain $job.*]
 		if {![llength $files]} continue
 		file delete {*}$files
@@ -80,7 +88,11 @@ proc job_update {logfile {cleanup success} {force 0}} {
 			puts $o [join [list total $jobid $endstatus $submittime $endstarttime $endendtime [timediff2duration $totalduration] $targets [job_cleanmsg $msg] $run] \t]
 			break
 		}
-		if {[get cgjob(basedir) ""] ne "" && [file pathtype $jobo] ne "absolute"} {set job $cgjob(basedir)/$jobo} else {set job $jobo}
+		if {[get cgjob(basedir) ""] ne "" && [file pathtype $jobo] ne "absolute"} {
+			set job $cgjob(basedir)/$jobo
+		} else {
+			set job $jobo
+		}
 		if {$status in {submitted running}} {set starttime {} ; set endtime {} ; set duration {}}
 		if {($starttime eq "" || $endtime eq "" | $duration eq "" | $force) && [job_file_exists $job.log]} {
 			set jobloginfo [job_parse_log $job $totalduration]

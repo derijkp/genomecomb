@@ -287,3 +287,16 @@ proc gzlink {file} {
 	if {[catch {glob $file}]} {return ""}
 	gzfile [getlink $file]
 }
+
+# set pattern (a|(bc|de))X(c|d)
+# set pattern adfg(ab)
+proc regexp2glob {pattern} {
+	set glob $pattern
+	while {[regsub -all {\([^\(\)]*[|][^\(\)]*\)} $glob {*} glob]} {}
+	regsub -all {\(\[^\(\)]*|[^\(\)]*\)} $pattern {*} glob
+	regsub -all {\[[^]]*\]} $glob {*} glob
+	regsub -all {\{[^\}]*\}} $glob {*} glob
+	regsub -all {\\.} $glob {*} glob
+	regsub -all {[*+?.()]+} $glob {*} glob
+	return $glob
+}
