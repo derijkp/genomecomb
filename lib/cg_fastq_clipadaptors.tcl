@@ -20,12 +20,15 @@ proc fastq_clipadapters {files targets args} {
 	set temptargets {}
 	if {[llength $files] == 1 || !$paired} {
 		foreach {f1} $files {t1} $targets {
+			file mkdir [file dir $t1]
 			set tempout1 [filetemp $t1]
 			exec fastq-mcf -k $removeskew -a -o $tempout1 $adapterfile $f1 2>@ stderr
 			lappend temptargets $tempout1
 		}
 	} else {
 		foreach {f1 f2} $files {t1 t2} $targets {
+			file mkdir [file dir $t1]
+			file mkdir [file dir $t2]
 			set tempout1 [filetemp $t1]
 			set tempout2 [filetemp $t2]
 			exec fastq-mcf -k $removeskew -a -o $tempout1 -o $tempout2 $adapterfile $f1 $f2 2>@ stderr
@@ -33,6 +36,7 @@ proc fastq_clipadapters {files targets args} {
 		}
 	}
 	foreach target $targets temptarget $temptargets {
+		file mkdir [file dir $target]
 		file rename -force $temptarget $target
 	}
 }
