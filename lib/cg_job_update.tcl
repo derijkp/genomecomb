@@ -34,10 +34,26 @@ proc job_cleanlogs {logfile} {
 	}
 }
 
+# status can be
+# submitting: while submitting; cannot be updated
+# running: still running, can be updated
+# finished: after completely successful run
+# error: some jobs had errors
 proc job_update {logfile {cleanup success} {force 0}} {
 	global cgjob
 	if {![file exists $logfile]} {
-		error "cannot update non(no longer)-existing logfile: $logfile"
+		puts stderr "logfile $logfile not found, checking for finished logfile"
+		set root [file root $logfile]
+		foreach ext {finished error} {
+			if {[file exists $root.$ext]} {
+				puts stderr "run already finished with status $ext: $root.$ext"
+				return
+			}
+		}
+		if {[file exists $root.submitting]} {
+			error "cannot update, run still submitting: $logfile"
+		}
+		error "logfile $logfile not found"
 	}
 	if {[file extension $logfile] eq ".submitting"} {
 		error "cannot update logfile while still submitting: $logfile"
@@ -153,7 +169,10 @@ proc cg_job_update args {
 		-f - -force {
 			set force $value
 		}
-	} logfile 1 1
+	}
+	foreach logfile [lsort -dict -decreasing $args] {
+		if {[file extension $logfile] in ".running .finished .error .submitting"} break
+	}
 	set logfile [file_absolute $logfile]
 	job_update $logfile $cleanup $force
 }
