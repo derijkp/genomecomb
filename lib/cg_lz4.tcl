@@ -26,6 +26,10 @@ proc cg_lz4 args {
 	if {$outputfile ne "" && [llength $args] > 1} {
 		error "option -o can only be used for compressing one file"
 	}
+	if {![llength $args]} {
+		exec lz4c -q -$compressionlevel -B$blocksize -c <@ stdin >@ stdout 2>@ stderr
+		return
+	}
 	foreach file $args {
 		set ext [file extension $file]
 		if {$outputfile eq ""} {
