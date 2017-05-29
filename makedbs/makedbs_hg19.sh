@@ -362,6 +362,7 @@ foreach {targetname url file} {
 	nextera https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions.bed {}
 	nextera_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions_v1.2.bed {}
 	truseq_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/downloads/productfiles/truseq/truseq-rapid-exome-targeted-regions-manifest-v1-2-bed.zip {}
+	SeqCap_EZ_v2 https://sftp.rch.cm/diagnostics/sequencing/nimblegen_annotations/ez_exome_v2/SeqCapEZ_Exome_v2.0_Design_Annotation_files.zip Design_Annotation_files/Target_Regions/SeqCap_EZ_Exome_v2.bed
 	SeqCap_EZ_v3 https://sftp.rch.cm/diagnostics/sequencing/literature/nimblegen/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip SeqCapEZ_Exome_v3.0_Design_Annotation_files/SeqCap_EZ_Exome_v3_hg19_capture_targets.bed
 	VCRome_V2_1 https://sftp.rch.cm/diagnostics/sequencing/nimblegen_annotations/ez_hgsc_vcrome/VCRome_2.1_design_files.zip VCRome_2_1_hg19_capture_targets.bed
 } {
@@ -383,7 +384,7 @@ foreach {targetname url file} {
 			wgetfile $url temp.bed
 		}
 		cg bed2tsv temp.bed u$targetname.tsv
-		if {$targetname in "SeqCap_EZ_v3 VCRome_V2_1"} {
+		if {$targetname in "SeqCap_EZ_v2 SeqCap_EZ_v3 VCRome_V2_1"} {
 			cg select -s {chromosome begin end} -f {chromosome begin end {gene=regextract($name,{=([^;]*)})}} u$targetname.tsv s$targetname.tsv
 		} else {
 			cg select -s {chromosome begin end} u$targetname.tsv s$targetname.tsv
