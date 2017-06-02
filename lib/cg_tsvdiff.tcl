@@ -1,5 +1,6 @@
-proc xlong {file resultfile splitlines} {
+proc xlong {file resultfile splitlines {pre {}}} {
 	set o [open $resultfile.temp w]
+	if {$pre ne ""} {puts $o $pre}
 	set f [gzopen $file]
 	set header [tsv_open $f comment1]
 	set poss [tsv_basicfields $header 6 0]
@@ -22,8 +23,9 @@ proc xlong {file resultfile splitlines} {
 	return 0
 }
 
-proc long {file resultfile splitlines} {
+proc long {file resultfile splitlines {pre {}}} {
 	set o [open $resultfile.temp w]
+	if {$pre ne ""} {puts $o $pre}
 	set f [gzopen $file]
 	set header [tsv_open $f comment1]
 	while {[gets $f line] != -1} {
@@ -47,6 +49,10 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	set f2 [gzopen $file2]
 	set header2 [tsv_open $f2 comment2]
 	catch {close $f2}
+	set tempdir [tempdir]
+	set temp1 $tempdir/[file tail $file1]
+	set temp2 $tempdir/[file tail $file2]
+	if {$temp2 eq $temp1} {append temp2 -b}
 	if {[llength $fields]} {
 		set h1 [list_common $header1 [expandfields $header1 $fields]]
 		set h2 [list_common $header2 [expandfields $header2 $fields]]
@@ -61,11 +67,12 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 		append error "<extrafields: [list_lremove $h1 $common]\n"
 		append error "---\n"
 		append error ">extrafields: [list_lremove $h2 $common]\n"
+		set temp1_pre "\#extra fields: [list_lremove $h1 $common]\n"
+		set temp2_pre "\#extra fields: [list_lremove $h2 $common]\n"
+	} else {
+		set temp1_pre ""
+		set temp2_pre ""
 	}
-	set tempdir [tempdir]
-	set temp1 $tempdir/[file tail $file1]
-	set temp2 $tempdir/[file tail $file2]
-	if {$temp2 eq $temp1} {append temp2 -b}
 	if {$type eq "xl"} {
 		cg select -f [list {*}$common {*}$h1] $file1 $temp1.pre
 		set error1 [xlong $temp1.pre $temp1 $splitlines]
@@ -82,17 +89,21 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 		set msg2 "error in xl conversion"
 	} elseif {$splitlines} {
 		set error1 [catch {
-			exec cg select -rc $rcomments -f $common $file1 | awk {{print $0"\n----"}} > $temp1
+			file_write $temp1 $temp1_pre
+			exec cg select -rc $rcomments -f $common $file1 | awk {{print $0"\n----"}} >> $temp1
 		} msg1]
 		set error2 [catch {
-			exec cg select -rc $rcomments -f $common $file2 | awk {{print $0"\n----"}} > $temp2
+			file_write $temp2 $temp2_pre
+			exec cg select -rc $rcomments -f $common $file2 | awk {{print $0"\n----"}} >> $temp2
 		} msg2]
 	} else {
 		set error1 [catch {
-			cg select -rc $rcomments -f $common $file1 $temp1
+			file_write $temp1 $temp1_pre
+			cg select -rc $rcomments -f $common $file1 >> $temp1
 		} msg1]
 		set error2 [catch {
-			cg select -rc $rcomments -f $common $file2 $temp2
+			file_write $temp2 $temp2_pre
+			cg select -rc $rcomments -f $common $file2 >> $temp2
 		} msg2]
 	}
 	if {$error1} {
