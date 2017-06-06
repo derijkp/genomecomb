@@ -5,7 +5,6 @@ proc process_multicompar_job {args} {
 	set realign 1
 	set cleanup 1
 	set paired 1
-	set adapterfile {}
 	set conv_nextseq 0
 	set skipincomplete 1
 	set targetsfile {}

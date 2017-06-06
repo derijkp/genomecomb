@@ -85,6 +85,7 @@ proc process_illumina {args} {
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
+	set adapterfile [adapterfile $adapterfile]
 	# check projectinfo
 	projectinfo $destdir dbdir {split 1}
 	set dbdir [dbdir $dbdir]

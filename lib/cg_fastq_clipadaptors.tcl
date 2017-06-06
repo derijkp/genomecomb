@@ -13,9 +13,7 @@ proc fastq_clipadapters {files targets args} {
 			lappend opts $key $value
 		}
 	}
-	if {$adapterfile eq ""} {
-		set adapterfile $::externdir/adaptors.fa
-	}
+	set adapterfile [adapterfile $adapterfile]
 	# clip primers, quality
 	set temptargets {}
 	if {[llength $files] == 1 || !$paired} {
@@ -62,6 +60,7 @@ proc fastq_clipadapters_job {files args} {
 			lappend opts $key $value
 		}
 	}
+	set adapterfile [adapterfile $adapterfile]
 	foreach file $files {
 		set file [file_absolute [gzroot $file]]
 		set root [file root $file]
