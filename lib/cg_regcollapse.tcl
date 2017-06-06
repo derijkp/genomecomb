@@ -99,6 +99,8 @@ proc collapseoverlap {{infile stdin} {resultfile stdout} {scorefield score} {num
 				list_shift cur
 			}
 		}
+		# check sort
+		if {!$newchr && $cstart < $start} {error "file incorrectly sorted: $chr: $cstart < $start"}
 		# add new line
 		lappend cur $line
 		if {[llength $cur] > 1} {
