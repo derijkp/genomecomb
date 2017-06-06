@@ -29,7 +29,7 @@ proc job_cleanlogs {logfile} {
 	}
 	foreach dir [array names dirsa] {
 		if {[catch {glob $dir/*}]} {
-			file delete $dir
+			catch {file delete $dir}
 		}
 	}
 }
