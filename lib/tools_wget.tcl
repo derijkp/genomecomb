@@ -30,20 +30,48 @@ proc wgetfile {url {resultfile {}} {force 0}} {
 			return {}
 		}
 		if {$webcache ne ""} {
-			if {[catch {hardlink $resultfile.temp $webcachename}]} {
-				file copy $resultfile.temp $webcachename
+			if {[catch {hardlink $resultfile.temp $webcachename.temp}]} {
+				file copy $resultfile.temp $webcachename.temp
 			}
+			file rename $webcachename.temp $webcachename
 		}
 	}
 	file rename -force $resultfile.temp $resultfile
 	return $resultfile
 }
 
-proc wgetfiles {url resultdir} {
-	if {[catch {
-		exec wget -c --tries=45 -P $resultdir $url 2>@ stderr
-	} errmsg]} {
-		puts $errmsg
-		return {}
+proc wgetfiles {url resultdir {force 0}} {
+	if {!$force && [file exists $resultdir]} {return $resultdir}
+	set tail [file tail $resultdir]
+	set webcache [get ::env(webcache)]
+	set webcachename $webcache/$tail
+	if {$webcache ne "" && [file exists $webcachename]} {
+		putslog "Getting from webcache: $tail"
+		file delete -force $resultdir.temp
+		if {[catch {hardlink $webcachename $resultdir.temp}]} {
+			file copy $webcachename $resultdir.temp
+		}
+	} else {
+		if {[catch {
+			exec wget -c --tries=45 -P $resultdir.temp $url 2>@ stderr
+		} errmsg]} {
+			return {}
+		}
+		if {[catch {glob $resultdir.temp/*}]} {
+			return {}
+		}
+		if {[regexp "No such file" $errmsg]} {
+			file delete $resultdir.temp
+			return {}
+		}
+		if {$webcache ne ""} {
+			if {[catch {hardlink $resultdir.temp $webcachename.temp}]} {
+				file copy $resultdir.temp $webcachename.temp
+			}
+			file rename $webcachename.temp $webcachename
+		}
 	}
+	file rename -force $resultdir.temp $resultdir
+	return $resultdir
 }
+

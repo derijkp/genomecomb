@@ -4,7 +4,13 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc cg_download_genome {result build {chromosomes {}}} {
+proc cg_download_genome {args} {
+	set chromosomes {}
+	set alt 0
+	cg_options download_genome args {
+		-chromosomes {set chromosomes $value}
+		-alt {set alt $value}
+	} {result build chromosomes} 2 3
 	set keepdir [pwd]
 	set result [file_absolute $result]
 	file mkdir $result.temp
@@ -20,26 +26,35 @@ proc cg_download_genome {result build {chromosomes {}}} {
 				continue
 			}
 			putslog "Downloading chromosome chr$chr.fa.gz"
-			catch {exec wget --tries=45 ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr$chr.fa.gz >@ stdout  2>@ stderr}
+			wgetfile ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr$chr.fa.gz
 		}
 		putslog "Converting and indexing"
 		exec zcat {*}$files | cg genome_indexfasta [file tail $result]
 		file rename -force {*}[glob [file tail $result]*] ..
 	} elseif {![catch {
-		set url http://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/analysisSet/$build.analysisSet.chroms.tar.gz
+		if {$alt} {
+			set url http://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/analysisSet/$build.fullAnalysisSet.chroms.tar.gz
+			set file $build.fullAnalysisSet.chroms.tar.gz
+		} else {
+			set url http://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/analysisSet/$build.analysisSet.chroms.tar.gz
+			set file $build.analysisSet.chroms.tar.gz
+		}
 		wgetfile $url
-		if {![file exists $build.analysisSet.chroms.tar.gz]} {error "Could not download $build.analysisSet.chroms.tar.gz"}
+		if {![file exists $file]} {error "Could not download $file"}
 	} msg]} {
-		exec tar xvzf $build.analysisSet.chroms.tar.gz
+		exec tar xvzf $file
 		set files [ssort -natural [glob */chr*.fa]]
 		putslog "Converting and indexing"
 		exec cat {*}$files | cg genome_indexfasta $tail
 		file rename -force {*}[glob [file tail $result]*] ..
 	} elseif {![catch {
-		exec wget --tries=45 -c ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/*.fa.gz >@ stdout  2>@ stderr
-		if {![llength [glob *.fa.gz]]} {error "Could not download $build.analysisSet.chroms.tar.gz"}
+		wgetfiles ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/*.fa.gz goldenPath-$build-chromosomes
+		if {![llength [glob goldenPath-$build-chromosomes/*.fa.gz]]} {error "Could not download $build chromosomes"}
 	} msg]} {
-		set files [ssort -natural [glob *.fa.gz]]
+		set files [ssort -natural [glob goldenPath-$build-chromosomes/*.fa.gz]]
+		if {!$alt} {
+			set files [list_sub $files -exclude [list_find -regexp $files _hap]]
+		}
 		putslog "Converting and indexing"
 		exec zcat {*}$files | cg genome_indexfasta $tail
 		file rename -force {*}[glob [file tail $result]*] ..
