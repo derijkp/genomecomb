@@ -62,16 +62,17 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	}
 	set common [list_common $h1 $h2]
 	set error {}
+	set temp1_pre ""
+	set temp2_pre ""
 	if {[llength $common] != [llength $h1] || [llength $common] != [llength $h2]} {
 		append error "header diff\n"
 		append error "<extrafields: [list_lremove $h1 $common]\n"
 		append error "---\n"
 		append error ">extrafields: [list_lremove $h2 $common]\n"
-		set temp1_pre "\#extra fields: [list_lremove $h1 $common]\n"
-		set temp2_pre "\#extra fields: [list_lremove $h2 $common]\n"
-	} else {
-		set temp1_pre ""
-		set temp2_pre ""
+		if {$diffprog ne ""} {
+			set temp1_pre "\#extra fields: [list_lremove $h1 $common]\n"
+			set temp2_pre "\#extra fields: [list_lremove $h2 $common]\n"
+		}
 	}
 	if {$type eq "xl"} {
 		cg select -f [list {*}$common {*}$h1] $file1 $temp1.pre
