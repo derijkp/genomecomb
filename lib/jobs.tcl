@@ -381,6 +381,7 @@ proc job_finddep {pattern idsVar timeVar timefileVar checkcompressed {regexppatt
 	upvar $idsVar ids
 	upvar $timeVar time
 	upvar $timefileVar timefile
+	if {$pattern eq ""} {return {}}
 	if {$regexppatternVar ne ""} {upvar $regexppatternVar regexppattern}
 	if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
 		set regexppattern 1
