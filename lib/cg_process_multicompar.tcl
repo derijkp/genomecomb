@@ -128,6 +128,7 @@ proc process_multicompar_job {args} {
 	if {[llength $stilltodo]} {putslog "Samples to add: $stilltodo"}
 	if {[llength $stilltodo] || $addtargets} {
 		putslog "Starting multicompar"
+		set compar_file [gzroot $compar_file].lz4
 		pmulticompar_job $compar_file $stilltodo 0 $split $targetsfile 0 $skipincomplete
 	}
 	# annotate multicompar
