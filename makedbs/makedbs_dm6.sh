@@ -50,6 +50,9 @@ job genome_${build}_cindex -deps {$ifasfile} -targets {genome_${build}.ssa} -cod
 	cg make_genomecindex $dep
 }
 
+# make bwa version of genome
+bwarefseq_job genome_${build}.ifas
+
 job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv.lz4} -code {
 	exec cg calcsequencedgenome --stack 1 $dep | lz4c -12 > $target.temp
 	file rename -force $target.temp $target

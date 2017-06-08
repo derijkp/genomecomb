@@ -37,10 +37,13 @@ job genome_${build}_cindex -deps {genome_${build}.ifas} -targets {genome_${build
 	cg make_genomecindex $dep
 }
 
-job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv} -code {
+job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv.lz4} -code {
 	exec cg calcsequencedgenome --stack 1 $dep | lz4c -12 > $target.temp
 	file rename -force $target.temp $target
 }
+
+# make bwa version of genome
+bwarefseq_job genome_${build}.ifas
 
 # region databases (ucsc)
 # you can explicitely download info on a database using:
@@ -233,10 +236,11 @@ foreach {name id disease pattern} {
 }
 
 # homopolymer
-job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi reg_${build}_homopolymer.tsv.opt} -vars {dest build db} -code {
-	cg extracthomopolymers genome_${build}.ifas > reg_${build}_homopolymer.tsv.temp
-	file rename -force reg_${build}_homopolymer.tsv.temp reg_${build}_homopolymer.tsv
+job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv.lz4 reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi reg_${build}_homopolymer.tsv.opt} -vars {dest build db} -code {
+	cg extracthomopolymers genome_${build}.ifas | cg lz4 > reg_${build}_homopolymer.tsv.temp.lz4
+	file rename -force reg_${build}_homopolymer.tsv.temp.lz4 reg_${build}_homopolymer.tsv
         cg maketabix reg_${build}_homopolymer.tsv
+	cg lz4 reg_${build}_homopolymer.tsv
 	file_write reg_${build}_homopolymer.tsv.opt "fields\t{base size}\n"
 }
 

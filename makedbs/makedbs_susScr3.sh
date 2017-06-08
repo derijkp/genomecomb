@@ -43,6 +43,9 @@ job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas}
 	file rename -force $target.temp $target
 }
 
+# make bwa version of genome
+bwarefseq_job genome_${build}.ifas
+
 # region databases (ucsc)
 # you can explicitely download info on a database using:
 # cg download_ucscinfo resultfile ${build} dbname
