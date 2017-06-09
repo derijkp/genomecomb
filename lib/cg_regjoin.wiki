@@ -13,14 +13,14 @@ regjoin joins all overlapping or adjoined regions into
 one region. The resulting regions files is written to stdout.
 If no arguments are given, a region file should be entered via stdin
 
+== Arguments ==
+; **region_file1**: regions file
+; **region_file2**: second regions file
+
 == Options ==
 ; -fields: if fields is given, only regions that, consecutively, have the
 same value for the given fields will be joined. This only works with one
 region file (and is a significantly slower)
-
-== Arguments ==
-; **region_file1**: regions file
-; **region_file2**: second regions file
 
 == Category ==
 Regions

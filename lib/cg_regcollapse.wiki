@@ -15,14 +15,14 @@ of the original. Overlap regions get the annotation of the highest scoring regio
 column is available. If not, overlap regions are annotated with a (comma separated) list of
 the distinct values in the original annotations of the overlapping regions.
 
+== Arguments ==
+; **region_file1**: region file
+; ...: other region files
+
 == Options ==
 ; **-o filename**: write result to filename instead of stdout
 ; **-s scorefield**: name of the column to use as scores.
 ; **-n numfield**: name of a numfield: overlap regions will get the sum of the original values in this field as annotation
-
-== Arguments ==
-; **region_file1**: region file
-; ...: other region files
 
 == Category ==
 Regions
