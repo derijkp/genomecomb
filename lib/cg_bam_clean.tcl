@@ -6,13 +6,11 @@ proc bam_clean_job {args} {
 		{realigndeps {}}
 		{clipamplicons {}}
 		{cleanup 1}
-		{bed {}}
+		{regionfile {}}
 		args
 	} $args
-	set regionfile {}
-	if {$bed ne ""} {
-		set regionfile $bed
-		lappend realigndeps $bed
+	if {$regionfile ne ""} {
+		lappend realigndeps $regionfile
 	}
 	if {[llength $args]} {
 		array set opt $args

@@ -406,6 +406,7 @@ proc process_sample_cgi_job {workdir split} {
 proc process_sample_job {args} {
 	set keepargs $args
 	set dbdir {}
+	set minfastqreads 0
 	set aligner bwa
 	set varcallers {gatk sam}
 	set realign 1
@@ -415,7 +416,12 @@ proc process_sample_job {args} {
 	set paired 1
 	set samBQ 0
 	set adapterfile {}
+	set removeskew {}
+	set dt {}
+	set targetfile {}
 	set reports all
+	set removeduplicates {}
+	set amplicons {}
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -423,11 +429,24 @@ proc process_sample_job {args} {
 		-dbdir - -refdir {
 			set dbdir $value
 		}
+		-minfastqreads {
+			set minfastqreads $value
+		}
+		-p - -paired {
+			set paired $value
+		}
 		-a - -aligner {
 			set aligner $value
 		}
 		-realign - -realign {
 			set realign $value
+		}
+		-removeduplicates {
+			set removeduplicates $value
+		}
+		-amplicons {
+			set amplicons [file_absolute $value]
+			if {$value ne "" && ![jobfileexists $amplicons]} {error "amplicons file $amplicons does not exists"}
 		}
 		-v - -varcallers {
 			set varcallers $value
@@ -435,17 +454,26 @@ proc process_sample_job {args} {
 		-s - -split {
 			set split $value
 		}
-		-p - -paired {
-			set paired $value
+		-samBQ {
+			set samBQ $value
 		}
 		-a - -adapterfile {
-			set adapterfile $value
+			set adapterfile [file_absolute $value]
+			if {$value ne "" && ![jobfileexists $adapterfile]} {error "adapterfile $adapterfile does not exists"}
+		}
+		-removeskew {
+			set removeskew $value
+		}
+		-dt - -downsampling_type {
+			if {$value ni "{} NONE ALL_READS BY_SAMPLE"} {error "-dt must be one of: NONE ALL_READS BY_SAMPLE"}
+			set dt $value
+		}
+		-targetfile {
+			set targetfile [file_absolute $value]
+			if {$value ne "" && ![jobfileexists $targetfile]} {error "target file $targetfile does not exists"}
 		}
 		-r - -reports {
 			set reports $value
-		}
-		-samBQ {
-			set samBQ $value
 		}
 		-todoVar {
 			upvar $value todo
@@ -461,61 +489,123 @@ proc process_sample_job {args} {
 		}
 	} {} 1 2
 	if {[llength $args] == 1} {
-		foreach {destdir} $args break
+		foreach {sampledir} $args break
 	} elseif {[llength $args] == 2} {
-		foreach {oridir destdir} $args break
+		foreach {oridir sampledir} $args break
 	}
 	set dbdir [file_absolute $dbdir]
-	set destdir [file_absolute $destdir]
+	set sampledir [file_absolute $sampledir]
+	adapterfile [adapterfile $adapterfile]
 	if {![info exists todo]} {set todo {}}
 	if {![info exists reportstodo]} {set reportstodo {}}
-	set sample [file tail $destdir]
-	putslog "Making $destdir"
-	catch {file mkdir $destdir}
+	set sample [file tail $sampledir]
+	#
+	if {$minfastqreads > 0} {
+		set files [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+		if {![llength $files]} {return {}}
+		set file [lindex $files 0]
+		set f [gzopen $file]
+		set count $minfastqreads
+		while {$count} {
+			for {set i 0} {$i < 4} {incr i} {
+				if {[gets $f line] == -1} {
+					gzclose $f
+					if {[inlist $reports fastqstats] || [inlist $reports all]} {
+						set num [expr {$minfastqreads-$count}]
+						file mkdir $sampledir/reports
+						file_write $sampledir/reports/report_fastq_fw-$sample.tsv [join [list \
+							[join {sample source parameter value} \t] \
+							[join [list $sample fastq-stats fw_numreads $num] \t] \
+						] \n]\n
+						file_write $sampledir/reports/report_fastq_rev-$sample.tsv [join [list \
+							[join {sample source parameter value} \t] \
+							[join [list $sample fastq-stats rev_numreads $num] \t] \
+						] \n]\n
+						lappend reportstodo $sampledir/reports
+					}
+					return {}
+				}
+			}
+			incr count -1
+		}
+		gzclose $f
+	}
+	putslog "Making $sampledir"
+	catch {file mkdir $sampledir}
+	set ref [file tail $dbdir]
+	# ampliconsfile
+	set temp [ampliconsfile $sampledir $ref]
+	if {$temp ne ""} {
+		if {$amplicons ne ""} {puts stderr "Not overwriting existing ampliconsfile $temp"}
+		set amplicons $temp
+	} elseif {$amplicons ne ""} {
+		set temp [lindex [split [file root [gzroot [file tail $amplicons]]] -] end]
+		mklink $amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv 1
+		set amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv
+	}
+	if {$amplicons ne ""} {
+		if {$removeduplicates eq ""} {set removeduplicates 0}
+		if {$removeskew eq ""} {set removeskew 0}
+		if {$dt eq ""} {set dt NONE}
+	} else {
+		if {$removeduplicates eq ""} {set removeduplicates 1}
+		if {$removeskew eq ""} {set removeskew 1}
+		if {$dt eq ""} {set dt BY_SAMPLE}
+	}
+	# targetfile
+	set temp [targetfile $sampledir $ref]
+	if {$temp ne ""} {
+		if {$amplicons ne ""} {puts stderr "Not overwriting existing targetfile $temp"}
+		set targetfile $temp
+	} elseif {$targetfile ne ""} {
+		set temp [lindex [split [file root [gzroot [file tail $targetfile]]] -] end]
+		mklink $targetfile $sampledir/reg_${ref}_targets-$temp.tsv 1
+		set targetfile $sampledir/reg_${ref}_targets-$temp.tsv
+	}
 	# check projectinfo
-	projectinfo $destdir dbdir {split 1}
+	projectinfo $sampledir dbdir {split 1}
 	set dbdir [dbdir $dbdir]
 	if {[info exists oridir]} {
 		if {[file exists $oridir]} {
 			set oridir [file_absolute $oridir]
-			file delete $destdir/ori
-			mklink $oridir $destdir/ori
+			file delete $sampledir/ori
+			mklink $oridir $sampledir/ori 1
 		}
 	}
 	# logfile
 	set cmdline [list cg process_sample]
 	foreach option {
-		oridir dbdir refdir aligner realign realign varcallers split paired adapterfile reports samBQ todoVar reportstodoVar cleanup maxopenfiles
+		oridir dbdir paired aligner realign removeduplicates amplicons varcallers split samBQ adapterfile reports todoVar reportstodoVar cleanup maxopenfiles
 	} {
 		if {[info exists $option]} {
 			lappend cmdline -$option [get $option]
 		}
 	}
-	lappend cmdline $destdir
-	job_logfile $destdir/process_sample_[file tail $destdir] $destdir $cmdline \
+	lappend cmdline $sampledir
+	job_logfile $sampledir/process_sample_[file tail $sampledir] $sampledir $cmdline \
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
 	# check if ori is a cg dir, if so use process_sample_cgi_job
 	# ----------------------------------------------------------
-	if {[jobglob $destdir/ori/ASM/var-*-ASM*.tsv] ne ""} {
+	if {[jobglob $sampledir/ori/ASM/var-*-ASM*.tsv] ne ""} {
 		# analysis info
 		# -------------
-		info_analysis_file $destdir/info_analysis.tsv $sample \
+		info_analysis_file $sampledir/info_analysis.tsv $sample \
 			{dbdir reports} \
 			{genomecomb dbdir gnusort8 tabix lz4 os} \
 			command [list cg process_sample {*}$keepargs]
-		process_sample_cgi_job $destdir $split
+		process_sample_cgi_job $sampledir $split
 		lappend todo cg-cg-$sample
 		return $todo
 	}
 	# analysis info
 	# -------------
-	info_analysis_file $destdir/info_analysis.tsv $sample \
+	info_analysis_file $sampledir/info_analysis.tsv $sample \
 		{dbdir aligner varcallers realign paired samBQ adapterfile reports} \
 		{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatkjava picard java gnusort8 tabix lz4 os} \
 		command [list cg process_sample {*}$keepargs]
 	# convert existing vcfs
 	# ----------------------
-	set files [jobglob $destdir/var-*.vcf]
+	set files [jobglob $sampledir/var-*.vcf]
 	foreach file $files {
 		set target [file root [gzroot $file]].tsv
 		if {![file exists $target]} {
@@ -528,7 +618,7 @@ proc process_sample_job {args} {
 	}
 	# add existing var files to todo
 	# ------------------------------
-	set files [jobglob $destdir/var-*.tsv]
+	set files [jobglob $sampledir/var-*.tsv]
 	foreach file $files {
 		set target [file root [gzroot $file]].tsv
 		lappend todo [string range [file tail $target] 4 end-4]
@@ -536,20 +626,25 @@ proc process_sample_job {args} {
 	# use generic (fastq/bam source)
 	# ------------------------------
 #	set keeppwd [pwd]
-#	cd $destdir
-	job_logdir $destdir/log_jobs
+#	cd $sampledir
+	job_logdir $sampledir/log_jobs
 	set refseq [glob $dbdir/genome_*.ifas]
-	set resultbamprefix rds
+	set resultbamprefix {}
+	if {$amplicons ne ""} {append resultbamprefix c}
+	if {$realign} {append resultbamprefix r}
+	if {$removeduplicates} {append resultbamprefix d}
+	# allways sort
+	append resultbamprefix s
 	# find fastq files in fastq dir
-	set files [ssort -natural [jobglob $destdir/fastq/*.fastq.gz $destdir/fastq/*.fastq $destdir/fastq/*.fq.gz $destdir/fastq/*.fq]]
+	set files [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
 	if {![llength $files]} {
-		file mkdir $destdir/fastq
+		file mkdir $sampledir/fastq
 		# if there are none in the fastq dir, check ori dir
-		set files [ssort -natural [jobglob $destdir/ori/*.fastq.gz $destdir/ori/*.fastq $destdir/ori/*.fq.gz $destdir/ori/*.fq]]
+		set files [ssort -natural [jobglob $sampledir/ori/*.fastq.gz $sampledir/ori/*.fastq $sampledir/ori/*.fq.gz $sampledir/ori/*.fq]]
 		if {[llength $files]} {
 			set targets {}
 			foreach file $files {
-				lappend targets $destdir/fastq/[file tail $file]
+				lappend targets $sampledir/fastq/[file tail $file]
 			}
 			job fastq_from_ori-$sample -deps $files -targets $targets -code {
 				foreach file $deps target $targets {
@@ -558,9 +653,9 @@ proc process_sample_job {args} {
 			}
 		} else {
 			# check if there are bam files in ori to extract fastq from
-			set files [ssort -natural [jobglob $destdir/ori/*.bam]]
+			set files [ssort -natural [jobglob $sampledir/ori/*.bam]]
 			foreach file $files {
-				set base $destdir/fastq/[file tail [file root $file]]
+				set base $sampledir/fastq/[file tail [file root $file]]
 				set target $base-R1.fastq.gz
 				set target2 $base-R2.fastq.gz
 				job bam2fastq-[file tail $file] -deps {$file} \
@@ -571,42 +666,48 @@ proc process_sample_job {args} {
 				}
 			}
 		}
-		set files [ssort -natural [jobglob $destdir/fastq/*.fastq.gz $destdir/fastq/*.fastq $destdir/fastq/*.fq.gz $destdir/fastq/*.fq]]
+		set files [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
 	}
 	# create bam from fastq files (if found)
-	set resultbamfile $destdir/map-${resultbamprefix}${aligner}-$sample.bam
+	set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.bam
 	if {[llength $files]} {
 		# do not do any of preliminaries if end product is already there
-		set bamfile $destdir/map-${aligner}-$sample.bam
+		set bamfile $sampledir/map-${aligner}-$sample.bam
 		# quality and adapter clipping
 		set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired \
-			-skips [list -skip $bamfile -skip $resultbamfile]]
+			-skips [list -skip $bamfile -skip $resultbamfile] -removeskew $removeskew]
 		lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
 		lappend cleanupdeps $resultbamfile
 		#
 		# map using ${aligner}
 		map_${aligner}_job $bamfile $refseq $files $sample $paired -skips [list -skip $resultbamfile]
 		# extract regions with coverage >= 5 (for cleaning)
-		set cov5reg [bam2reg_job $destdir/map-${aligner}-$sample.bam 5]
+		set cov5reg [bam2reg_job $sampledir/map-${aligner}-$sample.bam 5]
 		# clean bamfile (mark duplicates, realign)
-		set cleanedbam [bam_clean_job $destdir/map-${aligner}-$sample.bam $refseq $sample \
-			-removeduplicates 1 -realign $realign -bed $cov5reg -cleanup $cleanup]
+		set cleanedbam [bam_clean_job $sampledir/map-${aligner}-$sample.bam $refseq $sample \
+			-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
+			-regionfile $cov5reg -cleanup $cleanup]
 	}
 	# varcaller from bams
-	foreach cleanedbam [jobglob $destdir/map-*.bam] {
+	foreach cleanedbam [jobglob $sampledir/map-*.bam] {
 		# make 5x coverage regfile from cleanedbam
 		set cov5reg [bam2reg_job $cleanedbam 5]
 		# make 20x coverage regfile
 		bam2reg_job $cleanedbam 20 1
+		if {$amplicons eq ""} {
+			set regionfile $cov5reg
+		} else {
+			set regionfile $amplicons
+		}
 		if {"sam" in $varcallers} {
-			# samtools variant calling on map-rds${aligner}
-			lappend cleanupdeps [var_sam_job -bed $cov5reg -split $split -BQ $samBQ $cleanedbam $refseq]
-			lappend todo sam-rds${aligner}-$sample
+			# samtools variant calling on map-${resultbamprefix}${aligner}
+			lappend cleanupdeps [var_sam_job -regionfile $regionfile -split $split -BQ $samBQ $cleanedbam $refseq]
+			lappend todo sam-${resultbamprefix}${aligner}-$sample
 		}
 		if {"gatk" in $varcallers} {
-			# gatk variant calling on map-rds${aligner}
-			lappend cleanupdeps [var_gatk_job -bed $cov5reg -split $split $cleanedbam $refseq]
-			lappend todo gatk-rds${aligner}-$sample
+			# gatk variant calling on map-${resultbamprefix}${aligner}
+			lappend cleanupdeps [var_gatk_job -regionfile $regionfile -split $split -dt $dt $cleanedbam $refseq]
+			lappend todo gatk-${resultbamprefix}${aligner}-$sample
 		}
 	}
 	if {$cleanup} {
@@ -615,8 +716,8 @@ proc process_sample_job {args} {
 	}
 	#calculate reports
 	if {[llength $reports]} {
-		process_reports_job $destdir $dbdir $reports
-		lappend reportstodo $destdir/reports
+		process_reports_job $sampledir $dbdir $reports
+		lappend reportstodo $sampledir/reports
 	}
 	return $todo
 }

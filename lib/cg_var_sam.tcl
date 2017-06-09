@@ -25,7 +25,7 @@ proc var_sam_job {args} {
 		-l - deps {
 			lappend deps $value
 		}
-		-bed {
+		-regionfile {
 			set regionfile $value
 			lappend deps $value
 		}

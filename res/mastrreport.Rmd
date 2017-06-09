@@ -31,15 +31,30 @@ google_jsapi_local <- function(googleChart, local_jsapi) {
 ```
 
 ```{r loaddata, results='asis', echo=FALSE}
-setwd(mastrdir)  
-demultiplex <- read.delim(paste(mastrdir, '/demultiplex_stats.tsv',sep=''))
+setwd(mastrdir)
+statsfile = paste(mastrdir, '/reports/report_stats-',mastr,'.tsv',sep='')
+if (file.exists(statsfile)) {
+	# create old demultiplex format used in rest of code (keep compatible if only demultiplex file is present)
+	demultiplex <- read.delim(statsfile,sep='\t')
+	demultiplex = demultiplex[demultiplex$parameter == 'fw_numreads',]
+	demultiplex$SampleID = demultiplex$sample
+	demultiplex$NumberOfClustersPF = as.integer(levels(demultiplex$value))[demultiplex$value]
+	demultiplex = droplevels(demultiplex)
+} else {
+	demultiplexfile = paste(mastrdir, '/demultiplex_stats.tsv',sep='')
+	demultiplex <- read.delim(demultiplexfile)
+}
 avg_cov <- read.delim(file=Sys.glob(paste(mastrdir,'/*coverage*avg*',sep=''))[1],sep='\t',header=T)
 frac_cov_file <- Sys.glob(paste(mastrdir,'/*coverage*frac*',sep=''))[1]
 frac_cov <- read.delim(file = frac_cov_file, sep='\t', header=T)
 
 frac <- sub('.+_above_([0-9]+).tsv', '\\1', frac_cov_file, perl = T)
 
-amplicons  <- read.delim(file=Sys.glob(paste(mastrdir,'/*.mastr/samplicons*.tsv', sep=''))[1], sep='\t', header=T) 
+ampliconsfile = Sys.glob(paste(mastrdir,'/*.mastr/samplicons*.tsv', sep=''))[1]
+if (!file.exists(ampliconsfile)) {
+	ampliconsfile = Sys.glob(paste(mastrdir,'/samples/*/reg_*amplicons*.tsv', sep=''))[1]
+}
+amplicons  <- read.delim(file=ampliconsfile, sep='\t', header=T) 
 
 #get number of variant/sample
 temp <- paste(mastrdir,'/compar/summary-compar-', mastr,'.tsv',sep='')

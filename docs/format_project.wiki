@@ -59,7 +59,8 @@ to separate different elements of the file. The first element indicates
 what is in the file. The last element (before the extension) is the sample
 name. There can be several steps in between.
 
-Each sampledir can contain results for this individual sample of the following type:
+Each sampledir can contain results for this individual sample of the following 
+type (depending on source data):
 ; map-rdsbwa-sample1.bam: bam file created by aligning the reads of sample1
 to the reference genome in dbdir using bwa. The bam file has been sorted
 (s), duplicate marked (d), and realigned (r).
@@ -76,6 +77,9 @@ is used to create the sreg files, and to update data in making multicompar
 files later.
 ; reg_cluster-gatk-rdsbwa-S0489.tsv: regions with many clustered variants
 (which are less reliable)
+; coverage-cg-sample1: directory containing whole genome coverage, refscore, ... data in the form of [[bcol]] files.
+; cgsv-sample.tsv: structural variants
+; cgcnv-sample.tsv: CNV data
 
 The result files from samtools variant calling on the same bamfile
 (map-rdsbwa-sample1.bam), are named var-sam-rdsbwa-sample1.tsv,

@@ -1,6 +1,8 @@
 proc process_project_job {args} {
 	set dbdir {}
 	set dbfiles {}
+	set minfastqreads 0
+	set removeskew {}
 	set aligner bwa
 	set varcallers {gatk sam}
 	set realign 1
@@ -8,8 +10,13 @@ proc process_project_job {args} {
 	set paired 1
 	set adapterfile {}
 	set conv_nextseq 0
+	set targetfile {}
 	set reports all
 	set samBQ 0
+	set dt {}
+	set removeduplicates {}
+	set amplicons {}
+	set extra_reports_mastr 0
 	cg_options process_project_job args {
 		-ori {
 			set oridir $value
@@ -17,11 +24,31 @@ proc process_project_job {args} {
 		-dbdir - -refdir {
 			set dbdir $value
 		}
+		-minfastqreads {
+			set minfastqreads $value
+		}
+		-p - -paired {
+			set paired $value
+		}
+		-adapterfile {
+			if {$value ne "" && ![file exists $value]} {error "adapterfile $value does not exists"}
+			set adapterfile $value
+		}
+		-removeskew {
+			set removeskew $value
+		}
 		-a - -aligner {
 			set aligner $value
 		}
 		-realign {
 			set realign $value
+		}
+		-removeduplicates {
+			set removeduplicates $value
+		}
+		-amplicons {
+			set amplicons [file_absolute $value]
+			if {$value ne "" && ![jobfileexists $amplicons]} {error "amplicons file $amplicons does not exists"}
 		}
 		-v - -varcallers {
 			set varcallers $value
@@ -29,9 +56,16 @@ proc process_project_job {args} {
 		-s - -split {
 			set split $value
 		}
+		-dt - -downsampling_type {
+			if {$value ni "{} NONE ALL_READS BY_SAMPLE"} {error "-dt must be one of: NONE ALL_READS BY_SAMPLE"}
+			set dt $value
+		}
+		-samBQ {
+			set samBQ $value
+		}
 		-dbfile {
 			set file [gzfile $value]
-			if {![file exists $file]} {error "dbfile $value does not exists"}
+			if {$value ne "" && ![file exists $file]} {error "dbfile $value does not exists"}
 			lappend dbfiles [file_absolute $file]
 		}
 		-dbfiles {
@@ -41,15 +75,9 @@ proc process_project_job {args} {
 				lappend dbfiles [file_absolute $file]
 			}
 		}
-		-p - -paired {
-			set paired $value
-		}
-		-adapterfile {
-			if {$value ne "" && ![file exists $value]} {error "adapterfile $value does not exists"}
-			set adapterfile $value
-		}
-		-conv_nextseq {
-			set conv_nextseq $value
+		-targetfile {
+			set targetfile [file_absolute $value]
+			if {$value ne "" && ![jobfileexists $targetfile]} {error "target file $targetfile does not exists"}
 		}
 		-r - -reports {
 			set reports $value
@@ -60,12 +88,26 @@ proc process_project_job {args} {
 		-m - -maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
-		-samBQ {
-			set samBQ $value
+		-conv_nextseq {
+			set conv_nextseq $value
+		}
+		-extra_reports_mastr {
+			set extra_reports_mastr $value
 		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
+	set adapterfile [adapterfile $adapterfile]
+	if {$amplicons ne ""} {
+		if {$removeduplicates eq ""} {set removeduplicates 0}
+		if {$removeskew eq ""} {set removeskew 0}
+		if {$dt eq ""} {set dt NONE}
+		list_addnew dbfiles $amplicons
+	} else {
+		if {$removeduplicates eq ""} {set removeduplicates 1}
+		if {$removeskew eq ""} {set removeskew 1}
+		if {$dt eq ""} {set dt BY_SAMPLE}
+	}
 	# check projectinfo
 	projectinfo $destdir dbdir {split 1}
 	set dbdir [dbdir $dbdir]
@@ -73,7 +115,7 @@ proc process_project_job {args} {
 	# -------
 	set cmdline [list cg process_project]
 	foreach option {
-		ori dbdir refdir a aligner realign v varcallers split dbfile dbfiles paired adapterfile conv_nextseq reports cleanup maxopenfiles samBQ
+		ori dbdir refdir aligner realign varcallers split dbfile dbfiles paired adapterfile conv_nextseq reports cleanup maxopenfiles samBQ amplicons extra_reports_mastr
 	} {
 		if {[info exists $option]} {
 			lappend cmdline -$option [get $option]
@@ -119,6 +161,8 @@ proc process_project_job {args} {
 			-aligner $aligner -realign $realign --varcallers $varcallers \
 			-dbdir $dbdir -split $split -paired $paired \
 			-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
+			-removeduplicates $removeduplicates -amplicons $amplicons \
+			-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
 			$dir
 	}
 	job_logdir $destdir/log_jobs
@@ -127,6 +171,17 @@ proc process_project_job {args} {
 		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir $todo
 	if {[llength $reports]} {
 		proces_reportscombine_job $destdir $reportstodo
+	}
+	if {$extra_reports_mastr} {
+		make_alternative_compar_job $experiment $destdir
+		set histofiles {}
+		foreach dir $reportstodo {
+			set histofile [jobglob $dir/*.histo]
+			if {$histofile ne ""} {lappend histofiles $histofile}
+		}
+		generate_coverage_report_job $experiment $amplicons $histofiles $destdir
+		generate_html_report_job $experiment $destdir
+		analysis_complete_job $experiment $destdir
 	}
 	list $todo
 }

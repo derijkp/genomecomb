@@ -16,14 +16,20 @@ analyse all samples in the projectdir, generating variant calls, reports,
 comparison of variants over samples, ...
 
 The projectdir should contain a subdirectory named **samples** that contains
-a separate subdirectory for each sample (**sampledir*).
-In case the starting raw data for the sample is fastq files, they should
-be in a subdirectory of the sampledir named fastq. The names of
-matching fastq files of paired reads should be consecutive when sorted
-naturaly,the forward reads first. The usual naming of these files (same
-name, except for a 1 and 2) is ok. Only subdirectories containing these
-fastq dirs are considered sampledirs. The name of each sample is taken
-from the sampledir name. The sample name should not contain hyphens (-)
+a separate subdirectory for each sample (**sampledir*) of the project.
+The name of each sample is taken from the name of the sampledir. The sample name
+should not contain hyphens (-)
+
+In the first step, each sampledir is processed using [[cg_process_sample]];
+Samples in one project can come from different sources (Complete genomics,
+illumina sequencing) and be of different types (shotgun, amplicon).
+Some options are applied to all samples, e.g. the -amplicons option (for
+amplicon sequencing analysis) will placing (a link to) the given amplicons
+file in each sampledir. These options should only be used in projects with uniform
+samples. For mixed samples, these options can be applied specifically by
+placing files, e.g. an amplicon file (named reg_*_amplicons.tsv) in the
+appropriate sample directories. More information on specific sample types
+and options can be found in the description of [[cg_process_sample]].
 
 == overview/comparison data ==
 In projectdir a subdirectory compar will be made. This will contain 
@@ -55,23 +61,33 @@ are applicable. Options that are not applicable to the given type of data are
 ignored.
 
 ; -dbdir dbdir: **dbdir** can also be given as an option (instead of second parameter)
-; -aligner aligner: use the given aligner for mapping to the reference genome (default bwa)
+; -minfastqreads num: fastq based samples with less than **num** reads in the fastq files are 
+not processed and not added to the final compar. 
+; -paired 1/0 (-p): sequenced are paired/unpaired
+; -adapterfile file: Use **file** for possible adapter sequences
+; -removeskew num: -k parameter for sequence clipping using fastq-mcf: sKew percentage-less-than causing cycle removal
+; -aligner aligner (-a): use the given aligner for mapping to the reference genome (default bwa)
 ; -realign value: If **value** is 0, realignment will not be performed, 
 use 1 for (default) realignment with gatk, or srma for alignment with srma
 if 1, bam files are realigned using gatk, use **value** srma to align using srma.
+; -removeduplicates 0/1: By default duplicates will be removed (1) using picard except for amplicon 
+sequencing. With this option you can specifically request or turn of duplicate removal (overruling 
+the default).
+; -amplicons ampliconfile: This option turns on amplicon sequencing analysis (as described 
+in [[cg_process_sample]]) using the amplicons defained in **ampliconfile** for all samples
+that do not have a sample specific amplicon file yet.
 ; -varcallers varcallers: (space separated) list of variant callers to be used (default "gatk sam")
 ; -split 1/0: split multiple alternative genotypes over different line
-; -paired 1/0: sequenced are paired/unpaired
-; -adapterfile file: Use **file** for possible adapter sequences
+; -downsampling_type NONE/ALL_READS/BY_SAMPLE/: sets the downsampling type used by GATK (empty for default).
 ; -reports list: use all (default) for creating all reports. If you only
 want some made, give these as a space separated list. Possible reports are:
-flagstats fastqc vars hsmetrics covered
+flagstats fastqstats fastqc vars hsmetrics covered histo
 ; -dbfile file: Use the given **file** for extra (files in **dbdir** are already used) annotation. 
 This option can be given more than once; all given files will be added
 ; -dbfiles files: Use **files** for extra (files in **dbdir** are already used) annotation. **files** should be a space separated list of files.
 ; -conv_nextseq 1/0: generate fastqs for nextseq run & create sample folders - rundir should be placed in projectdir
 of resulting variants. This option can be added multiple times (with different files)
-; -bedfile bedfile: if bedfile is provided, coverage statistics will be calculated for this region using picard CalculateHsMetrics
+; -targetfile targetfile: if targetfile is provided, coverage statistics will be calculated for this region using picard CalculateHsMetrics
 ; -m maxopenfiles (-maxopenfiles): The number of files that a program
 can keep open at the same time is limited. pmulticompar will distribute
 the subtasks thus, that the number of files open at the same time stays
@@ -80,51 +96,8 @@ be set manually (if the program e.g. does not deduce the proper limit, or
 you want to affect the distribution).
 ; -samBQ number: only for samtools; minimum base quality for a base to be considered (samtools --min-BQ option)
 
-This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
-
-
-== Samples from fastq ==
-By default reads are clipped using fastq-mcf, aligned to the reference
-genome in dbdir using bwa mem, duplicates removed (using picard) and realigned
-(using gatk). Variants are called using gatk and samtools.
-All files generated have names following the convention of using hyphens
-to separate different elements about the file. The first element is the
-type of file. The last element (before the extension) is the sample name.
-There can be several steps in between. Each sampledir will contain results 
-for this individual sample of the following type:
-
-; map-rdsbwa-sample1.bam: bam file created by aligning the reads of sample1
-to the reference genome in dbdir using bwa. The bam file has been sorted
-(s), duplicate marked (d), and realigned (r).
-
-; var-gatk-rdsbwa-sample1.tsv: a [[intro|variant file]] that contains
-variants called by gatk based on map-rdsbwa-sample1.bam. Positions with a
-quality < 30 or coverage < 5 are considered unsequenced. Lower quality
-variants (but with quality >= 10) are still included in the variant list,
-but have the a "u" in the sequenced and zyg columns to indicate that they
-are considered unsequenced
-; sreg-gatk-rdsbwa-sample1.tsv: A region file with all regions that can be
-considered sequenced (quality >= 30 and coverage >= 5) using the same methods 
-and quality measures as var-gatk-rdsbwa-sample1.tsv. Any position in those 
-regions that is not in the variant file can be called reference with the same
-reliability as the variant calls.
-; varall-gatk-rdsbwa-sample1.tsv: variant calling data by gatk for all
-positions with >= 5 coverage (also reference called positions). This file
-is used to create the sreg files, and to update data in making multicompar 
-files later.
-; reg_cluster-gatk-rdsbwa-S0489.tsv: regions with many clustered variants
-(which are less reliable)
-
-For samtools variant calling on the same bamfile (map-rdsbwa-sample1.bam),
-these result files are named var-sam-rdsbwa-sample1.tsv,
-sreg-sam-rdsbwa-sample1.tsv, varall-sam-rdsbwa-sample1.tsv,
-reg_cluster-sam-rdsbwa-S0489.tsv
-
-== Precalculated data ==
-The sampledir may contain precalculated data data from other pipelines.
-If these are in the correct format, they will be integrated in the
-project. vcf files (var-*.vcf) will be converted to tsv files, and their
-variants included in the multicompar.
+This command can be distributed on a cluster or using multiple with
+[[joboptions|job options]] (more info with cg help joboptions)
 
 == Dependencies ==
 Some of the programs needed in this workflow are not distributed with genomecomb. 

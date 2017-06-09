@@ -33,6 +33,7 @@ proc cg_process_conv_illnextseq {illsrc destdir} {
 proc process_illumina {args} {
 	set dbdir {}
 	set dbfiles {}
+	set targetfile {}
 	set realign 1
 	set cleanup 1
 	set cleanupfiles {}
@@ -61,6 +62,10 @@ proc process_illumina {args} {
 				if {![file exists $file]} {error "dbfile $v does not exist"}
 				lappend dbfiles [file_absolute $file]
 			}
+		}
+		-targetfile {
+			set targetfile [file_absolute $value]
+			if {$value ne "" && ![jobfileexists $targetfile]} {error "target file $targetfile does not exists"}
 		}
 		-paired {
 			set paired $value
@@ -167,17 +172,16 @@ proc process_illumina {args} {
 		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample \
-			-removeduplicates 1 -realign $realign -bed $cov5reg -cleanup $cleanup]
+			-removeduplicates 1 -realign $realign -regionfile $cov5reg -cleanup $cleanup]
 		# make 5x coverage regfile from cleanedbam
 		set cov5reg [bam2reg_job $cleanedbam 5]
 		# make 20x coverage regfile
 		bam2reg_job $cleanedbam 20 1
-		#calculate reports
 		# gatk variant calling on map-rdsbwa
-		var_gatk_job -bed $cov5reg -split $split $cleanedbam $refseq
+		var_gatk_job -regionfile $cov5reg -split $split $cleanedbam $refseq
 		lappend todo gatk-rdsbwa-$sample
 		# samtools variant calling on map-rdsbwa
-		var_sam_job -bed $cov5reg -split $split $cleanedbam $refseq
+		var_sam_job -regionfile $cov5reg -split $split $cleanedbam $refseq
 		lappend todo sam-rdsbwa-$sample
 		if {$cleanup} {
 			# clean up no longer needed intermediate files
@@ -202,6 +206,7 @@ proc process_illumina {args} {
 			set target [file root [gzroot $file]].tsv
 			lappend todo [string range $target 4 end-4]
 		}
+		# calculate reports
 		if {[llength $reports]} {
 			process_reports_job $sampledir/$sample $dbdir $reports
 			lappend reportstodo $sampledir/$sample/reports

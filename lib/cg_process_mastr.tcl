@@ -1,9 +1,12 @@
 
 package require tdom
 
-proc make_alternative_compar_job {experiment} {
+proc make_alternative_compar_job {experiment {destdir {}}} {
 	upvar job_logdir job_logdir
-	job altcompar-$experiment -deps compar/annot_compar-$experiment.tsv -targets [list compar/annot_compar_gatk-${experiment}.tsv.lz4 compar/annot_compar_gatk-${experiment}_long.tsv.lz4] -code {
+	if {$destdir eq ""} {set destdir [pwd]}
+	job altcompar-$experiment -deps {$destdir/compar/annot_compar-$experiment.tsv} \
+	-targets [list $destdir/compar/annot_compar_gatk-${experiment}.tsv.lz4 $destdir/compar/annot_compar_gatk-${experiment}_long.tsv.lz4] \
+	-code {
 		set target1 [lindex $targets 0]
 		set target2 [lindex $targets 1]
 		##remove samtools analysis & move specific annotfields forwards		
@@ -231,20 +234,26 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	return [list $mastrname $refseq $mastrdir/reg-$mastrname.map]
 }
 
-proc analysis_complete_job {experiment} {
+proc analysis_complete_job {experiment {destdir {}}} {
 	upvar job_logdir job_logdir
-	job analysis_complete-$experiment -deps [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv compar/annot_compar_gatk-${experiment}_long.tsv ${experiment}.html]  -targets analysis_complete -code {
-		file delete analysis_running
-		exec touch analysis_complete
+	if {$destdir eq ""} {set destdir [pwd]}
+	job analysis_complete-$experiment -deps [list $destdir/coverage_${experiment}_avg.tsv $destdir/coverage_${experiment}_frac_above_20.tsv $destdir/compar/annot_compar_gatk-${experiment}_long.tsv $destdir/${experiment}.html] \
+	-targets $destdir/analysis_complete -vars destdir -code {
+		file delete $destdir/analysis_running
+		exec touch $target
 	}
 }
 
-proc generate_coverage_report_job {experiment regfile histofiles} {
+proc generate_coverage_report_job {experiment regfile histofiles {destdir {}}} {
 	upvar job_logdir job_logdir
-	job coverage_report-$experiment -deps [list $regfile {*}$histofiles] -targets [list coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv ] -code {
+	if {$destdir eq ""} {set destdir [pwd]}
+	job coverage_report-$experiment -deps [list $regfile {*}$histofiles] \
+	-targets [list $destdir/coverage_${experiment}_avg.tsv $destdir/coverage_${experiment}_frac_above_20.tsv ] -code {
+		set regfile [tempfile]
+		cg regcollapse $dep1 > $regfile
 		set oheader {name chr begin end}
 		set names {}
-		foreach line [split [cg select -sh /dev/null -f {name chromosome begin end} $dep1] \n] {
+		foreach line [split [cg select -sh /dev/null -f {name chromosome begin end} $regfile] \n] {
 			set line [split $line \t]
 			set avga([lindex $line 0]) $line
 			set fraca([lindex $line 0]) $line
@@ -252,8 +261,15 @@ proc generate_coverage_report_job {experiment regfile histofiles} {
 		}
 		set histofiles [lrange $deps 1 end]
 		foreach file $histofiles {
+			if {![file exists $file]} continue
 			set file [file_absolute $file]
-			lappend oheader [file tail [file dir $file]]
+			set temp [file split $file]
+			if {[lindex $temp end-1] eq "reports"} {
+				lappend oheader [lindex $temp end-2]
+			} else {
+				# old arrangment
+				lappend oheader [lindex $temp end-1]
+			}
 			set f [open $file]
 			set header [tsv_open $f]
 			set poss [list_cor $header {name avg size {r<1} {r1<5} {r5<10} {r10<20}}]
@@ -285,17 +301,18 @@ proc generate_coverage_report_job {experiment regfile histofiles} {
 
 # Needs R to be installed together with some R packages:
 # install.packages("rmarkdown") ; install.packages("stringr") ; install.packages("dplyr") ; install.packages("tidyr") ; install.packages("googleVis") ; install.packages("DT")
-proc generate_html_report_job {experiment} {
+proc generate_html_report_job {experiment {destdir {}}} {
 	upvar job_logdir job_logdir
-	job html_report -deps [list compar/compar-${experiment}.tsv coverage_${experiment}_avg.tsv coverage_${experiment}_frac_above_20.tsv demultiplex_stats.tsv] \
-	-targets {$experiment.html} -vars {experiment} -code {
-		cg select -g sample -gc {sequenced {v} count} $dep compar/summary-compar-${experiment}.tsv
+	if {$destdir eq ""} {set destdir [pwd]}
+	job html_report -deps [list $destdir/compar/compar-${experiment}.tsv $destdir/coverage_${experiment}_avg.tsv $destdir/coverage_${experiment}_frac_above_20.tsv ($destdir/report_stats-$experiment.tsv) ($destdir/demultiplex_stats.tsv)] \
+	-targets {$destdir/$experiment.html} -vars {experiment destdir} -code {
+		cg select -g sample -gc {sequenced {v} count} $dep $destdir/compar/summary-compar-${experiment}.tsv
 		set rmd $::appdir/res/mastrreport.Rmd
 		set chartjs $::appdir/res/displayChartHistogram.js
-		set cmd [string_change {library(rmarkdown); library(stringr); mastrdir=getwd(); local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @rmd@ $rmd @chartjs@ $chartjs]]
+		set cmd [string_change {library(rmarkdown); library(stringr); mastrdir="@destdir@"; local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @destdir@ $destdir @rmd@ $rmd @chartjs@ $chartjs]]
 		exec [findR] -e $cmd >@ stdout 2>@ stderr
 		file rename -force $target.temp $target
-		file delete compar/summary-compar-${experiment}.tsv
+		file delete $destdir/compar/summary-compar-${experiment}.tsv
 	}
 }
 
@@ -463,7 +480,7 @@ proc process_mastr_job {args} {
 		set cleanbam [bam_clean_job $bamfile $refseq $sample \
 			-removeduplicates 0 \
 			-clipamplicons $clipamplicons \
-			-bed $mastrdir/reg-inner-joined-$mastrname.bed \
+			-regionfile $mastrdir/reg-inner-joined-$mastrname.bed \
 			-cleanup $cleanup]
 		# coverage statistics
 		bam2covstats_job $cleanbam $mastrdir/reg-inner-$mastrname.tsv
@@ -482,7 +499,7 @@ proc process_mastr_job {args} {
 			}
 			sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv.lz4
 		} else {
-			var_sam_job -pre $pre -bed $mastrdir/reg-inner-$mastrname.bed -split $split -BQ $samBQ $cleanbam $refseq
+			var_sam_job -pre $pre -regionfile $mastrdir/reg-inner-$mastrname.bed -split $split -BQ $samBQ $cleanbam $refseq
 		}
 		lappend todo sam-$resultbamprefix${aligner}-$sample
 		if {$useminigenome} {
@@ -498,7 +515,7 @@ proc process_mastr_job {args} {
 			sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv.lz4
 		} else {
 			# gatk variant calling on map-rs${aligner}
-			var_gatk_job -pre $pre -dt NONE -bed $mastrdir/reg-inner-$mastrname.bed -split $split $cleanbam $refseq
+			var_gatk_job -pre $pre -dt NONE -regionfile $mastrdir/reg-inner-$mastrname.bed -split $split $cleanbam $refseq
 		}
 		lappend todo gatk-$resultbamprefix${aligner}-$sample
 	}

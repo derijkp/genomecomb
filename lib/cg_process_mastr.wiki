@@ -8,6 +8,8 @@ process an mastr sequencing project, results in genomecomb project dir (mastrpro
 multicompar, etc.
 
 == Description ==
+This command is depricated. The same functionality is available through the
+more generic process_project.
 
 == Arguments ==
 ; **mastrdesigndir**: directory with data about the mastr design. The mastrname is the root name of the 
@@ -50,4 +52,4 @@ cg process_mastr -d 2 test.mastr testproject /complgen/refseq/hg19
 }}}
 
 == Category ==
-Process
+Depricated

@@ -1,53 +1,3 @@
-proc targetfile_job {sampledir {dbdir {}}} {
-	upvar job_logdir job_logdir
-	set dbdir [dbdir $dbdir]
-	set ref [dbdir_ref $dbdir]
-	set targetfile [gzfile $sampledir/reg_${ref}_targets.tsv]
-	if {[file exists $targetfile]} {
-		return $targetfile
-	}
-	set targetfile $sampledir/reg_${ref}_targets.tsv
-	set link [gzlink $targetfile]
-	if {[file exists $link]} {
-		file delete $targetfile
-		gzmklink $link $targetfile
-		return [gzfile $targetfile]
-	}
-	if {[jobfileexists $targetfile]} {
-		return $targetfile
-	}
-	# get targetfile (if possible)
-	set capturefile $sampledir/info_capture.txt
-	if {![jobfileexists $capturefile]} {
-		if {[file tail [file dir $sampledir]] eq "samples"} {
-			set take2 [file dir [file dir $sampledir]]/reg_${ref}_targets.tsv
-			set capture [file dir [file dir $sampledir]]/info_capture.tsv
-		} else {
-			set take2 [file dir $sampledir]/reg_${ref}_targets.tsv
-			set capture [file dir $sampledir]/info_capture.tsv
-		}
-		if {[jobfileexists $take2]} {
-			set take2 [find_link $take2 1]
-			mklink_job $take2 $targetfile
-			return $targetfile
-		}
-	}
-	if {[jobfileexists $capturefile]} {
-		job reports_targetfile -deps {$capturefile} -targets {$targetfile} -vars {sample dbdir ref} -code {
-			set capture [string trim [file_read $dep]]
-			set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
-			if {![file exists $oritargetfile]} {
-				array set transa {seqcapv3 SeqCap_EZ_v3 sure4 SureSelectV4 sure5 SureSelectV5 sure5utr SureSelectV5UTR}
-				set capture [get transa($capture) $capture]
-				set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
-			}
-			mklink $oritargetfile $target 1
-		}
-		return $targetfile
-	}
-	return {}
-}
-
 proc process_reports_job {args} {
 	set reports all
 	cg_options process_reports args {
@@ -66,7 +16,7 @@ proc process_reports_job {args} {
 	job_logdir $sampledir/log_jobs
 	set ref [dbdir_ref $dbdir]
 	if {$reports eq "all"} {
-		set reports {flagstats fastqstats fastqc vars hsmetrics covered}
+		set reports {flagstats fastqstats fastqc vars hsmetrics covered histo}
 	}
 	# logfile
 	set cmdline [list cg process_reports]
@@ -83,15 +33,16 @@ proc process_reports_job {args} {
 	# start
 	set bamfiles [jobglob $sampledir/*.bam]
 	set targetfile [targetfile_job $sampledir $dbdir]
+	set ampliconsfile [ampliconsfile $sampledir $ref]
 	file mkdir $sampledir/reports
 	foreach bamfile $bamfiles {
-		set sample [file root [file tail [gzroot $bamfile]]]
-		regsub ^map- $sample {} sample
+		set bamroot [file root [file tail [gzroot $bamfile]]]
+		regsub ^map- $bamroot {} bamroot
 		if {[inlist $reports flagstats]} {
 			set dep $bamfile
-			set target $sampledir/reports/flagstat-$sample.flagstat
-			set target2 $sampledir/reports/report_bam-$sample.tsv
-			job reports_flagstats-[file tail $bamfile] -deps {$dep} -targets {$target $target2} -vars {sample} -code {
+			set target $sampledir/reports/flagstat-$bamroot.flagstat
+			set target2 $sampledir/reports/report_bam-$bamroot.tsv
+			job reports_flagstats-[file tail $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
 				exec samtools flagstat $dep > $target.temp
 				file rename -force -force $target.temp $target
 				set o [open $target2.temp w]
@@ -99,20 +50,20 @@ proc process_reports_job {args} {
 				set f [open $target]
 				while {[gets $f line] != -1} {
 					if {![regexp {^([0-9]+) \+ ([0-9]+) ([^()]*)} $line temp value value_qcfail parameter]} continue
-					puts $o "$sample\tflagstat\t$parameter\t$value\t$value_qcfail"
+					puts $o "$bamroot\tflagstat\t$parameter\t$value\t$value_qcfail"
 				}
 				close $f
 				close $o
 				file rename -force $target2.temp $target2
 			}
 		}
-		if {[inlist $reports hsmetrics] && $targetfile ne ""} {
+		if {[inlist $reports hsmetrics] && [jobfileexists $targetfile]} {
 			set dep1 $bamfile
 			set dep2 $targetfile
-			set target $sampledir/reports/hsmetrics-$sample.hsmetrics
-			set target2 $sampledir/reports/report_hsmetrics-$sample.tsv
-			job reports_hsmetrics-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2} -targets {$target $target2} -vars {sample bamfile targetfile} -code {
-				cg_hsmetrics --sample $sample $bamfile $targetfile $target
+			set target $sampledir/reports/hsmetrics-$bamroot.hsmetrics
+			set target2 $sampledir/reports/report_hsmetrics-$bamroot.tsv
+			job reports_hsmetrics-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2} -targets {$target $target2} -vars {bamroot bamfile targetfile} -code {
+				cg_hsmetrics --sample $bamroot $dep1 $dep2 $target
 				set f [open $target]
 				set header [tsv_open $f]
 				set data [split [gets $f] \t]
@@ -121,10 +72,22 @@ proc process_reports_job {args} {
 				set o [open $target2temp w]
 				puts $o [join {sample source parameter value} \t]
 				foreach key [lrange $header 1 end] value [lrange $data 1 end] {
-					puts $o "$sample\thsmetrics\t$key\t$value"
+					puts $o "$bamroot\thsmetrics\t$key\t$value"
 				}
 				close $o
 				file rename -force $target2temp $target2
+			}
+		}
+		if {[inlist $reports histo] && $ampliconsfile ne ""} {
+			set dep1 $bamfile
+			set dep2 $ampliconsfile
+			set target $sampledir/reports/$bamroot.histo
+			job reports_histo-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2} -targets {$target} -vars {bamroot bamfile targetfile} -code {
+				set tempfile [filetemp $target]
+				set regionfile [filetemp $target]
+				cg regcollapse $dep2 > $regionfile
+				cg bam_histo $regionfile $dep {1 5 10 20 50 100 200 500 1000} > $tempfile
+				file rename -force $tempfile $target
 			}
 		}
 	}
@@ -289,7 +252,7 @@ proc proces_reportscombine_job {destdir reportstodo} {
 	set experiment [file tail $destdir]
 	set deps {}
 	foreach dir $reportstodo {
-		lappend deps {*}[jobglob $dir/hsmetrics-*.hsmetrics]
+		lappend deps {*}[jobglob $dir/hsmetrics-*.hsmetrics $dir/reports/]
 	}
 	if {[llength $deps]} {
 		set target $destdir/reports/report_hsmetrics-${experiment}.tsv

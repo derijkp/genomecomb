@@ -58,7 +58,7 @@ proc var_gatk_job {args} {
 		-L - -deps {
 			lappend deps $value
 		}
-		-bed {
+		-regionfile {
 			set regionfile $value
 			lappend deps $value
 		}

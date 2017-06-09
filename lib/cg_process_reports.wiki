@@ -26,11 +26,12 @@ etc in the various var files (file report_vars-source.tsv)
 ; covered: how much bases are covered in the various region files (5x
 coverage, 20x coverage, gatk sequenced, ...), oper chromosome and in total
 (file report_covered-source.tsv)
+; histo: "histogram" of coverage (file crsbwa-sample.histo)
 
 == Arguments ==
 ; sampledir: processed sample directory (containing variant files, bam files, etc.)
 ; dbdir: directory containing reference data (genome sequence, annotation, ...)
-; reports: select wich reports to make (can also be given as an option). Defaul is
+; reports: select wich reports to make (can also be given as an option). Default is
 to try to create all possible reports
 
 == Options ==
