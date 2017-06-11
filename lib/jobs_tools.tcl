@@ -1,5 +1,10 @@
 proc cleanup_job {name rmtargets args} {
 	upvar job_logdir job_logdir
+	set todo 0
+	foreach temp $rmtargets {
+		if {[jobfileexists $temp]} {set todo 1; break}
+	}
+	if {!$todo} return
 	set num 1
 	foreach deps $args {
 		job cleanup-$name-deps$num -optional 1 -deps [list {*}$deps {*}[job_optdeps $rmtargets]] -vars {rmtargets} \
