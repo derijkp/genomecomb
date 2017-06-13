@@ -17,7 +17,7 @@ test reports {hsmetrics} {
 
 test reports {process_reports} {
 	cd $::bigtestdir
-	file delete -force {*}[glob tmp/test_reports/*]
+	file delete -force tmp/test_reports
 	file mkdir tmp/test_reports/NA19240mx2
 	file copy {*}[glob expected/exomes_yri_mx2/samples/NA19240mx2/*] tmp/test_reports/NA19240mx2
 	file delete -force tmp/test_reports/NA19240mx2/reports

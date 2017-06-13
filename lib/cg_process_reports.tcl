@@ -92,25 +92,26 @@ proc process_reports_job {args} {
 		}
 	}
 	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*]]
+	set fastqfiles_fw [list_unmerge $fastqfiles 1 fastqfiles_rev]
 	if {[inlist $reports fastqc] && [llength $fastqfiles]} {
-		foreach fastqfile $fastqfiles {
-			set name [file root [file tail [gzroot $fastqfile]]]
-			set dep $fastqfile
-			set outdir $sampledir/reports/fastqc
-			file mkdir $outdir
-			set target $sampledir/reports/fastqc/${name}.fq_fastqc
-			job reports_fastqc-[file tail $fastqfile] -deps {$dep} -targets {$target} -vars {outdir} -code {
+		foreach deps [list $fastqfiles_fw $fastqfiles_rev] dir {fw rev} {
+			set target $sampledir/reports/fastqc_$dir-$sample.fastqc
+			job reports_fastqc-$dir-$sample -deps $deps -targets {$target} -code {
+				if {[llength $deps] > 1} {
+					set ext [file extension [lindex $deps 0]]
+					set dep [scratchfile].fq.gz
+					exec cat {*}$deps > $dep
+				}
 				fastqc $target -q $dep 2>@ stderr >@ stdout
 			}
 		}
 	}
 	if {[inlist $reports fastqstats] && [llength $fastqfiles]} {
-		set fastqfiles_fw [list_unmerge $fastqfiles 1 fastqfiles_rev]
 		foreach deps [list $fastqfiles_fw $fastqfiles_rev] dir {fw rev} {
 			set target $sampledir/reports/report_fastq_$dir-$sample.tsv
 			set target2 $sampledir/reports/fastq_stats_$dir-$sample.txt
 			set target3 $sampledir/reports/fastx_$dir-$sample.tsv
-			job reports_fastq-stats-$dir -deps $deps -targets {$target $target2 $target3} -vars {sample dir} -code {
+			job reports_fastq-stats-$dir-$sample -deps $deps -targets {$target $target2 $target3} -vars {sample dir} -code {
 				set gzcat [gzcat [lindex $deps 0]]
 				exec {*}$gzcat {*}$deps | fastq-stats -x $target3 > $target2
 				set o [open $target.temp w]
