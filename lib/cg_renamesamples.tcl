@@ -35,11 +35,7 @@ proc renamesamples_newfilename {file changes} {
 
 proc renamesamples_file {file changes} {
 	set gzroot [gzroot $file]
-	if {$gzroot ne $file} {
-		set gzext [file extension $file]
-	} else {
-		set gzext ""
-	}
+	set gzext [gzext $file]
 	set ext [file extension $gzroot]
 	set basefile [file root $gzroot]
 	set newbasefile [renamesamples_newfilename $basefile $changes]

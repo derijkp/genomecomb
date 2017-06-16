@@ -81,12 +81,21 @@ array set gzexts {
 	.bz2 bzip2
 }
 
-proc gzext ext {
+proc isgzext ext {
 	info exists ::gzexts($ext)
 }
 
+proc gzext file {
+	set ext [file extension $file]
+	if {[isgzext $ext]} {
+		return $ext
+	} else {
+		return ""
+	}
+}
+
 proc gzroot filename {
-	if {[gzext [file extension $filename]]} {
+	if {[isgzext [file extension $filename]]} {
 		return [file root $filename]
 	} else {
 		return $filename
@@ -94,7 +103,7 @@ proc gzroot filename {
 }
 
 proc gziscompressed filename {
-	if {[gzext [file extension $filename]]} {
+	if {[isgzext [file extension $filename]]} {
 		return 1
 	} else {
 		return 0

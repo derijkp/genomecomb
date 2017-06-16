@@ -80,7 +80,7 @@ proc filetemp {file {write 1}} {
 
 proc filetemp_ext {file {write 1}} {
 	set ext [file extension $file]
-	if {![gzext $ext]} {set ext {}}
+	if {![isgzext $ext]} {set ext {}}
 	if {![file exists $file.temp$ext]} {
 		set result $file.temp$ext
 	} else {
@@ -260,7 +260,7 @@ proc gzmklink {src dest} {
 	set src [gzfile $src]
 	set ext_s [file extension $src]
 	set ext_d [file extension $dest]
-	if {$ext_s ne $ext_d && [gzext $ext_s]} {
+	if {$ext_s ne $ext_d && [isgzext $ext_s]} {
 		mklink $src $dest$ext_s
 	} else {
 		mklink $src $dest

@@ -559,8 +559,8 @@ proc process_sample_job {args} {
 		set targetfile $temp
 	} elseif {$targetfile ne ""} {
 		set temp [lindex [split [file root [gzroot [file tail $targetfile]]] -] end]
-		mklink $targetfile $sampledir/reg_${ref}_targets-$temp.tsv 1
-		set targetfile $sampledir/reg_${ref}_targets-$temp.tsv
+		mklink $targetfile $sampledir/reg_${ref}_targets-$temp.tsv[gzext $targetfile] 1
+		set targetfile $sampledir/reg_${ref}_targets-$temp.tsv[gzext $targetfile]
 	}
 	# check projectinfo
 	projectinfo $sampledir dbdir {split 1}
