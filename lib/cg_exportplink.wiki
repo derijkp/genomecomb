@@ -35,4 +35,4 @@ included in the result.
 ; **-c 1/0**: code genotypes to numbers (reference = 1, alternative allele = 2).
 
 == Category ==
-Conversion
+Analysis

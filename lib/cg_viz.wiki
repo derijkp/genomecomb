@@ -4,16 +4,21 @@
 cg viz tsvfile
 
 == Summary ==
-grahical vizualization of tsv file (even very large ones) as table without loading everything into memory
+grahical vizualization of tsv files (even very large ones) as table without loading everything into memory
 
 == Description ==
-Shows the given tsv table in a gui. It indexes the table rather than loading
-it entirely into memory. This means it can be used to browse huge tables very fast.
-It only takes waiting time on first access (making the indexes)
-Queries and vizualzations will be added later
+This command starts a GUI for browsing (large) [[tsv]] files. 
+cg viz never loads the entire table into memory, allowing for browsing huge files
+with millions of lines. 
+The file is indexed to provide fast random access. First access to a file
+is slow because the index has to made.
+Alternatively, the [[cg_index]] command can be used to create the index beforehand
+
+The table can be viewed and queried in various ways. Look in [[howto_view]] for some
+examples of what you can do in cg_viz (and how).
 
 == Arguments ==
 ; **tsvfile** ...: tsvfile to display
 
 == Category ==
-tsv
+Query

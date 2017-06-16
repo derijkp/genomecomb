@@ -1,0 +1,18 @@
+= Genomecomb file formats =
+
+Most files are in the [[tsv]] format (tab-separated value), a simple but flexible format.
+The general tsv format is described in [[format_tsv]]. Some tsv formats for specific data require
+(or often have) specific fields:
+; region file format: for storing genomic region information, explained in [[format_tsv]]
+; variant file format: for storing variants, explained in [[format_tsv]]
+; GATK variant data: [[format_gatk_vars]] explains the fields typically found in GATK called variants
+; samtools variant data: [[format_sam_vars]] explains the fields typically found in samtools called variants
+
+; bcol format: 
+[[format_bcol]] descibes the bcol format. This is a (partly) binary format that is more efficient
+at storing value data for all bases in the genome.
+
+; project directory: 
+[[format_project]] explains the structure of a genomecomb project directory.
+While not strictly a file format, it is a specific directory structure created by
+(and expected by) some genomecomb tools.

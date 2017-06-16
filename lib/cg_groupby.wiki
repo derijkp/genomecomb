@@ -7,6 +7,8 @@ cg groupby ?options? fields ?infile? ?outfile?
 Group lines in a tsv file, based on 1 or more identical fields
 
 == Description ==
+"cg select -g" provides most of the groupby functionality (and a lot extra). "cg groupby"
+can run using little memory on sorted files, while for select results must however allways fit in memory.
 Groups lines in a tab separated file, where the value in in the given fields are the same.
 By default, entries in data fields (= other than the ones on which the groups are made) are 
 concatenated using commas.

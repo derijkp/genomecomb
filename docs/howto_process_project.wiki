@@ -1,0 +1,117 @@
+= Howto process_project =
+
+This text describes how to analyze, combine, and annotate whole genome,
+exome or targetted sequencing raw data using genomecomb. Starting from raw
+data, a fully annotated [[projectdir]] will be created, that can be further
+queried and analyzed using [[cg_select]] and [[cg_viz]]
+
+In the howto, the smal example and test data set ori_mixed_yri_mx2 downloadable from the genomecomb
+website will be used. This data set was derived from publically available exome and genome
+sequencing data by extracting only raw data covering the region of the MX2 gene (on
+chr21) and a part of the ACO2 gene (on chr22).
+
+== Add samples ==
+
+We start by creating and populating a projectdir (tmp/mixed_yri_mx2) with samples using the [[cg_project_addsample]] 
+command. (The projectdir will be made with the first addsample call if it does not yet exists)
+{{{
+# Create the projectdir
+# This is not strictly needed: 
+# It would be made with the first addsample call if it did not yet exists
+mkdir -p tmp/mixed_yri_mx2
+
+# Add a Complete genomics sample named cgNA19240mx2. 
+# ori/mixed_yri_mx2/cgNA19240mx2 contains an ASM directory as obtained from Complete Genomics
+cg project_addsample tmp/mixed_yri_mx2 cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
+
+# Add illumina fastq files from a genome sequencing using wildcards to find all fastq files
+cg project_addsample tmp/mixed_yri_mx2 gilNA19240mx2 ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz
+
+# Add illumina fastq files from exome sequencing
+# The option -targetfile gives a regionfile with the target regions for this sample
+# (The \ at the end of the first line means the the command is continued on the next line)
+cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
+tmp/mixed_yri_mx2 exNA19239mx2 ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz
+
+# Add another exome sequencing sample
+# Here we do not give the individual fastq files as argument, but the directory containing them.
+# you can only do this if the directory does not contain fastq files from other samples
+cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
+tmp/mixed_yri_mx2 exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
+}}}
+
+== Process project ==
+The [[cg_process_project]] command will run the entire secondary analysis (clipping,
+alignment, variant calling, reports, ...) and part of the tertiary
+analysis (combining samples, annotation, ...) on the samples in the projectdir
+Reference information (genome sequence, annotation files, etc.) are in /data/refseq/hg19
+{{{
+cg process_project -verbose 2 -d 2 -split 1 -dbdir /data/refseq/hg19 tmp/mixed_yri_mx2
+}}}
+If the command is interupted, The processing can continue from where it
+was by repeating the same command. Processing can also be distributed over
+more than one processing unit: The -d 2 parameter in the example
+distibutes the processing over 2 cores on the local machine. If you have a
+Sun Grid Engine cluster, you can distribute on the cluster using -d sge
+
+== View results ==
+All analysis results are added in the projectdir, described in [[projectdir]].
+[[cg_viz]] allows an easy (graphical interface) view of the results.
+{{{
+cg viz tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.lz4
+}}}
+opens the annotated combined variant file (format described in [[format_tsv]])
+using cg viz, allowing you to browse through the table (even if it is
+millions of lines long).
+Look in [[howto_view]] for some examples of what to do in cg viz.
+
+== Flexible queries using cg select ==
+[[cg_select|cg select]] can be used to query the result files:
+selecting or adding fields, selecting variants fullfilling given criteria
+or making summaries using a command line tool (functionality is similar to
+cg viz, with a few extras). As such it can be more easily integrated in
+other workflows and exact logging of what was done is easier dan using cg
+viz.
+
+Some examples are shown here, you can find more examples in [[howto_query]]
+and an extensive description of the possibilities in the [[cg_select]] help. 
+{{{
+# Which fields are in the file, results are shown on the terminal (stdout)
+cg select -h tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.lz4
+
+# Which "samples" are in the file, results are shown on the terminal (stdout)
+cg select -n tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.lz4
+
+# Write a file tmp/short.tsv containing only the basic variant fields
+cg select -f 'chromosome begin end type ref alt' \
+tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.lz4 tmp/short.tsv
+
+# Add a field count that calculates in how many of the "NA19240 samples" zyg is either t or m
+cg select \
+-f 'chromosome begin end type ref alt {count=scount($zyg in "t m" and $sample regexp "NA19240")}' \
+tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.lz4 tmp/short.tsv
+
+# Select only variants where gatk has made a homozygous call in sample gilNA19240mx2
+# The results are compressed using "piping": 
+# The results of cg select are transferred (indicated by the | or pipe character) to "cg lz4"
+# cg lz4 compresses the data.
+# the > character redirects the results of the compression to the file tmp/homozygous.tsv.lz4
+cg select -q '$zyg-gatk-rdsbwa-gilNA19240mx2 == "m"' \
+tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.lz4 | cg lz4 > tmp/homozygous.tsv.lz4
+
+# intGene_impact contains the impact of the variant on all alternative splice variants in the intGene
+# gene dataset. intGene_impact contains a list of impacts (so we cannot use ==).
+# You can also query using regular expression. The following selects only variants with 
+# impact matching the regexp pattern "UTR|RNA": containing UTR or RNA
+cg select -q '$intGene_impact regexp "UTR|RNA"' \
+tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.lz4 tmp/utr.tsv
+
+# You can also properly check the list vs a given list of impacts
+# (getting the correct list may be easier in cg viz using Easyquery)
+# shares is true if the list in intGene_impact shares elements with the given list
+cg select \
+-q '$intGene_impact shares {RNASTART UTR5KOZAK UTR5SPLICE UTR5 RNAEND UTR3SPLICE UTR3 RNASPLICE RNA}' \
+tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.lz4 tmp/utr2.tsv
+
+}}}
+

@@ -27,7 +27,7 @@ projectsname. For this reason, the hyphen-minus character may not be used
 in the projectname.
 
 Most of the result files in a projectdir/sampledir are tab-separated value
-files (file extension tsv) of various types (described in [[tsv]]).
+files (file extension tsv) of various types (described in [[format_tsv]]).
 For space reasons, files are often compressed. genomecomb tools can generally
 handle compressed files transparently.
 
@@ -64,7 +64,7 @@ type (depending on source data):
 ; map-rdsbwa-sample1.bam: bam file created by aligning the reads of sample1
 to the reference genome in dbdir using bwa. The bam file has been sorted
 (s), duplicate marked (d), and realigned (r).
-; var-gatk-rdsbwa-sample1.tsv: a [[tsv]] variant file that contains
+; var-gatk-rdsbwa-sample1.tsv: a [[format_tsv|tsv]] variant file that contains
 variants called by gatk based on map-rdsbwa-sample1.bam. 
 ; sreg-gatk-rdsbwa-sample1.tsv: A region file with all regions that can be
 considered sequenced using the same methods and quality measures as

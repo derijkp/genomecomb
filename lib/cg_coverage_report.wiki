@@ -19,4 +19,4 @@ supports job options:
 ; **-d sge**: use grid engine to distribute subjobs
 
 == Category ==
-report
+Report

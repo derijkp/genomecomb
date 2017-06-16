@@ -22,4 +22,4 @@ column. It does not support all the options of picard.
 ; -b baitfile (--baitfile): tsv region file containing the bait regions. If not given, the target regions will also be used as bait regions.
 
 == Category ==
-Conversion
+Report

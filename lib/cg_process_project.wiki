@@ -9,17 +9,20 @@ analysis information (variant calls, multicompar, reports, ...) starting
 from raw sample data from various sources.
 
 == Description ==
-The main command expects a basic genomecomb project directory (as
+The [[cg_process_project]] command performs the entire secondary analysis (clipping,
+alignment, variant calling, reports, ...) and part of the tertiary
+analysis (combining samples, annotation, ...) on a number of samples
+that may come from various sources. A practical example of the workflow
+can be found in [[howto_process_project]].
+
+The command expects a basic genomecomb project directory (as
 described extensively in [[projectdir]]) containing a number of
-samples with raw data (fastq, Complete genomics results, ...). It will
-analyse all samples in the projectdir, generating variant calls, reports,
-comparison of variants over samples, ...
+samples with raw data (fastq, Complete genomics results, ...). 
+Each sample is in a separate subdirectory of a directory named **samples** 
+in the projectdir. You can add samples manually or using the [[cg_project_addsample]]
+command as described in [[howto_process_project]].
 
-The projectdir should contain a subdirectory named **samples** that contains
-a separate subdirectory for each sample (**sampledir*) of the project.
-The name of each sample is taken from the name of the sampledir. The sample name
-should not contain hyphens (-)
-
+=== Per sample analysis ===
 In the first step, each sampledir is processed using [[cg_process_sample]];
 Samples in one project can come from different sources (Complete genomics,
 illumina sequencing) and be of different types (shotgun, amplicon).
@@ -31,17 +34,20 @@ placing files, e.g. an amplicon file (named reg_*_amplicons.tsv) in the
 appropriate sample directories. More information on specific sample types
 and options can be found in the description of [[cg_process_sample]].
 
-== overview/comparison data ==
-In projectdir a subdirectory compar will be made. This will contain 
-comparisons of all samples:
+=== Combined analysis ===
+In the final step process_project will call [[cg_process_multicompar]] to combine
+sample results in the subdirectory compar. Different result files may be present
+depending on the type of analysis:
 ; annot_compar-projectname.tsv: multicompar file containing information for
 all variants in all samples (and all methods). If a variant is not present
 in one of the samples, the information at the position of the variant will
 be completed (is the position sequenced or not, coverage, ...) The file is
 also annotated with all databases in dbdir (impact on genes, regions of
 interest, known variant data)
-; sreg-project.tsv: sequenced region multicompar file containing for all
+; sreg-projectname.tsv: sequenced region multicompar file containing for all
 regions whether they are sequenced (1) or nor (0) for each sample.
+; annot_cgsv-projectname.tsv: combined results of Complete Genomics structural variant calling
+; annot_cgcnv-projectname.tsv: combined results of Complete Genomics CNV calling
 
 == Arguments ==
 ; **projectdir**: project directory with illumina data for different

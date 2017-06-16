@@ -9,7 +9,7 @@ As values cannot be quoted (as in csv), they cannot contain tabs or newlines,
 unless by coding them e.g. by using escape characters (\t,\n)
 
 The first line of the tab file (not starting with a #) is a **header**
-that contains column names. Genomecomb allows comment lines (indicated by
+that contains column names (or fields). Genomecomb allows comment lines (indicated by
 starting the line with a # character) containing metadata to precede the header.
 
 Depending on the columns present, tsv files can be used for various purposes. Usually 
@@ -38,7 +38,7 @@ before the first base would be indicated by begin=0, end=0.
 and "1" type of notation for chromosome, meaning that "chr1 1 2" is considered the 
 same region as "1 1 2".
 
-Most genomecomb tools expect region files to be **sorted** on chromosme, begin, end 
+Most genomecomb tools expect region files to be **sorted** on chromosome, begin, end 
 (and files created by genomecomb are usually sorted).
 You can sort files using the -s option of [[cg_select]]. 
 Use -s - to sort using the default expected sort order:

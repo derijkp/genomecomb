@@ -6,7 +6,7 @@
 
 proc help_get {action} {
 	if {$action eq ""} {
-		help_overview
+		helptext_overview
 	} elseif {[file exists $::appdir/lib/cg_$action.wiki]} {
 		set help [file_read $::appdir/lib/cg_$action.wiki]
 	} elseif {[file exists $::appdir/lib-exp/cg_$action.wiki]} {
@@ -158,7 +158,10 @@ proc help_formatw {foutput text width mode indent {format 1}} {
 
 proc help {action {format 1}} {
 	set help [help_get $action]
-	if {$format} {
+	if {$format eq "md"} {
+		puts $help
+		return
+	} elseif {$format} {
 		set bold "\033\[1;1m"
 		set underline "\033\[1;4m"
 		set green "\033\[1;32m"
@@ -224,6 +227,7 @@ proc help {action {format 1}} {
 			set collect {}
 			set indent 5
 			if {[regexp {;? *([^\n]+?) *: +(.*)} $line tmp term def]} {
+				regsub {\[\[[^\|]+\|(.*)\]\]} $term {\1} term
 				set mode d
 				regsub -all {\*\*([^\n*]+)\*\*} $term "${yellow}\\1$normal" term
 				puts -nonewline $foutput "  ${yellow}$term$normal\n"
@@ -263,41 +267,41 @@ proc help {action {format 1}} {
 proc helptext_overview {} {
 	global appdir
 	set help {}
-	append help [string trim {
-= Reference =
-== Format ==
-cg subcommand ?options? ....
-
-== Description ==
-This help page gives a (reference style) overview of all genomecomb functions. For an 
-introductory text to genomecomb and its formats, use
-{{{
-cg help intro
-}}}
-All genomecombs functions are called using the cg command and a subcommand. 
-The available subcommands are listed on this page (in categories) with a short description.
-To get further info on how to use the subcommands and their parameters, use
-{{{
-cg help subcommand
-}}}
-or 
-{{{
-cg subcommand -h
-}}}
-
-== Options ==
-The following options are generic and available for all subcommands. They must however
-always preceed the subcommand specific options.
-; -v number (--verbose): Setting this to 1 or 2 (instead of the default 0) makes some subcommands chattier about their progress.
-At the given number is 1, logging messages are shown (warnings, start of subtask, etc.)
-If the number >= 2, progress counters are also shown (for commands that support them)
-; --stack 0/1: When the program returns an error, by default only the error message is shown,
-which is normally ok to show errors in input format, etc.
-if --stack is set to 1, a full stack trace is shown on error (which may be useful to solve 
-errors caused by bugs in the program)
-
-== Available subcommands ==
-}] \n
+	append help [string trim [deindent {
+		= Reference =
+		== Format ==
+		cg subcommand ?options? ....
+		
+		== Description ==
+		This help page gives a (reference style) overview of all genomecomb functions. For an 
+		introductory text to genomecomb and its formats, use
+		{{{
+		cg help intro
+		}}}
+		All genomecombs functions are called using the cg command and a subcommand. 
+		The available subcommands are listed on this page (in categories) with a short description.
+		To get further info on how to use the subcommands and their parameters, use
+		{{{
+		cg help subcommand
+		}}}
+		or 
+		{{{
+		cg subcommand -h
+		}}}
+		
+		== Options ==
+		The following options are generic and available for all subcommands. They must however
+		always preceed the subcommand specific options.
+		; -v number (--verbose): Setting this to 1 or 2 (instead of the default 0) makes some subcommands chattier about their progress.
+		At the given number is 1, logging messages are shown (warnings, start of subtask, etc.)
+		If the number >= 2, progress counters are also shown (for commands that support them)
+		; --stack 0/1: When the program returns an error, by default only the error message is shown,
+		which is normally ok to show errors in input format, etc.
+		if --stack is set to 1, a full stack trace is shown on error (which may be useful to solve 
+		errors caused by bugs in the program)
+		
+		== Available subcommands ==
+	}]] \n
 	unset -nocomplain a
 	set files [glob -nocomplain $appdir/lib/cg_*.wiki $appdir/lib-exp/cg_*.wiki]
 	foreach file $files {
@@ -307,14 +311,15 @@ errors caused by bugs in the program)
 		if {[catch {dict get $h Category} category]} continue
 		set category [string trim $category]
 		set descr {}
-		set item "; $action"
+		set item "; \[\[cg_$action|$action\]\]"
 		if {![catch {dict get $h Summary} summary]} {
 			append item ": $summary"
 		}
 		lappend a($category) $item
 	}
+	unset -nocomplain a(Depricated)
 	set categories [array names a]
-	set pre {Conversion Annotation Compare Query Regions Structural}
+	set pre {Process Query Regions Analysis Validation tsv Conversion Annotation Compare Structural}
 	set categories [list_concat [list_common $pre $categories] [list_lremove $categories $pre]]
 	foreach category $categories {
 		append help "\n=== $category ===\n"

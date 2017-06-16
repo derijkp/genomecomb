@@ -1,0 +1,98 @@
+= Howto view results =
+
+This text gives examples of how to view results in a [[projectdir]] using the gui [[cg_viz]].
+
+In the howto, the smal example and test data set ori_mixed_yri_mx2 downloadable from the genomecomb
+website will be used. This data set was derived from publically available exome and genome
+sequencing data by extracting only raw data covering the region of the MX2 gene (on
+chr21) and a part of the ACO2 gene (on chr22).
+
+This howto expects a processed projectdir in tmp/mixed_yri_mx2. This can
+be created following the directions in [[howto_process_project]]. 
+Alternatively you could also copy it from the expected dir (or adapt the path):
+{{{
+	cp -a expected/mixed_yri_mx2 tmp/mixed_yri_mx2
+}}}
+
+== Startup ==
+Start up [[cg_viz]] using
+{{{
+cg viz tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.lz4
+}}}
+This opens the annotated combined variant file (fomrmat described in [[tsv]])
+using cg viz, allowing you to browse through the table (even if it is
+millions of lines long).
+
+== Fields ==
+You can use the **Fields** button to limit the number of fields you want
+to see. The list on the right of the dialog shows the currently
+displayed fields. The list on the left shows available fields.
+Sample specific fields are indicated by having a - followed by a sample suffix.
+We will select to display only a limited set of sample specific fields:
+
+* Click "Fields"
+* Filter all sample specific fields in the right list by typing a - in the Filter field above it
+* Use the left button (<-) to remove all these fields from display (right list)
+* Delete the - in the filter to show the remaining fields again
+* Click on the "alt" field; we will add back some of the sample fields after this field
+* In the "Filter" field in the left selection box, enter "^zyg|^qual"; 
+only fields starting with "zyg" or "qual" will be shown
+* Use the right arrow button (->) to add them to the display
+* You may also add or remove fields by selecting them with the mouse, and using the "<-" or "->" button
+* Click "Go"
+Now only the selected fields are displayed. Longer field names in the
+title line are cut off; make these visible by selecting the line between
+title and table, and drag it lower.
+
+The sample fields have a specific format, e.g.
+; zyg-gatk-rdsbwa-exNA19240mx2: indicates the zygosity (as described in
+[[tsv]]) for this variant by the gatk variant caller on the reads aligned
+using bwa of the sample exNA19240mx2.
+; zyg-sam-rdsbwa-exNA19240mx2: contains the zygosity according to the sam variant caller for
+the same sequence sample.
+; zyg-gatk-rdsbwa-gilNA19240mx2: The same biological sample (NA19240) was
+also genome sequenced, and sequence sample gilNA19240mx2 contains this
+data. zyg-gatk-rdsbwa-gilNA19240mx2 is then the zygosity called using the
+same analysis tools on the genome sequence sample.
+
+When combining sample results, process_project will check if a variant is not present
+in a sample variant list, whether this is due to actually being reference (zyg = r) or being
+unsequenced (zyg = u), according to the criteria used.
+also other data, such as the quality of the "variant" call, is added for the reference calls
+where possible. You can see that no quality value is available (quality-* = ?) 
+for unsequenced variants (zyg-* = u)
+
+== Query ==
+You can use **Query** to show only lines that fit a number of criteria.
+The query language is the same as supported by [[cg_select]] and the specifics
+can be found in the [[cg_select]] help.
+You can type a query directly into the Query field at the top, e.g. type 
+{{{$zyg-gatk-rdsbwa-gilNA19240mx2 == "m"}}}
+to select only variants that are homozygous gatk calls for sample gilNA19240mx2
+and press Enter. 
+
+You can use the "Query" button to get help in building queries
+or the "EasyQuery" button for adding some common queries in an easier way.
+
+== Summaries ==
+The **Summaries** button can be used to create summary data. This provides
+functionality similar to the -g and -gc options in [[cg_select]] (more
+info in the [[cg_select]] help), but you can select fields etc. in the GUI.
+
+For example:
+* Click Summaries
+* Select "chromosome" in the fields column (left)
+* Click "Add to row grouping" (top right)
+* Click "Summary" button at the bottom
+* The number of variants per chromosome is shown
+* Clear the query and press Enter to change to a summary of the full data set
+* Select "data" in the Selection button next to the Summaries button to return to the normal data view
+
+== Tree view ==
+Make the **tree view** on the left larger by dragging the dividing line to the right.
+Here you can select other result files to view. 
+* Click on reports directory in compar. This contains combined reports data. 
+Individual (more extensive) reports are in the sampledirs.
+* Select report_stats-mixed_yri_mx2.tsv
+* Enter {{{$parameter eq "fw_numreads"}}} as a query
+* See the number of reads in the fastq files for each sample (that started from fastq files)

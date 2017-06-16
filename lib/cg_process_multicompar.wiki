@@ -9,9 +9,14 @@ This expects a genomecomb directory with samples already processed and
 makes annotated multicompar data
 
 == Description ==
-This command runs only the multicomparison step of [[cg_process_illumina]].
+This command runs the multicomparison step of [[cg_process_project]].
 As input, the command expects a basic genomecomb project directory with
-sequencing data (projectdir) for which the samples have already been processed
+sequencing data (projectdir) for which the samples have already been processed.
+
+Some of the steps/commands it uses can be used separately as well:
+* [[cg_pmulticompar]]: combine variant data of multiple samples
+* [[cg_annotate]]: annotate combined variant data
+* [[cg_multireg]]: combine sequenced region data of multiple samples
 
 == Arguments ==
 ; **projectdir**: project directory with illumina data for different
