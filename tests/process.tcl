@@ -5,6 +5,7 @@ exec tclsh "$0" "$@"
 source tools.tcl
 set keepdir [pwd]
 set dopts [get argv ""]
+set test_cleantmp 0
 
 if 0 {
 	# make exome testdata (done using seqcap v2?)
@@ -63,10 +64,7 @@ test process {process_illumina exomes yri chr2122} {
 	foreach sample {
 		NA19238chr2122  NA19239chr2122  NA19240chr2122
 	} {
-		file mkdir tmp/exomes_yri_chr2122/samples/$sample/fastq
-		foreach file [glob ori/exomes_yri_chr2122.start/samples/$sample/fastq/*] {
-			file copy $file tmp/exomes_yri_chr2122/samples/$sample/fastq/[file tail $file]
-		}
+		cg project_addsample tmp/exomes_yri_chr2122 $sample {*}[glob ori/exomes_yri_chr2122.start/samples/$sample/fastq/*]
 	}
 	if 0 {
 		foreach sample {NA19238chr2122 NA19239chr2122 NA19240chr2122} {
@@ -76,8 +74,19 @@ test process {process_illumina exomes yri chr2122} {
 		exec touch {*}[glob tmp/exomes_yri_chr2122/samples/*/map-*.bam*]
 	}
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
-	cg process_illumina --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
+	cg process_project --stack 1 --verbose 2 {*}$::dopts \
+	  -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
+	  -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
 	# check vs expected
+	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished \
+		tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
+	checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"
+	foreach file1 [glob tmp/exomes_yri_chr2122/compar/info_analysis.tsv tmp/exomes_yri_chr2122/samples/*/info_analysis.tsv] {
+		regsub ^tmp $file1 expected file2
+		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os}
+	}
+
 	checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"
 	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
 	# could have used this, but previous is faster
@@ -88,21 +97,20 @@ test process {genomes yri chr2122} {
 	cd $::bigtestdir	
 	file delete -force tmp/genomes_yri_chr2122
 	file mkdir tmp/genomes_yri_chr2122
-	foreach sample {
-		testNA19238chr2122cg testNA19239chr2122cg testNA19240chr2122cg
-		testNA19240chr21il
-	} {
-		file mkdir tmp/genomes_yri_chr2122/samples/$sample
-		mklink ori/genomes_yri_chr2122.start/samples/$sample.ori tmp/genomes_yri_chr2122/samples/$sample/ori
-	}
-	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/genomes_yri_chr2122
+	cg project_addsample tmp/genomes_yri_chr2122 testNA19238chr2122cg ori/genomes_yri_chr2122.start/samples/testNA19238chr2122cg.ori
+	cg project_addsample tmp/genomes_yri_chr2122 testNA19239chr2122cg ori/genomes_yri_chr2122.start/samples/testNA19239chr2122cg.ori
+	cg project_addsample tmp/genomes_yri_chr2122 testNA19240chr2122cg ori/genomes_yri_chr2122.start/samples/testNA19240chr2122cg.ori
+	cg project_addsample tmp/genomes_yri_chr2122 testNA19240chr21il {*}[glob ori/genomes_yri_chr2122.start/samples/testNA19240chr21il.ori/*.fq.gz]
 	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/genomes_yri_chr2122 2>@ stderr >@ stdout
 	# check vs expected
-	foreach cgsample {testNA19238chr2122cg testNA19239chr2122cg testNA19240chr2122cg} {
-		checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_chr2122/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"
-	}
+	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
+		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished \
+		tmp/genomes_yri_chr2122 expected/genomes_yri_chr2122
 	checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics expected/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics | grep -v "Started on"
-	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri_chr2122 expected/genomes_yri_chr2122
+	foreach file1 [glob tmp/genomes_yri_chr2122/compar/info_analysis.tsv tmp/genomes_yri_chr2122/samples/*/info_analysis.tsv] {
+		regsub ^tmp $file1 expected file2
+		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os}
+	}
 	# file_write temp $e
 } {}
 
