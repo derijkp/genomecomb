@@ -155,7 +155,11 @@ test process_small {mixed yri mx2} {
 	cg project_addsample tmp/mixed_yri_mx2 gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2 exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4  tmp/mixed_yri_mx2 exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
-	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/mixed_yri_mx2 2>@ stderr >@ stdout
+	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 \
+	  -dbdir /complgen/refseq/hg19 \
+	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
+	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
+	  tmp/mixed_yri_mx2 2>@ stderr >@ stdout
 	# check vs expected
 	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
 		checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"
