@@ -256,7 +256,7 @@ mainw method tree_open {dir} {
 	set files {}
 	foreach file [glob -nocomplain $dir/*] {
 		set ext [file extension $file]
-		if {$ext eq ".index"} continue
+		if {$ext in ".index .lz4i"} continue
 		if {[file isdirectory $file]} {
 			lappend dirs $file
 		} else {
