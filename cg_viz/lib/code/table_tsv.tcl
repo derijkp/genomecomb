@@ -28,7 +28,7 @@ proc _table_tsv_get {object row col args} {
 	private $object tdata cache
 	if {![info exists tdata(f)]} return
 	if {$row == 0} {
-		return [lindex [get tdata(qfields) {}] $col]
+		return [string_change [lindex [get tdata(qfields) {}] $col] [list - -\n]]
 	}
 	incr row -1
 	if {![info exists cache($row)]} {
