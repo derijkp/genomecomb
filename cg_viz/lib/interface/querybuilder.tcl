@@ -243,8 +243,7 @@ mainw method querybuilder_makecondition {fields operator values {join " or "}} {
 	foreach field $fields {
 		set temp {}
 		if {[inlist {shares in ni} $operator]} {
-			set temp [$object querybuilder_quotevalues $values]
-			lappend insert "\$$field $operator \{[join $temp " "]\}"
+			lappend insert "\$$field $operator \{[list {*}$values]\}"
 		} else { 
 			foreach value $values {
 				set value [$object querybuilder_quotevalue $value]
