@@ -97,12 +97,15 @@ proc process_reports_job {args} {
 		foreach deps [list $fastqfiles_fw $fastqfiles_rev] dir {fw rev} {
 			set target $sampledir/reports/fastqc_$dir-$sample.fastqc
 			job reports_fastqc-$dir-$sample -deps $deps -targets {$target} -code {
-				if {[llength $deps] > 1} {
-					set ext [file extension [lindex $deps 0]]
-					set dep [scratchfile].fq.gz
-					exec cat {*}$deps > $dep
-				}
-				fastqc $target -q $dep 2>@ stderr >@ stdout
+				file mkdir $target.temp
+				set gzcat [gzcat [lindex $deps 0]]
+				exec {*}$gzcat {*}$deps | fastqc -o $target.temp stdin 2>@ stderr >@ stdout
+				exec unzip $target.temp/stdin_fastqc.zip -d $target.temp
+				file rename -force {*}[glob $target.temp/stdin_fastqc/*] $target.temp
+				file delete $target.temp/stdin_fastqc
+				file delete $target.temp/stdin_fastqc.zip
+				file delete $target.temp/stdin_fastqc.html
+				file rename $target.temp $target
 			}
 		}
 	}
