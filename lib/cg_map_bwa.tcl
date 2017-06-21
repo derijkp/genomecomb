@@ -32,48 +32,62 @@ proc map_bwa_job {args} {
 	set readgroupdata [array get a]
 	set bwarefseq [bwarefseq_job $refseq]
 	set resultbase [file root $result]
-	job bwa-$sample -mem 5G -deps [list $bwarefseq {*}$files] -targets {$resultbase.sam} -vars {readgroupdata sample paired} \
-	-skip $resultbase.bam {*}$skips -code {
-		puts "making $target"
-		set bwarefseq [list_shift deps]
-		set rg {}
-		foreach {key value} $readgroupdata {
-			lappend rg "$key:$value"
+	set samfiles {}
+	set num 1
+	if {!$paired} {
+		foreach file $files {
+			set name [file root [file tail $file]]
+			set target $resultbase-$name.sam
+			lappend samfiles $target
+			job bwa-$sample-$name -mem 5G -deps [list $bwarefseq $file] -targets {$target} -vars {readgroupdata sample paired} \
+			-skip $resultbase.bam {*}$skips -code {
+				puts "making $target"
+				foreach {bwarefseq fastq} $deps break
+				set rg {}
+				foreach {key value} $readgroupdata {
+					lappend rg "$key:$value"
+				}
+				exec bwa mem -t 2 -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq > $target.temp 2>@ stderr
+				file rename -force $target.temp $target
+			}
 		}
-		set tempdir [scratchdir]
-		if {!$paired} {
-			if {[llength $deps] > 1} {
-				exec cat {*}$deps > $tempdir/bwa1.fastq
-			} else {
-				mklink $deps $tempdir/bwa1.fastq
+	} else {
+		foreach {file1 file2} $files {
+			set name [file root [file tail $file1]]
+			set target $resultbase-$name.sam
+			lappend samfiles $target
+			job bwa-$sample-$name -mem 5G -deps [list $bwarefseq $file1 $file2] -targets {$target} -vars {readgroupdata sample paired} \
+			-skip $resultbase.bam {*}$skips -code {
+				puts "making $target"
+				foreach {bwarefseq fastq1 fastq2} $deps break
+				set rg {}
+				foreach {key value} $readgroupdata {
+					lappend rg "$key:$value"
+				}
+				exec bwa mem -t 2 -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq1 $fastq2 > $target.temp 2>@ stderr
+				file rename -force $target.temp $target
+				file delete bwa1.fastq bwa2.fastq
 			}
-			exec bwa mem -t 2 -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $tempdir/bwa1.fastq > $target.temp 2>@ stderr
-		} else {
-			set files1 {}
-			set files2 {}
-			foreach {file1 file2} $deps {
-				lappend files1 $file1
-				lappend files2 $file2
-			}
-			if {[llength $files1] > 1} {
-				exec cat {*}$files1 > $tempdir/bwa1.fastq
-				exec cat {*}$files2 > $tempdir/bwa2.fastq
-			} else {
-				mklink $file1 $tempdir/bwa1.fastq
-				mklink $file2 $tempdir/bwa2.fastq
-			}
-			exec bwa mem -t 2 -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $tempdir/bwa1.fastq $tempdir/bwa2.fastq > $target.temp 2>@ stderr
 		}
-		file rename -force $target.temp $target
-		file delete bwa1.fastq bwa2.fastq
 	}
-	job bwa2bam-$sample -deps $resultbase.sam -targets $result {*}$skips -vars {resultbase} -code {
+	job bwa2bam-$sample -deps $samfiles -rmtargets $samfiles -targets $result {*}$skips -vars {resultbase} -code {
 		puts "making $target"
-		exec samtools view -S -h -b -o $resultbase.ubam $resultbase.sam >@ stdout 2>@ stderr
-		samtools_sort $resultbase.ubam $target.temp
-		file rename -force $target.temp $target
-		file delete $resultbase.ubam
-		file delete $resultbase.sam
+		if {[catch {version samtools 1}]} {
+			if {[catch {
+				exec samcat {*}$deps | samtools view -S -h -b - | samtools sort - $target.temp 2>@ stderr
+			}]} {
+				error $msg
+			}
+			file rename -force $target.temp.bam $target
+		} else {
+			if {[catch {
+				exec samcat {*}$deps | samtools view -S -h -b - | samtools sort - > $target.temp 2>@ stderr
+			}]} {
+				error $msg
+			}
+			file rename -force $target.temp $target
+		}
+		file delete {*}$deps
 	}
 	job bwa_index-$sample -deps $result -targets $result.bai {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
