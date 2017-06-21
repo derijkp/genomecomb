@@ -27,6 +27,7 @@ bcolfile.bcol is a tab-separated file ([[tsv]]) with the following format
 # binary column
 # type iu
 # default 0
+# precision 3
 chromosome      begin   end
 1       0       50
 2       10      51
@@ -41,6 +42,12 @@ The comments before the table must contain the following information:
 * The first comment line "# binary column" indicates it is a bcol file.
 * The "# type" comment line indicates the type of data in the binary file (supported types listed below)
 * The "# default" indicates the default value: the return value for any position not in the file.
+* "# precision" indicates the default precision used when outputting values from the bcol.
+
+A bcol file can contain multiple values for each position. This is
+indicated by the extra field multi in the bcol comments. e.g. "# multi
+A,C,T,G" is used in a var bcol to indicate that there are 4 values for
+each position for the bases A, C, T and G respectively.
 
 === Supported types ===
 ; d: double-precision floating point (64 bit) in machine native byte order
@@ -63,7 +70,8 @@ The integer types can have an u appended for unsigned types
 
 == bcolfile.bcol.bin.lz4 ==
 bcolfile.bcol.bin.lz4 is the (compressed) binary file containing the
-actual data. The uncompressed binary file (bcolfile.bcol.bin) is also
-recognized, but by default the binaries are compressed.
-A lz4 index file bcolfile.bcol.bin.lz4.lz4i may also exists to speed up
-random access to the compressed binary.
+actual data, a lz3 compressed continuous stream of values in the given
+binary type. The uncompressed binary file (bcolfile.bcol.bin) is also
+recognized, but by default the binaries are compressed. A lz4 index file
+bcolfile.bcol.bin.lz4.lz4i may also exists to speed up random access to
+the compressed binary.
