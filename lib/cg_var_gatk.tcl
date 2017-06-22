@@ -54,6 +54,7 @@ proc var_gatk_job {args} {
 	set split 0
 	set deps {}
 	set regionfile {}
+	set cleanup 1
 	cg_options var_sam args {
 		-L - -deps {
 			lappend deps $value
@@ -67,6 +68,9 @@ proc var_gatk_job {args} {
 		}
 		-split {
 			set split $value
+		}
+		-cleanup {
+			set cleanup $value
 		}
 		default {
 			lappend opts $key $value
@@ -171,13 +175,15 @@ proc var_gatk_job {args} {
 	## filter SNPs (according to seqanswers exome guide)
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup
-	job clean_${pre}var-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} \
-	-rmtargets {${pre}uvar-gatk-$root.tsv ${pre}uvar-gatk-$root.tsv.index ${pre}varall-gatk-$root.vcf ${pre}delvar-gatk-$root.vcf ${pre}delvar-gatk-$root.tsv} -code {
-		catch {file delete ${pre}uvar-gatk-$root.tsv}
-		catch {file delete -force ${pre}uvar-gatk-$root.tsv.index}
-		catch {file delete ${pre}varall-gatk-$root.vcf}
-		catch {file delete ${pre}delvar-gatk-$root.vcf}
-		catch {file delete ${pre}delvar-gatk-$root.tsv}
+	if {$cleanup} {
+		job clean_${pre}var-gatk-$root -deps {${pre}var-gatk-$root.tsv} -vars {pre root} -targets {} \
+		-rmtargets {${pre}uvar-gatk-$root.tsv ${pre}uvar-gatk-$root.tsv.index ${pre}varall-gatk-$root.vcf ${pre}delvar-gatk-$root.vcf ${pre}delvar-gatk-$root.tsv} -code {
+			catch {file delete ${pre}uvar-gatk-$root.tsv}
+			catch {file delete -force ${pre}uvar-gatk-$root.tsv.index}
+			catch {file delete ${pre}varall-gatk-$root.vcf}
+			catch {file delete ${pre}delvar-gatk-$root.vcf}
+			catch {file delete ${pre}delvar-gatk-$root.tsv}
+		}
 	}
 	cd $keeppwd
 	return [file join $destdir ${pre}var-gatk-$root.tsv]

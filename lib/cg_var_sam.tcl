@@ -21,6 +21,7 @@ proc var_sam_job {args} {
 	set opts {}
 	set split 0
 	set BQ 0
+	set cleanup 1
 	cg_options var_sam args {
 		-l - deps {
 			lappend deps $value
@@ -37,6 +38,9 @@ proc var_sam_job {args} {
 		}
 		-BQ {
 			set BQ $value
+		}
+		-cleanup {
+			set cleanup $value
 		}
 		default {
 			lappend opts $key $value
@@ -108,12 +112,14 @@ proc var_sam_job {args} {
 	# find regions
 	sreg_sam_job ${pre}sreg-sam-$root ${pre}varall-sam-$root.tsv ${pre}sreg-sam-$root.tsv.lz4
 	# cleanup
-	job clean_${pre}var-sam-$root -deps {${pre}var-sam-$root.tsv ${pre}varall-sam-$root.tsv} -vars {pre root} -targets {} \
-	-rmtargets {${pre}uvar-sam-$root.tsv ${pre}uvar-sam-$root.tsv.index ${pre}varall-sam-$root.vcf ${pre}varall-sam-$root.vcf.idx} -code {
-		catch {file delete ${pre}uvar-sam-$root.tsv}
-		catch {file delete -force ${pre}uvar-sam-$root.tsv.index}
-		catch {file delete ${pre}varall-sam-$root.vcf}
-		catch {file delete ${pre}varall-sam-$root.vcf.idx}
+	if {$cleanup} {
+		job clean_${pre}var-sam-$root -deps {${pre}var-sam-$root.tsv ${pre}varall-sam-$root.tsv} -vars {pre root} -targets {} \
+		-rmtargets {${pre}uvar-sam-$root.tsv ${pre}uvar-sam-$root.tsv.index ${pre}varall-sam-$root.vcf ${pre}varall-sam-$root.vcf.idx} -code {
+			catch {file delete ${pre}uvar-sam-$root.tsv}
+			catch {file delete -force ${pre}uvar-sam-$root.tsv.index}
+			catch {file delete ${pre}varall-sam-$root.vcf}
+			catch {file delete ${pre}varall-sam-$root.vcf.idx}
+		}
 	}
 	cd $keeppwd
 	return [file join $destdir var-sam-$root.tsv]

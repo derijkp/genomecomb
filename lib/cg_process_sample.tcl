@@ -701,12 +701,12 @@ proc process_sample_job {args} {
 		}
 		if {"sam" in $varcallers} {
 			# samtools variant calling on map-${resultbamprefix}${aligner}
-			lappend cleanupdeps [var_sam_job -regionfile $regionfile -split $split -BQ $samBQ $cleanedbam $refseq]
+			lappend cleanupdeps [var_sam_job -regionfile $regionfile -split $split -BQ $samBQ -cleanup $cleanup $cleanedbam $refseq]
 			lappend todo sam-${resultbamprefix}${aligner}-$sample
 		}
 		if {"gatk" in $varcallers} {
 			# gatk variant calling on map-${resultbamprefix}${aligner}
-			lappend cleanupdeps [var_gatk_job -regionfile $regionfile -split $split -dt $dt $cleanedbam $refseq]
+			lappend cleanupdeps [var_gatk_job -regionfile $regionfile -split $split -dt $dt -cleanup $cleanup $cleanedbam $refseq]
 			lappend todo gatk-${resultbamprefix}${aligner}-$sample
 		}
 	}
