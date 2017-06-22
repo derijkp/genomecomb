@@ -717,7 +717,7 @@ int main(int argc, char *argv[]) {
 	DString *genotypelist=DStringNew();
 	altvars = NULL;
 	int *order = NULL;
-	int split,read,i,j,maxtab, excludefilter = 0, excludename = 0;
+	int split,read,i,j,maxtab, min, excludefilter = 0, excludename = 0;
 	line=NULL; string=NULL; temp=NULL;
 	snp=DStringNewFromChar("snp"); del=DStringNewFromChar("del"); ins=DStringNewFromChar("ins"); sub=DStringNewFromChar("sub");
 	geno = NULL; outinfo = NULL; formatfieldsnumber=NULL; infofieldsnumber=NULL;
@@ -898,10 +898,15 @@ int main(int argc, char *argv[]) {
 	}
 	fprintf(fo,"\n");
 	maxtab = 9+samples->size;
+	min = 8+samples->size;
 	outinfo =  (DString *)malloc(infofields->size*sizeof(DString));
 	linea = DStringArrayNew(maxtab+2);
 	NODPRINT("==== Parsing data ====")
 	while ((read = DStringGetTab(line,fd,maxtab,linea,1,NULL)) != -1) {
+		if (linea->size < min) {
+			fprintf(stderr,"not enough fields in line %s\n",line->string);
+			exit(1);
+		}
 		linenr++;
 		if (split) {
 			process_line_split(fo,linea,excludename,excludefilter,genotypelist);
