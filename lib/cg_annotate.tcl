@@ -102,8 +102,10 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 		set split [split [lindex [split [file root [file tail [gzroot $dbfile]]] -] 0] _]
 		set name [lindex $split end]
 	}
+	if {$name eq "refScore"} {set name refscore}
 	dict set a name $name
 	set dbtype [lindex [split [file tail $dbfile] _] 0]
+	if {$dbtype ne "var" && [file extension $dbfile] eq ".bcol"} {set dbtype bcol}
 	dict set a dbtype $dbtype
 	set f [gzopen $dbfile]
 	set header [tsv_open $f comment]
@@ -330,7 +332,7 @@ proc cg_annotate_job {args} {
 			puts "Skipping $dbfile: $name already in file"
 			continue
 		}
-		set dbtype [lindex [split [file tail $dbfile] _] 0]
+		set dbtype [dict get $dbinfo dbtype]
 		set target $tempbasefile.${name}_annot
 		lappend afiles $target
 		if {$dbtype eq "gene"} {

@@ -66,88 +66,7 @@ proc process_sample_cgi_job {workdir split} {
 		set chromosomes [ssort -natural [list_remdup $chromosomes]]
 	}
 	# start from CGI data
-	job cg_svar-$sample -optional 1 -deps {ori/ASM/var-*-ASM*.tsv} -targets {svar-$sample.tsv} \
-	-skip {var-cg-cg-$sample.tsv sreg-cg-cg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} \
-	-code {
-		set varfile $dep
-		set f [gzopen $varfile]
-		set info {}
-		while {![eof $f]} {
-			set line [gets $f]
-			if {[string index $line 0] ne "#"} break
-			lappend info $line
-		}
-		catch {gzclose $f}
-		if {[file exists info.txt]} {
-			set test [split [file_read info.txt] \n]
-			if {$info ne $test} {
-				error "$target1 already has info.txt that differs from data in the source $dir"
-			}
-		}
-		file_write info.txt [join $info \n]
-		putslog "Sort var file ($varfile)"
-		cg select -s "chromosome begin end varType" $varfile $target.temp
-		file rename -force $target.temp $target
-	}
-	job cg_sgene-$sample -optional 1 -deps {ori/ASM/gene-*-ASM*.tsv} -targets {sgene-$sample.tsv} \
-	-skip {var-cg-cg-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} -code {
-		set genefile $dep
-		if {[llength $genefile] != 1} {error "could not identify genefile"}
-		putslog "Sort gene file ($genefile)"
-		cg select -s "chromosome begin end" $genefile $target.temp
-		file rename -force $target.temp $target
-	}
-	# annotated vars file
-	job cg_annotvar-$sample -optional 1 -vars {split} \
-	-deps {svar-$sample.tsv (sgene-$sample.tsv)} -targets {annotvar-$sample.tsv} \
-	-skip {var-cg-cg-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} -code {
-		putslog "Create annotated varfile $target"
-		if {[file exists $dep2]} {
-			cg cg2tsv -split $split -sorted 1 $dep1 $dep2 $target.temp
-		} else {
-			cg cg2tsv -split $split -sorted 1 $dep1 $target.temp
-		}
-		file rename -force $target.temp $target
-	}
-	# if not from CGI, we do not have svar and sgene, take from first var_* file found
-	job cg_annotvar_var-$sample -optional 1 {vars_*.tsv} {annotvar-$sample.tsv} {
-		gzmklink $dep $target
-	}
-	# if we also do not find a var_* file, take from first variant* file found
-	job cg_annotvar_variant-$sample -optional 1 {variant*.tsv} {annotvar-$sample.tsv} {
-		set file [gzfile $dep]
-		gzmklink $file $target
-	}
-	# only if reg file exists, otherwise extract from svar (next)
-	job cg_sreg-cg-cg-$sample -optional 1 {ori/ASM/reg-*-ASM*.tsv} {sreg-cg-cg-$sample.tsv.lz4} {
-		set regfile [gzfile $dep]
-		putslog "Sort region file ($regfile)"
-		cg select -s "chromosome begin end" $regfile $target.temp.lz4
-		file rename -force $target.temp.lz4 $target
-	}
-	job cg_regfromsvar-$sample -optional 1 {svar-$sample.tsv} {sreg-cg-cg-$sample.tsv.lz4} {
-		set svarfile $dep
-		putslog "Extract $target from $svarfile"
-		cg select -q {$varType != "no-call" && $varType != "no-ref"} -f "chromosome begin end" $svarfile $target.temp
-		exec cg regjoin $target.temp {*}[compresspipe .lz4 9] > $target.temp2
-		file rename -force $target.temp2 $target
-		file delete $target.temp
-	}
-	job cg_reg_refcons-$sample -optional 1 {svar-$sample.tsv} {reg_refcons-$sample.tsv} {
-		putslog "Find refcons regions for $dep"
-		cg refconsregions $dep > $target.temp
-		file rename -force $target.temp $target
-	}
-	job cg_reg_nocall-$sample -optional 1 {svar-$sample.tsv} {reg_nocall-$sample.tsv} {
-		putslog "Find partial no-call regions for dep"
-		if {[catch {
-			nocallregions $dep $target.temp
-		}]} {
-			puts stderr "Could not make $job (old version files ?)"
-		} else {
-			file rename -force $target.temp $target
-		}
-	}
+	# convert overage files to bcol first (will be used to add coverage and refscore to vars)
 	set files [ssort -natural [glob -nocomplain ori/ASM/REF/coverage*-chr*-*]]
 	if {[llength $files]} {
 		# this will only work if ori/ASM/REF/coverage*-chr* already exist from the start
@@ -210,6 +129,103 @@ proc process_sample_cgi_job {workdir split} {
 				file rename $finaltarget.temp $finaltarget
 				file delete {*}$deps
 			}
+		}
+	}
+	# variants
+	job cg_svar-$sample -optional 1 -deps {ori/ASM/var-*-ASM*.tsv} -targets {svar-$sample.tsv} \
+	-skip {var-cg-cg-$sample.tsv sreg-cg-cg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} \
+	-code {
+		set varfile $dep
+		set f [gzopen $varfile]
+		set info {}
+		while {![eof $f]} {
+			set line [gets $f]
+			if {[string index $line 0] ne "#"} break
+			lappend info $line
+		}
+		catch {gzclose $f}
+		if {[file exists info.txt]} {
+			set test [split [file_read info.txt] \n]
+			if {$info ne $test} {
+				error "$target1 already has info.txt that differs from data in the source $dir"
+			}
+		}
+		file_write info.txt [join $info \n]
+		putslog "Sort var file ($varfile)"
+		cg select -s "chromosome begin end varType" $varfile $target.temp
+		file rename -force $target.temp $target
+	}
+	# we no longer convert the CG gene info. better annotated by genomecomb itself later
+#	job cg_sgene-$sample -optional 1 -deps {ori/ASM/gene-*-ASM*.tsv} -targets {sgene-$sample.tsv} \
+#	-skip {var-cg-cg-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} -code {
+#		set genefile $dep
+#		if {[llength $genefile] != 1} {error "could not identify genefile"}
+#		putslog "Sort gene file ($genefile)"
+#		cg select -s "chromosome begin end" $genefile $target.temp
+#		file rename -force $target.temp $target
+#	}
+	# annotated vars file
+	job cg_annotvar-$sample -optional 1 -vars {split sample} \
+	-deps {svar-$sample.tsv (sgene-$sample.tsv) (coverage-cg-$sample/coverage-$sample.bcol) (coverage-cg-$sample/refScore-$sample.bcol)} -targets {annotvar-$sample.tsv} \
+	-skip {var-cg-cg-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} -code {
+		putslog "Create annotated varfile $target"
+		if {[file exists $dep2]} {
+			cg cg2tsv -split $split -sorted 1 $dep1 $dep2 $target.temp
+		} else {
+			cg cg2tsv -split $split -sorted 1 $dep1 $target.temp
+		}
+		set todo {}
+		if {[file exists coverage-cg-$sample/coverage-$sample.bcol]} {
+			lappend todo coverage-cg-$sample/coverage-$sample.bcol
+		}
+		if {[file exists coverage-cg-$sample/refScore-$sample.bcol]} {
+			lappend todo coverage-cg-$sample/refScore-$sample.bcol
+		}
+		if {[llength $todo]} {
+			cg annotate $target.temp $target.temp2 {*}$todo
+			file rename -force $target.temp2 $target
+			file delete $target.temp
+		} else {
+			file rename -force $target.temp $target
+		}
+	}
+#	# if not from CGI, we do not have svar and sgene, take from first var_* file found
+#	job cg_annotvar_var-$sample -optional 1 {vars_*.tsv} {annotvar-$sample.tsv} {
+#		gzmklink $dep $target
+#	}
+#	# if we also do not find a var_* file, take from first variant* file found
+#	job cg_annotvar_variant-$sample -optional 1 {variant*.tsv} {annotvar-$sample.tsv} {
+#		set file [gzfile $dep]
+#		gzmklink $file $target
+#	}
+	# only if reg file exists, otherwise extract from svar (next)
+	job cg_sreg-cg-cg-$sample -optional 1 {ori/ASM/reg-*-ASM*.tsv} {sreg-cg-cg-$sample.tsv.lz4} {
+		set regfile [gzfile $dep]
+		putslog "Sort region file ($regfile)"
+		cg select -s "chromosome begin end" $regfile $target.temp.lz4
+		file rename -force $target.temp.lz4 $target
+	}
+	job cg_regfromsvar-$sample -optional 1 {svar-$sample.tsv} {sreg-cg-cg-$sample.tsv.lz4} {
+		set svarfile $dep
+		putslog "Extract $target from $svarfile"
+		cg select -q {$varType != "no-call" && $varType != "no-ref"} -f "chromosome begin end" $svarfile $target.temp
+		exec cg regjoin $target.temp {*}[compresspipe .lz4 9] > $target.temp2
+		file rename -force $target.temp2 $target
+		file delete $target.temp
+	}
+	job cg_reg_refcons-$sample -optional 1 {svar-$sample.tsv} {reg_refcons-$sample.tsv} {
+		putslog "Find refcons regions for $dep"
+		cg refconsregions $dep > $target.temp
+		file rename -force $target.temp $target
+	}
+	job cg_reg_nocall-$sample -optional 1 {svar-$sample.tsv} {reg_nocall-$sample.tsv} {
+		putslog "Find partial no-call regions for dep"
+		if {[catch {
+			nocallregions $dep $target.temp
+		}]} {
+			puts stderr "Could not make $job (old version files ?)"
+		} else {
+			file rename -force $target.temp $target
 		}
 	}
 	job cg_cpSV-$sample -optional 1 {ori/ASM/SV ^ori/ASM/SV/(.*)$} {SV/\_} {

@@ -6,6 +6,8 @@ cg cg2tsv ?options? cgvarfile ?cggenefile? outputfile
 == Summary ==
 Converts data in Complete Genomics format to tsv (tab separated, simple feature table) format.
 The command will also sort the tsv appropriately.
+The cggenefile is optional. It contains the CG gene annotations, which can be (best) left out as
+these annotations (and more) can be done in genomecomb.
 
 == Arguments ==
 ; **cgvarfile**: Complete genomics var file to be converted. File may be compressed.
