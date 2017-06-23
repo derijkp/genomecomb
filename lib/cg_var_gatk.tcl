@@ -143,10 +143,13 @@ proc var_gatk_job {args} {
 	-targets ${pre}delvar-gatk-$root.tsv \
 	-skip {${pre}var-gatk-$root.tsv} -vars {sample split} -code {
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp
-		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
+		cg select -q {
+			$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4
+			&& $zyg ni "r o"
+		} \
 		-f {
 			chromosome begin end type ref alt quality alleleSeq1 alleleSeq2 
-			{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
+			{sequenced=if($quality < 30 || $totalcoverage < 5,"u","v")}
 			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 			*
 		} $target.temp $target.temp2

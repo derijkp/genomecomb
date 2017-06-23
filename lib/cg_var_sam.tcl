@@ -96,11 +96,11 @@ proc var_sam_job {args} {
 	-code {
 		cg select -q {
 				$alt ne "." && $alleleSeq1 ne "." && $quality >= 10 && $totalcoverage > 4
-				&& $zyg != "r"
+				&& $zyg ni "r o"
 			} \
 			-f {
 				chromosome begin end type ref alt quality alleleSeq1 alleleSeq2
-				{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
+				{sequenced=if($quality < 30 || $totalcoverage < 5,"u","v")}
 				{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 				*
 			} \
