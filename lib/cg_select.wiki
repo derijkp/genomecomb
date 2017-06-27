@@ -56,41 +56,12 @@ If 2, the result file will also have the header in the last comment.
 ; **-samplingskip number**: sample data, skipping **number** rows
 ; **-g groupfields**: with this option a summary table is returned. This will contain one line with 
 information for each value or combination of values in the given groupfield(s).  **groupfields** has the 
-following format: "field1 filter1 field2 filter2 ...". Only values given in 
-the filters (is a lists) will be shown. If a filter is empty, all values are retained. The filters can 
-contain wildcards (*)
-If the -gc option is not given, the table will contain one extra column showing the number of lines in 
-the data file containing the group value. Other columns can be added using the -gc option.
-Fields used in groupfields may be calculated columns.  
-This option will use memory proportional to the size of the result set!  
-If you want a summary over all selected lines, you can use the special field all as a group field.
-The value of this field (unless it is actually present in the file) will be "all" for all lines.
-If the file contains an actual field "all", you can use "-" or "_" instead to get an overview summary.
-; **-gc groupcols**: show other columns instead of count when using the -g option. **groupcols** has the 
-following format: "field1 filter1 field2 filter2 ... functions". A different column will be made in the 
-summary table for each combination of values in field1,field2,... Only values given in 
-values1,... (a space separated list) will be included. If value1, ... is empty (e.g. type {}), all values for this 
-field in the file will be included.
-Functions determines what type of summary data will be given in each column, I takes the form of 
-e.g. avg(quality), which will return the average of the values in the quality column matching the given 
-values in group and column. Supported functions are
-; count: number of lines (does not need a field argument)
-; percent: count as percent versus total count in given column
-; gpercent: count as percent versus total count in given group (row)
-; min(field): minimum of all values in the field (for the given group and column)
-; max(field): maximum
-; sum(field): sum of values in this field
-; avg(field): average
-; median(field): median
-; q1(field): q1
-; q3(field): q3
-; stdev(field): standard deviation
-; ucount(field): number of unique values in field
-; distinct(field): lists (comma separated) all distinct values found in the field
-; list(field): lists (comma separated) all values found in the field (the same one can occur multiple times)
-The field sample in groups or groupcols is interpreted specially: If sample is present, you can
-give fieldnames without the sample suffix (in both -gc and -g), and the sample name (of the current 
-column) will be automatically added where fields in the form field-sample are available.
+following format: "field1 filter1 field2 filter2 ...". For more information, see 
+further (Summaries using -g and -gc)
+; **-gc groupcols**: show other columns instead of count when using the -g
+option. **groupcols** has the following format: "field1 filter1 field2
+filter2 ... functions". For more information, see further (Summaries using
+-g and -gc)
 
 The query or field lines can contain more than one line (enclose in '').
 Lines starting with a # are comments
@@ -312,6 +283,70 @@ un (unsequenced in some samples, variant in one of the others)
 ; **df(sample1,sample2, ...)**: different: variant in some, reference in other (all sequenced)
 ; **mm(sample1,sample2, ...)**: mismatch; variant in all, but different genotypes (all sequenced)
 ; **un(sample1,sample2, ...)**: unsequenced in some samples, variant in one of the others
+
+== Summaries using -g and -gc ==
+The -g (groupfields) and -gc (groupcols) allow the flexible creation of summaries.
+The **groupfields** option alternates a fieldname and filter (fieldname1
+filter1 fieldname2 filter2 ...). For each uniqe combination of values in
+the given fields (in lines selected by the query) a summary or aggregate
+value is returned, by default the count of lines with this combination in
+the file. The result is a [[tsv]] file with the grouping columns and one
+added column (named count). Fields used as groupfields may be calculated
+columns.
+
+The **filter** elements can be used to show only allowed values for each
+field. The filter is a list of allowed values separated by spaces. If a
+list element contains spaces, enclose it in {}. Filter elements can
+contain wildcards (*) that match any set of characters (e.g. CDS* to match
+any value starting with CDS). If filter is * or {} (=emtpy)
+
+The field **sample** in is interpreted specially: If sample is present,
+you can use fieldnames without the sample suffix (in both -gc and -g), and
+the sample name (of the current column) will be automatically added where
+fields in the form field-sample are available.
+
+If you want a summary over all selected lines, you can use the special
+field **all** as a group field. The value of this field (unless it is
+actually present in the file) will be "all" for all lines. If the file
+contains an actual field "all", you can use "-" or "_" instead to get an
+overview summary.
+
+If a field (may) contains lists, you can prepend the fieldname with a +.
+In this case, the select command will go over each element in the list for
+each line when making the summary. This means that the same line may be
+counted several times (for different elements). When multiple lists are
+present, all possible combinations are counted.
+
+* This option will use memory proportional to the size of the result set!  
+
+The **groupcols (-gc)** option can be used to add other summary columns than the
+default count. **groupcols** is a list with the following format: "field1 filter1 field2
+filter2 ... functions". A different column will be made in the summary
+table for each combination of values in field1,field2,... They can be
+filtered the same way as in the -g option.
+
+The last element in this (space separated) list is **functions**.
+This determines what type of summary data will be given in each
+column, I takes the form of e.g. avg(quality), which will return the
+average of the values in the quality column matching the given values in
+group and column. Supported functions are
+; count: number of lines (does not need a field argument)
+; percent: count as percent versus total count in given column
+; gpercent: count as percent versus total count in given group (row)
+; min(field): minimum of all values in the field (for the given group and column)
+; max(field): maximum
+; sum(field): sum of values in this field
+; avg(field): average
+; median(field): median
+; q1(field): q1
+; q3(field): q3
+; stdev(field): standard deviation
+; ucount(field): number of unique values in field
+; distinct(field): lists (comma separated) all distinct values found in the field
+; list(field): lists (comma separated) all values found in the field (the same one can occur multiple times)
+**functions** can be a comma separated list to display multiple summary
+functions, eg. min(coverage),max(coverage) to display minimum and maximum
+coverage (in separate columns).
 
 == sampleinfofile ==
 A sampleinfofile is a tab delimited file containing extra information about the samples in the datafile.

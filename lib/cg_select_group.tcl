@@ -101,6 +101,62 @@ proc tsv_select_sampleusefield {header field sample calccolsVar {neededfieldsVar
 	return $fieldused
 }
 
+proc tsv_select_addforeach {varVar code} {
+	upvar $varVar loopsa
+	set loops [array names loopsa]
+	if {![llength $loops]} {
+		return $code
+	}
+	set pre {} ; set post {}
+	set pre {}
+	foreach loop $loops {
+		set values $loopsa($loop)
+		if {$values eq ""} {
+			append pre "foreach _$loop \[split \$\{$loop\} {;,}\] \{\n"
+		} else {
+			append pre "foreach _$loop [list $values] \{\n"
+		}
+		append post \}\n
+	}
+	return $pre$code$post
+}
+
+proc tsv_select_matchfilter {filter value} {
+	if {$filter in {{} *}} {return 1}
+	if {[string first * $filter] == -1} {
+		return [inlist $filter $value]
+	} else {
+		foreach temp $filter {
+			if {[string match $temp $value]} {return 1}
+		}
+	}
+	return 0
+}
+
+proc tsv_select_applyfilter {filter values} {
+	if {$filter in {{} *}} {
+		return $values
+	} else {
+		set poss [list_find -regexp $filter {\*}]
+		set patterns [list_sub $filter $poss]
+		set dofilter [list_sub $filter -exclude $poss]
+		set list {}
+		foreach el [split $values {;, }] {
+			if {[inlist $dofilter $el]} {
+				lappend list $el
+				continue
+			}
+			foreach pattern $patterns {
+				if {[string match $pattern $el]} {
+					lappend list $el
+					continue
+				}
+			}
+		}
+		return $list
+	}
+}
+
 proc tsv_select_addaggregatecalc {todolist} {
 	set colactions {}
 	# add calculations for everything needed for aggregates to colactions
@@ -411,6 +467,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	set addcols {}
 	set oneok 0
 	set fieldsnotfound {}
+	unset -nocomplain loopsa
 	foreach sample $gsamples {
 		# also make query for skipping data for which no cols will be made (colquery)
 		set groupname {}
@@ -419,6 +476,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		set colquery {}
 		set colactions {}
 		# calculate groupname
+		unset -nocomplain sloopsa
 		set found 1
 		foreach {field filter} $group {
 			if {!$sampleinheader && $field eq "sample"} {
@@ -430,32 +488,42 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 				}
 				continue
 			}
+			if {[string index $field 0] eq "+"} {
+				set field [string range $field 1 end]
+				set loop 1
+			} else {
+				set loop 0
+			}
 			set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
 			if {$fieldused ne ""} {
+				if {$loop} {
+					if {$field eq $fieldused} {
+						set loopsa($field) {}
+					} else {
+						set sloopsa($fieldused) {}
+					}
+					set fieldused _$fieldused
+				}
 				lappend groupname \$\{$fieldused\}
 				if {[llength $filter]} {
 					if {[string first * $filter] == -1} {
 						lappend rowquery "\[inlist \{$filter\} \$\{$fieldused\}\]"
 					} else {
+						set temprowquery {}
 						foreach temp $filter {
-							lappend rowquery "\[string match \{$temp\} \$\{$fieldused\}\]"
+							lappend temprowquery "\[string match \{$temp\} \$\{$fieldused\}\]"
 						}
+						lappend rowquery [join $temprowquery " || "]
 					}
 				}
 			} elseif {![catch {tsv_select_sampleinfo $field-$sample $header} value] || ![catch {tsv_select_sampleinfo $field $header} value]} {
-				lappend groupname $value
-				if {[llength $filter]} {
-					if {[string first * $filter] == -1} {
-						if {![inlist $filter $value]} {lappend rowquery 0}
-					} else {
-						set final 1
-						foreach temp $filter {
-							if {![string match $temp $value]} {
-								set final 0; break
-							}
-						}
-						if {$final == 0} {lappend rowquery 0}
-					}
+				if {$loop} {
+					set list [tsv_select_applyfilter $filter [split $value {;,}]]
+					set sloopsa($field) [list_union [get sloopsa($field) ""] $list]
+					lappend groupname \$\{_$field\}
+				} else {
+					lappend groupname $value
+					if {![tsv_select_matchfilter $filter $value]} {lappend rowquery 0}
 				}
 			} elseif {$field in {all - _}} {
 				lappend groupname $field
@@ -496,34 +564,43 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 					lappend neededfields sample
 				}
 				continue
-			} else {
-				set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
 			}
+			if {[string index $field 0] eq "+"} {
+				set field [string range $field 1 end]
+				set loop 1
+			} else {
+				set loop 0
+			}
+			set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
 			if {$fieldused ne ""} {
+				if {$loop} {
+					if {$field eq $fieldused} {
+						set loopsa($field) {}
+					} else {
+						set sloopsa($fieldused) {}
+					}
+					set fieldused _$fieldused
+				}
 				lappend col \$\{$fieldused\}
 				if {[llength $filter]} {
 					if {[string first * $filter] == -1} {
 						lappend colquery "\[inlist \{$filter\} \$\{$fieldused\}\]"
 					} else {
+						set tempcolquery {}
 						foreach temp $filter {
-							lappend colquery "\[string match \{$temp\} \$\{$fieldused\}\]"
+							lappend tempcolquery "\[string match \{$temp\} \$\{$fieldused\}\]"
 						}
+						lappend colquery [join $colquery " || "]
 					}
 				}
 			} elseif {![catch {tsv_select_sampleinfo $field-$sample $header} value] || ![catch {tsv_select_sampleinfo $field $header} value]} {
-				lappend col $value
-				if {[llength $filter]} {
-					if {[string first * $filter] == -1} {
-						if {![inlist $filter $value]} {lappend colquery 0}
-					} else {
-						set final 1
-						foreach temp $filter {
-							if {![string match $temp $value]} {
-								set final 0; break
-							}
-						}
-						if {$final == 0} {lappend colquery 0}
-					}
+				if {$loop} {
+					set list [tsv_select_applyfilter $filter [split $value {;,}]]
+					set sloopsa($field) [list_union [get sloopsa($field) ""] $list]
+					lappend col \$\{_$field\}
+				} else {
+					lappend col $value
+					if {![tsv_select_matchfilter $filter $value]} {lappend colquery 0}
 				}
 			}
 		}
@@ -533,12 +610,11 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		append colactions [tsv_select_addaggregatecalc $todolist]
 		# create calcresults, that calculate the final agregate results for each group (runs after looping through the file)
 		set calcresults [tsv_select_addaggregateresult $grouptypes $header $sample calccols]
-		set q [list_concat $rowquery $colquery]
+		set q [list_remove [list_concat $rowquery $colquery] {}]
 		if {[llength $q]} {
-			append addcols \t\t\t\t "if \{[join $q { && }]\} \{\n[string trimright $colactions]\n\t\t\t\t\}\n"
-		} else {
-			append addcols $colactions
+			set colactions "\t\t\t\tif \{[join $q { && }]\} \{\n[string trimright $colactions]\n\t\t\t\t\}\n"
 		}
+		append addcols [tsv_select_addforeach sloopsa $colactions]
 	}
 	if {!$oneok} {
 		error "some fields ([join [list_remdup $fieldsnotfound] ,]) needed were not found (in any of the samples)"
@@ -576,6 +652,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		append precalc [lindex $calccols($field) 0]
 	}
 	set neededcols [list_cor $header $neededfields]
+	set addcols [tsv_select_addforeach loopsa $addcols]
 	append tclcode {
 		proc tsv_selectc_query {@neededfields@} {
 			global resultdata resultgroups resultcount resultdatacols
@@ -616,13 +693,18 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		}
 		exit
 	}
+	set groupheader {}
+	foreach el [list_unmerge $group] {
+		regsub {^\+} $el {} el
+		lappend groupheader $el
+	}
 	set tclcode [string_change $tclcode [list @neededfields@ $neededfields @neededfieldsvals@ \$\{[join $neededfields \}\ \$\{]\} \
 		@pquery@ $pquery @prequery@ $prequery\
 		@precalc@ $precalc @addcols@ $addcols \
 		@neededcols@ $neededcols @calcresults@ $calcresults \
-		@grouptypes@ [list $grouptypes] @grouph@ [list_unmerge $group] @verbose@ [get ::verbose 0] \
+		@grouptypes@ [list $grouptypes] @grouph@ $groupheader @verbose@ [get ::verbose 0] \
 		@sortfields@ [list $sortfields]]
 	]]
-	# file_write /tmp/temp.txt $tclcode\n
+	 file_write /tmp/temp.txt $tclcode\n
 	return $tclcode
 }

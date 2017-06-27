@@ -744,4 +744,159 @@ test select_group "median" {
 sample1	1.5	3	4.5
 sample2	15.0	30	45.0}
 
+test select_group "decompose lists" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name value
+		n1	1
+		n1,n2	2
+		n2	3
+	}
+	exec cg select -g name tmp/temp.tsv
+} {name	count
+n1	1
+n1,n2	1
+n2	1}
+
+test select_group "decompose lists" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name value
+		n1	1
+		n1,n2	2
+		n2	3
+	}
+	exec cg select -g +name tmp/temp.tsv
+} {name	count
+n1	2
+n2	2}
+
+test select_group "decompose lists filter" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name value
+		n1	1
+		n1,n2	2
+		n2	3
+	}
+	exec cg select -g {+name n1} tmp/temp.tsv
+} {name	count
+n1	2}
+
+test select_group "decompose lists multiple" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name test	value
+		n1	t1,t2	1
+		n1,n2	t1,t2	2
+		n2	t2	3
+	}
+	exec cg select -g {+name * +test} tmp/temp.tsv
+} {name	test	count
+n1	t1	2
+n1	t2	2
+n2	t1	1
+n2	t2	2}
+
+test select_group "decompose lists groupcol" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name value
+		n1	1
+		n1,n2	2
+		n2	3
+	}
+	exec cg select -stack 1 -g all -gc {+name * count} tmp/temp.tsv
+} {all	n1-count	n2-count
+all	2	2}
+
+test select_group "decompose lists group and groupcol" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name test	value
+		n1	t1,t2	1
+		n1,n2	t1,t2	2
+		n2	t2	3
+	}
+	exec cg select -g +name -gc {+test * count} tmp/temp.tsv
+} {name	t1-count	t2-count
+n1	2	2
+n2	1	2}
+
+test select_group "decompose lists multiple sample" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name test-sample1	test-sample2	value
+		n1	t1,t2	t1	1
+		n1,n2	t1,t2	t1,t2	2
+		n2	t2	t2	3
+	}
+	exec cg select -g {sample * +name * +test} tmp/temp.tsv
+} {sample	name	test	count
+sample1	n1	t1	2
+sample1	n1	t2	2
+sample1	n2	t1	1
+sample1	n2	t2	2
+sample2	n1	t1	2
+sample2	n1	t2	1
+sample2	n2	t1	1
+sample2	n2	t2	2}
+
+test select_group "decompose lists group and groupcol and sample" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name test-sample1	test-sample2	value
+		n1	t1,t2	t1	1
+		n1,n2	t1,t2	t1,t2	2
+		n2	t2	t2	3
+	}
+	exec cg select -g {sample * +name} -gc {+test * count} tmp/temp.tsv
+} {sample	name	t1-count	t2-count
+sample1	n1	2	2
+sample1	n2	1	2
+sample2	n1	2	1
+sample2	n2	1	2}
+
+test select_group {decompose lists sampleinfo} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	seq-sample1	seq-sample2
+		1	v	r
+		2	v	v
+	}
+	write_tab tmp/temp.sampleinfo.tsv {
+		id	test
+		sample1	t1,t2
+		sample2	t2
+	}
+	exec cg select -g {seq v +test} tmp/temp.tsv
+} {seq	test	count
+v	t1	2
+v	t2	3}
+
+test select_group {decompose lists sampleinfo} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	seq-sample1	seq-sample2
+		1	v	r
+		2	v	v
+	}
+	write_tab tmp/temp.sampleinfo.tsv {
+		id	test
+		sample1	t1,t2
+		sample2	t2
+	}
+	exec cg select -g {sample *} -gc {seq v +test * count} tmp/temp.tsv
+} {sample	v-t1-count	v-t2-count
+sample1	2	2
+sample2	0	1}
+
 testsummarize
