@@ -647,8 +647,12 @@ int bcol_getbinloc(BCol *bcol,DString *chromosome, uint64_t start,uint64_t end) 
 		}
 		if (tablepos == bcol->tablepos) {return 0;}
 	}
-	binpos = table[tablepos].pos + start - start2;
-	return bcol_getbin(bcol,binpos,binpos+end-start);
+	if (comp> 0 || start < start2) {
+		return 0;
+	} else {
+		binpos = table[tablepos].pos + start - start2;
+		return bcol_getbin(bcol,binpos,binpos+end-start);
+	}
 }
 
 int bcol_readbin(BCol *fbcol,int rsize,unsigned char *buffer) {
