@@ -582,6 +582,11 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 					lappend bcolannot $pos $file
 					incr pos ; continue
 				}
+				set file $sampledir/bcolall/${field}-$sample.bcol
+				if {[file exists $file]} {
+					lappend bcolannot $pos $file
+					incr pos ; continue
+				}
 				set allfound 0
 				set file [lindex [glob -nocomplain $sampledir/coverage*/${field}-*-$sample.bcol] 0]
 				if {$file ne ""} {

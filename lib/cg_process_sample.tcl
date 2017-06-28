@@ -100,12 +100,12 @@ proc process_sample_cgi_job {workdir split} {
 		}
 		foreach field $fields {
 			if {$field eq "uniqueSequenceCoverage"} {set outfield coverage} else {set outfield $field}
-			set finaltarget coverage-cg-$sample/$outfield-$sample.bcol
+			file mkdir bcolall
+			set finaltarget bcolall/$outfield-cg-cg-$sample.bcol
 			set tomerge {}
 			set tomergebins {}
 			foreach file $files chr $chrs {
-				file mkdir coverage-cg-$sample
-				set target coverage-cg-$sample/$outfield-$chr-$sample.bcol
+				set target bcolall/$outfield-cg-cg-$chr-$sample.bcol
 				lappend tomerge $target
 				lappend tomergebins $target.bin
 				job cg_coverage-cg-$sample-$outfield-$chr-$sample -deps $file \
@@ -166,7 +166,7 @@ proc process_sample_cgi_job {workdir split} {
 #	}
 	# annotated vars file
 	job cg_annotvar-$sample -optional 1 -vars {split sample} \
-	-deps {svar-$sample.tsv (sgene-$sample.tsv) (coverage-cg-$sample/coverage-$sample.bcol) (coverage-cg-$sample/refScore-$sample.bcol)} -targets {annotvar-$sample.tsv} \
+	-deps {svar-$sample.tsv (sgene-$sample.tsv) (bcolall/coverage-cg-cg-$sample.bcol) (bcolall/refScore-cg-cg-$sample.bcol)} -targets {annotvar-$sample.tsv} \
 	-skip {var-cg-cg-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} -code {
 		putslog "Create annotated varfile $target"
 		if {[file exists $dep2]} {
@@ -175,16 +175,16 @@ proc process_sample_cgi_job {workdir split} {
 			cg cg2tsv -split $split -sorted 1 $dep1 $target.temp
 		}
 		set todo {}
-		if {[file exists coverage-cg-$sample/coverage-$sample.bcol]} {
-			lappend todo coverage-cg-$sample/coverage-$sample.bcol
+		if {[file exists bcolall/coverage-cg-cg-$sample.bcol]} {
+			lappend todo bcolall/coverage-cg-cg-$sample.bcol
 		}
-		if {[file exists coverage-cg-$sample/refScore-$sample.bcol]} {
-			lappend todo coverage-cg-$sample/refScore-$sample.bcol
+		if {[file exists bcolall/refScore-cg-cg-$sample.bcol]} {
+			lappend todo bcolall/refScore-cg-cg-$sample.bcol
 		}
 		if {[llength $todo]} {
 			cg annotate $target.temp $target.temp2 {*}$todo
 			file rename -force $target.temp2 $target
-			file delete $target.temp
+			file delete -force $target.temp $target.temp.index $target.temp2.index
 		} else {
 			file rename -force $target.temp $target
 		}
@@ -364,7 +364,7 @@ proc process_sample_cgi_job {workdir split} {
 		var-cg-cg-$sample.tsv
 		sreg-cg-cg-$sample.tsv
 		reg-$sample.covered
-		coverage-cg-$sample/coverage-$sample.bcol
+		bcolall/coverage-cg-cg-$sample.bcol
 		(reg_refcons-$sample.tsv)
 		(reg_nocall-$sample.tsv)
 		(SV) (CNV)
