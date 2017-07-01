@@ -1,0 +1,14 @@
+= csv2tsv =
+
+== Format ==
+cg csv2tsv ?infile? ?outfile?
+
+== Summary ==
+Converts comma-separated value (csv) data to tab-sparated ([[tsv]])
+
+== Arguments ==
+; **infile**: file to be converted, if not given, uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Category ==
+Conversion
