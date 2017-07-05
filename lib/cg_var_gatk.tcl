@@ -19,7 +19,7 @@ proc gatk_refseq_job refseq {
 proc annotvar_clusters_job {file resultfile} {
 	upvar job_logdir job_logdir
 	set root [join [lrange [split [file root $file] -] 1 end] -]
-	job annotvar-clusters-$root -deps $file -targets reg_cluster-$root.tsv.lz4 -code {
+	job annotvar-clusters-$root -deps $file -targets reg_cluster-$root.tsv.lz4 -skip $resultfile -code {
 		cg clusterregions < $dep > $target.temp
 		cg lz4 $target.temp
 		file rename -force $target.temp.lz4 $target
