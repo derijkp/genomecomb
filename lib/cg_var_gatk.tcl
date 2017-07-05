@@ -100,7 +100,7 @@ proc var_gatk_job {args} {
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set deps [list $file $gatkrefseq $file.bai {*}$deps]
-	job ${pre}varall-gatk-$root -deps $deps \
+	job ${pre}varall-gatk-$root -mem 5G -cores 2 -deps $deps \
 	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk opts regionfile gatkrefseq refseq} -code {
 		if {$regionfile ne ""} {
 			set bedfile [tempbed $regionfile $refseq]

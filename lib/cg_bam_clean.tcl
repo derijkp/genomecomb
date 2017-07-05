@@ -101,7 +101,7 @@ proc bam_clean_job {args} {
 				file rename -force $target.temp $target
 			}
 		} else {
-			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
+			job bamrealign-$root -mem 5G -cores 2 -deps $deps -targets {$dir/$pre-r$root.bam} \
 			-vars {gatkrefseq refseq gatk pre realignopts regionfile} {*}$skips -code {
 				if {$regionfile ne ""} {
 					set bedfile [tempbed $regionfile $refseq]
