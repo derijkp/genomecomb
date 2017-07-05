@@ -31,12 +31,16 @@ proc cg_bed2tsv {args} {
 		}
 	}
 	set bedfields {chromosome begin end name score strand thickStart thickEnd itemRgb blockCount blockSizes blockStarts}
-	set size [expr {[llength $line]-1}]
-	puts $o [join [lrange $bedfields 0 $size] \t]
-	puts $o $line
-	fconfigure $f -translation binary
-	fconfigure $o -translation binary
-	fcopy $f $o
+	if {[eof $f] && ![llength $line]} {
+		puts $o [join {chromosome begin end} \t]
+	} else {
+		set size [expr {[llength $line]-1}]
+		puts $o [join [lrange $bedfields 0 $size] \t]
+		puts $o $line
+		fconfigure $f -translation binary
+		fconfigure $o -translation binary
+		fcopy $f $o
+	}
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {gzclose $f}}
 }
