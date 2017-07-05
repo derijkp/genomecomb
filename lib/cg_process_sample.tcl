@@ -599,7 +599,7 @@ proc process_sample_job {args} {
 	}
 	lappend cmdline $sampledir
 	job_logfile $sampledir/process_sample_[file tail $sampledir] $sampledir $cmdline \
-		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
+		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard java gnusort8 lz4 os]
 	# check if ori is a cg dir, if so use process_sample_cgi_job
 	# ----------------------------------------------------------
 	if {[jobglob $sampledir/ori/ASM/var-*-ASM*.tsv] ne ""} {
@@ -617,7 +617,7 @@ proc process_sample_job {args} {
 	# -------------
 	info_analysis_file $sampledir/info_analysis.tsv $sample \
 		{dbdir aligner varcallers realign paired samBQ adapterfile reports} \
-		{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatkjava picard java gnusort8 tabix lz4 os} \
+		{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatkjava biobambam picard java gnusort8 tabix lz4 os} \
 		command [list cg process_sample {*}$keepargs]
 	# convert existing vcfs
 	# ----------------------

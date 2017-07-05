@@ -123,7 +123,7 @@ proc process_project_job {args} {
 	}
 	lappend cmdline $destdir $dbdir
 	job_logfile $destdir/process_project_[file tail $destdir] $destdir $cmdline \
-		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
+		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard java gnusort8 lz4 os]
 	# start
 	# -----
 	##in case of nextseq500 data - generate fastqs & distribute data

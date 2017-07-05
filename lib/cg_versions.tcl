@@ -97,6 +97,11 @@ proc version {item {minversion {}}} {
 				catch {exec uname -m} machine
 				set _versions($item) "$release $os $machine $kernel_version"
 			}
+			biobambam {
+				catch {exec bammarkduplicates2 -h} temp
+				regexp {version ([0-9.]+)} $temp temp temp
+				set _versions($item) [string trimright $temp .]
+			}
 			default {
 				if {![catch {exec $item --version} temp]} {
 				} elseif {![catch {exec $item -version} temp]} {
@@ -139,7 +144,7 @@ proc version {item {minversion {}}} {
 
 proc versions {args} {
 	if {![llength $args]} {
-		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard plink primer3 java R gnusort8 tabix lz4 os}
+		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard plink primer3 java R gnusort8 tabix lz4 os}
 	}
 	set result {}
 	foreach item $args {
@@ -165,7 +170,7 @@ proc cg_versions {args} {
 		returns the (current) versions of the given programs as a tsv file
 	}
 	if {![llength $args]} {
-		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard plink primer3 java R gnusort8 tabix lz4 os}
+		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard plink primer3 java R gnusort8 tabix lz4 os}
 	}
 	puts "item\tversion"
 	foreach item $args {

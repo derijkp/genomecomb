@@ -26,7 +26,7 @@ fastq dirs are considered sampledirs. The name of each sample is taken
 from the sampledir name. The sample name should not contain hyphens (-)
 
 By default reads are clipped using fastq-mcf, aligned to the reference
-genome in dbdir using bwa mem, duplicates removed (using picard) and realigned
+genome in dbdir using bwa mem, duplicates removed (using biobambam bammarkduplicates2) and realigned
 (using gatk). Variants are called using gatk and samtools.
 All files generated have names following the convention of using hyphens
 to separate different elements about the file. The first element is the
