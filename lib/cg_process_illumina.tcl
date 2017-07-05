@@ -156,10 +156,10 @@ proc process_illumina {args} {
 			}
 			set fastqfiles [ssort -natural [jobglob fastq/*.fastq.gz fastq/*.fastq fastq/*.fq.gz fastq/*.fq]]
 		}
+		set resultbamfile map-${resultbamprefix}bwa-$sample.bam
 		if {[llength $fastqfiles]} {
 			# do not do any of preliminaries if end product is already there
 			set bamfile map-bwa-$sample.bam
-			set resultbamfile map-${resultbamprefix}bwa-$sample.bam
 			# quality and adapter clipping
 			set files [fastq_clipadapters_job $fastqfiles \
 				-adapterfile $adapterfile -paired $paired \
@@ -169,14 +169,14 @@ proc process_illumina {args} {
 			map_bwa_job $bamfile $refseq $files $sample $paired -skips [list -skip $resultbamfile]
 		}
 		# extract regions with coverage >= 5 (for cleaning)
-		set cov5reg [bam2reg_job map-bwa-$sample.bam 5]
+		set cov5reg [bam2reg_job -mincoverage 5 -skip $resultbamfile map-bwa-$sample.bam]
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample \
 			-removeduplicates 1 -realign $realign -regionfile $cov5reg -cleanup $cleanup]
 		# make 5x coverage regfile from cleanedbam
-		set cov5reg [bam2reg_job $cleanedbam 5]
+		set cov5reg [bam2reg_job -mincoverage 5 $cleanedbam]
 		# make 20x coverage regfile
-		bam2reg_job $cleanedbam 20 1
+		bam2reg_job -mincoverage 20 -compress 1 $cleanedbam
 		# gatk variant calling on map-rdsbwa
 		var_gatk_job -regionfile $cov5reg -split $split $cleanedbam $refseq
 		lappend todo gatk-rdsbwa-$sample

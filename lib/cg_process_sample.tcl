@@ -698,7 +698,7 @@ proc process_sample_job {args} {
 		# map using ${aligner}
 		map_${aligner}_job $bamfile $refseq $files $sample $paired -skips [list -skip $resultbamfile]
 		# extract regions with coverage >= 5 (for cleaning)
-		set cov5reg [bam2reg_job $sampledir/map-${aligner}-$sample.bam 5]
+		set cov5reg [bam2reg_job -mincoverage 5 -skip $resultbamfile $sampledir/map-${aligner}-$sample.bam]
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job $sampledir/map-${aligner}-$sample.bam $refseq $sample \
 			-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
@@ -707,9 +707,9 @@ proc process_sample_job {args} {
 	# varcaller from bams
 	foreach cleanedbam [jobglob $sampledir/map-*.bam] {
 		# make 5x coverage regfile from cleanedbam
-		set cov5reg [bam2reg_job $cleanedbam 5]
+		set cov5reg [bam2reg_job -mincoverage 5 $cleanedbam]
 		# make 20x coverage regfile
-		bam2reg_job $cleanedbam 20 1
+		bam2reg_job -mincoverage 20 -compress 1 $cleanedbam
 		if {$amplicons eq ""} {
 			set regionfile $cov5reg
 		} else {
