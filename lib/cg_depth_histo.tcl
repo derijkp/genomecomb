@@ -1,4 +1,4 @@
-proc depth_histo {bamfile regionfile {max 1000}} {
+proc depth_histo {bamfile regionfile {max 1000} {Q 0} {q 0} args} {
 	global cache
 	# catch {close $f1}
 	# catch {close $f2}
@@ -9,16 +9,20 @@ proc depth_histo {bamfile regionfile {max 1000}} {
 	} else {
 		set poss2 {0 0 0}
 	}
-	# puts [list depth_histo $regionfile {*}$poss2 $near]
-	exec samtools depth $bamfile | depth_histo $regionfile {*}$poss2 $max >@ stdout 2>@ stderr
+	exec samtools depth -Q $Q -q $q $bamfile | depth_histo $regionfile {*}$poss2 $max >@ stdout 2>@ stderr
 }
 
 proc cg_depth_histo {args} {
 	set max 1000
+	set opts {}
+	set Q 0
+	set q 0
 	cg_options depth_histo args {
 		-max {set max $value}
+		-q {set q $value}
+		-Q {set Q $value}
 	} {bamfile regionfile} 2 2 {
 		make histogram of depth in a bamfile, seperating targeted by a regionfile
 	}
-	depth_histo $bamfile $regionfile $max
+	depth_histo $bamfile $regionfile $max $Q $q
 }

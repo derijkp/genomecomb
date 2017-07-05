@@ -17,6 +17,8 @@ can be changed with the -max option. Depths not presents in are skipped in the o
 
 == Options ==
 ; -max maxnum: The maximum depth in the histogram (default = 1000). Positions with a depth >= maxnum are counted as depth maxnum
+; -q num: Only count reads with base quality greater than num
+; -Q num: Only count reads with mapping quality greater than num
 
 == Arguments ==
 ; **bamfile**: bamfile
