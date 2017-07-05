@@ -1,0 +1,31 @@
+= Depth_histo =
+
+== Format ==
+cg depth_histo ?options? bamfile regionfile
+
+== Summary ==
+makes a histogram of the depth in the given bamfile, subdivided in on- and oftarget regions
+
+== Description ==
+depth_histo outputs a [[tsv]] formatted histogram of the depth: For
+each depth (column depth) the number of bases with this depth are given
+in the target region (column ontarget) and outside the target region
+(column offtarget). The target region is given in the regionfile in
+[[tsv]] format. The histogram is by default limited to a maximum depth of
+1000 (Positions with a depth >= 1000 are counted as depth 1000). This
+can be changed with the -max option. Depths not presents in are skipped in the output
+
+== Options ==
+; -max maxnum: The maximum depth in the histogram (default = 1000). Positions with a depth >= maxnum are counted as depth maxnum
+
+== Arguments ==
+; **bamfile**: bamfile
+; **regionfile**: target regions
+
+== Example ==
+{{{
+cg depth_histo test.bam regfile.tsv > histo.tsv
+}}}
+
+== Category ==
+Report

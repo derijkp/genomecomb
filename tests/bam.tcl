@@ -25,6 +25,16 @@ test bam_histo {bam_histo chr_clipped} {
 	exec diff tmp/result.tsv genomecomb.testdata/expected/bam_histo-NA19240_smallpartchr2122.tsv
 } {}
 
+test depth_histo {depth_histo} {
+	test_cleantmp
+	file copy data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
+	set regionfile tmp/regfile.tsv
+	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set max 1000
+	cg depth_histo -max $max $bamfile $regionfile > tmp/result.tsv
+	exec diff tmp/result.tsv genomecomb.testdata/expected/depth_histo-NA19240_smallpartchr2122.tsv
+} {}
+
 test bam2fastq {bam2fastq} {
 	test_cleantmp
 	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam

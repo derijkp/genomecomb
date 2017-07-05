@@ -13,7 +13,8 @@ all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../b
      ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions \
      ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/getregionsbcol2 ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby \
      ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile ../bin$(ARCH)/bcol_indexfile_all \
-     ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_make_multi ../bin$(ARCH)/bcol_annot ../bin$(ARCH)/vcf2tsv ../bin$(ARCH)/reg_select \
+     ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_make_multi ../bin$(ARCH)/bcol_annot ../bin$(ARCH)/vcf2tsv \
+     ../bin$(ARCH)/reg_select ../bin$(ARCH)/depth_histo \
      ../bin$(ARCH)/check_sort ../bin$(ARCH)/multi_merge ../bin$(ARCH)/multi_join \
      ../bin$(ARCH)/multicompar_addvars \
      ../bin$(ARCH)/multidb_join \
@@ -90,6 +91,9 @@ clean:
 
 ../bin$(ARCH)/reg_select: reg_select.c $(TOOLS)
 	gcc reg_select.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_select
+
+../bin$(ARCH)/depth_histo: depth_histo.c $(TOOLS)
+	gcc depth_histo.c tools.c $(CFLAGS) -o ../bin$(ARCH)/depth_histo
 
 ../bin$(ARCH)/check_sort: check_sort.c $(TOOLS)
 	gcc check_sort.c tools.c $(CFLAGS) -o ../bin$(ARCH)/check_sort
