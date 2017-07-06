@@ -46,15 +46,13 @@ proc bam_clean_job {args} {
 		lappend skips -skip [list $dir/$pre-$temproot.bam]
 	}
 	# start jobs
-	# sort using picard
+	# sort using samtools
 	job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
 	-vars {removeduplicates sample} {*}$skips -code {
 		file delete $target.temp
-		picard SortSam	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr >@ stdout
+		samtools_sort $dep $target.temp
+	#	picard SortSam	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
-	#	# picard AddOrReplaceReadGroups	I=$src	O=$target.temp3	RGID=$sample	RGLB=solexa-123	RGPL=illumina	RGPU=$sample RGSM=$sample 2>@ stderr >@ stdout
-	#	# file delete $target.temp $target.temp2
-	#	# file rename -force $target.temp3 $target
 	}
 	set root s$root
 	list_pop skips 0; list_pop skips 0;
