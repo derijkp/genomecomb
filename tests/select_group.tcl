@@ -252,9 +252,9 @@ test select_group {group with sample in -gc where not all samples have the -g fi
 		2	B	B	b
 	}
 	exec cg select -g {type} -gc {sample {} count} tmp/temp.tsv
-} {type	sample1-count	sample2-count
-A	1	0
-B	1	2}
+} {type	sample1-count	sample2-count	sample3-count
+A	1	0	0
+B	1	2	0}
 
 test select_group {group with sample in -gc where not all samples have the -g field and limit sample} {
 	test_cleantmp
@@ -337,9 +337,9 @@ test select_group {sampleinfo in group, filter} {
 		sample3	f
 	}
 	exec cg select -g {type {} gender f} -gc {sample {} count} tmp/temp.tsv
-} {type	gender	sample2-count	sample3-count
-A	f	0	1
-B	f	2	1}
+} {type	gender	sample1-count	sample2-count	sample3-count
+A	f	0	0	1
+B	f	0	2	1}
 
 test select_group {sampleinfo in gc} {
 	test_cleantmp
@@ -355,9 +355,9 @@ test select_group {sampleinfo in gc} {
 		sample3	f
 	}
 	exec cg select -g {type {}} -gc {sample {} gender f count} tmp/temp.tsv
-} {type	sample2-f-count	sample3-f-count
-A	0	1
-B	2	1}
+} {type	sample1-f-count	sample2-f-count	sample3-f-count
+A	0	0	1
+B	0	2	1}
 
 test select_group {sampleinfo in gc, sample in g} {
 	test_cleantmp
@@ -898,5 +898,21 @@ test select_group {decompose lists sampleinfo} {
 } {sample	v-t1-count	v-t2-count
 sample1	2	2
 sample2	0	1}
+
+test select_group {group simple empty} {
+	write_tab tmp/temp.tsv {
+		chromosome	begin		end	type
+	}
+	cg select -g all tmp/temp.tsv
+} {all	count
+all	0}
+
+test select_group {group simple empty} {
+	write_tab tmp/temp.tsv {
+		chromosome	begin		end	type
+	}
+	cg select -g all -gc {type {ins del} count} tmp/temp.tsv
+} {all	del-count	ins-count
+all	0	0}
 
 testsummarize

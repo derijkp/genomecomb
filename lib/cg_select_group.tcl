@@ -365,6 +365,20 @@ proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
 	return $calcresults
 }
 
+proc tsv_select_combinations {list} {
+	set temp [lindex $list 0]
+	foreach values [lrange $list 1 end] {
+		set newtemp {}
+		foreach el $temp {
+			foreach value $values {
+				lappend newtemp [list {*}$el $value]
+			}
+		}
+		set temp $newtemp
+	}
+	return $temp
+}
+
 proc tsv_select_group {header pquery qposs qfields group groupcols neededfields sortfields} {
 # putsvars header pquery qposs qfields group groupcols neededfields sortfields
 	global typetodoa
@@ -653,6 +667,62 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	}
 	set neededcols [list_cor $header $neededfields]
 	set addcols [tsv_select_addforeach loopsa $addcols]
+	# pregroup and precol
+	set pregroup {}
+	foreach {el values} $group {
+		if {[info exists pregroup]} {
+			if {$el eq "all"} {
+				lappend pregroup all
+			} elseif {$el eq "sample"} {
+				if {$gsamples eq {{}}} {
+					if {[llength [set temp [list_sub $values -exclude [list_find -regexp $values {\*}]]]]} {
+						lappend pregroup $temp
+					} else {
+						unset pregroup; break
+					}
+				} else {
+					lappend pregroup $gsamples
+				}
+			} elseif {[llength [set temp [list_sub $values -exclude [list_find -regexp $values {\*}]]]]} {
+				lappend pregroup $temp
+			} else {
+				unset pregroup; break
+			}
+		}
+	}
+	if {[info exists pregroup]} {
+		foreach _group [tsv_select_combinations $pregroup] {
+			append tclcode "[list set resultgroups([join $_group \t]) 1]\n"
+		}
+	}
+	set precol {}
+	foreach {el values} $groupcol {
+		if {[info exists precol]} {
+			if {$el eq "all"} {
+				lappend precol all
+			} elseif {$el eq "sample"} {
+				if {$gsamples eq {{}}} {
+					if {[llength [set temp [list_sub $values -exclude [list_find -regexp $values {\*}]]]]} {
+						lappend precol $temp
+					} else {
+						unset precol; break
+					}
+				} else {
+					lappend precol $gsamples
+				}
+			} elseif {[llength [set temp [list_sub $values -exclude [list_find -regexp $values {\*}]]]]} {
+				lappend precol $temp
+			} else {
+				unset precol; break
+			}
+		}
+	}
+	if {[info exists precol]} {
+		foreach _cols [tsv_select_combinations $precol] {
+			append tclcode "[list set resultdatacols([join $_cols -]) 1]\n"
+		}
+	}
+	# add rest to tclcode (tsv_selectc_query, calculate aggregates)
 	append tclcode {
 		proc tsv_selectc_query {@neededfields@} {
 			global resultdata resultgroups resultcount resultdatacols
@@ -665,6 +735,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		}
 		tsv_selectc tsv_selectc_query {@neededcols@} {} @verbose@
 		set cols [ssort -natural [array names resultdatacols]]
+		if {![llength $cols]} {set cols {{}}}
 		set header [list @grouph@]
 		foreach col $cols {
 			foreach {func val} @grouptypes@ {

@@ -355,6 +355,7 @@ set auto_index(tsv_select_matchfilter) [list source [file join $dir cg_select_gr
 set auto_index(tsv_select_applyfilter) [list source [file join $dir cg_select_group.tcl]]
 set auto_index(tsv_select_addaggregatecalc) [list source [file join $dir cg_select_group.tcl]]
 set auto_index(tsv_select_addaggregateresult) [list source [file join $dir cg_select_group.tcl]]
+set auto_index(tsv_select_combinations) [list source [file join $dir cg_select_group.tcl]]
 set auto_index(tsv_select_group) [list source [file join $dir cg_select_group.tcl]]
 set auto_index(cg_sft2gff) [list source [file join $dir cg_sft2gff.tcl]]
 set auto_index(exiterror) [list source [file join $dir cg_sh.tcl]]
