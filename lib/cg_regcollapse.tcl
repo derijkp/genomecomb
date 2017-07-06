@@ -59,9 +59,10 @@ proc collapseoverlap {{infile stdin} {resultfile stdout} {scorefield score} {num
 	set cur [list $line]
 	set num 0; set next 100000
 	set prev {}
-	while {![eof $f]} {
+	while {1} {
 		incr num; if {$num >= $next} {putslog $num; incr next 100000}
-		set line [split [gets $f] "\t"]
+		set read [gets $f line]
+		set line [split $line "\t"]
 		set cchr {}
 		foreach {cchr cstart cend} [list_sub $line $cor] break
 		set newchr [expr {$cchr ne $chr}]
@@ -99,6 +100,7 @@ proc collapseoverlap {{infile stdin} {resultfile stdout} {scorefield score} {num
 				list_shift cur
 			}
 		}
+		if {$read == -1} break
 		# check sort
 		if {!$newchr && $cstart < $start} {error "file incorrectly sorted: $chr: $cstart < $start"}
 		# add new line
