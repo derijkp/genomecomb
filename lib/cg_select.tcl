@@ -1275,7 +1275,12 @@ proc cg_select {args} {
 	}
 	if {[llength $args] > 1} {
 		set outfile [lindex $args 1]
-		set out [open $outfile w]
+		set compress [compresspipe $outfile]
+		if {$compress eq ""} {
+			set out [open $outfile w]
+		} else {
+			set out [open "$compress > $outfile" w]
+		}
 	} else {
 		set out stdout
 	}

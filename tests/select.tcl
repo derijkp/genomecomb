@@ -1080,6 +1080,24 @@ test select "regsub $dboptt" {
 test1	1
 test1	3}
 
+test select "-f compressed$dboptt" {
+	global dbopt
+	exec cg select {*}$dbopt -f "num text" data/table.tsv tmp/temp.lz4
+	cg lz4cat tmp/temp.lz4
+} {num	text
+4	a
+10	b
+2	c
+100	d}
+
+test select "-q compressed$dboptt" {
+	global dbopt
+	exec cg select {*}$dbopt -q {$num <= 4} data/table.tsv tmp/temp.lz4
+	cg lz4cat tmp/temp.lz4
+} {num	text	mixed	other
+4	a	a4	aaaa
+2	c	a2	cc}
+
 }
 
 foreach dbopt {{}} {
