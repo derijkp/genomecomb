@@ -70,7 +70,7 @@ proc cg_liftover {args} {
 		set refchangesfile [file root $liftoverfile].refchanges.tsv
 		set refchangesfile [gzfiles $refchangesfile]
 		if {$refchangesfile eq ""} {
-			exiterror "option correctvariants is 1, but could not find the needed refchanges file $refchangesfile\nThis can be generated using the command:\ncg liftfindchanges srcgenome.ifas destgenome.ifas $liftoverfile > $refchangesfile"
+			exiterror "option correctvariants is 1, but could not find the needed refchanges file \"[file root $liftoverfile].refchanges.tsv\"\nThis can be generated using the command:\ncg liftfindchanges srcgenome.ifas destgenome.ifas $liftoverfile > $refchangesfile"
 		}
 		set fc [gzopen $refchangesfile]
 		set cheader [tsv_open $fc]
