@@ -1,4 +1,4 @@
-proc xlong {file resultfile splitlines {pre {}}} {
+proc xlong {file resultfile splitlines {pre {}} {lines {}}} {
 	set o [open $resultfile.temp w]
 	if {$pre ne ""} {puts $o $pre}
 	set f [gzopen $file]
@@ -16,6 +16,7 @@ proc xlong {file resultfile splitlines {pre {}}} {
 			puts $o "$pre\t$field\t$value"
 			if {$splitlines} {puts $o ""}
 		}
+		if {[isint $lines] && ![incr $lines -1]} break
 	}
 	gzclose $f
 	close $o
@@ -23,7 +24,7 @@ proc xlong {file resultfile splitlines {pre {}}} {
 	return 0
 }
 
-proc long {file resultfile splitlines {pre {}}} {
+proc long {file resultfile splitlines {pre {}} {lines {}}} {
 	set o [open $resultfile.temp w]
 	if {$pre ne ""} {puts $o $pre}
 	set f [gzopen $file]
@@ -34,6 +35,7 @@ proc long {file resultfile splitlines {pre {}}} {
 			puts $o "$field\t$value"
 			if {$splitlines} {puts $o ""}
 		}
+		if {[isint $lines] && ![incr $lines -1]} break
 	}
 	gzclose $f
 	close $o
@@ -41,7 +43,7 @@ proc long {file resultfile splitlines {pre {}}} {
 	return 0
 }
 
-proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog} {
+proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}}} {
 	global errors
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
@@ -76,35 +78,37 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	}
 	if {$type eq "xl"} {
 		cg select -f [list {*}$common {*}$h1] $file1 $temp1.pre
-		set error1 [xlong $temp1.pre $temp1 $splitlines]
+		set error1 [xlong $temp1.pre $temp1 $splitlines {} $lines]
 		set msg1 "error in xl conversion"
 		cg select -f [list {*}$common {*}$h2] $file2 $temp2.pre
-		set error2 [xlong $temp2.pre $temp2 $splitlines]
+		set error2 [xlong $temp2.pre $temp2 $splitlines {} $lines]
 		set msg2 "error in xl conversion"
 	} elseif {$type eq "l"} {
 		cg select -f [list {*}$common {*}$h1] $file1 $temp1.pre
-		set error1 [long $temp1.pre $temp1 $splitlines]
+		set error1 [long $temp1.pre $temp1 $splitlines {} $lines]
 		set msg1 "error in xl conversion"
 		cg select -f [list {*}$common {*}$h2] $file2 $temp2.pre
-		set error2 [long $temp2.pre $temp2 $splitlines]
+		set error2 [long $temp2.pre $temp2 $splitlines {} $lines]
 		set msg2 "error in xl conversion"
 	} elseif {$splitlines} {
+		if {[isint $lines]} {set query [list -q "\$ROW <= $lines"]} else {set query {}}
 		set error1 [catch {
 			file_write $temp1 $temp1_pre
-			exec cg select -rc $rcomments -f $common $file1 | awk {{print $0"\n----"}} >> $temp1
+			exec cg select -rc $rcomments {*}$query -f $common $file1 | awk {{print $0"\n----"}} >> $temp1
 		} msg1]
 		set error2 [catch {
 			file_write $temp2 $temp2_pre
-			exec cg select -rc $rcomments -f $common $file2 | awk {{print $0"\n----"}} >> $temp2
+			exec cg select -rc $rcomments {*}$query -f $common $file2 | awk {{print $0"\n----"}} >> $temp2
 		} msg2]
 	} else {
+		if {[isint $lines]} {set query [list -q "\$ROW <= $lines"]} else {set query {}}
 		set error1 [catch {
 			file_write $temp1 $temp1_pre
-			cg select -rc $rcomments -f $common $file1 >> $temp1
+			cg select -rc $rcomments {*}$query -f $common $file1 >> $temp1
 		} msg1]
 		set error2 [catch {
 			file_write $temp2 $temp2_pre
-			cg select -rc $rcomments -f $common $file2 >> $temp2
+			cg select -rc $rcomments {*}$query -f $common $file2 >> $temp2
 		} msg2]
 	}
 	if {$error1} {
@@ -182,6 +186,7 @@ proc cg_tsvdiff args {
 	set diffprog {}
 	set diffopts {}
 	set excludeopts {}
+	set lines {}
 	cg_options tsvdiff args {
 		-c {
 			if {[true $value]} {set rcomments 0} else {set rcomments 1}
@@ -209,6 +214,9 @@ proc cg_tsvdiff args {
 		}
 		-w - -width {
 			set width $value
+		}
+		-lines {
+			set lines $value
 		}
 		-q - -brief {
 			if {$value in "1 0"} {
@@ -246,7 +254,7 @@ proc cg_tsvdiff args {
 				set file2 [gzfile [gzroot $dir2$post]]
 				if {[file exists $file2]} {
 					if {!$brief} {
-						tsvdiff_file $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
+						tsvdiff_file $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines
 					} else {
 						tsvdiff_file_brief $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
 					}
@@ -268,7 +276,7 @@ proc cg_tsvdiff args {
 				if {$brief} {
 					tsvdiff_file_brief $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
 				} else {
-					tsvdiff_file $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
+					tsvdiff_file $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines
 				}
 			} else {
 				if {$brief} {
