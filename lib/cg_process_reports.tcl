@@ -99,7 +99,7 @@ proc process_reports_job {args} {
 			job reports_fastqc-$dir-$sample -deps $deps -targets {$target} -code {
 				file mkdir $target.temp
 				set gzcat [gzcat [lindex $deps 0]]
-				exec {*}$gzcat {*}$deps | fastqc -o $target.temp stdin 2>@ stderr >@ stdout
+				exec -ignorestderr {*}$gzcat {*}$deps | fastqc -o $target.temp stdin 2>1
 				exec unzip $target.temp/stdin_fastqc.zip -d $target.temp
 				file rename -force {*}[glob $target.temp/stdin_fastqc/*] $target.temp
 				file delete $target.temp/stdin_fastqc
@@ -116,7 +116,7 @@ proc process_reports_job {args} {
 			set target3 $sampledir/reports/fastx_$dir-$sample.tsv
 			job reports_fastq-stats-$dir-$sample -deps $deps -targets {$target $target2 $target3} -vars {sample dir} -code {
 				set gzcat [gzcat [lindex $deps 0]]
-				exec {*}$gzcat {*}$deps | fastq-stats -x $target3 > $target2
+				exec -ignorestderr {*}$gzcat {*}$deps | fastq-stats -x $target3 > $target2
 				set o [open $target.temp w]
 				puts $o [join {sample source parameter value} \t]
 				set f [open $target2]
