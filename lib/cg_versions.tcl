@@ -98,7 +98,7 @@ proc version {item {minversion {}}} {
 				set _versions($item) "$release $os $machine $kernel_version"
 			}
 			biobambam {
-				catch {exec bammarkduplicates2 -h} temp
+				catch {biobambam bammarkduplicates2 -h} temp
 				regexp {version ([0-9.]+)} $temp temp temp
 				set _versions($item) [string trimright $temp .]
 			}
