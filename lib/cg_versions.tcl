@@ -55,6 +55,9 @@ proc version {item {minversion {}}} {
 				regsub {java version "([^"]+)"} $temp {\1 } temp
 				set _versions($item) [join [split $temp \n] {, }]
 			}
+			tcl {
+				set _versions($item) $::tcl_patchLevel
+			}
 			R {
 				catch {exec [findR] --version} temp
 				set _versions($item) [lindex [split $temp \n] 0]
@@ -144,7 +147,7 @@ proc version {item {minversion {}}} {
 
 proc versions {args} {
 	if {![llength $args]} {
-		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard plink primer3 java R gnusort8 tabix lz4 os}
+		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard plink primer3 java tcl R gnusort8 tabix lz4 os}
 	}
 	set result {}
 	foreach item $args {
