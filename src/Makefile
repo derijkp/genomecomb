@@ -92,8 +92,8 @@ clean:
 ../bin$(ARCH)/reg_select: reg_select.c $(TOOLS)
 	gcc reg_select.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_select
 
-../bin$(ARCH)/depth_histo: depth_histo.c $(TOOLS)
-	gcc depth_histo.c tools.c $(CFLAGS) -o ../bin$(ARCH)/depth_histo
+../bin$(ARCH)/depth_histo: depth_histo.c $(TOOLS) $(GZTOOLS)
+	gcc depth_histo.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/depth_histo $(LIBZ)
 
 ../bin$(ARCH)/check_sort: check_sort.c $(TOOLS)
 	gcc check_sort.c tools.c $(CFLAGS) -o ../bin$(ARCH)/check_sort

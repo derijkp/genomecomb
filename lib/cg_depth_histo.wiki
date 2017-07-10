@@ -1,7 +1,7 @@
 = Depth_histo =
 
 == Format ==
-cg depth_histo ?options? bamfile regionfile
+cg depth_histo ?options? bamfile ?regionfile?
 
 == Summary ==
 makes a histogram of the depth in the given bamfile, subdivided in on- and oftarget regions
@@ -22,7 +22,7 @@ can be changed with the -max option. Depths not presents in are skipped in the o
 
 == Arguments ==
 ; **bamfile**: bamfile
-; **regionfile**: target regions
+; **regionfile**: target regions. If no target regionfile is given, all bases will be counted in offtarget
 
 == Example ==
 {{{

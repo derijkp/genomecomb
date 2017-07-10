@@ -12,10 +12,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tools.h"
+#include "gztools.h"
 #include "debug.h"
 
 int main(int argc, char *argv[]) {
-	FILE *f1,*f2;
+	GZFILE *f2;
+	FILE *f1;
 	DStringArray *result1=NULL,*result2=NULL,*resultkeep=NULL,*resulttemp=NULL;
 	DString *line1 = NULL,*line2 = NULL,*linekeep = NULL,*linetemp = NULL,*empty=NULL;
 	DString *chromosome1 = NULL,*chromosome2 = NULL,*chromosomekeep = NULL;
@@ -27,11 +29,15 @@ int main(int argc, char *argv[]) {
 	int prevstart2 = -1,prevend2 = -1;
 	int error2;
 	if ((argc != 6)) {
-		fprintf(stderr,"Format is: reg_select file2 chrpos2 startpos2 endpos2 max");
+		fprintf(stderr,"Format is: depth_histo file2 chrpos2 startpos2 endpos2 max");
 		exit(EXIT_FAILURE);
 	}
 	f1 = stdin;
-	f2 = fopen64_or_die(argv[1],"r");
+	if (argv[1][0] == '\0') {
+		f2 = NULL;
+	} else {
+		f2 = gz_open(argv[1]);
+	}
 	chr2pos = atoi(argv[2]);
 	start2pos = atoi(argv[3]);
 	end2pos = atoi(argv[4]);
@@ -48,8 +54,12 @@ NODPRINT("reg_select %d %d %d %s %d %d %d %d",chr1pos,start1pos,end1pos,argv[4],
 	result1 = DStringArrayNew(2+2);
 	result2 = DStringArrayNew(max2+2);
 	resultkeep = DStringArrayNew(max2+2);
-	skip_header(f2,line2,&numfields2,&pos2);
-	error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields);	pos2++;
+	if (f2 == NULL) {
+		error2 = 1;
+	} else {
+		gz_skip_header(f2,line2,&numfields2,&pos2);
+		error2 = gz_DStringGetTab(line2,f2,max2,result2,1,&numfields);	pos2++;
+	}
 	if (!error2) {
 		check_numfieldserror(numfields,numfields2,line2,argv[4],&pos2);
 		chromosome2 = result2->data+chr2pos;
@@ -77,7 +87,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
 			resultkeep = result2;
 			result2 = resulttemp;
 			/* get new line */
-			error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields); pos2++;
+			error2 = gz_DStringGetTab(line2,f2,max2,result2,1,&numfields); pos2++;
 			if (error2)  {
 				chromosome2 = NULL;
 				comp = -1;
@@ -107,7 +117,9 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
 		}
 	}
 	fclose(f1);
-	fclose(f2);
+	if (f2 != NULL) {
+		gz_close(f2);
+	}
 	fprintf(stdout,"depth\tontarget\tofftarget\n");
 	for(depth = 1; depth <= max; depth++) {
 		if (ontarget[depth] > 0 || offtarget[depth] > 0) fprintf(stdout,"%d\t%d\t%d\n",depth,ontarget[depth],offtarget[depth]);

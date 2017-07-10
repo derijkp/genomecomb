@@ -45,6 +45,27 @@ test depth_histo {depth_histo -Q -max} {
 	exec diff tmp/result.tsv genomecomb.testdata/expected/depth_histo_Q20-NA19240_smallpartchr2122.tsv
 } {}
 
+test depth_histo {depth_histo no regfile} {
+	test_cleantmp
+	file copy data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
+	set regionfile {}
+	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set max 1000
+	cg depth_histo -max $max $bamfile $regionfile > tmp/result.tsv
+	cg select -f {depth {ontarget=0} {offtarget=$ontarget + $offtarget}} genomecomb.testdata/expected/depth_histo-NA19240_smallpartchr2122.tsv tmp/expected.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test depth_histo {depth_histo compressed regfile} {
+	test_cleantmp
+	exec lz4c -c data/reg_hg19_smallpartexome.tsv > tmp/regfile.tsv.lz4
+	set regionfile tmp/regfile.tsv.lz4
+	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set max 1000
+	cg depth_histo -max $max $bamfile $regionfile > tmp/result.tsv
+	exec diff tmp/result.tsv genomecomb.testdata/expected/depth_histo-NA19240_smallpartchr2122.tsv
+} {}
+
 test bam2fastq {bam2fastq} {
 	test_cleantmp
 	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
