@@ -1,6 +1,4 @@
 
-package require tdom
-
 proc make_alternative_compar_job {experiment {destdir {}}} {
 	upvar job_logdir job_logdir
 	if {$destdir eq ""} {set destdir [pwd]}
@@ -53,7 +51,7 @@ proc makeminigenome {dbdir name ampliconsfile namefield {adaptorseq TGGAGAACAGTG
 
 proc generate_demultiplex_stats {illsrc outfile} {
 	set xmlfile $illsrc/GenerateFASTQRunStatistics.xml
-	if {[file exists $xmlfile]} {
+	if {[file exists $xmlfile] && ![catch {package require tdom}]} {
 		set o [open $outfile w]
 		set nodes {SampleNumber SampleID SampleName NumberOfClustersRaw NumberOfClustersPF}
 		puts $o [join $nodes \t]
