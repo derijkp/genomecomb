@@ -43,7 +43,8 @@ proc long {file resultfile splitlines {pre {}} {lines {}}} {
 	return 0
 }
 
-proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}}} {
+proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}}} {
+	putsvars file1 file2 rcomments type fields diffopts splitlines diffprog lines sort
 	global errors
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
@@ -64,6 +65,9 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	}
 	set common [list_common $h1 $h2]
 	set error {}
+	if {$sort eq "1"} {
+		set sort $common
+	}
 	set temp1_pre ""
 	set temp2_pre ""
 	if {[llength $common] != [llength $h1] || [llength $common] != [llength $h2]} {
@@ -76,39 +80,42 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 			set temp2_pre "\#extra fields: [list_lremove $h2 $common]\n"
 		}
 	}
+	if {[isint $lines]} {
+		set query "\$ROW < $lines"
+	} else {
+		set query ""
+	}
 	if {$type eq "xl"} {
-		cg select -f [list {*}$common {*}$h1] $file1 $temp1.pre
+		cg select -s $sort -q $query -f [list {*}$common {*}$h1] $file1 $temp1.pre
 		set error1 [xlong $temp1.pre $temp1 $splitlines {} $lines]
 		set msg1 "error in xl conversion"
 		cg select -f [list {*}$common {*}$h2] $file2 $temp2.pre
-		set error2 [xlong $temp2.pre $temp2 $splitlines {} $lines]
+		set error2 [xlong $temp2.pre $temp2 $splitlines {}]
 		set msg2 "error in xl conversion"
 	} elseif {$type eq "l"} {
-		cg select -f [list {*}$common {*}$h1] $file1 $temp1.pre
+		cg select -s $sort -q $query -f [list {*}$common {*}$h1] $file1 $temp1.pre
 		set error1 [long $temp1.pre $temp1 $splitlines {} $lines]
 		set msg1 "error in xl conversion"
 		cg select -f [list {*}$common {*}$h2] $file2 $temp2.pre
-		set error2 [long $temp2.pre $temp2 $splitlines {} $lines]
+		set error2 [long $temp2.pre $temp2 $splitlines {}]
 		set msg2 "error in xl conversion"
 	} elseif {$splitlines} {
-		if {[isint $lines]} {set query [list -q "\$ROW <= $lines"]} else {set query {}}
 		set error1 [catch {
 			file_write $temp1 $temp1_pre
-			exec cg select -rc $rcomments {*}$query -f $common $file1 | awk {{print $0"\n----"}} >> $temp1
+			exec cg select -rc $rcomments -s $sort -q $query -f $common $file1 | awk {{print $0"\n----"}} >> $temp1
 		} msg1]
 		set error2 [catch {
 			file_write $temp2 $temp2_pre
-			exec cg select -rc $rcomments {*}$query -f $common $file2 | awk {{print $0"\n----"}} >> $temp2
+			exec cg select -rc $rcomments -s $sort -q $query -f $common $file2 | awk {{print $0"\n----"}} >> $temp2
 		} msg2]
 	} else {
-		if {[isint $lines]} {set query [list -q "\$ROW <= $lines"]} else {set query {}}
 		set error1 [catch {
 			file_write $temp1 $temp1_pre
-			cg select -rc $rcomments {*}$query -f $common $file1 >> $temp1
+			cg select -rc $rcomments -s $sort -q $query -f $common $file1 >> $temp1
 		} msg1]
 		set error2 [catch {
 			file_write $temp2 $temp2_pre
-			cg select -rc $rcomments {*}$query -f $common $file2 >> $temp2
+			cg select -rc $rcomments -s $sort -q $query -f $common $file2 >> $temp2
 		} msg2]
 	}
 	if {$error1} {
@@ -133,7 +140,7 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	}
 }
 
-proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines diffprog} {
+proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}}} {
 	global errors
 	if {![catch {exec diff -q $file1 $file2}]} return
 	set f1 [gzopen $file1]
@@ -149,10 +156,18 @@ proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines d
 		puts "Files differ: [string_change $file1 {{ } {\ }}] [string_change $file2 {{ } {\ }}]"
 		return
 	}
+	if {[isint $lines]} {
+		set query "\$ROW < $lines"
+	} else {
+		set query ""
+	}
+	if {$sort eq "1"} {
+		set sort $common
+	}
 	set temp1 [tempfile]
 	set temp2 [tempfile]
 	if {[catch {
-		cg select -rc $rcomments -f $common $file1 $temp1
+		cg select -q $query -rc $rcomments -f $common $file1 $temp1
 	}]} {
 		if {[catch {exec diff -q $file1 $file2} msg]} {
 			incr errors
@@ -161,7 +176,7 @@ proc tsvdiff_file_brief {file1 file2 rcomments type fields diffopts splitlines d
 		}
 	}
 	if {[catch {
-		cg select -rc $rcomments -f $common $file2 $temp2
+		cg select -q $query -rc $rcomments -f $common $file2 $temp2
 	}]} {
 		if {[catch {exec diff -q $file1 $file2} msg]} {
 			incr errors
@@ -187,6 +202,7 @@ proc cg_tsvdiff args {
 	set diffopts {}
 	set excludeopts {}
 	set lines {}
+	set sort {}
 	cg_options tsvdiff args {
 		-c {
 			if {[true $value]} {set rcomments 0} else {set rcomments 1}
@@ -206,8 +222,11 @@ proc cg_tsvdiff args {
 		-sc - -suppress-common-lines {
 			set suppress-common-lines $value
 		}
-		-s - -splitlines {
+		-split - -splitlines {
 			set splitlines $value
+		}
+		-s - -sort {
+			set sort $value
 		}
 		-d - -diffprog {
 			set diffprog $value
@@ -254,9 +273,9 @@ proc cg_tsvdiff args {
 				set file2 [gzfile [gzroot $dir2$post]]
 				if {[file exists $file2]} {
 					if {!$brief} {
-						tsvdiff_file $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines
+						tsvdiff_file $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
 					} else {
-						tsvdiff_file_brief $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
+						tsvdiff_file_brief $file $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
 					}
 				} else {
 					incr errors
@@ -274,9 +293,9 @@ proc cg_tsvdiff args {
 		} elseif {[regexp {^Files (.*) and (.*) differ$} $line temp file1 file2]} {
 			if {[file extension [gzroot $file1]] in ".tsv .sft .hsmetrics"} {
 				if {$brief} {
-					tsvdiff_file_brief $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog
+					tsvdiff_file_brief $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
 				} else {
-					tsvdiff_file $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines
+					tsvdiff_file $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
 				}
 			} else {
 				if {$brief} {

@@ -1,0 +1,41 @@
+= tsv_diff =
+
+== Format ==
+cg tsvdiff ?options? file1 file2
+
+== Summary ==
+compare tsv files
+
+== Description ==
+tsvdiff compares tsv files, taking into account that they are tsv files
+(if they have an extension indicating they are tsv files):
+* order of fields is ignored: If the same fields are present but in a 
+different order, this is not shown as a difference
+* Extra fields are only indicated in the beginning (header difference), 
+not in all the data lines. If file1 and file2 are directories, they are 
+recursively traversed and the diff made between all files in them.
+* Files are compared decompressed: files can be equal even if one 
+file is compressed and the other not.
+
+== Arguments ==
+; file1: file to compared to file2
+; file2: file to be compared to file1
+
+== Options ==
+; -q 0/1 (-brief): only show files which differ (not the differences of each file)
+; -c 0/1: ignore differences in comments
+; -f fields: only compare the given fields
+; -x excludepattern (-exclude): exclude files that match **excludepattern**. This option can be given multiple times
+; -t l/xl/sd/diff (-type): type of diff: 
+l first converts files to a long format where each line is split so that for each field you get a line of the form "fieldname fieldvalue"
+xl is similar to l, but adds extra data describing the variant or region before each line (-> variant fieldname fieldvalue)
+; -y 0/1 (-side-by-side): compare side by side
+; -sc 0/1 (-suppress-common-lines): do not show common lines (in side by side comparison
+; -split 0/1 (-splitlines): add an extra empty line between each line before comparison (this will split up multiline diffs)
+; -s 0/1/list (-sort): sort tsv files before comparing (sort order is ignored)
+; -d progname (-diffprog): show diff using **progname** (conversion from e.g. xl type is done first)
+; -w number (-width): number of characters the display is wide (for side by side)
+; -lines number: only compare the first **number** of lines
+
+== Category ==
+Dev
