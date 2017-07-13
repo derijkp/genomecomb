@@ -51,7 +51,6 @@ proc bam_clean_job {args} {
 	-vars {removeduplicates sample} {*}$skips -code {
 		file delete $target.temp
 		samtools_sort $dep $target.temp
-	#	picard SortSam	I=$dep	O=$target.temp	SO=coordinate 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
 	}
 	set root s$root

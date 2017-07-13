@@ -67,7 +67,7 @@ analysis (see further) using the amplicons defained in **ampliconfile**
 ; -varcallers varcallers (-v): (space separated) list of variant callers to be used (default "gatk sam")
 ; -split 1/0 (-s): split multiple alternative genotypes over different line
 ; -downsampling_type NONE/ALL_READS/BY_SAMPLE/: sets the downsampling type used by GATK (empty for default).
-; -targetfile targetfile: if targetfile is provided, coverage statistics will be calculated for this region using picard CalculateHsMetrics
+; -targetfile targetfile: if targetfile is provided, coverage statistics will be calculated for this region
 ; -reports list: use all (default) for creating all reports. If you only
 want some made, give these as a space separated list. Possible reports are:
 flagstats fastqc vars hsmetrics covered
@@ -127,8 +127,7 @@ reg_cluster-sam-rdsbwa-S0489.tsv
 If the experiment used e.g. exome capture, this can be indicated by the
 presence of a file named reg_targets.tsv (or matching reg_*_targets*.tsv)
 in the sampledir (or the option -targetfile). If present, coverage
-statistics will be calculated for this region using picard
-CalculateHsMetrics.
+statistics will be calculated for this region.
 
 === Amplicon sequencing ===
 Amplicon sequencing samples are indicated by the presence of a file named

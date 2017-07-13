@@ -95,7 +95,7 @@ This option can be given more than once; all given files will be added
 ; -dbfiles files: Use **files** for extra (files in **dbdir** are already used) annotation. **files** should be a space separated list of files.
 ; -conv_nextseq 1/0: generate fastqs for nextseq run & create sample folders - rundir should be placed in projectdir
 of resulting variants. This option can be added multiple times (with different files)
-; -targetfile targetfile: if targetfile is provided, coverage statistics will be calculated for this region using picard CalculateHsMetrics
+; -targetfile targetfile: if targetfile is provided, coverage statistics will be calculated for this region
 ; -m maxopenfiles (-maxopenfiles): The number of files that a program
 can keep open at the same time is limited. pmulticompar will distribute
 the subtasks thus, that the number of files open at the same time stays
