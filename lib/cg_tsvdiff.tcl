@@ -44,7 +44,6 @@ proc long {file resultfile splitlines {pre {}} {lines {}}} {
 }
 
 proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}}} {
-	putsvars file1 file2 rcomments type fields diffopts splitlines diffprog lines sort
 	global errors
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
