@@ -7,7 +7,6 @@
 lappend auto_path ~/dev/genomecomb/lib
 package require ClassyTk
 package require Extral
-package require dbi
 package require dbi_sqlite3
 
 Widget subclass cgdisplay
