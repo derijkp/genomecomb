@@ -119,7 +119,7 @@ proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
 		set sampleid [file_read $compar_dir/analysis.tsv.maxid]
 	} elseif {[file exists $compar_dir/analysis.tsv]} {
 		set sampleid [lindex [cg select -g all -gc {max(id)} $compar_dir/analysis.tsv] end]
-		if {$sampleid eq "all"} {set sampleid 0}
+		if {$sampleid eq ""} {set sampleid 0}
 	} else {
 		set sampleid 0
 	}
@@ -294,7 +294,7 @@ proc multidb_job {args} {
 			set varidstart [file_read $dep.maxid]
 		} else {
 			set varidstart [lindex [cg select -g all -gc {max(id)} $dep] end]
-			if {$varidstart eq "all"} {set varidstart 1}
+			if {$varidstart eq ""} {set varidstart 1}
 		}
 		incr varidstart
 		# write headers of targets
