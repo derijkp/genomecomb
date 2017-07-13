@@ -88,8 +88,8 @@ that do not have a sample specific amplicon file yet.
 ; -split 1/0: split multiple alternative genotypes over different line
 ; -downsampling_type NONE/ALL_READS/BY_SAMPLE/: sets the downsampling type used by GATK (empty for default).
 ; -reports list: use all (default) for creating all reports. If you only
-want some made, give these as a space separated list. Possible reports are:
-flagstats fastqstats fastqc vars hsmetrics covered histo
+want some made, give these as a space separated list. Possible reports are (further explained in [[cg_process_reports]]):
+fastqstats fastqc flagstat_reads flagstat_alignments histodepth vars hsmetrics covered histo
 ; -dbfile file: Use the given **file** for extra (files in **dbdir** are already used) annotation. 
 This option can be given more than once; all given files will be added
 ; -dbfiles files: Use **files** for extra (files in **dbdir** are already used) annotation. **files** should be a space separated list of files.

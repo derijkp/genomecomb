@@ -22,8 +22,18 @@ test reports {process_reports} {
 	file copy {*}[glob expected/exomes_yri_mx2/samples/NA19240mx2/*] tmp/test_reports/NA19240mx2
 	file delete -force tmp/test_reports/NA19240mx2/reports
 	mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/test_reports/NA19240mx2/reg_hg19_targets.tsv.lz4
-	cg process_reports -stack 1 tmp/test_reports/NA19240mx2 refseqtest/hg19
+	cg process_reports -stack 1 -v 2 tmp/test_reports/NA19240mx2 refseqtest/hg19 2>@ stderr >@ stdout
 	cg tsvdiff -q 1 tmp/test_reports/NA19240mx2/reports expected/exomes_yri_mx2/samples/NA19240mx2/reports
+} {}
+
+test reports {process_reports no targetfile} {
+	cd $::bigtestdir
+	file delete -force tmp/test_reportsnotarget
+	file mkdir tmp/test_reportsnotarget/NA19240mx2
+	file copy {*}[glob expected/exomes_yri_mx2/samples/NA19240mx2/*] tmp/test_reportsnotarget/NA19240mx2
+	file delete -force tmp/test_reportsnotarget/NA19240mx2/reports tmp/test_reportsnotarget/NA19240mx2/reg_hg19_targets.tsv.lz4
+	cg process_reports -stack 1 -v 2 tmp/test_reportsnotarget/NA19240mx2 refseqtest/hg19 2>@ stderr >@ stdout
+	cg tsvdiff -q 1 tmp/test_reportsnotarget/NA19240mx2/reports expected/test_reportsnotarget
 } {}
 
 testsummarize

@@ -18,8 +18,13 @@ Following report types can be selected:
 fastq files made using fastq-stats (files report_fastq_fw-source.tsv and
 report_fastq_rev-sample.tsv)
 ; fastqc: fastqc analysis with graphs etc. per fastq file (in the fastqc subdir)
-; flagstats: stats about bamfiles in the sampledir made using samtools flagstat 
-(file report_bam-source.tsv)
+; flagstat_reads: stats about bamfiles in the sampledir made using samtools flagstat 
+(file report_flagstat_reads-source.tsv) based on primary alignments only (so counts reads)
+; flagstat_alignmments: stats about bamfiles in the sampledir made using samtools flagstat 
+(file report_flagstat_alignments-source.tsv). This counts alignments, not reads (includes secondary alignments)
+; histodepth: create a histogram of the sequencing depth. If a targetfile is present, 
+histograms for on- and off-target regions will be separated. The report_* version
+contains coverage statistics at various depth cutoffs
 ; vars: number of variants, quality variants ($coverage >= 20 and $quality >= 50), 
 etc in the various var files (file report_vars-source.tsv)
 ; hsmetrics: picard hsmetrics analysis of target coverage
@@ -43,3 +48,4 @@ This command can be distributed on a cluster or using multiple threads with
 
 == Category ==
 Process
+

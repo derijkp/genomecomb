@@ -16,8 +16,10 @@ proc process_reports_job {args} {
 	job_logdir $sampledir/log_jobs
 	set ref [dbdir_ref $dbdir]
 	if {$reports eq "all"} {
-		set reports {flagstats fastqstats fastqc vars hsmetrics covered histo}
+		set reports {fastqstats fastqc flagstat_reads histodepth hsmetrics vars covered histo}
 	}
+	# find regionfile indicating target of sequencing (used by hsmetrics, histodepth, vars, so needs to be here)
+	set targetfile [targetfile_job $sampledir $dbdir]
 	# logfile
 	set cmdline [list cg process_reports]
 	foreach option {
@@ -32,17 +34,16 @@ proc process_reports_job {args} {
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
 	# start
 	set bamfiles [jobglob $sampledir/*.bam]
-	set targetfile [targetfile_job $sampledir $dbdir]
 	set ampliconsfile [ampliconsfile $sampledir $ref]
 	file mkdir $sampledir/reports
 	foreach bamfile $bamfiles {
 		set bamroot [file root [file tail [gzroot $bamfile]]]
 		regsub ^map- $bamroot {} bamroot
-		if {[inlist $reports flagstats]} {
+		if {[inlist $reports flagstat_alignments]} {
 			set dep $bamfile
-			set target $sampledir/reports/flagstat-$bamroot.flagstat
-			set target2 $sampledir/reports/report_bam-$bamroot.tsv
-			job reports_flagstats-[file tail $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
+			set target $sampledir/reports/flagstat_alignments-$bamroot.flagstat
+			set target2 $sampledir/reports/report_flagstat_alignments-$bamroot.tsv
+			job reports_flagstat_alignments-[file tail $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
 				exec samtools flagstat $dep > $target.temp
 				file rename -force -force $target.temp $target
 				set o [open $target2.temp w]
@@ -50,7 +51,30 @@ proc process_reports_job {args} {
 				set f [open $target]
 				while {[gets $f line] != -1} {
 					if {![regexp {^([0-9]+) \+ ([0-9]+) ([^()]*)} $line temp value value_qcfail parameter]} continue
-					puts $o "$bamroot\tflagstat\t$parameter\t$value\t$value_qcfail"
+					puts $o "$bamroot\tflagstat_alignments\t[string trim $parameter]\t$value\t$value_qcfail"
+				}
+				close $f
+				close $o
+				file rename -force $target2.temp $target2
+			}
+		}
+		if {[inlist $reports flagstat_reads]} {
+			set dep $bamfile
+			set target $sampledir/reports/flagstat_reads-$bamroot.flagstat
+			set target2 $sampledir/reports/report_flagstat_reads-$bamroot.tsv
+			job reports_flagstat_reads-[file tail $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
+				if {[catch {
+					exec samtools view -F 256 -h -b $dep | samtools flagstat - > $target.temp
+				} msg]} {
+					if {$msg ne "\[bam_header_read\] EOF marker is absent. The input is probably truncated."} {error $msg}
+				}
+				file rename -force -force $target.temp $target
+				set o [open $target2.temp w]
+				puts $o [join {sample source parameter value value_qcfail} \t]
+				set f [open $target]
+				while {[gets $f line] != -1} {
+					if {![regexp {^([0-9]+) \+ ([0-9]+) ([^()]*)} $line temp value value_qcfail parameter]} continue
+					puts $o "$bamroot\tflagstat_reads\t[string trim $parameter]\t$value\t$value_qcfail"
 				}
 				close $f
 				close $o
@@ -78,11 +102,59 @@ proc process_reports_job {args} {
 				file rename -force $target2temp $target2
 			}
 		}
+		if {[inlist $reports histodepth]} {
+			set dep1 $bamfile
+			set dep2 $targetfile
+			set target $sampledir/reports/histodepth-$bamroot.tsv
+			set target2 $sampledir/reports/report_histodepth-$bamroot.tsv
+			job reports_histodepth-[file tail $bamfile] -optional 1 -deps {$dep1 ($dep2)} -targets {$target $target2} -vars {bamroot bamfile} -code {
+				set targettemp [filetemp target]
+				if {![file exists $dep2]} {
+					set targetfile {}
+					set tottarget 0
+				} else {
+					set targetfile $dep2
+					set tottarget [lindex [cg covered $targetfile] end]
+				}
+				cg depth_histo -max 1000 -q 0 -Q 0 $dep1 $targetfile > $targettemp
+				file rename -force $targettemp $target
+				set c [split [string trim [file_read $target]] \n]
+				set header [split [list_shift c] \t]
+				if {$header ne "depth ontarget offtarget"} {
+					error "$target has wrong format (should have fields: depth ontarget offtarget)"
+				}
+				set c [list_reverse $c]
+				set totontarget 0
+				set totofftarget 0
+				set result {}
+				foreach line $c {
+					foreach {depth ontarget offtarget} [split $line \t] break
+					incr totontarget $ontarget
+					incr totofftarget $offtarget
+					if {$depth in {30 20 10 2 1}} {
+						if {$tottarget} {
+							lappend result "$bamroot\thistodepth\tontarget_bases_${depth}X\t$totontarget"
+							lappend result "$bamroot\thistodepth\tpct_target_bases_${depth}X\t[format %.4f [expr {(100.0*$totontarget)/$tottarget}]]"
+						}
+						lappend result "$bamroot\thistodepth\tofftarget_bases_${depth}X\t$totofftarget"
+					}
+				}
+				set out [join {sample source parameter value} \t]\n
+				if {$tottarget} {
+					append out "$bamroot\thistodepth\ttargetbases\t$tottarget\n"
+				}
+				append out [join [ssort -natural $result] \n]
+				append out \n
+				set target2temp [filetemp target2]
+				file_write $target2temp $out
+				file rename -force $target2temp $target2
+			}
+		}
 		if {[inlist $reports histo] && $ampliconsfile ne ""} {
 			set dep1 $bamfile
 			set dep2 $ampliconsfile
 			set target $sampledir/reports/$bamroot.histo
-			job reports_histo-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2} -targets {$target} -vars {bamroot bamfile targetfile} -code {
+			job reports_histo-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2} -targets {$target} -vars {bamroot bamfile} -code {
 				set tempfile [filetemp $target]
 				set regionfile [filetemp $target]
 				cg regcollapse $dep2 > $regionfile
@@ -105,7 +177,7 @@ proc process_reports_job {args} {
 				file delete $target.temp/stdin_fastqc
 				file delete $target.temp/stdin_fastqc.zip
 				file delete $target.temp/stdin_fastqc.html
-				file rename $target.temp $target
+				file rename -force $target.temp $target
 			}
 		}
 	}
@@ -157,6 +229,7 @@ proc process_reports_job {args} {
 			job reports_vars-$sample -deps $deps -targets {$target} -vars {sample varfile targetfile refcodingfile dbdir build} -code {
 				set tempfile [tempfile]
 				set fields {}
+				set varfile $dep
 				set header [cg select -h $varfile]
 				if {"coverage" in $header && "quality" in $header} {
 					set usehq 1
@@ -166,6 +239,7 @@ proc process_reports_job {args} {
 					lappend fields {hq=0}
 				}
 				set annotfiles {}
+				set targetfile [gzfile $targetfile]
 				if {[file exists $targetfile]} {
 					lappend annotfiles $targetfile
 					lappend fields {target=if($targets ne "",1,0)}
@@ -276,12 +350,82 @@ proc proces_reportscombine_job {destdir reportstodo} {
 	}
 	if {[llength $deps]} {
 		set target $destdir/reports/report_stats-${experiment}.tsv
-		job reportscombine_stats-$experiment -deps $deps -targets {$target} -code {
+		set target2 $destdir/reports/report_summarytable-${experiment}.tsv
+		job reportscombine_stats-$experiment -deps $deps -targets {$target $target2} -code {
+			# make report_stats
 			file mkdir [file dir $target]
 			cg cat -m -c 0 {*}$deps > $target.temp
 			cg select -rc 1 $target.temp $target.temp2
 			file rename -force $target.temp2 $target
 			file delete $target.temp
+			# make report_summarytable
+			unset -nocomplain posa
+			set pos -1
+			set template {}
+			foreach {source parameter} {
+				fastq-stats	fw_numreads
+				fastq-stats	rev_numreads
+				flagstat_reads {in total}
+				flagstat_reads duplicates
+				flagstat_reads mapped
+				flagstat_reads {properly paired}
+				histodepth	targetbases
+				histodepth	pct_target_bases_2X
+				histodepth	pct_target_bases_10X
+				histodepth	pct_target_bases_20X
+				histodepth	pct_target_bases_30X
+				genomecomb	covered_total
+				genomecomb	qvars
+				genomecomb	qvars_target
+				genomecomb	qvars_refcoding
+			} {
+				set posa($source,$parameter) [incr pos]
+				lappend template {}
+			}
+			unset -nocomplain data
+			set f [open $target]
+			set header [tsv_open $f]
+			while {[gets $f line] != -1} {
+				foreach {sample source parameter value} [split $line \t] break
+				set sample [lindex [split $sample -] end]
+				set parameter [string trim $parameter]
+				if {![info exists data($sample)]} {
+					set data($sample) $template
+				}
+				if {[info exists posa($source,$parameter)]} {lset data($sample) $posa($source,$parameter) $value}
+			}
+			close $f
+
+			set o [open $target2.temp w]
+			puts $o [join {
+				sample numreads pf_reads pct_pf_reads pf_unique_reads pct_pf_unique_reads pf_mapped pct_pf_aligned_reads
+				targetbases	pct_target_bases_2X pct_target_bases_10X pct_target_bases_20X pct_target_bases_30X
+				covered_total qvars qvars_target qvars_refcoding
+			} \t]
+			foreach sample [ssort -natural [array names data]] {
+				foreach {
+					fw_numreads rev_numreads pf_reads pf_duplicates pf_mapped pf_properlypaired
+					targetbases	pct_target_bases_2X pct_target_bases_10X pct_target_bases_20X pct_target_bases_30X
+					covered_total qvars qvars_target qvars_refcoding
+				} $data($sample) break
+				set numreads [expr {$fw_numreads+$rev_numreads}]
+				if {[isint $pf_reads]} {
+					set pct_pf_reads [format %.2f [expr {$pf_reads*100.0/$numreads}]]
+					set pf_unique_reads [expr {($pf_reads - $pf_duplicates)}]
+					set pct_pf_unique_reads [format %.2f [expr {$pf_unique_reads*100.0/$pf_reads}]]
+					set pct_pf_aligned_reads [format %.2f [expr {($pf_mapped)*100.0/$pf_reads}]]
+				} else {
+					set pct_pf_reads {}
+					set pf_unique_reads {}
+					set pct_pf_unique_reads {}
+					set pct_pf_aligned_reads {}
+				}
+				set resultline [list $sample $numreads $pf_reads $pct_pf_reads $pf_unique_reads $pct_pf_unique_reads $pf_mapped $pct_pf_aligned_reads]
+				lappend resultline {*}[lrange $data($sample) 6 end]
+				puts $o [join $resultline \t]
+			}
+			close $o
+			file rename -force $target2.temp $target2
 		}
 	}
 }

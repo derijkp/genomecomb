@@ -120,6 +120,7 @@ proc gzexists {filename {checkcompressed 1}} {
 
 proc gzfile {args} {
 	foreach filename $args {
+		if {$filename eq ""} {return {}}
 		if {![catch {glob $filename $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
 			return [lindex $list 0]
 		}
