@@ -10,7 +10,6 @@ source clip.tcl
 source compar.tcl
 source convert.tcl
 source genome_seq.tcl
-source job.tcl
 source libext.tcl
 source lift.tcl
 source mirannot.tcl
@@ -26,6 +25,7 @@ source tsv.tcl
 source val.tcl
 source varia.tcl
 source vcf2tsv.tcl
+source job.tcl
 
 # next ones take longer, use larger data in genomecomb.testdata
 source queries.tcl
