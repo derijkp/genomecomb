@@ -776,6 +776,6 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		@grouptypes@ [list $grouptypes] @grouph@ $groupheader @verbose@ [get ::verbose 0] \
 		@sortfields@ [list $sortfields]]
 	]]
-	 file_write /tmp/temp.txt $tclcode\n
+	# file_write /tmp/temp.txt $tclcode\n
 	return $tclcode
 }
