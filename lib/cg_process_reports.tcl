@@ -163,7 +163,7 @@ proc process_reports_job {args} {
 			}
 		}
 	}
-	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*]]
+	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
 	set fastqfiles_fw [list_unmerge $fastqfiles 1 fastqfiles_rev]
 	if {[inlist $reports fastqc] && [llength $fastqfiles]} {
 		foreach deps [list $fastqfiles_fw $fastqfiles_rev] dir {fw rev} {
