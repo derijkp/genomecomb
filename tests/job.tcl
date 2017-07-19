@@ -1241,6 +1241,42 @@ test job "basic chain rerun $testname" {
 	set result
 } {{log.*.error log_jobs test1.txt test2.txt} {log.*.error log.*.finished test1.txt test2.txt test3.txt}} match
 
+test job "job_update -r 1 $testname" {
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init
+	file_write test1.txt test1\n
+	after 10
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job job2 -deps {test2.txt} -targets {test3.txt} -code {
+		error "wrong this time"
+	}
+	job_wait
+	gridwait
+	after 10
+	set result {}
+	lappend result [lsort -dict [glob *]]
+	file delete -force log_jobs
+	test_job_init
+	job job1 -deps {test1.txt} -targets {test2.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test2\n
+	}
+	job job2 -deps {test2.txt} -targets {test3.txt} -code {
+		set c [file_read $dep]
+		file_write $target ${c}test3\n
+	}
+	job_wait
+	gridwait
+	cg job_update -r 1 [lindex [glob log.*.finished] 0]
+	lappend result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {{log.*.error log_jobs test1.txt test2.txt} {log.*.finished test1.txt test2.txt test3.txt}} match
+
 # end of block
 }
 

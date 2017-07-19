@@ -39,7 +39,7 @@ proc job_cleanlogs {logfile} {
 # running: still running, can be updated
 # finished: after completely successful run
 # error: some jobs had errors
-proc job_update {logfile {cleanup success} {force 0}} {
+proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 	global cgjob
 	if {![file exists $logfile]} {
 		puts stderr "logfile $logfile not found, checking for finished logfile"
@@ -58,6 +58,28 @@ proc job_update {logfile {cleanup success} {force 0}} {
 	if {[file extension $logfile] eq ".submitting"} {
 		error "cannot update logfile while still submitting: $logfile"
 	}
+	# get data from old log files
+	set oldlogfiles [lsort -dict [glob -nocomplain [file root [file root $logfile]].*.*]]
+	set pos [lsearch $oldlogfiles $logfile]
+	incr pos -1
+	set oldlogfiles [lrange $oldlogfiles 0 $pos]
+	unset -nocomplain oldlogsa
+	foreach oldlogfile $oldlogfiles {
+		set f [gzopen $oldlogfile]
+		set header [tsv_open $f]
+		if {$header ne "job jobid status submittime starttime endtime duration targets msg run"} {
+			error in format of logfile $oldlogfile
+		}
+		while {[gets $f line] != -1} {
+			set line [split $line \t]
+			foreach {job jobid status} $line break
+			if {$status ne "skipped"} {
+				set oldlogsa($job) $line
+			}
+		}
+		gzclose $f
+	}
+	# start
 	catch {close $f} ; catch {close $o}
 	set tempfile [filetemp $logfile]
 	set f [open $tempfile]
@@ -131,6 +153,11 @@ proc job_update {logfile {cleanup success} {force 0}} {
 		} elseif {$status eq "error" && $endstatus ne "running"} {
 			set endstatus error
 		}
+		if {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
+			foreach {jobo jobid status submittime starttime endtime duration targets msg run} $oldlogsa($jobo) break
+			set startcode [timescan $starttime]
+			set endcode [timescan $endtime]
+		}
 		if {$startcode ne "" && $endcode ne ""} {
 			set diff [lmath_calc $endcode - $startcode]
 			set totalduration [lmath_calc $totalduration + $diff]
@@ -155,16 +182,28 @@ proc job_update {logfile {cleanup success} {force 0}} {
 		job_cleanlogs $result
 	}
 	if {$logfile ne $result} {file delete $logfile}
+	if {$removeold} {
+		foreach oldlogfile $oldlogfiles {
+			if {$cleanup eq "allways" || ($cleanup eq "success" && $endstatus eq "finished")} {
+				job_cleanlogs $oldlogfile
+			}
+			file delete $oldlogfile
+		}
+	}
 }
 
 proc cg_job_update args {
 	job_init
 	set cleanup success
 	set force 0
+	set removeold 0
 	cg_options job_update args {
 		-dcleanup - -cleanup - -c {
 			if {$value ni {success never allways}} {error "$value not a valid option for -cleanup, should be one of: success, never, allways"}
 			set cleanup $value
+		}
+		-removeold - -r {
+			set removeold $value
 		}
 		-f - -force {
 			set force $value
@@ -174,5 +213,5 @@ proc cg_job_update args {
 		if {[file extension $logfile] in ".running .finished .error .submitting"} break
 	}
 	set logfile [file_absolute $logfile]
-	job_update $logfile $cleanup $force
+	job_update $logfile $cleanup $force $removeold
 }
