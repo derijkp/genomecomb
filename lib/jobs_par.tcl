@@ -294,7 +294,7 @@ proc job_process_par {} {
 proc job_logfile_par_close {} {
 	global cgjob
 	if {![info exists cgjob(f_logfile)]} return
-	puts $cgjob(f_logfile) [join [list total . running $cgjob(starttime) "" "" "" "" ""] \t]
+	puts $cgjob(f_logfile) [join [list total . running $cgjob(starttime) "" "" "" "" "" ""] \t]
 	close $cgjob(f_logfile)
 	file rename $cgjob(logfile).submitting $cgjob(logfile).running
 	job_update $cgjob(logfile).running $cgjob(cleanup)

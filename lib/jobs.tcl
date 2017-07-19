@@ -796,7 +796,7 @@ proc job_logfile_set {logfile {dir {}} {cmdline {}} args} {
 	foreach {key value} $args {
 		puts $cgjob(f_logfile) "\# version_$key: $value"
 	}
-	puts $cgjob(f_logfile) [join {job jobid status submittime starttime endtime duration targets msg run} \t]
+	puts $cgjob(f_logfile) [join {job jobid status submittime starttime endtime duration time_seconds targets msg run} \t]
 	set cgjob(totalduration) {0 0}
 	set cgjob(status) ok
 	set cgjob(starttime) [timestamp]
@@ -812,13 +812,38 @@ proc job_logfile {{logfile {}} {dir {}} {cmdline {}} args} {
 }
 
 proc timediff2duration {diff} {
-	set tduration [time_format [list 0 [lindex $diff end]] "%H %M %S %s"]
-	regexp {[1-9]*[0-9]$} [lindex $tduration 0] hours
-	set duration "[expr {24*[lindex $diff 0]+$hours}]:[lindex $tduration 1]:[lindex $tduration 2].[lindex $tduration 3]"
+	if {$diff eq ""} {return ""}
+	foreach {days miliseconds} $diff break
+	set seconds [expr {$days*86400 + $miliseconds/1000.0}]
+	set hours [expr {int($seconds/3600)}]
+	set minutes [expr {int(($seconds-3600*$hours)/60)}]
+	set seconds [expr {$seconds-3600*$hours-60*$minutes}]
+	foreach {seconds miliseconds} [split [format %.3f $seconds] .] break
+	return $hours:$minutes:$seconds.$miliseconds
+}
+
+proc timebetween_induration {starttime endtime} {
+	if {[catch {time_scan $endtime} endcode]} {return {}}
+	if {[catch {time_scan $starttime} startcode]} {return {}}
+	set diff [lmath_calc $endcode - $startcode]
+	timediff2duration $diff
+}
+
+proc timebetween_inseconds {starttime endtime} {
+	if {[catch {time_scan $endtime} endcode]} {return {}}
+	if {[catch {time_scan $starttime} startcode]} {return {}}
+	set diff [lmath_calc $endcode - $startcode]
+	foreach {days miliseconds} $diff break
+	format %.3f [expr {$days*86400 + $miliseconds/1000.0}]
+}
+
+proc time_seconds {diff} {
+	foreach {days miliseconds} $diff break
+	format %.3f [expr {$days*86400 + $miliseconds/1000.0}]
 }
 
 proc job_parse_log {job {totalduration {0 0}}} {
-	set starttime {} ; set endtime {} ; set duration {} ; set currentrun "" ; set currentsubmittime ""
+	set starttime {} ; set endtime {} ; set duration {} ; set currentrun "" ; set currentsubmittime ""; set time_seconds ""
 	set status submitted
 	set logdata [split [file_read $job.log] \n]
 	set failed 0
@@ -868,6 +893,7 @@ proc job_parse_log {job {totalduration {0 0}}} {
 		if {$endtime ne ""} {
 			set extratime {}
 			set diff [lmath_calc $endcode - $startcode]
+			set time_seconds [time_seconds $diff]
 			set totalduration [lmath_calc $totalduration + $diff]
 		} else {
 			set endtime ""
@@ -875,11 +901,9 @@ proc job_parse_log {job {totalduration {0 0}}} {
 			set endcode [time_scan [timestamp]]
 			set diff [lmath_calc $endcode - $startcode]
 		}
-		set tduration [time_format [list 0 [lindex $diff end]] "%H %M %S %s"]
-		regexp {[1-9]*[0-9]$} [lindex $tduration 0] hours
-		set duration "[expr {24*[lindex $diff 0]+$hours}]:[lindex $tduration 1]:[lindex $tduration 2].[lindex $tduration 3]$extratime"
+		set duration [timediff2duration $diff]$extratime
 	}
-	return [list $status $starttime $endtime $run $duration $totalduration $submittime]
+	return [list $status $starttime $endtime $run $duration $totalduration $submittime $time_seconds]
 }
 
 proc job_cleanmsg {msg} {
@@ -896,8 +920,10 @@ proc job_logfile_add {job jobid status {targets {}} {msg {}} {submittime {}} {st
 		set diff [lmath_calc [time_scan $endtime] - [time_scan $starttime]]
 		set cgjob(totalduration) [lmath_calc $cgjob(totalduration) + $diff]
 		set duration [timediff2duration $diff]
+		set time_seconds [time_seconds $diff]
 	} else {
 		set duration ""
+		set time_seconds ""
 	}
 	if {$cgjob(basedir) ne ""} {
 		set pos [string length $cgjob(basedir)/]
@@ -913,7 +939,7 @@ proc job_logfile_add {job jobid status {targets {}} {msg {}} {submittime {}} {st
 		}
 		set targets $newtargets
 	}
-	puts $cgjob(f_logfile) [join [list $job $jobid $status $submittime $starttime $endtime $duration $targets $msg $run] \t]
+	puts $cgjob(f_logfile) [join [list $job $jobid $status $submittime $starttime $endtime $duration $time_seconds $targets $msg $run] \t]
 	flush $cgjob(f_logfile)
 	if {$status eq "error"} {set cgjob(status) error}
 }

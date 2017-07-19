@@ -221,7 +221,7 @@ proc job_process_direct {} {
 proc job_logfile_direct_close {} {
 	global cgjob
 	if {![info exists cgjob(f_logfile)]} return
-	puts $cgjob(f_logfile) [join [list total . finished $cgjob(starttime) "" $cgjob(endtime) [timediff2duration $cgjob(totalduration)] "" ""] \t]
+	puts $cgjob(f_logfile) [join [list total . finished $cgjob(starttime) "" $cgjob(endtime) [timediff2duration $cgjob(totalduration)] [time_seconds $cgjob(totalduration)] "" ""] \t]
 	close $cgjob(f_logfile)
 	if {$cgjob(status) eq "error"} {
 		set result $cgjob(logfile).error
