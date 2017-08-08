@@ -14,7 +14,7 @@ prepared first (ao. sorted by name to avoid the problems caused by position sort
 ; **fastqfile2**: name of the fastq file that will contain the matching second read of each pair
 
 == Options ==
-; -m picard/sam (--method): which method is used underneath (default = picard)
+; -m biobambam/picard/sam (--method): which method is used underneath (default = biobambam)
 
 == Category ==
 Conversion

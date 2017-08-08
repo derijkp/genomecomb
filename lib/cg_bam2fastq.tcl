@@ -1,10 +1,20 @@
 proc cg_bam2fastq {args} {
 	set pos 0
-	set method picard
+	set method biobambam
 	set fastqfile2 {}
+	set extrafiles {}
 	cg_options bam2fastq args {
 		-m - -method {
 			set method $value
+		}
+		-s - -single {
+			lappend extrafiles S=$value
+		}
+		-u - -unmatched {
+			lappend extrafiles O=$value
+		}
+		-u2 - -unmatched2 {
+			lappend extrafiles O2=$value
 		}
 	} {bamfile fastqfile1 fastqfile2} 2 3
 	set compress 0
@@ -24,7 +34,14 @@ proc cg_bam2fastq {args} {
 	# Sorting based on name should avoid this
 	putslog "Sorting bam file on name"
 	samtools_sort -n $bamfile $tempbam
-	if {$method eq "picard"} {
+	if {$method eq "biobambam"} {
+		putslog "Using biobambam to convert bam to fastq"
+		if {$fastqfile2 ne ""} {
+			biobambam bamtofastq filename=$tempbam F=$fastqfile1.temp F2=$fastqfile2.temp {*}$extrafiles collate=1 exclude=SECONDARY T=[scratchfile] gz=$compress > /dev/null 2> ~/tmp/temp
+		} else {
+			biobambam bamtofastq filename=$tempbam F=$fastqfile1.temp {*}$extrafiles collate=0 exclude=SECONDARY T=[scratchfile] gz=$compress > /dev/null
+		}
+	} elseif {$method eq "picard"} {
 		putslog "Using picard to convert bam to fastq"
 		if {$fastqfile2 ne ""} {
 			set picard [findpicard]
@@ -34,7 +51,7 @@ proc cg_bam2fastq {args} {
 				error $msg
 			}
 		} else {
-			picard SamToFastq I=$tempbam F=$fastqfile1 VALIDATION_STRINGENCY=SILENT >@ stdout
+			picard SamToFastq I=$tempbam F=$fastqfile1.temp VALIDATION_STRINGENCY=SILENT >@ stdout
 		}
 		putslog $msg
 	} elseif {$method eq "sam"} {
@@ -45,7 +62,7 @@ proc cg_bam2fastq {args} {
 	} else {
 		error "unknown method \"$method\", must be picard or sam"
 	}
-	if {$compress} {
+	if {$compress && $method ne "biobambam"} {
 		exec gzip $fastqfile1.temp
 		file rename -force $fastqfile1.temp.gz $fastqfile1.gz
 		if {$fastqfile2 ne ""} {
