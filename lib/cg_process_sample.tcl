@@ -423,7 +423,7 @@ proc process_sample_job {args} {
 	set keepargs $args
 	set dbdir {}
 	set minfastqreads 0
-	set aligner bwa
+	set aligners bwa
 	set varcallers {gatk sam}
 	set realign 1
 	set cleanup 1
@@ -451,8 +451,8 @@ proc process_sample_job {args} {
 		-p - -paired {
 			set paired $value
 		}
-		-a - -aligner {
-			set aligner $value
+		-a - -aligner - -aligners {
+			set aligners $value
 		}
 		-realign - -realign {
 			set realign $value
@@ -591,7 +591,7 @@ proc process_sample_job {args} {
 	# logfile
 	set cmdline [list cg process_sample]
 	foreach option {
-		oridir dbdir paired aligner realign removeduplicates amplicons varcallers split samBQ adapterfile reports todoVar reportstodoVar cleanup maxopenfiles
+		oridir dbdir paired aligners realign removeduplicates amplicons varcallers split samBQ adapterfile reports todoVar reportstodoVar cleanup maxopenfiles
 	} {
 		if {[info exists $option]} {
 			lappend cmdline -$option [get $option]
@@ -616,7 +616,7 @@ proc process_sample_job {args} {
 	# analysis info
 	# -------------
 	info_analysis_file $sampledir/info_analysis.tsv $sample \
-		{dbdir aligner varcallers realign paired samBQ adapterfile reports} \
+		{dbdir aligners varcallers realign paired samBQ adapterfile reports} \
 		{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatkjava biobambam picard java gnusort8 tabix lz4 os} \
 		command [list cg process_sample {*}$keepargs]
 	# convert existing vcfs
@@ -685,27 +685,31 @@ proc process_sample_job {args} {
 		set files [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
 	}
 	# create bam from fastq files (if found)
-	set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.bam
+	set cleanedbams {}
 	if {[llength $files]} {
-		# do not do any of preliminaries if end product is already there
-		set bamfile $sampledir/map-${aligner}-$sample.bam
-		# quality and adapter clipping
-		set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired \
-			-skips [list -skip $bamfile -skip $resultbamfile] -removeskew $removeskew]
-		lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
-		lappend cleanupdeps $resultbamfile
-		#
-		# map using ${aligner}
-		map_${aligner}_job $bamfile $refseq $files $sample $paired -skips [list -skip $resultbamfile]
-		# extract regions with coverage >= 5 (for cleaning)
-		set cov5reg [bam2reg_job -mincoverage 5 -skip $resultbamfile $sampledir/map-${aligner}-$sample.bam]
-		# clean bamfile (mark duplicates, realign)
-		set cleanedbam [bam_clean_job $sampledir/map-${aligner}-$sample.bam $refseq $sample \
-			-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
-			-regionfile $cov5reg -cleanup $cleanup]
+		foreach aligner $aligners {
+			# do not do any of preliminaries if end product is already there
+			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.bam
+			set bamfile $sampledir/map-${aligner}-$sample.bam
+			# quality and adapter clipping
+			set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired \
+				-skips [list -skip $bamfile -skip $resultbamfile] -removeskew $removeskew]
+			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
+			lappend cleanupdeps $resultbamfile
+			#
+			# map using ${aligner}
+			map_${aligner}_job $bamfile $refseq $files $sample $paired -skips [list -skip $resultbamfile]
+			# extract regions with coverage >= 5 (for cleaning)
+			set cov5reg [bam2reg_job -mincoverage 5 -skip $resultbamfile $sampledir/map-${aligner}-$sample.bam]
+			# clean bamfile (mark duplicates, realign)
+			lappend cleanedbams [bam_clean_job $sampledir/map-${aligner}-$sample.bam $refseq $sample \
+				-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
+				-regionfile $cov5reg -cleanup $cleanup]
+		}
 	}
 	# varcaller from bams
-	foreach cleanedbam [jobglob $sampledir/map-*.bam] {
+	foreach cleanedbam $cleanedbams {
+		set bambase [join [lrange [split [file root [file tail $cleanedbam]] -] 1 end] -]
 		# make 5x coverage regfile from cleanedbam
 		set cov5reg [bam2reg_job -mincoverage 5 $cleanedbam]
 		# make 20x coverage regfile
@@ -716,14 +720,14 @@ proc process_sample_job {args} {
 			set regionfile $amplicons
 		}
 		if {"sam" in $varcallers} {
-			# samtools variant calling on map-${resultbamprefix}${aligner}
+			# samtools variant calling on map-$bambase
 			lappend cleanupdeps [var_sam_job -regionfile $regionfile -split $split -BQ $samBQ -cleanup $cleanup $cleanedbam $refseq]
-			lappend todo sam-${resultbamprefix}${aligner}-$sample
+			lappend todo sam-$bambase
 		}
 		if {"gatk" in $varcallers} {
-			# gatk variant calling on map-${resultbamprefix}${aligner}
+			# gatk variant calling on map-$bambase
 			lappend cleanupdeps [var_gatk_job -regionfile $regionfile -split $split -dt $dt -cleanup $cleanup $cleanedbam $refseq]
-			lappend todo gatk-${resultbamprefix}${aligner}-$sample
+			lappend todo gatk-$bambase
 		}
 	}
 	if {$cleanup} {
