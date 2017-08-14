@@ -1,7 +1,7 @@
 = bam2fastq =
 
 == Format ==
-cg bam2fastq bamfile fastqfile1 ?fastqfile2?
+cg bam2fastq ?options? bamfile fastqfile1 ?fastqfile2?
 
 == Summary ==
 Extracts reads from a bamfile into fastq. 
@@ -15,6 +15,10 @@ prepared first (ao. sorted by name to avoid the problems caused by position sort
 
 == Options ==
 ; -m biobambam/picard/sam (--method): which method is used underneath (default = biobambam)
+; -namesort 0/1: sort (based on name) before converting; this may avoid biases during (re)alignment because of position based sort (default = 1)
+; -single file (-s): file to write single reads
+; -unmatched file (-u): file to write unmatched first reads from pair
+; -unmatched2 file (-u2): file to write unmatched second reads from pair
 
 == Category ==
 Conversion

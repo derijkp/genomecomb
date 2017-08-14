@@ -7,5 +7,7 @@ proc biobambam {args} {
 		}
 		set ::biobambamset 1
 	}
-	exec -ignorestderr {*}$args
+	if {[catch {exec {*}$args} msg] && ![regexp {\[V\] MemUsage} $msg]} {
+		error $msg
+	}
 }

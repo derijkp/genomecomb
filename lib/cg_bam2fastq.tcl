@@ -1,20 +1,26 @@
 proc cg_bam2fastq {args} {
 	set pos 0
 	set method biobambam
+	set namesort 1
 	set fastqfile2 {}
-	set extrafiles {}
+	set singlefile [scratchfile]
+	set unmatchedfile [scratchfile]
+	set unmatchedfile2 [scratchfile]
 	cg_options bam2fastq args {
 		-m - -method {
 			set method $value
 		}
+		-namesort {
+			set namesort $value
+		}
 		-s - -single {
-			lappend extrafiles S=$value
+			set singlefile $value
 		}
 		-u - -unmatched {
-			lappend extrafiles O=$value
+			set unmatchedfile $value
 		}
 		-u2 - -unmatched2 {
-			lappend extrafiles O2=$value
+			set unmatchedfile2 $value
 		}
 	} {bamfile fastqfile1 fastqfile2} 2 3
 	set compress 0
@@ -29,17 +35,21 @@ proc cg_bam2fastq {args} {
 	set fastqfile1 [file_absolute $fastqfile1]
 	set fastqfile2 [file_absolute $fastqfile2]
 	set destdir [file dir $fastqfile1]
-	set tempbam [file root [tempfile]].bam
 	# Aligning the generated fastq files may give problems/biases if the bam is sorted on position
 	# Sorting based on name should avoid this
-	putslog "Sorting bam file on name"
-	samtools_sort -n $bamfile $tempbam
+	if {$namesort} {
+		putslog "Sorting bam file on name"
+		set tempbam [file root [scratchfile]].bam
+		samtools_sort -n $bamfile $tempbam
+	} else {
+		set tempbam $bamfile
+	}
 	if {$method eq "biobambam"} {
 		putslog "Using biobambam to convert bam to fastq"
 		if {$fastqfile2 ne ""} {
-			biobambam bamtofastq filename=$tempbam F=$fastqfile1.temp F2=$fastqfile2.temp {*}$extrafiles collate=1 exclude=SECONDARY T=[scratchfile] gz=$compress > /dev/null 2> ~/tmp/temp
+			biobambam bamtofastq filename=$tempbam F=$fastqfile1.temp F2=$fastqfile2.temp S=$singlefile O=$unmatchedfile O2=$unmatchedfile2 collate=1 exclude=SECONDARY T=[scratchfile] gz=$compress
 		} else {
-			biobambam bamtofastq filename=$tempbam F=$fastqfile1.temp {*}$extrafiles collate=0 exclude=SECONDARY T=[scratchfile] gz=$compress > /dev/null
+			biobambam bamtofastq filename=$tempbam F=$fastqfile1.temp S=$singlefile O=$unmatchedfile collate=0 exclude=SECONDARY T=[scratchfile] gz=$compress
 		}
 	} elseif {$method eq "picard"} {
 		putslog "Using picard to convert bam to fastq"
@@ -69,11 +79,16 @@ proc cg_bam2fastq {args} {
 			exec gzip $fastqfile2.temp
 			file rename -force $fastqfile2.temp.gz $fastqfile2.gz
 		}
+	} elseif {$compress} {
+		file rename -force $fastqfile1.temp $fastqfile1.gz
+		if {$fastqfile2 ne ""} {
+			file rename -force $fastqfile2.temp $fastqfile2.gz
+		}
 	} else {
 		file rename -force $fastqfile1.temp $fastqfile1
 		if {$fastqfile2 ne ""} {
 			file rename -force $fastqfile2.temp $fastqfile2
 		}
 	}
-	file delete $tempbam
+	if {$tempbam ne $bamfile} {file delete $tempbam}
 }
