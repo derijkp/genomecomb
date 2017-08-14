@@ -408,13 +408,14 @@ proc proces_reportscombine_job {destdir reportstodo} {
 					targetbases	pct_target_bases_2X pct_target_bases_10X pct_target_bases_20X pct_target_bases_30X
 					covered_total qvars qvars_target qvars_refcoding
 				} $data($sample) break
-				set numreads [expr {$fw_numreads+$rev_numreads}]
-				if {[isint $pf_reads]} {
+				if {[isint $fw_numreads] && [isint $rev_numreads] && [isint $pf_reads]} {
+					set numreads [expr {$fw_numreads+$rev_numreads}]
 					set pct_pf_reads [format %.2f [expr {$pf_reads*100.0/$numreads}]]
 					set pf_unique_reads [expr {($pf_reads - $pf_duplicates)}]
 					set pct_pf_unique_reads [format %.2f [expr {$pf_unique_reads*100.0/$pf_reads}]]
 					set pct_pf_aligned_reads [format %.2f [expr {($pf_mapped)*100.0/$pf_reads}]]
 				} else {
+					set numreads {}
 					set pct_pf_reads {}
 					set pf_unique_reads {}
 					set pct_pf_unique_reads {}
