@@ -297,6 +297,6 @@ proc job_logfile_par_close {} {
 	puts $cgjob(f_logfile) [join [list total . running $cgjob(starttime) "" "" "" "" "" ""] \t]
 	close $cgjob(f_logfile)
 	file rename $cgjob(logfile).submitting $cgjob(logfile).running
-	job_update $cgjob(logfile).running $cgjob(cleanup)
+	job_update $cgjob(logfile).running $cgjob(cleanup) 0 $cgjob(removeold)
 }
 

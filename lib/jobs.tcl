@@ -37,6 +37,9 @@ proc job_args {jobargs} {
 	if {![info exists cgjob(cleanup)]} {
 		set cgjob(cleanup) success
 	}
+	if {![info exists cgjob(removeold)]} {
+		set cgjob(removeold) 0
+	}
 	if {![info exists cgjob(silent)]} {
 		if {[get ::verbose 0] >= 1} {
 			set cgjob(silent) 0
@@ -87,6 +90,12 @@ proc job_args {jobargs} {
 				incr pos
 				if {$value ni {success never allways}} {error "$value not a valid option for -dcleanup, should be one of: success, never, allways"}
 				set cgjob(cleanup) $value
+			}
+			-dremoveold {
+				set value [lindex $jobargs $pos]
+				incr pos
+				if {$value ni {0 1}} {error "$value not a valid option for -dcleanup, should be one of: 0 1"}
+				set cgjob(removeold) $value
 			}
 			-silent - --silent {
 				set val [lindex $jobargs $pos]
@@ -1219,6 +1228,7 @@ proc job_init {args} {
 	set cgjob(endtime) {}
 	set cgjob(totalduration) {0 0}
 	set cgjob(cleanup) success
+	set cgjob(removeold) 0
 	set job_logdir [file_absolute [pwd]/log_jobs]
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_running {} job_running_direct

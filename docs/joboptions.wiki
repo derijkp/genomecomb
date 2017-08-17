@@ -68,6 +68,7 @@ List of all options supported by job enabled commands:
 ; -dcleanup success/never/allways: Allows you to keep all run/log files in the log_jobs
 dirs even if a jub is successfull (**never**), or to allways delete them (**allways**)
 instead of only deleting them after a succesfull run (**success**)
+; -dremove 0/1: remove logfiles from older runs (relevant info is included in new one, default 0)
 ; -v number (--verbose): This general option has a big effect on job enabled commands:
 If it is > 0, they will output a lot of info (to stder) on dependencies, jobs started, etc.
 ; -f 0/1 (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)

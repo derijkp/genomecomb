@@ -288,7 +288,7 @@ proc job_process_status_wait {} {
 	global cgjob jobsrunning graph totalduration
 	job_logfile_par_close
 	if {[file exists $cgjob(logfile).running]} {
-		job_update $cgjob(logfile).running $cgjob(cleanup)
+		job_update $cgjob(logfile).running $cgjob(cleanup) 0 $cgjob(removeold)
 	}
 	puts \n
 	set tduration [time_format [list 0 [lindex $totalduration end]] "%H %M %S %s"]

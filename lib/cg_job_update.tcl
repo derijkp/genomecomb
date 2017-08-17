@@ -223,7 +223,7 @@ proc cg_job_update args {
 			if {$value ni {success never allways}} {error "$value not a valid option for -cleanup, should be one of: success, never, allways"}
 			set cleanup $value
 		}
-		-removeold - -r {
+		-dremoveold - -removeold - -r {
 			set removeold $value
 		}
 		-f - -force {

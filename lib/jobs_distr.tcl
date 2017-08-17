@@ -180,6 +180,6 @@ proc job_process_distr_wait {} {
 	unset -nocomplain cgjob_exit
 	update
 	if {[file exists $cgjob(logfile).running]} {
-		job_update $cgjob(logfile).running $cgjob(cleanup)
+		job_update $cgjob(logfile).running $cgjob(cleanup) 0 $cgjob(removeold)
 	}
 }
