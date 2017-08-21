@@ -187,4 +187,9 @@ test vcf2tsv {cg_vcf2tsv -removefields only info, ref} {
 	exec diff tmp/temp2.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {vcf2tsv extraalleles} {
+	exec cg vcf2tsv -split 1 data/extraalleles.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test_extraalleles.vcf2tsv
+} {}
+
 testsummarize
