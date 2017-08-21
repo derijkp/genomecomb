@@ -253,7 +253,8 @@ proc cg_make_genomecindex {ifasfile} {
 	set ifasfile [file_absolute $ifasfile]
 	set f [open $ifasfile]
 	set base [file root $ifasfile]
-	file mkdir $base.ssa
+	set resultdir $base.ssa
+	file mkdir $resultdir.temp
 	while {![eof $f]} {
 		set name [gets $f]
 		puts $name
@@ -263,7 +264,7 @@ proc cg_make_genomecindex {ifasfile} {
 				set chr [lindex $name end]
 			}
 		}
-		set result $base.ssa/[file tail $base]-$chr
+		set result $resultdir.temp/[file tail $base]-$chr
 		if {![file exists $result.ssa]} {
 			puts "creating index $chr"
 			time {
@@ -280,6 +281,7 @@ proc cg_make_genomecindex {ifasfile} {
 		}
 	}
 	close $f
+	file rename $resultdir.temp $resultdir
 }
 
 proc cg_genome_get {args} {
