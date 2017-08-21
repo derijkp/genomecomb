@@ -25,8 +25,9 @@ cg_options makedbs_dm6 argv {
 	Downloads and creates the dm6 reference genome and annotation databases
 }
 
-set dest [file_absolute $dest]
+if {![info exists dest]} {set dest /complgen/refseqnew}
 if {[info exists webcache]} {set env(webcache) $webcache}
+set dest [file_absolute $dest]
 
 putslog "Creating dir $dest/$build"
 
