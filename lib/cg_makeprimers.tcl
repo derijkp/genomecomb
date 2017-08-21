@@ -651,6 +651,7 @@ proc makeprimers_region {name maxsize prefsize temperature dbdir db extraseq min
 }
 
 proc makeprimers {regionfile dbdir maxsize prefsize db {minfreq -1} {numthreads 1} {o stdout}} {
+# putsvars regionfile dbdir maxsize prefsize db minfreq numthreads o
 	global cachedir threads temperature extraseq
 	set cachedir [indexdir_filewrite $regionfile makeprimers_cache]
 	set threads $numthreads
@@ -702,13 +703,10 @@ proc makeprimers {regionfile dbdir maxsize prefsize db {minfreq -1} {numthreads 
 
 proc cg_makeprimers {args} {
 	global scriptname action
-	set len [llength $args]
-	if {$len < 4 || $len > 6} {
-		errorformat makeprimers
-	}
 	set threads 1
 	set minfreq -1
-	foreach {regionfile maxsize prefsize dbdir minfreq threads} $args break
+	cg_options makeprimers args {
+	} {regionfile maxsize prefsize dbdir minfreq threads} 4 6
 	set dbdir [dbdir $dbdir]
 	set db [lindex [glob $dbdir/genome_*.ssa] 0]
 	makeprimers $regionfile $dbdir $maxsize $prefsize $db $minfreq $threads
