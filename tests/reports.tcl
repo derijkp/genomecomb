@@ -33,7 +33,7 @@ test reports {process_reports no targetfile} {
 	file copy {*}[glob expected/exomes_yri_mx2/samples/NA19240mx2/*] tmp/test_reportsnotarget/NA19240mx2
 	file delete -force tmp/test_reportsnotarget/NA19240mx2/reports tmp/test_reportsnotarget/NA19240mx2/reg_hg19_targets.tsv.lz4
 	cg process_reports -stack 1 -v 2 tmp/test_reportsnotarget/NA19240mx2 refseqtest/hg19 2>@ stderr >@ stdout
-	cg tsvdiff -q 1 tmp/test_reportsnotarget/NA19240mx2/reports expected/test_reportsnotarget
+	cg tsvdiff -q 1 tmp/test_reportsnotarget/NA19240mx2/reports expected/test_reportsnotarget/NA19240mx2/reports
 } {}
 
 testsummarize
