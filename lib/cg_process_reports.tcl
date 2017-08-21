@@ -92,7 +92,7 @@ proc process_reports_job {args} {
 				set header [tsv_open $f]
 				set data [split [gets $f] \t]
 				close $f
-				set target2temp [filetemp target2]
+				set target2temp [filetemp $target2]
 				set o [open $target2temp w]
 				puts $o [join {sample source parameter value} \t]
 				foreach key [lrange $header 1 end] value [lrange $data 1 end] {
@@ -108,7 +108,7 @@ proc process_reports_job {args} {
 			set target $sampledir/reports/histodepth-$bamroot.tsv
 			set target2 $sampledir/reports/report_histodepth-$bamroot.tsv
 			job reports_histodepth-[file tail $bamfile] -optional 1 -deps {$dep1 ($dep2)} -targets {$target $target2} -vars {bamroot bamfile} -code {
-				set targettemp [filetemp target]
+				set targettemp [filetemp $target]
 				if {![file exists $dep2]} {
 					set targetfile {}
 					set tottarget 0
@@ -145,7 +145,7 @@ proc process_reports_job {args} {
 				}
 				append out [join [ssort -natural $result] \n]
 				append out \n
-				set target2temp [filetemp target2]
+				set target2temp [filetemp $target2]
 				file_write $target2temp $out
 				file rename -force $target2temp $target2
 			}
