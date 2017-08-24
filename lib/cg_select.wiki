@@ -286,40 +286,49 @@ un (unsequenced in some samples, variant in one of the others)
 ; **un(sample1,sample2, ...)**: unsequenced in some samples, variant in one of the others
 
 == Summaries using -g and -gc ==
-The -g (groupfields) and -gc (groupcols) allow the flexible creation of summaries.
-The **groupfields** option alternates a fieldname and filter (fieldname1
-filter1 fieldname2 filter2 ...). For each uniqe combination of values in
-the given fields (in lines selected by the query) a summary or aggregate
-value is returned, by default the count of lines with this combination in
-the file. The result is a [[tsv]] file with the grouping columns and one
-added column (named count). Fields used as groupfields may be calculated
-columns.
+The -g (groupfields) and -gc (groupcols) allow the flexible creation of
+summaries by calculating summary or aggregate values for uniqe
+combinations of values in different fields. The default summary is a count
+of lines, e.g. using the field "type" in -g will return the number of each
+type of variant in a variant file. The summary is made taking into account
+the query (-q).
 
-The **filter** elements can be used to show only allowed values for each
+The resulting summaries are again in the [[tsv]] format and can be queried again.
+
+Warning: This option will use memory proportional to the size of the
+resulting summary!, so grouping on e.g. position in a file with millions
+of lines may exaust the memory.
+
+=== groupfields ===
+The **groupfields** option is used to enter the field(s) to aggregate upon
+(together with a filter to apply for each field) in the following format:
+"fieldname1 filter1 fieldname2 filter2 ..." If the parameter is given with
+only one element, this field is used without filter. If multiple fields
+are given, they must be alternated with a filter. Fields used as
+groupfields may be calculated columns. 
+The resulting [[tsv]] file will contain a column for each of the grouping
+fields (and added columnsfor the summary data).
+
+The **filter** elements can be used to show only specific values for each
 field. The filter is a list of allowed values separated by spaces. If a
 list element contains spaces, enclose it in {}. Filter elements can
 contain wildcards (*) that match any set of characters (e.g. CDS* to match
-any value starting with CDS). If filter is * or {} (=emtpy)
+any value starting with CDS). If the filter is * or {} (=emtpy) all values
+will be used.
 
-The field **sample** in is interpreted specially: If sample is present,
-you can use fieldnames without the sample suffix (in both -gc and -g), and
-the sample name (of the current column) will be automatically added where
-fields in the form field-sample are available.
+The field **sample** is interpreted specially: If the field sample is
+present, you can use fieldnames without the sample suffix (in both -gc and
+-g), and the sample name (of the current column) will be automatically
+added where fields in the form field-sample are available.
 
-If you want a summary over all selected lines, you can use the special
-field **all** as a group field. The value of this field (unless it is
-actually present in the file) will be "all" for all lines. If the file
-contains an actual field "all", you can use "-" or "_" instead to get an
-overview summary.
+Another special field is **all**, which you can use to summarize over all
+selected lines. The value of the field "all" (unless it is
+actually present in the file) will be "all" for all lines. This allows you
+to e.g. count the number of result lines of a query by adding -g all. If the
+file contains an actual field "all", you can use "-" or "_" instead to get
+an overview summary.
 
-If a field (may) contains lists, you can prepend the fieldname with a +.
-In this case, the select command will go over each element in the list for
-each line when making the summary. This means that the same line may be
-counted several times (for different elements). When multiple lists are
-present, all possible combinations are counted.
-
-* This option will use memory proportional to the size of the result set!  
-
+=== groupcols ===
 The **groupcols (-gc)** option can be used to add other summary columns than the
 default count. **groupcols** is a list with the following format: "field1 filter1 field2
 filter2 ... functions". A different column will be made in the summary
@@ -348,6 +357,18 @@ group and column. Supported functions are
 **functions** can be a comma separated list to display multiple summary
 functions, eg. min(coverage),max(coverage) to display minimum and maximum
 coverage (in separate columns).
+
+=== loop over list fields ===
+Some fields (may) contain lists (e.g. genes, impacts), where you would
+like to summarize over the elements in the lists. You can do this by
+prepending the fieldname with a + or - on the groupfields or groupcols.
+In case of a prepended +, the select command will loop over each element
+in the list for each line when making the summary. This means that the
+same line may be counted several times (for different elements). If the
+same element is present multiple times in the list, it is counted multiple
+times. If a - is prepended, the select command will first remove
+duplicates in each list before looping over them. When multiple looped
+lists are present, all possible combinations are counted.
 
 == sampleinfofile ==
 A sampleinfofile is a tab delimited file containing extra information about the samples in the datafile.

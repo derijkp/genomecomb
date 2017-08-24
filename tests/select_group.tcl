@@ -773,6 +773,34 @@ test select_group "decompose lists" {
 n1	2
 n2	2}
 
+test select_group "decompose lists with duplicates (+)" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name value
+		n1	1
+		n1,n2,n2	2
+		n2	3
+	}
+	exec cg select -g +name tmp/temp.tsv
+} {name	count
+n1	2
+n2	3}
+
+test select_group "decompose lists with duplicates (-)" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name value
+		n1	1
+		n1,n2,n2	2
+		n2	3
+	}
+	exec cg select -g -name tmp/temp.tsv
+} {name	count
+n1	2
+n2	2}
+
 test select_group "decompose lists filter" {
 	global dbopt
 	test_cleantmp
@@ -785,6 +813,32 @@ test select_group "decompose lists filter" {
 	exec cg select -g {+name n1} tmp/temp.tsv
 } {name	count
 n1	2}
+
+test select_group "decompose lists filter with duplicates (+)" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name value
+		n1	1
+		n1,n2,n2	2
+		n2	3
+	}
+	exec cg select -g {+name n2} tmp/temp.tsv
+} {name	count
+n2	3}
+
+test select_group "decompose lists with duplicates (-)" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name value
+		n1	1
+		n1,n2,n2	2
+		n2	3
+	}
+	exec cg select -g {-name n2} tmp/temp.tsv
+} {name	count
+n2	2}
 
 test select_group "decompose lists multiple" {
 	global dbopt
@@ -815,6 +869,32 @@ test select_group "decompose lists groupcol" {
 } {all	n1-count	n2-count
 all	2	2}
 
+test select_group "decompose lists groupcol duplicates +" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name value
+		n1	1
+		n1,n2,n2	2
+		n2	3
+	}
+	exec cg select -stack 1 -g all -gc {+name * count} tmp/temp.tsv
+} {all	n1-count	n2-count
+all	2	3}
+
+test select_group "decompose lists groupcol duplicates -" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name value
+		n1	1
+		n1,n2,n2	2
+		n2	3
+	}
+	exec cg select -stack 1 -g all -gc {-name * count} tmp/temp.tsv
+} {all	n1-count	n2-count
+all	2	2}
+
 test select_group "decompose lists group and groupcol" {
 	global dbopt
 	test_cleantmp
@@ -829,6 +909,34 @@ test select_group "decompose lists group and groupcol" {
 n1	2	2
 n2	1	2}
 
+test select_group "decompose lists group and groupcol duplicates +" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name test	value
+		n1	t1,t2	1
+		n1,n1,n2	t1,t2,t2	2
+		n2	t2	3
+	}
+	exec cg select -g +name -gc {+test * count} tmp/temp.tsv
+} {name	t1-count	t2-count
+n1	3	5
+n2	1	3}
+
+test select_group "decompose lists group and groupcol duplicates -" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name test	value
+		n1	t1,t2	1
+		n1,n1,n2	t1,t2,t2	2
+		n2	t2	3
+	}
+	exec cg select -g -name -gc {-test * count} tmp/temp.tsv
+} {name	t1-count	t2-count
+n1	2	2
+n2	1	2}
+
 test select_group "decompose lists multiple sample" {
 	global dbopt
 	test_cleantmp
@@ -839,6 +947,26 @@ test select_group "decompose lists multiple sample" {
 		n2	t2	t2	3
 	}
 	exec cg select -g {sample * +name * +test} tmp/temp.tsv
+} {sample	name	test	count
+sample1	n1	t1	2
+sample1	n1	t2	2
+sample1	n2	t1	1
+sample1	n2	t2	2
+sample2	n1	t1	2
+sample2	n1	t2	1
+sample2	n2	t1	1
+sample2	n2	t2	2}
+
+test select_group "decompose lists multiple sample duplicates -" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		name test-sample1	test-sample2	value
+		n1	t1,t2	t1	1
+		n1,n1,n2	t1,t2,t2	t1,t2	2
+		n2	t2	t2	3
+	}
+	exec cg select -g {sample * -name * -test} tmp/temp.tsv
 } {sample	name	test	count
 sample1	n1	t1	2
 sample1	n1	t2	2
@@ -895,6 +1023,40 @@ test select_group {decompose lists sampleinfo} {
 		sample2	t2
 	}
 	exec cg select -g {sample *} -gc {seq v +test * count} tmp/temp.tsv
+} {sample	v-t1-count	v-t2-count
+sample1	2	2
+sample2	0	1}
+
+test select_group {decompose lists sampleinfo duplicates +} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	seq-sample1	seq-sample2
+		1	v	r
+		2	v	v
+	}
+	write_tab tmp/temp.sampleinfo.tsv {
+		id	test
+		sample1	t1,t2,t2
+		sample2	t2
+	}
+	exec cg select -g {sample *} -gc {seq v +test * count} tmp/temp.tsv
+} {sample	v-t1-count	v-t2-count
+sample1	2	4
+sample2	0	1}
+
+test select_group {decompose lists sampleinfo duplicates -} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	seq-sample1	seq-sample2
+		1	v	r
+		2	v	v
+	}
+	write_tab tmp/temp.sampleinfo.tsv {
+		id	test
+		sample1	t1,t2,t2
+		sample2	t2
+	}
+	exec cg select -g {sample *} -gc {seq v -test * count} tmp/temp.tsv
 } {sample	v-t1-count	v-t2-count
 sample1	2	2
 sample2	0	1}
