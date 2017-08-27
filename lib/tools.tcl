@@ -260,3 +260,10 @@ proc deindent {text} {
 		set text [string_change [string range $text [string length $temp] end] [list \n$temp \n]]
 	}
 }
+
+proc unquote {string} {
+	if {[string index $string 0] eq {"} && [string index $string end] eq {"}} {
+		return [string range $string 1 end-1]
+	}
+	return $string
+}

@@ -397,6 +397,20 @@ proc tsv_select_region {ids header neededfieldsVar} {
 	return "(([join $result "\) || \("]))"
 }
 
+proc tsv_select_transcripts {ids header neededfieldsVar} {
+	upvar $neededfieldsVar neededfields
+	foreach {geneset filter format} $ids break
+	set geneset [unquote $geneset]
+	set filter [unquote $filter]
+	set format [unquote $format]
+	if {$format ni {gt t g}} {
+		error "unknown format $format, must be one of: gt t g"
+	}
+	lappend neededfields ${geneset}_gene ${geneset}_impact ${geneset}_descr
+	set filter [var_impact_list [split $filter {,;}]]
+	return "transcripts(\$${geneset}_gene,\$${geneset}_impact,\$${geneset}_descr,\"$filter\",\"$format\")"
+}
+
 proc tsv_select_expandfield {header field {giveerror 0} {qpossVar {}}} {
 	if {$qpossVar ne ""} {upvar $qpossVar qposs}
 	if {$field eq "ROW"} {return "ROW"}
@@ -1045,6 +1059,9 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 					}
 					region {
 						set temp [tsv_select_region $ids $header neededfields]
+					}
+					transcripts {
+						set temp [tsv_select_transcripts $ids $header neededfields]
 					}
 					counthasone {
 						foreach {operator value} [lindex $line end] break

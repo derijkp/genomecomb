@@ -45,8 +45,43 @@ proc annot_init {} {
 }
 annot_init
 
-proc var_impact_list {} {
-	list_subindex $::impact_list 0
+proc var_impact_list {{filter {}}} {
+	if {$filter eq ""} {
+		return [list_subindex $::impact_list 0]
+	} else {
+		set poss [list_find -regexp $filter {[*><]}]
+		if {![llength $poss]} {
+			return $filter
+		}
+		set result {}
+		foreach pattern $filter {
+			set temp [list_subindex $::impact_list 0]
+			set first [string index $pattern 0]
+			if {$first eq ">"} {
+				if {[string index $pattern 1] eq "="} {
+					set score [annotate_impact2score [string range $pattern 2 end]]
+					incr score -1
+				} else {
+					set score [annotate_impact2score [string range $pattern 1 end]]
+				}
+				lappend result {*}[lrange $temp $score end]
+			} elseif {$first eq "<"} {
+				if {[string index $pattern 1] eq "="} {
+					set score [annotate_impact2score [string range $pattern 2 end]]
+					incr score -2
+				} else {
+					set score [annotate_impact2score [string range $pattern 1 end]]
+					incr score -1
+				}
+				lappend result {*}[lrange $temp 0 $score]
+			} elseif {[regexp {\*} $pattern]} {
+				lappend result {*}[list_sub $temp [list_find -regexp $temp $pattern]]
+			} else {
+				lappend result $pattern
+			}
+		}
+		return [list_remdup $result]
+	}
 }
 
 proc annotate_compl {seq} {

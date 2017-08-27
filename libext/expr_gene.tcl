@@ -20,3 +20,38 @@ proc tcl::mathfunc::zyg args {
 	::zyg {*}$args
 }
 
+proc tcl::mathfunc::transcripts {genes impacts descrs filter format} {
+	set result {}
+	set descrs [split $descrs {,;}]
+	set len [llength $descrs]
+	if {$len > 1} {
+		set genes [split $genes {,;}]
+		set impacts [split $impacts {,;}]
+		if {[llength $genes] == 1} {
+			set genes [list_fill $len [lindex $genes 0]]
+		}
+		if {[llength $impacts] == 1} {
+			set impacts [list_fill $len [lindex $impacts 0]]
+		}
+		if {[llength $descrs] > [llength $genes]} {
+			set genes [list_fill $len [lindex $genes 0]]
+		}
+	}
+	foreach gene $genes descr $descrs impact $impacts {
+		if {[llength $filter] && $impact ni $filter} continue
+		if {![regexp {^[+-]([^:]+):} $descr temp transcript]} {
+			error "[lindex $args 0] has wrong format (should be a x_descr field)"
+		}
+		if {$gene eq "" || $format eq "t"} {
+			lappend result $transcript
+		} elseif {$format eq "g"} {
+			lappend result $gene
+		} elseif {$format eq "gt"} {
+			lappend result $gene:$transcript
+		} else {
+			error "unknown format $format"
+		}
+	}
+	return [join $result \;]
+}
+
