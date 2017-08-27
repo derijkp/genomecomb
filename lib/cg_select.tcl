@@ -1086,7 +1086,11 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 						}
 					}
 					default {
-						set temp "${val}\([join $ids ", "]\)"
+						if {![auto_load tcl::mathfunc::$val] && [string index $val 0] eq "v"} {
+							set temp "vfunc\(\"[string range ${val} 1 end]\",[join $ids ", "]\)"
+						} else {
+							set temp "${val}\([join $ids ", "]\)"
+						}
 					}
 				}
 				lappend result $temp

@@ -105,6 +105,37 @@ proc tcl::mathfunc::lmode args {
 	join [mode [concat_vect $args]] ,
 }
 
+proc tcl::mathfunc::vfunc {args} {
+	set function [lindex $args 0]
+	set temp {}
+	set len 1
+	foreach value [lrange $args 1 end] {
+		set s [split $value ";, "]
+		set l [llength $s]
+		if {$l != 1} {
+			if {$len != 1} {error "vconcat error: $value has a different number of elements"}
+			set len $l
+		}
+		lappend temp $s
+	}
+	set result {}
+	if {$len == 1} {
+		foreach v $temp {
+			lappend result [tcl::mathfunc::$function $v]
+		}
+	} else {
+		set i 0
+		foreach line $temp {
+			if {[llength $line] == 1} {lset temp $i [list_fill $len [lindex $line 0]]}
+			incr i
+		}
+		for {set i 0} {$i < $len} {incr i} {
+			lappend result [tcl::mathfunc::$function {*}[list_subindex $temp $i]]
+		}
+	}
+	return [join $result ,]
+}
+
 proc tcl::mathfunc::vif {args} {
 	if {[llength $args] < 3 || [expr {[llength $args]%2}] != 1} {
 		error "wrong # args for function vif, must be: vif(condition1,true1,?condition2?,?true2?,...,false)"
