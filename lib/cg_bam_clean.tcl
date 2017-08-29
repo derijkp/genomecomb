@@ -69,7 +69,6 @@ proc bam_clean_job {args} {
 		list_pop skips 0; list_pop skips 0;
 		job bamremdup-$root -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-d$root.bam} \
 		-vars {sample} {*}$skips -code {
-			puts "removing duplicates"
 			biobambam bammarkduplicates2 I=$dep	O=$target.temp M=$target.dupmetrics rmdup=0 markthreads=1 tmpfile=[scratchfile] 2>@ stderr >@ stdout
 			file rename -force $target.temp $target
 		}

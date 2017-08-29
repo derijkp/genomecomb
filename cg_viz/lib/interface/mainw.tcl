@@ -362,7 +362,6 @@ proc commify {num {sep ,}} {
 }
 
 mainw method query {args} {
-putsvars args
 	set tb $object.tb
 	set var [$object.buttons.query cget -textvariable]
 	if {[llength $args]} {
