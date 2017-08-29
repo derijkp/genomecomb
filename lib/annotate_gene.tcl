@@ -75,7 +75,7 @@ proc var_impact_list {{filter {}}} {
 				}
 				lappend result {*}[lrange $temp 0 $score]
 			} elseif {[regexp {\*} $pattern]} {
-				lappend result {*}[list_sub $temp [list_find -regexp $temp $pattern]]
+				lappend result {*}[list_sub $temp [list_find -glob $temp $pattern]]
 			} else {
 				lappend result $pattern
 			}
