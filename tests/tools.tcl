@@ -85,11 +85,21 @@ proc test_genomecombdir {} {
 	# exec diff $expdir/compar/compar-test.tsv data/expected-multicompar-split-reannot.sft
 }
 
+proc file_regsub {exp subSpec file resultfile} {
+	set f [open $file]
+	set o [open $resultfile w]
+	while {[gets $f line] != -1} {
+		regsub -all $exp $line $subSpec line
+		puts $o $line
+	}
+	close $o
+	close $f
+}
+
 lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
 
 # remove tmp if it is a unexisting link
 if {![file exists tmp]} {catch {file delete tmp}}
 file mkdir tmp
-test_cleantmp
 set dbopt {}
 set dboptt {}
