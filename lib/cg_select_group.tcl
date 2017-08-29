@@ -67,9 +67,14 @@ proc tsv_select_makecol {name code {arg @neededfield@} {prequery {}}} {
 		proc $name {$arg} {
 			$prequery
 			if {[catch {expr {$code}} e]} {
-				switch \$e {
+				switch -regexp \$e {
 					{domain error: argument not in valid range} {return NaN}
 					{divide by zero} {return NaN}
+					{invalid command name "tcl::mathfunc::.*"} {
+						regexp {tcl::mathfunc::([^"]*)} \$e temp temp
+						error "unknown function \$temp"
+					}
+					default {error \$e}
 				}
 			}
 			return \$e
