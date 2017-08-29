@@ -403,6 +403,7 @@ proc tsv_select_transcripts {ids header neededfieldsVar} {
 	set geneset [unquote $geneset]
 	set filter [unquote $filter]
 	set format [unquote $format]
+	if {$format eq ""} {set format gt}
 	if {$format ni {gt t g}} {
 		error "unknown format $format, must be one of: gt t g"
 	}
