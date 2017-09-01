@@ -115,65 +115,65 @@ snp	12	1}
 
 test select_group {group distinct} {
 	cg select -g type -gc {sample {} count,distinct(coverage)} data/expected_near-vars1-reg_annot.sft
-} {type	sample1-count	sample1-distinct_coverage	sample2-count	sample2-distinct_coverage
+} {type	count-sample1	distinct_coverage-sample1	count-sample2	distinct_coverage-sample2
 del	1	32	1	41
 ins	1	32	1	41
 snp	12	1,47,54	12	0,35,52}
 
 test select_group {group distinct sample with list} {
 	cg select -g type -gc {sample {sample2} count,distinct(coverage)} data/expected_near-vars1-reg_annot.sft
-} {type	sample2-count	sample2-distinct_coverage
+} {type	count-sample2	distinct_coverage-sample2
 del	1	41
 ins	1	41
 snp	12	0,35,52}
 
 test select_group {group ucount} {
 	cg select -g type -gc {sample {} count,ucount(coverage)} data/expected_near-vars1-reg_annot.sft
-} {type	sample1-count	sample1-ucount_coverage	sample2-count	sample2-ucount_coverage
+} {type	count-sample1	ucount_coverage-sample1	count-sample2	ucount_coverage-sample2
 del	1	1	1	1
 ins	1	1	1	1
 snp	12	3	12	3}
 
 test select_group {group list} {
 	cg select -g type -gc {sample {} list(coverage)} data/expected_near-vars1-reg_annot.sft
-} {type	sample1-list_coverage	sample2-list_coverage
+} {type	list_coverage-sample1	list_coverage-sample2
 del	32	41
 ins	32	41
 snp	1,1,47,54,1,1,47,54,54,54,54,54	0,0,35,52,0,0,35,52,52,52,52,52}
 
 test select_group {group sample sum} {
-	cg select -g chromosome -gc {sample {} sequenced v sum(coverage)} data/expected_near-vars1-reg_annot.sft
-} {chromosome	sample1-v-sum_coverage	sample2-v-sum_coverage
+	cg select -g chromosome -gc {sequenced v sample {} sum(coverage)} data/expected_near-vars1-reg_annot.sft
+} {chromosome	sum_coverage-v-sample1	sum_coverage-v-sample2
 chr1	135	35
 chr2	351	139}
 
 test select_group {group sample percent} {
 	cg select -g chromosome -gc {sample {} sequenced v percent} data/expected_near-vars1-reg_annot.sft
-} {chromosome	sample1-v-percent	sample2-v-percent
+} {chromosome	percent-sample1-v	percent-sample2-v
 chr1	35.71	37.50
 chr2	64.29	62.50}
 
 test select_group {group sample gpercent} {
 	cg select -g chromosome -gc {sample {} sequenced v gpercent} data/expected_near-vars1-reg_annot.sft
-} {chromosome	sample1-v-gpercent	sample2-v-gpercent
+} {chromosome	gpercent-sample1-v	gpercent-sample2-v
 chr1	62.50	37.50
 chr2	64.29	35.71}
 
 test select_group {group sample and query} {
 	cg select -q {$coverage-sample1 > 2} -g chromosome -gc {sample {} sequenced v count} data/expected_near-vars1-reg_annot.sft
-} {chromosome	sample1-v-count	sample2-v-count
+} {chromosome	count-sample1-v	count-sample2-v
 chr1	3	1
 chr2	7	3}
 
 test select_group {group sample with non-sample var} {
 	cg select -g chromosome -gc {sample {} sequenced v type {} count} data/expected_near-vars1-reg_annot.sft
-} {chromosome	sample1-v-del-count	sample1-v-ins-count	sample1-v-snp-count	sample2-v-snp-count
+} {chromosome	count-sample1-v-del	count-sample1-v-ins	count-sample1-v-snp	count-sample2-v-snp
 chr1	1	0	4	3
 chr2	0	1	8	5}
 
 test select_group {group where -g has sample} {
 	cg select -g coverage -gc {sample {} count} data/expected_near-vars1-reg_annot.sft
-} {coverage	sample1-count	sample2-count
+} {coverage	count-sample1	count-sample2
 0	0	4
 1	4	0
 32	2	0
@@ -185,7 +185,7 @@ test select_group {group where -g has sample} {
 
 test select_group {group where -g has sample and non-sample field} {
 	cg select -g {coverage {} type {}} -gc {sample {} count} data/expected_near-vars1-reg_annot.sft
-} {coverage	type	sample1-count	sample2-count
+} {coverage	type	count-sample1	count-sample2
 0	snp	0	4
 1	snp	4	0
 32	del	1	0
@@ -240,7 +240,7 @@ test select_group {group with sample in -gc} {
 		2	B	B
 	}
 	exec cg select -g {type} -gc {sample {} count} tmp/temp.tsv
-} {type	sample1-count	sample2-count
+} {type	count-sample1	count-sample2
 A	1	0
 B	1	2}
 
@@ -252,7 +252,7 @@ test select_group {group with sample in -gc where not all samples have the -g fi
 		2	B	B	b
 	}
 	exec cg select -g {type} -gc {sample {} count} tmp/temp.tsv
-} {type	sample1-count	sample2-count	sample3-count
+} {type	count-sample1	count-sample2	count-sample3
 A	1	0	0
 B	1	2	0}
 
@@ -264,7 +264,7 @@ test select_group {group with sample in -gc where not all samples have the -g fi
 		2	B	B	b
 	}
 	exec cg select -g {type} -gc {sample {sample2} count} tmp/temp.tsv
-} {type	sample2-count
+} {type	count-sample2
 B	2}
 
 test select_group {group with wildcard calc col and sampleinfo} {
@@ -317,7 +317,7 @@ test select_group {sampleinfo in group} {
 		sample3	f
 	}
 	exec cg select -g {type {} gender {}} -gc {sample {} count} tmp/temp.tsv
-} {type	gender	sample1-count	sample2-count	sample3-count
+} {type	gender	count-sample1	count-sample2	count-sample3
 A	f	0	0	1
 A	m	1	0	0
 B	f	0	2	1
@@ -337,7 +337,7 @@ test select_group {sampleinfo in group, filter} {
 		sample3	f
 	}
 	exec cg select -g {type {} gender f} -gc {sample {} count} tmp/temp.tsv
-} {type	gender	sample1-count	sample2-count	sample3-count
+} {type	gender	count-sample1	count-sample2	count-sample3
 A	f	0	0	1
 B	f	0	2	1}
 
@@ -355,7 +355,7 @@ test select_group {sampleinfo in gc} {
 		sample3	f
 	}
 	exec cg select -g {type {}} -gc {sample {} gender f count} tmp/temp.tsv
-} {type	sample1-f-count	sample2-f-count	sample3-f-count
+} {type	count-sample1-f	count-sample2-f	count-sample3-f
 A	0	0	1
 B	0	2	1}
 
@@ -373,7 +373,7 @@ test select_group {sampleinfo in gc, sample in g} {
 		sample3	f
 	}
 	exec cg select -g {sample {}} -gc {type {} gender {} count} tmp/temp.tsv
-} {sample	A-f-count	A-m-count	B-f-count	B-m-count
+} {sample	count-A-f	count-A-m	count-B-f	count-B-m
 sample1	0	1	0	1
 sample2	0	0	2	0
 sample3	1	0	1	0}
@@ -392,7 +392,7 @@ test select_group {sampleinfo in agregate, sample in g} {
 		sample3	f
 	}
 	exec cg select -g {sample {}} -gc {type {} list(gender)} tmp/temp.tsv
-} {sample	A-list_gender	B-list_gender
+} {sample	list_gender-A	list_gender-B
 sample1	m	m
 sample2		f,f
 sample3	f	f}
@@ -411,7 +411,7 @@ test select_group {sampleinfo in agregate, sample in g} {
 		sample3	3
 	}
 	exec cg select -g {sample {}} -gc {type {} list(num),sum(num),avg(num)} tmp/temp.tsv
-} {sample	A-list_num	A-sum_num	A-avg_num	B-list_num	B-sum_num	B-avg_num
+} {sample	list_num-A	sum_num-A	avg_num-A	list_num-B	sum_num-B	avg_num-B
 sample1	1	1	1.0	1	1	1.0
 sample2				2,2	4	2.0
 sample3	3	3	3.0	3	3	3.0}
@@ -442,7 +442,7 @@ test select_group {hidden sample, sampleinfo in gc} {
 		sample3	f
 	}
 	exec cg select -g {type {}} -gc {gender {} count} tmp/temp.tsv
-} {type	f-count	m-count
+} {type	count-f	count-m
 A	1	1
 B	3	1}
 
@@ -537,7 +537,7 @@ test select_group {wildcard calc column used in gc} {
 		4	B	1	9	4
 	}
 	exec cg select -f {{valb-*=if($val-* == 0,0,1)}} -g type -gc {valb {} count} tmp/temp.tsv
-} {type	0-count	1-count
+} {type	count-0	count-1
 A	2	4
 B	1	5}
 
@@ -617,7 +617,7 @@ test select_group "long format -gc with sampleinfo" {
 		sample3	f	1.0
 	}
 	exec cg select -g all -gc {gender {} count} tmp/temp.tsv
-} {all	f-count	m-count
+} {all	count-f	count-m
 all	2	1}
 
 test select_group "long format -g and -gc aggregate with sampleinfo" {
@@ -658,7 +658,7 @@ test select_group "long format -g and -gc with sampleinfo" {
 		sample4	m	0.5
 	}
 	exec cg select -g gender -gc {exp {} avg(freq)} tmp/temp.tsv
-} {gender	1-avg_freq	2-avg_freq
+} {gender	avg_freq-1	avg_freq-2
 f	0.8	1.0
 m	0.4	0.5}
 
@@ -680,7 +680,7 @@ test select_group "long format -g and -gc and filter with sampleinfo" {
 		sample4	m	0.5
 	}
 	exec cg select -g {gender f} -gc {exp {} avg(freq)} tmp/temp.tsv
-} {gender	1-avg_freq	2-avg_freq
+} {gender	avg_freq-1	avg_freq-2
 f	0.8	1.0}
 
 test select_group "long format -g with sample with sampleinfo" {
@@ -724,7 +724,7 @@ test select_group "long format -gc with sample with sampleinfo" {
 		sample4	m	0.5
 	}
 	exec cg select -g gender -gc {sample {} list(freq)} tmp/temp.tsv
-} {gender	sample1-list_freq	sample2-list_freq	sample3-list_freq	sample4-list_freq
+} {gender	list_freq-sample1	list_freq-sample2	list_freq-sample3	list_freq-sample4
 f		0.8	1.0	
 m	0.4			0.5}
 
@@ -866,7 +866,7 @@ test select_group "decompose lists groupcol" {
 		n2	3
 	}
 	exec cg select -stack 1 -g all -gc {+name * count} tmp/temp.tsv
-} {all	n1-count	n2-count
+} {all	count-n1	count-n2
 all	2	2}
 
 test select_group "decompose lists groupcol duplicates +" {
@@ -879,7 +879,7 @@ test select_group "decompose lists groupcol duplicates +" {
 		n2	3
 	}
 	exec cg select -stack 1 -g all -gc {+name * count} tmp/temp.tsv
-} {all	n1-count	n2-count
+} {all	count-n1	count-n2
 all	2	3}
 
 test select_group "decompose lists groupcol duplicates -" {
@@ -892,7 +892,7 @@ test select_group "decompose lists groupcol duplicates -" {
 		n2	3
 	}
 	exec cg select -stack 1 -g all -gc {-name * count} tmp/temp.tsv
-} {all	n1-count	n2-count
+} {all	count-n1	count-n2
 all	2	2}
 
 test select_group "decompose lists group and groupcol" {
@@ -905,7 +905,7 @@ test select_group "decompose lists group and groupcol" {
 		n2	t2	3
 	}
 	exec cg select -g +name -gc {+test * count} tmp/temp.tsv
-} {name	t1-count	t2-count
+} {name	count-t1	count-t2
 n1	2	2
 n2	1	2}
 
@@ -919,7 +919,7 @@ test select_group "decompose lists group and groupcol duplicates +" {
 		n2	t2	3
 	}
 	exec cg select -g +name -gc {+test * count} tmp/temp.tsv
-} {name	t1-count	t2-count
+} {name	count-t1	count-t2
 n1	3	5
 n2	1	3}
 
@@ -933,7 +933,7 @@ test select_group "decompose lists group and groupcol duplicates -" {
 		n2	t2	3
 	}
 	exec cg select -g -name -gc {-test * count} tmp/temp.tsv
-} {name	t1-count	t2-count
+} {name	count-t1	count-t2
 n1	2	2
 n2	1	2}
 
@@ -987,7 +987,7 @@ test select_group "decompose lists group and groupcol and sample" {
 		n2	t2	t2	3
 	}
 	exec cg select -g {sample * +name} -gc {+test * count} tmp/temp.tsv
-} {sample	name	t1-count	t2-count
+} {sample	name	count-t1	count-t2
 sample1	n1	2	2
 sample1	n2	1	2
 sample2	n1	2	1
@@ -1023,7 +1023,7 @@ test select_group {decompose lists sampleinfo} {
 		sample2	t2
 	}
 	exec cg select -g {sample *} -gc {seq v +test * count} tmp/temp.tsv
-} {sample	v-t1-count	v-t2-count
+} {sample	count-v-t1	count-v-t2
 sample1	2	2
 sample2	0	1}
 
@@ -1040,7 +1040,7 @@ test select_group {decompose lists sampleinfo duplicates +} {
 		sample2	t2
 	}
 	exec cg select -g {sample *} -gc {seq v +test * count} tmp/temp.tsv
-} {sample	v-t1-count	v-t2-count
+} {sample	count-v-t1	count-v-t2
 sample1	2	4
 sample2	0	1}
 
@@ -1057,7 +1057,7 @@ test select_group {decompose lists sampleinfo duplicates -} {
 		sample2	t2
 	}
 	exec cg select -g {sample *} -gc {seq v -test * count} tmp/temp.tsv
-} {sample	v-t1-count	v-t2-count
+} {sample	count-v-t1	count-v-t2
 sample1	2	2
 sample2	0	1}
 
@@ -1074,7 +1074,7 @@ test select_group {group simple empty} {
 		chromosome	begin		end	type
 	}
 	cg select -g all -gc {type {ins del} count} tmp/temp.tsv
-} {all	del-count	ins-count
+} {all	count-del	count-ins
 all	0	0}
 
 testsummarize

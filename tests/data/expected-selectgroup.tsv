@@ -1,4 +1,4 @@
-test_gene	del-coding-count	del-coding-min_begin	del-coding-max_begin	del-coding-max_end	del-coding-avg_begin	del-noncoding-count	del-noncoding-min_begin	del-noncoding-max_begin	del-noncoding-max_end	del-noncoding-avg_begin	snp-coding-count	snp-coding-min_begin	snp-coding-max_begin	snp-coding-max_end	snp-coding-avg_begin	snp-noncoding-count	snp-noncoding-min_begin	snp-noncoding-max_begin	snp-noncoding-max_end	snp-noncoding-avg_begin
+test_gene	count-del-coding	min_begin-del-coding	max_begin-del-coding	max_end-del-coding	avg_begin-del-coding	count-del-noncoding	min_begin-del-noncoding	max_begin-del-noncoding	max_end-del-noncoding	avg_begin-del-noncoding	count-snp-coding	min_begin-snp-coding	max_begin-snp-coding	max_end-snp-coding	avg_begin-snp-coding	count-snp-noncoding	min_begin-snp-noncoding	max_begin-snp-noncoding	max_end-snp-noncoding	avg_begin-snp-noncoding
 	0					0					0					1	2000	2000	2001	2000.0
 CCDC30;PPIH;YBX1;CLDN19;LEPRE1	1	42890000	42890000	42985900	42890000.0	0					0					0				
 CLDN19	0					0					8	42974287	42978320	42978321	42976804.125	1	42976843	42976843	42976844	42976843.0

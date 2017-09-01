@@ -371,6 +371,10 @@ group and column. Supported functions are
 functions, eg. min(coverage),max(coverage) to display minimum and maximum
 coverage (in separate columns).
 
+The name of the new summary field created starts with the summary function; if it
+has a field "argument", the name will start with function_field (e.g. max_freq).
+If other other grouping fields were used, the values are added in order concatenated by -
+
 === loop over list fields ===
 Some fields (may) contain lists (e.g. genes, impacts), where you would
 like to summarize over the elements in the lists. You can do this by

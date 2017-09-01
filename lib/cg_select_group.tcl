@@ -759,7 +759,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		foreach col $cols {
 			foreach {func val} @grouptypes@ {
 				if {$val ne ""} {append func _$val} 
-				lappend header [join [list {*}${col} $func] -]
+				lappend header [join [list $func {*}${col}] -]
 			}
 		}
 		if {![llength @sortfields@]} {
