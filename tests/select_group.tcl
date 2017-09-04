@@ -252,9 +252,9 @@ test select_group {group with sample in -gc where not all samples have the -g fi
 		2	B	B	b
 	}
 	exec cg select -g {type} -gc {sample {} count} tmp/temp.tsv
-} {type	count-sample1	count-sample2	count-sample3
-A	1	0	0
-B	1	2	0}
+} {type	count-sample1	count-sample2
+A	1	0
+B	1	2}
 
 test select_group {group with sample in -gc where not all samples have the -g field and limit sample} {
 	test_cleantmp
@@ -1085,9 +1085,9 @@ test select_group {group with sample in -gc, field in -g missing for some sample
 		2	B	B	Y
 	}
 	exec cg select -g {type} -gc {sample {} count} tmp/temp.tsv
-} {type	count-sample1	count-sample2	count-sample3
-A	1	0	0
-B	1	2	0}
+} {type	count-sample1	count-sample2
+A	1	0
+B	1	2}
 
 test select_group {group with sample in -gc, field in -gc missing for some samples} {
 	test_cleantmp
@@ -1108,7 +1108,7 @@ test select_group {group with sample in -gc, field in -gc missing for some sampl
 		2	B	B	Y
 	}
 	exec cg select -g all -gc {type {A B} sample {} count} tmp/temp.tsv
-} {all	count-A-sample1	count-A-sample2	count-A-sample3	count-B-sample1	count-B-sample2	count-B-sample3
-all	1	0	0	1	2	0}
+} {all	count-A-sample1	count-A-sample2	count-B-sample1	count-B-sample2
+all	1	0	1	2}
 
 testsummarize

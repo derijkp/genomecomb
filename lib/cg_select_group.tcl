@@ -496,6 +496,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	set addcols {}
 	set oneok 0
 	set fieldsnotfound {}
+	unset -nocomplain skipsamplea
 	unset -nocomplain loopsa
 	unset -nocomplain loopstypea
 	foreach sample $gsamples {
@@ -562,6 +563,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			} else {
 				lappend fieldsnotfound $field
 				set found 0
+				set skipsamplea($sample) 1
 				# error "field \"$field\" not present in file (or sampleinfo)"
 			}
 		}
@@ -636,9 +638,10 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 					if {![tsv_select_matchfilter $filter $value]} {lappend colquery 0}
 				}
 			} else {
-				lappend colquery 0
+				set skipsamplea($sample) 1
 			}
 		}
+		if {[info exists skipsamplea($sample)]} continue
 		append colactions \t\t\t\t\t {set resultgroups($_groupname) 1} \n
 		append colactions \t\t\t\t\t "set _colname \"[join $col -]\"\n"
 		# add calculations for everything needed for aggregates to colactions
@@ -651,6 +654,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		}
 		append addcols [tsv_select_addforeach sloopsa sloopstypea $colactions]
 	}
+	set gsamples [list_lremove $gsamples [array names skipsamplea]]
 	if {!$oneok} {
 		error "some fields ([join [list_remdup $fieldsnotfound] ,]) needed were not found (in any of the samples)"
 	}

@@ -332,7 +332,9 @@ will be used.
 The field **sample** is interpreted specially: If the field sample is
 present, you can use fieldnames without the sample suffix (in both -gc and
 -g), and the sample name (of the current column) will be automatically
-added where fields in the form field-sample are available.
+added where fields in the form field-sample are available. Only data
+on samples that have all fields needed are in the summary: Samples with
+missing (either -g or -gc) fields are ignored.
 
 Another special field is **all**, which you can use to summarize over all
 selected lines. The value of the field "all" (unless it is
