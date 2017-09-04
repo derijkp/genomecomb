@@ -341,7 +341,7 @@ proc proces_reportscombine_job {destdir reportstodo} {
 			cg select -rc 1 $target.temp $target.temp2
 			file rename -force $target.temp2 $target
 			file delete $target.temp
-			mklink $target $target2 1
+			mklink $target $target2
 		}
 	}
 	set deps {}
