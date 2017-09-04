@@ -195,6 +195,27 @@ test multireg {100 files multilevel distribute (maxopenfiles)} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 
+test multireg {. in name} {
+	file delete tmp/temp.tsv
+	file copy data/regempty.tsv tmp/reg.empty.tsv
+	exec cg multireg tmp/temp.tsv data/reg1b.tsv tmp/reg.empty.tsv
+	file_read tmp/temp.tsv
+} {chromosome	begin	end	reg1b	reg.empty
+1	10	20	1	0
+1	50	60	1	0
+}
+
+test multireg {. in name compressed} {
+	file delete tmp/temp.tsv
+	file copy data/regempty.tsv tmp/reg.empty.tsv
+	cg lz4 tmp/reg.empty.tsv
+	exec cg multireg tmp/temp.tsv data/reg1b.tsv tmp/reg.empty.tsv.lz4
+	file_read tmp/temp.tsv
+} {chromosome	begin	end	reg1b	reg.empty
+1	10	20	1	0
+1	50	60	1	0
+}
+
 test regsubtract {basic} {
 	exec cg regsubtract data/reg1.tsv data/reg2.tsv
 } {chromosome	begin	end

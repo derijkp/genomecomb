@@ -64,14 +64,19 @@ RegFile *OpenRegfile(char *filename,char *isreg) {
 			DStringputs(result->data+i,stdout);
 		}
 	} else {
-		char *c = filename, *start = filename;
+		char *c = filename, *start = filename,*end = filename,*pend = filename;
 		putc_unlocked('\t',stdout);
 		while (*c != '\0') {
-			if (*c == '/') {start = c+1;}
+			if (*c == '/') {start = c+1; end = start; pend = start;}
+			if (*c == '.') {pend = end; end = c;}
 			c++;
 		}
+		if (regfile->f->type != UNCOMPRESSED && pend != start) {
+			end = pend;
+		}
+		if (end == start) {end = c;}
 		while (*start != '\0') {
-			if (*start == '.') break;
+			if (start == end) break;
 			putc_unlocked(*start++,stdout);
 		}
 	}
