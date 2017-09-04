@@ -635,6 +635,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 					lappend col $value
 					if {![tsv_select_matchfilter $filter $value]} {lappend colquery 0}
 				}
+			} else {
+				lappend colquery 0
 			}
 		}
 		append colactions \t\t\t\t\t {set resultgroups($_groupname) 1} \n
