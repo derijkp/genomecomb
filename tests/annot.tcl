@@ -489,6 +489,26 @@ test gene_annot {hgvs - strand gene non-coding} {
 	set errors
 } {}
 
+test gene_annot {hgvs - extra tests} {
+	# extra exon added to gene to test UT3 splice, short intron with only splice
+	write_tab tmp/gene_hg19s_part.tsv {
+		chrom	start	end	strand	geneid	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames
+		chr9    35056064        35072739        -       VCP     NM_007126       0       852     35057113        35072350        17      35056064,35057372,35059060,35059489,35060309,35060797,35061011,35061573,35061999,35062213,35062974,35064150,35065247,35066671,35067887,35068247,35072333,     35057219,35057527,35059216,35059798,35060522,35060920,35061176,35061686,35062135,35062347,35063077,35064282,35065378,35066814,35068060,35068359,35072739,      VCP     cmpl    cmpl    2,0,0,0,0,0,0,1,0,1,0,0,1,2,0,2,0,
+	}
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt	comment
+		9	35065348	35065349	snp	G	A	rs387906789
+		9	35065359	35065360	snp	C	T	rs121909329
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	comment	part_impact	part_gene	part_descr
+		9	35065348	35065349	snp	G	A	rs387906789	CDSMIS	VCP	-NM_007126:exon5+30:c.475C>T:p.R159C
+		9	35065359	35065360	snp	C	T	rs121909329	CDSMIS	VCP	-NM_007126:exon5+19:c.464G>A:p.R155H
+	}
+	cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/annot_results.tsv tmp/gene_hg19s_part.tsv
+	exec diff tmp/annot_results.tsv tmp/expected.tsv
+} {}
+
 test reg_annot {basic, extra comments} {
 	file_write tmp/temp2.sft "# a comment\n"
 	exec cat data/vars1.sft >> tmp/temp2.sft
