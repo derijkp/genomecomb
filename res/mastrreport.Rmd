@@ -82,7 +82,7 @@ rf <- demultiplex%>%filter(!grepl('blanco',tolower(SampleID)))%>%
 
 vf <- vf%>%filter(!grepl('blanco|sam-crsbwa',tolower(sample)))%>%
   mutate(sample = sub('gatk-crsbwa-','',sample))%>%
-  mutate(variants=v.count)%>%select(sample,variants)
+  mutate(variants=count.v)%>%select(sample,variants)
 
 if (nrow(frac_cov)) {
 	frac_cov$region_size<-sum(frac_cov%>%mutate(size=end-begin)%>%select(size))
