@@ -15,6 +15,15 @@ test homwes {basic} {
 	cg tsvdiff -q 1 -x *.log $::bigtestdir/tmp/homwes $::bigtestdir/expected/yri_exome.homwes-out
 } {}
 
+test homwes {sample not given -> multiple samples} {
+	file delete -force $::bigtestdir/tmp/homwes
+	file mkdir $::bigtestdir/tmp/homwes
+	set varfile $::bigtestdir/ori/exomes_yri.ori/compar/annot_compar-yri_exome_test.tsv.lz4
+	set dbdir $::bigtestdir/refseqtest/hg19
+	cg homwes --stack 1 -dbdir $dbdir $varfile {} $::bigtestdir/tmp/homwes_multi/homwes-out.tsv
+	cg tsvdiff -q 1 -x *.log $::bigtestdir/tmp/homwes $::bigtestdir/expected/yri_exome.homwes-out
+} {}
+
 cd $keepdir
 
 testsummarize
