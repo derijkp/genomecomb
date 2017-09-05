@@ -75,9 +75,11 @@ variant calls.
 positions with >= 5 coverage (also reference called positions). This file
 is used to create the sreg files, and to update data in making multicompar 
 files later.
-; reg_cluster-gatk-rdsbwa-S0489.tsv: regions with many clustered variants
-(which are less reliable)
-; coverage-cg-sample1: directory containing whole genome coverage, refscore, ... data in the form of [[bcol]] files.
+; reg_cluster-gatk-rdsbwa-S0489.tsv: regions with many clustered variants (which are less reliable)
+; bcolall: directory containing whole genome coverage, refscore, ... data in the form of [[bcol]] files.
+These files can be used to create the sreg files, and to update data in making multicompar 
+files later. (In older project dirs, this directory may be called
+coverage-cg-* and contain old style formatted bcol files)
 ; cgsv-sample.tsv: structural variants
 ; cgcnv-sample.tsv: CNV data
 
