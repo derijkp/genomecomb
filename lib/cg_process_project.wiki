@@ -96,6 +96,9 @@ This option can be given more than once; all given files will be added
 ; -conv_nextseq 1/0: generate fastqs for nextseq run & create sample folders - rundir should be placed in projectdir
 of resulting variants. This option can be added multiple times (with different files)
 ; -targetfile targetfile: if targetfile is provided, coverage statistics will be calculated for this region
+; -targetsfile file: Use this option to easily check certain target positions/variants
+in the multicompar. The variants in **file** will allways be added in the 
+final multicompar file, even if none of the samples is variant (or even sequenced) in it.
 ; -m maxopenfiles (-maxopenfiles): The number of files that a program
 can keep open at the same time is limited. pmulticompar will distribute
 the subtasks thus, that the number of files open at the same time stays

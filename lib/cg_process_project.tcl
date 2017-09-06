@@ -11,6 +11,7 @@ proc process_project_job {args} {
 	set adapterfile {}
 	set conv_nextseq 0
 	set targetfile {}
+	set targetsfile {}
 	set reports all
 	set samBQ 0
 	set dt {}
@@ -78,6 +79,10 @@ proc process_project_job {args} {
 		-targetfile {
 			set targetfile [file_absolute $value]
 			if {$value ne "" && ![jobfileexists $targetfile]} {error "target file $targetfile does not exists"}
+		}
+		-targetsfile {
+			set targetsfile [file_absolute $value]
+			if {$targetsfile ne "" && ![jobfileexists $value]} {error "targetsfile $targetsfile does not exists"}
 		}
 		-r - -reports {
 			set reports $value
@@ -167,7 +172,7 @@ proc process_project_job {args} {
 	}
 	job_logdir $destdir/log_jobs
 	set todo [list_remdup $todo]
-	process_multicompar_job -experiment $experiment -skipincomplete 1 \
+	process_multicompar_job -experiment $experiment -skipincomplete 1 -targetsfile $targetsfile \
 		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir $todo
 	if {[llength $reports]} {
 		proces_reportscombine_job $destdir $reportstodo
