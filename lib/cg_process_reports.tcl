@@ -107,7 +107,7 @@ proc process_reports_job {args} {
 			set dep2 $targetfile
 			set target $sampledir/reports/histodepth-$bamroot.tsv
 			set target2 $sampledir/reports/report_histodepth-$bamroot.tsv
-			job reports_histodepth-[file tail $bamfile] -optional 1 -deps {$dep1 ($dep2)} -targets {$target $target2} -vars {bamroot bamfile} -code {
+			job reports_histodepth-[file tail $bamfile] -optional 1 -deps {$dep1 ($dep2) $dep1.bai} -targets {$target $target2} -vars {bamroot bamfile} -code {
 				set targettemp [filetemp $target]
 				if {![file exists $dep2]} {
 					set targetfile {}
