@@ -44,22 +44,31 @@ if (file.exists(statsfile)) {
 	demultiplexfile = paste(mastrdir, '/demultiplex_stats.tsv',sep='')
 	demultiplex <- read.delim(demultiplexfile)
 }
+```
+
+```{r loadavgcoverag, results='asis', echo=FALSE}
 avg_cov <- read.delim(file=Sys.glob(paste(mastrdir,'/*coverage*avg*',sep=''))[1],sep='\t',header=T)
 frac_cov_file <- Sys.glob(paste(mastrdir,'/*coverage*frac*',sep=''))[1]
 frac_cov <- read.delim(file = frac_cov_file, sep='\t', header=T)
 
 frac <- sub('.+_above_([0-9]+).tsv', '\\1', frac_cov_file, perl = T)
 
+```
+
+```{r loadamplicons, results='asis', echo=FALSE}
 ampliconsfile = Sys.glob(paste(mastrdir,'/*.mastr/samplicons*.tsv', sep=''))[1]
 if (!file.exists(ampliconsfile)) {
 	ampliconsfile = Sys.glob(paste(mastrdir,'/samples/*/reg_*amplicons*.tsv', sep=''))[1]
 }
 amplicons  <- read.delim(file=ampliconsfile, sep='\t', header=T) 
 
+```
+
+```{r loadvarsummary, results='asis', echo=FALSE}
 #get number of variant/sample
 temp <- paste(mastrdir,'/compar/summary-compar-', mastr,'.tsv',sep='')
 vf <- read.delim(temp, sep='\t',header=T, stringsAsFactors=F)
-sys_output <- file.remove(temp)
+# sys_output <- file.remove(temp)
 
 read_cutoff <- 10
 cov_cutoff <- 20
