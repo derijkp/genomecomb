@@ -154,7 +154,7 @@ proc process_reports_job {args} {
 			set dep1 $bamfile
 			set dep2 $ampliconsfile
 			set target $sampledir/reports/$bamroot.histo
-			job reports_histo-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2} -targets {$target} -vars {bamroot bamfile} -code {
+			job reports_histo-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2 $dep1.bai} -targets {$target} -vars {bamroot bamfile} -code {
 				set tempfile [filetemp $target]
 				set regionfile [filetemp $target]
 				cg regcollapse $dep2 > $regionfile
