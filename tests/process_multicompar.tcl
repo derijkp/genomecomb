@@ -175,7 +175,7 @@ test process_multicompar$testname {process_multicompar -varfiles pattern} {
 	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
 } {} 
 
-test process_project$testname {process_multicompar} {
+test process_project$testname {limited process_project} {
 	test_cleantmp
 	# limited process_project test: starting van var and sreg files
 	file mkdir tmp/samples/annot1
@@ -191,6 +191,37 @@ test process_project$testname {process_multicompar} {
 	exec diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
 	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-multicompar.tsv
 } {}
+
+test process_project$testname {limited process_project with -targetsfile} {
+	test_cleantmp
+	# limited process_project test: starting van var and sreg files
+	file mkdir tmp/samples/annot1
+	file mkdir tmp/samples/annot2
+	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/samples/annot2/sreg-annot2.tsv
+	write_tab tmp/targets.tsv {
+		chromosome	begin	end	type	ref	alt
+		1	4001	4002	snp	A	C
+		2	4003	4004	snp	N	A
+	} 
+	cg process_project -v 2 --stack 1 -targetsfile tmp/targets.tsv {*}$::jobopts -dbdir $::refseqdir/hg19 -split 0 tmp >@ stdout 2>@ stderr
+	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
+	cg unzip tmp/compar/compar-tmp.tsv.lz4
+	cg unzip tmp/compar/sreg-tmp.tsv.lz4
+	exec diff tmp/compar/sreg-tmp.tsv data/expected-sreg-multicompar.tsv
+	exec cg tsvdiff tmp/compar/compar-tmp.tsv tmp/expected.tsv
+} {diff tmp/compar/compar-tmp.tsv tmp/expected.tsv
+header diff
+<extrafields: targets
+---
+>extrafields: 
+header
+  chromosome	begin	end	type	ref	alt	sequenced-annot1	zyg-annot1	alleleSeq1-annot1	alleleSeq2-annot1	name-annot1	freq-annot1	sequenced-annot2	zyg-annot2	alleleSeq1-annot2	alleleSeq2-annot2	name-annot2	freq-annot2
+9d8
+< 2	4003	4004	snp	N	A	r	r	N	N	?	?	r	r	N	N	?	?
+child process exited abnormally} error
 
 test process_project$testname {process_multicompar} {
 	test_cleantmp
