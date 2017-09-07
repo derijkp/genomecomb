@@ -52,7 +52,7 @@ proc cg_qsub {args} {
 	} else {
 		if {![info exists outputfile]} {set outputfile job_$name.out}
 		if {![info exists errorfile]} {set errorfile job_$name.err}
-		set jnum [exec qsub -N j$name -q $dqueue -o $outputfile -e $errorfile {*}$options $::genomecombdir/apps/cg/lib/repeater.sh $basedir $command {*}$args]
+		set jnum [exec qsub -N j$name -q $dqueue -o $outputfile -e $errorfile {*}$options $::appdir/lib/repeater.sh $basedir $command {*}$args]
 		puts "$jnum $name"
 	}
 }
