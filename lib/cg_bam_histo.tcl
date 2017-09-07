@@ -48,7 +48,7 @@ proc cg_bam_histo {args} {
 	lappend header size avg min max
 	puts [join $header \t]
 	set line [getline $f]
-	set prevname [lindex $line 3]
+	set prevname [lindex [list_sub $line $poss] 3]
 	while {1} {
 		foreach {chr begin end name} [list_sub $line $poss] break
 		if {[eof $f] || $name ne $prevname} {
