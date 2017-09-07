@@ -154,6 +154,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 		if {($starttime eq "" || $endtime eq "" | $duration eq "" | $force) && [job_file_exists $job.log]} {
 			set jobloginfo [job_parse_log $job $totalduration]
 			foreach {status starttime endtime run duration totalduration submittime time_seconds} $jobloginfo break
+			set msg {}
 			if {$status eq "error"} {
 				if {[catch {set msg [file_read $job.err]}]} {set msg ""}
 			} elseif {$status in {submitted running}} {
