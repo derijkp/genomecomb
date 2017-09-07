@@ -98,8 +98,9 @@ proc job_process_sge_submit {job runfile args} {
 	}
 	set name "[file tail $job] $job"
 	set prefix [file tail [get cgjob(prefix) "j"]]
-	set name ${prefix}.$name
 	regsub -all {[^A-Za-z0-9_.-]} $name __ name
+	regsub -all {[^A-Za-z0-9_.-]} $prefix __ prefix
+	set name ${prefix}#$name
 	if {[string length $name] > 200} {
 		set name [string range $name 0 100]....[string range $name end-100 end]
 	}

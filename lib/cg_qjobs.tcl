@@ -5,21 +5,19 @@ proc cg_qjobs {args} {
 		-u {lappend options -u $value}
 	} {} 0
 	set xml [exec qstat -xml -pri {*}$options]
-	set temp [string range $xml 21 end]
-	regsub -all {[ \t]} $temp {} temp
-	regsub -all {([ \n]*</?(job_|queue_info)[^>]*>[ \n]*)+} $temp # temp
-	regsub -all {<([^ >]*)[^>]*>([^>]*)</([^>]+)>} $temp \\1\t\\2 temp
-	set list [split $temp #]
-	set result {}
+	set list [regexp -all -inline {<job_list .*?</job_list>} $xml]
 	foreach el $list {
-		set el [string trim $el]
-		if {$el eq ""} continue
+		set data [regexp -all -inline {<([^>]+)>([^>]*?)</[^>]+>} $el]
 		set a(tasks) ""
-		array set a [split $el \t\n]
-		set resultline $a(JB_job_number),$a(tasks)
 		set a(run) ?
 		set a(runversion) ?
-		if {![regexp {^j([^.]+)\.([0-9_-]+)\.} $a(JB_name) temp a(run) a(runversion)]} {
+		foreach {temp key value} $data {
+			set a($key) $value
+		}
+		set resultline $a(JB_job_number),$a(tasks)
+		if {[regexp {^j([^#]+)\.([0-9_-]+)\#} $a(JB_name) temp a(run) a(runversion)]} {
+		} elseif {[regexp {^j([^.]+)\.([0-9_-]+)\.} $a(JB_name) temp a(run) a(runversion)]} {
+		} else {
 			regexp {^j(.+)\.([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9])\.} $a(JB_name) temp a(run) a(runversion)
 		}
 		foreach field {JB_job_number tasks state JB_submission_time JAT_start_time JB_priority JAT_prio JB_owner queue_name slots run runversion JB_name} {
