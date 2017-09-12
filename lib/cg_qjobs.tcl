@@ -4,6 +4,7 @@ proc cg_qjobs {args} {
 	cg_options qjobs args {
 		-u {lappend options -u $value}
 	} {} 0
+	set result {}
 	set xml [exec qstat -xml -pri {*}$options]
 	set list [regexp -all -inline {<job_list .*?</job_list>} $xml]
 	foreach el $list {
