@@ -42,9 +42,9 @@ files. (check cg multicompar_reannot help for more info)
 == Options ==
 ; **-reannot**: Also do reannotation (see cg multicompar_reannot)
 ; **-reannotregonly**: Also do reannotation, but only region data (sequenced) will be updated
-; **-targetsfile variantfile**: All variants in **variantfile** will be in the final multicompar, even if
+; **-targetvarsfile variantfile**: All variants in **variantfile** will be in the final multicompar, even if
 they are not present in any of the samples. 
-A column will be added to indicate for each variant if it was in the targetsfile. The name of the 
+A column will be added to indicate for each variant if it was in the **variantfile**. The name of the 
 column will be the part of the filename after the last dash. If **variantfile** contains a "name" column, 
 the content of this will be used in the targets column instead of a 1.
 ; **-split**: if 1, multiple alternative alleles will be on a separate lines, treated mostly as a separate variant

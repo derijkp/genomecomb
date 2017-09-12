@@ -376,10 +376,10 @@ proc process_mastr_job {args} {
 	catch {lappend dbfiles [jobglob $dbdir/extra/*dbnsfp*.tsv]}
 	catch {lappend dbfiles [jobglob $dbdir/extra/var_*_evs.tsv]}
 	set addtargets 0
-	set targetsfile [glob -nocomplain *.mastr/stargets-*.tsv]
-	if {[llength $targetsfile]} {
+	set targetvarsfile [glob -nocomplain *.mastr/stargets-*.tsv]
+	if {[llength $targetvarsfile]} {
 	 	set addtargets 1
-	 	set targetsfile [lindex $targetsfile 0]
+	 	set targetvarsfile [lindex $targetvarsfile 0]
 	 }
 	# which samples are there
 	job_logdir $destdir/log_jobs
@@ -522,7 +522,7 @@ proc process_mastr_job {args} {
 	set todo [list_remdup $todo]
 	set dbfiles [list_remove $dbfiles {}]
 	if $addtargets {
-		process_multicompar_job -experiment $experiment -split $split -dbfiles $dbfiles -targetsfile $targetsfile $destdir $dbdir $todo
+		process_multicompar_job -experiment $experiment -split $split -dbfiles $dbfiles -targetvarsfile $targetvarsfile $destdir $dbdir $todo
 	} else {
 		process_multicompar_job -experiment $experiment -split $split -dbfiles $dbfiles $destdir $dbdir $todo
 	}

@@ -749,7 +749,7 @@ test pmulticompar$testname {targets} {
 		1	165	166	snp	N	G	u	u	?	?	?	r	r	N	N	?	snp4
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar {*}$::jobopts -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 -targetvarsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
@@ -813,7 +813,7 @@ test pmulticompar$testname {targets, no name} {
 		1	165	166	snp	N	G	r	r	N	N	?	u	u	?	?	?	1
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar {*}$::jobopts -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 -targetvarsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
@@ -882,7 +882,7 @@ test pmulticompar$testname {add targets only} {
 		1	160	161	snp	A	T	r	o	@	@	?	v	t	A	T	33
 		1	160	162	del	NN	{}	v	m	{}	{}	33	r	r	NN	NN	33
 	}
-	cg pmulticompar {*}$::jobopts -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv
+	cg pmulticompar {*}$::jobopts -split 1 -targetvarsfile tmp/targets-testsnps.tsv tmp/temp.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
@@ -947,7 +947,7 @@ test pmulticompar$testname {different header for varall} {
 		1	165	166	snp	N	G	u	u	?	?	?	?	?	r	r	N	N	?	snp4
 	}
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar {*}$::jobopts -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg pmulticompar {*}$::jobopts -split 1 -targetvarsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 

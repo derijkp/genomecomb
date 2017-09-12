@@ -632,7 +632,7 @@ test multicompar {targets} {
 		1	165	166	snp	N	G	u	u	?	?	?	u	u	?	?	?	snp4
 	}
 	catch {file delete tmp/temp.tsv}
-	cg multicompar -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg multicompar -split 1 -targetvarsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	cg multicompar_reannot tmp/temp.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
@@ -694,7 +694,7 @@ test multicompar {targets, no name} {
 		1	165	166	snp	N	G	u	u	?	?	?	u	u	?	?	?	1
 	}
 	catch {file delete tmp/temp.tsv}
-	cg multicompar -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	cg multicompar -split 1 -targetvarsfile tmp/targets-testsnps.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
 	cg multicompar_reannot tmp/temp.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
@@ -752,7 +752,7 @@ test multicompar {targets only} {
 		1	160	161	snp	A	T	r	o	@	@	?	v	t	A	T	33
 		1	160	162	del	NN	{}	v	m	{}	{}	33	r	r	NN	NN	33
 	}
-	cg multicompar -split 1 -targetsfile tmp/targets-testsnps.tsv tmp/temp.tsv
+	cg multicompar -split 1 -targetvarsfile tmp/targets-testsnps.tsv tmp/temp.tsv
 	cg multicompar_reannot tmp/temp.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 

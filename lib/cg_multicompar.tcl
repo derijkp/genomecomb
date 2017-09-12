@@ -9,7 +9,7 @@ proc cg_multicompar {args} {
 	set reannot 0
 	set regonly 0
 	set split 0
-	set targetsfile {}
+	set targetvarsfile {}
 	set targetsfield {}
 	cg_options multicompar args {
 		-reannot {
@@ -25,9 +25,9 @@ proc cg_multicompar {args} {
 		-split {
 			set split [true $value]
 		}
-		-targetsfile {
-			set targetsfile $value
-			set targetsfield [lindex [split [file root [file tail $targetsfile]] -] end]
+		-targetvarsfile {
+			set targetvarsfile $value
+			set targetsfield [lindex [split [file root [file tail $targetvarsfile]] -] end]
 		}
 	} compar_file
 	set dirs $args
@@ -98,9 +98,9 @@ proc cg_multicompar {args} {
 	} else {
 		set allfiles $files
 	}
-	# for calculating the varlines needed, we can treat targetsfile as just another variant file
+	# for calculating the varlines needed, we can treat targetvarsfile as just another variant file
 	set files $allfiles
-	if {$targetsfile ne ""} {lappend files $targetsfile}
+	if {$targetvarsfile ne ""} {lappend files $targetvarsfile}
 	multi_merge_job $workdir/vars.tsv $files -split $split
 	#
 	# make todofile used by multi_join to join all separate files together
@@ -150,12 +150,12 @@ proc cg_multicompar {args} {
 		puts $ftodo [join $keepposs \t]
 	}
 	set len [expr {[llength $allfiles]+1}]
-	if {$targetsfile ne ""} {
-		set f [open $targetsfile]
+	if {$targetvarsfile ne ""} {
+		set f [open $targetvarsfile]
 		set header [tsv_open $f]
 		close $f
 		lappend reannotheader $targetsfield
-		set file [file_absolute $targetsfile]
+		set file [file_absolute $targetvarsfile]
 		set basicposs [tsv_basicfields $header 6 $file]
 		# if seqpos != -1, no new calculated sequence column will be added
 		# -2 is used to indicate to put an empty field instead of a ? for no match

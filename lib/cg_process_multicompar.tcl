@@ -7,7 +7,7 @@ proc process_multicompar_job {args} {
 	set paired 1
 	set conv_nextseq 0
 	set skipincomplete 1
-	set targetsfile {}
+	set targetvarsfile {}
 	set addtargets 0
 	cg_options process_multicompar args {
 		-dbdir {
@@ -31,10 +31,10 @@ proc process_multicompar_job {args} {
 		-skipincomplete {
 			set skipincomplete $value
 		}
-		-targetsfile {
+		-targetvarsfile {
 			set addtargets 1
-			if {$targetsfile ne "" && ![file exists $value]} {error "targetsfile $value does not exists"}
-			set targetsfile $value
+			if {$targetvarsfile ne "" && ![file exists $value]} {error "targetvarsfile $value does not exists"}
+			set targetvarsfile $value
 		}
 		-todo {
 			set todo $value
@@ -66,7 +66,7 @@ proc process_multicompar_job {args} {
 	# -------
 	set cmdline [list cg process_multicompar]
 	foreach option {
-		dbdir split dbfile dbfiles skipincomplete targetsfile todo varfiles experiment cleanup maxopenfiles
+		dbdir split dbfile dbfiles skipincomplete targetvarsfile todo varfiles experiment cleanup maxopenfiles
 	} {
 		if {[info exists $option]} {
 			lappend cmdline -$option [get $option]
@@ -78,7 +78,7 @@ proc process_multicompar_job {args} {
 	# analysis info
 	# -------------
 	info_analysis_file $destdir/compar/info_analysis.tsv {} \
-		{dbdir split dbfiles targetsfile ::maxopenfiles} \
+		{dbdir split dbfiles targetvarsfile ::maxopenfiles} \
 		{genomecomb dbdir gnusort8 lz4 os} \
 		command [list cg process_multicompar {*}$keepargs]
 
@@ -129,7 +129,7 @@ proc process_multicompar_job {args} {
 	if {[llength $stilltodo] || $addtargets} {
 		putslog "Starting multicompar"
 		set compar_file [gzroot $compar_file].lz4
-		pmulticompar_job $compar_file $stilltodo 0 $split $targetsfile 0 $skipincomplete
+		pmulticompar_job $compar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
 	}
 	# annotate multicompar
 	# --------------------

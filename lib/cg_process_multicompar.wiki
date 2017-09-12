@@ -31,7 +31,7 @@ create the projectinfo.tsv file.
 ; **-split 1/0**: split multiple alternative genotypes over different line
 ; **-dbdir dbdir**: **dbdir** can also be given as an option (instead of second parameter)
 ; **-dbfile file**: Use **file** for extra (files in **dbdir** are already used) annotation 
-; **-targetsfile file**: Use this option to easily check certain target positions/variants
+; **-targetvarsfile file**: Use this option to easily check certain target positions/variants
 in the multicompar. The variants in **file** will allways be added in the 
 final multicompar file, even if none of the samples is variant (or even sequenced) in it.
 ; **-m maxopenfiles** (-maxopenfiles): The number of files that a program

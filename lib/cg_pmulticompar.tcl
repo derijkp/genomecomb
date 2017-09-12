@@ -412,8 +412,8 @@ proc multicompar_tcl_addvars {sample target split allvarsfile samplevarsfile sre
 	close $o; catch {close $allvars} ; catch {close $orivars}; catch {close $sreg}
 }
 
-proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {erroronduplicates 0} {skipincomplete 0}} {
-# putsvars compar_file dirs regonly split targetsfile erroronduplicates
+proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}} {erroronduplicates 0} {skipincomplete 0}} {
+# putsvars compar_file dirs regonly split targetvarsfile erroronduplicates
 	if {[jobfileexists $compar_file]} {
 		set dirs [list $compar_file {*}$dirs]
 	}
@@ -509,9 +509,9 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 	} else {
 		set allfiles $files
 	}
-	# for calculating the varlines needed, we can treat targetsfile as just another variant file
+	# for calculating the varlines needed, we can treat targetvarsfile as just another variant file
 	set files $allfiles
-	if {$targetsfile ne ""} {lappend files $targetsfile}
+	if {$targetvarsfile ne ""} {lappend files $targetvarsfile}
 	multi_merge_job $workdir/vars.tsv $files -split $split -force 1
 
 	# 
@@ -639,31 +639,31 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetsfile {}} {
 			file rename -force $target.temp $target
 		}
 	}
-	if {$targetsfile ne ""} {
-		# add targetsfile annotation
+	if {$targetvarsfile ne ""} {
+		# add targetvarsfile annotation
 		set target $workdir/targets_annot.tsv
 		lappend pastefiles $target
-		job multicompar_targets -force 1 -deps {$allvarsfile $targetsfile} -targets {$target} \
-		  -vars {allvarsfile targetsfile split} -code {
-			set targetsfield [lindex [split [file root [file tail $targetsfile]] -] end]
-			set f [gzopen $targetsfile]
+		job multicompar_targets -force 1 -deps {$allvarsfile $targetvarsfile} -targets {$target} \
+		  -vars {allvarsfile targetvarsfile split} -code {
+			set targetsfield [lindex [split [file root [file tail $targetvarsfile]] -] end]
+			set f [gzopen $targetvarsfile]
 			set header [tsv_open $f]
 			gzclose $f
 			set tempdbposs [tsv_basicfields $header 6 0]
 			set dbposs [lrange $tempdbposs 0 2]
 			set type2pos [lindex $tempdbposs 3]
 			if {$type2pos == -1} {
-				error "$targetsfile has no type field"
+				error "$targetvarsfile has no type field"
 			}
 			set alt2pos [lindex $tempdbposs 5]
 			if {$alt2pos == -1} {
-				error "$targetsfile has no alt field"
+				error "$targetvarsfile has no alt field"
 			}
 			set keeppos [lsearch $header name]
 			if {$keeppos == -1} {set keeppos {}}
 			file_write $target.temp $targetsfield\n
-			# puts [list ../bin/var_annot $allvarsfile 0 1 2 3 5 $targetsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos]
-			exec var_annot $allvarsfile 0 1 2 3 5 $targetsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos >> $target.temp 2>@ stderr
+			# puts [list ../bin/var_annot $allvarsfile 0 1 2 3 5 $targetvarsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos]
+			exec var_annot $allvarsfile 0 1 2 3 5 $targetvarsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos >> $target.temp 2>@ stderr
 			file rename -force $target.temp $target
 		}
 	}
@@ -680,7 +680,7 @@ proc cg_pmulticompar {args} {
 	set regonly 0
 	set split 0
 	set erroronduplicates 0
-	set targetsfile {}
+	set targetvarsfile {}
 	set skipincomplete 1
 	cg_options pmulticompar args {
 		-r - -reannotregonly {
@@ -693,8 +693,8 @@ proc cg_pmulticompar {args} {
 		-e - -erroronduplicates {
 			set erroronduplicates $value
 		}
-		-t - -targetsfile {
-			set targetsfile $value
+		-t - -targetvarsfile {
+			set targetvarsfile $value
 		}
 		-i - -skipincomplete {
 			set skipincomplete $value
@@ -704,7 +704,7 @@ proc cg_pmulticompar {args} {
 		}
 	} compar_file 1
 	set dirs $args
-	pmulticompar_job $compar_file $dirs $regonly $split $targetsfile $erroronduplicates $skipincomplete
+	pmulticompar_job $compar_file $dirs $regonly $split $targetvarsfile $erroronduplicates $skipincomplete
 	job_wait
 }
 

@@ -74,9 +74,9 @@ fannotvar-<sample>.tsv) will be added as variant files.
 
 == Options ==
 ; **-r 0/1** (--reannotregonly): Also do reannotation, but only region data (sreg) will be updated
-; **-t variantfile** (--targetsfile): All variants in **variantfile** will be in the final multicompar, even if
+; **-t variantfile** (--targetvarsfile): All variants in **variantfile** will be in the final multicompar, even if
 they are not present in any of the samples. 
-A column will be added to indicate for each variant if it was in the targetsfile. The name of the 
+A column will be added to indicate for each variant if it was in the targetvarsfile. The name of the 
 column will be the part of the filename after the last dash. If **variantfile** contains a "name" column, 
 the content of this will be used in the targets column instead of a 1.
 ; **-s 0/1** (-split --split): if 1, multiple alternative alleles will be on a separate lines, treated mostly as a separate variant

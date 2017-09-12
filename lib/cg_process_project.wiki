@@ -27,7 +27,7 @@ In the first step, each sampledir is processed using [[cg_process_sample]];
 Samples in one project can come from different sources (Complete genomics,
 illumina sequencing) and be of different types (shotgun, amplicon).
 Some options are applied to all samples, e.g. the -amplicons option (for
-amplicon sequencing analysis) will placing (a link to) the given amplicons
+amplicon sequencing analysis) will place (a link to) the given amplicons
 file in each sampledir. These options should only be used in projects with uniform
 samples. For mixed samples, these options can be applied specifically by
 placing files, e.g. an amplicon file (named reg_*_amplicons.tsv) in the
@@ -96,7 +96,7 @@ This option can be given more than once; all given files will be added
 ; -conv_nextseq 1/0: generate fastqs for nextseq run & create sample folders - rundir should be placed in projectdir
 of resulting variants. This option can be added multiple times (with different files)
 ; -targetfile targetfile: if targetfile is provided, coverage statistics will be calculated for this region
-; -targetsfile file: Use this option to easily check certain target positions/variants
+; -targetvarsfile file: Use this option to easily check certain target positions/variants
 in the multicompar. The variants in **file** will allways be added in the 
 final multicompar file, even if none of the samples is variant (or even sequenced) in it.
 ; -m maxopenfiles (-maxopenfiles): The number of files that a program
