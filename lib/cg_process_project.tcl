@@ -18,6 +18,7 @@ proc process_project_job {args} {
 	set removeduplicates {}
 	set amplicons {}
 	set extra_reports_mastr 0
+	set jobsample 0
 	cg_options process_project_job args {
 		-ori {
 			set oridir $value
@@ -99,6 +100,10 @@ proc process_project_job {args} {
 		-extra_reports_mastr {
 			set extra_reports_mastr $value
 		}
+		-jobsample {
+			if {$value ni {0 1}} {error "-jobsample must be 0 or 1"}
+			set jobsample $value
+		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
@@ -162,13 +167,40 @@ proc process_project_job {args} {
 	foreach sample $samples {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
-		process_sample_job -todoVar todo -reportstodoVar reportstodo \
-			-aligner $aligner -realign $realign --varcallers $varcallers \
-			-dbdir $dbdir -split $split -paired $paired \
-			-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
-			-removeduplicates $removeduplicates -amplicons $amplicons \
-			-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
-			$dir
+		if {!$jobsample} {
+			process_sample_job -todoVar todo -reportstodoVar reportstodo \
+				-aligner $aligner -realign $realign --varcallers $varcallers \
+				-dbdir $dbdir -split $split -paired $paired \
+				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
+				-removeduplicates $removeduplicates -amplicons $amplicons \
+				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
+				$dir
+		} else {
+			# finds deps and targets
+			job_getinfo 1
+			set ::deps {} ; set ::targets {}
+			process_sample_job -todoVar todo -reportstodoVar reportstodo \
+				-aligner $aligner -realign $realign --varcallers $varcallers \
+				-dbdir $dbdir -split $split -paired $paired \
+				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
+				-removeduplicates $removeduplicates -amplicons $amplicons \
+				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
+				$dir
+			job_getinfo 0
+			job process_sample-$sample -deps $::deps -targets $::targets -vars {
+				aligner realign varcallers dbdir split paired
+				adapterfile reports samBQ cleanup  removeduplicates amplicons
+				removeskew dt targetfile minfastqreads dir
+			} -code {
+				cg process_sample -todoVar todo -reportstodoVar reportstodo \
+					-aligner $aligner -realign $realign --varcallers $varcallers \
+					-dbdir $dbdir -split $split -paired $paired \
+					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
+					-removeduplicates $removeduplicates -amplicons $amplicons \
+					-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
+					$dir
+			}
+		}
 	}
 	job_logdir $destdir/log_jobs
 	set todo [list_remdup $todo]

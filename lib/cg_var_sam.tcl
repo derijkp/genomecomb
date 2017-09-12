@@ -91,6 +91,7 @@ proc var_sam_job {args} {
 	}
 	# lz4_job ${pre}varall-sam-$root.tsv -i 1
 	lz4index_job ${pre}varall-sam-$root.tsv.lz4
+	if {[job_getinfo]} {lappend ::targets $destdir/${pre}varall-sam-$root.tsv.lz4 $destdir/${pre}varall-sam-$root.tsv.lz4.lz4i}
 	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \
 	-code {
@@ -111,6 +112,10 @@ proc var_sam_job {args} {
 	annotvar_clusters_job ${pre}uvar-sam-$root.tsv ${pre}var-sam-$root.tsv.lz4
 	# find regions
 	sreg_sam_job ${pre}sreg-sam-$root ${pre}varall-sam-$root.tsv ${pre}sreg-sam-$root.tsv.lz4
+	if {[job_getinfo]} {
+		lappend ::targets $destdir/${pre}var-sam-$root.tsv.lz4 $destdir/${pre}var-sam-$root.tsv.lz4.lz4i
+		lappend ::targets $destdir/${pre}sreg-sam-$root.tsv.lz4 $destdir/${pre}sreg-sam-$root.tsv.lz4.lz4i
+	}
 	# cleanup
 	if {$cleanup} {
 		job clean_${pre}var-sam-$root -deps {${pre}var-sam-$root.tsv ${pre}varall-sam-$root.tsv} -vars {pre root} -targets {} \

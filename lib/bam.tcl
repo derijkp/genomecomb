@@ -38,6 +38,7 @@ proc bam2reg_job {args} {
 		file rename -force $temptarget $target
 		cg lz4index $target
 	}
+	if {[job_getinfo]} {lappend ::targets $target}
 	return $target
 }
 

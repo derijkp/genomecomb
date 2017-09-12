@@ -66,6 +66,34 @@ test process_small {process_project mastr_mx2} {
 	checkdiff -y --suppress-common-lines tmp/mastr_mx2/compar/info_analysis.tsv expected/mastr_mx2/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|command|version_genomecomb}
 } {}
 
+test process_small {process_project -jobsample 1 mastr_mx2} {
+	cd $::bigtestdir
+	file delete -force tmp/mastr_mx2
+	file mkdir tmp/mastr_mx2/samples
+	foreach sample [glob ori/mastr_mx2.start/samples/*] {
+		set sdest tmp/mastr_mx2/samples/[string range [file tail $sample] 0 end-3]/fastq
+		file mkdir $sdest
+		foreach file [glob -nocomplain $sample/ori/*] {
+			file copy $file $sdest
+		}
+	}
+	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv samplicons-wgs2.tsv
+	# file copy ori/mastr_mx2/demultiplex_stats.tsv tmp/mastr_mx2
+	# if you want to see output while running
+	cg process_project --stack 1 --verbose 2 {*}$::dopts -jobsample 1 -split 1 \
+		-minfastqreads 10 -amplicons samplicons-wgs2.tsv -extra_reports_mastr 1 \
+		tmp/mastr_mx2 refseqtest/hg19 2>@ stderr >@ stdout
+	# check vs expected
+	cg tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
+		-x colinfo -x mastr_mx2.html -x *.lz4i -x *.finished -x info_analysis.tsv \
+		tmp/mastr_mx2 expected/mastr_mx2
+	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
+		checkdiff -y --suppress-common-lines tmp/mastr_mx2/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics expected/mastr_mx2/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
+	}
+	checkdiff -y --suppress-common-lines tmp/mastr_mx2/mastr_mx2.html expected/mastr_mx2/mastr_mx2.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
+	checkdiff -y --suppress-common-lines tmp/mastr_mx2/compar/info_analysis.tsv expected/mastr_mx2/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|command|version_genomecomb}
+} {}
+
 test process_small {process_sample exome yri mx2} {
 	cd $::bigtestdir
 	file delete -force tmp/one_exome_yri_mx2

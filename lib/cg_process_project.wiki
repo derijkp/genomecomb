@@ -106,6 +106,9 @@ below this number. With this option, the maximum number of open files can
 be set manually (if the program e.g. does not deduce the proper limit, or
 you want to affect the distribution).
 ; -samBQ number: only for samtools; minimum base quality for a base to be considered (samtools --min-BQ option)
+; -jobsample 0/1: By default (0) the processing of each sample is split in many separate jobs.
+If you have to process many samples with relatively short indivual runtimes, you can set this
+to 1 to run each sample in one job, thus reducing the job managment overhead.
 
 This command can be distributed on a cluster or using multiple with
 [[joboptions|job options]] (more info with cg help joboptions)

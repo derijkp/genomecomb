@@ -8,6 +8,14 @@ proc job_file_mtime {file} {
 	return $a(mtime)
 }
 
+proc job_getinfo {{value {}}} {
+	if {$value eq ""} {
+		get ::job_getinfo 0
+	} else {
+		set ::job_getinfo $value
+	}
+}
+
 proc job_distribute {type} {
 	global cgjob
 	set cgjob(distribute) $type
@@ -1054,6 +1062,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 
 proc job {jobname args} {
 	global curjobid cgjob job_logdir_submit
+	if {[get ::job_getinfo 0]} return
 	upvar job_logdir job_logdir
 	if {![info exists job_logdir]} {
 		error "The variable job_logdir is not set, This must be set before calling job, either by using the command job_logdir, or by setting the variable directly"
@@ -1233,6 +1242,7 @@ proc job_init {args} {
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_running {} job_running_direct
 	interp alias {} job_wait {} job_process_direct_wait
+	set ::job_getinfo 0
 	job_args $args
 }
 

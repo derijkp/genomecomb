@@ -57,6 +57,7 @@ proc process_reports_job {args} {
 				close $o
 				file rename -force $target2.temp $target2
 			}
+			if {[job_getinfo]} {lappend ::targets $target $target2}
 		}
 		if {[inlist $reports flagstat_reads]} {
 			set dep $bamfile
@@ -80,6 +81,7 @@ proc process_reports_job {args} {
 				close $o
 				file rename -force $target2.temp $target2
 			}
+			if {[job_getinfo]} {lappend ::targets $target $target2}
 		}
 		if {[inlist $reports hsmetrics] && [jobfileexists $targetfile]} {
 			set dep1 $bamfile
@@ -101,6 +103,7 @@ proc process_reports_job {args} {
 				close $o
 				file rename -force $target2temp $target2
 			}
+			if {[job_getinfo]} {lappend ::targets $target $target2}
 		}
 		if {[inlist $reports histodepth]} {
 			set dep1 $bamfile
@@ -149,6 +152,7 @@ proc process_reports_job {args} {
 				file_write $target2temp $out
 				file rename -force $target2temp $target2
 			}
+			if {[job_getinfo]} {lappend ::targets $target $target2}
 		}
 		if {[inlist $reports histo] && $ampliconsfile ne ""} {
 			set dep1 $bamfile
@@ -161,6 +165,7 @@ proc process_reports_job {args} {
 				cg bam_histo $regionfile $dep {1 5 10 20 50 100 200 500 1000} > $tempfile
 				file rename -force $tempfile $target
 			}
+			if {[job_getinfo]} {lappend ::targets $target}
 		}
 	}
 	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
@@ -179,6 +184,7 @@ proc process_reports_job {args} {
 				file delete $target.temp/stdin_fastqc.html
 				file rename -force $target.temp $target
 			}
+			if {[job_getinfo]} {lappend ::targets $target}
 		}
 	}
 	if {[inlist $reports fastqstats] && [llength $fastqfiles]} {
@@ -215,6 +221,7 @@ proc process_reports_job {args} {
 				close $o
 				file rename -force $target.temp $target
 			}
+			if {[job_getinfo]} {lappend ::targets $target $target2 $target3}
 		}
 	}
 	if {[inlist $reports vars]} {
@@ -303,6 +310,7 @@ proc process_reports_job {args} {
 				close $f
 				file rename -force $target.temp $target
 			}
+			if {[job_getinfo]} {lappend ::targets $target}
 		}
 	}
 	if {[inlist $reports covered]} {
@@ -321,6 +329,7 @@ proc process_reports_job {args} {
 				close $f
 				file rename -force $target.temp $target
 			}
+			if {[job_getinfo]} {lappend ::targets $target}
 		}
 	}
 }
@@ -343,6 +352,7 @@ proc proces_reportscombine_job {destdir reportstodo} {
 			file delete $target.temp
 			mklink $target $target2
 		}
+		if {[job_getinfo]} {lappend ::targets $target $target2}
 	}
 	set deps {}
 	foreach dir $reportstodo {
@@ -431,6 +441,7 @@ proc proces_reportscombine_job {destdir reportstodo} {
 			close $o
 			file rename -force $target2.temp $target2
 		}
+		if {[job_getinfo]} {lappend ::targets $target $target2}
 	}
 }
 

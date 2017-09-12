@@ -139,6 +139,7 @@ proc bam_clean_job {args} {
 	if {$cleanup} {
 		cleanup_job bamclean_remtemp-$root $cleanuplist [list $dir/$pre-$root.bam]
 	}
+	if {[job_getinfo]} {lappend ::targets $dir/$pre-$root.bam}
 	return $dir/$pre-$root.bam
 }
 
