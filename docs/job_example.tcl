@@ -41,7 +41,7 @@ proc main args {
 	job_logdir log_jobs
 	for {set i 0} {$i < $num} {incr i} {
 		# run a job
-		job initfile-$i -targets numbers-$i.txt -vars max -skip {sumtotal.txt message.txt} -code {
+		job initfile-$i -targets {numbers-$i.txt} -vars max -skip {sumtotal.txt message.txt} -code {
 			# write to temp, so that when the code fails, we wont be stuck with an incomplete target file
 			set f [open $target.temp w]
 			for {set j 0} {$j < 10} {incr j} {

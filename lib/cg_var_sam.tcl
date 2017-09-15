@@ -85,14 +85,14 @@ proc var_sam_job {args} {
 		}
 		file rename -force $target.temp $target
 	}
-	job ${pre}varall-sam2sft-$root -deps ${pre}varall-sam-$root.vcf -targets ${pre}varall-sam-$root.tsv.lz4 -vars split -code {
+	job ${pre}varall-sam2sft-$root -deps {${pre}varall-sam-$root.vcf} -targets {${pre}varall-sam-$root.tsv.lz4} -vars split -code {
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} $dep $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
 	# lz4_job ${pre}varall-sam-$root.tsv -i 1
 	lz4index_job ${pre}varall-sam-$root.tsv.lz4
 	if {[job_getinfo]} {lappend ::targets $destdir/${pre}varall-sam-$root.tsv.lz4 $destdir/${pre}varall-sam-$root.tsv.lz4.lz4i}
-	job ${pre}var-sam-$root -deps ${pre}varall-sam-$root.tsv -targets {${pre}uvar-sam-$root.tsv} \
+	job ${pre}var-sam-$root -deps {${pre}varall-sam-$root.tsv} -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \
 	-code {
 		cg select -q {

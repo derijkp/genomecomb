@@ -19,7 +19,7 @@ cgdisplay method init {args} {
 	set start 0
 	set end 10000
 	dbi_sqlite3 $object.db
-	if {"$args" != ""} {eval $object configure $args}
+	if {"$args" != ""} {$object configure {*}$args}
 	Classy::todo $object redraw
 	return $object
 }

@@ -30,7 +30,7 @@ proc bam2reg_job {args} {
 #	}
 	set target $dir/sreg-cov$mincoverage-$root.tsv
 	if {$compress} {append target .lz4}
-	job cov$mincoverage-$root -optional 1 -deps $bamfile -targets $target -vars {mincoverage compress} \
+	job cov$mincoverage-$root -optional 1 -deps {$bamfile} -targets {$target} -vars {mincoverage compress} \
 	-skip $skip -code {
 		set compress [compresspipe $target]
 		set temptarget [filetemp $target]

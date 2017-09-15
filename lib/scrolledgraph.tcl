@@ -214,7 +214,7 @@ scrolledgraph method sort {sortcol} {
 	if {[llength $others]} {
 		vector create $object.sortvector
 		$object.sortvector set [list_cor $slist $list]
-		eval {$object.sortvector sort} $others
+		$object.sortvector sort {*}$others
 	}
 }
 

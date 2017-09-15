@@ -154,7 +154,7 @@ $object start
 		-command [varsubst object {$object summarybuilder}]
 	Classy::DynaMenu attachmainmenu MainMenu $object
 	# Configure initial arguments
-	if {"$args" != ""} {eval $object configure $args}
+	if {"$args" != ""} {$object configure {*}$args}
 	return $object
 }
 

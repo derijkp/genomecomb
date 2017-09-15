@@ -1,7 +1,7 @@
 proc bowtie2refseq_job {refseq} {
 	upvar job_logdir job_logdir
 	set bowtie2refseq $refseq.bowtie2/[file tail $refseq]
-	job bowtie2refseq-[file tail $refseq] -deps $refseq -targets {$refseq.bowtie2 $bowtie2refseq.1.bt2} \
+	job bowtie2refseq-[file tail $refseq] -deps {$refseq} -targets {$refseq.bowtie2 $bowtie2refseq.1.bt2} \
 	-vars {refseq} -code {
 		file mkdir $refseq.bowtie2.temp
 		mklink $refseq $refseq.bowtie2.temp/[file tail $refseq]
@@ -26,7 +26,7 @@ proc map_bowtie2_job {args} {
 	set readgroupdata [array get a]
 	upvar job_logdir job_logdir
 	set bowtie2refseq [bowtie2refseq_job $refseq]
-	job bowtie2-$sample -deps [list $bowtie2refseq {*}$files] -targets $resultbase.sam \
+	job bowtie2-$sample -deps [list $bowtie2refseq {*}$files] -targets {$resultbase.sam} \
 	-vars {paired bowtie2refseq readgroupdata sample} \
 	-skip $resultbase.bam {*}$skips -code {
 		puts "making $target"
@@ -53,7 +53,7 @@ proc map_bowtie2_job {args} {
 		}
 		file rename -force $temptarget $target
 	}
-	job bowtie2_bam-$sample -deps $resultbase.sam -targets $result -vars {resultbase} {*}$skips -code {
+	job bowtie2_bam-$sample -deps {$resultbase.sam} -targets {$result} -vars {resultbase} {*}$skips -code {
 		puts "making $target"
 		catch {exec samtools view -S -h -b -o $resultbase.ubam $resultbase.sam >@ stdout 2>@ stderr}
 		catch {samtools_sort $resultbase.ubam $target.temp}
@@ -61,7 +61,7 @@ proc map_bowtie2_job {args} {
 		file delete $resultbase.ubam
 		file delete $resultbase.sam
 	}
-	job bowtie2_index-$sample -deps $result -targets $result.bai {*}$skips -code {
+	job bowtie2_index-$sample -deps {$result} -targets {$result.bai} {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}

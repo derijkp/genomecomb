@@ -118,7 +118,7 @@ fieldsdialog method init args {
 	$object add go Go [varsubst object {$object go}] default
 	$object persistent set 
 	# Configure initial arguments
-	if {"$args" != ""} {eval $object configure $args}
+	if {"$args" != ""} {$object configure {*}$args}
 # ClassyTk Finalise
 $object start
 	return $object

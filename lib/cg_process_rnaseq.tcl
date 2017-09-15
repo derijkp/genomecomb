@@ -7,7 +7,7 @@ proc tophat_job {sample files libtype outdir bowtie_index} {
 	set targets {}
 	set files [ssort -natural $files]
 	set target map-tophat-${sample}.bam
-	job tophat-$sample -deps $files -targets $target -vars {libtype bowtie_index outdir}  -code {
+	job tophat-$sample -deps $files -targets {$target} -vars {libtype bowtie_index outdir}  -code {
 		exec tophat  -p 8 -o $outdir --library-type $libtype $bowtie_index $dep1 $dep2 >@ stdout 2>@ stderr
 		exec ln -s accepted_hits.bam $target
 		}
@@ -33,7 +33,7 @@ proc bam_index_job {bam} {
 	set pre [lindex [split $bam -] 0]
 	set root [join [lrange [split [file root $bam] -] 1 end] -]
 	set dir [file dir $bam]
-	job bamindex-$pre-$root -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai -code {
+	job bamindex-$pre-$root -deps [list $dir/$pre-$root.bam] -targets [list $dir/$pre-$root.bam.bai] -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
@@ -44,7 +44,7 @@ proc htseqcount_job {bam gff order stranded mode} {
 	set pre count
 	set root [join [lrange [split [file root $bam] -] 1 end] -]
 	set dir [file dir $bam]
-	job htseqcount-$bam -deps $bam -targets $dir/$pre-$root.tsv -vars {pre root gff order stranded mode} -code {
+	job htseqcount-$bam -deps {$bam} -targets [list $dir/$pre-$root.tsv] -vars {pre root gff order stranded mode} -code {
 		file delete $target.temp
 		#use -q quiet option? or redirect
 		exec echo "id\t$pre-$root" > $target.temp
@@ -55,7 +55,7 @@ proc htseqcount_job {bam gff order stranded mode} {
 
 proc make_count_table_job {dir experiment samples} {
 	upvar job_logdir job_logdir
-	job make_count_table -deps $samples -targets $dir/counts-$experiment.tsv  -code {
+	job make_count_table -deps $samples -targets {$dir/counts-$experiment.tsv}  -code {
 		file delete $target.temp1
 		file delete $target.temp2
 		exec paste {*}$deps > $target.temp1

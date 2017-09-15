@@ -79,36 +79,58 @@ job jobname ?options? -deps dependencylist -targets targetlist -code code
 or
 job jobname ?options? dependencylist targetlist code
 }}}
+
 **jobname** is the name given to the job, and has to be unique within the same log dir.
 It is used to uniquely create run, log and error files in the log directory,
 and to name jobs if run on a cluster.
 The options -deps, -targets and -code are given in the command description as they
 are obligatory. If not present as an option, the must be present as arguments.
 
-Supported options:
-; **-deps dependencylist**: list of files on which this job is dependent. 
-If one of these is not present, the job will be skipped. 
+**targetlist** contains a list of files that the job will create.
+Variables are expanded in this list:
+You can use -targets {$target1 $target2} and $target1 and
+$target2 will be replaced with the value in variables target1 and target2.
+When using this method, you should also enclose a one element list in {}:
+If one of the variables used contains a space, the result would be split
+up as separate elements.
+You can of course also create a list explicitely using the list command
+-targets [list $target1 $target2]
+
+**dependencylist** contains a list of files which the job uses and is thus
+dependent on: If one or more of these dependencies do not exist and are
+not going to be made by previous jobs (targets), the program will stop
+with an error. If the option -optional 1 is given, the job will be skipped
+instead. Stating dependencies are important for parallel processing: A
+job will only be run once the dependencies are available.
+
 File names in the dependency list may use **wildcards**. These will be
 expanded to all matching files, using both already existing files and files
 that will be made by previous jobs (targets).
-The elements of the list are evaluated, so variables are expanded.
+
 The list can also contain **optional dependencies**, indicated by a
-filename(pattern) enclosed in parentheses. The job will not be skipped if
-an optional dependency does not exist, but the job will not be actually
-executed until this dependency/file is made.
-; **-targets targetlist**: files that will be created by the job
-; **-code code**: code to be executed in the job. This code will run in a separate scope
+filename (or pattern) enclosed in parentheses. The job will not give an
+error or be skipped if an optional dependency does not exist, but the job
+will not be actually executed until this dependency/file is made if it is
+a target of a previous job.
+
+**code** contains the code to be executed in the job. This code will run in a separate scope
 from the code outside the job. Variables set in it will not be visible to the caller
 and it does not see variables in the caller (though you can pass them using the -vars option).
 It has a number of predefined variables:
-deps (containing the list of dependencies; in case you used wildcards,
+**deps** (contains the list of dependencies; in case you used wildcards,
 deps will contain the filenames, not the patterns), 
-targets (filenames to be created). For convenience are also available: 
+targets (filenames to be created). 
+For convenience are also available: 
 dep (first dependency), dep2 (second dependency) and
 target (first target), target2 (second target).
 It is advised (generally as well) to create **result files using a temporary name**
 (e.g. $target.temp), and rename them to $target when finished: This way, if a
 job crashes, there will never be a target file present that is incomplete.
+
+job supports following **options**:
+; -deps dependencylist: list of files on which this job is dependent. 
+; -targets targetlist: list of files that will be created by the job
+; -code code: code to be executed in the job. 
 ; -vars varlist: a list of variables that must be passed on to the job.
 ; -optional 0/1: By default (0) an error will be given if the job cannot run because of missing
 dependencies. Set -optional to 1 to indicate that this job is optional, and can be simply skipped

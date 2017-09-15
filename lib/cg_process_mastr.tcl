@@ -216,7 +216,7 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	# check if targetfile.tsv is present, if so generate sorted and collapsed stargetfile.tsv
 	set targetsfile [glob -nocomplain $mastrdir/targets-*.tsv]
 	if {[llength $targetsfile]} {
-		job mastrdesign-targets-$mastrname -deps  [lindex $targetsfile  0] -targets  [file dirname ${targetsfile}]/s[file tail $targetsfile] -code {
+		job mastrdesign-targets-$mastrname -deps [list [lindex $targetsfile  0]] -targets [list [file dirname ${targetsfile}]/s[file tail $targetsfile]] -code {
 			make_targets_file $dep
 		}
 	}
@@ -419,7 +419,7 @@ proc process_mastr_job {args} {
 			}
 			set numreads 0
 			foreach {file1 file2} $files {
-				incr numreads [expr {[lindex [eval exec [gzcat $file1] $file1 | wc -l] 0]/4}]
+				incr numreads [expr {[lindex [exec {*}[gzcat $file1] $file1 | wc -l] 0]/4}]
 			}
 			puts $o [join [list $samplenr $sample $sample $numreads $numreads] \t]
 		}
@@ -439,7 +439,7 @@ proc process_mastr_job {args} {
 		foreach file $files {
 			set target [file root [gzroot $file]].tsv
 			if {![file exists $target]} {
-				job vcf2tsv-$file -deps $file -targets $target -vars split -code {
+				job vcf2tsv-$file -deps {$file} -targets {$target} -vars split -code {
 					cg vcf2tsv -split $split $dep $target.temp
 					file rename -force $target.temp $target
 				}
@@ -488,11 +488,11 @@ proc process_mastr_job {args} {
 		# samtools variant calling on map-rs${aligner}
 		if {$useminigenome} {
 			var_sam_job -pre $pre -split $split -BQ $samBQ $cleanbam $refseq
-			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets varall-sam-rs${aligner}-$name.tsv -code {
+			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets {varall-sam-rs${aligner}-$name.tsv} -code {
 				cg remap $dep1 $dep2 $target
 			}
 			lz4_job varall-sam-rs${aligner}-$name.tsv -i 1
-			job remapsam-var-$name -deps {reg_var-sam-rs${aligner}-$name.tsv $mapfile} -targets var-sam-rs${aligner}-$name.tsv -code {
+			job remapsam-var-$name -deps {reg_var-sam-rs${aligner}-$name.tsv $mapfile} -targets {var-sam-rs${aligner}-$name.tsv} -code {
 				cg remap $dep1 $dep2 $target
 			}
 			sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv.lz4
@@ -503,11 +503,11 @@ proc process_mastr_job {args} {
 		if {$useminigenome} {
 			# gatk variant calling on map-rs${aligner}
 			var_gatk_job -pre $pre -dt NONE -split $split $cleanbam $refseq
-			job remapgatk-varall-$name -deps {reg_varall-gatk-rs${aligner}-$name.tsv $mapfile} -targets varall-gatk-rs${aligner}-$name.tsv -code {
+			job remapgatk-varall-$name -deps {reg_varall-gatk-rs${aligner}-$name.tsv $mapfile} -targets {varall-gatk-rs${aligner}-$name.tsv} -code {
 				cg remap $dep1 $dep2 $target
 			}
 			lz4_job varall-gatk-rs${aligner}-$name.tsv -i 1
-			job remapgatk-var-$name -deps {reg_var-gatk-rs${aligner}-$name.tsv $mapfile} -targets var-gatk-rs${aligner}-$name.tsv -code {
+			job remapgatk-var-$name -deps {reg_var-gatk-rs${aligner}-$name.tsv $mapfile} -targets {var-gatk-rs${aligner}-$name.tsv} -code {
 				cg remap $dep1 $dep2 $target
 			}
 			sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv.lz4

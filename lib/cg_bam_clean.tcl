@@ -75,7 +75,7 @@ proc bam_clean_job {args} {
 		set root d$root
 	}
 	# index intermediate result
-	job bamindex-$pre-$root -optional 1 -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai {*}$skips -code {
+	job bamindex-$pre-$root -optional 1 -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-$root.bam.bai} {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
@@ -119,7 +119,7 @@ proc bam_clean_job {args} {
 			}
 		}
 		set root r$root
-		job bamrealign_index-$root -optional 1 -deps $dir/$pre-$root.bam {*}$skips -targets $dir/$pre-$root.bam.bai -code {
+		job bamrealign_index-$root -optional 1 -deps {$dir/$pre-$root.bam} {*}$skips -targets {$dir/$pre-$root.bam.bai} -code {
 			exec samtools index $dep >@ stdout 2>@ stderr
 			puts "making $target"
 		}
@@ -131,7 +131,7 @@ proc bam_clean_job {args} {
 			file rename $target.temp $target
 		}
 		set root c$root
-		job bamclean_clipamplicons_index-$root -optional 1 -deps $dir/$pre-$root.bam -targets $dir/$pre-$root.bam.bai -code {
+		job bamclean_clipamplicons_index-$root -optional 1 -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-$root.bam.bai} -code {
 			exec samtools index $dep >@ stdout 2>@ stderr
 			puts "making $target"
 		}
@@ -139,7 +139,7 @@ proc bam_clean_job {args} {
 	if {$cleanup} {
 		cleanup_job bamclean_remtemp-$root $cleanuplist [list $dir/$pre-$root.bam]
 	}
-	if {[job_getinfo]} {lappend ::targets $dir/$pre-$root.bam}
+	# if {[job_getinfo]} {lappend ::targets $dir/$pre-$root.bam}
 	return $dir/$pre-$root.bam
 }
 

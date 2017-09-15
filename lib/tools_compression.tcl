@@ -25,25 +25,25 @@ proc gzopen {file {pos -1}} {
 	set ext [file extension $file]
 	if {[inlist {.rz} $ext]} {
 		if {$pos == -1} {
-			set f [open "| razip -d -c $file"]
+			set f [open "| razip -d -c [list $file]"]
 		} else {
-			set f [open "| razip -d -c -b $pos $file"]
+			set f [open "| razip -d -c -b $pos [list $file]"]
 		}
 	} elseif {[inlist {.lz4} $ext]} {
 		if {$pos == -1} {
-			set f [open "| lz4c -d -c $file"]
+			set f [open "| lz4c -d -c [list $file]"]
 		} else {
-			set f [open "| lz4ra $file $pos"]
+			set f [open "| lz4ra [list $file] $pos"]
 		}
 	} elseif {[inlist {.bgz .gz} $ext]} {
 		if {$pos == -1} {
-			set f [open "| zcat $file"]
+			set f [open "| zcat [list $file]"]
 		} else {
 			error "positioning not supported in (b)gz files"
 		}
 	} elseif {[inlist {.bz2} $ext]} {
 		if {$pos == -1} {
-			set f [open "| bzcat $file"]
+			set f [open "| bzcat [list $file]"]
 		} else {
 			error "positioning not supported in bz2 files"
 		}
@@ -269,7 +269,7 @@ proc gunzip {file args} {
 
 proc razip_job {file args} {
 	set deps [gzfiles $file {*}$args]
-	uplevel [list job razip-$file -checkcompressed 0 -deps $deps -targets $file.rz -rmtargets $file -code {
+	uplevel [list job razip-$file -checkcompressed 0 -deps $deps -targets {$file.rz} -rmtargets {$file} -code {
 		if {![file exists $dep]} {error "error compressing: file $dep does not exist"}
 		cg_razip $dep
 	}]
@@ -278,7 +278,7 @@ proc razip_job {file args} {
 proc lz4_job {file args} {
 	upvar job_logdir job_logdir
 	set deps [jobglob $file]
-	job lz4-$file -checkcompressed 0 -deps $deps -targets $file.lz4 -rmtargets $file -vars args -code {
+	job lz4-$file -checkcompressed 0 -deps $deps -targets {$file.lz4} -rmtargets {$file} -vars args -code {
 		if {![file exists $dep]} {error "error compressing: file $dep does not exist"}
 		cg_lz4 -keep 0 {*}$args $dep
 	}
@@ -286,7 +286,7 @@ proc lz4_job {file args} {
 
 proc lz4index_job {file args} {
 	upvar job_logdir job_logdir
-	job lz4index-$file -checkcompressed 0 -deps $file -targets $file.lz4i -code {
+	job lz4index-$file -checkcompressed 0 -deps {$file} -targets {$file.lz4i} -code {
 		if {![file exists $dep]} {error "error indexing: file $dep does not exist"}
 		cg_lz4index $dep
 	}

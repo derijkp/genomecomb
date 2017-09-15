@@ -16,7 +16,7 @@ proc make_hsmetrics_report_job {destdir files {optional 1}} {
 	upvar job_logdir job_logdir
 	set experiment [file tail $destdir]
 	if {![llength $files]} return
-	job calc_hsmetrics-$experiment -optional $optional -deps $files -targets $destdir/${experiment}_hsmetrics_report.tsv -code {
+	job calc_hsmetrics-$experiment -optional $optional -deps $files -targets {$destdir/${experiment}_hsmetrics_report.tsv} -code {
 		cg cat -c 0 {*}$deps > $target.temp
 		cg select -rc 1 $target.temp $target.temp2
 		file rename -force $target.temp2 $target

@@ -192,7 +192,7 @@ proc process_illumina {args} {
 		foreach file $files {
 			set target [file root [gzroot $file]].tsv
 			if {![file exists $target]} {
-				job vcf2tsv-$file -deps $file -targets $target -vars split -code {
+				job vcf2tsv-$file -deps {$file} -targets {$target} -vars split -code {
 					cg vcf2tsv -split $split $dep $target.temp
 					file rename -force $target.temp $target
 				}

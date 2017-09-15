@@ -6,7 +6,7 @@ proc bwarefseq_job {refseq} {
 	set targets [list $refseq.bwa $refseq.bwa/$tail]
 	foreach ext {amb ann bwt pac sa} {lappend targets $refseq.bwa/$tail.$ext}
 	if {[jobtargetexists $targets $refseq]} return
-	job bwa2refseq-[file tail $refseq] -deps $refseq -targets $targets -code {
+	job bwa2refseq-[file tail $refseq] -deps {$refseq} -targets $targets -code {
 		file delete -force $target.temp
 		file mkdir $target.temp
 		mklink $dep $target.temp/[file tail $dep]
@@ -41,7 +41,7 @@ proc map_bwa_job {args} {
 			lappend samfiles $target
 			job bwa-$sample-$name -mem 5G -cores 2 \
 			-deps [list $bwarefseq $file] -targets {$target} -vars {readgroupdata sample paired} \
-			-skip $resultbase.bam {*}$skips -code {
+			-skip {$resultbase.bam} {*}$skips -code {
 				puts "making $target"
 				foreach {bwarefseq fastq} $deps break
 				set rg {}
@@ -58,7 +58,7 @@ proc map_bwa_job {args} {
 			set target $resultbase-$name.sam
 			lappend samfiles $target
 			job bwa-$sample-$name -mem 5G -cores 2 -deps [list $bwarefseq $file1 $file2] -targets {$target} -vars {readgroupdata sample paired} \
-			-skip $resultbase.bam {*}$skips -code {
+			-skip {$resultbase.bam} {*}$skips -code {
 				puts "making $target"
 				foreach {bwarefseq fastq1 fastq2} $deps break
 				set rg {}
@@ -71,7 +71,7 @@ proc map_bwa_job {args} {
 			}
 		}
 	}
-	job bwa2bam-$sample -deps $samfiles -rmtargets $samfiles -targets $result {*}$skips -vars {resultbase} -code {
+	job bwa2bam-$sample -deps $samfiles -rmtargets $samfiles -targets {$result} {*}$skips -vars {resultbase} -code {
 		puts "making $target"
 		if {[catch {version samtools 1}]} {
 			if {[catch {
@@ -90,7 +90,7 @@ proc map_bwa_job {args} {
 		}
 		file delete {*}$deps
 	}
-	job bwa_index-$sample -deps $result -targets $result.bai {*}$skips -code {
+	job bwa_index-$sample -deps {$result} -targets {$result.bai} {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}

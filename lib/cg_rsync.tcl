@@ -7,5 +7,5 @@ proc cg_rsync {args} {
 		lappend list [string trimright $el /]
 	}
 	puts "rsync -av --delete $list"
-	eval exec rsync -av --delete $list >@ stdout 2>@ stderr
+	exec rsync -av --delete {*}$list >@ stdout 2>@ stderr
 }

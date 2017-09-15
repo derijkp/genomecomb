@@ -58,7 +58,7 @@ proc scratchfile {{action {get}} {type file}} {
 			unset ::Extral::scratchdir
 		}
 		cleanall {
-			catch {eval file delete -force [glob [file join $scratch_dir scratchExtral*]]}
+			catch {file delete -force {*}[glob [file join $scratch_dir scratchExtral*]]}
 		}
 		default {
 			return -code error "bad option \"$action\": must be get, clean or cleanall"

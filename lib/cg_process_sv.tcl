@@ -25,15 +25,15 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 	set files [gzfiles $name-*-paired.tsv]
 	foreach file [ssort -natural $files] {
 		set root [file root [gzroot $file]]
-		job svindex-$root -deps $file -targets $root.tsv.end1_index -code {
+		job svindex-$root -deps {$file} -targets {$root.tsv.end1_index} -code {
 			puts "Indexing $dep"
 			cg tsv_index end1 $dep
 		}
-		job svinfo-$root -deps $file -targets $root.tsv.numinfo -code {
+		job svinfo-$root -deps {$file} -targets {$root.tsv.numinfo} -code {
 			puts "Info on $dep"
 			cg svinfo $dep
 		}
-		job svfind-$root -deps {$file $root.tsv.numinfo} -targets $root-sv.tsv -vars {dbdir} -code {
+		job svfind-$root -deps {$file $root.tsv.numinfo} -targets {$root-sv.tsv} -vars {dbdir} -code {
 			puts "svfind $dep"
 			cg svfind $dep [lindex [glob $dbdir/reg_*_simpleRepeat.tsv] 0]
 		}

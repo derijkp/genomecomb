@@ -167,7 +167,7 @@ proc cg_multicompar {args} {
 		incr len
 	}
 	close $ftodo
-	job multi_join -deps [list $todofile] -vars {split len reannotheader} -targets $compar_file_root -code {
+	job multi_join -deps [list $todofile] -vars {split len reannotheader} -targets {$compar_file_root} -code {
 		set tempfile [filetemp $target]
 		file_write $tempfile [join $reannotheader \t]\n
 		exec multi_join $dep1 $len $split >> $tempfile
