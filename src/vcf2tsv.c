@@ -811,7 +811,7 @@ int main(int argc, char *argv[]) {
 					DStringArrayAppend(info,line->string+7,-1);
 				}
 			} else {
-				header = DStringArrayFromCharM(line->string+1," \t");
+				header = DStringArrayFromCharM(line->string+1,"\t");
 				break;
 			}
 		}

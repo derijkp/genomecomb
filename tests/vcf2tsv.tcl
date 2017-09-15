@@ -192,4 +192,10 @@ test vcf2tsv {vcf2tsv extraalleles} {
 	exec diff tmp/temp.tsv data/expected-test_extraalleles.vcf2tsv
 } {}
 
+test vcf2tsv {vcf2tsv space in name} {
+	file copy -force data/test.vcf "tmp/test it.vcf"
+	exec cg vcf2tsv "tmp/test it.vcf" "tmp/test it.tsv"
+	exec diff "tmp/test it.tsv" data/expected-test.vcf2tsv
+} {}
+
 testsummarize
