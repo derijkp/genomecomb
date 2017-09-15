@@ -91,11 +91,9 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 	# start
 	catch {close $f} ; catch {close $o}
 	set tempfile [filetemp $logfile]
-	set f [open $tempfile]
 	hardcopy $logfile $tempfile
-	# init needs to be here, because otherwise variables like cgpub(pid) will 
-	# be reset on first use of functions in jobs.tcl
 	set tempresult [filetemp $logfile]
+	set f [open $tempfile]
 	set o [open $tempresult w]
 	while 1 {
 		if {[gets $f line] == -1} break
@@ -215,6 +213,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 }
 
 proc cg_job_update args {
+	# init needs to be here, because otherwise variables like cgpub(pid) will 
+	# be reset on first use of functions in jobs.tcl
 	job_init
 	set cleanup success
 	set force 0
