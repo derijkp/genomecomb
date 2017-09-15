@@ -8,14 +8,6 @@ proc job_file_mtime {file} {
 	return $a(mtime)
 }
 
-proc job_getinfo {{value {}}} {
-	if {$value eq ""} {
-		get ::job_getinfo 0
-	} else {
-		set ::job_getinfo $value
-	}
-}
-
 proc job_distribute {type} {
 	global cgjob
 	set cgjob(distribute) $type
@@ -209,8 +201,8 @@ proc job_expandvars {string {level 0}} {
 proc job_expandvarslist {list {level 1}} {
 	set result {}
 	incr level
-	set list [string_change $list [list \\ \\\\]]
 	foreach string $list {
+		set string [string_change $string [list \\ \\\\]]
 		lappend result {*}[job_expandvars $string $level]
 	}
 	return $result
@@ -1062,7 +1054,6 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 
 proc job {jobname args} {
 	global curjobid cgjob job_logdir_submit
-	if {[get ::job_getinfo 0]} return
 	upvar job_logdir job_logdir
 	if {![info exists job_logdir]} {
 		error "The variable job_logdir is not set, This must be set before calling job, either by using the command job_logdir, or by setting the variable directly"
@@ -1207,9 +1198,14 @@ proc job {jobname args} {
 		append newcode [list set $var [uplevel get $var]]\n
 	}
 	append newcode $code
+	if {[get ::job_getinfo 0]} {
+		# do not actually run if just gathering info
+		job_process_getinfo $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional
+		return
+	}
 	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional]
 	incr cgjob(id)
-	if {!$cgjob(debug)} job_process
+	if {!$cgjob(debug)} {job_process}
 }
 
 proc job_init {args} {

@@ -91,31 +91,24 @@ proc var_sam_job {args} {
 	}
 	# lz4_job ${pre}varall-sam-$root.tsv -i 1
 	lz4index_job ${pre}varall-sam-$root.tsv.lz4
-	if {[job_getinfo]} {lappend ::targets $destdir/${pre}varall-sam-$root.tsv.lz4 $destdir/${pre}varall-sam-$root.tsv.lz4.lz4i}
 	job ${pre}var-sam-$root -deps {${pre}varall-sam-$root.tsv} -targets {${pre}uvar-sam-$root.tsv} \
 	-skip {${pre}var-sam-$root.tsv} \
 	-code {
 		cg select -q {
-				$alt ne "." && $alleleSeq1 ne "." && $quality >= 10 && $totalcoverage > 4
-				&& $zyg ni "r o"
-			} \
-			-f {
-				chromosome begin end type ref alt quality alleleSeq1 alleleSeq2
-				{sequenced=if($quality < 30 || $totalcoverage < 5,"u","v")}
-				{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
-				*
-			} \
-			$dep $target.temp
+			$alt ne "." && $alleleSeq1 ne "." && $quality >= 10 && $totalcoverage > 4
+			&& $zyg ni "r o"
+		} -f {
+			chromosome begin end type ref alt quality alleleSeq1 alleleSeq2
+			{sequenced=if($quality < 30 || $totalcoverage < 5,"u","v")}
+			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
+			*
+		} $dep $target.temp
 		file rename -force $target.temp $target
 	}
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job ${pre}uvar-sam-$root.tsv ${pre}var-sam-$root.tsv.lz4
 	# find regions
 	sreg_sam_job ${pre}sreg-sam-$root ${pre}varall-sam-$root.tsv ${pre}sreg-sam-$root.tsv.lz4
-	if {[job_getinfo]} {
-		lappend ::targets $destdir/${pre}var-sam-$root.tsv.lz4 $destdir/${pre}var-sam-$root.tsv.lz4.lz4i
-		lappend ::targets $destdir/${pre}sreg-sam-$root.tsv.lz4 $destdir/${pre}sreg-sam-$root.tsv.lz4.lz4i
-	}
 	# cleanup
 	if {$cleanup} {
 		job clean_${pre}var-sam-$root -deps {${pre}var-sam-$root.tsv ${pre}varall-sam-$root.tsv} -vars {pre root} -targets {} \

@@ -12,20 +12,23 @@ proc job_process_par_jobid {job} {
 }
 
 proc job_process_par_marktargets {targets ptargets rmtargets id} {
-	global cgjob_id cgjob_ptargets cgjob_rm
+	global cgjob_id cgjob_ptargets cgjob_rm job_getinfo cgjob_getinfo
 	foreach target $targets {
 		if {[get cgjob_id($target) q] eq "q"} {
 			set gzfile [gzfiles $target]
 			if {$gzfile ne ""} {set target $gzfile}
+			if {[get job_getinfo 0] && ![info exists cgjob_id($target)]} {lappend cgjob_getinfo(id) $target}
 			set cgjob_id($target) $id
 		}
 	}
 	foreach ptarget $ptargets {
 		if {[get cgjob_ptargets($ptarget) q] eq "q"} {
+			if {[get job_getinfo 0] && ![info exists cgjob_ptargets($ptarget)]} {lappend cgjob_getinfo(ptargets) $ptarget}
 			set cgjob_ptargets($ptarget) $id
 		}
 	}
 	foreach rmtarget $rmtargets {
+		if {[get job_getinfo 0] && ![info exists cgjob_rm($rmtarget)]} {lappend cgjob_getinfo(rm) $rmtarget}
 		set cgjob_rm($rmtarget) $id
 	}
 }

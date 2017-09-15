@@ -19,7 +19,7 @@ proc process_project_job {args} {
 	set amplicons {}
 	set extra_reports_mastr 0
 	set jobsample 0
-	cg_options process_project_job args {
+	cg_options process_project args {
 		-ori {
 			set oridir $value
 		}
@@ -186,19 +186,19 @@ proc process_project_job {args} {
 				-removeduplicates $removeduplicates -amplicons $amplicons \
 				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
 				$dir
-			job_getinfo 0
+			foreach {deps targets} [job_getinfo 0] break
 			job process_sample-$sample -deps $::deps -targets $::targets -vars {
 				aligner realign varcallers dbdir split paired
 				adapterfile reports samBQ cleanup  removeduplicates amplicons
 				removeskew dt targetfile minfastqreads dir
 			} -code {
-				cg process_sample -todoVar todo -reportstodoVar reportstodo \
+				cg process_sample -stack 1 -v 2 \
 					-aligner $aligner -realign $realign --varcallers $varcallers \
 					-dbdir $dbdir -split $split -paired $paired \
 					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 					-removeduplicates $removeduplicates -amplicons $amplicons \
 					-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
-					$dir
+					$dir >@ stdout >@ stderr
 			}
 		}
 	}

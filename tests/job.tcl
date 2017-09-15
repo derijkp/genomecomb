@@ -255,6 +255,12 @@ test job {job_expandvars} {
 	job_expandvars $string
 } {A(B1(C1)) A(B2(C1)) A(B(C2))}
 
+test job {job_expandvarslist} {
+	set a {test it}
+	set b now
+	job_expandvarslist {$a$b}
+} {}
+
 # ------------------------------------
 # test in different "processing modes"
 # ------------------------------------

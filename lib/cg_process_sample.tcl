@@ -116,7 +116,6 @@ proc process_sample_cgi_job {workdir split} {
 					set file $dep
 					exec {*}[gzcat $file] $file | cg bcol make -n $chr -co 0 -p $posfield -t i $target $field >@ stdout 2>@ stderr
 				}
-				if {[job_getinfo]} {lappend ::deps $file}
 			}
 			job cg_coverage-cg-${sample}_merge-$outfield-$sample \
 			    -vars {tomerge tomergebins finaltarget} \
@@ -130,7 +129,6 @@ proc process_sample_cgi_job {workdir split} {
 				file rename $finaltarget.temp $finaltarget
 				file delete {*}$deps
 			}
-			if {[job_getinfo]} {lappend ::targets $finaltarget $finaltarget.bin.lz4 $finaltarget.bin.lz4.lz4i}
 		}
 	}
 	# variants
@@ -157,7 +155,6 @@ proc process_sample_cgi_job {workdir split} {
 		cg select -s "chromosome begin end varType" $varfile $target.temp
 		file rename -force $target.temp $target
 	}
-	if {[job_getinfo]} {lappend ::deps $workdir/ori/ASM/var-*-ASM*.tsv}
 	# we no longer convert the CG gene info. better annotated by genomecomb itself later
 #	job cg_sgene-$sample -optional 1 -deps {ori/ASM/gene-*-ASM*.tsv} -targets {sgene-$sample.tsv} \
 #	-skip {var-cg-cg-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} -code {
@@ -210,7 +207,6 @@ proc process_sample_cgi_job {workdir split} {
 		cg select -s "chromosome begin end" $regfile $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/sreg-cg-cg-$sample.tsv.lz4}
 	job cg_regfromsvar-$sample -optional 1 -deps {svar-$sample.tsv} \
 	-targets {sreg-cg-cg-$sample.tsv.lz4} -code {
 		set svarfile $dep
@@ -226,7 +222,6 @@ proc process_sample_cgi_job {workdir split} {
 		cg refconsregions $dep > $target.temp
 		file rename -force $target.temp $target
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/reg_refcons-$sample.tsv}
 	job cg_reg_nocall-$sample -optional 1 -deps {svar-$sample.tsv} \
 	-targets {reg_nocall-$sample.tsv} -code {
 		putslog "Find partial no-call regions for dep"
@@ -238,7 +233,6 @@ proc process_sample_cgi_job {workdir split} {
 			file rename -force $target.temp $target
 		}
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/reg_nocall-$sample.tsv}
 	job cg_cpSV-$sample -optional 1 -deps {ori/ASM/SV ^ori/ASM/SV/(.*)$} -targets {SV/\_} -code {
 		putslog "Copying SV"
 		set targetdir [file dir $target]
@@ -248,13 +242,11 @@ proc process_sample_cgi_job {workdir split} {
 		file delete -force $targetdir
 		file rename -force $tempdir $targetdir
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/SV/\_}
 	job cg_cgsv-$sample -optional 1 -deps {SV/allJunctionsBeta-*.tsv} -targets {cgsv-$sample.tsv} -code {
 		set tempfile [filetemp $target]
 		convcgsv $dep $tempfile
 		file rename -force $tempfile $target
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/cgsv-$sample.tsv}
 	job cg_cgsv_alpha-$sample -optional 1 -deps {SV/annotatedJunctionsAlpha-*.tsv} -targets {cgsv-$sample.tsv} -code {
 		set tempfile [filetemp $target]
 		convcgsv $dep $tempfile
@@ -269,13 +261,11 @@ proc process_sample_cgi_job {workdir split} {
 		file delete -force $targetdir
 		file rename -force $tempdir $targetdir
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/CNV/\_}
 	job cg_cgcnv -optional 1 -deps {CNV/cnvSegmentsBeta-*.tsv} -targets {cgcnv-$sample.tsv} -code {
 		set tempfile [filetemp $target]
 		convcgcnv $dep $tempfile
 		file rename -force $tempfile $target
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/cgcnv-$sample.tsv}
 	job cg_cgcnv_diploid-$sample -optional 1 -deps {CNV/cnvSegmentsDiploidBeta-*.tsv} -targets {cgcnv-$sample.tsv} -code {
 		set tempfile [filetemp $target]
 		convcgcnv $dep $tempfile
@@ -292,13 +282,11 @@ proc process_sample_cgi_job {workdir split} {
 		cg lz4 $target.temp
 		file rename -force $target.temp.lz4 $target
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/reg_cluster-$sample.tsv.lz4}
 	job reg_ns-$sample -optional 1 -deps {annotvar-$sample.tsv} -targets {reg_ns-$sample.tsv} -code {
 		putslog "Find regions with N's for $dep"
 		cg select -f {chromosome begin end} -q {$alleleSeq1 ~ /[N?]/ || $alleleSeq2 ~ /[N?]/} < $dep > $target.temp
 		file rename -force $target.temp $target
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/reg_ns-$sample.tsv}
 	job reg_lowscore-$sample -optional 1 -deps {annotvar-$sample.tsv} -targets {reg_lowscore-$sample.tsv} -code {
 		set header [cg select -h $dep]
 		if {[llength [list_common $header {totalScore1 totalScore2}]] == 2} {
@@ -307,7 +295,6 @@ proc process_sample_cgi_job {workdir split} {
 			file rename -force $target.temp $target
 		}
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/reg_lowscore-$sample.tsv}
 	job cg_var-cg-cg-$sample -optional 1 \
 	-deps {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage-cg-$sample/bcol_coverage-$sample.tsv) (coverage-cg-$sample/bcol_refscore-$sample.tsv)} \
 	-targets {var-cg-cg-$sample.tsv.lz4} -vars {sample} -code {
@@ -318,13 +305,11 @@ proc process_sample_cgi_job {workdir split} {
 		file delete -force [gzroot $temp].index
 		file delete -force [gzroot $dep].index
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/var-cg-cg-$sample.tsv.lz4}
 	job reg_covered-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv.lz4} -targets {reg-$sample.covered} -code {
 		putslog "Genomic coverage of sequenced regions"
 		cg covered $dep | cg lz4 > $target.temp
 		file rename -force $target.temp $target
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/sreg-cg-cg-$sample.tsv.lz4}
 	file mkdir filtered
 	file mkdir covered
 	job cg_filteredrefcons-$sample -optional 1 -vars sample \
@@ -339,14 +324,12 @@ proc process_sample_cgi_job {workdir split} {
 		cg_lz4 -keep 0 -i 1 -o $target1.lz4 $temp1
 		file rename -force $temp2 $target2
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/filtered/filteredrefcons-$sample.tsv $workdir/covered/filteredrefcons-$sample.covered}
 	job cg_filteredns-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv reg_ns-$sample.tsv} \
 	-targets {filtered/filteredns-$sample.tsv.lz4} -code {
 		putslog "Coverage of ns region"
 		cg regsubtract $dep1 $dep2 > $target.temp
 		cg_lz4 -keep 0 -i 1 -o $target $target.temp
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/filteredns-$sample.tsv.lz4}
 	job cg_filteredns_covered-$sample -optional 1 -deps {filtered/filteredns-$sample.tsv} \
 	-targets {covered/filteredns-$sample.covered} -code {
 		putslog "Making $target"
@@ -354,27 +337,23 @@ proc process_sample_cgi_job {workdir split} {
 		cg covered $dep > $temp
 		file rename -force $temp $target
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/covered/filteredns-$sample.covered}
 	job cg_filteredlowscore-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv reg_lowscore-$sample.tsv} \
 	-targets {filtered/filteredlowscore-$sample.tsv.lz4} -code {
 		set temp [filetemp $target]
 		cg regsubtract $dep1 $dep2 > $temp
 		cg_lz4 -keep 0 -i 1 -o $target $temp
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/filtered/filteredlowscore-$sample.tsv.lz4}
 	job cg_filteredlowscore_covered-$sample -optional 1 -deps {filtered/filteredlowscore-$sample.tsv} \
 	-targets {covered/filteredlowscore-$sample.covered} -code {
 		set temp [filetemp $target]
 		cg covered $dep > $temp
 		file rename -force $temp $target
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/covered/filteredlowscore-$sample.covered}
 	job cg_refcons_histo-$sample -optional 1 -deps {reg_refcons-$sample.tsv} -targets {histo-refcons-$sample.tsv} -code {
 		putslog "Making $target"
 		cg reghisto $dep > $target.temp
 		file rename -force $target.temp $target
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/histo-refcons-$sample.tsv}
 	job cg_filteredcluster-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv reg_cluster-$sample.tsv} \
 	-targets {filtered/filteredcluster-$sample.tsv.lz4} -code {
 		putslog "Coverage of clusters region"
@@ -382,14 +361,12 @@ proc process_sample_cgi_job {workdir split} {
 		cg regsubtract $dep1 $dep2 > $temp
 		cg_lz4 -keep 0 -i 1 -o $target $temp
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/filtered/filteredcluster-$sample.tsv.lz4}
 	job cg_filteredcluster_covered-$sample -optional 1 -deps {filtered/filteredcluster-$sample.tsv} 
 	-targets {covered/filteredcluster-$sample.covered} -code {
 		putslog "Making $target"
 		cg covered $dep > $target.temp
 		file rename -force $target.temp $target
 	}
-	if {[job_getinfo]} {lappend ::targets $workdir/covered/filteredcluster-$sample.covered}
 	job cg_process_cleanup-$sample -optional 1 -deps {(svar-$sample.tsv) (annotvar-$sample.tsv) (annotvar-$sample.tsv.index) (sgene-$sample.tsv) var-cg-cg-$sample.tsv sreg-cg-cg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} \
 		-vars {sample} -rmtargets {svar-$sample.tsv annotvar-$sample.tsv sgene-$sample.tsv} -code {
 			catch {file delete svar-$sample.tsv}
@@ -639,7 +616,7 @@ proc process_sample_job {args} {
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard java gnusort8 lz4 os]
 	# check if ori is a cg dir, if so use process_sample_cgi_job
 	# ----------------------------------------------------------
-	if {[jobglob $sampledir/ori/ASM/var-*-ASM*.tsv] ne ""} {
+	if {![job_getinfo] && [jobglob $sampledir/ori/ASM/var-*-ASM*.tsv] ne ""} {
 		# analysis info
 		# -------------
 		info_analysis_file $sampledir/info_analysis.tsv $sample \
@@ -652,21 +629,22 @@ proc process_sample_job {args} {
 	}
 	# analysis info
 	# -------------
-	info_analysis_file $sampledir/info_analysis.tsv $sample \
-		{dbdir aligners varcallers realign paired samBQ adapterfile reports} \
-		{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatkjava biobambam picard java gnusort8 tabix lz4 os} \
-		command [list cg process_sample {*}$keepargs]
+	if {![job_getinfo]} {
+		info_analysis_file $sampledir/info_analysis.tsv $sample \
+			{dbdir aligners varcallers realign paired samBQ adapterfile reports} \
+			{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatkjava biobambam picard java gnusort8 tabix lz4 os} \
+			command [list cg process_sample {*}$keepargs]
+	}
 	# convert existing vcfs
 	# ----------------------
 	set files [jobglob $sampledir/var-*.vcf]
 	foreach file $files {
 		set target [file root [gzroot $file]].tsv
 		if {![file exists $target]} {
-			job vcf2tsv-$file -deps $file -targets $target -vars split -code {
+			job vcf2tsv-$file -deps {$file} -targets {$target} -vars split -code {
 				cg vcf2tsv -split $split $dep $target.temp
 				file rename -force $target.temp $target
 			}
-			if {[job_getinfo]} {lappend ::deps $file ; lappend ::targets $target}
 			lappend todo [string range $target 4 end-4]
 		}
 	}
@@ -700,12 +678,11 @@ proc process_sample_job {args} {
 			foreach file $files {
 				lappend targets $sampledir/fastq/[file tail $file]
 			}
-			job fastq_from_ori-$sample -deps $files -targets $targets -code {
+			job fastq_from_ori-$sample -deps {$files} -targets {$targets} -code {
 				foreach file $deps target $targets {
 					mklink $file $target
 				}
 			}
-			if {[job_getinfo]} {lappend ::deps {*}$files}
 		} else {
 			# check if there are bam files in ori to extract fastq from
 			set files [ssort -natural [jobglob $sampledir/ori/*.bam]]
@@ -720,10 +697,9 @@ proc process_sample_job {args} {
 					file rename -force $target2.temp.gz $target2
 				}
 			}
-			if {[job_getinfo]} {lappend ::deps {*}$files}
 		}
 		set files [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
-	} elseif {[job_getinfo]} {lappend ::deps {*}$files}
+	} 
 	# create bam from fastq files (if found)
 	set cleanedbams {}
 	if {[llength $files]} {

@@ -122,7 +122,6 @@ proc var_gatk_job {args} {
 	}
 	# lz4_job ${pre}varall-gatk-$root.tsv -i 1
 	lz4index_job ${pre}varall-gatk-$root.tsv.lz4
-	if {[job_getinfo]} {lappend ::targets $destdir/${pre}varall-gatk-$root.tsv.lz4 $destdir/${pre}varall-gatk-$root.tsv.lz4.lz4i}
 	# predict deletions separately, because gatk will not predict snps in a region where a deletion
 	# was predicted in the varall
 	job ${pre}delvar-gatk-$root -deps $deps \
@@ -177,10 +176,6 @@ proc var_gatk_job {args} {
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job ${pre}uvar-gatk-$root.tsv ${pre}var-gatk-$root.tsv.lz4
 	sreg_gatk_job ${pre}sreg-gatk-$root ${pre}varall-gatk-$root.tsv ${pre}sreg-gatk-$root.tsv.lz4
-	if {[job_getinfo]} {
-		lappend ::targets $destdir/${pre}var-gatk-$root.tsv.lz4 $destdir/${pre}var-gatk-$root.tsv.lz4.lz4i
-		lappend ::targets $destdir/${pre}sreg-gatk-$root.tsv.lz4 $destdir/${pre}sreg-gatk-$root.tsv.lz4.lz4i
-	}
 	## filter SNPs (according to seqanswers exome guide)
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup
