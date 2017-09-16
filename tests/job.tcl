@@ -12,6 +12,7 @@ proc test_job_init {args} {
 	job_logfile_set log
 }
 proc gridwait {} {}
+
 if 0 {
 	set testname "-d direct"
 	proc test_job_init {args} {
@@ -258,8 +259,8 @@ test job {job_expandvars} {
 test job {job_expandvarslist} {
 	set a {test it}
 	set b now
-	job_expandvarslist {$a$b}
-} {}
+	job_expandvarslist {$a$b $a$a}
+} {{test itnow} {test ittest it}}
 
 # ------------------------------------
 # test in different "processing modes"

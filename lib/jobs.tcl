@@ -198,11 +198,11 @@ proc job_expandvars {string {level 0}} {
 	return $result
 }
 
-proc job_expandvarslist {list {level 1}} {
+proc job_expandvarslist {list {level 0}} {
 	set result {}
 	incr level
+	set list [string_change $list [list \\ \\\\]]
 	foreach string $list {
-		set string [string_change $string [list \\ \\\\]]
 		lappend result {*}[job_expandvars $string $level]
 	}
 	return $result
