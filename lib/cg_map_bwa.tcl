@@ -41,7 +41,7 @@ proc map_bwa_job {args} {
 			lappend samfiles $target
 			job bwa-$sample-$name -mem 5G -cores 2 \
 			-deps [list $bwarefseq $file] -targets {$target} -vars {readgroupdata sample paired} \
-			-skip {$resultbase.bam} {*}$skips -code {
+			-skip [list $resultbase.bam] {*}$skips -code {
 				puts "making $target"
 				foreach {bwarefseq fastq} $deps break
 				set rg {}
@@ -58,7 +58,7 @@ proc map_bwa_job {args} {
 			set target $resultbase-$name.sam
 			lappend samfiles $target
 			job bwa-$sample-$name -mem 5G -cores 2 -deps [list $bwarefseq $file1 $file2] -targets {$target} -vars {readgroupdata sample paired} \
-			-skip {$resultbase.bam} {*}$skips -code {
+			-skip [list $resultbase.bam] {*}$skips -code {
 				puts "making $target"
 				foreach {bwarefseq fastq1 fastq2} $deps break
 				set rg {}

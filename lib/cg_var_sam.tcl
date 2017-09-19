@@ -65,12 +65,12 @@ proc var_sam_job {args} {
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	# make sure reference sequence is indexed
-	job ${pre}var_sam_faidx -deps $refseq -targets {$refseq.fai} -code {
+	job ${pre}var_sam_faidx -deps {$refseq} -targets {$refseq.fai} -code {
 		exec samtools faidx $dep
 	}
 	set deps [list $file $refseq $refseq.fai {*}$deps]
 	job ${pre}varall-sam-$root -deps $deps -targets {${pre}varall-sam-$root.vcf} \
-		-vars {refseq opts BQ regionfile} -skip ${pre}varall-sam-$root.tsv -code {
+		-vars {refseq opts BQ regionfile} -skip [list ${pre}varall-sam-$root.tsv] -code {
 		if {$regionfile ne ""} {
 			set bedfile [tempbed $regionfile $refseq]
 			lappend opts -l $bedfile
@@ -92,7 +92,7 @@ proc var_sam_job {args} {
 	# lz4_job ${pre}varall-sam-$root.tsv -i 1
 	lz4index_job ${pre}varall-sam-$root.tsv.lz4
 	job ${pre}var-sam-$root -deps {${pre}varall-sam-$root.tsv} -targets {${pre}uvar-sam-$root.tsv} \
-	-skip {${pre}var-sam-$root.tsv} \
+	-skip [list ${pre}var-sam-$root.tsv] \
 	-code {
 		cg select -q {
 			$alt ne "." && $alleleSeq1 ne "." && $quality >= 10 && $totalcoverage > 4

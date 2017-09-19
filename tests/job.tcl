@@ -131,7 +131,7 @@ proc jobtest {args} {
 		file_write $destdir/sumpattern.log [join $targets \n]
 	}
 	job sumpattern2 -foreach {^$destdir/sumpattern-(.*)\.txt$} \
-	  -skip {$destdir/allp2.txt} \
+	  -skip [list $destdir/allp2.txt] \
 	  -cores 2 \
 	  -targets {$destdir/sumpattern2-\1.txt} -code {
 		for {set i 1} {$i < 5} {incr i} {
@@ -157,7 +157,7 @@ proc jobtest {args} {
 		exec wc $dep > $target
 	}
 	job sum2 -foreach {^$destdir/sum-(.*)\.txt$} \
-	  -skip {$destdir/all2.txt} \
+	  -skip [list $destdir/all2.txt] \
 	  -targets {$destdir/sum2-\1.txt} -code {
 		for {set i 1} {$i < 5} {incr i} {
 			# puts stderr "progress $i"
@@ -413,6 +413,36 @@ test job "chained jobglob $testname" {
 	cd $::testdir
 	set result
 } {{final1.txt log.*.finished rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
+}} match
+
+test job "chained jobglob spaces in name $testname" {
+	cd $::testdir
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init
+	set target1 {test 1.txt}
+	job init -deps {} -targets {$target1 {test 2.txt}} -code {
+		after 500
+		file_write {test 1.txt} test1\n
+		file_write {test 2.txt} test2\n
+	}
+	foreach dep [jobglob test*.txt] {
+		set target r$dep
+		job job1-[file tail $dep] -deps {$dep} -targets {$target} -code {
+			set c [file_read $dep]
+			file_write $target r${c}
+		}
+	}
+	job job2 -deps {{rtest 1.txt}} -targets {{final 1.txt}} -code {
+		set c [file_read $dep]
+		file_write $target f${c}
+	}
+	job_wait
+	gridwait
+	set result [list [lsort -dict [glob *]] [file_read {final 1.txt}]]
+	cd $::testdir
+	set result
+} {{{final 1.txt} log.*.finished {rtest 1.txt} {rtest 2.txt} {test 1.txt} {test 2.txt}} {frtest1
 }} match
 
 test job "basic chain --force 0 $testname" {

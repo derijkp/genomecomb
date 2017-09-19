@@ -136,8 +136,8 @@ proc process_multicompar_job {args} {
 	putslog "Starting annotation"
 	cg_annotate_job $compar_file compar/annot_compar-$experiment.tsv.lz4 $dbdir {*}$dbfiles
 	job indexannotcompar-$experiment \
-	-deps compar/annot_compar-$experiment.tsv \
-	-targets compar/annot_compar-$experiment.tsv.index/info.tsv -vars dbdir -code {
+	-deps {compar/annot_compar-$experiment.tsv} \
+	-targets {compar/annot_compar-$experiment.tsv.index/info.tsv} -vars dbdir -code {
 		cg index -colinfo $dep
 	}
 	#

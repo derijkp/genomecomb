@@ -66,6 +66,36 @@ test process_small {process_project mastr_mx2} {
 	checkdiff -y --suppress-common-lines tmp/mastr_mx2/compar/info_analysis.tsv expected/mastr_mx2/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|command|version_genomecomb}
 } {}
 
+test process_small {process_project mastr_mx2 space in name} {
+	cd $::bigtestdir
+	set mastrdir {tmp/mastr_mx2 space}
+	set expected {expected/mastr_mx2 space}
+	file delete -force $mastrdir
+	file mkdir $mastrdir/samples
+	foreach sample [glob ori/mastr_mx2.start/samples/*] {
+		set sdest $mastrdir/samples/[string range [file tail $sample] 0 end-3]/fastq
+		file mkdir $sdest
+		foreach file [glob -nocomplain $sample/ori/*] {
+			file copy $file $sdest
+		}
+	}
+	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv $mastrdir/samplicons-wgs2.tsv
+	# file copy ori/mastr_mx2/demultiplex_stats.tsv $mastrdir
+	# if you want to see output while running
+	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 \
+		-minfastqreads 10 -amplicons $mastrdir/samplicons-wgs2.tsv -extra_reports_mastr 1 \
+		$mastrdir refseqtest/hg19 2>@ stderr >@ stdout
+	# check vs expected
+	cg tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
+		-x colinfo -x mastr_mx2.html -x *.lz4i -x *.finished -x info_analysis.tsv \
+		$mastrdir $expected
+	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
+		checkdiff -y --suppress-common-lines $mastrdir/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics $expected/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
+	}
+	checkdiff -y --suppress-common-lines "$mastrdir/mastr_mx2 space.html" "$expected/mastr_mx2 space.html" | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
+	checkdiff -y --suppress-common-lines $mastrdir/compar/info_analysis.tsv $expected/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
+} {}
+
 test process_small {process_project -jobsample 1 mastr_mx2} {
 	cd $::bigtestdir
 	file delete -force tmp/mastr_mx2

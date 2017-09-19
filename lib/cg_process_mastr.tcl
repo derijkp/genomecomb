@@ -183,7 +183,7 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	if {$useminigenome} {
 		set refseq seq-$mastrname.fa
 		set mapfile reg-$mastrname.map
-		job mastrdesign-makeminigenome-$mastrname -deps amplicons-$mastrname.tsv \
+		job mastrdesign-makeminigenome-$mastrname -deps {amplicons-$mastrname.tsv} \
 		-targets {
 			$refseq reg-$mastrname.bed reg-$mastrname.tsv
 			inner_amplicons-$mastrname.tsv
@@ -236,7 +236,7 @@ proc analysis_complete_job {experiment {destdir {}}} {
 	upvar job_logdir job_logdir
 	if {$destdir eq ""} {set destdir [pwd]}
 	job analysis_complete-$experiment -deps [list $destdir/coverage_${experiment}_avg.tsv $destdir/coverage_${experiment}_frac_above_20.tsv $destdir/compar/annot_compar_gatk-${experiment}_long.tsv $destdir/${experiment}.html] \
-	-targets $destdir/analysis_complete -vars destdir -code {
+	-targets {$destdir/analysis_complete} -vars destdir -code {
 		file delete $destdir/analysis_running
 		exec touch $target
 	}
@@ -465,10 +465,10 @@ proc process_mastr_job {args} {
 		set bamfile ${pre}map-${aligner}-$name.bam
 		set resultbamfile ${pre}map-$resultbamprefix${aligner}-$name.bam
 		# quality and adapter clipping
-		set files [fastq_clipadapters_job $files -skips [list -skip $bamfile -skip $resultbamfile] -removeskew 0]
+		set files [fastq_clipadapters_job $files -skips [list -skip [list $bamfile] -skip [list $resultbamfile]] -removeskew 0]
 		#
 		# map using $aligner
-		map_${aligner}_job $bamfile $refseq $files $name $paired -readgroupdata {PL illumina LB solexa-123} -pre $pre -skips [list -skip $resultbamfile]
+		map_${aligner}_job $bamfile $refseq $files $name $paired -readgroupdata {PL illumina LB solexa-123} -pre $pre -skips [list -skip [list $resultbamfile]]
 		if {$cleanup} {
 			# clean clipped files
 			lappend files [file dir [lindex $files 0]]

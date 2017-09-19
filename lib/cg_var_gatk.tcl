@@ -4,11 +4,11 @@ proc gatk_refseq_job refseq {
 	if {![file exists $nrefseq] && $refseq ne $nrefseq} {
 		mklink $refseq $nrefseq
 	}
-	job gatkrefseq_faidx-[file tail $nrefseq] -deps $nrefseq -targets {$nrefseq.fai} -code {
+	job gatkrefseq_faidx-[file tail $nrefseq] -deps {$nrefseq} -targets {$nrefseq.fai} -code {
 		exec samtools faidx $dep
 	}
 	set dict [file root $nrefseq].dict
-	job gatkrefseq-[file tail $nrefseq] -deps $nrefseq -targets {$dict} -vars {nrefseq} -code {
+	job gatkrefseq-[file tail $nrefseq] -deps {$nrefseq} -targets {$dict} -vars {nrefseq} -code {
 		file delete $target.temp
 		picard CreateSequenceDictionary R= $nrefseq O= $target.temp 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
@@ -19,7 +19,7 @@ proc gatk_refseq_job refseq {
 proc annotvar_clusters_job {file resultfile} {
 	upvar job_logdir job_logdir
 	set root [join [lrange [split [file root $file] -] 1 end] -]
-	job annotvar-clusters-$root -deps {$file} -targets {reg_cluster-$root.tsv.lz4} -skip {$resultfile} -code {
+	job annotvar-clusters-$root -deps {$file} -targets {reg_cluster-$root.tsv.lz4} -skip [list $resultfile] -code {
 		cg clusterregions < $dep > $target.temp
 		cg lz4 $target.temp
 		file rename -force $target.temp.lz4 $target
@@ -101,7 +101,7 @@ proc var_gatk_job {args} {
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set deps [list $file $gatkrefseq $file.bai {*}$deps]
 	job ${pre}varall-gatk-$root -mem 5G -cores 2 -deps $deps \
-	-targets ${pre}varall-gatk-$root.vcf -skip ${pre}varall-gatk-$root.tsv -vars {gatk opts regionfile gatkrefseq refseq} -code {
+	-targets {${pre}varall-gatk-$root.vcf} -skip [list ${pre}varall-gatk-$root.tsv] -vars {gatk opts regionfile gatkrefseq refseq} -code {
 		if {$regionfile ne ""} {
 			set bedfile [tempbed $regionfile $refseq]
 			lappend opts -L $bedfile
@@ -116,7 +116,7 @@ proc var_gatk_job {args} {
 		# file delete $target.temp
 	}
 	job ${pre}varall-gatk2sft-$root -deps [list ${pre}varall-gatk-$root.vcf] \
-	-targets ${pre}varall-gatk-$root.tsv.lz4 -vars {sample split} -code {
+	-targets {${pre}varall-gatk-$root.tsv.lz4} -vars {sample split} -code {
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
@@ -125,8 +125,8 @@ proc var_gatk_job {args} {
 	# predict deletions separately, because gatk will not predict snps in a region where a deletion
 	# was predicted in the varall
 	job ${pre}delvar-gatk-$root -deps $deps \
-	-targets ${pre}delvar-gatk-$root.vcf -skip {${pre}delvar-gatk-$root.tsv} \
-	-skip {${pre}var-gatk-$root.tsv} -vars {gatk opts regionfile gatkrefseq refseq} -code {
+	-targets {${pre}delvar-gatk-$root.vcf} -skip [list ${pre}delvar-gatk-$root.tsv] \
+	-skip [list ${pre}var-gatk-$root.tsv] -vars {gatk opts regionfile gatkrefseq refseq} -code {
 		if {$regionfile ne ""} {
 			set bedfile [tempbed $regionfile $refseq]
 			lappend opts -L $bedfile
@@ -141,8 +141,8 @@ proc var_gatk_job {args} {
 		# file delete $target.temp
 	}
 	job ${pre}delvar-gatk2sft-$root -deps [list ${pre}delvar-gatk-$root.vcf] \
-	-targets ${pre}delvar-gatk-$root.tsv \
-	-skip {${pre}var-gatk-$root.tsv} -vars {sample split} -code {
+	-targets {${pre}delvar-gatk-$root.tsv} \
+	-skip [list ${pre}var-gatk-$root.tsv] -vars {sample split} -code {
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp
 		cg select -q {
 			$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4
@@ -158,8 +158,8 @@ proc var_gatk_job {args} {
 		file delete $target.temp
 	}
 	job ${pre}uvar-gatk-$root -deps {${pre}varall-gatk-$root.tsv ${pre}delvar-gatk-$root.tsv} \
-	-targets ${pre}uvar-gatk-$root.tsv \
-	-skip {${pre}var-gatk-$root.tsv} -code {
+	-targets {${pre}uvar-gatk-$root.tsv} \
+	-skip [list ${pre}var-gatk-$root.tsv] -code {
 		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
 		-f {
 			chromosome begin end type ref alt quality alleleSeq1 alleleSeq2 

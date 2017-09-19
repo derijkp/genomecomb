@@ -25,7 +25,7 @@ proc bam2reg_job {args} {
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
 	set root [join [lrange [split [file root $file] -] 1 end] -]
-#	job bam2coverage-$file -deps $bamfile -targets {$dir/coverage-$root $dir/coverage-$root/coverage-$root.FINISHED} -vars {root} -code {
+#	job bam2coverage-$file -deps {$bamfile} -targets {$dir/coverage-$root $dir/coverage-$root/coverage-$root.FINISHED} -vars {root} -code {
 #		cg bam2coverage $dep $target/coverage-$root
 #	}
 	set target $dir/sreg-cov$mincoverage-$root.tsv

@@ -549,7 +549,7 @@ foreach chromosome {
 	set vcf gnomad.genomes.$version.sites.$chromosome.vcf.gz
 	set target $tempdir/result$chromosome.tsv.lz4
 	lappend deps $target
-	job var_hg19_gnomad-$chromosome -targets {$target} -skip $finaltarget -vars {tempdir baseurl vcf fields dest db build} -code {
+	job var_hg19_gnomad-$chromosome -targets {$target} -skip {$finaltarget} -vars {tempdir baseurl vcf fields dest db build} -code {
 		if {![file exists $tempdir/$vcf]} {
 			putslog "Downloading $vcf"
 			wgetfile $baseurl/$vcf $tempdir/$vcf

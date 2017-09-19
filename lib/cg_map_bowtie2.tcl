@@ -28,7 +28,7 @@ proc map_bowtie2_job {args} {
 	set bowtie2refseq [bowtie2refseq_job $refseq]
 	job bowtie2-$sample -deps [list $bowtie2refseq {*}$files] -targets {$resultbase.sam} \
 	-vars {paired bowtie2refseq readgroupdata sample} \
-	-skip $resultbase.bam {*}$skips -code {
+	-skip [list $resultbase.bam] {*}$skips -code {
 		puts "making $target"
 		list_shift deps
 		set rg {}

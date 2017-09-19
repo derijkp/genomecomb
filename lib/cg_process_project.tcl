@@ -148,12 +148,20 @@ proc process_project_job {args} {
 	if {[file exists $destdir/samples]} {
 		set sampledir $destdir/samples
 		foreach dir [jobglob $sampledir/*] {
-			set a([file tail $dir]) 1
+			set sample [file tail $dir]
+			if {[regexp {[- ]} $sample]} {
+				error "incompatible sample name $sample: sample names cannot contain spaces or dashes (-)"
+			}
+			set a($sample) 1
 		}
 	} else {
 		set sampledir $destdir
 		foreach dir [jobglob $sampledir/*/fastq $sampledir/*/ori] {
-			set a([file tail [file dir $dir]]) 1
+			set sample [file tail [file dir $dir]]
+			if {[regexp {[- ]} $sample]} {
+				error "incompatible sample name $sample: sample names cannot contain spaces or dashes (-)"
+			}
+			set a($sample) 1
 		}
 	}
 	set samples [ssort -natural [array names a]]
@@ -213,8 +221,8 @@ proc process_project_job {args} {
 		make_alternative_compar_job $experiment $destdir
 		set histofiles {}
 		foreach dir $reportstodo {
-			set histofile [jobglob $dir/*.histo]
-			if {$histofile ne ""} {lappend histofiles $histofile}
+			set list [jobglob $dir/*.histo]
+			if {[llength $list]} {lappend histofiles {*}$list}
 		}
 		generate_coverage_report_job $experiment $amplicons $histofiles $destdir
 		generate_html_report_job $experiment $destdir

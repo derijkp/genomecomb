@@ -148,7 +148,7 @@ specifically targetting compression
 This can also be handled (more flexibly) using jobglob and a foreach loop
 {{{
 foreach file [jobglob test*.tsv] {
-	job test-$file -deps $file -targets [file root $file]-result.tsv -code {
+	job test-$file -deps {$file} -targets {[file root $file]-result.tsv} -code {
 	}
 }
 }}}

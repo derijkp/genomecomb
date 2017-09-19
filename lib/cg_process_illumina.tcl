@@ -163,13 +163,13 @@ proc process_illumina {args} {
 			# quality and adapter clipping
 			set files [fastq_clipadapters_job $fastqfiles \
 				-adapterfile $adapterfile -paired $paired \
-				-skips [list -skip $bamfile -skip $resultbamfile]]
+				-skips [list -skip [list $bamfile] -skip [list $resultbamfile]]]
 			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
 			# map using bwa
-			map_bwa_job $bamfile $refseq $files $sample $paired -skips [list -skip $resultbamfile]
+			map_bwa_job $bamfile $refseq $files $sample $paired -skips [list -skip [list $resultbamfile]]
 		}
 		# extract regions with coverage >= 5 (for cleaning)
-		set cov5reg [bam2reg_job -mincoverage 5 -skip $resultbamfile map-bwa-$sample.bam]
+		set cov5reg [bam2reg_job -mincoverage 5 -skip [list $resultbamfile] map-bwa-$sample.bam]
 		# clean bamfile (mark duplicates, realign)
 		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample \
 			-removeduplicates 1 -realign $realign -regionfile $cov5reg -cleanup $cleanup]

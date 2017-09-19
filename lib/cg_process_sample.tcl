@@ -110,7 +110,7 @@ proc process_sample_cgi_job {workdir split} {
 				lappend tomergebins $target.bin
 				job cg_coverage-cg-$sample-$outfield-$chr-$sample -deps $file \
 				   -vars {sample chr field posfield} \
-				   -skip {$finaltarget $finaltarget.bin.lz4 $finaltarget.bin.lz4.lz4i} \
+				   -skip [list $finaltarget $finaltarget.bin.lz4 $finaltarget.bin.lz4.lz4i] \
 				   -targets {$target $target.bin} -code {
 					# make coverage files
 					set file $dep
@@ -133,7 +133,7 @@ proc process_sample_cgi_job {workdir split} {
 	}
 	# variants
 	job cg_svar-$sample -optional 1 -deps {ori/ASM/var-*-ASM*.tsv} -targets {svar-$sample.tsv} \
-	-skip {var-cg-cg-$sample.tsv sreg-cg-cg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} \
+	-skip [list var-cg-cg-$sample.tsv sreg-cg-cg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv] \
 	-code {
 		set varfile $dep
 		set f [gzopen $varfile]
@@ -157,7 +157,7 @@ proc process_sample_cgi_job {workdir split} {
 	}
 	# we no longer convert the CG gene info. better annotated by genomecomb itself later
 #	job cg_sgene-$sample -optional 1 -deps {ori/ASM/gene-*-ASM*.tsv} -targets {sgene-$sample.tsv} \
-#	-skip {var-cg-cg-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} -code {
+#	-skip [list var-cg-cg-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv] -code {
 #		set genefile $dep
 #		if {[llength $genefile] != 1} {error "could not identify genefile"}
 #		putslog "Sort gene file ($genefile)"
@@ -168,7 +168,7 @@ proc process_sample_cgi_job {workdir split} {
 	job cg_annotvar-$sample -optional 1 -vars {split sample} \
 	-deps {svar-$sample.tsv (sgene-$sample.tsv) (bcolall/coverage-cg-cg-$sample.bcol) (bcolall/refScore-cg-cg-$sample.bcol)} 
 	-targets {annotvar-$sample.tsv} \
-	-skip {var-cg-cg-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} -code {
+	-skip [list var-cg-cg-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv] -code {
 		putslog "Create annotated varfile $target"
 		if {[file exists $dep2]} {
 			cg cg2tsv -split $split -sorted 1 $dep1 $dep2 $target.temp
@@ -709,14 +709,14 @@ proc process_sample_job {args} {
 			set bamfile $sampledir/map-${aligner}-$sample.bam
 			# quality and adapter clipping
 			set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired \
-				-skips [list -skip $bamfile -skip $resultbamfile] -removeskew $removeskew]
+				-skips [list -skip [list $bamfile] -skip [list $resultbamfile]] -removeskew $removeskew]
 			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
 			lappend cleanupdeps $resultbamfile
 			#
 			# map using ${aligner}
-			map_${aligner}_job $bamfile $refseq $files $sample $paired -skips [list -skip $resultbamfile]
+			map_${aligner}_job $bamfile $refseq $files $sample $paired -skips [list -skip [list $resultbamfile]]
 			# extract regions with coverage >= 5 (for cleaning)
-			set cov5reg [bam2reg_job -mincoverage 5 -skip $resultbamfile $sampledir/map-${aligner}-$sample.bam]
+			set cov5reg [bam2reg_job -mincoverage 5 -skip [list $resultbamfile] $sampledir/map-${aligner}-$sample.bam]
 			# clean bamfile (mark duplicates, realign)
 			lappend cleanedbams [bam_clean_job $sampledir/map-${aligner}-$sample.bam $refseq $sample \
 				-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
