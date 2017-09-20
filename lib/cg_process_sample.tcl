@@ -361,13 +361,14 @@ proc process_sample_cgi_job {workdir split} {
 		cg regsubtract $dep1 $dep2 > $temp
 		cg_lz4 -keep 0 -i 1 -o $target $temp
 	}
-	job cg_filteredcluster_covered-$sample -optional 1 -deps {filtered/filteredcluster-$sample.tsv} 
+	job cg_filteredcluster_covered-$sample -optional 1 -deps {filtered/filteredcluster-$sample.tsv} \
 	-targets {covered/filteredcluster-$sample.covered} -code {
 		putslog "Making $target"
 		cg covered $dep > $target.temp
 		file rename -force $target.temp $target
 	}
-	job cg_process_cleanup-$sample -optional 1 -deps {(svar-$sample.tsv) (annotvar-$sample.tsv) (annotvar-$sample.tsv.index) (sgene-$sample.tsv) var-cg-cg-$sample.tsv sreg-cg-cg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} \
+	job cg_process_cleanup-$sample -optional 1 \
+		-deps {(svar-$sample.tsv) (annotvar-$sample.tsv) (annotvar-$sample.tsv.index) (sgene-$sample.tsv) var-cg-cg-$sample.tsv sreg-cg-cg-$sample.tsv reg_refcons-$sample.tsv reg_nocall-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv} \
 		-vars {sample} -rmtargets {svar-$sample.tsv annotvar-$sample.tsv sgene-$sample.tsv} -code {
 			catch {file delete svar-$sample.tsv}
 			catch {file delete annotvar-$sample.tsv}
@@ -678,7 +679,7 @@ proc process_sample_job {args} {
 			foreach file $files {
 				lappend targets $sampledir/fastq/[file tail $file]
 			}
-			job fastq_from_ori-$sample -deps {$files} -targets {$targets} -code {
+			job fastq_from_ori-$sample -deps $files -targets $targets -code {
 				foreach file $deps target $targets {
 					mklink $file $target
 				}
