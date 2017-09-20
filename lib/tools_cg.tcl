@@ -14,7 +14,7 @@ proc cg {cmd args} {
 		set redir ""
 	}
 	if {[string length $args] < 2000} {
-		set error [catch {exec -ignorestderr cg $cmd {*}$args {*}$redir} result]
+		set error [catch {exec cg $cmd {*}$args {*}$redir} result]
 	} else {
 		set temprunfile [tempfile]
 		set poss [list_concat [list_find -glob $args ">*"] [list_find -glob $args "<*"]]
@@ -27,7 +27,7 @@ proc cg {cmd args} {
 			set redirect {}
 		}
 		file_write $temprunfile [list cg_$cmd {*}$code]\n
-		set error [catch {exec -ignorestderr cg source $temprunfile {*}$redirect {*}$redir} result]
+		set error [catch {exec cg source $temprunfile {*}$redirect {*}$redir} result]
 	}
 	if {$error} {
 		if {[file exists $tempfile]} {
