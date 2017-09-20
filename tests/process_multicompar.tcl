@@ -230,7 +230,7 @@ test process_project$testname {process_multicompar} {
 	file mkdir tmp/samples/annot2
 	file mkdir tmp/samples/annot-3
 	cg process_project {*}$::jobopts -dbdir $::refseqdir/hg19 -split 0 tmp
-} {- is not allowed in sample names. The following sample name(s) have a -: annot-3 annot-1} error
+} {incompatible sample name annot-*: sample names cannot contain spaces or dashes (-)} match error
 
 }
 

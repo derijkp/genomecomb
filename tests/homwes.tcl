@@ -21,7 +21,7 @@ test homwes {sample not given -> multiple samples} {
 	set varfile $::bigtestdir/ori/exomes_yri.ori/compar/annot_compar-yri_exome_test.tsv.lz4
 	set dbdir $::bigtestdir/refseqtest/hg19
 	cg homwes --stack 1 -dbdir $dbdir $varfile {} $::bigtestdir/tmp/homwes_multi/homwes-out.tsv
-	cg tsvdiff -q 1 -x *.log $::bigtestdir/tmp/homwes_multi $::bigtestdir/expected/homwes_multi
+	cg tsvdiff -q 1 -x *.log -x log_jobs $::bigtestdir/tmp/homwes_multi $::bigtestdir/expected/homwes_multi
 } {}
 
 cd $keepdir
