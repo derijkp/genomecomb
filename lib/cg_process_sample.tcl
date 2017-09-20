@@ -166,7 +166,7 @@ proc process_sample_cgi_job {workdir split} {
 #	}
 	# annotated vars file
 	job cg_annotvar-$sample -optional 1 -vars {split sample} \
-	-deps {svar-$sample.tsv (sgene-$sample.tsv) (bcolall/coverage-cg-cg-$sample.bcol) (bcolall/refScore-cg-cg-$sample.bcol)} 
+	-deps {svar-$sample.tsv (sgene-$sample.tsv) (bcolall/coverage-cg-cg-$sample.bcol) (bcolall/refScore-cg-cg-$sample.bcol)} \
 	-targets {annotvar-$sample.tsv} \
 	-skip [list var-cg-cg-$sample.tsv reg_cluster-$sample.tsv reg_ns-$sample.tsv reg_lowscore-$sample.tsv] -code {
 		putslog "Create annotated varfile $target"
@@ -307,7 +307,7 @@ proc process_sample_cgi_job {workdir split} {
 	}
 	job reg_covered-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv.lz4} -targets {reg-$sample.covered} -code {
 		putslog "Genomic coverage of sequenced regions"
-		cg covered $dep | cg lz4 > $target.temp
+		cg covered $dep > $target.temp
 		file rename -force $target.temp $target
 	}
 	file mkdir filtered
