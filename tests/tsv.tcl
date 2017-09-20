@@ -82,7 +82,7 @@ test tsv_open {vcf} {
 	set line [gets $f]
 	close $f
 	list $header $keepheader $line
-} {{CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003} {##fileformat=VCFv4.0
+} {{CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001	NA00002	NA00003} {##fileformat=VCFv4.0
 ##fileDate=20090805
 ##source=myImputationProgramV3.1
 ##reference=1000GenomesPilot-NCBI36
