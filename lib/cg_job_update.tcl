@@ -35,6 +35,16 @@ proc job_cleanlogs {logfile} {
 	}
 }
 
+# correct error in values from older version of timestamp
+proc correct_time_ms {timeVar} {
+	upvar $timeVar time
+	if {![regexp {^(.*\.)([0-9]?[0-9]?)$} $time temp pre ms]} {
+		return 0
+	}
+	set time $pre[format %03d $ms]
+	return 1
+}
+
 # status can be
 # submitting: while submitting; cannot be updated
 # running: still running, can be updated
@@ -133,9 +143,16 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 		set sline [split $line \t]
 		if {$addseconds} {
 			foreach {jobo jobid status submittime starttime endtime duration targets msg run} $sline break
+			if {[correct_time_ms starttime] || [correct_time_ms endtime]} {
+				set duration [timediff2duration [lmath_calc $endcode - $startcode]]
+			}
 			set time_seconds [timebetween_inseconds $starttime $endtime]
 		} else {
 			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $sline break
+			if {[correct_time_ms starttime] || [correct_time_ms endtime]} {
+				set duration [timediff2duration [lmath_calc $endcode - $startcode]]
+				set time_seconds [timebetween_inseconds $starttime $endtime]
+			}
 		}
 		set startcode [timescan $starttime]
 		set endcode [timescan $endtime]
@@ -152,6 +169,10 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 		if {($starttime eq "" || $endtime eq "" | $duration eq "" | $force) && [job_file_exists $job.log]} {
 			set jobloginfo [job_parse_log $job $totalduration]
 			foreach {status starttime endtime run duration totalduration submittime time_seconds} $jobloginfo break
+			if {[correct_time_ms starttime] || [correct_time_ms endtime]} {
+				set duration [timediff2duration [lmath_calc $endcode - $startcode]]
+				set time_seconds [timebetween_inseconds $starttime $endtime]
+			}
 			set msg {}
 			if {$status eq "error"} {
 				if {[catch {set msg [file_read $job.err]}]} {set msg ""}
@@ -167,9 +188,12 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 			}
 		} elseif {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
 			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break
+			correct_time_ms starttime
+			correct_time_ms endtime
 			set startcode [timescan $starttime]
 			set endcode [timescan $endtime]
 			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
+			set time_seconds [timebetween_inseconds $starttime $endtime]
 		} else {
 			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 		}
