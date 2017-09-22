@@ -715,7 +715,7 @@ proc process_sample_job {args} {
 			lappend cleanupdeps $resultbamfile
 			#
 			# map using ${aligner}
-			map_${aligner}_job $bamfile $refseq $files $sample $paired -skips [list -skip [list $resultbamfile]]
+			map_${aligner}_job -paired $paired -skips [list -skip [list $resultbamfile]] $bamfile $refseq $files $sample
 			# extract regions with coverage >= 5 (for cleaning)
 			set cov5reg [bam2reg_job -mincoverage 5 -skip [list $resultbamfile] $sampledir/map-${aligner}-$sample.bam]
 			# clean bamfile (mark duplicates, realign)

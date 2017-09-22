@@ -159,20 +159,20 @@ proc process_illumina {args} {
 		set resultbamfile map-${resultbamprefix}bwa-$sample.bam
 		if {[llength $fastqfiles]} {
 			# do not do any of preliminaries if end product is already there
-			set bamfile map-bwa-$sample.bam
+			set bamfile map-sbwa-$sample.bam
 			# quality and adapter clipping
 			set files [fastq_clipadapters_job $fastqfiles \
 				-adapterfile $adapterfile -paired $paired \
 				-skips [list -skip [list $bamfile] -skip [list $resultbamfile]]]
 			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
 			# map using bwa
-			map_bwa_job $bamfile $refseq $files $sample $paired -skips [list -skip [list $resultbamfile]]
+			map_bwa_job -paired $paired -skips [list -skip [list $resultbamfile]] $bamfile $refseq $files $sample
 		}
 		# extract regions with coverage >= 5 (for cleaning)
-		set cov5reg [bam2reg_job -mincoverage 5 -skip [list $resultbamfile] map-bwa-$sample.bam]
+		set cov5reg [bam2reg_job -mincoverage 5 -skip [list $resultbamfile] map-sbwa-$sample.bam]
 		# clean bamfile (mark duplicates, realign)
-		set cleanedbam [bam_clean_job map-bwa-$sample.bam $refseq $sample \
-			-removeduplicates 1 -realign $realign -regionfile $cov5reg -cleanup $cleanup]
+		set cleanedbam [bam_clean_job map-sbwa-$sample.bam $refseq $sample \
+			-sort 0 -removeduplicates 1 -realign $realign -regionfile $cov5reg -cleanup $cleanup]
 		# make 5x coverage regfile from cleanedbam
 		set cov5reg [bam2reg_job -mincoverage 5 $cleanedbam]
 		# make 20x coverage regfile

@@ -18,13 +18,29 @@ proc bwarefseq_job {refseq} {
 }
 
 proc map_bwa_job {args} {
-	oargs map_bwa_job {result refseq files sample
-		{paired 1}
-		{readgroupdata {}}
-		{pre {}}
-		{skips {}}
-	} $args
 	upvar job_logdir job_logdir
+	set paired 1
+	set readgroupdata {}
+	set pre {}
+	set skips {}
+	set threads 2
+	cg_options map_bwa args {
+		-paired {
+			set paired $value
+		}
+		-readgroupdata {
+			set readgroupdata $value
+		}
+		-pre {
+			set pre $value
+		}
+		-skips {
+			set skips $value
+		}
+		-threads - -t {
+			set threads $value
+		}
+	} {result refseq files sample}
 	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
 	if {$readgroupdata ne ""} {
 		array set a $readgroupdata
@@ -39,8 +55,8 @@ proc map_bwa_job {args} {
 			set name [file root [file tail $file]]
 			set target $resultbase-$name.sam
 			lappend samfiles $target
-			job bwa-$sample-$name -mem 5G -cores 2 \
-			-deps [list $bwarefseq $file] -targets {$target} -vars {readgroupdata sample paired} \
+			job bwa-$sample-$name -mem 5G -cores $threads \
+			-deps [list $bwarefseq $file] -targets {$target} -vars {readgroupdata sample paired threads} \
 			-skip [list $resultbase.bam] {*}$skips -code {
 				puts "making $target"
 				foreach {bwarefseq fastq} $deps break
@@ -48,7 +64,7 @@ proc map_bwa_job {args} {
 				foreach {key value} $readgroupdata {
 					lappend rg "$key:$value"
 				}
-				exec bwa mem -t 2 -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq > $target.temp 2>@ stderr
+				exec bwa mem -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
 			}
 		}
@@ -57,7 +73,7 @@ proc map_bwa_job {args} {
 			set name [file root [file tail $file1]]
 			set target $resultbase-$name.sam
 			lappend samfiles $target
-			job bwa-$sample-$name -mem 5G -cores 2 -deps [list $bwarefseq $file1 $file2] -targets {$target} -vars {readgroupdata sample paired} \
+			job bwa-$sample-$name -mem 5G -cores $threads -deps [list $bwarefseq $file1 $file2] -targets {$target} -vars {readgroupdata sample paired threads} \
 			-skip [list $resultbase.bam] {*}$skips -code {
 				puts "making $target"
 				foreach {bwarefseq fastq1 fastq2} $deps break
@@ -65,7 +81,7 @@ proc map_bwa_job {args} {
 				foreach {key value} $readgroupdata {
 					lappend rg "$key:$value"
 				}
-				exec bwa mem -t 2 -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq1 $fastq2 > $target.temp 2>@ stderr
+				exec bwa mem -t $threads -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq1 $fastq2 > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
 				file delete bwa1.fastq bwa2.fastq
 			}
@@ -83,3 +99,8 @@ proc map_bwa_job {args} {
 	}
 }
 
+proc cg_map_bwa {args} {
+	set args [job_init {*}$args]
+	map_bwa_job {*}$args
+	job_wait
+}

@@ -12,12 +12,25 @@ proc bowtie2refseq_job {refseq} {
 }
 
 proc map_bowtie2_job {args} {
-	oargs map_bowtie2_job {result refseq files sample 
-		{paired 1}
-		{readgroupdata {}}
-		{pre {}}
-		{skips {}}
-	} $args
+	upvar job_logdir job_logdir
+	set paired 1
+	set readgroupdata {}
+	set pre {}
+	set skips {}
+	cg_options map_bowtie2 args {
+		-paired {
+			set paired $value
+		}
+		-readgroupdata {
+			set readgroupdata $value
+		}
+		-pre {
+			set pre $value
+		}
+		-skips {
+			set skips $value
+		}
+	} {result refseq files sample}
 	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
 	if {$readgroupdata ne ""} {
 		array set a $readgroupdata
@@ -65,4 +78,10 @@ proc map_bowtie2_job {args} {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
+}
+
+proc cg_map_bowtie2 {args} {
+	set args [job_init {*}$args]
+	map_bowtie2_job {*}$args
+	job_wait
 }
