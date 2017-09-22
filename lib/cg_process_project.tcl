@@ -184,7 +184,7 @@ proc process_project_job {args} {
 				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
 				$dir
 		} else {
-			# finds deps and targets
+			# find deps and targets by running the process_sample_job with job_getinfo set to 1
 			job_getinfo 1
 			set ::deps {} ; set ::targets {}
 			process_sample_job -todoVar todo -reportstodoVar reportstodo \
@@ -195,6 +195,7 @@ proc process_project_job {args} {
 				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
 				$dir
 			foreach {deps targets} [job_getinfo 0] break
+			# run the actual job with deps and targets found
 			job process_sample-$sample -deps $::deps -targets $::targets -vars {
 				aligner realign varcallers dbdir split paired
 				adapterfile reports samBQ cleanup  removeduplicates amplicons
@@ -206,7 +207,7 @@ proc process_project_job {args} {
 					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 					-removeduplicates $removeduplicates -amplicons $amplicons \
 					-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
-					$dir >@ stdout >@ stderr
+					$dir >@ stdout 2>@ stderr
 			}
 		}
 	}
