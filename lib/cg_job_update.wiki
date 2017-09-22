@@ -1,0 +1,28 @@
+= job_update =
+
+== Format ==
+cg job_update ?options? logfile ..
+
+== Summary ==
+updates the logfile of a command using [[joboptions]]
+
+== Description ==
+If the logfile of a command using [[joboptions]] has the extension
+.running, the command (or its jobs on a cluster) is either still running
+or it crashed without being able to update the log. 
+cg job_update can be used to update the log to current status. The status
+(and times, ...) for each job will be updated.
+If the command is no longer running, the logfile will get the extension .finished
+if all jobs were successfully run, and .error if any of them had errors.
+
+== Options ==
+; -c success/never/allways (-dcleanup): by default (**success**) the log_jobs directories containing
+run, log, error, wtc. files are removed after a successful run, but not after one with errors.
+**never** will always keep the job_log dirs, and **allways** will always remove them.
+after a succesfull run
+; -f 0/1 (-force): use 1 to force aquiring job metadata from log_jobs dirs, 
+even if it already in the logfile
+; -r 0/1 (-dremoveold): remove older logfiles, keeping only the last one
+
+== Category ==
+Compression
