@@ -1,5 +1,6 @@
 proc bam_clean_job {args} {
 	oargs bam_clean_job {bamfile refseq sample
+		{sort 1}
 		{removeduplicates 1}
 		{realign 1}
 		{realignopts {}}
@@ -27,9 +28,12 @@ proc bam_clean_job {args} {
 	# precalc skips and cleanuplist
 	set skips {}
 	set cleanuplist {}
-	lappend cleanuplist $dir/$pre-$root.bam $dir/$pre-$root.bam.bai
-	set temproot s$root
-	lappend skips -skip [list $dir/$pre-$temproot.bam]
+	set temproot $root
+	if {$sort} {
+		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
+		set temproot s$temproot
+		lappend skips -skip [list $dir/$pre-$temproot.bam]
+	}
 	if {$removeduplicates} {
 		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot d$temproot
@@ -50,7 +54,7 @@ proc bam_clean_job {args} {
 	job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
 	-vars {removeduplicates sample} {*}$skips -code {
 		file delete $target.temp
-		samtools_sort $dep $target.temp
+		bam_sort $dep $target.temp
 		file rename -force $target.temp $target
 	}
 	set root s$root

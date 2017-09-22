@@ -71,28 +71,15 @@ proc map_bwa_job {args} {
 			}
 		}
 	}
-	job bwa2bam-$sample -deps $samfiles -rmtargets $samfiles -targets {$result} {*}$skips -vars {resultbase} -code {
+	job bwa2bam-$sample -deps $samfiles -rmtargets $samfiles -targets {$result $result.bai} {*}$skips -vars {resultbase} -code {
 		puts "making $target"
-		if {[catch {version samtools 1}]} {
 			if {[catch {
-				exec samcat {*}$deps | samtools view -S -h -b - | samtools sort - $target.temp 2>@ stderr
-			}]} {
-				error $msg
-			}
-			file rename -force $target.temp.bam $target
-		} else {
-			if {[catch {
-				exec samcat {*}$deps | samtools view -S -h -b - | samtools sort - > $target.temp 2>@ stderr
+				exec samcat {*}$deps | bamsort SO=coordinate tmpfile=[scratchfile] index=1 indexfilename=$target.bai inputformat=sam > $target.temp 2>@ stderr
 			}]} {
 				error $msg
 			}
 			file rename -force $target.temp $target
-		}
 		file delete {*}$deps
-	}
-	job bwa_index-$sample -deps {$result} -targets {$result.bai} {*}$skips -code {
-		exec samtools index $dep >@ stdout 2>@ stderr
-		puts "making $target"
 	}
 }
 

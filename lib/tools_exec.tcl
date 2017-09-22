@@ -111,17 +111,23 @@ proc genomecombenv {} {
 		# we are being run from a dirtcl installation in apps/cg
 		set genomecombdir $tcl_dirtcl
 		set externdir $genomecombdir/bin
-		set env(PATH) $appdir/bin:$externdir:$genomecombdir:$env(PATH)
+		set bindir $appdir/bin
 	} elseif {[file tail $appdir] eq "cg_viz"} {
 		# we are being run from dev cg_viz
 		set genomecombdir [file dir $appdir]
 		set externdir $genomecombdir/extern
-		set env(PATH) $genomecombdir/bin:$externdir:$genomecombdir:$env(PATH)
+		set bindir $genomecombdir/bin
 	} else {
 		# we are being run from dev 
 		set genomecombdir $appdir
 		set externdir $genomecombdir/extern
-		set env(PATH) $genomecombdir/bin:$externdir:$genomecombdir:$env(PATH)
+		set bindir $genomecombdir/bin
+	}
+	set env(PATH) $bindir:$externdir:$genomecombdir:$env(PATH)
+	if {[info exists env(LD_LIBRARY_PATH)]} {
+		set env(LD_LIBRARY_PATH) $::externdir/lib:$env(LD_LIBRARY_PATH)
+	} else {
+		set env(LD_LIBRARY_PATH) $::externdir/lib
 	}
 	return $genomecombdir
 }

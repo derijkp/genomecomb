@@ -40,7 +40,7 @@ proc cg_bam2fastq {args} {
 	if {$namesort} {
 		putslog "Sorting bam file on name"
 		set tempbam [file root [scratchfile]].bam
-		samtools_sort -n $bamfile $tempbam
+		bam_sort -sort name $bamfile $tempbam
 	} else {
 		set tempbam $bamfile
 	}

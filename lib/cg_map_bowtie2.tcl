@@ -56,8 +56,8 @@ proc map_bowtie2_job {args} {
 	job bowtie2_bam-$sample -deps {$resultbase.sam} -targets {$result} -vars {resultbase} {*}$skips -code {
 		puts "making $target"
 		catch {exec samtools view -S -h -b -o $resultbase.ubam $resultbase.sam >@ stdout 2>@ stderr}
-		catch {samtools_sort $resultbase.ubam $target.temp}
-		file rename -force $target.bam $target
+		catch {bam_sort $resultbase.ubam $target.temp}
+		file rename -force $target.temp $target
 		file delete $resultbase.ubam
 		file delete $resultbase.sam
 	}
