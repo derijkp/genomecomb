@@ -83,8 +83,10 @@ test bam2fastq {bam2fastq} {
 	cg bam2fastq $bamfile tmp/out_1.fq tmp/out_2.fq
 	exec gunzip -c genomecomb.testdata/expected/test-NA19240chr2122_1.fq.gz > tmp/expected1.fq
 	exec gunzip -c genomecomb.testdata/expected/test-NA19240chr2122_2.fq.gz > tmp/expected2.fq
-	exec diff tmp/out_1.fq tmp/expected1.fq
-	exec diff tmp/out_2.fq tmp/expected2.fq
+	cg sortfastq tmp/out_1.fq tmp/sout_1.fq
+	cg sortfastq tmp/out_2.fq tmp/sout_2.fq
+	exec diff --brief tmp/sout_1.fq tmp/expected1.fq
+	exec diff --brief tmp/sout_2.fq tmp/expected2.fq
 } {}
 
 test bam2fastq {bam2fastq gz} {
@@ -94,8 +96,10 @@ test bam2fastq {bam2fastq gz} {
 	exec gunzip tmp/out_1.fq.gz tmp/out_2.fq.gz
 	exec gunzip -c genomecomb.testdata/expected/test-NA19240chr2122_1.fq.gz > tmp/expected1.fq
 	exec gunzip -c genomecomb.testdata/expected/test-NA19240chr2122_2.fq.gz > tmp/expected2.fq
-	exec diff tmp/out_1.fq tmp/expected1.fq
-	exec diff tmp/out_2.fq tmp/expected2.fq
+	cg sortfastq tmp/out_1.fq tmp/sout_1.fq
+	cg sortfastq tmp/out_2.fq tmp/sout_2.fq
+	exec diff --brief tmp/sout_1.fq tmp/expected1.fq
+	exec diff --brief tmp/sout_2.fq tmp/expected2.fq
 } {}
 
 test cg_regextract {regextract} {
