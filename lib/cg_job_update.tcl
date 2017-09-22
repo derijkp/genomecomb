@@ -165,15 +165,19 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 		} else {
 			set job $jobo
 		}
-		if {$status in {submitted running}} {set starttime {} ; set endtime {} ; set duration {}; set time_seconds {}}
-		if {($starttime eq "" || $endtime eq "" | $duration eq "" | $force) && [job_file_exists $job.log]} {
-			set jobloginfo [job_parse_log $job $totalduration]
-			foreach {status starttime endtime run duration totalduration submittime time_seconds} $jobloginfo break
-			if {[correct_time_ms starttime] || [correct_time_ms endtime]} {
-				set duration [timediff2duration [lmath_calc $endcode - $startcode]]
-				set time_seconds [timebetween_inseconds $starttime $endtime]
+		if {$status in {submitted running}} {set endtime {} ; set duration {}; set time_seconds {}}
+		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force} {
+			if {[job_file_exists $job.log]} {
+				set jobloginfo [job_parse_log $job $totalduration]
+				foreach {status starttime endtime run duration totalduration submittime time_seconds} $jobloginfo break
+				if {[correct_time_ms starttime] || [correct_time_ms endtime]} {
+					set duration [timediff2duration [lmath_calc $endcode - $startcode]]
+					set time_seconds [timebetween_inseconds $starttime $endtime]
+				}
+				set msg {}
+			} else {
+				set jobloginfo [list $status $starttime $endtime $run $duration $totalduration $submittime $time_seconds]
 			}
-			set msg {}
 			if {$status eq "error"} {
 				if {[catch {set msg [file_read $job.err]}]} {set msg ""}
 			} elseif {$status in {submitted running}} {
