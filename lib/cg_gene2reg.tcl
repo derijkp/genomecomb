@@ -1,13 +1,11 @@
 proc cg_gene2reg {args} {
-	set genecol name2
-	set transcriptcol name
+	set file {}
+	set outfile {}
+	cg_options gene2reg args {
+	}  {file outfile} 0 2
 	if {[llength $args] > 2} {
 		errorformat gene2reg
 	}
-	set file {}
-	set outfile {}
-	foreach {file outfile} $args break
-
 	catch {close $f}; catch {close $o};
 	if {$file eq ""} {
 		set f stdin
