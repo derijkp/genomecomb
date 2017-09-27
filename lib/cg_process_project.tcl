@@ -176,7 +176,7 @@ proc process_project_job {args} {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		if {!$jobsample} {
-			process_sample_job -todoVar todo -reportstodoVar reportstodo \
+			process_sample_job \
 				-aligner $aligner -realign $realign --varcallers $varcallers \
 				-dbdir $dbdir -split $split -paired $paired \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -196,7 +196,7 @@ proc process_project_job {args} {
 				$dir
 			foreach {deps targets} [job_getinfo 0] break
 			# run the actual job with deps and targets found
-			job process_sample-$sample -deps $::deps -targets $::targets -vars {
+			job process_sample-$sample -deps $deps -targets $targets -vars {
 				aligner realign varcallers dbdir split paired
 				adapterfile reports samBQ cleanup  removeduplicates amplicons
 				removeskew dt targetfile minfastqreads dir
