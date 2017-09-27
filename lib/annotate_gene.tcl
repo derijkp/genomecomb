@@ -1151,7 +1151,7 @@ proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 	lappend dposs [lsearch $header $transcriptcol] [lsearch $header $genecol]
 	set dbposs [lrange $dposs 0 2]
 	if {[lsearch [lrange $dposs 0 end-2] -1] != -1} {
-		error "error: gene file $dbfile misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
+		error "error: gene file misses the following fields: [list_sub $deffields [list_find [lrange $dposs 0 end-2] -1]]"
 	}
 	return $header
 }
