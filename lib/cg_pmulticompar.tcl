@@ -425,7 +425,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 	set samples {}
 	foreach dir $dirs {
 		set dir [file_absolute $dir]
-		if {![jobfileexists $dir]} {error "$dir does not exist"}
+		if {![jobfileexists $dir]} {error "$dir does not exist (and will not be made by previous jobs))"}
 		if {[file isdir $dir]} {
 			# a directory is given, look for the variant file(s)
 			set sample [file tail $dir]
