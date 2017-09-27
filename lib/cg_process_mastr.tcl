@@ -302,8 +302,14 @@ proc generate_coverage_report_job {experiment regfile histofiles {destdir {}}} {
 proc generate_html_report_job {experiment {destdir {}}} {
 	upvar job_logdir job_logdir
 	if {$destdir eq ""} {set destdir [pwd]}
-	job html_report -deps [list $destdir/compar/compar-${experiment}.tsv $destdir/coverage_${experiment}_avg.tsv $destdir/coverage_${experiment}_frac_above_20.tsv ($destdir/report_stats-$experiment.tsv) ($destdir/demultiplex_stats.tsv)] \
-	-targets {$destdir/$experiment.html} -vars {experiment destdir} -code {
+	job html_report -deps {
+		$destdir/compar/compar-${experiment}.tsv
+		$destdir/coverage_${experiment}_avg.tsv
+		$destdir/coverage_${experiment}_frac_above_20.tsv
+		($destdir/reports/report_stats-$experiment.tsv)
+		($destdir/report_stats-$experiment.tsv)
+		($destdir/demultiplex_stats.tsv)
+	} -targets {$destdir/$experiment.html} -vars {experiment destdir} -code {
 		cg select -g sample -gc {sequenced {v} count} $dep $destdir/compar/summary-compar-${experiment}.tsv
 		set rmd $::appdir/res/mastrreport.Rmd
 		set chartjs $::appdir/res/displayChartHistogram.js
