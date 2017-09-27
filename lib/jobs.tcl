@@ -921,6 +921,7 @@ proc job_cleanmsg {msg} {
 
 proc job_logfile_add {job jobid status {targets {}} {msg {}} {submittime {}} {starttime {}} {endtime {}}} {
 	global cgjob
+	if {[job_getinfo]} return
 	if {![info exists cgjob(f_logfile)]} return
 	set run [file tail [get cgjob(logfile) ""]]
 	set cgjob(endtime) $endtime
