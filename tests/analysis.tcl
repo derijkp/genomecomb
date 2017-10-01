@@ -67,7 +67,7 @@ test exportplink {query error} {
 	test_cleantmp
 	exec cg exportplink -q {$bla == "chr1"} data/vars3.sft tmp/temp
 	exec diff tmp/temp.tped data/expected-vars3.tped
-} {error querying file: field "bla" not present in file and no sampleinfo file found*} error match
+} {error querying file: field bla not present in file (or sampleinfo)*} error match
 
 file delete -force tmp/temp.tsv tmp/temp.tsv.old
 

@@ -188,6 +188,154 @@ test select {incorrect use of sample outside sample aggregates} {
 		-q {$sample eq "sample1"} \
 		-f {chromosome begin sequenced-*
 	} data/vars-saggr.tsv
-} {field "sample" not present in file and no sampleinfo file found} error
+} {field sample not present in file (or sampleinfo)} error
+
+test select {scount field not present in all samples} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1	sequenced-sample2 zyg-sample3
+		chr1 4001 4002 snp A G,C	v	v	t
+	}
+	exec cg select -f {chromosome begin {test=scount($sequenced eq "v")}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	2}
+
+test select {scount field not present at all} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1	sequenced-sample2 zyg-sample3
+		chr1 4001 4002 snp A G,C	v	v	t
+	}
+	exec cg select -f {chromosome begin {test=scount($test eq "v")}} tmp/vars.tsv
+} {error in scount: all samples are missing one or more needed fields (test-sample1,test-sample2,test-sample3)} error
+
+test select {scount used in other function field not present in all samples} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1	sequenced-sample2 zyg-sample3
+		chr1 4001 4002 snp A G,C	v	v	t
+	}
+	exec cg select -f {chromosome begin {test=if(scount($sequenced eq "v") == 2, scount($sequenced eq "v")+20, scount($sequenced eq "v")+10)}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	22}
+
+test select {scount used in other function field not present in all samples, but in calccols} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1	sequenced-sample2 zyg-sample3
+		chr1 4001 4002 snp A G,C	v	v	t
+	}
+	exec cg select -f {chromosome begin -sequenced-sample3="v" {test=if(scount($sequenced eq "v") == 3, scount($sequenced eq "v")+20, scount($sequenced eq "v")+10)}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	23}
+
+test select {scount field not present in all samples, but in calccol} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1	sequenced-sample2 zyg-sample3
+		chr1 4001 4002 snp A G,C	v	v	t
+	}
+	exec cg select -stack 1 -f {chromosome begin -sequenced-sample3="v" {test=scount($sequenced eq "v")}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	3}
+
+test select {scount field not present in all samples, but in sampleinfo} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1	sequenced-sample2 zyg-sample3
+		chr1 4001 4002 snp A G,C	v	v	t
+	}
+	write_tab tmp/vars.tsv.sampleinfo.tsv {
+		sample	sequenced
+		sample3	v
+	}
+	exec cg select -stack 1 -f {chromosome begin {test=scount($sequenced eq "v")}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	3}
+
+test select {spercent field not present in all samples} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1	sequenced-sample2 zyg-sample3
+		chr1 4001 4002 snp A G,C	v	t	t
+	}
+	exec cg select -f {chromosome begin {test=spercent($sequenced eq "v")}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	50.0}
+
+test select {spercent field not present in all samples, 2 cond} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1 num-sample1	sequenced-sample2 num-sample2	zyg-sample3
+		chr1 4001 4002 snp A G,C	v 1 t 0 t
+	}
+	exec cg select -f {chromosome begin {test=spercent($sequenced eq "v",$num == 1)}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	100.0}
+
+test select {spercent field not present in all samples, 2 cond different missing} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1 num-sample1	sequenced-sample2	zyg-sample3 num-sample3
+		chr1 4001 4002 snp A G,C	v 1 t t 0
+	}
+	exec cg select -f {chromosome begin {test=spercent($sequenced eq "v",$num == 1)}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	100.0}
+
+test select {spercent field not present at all} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1	sequenced-sample2 zyg-sample3
+		chr1 4001 4002 snp A G,C	v	t	t
+	}
+	exec cg select -f {chromosome begin {test=spercent($test eq "v")}} tmp/vars.tsv
+} {error in spercent: all samples are missing one or more needed fields (test-sample1,test-sample2,test-sample3)} error
+
+test select {ssum field not present in all samples} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1	sequenced-sample2 zyg-sample3
+		chr1 4001 4002 snp A G,C	v	v	t
+	}
+	exec cg select -f {chromosome begin {test=ssum($sequenced eq "v")}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	2.0}
+
+test select {ssum field not present in all samples, 2 cond} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1 num-sample1	sequenced-sample2 num-sample2	zyg-sample3
+		chr1 4001 4002 snp A G,C	v 1 v 2 t
+	}
+	exec cg select -f {chromosome begin {test=ssum($sequenced eq "v",$num)}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	3.0}
+
+test select {ssum field not present in all samples, 2 cond different missing} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1 num-sample1	sequenced-sample2	zyg-sample3 num-sample3
+		chr1 4001 4002 snp A G,C	v 1 v t 0
+	}
+	exec cg select -f {chromosome begin {test=ssum($sequenced eq "v",$num)}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	1.0}
+
+test select {ssum field not present in all samples, 2 cond different missing but in calc and sampleinfo} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1 num-sample1	sequenced-sample2	zyg-sample3 num-sample3
+		chr1 4001 4002 snp A G,C	v 1 v t 3
+	}
+	write_tab tmp/vars.tsv.sampleinfo.tsv {
+		sample	num
+		sample2	2
+	}
+	exec cg select -f {chromosome begin -sequenced-sample3="v" {test=ssum($sequenced eq "v",$num)}} tmp/vars.tsv
+} {chromosome	begin	test
+chr1	4001	6.0}
+
+test select {ssum field not present at all} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1 num-sample1	sequenced-sample2 num-sample2	zyg-sample3
+		chr1 4001 4002 snp A G,C	v 1 t 2 t
+	}
+	exec cg select -f {chromosome begin {test=ssum($test eq "v",$num)}} tmp/vars.tsv
+} {error in ssum: all samples are missing one or more needed fields (test-sample1,test-sample2,test-sample3)} error
+
+test select {ssum field not present at all} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-sample1 num-sample1	sequenced-sample2 num-sample2	zyg-sample3
+		chr1 4001 4002 snp A G,C	v 1 t 2 t
+	}
+	exec cg select -f {chromosome begin {test=ssum($sequenced eq "v",$test)}} tmp/vars.tsv
+} {error in ssum: all samples are missing one or more needed fields (test-sample1,test-sample2,sequenced-sample3)} error
 
 testsummarize

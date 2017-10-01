@@ -143,7 +143,7 @@ child process exited abnormally} error
 test select "-f wildcard error$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -f {chromosome begin end {countG=count($alleleSeq-*, == "G")}} -q {$begin == 4000} [gzfile data/vars1.sft]
-} {field "alleleSeq-*" not present in file and no sampleinfo file found} error
+} {field alleleSeq-* not present in file (or sampleinfo)} error
 
 test select "-f calculated if$dboptt" {
 	global dbopt
@@ -970,7 +970,7 @@ test select "long format with sampleinfo in calc $dboptt" {
 		sample2	f
 		sample3	f
 	}
-	exec cg select {*}$dbopt -q {$gender eq "f" and $freq > 0.9} -f {{t=concat($sample,$gender)}} tmp/temp.tsv
+	exec cg select -stack 1 {*}$dbopt -q {$gender eq "f" and $freq > 0.9} -f {{t=concat($sample,$gender)}} tmp/temp.tsv
 } {t
 sample3f}
 

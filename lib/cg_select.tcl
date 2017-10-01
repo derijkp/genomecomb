@@ -4,8 +4,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc tsv_select_sampleinfo_setfile {filename} {
-	global tsv_select_sampleinfofile tsv_select_sampleinfo
+proc tsv_select_sampleinfo_findfile {filename} {
 	# Try different sources (older versions)
 	set sampleinfofile [gzroot $filename].sampleinfo
 	if {![file exists $sampleinfofile]} {
@@ -15,13 +14,18 @@ proc tsv_select_sampleinfo_setfile {filename} {
 		set sampleinfofile [file root [gzroot $filename]].sampleinfo.tsv
 	}
 	if {![file exists $sampleinfofile]} {set sampleinfofile ""}
-	if {[info exists ::tsv_select_sampleinfo] && [get tsv_select_sampleinfofile ""] ne $sampleinfofile} {
+	return $sampleinfofile
+}
+
+proc tsv_select_sampleinfo_setfile {filename} {
+	global tsv_select_sampleinfofile tsv_select_sampleinfo
+	if {[info exists ::tsv_select_sampleinfo] && [get tsv_select_sampleinfofile ""] ne $filename} {
 		unset -nocomplain ::tsv_select_sampleinfo
 		set ::tsv_select_sampleinfo_islong 0
 		unset -nocomplain ::tsv_select_sampleinfo_longfields
 	}
-	set ::tsv_select_sampleinfofile $sampleinfofile
-	return $sampleinfofile
+	set ::tsv_select_sampleinfofile $filename
+	return $filename
 }
 
 proc tsv_select_sampleinfo_load {field {header {}}} {
@@ -36,7 +40,10 @@ proc tsv_select_sampleinfo_load {field {header {}}} {
 	set siheader [tsv_open $f]
 	set idpos [lsearch $siheader id]
 	if {$idpos == -1} {
-		error "sampleinfo file must have an id field"
+		set idpos [lsearch $siheader sample]
+		if {$idpos == -1} {
+			error "sampleinfo file must have an id or sample field"
+		}
 	}
 	set samples [samples $header]
 	if {[get tsv_select_sampleinfo_islong 0] || ![llength $header] || ![llength $samples]} {
@@ -125,7 +132,7 @@ proc tsv_select_sampleinfo_long {field sample} {
 }
 
 proc cg_missing_sampleinfo {filename} {
-	set sampleinfofile [tsv_select_sampleinfo_setfile $filename]
+	set sampleinfofile [tsv_select_sampleinfo_setfile [tsv_select_sampleinfo_findfile $filename]]
 	set samples [split [cg select -n $filename] \n]
 	set infosamples [lrange [split [cg select -f id $sampleinfofile] \n] 0 end]
 	puts "missing in sampleinfo file $sampleinfofile"
@@ -133,6 +140,13 @@ proc cg_missing_sampleinfo {filename} {
 	puts ""
 	puts "missing in file $filename"
 	puts [join [list_lremove $infosamples $samples] \n]
+}
+
+proc tsv_select_fieldpresent {field header} {
+	global calccols
+	if {$field eq "ROW" || $field in $header || [info exists calccols($field)]} {return 1}
+	if {![catch {tsv_select_sampleinfo $field $header}]} {return 1}
+	return 0
 }
 
 proc tsv_select_compare {ids header neededfieldsVar} {
@@ -959,7 +973,7 @@ proc tsv_select_precedence {curstack} {
 }
 
 proc tsv_select_detokenize {tokens header neededfieldsVar} {
-	global newoptransa
+	global newoptransa calccols
 	upvar $neededfieldsVar neededfields
 	set result {}
 	foreach line $tokens {
@@ -969,6 +983,9 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 				lappend result $val
 			}
 			@var {
+				if {![tsv_select_fieldpresent $val $header]} {
+					error "field $val not present in file (or sampleinfo)"
+				}
 				lappend result \$\{$val\}
 				lappend neededfields $val
 			}
@@ -1110,8 +1127,9 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 	return [join $result " "]
 }
 
-proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calccolsVar {}}} {
+proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}}} {
 # putsvars header code neededfieldsVar prequeryVar
+	global calccols
 	upvar $neededfieldsVar neededfields
 	# variable preprocessor first, to expand *
 	# check and exchange variables needed
@@ -1121,7 +1139,6 @@ proc tsv_select_expandcode {header code neededfieldsVar {prequeryVar {}} {calcco
 	set code [tsv_select_detokenize $tokens $header tempneededfields]
 	if {$prequeryVar ne ""} {
 		upvar $prequeryVar prequery
-		upvar $calccolsVar calccols
 		set calcfieldsquery [list_lremove $tempneededfields $header]
 		set calcfieldsquery [list_remove $calcfieldsquery ROW]
 		set tempneededfields [list_lremove $tempneededfields $calcfieldsquery]
@@ -1178,6 +1195,8 @@ proc tsv_hcheader {f keepcommentsVar headerVar} {
 }
 
 proc cg_select {args} {
+	global calccols
+	unset -nocomplain calccols
 	if {[llength $args] == 0} {
 		errorformat select
 	}
@@ -1193,10 +1212,10 @@ proc cg_select {args} {
 			regsub -all {\\=} $query = query
 		}
 		-si {
-			set ::tsv_select_sampleinfofile $value
-			if {![file exists $::tsv_select_sampleinfofile]} {
-				error "sampleinfofile \"$::tsv_select_sampleinfofile\" does not exist"
+			if {![file exists $value]} {
+				error "sampleinfofile \"$value\" does not exist"
 			}
+			tsv_select_sampleinfo_setfile $value
 		}
 		-qf {
 			set f [gzopen $value]
@@ -1286,7 +1305,7 @@ proc cg_select {args} {
 		catch {close $f}
 		set f [gzopen $filename]
 		if {![info exists ::tsv_select_sampleinfofile]} {
-			tsv_select_sampleinfo_setfile $filename
+			tsv_select_sampleinfo_setfile [tsv_select_sampleinfo_findfile $filename]
 		}
 	} else {
 		set index {}
@@ -1411,11 +1430,6 @@ proc cg_select {args} {
 		}
 	}
 	set query [string trim $query]
-	if {$query ne ""} {
-		set pquery [tsv_select_expandcode $header $query neededfields]
-	} else {
-		set pquery 1
-	}
 	set pipe {}
 	if {$sort ne ""} {
 		lappend pipe $sort
@@ -1424,7 +1438,7 @@ proc cg_select {args} {
 	set tclcode {}
 	set sampleinfo_long 0
 	if {$group ne ""} {
-		append tclcode \n [tsv_select_group $header $pquery $qposs $qfields $group $groupcols $neededfields $sortfields]
+		append tclcode \n [tsv_select_group $header $query $qposs $qfields $group $groupcols $neededfields $sortfields]
 		#file_write /tmp/temp.tcl $tclcode\n
 		#putsvars tclcode
 	} elseif {$query ne "" || [llength $qfields]} {
@@ -1436,9 +1450,6 @@ proc cg_select {args} {
 		# as the same args will be used for all these, start with a placeholder (@neededfields@) here 
 		# that will be filled in at the end
 		append tclcode "package require genomecomb\n"
-		if {[get ::tsv_select_sampleinfo_islong 0]} {
-			append tclcode "[list set ::tsv_select_sampleinfofile $::tsv_select_sampleinfofile]\n"
-		}
 		unset -nocomplain outcalccols
 		foreach el $qposs field $qfields {
 			if {[string index $field 0] eq "-"} {set rfield [string range $field 1 end]} else {set rfield $field}
@@ -1457,7 +1468,7 @@ proc cg_select {args} {
 				# field is calculated, add all needed fields to prequery
 				if {[lindex $el 0] eq "code"} {
 					set tempneededfields {}
-					set code [tsv_select_expandcode $header [lindex $el 1] tempneededfields prequery calccols]
+					set code [tsv_select_expandcode $header [lindex $el 1] tempneededfields prequery]
 					set tempneededfields [list_remdup $tempneededfields]
 					lappend neededfields {*}$tempneededfields
 					if {$rfield eq $field} {
@@ -1487,6 +1498,11 @@ proc cg_select {args} {
 				}
 			}
 			incr num
+		}
+		if {$query ne ""} {
+			set pquery [tsv_select_expandcode $header $query neededfields]
+		} else {
+			set pquery 1
 		}
 		# neededcols contains the column numbers used to supply neededfields by tsv_selectc to the run proc
 		set neededfields [list_remdup $neededfields]
@@ -1553,6 +1569,9 @@ proc cg_select {args} {
 				exit
 			}]
 		}
+		if {[get ::tsv_select_sampleinfo_islong 0]} {
+			set tclcode "[list tsv_select_sampleinfo_setfile $::tsv_select_sampleinfofile]\n$tclcode"
+		}
 		set tclcode [string_change $tclcode [list @neededfields@ $neededfields @neededfieldsvals@ \$\{[join $neededfields \}\ \$\{]\}]]
 	}
 # file_write /tmp/temp.txt $tclcode\n
@@ -1598,3 +1617,4 @@ proc cg_select {args} {
 	if {$f ne "stdin"} {catch {gzclose $f}}
 	if {$out ne "stdout"} {catch {close $out}}
 }
+

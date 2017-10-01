@@ -266,8 +266,9 @@ Sometimes you want summary info for each (selected) variation over the samples i
 (e.g. in how many samples is the variant present, in which samples, ..). 
 You can do this in a limited way using the previous count functions using an asterix.
 Sample aggregate functions are a much more flexible way to do this. In the arguments 
-of the function, you can use variable names without the sample part, which will then be added for each sample,
-e.g. scount($sequenced == "v") will count the number of samples for which sequenced-<sample> is equal to "v"
+of the function, you can use field names without the sample part, which will then be used for each sample,
+e.g. scount($sequenced == "v") will count the number of samples for which sequenced-<sample> is equal to "v".
+Samples that do not have the required field(s) are ignored.
 A special variable named sample is available with the name of the sample, e.g.
 scount($sample match "gatk-*" and $sequenced == "v") will count the number of 
 gatk samples (sample name matches gatk-*) for which sequenced-<sample> is equal to "v"

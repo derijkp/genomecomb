@@ -219,6 +219,20 @@ test select_group {group query field with and without sample preference} {
 s1	1	1
 s2	1	2}
 
+test select_group {group query missing field in one sample} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	val-s1	test-s2
+		i1	0	1
+		i2	1	0
+		i3	1	1
+		i4	0	0
+		i5	0	1
+	}
+	cg select -g {sample {} val 1} -gc count tmp/temp.tsv
+} {sample	val	count
+s1	1	2}
+
 test select_group {group with wildcard calc col} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {

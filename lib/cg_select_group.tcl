@@ -22,8 +22,8 @@ proc select_parse_grouptypes {grouptypelist} {
 	return $grouptypes
 }
 
-proc select_parse_for_samples {group groupcol header {calccolsVar {}}} {
-	if {$calccolsVar ne ""} {upvar $calccolsVar calccols}
+proc select_parse_for_samples {group groupcol header} {
+	global calccols
 	set gsamples {}
 	set usesamples 0
 	foreach {field values} [list_concat $group $groupcol] {
@@ -82,9 +82,9 @@ proc tsv_select_makecol {name code {arg @neededfield@} {prequery {}}} {
 	}
 }
 
-proc tsv_select_sampleusefield {header field sample calccolsVar {neededfieldsVar {}}} {
+proc tsv_select_sampleusefield {header field sample {neededfieldsVar {}}} {
+	global calccols
 	if {$neededfieldsVar ne ""} {upvar $neededfieldsVar neededfields}
-	upvar $calccolsVar calccols
 	if {$sample ne "" && [info exists calccols($field-$sample)]} {
 		set fieldused ${field}-$sample
 	} elseif {$sample ne "" && [inlist $header ${field}-$sample]} {
@@ -311,8 +311,8 @@ proc tsv_select_addaggregatecalc {todolist} {
 	return $colactions
 }
 
-proc tsv_select_addaggregateresult {grouptypes header sample calccolsVar} {
-	upvar $calccolsVar calccols
+proc tsv_select_addaggregateresult {grouptypes header sample} {
+	global calccols
 	set calcresults ""
 	foreach {func field} $grouptypes {
 		if {$func eq "count"} {
@@ -394,9 +394,9 @@ proc tsv_select_combinations {list} {
 	return $temp
 }
 
-proc tsv_select_group {header pquery qposs qfields group groupcols neededfields sortfields} {
-# putsvars header pquery qposs qfields group groupcols neededfields sortfields
-	global typetodoa
+proc tsv_select_group {header query qposs qfields group groupcols neededfields sortfields} {
+# putsvars header query qposs qfields group groupcols neededfields sortfields
+	global typetodoa calccols
 	# outcols not used in group
 	# start making code
 	# neededfields will contain all fields needed by the query proc and calculated fields
@@ -407,7 +407,6 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	if {[llength $group] == 1} {lappend group {}}
 	# start making code
 	set tclcode "package require genomecomb\n"
-	unset -nocomplain calccols
 	# more than one groupcol not supported (yet)
 	set groupcol [lindex $groupcols 0]
 	regsub -all \n [string trim $groupcol] { } groupcol
@@ -465,7 +464,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		if {![isint $el] && $el ne "" && ![info exists calccols($field)]} {
 			if {[lindex $el 0] eq "code"} {
 				set tempneededfields {}
-				set code [tsv_select_expandcode $header [lindex $el 1] tempneededfields prequery calccols]
+				set code [tsv_select_expandcode $header [lindex $el 1] tempneededfields prequery]
 				set tempneededfields [list_remdup $tempneededfields]
 				lappend neededfields {*}$tempneededfields
 				# code for query
@@ -489,7 +488,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	} else {
 		# if no sample field, we have a wide format with sample info in field-sample format
 		# check group and groupcol for presence of sample field to handle the query using it
-		set gsamples [select_parse_for_samples $group $groupcol $header calccols]
+		set gsamples [select_parse_for_samples $group $groupcol $header]
 		set sampleinheader 0
 	}
 	# make colactions, which will be executed only when the colquery and rowquery is true
@@ -529,7 +528,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			} else {
 				set loop 0
 			}
-			set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
+			set fieldused [tsv_select_sampleusefield $header $field $sample neededfields]
 			if {$fieldused ne ""} {
 				if {$loop} {
 					set sloopsa($fieldused) {}
@@ -578,7 +577,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 					set fieldused {}
 					list_addnew todoa([list $field $fieldused]) $item
 				} else {
-					set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
+					set fieldused [tsv_select_sampleusefield $header $field $sample neededfields]
 					if {$fieldused ne ""} {
 						list_addnew todoa([list $field $fieldused 0]) $item
 					} elseif {![catch {tsv_select_sampleinfo $field-$sample $header} value] || ![catch {tsv_select_sampleinfo $field $header} value]} {
@@ -608,7 +607,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 			} else {
 				set loop 0
 			}
-			set fieldused [tsv_select_sampleusefield $header $field $sample calccols neededfields]
+			set fieldused [tsv_select_sampleusefield $header $field $sample neededfields]
 			if {$fieldused ne ""} {
 				if {$loop} {
 					set sloopsa($fieldused) {}
@@ -647,7 +646,7 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		# add calculations for everything needed for aggregates to colactions
 		append colactions [tsv_select_addaggregatecalc $todolist]
 		# create calcresults, that calculate the final agregate results for each group (runs after looping through the file)
-		set calcresults [tsv_select_addaggregateresult $grouptypes $header $sample calccols]
+		set calcresults [tsv_select_addaggregateresult $grouptypes $header $sample]
 		set q [list_remove [list_concat $rowquery $colquery] {}]
 		if {[llength $q]} {
 			set colactions "\t\t\t\tif \{[join $q { && }]\} \{\n[string trimright $colactions]\n\t\t\t\t\}\n"
@@ -661,6 +660,12 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	set neededfields [list_remdup $neededfields]
 	if {[get ::tsv_select_sampleinfo_islong 0]} {
 		append tclcode "[list set ::tsv_select_sampleinfofile $::tsv_select_sampleinfofile]\n"
+	}
+	# expand query
+	if {$query ne ""} {
+		set pquery [tsv_select_expandcode $header $query neededfields]
+	} else {
+		set pquery 1
 	}
 	# see what we need of calculated fields
 	set calcfieldsquery [list_lremove $neededfields $header]
@@ -690,7 +695,6 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 	foreach field [array names calccols] {
 		append precalc [lindex $calccols($field) 0]
 	}
-	set neededcols [list_cor $header $neededfields]
 	set addcols [tsv_select_addforeach loopsa sloopstypea $addcols]
 	# pregroup and precol
 	set pregroup {}
@@ -794,6 +798,8 @@ proc tsv_select_group {header pquery qposs qfields group groupcols neededfields 
 		regsub {^[+-]} $el {} el
 		lappend groupheader $el
 	}
+	set neededfields [list_remdup $neededfields]
+	set neededcols [list_cor $header $neededfields]
 	set tclcode [string_change $tclcode [list @neededfields@ $neededfields @neededfieldsvals@ \$\{[join $neededfields \}\ \$\{]\} \
 		@pquery@ $pquery @prequery@ $prequery\
 		@precalc@ $precalc @addcols@ $addcols \
