@@ -30,7 +30,11 @@ proc map_bowtie2_job {args} {
 		-skips {
 			set skips $value
 		}
-	} {result refseq files sample}
+	} {result refseq sample fastqfile1} 4
+	set files [list $fastqfile1 {*}$args]
+	if {![info exists job_logdir]} {
+		job_logdir [file dir $result]/log_jobs
+	}
 	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
 	if {$readgroupdata ne ""} {
 		array set a $readgroupdata
@@ -82,6 +86,7 @@ proc map_bowtie2_job {args} {
 
 proc cg_map_bowtie2 {args} {
 	set args [job_init {*}$args]
+	unset job_logdir
 	map_bowtie2_job {*}$args
 	job_wait
 }

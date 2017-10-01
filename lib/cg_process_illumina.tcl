@@ -166,7 +166,7 @@ proc process_illumina {args} {
 				-skips [list -skip [list $bamfile] -skip [list $resultbamfile]]]
 			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
 			# map using bwa
-			map_bwa_job -paired $paired -skips [list -skip [list $resultbamfile]] $bamfile $refseq $files $sample
+			map_bwa_job -paired $paired -skips [list -skip [list $resultbamfile]] $bamfile $refseq $sample {*}$files
 		}
 		# extract regions with coverage >= 5 (for cleaning)
 		set cov5reg [bam2reg_job -mincoverage 5 -skip [list $resultbamfile] map-sbwa-$sample.bam]

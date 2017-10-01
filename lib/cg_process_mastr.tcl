@@ -474,7 +474,7 @@ proc process_mastr_job {args} {
 		set files [fastq_clipadapters_job $files -skips [list -skip [list $bamfile] -skip [list $resultbamfile]] -removeskew 0]
 		#
 		# map using $aligner
-		map_${aligner}_job -paired $paired -readgroupdata {PL illumina LB solexa-123} -pre $pre -skips [list -skip [list $resultbamfile]] $bamfile $refseq $files $name
+		map_${aligner}_job -paired $paired -readgroupdata {PL illumina LB solexa-123} -pre $pre -skips [list -skip [list $resultbamfile]] $bamfile $refseq $name {*}$files
 		if {$cleanup} {
 			# clean clipped files
 			lappend files [file dir [lindex $files 0]]

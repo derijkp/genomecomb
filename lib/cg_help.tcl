@@ -80,7 +80,7 @@ proc errorformat {action {options {}} {minargs {}} {maxargs {}} {parameters {}}}
 # putsvars action options minargs maxargs parameters
 	if {![catch {
 		set help [helpparts $action]
-	}]} {
+	}] && [dict exists $help Format]} {
 		set msg "\nERROR: Wrong number of arguments, correct format is:"
 		append msg \n[dict get $help Format]
 		append msg "\n\nFor more help, use:\ncg $action -h\n"
