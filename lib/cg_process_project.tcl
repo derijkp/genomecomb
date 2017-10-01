@@ -176,7 +176,7 @@ proc process_project_job {args} {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		if {!$jobsample} {
-			process_sample_job \
+			process_sample_job -todoVar todo -reportstodoVar reportstodo \
 				-aligner $aligner -realign $realign --varcallers $varcallers \
 				-dbdir $dbdir -split $split -paired $paired \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -213,6 +213,7 @@ proc process_project_job {args} {
 	}
 	job_logdir $destdir/log_jobs
 	set todo [list_remdup $todo]
+	set reportstodo [list_remdup $reportstodo]
 	process_multicompar_job -experiment $experiment -skipincomplete 1 -targetvarsfile $targetvarsfile \
 		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir $todo
 	if {[llength $reports]} {
