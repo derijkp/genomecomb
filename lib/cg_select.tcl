@@ -698,7 +698,7 @@ proc tsv_select_extractvars {code} {
 }
 
 proc tsv_select_tokenize {header code neededfieldsVar} {
-	global tsv_select_tokenize_opsa
+	global tsv_select_tokenize_opsa calccols
 	upvar $neededfieldsVar neededfields
 	upvar tsv_funcnum tsv_funcnum
 	# variable preprocessor first, to expand *
@@ -749,6 +749,7 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 				# sample aggregates use fields without sample
 				# we put the actual ones needed in neededfields later, so do not do it here
 				if {[lsearch -glob $header $f-*] != -1} continue
+				if {[llength [array names calccols $f-*]]} continue
 				if {![catch {tsv_select_sampleinfo_wildcard $f-* $header} temp] && [llength $temp]} continue
 			}
 			lappend neededfields $f
@@ -1437,6 +1438,7 @@ proc cg_select {args} {
 # putslog stderr ----------\n$query\n----------
 	set tclcode {}
 	set sampleinfo_long 0
+
 	if {$group ne ""} {
 		append tclcode \n [tsv_select_group $header $query $qposs $qfields $group $groupcols $neededfields $sortfields]
 		#file_write /tmp/temp.tcl $tclcode\n

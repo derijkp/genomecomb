@@ -338,4 +338,13 @@ test select {ssum field not present at all} {
 	exec cg select -f {chromosome begin {test=ssum($sequenced eq "v",$test)}} tmp/vars.tsv
 } {error in ssum: all samples are missing one or more needed fields (test-sample1,test-sample2,sequenced-sample3)} error
 
+test select {calc field in -f used in query scount} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	zyg-gatk-sample1 zyg-sam-sample1	zyg-gatk-sample2 zyg-sam-sample2
+		chr1 4001 4002 snp A G,C	m m t m
+	}
+	exec cg select -stack 1 -f {chromosome begin {samzyg-gatk-*=$zyg-sam-*}} -q {scount($samzyg eq "m") == 2} tmp/vars.tsv
+} {chromosome	begin	samzyg-gatk-sample1	samzyg-gatk-sample2
+chr1	4001	m	m}
+
 testsummarize
