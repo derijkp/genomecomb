@@ -1,0 +1,158 @@
+= Headers =
+
+This text describes the fields in the example file (and most files coming
+out of genomecomb analysis) shortly. More detail on the format of the
+example files can be found in [[format_tsv]].
+
+Some of the fields apply to variant itself:
+the basic variant fields describe the variant itself, the annotation fields give
+info on the variant (location etc.).
+
+Sample specific fields are given separately for each sample by appending
+a dash and the sample name to the generic fieldname. They specify data
+about the variant that can be different for each sample, e.g. the genotype (a
+sample can have a reference, heterozygous,... genotype for the variant),
+or sequencing quality score.
+
+== Basic variant fields ==
+
+* **chromosome**: chromosome number
+* **begin**: start position of variant (zero based)
+* **end**: end position of variant (zero based)
+* **type**: single nucleotide variants (snp), short insertions (ins), deletions (del) or substitutions (sub), or the combinations of two different variant types at heterozygous positions (e.g. del_snp). 
+* **ref**: The reference allele at this position
+* **alt**: The alternative allele at this position
+
+== Sample specific fields for cg samples ==
+* **sequenced-cg-cg-testNA19238chr2122cg**: Position sequenced by CG/CG? ("u" = unsequenced, "v"=variant, "r"=reference)
+* **zyg-cg-cg-testNA19238chr2122cg**: zygosity according according to CG
+* **alleleSeq1-cg-cg-testNA19238chr2122cg**: First allele called in CG genome.
+* **alleleSeq2-cg-cg-testNA19238chr2122cg**: Second allele called in CG genome.
+* **totalScore1-cg-cg-testNA19238chr2122cg**: Variant score at first allele.
+* **totalScore2-cg-cg-testNA19238chr2122cg**: Variant score at second allele.
+* **coverage-cg-cg-testNA19238chr2122cg**: Coverage depth at this position by CG.
+* **refscore-cg-cg-testNA19238chr2122cg**: Reference score at this position.
+* **refcons-cg-cg-testNA19238chr2122cg**: in a poorly called region (accoring to CG)
+* **cluster-cg-cg-testNA19238chr2122cg**: Presence within a cluster of SNVs by CG
+
+The same fields are present for NA19239 and NA19240
+
+== Sample specific fields for gatk analysis ==
+* **sequenced-gatk-rdsbwa-testNA19240chr21il**: sequenced by Illumina/GATK? ("u" = unsequenced, "v"=variant, "r"=reference)
+* **zyg-gatk-rdsbwa-testNA19240chr21il**: zygosity according to GATK (m=homozygous, t=heterozygous,  c=compound, o=other, r=reference, u=unsequenced/unspecified)
+* **alleleSeq1-gatk-rdsbwa-testNA19240chr21il**: First allele called in Illumina genome by GATK.
+* **alleleSeq2-gatk-rdsbwa-testNA19240chr21il**: Second allele called in Illumina genome by GATK.
+* **quality-gatk-rdsbwa-testNA19240chr21il**: Quality score for this position as called by GATK on Illumina genome.
+* **phased-gatk-rdsbwa-testNA19240chr21il**: order of genotypes in alleleSeq1 and alleleSeq2 is significant (phase is known)
+* **genotypes-gatk-rdsbwa-testNA19240chr21il**: list of genotypes, can contain more than 2
+* **alleledepth_ref-gatk-rdsbwa-testNA19240chr21il**: depth of reference allele
+* **alleledepth-gatk-rdsbwa-testNA19240chr21il**: depth of alternative alleles
+* **coverage-gatk-rdsbwa-testNA19240chr21il**: Coverage depth at this position by by Illumina/GATK.
+* **genoqual-gatk-rdsbwa-testNA19240chr21il**: quality of the genotypes
+* **PL-gatk-rdsbwa-testNA19240chr21il**: Normalized, Phred-scaled likelihoods for AA,AB,BB genotypes where A=ref and B=alt; not applicable if site is not biallelic
+* **BaseQRankSum-gatk-rdsbwa-testNA19240chr21il**: Phred-scaled p-value From Wilcoxon Rank Sum Test of Alt Vs. Ref base qualities
+* **totalcoverage-gatk-rdsbwa-testNA19240chr21il**: Total Depth, counting all reads (DP in vcf INFO)
+* **DS-gatk-rdsbwa-testNA19240chr21il**: Were any of the samples downsampled?
+* **Dels-gatk-rdsbwa-testNA19240chr21il**: Fraction of Reads Containing Spanning Deletions
+* **FS-gatk-rdsbwa-testNA19240chr21il**: Phred-scaled p-value using Fisher's exact test to detect strand bias
+* **HaplotypeScore-gatk-rdsbwa-testNA19240chr21il**: Consistency of the site with at most two segregating haplotypes
+* **MQ-gatk-rdsbwa-testNA19240chr21il**: RMS Mapping Quality
+* **MQ0-gatk-rdsbwa-testNA19240chr21il**: Total Mapping Quality Zero Reads
+* **MQRankSum-gatk-rdsbwa-testNA19240chr21il**: Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities
+* **QD-gatk-rdsbwa-testNA19240chr21il**: Variant Confidence/Quality by Depth
+* **ReadPosRankSum-gatk-rdsbwa-testNA19240chr21il**: Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias
+* **SOR-gatk-rdsbwa-testNA19240chr21il**: Symmetric Odds Ratio of 2x2 contingency table to detect strand bias
+* **cluster-gatk-rdsbwa-testNA19240chr21il**: Presence within a cluster of SNVs by Illumina/GATK (if yes "cl", if no "")
+
+== Sample specific fields for samtools analysis ==
+* **sequenced-sam-rdsbwa-testNA19240chr21il**: sequenced by Illumina/samtools? ("u" = unsequenced, "v"=variant, "r"=reference)
+* **zyg-sam-rdsbwa-testNA19240chr21il**: zygosity according to samtools (m=homozygous, t=heterozygous,  c=compound, o=other, r=reference, u=unsequenced/unspecified)
+* **alleleSeq1-sam-rdsbwa-testNA19240chr21il**: First allele called in Illumina genome by samtools.
+* **alleleSeq2-sam-rdsbwa-testNA19240chr21il**: Second allele called in Illumina genome by GATK.
+* **quality-sam-rdsbwa-testNA19240chr21il**: Quality score for this position as called by GATK on Illumina genome.
+* **phased-sam-rdsbwa-testNA19240chr21il**: order of genotypes in alleleSeq1 and alleleSeq2 is significant (phase is known)
+* **genotypes-sam-rdsbwa-testNA19240chr21il**: list of genotypes, can contain more than 2
+* **genoqual-sam-rdsbwa-testNA19240chr21il**: genotype quality
+* **loglikelihood-sam-rdsbwa-testNA19240chr21il**: 
+* **coverage-sam-rdsbwa-testNA19240chr21il**: Coverage depth at this position by by Illumina/GATK.
+* **DV-sam-rdsbwa-testNA19240chr21il**: number of high-quality non-reference bases
+* **SP-sam-rdsbwa-testNA19240chr21il**: Phred-scaled strand bias P-value
+* **PL-sam-rdsbwa-testNA19240chr21il**: List of Phred-scaled genotype likelihoods
+* **totalcoverage-sam-rdsbwa-testNA19240chr21il**: Raw read depth (DP in vcf INFO); samtools does not count all mapping reads for totalcoverage (bad reads are filtered out)
+* **DP4-sam-rdsbwa-testNA19240chr21il**: number of high-quality ref-forward bases, ref-reverse, alt-forward and alt-reverse bases
+* **MQ-sam-rdsbwa-testNA19240chr21il**: Root-mean-square mapping quality of covering reads
+* **FQ-sam-rdsbwa-testNA19240chr21il**: Phred probability of all samples being the same
+* **AF1-sam-rdsbwa-testNA19240chr21il**: Max-likelihood estimate of the first ALT allele frequency (assuming HWE)
+* **AC1-sam-rdsbwa-testNA19240chr21il**: Max-likelihood estimate of the first ALT allele count (no HWE assumption)
+* **IS-sam-rdsbwa-testNA19240chr21il**: Maximum number of reads supporting an indel and fraction of indel reads
+* **PV4-sam-rdsbwa-testNA19240chr21il**: P-values for strand bias, baseQ bias, mapQ bias and tail distance bias
+* **PC2-sam-rdsbwa-testNA19240chr21il**: Phred probability of the nonRef allele frequency in group1 samples being larger (,smaller) than in group2.
+* **QBD-sam-rdsbwa-testNA19240chr21il**: Quality by Depth: QUAL/#reads
+* **RPB-sam-rdsbwa-testNA19240chr21il**: Read Position Bias
+* **MDV-sam-rdsbwa-testNA19240chr21il**: Maximum number of high-quality nonRef reads in samples
+* **VDB-sam-rdsbwa-testNA19240chr21il**: Variant Distance Bias (v2) for filtering splice-site artefacts in RNA-seq data. Note: this version may be broken.
+* **cluster-sam-rdsbwa-testNA19240chr21il**: Presence within a cluster of SNVs by Illumina/GATK (if yes "cl", if no "")
+
+== Annotation fields ==
+* **intGene_impact**: impact on gene transcripts (can be list) of intGene gene set (integration of refGene, knownGene, genecode, ensGene)
+* **intGene_gene**: gene name
+* **intGene_descr**: description of transcript and location of variant in transcript in several ways (including hgvs)
+* **lincRNA_impact**: impact on long non-coding genes
+* **lincRNA_gene**: long non-coding gene name
+* **lincRNA_descr**: description of transcript and location of variant in long non-coding transcript
+* **refGene_impact**: impact on refGene genes
+* **refGene_gene**: name of refGene genes
+* **refGene_descr**: list of refGene transcripts and description of location and effect of variant on the transcript
+* **mirbase20_impact**: impact on mirbase20 miRNA
+* **mirbase20_mir**: mirbase20 miRNA variant is located in
+* **chainSelf**: Presence in self-chained region (yes = "label from UCSC", no = "")
+* **cytoBand**: approximate location of bands seen on Giemsa-stained chromosomes.
+* **dgvMerged**: Database of Genomic Variants (Structural Var Regions)
+* **evofold**: conserved functional RNA structures based on predictions made with the EvoFold program
+* **gad**: Genetic Association Database
+* **genomicSuperDups**: Presence in segmental duplication (yes = "label from UCSC", no = "")
+* **gwasCatalog_name**: name single nucleotide polymorphisms (SNPs) identified by published GWAS
+* **gwasCatalog_score**: score for gwasCatalog SNPs
+* **homopolymer_base**: if part of a homopolymer, the homopolymer base is given
+* **homopolymer_size**: if part of a homopolymer, the homopolymer size is given
+* **microsat**: Presence in a microsatelite
+* **oreganno**: literature-curated regulatory regions, transcription factor binding sites, and regulatory polymorphisms from oreganno
+* **phastConsElements46way_name**: evolutionary conservation region name (phastcons raw log odds scores)
+* **phastConsElements46way_score**: evolutionary conservation score (phastcons)
+* **phastConsElements46wayPlacental_name**: evolutionary conservation name in placental mammals
+* **phastConsElements46wayPlacental_score**: evolutionary conservation score in placental mammals
+* **phastConsElements46wayPrimates_name**: evolutionary conservation name in primates
+* **phastConsElements46wayPrimates_score**: evolutionary conservation score in primates
+* **rmsk**: Presence in a RepeatMasker region (yes = "label from UCSC", no = "")
+* **simpleRepeat**: Presence in simple tandem repeat (yes = "label from UCSC", no = "")
+* **targetScanS_name**: Putative miRNA binding site
+* **targetScanS_score**: Putative miRNA binding site score
+* **tfbsConsSites_name**: transcription factor binding site
+* **tfbsConsSites_score**: transcription factor binding site score
+* **tRNAs**: transfer RNA
+* **vistaEnhancers_name**: Vista distant-acting transcriptional enhancer
+* **vistaEnhancers_score**: Vista distant-acting transcriptional enhancer score
+* **wgEncodeCaltechRnaSeq**: Encode RnaSeq score
+* **wgEncodeH3k4me1**: Encode H3k4me1 score
+* **wgEncodeH3k4me3**: Encode H3k4me3 score
+* **wgEncodeH3k27ac**: Encode H3k27ac score
+* **wgEncodeRegDnaseClusteredV3_name**: Encode Dnase region name
+* **wgEncodeRegDnaseClusteredV3_score**: Encode Dnase region score
+* **wgEncodeRegTfbsClusteredV3_name**: Encode transcription factor binding site name
+* **wgEncodeRegTfbsClusteredV3_score**: Encode transcription factor binding site score
+* **wgRna_name**: RNA gene (pre-miRNA, snoRNA or scaRNA) name
+* **wgRna_score**: RNA gene score
+* **1000g3**: frequency (in percent) of the variant in the 1000 genomes data set
+* **cadd**: deleteriousness of single nucleotide variants according to CADD
+* **clinvar_acc**: clinvar accession number
+* **clinvar_disease**: clinvar disease
+* **gnomad_max_freqp**: maximum population frequency (in percent) in the the gnmomad (genomic) database
+* **gnomad_nfe_freqp**: maximum frequency in the NFE population in the the gnmomad (genomic) database
+* **kaviar**: frequency (in percent) in the klaviar database
+* **snp147**: variant name (in the dbSNP 147 database)
+* **snp147Common**: frequency in dbSNP 147 database (only for variants > 1% in a sufficient population)
+* **evs_ea_freqp**: frequency (percent) in Exome Variant Server (european american population)
+* **evs_aa_freqp**: frequency (percent) in Exome Variant Server (african american population)
+* **evs_ea_mfreqp**: homozygote frequency (percent) in Exome Variant Server (european american population)
+* **evs_aa_mfreqp**: homozygote frequency (percent) in Exome Variant Server (african american population)
+

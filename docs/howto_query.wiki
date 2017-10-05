@@ -2,9 +2,9 @@
 
 This howto illustrates some of the uses of the "cg select" command line to
 query tab-separated data files. More extensive information about the
-command can be found in the [[../cg_select|cg select help]]. The same
+command can be found in the [[cg_select|cg select help]]. The same
 queries can be performed in a GUI with a query builder to aid using
-[[../cg_viz|cg viz]]
+[[cg_viz|cg viz]]
 
 == Example files ==
 
@@ -12,14 +12,22 @@ We created a smaller data set for testing by extracting a few chromosomes
 out of a number of publically available genome sequences made using 2
 different technologies: 
 * chromosomes 21 and 22 of NA19238, NA19239, NA19240 sequenced by Complete Genomics
-* chromosome 22 of NA19240 sequenced using Illumina GAII
+* chromosome 21 of NA19240 sequenced using Illumina GAII
+* chromosome 21 and 22 Ilumina based exome sequences of NA19238 and NA19239
+
 The analysis result files used in these examples are available through the
 [[../install|install]] page). A detailed description of the columns
-present in this file are presented in the [[headers|Headers]] section.
+present in this file are presented in the [[example_header|example_header]] section.
 
 The files used are:
-* annot_compar-genomes_yri_chr2122.tsv.lz4
-* sreg-genomes_yri_chr2122.tsv.lz4
+; annot_compar-yri_chr2122.tsv.lz4 : an annotated [[format_tsv|multicompar variant file]]
+where each line contains a variant, genotype, quality, etc. data per sample and annotations
+; annot_compar-yri_chr2122.tsv.sampleinfo.tsv : a sampleinfo file
+containing extra information on the samples. If it is in the same directory
+it will automatically be used (with this name).
+; sreg-yri_chr2122.tsv.lz4: a [[format_tsv|multiregion file]] 
+where each line contains a region and a field for each sample to indicate whether this
+resion is sequenced or not in the sample
 
 Some queries are quite long. For readability they are split into several lines, but
 allways in a way that they only execute after typing the entire query into
@@ -31,44 +39,47 @@ bash (or copy/pasting):
 == Get (summary) information on the file ==
 
 Which samples are in the file?
-"Samples" in this context means analysis samples: Different sequencing sets of the
-same biological sample (e.g. cg-cg-testNA19240chr2122cg and
-gatk-rdsbwa-testNA19240chr21il) or different analysis (e.g. varcaller:
-sam-rdsbwa-testNA19240chr21il and gatk-rdsbwa-testNA19240chr21il) of the
-same biological sample are shown as separate samples!
+"Samples" in this context means analysis samples: If the same biological
+sample was sequenced twice (e.g. cg-cg-testNA19240chr2122cg and
+gatk-rdsbwa-testNA19240chr21il) or analysed twice using different methods
+(e.g. varcaller: sam-rdsbwa-testNA19240chr21il and
+gatk-rdsbwa-testNA19240chr21il) these versions are shown as separate
+samples!
+
 {{{
-cg select -n annot_compar-genomes_yri_chr2122.tsv.lz4
+cg select -n annot_compar-yri_chr2122.tsv.lz4
 }}}
 
-How many (analysis) samples: The | (pipe symbol) sends the results from select -n to wc (wordcount, counts lines words and characters):
+How many (analysis) samples are there: The | (pipe symbol) sends the results from
+select -n to wc (wordcount, using the -l option it only counts lines):
 {{{
-cg select -n annot_compar-genomes_yri_chr2122.tsv.lz4 | wc
+cg select -n annot_compar-yri_chr2122.tsv.lz4 | wc -l
 }}}
 
 How many complete genomics samples
 (The grep command filters out lines containing the pattern cg-cg at the start of the line.
 wc -l only counts the number of lines):
 {{{
-cg select -n annot_compar-genomes_yri_chr2122.tsv.lz4 | grep ^cg-cg- | wc -l
+cg select -n annot_compar-yri_chr2122.tsv.lz4 | grep ^cg-cg- | wc -l
 }}}
 
 which fields are present in the file (cg select -h); less allows scrolling through the results
 {{{
-cg select -h annot_compar-genomes_yri_chr2122.tsv.lz4 | less
+cg select -h annot_compar-yri_chr2122.tsv.lz4 | less
 }}}
 
 Show only fields with impact in the name (grep only shows lines matching the pattern "impact")
 {{{
-cg select -h annot_compar-genomes_yri_chr2122.tsv.lz4 | grep impact
+cg select -h annot_compar-yri_chr2122.tsv.lz4 | grep impact
 }}}
 
 How many variants (data lines) are in the file. 
 This uses the -g option to count the number of data lines (ignoring
-comments and header, which would be counted using wc). This option for
+comments and header, which would be counted using wc). The -g option for
 creating summaries is a lot more flexible, and will be explained later in
-more detail after the queries. 
+more detail further in this document. 
 {{{
-cg select -g all annot_compar-genomes_yri_chr2122.tsv.lz4
+cg select -g all annot_compar-yri_chr2122.tsv.lz4
 }}}
 
 
@@ -79,7 +90,7 @@ variants which fullfill given criteria. In the query, $fieldname will be
 replaced with the value of field for the variable. e.g. only return
 variants of type ins (insertion) and show them using the less pager 
 {{{
-cg select -q '$type == "ins"' annot_compar-genomes_yri_chr2122.tsv.lz4 | less -S
+cg select -q '$type == "ins"' annot_compar-yri_chr2122.tsv.lz4 | less -S
 }}}
 Notice that we used the comparison operator == to see if the value of type ($type) is 
 equal to the value  "ins" (literal values must be quoted)
@@ -92,7 +103,7 @@ cg select -h
 If we just want to know how many insertions there are in the file, we can
 combine the query with -g all
 {{{
-cg select -q '$type == "ins"' -g all annot_compar-genomes_yri_chr2122.tsv.lz4
+cg select -q '$type == "ins"' -g all annot_compar-yri_chr2122.tsv.lz4
 }}}
 
 We want to select all variants with an impact on refGene exons. Because one variant
@@ -109,7 +120,7 @@ output file indicates lz4 compression, the results will be autmatically compress
 {{{
 cg select -q '
     $refGene_impact regexp "CDS|UTR|GENE"
-' annot_compar-genomes_yri_chr2122.tsv.lz4 refexome.tsv.lz4
+' annot_compar-yri_chr2122.tsv.lz4 refexome.tsv.lz4
 }}}
 We can use "cg less" to page through the lz4 compressed resultfile refexome.tsv.lz4
 or use "cg viz" for a graphical user interface for browsing and querying large tsv files
@@ -125,8 +136,12 @@ in the intGene_impact column shares an element with the given list. (We use intG
 which contains more transcripts).
 {{{
 cg select -q '
-    $intGene_impact shares "CDSDEL CDSFRAME CDSINS CDSMIS CDSNONSENSE CDSSPLICE CDSSTART CDSSTOP GENEDEL GENECOMP"
-' annot_compar-genomes_yri_chr2122.tsv.lz4 temp.tsv.lz4
+    $intGene_impact shares "
+        CDSDEL CDSFRAME CDSINS CDSMIS
+        CDSNONSENSE CDSSPLICE CDSSTART CDSSTOP
+        GENEDEL GENECOMP
+    "
+' annot_compar-yri_chr2122.tsv.lz4 temp.tsv.lz4
 }}}
 
 Count the number of snp variant positions in the refexome file we just
@@ -173,6 +188,49 @@ cg select -q '
 ' -g all refexome.tsv.lz4
 }}}
 
+more filtering: In the next example we select high quality, rare (based on
+1000g and exac AFR) SNPs based on several criteria: 
+Variant related criteria that are not specific to each sample (e.g. not in
+simple repeats, population frequency) are used directly. sample specific
+filters (good coverage and quality, not in cluster, in at least to gatk
+samples) are in an scount aggregate function that selects variants that have
+a high quality variant genotype in at least 2 gatk samples. We select
+only gatk and not samtools calls/samples using the sample field (cg calls
+are not be considered in the scount anyway because they do not have the field quality
+that is used in the scount query). 
+{{{
+cg select -q '
+    $type == "snp" and lmax($1000g3,0) < 0.01 and lmax($exac_freqp_AFR,0) < 0.01
+    and scount(
+        $sample matches "gatk-*" and $sequenced == "v"
+        and $coverage >= 20 and $quality >= 50 and $cluster == ""
+    ) >= 2 
+    and $simpleRepeat == "" && $microsat == ""
+' refexome.tsv.lz4 > tempsel.tsv
+cg select -g all tempsel.tsv
+cg select -f '
+    chromosome begin end type ref alt simpleRepeat microsat genomicSuperDups cluster-*
+' tempsel.tsv | less -S -x 15
+}}}
+
+In the next query we add an even stronger quality criterium: concordance
+with samtools zyg call. Using a wildcard (*) we calculate a new field
+samzyg for each gatk sample that contains the zyg call by samtools for the
+corresponding sample. In the query we use this extra field to see if it is
+equal to the gatk zyg call for each sample. (Here we only count the number
+of results.)
+{{{
+cg select -f '{samzyg-gatk-*=$zyg-sam-*}' -q '
+    $type == "snp" and lmax($1000g3,0) < 0.01 and lmax($exac_freqp_AFR,0) < 0.01
+    and scount(
+        $sample matches "gatk-*" and $sequenced == "v"
+        and $coverage >= 20 and $quality >= 50 and $cluster == ""
+	and $samzyg == $zyg
+    ) >= 2 
+    and $simpleRepeat == "" && $microsat == ""
+' -g all refexome.tsv.lz4
+}}}
+
 Extract a specific region from the file using the region function
 {{{
 cg select -q 'region("22:50000000-60000000")' -g all refexome.tsv.lz4
@@ -182,7 +240,7 @@ Count all variants where the same genotype is called between CG and gatk analysi
 {{{
 cg select -g all \
     -q 'sm("gatk-rdsbwa-testNA19240chr21il", "cg-cg-testNA19240chr2122cg")' \
-    annot_compar-genomes_yri_chr2122.tsv.lz4
+    annot_compar-yri_chr2122.tsv.lz4
 }}}
 
 Select all positions where the same genotype is called between CG and gatk
@@ -191,7 +249,7 @@ that position.
 {{{
 cg select -g all -q '
     same("gatk-rdsbwa-testNA19240chr21il", "cg-cg-testNA19240chr2122cg")
-' annot_compar-genomes_yri_chr2122.tsv.lz4
+' annot_compar-yri_chr2122.tsv.lz4
 }}}
 
 Select mismatches between CG and gatk analysis on the CG genome, i.e. a
@@ -199,14 +257,14 @@ variant is called by both but with a different genotype.
 {{{
 cg select -g all -q '
     mm("gatk-rdsbwa-testNA19240chr21il", "cg-cg-testNA19240chr2122cg")
-' annot_compar-genomes_yri_chr2122.tsv.lz4
+' annot_compar-yri_chr2122.tsv.lz4
 }}}
 
 Select all variants not in simple tandem repeats, microsatellites or segmental duplications
 {{{
 cg select -q '$type == "snp" 
     and $simpleRepeat == "" and $microsat == "" and $genomicSuperDups == "" ' \
-    annot_compar-genomes_yri_chr2122.tsv.lz4 > nonrepeat.tsv
+    annot_compar-yri_chr2122.tsv.lz4 nonrepeat.tsv.lz4
 }}}
 
 Count lines where NA19240 has a variant according to 3 technologies (CG
@@ -216,13 +274,23 @@ cg select -g all -q '
     $sequenced-cg-cg-testNA19240chr2122cg == "v" 
     and $sequenced-gatk-rdsbwa-testNA19240chr21il == "v" 
     and $sequenced-sam-rdsbwa-testNA19240chr21il == "v"
-' annot_compar-genomes_yri_chr2122.tsv.lz4
+' annot_compar-yri_chr2122.tsv.lz4
 }}}
 
 Count lines where NA19240 has a variant according to all 3 technologies, but by 
 using the **scount** function.
 {{{
-cg select -g all -q 'scount($sequenced == "v")  == 3' annot_compar-genomes_yri_chr2122.tsv.lz4
+cg select -g all -q '
+    scount($sequenced == "v" and $sample matches "*-testNA19240*")  == 3
+' annot_compar-yri_chr2122.tsv.lz4
+}}}
+
+Count lines where NA19240 has a variant according to all 3 technologies, but by 
+using the **scount** function and information (individual) in the sampleinfo file.
+{{{
+cg select -g all -q '
+    scount($sequenced == "v" and $individual == "NA19240")  == 3
+' annot_compar-yri_chr2122.tsv.lz4
 }}}
 
 Count all variants with coverage between 20 and 100 and not in clustered SNV
@@ -232,22 +300,22 @@ cg select -g all -q '
     scount($sequenced == "v" and $coverage >= 20 and $coverage <= 100 and $cluster == ""
     and $sample matches "cg-cg-*")  >= 2
     and $type == "snp"
-' annot_compar-genomes_yri_chr2122.tsv.lz4
+' annot_compar-yri_chr2122.tsv.lz4
 }}}
 
-We can query all tsv files. Querying the multirgion file sreg-genomes_yri_chr2122.tsv.lz4
+We can query all tsv files. Querying the multiregion file sreg-yri_chr2122.tsv.lz4
 can tell us for instance how large the region sequenced in all cg samples is:
 {{{
 cg select -q '
     scount($sreg == 1 and $sample matches "cg-cg-*") == 3
-' sreg-genomes_yri_chr2122.tsv.lz4 | cg covered
+' sreg-yri_chr2122.tsv.lz4 | cg covered
 }}}
 
 Or how much in more than 1 samples:
 {{{
 cg select -q '
     scount($sreg == 1 and $sample matches "cg-cg-*") > 1
-' sreg-genomes_yri_chr2122.tsv.lz4 | cg covered
+' sreg-yri_chr2122.tsv.lz4 | cg covered
 }}}
 
 We can combine with other commands to find out which regions from refcoding are still
@@ -256,21 +324,22 @@ missing in a given sample (cg-cg-testNA19240chr2122cg).
 # select the region covered in the sample
 cg select -q '
     $sreg-cg-cg-testNA19240chr2122cg == 1
-' sreg-genomes_yri_chr2122.tsv.lz4 reg-testNA19240chr2122cg.tsv.lz4
+' sreg-yri_chr2122.tsv.lz4 reg-testNA19240chr2122cg.tsv.lz4
 # subtract from refcoding
-cg regsubtract /complgen/refseq/hg19/extra/reg_hg19_refcoding.tsv.lz4 reg-testNA19240chr2122cg.tsv.lz4 > missing.tsv
+refcoding=/complgen/refseq/hg19/extra/reg_hg19_refcoding.tsv.lz4
+cg regsubtract $refcoding reg-testNA19240chr2122cg.tsv.lz4 > missing.tsv
 # get size of region covered by missing
 cg covered missing.tsv
-# recalculate missing, but only for chr 21 and 22
-cg regsubtract /complgen/refseq/hg19/extra/reg_hg19_refcoding.tsv.lz4 reg-testNA19240chr2122cg.tsv.lz4 | 
+# recalculate missing, but only for chr 21 and 22 (using a pipe to do it in one go)
+cg regsubtract $refcoding reg-testNA19240chr2122cg.tsv.lz4 | 
     cg select -q '$chromosome in "21 22"' > missing.tsv
 cg covered missing.tsv
 }}}
 
 == Fields: select fields to show ==
 
-List the genomic positions (chromosome, begin, end) of all missense SNPs
-(according to complete genomics annotation) in NA19240 chromosome 22.
+Using the -f option, we can select which fields to show in the output, e.g.
+List the genomic positions (chromosome, begin, end) of the refexome.
 {{{
 cg select -f 'chromosome begin end' refexome.tsv.lz4 | less
 }}}
@@ -279,7 +348,7 @@ Wildcards can be used in the fieldnames, selecting fields matching the
 pattern (e.g. refGene_*). * selects all (up till now unselected) fields.
 This can be used to reorder fields while keeping all of them in  the file
 {{{
-cg select -f 'chromosome begin end type refGene_* *' refexome.tsv.lz4 | less
+cg select -f 'chromosome begin end type refGene_* *' refexome.tsv.lz4 | less -S
 }}}
 
 Using the form field=expression, you can create a calculated field: field
@@ -294,13 +363,16 @@ cg select -f 'chromosome begin end type {size= $end - $begin}' refexome.tsv.lz4 
 Calculated fields can use sample aggregate functions, to e.g. count the number of samples
 for which each line is variant:
 {{{
-cg select -f 'chromosome begin end type {countv= scount($sequenced == "v")}' refexome.tsv.lz4 | less
+cg select -f '
+    chromosome begin end type {countv= scount($sequenced == "v")}
+' refexome.tsv.lz4 | less
 }}}
 
 Calculated fields can be used in queries:
 {{{
 cg select -g all -f '
-    chromosome begin end type {countv= scount($sequenced == "v" and $coverage >= 20 and $sample matches "cg-cg-*")}
+    chromosome begin end type
+    {countv= scount($sequenced == "v" and $coverage >= 20 and $sample matches "cg-cg-*")}
 ' -q '$countv >= 2' refexome.tsv.lz4
 }}}
 
@@ -313,7 +385,10 @@ calculated for these.
 {{{
 cg select -f '
     chromosome begin end type ref alt 
-    {hqv-*=if($sequenced-* == "v" and $quality-* >= 50 and $coverage-* >= 20 and lmind($evs_aa_freqp,0) <= 1,1,0)}
+    {hqv-*=if(
+        $sequenced-* == "v" and $quality-* >= 50 
+        and $coverage-* >= 20 and lmind($evs_aa_freqp,0) <= 1
+    ,1,0)}
 ' refexome.tsv.lz4 | less
 }}}
 
@@ -336,20 +411,20 @@ groups (counts by default)
 
 How many of each type of variant is present in the file:
 {{{
-cg select -g type annot_compar-genomes_yri_chr2122.tsv.lz4
+cg select -g type annot_compar-yri_chr2122.tsv.lz4
 }}}
 
-We cannot use wc to count the number of variants correctly, as it also counts
+As shown earlier, We can use -g to count the number of variants correctly (without
 comments and header lines. Using the special field "all", we can 
 get it correct: The value of "all" is allways all, creating
 only one group, and thus counting the total number of variants.
 {{{
-cg select -g all annot_compar-genomes_yri_chr2122.tsv.lz4
+cg select -g all annot_compar-yri_chr2122.tsv.lz4
 }}}
 
 We can limit the display to only snp or indels using the filter following the group field:
 {{{
-cg select -g 'type {snp ins del}' annot_compar-genomes_yri_chr2122.tsv.lz4
+cg select -g 'type {snp ins del}' annot_compar-yri_chr2122.tsv.lz4
 }}}
 
 We can use the special field "sample" to get separate counts per sample.
@@ -362,23 +437,31 @@ fieldname without the sample specification, e.g. sequenced here to count
 the sequenced status (v for variant, r for reference and u for
 unsequenced) of the variants in each samples. 
 {{{
-cg select -g 'sample * sequenced' annot_compar-genomes_yri_chr2122.tsv.lz4
+cg select -g 'sample * sequenced' annot_compar-yri_chr2122.tsv.lz4
 }}}
 
-If you want to count only variants for each sample that are actually genotyped 
+If we want to count only variants for each sample that are actually genotyped 
 as being variant in each sample, use filter "v" for sequenced
 {{{
-cg select -g 'sample * sequenced v' annot_compar-genomes_yri_chr2122.tsv.lz4
+cg select -g 'sample * sequenced v' annot_compar-yri_chr2122.tsv.lz4
 }}}
 
 Using -gc, we can change the output columns. Here we add both count and
 the average coverage (of the variants) to the output
 {{{
-cg select -g 'sample * sequenced v' -gc 'count,avg(coverage)' annot_compar-genomes_yri_chr2122.tsv.lz4
+cg select -g 'sample * sequenced v' -gc 'count,avg(coverage)' annot_compar-yri_chr2122.tsv.lz4
 }}}
 
-Show for each of the refGene genes how many variants are in the gene. The first
-way you would think of doing this has some problems:
+We can use the same method (combined with a calculated column for size) to get
+the region covered for each sample from the multiregion file
+{{{
+cg select -f '{size=$end - $begin}' \
+    -g 'sample {} chromosome {} sreg 1' \
+    -gc 'sum(size)' sreg-yri_chr2122.tsv.lz4
+}}}
+
+We want to show for each of the refGene genes how many variants are in the
+gene. The first way you would think of doing this has some problems:
 {{{
 cg select -g 'refGene_gene' refexome.tsv.lz4 | less
 }}}
@@ -387,23 +470,24 @@ one variant may affect multiple genes, in which case refGene_gene is a
 list. If it is a list, the same gene may appear more than once (once
 for each transcript). To solve this problem, we use a calculated column genes
 which removes the duplicates in the list using the vdistinct function.
-In the -g option we prepend a + before the fieldname "genes". The + will
-cause the count (or other aggregate) to be calculated for each element in
-the list.
+In the -g option we prepend a - before the fieldname "genes". The - will
+cause the count (or other aggregate) to loop over each list, adding 1 to the result
+for each unique element in the list. (+ can be used to add 1 for each element in
+the list, even duplicates)
 {{{
 cg select -g '-refGene_gene' refexome.tsv.lz4 | less
 }}}
 
-You could also use this type of summary to look for genes with compound
+We could also use this type of summary to look for genes with compound
 variants. However, there are some extra complexities:
 
-You want to count (and find multiple) variants in the same transcipt (rather than
+We want to count (and find multiple) variants in the same transcipt (rather than
 gene) with a given impact (e.g. ignoring intronic variants). This can be
 done using the transcripts function, used here to create the field refGene_transcripts
 that will contain a list of transcript names (together with gene name) for which the impact
 id > CDSsilent (comes after it in the list of impacts in [[cg_annotate]]).
 
-You want the variants to be actually variant (sequenced v) in the same sample (so we
+We want the variants to be actually variant (sequenced v) in the same sample (so we
 add sequenced and sample in the grouping).
 We may also want to limit ourselves to rare high quality variants in the
 sample; For this, we need to create a field to use as a group for each
@@ -416,10 +500,10 @@ With no hqv-sample field present for the cg samples, they will not be included i
 We use evs_aa_freqp for excluding common polymorfisms.
 {{{
 cg select -f '
-        {hqv-*=if($sequenced-* == "v" and $quality-* >= 50 and $coverage-* >= 20 and lmind($evs_aa_freqp,0) <= 1,1,0)} 
-        {refGene_transcripts=transcripts("refGene",">CDSsilent")}
-    ' \
-    -g '-refGene_transcripts' -gc 'hqv 1 sample {} count' refexome.tsv.lz4 | less
+    {hqv-*=if($sequenced-* == "v" and $quality-* >= 50 and $coverage-* >= 20
+        and lmind($evs_aa_freqp,0) <= 1,1,0)} 
+    {refGene_transcripts=transcripts("refGene",">CDSsilent")}
+' -g '-refGene_transcripts' -gc 'hqv 1 sample {} count' refexome.tsv.lz4 | less
 }}}
 
 The previous query produces a column for each sample. We can also put
@@ -427,9 +511,10 @@ sample in -g, causing the creation of a new output line for each sample/transcri
 This makes it easier to pipe the output into a new query to select only those with >= 2 variants
 {{{
 cg select -f '
-        {hqv-*=if($sequenced-* == "v" and $quality-* >= 50 and $coverage-* >= 20 and lmind($evs_aa_freqp,0) <= 1,1,0)} 
-        {refGene_transcripts=transcripts("refGene",">CDSsilent")}
-    ' -g 'sample {} -refGene_transcripts' -gc 'hqv 1 count' refexome.tsv.lz4 | 
+    {hqv-*=if($sequenced-* == "v" and $quality-* >= 50 and $coverage-* >= 20
+        and lmind($evs_aa_freqp,0) <= 1,1,0)} 
+    {refGene_transcripts=transcripts("refGene",">CDSsilent")}
+' -g 'sample {} -refGene_transcripts' -gc 'hqv 1 count' refexome.tsv.lz4 | 
     cg select -q '$count-1 > 1' | less
 }}}
 
@@ -438,7 +523,7 @@ the average quality of variants with a given coverage:
 {{{
 cg select -g coverage -gc '
     sequenced v sample {gatk-* sam-*} avg(quality)
-' annot_compar-genomes_yri_chr2122.tsv.lz4 | less -S
+' annot_compar-yri_chr2122.tsv.lz4 | less -S
 }}}
 
 We can add several agregate functions (separated by commas), in this case adding the count as well
@@ -446,5 +531,5 @@ as the median and quartile 1 and 3 of the quality:
 {{{
 cg select -g coverage -gc '
     sequenced v sample {gatk-* sam-*} count,q1(quality),median(quality),q3(quality)
-' annot_compar-genomes_yri_chr2122.tsv.lz4 | less -S
+' annot_compar-yri_chr2122.tsv.lz4 | less -S
 }}}	

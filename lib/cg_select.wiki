@@ -7,10 +7,9 @@ cg select ?options? ?datafile? ?outfile?
 Command for very flexible selection, sorting and conversion of tab separated files
 
 == Description ==
-Scans a tab separated file with header, and returns selected lines and columns, optionally sorted.
-The first line of the file is used as a header containing the field names of each column.
-The header line can be proceeded by comment lines that start with #. The comment lines
-will be included in the result. Other types of headers are supported (CGI style, vcf style)
+Scans a [[tsv|tab separated file with header]], and returns selected lines and columns, optionally sorted.
+cg select can also add new columns calculated based on the content of other columns.
+It can also be used to create summaries. Examples of its use can be found in [[howto_query]]
 
 == Arguments ==
 ; **datafile**: file to be scanned, if not given, uses stdin. File may be compressed.
@@ -196,6 +195,50 @@ If no number was given, the answer will be NaN
 **formatstring** follows the ANSI C sprintf specification, e.g. use "%.2f" to print a floating point number
 with two digits after the decimel point
 
+=== String functions ===
+; **oneof($field,value1,value2,...)**: returns true if the given field is equal to one of the values
+; **regexp(value,pattern)**: true if value matches the regular expression given by **pattern**
+; **regextract(value,pattern)**: extract the part matching the given **pattern** from **value**
+; **regsub(value,pattern,replace)**: substitutes values matched by **pattern** in **value** by **replace**
+; **matches(value,pattern)**:  true if value matches the glob pattern given by **pattern** 
+(using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
+; **concat(value,...)**: makes one long string by appending all values.
+
+=== multifield functions ===
+The following functions address multiple fields.
+; **count($field1, $field2, ..., test)**: Counts the number of fields that fullfill the test (can be things like: ' == "A"' or '< 20')
+; **counthasone($field1, $field2, ..., test)**: Counts the number of fields containing a commma separated lists for which one of the values fullfills the test
+; **counthasall($field1, $field2, ..., test)**: Counts the number of fields containing a commma separated lists for which all of the values fullfill the test
+An asterix can be used to indicated several fields matching a pattern.
+As field names specific to a sample are made by appending with -samplename, something like
+count($sequenced-*, == "v")
+will give the number of samples for which a variant was found
+
+=== Sample aggregates ===
+Sometimes you want summary info for each (selected) variation over the samples in the file 
+(e.g. in how many samples is the variant present, in which samples, ..). 
+You can do this in a limited way using the previous count functions using an asterix.
+Sample aggregate functions are a much more flexible way to do this. In the arguments 
+of the function, you can use field names without the sample part, which will then be used for each sample,
+e.g. scount($sequenced == "v") will count the number of samples for which sequenced-<sample> is equal to "v".
+Samples that do not have the required field(s) are ignored.
+A special variable named sample is available with the name of the sample, e.g.
+scount($sample match "gatk-*" and $sequenced == "v") will count the number of 
+gatk samples (sample name matches gatk-*) for which sequenced-<sample> is equal to "v"
+Following sample aggregates are available:
+; **scount(condition)**: number of samples for which **condition** is true
+; **slist(?condition?,value)**: returns a (comma separated) list with results of value for each sample for which (if given) **condition** is true
+; **sdistinct(?condition?,value)**: returns a non-redundant (comma separated) list of the results of value for each sample for which (if given) **condition** is true
+; **sucount(?condition?,value)**: number of unique values in field
+; **smin(?condition?,value)**: returns the minimum of results of value for each sample for which (if given) **condition** is true
+; **smax(?condition?,value)**: returns the maximum of results of value for each sample for which (if given) **condition** is true
+; **ssum(?condition?,value)**: returns the sum of results of value for each sample for which (if given) **condition** is true
+; **savg(?condition?,value)**: returns the average of results of value for each sample for which (if given) **condition** is true
+; **sstdev(?condition?,value)**: returns the standard deviation of results of value for each sample for which (if given) **condition** is true
+; **smedian(?condition?,value)**: returns the median of results of value for each sample for which (if given) **condition** is true
+; **smode(?condition?,value)**: returns the mode of results of value for each sample for which (if given) **condition** is true
+; **spercent(condition1,condition2)**: returns 100.0*(number of samples for which condition1 and condition2 are true)/(number of samples for which condition1 is true)
+
 === vector functions (comma separated lists) ===
 Some fields can contain multiple values in the form of a comma (or ; or space) separated 
 list (further called vector).
@@ -241,53 +284,8 @@ all elements in the other vector. Supported operators are:
 ; **vif(condition,true,?condition2,true2, ...?false)**: like if, but conditions, true1, ... and 
 false may be vectors, and a vector is returned
 ; **vformat(formatstring, arg, ...)**: same as format, but arg may be a vector, and the result is a vector
-=== String functions ===
-; **oneof($field,value1,value2,...)**: returns true if the given field is equal to one of the values
-; **regexp(value,pattern)**: true if value matches the regular expression given by **pattern**
-; **regextract(value,pattern)**: extract the part matching the given **pattern** from **value**
-; **regsub(value,pattern,replace)**: substitutes values matched by **pattern** in **value** by **replace**
-; **matches(value,pattern)**:  true if value matches the glob pattern given by **pattern** 
-(using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
-; **concat(value,...)**: makes one long string by appending all values.
-=== multifield functions ===
-The following functions address multiple fields.
-
-; **count($field1, $field2, ..., test)**: Counts the number of fields that fullfill the test (can be things like: ' == "A"' or '< 20')
-; **counthasone($field1, $field2, ..., test)**: Counts the number of fields containing a commma separated lists for which one of the values fullfills the test
-; **counthasall($field1, $field2, ..., test)**: Counts the number of fields containing a commma separated lists for which all of the values fullfill the test
-
-An asterix can be used to indicated several fields matching a pattern.
-As field names specific to a sample are made by appending with -samplename, something like
-count($sequenced-*, == "v")
-will give the number of samples for which a variant was found
-
-=== Sample aggregates ===
-Sometimes you want summary info for each (selected) variation over the samples in the file 
-(e.g. in how many samples is the variant present, in which samples, ..). 
-You can do this in a limited way using the previous count functions using an asterix.
-Sample aggregate functions are a much more flexible way to do this. In the arguments 
-of the function, you can use field names without the sample part, which will then be used for each sample,
-e.g. scount($sequenced == "v") will count the number of samples for which sequenced-<sample> is equal to "v".
-Samples that do not have the required field(s) are ignored.
-A special variable named sample is available with the name of the sample, e.g.
-scount($sample match "gatk-*" and $sequenced == "v") will count the number of 
-gatk samples (sample name matches gatk-*) for which sequenced-<sample> is equal to "v"
-Following sample aggregates are available:
-; **scount(condition)**: number of samples for which **condition** is true
-; **slist(?condition?,value)**: returns a (comma separated) list with results of value for each sample for which (if given) **condition** is true
-; **sdistinct(?condition?,value)**: returns a non-redundant (comma separated) list of the results of value for each sample for which (if given) **condition** is true
-; **sucount(?condition?,value)**: number of unique values in field
-; **smin(?condition?,value)**: returns the minimum of results of value for each sample for which (if given) **condition** is true
-; **smax(?condition?,value)**: returns the maximum of results of value for each sample for which (if given) **condition** is true
-; **ssum(?condition?,value)**: returns the sum of results of value for each sample for which (if given) **condition** is true
-; **savg(?condition?,value)**: returns the average of results of value for each sample for which (if given) **condition** is true
-; **sstdev(?condition?,value)**: returns the standard deviation of results of value for each sample for which (if given) **condition** is true
-; **smedian(?condition?,value)**: returns the median of results of value for each sample for which (if given) **condition** is true
-; **smode(?condition?,value)**: returns the mode of results of value for each sample for which (if given) **condition** is true
-; **spercent(condition1,condition2)**: returns 100.0*(number of samples for which condition1 and condition2 are true)/(number of samples for which condition1 is true)
 
 === comparing samples ===
-
 ; **compare(samplename1,samplename2, ...)**: compares the variant in the given samples, and returns one of:
 sm (variant with the same genotype in all given samples, with all sequenced)
 df (different: variant in some, reference in other, with all sequenced)
