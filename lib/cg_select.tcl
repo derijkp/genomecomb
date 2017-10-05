@@ -1242,7 +1242,7 @@ proc cg_select {args} {
 		}
 		-g {set group $value}
 		-db {set db $value}
-		-gc {lappend groupcols $value}
+		-gc {if {$value ne ""} {lappend groupcols $value}}
 		-nh {set newheader $value}
 		-sh {set sepheader $value}
 		-hc {

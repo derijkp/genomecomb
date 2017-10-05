@@ -21,6 +21,7 @@ source remap.tcl
 source select.tcl
 source select_group.tcl
 source select_saggregates.tcl
+source multiselect.tcl
 source tsv.tcl
 source val.tcl
 source varia.tcl
