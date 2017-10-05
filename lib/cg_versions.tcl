@@ -25,12 +25,12 @@ proc version {item {minversion {}}} {
 			}
 			gatk {
 				set gatk [gatk]
-				if {![catch {exec java -jar $gatk --version} msg]} {
+				if {![catch {exec java -XX:ParallelGCThreads=1 -jar $gatk --version} msg]} {
 					set version $msg
 					set ::gatkjava java
-				} elseif {![catch {exec java1.8 -jar $gatk --version} version]} {
+				} elseif {![catch {exec java1.8 -XX:ParallelGCThreads=1 -jar $gatk --version} version]} {
 					set ::gatkjava java1.8
-				} elseif {![catch {exec java1.7 -jar $gatk --version} version]} {
+				} elseif {![catch {exec java1.7 -XX:ParallelGCThreads=1 -jar $gatk --version} version]} {
 					set ::gatkjava java1.7
 				} else {
 					error "Cannot determine gatk version:\n$msg"
@@ -46,12 +46,12 @@ proc version {item {minversion {}}} {
 				regsub {^[^0-9]*} $temp {} _versions($item)
 			}
 			java {
-				catch {exec java -version} temp
+				catch {exec java -XX:ParallelGCThreads=1 -version} temp
 				regsub {java version "([^"]+)"} $temp {\1 } temp
 				set _versions($item) [join [split $temp \n] {, }]
 			}
 			gatkjava {
-				catch {exec [gatkjava] -version} temp
+				catch {exec [gatkjava] -XX:ParallelGCThreads=1 -version} temp
 				regsub {java version "([^"]+)"} $temp {\1 } temp
 				set _versions($item) [join [split $temp \n] {, }]
 			}
