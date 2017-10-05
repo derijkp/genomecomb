@@ -20,7 +20,8 @@ proc putslog {args} {
 proc putsprogress {args} {
 }
 
-proc logverbose num {
+proc logverbose {{num {}}} {
+	if {$num eq ""} {return $::verbose}
 	set ::verbose $num
 	switch $num {
 		0 {
