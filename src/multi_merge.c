@@ -17,7 +17,7 @@
 
 int main(int argc, char *argv[]) {
 	VarFile **varfiles = NULL, *varfile;
-	Variant *bestvar;
+	Variant *bestvar = NULL;
 	DString *alts = NULL;
 	int bestpos = 0, bestposnum = 0, *bestposlist = NULL, comp, count, split, i;
 	if (argc < 2) {
@@ -31,6 +31,7 @@ int main(int argc, char *argv[]) {
 	bestposlist = (int *)malloc(count*sizeof(int));
 	for (i = 0 ; i < count ; i++) {
 		varfiles[i] = OpenVarfile(argv[i+2],split);
+		Varfile_checkbasicfields(varfiles[i]);
 		varfile_next(varfiles[i]);
 	}
 	fprintf(stdout,"chromosome\tbegin\tend\ttype\tref\talt\n");

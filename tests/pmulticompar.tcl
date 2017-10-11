@@ -471,6 +471,18 @@ test pmulticompar$testname {error on badly sorted files 2} {
 } {File (*vars_sorterror2.sft) is not correctly sorted (sort correctly using "cg select -s -")
 chr3:52847303-52847304:snp:G came before chr3:52847042-52847060:del:*} match error
 
+test pmulticompar$testname {error on file with missing fields} {
+	test_cleantmp
+	write_tab tmp/errorfile.tsv {
+		name amplicon   begin   end     typr    chr     ref     alt
+		{}	{}	{}	{}	{}	{}	{}	{}
+		ATAD3B_1421916  1421915 1421916 snp     chr1    T       C
+	}
+	# exec multi_merge 1 tmp/errorfile.tsv
+	cg pmulticompar tmp/result.tsv tmp/errorfile.tsv
+} {field type not found
+child process exited abnormally} error
+
 test pmulticompar$testname {split reannot split multiallelic varall,no sreg,zyg} {
 	test_cleantmp
 	write_tab tmp/var-sample1.tsv {

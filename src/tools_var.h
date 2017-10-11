@@ -62,6 +62,7 @@ void var_init(Variant *var);
 int varpos_max(VariantPos *varpos);
 void varpos_fromheader(VariantPos *varpos,DStringArray *header);
 VarFile *OpenVarfile(char *filename, int split);
+void Varfile_checkbasicfields(VarFile *varfile);
 Variant *varfile_next(VarFile *varfile);
 void CloseVarfile(VarFile *varfile);
 
