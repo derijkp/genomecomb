@@ -251,11 +251,11 @@ proc generate_coverage_report_job {experiment regfile histofiles {destdir {}}} {
 		cg regcollapse $dep1 > $regfile
 		set oheader {name chr begin end}
 		set names {}
-		foreach line [split [cg select -sh /dev/null -f {name chromosome begin end} $regfile] \n] {
+		set regionlist [split [cg select -sh /dev/null -f {name chromosome begin end} $regfile] \n]
+		foreach line $regionlist {
 			set line [split $line \t]
-			set avga([lindex $line 0]) $line
-			set fraca([lindex $line 0]) $line
-			lappend names [lindex $line 0]
+			set avga($line) $line
+			set fraca($line) $line
 		}
 		set histofiles [lrange $deps 1 end]
 		foreach file $histofiles {
@@ -271,27 +271,28 @@ proc generate_coverage_report_job {experiment regfile histofiles {destdir {}}} {
 			set f [open $file]
 			set header [tsv_open $f]
 			set poss [list_cor $header {name avg size {r<1} {r1<5} {r5<10} {r10<20}}]
-			foreach expname $names {
+			foreach region $regionlist {
 				if {[gets $f line] == -1} {error "file $file too short"}
 				set line [list_sub [split $line \t] $poss]
 				foreach {name avg size r1 r5 r10 r20} $line break
-				if {$name ne $expname} {error "wrong name (order) in file $file"}
+				set regionname [lindex [split $region \t] 0]
+				if {$name ne $regionname} {error "wrong name (order) in file $file"}
 				set frac20 [format %.4g [expr {1-double($r1+$r5+$r10+$r20)/$size}]]
-				lappend avga($name) $avg
-				lappend fraca($name) $frac20
+				lappend avga($region) $avg
+				lappend fraca($region) $frac20
 			}
 			close $f
 		}
 		set o [open [lindex $targets 0] w]
 		puts $o [join $oheader \t]
-		foreach name $names {
-			puts $o [join $avga($name) \t]
+		foreach region $regionlist {
+			puts $o [join $avga($region) \t]
 		}
 		close $o
 		set o [open [lindex $targets 1] w]
 		puts $o [join $oheader \t]
-		foreach name $names {
-			puts $o [join $fraca($name) \t]
+		foreach region $regionlist {
+			puts $o [join $fraca($region) \t]
 		}
 		close $o
 	}
