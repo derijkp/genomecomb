@@ -105,6 +105,11 @@ proc version {item {minversion {}}} {
 				regexp {version ([0-9.]+)} $temp temp temp
 				set _versions($item) [string trimright $temp .]
 			}
+			albacore {
+				catch {exec read_fast5_basecaller.py -v} temp
+				regexp {version ([0-9.]+)} $temp temp temp
+				set _versions($item) [string trimright $temp .]
+			}
 			default {
 				if {![catch {exec $item --version} temp]} {
 				} elseif {![catch {exec $item -version} temp]} {
