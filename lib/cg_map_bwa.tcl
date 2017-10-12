@@ -25,7 +25,7 @@ proc map_bwa_job {args} {
 	set skips {}
 	set threads 2
 	cg_options map_bwa args {
-		-paired {
+		-paired - -p {
 			set paired $value
 		}
 		-readgroupdata {
