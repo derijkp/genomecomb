@@ -10,31 +10,3 @@ proc cg_sortfastq {args} {
 		file rename -force $outfile.temp $outfile
 	}
 }
-
-proc cg_fastq2tsv {args} {
-	cg_options fastq2tsv args {
-	} {infile outfile} 0 2
-	set header [join {id sequence temp quality} \t]
-	if {[info exists outfile]} {
-		set compresspipe [compresspipe $outfile]
-		if {$compresspipe ne ""} {
-			set o [open [list {*}$compresspipe > $outfile.temp] w]
-		} else {
-			set o [open $outfile.temp w]
-		}
-	} else {
-		set o stdout
-	}
-	if {![info exists infile]} {
-		puts $header
-		exec paste - - - - <@ stdin >@ stdout
-	} elseif {![info exists outfile]} {
-		puts $header
-		exec {*}[gzcat $infile] $infile | paste - - - - >@ stdout
-	} else {
-		puts $o $header
-		exec {*}[gzcat $infile] $infile | paste - - - - >@ $o
-		close $o
-		file rename -force $outfile.temp $outfile
-	}
-}
