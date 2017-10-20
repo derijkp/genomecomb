@@ -219,7 +219,7 @@ proc process_project_job {args} {
 	process_multicompar_job -experiment $experiment -skipincomplete 1 -targetvarsfile $targetvarsfile \
 		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir $todo
 	if {[llength $reports]} {
-		proces_reportscombine_job $destdir $reportstodo
+		proces_reportscombine_job $destdir/reports {*}$reportstodo
 	}
 	if {$extra_reports_mastr} {
 		make_alternative_compar_job $experiment $destdir
