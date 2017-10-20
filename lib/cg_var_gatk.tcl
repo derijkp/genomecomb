@@ -54,6 +54,7 @@ proc var_gatk_job {args} {
 	set split 0
 	set deps {}
 	set regionfile {}
+	set threads 2
 	set cleanup 1
 	cg_options var_sam args {
 		-L - -deps {
@@ -68,6 +69,9 @@ proc var_gatk_job {args} {
 		}
 		-split {
 			set split $value
+		}
+		-threads - -t {
+			set threads $value
 		}
 		-cleanup {
 			set cleanup $value
@@ -100,14 +104,16 @@ proc var_gatk_job {args} {
 	set root [join [lrange [split [file root $file] -] 1 end] -]
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set deps [list $file $gatkrefseq $file.bai {*}$deps]
-	job ${pre}varall-gatk-$root -mem 5G -cores 3 -deps $deps \
-	-targets {${pre}varall-gatk-$root.vcf} -skip [list ${pre}varall-gatk-$root.tsv] -vars {gatk opts regionfile gatkrefseq refseq} -code {
+	job ${pre}varall-gatk-$root -mem 5G -cores $threads -deps $deps \
+	-targets {${pre}varall-gatk-$root.vcf} \
+	-skip [list ${pre}varall-gatk-$root.tsv] \
+	-vars {gatk opts regionfile gatkrefseq refseq threads} -code {
 		if {$regionfile ne ""} {
 			set bedfile [tempbed $regionfile $refseq]
 			lappend opts -L $bedfile
 		}
-		exec [gatkjava] -XX:ParallelGCThreads=1 --num_cpu_threads_per_data_thread=2 -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
-			{*}$opts -R $dep2 -I $dep -o $target.temp \
+		exec [gatkjava] -XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
+			{*}$opts -nct $threads -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 10.0 -dcov 1000 \
 			--annotateNDA \
 			-glm SNP --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr >@ stdout
