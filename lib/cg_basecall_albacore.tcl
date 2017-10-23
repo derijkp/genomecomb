@@ -82,9 +82,11 @@ proc basecaller_albacore_job {args} {
 				set name ${sourcename}_[file tail $dir]
 				set target1 $resultdir/pass_$name.fastq.gz
 				set target2 $resultdir/fail_$name.fastq.gz
+				set target3 $resultdir/sequencing_summary_$name.txt
+				
 				job albacore-[file tail $sourcedir]-$name -cores $threads \
 				-deps {$sourcedir/$dir} \
-				-targets {$target1 $target2} \
+				-targets {$target1 $target2 $target3} \
 				-vars {sourcedir from to todo opts threads} \
 				-code {
 					set tempdir [scratchdir]
@@ -96,10 +98,12 @@ proc basecaller_albacore_job {args} {
 						-s $tempdir/tempfastq >@ stdout 2>@ stderr
 					exec cat {*}[glob $tempdir/tempfastq/workspace/pass/*.fastq] | gzip > $target1
 					exec cat {*}[glob $tempdir/tempfastq/workspace/fail/*.fastq] | gzip > $target2
+					file copy $tempdir/tempfastq/sequencing_summary.txt $target3
 					file delete -force $tempdir/fast5 $tempdir/tempfastq
 				}
 			}
 		}
+	# old method of selecting 1 directory and finding all the *.fast5
 	} else {
 		# find fast5 files
 		set files [lsort -dict [dirglob $sourcedir *.fast5]]
