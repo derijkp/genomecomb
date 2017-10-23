@@ -108,6 +108,7 @@ proc process_project_job {args} {
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
 	set adapterfile [adapterfile $adapterfile]
+	set experimentname [file tail $destdir]
 	if {$amplicons ne ""} {
 		if {$removeduplicates eq ""} {set removeduplicates 0}
 		if {$removeskew eq ""} {set removeskew 0}
@@ -181,7 +182,7 @@ proc process_project_job {args} {
 				-dbdir $dbdir -split $split -paired $paired \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
-				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
+				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads \
 				$dir
 		} else {
 			# find deps and targets by running the process_sample_job with job_getinfo set to 1
@@ -198,7 +199,8 @@ proc process_project_job {args} {
 			foreach {deps targets} [job_getinfo 0] break
 			logverbose $verbose
 			# run the actual job with deps and targets found
-			job process_sample-$sample -deps $deps -targets $targets -vars {
+			job process_sample-$sample \
+				-deps $deps -targets $targets -vars {
 				aligner realign varcallers dbdir split paired
 				adapterfile reports samBQ cleanup  removeduplicates amplicons
 				removeskew dt targetfile minfastqreads dir
@@ -216,10 +218,14 @@ proc process_project_job {args} {
 	job_logdir $destdir/log_jobs
 	set todo [list_remdup $todo]
 	set reportstodo [list_remdup $reportstodo]
-	process_multicompar_job -experiment $experiment -skipincomplete 1 -targetvarsfile $targetvarsfile \
+	process_multicompar_job -experiment $experiment \
+		-skipincomplete 1 -targetvarsfile $targetvarsfile \
 		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir $todo
 	if {[llength $reports]} {
 		proces_reportscombine_job $destdir/reports {*}$reportstodo
+		if {[jobfileexists $destdir/reports/report_hsmetrics-${experimentname}.tsv]} {
+			mklink $destdir/reports/report_hsmetrics-${experimentname}.tsv $destdir/${experimentname}_hsmetrics_report.tsv
+		}
 	}
 	if {$extra_reports_mastr} {
 		make_alternative_compar_job $experiment $destdir
