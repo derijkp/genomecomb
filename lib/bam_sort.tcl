@@ -1,3 +1,36 @@
+proc bam_sort_job {args} {
+	upvar job_logdir job_logdir
+	set method biobambam
+	set sort coordinate
+	set inputformat bam
+	cg_options bam_sort args {
+		-method {
+			if {$value ni {biobambam samtools}} {error "bamsort: unsupported -method $value"}
+			set method $value
+		}
+		-sort {
+			if {$value ni {coordinate name hash}} {error "bamsort: unsupported -sort $value"}
+			set sort $value
+		}
+		-inputformat {
+			set inputformat $value
+		}
+		-infostring {
+			upvar $value infostring
+		}
+		-skip {
+			lappend skips -skip $value
+		}
+	} {sourcefile resultfile}
+	lappend infostring bamsort $method bamsort_version [version $method]
+	job bamsort-[file tail $resultfile] -deps {$sourcefile} -targets {$resultfile} \
+	-vars {method sort inputformat} {*}$skips -code {
+		file delete $target.temp
+		bam_sort -method $method -sort $sort -inputformat $inputformat $dep $target.temp
+		file rename -force $target.temp $target
+	}
+}
+
 proc bam_sort {args} {
 	set method biobambam
 	set sort coordinate

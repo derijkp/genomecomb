@@ -50,13 +50,8 @@ proc bam_clean_job {args} {
 		lappend skips -skip [list $dir/$pre-$temproot.bam]
 	}
 	# start jobs
-	# sort using samtools
-	job bamsort-$root -deps {$bamfile} -targets {$dir/$pre-s$root.bam} \
-	-vars {removeduplicates sample} {*}$skips -code {
-		file delete $target.temp
-		bam_sort $dep $target.temp
-		file rename -force $target.temp $target
-	}
+	# sort using default
+	bam_sort_job -infostring infostring {*}$skips $bamfile $dir/$pre-s$root.bam
 	set root s$root
 	list_pop skips 0; list_pop skips 0;
 	if {$removeduplicates eq "picard"} {

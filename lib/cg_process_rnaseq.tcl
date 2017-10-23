@@ -13,7 +13,7 @@ proc tophat_job {sample files libtype outdir bowtie_index} {
 		}
 }
 
-proc bam_sort_job {bam} {
+proc bam_sort_rseq_job {bam} {
 	upvar job_logdir job_logdir
 	set pre [lindex [split $bam -] 0]
 	set root [join [lrange [split [file root $bam] -] 1 end] -]
@@ -157,7 +157,7 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff fastqc adapterfile pai
 		}
 
 		#sort by coordinate and by name -- latter is needed for htseqcount
-		bam_sort_job map-tophat-$sample.bam
+		bam_sort_rseq_job map-tophat-$sample.bam
 		bam_index_job map-stophat-$sample.bam
 		htseqcount_job map-sntophat-$sample.bam $gff $order $stranded $mode
 		lappend todo $dir/count-sntophat-$sample.tsv 
