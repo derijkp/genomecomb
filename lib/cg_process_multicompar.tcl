@@ -113,23 +113,37 @@ proc process_multicompar_job {args} {
 	# multicompar
 	# -----------
 	putslog "Finding samples"
+	# todo: no check if targetsfile was actually used
 	set compar_file [gzfile compar/compar-$experiment.tsv]
-	if {[catch {cg select -n $compar_file} done]} {set done {}}
-	set done [split $done \n]
+	if {[catch {cg select -n $compar_file} done]} {set done {}} else {set done [split $done \n]}
+	if {[file exists $compar_file]} {set mtime [file mtime $compar_file]} else {set mtime 0}
 	set stilltodo {}
 	foreach sample $todo {
 		set name [lindex [split $sample -] end]
+		set varfile [gzfile $sampledir/$name/var-$sample.tsv]
+		if {![file exists $varfile] || [file mtime $varfile] > $mtime} {
+			putslog "redo all: $varfile is newer than $compar_file"
+			set stilltodo {}
+			foreach sample $todo {
+				set name [lindex [split $sample -] end]
+				lappend stilltodo $sampledir/$name/var-$sample.tsv
+			}
+			if {[file exists $compar_file]} {file rename -force $compar_file $compar_file.old}
+			break
+		}
 		if {![inlist $done $sample]} {
 			putslog "Still todo: $sample"
-			lappend stilltodo $sampledir/$name/var-$sample.tsv
+			lappend stilltodo $varfile
 		}
 	}
 	putslog "Samples: [llength $todo] todo, [llength $done] already done, [llength $stilltodo] to add"
-	if {[llength $stilltodo]} {putslog "Samples to add: $stilltodo"}
-	if {[llength $stilltodo] || $addtargets} {
+	if {[llength $stilltodo]} {
+		putslog "Samples to add: $stilltodo"
 		putslog "Starting multicompar"
 		set compar_file [gzroot $compar_file].lz4
 		pmulticompar_job $compar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
+	} else {
+		putslog "skipping multicompar (no update needed)"
 	}
 	# annotate multicompar
 	# --------------------
