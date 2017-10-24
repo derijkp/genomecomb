@@ -1,6 +1,6 @@
 proc searchpath {envvar args} {
 	set name [lindex $args 0]
-	if {[info exists ::env($envvar)]} {
+	if {$envvar ne "" && [info exists ::env($envvar)]} {
 		if {![file exists $::env($envvar)]} {
 			error "$name not found at $::env($envvar) (from env var $envvar)"
 		}
@@ -38,6 +38,14 @@ proc gatk {} {
 		set gatk [searchpath GATK gatk GenomeAnalysisTK*]/GenomeAnalysisTK.jar
 	}
 	return $gatk
+}
+
+proc findjar {program {envvar {}}} {
+	global extprograms
+	if {![info exists extprograms($program)]} {
+		set extprograms($program) [searchpath $envvar $program/$program.jar $program/$program*.jar $program/*.jar $program.jar $program*.jar]
+	}
+	return $extprograms($program)
 }
 
 proc findR {} {
