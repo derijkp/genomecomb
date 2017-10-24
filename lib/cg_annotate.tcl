@@ -213,7 +213,7 @@ proc cg_annotate_job {args} {
 			set namefield $value
 		}
 		-replace {
-			if {$value ni "y n e"} {error "invalid value $value for -replace, must be one of y n e"}
+			if {$value ni "y n e a"} {error "invalid value $value for -replace, must be one of y n e a"}
 			set replace $value
 		}
 		-multidb {
@@ -243,20 +243,48 @@ proc cg_annotate_job {args} {
 		}
 	}
 	# start
-	if {[jobtargetexists $resultfile [list $orifile {*}$dbfiles]]} {
-		putslog "Skipping annotation to $resultfile: already made"
-		return
-	}
-	set names {}
-	set newh {}
-	foreach dbfile $dbfiles {
-		set dbinfo [cg_annotatedb_info $dbfile $near]
-		lappend names [dict get $dbinfo name]
-		lappend newh {*}[dict get $dbinfo newh]
-	}
+#	if {[jobtargetexists $resultfile [list $orifile {*}$dbfiles]]} {
+#		putslog "Skipping annotation to $resultfile: already made"
+#		return
+#	}
+
 	set ext [file extension [gzroot $orifile]]
+	# check if the annotation needs to be run (if target exists already)
+	if {[file exists $resultfile]} {
+		set checkresult 1
+		set mtime [file mtime $resultfile]
+		set resultheader [header $resultfile]
+		if {[file exists $orifile] && [file mtime $orifile] > $mtime} {
+			putslog "target $resultfile older than dep $orifile"
+			set skip 0
+		} else {
+			set skip 1
+			foreach dbfile $dbfiles {
+				if {[file mtime $dbfile] > $mtime} {
+					putslog "target $resultfile older than dep $dbfile"
+					set skip 0 ; break
+				}
+				set dbinfo [cg_annotatedb_info $dbfile $near]
+				set dbnewh [dict get $dbinfo newh]
+				set common [list_common $resultheader $dbnewh]
+				if {[llength $common] ne [llength $dbnewh]} {
+					set skip 0 ; break
+				}
+			}
+		}
+		if {$skip} {
+			putslog "Skipping annotation to $resultfile: already made"
+			return
+		}
+		file rename -force $resultfile $resultfile.old
+	} else {
+		set checkresult 0
+		set resultheader {}
+	}
+	# find out which dbfiles need to be added
 	if {[file exists $orifile]} {
 		# only check for existing columns if file already exists
+		set mtime [file mtime $orifile]
 		if {$ext eq ".vcf"} {
 			set f [gzopen $orifile]
 			set header [vcf2sft_header $f]
@@ -264,20 +292,37 @@ proc cg_annotate_job {args} {
 		} else {
 			set header [header $orifile]
 		}
-		set poss [tsv_basicfields $header 6 0]
-		set common [list_common $header $newh]
+	} else {
+		set mtime now
+		set header {}
+	}
+	set names {}
+	set newh {}
+	set dbfilestodo {}
+	set errors {}
+	foreach dbfile $dbfiles {
+		set dbinfo [cg_annotatedb_info $dbfile $near]
+		set dbnewh [dict get $dbinfo newh]
+		set common [list_common $header $dbnewh]
 		if {[llength $common]} {
 			if {$replace eq "e"} {
-				error "Error: field(s) [join $common ,] already in file"
-			}
-			if {$replace eq "n"} {
-				foreach name $common {
-					set skip($name) 1
+				lappend errors {*}$common
+			} elseif {$replace eq "n"} {
+				putslog "Skipping $dbfile: [join $common ,] already in file"
+				continue
+			} elseif {$replace eq "y"} {
+				if {[file mtime $dbfile] <= $mtime} {
+					putslog "Skipping $dbfile: [join $common ,] already in file"
+					continue
 				}
 			}
 		}
+		lappend dbfilestodo $dbfile $dbinfo
+		lappend newh {*}$dbnewh
 	}
-	set tempbasefile [indexdir_file $resultfile vars.tsv ok]
+	if {[llength $errors]} {
+		error "Error: field(s) [join $errors ,] already in file"
+	}
 	# logfile
 	set cmdline [list cg annotate]
 	foreach option {
@@ -288,12 +333,25 @@ proc cg_annotate_job {args} {
 		}
 	}
 	lappend cmdline $orifile $resultfile
+	set tempbasefile [indexdir_file $resultfile vars.tsv ok]
 	job_logfile [file dir $tempbasefile]/annotate_[file tail $resultfile] [file dir $tempbasefile] $cmdline \
 		{*}[versions dbdir lz4 os]
 	# logdir
 	job_logdir $tempbasefile.log_jobs
+	# if nothing to add, copy orifile
+	if {![llength $dbfilestodo]} {
+		job annotate_copyori -deps {$orifile} -targets {$resultfile} -code {
+			set ext [file extension [gzroot $dep]]
+			if {$ext eq ".vcf"} {
+				cg vcf2tsv -split 1 $dep $target.temp
+			} else {
+				file copy $dep $target.temp
+			}
+			file rename -force $target.temp $target
+		}
+		return
+	}
 	# If $orifile is a vcf file, convert
-	set ext [file extension [gzroot $orifile]]
 	if {$ext eq ".vcf"} {
 		set convertedfile [indexdir_file $resultfile cvars.tsv ok]
 		job annot-vcf2tsv -deps {$orifile} -targets {$convertedfile} -code {
@@ -305,32 +363,29 @@ proc cg_annotate_job {args} {
 	} else {
 		set usefile [indexdir_file $orifile vars.tsv ok]
 	}
-	if {!$ok} {
-		job annot-createusefile-$resultname -deps {$orifile} -targets {$usefile} -vars {ok orifile usefile dbfiles} -code {
-			# usefile: smaller file with only variants used for actual annotation; 
-			# if orifile is small, a link to it is made.
-			# If it contains to many extra columns a cut down version is made
-			set f [gzopen $orifile]
-			set header [tsv_open $f]
-			catch {gzclose $f}
-			if {[gziscompressed $orifile] || [file dir $target] ne "$orifile.index" || ([llength $header] > 10 && [llength $dbfiles] >= 4)} {
-				tsv_varsfile $orifile $usefile
-				puts "Using varfile $usefile"
-			} else {
-				if {[file dir $target] eq "$orifile.index"} {
-					mklink $orifile $target
-				}
-			}
-		}
-	}
 	set afiles {}
-	foreach dbfile $dbfiles {
-		set dbinfo [cg_annotatedb_info $dbfile $near]
+	foreach {dbfile dbinfo} $dbfilestodo {
 		set name [dict get $dbinfo name]
 		if {[info exists namefield]} {set name $namefield}
-		if {[info exists skip($name)]} {
-			puts "Skipping $dbfile: $name already in file"
-			continue
+		if {!$ok} {
+			# if needed, create or update vars.tsv file in index to use in annotation (to avoid using the larger orifile)
+			job annot-createusefile-$resultname -deps {$orifile} -targets {$usefile} -vars {ok orifile usefile dbfiles} -code {
+				# usefile: smaller file with only variants used for actual annotation; 
+				# if orifile is small, a link to it is made.
+				# If it contains to many extra columns a cut down version is made
+				set f [gzopen $orifile]
+				set header [tsv_open $f]
+				catch {gzclose $f}
+				if {[gziscompressed $orifile] || [file dir $target] ne "$orifile.index" || ([llength $header] > 10 && [llength $dbfiles] >= 4)} {
+					tsv_varsfile $orifile $usefile
+					puts "Using varfile $usefile"
+				} else {
+					if {[file dir $target] eq "$orifile.index"} {
+						mklink $orifile $target
+					}
+				}
+			}
+			set ok 1
 		}
 		set dbtype [dict get $dbinfo dbtype]
 		set target $tempbasefile.${name}_annot
@@ -399,6 +454,7 @@ proc cg_annotate_job {args} {
 	}
 	job annot-paste-$resultname -deps [list $orifile {*}$afiles] \
 	-targets {$resultfile} -vars {orifile afiles multidb replace newh resultfile} -code {
+		analysisinfo_write $dep $target annotate_cg_version [version genomecomb]
 		set compress [compresspipe $target]
 		if {$multidb} {
 			set temp2 [filetemp $resultfile]
@@ -408,20 +464,21 @@ proc cg_annotate_job {args} {
 			file delete $temp2
 			file rename -force $temp $resultfile
 			if {$compress ne ""} {cg_lz4index $resultfile}
-		} elseif {$replace eq "y"} {
-			set temp2 [filetemp $resultfile]
+		} else {
 			set f [gzopen $orifile]
 			set header [tsv_open $f]
 			gzclose $f
-			cg select -f [list_lremove $header $newh] $orifile $temp2
-			set temp [filetemp_ext $resultfile]
-			exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
-			file delete $temp2
-			file rename -force $temp $resultfile
-			if {$compress ne ""} {cg_lz4index $resultfile}
-		} else {
-			set temp [filetemp_ext $resultfile]
-			exec tsv_paste $orifile {*}$afiles {*}$compress > $temp
+			set nh [list_lremove $header $newh]
+			if {[llength $nh] < [llength $header]} {
+				set temp2 [filetemp $resultfile]
+				cg select -f $nh $orifile $temp2
+				set temp [filetemp_ext $resultfile]
+				exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
+				file delete $temp2
+			} else {
+				set temp [filetemp_ext $resultfile]
+				exec tsv_paste $orifile {*}$afiles {*}$compress > $temp
+			}
 			file rename -force $temp $resultfile
 			if {$compress ne ""} {cg_lz4index $resultfile}
 		}

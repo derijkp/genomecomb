@@ -35,9 +35,10 @@ gene annotation). By default the directory the gene annotation file is in
 will be used. Annotation databases in dbdir will not automatically be used to annotate by using 
 this option. (You will need to add dbdir as a **dbfile** parameter for that)
 ; **-replace y/n/e**: what to do if annotation fields to be added are already in the variantfile: 
-y - replace them with new annotation,
-n - keep the old annotation,
 e (default) - give an error
+y - replace them with new annotation if dbfile is newer,
+n - keep the old annotation,
+a - allways replace them with new information
 
 == database types ==
 ; **reg**: regions file that must at least contain the columns chromosome,start,end. 

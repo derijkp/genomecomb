@@ -534,10 +534,39 @@ test reg_annot {existing field error} {
 	exec cg annotate -near 1000 tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
 } {*Error: field(s) regtest already in file} match error
 
-test reg_annot {-replace y} {
-	file copy data/vars1.sft tmp/vars1.sft
-	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
-	exec cg annotate -near 1000 -replace y tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
+test reg_annot {-replace y dbfile newer} {
+	file copy -force data/vars1.sft tmp/vars1.sft
+	file copy -force data/reg_annot.sft tmp/reg_annot.tsv
+	file copy -force data/reg_annot.sft.opt tmp/reg_annot.tsv.opt
+	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.tsv
+	after 1000
+	exec touch tmp/reg_annot.tsv
+	exec cg annotate -near 1000 -replace y tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
+	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
+	exec diff tmp/temp3.sft data/expected_near-vars1-reg_annot.sft
+	split [cg select -f regtest tmp/temp2.sft] \n
+} {regtest reg1 reg1 reg1 reg1 reg1 reg3 reg3 reg3 reg3 reg3 reg3 reg3 reg3 {}}
+
+test reg_annot {-replace y dbfile older} {
+	file copy -force data/vars1.sft tmp/vars1.sft
+	file copy -force data/reg_annot.sft tmp/reg_annot.tsv
+	file copy -force data/reg_annot.sft.opt tmp/reg_annot.tsv.opt
+	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.tsv
+	after 100
+	exec touch tmp/temp.sft
+	exec cg annotate -near 1000 -replace y tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
+	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
+	split [cg select -f regtest tmp/temp3.sft] \n
+} {regtest reg1 reg1 reg1 reg1 {} {} {} {} reg3 reg3 {} {} {} {}} 
+
+test reg_annot {-replace a} {
+	file copy -force data/vars1.sft tmp/vars1.sft
+	file copy -force data/reg_annot.sft tmp/reg_annot.tsv
+	file copy -force data/reg_annot.sft.opt tmp/reg_annot.tsv.opt
+	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.tsv
+	after 100
+	exec touch tmp/temp.sft
+	exec cg annotate -near 1000 -replace a tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
 	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
 	exec diff tmp/temp3.sft data/expected_near-vars1-reg_annot.sft
 } {} 
