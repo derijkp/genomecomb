@@ -482,11 +482,12 @@ proc process_mastr_job {args} {
 			cleanup_job bamclean_clipped-$name $files [list $resultbamfile] [list $bamfile]
 		}
 		# clean bamfile (do not mark duplicates, realign)
-		set cleanbam [bam_clean_job $bamfile $refseq $sample \
+		set cleanbam [bam_clean_job \
 			-removeduplicates 0 \
 			-clipamplicons $clipamplicons \
 			-regionfile $mastrdir/reg-inner-joined-$mastrname.bed \
-			-cleanup $cleanup]
+			-cleanup $cleanup \
+			 $bamfile $refseq $sample]
 		# coverage statistics
 		bam2covstats_job $cleanbam $mastrdir/reg-inner-$mastrname.tsv
 		#calculate hsmetrics

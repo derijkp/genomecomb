@@ -47,6 +47,7 @@ proc map_bowtie2_job {args} {
 	-vars {paired bowtie2refseq readgroupdata sample} \
 	-skip [list $resultbase.bam] {*}$skips -code {
 		puts "making $target"
+		analysisinfo_write $dep2 $target aligner bowtie2 aligner_version [version bowtie2] reference [file2refname $bowtie2refseq] aligner_paired $paired
 		list_shift deps
 		set rg {}
 		foreach {key value} $readgroupdata {
@@ -72,11 +73,12 @@ proc map_bowtie2_job {args} {
 	}
 	job bowtie2_bam-$sample -deps {$resultbase.sam} -targets {$result} -vars {resultbase} {*}$skips -code {
 		puts "making $target"
+		analysisinfo_write $dep $target
 		catch {exec samtools view -S -h -b -o $resultbase.ubam $resultbase.sam >@ stdout 2>@ stderr}
 		catch {bam_sort $resultbase.ubam $target.temp}
 		file rename -force $target.temp $target
-		file delete $resultbase.ubam
-		file delete $resultbase.sam
+		file delete $resultbase.ubam $resultbase.ubam.analysisinfo
+		file delete $resultbase.sam $resultbase.sam.analysisinfo
 	}
 	job bowtie2_index-$sample -deps {$result} -targets {$result.bai} {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr

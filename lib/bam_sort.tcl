@@ -15,16 +15,13 @@ proc bam_sort_job {args} {
 		-inputformat {
 			set inputformat $value
 		}
-		-infostring {
-			upvar $value infostring
-		}
 		-skip {
 			lappend skips -skip $value
 		}
 	} {sourcefile resultfile}
-	lappend infostring bamsort $method bamsort_version [version $method]
 	job bamsort-[file tail $resultfile] -deps {$sourcefile} -targets {$resultfile} \
 	-vars {method sort inputformat} {*}$skips -code {
+		analysisinfo_write $dep $target bamsort $method bamsort_version [version $method]
 		file delete $target.temp
 		bam_sort -method $method -sort $sort -inputformat $inputformat $dep $target.temp
 		file rename -force $target.temp $target

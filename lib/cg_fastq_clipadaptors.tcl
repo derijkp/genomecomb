@@ -69,8 +69,11 @@ proc fastq_clipadapters_job {files args} {
 	}
 	# paired files need to be clipped together!
 	job clip-[file dir [file dir $root]] -deps $files -targets $targets \
-	-vars {adapterfile paired removeskew} {*}$skips -code {
+	-vars {adapterfile paired removeskew ::analysisinfo} {*}$skips -code {
 		fastq_clipadapters $deps $targets -removeskew $removeskew -adapterfile $adapterfile -paired $paired
+		foreach dep $deps $target $targets {
+			analysisinfo_write $dep $target clipping fastq-mcf clipping_version [version fastq-mcf] clipping_cg_version [version genomecomb]
+		}
 	}
 	return $targets
 }

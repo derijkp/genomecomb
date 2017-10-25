@@ -300,3 +300,21 @@ proc regexp2glob {pattern} {
 	regsub -all {[*+?.()]+} $glob {*} glob
 	return $glob
 }
+
+proc filename {file} {
+	if {![catch {file link $file} link]} {
+		return [file tail $link]
+	} else {
+		return [file tail $file]
+	}
+}
+
+proc file2refname {file} {
+	if {![catch {file link $file} link]} {
+		set tail [file tail $link]
+	} else {
+		set tail [file tail $file]
+	}
+	regexp {genome_([^_.]+)\.ifas} $tail temp tail
+	return $tail
+}

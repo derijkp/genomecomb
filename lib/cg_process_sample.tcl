@@ -183,7 +183,7 @@ proc process_sample_cgi_job {workdir split} {
 			lappend todo bcolall/refScore-cg-cg-$sample.bcol
 		}
 		if {[llength $todo]} {
-			cg annotate $target.temp $target.temp2 {*}$todo
+			cg annotate -analysisinfo 0 $target.temp $target.temp2 {*}$todo
 			file rename -force $target.temp2 $target
 			file delete -force $target.temp $target.temp.index $target.temp2.index
 		} else {
@@ -298,11 +298,26 @@ proc process_sample_cgi_job {workdir split} {
 	job cg_var-cg-cg-$sample -optional 1 \
 	-deps {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage-cg-$sample/bcol_coverage-$sample.tsv) (coverage-cg-$sample/bcol_refscore-$sample.tsv)} \
 	-targets {var-cg-cg-$sample.tsv.lz4} -vars {sample} -code {
-		set temp [filetemp_ext $target 0]
-		cg annotate $dep $temp {*}[list_remove [lrange $deps 1 end] {}]
-		file rename $temp $target
-		file rename $temp.lz4i $target.lz4i
-		file delete -force [gzroot $temp].index
+		set cgi_version ?
+		set cgi_reference ?
+		if {[file exists info.txt]} {
+			set c [file_read info.txt]
+			regexp {SOFTWARE_VERSION\t([^\n]+)} $c temp cgi_version
+			regexp {GENOME_REFERENCE\t([^\n]+)} $c temp cgi_reference
+			if {$cgi_reference eq "NCBI build 37"} {
+				set reference hg19
+			} elseif {$cgi_reference eq "NCBI build 36"} {
+				set reference hg18
+			} else {
+				set reference $cgi_reference
+			}
+		}
+		set tempfile [filetemp_ext $target 0]
+		cg annotate -analysisinfo 0 $dep $tempfile {*}[list_remove [lrange $deps 1 end] {}]
+		analysisinfo_write $dep $target sample cg-cg-$sample aligner cgi aligner_version $cgi_version varcaller cgi varcaller_version $cgi_version reference $reference
+		file rename $tempfile $target
+		file rename $tempfile.lz4i $target.lz4i
+		file delete -force [gzroot $tempfile].index
 		file delete -force [gzroot $dep].index
 	}
 	job reg_covered-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv.lz4} -targets {reg-$sample.covered} -code {
@@ -564,6 +579,8 @@ proc process_sample_job {args} {
 	putslog "Making $sampledir"
 	catch {file mkdir $sampledir}
 	set ref [file tail $dbdir]
+	#
+	set analysisinfo [list genomecomb_version [version genomecomb] reference $ref]
 	# ampliconsfile
 	set temp [ampliconsfile $sampledir $ref]
 	if {$temp ne ""} {
@@ -574,6 +591,12 @@ proc process_sample_job {args} {
 		mklink $amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv 1
 		set amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv
 	}
+	if {![catch {file link $amplicons} link]} {
+		set ampliconsname [file tail $link]
+	} else {
+		set ampliconsname [file tail $amplicons]
+	}
+	lappend analysisinfo amplicons $ampliconsname
 	if {$amplicons ne ""} {
 		if {$removeduplicates eq ""} {set removeduplicates 0}
 		if {$removeskew eq ""} {set removeskew 0}
@@ -592,6 +615,11 @@ proc process_sample_job {args} {
 		set temp [lindex [split [file root [gzroot [file tail $targetfile]]] -] end]
 		mklink $targetfile $sampledir/reg_${ref}_targets-$temp.tsv[gzext $targetfile] 1
 		set targetfile $sampledir/reg_${ref}_targets-$temp.tsv[gzext $targetfile]
+	}
+	if {![catch {file link $targetfile} link]} {
+		lappend analysisinfo targetfile [file tail $link]
+	} else {
+		lappend analysisinfo targetfile [file tail $targetfile]
 	}
 	# check projectinfo
 	projectinfo $sampledir dbdir {split 1}
@@ -710,18 +738,23 @@ proc process_sample_job {args} {
 			set bamfile $sampledir/map-${aligner}-$sample.bam
 			# quality and adapter clipping
 			set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired \
-				-skips [list -skip [list $bamfile] -skip [list $resultbamfile]] -removeskew $removeskew]
+				-skips [list -skip [list $bamfile] -skip [list $resultbamfile]] \
+				-removeskew $removeskew]
 			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
 			lappend cleanupdeps $resultbamfile
 			#
 			# map using ${aligner}
-			map_${aligner}_job -paired $paired -skips [list -skip [list $resultbamfile]] $bamfile $refseq $sample {*}$files
+			map_${aligner}_job -paired $paired \
+				-skips [list -skip [list $resultbamfile]] \
+				$bamfile $refseq $sample {*}$files
 			# extract regions with coverage >= 5 (for cleaning)
 			set cov5reg [bam2reg_job -mincoverage 5 -skip [list $resultbamfile] $sampledir/map-${aligner}-$sample.bam]
 			# clean bamfile (mark duplicates, realign)
-			lappend cleanedbams [bam_clean_job $sampledir/map-${aligner}-$sample.bam $refseq $sample \
+			set cleanbam [bam_clean_job \
 				-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
-				-regionfile $cov5reg -cleanup $cleanup]
+				-regionfile $cov5reg -cleanup $cleanup \
+				 $sampledir/map-${aligner}-$sample.bam $refseq $sample]
+			lappend cleanedbams $cleanbam
 		}
 	}
 	# varcaller from bams
@@ -736,15 +769,15 @@ proc process_sample_job {args} {
 		} else {
 			set regionfile $amplicons
 		}
-		if {"sam" in $varcallers} {
-			# samtools variant calling on map-$bambase
-			lappend cleanupdeps [var_sam_job -regionfile $regionfile -split $split -BQ $samBQ -cleanup $cleanup $cleanedbam $refseq]
-			lappend todo sam-$bambase
-		}
 		if {"gatk" in $varcallers} {
 			# gatk variant calling on map-$bambase
 			lappend cleanupdeps [var_gatk_job -regionfile $regionfile -split $split -dt $dt -cleanup $cleanup $cleanedbam $refseq]
 			lappend todo gatk-$bambase
+		}
+		if {"sam" in $varcallers} {
+			# samtools variant calling on map-$bambase
+			lappend cleanupdeps [var_sam_job -regionfile $regionfile -split $split -BQ $samBQ -cleanup $cleanup $cleanedbam $refseq]
+			lappend todo sam-$bambase
 		}
 	}
 	if {$cleanup} {

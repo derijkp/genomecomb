@@ -60,10 +60,12 @@ proc map_bwa_job {args} {
 			set target $resultbase-$name.sam
 			lappend samfiles $target
 			job bwa-$sample-$name -mem 5G -cores $threads \
-			-deps [list $bwarefseq $file] -targets {$target} -vars {readgroupdata sample paired threads} \
+			-deps [list $bwarefseq $file] -targets {$target} \
+			-vars {readgroupdata sample paired threads} \
 			-skip [list $resultbase.bam] {*}$skips -code {
 				puts "making $target"
 				foreach {bwarefseq fastq} $deps break
+				analysisinfo_write $fastq $target aligner bwa aligner_version [version bwa] reference [file2refname $bwarefseq] aligner_paired 0
 				set rg {}
 				foreach {key value} $readgroupdata {
 					lappend rg "$key:$value"
@@ -77,10 +79,13 @@ proc map_bwa_job {args} {
 			set name [file root [file tail $file1]]
 			set target $resultbase-$name.sam
 			lappend samfiles $target
-			job bwa-$sample-$name -mem 5G -cores $threads -deps [list $bwarefseq $file1 $file2] -targets {$target} -vars {readgroupdata sample paired threads} \
+			job bwa-$sample-$name -mem 5G -cores $threads \
+			-deps [list $bwarefseq $file1 $file2] -targets {$target} \
+			-vars {readgroupdata sample paired threads} \
 			-skip [list $resultbase.bam] {*}$skips -code {
 				puts "making $target"
 				foreach {bwarefseq fastq1 fastq2} $deps break
+				analysisinfo_write $fastq1 $target aligner bwa aligner_version [version bwa] reference [file2refname $bwarefseq] aligner_paired 1
 				set rg {}
 				foreach {key value} $readgroupdata {
 					lappend rg "$key:$value"
@@ -93,13 +98,16 @@ proc map_bwa_job {args} {
 	}
 	job bwa2bam-$sample -deps $samfiles -rmtargets $samfiles -targets {$result $result.bai} {*}$skips -vars {resultbase} -code {
 		puts "making $target"
-			if {[catch {
-				exec samcat {*}$deps | bamsort SO=coordinate tmpfile=[scratchfile] index=1 indexfilename=$target.bai inputformat=sam > $target.temp 2>@ stderr
-			}]} {
-				error $msg
-			}
-			file rename -force $target.temp $target
-		file delete {*}$deps
+		analysisinfo_write $dep $target
+		if {[catch {
+			exec samcat {*}$deps | bamsort SO=coordinate tmpfile=[scratchfile] index=1 indexfilename=$target.bai inputformat=sam > $target.temp 2>@ stderr
+		}]} {
+			error $msg
+		}
+		file rename -force $target.temp $target
+		foreach dep $deps {
+			file delete $dep [gzroot $dep].analysisinfo
+		}
 	}
 }
 

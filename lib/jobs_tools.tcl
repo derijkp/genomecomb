@@ -11,6 +11,7 @@ proc cleanup_job {name rmtargets args} {
 			-rmtargets $rmtargets -code {
 			foreach file $rmtargets {
 				catch {file delete $file}
+				catch {file delete [gzroot $file].analysisinfo}
 			}
 		}
 		incr num

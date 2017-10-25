@@ -508,6 +508,22 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 	} else {
 		set allfiles $files
 	}
+	# analysisinfo
+	set deps {}
+	foreach file [lsort -dict $files] {
+		lappend deps "([gzroot $file].analysisinfo)"
+	}
+	set target [gzroot $compar_file].analysisinfo
+	job multicompar_analysisinfo-[file tail $compar_file] -deps $deps -optional 1 \
+	-targets {$target} -code {
+		set deps [list_remove $deps {}]
+		if {[llength $deps]} {
+			cg cat -c 0 -m 1 {*}$deps > $target.temp
+			file rename $target.temp $target
+		} else {
+			file_write $target ""
+		}
+	}
 	# for calculating the varlines needed, we can treat targetvarsfile as just another variant file
 	set files $allfiles
 	if {$targetvarsfile ne ""} {lappend files $targetvarsfile}

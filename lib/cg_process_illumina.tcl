@@ -91,6 +91,7 @@ proc process_illumina {args} {
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
 	set adapterfile [adapterfile $adapterfile]
+	set experimentname [file tail $destdir]
 	# check projectinfo
 	projectinfo $destdir dbdir {split 1}
 	set dbdir [dbdir $dbdir]
@@ -171,8 +172,9 @@ proc process_illumina {args} {
 		# extract regions with coverage >= 5 (for cleaning)
 		set cov5reg [bam2reg_job -mincoverage 5 -skip [list $resultbamfile] map-sbwa-$sample.bam]
 		# clean bamfile (mark duplicates, realign)
-		set cleanedbam [bam_clean_job map-sbwa-$sample.bam $refseq $sample \
-			-sort 0 -removeduplicates 1 -realign $realign -regionfile $cov5reg -cleanup $cleanup]
+		set cleanedbam [bam_clean_job \
+			-sort 0 -removeduplicates 1 -realign $realign -regionfile $cov5reg -cleanup $cleanup \
+			 map-sbwa-$sample.bam $refseq $sample]
 		# make 5x coverage regfile from cleanedbam
 		set cov5reg [bam2reg_job -mincoverage 5 $cleanedbam]
 		# make 20x coverage regfile
@@ -218,6 +220,9 @@ proc process_illumina {args} {
 	process_multicompar_job -experiment $experiment -skipincomplete 1 -split $split -dbfiles $dbfiles $destdir $dbdir $todo
 	if {[llength $reports]} {
 		proces_reportscombine_job $destdir/reports {*}$reportstodo
+		if {[jobfileexists $destdir/reports/report_hsmetrics-${experimentname}.tsv]} {
+			mklink $destdir/reports/report_hsmetrics-${experimentname}.tsv $destdir/${experimentname}_hsmetrics_report.tsv
+		}
 	}
 	cd $keeppwd
 }

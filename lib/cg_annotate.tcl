@@ -202,6 +202,7 @@ proc cg_annotate_job {args} {
 	set replace e
 	set multidb 0
 	set upstreamsize 2000
+	set analysisinfo 1
 	cg_options annotate args {
 		-near {
 			set near $value
@@ -221,6 +222,9 @@ proc cg_annotate_job {args} {
 		}
 		-u - -upstreamsize {
 			set upstreamsize $value
+		}
+		-analysisinfo {
+			set analysisinfo $value
 		}
 	} {orifile resultfile} 3
 	set dbdir [file_absolute $dbdir]
@@ -453,8 +457,10 @@ proc cg_annotate_job {args} {
 		}
 	}
 	job annot-paste-$resultname -deps [list $orifile {*}$afiles] \
-	-targets {$resultfile} -vars {orifile afiles multidb replace newh resultfile} -code {
-		analysisinfo_write $dep $target annotate_cg_version [version genomecomb]
+	-targets {$resultfile} -vars {orifile afiles multidb replace newh resultfile analysisinfo} -code {
+		if {$analysisinfo} {
+			analysisinfo_write $dep $target annotate_cg_version [version genomecomb]
+		}
 		set compress [compresspipe $target]
 		if {$multidb} {
 			set temp2 [filetemp $resultfile]

@@ -69,6 +69,7 @@ proc map_minimap2_job {args} {
 		-skip [list $resultbase.bam] {*}$skips -code {
 			puts "making $target"
 			foreach {minimap2refseq fastq} $deps break
+			analysisinfo_write $fastq $target aligner minimap2 aligner_version [version minimap2] reference [file2refname $minimap2refseq] aligner_paired 0
 			set rg {}
 			foreach {key value} $readgroupdata {
 				lappend rg "$key:$value"
@@ -82,13 +83,16 @@ proc map_minimap2_job {args} {
 	job minimap2_2bam-$sample -deps $samfiles -rmtargets $rmsamfiles \
 	-targets {$result $result.bai} {*}$skips -vars {resultbase} -code {
 		puts "making $target"
+		analysisinfo_write $dep $target
 		if {[catch {
 			exec samcat {*}$deps | bamsort SO=coordinate tmpfile=[scratchfile] index=1 indexfilename=$target.bai inputformat=sam > $target.temp 2>@ stderr
 		}]} {
 			error $msg
 		}
 		file rename -force $target.temp $target
-		if {[llength $deps]} {file delete {*}$deps}
+		foreach dep $deps {
+			file delete $dep [gzroot $dep].analysisinfo
+		}
 	}
 }
 
