@@ -43,6 +43,8 @@ inline int max ( int a, int b ) { return a > b ? a : b; }
 #define BAM_FQCFAIL      512
 /*! @abstract optical or PCR duplicate */
 #define BAM_FDUP        1024
+/*! @abstract suplementary alignment (part of chimeric alignment) */
+#define BAM_FSUPPL      2048
 
 typedef struct Amplicon {
 	DString *chr2;
