@@ -29,11 +29,11 @@ proc realign_abra_job {args} {
 	-targets {$resultbamfile $resultbamfile.bai} {*}$skips \
 	-vars {abra bamfile refseq regionfile threads} -code {
 		if {$regionfile eq "" || ![file exists $regionfile]} {
-			puts "making regionfile"
+			putslog "making regionfile"
 			set regionfile [tempfile]
 			cg bam2reg $bamfile 3 $regionfile
 		}
-		puts "making $target"
+		putslog "making $target"
 		if {![file exists $bamfile.bai]} {exec samtools index $bamfile}
 		if {[file extension $regionfile] ne ".bed"} {
 			set tempfile [tempfile]
@@ -41,7 +41,7 @@ proc realign_abra_job {args} {
 			set regionfile $tempfile
 		}
 		if {[catch {
-			exec java -Xmx4G -XX:ParallelGCThreads=1 -jar $abra --in $bamfile --out $target.temp.bam --ref $refseq --targets $regionfile --threads $threads --working [scratchdir] > $target.log 2>@ stderr 1>@ stdout
+			exec java -Xmx4G -XX:ParallelGCThreads=1 -jar $abra --in $bamfile --out $target.temp.bam --ref $refseq --targets $regionfile --threads $threads --working [scratchdir] > $target.log 2>@ stdout 1>@ stdout
 		} msg]} {
 			error $msg
 		}

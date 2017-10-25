@@ -32,8 +32,14 @@ test map_minimap2 {map_minimap2 basic} {
 	exec diff tmp/ali.sam tmp/expected.sam
 } {}
 
+test realign {realign_gatk basic} {
+	cg realign_gatk -stack 1 data/bwa.bam tmp/ratest.bam $::refseqdir/hg19
+	exec diff tmp/ratest.bam data/ratest-gatk.bam
+} {}
+
 test realign {realign_abra basic} {
-	cg realign_abra -stack 1 -v 2 data/minimap2.bam tmp/ratest.bam $::refseqdir/hg19
+	cg realign_abra -stack 1 data/bwa.bam tmp/ratest.bam $::refseqdir/hg19
+	exec diff tmp/ratest.bam data/ratest-abra.bam
 } {}
 
 testsummarize
