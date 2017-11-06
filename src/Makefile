@@ -21,7 +21,8 @@ all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../b
      ../bin$(ARCH)/tsv_paste ../bin$(ARCH)/tsv_histo \
      ../bin$(ARCH)/sam_clipamplicons \
      ../bin$(ARCH)/tsv2bed \
-     ../bin$(ARCH)/samcat
+     ../bin$(ARCH)/samcat \
+     ../bin$(ARCH)/sam2tsv ../bin$(ARCH)/tsv2sam
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -124,3 +125,9 @@ clean:
 
 ../bin$(ARCH)/samcat: samcat.c $(TOOLS)
 	gcc samcat.c tools.c $(CFLAGS) -o ../bin$(ARCH)/samcat
+
+../bin$(ARCH)/sam2tsv: sam2tsv.c $(TOOLS)
+	gcc sam2tsv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam2tsv
+
+../bin$(ARCH)/tsv2sam: tsv2sam.c $(TOOLS)
+	gcc tsv2sam.c tools.c $(CFLAGS) -o ../bin$(ARCH)/tsv2sam

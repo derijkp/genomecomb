@@ -21,6 +21,19 @@ proc catchstderr_exec {args} {
 	return $msg
 }
 
+proc catch_exec {args} {
+	set tempfile [tempfile]
+	file_write $tempfile ""
+	if {[catch {
+		exec {*}$args 2> $tempfile
+	} msg]} {
+		set error [file_read $tempfile]
+		file delete $tempfile
+		error "$msg\n$error"
+	}
+	return $msg
+}
+
 proc progress {cmd args} {
 	if {![llength [info commands winfo]]} {
 		global progresslevel

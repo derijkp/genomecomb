@@ -762,7 +762,7 @@ NODPRINT("maxtab=%d result->memsize=%d",maxtab,result->memsize)
 		}
 		result->data[count].memsize = -1;
 NODPRINT("final count=%d size=%d %s",count, result->data[count].size,result->data[count].string)
-		prevsize = pos+1;
+		if (pos < linePtr->size) {prevsize = pos+1;} else {prevsize = linePtr->size;}
 		count++;
 	}
 	}
