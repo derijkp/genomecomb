@@ -318,3 +318,10 @@ proc file2refname {file} {
 	regexp {genome_([^_.]+)\.ifas} $tail temp tail
 	return $tail
 }
+
+proc file_rootname {file} {
+	set base [file root [file tail $file]]
+	set root [join [lrange [split $base -] 1 end] -]
+	if {$root ne ""} {return $root}
+	return $base
+}

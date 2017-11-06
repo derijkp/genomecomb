@@ -759,7 +759,7 @@ proc process_sample_job {args} {
 	}
 	# varcaller from bams
 	foreach cleanedbam $cleanedbams {
-		set bambase [join [lrange [split [file root [file tail $cleanedbam]] -] 1 end] -]
+		set bambase [file_rootname $cleanedbam]
 		# make 5x coverage regfile from cleanedbam
 		set cov5reg [bam2reg_job -mincoverage 5 $cleanedbam]
 		# make 20x coverage regfile

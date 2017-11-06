@@ -3,8 +3,7 @@ proc bam2covstats_job {bamfile regionfile {suffix {}}} {
 	set bamfile [file_absolute $bamfile]
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
-	set root [join [lrange [split [file root $file] -] 1 end] -]
-	if {$root eq ""} {set root $file}
+	set root [file_rootname $file]
 #	job bam2coverage-$root -deps {$bamfile} -targets {$dir/coverage-$root $dir/coverage-$root/coverage-$root.FINISHED} -vars {root} -code {
 #		cg bam2coverage $dep $target/coverage-$root
 #	}

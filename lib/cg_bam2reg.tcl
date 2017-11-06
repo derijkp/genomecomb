@@ -18,7 +18,7 @@ proc bam2reg_job {args} {
 	set pre [lindex [split $bamfile -] 0]
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
-	set root [join [lrange [split [file root $file] -] 1 end] -]
+	set root [file_rootname $file]
 	if {![info exists target]} {
 		set target $dir/sreg-cov$mincoverage-$root.tsv
 		if {$compress} {append target .lz4}

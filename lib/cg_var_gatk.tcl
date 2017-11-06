@@ -18,7 +18,7 @@ proc gatk_refseq_job refseq {
 
 proc annotvar_clusters_job {file resultfile} {
 	upvar job_logdir job_logdir
-	set root [join [lrange [split [file root $file] -] 1 end] -]
+	set root [file_rootname $file]
 	job annotvar-clusters-$root -deps {$file} -targets {reg_cluster-$root.tsv.lz4 reg_cluster-$root.tsv.lz4.lz4i} -skip [list $resultfile] -code {
 		cg clusterregions < $dep > $target.temp
 		cg lz4 $target.temp
@@ -58,6 +58,7 @@ proc var_gatk_job {args} {
 	set regionfile {}
 	set threads 2
 	set cleanup 1
+	set regmincoverage 3
 	cg_options var_sam args {
 		-L - -deps {
 			lappend deps $value
@@ -65,6 +66,9 @@ proc var_gatk_job {args} {
 		-regionfile {
 			set regionfile $value
 			lappend deps $value
+		}
+		-regmincoverage {
+			set regmincoverage $value
 		}
 		-pre {
 			set pre $value
@@ -85,6 +89,11 @@ proc var_gatk_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	set destdir [file dir $bamfile]
+	if {$regionfile ne ""} {
+		set regionfile [file_absolute $regionfile]
+	} else {
+		set regionfile [bam2reg_job -mincoverage $regmincoverage $bamfile]
+	}
 	set gatk [gatk]
 	# logfile
 	set cmdline [list cg var_gatk]
@@ -99,7 +108,8 @@ proc var_gatk_job {args} {
 	job_logfile $destdir/var_gatk_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
 	set file [file tail $bamfile]
-	set root [join [lrange [split [file root $file] -] 1 end] -]
+	set root [file_rootname $file]
+	if {$root eq ""} {set root [file root $file]}
 	# start
 	## Produce gatk SNP calls
 	set keeppwd [pwd]

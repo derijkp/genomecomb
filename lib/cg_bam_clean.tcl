@@ -28,7 +28,7 @@ proc bam_clean_job {args} {
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
 	set pre [lindex [split $file -] 0]
-	set root [join [lrange [split [file root $file] -] 1 end] -]
+	set root [file_rootname $file]
 	# make gatk refseq
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set dict [file root $gatkrefseq].dict

@@ -16,7 +16,7 @@ proc tophat_job {sample files libtype outdir bowtie_index} {
 proc bam_sort_rseq_job {bam} {
 	upvar job_logdir job_logdir
 	set pre [lindex [split $bam -] 0]
-	set root [join [lrange [split [file root $bam] -] 1 end] -]
+	set root [file_rootname $bam]
 	set dir [file dir $bam]
 	job bamsort-$root -deps {$bam} -targets {$dir/$pre-s$root.bam $dir/$pre-sn$root.bam} -vars {dir pre root} -code {
 		file delete $target1.temp.bam
@@ -31,7 +31,7 @@ proc bam_sort_rseq_job {bam} {
 proc bam_index_job {bam} { 
 	upvar job_logdir job_logdir
 	set pre [lindex [split $bam -] 0]
-	set root [join [lrange [split [file root $bam] -] 1 end] -]
+	set root [file_rootname $bam]
 	set dir [file dir $bam]
 	job bamindex-$pre-$root -deps [list $dir/$pre-$root.bam] -targets [list $dir/$pre-$root.bam.bai] -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
@@ -42,7 +42,7 @@ proc bam_index_job {bam} {
 proc htseqcount_job {bam gff order stranded mode} {
 	upvar job_logdir job_logdir
 	set pre count
-	set root [join [lrange [split [file root $bam] -] 1 end] -]
+	set root [file_rootname $bam]
 	set dir [file dir $bam]
 	job htseqcount-$bam -deps {$bam} -targets [list $dir/$pre-$root.tsv] -vars {pre root gff order stranded mode} -code {
 		file delete $target.temp

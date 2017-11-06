@@ -63,7 +63,7 @@ proc var_sam_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set file [file tail $bamfile]
-	set root [join [lrange [split [file root $file] -] 1 end] -]
+	set root [file_rootname $file]
 	# make sure reference sequence is indexed
 	job ${pre}var_sam_faidx -deps {$refseq} -targets {$refseq.fai} -code {
 		exec samtools faidx $dep
