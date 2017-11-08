@@ -9,6 +9,9 @@ proc cg_regextract {args} {
 	set posfields {offset pos position begin start}
 	set above 0; set shift 0
 	set filtered 0
+	# can no longer use -d$cutoff in newer samtools:
+	# this can cause the depth to be wrong on positions with coverage below cutoff
+	set depthcuttoff 1000000
 	set aa 0
 	cg_options regextract args {
 		-min {set min $value}
@@ -18,6 +21,7 @@ proc cg_regextract {args} {
 		-posfields {set posfields $value}
 		-q {set q $value}
 		-Q {set Q $value}
+		-d {set depthcutoff $value}
 		-all {set aa 1}
 		-f - -filtered {
 			set filtered 1
@@ -34,8 +38,9 @@ proc cg_regextract {args} {
 		set cutoff [expr {$max + 1}]
 	} else {
 		# set cutoff [list_shift args]
-		error "The -min or -max option must be provided. The old use with cutoff as a parameter (and a default of below) is no longer supported becaus it was confusing (even to the author)"
+		error "The -min or -max option must be provided. The old use with cutoff as a parameter (and a default of below) is no longer supported because it was confusing (even to the author)"
 	}
+	if {$depthcuttoff > $cutoff} {set depthcutoff [expr {$cutoff+10000}]}
 	set samtoolsargs {}
 	if {[info exists q]} {lappend samtoolsargs -q $q}
 	if {[info exists Q]} {lappend samtoolsargs -Q $Q}
@@ -76,10 +81,10 @@ proc cg_regextract {args} {
 			set poscol 1
 			if {!$filtered} {
 				set valuecol 2
-				catchstderr_exec samtools depth -d$cutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $shift 0 >@ $o
+				catchstderr_exec samtools depth -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $shift 0 >@ $o
 			} else {
 				set valuecol 3
-				catchstderr_exec samtools mpileup --ignore-overlaps -d$cutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $shift 0 >@ $o
+				catchstderr_exec samtools mpileup --ignore-overlaps -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $shift 0 >@ $o
 			}
 		} else {
 			set f [gzopen $file]

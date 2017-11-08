@@ -88,7 +88,7 @@ proc var_sam_job {args} {
 	}
 	job ${pre}varall-sam2sft-$root -deps {${pre}varall-sam-$root.vcf} -targets {${pre}varall-sam-$root.tsv.lz4} -vars split -code {
 		analysisinfo_write $dep $target
-		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} $dep $target.temp.lz4
+		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR FQ} $dep $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
 	# lz4_job ${pre}varall-sam-$root.tsv -i 1
