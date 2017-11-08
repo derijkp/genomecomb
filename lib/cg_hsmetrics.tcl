@@ -3,7 +3,7 @@ proc calculate_hsmetrics_job {bamfile targetsfile {optional 1}} {
 	upvar job_logdir job_logdir
 	set bamfile [file_absolute $bamfile]
 	set dir [file dir $bamfile]
-	set root [file_rootname $file]
+	set root [file_rootname $bamfile]
 	set target $dir/$root.hsmetrics
 	job calc_hsmetrics-$root -optional $optional -deps {$bamfile $bamfile.bai $targetsfile} -targets [list $target] -vars {bamfile targetsfile} -code {
 		cg_hsmetrics $bamfile $targetsfile $target
