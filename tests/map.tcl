@@ -39,7 +39,9 @@ test realign {realign_gatk basic} {
 
 test realign {realign_abra basic} {
 	cg realign_abra -stack 1 data/bwa.bam tmp/ratest.bam $::refseqdir/hg19
-	exec diff tmp/ratest.bam data/ratest-abra.bam
+	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
+	cg sam2tsv data/ratest-abra.bam tmp/expected.tsv
+	exec diff tmp/ratest.tsv tmp/expected.tsv
 } {}
 
 testsummarize

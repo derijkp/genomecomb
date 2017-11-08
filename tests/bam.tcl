@@ -105,7 +105,7 @@ test bam2fastq {bam2fastq gz} {
 test cg_regextract {regextract} {
 	test_cleantmp
 	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
-	cg regextract -min 20 $bamfile > tmp/reg-cov20.tsv
+	cg regextract -min 20 $bamfile > tmp/reg-cov20.tsv 2>@ stderr
 	string_change [cg covered tmp/reg-cov20.tsv] [list \n\n \n]
 } {chromosome	bases
 chr21	495709
