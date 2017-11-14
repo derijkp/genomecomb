@@ -24,7 +24,9 @@ proc cg_bed2tsv {args} {
 	}
 	while {![eof $f]} {
 		set line [gets $f]
-		if {[inlist {browser track} [lindex $line 0]]} {
+		if {[string index $line 0] eq "\#"} {
+			puts $o $line
+		} elseif {[inlist {browser track} [lindex $line 0]]} {
 			puts $o #$line
 		} else {
 			break
