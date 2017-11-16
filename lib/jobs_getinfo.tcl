@@ -25,6 +25,7 @@ proc job_getinfo {{value {}}} {
 }
 
 proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional} {
+# putsvars jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional
 	global cgjob job_deps
 	global cgjob_getinfo
 	set jobroot [pwd]
@@ -146,7 +147,9 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars 
 			job_log $job "skipping $jobname: targets already completed or running"
 			job_logfile_add $job . skipped $targets "targets already completed or running" $submittime
 			job_logclose $job
-			list_addnew cgjob_getinfo(deps) {*}[list_lremove $adeps $cgjob_getinfo(targets)]
+			if {$joberror eq ""} {
+				list_addnew cgjob_getinfo(deps) {*}[list_lremove $adeps $cgjob_getinfo(targets)]
+			}
 			list_addnew cgjob_getinfo(targets) {*}$targets
 			return
 		}
