@@ -126,7 +126,7 @@ proc process_project_job {args} {
 	# -------
 	set cmdline [list cg process_project]
 	foreach option {
-		ori dbdir refdir aligner realign varcallers split dbfile dbfiles paired adapterfile conv_nextseq reports cleanup maxopenfiles samBQ amplicons extra_reports_mastr
+		ori dbdir refdir aligner realign varcallers split dbfile dbfiles paired adapterfile conv_nextseq reports cleanup jobsample maxopenfiles samBQ amplicons extra_reports_mastr
 	} {
 		if {[info exists $option]} {
 			lappend cmdline -$option [get $option]
