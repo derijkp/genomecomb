@@ -22,7 +22,7 @@ present in this file are presented in the [[example_header|example_header]] sect
 The files used are:
 ; annot_compar-yri_chr2122.tsv.lz4 : an annotated [[format_tsv|multicompar variant file]]
 where each line contains a variant, genotype, quality, etc. data per sample and annotations
-; annot_compar-yri_chr2122.tsv.sampleinfo.tsv : a sampleinfo file
+; annot_compar-yri_chr2122.tsv.sampleinfo : a sampleinfo file
 containing extra information on the samples. If it is in the same directory
 it will automatically be used (with this name).
 ; sreg-yri_chr2122.tsv.lz4: a [[format_tsv|multiregion file]] 
