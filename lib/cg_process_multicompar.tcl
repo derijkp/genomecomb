@@ -112,8 +112,9 @@ proc process_multicompar_job {args} {
 	#
 	# multicompar
 	# -----------
-	putslog "Finding samples"
 	# todo: no check if targetsfile was actually used
+	putslog "Making/updating multicompar in $destdir/compar/compar-$experiment.tsv"
+	putslog "Finding samples"
 	set compar_file [gzfile compar/compar-$experiment.tsv]
 	if {[catch {cg select -n $compar_file} done]} {set done {}} else {set done [split $done \n]}
 	if {[file exists $compar_file]} {set mtime [file mtime $compar_file]} else {set mtime 0}

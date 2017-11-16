@@ -63,7 +63,8 @@ proc bam_clean_job {args} {
 	list_pop skips 0; list_pop skips 0;
 	if {$removeduplicates eq "picard"} {
 		list_pop skips 0; list_pop skips 0;
-		job bamremdup-$root -mem 7G -cores 2 -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-d$root.bam} \
+		job bamremdup-$root -mem 7G -cores 2 -deps {$dir/$pre-$root.bam} \
+		-targets {$dir/$pre-d$root.bam $dir/$pre-d$root.bam.analysisinfo} \
 		-vars {sample} {*}$skips -code {
 			analysisinfo_write $dep $target removeduplicates picard removeduplicates_version [version picard]
 			puts "removing duplicates"
@@ -74,7 +75,8 @@ proc bam_clean_job {args} {
 		set root d$root
 	} elseif {$removeduplicates} {
 		list_pop skips 0; list_pop skips 0;
-		job bamremdup-$root -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-d$root.bam} \
+		job bamremdup-$root -deps {$dir/$pre-$root.bam} \
+		-targets {$dir/$pre-d$root.bam $dir/$pre-d$root.bam.analysisinfo} \
 		-vars {sample} {*}$skips -code {
 			analysisinfo_write $dep $target removeduplicates biobambam removeduplicates_version [version biobambam]
 			biobambam bammarkduplicates2 I=$dep	O=$target.temp M=$target.dupmetrics rmdup=0 markthreads=1 tmpfile=[scratchfile] 2>@ stderr >@ stdout
@@ -93,7 +95,8 @@ proc bam_clean_job {args} {
 		set deps [list $dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict $gatkrefseq $refseq {*}$realigndeps]
 		if {$realign eq "srma"} {
 			set srma [srma]
-			job bamrealign-$root -deps $deps -targets {$dir/$pre-r$root.bam} \
+			job bamrealign-$root -deps $deps \
+			-targets {$dir/$pre-r$root.bam $dir/$pre-r$root.bam.analysisinfo} \
 			-vars {gatkrefseq refseq srma pre realignopts regionfile} {*}$skips -code {
 				analysisinfo_write $dep $target realign srma realign_version [version srma]
 				if {$regionfile ne ""} {
@@ -106,7 +109,8 @@ proc bam_clean_job {args} {
 				file rename -force $target.temp $target
 			}
 		} else {
-			job bamrealign-$root -mem 10G -cores 2 -deps $deps -targets {$dir/$pre-r$root.bam} \
+			job bamrealign-$root -mem 10G -cores 2 -deps $deps \
+			-targets {$dir/$pre-r$root.bam $dir/$pre-r$root.bam.analysisinfo} \
 			-vars {gatkrefseq refseq gatk realignopts regionfile} {*}$skips -code {
 				analysisinfo_write $dep $target realign gatk realign_version [version gatk]
 				if {$regionfile ne ""} {
@@ -139,7 +143,7 @@ proc bam_clean_job {args} {
 		job bamclean_clipamplicons-$root -deps {
 			$dir/$pre-$root.bam $clipamplicons
 		} -targets {
-			$dir/$pre-c$root.bam
+			$dir/$pre-c$root.bam $dir/$pre-c$root.bam.analysisinfo
 		} {*}$skips -vars {clipamplicons} -code {
 			analysisinfo_write $dep $target clipamplicons genomecomb clipamplicons_version [version genomecomb] clipampliconsfile [filename $clipamplicons]
 			cg sam_clipamplicons $dep2 $dep $target.temp

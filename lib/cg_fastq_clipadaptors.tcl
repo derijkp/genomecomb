@@ -1,4 +1,4 @@
-proc fastq_clipadapters {files targets args} {
+proc fastq_clipadapters {fastqfiles targets args} {
 	set adapterfile {}
 	set removeskew 1
 	set paired 1
@@ -16,15 +16,15 @@ proc fastq_clipadapters {files targets args} {
 	set adapterfile [adapterfile $adapterfile]
 	# clip primers, quality
 	set temptargets {}
-	if {[llength $files] == 1 || !$paired} {
-		foreach {f1} $files {t1} $targets {
+	if {[llength $fastqfiles] == 1 || !$paired} {
+		foreach {f1} $fastqfiles {t1} $targets {
 			file mkdir [file dir $t1]
 			set tempout1 [filetemp $t1]
 			exec fastq-mcf -k $removeskew -a -o $tempout1 $adapterfile $f1 2>@ stderr
 			lappend temptargets $tempout1
 		}
 	} else {
-		foreach {f1 f2} $files {t1 t2} $targets {
+		foreach {f1 f2} $fastqfiles {t1 t2} $targets {
 			file mkdir [file dir $t1]
 			file mkdir [file dir $t2]
 			set tempout1 [filetemp $t1]
@@ -39,14 +39,13 @@ proc fastq_clipadapters {files targets args} {
 	}
 }
 
-proc fastq_clipadapters_job {files args} {
+proc fastq_clipadapters_job {fastqfiles args} {
 	upvar job_logdir job_logdir
-	set targets {}
 	set skips {}
 	set adapterfile {}
 	set paired 1
 	set removeskew 1
-	set files [ssort -natural $files]
+	set fastqfiles [ssort -natural $fastqfiles]
 	foreach {key value} $args {
 		if {$key eq "-adapterfile"} {
 			set adapterfile $value
@@ -61,20 +60,23 @@ proc fastq_clipadapters_job {files args} {
 		}
 	}
 	set adapterfile [adapterfile $adapterfile]
-	foreach file $files {
+	set resultfastqs {}
+	set resultanalysisinfo {}
+	foreach file $fastqfiles {
 		set file [file_absolute [gzroot $file]]
 		set root [file root $file]
 		file mkdir [file dir $root].clipped
-		lappend targets [file dir $root].clipped/[file tail $root].clipped.fastq
+		lappend resultfastqs [file dir $root].clipped/[file tail $root].clipped.fastq
+		lappend resultanalysisinfo [file dir $root].clipped/[file tail $root].clipped.fastq.analysisinfo
 	}
 	# paired files need to be clipped together!
-	job clip-[file dir [file dir $root]] -deps $files -targets $targets \
-	-vars {adapterfile paired removeskew ::analysisinfo} {*}$skips -code {
-		fastq_clipadapters $deps $targets -removeskew $removeskew -adapterfile $adapterfile -paired $paired
-		foreach dep $deps $target $targets {
+	job clip-[file dir [file dir $root]] -deps $fastqfiles -targets [list {*}$resultfastqs {*}$resultanalysisinfo] \
+	-vars {resultfastqs adapterfile paired removeskew ::analysisinfo} {*}$skips -code {
+		fastq_clipadapters $deps $resultfastqs -removeskew $removeskew -adapterfile $adapterfile -paired $paired
+		foreach dep $deps target $resultfastqs {
 			analysisinfo_write $dep $target clipping fastq-mcf clipping_version [version fastq-mcf] clipping_cg_version [version genomecomb]
 		}
 	}
-	return $targets
+	return $resultfastqs
 }
 

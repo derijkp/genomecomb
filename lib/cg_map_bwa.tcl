@@ -53,14 +53,18 @@ proc map_bwa_job {args} {
 	set bwarefseq [bwarefseq_job $refseq]
 	set resultbase [file root $result]
 	set samfiles {}
+	set asamfiles {}
 	set num 1
 	if {!$paired} {
 		foreach file $files {
 			set name [file root [file tail $file]]
 			set target $resultbase-$name.sam
 			lappend samfiles $target
+			set analysisinfo [gzroot $target].analysisinfo
+			lappend asamfiles $analysisinfo
 			job bwa-$sample-$name -mem 5G -cores $threads \
-			-deps [list $bwarefseq $file] -targets {$target} \
+			-deps [list $bwarefseq $file] \
+			-targets {$target $analysisinfo} \
 			-vars {readgroupdata sample paired threads} \
 			-skip [list $resultbase.bam] {*}$skips -code {
 				puts "making $target"
@@ -79,8 +83,11 @@ proc map_bwa_job {args} {
 			set name [file root [file tail $file1]]
 			set target $resultbase-$name.sam
 			lappend samfiles $target
+			set analysisinfo [gzroot $target].analysisinfo
+			lappend asamfiles $analysisinfo
 			job bwa-$sample-$name -mem 5G -cores $threads \
-			-deps [list $bwarefseq $file1 $file2] -targets {$target} \
+			-deps [list $bwarefseq $file1 $file2] \
+			-targets {$target $analysisinfo} \
 			-vars {readgroupdata sample paired threads} \
 			-skip [list $resultbase.bam] {*}$skips -code {
 				puts "making $target"
@@ -96,7 +103,10 @@ proc map_bwa_job {args} {
 			}
 		}
 	}
-	job bwa2bam-$sample -deps $samfiles -rmtargets $samfiles -targets {$result $result.bai} {*}$skips -vars {resultbase} -code {
+	job bwa2bam-$sample -deps $samfiles \
+	-rmtargets [list {*}$samfiles {*}$asamfiles] \
+	-targets {$result $result.bai $result.analysisinfo} {*}$skips -vars {resultbase} \
+	-code {
 		puts "making $target"
 		analysisinfo_write $dep $target
 		if {[catch {

@@ -33,6 +33,7 @@ proc job_cleanlogs {logfile} {
 			catch {file delete $dir}
 		}
 	}
+	putslog "cleanup finished"
 }
 
 # correct error in values from older version of timestamp

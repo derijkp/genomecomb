@@ -19,7 +19,8 @@ proc bam_sort_job {args} {
 			lappend skips -skip $value
 		}
 	} {sourcefile resultfile}
-	job bamsort-[file tail $resultfile] -deps {$sourcefile} -targets {$resultfile} \
+	set analysisinfo [gzroot $resultfile].analysisinfo
+	job bamsort-[file tail $resultfile] -deps {$sourcefile} -targets {$resultfile $analysisinfo} \
 	-vars {method sort inputformat} {*}$skips -code {
 		analysisinfo_write $dep $target bamsort $method bamsort_version [version $method]
 		file delete $target.temp

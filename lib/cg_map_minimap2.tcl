@@ -63,8 +63,10 @@ proc map_minimap2_job {args} {
 		set name [file root [file tail $file]]
 		set target $result.index/$name.sam
 		lappend samfiles $target
+		set analysisinfo [gzroot $target].analysisinfo
 		job minimap2-$sample-$name -mem 5G -cores $threads \
-		-deps {$minimap2refseq $file} -targets {$target} \
+		-deps {$minimap2refseq $file} \
+		-targets {$target $analysisinfo} \
 		-vars {threads preset readgroupdata sample} \
 		-skip [list $resultbase.bam] {*}$skips -code {
 			puts "making $target"
@@ -81,7 +83,7 @@ proc map_minimap2_job {args} {
 	}
 	if {$keepsams} {set rmsamfiles {}} else {set rmsamfiles $samfiles}
 	job minimap2_2bam-$sample -deps $samfiles -rmtargets $rmsamfiles \
-	-targets {$result $result.bai} {*}$skips -vars {resultbase} -code {
+	-targets {$result $result.bai $result.analysisinfo} {*}$skips -vars {resultbase} -code {
 		puts "making $target"
 		analysisinfo_write $dep $target
 		if {[catch {

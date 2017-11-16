@@ -297,7 +297,7 @@ proc process_sample_cgi_job {workdir split} {
 	}
 	job cg_var-cg-cg-$sample -optional 1 \
 	-deps {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage-cg-$sample/bcol_coverage-$sample.tsv) (coverage-cg-$sample/bcol_refscore-$sample.tsv)} \
-	-targets {var-cg-cg-$sample.tsv.lz4} -vars {sample} -code {
+	-targets {var-cg-cg-$sample.tsv.lz4 var-cg-cg-$sample.tsv.analysisinfo} -vars {sample} -code {
 		set cgi_version ?
 		set cgi_reference ?
 		if {[file exists info.txt]} {
@@ -580,7 +580,6 @@ proc process_sample_job {args} {
 	catch {file mkdir $sampledir}
 	set ref [file tail $dbdir]
 	#
-	set analysisinfo [list genomecomb_version [version genomecomb] reference $ref]
 	# ampliconsfile
 	set temp [ampliconsfile $sampledir $ref]
 	if {$temp ne ""} {
@@ -596,7 +595,6 @@ proc process_sample_job {args} {
 	} else {
 		set ampliconsname [file tail $amplicons]
 	}
-	lappend analysisinfo amplicons $ampliconsname
 	if {$amplicons ne ""} {
 		if {$removeduplicates eq ""} {set removeduplicates 0}
 		if {$removeskew eq ""} {set removeskew 0}
@@ -615,11 +613,6 @@ proc process_sample_job {args} {
 		set temp [lindex [split [file root [gzroot [file tail $targetfile]]] -] end]
 		mklink $targetfile $sampledir/reg_${ref}_targets-$temp.tsv[gzext $targetfile] 1
 		set targetfile $sampledir/reg_${ref}_targets-$temp.tsv[gzext $targetfile]
-	}
-	if {![catch {file link $targetfile} link]} {
-		lappend analysisinfo targetfile [file tail $link]
-	} else {
-		lappend analysisinfo targetfile [file tail $targetfile]
 	}
 	# check projectinfo
 	projectinfo $sampledir dbdir {split 1}
@@ -697,17 +690,17 @@ proc process_sample_job {args} {
 	# allways sort
 	append resultbamprefix s
 	# find fastq files in fastq dir
-	set files [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
-	if {![llength $files]} {
+	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+	if {![llength $fastqfiles]} {
 		file mkdir $sampledir/fastq
 		# if there are none in the fastq dir, check ori dir
-		set files [ssort -natural [jobglob $sampledir/ori/*.fastq.gz $sampledir/ori/*.fastq $sampledir/ori/*.fq.gz $sampledir/ori/*.fq]]
-		if {[llength $files]} {
+		set fastqfiles [ssort -natural [jobglob $sampledir/ori/*.fastq.gz $sampledir/ori/*.fastq $sampledir/ori/*.fq.gz $sampledir/ori/*.fq]]
+		if {[llength $fastqfiles]} {
 			set targets {}
-			foreach file $files {
+			foreach file $fastqfiles {
 				lappend targets $sampledir/fastq/[file tail $file]
 			}
-			job fastq_from_ori-$sample -deps $files -targets $targets -code {
+			job fastq_from_ori-$sample -deps $fastqfiles -targets $targets -code {
 				foreach file $deps target $targets {
 					mklink $file $target
 				}
@@ -727,17 +720,17 @@ proc process_sample_job {args} {
 				}
 			}
 		}
-		set files [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+		set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
 	} 
 	# create bam from fastq files (if found)
 	set cleanedbams {}
-	if {[llength $files]} {
+	if {[llength $fastqfiles]} {
 		foreach aligner $aligners {
 			# do not do any of preliminaries if end product is already there
 			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.bam
 			set bamfile $sampledir/map-${aligner}-$sample.bam
 			# quality and adapter clipping
-			set files [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired \
+			set files [fastq_clipadapters_job $fastqfiles -adapterfile $adapterfile -paired $paired \
 				-skips [list -skip [list $bamfile] -skip [list $resultbamfile]] \
 				-removeskew $removeskew]
 			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
