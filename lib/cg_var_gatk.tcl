@@ -29,11 +29,10 @@ proc annotvar_clusters_job {file resultfile} {
 		file rename -force $target.temp.lz4 $target
 		cg lz4index $target
 	}
-putsvars file resultfile afile
 	job annotvar-annotclusters-$root -deps {$file reg_cluster-$root.tsv.lz4} \
 	-targets {$resultfile $afile} \
 	-code {
-		cg annotate -analysisinfo 0 $dep $target {*}[list_remove [lrange $deps 1 end] {}]
+		cg annotate -stack 1 -v 2 -analysisinfo 0 $dep $target {*}[list_remove [lrange $deps 1 end] {}] 2>@ stderr >@ stdout
 		analysisinfo_write $dep $target
 	}
 }

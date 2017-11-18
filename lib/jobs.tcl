@@ -623,6 +623,7 @@ proc job_targetsreplace {list targetvars} {
 }
 
 proc job_checktarget {job target time timefile checkcompressed {newidsVar {}}} {
+	if {$target eq ""} {return 1}
 	global cgjob_id
 	if {$newidsVar ne ""} {
 		upvar $newidsVar newids

@@ -462,7 +462,9 @@ proc cg_annotate_job {args} {
 		set analysisinfofile {}
 	}
 	job annot-paste-$resultname -deps [list $orifile {*}$afiles] \
-	-targets {$resultfile $analysisinfofile} -vars {orifile afiles multidb replace newh resultfile analysisinfo} -code {
+	-targets {$resultfile $analysisinfofile} \
+	-vars {orifile afiles multidb replace newh resultfile analysisinfo} \
+	-code {
 		if {$analysisinfo} {
 			analysisinfo_write $dep $target annotate_cg_version [version genomecomb]
 		}
