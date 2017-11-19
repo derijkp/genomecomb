@@ -228,7 +228,7 @@ proc tsv_varsfile {tsvfile {varsfile {}}} {
 			} else {
 				set hfield [lindex $header $pos]
 				if {$hfield ne $field} {
-					lappend basicfields $field=\$hfield
+					lappend basicfields $field=\$$hfield
 				} else {
 					lappend basicfields $field
 				}
