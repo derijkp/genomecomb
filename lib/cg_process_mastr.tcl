@@ -303,7 +303,7 @@ proc generate_coverage_report_job {experiment regfile histofiles {destdir {}}} {
 proc generate_html_report_job {experiment {destdir {}}} {
 	upvar job_logdir job_logdir
 	if {$destdir eq ""} {set destdir [pwd]}
-	job html_report -deps {
+	job html_report-$experiment -deps {
 		$destdir/compar/compar-${experiment}.tsv
 		$destdir/coverage_${experiment}_avg.tsv
 		$destdir/coverage_${experiment}_frac_above_20.tsv
