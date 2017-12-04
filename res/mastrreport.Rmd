@@ -38,8 +38,8 @@ if (file.exists(statsfile)) {
 	demultiplex <- read.delim(statsfile,sep='\t')
 	demultiplex = demultiplex[demultiplex$parameter == 'fw_numreads',]
 	demultiplex$SampleID = demultiplex$sample
-	demultiplex$NumberOfClustersPF = as.integer(levels(demultiplex$value))[demultiplex$value]
 	demultiplex = droplevels(demultiplex)
+	demultiplex$NumberOfClustersPF = as.integer(levels(demultiplex$value))[demultiplex$value]
 } else {
 	demultiplexfile = paste(mastrdir, '/demultiplex_stats.tsv',sep='')
 	demultiplex <- read.delim(demultiplexfile)
