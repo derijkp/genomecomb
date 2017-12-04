@@ -39,28 +39,30 @@ proc bam_clean_job {args} {
 	if {$sort} {
 		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot s$temproot
-		lappend skips -skip [list $dir/$pre-$temproot.bam]
+		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.analysisinfo]
 	}
 	if {$removeduplicates} {
 		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot d$temproot
-		lappend skips -skip [list $dir/$pre-$temproot.bam]
+		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.analysisinfo]
 	}
 	if {$realign ne "0"} {
 		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot r$temproot
-		lappend skips -skip [list $dir/$pre-$temproot.bam]
+		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.analysisinfo]
 	}
 	if {$clipamplicons ne ""} {
 		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot c$temproot
-		lappend skips -skip [list $dir/$pre-$temproot.bam]
+		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.analysisinfo]
 	}
 	# start jobs
 	# sort using default
-	bam_sort_job {*}$skips $bamfile $dir/$pre-s$root.bam
-	set root s$root
-	list_pop skips 0; list_pop skips 0;
+	if {$sort} {
+		list_pop skips 0; list_pop skips 0
+		bam_sort_job {*}$skips $bamfile $dir/$pre-s$root.bam
+		set root s$root
+	}
 	if {$removeduplicates eq "picard"} {
 		list_pop skips 0; list_pop skips 0;
 		job bamremdup-$root -mem 7G -cores 2 -deps {$dir/$pre-$root.bam} \

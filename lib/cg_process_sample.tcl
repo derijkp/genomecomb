@@ -731,17 +731,17 @@ proc process_sample_job {args} {
 			set bamfile $sampledir/map-${aligner}-$sample.bam
 			# quality and adapter clipping
 			set files [fastq_clipadapters_job $fastqfiles -adapterfile $adapterfile -paired $paired \
-				-skips [list -skip [list $bamfile] -skip [list $resultbamfile]] \
+				-skips [list -skip [list $bamfile $bamfile.analysisinfo] -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
 				-removeskew $removeskew]
 			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
 			lappend cleanupdeps $resultbamfile
 			#
 			# map using ${aligner}
 			map_${aligner}_job -paired $paired \
-				-skips [list -skip [list $resultbamfile]] \
+				-skips [list -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
 				$bamfile $refseq $sample {*}$files
 			# extract regions with coverage >= 5 (for cleaning)
-			set cov5reg [bam2reg_job -mincoverage 5 -skip [list $resultbamfile] $sampledir/map-${aligner}-$sample.bam]
+			set cov5reg [bam2reg_job -mincoverage 5 -skip [list $resultbamfile $resultbamfile.analysisinfo] $sampledir/map-${aligner}-$sample.bam]
 			# clean bamfile (mark duplicates, realign)
 			set cleanbam [bam_clean_job \
 				-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
