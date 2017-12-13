@@ -24,6 +24,6 @@ proc cg_hardsync {args} {
 		puts "cp -alf $src $dest"
 		hardlink -f $src $dest >@ stdout 2>@ stderr
 		puts "rsync -av $opts --delete --link-dest=$src $src/ $finaldest"
-		exec rsync -av {*}$opts --delete --link-dest=$src $src/ $finaldest >@ stdout 2>@ stderr]
+		exec rsync -av {*}$opts --delete --link-dest=$src $src/ $finaldest >@ stdout 2>@ stderr
 	}
 }

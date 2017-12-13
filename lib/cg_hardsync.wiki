@@ -1,0 +1,14 @@
+= hardsync =
+
+== Format ==
+cg hardsync source dest
+
+== Summary ==
+creates a hardlinked copy of a directory in another location
+
+== Arguments ==
+; source: directory to be copied
+; dest: destination directory; This must be an existing directory into which the source directory will be copied
+
+== Category ==
+Tools
