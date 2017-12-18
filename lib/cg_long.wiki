@@ -22,10 +22,12 @@ lines (the common fields are repeated in each line).
 ; **outfile**: write results to outfile, if not given, uses stdout
 
 == Options ==
-; **-norm 1/0**: If 1, output "normalized" long tables: The normal output will contain only variant 
+; -norm 1/0: If 1, output "normalized" long tables: The normal output will contain only variant 
 data with a numeric id, without the data specific for each sample. 
 An extra tsv file is generated (<outfile>.sampledata.tsv) that contains the sample specific data, one line
-per variant (identified by the id) and sample (identified by a "sample" column)
+per sample (identified by the id) and sample (identified by a "sample" column)
+; -samplefields samplefields: Using this option, sample names that consist of several parts separated by - (as typical in 
+genomecomb output, e.g. -gatk-rdsbwa-sample1) are split up in separate fields with the field names given by **samplefields**
 
 == Category ==
 Conversion
