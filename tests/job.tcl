@@ -1348,6 +1348,30 @@ test job {gzarraynames} {
 	lsort [gzarraynames a dep.*]
 } {dep.txt dep.txt2}
 
+test job_getinfo {job_getinfo basic} {
+	file_write tmp/dep.txt test
+	job_init
+	job_getinfo 1
+	job test -deps {tmp/dep.txt} -targets tmp/target.txt -code {
+		puts ok
+	}
+	foreach {deps targets} [job_getinfo 0] break
+	list $deps $targets
+} {*tmp/dep.txt *tmp/target.txt} match
+
+test job_getinfo {job_getinfo skipped} {
+	file_write tmp/dep.txt test
+	after 10
+	file_write tmp/target.txt target
+	job_init
+	job_getinfo 1
+	job test -deps {tmp/dep.txt} -targets tmp/target.txt -code {
+		puts ok
+	}
+	foreach {deps targets} [job_getinfo 0] break
+	list $deps $targets
+} {{} {}}
+
 set ::env(PATH) $keeppath
 
 cd $keepdir
