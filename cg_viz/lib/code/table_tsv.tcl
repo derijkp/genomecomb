@@ -456,6 +456,8 @@ table_tsv method open {file parent} {
 	set file [file_absolute $file]
 	set info [$object index $file]
 	unset -nocomplain tdata
+	set tdata(numcache) 0
+	set tdata(query_results) {}
 	# tdata(query) is linked to entry, so clear it explicitely
 	set tdata(query) ""
 	array set tdata $info
