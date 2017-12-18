@@ -8,6 +8,7 @@ if {![info exists argv]} {set argv {}}
 set argv [job_init {*}$argv]
 foreach {dest webcache} $argv break
 if {![info exists dest]} {set dest /complgen/refseqnew}
+if {![info exists webcache]} {set webcache $dest/webcache}
 if {[info exists webcache]} {set env(webcache) $webcache}
 set dest [file_absolute $dest]
 

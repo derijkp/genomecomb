@@ -26,6 +26,7 @@ cg_options makedbs_dm6 argv {
 }
 
 if {![info exists dest]} {set dest /complgen/refseqnew}
+if {![info exists webcache]} {set webcache $dest/webcache}
 if {[info exists webcache]} {set env(webcache) $webcache}
 set dest [file_absolute $dest]
 
