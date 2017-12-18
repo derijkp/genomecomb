@@ -15,26 +15,26 @@ proc primercheck_search {db searchseq add maxnum} {
 			set numhits many
 			set hits many
 		} else {
-			return -errorcode error -errorinfo $::errorInfo $errmsg
+			error $errmsg
 		}
 	}
 	return [list $numhits $hits]
 }
 
 proc primercheck_merge {d1 d2} {
-        set result {} 
+	set result {}
 	foreach d [list $d1 $d2] n {1 2} {
-	        dict for {key value} $d {
-	                if {[catch {dict get $result $key} resultvalues]} {
+		dict for {key value} $d {
+			if {[catch {dict get $result $key} resultvalues]} {
 				set resultvalues {}
 			}
 			foreach v $value {
 				lappend resultvalues [list $n $v]
 			}
-                        dict set result $key $resultvalues
-	        }
+	 		dict set result $key $resultvalues
+		}
 	}
-        return $result
+	return $result
 }
 
 proc primercheck_epcr {hits1 hits2 rhits1 rhits2 maxsize maxamplicons} {
