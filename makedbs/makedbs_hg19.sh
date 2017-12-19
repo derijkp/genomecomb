@@ -11,7 +11,7 @@ logverbose 2
 if {![info exists argv]} {set argv {}}
 set argv [job_init {*}$argv]
 foreach {dest webcache} $argv break
-if {![info exists dest]} {set dest /complgen/refseqnew}
+if {![info exists dest]} {set dest /complgen/refseq}
 if {![info exists webcache]} {set webcache $dest/webcache}
 if {[info exists webcache]} {set env(webcache) $webcache}
 set dest [file_absolute $dest]
@@ -186,11 +186,27 @@ job reg_refcoding \
 	file rename -force $target.temp $target
 }
 
+job reg_exome_refGene \
+-deps {gene_${build}_refGene.tsv} \
+-targets {extra/reg_${build}_exome_refGene.tsv} \
+-code {
+	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin > $target.temp
+	file rename -force $target.temp $target
+}
+
 job reg_intcoding \
 -deps {gene_${build}_intGene.tsv} \
 -targets {extra/reg_${build}_intcoding.tsv} \
 -code {
 	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin > $target.temp
+	file rename -force $target.temp $target
+}
+
+job reg_exome_intGene \
+-deps {gene_${build}_intGene.tsv} \
+-targets {extra/reg_${build}_exome_intGene.tsv} \
+-code {
+	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin > $target.temp
 	file rename -force $target.temp $target
 }
 
@@ -434,6 +450,7 @@ foreach file [glob genome_*] {
 
 # compress
 foreach file [jobglob *.tsv extra/*.tsv] {
+	if {[file extension $file] eq ".lz4"} continue
 	job lz4_${build}_[file tail $file] -deps {$file} -targets {$file.lz4} -vars {dest build} -code {
 		cg lz4 -c 12 -i 1 $dep
 	}
