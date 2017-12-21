@@ -397,6 +397,13 @@ table_tsv method fields {args} {
 	}
 }
 
+table_tsv method unlink {tktable button} {
+	private $object tdata
+	set tdata(tktable)	$tktable
+	$tktable configure -variabletype tktable -usecommand 1 -command {}
+	$button configure -textvariable {}
+}
+
 table_tsv method link {tktable button} {
 	private $object tdata
 	set tdata(tktable)	$tktable

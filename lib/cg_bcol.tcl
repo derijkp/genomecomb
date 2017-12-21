@@ -181,7 +181,9 @@ proc bcol_close bcol {
 # the procedure bcol_get follows the Tcl lrange convention: end position is included!
 # chromosome "" will take the empty chromosome, or else the first in the list
 proc bcol_get {bcol start {end {}} {chromosome {}}} {
-	if {[dict get $bcol objtype] ne "bcol"} {error "This is not a bcol object: $bcol"}
+	if {[catch {dict get $bcol objtype} objtype] || $objtype ne "bcol"} {
+		error "This is not a bcol object: $bcol"
+	}
 	if {$end eq ""} {
 		set end $start
 	}

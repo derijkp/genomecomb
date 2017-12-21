@@ -274,9 +274,9 @@ mainw method tree_open {dir} {
 mainw method opentsv {args} {
 	private $object view
 	foreach {file} $args break
+	$object.tb unlink $object.table.data $object.buttons.query
 	catch {$object.tb destroy}
 	table_tsv new $object.tb
-	$object.tb link $object.table.data $object.buttons.query
 	set file [$object.tb open $file $object]
 	wm title $object $file
 	# find root and start tree
@@ -321,6 +321,7 @@ mainw method opentsv {args} {
 	set view(summary_rows) {}
 	set view(summary_cols) {}
 	set view(summary_cells) [list count]
+	$object.tb link $object.table.data $object.buttons.query
 }
 
 mainw method savetsv {file} {
@@ -676,3 +677,4 @@ mainw method curline {} {
 	set wtable $object.table.data
 	$object.tb getline [$object cur_row]
 }
+
