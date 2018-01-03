@@ -1,0 +1,30 @@
+= keyvalue =
+
+== Format ==
+cg keyvalue ?options? ?infile? ?outfile?
+
+== Summary ==
+Converts data in tsv format from wide format (data for each sample in separate columns) 
+to keyvalue format.
+
+== Description ==
+Converts a tsv file containing different values of an object in one row (different fields) into 
+a key-value format: Each of the rows is split into multiple rows (one for each data column) 
+containing fields identifying the object followed by the fields key (fieldname of data column in original) \
+and value (value in the data column).
+
+The fields identifying the object can be specified using the -idfields option, but defaults to sample or id.
+sample as id field is treated special (unless an actual sample field is present in the file):
+The actual sample value is extracted from the fieldname (field-sample).
+
+== Arguments ==
+; **infile**: file to be converted, if not given, uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Options ==
+; -idfields list: which fields identify the object (default sample or id)
+; -samplefields samplefields: Using this option, sample names that consist of several parts separated by - (as typical in 
+genomecomb output, e.g. -gatk-rdsbwa-sample1) are split up in separate fields with the field names given by **samplefields**
+
+== Category ==
+Conversion

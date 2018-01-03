@@ -409,6 +409,109 @@ test format {wide other unsorted} {
 	exec diff tmp/wide.tsv tmp/expected.tsv
 } {}
 
+test format {keyvalue} {
+	write_tab tmp/test.tsv {
+		id	v1	v2
+	 	id1	1	2
+	 	id2	3	3
+	}
+	exec cg keyvalue tmp/test.tsv tmp/result.tsv
+	write_tab tmp/expected.tsv {
+		id	key	value
+	 	id1	v1	1
+	 	id1	v2	2
+	 	id2	v1	3
+	 	id2	v2	3
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test format {keyvalue} {
+	write_tab tmp/test.tsv {
+		test	v1	v2
+	 	id1	1	2
+	 	id2	3	3
+	}
+	exec cg keyvalue -idfields test tmp/test.tsv tmp/result.tsv
+	write_tab tmp/expected.tsv {
+		test	key	value
+	 	id1	v1	1
+	 	id1	v2	2
+	 	id2	v1	3
+	 	id2	v2	3
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test format {keyvalue} {
+	write_tab tmp/test.tsv {
+		test	extra	v1	v2
+	 	id1	a	a1	a2
+	 	id1	b	b1	b2
+	 	id2	a	3	3
+	}
+	exec cg keyvalue -idfields {test extra} tmp/test.tsv tmp/result.tsv
+	write_tab tmp/expected.tsv {
+		test	extra	key	value
+	 	id1	a	v1	a1
+	 	id1	a	v2	a2
+	 	id1	b	v1	b1
+	 	id1	b	v2	b2
+	 	id2	a	v1	3
+	 	id2	a	v2	3
+	}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test format {keyvalue} {
+	write_tab tmp/wide.tsv {
+		chromosome begin end type ref alt freq-test-sample1 sequenced-test-sample1 freq-try-sample1 sequenced-try-sample1
+	 	chr1 4200 4200 snp G A 0.5 v 0.8 v
+	}
+	exec cg keyvalue -samplefields {group sample} tmp/wide.tsv tmp/keyvalue.tsv
+	write_tab tmp/expected.tsv {
+		group	sample	chromosome	begin	end	type	ref	alt	key	value
+		test	sample1	chr1	4200	4200	snp	G	A	freq	0.5
+		test	sample1	chr1	4200	4200	snp	G	A	sequenced	v
+		try	sample1	chr1	4200	4200	snp	G	A	freq	0.8
+		try	sample1	chr1	4200	4200	snp	G	A	sequenced	v
+	}
+	exec diff tmp/keyvalue.tsv tmp/expected.tsv
+} {}
+
+test format {keyvalue} {
+	write_tab tmp/wide.tsv {
+		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleSeq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleSeq2-sample2 zyg-sample2
+	 	chr1 4200 4200 snp G A 0.5 v G A t 0.8 v A A m
+	 	chr1 4200 4200 ins {} A 0.8 v {} A t 0.1 r {} {} r
+	}
+	exec cg keyvalue tmp/wide.tsv tmp/keyvalue.tsv
+	write_tab tmp/expected.tsv {
+		sample	chromosome	begin	end	type	ref	alt	key	value
+		sample1	chr1	4200	4200	snp	G	A	freq	0.5
+		sample1	chr1	4200	4200	snp	G	A	sequenced	v
+		sample1	chr1	4200	4200	snp	G	A	alleleSeq1	G
+		sample1	chr1	4200	4200	snp	G	A	alleleSeq2	A
+		sample1	chr1	4200	4200	snp	G	A	zyg	t
+		sample2	chr1	4200	4200	snp	G	A	freq	0.8
+		sample2	chr1	4200	4200	snp	G	A	sequenced	v
+		sample2	chr1	4200	4200	snp	G	A	alleleSeq1	A
+		sample2	chr1	4200	4200	snp	G	A	alleleSeq2	A
+		sample2	chr1	4200	4200	snp	G	A	zyg	m
+		sample1	chr1	4200	4200	ins	{}	A	freq	0.8
+		sample1	chr1	4200	4200	ins	{}	A	sequenced	v
+		sample1	chr1	4200	4200	ins	{}	A	alleleSeq1	{}
+		sample1	chr1	4200	4200	ins	{}	A	alleleSeq2	A
+		sample1	chr1	4200	4200	ins	{}	A	zyg	t
+		sample2	chr1	4200	4200	ins	{}	A	freq	0.1
+		sample2	chr1	4200	4200	ins	{}	A	sequenced	r
+		sample2	chr1	4200	4200	ins	{}	A	alleleSeq1	{}
+		sample2	chr1	4200	4200	ins	{}	A	alleleSeq2	{}
+		sample2	chr1	4200	4200	ins	{}	A	zyg	r
+	}
+	exec diff tmp/keyvalue.tsv tmp/expected.tsv
+} {}
+
 test gene2reg {gene2reg basic} {
 	cg select -q {$name2 == "HES4"} data/gene_test.tsv tmp/genetmp.tsv
 	cg gene2reg tmp/genetmp.tsv tmp/result.tsv
