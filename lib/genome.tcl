@@ -189,6 +189,7 @@ proc genome_get {f chr start end {correctend 0}} {
 }
 
 proc genome_mask {dbdir seq chr estart eend {freql 0} {freqN 0.2} {delsize 5} {repeats s} {snpdbpatterns snp}} {
+# puts "" ; putsvars dbdir seq chr estart eend freql freqN delsize repeats snpdbpatterns
 	global dbsnpdata
 	# init dbsnpdata
 	if {![info exists dbsnpdata($dbdir)]} {
@@ -196,17 +197,28 @@ proc genome_mask {dbdir seq chr estart eend {freql 0} {freqN 0.2} {delsize 5} {r
 		foreach snpdbpattern $snpdbpatterns {
 			lappend dbsnpfiles {*}[gzfiles $dbdir/var_*$snpdbpattern*.tsv.gz]
 		}
-		set dbsnpposs {}
+		set dbsnpposs {} ;  set dbsnptype {}
 		foreach dbsnp $dbsnpfiles {
 			set dbsnpheader [cg select -h $dbsnp]
 			set temp [tsv_basicfields $dbsnpheader 4]
-			lappend temp [lsearch $dbsnpheader freq]
+			set freqtype f
+			set pos [lsearch $dbsnpheader freq]
+			if {$pos == -1} {
+				set pos [lsearch $dbsnpheader freqp]
+				set freqtype p
+			}
+			if {$pos == -1} {
+				error "file $dbsnp has no freq or freqp field"
+			}
+			lappend temp $pos
 			lappend dbsnpposs $temp
+			lappend dbsnptype $freqtype
 		}
-		set dbsnpdata($dbdir) [dict create dbsnpfiles $dbsnpfiles dbsnpposs $dbsnpposs]
+		set dbsnpdata($dbdir) [dict create dbsnpfiles $dbsnpfiles dbsnpposs $dbsnpposs dbsnptype $dbsnptype]
 	} else {
 		set dbsnpfiles [dict get $dbsnpdata($dbdir) dbsnpfiles]
 		set dbsnpposs [dict get $dbsnpdata($dbdir) dbsnpposs]
+		set dbsnptype [dict get $dbsnpdata($dbdir) dbsnptype]
 	}
 	# repeats are already masked, change lowercase to N if hardmasking is required
 	if {$repeats eq "0"} {
@@ -216,18 +228,22 @@ proc genome_mask {dbdir seq chr estart eend {freql 0} {freqN 0.2} {delsize 5} {r
 	}
 	# mask snps
 	set list {}
-	foreach snpposs $dbsnpposs dbsnp $dbsnpfiles {
+	foreach snpposs $dbsnpposs dbsnp $dbsnpfiles freqtype $dbsnptype {
 		set temp [tabix $dbsnp chr$chr $estart $eend]
-		lappend list {*}[list_subindex $temp $snpposs]
-	}
-	set list [ssort -natural -decreasing $list]
-	list_foreach {c s e type ffreq} $list {
-		if {$e <= $estart || $s > $eend} continue
-		set freq 0
-		foreach el [split $ffreq ,] {
-			if {[isdouble $el] && $el > $freq} {set freq $el}
+		foreach line [list_subindex $temp $snpposs] {
+			foreach {c s e type ffreq} $line break
+			if {$e <= $estart || $s > $eend} continue
+			set freq 0
+			foreach el [split [lindex $line 4] ,] {
+				if {[isdouble $el] && $el > $freq} {set freq $el}
+			}
+			if {$freqtype eq "p"} {set freq [expr {$freq/100.0}]}
+			if {$freq <= $freql && $freq <= $freqN} continue
+			lappend list [list $s $e $type $freq]
 		}
-		if {$freq <= $freql} continue
+	}
+	set list [lsort -index 2 -increasing $list]
+	list_foreach {s e type freq} $list {
 		set start [expr {$s-$estart}]
 		if {$start < 0} {set start 0}
 		if {$type eq "ins"} {

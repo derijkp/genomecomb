@@ -263,6 +263,7 @@ proc cg_maketabix {args} {
 		set header [tsv_open $f comment]
 		catch {gzclose $f}
 		set skip [llength [split $comment \n]]
+		incr skip
 		foreach {chrompos beginpos endpos} [lmath_calc [tsv_basicfields $header 3] + 1] break
 		exec tabix -s $chrompos -b $beginpos -e $endpos -0 -S $skip $file
 	}

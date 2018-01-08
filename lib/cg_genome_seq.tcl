@@ -33,7 +33,15 @@ proc cg_genome_seq {args} {
 		-f - -freq {
 			set freql $value
 		}
+		-fp - -freqp {
+			if {$value != -1} {set value [expr {$value/100.0}]}
+			set freql $value
+		}
 		-n - -freqn {
+			set freqN $value
+		}
+		-np - -freqnp {
+			if {$value != -1} {set value [expr {$value/100.0}]}
 			set freqN $value
 		}
 		-p - -snpdbpattern {
