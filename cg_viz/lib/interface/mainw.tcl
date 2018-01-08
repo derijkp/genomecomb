@@ -274,7 +274,7 @@ mainw method tree_open {dir} {
 mainw method opentsv {args} {
 	private $object view
 	foreach {file} $args break
-	$object.tb unlink $object.table.data $object.buttons.query
+	catch {$object.tb unlink $object.table.data $object.buttons.query}
 	catch {$object.tb destroy}
 	table_tsv new $object.tb
 	set file [$object.tb open $file $object]
