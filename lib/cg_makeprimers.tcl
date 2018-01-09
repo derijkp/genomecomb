@@ -517,7 +517,17 @@ proc makeprimers_region {name maxsize prefsize temperature dbdir db extraseq min
 		set dbsnpheader [cg select -h $dbsnpfile]
 		set poss [tsv_basicfields $dbsnpheader 3]
 		lappend poss [lsearch $dbsnpheader name]
-		lappend poss [lsearch $dbsnpheader freq]
+		set pos [lsearch $dbsnpheader freq]
+		if {$pos == -1} {
+			set pos [lsearch $dbsnpheader freqp]
+			if {$pos == -1} {
+				error "file $dbsnpfile contains no freq or freqp field"
+			}
+			set freqtype p
+		} else {
+			set freqtype f
+		}
+		lappend poss $pos
 		set temp [tabix $dbsnpfile chr$cchr $regstart $regend]
 		foreach dbsnpline $temp {
 			set dbsnpline [split $dbsnpline \t]
@@ -527,7 +537,17 @@ proc makeprimers_region {name maxsize prefsize temperature dbdir db extraseq min
 			incr end -1
 			set end [expr {$end - $regstart}]
 			if {[expr {$end - $start}] > 2} continue
-			set freq [max {*}[split $freq ,]]
+			if {$freqtype eq "p"} {
+				set freq 0
+				foreach el [split $freq ,] {
+					if {![isdouble $el]} continue
+					set el [expr {$el / 100.0}]
+					if {$el > $freq} {set freq $el}
+				}
+				regsub {\.0+$} $freq {} freq
+			} else {
+				set freq [max {*}[split $freq ,]]
+			}
 			if {$freq <= $minfreq && $minfreq >= 0} continue
 			db set [list ft $id] type dbsnp name $name chromosome $cchr start $start end $end freq $freq
 			incr id

@@ -1,10 +1,10 @@
 remark	label	sequence	modification	scale	purification	project	pair	species	chromosome	cyto	target	contig	pos	temperature	mg
-pairhits 1 ucschits 1 asize 354 hits 2 m 147 fts {{repeat 0 18 completerepeat,multi L1PREC2}}	1-69432-69531f	CAGCCTCTCTGCCCGTGTC					1	Hs	1				69267	64.549
+pairhits 1 ucschits 1 asize 354 hits 2 m 147 fts {{repeat 0 18 completerepeat,multi L1PREC2} {dbsnp 14 14 rs2691296}}	1-69432-69531f	CAGCCTCTCTGCCCGTGTC					1	Hs	1				69267	64.549
 pairhits 1 ucschits 1 asize 354 hits 9 m 107 fts {{repeat 0 21 completerepeat,multi L1PREC2}}	1-69432-69531r	TTTGTGGTCGACTGCAGCTTGT					1	Hs	1				69638	65.366
 pairhits 1 ucschits 1 asize 378 hits 3 m 109	1-231830471-231830512f	TTCTCTGTTTCGCTTCACTCAGAACT					1	Hs	1				231830337	64.038
 pairhits 1 ucschits 1 asize 378 hits 3 m 227 fts {{repeat 0 21 completerepeat,multi L1PA17}}	1-231830471-231830512r	GAGGCTTGGGCTTCTCATGAAC					1	Hs	1				231830739	64.543
-pairhits 1 ucschits 1 asize 501 hits 3 m 213 fts {{repeat 0 14 completerepeat,multi AluSx}}	2-145425380-145425421f	CCACTATGCCCGGCCAATC					1	Hs	2				145425149	65.805
-pairhits 1 ucschits 1 asize 501 hits 1 m 246 fts {{repeat 3 25 completerepeat,multi MER33}}	2-145425380-145425421r	ACATATTTGGCTCGCTTGTATTTGTG					1	Hs	2				145425667	64.287
+pairhits 1 ucschits 1 asize 535 hits 2 m 403 fts {{repeat 0 20 completerepeat,multi AluSx}}	2-145425380-145425421f	GGGTTCTAGCCATTCGCCTGT					1	Hs	2				145424957	64.752
+pairhits 1 ucschits 1 asize 535 hits 4 m 90	2-145425380-145425421r	ACCCAGCATGCCCAATTCTACTAT					1	Hs	2				145425511	64.010
 pairhits 1 ucschits 1 asize 488 hits 2 m 334	2-145427682-145427723f	CCTCAAGGTGAGCTGTCAATCATAAC					1	Hs	2				145427323	64.330
 pairhits 1 ucschits 1 asize 488 hits 1 m 112 fts {{repeat 0 24 completerepeat,multi MER5A}}	2-145427682-145427723r	GGTGATTCTGATGCGCAAGTTTAGA					1	Hs	2				145427835	65.637
 no primers	2-145671333-145671387
@@ -18,14 +18,14 @@ pairhits 1 ucschits 1 asize 491 hits 3 m 83 fts {{repeat 0 21 completerepeat,mul
 pairhits 1 ucschits 1 asize 491 hits 1 m 367	4-5527095-5527135r	CTCCACCTCATTGGGCAGTAAAC					1	Hs	4				5527502	64.073
 pairhits 1 ucschits 1 asize 540 hits 3 m 174	4-24981668-24981709f	CAAGTGTGGCCCAGATCAGTGT					1	Hs	4				24981473	64.683
 pairhits 1 ucschits 1 asize 540 hits 6 m 324 fts {{repeat 0 19 completerepeat,multi AluSx}}	4-24981668-24981709r	CCAGCCTGTCCAACAAAGCA					1	Hs	4				24982033	64.604
-pairhits 1 ucschits 1 asize 480 hits 2 m 145 fts {{repeat 0 17 repeat,multi MIRb}}	7-26416392-26416433f	AGCGCTTAGCAAATAGTGGGTCAT					1	Hs	7				26416224	64.318
-pairhits 1 ucschits 1 asize 480 hits 1 m 293	7-26416392-26416433r	GCTGAAATGGTTATGTTGGCGATT					1	Hs	7				26416726	65.205
+pairhits 1 ucschits 1 asize 391 hits 2 m 145 fts {{repeat 0 19 repeat,multi MIRb}}	7-26416392-26416433f	ATAGCGCTTAGCAAATAGTGGGTCAT					1	Hs	7				26416222	64.231
+pairhits 1 ucschits 1 asize 391 hits 1 m 204	7-26416392-26416433r	CAGCTCTCCTGTACGTGGCAAA					1	Hs	7				26416637	64.851
 pairhits 1 ucschits 1 asize 436 hits 3 m 98 fts {{repeat 0 25 completerepeat,multi L1M1}}	8-1949105-1949146f	ATTGATTTGCCTATCACAAACCATCC					1	Hs	8				1948982	65.090
 pairhits 1 ucschits 1 asize 436 hits 3 m 296 fts {{repeat 0 10 completerepeat,multi AluSq} {repeat 11 18 completerepeat,multi L1M1}}	8-1949105-1949146r	CCCAGGACCCTGCCTCAAC					1	Hs	8				1949442	65.288
 no primers	18-103991-104038
 pairhits 1 ucschits 1 asize 461 hits 1 m 306	22-16108919-16108960f	CTGCACATAAAGCGGGCATTTC					1	Hs	22				16108592	65.876
 pairhits 1 ucschits 1 asize 461 hits 1 m 113	22-16108919-16108960r	GCCAGCAAACGTCAGTGTCC					1	Hs	22				16109073	64.171
-pairhits 1 ucschits 1 asize 467 hits 1 m 216	M-16151-16192f	CCAGTCTTGTAAACCGGAGACGA					1	Hs	M				15913	64.720
-pairhits 1 ucschits 1 asize 467 hits 1 m 209	M-16151-16192r	TGATTTCACGGAGGATGGTGGT					1	Hs	M				16401	65.927
+pairhits 1 ucschits 1 asize 332 hits 1 m 61	M-16151-16192f	CTCACCCATCAACAACCGCTATG					1	Hs	M				16068	65.827
+pairhits 1 ucschits 1 asize 332 hits 1 m 229	M-16151-16192r	AGTAGCACTCTTGTGCGGGATATTG					1	Hs	M				16421	64.725
 pairhits 2 ucschits 2 asize 414 hits 10 m 188 fts {{repeat 0 23 completerepeat,multi AluSg}}	X-302426-302467f	GCAATCCCAGTTACTCAGGAGAGG					1	Hs	X				302215	64.539
 pairhits 2 ucschits 2 asize 414 hits 2 m 184	X-302426-302467r	CCCTGCCGTTAACACCTTCG					1	Hs	X				302651	64.927
