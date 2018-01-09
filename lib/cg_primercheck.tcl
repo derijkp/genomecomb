@@ -131,7 +131,7 @@ proc cg_primercheck {args} {
 	foreach dbsnp $dbsnpfiles {
 		set dbsnpheader [cg select -h $dbsnp]
 		set temp [tsv_basicfields $dbsnpheader 4]
-		lappend temp {*}[list_cor $dbsnpheader {name freq valid weight func submitterCount submitters bitfields}]
+		lappend temp {*}[list_cor $dbsnpheader {name freq freqp valid weight func submitterCount submitters bitfields}]
 		lappend dbsnpposs $temp
 	}
 	set genomedb [lindex [glob $dbdir/genome_*.ssa] 0]
@@ -182,9 +182,27 @@ proc cg_primercheck {args} {
 					set temp [tabix $dbsnp chr$targetchrom $primerpos($p,start) $primerpos($p,end)]
 					foreach line $temp {
 						set line [split $line \t]
-						foreach {chrom begin end type snpname freq valid weight func submitterCount submitters bitfields} [list_sub $line $snpposs] break
-						if {[isdouble $freq] && $freq > $maxfreq($p)} {
-							set maxfreq($p) $freq
+						foreach {chrom begin end type snpname freq freqp valid weight func submitterCount submitters bitfields} [list_sub $line $snpposs] break
+						if {$freq ne ""} {
+							foreach el [split $freq ,] {
+								if {[isdouble $el] && $el > $maxfreq($p)} {
+									set maxfreq($p) $el
+								}
+							}
+						} else {
+							set freq {}
+							foreach el [split $freqp ,] {
+								if {![isdouble $el]} continue
+								set el [expr {$el / 100.0}]
+								if {$el > $maxfreq($p)} {
+									regsub {\.0+$} $el {} el
+									set maxfreq($p) $el
+								} else {
+									regsub {\.0+$} $el {} el
+								}
+								lappend freq $el
+							}
+							set freq [join $freq ,]
 						}
 						set descr "${snpname}($type@$chrom:$begin-${end}\;freq=${freq}\;valid=${valid}\;submitterCount=$submitterCount)"
 						lappend primersnps($p) $descr
