@@ -18,12 +18,12 @@ proc cg_calcsequencedgenome {args} {
 		list_foreach {begin end} $indices {
 			incr end
 			if {$begin > [expr {$pend+1}]} {
-				puts $o chr$chr\t$pbegin\t$pend\t[expr {$end-$begin}]
+				puts $o chr$chr\t$pbegin\t$pend\t[expr {$pend-$pbegin}]
 				set pbegin $begin
 			}
 			set pend $end
 		}
-		puts $o chr$chr\t$pbegin\t$pend\t[expr {$end-$begin}]
+		puts $o chr$chr\t$pbegin\t$pend\t[expr {$pend-$pbegin}]
 	}
 	close $f
 }
