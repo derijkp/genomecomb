@@ -259,6 +259,14 @@ proc cg_tsvdiff args {
 	if {[info exists width]} {lappend diffopts --width=$width}
 	set errors 0
 	if {![catch {exec diff -r {*}$diffopts {*}$excludeopts --brief $dir1 $dir2} diff]} {exit 0}
+	if {![file isdir $dir1] && ![file isdir $dir2]} {
+		if {!$brief} {
+			tsvdiff_file $dir1 $dir2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
+		} else {
+			tsvdiff_file_brief $dir1 $dir2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
+		}
+		if {$errors} {exit 1} else {exit 0}
+	}
 	set len1 [string length $dir1]
 	set last1 [expr {$len1 - 1}]
 	set len2 [string length $dir2]
