@@ -837,6 +837,41 @@ test bcol_var_annot {basic} {
 	exec diff tmp/results.tsv tmp/expected.tsv
 } {}
 
+test bcol_var_annot {basic default} {
+	test_cleantmp
+	cg bcol make -t f --multicol alt -d - --multilist A,C,T,G -p begin -c chromosome tmp/var_annot.bcol score < data/var-annot.tsv
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	alt
+		chr1	0	1	snp	A
+		chr1	0	1	snp	C
+		chr1	1	2	snp	A
+		chr1	1	2	snp	C
+		chr1	1	2	snp	T
+		chr1	4	5	snp	T
+		chr1	10	20	snp	T
+		chr2	22	23	snp	G
+		chr2	26	27	snp	A
+		chr2	29	30	snp	C
+	}
+	exec cg annotate tmp/vars.tsv tmp/results.tsv tmp/var_annot.bcol
+	# first = 0 because type f is rounded to 6 decimal places (precision)
+	# latest = 3000000 because type f cannot store 3000000.1 
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	alt	annot
+		chr1	0	1	snp	A	0
+		chr1	0	1	snp	C	0.1
+		chr1	1	2	snp	A	2
+		chr1	1	2	snp	C	0
+		chr1	1	2	snp	T	2.1
+		chr1	4	5	snp	T	6.1
+		chr1	10	20	snp	T	0
+		chr2	22	23	snp	G	0
+		chr2	26	27	snp	A	0
+		chr2	29	30	snp	C	3000000
+	}
+	exec diff tmp/results.tsv tmp/expected.tsv
+} {}
+
 test bcol_var_annot {basic type d} {
 	test_cleantmp
 	cg bcol make -t d --multicol alt --multilist A,C,T,G -p begin -c chromosome tmp/var_annot.bcol score < data/var-annot.tsv
