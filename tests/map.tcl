@@ -33,7 +33,8 @@ test map_minimap2 {map_minimap2 basic} {
 } {}
 
 test realign {realign_gatk basic} {
-	cg realign_gatk -stack 1 data/bwa.bam tmp/ratest.bam $::refseqdir/hg19
+	file copy data/bwa.bam tmp/bwa.bam
+	cg realign_gatk -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19
 	exec diff tmp/ratest.bam data/ratest-gatk.bam
 } {}
 
