@@ -786,4 +786,24 @@ test tsv2bed {fixed chr} {
 	exec diff tmp/temp.bed tmp/expected.bed
 } {}
 
+test format {tsvjoin} {
+	write_tab tmp/file1.tsv {
+		id	v1
+		id1	a
+		id2	b
+	}
+	write_tab tmp/file2.tsv {
+		id	v2
+		id1	1
+		id2	2
+	}
+	write_tab tmp/expected.tsv {
+		id	v1	v2
+		id1	a	1
+		id2	b	2
+	}
+	exec cg tsvjoin tmp/file1.tsv tmp/file2.tsv tmp/result.tsv
+	cg tsvdiff tmp/result.tsv tmp/expected.tsv
+} {}
+
 testsummarize

@@ -1,0 +1,34 @@
+= tsvjoin =
+
+== Format ==
+cg tsvjoin ?options? file1 file2 ?outfile?
+
+== Summary ==
+join two tsv files based on common fields (must be sorted).
+
+== Description ==
+tsvjoin creates a new tsv file joining the two given input tsv files. The
+new tsv adds extra fields from the second tsv to the first where the
+idfields are the same between the two. Both files must be sorted on their
+respective id fields.
+
+== Arguments ==
+; **file1**: input file 1
+; **file2**: input file 2
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Options ==
+; -idfields list: which fields identify the object in file1, and should be
+match the id fields in file2 (default is all fields with the same name
+between the 2 files)
+; -idfields2 list: which fields identify the object in file2, and should be match the id fields in file1 (default is same fields as for file1)
+; -pre1 string: prefix all fieldnames (except the idfields) coming from file1 with **string**
+; -pre2 string: prefix all fieldnames (except the idfields) coming from file2 with **string**
+; -type inner/full/left/right: determines the type of join:
+In an **inner** join only lines are present where the id was found in both files. A **left**
+join shows all lines of file1; if the id values where not found in file2, the file2 based fields
+are empty. A **right** join contains all lines in file2 and a **full** join has data for all lines
+in both files, putting empty values where needed.
+
+== Category ==
+Conversion
