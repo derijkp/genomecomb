@@ -1,0 +1,34 @@
+= colvalue =
+
+== Format ==
+cg colvalue ?options? ?infile? ?outfile?
+
+== Summary ==
+Converts data in tsv format from a long key-value format to a wide column-value format
+
+== Description ==
+In a file in long key-value format, each value is in a separate line,
+where each line has identifier fields indicating the object, key fields defining
+what the value descibes about the object, and a value field containing the actual value.
+"cg colvalue" converts these files to a wide col-value format, where all values
+about the object are on the same line in different columns.
+
+The fields identifying the object can be specified using the -idfields option. If not given,
+all fields except the key and value fields will be used as idfields.
+
+This command is similar to the [[cg_wide]] command, but more generic. [[cg_wide]] is specifically made
+for conveniently converting variant files (to wide variant file format with samples). 
+cg colvalue can be used to "transpose" any tsv file.
+
+== Arguments ==
+; **infile**: file to be converted, if not given, uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Options ==
+; -idfields list: which fields identify the object (default sample or id)
+; -keyfields keyfields: fields which compose the key. If more than one
+field is given, the fieldnames will be constructed by concatenating the values with - (default is key or parameter)
+; -valuefield: field containing the value (default value)
+
+== Category ==
+Conversion

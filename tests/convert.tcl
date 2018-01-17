@@ -512,6 +512,56 @@ test format {keyvalue} {
 	exec diff tmp/keyvalue.tsv tmp/expected.tsv
 } {}
 
+test format {colvalue} {
+	write_tab tmp/keyvalue.tsv {
+		sample	key	value
+		sample1	a	1
+		sample1	b	2	
+		sample2	a	3
+		sample2	b	4	
+	}
+	exec cg colvalue tmp/keyvalue.tsv tmp/wide.tsv
+	write_tab tmp/expected.tsv {
+		sample	a	b
+		sample1	1	2
+		sample2	3	4
+	}
+	cg tsvdiff tmp/wide.tsv tmp/expected.tsv
+} {}
+
+test format {colvalue} {
+	write_tab tmp/keyvalue.tsv {
+		sample	x	test	nr
+		sample1	n	a	1
+		sample1	n	b	2	
+		sample2	n	a	3
+		sample2	n	b	4	
+	}
+	exec cg colvalue -idfields sample -keyfields test -valuefield nr tmp/keyvalue.tsv tmp/wide.tsv
+	write_tab tmp/expected.tsv {
+		sample	a	b
+		sample1	1	2
+		sample2	3	4
+	}
+	cg tsvdiff tmp/wide.tsv tmp/expected.tsv
+} {}
+
+test format {colvalue} {
+	write_tab tmp/keyvalue.tsv {
+		group	sample	chromosome	begin	end	type	ref	alt	key	value
+		test	sample1	chr1	4200	4200	snp	G	A	freq	0.5
+		test	sample1	chr1	4200	4200	snp	G	A	sequenced	v
+		try	sample1	chr1	4200	4200	snp	G	A	freq	0.8
+		try	sample1	chr1	4200	4200	snp	G	A	sequenced	v
+	}
+	exec cg colvalue -keyfields {key group sample} tmp/keyvalue.tsv tmp/wide.tsv
+	write_tab tmp/expected.tsv {
+		chromosome begin end type ref alt freq-test-sample1 sequenced-test-sample1 freq-try-sample1 sequenced-try-sample1
+	 	chr1 4200 4200 snp G A 0.5 v 0.8 v
+	}
+	cg tsvdiff tmp/wide.tsv tmp/expected.tsv
+} {}
+
 test gene2reg {gene2reg basic} {
 	cg select -q {$name2 == "HES4"} data/gene_test.tsv tmp/genetmp.tsv
 	cg gene2reg tmp/genetmp.tsv tmp/result.tsv
