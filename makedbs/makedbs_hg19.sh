@@ -210,6 +210,13 @@ job reg_exome_intGene \
 	file rename -force $target.temp $target
 }
 
+file_write extra/reg_${build}_pseudoautosomal.tsv {chromosome	begin	end	name
+X	60001	2699520	PAR1
+X	154931044	155260560	PAR2
+Y	10001	2649520	PAR1
+Y	59034050	59363566	PAR2
+}
+
 job reg_${build}_phenotype -deps {extra/reg_${build}_genes.tsv} \
 -targets {extra/reg_${build}_phenotype.tsv extra/geneannot_${build}_phenotype.tsv} -vars {dest build} -code {
 	# get target2, uses biomart (ensembl geneset) and clinvar for gene-phenotype correlations

@@ -249,6 +249,7 @@ set auto_index(multicompar_tcl_addvars_coverageRefScore) [list source [file join
 set auto_index(multicompar_tcl_addvars) [list source [file join $dir cg_pmulticompar.tcl]]
 set auto_index(pmulticompar_job) [list source [file join $dir cg_pmulticompar.tcl]]
 set auto_index(cg_pmulticompar) [list source [file join $dir cg_pmulticompar.tcl]]
+set auto_index(cg_predictgender) [list source [file join $dir cg_predictgender.tcl]]
 set auto_index(primercheck_search) [list source [file join $dir cg_primercheck.tcl]]
 set auto_index(primercheck_merge) [list source [file join $dir cg_primercheck.tcl]]
 set auto_index(primercheck_epcr) [list source [file join $dir cg_primercheck.tcl]]

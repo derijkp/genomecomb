@@ -1,5 +1,6 @@
 proc process_reports_job {args} {
 	set reports all
+	set dbdir {}
 	cg_options process_reports args {
 		-dbdir {
 			set dbdir $value
@@ -15,8 +16,9 @@ proc process_reports_job {args} {
 	set sample [file tail $sampledir]
 	job_logdir $sampledir/log_jobs
 	set ref [dbdir_ref $dbdir]
-	if {$reports eq "all"} {
-		set reports {fastqstats fastqc flagstat_reads histodepth hsmetrics vars covered histo}
+	if {"all" in $reports} {
+		set pos [lsearch $reports all]
+		set reports [lreplace $reports $pos $pos fastqstats fastqc flagstat_reads histodepth hsmetrics vars covered histo]
 	}
 	# find regionfile indicating target of sequencing (used by hsmetrics, histodepth, vars, so needs to be here)
 	set targetfile [targetfile_job $sampledir $dbdir]
@@ -161,6 +163,12 @@ proc process_reports_job {args} {
 				cg bam_histo $regionfile $dep {1 5 10 20 50 100 200 500 1000} > $tempfile
 				file rename -force $tempfile $target
 			}
+		}
+	}
+	if {[inlist $reports predictgender]} {
+		set target $sampledir/reports/report_predictgender-$sample.tsv
+		job predictgender-$sample -deps {$sampledir/map-*.bam $sampledir/var-*.tsv} -vars {dbdir sampledir} -targets {$target} -code {
+			cg predictgender -dbdir $dbdir $sampledir $target
 		}
 	}
 	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
