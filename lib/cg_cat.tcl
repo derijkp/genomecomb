@@ -49,6 +49,7 @@ proc cg_cat {args} {
 	if {$sort} {set args [lsort -dict $args]}
 	set headers {}
 	set comments {}
+	set files {}
 	foreach file $args {
 		set f [gzopen $file]
 		set header [tsv_open $f comment]
@@ -56,6 +57,7 @@ proc cg_cat {args} {
 			error "$file does not have all fields: $fields"
 		}
 		lappend headers $header
+		lappend files $file
 		gzclose $f
 		if {$addcomment eq "1"} {
 			lappend comments "# ++++ $file ++++"
@@ -76,17 +78,17 @@ proc cg_cat {args} {
 	} else {
 		set header [lindex $headers 0]
 		set hlen [llength $header]
-		foreach testheader $headers {
+		foreach testheader $headers file $files {
 			set cor [list_cor $header $testheader]
 			if {[llength $testheader] != $hlen} {
 				if {$force eq ""} {
-					error "headers do not match, use -f to force or -m to merge"
+					error "headers do not match, use -f to force or -m to merge (at file $file)"
 				}
 			}
 			set poss [list_find $cor -1]
 			if {[llength $poss]} {
 				if {$force eq ""} {
-					error "headers do not match, use -f to force or -m to merge"
+					error "headers do not match, use -f to force or -m to merge (at file $file)"
 				}
 				lappend header {*}[list_sub $testheader $poss]
 			}
