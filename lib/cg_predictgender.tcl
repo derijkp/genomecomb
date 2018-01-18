@@ -60,7 +60,7 @@ proc cg_predictgender {args} {
 	}
 	if {$varfile eq ""} {
 		set varfile [gzfile $dir/var-gatk-*.tsv]
-		if {$varfile eq ""} {set varfile [gzfile $dir/var-*.tsv]}
+		if {![file exists $varfile]} {set varfile [gzfile $dir/var-*.tsv]}
 	}
 	#
 	set targetfile [gzfile $dir/reg_*targets*.tsv]
@@ -96,23 +96,38 @@ proc cg_predictgender {args} {
 	} else {
 		set xygender u
 	}
-	# pctheterozygous
-	set c [exec cg select -q "region(\"$xreg\") and \$coverage >= 20" -g zyg $varfile]
-	array set a $c
-	set htvars [expr {$a(t) + $a(c)}]
-	set totalvars [expr {$htvars + $a(m)}]
-	set pctheterozygous [expr {100.0*$htvars/$totalvars}]
-	# pctheterozygous
-	set c [exec cg select -q "region(\"$xreg\") and \$coverage >= 20 and \$quality >= 50" -g zyg $varfile]
-	array set a $c
-	set hthqvars [expr {$a(t) + $a(c)}]
-	set totalvars [expr {$hthqvars + $a(m)}]
-	set pcthqheterozygous [expr {100.0*$hthqvars/$totalvars}]
+	set pctheterozygous ?
+	set pcthqheterozygous ?
+	set totalvars 0
+	set htvars 0
+	if {[file exists $varfile]} {
+		catch {
+			# pctheterozygous
+			if {"zyg" ni [cg select -h $varfile]} {
+				set f {zyg=zyg($alleleSeq1,$alleleSeq2,$ref,$alt)}
+			} else {
+				set f {}
+			}
+			set c [exec cg select -f $f -q "region(\"$xreg\") and \$coverage >= 20" -g zyg $varfile]
+			array set a $c
+			set htvars [expr {[get a(t) 0] + [get a(c) 0]}]
+			set totalvars [expr {$htvars + [get a(m) 0]}]
+			set pctheterozygous [format %.4f [expr {100.0*$htvars/$totalvars}]]
+			# pctheterozygous
+			set c [exec cg select -f $f -q "region(\"$xreg\") and \$coverage >= 20 and \$quality >= 50" -g zyg $varfile]
+			array set a $c
+			set hthqvars [expr {$a(t) + $a(c)}]
+			set totalvars [expr {$hthqvars + $a(m)}]
+			set pcthqheterozygous [format %.4f [expr {100.0*$hthqvars/$totalvars}]]
+		}
+	}
 	# write results
 	if {![info exists outfile]} {set o stdout} else {set o [open $outfile w]}
 	puts $o [join {sample source parameter value} \t]
-	puts $o $sample\tgenomecomb\tpg_pctheterozygous\t[format %.4f $pctheterozygous]
-	puts $o $sample\tgenomecomb\tpg_pcthqheterozygous\t[format %.4f $pctheterozygous]
+	puts $o $sample\tgenomecomb\tpg_xtotalvars\t$totalvars
+	puts $o $sample\tgenomecomb\tpg_xheterozygous\t$htvars
+	puts $o $sample\tgenomecomb\tpg_pctheterozygous\t$pctheterozygous
+	puts $o $sample\tgenomecomb\tpg_pcthqheterozygous\t$pcthqheterozygous
 	puts $o $sample\tgenomecomb\tpg_refsize\t$refsize
 	puts $o $sample\tgenomecomb\tpg_xsize\t$xsize
 	puts $o $sample\tgenomecomb\tpg_ysize\t$ysize
@@ -123,8 +138,6 @@ proc cg_predictgender {args} {
 	puts $o $sample\tgenomecomb\tpg_xncount\t[format %.4f $xncount]
 	puts $o $sample\tgenomecomb\tpg_yncount\t[format %.4f $yncount]
 	puts $o $sample\tgenomecomb\tpg_xyratio\t[format %.4f $xyratio]
-	puts $o $sample\tgenomecomb\tpg_xheterozygous\t$htvars
-	puts $o $sample\tgenomecomb\tpg_xtotal\t$totalvars
 	puts $o $sample\tgenomecomb\txygender\t$xygender
 	if {$o ne "stdout"} {close $o}
 }
