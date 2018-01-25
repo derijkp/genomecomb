@@ -152,18 +152,19 @@ proc var_gatk_job {args} {
 	lz4index_job ${pre}varall-gatk-$root.tsv.lz4
 	# predict deletions separately, because gatk will not predict snps in a region where a deletion
 	# was predicted in the varall
-	job ${pre}delvar-gatk-$root -deps $deps \
+	job ${pre}delvar-gatk-$root -cores $threads \
+	-deps $deps \
 	-targets {${pre}delvar-gatk-$root.vcf} \
 	-skip [list ${pre}delvar-gatk-$root.tsv ${pre}delvar-gatk-$root.tsv.analysisinfo] \
 	-skip [list ${pre}var-gatk-$root.tsv ${pre}var-gatk-$root.tsv.analysisinfo] \
-	-vars {gatk opts regionfile gatkrefseq refseq} \
+	-vars {gatk opts regionfile gatkrefseq refseq threads} \
 	-code {
 		if {$regionfile ne ""} {
 			set bedfile [tempbed $regionfile $refseq]
 			lappend opts -L $bedfile
 		}
 		exec [gatkjava] -XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
-			{*}$opts -R $dep2 -I $dep -o $target.temp \
+			{*}$opts -nct $threads -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 10.0 -dcov 1000 \
 			--annotateNDA \
 			-glm INDEL 2>@ stderr >@ stdout
