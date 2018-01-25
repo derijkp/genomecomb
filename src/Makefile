@@ -22,6 +22,7 @@ all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../b
      ../bin$(ARCH)/sam_clipamplicons \
      ../bin$(ARCH)/tsv2bed \
      ../bin$(ARCH)/samcat \
+     ../bin$(ARCH)/sam_amplicons_count \
      ../bin$(ARCH)/sam2tsv ../bin$(ARCH)/tsv2sam
 
 clean:
@@ -131,3 +132,7 @@ clean:
 
 ../bin$(ARCH)/tsv2sam: tsv2sam.c $(TOOLS)
 	gcc tsv2sam.c tools.c $(CFLAGS) -o ../bin$(ARCH)/tsv2sam
+
+../bin$(ARCH)/sam_amplicons_count: sam_amplicons_count.c $(TOOLS)
+	gcc sam_amplicons_count.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam_amplicons_count
+
