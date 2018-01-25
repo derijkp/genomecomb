@@ -32,6 +32,7 @@ etc in the various var files (file report_vars-source.tsv)
 coverage, 20x coverage, gatk sequenced, ...), oper chromosome and in total
 (file report_covered-source.tsv)
 ; histo: "histogram" of coverage (file crsbwa-sample.histo)
+; predictgender: predict gender of a sample
 
 == Arguments ==
 ; sampledir: processed sample directory (containing variant files, bam files, etc.)

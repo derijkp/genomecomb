@@ -1,0 +1,47 @@
+= predictgender =
+
+== Format ==
+cg predictgender ?options? bamfile/sampledir ?outfile?
+
+== Summary ==
+predicts gender for a sample
+
+== Description ==
+cg predictgender calculates a number of relevant metrics and predicts the
+gender of the given sample. It outputs the results in report form (tsv
+file with parameter/value fields). The predicted gender is in the
+predgender line in the results.
+
+Usually the sampledir is given as argument, and the command will find all
+files needed for the prediction in it. If a bamfile is given instead, the
+command will look for other files needed in the same directory. The other
+files used can however also be given explicitely using options (-varfile,
+-targetfile)
+
+The measures compare the non-pseudoautosomal region on the Y chromosome (yreg)
+to the non-pseudoautosomal region on the X chromosome (xreg). these regions can be 
+derived from data in the given reference dbdir (-dbdir) or given directly
+by the options -regy and -regx.
+
+The gender prediction is primarily based on the the ratio of median
+coverage of 500 target regions in regy vs regx (**pg_yxcovratio**). If this
+is unclear (insufficient X coverage, between 0.1 and 0.3), a combination of the
+ratio of number of reads mapping to regy (normalized vs the target region)
+vs that of regx (**pg_yxnratio**), and the percentage of
+heterozygous high quality variants (**pg_pcthqheterozygous**) is
+used.
+
+== Arguments ==
+; bamfile/sampledir: The bamfile of the sample or the sampledir can be given as first argument
+; outfile: if given, results are written to outfile. Otherwise to stdout
+
+== Options ==
+; -dbdir dbdir: dbdir containing reference genomes databases, used to find non-pseudoautosomal regions
+; -varfile varfile: variantfile used for calculating the percentage of heterozygous high quality variants
+; -targetfile targetfile: used to find the size of target area and targeted regions in regy and regx
+; -xreg xreg: non-pseudoautosomal region on the X chromosome
+; -yreg yreg: non-pseudoautosomal region on the Y chromosome
+; -refreg refreg: non X/Y chromosome region, used for adding some reference metrics
+
+== Category ==
+Report

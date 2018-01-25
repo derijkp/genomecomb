@@ -5,8 +5,8 @@
 #
 
 proc cg_predictgender {args} {
-	set bamfile {}
 	set varfile {}
+	set targetfile {}
 	set xreg ""
 	set yreg ""
 	set refreg ""
@@ -15,11 +15,11 @@ proc cg_predictgender {args} {
 		-dbdir {
 			set dbdir [file_absolute $value]
 		}
-		-bamfile {
-			set bamfile $value
-		}
 		-varfile {
 			set varfile $value
+		}
+		-targetfile {
+			set targetfile $value
 		}
 		-refreg {
 			set refreg $value
@@ -30,14 +30,13 @@ proc cg_predictgender {args} {
 		-yreg {
 			set yreg $value
 		}
-	} {file outfile} 1 2 {
+	} {bamfile outfile} 1 2 {
 		predicts gender based on bam and var file, also gives some metrics indicative of gender
 	}
 	set dbdir [dbdir $dbdir]
 	if {$dbdir eq ""} {
-		if {$xreg eq ""} {set xreg chrX:2699520-154931044}
-		if {$yreg eq ""} {set yreg chrY:2649520-59034050}
-		if {$refreg eq ""} {set refreg chr22:20609431-50364777}
+		if {$xreg eq ""} {error "no xreg, give either -dbdir or -xreg option to specify non-pseudoautosomal region on X"}
+		if {$yreg eq ""} {error "no yreg, give either -dbdir or -yreg option to specify non-pseudoautosomal region on Y"}
 	} else {
 		if {$xreg eq ""} {
 			set c [split [cg select -q {$chromosome in "chrX X"} -f {begin end} [gzfile $dbdir/extra/reg_*_pseudoautosomal.tsv]] \n]
@@ -53,54 +52,81 @@ proc cg_predictgender {args} {
 			set refreg chr22:[lindex $c 0]-[lindex $c 1]
 		}
 	}
-	set dir $file
-	set sample [file tail $dir]
-	if {$bamfile eq ""} {
+	if {[file isdir $bamfile]} {
+		set dir $bamfile
 		set bamfile [lindex [glob -nocomplain $dir/map-*.bam] 0]
+		set sample [file tail $dir]
+	} else {
+		set dir [file dir $bamfile]
+		set sample [lindex [split [file root [file tail $bamfile]] -] end]
 	}
 	if {$varfile eq ""} {
 		set varfile [gzfile $dir/var-gatk-*.tsv]
 		if {![file exists $varfile]} {set varfile [gzfile $dir/var-*.tsv]}
+		if {![file exists $varfile]} {set varfile ""}
 	}
-	#
-	set targetfile [gzfile $dir/reg_*targets*.tsv]
+	if {$targetfile eq ""} {
+		set targetfile [gzfile $dir/reg_*targets*.tsv]
+		if {![file exists $targetfile]} {set targetfile ""}
+	}
 	if {$targetfile ne ""} {
 		set refsize [lindex [exec cg select -q "region(\"$refreg\") == 1" $targetfile | cg covered] end]
 		set xsize [lindex [exec cg select -q "region(\"$xreg\") == 1" $targetfile | cg covered] end]
 		set ysize [lindex [exec cg select -q "region(\"$yreg\") == 1" $targetfile | cg covered] end]
+		set tempxreg [tempfile]
+		set tempyreg [tempfile]
+		exec cg select -f {chromosome begin end} -sh /dev/null -q "region(\"$xreg\") == 1" $targetfile | head -500 > $tempxreg
+		exec cg select -f {chromosome begin end} -sh /dev/null -q "region(\"$yreg\") == 1" $targetfile | head -500 > $tempyreg
+		set end [lindex [exec tail -1 $tempxreg] end]
+		set xcov [median [exec samtools depth -a -r [lindex [split $xreg -] 0]-$end -b $tempxreg $bamfile | cut -d \t -f 3]]
+		set end [lindex [exec tail -1 $tempyreg] end]
+		set ycov [median [exec samtools depth -a -r [lindex [split $yreg -] 0]-$end -b $tempyreg $bamfile | cut -d \t -f 3]]
 	} else {
+		if {![file exists $dbdir]} {
+			error "no targetfile was given or found in sampledir, -dbdir must be given"
+		}
 		if {![regexp {([0-9]+)-([0-9]+)$} $refreg temp x1 x2]} {
 			error "refreg has wrong format: $refreg"
 		}
 		set refsize [expr {$x2-$x1}]
-		if {![regexp {([0-9]+)-([0-9]+)$} $xreg temp x1 x2]} {
+		#
+		if {![regexp {(.+):([0-9]+)-([0-9]+)$} $xreg temp chr x1 x2]} {
 			error "xreg has wrong format: $xreg"
 		}
 		set xsize [expr {$x2-$x1}]
-		if {![regexp {([0-9]+)-([0-9]+)$} $yreg temp y1 y2]} {
+		set tempxreg [tempfile]
+		set rfile [gzfile $dbdir/gene_*_refGene*.tsv]
+		exec cg select -q "region(\"$xreg\") == 1" $rfile | cg gene2reg | cg select -q {$type eq "CDS"} -f {chromosome begin end} -sh /dev/null | head -500 > $tempxreg
+		set end [lindex [exec tail -1 $tempxreg] end]
+		set xcov [median [exec samtools depth -a -r [lindex [split $xreg -] 0]-$end -b $tempxreg $bamfile | cut -d \t -f 3]]
+		#
+		if {![regexp {(.+):([0-9]+)-([0-9]+)$} $yreg temp chr y1 y2]} {
 			error "xreg has wrong format: $yreg"
 		}
 		set ysize [expr {$y2-$y1}]
+		set tempyreg [tempfile]
+		exec cg select -q "region(\"$yreg\") == 1" $rfile | cg gene2reg | cg select -q {$type eq "CDS"} -f {chromosome begin end} -sh /dev/null | head -500 > $tempyreg
+		set end [lindex [exec tail -1 $tempyreg] end]
+		set ycov [median [exec samtools depth -a -r [lindex [split $yreg -] 0]-$end -b $tempyreg $bamfile | cut -d \t -f 3]]
 	}
-	set refcount [exec samtools view -q 5 -c $bamfile $refreg]
-	set xcount [exec samtools view -q 5 -c $bamfile $xreg]
-	set ycount [exec samtools view -q 5 -c $bamfile $yreg]
+	if {$xcov < 4} {
+		set yxcovratio ?
+	} else {
+		set yxcovratio [expr {double($ycov)/$xcov}]
+	}
+	set refcount [exec samtools view -q 20 -c $bamfile $refreg]
+	set xcount [exec samtools view -q 20 -c $bamfile $xreg]
+	set ycount [exec samtools view -q 20 -c $bamfile $yreg]
 	set refncount [expr {$refcount/double($refsize)}]
 	set xncount [expr {$xcount/double($xsize)}]
 	set yncount [expr {$ycount/double($ysize)}]
-	set xyratio [expr {double($ycount)/$xcount}]
-	if {$xyratio <= 0.03} {
-		set xygender f
-	} elseif {$xyratio >= 0.05} {
-		set xygender m
-	} else {
-		set xygender u
-	}
+	set yxratio [expr {double($ycount)/$xcount}]
+	set yxnratio [expr {double($yncount)/$xncount}]
 	set pctheterozygous ?
 	set pcthqheterozygous ?
 	set totalvars 0
 	set htvars 0
-	if {[file exists $varfile]} {
+	if {$varfile ne ""} {
 		catch {
 			# pctheterozygous
 			if {"zyg" ni [cg select -h $varfile]} {
@@ -121,13 +147,36 @@ proc cg_predictgender {args} {
 			set pcthqheterozygous [format %.4f [expr {100.0*$hthqvars/$totalvars}]]
 		}
 	}
+	if {[isdouble $yxcovratio] && $yxcovratio < 0.1} {
+		set predgender f
+	} elseif {[isdouble $yxcovratio] && $yxcovratio > 0.3} {
+		set predgender m
+	} elseif {$yxnratio > 0.9} {
+		if {[isdouble $pcthqheterozygous] && $pcthqheterozygous > 60} {
+			set predgender u
+		} else {
+			set predgender m
+		}
+	} elseif {$yxnratio < 0.5} {
+		if {[isdouble $pcthqheterozygous] && $pcthqheterozygous < 40} {
+			set predgender u
+		} else {
+			set predgender f
+		}
+	} elseif {$yxncount > 0.7 && [isdouble $pcthqheterozygous] && $pcthqheterozygous < 50} {
+		set predgender m
+	} elseif {$yxncount < 0.6 && [isdouble $pcthqheterozygous] && $pcthqheterozygous > 50} {
+		set predgender f
+	} else {
+		set predgender u
+	}
 	# write results
 	if {![info exists outfile]} {set o stdout} else {set o [open $outfile w]}
 	puts $o [join {sample source parameter value} \t]
 	puts $o $sample\tgenomecomb\tpg_xtotalvars\t$totalvars
 	puts $o $sample\tgenomecomb\tpg_xheterozygous\t$htvars
+	puts $o $sample\tgenomecomb\tpg_xhqheterozygous\t$hthqvars
 	puts $o $sample\tgenomecomb\tpg_pctheterozygous\t$pctheterozygous
-	puts $o $sample\tgenomecomb\tpg_pcthqheterozygous\t$pcthqheterozygous
 	puts $o $sample\tgenomecomb\tpg_refsize\t$refsize
 	puts $o $sample\tgenomecomb\tpg_xsize\t$xsize
 	puts $o $sample\tgenomecomb\tpg_ysize\t$ysize
@@ -137,7 +186,17 @@ proc cg_predictgender {args} {
 	puts $o $sample\tgenomecomb\tpg_refncount\t[format %.4f $refncount]
 	puts $o $sample\tgenomecomb\tpg_xncount\t[format %.4f $xncount]
 	puts $o $sample\tgenomecomb\tpg_yncount\t[format %.4f $yncount]
-	puts $o $sample\tgenomecomb\tpg_xyratio\t[format %.4f $xyratio]
-	puts $o $sample\tgenomecomb\txygender\t$xygender
+	puts $o $sample\tgenomecomb\tpg_yxratio\t[format %.4f $yxratio]
+	puts $o $sample\tgenomecomb\tpg_pcthqheterozygous\t[format %.4f $pcthqheterozygous]
+	puts $o $sample\tgenomecomb\tpg_yxnratio\t[format %.4f $yxnratio]
+	puts $o $sample\tgenomecomb\tpg_xcov\t$xcov
+	puts $o $sample\tgenomecomb\tpg_ycov\t$ycov
+	puts $o $sample\tgenomecomb\tpg_yxcovratio\t[format %.4f $yxcovratio]
+	puts $o $sample\tgenomecomb\tpredgender\t$predgender
 	if {$o ne "stdout"} {close $o}
 }
+
+# for hg19
+# set xreg chrX:2699520-154931044
+# set yreg chrY:2649520-59034050
+# set refreg chr22:20609431-50364777
