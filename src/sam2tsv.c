@@ -100,10 +100,10 @@ int main(int argc, char *argv[]) {
 	FILE *f1=stdin;
 	Cigar cigar;
 	DStringArray *result1=NULL;
-	DString *line1 = NULL,*linekeep = NULL,*qual=NULL,*seq=NULL;
+	DString *line1 = NULL,*linekeep = NULL;
 	ssize_t read;
 	unsigned int curpos=0, flag;
-	unsigned int numfields,pos1, count;
+	unsigned int numfields,pos1;
 	int start1,end1;
 	char *cur;
 	if ((argc != 1)) {
@@ -130,8 +130,6 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		pos1++;
 		sscanf(result1->data[1].string,"%d",&(flag));
-		seq = result1->data+9;
-		qual = result1->data+10;
 		sscanf(result1->data[3].string,"%d",&start1);
 		parse_cigar(&cigar,result1->data[5].string);
 		start1--;
@@ -181,7 +179,6 @@ int main(int argc, char *argv[]) {
 		fputc('\t',stdout);
 		DStringputs(result1->data+10,stdout); /* qual */
 		fputc('\t',stdout);
-		count=result1->data[11].size;
 		cur=result1->data[11].string;
 		while (*cur != '\0') {
 			if (*cur == '\t') {fputc(' ',stdout);} else {fputc(*cur,stdout);}
