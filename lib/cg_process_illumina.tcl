@@ -40,7 +40,7 @@ proc process_illumina {args} {
 	set paired 1
 	set adapterfile {}
 	set conv_nextseq 0
-	set reports all
+	set reports basic
 	cg_options process_illumina args {
 		-realign {
 			set realign $value

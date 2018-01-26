@@ -465,7 +465,7 @@ proc process_sample_job {args} {
 	set removeskew {}
 	set dt {}
 	set targetfile {}
-	set reports all
+	set reports basic
 	set removeduplicates {}
 	set amplicons {}
 	cg_options process_sample args {

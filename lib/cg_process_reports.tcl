@@ -1,5 +1,5 @@
 proc process_reports_job {args} {
-	set reports all
+	set reports basic
 	set dbdir {}
 	cg_options process_reports args {
 		-dbdir {
@@ -20,7 +20,7 @@ proc process_reports_job {args} {
 		set reports {fastqstats fastqc flagstat_reads histodepth hsmetrics vars covered histo predictgender}
 	} elseif {"basic" in $reports} {
 		set pos [lsearch $reports all]
-		set reports [lreplace $reports $pos $pos fastqstats histodepth hsmetrics vars covered histo]
+		set reports [lreplace $reports $pos $pos fastqstats fastqc flagstat_reads histodepth hsmetrics vars covered histo]
 	}
 	# find regionfile indicating target of sequencing (used by hsmetrics, histodepth, vars, so needs to be here)
 	set targetfile [targetfile_job $sampledir $dbdir]

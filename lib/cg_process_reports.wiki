@@ -37,8 +37,9 @@ coverage, 20x coverage, gatk sequenced, ...), oper chromosome and in total
 == Arguments ==
 ; sampledir: processed sample directory (containing variant files, bam files, etc.)
 ; dbdir: directory containing reference data (genome sequence, annotation, ...)
-; reports: select wich reports to make (can also be given as an option). Default is
-to try to create all possible reports
+; reports: select wich reports to make (can also be given as an option).
+You can use **basic** (default) to add all basic reports (currently all except predictgender),
+or **all** to create all report types.
 
 == Options ==
 ; -dbdir dbdir: dir containing the reference databases

@@ -12,7 +12,7 @@ proc process_project_job {args} {
 	set conv_nextseq 0
 	set targetfile {}
 	set targetvarsfile {}
-	set reports all
+	set reports basic
 	set samBQ 0
 	set dt {}
 	set removeduplicates {}

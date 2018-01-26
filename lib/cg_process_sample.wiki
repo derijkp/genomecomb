@@ -68,7 +68,7 @@ analysis (see further) using the amplicons defained in **ampliconfile**
 ; -split 1/0 (-s): split multiple alternative genotypes over different line
 ; -downsampling_type NONE/ALL_READS/BY_SAMPLE/: sets the downsampling type used by GATK (empty for default).
 ; -targetfile targetfile: if targetfile is provided, coverage statistics will be calculated for this region
-; -reports list: use all (default) for creating all reports. If you only
+; -reports list: use basic (default) for creating most reports (or all for all reports). If you only
 want some made, give these as a space separated list. Possible reports are:
 flagstat_reads flagstat_alignments fastqc histodepth vars hsmetrics covered
 ; -samBQ number: only for samtools; minimum base quality for a base to be considered (samtools --min-BQ option)
