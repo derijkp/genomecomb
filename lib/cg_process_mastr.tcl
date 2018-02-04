@@ -311,6 +311,8 @@ proc generate_html_report_job {experiment {destdir {}}} {
 		($destdir/report_stats-$experiment.tsv)
 		($destdir/demultiplex_stats.tsv)
 	} -targets {$destdir/$experiment.html} -vars {experiment destdir} -code {
+		set keepdir [pwd]
+		cd $destdir
 		cg select -g sample -gc {sequenced {v} count} $dep $destdir/compar/summary-compar-${experiment}.tsv
 		set rmd $::appdir/res/mastrreport.Rmd
 		set chartjs $::appdir/res/displayChartHistogram.js
@@ -318,6 +320,7 @@ proc generate_html_report_job {experiment {destdir {}}} {
 		exec [findR] -e $cmd >@ stdout 2>@ stderr
 		file rename -force $target.temp $target
 		file delete $destdir/compar/summary-compar-${experiment}.tsv
+		cd $keepdir
 	}
 }
 
