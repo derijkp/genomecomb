@@ -9,13 +9,17 @@ make a plink "Transposed fileset" from the genome data
 == Description ==
 This command makes two files that can be used as a transposed fileset in plink (--tfile option).
 
-; **resultfilebase.tfam.pre**: This file must be edited and renamed to resultfilebase.tfam: 
+; resultfilebase.tfam.pre: This file must be edited and renamed to resultfilebase.tfam: 
 Only the names are correct. The other fields (father, mother, sex, phenotype) are set 
 to missing (0 or -9) and must be corrected.
-; **resultfilebase.tped**: This file contains the variant and the genotype information.
+; resultfilebase.tped: This file contains the variant and the genotype information.
 Variants  with more than two alleles (which are not supported by plink) are skipped with
 a warning message. The genetic location is (very roughly) estimated by dividing the 
 base position by 1M.
+
+Variant genotypes for samples that have a "u" (unsequenced) in the
+sequenced field (or in the zyg field if no sequenced filed is present) are
+set to 0 (unknown genotype) in the plink file.
 
 == Use with plink ==
 Edit **resultfilebase.tfam.pre** to the correct settings, and rename to resultfilebase.tfam
@@ -26,13 +30,16 @@ You can use plink to recode to the default plink format (non-tansposed)
 {{{plink --tfile resultfilebase --recode}}}
 
 == Arguments ==
-; **varfile**: variant file
-; **resultfilebase**: result file
+; varfile: variant file
+; resultfilebase: result file
 
 == Options ==
-; **-q query**: query (as can be given to cg_select). Only variants matching the query are 
+; -q query: query (as can be given to cg_select). Only variants matching the query are 
 included in the result.
-; **-c 1/0**: code genotypes to numbers (reference = 1, alternative allele = 2).
+; -c 1/0: code genotypes to numbers (reference = 1, alternative allele = 2).
+; -samples samples: Only write data for the given samples to the file, if
+a sample is not present in the varfile, all genotypes will be set to 0
+; -all 0/1: Also include genotypes of samples that have a "u" in the sequenced or zyg field
 
 == Category ==
 Analysis

@@ -2,6 +2,7 @@ proc cg_exportplink {args} {
 	set query {}
 	set nulllines 0
 	set codegeno 0
+	set all 0
 	cg_options exportplink args {
 		-q {
 			set query $value
@@ -14,6 +15,9 @@ proc cg_exportplink {args} {
 		}
 		-n - -nulllines {
 			set nulllines $value
+		}
+		-all {
+			set all $value
 		}
 	} {varfile resultfile} 2 2
 	catch {close $f} ; catch {close $o}
@@ -45,6 +49,14 @@ proc cg_exportplink {args} {
 		lappend aposs $pos
 		set pos [lsearch $header alleleSeq2-$sample]
 		if {$pos == -1} {error "no genotype (alleleSeq2-$sample) found for $sample"}
+		lappend aposs $pos
+		set pos [lsearch $header sequenced-$sample]
+		if {$pos == -1} {
+			set pos [lsearch $header zyg-$sample]
+			if {$pos == -1 && !$all} {
+				error "no sequenced-$sample or zyg-$sample found for $sample, use -all 1"
+			}
+		}
 		lappend aposs $pos
 	}
 	set o [open $resultfile.tfam.pre w]
@@ -85,10 +97,10 @@ proc cg_exportplink {args} {
 				set altcode $alt
 			}
 			set result {}
-			foreach {gt1 gt2} [list_sub $line $aposs] samplepresent $samplepresents {
+			foreach {gt1 gt2 seq} [list_sub $line $aposs] samplepresent $samplepresents {
 				set gt1 [string toupper $gt1]
 				set gt2 [string toupper $gt2]
-				if {!$samplepresent} {
+				if {!$samplepresent || (!$all && $seq eq "u")} {
 					lappend result 0 0
 					continue
 				}
