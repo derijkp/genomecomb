@@ -33,6 +33,8 @@ proc cg_exportplink {args} {
 	}
 	if {![info exists samples]} {
 		set samples [samples $header]
+	} elseif {[string first * $samples] != -1} {
+		set samples [samples $header $samples]
 	}
 	set aposs {}
 	set samplepresents {}
