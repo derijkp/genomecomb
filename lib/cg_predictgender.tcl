@@ -78,9 +78,17 @@ proc cg_predictgender {args} {
 		exec cg select -f {chromosome begin end} -sh /dev/null -q "region(\"$xreg\") == 1" $targetfile | head -500 > $tempxreg
 		exec cg select -f {chromosome begin end} -sh /dev/null -q "region(\"$yreg\") == 1" $targetfile | head -500 > $tempyreg
 		set end [lindex [exec tail -1 $tempxreg] end]
-		set xcov [median [exec samtools depth -a -r [lindex [split $xreg -] 0]-$end -b $tempxreg $bamfile | cut -d \t -f 3]]
+		if {![isint $end]} {
+			set xcov ?
+		} else {
+			set xcov [median [exec samtools depth -a -r [lindex [split $xreg -] 0]-$end -b $tempxreg $bamfile | cut -d \t -f 3]]
+		}
 		set end [lindex [exec tail -1 $tempyreg] end]
-		set ycov [median [exec samtools depth -a -r [lindex [split $yreg -] 0]-$end -b $tempyreg $bamfile | cut -d \t -f 3]]
+		if {![isint $end]} {
+			set ycov ?
+		} else {
+			set ycov [median [exec samtools depth -a -r [lindex [split $yreg -] 0]-$end -b $tempyreg $bamfile | cut -d \t -f 3]]
+		}
 	} else {
 		if {![file exists $dbdir]} {
 			error "no targetfile was given or found in sampledir, -dbdir must be given"
@@ -98,7 +106,11 @@ proc cg_predictgender {args} {
 		set rfile [gzfile $dbdir/gene_*_refGene*.tsv]
 		exec cg select -q "region(\"$xreg\") == 1" $rfile | cg gene2reg | cg select -q {$type eq "CDS"} -f {chromosome begin end} -sh /dev/null | head -500 > $tempxreg
 		set end [lindex [exec tail -1 $tempxreg] end]
-		set xcov [median [exec samtools depth -a -r [lindex [split $xreg -] 0]-$end -b $tempxreg $bamfile | cut -d \t -f 3]]
+		if {![isint $end]} {
+			set xcov ?
+		} else {
+			set xcov [median [exec samtools depth -a -r [lindex [split $xreg -] 0]-$end -b $tempxreg $bamfile | cut -d \t -f 3]]
+		}
 		#
 		if {![regexp {(.+):([0-9]+)-([0-9]+)$} $yreg temp chr y1 y2]} {
 			error "xreg has wrong format: $yreg"
@@ -107,9 +119,13 @@ proc cg_predictgender {args} {
 		set tempyreg [tempfile]
 		exec cg select -q "region(\"$yreg\") == 1" $rfile | cg gene2reg | cg select -q {$type eq "CDS"} -f {chromosome begin end} -sh /dev/null | head -500 > $tempyreg
 		set end [lindex [exec tail -1 $tempyreg] end]
-		set ycov [median [exec samtools depth -a -r [lindex [split $yreg -] 0]-$end -b $tempyreg $bamfile | cut -d \t -f 3]]
+		if {![isint $end]} {
+			set ycov ?
+		} else {
+			set ycov [median [exec samtools depth -a -r [lindex [split $yreg -] 0]-$end -b $tempyreg $bamfile | cut -d \t -f 3]]
+		}
 	}
-	if {$xcov < 4} {
+	if {![isint $xcov] || $xcov < 4} {
 		set yxcovratio ?
 	} else {
 		set yxcovratio [expr {double($ycov)/$xcov}]
@@ -120,8 +136,13 @@ proc cg_predictgender {args} {
 	set refncount [expr {$refcount/double($refsize)}]
 	set xncount [expr {$xcount/double($xsize)}]
 	set yncount [expr {$ycount/double($ysize)}]
-	set yxratio [expr {double($ycount)/$xcount}]
-	set yxnratio [expr {double($yncount)/$xncount}]
+	if {$xcount == 0} {
+		set yxratio ?
+		set yxnratio ?
+	} else {
+		set yxratio [expr {double($ycount)/$xcount}]
+		set yxnratio [expr {double($yncount)/$xncount}]
+	}
 	set pctheterozygous ?
 	set pcthqheterozygous ?
 	set totalvars 0
