@@ -96,6 +96,7 @@ proc cg_primercheck {args} {
 	set maxsize 1000
 	set maxamplicons 100
 	set resultfile {}
+	set includefields {}
 	cg_options primercheck args {
 		-m - -maxnum {
 			set maxnum $value
@@ -106,6 +107,9 @@ proc cg_primercheck {args} {
 		-a - -maxamplicons {
 			set maxamplicons $value
 		}
+		-i - -includefields {
+			set includefields $value
+		}
 	} {primerfile dbdir resultfile} 2 3
 	set dbdir [dbdir $dbdir]
 	#
@@ -114,6 +118,11 @@ proc cg_primercheck {args} {
 	set f [open $primerfile]
 	set header [tsv_open $f]
 	set poss [list_cor $header {name primer1 primer2}]
+	if {$includefields eq "*" || $includefields eq "1"} {
+		set iposs [list_lremove [list_cor $header $header] $poss]
+	} else {
+		set iposs [list_lremove [list_cor $header $includefields] $poss]
+	}
 	if {$resultfile ne ""} {
 		set o [open $resultfile w]
 	} else {
@@ -125,6 +134,7 @@ proc cg_primercheck {args} {
 		primer1_hits primer1_snpsmaxfreq primer1_snps \
 		primer2_hits primer2_snpsmaxfreq primer2_snps \
 		amplicon_fts remarks \
+		{*}[list_sub $header $iposs]
 	] \t]
 	set dbsnpfiles [gzfiles $dbdir/var_*snp*.tsv.gz]
 	set dbsnpposs {}
@@ -267,6 +277,9 @@ proc cg_primercheck {args} {
 		} else {
 			set outer_end ?
 		}
+		if {$targetchrom eq "?" && $amplicons ne "many" && [llength $amplicons] == 1} {
+			foreach {targetchrom targetbegin targetend targetsize targetfwd targetrev} [lindex $amplicons 0] break
+		}
 		if {$targetfwd == 1} {set strand +} elseif {$targetfwd == 2} {set strand -} else {set strand ?}
 		lappend resultline $targetchrom $targetbegin $targetend $name \
 			$outer_begin $outer_end $strand \
@@ -275,6 +288,9 @@ proc cg_primercheck {args} {
 			$numhits(2) $maxfreq(2) [join $primersnps(2) " "] \
 			[join $ampliconfts " "] \
 			[join $analysis ","]
+		if {[llength $iposs]} {
+			lappend resultline {*}[list_sub $inputline $iposs]
+		}
 		puts $o [join $resultline \t]
 		flush $o
 	}

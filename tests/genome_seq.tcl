@@ -114,31 +114,6 @@ ctccagaggcNgaggcaggagaatggtgtgaacctgggaggaggagcttgcagtgagccgggatcatgccactgcattcc
 	exec diff tmp/result.fas tmp/expected.fas
 } {}
 
-test primercheck {basic} {
-	exec cg primercheck data/primers.tsv $::refseqdir/hg19 tmp/primerinfo.tsv
-	exec diff tmp/primerinfo.tsv data/primercheck-results.tsv
-} {} 
-
-test primercheck {freq} {
-	cg cplinked $::refseqdir/hg19 tmp
-	file delete {*}[glob tmp/hg19/var_hg19_snp135.*]
-	file copy data/var_hg19_partofsnp135.tsv.lz4 tmp/hg19/var_hg19_snp135.tsv.lz4
-	cg lz4index tmp/hg19/var_hg19_snp135.tsv.lz4
-	cg maketabix tmp/hg19/var_hg19_snp135.tsv.lz4
-	exec cg primercheck data/primers.tsv tmp/hg19 tmp/primerinfo.tsv
-	exec diff tmp/primerinfo.tsv data/primercheck-results.tsv
-} {} 
-
-test primercheck {freqp} {
-	cg cplinked $::refseqdir/hg19 tmp
-	file delete {*}[glob tmp/hg19/var_hg19_snp135.*]
-	cg select -f {chrom start end type ref alt name {freqp=catch($freq * 100.0,$freq)} avHetSE strand molType valid func weight exceptions submitterCount submitters alleleFreqCount alleles alleleNs alleleFreqs bitfields} data/var_hg19_partofsnp135.tsv.lz4 tmp/hg19/var_hg19_snp135.tsv.lz4
-	cg lz4index tmp/hg19/var_hg19_snp135.tsv.lz4
-	cg maketabix tmp/hg19/var_hg19_snp135.tsv.lz4
-	exec cg primercheck data/primers.tsv tmp/hg19 tmp/primerinfo.tsv
-	exec diff tmp/primerinfo.tsv data/primercheck-results.tsv
-} {} 
-
 file delete -force tmp/temp.sft
 
 set ::env(PATH) $keeppath

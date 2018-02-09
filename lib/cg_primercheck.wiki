@@ -24,14 +24,17 @@ shown in columns "primer1_snpsmaxfreq" and "primer2_snpsmaxfreq".
 The "amplicon_fts" column will list any homopolymers detected in the amplicon.
 
 == Arguments ==
-; **primerfile**: tsv file that has at least the columns name, primer1, primer2
-; **dbdir**: directory containing reference genomes and variation data
-; **resultfile**: results will be written to this file if given, otherwise to stdout
+; primerfile: tsv file that has at least the columns name, primer1, primer2
+; dbdir: directory containing reference genomes and variation data
+; resultfile: results will be written to this file if given, otherwise to stdout
 
 == Options ==
-; **-m maxnum**: further analysis stops if a primer has > **maxnum** hits in the genome (default 5000)
-; **-s maxsize**: only amplicons smaller than **maxsize** are considered in numamplicons (default 1000)
-; **-a maxamplicons**: if more than **maxamplicons** are found, further analysis is aborted (default 100)
+; -m maxnum: further analysis stops if a primer has > **maxnum** hits in the genome (default 5000)
+; -s maxsize: only amplicons smaller than **maxsize** are considered in numamplicons (default 1000)
+; -a maxamplicons: if more than **maxamplicons** are found, further analysis is aborted (default 100)
+; -i includefields (-includefields): include the fields in
+**includefields** (space separated list) of the source file into the
+resultfile. If **includefields** is '*' (or 1), all fields will be included
 
 == Category ==
 Validation

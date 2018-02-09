@@ -7,9 +7,11 @@ source annot.tcl
 source bcol.tcl
 source cg2tsv.tcl
 source clip.tcl
+source extract.tcl
 source compar.tcl
 source convert.tcl
 source genome_seq.tcl
+source primercheck.tcl
 source libext.tcl
 source lift.tcl
 source mirannot.tcl

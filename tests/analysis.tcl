@@ -134,6 +134,38 @@ test exportplink {no seq or zyg} {
 	exec diff tmp/temp.tped tmp/expected.tped
 } {}
 
+test exportplink {samples with *} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt alleleSeq1-gatk-s1 alleleSeq2-gatk-s1 alleleSeq1-sam-s1 alleleSeq2-sam-s1
+		chr1	4001	4002	snp	A	G	A	G	A	A
+		chr1	4002	4003	del	T	{}	{}	{}	T	{}
+	}
+	exec cg exportplink -all 1 -samples gatk-* tmp/vars.tsv tmp/temp
+	write_tab tmp/expected.tped {
+		1	1-4001-4002-snp-A-G	0.004001	4001	A	G
+		1	1-4002-4003-del-T-	0.004002	4002	-	-
+	}
+	write_tab tmp/expected.tfam.pre {
+		fam	gatk-s1	0	0	0	-9
+	}
+	exec diff tmp/temp.tped tmp/expected.tped
+	exec diff tmp/temp.tfam.pre tmp/expected.tfam.pre
+} {}
+
+test exportplink {filter} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-s1 quality-s1 alleleSeq1-s1 alleleSeq2-s1	sequenced-s2 quality-s2 alleleSeq1-s2 alleleSeq2-s2
+		chr1	4001	4002	snp	A	G	v	10	A	G	30	r	A	A
+		chr1	4002	4003	del	T	{}	v	20	{}	{}	40	v	T	{}
+	}
+	write_tab tmp/expected.tped {
+		1	1-4001-4002-snp-A-G	0.004001	4001	0	0	A	A
+		1	1-4002-4003-del-T-	0.004002	4002	0	0	T	-
+	}
+	exec cg exportplink -filter {$quality > 20} tmp/vars.tsv tmp/temp
+	exec diff tmp/temp.tped tmp/expected.tped
+} {}
+
 file delete -force tmp/temp.tsv tmp/temp.tsv.old
 
 testsummarize
