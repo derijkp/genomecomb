@@ -226,122 +226,132 @@ void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int exclu
 			char *genotypestring,*genotypecur;
 			int phased,i,a1,a2;
 			geno = DStringArrayGet(linea,igeno++);
-			genoa = DStringArrayFromChar(geno->string,':');
-			if (order[0] == -1) {
-				genotypestring = "0/0";
-			} else {
-				genotype = DStringArrayGet(genoa,order[0]);
-				genotypestring = genotype->string;
-			}
-			genotypecur = genotypestring;
-			while (*genotypecur != '|' && *genotypecur != '/' && *genotypecur != '\0') {
-				genotypecur++;
-			}
-			if (*genotypecur == '/') {phased = 0;} else {phased = 1;}
-			/* print out alleleSeq1 and alleleSeq2 */
-			/* ----------------------------------- */
-			if (genotypestring[0] == '.') {
-				fprintf(fo,"\t?");
-				a1 = -2;
-			} else if (genotypestring == genotypecur) {
-				/* empty genotype */
-				fprintf(fo,"\t-");
-				a1 = -1;
-			} else {
-				a1 = atol(genotypestring);
-				if (a1 == 0) {
-					fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
-				} else {
-					ds = DStringArrayGet(alts,a1-1);
-					if (ds->size == 0 && diff > 0) {
-						fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
-					}
-					fprintf(fo,"\t%*.*s",ds->size-diff,ds->size-diff,ds->string+diff);
-				}
-			}
-			if (*genotypecur != '\0') {genotypecur++;}
-			if (*genotypecur == '.') {
-				fprintf(fo,"\t?");
-				a2 = -2;
-			} else if (*genotypecur == '\0') {
-				fprintf(fo,"\t-");
-				a2 = -1;
-			} else {
-				a2 = atol(genotypecur);
-				if (a2 == 0) {
-					fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
-				} else {
-					ds = DStringArrayGet(alts,a2-1);
-					if (ds->size == 0 && diff > 0) {
-						fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
-					}
-					fprintf(fo,"\t%*.*s",ds->size-diff,ds->size-diff,ds->string+diff);
-				}
-			}
-			/* print out zyg */
-			/* ------------- */
-			if (a1 < 0 || a2 < 0) {
-				zyg = '?';
-			} else if (a1 > 0) {
-				if (a2 == a1) {
-					zyg = 'm';
-				} else if (a2 > 0) {
-					zyg = 'c';
-				} else {
-					zyg = 't';
-				}
-			} else if (a2 > 0) {
-				zyg = 't';
-			} else {
-				zyg = 'r';
-			}
-			fprintf(fo,"\t%c",zyg);
-			fprintf(fo,"\t%d",phased);
-			/* print out genotypes */
-			/* ------------------- */
-			fputc_unlocked('\t',fo);
-			genotypecur = genotypestring;
-			while (*genotypecur != '\0') {
-				if (*genotypecur == '|') {
-					fputc_unlocked(',',fo);
-				} else if (*genotypecur == '/') {
-					fputc_unlocked(';',fo);
-				} else {
-					fputc_unlocked(*genotypecur,fo);
-				}
-				genotypecur++;
-			}
-			/* print out rest of the fields */
-			/* ---------------------------- */
-			for (i = 1 ; i < formatfields->size; i++) {
-				if (order[i] <= 0) {
+			if (geno->size == 1 && geno->string[0] == '.') {
+				fprintf(fo,"\t?\t?\t?\t?\t?");
+				for (i = 1 ; i < formatfields->size; i++) {
 					fprintf(fo,"\t");
 					if (formatfieldsnumber->string[i] == 'R') {
 						fprintf(fo,"\t");
 					}
-				} else if (formatfieldsnumber->string[i] == 'R') {
-					DString *value;
-					char *cur,test=',';
-					int count;
-					value = DStringArrayGet(genoa,order[i]);
-					cur = value->string; count = value->size;
-					fputc_unlocked('\t',fo);
-					while(count--) {
-						if (*cur == test) {
-							fputc_unlocked('\t',fo); cur++; test = '\0';
-						} else {
-							fputc_unlocked(*cur++,fo);
-						}
-					}
-				} else if (formatfieldsnumber->string[i] == 'A') {
-					DString *value;
-					value = DStringArrayGet(genoa,order[i]);
-					fprintf(fo,"\t%*.*s",value->size,value->size,value->string);
-				} else {
-					fprintf(fo,"\t%s",DStringArrayGet(genoa,order[i])->string);
 				}
+			} else {
+				genoa = DStringArrayFromChar(geno->string,':');
+				if (order[0] == -1) {
+					genotypestring = "0/0";
+				} else {
+					genotype = DStringArrayGet(genoa,order[0]);
+					genotypestring = genotype->string;
+				}
+				genotypecur = genotypestring;
+				while (*genotypecur != '|' && *genotypecur != '/' && *genotypecur != '\0') {
+					genotypecur++;
+				}
+				if (*genotypecur == '|') {phased = 1;} else {phased = 0;}
+				/* print out alleleSeq1 and alleleSeq2 */
+				/* ----------------------------------- */
+				if (genotypestring[0] == '.') {
+					fprintf(fo,"\t?");
+					a1 = -2;
+				} else if (genotypestring == genotypecur) {
+					/* empty genotype */
+					fprintf(fo,"\t-");
+					a1 = -1;
+				} else {
+					a1 = atol(genotypestring);
+					if (a1 == 0) {
+						fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
+					} else {
+						ds = DStringArrayGet(alts,a1-1);
+						if (ds->size == 0 && diff > 0) {
+							fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+						}
+						fprintf(fo,"\t%*.*s",ds->size-diff,ds->size-diff,ds->string+diff);
+					}
+				}
+				if (*genotypecur != '\0') {genotypecur++;}
+				if (*genotypecur == '.') {
+					fprintf(fo,"\t?");
+					a2 = -2;
+				} else if (*genotypecur == '\0') {
+					fprintf(fo,"\t-");
+					a2 = -1;
+				} else {
+					a2 = atol(genotypecur);
+					if (a2 == 0) {
+						fprintf(fo,"\t%*.*s",ref->size,ref->size,ref->string);
+					} else {
+						ds = DStringArrayGet(alts,a2-1);
+						if (ds->size == 0 && diff > 0) {
+							fprintf(stderr,"error in alt alleles: "); DStringPrintTab(stderr,line);	fprintf(stderr,"\n"); exit(1);
+						}
+						fprintf(fo,"\t%*.*s",ds->size-diff,ds->size-diff,ds->string+diff);
+					}
+				}
+				/* print out zyg */
+				/* ------------- */
+				if (a1 < 0 || a2 < 0) {
+					zyg = '?';
+				} else if (a1 > 0) {
+					if (a2 == a1) {
+						zyg = 'm';
+					} else if (a2 > 0) {
+						zyg = 'c';
+					} else {
+						zyg = 't';
+					}
+				} else if (a2 > 0) {
+					zyg = 't';
+				} else {
+					zyg = 'r';
+				}
+				fprintf(fo,"\t%c",zyg);
+				fprintf(fo,"\t%d",phased);
+				/* print out genotypes */
+				/* ------------------- */
+				fputc_unlocked('\t',fo);
+				genotypecur = genotypestring;
+				while (*genotypecur != '\0') {
+					if (*genotypecur == '|') {
+						fputc_unlocked(',',fo);
+					} else if (*genotypecur == '/') {
+						fputc_unlocked(';',fo);
+					} else {
+						fputc_unlocked(*genotypecur,fo);
+					}
+					genotypecur++;
+				}
+				/* print out rest of the fields */
+				/* ---------------------------- */
+				for (i = 1 ; i < formatfields->size; i++) {
+					if (order[i] <= 0 || order[i] >= genoa->size) {
+						fprintf(fo,"\t");
+						if (formatfieldsnumber->string[i] == 'R') {
+							fprintf(fo,"\t");
+						}
+					} else if (formatfieldsnumber->string[i] == 'R') {
+						DString *value;
+						char *cur,test=',';
+						int count;
+						value = DStringArrayGet(genoa,order[i]);
+						cur = value->string; count = value->size;
+						fputc_unlocked('\t',fo);
+						while(count--) {
+							if (*cur == test) {
+								fputc_unlocked('\t',fo); cur++; test = '\0';
+							} else {
+								fputc_unlocked(*cur++,fo);
+							}
+						}
+					} else if (formatfieldsnumber->string[i] == 'A') {
+						DString *value;
+						value = DStringArrayGet(genoa,order[i]);
+						fprintf(fo,"\t%*.*s",value->size,value->size,value->string);
+					} else {
+						fprintf(fo,"\t%s",DStringArrayGet(genoa,order[i])->string);
+					}
+				}
+				if (genoa != NULL) DStringArrayDestroy(genoa);
 			}
-			if (genoa != NULL) DStringArrayDestroy(genoa);
 		}
 	}
 	/* info output */
@@ -491,162 +501,172 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 				int phased,i,a1,a2;
 				DStringSetS(genotypelist,"",0);
 				geno = DStringArrayGet(linea,igeno++);
-				genoa = DStringArrayFromChar(geno->string,':');
-				if (order[0] == -1) {
-					genotypestring = "0/0";
-				} else {
-					genotype = DStringArrayGet(genoa,order[0]);
-					genotypestring = genotype->string;
-				}
-				genotypecur = genotypestring;
-				while (*genotypecur != '|' && *genotypecur != '/' && *genotypecur != '\0') {
-					genotypecur++;
-				}
-				if (*genotypecur == '/') {phased = 0;} else {phased = 1;}
-				if (genotypestring[0] == '.') {
-					fprintf(fo,"\t?");
-					a1 = -2;
-					DStringAppendS(genotypelist,"?",1);
-				} else if (genotypestring == genotypecur) {
-					/* empty genotype */
-					fprintf(fo,"\t-");
-					a1 = -1;
-					DStringAppendS(genotypelist,"?",1);
-				} else {
-					a1 = atol(genotypestring);
-					if (a1 == 0) {
-						if (altvar->refsize >= 20) {
-							fprintf(fo,"\t%d", altvar->refsize);
-						} else {
-							fprintf(fo,"\t%*.*s", altvar->refsize, altvar->refsize, altvar->ref);
-						}
-						DStringAppendS(genotypelist,"0",1);
-					} else if (a1 == curallele) {
-						fprintf(fo,"\t%*.*s",altvar->altsize,altvar->altsize,altvar->alt);
-						DStringAppendS(genotypelist,"1",1);
-					} else {
-						AltVar *temp = altvars+a1-1;
-						if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
-							fprintf(fo,"\t%*.*s",temp->altsize,temp->altsize,temp->alt);
-						} else {
-							fprintf(fo,"\t@");
-						}
-						DStringAppendS(genotypelist,"2",1);
-					}
-				}
-				if (*genotypecur == '|') {
-					DStringAppendS(genotypelist,",",1);
-				} else if (*genotypecur == '/') {
-					DStringAppendS(genotypelist,";",1);
-				} else {
-					DStringAppendS(genotypelist,"?",1);
-				}
-				if (*genotypecur != '\0') {genotypecur++;}
-				if (*genotypecur == '.') {
-					fprintf(fo,"\t?");
-					a2 = -2;
-					DStringAppendS(genotypelist,"?",1);
-				} else if (*genotypecur == '\0') {
-					fprintf(fo,"\t-");
-					a2 = -1;
-					DStringAppendS(genotypelist,"?",1);
-				} else {
-					a2 = atol(genotypecur);
-					if (a2 == 0) {
-						if (altvar->refsize >= 20) {
-							fprintf(fo,"\t%d", altvar->refsize);
-						} else {
-							fprintf(fo,"\t%*.*s", altvar->refsize, altvar->refsize, altvar->ref);
-						}
-						DStringAppendS(genotypelist,"0",1);
-					} else if (a2 == curallele) {
-						fprintf(fo,"\t%*.*s",altvar->altsize,altvar->altsize,altvar->alt);
-						DStringAppendS(genotypelist,"1",1);
-					} else {
-						AltVar *temp = altvars+a2-1;
-						if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
-							fprintf(fo,"\t%*.*s",temp->altsize,temp->altsize,temp->alt);
-						} else {
-							fprintf(fo,"\t@");
-						}
-						DStringAppendS(genotypelist,"2",1);
-					}
-				}
-				if (a1 < 0 || a2 < 0) {
-					zyg = '?';
-				} else if (a1 == curallele) {
-					if (a2 == a1) {
-						zyg = 'm';
-					} else if (a2 > 0) {
-						zyg = 'c';
-					} else {
-						zyg = 't';
-					}
-				} else if (a2 == curallele) {
-					if (a1 > 0) {
-						zyg = 'c';
-					} else {
-						zyg = 't';
-					}
-				} else if (a1 > 0 || a2 > 0) {
-					zyg = 'o';
-				} else {
-					zyg = 'r';
-				}
-				fprintf(fo,"\t%c",zyg);
-				fprintf(fo,"\t%d",phased);
-				fputc_unlocked('\t',fo);
-				DStringputs(genotypelist,fo);
-				while (*genotypecur >= 48 && *genotypecur <= 57) {
-					genotypecur++;
-				}
-				while (*genotypecur != '\0') {
-					if (*genotypecur == '|') {
-						fputc_unlocked(',',fo);
-						genotypecur++;
-					} else if (*genotypecur == '/') {
-						fputc_unlocked(';',fo);
-						genotypecur++;
-					} else if (*genotypecur >= 48 && *genotypecur <= 57) {
-						a1 = atol(genotypecur);
-						if (a1 == 0) {
-							fprintf(fo,"0");
-						} else if (a1 == curallele) {
-							fprintf(fo,"1");
-						} else {
-							fprintf(fo,"2");
-						}
-						while (*genotypecur >= 48 && *genotypecur <= 57) {
-							genotypecur++;
-						}
-					} else {
-						fputc_unlocked(*genotypecur,fo);
-						genotypecur++;
-					}
-				}
-				for (i = 1 ; i < formatfields->size; i++) {
-					if (order[i] <= 0) {
+				if (geno->size == 1 && geno->string[0] == '.') {
+					fprintf(fo,"\t?\t?\t?\t?\t?");
+					for (i = 1 ; i < formatfields->size; i++) {
 						fprintf(fo,"\t");
 						if (formatfieldsnumber->string[i] == 'R') {
 							fprintf(fo,"\t");
 						}
-					} else if (formatfieldsnumber->string[i] == 'R') {
-						DString result, *value;
-						value = DStringArrayGet(genoa,order[i]);
-						getfield(&result,value->string,0);
-						fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
-						getfield(&result,value->string,curallele);
-						fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
-					} else if (formatfieldsnumber->string[i] == 'A') {
-						DString result, *value;
-						value = DStringArrayGet(genoa,order[i]);
-						getfield(&result,value->string,curallele-1);
-						fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
-					} else {
-						fprintf(fo,"\t%s",DStringArrayGet(genoa,order[i])->string);
 					}
+				} else {
+					genoa = DStringArrayFromChar(geno->string,':');
+					if (order[0] == -1) {
+						genotypestring = "0/0";
+					} else {
+						genotype = DStringArrayGet(genoa,order[0]);
+						genotypestring = genotype->string;
+					}
+					genotypecur = genotypestring;
+					while (*genotypecur != '|' && *genotypecur != '/' && *genotypecur != '\0') {
+						genotypecur++;
+					}
+					if (*genotypecur == '|') {phased = 1;} else {phased = 0;}
+					if (genotypestring[0] == '.') {
+						fprintf(fo,"\t?");
+						a1 = -2;
+						DStringAppendS(genotypelist,"?",1);
+					} else if (genotypestring == genotypecur) {
+						/* empty genotype */
+						fprintf(fo,"\t-");
+						a1 = -1;
+						DStringAppendS(genotypelist,"?",1);
+					} else {
+						a1 = atol(genotypestring);
+						if (a1 == 0) {
+							if (altvar->refsize >= 20) {
+								fprintf(fo,"\t%d", altvar->refsize);
+							} else {
+								fprintf(fo,"\t%*.*s", altvar->refsize, altvar->refsize, altvar->ref);
+							}
+							DStringAppendS(genotypelist,"0",1);
+						} else if (a1 == curallele) {
+							fprintf(fo,"\t%*.*s",altvar->altsize,altvar->altsize,altvar->alt);
+							DStringAppendS(genotypelist,"1",1);
+						} else {
+							AltVar *temp = altvars+a1-1;
+							if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
+								fprintf(fo,"\t%*.*s",temp->altsize,temp->altsize,temp->alt);
+							} else {
+								fprintf(fo,"\t@");
+							}
+							DStringAppendS(genotypelist,"2",1);
+						}
+					}
+					if (*genotypecur == '|') {
+						DStringAppendS(genotypelist,",",1);
+					} else if (*genotypecur == '/') {
+						DStringAppendS(genotypelist,";",1);
+					} else {
+						DStringAppendS(genotypelist,"?",1);
+					}
+					if (*genotypecur != '\0') {genotypecur++;}
+					if (*genotypecur == '.') {
+						fprintf(fo,"\t?");
+						a2 = -2;
+						DStringAppendS(genotypelist,"?",1);
+					} else if (*genotypecur == '\0') {
+						fprintf(fo,"\t-");
+						a2 = -1;
+						DStringAppendS(genotypelist,"?",1);
+					} else {
+						a2 = atol(genotypecur);
+						if (a2 == 0) {
+							if (altvar->refsize >= 20) {
+								fprintf(fo,"\t%d", altvar->refsize);
+							} else {
+								fprintf(fo,"\t%*.*s", altvar->refsize, altvar->refsize, altvar->ref);
+							}
+							DStringAppendS(genotypelist,"0",1);
+						} else if (a2 == curallele) {
+							fprintf(fo,"\t%*.*s",altvar->altsize,altvar->altsize,altvar->alt);
+							DStringAppendS(genotypelist,"1",1);
+						} else {
+							AltVar *temp = altvars+a2-1;
+							if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
+								fprintf(fo,"\t%*.*s",temp->altsize,temp->altsize,temp->alt);
+							} else {
+								fprintf(fo,"\t@");
+							}
+							DStringAppendS(genotypelist,"2",1);
+						}
+					}
+					if (a1 < 0 || a2 < 0) {
+						zyg = '?';
+					} else if (a1 == curallele) {
+						if (a2 == a1) {
+							zyg = 'm';
+						} else if (a2 > 0) {
+							zyg = 'c';
+						} else {
+							zyg = 't';
+						}
+					} else if (a2 == curallele) {
+						if (a1 > 0) {
+							zyg = 'c';
+						} else {
+							zyg = 't';
+						}
+					} else if (a1 > 0 || a2 > 0) {
+						zyg = 'o';
+					} else {
+						zyg = 'r';
+					}
+					fprintf(fo,"\t%c",zyg);
+					fprintf(fo,"\t%d",phased);
+					fputc_unlocked('\t',fo);
+					DStringputs(genotypelist,fo);
+					while (*genotypecur >= 48 && *genotypecur <= 57) {
+						genotypecur++;
+					}
+					while (*genotypecur != '\0') {
+						if (*genotypecur == '|') {
+							fputc_unlocked(',',fo);
+							genotypecur++;
+						} else if (*genotypecur == '/') {
+							fputc_unlocked(';',fo);
+							genotypecur++;
+						} else if (*genotypecur >= 48 && *genotypecur <= 57) {
+							a1 = atol(genotypecur);
+							if (a1 == 0) {
+								fprintf(fo,"0");
+							} else if (a1 == curallele) {
+								fprintf(fo,"1");
+							} else {
+								fprintf(fo,"2");
+							}
+							while (*genotypecur >= 48 && *genotypecur <= 57) {
+								genotypecur++;
+							}
+						} else {
+							fputc_unlocked(*genotypecur,fo);
+							genotypecur++;
+						}
+					}
+					for (i = 1 ; i < formatfields->size; i++) {
+						if (order[i] <= 0 || order[i] >= genoa->size) {
+							fprintf(fo,"\t");
+							if (formatfieldsnumber->string[i] == 'R') {
+								fprintf(fo,"\t");
+							}
+						} else if (formatfieldsnumber->string[i] == 'R') {
+							DString result, *value;
+							value = DStringArrayGet(genoa,order[i]);
+							getfield(&result,value->string,0);
+							fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
+							getfield(&result,value->string,curallele);
+							fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
+						} else if (formatfieldsnumber->string[i] == 'A') {
+							DString result, *value;
+							value = DStringArrayGet(genoa,order[i]);
+							getfield(&result,value->string,curallele-1);
+							fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
+						} else {
+							fprintf(fo,"\t%s",DStringArrayGet(genoa,order[i])->string);
+						}
+					}
+					if (genoa != NULL) DStringArrayDestroy(genoa);
 				}
-				if (genoa != NULL) DStringArrayDestroy(genoa);
 			}
 		}
 		/* info output */
