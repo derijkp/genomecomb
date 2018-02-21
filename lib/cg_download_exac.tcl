@@ -10,16 +10,20 @@ proc cg_download_exac {args} {
 	set keep 0
 	cg_options download_exac args {
 		-k {set keep $value}
-	} {resultfile build url} 2 3 {
+	} {resultfile url} 1 2 {
 		download data from exac
 	}
 	set tempdir $resultfile.temp
 	file mkdir $tempdir
 	set tail [file tail $url]
-	if {![regexp {[0-9][0-9.]+[0-9]} $tail version]} {error "could not get version from $tail"}
+	if {![regexp {[0-9][0-9.]+[0-9]} $tail version]} {
+		if {![regexp {[0-9]+} $tail version]} {
+			error "could not get version from $tail"
+		}
+	}
 	wgetfile $url $tempdir/$tail
 	set tsvfile $tempdir/[file root $tail].tsv
-	set tempresult $tempdir/var_${build}_exac.tsv
+	set tempresult $tempdir/[file tail resultfile]
 	if {![file exists $tsvfile]} {
 		set populations {AFR AMR EAS FIN NFE OTH SAS}
 		set nheader {chromosome begin end type ref alt}
@@ -32,7 +36,7 @@ proc cg_download_exac {args} {
 		cg vcf2tsv -split 1 -sort 0 $tempdir/$tail | cg select -f $nheader > $tsvfile.temp
 		file rename -force $tsvfile.temp $tsvfile
 	}
-	cg select -s - $tsvfile | cg collapsealleles > $tempresult.temp
+	cg select -s - $tsvfile | cg collapsealleles > $tempresult
 	# opt
 	file_write $tempresult.opt "fields\t{freqp_AFR mfreqp_AFR freqp_AMR mfreqp_AMR freqp_EAS mfreqp_EAS freqp_FIN mfreqp_FIN freqp_NFE mfreqp_NFE freqp_OTH mfreqp_OTH freqp_SAS mfreqp_SAS}\n"
 	# info
@@ -108,9 +112,15 @@ proc cg_download_exac {args} {
 		
 		more information on http://exac.broadinstitute.org/about
 	}]]
-	file rename -force $tempresult.opt $resultfile.opt
-	file rename -force $tempresult.info $resultfile.info
-	file rename -force $tempresult.temp $resultfile
+	file rename -force $tempresult.opt [gzroot $resultfile].opt
+	file rename -force $tempresult.info [gzroot $resultfile].info
+	if {[file extension $resultfile] eq ".lz4"} {
+		cg lz4 -i 1 $tempresult
+		file rename -force $tempresult.lz4 $resultfile
+		file rename -force $tempresult.lz4.lz4i $resultfile.lz4i
+	} else {
+		file rename -force $tempresult $resultfile
+	}
 	if {!$keep} {file delete -force $tempdir}
 }
 

@@ -37,7 +37,12 @@ proc cg_download_biograph {file diseaseid {genefile {}}} {
 	}
 	close $o
 	close $f
-	file rename -force $file.temp2 $file
+	if {[file extension $file] eq ",lz4"} {
+		cg lz4 $file.temp2
+		file rename -force $file.temp2.lz4 $file
+	} else {
+		file rename -force $file.temp2 $file
+	}
 	file delete $file.temp
 }
 # cg download_biograph biograph_ad.tsv C0002395 

@@ -53,7 +53,7 @@ proc cg_liftover {args} {
 	if {[file isdir $varfile]} {
 		cg_liftoversample $varfile $resultfile $liftoverfile {*}$args
 	}
-	set unmappedfile $resultfile.unmapped
+	set unmappedfile [gzroot $resultfile].unmapped[gzext $resultfile]
 	#
 	catch {gzclose $f} ; catch {gzclose $fl} ; catch {gzclose $fc} ; catch {gzclose $freg} ; catch {close $o} ; catch {close $ou}
 	#
@@ -382,9 +382,10 @@ proc cg_liftover {args} {
 		lappend sortfields ${oldrefname}_chromosome ${oldrefname}_begin ${oldrefname}_end ${oldrefname}_ref
 		set fields [list_union [list_sub $newheader [list_remove $fposs -1]] $newheader]
 		if {$resultfile ne "-"} {
-			set tempresult [filetemp $resultfile]
+			set tempresult [filetemp_ext $resultfile]
 			cg select -f $fields -s $sortfields $tempout $tempresult
 			file rename -force $tempresult $resultfile
+			cg lz4index $resultfile
 			file delete -force $tempout
 		} else {
 			cg select -f $fields -s $sortfields $tempout >@ stdout
@@ -392,13 +393,25 @@ proc cg_liftover {args} {
 	} else {
 		if {$resultfile ne "-"} {
 			catch {close $o}
-			file rename -force $tempout $resultfile
+			if {[file extension $resultfile] eq ".lz4"} {
+				cg lz4 -i 1 $tempout
+				file rename -force $tempout.lz4 $resultfile
+				file rename -force $tempout.lz4.lz4i $resultfile.lz4i
+			} else {
+				file rename -force $tempout $resultfile
+			}
 		}
 	}
 	#
 	# rename result, cleanup
 	#
 	if {$tempunmapped ne ""} {
-		file rename -force $tempunmapped $unmappedfile
+		if {[file extension $unmappedfile] eq ".lz4"} {
+			cg lz4 -i 1 $tempunmapped
+			file rename -force $tempunmapped.lz4 $unmappedfile
+			file rename -force $tempunmapped.lz4.lz4i $unmappedfile.lz4i
+		} else {
+			file rename -force $tempunmapped $unmappedfile
+		}
 	}
 }

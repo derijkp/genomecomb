@@ -62,8 +62,8 @@ proc cg_download_phenotype {args} {
 		These gene-phenotype correlations are extracted from the ensembl gene database 
 		using biomart combined with those found in the clinvar database.
 	} \n temp
-	file_write $resultfile.info [string trim $temp]
-file_write $resultfile.info [subst [string trim {
+	file_write [gzroot $resultfile].info [string trim $temp]
+file_write [gzroot $resultfile].info [subst [string trim {
 phenotype
 =========
 
@@ -82,5 +82,11 @@ Gene-phenotype data file
 These gene-phenotype correlations are extracted from the ensembl gene database 
 using biomart combined with those found in the clinvar database.
 }]]
-	file rename -force $tempdir/phenotype.tsv $resultfile
+	if {[file extension $resultfile] eq ".lz4"} {
+		cg lz4 -i 1 $tempdir/phenotype.tsv
+		file rename -force $tempdir/phenotype.tsv.lz4 $resultfile
+		file rename -force $tempdir/phenotype.tsv.lz4.lz4i $resultfile.lz4i
+	} else {
+		file rename -force $tempdir/phenotype.tsv $resultfile
+	}
 }

@@ -29,26 +29,10 @@ proc cg_download_genome {args} {
 			wgetfile ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr$chr.fa.gz
 		}
 		putslog "Converting and indexing"
-		exec zcat {*}$files | cg genome_indexfasta [file tail $result]
-		file rename -force {*}[glob [file tail $result]*] ..
+		exec zcat {*}$files | cg genome_indexfasta $tail
+		file rename -force {*}[glob $tail*] ..
 	} elseif {![catch {
-		if {$alt} {
-			set url http://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/analysisSet/$build.fullAnalysisSet.chroms.tar.gz
-			set file $build.fullAnalysisSet.chroms.tar.gz
-		} else {
-			set url http://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/analysisSet/$build.analysisSet.chroms.tar.gz
-			set file $build.analysisSet.chroms.tar.gz
-		}
-		wgetfile $url
-		if {![file exists $file]} {error "Could not download $file"}
-	} msg]} {
-		exec tar xvzf $file
-		set files [ssort -natural [glob */chr*.fa]]
-		putslog "Converting and indexing"
-		exec cat {*}$files | cg genome_indexfasta $tail
-		file rename -force {*}[glob [file tail $result]*] ..
-	} elseif {![catch {
-		wgetfiles ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/*.fa.gz goldenPath-$build-chromosomes
+		wgetfiles ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr*.fa.gz goldenPath-$build-chromosomes
 		if {![llength [glob goldenPath-$build-chromosomes/*.fa.gz]]} {error "Could not download $build chromosomes"}
 	} msg]} {
 		set files [ssort -natural [glob goldenPath-$build-chromosomes/*.fa.gz]]
@@ -57,7 +41,7 @@ proc cg_download_genome {args} {
 		}
 		putslog "Converting and indexing"
 		exec zcat {*}$files | cg genome_indexfasta $tail
-		file rename -force {*}[glob [file tail $result]*] ..
+		file rename -force {*}[glob $tail*] ..
 	} else {
 		exec wget --tries=45 ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/$build.fa.gz >@ stdout  2>@ stderr
 		cg_fas2ifas $build.fa.gz $tail
@@ -69,7 +53,7 @@ proc cg_download_genome {args} {
 	# make samtools index
 	exec samtools faidx $result
 	#
-	set rfile [file dir $result]/reg_[file root [file tail $result]].tsv
+	set rfile [file dir $result]/reg_[file root $tail].tsv
 	putslog "Making $rfile"
 	set data [file_read $result.index]
 	set o [open $rfile.temp w]

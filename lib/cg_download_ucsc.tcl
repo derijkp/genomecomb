@@ -70,7 +70,7 @@ proc cg_download_ucsc {args} {
 	file mkdir $temp
 	# download documentation
 	# ----------------
-	cg_download_ucscinfo $resultfile.info $build $dbname
+	cg_download_ucscinfo [gzroot $resultfile].info $build $dbname
 	#
 	# download data
 	set single 1
@@ -154,6 +154,12 @@ proc cg_download_ucsc {args} {
 	exec cg select -s - -f $fields $temp/u_$dbname.tsv {*}[compresspipe $resulttail 12] > $temp/$resulttail
 	# move to result
 	putslog "move results to $resultfile and $resultfile.info"
-	file rename -force $temp/$resulttail $resultfile
+	if {[file extension $resultfile] eq ".lz4"} {
+		cg lz4 -i 1 $temp/$resulttail
+		file rename -force $temp/$resulttail.lz4 $resultfile
+		file rename -force $temp/$resulttail.lz4.lz4i $resultfile.lz4i
+	} else {
+		file rename -force $temp/$resulttail $resultfile
+	}
 	file delete -force $temp
 }

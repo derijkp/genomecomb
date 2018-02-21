@@ -1,14 +1,16 @@
 proc cg_download_evs {args} {
 	cg_options download_phenotype args {
-	} {resultfile build url}
+	} {resultfile url}
 	set resultfile [file_absolute $resultfile]
 	if {$url eq ""} {
 		set url http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
+		set evsbuild hg19
 		if {$build ne "hg19"} {error "for build other than hg19, the url must be given"}
 	}
 	set version {}
 	regexp {^[^.]*} [file tail $url] version
 	set tempdir $resultfile.temp
+	set tempresult $tempdir/result.tsv
 	file mkdir $tempdir
 	set keeppwd [pwd]
 	cd $tempdir
@@ -24,17 +26,17 @@ proc cg_download_evs {args} {
 	set files [lsort -dict [glob ESP6500SI-*.snps_indels.tsv]]
 	if {[llength $files] != 24} {error "not enough files found"}
 	putslog "Concatenating files"
-	cg cat {*}$files > var_${build}_evs.tsv.temp
+	cg cat {*}$files > $tempresult.temp
 #	cg select -f {chromosome begin end type 
 #		{ea_freqp=lrange(vformat("%.3f",(100.0 @* $EA_AC) @/ lsum($EA_AC)),0,"end-1")} 
 #		{aa_freqp=lrange(vformat("%.3f",(100.0 @* $AA_AC) @/ lsum($AA_AC)),0,"end-1")}
 #		*
-#	} var_${build}_evs.tsv.temp var_${build}_evs.tsv.temp2
+#	} $tempresult.temp $tempresult.temp2
 	putslog "Create results"
-	set f [open var_${build}_evs.tsv.temp]
+	set f [open $tempresult.temp]
 	set header [tsv_open $f]
 	set bposs [tsv_basicfields $header]
-	set o [open var_${build}_evs.tsv.temp2 w]
+	set o [open $tempresult.temp2 w]
 	set nheader [list {*}[list_sub $header $bposs] ea_freqp aa_freqp ea_mfreqp aa_mfreqp {*}[list_sub $header -exclude $bposs]]
 	puts $o [join $nheader \t]
 	set poss [list_cor $header {alt EA_AC AA_AC GTS EA_GTC AA_GTC}]
@@ -84,9 +86,9 @@ proc cg_download_evs {args} {
 	}
 	close $o
 	close $f
-	file_write $resultfile.opt "fields\t{ea_freqp aa_freqp ea_mfreqp aa_mfreqp}\n"
+	file_write [gzroot $resultfile].opt "fields\t{ea_freqp aa_freqp ea_mfreqp aa_mfreqp}\n"
 	#
-file_write $resultfile.info [subst [string trim {
+file_write [gzroot $resultfile].info [subst [string trim {
 Exome variant server
 ====================
 
@@ -118,7 +120,13 @@ more information on http://evs.gs.washington.edu/EVS/
 }]]
 	#
 	putslog "move results to $resultfile"
-	file rename var_${build}_evs.tsv.temp2 $resultfile
+	if {[file extension $resultfile] eq ".lz4"} {
+		cg lz4 -i 1 $tempresult.temp2
+		file rename -force $tempresult.temp2.lz4 $resultfile
+		file rename -force $tempresult.temp2.lz4.lz4i $resultfile.lz4i
+	} else {
+		file rename -force $tempresult.temp2 $resultfile
+	}
 	cd $keeppwd
 	file delete -force $tempdir
 }

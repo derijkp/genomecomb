@@ -115,9 +115,9 @@ proc cg_download_dbsnp {resultfile build dbname} {
 		if {[eof $f]} break
 	}
 	close $f ; close $o
-	file rename -force $resultfile.ucsc.info $resultfile.info
+	file rename -force $resultfile.ucsc.info [gzroot $resultfile].info
 	puts "Sorting $resultfile"
-	cg select -s - $resultfile.temp $resultfile.temp2
-	file rename -force $resultfile.temp2 $resultfile
+	cg select -s - $resultfile.temp $resultfile.temp2[file extension $resultfile]
+	file rename -force $resultfile.temp2[file extension $resultfile] $resultfile
 	file delete $resultfile.temp $resultfile.ucsc
 }

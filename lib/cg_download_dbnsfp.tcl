@@ -24,7 +24,7 @@ proc cg_download_dbnsfp {args} {
 		-version {set version $value}
 		-k {set keep value}
 		-fields {set usefields $value}
-	} {resultfile build url} 2 3 {
+	} {resultfile build url basebuild} 2 4 {
 		download data from dbnsfp
 	}
 	if {[file exists $resultfile]} {
@@ -63,8 +63,8 @@ proc cg_download_dbnsfp {args} {
 	puts $o "== Description from Readme =="
 	close $o
 	exec cat $readme >> $tempdir/info
-	file rename -force $tempdir/info $resultfile.info
-	file copy -force $tempdir/LICENSE.txt $resultfile.license
+	file rename -force $tempdir/info [gzroot $resultfile].info
+	file copy -force $tempdir/LICENSE.txt [gzroot $resultfile].license
 	# data
 	set files [ssort -natural [glob $tempdir/dbNSFP*_variant.chr*]]
 	set f [open [lindex $files 0]]
@@ -112,11 +112,13 @@ proc cg_download_dbnsfp {args} {
 	}
 	putslog "joining files"
 	cg cat -c 0 {*}$todo > $tempdir/var_hg19_dbnsfp.tsv.temp
-	cg select -s - $tempdir/var_hg19_dbnsfp.tsv.temp $tempdir/var_hg19_dbnsfp.tsv.temp2
+	set tempresult $tempdir/var_hg19_dbnsfp.tsv.temp2[file extension $resultfile]
+	cg select -s - $tempdir/var_hg19_dbnsfp.tsv.temp $tempresult
 	putslog "move result to target"
 	# move dbNSFPzip files to target
-	file_write $resultfile.opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred MetaSVM_score MetaSVM_pred MetaLR_score MetaLR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score GERP_NR GERP_RS MetaLR_score MetaLR_pred SiPhy_29way_pi SiPhy_29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
-	file rename -force $tempdir/var_hg19_dbnsfp.tsv.temp2 $resultfile
+	file_write [gzroot $resultfile].opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred MetaSVM_score MetaSVM_pred MetaLR_score MetaLR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score GERP_NR GERP_RS MetaLR_score MetaLR_pred SiPhy_29way_pi SiPhy_29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
+	# lz4 already handled in last select
+	file rename -force $tempresult $resultfile
 	if {!$keep} {file delete -force $tempdir}
 }
 

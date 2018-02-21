@@ -6,12 +6,11 @@
 
 proc cg_download_kaviar {args} {
 	set version {}
-	set build hg19
 	set keep 0
 	cg_options download_dbnsfp args {
 		-version {set version $value}
 		-k {set keep value}
-	} {resultfile build url} 1 3 {
+	} {resultfile url} 1 2 {
 		download data from dbnsfp
 	}
 	if {[file exists $resultfile]} {
@@ -19,19 +18,10 @@ proc cg_download_kaviar {args} {
 		return
 	}
 	if {![info exists url]} {
-		if {$build eq "hg19"} {
-			set url http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-hg19-trim.vcf.tar
-		} elseif {$build eq "hg38"} {
-			set url http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-hg38-trim.vcf.tar
-		} else {
-			error "unsupported build, specify url"
-		}
+		set url http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-hg19-trim.vcf.tar
 	}
 	set tail [file tail $url]
 	set rtail [file tail $resultfile]
-	if {![regexp -- "-${build}-" $tail]} {
-		error "url $url does not seem to be of build $build"
-	}
 	if {$version eq ""} {
 		regexp {[0-9][0-9.]*[0-9][a-z]?} $tail version
 	}
@@ -47,7 +37,7 @@ proc cg_download_kaviar {args} {
 	exec tar xvf $tempdir/$tail --directory $tempdir
 	set vcffile [glob $tempdir/*/*/Kaviar*vcf.gz]
 	cg vcf2tsv $vcffile $tempdir/$rtail.temp
-	cg select -f {chromosome begin end type ref alt {freqp=vformat("%.5f",100.0 @* $frequency)} allelecount totalallelecount} $tempdir/$rtail.temp $tempdir/$rtail.temp2
+	cg select -f {chromosome begin end type ref alt {freqp=vformat("%.5f",100.0 @* $frequency)} allelecount totalallelecount} $tempdir/$rtail.temp $tempdir/$rtail.temp2[file extension $resultfile]
 	file delete $tempdir/$rtail.temp
 	#
 	putslog "Extracting info"
@@ -62,9 +52,9 @@ proc cg_download_kaviar {args} {
 	puts $o ""
 	close $o
 	exec cat $readme >> $tempdir/info
-	file rename $tempdir/info $resultfile.info
+	file rename $tempdir/info [gzroot $resultfile].info
 	#
 	putslog "move result to target"
-	file rename -force $tempdir/$rtail.temp2 $resultfile
+	file rename -force $tempdir/$rtail.temp2[file extension $resultfile] $resultfile
 	if {!$keep} {file delete -force $tempdir}
 }

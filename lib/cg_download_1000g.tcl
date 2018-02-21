@@ -6,12 +6,10 @@
 
 proc cg_download_1000g3 {args} {
 	set url ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
+	set readmeurl ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
 	cg_options download_1000g3 args {
-	} {resultfile build url} 2 3 {
+	} {resultfile url readmeurl} 1 3 {
 		download data from 1000 genomes final release
-	}
-	if {$build ne "hg19"} {
-		error "only build hg19 supported"
 	}
 	set dir [file tail [file dir $url]]
 	set tail [file tail $url]
@@ -24,12 +22,7 @@ proc cg_download_1000g3 {args} {
 	file mkdir $tempdir
 	# info
 	regsub {/[^/]+$} $url {} urldir
-	set error [catch {
-		wgetfile $urldir/README_phase3_callset_20150220 $tempdir/[file tail $infourl]
-	} msg]
-	if {$error} {
-		wgetfiles $urldir/README_* $tempdir
-	}
+	wgetfile $readmeurl $tempdir/[file tail $readmeurl]
 	set readme [lindex [glob -nocomplain $tempdir/README_phase3_callset_20150220 $tempdir/README_*callset* $tempdir/README_*] 0]
 	set o [open $tempdir/result.info w]
 	puts $o dbname\t1000g3
@@ -41,7 +34,7 @@ proc cg_download_1000g3 {args} {
 	puts $o ""
 	close $o
 	exec cat $readme >> $tempdir/result.info
-	file rename -force $tempdir/result.info $resultfile.info
+	file rename -force $tempdir/result.info [gzroot $resultfile].info
 	
 	# data
 	wgetfile $url $tempdir/$tail
@@ -57,8 +50,8 @@ proc cg_download_1000g3 {args} {
 		}
 	}
 	file rename -force $tempdir/$base.tsv.temp $tempdir/$base.tsv
-	cg select -s - -f $fields $tempdir/$base.tsv $tempdir/result.tsv.temp
-	file rename -force $tempdir/result.tsv.temp $resultfile
+	cg select -s - -f $fields $tempdir/$base.tsv $tempdir/result.tsv.temp[file extension $resultfile]
+	file rename -force $tempdir/result.tsv.temp[file extension $resultfile] $resultfile
 	file delete -force $resultfile.temp
 }
 

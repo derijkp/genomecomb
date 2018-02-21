@@ -3,42 +3,83 @@
 exec cg source "$0" "$@"
 
 set build hg19
+
+# settings
 set mirbasegenome hsa
 set mirbaserelease 20
+set mirbasebuild hg19
+set dbsnpversion 150
+set gencodeversion 27
+set 1000g3url ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
+set 1000g3readmeurl ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
+set 1000g3build hg19
+set clinvarurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20180128.vcf.gz
+set clinvarpapuurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20180128_papu.vcf.gz
+set kaviarurl http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-hg19-trim.vcf.tar
+set kaviarbuild hg19
+set evsurl http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
+set evsbuild hg19
+set exacurl ftp://ftp.broadinstitute.org/pub/ExAC_release/release1/ExAC.r1.sites.vep.vcf.gz
+set exacbuild hg19
+set caddurl http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz
+set caddbuild hg19
+set gnomadversion 2.0.2
+set gnomadbaseurl https://storage.googleapis.com/gnomad-public/release/$gnomadversion/vcf
+set gnomadexurl $gnomadbaseurl/exomes/gnomad.exomes.r$gnomadversion.sites.vcf.bgz
+set dbnsfpurl ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv3.5a.zip
+set dbnsfpbuild hg38
 
-logverbose 2
-
+# arguments
 if {![info exists argv]} {set argv {}}
 set argv [job_init {*}$argv]
 foreach {dest webcache} $argv break
-if {![info exists dest]} {set dest /complgen/refseq}
+if {![info exists dest]} {set dest /complgen/refseqnew}
 if {![info exists webcache]} {set webcache $dest/webcache}
 if {[info exists webcache]} {set env(webcache) $webcache}
 set dest [file_absolute $dest]
 
+# prepare
 putslog "Installing in $dest/$build"
-
-# download hg19
-# =============
-#
 file mkdir ${dest}/${build}
 cd ${dest}/${build}
 file mkdir extra
-file mkdir ${dest}/hg18
 
+logverbose 2
 job_logdir log_jobs
 
+# download
+# ========
+#
+
+# readme
+set c [file_read $genomecombdir/docs/dbdir_README.txt]
+regsub {version: [0-9.]+} $c "version: 0.98.7\ntime: [lindex [timestamp] 0]" c
+file_write README_dbdir.txt $c
+
 # download genome
-job genome_${build} -vars build -targets {genome_${build}.ifas genome_${build}.ifas.fai extra/reg_${build}_fullgenome.tsv} -code {
-	cg download_genome -alt 0 genome_${build}.ifas ${build}
+job genome_${build} -targets {
+	genome_${build}.ifas
+	genome_${build}.ifas.fai
+	extra/reg_${build}_fullgenome.tsv
+} -vars build -code {
+	cg download_genome -alt 0 genome_${build}.ifas ${build} 2>@ stderr
 	file rename -force reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
+	cg lz4 -i 1 extra/reg_${build}_fullgenome.tsv
 }
 
-job genome_${build}_cindex -deps {genome_${build}.ifas} -targets {genome_${build}.ssa} -code {
+job genome_${build}_cindex -deps {
+	genome_${build}.ifas
+} -targets {
+	genome_${build}.ssa
+} -code {
 	cg make_genomecindex $dep
 }
 
-job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv.lz4} -code {
+job reg_${build}_sequencedgenome -deps {
+	genome_${build}.ifas
+} -targets {
+	extra/reg_${build}_sequencedgenome.tsv.lz4
+} -vars {dest build} -code {
 	exec cg calcsequencedgenome --stack 1 $dep | lz4c -12 > $target.temp
 	file rename -force $target.temp $target
 }
@@ -55,13 +96,19 @@ foreach db {
 	cytoBand evofold microsat oreganno rmsk simpleRepeat targetScanS tfbsConsSites 
 	tRNAs wgRna vistaEnhancers gad
 	phastConsElements46way phastConsElements46wayPlacental phastConsElements46wayPrimates
+	phastConsElements100way
 } {
-	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {dest build db} -code {
+	job reg_${build}_$db -targets {
+		reg_${build}_${db}.tsv
+	} -vars {dest build db} -code {
+		set target [gzroot $target].lz4
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regcollapse $target.ucsc > $target.temp
-		file rename -force $target.ucsc.info $target.info
-		file rename -force $target.temp $target
 		file delete $target.ucsc
+		cg lz4 -i 1 $target.temp
+		file rename -force $target.ucsc.info [gzroot $target].info
+		file rename -force $target.temp.lz4 $target
+		file rename -force $target.temp.lz4.lz4i $target.lz4i
 	}
 }
 
@@ -69,80 +116,130 @@ foreach db {
 foreach db {
 	chainSelf dgvMerged genomicSuperDups
 } {
-	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {dest build db} -code {
+	job reg_${build}_$db -targets {
+		reg_${build}_${db}.tsv
+	} -vars {dest build db} -code {
+		set target [gzroot $target].lz4
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regjoin $target.ucsc > $target.temp
 		file delete $target.ucsc
-		file rename -force $target.ucsc.info $target.info
-		file rename -force $target.temp $target
+		cg lz4 -i 1 $target.temp
+		file rename -force $target.ucsc.info [gzroot $target].info
+		file rename -force $target.temp.lz4 $target
+		file rename -force $target.temp.lz4.lz4i $target.lz4i
 	}
 }
 
-job reg_${build}_gwasCatalog -vars {build dest} -targets {reg_${build}_gwasCatalog.tsv} -code {
+job reg_${build}_gwasCatalog -targets {
+	reg_${build}_gwasCatalog.tsv
+} -vars {build dest} -code {
+	set target [gzroot $target].lz4
 	cg download_ucsc $target.ucsc ${build} gwasCatalog
 	cg select \
 		-f {chrom start end trait pValue pubMedID name bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv} \
 		-nh {chrom start end name score pubMedID dbsnp bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv} \
 		$target.ucsc $target.temp
 	cg regcollapse $target.temp > $target.temp2
-	file rename -force $target.ucsc.info $target.info
-	file rename -force $target.temp2 $target
 	file delete $target.temp
 	file delete $target.ucsc
+	cg lz4 -i 1 $target.temp2
+	file rename -force $target.ucsc.info [gzroot $target].info
+	file rename -force $target.temp2.lz4 $target
+	file rename -force $target.temp2.lz4.lz4i $target.lz4i
 }
 
 foreach db {
 	rmsk simpleRepeat
 } {
-	job maketabix_${build}_$db -deps {reg_${build}_${db}.tsv} -targets {reg_${build}_${db}.tsv.gz.tbi reg_${build}_${db}.tsv.gz} -vars {build db} -code {
-		cg maketabix reg_${build}_${db}.tsv
-	}
-}
-
-## 1000 genomes
-job 1000g3 -targets {var_hg19_1000g3.tsv extra/var_hg19_1000g3.tsv.opt} -vars {dest} -code {
-	cg download_1000g3 $target hg19
-	cplinked $target extra/var_hg19_1000g3.tsv
-	file_write extra/var_hg19_1000g3.tsv.opt "fields\t{EUR_AF AMR_AF EAS_AF SAS_AF AFR_AF}\n"
-}
-
-# dbsnp
-job dbsnp147 -targets {var_hg19_snp147.tsv var_hg19_snp147.tsv.opt} -vars {dest build} -code {
-	file_write $target.opt "fields\t{name}\n"
-	cg download_dbsnp $target ${build} snp147 2>@ stderr
-}
-
-job dbsnp147Common -targets {var_hg19_snp147Common.tsv} -vars {dest build} -code {
-	file_write $target.opt "fields\t{freqp}\n"
-	cg download_dbsnp $target ${build} snp147Common 2>@ stderr
-}
-
-foreach db {
-	snp147 snp147Common
-} {
-	job maketabix_${build}_$db -deps {var_${build}_${db}.tsv} -targets {var_${build}_${db}.tsv.gz.tbi var_${build}_${db}.tsv.gz} -vars {dest build db} -code {
+	job maketabix_${build}_$db -deps {
+		reg_${build}_${db}.tsv
+	} -targets {
+		reg_${build}_${db}.tsv.gz.tbi
+		reg_${build}_${db}.tsv.gz
+	} -vars {build db} -code {
 		cg maketabix $dep
 	}
 }
 
-job clinvar -targets {var_${build}_clinvar.tsv} -vars {dest build} -code {
-	cg download_clinvar --stack 1 $target $build ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar.vcf.gz
+## 1000 genomes
+job 1000g3 -targets {
+	var_${build}_1000g3.tsv
+	extra/var_${build}_1000g3.tsv
+	extra/var_${build}_1000g3.tsv.opt
+} -vars {dest 1000g3url 1000g3readmeurl 1000g3build build} -code {
+	set target [gzroot $target].lz4
+	if {$1000g3build eq $build} {
+		cg download_1000g3 $target $1000g3url $1000g3readmeurl
+	} else {
+		cg download_1000g3 $target.$1000g3build.lz4 $1000g3url $1000g3readmeurl
+		liftover_refdb $target.$1000g3build.lz4 $target $dest $1000g3build $build
+	}
+	cplinked $target extra/var_${build}_1000g3.tsv.lz4
+	cplinked $target.lz4i extra/var_${build}_1000g3.tsv.lz4.lz4i
+	file_write extra/var_${build}_1000g3.tsv.opt "fields\t{EUR_AF AMR_AF EAS_AF SAS_AF AFR_AF}\n"
 }
 
-job kaviar -targets {var_hg19_kaviar.tsv var_hg19_kaviar.tsv.opt} -vars {dest build} -code {
-	cg download_kaviar $target hg19 http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-hg19-trim.vcf.tar
+# dbsnp
+job dbsnp -targets {
+	var_${build}_dbsnp.tsv
+	var_${build}_dbsnp.tsv.opt
+} -vars {dest build dbsnpversion} -code {
+	set target [gzroot $target].lz4
+	file_write [gzroot $target].opt "fields\t{name}\n"
+	cg download_dbsnp $target ${build} snp$dbsnpversion 2>@ stderr
+	cg lz4index $target
+}
+
+job dbsnpCommon -targets {
+	var_${build}_dbsnpCommon.tsv
+} -vars {dest build dbsnpversion} -code {
+	set target [gzroot $target].lz4
+	file_write [gzroot $target].opt "fields\t{freqp}\n"
+	cg download_dbsnp $target ${build} snp${dbsnpversion}Common 2>@ stderr
+	cg lz4index $target
+}
+
+foreach db [list dbsnp dbsnpCommon] {
+	job maketabix_${build}_$db -deps {
+		var_${build}_${db}.tsv
+	} -targets {
+		var_${build}_${db}.tsv.gz.tbi
+		var_${build}_${db}.tsv.gz
+	} -vars {dest build db} -code {
+		cg maketabix $dep
+	}
+}
+
+job clinvar -targets {
+	var_${build}_clinvar.tsv
+} -vars {dest build clinvarurl clinvarpapuurl} -code {
+	set target [gzroot $target].lz4
+	cg download_clinvar --stack 1 $target $build $clinvarurl $clinvarpapuurl
+	cg lz4index $target
+}
+
+job kaviar -targets {
+	var_${build}_kaviar.tsv
+} -vars {dest build kaviarurl kaviarbuild} -code {
+	set target [gzroot $target].lz4
+	if {$kaviarbuild eq $build} {
+		cg download_kaviar $target $kaviarurl
+	} else {
+		cg download_kaviar $target.$kaviarbuild.lz4 $kaviarurl
+		liftover_refdb $target.$kaviarbuild.lz4 $target $dest $kaviarbuild $build
+	}
 }
 
 # genes
-foreach db {
-	refGene ensGene knownGene wgEncodeGencodeBasicV24lift37 wgEncodeGencodeCompV24lift37
-	genscan acembly lincRNAsTranscripts
-} {
+foreach db [list \
+	refGene ensGene knownGene wgEncodeGencodeBasicV${gencodeversion}lift37 wgEncodeGencodeCompV${gencodeversion}lift37 \
+	genscan acembly lincRNAsTranscripts \
+] {
 	if {$db eq "wgEncodeGencodeCompV19"} {
 		set dbname gencode
-	} elseif {$db eq "wgEncodeGencodeBasicV24lift37"} {
+	} elseif {$db eq "wgEncodeGencodeBasicV${gencodeversion}lift37"} {
 		set dbname gencode
-	} elseif {$db eq "wgEncodeGencodeCompV24lift37"} {
+	} elseif {$db eq "wgEncodeGencodeCompV${gencodeversion}lift37"} {
 		set dbname cgencode
 	} elseif {$db eq "lincRNAsTranscripts"} {
 		set dbname lincRNA
@@ -152,7 +249,12 @@ foreach db {
 	} else {
 		set target extra/gene_${build}_${dbname}.tsv
 	}
-	job gene_${build}_$dbname -targets {$target $target.gz.tbi $target.gz} -vars {dest build db} -code {
+	job gene_${build}_$dbname -targets {
+		$target
+		$target.gz.tbi
+		$target.gz
+	} -vars {dest build db} -code {
+		set target [gzroot $target].lz4
 		file delete $target
 		cg download_genes $target $build $db
 	        cg maketabix $target
@@ -161,53 +263,80 @@ foreach db {
 }
 
 set target gene_${build}_intGene.tsv
-job gene_${build}_intGene \
--deps {gene_${build}_refGene.tsv extra/gene_${build}_gencode.tsv extra/gene_${build}_ensGene.tsv extra/gene_${build}_knownGene.tsv} \
--targets {$target $target.gz $target.gz.tbi} -vars {dest build db} -code {
-	cg intgene {*}$deps > $target.temp
-	file rename -force $target.temp $target
+job gene_${build}_intGene -deps {
+	gene_${build}_refGene.tsv
+	extra/gene_${build}_gencode.tsv
+	extra/gene_${build}_ensGene.tsv
+	extra/gene_${build}_knownGene.tsv
+} -targets {
+	$target
+	$target.gz
+	$target.gz.tbi
+} -vars {dest build db} -code {
+	set target [gzroot $target].lz4
+	cg intgene {*}$deps | cg lz4 > $target.temp.lz4
+	file rename -force $target.temp.lz4 $target
 	cg maketabix $target
+	cg lz4index $target
 	cg index $target
 }
 
-job reg_${build}_genes \
--deps {gene_${build}_refGene.tsv extra/gene_${build}_ensGene.tsv extra/gene_${build}_knownGene.tsv extra/gene_${build}_gencode.tsv} \
--targets {extra/reg_${build}_genes.tsv} \
--code {
-	exec cg cat -fields {chrom start end geneid} {*}$deps | cg select -s {chrom start end geneid} -f {chrom {start=$start - 2000} {end=$end + 2000} geneid} | cg regcollapse > $target.temp
-	file rename -force $target.temp $target
+job reg_${build}_genes -deps {
+	gene_${build}_refGene.tsv
+	extra/gene_${build}_ensGene.tsv
+	extra/gene_${build}_knownGene.tsv
+	extra/gene_${build}_gencode.tsv
+} -targets {
+	extra/reg_${build}_genes.tsv
+} -code {
+	set target [gzroot $target].lz4
+	exec cg cat -fields {chrom start end geneid} {*}$deps | cg select -s {chrom start end geneid} -f {chrom {start=$start - 2000} {end=$end + 2000} geneid} | cg regcollapse | cg lz4 > $target.temp.lz4
+	file rename -force $target.temp.lz4 $target
+	cg lz4index $target
 }
 
-job reg_refcoding \
--deps {gene_${build}_refGene.tsv} \
--targets {extra/reg_${build}_refcoding.tsv} \
--code {
-	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin > $target.temp
-	file rename -force $target.temp $target
+job reg_refcoding -deps {
+	gene_${build}_refGene.tsv
+} -targets {
+	extra/reg_${build}_refcoding.tsv
+} -code {
+	set target [gzroot $target].lz4
+	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin | cg lz4 > $target.temp.lz4
+	file rename -force $target.temp.lz4 $target
+	cg lz4index $target
 }
 
-job reg_exome_refGene \
--deps {gene_${build}_refGene.tsv} \
--targets {extra/reg_${build}_exome_refGene.tsv} \
--code {
-	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin > $target.temp
-	file rename -force $target.temp $target
+job reg_exome_refGene -deps {
+	gene_${build}_refGene.tsv
+} -targets {
+	extra/reg_${build}_exome_refGene.tsv
+} -code {
+	set target [gzroot $target].lz4
+	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin | cg lz4 > $target.temp.lz4
+	file rename -force $target.temp.lz4 $target
+	cg lz4index $target
 }
 
-job reg_intcoding \
--deps {gene_${build}_intGene.tsv} \
--targets {extra/reg_${build}_intcoding.tsv} \
--code {
-	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin > $target.temp
-	file rename -force $target.temp $target
+job reg_intcoding -deps {
+	gene_${build}_intGene.tsv
+} -targets {
+	extra/reg_${build}_intcoding.tsv
+} -code {
+	set target [gzroot $target].lz4
+	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin | cg lz4 > $target.temp.lz4
+	file rename -force $target.temp.lz4 $target
+	cg lz4index $target
 }
 
-job reg_exome_intGene \
--deps {gene_${build}_intGene.tsv} \
--targets {extra/reg_${build}_exome_intGene.tsv} \
--code {
-	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin > $target.temp
-	file rename -force $target.temp $target
+job reg_exome_intGene -deps {
+	gene_${build}_intGene.tsv
+} -targets {
+	extra/reg_${build}_exome_intGene.tsv
+} -code {
+	set target [gzroot $target].lz4
+	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin | cg lz4 > $target.temp.lz4
+	file rename -force $target.temp.lz4 $target
+	cg lz4index $target
 }
 
 file_write extra/reg_${build}_pseudoautosomal.tsv {chromosome	begin	end	name
@@ -217,80 +346,125 @@ Y	10001	2649520	PAR1
 Y	59034050	59363566	PAR2
 }
 
-job reg_${build}_phenotype -deps {extra/reg_${build}_genes.tsv} \
--targets {extra/reg_${build}_phenotype.tsv extra/geneannot_${build}_phenotype.tsv} -vars {dest build} -code {
+job reg_${build}_phenotype -deps {
+	extra/reg_${build}_genes.tsv
+} -targets {
+	extra/reg_${build}_phenotype.tsv
+	extra/geneannot_${build}_phenotype.tsv
+} -vars {dest build} -code {
+	set target [gzroot $target].lz4
 	# get target2, uses biomart (ensembl geneset) and clinvar for gene-phenotype correlations
 	cg download_phenotype $target2 ${build}
 	# to reg file
 	cg geneannot2reg $dep $target2 $target.temp
-	file rename -force $target.temp $target
+	cg lz4 -i 1 $target.temp
+	file rename -force $target.temp.lz4 $target
+	file rename -force $target.temp.lz4.lz4i $target.lz4i
 }
 
-job reg_${build}_go -deps {extra/reg_${build}_genes.tsv} \
--targets {extra/reg_${build}_go.tsv extra/geneannot_${build}_go.tsv} -code {
-	cg download_mart $target2 hsapiens_gene_ensembl gene_ensembl_config {hgnc_symbol name_1006 namespace_1003}
-	cg geneannot2reg $dep $target2 $target.temp
-	file rename -force $target.temp $target
+job reg_${build}_go -deps {
+	extra/reg_${build}_genes.tsv
+} -targets {
+	extra/reg_${build}_go.tsv
+	extra/geneannot_${build}_go.tsv
+} -code {
+	set target [gzroot $target].lz4
+	cg download_mart $target2.lz4 hsapiens_gene_ensembl gene_ensembl_config {hgnc_symbol name_1006 namespace_1003}
+	cg geneannot2reg $dep $target2.lz4 $target.temp
+	cg lz4 -i 1 $target.temp
+	file rename -force $target.temp.lz4 $target
+	file rename -force $target.temp.lz4.lz4i $target.lz4i
 	file delete temp_go.tsv.temp
 }
 
-foreach {name id disease pattern} {
-	ad	C0002395	{Alzheimer's Disease} Alzheimer
-	ftd	C0338451 {Frontotemporal Dementia} frontotemp
-	als	C0002736	{Amyotrophic Lateral Sclerosis} {amyotrophic lateral}
-	pd	C0030567	{Parkinson Disease} parkinson
-	ep	C0014544	{Epilepsy} epilep
-	cmt	C0007959	{Charcot-Marie-Tooth Disease} charcot
-	pn	C0031117	{Peripheral Neuropathy} {peripher.*neuropat|motor.*neuropat|neuropat.*motor|peripher.*nerv}
-} {
-	job reg_${build}_biograph_$name -vars {id pattern name disease} \
-	-deps {extra/reg_${build}_genes.tsv extra/geneannot_${build}_phenotype.tsv} \
-	-targets {extra/reg_${build}_biograph_$name.tsv extra/geneannot_${build}_biograph_$name.tsv extra/reg_${build}_biograph_$name.info} -code {
-		set genefile [tempfile]
-		cg select -q "\$phenotype_description regexp \"(?i)$pattern\"" $dep2 $genefile
-		cg download_biograph $target2 $id $genefile
-		cg geneannot2reg $dep $target2 $target.temp
-		file rename -force $target.temp $target
-		set temp "gene ranking\n============\ngene ranking for $disease\n\nThe following scores will be given to variants in genes that"
-		append temp "0: are directly linked to the disease in the ensembl gene database or in the clinvar database\n"
-		append temp "1: have a known relation to the disease in biograph (can be association, etc.)\n"
-		append temp ">1: position in genelist sorted according to biograph prioritization (there are 18182 genes)"
-		file_write $target3 $temp
-	}
-}
-
-# homopolymer
-job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv.lz4 reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi reg_${build}_homopolymer.tsv.opt} -vars {dest build db} -code {
-	cg extracthomopolymers genome_${build}.ifas | cg lz4 > reg_${build}_homopolymer.tsv.temp.lz4
-	file rename -force reg_${build}_homopolymer.tsv.temp.lz4 reg_${build}_homopolymer.tsv
-        cg maketabix reg_${build}_homopolymer.tsv
-	cg lz4 reg_${build}_homopolymer.tsv
-	file_write reg_${build}_homopolymer.tsv.opt "fields\t{base size}\n"
-}
-
-## mirdmg
-#job reg_${build}_mirdmg -targets {mir_${build}_mirdmg.tsv mir_${build}_mirdmg.info} -vars {dest build db} -code {
-#	wgetfile http://mirna.bioinf.be/public/mir_hg19_mirdmg.tsv mir_hg19_mirdmg.tsv.temp
-#	file rename -force mir_hg19_mirdmg.tsv.temp mir_hg19_mirdmg.tsv
+# biograph is no longer accessible
+#foreach {name id disease pattern} {
+#	ad	C0002395	{Alzheimer's Disease} Alzheimer
+#	ftd	C0338451 {Frontotemporal Dementia} frontotemp
+#	als	C0002736	{Amyotrophic Lateral Sclerosis} {amyotrophic lateral}
+#	pd	C0030567	{Parkinson Disease} parkinson
+#	ep	C0014544	{Epilepsy} epilep
+#	cmt	C0007959	{Charcot-Marie-Tooth Disease} charcot
+#	pn	C0031117	{Peripheral Neuropathy} {peripher.*neuropat|motor.*neuropat|neuropat.*motor|peripher.*nerv}
+#} {
+#	job reg_${build}_biograph_$name -vars {id pattern name disease} \
+#	-deps {extra/reg_${build}_genes.tsv extra/geneannot_${build}_phenotype.tsv} \
+#	-targets {extra/reg_${build}_biograph_$name.tsv extra/geneannot_${build}_biograph_$name.tsv extra/reg_${build}_biograph_$name.info} -code {
+#		set genefile [tempfile]
+#		cg select -q "\$phenotype_description regexp \"(?i)$pattern\"" $dep2 $genefile
+#		cg download_biograph $target2.lz4 $id $genefile
+#		cg geneannot2reg $dep $target2.lz4 $target.temp
+#		cg lz4 -i 1 $target.temp
+#		file rename -force $target.temp.lz4 [gzroot $target].lz4
+#		file rename -force $target.temp.lz4.lz4i [gzroot $target].lz4.lz4i
+#		set temp "gene ranking\n============\ngene ranking for $disease\n\nThe following scores will be given to variants in genes that"
+#		append temp "0: are directly linked to the disease in the ensembl gene database or in the clinvar database\n"
+#		append temp "1: have a known relation to the disease in biograph (can be association, etc.)\n"
+#		append temp ">1: position in genelist sorted according to biograph prioritization (there are 18182 genes)"
+#		file_write $target3 $temp
+#	}
 #}
 
+# homopolymer
+job reg_${build}_homopolymer -deps {
+	genome_${build}.ifas
+} -targets {
+	reg_${build}_homopolymer.tsv.lz4
+	reg_${build}_homopolymer.tsv.gz
+	reg_${build}_homopolymer.tsv.gz.tbi
+	reg_${build}_homopolymer.tsv.opt
+} -vars {dest build db} -code {
+	file_write reg_${build}_homopolymer.tsv.opt "fields\t{base size}\n"
+	cg extracthomopolymers genome_${build}.ifas | cg lz4 > reg_${build}_homopolymer.tsv.temp.lz4
+	file rename -force reg_${build}_homopolymer.tsv.temp.lz4 reg_${build}_homopolymer.tsv.lz4
+        cg maketabix reg_${build}_homopolymer.tsv.lz4
+}
+
 # mirbase
-job mir_${build}_mirbase -targets {mir_${build}_mirbase$mirbaserelease.tsv mir_${build}_mirbase$mirbaserelease.tsv.info} -vars {mirbasegenome mirbaserelease dest build db} -code {
+job mir_${build}_mirbase -targets {
+	mir_${build}_mirbase$mirbaserelease.tsv
+	mir_${build}_mirbase$mirbaserelease.tsv.info
+} -vars {mirbasegenome mirbaserelease mirbasebuild dest build db} -code {
+	set target [gzroot $target].lz4
+	if {$mirbasebuild ne $build} {error "error: mirbase $mirbaserelease for build $mirbasebuild (making $build)"}
 	cg download_mirbase $target $mirbasegenome $mirbaserelease
 }
 
 # exome variant server
-job var_hg19_evs -targets {extra/var_hg19_evs.tsv extra/var_hg19_evs.tsv.opt extra/var_hg19_evs.tsv.info} -vars {dest build db} -code {
-	cg download_evs $target hg19 http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
+job var_${build}_evs -targets {
+	extra/var_${build}_evs.tsv
+	extra/var_${build}_evs.tsv.opt
+	extra/var_${build}_evs.tsv.info
+} -vars {dest build db evsurl evsbuild} -code {
+	set target [gzroot $target].lz4
+	if {$evsbuild eq $build} {
+		cg download_evs $target $evsurl
+	} else {
+		cg download_evs $target.$evsbuild.lz4 $evsurl
+		liftover_refdb $target.$evsbuild.lz4 $target $dest $evsbuild $build
+	}
 }
 
 # exac
-job reg_hg19_exac -targets {extra/var_hg19_exac.tsv extra/var_hg19_exac.tsv.opt extra/var_hg19_exac.tsv.info} -vars {dest build db} -code {
-	cg download_exac --stack 1 --verbose 2 $target hg19 ftp://ftp.broadinstitute.org/pub/ExAC_release/release0.3.1/ExAC.r0.3.1.sites.vep.vcf.gz
+job reg_${build}_exac -targets {
+	extra/var_${build}_exac.tsv
+	extra/var_${build}_exac.tsv.opt
+	extra/var_${build}_exac.tsv.info
+} -vars {dest build db exacurl exacbuild} -code {
+	set target [gzroot $target].lz4
+	if {$exacbuild eq $build} {
+		cg download_exac --stack 1 --verbose 2 $target $exacurl
+	} else {
+		cg download_exac --stack 1 --verbose 2 $target.$exacbuild.lz4 $exacurl
+		liftover_refdb $target.$exacbuild.lz4 $target $dest $exacbuild $build
+	}
 }
 
 # GERP
-job GERP -targets {extra/bcol_${build}_GERP.bcol extra/bcol_${build}_GERP.bcol.info} -vars {dest build tables} -code {
+job GERP -targets {
+	extra/bcol_${build}_GERP.bcol
+	extra/bcol_${build}_GERP.bcol.info
+} -vars {dest build tables} -code {
 	set table allHg19RS_BW
 	set tempdir $target.temp
 	file mkdir $tempdir
@@ -302,7 +476,7 @@ job GERP -targets {extra/bcol_${build}_GERP.bcol extra/bcol_${build}_GERP.bcol.i
 	file rename -force $tempdir/$tail.bin.lz4 $target.bin.lz4
 	file rename -force $tempdir/$tail.bin.lz4.lz4i $target.bin.lz4.lz4i
 	file rename -force $tempdir/$tail $target
-	file rename -force $tempdir/ucsc_${build}_$table.tsv.info $target.info
+	file rename -force $tempdir/ucsc_${build}_$table.tsv.info [gzroot $target].info
 	file delete -force $tempdir
 }
 
@@ -314,7 +488,9 @@ foreach {jobname resultname infosrc tables} {
 	enc_H3K4Me3	wgEncodeH3k4me3 wgEncodeRegMarkH3k4me3   {wgEncodeBroadHistoneGm12878H3k4me3StdSig wgEncodeBroadHistoneH1hescH3k4me3StdSig wgEncodeBroadHistoneHsmmH3k4me3StdSig wgEncodeBroadHistoneHuvecH3k4me3StdSig wgEncodeBroadHistoneK562H3k4me3StdSig wgEncodeBroadHistoneNhekH3k4me3StdSig wgEncodeBroadHistoneNhlfH3k4me3StdSig}
 } {
 	# make database
-	job $jobname -targets {bcol_${build}_$resultname.bcol} -vars {dest build tables resultname} -code {
+	job $jobname -targets {
+		bcol_${build}_$resultname.bcol
+	} -vars {dest build tables resultname} -code {
 		set tempdir $target.temp
 		file mkdir $tempdir
 		set todo {}
@@ -357,25 +533,30 @@ foreach {jobname resultname infosrc tables} {
 }
 
 # DNase Clusters and Txn Factor ChIP
-job enc_RegDnaseClustered -targets {reg_${build}_wgEncodeRegDnaseClusteredV3.tsv reg_${build}_wgEncodeRegDnaseClusteredV3.tsv.info} -vars {dest build} -code {
+job enc_RegDnaseClustered -targets {
+	reg_${build}_wgEncodeRegDnaseClusteredV3.tsv
+	reg_${build}_wgEncodeRegDnaseClusteredV3.tsv.info
+} -vars {dest build} -code {
 	cg download_ucsc $target.ucsc $build wgEncodeRegDnaseClusteredV3
 	cg regcollapse $target.ucsc > $target.temp
+	file rename -force $target.ucsc.info [gzroot $target].info
 	file rename -force $target.temp $target
 	file delete $target.ucsc
-	cg download_ucscinfo $target.info ${build} wgEncodeRegDnaseClusteredV3
 }
 
-job enc_RegTfbsClustered -targets {reg_${build}_wgEncodeRegTfbsClusteredV3.tsv} -vars {dest build} -code {
+job enc_RegTfbsClustered -targets {
+	reg_${build}_wgEncodeRegTfbsClusteredV3.tsv
+} -vars {dest build} -code {
 	cg download_ucsc $target.ucsc ${build} wgEncodeRegTfbsClusteredV3
 	cg select -s - -f {chrom	start	end	name	score} $target.ucsc $target.temp
 	cg regcollapse $target.temp > $target.temp2
 	file rename -force $target.temp2 $target
-	file rename -force $target.ucsc.info $target.info
+	file rename -force $target.ucsc.info [gzroot $target].info
 	file delete -force $target.ucsc $target.temp
 }
 
 # link local data in dir
-foreach file [glob -nocomplain ../hg19-local/*] {
+foreach file [glob -nocomplain ../${build}-local/*] {
 	catch {
 		file delete extra/[file tail $file]
 		cplinked $file [file tail $file]
@@ -395,45 +576,60 @@ foreach {targetname url file} {
 	SeqCap_EZ_v3 https://sftp.rch.cm/diagnostics/sequencing/literature/nimblegen/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip SeqCapEZ_Exome_v3.0_Design_Annotation_files/SeqCap_EZ_Exome_v3_hg19_capture_targets.bed
 	VCRome_V2_1 https://sftp.rch.cm/diagnostics/sequencing/nimblegen_annotations/ez_hgsc_vcrome/VCRome_2.1_design_files.zip VCRome_2_1_hg19_capture_targets.bed
 } {
-	job reg_exome_$targetname -targets {extra/reg_hg19_exome_$targetname.tsv.lz4} -vars {targetname url file} -code {
-		file delete -force $target.temp
-		file mkdir $target.temp
-		set keep [pwd]
-		cd $target.temp
+	job reg_exome_$targetname -targets {
+		extra/reg_hg19_exome_$targetname.tsv
+	} -vars {targetname url file dest build} -code {
+		cd ${dest}/${build}
+		set fulltarget [file_absolute $target]
+		file delete -force $fulltarget.temp
+		file mkdir $fulltarget.temp
+		cd $fulltarget.temp
 		if {[file extension $url] eq ".zip"} {
 			wgetfile $url temp.zip
 			exec unzip temp.zip
 			file delete temp.zip
 			if {$file eq ""} {
-				file rename [lindex [glob *] 0] temp.bed
-			} else {
-				file rename $file temp.bed
+				set file [lindex [glob *] 0]
 			}
+			set f [open $file]
+			set o [open temp.bed w]
+			set line [gets $f]
+			puts $o $line
+			while {[gets $f line] != -1} {
+				if {![isint [lindex $line 1]]} break
+				puts $o $line
+			}
+			close $o
+			close $f
 		} else {
 			wgetfile $url temp.bed
 		}
 		cg bed2tsv temp.bed u$targetname.tsv
-		if {$targetname in "SeqCap_EZ_v2 SeqCap_EZ_v3 VCRome_V2_1"} {
-			cg select -s {chromosome begin end} -f {chromosome begin end {gene=regextract($name,{=([^;]*)})}} u$targetname.tsv s$targetname.tsv
-		} else {
-			cg select -s {chromosome begin end} u$targetname.tsv s$targetname.tsv
-		}
+		cg select -s {chromosome begin end} u$targetname.tsv s$targetname.tsv
 		cg regcollapse -o reg_hg19_exome_$targetname.tsv s$targetname.tsv
-		cg lz4 reg_hg19_exome_$targetname.tsv
+		cg lz4 -i 1 reg_hg19_exome_$targetname.tsv
 		file delete temp.bed s$targetname.tsv u$targetname.tsv
-		file rename -force reg_hg19_exome_$targetname.tsv.lz4 $keep/extra
-		cd $keep
-		file delete -force $target.temp
+		file rename -force reg_hg19_exome_$targetname.tsv.lz4 $fulltarget.lz4
+		file rename -force reg_hg19_exome_$targetname.tsv.lz4.lz4i $fulltarget.lz4.lz4i
+		file delete -force $fulltarget.temp
 	}
 }
+cd ${dest}/${build}
 
 # dbNSFP
-job var_hg19_dbnsfp -targets {extra/var_hg19_dbnsfp.tsv extra/var_hg19_dbnsfp.tsv.opt} -vars {dest build} -code {
-	cg download_dbnsfp $target $build ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv3.3a.zip
+job var_${build}_dbnsfp -targets {
+	extra/var_${build}_dbnsfp.tsv
+	extra/var_${build}_dbnsfp.tsv.opt
+} -vars {dest build dbnsfpurl dbnsfpbuild} -code {
+	set target [gzroot $target].lz4
+	cg download_dbnsfp $target $build $dbnsfpurl $dbnsfpbuild
 }
 
-job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${build}.ssa} -vars build \
--targets {
+job extragenome -deps {
+	genome_${build}.ifas
+	genome_${build}.ifas.index
+	genome_${build}.ssa
+} -vars build -targets {
 	extra/genome_${build}.ifas extra/genome_${build}.ifas.fai extra/genome_${build}.ifas.index
 	genome_${build}.fa genome_${build}.fa.fai genome_${build}.fa.index
 	extra/genome_${build}.ssa
@@ -455,83 +651,22 @@ foreach file [glob genome_*] {
 	}
 }
 
-# compress
-foreach file [jobglob *.tsv extra/*.tsv] {
-	if {[file extension $file] eq ".lz4"} continue
-	job lz4_${build}_[file tail $file] -deps {$file} -targets {$file.lz4} -vars {dest build} -code {
-		cg lz4 -c 12 -i 1 $dep
-	}
-}
-
-# CADD
-job reg_hg19_cadd -targets {var_hg19_cadd.bcol var_hg19_cadd.bcol.bin.lz4 var_hg19_cadd.bcol.bin.lz4.lz4i var_hg19_cadd.bcol.info} -vars {dest db build} -code {
-	set tempdir $target.temp
-	file mkdir $tempdir
-	set url http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz
-	set tail [file tail $url]
-	file_write var_${build}_cadd.bcol.info [subst [deindent {
-		= CADD (Combined Annotation Dependent Depletion) =
-		
-		== Download info ==
-		dbname	cadd
-		version	1.3
-		citation	Kircher M, Witten DM, Jain P, O'Roak BJ, Cooper GM, Shendure J. A general framework for estimating the relative pathogenicity of human genetic variants. Nat Genet. 2014 Feb 2. doi:10.1038/ng.2892 PubMed PMID:24487276
-		license	non-commercial
-		source	$url
-		time	[timestamp]
-		
-		== Description ==
-		CADD is a tool for scoring the deleteriousness of single nucleotide variants as well as
-		insertion/deletions variants in the human genome.
-		While many variant annotation and scoring tools are around, most annotations 
-		tend to exploit a single information type (e.g. conservation) and/or 
-		are restricted in scope (e.g. to missense changes). Thus, a broadly applicable metric 
-		that objectively weights and integrates diverse information is needed. 
-		Combined Annotation Dependent Depletion (CADD) is a framework that 
-		integrates multiple annotations into one metric by contrasting variants that 
-		survived natural selection with simulated mutations.
-		C-scores strongly correlate with allelic 
-		diversity, pathogenicity of both coding and non-coding variants, and 
-		experimentally measured regulatory effects, and also highly rank causal variants 
-		within individual genome sequences. 
-		More info on the CADD scores can be found on \[\[http://cadd.gs.washington.edu/home\]\]
-		
-		== Category ==
-		Annotation
-	}]]
-	if {![file exists $tempdir/$tail]} {
-		putslog "Downloading $tail"
-		wgetfile $url $tempdir/$tail
-	}
-	putslog "make bcol"
-	file_write var_${build}_cadd.tsv.opt "fields\t{score pscore}\n"
-	cg select -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
-		| cg collapsealleles \
-		| cg bcol make --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
-	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4 var_${build}_cadd.bcol.bin.lz4
-	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4.lz4i var_${build}_cadd.bcol.bin.lz4.lz4i
-	file rename -force $tempdir/var_${build}_cadd.bcol var_${build}_cadd.bcol
-	file delete -force $tempdir
-}
-
 # gnomad
 # ------
 set finaltarget var_${build}_gnomad.tsv.lz4
 set tempdir $finaltarget.temp
 file mkdir $tempdir
-set version r2.0.1
-set baseurl https://data.broadinstitute.org/gnomAD/release-170228/genomes/vcf
-# set url https://data.broadinstitute.org/gnomAD/release-170228/genomes/vcf/gnomad.genomes.$version.sites.*.vcf.gz
-
-job var_hg19_gnomad-info -targets {var_hg19_gnomad.tsv.info} -vars {dest db build version} -code {
+job var_${build}_gnomad-info -targets {
+	var_${build}_gnomad.tsv.info
+} -vars {dest db build gnomadversion gnomadbaseurl} -code {
 	file_write var_${build}_gnomad.tsv.info [subst [deindent {
 		= gnomAD (genome Aggregation Database) =
 		
 		== Download info ==
 		dbname	gnomad
-		version	$version
+		version	$gnomadversion
 		citation	Lek, M., Karczewski, K. J., Minikel, E. V., Samocha, K. E., Banks, E., Fennell, T., Exome Aggregation Consortium. (2016). Analysis of protein-coding genetic variation in 60,706 humans. Nature, 536(7616), 285-291. https://doi.org/10.1038/nature19057
-		source	http://gnomad.broadinstitute.org/downloads
+		source	$gnomadbaseurl
 		time	[timestamp]
 		
 		== Description ==
@@ -572,13 +707,15 @@ foreach chromosome {
 	1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X
 } {
 	puts chr$chromosome
-	set vcf gnomad.genomes.$version.sites.$chromosome.vcf.gz
+	set vcf gnomad.genomes.r$gnomadversion.sites.chr$chromosome.vcf.bgz
 	set target $tempdir/result$chromosome.tsv.lz4
 	lappend deps $target
-	job var_hg19_gnomad-$chromosome -targets {$target} -skip {$finaltarget} -vars {tempdir baseurl vcf fields dest db build} -code {
+	job var_${build}_gnomad-$chromosome -targets {
+		$target
+	} -skip {$finaltarget} -vars {tempdir gnomadbaseurl vcf fields dest db build} -code {
 		if {![file exists $tempdir/$vcf]} {
 			putslog "Downloading $vcf"
-			wgetfile $baseurl/$vcf $tempdir/$vcf
+			wgetfile $gnomadbaseurl/genomes/$vcf $tempdir/$vcf
 		}
 		putslog "Converting $vcf"
 		cg vcf2tsv -split 1 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles | lz4c > $target.temp
@@ -586,28 +723,102 @@ foreach chromosome {
 	}
 }
 
-job var_hg19_gnomad-final -deps $deps -targets {$finaltarget var_${build}_gnomad.tsv.opt} -vars {tempdir fields dest db build} -code {
+job var_${build}_gnomad-final -deps $deps -targets {
+	$finaltarget
+	var_${build}_gnomad.tsv.opt
+} -vars {tempdir fields dest db build} -code {
 	exec cg cat {*}$deps | lz4c -9 > $tempdir/result.tsv.lz4
 	file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
 	file rename -force $tempdir/result.tsv.lz4 var_${build}_gnomad.tsv.lz4
+	cg lz4index var_${build}_gnomad.tsv.lz4
 	file_write extra/var_${build}_gnomad.tsv.opt "fields\t{afr_freqp amr_freqp asj_freqp eas_freqp fin_freqp nfe_freqp oth_freqp male_freqp female_freqp}\n"
 	mklink var_${build}_gnomad.tsv.lz4 extra/var_${build}_gnomad.tsv.lz4
 	# file delete -force $tempdir
 }
 
-set finaltarget extra/var_${build}_gnomadex.tsv.lz4
-set version r2.0.1
-set url https://data.broadinstitute.org/gnomAD/release-170228/exomes/vcf/gnomad.exomes.$version.sites.vcf.gz
-job var_hg19_gnomad_exomes -targets {$finaltarget extra/var_${build}_gnomadex.tsv.opt} -vars {url tempdir fields dest db build} -code {
-	file_write extra/var_${build}_gnomadex.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
-	set tempdir $finaltarget.temp
+set target var_${build}_gnomadex.tsv.lz4
+job var_${build}_gnomad_exomes -targets {
+	$target
+	var_${build}_gnomadex.tsv.opt
+} -vars {gnomadexurl tempdir fields dest db build} -code {
+	file_write var_${build}_gnomadex.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
+	set tempdir $target.temp
 	file mkdir $tempdir
-	set vcf [file tail $url]
-	wgetfile $url $tempdir/$vcf
+	set vcf [file tail $gnomadexurl]
+	wgetfile $gnomadexurl $tempdir/$vcf
 	putslog "Converting $vcf"
 	cg vcf2tsv -split 1 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles | lz4c > $tempdir/[file tail $target]
 	file rename $tempdir/[file tail $target] $target
 	cg lz4index $target
+	file delete -force $tempdir
+}
+
+# CADD
+job reg_${build}_cadd -targets {
+	var_${build}_cadd.bcol
+	var_${build}_cadd.bcol.bin.lz4
+	var_${build}_cadd.bcol.bin.lz4.lz4i
+	var_${build}_cadd.bcol.info
+} -vars {dest db build caddurl caddbuild} -code {
+	set tempdir $target.temp
+	file mkdir $tempdir
+	set tail [file tail $caddurl]
+	file_write var_${build}_cadd.bcol.info [subst [deindent {
+		= CADD (Combined Annotation Dependent Depletion) =
+		
+		== Download info ==
+		dbname	cadd
+		version	1.3
+		citation	Kircher M, Witten DM, Jain P, O'Roak BJ, Cooper GM, Shendure J. A general framework for estimating the relative pathogenicity of human genetic variants. Nat Genet. 2014 Feb 2. doi:10.1038/ng.2892 PubMed PMID:24487276
+		license	non-commercial
+		source	$caddurl
+		time	[timestamp]
+		
+		== Description ==
+		CADD is a tool for scoring the deleteriousness of single nucleotide variants as well as
+		insertion/deletions variants in the human genome.
+		While many variant annotation and scoring tools are around, most annotations 
+		tend to exploit a single information type (e.g. conservation) and/or 
+		are restricted in scope (e.g. to missense changes). Thus, a broadly applicable metric 
+		that objectively weights and integrates diverse information is needed. 
+		Combined Annotation Dependent Depletion (CADD) is a framework that 
+		integrates multiple annotations into one metric by contrasting variants that 
+		survived natural selection with simulated mutations.
+		C-scores strongly correlate with allelic 
+		diversity, pathogenicity of both coding and non-coding variants, and 
+		experimentally measured regulatory effects, and also highly rank causal variants 
+		within individual genome sequences. 
+		More info on the CADD scores can be found on \[\[http://cadd.gs.washington.edu/home\]\]
+		
+		== Category ==
+		Annotation
+	}]]
+	if {![file exists $tempdir/$tail]} {
+		putslog "Downloading $tail"
+		wgetfile $caddurl $tempdir/$tail
+	}
+	putslog "make bcol"
+	file_write var_${build}_cadd.tsv.opt "fields\t{score pscore}\n"
+	if {$caddbuild ne $build} {
+		if {![file exists $tempdir/collapsed${build}.tsv.lz4]} {
+			if {![file exists $tempdir/collapsed.tsv.lz4]} {
+				cg select --stack 1 -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {end=$Pos} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
+					| cg collapsealleles --stack 1 | lz4c > $tempdir/collapsed.tsv.lz4.temp | lz4c > $tempdir/collapsed.tsv.lz4.temp
+				file rename $tempdir/collapsed.tsv.lz4.temp $tempdir/collapsed.tsv.lz4
+			}
+			cg liftover --stack 1 -split 0 -s 0 $tempdir/collapsed.tsv.lz4 ../liftover/${caddbuild}To${build}.over.tsv | lz4c > $tempdir/collapsed${build}.tsv.lz4.temp
+			file rename $tempdir/collapsed${build}.tsv.lz4.temp $tempdir/collapsed${build}.tsv.lz4
+			file delete $tempdir/collapsed.tsv.lz4
+		}
+		exec cg select -s - $tempdir/collapsed${build}.tsv.lz4 | cg bcol make --stack 1 --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
+	} else {
+		cg select -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
+			| cg collapsealleles \
+			| cg bcol make --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
+	}
+	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4 var_${build}_cadd.bcol.bin.lz4
+	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4.lz4i var_${build}_cadd.bcol.bin.lz4.lz4i
+	file rename -force $tempdir/var_${build}_cadd.bcol var_${build}_cadd.bcol
 	file delete -force $tempdir
 }
 

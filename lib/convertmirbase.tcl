@@ -133,5 +133,11 @@ proc convertmirbase {gff3file resultfile genomefile {structfile {}}} {
 		puts $o [join $resultline \t]
 	}
 	close $o
-	file rename -force $resultfile.temp $resultfile
+	if {[file extension $resultfile] eq ".lz4"} {
+		cg lz4 -i 1 $resultfile.temp
+		file rename -force $resultfile.temp.lz4 $resultfile
+		file rename -force $resultfile.temp.lz4.lz4i $resultfile.lz4i
+	} else {
+		file rename -force $resultfile.temp $resultfile
+	}
 }

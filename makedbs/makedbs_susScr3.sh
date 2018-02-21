@@ -32,6 +32,7 @@ job_logdir log_jobs
 job genome_${build} -vars build -targets {genome_${build}.ifas extra/reg_${build}_fullgenome.tsv} -code {
 	cg downloadgenome ${build} genome_${build}.ifas
 	file rename -force reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
+	cg lz4 -i 1 extra/reg_${build}_fullgenome.tsv
 }
 
 set ifasfile genome_${build}.ifas
@@ -58,7 +59,7 @@ foreach db {
 	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {dest build db} -code {
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regcollapse $target.ucsc > $target.temp
-		file rename -force $target.ucsc.info $target.info
+		file rename -force $target.ucsc.info [gzroot $target].lz4
 		file rename -force $target.temp $target
 		file delete $target.ucsc
 	}
@@ -71,7 +72,7 @@ foreach db {
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regjoin $target.ucsc > $target.temp
 		file delete $target.ucsc
-		file rename -force $target.ucsc.info $target.info
+		file rename -force $target.ucsc.info [gzroot $target].info
 		file rename -force $target.temp $target
 	}
 }

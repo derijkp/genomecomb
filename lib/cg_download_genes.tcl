@@ -58,8 +58,12 @@ proc cg_download_genes {args} {
 	        cg select -s - -f [list chrom start end strand "geneid=\$$geneidcol" *] $ucscfile {*}[compresspipe $resulttail 12] > $temp/$resulttail
 	}
 	# move to results
-	putslog "move results to $resultfile and $resultfile.info"
-	file rename -force $ucscfile.info $resultfile.info
+	putslog "move results to $resultfile and [gzroot $resultfile].info"
+	file rename -force $ucscfile.info [gzroot $resultfile].info
+	if {[file extension $resultfile] eq ".lz4"} {
+		cg lz4index $temp/$resulttail
+		file rename -force $temp/$resulttail.lz4i $resultfile.lz4i
+	}
 	file rename -force $temp/$resulttail $resultfile
 	file delete -force $temp
 }

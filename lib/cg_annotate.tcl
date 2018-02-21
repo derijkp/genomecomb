@@ -147,7 +147,7 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 		set olen [llength $outfields]
 		set hlen [llength $headerfields]
 		if {$olen != $hlen && !($olen == 0 && $hlen == 1)} {
-			error "error: number of headerfields in opt file differs from number of outfields"
+			error "error for $dbfile: number of headerfields in opt file differs from number of outfields"
 		}
 		set newh $headerfields
 		if {$near != -1} {
@@ -369,6 +369,7 @@ proc cg_annotate_job {args} {
 	}
 	set afiles {}
 	foreach {dbfile dbinfo} $dbfilestodo {
+		putslog "Annotating using $dbfile"
 		set name [dict get $dbinfo name]
 		if {[info exists namefield]} {set name $namefield}
 		if {!$ok} {

@@ -8,7 +8,7 @@ proc cg_download_mirbase {resultfile species {release 21}} {
 	wgetfile ftp://mirbase.org/pub/mirbase/$release/genomes/$species.gff3 $gff3file
 	wgetfile ftp://mirbase.org/pub/mirbase/$release/miRNA.str.gz $structfile.gz
 	wgetfile ftp://mirbase.org/pub/mirbase/$release/README $resultfile.info.temp
-file_write $resultfile.info [subst [string trimleft {
+file_write [gzroot $resultfile].info [subst [string trimleft {
 = miRBase =
 
 == Download info ==
@@ -20,7 +20,7 @@ source	ftp://mirbase.org/pub/mirbase/$release/genomes/$species.gff3
 time	[timestamp]
 
 }]]
-	exec cat $resultfile.info.temp >> $resultfile.info
+	exec cat $resultfile.info.temp >> [gzroot $resultfile].info
 	file delete $resultfile.info.temp
 	cg unzip $structfile.gz
 	convertmirbase $gff3file $resultfile $genomefile $structfile
