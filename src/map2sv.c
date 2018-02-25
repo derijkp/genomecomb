@@ -7,10 +7,15 @@
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
+#include "cg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "tools.h"
+
+#ifdef __MINGW32__
+#include "getline.c"
+#endif
 
 int pos2bin(int start,int end) {
 	int pre = 4681;

@@ -30,7 +30,7 @@ lappend auto_path [file join ${genomecomb::dir} libext]
 if {![info exists appdir]} {
 	set appdir ${genomecomb::dir}
 	lappend auto_path $appdir/lib $appdir/lib-exp
-	set env(PATH) $appdir/bin:$appdir/extern:[file dir [file dir $appdir]]/bin:$env(PATH)
+	set env(PATH) $appdir/bin[pathsep]$appdir/extern[pathsep][file dir [file dir $appdir]]/bin[pathsep]$env(PATH)
 }
 
 interp alias {} ::tcl::mathfunc::! {} ::tcl::mathop::!

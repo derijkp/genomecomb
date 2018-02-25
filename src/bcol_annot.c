@@ -9,6 +9,7 @@
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
+#include "cg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

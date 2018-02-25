@@ -7,8 +7,14 @@
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
+#include "cg.h"
+#include "tools.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef __MINGW32__
+#include "getline.c"
+#endif
 
 int main(int argc, char *argv[]) {
 	char *line = NULL;

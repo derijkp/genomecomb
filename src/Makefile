@@ -1,6 +1,9 @@
 # ARCH should be defined by caller
- CFLAGS=-D_FILE_OFFSET_BITS=64 -Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
-#CFLAGS=-D_FILE_OFFSET_BITS=64 -Wall -O2 -I~/dev/genomecomb/src
+ARCH?=
+GCC?=gcc
+EXEEXT?=
+# CFLAGS=-D_FILE_OFFSET_BITS=64 -Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
+CFLAGS:=-D_FILE_OFFSET_BITS=64 -Wall -O2 -I~/dev/genomecomb/src ${CFLAGS}
 TOOLS= tools.c tools.h debug.h
 GZTOOLS_C= lz4.c lz4tools.c razf.c gztools.c
 GZTOOLS= $(GZTOOLS_C) gztools.h razf.h lz4.h lz4tools.h debug.h
@@ -9,130 +12,134 @@ HASHTOOLS=hash.h hash.c
 BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h lz4.c lz4.h lz4tools.c lz4tools.h xxhash.c xxhash.h
 LIBZ=-Wl,-Bstatic -lz -Wl,-Bdynamic
 
-all: ../bin$(ARCH)/map2besthit ../bin$(ARCH)/distr2chr ../bin$(ARCH)/map2sv ../bin$(ARCH)/addcols \
-     ../bin$(ARCH)/reg_subtract ../bin$(ARCH)/reg_join ../bin$(ARCH)/covered ../bin$(ARCH)/getregions \
-     ../bin$(ARCH)/getregionsbcol ../bin$(ARCH)/getregionsbcol2 ../bin$(ARCH)/reg_annot ../bin$(ARCH)/var_annot ../bin$(ARCH)/groupby \
-     ../bin$(ARCH)/multireg ../bin$(ARCH)/bcol_indexfile ../bin$(ARCH)/bcol_indexfile_all \
-     ../bin$(ARCH)/bcol_make ../bin$(ARCH)/bcol_make_multi ../bin$(ARCH)/bcol_annot ../bin$(ARCH)/vcf2tsv \
-     ../bin$(ARCH)/reg_select ../bin$(ARCH)/depth_histo \
-     ../bin$(ARCH)/check_sort ../bin$(ARCH)/multi_merge ../bin$(ARCH)/multi_join \
-     ../bin$(ARCH)/multicompar_addvars \
-     ../bin$(ARCH)/multidb_join \
-     ../bin$(ARCH)/tsv_paste ../bin$(ARCH)/tsv_histo \
-     ../bin$(ARCH)/sam_clipamplicons \
-     ../bin$(ARCH)/tsv2bed \
-     ../bin$(ARCH)/samcat \
-     ../bin$(ARCH)/sam_amplicons_count \
-     ../bin$(ARCH)/sam2tsv ../bin$(ARCH)/tsv2sam
+all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$(ARCH)/map2sv$(EXEEXT) ../bin$(ARCH)/addcols$(EXEEXT) \
+     ../bin$(ARCH)/reg_subtract$(EXEEXT) ../bin$(ARCH)/reg_join$(EXEEXT) ../bin$(ARCH)/covered$(EXEEXT) ../bin$(ARCH)/getregions$(EXEEXT) \
+     ../bin$(ARCH)/getregionsbcol$(EXEEXT) ../bin$(ARCH)/getregionsbcol2$(EXEEXT) ../bin$(ARCH)/reg_annot$(EXEEXT) ../bin$(ARCH)/var_annot$(EXEEXT) ../bin$(ARCH)/groupby$(EXEEXT) \
+     ../bin$(ARCH)/multireg$(EXEEXT) ../bin$(ARCH)/bcol_indexfile$(EXEEXT) ../bin$(ARCH)/bcol_indexfile_all$(EXEEXT) \
+     ../bin$(ARCH)/bcol_make$(EXEEXT) ../bin$(ARCH)/bcol_make_multi$(EXEEXT) ../bin$(ARCH)/bcol_annot$(EXEEXT) ../bin$(ARCH)/vcf2tsv$(EXEEXT) \
+     ../bin$(ARCH)/reg_select$(EXEEXT) ../bin$(ARCH)/depth_histo$(EXEEXT) \
+     ../bin$(ARCH)/check_sort$(EXEEXT) ../bin$(ARCH)/multi_merge$(EXEEXT) ../bin$(ARCH)/multi_join$(EXEEXT) \
+     ../bin$(ARCH)/multicompar_addvars$(EXEEXT) \
+     ../bin$(ARCH)/multidb_join$(EXEEXT) \
+     ../bin$(ARCH)/tsv_paste$(EXEEXT) ../bin$(ARCH)/tsv_histo$(EXEEXT) \
+     ../bin$(ARCH)/sam_clipamplicons$(EXEEXT) \
+     ../bin$(ARCH)/sam_extract$(EXEEXT) \
+     ../bin$(ARCH)/tsv2bed$(EXEEXT) \
+     ../bin$(ARCH)/samcat$(EXEEXT) \
+     ../bin$(ARCH)/sam_amplicons_count$(EXEEXT) \
+     ../bin$(ARCH)/sam2tsv$(EXEEXT) ../bin$(ARCH)/tsv2sam$(EXEEXT)
 
 clean:
 	rm -f ../bin$(ARCH)/*
 
-../bin$(ARCH)/map2besthit: map2besthit.c $(TOOLS)
-	gcc map2besthit.c tools.c $(CFLAGS) -o ../bin$(ARCH)/map2besthit
+../bin$(ARCH)/map2besthit$(EXEEXT): map2besthit.c $(TOOLS)
+	$(GCC) map2besthit.c tools.c $(CFLAGS) -o ../bin$(ARCH)/map2besthit$(EXEEXT)
 
-../bin$(ARCH)/distr2chr: distr2chr.c $(TOOLS) $(HASHTOOLS)
-	gcc distr2chr.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/distr2chr
+../bin$(ARCH)/distr2chr$(EXEEXT): distr2chr.c $(TOOLS) $(HASHTOOLS)
+	$(GCC) distr2chr.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/distr2chr$(EXEEXT)
 
-../bin$(ARCH)/map2sv: map2sv.c $(TOOLS)
-	gcc map2sv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/map2sv
+../bin$(ARCH)/map2sv$(EXEEXT): map2sv.c $(TOOLS)
+	$(GCC) map2sv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/map2sv$(EXEEXT)
 
-../bin$(ARCH)/addcols: addcols.c $(TOOLS)
-	gcc addcols.c tools.c $(CFLAGS) -o ../bin$(ARCH)/addcols
+../bin$(ARCH)/addcols$(EXEEXT): addcols.c $(TOOLS)
+	$(GCC) addcols.c tools.c $(CFLAGS) -o ../bin$(ARCH)/addcols$(EXEEXT)
 
-../bin$(ARCH)/reg_subtract: reg_subtract.c $(TOOLS)
-	gcc reg_subtract.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_subtract
+../bin$(ARCH)/reg_subtract$(EXEEXT): reg_subtract.c $(TOOLS)
+	$(GCC) reg_subtract.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_subtract$(EXEEXT)
 
-../bin$(ARCH)/reg_join: reg_join.c $(TOOLS)
-	gcc reg_join.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_join
+../bin$(ARCH)/reg_join$(EXEEXT): reg_join.c $(TOOLS)
+	$(GCC) reg_join.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_join$(EXEEXT)
 
-../bin$(ARCH)/covered: covered.c $(TOOLS)
-	gcc covered.c tools.c $(CFLAGS) -o ../bin$(ARCH)/covered
+../bin$(ARCH)/covered$(EXEEXT): covered.c $(TOOLS)
+	$(GCC) covered.c tools.c $(CFLAGS) -o ../bin$(ARCH)/covered$(EXEEXT)
 
-../bin$(ARCH)/getregions: getregions.c $(TOOLS)
-	gcc getregions.c tools.c $(CFLAGS) -o ../bin$(ARCH)/getregions
+../bin$(ARCH)/getregions$(EXEEXT): getregions.c $(TOOLS)
+	$(GCC) getregions.c tools.c $(CFLAGS) -o ../bin$(ARCH)/getregions$(EXEEXT)
 
-../bin$(ARCH)/getregionsbcol: getregionsbcol.c $(TOOLS)
-	gcc getregionsbcol.c tools.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol
+../bin$(ARCH)/getregionsbcol$(EXEEXT): getregionsbcol.c $(TOOLS)
+	$(GCC) getregionsbcol.c tools.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol$(EXEEXT)
 
-../bin$(ARCH)/getregionsbcol2: getregionsbcol2.c $(TOOLS)
-	gcc getregionsbcol2.c tools.c tools_bcol.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol2 $(LIBZ)
+../bin$(ARCH)/getregionsbcol2$(EXEEXT): getregionsbcol2.c $(TOOLS)
+	$(GCC) getregionsbcol2.c tools.c tools_bcol.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol2$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/reg_annot: reg_annot.c $(TOOLS)
-	gcc reg_annot.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_annot
+../bin$(ARCH)/reg_annot$(EXEEXT): reg_annot.c $(TOOLS)
+	$(GCC) reg_annot.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_annot$(EXEEXT)
 
-../bin$(ARCH)/var_annot: var_annot.c $(TOOLS)
-	gcc var_annot.c tools.c $(CFLAGS) -o ../bin$(ARCH)/var_annot
+../bin$(ARCH)/var_annot$(EXEEXT): var_annot.c $(TOOLS)
+	$(GCC) var_annot.c tools.c $(CFLAGS) -o ../bin$(ARCH)/var_annot$(EXEEXT)
 
-../bin$(ARCH)/groupby: groupby.c $(TOOLS)
-	gcc groupby.c tools.c $(CFLAGS) -o ../bin$(ARCH)/groupby
+../bin$(ARCH)/groupby$(EXEEXT): groupby.c $(TOOLS)
+	$(GCC) groupby.c tools.c $(CFLAGS) -o ../bin$(ARCH)/groupby$(EXEEXT)
 
-../bin$(ARCH)/multireg: multireg.c $(TOOLS) $(GZTOOLS) $(TOOLS_VAR)
-	gcc multireg.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multireg $(LIBZ)
+../bin$(ARCH)/multireg$(EXEEXT): multireg.c $(TOOLS) $(GZTOOLS) $(TOOLS_VAR)
+	$(GCC) multireg.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multireg$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/bcol_indexfile: bcol_indexfile.c $(TOOLS)
-	gcc bcol_indexfile.c tools.c $(CFLAGS) -o ../bin$(ARCH)/bcol_indexfile
+../bin$(ARCH)/bcol_indexfile$(EXEEXT): bcol_indexfile.c $(TOOLS)
+	$(GCC) bcol_indexfile.c tools.c $(CFLAGS) -o ../bin$(ARCH)/bcol_indexfile$(EXEEXT)
 
-../bin$(ARCH)/bcol_indexfile_all: bcol_indexfile_all.c $(TOOLS) $(HASHTOOLS)
-	gcc bcol_indexfile_all.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_indexfile_all
+../bin$(ARCH)/bcol_indexfile_all$(EXEEXT): bcol_indexfile_all.c $(TOOLS) $(HASHTOOLS)
+	$(GCC) bcol_indexfile_all.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_indexfile_all$(EXEEXT)
 
-../bin$(ARCH)/bcol_make: bcol_make.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
-	gcc bcol_make.c tools.c tools_bcol.c hash.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make $(LIBZ)
+../bin$(ARCH)/bcol_make$(EXEEXT): bcol_make.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
+	$(GCC) bcol_make.c tools.c tools_bcol.c hash.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/bcol_make_multi: bcol_make_multi.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
-	gcc bcol_make_multi.c tools.c tools_bcol.c hash.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make_multi $(LIBZ)
+../bin$(ARCH)/bcol_make_multi$(EXEEXT): bcol_make_multi.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
+	$(GCC) bcol_make_multi.c tools.c tools_bcol.c hash.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make_multi$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/bcol_annot: bcol_annot.c $(TOOLS) $(BCOL_TOOLS)
-	gcc bcol_annot.c tools.c tools_bcol.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_annot $(LIBZ)
+../bin$(ARCH)/bcol_annot$(EXEEXT): bcol_annot.c $(TOOLS) $(BCOL_TOOLS)
+	$(GCC) bcol_annot.c tools.c tools_bcol.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_annot$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/test: test.c tools.c
-	gcc test.c tools.c $(CFLAGS) -o ../bin$(ARCH)/test
+../bin$(ARCH)/test$(EXEEXT): test.c tools.c
+	$(GCC) test.c tools.c $(CFLAGS) -o ../bin$(ARCH)/test$(EXEEXT)
 
-../bin$(ARCH)/vcf2tsv: vcf2tsv.c $(TOOLS) $(HASHTOOLS)
-	gcc vcf2tsv.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/vcf2tsv
+../bin$(ARCH)/vcf2tsv$(EXEEXT): vcf2tsv.c $(TOOLS) $(HASHTOOLS)
+	$(GCC) vcf2tsv.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/vcf2tsv$(EXEEXT)
 
-../bin$(ARCH)/reg_select: reg_select.c $(TOOLS)
-	gcc reg_select.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_select
+../bin$(ARCH)/reg_select$(EXEEXT): reg_select.c $(TOOLS)
+	$(GCC) reg_select.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_select$(EXEEXT)
 
-../bin$(ARCH)/depth_histo: depth_histo.c $(TOOLS) $(GZTOOLS)
-	gcc depth_histo.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/depth_histo $(LIBZ)
+../bin$(ARCH)/depth_histo$(EXEEXT): depth_histo.c $(TOOLS) $(GZTOOLS)
+	$(GCC) depth_histo.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/depth_histo$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/check_sort: check_sort.c $(TOOLS)
-	gcc check_sort.c tools.c $(CFLAGS) -o ../bin$(ARCH)/check_sort
+../bin$(ARCH)/check_sort$(EXEEXT): check_sort.c $(TOOLS)
+	$(GCC) check_sort.c tools.c $(CFLAGS) -o ../bin$(ARCH)/check_sort$(EXEEXT)
 
-../bin$(ARCH)/multi_merge: multi_merge.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
-	gcc multi_merge.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multi_merge $(LIBZ)
+../bin$(ARCH)/multi_merge$(EXEEXT): multi_merge.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
+	$(GCC) multi_merge.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multi_merge$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/multi_join: multi_join.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
-	gcc multi_join.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multi_join $(LIBZ)
+../bin$(ARCH)/multi_join$(EXEEXT): multi_join.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
+	$(GCC) multi_join.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multi_join$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/multicompar_addvars: multicompar_addvars.c $(TOOLS) $(GZTOOLS) $(BCOL_TOOLS) $(TOOLS_VAR)
-	gcc multicompar_addvars.c tools.c tools_bcol.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multicompar_addvars $(LIBZ)
+../bin$(ARCH)/multicompar_addvars$(EXEEXT): multicompar_addvars.c $(TOOLS) $(GZTOOLS) $(BCOL_TOOLS) $(TOOLS_VAR)
+	$(GCC) multicompar_addvars.c tools.c tools_bcol.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multicompar_addvars$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/multidb_join: multidb_join.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
-	gcc multidb_join.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multidb_join $(LIBZ)
+../bin$(ARCH)/multidb_join$(EXEEXT): multidb_join.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
+	$(GCC) multidb_join.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multidb_join$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/tsv_paste: tsv_paste.c $(TOOLS) $(GZTOOLS)
-	gcc tsv_paste.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/tsv_paste $(LIBZ)
+../bin$(ARCH)/tsv_paste$(EXEEXT): tsv_paste.c $(TOOLS) $(GZTOOLS)
+	$(GCC) tsv_paste.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/tsv_paste$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/tsv_histo: tsv_histo.c $(TOOLS) $(HASHTOOLS)
-	gcc tsv_histo.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/tsv_histo
+../bin$(ARCH)/tsv_histo$(EXEEXT): tsv_histo.c $(TOOLS) $(HASHTOOLS)
+	$(GCC) tsv_histo.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/tsv_histo$(EXEEXT)
 
-../bin$(ARCH)/sam_clipamplicons: sam_clipamplicons.c $(TOOLS)
-	gcc sam_clipamplicons.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam_clipamplicons
+../bin$(ARCH)/sam_clipamplicons$(EXEEXT): sam_clipamplicons.c $(TOOLS)
+	$(GCC) sam_clipamplicons.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam_clipamplicons$(EXEEXT)
 
-../bin$(ARCH)/tsv2bed: tsv2bed.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
-	gcc tsv2bed.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/tsv2bed $(LIBZ)
+../bin$(ARCH)/sam_extract$(EXEEXT): sam_extract.c $(TOOLS) $(GZTOOLS)
+	$(GCC) sam_extract.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/sam_extract$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/samcat: samcat.c $(TOOLS)
-	gcc samcat.c tools.c $(CFLAGS) -o ../bin$(ARCH)/samcat
+../bin$(ARCH)/tsv2bed$(EXEEXT): tsv2bed.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
+	$(GCC) tsv2bed.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/tsv2bed$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/sam2tsv: sam2tsv.c $(TOOLS)
-	gcc sam2tsv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam2tsv
+../bin$(ARCH)/samcat$(EXEEXT): samcat.c $(TOOLS)
+	$(GCC) samcat.c tools.c $(CFLAGS) -o ../bin$(ARCH)/samcat$(EXEEXT)
 
-../bin$(ARCH)/tsv2sam: tsv2sam.c $(TOOLS)
-	gcc tsv2sam.c tools.c $(CFLAGS) -o ../bin$(ARCH)/tsv2sam
+../bin$(ARCH)/sam2tsv$(EXEEXT): sam2tsv.c $(TOOLS)
+	$(GCC) sam2tsv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam2tsv$(EXEEXT)
 
-../bin$(ARCH)/sam_amplicons_count: sam_amplicons_count.c $(TOOLS)
-	gcc sam_amplicons_count.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam_amplicons_count
+../bin$(ARCH)/tsv2sam$(EXEEXT): tsv2sam.c $(TOOLS)
+	$(GCC) tsv2sam.c tools.c $(CFLAGS) -o ../bin$(ARCH)/tsv2sam$(EXEEXT)
+
+../bin$(ARCH)/sam_amplicons_count$(EXEEXT): sam_amplicons_count.c $(TOOLS)
+	$(GCC) sam_amplicons_count.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam_amplicons_count$(EXEEXT)
 

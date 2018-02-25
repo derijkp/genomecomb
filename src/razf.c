@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include "razf.h"
 
 #if ZLIB_VERNUM < 0x1221
@@ -651,7 +652,7 @@ uint64_t razf_tell2(RAZF *rz)
 		idx = rz->out / RZ_BLOCK_SIZE - 1;
 		seek_pos = (idx < 0)? rz->header_size:(rz->index->cell_offsets[idx] + rz->index->bin_offsets[idx / RZ_BIN_SIZE]);
 		if (seek_pos != rz->block_pos || rz->out%RZ_BLOCK_SIZE != rz->block_off)
-			fprintf(stderr, "[razf_tell2] inconsistent block offset: (%lld, %lld) != (%lld, %lld)\n",
+			fprintf(stderr, "[razf_tell2] inconsistent block offset: (%" PRId64 ", %" PRId64 ") != (%" PRId64 ", %" PRId64 ")\n",
 					(long long)seek_pos, (long long)rz->out%RZ_BLOCK_SIZE, (long long)rz->block_pos, (long long) rz->block_off);
 	}
 	*/

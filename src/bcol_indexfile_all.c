@@ -7,11 +7,13 @@
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
+#include "cg.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <inttypes.h>
 #include "tools.h"
 #include "debug.h"
 #include "hash.h"
@@ -119,7 +121,7 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 */
 		fpos = ftello(f1);
 		if (fpos > progress) {
-			fprintf(stderr,"filepos: %llu\n",(unsigned long long)fpos);
+			fprintf(stderr,"filepos: %" PRIu64 "\n",fpos);
 			progress += 20000000L;
 		}
 		/* colinfo code */
@@ -182,7 +184,7 @@ NODPRINT("poss: %d:%d-%d %d",chr1pos,start1pos,end1pos,type1pos)
 		}
 	}
 	if (count == -1) {count = 0;}
-	fprintf(f2,"\t0\t%llu\n",(long long int)(count+1));
+	fprintf(f2,"\t0\t%" PRIu64 "\n",(count+1));
 	fclose(f1);
 	fclose(f2);
 	fclose(f3);

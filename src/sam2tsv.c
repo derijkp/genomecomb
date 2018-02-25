@@ -7,6 +7,7 @@
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
+#include "cg.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -101,7 +102,7 @@ int main(int argc, char *argv[]) {
 	Cigar cigar;
 	DStringArray *result1=NULL;
 	DString *line1 = NULL,*linekeep = NULL;
-	ssize_t read;
+	size_t read;
 	unsigned int curpos=0, flag;
 	unsigned int numfields,pos1;
 	int start1,end1;

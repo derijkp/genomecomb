@@ -6,7 +6,7 @@ proc searchpath {envvar args} {
 		}
 		return $::env($envvar)
 	} else {
-		set dirlist [split [get ::env(PATH) ""] :]
+		set dirlist [split [get ::env(PATH) ""] [pathsep]]
 		list_addnew dirlist $::externdir
 		foreach pattern $args {
 			foreach dir $dirlist {

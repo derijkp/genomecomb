@@ -7,9 +7,12 @@
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
+#include "cg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include "tools.h"
 #include "debug.h"
 
@@ -46,7 +49,7 @@ int main(int argc, char *argv[]) {
 NODPRINT("%s <-> %s\n",keepchromosome.string,Loc_ChrString(chromosome1))
 		if (DStringLocCompare(chromosome1,&keepchromosome)) {
 			totsize += size;
-			fprintf(stdout,"%s\t%lld\n", keepchromosome.string, (long long int)size);
+			fprintf(stdout,"%s\t%" PRId64 "\n", keepchromosome.string, size);
 NODPRINT("is new\n")
 			size = 0;
 #ifdef SHOWPROGRESS
@@ -64,8 +67,8 @@ NODPRINT("is new\n")
 		size += end1 - start1;
 	}
 	totsize += size;
-	fprintf(stdout,"%s\t%lld\n", keepchromosome.string, (long long int)size);
-	fprintf(stdout,"\ntotal\t%lld\n", (long long int)totsize);
+	fprintf(stdout,"%s\t%" PRId64 "\n", keepchromosome.string, size);
+	fprintf(stdout,"\ntotal\t%" PRId64 "\n", totsize);
 	fclose(f1);
 	DStringClear(&line);
 	exit(EXIT_SUCCESS);

@@ -9,7 +9,7 @@ proc regsubtract {regfile1 regfile2} {
 	gzclose $f1; gzclose $f2
 	set temp1 [gztemp $regfile1]
 	set temp2 [gztemp $regfile2]
-	# puts [list reg_subtract $temp1 {*}$poss1 $temp2 {*}$poss2]
+	# puts [list regsubtract $temp1 {*}$poss1 $temp2 {*}$poss2]
 	exec reg_subtract $temp1 {*}$poss1 $temp2 {*}$poss2 >@ stdout 2>@ stderr
 	gzrmtemp $temp1 ; gzrmtemp $temp2
 }

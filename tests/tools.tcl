@@ -30,7 +30,7 @@ set script [info script] ; if {$script eq ""} {set script ./t}
 set testdir [file dir [file normalize $script]]
 set refseqdir $testdir/genomecomb.testdata/refseqtest
 set appdir [file dir [file dir [file normalize $script]]]
-append ::env(PATH) :$appdir/bin
+append ::env(PATH) [pathsep]$appdir/bin
 # putsvars ::env(PATH)
 set env(SCRATCHDIR) [file dir [tempdir]]
 source $appdir/lib/file.tcl ; pwd

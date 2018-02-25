@@ -136,7 +136,7 @@ proc genomecombenv {} {
 		set externdir $genomecombdir/extern
 		set bindir $genomecombdir/bin
 	}
-	set env(PATH) $bindir:$externdir:$genomecombdir:$env(PATH)
+	set env(PATH) $bindir[pathsep]$externdir[pathsep]$genomecombdir[pathsep]$env(PATH)
 	if {[info exists env(LD_LIBRARY_PATH)]} {
 		set env(LD_LIBRARY_PATH) $::externdir/lib:$env(LD_LIBRARY_PATH)
 	} else {

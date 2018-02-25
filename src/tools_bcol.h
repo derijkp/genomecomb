@@ -5,9 +5,9 @@
 
 typedef struct BCol_table {
 	DString *chr;
-	unsigned long long begin;
-	unsigned long long end;
-	unsigned long long pos;
+	uint64_t begin;
+	uint64_t end;
+	uint64_t pos;
 } BCol_table;
 
 typedef struct BCol {

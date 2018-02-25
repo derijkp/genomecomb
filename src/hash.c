@@ -1,3 +1,4 @@
+#include "cg.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -9,7 +10,7 @@
 
 Hash_table *hash_init_size(int tablesize) {
 	Hash_table *table;
-	size_t size = tablesize*sizeof(Hash_tableitem);
+	ssize_t size = tablesize*sizeof(Hash_tableitem);
 	table = (Hash_table *)malloc(sizeof(Hash_table));
 	table->table = (Hash_tableitem *)malloc(size);
 	memset(table->table,0,size);

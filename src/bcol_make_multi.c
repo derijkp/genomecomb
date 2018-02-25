@@ -7,10 +7,12 @@
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
+#include "cg.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include "tools.h"
 #include "debug.h"
 #include "tools_bcol.h"
@@ -20,7 +22,7 @@ int main(int argc, char *argv[]) {
 	FILE *obcol;
 	FILE *obin;
 	char **outputa = NULL,*fieldStr,*valueStr;
-	unsigned long long start;
+	uint64_t start;
 	DStringArray *result = NULL, *mvalues = NULL;
 	DString *line = NULL,*chromosome = NULL;
 	char *outfile,*type = "u",*defaultvalue = "",*chrname="";
@@ -86,7 +88,7 @@ int main(int argc, char *argv[]) {
 					} else {
 						shift = 0;
 					}
-					fprintf(obcol,"%*.*s\t%lld\t%lld\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,(unsigned long long)poffset);
+					fprintf(obcol,"%*.*s\t%" PRId64 "\t%" PRIu64 "\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,poffset);
 					DStringCopy(prevchr,chromosome);
 				}
 				poffset = -1;
@@ -167,7 +169,7 @@ int main(int argc, char *argv[]) {
 	} else if (prevchr->size > 3 && prevchr->string[0] == 'c' && prevchr->string[1] == 'h' && prevchr->string[2] == 'r') {
 		shift = 3;
 	}
-	fprintf(obcol,"%*.*s\t%lld\t%lld\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,(unsigned long long)poffset);
+	fprintf(obcol,"%*.*s\t%" PRId64 "\t%" PRIu64 "\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,poffset);
 	if (line) {DStringDestroy(line);}
 	if (result) {DStringArrayDestroy(result);}
 	if (buffer) {DStringDestroy(buffer);}

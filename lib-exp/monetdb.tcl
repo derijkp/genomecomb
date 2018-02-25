@@ -29,7 +29,7 @@ proc monetdbinit {} {
 		error "could not find monetdb installation"
 	}
 	set monetdbdir [file dir [file dir $file]]
-	set ::env(PATH) ${::env(PATH)}:$monetdbdir/bin
+	set ::env(PATH) ${::env(PATH)}[pathsep]$monetdbdir/bin
 	if {[info exists ::env(LD_LIBRARY_PATH)]} {
 		set ::env(LD_LIBRARY_PATH) ${::env(LD_LIBRARY_PATH)}:$monetdbdir/lib
 	} else {

@@ -7,11 +7,13 @@
 #define _FILE_OFFSET_BITS 64
 #define _LARGEFILE64_SOURCE 1
 
+#include "cg.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include "tools.h"
 #include "tools_bcol.h"
@@ -530,7 +532,7 @@ int bcol_printtext(FILE *f,int reverse,int isunsigned,char type,unsigned char *b
 			    | (((uint64_t) buffer[1]) << 48)
 			    | (((uint64_t) buffer[0]) << 56);
 		}
-		fprintf(f,"%lld",(long long int)wvalue);
+		fprintf(f,"%" PRId64 "",wvalue);
 /* need to handle unsigned properly ... (later)
 		if (unsigned) {
 			
@@ -830,7 +832,7 @@ BCol *bcol_open(char *bcolfile) {
 				strpos++;
 			}
 			result->table[i].chr = DStringNewFromCharS(line->string,strpos);
-			if (sscanf(line->string+strpos+1,"%lld\t%lld",&(result->table[i].begin),&(result->table[i].end)) != 2) {
+			if (sscanf(line->string+strpos+1,"%" PRId64 "\t%" PRId64 "",&(result->table[i].begin),&(result->table[i].end)) != 2) {
 				fprintf(stderr,"error in bcol format");
 				exit(1);
 			}

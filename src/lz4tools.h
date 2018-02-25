@@ -5,6 +5,7 @@
 #define _LARGEFILE64_SOURCE 1
 
 #define _GNU_SOURCE
+#include "cg.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>

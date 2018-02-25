@@ -13,7 +13,7 @@ proc cg_wish {args} {
 	package require Tk
 	set tk 1
 	package require Tclx
-	signal -restart error SIGINT
+	catch {signal -restart error SIGINT}
 	if {[info commands "console"] == "console"} {
 		console show
 	} else {
@@ -23,6 +23,7 @@ proc cg_wish {args} {
 }
 
 proc cg_sh {args} {
+	global tcl_platform
 	if {[lsearch $args tk] != -1} {
 		cg_wish {*}$args
 		return
@@ -49,12 +50,12 @@ proc cg_sh {args} {
 		}
 		uplevel #0 interactive
 	} elseif {[lsearch $args nox] == -1 && ![catch {package require Tclx}]} {
-		signal -restart error SIGINT
+		catch {signal -restart error SIGINT}
 		rename cindex tclx_cindex
 		uplevel #0 {commandloop -prompt1 {puts -nonewline "% "} -prompt2 {puts -nonewline ""}}
 	} else {
 		if {![catch {package require Tclx}]} {
-			signal -restart error SIGINT
+			catch {signal -restart error SIGINT}
 			rename cindex tclx_cindex
 		}
 		package require TclReadLine

@@ -44,3 +44,7 @@ proc pwd {} {
 	}
 	return $::genomecomb::cwd
 }
+
+proc pathsep {} {
+	if {$::tcl_platform(platform) eq "windows"} {return \;} else {return \:}
+}

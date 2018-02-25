@@ -7,14 +7,16 @@
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
+#include "cg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include "tools.h"
 
-void output_resultline(FILE *f2,DStringArray *result1,DString *listr,long long int *sumr,int *grouppos,int groupnum,int *listpos,int listnum,int *sumpos,int sumnum,double *statsr,int statsnum) {
+void output_resultline(FILE *f2,DStringArray *result1,DString *listr,uint64_t *sumr,int *grouppos,int groupnum,int *listpos,int listnum,int *sumpos,int sumnum,double *statsr,int statsnum) {
 	char *sep = "";
 	int i;
 	if (groupnum) {
@@ -25,7 +27,7 @@ void output_resultline(FILE *f2,DStringArray *result1,DString *listr,long long i
 	}
 	if (sumnum) {
 		for(i = 0 ; i < sumnum ; i++) {
-			fprintf(f2,"%s%lld",sep,sumr[i]);
+			fprintf(f2,"%s%" PRId64 "",sep,sumr[i]);
 			sep = "\t";
 		}
 	}
@@ -49,7 +51,7 @@ int main(int argc, char *argv[]) {
 	int *grouppos=NULL, *listpos=NULL, *sumpos=NULL, *statspos=NULL;
 	int groupnum=0, listnum=0, sumnum=0, statsnum=0;
 	DString *listr=NULL;
-	long long int *sumr=NULL;
+	uint64_t *sumr=NULL;
 	double *statsr=NULL;
 	int *group1lens=NULL;
 	DString *line1 = NULL,*line2 = NULL,*templine = NULL;
@@ -73,8 +75,8 @@ int main(int argc, char *argv[]) {
 	line1 = DStringNew(); line2=DStringNew();
 	result1 = DStringArrayNew(max+2);
 	result2 = DStringArrayNew(max+2);
-	sumr = (long long int *)malloc(sumnum*sizeof(long long int));
-	statsr = (double *)malloc(4*statsnum*sizeof(long long int));
+	sumr = (uint64_t *)malloc(sumnum*sizeof(uint64_t));
+	statsr = (double *)malloc(4*statsnum*sizeof(uint64_t));
 	listr = (DString *)malloc(listnum*sizeof(DString));
 	group1lens = (int *)malloc(groupnum*sizeof(int));
 	/* ----- initialise from first ----- */

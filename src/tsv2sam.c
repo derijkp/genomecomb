@@ -7,6 +7,7 @@
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
+#include "cg.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -125,7 +126,7 @@ int main(int argc, char *argv[]) {
 	FILE *f1=stdin;
 	DStringArray *result1=NULL, *header = NULL;
 	DString *line1 = NULL,*linekeep = NULL, *headerline = NULL;
-	ssize_t read;
+	size_t read;
 	unsigned int curpos=0, flag, header_numfields;
 	unsigned int numfields,pos1, count, max, i;
 	int pos;

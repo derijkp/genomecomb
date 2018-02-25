@@ -7,9 +7,11 @@
 #define _FILE_OFFSET_BITS 64
 
 #define _GNU_SOURCE
+#include "cg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include "tools.h"
 #include "debug.h"
 
@@ -194,13 +196,13 @@ NODPRINT("%d",v)
 		} else {
 			value = (long long) (buffer[1] + (buffer[0] << 8));
 		}
-NODPRINT("%d,%d -> %lld",buffer[0],buffer[1],value)
+NODPRINT("%d,%d -> %" PRId64 "",buffer[0],buffer[1],value)
 		if ((ftype[1] != 'u')) {
 			if (value & 0x8000) {
 				value |= -0x10000;
 			}
 		}
-NODPRINT("   -> %lld",value)
+NODPRINT("   -> %" PRId64 "",value)
 		*result = (long double)value;
 		break;
 	case 'i':
@@ -220,7 +222,7 @@ NODPRINT("   -> %lld",value)
 			+ (buffer[1] << 16)
 			+ (((long long)buffer[0]) << 24));
 		}
-NODPRINT("%d,%d,%d,%d -> %lld",buffer[0],buffer[1],buffer[2],buffer[3],value)
+NODPRINT("%d,%d,%d,%d -> %" PRId64 "",buffer[0],buffer[1],buffer[2],buffer[3],value)
 		if ((ftype[1] != 'u')) {
 			if ((value & (((unsigned int)1)<<31)) && (value > 0)) {
 			    value -= (((unsigned int)1)<<31);

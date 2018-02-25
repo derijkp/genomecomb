@@ -1,6 +1,13 @@
+#define _GNU_SOURCE
+#include "cg.h"
 #include <stdio.h>
+#include <inttypes.h>
 #include "tools.h"
 #include "lz4tools.h"
+
+#ifdef __MINGW32__
+#include "getline.c"
+#endif
 
 unsigned LZ4IO_readLE32 (const void* s) {
     const unsigned char* srcPtr = (const unsigned char*)s;
@@ -110,9 +117,9 @@ LZ4res *lz4open(FILE* finput,FILE *findex) {
 			if (read == 4 && strncmp(buffer,"...",3) == 0) break;
 			if (read < 6) continue;
 			if (read > 7 && strncmp(buffer,"usize: ",7) == 0) {
-				sscanf(buffer+7,"%llu",(long long unsigned int *)&(res->usize));
+				sscanf(buffer+7,"%" PRIu64 "",(uint64_t *)&(res->usize));
 			} else if (read > 9 && strncmp(buffer,"binsize: ",9) == 0) {
-				sscanf(buffer+9,"%llu",(long long unsigned int *)&(res->indexbsize));
+				sscanf(buffer+9,"%" PRIu64 "",(uint64_t *)&(res->indexbsize));
 			} else if (read > 6 && strncmp(buffer,"name: ",6) == 0) {
 				yaml_checkparam(buffer,read,6,"lz4index",8);
 			} else if (read > 9 && strncmp(buffer,"version: ",9) == 0) {
@@ -134,9 +141,9 @@ LZ4res *lz4open(FILE* finput,FILE *findex) {
 			exit(1);
 		}
 		res->indexstart = ftell(findex);
-		NODPRINT("indexfile usize: %llu",(long long unsigned int)res->usize);
-		NODPRINT("indexfile indexstart: %llu",(long long unsigned int)res->indexstart);
-		NODPRINT("indexfile indexbsize: %llu",(long long unsigned int)res->indexbsize);
+		NODPRINT("indexfile usize: %" PRIu64 "",res->usize);
+		NODPRINT("indexfile indexstart: %" PRIu64 "",res->indexstart);
+		NODPRINT("indexfile indexbsize: %" PRIu64 "",res->indexbsize);
 	}
 	return res;
 }
@@ -151,7 +158,7 @@ void lz4close(LZ4res *res) {
 
 int lz4_readblock(LZ4res *res, unsigned int startblock) {
 	FILE *finput = res->finput, *findex = res->findex;
-	unsigned long long pos;
+	uint64_t pos;
 	unsigned int compressedsize, count;
 	int readsize = 0, numdecompressed, uncompressed, r;
 	if (startblock == res->currentblock) {
@@ -162,10 +169,10 @@ int lz4_readblock(LZ4res *res, unsigned int startblock) {
 	if (res->writebuffer == NULL || startblock != res->currentblock+1) {
 		if (findex != NULL) {
 			/* find block using the index */
-			NODPRINT("indexpos: %llu",(long long unsigned int)(res->indexstart + 8*startblock));
+			NODPRINT("indexpos: %" PRIu64 "",(res->indexstart + 8*startblock));
 			fseeko(findex,res->indexstart + 8*startblock,SEEK_SET);
 			pos = lz4index_read(findex);
-			NODPRINT("filepos: %llu",(long long unsigned int)pos);
+			NODPRINT("filepos: %" PRIu64 "",pos);
 			fseeko(finput,pos,SEEK_SET);
 		} else {
 			/* find block by skipping */
