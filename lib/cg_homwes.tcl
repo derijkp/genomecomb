@@ -100,9 +100,9 @@ proc cg_homwes {args} {
 	}
 	set hsamples [list_remdup $hsamples]
 	if {![llength $hsamples]} {
-		putslog "Only one sample in file: not using different variant callers"
+		# putslog "Only one sample in file: not using different variant callers"
 		set hassamples 0
-		set callers {}
+		# set callers {}
 	} else {
 		set hassamples 1
 	}

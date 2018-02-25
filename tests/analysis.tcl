@@ -152,20 +152,6 @@ test exportplink {samples with *} {
 	exec diff tmp/temp.tfam.pre tmp/expected.tfam.pre
 } {}
 
-test exportplink {filter} {
-	write_tab tmp/vars.tsv {
-		chromosome begin end type ref alt	sequenced-s1 quality-s1 alleleSeq1-s1 alleleSeq2-s1	sequenced-s2 quality-s2 alleleSeq1-s2 alleleSeq2-s2
-		chr1	4001	4002	snp	A	G	v	10	A	G	30	r	A	A
-		chr1	4002	4003	del	T	{}	v	20	{}	{}	40	v	T	{}
-	}
-	write_tab tmp/expected.tped {
-		1	1-4001-4002-snp-A-G	0.004001	4001	0	0	A	A
-		1	1-4002-4003-del-T-	0.004002	4002	0	0	T	-
-	}
-	exec cg exportplink -filter {$quality > 20} tmp/vars.tsv tmp/temp
-	exec diff tmp/temp.tped tmp/expected.tped
-} {}
-
 file delete -force tmp/temp.tsv tmp/temp.tsv.old
 
 testsummarize

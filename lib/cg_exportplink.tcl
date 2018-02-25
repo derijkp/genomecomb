@@ -56,7 +56,7 @@ proc cg_exportplink {args} {
 		if {$pos == -1} {
 			set pos [lsearch $header zyg-$sample]
 			if {$pos == -1 && !$all} {
-				error "no sequenced-$sample or zyg-$sample found for $sample, use -all 1"
+				set all 1
 			}
 		}
 		lappend aposs $pos
