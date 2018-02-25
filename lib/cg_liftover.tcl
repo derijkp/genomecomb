@@ -385,7 +385,7 @@ proc cg_liftover {args} {
 			set tempresult [filetemp_ext $resultfile]
 			cg select -f $fields -s $sortfields $tempout $tempresult
 			file rename -force $tempresult $resultfile
-			cg lz4index $resultfile
+			if {[file extension $resultfile] eq ".lz4"} {cg lz4index $resultfile}
 			file delete -force $tempout
 		} else {
 			cg select -f $fields -s $sortfields $tempout >@ stdout
