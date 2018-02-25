@@ -169,7 +169,7 @@ t	chrY	1010	1900	t2	reg4.tsv}
 
 test tsv_cat {two diff header} {
 	exec cg cat data/reg1b.tsv data/reg2.tsv
-} {headers do not match, use -f to force or -m to merge} error
+} {headers do not match, use -f to force or -m to merge (at file data/reg2.tsv)} error
 
 test tsv_cat {two diff header} {
 	write_tab tmp/reg.tsv {
@@ -177,7 +177,7 @@ test tsv_cat {two diff header} {
 		1 2
 	}
 	exec cg cat data/reg1b.tsv tmp/reg.tsv
-} {headers do not match, use -f to force or -m to merge} error
+} {headers do not match, use -f to force or -m to merge (at file tmp/reg.tsv)} error
 
 test tsv_cat {two diff header -m} {
 	cg cat -m data/reg2.tsv data/reg1b.tsv
