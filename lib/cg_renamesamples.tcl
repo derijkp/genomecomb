@@ -47,15 +47,16 @@ proc renamesamples_file {file changes} {
 			set tbasefile [file root $basefile]
 		}
 		set newbasefile [renamesamples_newfilename $basefile $changes]
-		if {$newbasefile eq $basefile} return
 		set ext [string range [gzroot $file] [string length $basefile] end]
 	}
 	set newfile $newbasefile$ext$gzext
 	if {![catch {file link $file} link]} {
+		puts "relinking $file to $newfile"
 		set newlink [renamesamples_newfilename $link $changes]
 		file delete $file
 		exec ln -s $newlink $newfile
 	} elseif {[inlist {.tsv .sft .tab} $ext]} {
+		puts "converting $file to $newfile"
 		set f [gzopen $file]
 		set header [tsv_open $f comment]
 		set newheader {}
@@ -86,12 +87,13 @@ proc renamesamples_file {file changes} {
 			file_rename $file $newfile
 		}
 	} else {
+		puts "renaming $file to $newfile"
 		file_rename $file $newfile
 	}
 }
 
 proc renamesamples {dir changes} {
-	puts "----- Dir $dir -----"
+	putslog "converting $dir"
 	foreach file [glob -nocomplain $dir/*] {
 		if {[file isdir $file]} {
 			renamesamples $file $changes
@@ -111,6 +113,7 @@ proc cg_renamesamples {dir args} {
 	if {![file isdir $dir]} {
 		renamesamples_file $dir $changes
 	} else {
+		putslog "convert root $dir"
 		cd [file dir $dir]
 		set dir [file tail $dir]
 		file delete -force $dir.temp
