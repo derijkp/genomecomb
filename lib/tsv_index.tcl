@@ -32,11 +32,6 @@ proc tsv_index {xfield file} {
 		if {![expr $next%1000000]} {putslog $next}
 	}
 	catch {progress stop}
-	gzclose $f
-	set size [file size $file]
-	set f [gzopen $file]
-	seek $f [expr {$size-5000}] start
-	gets $f
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
