@@ -731,8 +731,6 @@ job var_${build}_gnomad-final -deps $deps -targets {
 	file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
 	file rename -force $tempdir/result.tsv.lz4 var_${build}_gnomad.tsv.lz4
 	cg lz4index var_${build}_gnomad.tsv.lz4
-	file_write extra/var_${build}_gnomad.tsv.opt "fields\t{afr_freqp amr_freqp asj_freqp eas_freqp fin_freqp nfe_freqp oth_freqp male_freqp female_freqp}\n"
-	mklink var_${build}_gnomad.tsv.lz4 extra/var_${build}_gnomad.tsv.lz4
 	# file delete -force $tempdir
 }
 
@@ -751,6 +749,22 @@ job var_${build}_gnomad_exomes -targets {
 	file rename $tempdir/[file tail $target] $target
 	cg lz4index $target
 	file delete -force $tempdir
+}
+
+job var_${build}_extragnomad-final -deps {
+	var_${build}_gnomad.tsv.lz4
+	var_${build}_gnomadex.tsv.lz4
+} -targets {
+	extra/var_${build}_gnomad.tsv.lz4
+	extra/var_${build}_gnomadex.tsv.lz4
+	extra/var_${build}_gnomad.tsv.opt
+	extra/var_${build}_gnomadex.tsv.opt
+} -vars {build} -code {
+	file_write extra/var_${build}_gnomad.tsv.opt "fields\t{afr_freqp amr_freqp asj_freqp eas_freqp fin_freqp oth_freqp male_freqp female_freqp}\n"
+	mklink var_${build}_gnomad.tsv.lz4 extra/var_${build}_gnomad.tsv.lz4
+	file_write extra/var_${build}_gnomadex.tsv.opt "fields\t{afr_freqp amr_freqp asj_freqp eas_freqp fin_freqp oth_freqp male_freqp female_freqp}\n"
+	mklink var_${build}_gnomadex.tsv.lz4 extra/var_${build}_gnomadex.tsv.lz4
+	# file delete -force $tempdir
 }
 
 # CADD
