@@ -16,6 +16,9 @@ extern int genomecomb_loc_compare_ObjCmd _ANSI_ARGS_((ClientData clientData,
 extern int genomecomb_nat_compare_ObjCmd _ANSI_ARGS_((ClientData clientData,
 	Tcl_Interp *interp, int argc, char *argv[]));
 
+extern int genomecomb_annotategene_findregc_ObjCmd _ANSI_ARGS_((ClientData clientData,
+	Tcl_Interp *interp, int argc, char *argv[]));
+
 int
 Genomecomb_Init(interp)
 	Tcl_Interp *interp;		/* Interpreter to add extra commands */
@@ -29,5 +32,6 @@ Genomecomb_Init(interp)
 	Tcl_CreateObjCommand(interp,"tsv_selectc_indexed",(Tcl_ObjCmdProc *)genomecomb_tsv_select_indexed_ObjCmd,(ClientData)NULL,(Tcl_CmdDeleteProc *)NULL);
 	Tcl_CreateObjCommand(interp,"loc_compare",(Tcl_ObjCmdProc *)genomecomb_loc_compare_ObjCmd,(ClientData)NULL,(Tcl_CmdDeleteProc *)NULL);
 	Tcl_CreateObjCommand(interp,"nat_compare",(Tcl_ObjCmdProc *)genomecomb_nat_compare_ObjCmd,(ClientData)NULL,(Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateObjCommand(interp,"annotategene_findregc",(Tcl_ObjCmdProc *)genomecomb_annotategene_findregc_ObjCmd,(ClientData)NULL,(Tcl_CmdDeleteProc *)NULL);
 	return TCL_OK;
 }

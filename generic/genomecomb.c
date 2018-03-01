@@ -239,3 +239,44 @@ genomecomb_nat_compare_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int ar
 	Tcl_SetObjResult(interp,Tcl_NewIntObj(result));
 	return TCL_OK;
 }
+
+int 
+genomecomb_annotategene_findregc_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int argc, Tcl_Obj *CONST argv[])
+{
+	int listobjc;
+	Tcl_Obj **listobjv;
+	int templistobjc;
+	Tcl_Obj **templistobjv;
+	Tcl_Obj *def;
+	int pos,ftstart,ftend,i;
+	if ((argc < 4)||(argc > 4)) {
+		Tcl_WrongNumArgs(interp, 1, argv, "list pos def");
+		return TCL_ERROR;
+	}
+	if (Tcl_ListObjGetElements(interp, argv[1], &listobjc, &listobjv) != TCL_OK) {
+		return TCL_ERROR;
+	}
+	if (Tcl_GetIntFromObj(interp, argv[2], &pos) != TCL_OK) {
+		return TCL_ERROR;
+	}
+	def = argv[3];
+	i=0;
+	while(i<listobjc) {
+		if (Tcl_ListObjGetElements(interp, listobjv[i], &templistobjc, &templistobjv) != TCL_OK) {
+			return TCL_ERROR;
+		}
+		if (Tcl_GetIntFromObj(interp, templistobjv[0], &ftstart) != TCL_OK) {
+			return TCL_ERROR;
+		}
+		if (Tcl_GetIntFromObj(interp, templistobjv[1], &ftend) != TCL_OK) {
+			return TCL_ERROR;
+		}
+		if (pos >= ftstart && pos <= ftend) {
+			Tcl_SetObjResult(interp,listobjv[i]);
+			return TCL_OK;
+		}
+		i++;
+	}
+	Tcl_SetObjResult(interp,def);
+	return TCL_OK;
+}

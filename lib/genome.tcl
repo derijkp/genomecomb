@@ -165,7 +165,7 @@ proc genome_close {f} {
 	unset genomefasta($f)
 }
 
-proc genome_get {f chr start end {correctend 0}} {
+proc genome_get {f chr start end {correctend 0} {unknownchr 0}} {
 	global genomefasta
 	if {$end < $start} {error "end ($end) is smaller than start ($start)"}
 	set fastaindex $genomefasta($f)
@@ -173,7 +173,17 @@ proc genome_get {f chr start end {correctend 0}} {
 		set temp [dict get $fastaindex $chr]
 	}]} {
 		set chr [chr_clip $chr]
-		set temp [dict get $fastaindex $chr]
+		if {[catch {
+			set temp [dict get $fastaindex $chr]
+		} error]} {
+			if {![regexp "not known in dictionary" $error]} {
+				return -code error -errorinfo $::errorInfo $error
+			} elseif {!$unknownchr} {
+				error "Could not get reference sequence of chromosome $chr"
+			} else {
+				return [string_fill N [expr {$end-$start}]]
+			}
+		}
 	}
 	foreach {gstart glen} $temp break
 	if {$end > $glen} {

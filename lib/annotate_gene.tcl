@@ -201,7 +201,7 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
 	}
 
 	if {$complement} {set type upstream} else  {set type downstream}
-	lappend ftlist [list [expr {$e}] 9000000000 $type]
+	lappend ftlist [list [expr {$e}] 2147483647 $type]
 	# add info to ftlist so data will be: begin end type exon rnabegin rnaend cdsbegin cdsend
 	set adata(grefstart) 0
 	set adata(rrefstart) 0
@@ -302,7 +302,7 @@ proc annotatevar_gene_rnaseq {} {
 	# join $adata(rnalist) \n
 	list_foreach {gs ge t el rs re ps pe} $adata(rnalist) {
 		incr ge ;# genome_get works with half open coordinates
-		append result [genome_get $genomef $chr $gs $ge]
+		append result [genome_get $genomef $chr $gs $ge 0 1]
 	}
 	if {$complement} {
 		set result [seq_complement $result]
@@ -331,7 +331,7 @@ proc annotatevar_gene_getrnaseq {qstart qend {line {}}} {
 				set gstart [expr {$gs+$qstart-$rs}]
 				set gend [expr {$gs+$qend-$rs}]
 				incr gend ;# genome_get works with half open coordinates
-				set result [genome_get $genomef $chr $gstart $gend]
+				set result [genome_get $genomef $chr $gstart $gend 0 1]
 				if {!$complement} {return $result} else {return [seq_complement $result]}
 			}
 		}
@@ -344,7 +344,7 @@ proc annotatevar_gene_getrnaseq {qstart qend {line {}}} {
 				if {$gstart < $gs} {set gstart $gs}
 				if {$gend > $ge} {set gend $ge}
 				incr gend ;# genome_get works with half open coordinates
-				append result [genome_get $genomef $chr $gstart $gend]
+				append result [genome_get $genomef $chr $gstart $gend 0 1]
 				if {$re > $qend} break
 			}
 		}
@@ -357,7 +357,7 @@ proc annotatevar_gene_getrnaseq {qstart qend {line {}}} {
 				set gstart [expr {$gs+$re-$qend}]
 				set gend [expr {$gs+$re-$qstart}]
 				incr gend ;# genome_get works with half open coordinates
-				set result [genome_get $genomef $chr $gstart $gend]
+				set result [genome_get $genomef $chr $gstart $gend 0 1]
 				if {!$complement} {return $result} else {return [seq_complement $result]}
 			}
 		}
@@ -372,7 +372,7 @@ proc annotatevar_gene_getrnaseq {qstart qend {line {}}} {
 				if {$gstart < $gs} {set gstart $gs}
 				if {$gend > $ge} {set gend $ge}
 				incr gend ;# genome_get works with half open coordinates
-				append result [genome_get $genomef $chr $gstart $gend]
+				append result [genome_get $genomef $chr $gstart $gend 0 1]
 				if {$rs < $qstart} break
 			}
 		}
@@ -424,7 +424,6 @@ proc annotategene_rpos {line snppos} {
 }
 
 proc annotategene_element {line snppos} {
-# putsvars line snppos
 	global adata
 	set complement $adata(complement)
 	foreach {gbegin gend eltype element rnabegin rnaend cdsbegin cdsend} $line break
@@ -476,14 +475,9 @@ proc annotategene_p_loc {AZ1 prstart {AZ2 {}} {prend {}}} {
 
 proc annotategene_findreg {snppos snpend} {
 	global adata
-	set sline pre
-	set eline post
-	foreach line $adata(ftlist) {
-		foreach {ftstart ftend type} $line break
-		if {($snppos >= $ftstart) && ($snppos <= $ftend)} {set sline $line}
-		if {($snpend >= $ftstart) && ($snpend <= $ftend)} {set eline $line}
-	}
-	return [list $sline $eline]
+	set sline [annotategene_findregc $adata(ftlist) $snppos pre]
+	set eline [annotategene_findregc $adata(ftlist) $snpend post]
+	list $sline $eline
 }
 
 proc annotategene_one_ins {loc} {
@@ -509,7 +503,7 @@ proc annotategene_one_ins {loc} {
 			set gend [lindex $eline 1]
 			while {$snpend <= $gend} {
 				set from [string index $alt 0]
-				set dest [genome_get $genomef $chr $snpend [expr {$snpend+1}]]
+				set dest [genome_get $genomef $chr $snpend [expr {$snpend+1}] 0 1]
 				if {$from ne $dest} break
 				incr snppos; incr snpend
 				set alt [string range $alt 1 end][string index $alt 0]
@@ -523,8 +517,8 @@ proc annotategene_one_ins {loc} {
 			while {$snppos >= $gbegin} {
 				set from [string index $alt end]
 				# get base just before (current) insert
-				set dest [genome_get $genomef $chr $snppos $snpend]
-				# puts [genome_get $genomef $chr $gbegin $snpend]\ $alt
+				set dest [genome_get $genomef $chr $snppos $snpend 0 1]
+				# puts [genome_get $genomef $chr $gbegin $snpend 0 1]\ $alt
 				if {$from ne $dest} break
 				incr snppos -1; incr snpend -1
 				set alt $from[string range $alt 0 end-1]
@@ -622,8 +616,8 @@ proc annotategene_one_del {loc} {
 		if {!$complement} {
 			set gend [lindex $eline 1]
 			while {$snpend < $gend} {
-				set from [genome_get $genomef $chr $snppos [expr {$snppos+1}]]
-				set dest [genome_get $genomef $chr [expr {$snpend+1}] [expr {$snpend+2}]]
+				set from [genome_get $genomef $chr $snppos [expr {$snppos+1}] 0 1]
+				set dest [genome_get $genomef $chr [expr {$snpend+1}] [expr {$snpend+2}] 0 1]
 				if {$from ne $dest} break
 				incr snppos; incr snpend
 			}
@@ -631,8 +625,8 @@ proc annotategene_one_del {loc} {
 			# for complement towards 3' is going back
 			set gbegin [lindex $sline 0]
 			while {$snppos > $gbegin} {
-				set from [genome_get $genomef $chr [expr {$snppos-1}] $snppos]
-				set dest [genome_get $genomef $chr $snpend [expr {$snpend+1}]]
+				set from [genome_get $genomef $chr [expr {$snppos-1}] $snppos 0 1]
+				set dest [genome_get $genomef $chr $snpend [expr {$snpend+1}] 0 1]
 				if {$from ne $dest} break
 				incr snppos -1; incr snpend -1
 			}
@@ -1159,6 +1153,7 @@ proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcriptcol {}} {upstreamsize 2000}} {
 # putsvars file genomefile dbfile name annotfile genecol transcriptcol upstreamsize
 	global genomef
+
 	annot_init
 	if {[catch {eof $genomef}]} {
 		set genomef [genome_open $genomefile]
@@ -1252,6 +1247,20 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 			putslog $chr:$start
 			set counter 0
 		}
+		# remove genes from dblist that are before current var in remove
+		set newdblist {}
+		foreach dbline $dblist {
+			foreach {dc ds de} $dbline break
+			set chrcompar [chr_compare $dc $chr]
+			# previous chromosome, remove
+			if {$chrcompar < 0} continue
+			# of end of gene anotation is before current variant
+			# de is already corrected for upstream
+			if {$chrcompar == 0 && $de <= $start} continue
+			lappend newdblist $dbline
+		}
+		set dblist $newdblist
+		# 
 		# add all overlapping to dblist
 		while {![eof $df]} {
 			set chrcompar [chr_compare $dbchr $chr]
@@ -1286,6 +1295,11 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 			set dbstart [expr {$dbstart - $upstreamsize}]
 			incr dbend $upstreamsize
 		}
+
+		if {![llength $dblist]} {
+			puts $o $empty
+			continue
+		}
 		# join [list_subindex $dblist 4] \n\n
 		# check for multiple alleles, process these separately (alist contains >1 loc)
 		set malt [split $alt ,]
@@ -1308,20 +1322,15 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 			# join [list_subindex $dblist 4] \n\n
 			list_foreach {dc ds de geneobj dbline} $dblist {
 				set chrcompar [chr_compare $dc $chr]
-				if {$chrcompar < 0} {
-					lappend remove $num
-				} elseif {$chrcompar == 0} {
-					if {$de <= $start} {
-						lappend remove $num
-					} elseif {$ds < $end} {
-						if {[catch {dict get $geneobj end}]} {
-							set geneobj [annotatevar_gene_makegeneobj $genomef $dbline $dposs $upstreamsize]
-							lset dblist $num 3 $geneobj
-						}
-						set genename [dict get $geneobj genename]
-						set result [annotategene_one $loc $geneobj]
-						lappend hitgenes [linsert $result 1 $genename]
+				# gene cannot be before var (were removed before)
+				if {$chrcompar == 0 && $ds < $end} {
+					if {[catch {dict get $geneobj end}]} {
+						set geneobj [annotatevar_gene_makegeneobj $genomef $dbline $dposs $upstreamsize]
+						lset dblist $num 3 $geneobj
 					}
+					set genename [dict get $geneobj genename]
+					set result [annotategene_one $loc $geneobj]
+					lappend hitgenes [linsert $result 1 $genename]
 				}
 				incr num
 			}
@@ -1402,5 +1411,6 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 	close $genomef
 	close $o; gzclose $f;	gzclose $df
 	file rename -force $annotfile.temp $annotfile
+
 }
 
