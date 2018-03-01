@@ -81,6 +81,7 @@ proc renamesamples_file {file changes} {
 			if {$gzext ne ""} {compress $newbasefile$ext.temp $gzext}
 			file delete $file
 			file_rename $newbasefile$ext.temp$gzext $newfile
+			catch {file delete $newbasefile$ext.temp}
 			puts "Adapted $newfile"
 		} else {
 			gzclose $f
