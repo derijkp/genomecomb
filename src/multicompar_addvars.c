@@ -44,7 +44,7 @@ int inregion(Variant *allvar,VarFile *sreg) {
 				break;
 			}
 		}
-		varfile_next(sreg);
+		varfile_next(sreg,1);
 	}
 	return 0;
 }
@@ -82,7 +82,7 @@ void orivarmatch(VarFile *orivars, int *orikeepposs, int orikeepsize, DelInfo *o
 		}
 		cur++;
 	}
-	varfile_next(orivars);
+	varfile_next(orivars,1);
 	if (!orivars->error) {
 		if (DStringCompare(orivars->var->chr,orid->chr) != 0) {
 			DStringCopy(orid->chr,orivars->var->chr);
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 		pos = atoi(argv[i++]);
 		fieldannotlist[pos].type = 'r';
 		regf = OpenVarfile(argv[i++],1);
-		varfile_next(regf);
+		varfile_next(regf,1);
 		fieldannotlist[pos].regf = regf;
 		fieldannotlist[pos].regfieldpos = atoi(argv[i++]);
 		if (fieldannotlist[pos].regfieldpos > regf->max) {
@@ -172,14 +172,14 @@ int main(int argc, char *argv[]) {
 		if (orikeepposs[j] > orivars->max) {orivars->max = orikeepposs[j];}
 		i++; j++;
 	}
-	varfile_next(orivars);
+	varfile_next(orivars,1);
 	orizygpos = orivars->varpos.zyg;
 	oria1pos = orivars->varpos.a1;
 	oria2pos = orivars->varpos.a2;
 	/* sregfile */
 	if (*sregfile != '\0') {
 		sreg = OpenVarfile(sregfile,split);
-		varfile_next(sreg);
+		varfile_next(sreg,1);
 	}
 	/* varallfile */
 	if (*varallfile != '\0') {
@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
 			if (varallkeepposs[i] > varallvars->max) {varallvars->max = varallkeepposs[i];}
 		}
 		/* get first var from varall */
-		varfile_next(varallvars);
+		varfile_next(varallvars,1);
 	}
 	/* get first variant in ori */
 	if (!orivars->error) {
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
 	}
 	/* open file with all variants (allvar) */
 	allvars = OpenVarfile(allvarsfile,split);
-	varfile_next(allvars);
+	varfile_next(allvars,1);
 	/* go over all vars in allvars, add vars from ori if found, otherwise test sreg, etc. */
 	while (!allvars->error) {
 		out_seq = ds_q; out_zyg = ds_q; out_a1 = ds_q; out_a2 = ds_q;
@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
 						break; /* use only start match if snp */
 					}
 				}
-				varfile_next(varallvars);
+				varfile_next(varallvars,1);
 				if (varallvars->error) {
 					comp = -2;
 					break;
@@ -511,7 +511,7 @@ NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvars->var->ref->string,
 		}
 		prevcomp = comp;
 		putc_unlocked('\n',stdout);
-		varfile_next(allvars);
+		varfile_next(allvars,1);
 		if (allvars->error) break;
 	}
 	CloseVarfile(orivars);

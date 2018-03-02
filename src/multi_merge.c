@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 	for (i = 0 ; i < count ; i++) {
 		varfiles[i] = OpenVarfile(argv[i+2],split);
 		Varfile_checkbasicfields(varfiles[i]);
-		varfile_next(varfiles[i]);
+		varfile_next(varfiles[i],1);
 	}
 	fprintf(stdout,"chromosome\tbegin\tend\ttype\tref\talt\n");
 	while (1) {
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 					alt2++;
 				}
 			}
-			varfile_next(varfile);
+			varfile_next(varfile,1);
 		}
 		if (!split) {
 			DStringputs(alts,stdout);

@@ -262,7 +262,7 @@ void Varfile_checkbasicfields(VarFile *varfile) {
 	}
 }
 
-Variant *varfile_next(VarFile *varfile) {
+Variant *varfile_next(VarFile *varfile,int check) {
 	Variant *tempvar;
 	DString *templine;
 	DStringArray *tempresult;
@@ -290,11 +290,11 @@ Variant *varfile_next(VarFile *varfile) {
 	check_numfieldserror(numfields,varfile->numfields,varfile->line,varfile->file,&varfile->pos);
 	result2var(varfile->result,varfile->varpos,varfile->var);
 	varfile->linenr ++;
-	if (varfile->linenr > 1) {
+	if (check && varfile->linenr > 1) {
 		compcheck = varchecksort(varfile->prevvar,varfile->var,varfile->file,NULL);
 		if (!varfile->split && compcheck < 2) {
 			Variant *prev = varfile->prevvar;
-			fprintf(stderr,"error in \"%s\": file uses split alleles (\"%s %d %d %s\" occurs more than once and you are not running multicompar with the -split option)",
+			fprintf(stderr,"error in \"%s\": file uses split alleles (\"%s %d %d %s\" occurs more than once and you are not running with the -split option)",
 				varfile->file,prev->chr->string,prev->start,prev->end,prev->type->string);
 			exit(EXIT_FAILURE);
 		}

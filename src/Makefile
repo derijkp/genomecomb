@@ -27,6 +27,7 @@ all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$
      ../bin$(ARCH)/tsv2bed$(EXEEXT) \
      ../bin$(ARCH)/samcat$(EXEEXT) \
      ../bin$(ARCH)/sam_amplicons_count$(EXEEXT) \
+     ../bin$(ARCH)/varsfile$(EXEEXT) \
      ../bin$(ARCH)/sam2tsv$(EXEEXT) ../bin$(ARCH)/tsv2sam$(EXEEXT)
 
 clean:
@@ -142,4 +143,7 @@ clean:
 
 ../bin$(ARCH)/sam_amplicons_count$(EXEEXT): sam_amplicons_count.c $(TOOLS)
 	$(GCC) sam_amplicons_count.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam_amplicons_count$(EXEEXT)
+
+../bin$(ARCH)/varsfile$(EXEEXT): varsfile.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
+	$(GCC) varsfile.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/varsfile$(EXEEXT) $(LIBZ)
 
