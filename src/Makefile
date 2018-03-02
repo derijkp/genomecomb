@@ -96,8 +96,8 @@ clean:
 ../bin$(ARCH)/vcf2tsv$(EXEEXT): vcf2tsv.c $(TOOLS) $(HASHTOOLS)
 	$(GCC) vcf2tsv.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/vcf2tsv$(EXEEXT)
 
-../bin$(ARCH)/reg_select$(EXEEXT): reg_select.c $(TOOLS)
-	$(GCC) reg_select.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_select$(EXEEXT)
+../bin$(ARCH)/reg_select$(EXEEXT): reg_select.c $(TOOLS) $(GZTOOLS)
+	$(GCC) reg_select.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/reg_select$(EXEEXT) $(LIBZ)
 
 ../bin$(ARCH)/depth_histo$(EXEEXT): depth_histo.c $(TOOLS) $(GZTOOLS)
 	$(GCC) depth_histo.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/depth_histo$(EXEEXT) $(LIBZ)

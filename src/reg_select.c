@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 	start1pos = atoi(argv[2]);
 	end1pos = atoi(argv[3]);
 	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
-	f2 = fopen64_or_die(argv[4],"r");
+	f2 = gz_open(argv[4],"r");
 	chr2pos = atoi(argv[5]);
 	start2pos = atoi(argv[6]);
 	end2pos = atoi(argv[7]);
@@ -51,8 +51,8 @@ NODPRINT("reg_select %d %d %d %s %d %d %d %d",chr1pos,start1pos,end1pos,argv[4],
 	resultkeep = DStringArrayNew(max2+2);
 	skip_header(f1,line1,&numfields1,&pos1);
 	fprintf(stdout,"%s\n",line1->string);
-	skip_header(f2,line2,&numfields2,&pos2);
-	error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields);	pos2++;
+	gz_skip_header(f2,line2,&numfields2,&pos2);
+	error2 = gz_DStringGetTab(line2,f2,max2,result2,1,&numfields);	pos2++;
 	if (!error2) {
 		check_numfieldserror(numfields,numfields2,line2,argv[4],&pos2);
 		chromosome2 = result2->data+chr2pos;
@@ -81,7 +81,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 			resultkeep = result2;
 			result2 = resulttemp;
 			/* get new line */
-			error2 = DStringGetTab(line2,f2,max2,result2,1,&numfields); pos2++;
+			error2 = gz_DStringGetTab(line2,f2,max2,result2,1,&numfields); pos2++;
 			if (error2)  {
 				chromosome2 = NULL;
 				comp = -1;
@@ -124,7 +124,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 		}
 	}
 	fclose(f1);
-	fclose(f2);
+	gz_close(f2);
 	if (line1) {DStringDestroy(line1);}
 	if (line2) {DStringDestroy(line2);}
 	if (linekeep) {DStringDestroy(linekeep);}
