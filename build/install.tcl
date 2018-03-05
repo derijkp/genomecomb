@@ -18,3 +18,6 @@ set binaries {}
 # standard
 # --------
 pkgtools::install $argv
+
+# replace soft link in src with real copy in target
+file copy -force $config(srcdir)/lib/tools_compare.tcl $config(pkglibdir)/libext/tools_compare.tcl
