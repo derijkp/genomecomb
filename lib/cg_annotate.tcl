@@ -203,6 +203,7 @@ proc cg_annotate_job {args} {
 	set multidb 0
 	set upstreamsize 2000
 	set analysisinfo 1
+	set distrchr 0
 	cg_options annotate args {
 		-near {
 			set near $value
@@ -225,6 +226,9 @@ proc cg_annotate_job {args} {
 		}
 		-analysisinfo {
 			set analysisinfo $value
+		}
+		-distrchr {
+			set distrchr $value
 		}
 	} {orifile resultfile} 3
 	set dbdir [file_absolute $dbdir]
@@ -405,10 +409,37 @@ proc cg_annotate_job {args} {
 			if {![file exists $genomefile]} {
 				error "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
 			}
-			job annot-$resultname-[file tail $dbfile] -deps {$usefile $genomefile $dbfile} -targets {$target} -vars {genomefile dbfile name dbinfo upstreamsize} -code {
-				set genecol [dict_get_default $dbinfo genecol {}]
-				set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
-				annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize
+			if {!$distrchr} {
+				putsvars usefile resultname
+				job annot-$resultname-[file tail $dbfile] -deps {$usefile $genomefile $dbfile} -targets {$target} -vars {genomefile dbfile name dbinfo upstreamsize} -code {
+					set genecol [dict_get_default $dbinfo genecol {}]
+					set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
+					# putsvars dep genomefile dbfile name target genecol transcriptcol upstreamsize
+					annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize
+				}
+			} else {
+				set chromosomes [exec cut -f 1 $genomefile.fai]
+				set todo {}
+				foreach chromosome $chromosomes {
+					lappend todo $target.$chromosome
+					job annot-$resultname-$chromosome-[file tail $dbfile] -deps {
+						$usefile $genomefile $dbfile
+					} -targets {
+						$target.$chromosome
+					} -vars {
+						genomefile dbfile name dbinfo upstreamsize chromosome
+					} -code {
+						set genecol [dict_get_default $dbinfo genecol {}]
+						set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
+						# putsvars dep genomefile dbfile name target genecol transcriptcol upstreamsize
+						annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize $chromosome
+					}
+				}
+				job annot-$resultname-[file tail $dbfile] -deps $todo -targets {$target} -vars {} -code {
+					set temp [filetemp $target]
+					cg cat -c 0 {*}$deps > $temp
+					file rename $temp $target
+				}
 			}
 		} elseif {$dbtype eq "mir"} {
 			if {$near != -1} {error "-near option does not work with gene dbfiles"}

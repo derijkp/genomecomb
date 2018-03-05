@@ -1150,7 +1150,7 @@ proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 	return $header
 }
 
-proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcriptcol {}} {upstreamsize 2000}} {
+proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcriptcol {}} {upstreamsize 2000} {onlychr {}}} {
 # putsvars file genomefile dbfile name annotfile genecol transcriptcol upstreamsize
 	global genomef
 
@@ -1219,12 +1219,17 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 			error "error: empty line in $file"
 		}
 		set loc [list_sub $line $poss]
+		foreach {chr start end type ref alt} $loc break
+		if {$onlychr ne ""} {
+			set comp [chr_compare $chr $onlychr]
+			if {$comp > 0} break
+			if {$comp != 0} continue
+		}
 		set ploc [lrange $loc 0 2]
 		if {[lloc_compare $prevloc $ploc] > 0} {
 			error "Cannot annotate because the variant file is not correctly sorted (sort correctly using \"cg select -s -\")"
 		}
 		set prevloc $ploc
-		foreach {chr start end type ref alt} $loc break
 		if {$type eq ""} {
 			lset loc 3 del
 			set type del
@@ -1413,4 +1418,3 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 	file rename -force $annotfile.temp $annotfile
 
 }
-
