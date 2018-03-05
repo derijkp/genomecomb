@@ -21,6 +21,9 @@ proc cg_qsub {args} {
 		-queue - -dqueue {
 			set dqueue $value
 		}
+		-name {
+			set jobname $value
+		}
 	} command	
 	catch {exec qstat -xml} jobxml
 	set jobs [regexp -all -inline {<job_list.+?</job_list>} $jobxml]
@@ -40,19 +43,34 @@ proc cg_qsub {args} {
 			}
 		}
 	}
-	
-	set name $command.[join $args .]
-	regsub -all / $name __ name
-	if {[string length $name] > 200} {
-		set name [string range $name 0 100]....[string range $name end-100 end]
+	if {![info exists jobname]} {
+		set jobname $command.[join $args .]
+	}
+	set jobname [string_change $jobname [list { } _ / __ \\ __ : _ > _ * _ ' _ ( _ ) _ , _ / __ \n __ * _ ? _]]
+	if {[string length $jobname] > 200} {
+		set jobname [string range $jobname 0 100]....[string range $jobname end-100 end]
 	}
 	set tasknum {}
-	if {[info exists ra([list $name $tasknum])]} {
-		puts "Job $name.$tasknum is running, skipping"
+	if {[info exists ra([list $jobname $tasknum])]} {
+		puts "Job $jobname.$tasknum is running, skipping"
 	} else {
-		if {![info exists outputfile]} {set outputfile job_$name.out}
-		if {![info exists errorfile]} {set errorfile job_$name.err}
-		set jnum [exec qsub -N j$name -q $dqueue -o $outputfile -e $errorfile {*}$options $::appdir/lib/repeater.sh $basedir $command {*}$args]
-		puts "$jnum $name"
+		job_init
+		global cgjob
+		set cmd {#!/bin/sh}
+		append cmd \n
+		append cmd {#$ -S /bin/bash} \n
+		append cmd {#$ -V} \n
+		append cmd {#$ -cwd} \n
+		append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
+		append cmd "exec $cgjob(runcmd) \"\$0\" \"\$@\"\n"
+		append cmd [list exec $command {*}$args]\n
+		set runfile job_$jobname.run
+		file_write $runfile $cmd
+		file attributes $runfile -permissions u+x
+
+		if {![info exists outputfile]} {set outputfile job_$jobname.out}
+		if {![info exists errorfile]} {set errorfile job_$jobname.err}
+		set jnum [exec qsub -N j$jobname -q $dqueue -o $outputfile -e $errorfile {*}$options $runfile]
+		puts "$jnum $jobname"
 	}
 }
