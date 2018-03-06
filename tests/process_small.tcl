@@ -246,7 +246,7 @@ test process_small {genomes yri mx2} {
 	checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics expected/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
+		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb|Linux}
 	}
 } {}
 
