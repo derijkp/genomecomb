@@ -556,7 +556,7 @@ proc process_sample_job {args} {
 			for {set i 0} {$i < 4} {incr i} {
 				if {[gets $f line] == -1} {
 					gzclose $f
-					if {[inlist $reports fastqstats] || [inlist $reports all]} {
+					if {[inlist $reports fastqstats] || [inlist $reports all] || [inlist $reports basic]} {
 						set num [expr {$minfastqreads-$count}]
 						file mkdir $sampledir/reports
 						file_write $sampledir/reports/report_fastq_fw-$sample.tsv [join [list \
@@ -762,15 +762,17 @@ proc process_sample_job {args} {
 		} else {
 			set regionfile $amplicons
 		}
-		if {"gatk" in $varcallers} {
-			# gatk variant calling on map-$bambase
-			lappend cleanupdeps [var_gatk_job -regionfile $regionfile -split $split -dt $dt -cleanup $cleanup $cleanedbam $refseq]
-			lappend todo gatk-$bambase
+		switch {$varcaller} {
+			gatk {set extraopts [list -dt $dt]}
+			sam {set extraopts [list -dt $dt]}
+			default {set extraopts {}}
 		}
-		if {"sam" in $varcallers} {
-			# samtools variant calling on map-$bambase
-			lappend cleanupdeps [var_sam_job -regionfile $regionfile -split $split -BQ $samBQ -cleanup $cleanup $cleanedbam $refseq]
-			lappend todo sam-$bambase
+		foreach varcaller $varcallers {
+			if {![auto_load var_${varcaller}_job]} {
+				error "varcaller $varcaller not supported"
+			}
+			lappend cleanupdeps [var_${varcaller}_job -regionfile $regionfile -split $split {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
+			lappend todo $varcaller-$bambase
 		}
 	}
 	if {$cleanup} {
