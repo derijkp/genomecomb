@@ -84,7 +84,8 @@ for removing duplicates (third option)
 ; -amplicons ampliconfile: This option turns on amplicon sequencing analysis (as described 
 in [[cg_process_sample]]) using the amplicons defained in **ampliconfile** for all samples
 that do not have a sample specific amplicon file yet.
-; -varcallers varcallers: (space separated) list of variant callers to be used (default "gatk sam")
+; -varcallers varcallers: (space separated) list of variant callers to be used (default "gatk sam").
+Currently supported are" gatk, sam and freebayes
 ; -split 1/0: split multiple alternative genotypes over different line
 ; -downsampling_type NONE/ALL_READS/BY_SAMPLE/: sets the downsampling type used by GATK (empty for default).
 ; -reports list: use basic (default) for creating most reports, or all for all reports. If you only
@@ -119,6 +120,7 @@ gatk and picard should be installed separately. Their installation location can 
 using the environment variables GATK and PICARD. These should point to the installation
 directory that contains the jar files. If these environment variables are not set, a directory
 named gatk and picard will be searched in the PATH.
+If used, freebayes must also be installed separately, and should be runnable from the path.
 
 == Example ==
 {{{

@@ -168,6 +168,29 @@ test process_small {process_project exomes yri mx2} {
 	}
 } {}
 
+test process_small {process_project exomes yri mx2 freebayes} {
+	cd $::bigtestdir
+	file delete -force tmp/exomesfb_yri_mx2
+	file mkdir tmp/exomesfb_yri_mx2/samples
+	foreach sample {
+		NA19238mx2  NA19239mx2  NA19240mx2
+	} {
+		file mkdir tmp/exomesfb_yri_mx2/samples/$sample/fastq
+		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomesfb_yri_mx2/samples/$sample/fastq
+		mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/exomesfb_yri_mx2/samples/$sample/reg_hg19_targets.tsv
+	}
+	cg process_project --stack 1 --verbose 2 {*}$::dopts -varcallers {gatk freebayes} -split 1 -dbdir refseqtest/hg19 tmp/exomesfb_yri_mx2 2>@ stderr >@ stdout
+	# check vs expected
+	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
+		tmp/exomesfb_yri_mx2 expected/exomesfb_yri_mx2
+	checkdiff -y --suppress-common-lines tmp/exomesfb_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomesfb_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2
+	foreach file1 [glob tmp/exomesfb_yri_mx2/compar/info_analysis.tsv tmp/exomesfb_yri_mx2/samples/*/info_analysis.tsv] {
+		regsub ^tmp $file1 expected file2
+		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
+	}
+} {}
+
 #test process_small {process_project exomes yri mx2} {
 #	cd $::bigtestdir
 #	file delete -force tmp/exomes_yri_mx2

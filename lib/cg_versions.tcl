@@ -110,6 +110,11 @@ proc version {item {minversion {}}} {
 				regexp {version ([0-9.]+)} $temp temp temp
 				set _versions($item) [string trimright $temp .]
 			}
+			freebayes {
+				catch {exec freebayes --version} temp
+				regsub {version: *} $temp {} temp
+				set _versions($item) [string trim $temp]
+			}
 			default {
 				if {![catch {exec $item --version} temp]} {
 				} elseif {![catch {exec $item -version} temp]} {
@@ -132,7 +137,7 @@ proc version {item {minversion {}}} {
 					set temp [lindex [split [string trim $temp] \n] 0]
 					set _versions($item) $temp
 				} else {
-					regsub {^.*[Vv]ersion:? } $temp {} temp
+					
 					set temp [lindex [split [string trim $temp] \n] 0]
 					set _versions($item) $temp
 				}

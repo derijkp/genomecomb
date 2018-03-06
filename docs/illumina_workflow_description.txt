@@ -6,7 +6,7 @@ removed using biobambam bammarkduplicates2 (5). Realignment in the
 neighborhood of indels was performed with GATK (6). Variants were called
 at all positions with a totalcoverage >= 5 using both GATK (6) and
 samtools (4). At this initial stage positions with a coverage < 5 or a
-score < 30 were considered unsequenced. The resulting variant sets of
+quality score < 30 were considered unsequenced. The resulting variant sets of
 different individuals were combined and annotated using genomecomb (1).
 
 (1) Reumers, J*, De Rijk, P*, Zhao, H, Liekens, A, Smeets, D, Cleary, J, Van Loo, P, Van Den Bossche, M, Catthoor, K, Sabbe, B, Despierre, E, Vergote, I, Hilbush, B, Lambrechts, D and Del-Favero, J (2011) Optimized filtering reduces the error rate in detecting genomic variants by short-read sequencing. Nature biotechnology, 30, 61-88 [PMID: 22178994]
