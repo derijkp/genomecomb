@@ -244,11 +244,13 @@ proc process_sample_cgi_job {workdir split} {
 	}
 	job cg_cgsv-$sample -optional 1 -deps {SV/allJunctionsBeta-*.tsv} -targets {cgsv-$sample.tsv} -code {
 		set tempfile [filetemp $target]
+		file delete $tempfile
 		convcgsv $dep $tempfile
 		file rename -force $tempfile $target
 	}
 	job cg_cgsv_alpha-$sample -optional 1 -deps {SV/annotatedJunctionsAlpha-*.tsv} -targets {cgsv-$sample.tsv} -code {
 		set tempfile [filetemp $target]
+		file delete $tempfile
 		convcgsv $dep $tempfile
 		file rename -force $tempfile $target
 	}

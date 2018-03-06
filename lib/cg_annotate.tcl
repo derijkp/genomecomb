@@ -516,7 +516,7 @@ proc cg_annotate_job {args} {
 			set nh [list_lremove $header $newh]
 			if {[llength $nh] < [llength $header]} {
 				set temp2 [filetemp $resultfile]
-				cg select -f $nh $orifile $temp2
+				cg select -overwrite 1 -f $nh $orifile $temp2
 				set temp [filetemp_ext $resultfile]
 				exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
 				file delete $temp2

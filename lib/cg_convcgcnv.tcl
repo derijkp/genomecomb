@@ -7,7 +7,7 @@
 proc convcgcnv {srcfile dstfile} {
 	set fields [cg select -h $srcfile]
 	set nfields [list_concat {chr begin end {type=($calledCNVType == "-")? "del" : (($calledCNVType == "+")? "amp" : $calledCNVType)}} [list_remove $fields chr begin end calledCNVType]]
-	cg select -s - -f $nfields -q {$calledCNVType != "hypervariable" && $calledCNVType != "\=" && $calledCNVType != "invariant"} $srcfile $dstfile
+	cg select -overwrite 1 -s - -f $nfields -q {$calledCNVType != "hypervariable" && $calledCNVType != "\=" && $calledCNVType != "invariant"} $srcfile $dstfile
 }
 
 proc cg_convcgcnv {args} {

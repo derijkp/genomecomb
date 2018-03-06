@@ -187,7 +187,7 @@ proc cg_homwes {args} {
 		}
 		if {$query eq ""} {set query 1}
 		putslog "Quality filtering data"
-		cg select \
+		cg select -overwrite 1 \
 			-q "(chr_clip(\$chromosome) ni {X Y M MT}) && [join $query " && "]" \
 			-f $fields \
 			$usefile ${sworkbase}-filtered.tsv

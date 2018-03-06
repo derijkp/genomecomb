@@ -383,7 +383,7 @@ proc cg_liftover {args} {
 		set fields [list_union [list_sub $newheader [list_remove $fposs -1]] $newheader]
 		if {$resultfile ne "-"} {
 			set tempresult [filetemp_ext $resultfile]
-			cg select -f $fields -s $sortfields $tempout $tempresult
+			cg select -overwrite 1 -f $fields -s $sortfields $tempout $tempresult
 			file rename -force $tempresult $resultfile
 			if {[file extension $resultfile] eq ".lz4"} {cg lz4index $resultfile}
 			file delete -force $tempout

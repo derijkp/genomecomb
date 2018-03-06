@@ -132,14 +132,14 @@ table_tsv method query {args} {
 		}
 		if {![info exists numlines]} {
 			progress message "Running query, please be patient (no progress shown)"
-			exec cg select -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv
+			exec cg select -overwrite 1 -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv
 		} else {
 			set step [expr {$numlines/10}]
 			if {$step > 50000} {set step 50000} elseif {$step < 1} {set step 1}
 			progress start $numlines "Running query" "Running query"
 			set ::bgerror {}
 			Extral::bgexec -progresscommand [list $object queryprogress] -no_error_redir -channelvar [privatevar $object bgexechandle] \
-				cg select -v $step -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
+				cg select -overwrite 1 -v $step -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
 			if {$::bgerror ne ""} {error $::bgerror}
 			progress stop
 		}

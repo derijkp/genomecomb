@@ -65,7 +65,7 @@ proc convcgsv {srcfile dstfile} {
 	}
 	close $o
 	gzclose $f
-	cg select -s - $tempfile $dstfile
+	cg select -overwrite 1 -s - $tempfile $dstfile
 	file delete $tempfile
 }
 

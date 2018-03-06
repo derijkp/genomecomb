@@ -52,8 +52,8 @@ test reg_annot {near} {
 
 test reg_annot {near indels} {
 	file copy data/vars1.sft tmp/vars1.sft
-	exec cg select -q {$type == "del" || $type == "ins"} tmp/vars1.sft data/indels1.sft
-	exec cg annotate -near 50 tmp/vars1.sft tmp/temp.sft data/indels1.sft
+	exec cg select -q {$type == "del" || $type == "ins"} tmp/vars1.sft tmp/indels1.sft
+	exec cg annotate -near 50 tmp/vars1.sft tmp/temp.sft tmp/indels1.sft
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-indels.sft
 } {}
@@ -334,6 +334,13 @@ test gene_annot {gene} {
 	set result
 } {}
 
+test gene_annot {gene -distrchr 1} {
+	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
+	exec cg annotate -distrchr 1 -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv
+	catch {exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv} result
+	set result
+} {}
+
 test gene_annot {gene --upstreamsize option} {
 	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
 	exec cg annotate --upstreamsize 1000 -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv
@@ -449,9 +456,12 @@ test gene_annot {hgvs + strand gene coding} {
 
 test gene_annot {hgvs + strand gene non-coding} {
 	# extra exon added to gene to test UT3 splice, short intron with only splice
-	set dbline {chr1 850983 869932 NM_152486n + 591 851184 851184 14 850983,851164,855397,856281,861014,864282,864517,866386,867378,867652,867801,868495,868940,869150,869832, 851043,851256,855579,856332,861139,864372,864703,866549,867494,867731,868301,868620,869051,869824,869932, 0 SAMD11 cmpl cmpl -1,0,0,2,2,1,1,1,2,1,2,1,0,0,0,}
-	file_write tmp/gene_part_test.tsv [join {chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames} \t]\n[join $dbline \t]\n
+	write_tab tmp/gene_part_test.tsv {
+		chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames
+		chr1 850983 869932 NM_152486n + 591 851184 851184 14 850983,851164,855397,856281,861014,864282,864517,866386,867378,867652,867801,868495,868940,869150,869832, 851043,851256,855579,856332,861139,864372,864703,866549,867494,867731,868301,868620,869051,869824,869932, 0 SAMD11 cmpl cmpl -1,0,0,2,2,1,1,1,2,1,2,1,0,0,0,
+	}
 	cg select -s - data/annot_gene_tests_fw_noncoding.tsv tmp/sannot_gene_tests.tsv
+	file delete tmp/annot_results.tsv
 	cg annotate -dbdir $::refseqdir/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
 	set errors {}
 	foreach line [split [cg select -sh /dev/null -q {$test_impact ne $expected_impact or $test_descr ne $expected_descr} tmp/annot_results.tsv] \n] {
@@ -463,8 +473,10 @@ test gene_annot {hgvs + strand gene non-coding} {
 
 test gene_annot {hgvs - strand gene coding} {
 	# extra exon added to gene to test UT3 splice, short intron with only splice
-	set dbline {chr1	1706588	1812355	NM_002074	-	598	1708629	1746752	12	1706588,1708620,1710351,1711693,1714543,1725717,1727773,1737054,1739135,1746695,1760488,1812118,	1708352,1708736,1710568,1711895,1714610,1725880,1727837,1737161,1739174,1746798,1760537,1812355,	0	GNB1	cmpl	cmpl	-1,1,0,2,1,0,2,0,0,0,-1,-1,}
-	file_write tmp/gene_part_test.tsv [join {chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames} \t]\n[join $dbline \t]\n
+	write_tab tmp/gene_part_test.tsv {
+		chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames
+		chr1	1706588	1812355	NM_002074	-	598	1708629	1746752	12	1706588,1708620,1710351,1711693,1714543,1725717,1727773,1737054,1739135,1746695,1760488,1812118,	1708352,1708736,1710568,1711895,1714610,1725880,1727837,1737161,1739174,1746798,1760537,1812355,	0	GNB1	cmpl	cmpl	-1,1,0,2,1,0,2,0,0,0,-1,-1,
+	}
 	cg select -s - data/annot_gene_tests_rv_coding.tsv tmp/sannot_gene_tests.tsv
 	cg annotate -dbdir $::refseqdir/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
 	set errors {}
@@ -513,8 +525,8 @@ test reg_annot {basic, extra comments} {
 	file_write tmp/temp2.sft "# a comment\n"
 	exec cat data/vars1.sft >> tmp/temp2.sft
 	exec cg annotate tmp/temp2.sft tmp/temp.sft data/reg_annot.sft
-	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
-	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
+	exec cg select -rf {list} tmp/temp.sft tmp/temp3.sft
+	exec diff tmp/temp3.sft data/expected-vars1-reg_annot.sft
 } {1d0
 < # a comment
 child process exited abnormally} error
@@ -1033,6 +1045,24 @@ test reg_annot {bugcheck overwrite of .temp src} {
 	exec cg select -rf {list} tmp/vars1.tsv tmp/temp2.tsv
 	exec diff tmp/temp2.tsv data/expected-vars1-reg_annot.sft
 } {}
+
+test gene_annot {no refseq} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		test	1600	1601	del	N	{}
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	name	strand	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2
+		test	1500	1800	test	+	{}	{}	1	1500,	1800,	testgene
+		test	1500	1800	cdstest	+	1500	1800	1	1500,	1800,	cdstestgene
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		test	1600	1601	del	N	{}	RNA;CDSFRAME	testgene;cdstestgene	+test:exon1+300:n.300del;+cdstest:exon1+300:c.300del:p.X101Xfs*?
+	}
+	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {} 
 
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft

@@ -42,7 +42,7 @@ proc sreg_gatk_job {job varallfile resultfile} {
 	job $job -deps {$varallfile} -targets {$resultfile} -code {
 		set temp [filetemp $target]
 		set temp2 [filetemp $target]
-		cg select -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
+		cg select -overwrite 1 -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
 		file_write $temp2 "# regions selected from [gzroot $dep]: \$quality >= 30 && \$totalcoverage >= 5\n"
 		cg regjoin $temp >> $temp2
 		if {[file extension $target] eq ".lz4"} {

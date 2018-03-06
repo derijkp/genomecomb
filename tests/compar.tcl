@@ -308,7 +308,7 @@ test multicompar {basic reannot varall split} {
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
 	# make tmp/varall-annot2.tsv
-	catch {file delete tmp/temp.tsv}
+	catch {file delete tmp/temp1.tsv}
 	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp1.tsv
 	cg splitalleles tmp/temp1.tsv tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
@@ -334,7 +334,7 @@ test multicompar {error on split files without split option} {
 	# this gave an incorrectly sorted file
 	cg multicompar tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
 	cg checksort tmp/temp.tsv
-} {*error in "*var-compartest2.tsv": file uses split alleles ("*1 207806142 207806170 sub" occurs more than once and you are not running multicompar with the -split option)*} match error
+} {*error in "*var-compartest2.tsv": file uses split alleles ("*1 207806142 207806170 sub" occurs more than once and you are not running with the -split option)*} match error
 
 test multicompar {error on badly sorted files} {
 	test_cleantmp

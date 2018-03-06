@@ -123,11 +123,11 @@ test process_multicompar$testname {process_multicompar varall} {
 	cg select -s - tmp/temp.tsv tmp/samples/annot1/varall-annot1.tsv
 	mklink data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft tmp/expected.tsv
 	# make tmp/samples/annot2/varall-annot2.tsv
-	cg select -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
 	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
 	close $f
-	cg select -s - tmp/temp.tsv tmp/samples/annot2/varall-annot2.tsv
+	cg select -overwrite 1 -s - tmp/temp.tsv tmp/samples/annot2/varall-annot2.tsv
 	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
 	catch {file delete tmp/temp.tsv}
 	cg process_multicompar {*}$::jobopts -dbdir $::refseqdir/hg19 -split 0 tmp

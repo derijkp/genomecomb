@@ -490,7 +490,7 @@ proc tsv_select_expandcalcfield {header fielddef} {
 	set vars [array names ha]
 	set notpresent [list_lremove $wildvars $vars]
 	if {[llength $notpresent]} {
-		error "some patterns ([join $notpresent ,]) in calcfield were not matched in code"
+		error "some patterns ([join $notpresent ,]) in calcfield were not matched in code\nmake sure you did not forget a $ (patterns must occur in a variable)"
 	}
 	set result [list $fielddef]
 	foreach var [lsort -decreasing $wildvars] {
@@ -1205,6 +1205,7 @@ proc cg_select {args} {
 	set query {}; set qfields {}; set sortfields {}; set oldheader {}; set newheader {}; set sepheader ""
 	set inverse 0; set group {}; set groupcols {} ; set samplingskip 0; set db {} ; set removecomment 0
 	set samples {} ; set sortsamples 0
+	set overwrite 0
 	set pos 0
 	cg_options select args {
 		-q {
@@ -1287,6 +1288,9 @@ proc cg_select {args} {
 		-rc {
 			set removecomment $value
 		}
+		-overwrite {
+			set overwrite $value
+		}
 	}
 	if {[llength $groupcols] && ![llength $group]} {
 		error "cannot use -gc option without -g option"
@@ -1317,6 +1321,7 @@ proc cg_select {args} {
 	}
 	if {[llength $args] > 1} {
 		set outfile [lindex $args 1]
+		if {!$overwrite && [file exists $outfile]} {error "error: output file $outfile already exists"}
 		set compress [compresspipe $outfile]
 		if {$compress eq ""} {
 			set out [open $outfile w]

@@ -28,7 +28,7 @@ table_tsv method summary {definition {file {}}} {
 			progress start 1
 			progress message "Creating Summary, please be patient (no progress shown)"
 			update
-			cg select -f $tdata(fields) -q $tdata(query) -g $rowdef -gc $coldef $tdata(file) $tdata(indexdir)/summary_results.tsv
+			cg select -overwrite 1 -f $tdata(fields) -q $tdata(query) -g $rowdef -gc $coldef $tdata(file) $tdata(indexdir)/summary_results.tsv
 			progress stop
 		} else {
 			set step [expr {$numlines/10}]

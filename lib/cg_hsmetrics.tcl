@@ -94,7 +94,7 @@ proc cg_hsmetrics {args} {
 	set temp [tempfile]
 	set temptarget [filetemp $resultfile]
 	picard CalculateHsMetrics BAIT_INTERVALS=$bait_intervals TARGET_INTERVALS=$target_intervals I=$bamfile O=$temp
-	cg select -f [list sample=\"$sample\" *] $temp $temptarget
+	cg select -overwrite 1 -f [list sample=\"$sample\" *] $temp $temptarget
 	file rename -force $temptarget $resultfile
 	file delete $target_intervals
 }

@@ -117,15 +117,6 @@ test exportplink {no seq or zyg} {
 		chr1	4001	4002	snp	A	G	A	G	A	A
 		chr1	4002	4003	del	T	{}	{}	{}	T	{}
 	}
-	exec cg exportplink tmp/vars.tsv tmp/temp
-} {no sequenced-s1 or zyg-s1 found for s1, use -all 1} error
-
-test exportplink {no seq or zyg} {
-	write_tab tmp/vars.tsv {
-		chromosome begin end type ref alt alleleSeq1-s1 alleleSeq2-s1 alleleSeq1-s2 alleleSeq2-s2
-		chr1	4001	4002	snp	A	G	A	G	A	A
-		chr1	4002	4003	del	T	{}	{}	{}	T	{}
-	}
 	write_tab tmp/expected.tped {
 		1	1-4001-4002-snp-A-G	0.004001	4001	A	G	A	A
 		1	1-4002-4003-del-T-	0.004002	4002	-	-	T	-
