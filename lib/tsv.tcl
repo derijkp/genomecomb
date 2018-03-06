@@ -208,6 +208,7 @@ proc tsv_count {tsvfile} {
 # creates or updates (if needed) and returns a index file containing only the vars columns of $tsvfile
 # if varsfile is given, the index file will be created as $varsfile instead of at the usual location
 proc tsv_varsfile {tsvfile {varsfile {}}} {
+	set tsvfile [gzfile $tsvfile]
 	if {$varsfile eq ""} {
 		set varsfile [indexdir_file $tsvfile vars.tsv ok]
 	} else {

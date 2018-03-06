@@ -136,6 +136,7 @@ proc indexdir_filewrite {mainfile indexfile} {
 # if there is none, the result will be empty
 proc indexdir_file {mainfile indexfile {okVar {}}} {
 	if {$okVar ne ""} {upvar $okVar ok}
+	set mainfile [gzfile $mainfile]
 	set ok 1
 	set indexdir [file_absolute [gzroot $mainfile]].index
 	# if a good indexfile exists in indexdir, return it  (ok is 1 if we do find one)
