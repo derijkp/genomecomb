@@ -7,8 +7,10 @@ proc cg_histo {args} {
 	}
 	if {$header} {
 		set header [tsv_open stdin]
-		set pos [lsearch $header $pos]
+		set pos [lsearch $header $field]
 		if {$pos == -1} {error "Field $field not found"}
+	} else {
+		set pos $field
 	}
 	puts value\tcount
 	set o [open "| tsv_histo $pos 0 >@ stdout" w]
