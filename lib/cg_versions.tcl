@@ -137,7 +137,7 @@ proc version {item {minversion {}}} {
 					set temp [lindex [split [string trim $temp] \n] 0]
 					set _versions($item) $temp
 				} else {
-					
+					regsub {^.*[Vv]ersion:? } $temp {} temp
 					set temp [lindex [split [string trim $temp] \n] 0]
 					set _versions($item) $temp
 				}
