@@ -15,4 +15,4 @@ The command will also sort the tsv appropriately.
 ; **-sorted 0/1**: Use 1 if the CG var is already sorted (so they are not sorted gain first)
 
 == Category ==
-Conversion
+Format Conversion

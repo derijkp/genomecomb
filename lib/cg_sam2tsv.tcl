@@ -22,5 +22,3 @@ proc cg_sam2tsv {args} {
 	}
 	catch_exec {*}$pipe
 }
-
-

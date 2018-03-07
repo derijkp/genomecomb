@@ -83,4 +83,4 @@ The default typelist is ". AD R RPA R AC A AF A", including some fields
 which are commonly defined this way.
 
 == Category ==
-Conversion
+Format Conversion

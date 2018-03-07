@@ -18,4 +18,4 @@ sample name in the file name.
 ; **newsamplename**: new name of sample
 
 == Category ==
-Conversion
+Process

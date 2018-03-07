@@ -11,4 +11,4 @@ Convert the Complete Genomics CNV files to the cg format
 ; **dstfile**: resulting sft cnv file
 
 == Category ==
-Conversion
+Format Conversion

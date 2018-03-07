@@ -21,4 +21,4 @@ prepared first (ao. sorted by name to avoid the problems caused by position sort
 ; -unmatched2 file (-u2): file to write unmatched second reads from pair
 
 == Category ==
-Conversion
+Format Conversion

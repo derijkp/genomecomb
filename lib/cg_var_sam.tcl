@@ -103,7 +103,7 @@ proc var_sam_job {args} {
 		}
 		file rename -force $target.temp $target
 	}
-	job ${pre}varall-sam2sft-$root -deps {${pre}varall-sam-$root.vcf} \
+	job ${pre}varall-sam2tsv-$root -deps {${pre}varall-sam-$root.vcf} \
 	-targets {${pre}varall-sam-$root.tsv.lz4 ${pre}varall-sam-$root.tsv.analysisinfo} -vars split -code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} $dep $target.temp.lz4

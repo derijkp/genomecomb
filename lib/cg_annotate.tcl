@@ -295,7 +295,7 @@ proc cg_annotate_job {args} {
 		set mtime [file mtime $orifile]
 		if {$ext eq ".vcf"} {
 			set f [gzopen $orifile]
-			set header [vcf2sft_header $f]
+			set header [vcf2tsv_header $f]
 			catch {gzclose $f}
 		} else {
 			set header [header $orifile]

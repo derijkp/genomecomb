@@ -8,7 +8,7 @@ package require Extral
 
 proc cg_bed2tsv {args} {
 	if {([llength $args] < 0) || ([llength $args] > 2)} {
-		errorformat bed2sft
+		errorformat bed2tsv
 	}
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]

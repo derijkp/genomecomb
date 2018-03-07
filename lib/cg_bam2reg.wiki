@@ -1,0 +1,25 @@
+= Bam2reg =
+
+== Format ==
+cg bam2reg ?options? bamfile ?mincoverage? ?outfile?
+
+== Summary ==
+Extract regions with a minimum coverage from a bam file.
+
+== Description ==
+
+== Arguments ==
+; bamfile: bam file to analyse
+; mincoverage: minimum coverage
+; outfile: result file containing the regions with coverage >= mincoverage. 
+If not given, a filename of the form sreg-cov<mincoverage>-<bamfilerootname>.tsv
+will be used. If the -compress 1 option is given, it will be compressed using lz4
+
+== Options ==
+; -mincoverage mincoverage: mincoverage given as an option instead of a parameter
+; -compress 0/1: Compress the output file (or not) if no outfile is given.
+If outfile is given, the extension of the file name will determine compression.
+; -skip skipfile: Do not run if skipfile exists
+
+== Category ==
+Format Conversion

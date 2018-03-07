@@ -1,4 +1,4 @@
-= genome_seq =
+= sam_clipamplicons =
 
 == Format ==
 cg sam_clipamplicons ampliconsfile file outfile
@@ -14,4 +14,4 @@ Clip primers from aligned sequences in a sam file (by changing bases to N and qu
 ; **outfile**: directory containing reference genomes and variation data
 
 == Category ==
-Process
+Conversion

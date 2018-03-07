@@ -3,7 +3,7 @@
 == Howtos ==
 * [[howto_process_project]]: How to process ngs projects starting from raw data (fastq, CG, ...) to an annotated multicompar file
 
-* [[howto_view]]: View and query results using the graphical interface [[cg_viz]]
+* [[howto_view]]: View and query results using the graphical interface
 
 * [[howto_query]]: Fast querying of annotated files, provides additional functionality for comparing genotypes across multiple genomes
 

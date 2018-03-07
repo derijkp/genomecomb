@@ -19,4 +19,4 @@ one new bcol file give the separate files for all chromosomes as parameters.
 ; **oldbcolfile**: Name of old bcolfile
 
 == Category ==
-Conversion
+Format Conversion

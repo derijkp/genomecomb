@@ -11,4 +11,4 @@ Convert the Complete Genomics SV files to the cg format
 ; **dstfile**: resulting sft sv file
 
 == Category ==
-Conversion
+Format Conversion

@@ -11,4 +11,4 @@ Converts comma-separated value (csv) data to tab-sparated ([[tsv]])
 ; **outfile**: write results to outfile, if not given, uses stdout
 
 == Category ==
-Conversion
+Format Conversion

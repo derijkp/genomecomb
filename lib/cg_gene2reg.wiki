@@ -4,7 +4,7 @@
 cg gene2reg ?infile? ?outfile?
 
 == Summary ==
-Converts gene data in genepred-like format to a (tab separated) region file.
+Extract gene elements from data in genepred-like format to a (tab separated) region file.
 
 == Description ==
 cg gene2reg outputs a [[tsv]] file with the location  and meta info about each element of a gene 
@@ -24,4 +24,4 @@ includes the following extra fields:
 ; **outfile**: write results to outfile, if not given, uses stdout
 
 == Category ==
-Conversion
+Format Conversion

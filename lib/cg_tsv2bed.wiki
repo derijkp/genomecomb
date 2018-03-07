@@ -28,4 +28,4 @@ cg tsv2bed --fields 'contig1 {} {} name score' tsvfile bedfile
 will contain the value "contig1" for the first (chromosome) field in all output
 
 == Category ==
-Conversion
+Format Conversion

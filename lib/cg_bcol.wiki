@@ -20,4 +20,4 @@ as well as "cg bcol_subcommand ?options? ..."
 ; [[bcol_update|update]]: converts the old bcol format to the new (that can contain data for different chromosomes or alleles)
 
 == Category ==
-Conversion
+Format Conversion

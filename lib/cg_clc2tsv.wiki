@@ -1,7 +1,7 @@
-= clc2sft =
+= clc2tsv =
 
 == Format ==
-cg clc2sft ?options? ?infile? ?outfile?
+cg clc2tsv ?options? ?infile? ?outfile?
 
 == Summary ==
 Converts output from the clc bio assembly cell snp caller to sft (simple feature table) format
@@ -17,4 +17,4 @@ unsequenced: variant data is present in output, but the "sequenced" column gets 
 variant: the "sequenced" column gets value "v"; if lower "sequenced" will be "r"
 
 == Category ==
-Conversion
+Format Conversion

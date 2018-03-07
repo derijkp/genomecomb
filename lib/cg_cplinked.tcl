@@ -82,16 +82,14 @@ proc cplinked_file {file destfile {absolute 0}} {
 }
 
 proc cg_cplinked {args} {
-	if {[lindex $args 0] eq "-absolute"} {
-		set absolute 1
-		set args [lrange $args 1 end]
-	} else {
-		set absolute 0
+	set absolute 0
+	cg_options cplinked args {
+		-absolute {
+			set absolute $value
+		}
+	} {src dest} 2 2 {
+		create a copy of a directory where each file in it is a softlink to the src.
 	}
-	if {[llength $args] != 2} {
-		exiterror {wrong # args: should be "cg cplinked src dest"}
-	}
-	foreach {src dest} $args break
 	if {[file isdir $dest]} {
 		set tail [file tail $src]
 		set dest $dest/$tail

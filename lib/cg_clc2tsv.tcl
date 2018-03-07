@@ -7,10 +7,14 @@
 package require Extral
 
 proc cg_clc2sft {args} {
+	cg_clc2tsv {*}$args
+}
+
+proc cg_clc2tsv {args} {
 	set coveragecutoff 0
 	set pos 0
 	set minfreq 0.25
-	cg_options clc2sft args {
+	cg_options clc2tsv args {
 		-coverage {
 			set coveragecutoff $value
 		}

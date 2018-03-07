@@ -8,8 +8,12 @@
 # genotype in haploid calls (Y chromosome)
 
 proc cg_gff2sft {args} {
+	cg_gff2tsv {*}$args
+}
+
+proc cg_gff2tsv {args} {
 	if {([llength $args] < 0) || ([llength $args] > 2)} {
-		errorformat gff2sft
+		errorformat gff2tsv
 	}
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]

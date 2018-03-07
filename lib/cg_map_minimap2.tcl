@@ -37,7 +37,9 @@ proc map_minimap2_job {args} {
 		-threads - -t {
 			set threads $value
 		}
-	} {result refseq sample fastqfile1} 4
+	} {result refseq sample fastqfile1} 4 ... {
+		align reads in fastq files to a reference genome using minimap2
+	}
 	set files [list $fastqfile1 {*}$args]
 	set result [file_absolute $result]
 	set refseq [file_absolute $refseq]
@@ -101,6 +103,7 @@ proc map_minimap2_job {args} {
 proc cg_map_minimap2 {args} {
 	set args [job_init {*}$args]
 	unset job_logdir
-	map_minimap2_job {*}$args
+	set result [map_minimap2_job {*}$args]
 	job_wait
+	return $result
 }

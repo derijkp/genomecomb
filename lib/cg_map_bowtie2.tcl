@@ -30,7 +30,9 @@ proc map_bowtie2_job {args} {
 		-skips {
 			set skips $value
 		}
-	} {result refseq sample fastqfile1} 4
+	} {result refseq sample fastqfile1} 4 ... {
+		align reads in fastq files to a reference genome using bowtie2
+	}
 	set files [list $fastqfile1 {*}$args]
 	if {![info exists job_logdir]} {
 		job_logdir [file dir $result]/log_jobs
@@ -93,6 +95,7 @@ proc map_bowtie2_job {args} {
 proc cg_map_bowtie2 {args} {
 	set args [job_init {*}$args]
 	unset job_logdir
-	map_bowtie2_job {*}$args
+	set result [map_bowtie2_job {*}$args]
 	job_wait
+	return $result
 }

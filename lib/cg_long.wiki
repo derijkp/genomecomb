@@ -30,4 +30,4 @@ per sample (identified by the id) and sample (identified by a "sample" column)
 genomecomb output, e.g. -gatk-rdsbwa-sample1) are split up in separate fields with the field names given by **samplefields**
 
 == Category ==
-Conversion
+Format Conversion

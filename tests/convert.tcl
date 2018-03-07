@@ -22,7 +22,7 @@ chr7	127480532  127481699  Neg4  0  -}
 
 test_cleantmp
 
-test sft2gff {sft2gff} {
+test vcf2tsv {vcf2tsv} {
 	exec cg vcf2tsv data/test1000glow.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
 } {}

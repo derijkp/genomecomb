@@ -7,6 +7,10 @@
 # todo:
 # genotype in haploid calls (Y chromosome)
 
+proc cg_vcf2sft {args} {
+	cg_vcf2tsv {*}$args
+}
+
 proc cg_vcf2tsv {args} {
 	set split 1
 	set sort 1
@@ -60,11 +64,7 @@ proc cg_vcf2tsv {args} {
 	if {$error} {exiterror "error converting vcf file: $msg"}
 }
 
-proc cg_vcf2sft {args} {
-	cg_vcf2tsv {*}$args
-}
-
-proc vcf2sft_header {f {samplesVar {}} {commentVar {}} {formatfieldsVar {}} {infofieldsVar {}}} {
+proc vcf2tsv_header {f {samplesVar {}} {commentVar {}} {formatfieldsVar {}} {infofieldsVar {}}} {
 	if {$samplesVar ne ""} {upvar $samplesVar samples}
 	if {$commentVar ne ""} {upvar $commentVar comment}
 	if {$formatfieldsVar ne ""} {upvar $formatfieldsVar formatfields}
@@ -133,7 +133,7 @@ proc vcf2sft_header {f {samplesVar {}} {commentVar {}} {formatfieldsVar {}} {inf
 	return $nheader
 }
 
-proc cg_vcf2sft.old {args} {
+proc cg_vcf2tsv.old {args} {
 	if {([llength $args] < 0) || ([llength $args] > 2)} {
 		errorformat vcf2tsv
 	}
@@ -153,7 +153,7 @@ proc cg_vcf2sft.old {args} {
 	if {![string match "##fileformat=VCF*" $line]} {
 		error "input is not a vcf file"
 	}
-	set nheader [vcf2sft_header $f samples comment formatfields infofields]
+	set nheader [vcf2tsv_header $f samples comment formatfields infofields]
 	puts -nonewline $o $comment
 	puts $o [join $nheader \t]
 	set next 100000; set num 0

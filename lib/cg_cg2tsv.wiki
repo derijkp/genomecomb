@@ -21,4 +21,4 @@ these annotations (and more) can be done in genomecomb.
 If not given it will detect hg18 or hg19 from the comments in the CG file
 
 == Category ==
-Conversion
+Format Conversion

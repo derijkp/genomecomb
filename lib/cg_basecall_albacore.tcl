@@ -40,7 +40,9 @@ proc basecaller_albacore_job {args} {
 		default {
 			lappend opts $key $value
 		}
-	} {resultdir sourcedir} 2
+	} {resultdir sourcedir} 2 2 {
+		basecall nanopore reads using albacore
+	}
 	set resultdir [file_absolute $resultdir]
 	set sourcedirs [list [file_absolute $sourcedir]]
 	foreach dir $args {
@@ -145,6 +147,7 @@ proc basecaller_albacore_job {args} {
 
 proc cg_basecaller_albacore {args} {
 	set args [job_init {*}$args]
-	basecaller_albacore_job {*}$args
+	set result [basecaller_albacore_job {*}$args]
 	job_wait
+	return $result
 }

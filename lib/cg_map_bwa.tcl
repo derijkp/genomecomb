@@ -40,7 +40,9 @@ proc map_bwa_job {args} {
 		-threads - -t {
 			set threads $value
 		}
-	} {result refseq sample fastqfile1} 4
+	} {result refseq sample fastqfile1} 4 ... {
+		align reads in fastq files to a reference genome using bwa-mem
+	}
 	set files [list $fastqfile1 {*}$args]
 	if {![info exists job_logdir]} {
 		job_logdir [file dir $result]/log_jobs
@@ -124,6 +126,7 @@ proc map_bwa_job {args} {
 proc cg_map_bwa {args} {
 	set args [job_init {*}$args]
 	unset job_logdir
-	map_bwa_job {*}$args
+	set return [map_bwa_job {*}$args]
 	job_wait
+	return $return
 }

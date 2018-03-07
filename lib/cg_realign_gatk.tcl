@@ -13,7 +13,9 @@ proc realign_gatk_job {args} {
 		-threads - -t {
 			set threads $value
 		}
-	} {bamfile resultbamfile refseq}
+	} {bamfile resultbamfile refseq} 3 3 {
+		realign around indels using gatk
+	}
 	set bamfile [file_absolute $bamfile]
 	set resultbamfile [file_absolute $resultbamfile]
 	set refseq [file_absolute $refseq]
@@ -57,6 +59,7 @@ proc realign_gatk_job {args} {
 proc cg_realign_gatk {args} {
 	set args [job_init {*}$args]
 	unset job_logdir
-	realign_gatk_job {*}$args
+	set result [realign_gatk_job {*}$args]
 	job_wait
+	return $result
 }

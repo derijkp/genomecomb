@@ -40,6 +40,7 @@ proc bam2reg_job {args} {
 proc cg_bam2reg {args} {
 	set args [job_init {*}$args]
 	unset job_logdir
-	bam2reg_job {*}$args
+	set result [bam2reg_job {*}$args]
 	job_wait
+	return $result
 }

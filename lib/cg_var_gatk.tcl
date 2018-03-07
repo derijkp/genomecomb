@@ -140,7 +140,7 @@ proc var_gatk_job {args} {
 		catch {file delete $target.temp.idx}
 		# file delete $target.temp
 	}
-	job ${pre}varall-gatk2sft-$root -deps [list ${pre}varall-gatk-$root.vcf] \
+	job ${pre}varall-gatk2tsv-$root -deps [list ${pre}varall-gatk-$root.vcf] \
 	-targets {${pre}varall-gatk-$root.tsv.lz4 ${pre}varall-gatk-$root.tsv.analysisinfo} \
 	-vars {sample split} \
 	-code {
@@ -172,7 +172,7 @@ proc var_gatk_job {args} {
 		catch {file delete $target.temp.idx}
 		# file delete $target.temp
 	}
-	job ${pre}delvar-gatk2sft-$root -deps [list ${pre}delvar-gatk-$root.vcf] \
+	job ${pre}delvar-gatk2tsv-$root -deps [list ${pre}delvar-gatk-$root.vcf] \
 	-targets {${pre}delvar-gatk-$root.tsv} \
 	-skip [list ${pre}var-gatk-$root.tsv ${pre}var-gatk-$root.tsv.analysisinfo] \
 	-vars {sample split} \

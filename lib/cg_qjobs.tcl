@@ -3,7 +3,9 @@ proc cg_qjobs {args} {
 	set options {}
 	cg_options qjobs args {
 		-u {lappend options -u $value}
-	} {} 0
+	} {} 0 0 {
+		returns running and waiting jobs on a grid engine cluster in tsv format (so they can by analysed using cg select)
+	}
 	set result {}
 	set xml [exec qstat -xml -pri {*}$options]
 	set list [regexp -all -inline {<job_list .*?</job_list>} $xml]

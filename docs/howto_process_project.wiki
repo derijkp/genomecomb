@@ -115,7 +115,7 @@ tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.lz4 tmp/utr2.tsv
 
 }}}
 
-== Referencing ==
+== Reference ==
 The following is an example text describing the default process_project
 workflow for Illumina sequencing with the proper references (The <version>
 actually used for the various tools can be found in the analysisinfo files):

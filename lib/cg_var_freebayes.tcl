@@ -51,7 +51,9 @@ proc var_freebayes_job {args} {
 		default {
 			lappend opts $key $value
 		}
-	} {bamfile refseq}
+	} {bamfile refseq} 2 2 {
+		call variants using freebayes
+	}
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	set destdir [file dir $bamfile]
@@ -96,7 +98,7 @@ proc var_freebayes_job {args} {
 			-f $refseq $dep > $target.temp 2>@ stderr
 		file rename -force $target.temp $target
 	}
-	job ${pre}varall-freebayes2sft-$root -deps {
+	job ${pre}varall-freebayes2tsv-$root -deps {
 		${pre}varall-freebayes-$root.vcf
 	} -targets {
 		${pre}varall-freebayes-$root.tsv.lz4
@@ -148,6 +150,7 @@ proc var_freebayes_job {args} {
 
 proc cg_var_freebayes {args} {
 	set args [job_init {*}$args]
-	var_freebayes_job {*}$args
+	set result [var_freebayes_job {*}$args]
 	job_wait
+	return $result
 }

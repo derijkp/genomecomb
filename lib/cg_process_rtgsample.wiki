@@ -16,4 +16,4 @@ the adapted data into destdir. By default, only files that are not present alrea
 ; **force**: When force is given as a parameter, everything will be recalculated and overwritten."
 
 == Category ==
-Conversion
+Format Conversion

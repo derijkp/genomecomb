@@ -1,7 +1,7 @@
-= Rtg2sft =
+= Rtg2tsv =
 
 == Format ==
-cg rtg2sft infile outfile
+cg rtg2tsv infile outfile
 
 == Summary ==
 Converts data in rtg format to sft (simple feature table) format
@@ -11,4 +11,4 @@ Converts data in rtg format to sft (simple feature table) format
 ; **outfile**: write results to outfile.
 
 == Category ==
-Conversion
+Format Conversion

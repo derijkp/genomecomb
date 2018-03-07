@@ -1,0 +1,17 @@
+= cplinked =
+
+== Format ==
+cg cplinked ?options? source dest
+
+== Summary ==
+create a copy of a directory where each file in it is a softlink to the src.
+
+== Arguments ==
+; source: directory to be copied
+; dest: destination directory
+
+== Options ==
+; -absolute 0/1: softlinks will use absolute paths if 1, relative paths if 0 (default)
+
+== Category ==
+Tools

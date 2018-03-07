@@ -315,15 +315,30 @@ proc helptext_overview {} {
 		if {![catch {dict get $h Summary} summary]} {
 			append item ": $summary"
 		}
-		lappend a($category) $item
+		lappend a($category) [list $action $item]
 	}
 	unset -nocomplain a(Depricated)
 	set categories [array names a]
-	set pre {Process Query Regions Analysis Validation tsv Conversion Annotation Compare Structural}
+	set pre {Process Query Analysis Regions Annotation Validation tsv Conversion {Format Conversion} Compare Structural Report}
+	array set preorder {
+		Process {process_project}
+		Query {select viz multiselect groupby}
+		Regions {multireg regselect}
+		Conversion {sam_clipamplicons liftover liftregion liftsample liftchain2tsv correctvariants bamreorder9}
+	}
 	set categories [list_concat [list_common $pre $categories] [list_lremove $categories $pre]]
 	foreach category $categories {
 		append help "\n=== $category ===\n"
-		append help [join $a($category) \n]\n
+		set list $a($category)
+		foreach item [get preorder($category) ""] {
+			set pos [lsearch [list_subindex $list 0] $item]
+			if {$pos != -1} {
+				set line [list_pop list $pos]
+				append help [lindex $line 1]\n
+			}
+		}
+		set list [lsort -index 0 $list]
+		append help [join [list_subindex $list 1] \n]\n
 	}
 	return $help
 }

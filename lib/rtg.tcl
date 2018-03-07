@@ -53,8 +53,12 @@ proc rtg2annotvar {file {outfile {}}} {
 }
 
 proc cg_rtg2sft {args} {
+	cg_rtg2tsv {*}$args
+}
+
+proc cg_rtg2tsv {args} {
 	if {[llength $args] != 2} {
-		errorformat rtg2sft
+		errorformat cg_rtg2tsv
 	}
 	foreach {file outfile} $args break
 	rtg2annotvar $file $outfile

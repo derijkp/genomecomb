@@ -25,4 +25,4 @@ lines (the common fields are repeated in each line).
 ; **-s samplefields** (--samplefields): set which fields will be used as fields to define the sample. Wildcards may be used in defining the fielnames. (default is all of sample,sample1,sample2,sample3,mapping,varcall present in the file).
 
 == Category ==
-Conversion
+Format Conversion
