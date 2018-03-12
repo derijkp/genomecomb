@@ -23,7 +23,6 @@ all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$
      ../bin$(ARCH)/multidb_join$(EXEEXT) \
      ../bin$(ARCH)/tsv_paste$(EXEEXT) ../bin$(ARCH)/tsv_histo$(EXEEXT) \
      ../bin$(ARCH)/sam_clipamplicons$(EXEEXT) \
-     ../bin$(ARCH)/sam_extract$(EXEEXT) \
      ../bin$(ARCH)/tsv2bed$(EXEEXT) \
      ../bin$(ARCH)/samcat$(EXEEXT) \
      ../bin$(ARCH)/sam_amplicons_count$(EXEEXT) \
@@ -125,9 +124,6 @@ clean:
 
 ../bin$(ARCH)/sam_clipamplicons$(EXEEXT): sam_clipamplicons.c $(TOOLS)
 	$(GCC) sam_clipamplicons.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam_clipamplicons$(EXEEXT)
-
-../bin$(ARCH)/sam_extract$(EXEEXT): sam_extract.c $(TOOLS) $(GZTOOLS)
-	$(GCC) sam_extract.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/sam_extract$(EXEEXT) $(LIBZ)
 
 ../bin$(ARCH)/tsv2bed$(EXEEXT): tsv2bed.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
 	$(GCC) tsv2bed.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/tsv2bed$(EXEEXT) $(LIBZ)
