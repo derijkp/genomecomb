@@ -183,14 +183,14 @@ proc jobtest {args} {
 	}
 	job all.txt -vars header -deps {^$destdir/sum-(.*)\.txt$} -targets {$destdir/all.txt} -code {
 		file_write $target.temp $header\n
-		exec cat {*}$deps >> $target.temp
+		exec cat {*}[lsort -dict $deps] >> $target.temp
 		file rename -force $target.temp $target
 	}
 	set keepdir [pwd]
 	cd $destdir
 	job all2.txt -vars header -deps {^sum2-(.*)\.txt$} -targets {all2.txt} -code {
 		file_write $target.temp $header\n
-		exec cat {*}$deps >> $target.temp
+		exec cat {*}[lsort -dict $deps] >> $target.temp
 		file rename -force $target.temp $target
 	}
 	cd $keepdir
