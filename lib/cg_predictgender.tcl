@@ -125,7 +125,7 @@ proc cg_predictgender {args} {
 			set ycov [median [exec samtools depth -a -r [lindex [split $yreg -] 0]-$end -b $tempyreg $bamfile | cut -d \t -f 3]]
 		}
 	}
-	if {![isint $xcov] || $xcov < 4} {
+	if {![isdouble $xcov] || $xcov < 4} {
 		set yxcovratio ?
 	} else {
 		set yxcovratio [expr {double($ycov)/$xcov}]
@@ -172,21 +172,21 @@ proc cg_predictgender {args} {
 		set predgender f
 	} elseif {[isdouble $yxcovratio] && $yxcovratio > 0.3} {
 		set predgender m
-	} elseif {$yxnratio > 0.9} {
+	} elseif {[isdouble $yxnratio] && $yxnratio > 0.9} {
 		if {[isdouble $pcthqheterozygous] && $pcthqheterozygous > 60} {
 			set predgender u
 		} else {
 			set predgender m
 		}
-	} elseif {$yxnratio < 0.5} {
+	} elseif {[isdouble $yxnratio] && $yxnratio < 0.5} {
 		if {[isdouble $pcthqheterozygous] && $pcthqheterozygous < 40} {
 			set predgender u
 		} else {
 			set predgender f
 		}
-	} elseif {$yxncount > 0.7 && [isdouble $pcthqheterozygous] && $pcthqheterozygous < 50} {
+	} elseif {[isdouble $yxncount] && $yxncount > 0.7 && [isdouble $pcthqheterozygous] && $pcthqheterozygous < 50} {
 		set predgender m
-	} elseif {$yxncount < 0.6 && [isdouble $pcthqheterozygous] && $pcthqheterozygous > 50} {
+	} elseif {[isdouble $yxncount] && $yxncount < 0.6 && [isdouble $pcthqheterozygous] && $pcthqheterozygous > 50} {
 		set predgender f
 	} else {
 		set predgender u
@@ -204,15 +204,15 @@ proc cg_predictgender {args} {
 	puts $o $sample\tgenomecomb\tpg_refcount\t$refcount
 	puts $o $sample\tgenomecomb\tpg_xcount\t$xcount
 	puts $o $sample\tgenomecomb\tpg_ycount\t$ycount
-	puts $o $sample\tgenomecomb\tpg_refncount\t[format %.4f $refncount]
-	puts $o $sample\tgenomecomb\tpg_xncount\t[format %.4f $xncount]
-	puts $o $sample\tgenomecomb\tpg_yncount\t[format %.4f $yncount]
-	puts $o $sample\tgenomecomb\tpg_yxratio\t[format %.4f $yxratio]
-	puts $o $sample\tgenomecomb\tpg_pcthqheterozygous\t[format %.4f $pcthqheterozygous]
-	puts $o $sample\tgenomecomb\tpg_yxnratio\t[format %.4f $yxnratio]
+	puts $o $sample\tgenomecomb\tpg_refncount\t[oformat $refncount 4]
+	puts $o $sample\tgenomecomb\tpg_xncount\t[oformat $xncount 4]
+	puts $o $sample\tgenomecomb\tpg_yncount\t[oformat $yncount 4]
+	puts $o $sample\tgenomecomb\tpg_yxratio\t[oformat $yxratio 4]
+	puts $o $sample\tgenomecomb\tpg_pcthqheterozygous\t[oformat $pcthqheterozygous 4]
+	puts $o $sample\tgenomecomb\tpg_yxnratio\t[oformat $yxnratio 4]
 	puts $o $sample\tgenomecomb\tpg_xcov\t$xcov
 	puts $o $sample\tgenomecomb\tpg_ycov\t$ycov
-	puts $o $sample\tgenomecomb\tpg_yxcovratio\t[format %.4f $yxcovratio]
+	puts $o $sample\tgenomecomb\tpg_yxcovratio\t[oformat $yxcovratio 3]
 	puts $o $sample\tgenomecomb\tpredgender\t$predgender
 	if {$o ne "stdout"} {close $o}
 }
