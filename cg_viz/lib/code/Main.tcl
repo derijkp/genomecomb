@@ -11,7 +11,7 @@ proc main args {
 	#Classy::cmd
 	if {![llength $args]} {
 	} elseif {[file exists [lindex $args 0]]} {
-		.mainw opentsv {*}$args
+		.mainw open {*}$args
 	} else {
 		.mainw opendb {*}$args
 	}

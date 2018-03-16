@@ -15,6 +15,7 @@ menu "Edit" {
 	action "Copy" {error "copy not implemented yet"} <<Copy>>
 }
 menu "Tools" {
+	action "IGV" {%W igv} <i>
 	action "Fields" {%W fields}
 	action "Summaries" {%W summarybuilder}
 	action "cmdline" {%W showcmdline}
@@ -33,6 +34,8 @@ toolbar,MainTool {
 	# action print "Print" {error "print not implemented yet"}
 	separator
 	action copy "Copy" {error "copy not implemented yet"}
+	separator
+	action igv "IGV" {%W igv}
 }
 toolbar,Table_tool {label Tableinfo tableinfo {} {}
 action query {Query builder} {$object querybuilder} {}

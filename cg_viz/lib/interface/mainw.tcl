@@ -168,6 +168,7 @@ mainw method start {args} {
 	Extral::event listen $object querychanged [list Classy::todo $object redrawquery]
 	$object.tree clearnode {}
 	$object.table.data configure -wrap 1 -resizeborders both -bordercursor crosshair -anchor n -justify right
+	bind $object.table.data <i> [subst {$object igv ; break}]
 }
 
 mainw method redrawselection {args} {
@@ -336,7 +337,8 @@ mainw method savetsv {file} {
 }
 
 mainw method open {args} {
-	private $object tdata
+	private $object tdata igv
+	unset -nocomplain igv(poss)
 	if {[llength $args]} {
 		set file [lindex $args 0]
 	} else {
@@ -678,3 +680,30 @@ mainw method curline {} {
 	$object.tb getline [$object cur_row]
 }
 
+mainw method igv {} {
+	private $object tdata igv
+	if {![info exists igv(port)] || [catch {igv $igv(port) echo 1}]} {
+		Classy::busy .mainw
+		set igv(port) [igvopen]
+		Classy::busy remove .mainw
+	}
+	
+	if {![info exists igv(poss)]} {
+		set igv(poss) [tsv_basicfields [$object.tb fields] 3]
+	}
+	set row [$object cur_row]
+	set col [$object cur_col]
+	set fields [$object.tb info qfields]
+	set field [lindex $fields $col]
+	if {![regexp -- {-(.+)$} $field temp sample]} {
+		set sample [lindex [samples $fields] 0]
+	}
+	# find and load bam
+	set bamfile [findbam [file dir $tdata(file)] $sample]
+	foreach {chr begin end} [list_sub [$object.tb getline $row] $igv(poss)] break
+	Classy::busy .mainw
+	igv $igv(port) load $bamfile
+	# goto pos
+	igv $igv(port) goto $chr:[expr {$begin+1}]-[expr {$end+1}]
+	Classy::busy remove .mainw
+}
