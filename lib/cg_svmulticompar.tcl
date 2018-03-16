@@ -26,77 +26,175 @@ cd /complgen/sv
 
 }
 
-proc svmulticompar_groupdists {dlist type} {
-	set sizepos $::locpos(size)
-	set curdist [lindex $dlist 0 $sizepos]
-	set result {}
-	set newlist {}
-	set mindiff 35
-	if {$type eq "inv"} {
-		set mindiff 400
+proc svopen {file side {name {}}} {
+	if {$name eq ""} {
+		set name [file root [file tail $file]]
+		regsub {^[^-]*-} $name {} name
 	}
-	foreach line $dlist {
-		set d [lindex $line $sizepos]
-		set diff [expr {abs($d-$curdist)}]
-		set sizediff [min [max [expr {round(0.25*$curdist)}] $mindiff] 8000]
-		if {$diff > $sizediff} {
-			lappend result $newlist
-			set curdist [lindex $line $sizepos]
-			set newlist [list $line]
-		} else {
-			lappend newlist $line
-		}
+	set fh [gzopen $file]
+	set header [tsv_open $fh]
+	set poss [tsv_basicfields $header 6 0]
+	set pos [lsearch $poss -1]
+	if {$pos != -1 && $pos < 4} {error "One of chromosome, begin, end, type (or equivalent) missing in file $file"}
+	set temp [list_fill [llength $header] 0 1]
+	set newheader {chromosome begin end type ref alt}
+	foreach field [list_sub $header [list_lremove $temp $poss]] {
+		if {[string first - $field] == -1} {append field -$name}
+		lappend newheader $field
 	}
-	if {[llength $newlist]} {
-		lappend result $newlist
-	}
-	return $result
-}
-
-proc svmulticompar_groupcompatible {plist} {
-	set plist [lsort -integer -index 3 $plist]
-	set curstart1 [lindex $plist 0 2]
-	set curend1 [lindex $plist 0 3]
-	set result {}
-	set newlist {}
-	foreach line $plist {
-		set start1 [lindex $line 2]
-		set end1 [lindex $line 3]
-		if {[overlap $start1 $end1 $curstart1 $curend1] > 1} {
-			lappend newlist $line
-		} else {
-			lappend result $newlist
-			set newlist {}
-			set curstart1 $start1
-			set curend1 $end1
-		}
-	}
-	if {[llength $newlist]} {
-		lappend result $newlist
-	}
-	return $result
-}
-
-proc svmulticompar_compar {line1 line2 {margin 20}} {
-	if {![llength $line1]} {return 1}
-	if {![llength $line2]} {return -1}
-	# must be adapted on locfields changes
-	foreach {src id1 chr1 begin end type start1 end1} $line1 break
-	foreach {src id2 chr2 begin end type start2 end2} $line2 break
-	if {$id1 ne "" && $id1 eq $id2} {
-		return 0
-	}
-	set chrcomp [chr_compare $chr1 $chr2]
-	if {$chrcomp != 0} {
-		return $chrcomp
-	}
-	if {[expr {$end2+$margin}] <= $start1} {
-		return 1
-	} elseif {[expr {$end1+$margin}] <= $start2} {
-		return -1
+	set poss [list -1 {*}$poss {*}[list_lremove $temp $poss]]
+	if {[lindex $poss 5] == -1} {
+		set makeref 1
 	} else {
-		return 0
+		set makeref -1
 	}
+	if {[lindex $poss 6] == -1} {
+		set makealt [lsearch $header size]
+		if {$makealt == -1} {error "no alt and no size column for file $file"}
+		set makealt [lsearch $poss $makealt]
+		lappend makealt [lsearch $poss [lsearch $header chr2]]
+		lappend makealt [lsearch $poss [lsearch $header start2]]
+	} else {
+		set makealt ""
+	}
+	return [list $fh $poss $side $makeref $makealt $newheader $header]
+}
+
+proc svclose {f} {
+	foreach {fh} $f break
+	gzclose $fh
+}
+
+proc svgetline {f} {
+	foreach {fh poss side makeref makealt} $f break
+	while 1 {
+		if {[gets $fh line] == -1} {
+			return {}
+		}
+		set line [split $line \t]
+		if {[llength $line]} break
+	}
+	set line [list_sub $line $poss]
+	lset line 0 $side
+	if {$makeref != -1 || [llength $makealt]} {
+		foreach {side chr begin end type} $line break
+		lset line 1 [chr_clip $chr]
+		if {$makeref != -1} {
+			lset line 5 [expr {$end - $begin}]
+		}
+		if {[llength $makealt]} {
+			if {$type eq "inv"} {
+				lset line 6 i
+			} elseif {$type eq "del"} {
+				lset line 6 ""
+			} elseif {$type eq "ins"} {
+				lset line 6 [lindex $line [lindex $makealt 0]]
+			} elseif {$type eq "trans"} {
+				foreach {size chr2 start2} [list_sub $line $makealt] break
+				lset line 6 \[$chr2:$start2\[
+			} else {
+				lset line 6 ?
+			}
+		}
+	} else {
+		lset line 1 [chr_clip [lindex $line 1]]
+	}
+	return $line
+}
+
+proc svmulticompar_dist {sline1 sline2 {margin 30} {lmargin 300} {overlap 80}} {
+	foreach {side1 chr1 begin1 end1 type1 ref1 alt1} $sline1 break
+	foreach {side2 chr2 begin2 end2 type2 ref2 alt2} $sline2 break
+	if {$type1 in "del inv"} {
+		set overlap1 [max $begin1 $begin2]
+		set overlap2 [min $end1 $end2]
+		set psize [expr {100*($overlap2 - $overlap1)}]
+		if {[expr {$psize/($end1-$begin1)}] < $overlap} {return 2147483648}
+		if {[expr {$psize/($end2-$begin2)}] < $overlap} {return 2147483648}
+		set margin $lmargin
+	}
+	set enddiff [expr {abs($end2 - $end1)}]
+	if {$enddiff > $margin} {return 2147483648}
+	if {[isint $alt1]} {
+		if {[isint $alt2]} {
+			set altdiff [expr {abs($alt2 - $alt1)}]
+			if {$altdiff > $margin} {return 2147483648}
+		} else {
+			set alt2 [string length $alt2]
+			set altdiff [expr {abs($alt2 - $alt1)}]
+			if {$altdiff > $margin} {return 2147483648}
+		}
+	} elseif {[isint $alt2]} {
+		set alt1 [string length $alt1]
+		set altdiff [expr {abs($alt2 - $alt1)}]
+		if {$altdiff > $margin} {return 2147483648}
+	} else {
+		if {$alt1 ne $alt2} {return 2147483648}
+		set altdiff 0
+	}
+	set diff [expr {abs($begin2 - $begin1) + $enddiff + $altdiff}]
+	return $diff
+}
+
+proc svmulticompar_out {line1 line2 dummy1 dummy2} {
+	if {[llength $line1]} {
+		if {[llength $line2]} {
+			list {*}[lrange $line1 1 end] {*}[list_sub $line2 {2 3 6}] {*}[lrange $line2 7 end]
+		} else {
+			list {*}[lrange $line1 1 end] {*}$dummy2
+		}
+	} elseif {[llength $line2]} {
+		list {*}[lrange $line2 1 6] {*}$dummy1 {*}[list_sub $line2 {2 3 6}] {*}[lrange $line2 7 end]
+	} else {
+		error "both line1 and line2 empty"
+	}
+}
+
+proc svmulticompar_groupdists {list1 list2 dummy1 dummy2 {margin 30} {lmargin 300} {overlap 80}} {
+# putsvars list1 list2
+# if {[llength $list1] > 1 && [llength $list2] > 1} {error STOP}
+	set matches {}
+	set p1 0
+	foreach sline1 $list1 {
+		set p2 0
+		foreach sline2 $list2 {
+			set diff [svmulticompar_dist $sline1 $sline2 $margin $lmargin $overlap]
+			if {$diff < 1000} {
+				lappend matches [list $diff $p1 $p2]
+			}
+			incr p2
+		}
+		incr p1
+	}
+	set matches [lsort -index 0 -integer $matches]
+	unset -nocomplain done1
+	unset -nocomplain done2
+	set pos 0
+	list_foreach {diff p1 p2} $matches {
+		incr pos
+		if {[info exists done($p2)]} continue
+		set done2($p2) 1
+		if {[info exists done1($p1)]} {
+			if {[lsearch [list_subindex [lrange $matches $pos end] 1] $p1] != -1} continue
+		} else {
+			lappend done1($p1) $p2
+		}
+	}
+	set result {}
+	set p1s [array names done1]
+	foreach p1 $p1s {
+		set line1 [lindex $list1 $p1]
+		foreach p2 $done1($p1) {
+			lappend result [svmulticompar_out $line1 [lindex $list2 $p2] $dummy1 $dummy2]
+		}
+	}
+	foreach line1 [list_sub $list1 -exclude $p1s] {
+		lappend result [svmulticompar_out $line1 {} $dummy1 $dummy2]
+	}
+	foreach line2 [list_sub $list2 -exclude [array names done2]] {
+		lappend result [svmulticompar_out {} $line2 $dummy1 $dummy2]
+	}
+	return $result
 }
 
 proc svmulticompar_getline {f poss {type 1}} {
@@ -138,120 +236,80 @@ proc svmulticompar_getline {f poss {type 1}} {
 	list_concat $type $cur $line
 }
 
-proc svmulticompar_write {id group poss2 dummy1 dummy2 {ddummy1 {}} {ddummy2 {}}} {
-	global locpos
-	set resultlist {}
-	unset -nocomplain todo
-	set todo(1) {}; set todo(2) {}
-	foreach line $group {
-		lappend todo([lindex $line 0]) $line
-	}
-	if {![llength $todo(1)] || ![llength $todo(2)]} {
-		set udummy1 $dummy1; set udummy2 $dummy2
-	} else {
-		set udummy1 $ddummy1; set udummy2 $ddummy2
-	}
-	set max [max [llength $todo(1)] [llength $todo(2)]]
-	if {$max > 1} {append id -$max}
-	# count keeps track of how many matches we have for this sv
-	if {[llength $todo(1)]} {
-		set count [lindex $todo(1) 0 $::countpos]
-	} else {
-		set count 0
-	}
-	if {[llength $todo(2)]} {
-		incr count
-	}
-	foreach l1 $todo(1) l2 $todo(2) {
-		if {[llength $l2]} {
-			set oline2 [lrange $l2 $locpos(datastart) end]
-			set cur2 [list_sub $oline2 $poss2]
-			set merge [list_sub $oline2 $::mergeget2]
-		} else {
-			set oline2 $udummy2
-		}
-		if {[llength $l1]} {
-			set oline1 [lrange $l1 $locpos(datastart) end]
-			set merge [list_sub $oline1 $::mergeget1]
-		} else {
-			set oline1 $udummy1
-			set oline1 [lreplace $oline1 1 $locpos(datastart) {*}$cur2]
-		}
-		lset oline1 0 $count
-		lset oline1 1 $id
-		if {[llength $::mergeposs1]} {
-			set oline1 [list_sub $oline1 -exclude $::mergeposs1]
-		}
-		if {[llength $::mergeposs2]} {
-			set oline2 [list_sub $oline2 -exclude $::mergeposs2]
-		}
-		lappend resultlist [list_concat $oline1 $oline2 $merge]
-	}
-	return $resultlist
-}
-
-proc svmulticompar_getlist {f1 poss1 len1 line1Var f2 poss2 len2 line2Var} {
-	global locpos
-	# lines have the following format:
-	# {src id chr1 begin end type start1 end1 size zyg chr2 start2 end2 (complete line)}
-# puts [join [list_subindex [list $line1 $line2] {0 1 2 3 4 5}] \n]
+proc svmulticompar_getlist {f1 line1Var f2 line2Var margin} {
 	upvar $line1Var line1
 	upvar $line2Var line2
-	set margin 20
-	set idpos $locpos(id)
-	set chrpos $locpos(chromosome)
-	set startpos $locpos(start1)
-	set endpos $locpos(end1)
-	set list {}
-	set compar [svmulticompar_compar $line1 $line2 $margin]
-	if {$compar < 0} {
-		set listchr [lindex $line1 $chrpos]	
-		set liststart [lindex $line1 $startpos]
-		set listend [expr {[lindex $line1 $endpos]+$margin}]
-		set curid1 [lindex $line1 $idpos]
-		set curid2 {}
-	} elseif {$compar > 0} {
-		set listchr [lindex $line2 $chrpos]	
-		set liststart [lindex $line2 $startpos]
-		set listend [expr {[lindex $line2 $endpos]+$margin}]
-		set curid1 {}
-		set curid2 [lindex $line2 $idpos]
+	global locpos
+	# lines have the following format: chromosome begin end type ref alt ...
+# puts [join [list_subindex [list $line1 $line2] {0 1 2 3 4 5}] \n]
+	set return 0
+	if {![llength $line1]} {
+		if {![llength $line2]} {return {}}
+		set return 2
+	} elseif {![llength $line2]} {
+		set return 1
 	} else {
-		set listchr [lindex $line1 $chrpos]	
-		set liststart [min [lindex $line1 $startpos] [lindex $line2 $startpos]]
-		set listend [expr {[max [lindex $line1 $endpos] [lindex $line2 $endpos]]+$margin}]
-		set curid1 [lindex $line1 $idpos]
-		set curid2 [lindex $line2 $idpos]
+		foreach {side1 chr1 begin1 end1} $line1 break
+		foreach {side2 chr2 begin2 end2} $line2 break
+		set chrcomp [loc_compare $chr1 $chr2]
+		if {$chrcomp < 0} {
+			set return 1
+		} elseif {$chrcomp > 0} {
+			set return 2
+		} elseif {[expr {$begin1+$margin}] <= $begin2} {
+			set return 1
+		} elseif {[expr {$begin2+$margin}] <= $begin1} {
+			set return 2
+		}
 	}
-	while {![eof $f1] || ![eof $f2]} {
+	if {$return == 1} {
+		lappend linea 1
+		set list [list $line1]
+		set line1 [svgetline $f1]
+		return $list
+	} elseif {$return == 2} {
+		lappend line2 2
+		set list [list $line2]
+		set line2 [svgetline $f2]
+		return $list
+	}
+	set curchr $chr1
+	if {$begin1 < $begin2} {
+		set curstart [expr {$begin1 - $margin}]
+		set curend [expr {$begin2 + $margin}]
+	} else {
+		set curstart [expr {$begin2 - $margin}]
+		set curend [expr {$begin1 + $margin}]
+	}
+	set list [list $line1 $line2]
+	set line1 [svgetline $f1]
+	foreach {side1 chr1 begin1} $line1 break
+	set line2 [svgetline $f2]
+	foreach {side2 chr2 begin2} $line2 break
+	while {[llength $line1] || [llength  $line2]} {
 		set match 0
 		if {[llength $line1]} {
-			set id1 [lindex $line1 $idpos]
-			set listchr1 [lindex $line1 $chrpos]
-			set liststart1 [lindex $line1 $startpos]
-			if {($id1 ne "" && $id1 eq $curid1) || (($listchr1 == $listchr) && ($liststart1 < $listend))} {
+			if {$chr1 == $curchr && $begin1 < $curend} {
 				lappend list $line1
-				set curid1 $id1
-				set temp [expr {[lindex $line1 $endpos]+$margin}]
-				if {$temp > $listend} {
-					set listend $temp
+				set temp [expr {$begin1+$margin}]
+				if {$temp > $curend} {
+					set curend $temp
 				}
-				set line1 [svmulticompar_getline $f1 $poss1 1]
+				set line1 [svgetline $f1]
+				foreach {side1 chr1 begin1} $line1 break
 				set match 1
 			}
 		}
 		if {[llength $line2]} {
-			set id2 [lindex $line2 $idpos]
-			set listchr2 [lindex $line2 $chrpos]
-			set liststart2 [lindex $line2 $startpos]
-			if {($id2 ne "" && $id2 eq $curid2) || (($listchr2 == $listchr) && ($liststart2 < $listend))} {
+			if {$chr2 == $curchr && $begin2 < $curend} {
 				lappend list $line2
-				set curid2 $id2
-				set temp [expr {[lindex $line2 $endpos]+$margin}]
-				if {$temp > $listend} {
-					set listend $temp
+				set temp [expr {$begin2+$margin}]
+				if {$temp > $curend} {
+					set curend $temp
 				}
-				set line2 [svmulticompar_getline $f2 $poss2 2]
+				set line2 [svgetline $f2]
+				lappend line2 2
+				foreach {side2 chr2 begin2} $line1 break
 				set match 2
 			}
 		}
@@ -260,143 +318,134 @@ proc svmulticompar_getlist {f1 poss1 len1 line1Var f2 poss2 len2 line2Var} {
 	return $list
 }
 
-proc svmulticompar {svfile1 svfile2} {
+proc svmulticompar {args} {
 	global locpos
+	set margin 30
+	set lmargin 300
+	set overlap 80
+	cg_options svmulticompar args {
+		-margin {set margin $value}
+		-lmargin {set lmargin $value}
+		-overlap {set overlap $value}
+	} {svfile1 svfile2}
+	set maxmargin [max $margin $lmargin]
 
-	# set locfields {chr1 start1 end1 type size zyg chr2 start2 end2}
-	catch {close $f1}; catch {close $f2}; catch {close $o}; catch {file delete $tempfile2}
-	set mergefields {LeftRepeatClassification RightRepeatClassification LeftGenes RightGenes XRef DeletedTransposableElement KnownUnderrepresentedRepeat FrequencyInBaselineGenomeSet}
-	lappend mergefields overlappingGene	knownCNV
-	# set locfields {chromosome begin end type start1 end1 size zyg chr2 start2 end2}
-	set locfields {id chromosome begin end type start1 end1 size zyg chr2 start2 end2}
-	set locpos(fields) [list_concat src $locfields]
-	foreach f {id chromosome begin end type start1 end1 size start2 end2} {
-		# add 1, because src will be prepended to lines
-		set locpos($f) [expr {[lsearch $locfields $f]+1}]
-	}
-	set sizepos $locpos(size); set typepos $locpos(type)
-	set locpos(datastart) [expr {[llength $locfields]+1}]
-	set ::countpos [expr {[llength $locfields]+1}]
+	set locfields {chromosome begin end type ref alt}
 	if {![file exists $svfile1]} {
+		set name [file root [file tail $svfile2]]
+		regsub {^[^-]*-} $name {} name
+		catch {svclose $f} ; catch {close $o}
+		set f [svopen $svfile2 1]
+		foreach {fh side poss makeref makealt newheader} $f break
 		set o [open $svfile1 w]
-		puts $o count\t[join $locfields \t]
+		puts $o [join [linsert $newheader 6 lbegin-$name lend-$name lalt-$name] \t]
+		while 1 {
+			set line [svgetline $f]
+			if {![llength $line]} break
+			puts $o [join [list {*}[lrange $line 1 6] {*}[list_sub $line {2 3 4}] {*}[lrange $line 7 end]] \t]
+		}
 		close $o
+		svclose $f
+		return
 	}
-	#file copy -force comparsvcg.tsv.old comparsvcg.tsv
-	set o [open $svfile1.temp w]
+
 	#
 	# open compar file
-	set f1 [gzopen $svfile1]
-	set header1 [tsv_open $f1]
+	catch {svclose $f1}
+	set f1 [svopen $svfile1 1]
+	foreach {fh1 side1 poss1 makeref1 makealt1 header1} $f1 break
+	if {[lrange $header1 0 5] ne {chromosome begin end type ref alt}} {
+		error "error in compar file $svfile1, must start with fields: chromosome begin end type ref alt"
+	}
 	set len1 [llength $header1]
-	set poss1 [list_cor $header1 $locfields]
-	set mergefields1 [list_common $header1 $mergefields]
-	set ::mergeposs1 [list_cor $header1 $mergefields1]
-	set templen [expr {[llength $header1]+1}]
-	set dummy1 [list_fill $templen {}]
-	set ddummy1 [list_fill $templen d]
+	set dummy1 [list_fill [expr {[llength $header1]-6}] {}]
+	set ddummy1 [list_fill [expr {[llength $header1]-6}] d]
+	set line1 [svgetline $f1]
 	#
 	# open add file
 	set name [file root [file tail $svfile2]]
-	set name [lindex [split $name -] end]
-	# set tempfile2 [tempfile]
-	# cg select -s "chr1 start1" < $svfile2 > $tempfile2
-	# set f2 [open $tempfile2]
-	set f2 [gzopen $svfile2]
-	set header2 [tsv_open $f2]
+	regsub {^[^-]*-} $name {} name
+	catch {svclose $f2}
+	set f2 [svopen $svfile2 2 $name]
+	foreach {fh2 side2 poss2 makeref2 makealt2 header2} $f2 break
 	set len2 [llength $header2]
-	# make poss2
-	set poss2 [list_cor $header2 $locfields]
-	set temp [tsv_basicfields $header2 4]
-	set poss2 [lreplace $poss2 1 4 {*}$temp]
-	set workfields {id chr1 begin end type start1 end1 size zyg chr2 start2 end2 (complete line)}
-	# set locfields {id chromosome begin end type start1 end1 size zyg chr2 start2 end2}
-	foreach {fld basicpos} {start1 1 end1 1 start2 2 end2 2 chr2 0} {
-		set workpos [lsearch $workfields $fld]
-		if {[lindex $poss2 $workpos] == -1} {lset poss2 $workpos [lindex $temp $basicpos]}
-	}
-	set mergefields2 [list_common $header2 $mergefields]
-	set ::mergeposs2 [list_cor $header2 $mergefields2]
-	set templen [llength $header2]
-	set dummy2 [list_fill $templen {}]
-	set ddummy2 [list_fill $templen d]
-	#
-	set finalmerge [list_union $mergefields1 $mergefields2]
-	set ::mergeget1 [list_cor $header1 $finalmerge]
-	set ::mergeget2 [list_cor $header2 $finalmerge]
-	#
+	set dummy2 [list_fill [expr {[llength $header2]-3}] {}]
+	set ddummy2 [list_fill [expr {[llength $header2]-3}] d]
+	set line2 [svgetline $f2]
+
+	catch {close $o} ; set o [open $svfile1.temp w]
 	# make new header
-	set header [list_sub $header1 -exclude $::mergeposs1]
-	foreach field [list_sub $header2 -exclude $::mergeposs2] {append header \t${field}-$name}
-	if {[llength $finalmerge]} {append header \t[join $finalmerge \t]}
+	set header [list {*}$header1 lbegin-$name lend-$name lalt-$name {*}[lrange $header2 6 end]]
 	puts $o [join $header \t]
 	#
 	# go over files
 	set ::cchr {}
 	set ::cpos 0
-	set line1 [svmulticompar_getline $f1 $poss1 1]
-	set line2 [svmulticompar_getline $f2 $poss2 2]
 	set did 1
-	while {![eof $f1] || ![eof $f2]} {
+	while {[llength $line1] || [llength $line2]} {
 		# get overlapping lines from both files in the following format (locfields):
 		# {src chr1 begin end type start1 end1 size zyg chr2 start2 end2 (complete line)}
-		set list [svmulticompar_getlist $f1 $poss1 $len1 line1 $f2 $poss2 $len2 line2]
-#puts ----
-#putsvars list
+		set list [svmulticompar_getlist $f1 line1 $f2 line2 $maxmargin]
+#puts ------------
+#putsvars list line1 line2
 #puts [join [list_subindex $list {0 1 2 3 4 5}] \n]
+#if {[lsearch [list_subindex $list 3] 2897835] != -1} {error STOPPED}
 #if {[lsearch [list_subindex $list 3] 67759423] != -1} {error STOPPED}
 #if {[lindex $list 0 4] eq "trans"} {error STOP}
 #puts [join $list \n]\n\n
 # join $list \n\n
-		if {[llength $list] == 1} {
-			set temp [lindex [svmulticompar_write $did $list $poss2 $dummy1 $dummy2 $ddummy1 $ddummy2] 0]
-			puts $o [join $temp \t]
-			incr did
+		if {[llength $list] == 1 || [llength [list_remdup [list_subindex $list 0]]] == 1} {
+			# from single source
+			foreach line $list {
+				set side [lindex $line 0]
+				if {$side == 1} {
+					puts $o [join [svmulticompar_out $line {} $dummy1 $dummy2] \t]
+				} else {
+					puts $o [join [svmulticompar_out {} $line $dummy1 $dummy2] \t]
+				}
+				incr did
+			}
 			continue
 		}
+		#
+		# multi source, match first
 		# split on type
 		unset -nocomplain todo
-		foreach line [lsort -integer -index $sizepos $list] {
-			set type [lindex $line $typepos]
-			set size [lindex $line $sizepos]
-			lappend todo($type) $line
+		unset -nocomplain typesa
+		foreach line $list {
+			set side [lindex $line 0]
+			set type [lindex $line 4]
+			set typesa($type) 1
+			lappend todo($type,$side) $line
 		}
 		set list {}
-		foreach type [lsort [array names todo]] {
-			if {[llength $todo($type)] < 2} {
-				lappend list $todo($type)
-				continue
+		foreach type [lsort [array names typesa]] {
+			if {![info exists todo($type,1)]} {
+				foreach l2 $todo($type,2) {
+					lappend list [svmulticompar_out {} $l2 $dummy1 $dummy2]
+				}
+			} elseif {![info exists todo($type,2)]} {
+				foreach l1 $todo($type,1) {
+					lappend list [svmulticompar_out $l1 {} $dummy1 $dummy2]
+				}
+			} else {
+				# foreach {list1 list2} [list $todo($type,1) $todo($type,2)] break
+				set plist [svmulticompar_groupdists $todo($type,1) $todo($type,2) $dummy1 $dummy2 $margin $lmargin $overlap]
+				lappend list {*}$plist
 			}
-			set plists [svmulticompar_groupdists $todo($type) $type]
-			lappend list {*}$plists
-#			foreach plist $plists {
-#				set plist [lsort -integer -index 3 $plist]
-#				set clists [svmulticompar_groupcompatible $plist]
-#				foreach clist $clists {
-#					lappend list $clist
-#				}
-#			}
 		}
-		set resultlist {}
-		foreach group $list {
-#puts [join [list_subindex $group {0 1 2 3 4 5}] \n]
-			lappend resultlist {*}[svmulticompar_write $did $group $poss2 $dummy1 $dummy2 $ddummy1 $ddummy2]
-			incr did
+		if {[llength $list] > 1} {
+			set list [ssort -natural $list]
 		}
-		if {[llength $resultlist] > 1} {
-			set resultlist [ssort -index $locpos(id) -natural $resultlist]
-			set resultlist [ssort -index $locpos(end) -natural $resultlist]
-			set resultlist [lsort -index $locpos(begin) -integer $resultlist]
-		}
-		foreach temp $resultlist {
+		foreach temp $list {
 			puts $o [join $temp \t]
 		}
 	}
 
 	flush $o
 	close $o
-	gzclose $f1
-	gzclose $f2
+	svclose $f1
+	svclose $f2
 	# file delete $tempfile2
 	# cg select -s {chr1 start1} $svfile1.temp $svfile1.temp2
 	# file delete $svfile1.temp
@@ -406,67 +455,29 @@ proc svmulticompar {svfile1 svfile2} {
 }
 
 proc cg_svmulticompar {args} {
-	if {[llength $args] < 2} {
-		errorformat svmulticompar
-	}
+	set margin 30
+	set lmargin 300
+	set overlap 80
+	cg_options svmulticompar args {
+		-margin {set margin $value}
+		-lmargin {set lmargin $value}
+		-overlap {set overlap $value}
+	} {compar_file svfile} 2 ...
+	set files [list $svfile {*}$args]
 	set done {}
-	foreach {compar_file} $args break
 	if {[file exists $compar_file]} {
 		set list [cg select -h $compar_file]
 		set poss [list_find -glob $list start1-*]
 		set done [list_sub $list $poss]
 		set done [list_regsub -all {^start1-} $done {}]
 	}
-	set files [lrange $args 1 end]
 	foreach file $files {
 		set name [lindex [split [file tail [file root $file]] -] end]
 		if {[inlist $done $name]} {
 			putslog "Skipping $file: $name already present"
 		} else {
 			putslog "Adding $file"
-			svmulticompar $compar_file $file
+			svmulticompar -margin $margin -lmargin $lmargin -overlap $overlap $compar_file $file
 		}
 	}
-}
-
-if 0 {
-	# convert old
-	set base GS103
-	cd /complgen/sv/$base
-	set file $base-sv.tsv
-	catch {close $o}; catch {close $f}
-	set o [open $file w]
-	set h {check chr patchstart pos type size zyg problems gapsize/chr2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum}
-	set h {check chr1 start1 end1 type size zyg problems chr2 start2 end2 quality numreads numnontrf weight patchsize slope1 sd1 slope2 sd2 totnum psdiff threads exnum}
-	puts $o [join $h \t]
-	foreach chr {1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X} {
-		set f [open $base-$chr-paired-sv.tsv]
-		gets $f
-		while {![eof $f]} {
-			set line [split [gets $f ] \t]
-			if {![llength $line]} continue
-			set type [lindex $line 4]
-			if {$type eq "trans"} {
-				set chr2 [lindex $line 8]
-				set start2 0
-				set end2 0
-			} elseif {$type eq "inv"} {
-				set chr2 [lindex $line 1]
-				set start2 [expr {[lindex $line 3]+abs([lindex $line 5])}]
-				set end2 [expr {$start2+abs([lindex $line 13])}]
-			} else {
-				set chr2 [lindex $line 1]
-				set start2 [expr {[lindex $line 3]+abs([lindex $line 8])}]
-				set end2 [expr {$start2+abs([lindex $line 13])}]
-			}
-			lset line 1 chr$chr
-			set line [lreplace $line 8 8 chr$chr2 $start2 $end2]
-			puts $o [join $line \t]
-		}
-		close $f
-	}
-	close $o
-	cg select -q {$type != "ins" && !($type == "del" && $size < 250)} $file msv-a$base.tsv
-	file rename -force msv-a$base.tsv /complgen/1.8/svcg/msv-a$base.tsv
-
 }

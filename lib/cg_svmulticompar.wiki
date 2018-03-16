@@ -1,7 +1,7 @@
 = Svmulticompar =
 
 == Format ==
-cg svmulticompar file svfile ...
+cg svmulticompar ?options? file svfile ...
 
 == Summary ==
 Compare multiple structural variant files
@@ -9,11 +9,23 @@ Compare multiple structural variant files
 == Description ==
 This command is used to create multi sv compar_files.
 These are tab separated files indicating structural variants present in one or more samples.
+As structural variant (sv) calls are usually imprecise, the sv (of
+different samples) are approximately matched: Begin, end or alt values do
+not have to match exactly. The global variant features (chromosome, begin, end, type, ref, alt)
+are taken from the first sample the variant is seen in. (so there can be
+small differences due to order of samples given) The values for begin, end
+and alt values of each sample are kept as lbegin-sample, lend-sample and
+lalt-sample.
 
 == Arguments ==
 ; **svmulticomparfile**: resultfile, will be created if it does not exist
 ; **svfile**: file containing structural variants of new sample to be added
 More than one svfile can added in one command
+
+== Options ==
+; -margin number: Allow begin and end to deviate the number of bases given (default 30)
+; -lmargin number: Allow begin and end to deviate the number of bases given for deletions and inversion (default 300)
+; -minoverlap number: minimum percent overlap needed to identify deletions or inversions as the same (default 80)
 
 == Category ==
 Structural variants

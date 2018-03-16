@@ -216,8 +216,8 @@ child process exited abnormally}
 
 test svmulticompar {basic} {
 	test_cleantmp
-	cg svmulticompar tmp/temp.sft data/cgsv1.tsv data/cgsv2.tsv data/cgsv3.tsv
-	exec diff tmp/temp.sft data/expected-svmulticompar.tsv
+	cg svmulticompar tmp/temp.tsv data/cgsv1.tsv data/cgsv2.tsv data/cgsv3.tsv
+	exec diff tmp/temp.tsv data/expected-svmulticompar.tsv
 } {} 
 
 test makepvt {basic} {
