@@ -10,7 +10,7 @@ proc multi_merge_job {varsfile files args} {
 	upvar job_logdir job_logdir
 	set force 0
 	set optional 0
-	set split 0
+	set split 1
 	set force 1
 	foreach {k v} $args {
 		switch $k {
@@ -693,7 +693,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 proc cg_pmulticompar {args} {
 	set args [job_init {*}$args]
 	set regonly 0
-	set split 0
+	set split 1
 	set erroronduplicates 0
 	set targetvarsfile {}
 	set skipincomplete 1

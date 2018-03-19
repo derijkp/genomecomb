@@ -19,7 +19,7 @@ proc var_sam_job {args} {
 	upvar job_logdir job_logdir
 	set pre ""
 	set opts {}
-	set split 0
+	set split 1
 	set deps {}
 	set regionfile {}
 	set BQ 0

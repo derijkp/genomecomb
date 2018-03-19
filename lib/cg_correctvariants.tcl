@@ -21,7 +21,7 @@ proc cg_correctvariants_alts {type list gref} {
 proc cg_correctvariants {args} {
 	set force 0
 	set complement 0
-	set split 0
+	set split 1
 	cg_options correctvariants args {
 		-c {
 			set complement $value

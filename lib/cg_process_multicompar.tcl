@@ -59,7 +59,7 @@ proc process_multicompar_job {args} {
 		set experiment [file tail $destdir]
 	}
 	# check projectinfo
-	projectinfo $destdir dbdir {split 0}
+	projectinfo $destdir dbdir {split 1}
 	set dbdir [dbdir $dbdir]
 	set refseq [glob $dbdir/genome_*.ifas]
 	# logfile

@@ -114,7 +114,7 @@ test loc_compare {{chr2 10} {chr2 2}} {
 
 test multicompar {basic} {
 	test_cleantmp
-	cg multicompar tmp/temp.sft data/var_annot.sft data/var_annot2.sft
+	cg multicompar -split 0 tmp/temp.sft data/var_annot.sft data/var_annot2.sft
 	exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft
 } {} 
 
@@ -123,7 +123,7 @@ test multicompar {basic with 3} {
 	foreach sample {annot annot2 annot3} {
 		file copy data/var_$sample.sft tmp/var-$sample.tsv
 	}
-	cg multicompar tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv tmp/var-annot3.tsv
+	cg multicompar -split 0 tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv tmp/var-annot3.tsv
 	exec diff tmp/temp.tsv data/expected-multicompar-var_annotvar_annot3.sft
 } {} 
 
@@ -142,7 +142,7 @@ test multicompar {basic reannot} {
 	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/var-annot2.tsv
 	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
-	cg multicompar tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
+	cg multicompar -split 0 tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	cg multicompar_reannot tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-multicompar_reannot-var_annotvar_annot2.sft
 } {} 
@@ -191,7 +191,7 @@ test multicompar {basic split reannot paged with pagedstart} {
 
 test multicompar {basic, sequenced already present} {
 	test_cleantmp
-	cg multicompar tmp/temp.sft data/var_annot.sft data/var_annot2seq.sft
+	cg multicompar -split 0 tmp/temp.sft data/var_annot.sft data/var_annot2seq.sft
 	catch {exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft} e
 	set e
 } {1c1
@@ -218,6 +218,26 @@ test svmulticompar {basic} {
 	test_cleantmp
 	cg svmulticompar tmp/temp.tsv data/cgsv1.tsv data/cgsv2.tsv data/cgsv3.tsv
 	exec diff tmp/temp.tsv data/expected-svmulticompar.tsv
+} {} 
+
+test svmulticompar {cnv} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chr	begin	end	type	avgNormalizedCvg	relativeCvg	calledPloidy	ploidyScore
+		chr1	1720	2721	amp	84.8	1.95	4	9
+		chr1	9650	10000	del	76.5	1.76	4	9
+	}
+	write_tab tmp/s2.tsv {
+		chr	begin	end	type	avgNormalizedCvg	relativeCvg	calledPloidy	ploidyScore
+		chr1	1700	2721	amp	84.8	1.95	3	9
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	lbegin-s1	lend-s1	lalt-s1	avgNormalizedCvg-s1	relativeCvg-s1	calledPloidy-s1	ploidyScore-s1	lbegin-s2	lend-s2	lalt-s2	avgNormalizedCvg-s2	relativeCvg-s2	calledPloidy-s2	ploidyScore-s2
+		1	1720	2721	amp	1001	?	1720	2721	amp	84.8	1.95	4	9	1700	2721	?	84.8	1.95	3	9
+		1	9650	10000	del	350	{}	9650	10000	del	76.5	1.76	4	9	{}	{}	{}	{}	{}	{}	{}
+	}
+	cg svmulticompar tmp/temp.tsv tmp/s1.tsv tmp/s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
 test makepvt {basic} {
@@ -251,7 +271,7 @@ test multicompar {var and mapper naming convention} {
 	catch {file link tmp/var-varcaller2-mapper2-sample1.sft ../data/var_annot.sft}
 	catch {file link tmp/var-varcaller1-mapper1-sample2.sft ../data/var_annot2.sft}
 	catch {file link tmp/var-varcaller2-mapper2-sample2.sft ../data/var_annot2.sft}
-	cg multicompar tmp/temp.sft tmp/var-varcaller1-mapper1-sample1.sft tmp/var-varcaller2-mapper2-sample1.sft tmp/var-varcaller1-mapper1-sample2.sft tmp/var-varcaller2-mapper2-sample2.sft
+	cg multicompar -split 0 tmp/temp.sft tmp/var-varcaller1-mapper1-sample1.sft tmp/var-varcaller2-mapper2-sample1.sft tmp/var-varcaller1-mapper1-sample2.sft tmp/var-varcaller2-mapper2-sample2.sft
 	set fields {chromosome	begin	end	type	ref	alt}
 	foreach {from to} {
 		var_annot varcaller1-mapper1-sample1 var_annot varcaller2-mapper2-sample1
@@ -287,7 +307,7 @@ test multicompar {basic reannot varall} {
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
 	catch {file delete tmp/temp.tsv}
-	cg multicompar tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
+	cg multicompar -split 0 tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	cg multicompar_reannot tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft
 } {} 
@@ -332,7 +352,7 @@ test multicompar {sort empty bug split} {
 test multicompar {error on split files without split option} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg multicompar tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
+	cg multicompar -split 0 tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
 	cg checksort tmp/temp.tsv
 } {*error in "*var-compartest2.tsv": file uses split alleles ("*1 207806142 207806170 sub" occurs more than once and you are not running with the -split option)*} match error
 

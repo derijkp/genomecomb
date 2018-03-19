@@ -15,7 +15,7 @@ these annotations (and more) can be done in genomecomb.
 ; **outfile**: write results to outfile
 
 == Options ==
-; **-split**: if 1, multiple alternative alleles will be on a separate lines, treated mostly as a separate variant
+; **-split**: If 1 (default),  will be on a separate lines, treated mostly as a separate variant
 ; **-sorted 0/1**: Use 1 if the CG var and gene file are already sorted (so they are not sorted gain first)
 ; **-ref refname**: name of reference genome that will be put in the comment of the tsv file, e.g. hg19.
 If not given it will detect hg18 or hg19 from the comments in the CG file

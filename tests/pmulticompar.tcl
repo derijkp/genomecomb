@@ -59,14 +59,14 @@ foreach {testname jobopts} {
 
 test pmulticompar$testname {basic} {
 	test_cleantmp
-	cg pmulticompar {*}$::jobopts tmp/temp.sft data/var_annot.sft data/var_annot2.sft
+	cg pmulticompar -split 0 {*}$::jobopts tmp/temp.sft data/var_annot.sft data/var_annot2.sft
 	reorder data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/temp.sft tmp/expected.tsv
 } {} 
 
 test pmulticompar$testname {no sreg error} {
 	test_cleantmp
-	cg pmulticompar {*}$::jobopts -i 0 tmp/temp.sft data/var_annot.sft data/var_annot2.sft
+	cg pmulticompar -split 0 {*}$::jobopts -i 0 tmp/temp.sft data/var_annot.sft data/var_annot2.sft
 	reorder data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/temp.sft tmp/expected.tsv
 } {no sorted region file (*/sreg-var_annot.tsv) or varallfile (*/varall-var_annot.tsv) found: not properly processed sample} error match
@@ -76,7 +76,7 @@ test pmulticompar$testname {basic with 3} {
 	foreach sample {annot annot2 annot3} {
 		file copy data/var_$sample.sft tmp/var-$sample.tsv
 	}
-	cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv tmp/var-annot3.tsv 2> tmp/warnings.log
+	cg pmulticompar -split 0 {*}$::jobopts tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv tmp/var-annot3.tsv 2> tmp/warnings.log
 	reorder data/expected-multicompar-var_annotvar_annot3.sft tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
@@ -86,8 +86,8 @@ test pmulticompar$testname {add to existing} {
 	foreach sample {annot annot2 annot3} {
 		file copy data/var_$sample.sft tmp/var-$sample.tsv
 	}
-	exec cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv
-	exec cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot3.tsv
+	exec cg pmulticompar -split 0 {*}$::jobopts tmp/temp.tsv tmp/var-annot.tsv tmp/var-annot2.tsv
+	exec cg pmulticompar -split 0 {*}$::jobopts tmp/temp.tsv tmp/var-annot3.tsv
 	reorder data/expected-multicompar-var_annotvar_annot3.sft tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
@@ -117,7 +117,7 @@ test pmulticompar$testname {basic reannot} {
 	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/var-annot2.tsv
 	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
-	cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
+	cg pmulticompar -split 0 {*}$::jobopts tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
@@ -194,7 +194,7 @@ test pmulticompar$testname {split reannot test diff alleles} {
 
 test pmulticompar$testname {basic, sequenced already present} {
 	test_cleantmp
-	cg pmulticompar {*}$::jobopts tmp/temp.sft data/var_annot.sft data/var_annot2seq.sft
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.sft data/var_annot.sft data/var_annot2seq.sft
 	catch {exec diff tmp/temp.sft data/expected-multicompar-var_annotvar_annot2.sft} e
 	set e
 } {1c1
@@ -217,7 +217,7 @@ test pmulticompar$testname {var and mapper naming convention} {
 	catch {file link tmp/var-varcaller2-mapper2-sample1.sft ../data/var_annot.sft}
 	catch {file link tmp/var-varcaller1-mapper1-sample2.sft ../data/var_annot2.sft}
 	catch {file link tmp/var-varcaller2-mapper2-sample2.sft ../data/var_annot2.sft}
-	cg pmulticompar {*}$::jobopts tmp/temp.sft tmp/var-varcaller1-mapper1-sample1.sft tmp/var-varcaller2-mapper2-sample1.sft tmp/var-varcaller1-mapper1-sample2.sft tmp/var-varcaller2-mapper2-sample2.sft
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.sft tmp/var-varcaller1-mapper1-sample1.sft tmp/var-varcaller2-mapper2-sample1.sft tmp/var-varcaller1-mapper1-sample2.sft tmp/var-varcaller2-mapper2-sample2.sft
 	set fields {chromosome	begin	end	type	ref	alt}
 	foreach {from to} {
 		var_annot varcaller1-mapper1-sample1 var_annot varcaller2-mapper2-sample1
@@ -254,7 +254,7 @@ test pmulticompar$testname {basic reannot varall} {
 	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
 	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
 	catch {file delete tmp/temp.tsv}
-	cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
@@ -281,7 +281,7 @@ test pmulticompar$testname {basic reannot varall lz4 compressed} {
 	catch {file delete tmp/temp.tsv}
 	cg lz4 {*}[glob tmp/*]
 	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
-	cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot1.tsv.lz4 tmp/var-annot2.tsv.lz4
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv tmp/var-annot1.tsv.lz4 tmp/var-annot2.tsv.lz4
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
@@ -308,7 +308,7 @@ test pmulticompar$testname {basic reannot varall rz compressed} {
 	catch {file delete tmp/temp.tsv}
 	cg razip {*}[glob tmp/*]
 	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
-	cg pmulticompar {*}$::jobopts tmp/temp.tsv tmp/var-annot1.tsv.rz tmp/var-annot2.tsv.rz
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv tmp/var-annot1.tsv.rz tmp/var-annot2.tsv.rz
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
@@ -438,7 +438,7 @@ test pmulticompar$testname {sort empty bug split} {
 test pmulticompar$testname {error on split files without split option} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg pmulticompar {*}$::jobopts tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv data/var-compartest1.tsv data/var-compartest2.tsv
 	# no error on command for -d num, check error file
 	set temp [file_read tmp/temp.tsv.index/multicompar/log_jobs/multi_merge-vars.tsv.err]
 	error $temp
@@ -447,7 +447,7 @@ test pmulticompar$testname {error on split files without split option} {
 test pmulticompar$testname {error on badly sorted files} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg pmulticompar {*}$::jobopts tmp/temp.tsv data/vars_sorterror1.sft data/var_annot2.sft
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv data/vars_sorterror1.sft data/var_annot2.sft
 	# no error on command for -d num, check error file
 	set temp [file_read tmp/temp.tsv.index/multicompar/log_jobs/multi_merge-vars.tsv.err]
 	error $temp
@@ -457,7 +457,7 @@ chr10:43198434-43198435:snp:G came before chr3:52847042-52847060:del:*} match er
 test pmulticompar$testname {error on badly sorted files 2} {
 	test_cleantmp
 	# this gave an incorrectly sorted file
-	cg pmulticompar {*}$::jobopts tmp/temp.tsv data/vars_sorterror1.sft data/vars_sorterror2.sft
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv data/vars_sorterror1.sft data/vars_sorterror2.sft
 	# no error on command for -d num, check error file
 	set temp [file_read tmp/temp.tsv.index/multicompar/log_jobs/multi_merge-vars.tsv.err]
 	error $temp
@@ -472,7 +472,7 @@ test pmulticompar$testname {error on file with missing fields} {
 		ATAD3B_1421916  1421915 1421916 snp     chr1    T       C
 	}
 	# exec multi_merge 1 tmp/errorfile.tsv
-	cg pmulticompar tmp/result.tsv tmp/errorfile.tsv
+	cg pmulticompar -split 0 tmp/result.tsv tmp/errorfile.tsv
 } {field type not found
 child process exited abnormally} error
 

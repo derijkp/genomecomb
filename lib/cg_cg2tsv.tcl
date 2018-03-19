@@ -599,7 +599,7 @@ proc cg_var2annot {args} {
 
 proc cg_cg2tsv {args} {
 	global scriptname action
-	set split 0
+	set split 1
 	set sorted 0
 	set ref {}
 	cg_options cg2tsv args {

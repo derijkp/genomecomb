@@ -47,8 +47,8 @@ they are not present in any of the samples.
 A column will be added to indicate for each variant if it was in the **variantfile**. The name of the 
 column will be the part of the filename after the last dash. If **variantfile** contains a "name" column, 
 the content of this will be used in the targets column instead of a 1.
-; **-split**: if 1, multiple alternative alleles will be on a separate lines, treated mostly as a separate variant
-Use 0 for the default (alternatives alleles are on the same line, separated by comma in the alt field)
+; **-split**: if 1 (default), multiple alternative alleles will be on a separate lines, treated mostly as a separate variant
+Use 0 for giving alternatives alleles on the same line, separated by comma in the alt field
 
 == Category ==
 Compare

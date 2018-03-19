@@ -667,14 +667,14 @@ test correctvariants {basic multicompar doubles} {
 
 test correctvariants {-c 1} {
 	test_cleantmp
-	exec cg correctvariants -c 1 data/updatavartest.tsv tmp/temp.tsv /complgen/refseq/hg18
+	exec cg correctvariants -split 0 -c 1 data/updatavartest.tsv tmp/temp.tsv /complgen/refseq/hg18
 	exec diff tmp/temp.tsv data/expected-updatavartest.tsv
 } {}
 
 test correctvariants {-f} {
 	test_cleantmp
 	exec cg select -f {chromosome begin end type ref alt} data/updatavartest.tsv tmp/temp.tsv
-	exec cg correctvariants -c 1 tmp/temp.tsv tmp/temp2.tsv /complgen/refseq/hg18
+	exec cg correctvariants -split 0 -c 1 tmp/temp.tsv tmp/temp2.tsv /complgen/refseq/hg18
 	exec diff tmp/temp2.tsv data/expected-updatavartest2.tsv
 } {}
 

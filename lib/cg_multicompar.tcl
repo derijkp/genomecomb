@@ -8,7 +8,7 @@ proc cg_multicompar {args} {
 	set args [job_init {*}$args]
 	set reannot 0
 	set regonly 0
-	set split 0
+	set split 1
 	set targetvarsfile {}
 	set targetsfield {}
 	cg_options multicompar args {
