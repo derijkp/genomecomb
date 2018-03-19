@@ -213,4 +213,9 @@ test vcf2tsv {missing geno fields} {
 #	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {svtest.vcf} {
+	cg vcf2tsv -split 1 data/svtest.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/svtest.tsv
+} {}
+
 testsummarize

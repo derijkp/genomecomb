@@ -106,6 +106,16 @@ void changetoupper(DString *ds) {
 	}
 }
 
+void printallele(FILE *fo,int size,char *string,int limit) {
+	if (size == 0) {
+		fprintf(fo,"\t");
+	} else if (string == NULL || (limit > 0 && size >= limit)) {
+		fprintf(fo,"\t%d", size);
+	} else {
+		fprintf(fo,"\t%*.*s", size, size, string);
+	}
+}
+
 typedef struct altvar {
 	DString *type;
 	int begin;
@@ -114,12 +124,13 @@ typedef struct altvar {
 	int refsize;
 	char *alt;
 	int altsize;
+	DString *buffer;
 } AltVar;
 
 /* i know it is ugly, but dont have the time to transfer all, or put in a nice struct at do at the moment */
 AltVar *altvars;
 static DString *line, *string, *temp;
-static DString *snp, *del, *ins, *sub;
+static DString *snp, *del, *ins, *sub, *dup, *inv, *cnv, *trans;
 static DString *geno, *outinfo, *formatfieldsnumber, *infofieldsnumber;
 static DStringArray *header, *format, *info, *samples;
 static DStringArray *formatfields , *infofields;
@@ -128,7 +139,7 @@ static DString *num;
 static char *typelist;
 static int *order = NULL;
 static int numalleles,altvarsmax;
-static int linenr;
+static int linenr,svendpos,svlenpos,svtypepos,chr2pos;
 
 #define a_chrom(array) (DStringArrayGet(array,0))
 #define a_pos(array) (DStringArrayGet(array,1))
@@ -418,8 +429,10 @@ void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int exclu
 
 void process_line_split(FILE *fo,DStringArray *linea,int excludename,int excludefilter,DString *genotypelist) {
 	DStringArray *lineformat,*alts;
+	DString *svlens=NULL,*svtype=NULL;
+	char *cursvlen=NULL;
 	char zyg;
-	int l1,l2,len,numalleles,curallele,pos,i,igeno,isample;
+	int l1,l2,len,numalleles,curallele,pos,i,igeno,isample,svend=-1,svlen=0;
 	/* determine type, ref, alt, ... for different alleles */
 	lineformat = DStringArrayFromChar(a_format(linea)->string,':');
 	/* set genos [lrange $line 9 end] */
@@ -432,17 +445,64 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 		altvars = (AltVar *)realloc(altvars,numalleles*sizeof(AltVar));
 		altvarsmax = numalleles;
 	}
+	{
+		/* parse info first (need END for structural variants) */
+		char *cur,*curend;
+		DString *info = a_info(linea);
+		for (i = 0 ; i< infofields->size ; i++) {
+			outinfo[i].size = -1;
+		}
+		cur = info->string;
+		curend = cur;
+		while (1) {
+			while (*curend != '=' && *curend != ';' && *curend != '\0') curend++;
+			if (curend == cur) {
+				cur = ++curend;
+				continue;
+			}
+			pos = DStringArraySearch(infofields,cur,curend-cur);
+			if (*curend == '=') {curend++;}
+			cur = curend;
+			if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
+			if (pos == -1) {
+				/* fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur); */
+			} else {
+				outinfo[pos].string = cur;
+				outinfo[pos].size = curend-cur;
+				if (pos == svtypepos) {
+					svtype = outinfo + svtypepos;
+				} else if (pos == svendpos) {
+					/* vcf 1 based, but for SVs the pos is given before variant and END is defined as POS + length of REF allele - 1 */
+					/* so no -1 to get correct endpoint in half open */
+					svend=atoi(outinfo[svendpos].string);
+				} else if (pos == svlenpos) {
+					svlens = outinfo + svlenpos;
+				}
+			}
+			if (*curend == '\0') break;
+			cur = ++curend;
+		}
+		if (svlens != NULL)  {
+			cursvlen = svlens->string;
+		} else {
+			cursvlen = NULL;
+		}
+	}
 	for (curallele = 0 ; curallele < numalleles; curallele++) {
 		DString *altallele = DStringArrayGet(alts,curallele);
 		AltVar *altvar = altvars+curallele;
 		char *curref, *curalt;
 		/* determine type for this altallele */
+		if (cursvlen != NULL)  {
+			svlen = atoi(cursvlen); while (*cursvlen != ',' && *cursvlen != '\0') cursvlen++;
+		}
 		pos = atoi(a_pos(linea)->string);
 		curref = ref->string;
 		l1 = ref->size;
 		curalt = altallele->string;
 		l2 = altallele->size;
 		pos--; /* vcf 1 based */
+		/* if ((l2 == 0 || *curalt != '<') && (l2 < 2 || (curalt[1] != '<'))) */
 		if (*curref == *curalt) {
 			/* remove base before simple indel */
 			pos++;
@@ -454,36 +514,104 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 			l1--; l2--;
 		}
 		altvar->ref = curref; altvar->refsize = l1;
-		altvar->alt = curalt; altvar->altsize = l2;
-		if (l1 == 1 && l2 == 1) {
-			altvar->type = snp;
-			altvar->begin = pos;
-			altvar->end = pos + 1;
-		} else if (l1 == 0 && l2 != 0) {
-			altvar->type = ins;
-			altvar->begin = pos;
-			altvar->end = pos;
-		} else if (l1 != 0 && l2 == 0) {
-			altvar->type = del;
-			altvar->begin = pos;
-			altvar->end = pos+l1;
+		altvar->alt = curalt; altvar->altsize = l2; altvar->buffer = NULL;
+		if ((l2 == 0 || *curalt != '<') && svtype == NULL) {
+			if (l1 == 1 && l2 == 1) {
+				altvar->type = snp;
+				altvar->begin = pos;
+				altvar->end = pos + 1;
+			} else if (l1 == 0 && l2 != 0) {
+				altvar->type = ins;
+				altvar->begin = pos;
+				altvar->end = pos;
+			} else if (l1 != 0 && l2 == 0) {
+				altvar->type = del;
+				altvar->begin = pos;
+				altvar->end = pos+l1;
+			} else {
+				altvar->type = sub;
+				altvar->begin = pos;
+				altvar->end = pos+l1;
+			}
 		} else {
-			altvar->type = sub;
+			/* sv */
+			if (altallele->string[0] == '<') {
+				/* vcf uses base before actual variant, but this notation has no matching base in alt to shift it */
+				pos++; 
+			}
 			altvar->begin = pos;
-			altvar->end = pos+l1;
+			if (svend != -1) {
+				altvar->end = svend;
+				altvar->refsize = svend - pos;
+			} else {
+				altvar->end = pos;
+				altvar->refsize = 0;
+			}
+			altvar->ref = NULL;
+			if (l2 > 3 && strncmp(curalt+1,"DEL",3) == 0) {
+				altvar->type = del;
+				altvar->altsize = 0;
+			} else if (l2 > 3 && strncmp(curalt+1,"INS",3) == 0) {
+				altvar->type = ins;
+				if (svlen > 0) {
+					altvar->altsize = svlen;
+					altvar->alt = NULL;
+				}
+			} else if (l2 > 3 && strncmp(curalt+1,"DUP",3) == 0) {
+				altvar->type = dup;
+				altvar->altsize = altvar->refsize + svlen;
+				altvar->alt = NULL;
+			} else if (l2 > 3 && strncmp(curalt+1,"INV",3) == 0) {
+				altvar->type = inv;
+				altvar->altsize = 1;
+				altvar->alt = "i";
+			} else if (l2 > 3 && strncmp(curalt+1,"CNV",3) == 0) {
+				altvar->type = cnv;
+				altvar->altsize = 4;
+				altvar->alt = "cnv";
+			} else if (l2 > 3 && strncmp(curalt+1,"TRA",3) == 0) {
+				char *curchr; int cursize;
+				altvar->end = altvar->begin;
+				altvar->refsize = 0;
+				altvar->type = trans;
+				if (altvar->buffer == NULL) {altvar->buffer = DStringNew();}
+				curchr = outinfo[chr2pos].string; cursize = outinfo[chr2pos].size;
+				if (cursize > 3 && (curchr[0] == 'c' || curchr[0] == 'C') && curchr[1] == 'h' && curchr[2] == 'r') {
+					curchr += 3; cursize -= 3;
+				}
+				DStringPrintf(altvar->buffer,"[%*.*s:%d[",cursize,cursize,curchr,svend-1);
+				altvar->altsize = altvar->buffer->size;
+				altvar->alt = altvar->buffer->string;
+			} else if (svtype != NULL) {
+				char *pos;
+				for (i=0 ; i < svtype->size ; i++) {svtype->string[i] = tolower(svtype->string[i]);}
+				altvar->type = svtype;
+				pos = strchr(altvar->alt,'[');
+				if (pos != NULL) {
+					int size, loc;
+					pos = strchr(altvar->alt,':');
+					size = pos-altvar->alt;
+					loc = atoi(pos+1)-1;
+					if (altvar->buffer == NULL) {altvar->buffer = DStringNew();}
+					pos++;
+					while(*pos >= 48 && *pos <= 57) pos++;
+					DStringPrintf(altvar->buffer,"%*.*s:%d%s",size,size,altvar->alt,loc,pos);
+					altvar->altsize = altvar->buffer->size;
+					altvar->alt = altvar->buffer->string;
+				} else {
+					altvar->altsize = l2;
+					altvar->alt = curalt;
+				}
+			}
 		}
 	}
 	/* go over the different alleles */
 	for (curallele = 1 ; curallele <= numalleles; curallele++) {
 		AltVar *altvar = altvars+curallele-1;
 		NODPRINT("==== Print variant info ====")
-		fprintf(fo,"%s\t%d\t%d\t%s", a_chrom(linea)->string, altvar->begin, altvar->end, altvar->type->string);
-		if (altvar->refsize >= 20) {
-			fprintf(fo,"\t%d", altvar->refsize);
-		} else {
-			fprintf(fo,"\t%*.*s", altvar->refsize, altvar->refsize, altvar->ref);
-		}
-		fprintf(fo,"\t%*.*s", altvar->altsize, altvar->altsize, altvar->alt);
+		fprintf(fo,"%s\t%d\t%d\t%*.*s", a_chrom(linea)->string, altvar->begin, altvar->end, altvar->type->size, altvar->type->size, altvar->type->string);
+		printallele(fo,altvar->refsize,altvar->ref,20);
+		printallele(fo,altvar->altsize,altvar->alt,0);
 		if (!excludename) fprintf(fo,"\t%s", a_id(linea)->string);
 		fprintf(fo,"\t%s", a_qual(linea)->string);
 		if (!excludefilter) fprintf(fo,"\t%s", a_filter(linea)->string);
@@ -535,19 +663,15 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 					} else {
 						a1 = atol(genotypestring);
 						if (a1 == 0) {
-							if (altvar->refsize >= 20) {
-								fprintf(fo,"\t%d", altvar->refsize);
-							} else {
-								fprintf(fo,"\t%*.*s", altvar->refsize, altvar->refsize, altvar->ref);
-							}
+							printallele(fo,altvar->refsize,altvar->ref,20);
 							DStringAppendS(genotypelist,"0",1);
 						} else if (a1 == curallele) {
-							fprintf(fo,"\t%*.*s",altvar->altsize,altvar->altsize,altvar->alt);
+							printallele(fo,altvar->altsize,altvar->alt,0);
 							DStringAppendS(genotypelist,"1",1);
 						} else {
 							AltVar *temp = altvars+a1-1;
 							if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
-								fprintf(fo,"\t%*.*s",temp->altsize,temp->altsize,temp->alt);
+								printallele(fo,temp->altsize,temp->alt,0);
 							} else {
 								fprintf(fo,"\t@");
 							}
@@ -573,19 +697,15 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 					} else {
 						a2 = atol(genotypecur);
 						if (a2 == 0) {
-							if (altvar->refsize >= 20) {
-								fprintf(fo,"\t%d", altvar->refsize);
-							} else {
-								fprintf(fo,"\t%*.*s", altvar->refsize, altvar->refsize, altvar->ref);
-							}
+							printallele(fo,altvar->refsize,altvar->ref,20);
 							DStringAppendS(genotypelist,"0",1);
 						} else if (a2 == curallele) {
-							fprintf(fo,"\t%*.*s",altvar->altsize,altvar->altsize,altvar->alt);
+							printallele(fo,altvar->altsize,altvar->alt,0);
 							DStringAppendS(genotypelist,"1",1);
 						} else {
 							AltVar *temp = altvars+a2-1;
 							if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
-								fprintf(fo,"\t%*.*s",temp->altsize,temp->altsize,temp->alt);
+								printallele(fo,temp->altsize,temp->alt,0);
 							} else {
 								fprintf(fo,"\t@");
 							}
@@ -671,61 +791,34 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 			}
 		}
 		/* info output */
-		{
-			char *cur,*curend;
-			DString *info = a_info(linea);
-			for (i = 0 ; i< infofields->size ; i++) {
-				outinfo[i].size = -1;
-			}
-			cur = info->string;
-			curend = cur;
-			while (1) {
-				while (*curend != '=' && *curend != ';' && *curend != '\0') curend++;
-				if (curend == cur) {
-					cur = ++curend;
-					continue;
-				}
-				pos = DStringArraySearch(infofields,cur,curend-cur);
-				if (*curend == '=') {curend++;}
-				cur = curend;
-				if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
-				if (pos == -1) {
-					/* fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur); */
-				} else {
-					outinfo[pos].string = cur;
-					outinfo[pos].size = curend-cur;
-				}
-				if (*curend == '\0') break;
-				cur = ++curend;
-			}
-			for (i = 0 ; i< infofields->size ; i++) {
-				len  = outinfo[i].size;
-				if (len == -1) {
+		for (i = 0 ; i< infofields->size ; i++) {
+			if (i == svendpos || i == svlenpos || i == svtypepos) continue;
+			len  = outinfo[i].size;
+			if (len == -1) {
+				fprintf(fo,"\t");
+				if (infofieldsnumber->string[i] == 'R') {
 					fprintf(fo,"\t");
-					if (infofieldsnumber->string[i] == 'R') {
-						fprintf(fo,"\t");
-					}
-				} else if (len == 0) {
-					if (infofieldsnumber->string[i] == 'R') {
-						fprintf(fo,"\t");
-					}
-					fprintf(fo,"\t1");
-				} else if (infofieldsnumber->string[i] == 'R') {
-					DString result;
-					getfield(&result,outinfo[i].string,0);
-					fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
-					getfield(&result,outinfo[i].string,curallele);
-					fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
-				} else if (infofieldsnumber->string[i] == 'A') {
-					DString result;
-					getfield(&result,outinfo[i].string,curallele-1);
-					fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
-				} else {
-					fprintf(fo,"\t%*.*s",len,len,outinfo[i].string);
 				}
+			} else if (len == 0) {
+				if (infofieldsnumber->string[i] == 'R') {
+					fprintf(fo,"\t");
+				}
+				fprintf(fo,"\t1");
+			} else if (infofieldsnumber->string[i] == 'R') {
+				DString result;
+				getfield(&result,outinfo[i].string,0);
+				fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
+				getfield(&result,outinfo[i].string,curallele);
+				fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
+			} else if (infofieldsnumber->string[i] == 'A') {
+				DString result;
+				getfield(&result,outinfo[i].string,curallele-1);
+				fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
+			} else {
+				fprintf(fo,"\t%*.*s",len,len,outinfo[i].string);
 			}
-			fprintf(fo,"\n");
 		}
+		fprintf(fo,"\n");
 	}
 	DStringArrayDestroy(lineformat);
 	DStringArrayDestroy(alts);
@@ -741,12 +834,14 @@ int main(int argc, char *argv[]) {
 	int split,read,i,j,maxtab, min, excludefilter = 0, excludename = 0;
 	line=NULL; string=NULL; temp=NULL;
 	snp=DStringNewFromChar("snp"); del=DStringNewFromChar("del"); ins=DStringNewFromChar("ins"); sub=DStringNewFromChar("sub");
+	dup=DStringNewFromChar("dup"); inv=DStringNewFromChar("inv"); cnv=DStringNewFromChar("cnv"); trans=DStringNewFromChar("trans");
 	geno = NULL; outinfo = NULL; formatfieldsnumber=NULL; infofieldsnumber=NULL;
 	header=NULL; format=NULL; info=NULL; samples=NULL;
 	formatfields=NULL ; headerfields=NULL; infofields=NULL; linea=NULL;
 	ref=NULL; alt=DStringNew(); id=DStringNew();
 	num=DStringNew();
 	linenr=0; numalleles=1;
+	svtypepos = -1; svendpos = -1; svlenpos = -1;
 	DStringSetS(num,".",1);
 	altvars = (AltVar *)malloc(5*sizeof(AltVar)); altvarsmax = 5;
 	line = DStringNew();
@@ -778,6 +873,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	temp = DStringNew();
+	/* create hash for conversion of field names */
 	conv_formata = hash_init();
 	dstring_hash_set(conv_formata,DStringNewFromChar("AD"),(void *)DStringNewFromChar("alleledepth"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("GT"),(void *)DStringNewFromChar("genotype"));
@@ -792,6 +888,7 @@ int main(int argc, char *argv[]) {
 	dstring_hash_set(conv_formata,DStringNewFromChar("AA"),(void *)DStringNewFromChar("Ancestralallele"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("DB"),(void *)DStringNewFromChar("dbsnp"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("H2"),(void *)DStringNewFromChar("Hapmap2"));
+	/* create hash for fields to remove */
 	if (argc == 6) {
 		char *start = argv[5];
 		char *cur = argv[5];
@@ -907,10 +1004,21 @@ int main(int argc, char *argv[]) {
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
 			if (ds->size == 0) {continue;}
-			if (num->string[0] == 'R') {
-				fprintf(fo,"\t%*.*s_ref",ds->size,ds->size,ds->string);
-			}			
-			fprintf(fo,"\t%*.*s",ds->size,ds->size,ds->string);
+			if (id->size == 3 && strncmp(id->string,"END",3) == 0) {
+				svendpos = i;
+			} else if (id->size == 5 && strncmp(id->string,"SVLEN",5) == 0) {
+				svlenpos = i;
+			} else if (id->size == 6 && strncmp(id->string,"SVTYPE",6) == 0) {
+				svtypepos = i;
+			} else {
+				if (id->size == 4 && strncmp(id->string,"CHR2",5) == 0) {
+					chr2pos = i;
+				}
+				if (num->string[0] == 'R') {
+					fprintf(fo,"\t%*.*s_ref",ds->size,ds->size,ds->string);
+				}			
+				fprintf(fo,"\t%*.*s",ds->size,ds->size,ds->string);
+			}
 		}
 		DStringArrayAppend(infofields,id->string,id->size);
 		num->string[0] = extractNumber(DStringArrayGet(info,i));
