@@ -28,7 +28,7 @@ int copy_line_check(GZFILE *f, int numfields) {
 		if (c == '\t') {
 			numfields--;
 			if (numfields == 0) {
-				fprintf(stderr,"\nfile has more columns in a line than header\n");
+				fprintf(stderr,"\nfile %s has more columns in a line than header\n",f->filename);
 				exit(1);
 			}
 		}

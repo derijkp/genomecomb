@@ -609,7 +609,7 @@ test tsv_paste {extra column error} {
 		t	x2	2
 	}]
 	exec cg paste tmp/vars1.tsv tmp/sample1.tsv > /dev/null
-} {*file has more columns in a line than header*} error match
+} {*file tmp/sample1.tsv has more columns in a line than header*} error match
 
 test tsv_paste {multiple files} {
 	test_cleantmp
