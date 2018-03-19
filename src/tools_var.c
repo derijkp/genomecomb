@@ -243,22 +243,22 @@ void Varfile_checkbasicfields(VarFile *varfile) {
 	VariantPos *varpos;
 	varpos = &(varfile->varpos);
 	if (varpos->chr == -1) {
-		fprintf(stderr,"field chromosome not found\n"); exit(EXIT_FAILURE);
+		fprintf(stderr,"field chromosome not found in %s\n",varfile->file); exit(EXIT_FAILURE);
 	}
 	if (varpos->start == -1) {
-		fprintf(stderr,"field begin not found\n"); exit(EXIT_FAILURE);
+		fprintf(stderr,"field begin not found in %s\n",varfile->file); exit(EXIT_FAILURE);
 	}
 	if (varpos->end == -1) {
-		fprintf(stderr,"field end not found\n"); exit(EXIT_FAILURE);
+		fprintf(stderr,"field end not found in %s\n",varfile->file); exit(EXIT_FAILURE);
 	}
 	if (varpos->type == -1) {
-		fprintf(stderr,"field type not found\n"); exit(EXIT_FAILURE);
+		fprintf(stderr,"field type not found in %s\n",varfile->file); exit(EXIT_FAILURE);
 	}
 	if (varpos->ref == -1) {
-		fprintf(stderr,"field ref not found\n"); exit(EXIT_FAILURE);
+		fprintf(stderr,"field ref not found in %s\n",varfile->file); exit(EXIT_FAILURE);
 	}
 	if (varpos->alt == -1) {
-		fprintf(stderr,"field alt not found\n"); exit(EXIT_FAILURE);
+		fprintf(stderr,"field alt not found in %s\n",varfile->file); exit(EXIT_FAILURE);
 	}
 }
 
