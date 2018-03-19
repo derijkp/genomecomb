@@ -2,6 +2,8 @@
 # the next line restarts using wish \
 exec cg source "$0" "$@"
 
+if {[inlist $argv direct]} {set rundirect 1} else {set rundirect 0}
+
 source tools.tcl
 set keepdir [pwd]
 
@@ -272,6 +274,8 @@ foreach {testname initcode} {
 	"-d 30" {uplevel job_init -d 30 {*}$args}
 	"-d sge" {uplevel job_init -d sge {*}$args}
 } {
+
+if {$rundirect && $testname ne "direct"} continue
 # start of block
 
 if {$testname eq "-d sge"} {
