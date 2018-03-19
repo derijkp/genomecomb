@@ -682,7 +682,9 @@ mainw method curline {} {
 
 mainw method igv {} {
 	private $object tdata igv
-	if {![info exists igv(port)] || [catch {igv $igv(port) echo 1}]} {
+	# test if we still have connection using echo
+	# we do this twice, because when the igv was closed, the first time there sometimes still is a response
+	if {![info exists igv(port)] || [catch {igv $igv(port) echo 1} result] || [catch {igv $igv(port) echo 1} result]} {
 		Classy::busy .mainw
 		set igv(port) [igvopen]
 		Classy::busy remove .mainw
