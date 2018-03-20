@@ -53,8 +53,9 @@ proc liftsample_job {args} {
 			} else {
 				putslog "converting $file"
 				file delete $target.temp
-				if {[jobglob $regionfile] ne ""} {
-					cg liftover -regionfile $liftoverfile -split $split $file $target.temp $liftoverfile 2>@ stderr
+				set regionfile [jobglob $regionfile]
+				if {$regionfile ne ""} {
+					cg liftover -regionfile $regionfile -split $split $file $target.temp $liftoverfile 2>@ stderr
 				} else {
 					cg liftover -split $split $file $target.temp $liftoverfile 2>@ stderr
 				}
