@@ -1,3 +1,5 @@
+#test
+#comments
 chromosome	begin	end	type	ref	alt	name	small_impact	small_mir
 chr1	567603	567604	snp	G	C	pre	mir1+:upstream(a-101e);mir1-a:downstream(a+e101);mir1-b:downstream(a+e101)	mir1+;mir1-;mir1-
 chr1	567604	567605	snp	A	C	flank-5p	mir1+:flank5p(a-e100);mir1-a:flank3p(a+100e);mir1-b:flank3p(a+100e)	mir1+;mir1-;mir1-

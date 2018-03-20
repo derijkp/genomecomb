@@ -2,8 +2,6 @@
 # the next line restarts using wish \
 exec cg source "$0" "$@"
 
-if {[inlist $argv direct]} {set rundirect 1} else {set rundirect 0}
-
 source analysis.tcl
 source annot.tcl
 source bcol.tcl

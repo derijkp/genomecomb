@@ -352,7 +352,6 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 		set mo [mirvas_start $mirvas $file $resultfile $flanksizes]
 		puts $o [join $nh \t]
 	} else {
-		puts -nonewline $o [join [list_fill [expr {[llength [split $comment \n]]-1}] \n] ""]
 		set addtranscriptname 1
 		set nh [list ${name}_impact ${name}_mir]
 		foreach col $extracols {
