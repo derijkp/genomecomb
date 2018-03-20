@@ -489,8 +489,8 @@ test pmulticompar$testname {error on file with missing fields} {
 	}
 	# exec multi_merge 1 tmp/errorfile.tsv
 	cg pmulticompar -split 0 tmp/result.tsv tmp/errorfile.tsv
-} {field type not found
-child process exited abnormally} error
+} {field type not found in *errorfile.tsv
+child process exited abnormally} match error
 
 test pmulticompar$testname {split reannot split multiallelic varall,no sreg,zyg} {
 	test_cleantmp
