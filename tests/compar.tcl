@@ -220,6 +220,24 @@ test svmulticompar {basic} {
 	exec diff tmp/temp.tsv data/expected-svmulticompar.tsv
 } {} 
 
+test svmulticompar {trans} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	10001	10001	trans	{}	[chr2:100[
+	}
+	write_tab tmp/s2.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	10021	10021	trans	{}	[chr2:200[
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	lbegin-s1	lend-s1	lalt-s1	lbegin-s2	lend-s2	lalt-s2
+		1	10001	10001	trans	{}	[chr2:100[	10001	10001	[chr2:100[	10021	10021	[chr2:200[
+	}
+	cg svmulticompar tmp/temp.tsv tmp/s1.tsv tmp/s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
 test svmulticompar {cnv} {
 	test_cleantmp
 	write_tab tmp/s1.tsv {

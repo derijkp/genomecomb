@@ -4,28 +4,6 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-if 0 {
-
-package require Tclx
-signal -restart error SIGINT
-lappend auto_path ~/dev/genomecomb/lib ~/dev/genomecomb/lib-exp
-package require Extral
-cd /complgen/sv
-	cd /complgen/sv
-	set outfile svcompar_test.tsv
-	set outfile svcompar_GS102_GS103/svcompar_GS102_GS103-20.tsv
-	set svfile1 sv79-20-pairs-sv.tsv
-	set svfile2 sv78-20-pairs-sv.tsv
-	set outfile svcompar_sv78_sv79-20.tsv
-	set svfile1 GS103/GS103-9-paired-sv.tsv
-	set svfile2 oldGS103-9-paired-sv.tsv
-	set svfile1 GS103/GS103-9-paired-sv.tsv
-	set svfile2 GS102/GS102-9-paired-sv.tsv
-	set svfile1 GS103/GS103-20-paired-sv.tsv
-	set svfile2 GS102/GS102-20-paired-sv.tsv
-
-}
-
 proc svopen {file side {name {}}} {
 	if {$name eq ""} {
 		set name [file root [file tail $file]]
@@ -50,7 +28,7 @@ proc svopen {file side {name {}}} {
 	}
 	if {[lindex $poss 6] == -1} {
 		set makealt [lsearch $header size]
-		if {$makealt == -1} {error "no alt and no size column for file $file"}
+		# if {$makealt == -1} {error "no alt and no size column for file $file"}
 		set makealt [lsearch $poss $makealt]
 		lappend makealt [lsearch $poss [lsearch $header chr2]]
 		lappend makealt [lsearch $poss [lsearch $header start2]]
@@ -109,9 +87,17 @@ proc svmulticompar_dist {sline1 sline2 {margin 30} {lmargin 300} {overlap 80}} {
 		set overlap1 [max $begin1 $begin2]
 		set overlap2 [min $end1 $end2]
 		set psize [expr {100*($overlap2 - $overlap1)}]
-		if {[expr {$psize/($end1-$begin1)}] < $overlap} {return 2147483648}
-		if {[expr {$psize/($end2-$begin2)}] < $overlap} {return 2147483648}
+		if {$end1 == $begin1 || [expr {$psize/($end1-$begin1)}] < $overlap} {return 2147483648}
+		if {$end2 == $begin2 || [expr {$psize/($end2-$begin2)}] < $overlap} {return 2147483648}
 		set margin $lmargin
+	} elseif {$type1 eq "trans"
+		&& [regexp {\[?([^:]+):([0-9]+)\]?} $alt1 temp tchr1 tbegin1]
+		&& [regexp {\[?([^:]+):([0-9]+)\]?} $alt2 temp tchr2 tbegin2]
+	} {
+		if {$tchr1 ne $tchr2} {return 2147483648}
+		set diff [expr {abs($tbegin2 - $tbegin1)}]
+		if {$diff > $lmargin} {return 2147483648}
+		return [expr {abs($begin2 - $begin1) + $diff}]
 	}
 	set enddiff [expr {abs($end2 - $end1)}]
 	if {$enddiff > $margin} {return 2147483648}
