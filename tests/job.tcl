@@ -2,7 +2,27 @@
 # the next line restarts using wish \
 exec cg source "$0" "$@"
 
-if {[inlist $argv direct]} {set rundirect 1} else {set rundirect 0}
+set pos [lsearch $argv -d]
+if {$pos != -1} {
+	set distribute [lindex $argv [incr pos]]
+	if {$distribute eq "direct"} {
+		set tests {
+			"direct" {uplevel job_init -skipjoberrors 1 {*}$args}
+		}
+	} else {
+		set tests [subst {
+			"-d $distribute" {uplevel job_init -d $distribute {*}\$args}
+		}]
+	}
+} else {
+	set tests {
+		"direct" {uplevel job_init -skipjoberrors 1 {*}$args}
+		"-d 2" {uplevel job_init -d 2 {*}$args}
+		"-d 4" {uplevel job_init -d 4 {*}$args}
+		"-d 30" {uplevel job_init -d 30 {*}$args}
+		"-d sge" {uplevel job_init -d sge {*}$args}
+	}
+}
 
 source tools.tcl
 set keepdir [pwd]
@@ -267,15 +287,7 @@ test job {job_expandvarslist} {
 # ------------------------------------
 # test in different "processing modes"
 # ------------------------------------
-foreach {testname initcode} {
-	"direct" {uplevel job_init -skipjoberrors 1 {*}$args}
-	"-d 2" {uplevel job_init -d 2 {*}$args}
-	"-d 4" {uplevel job_init -d 4 {*}$args}
-	"-d 30" {uplevel job_init -d 30 {*}$args}
-	"-d sge" {uplevel job_init -d sge {*}$args}
-} {
-
-if {$rundirect && $testname ne "direct"} continue
+foreach {testname initcode} $tests {
 # start of block
 
 if {$testname eq "-d sge"} {

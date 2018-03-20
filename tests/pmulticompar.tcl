@@ -5,6 +5,25 @@ exec tclsh "$0" "$@"
 source tools.tcl
 package require genomecomb
 
+set pos [lsearch $argv -d]
+if {$pos != -1} {
+	set distribute [lindex $argv [incr pos]]
+	if {$distribute eq "direct"} {
+		set tests {
+			_direct {}
+		}
+	} else {
+		set tests [subst {
+			"_d$distribute" "-d $distribute"
+		}]
+	}
+} else {
+	set tests {
+		_direct {}
+		_d4 {-d 4}
+	}
+}
+
 proc reorder {file dest} {
 	set header [cg select -h $file]
 	set samples [samples $header]
@@ -52,10 +71,7 @@ proc multicompartest {num} {
 set testname _direct
 set jobopts {}
 
-foreach {testname jobopts} {
-	_direct {}
-	_d4 {-d 4}
-} {
+foreach {testname jobopts} $tests {
 
 test pmulticompar$testname {basic} {
 	test_cleantmp
