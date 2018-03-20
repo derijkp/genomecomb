@@ -313,7 +313,7 @@ proc generate_html_report_job {experiment {destdir {}}} {
 	} -targets {$destdir/$experiment.html} -vars {experiment destdir} -code {
 		set keepdir [pwd]
 		cd $destdir
-		cg select -g sample -gc {sequenced {v} count} $dep $destdir/compar/summary-compar-${experiment}.tsv
+		cg select -overwrite 1 -g sample -gc {sequenced {v} count} $dep $destdir/compar/summary-compar-${experiment}.tsv
 		set rmd $::appdir/res/mastrreport.Rmd
 		set chartjs $::appdir/res/displayChartHistogram.js
 		set cmd [string_change {library(rmarkdown); library(stringr); mastrdir="@destdir@"; local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @destdir@ $destdir @rmd@ $rmd @chartjs@ $chartjs]]
