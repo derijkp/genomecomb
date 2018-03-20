@@ -12,18 +12,18 @@ if {![info exists webcache]} {set webcache $dest/webcache}
 if {[info exists webcache]} {set env(webcache) $webcache}
 set dest [file_absolute $dest]
 
-putslog "Installing in $dest/$build"
+putslog "Installing in $dest/liftover"
 
 # liftchanges
 # ===========
 #
-file mkdir ${dest}
-cd ${dest}
+file mkdir ${dest}/liftover
+cd ${dest}/liftover
 
 job_logdir log_jobs
 
 # get chain files
-foreach {base src} {hg18ToHg19 hg18 hg19ToHg18 hg19 hg38ToHg19 hg38 hg19ToHg38 hg19} {
+foreach {base src} {hg18ToHg19 hg18 hg18ToHg38 hg18 hg19ToHg18 hg19 hg38ToHg19 hg38 hg19ToHg38 hg19} {
 	job getchain-$base -vars {src base} -targets {$base.over.chain} -code {
 		wgetfile http://hgdownload.soe.ucsc.edu/goldenPath/$src/liftOver/$base.over.chain.gz
 	}
@@ -31,9 +31,9 @@ foreach {base src} {hg18ToHg19 hg18 hg19ToHg18 hg19 hg38ToHg19 hg38 hg19ToHg38 h
 
 
 # make liftover files
-foreach base {hg18ToHg19 hg19ToHg18 hg38ToHg19 hg19ToHg38} {
+foreach base {hg18ToHg19 hg18ToHg38 hg19ToHg18 hg38ToHg19 hg19ToHg38} {
 	job liftchain2tsv-$base -deps {$base.over.chain} -targets {$base.over.tsv} -code {
-		cg liftchain2tsv $dep > $target.temp
+		cg liftchain2tsv $dep $target.temp
 		file rename -force $target.temp $target
 	}
 }
@@ -41,6 +41,7 @@ foreach base {hg18ToHg19 hg19ToHg18 hg38ToHg19 hg19ToHg38} {
 # lift refchanges hg18Tohg19
 foreach {base src dest} {
 	hg18ToHg19 hg18 hg19
+	hg18ToHg38 hg18 hg38
 	hg19ToHg18 hg19 hg18
 	hg38ToHg19 hg38 hg19
 	hg19ToHg38 hg19 hg38
