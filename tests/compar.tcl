@@ -233,8 +233,8 @@ test svmulticompar {cnv} {
 	}
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	lbegin-s1	lend-s1	lalt-s1	avgNormalizedCvg-s1	relativeCvg-s1	calledPloidy-s1	ploidyScore-s1	lbegin-s2	lend-s2	lalt-s2	avgNormalizedCvg-s2	relativeCvg-s2	calledPloidy-s2	ploidyScore-s2
-		1	1720	2721	amp	1001	?	1720	2721	amp	84.8	1.95	4	9	1700	2721	?	84.8	1.95	3	9
-		1	9650	10000	del	350	{}	9650	10000	del	76.5	1.76	4	9	{}	{}	{}	{}	{}	{}	{}
+		1	1720	2721	amp	1001	?	1720	2721	?	84.8	1.95	4	9	1700	2721	?	84.8	1.95	3	9
+		1	9650	10000	del	350	{}	9650	10000	{}	76.5	1.76	4	9	{}	{}	{}	{}	{}	{}	{}
 	}
 	cg svmulticompar tmp/temp.tsv tmp/s1.tsv tmp/s2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv

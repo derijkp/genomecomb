@@ -342,7 +342,7 @@ proc svmulticompar {args} {
 		while 1 {
 			set line [svgetline $f]
 			if {![llength $line]} break
-			puts $o [join [list {*}[lrange $line 1 6] {*}[list_sub $line {2 3 4}] {*}[lrange $line 7 end]] \t]
+			puts $o [join [list {*}[lrange $line 1 6] {*}[list_sub $line {2 3 6}] {*}[lrange $line 7 end]] \t]
 		}
 		close $o
 		svclose $f
