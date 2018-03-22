@@ -2,7 +2,7 @@
 #fileversion	0.10.0
 #split	0
 #info	tsv converted from vcf, original comments follow
-##fileDate=20180320
+##fileDate=20180322
 ##source=freeBayes v1.1.0-60-gc15b070
 ##reference=/home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.ifas
 ##contig=<ID=chr1,length=249250621>
@@ -31,7 +31,7 @@
 ##contig=<ID=chrX,length=155270560>
 ##contig=<ID=chrY,length=59373566>
 ##phasing=none
-##commandline="freebayes -t /tmp/tempExtral.27956-uHAFospKNWVNJRzLMaki/_Extral_temp_1.bed --genotype-qualities --report-monomorphic --exclude-unobserved-genotypes -f /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.ifas /home/peter/dev/genomecomb/tests/tmp/bwa.bam"
+##commandline="freebayes -t /tmp/tempExtral.28454-yNAjlXnTBGpxLLsPDLGd/_Extral_temp_1.bed --genotype-qualities --report-monomorphic --exclude-unobserved-genotypes -f /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.ifas /home/peter/dev/genomecomb/tests/tmp/bwa.bam"
 ##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of samples with data">
 ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total read depth at the locus">
 ##INFO=<ID=DPB,Number=1,Type=Float,Description="Total read depth per bp at the locus; bases in reads overlapping / bases in haplotype">
@@ -88,6 +88,6 @@
 ##FORMAT=<ID=MIN_DP,Number=1,Type=Integer,Description="Minimum depth in gVCF output block.">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA19240m
 # ----
-chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	genoqual	loglikelihood	coverage	alleledepth_ref	alleledepth	RO	QR	AO	QA	MIN_DP	NS	totalcoverage	DPB	RO	AO	PRO	PAO	QR	QA	PQR	PQA	SRF	SRR	SAF	SAR	SRP	SAP	AB	ABP	RUN	RPP	RPPR	RPL	RPR	EPP	EPPR	DPRA	ODDS	GTI	TYPE	CIGAR	NUMALT	MEANALT	LEN	MQM	MQMR	PAIRED	PAIREDR	MIN_DP	technology.illumina	cluster
+chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	genoqual	loglikelihood	coverage	alleledepth_ref	alleledepth	RO	QR	AO	QA	MIN_DP	NS	totalcoverage	DPB	info_RO	info_AO	PRO	info_PAO	info_QR	info_QA	PQR	PQA	SRF	SRR	SAF	SAR	SRP	SAP	info_AB	ABP	RUN	RPP	info_RPPR	RPL	RPR	EPP	EPPR	DPRA	ODDS	GTI	TYPE	CIGAR	NUMALT	MEANALT	LEN	MQM	MQMR	PAIRED	PAIREDR	info_MIN_DP	technology.illumina	cluster
 chr21	42735718	42735719	snp	G	A	62.5115	G	A	v	t	0	0;1	61.4363		8	4	4	4	145	4	139		1	8	8	4	4	0	0	145	139	0	0	2	2	2	2	3.0103	3.0103	0.5	3.0103	1	5.18177	5.18177	3	1	5.18177	5.18177	0	14.3938	0	snp	1X	1	1	1	60	60	1	1			
 chr21	42775179	42775180	snp	C	T	175.333	T	T	v	m	0	1;1	56.1236		6	0	6	0	0	6	215		1	6	6	0	6	0	0	0	215	0	0	0	0	5	1	0	8.80089	0	0	1	4.45795	0	2	4	3.0103	0	0	12.9229	0	snp	1X	1	1	1	60	0	1	0			

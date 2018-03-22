@@ -825,7 +825,7 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 }
 
 int main(int argc, char *argv[]) {
-	Hash_table *conv_formata;
+	Hash_table *conv_formata, *donefields;
 	FILE *fd = NULL,*fo = NULL;
 	DStringArray *headerfields, *linea;
 	DString *genotypelist=DStringNew();
@@ -873,6 +873,8 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	temp = DStringNew();
+	/* create hash for fields already used */
+	donefields = hash_init();
 	/* create hash for conversion of field names */
 	conv_formata = hash_init();
 	dstring_hash_set(conv_formata,DStringNewFromChar("AD"),(void *)DStringNewFromChar("alleledepth"));
@@ -963,6 +965,7 @@ int main(int argc, char *argv[]) {
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
 			if (ds->size == 0) {continue;}
+			dstring_hash_set(donefields,ds,(void *)"");
 			DStringArrayAppend(formatfields,id->string,id->size);
 			num->string[0] = extractNumber(DStringArrayGet(format,i));
 			num->string[0] = numberfromid(id,num->string[0],typelist);
@@ -1014,10 +1017,17 @@ int main(int argc, char *argv[]) {
 				if (id->size == 4 && strncmp(id->string,"CHR2",5) == 0) {
 					chr2pos = i;
 				}
-				if (num->string[0] == 'R') {
-					fprintf(fo,"\t%*.*s_ref",ds->size,ds->size,ds->string);
-				}			
-				fprintf(fo,"\t%*.*s",ds->size,ds->size,ds->string);
+				if (dstring_hash_get(donefields,ds) == NULL) {
+					if (num->string[0] == 'R') {
+						fprintf(fo,"\t%*.*s_ref",ds->size,ds->size,ds->string);
+					}
+					fprintf(fo,"\t%*.*s",ds->size,ds->size,ds->string);
+				} else {
+					if (num->string[0] == 'R') {
+						fprintf(fo,"\tinfo_%*.*s_ref",ds->size,ds->size,ds->string);
+					}
+					fprintf(fo,"\tinfo_%*.*s",ds->size,ds->size,ds->string);
+				}
 			}
 		}
 		DStringArrayAppend(infofields,id->string,id->size);
