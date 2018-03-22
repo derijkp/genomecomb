@@ -4,6 +4,10 @@ proc cg_checktsv {file} {
 	set poss [tsv_basicfields $header 4 0]
 	set line [split [gets $f] \t]
 	# foreach {pchr pbegin pend ptype} [list_sub $line $poss] break
+	set rheader [list_remdup $header]
+	if {[llength $rheader] < [llength $header]} {
+		puts "header has duplicate fields: [list_sub $header -exclude [list_cor $header $rheader]]"
+	}
 	set prev [list_sub $line $poss]
 	set len [llength $header]
 	set linenr 0
