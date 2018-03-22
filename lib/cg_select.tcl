@@ -431,11 +431,19 @@ proc tsv_select_expandfield {header field {giveerror 0} {qpossVar {}}} {
 	if {$field eq "ROW"} {return "ROW"}
 	if {[string index $field 0] eq "-"} {
 		set field [string range $field 1 end]
-		set poss [list_find -glob $header $field]
+		if {[string first * $field] == -1} {
+			set poss [lsearch $header $field]
+		} else {
+			set poss [list_find -glob $header $field]
+		}
 		set hfields [list_sub $header -exclude $poss]
 		lappend qposs {*}[list_cor $header $hfields]
 	} else {
-		set poss [list_find -glob $header $field]
+		if {[string first * $field] == -1} {
+			set poss [lsearch $header $field]
+		} else {
+			set poss [list_find -glob $header $field]
+		}
 		set hfields [list_sub $header $poss]
 		lappend qposs {*}[list_sub [list_fill [llength $header] 0 1] $poss]
 		if {![catch {set sampleinfofields [tsv_select_sampleinfo_wildcard $field $header]}]} {
