@@ -80,7 +80,7 @@ proc svgetline {f} {
 	return $line
 }
 
-proc svmulticompar_dist {sline1 sline2 {margin 30} {lmargin 300} {overlap 80}} {
+proc svmulticompar_dist {sline1 sline2 {margin 30} {lmargin 300} {overlap 75}} {
 	foreach {side1 chr1 begin1 end1 type1 ref1 alt1} $sline1 break
 	foreach {side2 chr2 begin2 end2 type2 ref2 alt2} $sline2 break
 	if {$type1 in "del inv"} {
@@ -136,7 +136,7 @@ proc svmulticompar_out {line1 line2 dummy1 dummy2} {
 	}
 }
 
-proc svmulticompar_groupdists {list1 list2 dummy1 dummy2 {margin 30} {lmargin 300} {overlap 80}} {
+proc svmulticompar_groupdists {list1 list2 dummy1 dummy2 {margin 30} {lmargin 300} {overlap 75}} {
 # putsvars list1 list2
 # if {[llength $list1] > 1 && [llength $list2] > 1} {error STOP}
 	set matches {}
@@ -145,7 +145,7 @@ proc svmulticompar_groupdists {list1 list2 dummy1 dummy2 {margin 30} {lmargin 30
 		set p2 0
 		foreach sline2 $list2 {
 			set diff [svmulticompar_dist $sline1 $sline2 $margin $lmargin $overlap]
-			if {$diff < 1000} {
+			if {$diff < 2147483640} {
 				lappend matches [list $diff $p1 $p2]
 			}
 			incr p2
@@ -158,7 +158,7 @@ proc svmulticompar_groupdists {list1 list2 dummy1 dummy2 {margin 30} {lmargin 30
 	set pos 0
 	list_foreach {diff p1 p2} $matches {
 		incr pos
-		if {[info exists done($p2)]} continue
+		if {[info exists done2($p2)]} continue
 		set done2($p2) 1
 		if {[info exists done1($p1)]} {
 			if {[lsearch [list_subindex [lrange $matches $pos end] 1] $p1] != -1} continue
@@ -167,11 +167,13 @@ proc svmulticompar_groupdists {list1 list2 dummy1 dummy2 {margin 30} {lmargin 30
 		}
 	}
 	set result {}
+	unset -nocomplain done2
 	set p1s [array names done1]
 	foreach p1 $p1s {
 		set line1 [lindex $list1 $p1]
 		foreach p2 $done1($p1) {
 			lappend result [svmulticompar_out $line1 [lindex $list2 $p2] $dummy1 $dummy2]
+			set done2($p2) 1
 		}
 	}
 	foreach line1 [list_sub $list1 -exclude $p1s] {
@@ -222,7 +224,7 @@ proc svmulticompar_getline {f poss {type 1}} {
 	list_concat $type $cur $line
 }
 
-proc svmulticompar_getlist {f1 line1Var f2 line2Var margin} {
+proc svmulticompar_getlist {f1 line1Var f2 line2Var maxmargin} {
 	upvar $line1Var line1
 	upvar $line2Var line2
 	global locpos
@@ -242,9 +244,9 @@ proc svmulticompar_getlist {f1 line1Var f2 line2Var margin} {
 			set return 1
 		} elseif {$chrcomp > 0} {
 			set return 2
-		} elseif {[expr {$begin1+$margin}] <= $begin2} {
+		} elseif {[expr {$begin1+$maxmargin}] <= $begin2} {
 			set return 1
-		} elseif {[expr {$begin2+$margin}] <= $begin1} {
+		} elseif {[expr {$begin2+$maxmargin}] <= $begin1} {
 			set return 2
 		}
 	}
@@ -261,11 +263,11 @@ proc svmulticompar_getlist {f1 line1Var f2 line2Var margin} {
 	}
 	set curchr $chr1
 	if {$begin1 < $begin2} {
-		set curstart [expr {$begin1 - $margin}]
-		set curend [expr {$begin2 + $margin}]
+		set curstart [expr {$begin1 - $maxmargin}]
+		set curend [expr {$begin2 + $maxmargin}]
 	} else {
-		set curstart [expr {$begin2 - $margin}]
-		set curend [expr {$begin1 + $margin}]
+		set curstart [expr {$begin2 - $maxmargin}]
+		set curend [expr {$begin1 + $maxmargin}]
 	}
 	set list [list $line1 $line2]
 	set line1 [svgetline $f1]
@@ -277,7 +279,7 @@ proc svmulticompar_getlist {f1 line1Var f2 line2Var margin} {
 		if {[llength $line1]} {
 			if {$chr1 == $curchr && $begin1 < $curend} {
 				lappend list $line1
-				set temp [expr {$begin1+$margin}]
+				set temp [expr {$begin1+$maxmargin}]
 				if {$temp > $curend} {
 					set curend $temp
 				}
@@ -289,13 +291,12 @@ proc svmulticompar_getlist {f1 line1Var f2 line2Var margin} {
 		if {[llength $line2]} {
 			if {$chr2 == $curchr && $begin2 < $curend} {
 				lappend list $line2
-				set temp [expr {$begin2+$margin}]
+				set temp [expr {$begin2+$maxmargin}]
 				if {$temp > $curend} {
 					set curend $temp
 				}
 				set line2 [svgetline $f2]
-				lappend line2 2
-				foreach {side2 chr2 begin2} $line1 break
+				foreach {side2 chr2 begin2} $line2 break
 				set match 2
 			}
 		}
@@ -308,7 +309,7 @@ proc svmulticompar {args} {
 	global locpos
 	set margin 30
 	set lmargin 300
-	set overlap 80
+	set overlap 75
 	cg_options svmulticompar args {
 		-margin {set margin $value}
 		-lmargin {set lmargin $value}
@@ -367,7 +368,6 @@ proc svmulticompar {args} {
 	# go over files
 	set ::cchr {}
 	set ::cpos 0
-	set did 1
 	while {[llength $line1] || [llength $line2]} {
 		# get overlapping lines from both files in the following format (locfields):
 		# {src chr1 begin end type start1 end1 size zyg chr2 start2 end2 (complete line)}
@@ -389,7 +389,6 @@ proc svmulticompar {args} {
 				} else {
 					puts $o [join [svmulticompar_out {} $line $dummy1 $dummy2] \t]
 				}
-				incr did
 			}
 			continue
 		}
@@ -443,7 +442,7 @@ proc svmulticompar {args} {
 proc cg_svmulticompar {args} {
 	set margin 30
 	set lmargin 300
-	set overlap 80
+	set overlap 75
 	cg_options svmulticompar args {
 		-margin {set margin $value}
 		-lmargin {set lmargin $value}
