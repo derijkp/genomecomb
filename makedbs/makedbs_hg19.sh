@@ -612,6 +612,9 @@ foreach {targetname url file} {
 		file rename -force reg_hg19_exome_$targetname.tsv.lz4 $fulltarget.lz4
 		file rename -force reg_hg19_exome_$targetname.tsv.lz4.lz4i $fulltarget.lz4.lz4i
 		file delete -force $fulltarget.temp
+		if {$targetname eq "SeqCap_EZ_v3"} {
+			mklink $fulltarget [file dit $fulltarget]/reg_hg19_exome_seqcapv3.tsv
+		}
 	}
 }
 cd ${dest}/${build}
