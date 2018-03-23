@@ -213,9 +213,40 @@ test vcf2tsv {missing geno fields} {
 #	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {duplicate fields (in info and format)} {
+	write_vcf tmp/temp.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+		20	14370	rs6054257	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ:DB	0|0:48:1:51,51:t	1|0	.
+	} "##FORMAT=<ID=DB,Number=0,Type=Flag,Description=\"dbSNP membership, build 129\">\n"
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1-NA00001	alleleSeq2-NA00001	zyg-NA00001	phased-NA00001	genotypes-NA00001	alleledepth_ref-NA00001	alleledepth-NA00001	TE-NA00001	genoqual-NA00001	coverage-NA00001	haploqual-NA00001	dbsnp-NA00001	alleleSeq1-NA00002	alleleSeq2-NA00002	zyg-NA00002	phased-NA00002	genotypes-NA00002	alleledepth_ref-NA00002	alleledepth-NA00002	TE-NA00002	genoqual-NA00002	coverage-NA00002	haploqual-NA00002	dbsnp-NA00002	alleleSeq1-NA00003	alleleSeq2-NA00003	zyg-NA00003	phased-NA00003	genotypes-NA00003	alleledepth_ref-NA00003	alleledepth-NA00003	TE-NA00003	genoqual-NA00003	coverage-NA00003	haploqual-NA00003	dbsnp-NA00003	NS	totalcoverage	frequency	Ancestralallele	info_dbsnp	Hapmap2
+		20	14369	14370	snp	G	A	rs6054257	29	PASS	G	G	r	1	0,0	{}	{}	{}	48	1	51,51	t	A	G	t	1	1,0	{}	{}	{}	{}	{}	{}	{}	?	?	?	?	?	{}	{}	{}	{}	{}	{}	{}	3	14	0.5	{}	1	1
+	}
+	cg vcf2tsv tmp/temp.vcf tmp/temp.tsv
+	cg select -rc 1 tmp/temp.tsv tmp/temp2.tsv
+	exec diff tmp/temp2.tsv tmp/expected.tsv
+} {}
+
+test vcf2tsv {wrong nr lines with -removefields} {
+	cg vcf2tsv -removefields {
+		name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
+	} data/varall-freebayes-rdsbwa-NA19238mx2-part.vcf tmp/temp.tsv
+	cg checktsv tmp/temp.tsv
+} {}
+
 test vcf2tsv {svtest.vcf} {
 	cg vcf2tsv -split 1 data/svtest.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/svtest.tsv
 } {}
+
+test vcf2tsv {svtest.vcf} {
+	cg vcf2tsv -split 0 data/svtest.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/svtest-unsplit.tsv
+} {}
+
+test vcf2tsv {svtest.vcf} {
+	cg vcf2tsv -split ori data/svtest.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/svtest.tsv
+} {*structural variants not supported in -split ori, vcf has SVLEN*} match error
 
 testsummarize

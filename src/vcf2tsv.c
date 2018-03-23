@@ -382,12 +382,13 @@ void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int exclu
 				continue;
 			}
 			pos = DStringArraySearch(infofields,cur,curend-cur);
-			/* if (pos == -1) {fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur);}*/
 			if (*curend == '=') {curend++;}
 			cur = curend;
 			if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
-			outinfo[pos].string = cur;
-			outinfo[pos].size = curend-cur;
+			if (pos != -1) {
+				outinfo[pos].string = cur;
+				outinfo[pos].size = curend-cur;
+			}
 			if (*curend == '\0') break;
 			cur = ++curend;
 		}
@@ -464,9 +465,7 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 			if (*curend == '=') {curend++;}
 			cur = curend;
 			if (*curend) {while (*curend != ';' && *curend != '\0') curend++;}
-			if (pos == -1) {
-				/* fprintf(stderr,"line %d: info field %*.*s not described in header, skipping\n",linenr,(int)(curend-cur),(int)(curend-cur),cur); */
-			} else {
+			if (pos != -1) {
 				outinfo[pos].string = cur;
 				outinfo[pos].size = curend-cur;
 				if (pos == svtypepos) {
@@ -831,7 +830,7 @@ int main(int argc, char *argv[]) {
 	DString *genotypelist=DStringNew();
 	altvars = NULL;
 	int *order = NULL;
-	int split,read,i,j,maxtab, min, excludefilter = 0, excludename = 0;
+	int split,read,i,j,maxtab, min, excludefilter = 0, excludename = 0, infopos = 0;
 	line=NULL; string=NULL; temp=NULL;
 	snp=DStringNewFromChar("snp"); del=DStringNewFromChar("del"); ins=DStringNewFromChar("ins"); sub=DStringNewFromChar("sub");
 	dup=DStringNewFromChar("dup"); inv=DStringNewFromChar("inv"); cnv=DStringNewFromChar("cnv"); trans=DStringNewFromChar("trans");
@@ -965,7 +964,7 @@ int main(int argc, char *argv[]) {
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
 			if (ds->size == 0) {continue;}
-			dstring_hash_set(donefields,ds,(void *)"");
+			dstring_hash_set(donefields,DStringDup(ds),(void *)"");
 			DStringArrayAppend(formatfields,id->string,id->size);
 			num->string[0] = extractNumber(DStringArrayGet(format,i));
 			num->string[0] = numberfromid(id,num->string[0],typelist);
@@ -998,6 +997,7 @@ int main(int argc, char *argv[]) {
 	NODPRINT("\n\n==== Parsing info ====")
 	infofields = DStringArrayNew(10);
 	infofieldsnumber = DStringNew();
+	infopos = 0;
 	for (i = 0 ; i < info->size ; i ++) {
 		DString *ds;
 		id = extractID(DStringArrayGet(info,i),id);
@@ -1006,13 +1006,22 @@ int main(int argc, char *argv[]) {
 		} else {
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
-			if (ds->size == 0) {continue;}
-			if (id->size == 3 && strncmp(id->string,"END",3) == 0) {
-				svendpos = i;
+			if (ds->size == 0) {
+				continue;
+			} else if (split && id->size == 3 && strncmp(id->string,"END",3) == 0) {
+				svendpos = infopos;
 			} else if (id->size == 5 && strncmp(id->string,"SVLEN",5) == 0) {
-				svlenpos = i;
+				if (!split) {
+					fprintf(stderr,"structural variants not supported in -split ori, vcf has SVLEN\n");
+					exit(1);
+				}
+				svlenpos = infopos;
 			} else if (id->size == 6 && strncmp(id->string,"SVTYPE",6) == 0) {
-				svtypepos = i;
+				if (!split) {
+					fprintf(stderr,"structural variants not supported in -split ori, vcf has SVTYPE\n");
+					exit(1);
+				}
+				svtypepos = infopos;
 			} else {
 				if (id->size == 4 && strncmp(id->string,"CHR2",5) == 0) {
 					chr2pos = i;
@@ -1031,6 +1040,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		DStringArrayAppend(infofields,id->string,id->size);
+		infopos++;
 		num->string[0] = extractNumber(DStringArrayGet(info,i));
 		num->string[0] = numberfromid(id,num->string[0],typelist);
 		DStringAppendS(infofieldsnumber,num->string,1);
