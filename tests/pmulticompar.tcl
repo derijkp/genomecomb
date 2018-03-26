@@ -5,6 +5,7 @@ exec tclsh "$0" "$@"
 source tools.tcl
 package require genomecomb
 
+if {![info exists argv]} {set argv {}}
 set pos [lsearch $argv -d]
 if {$pos != -1} {
 	set distribute [lindex $argv [incr pos]]
