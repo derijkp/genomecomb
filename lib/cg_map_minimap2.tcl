@@ -15,13 +15,17 @@ proc minimap2refseq_job {refseq preset} {
 
 proc map_minimap2_job {args} {
 	upvar job_logdir job_logdir
+	set paired 1
 	set keepargs $args
-	set preset map-ont
+	set preset {}
 	set readgroupdata {}
 	set skips {}
 	set keepsams 0
 	set threads 2
 	cg_options map_minimap2 args {
+		-paired - -p {
+			set paired $value
+		}
 		-x - -preset - -p {
 			set preset $value
 		}
@@ -40,6 +44,7 @@ proc map_minimap2_job {args} {
 	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome using minimap2
 	}
+	if {$paired && $preset eq ""} {set preset sr} else {set preset map-ont}
 	set files [list $fastqfile1 {*}$args]
 	set result [file_absolute $result]
 	set refseq [file_absolute $refseq]
@@ -61,26 +66,56 @@ proc map_minimap2_job {args} {
 	set resultbase [file root $result]
 	set samfiles {}
 	set num 1
-	foreach file $files {
-		set name [file root [file tail $file]]
-		set target $result.index/$name.sam
-		lappend samfiles $target
-		set analysisinfo [gzroot $target].analysisinfo
-		job minimap2-$sample-$name -mem 5G -cores $threads \
-		-deps {$minimap2refseq $file} \
-		-targets {$target $analysisinfo} \
-		-vars {threads preset readgroupdata sample} \
-		-skip [list $resultbase.bam] {*}$skips -code {
-			puts "making $target"
-			foreach {minimap2refseq fastq} $deps break
-			analysisinfo_write $fastq $target aligner minimap2 aligner_version [version minimap2] reference [file2refname $minimap2refseq] aligner_paired 0
-			set rg {}
-			foreach {key value} $readgroupdata {
-				lappend rg "$key:$value"
+	if {!$paired} {
+		foreach file $files {
+			set name [file root [file tail $file]]
+			set target $result.index/$name.sam
+			lappend samfiles $target
+			set analysisinfo [gzroot $target].analysisinfo
+			job minimap2-$sample-$name -mem 5G -cores $threads -deps {
+				$minimap2refseq $file
+			} -targets {
+				$target $analysisinfo
+			} -vars {
+				threads preset readgroupdata sample
+			} -skip [list $resultbase.bam] {*}$skips -code {
+				puts "making $target"
+				foreach {minimap2refseq fastq} $deps break
+				analysisinfo_write $fastq $target aligner minimap2 aligner_version [version minimap2] reference [file2refname $minimap2refseq] aligner_paired 0
+				set rg {}
+				foreach {key value} $readgroupdata {
+					lappend rg "$key:$value"
+				}
+				exec minimap2 -a -x $preset -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] \
+					$minimap2refseq $fastq > $target.temp 2>@ stderr
+				file rename -force $target.temp $target
 			}
-			exec minimap2 -a -x $preset -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] \
-				$minimap2refseq $fastq > $target.temp 2>@ stderr
-			file rename -force $target.temp $target
+		}
+	} else {
+		foreach {file1 file2} $files {
+			set name [file root [file tail $file1]]
+			set target $resultbase-$name.sam
+			lappend samfiles $target
+			set analysisinfo [gzroot $target].analysisinfo
+			lappend asamfiles $analysisinfo
+			job bwa-$sample-$name -mem 5G -cores $threads -deps {
+				$minimap2refseq $file1 $file2
+			} -targets {
+				$target $analysisinfo
+			} -vars {
+				threads preset readgroupdata sample
+			} -skip [list $resultbase.bam] {*}$skips -code {
+				puts "making $target"
+				foreach {minimap2refseq fastq1 fastq2} $deps break
+				analysisinfo_write $fastq1 $target aligner minimap2 aligner_version [version minimap2] reference [file2refname $minimap2refseq] aligner_paired 1
+				set rg {}
+				foreach {key value} $readgroupdata {
+					lappend rg "$key:$value"
+				}
+				exec minimap2 -a -x $preset -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] \
+					$minimap2refseq $fastq1 $fastq2 > $target.temp 2>@ stderr
+				file rename -force $target.temp $target
+			}
 		}
 	}
 	if {$keepsams} {set rmsamfiles {}} else {set rmsamfiles $samfiles}
