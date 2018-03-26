@@ -433,6 +433,7 @@ proc tsv_select_expandfield {header field {giveerror 0} {qpossVar {}}} {
 		set field [string range $field 1 end]
 		if {[string first * $field] == -1} {
 			set poss [lsearch $header $field]
+			if {$poss == -1} {set poss {}}
 		} else {
 			set poss [list_find -glob $header $field]
 		}
@@ -441,6 +442,7 @@ proc tsv_select_expandfield {header field {giveerror 0} {qpossVar {}}} {
 	} else {
 		if {[string first * $field] == -1} {
 			set poss [lsearch $header $field]
+			if {$poss == -1} {set poss {}}
 		} else {
 			set poss [list_find -glob $header $field]
 		}
