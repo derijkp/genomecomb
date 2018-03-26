@@ -94,6 +94,25 @@ test svmulticompar {sv repeated del} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
+test svmulticompar {sv trans, diff chr} {
+	test_cleantmp
+	write_tab tmp/s1.tsv {
+		chromosome	begin	end	type	ref	alt
+		1	5727760	5727760	trans	{}	[2:1000[
+	}
+	write_tab tmp/s2.tsv {
+		chromosome	begin	end	type	ref	alt
+		1	5727767	5728301	trans	534	[chr2:1200[
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	lbegin-s1	lend-s1	lalt-s1	lbegin-s2	lend-s2	lalt-s2
+		1	5727760	5727760	trans	{}	[2:1000[	5727760	5727760	[2:1000[	5727767	5728301	[2:1200[
+	}
+	file delete tmp/temp.tsv
+	cg svmulticompar -overlap 80 tmp/temp.tsv tmp/s1.tsv tmp/s2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
 test_cleantmp
 
 set ::env(PATH) $keeppath

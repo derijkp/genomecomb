@@ -54,8 +54,8 @@ proc svgetline {f} {
 	}
 	set line [list_sub $line $poss]
 	lset line 0 $side
+	foreach {side chr begin end type} $line break
 	if {$makeref != -1 || [llength $makealt]} {
-		foreach {side chr begin end type} $line break
 		lset line 1 [chr_clip $chr]
 		if {$makeref != -1} {
 			lset line 5 [expr {$end - $begin}]
@@ -69,13 +69,18 @@ proc svgetline {f} {
 				lset line 6 [lindex $line [lindex $makealt 0]]
 			} elseif {$type eq "trans"} {
 				foreach {size chr2 start2} [list_sub $line $makealt] break
-				lset line 6 \[$chr2:$start2\[
+				lset line 6 \[[chr_clip $chr2]:$start2\[
 			} else {
 				lset line 6 ?
 			}
 		}
 	} else {
-		lset line 1 [chr_clip [lindex $line 1]]
+		lset line 1 [chr_clip $chr]
+		if {$type eq "trans"} {
+			set temp [lindex $line 6]
+			regsub {([\[\]])chr} $temp {\1} temp
+			lset line 6 $temp
+		}
 	}
 	return $line
 }
