@@ -16,6 +16,10 @@ while 1 {
 }
 
 set appdir [file dir $script]
+if {[lrange [file split $script] end-2 end] eq {apps cg cg.tcl}} {
+	set appbasedir [file dir [file dir $appdir]]
+	set auto_path [list $appbasedir/lib $appbasedir/lib/tcl8.5 $appbasedir/lib/tk8.5]
+}
 lappend auto_path $appdir/lib $appdir/lib-exp
 source $appdir/lib/file.tcl
 package require Extral
