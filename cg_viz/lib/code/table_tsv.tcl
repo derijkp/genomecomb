@@ -91,6 +91,10 @@ table_tsv method table {args} {
 	return $tdata(table)	
 }
 
+table_tsv method queryprogress {args} {
+	progress set [lindex $args 0]
+}
+
 table_tsv method query {args} {
 	private $object tdata
 	if {![llength $args]} {
@@ -139,7 +143,7 @@ table_tsv method query {args} {
 			progress start $numlines "Running query" "Running query"
 			set ::bgerror {}
 			Extral::bgexec -progresscommand [list $object queryprogress] -no_error_redir -channelvar [privatevar $object bgexechandle] \
-				cg select -overwrite 1 -v $step -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
+				cg select -v $step -overwrite 1 -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
 			if {$::bgerror ne ""} {error $::bgerror}
 			progress stop
 		}
