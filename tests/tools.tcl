@@ -165,6 +165,13 @@ proc write_sam {file data} {
 	exec gnusort8 -t \t -N -s -k3,3 -k4,4 -k1,1 $tempfile >> $file
 }
 
+proc diffanalysisinfo {file1 file2} {
+	set file1 [lindex [glob $file1] 0]
+	set file2 [lindex [glob $file2] 0]
+	catch {exec cg tsvdiff -t xl $file1 $file2 | grep -v _version} temp
+	if {[llength [split $temp \n]] != 3} {error $temp}
+}
+
 lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
 
 # remove tmp if it is a unexisting link
