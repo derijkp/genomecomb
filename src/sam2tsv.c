@@ -112,6 +112,7 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 	/* allocate */
+	cigar.memsize = 0;
 	line1 = DStringNew(); linekeep=DStringNew();
 	/* we add 2 to max because we need to have the column itself, and an extra space for the remainder */
 	result1 = DStringArrayNew(10+2);
