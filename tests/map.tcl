@@ -32,7 +32,7 @@ test map_bowtie2 {map_bowtie2 basic} {
 #	exec diff tmp/ali.sam tmp/expected.sam
 #} {}
 
-test map_bwa {map_minimap2 paired} {
+test map_minimap2 {map_minimap2 paired} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	cg map_minimap2 -stack 1 -v 2 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]] >@ stdout 2>@ stderr
@@ -40,6 +40,16 @@ test map_bwa {map_minimap2 paired} {
 	exec samtools view tmp/ali.bam > tmp/ali.sam
 	exec samtools view data/bwa.bam > tmp/expected.sam
 	exec diff tmp/ali.sam tmp/expected.sam
+} {}
+
+test map_ngmlr {map_ngmlr basic} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
+	cg map_ngmlr -stack 1 -v 2 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]] >@ stdout 2>@ stderr
+	# sam2tsv not really needed for this comparison, but useful for comparing to others
+	cg sam2tsv tmp/ali.bam | cg select -f {qname refname begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
+	cg sam2tsv data/ngmlr.bam | cg select -f {qname refname begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/expected.tsv
+	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
 } {}
 
 test realign {realign_gatk basic} {
