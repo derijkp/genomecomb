@@ -1760,6 +1760,7 @@ proc svfind {pairfile trffile} {
 	set header [gets $f]
 	set iheader {chromosome start1 end1 weight1 numl chr2 start2 end2 weight2 numr type dist}
 	set poss [list_cor $header $iheader]
+	if {[lindex $poss 0] == -1} {lset poss 0 [lsearch $header chr1]}
 	array set infoa [list \
 		start1pos [lsearch $iheader start1] \
 		end1pos [lsearch $iheader end1] \
@@ -1810,7 +1811,8 @@ proc svfind {pairfile trffile} {
 	set end [expr {$start + $windowsize -1}]
 	set chr [lindex $line $infoa(chr1pos)]
 	# prepare trf data
-	set trf [open $trffile]
+	set trffile [gztemp $trffile]
+	set trf [gzopen $trffile]
 	set trfposs [open_region $trf]
 	set trflist {}
 	chrindexseek $trffile $trf $chr
@@ -1924,7 +1926,8 @@ proc svfind {pairfile trffile} {
 		incr end $windowsize
 	}
 
-	close $trf
+	gzclose $trf
+	gzrmtemp $trffile
 	close $o
 	catch {close $f}
 	catch {file delete $outfile.old}

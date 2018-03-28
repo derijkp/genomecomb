@@ -35,7 +35,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 		}
 		job svfind-$root -deps {$file $root.tsv.numinfo} -targets {$root-sv.tsv} -vars {dbdir} -code {
 			puts "svfind $dep"
-			cg svfind $dep [lindex [glob $dbdir/reg_*_simpleRepeat.tsv] 0]
+			cg svfind $dep [gzfile $dbdir/reg_*_simpleRepeat.tsv]
 		}
 		lappend resultfiles $root-sv.tsv
 #		if {$force || [file extension $file] ne ".rz"} {
@@ -48,7 +48,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 		cg cat {*}[lsort -dict $deps] > $temptarget
 		file rename -force $temptarget $target
 		set temptarget [filetemp $target2]
-		cg select -q {$problems eq "" and $quality > 2} $target $temptarget
+		cg select -overwrite 1 -q {$problems eq "" and $quality > 2} $target $temptarget
 		file rename -force $temptarget $target2
 		putslog "Done: finished finding sv in $dir"
 	}
@@ -57,10 +57,14 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 
 proc cg_process_sv {args} {
 	global scriptname action
-	set args [job_args $args]
+	set args [job_init {*}$args]
+	set force 0
+	set dbdir {}
 	cg_options process_sv args {
-	} {dir destdir dbdir force} 2 3
+		-force {set force $value}
+	} {dir destdir dbdir force} 2 4
 	switch $force {
+		1 - 0 {# keep value}
 		force {set force 1}
 		"" {set force 0}
 		default {error "unrecognized option $force"}

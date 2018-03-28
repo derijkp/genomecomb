@@ -6,41 +6,47 @@
 
 proc tsv_index {xfield file} {
 	set indexname [gzroot $file].${xfield}_index
-	set f [gzopen $file]
+	set unzippedfile [gztemp $file]
+	set f [gzopen $unzippedfile]
 	set header [tsv_open $f]
 	set xpos [lsearch $header $xfield]
 	if {$xpos == -1} {error "field $xfield not present in file $file"}
 	set fstart [tell $f]
 	set fpos $fstart
 	set line [split [gets $f] \t]
-	set xmin [lindex $line $xpos]
-	set findex [expr {$xmin-$xmin%10000}]
-	set prev $findex
-	set next [expr {$prev + 10000}]
-	set index [list $fpos]
-	catch {progress start [file size $file] "Making index"}
-	while {![eof $f]} {
-		set fpos [tsv_next $f $xpos $next]
-		if {[eof $f]} {
-			set xmax $fpos
-			break
+	if {[llength $line]} {
+		set xmin [lindex $line $xpos]
+		set findex [expr {$xmin-$xmin%10000}]
+		set prev $findex
+		set next [expr {$prev + 10000}]
+		set index [list $fpos]
+		catch {progress start [file size $file] "Making index"}
+		while {![eof $f]} {
+			set fpos [tsv_next $f $xpos $next]
+			if {[eof $f]} {
+				set xmax $fpos
+				break
+			}
+			lappend index $fpos
+			incr prev 10000
+			incr next 10000
+			catch {progress set [tell $f]}
+			if {![expr $next%1000000]} {putslog $next}
 		}
-		lappend index $fpos
-		incr prev 10000
-		incr next 10000
-		catch {progress set [tell $f]}
-		if {![expr $next%1000000]} {putslog $next}
-	}
-	catch {progress stop}
-	while {![eof $f]} {
-		set line [split [gets $f] \t]
-		if {![llength $line]} continue
-		set temp [lindex $line $xpos]
-		if {[isint $temp]} {
-			set xmax $temp
+		catch {progress stop}
+		while {![eof $f]} {
+			set line [split [gets $f] \t]
+			if {![llength $line]} continue
+			set temp [lindex $line $xpos]
+			if {[isint $temp]} {
+				set xmax $temp
+			}
 		}
+	} else {
+		set findex 0 ; set xmin 0 ; set xmax 0; set index {}
 	}
 	gzclose $f
+	gzrmtemp $unzippedfile
 	set o [open $indexname.temp w]
 	puts $o 10000
 	puts $o $findex
