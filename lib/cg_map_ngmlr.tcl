@@ -42,6 +42,9 @@ proc map_ngmlr_job {args} {
 		-threads - -t {
 			set threads $value
 		}
+		-m - -maxopenfiles {
+			set ::maxopenfiles $value
+		}
 	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome using ngmlr
 	}
@@ -54,8 +57,8 @@ proc map_ngmlr_job {args} {
 	if {![info exists job_logdir]} {
 		job_logdir $result.index/log_jobs
 	}
-	job_logfile $resultdir/map_minmap2_[file tail $result] $resultdir \
-		[list cg map_minmap2_ {*}$keepargs] \
+	job_logfile $resultdir/map_ngmlr_[file tail $result] $resultdir \
+		[list cg map_ngmlr_ {*}$keepargs] \
 		{*}[versions ngmlr]
 	#
 	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
@@ -86,25 +89,12 @@ proc map_ngmlr_job {args} {
 			foreach {key value} $readgroupdata {
 				lappend rg "$key:$value"
 			}
-			exec ngmlr -x $preset -t $threads -r $ngmlr_refseq -q $fastq -o $target.temp 2>@ stderr
+			exec ngmlr -x $preset -t $threads -r $ngmlr_refseq -q $fastq | samtools sort -T [scratchfile] --output-fmt SAM > $target.temp 2>@ stderr
 			file rename -force $target.temp $target
 		}
 	}
-	if {$keepsams} {set rmsamfiles {}} else {set rmsamfiles $samfiles}
-	job ngmlr_2bam-$sample -deps $samfiles -rmtargets $rmsamfiles \
-	-targets {$result $result.bai $result.analysisinfo} {*}$skips -vars {resultbase} -code {
-		puts "making $target"
-		analysisinfo_write $dep $target
-		if {[catch {
-			exec samcat {*}$deps | bamsort SO=coordinate tmpfile=[scratchfile] index=1 indexfilename=$target.bai inputformat=sam > $target.temp 2>@ stderr
-		}]} {
-			error $msg
-		}
-		file rename -force $target.temp $target
-		foreach dep $deps {
-			file delete $dep [gzroot $dep].analysisinfo
-		}
-	}
+	if {$keepsams} {set deletesams 0} else {set deletesams 1}
+	sam_merge_job -name ngmlr_merge2bam-$sample -deletesams $deletesams -index 1 -threads $threads $result $samfiles
 }
 
 proc cg_map_ngmlr {args} {
