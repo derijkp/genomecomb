@@ -17,4 +17,4 @@ cg help displays help about a specific topic, or a general help overview if no t
 in color and output via less; use "md" for markdown output
 
 == Category ==
-Dev
+Info

@@ -1,0 +1,20 @@
+= version =
+
+== Format ==
+cg version ?topic?
+
+== Summary ==
+return version information
+
+== Description ==
+cg version returns the current version of genomecomb.
+The optional parameter **topic** can be given to return version information of the given
+topic. This can be a program used by genomecomb (e.g. samtools, gatk, ...) or of underlying
+run time information (e.g. os, java).
+Use [[cg_versions]] to get a (tab-separated) list of tools and their version.
+
+== Arguments ==
+; **topic**: display version of this specific topic
+
+== Category ==
+Info

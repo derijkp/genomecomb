@@ -1,0 +1,17 @@
+= versions =
+
+== Format ==
+cg versions ?topic? ...
+
+== Summary ==
+return version information as a tsv
+
+== Description ==
+cg versions returns the current version of several tools in genomecomb as a tab-separated list.
+If no arguments are given, the versions for a set default set of tools is given.
+
+== Arguments ==
+; **topic**: display version of this specific topic
+
+== Category ==
+Info

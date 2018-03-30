@@ -266,9 +266,8 @@ proc help {action {format 1}} {
 
 proc helptext_overview {} {
 	global appdir
-	set help {}
+	set help "= Genomecomb [version genomecomb] Reference =\n\n"
 	append help [string trim [deindent {
-		= Reference =
 		== Format ==
 		cg subcommand ?options? ....
 		
@@ -319,7 +318,7 @@ proc helptext_overview {} {
 	}
 	unset -nocomplain a(Depricated)
 	set categories [array names a]
-	set pre {Process Query Analysis Regions Annotation Validation tsv Conversion {Format Conversion} Compare Structural Report}
+	set pre {Process Query Analysis Regions Annotation Validation tsv Conversion {Format Conversion} Compare Structural Report Info}
 	array set preorder {
 		Process {process_project}
 		Query {select viz multiselect groupby}
