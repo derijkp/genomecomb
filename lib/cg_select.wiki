@@ -164,7 +164,7 @@ c (compound, at least one allele in alt, the other is not ref),
 o (other, at least one allele is not ref, but none are in alt)
 u (unsequenced)
 ; transcripts(geneset,filter,type): returns the list of transcript names
-affected by a variant for the given gene set, potentially filter by impact
+affected by a variant for the given gene set, potentially filtered by impact
 type. 
 **geneset** is the base name of the gene annotation, e.g. when it is
 "refGene", the field "refGene_descr" will be used to extract the transcipt
@@ -176,7 +176,8 @@ filter (e.g. CDS* for CDS impacts and >=CDSmis for anything at the level
 of missense and higher in the list).
 **type** determines what is returned: t for only transcipt name, gt for
 gene and transcript name and g for only the gene name.
-
+; maximpact(list,...): returns the maximum impact from one or more lists of impacts. The order of impact
+is as in the list given in [[cg_annotate]]
 === Number functions ===
 ; **between(value,{min max})** or **between(value,min,max)**: true of value is >= min and <= max (e.g. "between($begin,1000,2000)")
 This function can also be used as an operator, eg "$field between {1 2}"

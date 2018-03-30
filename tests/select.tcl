@@ -1119,4 +1119,26 @@ foreach dbopt {{}} {
 	selecttests
 } ;# dbopt
 
+test select "maximpact" {
+	write_tab tmp/testsort.tsv {
+		id	impact
+		test1	{}
+		test2	CDSsilent,RNA
+	}
+	exec cg select -f {id max=maximpact($impact)} tmp/testsort.tsv
+} {id	max
+test1	
+test2	CDSsilent}
+
+test select "maximpact" {
+	write_tab tmp/testsort.tsv {
+		id	impact	impact2
+		test1	{}	GENEDEL
+		test2	CDSsilent,RNA	CDSMIS
+	}
+	exec cg select -f {id max=maximpact($impact,$impact2)} tmp/testsort.tsv
+} {id	max
+test1	GENEDEL
+test2	CDSMIS}
+
 testsummarize

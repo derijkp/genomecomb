@@ -56,8 +56,11 @@ proc tcl::mathfunc::transcripts {genes impacts descrs filter format} {
 }
 
 proc tcl::mathfunc::maximpact {args} {
-	if {[lindex $args 0] eq ""} {return {}}
-	set list [split [lindex $args 0] {,;}]
+	set list {}
+	foreach el $args {
+		lappend list {*}[split $el {,;}]
+	}
+	if {![llength $list]} {return {}}
 	set varlist [var_impact_list]
 	set pos [::max [list_cor $varlist $list]]
 	lindex $varlist $pos
