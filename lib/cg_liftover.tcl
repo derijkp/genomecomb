@@ -317,6 +317,7 @@ proc cg_liftover {args} {
 					if {$refpos != -1} {lset line $refpos $ref}
 					if {$altpos != -1} {lset line $altpos [join $alts ,]}
 					foreach {a1pos a2pos seqpos zygpos} $sposs {a1 a2 seq zyg} $slist {
+						if {$a1pos == -1 || $a2pos == -1} continue
 						set a1 [seq_complement [lindex $line $a1pos]]
 						set a2 [seq_complement [lindex $line $a2pos]]
 						lset line $a1pos $a1
