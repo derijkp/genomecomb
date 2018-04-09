@@ -1,3 +1,30 @@
+# basecaller_albacore_mvresults $name $tempdir/tempfastq $resultdir $barcoding
+
+proc basecaller_albacore_mvresults {barcoding name srcdir resultdir} {
+	if {![llength $barcoding]} {
+		exec cat {*}[glob $srcdir/workspace/pass/*.fastq] | gzip > $resultdir/pass_$name.fastq.gz
+		exec cat {*}[glob $srcdir/workspace/fail/*.fastq] | gzip > $resultdir/fail_$name.fastq.gz
+	} else {
+		foreach dir [glob -nocomplain $srcdir/workspace/pass/*] {
+			set barcode [file tail $dir]
+			exec cat {*}[glob $dir/*.fastq] | gzip > $resultdir/${barcode}_pass_$name.fastq.gz
+		}
+		foreach dir [glob -nocomplain $srcdir/workspace/fail/*] {
+			set barcode [file tail $dir]
+			exec cat {*}[glob $dir/*.fastq] | gzip > $resultdir/${barcode}_fail_$name.fastq.gz
+		}
+		foreach barcode $barcoding {
+			if {![file exists $resultdir/${barcode}_pass_$name.fastq.gz]} {
+				file_write $resultdir/${barcode}_pass_$name.fastq.gz ""
+			}
+			if {![file exists $resultdir/${barcode}_fail_$name.fastq.gz]} {
+				file_write $resultdir/${barcode}_fail_$name.fastq.gz ""
+			}
+		}
+	}
+	file copy $srcdir/sequencing_summary.txt $resultdir/sequencing_summary_$name.txt
+}
+
 proc basecaller_albacore_job {args} {
 	upvar job_logdir job_logdir
 	set keepargs $args
@@ -8,7 +35,7 @@ proc basecaller_albacore_job {args} {
 	set kit {}
 	set opts {}
 	set threads 1
-	set barcoding 0
+	set barcoding {}
 	cg_options var_sam args {
 		-n - -numreads {
 			set numreads $value
@@ -29,8 +56,15 @@ proc basecaller_albacore_job {args} {
 			if {![true $value]} {lappend opts --disable_filtering}
 		}
 		-b - -barcoding {
-			set barcoding [true $value]
-			if {$barcoding} {
+			if {$value eq "1"} {
+				set bsarcoding {}
+				for {set i 1} {$i <= 48} {incr i} {
+					lappend barcoding barcode[format %02d $i]
+				}
+			} else {
+				set barcoding $value
+			}
+			if {$barcoding ne ""} {
 				lappend opts --barcoding
 			}
 		}
@@ -40,7 +74,7 @@ proc basecaller_albacore_job {args} {
 		default {
 			lappend opts $key $value
 		}
-	} {resultdir sourcedir} 2 2 {
+	} {resultdir sourcedir} 2 ... {
 		basecall nanopore reads using albacore
 	}
 	set resultdir [file_absolute $resultdir]
@@ -82,15 +116,26 @@ proc basecaller_albacore_job {args} {
 					continue
 				}
 				set name ${sourcename}_[file tail $dir]
-				set target1 $resultdir/pass_$name.fastq.gz
-				set target2 $resultdir/fail_$name.fastq.gz
-				set target3 $resultdir/sequencing_summary_$name.txt
+				if {![llength $barcoding]} {
+					set target1 $resultdir/pass_$name.fastq.gz
+					set target2 $resultdir/fail_$name.fastq.gz
+					set target3 $resultdir/sequencing_summary_$name.txt
+					set targets [list $target1 $target2 $target3]
+				} else {
+					set targets {}
+					foreach barcode $barcoding {
+						lappend targets $resultdir/${barcode}_pass_$name.fastq.gz
+						lappend targets $resultdir/${barcode}_fail_$name.fastq.gz
+					}
+					lappend targets $resultdir/${barcode}_sequencing_summary_$name.txt
+				}
 				
 				job albacore-[file tail $sourcedir]-$name -cores $threads \
 				-deps {$sourcedir/$dir} \
-				-targets {$target1 $target2 $target3} \
-				-vars {sourcedir from to todo opts threads} \
+				-targets $targets \
+				-vars {sourcedir from to todo opts threads barcoding resultdir name} \
 				-code {
+					albacoreinit
 					set tempdir [scratchdir]
 					exec read_fast5_basecaller.py {*}$opts \
 						--files_per_batch_folder 0 \
@@ -98,8 +143,29 @@ proc basecaller_albacore_job {args} {
 						-t $threads -o fastq \
 						-i $dep \
 						-s $tempdir/tempfastq >@ stdout 2>@ stderr
-					exec cat {*}[glob $tempdir/tempfastq/workspace/pass/*.fastq] | gzip > $target1
-					exec cat {*}[glob $tempdir/tempfastq/workspace/fail/*.fastq] | gzip > $target2
+					basecaller_albacore_mvresults $name $tempdir/tempfastq $resultdir $barcoding
+#					if {![llength $barcoding]} {
+#						exec cat {*}[glob $tempdir/tempfastq/workspace/pass/*.fastq] | gzip > $target1
+#						exec cat {*}[glob $tempdir/tempfastq/workspace/fail/*.fastq] | gzip > $target2
+#					} else {
+#						set target3 [list_pop targets]
+#						foreach dir [glob -nocomplain $tempdir/tempfastq/workspace/pass/*] {
+#							set barcode [file tail $dir]
+#							exec cat {*}[glob $dir/*.fastq] | gzip > $resultdir/${barcode}_pass_$name.fastq.gz
+#						}
+#						foreach dir [glob -nocomplain $tempdir/tempfastq/workspace/fail/*] {
+#							set barcode [file tail $dir]
+#							exec cat {*}[glob $dir/*.fastq] | gzip > $resultdir/${barcode}_fail_$name.fastq.gz
+#						}
+#						foreach barcode $barcoding {
+#							if {![file exists $resultdir/${barcode}_pass_$name.fastq.gz]} {
+#								file_write $resultdir/${barcode}_pass_$name.fastq.gz ""
+#							}
+#							if {![file exists $resultdir/${barcode}_fail_$name.fastq.gz]} {
+#								file_write $resultdir/${barcode}_fail_$name.fastq.gz ""
+#							}
+#						}
+#					}
 					file copy $tempdir/tempfastq/sequencing_summary.txt $target3
 					file delete -force $tempdir/fast5 $tempdir/tempfastq
 				}
@@ -117,12 +183,24 @@ proc basecaller_albacore_job {args} {
 			set to [expr {$from+$numreads-1}]
 			if {$to > $len} {set to $len}
 			set todo [lrange $files $from $to]
-			set target1 $resultdir/pass_[file tail $resultdir]-$from-$to.fastq.gz
-			set target2 $resultdir/fail_[file tail $resultdir]-$from-$to.fastq.gz
+			set name [file tail $resultdir]-$from-$to
+			if {![llength $barcoding]} {
+				set targets [list \
+					$resultdir/pass_$name.fastq.gz \
+					$resultdir/fail_$name.fastq.gz \
+					$resultdir/sequencing_summary_$name.txt]
+			} else {
+				set targets {}
+				foreach barcode $barcoding {
+					lappend targets $resultdir/${barcode}_pass_$name.fastq.gz
+					lappend targets $resultdir/${barcode}_fail_$name.fastq.gz
+				}
+				lappend targets $resultdir/${barcode}_sequencing_summary_$name.txt
+			}
 			job albacore-[file tail $sourcedir]-$from-$to -cores $threads \
 			-deps $sourcedir \
-			-targets {$target1 $target2} \
-			-vars {sourcedir from to todo opts threads} \
+			-targets $targets \
+			-vars {name sourcedir resultdir barcoding from to todo opts threads} \
 			-code {
 				albacoreinit
 				set tempdir [scratchdir]
@@ -136,8 +214,7 @@ proc basecaller_albacore_job {args} {
 					-t $threads -o fastq \
 					-i $tempdir/fast5 \
 					-s $tempdir/tempfastq >@ stdout 2>@ stderr
-				exec cat {*}[glob $tempdir/tempfastq/workspace/pass/*.fastq] | gzip > $target1
-				exec cat {*}[glob $tempdir/tempfastq/workspace/fail/*.fastq] | gzip > $target2
+				basecaller_albacore_mvresults $name $tempdir/tempfastq $resultdir $barcoding
 				file delete -force $tempdir/fast5 $tempdir/tempfastq
 			}
 		}
