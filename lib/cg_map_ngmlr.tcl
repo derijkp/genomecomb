@@ -89,12 +89,32 @@ proc map_ngmlr_job {args} {
 			foreach {key value} $readgroupdata {
 				lappend rg "$key:$value"
 			}
-			exec ngmlr -x $preset -t $threads -r $ngmlr_refseq -q $fastq | samtools sort -T [scratchfile] --output-fmt SAM > $target.temp 2>@ stderr
+			exec ngmlr -x $preset -t $threads -r $ngmlr_refseq -q $fastq > $target.temp 2>@ stderr
 			file rename -force $target.temp $target
 		}
 	}
-	if {$keepsams} {set deletesams 0} else {set deletesams 1}
-	sam_merge_job -name ngmlr_merge2bam-$sample -deletesams $deletesams -index 1 -threads $threads $result $samfiles
+	# if {$keepsams} {set deletesams 0} else {set deletesams 1}
+	if {$keepsams} {set rmsamfiles {}} else {set rmsamfiles $samfiles}
+	job ngmlr_sort2bam-$sample -cores $threads -deps $samfiles -rmtargets $rmsamfiles -targets {
+		$result $result.analysisinfo
+	} -vars {
+		resultbase rmsamfiles threads
+	} {*}$skips -code {
+		puts "making $target"
+		analysisinfo_write $dep $target
+		if {[catch {
+			exec samcat {*}$deps | samtools sort -T [scratchfile] -@ $threads -o $target.temp 2>@ stderr
+		}]} {
+			error $msg
+		}
+		file rename -force $target.temp $target
+		foreach dep $rmsamfiles {
+			file delete $dep [gzroot $dep].analysisinfo
+		}
+	}
+	job ngmlr_bamindex-$sample -deps {$result} -targets {$result.bai} -code {
+		exec samtools index $dep
+	}
 }
 
 proc cg_map_ngmlr {args} {
