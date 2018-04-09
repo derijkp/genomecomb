@@ -249,4 +249,20 @@ test vcf2tsv {svtest.vcf} {
 	exec diff tmp/temp.tsv data/svtest.tsv
 } {*structural variants not supported in -split ori, vcf has SVLEN*} match error
 
+test vcf2tsv {AD 0} {
+	write_vcf tmp/temp.vcf {
+		CHROM    POS    ID      REF     ALT     QUAL    FILTER  INFO    FORMAT   NA00001
+		20	14370	.	G	.	35	PASS	{}	GT:GQ:AD	0|0:48:0
+		20	14371	.	A	C	36	PASS	{}	GT:GQ:AD	1|1:48:0,18
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	TE genoqual	coverage	haploqual NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+		20	14369	14370	snp	G	.	.	35	PASS	G          G          r   1      0,0       {}              {}          {} 48       {}        {}        {} {}            {}        {}              {}         {}
+		20	14370	14371	snp	A	C	.	36	PASS	C          C          m   1      1,1       0               18          {} 48       {}        {}        {} {}            {}        {}              {}         {}
+	}
+	cg vcf2tsv tmp/temp.vcf tmp/temp.tsv
+	cg select -overwrite 1 -rc 1 tmp/temp.tsv tmp/temp2.tsv
+	exec diff tmp/temp2.tsv tmp/expected.tsv
+} {}
+
 testsummarize

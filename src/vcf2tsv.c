@@ -607,6 +607,7 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 	/* go over the different alleles */
 	for (curallele = 1 ; curallele <= numalleles; curallele++) {
 		AltVar *altvar = altvars+curallele-1;
+		int ADpos = -1;
 		NODPRINT("==== Print variant info ====")
 		fprintf(fo,"%s\t%d\t%d\t%*.*s", a_chrom(linea)->string, altvar->begin, altvar->end, altvar->type->size, altvar->type->size, altvar->type->string);
 		printallele(fo,altvar->refsize,altvar->ref,20);
@@ -618,7 +619,11 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 			NODPRINT("==== Determine geno fields order ====")
 			order = realloc(order,formatfields->size*sizeof(int));
 			for (i = 0 ; i < formatfields->size ; i++) {
-				order[i] = DStringArraySearch(lineformat,DStringArrayGet(formatfields,i)->string,DStringArrayGet(formatfields,i)->size);
+				DString *string = DStringArrayGet(formatfields,i);
+				order[i] = DStringArraySearch(lineformat,string->string,string->size);
+				if (string->size == 2 && string->string[0] == 'A' && string->string[1] == 'D') {
+					ADpos = i;
+				}
 			}
 			NODPRINT("==== Process genos ====")
 			igeno = 9; /* genos start at col 9 */
@@ -773,7 +778,12 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 							DString result, *value;
 							value = DStringArrayGet(genoa,order[i]);
 							getfield(&result,value->string,0);
-							fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
+							if (i == ADpos && result.size == 1 && result.string[0] == '0' && altvar->alt[0] == '.') {
+								/* fix for some versions of gatk, that incorrectly set AD to 0 for reference call */
+								fprintf(fo,"\t");
+							} else {
+								fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
+							}
 							getfield(&result,value->string,curallele);
 							fprintf(fo,"\t%*.*s",result.size,result.size,result.string);
 						} else if (formatfieldsnumber->string[i] == 'A') {

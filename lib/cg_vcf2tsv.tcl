@@ -60,6 +60,7 @@ proc cg_vcf2tsv {args} {
 	} else {
 		lappend pipe >@ stdout 2>@ stderr
 	}
+	# putsvars pipe
 	set error [catch $pipe msg]
 	if {$error} {exiterror "error converting vcf file: $msg"}
 }
