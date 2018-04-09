@@ -169,7 +169,8 @@ proc diffanalysisinfo {file1 file2} {
 	set file1 [lindex [glob $file1] 0]
 	set file2 [lindex [glob $file2] 0]
 	catch {exec cg tsvdiff -t xl $file1 $file2 | grep -v _version} temp
-	if {[llength [split $temp \n]] != 3} {error $temp}
+	set len [llength [split $temp \n]]
+	if {$len != 3 && $len != 1} {error "error comparing $file1 and $file2: $temp"}
 }
 
 lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext

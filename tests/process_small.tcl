@@ -4,7 +4,9 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 set keepdir [pwd]
-set dopts [get argv ""]
+set dopts {}
+# lappend dopts --stack 1 --verbose 2
+lappend dopts {*}[get argv ""]
 set test_cleantmp 0
 
 # tests
@@ -26,7 +28,7 @@ test process_small {process_mastr mastr_mx2} {
 	file copy -force ori/wgs2.mastr/amplicons-wgs2.tsv tmp/wgs2.mastr
 	# file copy ori/mastr_mx2/demultiplex_stats.tsv tmp/mastr_mx2_pm
 	# if you want to see output while running
-	cg process_mastr --stack 1 --verbose 2 {*}$::dopts -split 1 tmp/wgs2.mastr tmp/mastr_mx2_pm refseqtest/hg19 2>@ stderr >@ stdout
+	cg process_mastr {*}$::dopts -split 1 tmp/wgs2.mastr tmp/mastr_mx2_pm refseqtest/hg19 2>@ stderr >@ stdout
 	# check vs expected
 	cg tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
 		-x colinfo -x mastr_mx2_pm.html -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png \
@@ -54,7 +56,7 @@ test process_small {process_project mastr_mx2} {
 	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2/samplicons-wgs2.tsv
 	# file copy ori/mastr_mx2/demultiplex_stats.tsv tmp/mastr_mx2
 	# if you want to see output while running
-	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 \
+	cg process_project {*}$::dopts -split 1 \
 		-minfastqreads 10 -amplicons tmp/mastr_mx2/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 		tmp/mastr_mx2 refseqtest/hg19 2>@ stderr >@ stdout
 	# check vs expected
@@ -70,37 +72,37 @@ test process_small {process_project mastr_mx2} {
 	checkdiff -y --suppress-common-lines tmp/mastr_mx2/compar/info_analysis.tsv expected/mastr_mx2/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
 } {}
 
-test process_small {process_project mastr_mx2 space in name} {
-	cd $::bigtestdir
-	set mastrdir {tmp/mastr_mx2 space}
-	set expected {expected/mastr_mx2 space}
-	file delete -force $mastrdir
-	file mkdir $mastrdir/samples
-	foreach sample [glob ori/mastr_mx2.start/samples/*] {
-		set sdest $mastrdir/samples/[string range [file tail $sample] 0 end-3]/fastq
-		file mkdir $sdest
-		foreach file [glob -nocomplain $sample/ori/*] {
-			file copy $file $sdest
-		}
-	}
-	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv $mastrdir/samplicons-wgs2.tsv
-	# file copy ori/mastr_mx2/demultiplex_stats.tsv $mastrdir
-	# if you want to see output while running
-	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 \
-		-minfastqreads 10 -amplicons $mastrdir/samplicons-wgs2.tsv -extra_reports_mastr 1 \
-		$mastrdir refseqtest/hg19 2>@ stderr >@ stdout
-	# check vs expected
-	cg tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
-		-x colinfo -x "mastr_mx2 space.html" -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png \
-		-x *.analysisinfo \
-		$mastrdir $expected
-	diffanalysisinfo $mastrdir/compar/annot_compar-*.tsv.analysisinfo $expected/compar/annot_compar-*.tsv.analysisinfo
-	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
-		checkdiff -y --suppress-common-lines $mastrdir/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics $expected/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
-	}
-	checkdiff -y --suppress-common-lines "$mastrdir/mastr_mx2 space.html" "$expected/mastr_mx2 space.html" | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}
-	checkdiff -y --suppress-common-lines $mastrdir/compar/info_analysis.tsv $expected/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
-} {}
+#test process_small {process_project mastr_mx2 space in name} {
+#	cd $::bigtestdir
+#	set mastrdir {tmp/mastr_mx2 space}
+#	set expected {expected/mastr_mx2 space}
+#	file delete -force $mastrdir
+#	file mkdir $mastrdir/samples
+#	foreach sample [glob ori/mastr_mx2.start/samples/*] {
+#		set sdest $mastrdir/samples/[string range [file tail $sample] 0 end-3]/fastq
+#		file mkdir $sdest
+#		foreach file [glob -nocomplain $sample/ori/*] {
+#			file copy $file $sdest
+#		}
+#	}
+#	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv $mastrdir/samplicons-wgs2.tsv
+#	# file copy ori/mastr_mx2/demultiplex_stats.tsv $mastrdir
+#	# if you want to see output while running
+#	cg process_project {*}$::dopts -split 1 \
+#		-minfastqreads 10 -amplicons $mastrdir/samplicons-wgs2.tsv -extra_reports_mastr 1 \
+#		$mastrdir refseqtest/hg19 2>@ stderr >@ stdout
+#	# check vs expected
+#	cg tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
+#		-x colinfo -x "mastr_mx2 space.html" -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png \
+#		-x *.analysisinfo \
+#		$mastrdir $expected
+#	diffanalysisinfo $mastrdir/compar/annot_compar-*.tsv.analysisinfo $expected/compar/annot_compar-*.tsv.analysisinfo
+#	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
+#		checkdiff -y --suppress-common-lines $mastrdir/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics $expected/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
+#	}
+#	checkdiff -y --suppress-common-lines "$mastrdir/mastr_mx2 space.html" "$expected/mastr_mx2 space.html" | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}
+#	checkdiff -y --suppress-common-lines $mastrdir/compar/info_analysis.tsv $expected/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
+#} {}
 
 test process_small {process_project -jobsample 1 mastr_mx2} {
 	cd $::bigtestdir
@@ -116,7 +118,7 @@ test process_small {process_project -jobsample 1 mastr_mx2} {
 	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2/samplicons-wgs2.tsv
 	# file copy ori/mastr_mx2/demultiplex_stats.tsv tmp/mastr_mx2
 	# if you want to see output while running
-	cg process_project --stack 1 --verbose 2 {*}$::dopts -jobsample 1 -split 1 \
+	cg process_project {*}$::dopts -jobsample 1 -split 1 \
 		-minfastqreads 10 -amplicons tmp/mastr_mx2/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 		tmp/mastr_mx2 refseqtest/hg19 2>@ stderr >@ stdout
 	# check vs expected
@@ -143,7 +145,7 @@ test process_small {process_sample exome yri mx2} {
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/one_exome_yri_mx2/samples/$sample/fastq
 		mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/one_exome_yri_mx2/samples/$sample/reg_hg19_targets.tsv
 	}
-	cg process_sample --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/one_exome_yri_mx2/samples/NA19240mx2 2>@ stderr >@ stdout
+	cg process_sample {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/one_exome_yri_mx2/samples/NA19240mx2 2>@ stderr >@ stdout
 	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir refseqtest/hg19 tmp/one_exome_yri_mx2/samples/NA19240mx2 | less -S
 	# check vs expected
 	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
@@ -165,7 +167,7 @@ test process_small {process_project exomes yri mx2} {
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_yri_mx2/samples/$sample/fastq
 		mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/exomes_yri_mx2/samples/$sample/reg_hg19_targets.tsv
 	}
-	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_mx2 2>@ stderr >@ stdout
+	cg process_project {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_mx2 2>@ stderr >@ stdout
 	# check vs expected
 	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
 		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
@@ -190,7 +192,7 @@ test process_small {process_project exomes yri mx2 freebayes} {
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomesfb_yri_mx2/samples/$sample/fastq
 		mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/exomesfb_yri_mx2/samples/$sample/reg_hg19_targets.tsv
 	}
-	cg process_project --stack 1 --verbose 2 {*}$::dopts -varcallers {gatk freebayes} -split 1 -dbdir refseqtest/hg19 tmp/exomesfb_yri_mx2 2>@ stderr >@ stdout
+	cg process_project {*}$::dopts -varcallers {gatk freebayes} -split 1 -dbdir refseqtest/hg19 tmp/exomesfb_yri_mx2 2>@ stderr >@ stdout
 	# check vs expected
 	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
 		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
@@ -214,7 +216,7 @@ test process_small {process_project exomes yri mx2 freebayes} {
 #		file mkdir tmp/exomes_yri_mx2/samples/$sample/fastq
 #		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_yri_mx2/samples/$sample/fastq
 #	}
-#	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
+#	# cg process_illumina -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
 #	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_mx2 2>@ stderr >@ stdout
 #	# check vs expected
 #	checkdiff -y --suppress-common-lines tmp/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2
@@ -229,7 +231,7 @@ test process_small {process_sample genome yri mx2} {
 	file delete -force tmp/one_genome_yri_mx2
 	file mkdir tmp/one_genome_yri_mx2/samples/NA19240cgmx2
 	mklink ori/genomes_yri_mx2.start/samples/NA19240cgmx2/ori tmp/one_genome_yri_mx2/samples/NA19240cgmx2/ori
-	cg process_sample --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir $ref tmp/one_genome_yri_mx2/samples/NA19240cgmx2 2>@ stderr >@ stdout
+	cg process_sample {*}$::dopts -split 1 -dbdir $ref tmp/one_genome_yri_mx2/samples/NA19240cgmx2 2>@ stderr >@ stdout
 	# check vs expected
 	cg tsvdiff -q 1 -x info_analysis.tsv -x log_jobs -x summary-NA19240cgmx2.txt -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo \
@@ -249,7 +251,7 @@ test process_small {genomes yri mx2} {
 		mklink ori/genomes_yri_mx2.start/samples/$sample/ori tmp/genomes_yri_mx2/samples/$sample/ori
 	}
 	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/genomes_yri_mx2
-	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/genomes_yri_mx2 2>@ stderr >@ stdout
+	cg process_project {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/genomes_yri_mx2 2>@ stderr >@ stdout
 	# check vs expected
 	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
 		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index -x info_analysis.tsv \
@@ -275,7 +277,7 @@ test process_small {mixed yri mx2} {
 	cg project_addsample tmp/mixed_yri_mx2 gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2 exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4  tmp/mixed_yri_mx2 exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
-	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 \
+	cg process_project {*}$::dopts -split 1 \
 	  -dbdir /complgen/refseq/hg19 \
 	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
 	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
