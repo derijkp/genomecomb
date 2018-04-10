@@ -3,15 +3,15 @@ proc matchlistsize {args} {
 	set lengths {}
 	foreach v $args {
 		set line [split $v ";, "]
-		lappend lengths [llength $line]
+		lappend lengths [::llength $line]
 		lappend data $line
 	}
 	set size [list_remove [list_remdup $lengths] 1]
-	if {[llength $size] > 1} {
+	if {[::llength $size] > 1} {
 		error "some lists of different length: $args"
 	}
 	set result {}
-	if {[llength $size] == 0} {
+	if {[::llength $size] == 0} {
 		return $data
 	} else {
 		foreach line $data len $lengths {

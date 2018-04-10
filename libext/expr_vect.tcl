@@ -1,8 +1,8 @@
 proc matchlist {v1 v2} {
 	set v1 [split $v1 ";, "]
-	set len1 [llength $v1]
+	set len1 [::llength $v1]
 	set v2 [split $v2 ";, "]
-	set len2 [llength $v2]
+	set len2 [::llength $v2]
 	if {$len1 != $len2} {
 		if {$len1 == 1} {
 			set v1 [list_fill $len2 $v1]
@@ -64,7 +64,15 @@ proc tcl::mathfunc::lrange {list start end} {
 proc tcl::mathfunc::llen {args} {
 	set result 0
 	foreach value $args {
-		incr result [llength [split $value ";, "]]
+		incr result [::llength [split $value ";, "]]
+	}
+	return $result
+}
+
+proc tcl::mathfunc::llength {args} {
+	set result 0
+	foreach value $args {
+		incr result [::llength [split $value ";, "]]
 	}
 	return $result
 }
@@ -111,7 +119,7 @@ proc tcl::mathfunc::vfunc {args} {
 	set len 1
 	foreach value [lrange $args 1 end] {
 		set s [split $value ";, "]
-		set l [llength $s]
+		set l [::llength $s]
 		if {$l != 1} {
 			if {$len != 1} {error "vconcat error: $value has a different number of elements"}
 			set len $l
@@ -126,7 +134,7 @@ proc tcl::mathfunc::vfunc {args} {
 	} else {
 		set i 0
 		foreach line $temp {
-			if {[llength $line] == 1} {lset temp $i [list_fill $len [lindex $line 0]]}
+			if {[::llength $line] == 1} {lset temp $i [list_fill $len [lindex $line 0]]}
 			incr i
 		}
 		for {set i 0} {$i < $len} {incr i} {
@@ -137,11 +145,11 @@ proc tcl::mathfunc::vfunc {args} {
 }
 
 proc tcl::mathfunc::vif {args} {
-	if {[llength $args] < 3 || [expr {[llength $args]%2}] != 1} {
+	if {[::llength $args] < 3 || [expr {[::llength $args]%2}] != 1} {
 		error "wrong # args for function vif, must be: vif(condition1,true1,?condition2?,?true2?,...,false)"
 	}
 	set args [matchlistsize {*}$args]
-	set len [llength [::lindex $args 0]]
+	set len [::llength [::lindex $args 0]]
 	set result {}
 	for {set pos 0} {$pos < $len} {incr pos} {
 		set line [list_subindex $args $pos]
@@ -163,7 +171,7 @@ proc tcl::mathfunc::vif {args} {
 
 proc tcl::mathfunc::vavg {args} {
 	set result [split [::lindex $args 0] ";, "]
-	set result [list_fill [expr {[llength $result]*2}] 0]
+	set result [list_fill [expr {[::llength $result]*2}] 0]
 	foreach value $args {
 		set newresult {}
 		foreach el [split $value ";, "] {p t} $result {
@@ -201,7 +209,7 @@ proc tcl::mathfunc::vabs {value} {
 }
 
 proc tcl::mathfunc::vmax args {
-	set len [llength [split [::lindex $args 0] ";, "]]
+	set len [::llength [split [::lindex $args 0] ";, "]]
 	set max [list_fill $len -Inf]
 	foreach v $args {
 		set pos 0
@@ -214,7 +222,7 @@ proc tcl::mathfunc::vmax args {
 }
 
 proc tcl::mathfunc::vmin args {
-	set len [llength [split [::lindex $args 0] ";, "]]
+	set len [::llength [split [::lindex $args 0] ";, "]]
 	set min [list_fill $len Inf]
 	foreach v $args {
 		set pos 0
@@ -233,7 +241,7 @@ proc tcl::mathfunc::vformat {args} {
 	set todo {}
 	foreach el $args {
 		set el [split $el ";, "]
-		set testlen [llength $el]
+		set testlen [::llength $el]
 		if {$testlen != 1} {
 			if {$len == 1} {set len $testlen} elseif {$testlen != $len} {error "args of vformat are vectors of different size (not 1)"}
 		}
@@ -242,7 +250,7 @@ proc tcl::mathfunc::vformat {args} {
 	if {$len != 1} {
 		set pos 0
 		foreach el $todo {
-			set testlen [llength $el]
+			set testlen [::llength $el]
 			if {$testlen == 1} {
 				lset todo $pos [list_fill $len $el]
 			}

@@ -92,6 +92,10 @@ test libext {llen} {
 	expr {llen("1,0,0","1,1,1")}
 } 6
 
+test libext {llength} {
+	expr {llength("1,0,0","1,1,1")}
+} 6
+
 test libext {vector} {
 	expr {vector("1","2,3","4,5")}
 } {1,2,3,4,5}

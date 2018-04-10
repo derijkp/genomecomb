@@ -36,7 +36,7 @@ proc tcl::mathfunc::median args {
 
 proc tcl::mathfunc::q1 args {
 	set args [ssort -natural $args]
-	set len [llength $args]
+	set len [::llength $args]
 	set len [expr {$len/2}]
 	if {[expr {$len % 2}]} {
 		# uneven
@@ -50,7 +50,7 @@ proc tcl::mathfunc::q1 args {
 
 proc tcl::mathfunc::q3 args {
 	set args [ssort -natural $args]
-	set len [llength $args]
+	set len [::llength $args]
 	set len [expr {$len/2}]
 	if {[expr {$len % 2}]} {
 		# uneven

@@ -23,22 +23,22 @@ proc tcl::mathfunc::zyg args {
 proc tcl::mathfunc::transcripts {genes impacts descrs filter format} {
 	set result {}
 	set descrs [split $descrs {,;}]
-	set len [llength $descrs]
+	set len [::llength $descrs]
 	if {$len > 1} {
 		set genes [split $genes {,;}]
 		set impacts [split $impacts {,;}]
-		if {[llength $genes] == 1} {
+		if {[::llength $genes] == 1} {
 			set genes [list_fill $len [lindex $genes 0]]
 		}
-		if {[llength $impacts] == 1} {
+		if {[::llength $impacts] == 1} {
 			set impacts [list_fill $len [lindex $impacts 0]]
 		}
-		if {[llength $descrs] > [llength $genes]} {
+		if {[::llength $descrs] > [::llength $genes]} {
 			set genes [list_fill $len [lindex $genes 0]]
 		}
 	}
 	foreach gene $genes descr $descrs impact $impacts {
-		if {[llength $filter] && $impact ni $filter} continue
+		if {[::llength $filter] && $impact ni $filter} continue
 		if {![regexp {^[+-]([^:]+):} $descr temp transcript]} {
 			error "[lindex $args 0] has wrong format (should be a x_descr field)"
 		}
@@ -60,7 +60,7 @@ proc tcl::mathfunc::maximpact {args} {
 	foreach el $args {
 		lappend list {*}[split $el {,;}]
 	}
-	if {![llength $list]} {return {}}
+	if {![::llength $list]} {return {}}
 	set varlist [var_impact_list]
 	set pos [::max [list_cor $varlist $list]]
 	lindex $varlist $pos

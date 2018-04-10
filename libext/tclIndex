@@ -73,6 +73,7 @@ set auto_index(::tcl::mathfunc::lindex) [list source [file join $dir expr_vect.t
 set auto_index(::tcl::mathfunc::lsearch) [list source [file join $dir expr_vect.tcl]]
 set auto_index(::tcl::mathfunc::lrange) [list source [file join $dir expr_vect.tcl]]
 set auto_index(::tcl::mathfunc::llen) [list source [file join $dir expr_vect.tcl]]
+set auto_index(::tcl::mathfunc::llength) [list source [file join $dir expr_vect.tcl]]
 set auto_index(::tcl::mathfunc::vector) [list source [file join $dir expr_vect.tcl]]
 set auto_index(::tcl::mathfunc::distinct) [list source [file join $dir expr_vect.tcl]]
 set auto_index(::tcl::mathfunc::vdistinct) [list source [file join $dir expr_vect.tcl]]
