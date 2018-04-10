@@ -615,6 +615,15 @@ test bcol_make {-n} {
 	exec diff tmp/temp.test tmp/expected.tsv
 } {}
 
+test bcol_make {empty file} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		test
+	}
+	exec cg bcol make -t c tmp/temp.bcol test < tmp/temp.tsv
+	cg bcol table tmp/temp.bcol
+} {test}
+
 test_cleantmp
 
 set ::env(PATH) $keeppath

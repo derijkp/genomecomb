@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 	char *outfile,*type = "u",*defaultvalue = "",*chrname="";
 	uint64_t offset, poffset, size, endpos;
 	int reverse = 0, isunsigned = 0;
-	int col = 0,max = 0,offsetcol = -1,endcol = -1,chrcol = -1,shift, precision = -1, i;
+	int col = 0,max = 0,offsetcol = -1,endcol = -1,chrcol = -1,shift, precision = -1, i, found = 0;
 	if (argc != 10) {
 		fprintf(stderr,"Format is: bcol_make output_file type col chromosomecol chromosomename offsetcol endcol default precision\n");
 		exit(EXIT_FAILURE);
@@ -69,6 +69,7 @@ int main(int argc, char *argv[]) {
 	fprintf(obcol,"chromosome\tbegin\tend\n");
 	poffset = -1;
 	while (!DStringGetTab(line,stdin,max,result,0,NULL)) {
+		found = 1;
 		if (chrcol != -1) {
 			chromosome = result->data+chrcol;
 			if (DStringCompare(chromosome, prevchr) != 0) {
@@ -125,7 +126,9 @@ int main(int argc, char *argv[]) {
 	} else if (prevchr->size > 3 && prevchr->string[0] == 'c' && prevchr->string[1] == 'h' && prevchr->string[2] == 'r') {
 		shift = 3;
 	}
-	fprintf(obcol,"%*.*s\t%" PRId64 "\t%" PRIu64 "\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,poffset);
+	if (found) {
+		fprintf(obcol,"%*.*s\t%" PRId64 "\t%" PRIu64 "\n",prevchr->size-shift,prevchr->size-shift,prevchr->string+shift,start,poffset);
+	}
 	fflush(obcol);
 	if (line) {DStringDestroy(line);}
 	if (result) {DStringArrayDestroy(result);}
