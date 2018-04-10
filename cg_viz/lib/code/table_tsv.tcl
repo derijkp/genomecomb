@@ -116,9 +116,14 @@ table_tsv method query {args} {
 	putslog "Doing query $query"
 	regsub -all \n $query { } query
 	if {![info exists tdata(sqlbackend_db)]} {
-		if {[file exists $tdata(indexdir)/info.tsv]} {
-			set info [infofile_read $tdata(indexdir)/info.tsv]
-			catch {set numlines [dict get $info size]}
+		if {[info exists tdata(size)]} {
+			set numlines $tdata(size)
+		} else {
+			set infofile [indexdir_file $tdata(file) info.tsv ok]
+			if {$ok} {
+				set info [infofile_read $infofile]
+				catch {set numlines [dict get $info size]}
+			}
 		}
 		set fieldopt [list {rowid=$ROW}]
 		if {$query ne ""} {
