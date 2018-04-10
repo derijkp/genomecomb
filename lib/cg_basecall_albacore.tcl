@@ -36,7 +36,7 @@ proc basecaller_albacore_job {args} {
 	set opts {}
 	set threads 1
 	set barcoding {}
-	cg_options var_sam args {
+	cg_options basecaller_albacore args {
 		-n - -numreads {
 			set numreads $value
 		}
@@ -135,7 +135,6 @@ proc basecaller_albacore_job {args} {
 				-targets $targets \
 				-vars {sourcedir from to todo opts threads barcoding resultdir name} \
 				-code {
-					albacoreinit
 					set tempdir [scratchdir]
 					exec read_fast5_basecaller.py {*}$opts \
 						--files_per_batch_folder 0 \
@@ -202,7 +201,6 @@ proc basecaller_albacore_job {args} {
 			-targets $targets \
 			-vars {name sourcedir resultdir barcoding from to todo opts threads} \
 			-code {
-				albacoreinit
 				set tempdir [scratchdir]
 				file mkdir $tempdir/fast5
 				foreach file $todo {
