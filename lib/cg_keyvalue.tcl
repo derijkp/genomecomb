@@ -2,6 +2,8 @@ proc cg_keyvalue {args} {
 	set samplefields {}
 	set samplefieldslen 0
 	set idfields {}
+	set infile {}
+	set outfile {}
 	cg_options keyvalue args {
 		-idfields {
 			set idfields $value
