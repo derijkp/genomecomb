@@ -19,7 +19,7 @@ proc cg_colvalue {args} {
 		set f stdin
 		set header [tsv_open $f comment]
 		set tempfile [tempfile]
-		set o [open $tmpfile w]
+		set o [open $tempfile w]
 		puts $o [join $header \t]
 		fcopy $f $o
 		close $o
