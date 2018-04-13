@@ -25,7 +25,7 @@ proc var_freebayes_job {args} {
 	set threads 2
 	set cleanup 1
 	set regmincoverage 3
-	cg_options var_sam args {
+	cg_options var_freebayes args {
 		-L - -deps {
 			lappend deps $value
 		}
