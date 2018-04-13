@@ -107,6 +107,11 @@ proc version {item {minversion {}}} {
 				regsub {version: *} $temp {} temp
 				set _versions($item) [string trim $temp]
 			}
+			razip {
+				catch {exec grep Version [exec which razip]_docs/razf.c} temp
+				regsub {.*Version: *} $temp {} temp
+				set _versions($item) [string trim $temp]
+			}
 			default {
 				if {![catch {exec $item --version} temp]} {
 				} elseif {![catch {exec $item -version} temp]} {

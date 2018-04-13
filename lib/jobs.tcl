@@ -76,6 +76,7 @@ proc job_args {jobargs} {
 			-d - -distribute - --distribute {
 				job_distribute [lindex $jobargs $pos]
 				incr pos
+				set cgjob(hasargs) 1
 			}
 			-dpriority {
 				set cgjob(priority) [lindex $jobargs $pos]
@@ -815,7 +816,7 @@ proc job_logfile_set {logfile {dir {}} {cmdline {}} args} {
 
 proc job_logfile {{logfile {}} {dir {}} {cmdline {}} args} {
 	global cgjob
-	# This will only set the log file the first time it is called, allowing subcommans to set it if called separately
+	# This will only set the log file the first time it is called, allowing subcommands to set it if called separately
 	# but not when called from a larger workflow
 	if {$cgjob(logfile) ne ""} {return $cgjob(logfile)}
 	job_logfile_set $logfile $dir $cmdline {*}$args
@@ -1221,6 +1222,7 @@ proc job_init {args} {
 	unset -nocomplain cgjob_info
 	unset -nocomplain job_logdir_submit
 	set ::job_method_info {}
+	set cgjob(hasargs) 0
 	set cgjob(debug) 0
 	set cgjob(distribute) 0
 	set cgjob(force) 0

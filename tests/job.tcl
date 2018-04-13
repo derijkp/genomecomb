@@ -17,7 +17,7 @@ if {$pos != -1} {
 	}
 } else {
 	set tests {
-		"direct" {uplevel job_init -skipjoberrors 1 {*}$args}
+		"direct" {uplevel job_init -skipjoberrors 1 -d 0 {*}$args}
 		"-d 2" {uplevel job_init -d 2 {*}$args}
 		"-d 4" {uplevel job_init -d 4 {*}$args}
 		"-d 30" {uplevel job_init -d 30 {*}$args}
@@ -31,7 +31,7 @@ set keepdir [pwd]
 # use these for trying out individual tests
 set testname "-d direct"
 proc test_job_init {args} {
-	uplevel job_init -skipjoberrors 1 {*}$args
+	uplevel job_init -skipjoberrors 1 -d 0 {*}$args
 	job_logfile_set log
 }
 proc gridwait {} {}

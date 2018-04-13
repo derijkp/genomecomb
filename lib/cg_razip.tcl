@@ -2,11 +2,13 @@ proc cg_razip args {
 	set pos 0
 	set keep 0
 	set args [job_init {*}$args]
+	set cmdline [list cg razip {*}$args]
 	cg_options razip args {
 		-k - -keep {
 			set keep 1
 		}
 	}
+	set logfile [job_logfile razip [pwd] $cmdline {*}[versions razip]]
 	foreach file $args {
 		set target [gzroot $file].rz
 		job razip-$file -deps {$file} -targets {$target} -vars {keep} -code {

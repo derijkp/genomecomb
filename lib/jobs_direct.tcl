@@ -231,6 +231,7 @@ proc job_logfile_direct_close {} {
 	file rename $cgjob(logfile).submitting $result
 	if {$cgjob(cleanup) eq "allways" || ($cgjob(cleanup) eq "success" && $cgjob(status) eq "ok")} {
 		job_cleanlogs $result
+		if {!$cgjob(hasargs)} {file delete $result}
 	}
 }
 
