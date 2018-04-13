@@ -38,7 +38,7 @@ test map_minimap2 {map_minimap2 paired} {
 	cg map_minimap2 -stack 1 -v 2 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]] >@ stdout 2>@ stderr
 	# chr21:42730799-42762826
 	exec samtools view tmp/ali.bam > tmp/ali.sam
-	exec samtools view data/bwa.bam > tmp/expected.sam
+	exec samtools view data/minimap2-p.bam > tmp/expected.sam
 	exec diff tmp/ali.sam tmp/expected.sam
 } {}
 
