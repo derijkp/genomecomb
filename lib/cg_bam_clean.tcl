@@ -23,7 +23,6 @@ proc bam_clean_job {args} {
 	if {[llength $args]} {
 		array set opt $args
 	}
-	set gatk [gatk]
 	upvar job_logdir job_logdir
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
@@ -114,19 +113,19 @@ proc bam_clean_job {args} {
 			job bamrealign-$root -mem 10G -cores 2 -deps $deps \
 			-targets {$dir/$pre-r$root.bam $dir/$pre-r$root.bam.analysisinfo} \
 			-vars {gatkrefseq refseq gatk realignopts regionfile} {*}$skips -code {
-				analysisinfo_write $dep $target realign gatk realign_version [version gatk]
+				analysisinfo_write $dep $target realign gatk realign_version [version gatk3]
 				if {$regionfile ne ""} {
 					set bedfile [tempbed $regionfile $refseq]
 					lappend realignopts -L $bedfile
 				}
-				exec [gatkjava] -XX:ParallelGCThreads=1 -Xms512m -Xmx8g -jar $gatk -T RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
-				if {[loc_compare [version gatk] 2.7] >= 0} {
+				gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
+				if {[loc_compare [version gatk3] 2.7] >= 0} {
 					set extra {--filter_bases_not_stored}
 				} else {
 					set extra {}
 				}
 				lappend extra --filter_mismatching_base_and_quals
-				exec [gatkjava] -XX:ParallelGCThreads=1 -Xms512m -Xmx8g -jar $gatk -T IndelRealigner -R $gatkrefseq \
+				gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} IndelRealigner -R $gatkrefseq \
 					-targetIntervals $target.intervals -I $dep \
 					-o $target.temp {*}$extra 2>@ stderr >@ stdout
 				catch {file rename -force $target.temp.bai $target.bai}

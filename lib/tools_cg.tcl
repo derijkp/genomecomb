@@ -43,6 +43,11 @@ proc cg {cmd args} {
 	}
 }
 
+proc cg {cmd args} {
+	# puts "cg $args"
+	catch_exec cg $cmd {*}$args
+}
+
 proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {summary {}}} {
 # putsvars cmd argsVar def parameters minargs maxargs summary
 	# we allways need options in the subst command anyway

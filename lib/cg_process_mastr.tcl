@@ -374,7 +374,7 @@ proc process_mastr_job {args} {
 	}
 	lappend cmdline $mastrdir $destdir $dbdir
 	job_logfile $destdir/process_mastr_[file tail $destdir] $destdir $cmdline \
-		{*}[versions fastqc dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard java gnusort8 lz4 os]
+		{*}[versions fastqc dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 biobambam picard java gnusort8 lz4 os]
 	# start mastr analysis
 	set keeppwd [pwd]
 	cd $destdir

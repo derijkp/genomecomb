@@ -24,18 +24,10 @@ proc version {item {minversion {}}} {
 				regexp {Version: ([^\n]+)} $temp temp _versions($item)
 			}
 			gatk {
-				set gatk [gatk]
-				if {![catch {exec java -XX:ParallelGCThreads=1 -jar $gatk --version} msg]} {
-					set version $msg
-					set ::gatkjava java
-				} elseif {![catch {exec java1.8 -XX:ParallelGCThreads=1 -jar $gatk --version} version]} {
-					set ::gatkjava java1.8
-				} elseif {![catch {exec java1.7 -XX:ParallelGCThreads=1 -jar $gatk --version} version]} {
-					set ::gatkjava java1.7
-				} else {
-					error "Cannot determine gatk version:\n$msg"
-				}
-				set _versions($item) $version
+				set _versions($item) [gatkexec version]
+			}
+			gatk3 {
+				set _versions($item) [gatk3exec version]
 			}
 			picard {
 				catch {picard MarkDuplicates --version} version_picard

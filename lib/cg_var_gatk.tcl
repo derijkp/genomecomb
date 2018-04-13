@@ -64,13 +64,12 @@ proc var_gatk_job {args} {
 	set threads 2
 	set cleanup 1
 	set regmincoverage 3
-	cg_options var_sam args {
+	cg_options var_gatk args {
 		-L - -deps {
 			lappend deps $value
 		}
 		-regionfile {
 			set regionfile $value
-			lappend deps $value
 		}
 		-regmincoverage {
 			set regmincoverage $value
@@ -99,7 +98,7 @@ proc var_gatk_job {args} {
 	} else {
 		set regionfile [bam2reg_job -mincoverage $regmincoverage $bamfile]
 	}
-	set gatk [gatk]
+	lappend deps $regionfile
 	# logfile
 	set cmdline [list cg var_gatk]
 	foreach option {
@@ -111,7 +110,7 @@ proc var_gatk_job {args} {
 	}
 	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_gatk_[file tail $bamfile] $destdir $cmdline \
-		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
+		{*}[versions bwa bowtie2 samtools gatk gatk3 picard java gnusort8 lz4 os]
 	set file [file tail $bamfile]
 	set root [file_rootname $file]
 	if {$root eq ""} {set root [file root $file]}
@@ -126,12 +125,12 @@ proc var_gatk_job {args} {
 	-skip [list ${pre}varall-gatk-$root.tsv ${pre}varall-gatk-$root.tsv.analysisinfo] \
 	-vars {gatk opts regionfile gatkrefseq refseq threads root} \
 	-code {
-		analysisinfo_write $dep $target sample gatk-$root varcaller gatk varcaller_version [version gatk] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $dep $target sample gatk-$root varcaller gatk varcaller_version [version gatk3] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		if {$regionfile ne ""} {
 			set bedfile [tempbed $regionfile $refseq]
 			lappend opts -L $bedfile
 		}
-		exec [gatkjava] -XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
+		gatk3exec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} UnifiedGenotyper \
 			{*}$opts -nct $threads -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 10.0 -dcov 1000 \
 			--annotateNDA \
@@ -163,7 +162,7 @@ proc var_gatk_job {args} {
 			set bedfile [tempbed $regionfile $refseq]
 			lappend opts -L $bedfile
 		}
-		exec [gatkjava] -XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g -jar $gatk -T UnifiedGenotyper \
+		gatk3exec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} UnifiedGenotyper \
 			{*}$opts -nct $threads -R $dep2 -I $dep -o $target.temp \
 			-stand_call_conf 10.0 -dcov 1000 \
 			--annotateNDA \

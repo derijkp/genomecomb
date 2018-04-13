@@ -22,14 +22,13 @@ proc catchstderr_exec {args} {
 }
 
 proc catch_exec {args} {
-	set tempfile [tempfile]
-	file_write $tempfile ""
 	if {[catch {
-		exec {*}$args 2> $tempfile
-	} msg]} {
-		set error [file_read $tempfile]
-		file delete $tempfile
-		error "$msg\n$error"
+		exec {*}$args
+	} msg opt]} {
+		if {$::errorCode ne "NONE"} {
+			dict unset resultoptions -level
+			return -options $opt $msg
+		}
 	}
 	return $msg
 }

@@ -32,13 +32,88 @@ proc findpicard {} {
 	return $picard
 }
 
-proc gatk {} {
+proc gatkexec {args} {
 	global gatk
-	if {![info exists gatk]} {
-		set gatk [searchpath GATK gatk GenomeAnalysisTK*]/GenomeAnalysisTK.jar
+	if {![info exists gatk(version)]} {
+		set gatk(usecommand) 0
+		if {![info exists ::env(GATK)] || [file isfile $::env(GATK)]} {
+			if {[info exists ::env(GATK)]} {
+				set gatk(command) $::env(GATK)
+			} else {
+				set gatk(command) gatk
+			}
+			catch {exec $gatk(command) HaplotypeCaller --version} msg
+			if {[regexp {GATK.*Version:(.*)} $msg temp version]} {
+				set gatk(usecommand) 1
+				set gatk(version) $version
+				set ::gatkjava java
+			} elseif {[info exists ::env(GATK)]} {
+				error "gatk command given in env var GATK gives following unexpected result when trying to get version:\n$msg"
+			}
+		} 
+		if {![info exists gatk(version)]} {
+			set gatk(command) 0
+			set gatk(jar) [searchpath GATK gatk GenomeAnalysisTK*]/GenomeAnalysisTK.jar
+			if {![catch {exec java -XX:ParallelGCThreads=1 -jar $gatk(jar) --version} msg]} {
+				set version $msg
+				set ::gatkjava java
+			} elseif {![catch {exec java1.8 -XX:ParallelGCThreads=1 -jar $gatk(jar) --version} version]} {
+				set ::gatkjava java1.8
+			} elseif {![catch {exec java1.7 -XX:ParallelGCThreads=1 -jar $gatk(jar) --version} version]} {
+				set ::gatkjava java1.7
+			} else {
+				error "Cannot determine gatk version:\n$msg"
+			}
+			set gatk(version) $version
+		}
 	}
-	return $gatk
+	if {[lindex $args 0] eq "version"} {return $gatk(version)}
+	set javaopts [list_pop args 0]
+	if ($gatk(usecommand)) {
+		catch_exec $gatk(command) --java-options $javaopts {*}$args
+	} else {
+		catch_exec -ignorestderr $::gatkjava {*}$javaopts -jar $gatk(jar) -T {*}$args
+	}
+	return ""
 }
+
+proc gatk3exec {args} {
+	global gatk3
+	if {![info exists gatk3(version)]} {
+		if {[catch {
+			set gatk3(jar) [searchpath GATK3 gatk3 GenomeAnalysisTK*]/GenomeAnalysisTK.jar
+		} msg]} {
+			if {[catch {
+				set gatk3(jar) [searchpath GATK gatk GenomeAnalysisTK*]/GenomeAnalysisTK.jar
+			}]} {
+				error $msg
+			}
+		}
+		
+		if {![catch {exec java -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} msg]} {
+			set version $msg
+			set ::gatkjava java
+		} elseif {![catch {exec java1.8 -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} version]} {
+			set ::gatkjava java1.8
+		} elseif {![catch {exec java1.7 -XX:ParallelGCThreads=1 -jar $gatk3(jar) --version} version]} {
+			set ::gatkjava java1.7
+		} else {
+			error "Cannot determine gatk3 version:\n$msg"
+		}
+		set gatk3(version) $version
+	}
+	if {[lindex $args 0] eq "version"} {return $gatk3(version)}
+	set javaopts [list_pop args 0]
+	catch_exec $::gatkjava {*}$javaopts -jar $gatk3(jar) -T {*}$args
+}
+
+#proc gatk {} {
+#	global gatk
+#	if {![info exists gatk]} {
+#		set gatk [searchpath GATK gatk GenomeAnalysisTK*]/GenomeAnalysisTK.jar
+#	}
+#	return $gatk
+#}
 
 proc findjar {program {envvar {}}} {
 	global extprograms
