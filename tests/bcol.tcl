@@ -622,7 +622,7 @@ test bcol_make {empty file} {
 	}
 	exec cg bcol make -t c tmp/temp.bcol test < tmp/temp.tsv
 	cg bcol table tmp/temp.bcol
-} {test}
+} {chromosome	pos	value}
 
 test_cleantmp
 
