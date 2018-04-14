@@ -133,7 +133,7 @@ proc cg_genome_seq {args} {
 	}
 	set fg [genome_open [lindex [glob $dbdir/genome_*.ifas] 0]]
 	if {![file exists $regionfile]} {
-		set regionlist [list_remove [split $regionfile {:-, \n}] {}]
+		set regionlist [list_remove [split $regionfile ":-, \n"] {}]
 		set regionfile [tempfile]
 		set f [open $regionfile w]
 		puts $f [join {chromosome begin end} \t]

@@ -114,6 +114,14 @@ ctccagaggcNgaggcaggagaatggtgtgaacctgggaggaggagcttgcagtgagccgggatcatgccactgcattcc
 	exec diff tmp/result.fas tmp/expected.fas
 } {}
 
+test genome_seq {regionlist of one} {
+	exec cg genome_seq {chr18:103887-104141} $::refseqdir/hg19 tmp/result.fas
+	file_write tmp/expected.fas {>chr18-103887-104141
+ctccagaggcNgaggcaggagaatggtgtgaacctgggaggaggagcttgcagtgagccgggatcatgccactgcattccagcccgggcaacagagcaagactccatctcaaaaaaaaaaaaaaaaaaaaaGGATCTCTGTTTAGAATGCTACCTATTGCCTTCTGGATAGAATCACAACTCTTTACCACAATCAACACAGCTTCAgccctgcttctatatccagcctcatctatttctgctcctcctccttat
+}
+	exec diff tmp/result.fas tmp/expected.fas
+} {}
+
 file delete -force tmp/temp.sft
 
 set ::env(PATH) $keeppath
