@@ -7,7 +7,7 @@
 proc cg_regextract {args} {
 	set qfields {coverage uniqueSequenceCoverage}
 	set posfields {offset pos position begin start}
-	set above 0; set shift 0
+	set above 0; set shift {}
 	set filtered 0
 	# can no longer use -d$cutoff in newer samtools:
 	# this can cause the depth to be wrong on positions with coverage below cutoff
@@ -52,6 +52,9 @@ proc cg_regextract {args} {
 	foreach file $files {
 		putslog "Processing $file"
 		set ext [file extension $file]
+		if {$shift ne ""} {set useshift $shift} else {
+			if {$ext in ".bam .sam"} {set useshift -1} else {set useshift 0}
+		}
 		if {$ext eq ".bcol"} {
 			set bcol [bcol_open $file]
 			if {[dict get $bcol version] == 0} {
@@ -62,8 +65,8 @@ proc cg_regextract {args} {
 				set file [gzfile $file.bin]
 				set cat [gzcat $file]
 				set error [catch {
-					# puts "$cat $file | getregionsbcol $chr $type $start $cutoff $above $shift"
-					exec {*}$cat $file | getregionsbcol $chr $type $start $cutoff $above $shift >@ $o
+					# puts "$cat $file | getregionsbcol $chr $type $start $cutoff $above $useshift"
+					exec {*}$cat $file | getregionsbcol $chr $type $start $cutoff $above $useshift >@ $o
 				} errmessage]
 				if {$error} {
 					set errmessage [split [string trim $errmessage] \n]
@@ -73,18 +76,18 @@ proc cg_regextract {args} {
 					}
 				}
 			} else {
-				# puts "getregionsbcol2 $file $cutoff $above $shift"
-				exec getregionsbcol2 $file $cutoff $above $shift >@ $o
+				# puts "getregionsbcol2 $file $cutoff $above $useshift"
+				exec getregionsbcol2 $file $cutoff $above $useshift >@ $o
 			}
-		} elseif {$ext eq ".bam"} {
+		} elseif {$ext in ".bam .sam"} {
 			set chrcol 0
 			set poscol 1
 			if {!$filtered} {
 				set valuecol 2
-				catchstderr_exec samtools depth -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $shift 0 >@ $o
+				catchstderr_exec samtools depth -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
 			} else {
 				set valuecol 3
-				catchstderr_exec samtools mpileup --ignore-overlaps -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $shift 0 >@ $o
+				catchstderr_exec samtools mpileup --ignore-overlaps -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
 			}
 		} else {
 			set f [gzopen $file]
@@ -119,7 +122,7 @@ proc cg_regextract {args} {
 			}
 			set cat [gzcat $file]
 			set error [catch {
-				exec {*}$cat $file | getregions $chr $chrcol $poscol $qcol $cutoff $above $shift 1 >@ $o
+				exec {*}$cat $file | getregions $chr $chrcol $poscol $qcol $cutoff $above $useshift 1 >@ $o
 			} errmessage]
 			if {$error && ![regexp {decompression OK, trailing garbage ignored} $errmessage] && ![regexp {Successfully decoded} $errmessage]} {
 				error $errmessage

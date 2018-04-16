@@ -138,7 +138,7 @@ test cg_regextract {--filtered 1 -q 1 -Q 0} {
 	set total [lindex [cg covered tmp/selmultireg.tsv] end]
 	set cov20 [lindex [exec cg select -q {$reg-cov20 == 1} tmp/selmultireg.tsv | cg covered] end]
 	format %.4f [expr 100.0*$cov20/$total]
-} {56.1604}
+} {56.1521}
 
 test cg_regextract {-q 20 -Q 20} {
 	test_cleantmp
@@ -156,6 +156,101 @@ test cg_regextract {-q 20 -Q 20} {
 	set total [lindex [cg covered tmp/selmultireg.tsv] end]
 	set cov20 [lindex [exec cg select -q {$reg-cov20 == 1} tmp/selmultireg.tsv | cg covered] end]
 	format %.4f [expr 100.0*$cov20/$total]
-} {55.0057}
+} {54.9979}
+
+test cg_regextract {small sam -min 1} {
+	write_sam tmp/temp.sam {
+		chr1	100	20M	20	chr1	121	20M	20
+		chr1	100	2M1X17M	20	chr1	121	17M1X2M	20
+		chr1	100	2S18M	20	chr1	121	2S16M2S	20
+		chr1	100	2S2M2D16M	20	chr1	120	2S16M2D2M	20
+		chr1	100	2S2M2I14M	20	chr1	123	2S14M2I2M	20
+		chr1	102	4S2M2I12M	20	chr1	111	30M	30
+		chr1	107	20M	20	chr1	112	20M	20
+		chr1	108	20M	20	chr1	113	20M	20
+		chr2	50	20M	20	chr2	60	20M	20
+		chr2	100	50M	50	chr2	100	50M	50
+	}
+	cg regextract -min 1 tmp/temp.sam
+} {chromosome	begin	end
+chr1	99	140
+chr2	49	79
+chr2	99	149}
+
+test cg_bam2reg {small sam -min 2} {
+	write_sam tmp/temp.sam {
+		chr1	100	20M	20	chr1	121	20M	20
+		chr1	102	4S2M2I12M	20	chr1	111	30M	30
+		chr2	50	20M	20	chr2	60	20M	20
+		chr2	100	50M	50	chr2	100	50M	50
+	}
+	cg bam2reg -mincoverage 2 tmp/temp.sam
+	exec cg zcat tmp/sreg-cov2-temp.tsv.lz4
+} {chromosome	begin	end
+chr1	101	119
+chr1	120	140
+chr2	59	69
+chr2	99	149}
+
+test cg_bam2reg {small sam -min 2 with target} {
+	write_sam tmp/temp.sam {
+		chr1	100	20M	20	chr1	121	20M	20
+		chr1	102	4S2M2I12M	20	chr1	111	30M	30
+		chr2	50	20M	20	chr2	60	20M	20
+		chr2	100	50M	50	chr2	100	50M	50
+	}
+	cg bam2reg -mincoverage 2 tmp/temp.sam tmp/reg.tsv
+	file_read tmp/reg.tsv
+} {chromosome	begin	end
+chr1	101	119
+chr1	120	140
+chr2	59	69
+chr2	99	149
+}
+
+test cg_bam2reg {small sam 2} {
+	write_sam tmp/temp.sam {
+		chr1	100	20M	20	chr1	121	20M	20
+		chr1	102	4S2M2I12M	20	chr1	111	30M	30
+		chr2	50	20M	20	chr2	60	20M	20
+		chr2	100	50M	50	chr2	100	50M	50
+	}
+	cg bam2reg tmp/temp.sam 2
+	exec cg zcat tmp/sreg-cov2-temp.tsv.lz4
+} {chromosome	begin	end
+chr1	101	119
+chr1	120	140
+chr2	59	69
+chr2	99	149}
+
+test cg_bam2reg {small sam 2 target} {
+	write_sam tmp/temp.sam {
+		chr1	100	20M	20	chr1	121	20M	20
+		chr1	102	4S2M2I12M	20	chr1	111	30M	30
+		chr2	50	20M	20	chr2	60	20M	20
+		chr2	100	50M	50	chr2	100	50M	50
+	}
+	cg bam2reg tmp/temp.sam 2 tmp/reg.tsv
+	file_read tmp/reg.tsv
+} {chromosome	begin	end
+chr1	101	119
+chr1	120	140
+chr2	59	69
+chr2	99	149
+}
+
+test cg_bam2reg {basic} {
+	mklink genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam tmp/test.bam
+	cg bam2reg -stack 1 -mincoverage 20 tmp/test.bam tmp/result.tsv
+	catch {exec cg zcat tmp/result.tsv | head -4} temp
+	append temp \n[exec cg zcat tmp/result.tsv | tail -3]
+} {chromosome	begin	end
+chr21	9439337	9439639
+chr21	9439640	9439747
+chr21	9444036	9444482
+child killed: write on pipe with no readers
+chr22	51229714	51229749
+chr22	51229752	51229787
+chr22	51237064	51237741}
 
 testsummarize

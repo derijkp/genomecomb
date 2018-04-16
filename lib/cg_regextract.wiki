@@ -41,7 +41,7 @@ element.
 ; -min number: extract regions with coverage >= number.
 ; -max number: extract regions with coverage <= number.
 ; -shift: change the position by the given amount, e.g. -1 to change from
-          1-based to 0-based coordinates
+          1-based to 0-based coordinates, (default is -1 for bam and sam files, for other files 0)
 ; -q number: Minimum mapping quality for an alignment to be used (only used for bams)
 ; -Q number: Minimum base quality for a base to be considered (only used for bams)
 ; -f 0/1 (--filtered): (only used for bams) if 1, skip anomalous read pairs and low quality for 

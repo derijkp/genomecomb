@@ -1,11 +1,10 @@
 proc bam2reg_job {args} {
 	upvar job_logdir job_logdir
-	set mincoverage 5
 	set compress 1
 	set skip {}
 	cg_options bam2reg args {
 		-mincoverage {
-			set mincoverage $value
+			set mincov $value
 		}
 		-compress {
 			set compress $value
@@ -19,6 +18,13 @@ proc bam2reg_job {args} {
 	set dir [file dir $bamfile]
 	set file [file tail $bamfile]
 	set root [file_rootname $file]
+	if {![info exists target] && [info exists mincoverage] && [info exists mincov]} {
+		set target $mincoverage
+		set mincoverage $mincov
+	}
+	if {![info exists mincoverage]} {
+		if {[info exists mincov]} {set mincoverage $mincov} else {set mincoverage 5}
+	}
 	if {![info exists target]} {
 		set target $dir/sreg-cov$mincoverage-$root.tsv
 		if {$compress} {append target .lz4}
