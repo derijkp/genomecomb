@@ -1,0 +1,111 @@
+#filetype	tsv/varfile
+#fileversion	0.10.0
+#split	0
+#info	tsv converted from vcf, original comments follow
+##ALT=<ID=NON_REF,Description="Represents any possible alternative allele at this location">
+##FILTER=<ID=LowQual,Description="Low quality">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth (reads with MQ=255 or with bad mates are filtered)">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=PGT,Number=1,Type=String,Description="Physical phasing haplotype information, describing how the alternate alleles are phased in relation to one another">
+##FORMAT=<ID=PID,Number=1,Type=String,Description="Physical phasing ID information, where each unique ID within a given sample (but not across samples) connects records within a phasing group">
+##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification">
+##FORMAT=<ID=SB,Number=4,Type=Integer,Description="Per-sample component statistics which comprise the Fisher's Exact Test to detect strand bias.">
+##GATKCommandLine=<ID=HaplotypeCaller,CommandLine="HaplotypeCaller  --annotation-group StandardAnnotation --annotation-group AS_StandardAnnotation --emit-ref-confidence BP_RESOLUTION --annotate-with-num-discovered-alleles true --output varall-gatkh-bwa.gvcf.index/varall-gatkh-bwa.gvcf.chr21.gvcf.temp --intervals varall-gatkh-bwa.gvcf.index/varall-gatkh-bwa.gvcf-chr21.bed --input /home/peter/dev/genomecomb/tests/tmp/bwa.bam --reference /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.fa  --disable-tool-default-annotations false --gvcf-gq-bands 1 --gvcf-gq-bands 2 --gvcf-gq-bands 3 --gvcf-gq-bands 4 --gvcf-gq-bands 5 --gvcf-gq-bands 6 --gvcf-gq-bands 7 --gvcf-gq-bands 8 --gvcf-gq-bands 9 --gvcf-gq-bands 10 --gvcf-gq-bands 11 --gvcf-gq-bands 12 --gvcf-gq-bands 13 --gvcf-gq-bands 14 --gvcf-gq-bands 15 --gvcf-gq-bands 16 --gvcf-gq-bands 17 --gvcf-gq-bands 18 --gvcf-gq-bands 19 --gvcf-gq-bands 20 --gvcf-gq-bands 21 --gvcf-gq-bands 22 --gvcf-gq-bands 23 --gvcf-gq-bands 24 --gvcf-gq-bands 25 --gvcf-gq-bands 26 --gvcf-gq-bands 27 --gvcf-gq-bands 28 --gvcf-gq-bands 29 --gvcf-gq-bands 30 --gvcf-gq-bands 31 --gvcf-gq-bands 32 --gvcf-gq-bands 33 --gvcf-gq-bands 34 --gvcf-gq-bands 35 --gvcf-gq-bands 36 --gvcf-gq-bands 37 --gvcf-gq-bands 38 --gvcf-gq-bands 39 --gvcf-gq-bands 40 --gvcf-gq-bands 41 --gvcf-gq-bands 42 --gvcf-gq-bands 43 --gvcf-gq-bands 44 --gvcf-gq-bands 45 --gvcf-gq-bands 46 --gvcf-gq-bands 47 --gvcf-gq-bands 48 --gvcf-gq-bands 49 --gvcf-gq-bands 50 --gvcf-gq-bands 51 --gvcf-gq-bands 52 --gvcf-gq-bands 53 --gvcf-gq-bands 54 --gvcf-gq-bands 55 --gvcf-gq-bands 56 --gvcf-gq-bands 57 --gvcf-gq-bands 58 --gvcf-gq-bands 59 --gvcf-gq-bands 60 --gvcf-gq-bands 70 --gvcf-gq-bands 80 --gvcf-gq-bands 90 --gvcf-gq-bands 99 --indel-size-to-eliminate-in-ref-model 10 --use-alleles-trigger false --disable-optimizations false --just-determine-active-regions false --dont-genotype false --dont-trim-active-regions false --max-disc-ar-extension 25 --max-gga-ar-extension 300 --padding-around-indels 150 --padding-around-snps 20 --kmer-size 10 --kmer-size 25 --dont-increase-kmer-sizes-for-cycles false --allow-non-unique-kmers-in-ref false --num-pruning-samples 1 --recover-dangling-heads false --do-not-recover-dangling-branches false --min-dangling-branch-length 4 --consensus false --max-num-haplotypes-in-population 128 --error-correct-kmers false --min-pruning 2 --debug-graph-transformations false --kmer-length-for-read-error-correction 25 --min-observations-for-kmer-to-be-solid 20 --likelihood-calculation-engine PairHMM --base-quality-score-threshold 18 --pair-hmm-gap-continuation-penalty 10 --pair-hmm-implementation FASTEST_AVAILABLE --pcr-indel-model CONSERVATIVE --phred-scaled-global-read-mismapping-rate 45 --native-pair-hmm-threads 4 --native-pair-hmm-use-double-precision false --debug false --use-filtered-reads-for-annotations false --bam-writer-type CALLED_HAPLOTYPES --dont-use-soft-clipped-bases false --capture-assembly-failure-bam false --error-correct-reads false --do-not-run-physical-phasing false --min-base-quality-score 10 --smith-waterman JAVA --use-new-qual-calculator false --heterozygosity 0.001 --indel-heterozygosity 1.25E-4 --heterozygosity-stdev 0.01 --standard-min-confidence-threshold-for-calling 10.0 --max-alternate-alleles 6 --max-genotype-count 1024 --sample-ploidy 2 --genotyping-mode DISCOVERY --contamination-fraction-to-filter 0.0 --output-mode EMIT_VARIANTS_ONLY --all-site-pls false --min-assembly-region-size 50 --max-assembly-region-size 300 --assembly-region-padding 100 --max-reads-per-alignment-start 50 --active-probability-threshold 0.002 --max-prob-propagation-distance 50 --interval-set-rule UNION --interval-padding 0 --interval-exclusion-padding 0 --interval-merging-rule ALL --read-validation-stringency SILENT --seconds-between-progress-updates 10.0 --disable-sequence-dictionary-validation false --create-output-bam-index true --create-output-bam-md5 false --create-output-variant-index true --create-output-variant-md5 false --lenient false --add-output-sam-program-record true --add-output-vcf-command-line true --cloud-prefetch-buffer 40 --cloud-index-prefetch-buffer -1 --disable-bam-index-caching false --help false --version false --showHidden false --verbosity INFO --QUIET false --use-jdk-deflater false --use-jdk-inflater false --gcs-max-retries 20 --disable-tool-default-read-filters false --minimum-mapping-quality 20",Version=4.0.3.0,Date="April 18, 2018 6:43:27 PM CEST">
+##INFO=<ID=AS_InbreedingCoeff,Number=A,Type=Float,Description="allele specific heterozygosity as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation; relate to inbreeding coefficient">
+##INFO=<ID=AS_QD,Number=A,Type=Float,Description="Allele-specific Variant Confidence/Quality by Depth">
+##INFO=<ID=AS_RAW_BaseQRankSum,Number=1,Type=String,Description="raw data for allele specific rank sum test of base qualities">
+##INFO=<ID=AS_RAW_MQ,Number=1,Type=String,Description="Allele-specfic raw data for RMS Mapping Quality">
+##INFO=<ID=AS_RAW_MQRankSum,Number=1,Type=String,Description="Allele-specfic raw data for Mapping Quality Rank Sum">
+##INFO=<ID=AS_RAW_ReadPosRankSum,Number=1,Type=String,Description="allele specific raw data for rank sum test of read position bias">
+##INFO=<ID=AS_SB_TABLE,Number=1,Type=String,Description="Allele-specific forward/reverse read counts for strand bias tests">
+##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt Vs. Ref base qualities">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth; some reads may have been filtered">
+##INFO=<ID=DS,Number=0,Type=Flag,Description="Were any of the samples downsampled?">
+##INFO=<ID=ExcessHet,Number=1,Type=Float,Description="Phred-scaled p-value for exact test of excess heterozygosity">
+##INFO=<ID=InbreedingCoeff,Number=1,Type=Float,Description="Inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation">
+##INFO=<ID=MLEAC,Number=A,Type=Integer,Description="Maximum likelihood expectation (MLE) for the allele counts (not necessarily the same as the AC), for each ALT allele, in the same order as listed">
+##INFO=<ID=MLEAF,Number=A,Type=Float,Description="Maximum likelihood expectation (MLE) for the allele frequency (not necessarily the same as the AF), for each ALT allele, in the same order as listed">
+##INFO=<ID=MQ,Number=1,Type=Float,Description="RMS Mapping Quality">
+##INFO=<ID=MQRankSum,Number=1,Type=Float,Description="Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities">
+##INFO=<ID=NDA,Number=1,Type=Integer,Description="Number of alternate alleles discovered (but not necessarily genotyped) at this site">
+##INFO=<ID=RAW_MQ,Number=1,Type=Float,Description="Raw data for RMS Mapping Quality">
+##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias">
+##contig=<ID=chr1,length=249250621>
+##contig=<ID=chr2,length=243199373>
+##contig=<ID=chr3,length=198022430>
+##contig=<ID=chr4,length=191154276>
+##contig=<ID=chr5,length=180915260>
+##contig=<ID=chr6,length=171115067>
+##contig=<ID=chr7,length=159138663>
+##contig=<ID=chr8,length=146364022>
+##contig=<ID=chr9,length=141213431>
+##contig=<ID=chr10,length=135534747>
+##contig=<ID=chr11,length=135006516>
+##contig=<ID=chr12,length=133851895>
+##contig=<ID=chr13,length=115169878>
+##contig=<ID=chr14,length=107349540>
+##contig=<ID=chr15,length=102531392>
+##contig=<ID=chr16,length=90354753>
+##contig=<ID=chr17,length=81195210>
+##contig=<ID=chr18,length=78077248>
+##contig=<ID=chr19,length=59128983>
+##contig=<ID=chr20,length=63025520>
+##contig=<ID=chr21,length=48129895>
+##contig=<ID=chr22,length=51304566>
+##contig=<ID=chrM,length=16571>
+##contig=<ID=chrX,length=155270560>
+##contig=<ID=chrY,length=59373566>
+##source=HaplotypeCaller
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA19240m
+# ----
+chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	PGT	PID	PL	SB	AS_InbreedingCoeff	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_SB_TABLE	BaseQRankSum	totalcoverage	DS	ExcessHet	InbreedingCoeff	MLEAC	MLEAF	MQ	MQRankSum	NDA	RAW_MQ	ReadPosRankSum
+chr21	9439513	9439514	ref	T	.	.	.	.	T	T	r	0	0;0	55	0	55	99			0,117,1755																				
+chr21	9439514	9439515	snp	C	T	.	362.73	.	C	T	t	0	0;1	27	15		46			400,0,918,46,481,1238,507,968,1154,1592	16,11,13,13			|-0.2,1|0.2,1|NaN	97200.00|54000.00|39600.00|0.00	|0.0,1|0.0,1|NaN	|-0.9,1|-0.3,1|NaN	16,11|9,6|4,7|0,0	0.036	55		3.0103		1	0.500		0.000	3	198000.00	-0.677
+chr21	9439515	9439515	ins		GCT	.	362.73	.		@	o	0	0;2	27	11		46			400,0,918,46,481,1238,507,968,1154,1592	16,11,13,13			|-0.2,1|0.2,1|NaN	97200.00|54000.00|39600.00|0.00	|0.0,1|0.0,1|NaN	|-0.9,1|-0.3,1|NaN	16,11|9,6|4,7|0,0	0.036	55		3.0103		0	0.00		0.000	3	198000.00	-0.677
+chr21	9439515	9439516	ref	G	.	.	.	.	G	G	r	0	0;0	45	11	56	0			0,0,1138																				
+chr21	9452555	9452556	ref	T	.	.	.	.	T	T	r	0	0;0	29	1	30	48			0,48,1101																				
+chr21	9452556	9452557	ref	C	.	.	.	.	C	C	r	0	0;0	28	1	29	45			0,45,1079																				
+chr21	9452558	9452559	snp	T	C,G	.	117.77	.	T	C	t	0	0;1	18	6,1		99			146,0,616,180,613,811,200,634,814,834	12,6,6,1			|1.1,1|1.1,1|NaN	44030.00|6888.00|784.00|0.00	|-2.3,1|-1.1,1|NaN	|-0.8,1|-1.1,1|NaN	12,6|5,1|1,0|0,0	1.375	27		3.0103		1,0	0.500,0.00		-2.425	3	52543.00	-1.060
+chr21	9452558	9452561	del	TTT		.	61.73	.	TTT		t	0	0;1	23	4		99	0|1	9452558_GTTT_G	99,0,944,168,956,1124	16,7,4,0			|1.5,1|NaN	49697.00|2846.00|0.00	|-2.4,1|NaN	|-0.4,1|NaN	16,7|4,0|0,0	1.548	28		3.0103		1	0.500		-2.382	2	56143.00	-0.376
+chr21	9452559	9452560	ref	T	.	.	.	.	T	T	r	0	0;0	24	4	28	0			0,0,779																				
+chr21	9452561	9452561	ins		GG	.	61.73	.		GG	t	0	0;1	23	4		99	0|1	9452558_GTTT_G	99,0,944,168,956,1124	16,7,4,0			|1.2,1|NaN	49697.00|2846.00|0.00	|-2.4,1|NaN	|0.0,1|NaN	16,7|4,0|0,0	1.237	27		3.0103		1	0.500		-2.382	2	52543.00	0.034
+chr21	9452561	9452562	ref	T	.	.	.	.	T	T	r	0	0;0	27	0	27	75			0,75,1125																				
+chr21	9452562	9452563	ref	A	.	.	.	.	A	A	r	0	0;0	28	0	28	78			0,78,1170																				
+chr21	9452563	9452564	ref	A	.	.	.	.	A	A	r	0	0;0	28	0	28	81			0,81,1215																				
+chr21	9452564	9452565	ref	A	.	.	.	.	A	A	r	0	0;0	29	0	29	84			0,84,1260																				
+chr21	9452565	9452566	ref	G	.	.	.	.	G	G	r	0	0;0	30	0	30	84			0,84,1260																				
+chr21	9483521	9483522	ref	G	.	.	.	.	G	G	r	0	0;0	18	1	19	20			0,20,583																				
+chr21	9483522	9483523	snp	C	A	.	47.77	.	C	A	t	0	0;1	7	3		76			76,0,239,97,248,345	0,7,0,3			|-0.5,1|NaN	25200.00|10800.00|0.00	|0.0,1|NaN	|0.3,1|NaN	0,7|0,3|0,0	-0.431	10		3.0103		1	0.500		0.000	2	36000.00	0.319
+chr21	9483523	9483524	ref	G	.	.	.	.	G	G	r	0	0;0	11	6	17	0			0,0,159																				
+chr21	9483525	9483526	ref	C	.	.	.	.	C	C	r	0	0;0	10	7	17	0			0,0,80																				
+chr21	9483525	9483542	del	CTTTTTGCCCGCCGCGG		.	22.75	.	CTTTTTGCCCGCCGCGG		t	0	0;1	8	2		60			60,0,330,84,336,420	0,8,0,2			|0.8,1|NaN	28800.00|7200.00|0.00	|0.0,1|NaN	|1.0,1|NaN	0,8|0,2|0,0	0.803	10		3.0103		1	0.500		0.000	2	36000.00	1.013
+chr21	9483526	9483527	ref	T	.	.	.	.	T	T	r	0	0;0	15	1	16	13			0,13,548																				
+chr21	9483527	9483528	ref	T	.	.	.	.	T	T	r	0	0;0	14	1	15	10			0,10,518																				
+chr21	9483528	9483529	ref	T	.	.	.	.	T	T	r	0	0;0	10	5	15	0			0,0,225																				
+chr21	9483529	9483530	ref	T	.	.	.	.	T	T	r	0	0;0	10	4	14	0			0,0,226																				
+chr21	9483530	9483531	ref	T	.	.	.	.	T	T	r	0	0;0	9	4	13	0			0,0,177																				
+chr21	9569589	9569590	ref	T	.	.	.	.	T	T	r	0	0;0	18	1	19	12			0,12,645																				
+chr21	9569590	9569591	snp	C	T	.	4.59	.	C	T	t	0	0;1	13	2		9			39,9,889,0,538,662,39,645,570,674,96,781,627,695,851	4,9,4,2			|-1.2,1|-1.9,1|NaN|NaN	39710.00|6329.00|5200.00|0.00|0.00	|-1.8,1|-0.5,1|NaN|NaN	|-2.3,1|0.5,1|NaN|NaN	4,9|3,1|1,1|0,0|0,0	-1.884	25		3.0103		1	0.500		-1.661	4	70064.00	-1.493
+chr21	9569591	9569591	ins		AGTGATGGGGT	.	4.59	.		@	o	0	0;2	13	0		9			39,9,889,0,538,662,39,645,570,674,96,781,627,695,851	4,9,4,2			|-1.2,1|-1.9,1|NaN|NaN	39710.00|6329.00|5200.00|0.00|0.00	|-1.8,1|-0.5,1|NaN|NaN	|-2.3,1|0.5,1|NaN|NaN	4,9|3,1|1,1|0,0|0,0	-1.884	25		3.0103		0	0.00		-1.661	4	70064.00	-1.493
+chr21	9569591	9569592	ref	C	.	.	.	.	C	C	r	0	0;0	15	2	17	0			0,0,496																				
+chr21	9569591	9569686	del	95		.	4.59	.	95	@	o	0	0;2	13	4		9			39,9,889,0,538,662,39,645,570,674,96,781,627,695,851	4,9,4,2			|-1.2,1|-1.9,1|NaN|NaN	39710.00|6329.00|5200.00|0.00|0.00	|-1.8,1|-0.5,1|NaN|NaN	|-2.3,1|0.5,1|NaN|NaN	4,9|3,1|1,1|0,0|0,0	-1.884	25		3.0103		0	0.00		-1.661	4	70064.00	-1.493
+chr21	9569592	9569593	ref	T	.	.	.	.	T	T	r	0	0;0	15	2	17	0			0,0,502																				
+chr21	9569593	9569594	ref	G	.	.	.	.	G	G	r	0	0;0	15	2	17	0			0,0,488																				
+chr21	9569594	9569595	ref	C	.	.	.	.	C	C	r	0	0;0	15	2	17	0			0,0,489																				
+chr21	9569595	9569596	snp	T	C	.	11.12	.	T	C	t	0	0;1	15	2		39			39,0,684,84,690,774	5,10,1,1			|-1.9,1|NaN	40839.00|5200.00|0.00	|-0.1,1|NaN	|0.5,1|NaN	5,10|1,1|0,0	-1.891	17		3.0103		1	0.500		-0.081	2	46039.00	0.522
+chr21	9569596	9569597	ref	G	.	.	.	.	G	G	r	0	0;0	14	2	16	0			0,0,455																				
+chr21	9569597	9569598	ref	T	.	.	.	.	T	T	r	0	0;0	14	2	16	0			0,0,451																				
+chr21	9569598	9569599	ref	G	.	.	.	.	G	G	r	0	0;0	16	0	16	39			0,39,585																				
+chr21	42735715	42735716	ref	T	.	.	.	.	T	T	r	0	0;0	8	0	8	18			0,18,270																				
+chr21	42735716	42735717	ref	C	.	.	.	.	C	C	r	0	0;0	7	0	7	18			0,18,270																				
+chr21	42735717	42735718	ref	C	.	.	.	.	C	C	r	0	0;0	7	0	7	18			0,18,270																				
+chr21	42735718	42735719	snp	G	A	.	104.77	.	G	A	t	0	0;1	4	4		99			133,0,104,145,116,260	2,2,2,2			|1.1,1|NaN	14400.00|14400.00|0.00	|0.0,1|NaN	|-0.4,1|NaN	2,2|2,2|0,0	1.100	8		3.0103		1	0.500		0.000	2	28800.00	-0.366
+chr21	42735719	42735720	ref	G	.	.	.	.	G	G	r	0	0;0	7	0	7	21			0,21,247																				
+chr21	42735720	42735721	ref	C	.	.	.	.	C	C	r	0	0;0	7	0	7	21			0,21,252																				
+chr21	42735721	42735722	ref	A	.	.	.	.	A	A	r	0	0;0	7	0	7	21			0,21,253																				
+chr21	42735722	42735723	ref	C	.	.	.	.	C	C	r	0	0;0	7	0	7	21			0,21,254																				
+chr21	42775553	42775554	ref	G	.	.	.	.	G	G	r	0	0;0	4	0	4	9			0,9,135																				
+chr21	42775554	42775555	snp	A	G	.	58.56	.	G	G	m	0	1;1	0	2		6			85,6,0,85,6,85	0,0,0,2			||	0.00|7200.00|0.00	||	||	0,0|0,0|0,0		2		3.0103		2	1.00			2	7200.00	
+chr21	42775555	42775556	ref	A	.	.	.	.	A	A	r	0	0;0	3	0	3	9			0,9,124																				

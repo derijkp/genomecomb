@@ -265,4 +265,14 @@ test vcf2tsv {AD 0} {
 	exec diff tmp/temp2.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {gvcf GVCF} {
+	cg vcf2tsv data/gatkh.gvcf tmp/test.tsv
+	cg tsvdiff tmp/test.tsv data/gatkh-expected.tsv
+} {}
+
+test vcf2tsv {gvcf BP_RESOLUTION} {
+	cg vcf2tsv data/gatkh_bp.gvcf tmp/test.tsv
+	cg tsvdiff tmp/test.tsv data/gatkh_bp-expected.tsv
+} {}
+
 testsummarize

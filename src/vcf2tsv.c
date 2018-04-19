@@ -130,7 +130,7 @@ typedef struct altvar {
 /* i know it is ugly, but dont have the time to transfer all, or put in a nice struct at do at the moment */
 AltVar *altvars;
 static DString *line, *string, *temp;
-static DString *snp, *del, *ins, *sub, *dup, *inv, *cnv, *trans;
+static DString *reftype, *snp, *del, *ins, *sub, *dup, *inv, *cnv, *trans;
 static DString *geno, *outinfo, *formatfieldsnumber, *infofieldsnumber;
 static DStringArray *header, *format, *info, *samples;
 static DStringArray *formatfields , *infofields;
@@ -514,7 +514,18 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 		}
 		altvar->ref = curref; altvar->refsize = l1;
 		altvar->alt = curalt; altvar->altsize = l2; altvar->buffer = NULL;
-		if ((l2 == 0 || *curalt != '<') && svtype == NULL) {
+		if (*curalt == '<' && strcmp(curalt+1,"NON_REF>") == 0) {
+			altvar->type = reftype;
+			altvar->begin = pos;
+			altvar->end = pos+l1;
+			altvar->altsize = 1;
+			altvar->alt[0] = '.';
+			if (svend != -1) {
+				altvar->end = svend;
+				altvar->refsize = svend - altvar->begin;
+				if (altvar->refsize != 1) {altvar->ref = NULL;}
+			}
+		} else if ((l2 == 0 || *curalt != '<') && svtype == NULL) {
 			if (l1 == 1 && l2 == 1) {
 				altvar->type = snp;
 				altvar->begin = pos;
@@ -608,6 +619,7 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 	for (curallele = 1 ; curallele <= numalleles; curallele++) {
 		AltVar *altvar = altvars+curallele-1;
 		int ADpos = -1;
+		if (curallele > 1 && altvar->alt[0] == '.') continue;
 		NODPRINT("==== Print variant info ====")
 		fprintf(fo,"%s\t%d\t%d\t%*.*s", a_chrom(linea)->string, altvar->begin, altvar->end, altvar->type->size, altvar->type->size, altvar->type->string);
 		printallele(fo,altvar->refsize,altvar->ref,20);
@@ -842,6 +854,7 @@ int main(int argc, char *argv[]) {
 	int *order = NULL;
 	int split,read,i,j,maxtab, min, excludefilter = 0, excludename = 0, infopos = 0;
 	line=NULL; string=NULL; temp=NULL;
+	reftype=DStringNewFromChar("ref");
 	snp=DStringNewFromChar("snp"); del=DStringNewFromChar("del"); ins=DStringNewFromChar("ins"); sub=DStringNewFromChar("sub");
 	dup=DStringNewFromChar("dup"); inv=DStringNewFromChar("inv"); cnv=DStringNewFromChar("cnv"); trans=DStringNewFromChar("trans");
 	geno = NULL; outinfo = NULL; formatfieldsnumber=NULL; infofieldsnumber=NULL;
