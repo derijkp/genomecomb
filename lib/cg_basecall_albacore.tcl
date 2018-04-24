@@ -2,8 +2,18 @@
 
 proc basecaller_albacore_mvresults {name srcdir resultdir barcoding} {
 	if {![llength $barcoding]} {
-		exec cat {*}[glob $srcdir/workspace/pass/*.fastq] | gzip > $resultdir/pass_$name.fastq.gz
-		exec cat {*}[glob $srcdir/workspace/fail/*.fastq] | gzip > $resultdir/fail_$name.fastq.gz
+		set files [glob -nocomplain $srcdir/workspace/pass/*.fastq]
+		if {[llength $files]} {
+			exec cat {*}$files | gzip > $resultdir/pass_$name.fastq.gz
+		} else {
+			file_write $resultdir/fail_$name.fastq.gz ""
+		}
+		set files [glob -nocomplain $srcdir/workspace/fail/*.fastq]
+		if {[llength $files]} {
+			exec cat {*}$files | gzip > $resultdir/fail_$name.fastq.gz
+		} else {
+			file_write $resultdir/fail_$name.fastq.gz ""
+		}
 	} else {
 		foreach dir [glob -nocomplain $srcdir/workspace/pass/*] {
 			set barcode [file tail $dir]
@@ -22,7 +32,7 @@ proc basecaller_albacore_mvresults {name srcdir resultdir barcoding} {
 			}
 		}
 	}
-	file copy $srcdir/sequencing_summary.txt $resultdir/sequencing_summary_$name.txt
+	file copy -force $srcdir/sequencing_summary.txt $resultdir/sequencing_summary_$name.txt
 }
 
 proc basecaller_albacore_job {args} {
@@ -165,7 +175,7 @@ proc basecaller_albacore_job {args} {
 #							}
 #						}
 #					}
-					file copy $tempdir/tempfastq/sequencing_summary.txt $target3
+					file copy -force $tempdir/tempfastq/sequencing_summary.txt $target3
 					file delete -force $tempdir/fast5 $tempdir/tempfastq
 				}
 			}

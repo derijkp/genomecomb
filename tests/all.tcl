@@ -28,6 +28,7 @@ source map.tcl
 source var.tcl
 source job.tcl
 source compar.tcl
+source nanopore.tcl
 source pmulticompar.tcl
 source process_multicompar.tcl
 
