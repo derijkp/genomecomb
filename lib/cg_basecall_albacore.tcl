@@ -1,6 +1,6 @@
 # basecaller_albacore_mvresults $name $tempdir/tempfastq $resultdir $barcoding
 
-proc basecaller_albacore_mvresults {barcoding name srcdir resultdir} {
+proc basecaller_albacore_mvresults {name srcdir resultdir barcoding} {
 	if {![llength $barcoding]} {
 		exec cat {*}[glob $srcdir/workspace/pass/*.fastq] | gzip > $resultdir/pass_$name.fastq.gz
 		exec cat {*}[glob $srcdir/workspace/fail/*.fastq] | gzip > $resultdir/fail_$name.fastq.gz
