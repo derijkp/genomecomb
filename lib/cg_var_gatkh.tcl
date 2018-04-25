@@ -1,18 +1,17 @@
-proc sreg_gatkh_job {job varallfile resultfile} {
-return
+proc sreg_gatkh_job {job varallfile resultfile {mincoverage 5} {mingenoqual 12}} {
 	upvar job_logdir job_logdir
-	job $job -deps {$varallfile} -targets {$resultfile} -code {
+	job $job -deps {$varallfile} -targets {$resultfile} -vars {mincoverage mingenoqual} -code {
 		set temp [filetemp $target]
-		set temp2 [filetemp $target]
-		cg select -overwrite 1 -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
-		file_write $temp2 "# regions selected from [gzroot $dep]: \$quality >= 30 && \$totalcoverage >= 5\n"
-		cg regjoin $temp >> $temp2
+		file_write $temp "# regions selected from [gzroot $dep]: \$genoqual >= $mingenoqual && \$coverage >= $mincoverage\n"
+		exec cg vcf2tsv $dep \
+			| cg select -q [subst {
+				\$genoqual >= $mingenoqual && \$coverage >= $mincoverage && \$type ne "ins"
+			}] -f {chromosome begin end} \
+			| cg regjoin {*}[compresspipe $target] > $temp
+		file rename $temp $target
 		if {[file extension $target] eq ".lz4"} {
-			cg_lz4 -keep 0 -i 1 -o $target $temp2
-		} else {
-			file rename $temp2 $target
+			exec lz4index $target
 		}
-		file delete $temp
 	}
 }
 
@@ -29,6 +28,8 @@ proc var_gatkh_job {args} {
 	set regmincoverage 3
 	set ERC BP_RESOLUTION
 	set distrchr 0
+	set mincoverage 5
+	set mingenoqual 12
 	cg_options var_gatkh args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -52,12 +53,18 @@ proc var_gatkh_job {args} {
 		-cleanup {
 			set cleanup $value
 		}
-		-ERC {
-			if {$value ni {BP_RESOLUTION GVCF}} {error "option $value not supported for -ERC"}
+		-ERC - -emitRefConfidence {
+			if {$value ni {BP_RESOLUTION GVCF NONE}} {error "option $value not supported for -ERC, must be one of: BP_RESOLUTION, GVCF, NONE"}
 			set ERC $value
 		}
 		-distrchr {
 			set distrchr $value
+		}
+		-mincoverage {
+			set mincoverage $value
+		}
+		-mingenoqual {
+			set mingenoqual $value
 		}
 		default {
 			lappend opts $key $value
@@ -114,6 +121,7 @@ proc var_gatkh_job {args} {
 				--annotate-with-num-discovered-alleles \
 				-ERC $ERC \
 				-G StandardAnnotation \
+				-G StandardHCAnnotation \
 				-G AS_StandardAnnotation \
 				2>@ stderr >@ stdout
 			file rename -force $resultgvcf.temp.gz $resultgvcf
@@ -171,6 +179,7 @@ proc var_gatkh_job {args} {
 					--annotate-with-num-discovered-alleles \
 					-ERC $ERC \
 					-G StandardAnnotation \
+					-G StandardHCAnnotation \
 					-G AS_StandardAnnotation \
 					2>@ stderr >@ stdout
 				file rename -force $indexdir/$basename.$chromosome.gvcf.temp $indexdir/$basename.$chromosome.gvcf
@@ -222,34 +231,31 @@ proc var_gatkh_job {args} {
 	} -targets {
 		${pre}uvar-gatkh-$root.tsv ${pre}uvar-gatkh-$root.tsv.analysisinfo
 	} -vars {
-		sample split pre root gatkrefseq resultgvcf
+		sample split pre root gatkrefseq resultgvcf mincoverage mingenoqual
 	} -skip {
 		${pre}var-gatkh-$root.tsv.lz4 ${pre}var-gatkh-$root.tsv.analysisinfo
 	} -code {
-		analysisinfo_write $dep $target varcaller_mincoverage 5 varcaller_minquality 30 varcaller_cg_version [version genomecomb]
+		analysisinfo_write $dep $target varcaller_mincoverage $mincoverage varcaller_mingenoqual $mingenoqual varcaller_cg_version [version genomecomb]
 		gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} GenotypeGVCFs \
 			-R $gatkrefseq \
 			-V $resultgvcf \
 			-O ${pre}uvar-gatkh-$root.temp.vcf \
-			-G StandardAnnotation -G AS_StandardAnnotation
+			-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
 		catch {file delete ${pre}uvar-gatkh-$root.temp.vcf.idx}
 		file rename -force ${pre}uvar-gatkh-$root.temp.vcf ${pre}uvar-gatkh-$root.vcf
+		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
+		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
+		lappend fields [subst {zyg=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u",\$zyg)}]
+		lappend fields *
 		exec cg vcf2tsv -split $split -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
-		} ${pre}uvar-gatkh-$root.vcf | cg select -f {
-			chromosome begin end type ref alt quality alleleSeq1 alleleSeq2 
-			{sequenced=if($quality < 30 || $totalcoverage < 5,"u","v")}
-			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
-			*
-		} > ${pre}uvar-gatkh-$root.tsv.temp
+		} ${pre}uvar-gatkh-$root.vcf | cg select -f $fields > ${pre}uvar-gatkh-$root.tsv.temp
 		file rename -force ${pre}uvar-gatkh-$root.tsv.temp ${pre}uvar-gatkh-$root.tsv
 	}
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job ${pre}uvar-gatkh-$root.tsv ${pre}var-gatkh-$root.tsv.lz4
 	# make sreg
-	sreg_gatkh_job ${pre}sreg-gatkh-$root ${pre}varall-gatkh-$root.gvcf ${pre}sreg-gatkh-$root.tsv.lz4
-	## filter SNPs (according to seqanswers exome guide)
-	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
+	sreg_gatkh_job ${pre}sreg-gatkh-$root ${pre}varall-gatkh-$root.gvcf ${pre}sreg-gatkh-$root.tsv.lz4 $mincoverage $mingenoqual
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
