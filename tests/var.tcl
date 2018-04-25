@@ -9,7 +9,13 @@ test var {var_gatk basic} {
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var_gatk -stack 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
 	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv.lz4
-} {}
+	cg covered tmp/sreg-gatk-bwa.tsv.lz4
+} {chromosome	bases
+chr21	1047
+chr22	156
+
+total	1203
+}
 
 test var {var_freebayes basic} {
 	test_cleantmp
@@ -24,7 +30,12 @@ test var {var_gatkh basic} {
 	cg var_gatkh -stack 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
 	cg tsvdiff tmp/var-gatkh-bwa.tsv.lz4 data/var-gatkh-bwa.tsv.lz4
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.gvcf.gz
-} {}
+	cg covered tmp/sreg-gatkh-bwa.tsv.lz4
+} {chromosome	bases
+chr21	1018
+chr22	142
+
+total	1160}
 
 test var {var_gatkh -distrchr 1} {
 	test_cleantmp
@@ -32,7 +43,12 @@ test var {var_gatkh -distrchr 1} {
 	cg var_gatkh -stack 1 -distrchr 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
 	cg tsvdiff tmp/var-gatkh-bwa.tsv.lz4 data/var-gatkh-bwa.tsv.lz4
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.gvcf.gz
-} {}
+	cg covered tmp/sreg-gatkh-bwa.tsv.lz4
+} {chromosome	bases
+chr21	1018
+chr22	142
+
+total	1160}
 
 testsummarize
 
