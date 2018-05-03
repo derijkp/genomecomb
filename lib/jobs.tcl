@@ -1231,7 +1231,7 @@ proc job_init {args} {
 	set cgjob(debug) 0
 	set cgjob(resubmit) 1
 	set cgjob(skipjoberrors) 0
-	set cgjob(runcmd) [list $::genomecombdir/cg source]
+	set cgjob(runcmd) [list $::genomecombdir/cg source -stack 1]
 	set cgjob(logfile) {}
 	set cgjob(starttime) {}
 	set cgjob(endtime) {}
