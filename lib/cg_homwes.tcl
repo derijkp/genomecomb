@@ -19,6 +19,7 @@ proc cg_homwes {args} {
 	set vcf 0
 	set pos 0
 	set variantsonly 0
+	set samples {}
 	set resultfile {}
 	cg_options homwes args {
 		-dbdir {
@@ -51,7 +52,7 @@ proc cg_homwes {args} {
 		-snpsonly {
 			set snpsonly $value
 		}
-	} {annotcomparfile samples resultfile} 2 3
+	} {annotcomparfile samples resultfile} 1 3
 	set annotcomparfile [file_absolute $annotcomparfile]
 	if {$resultfile eq ""} {
 		set resultfile [file root $annotcomparfile]-homwes.tsv
@@ -63,7 +64,7 @@ proc cg_homwes {args} {
 	set workbase $workdir/[file tail $resultfilebase]
 	set dir [file dir $annotcomparfile]
 	set tail [file tail $annotcomparfile]
-	if {[file ext $annotcomparfile] eq ".vcf"} {
+	if {[file ext [gzroot $annotcomparfile]] eq ".vcf"} {
 		if {$dbdir eq ""} {
 			error "No -dbdir option given, this is needed for analysing"
 		}
@@ -126,10 +127,14 @@ proc cg_homwes {args} {
 		set fields {chromosome begin end type ref alt}
 		set filter {}
 		set caller1 [lindex $callers 0]
-		if {$hassamples} {
+		if {"alleleSeq1-$caller1$sample" in $header} {
 			set postfix -$caller1$sample
-		} else {
+		} elseif {"alleleSeq1-$sample" in $header} {
+			set postfix -$sample
+		} elseif {"alleleSeq1" in $header} {
 			set postfix ""
+		} else {
+			error "Could not find alleleSeq1 field for sample $sample in header (checked alleleSeq1-$caller1$sample, alleleSeq1-$sample, alleleSeq1)"
 		}
 		set field [findfield $header filter$postfix]
 		if {$field ne ""} {
@@ -163,7 +168,7 @@ proc cg_homwes {args} {
 				lappend dosame $caller$sample
 				lappend callers_used $caller
 			} else {
-				puts "warning: field \"alleleSeq1-$caller$sample\" or \"alleleSeq2-$caller$sample\" is missing"
+				puts "warning: field \"alleleSeq1-$caller$sample\" or \"alleleSeq2-$caller$sample\" is missing, you can use -callers '' if the variant file does not contain data for different callers"
 			}
 		}
 		if {[llength $dosame] > 1} {

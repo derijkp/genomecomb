@@ -1,7 +1,7 @@
 = homwes =
 
 == Format ==
-cg homwes ?options? variantfile samples ?resultfile?
+cg homwes ?options? variantfile ?samples? ?resultfile?
 
 == Summary ==
 finds regions of homozygosity based on a variant file
