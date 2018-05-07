@@ -72,7 +72,7 @@ proc gatkexec {args} {
 	if ($gatk(usecommand)) {
 		catch_exec $gatk(command) --java-options $javaopts {*}$args
 	} else {
-		catch_exec -ignorestderr $::gatkjava {*}$javaopts -jar $gatk(jar) -T {*}$args
+		catch_exec $::gatkjava {*}$javaopts -jar $gatk(jar) -T {*}$args
 	}
 	return ""
 }

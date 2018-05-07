@@ -1,4 +1,4 @@
-proc sreg_gatkh_job {job varallfile resultfile {mincoverage 5} {mingenoqual 12}} {
+proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25}} {
 	upvar job_logdir job_logdir
 	job $job -deps {$varallfile} -targets {$resultfile} -vars {mincoverage mingenoqual} -code {
 		set temp [filetemp $target]
@@ -28,8 +28,8 @@ proc var_gatkh_job {args} {
 	set regmincoverage 3
 	set ERC BP_RESOLUTION
 	set distrchr 0
-	set mincoverage 5
-	set mingenoqual 12
+	set mincoverage 8
+	set mingenoqual 25
 	cg_options var_gatkh args {
 		-L - -deps {
 			lappend deps [file_absolute $value]

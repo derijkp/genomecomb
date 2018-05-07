@@ -27,7 +27,8 @@ test var {var_freebayes basic} {
 test var {var_gatkh basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
-	cg var_gatkh -stack 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
+	# use low quality settings because test bwa.bam has low coverage
+	cg var_gatkh -stack 1 -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
 	cg tsvdiff tmp/var-gatkh-bwa.tsv.lz4 data/var-gatkh-bwa.tsv.lz4
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.gvcf.gz
 	cg covered tmp/sreg-gatkh-bwa.tsv.lz4
@@ -40,7 +41,7 @@ total	1160}
 test var {var_gatkh -distrchr 1} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
-	cg var_gatkh -stack 1 -distrchr 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
+	cg var_gatkh -stack 1 -mincoverage 5 -mingenoqual 12 -distrchr 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
 	cg tsvdiff tmp/var-gatkh-bwa.tsv.lz4 data/var-gatkh-bwa.tsv.lz4
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.gvcf.gz
 	cg covered tmp/sreg-gatkh-bwa.tsv.lz4
