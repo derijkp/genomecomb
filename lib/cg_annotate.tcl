@@ -467,13 +467,11 @@ proc cg_annotate_job {args} {
 				set f [gzopen $dep]
 				set header [tsv_open $f]
 				catch {gzclose $f}
-				if {[file extension $dbfile] ne ".bcol"} {
-					set altpos [lsearch $header alt]
-					if {$altpos == -1} {
-						puts "Skipping: $orifile has no alt field"
-						file_write $target ""
-						return
-					}
+				set altpos [lsearch $header alt]
+				if {$altpos == -1} {
+					puts "Skipping: $orifile has no alt field"
+					file_write $target ""
+					return
 				}
 				set outfields [dict get $dbinfo outfields]
 				if {[file extension $dbfile] eq ".bcol"} {
