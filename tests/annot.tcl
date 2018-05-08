@@ -302,7 +302,7 @@ test var_annot {lz4} {
 	exec diff tmp/temp2.sft data/expected-vars1-var_annot.sft
 } {} 
 
-test var_annot {multi alt split, one value in vardb} {
+test var_annot {skip var_ annots if no alt field} {
 	file mkdir tmp
 	write_tab tmp/vars.tsv {
 		chromosome begin end type ref
@@ -312,8 +312,34 @@ test var_annot {multi alt split, one value in vardb} {
 		chrom start end type ref alt name freq
 		chr1 4001 4002 snp A G,C test2 0.2
 	}
-	exec cg annotate tmp/vars.tsv tmp/temp.tsv tmp/var_annot.tsv
-} {Skipping: */vars.tsv has no alt field} error match
+	write_tab tmp/reg_annot.tsv {
+		chrom start end name
+		chr1 4000 5000 test
+	}
+	exec cg annotate tmp/vars.tsv tmp/temp.tsv tmp/var_annot.tsv tmp/reg_annot.tsv
+} {Skipping: */vars.tsv has no alt field} match
+
+test var_annot {skip var_ annots if no alt field, check other annot} {
+	file mkdir tmp
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref
+		chr1 4001 4002 snp A
+	}
+	write_tab tmp/var_annotv.tsv {
+		chrom start end type ref alt name freq
+		chr1 4001 4002 snp A G,C test2 0.2
+	}
+	write_tab tmp/reg_annotr.tsv {
+		chrom start end name
+		chr1 4000 5000 test
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	annotr
+		chr1	4001	4002	snp	A	test
+	}
+	exec cg annotate tmp/vars.tsv tmp/annot_vars.tsv tmp/var_annotv.tsv tmp/reg_annotr.tsv
+	exec diff tmp/annot_vars.tsv tmp/expected.tsv
+} {}
 
 test gene_annot {variant file sort error 1} {
 	file copy data/vars_sorterror1.sft tmp/vars_sorterror1.sft

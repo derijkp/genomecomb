@@ -472,6 +472,7 @@ proc cg_annotate_job {args} {
 					if {$altpos == -1} {
 						puts "Skipping: $orifile has no alt field"
 						file_write $target ""
+						return
 					}
 				}
 				set outfields [dict get $dbinfo outfields]
@@ -507,6 +508,12 @@ proc cg_annotate_job {args} {
 			analysisinfo_write $dep $target annotate_cg_version [version genomecomb]
 		}
 		set compress [compresspipe $target]
+		set temp {}
+		foreach file $afiles {
+			if {[file size $file] == 0} continue
+			lappend temp $file
+		}
+		set afiles $temp
 		if {$multidb} {
 			set temp2 [filetemp $resultfile]
 			cg select -f id $orifile $temp2
