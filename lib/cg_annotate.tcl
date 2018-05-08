@@ -457,7 +457,13 @@ proc cg_annotate_job {args} {
 			}
 		} elseif {$dbtype eq "var"} {
 			if {$near != -1} {error "-near option does not work with var dbfiles"}
-			job annot-$resultname-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo upstreamsize} -code {
+			job annot-$resultname-[file tail $dbfile] -deps {
+				$usefile $dbfile
+			} -targets {
+				$target
+			} -vars {
+				dbfile name dbinfo upstreamsize orifile
+			} -code {
 				set f [gzopen $dep]
 				set header [tsv_open $f]
 				catch {gzclose $f}

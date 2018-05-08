@@ -302,6 +302,19 @@ test var_annot {lz4} {
 	exec diff tmp/temp2.sft data/expected-vars1-var_annot.sft
 } {} 
 
+test var_annot {multi alt split, one value in vardb} {
+	file mkdir tmp
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref
+		chr1 4001 4002 snp A
+	}
+	write_tab tmp/var_annot.tsv {
+		chrom start end type ref alt name freq
+		chr1 4001 4002 snp A G,C test2 0.2
+	}
+	exec cg annotate tmp/vars.tsv tmp/temp.tsv tmp/var_annot.tsv
+} {Skipping: */vars.tsv has no alt field} error match
+
 test gene_annot {variant file sort error 1} {
 	file copy data/vars_sorterror1.sft tmp/vars_sorterror1.sft
 	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars_sorterror1.sft tmp/temp.sft data/gene_test.tsv
