@@ -25,6 +25,7 @@ proc var_sam_job {args} {
 	set BQ 0
 	set cleanup 1
 	set regmincoverage 3
+	set threads 2
 	cg_options var_sam args {
 		-l - deps {
 			lappend deps $value
@@ -44,6 +45,10 @@ proc var_sam_job {args} {
 		}
 		-BQ {
 			set BQ $value
+		}
+		-threads {
+			set threads $value
+			# not used yet
 		}
 		-cleanup {
 			set cleanup $value

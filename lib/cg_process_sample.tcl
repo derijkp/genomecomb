@@ -470,6 +470,8 @@ proc process_sample_job {args} {
 	set reports basic
 	set removeduplicates {}
 	set amplicons {}
+	set threads 2
+	set distrchr 0
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -528,6 +530,12 @@ proc process_sample_job {args} {
 		}
 		-reportstodoVar {
 			upvar $value reportstodo
+		}
+		-threads {
+			set threads $value
+		}
+		-distrchr {
+			set distrchr $value
 		}
 		-c - -cleanup {
 			set cleanup $value
@@ -739,7 +747,7 @@ proc process_sample_job {args} {
 			lappend cleanupdeps $resultbamfile
 			#
 			# map using ${aligner}
-			map_${aligner}_job -paired $paired \
+			map_${aligner}_job -paired $paired -threads $threads \
 				-skips [list -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
 				$bamfile $refseq $sample {*}$files
 			# extract regions with coverage >= 5 (for cleaning)
@@ -747,7 +755,7 @@ proc process_sample_job {args} {
 			# clean bamfile (mark duplicates, realign)
 			set cleanbam [bam_clean_job \
 				-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
-				-regionfile $cov5reg -cleanup $cleanup \
+				-regionfile $cov5reg -threads $threads -cleanup $cleanup \
 				 $sampledir/map-${aligner}-$sample.bam $refseq $sample]
 			lappend cleanedbams $cleanbam
 		}
@@ -773,7 +781,7 @@ proc process_sample_job {args} {
 			if {![auto_load var_${varcaller}_job]} {
 				error "varcaller $varcaller not supported"
 			}
-			lappend cleanupdeps [var_${varcaller}_job -regionfile $regionfile -split $split {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
+			lappend cleanupdeps [var_${varcaller}_job -regionfile $regionfile -split $split -distrchr $distrchr -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
 			lappend todo $varcaller-$bambase
 		}
 	}

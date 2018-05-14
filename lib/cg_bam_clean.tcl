@@ -7,6 +7,7 @@ proc bam_clean_job {args} {
 	set clipamplicons {}
 	set cleanup 1
 	set regionfile {}
+	set threads 2
 	cg_options process_sample args {
 		-sort {set sort $value}
 		-removeduplicates {set removeduplicates $value}
@@ -14,6 +15,10 @@ proc bam_clean_job {args} {
 		-realignopts {set realignopts $value}
 		-realigndeps {set realigndeps $value}
 		-clipamplicons {set clipamplicons $value}
+		-threads {
+			set threads $value
+			# not used yet
+		}
 		-cleanup {set cleanup $value}
 		-regionfile {set regionfile $value}
 	} {bamfile refseq sample}

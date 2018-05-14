@@ -17,12 +17,17 @@ proc map_bowtie2_job {args} {
 	set readgroupdata {}
 	set pre {}
 	set skips {}
+	set threads 2
 	cg_options map_bowtie2 args {
 		-paired {
 			set paired $value
 		}
 		-readgroupdata {
 			set readgroupdata $value
+		}
+		-threads {
+			set threads $value
+			# not used (yet)
 		}
 		-pre {
 			set pre $value
