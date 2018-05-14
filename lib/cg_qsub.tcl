@@ -60,9 +60,9 @@ proc cg_qsub {args} {
 		append cmd \n
 		append cmd {#$ -S /bin/bash} \n
 		append cmd {#$ -V} \n
-		append cmd {#$ -cwd} \n
 		append cmd "\n\# the next line restarts using runcmd (specialised tclsh) \\\n"
 		append cmd "exec $cgjob(runcmd) \"\$0\" \"\$@\"\n"
+		append cmd "cd [pwd]\n"
 		append cmd [list exec $command {*}$args]\n
 		set runfile job_$jobname.run
 		file_write $runfile $cmd
@@ -70,6 +70,9 @@ proc cg_qsub {args} {
 
 		if {![info exists outputfile]} {set outputfile job_$jobname.out}
 		if {![info exists errorfile]} {set errorfile job_$jobname.err}
+		puts "run file: $runfile"
+		puts "output file: $outputfile"
+		puts "error file: $errorfile"
 		set jnum [exec qsub -N j$jobname -q $dqueue -o $outputfile -e $errorfile {*}$options $runfile]
 		puts "$jnum $jobname"
 	}
