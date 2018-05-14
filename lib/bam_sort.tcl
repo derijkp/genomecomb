@@ -57,6 +57,7 @@ proc bam_sort {args} {
 			lappend opts -n
 		}
 		if {[catch {version samtools 1}]} {
+			# version < 1
 			if {[catch {exec samtools sort {*}$opts $sourcefile $resultfile.temp 2>@ stdout} msg]} {
 				error $msg
 			}
@@ -66,7 +67,7 @@ proc bam_sort {args} {
 				file rename -force $resultfile.temp $resultfile
 			}
 		} else {
-			if {[catch {exec samtools sort {*}$opts $sourcefile > $resultfile.temp 2>@ stdout} msg]} {
+			if {[catch {exec samtools sort {*}$opts -T [scratchfile] $sourcefile > $resultfile.temp 2>@ stdout} msg]} {
 				error $msg
 			}
 			file rename -force $resultfile.temp $resultfile

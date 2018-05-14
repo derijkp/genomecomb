@@ -1,6 +1,7 @@
 proc cg_bam2fastq {args} {
 	set pos 0
 	set method biobambam
+	set sortmethod biobambam
 	set namesort 1
 	set fastqfile2 {}
 	set singlefile [scratchfile]
@@ -9,6 +10,9 @@ proc cg_bam2fastq {args} {
 	cg_options bam2fastq args {
 		-m - -method {
 			set method $value
+		}
+		-sortmethod {
+			set sortmethod $value
 		}
 		-namesort {
 			set namesort $value
@@ -40,7 +44,7 @@ proc cg_bam2fastq {args} {
 	if {$namesort} {
 		putslog "Sorting bam file on name"
 		set tempbam [file root [scratchfile]].bam
-		bam_sort -sort name $bamfile $tempbam
+		bam_sort -sort name -method $sortmethod $bamfile $tempbam
 	} else {
 		set tempbam $bamfile
 	}
