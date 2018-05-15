@@ -45,7 +45,8 @@ proc tsv_select_sampleinfo_load {field {header {}}} {
 			error "sampleinfo file must have an id or sample field"
 		}
 	}
-	set samples [samples $header]
+	set analyses [listanalyses $header]
+	set samples [listsamples $header]
 	if {[get tsv_select_sampleinfo_islong 0] || ![llength $header] || ![llength $samples]} {
 		set tsv_select_sampleinfo_islong 1
 	} else {
@@ -56,12 +57,13 @@ proc tsv_select_sampleinfo_load {field {header {}}} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
 		set id [lindex $line $idpos]
-		if {$tsv_select_sampleinfo_islong || [inlist $samples $id]} {
+		if {$tsv_select_sampleinfo_islong || [inlist $analyses $id]} {
 			set ids [list $id]
 		} else {
-			set poss [list_find -glob $samples *-$id]
+			set poss [list_find -glob $analyses *-$id]
 			if {![llength $poss]} continue
-			set ids [list_sub $samples $poss]
+			set ids [list_sub $analyses $poss]
+			if {[inlist $samples $id]} {lappend ids $id}
 		}
 		foreach id $ids {
 			foreach val $line tempfield $siheader {
@@ -127,7 +129,12 @@ proc tsv_select_sampleinfo_long {field sample} {
 	if {[info exists tsv_select_sampleinfo(${field}-$sample)]} {
 		return $tsv_select_sampleinfo(${field}-$sample)
 	} else {
-		error "field \"$field\" not found for sample $sample, also not in sampleinfo file $tsv_select_sampleinfofile"
+		set temp [lindex [split $sample -] end]
+		if {[info exists tsv_select_sampleinfo(${field}-$temp)]} {
+			return $tsv_select_sampleinfo(${field}-$temp)
+		} else {
+			error "field \"$field\" not found for sample $sample, also not in sampleinfo file $tsv_select_sampleinfofile"
+		}
 	}
 }
 
@@ -1044,6 +1051,39 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 						}
 					}
 				}
+				set aaggra {
+					acount {}
+					alist {vector slist_cond_}
+					adistinct {distinct sdistinct_cond_}
+					aucount {ucount sucount_cond_}
+					amin {lmin smin_cond_}
+					amax {lmax smax_cond_}
+					asum {lsum ssum_cond_}
+					aavg {lavg savg_cond_}
+					astdev {lstdev sstdev_cond_}
+					amedian {lmedian smedian_cond_}
+					amode {lmode smode_cond_}
+					apercent {}
+				}
+				if {[dict exists $aaggra $val]} {
+					switch $val {
+						acount {
+							set temp [tsv_select_acount $arguments $header neededfields]
+							lappend result $temp
+							continue
+						}
+						apercent {
+							set temp [tsv_select_apercent $arguments $header neededfields]
+							lappend result $temp
+							continue
+						}
+						default {
+							set temp [tsv_select_aaggr $val {*}[dict get $aaggra $val] $arguments $header neededfields]
+							lappend result $temp
+							continue
+						}
+					}
+				}
 				set ids {}
 				foreach el $arguments {
 					lappend ids [tsv_select_detokenize $el $header neededfields]
@@ -1278,7 +1318,18 @@ proc cg_select {args} {
 				set header [tsv_open $f]
 				gzclose $f
 			}
-			puts stdout [join [samples $header] \n]
+			puts stdout [join [listsamples $header] \n]
+			exit 0
+		}
+		-a {
+			if {$value eq ""} {
+				set header [tsv_open stdin]
+			} else {
+				set f [gzopen $value]
+				set header [tsv_open $f]
+				gzclose $f
+			}
+			puts stdout [join [listanalyses $header] \n]
 			exit 0
 		}
 		-h - -header {
@@ -1601,9 +1652,9 @@ proc cg_select {args} {
 		#putsvars tclcode
 		lappend pipe [list cg exec $tclcode]
 	}
-#putslog -------------pipe-------------------
-#putslog pipe:[join $pipe " | "]
-#putslog ------------------------------------
+putslog -------------pipe-------------------
+putslog pipe:[join $pipe " | "]
+putslog ------------------------------------
 	if {$qfields ne ""} {
 		set nh [list_sub $qfields -exclude [list_find -glob $qfields -*]]
 	} else {

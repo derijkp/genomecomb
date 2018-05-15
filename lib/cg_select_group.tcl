@@ -28,33 +28,58 @@ proc select_parse_for_samples {group groupcol header} {
 	set usesamples 0
 	foreach {field values} [list_concat $group $groupcol] {
 		if {$field eq "sample"} {
+			if {$usesamples == 3} {error "Cannot use sample twice in summary"}
+			if {$usesamples == 4} {error "Cannot mix sample and analysis in one summary"}
 			if {[llength $values]} {
 				if {[string first * $values] == -1} {
 					set gsamples $values
 				} else {
 					set gsamples {} 
 					foreach pattern $values {
-						lappend gsamples {*}[samples $header $pattern]
+						lappend gsamples {*}[listsamples $header $pattern]
 					}
 					set gsamples [list_remdup $gsamples]
 				}
 			} else {
-				set gsamples [samples $header]
+				set gsamples [listsamples $header]
 			}
-			set usesamples 1
-			break
-		}
-		if {![inlist $header $field] && ![info exists calccols($field)]} {
+			set usesamples 3
+		} elseif {$field eq "analysis"} {
+			if {$usesamples == 4} {error "Cannot use analysis twice in summary"}
+			if {$usesamples == 3} {error "Cannot mix analysis and sample in one summary"}
+			if {[llength $values]} {
+				if {[string first * $values] == -1} {
+					set gsamples $values
+				} else {
+					set gsamples {} 
+					foreach pattern $values {
+						lappend gsamples {*}[listanalyses $header $pattern]
+					}
+					set gsamples [list_remdup $gsamples]
+				}
+			} else {
+				set gsamples [listanalyses $header]
+			}
+			set usesamples 4
+		} elseif {![inlist $header $field] && ![info exists calccols($field)]} {
 			if {[lsearch -glob $header ${field}-*] != -1
 				|| [llength [array names calccols ${field}-*]]
 				|| (![catch {tsv_select_sampleinfo_wildcard ${field}-* $header} temp] && [llength $temp])
 			} {
-				# hidden sample
-				set usesamples 1
+				if {$usesamples ni {3 4}} {
+					if {[string first - $field] != -1} {
+						# hidden sample
+						set gsamples [listsamples $header]
+						set usesamples 1
+					} else {
+						# hidden analysis
+						set gsamples [listanalyses $header]
+						set usesamples 1
+					}
+				}
 			}
 		}
 	}
-	if {$usesamples && ![llength $gsamples]} {set gsamples [samples $header]}
 	# if no sample field found, do not actually use samples by making gsamples a list with only one empty sample
 	if {![llength $gsamples]} {
 		set gsamples {{}}
@@ -403,6 +428,7 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 	# calculated fields will be calculated in the begining of the query proc
 	# these are gathered in precalc
 	# precalc is run for every match (sets some variables used in query, etc.)
+	set calcresults ""
 	regsub -all \n [string trim $group] { } group
 	if {[llength $group] == 1} {lappend group {}}
 	# start making code
@@ -480,8 +506,8 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 		}
 		incr num
 	}
-	if {[inlist $header sample]} {
-		# if the file contains a sample field, treat it as any other field
+	if {[inlist $header sample] || [inlist $header analysis]} {
+		# if the file contains a sample or analysis field, treat it as any other field
 		# gsamples is list of one (empty) element to go over the setup once, without incorporating sample specific code
 		set gsamples {{}}
 		set sampleinheader 1
@@ -516,6 +542,15 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 				} else {
 					lappend groupname \$sample
 					lappend neededfields sample
+				}
+				continue
+			}
+			if {!$sampleinheader && $field eq "analysis"} {
+				if {$sample ne ""} {
+					lappend groupname $sample
+				} else {
+					lappend groupname \$analysis
+					lappend neededfields analysis
 				}
 				continue
 			}
@@ -595,6 +630,15 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 				} else {
 					lappend col \$sample
 					lappend neededfields sample
+				}
+				continue
+			}
+			if {$field eq "analysis"} {
+				if {$sample ne ""} {
+					lappend col $sample
+				} else {
+					lappend col \$analysis
+					lappend neededfields analysis
 				}
 				continue
 			}

@@ -639,6 +639,38 @@ test select "sampleinfo in fields$dboptt" {
 } {id	gender-sample1	gender-sample2	gender-sample3
 1	m	f	f}
 
+test select "sampleinfo in fields with full analysis$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-gatk-sample1	freq-sam-sample1	freq-gatk-sample2
+		1	0.4	0.8	1.0
+	}
+	write_tab tmp/temp.tsv.sampleinfo {
+		id	gender
+		sample1	m
+		sample2	f
+	}
+	exec cg select {*}$dbopt -f {id gender-gatk-sample1	gender-sam-sample1 gender-gatk-sample2} tmp/temp.tsv
+} {id	gender-gatk-sample1	gender-sam-sample1	gender-gatk-sample2
+1	m	m	f}
+
+test select "sampleinfo in fields with full analysis but not in fields asked$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-gatk-sample1	freq-sam-sample1	freq-gatk-sample2
+		1	0.4	0.8	1.0
+	}
+	write_tab tmp/temp.tsv.sampleinfo {
+		id	gender
+		sample1	m
+		sample2	f
+	}
+	exec cg select {*}$dbopt -f {id gender-sample1 gender-sample2} tmp/temp.tsv
+} {id	gender-sample1	gender-sample2
+1	m	f}
+
 test select "sampleinfo (other filename convention) in fields$dboptt" {
 	global dbopt
 	test_cleantmp
@@ -789,7 +821,7 @@ test select "sampleinfo ignoring prefix in in -f and -q saggregate$dboptt" {
 		sample2	f
 		sample3	f
 	}
-	exec cg select {*}$dbopt -q {scount($gender eq "f" and $freq > 0.9) > 0} -f {id gender-gatk-crsbwa-sample1 gender-gatk-crsbwa-sample2 gender-gatk-crsbwa-sample3} tmp/temp.tsv
+	exec cg select {*}$dbopt -q {acount($gender eq "f" and $freq > 0.9) > 0} -f {id gender-gatk-crsbwa-sample1 gender-gatk-crsbwa-sample2 gender-gatk-crsbwa-sample3} tmp/temp.tsv
 } {id	gender-gatk-crsbwa-sample1	gender-gatk-crsbwa-sample2	gender-gatk-crsbwa-sample3
 1	m	f	f}
 
@@ -885,6 +917,25 @@ test select "long format with sampleinfo $dboptt" {
 	exec cg select {*}$dbopt -q {$gender eq "f" and $freq > 0.9} -f {sample freq gender} tmp/temp.tsv
 } {sample	freq	gender
 sample3	1.0	f}
+
+test select "long format with sampleinfo using analysis$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample id	freq
+		gatk-sample1	1	0.4
+		gatk-sample2	1	0.8
+		gatk-sample3	1	1.0
+	}
+	write_tab tmp/temp.tsv.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+		sample3	f
+	}
+	exec cg select {*}$dbopt -q {$gender eq "f" and $freq > 0.9} -f {sample freq gender} tmp/temp.tsv
+} {sample	freq	gender
+gatk-sample3	1.0	f}
 
 test select "long with * in -f" {
 	global dbopt
@@ -1140,5 +1191,29 @@ test select "maximpact" {
 } {id	max
 test1	GENEDEL
 test2	CDSMIS}
+
+test select "select -n" {
+	global dbopt
+	write_tab tmp/test.tsv {
+		chromsome begin end zyg-gatk-rdsbwa-sample1 zyg-sam-rdsbwa-sample1 zyg-gatk-rdsbwa-sample2 zyg-sam-rdsbwa-sample2
+		10	1000	1001	t	m	r	t
+		gatk-rdsbwa-test1	3
+	}
+	exec cg select -n tmp/test.tsv
+} {sample1
+sample2}
+
+test select "select -a" {
+	global dbopt
+	write_tab tmp/test.tsv {
+		chromsome begin end zyg-gatk-rdsbwa-sample1 zyg-sam-rdsbwa-sample1 zyg-gatk-rdsbwa-sample2 zyg-sam-rdsbwa-sample2
+		10	1000	1001	t	m	r	t
+		gatk-rdsbwa-test1	3
+	}
+	exec cg select -a tmp/test.tsv
+} {gatk-rdsbwa-sample1
+sam-rdsbwa-sample1
+gatk-rdsbwa-sample2
+sam-rdsbwa-sample2}
 
 testsummarize

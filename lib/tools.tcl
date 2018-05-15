@@ -121,6 +121,43 @@ proc dict_get_default {d key {default {}}} {
 	}
 }
 
+# listsamples returns the list of samples, defined as the part after the last - in the fieldname
+# e.g. sample2 for zyg-gatk-rdsbwa-sample2
+proc listsamples {header {pattern {}}} {
+	set names {}
+	foreach col $header {
+		set pos [string last - $col]
+		if {$pos != -1} {
+			incr pos
+			set name [string range $col $pos end]
+			if {$pattern eq "" || [string match $pattern $name]} {
+				lappend names $name
+			}
+		}
+	}
+	list_remdup $names
+}
+
+# listanalyses returns the list of analyses, defined as the part after the first - in the fieldname
+# e.g. gatk-rdsbwa-sample2 for zyg-gatk-rdsbwa-sample2
+proc listanalyses {header {pattern {}}} {
+	set names {}
+	foreach col $header {
+		set pos [string first - $col]
+		if {$pos != -1} {
+			incr pos
+			set name [string range $col $pos end]
+			if {$pattern eq "" || [string match $pattern $name]} {
+				lappend names $name
+			}
+		}
+	}
+	list_remdup $names
+}
+
+# The samples command returns the list of "samples" as originally defined and used in the code 
+# in many places (= same as analyses now)
+# The samples command is kept this way for compatiblity reasons
 proc samples {header {pattern {}}} {
 	set names {}
 	foreach col $header {

@@ -127,6 +127,42 @@ del	1	41
 ins	1	41
 snp	12	0,35,52}
 
+test select_group {group distinct analysis with list} {
+	file copy -force data/expected_near-vars1-reg_annot.sft tmp/test.tsv
+	cg renamesamples tmp/test.tsv sample1 test1-sample1 sample2 test2-sample1
+	cg select -stack 1 -g type -gc {analysis {test2-sample1} count,distinct(coverage)} tmp/test.tsv
+} {type	count-test2-sample1	distinct_coverage-test2-sample1
+del	1	41
+ins	1	41
+snp	12	0,35,52}
+
+test select_group {group distinct sample with list} {
+	file copy -force data/expected_near-vars1-reg_annot.sft tmp/test.tsv
+	cg renamesamples tmp/test.tsv sample1 test1-sample1 sample2 test1-sample2
+	cg select -stack 1 -g type -gc {sample {sample1} count,distinct(coverage-test1)} tmp/test.tsv
+} {type	count-sample1	distinct_coverage-test1-sample1
+del	1	32
+ins	1	32
+snp	12	1,47,54}
+
+test select_group {group distinct sample with *} {
+	file copy -force data/expected_near-vars1-reg_annot.sft tmp/test.tsv
+	cg renamesamples tmp/test.tsv sample1 test1-sample1 sample2 test1-sample2
+	cg select -stack 1 -g type -gc {sample * count,distinct(coverage-test1)} tmp/test.tsv
+} {type	count-sample1	distinct_coverage-test1-sample1	count-sample2	distinct_coverage-test1-sample2
+del	1	32	1	41
+ins	1	32	1	41
+snp	12	1,47,54	12	0,35,52}
+
+test select_group {group distinct sample with list using sample} {
+	file copy -force data/expected_near-vars1-reg_annot.sft tmp/test.tsv
+	cg renamesamples tmp/test.tsv sample1 test1-sample1 sample2 test2-sample1
+	cg select -stack 1 -g type -gc {sample {test2-sample1} count,distinct(coverage)} tmp/test.tsv
+} {type	count-test2-sample1	distinct_coverage-test2-sample1
+del	1	41
+ins	1	41
+snp	12	0,35,52}
+
 test select_group {group ucount} {
 	cg select -g type -gc {sample {} count,ucount(coverage)} data/expected_near-vars1-reg_annot.sft
 } {type	count-sample1	ucount_coverage-sample1	count-sample2	ucount_coverage-sample2
@@ -299,7 +335,7 @@ sample1	Am	1
 sample1	Bm	1
 sample2	Bf	2}
 
-test select_group {group with wildcard calc col and sampleinfo, ignoring sample prefix} {
+test select_group {analysis group with wildcard calc col and sampleinfo, ignoring sample prefix} {
 	test_cleantmp
 	write_tab tmp/temp.tsv {
 		id	type-gatk-crsbwa-sample1	type-gatk-crsbwa-sample2
@@ -311,11 +347,29 @@ test select_group {group with wildcard calc col and sampleinfo, ignoring sample 
 		sample1	m
 		sample2	f
 	}
-	exec cg select -f {{typex-*="${type-*}${gender-*}"}} -g {sample {} typex {}} -gc {count} tmp/temp.tsv
-} {sample	typex	count
+	exec cg select -f {{typex-*="${type-*}${gender-*}"}} -g {analysis {} typex {}} -gc {count} tmp/temp.tsv
+} {analysis	typex	count
 gatk-crsbwa-sample1	Am	1
 gatk-crsbwa-sample1	Bm	1
 gatk-crsbwa-sample2	Bf	2}
+
+test select_group {sample group with wildcard calc col and sampleinfo, ignoring sample prefix} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-gatk-crsbwa-sample1	type-gatk-crsbwa-sample2
+		1	A	B
+		2	B	B
+	}
+	write_tab tmp/temp.sampleinfo.tsv {
+		id	gender
+		sample1	m
+		sample2	f
+	}
+	exec cg select -stack 1 -f {{typex-*="${type-*}${gender-*}"}} -g {sample {} typex-gatk-crsbwa {}} -gc {count} tmp/temp.tsv
+} {sample	typex-gatk-crsbwa	count
+sample1	Am	1
+sample1	Bm	1
+sample2	Bf	2}
 
 test select_group {sampleinfo in group} {
 	test_cleantmp
@@ -441,6 +495,58 @@ test select_group {hidden sample} {
 } {type	count
 A	2
 B	4}
+
+test select_group {hidden sample with analysis} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-gatk-sample1	type-sam-sample1	type-gatk-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	exec cg select -g {type-gatk *} -gc {count} tmp/temp.tsv
+} {type-gatk	count
+A	2
+B	2}
+
+test select_group {hidden analysis} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-gatk-sample1	type-sam-sample1	type-gatk-sample3
+		1	A	B	A
+		2	B	B	B
+	}
+	exec cg select -g {type {}} -gc {count} tmp/temp.tsv
+} {type	count
+A	2
+B	4}
+
+test select_group {sample field present} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample	key	value
+		A	a	1
+		A	b	2
+		B	a	3
+		B	b	4
+	}
+	exec cg select -g sample tmp/temp.tsv
+} {sample	count
+A	2
+B	2}
+
+test select_group {sample field present} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		sample	key	value
+		A	a	1
+		A	b	2
+		B	a	3
+		B	b	4
+	}
+	exec cg select -g sample -gc sum(value) tmp/temp.tsv
+} {sample	sum_value
+A	3
+B	7}
 
 test select_group {hidden sample, sampleinfo in gc} {
 	test_cleantmp
@@ -1124,5 +1230,38 @@ test select_group {group with sample in -gc, field in -gc missing for some sampl
 	exec cg select -g all -gc {type {A B} sample {} count} tmp/temp.tsv
 } {all	count-A-sample1	count-A-sample2	count-B-sample1	count-B-sample2
 all	1	0	1	2}
+
+test select_group {group with sample in -g, using analysis part in field} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-gatk-bwa-sample1	type-sam-bwa-sample1	other-gatk-bwa-sample2
+		1	A	B	X
+		2	B	B	Y
+	}
+	exec cg select -g {sample * type-gatk-bwa *} tmp/temp.tsv
+} {sample	type-gatk-bwa	count
+sample1	A	1
+sample1	B	1}
+
+test select_group {group with sample in -g, but field without analysis error} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-gatk-bwa-sample1	type-sam-bwa-sample1	other-gatk-bwa-sample2
+		1	A	B	X
+		2	B	B	Y
+	}
+	exec cg select -g {sample * type *} tmp/temp.tsv
+} {some fields (type) needed were not found (in any of the samples)} error
+
+test select_group {group with analysis in -gc} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	type-gatk-bwa-sample1	type-sam-bwa-sample1	other-gatk-bwa-sample2
+		1	A	B	X
+		2	B	B	Y
+	}
+	exec cg select -g all -gc {analysis * type * count} tmp/temp.tsv
+} {all	count-gatk-bwa-sample1-A	count-gatk-bwa-sample1-B	count-sam-bwa-sample1-B
+all	1	1	2}
 
 testsummarize

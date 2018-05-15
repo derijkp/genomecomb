@@ -1,4 +1,4 @@
-chromosome	begin	end	type	ref	alt	sequenced-sample1	alleleSeq1-sample1	alleleSeq2-sample1	name-sample1	freq-sample1	sequenced-sample2	alleleSeq1-sample2	alleleSeq2-sample2	name-sample2	freq-sample2	sequenced-sample3	alleleSeq1-sample3	alleleSeq2-sample3	name-sample3	freq-sample3
+chromosome	begin	end	type	ref	alt	sequenced-gatk-sample1	alleleSeq1-gatk-sample1	alleleSeq2-gatk-sample1	name-gatk-sample1	freq-gatk-sample1	sequenced-sam-sample1	alleleSeq1-sam-sample1	alleleSeq2-sam-sample1	name-sam-sample1	freq-sam-sample1	sequenced-gatk-sample2	alleleSeq1-gatk-sample2	alleleSeq2-gatk-sample2	name-gatk-sample2	freq-gatk-sample2
 1	259	260	snp	N	T	v	T	C	test1	0.1	v	T	C	test1	0.11	v	T	C	test1	0.2
 1	4001	4002	snp	A	C	v	A	C	test2	0.2	v	A	C	test2	0.1	r	A	C	test2	0.2
 1	4050	4060	snp	N	T	v	T	T	test3	0.3	u	-	-	?	?	u	-	-	?	?

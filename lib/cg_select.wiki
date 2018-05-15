@@ -12,85 +12,125 @@ cg select can also add new columns calculated based on the content of other colu
 It can also be used to create summaries. Examples of its use can be found in [[howto_query]]
 
 == Arguments ==
-; **datafile**: file to be scanned, if not given, uses stdin. File may be compressed.
-; **outfile**: write results to outfile, if not given, uses stdout. If outfile has an extension
+; datafile: file to be scanned, if not given, uses stdin. File may be compressed.
+; outfile: write results to outfile, if not given, uses stdout. If outfile has an extension
 indicating compression (e.g. .lz4), the output file will be compressed using the proper method.
 
 == Options ==
-; **-q query**: only lines fullfilling conditions in query will be written to outfile (see further)
-; **-qf queryfile**: only lines fullfilling conditions in queryfile will be written to outfile (see further)
-; **-f fields**: only write given fields to result.
-An asterix (wildcard) can be used to indicated several fields matching a pattern. If a field
-with wildcards is prefiexed with a minus, all fields not matching the pattern will be added.  
-A field starting with fieldname=formula will add a calculated field: a field with the given 
-fieldname for which the value will be calculated using the given formula. 
-If the formula is complex (includes spaces), add braces around the entire field=formula.
-If the fieldname in a formula is preceeded by a -, it is not included in the output (but can be
-used for queries.  
-You can create multiple calculated fields in one go using wildcards (*,\*\*,\*\*\*,...), e.g.
-{{{freq-**=$count-**/double($total)}}} to calculate columns freq-sample1, freq-sample2, ... 
-for each sample for which a count-sample1, count-sample2, ... exists. Different patterns can be 
-combined using different number of asterisks. The example uses 2 asterisks. You can use 1, but have 
-to be careful; if the definition contains a multiplication (an asterisk), it would also be replaced 
-by the pattern.
-; **-rf removefields**: write all, except given fields to result.
-; **-samples samples**: Only the given list of samples (space separated) will be included in the output.
+; -f fields: list of fields to be written to result. Can contain wildcards or new calculated fields (see further)
+; -q query: only lines fullfilling conditions in query will be written to outfile (see further)
+; -qf queryfile: only lines fullfilling conditions in queryfile will be written to outfile (see further)
+; -rf removefields: write all, except given fields to result.
+; -samples samples: Only the given list of samples (space separated) will be included in the output.
 All non-sample related fields (those without a -) will be included. The sample nnames may contain wildcards (*)
-; **-ssamples samples**: same as -samples, but the order of fields in the file will be changed, so that samples are sorted as in the parameter
-; **-s sortfields**: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
+; -ssamples samples: same as -samples, but the order of fields in the file will be changed, so that samples are sorted as in the parameter
+; -s sortfields: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
 if **sortfields** is "-", the default sort fields will be used (chromosome,begin,end,type,alt).
 This will also accept name variations of the fields, such as chrom instead of chromosome.
-; **-sr sortfields**: sort on given fields in reverse order
-; **-si sampleinfofile**: a file in which extra information about the samples can be found (see further).
+; -sr sortfields: sort on given fields in reverse order
+; -si sampleinfofile: a file in which extra information about the samples can be found (see further).
 If a file exists with the same name as the datafile (without compression extension, if present) 
 with .sampleinfo or .sampleinfo.tsv appended, it will be used as sampleinfofile by default.
-; **-nh newheader**: replace header in output with fields given by this option
-; **-sh sepheader**: write a resultfile without header, and write the header into the file **sepheader**
-; **-hc headerincomment**: if 1, the last of the starting comment lines will be used for the header instead of the first non-comment line. 
+; -nh newheader: replace header in output with fields given by this option
+; -sh sepheader: write a resultfile without header, and write the header into the file **sepheader**
+; -hc headerincomment: if 1, the last of the starting comment lines will be used for the header instead of the first non-comment line. 
 If 2, the result file will also have the header in the last comment.
-; **-hf headerfile**: datafile does not have a header, the header will be read from **headerfile** instead
-; **-hp header**: datafile does not have a header, the list (space separated) given in this parameter will be used as header for the file
-; **-rc 0/1**: remove comment
-; **-h 0/1**: return header fields in file
-; **-n 0/1**: return sample names in file
-; **-samplingskip number**: sample data, skipping **number** rows
-; **-g groupfields**: with this option a summary table is returned. This will contain one line with 
+; -hf headerfile: datafile does not have a header, the header will be read from **headerfile** instead
+; -hp header: datafile does not have a header, the list (space separated) given in this parameter will be used as header for the file
+; -rc 0/1: remove comment
+; -h 0/1: return header fields in file
+; -n 0/1: return sample names in file
+; -samplingskip number: sample data, skipping **number** rows
+; -g groupfields: with this option a summary table is returned. This will contain one line with 
 information for each value or combination of values in the given groupfield(s).  **groupfields** has the 
 following format: "field1 filter1 field2 filter2 ...". For more information, see 
 further (Summaries using -g and -gc)
-; **-gc groupcols**: show other columns instead of count when using the -g
+; -gc groupcols: show other columns instead of count when using the -g
 option. **groupcols** has the following format: "field1 filter1 field2
 filter2 ... functions". For more information, see further (Summaries using
 -g and -gc)
 
-The query or field lines can contain more than one line (enclose in '').
-Lines starting with a # are comments
+== Fields (option -f) ==
+With the -f option, the output can be limited to the fields given (whitespace
+separated list). The field argument can contain more than one line
+(enclose in '' when running from sh) to format for clarity, e.g.:
+{{{
+cg select -f '
+    chromosome
+    begin
+    end
+' file.tsv
+}}}
 
-== Query ==
-In queries, the value of a field for the line can be accessed using a $ followed by 
-the name of the field, e.g.:
+An asterix (wildcard) can be used to indicated several
+fields matching a pattern. If a field with wildcards is prefixed with a
+minus, all fields not matching the pattern will be added.
+
+A field starting with fieldname=formula will add a **calculated field:
+a field with the given fieldname for which the value will be calculated
+using the given formula. The formula can use any of the fields in the file
+and all operators or functions described further in the query secction. If
+the formula is complex (includes spaces), add braces around the entire
+field=formula.
+
+Calculated fields can be used in queries If the field definition is
+preceeded by a -, it is not included in the output (but can still be used in
+queries.
+
+You can create multiple calculated fields in one go using wildcards
+(*,\*\*,\*\*\*,...), e.g. {{{freq-**=$count-**/double($total)}}} to
+calculate columns freq-sample1, freq-sample2, ... for each sample for
+which a count-sample1, count-sample2, ... exists. Different patterns can
+be combined using different number of asterisks. The example uses 2
+asterisks. You can use 1, but have to be careful; if the definition
+contains a multiplication (an asterisk), it would also be replaced by the
+pattern.
+
+== Query (option -q) ==
+Queries (-q) are used to limit the output to lines fullfilling the
+conditions in query: Only lines for which the query is true are in the
+output. The query argument may be formatted for clarity using newlines
+(enclose in '' when running from sh) to format for clarity, e.g.:
+{{{
+cg select -q '
+    $type == "snp"
+    and $quality >= 30
+' file.tsv
+}}}
+
+=== Using field values ===
+In queries, the value of a field for the line can be accessed
+using a $ followed by the name of the field, e.g. the query
 $start > 10000
-will only return lines where the field start is larger than 10000.
+will only return lines where the value in the field start is larger than 10000.
+
+Fields can contain lists of values separated by commas  (or semicolons or
+space) (= a vector). In such case a simple > operator will give errors, as
+it only works on numbers. There are several functions and operators
+(described further) to handle these kind of values, e.g the query
+"lmax($freq) < 5" can be used to select only lines for which the maximum
+freq in the list/vector is smaller than 5.
+
 The special variable ROW will contain the row number of the current line.
 $ROW starts at 0 for this first line after the header/comments.
 e.g.:
 $ROW == 1000
 will select data line 1000 in the file.
 
-== Operators ==
+=== Operators ===
 Queries support all operators provided by Tcl expr:
-; **== !=** : Boolean equal and not equal. Each operator produces a zero/one result. Valid for all operand types.
-; **< > <= >=** : Boolean less, greater, less than or equal, and greater than or equal. Each operator produces 1 if the condition is true, 0 otherwise. These operators may be applied to strings as well as numeric operands, in which case string comparison is used.
-; **+ -** : Add and subtract. Valid for any numeric operands.
+; == !=** : Boolean equal and not equal. Each operator produces a zero/one result. Valid for all operand types.
+; < > <= >=** : Boolean less, greater, less than or equal, and greater than or equal. Each operator produces 1 if the condition is true, 0 otherwise. These operators may be applied to strings as well as numeric operands, in which case string comparison is used.
+; + -** : Add and subtract. Valid for any numeric operands.
 ; * / % : Multiply, divide, remainder. None of these operands may be applied to string operands, and remainder may be applied only to integers. The remainder will always have the same sign as the divisor and an absolute value smaller than the divisor.
-; **&&** : Logical AND. Produces a 1 result if both operands are non-zero, 0 otherwise. Valid for numeric operands only (integers or floating-point).
-; **||** : Logical OR. Produces a 0 result if both operands are zero, 1 otherwise. Valid for numeric operands only (integers or floating-point).
-; **- + ~ !** : Unary minus, unary plus, bit-wise NOT, logical NOT. None of these operands may be applied to string operands, and bit-wise NOT may be applied only to integers.
-; **<< >>** : Left and right shift. Valid for integer operands only. A right shift always propagates the sign bit.
-; **&** : Bit-wise AND. Valid for integer operands only.
-; **^** : Bit-wise exclusive OR. Valid for integer operands only.
-; **|** : Bit-wise OR. Valid for integer operands only.
-; **x?y:z** : If-then-else, as in C. If x evaluates to non-zero, then the result is the value of y. Otherwise the result is the value of z. The x operand must have a numeric value.
+; &&** : Logical AND. Produces a 1 result if both operands are non-zero, 0 otherwise. Valid for numeric operands only (integers or floating-point).
+; ||** : Logical OR. Produces a 0 result if both operands are zero, 1 otherwise. Valid for numeric operands only (integers or floating-point).
+; - + ~ !** : Unary minus, unary plus, bit-wise NOT, logical NOT. None of these operands may be applied to string operands, and bit-wise NOT may be applied only to integers.
+; << >>** : Left and right shift. Valid for integer operands only. A right shift always propagates the sign bit.
+; &** : Bit-wise AND. Valid for integer operands only.
+; ^** : Bit-wise exclusive OR. Valid for integer operands only.
+; |** : Bit-wise OR. Valid for integer operands only.
+; x?y:z** : If-then-else, as in C. If x evaluates to non-zero, then the result is the value of y. Otherwise the result is the value of z. The x operand must have a numeric value.
 
 Some extra operators are added:
 ; condition1 **and** condition2: condition is true if both condition1 and condition2 are true (same as &&)
@@ -102,59 +142,59 @@ Several functions (see further: matches, regexp, oneof, shares, ...) can also be
 (using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
 ; value **regexp** pattern: true if value matches the regular expression given by **pattern**
 
-== Functions ==
+=== Functions ===
 Queries support all functions provided by Tcl expr
-; **exp(arg)** : exponential of arg.
-; **fmod(x,y)** : floating-point remainder of the division of x by y.
-; **isqrt(arg)** : Computes the integer part of the square root of arg.
-; **log(arg)** : natural logarithm of arg. Arg must be a positive value.
-; **log10(arg)** : base 10 logarithm of arg. Arg must be a positive value.
-; **pow(x,y)** : Computes the value of x raised to the power y.
-; **sqrt(arg)** : The argument may be any non-negative numeric value.
+; exp(arg)** : exponential of arg.
+; fmod(x,y)** : floating-point remainder of the division of x by y.
+; isqrt(arg)** : Computes the integer part of the square root of arg.
+; log(arg)** : natural logarithm of arg. Arg must be a positive value.
+; log10(arg)** : base 10 logarithm of arg. Arg must be a positive value.
+; pow(x,y)** : Computes the value of x raised to the power y.
+; sqrt(arg)** : The argument may be any non-negative numeric value.
 
-; **ceil(arg)** : smallest integral floating-point value (i.e. with a zero fractional part) not less than arg. The argument may be any numeric value.
-; **floor(arg)** : largest integral floating-point value (i.e. with a zero fractional part) not greater than arg. The argument may be any numeric value.
-; **round(arg)** : If arg is an integer value, returns arg, otherwise converts arg to integer by rounding and returns the converted value.
+; ceil(arg)** : smallest integral floating-point value (i.e. with a zero fractional part) not less than arg. The argument may be any numeric value.
+; floor(arg)** : largest integral floating-point value (i.e. with a zero fractional part) not greater than arg. The argument may be any numeric value.
+; round(arg)** : If arg is an integer value, returns arg, otherwise converts arg to integer by rounding and returns the converted value.
 
-; **abs(arg)** : absolute value of arg.
-; **double(arg)** : The argument may be any numeric value, If arg is a floating-point value, returns arg, otherwise converts arg to floating-point and returns the converted value. May return Inf or -Inf when the argument is a numeric value that exceeds the floating-point range.
-; **entier(arg)** : The argument may be any numeric value. The integer part of arg is determined and returned. The integer range returned by this function is unlimited, unlike int and wide which truncate their range to fit in particular storage widths.
-; **int(arg)** : The argument may be any numeric value. The integer part of arg is determined, and then the low order bits of that integer value up to the machine word size are returned as an integer value. For reference, the number of bytes in the machine word are stored in tcl_platform(wordSize).
-; **bool(arg)** : Accepts any numeric value, or any string acceptable to string is boolean, and returns the corresponding boolean value 0 or 1. Non-zero numbers are true. Other numbers are false. Non-numeric strings produce boolean value in agreement with string is true and string is false.
-; **wide(arg)** : The argument may be any numeric value. The integer part of arg is determined, and then the low order 64 bits of that integer value are returned as an integer value.
+; abs(arg)** : absolute value of arg.
+; double(arg)** : The argument may be any numeric value, If arg is a floating-point value, returns arg, otherwise converts arg to floating-point and returns the converted value. May return Inf or -Inf when the argument is a numeric value that exceeds the floating-point range.
+; entier(arg)** : The argument may be any numeric value. The integer part of arg is determined and returned. The integer range returned by this function is unlimited, unlike int and wide which truncate their range to fit in particular storage widths.
+; int(arg)** : The argument may be any numeric value. The integer part of arg is determined, and then the low order bits of that integer value up to the machine word size are returned as an integer value. For reference, the number of bytes in the machine word are stored in tcl_platform(wordSize).
+; bool(arg)** : Accepts any numeric value, or any string acceptable to string is boolean, and returns the corresponding boolean value 0 or 1. Non-zero numbers are true. Other numbers are false. Non-numeric strings produce boolean value in agreement with string is true and string is false.
+; wide(arg)** : The argument may be any numeric value. The integer part of arg is determined, and then the low order 64 bits of that integer value are returned as an integer value.
 
-; **max(arg,...)** : argument with the greatest value.
-; **min(arg,...)** : argument with the least value.
-; **rand()** : Returns a pseudo-random floating-point value in the range (0,1). The generator algorithm is a simple linear congruential generator that is not cryptographically secure. Each result from rand completely determines all future results from subsequent calls to rand, so rand should not be used to generate a sequence of secrets, such as one-time passwords. The seed of the generator is initialized from the internal clock of the machine or may be set with the srand function.
-; **srand(arg)** : The arg, which must be an integer, is used to reset the seed for the random number generator of rand. Returns the first random number (see rand) from that seed. Each interpreter has its own seed.
+; max(arg,...)** : argument with the greatest value.
+; min(arg,...)** : argument with the least value.
+; rand()** : Returns a pseudo-random floating-point value in the range (0,1). The generator algorithm is a simple linear congruential generator that is not cryptographically secure. Each result from rand completely determines all future results from subsequent calls to rand, so rand should not be used to generate a sequence of secrets, such as one-time passwords. The seed of the generator is initialized from the internal clock of the machine or may be set with the srand function.
+; srand(arg)** : The arg, which must be an integer, is used to reset the seed for the random number generator of rand. Returns the first random number (see rand) from that seed. Each interpreter has its own seed.
 
-; **acos(arg)** : arc cosine of arg, in the range [0,pi] radians. Arg should be in the range [-1,1].
-; **asin(arg)** : arc sine of arg, in the range [-pi/2,pi/2] radians. Arg should be in the range [-1,1].
-; **atan(arg)** : arc tangent of arg, in the range [-pi/2,pi/2] radians.
-; **atan2(y,x)** : arc tangent of y/x, in the range [-pi,pi] radians. x and y cannot both be 0. If x is greater than 0, this is equivalent to âatan [expr {y/x}]â.
-; **cos(arg)** : cosine of arg, measured in radians.
-; **cosh(arg)** : hyperbolic cosine of arg. If the result would cause an overflow, an error is returned.
-; **hypot(x,y)** : Computes the length of the hypotenuse of a right-angled triangle âsqrt [expr {x*x+y*y}]â.
-; **sin(arg)** : sine of arg, measured in radians.
-; **sinh(arg)** : hyperbolic sine of arg. If the result would cause an overflow, an error is returned.
-; **tan(arg)** : tangent of arg, measured in radians.
-; **tanh(arg)** : hyperbolic tangent of arg.
+; acos(arg)** : arc cosine of arg, in the range [0,pi] radians. Arg should be in the range [-1,1].
+; asin(arg)** : arc sine of arg, in the range [-pi/2,pi/2] radians. Arg should be in the range [-1,1].
+; atan(arg)** : arc tangent of arg, in the range [-pi/2,pi/2] radians.
+; atan2(y,x)** : arc tangent of y/x, in the range [-pi,pi] radians. x and y cannot both be 0. If x is greater than 0, this is equivalent to âatan [expr {y/x}]â.
+; cos(arg)** : cosine of arg, measured in radians.
+; cosh(arg)** : hyperbolic cosine of arg. If the result would cause an overflow, an error is returned.
+; hypot(x,y)** : Computes the length of the hypotenuse of a right-angled triangle âsqrt [expr {x*x+y*y}]â.
+; sin(arg)** : sine of arg, measured in radians.
+; sinh(arg)** : hyperbolic sine of arg. If the result would cause an overflow, an error is returned.
+; tan(arg)** : tangent of arg, measured in radians.
+; tanh(arg)** : hyperbolic tangent of arg.
 
 Several extra functions have been added:
 
-=== Logical functions ===
-; **if(condition,true,?condition2,true2, ...?false)**: if **condition** is true, the value for "true" will be returned, 
+==== Logical functions ====
+; if(condition,true,?condition2,true2, ...?false): if **condition** is true, the value for "true" will be returned, 
 otherwise the last parameter (**false**) is returned
-; **catch(value,?errorvalue?)**: if an error is generated when calculating **value**, the function returns **errorvalue**.
+; catch(value,?errorvalue?): if an error is generated when calculating **value**, the function returns **errorvalue**.
 If **errorvalue** is not given, catch returns 1 on an error, and 0 on success (without catch, the error message is returned.)
 
-=== Bio functions ===
-; **region("chromosome:begin-end",...)**: is true for any region in dataset that overlaps the given regions.
+==== Bio functions ====
+; region("chromosome:begin-end",...): is true for any region in dataset that overlaps the given regions.
 Can also be given as region(chromosome,begin,end,...).
 If the chromosome value in the query or the data file starts with chr, this part is ignored: chr2 will match 2, as wel as Chr2.
-; **chr_clip(value)**: Returns the chromosome name without "chr" in front (if present)
-; **hovar(samplename)**: true if the given sample is a homozygous variant. This is equivalent to ($sequenced-samplename == "v" && $alleleSeq1-samplename == $alleleSeq2-samplename)
-; **zyg(?sequenced?,alleleSeq1,alleleSeq2,ref,alt)**: returns the zygosity code given the parameters.
+; chr_clip(value): Returns the chromosome name without "chr" in front (if present)
+; hovar(samplename): true if the given sample is a homozygous variant. This is equivalent to ($sequenced-samplename == "v" && $alleleSeq1-samplename == $alleleSeq2-samplename)
+; zyg(?sequenced?,alleleSeq1,alleleSeq2,ref,alt): returns the zygosity code given the parameters.
 The sequenced parameter is optional; if it is present, a "u" will cause the zygosity to also be "u".
 Possible result codes are: 
 m (homozygous, alleles are equal and in alt), 
@@ -178,44 +218,45 @@ of missense and higher in the list).
 gene and transcript name and g for only the gene name.
 ; maximpact(list,...): returns the maximum impact from one or more lists of impacts. The order of impact
 is as in the list given in [[cg_annotate]]
-=== Number functions ===
-; **between(value,{min max})** or **between(value,min,max)**: true of value is >= min and <= max (e.g. "between($begin,1000,2000)")
+
+==== Number functions ====
+; between(value,{min max})** or **between(value,min,max): true of value is >= min and <= max (e.g. "between($begin,1000,2000)")
 This function can also be used as an operator, eg "$field between {1 2}"
-; **min(a1,a2,...)**: returns the minimum of a1, a2, ...
+; min(a1,a2,...): returns the minimum of a1, a2, ...
 min will return an error if one of the values is not a number. Use lmin if some values are
 list of numbers, or not numbers.
-; **max(a1,a2,...)**: returns the maximum of a1, a2, ...
+; max(a1,a2,...): returns the maximum of a1, a2, ...
 max will return an error if one of the values is not a number. Use lmax if some values are
 list of numbers, or not numbers.
-; **avg(value,...)**: returns the average of the values given. Non-number values are ignored.
+; avg(value,...): returns the average of the values given. Non-number values are ignored.
 If no number was given, the answer will be NaN
-; **isnum(value)**: true if value is a valid number
-; **percent(value)**: returns a fraction as a percent 
-; **def(value,default)**: if value is not a number, it returns the given default, otherwise value
-; **format(formatstring, arg, ...)**: format the given arguments according to the given **formatstring**. 
+; isnum(value): true if value is a valid number
+; percent(value): returns a fraction as a percent 
+; def(value,default): if value is not a number, it returns the given default, otherwise value
+; format(formatstring, arg, ...): format the given arguments according to the given **formatstring**. 
 **formatstring** follows the ANSI C sprintf specification, e.g. use "%.2f" to print a floating point number
 with two digits after the decimel point
 
-=== String functions ===
-; **oneof($field,value1,value2,...)**: returns true if the given field is equal to one of the values
-; **regexp(value,pattern)**: true if value matches the regular expression given by **pattern**
-; **regextract(value,pattern)**: extract the part matching the given **pattern** from **value**
-; **regsub(value,pattern,replace)**: substitutes values matched by **pattern** in **value** by **replace**
-; **matches(value,pattern)**:  true if value matches the glob pattern given by **pattern** 
+==== String functions ====
+; oneof($field,value1,value2,...): returns true if the given field is equal to one of the values
+; regexp(value,pattern): true if value matches the regular expression given by **pattern**
+; regextract(value,pattern): extract the part matching the given **pattern** from **value**
+; regsub(value,pattern,replace): substitutes values matched by **pattern** in **value** by **replace**
+; matches(value,pattern):  true if value matches the glob pattern given by **pattern** 
 (using wildcards * for anything, ? for any single character, [chars] for any of the characters in chars)
-; **concat(value,...)**: makes one long string by appending all values.
+; concat(value,...): makes one long string by appending all values.
 
-=== multifield functions ===
+==== multifield functions ====
 The following functions address multiple fields.
-; **count($field1, $field2, ..., test)**: Counts the number of fields that fullfill the test (can be things like: ' == "A"' or '< 20')
-; **counthasone($field1, $field2, ..., test)**: Counts the number of fields containing a commma separated lists for which one of the values fullfills the test
-; **counthasall($field1, $field2, ..., test)**: Counts the number of fields containing a commma separated lists for which all of the values fullfill the test
+; count($field1, $field2, ..., test): Counts the number of fields that fullfill the test (can be things like: ' == "A"' or '< 20')
+; counthasone($field1, $field2, ..., test): Counts the number of fields containing a commma separated lists for which one of the values fullfills the test
+; counthasall($field1, $field2, ..., test): Counts the number of fields containing a commma separated lists for which all of the values fullfill the test
 An asterix can be used to indicated several fields matching a pattern.
 As field names specific to a sample are made by appending with -samplename, something like
 count($sequenced-*, == "v")
 will give the number of samples for which a variant was found
 
-=== Sample aggregates ===
+==== Sample aggregates ====
 Sometimes you want summary info for each (selected) variation over the samples in the file 
 (e.g. in how many samples is the variant present, in which samples, ..). 
 You can do this in a limited way using the previous count functions using an asterix.
@@ -227,47 +268,61 @@ A special variable named sample is available with the name of the sample, e.g.
 scount($sample match "gatk-*" and $sequenced == "v") will count the number of 
 gatk samples (sample name matches gatk-*) for which sequenced-<sample> is equal to "v"
 Following sample aggregates are available:
-; **scount(condition)**: number of samples for which **condition** is true
-; **slist(?condition?,value)**: returns a (comma separated) list with results of value for each sample for which (if given) **condition** is true
-; **sdistinct(?condition?,value)**: returns a non-redundant (comma separated) list of the results of value for each sample for which (if given) **condition** is true
-; **sucount(?condition?,value)**: number of unique values in field
-; **smin(?condition?,value)**: returns the minimum of results of value for each sample for which (if given) **condition** is true
-; **smax(?condition?,value)**: returns the maximum of results of value for each sample for which (if given) **condition** is true
-; **ssum(?condition?,value)**: returns the sum of results of value for each sample for which (if given) **condition** is true
-; **savg(?condition?,value)**: returns the average of results of value for each sample for which (if given) **condition** is true
-; **sstdev(?condition?,value)**: returns the standard deviation of results of value for each sample for which (if given) **condition** is true
-; **smedian(?condition?,value)**: returns the median of results of value for each sample for which (if given) **condition** is true
-; **smode(?condition?,value)**: returns the mode of results of value for each sample for which (if given) **condition** is true
-; **spercent(condition1,condition2)**: returns 100.0*(number of samples for which condition1 and condition2 are true)/(number of samples for which condition1 is true)
+; scount(condition): number of samples for which **condition** is true
+; slist(?condition?,value): returns a (comma separated) list with results of value for each sample for which (if given) **condition** is true
+; sdistinct(?condition?,value): returns a non-redundant (comma separated) list of the results of value for each sample for which (if given) **condition** is true
+; sucount(?condition?,value): number of unique values in field
+; smin(?condition?,value): returns the minimum of results of value for each sample for which (if given) **condition** is true
+; smax(?condition?,value): returns the maximum of results of value for each sample for which (if given) **condition** is true
+; ssum(?condition?,value): returns the sum of results of value for each sample for which (if given) **condition** is true
+; savg(?condition?,value): returns the average of results of value for each sample for which (if given) **condition** is true
+; sstdev(?condition?,value): returns the standard deviation of results of value for each sample for which (if given) **condition** is true
+; smedian(?condition?,value): returns the median of results of value for each sample for which (if given) **condition** is true
+; smode(?condition?,value): returns the mode of results of value for each sample for which (if given) **condition** is true
+; spercent(condition1,condition2): returns 100.0*(number of samples for which condition1 and condition2 are true)/(number of samples for which condition1 is true)
 
-=== vector functions (comma separated lists) ===
-Some fields can contain multiple values in the form of a comma (or ; or space) separated 
-list (further called vector).
+==== comparing samples ====
+; compare(samplename1,samplename2, ...): compares the variant in the given samples, and returns one of:
+sm (variant with the same genotype in all given samples, with all sequenced)
+df (different: variant in some, reference in other, with all sequenced)
+mm (mismatch; variant in all, but different genotypes, with all sequenced)
+un (unsequenced in some samples, variant in one of the others)
+; same(sample1,sample2, ...): same: all samples have the same genotype (does not have to be a variant) (all sequenced)
+; sm(sample1,sample2, ...): same: variant with the same genotype in all given samples (all sequenced)
+; df(sample1,sample2, ...): different: variant in some, reference in other (all sequenced)
+; mm(sample1,sample2, ...): mismatch; variant in all, but different genotypes (all sequenced)
+; un(sample1,sample2, ...): unsequenced in some samples, variant in one of the others
+
+=== Vectors ===
+Several functions and operators deal with vectors, fields containing
+multiple values in the form of a comma (or ; or space) separated list.
+
+==== vector functions (comma separated lists) ====
 The following functions allow use of vectors in queries
 
-; **vector(value1,value2, ...)**: creates a vector from a number of values. If some elements are vectors themselves, they will be concatenated
-; **lindex(vector, position)**: the value of the element at the given **position** in the list. The first element is at position 0!
-; **lrange(vector, start, end)**: the a sublist of vector from element at position **start** up to and including the element at **end**. The first element is at position 0!
-; **lsearch(vector, element, ?args?)**: returns the position of **element** in the list **vector**. If "-glob" is given as an extra argument, **element** can be a glob pattern.
-; **llen(vector)**: number of elements in the vector (also **llength**)
-; **lmin(vector, ...)**: the minimum of the list of numbers in vector(s). A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
-; **lmax(vector, ...)**: the maximum of the vector. A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
-; **lmind(vector, ..., def)**: same as lmin, but you can set the default value for non-numeric characters is given as the last parameter
-; **lmaxd(vector, ..., def)**: same as lmax, but you can set the default value for non-numeric characters is given as the last parameter
-; **lminpos(vector, ...)**: position (within the index) of the minimum value. If more than one vector is given, the position of the minimum of all vectors is given
-; **lmaxpos(vector, ...)**: position (within the index) of the maximum value. If more than one vector is given, the position of the maximum of all vectors is given
-; **lsum(vector, ...)**: the sum of the list of numbers in vector(s). Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
-; **lavg(vector, ...)**: the average of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
-; **lstdev(vector, ...)**: the standard deviation of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
-; **lmedian(vector, ...)**: the median of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
-; **lmode(vector, ...)**: the mode (element that is most abundant) of the vector. The result can be a new vector (if multiple values occur at the same count)
-; **contains(vector, value)**: true if **vector** contains **value**. This can also be used as an operator: vector contains value
-; **shares(vector, valuelist)**: true if **vector** and the list in **valuelist** (a SPACE separated list!) share a value. This can also be used as an operator: vector shares valuelist
-; **lone(vector)**: true if one of elements of the vector is true
-; **lall(vector)**: true if all elements of the vector are true
-; **lcount(vector)**: number of elements in vector that are true
+; lmin(vector, ...): the minimum of the list of numbers in vector(s). A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
+; lmax(vector, ...): the maximum of the vector. A default value (NaN or not a number) is given for non-numeric characters (-); any comparison with NaN is false.
+; lmind(vector, ..., def): same as lmin, but you can set the default value for non-numeric characters is given as the last parameter
+; lmaxd(vector, ..., def): same as lmax, but you can set the default value for non-numeric characters is given as the last parameter
+; lminpos(vector, ...): position (within the index) of the minimum value. If more than one vector is given, the position of the minimum of all vectors is given
+; lmaxpos(vector, ...): position (within the index) of the maximum value. If more than one vector is given, the position of the maximum of all vectors is given
+; lsum(vector, ...): the sum of the list of numbers in vector(s). Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
+; lavg(vector, ...): the average of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
+; lstdev(vector, ...): the standard deviation of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
+; lmedian(vector, ...): the median of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
+; lmode(vector, ...): the mode (element that is most abundant) of the vector. The result can be a new vector (if multiple values occur at the same count)
+; llen(vector): number of elements in the vector (also **llength**)
+; vector(value1,value2, ...): creates a vector from a number of values. If some elements are vectors themselves, they will be concatenated
+; lindex(vector, position): the value of the element at the given **position** in the list. The first element is at position 0!
+; lrange(vector, start, end): the a sublist of vector from element at position **start** up to and including the element at **end**. The first element is at position 0!
+; lsearch(vector, element, ?args?): returns the position of **element** in the list **vector**. If "-glob" is given as an extra argument, **element** can be a glob pattern.
+; contains(vector, value): true if **vector** contains **value**. This can also be used as an operator: vector contains value
+; shares(vector, valuelist): true if **vector** and the list in **valuelist** (a SPACE separated list!) share a value. This can also be used as an operator: vector shares valuelist
+; lone(vector): true if one of elements of the vector is true
+; lall(vector): true if all elements of the vector are true
+; lcount(vector): number of elements in vector that are true
 
-=== vector operators ===
+==== vector operators ====
 Several special operators are added that work on comma (or ; or space) separated
 lists (vectors). The result of such an operator is also a vector. The arguments
 to such an operator must be of the same length, or one of them must be of 
@@ -275,28 +330,16 @@ length 1. If one of them is of length 1, the same element will be used versus
 all elements in the other vector. Supported operators are:
 @**, @*, @/, @%, @-, @+, @>, @<, @>=, @<=, @==, @!=, @&&, @||, vand, vor, vin, vni
 
-=== vector functions (that return vectors) ===
-; **vdistinct(vector, ...)**: returns a vector in which each element in one of the vectors occurs only once
-; **vabs(vector)**: returns vector of absolute values of given vector
-; **vavg(vector1,vector2,...)**: returns vector with average value for each position in the vector
-; **vmax(vector1,vector2,...)**: returns vector with maximum value for each position in the vector
-; **vmin(vector1,vector2,...)**: returns vector with minimum value for each position in the vector
-; **vdef(vector,default)**: returns the given vector, but with all non numbers replaced by default
-; **vif(condition,true,?condition2,true2, ...?false)**: like if, but conditions, true1, ... and 
+==== vector functions (that return vectors) ====
+; vdistinct(vector, ...): returns a vector in which each element in one of the vectors occurs only once
+; vabs(vector): returns vector of absolute values of given vector
+; vavg(vector1,vector2,...): returns vector with average value for each position in the vector
+; vmax(vector1,vector2,...): returns vector with maximum value for each position in the vector
+; vmin(vector1,vector2,...): returns vector with minimum value for each position in the vector
+; vdef(vector,default): returns the given vector, but with all non numbers replaced by default
+; vif(condition,true,?condition2,true2, ...?false): like if, but conditions, true1, ... and 
 false may be vectors, and a vector is returned
-; **vformat(formatstring, arg, ...)**: same as format, but arg may be a vector, and the result is a vector
-
-=== comparing samples ===
-; **compare(samplename1,samplename2, ...)**: compares the variant in the given samples, and returns one of:
-sm (variant with the same genotype in all given samples, with all sequenced)
-df (different: variant in some, reference in other, with all sequenced)
-mm (mismatch; variant in all, but different genotypes, with all sequenced)
-un (unsequenced in some samples, variant in one of the others)
-; **same(sample1,sample2, ...)**: same: all samples have the same genotype (does not have to be a variant) (all sequenced)
-; **sm(sample1,sample2, ...)**: same: variant with the same genotype in all given samples (all sequenced)
-; **df(sample1,sample2, ...)**: different: variant in some, reference in other (all sequenced)
-; **mm(sample1,sample2, ...)**: mismatch; variant in all, but different genotypes (all sequenced)
-; **un(sample1,sample2, ...)**: unsequenced in some samples, variant in one of the others
+; vformat(formatstring, arg, ...): same as format, but arg may be a vector, and the result is a vector
 
 == Summaries using -g and -gc ==
 The -g (groupfields) and -gc (groupcols) allow the flexible creation of
@@ -329,19 +372,38 @@ contain wildcards (*) that match any set of characters (e.g. CDS* to match
 any value starting with CDS). If the filter is * or {} (=emtpy) all values
 will be used.
 
-The field **sample** is interpreted specially: If the field sample is
-present, you can use fieldnames without the sample suffix (in both -gc and
--g), and the sample name (of the current column) will be automatically
-added where fields in the form field-sample are available. Only data
-on samples that have all fields needed are in the summary: Samples with
-missing (either -g or -gc) fields are ignored.
+The special field **all** can be used to summarize over all selected lines. The
+value of the field "all" (unless it is actually present in the file) will
+be "all" for all lines. This allows you to e.g. count the number of result
+lines of a query by adding -g all. If the file contains an actual field
+"all", you can use "-" or "_" instead to get an overview summary.
 
-Another special field is **all**, which you can use to summarize over all
-selected lines. The value of the field "all" (unless it is
-actually present in the file) will be "all" for all lines. This allows you
-to e.g. count the number of result lines of a query by adding -g all. If the
-file contains an actual field "all", you can use "-" or "_" instead to get
-an overview summary.
+muticompar [[tsv]] files can contain data of multiple samples or analyses:
+Sample/analysis specific fields are indicated by adding the analysis as a
+suffix to the generic/returning fieldname, separated by a - character. The
+analysis can consist of multiple parts separated by -. The last part of
+the analysis is the sample name, e.g. zyg-gatk-bwa-sample1 contains the
+zygosity data determined by gatk on a bwa alignment of sample1.
+
+The use of the field **sample** or **analysis** for grouping (if not
+present in the file) triggers a different interpretation of the file:
+Instead of calculating aggregate info (e.g. counting) by collecting info
+per line, info is now analyzed per sample or analysis. You can add sample
+specific fields without the sample/analysis suffix for grouping, e.g. -g
+'sample * zyg-gatk-bwa *' will list the number of reference, homozygotes,
+... called by gatk for each sample. (use -g 'analysis * zyg *' if you want
+the data for each analysis in the file). Only data on samples that have
+all fields required are in the summary: Samples with missing (either -g or
+-gc) fields are ignored. If a field is not found in any of the samples, an
+error is given. Further, only only one of **sample** or **analysis** can
+be used as a field. Using both together (in either -g or -gc) will also
+cause an error)
+
+I a field is given that only exists in the file as part of an
+analysis/sample specific one, processing per sample/analysis is also
+triggered, even though the aggregate will not be separated per sample.
+e.g. using zyg (in a file with only zyg-samplexx fields) will result in
+counting zyg values for all variants in all samples/analyses together.
 
 === groupcols ===
 The **groupcols (-gc)** option can be used to add other summary columns than the
@@ -390,19 +452,26 @@ duplicates in each list before looping over them. When multiple looped
 lists are present, all possible combinations are counted.
 
 == sampleinfofile ==
-A sampleinfofile is a tab delimited file containing extra information about the samples in the datafile.
-It should contain one column named id, that will contain the sample names. other fields contain the extra 
-data. You can use this information in most places where you use field values (queries, calculated fields, 
-grouping) using the $fieldname-sample construct, e.g. if there is a field gender in the sampleinfofile (and not
-in the datafile, you can use $gender-sample1 to get the gender of sample1 in a query.
-If there are no $fieldname-sample fields, but there is a field named "sample" in the 
-file (e.g. in the long format), that sample filed will be used to make the link. In this case 
-the sampleinfo will be available by using the plain fieldnames in sampleinfo (without -sample added)
+A sampleinfofile is a tab delimited file containing extra information
+about the samples in the datafile. It should contain one column named id,
+that will contain the sample names. other fields contain the extra data.
+You can use this information in most places where you use field values
+(queries, calculated fields, grouping) using the $fieldname-sample
+construct, e.g. if there is a field gender in the sampleinfofile (and not
+in the datafile, you can use $gender-sample1 to get the gender of sample1
+in a query. This also works with analyses from a given sample, e.g. you
+can also use $gender-gatk-bwa-sample1.
+
+If there are no $fieldname-sample fields, but there is a field named
+"sample" in the file (e.g. in the long format), that sample field will be
+used to make the link. In this case the sampleinfo will be available by
+using the plain fieldnames in sampleinfo (without -sample added)
 
 == Queryfile ==
-A queryfile is a tab delimited file with a header describing a query. The output will contain 
-resultlines where all values in the columns given in the query header in the resultline are 
-equal to the corresponding values given in one line of the query file.
+A queryfile is a tab delimited file with a header describing a query. The
+output will contain resultlines where all values in the columns given in
+the query header in the resultline are equal to the corresponding values
+given in one line of the query file.
 
 == Category ==
 Query

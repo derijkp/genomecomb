@@ -68,6 +68,7 @@ amplicons  <- read.delim(file=ampliconsfile, sep='\t', header=T)
 #get number of variant/sample
 temp <- paste(mastrdir,'/compar/summary-compar-', mastr,'.tsv',sep='')
 vf <- read.delim(temp, sep='\t',header=T, stringsAsFactors=F)
+vf$sample = vf$analysis
 # sys_output <- file.remove(temp)
 
 read_cutoff <- 10
