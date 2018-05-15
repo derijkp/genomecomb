@@ -6,7 +6,9 @@ proc cg_long {args} {
 	set sampledataid id
 	set file {}
 	set outfile {}
+	set type analysis
 	cg_options long args {
+		-type {set type $value}
 		-norm {set norm $value}
 		-samplefields {
 			set samplefields $value
@@ -48,7 +50,11 @@ proc cg_long {args} {
 	set fpos pre
 	set colpos 0
 	foreach col $header {
-		set pos [string first - $col]
+		if {$type eq "analysis"} {
+			set pos [string first - $col]
+		} else {
+			set pos [string last - $col]
+		}
 		if {$pos != -1} {
 			set field [string range $col 0 [expr {$pos-1}]]
 			list_addnew samplecols $field

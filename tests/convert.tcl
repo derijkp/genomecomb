@@ -236,6 +236,27 @@ test collapsealleles {collapsealleles -duplicates error} {
 chr1 4200 4200 snp G A 0.5
 chr1 4200 4200 snp G A 0.8} error
 
+test format {long -type analysis} {
+	write_tab tmp/wide.tsv {
+		var	zyg-gatk-bwa-sample1	zyg-sam-bwa-sample1	zyg-gatk-bwa-sample2
+		test	v	u	r
+	}
+	exec cg long -type analysis tmp/wide.tsv
+} {sample	var	zyg
+gatk-bwa-sample1	test	v
+sam-bwa-sample1	test	u
+gatk-bwa-sample2	test	r}
+
+test format {long -type sample} {
+	write_tab tmp/wide.tsv {
+		var	zyg-gatk-bwa-sample1	zyg-sam-bwa-sample1	zyg-gatk-bwa-sample2
+		test	v	u	r
+	}
+	exec cg long -type sample tmp/wide.tsv
+} {sample	var	zyg-gatk-bwa	zyg-sam-bwa
+sample1	test	v	u
+sample2	test	r	}
+
 test format {long} {
 	write_tab tmp/wide.tsv {
 		chromosome begin end type ref alt freq-sample1 sequenced-sample1 alleleSeq1-sample1 alleleSeq2-sample1 zyg-sample1 freq-sample2 sequenced-sample2 alleleSeq1-sample2 alleleSeq2-sample2 zyg-sample2
@@ -245,7 +266,7 @@ test format {long} {
 	}
 	exec cg long tmp/wide.tsv tmp/long.tsv
 	write_tab tmp/expected.tsv {
-		analysis chromosome begin end type ref alt sequenced zyg alleleSeq1 alleleSeq2 freq
+		sample chromosome begin end type ref alt sequenced zyg alleleSeq1 alleleSeq2 freq
 	 	sample1 chr1 4200 4200 snp G A v t G A 0.5
 	 	sample2 chr1 4200 4200 snp G A v m A A 0.8
 	 	sample1 chr1 4200 4200 ins {} A v t {} A 0.8
@@ -265,7 +286,7 @@ test format {long} {
 	}
 	exec cg long tmp/wide.tsv tmp/long.tsv
 	write_tab tmp/expected.tsv {
-		analysis chromosome begin end type ref alt sequenced zyg alleleSeq1 alleleSeq2 freq
+		sample chromosome begin end type ref alt sequenced zyg alleleSeq1 alleleSeq2 freq
 	 	gatk-bwa-sample1 chr1 4200 4200 snp G A v t G A 0.5
 	 	gatk-bwa-sample2 chr1 4200 4200 snp G A v m A A 0.8
 	 	gatk-bwa-sample1 chr1 4200 4200 ins {} A v t {} A 0.8
@@ -285,7 +306,7 @@ test format {long from temp} {
 	}
 	exec cg long tmp/test.tsv.temp tmp/test.tsv
 	write_tab tmp/expected.tsv {
-		analysis chromosome begin end type ref alt sequenced zyg alleleSeq1 alleleSeq2 freq
+		sample chromosome begin end type ref alt sequenced zyg alleleSeq1 alleleSeq2 freq
 	 	sample1 chr1 4200 4200 snp G A v t G A 0.5
 	 	sample2 chr1 4200 4200 snp G A v m A A 0.8
 	 	sample1 chr1 4200 4200 ins {} A v t {} A 0.8
@@ -331,7 +352,7 @@ test format {long with post, multialt} {
 	 	chr1 5000 5001 snp G T,C 0.9 v T T m 0.0 v C C m 3,4
 	}
 	write_tab tmp/expected.tsv {
-		analysis chromosome begin end type ref alt sequenced zyg alleleSeq1 alleleSeq2 freq post
+		sample chromosome begin end type ref alt sequenced zyg alleleSeq1 alleleSeq2 freq post
 	 	sample1 chr1 4200 4200 snp G A v t G A 0.5 1
 	 	sample2 chr1 4200 4200 snp G A v m A A 0.8 1
 	 	sample1 chr1 4200 4200 ins {} A v t {} A 0.8 2
@@ -350,7 +371,7 @@ test format {long with overlapping field} {
 		2	0	0	0	0
 	}
 	write_tab tmp/expected.tsv {
-		analysis	id	validated_global	validated
+		sample	id	validated_global	validated
 		s1	1	2	1
 		s2	1	2	0
 		s3	1	2	1
