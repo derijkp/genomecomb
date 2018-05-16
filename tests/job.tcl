@@ -1110,7 +1110,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets $testname" {
 		file_write data.txt test1
 	}
 	job compress -checkcompressed 0 -deps {data.txt} -targets data.txt.rz -rmtargets data.txt -code {
-		cg_razip data.txt
+		cg razip data.txt
 	}
 	job result -optional 1 -checkcompressed 0 -deps {data.txt} -targets result.txt -code {
 		after 1000
@@ -1129,13 +1129,13 @@ test job "rmtargets and -checkcompressed 0 on previous targets, write one first 
 	cd $::testdir/tmp
 	test_job_init
 	file_write data.txt testpre
-	cg_razip data.txt
+	cg razip data.txt
 	job makedata -targets data.txt -code {
 		after 1000
 		file_write data.txt test1
 	}
 	job compress -optional 1 -checkcompressed 0 -deps {data.txt} -targets data.txt.gz -rmtargets data.txt -code {
-		cg_razip data.txt
+		cg razip data.txt
 	}
 	job result -optional 1 -checkcompressed 0 -deps {data.txt} -targets result.txt -code {
 		after 1000

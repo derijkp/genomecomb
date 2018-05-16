@@ -271,7 +271,7 @@ proc razip_job {file args} {
 	set deps [gzfiles $file {*}$args]
 	uplevel [list job razip-$file -checkcompressed 0 -deps $deps -targets {$file.rz} -rmtargets {$file} -code {
 		if {![file exists $dep]} {error "error compressing: file $dep does not exist"}
-		cg_razip $dep
+		cg razip $dep
 	}]
 }
 

@@ -40,7 +40,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 		lappend resultfiles $root-sv.tsv
 #		if {$force || [file extension $file] ne ".rz"} {
 #			puts "razipping $file"
-#			cg_razip $file
+#			cg_razip_job $file
 #		}
 	}
 	job svfind-[file tail $dir] -deps $resultfiles -targets {$dir/sv/svall-$name.tsv $dir/sv-$name.tsv} -vars {dbdir dir} -code {

@@ -1,7 +1,7 @@
-proc cg_razip args {
+proc cg_razip_job args {
+	upvar job_logdir job_logdir
 	set pos 0
 	set keep 0
-	set args [job_init {*}$args]
 	set cmdline [list cg razip {*}$args]
 	cg_options razip args {
 		-k - -keep {
@@ -54,5 +54,10 @@ proc cg_razip args {
 			}
 		}
 	}
+}
+
+proc cg_razip args {
+	set args [job_init {*}$args]
+	cg_razip_job {*}$args
 	job_wait
 }
