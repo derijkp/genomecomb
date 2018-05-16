@@ -14,8 +14,7 @@ test var {var_gatk basic} {
 chr21	1047
 chr22	156
 
-total	1203
-}
+total	1203}
 
 test var {var_freebayes basic} {
 	test_cleantmp

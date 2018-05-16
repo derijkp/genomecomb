@@ -44,7 +44,7 @@ test homwes {vcf source, sample not given -> multiple samples} {
 	cg homwes --stack 1 -callers {} -dbdir $dbdir $varfile {} $::bigtestdir/tmp/homwes_vcfmulti/homwes-out.tsv
 	file delete $::bigtestdir/tmp/homwes_vcfmulti/annot_compar-yri_exome_test.vcf.gz
 	file delete -force $::bigtestdir/tmp/homwes_vcfmulti/homwes-out.work/annot_compar-yri_exome_test.vcf.tsv.temp.index
-	cg tsvdiff -q 1 -x *.log -x log_jobs $::bigtestdir/tmp/homwes_vcfmulti $::bigtestdir/expected/homwes_vcfmulti
+	cg tsvdiff -q 1 -x *.log -x .pversion -x log_jobs $::bigtestdir/tmp/homwes_vcfmulti $::bigtestdir/expected/homwes_vcfmulti
 } {}
 
 test homwes {field not found error} {
