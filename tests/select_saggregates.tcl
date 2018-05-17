@@ -851,4 +851,30 @@ test select {query between analyses} {
 chr1	4001	1
 chr1	4002	2}
 
+test select {use sample in scount condition} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	zyg-gatk-samplea1	zyg-gatk-samplea2	zyg-sam-samplea2	zyg-gatk-sampleb3
+		chr1	4001	4002	snp	A	G	t	r	t	t
+	}
+	exec cg select -f {chromosome begin {count=scount($zyg-gatk == "t" and $sample matches "samplea*")}} tmp/vars.tsv
+} {chromosome	begin	count
+chr1	4001	1}
+
+test select {trying to use analysis in scount condition error} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	zyg-gatk-samplea1	zyg-gatk-samplea2	zyg-sam-samplea2	zyg-gatk-sampleb3
+		chr1	4001	4002	snp	A	G	t	r	t	t
+	}
+	exec cg select -f {chromosome begin {count=scount($zyg-gatk == "t" and $analysis matches "gatk-samplea*")}} tmp/vars.tsv
+} {error in scount: all samples are missing one or more needed fields (analysis-samplea1,analysis-samplea2,analysis-sampleb3)} error
+
+test select {use sample in slist condition} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	zyg-gatk-samplea1	zyg-gatk-samplea2	zyg-sam-samplea2	zyg-gatk-sampleb3
+		chr1	4001	4002	snp	A	G	t	r	t	t
+	}
+	exec cg select -f {chromosome begin {list=slist($sample matches "samplea*",$zyg-gatk)}} tmp/vars.tsv
+} {chromosome	begin	list
+chr1	4001	t,r}
+
 testsummarize

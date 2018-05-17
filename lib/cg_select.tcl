@@ -98,6 +98,9 @@ proc tsv_select_sampleinfo_wildcard {field header} {
 proc tsv_select_sampleinfo {field header} {
 	global tsv_select_sampleinfofile tsv_select_sampleinfo tsv_select_sampleinfo_longfields
 	if {[string range $field 0 6] eq "sample-"} {
+		return [lindex [split $field -] end]
+	}
+	if {[string range $field 0 6] eq "analysis-"} {
 		return [string range $field 7 end]
 	}
 	if {![info exists tsv_select_sampleinfo]} {
@@ -763,6 +766,8 @@ proc tsv_select_tokenize {header code neededfieldsVar} {
 			if {![inlist $header $f]} {
 				# sample does not have to be in the header for sample aggregates
 				if {$f eq "sample"} continue
+				# analysis does not have to be in the header for analysis aggregates
+				if {$f eq "analysis"} continue
 				# sample aggregates use fields without sample
 				# we put the actual ones needed in neededfields later, so do not do it here
 				if {[lsearch -glob $header $f-*] != -1} continue
@@ -1504,7 +1509,6 @@ proc cg_select {args} {
 # putslog stderr ----------\n$query\n----------
 	set tclcode {}
 	set sampleinfo_long 0
-
 	if {$group ne ""} {
 		append tclcode \n [tsv_select_group $header $query $qposs $qfields $group $groupcols $neededfields $sortfields]
 		#file_write /tmp/temp.tcl $tclcode\n
@@ -1652,9 +1656,9 @@ proc cg_select {args} {
 		#putsvars tclcode
 		lappend pipe [list cg exec $tclcode]
 	}
-putslog -------------pipe-------------------
-putslog pipe:[join $pipe " | "]
-putslog ------------------------------------
+#putslog -------------pipe-------------------
+#putslog pipe:[join $pipe " | "]
+#putslog ------------------------------------
 	if {$qfields ne ""} {
 		set nh [list_sub $qfields -exclude [list_find -glob $qfields -*]]
 	} else {

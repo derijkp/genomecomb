@@ -818,13 +818,44 @@ test select {asum field not present at all} {
 	exec cg select -f {chromosome begin {test=asum($sequenced eq "v",$test)}} tmp/vars.tsv
 } {error in asum: all analyses are missing one or more needed fields (test-gatk-sample1,test-sam-sample1,sequenced-gatk-sample2)} error
 
-test select {calc field in -f used in query acount} {
+test select {use analysis in acount condition} {
 	write_tab tmp/vars.tsv {
-		chromosome begin end type ref alt	zyg-gatk-gatk-sample1 zyg-sam-gatk-sample1	zyg-gatk-sam-sample1 zyg-sam-sam-sample1
-		chr1 4001 4002 snp A G,C	m m t m
+		chromosome begin end type ref alt	zyg-gatk-samplea1	zyg-gatk-samplea2	zyg-sam-samplea2	zyg-gatk-sampleb3
+		chr1	4001	4002	snp	A	G	t	r	t	t
 	}
-	exec cg select -stack 1 -f {chromosome begin {samzyg-gatk-*=$zyg-sam-*}} -q {acount($samzyg eq "m") == 2} tmp/vars.tsv
-} {chromosome	begin	samzyg-gatk-gatk-sample1	samzyg-gatk-sam-sample1
-chr1	4001	m	m}
+	exec cg select -f {chromosome begin {count=acount($zyg == "t" and $analysis matches "gatk-samplea*")}} tmp/vars.tsv
+} {chromosome	begin	count
+chr1	4001	1}
+
+test select {use sample in acount condition} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	zyg-gatk-samplea1	zyg-gatk-samplea2	zyg-sam-samplea2	zyg-gatk-sampleb3
+		chr1	4001	4002	snp	A	G	t	r	t	t
+	}
+	exec cg select -f {chromosome begin {count=acount($zyg == "t" and $sample matches "samplea*")}} tmp/vars.tsv
+} {chromosome	begin	count
+chr1	4001	2}
+
+test select {use analysis in alist condition} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	zyg-gatk-samplea1	zyg-gatk-samplea2	zyg-sam-samplea2	zyg-gatk-sampleb3
+		chr1	4001	4002	snp	A	G	t	r	t	t
+	}
+	exec cg select -f {chromosome begin {list=alist($analysis matches "gatk-samplea*",$zyg)}} tmp/vars.tsv
+} {chromosome	begin	list
+chr1	4001	t,r}
+
+test select {use analysis in acount in query} {
+	write_tab tmp/vars.tsv {
+		chromosome begin end type ref alt	sequenced-gatk-sample1	coverage-gatk-sample1	sequenced-sam-sample1	coverage-sam-sample1 sequenced-gatk-sample2 coverage-gatk-sample2
+		chr1	4001	4002	snp	A	G	v	25	r	25	v	10
+		chr1	4002	4003	snp	A	G	v	10	v	25	v	10
+	}
+	cg select -stack 1 -q {
+	    $type=="snp" and acount($sequenced == "v" 
+	    and $coverage >= 20 and $analysis matches "gatk-*") >= 1
+	} -g all tmp/vars.tsv
+} {all	count
+all	1}
 
 testsummarize

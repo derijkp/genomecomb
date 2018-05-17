@@ -37,6 +37,45 @@ proc tsv_select_replacevars {tokens header sample} {
 	return $result
 }
 
+proc tsv_select_replacevarsa {tokens header analysis} {
+	global newoptransa
+	set result {}
+	foreach line $tokens {
+		foreach {type val} $line break
+		switch -exact $type {
+			@var {
+				if {$val eq "analysis"} {
+					lappend result [list @val \"$analysis\"]
+				} elseif {[lsearch $header $val-$analysis] != -1} {
+					lappend result [list @var $val-$analysis]
+				} elseif {[lsearch $header $val] != -1} {
+					lappend result [list @var $val]
+				} else {
+					lappend result [list @var $val-$analysis]
+				}
+			}
+			@function {
+				set newline [lrange $line 0 1]
+				set arguments [lrange $line 2 end]
+				set ids {}
+				foreach el $arguments {
+					lappend newline [tsv_select_replacevarsa $el $header $analysis]
+				}
+				lappend result $newline
+			}
+			@braces {
+				set newline [lindex $line 0]
+				lappend newline {*}[tsv_select_replacevarsa [lrange $line 1 end] $header $analysis]
+				lappend result $newline
+			}
+			default {
+				lappend result $line
+			}
+		}
+	}
+	return $result
+}
+
 proc tsv_select_saggr_detokenize {tokens header neededfieldsVar missingVar} {
 	upvar $neededfieldsVar neededfields
 	upvar $missingVar missing
@@ -139,7 +178,7 @@ proc tsv_select_acount {arguments header neededfieldsVar} {
 	set missing {}
 	set result {}
 	foreach analysis $analyses {
-		set temp [tsv_select_replacevars $argument $header $analysis]
+		set temp [tsv_select_replacevarsa $argument $header $analysis]
 		set code [tsv_select_saggr_detokenize $temp $header neededfields missing]
 		lappend result \($code\)
 	}
@@ -164,10 +203,10 @@ proc tsv_select_apercent {arguments header neededfieldsVar} {
 		if {$cond1 eq "1"} {
 			set code1 1
 		} else {
-			set tempcond1 [tsv_select_replacevars $cond1 $header $analysis]
+			set tempcond1 [tsv_select_replacevarsa $cond1 $header $analysis]
 			set code1 [tsv_select_saggr_detokenize $tempcond1 $header neededfields missing]
 		}
-		set tempcond2 [tsv_select_replacevars $cond2 $header $analysis]
+		set tempcond2 [tsv_select_replacevarsa $cond2 $header $analysis]
 		set code2 [tsv_select_saggr_detokenize $tempcond2 $header neededfields missing]
 		lappend result \($code1\)
 		lappend result \($code2\)
@@ -195,10 +234,10 @@ proc tsv_select_aaggr {val func1 func2 arguments header neededfieldsVar} {
 	set missing {}
 	foreach analysis $analyses {
 		if {$ifs ne ""} {
-			set tempif [tsv_select_replacevars $ifs $header $analysis]
+			set tempif [tsv_select_replacevarsa $ifs $header $analysis]
 			set code1 [tsv_select_saggr_detokenize $tempif $header neededfields missing]
 		}
-		set tempvalue [tsv_select_replacevars $values $header $analysis]
+		set tempvalue [tsv_select_replacevarsa $values $header $analysis]
 		set code2 [tsv_select_saggr_detokenize $tempvalue $header neededfields missing]
 		if {$ifs ne ""} {
 			lappend result $code1
