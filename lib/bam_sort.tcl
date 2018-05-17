@@ -1,6 +1,6 @@
 proc bam_sort_job {args} {
 	upvar job_logdir job_logdir
-	set method biobambam
+	set method samtools
 	set sort coordinate
 	set inputformat bam
 	cg_options bam_sort args {
@@ -30,7 +30,7 @@ proc bam_sort_job {args} {
 }
 
 proc bam_sort {args} {
-	set method biobambam
+	set method samtools
 	set sort coordinate
 	set inputformat bam
 	cg_options bam_sort args {
