@@ -93,28 +93,7 @@ proc map_ngmlr_job {args} {
 			file rename -force $target.temp $target
 		}
 	}
-	# if {$keepsams} {set deletesams 0} else {set deletesams 1}
-	if {$keepsams} {set rmsamfiles {}} else {set rmsamfiles $samfiles}
-	job ngmlr_sort2bam-$sample -cores $threads -deps $samfiles -rmtargets $rmsamfiles -targets {
-		$result $result.analysisinfo
-	} -vars {
-		resultbase rmsamfiles threads
-	} {*}$skips -code {
-		puts "making $target"
-		analysisinfo_write $dep $target
-		if {[catch {
-			exec samcat {*}$deps | samtools sort -T [scratchfile] -@ $threads -o $target.temp 2>@ stderr
-		}]} {
-			error $msg
-		}
-		file rename -force $target.temp $target
-		foreach dep $rmsamfiles {
-			file delete $dep [gzroot $dep].analysisinfo
-		}
-	}
-	job ngmlr_bamindex-$sample -deps {$result} -targets {$result.bai} -code {
-		exec samtools index $dep
-	}
+	sam_catmerge_job -name ngmlr_sort2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
 }
 
 proc cg_map_ngmlr {args} {

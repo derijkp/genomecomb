@@ -7,7 +7,7 @@ source tools.tcl
 test map_bwa {map_bwa basic} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
-	cg map_bwa -stack 1 -v 2 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]] >@ stdout 2>@ stderr
+	cg map_bwa -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
 	exec samtools view tmp/ali.bam > tmp/ali.sam
 	exec samtools view data/bwa.bam > tmp/expected.sam
@@ -17,7 +17,7 @@ test map_bwa {map_bwa basic} {
 test map_bowtie2 {map_bowtie2 basic} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
-	cg map_bowtie2 -stack 1 -v 2 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]] >@ stdout 2>@ stderr
+	cg map_bowtie2 -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	exec samtools view tmp/ali.bam > tmp/ali.sam
 	exec samtools view data/bowtie2.bam > tmp/expected.sam
 } {}
@@ -25,7 +25,7 @@ test map_bowtie2 {map_bowtie2 basic} {
 #test map_minimap2 {map_minimap2 basic} {
 #	test_cleantmp
 #	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
-#	cg map_minimap2 -stack 1 -v 2 -preset sr tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]] >@ stdout 2>@ stderr
+#	cg map_minimap2 -stack 1 -preset sr tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 #	# chr21:42730799-42762826
 #	exec samtools view tmp/ali.bam > tmp/ali.sam
 #	exec samtools view data/minimap2.bam > tmp/expected.sam
@@ -35,7 +35,7 @@ test map_bowtie2 {map_bowtie2 basic} {
 test map_minimap2 {map_minimap2 paired} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
-	cg map_minimap2 -stack 1 -v 2 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]] >@ stdout 2>@ stderr
+	cg map_minimap2 -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
 	exec samtools view tmp/ali.bam > tmp/ali.sam
 	exec samtools view data/minimap2-p.bam > tmp/expected.sam
@@ -45,7 +45,7 @@ test map_minimap2 {map_minimap2 paired} {
 test map_ngmlr {map_ngmlr basic} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
-	cg map_ngmlr -stack 1 -v 2 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]] >@ stdout 2>@ stderr
+	cg map_ngmlr -stack 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# using samtools merge may result in differently (although still correctly) ordered bam each run
 	# so first check if sorted correctly (only chromosome and start)
 	cg sam2tsv tmp/ali.bam | cg select -f {qname chromosome=$refname begin e=$end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
@@ -62,7 +62,7 @@ test map_ngmlr {map_ngmlr 7 files -m 2} {
 	for {set i 3} {$i < 8} {incr i} {
 		file copy data/seq_R1.fq.gz tmp/seq_R$i.fq.gz
 	}
-	cg map_ngmlr -stack 1 -v 2 -maxopenfiles 2 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]] >@ stdout 2>@ stderr
+	cg map_ngmlr -stack 1 -maxopenfiles 2 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# using samtools merge may result in differently (although still correctly) ordered bam each run
 	# so first check if sorted correctly (only chromosome and start)
 	cg sam2tsv tmp/ali.bam | cg select -f {qname chromosome=$refname begin e=$end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
@@ -80,7 +80,7 @@ test map_ngmlr {map_ngmlr 4 files -m 2} {
 	for {set i 3} {$i < 5} {incr i} {
 		file copy data/seq_R1.fq.gz tmp/seq_R$i.fq.gz
 	}
-	cg map_ngmlr -stack 1 -v 2 -maxopenfiles 2 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]] >@ stdout 2>@ stderr
+	cg map_ngmlr -stack 1 -maxopenfiles 2 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# using samtools merge may result in differently (although still correctly) ordered bam each run
 	# so first check if sorted correctly (only chromosome and start)
 	cg sam2tsv tmp/ali.bam | cg select -f {qname chromosome=$refname begin e=$end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv

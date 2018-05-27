@@ -98,7 +98,7 @@ proc map_minimap2_job {args} {
 			lappend samfiles $target
 			set analysisinfo [gzroot $target].analysisinfo
 			lappend asamfiles $analysisinfo
-			job bwa-$sample-$name -mem 5G -cores $threads -deps {
+			job minimap2-$sample-$name -mem 5G -cores $threads -deps {
 				$minimap2refseq $file1 $file2
 			} -targets {
 				$target $analysisinfo
@@ -118,21 +118,7 @@ proc map_minimap2_job {args} {
 			}
 		}
 	}
-	if {$keepsams} {set rmsamfiles {}} else {set rmsamfiles $samfiles}
-	job minimap2_2bam-$sample -deps $samfiles -rmtargets $rmsamfiles \
-	-targets {$result $result.bai $result.analysisinfo} {*}$skips -vars {resultbase} -code {
-		puts "making $target"
-		analysisinfo_write $dep $target
-		if {[catch {
-			exec samcat {*}$deps | bamsort SO=coordinate tmpfile=[scratchfile] index=1 indexfilename=$target.bai inputformat=sam > $target.temp 2>@ stderr
-		}]} {
-			error $msg
-		}
-		file rename -force $target.temp $target
-		foreach dep $deps {
-			file delete $dep [gzroot $dep].analysisinfo
-		}
-	}
+	sam_catmerge_job -name minimap2_2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
 }
 
 proc cg_map_minimap2 {args} {

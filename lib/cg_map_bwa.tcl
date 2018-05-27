@@ -24,6 +24,7 @@ proc map_bwa_job {args} {
 	set pre {}
 	set skips {}
 	set threads 2
+	set keepsams 0
 	cg_options map_bwa args {
 		-paired - -p {
 			set paired $value
@@ -36,6 +37,9 @@ proc map_bwa_job {args} {
 		}
 		-skips {
 			set skips $value
+		}
+		-keepsams {
+			set keepsams $value
 		}
 		-threads - -t {
 			set threads $value
@@ -105,22 +109,7 @@ proc map_bwa_job {args} {
 			}
 		}
 	}
-	job bwa2bam-$sample -deps $samfiles \
-	-rmtargets [list {*}$samfiles {*}$asamfiles] \
-	-targets {$result $result.bai $result.analysisinfo} {*}$skips -vars {resultbase} \
-	-code {
-		puts "making $target"
-		analysisinfo_write $dep $target
-		if {[catch {
-			exec samcat {*}$deps | bamsort SO=coordinate tmpfile=[scratchfile] index=1 indexfilename=$target.bai inputformat=sam > $target.temp 2>@ stderr
-		}]} {
-			error $msg
-		}
-		file rename -force $target.temp $target
-		foreach dep $deps {
-			file delete $dep [gzroot $dep].analysisinfo
-		}
-	}
+	sam_catmerge_job -name bwa2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
 }
 
 proc cg_map_bwa {args} {

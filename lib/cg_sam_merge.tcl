@@ -5,7 +5,7 @@ proc sam_merge_job {args} {
 	set deletesams 0
 	set optional 0
 	set index 1
-	cg_options makepvt args {
+	cg_options sam_merge args {
 		-index {
 			set index $value
 		}
@@ -27,8 +27,10 @@ proc sam_merge_job {args} {
 		-m - -maxopenfiles {
 			set ::maxopenfiles $value
 		}
-	} {outputfile samfiles}
-	set deletesams 0
+	} {outputfile samfile} 1 ... {
+		merge sam files using samtools merge
+	}
+	set samfiles [list $samfile {*}$args]
 	if {![info exists name]} {
 		set name sam_merge-[file tail $outputfile]
 	}
