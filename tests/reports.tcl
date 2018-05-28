@@ -27,7 +27,7 @@ test reports {process_reports} {
 	file rename -force tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html.temp tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html
 	file_regsub > >\n tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html.temp
 	file rename -force tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html.temp tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html
-	cg tsvdiff -q 1 -x fastqc_report.html tmp/test_reports/NA19240mx2/reports expected/exomes_yri_mx2/samples/NA19240mx2/reports
+	cg tsvdiff -q 1 -x fastqc_report.html -x *.png tmp/test_reports/NA19240mx2/reports expected/exomes_yri_mx2/samples/NA19240mx2/reports
 	catch {checkdiff -y --suppress-common-lines tmp/test_reports/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html expected/exomes_yri_mx2/samples/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html} e
 	if {[llength [split [string trim $e] \n]] > 2} {error "too many differences in fastqc_report.html"}
 	catch {checkdiff -y --suppress-common-lines tmp/test_reports/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html expected/exomes_yri_mx2/samples/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html} e
