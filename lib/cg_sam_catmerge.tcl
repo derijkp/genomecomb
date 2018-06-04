@@ -73,7 +73,7 @@ proc sam_catmerge_job {args} {
 		}
 	}
 	if {$index} {	
-		job $name-index -optional $optional -force $force -deps {$resultfile} -targets {$resultfile.bai} -code {
+		job $name-index {*}$skips -optional $optional -force $force -deps {$resultfile} -targets {$resultfile.bai} -code {
 			exec samtools index $dep
 		}
 		

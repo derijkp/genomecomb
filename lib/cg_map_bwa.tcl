@@ -109,7 +109,7 @@ proc map_bwa_job {args} {
 			}
 		}
 	}
-	sam_catmerge_job -name bwa2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
+	sam_catmerge_job -skips $skips -name bwa2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
 }
 
 proc cg_map_bwa {args} {

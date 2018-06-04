@@ -118,7 +118,7 @@ proc map_minimap2_job {args} {
 			}
 		}
 	}
-	sam_catmerge_job -name minimap2_2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
+	sam_catmerge_job -skips $skips -name minimap2_2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
 }
 
 proc cg_map_minimap2 {args} {

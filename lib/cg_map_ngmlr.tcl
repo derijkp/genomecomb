@@ -93,7 +93,7 @@ proc map_ngmlr_job {args} {
 			file rename -force $target.temp $target
 		}
 	}
-	sam_catmerge_job -name ngmlr_sort2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
+	sam_catmerge_job -skips $skips -name ngmlr_sort2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
 }
 
 proc cg_map_ngmlr {args} {
