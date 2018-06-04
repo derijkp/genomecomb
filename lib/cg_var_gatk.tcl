@@ -178,7 +178,7 @@ proc var_gatk_job {args} {
 	-vars {sample split} \
 	-code {
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp
-		cg select -q {
+		cg select -overwrite 1 -q {
 			$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4
 			&& $zyg ni "r o"
 		} \
@@ -196,7 +196,7 @@ proc var_gatk_job {args} {
 	-skip [list ${pre}var-gatk-$root.tsv ${pre}var-gatk-$root.tsv.analysisinfo] -vars {root pre} \
 	-code {
 		analysisinfo_write $dep $target varcaller_mincoverage 5 varcaller_minquality 30 varcaller_cg_version [version genomecomb]
-		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
+		cg select -overwrite 1 -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
 		-f {
 			chromosome begin end type ref alt quality alleleSeq1 alleleSeq2 
 			{sequenced=if($quality < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
