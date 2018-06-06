@@ -1,6 +1,6 @@
 proc cg_lz4 args {
 	set keep {}
-	set compressionlevel 9
+	set compressionlevel [defcompressionlevel]
 	set blocksize 5
 	set index 0
 	set outputfile {}

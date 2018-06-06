@@ -155,7 +155,7 @@ proc cg_download_ucsc {args} {
 	# move to result
 	putslog "move results to $resultfile and $resultfile.info"
 	if {[file extension $resultfile] eq ".lz4"} {
-		cg lz4 -i 1 $temp/$resulttail
+		cg_lz4 -i 1 $temp/$resulttail
 		file rename -force $temp/$resulttail.lz4 $resultfile
 		file rename -force $temp/$resulttail.lz4.lz4i $resultfile.lz4i
 	} else {

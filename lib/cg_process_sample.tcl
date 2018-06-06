@@ -281,7 +281,7 @@ proc process_sample_cgi_job {workdir split} {
 	# multiarch
 	job reg_cluster-$sample -optional 1 -deps {annotvar-$sample.tsv} -targets {reg_cluster-$sample.tsv.lz4} -code {
 		cg clusterregions < $dep > $target.temp
-		cg lz4 $target.temp
+		cg_lz4 $target.temp
 		file rename -force $target.temp.lz4 $target
 	}
 	job reg_ns-$sample -optional 1 -deps {annotvar-$sample.tsv} -targets {reg_ns-$sample.tsv} -code {

@@ -386,7 +386,7 @@ proc cg_liftover {args} {
 			set tempresult [filetemp_ext $resultfile]
 			cg select -overwrite 1 -f $fields -s $sortfields $tempout $tempresult
 			file rename -force $tempresult $resultfile
-			if {[file extension $resultfile] eq ".lz4"} {cg lz4index $resultfile}
+			if {[file extension $resultfile] eq ".lz4"} {cg_lz4index $resultfile}
 			file delete -force $tempout
 		} else {
 			cg select -f $fields -s $sortfields $tempout >@ stdout
@@ -395,7 +395,7 @@ proc cg_liftover {args} {
 		if {$resultfile ne "-"} {
 			catch {close $o}
 			if {[file extension $resultfile] eq ".lz4"} {
-				cg lz4 -i 1 $tempout
+				cg_lz4 -i 1 $tempout
 				file rename -force $tempout.lz4 $resultfile
 				file rename -force $tempout.lz4.lz4i $resultfile.lz4i
 			} else {
@@ -408,7 +408,7 @@ proc cg_liftover {args} {
 	#
 	if {$tempunmapped ne ""} {
 		if {[file extension $unmappedfile] eq ".lz4"} {
-			cg lz4 -i 1 $tempunmapped
+			cg_lz4 -i 1 $tempunmapped
 			file rename -force $tempunmapped.lz4 $unmappedfile
 			file rename -force $tempunmapped.lz4.lz4i $unmappedfile.lz4i
 		} else {

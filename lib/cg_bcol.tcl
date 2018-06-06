@@ -411,7 +411,7 @@ proc cg_bcol_update {newbcol oldbcol args} {
 			}
 		}
 	}
-	cg lz4 -c 9 $newbinfile
+	cg_lz4 -c 9 $newbinfile
 }
 
 proc cg_bcol_get {args} {

@@ -121,7 +121,7 @@ more information on http://evs.gs.washington.edu/EVS/
 	#
 	putslog "move results to $resultfile"
 	if {[file extension $resultfile] eq ".lz4"} {
-		cg lz4 -i 1 $tempresult.temp2
+		cg_lz4 -i 1 $tempresult.temp2
 		file rename -force $tempresult.temp2.lz4 $resultfile
 		file rename -force $tempresult.temp2.lz4.lz4i $resultfile.lz4i
 	} else {

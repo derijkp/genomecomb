@@ -83,7 +83,7 @@ These gene-phenotype correlations are extracted from the ensembl gene database
 using biomart combined with those found in the clinvar database.
 }]]
 	if {[file extension $resultfile] eq ".lz4"} {
-		cg lz4 -i 1 $tempdir/phenotype.tsv
+		cg_lz4 -i 1 $tempdir/phenotype.tsv
 		file rename -force $tempdir/phenotype.tsv.lz4 $resultfile
 		file rename -force $tempdir/phenotype.tsv.lz4.lz4i $resultfile.lz4i
 	} else {

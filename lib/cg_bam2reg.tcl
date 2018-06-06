@@ -32,13 +32,18 @@ proc bam2reg_job {args} {
 	if {![info exists job_logdir]} {
 		job_logdir $target.log_jobs
 	}
-	job cov$mincoverage-$root -optional 1 -deps {$bamfile} -targets {$target} -vars {mincoverage} \
-	-skip $skip -code {
+	job cov$mincoverage-$root -optional 1 -skip $skip -deps {
+		$bamfile
+	} -targets {
+		$target
+	} -vars {
+		mincoverage
+	} -code {
 		set compress [compresspipe $target]
 		set temptarget [filetemp $target]
 		exec cg regextract -min $mincoverage $dep {*}$compress > $temptarget
 		file rename -force $temptarget $target
-		if {[file extension $target] eq ".lz4"} {cg lz4index $target}
+		if {[file extension $target] eq ".lz4"} {cg_lz4index $target}
 	}
 	return $target
 }

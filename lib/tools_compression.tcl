@@ -1,10 +1,18 @@
+proc defcompressionlevel {args} {
+	if {![llength $args]} {
+		return [get ::defcompressionlevel 9]
+	} else {
+		set ::defcompressionlevel [lindex $args 0]
+	}
+}
+
 proc compress {file {ext .lz4}} {
 	set file [file_absolute $file]
 	if {[file exists $file$ext]} {file delete $file$ext}
 	if {[inlist {.rz} $ext]} {
 		exec razip $file
 	} elseif {[inlist {.lz4} $ext]} {
-		exec lz4c -q -9 -c $file > $file.lz4.temp
+		exec lz4c -q -[defcompressionlevel] -c $file > $file.lz4.temp
 		file rename -force $file.lz4.temp $file.lz4
 	} elseif {[inlist {.gz} $ext]} {
 		exec gzip $file
@@ -176,7 +184,7 @@ proc gzcat {filename} {
 proc compresspipe {target {compression 9}} {
 	switch [file extension $target] {
 		.rz {return "| razip -c"}
-		.lz4 {return "| lz4c -q -B5 -c -$compression"}
+		.lz4 {return "| lz4c -q -[defcompressionlevel] -B5 -c -$compression"}
 		.gz - .bgz {return "| bgzip -c"}
 		.bz2 {return "| bzip2 -c"}
 		default {return {}}
@@ -278,7 +286,11 @@ proc razip_job {file args} {
 proc lz4_job {file args} {
 	upvar job_logdir job_logdir
 	set deps [jobglob $file]
-	job lz4-$file -checkcompressed 0 -deps $deps -targets {$file.lz4} -rmtargets {$file} -vars args -code {
+	set defcompressionlevel [defcompressionlevel]
+	job lz4-$file -checkcompressed 0 -deps $deps -targets {$file.lz4} -rmtargets {$file} -vars {
+		args defcompressionlevel
+	} -code {
+		defcompressionlevel $defcompressionlevel
 		if {![file exists $dep]} {error "error compressing: file $dep does not exist"}
 		cg_lz4 -keep 0 {*}$args $dep
 	}

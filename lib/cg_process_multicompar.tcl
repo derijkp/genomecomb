@@ -212,7 +212,7 @@ proc process_multicompar_job {args} {
 			if {[llength $todo]} {
 				cg svmulticompar $target.temp {*}$todo
 			}
-			cg lz4 $target.temp
+			cg_lz4 $target.temp
 			file rename -force $target.temp.lz4 $target
 		}
 		job cgsv_annotate -optional 1 \
@@ -254,7 +254,7 @@ proc process_multicompar_job {args} {
 			if {[llength $todo]} {
 				cg svmulticompar $target.temp {*}$todo
 			}
-			cg lz4 $target.temp
+			cg_lz4 $target.temp
 			file rename -force $target.temp.lz4 $target
 		}
 		job cgcnv_annotate -optional 1 \
