@@ -1033,6 +1033,25 @@ test gene_annot {no refseq} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {} 
 
+test reg_annot {check for diff size in paste error} {
+	write_tab tmp/vars1.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	4000	4001	snp	G	A
+		chr2	4000	4001	snp	G	A
+	}
+	file mkdir tmp/vars1.tsv.index
+	write_tab tmp/vars1.tsv.index/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		chr1	4000	4001	snp	G	A
+	}
+	write_tab tmp/reg_annot.tsv {
+		chromosome	begin	end	name
+		chr1	4000	4010	A
+		chr2	4000	4010	B
+	}
+	exec cg annotate tmp/vars1.tsv tmp/temp.tsv tmp/reg_annot.tsv
+} {*file */vars.tsv.annot_annot has less lines than other files in paste*} error match
+
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
 

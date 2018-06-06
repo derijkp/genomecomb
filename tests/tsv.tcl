@@ -705,4 +705,36 @@ test tsv_paste {max files > maxopenfiles -o} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test tsv_paste {size mismatch} {
+	test_cleantmp
+	write_tab tmp/vars1.tsv {
+		# varcomment
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A G,C
+		chr1 4002 4003 snp A T
+	}
+	write_tab tmp/sample1.tsv [subst {
+		# comment
+		zyg-sample2	value-sample2
+		m	2
+	}]
+	exec cg paste tmp/vars1.tsv tmp/sample1.tsv > /dev/null
+} {*file tmp/sample1.tsv has less lines than other files in paste*} error match
+
+test tsv_paste {size mismatch} {
+	test_cleantmp
+	write_tab tmp/vars1.tsv {
+		# varcomment
+		chromosome begin end type ref alt
+		chr1 4001 4002 snp A G,C
+	}
+	write_tab tmp/sample1.tsv [subst {
+		# comment
+		zyg-sample2	value-sample2
+		m	2
+		t	x2
+	}]
+	exec cg paste tmp/vars1.tsv tmp/sample1.tsv
+} {*file tmp/sample1.tsv has more lines than other files in paste*} error match
+
 testsummarize

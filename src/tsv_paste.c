@@ -89,10 +89,23 @@ int main(int argc, char *argv[]) {
 	}
 	putc_unlocked('\n',stdout);
 	while(1) {
-		if (!copy_line_check(fa[0],numfieldsa[0])) break;
+		if (!copy_line_check(fa[0],numfieldsa[0])) {
+			register int c;
+			for (i = 1 ; i < numfiles ; i++) {
+				c = gz_get(fa[i]);
+				if (c != EOF) {
+					fprintf(stderr,"\nfile %s has more lines than other files in paste\n",fa[i]->filename);
+					exit(1);
+				}
+			}
+			break;
+		}
 		for (i = 1 ; i < numfiles ; i++) {
 			putc_unlocked('\t',stdout);
-			copy_line_check(fa[i],numfieldsa[i]);
+			if (!copy_line_check(fa[i],numfieldsa[i])) {
+				fprintf(stderr,"\nfile %s has less lines than other files in paste\n",fa[i]->filename);
+				exit(1);
+			}
 		}
 		putc_unlocked('\n',stdout);
 	}
