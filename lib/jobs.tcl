@@ -391,14 +391,14 @@ proc job_finddep {pattern idsVar timeVar timefileVar checkcompressed {regexppatt
 	upvar $idsVar ids
 	upvar $timeVar time
 	upvar $timefileVar timefile
-	if {$pattern eq ""} {return {}}
 	if {$regexppatternVar ne ""} {upvar $regexppatternVar regexppattern}
+	set regexppattern 0
+	if {$pattern eq ""} {return {}}
 	if {[string index $pattern 0] eq "^" && [string index $pattern end] eq "\$"} {
 		set regexppattern 1
 		set pattern [string range $pattern 1 end-1]
 		return [job_findregexpdep $pattern ids time timefile $checkcompressed]
 	}
-	set regexppattern 0
 	set pattern [file_absolute $pattern]
 	set ptargethits [array names cgjob_ptargets $pattern]
 	if {[llength $ptargethits]} {
