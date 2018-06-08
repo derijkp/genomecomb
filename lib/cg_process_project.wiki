@@ -110,9 +110,13 @@ you want to affect the distribution).
 ; -jobsample 0/1: By default (0) the processing of each sample is split in many separate jobs.
 If you have to process many samples with relatively short indivual runtimes, you can set this
 to 1 to run each sample in one job, thus reducing the job managment overhead.
+; -distrreg 0/1: distribute analysis over regions (per chromosome)
 
-This command can be distributed on a cluster or using multiple with
+This command can be distributed on a cluster or using multiple cores with
 [[joboptions|job options]] (more info with cg help joboptions)
+The option -distrreg can be used to allow a greater distribution by
+doing some analyses (variantcalling, annotations) split by region
+(chromosomes) and combinfing the results
 
 == Dependencies ==
 Some of the programs needed in this workflow are not distributed with genomecomb. 

@@ -298,6 +298,36 @@ test process_small {mixed yri mx2} {
 	}
 } {}
 
+test process_small {mixed yri mx2 -distrreg 1} {
+	cd $::bigtestdir
+	set dest tmp/mixed_yri_mx2_distrreg
+	file delete -force tmp/mixed_yri_mx2_distrreg
+	file mkdir tmp/mixed_yri_mx2_distrreg
+	cg project_addsample tmp/mixed_yri_mx2_distrreg cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
+	cg project_addsample tmp/mixed_yri_mx2_distrreg gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
+	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2_distrreg exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
+	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2_distrreg exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
+	cg process_project {*}$::dopts -distrreg 1 -split 1 \
+	  -dbdir /complgen/refseq/hg19 \
+	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
+	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
+	  tmp/mixed_yri_mx2_distrreg 2>@ stderr >@ stdout
+	# check vs expected
+	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
+		checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"
+	}
+	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
+		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
+		-x *.analysisinfo -x *.png \
+		tmp/mixed_yri_mx2_distrreg expected/mixed_yri_mx2_distrreg
+	diffanalysisinfo tmp/mixed_yri_mx2_distrreg/compar/annot_compar-*.tsv.analysisinfo expected/mixed_yri_mx2_distrreg/compar/annot_compar-*.tsv.analysisinfo
+	checkdiff -y --suppress-common-lines tmp/mixed_yri_mx2_distrreg/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/mixed_yri_mx2_distrreg/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2
+	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
+		regsub ^tmp $file1 expected file2
+		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
+	}
+} {}
+
 if 0 {
 
 test process_small {annotate refseqbuild/hg19} {

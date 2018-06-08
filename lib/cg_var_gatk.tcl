@@ -20,14 +20,15 @@ proc annotvar_clusters_job {file resultfile} {
 	upvar job_logdir job_logdir
 	set root [file_rootname $file]
 	set afile [gzroot $resultfile].analysisinfo
-	job annotvar-clusters-$root -deps {$file} \
-	-targets {reg_cluster-$root.tsv.lz4 reg_cluster-$root.tsv.lz4.lz4i} \
-	-skip [list [gzroot $resultfile] $afile] \
-	-code {
+	job annotvar-clusters-$root -skip [list [gzroot $resultfile] $afile] -deps {
+		$file
+	} -targets {
+		reg_cluster-$root.tsv.lz4 reg_cluster-$root.tsv.lz4.lz4i
+	} -code {
 		cg clusterregions < $dep > $target.temp
-		cg lz4 $target.temp
+		cg_lz4 $target.temp
 		file rename -force $target.temp.lz4 $target
-		cg lz4index $target
+		cg_lz4index $target
 	}
 	job annotvar-annotclusters-$root -deps {$file reg_cluster-$root.tsv.lz4} \
 	-targets {$resultfile $afile} \
@@ -64,6 +65,8 @@ proc var_gatk_job {args} {
 	set threads 2
 	set cleanup 1
 	set regmincoverage 3
+	set resultfiles 0
+	set rootname {}
 	cg_options var_gatk args {
 		-L - -deps {
 			lappend deps $value
@@ -86,6 +89,12 @@ proc var_gatk_job {args} {
 		-cleanup {
 			set cleanup $value
 		}
+		-resultfiles {
+			set resultfiles $value
+		}
+		-rootname {
+			set rootname $value
+		}
 		default {
 			lappend opts $key $value
 		}
@@ -93,6 +102,20 @@ proc var_gatk_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	set destdir [file dir $bamfile]
+	set file [file tail $bamfile]
+	if {$rootname eq ""} {
+		set root gatk-[file_rootname $file]
+	} else {
+		set root $rootname
+	}
+	# resultfiles
+	set varfile ${pre}var-$root.tsv
+	set sregfile ${pre}sreg-$root.tsv
+	set varallfile ${pre}varall-$root.tsv
+	set resultlist [list $destdir/$varfile.lz4 $destdir/$sregfile.lz4 $destdir/$varallfile.lz4 $destdir/reg_cluster-$root.tsv.lz4]
+	if {$resultfiles} {
+		return $resultlist
+	}
 	if {$regionfile ne ""} {
 		set regionfile [file_absolute $regionfile]
 	} else {
@@ -111,21 +134,19 @@ proc var_gatk_job {args} {
 	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_gatk_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk gatk3 picard java gnusort8 lz4 os]
-	set file [file tail $bamfile]
-	set root [file_rootname $file]
-	if {$root eq ""} {set root [file root $file]}
 	# start
 	## Produce gatk SNP calls
 	set keeppwd [pwd]
 	cd $destdir
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set deps [list $file $gatkrefseq $file.bai {*}$deps]
-	job ${pre}varall-gatk-$root -mem 5G -cores $threads -deps $deps \
-	-targets {${pre}varall-gatk-$root.vcf ${pre}varall-gatk-$root.vcf.analysisinfo} \
-	-skip [list ${pre}varall-gatk-$root.tsv ${pre}varall-gatk-$root.tsv.analysisinfo] \
+	job ${pre}varall-$root -mem 5G -cores $threads \
+	-deps $deps \
+	-targets {${pre}varall-$root.vcf ${pre}varall-$root.vcf.analysisinfo} \
+	-skip [list $varallfile $varallfile.analysisinfo] \
 	-vars {gatk opts regionfile gatkrefseq refseq threads root} \
 	-code {
-		analysisinfo_write $dep $target sample gatk-$root varcaller gatk varcaller_version [version gatk3] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $dep $target sample $root varcaller gatk varcaller_version [version gatk3] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		if {$regionfile ne ""} {
 			set bedfile [tempbed $regionfile $refseq]
 			lappend opts -L $bedfile
@@ -139,24 +160,24 @@ proc var_gatk_job {args} {
 		catch {file delete $target.temp.idx}
 		# file delete $target.temp
 	}
-	job ${pre}varall-gatk2tsv-$root -deps [list ${pre}varall-gatk-$root.vcf] \
-	-targets {${pre}varall-gatk-$root.tsv.lz4 ${pre}varall-gatk-$root.tsv.analysisinfo} \
+	job ${pre}varall-gatk2tsv-$root -deps [list ${pre}varall-$root.vcf] \
+	-targets {$varallfile.lz4 $varallfile.analysisinfo} \
 	-vars {sample split} \
 	-code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
-	# lz4_job ${pre}varall-gatk-$root.tsv -i 1
-	lz4index_job ${pre}varall-gatk-$root.tsv.lz4
+	# lz4_job $varallfile -i 1
+	lz4index_job $varallfile.lz4
 	# predict deletions separately, because gatk will not predict snps in a region where a deletion
 	# was predicted in the varall
 	# not using threads, as these cause (sporadic) errors (https://gatkforums.broadinstitute.org/gatk/discussion/3141/unifiedgenotyper-error-somehow-the-requested-coordinate-is-not-covered-by-the-read)
-	job ${pre}delvar-gatk-$root \
+	job ${pre}delvar-$root \
 	-deps $deps \
-	-targets {${pre}delvar-gatk-$root.vcf} \
-	-skip [list ${pre}delvar-gatk-$root.tsv ${pre}delvar-gatk-$root.tsv.analysisinfo] \
-	-skip [list ${pre}var-gatk-$root.tsv ${pre}var-gatk-$root.tsv.analysisinfo] \
+	-targets {${pre}delvar-$root.vcf} \
+	-skip [list ${pre}delvar-$root.tsv ${pre}delvar-$root.tsv.analysisinfo] \
+	-skip [list $varfile $varfile.analysisinfo] \
 	-vars {gatk opts regionfile gatkrefseq refseq} \
 	-code {
 		if {$regionfile ne ""} {
@@ -172,9 +193,9 @@ proc var_gatk_job {args} {
 		catch {file delete $target.temp.idx}
 		# file delete $target.temp
 	}
-	job ${pre}delvar-gatk2tsv-$root -deps [list ${pre}delvar-gatk-$root.vcf] \
-	-targets {${pre}delvar-gatk-$root.tsv} \
-	-skip [list ${pre}var-gatk-$root.tsv ${pre}var-gatk-$root.tsv.analysisinfo] \
+	job ${pre}delvar-gatk2tsv-$root -deps [list ${pre}delvar-$root.vcf] \
+	-targets {${pre}delvar-$root.tsv} \
+	-skip [list $varfile $varfile.analysisinfo] \
 	-vars {sample split} \
 	-code {
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp
@@ -191,9 +212,9 @@ proc var_gatk_job {args} {
 		file rename -force $target.temp2 $target
 		file delete $target.temp
 	}
-	job ${pre}uvar-gatk-$root -deps {${pre}varall-gatk-$root.tsv ${pre}delvar-gatk-$root.tsv} \
-	-targets {${pre}uvar-gatk-$root.tsv ${pre}uvar-gatk-$root.tsv.analysisinfo} \
-	-skip [list ${pre}var-gatk-$root.tsv ${pre}var-gatk-$root.tsv.analysisinfo] -vars {root pre} \
+	job ${pre}uvar-$root -deps {$varallfile ${pre}delvar-$root.tsv} \
+	-targets {${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo} \
+	-skip [list $varfile $varfile.analysisinfo] -vars {root pre} \
 	-code {
 		analysisinfo_write $dep $target varcaller_mincoverage 5 varcaller_minquality 30 varcaller_cg_version [version genomecomb]
 		cg select -overwrite 1 -q {$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4} \
@@ -203,31 +224,32 @@ proc var_gatk_job {args} {
 			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 			*
 		} $dep $target.temp
-		cg cat $target.temp $dep2 > $target.temp2
-		cg select -s - $target.temp2 $target.temp3
+		cg cat -c f $target.temp $dep2 > $target.temp2
+		cg select -overwrite 1 -s - $target.temp2 $target.temp3
 		file rename -force $target.temp3 $target
 		file delete $target.temp
 		file delete $target.temp2
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job ${pre}uvar-gatk-$root.tsv ${pre}var-gatk-$root.tsv.lz4
+	annotvar_clusters_job ${pre}uvar-$root.tsv $varfile.lz4
 	# make sreg
-	sreg_gatk_job ${pre}sreg-gatk-$root ${pre}varall-gatk-$root.tsv ${pre}sreg-gatk-$root.tsv.lz4
+	sreg_gatk_job ${pre}sreg-$root $varallfile $sregfile.lz4
 	## filter SNPs (according to seqanswers exome guide)
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-gatk-$root.tsv ${pre}uvar-gatk-$root.tsv.index ${pre}uvar-gatk-$root.tsv.analysisinfo \
-			${pre}varall-gatk-$root.vcf ${pre}varall-gatk-$root.vcf.analysisinfo \
-			${pre}delvar-gatk-$root.vcf ${pre}delvar-gatk-$root.vcf.analysisinfo \
-			${pre}delvar-gatk-$root.tsv ${pre}delvar-gatk-$root.tsv.analysisinfo \
+			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index ${pre}uvar-$root.tsv.analysisinfo \
+			${pre}varall-$root.vcf ${pre}varall-$root.vcf.analysisinfo \
+			${pre}delvar-$root.vcf ${pre}delvar-$root.vcf.analysisinfo \
+			${pre}delvar-$root.tsv ${pre}delvar-$root.tsv.analysisinfo \
 		]
-		set cleanupdeps [list ${pre}var-gatk-$root.tsv ${pre}varall-gatk-$root.tsv]
-		cleanup_job clean_${pre}var-gatk-$root $cleanupfiles $cleanupdeps
+		set cleanupdeps [list $varfile $varallfile]
+		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
 	}
 	cd $keeppwd
-	return [file join $destdir ${pre}var-gatk-$root.tsv]
+	return $resultlist
+	# return [file join $destdir $varfile]
 }
 
 proc cg_var_gatk {args} {

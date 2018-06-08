@@ -19,7 +19,7 @@ proc process_project_job {args} {
 	set amplicons {}
 	set extra_reports_mastr 0
 	set jobsample 0
-	set distrchr 0
+	set distrreg 0
 	set threads 2
 	cg_options process_project args {
 		-ori {
@@ -99,8 +99,8 @@ proc process_project_job {args} {
 		-threads {
 			set threads $value
 		}
-		-distrchr {
-			set distrchr $value
+		-distrreg {
+			set distrreg $value
 		}
 		-conv_nextseq {
 			set conv_nextseq $value
@@ -190,7 +190,7 @@ proc process_project_job {args} {
 				-dbdir $dbdir -split $split -paired $paired \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
-				-threads $threads -distrchr $distrchr \
+				-threads $threads -distrreg $distrreg \
 				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads \
 				$dir
 		} else {
@@ -229,7 +229,7 @@ proc process_project_job {args} {
 	set reportstodo [list_remdup $reportstodo]
 	process_multicompar_job -experiment $experiment \
 		-skipincomplete 1 -targetvarsfile $targetvarsfile \
-		-threads $threads -distrchr $distrchr \
+		-threads $threads -distrreg $distrreg \
 		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir $todo
 	if {[llength $reports]} {
 		proces_reportscombine_job $destdir/reports {*}$reportstodo

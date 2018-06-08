@@ -203,7 +203,7 @@ proc cg_annotate_job {args} {
 	set multidb 0
 	set upstreamsize 2000
 	set analysisinfo 1
-	set distrchr 0
+	set distrreg 0
 	cg_options annotate args {
 		-near {
 			set near $value
@@ -227,8 +227,8 @@ proc cg_annotate_job {args} {
 		-analysisinfo {
 			set analysisinfo $value
 		}
-		-distrchr {
-			set distrchr $value
+		-distrreg {
+			set distrreg $value
 		}
 	} {orifile resultfile} 3
 	set dbdir [file_absolute $dbdir]
@@ -409,7 +409,7 @@ proc cg_annotate_job {args} {
 			if {![file exists $genomefile]} {
 				error "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
 			}
-			if {!$distrchr} {
+			if {!$distrreg} {
 				# putsvars usefile resultname
 				job annot-$resultname-[file tail $dbfile] -deps {$usefile $genomefile $dbfile} -targets {$target} -vars {genomefile dbfile name dbinfo upstreamsize} -code {
 					set genecol [dict_get_default $dbinfo genecol {}]

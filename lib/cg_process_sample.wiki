@@ -36,9 +36,6 @@ can be a softlink), or a fastq dir with fastq files.
 ; sampledir: name of the sample directory to be created (or completed if it already exists)
 
 == Options ==
-This command can be distributed on a cluster or using multiple cores with
-[[joboptions|job options]] (more info with cg help joboptions)
-
 As different types of original data are processed differently, not all
 options are allways applicable. Options that are not applicable to the
 given type of data are ignored.
@@ -72,6 +69,13 @@ analysis (see further) using the amplicons defained in **ampliconfile**
 want some made, give these as a space separated list. Possible reports are:
 flagstat_reads flagstat_alignments fastqc histodepth vars hsmetrics covered
 ; -samBQ number: only for samtools; minimum base quality for a base to be considered (samtools --min-BQ option)
+; -distrreg 0/1: distribute analysis over regions (per chromosome)
+
+This command can be distributed on a cluster or using multiple cores with
+[[joboptions|job options]] (more info with cg help joboptions)
+The option -distrreg can be used to allow a greater distribution by
+doing some analyses (variantcalling, annotations) split by region
+(chromosomes) and combinfing the results
 
 == Sample types ==
 Several types of sample data are supported:

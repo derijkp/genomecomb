@@ -27,9 +27,10 @@ proc var_gatkh_job {args} {
 	set cleanup 1
 	set regmincoverage 3
 	set ERC BP_RESOLUTION
-	set distrchr 0
 	set mincoverage 8
 	set mingenoqual 25
+	set resultfiles 0
+	set rootname {}
 	cg_options var_gatkh args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -57,14 +58,17 @@ proc var_gatkh_job {args} {
 			if {$value ni {BP_RESOLUTION GVCF NONE}} {error "option $value not supported for -ERC, must be one of: BP_RESOLUTION, GVCF, NONE"}
 			set ERC $value
 		}
-		-distrchr {
-			set distrchr $value
-		}
 		-mincoverage {
 			set mincoverage $value
 		}
 		-mingenoqual {
 			set mingenoqual $value
+		}
+		-resultfiles {
+			set resultfiles $value
+		}
+		-rootname {
+			set rootname $value
 		}
 		default {
 			lappend opts $key $value
@@ -73,6 +77,20 @@ proc var_gatkh_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	set destdir [file dir $bamfile]
+	set file [file tail $bamfile]
+	if {$rootname eq ""} {
+		set root gatkh-[file_rootname $file]
+	} else {
+		set root $rootname
+	}
+	# resultfiles
+	set varfile ${pre}var-$root.tsv
+	set sregfile ${pre}sreg-$root.tsv
+	set varallfile ${pre}varall-$root.gvcf
+	set resultlist [list $destdir/$varfile.lz4 $destdir/$sregfile.lz4 $destdir/$varallfile.gz $destdir/reg_cluster-$root.tsv.lz4]
+	if {$resultfiles} {
+		return $resultlist
+	}
 	if {$regionfile ne ""} {
 		set regionfile [file_absolute $regionfile]
 	} else {
@@ -91,182 +109,80 @@ proc var_gatkh_job {args} {
 	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_gatkh_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
-	set file [file tail $bamfile]
-	set root [file_rootname $file]
-	if {$root eq ""} {set root [file root $file]}
 	# start
 	## Produce gatkh SNP calls
 	set keeppwd [pwd]
 	cd $destdir
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set dep $file
-	set resultgvcf ${pre}varall-gatkh-$root.gvcf.gz
-	set resultname ${pre}varall-gatkh-$root.gvcf
+	set resultgvcf $varallfile.gz
+	set resultname $varallfile
 	set deps [list $file $gatkrefseq $file.bai {*}$deps]
-	if {!$distrchr} {
-		job $resultname -mem 5G -cores $threads -deps $deps -targets {
-			$resultgvcf $resultgvcf.tbi ${pre}varall-gatkh-$root.gvcf.analysisinfo
-		} -vars {
-			opts regionfile gatkrefseq refseq threads root ERC resultgvcf
-		} -code {
-			analysisinfo_write $dep $resultgvcf sample gatkh-$root varcaller gatkh varcaller_version [version gatk] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
-			if {$regionfile ne ""} {
-				set bedfile [tempbed $regionfile $refseq]
-				lappend opts -L $bedfile
-			}
-			gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} HaplotypeCaller \
-				{*}$opts -R $gatkrefseq \
-				-I $dep \
-				-O $resultgvcf.temp.gz \
-				--annotate-with-num-discovered-alleles \
-				-ERC $ERC \
-				-G StandardAnnotation \
-				-G StandardHCAnnotation \
-				-G AS_StandardAnnotation \
-				2>@ stderr >@ stdout
-			file rename -force $resultgvcf.temp.gz $resultgvcf
-			file rename -force $resultgvcf.temp.gz.tbi $resultgvcf.tbi
-			# file delete $resultgvcf.temp
+	job $resultname -mem 5G -cores $threads -deps $deps -targets {
+		$resultgvcf $resultgvcf.tbi $varallfile.analysisinfo
+	} -vars {
+		opts regionfile gatkrefseq refseq threads root ERC resultgvcf
+	} -code {
+		analysisinfo_write $dep $resultgvcf sample $root varcaller gatkh varcaller_version [version gatk] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		if {$regionfile ne ""} {
+			set bedfile [tempbed $regionfile $refseq]
+			lappend opts -L $bedfile
 		}
-	} else {
-		set indexdir ${pre}varall-gatkh-$root.gvcf.index
-		file mkdir $indexdir
-		set chromosomes [exec cut -f 1 $refseq.fai]
-		set basename [gzroot $resultgvcf]
-		set regfiles {}
-		foreach chromosome $chromosomes {
-			lappend regfiles $indexdir/$basename-$chromosome.bed
-		}
-		job $resultname-distrchr-beds -deps {
-			$regionfile
-		} -skip {
-			$resultgvcf
-		} -targets $regfiles -vars {
-			regionfile chromosomes appdir basename indexdir
-		} -code {
-			cg select -f {chromosome begin end} $regionfile | $appdir/bin/distr2chr $indexdir/$basename-
-			foreach chromosome $chromosomes {
-				if {[file exists $indexdir/$basename-$chromosome]} {
-					file rename -force $indexdir/$basename-$chromosome $indexdir/$basename-$chromosome.bed
-				} else {
-					file_write $indexdir/$basename-$chromosome.bed {}
-				}
-			}
-			file delete $indexdir/$basename-chromosome
-		}
-		set todo {}
-		foreach chromosome $chromosomes {
-			lappend todo $indexdir/$basename.$chromosome.gvcf
-			job $resultname-$chromosome -mem 4G \
-			-deps [list {*}$deps $indexdir/$basename-$chromosome.bed] \
-			-targets {
-				$indexdir/$basename.$chromosome.gvcf
-			} -skip {
-				$resultgvcf
-			} -vars {
-				opts regionfile gatkrefseq refseq threads basename ERC chromosome indexdir
-			} -code {
-				set bedfile $indexdir/$basename-$chromosome.bed
-				if {![file size $bedfile]} {
-					file_write $indexdir/$basename.$chromosome.gvcf {}
-					return
-				}
-				gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} HaplotypeCaller \
-					{*}$opts -R $gatkrefseq \
-					-I $dep \
-					-O $indexdir/$basename.$chromosome.gvcf.temp \
-					-L $bedfile \
-					--annotate-with-num-discovered-alleles \
-					-ERC $ERC \
-					-G StandardAnnotation \
-					-G StandardHCAnnotation \
-					-G AS_StandardAnnotation \
-					2>@ stderr >@ stdout
-				file rename -force $indexdir/$basename.$chromosome.gvcf.temp $indexdir/$basename.$chromosome.gvcf
-				file delete $indexdir/$basename.$chromosome.gvcf.temp.idx
-			}
-		}
-		job $resultname-cat -deps $todo -targets {
-			$resultgvcf
-		} -vars {
-			todo regfiles basename regionfile indexdir resultgvcf
-		} -rmtargets [list {*}$todo $regfiles] -code {
-			analysisinfo_write $dep $resultgvcf sample gatkh-$basename varcaller gatkh varcaller_version [version gatk] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
-			set temp [filetemp $resultgvcf].gz
-			file delete [file root $temp]
-			set o [open "| bgzip > $temp" w]
-			set header 1
-			foreach file $todo {
-				if {![file size $file]} continue
-				set f [open $file]
-				if {$header} {
-					fcopy $f $o
-					set header 0
-				} else {
-					while {[gets $f line] != -1} {
-						if {[string index $line 0] eq {#}} continue
-						puts $o $line
-						break
-					}
-					fcopy $f $o
-				}
-				close $f
-			}
-			close $o
-			file rename $temp $resultgvcf
-			file delete {*}$todo
-			file delete {*}$regfiles
-			if {![llength [glob -nocomplain $indexdir/*]]} {catch {file delete $indexdir}}
-		}
-		job index-$resultname -deps {$resultgvcf} -targets {$resultgvcf.tbi} -vars {
-			todo regfiles basename regionfile indexdir resultgvcf
-		} -code {
-			gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} IndexFeatureFile \
-				-F $resultgvcf \
-				2>@ stderr >@ stdout
-		}
+		gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} HaplotypeCaller \
+			{*}$opts -R $gatkrefseq \
+			-I $dep \
+			-O $resultgvcf.temp.gz \
+			--annotate-with-num-discovered-alleles \
+			-ERC $ERC \
+			-G StandardAnnotation \
+			-G StandardHCAnnotation \
+			-G AS_StandardAnnotation \
+			2>@ stderr >@ stdout
+		file rename -force $resultgvcf.temp.gz $resultgvcf
+		file rename -force $resultgvcf.temp.gz.tbi $resultgvcf.tbi
+		# file delete $resultgvcf.temp
 	}
 	job ${pre}gvcf2tsv-$root -deps {
 		$resultgvcf $gatkrefseq
 	} -targets {
-		${pre}uvar-gatkh-$root.tsv ${pre}uvar-gatkh-$root.tsv.analysisinfo
+		${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo
 	} -vars {
 		sample split pre root gatkrefseq resultgvcf mincoverage mingenoqual
 	} -skip {
-		${pre}var-gatkh-$root.tsv.lz4 ${pre}var-gatkh-$root.tsv.analysisinfo
+		$varfile.lz4 $varfile.analysisinfo
 	} -code {
 		analysisinfo_write $dep $target varcaller_mincoverage $mincoverage varcaller_mingenoqual $mingenoqual varcaller_cg_version [version genomecomb]
 		gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} GenotypeGVCFs \
 			-R $gatkrefseq \
 			-V $resultgvcf \
-			-O ${pre}uvar-gatkh-$root.temp.vcf \
+			-O ${pre}uvar-$root.temp.vcf \
 			-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
-		catch {file delete ${pre}uvar-gatkh-$root.temp.vcf.idx}
-		file rename -force ${pre}uvar-gatkh-$root.temp.vcf ${pre}uvar-gatkh-$root.vcf
+		catch {file delete ${pre}uvar-$root.temp.vcf.idx}
+		file rename -force ${pre}uvar-$root.temp.vcf ${pre}uvar-$root.vcf
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
 		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
 		lappend fields [subst {zyg=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u",\$zyg)}]
 		lappend fields *
 		exec cg vcf2tsv -split $split -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
-		} ${pre}uvar-gatkh-$root.vcf | cg select -f $fields > ${pre}uvar-gatkh-$root.tsv.temp
-		file rename -force ${pre}uvar-gatkh-$root.tsv.temp ${pre}uvar-gatkh-$root.tsv
+		} ${pre}uvar-$root.vcf | cg select -f $fields > ${pre}uvar-$root.tsv.temp
+		file rename -force ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job ${pre}uvar-gatkh-$root.tsv ${pre}var-gatkh-$root.tsv.lz4
+	annotvar_clusters_job ${pre}uvar-$root.tsv $varfile.lz4
 	# make sreg
-	sreg_gatkh_job ${pre}sreg-gatkh-$root ${pre}varall-gatkh-$root.gvcf ${pre}sreg-gatkh-$root.tsv.lz4 $mincoverage $mingenoqual
+	sreg_gatkh_job ${pre}sreg-$root $varallfile $sregfile.lz4 $mincoverage $mingenoqual
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}var-gatkh-$root.vcf \
-			${pre}uvar-gatkh-$root.tsv ${pre}uvar-gatkh-$root.tsv.index
+			${pre}var-$root.vcf \
+			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index
 		]
-		set cleanupdeps [list ${pre}var-gatkh-$root.tsv $resultgvcf]
-		cleanup_job clean_${pre}var-gatkh-$root $cleanupfiles $cleanupdeps
+		set cleanupdeps [list $varfile $resultgvcf]
+		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
 	}
 	cd $keeppwd
-	return [file join $destdir ${pre}var-gatkh-$root.tsv]
+	return $resultlist
 }
 
 proc cg_var_gatkh {args} {

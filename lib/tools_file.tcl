@@ -320,7 +320,7 @@ proc file2refname {file} {
 }
 
 proc file_rootname {file} {
-	set base [file root [file tail $file]]
+	set base [file root [gzroot [file tail $file]]]
 	set root [join [lrange [split $base -] 1 end] -]
 	if {$root ne ""} {return $root}
 	return $base

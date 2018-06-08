@@ -373,9 +373,9 @@ test gene_annot {gene} {
 	set result
 } {}
 
-test gene_annot {gene -distrchr 1} {
+test gene_annot {gene -distrreg 1} {
 	cg select -s - data/vars_annottest.sft tmp/vars_annottest.sft
-	exec cg annotate -distrchr 1 -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv
+	exec cg annotate -distrreg 1 -dbdir $::refseqdir/hg18 tmp/vars_annottest.sft tmp/temp.sft data/gene_test.tsv
 	catch {exec diff tmp/temp.sft data/expected-annotate-vars_annottest-gene_test.tsv} result
 	set result
 } {}

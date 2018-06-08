@@ -25,6 +25,8 @@ proc var_freebayes_job {args} {
 	set threads 2
 	set cleanup 1
 	set regmincoverage 3
+	set rootname {}
+	set resultfiles 0
 	cg_options var_freebayes args {
 		-L - -deps {
 			lappend deps $value
@@ -48,6 +50,12 @@ proc var_freebayes_job {args} {
 		-cleanup {
 			set cleanup $value
 		}
+		-resultfiles {
+			set resultfiles $value
+		}
+		-rootname {
+			set rootname $value
+		}
 		default {
 			lappend opts $key $value
 		}
@@ -57,6 +65,20 @@ proc var_freebayes_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	set destdir [file dir $bamfile]
+	set file [file tail $bamfile]
+	if {$rootname eq ""} {
+		set root freebayes-[file_rootname $bamfile]
+	} else {
+		set root $rootname
+	}
+	# resultfiles
+	set varfile ${pre}var-$root.tsv
+	set sregfile ${pre}sreg-$root.tsv
+	set varallfile ${pre}varall-$root.tsv
+	set resultlist [list $destdir/$varfile.lz4 $destdir/$sregfile.lz4 $destdir/$varallfile.lz4 $destdir/reg_cluster-$root.tsv.lz4]
+	if {$resultfiles} {
+		return $resultlist
+	}
 	if {$regionfile ne ""} {
 		set regionfile [file_absolute $regionfile]
 	} else {
@@ -74,23 +96,28 @@ proc var_freebayes_job {args} {
 	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_freebayes_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa samtools freebayes picard java gnusort8 lz4 os]
-	set file [file tail $bamfile]
-	set root [file_rootname $file]
-	if {$root eq ""} {set root [file root $file]}
 	# start
 	## Produce freebayes SNP calls
 	set keeppwd [pwd]
 	cd $destdir
 	set deps [list $file $refseq $file.bai {*}$deps]
-	job ${pre}varall-freebayes-$root -mem 5G -cores $threads -deps $deps -targets {
-		${pre}varall-freebayes-$root.vcf
-		${pre}varall-freebayes-$root.vcf.analysisinfo
-	} -skip [list ${pre}varall-freebayes-$root.tsv ${pre}varall-freebayes-$root.tsv.analysisinfo] -vars {
+	job ${pre}varall-$root -mem 5G -cores $threads -deps $deps -targets {
+		${pre}varall-$root.vcf
+		${pre}varall-$root.vcf.analysisinfo
+	} -skip [list $varallfile $varallfile.analysisinfo] -vars {
 		opts regionfile refseq threads root
 	} -code {
-		analysisinfo_write $dep $target sample freebayes-$root varcaller freebayes varcaller_version [version freebayes] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $dep $target sample $root varcaller freebayes varcaller_version [version freebayes] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		if {$regionfile ne ""} {
-			set bedfile [tempbed $regionfile $refseq]
+			set regionfilesize [file size $regionfile]
+			if {$regionfilesize != 0} {
+				set bedfile [tempbed $regionfile $refseq]
+			} else {
+				set bedfile [tempfile].bed
+				set temp [exec samtools view -H $dep]
+				regexp "\tSN:(\[^ \t\]+)\t" $temp temp chr
+				file_write $bedfile $chr\t0\t1\n
+			}
 			lappend opts -t $bedfile
 		}
 		exec freebayes {*}$opts \
@@ -99,25 +126,25 @@ proc var_freebayes_job {args} {
 		file rename -force $target.temp $target
 	}
 	job ${pre}varall-freebayes2tsv-$root -deps {
-		${pre}varall-freebayes-$root.vcf
+		${pre}varall-$root.vcf
 	} -targets {
-		${pre}varall-freebayes-$root.tsv.lz4
-		${pre}varall-freebayes-$root.tsv.analysisinfo
+		$varallfile.lz4
+		$varallfile.analysisinfo
 	} -vars {sample split} \
 	-code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
-	# lz4_job ${pre}varall-freebayes-$root.tsv -i 1
-	lz4index_job ${pre}varall-freebayes-$root.tsv.lz4
+	# lz4_job $varallfile -i 1
+	lz4index_job $varallfile.lz4
 
-	job ${pre}uvar-freebayes-$root -deps {
-		${pre}varall-freebayes-$root.tsv
+	job ${pre}uvar-$root -deps {
+		$varallfile
 	} -targets {
-		${pre}uvar-freebayes-$root.tsv
-		${pre}uvar-freebayes-$root.tsv.analysisinfo
-	} -skip [list ${pre}var-freebayes-$root.tsv ${pre}var-freebayes-$root.tsv.analysisinfo] -vars {
+		${pre}uvar-$root.tsv
+		${pre}uvar-$root.tsv.analysisinfo
+	} -skip [list $varfile $varfile.analysisinfo] -vars {
 		root pre
 	} -code {
 		analysisinfo_write $dep $target varcaller_mincoverage 5 varcaller_minquality 30 varcaller_cg_version [version genomecomb]
@@ -133,19 +160,19 @@ proc var_freebayes_job {args} {
 		file delete $target.temp
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job ${pre}uvar-freebayes-$root.tsv ${pre}var-freebayes-$root.tsv.lz4
+	annotvar_clusters_job ${pre}uvar-$root.tsv $varfile.lz4
 	# make sreg
-	sreg_freebayes_job ${pre}sreg-freebayes-$root ${pre}varall-freebayes-$root.tsv ${pre}sreg-freebayes-$root.tsv.lz4
+	sreg_freebayes_job ${pre}sreg-$root $varallfile $sregfile.lz4
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-freebayes-$root.tsv ${pre}uvar-freebayes-$root.tsv.index ${pre}uvar-freebayes-$root.tsv.analysisinfo \
-			${pre}varall-freebayes-$root.vcf ${pre}varall-freebayes-$root.vcf.analysisinfo \
+			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index ${pre}uvar-$root.tsv.analysisinfo \
+			${pre}varall-$root.vcf ${pre}varall-$root.vcf.analysisinfo \
 		]
-		set cleanupdeps [list ${pre}var-freebayes-$root.tsv ${pre}varall-freebayes-$root.tsv]
-		cleanup_job clean_${pre}var-freebayes-$root $cleanupfiles $cleanupdeps
+		set cleanupdeps [list $varfile $varallfile]
+		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
 	}
 	cd $keeppwd
-	return [file join $destdir ${pre}var-freebayes-$root.tsv]
+	return $resultlist
 }
 
 proc cg_var_freebayes {args} {

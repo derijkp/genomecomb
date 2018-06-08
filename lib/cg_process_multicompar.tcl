@@ -10,7 +10,7 @@ proc process_multicompar_job {args} {
 	set targetvarsfile {}
 	set addtargets 0
 	set threads 1
-	set distrchr 0
+	set distrreg 0
 	cg_options process_multicompar args {
 		-dbdir {
 			set dbdir $value
@@ -51,8 +51,8 @@ proc process_multicompar_job {args} {
 			set threads $value
 			# not used yet
 		}
-		-distrchr {
-			set distrchr $value
+		-distrreg {
+			set distrreg $value
 		}
 		-c - -cleanup {
 			set cleanup $value
@@ -158,7 +158,7 @@ proc process_multicompar_job {args} {
 	# annotate multicompar
 	# --------------------
 	putslog "Starting annotation"
-	cg_annotate_job -distrchr $distrchr $compar_file compar/annot_compar-$experiment.tsv.lz4 $dbdir {*}$dbfiles
+	cg_annotate_job -distrreg $distrreg $compar_file compar/annot_compar-$experiment.tsv.lz4 $dbdir {*}$dbfiles
 	job indexannotcompar-$experiment \
 	-deps {compar/annot_compar-$experiment.tsv} \
 	-targets {compar/annot_compar-$experiment.tsv.index/info.tsv} -vars dbdir -code {

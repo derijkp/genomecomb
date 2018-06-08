@@ -26,6 +26,8 @@ proc var_sam_job {args} {
 	set cleanup 1
 	set regmincoverage 3
 	set threads 2
+	set resultfiles 0
+	set rootname {}
 	cg_options var_sam args {
 		-l - deps {
 			lappend deps $value
@@ -53,6 +55,12 @@ proc var_sam_job {args} {
 		-cleanup {
 			set cleanup $value
 		}
+		-resultfiles {
+			set resultfiles $value
+		}
+		-rootname {
+			set rootname $value
+		}
 		default {
 			lappend opts $key $value
 		}
@@ -60,6 +68,19 @@ proc var_sam_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	set destdir [file dir $bamfile]
+	if {$rootname eq ""} {
+		set root sam-[file_rootname $bamfile]
+	} else {
+		set root $rootname
+	}
+	# resultfiles
+	set varfile ${pre}var-$root.tsv
+	set sregfile ${pre}sreg-$root.tsv
+	set varallfile ${pre}varall-$root.tsv
+	set resultlist [list $destdir/$varfile.lz4 $destdir/$sregfile.lz4 $destdir/$varallfile.lz4 $destdir/reg_cluster-$root.tsv.lz4]
+	if {$resultfiles} {
+		return $resultlist
+	}
 	if {$regionfile ne ""} {
 		set regionfile [file_absolute $regionfile]
 	} else {
@@ -78,8 +99,6 @@ proc var_sam_job {args} {
 	job_logfile $destdir/var_sam_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools picard java gnusort8 lz4 os]
 	set file [file tail $bamfile]
-	set root [file_rootname $file]
-	if {$root eq ""} {set root [file root $file]}
 	# start
 	set keeppwd [pwd]
 	cd $destdir
@@ -88,12 +107,12 @@ proc var_sam_job {args} {
 		exec samtools faidx $dep
 	}
 	set deps [list $file $refseq $refseq.fai {*}$deps]
-	job ${pre}varall-sam-$root -deps $deps \
-	  -targets {${pre}varall-sam-$root.vcf ${pre}varall-sam-$root.vcf.analysisinfo} \
-	  -skip [list ${pre}varall-sam-$root.tsv ${pre}varall-sam-$root.tsv.analysisinfo] \
+	job ${pre}varall-$root -deps $deps \
+	  -targets {${pre}varall-$root.vcf ${pre}varall-$root.vcf.analysisinfo} \
+	  -skip [list ${pre}varall-$root.tsv ${pre}varall-$root.tsv.analysisinfo] \
 	  -vars {refseq opts BQ regionfile root} \
 	  -code {
-		analysisinfo_write $dep $target sample sam-$root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		if {$regionfile ne ""} {
 			set bedfile [tempbed $regionfile $refseq]
 			lappend opts -l $bedfile
@@ -108,17 +127,17 @@ proc var_sam_job {args} {
 		}
 		file rename -force $target.temp $target
 	}
-	job ${pre}varall-sam2tsv-$root -deps {${pre}varall-sam-$root.vcf} \
-	-targets {${pre}varall-sam-$root.tsv.lz4 ${pre}varall-sam-$root.tsv.analysisinfo} -vars split -code {
+	job ${pre}varall-sam2tsv-$root -deps {${pre}varall-$root.vcf} \
+	-targets {${pre}varall-$root.tsv.lz4 ${pre}varall-$root.tsv.analysisinfo} -vars split -code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} $dep $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
-	# lz4_job ${pre}varall-sam-$root.tsv -i 1
-	lz4index_job ${pre}varall-sam-$root.tsv.lz4
-	job ${pre}var-sam-$root -deps {${pre}varall-sam-$root.tsv} \
-	-targets {${pre}uvar-sam-$root.tsv ${pre}uvar-sam-$root.tsv.analysisinfo} \
-	-skip [list ${pre}var-sam-$root.tsv ${pre}var-sam-$root.tsv.analysisinfo] -vars {root pre} \
+	# lz4_job ${pre}varall-$root.tsv -i 1
+	lz4index_job ${pre}varall-$root.tsv.lz4
+	job ${pre}var-$root -deps {${pre}varall-$root.tsv} \
+	-targets {${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo} \
+	-skip [list ${pre}var-$root.tsv ${pre}var-$root.tsv.analysisinfo] -vars {root pre} \
 	-code {
 		analysisinfo_write $dep $target varcaller_mincoverage 5 varcaller_minquality 30 varcaller_cg_version [version genomecomb]
 		cg select -q {
@@ -133,21 +152,21 @@ proc var_sam_job {args} {
 		file rename -force $target.temp $target
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job ${pre}uvar-sam-$root.tsv ${pre}var-sam-$root.tsv.lz4
+	annotvar_clusters_job ${pre}uvar-$root.tsv ${pre}var-$root.tsv.lz4
 	# find regions
-	sreg_sam_job ${pre}sreg-sam-$root ${pre}varall-sam-$root.tsv ${pre}sreg-sam-$root.tsv.lz4
+	sreg_sam_job ${pre}sreg-$root ${pre}varall-$root.tsv ${pre}sreg-$root.tsv.lz4
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-sam-$root.tsv ${pre}uvar-sam-$root.tsv.index ${pre}uvar-sam-$root.tsv.analysisinfo \
-			${pre}varall-sam-$root.vcf ${pre}varall-sam-$root.vcf.analysisinfo \
-			${pre}varall-sam-$root.vcf.idx \
+			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index ${pre}uvar-$root.tsv.analysisinfo \
+			${pre}varall-$root.vcf ${pre}varall-$root.vcf.analysisinfo \
+			${pre}varall-$root.vcf.idx \
 		]
-		set cleanupdeps [list ${pre}var-sam-$root.tsv ${pre}varall-sam-$root.tsv]
-		cleanup_job clean_${pre}var-sam-$root $cleanupfiles $cleanupdeps
+		set cleanupdeps [list ${pre}var-$root.tsv ${pre}varall-$root.tsv]
+		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
 	}
 	cd $keeppwd
-	return [file join $destdir var-sam-$root.tsv]
+	return $resultlist
 }
 
 proc cg_var_sam {args} {

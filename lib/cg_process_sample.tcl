@@ -471,7 +471,7 @@ proc process_sample_job {args} {
 	set removeduplicates {}
 	set amplicons {}
 	set threads 2
-	set distrchr 0
+	set distrreg 0
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -534,8 +534,8 @@ proc process_sample_job {args} {
 		-threads {
 			set threads $value
 		}
-		-distrchr {
-			set distrchr $value
+		-distrreg {
+			set distrreg $value
 		}
 		-c - -cleanup {
 			set cleanup $value
@@ -781,7 +781,7 @@ proc process_sample_job {args} {
 			if {![auto_load var_${varcaller}_job]} {
 				error "varcaller $varcaller not supported"
 			}
-			lappend cleanupdeps [var_${varcaller}_job -regionfile $regionfile -split $split -distrchr $distrchr -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
+			lappend cleanupdeps [var_distrreg_job -method ${varcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
 			lappend todo $varcaller-$bambase
 		}
 	}

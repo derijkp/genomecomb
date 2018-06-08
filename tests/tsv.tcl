@@ -307,7 +307,6 @@ chromosome	begin	end	test
 1	15	25	t
 1	45	55	t}
 
-
 set ::env(PATH) $keeppath
 
 test check_sort {sort error 1 in vars} {
