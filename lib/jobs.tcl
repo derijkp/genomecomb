@@ -28,6 +28,7 @@ proc job_distribute {type} {
 
 proc job_args {jobargs} {
 	global cgjob
+	upvar job_logdir job_logdir
 	if {![info exists cgjob(distribute)]} {
 		set cgjob(distribute) 0
 	}
@@ -126,6 +127,12 @@ proc job_args {jobargs} {
 				} else {
 					set cgjob(skipjoberrors) 1
 				}
+			}
+			-logfile {
+				set logfile [lindex $jobargs $pos]
+				incr pos
+				job_logfile $logfile
+				job_logdir [file_absolute [file dir $logfile]/log_jobs]
 			}
 			-- break
 			default {
@@ -786,6 +793,8 @@ proc job_logclose {job args} {
 
 proc job_logfile_set {logfile {dir {}} {cmdline {}} args} {
 	global cgjob
+	upvar job_logdir job_logdir
+	if {![info exists job_logdir]} {job_logdir [file dir $logfile]/log_jobs}
 	set time [string_change [timestamp] {" " _ : - . -}]
 	set cgjob(logfile) [file_absolute $logfile].$time
 	set cgjob(prefix) [file tail $cgjob(logfile)]
@@ -807,7 +816,8 @@ proc job_logfile_set {logfile {dir {}} {cmdline {}} args} {
 	foreach {key value} $args {
 		puts $cgjob(f_logfile) "\# version_$key: $value"
 	}
-	puts $cgjob(f_logfile) [join {job jobid status submittime starttime endtime duration time_seconds targets msg run} \t]
+	puts $cgjob(f_logfile) [join {job jobid status submittime starttime endtime duration time_seconds targets msg run cores} \t]
+	flush $cgjob(f_logfile)
 	set cgjob(totalduration) {0 0}
 	set cgjob(status) ok
 	set cgjob(starttime) [timestamp]
@@ -816,6 +826,7 @@ proc job_logfile_set {logfile {dir {}} {cmdline {}} args} {
 
 proc job_logfile {{logfile {}} {dir {}} {cmdline {}} args} {
 	global cgjob
+	upvar job_logdir job_logdir
 	# This will only set the log file the first time it is called, allowing subcommands to set it if called separately
 	# but not when called from a larger workflow
 	if {$cgjob(logfile) ne ""} {return $cgjob(logfile)}
@@ -921,7 +932,7 @@ proc job_cleanmsg {msg} {
 	string_change [string trim $msg] [list \t \\t \n \\n]
 }
 
-proc job_logfile_add {job jobid status {targets {}} {msg {}} {submittime {}} {starttime {}} {endtime {}}} {
+proc job_logfile_add {job jobid status {targets {}} {cores 1} {msg {}} {submittime {}} {starttime {}} {endtime {}}} {
 	global cgjob
 	if {[job_getinfo]} return
 	if {![info exists cgjob(f_logfile)]} return
@@ -951,7 +962,7 @@ proc job_logfile_add {job jobid status {targets {}} {msg {}} {submittime {}} {st
 		}
 		set targets $newtargets
 	}
-	puts $cgjob(f_logfile) [join [list $job $jobid $status $submittime $starttime $endtime $duration $time_seconds $targets $msg $run] \t]
+	puts $cgjob(f_logfile) [join [list $job $jobid $status $submittime $starttime $endtime $duration $time_seconds $targets $msg $run $cores] \t]
 	flush $cgjob(f_logfile)
 	if {$status eq "error"} {set cgjob(status) error}
 }
@@ -1079,6 +1090,7 @@ proc job {jobname args} {
 	set checkcompressed 1
 	set jobforce 0
 	set optional 0
+	set cores 1
 	set len [llength $args]
 	while {$pos < $len} {
 		set key [lindex $args $pos]
@@ -1128,7 +1140,8 @@ proc job {jobname args} {
 				incr pos
 			}
 			-cores {
-				lappend submitopts -cores [lindex $args $pos]
+				set cores [lindex $args $pos]
+				lappend submitopts -cores $cores
 				incr pos
 			}
 			-mem {
@@ -1204,10 +1217,10 @@ proc job {jobname args} {
 	append newcode $code
 	if {[get ::job_getinfo 0]} {
 		# do not actually run if just gathering info
-		job_process_getinfo $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional
+		job_process_getinfo $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores
 		return
 	}
-	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional]
+	lappend cgjob(queue) [list $cgjob(id) $jobname $job_logdir [pwd] $edeps $eforeach {} $etargets $eptargets $eskip $checkcompressed $newcode $submitopts $ermtargets $precode $jobforce $optional $cores]
 	incr cgjob(id)
 	if {!$cgjob(debug)} {job_process}
 }

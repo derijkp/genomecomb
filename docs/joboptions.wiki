@@ -75,6 +75,7 @@ If it is > 0, they will output a lot of info (to stder) on dependencies, jobs st
 ; --skipjoberrors 0/1: Errors in one job cause the entire command to stop (in direct mode); 
 use --skipjoberrors 1 to skip over these errors and complete other jobs (as far as they are not
 dependent on the the job with an error) (also -skipjoberrors)
+; -logfile filename: use filename as base for logfile instead of the default.
 
 == Category ==
 Format Conversion

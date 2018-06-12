@@ -9,14 +9,14 @@ proc job_cleanlogs {logfile} {
 		}
 	}
 	set header [split $line \t]
-	if {[list_remove $header time_seconds] ne {job jobid status submittime starttime endtime duration targets msg run}} {
+	if {[list_remove $header time_seconds cores] ne {job jobid status submittime starttime endtime duration targets msg run}} {
 		close $f
-		error "file $logfile is not a proper logfile (must be tsv with fields: job jobid status submittime starttime endtime duration targets msg run)"
+		error "file $logfile is not a proper logfile (must be tsv with fields: job jobid status submittime starttime endtime duration time_seconds targets msg run cores)"
 	}
 	while 1 {
 		if {[gets $f line] == -1} break
 		set sline [split $line \t]
-		foreach {jobo jobid status submittime starttime endtime duration targets msg run} $sline break
+		foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run cores} $sline break
 		if {$jobo eq "total"} continue
 		if {[get cgjob(basedir) ""] ne "" && [file pathtype $jobo] ne "absolute"} {
 			set job $cgjob(basedir)/$jobo
@@ -77,13 +77,17 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 	incr pos -1
 	set oldlogfiles [lrange $oldlogfiles 0 $pos]
 	unset -nocomplain oldlogsa
+	set expectedheader "job jobid status submittime starttime endtime duration time_seconds targets msg run cores"
 	foreach oldlogfile $oldlogfiles {
 		set f [gzopen $oldlogfile]
 		set header [tsv_open $f]
 		set addseconds 0
+		set addcores 0
 		if {$header eq "job jobid status submittime starttime endtime duration targets msg run"} {
 			set addseconds 1
 		} elseif {$header ne "job jobid status submittime starttime endtime duration time_seconds targets msg run"} {
+			set addcores 1
+		} elseif {$header ne $expectedheader} {
 			error "error in format of logfile $oldlogfile"
 		}
 		while {[gets $f line] != -1} {
@@ -92,6 +96,9 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 			if {$addseconds} {
 				set time_seconds [timebetween_inseconds $starttime $endtime]
 				set line [linsert $line 7 $time_seconds]
+			}
+			if {$addcores} {
+				lappend line {}
 			}
 			if {$status ne "skipped"} {
 				set oldlogsa($job) $line
@@ -124,10 +131,11 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 		set target $cgjob(distribute)
 	}
 	set header [split $line \t]
-	set expectedheader "job jobid status submittime starttime endtime duration time_seconds targets msg run"
 	set addseconds 0
 	if {$header eq "job jobid status submittime starttime endtime duration targets msg run"} {
 		set addseconds 1
+	} elseif {$header ne "job jobid status submittime starttime endtime duration time_seconds targets msg run"} {
+		set addcores 1
 	} elseif {$header ne $expectedheader} {
 		close $o ; close $f
 		error "error in format of logfile $oldlogfile (must be tsv with fields: job jobid status submittime starttime endtime duration time_seconds targets msg run)"
@@ -149,7 +157,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 			}
 			set time_seconds [timebetween_inseconds $starttime $endtime]
 		} else {
-			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $sline break
+			set cores {}
+			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run cores} $sline break
 			if {[correct_time_ms starttime] || [correct_time_ms endtime]} {
 				set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 				set time_seconds [timebetween_inseconds $starttime $endtime]
@@ -158,7 +167,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 		set startcode [timescan $starttime]
 		set endcode [timescan $endtime]
 		if {$jobo eq "total"} {
-			puts $o [join [list total $jobid $endstatus $submittime $endstarttime $endendtime [timediff2duration $totalduration] [time_seconds $totalduration] $targets [job_cleanmsg $msg] $run] \t]
+			puts $o [join [list total $jobid $endstatus $submittime $endstarttime $endendtime [timediff2duration $totalduration] [time_seconds $totalduration] $targets [job_cleanmsg $msg] $run {}] \t]
 			break
 		}
 		if {[get cgjob(basedir) ""] ne "" && [file pathtype $jobo] ne "absolute"} {
@@ -211,7 +220,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 			set diff [lmath_calc $endcode - $startcode]
 			set totalduration [lmath_calc $totalduration + $diff]
 		}
-		puts $o [join [list $jobo $jobid $status $submittime $starttime $endtime $duration $time_seconds $targets [job_cleanmsg $msg] $run] \t]
+		puts $o [join [list $jobo $jobid $status $submittime $starttime $endtime $duration $time_seconds $targets [job_cleanmsg $msg] $run $cores] \t]
 		if {$endstartcode eq "" || [time_comp $startcode $endstartcode] > 0} {set endstartcode $startcode ; set endstarttime $starttime}
 		if {$endendcode eq "" || ($endcode ne "" && [time_comp $endendcode $endcode] > 0)} {set endendcode $endcode ; set endendtime $endtime}
 	}

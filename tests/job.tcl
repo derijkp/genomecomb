@@ -32,7 +32,7 @@ set keepdir [pwd]
 set testname "-d direct"
 proc test_job_init {args} {
 	uplevel job_init -skipjoberrors 1 -d 0 {*}$args
-	job_logfile_set log
+	job_logfile_set $::testdir/tmp/log $::testdir/tmp
 }
 proc gridwait {} {}
 
@@ -40,28 +40,28 @@ if 0 {
 	set testname "-d direct"
 	proc test_job_init {args} {
 		uplevel job_init -skipjoberrors 1 {*}$args
-		job_logfile_set log $::testdir/tmp
+		job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	proc gridwait {} {}
 
 	set testname "-d 2"
 	proc test_job_init {args} {
 		uplevel job_init -d 2 {*}$args
-		job_logfile_set log $::testdir/tmp
+		job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	proc gridwait {} {}
 
 	set testname "-d 30"
 	proc test_job_init {args} {
 		uplevel job_init -d 30 {*}$args
-		job_logfile_set log $::testdir/tmp
+		job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	proc gridwait {} {}
 
 	set testname "-d sge"
 	proc test_job_init {args} {
 		uplevel job_init -d sge {*}$args
-		job_logfile_set log $::testdir/tmp
+		job_logfile_set $::testdir/tmp/log $::testdir/tmp
 	}
 	proc gridwait {} {
 		while 1 {
@@ -308,7 +308,7 @@ if {$testname eq "-d sge"} {
 	proc gridwait {} {}
 }
 
-proc test_job_init {args} "$initcode\njob_logfile_set log \$::testdir/tmp"
+proc test_job_init {args} "$initcode\njob_logfile_set \$::testdir/tmp/log \$::testdir/tmp"
 
 test job "basic chain $testname" {
 	cd $::testdir
@@ -1330,6 +1330,21 @@ test job "job_update -r 1 $testname" {
 	cd $::testdir
 	set result
 } {{log.*.error log_jobs test1.txt test2.txt} {log.*.finished test1.txt test2.txt test3.txt}} match
+
+test job "-cores 2 $testname" {
+	test_job_init
+	job test -targets tmp/dep.txt -code {
+		file_write tmp/dep.txt test
+	}
+	job test -cores 2 -deps {tmp/dep.txt} -targets tmp/target.txt -code {
+		file_write tmp/target.txt [file_read $dep]_ok
+	}
+	job_wait ; gridwait
+	cg select -f cores -rc 1 [glob tmp/log.*]
+} {cores
+1
+2
+}
 
 # end of block
 }

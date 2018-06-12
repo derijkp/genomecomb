@@ -24,7 +24,7 @@ proc job_getinfo {{value {}}} {
 	}
 }
 
-proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional} {
+proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} {
 # putsvars jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional
 	global cgjob job_deps
 	global cgjob_getinfo
@@ -62,7 +62,7 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars 
 			}
 			job_process_par_marktargets $temptargets $tempptargets $temprmtargets $jobnum
 			job_log $job "job $jobname is already running, skip"
-			job_logfile_add $job $jobnum running $ftargets
+			job_logfile_add $job $jobnum running $ftargets $cores
 			job_logclose $job
 			return
 		}
@@ -75,7 +75,7 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars 
 					set joberror "error trying to run job $jobname:\n$adeps"
 				} else {
 					job_log $job "-----> job $jobname skipped: dependencies not found"
-					job_logfile_add $job . skipped $ftargets "dependencies not found" $submittime
+					job_logfile_add $job . skipped $ftargets $cores "dependencies not found" $submittime
 					job_logclose $job
 					return
 				}
@@ -85,7 +85,7 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars 
 				} else {
 					job_log $job "error in dependencies for $jobname: $adeps"
 					job_log $job "-----> job $jobname skipped: dependencies not found"
-					job_logfile_add $job . skipped $ftargets "error in dependencies: $adeps" $submittime
+					job_logfile_add $job . skipped $ftargets $cores "error in dependencies: $adeps" $submittime
 					job_logclose $job
 					return
 				}
@@ -107,7 +107,7 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars 
 			}
 			if {$doskip} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
-				job_logfile_add $job . skipped $ftargets "skip targets already completed or running" $submittime
+				job_logfile_add $job . skipped $ftargets $cores "skip targets already completed or running" $submittime
 				job_logclose $job
 				return
 			}
@@ -145,7 +145,7 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars 
 		}
 		if {!$jobforce && !$newtargets} {
 			job_log $job "skipping $jobname: targets already completed or running"
-			job_logfile_add $job . skipped $targets "targets already completed or running" $submittime
+			job_logfile_add $job . skipped $targets $cores "targets already completed or running" $submittime
 			job_logclose $job
 			return
 		}

@@ -121,7 +121,7 @@ proc job_process_parstatus {} {
 	set jobroot [pwd]
 	while {[llength $queue]} {
 		set line [list_shift queue]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 #		# If this job was previously blocked because of ptargets deps,
@@ -142,13 +142,13 @@ proc job_process_parstatus {} {
 			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time timefile $checkcompressed} fadeps]} {
 				if {[regexp {^missing dependency} $fadeps]} {
 #					job_log $job "$fadeps"
-					job_logfile_add $job . error $ftargets $errormsg $submittime
+					job_logfile_add $job . error $ftargets $cores $errormsg $submittime
 				} elseif {[regexp {^ptargets hit} $fadeps]} {
 					error "cannot get status on unfinished ptargets hit"
 				} else {
 					set errormsg "error in foreach dependencies for $jobname: $fadeps"
 					puts "joberror\t$jobname\t\terror in foreach dependencies: $fadeps\t$job"
-					job_logfile_add $job . error $ftargets $errormsg $submittime
+					job_logfile_add $job . error $ftargets $cores $errormsg $submittime
 				}
 				puts "skipped\t$jobname\t\tdependencies not found\t$job"
 				lappend graph $jobname
@@ -198,7 +198,7 @@ proc job_process_parstatus {} {
 			}
 			job_process_par_marktargets $temptargets $tempptargets $temprmtargets $jobnum
 			puts "running\t$jobname\t$jobnum\t$duration\t\t$job"
-			job_logfile_add $job $jobnum running $ftargets
+			job_logfile_add $job $jobnum running $ftargets $cores
 			lappend jobsrunning $jobnum
 			catch {job_finddeps $job $deps newtargetvars 0 ids time timefile $checkcompressed $ftargetvars} adeps
 			set job_name($jobnum) $job
@@ -221,7 +221,7 @@ proc job_process_parstatus {} {
 				puts "joberror\t$jobname\t\terror in dependencies: $adeps\t$job"
 			}
 			puts "skipped\t$jobname\t\tdependencies not found\t$job"
-			job_logfile_add $job . skipped $ftargets "dependencies not found" $submittime
+			job_logfile_add $job . skipped $ftargets $cores "dependencies not found" $submittime
 			continue
 		}
 		set targetvars $ftargetvars
@@ -267,16 +267,16 @@ proc job_process_parstatus {} {
 		job_process_par_marktargets [list_concat $targets $temp] $ptargets $rmtargets $jobnum
 		if {[job_file_exists $job.err]} {
 			puts "error\t$jobname\t$jobnum\t\terror file available\t$job.err"
-			job_logfile_add $job $jobnum error $targets [job_cleanmsg [file_read $job.err]] $submittime
+			job_logfile_add $job $jobnum error $targets $cores [job_cleanmsg [file_read $job.err]] $submittime
 			job_process_pargraph $job $jobname error $duration $checkcompressed $adeps $ids $targets $ptargets
 		} elseif {!$newtargets} {
 			puts "ok\t$jobname\t$jobnum\t$duration\ttargets found\t$job"
-			job_logfile_add $job $jobnum finished $targets "" $submittime
+			job_logfile_add $job $jobnum finished $targets $cores "" $submittime
 			job_process_pargraph $job $jobname ok $duration $checkcompressed $adeps $ids $targets $ptargets
 			continue
 		} else {
 			puts "wrong\t$jobname\t$jobnum\t\ttargets not ok, no error file\t$job"
-			job_logfile_add $job $jobnum error $targets "some error, no errorfile was left" $submittime
+			job_logfile_add $job $jobnum error $targets $cores "some error, no errorfile was left" $submittime
 			job_process_pargraph $job $jobname wrong $duration $checkcompressed $adeps $ids $targets $ptargets
 		}
 		set cgjob_running($job) $jobnum

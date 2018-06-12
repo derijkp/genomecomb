@@ -58,7 +58,7 @@ proc job_process_par_onepass {} {
 	while {[llength $queue]} {
 		set joberror {}
 		set line [list_shift queue]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
 		cd $pwd
 		set job [job_logname $job_logdir $jobname]
 		file mkdir [file dir $job]
@@ -80,7 +80,7 @@ proc job_process_par_onepass {} {
 			if {[catch {job_finddeps $job $foreach ftargetvars 1 fids time timefile $checkcompressed} fadeps]} {
 				if {[regexp {^missing dependency} $fadeps]} {
 					job_log $job "$fadeps"
-					job_logfile_add $job . error $ftargets $errormsg $submittime
+					job_logfile_add $job . error $ftargets $cores $errormsg $submittime
 				} elseif {[regexp {^ptargets hit} $fadeps]} {
 					# ptarget dependency means the job cannot yet be submitted
 					# nor any of the jobs that may be dependent on it
@@ -96,7 +96,7 @@ proc job_process_par_onepass {} {
 				} else {
 					set errormsg "error in foreach dependencies for $jobname: $fadeps"
 					job_log $job $errormsg
-					job_logfile_add $job . error $ftargets $errormsg $submittime
+					job_logfile_add $job . error $ftargets $cores $errormsg $submittime
 				}
 				job_log $job "-----> job $jobname skipped: dependencies not found"
 				job_logclose $job
@@ -140,7 +140,7 @@ proc job_process_par_onepass {} {
 			}
 			job_process_par_marktargets $temptargets $tempptargets $temprmtargets $jobnum
 			job_log $job "job $jobname is already running, skip"
-			job_logfile_add $job $jobnum running $ftargets
+			job_logfile_add $job $jobnum running $ftargets $cores
 			job_logclose $job
 			continue
 		}
@@ -153,7 +153,7 @@ proc job_process_par_onepass {} {
 					set joberror "error trying to run job $jobname:\n$adeps"
 				} else {
 					job_log $job "-----> job $jobname skipped: dependencies not found"
-					job_logfile_add $job . skipped $ftargets "dependencies not found" $submittime
+					job_logfile_add $job . skipped $ftargets $cores "dependencies not found" $submittime
 					job_logclose $job
 					continue
 				}
@@ -175,7 +175,7 @@ proc job_process_par_onepass {} {
 				} else {
 					job_log $job "error in dependencies for $jobname: $adeps"
 					job_log $job "-----> job $jobname skipped: dependencies not found"
-					job_logfile_add $job . skipped $ftargets "error in dependencies: $adeps" $submittime
+					job_logfile_add $job . skipped $ftargets $cores "error in dependencies: $adeps" $submittime
 					job_logclose $job
 					continue
 				}
@@ -198,7 +198,7 @@ proc job_process_par_onepass {} {
 			}
 			if {$doskip} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
-				job_logfile_add $job . skipped $ftargets "skip targets already completed or running" $submittime
+				job_logfile_add $job . skipped $ftargets $cores "skip targets already completed or running" $submittime
 				job_logclose $job
 				continue
 			}
@@ -247,7 +247,7 @@ proc job_process_par_onepass {} {
 		}
 		if {!$jobforce && !$newtargets} {
 			job_log $job "skipping $jobname: targets already completed or running"
-			job_logfile_add $job . skipped $targets "targets already completed or running" $submittime
+			job_logfile_add $job . skipped $targets $cores "targets already completed or running" $submittime
 			job_logclose $job
 			continue
 		}
@@ -270,7 +270,7 @@ proc job_process_par_onepass {} {
 		set ids [list_remove $ids {}]
 		set jobnum [job_process_par_submit $job $runfile -deps $ids {*}$submitopts]
 		job_log $job "-------------------- submitted $jobname ($jobnum <- $ids) (run $currentrun) --------------------"
-		job_logfile_add $job $jobnum submitted $targets "" $submittime
+		job_logfile_add $job $jobnum submitted $targets $cores "" $submittime
 		job_logclose $job
 		file_write $job.jobid $jobnum
 		job_process_par_marktargets $targets $ptargets $rmtargets $jobnum
@@ -297,7 +297,7 @@ proc job_process_par {} {
 proc job_logfile_par_close {} {
 	global cgjob
 	if {![info exists cgjob(f_logfile)]} return
-	puts $cgjob(f_logfile) [join [list total . running $cgjob(starttime) "" "" "" "" "" ""] \t]
+	puts $cgjob(f_logfile) [join [list total . running $cgjob(starttime) "" "" "" "" "" "" "" ""] \t]
 	close $cgjob(f_logfile)
 	file rename $cgjob(logfile).submitting $cgjob(logfile).running
 	job_update $cgjob(logfile).running $cgjob(cleanup) 1 $cgjob(removeold)

@@ -64,7 +64,7 @@ proc job_process_direct {} {
 	while {[llength $cgjob(queue)]} {
 		set joberror {}
 		set line [list_shift cgjob(queue)]
-		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional} $line break
+		foreach {jobid jobname job_logdir pwd deps foreach ftargetvars ftargets fptargets fskip checkcompressed code submitopts frmtargets precode jobforce optional cores} $line break
 		cd $pwd
 		set timefile {}
 		set job [job_logname $job_logdir $jobname]
@@ -76,10 +76,10 @@ proc job_process_direct {} {
 				if {![regexp {^missing dependency} $fadeps]} {
 					set errormsg "error in foreach dependencies for $jobname: $fadeps"
 					job_log $job $errormsg
-					job_logfile_add $job . error $ftargets $errormsg $submittime
+					job_logfile_add $job . error $ftargets $cores $errormsg $submittime
 				} else {
 					job_log $job "$fadeps"
-					job_logfile_add $job . error $ftargets $fadeps $submittime
+					job_logfile_add $job . error $ftargets $cores $fadeps $submittime
 				}
 				job_log $job "-----> job $jobname failed"
 				job_logclose $job
@@ -109,7 +109,7 @@ proc job_process_direct {} {
 			}
 			if {$optional || $cgjob(skipjoberrors)} {
 				job_log $job "-----> job $jobname skipped: dependencies not found"
-				job_logfile_add $job . skipped $ftargets "dependencies not found" $submittime
+				job_logfile_add $job . skipped $ftargets $cores "dependencies not found" $submittime
 				job_logclose $job
 				continue
 			} else {
@@ -132,7 +132,7 @@ proc job_process_direct {} {
 			}
 			if {$doskip} {
 				job_log $job "skipping $jobname: skip targets already completed or running"
-				job_logfile_add $job . skipped $ftargets "skip targets ($skip) already completed or running" $submittime
+				job_logfile_add $job . skipped $ftargets $cores "skip targets ($skip) already completed or running" $submittime
 				continue
 			}
 		}
@@ -165,12 +165,12 @@ proc job_process_direct {} {
 		}
 		if {!$run} {
 			job_log $job "skipping $jobname: targets already completed or running"
-			job_logfile_add $job . skipped $targets "targets already completed or running" $submittime
+			job_logfile_add $job . skipped $targets $cores "targets already completed or running" $submittime
 			job_logclose $job
 			continue
 		}
 		if {$joberror ne ""} {
-			job_logfile_add $job . error $ftargets $joberror $submittime
+			job_logfile_add $job . error $ftargets $cores $joberror $submittime
 			error $joberror
 		}
 		job_log $job "-------------------- running $jobname --------------------"
@@ -204,14 +204,14 @@ proc job_process_direct {} {
 		# ===========
 		if {![job_file_exists $job.finished]} {
 			job_log $job "$jobname failed: did not finish\nerror:\n$result\n"
-			job_logfile_add $job . error $targets "did not finish\nerror:\n$result" $submittime $starttime $endtime
+			job_logfile_add $job . error $targets $cores "did not finish\nerror:\n$result" $submittime $starttime $endtime
 		} elseif {$error} {
 			file delete $job.finished
-			job_logfile_add $job . error $targets $errormessage $submittime $starttime $endtime
+			job_logfile_add $job . error $targets $cores $errormessage $submittime $starttime $endtime
 		} else {
 			job_log $job "-------------------- end $jobname --------------------"
 			job_log $job "$jobname finished successfully\n"
-			job_logfile_add $job . finished $targets "" $submittime $starttime $endtime
+			job_logfile_add $job . finished $targets $cores "" $submittime $starttime $endtime
 		}
 		job_logclose $job
 	}
@@ -221,7 +221,7 @@ proc job_process_direct {} {
 proc job_logfile_direct_close {} {
 	global cgjob
 	if {![info exists cgjob(f_logfile)]} return
-	puts $cgjob(f_logfile) [join [list total . finished $cgjob(starttime) "" $cgjob(endtime) [timediff2duration $cgjob(totalduration)] [time_seconds $cgjob(totalduration)] "" ""] \t]
+	puts $cgjob(f_logfile) [join [list total . finished $cgjob(starttime) "" $cgjob(endtime) [timediff2duration $cgjob(totalduration)] [time_seconds $cgjob(totalduration)] "" "" "" ""] \t]
 	close $cgjob(f_logfile)
 	if {$cgjob(status) eq "error"} {
 		set result $cgjob(logfile).error

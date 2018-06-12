@@ -27,11 +27,12 @@ instead of only deleting them after a succesfull run (**success**)
 ; -v number (--verbose): This general option has a big effect on job enabled commands:
 If it is > 0, they will output a lot of info (to stder) on dependencies, jobs started, etc.
 ; -f 0/1 (--force): use -f 1 to rerun all jobs, even if some were actually already successfully finished (also -force)
-; --silent 0/1: use -silent 1 to supress output with info on the processing
-; --skipjoberrors 0/1: Errors in one job can cause the command to stop; 
-use --skipjoberrors 1 to skip over these errors and complete other jobs (as far as they are not
+; -silent 0/1: use -silent 1 to supress output with info on the processing
+; -skipjoberrors 0/1: Errors in one job can cause the command to stop; 
+use -skipjoberrors 1 to skip over these errors and complete other jobs (as far as they are not
 dependent on the the job with an error)
-; --runcmd cmd (--runcommand): For distributed processing, the command used to run job scripts made (default is "cg source -stack 1")
+; -runcmd cmd (-runcommand): For distributed processing, the command used to run job scripts made (default is "cg source -stack 1")
+; -logfile filename: (base) filename of the logfile (see next paragraph)
 
 Typical use:
 {{{
@@ -53,16 +54,32 @@ Typical use:
 job_logfile logfile ?basedir? ?cmdline? ?key value? ... 
 }}}
 
+You can only have one logfile for a run, which is set by the first call to job_logfile.
+Calling job_logfile a second time will not change this. (The -logfile option in job_init
+will override a subsequent call to job_logfile)
+
 == job_logdir ==
-job_logdir sets the current job log directory.
-This is a directory where output, job scripts etc. will be stored.
-A job is (should) be uniquely defined by the combination of log dir and
-jobname (see further)
-You can us different log dirs in one run (change the log dir during the
-program using the job_logdir command), e.g.
+The job log directory is a directory where per job output, job scripts,
+logs,  etc. will be stored while jobs are running. Each job is (should be)
+uniquely defined by the combination of log dir and jobname (see further).
+The job logdir can be changed (multiple times, resulting in multiple
+logdirs) during a run, so that the same job(name)s can be used together
+with a changed logdir for e.g. processing multiple samples using the same
+code.
+
+After a successfull run, useful info from the logdirs is collected into
+the logfile and the logdirs are by default removed. After an error, they
+are by default retained for error checking/solving.
+
+The current job log directory is given by the (content of the) variable
+job_logdir. The job command will give an error if job_logdir is not defined.
+You can change the variable directly or you can set it using the
+job_logdir command (which will also expand it to the full path and create
+the directory), e.g.
 {{{
 job_logdir log_jobs
 }}}
+job_init will set log_jobs to a default value (log_jobs in the directory of the logfile).
 
 == job ==
 The job command is used to define a subtask that may be distributed and
