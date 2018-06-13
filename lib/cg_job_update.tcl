@@ -28,7 +28,7 @@ proc job_cleanlogs {logfile} {
 		file delete {*}$files
 		set dirsa([file dir $job]) 1
 	}
-	foreach dir [array names dirsa] {
+	foreach dir [lsort -decreasing [array names dirsa]] {
 		if {[catch {glob $dir/*}]} {
 			catch {file delete $dir}
 		}

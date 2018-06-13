@@ -154,10 +154,10 @@ proc var_distrreg_job {args} {
 					file rename $target.temp $target
 					cg_lz4index $target
 				}
-				foreach file $deps {
+				foreach file $list {
 					file delete $file
 					if {[file extension $file] eq ".lz4"} {file delete $file.lz4i}
-					file delete [gzroot $file].index
+					file delete -force [gzroot $file].index
 					file delete [gzroot $file].analysisinfo
 				}
 			}

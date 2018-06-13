@@ -743,7 +743,11 @@ proc process_sample_job {args} {
 			set files [fastq_clipadapters_job $fastqfiles -adapterfile $adapterfile -paired $paired \
 				-skips [list -skip [list $bamfile $bamfile.analysisinfo] -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
 				-removeskew $removeskew]
-			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
+			lappend cleanupfiles {*}$files
+			foreach file $files {
+				lappend cleanupfiles [gzroot $file].analysisinfo
+			}
+			lappend cleanupfiles [file dir [lindex $files 0]]
 			lappend cleanupdeps $resultbamfile
 			#
 			# map using ${aligner}
@@ -781,7 +785,7 @@ proc process_sample_job {args} {
 			if {![auto_load var_${varcaller}_job]} {
 				error "varcaller $varcaller not supported"
 			}
-			lappend cleanupdeps [var_distrreg_job -method ${varcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
+			lappend cleanupdeps {*}[var_distrreg_job -method ${varcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
 			lappend todo $varcaller-$bambase
 		}
 	}
