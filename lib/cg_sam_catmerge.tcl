@@ -50,14 +50,19 @@ proc sam_catmerge_job {args} {
 	}
 	set resultfile [file_absolute $resultfile]
 	if {[string index $sort 0] eq "n"} {set sortopt "-n"} else {set sortopt ""}
-	if {$deletesams} {set rmsamfiles $samfiles} else {set rmsamfiles {}}
+	if {$deletesams} {
+		set rmfiles $samfiles
+		foreach file $samfiles {lappend rmfiles [gzroot $file].analysisinfo}
+	} else {
+		set rmfiles {}
+	}
 	job $name -optional $optional -force $force -cores $threads \
 	-deps $samfiles \
-	-rmtargets $rmsamfiles \
+	-rmtargets $rmfiles \
 	-targets {
 		$resultfile $resultfile.analysisinfo
 	} {*}$skips -vars {
-		threads sortopt rmsamfiles outputformat
+		threads sortopt rmfiles outputformat
 	} -code {
 		puts "making $target"
 		analysisinfo_write $dep $target
@@ -68,8 +73,8 @@ proc sam_catmerge_job {args} {
 			error $msg
 		}
 		file rename -force $target.temp $target
-		foreach dep $rmsamfiles {
-			file delete $dep [gzroot $dep].analysisinfo
+		foreach dep $rmfiles {
+			file delete $dep
 		}
 	}
 	if {$index} {	
@@ -78,8 +83,6 @@ proc sam_catmerge_job {args} {
 		}
 		
 	}
-
-	
 }
 
 proc cg_sam_catmerge {args} {
