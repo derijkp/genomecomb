@@ -21,6 +21,7 @@ proc process_project_job {args} {
 	set jobsample 0
 	set distrreg 0
 	set threads 2
+	set keepsams 0
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -112,6 +113,9 @@ proc process_project_job {args} {
 			if {$value ni {0 1}} {error "-jobsample must be 0 or 1"}
 			set jobsample $value
 		}
+		-keepsams {
+			set keepsams $value
+		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
@@ -190,7 +194,7 @@ proc process_project_job {args} {
 				-dbdir $dbdir -split $split -paired $paired \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
-				-threads $threads -distrreg $distrreg \
+				-threads $threads -distrreg $distrreg -keepsams $keepsams \
 				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads \
 				$dir
 		} else {
@@ -200,7 +204,7 @@ proc process_project_job {args} {
 			set ::deps {} ; set ::targets {}
 			process_sample_job -todoVar todo -reportstodoVar reportstodo \
 				-aligner $aligner -realign $realign --varcallers $varcallers \
-				-dbdir $dbdir -split $split -paired $paired \
+				-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
 				-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\
@@ -216,7 +220,7 @@ proc process_project_job {args} {
 			} -code {
 				cg process_sample -stack 1 -v 2 \
 					-aligner $aligner -realign $realign --varcallers $varcallers \
-					-dbdir $dbdir -split $split -paired $paired \
+					-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams \
 					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 					-removeduplicates $removeduplicates -amplicons $amplicons \
 					-removeskew $removeskew -dt $dt -targetfile $targetfile -minfastqreads $minfastqreads\

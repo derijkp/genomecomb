@@ -472,6 +472,7 @@ proc process_sample_job {args} {
 	set amplicons {}
 	set threads 2
 	set distrreg 0
+	set keepsams 0
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -542,6 +543,9 @@ proc process_sample_job {args} {
 		}
 		-m - -maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
+		}
+		-keepsams {
+			set keepsams $value
 		}
 	} {} 1 2
 	if {[llength $args] == 1} {
@@ -751,7 +755,7 @@ proc process_sample_job {args} {
 			lappend cleanupdeps $resultbamfile
 			#
 			# map using ${aligner}
-			map_${aligner}_job -paired $paired -threads $threads \
+			map_${aligner}_job -paired $paired -threads $threads -keepsams $keepsams \
 				-skips [list -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
 				$bamfile $refseq $sample {*}$files
 			# extract regions with coverage >= 5 (for cleaning)
