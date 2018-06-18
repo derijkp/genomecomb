@@ -8,6 +8,8 @@ proc cg_download_ucscinfo {args} {
 	file mkdir $temp
 	# do documentation
 	# ----------------
+	set version	[timestamp]
+	set lastupdated	?
 	if {![file exists $temp/$dbname.html]} {
 		puts "Downloading $dbname.html ....."
 		wgetfile http://genome.ucsc.edu/cgi-bin/hgTrackUi?db=$build&g=$dbname $temp/$dbname.html
@@ -21,6 +23,10 @@ proc cg_download_ucscinfo {args} {
 		return
 	}
 	set title $dbname
+	if {![regexp {Data version:(</B>)? *([^<]+)} $c t t version]} {
+		regexp {GENCODE Version *([^ ]+)} $c t version
+	}
+	regexp {Data last updated:(&nbsp;)?(</B>)? *([^<]+)} $c t t t lastupdated
 	regexp {<TITLE>([^<]+)</TITLE>} $c t title
 	regexp {<B style='font-family:serif; font-size:200%;'>([^<]+)</B>} $c t title
 #	regsub {^.*<H2>Description</H2>} $c {} c
@@ -37,7 +43,8 @@ file_write $temp/$dbname.info [subst [string trim {
 
 == Download info ==
 dbname	$dbname
-version	[timestamp]
+version	$version
+lastupdated	$lastupdated
 source	http://genome.ucsc.edu/cgi-bin/hgTrackUi?db=$build&g=$dbname
 time	[timestamp]
 
