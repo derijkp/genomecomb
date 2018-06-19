@@ -286,13 +286,13 @@ proc generate_coverage_report_job {experiment regfile histofiles {destdir {}}} {
 		set o [open [lindex $targets 0] w]
 		puts $o [join $oheader \t]
 		foreach region $regionlist {
-			puts $o [join $region \t]\t[join $avga($region) \t]
+			puts $o $region\t[join $avga($region) \t]
 		}
 		close $o
 		set o [open [lindex $targets 1] w]
 		puts $o [join $oheader \t]
 		foreach region $regionlist {
-			puts $o [join $region \t]\t[join $fraca($region) \t]
+			puts $o $region\t[join $fraca($region) \t]
 		}
 		close $o
 	}
