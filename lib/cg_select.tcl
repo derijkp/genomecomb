@@ -632,6 +632,7 @@ proc tsv_select_removefields {header qfields qpossVar} {
 	return [list_sub $header -exclude $poss]
 }
 
+# list of op {numargs prec}
 array set tsv_select_tokenize_opsa {
 	~ {u 1} ! {u 1} 
 	** {d 2}
@@ -1015,6 +1016,8 @@ proc tsv_select_detokenize {tokens header neededfieldsVar} {
 			@op {
 				if {$val eq "="} {
 					set val ==
+				} elseif {$val eq "/"} {
+					set val *1.0/
 				}
 				lappend result $val
 			}

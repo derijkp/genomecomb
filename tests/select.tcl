@@ -1216,4 +1216,16 @@ sam-rdsbwa-sample1
 gatk-rdsbwa-sample2
 sam-rdsbwa-sample2}
 
+test select "select allways make / to float (integer division is unexpected)" {
+	global dbopt
+	write_tab tmp/test.tsv {
+		name value1 value2
+		a	2	4
+		b	2.0	4
+	}
+	exec cg select -f {name {r=$value1 / $value2}} tmp/test.tsv
+} {name	r
+a	0.5
+b	0.5}
+
 testsummarize
