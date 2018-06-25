@@ -409,7 +409,7 @@ proc cg_annotate_job {args} {
 			if {![file exists $genomefile]} {
 				error "no genomefile (genome_*.ifas) found in $dbdir, try using the -dbdir option"
 			}
-			if {!$distrreg} {
+			if {$distrreg == "0"} {
 				# putsvars usefile resultname
 				job annot-$resultname-[file tail $dbfile] -deps {$usefile $genomefile $dbfile} -targets {$target} -vars {genomefile dbfile name dbinfo upstreamsize} -code {
 					set genecol [dict_get_default $dbinfo genecol {}]
