@@ -466,14 +466,14 @@ test tokenize {@newop precedence} {
 	set header {a b}; set a 1; set b 1
 	set tokens [tsv_select_tokenize $header $code n]
 	set pquery [tsv_select_detokenize $tokens $header n]
-} {((vminus(${a}, 1) - ((${b} * ${b}) / 2)) + 3)}
+} {((vminus(${a}, 1) - ((${b} * ${b}) *1.0/ 2)) + 3)}
 
 test tokenize {@newop precedence} {
 	set code {$a @- 1 - $b * $b / 2 @+ 3}
 	set header {a b}; set a 1; set b 1
 	set tokens [tsv_select_tokenize $header $code n]
 	set pquery [tsv_select_detokenize $tokens $header n]
-} {vplus((vminus(${a}, 1) - ((${b} * ${b}) / 2)), 3)}
+} {vplus((vminus(${a}, 1) - ((${b} * ${b}) *1.0/ 2)), 3)}
 
 test select "lindex$dboptt" {
 	global dbopt
