@@ -54,7 +54,7 @@ proc renamesamples_file {file changes} {
 		puts "relinking $file to $newfile"
 		set newlink [renamesamples_newfilename $link $changes]
 		file delete $file
-		exec ln -s $newlink $newfile
+		mklink $newlink $newfile
 	} elseif {[inlist {.tsv .sft .tab} $ext]} {
 		puts "converting $file to $newfile"
 		set f [gzopen $file]

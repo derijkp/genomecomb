@@ -224,6 +224,7 @@ proc hardcopy {args} {
 # allow links to non-exusting files
 proc mklink {src dest {absolute 0}} {
 	set src [file_absolute $src]
+	set keepsrc $src
 	set dest [file_absolute $dest]
 	if {!$absolute} {
 		set pos 0
@@ -252,6 +253,9 @@ proc mklink {src dest {absolute 0}} {
 			exec ln -s $src [file tail $dest]
 			cd $keeppwd
 		}
+	}
+	if {[file exists $keepsrc]} {
+		exec touch -h -d [clock format [file mtime $keepsrc]] $dest
 	}
 }
 

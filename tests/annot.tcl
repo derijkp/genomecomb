@@ -142,8 +142,8 @@ test var_annot {lz4, opt, links} {
 	exec lz4c -q -c data/var_annot.sft > tmp/var_annot.sft.lz4
 	file_write tmp/var_annot.sft.opt "fields\t{name freq alt}\n"
 	cd tmp
-	exec ln -s var_annot.sft.lz4 var_annot.tsv.lz4
-	exec ln -s var_annot.sft.opt var_annot.tsv.opt
+	mklink var_annot.sft.lz4 var_annot.tsv.lz4
+	mklink var_annot.sft.opt var_annot.tsv.opt
 	cd ..
 	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/var_annot.tsv.lz4
 	exec diff tmp/temp.sft data/expected-vars1-var_annot-multi.sft

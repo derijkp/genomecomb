@@ -151,13 +151,20 @@ test cplinked {dangling link} {
 	file delete -force tmp/out
 	file mkdir tmp/out
 	file_write tmp/out/test1 pre
-	exec ln -s tmp/out/test1 tmp/out/testlink
+	mklink tmp/out/remove tmp/out/testlink
 	file delete tmp/outresult
 	exec cg cplinked tmp/out tmp/outresult
 	set result [dirinfo tmp/outresult/]
 	file delete -force tmp/out tmp/outresult
 	set result
 } {{tmp/outresult/test1 ../out/test1 pre} {tmp/outresult/testlink ../out/testlink __file_does_not_exist__}}
+
+test mklink {nklink time} {
+	file_write tmp/test.txt ""
+	exec touch -d "2018-01-01 12:00" tmp/test.txt
+	mklink tmp/test.txt tmp/link.txt
+	expr {[job_file_mtime tmp/test.txt] == [job_file_mtime tmp/link.txt]}
+} 1
 
 test distr2chr {basic} {
 	test_cleantmp

@@ -9,7 +9,7 @@ proc tophat_job {sample files libtype outdir bowtie_index} {
 	set target map-tophat-${sample}.bam
 	job tophat-$sample -deps $files -targets {$target} -vars {libtype bowtie_index outdir}  -code {
 		exec tophat  -p 8 -o $outdir --library-type $libtype $bowtie_index $dep1 $dep2 >@ stdout 2>@ stderr
-		exec ln -s accepted_hits.bam $target
+		mklink accepted_hits.bam $target
 		}
 }
 
