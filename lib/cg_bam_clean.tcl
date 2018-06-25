@@ -64,7 +64,11 @@ proc bam_clean_job {args} {
 	# sort using default
 	if {$sort} {
 		list_pop skips 0; list_pop skips 0
-		bam_sort_job {*}$skips $bamfile $dir/$pre-s$root.bam
+		if {$sort == 2} {
+			bam_sort_job -method alreadysorted {*}$skips $bamfile $dir/$pre-s$root.bam
+		} else {
+			bam_sort_job {*}$skips $bamfile $dir/$pre-s$root.bam
+		}
 		set root s$root
 	}
 	if {$removeduplicates eq "picard"} {
