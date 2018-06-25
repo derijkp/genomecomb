@@ -40,25 +40,33 @@ proc parse_generic_args {subcmd argslist} {
 		exit 0
 	}
 	set ::stacktraceonerror 0
-	while 1 {
-		set arg [lindex $argslist 0]
-		if {$arg in "--verbose -verbose -v"} {
-			set value [lindex $argslist 1]
+	set remove {}
+	set pos 0
+	foreach {key value} $argslist {
+		if {[string index $key 0] ne "-"} {
+			break
+		} elseif {$key eq "--"} {
+			break
+		} elseif {$key in "--verbose -verbose -v"} {
 			if {![isint $value]} {error "$value is not a number, only numbers are accepted as value for -v (--verbose)"}
 			logverbose $value
-			set argslist [lrange $argslist 2 end]
-		} elseif {$arg in "--stack -stack"} {
-			set value [lindex $argslist 1]
+			lappend remove $pos [expr {$pos + 1}]
+		} elseif {$key in "--stack -stack"} {
 			if {$value in {0 1}} {
 				set ::stacktraceonerror $value
-				set argslist [lrange $argslist 2 end]
+				lappend remove $pos [expr {$pos + 1}]
 			} else {
 				error "$value is not 0 or 1, the only accepted values for --stack"
 			}
+		} elseif {$key in "--compressionlevel -compressionlevel"} {
+			defcompressionlevel $value
+			lappend remove $pos [expr {$pos + 1}]
 		} else {
 			break
 		}
+		incr pos 2
 	}
+	if {[llength $remove]} {set argslist [list_sub $argslist -exclude $remove]}
 	return $argslist
 }
 
