@@ -145,6 +145,7 @@ proc cg_predictgender {args} {
 	}
 	set pctheterozygous ?
 	set pcthqheterozygous ?
+	set hthqvars ?
 	set totalvars 0
 	set htvars 0
 	if {$varfile ne ""} {
