@@ -9,7 +9,7 @@ set mirbasegenome hsa
 set mirbaserelease 20
 set mirbasebuild hg19
 set dbsnpversion 150
-set gencodeversion 27
+set gencodeversion 28
 set 1000g3url ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
 set 1000g3readmeurl ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
 set 1000g3build hg19
