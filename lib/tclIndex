@@ -338,6 +338,7 @@ set auto_index(renamesamples_newfilename) [list source [file join $dir cg_rename
 set auto_index(renamesamples_file) [list source [file join $dir cg_renamesamples.tcl]]
 set auto_index(renamesamples) [list source [file join $dir cg_renamesamples.tcl]]
 set auto_index(cg_renamesamples) [list source [file join $dir cg_renamesamples.tcl]]
+set auto_index(cg_report_vars) [list source [file join $dir cg_report_vars.tcl]]
 set auto_index(cg_rs) [list source [file join $dir cg_rs.tcl]]
 set auto_index(cg_rsync) [list source [file join $dir cg_rsync.tcl]]
 set auto_index(cg_sam2tsv) [list source [file join $dir cg_sam2tsv.tcl]]

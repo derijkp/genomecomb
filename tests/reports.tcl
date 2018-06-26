@@ -15,6 +15,15 @@ test reports {hsmetrics} {
 	exec diff tmp/result.hsmetrics.nocomments genomecomb.testdata/expected/bam_histo-NA19240chr2122.hsmetrics
 } {}
 
+test reports {report_vars} {
+	mklink data/annot_compar-exomes_yri_parts.tsv tmp/vars.tsv
+	cg report_vars -stack 1 -v 2 -sample gatk-rdsbwa-NA19238chr2122 \
+		-targetfile $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
+		-refcodingfile $::refseqdir/hg19/extra/reg_hg19_refcoding.tsv.lz4 \
+		tmp/vars.tsv tmp/report_vars.tsv
+	exec diff tmp/report_vars.tsv data/report_vars.tsv
+} {}
+
 test reports {process_reports} {
 	cd $::bigtestdir
 	file delete -force tmp/test_reports

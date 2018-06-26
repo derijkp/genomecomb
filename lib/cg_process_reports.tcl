@@ -236,82 +236,12 @@ proc process_reports_job {args} {
 			set deps [list $varfile]
 			lappend deps "($refcodingfile)"
 			if {$targetfile ne ""} {lappend deps $targetfile}
-			job reports_vars-$sample -deps $deps -targets {$target} -vars {sample varfile targetfile refcodingfile dbdir build} -code {
-				set tempfile [tempfile]
-				set fields {}
-				set varfile $dep
-				set header [cg select -h $varfile]
-				if {"coverage" in $header && "quality" in $header} {
-					set usehq 1
-					lappend fields {hq=if($coverage >= 20 and $quality >= 50,1,0)}
-				} else {
-					set usehq 0
-					lappend fields {hq=0}
-				}
-				set annotfiles {}
-				set targetfile [gzfile $targetfile]
-				if {[file exists $targetfile]} {
-					lappend annotfiles $targetfile
-					lappend fields {target=if($targets ne "",1,0)}
-				} else {
-					lappend fields {target=0}
-				}
-				set refcodingfile [gzfile $refcodingfile]
-				if {[file exists $refcodingfile]} {
-					lappend annotfiles $refcodingfile
-					lappend fields {refcoding=if($refcoding ne "",1,0)}
-				} else {
-					lappend fields {refcoding=0}
-				}
-				if {[llength $annotfiles]} {
-					cg annotate $varfile $tempfile {*}$annotfiles
-				} else {
-					mklink $varfile $tempfile
-				}
-				if {[inlist $header sequenced]} {
-					set query {$sequenced == "v"}
-				} elseif {[inlist $header zyg]} {
-					set query {$zyg in "m t c"}
-				} else {
-					set query {}
-				}
-				set temp [exec cg select -q $query \
-					-f $fields -g {hq {} target {} refcoding {} type} $tempfile]
-				set vars 0 ; set qvars 0 ; set qvars_target 0; set qvars_refcoding 0
-				set vars_snp 0 ; set qvars_snp 0 ; set qvars_target_snp 0; set qvars_refcoding_snp 0
-				foreach line [lrange [split [string trim $temp] \n] 1 end] {
-					foreach {hq ontarget refcoding type count} [split $line \t] break
-					if {$hq} {
-						incr qvars $count
-						if {$type eq "snp"} {incr qvars_snp $count}
-						if {$ontarget} {
-							incr qvars_target $count
-							if {$type eq "snp"} {incr qvars_target_snp $count}
-						}
-						if {$refcoding} {
-							incr qvars_refcoding $count
-							if {$type eq "snp"} {incr qvars_refcoding_snp $count}
-						}
-					}
-					incr vars $count
-					if {$type eq "snp"} {incr vars_snp $count}
-				}
-				set f [open $target.temp w]
-				puts $f [join {sample source parameter value} \t]
-				puts $f $sample\tgenomecomb\tvars\t$vars
-				puts $f $sample\tgenomecomb\tvars_snp\t$vars_snp
-				puts $f $sample\tgenomecomb\tqvars\t$qvars
-				puts $f $sample\tgenomecomb\tqvars_snp\t$qvars_snp
-				if {[file exists $targetfile]} {
-					puts $f $sample\tgenomecomb\tqvars_target\t$qvars_target
-					puts $f $sample\tgenomecomb\tqvars_target_snp\t$qvars_target_snp
-				}
-				if {[file exists $refcodingfile]} {
-					puts $f $sample\tgenomecomb\tqvars_refcoding\t$qvars_refcoding
-					puts $f $sample\tgenomecomb\tqvars_refcoding_snp\t$qvars_refcoding_snp
-				}
-				close $f
-				file rename -force $target.temp $target
+			job reports_vars-$sample -deps $deps -targets {
+				$target
+			} -vars {
+				sample varfile targetfile refcodingfile dbdir build
+			} -code {
+				cg_report_vars -sample $sample -targetfile $targetfile -refcodingfile $refcodingfile $dep $target
 			}
 		}
 	}
