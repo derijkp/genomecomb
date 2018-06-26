@@ -100,7 +100,7 @@ total	1160}
 test var {var_distrreg gatkh} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
-	cg var_distrreg -stack 1 -cleanup 0 -method gatkh -mincoverage 5 -mingenoqual 12 -distrchr 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
+	cg var_distrreg -stack 1 -cleanup 0 -distrreg 1 -method gatkh -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
 	cg tsvdiff tmp/var-gatkh-bwa.tsv.lz4 data/var-gatkh-bwa.tsv.lz4
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.gvcf.gz
 	string_change [cg covered tmp/sreg-gatkh-bwa.tsv.lz4] [list \n\n \n]
