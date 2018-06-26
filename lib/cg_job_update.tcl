@@ -141,10 +141,10 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 		error "error in format of logfile $oldlogfile (must be tsv with fields: job jobid status submittime starttime endtime duration time_seconds targets msg run)"
 	}
 	puts $o [join $expectedheader \t]
-	set endstartcode {}
-	set endstarttime {}
-	set endendcode {}
-	set endendtime {}
+	set totalstartcode {}
+	set totalstarttime {}
+	set totalendcode {}
+	set totalendtime {}
 	set endstatus finished
 	set totalduration {0 0}
 	while 1 {
@@ -167,7 +167,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 		set startcode [timescan $starttime]
 		set endcode [timescan $endtime]
 		if {$jobo eq "total"} {
-			puts $o [join [list total $jobid $endstatus $submittime $endstarttime $endendtime [timediff2duration $totalduration] [time_seconds $totalduration] $targets [job_cleanmsg $msg] $run {}] \t]
+			puts $o [join [list total $jobid $endstatus $submittime $totalstarttime $totalendtime [timediff2duration $totalduration] [time_seconds $totalduration] $targets [job_cleanmsg $msg] $run {}] \t]
 			break
 		}
 		if {[get cgjob(basedir) ""] ne "" && [file pathtype $jobo] ne "absolute"} {
@@ -176,7 +176,15 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 			set job $jobo
 		}
 		if {$status in {submitted running}} {set endtime {} ; set duration {}; set time_seconds {}}
-		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force} {
+		if {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
+			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break
+			correct_time_ms starttime
+			correct_time_ms endtime
+			set startcode [timescan $starttime]
+			set endcode [timescan $endtime]
+			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
+			set time_seconds [timebetween_inseconds $starttime $endtime]
+		} elseif {$starttime eq "" || $endtime eq "" | $duration eq "" | $force} {
 			if {[job_file_exists $job.log]} {
 				set jobloginfo [job_parse_log $job $totalduration]
 				foreach {status starttime endtime run duration totalduration submittime time_seconds} $jobloginfo break
@@ -200,14 +208,6 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 					}
 				}
 			}
-		} elseif {$status eq "skipped" && [info exists oldlogsa($jobo)]} {
-			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break
-			correct_time_ms starttime
-			correct_time_ms endtime
-			set startcode [timescan $starttime]
-			set endcode [timescan $endtime]
-			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
-			set time_seconds [timebetween_inseconds $starttime $endtime]
 		} else {
 			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 		}
@@ -218,11 +218,16 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 		}
 		if {$startcode ne "" && $endcode ne ""} {
 			set diff [lmath_calc $endcode - $startcode]
+			if {[isint $cores] && $cores > 1} {set diff [lmath_calc $diff * $cores]}
 			set totalduration [lmath_calc $totalduration + $diff]
 		}
 		puts $o [join [list $jobo $jobid $status $submittime $starttime $endtime $duration $time_seconds $targets [job_cleanmsg $msg] $run $cores] \t]
-		if {$endstartcode eq "" || [time_comp $startcode $endstartcode] > 0} {set endstartcode $startcode ; set endstarttime $starttime}
-		if {$endendcode eq "" || ($endcode ne "" && [time_comp $endendcode $endcode] > 0)} {set endendcode $endcode ; set endendtime $endtime}
+		if {$totalstartcode eq "" || [time_comp $startcode $totalstartcode] < 0} {
+			set totalstartcode $startcode ; set totalstarttime $starttime
+		}
+		if {$totalendcode eq "" || ($endcode ne "" && [time_comp $endcode $totalendcode] > 0)} {
+			set totalendcode $endcode ; set totalendtime $endtime
+		}
 	}
 	close $o
 	close $f
