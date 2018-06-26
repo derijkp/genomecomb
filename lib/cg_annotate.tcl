@@ -255,7 +255,6 @@ proc cg_annotate_job {args} {
 #		putslog "Skipping annotation to $resultfile: already made"
 #		return
 #	}
-
 	set ext [file extension [gzroot $orifile]]
 	# check if the annotation needs to be run (if target exists already)
 	if {[file exists $resultfile]} {
