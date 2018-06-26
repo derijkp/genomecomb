@@ -35,7 +35,7 @@ proc analysisinfo_write {dep target args} {
 		close $o
 		close $f
 		return
-	} elseif {[info exists ::analysisinfo]} {
+	} elseif {[info exists ::analysisinfo] && ![expr {[llength $::analysisinfo]%2}]} {
 		set fields [list_unmerge $::analysisinfo 1 values]
 	} else {
 		set fields {}
