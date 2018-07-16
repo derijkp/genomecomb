@@ -42,6 +42,9 @@ proc map_ngmlr_job {args} {
 		-threads - -t {
 			set threads $value
 		}
+		-paired {
+			# ignored, placeholder for compatibility
+		}
 		-m - -maxopenfiles {
 			set ::maxopenfiles $value
 		}
