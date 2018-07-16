@@ -2,9 +2,11 @@ proc process_project_job {args} {
 	set dbdir {}
 	set dbfiles {}
 	set minfastqreads 0
+	set clip 1
 	set removeskew {}
 	set aligner bwa
 	set varcallers {gatk sam}
+	set svcallers {}
 	set realign 1
 	set cleanup 1
 	set paired 1
@@ -32,6 +34,9 @@ proc process_project_job {args} {
 		-minfastqreads {
 			set minfastqreads $value
 		}
+		-clip {
+			set clip $value
+		}
 		-p - -paired {
 			set paired $value
 		}
@@ -56,6 +61,9 @@ proc process_project_job {args} {
 			if {$value ne "" && ![jobfileexists $amplicons]} {error "amplicons file $amplicons does not exists"}
 		}
 		-v - -varcallers {
+			set varcallers $value
+		}
+		-svcallers {
 			set varcallers $value
 		}
 		-s - -split {
@@ -138,7 +146,7 @@ proc process_project_job {args} {
 	# -------
 	set cmdline [list cg process_project]
 	foreach option {
-		ori dbdir refdir aligner realign varcallers split dbfile dbfiles paired adapterfile conv_nextseq reports cleanup jobsample maxopenfiles samBQ amplicons extra_reports_mastr
+		ori dbdir refdir aligner realign varcallers svcallers split dbfile dbfiles paired adapterfile conv_nextseq reports cleanup jobsample maxopenfiles samBQ amplicons extra_reports_mastr
 	} {
 		if {[info exists $option]} {
 			lappend cmdline -$option [get $option]
@@ -183,14 +191,14 @@ proc process_project_job {args} {
 		error "- is not allowed in sample names. The following sample name(s) have a -: [list_sub $samples $poss]"
 	}
 	job_logdir $destdir/log_jobs
-	set todo {}
-	set reportstodo {}
+	set todo(var) {}
+	set todo(reports) {}
 	foreach sample $samples {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		if {!$jobsample} {
-			process_sample_job -todoVar todo -reportstodoVar reportstodo \
-				-aligner $aligner -realign $realign --varcallers $varcallers \
+			process_sample_job -todoVar todo -clip $clip \
+				-aligner $aligner -realign $realign --varcallers $varcallers -svcallers $svcallers \
 				-dbdir $dbdir -split $split -paired $paired \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
@@ -202,8 +210,8 @@ proc process_project_job {args} {
 			job_getinfo 1
 			set verbose [logverbose]
 			set ::deps {} ; set ::targets {}
-			process_sample_job -todoVar todo -reportstodoVar reportstodo \
-				-aligner $aligner -realign $realign --varcallers $varcallers \
+			process_sample_job -todoVar todo -clip $clip \
+				-aligner $aligner -realign $realign --varcallers $varcallers -svcallers $svcallers \
 				-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
@@ -212,14 +220,13 @@ proc process_project_job {args} {
 			foreach {deps targets} [job_getinfo 0] break
 			logverbose $verbose
 			# run the actual job with deps and targets found
-			job process_sample-$sample \
-				-deps $deps -targets $targets -vars {
-				aligner realign varcallers dbdir split paired
+			job process_sample-$sample -deps $deps -targets $targets -vars {
+				clip aligner realign varcallers svcallers dbdir split paired
 				adapterfile reports samBQ cleanup  removeduplicates amplicons
-				removeskew dt targetfile minfastqreads dir
+				removeskew dt targetfile minfastqreads dir keepsams
 			} -code {
-				cg process_sample -stack 1 -v 2 \
-					-aligner $aligner -realign $realign --varcallers $varcallers \
+				cg process_sample -stack 1 -v 2 -clip $clip \
+					-aligner $aligner -realign $realign --varcallers $varcallers -svcallers $svcallers \
 					-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams \
 					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 					-removeduplicates $removeduplicates -amplicons $amplicons \
@@ -229,14 +236,14 @@ proc process_project_job {args} {
 		}
 	}
 	job_logdir $destdir/log_jobs
-	set todo [list_remdup $todo]
-	set reportstodo [list_remdup $reportstodo]
+	set todo(var) [list_remdup $todo(var)]
+	set todo(reports) [list_remdup $todo(reports)]
 	process_multicompar_job -experiment $experiment \
 		-skipincomplete 1 -targetvarsfile $targetvarsfile \
 		-threads $threads -distrreg $distrreg \
-		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir $todo
+		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir $todo(var)
 	if {[llength $reports]} {
-		proces_reportscombine_job $destdir/reports {*}$reportstodo
+		proces_reportscombine_job $destdir/reports {*}$todo(reports)
 		if {[jobfileexists $destdir/reports/report_hsmetrics-${experimentname}.tsv]} {
 			mklink $destdir/reports/report_hsmetrics-${experimentname}.tsv $destdir/${experimentname}_hsmetrics_report.tsv
 		}
@@ -244,7 +251,7 @@ proc process_project_job {args} {
 	if {$extra_reports_mastr} {
 		make_alternative_compar_job $experiment $destdir
 		set histofiles {}
-		foreach dir $reportstodo {
+		foreach dir $todo(reports) {
 			set list [jobglob $dir/*.histo]
 			if {[llength $list]} {lappend histofiles {*}$list}
 		}
@@ -252,7 +259,7 @@ proc process_project_job {args} {
 		generate_html_report_job $experiment $destdir
 		analysis_complete_job $experiment $destdir
 	}
-	list $todo
+	list $todo(var)
 }
 
 proc cg_process_project {args} {

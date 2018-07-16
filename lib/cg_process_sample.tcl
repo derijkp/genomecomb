@@ -455,8 +455,10 @@ proc process_sample_job {args} {
 	set keepargs $args
 	set dbdir {}
 	set minfastqreads 0
+	set clip 1
 	set aligners bwa
 	set varcallers {gatk sam}
+	set svcallers {}
 	set realign 1
 	set cleanup 1
 	set cleanupfiles {}
@@ -483,6 +485,9 @@ proc process_sample_job {args} {
 		-minfastqreads {
 			set minfastqreads $value
 		}
+		-clip {
+			set clip $value
+		}
 		-p - -paired {
 			set paired $value
 		}
@@ -501,6 +506,9 @@ proc process_sample_job {args} {
 		}
 		-v - -varcallers {
 			set varcallers $value
+		}
+		-svcallers {
+			set svcallers $svcallers
 		}
 		-s - -split {
 			set split $value
@@ -529,9 +537,6 @@ proc process_sample_job {args} {
 		-todoVar {
 			upvar $value todo
 		}
-		-reportstodoVar {
-			upvar $value reportstodo
-		}
 		-threads {
 			set threads $value
 		}
@@ -556,8 +561,10 @@ proc process_sample_job {args} {
 	set dbdir [file_absolute $dbdir]
 	set sampledir [file_absolute $sampledir]
 	adapterfile [adapterfile $adapterfile]
-	if {![info exists todo]} {set todo {}}
-	if {![info exists reportstodo]} {set reportstodo {}}
+	if {![info exists todo]} {
+		set todo(var) {}
+		set todo(reports) {}
+	}
 	set sample [file tail $sampledir]
 	#
 	if {$minfastqreads > 0} {
@@ -581,7 +588,7 @@ proc process_sample_job {args} {
 							[join {sample source parameter value} \t] \
 							[join [list $sample fastq-stats rev_numreads $num] \t] \
 						] \n]\n
-						lappend reportstodo $sampledir/reports
+						lappend todo(reports) $sampledir/reports
 					}
 					return {}
 				}
@@ -641,7 +648,7 @@ proc process_sample_job {args} {
 	# logfile
 	set cmdline [list cg process_sample]
 	foreach option {
-		oridir dbdir paired aligners realign removeduplicates amplicons varcallers split samBQ adapterfile reports todoVar reportstodoVar cleanup maxopenfiles
+		oridir dbdir paired aligners realign removeduplicates amplicons varcallers svcallers split samBQ adapterfile reports cleanup maxopenfiles
 	} {
 		if {[info exists $option]} {
 			lappend cmdline -$option [get $option]
@@ -660,14 +667,14 @@ proc process_sample_job {args} {
 			{genomecomb dbdir gnusort8 tabix lz4 os} \
 			command [list cg process_sample {*}$keepargs]
 		process_sample_cgi_job $sampledir $split
-		lappend todo cg-cg-$sample
-		return $todo
+		lappend todo(var) cg-cg-$sample
+		return $todo(var)
 	}
 	# analysis info
 	# -------------
 	if {![job_getinfo]} {
 		info_analysis_file $sampledir/info_analysis.tsv $sample \
-			{dbdir aligners varcallers realign paired samBQ adapterfile reports} \
+			{dbdir aligners varcallers svcallers realign paired samBQ adapterfile reports} \
 			{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatkjava biobambam picard java gnusort8 tabix lz4 os} \
 			command [list cg process_sample {*}$keepargs]
 	}
@@ -681,15 +688,15 @@ proc process_sample_job {args} {
 				cg vcf2tsv -split $split $dep $target.temp
 				file rename -force $target.temp $target
 			}
-			lappend todo [string range $target 4 end-4]
+			lappend todo(var) [string range $target 4 end-4]
 		}
 	}
-	# add existing var files to todo
+	# add existing var files to todo(var)
 	# ------------------------------
 	set files [jobglob $sampledir/var-*.tsv]
 	foreach file $files {
 		set target [file root [gzroot $file]].tsv
-		lappend todo [string range [file tail $target] 4 end-4]
+		lappend todo(var) [string range [file tail $target] 4 end-4]
 	}
 	# use generic (fastq/bam source)
 	# ------------------------------
@@ -744,15 +751,19 @@ proc process_sample_job {args} {
 			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.bam
 			set bamfile $sampledir/map-${aligner}-$sample.bam
 			# quality and adapter clipping
-			set files [fastq_clipadapters_job $fastqfiles -adapterfile $adapterfile -paired $paired \
-				-skips [list -skip [list $bamfile $bamfile.analysisinfo] -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
-				-removeskew $removeskew]
-			lappend cleanupfiles {*}$files
-			foreach file $files {
-				lappend cleanupfiles [gzroot $file].analysisinfo
+			if {$clip} {
+				set files [fastq_clipadapters_job $fastqfiles -adapterfile $adapterfile -paired $paired \
+					-skips [list -skip [list $bamfile $bamfile.analysisinfo] -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
+					-removeskew $removeskew]
+				lappend cleanupfiles {*}$files
+				foreach file $files {
+					lappend cleanupfiles [gzroot $file].analysisinfo
+				}
+				lappend cleanupfiles [file dir [lindex $files 0]]
+				lappend cleanupdeps $resultbamfile
+			} else {
+				set files $fastqfiles
 			}
-			lappend cleanupfiles [file dir [lindex $files 0]]
-			lappend cleanupdeps $resultbamfile
 			#
 			# map using ${aligner}
 			map_${aligner}_job -paired $paired -threads $threads -keepsams $keepsams \
@@ -791,7 +802,13 @@ proc process_sample_job {args} {
 				error "varcaller $varcaller not supported"
 			}
 			lappend cleanupdeps {*}[var_distrreg_job -method ${varcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
-			lappend todo $varcaller-$bambase
+			lappend todo(var) $varcaller-$bambase
+		}
+		foreach svcaller $svcallers {
+			if {![auto_load sv_${svcaller}_job]} {
+				error "svcaller $svcaller not supported"
+			}
+			lappend cleanupdeps {*}[sv_distrreg_job -method ${svcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
 		}
 	}
 	if {$cleanup} {
@@ -801,9 +818,9 @@ proc process_sample_job {args} {
 	#calculate reports
 	if {[llength $reports]} {
 		process_reports_job $sampledir $dbdir $reports
-		lappend reportstodo $sampledir/reports
+		lappend todo(reports) $sampledir/reports
 	}
-	return $todo
+	return $todo(var)
 }
 
 proc cg_process_sample {args} {
