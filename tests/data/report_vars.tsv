@@ -12,8 +12,14 @@ gatk-rdsbwa-NA19238chr2122	genomecomb	vars_zyg_t	274
 gatk-rdsbwa-NA19238chr2122	genomecomb	vars_type_del	10
 gatk-rdsbwa-NA19238chr2122	genomecomb	vars_type_ins	7
 gatk-rdsbwa-NA19238chr2122	genomecomb	vars_type_snp	334
+gatk-rdsbwa-NA19238chr2122	genomecomb	vars_titv_i	189
+gatk-rdsbwa-NA19238chr2122	genomecomb	vars_titv_v	145
+gatk-rdsbwa-NA19238chr2122	genomecomb	vars_titv	1.3
 gatk-rdsbwa-NA19238chr2122	genomecomb	qvars_zyg_m	34
 gatk-rdsbwa-NA19238chr2122	genomecomb	qvars_zyg_t	169
 gatk-rdsbwa-NA19238chr2122	genomecomb	qvars_type_del	5
 gatk-rdsbwa-NA19238chr2122	genomecomb	qvars_type_ins	4
 gatk-rdsbwa-NA19238chr2122	genomecomb	qvars_type_snp	194
+gatk-rdsbwa-NA19238chr2122	genomecomb	qvars_titv_i	104
+gatk-rdsbwa-NA19238chr2122	genomecomb	qvars_titv_v	90
+gatk-rdsbwa-NA19238chr2122	genomecomb	qvars_titv	1.2
