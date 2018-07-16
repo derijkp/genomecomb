@@ -1,6 +1,6 @@
-proc sreg_sam_job {job varallfile resultfile} {
+proc sreg_sam_job {job varallfile resultfile {skips {}}} {
 	upvar job_logdir job_logdir
-	job $job -deps {$varallfile} -targets {$resultfile} -code {
+	job $job {*}$skips -deps {$varallfile} -targets {$resultfile} -code {
 		set temp [filetemp $target]
 		set temp2 [filetemp $target]
 		cg select -overwrite 1 -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
@@ -28,6 +28,7 @@ proc var_sam_job {args} {
 	set threads 2
 	set resultfiles 0
 	set rootname {}
+	set skips {}
 	cg_options var_sam args {
 		-l - deps {
 			lappend deps $value
@@ -61,6 +62,9 @@ proc var_sam_job {args} {
 		-rootname {
 			set rootname $value
 		}
+		-skip {
+			lappend skips -skip $value
+		}
 		default {
 			lappend opts $key $value
 		}
@@ -84,7 +88,7 @@ proc var_sam_job {args} {
 	if {$regionfile ne ""} {
 		set regionfile [file_absolute $regionfile]
 	} else {
-		set regionfile [bam2reg_job -mincoverage $regmincoverage $bamfile]
+		set regionfile [bam2reg_job {*}$skips -mincoverage $regmincoverage $bamfile]
 	}
 	# logfile
 	set cmdline [list cg var_sam]
@@ -103,11 +107,11 @@ proc var_sam_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	# make sure reference sequence is indexed
-	job ${pre}var_sam_faidx -deps {$refseq} -targets {$refseq.fai} -code {
+	job ${pre}var_sam_faidx {*}$skips -deps {$refseq} -targets {$refseq.fai} -code {
 		exec samtools faidx $dep
 	}
 	set deps [list $file $refseq $refseq.fai {*}$deps]
-	job ${pre}varall-$root -deps $deps \
+	job ${pre}varall-$root {*}$skips -deps $deps \
 	  -targets {${pre}varall-$root.vcf ${pre}varall-$root.vcf.analysisinfo} \
 	  -skip [list ${pre}varall-$root.tsv ${pre}varall-$root.tsv.analysisinfo] \
 	  -vars {refseq opts BQ regionfile root} \
@@ -127,15 +131,15 @@ proc var_sam_job {args} {
 		}
 		file rename -force $target.temp $target
 	}
-	job ${pre}varall-sam2tsv-$root -deps {${pre}varall-$root.vcf} \
+	job ${pre}varall-sam2tsv-$root {*}$skips -deps {${pre}varall-$root.vcf} \
 	-targets {${pre}varall-$root.tsv.lz4 ${pre}varall-$root.tsv.analysisinfo} -vars split -code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} $dep $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
 	# lz4_job ${pre}varall-$root.tsv -i 1
-	lz4index_job ${pre}varall-$root.tsv.lz4
-	job ${pre}var-$root -deps {${pre}varall-$root.tsv} \
+	lz4index_job {*}$skips ${pre}varall-$root.tsv.lz4
+	job ${pre}var-$root {*}$skips -deps {${pre}varall-$root.tsv} \
 	-targets {${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo} \
 	-skip [list ${pre}var-$root.tsv ${pre}var-$root.tsv.analysisinfo] -vars {root pre} \
 	-code {
@@ -152,9 +156,9 @@ proc var_sam_job {args} {
 		file rename -force $target.temp $target
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job ${pre}uvar-$root.tsv ${pre}var-$root.tsv.lz4
+	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv ${pre}var-$root.tsv.lz4
 	# find regions
-	sreg_sam_job ${pre}sreg-$root ${pre}varall-$root.tsv ${pre}sreg-$root.tsv.lz4
+	sreg_sam_job ${pre}sreg-$root ${pre}varall-$root.tsv ${pre}sreg-$root.tsv.lz4 $skips
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \

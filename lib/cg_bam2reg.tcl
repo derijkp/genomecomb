@@ -1,7 +1,7 @@
 proc bam2reg_job {args} {
 	upvar job_logdir job_logdir
 	set compress 1
-	set skip {}
+	set skips {}
 	cg_options bam2reg args {
 		-mincoverage {
 			set mincov $value
@@ -10,7 +10,7 @@ proc bam2reg_job {args} {
 			set compress $value
 		}
 		-skip {
-			set skip $value
+			lappend skips -skip $value
 		}
 	} {bamfile mincoverage target} 1 3
 	set bamfile [file_absolute $bamfile]
@@ -32,7 +32,7 @@ proc bam2reg_job {args} {
 	if {![info exists job_logdir]} {
 		job_logdir $target.log_jobs
 	}
-	job cov$mincoverage-$root -optional 1 -skip $skip -deps {
+	job cov$mincoverage-$root -optional 1 {*}$skips -deps {
 		$bamfile
 	} -targets {
 		$target

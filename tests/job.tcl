@@ -841,6 +841,22 @@ test job "-skip: chain $testname" {
 	set result
 } {log.*.finished result.txt} match
 
+test job "-skip: sone deps do not exist" {
+	cd $::testdir
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -skipjoberrors 0
+	file_write result.txt result
+	job step1 -deps {notpresent.txt} -targets step1.txt -skip {result.txt} -code {
+		file_write step1.txt test
+	}
+	job_wait
+	gridwait
+	set result [lsort -dict [glob *]]
+	cd $::testdir
+	set result
+} {log.*.finished result.txt} match
+
 test job "jobtestnojobs $testname" {
 	cd $::testdir
 	test_cleantmp

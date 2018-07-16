@@ -37,6 +37,22 @@ chr21	1047
 chr22	156
 total	1203}
 
+test var {var_distrreg gatk result exists already} {
+	test_cleantmp
+	file copy data/bwa.bam data/bwa.bam.bai tmp
+	foreach file {
+		tmp/sreg-cov3-bwa.tsv.lz4
+		tmp/varall-gatk-bwa.tsv.lz4 tmp/varall-gatk-bwa.tsv.lz4.lz4i tmp/varall-gatk-bwa.tsv.analysisinfo
+		tmp/var-gatk-bwa.tsv.lz4 tmp/var-gatk-bwa.tsv.lz4.lz4i tmp/var-gatk-bwa.tsv.analysisinfo
+		tmp/sreg-gatk-bwa.tsv.lz4 tmp/sreg-gatk-bwa.tsv.lz4.lz4i tmp/sreg-gatk-bwa.tsv.analysisinfo
+		tmp/reg_cluster-gatk-bwa.tsv.lz4
+	} {file_write $file {}}
+	cg var_distrreg -stack 1 -v 2 -distrreg chr -method gatk tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
+	catch {exec grep "targets already completed or running" tmp/logerror} temp
+	if {$temp eq ""} {error "not skipped"}
+	llength [glob -nocomplain tmp/*.old]
+} 0
+
 test var {var_sam basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
@@ -59,7 +75,7 @@ chr21	1047
 chr22	156
 total	1203}
 
-test var {var_distrreg sam} {
+test var {var_distrreg sam -d 3} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var_distrreg -stack 1 -d 3 -method sam tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
@@ -69,6 +85,16 @@ test var {var_distrreg sam} {
 chr21	1047
 chr22	156
 total	1203}
+
+test var {var_distrreg sam result exists already} {
+	test_cleantmp
+	file copy data/bwa.bam data/bwa.bam.bai tmp
+	cg var_distrreg -stack 1 -method sam tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
+	cg var_distrreg -stack 1 -method sam tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
+	catch {exec grep "targets already completed or running" tmp/logerror} temp
+	if {$temp eq ""} {error "not skipped"}
+	llength [glob -nocomplain tmp/*.old]
+} 0
 
 test var {var_freebayes basic} {
 	test_cleantmp

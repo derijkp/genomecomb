@@ -1,6 +1,6 @@
-proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25}} {
+proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} {skips {}}} {
 	upvar job_logdir job_logdir
-	job $job -deps {$varallfile} -targets {$resultfile} -vars {mincoverage mingenoqual} -code {
+	job $job {*}$skips -deps {$varallfile} -targets {$resultfile} -vars {mincoverage mingenoqual} -code {
 		set temp [filetemp $target]
 		file_write $temp "# regions selected from [gzroot $dep]: \$genoqual >= $mingenoqual && \$coverage >= $mincoverage\n"
 		exec cg vcf2tsv $dep \
@@ -31,6 +31,7 @@ proc var_gatkh_job {args} {
 	set mingenoqual 25
 	set resultfiles 0
 	set rootname {}
+	set skips {}
 	cg_options var_gatkh args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -70,6 +71,9 @@ proc var_gatkh_job {args} {
 		-rootname {
 			set rootname $value
 		}
+		-skip {
+			lappend skips -skip $value
+		}
 		default {
 			lappend opts $key $value
 		}
@@ -94,7 +98,7 @@ proc var_gatkh_job {args} {
 	if {$regionfile ne ""} {
 		set regionfile [file_absolute $regionfile]
 	} else {
-		set regionfile [bam2reg_job -mincoverage $regmincoverage $bamfile]
+		set regionfile [bam2reg_job {*}$skips -mincoverage $regmincoverage $bamfile]
 	}
 	lappend deps $regionfile
 	# logfile
@@ -118,7 +122,7 @@ proc var_gatkh_job {args} {
 	set resultgvcf $varallfile.gz
 	set resultname $varallfile
 	set deps [list $file $gatkrefseq $file.bai {*}$deps]
-	job $resultname -mem 5G -cores $threads -deps $deps -targets {
+	job $resultname {*}$skips -mem 5G -cores $threads -deps $deps -targets {
 		$resultgvcf $resultgvcf.tbi $varallfile.analysisinfo
 	} -vars {
 		opts regionfile gatkrefseq refseq threads root ERC resultgvcf
@@ -142,7 +146,7 @@ proc var_gatkh_job {args} {
 		file rename -force $resultgvcf.temp.gz.tbi $resultgvcf.tbi
 		# file delete $resultgvcf.temp
 	}
-	job ${pre}gvcf2tsv-$root -deps {
+	job ${pre}gvcf2tsv-$root {*}$skips -deps {
 		$resultgvcf $gatkrefseq
 	} -targets {
 		${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo
@@ -169,9 +173,9 @@ proc var_gatkh_job {args} {
 		file rename -force ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job ${pre}uvar-$root.tsv $varfile.lz4
+	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile.lz4
 	# make sreg
-	sreg_gatkh_job ${pre}sreg-$root $varallfile $sregfile.lz4 $mincoverage $mingenoqual
+	sreg_gatkh_job ${pre}sreg-$root $varallfile $sregfile.lz4 $mincoverage $mingenoqual $skips
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \

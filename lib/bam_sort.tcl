@@ -3,6 +3,7 @@ proc bam_sort_job {args} {
 	set method samtools
 	set sort coordinate
 	set inputformat bam
+	set skips {}
 	cg_options bam_sort args {
 		-method {
 			if {$value ni {biobambam samtools alreadysorted}} {error "bamsort: unsupported -method $value"}
@@ -25,7 +26,7 @@ proc bam_sort_job {args} {
 		analysisinfo_write $dep $target bamsort $method bamsort_version [version $method]
 		file delete $target.temp
 		if {$method eq "alreadysorted"} {
-			mklink $dep $target
+			hardlink $dep $target
 		} else {
 			bam_sort -method $method -sort $sort -inputformat $inputformat $dep $target.temp
 			file rename -force $target.temp $target

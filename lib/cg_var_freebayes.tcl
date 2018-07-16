@@ -1,6 +1,6 @@
-proc sreg_freebayes_job {job varallfile resultfile} {
+proc sreg_freebayes_job {job varallfile resultfile {skips {}}} {
 	upvar job_logdir job_logdir
-	job $job -deps {$varallfile} -targets {$resultfile} -code {
+	job $job {*}$skips -deps {$varallfile} -targets {$resultfile} -code {
 		set temp [filetemp $target]
 		set temp2 [filetemp $target]
 		cg select -overwrite 1 -q {$genoqual >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
@@ -27,6 +27,7 @@ proc var_freebayes_job {args} {
 	set regmincoverage 3
 	set rootname {}
 	set resultfiles 0
+	set skips {}
 	cg_options var_freebayes args {
 		-L - -deps {
 			lappend deps $value
@@ -56,6 +57,9 @@ proc var_freebayes_job {args} {
 		-rootname {
 			set rootname $value
 		}
+		-skip {
+			lappend skips -skip $value
+		}
 		default {
 			lappend opts $key $value
 		}
@@ -82,7 +86,7 @@ proc var_freebayes_job {args} {
 	if {$regionfile ne ""} {
 		set regionfile [file_absolute $regionfile]
 	} else {
-		set regionfile [bam2reg_job -mincoverage $regmincoverage $bamfile]
+		set regionfile [bam2reg_job {*}$skips -mincoverage $regmincoverage $bamfile]
 	}
 	# logfile
 	set cmdline [list cg var_freebayes]
@@ -101,7 +105,7 @@ proc var_freebayes_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set deps [list $file $refseq $file.bai {*}$deps]
-	job ${pre}varall-$root -mem 5G -cores $threads -deps $deps -targets {
+	job ${pre}varall-$root {*}$skips -mem 5G -cores $threads -deps $deps -targets {
 		${pre}varall-$root.vcf
 		${pre}varall-$root.vcf.analysisinfo
 	} -skip [list $varallfile $varallfile.analysisinfo] -vars {
@@ -125,7 +129,7 @@ proc var_freebayes_job {args} {
 			-f $refseq $dep > $target.temp 2>@ stderr
 		file rename -force $target.temp $target
 	}
-	job ${pre}varall-freebayes2tsv-$root -deps {
+	job ${pre}varall-freebayes2tsv-$root {*}$skips -deps {
 		${pre}varall-$root.vcf
 	} -targets {
 		$varallfile.lz4
@@ -139,7 +143,7 @@ proc var_freebayes_job {args} {
 	# lz4_job $varallfile -i 1
 	lz4index_job $varallfile.lz4
 
-	job ${pre}uvar-$root -deps {
+	job ${pre}uvar-$root {*}$skips -deps {
 		$varallfile
 	} -targets {
 		${pre}uvar-$root.tsv
@@ -160,9 +164,9 @@ proc var_freebayes_job {args} {
 		file delete $target.temp
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job ${pre}uvar-$root.tsv $varfile.lz4
+	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile.lz4
 	# make sreg
-	sreg_freebayes_job ${pre}sreg-$root $varallfile $sregfile.lz4
+	sreg_freebayes_job ${pre}sreg-$root $varallfile $sregfile.lz4 $skips
 	if {$cleanup} {
 		set cleanupfiles [list \
 			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index ${pre}uvar-$root.tsv.analysisinfo \

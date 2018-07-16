@@ -65,13 +65,13 @@ proc fastq_clipadapters_job {fastqfiles args} {
 	foreach file $fastqfiles {
 		set file [file_absolute [gzroot $file]]
 		set root [file root $file]
-		file mkdir [file dir $root].clipped
 		lappend resultfastqs [file dir $root].clipped/[file tail $root].clipped.fastq
 		lappend resultanalysisinfo [file dir $root].clipped/[file tail $root].clipped.fastq.analysisinfo
 	}
 	# paired files need to be clipped together!
-	job clip-[file dir [file dir $root]] -deps $fastqfiles -targets [list {*}$resultfastqs {*}$resultanalysisinfo] \
-	-vars {resultfastqs adapterfile paired removeskew ::analysisinfo} {*}$skips -code {
+	job clip-[file dir [file dir $root]] {*}$skips -deps $fastqfiles -targets [list {*}$resultfastqs {*}$resultanalysisinfo] \
+	-vars {resultfastqs adapterfile paired removeskew ::analysisinfo} -code {
+		file mkdir [file dir $target1].clipped
 		fastq_clipadapters $deps $resultfastqs -removeskew $removeskew -adapterfile $adapterfile -paired $paired
 		foreach dep $deps target $resultfastqs {
 			analysisinfo_write $dep $target clipping fastq-mcf clipping_version [version fastq-mcf] clipping_cg_version [version genomecomb]

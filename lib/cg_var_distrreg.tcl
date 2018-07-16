@@ -79,10 +79,8 @@ proc var_distrreg_job {args} {
 		set resultfiles [var_${method}_job -resultfiles 1 {*}$opts \
 			-regionfile $regionfile -pre $pre \
 			-split $split $bamfile $refseq]
-		if {[llength [jobglob $resultfiles]] == [llength $resultfiles]} {
-			putslog "var_distrreg: resultfiles ($resultfiles) already made, skipping"
-			return $resultfiles
-		}
+		set skips [list -skip $resultfiles]
+		# if {[jobtargetexists $resultfiles [list $refseq $bamfile $regionfile]]} return
 		foreach {varfile sregfile varallfile} $resultfiles break
 		set file [file tail $bamfile]
 		set root [file_rootname $varfile]
@@ -98,7 +96,7 @@ proc var_distrreg_job {args} {
 		foreach chromosome $chromosomes {
 			lappend regfiles $indexdir/$basename-$chromosome.bed
 		}
-		job [gzroot $varallfile]-distrreg-beds -deps {
+		job [gzroot $varallfile]-distrreg-beds {*}$skips -deps {
 			$regionfile
 		} -targets $regfiles -vars {
 			regionfile chromosomes appdir basename indexdir
@@ -120,7 +118,7 @@ proc var_distrreg_job {args} {
 		mklink $bamfile.bai $ibam.bai
 		defcompressionlevel 1
 		foreach chromosome $chromosomes regfile $regfiles {
-			lappend todo [var_${method}_job {*}$opts -rootname $root-$chromosome -regionfile $regfile \
+			lappend todo [var_${method}_job {*}$opts {*}$skips -rootname $root-$chromosome -regionfile $regfile \
 				-split $split -threads $threads -cleanup $cleanup $ibam $refseq]
 		}
 		defcompressionlevel 9
@@ -139,7 +137,7 @@ proc var_distrreg_job {args} {
 			}
 			set analysisinfo [lindex $ainfolist 0]
 			lappend deps {*}$ainfolist
-			job $resultfile -deps $list -rmtargets $list -targets {
+			job $resultfile  {*}$skips -deps $list -rmtargets $list -targets {
 				$resultfile
 			} -vars {
 				analysisinfo list
