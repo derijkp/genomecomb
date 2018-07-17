@@ -21,6 +21,10 @@ proc file_absolute {file} {
 	file join {*}$result
 }
 
+proc file_sample {file} {
+	string range [file root [file tail [gzroot $file]]] 4 end
+}
+
 namespace eval genomecomb {}
 if {[info commands genomecomb::cd.ori] eq ""} {
 	rename cd genomecomb::cd.ori

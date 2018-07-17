@@ -38,11 +38,11 @@ proc process_multicompar_job {args} {
 			if {$targetvarsfile ne "" && ![file exists $value]} {error "targetvarsfile $value does not exists"}
 			set targetvarsfile $value
 		}
-		-todo {
-			set todo $value
-		}
 		-varfiles {
 			set varfiles $value
+		}
+		-svfiles {
+			set svfiles $value
 		}
 		-experiment {
 			set experiment $value
@@ -60,7 +60,7 @@ proc process_multicompar_job {args} {
 		-m - -maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
-	} {destdir dbdir todo} 1 3
+	} {destdir dbdir} 1
 	set dbfiles [list_remove [list_remdup $dbfiles] {}]
 	set destdir [file_absolute $destdir]
 	file mkdir $destdir/compar
@@ -75,7 +75,7 @@ proc process_multicompar_job {args} {
 	# -------
 	set cmdline [list cg process_multicompar]
 	foreach option {
-		dbdir split dbfile dbfiles skipincomplete targetvarsfile todo varfiles experiment cleanup maxopenfiles
+		dbdir split dbfile dbfiles skipincomplete targetvarsfile varfiles experiment cleanup maxopenfiles
 	} {
 		if {[info exists $option]} {
 			lappend cmdline -$option [get $option]
@@ -91,26 +91,49 @@ proc process_multicompar_job {args} {
 		{genomecomb dbdir gnusort8 lz4 os} \
 		command [list cg process_multicompar {*}$keepargs]
 
-	# get samples todo
+	# get files todo
 	# ----------------
-	set samples {}
 	if {[file exists $destdir/samples]} {
 		set sampledir $destdir/samples
 	} else {
 		set sampledir $destdir
 	}
-	if {![info exists todo]} {
-		set todo {}
-		if {![info exists varfiles]} {
-			set varfiles [jobglob ${sampledir}/*/var-*.tsv]
-		} elseif {[string first * $varfiles] != -1} {
-			set varfiles [jobglob $varfiles]
+	if {![info exists varfiles]} {
+		set varfiles [jobglob ${sampledir}/*/var-*.tsv]
+	} else {
+		set tempvarfiles {}
+		foreach varfile $varfiles {
+			if {![jobfileexists $varfile]} {
+				set temp [jobglob $sampledir/*/$varfile]
+				if {$temp eq ""} {
+					set temp [jobglob $varfile]
+				}
+				if {$temp eq ""} {error "varfile $varfile not found"}
+				lappend tempvarfiles {*}$temp
+			} else {
+				lappend tempvarfiles $varfile
+			}
 		}
-		foreach file [lsort -dict $varfiles] {
-			lappend todo [string range [file root [file tail [gzroot $file]]] 4 end]
-		}
+		set varfiles $tempvarfiles
 	}
-	set todo [list_remdup $todo]
+	if {![info exists svfiles]} {
+		set svfiles [jobglob ${sampledir}/*/sv-*.tsv]
+	} else {
+		set tempsvfiles {}
+		foreach svfile $svfiles {
+			if {![jobfileexists $svfile]} {
+				set temp [jobglob $sampledir/*/$svfile]
+				if {$temp eq ""} {
+					set temp [jobglob $svfile]
+				}
+				if {$temp eq ""} {error "svfile $svfile not found"}
+				lappend tempsvfiles {*}$temp
+			} else {
+				lappend tempsvfiles $svfile
+			}
+		}
+		set svfiles $tempsvfiles
+	}
 	# set up job
 	job_logdir $destdir/log_jobs
 	set keeppwd [pwd]
@@ -122,67 +145,113 @@ proc process_multicompar_job {args} {
 	# multicompar
 	# -----------
 	# todo: no check if targetsfile was actually used
-	putslog "Making/updating multicompar in $destdir/compar/compar-$experiment.tsv"
-	putslog "Finding samples"
-	set compar_file [gzfile compar/compar-$experiment.tsv]
-	if {[catch {cg select -a $compar_file} done]} {set done {}} else {set done [split $done \n]}
-	if {[file exists $compar_file]} {set mtime [file mtime $compar_file]} else {set mtime 0}
-	set stilltodo {}
-	foreach sample $todo {
-		set name [lindex [split $sample -] end]
-		set varfile [gzfile $sampledir/$name/var-$sample.tsv]
-		if {![file exists $varfile] || [file mtime $varfile] > $mtime} {
-			putslog "redo all: $varfile is newer than $compar_file"
-			set stilltodo {}
-			foreach sample $todo {
-				set name [lindex [split $sample -] end]
-				lappend stilltodo $sampledir/$name/var-$sample.tsv
-			}
-			if {[file exists $compar_file]} {file rename -force $compar_file $compar_file.old}
-			break
-		}
-		if {![inlist $done $sample]} {
-			putslog "Still todo: $sample"
-			lappend stilltodo $varfile
-		}
-	}
-	putslog "Samples: [llength $todo] todo, [llength $done] already done, [llength $stilltodo] to add"
-	if {[llength $stilltodo]} {
-		putslog "Samples to add: $stilltodo"
-		putslog "Starting multicompar"
-		set compar_file [gzroot $compar_file].lz4
-		pmulticompar_job $compar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
+	if {![llength $varfiles]} {
+		putslog "No qualifying varfiles: not making var compar"
 	} else {
-		putslog "skipping multicompar (no update needed)"
-	}
-	# annotate multicompar
-	# --------------------
-	putslog "Starting annotation"
-	cg_annotate_job -distrreg $distrreg $compar_file compar/annot_compar-$experiment.tsv.lz4 $dbdir {*}$dbfiles
-	job indexannotcompar-$experiment \
-	-deps {compar/annot_compar-$experiment.tsv} \
-	-targets {compar/annot_compar-$experiment.tsv.index/info.tsv} -vars dbdir -code {
-		cg index -colinfo $dep
+		putslog "Making/updating multicompar in $destdir/compar/compar-$experiment.tsv"
+		putslog "Finding samples"
+		set compar_file [gzfile compar/compar-$experiment.tsv]
+		if {[catch {cg select -a $compar_file} done]} {set done {}} else {set done [split $done \n]}
+		if {[file exists $compar_file]} {set mtime [file mtime $compar_file]} else {set mtime 0}
+		set stilltodo {}
+		foreach varfile $varfiles {
+			if {![file exists $varfile] || [file mtime $varfile] > $mtime} {
+				putslog "redo all: $varfile is newer than $compar_file"
+				set stilltodo $varfiles
+				if {[file exists $compar_file]} {file rename -force $compar_file $compar_file.old}
+				break
+			}
+			if {![inlist $done $sample]} {
+				set sample [file_sample $varfile]
+				putslog "Still todo: $sample"
+				lappend stilltodo $varfile
+			}
+		}
+		putslog "Samples: [llength $varfiles] todo, [llength $done] already done, [llength $stilltodo] to add"
+		if {[llength $stilltodo]} {
+			putslog "Samples to add: $stilltodo"
+			putslog "Starting multicompar"
+			set compar_file [gzroot $compar_file].lz4
+			pmulticompar_job $compar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
+		} else {
+			putslog "skipping multicompar (no update needed)"
+		}
+		# annotate multicompar
+		# --------------------
+		putslog "Starting annotation"
+		cg_annotate_job -distrreg $distrreg $compar_file compar/annot_compar-$experiment.tsv.lz4 $dbdir {*}$dbfiles
+		job indexannotcompar-$experiment \
+		-deps {compar/annot_compar-$experiment.tsv} \
+		-targets {compar/annot_compar-$experiment.tsv.index/info.tsv} -vars dbdir -code {
+			cg index -colinfo $dep
+		}
+		#
+		# multi sreg
+		# ----------
+		putslog "Starting multisreg"
+		set regfiles {}
+		foreach varfile $varfiles {
+			set sample [file_sample $varfile]
+			set name [lindex [split $sample -] end]
+			set file $sampledir/$name/sreg-$sample.tsv
+			if {![jobfileexists $file]} {
+				if {!$skipincomplete} {
+					error "file $file not found"
+				} else {
+					putslog "warning: file $file not found"
+					continue
+				}
+			}
+			lappend regfiles $file
+		}
+		multireg_job compar/sreg-$experiment.tsv.lz4 $regfiles
 	}
 	#
-	# multi sreg
-	# ----------
-	putslog "Starting multisreg"
-	set regfiles {}
-	foreach sample $todo {
-		set name [lindex [split $sample -] end]
-		set file $sampledir/$name/sreg-$sample.tsv
-		if {![jobfileexists $file]} {
-			if {!$skipincomplete} {
-				error "file $file not found"
+	# sv
+	# ----
+	if {![llength $svfiles]} {
+		putslog "No qualifying svfiles: not making sv compar"
+	} else {
+		putslog "Starting sv"
+		set svcompar_file compar/sv-${experiment}.tsv.lz4
+		set target $svcompar_file
+		set names [list_regsub {.*/sv-(.*)\.tsv.*} $svfiles {\1}]
+		testmultitarget $target $names "$sampledir/\$name/sv-\$name.tsv"
+		job sv_multicompar -optional 1 -deps $svfiles -targets {$target} -code {
+			puts "Checking $target"
+			if {[file exists $target.temp]} {
+				set done [cg select -n $target.temp]
 			} else {
-				putslog "warning: file $file not found"
-				continue
+				set done {}
 			}
+			set todo {}
+			foreach file $deps {
+				regexp {sv-(.*)\.tsv*} [file tail $file] temp name
+				if {![inlist $done $name]} {
+					lappend todo $file
+				}
+			}
+			if {[llength $done]} {
+				puts "Multisv already present: $done"
+			}
+			if {[llength $todo]} {
+				cg svmulticompar -overlap 40 $target.temp {*}$todo
+			}
+			cg_lz4 $target.temp
+			file rename -force $target.temp.lz4 $target
 		}
-		lappend regfiles $file
+		# annotate svmulticompar
+		# --------------------
+		putslog "Starting annotation"
+		cg_annotate_job -distrreg $distrreg $svcompar_file compar/annot_sv-$experiment.tsv.lz4 $dbdir {*}$dbfiles
+		job indexannotcompar-$experiment -deps {
+			compar/annot_sv-$experiment.tsv
+		} -targets {
+			compar/annot_sv-$experiment.tsv.index/info.tsv
+		} -vars dbdir -code {
+			cg index -colinfo $dep
+		}
 	}
-	multireg_job compar/sreg-$experiment.tsv.lz4 $regfiles
 	#
 	# cgsv
 	# ----

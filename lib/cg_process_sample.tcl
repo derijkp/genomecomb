@@ -508,7 +508,7 @@ proc process_sample_job {args} {
 			set varcallers $value
 		}
 		-svcallers {
-			set svcallers $svcallers
+			set svcallers $value
 		}
 		-s - -split {
 			set split $value
@@ -667,7 +667,7 @@ proc process_sample_job {args} {
 			{genomecomb dbdir gnusort8 tabix lz4 os} \
 			command [list cg process_sample {*}$keepargs]
 		process_sample_cgi_job $sampledir $split
-		lappend todo(var) cg-cg-$sample
+		lappend todo(var) var-cg-cg-$sample.tsv
 		return $todo(var)
 	}
 	# analysis info
@@ -688,7 +688,7 @@ proc process_sample_job {args} {
 				cg vcf2tsv -split $split $dep $target.temp
 				file rename -force $target.temp $target
 			}
-			lappend todo(var) [string range $target 4 end-4]
+			lappend todo(var) $target
 		}
 	}
 	# add existing var files to todo(var)
@@ -696,7 +696,7 @@ proc process_sample_job {args} {
 	set files [jobglob $sampledir/var-*.tsv]
 	foreach file $files {
 		set target [file root [gzroot $file]].tsv
-		lappend todo(var) [string range [file tail $target] 4 end-4]
+		lappend todo(var) [file tail $target]
 	}
 	# use generic (fastq/bam source)
 	# ------------------------------
@@ -802,13 +802,14 @@ proc process_sample_job {args} {
 				error "varcaller $varcaller not supported"
 			}
 			lappend cleanupdeps {*}[var_distrreg_job -method ${varcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
-			lappend todo(var) $varcaller-$bambase
+			lappend todo(var) var-$varcaller-$bambase.tsv
 		}
 		foreach svcaller $svcallers {
 			if {![auto_load sv_${svcaller}_job]} {
 				error "svcaller $svcaller not supported"
 			}
-			lappend cleanupdeps {*}[sv_distrreg_job -method ${svcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
+			lappend cleanupdeps {*}[sv_job -method ${svcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
+			lappend todo(sv) sv-$svcaller-$bambase.tsv
 		}
 	}
 	if {$cleanup} {

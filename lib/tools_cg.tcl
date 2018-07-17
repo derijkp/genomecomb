@@ -12,7 +12,9 @@ proc cg {cmd args} {
 proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {summary {}}} {
 # putsvars cmd argsVar def parameters minargs maxargs summary
 	# we allways need options in the subst command anyway
-	set options [join [list_unmerge $def] ,]
+	set temp [list_unmerge $def]
+	set options [join [list_remove $temp default] ,]
+	if {[inlist $temp default]} {append options ,...}
 	set len [llength $parameters]
 	if {$minargs eq ""} {set minargs $len}
 	if {$maxargs eq "" || $maxargs eq "-1"} {set maxargs $len}

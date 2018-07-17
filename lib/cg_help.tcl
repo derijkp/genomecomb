@@ -73,6 +73,9 @@ proc errorformat_calc {action {options {}} {minargs {}} {maxargs {}} {parameters
 		append out " ?$p?"
 		incr pos
 	}
+	if {$options ne ""} {
+		append out "\n  with options: $options"
+	}
 	return $out
 }
 
@@ -83,6 +86,13 @@ proc errorformat {action {options {}} {minargs {}} {maxargs {}} {parameters {}}}
 	}] && [dict exists $help Format]} {
 		set msg "\nERROR: Wrong number of arguments, correct format is:"
 		append msg \n[dict get $help Format]
+		if {[dict exists $help Options]} {
+			set options [dict get $help Options]
+			list_unmerge [regexp -all -inline {; *(-[^ ]+)} $options] 1 temp
+			if {[llength $temp]} {
+				append msg "\n  with options: [join $temp ,]"
+			}
+		}
 		append msg "\n\nFor more help, use:\ncg $action -h\n"
 		error $msg
 	} else {

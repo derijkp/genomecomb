@@ -64,7 +64,7 @@ proc process_project_job {args} {
 			set varcallers $value
 		}
 		-svcallers {
-			set varcallers $value
+			set svcallers $value
 		}
 		-s - -split {
 			set split $value
@@ -192,13 +192,14 @@ proc process_project_job {args} {
 	}
 	job_logdir $destdir/log_jobs
 	set todo(var) {}
+	set todo(sv) {}
 	set todo(reports) {}
 	foreach sample $samples {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		if {!$jobsample} {
 			process_sample_job -todoVar todo -clip $clip \
-				-aligner $aligner -realign $realign --varcallers $varcallers -svcallers $svcallers \
+				-aligner $aligner -realign $realign -varcallers $varcallers -svcallers $svcallers \
 				-dbdir $dbdir -split $split -paired $paired \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
@@ -237,11 +238,13 @@ proc process_project_job {args} {
 	}
 	job_logdir $destdir/log_jobs
 	set todo(var) [list_remdup $todo(var)]
+	set todo(sv) [list_remdup $todo(sv)]
 	set todo(reports) [list_remdup $todo(reports)]
 	process_multicompar_job -experiment $experiment \
 		-skipincomplete 1 -targetvarsfile $targetvarsfile \
+		-varfiles $todo(var) -svfiles $todo(sv) \
 		-threads $threads -distrreg $distrreg \
-		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir $todo(var)
+		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir
 	if {[llength $reports]} {
 		proces_reportscombine_job $destdir/reports {*}$todo(reports)
 		if {[jobfileexists $destdir/reports/report_hsmetrics-${experimentname}.tsv]} {
