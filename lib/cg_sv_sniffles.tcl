@@ -3,7 +3,6 @@ proc sv_sniffles_job {args} {
 	set pre ""
 	set opts {}
 	set split 1
-	set deps {}
 	set regionfile {}
 	set threads 2
 	set cleanup 1
@@ -14,9 +13,6 @@ proc sv_sniffles_job {args} {
 	set min_support 2
 	set min_seq_size 300
 	cg_options sv_sniffles args {
-		-L - -deps {
-			lappend deps $value
-		}
 		-pre {
 			set pre $value
 		}
@@ -62,17 +58,15 @@ proc sv_sniffles_job {args} {
 		set root $rootname
 	}
 	# resultfiles
-	set varfile ${pre}var-$root.tsv
-	set sregfile ${pre}sreg-$root.tsv
-	set varallfile ${pre}varall-$root.tsv
-	set resultlist [list $destdir/$varfile.lz4]
+	set svfile ${pre}sv-$root.tsv
+	set resultlist [list $destdir/$svfile.lz4]
 	if {$resultfiles} {
 		return $resultlist
 	}
 	# logfile
 	set cmdline [list cg sv_sniffles]
 	foreach option {
-		split deps pre maxdist
+		split pre maxdist
 	} {
 		if {[info exists $option]} {
 			lappend cmdline -$option [get $option]
@@ -85,35 +79,38 @@ proc sv_sniffles_job {args} {
 	## Produce sniffles SNP calls
 	set keeppwd [pwd]
 	cd $destdir
-	set deps [list $file $refseq $file.bai {*}$deps]
-	job ${pre}var-$root {*}$skips -mem 1G -cores $threads \
-	-deps $deps \
-	-targets {${pre}varall-$root.vcf ${pre}varall-$root.vcf.analysisinfo} \
-	-skip [list $varallfile $varallfile.analysisinfo] \
-	-vars {sniffles opts regionfile refseq threads root} \
-	-code {
+	job ${pre}sv-$root.vcf {*}$skips -mem 1G -cores $threads \
+	-skip [list $svfile $svfile.analysisinfo] \
+	-deps {
+		$file $refseq $file.bai
+	} -targets {
+		${pre}sv-$root.vcf ${pre}sv-$root.vcf.analysisinfo
+	} -vars {
+		sniffles opts regionfile refseq threads root min_support min_seq_size
+	} -code {
 		analysisinfo_write $dep $target sample $root varcaller sniffles varcaller_version [version sniffles] varcaller_cg_version [version genomecomb]
-		exec sniffles {*}$opts -threads $threads --genotype \
-			--min_support $min_support --min_seq_size $min_seq_size
+		exec sniffles {*}$opts --threads $threads --genotype \
+			--min_support $min_support --min_seq_size $min_seq_size \
 			-m $dep -v $target.temp 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
 	}
-	job ${pre}var-sniffles2tsv-$root {*}$skips -deps [list ${pre}var-$root.vcf] \
-	-targets {$varfile.lz4 $varfile.analysisinfo} \
-	-vars {sample split} \
-	-code {
+	# 
+	job ${pre}sv-sniffles2tsv-$root {*}$skips -deps {
+		${pre}sv-$root.vcf
+	} -targets {
+		$svfile.lz4 $svfile.analysisinfo
+	} -vars {
+		sample split
+	} -code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
-	# lz4_job $varfile -i 1
-	lz4index_job {*}$skips $varfile.lz4
-#	# make sreg
-#	sreg_sniffles_job ${pre}sreg-$root $varallfile $sregfile.lz4 $skips
+	# lz4_job $svfile -i 1
+	lz4index_job {*}$skips $svfile.lz4
 	# cleanup
 	cd $keeppwd
 	return $resultlist
-	# return [file join $destdir $varfile]
 }
 
 proc cg_sv_sniffles {args} {
