@@ -185,9 +185,9 @@ proc cg_predictgender {args} {
 		} else {
 			set predgender f
 		}
-	} elseif {[isdouble $yxncount] && $yxncount > 0.7 && [isdouble $pcthqheterozygous] && $pcthqheterozygous < 50} {
+	} elseif {[isdouble $yxnratio] && $yxnratio > 0.7 && [isdouble $pcthqheterozygous] && $pcthqheterozygous < 50} {
 		set predgender m
-	} elseif {[isdouble $yxncount] && $yxncount < 0.6 && [isdouble $pcthqheterozygous] && $pcthqheterozygous > 50} {
+	} elseif {[isdouble $yxnratio] && $yxnratio < 0.6 && [isdouble $pcthqheterozygous] && $pcthqheterozygous > 50} {
 		set predgender f
 	} else {
 		set predgender u
