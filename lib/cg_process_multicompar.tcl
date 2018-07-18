@@ -99,7 +99,7 @@ proc process_multicompar_job {args} {
 		set sampledir $destdir
 	}
 	if {![info exists varfiles]} {
-		set varfiles [jobglob ${sampledir}/*/var-*.tsv]
+		set varfiles [ssort -natural [jobglob ${sampledir}/*/var-*.tsv]]
 	} else {
 		set tempvarfiles {}
 		foreach varfile $varfiles {
@@ -109,7 +109,7 @@ proc process_multicompar_job {args} {
 					set temp [jobglob $varfile]
 				}
 				if {$temp eq ""} {error "varfile $varfile not found"}
-				lappend tempvarfiles {*}$temp
+				lappend tempvarfiles {*}[ssort -natural $temp]
 			} else {
 				lappend tempvarfiles $varfile
 			}
@@ -117,7 +117,7 @@ proc process_multicompar_job {args} {
 		set varfiles $tempvarfiles
 	}
 	if {![info exists svfiles]} {
-		set svfiles [jobglob ${sampledir}/*/sv-*.tsv]
+		set svfiles [ssort -natural [jobglob ${sampledir}/*/sv-*.tsv]]
 	} else {
 		set tempsvfiles {}
 		foreach svfile $svfiles {
@@ -127,7 +127,7 @@ proc process_multicompar_job {args} {
 					set temp [jobglob $svfile]
 				}
 				if {$temp eq ""} {error "svfile $svfile not found"}
-				lappend tempsvfiles {*}$temp
+				lappend tempsvfiles {*}[ssort -natural $temp]
 			} else {
 				lappend tempsvfiles $svfile
 			}
