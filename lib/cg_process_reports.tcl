@@ -24,7 +24,7 @@ proc process_reports_job {args} {
 		set reports [list_lremove $allreports [string range $reports 1 end]]
 	} elseif {"basic" in $reports} {
 		set pos [lsearch $reports all]
-		set reports [list_remdup [lreplace $reports $pos $pos $basicreports]]
+		set reports [list_remdup [lreplace $reports $pos $pos {*}$basicreports]]
 	}
 	# find regionfile indicating target of sequencing (used by hsmetrics, histodepth, vars, so needs to be here)
 	set targetfile [targetfile_job $sampledir $dbdir]
