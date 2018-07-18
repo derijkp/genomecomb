@@ -161,8 +161,8 @@ proc process_multicompar_job {args} {
 				if {[file exists $compar_file]} {file rename -force $compar_file $compar_file.old}
 				break
 			}
+			set sample [file_sample $varfile]
 			if {![inlist $done $sample]} {
-				set sample [file_sample $varfile]
 				putslog "Still todo: $sample"
 				lappend stilltodo $varfile
 			}
