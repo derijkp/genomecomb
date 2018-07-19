@@ -134,13 +134,24 @@ proc cg_predictgender {args} {
 	set xcount [exec samtools view -q 20 -c $bamfile $xreg]
 	set ycount [exec samtools view -q 20 -c $bamfile $yreg]
 	set refncount [expr {$refcount/double($refsize)}]
-	set xncount [expr {$xcount/double($xsize)}]
-	set yncount [expr {$ycount/double($ysize)}]
-	if {$xcount == 0} {
+	if {$xsize != 0} {
+		set xncount [expr {$xcount/double($xsize)}]
+	} else {
+		set xncount ?
+	}
+	if {$ysize != 0} {
+		set yncount [expr {$ycount/double($ysize)}]
+	} else {
+		set yncount ?
+	}
+	if {![isdouble $xcount] || $xcount == 0 || ![isdouble $ycount]} {
 		set yxratio ?
-		set yxnratio ?
 	} else {
 		set yxratio [expr {double($ycount)/$xcount}]
+	}
+	if {![isdouble $xncount] || $xncount == 0 || ![isdouble $yncount]} {
+		set yxnratio ?
+	} else {
 		set yxnratio [expr {double($yncount)/$xncount}]
 	}
 	set pctheterozygous ?
