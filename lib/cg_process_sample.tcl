@@ -558,6 +558,7 @@ proc process_sample_job {args} {
 	} elseif {[llength $args] == 2} {
 		foreach {oridir sampledir} $args break
 	}
+	set reports [reports_expand $reports]
 	set dbdir [file_absolute $dbdir]
 	set sampledir [file_absolute $sampledir]
 	adapterfile [adapterfile $adapterfile]
