@@ -227,7 +227,7 @@ proc process_project_job {args} {
 				removeskew dt targetfile minfastqreads dir keepsams
 			} -code {
 				cg process_sample -stack 1 -v 2 -clip $clip \
-					-aligner $aligner -realign $realign --varcallers $varcallers -svcallers $svcallers \
+					-aligner $aligner -realign $realign -varcallers $varcallers -svcallers $svcallers \
 					-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams \
 					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 					-removeduplicates $removeduplicates -amplicons $amplicons \
@@ -267,6 +267,9 @@ proc process_project_job {args} {
 
 proc cg_process_project {args} {
 	set args [job_init {*}$args]
+	putslog pwd:\ [pwd]
+	putslog cmd:\ [list cg process_project {*}$args]
+	putslog jobargs:\ [job_curargs]
 	if {[llength $args] < 1} {
 		errorformat process_project
 	}

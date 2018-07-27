@@ -1260,4 +1260,13 @@ proc job_init {args} {
 	job_args $args
 }
 
+proc job_curargs {} {
+	global cgjob
+	set temp ""
+	foreach {opt field} {-distribute distribute -force force -dpriority priority -dqueue dqueue -dcleanup cleanup -runcmd runcmd -skipjoberrors skipjoberrors} {
+		lappend temp $opt $cgjob($field)
+	}
+	return $temp
+}
+
 job_init
