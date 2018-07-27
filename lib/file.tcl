@@ -22,7 +22,11 @@ proc file_absolute {file} {
 }
 
 proc file_sample {file} {
-	string range [file root [file tail [gzroot $file]]] 4 end
+	join [lrange [split [file root [file tail [gzroot $file]]] -] end end] -
+}
+
+proc file_analysis {file} {
+	join [lrange [split [file root [file tail [gzroot $file]]] -] 1 end] -
 }
 
 namespace eval genomecomb {}
