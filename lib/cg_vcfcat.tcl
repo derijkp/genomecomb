@@ -10,7 +10,7 @@ proc cg_vcfcat {args} {
 		}
 	} {} 1 ... {
 		concatenate vcf files that must have the same basic header:
-		The header of the ifrst file is used without checking for compatibility!
+		The header of the first file is used without checking for compatibility!
 	}
 	if {$index && ![info exists outfile]} {
 		error "cg vcfcat cannot index (-i 1) if no outputfile is given (-o)"
