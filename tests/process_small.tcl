@@ -210,6 +210,32 @@ test process_small {process_project exomes yri mx2 freebayes} {
 	}
 } {}
 
+test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
+	cd $::bigtestdir
+	file delete -force tmp/exomes_gatkh_yri_mx2
+	file mkdir tmp/exomes_gatkh_yri_mx2/samples
+	foreach sample {
+		NA19238mx2  NA19239mx2  NA19240mx2
+	} {
+		file mkdir tmp/exomes_gatkh_yri_mx2/samples/$sample/fastq
+		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_gatkh_yri_mx2/samples/$sample/fastq
+		mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/exomes_gatkh_yri_mx2/samples/$sample/reg_hg19_targets.tsv
+	}
+	cg process_project {*}$::dopts -split 1 -varcallers {gatkh freebayes} \
+		-dbdir refseqtest/hg19 tmp/exomes_gatkh_yri_mx2 >& tmp/exomes_gatkh_yri_mx2.log
+	# check vs expected
+	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
+		-x *.analysisinfo -x *.png \
+		tmp/exomes_gatkh_yri_mx2 expected/exomes_gatkh_yri_mx2
+	diffanalysisinfo tmp/exomes_gatkh_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/exomes_gatkh_yri_mx2/compar/annot_compar-*.tsv.analysisinfo
+	checkdiff -y --suppress-common-lines tmp/exomes_gatkh_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_gatkh_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2
+	foreach file1 [glob tmp/exomes_gatkh_yri_mx2/compar/info_analysis.tsv tmp/exomes_gatkh_yri_mx2/samples/*/info_analysis.tsv] {
+		regsub ^tmp $file1 expected file2
+		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
+	}
+} {}
+
 #test process_small {process_project exomes yri mx2} {
 #	cd $::bigtestdir
 #	file delete -force tmp/exomes_yri_mx2
