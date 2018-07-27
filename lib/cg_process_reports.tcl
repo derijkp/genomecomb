@@ -8,6 +8,8 @@ proc reports_expand {reports} {
 	} elseif {"basic" in $reports} {
 		set pos [lsearch $reports all]
 		set reports [list_remdup [lreplace $reports $pos $pos {*}$basicreports]]
+	} else {
+		return $reports
 	}
 }
 

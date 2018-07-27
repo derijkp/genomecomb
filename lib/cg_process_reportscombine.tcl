@@ -70,7 +70,7 @@ proc proces_reportscombine_job {args} {
 			set analyses [ssort -natural [array names a]]
 			foreach analysis $analyses {
 				# only report for "endpoints" analysis (data of partial will be included in endpoints)
-				if {[regexp {^cov[0-9]+-} $analysis]} continue
+				if {[regexp {^cov5-} $analysis]} continue
 				if {[llength [array names a *-$analysis]]} continue
 				set sample [lindex [split $analysis -] end]
 				set resultline [list $analysis $sample]
