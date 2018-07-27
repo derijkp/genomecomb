@@ -30,7 +30,7 @@ test process {process_illumina exomes yri} {
 	file delete -force tmp/exomes_yri
 	exec cp -al ori/exomes_yri.start tmp/exomes_yri
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
-	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri 2>@ stderr >@ stdout
+	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri >& tmp/exomes_yri.log
 	# check vs expected
 	checkdiff -y --suppress-common-lines tmp/exomes_yri/samples/NA19238/map-dsbwa-NA19238.bam.dupmetrics expected/exomes_yri/samples/NA19238/map-dsbwa-NA19238.bam.dupmetrics | grep -v "Started on"
 	checkdiff -qr -x *log_jobs -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri expected/exomes_yri
