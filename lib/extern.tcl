@@ -33,6 +33,16 @@ proc findpicard {} {
 }
 
 proc gatkexec {args} {
+	if {[lindex $args 0] eq "-finishedpattern"} {
+		# hack: If the given (regexp) pattern is present in the output, ignore errors
+		# This hack was added because haplotype caller sometimes fails with an error after
+		# completely processing the data and producing a compete gvcf (probably in cleanup)
+		# Using this these errors are ignored (if the analysis complete pattern is encountered)
+		set finishedpattern [lindex $args 1]
+		set args [lrange $args 2 end]
+	} else {
+		set finishedpattern {}
+	}
 	global gatk
 	if {![info exists gatk(version)]} {
 		set gatk(usecommand) 0
@@ -70,9 +80,21 @@ proc gatkexec {args} {
 	if {[lindex $args 0] eq "version"} {return $gatk(version)}
 	set javaopts [list_pop args 0]
 	if ($gatk(usecommand)) {
-		catch_exec $gatk(command) --java-options $javaopts {*}$args
+		set error [catch {
+			exec $gatk(command) --java-options $javaopts {*}$args
+		} msg opt]
 	} else {
-		catch_exec $::gatkjava {*}$javaopts -jar $gatk(jar) -T {*}$args
+		set error [catch {
+			exec $::gatkjava {*}$javaopts -jar $gatk(jar) -T {*}$args
+		} msg opt]
+	}
+	if {$error} {
+		if {$::errorCode ne "NONE"} {
+			if {$finishedpattern eq "" || ![regexp $finishedpattern $msg]} {
+				dict unset opt -level
+				return -options $opt $msg
+			}
+		}
 	}
 	return ""
 }

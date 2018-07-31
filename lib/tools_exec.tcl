@@ -26,7 +26,7 @@ proc catch_exec {args} {
 		exec {*}$args
 	} msg opt]} {
 		if {$::errorCode ne "NONE"} {
-			dict unset resultoptions -level
+			dict unset opt -level
 			return -options $opt $msg
 		}
 	}

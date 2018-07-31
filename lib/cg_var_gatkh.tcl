@@ -132,7 +132,9 @@ proc var_gatkh_job {args} {
 			set bedfile [tempbed $regionfile $refseq]
 			lappend opts -L $bedfile
 		}
-		gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} HaplotypeCaller \
+		# -finishedpattern is a hack to catch an error that sometimes seems to happen, after fully processing the data
+		# Do not use redirect to stdout/stderr, as the code needs the output to check if actual analysis was finished
+		gatkexec -finishedpattern {HaplotypeCaller done\. Elapsed time} {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} HaplotypeCaller \
 			{*}$opts -R $gatkrefseq \
 			-I $dep \
 			-O $resultgvcf.temp.gz \
@@ -140,8 +142,7 @@ proc var_gatkh_job {args} {
 			-ERC $ERC \
 			-G StandardAnnotation \
 			-G StandardHCAnnotation \
-			-G AS_StandardAnnotation \
-			2>@ stderr >@ stdout
+			-G AS_StandardAnnotation
 		file rename -force $resultgvcf.temp.gz $resultgvcf
 		file rename -force $resultgvcf.temp.gz.tbi $resultgvcf.tbi
 		# file delete $resultgvcf.temp
