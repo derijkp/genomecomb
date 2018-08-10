@@ -129,6 +129,21 @@ proc gatk3exec {args} {
 	catch_exec $::gatkjava {*}$javaopts -jar $gatk3(jar) -T {*}$args
 }
 
+proc gatk_IndexFeatureFile_job {file {name {}}} {
+	upvar job_logdir job_logdir
+	if {[file extension $file] eq ".gz"} {set target $file.tbi} else {set target $file.idx}
+	job gatkindex_$name[file tail $file] -deps {
+		$file
+	} -targets {
+		$target
+	} -vars {
+		file
+	} -code {
+		gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx4g] IndexFeatureFile -F $file
+	}
+	return $target
+}
+
 #proc gatk {} {
 #	global gatk
 #	if {![info exists gatk]} {
