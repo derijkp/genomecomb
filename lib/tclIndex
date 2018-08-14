@@ -161,6 +161,8 @@ set auto_index(fastq_clipadapters_job) [list source [file join $dir cg_fastq_cli
 set auto_index(cg_fixtsv) [list source [file join $dir cg_fixtsv.tcl]]
 set auto_index(gatk_compar_job) [list source [file join $dir cg_gatk_compar.tcl]]
 set auto_index(cg_gatk_compar) [list source [file join $dir cg_gatk_compar.tcl]]
+set auto_index(cg_gatk_gatk_genotypevcfs) [list source [file join $dir cg_gatk_genotypevcfs.tcl]]
+set auto_index(cg_gatk_index) [list source [file join $dir cg_gatk_index.tcl]]
 set auto_index(gatk_vqsr_job) [list source [file join $dir cg_gatk_vqsr.tcl]]
 set auto_index(cg_gatk_vqsr) [list source [file join $dir cg_gatk_vqsr.tcl]]
 set auto_index(cg_gene2reg) [list source [file join $dir cg_gene2reg.tcl]]
