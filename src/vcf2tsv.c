@@ -18,6 +18,14 @@
 #include "debug.h"
 #include "hash.h"
 
+/* 
+for later: conversion of genotype list fiels
+If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by:
+F(j/k) = (k*(k+1)/2)+j. 
+In other words, for biallelic sites the ordering is: AA,AB,BB; 
+for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.
+*/
+
 DString *extractID(DString *string,DString *id) {
 	char *str, *end;
 	str = strstr(string->string,"ID=");
@@ -686,12 +694,18 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 							DStringAppendS(genotypelist,"1",1);
 						} else {
 							AltVar *temp = altvars+a1-1;
-							if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
+							if ((temp->begin >= altvar->end && temp->end != altvar->begin) || (temp->end <= altvar->begin && temp->begin != altvar->end)) {
+								/* if this genotype is not overlapping with current alt (e.g. an insertion is located after a snp), this position is reference */
+								a1 = 0;
+								printallele(fo,altvar->refsize,altvar->ref,20);
+								DStringAppendS(genotypelist,"0",1);
+							} else if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
 								printallele(fo,temp->altsize,temp->alt,0);
+								DStringAppendS(genotypelist,"2",1);
 							} else {
 								fprintf(fo,"\t@");
+								DStringAppendS(genotypelist,"2",1);
 							}
-							DStringAppendS(genotypelist,"2",1);
 						}
 					}
 					if (*genotypecur == '|') {
@@ -720,12 +734,18 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 							DStringAppendS(genotypelist,"1",1);
 						} else {
 							AltVar *temp = altvars+a2-1;
-							if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
+							if ((temp->begin >= altvar->end && temp->end != altvar->begin) || (temp->end <= altvar->begin && temp->begin != altvar->end)) {
+								/* if this genotype is not overlapping with current alt (e.g. an insertion is located after a snp), this position is reference */
+								a2 = 0;
+								printallele(fo,altvar->refsize,altvar->ref,20);
+								DStringAppendS(genotypelist,"0",1);
+							} else if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
 								printallele(fo,temp->altsize,temp->alt,0);
+								DStringAppendS(genotypelist,"2",1);
 							} else {
 								fprintf(fo,"\t@");
+								DStringAppendS(genotypelist,"2",1);
 							}
-							DStringAppendS(genotypelist,"2",1);
 						}
 					}
 					if (a1 < 0 || a2 < 0) {

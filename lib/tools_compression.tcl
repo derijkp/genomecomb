@@ -81,7 +81,7 @@ proc gzcatch {cmd} {
 	}
 }
 
-array set gzexts {
+array set ::gzexts {
 	.rz razip
 	.lz4 lz4
 	.gz gzip

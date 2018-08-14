@@ -15,7 +15,7 @@ proc cg_vcf2tsv {args} {
 	set split 1
 	set sort 1
 	set typelist ". AD R RPA R AC A AF A"
-	set collapse 1
+	set collapse 0
 	set removefields {}
 	cg_options vcf2tsv args {
 		-s - -split {

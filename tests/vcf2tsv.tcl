@@ -39,17 +39,17 @@ proc write_vcf {file data {extracomment {}}} {
 }
 
 test vcf2tsv {vcf2tsv} {
-	exec cg vcf2tsv data/test.vcf tmp/temp.tsv
+	exec cg vcf2tsv -split 0 data/test.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test.vcf2tsv
 } {}
 
 test vcf2tsv {vcf2tsv ins and del} {
-	exec cg vcf2tsv data/test2.vcf tmp/temp.tsv
+	exec cg vcf2tsv -split 0 data/test2.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test2.vcf2tsv
 } {}
 
 test vcf2tsv {vcf2tsv 1000glow} {
-	exec cg vcf2tsv data/test1000glow.vcf tmp/temp.tsv
+	exec cg vcf2tsv -split 0 data/test1000glow.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
 } {}
 
@@ -194,7 +194,7 @@ test vcf2tsv {vcf2tsv extraalleles} {
 
 test vcf2tsv {vcf2tsv space in name} {
 	file copy -force data/test.vcf "tmp/test it.vcf"
-	exec cg vcf2tsv "tmp/test it.vcf" "tmp/test it.tsv"
+	exec cg vcf2tsv -split 0 "tmp/test it.vcf" "tmp/test it.tsv"
 	exec diff "tmp/test it.tsv" data/expected-test.vcf2tsv
 } {}
 
@@ -266,13 +266,19 @@ test vcf2tsv {AD 0} {
 } {}
 
 test vcf2tsv {gvcf GVCF} {
-	cg vcf2tsv data/gatkh.gvcf tmp/test.tsv
+	cg vcf2tsv -split 0 data/gatkh.gvcf tmp/test.tsv
 	cg tsvdiff tmp/test.tsv data/gatkh-expected.tsv
 } {}
 
 test vcf2tsv {gvcf BP_RESOLUTION} {
-	cg vcf2tsv data/gatkh_bp.gvcf tmp/test.tsv
+	cg vcf2tsv -split 0 data/gatkh_bp.gvcf tmp/test.tsv
 	cg tsvdiff tmp/test.tsv data/gatkh_bp-expected.tsv
+} {}
+
+test vcf2tsv {gvcf BP_RESOLUTION} {
+	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 data/varall-gatkh-bwa-sample1.gvcf.gz tmp/test.vcf
+	cg vcf2tsv tmp/test.vcf tmp/test.tsv
+	cg tsvdiff tmp/test.tsv data/varall-gatkh-bwa-sample1.tsv
 } {}
 
 test vcfcat {vcfcat basic} {
