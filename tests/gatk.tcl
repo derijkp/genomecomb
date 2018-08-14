@@ -19,9 +19,10 @@ test gatkexec {error -finishedpattern} {
 } 0
 
 test gatk {gatk_compar} {
-	file copy data/varall-gatkh-bwa.gvcf.gz tmp/varall-gatkh-bwa-sample1.gvcf.gz
+	file copy data/varall-gatkh-bwa-sample1.gvcf.gz tmp
 	file copy data/varall-gatkh-bwa-sample2.gvcf.gz tmp
-	exec cg gatk_compar --stack 1 -dbdir $::refseqdir/hg19 -maxmem 4 -vqsr tmp/result-vqsr.vcf.gz tmp/result.vcf.gz {*}[glob tmp/*.gvcf.gz] >@ stdout 2>@ stderr
+	exec cg gatk_compar --stack 1 -dbdir $::refseqdir/hg19 -maxmem 4 -vqsr {} tmp/result.vcf.gz {*}[glob tmp/*.gvcf.gz] >@ stdout 2>@ stderr
+	cg tsvdiff tmp/result.vcf.gz data/gatk_compar_expected.vcf.gz
 } {}
 
 testsummarize
