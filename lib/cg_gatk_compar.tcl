@@ -103,10 +103,10 @@ proc gatk_compar_job args {
 			lappend filesarg --variant $file
 			lappend deps $file $file.tbi
 		}
-		job gatkbp_combine-$name-$region -mem [expr {$maxmem + 4}]g -cores 1 \
+		job gatkbp_combine-$name -mem [expr {$maxmem + 4}]g -cores 1 \
 		 -deps $deps \
 		 -targets {$resultvcf} \
-		 -vars {region gatkrefseq resultvcf samplemapfile maxmem} \
+		 -vars {region gatkrefseq resultvcf samplemapfile maxmem filesarg} \
 		 -code {
 			set combinedgvcf [file root [gzroot $resultvcf]]-combined.gvcf
 			gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g] CombineGVCFs \
@@ -118,10 +118,10 @@ proc gatk_compar_job args {
 			gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g] GenotypeGVCFs \
 				-R $gatkrefseq \
 				-V $combinedgvcf \
-				-O $resultvcf.temp \
+				-O $resultvcf.temp[file extension $resultvcf] \
 				-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
 			file delete $combinedgvcf
-			file rename $resultvcf.temp $resultvcf
+			file rename $resultvcf.temp[file extension $resultvcf] $resultvcf
 		}
 	} else {
 		set regions [distrreg_regs $distrreg $refseq]
