@@ -138,7 +138,7 @@ typedef struct altvar {
 /* i know it is ugly, but dont have the time to transfer all, or put in a nice struct at do at the moment */
 AltVar *altvars;
 static DString *line, *string, *temp;
-static DString *reftype, *snp, *del, *ins, *sub, *dup, *inv, *cnv, *trans;
+static DString *snptype, *deltype, *instype, *subtype, *duptype, *invtype, *cnvtype, *transtype;
 static DString *geno, *outinfo, *formatfieldsnumber, *infofieldsnumber;
 static DStringArray *header, *format, *info, *samples;
 static DStringArray *formatfields , *infofields;
@@ -190,22 +190,22 @@ void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int exclu
 		diff = 0;
 		begin = pos - 1;
 		end = pos;
-		type = snp;
+		type = snptype;
 	} else if (diffchar) {
 		diff = 0;
 		begin = pos - 1;
 		end = pos + l1 - 1;
-		type = sub;
+		type = subtype;
 	} else {
 		diff = 1;
 		begin = pos;
 		end = pos + l1 - 1;
 		if (l1 == 1) {
-			type = ins;
+			type = instype;
 		} else if (l2 == 1) {
-			type = del;
+			type = deltype;
 		} else {
-			type = sub;
+			type = subtype;
 		}
 	}
 	fprintf(fo,"%s\t%d\t%d\t%s", a_chrom(linea)->string, begin, end, type->string);
@@ -523,11 +523,11 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 		altvar->ref = curref; altvar->refsize = l1;
 		altvar->alt = curalt; altvar->altsize = l2; altvar->buffer = NULL;
 		if (*curalt == '<' && strcmp(curalt+1,"NON_REF>") == 0) {
-			altvar->type = reftype;
+			altvar->type = snptype;
 			altvar->begin = pos;
 			altvar->end = pos+l1;
 			altvar->altsize = 1;
-			altvar->alt[0] = '.';
+			altvar->alt[0] = curref[0];
 			if (svend != -1) {
 				altvar->end = svend;
 				altvar->refsize = svend - altvar->begin;
@@ -535,19 +535,19 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 			}
 		} else if ((l2 == 0 || *curalt != '<') && svtype == NULL) {
 			if (l1 == 1 && l2 == 1) {
-				altvar->type = snp;
+				altvar->type = snptype;
 				altvar->begin = pos;
 				altvar->end = pos + 1;
 			} else if (l1 == 0 && l2 != 0) {
-				altvar->type = ins;
+				altvar->type = instype;
 				altvar->begin = pos;
 				altvar->end = pos;
 			} else if (l1 != 0 && l2 == 0) {
-				altvar->type = del;
+				altvar->type = deltype;
 				altvar->begin = pos;
 				altvar->end = pos+l1;
 			} else {
-				altvar->type = sub;
+				altvar->type = subtype;
 				altvar->begin = pos;
 				altvar->end = pos+l1;
 			}
@@ -567,31 +567,31 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 			}
 			altvar->ref = NULL;
 			if (l2 > 3 && strncmp(curalt+1,"DEL",3) == 0) {
-				altvar->type = del;
+				altvar->type = deltype;
 				altvar->altsize = 0;
 			} else if (l2 > 3 && strncmp(curalt+1,"INS",3) == 0) {
-				altvar->type = ins;
+				altvar->type = instype;
 				if (svlen > 0) {
 					altvar->altsize = svlen;
 					altvar->alt = NULL;
 				}
 			} else if (l2 > 3 && strncmp(curalt+1,"DUP",3) == 0) {
-				altvar->type = dup;
+				altvar->type = duptype;
 				altvar->altsize = altvar->refsize + svlen;
 				altvar->alt = NULL;
 			} else if (l2 > 3 && strncmp(curalt+1,"INV",3) == 0) {
-				altvar->type = inv;
+				altvar->type = invtype;
 				altvar->altsize = 1;
 				altvar->alt = "i";
 			} else if (l2 > 3 && strncmp(curalt+1,"CNV",3) == 0) {
-				altvar->type = cnv;
+				altvar->type = cnvtype;
 				altvar->altsize = 4;
 				altvar->alt = "cnv";
 			} else if (l2 > 3 && strncmp(curalt+1,"TRA",3) == 0) {
 				char *curchr; int cursize;
 				altvar->end = altvar->begin;
 				altvar->refsize = 0;
-				altvar->type = trans;
+				altvar->type = transtype;
 				if (altvar->buffer == NULL) {altvar->buffer = DStringNew();}
 				curchr = outinfo[chr2pos].string; cursize = outinfo[chr2pos].size;
 				if (cursize > 3 && (curchr[0] == 'c' || curchr[0] == 'C') && curchr[1] == 'h' && curchr[2] == 'r') {
@@ -874,9 +874,8 @@ int main(int argc, char *argv[]) {
 	int *order = NULL;
 	int split,read,i,j,maxtab, min, excludefilter = 0, excludename = 0, infopos = 0;
 	line=NULL; string=NULL; temp=NULL;
-	reftype=DStringNewFromChar("ref");
-	snp=DStringNewFromChar("snp"); del=DStringNewFromChar("del"); ins=DStringNewFromChar("ins"); sub=DStringNewFromChar("sub");
-	dup=DStringNewFromChar("dup"); inv=DStringNewFromChar("inv"); cnv=DStringNewFromChar("cnv"); trans=DStringNewFromChar("trans");
+	snptype=DStringNewFromChar("snp"); deltype=DStringNewFromChar("del"); instype=DStringNewFromChar("ins"); subtype=DStringNewFromChar("sub");
+	duptype=DStringNewFromChar("dup"); invtype=DStringNewFromChar("inv"); cnvtype=DStringNewFromChar("cnv"); transtype=DStringNewFromChar("trans");
 	geno = NULL; outinfo = NULL; formatfieldsnumber=NULL; infofieldsnumber=NULL;
 	header=NULL; format=NULL; info=NULL; samples=NULL;
 	formatfields=NULL ; headerfields=NULL; infofields=NULL; linea=NULL;
@@ -933,7 +932,7 @@ int main(int argc, char *argv[]) {
 	dstring_hash_set(conv_formata,DStringNewFromChar("DB"),(void *)DStringNewFromChar("dbsnp"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("H2"),(void *)DStringNewFromChar("Hapmap2"));
 	/* create hash for fields to remove */
-	if (argc == 6) {
+	if (argc >= 6) {
 		char *start = argv[5];
 		char *cur = argv[5];
 		while (1) {
@@ -1109,10 +1108,10 @@ int main(int argc, char *argv[]) {
 	if (fd != stdin) {fclose(fd);}
 	/* free dstrings */
 	DStringDestroy(line);
-	DStringDestroy(snp);
-	DStringDestroy(ins);
-	DStringDestroy(del);
-	DStringDestroy(sub);
+	DStringDestroy(snptype);
+	DStringDestroy(instype);
+	DStringDestroy(deltype);
+	DStringDestroy(subtype);
 	DStringDestroy(string);
 	DStringDestroy(temp);
 	DStringDestroy(alt);
