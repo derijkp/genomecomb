@@ -538,6 +538,9 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 		set sampledir [file dir $samplesa($sample)]
 		set sregfile $sampledir/sreg-$sample.tsv
 		set varallfile $sampledir/varall-$sample.tsv
+		if {![jobfileexists $varallfile]} {
+			set varallfile $sampledir/varall-$sample.gvcf
+		}
 		set target $workdir/avars-$sample.tsv
 		lappend pastefiles $target
 		if {![jobfileexists $sregfile] && ![jobfileexists $varallfile]} {
@@ -560,8 +563,9 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 		  -vars {allvarsfile samplevarsfile sregfile varallfile sample split sampledir} -code {
 			set allvarsfile [gzfile $allvarsfile]
 			set samplevarsfile [gzfile $samplevarsfile]
-			set sregfile [gzfile $sregfile]
-			set varallfile [gzfile $varallfile]
+			# if the file does not exist, the following will make it empty
+			set sregfile [lindex [gzfiles $sregfile] 0]
+			set varallfile [lindex [gzfiles $varallfile] 0]
 			set vf [gzopen $allvarsfile]
 			set vheader [tsv_open $vf]
 			gzclose $vf
@@ -643,9 +647,10 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 			set o [open $target.temp w]
 			puts $o [join $newheader \t]
 			close $o
-			set sregfile [lindex [gzfiles $sregfile] 0]
-			set varallfile [lindex [gzfiles $varallfile] 0]
-			if {$varallfile ne "" || $allfound || (![llength $oldbcolannot] && ![llength $coverageRefScorefiles])} {
+			if {[file extension [gzroot $varallfile]] eq ".gvcf"} {
+				# puts [list cg vcf2tsv $varallfile | ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
+				exec cg vcf2tsv $varallfile | multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs >> $target.temp
+			} elseif {$varallfile ne "" || $allfound || (![llength $oldbcolannot] && ![llength $coverageRefScorefiles])} {
 				# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
 				exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs >> $target.temp
 			} else {
