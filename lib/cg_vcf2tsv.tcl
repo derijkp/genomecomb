@@ -61,8 +61,11 @@ proc cg_vcf2tsv {args} {
 		lappend pipe >@ stdout 2>@ stderr
 	}
 	# putsvars pipe
-	set error [catch $pipe msg]
-	if {$error} {exiterror "error converting vcf file: $msg"}
+	set error [catch $pipe msg opt]
+	if {$error} {
+		puts stderr [list set ::errorCode $::errorCode \; set msg $msg \; set opt $opt]
+		exiterror "error converting vcf file: $msg"
+	}
 }
 
 proc vcf2tsv_header {f {samplesVar {}} {commentVar {}} {formatfieldsVar {}} {infofieldsVar {}}} {

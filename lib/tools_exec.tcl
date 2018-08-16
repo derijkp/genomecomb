@@ -8,7 +8,7 @@ proc chanexec {in out pipe} {
 	}
 	fcopy $in $o
 	if {$in ne "stdin"} {catch {gzclose $in}}
-	close $o
+	catch {close $o}
 	if {$out ne "stdout"} {catch {close $out}}
 }
 
