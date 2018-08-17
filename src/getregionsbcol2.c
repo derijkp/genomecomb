@@ -20,7 +20,7 @@
 int main(int argc, char *argv[]) {
 	BCol *bcol;
 	BCol_table *table;
-	DString *chr;
+	DString *chr = NULL;
 	long double value,cutoff;
 	uint64_t togo;
 	int tablepos = 0,tablesize;

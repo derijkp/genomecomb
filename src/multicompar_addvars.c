@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 	DString *out_seq=NULL, *out_zyg=NULL, *out_a1=NULL, *out_a2=NULL;
 	DelInfo *orid = (DelInfo *)malloc(sizeof(DelInfo));
 	FieldAnnot *fieldannotlist = NULL; int checkfieldannot = 0, numbcolannot, numregfiles;
-	int *orikeepposs, *varallkeepposs;
+	int *orikeepposs, *varallkeepposs = NULL;
 	char *orivarsfile, *allvarsfile, *sregfile, *varallfile;
 	int orizygpos, oria1pos, oria2pos, orikeepsize, prevcomp=-2;
 	int split = 1;

@@ -13,10 +13,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tools.h"
+#include "gztools.h"
 #include "debug.h"
 
 int main(int argc, char *argv[]) {
-	FILE *f1,*f2;
+	FILE *f1;
+	GZFILE *f2;
 	DStringArray *result1=NULL,*result2=NULL,*resultkeep=NULL,*resulttemp=NULL;
 	DString *line1 = NULL,*line2 = NULL,*linekeep = NULL,*linetemp = NULL,*empty=NULL;
 	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
@@ -35,7 +37,7 @@ int main(int argc, char *argv[]) {
 	start1pos = atoi(argv[2]);
 	end1pos = atoi(argv[3]);
 	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
-	f2 = gz_open(argv[4],"r");
+	f2 = gz_open(argv[4]);
 	chr2pos = atoi(argv[5]);
 	start2pos = atoi(argv[6]);
 	end2pos = atoi(argv[7]);
