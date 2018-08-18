@@ -16,6 +16,7 @@ proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} 
 }
 
 proc var_gatkh_job {args} {
+	# putslog [list var_gatkh_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
 	set pre ""
@@ -49,7 +50,7 @@ proc var_gatkh_job {args} {
 			set split $value
 		}
 		-threads - -t {
-			puts "-threads $value ignored because gatkh does not support threads for now"
+			putslog "-threads $value ignored because gatkh does not support threads for now"
 			set threads $value
 		}
 		-cleanup {
