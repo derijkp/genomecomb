@@ -39,7 +39,10 @@ proc process_multicompar_job {args} {
 			set targetvarsfile $value
 		}
 		-varfiles {
-			set varfiles $value
+			set varfiles {}
+			foreach file $value {
+				lappend varfiles [file_absolute $file]
+			}
 		}
 		-svfiles {
 			set svfiles $value
@@ -103,16 +106,15 @@ proc process_multicompar_job {args} {
 	} else {
 		set tempvarfiles {}
 		foreach varfile $varfiles {
-			if {![jobfileexists $varfile]} {
-				set temp [jobglob $sampledir/*/$varfile]
-				if {$temp eq ""} {
-					set temp [jobglob $varfile]
-				}
-				if {$temp eq ""} {error "varfile $varfile not found"}
-				lappend tempvarfiles {*}[ssort -natural $temp]
-			} else {
-				lappend tempvarfiles $varfile
+			set temp [jobglob $sampledir/*/$varfile]
+			if {$temp eq ""} {
+				set temp [jobglob $varfile]
 			}
+			if {$temp eq ""} {
+				set temp [jobglob $sampledir/*/[file tail $varfile]]
+			}
+			if {$temp eq ""} {error "varfile $varfile not found"}
+			lappend tempvarfiles {*}[ssort -natural $temp]
 		}
 		set varfiles $tempvarfiles
 	}
