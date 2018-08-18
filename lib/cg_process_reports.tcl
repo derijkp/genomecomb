@@ -179,7 +179,7 @@ proc process_reports_job {args} {
 	}
 	if {[inlist $reports predictgender]} {
 		set target $sampledir/reports/report_predictgender-$sample.tsv
-		job predictgender-$sample -deps {$sampledir/map-*.bam $sampledir/var-*.tsv} -vars {dbdir sampledir} -targets {$target} -code {
+		job predictgender-$sample -optional 1 -deps {$sampledir/map-*.bam ($sampledir/var-*.tsv)} -vars {dbdir sampledir} -targets {$target} -code {
 			cg predictgender -dbdir $dbdir $sampledir $target
 		}
 	}
