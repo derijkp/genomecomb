@@ -152,7 +152,8 @@ test cg_options {args error (not enough)} {
 	} {p1 p2}
 } {
 ERROR: Wrong number of arguments, correct format is:
-cg test ?options? p1 p2 ...} error
+cg test ?options? p1 p2 ...
+  with options: -opt} error
 
 test cg_options {args option} {
 	set args {-opt o 1 2 3 4}
@@ -182,7 +183,8 @@ test cg_options {args error (not enough)} {
 	} {p1 p2} 1 4
 } {
 ERROR: Wrong number of arguments, correct format is:
-cg test ?options? p1 ?p2? ...} error
+cg test ?options? p1 ?p2? ...
+  with options: -opt} error
 
 test cg_options {args error (too much)} {
 	set args {-opt o 1 2 3 4}
@@ -193,7 +195,8 @@ test cg_options {args error (too much)} {
 	} {p1 p2} 1 2
 } {
 ERROR: Wrong number of arguments, correct format is:
-cg test ?options? p1 ?p2?} error
+cg test ?options? p1 ?p2?
+  with options: -opt} error
 
 test cg_options {args option} {
 	set args {-opt o 1 2 3 4}
