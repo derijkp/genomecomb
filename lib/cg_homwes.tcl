@@ -72,7 +72,7 @@ proc cg_homwes {args} {
 		set vcf 1
 		set tsvfile $workdir/[file root [file tail $annotcomparfile]].tsv
 		putslog "Converting vcf file $annotcomparfile to tsv $tsvfile"
-		cg vcf2tsv $annotcomparfile $tsvfile.temp 2>@ stderr
+		cg vcf2tsv -split 0 $annotcomparfile $tsvfile.temp 2>@ stderr
 		putslog "annotating $tsvfile"
 		cg annotate $tsvfile.temp $tsvfile.temp2 {*}[gzfiles $dbdir/reg_*_microsat.tsv $dbdir/reg_*_simpleRepeat.tsv]
 		file rename -force $tsvfile.temp2 $tsvfile
