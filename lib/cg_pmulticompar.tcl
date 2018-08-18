@@ -540,6 +540,10 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 		set varallfile $sampledir/varall-$sample.tsv
 		if {![jobfileexists $varallfile]} {
 			set varallfile $sampledir/varall-$sample.gvcf
+			if {![jobfileexists $varallfile]} {
+				# back to original for error
+				set varallfile $sampledir/varall-$sample.tsv
+			}
 		}
 		set target $workdir/avars-$sample.tsv
 		lappend pastefiles $target
