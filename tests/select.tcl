@@ -124,8 +124,7 @@ chr2	4000	4001	4}
 test select "-f calculated functions error unknown function$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -f {chromosome begin end {error=blabla($alt)}} [gzfile data/vars1.sft] tmp/temp.tsv
-} {unknown function blabla
-child process exited abnormally} error
+} {unknown function blabla} error
 
 test select "-f calculated functions error catch$dboptt" {
 	global dbopt
@@ -137,8 +136,7 @@ chr1	4001	4002	error}
 test select "-f calculated functions error not a number$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -f {chromosome begin end {error=($list<1)}} [gzfile data/vars1.sft] tmp/temp.tsv
-} {1;2,3;4 is not a number
-child process exited abnormally} error
+} {1;2,3;4 is not a number} error
 
 test select "-f wildcard error$dboptt" {
 	global dbopt
