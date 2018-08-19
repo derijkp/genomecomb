@@ -1052,6 +1052,37 @@ test reg_annot {check for diff size in paste error} {
 	exec cg annotate tmp/vars1.tsv tmp/temp.tsv tmp/reg_annot.tsv
 } {*file */vars.tsv.annot_annot has less lines than other files in paste*} error match
 
+test reg_annot {bug fix, chromosome not in reference} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		6_qbl_hap6	1191644	1191645	del	T
+	}
+	write_tab tmp/gene_annot.tsv {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	proteinID	alignID
+		chr6_qbl_hap6	1150112	1203581	+	HLA-A	known	uc031suu.1	{}	{}	1150221	1203580	2	1150112,1203311,	1150294,1203581,	{}	{}	{}	{}	O19559	uc031suu.1
+		chr6_qbl_hap6	1150221	1152943	+	HLA-H	ens	ENST00000429724	0	593	1152943	1152943	7	1150221,1150418,1150929,1151790,1152167,1152724,1152899,	1150294,1150688,1151205,1152065,1152284,1152757,1152943,	ENSG00000227296	none	none	-1,-1,-1,-1,-1,-1,-1,	{}	{}
+		chr6_qbl_hap6	1151792	1206454	+	HLA-A	known	uc011igl.2	{}	{}	1151807	1206025	6	1151792,1204756,1205073,1205628,1205803,1206020,	1151848,1204974,1205190,1205661,1205851,1206454,	{}	{}	{}	{}	B4DJI3	uc011igl.2
+		chr6_qbl_hap6	1159017	1160149	+	HLA-T	ens	ENST00000430243	0	593	1160149	1160149	4	1159017,1159414,1159925,1160110,	1159289,1159527,1159962,1160149,	ENSG00000229552	none	none	-1,-1,-1,-1,	{}	{}
+		chr6_qbl_hap6	1161752	1203991	-	AK097625	known	uc011ign.1	{}	{}	1161752	1161752	6	1161752,1187266,1189768,1190537,1190824,1203805,	1163306,1187359,1189984,1190641,1190932,1203991,	{}	{}	{}	{}	{}	uc011ign.1
+		chr6_qbl_hap6	1168977	1169344	+	DDX39BP1	ens	ENST00000439001	0	593	1169344	1169344	2	1168977,1169287,	1169112,1169344,	ENSG00000236441	none	none	-1,-1,	{}	{}
+		chr6_qbl_hap6	1170219	1171079	-	MCCD1P1	ens	ENST00000429760	0	593	1171079	1171079	2	1170219,1170912,	1170377,1171079,	ENSG00000229411	none	none	-1,-1,	{}	{}
+		chr6_qbl_hap6	1187015	1188075	-	HCG4B	known	uc011igo.1	{}	{}	1187015	1187015	1	1187015,	1188075,	{}	{}	{}	{}	{}	uc011igo.1
+		chr6_qbl_hap6	1187015	1189600	-	HCG4B	ref	NR_001317	0	594	1189600	1189600	1	1187015,	1189600,	HCG4B	unk	unk	-1,	{}	{}
+		chr6_qbl_hap6	1187146	1189600	-	HCG4B	ens	ENST00000550894	0	594	1189600	1189600	1	1187146,	1189600,	ENSG00000220391	none	none	-1,	{}	{}
+		chr6_qbl_hap6	1188367	1189358	-	HCG4B	ens	ENST00000406611	0	594	1189358	1189358	1	1188367,	1189358,	ENSG00000220391	none	none	-1,	{}	{}
+		chr6_qbl_hap6	1188713	1192114	+	BC035647	known	uc011igp.2	{}	{}	1188713	1188713	5	1188713,1190842,1191404,1191571,1191788,	1190713,1190959,1191431,1191619,1192114,	{}	{}	{}	{}	{}	uc011igp.2
+		chr6_qbl_hap6	1188843	1191618	+	HLA-K	ens	ENST00000431463	0	594	1191618	1191618	6	1188843,1189044,1189562,1190434,1190842,1191571,	1188915,1189305,1189837,1190713,1190959,1191618,	ENSG00000224526	none	none	-1,-1,-1,-1,-1,-1,	{}	{}
+		chr6_qbl_hap6	1194728	1194913	+	HLA-U	ens	ENST00000442622	0	594	1194913	1194913	1	1194728,	1194913,	ENSG00000229428	none	none	-1,	{}	{}
+		chr6_qbl_hap6	1201813	1206454	+	HLA-A	ens	ENST00000383605	0	594	1203108	1206025	10	1201813,1202520,1202958,1203311,1203822,1204698,1205073,1205628,1205803,1206020,	1201873,1202651,1203181,1203581,1204098,1204974,1205190,1205661,1205851,1206454,	ENSG00000206505	cmpl	cmpl	-1,-1,0,1,1,1,1,1,1,1,	{}	{}
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	annot_impact	annot_gene	annot_descr
+		6_qbl_hap6	1191644	1191645	del	T	{}	intron	HLA-A;HLA-A;AK097625;BC035647	+uc031suu.1:intron1+41351:c.74-11667del;+uc011igl.2:intron1+39797:c.42-13112del;-uc011ign.1:intron1+12161:n.187-713del;+uc011igp.2:intron4+26:n.2192+26del
+	}
+	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/annot_vars.tsv tmp/gene_annot.tsv
+	exec diff tmp/annot_vars.tsv tmp/expected.tsv
+} {}
+
 file delete -force tmp/temp.sft
 file delete -force tmp/temp2.sft
 

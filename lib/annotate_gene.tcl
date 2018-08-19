@@ -619,6 +619,7 @@ proc annotategene_one_del {loc} {
 				set from [genome_get $genomef $chr $snppos [expr {$snppos+1}] 0 1]
 				set dest [genome_get $genomef $chr [expr {$snpend+1}] [expr {$snpend+2}] 0 1]
 				if {$from ne $dest} break
+				if {$from eq "N"} break
 				incr snppos; incr snpend
 			}
 		} else {
@@ -628,6 +629,7 @@ proc annotategene_one_del {loc} {
 				set from [genome_get $genomef $chr [expr {$snppos-1}] $snppos 0 1]
 				set dest [genome_get $genomef $chr $snpend [expr {$snpend+1}] 0 1]
 				if {$from ne $dest} break
+				if {$from eq "N"} break
 				incr snppos -1; incr snpend -1
 			}
 		}
