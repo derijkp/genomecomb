@@ -133,12 +133,38 @@ typedef struct altvar {
 	char *alt;
 	int altsize;
 	DString *buffer;
+	int curallele;
 } AltVar;
+
+int altvar_comparator(const void *p1, const void *p2)
+{
+	int comp;
+	/* 
+	<0 The element pointed by p1 goes before the element pointed by p2
+	0  The element pointed by p1 is equivalent to the element pointed by p2
+	>0 The element pointed by p1 goes after the element pointed by p2
+	*/
+	const AltVar *alt1 = *(const AltVar **)p1;
+	const AltVar *alt2 = *(const AltVar **)p2;
+	if (alt1->begin < alt2->begin) {
+		return -1;
+	} else if (alt1->begin > alt2->begin) {
+		return 1;
+	} else if (alt1->end < alt2->end) {
+		return -1;
+	} else if (alt1->end > alt2->end) {
+		return 1;
+	}
+	comp = DStringCompare(alt1->type,alt2->type);
+	if (comp != 0) {return comp;}
+	return naturalcompare(alt1->alt,alt2->alt,strlen(alt1->alt),strlen(alt2->alt));
+}
 
 /* i know it is ugly, but dont have the time to transfer all, or put in a nice struct at do at the moment */
 AltVar *altvars;
+AltVar **altsorted;
 static DString *line, *string, *temp;
-static DString *snptype, *deltype, *instype, *subtype, *duptype, *invtype, *cnvtype, *transtype;
+static DString *reftype,*snptype, *deltype, *instype, *subtype, *duptype, *invtype, *cnvtype, *transtype;
 static DString *geno, *outinfo, *formatfieldsnumber, *infofieldsnumber;
 static DStringArray *header, *format, *info, *samples;
 static DStringArray *formatfields , *infofields;
@@ -441,7 +467,7 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 	DString *svlens=NULL,*svtype=NULL;
 	char *cursvlen=NULL;
 	char zyg;
-	int l1,l2,len,numalleles,curallele,pos,i,igeno,isample,svend=-1,svlen=0;
+	int l1,l2,len,numalleles,curallele,curpos,pos,i,igeno,isample,svend=-1,svlen=0;
 	/* determine type, ref, alt, ... for different alleles */
 	lineformat = DStringArrayFromChar(a_format(linea)->string,':');
 	/* set genos [lrange $line 9 end] */
@@ -449,13 +475,21 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 	alts = DStringArrayFromChar(a_alt(linea)->string,',');
 	ref = a_ref(linea);
 	changetoupper(ref);
+	/* prepare 
+	   altvars: data on alt vars in VarAlt structure, order in vcf list)
+	   altsorted: pointers to altvars, will be sorted for correct genomecomb output sort
+	*/
 	numalleles = alts->size;
 	if (numalleles > altvarsmax) {
 		altvars = (AltVar *)realloc(altvars,numalleles*sizeof(AltVar));
+		altsorted = (AltVar **)realloc(altsorted,numalleles*sizeof(AltVar *));
 		altvarsmax = numalleles;
 	}
+	for(i = 0 ; i < numalleles ; i++ ) {
+		altsorted[i] = altvars+i;
+	}
+	/* parse info first (need END for structural variants) */
 	{
-		/* parse info first (need END for structural variants) */
 		char *cur,*curend;
 		DString *info = a_info(linea);
 		for (i = 0 ; i< infofields->size ; i++) {
@@ -495,10 +529,13 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 			cursvlen = NULL;
 		}
 	}
+	/* determine alt alleles (type, begin, etc ..., store in altvars) */
 	for (curallele = 0 ; curallele < numalleles; curallele++) {
 		DString *altallele = DStringArrayGet(alts,curallele);
 		AltVar *altvar = altvars+curallele;
 		char *curref, *curalt;
+		/* in vcf genotypes alt alleles number from 1 (0 is ref)*/
+		altvar->curallele = curallele + 1;
 		/* determine type for this altallele */
 		if (cursvlen != NULL)  {
 			svlen = atoi(cursvlen); while (*cursvlen != ',' && *cursvlen != '\0') cursvlen++;
@@ -523,11 +560,11 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 		altvar->ref = curref; altvar->refsize = l1;
 		altvar->alt = curalt; altvar->altsize = l2; altvar->buffer = NULL;
 		if (*curalt == '<' && strcmp(curalt+1,"NON_REF>") == 0) {
-			altvar->type = snptype;
+			altvar->type = reftype;
 			altvar->begin = pos;
 			altvar->end = pos+l1;
 			altvar->altsize = 1;
-			altvar->alt[0] = curref[0];
+			altvar->alt[0] = '.';
 			if (svend != -1) {
 				altvar->end = svend;
 				altvar->refsize = svend - altvar->begin;
@@ -623,11 +660,21 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 			}
 		}
 	}
-	/* go over the different alleles */
-	for (curallele = 1 ; curallele <= numalleles; curallele++) {
-		AltVar *altvar = altvars+curallele-1;
+	/* sort alleles in altsorted*/
+	qsort((void *)altsorted,numalleles,sizeof(AltVar *),altvar_comparator);
+	/* go over the different alleles, and print out */
+	for (curpos = 0 ; curpos < numalleles; curpos++) {
+		AltVar *altvar;
 		int ADpos = -1;
-		if (curallele > 1 && altvar->alt[0] == '.') continue;
+		altvar = altsorted[curpos];
+		/* altvar = altvars + curpos; */
+		curallele = altvar->curallele;
+		if (altvar->altsize == 1 && altvar->alt[0] == '.') {
+			if (curallele > 1) continue;
+			if (altvar->type == reftype && altvar->end - altvar->begin == 1) {
+				altvar->type = snptype;
+			}
+		}
 		NODPRINT("==== Print variant info ====")
 		fprintf(fo,"%s\t%d\t%d\t%*.*s", a_chrom(linea)->string, altvar->begin, altvar->end, altvar->type->size, altvar->type->size, altvar->type->string);
 		printallele(fo,altvar->refsize,altvar->ref,20);
@@ -874,6 +921,7 @@ int main(int argc, char *argv[]) {
 	int *order = NULL;
 	int split,read,i,j,maxtab, min, excludefilter = 0, excludename = 0, infopos = 0;
 	line=NULL; string=NULL; temp=NULL;
+	reftype=DStringNewFromChar("ref");
 	snptype=DStringNewFromChar("snp"); deltype=DStringNewFromChar("del"); instype=DStringNewFromChar("ins"); subtype=DStringNewFromChar("sub");
 	duptype=DStringNewFromChar("dup"); invtype=DStringNewFromChar("inv"); cnvtype=DStringNewFromChar("cnv"); transtype=DStringNewFromChar("trans");
 	geno = NULL; outinfo = NULL; formatfieldsnumber=NULL; infofieldsnumber=NULL;
@@ -885,6 +933,7 @@ int main(int argc, char *argv[]) {
 	svtypepos = -1; svendpos = -1; svlenpos = -1;
 	DStringSetS(num,".",1);
 	altvars = (AltVar *)malloc(5*sizeof(AltVar)); altvarsmax = 5;
+	altsorted = (AltVar **)malloc(5*sizeof(AltVar *));
 	line = DStringNew();
 	if (argc < 2) {
 		fprintf(stderr,"Format is: vcf2tsv split typelist ?infile? ?outfile? ?removefields?\n");
