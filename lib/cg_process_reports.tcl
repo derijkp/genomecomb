@@ -191,7 +191,7 @@ proc process_reports_job {args} {
 			job reports_fastqc-$dir-$sample -deps $deps -targets {$target} -code {
 				file mkdir $target.temp
 				set gzcat [gzcat [lindex $deps 0]]
-				exec -ignorestderr {*}$gzcat {*}$deps | fastqc -o $target.temp stdin 2>1
+				exec -ignorestderr {*}$gzcat {*}$deps | fastqc -o $target.temp stdin
 				exec unzip $target.temp/stdin_fastqc.zip -d $target.temp
 				file rename -force {*}[glob $target.temp/stdin_fastqc/*] $target.temp
 				file delete $target.temp/stdin_fastqc
