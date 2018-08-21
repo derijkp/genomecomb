@@ -5,14 +5,15 @@ proc igvopen {} {
 		if {![catch {socket -server Connect $port} sid]} break
 	}
 	close $sid
-	set igvpid [exec igv -p $port 2>1 &]
-	set count 10
+	set igvpid [catch_exec igv -p $port &]
+	set count 30
 	while {[incr count -1]} {
 		after 2000
 		if {![catch {
 			set igvport [socket 127.0.0.1 $port]
 		}]} break
 	}
+	if {![info exists igvport]} {error "Could not connect to IGV (port $port)"}
 	fconfigure $igvport -blocking 0
 	return [list igv $igvpid $igvport]
 }
