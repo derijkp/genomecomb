@@ -83,10 +83,10 @@ test pmulticompar$testname {basic} {
 
 test pmulticompar$testname {no sreg error} {
 	test_cleantmp
-	cg pmulticompar -split 0 {*}$::jobopts -i 0 tmp/temp.sft data/var_annot.sft data/var_annot2.sft
+	cg pmulticompar {*}$::jobopts -split 0 -i 0 tmp/temp.sft data/var_annot.sft data/var_annot2.sft
 	reorder data/expected-multicompar-var_annotvar_annot2.sft tmp/expected.tsv
 	exec diff tmp/temp.sft tmp/expected.tsv
-} {no sorted region file (*/sreg-var_annot.tsv) or varallfile (*/varall-var_annot.tsv) found: not properly processed sample} error match
+} {*no sorted region file (*/sreg-var_annot.tsv) or varallfile (*/varall-var_annot.tsv) found: not properly processed sample*} error match
 
 test pmulticompar$testname {basic with 3} {
 	test_cleantmp

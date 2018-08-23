@@ -223,7 +223,7 @@ test process_project$testname {limited process_project with -targetvarsfile} {
 		1	4001	4002	snp	A	C
 		2	4003	4004	snp	N	A
 	}
-	cg process_project -v 2 --stack 1 -targetvarsfile tmp/targets.tsv {*}$::jobopts -dbdir $::refseqdir/hg19 -split 0 tmp >@ stdout 2>@ stderr
+	cg process_project -stack 1 -v 2 -targetvarsfile tmp/targets.tsv {*}$::jobopts -dbdir $::refseqdir/hg19 -split 0 tmp >@ stdout 2>@ stderr
 	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
 	cg unzip tmp/compar/compar-tmp.tsv.lz4
 	cg unzip tmp/compar/sreg-tmp.tsv.lz4
