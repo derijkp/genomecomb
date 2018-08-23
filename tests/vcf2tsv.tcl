@@ -38,20 +38,24 @@ proc write_vcf {file data {extracomment {}}} {
 	close $f
 }
 
-test vcf2tsv {vcf2tsv} {
+test vcf2tsv {vcf2tsv -split 0} {
 	exec cg vcf2tsv -split 0 data/test.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test.vcf2tsv
 } {}
 
-test vcf2tsv {vcf2tsv ins and del} {
+test vcf2tsv {vcf2tsv -split 0 ins and del} {
 	exec cg vcf2tsv -split 0 data/test2.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test2.vcf2tsv
 } {}
 
-test vcf2tsv {vcf2tsv 1000glow} {
+test vcf2tsv {vcf2tsv -split 0 1000glow} {
 	exec cg vcf2tsv -split 0 data/test1000glow.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
-} {}
+} {3c3
+< #split	0
+---
+> #split	1
+child process exited abnormally} error
 
 test vcf2tsv {vcf2tsv -split ori} {
 	exec cg vcf2tsv -split ori data/test.vcf tmp/temp.tsv
@@ -63,17 +67,63 @@ test vcf2tsv {vcf2tsv ins and del -split ori} {
 	exec diff tmp/temp.tsv data/expected-test2ori.vcf2tsv
 } {}
 
-test vcf2tsv {vcf2tsv -split 1} {
+test vcf2tsv {vcf2tsv} {
 	exec cg vcf2tsv -s 1 data/test.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-tests.vcf2tsv
 } {}
 
-test vcf2tsv {vcf2tsv ins and del -split 1} {
+test vcf2tsv {vcf2tsv combination alleles -> position insdel} {
+	write_vcf tmp/test.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      SAMPLE
+		chrtest	10	.	CTG	C	10	.	.	GT	0/1
+		chrtest	20	.	CTGA	CT	20	.	.	GT	0/1
+		chrtest	30	.	A	ATG,G	30	.	.	GT	0/1
+		chrtest	40	.	GC	GCC,G	40	.	.	GT	1/2
+		chrtest	50	.	AT	ATG,AG,CT	50	.	.	GT	1/2
+		chrtest	60	.	ATTT	AT,ATT,ATTTT,ATTTTT,A	60	.	.	GT	1/2
+		chrtest	70	.	GGT	G,GCCGT,GCCGTGGGGCTGGGGGCGTTGT	70	.	.	GT	1/2
+		chrtest	80	.	TTTCTATTCTA	T,TTTCTA,TTTCTATTCTATTCTA	80	.	.	GT	1/2
+		chrtest	90	.	ATG	ATGA,A,AT,CTG,AGG,ATC	90	.	.	GT	1/2
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	TE	genoqual	coverage	haploqual	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+		chrtest	10	12	del	TG	{}	.	10	.	TG	{}	t	0	0;1	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	21	23	del	GA	{}	.	20	.	GA	{}	t	0	0;1	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	29	30	snp	A	G	.	30	.	A	A	r	0	0;0	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	30	30	ins	{}	TG	.	30	.	{}	TG	t	0	0;1	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	40	40	ins	{}	C	.	40	.	C	{}	t	0	1;0	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	40	41	del	C	{}	.	40	.	C	{}	t	0	0;1	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	49	50	snp	A	C	.	50	.	A	A	r	0	0;0	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	50	51	snp	T	G	.	50	.	T	G	t	0	0;1	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	51	51	ins	{}	G	.	50	.	G	{}	t	0	1;0	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	60	60	ins	{}	T	.	60	.	{}	{}	r	0	0;0	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	60	60	ins	{}	TT	.	60	.	{}	{}	r	0	0;0	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	60	61	del	T	{}	.	60	.	@	{}	c	0	2;1	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	60	62	del	TT	{}	.	60	.	{}	@	c	0	1;2	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	60	63	del	TTT	{}	.	60	.	@	@	o	0	2;2	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	70	70	ins	{}	CC	.	70	.	{}	CC	t	0	0;1	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	70	70	ins	{}	CCGTGGGGCTGGGGGCGTT	.	70	.	{}	CC	o	0	0;2	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	70	72	del	GT	{}	.	70	.	{}	GT	t	0	1;0	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	80	80	ins	{}	TTCTA	.	80	.	{}	{}	r	0	0;0	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	80	85	del	TTCTA	{}	.	80	.	@	{}	c	0	2;1	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	80	90	del	TTCTATTCTA	{}	.	80	.	{}	@	c	0	1;2	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	89	90	snp	A	C	.	90	.	A	A	r	0	0;0	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	90	91	snp	T	G	.	90	.	T	@	o	0	0;2	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	90	92	del	TG	{}	.	90	.	TG	{}	t	0	0;1	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	91	92	del	G	{}	.	90	.	G	@	o	0	0;2	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	91	92	snp	G	C	.	90	.	G	@	o	0	0;2	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+		chrtest	92	92	ins	{}	A	.	90	.	A	{}	t	0	1;0	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}
+	}
+	cg vcf2tsv tmp/test.vcf | cg select -rc 1 > tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test vcf2tsv {vcf2tsv ins and del} {
 	exec cg vcf2tsv -s 1 data/test2.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
 } {}
 
-test vcf2tsv {vcf2tsv ins and del -split 1 -typelist .} {
+test vcf2tsv {vcf2tsv ins and del -typelist .} {
 	exec cg vcf2tsv -typelist . -s 1 data/test2.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
 } {27,28c27,28
@@ -192,7 +242,7 @@ test vcf2tsv {vcf2tsv extraalleles} {
 	exec diff tmp/temp.tsv data/expected-test_extraalleles.vcf2tsv
 } {}
 
-test vcf2tsv {vcf2tsv space in name} {
+test vcf2tsv {vcf2tsv -split 0 space in name} {
 	file copy -force data/test.vcf "tmp/test it.vcf"
 	exec cg vcf2tsv -split 0 "tmp/test it.vcf" "tmp/test it.tsv"
 	exec diff "tmp/test it.tsv" data/expected-test.vcf2tsv
@@ -239,7 +289,7 @@ test vcf2tsv {svtest.vcf} {
 	exec diff tmp/temp.tsv data/svtest.tsv
 } {}
 
-test vcf2tsv {svtest.vcf} {
+test vcf2tsv {vcf2tsv -split 0 svtest.vcf} {
 	cg vcf2tsv -split 0 data/svtest.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/svtest-unsplit.tsv
 } {}
@@ -265,6 +315,154 @@ test vcf2tsv {AD 0} {
 	exec diff tmp/temp2.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {blocked gvcf} {
+	file_write tmp/temp.vcf [deindent {
+		##fileformat=VCFv4.2
+		##ALT=<ID=NON_REF,Description="Represents any possible alternative allele at this location">
+		##FILTER=<ID=LowQual,Description="Low quality">
+		##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+		##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth (reads with MQ=255 or with bad mates are filtered)">
+		##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+		##FORMAT=<ID=MIN_DP,Number=1,Type=Integer,Description="Minimum DP observed within the GVCF block">
+		##FORMAT=<ID=PGT,Number=1,Type=String,Description="Physical phasing haplotype information, describing how the alternate alleles are phased in relation to one another">
+		##FORMAT=<ID=PID,Number=1,Type=String,Description="Physical phasing ID information, where each unique ID within a given sample (but not across samples) connects records within a phasing group">
+		##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification">
+		##FORMAT=<ID=SB,Number=4,Type=Integer,Description="Per-sample component statistics which comprise the Fisher's Exact Test to detect strand bias.">
+		##GATKCommandLine=<ID=HaplotypeCaller,CommandLine="HaplotypeCaller  --annotation-group StandardAnnotation --annotation-group AS_StandardAnnotation --emit-ref-confidence GVCF --annotate-with-num-discovered-alleles true --output varall-gatkh-rdsbwa-NA19240chr2122.gvcf.gz.temp.gz --intervals /tmp/tempExtral.10600-UMRUbdTebwJFtLcIEVGB/_Extral_temp_1.bed --input /data/genomecomb.testdata/tmp/exomes_yri_chr2122/samples/NA19240chr2122/map-rdsbwa-NA19240chr2122.bam --reference /complgen/refseq/hg19/genome_hg19.fa  --disable-tool-default-annotations false --gvcf-gq-bands 1 --gvcf-gq-bands 2 --gvcf-gq-bands 3 --gvcf-gq-bands 4 --gvcf-gq-bands 5 --gvcf-gq-bands 6 --gvcf-gq-bands 7 --gvcf-gq-bands 8 --gvcf-gq-bands 9 --gvcf-gq-bands 10 --gvcf-gq-bands 11 --gvcf-gq-bands 12 --gvcf-gq-bands 13 --gvcf-gq-bands 14 --gvcf-gq-bands 15 --gvcf-gq-bands 16 --gvcf-gq-bands 17 --gvcf-gq-bands 18 --gvcf-gq-bands 19 --gvcf-gq-bands 20 --gvcf-gq-bands 21 --gvcf-gq-bands 22 --gvcf-gq-bands 23 --gvcf-gq-bands 24 --gvcf-gq-bands 25 --gvcf-gq-bands 26 --gvcf-gq-bands 27 --gvcf-gq-bands 28 --gvcf-gq-bands 29 --gvcf-gq-bands 30 --gvcf-gq-bands 31 --gvcf-gq-bands 32 --gvcf-gq-bands 33 --gvcf-gq-bands 34 --gvcf-gq-bands 35 --gvcf-gq-bands 36 --gvcf-gq-bands 37 --gvcf-gq-bands 38 --gvcf-gq-bands 39 --gvcf-gq-bands 40 --gvcf-gq-bands 41 --gvcf-gq-bands 42 --gvcf-gq-bands 43 --gvcf-gq-bands 44 --gvcf-gq-bands 45 --gvcf-gq-bands 46 --gvcf-gq-bands 47 --gvcf-gq-bands 48 --gvcf-gq-bands 49 --gvcf-gq-bands 50 --gvcf-gq-bands 51 --gvcf-gq-bands 52 --gvcf-gq-bands 53 --gvcf-gq-bands 54 --gvcf-gq-bands 55 --gvcf-gq-bands 56 --gvcf-gq-bands 57 --gvcf-gq-bands 58 --gvcf-gq-bands 59 --gvcf-gq-bands 60 --gvcf-gq-bands 70 --gvcf-gq-bands 80 --gvcf-gq-bands 90 --gvcf-gq-bands 99 --indel-size-to-eliminate-in-ref-model 10 --use-alleles-trigger false --disable-optimizations false --just-determine-active-regions false --dont-genotype false --dont-trim-active-regions false --max-disc-ar-extension 25 --max-gga-ar-extension 300 --padding-around-indels 150 --padding-around-snps 20 --kmer-size 10 --kmer-size 25 --dont-increase-kmer-sizes-for-cycles false --allow-non-unique-kmers-in-ref false --num-pruning-samples 1 --recover-dangling-heads false --do-not-recover-dangling-branches false --min-dangling-branch-length 4 --consensus false --max-num-haplotypes-in-population 128 --error-correct-kmers false --min-pruning 2 --debug-graph-transformations false --kmer-length-for-read-error-correction 25 --min-observations-for-kmer-to-be-solid 20 --likelihood-calculation-engine PairHMM --base-quality-score-threshold 18 --pair-hmm-gap-continuation-penalty 10 --pair-hmm-implementation FASTEST_AVAILABLE --pcr-indel-model CONSERVATIVE --phred-scaled-global-read-mismapping-rate 45 --native-pair-hmm-threads 4 --native-pair-hmm-use-double-precision false --debug false --use-filtered-reads-for-annotations false --bam-writer-type CALLED_HAPLOTYPES --dont-use-soft-clipped-bases false --capture-assembly-failure-bam false --error-correct-reads false --do-not-run-physical-phasing false --min-base-quality-score 10 --smith-waterman JAVA --use-new-qual-calculator false --heterozygosity 0.001 --indel-heterozygosity 1.25E-4 --heterozygosity-stdev 0.01 --standard-min-confidence-threshold-for-calling 10.0 --max-alternate-alleles 6 --max-genotype-count 1024 --sample-ploidy 2 --genotyping-mode DISCOVERY --contamination-fraction-to-filter 0.0 --output-mode EMIT_VARIANTS_ONLY --all-site-pls false --min-assembly-region-size 50 --max-assembly-region-size 300 --assembly-region-padding 100 --max-reads-per-alignment-start 50 --active-probability-threshold 0.002 --max-prob-propagation-distance 50 --interval-set-rule UNION --interval-padding 0 --interval-exclusion-padding 0 --interval-merging-rule ALL --read-validation-stringency SILENT --seconds-between-progress-updates 10.0 --disable-sequence-dictionary-validation false --create-output-bam-index true --create-output-bam-md5 false --create-output-variant-index true --create-output-variant-md5 false --lenient false --add-output-sam-program-record true --add-output-vcf-command-line true --cloud-prefetch-buffer 40 --cloud-index-prefetch-buffer -1 --disable-bam-index-caching false --help false --version false --showHidden false --verbosity INFO --QUIET false --use-jdk-deflater false --use-jdk-inflater false --gcs-max-retries 20 --disable-tool-default-read-filters false --minimum-mapping-quality 20",Version=4.0.3.0,Date="April 19, 2018 5:09:59 PM CEST">
+		##GVCFBlock0-1=minGQ=0(inclusive),maxGQ=1(exclusive)
+		##GVCFBlock1-2=minGQ=1(inclusive),maxGQ=2(exclusive)
+		##GVCFBlock10-11=minGQ=10(inclusive),maxGQ=11(exclusive)
+		##GVCFBlock11-12=minGQ=11(inclusive),maxGQ=12(exclusive)
+		##GVCFBlock12-13=minGQ=12(inclusive),maxGQ=13(exclusive)
+		##GVCFBlock13-14=minGQ=13(inclusive),maxGQ=14(exclusive)
+		##GVCFBlock14-15=minGQ=14(inclusive),maxGQ=15(exclusive)
+		##GVCFBlock15-16=minGQ=15(inclusive),maxGQ=16(exclusive)
+		##GVCFBlock16-17=minGQ=16(inclusive),maxGQ=17(exclusive)
+		##GVCFBlock17-18=minGQ=17(inclusive),maxGQ=18(exclusive)
+		##GVCFBlock18-19=minGQ=18(inclusive),maxGQ=19(exclusive)
+		##GVCFBlock19-20=minGQ=19(inclusive),maxGQ=20(exclusive)
+		##GVCFBlock2-3=minGQ=2(inclusive),maxGQ=3(exclusive)
+		##GVCFBlock20-21=minGQ=20(inclusive),maxGQ=21(exclusive)
+		##GVCFBlock21-22=minGQ=21(inclusive),maxGQ=22(exclusive)
+		##GVCFBlock22-23=minGQ=22(inclusive),maxGQ=23(exclusive)
+		##GVCFBlock23-24=minGQ=23(inclusive),maxGQ=24(exclusive)
+		##GVCFBlock24-25=minGQ=24(inclusive),maxGQ=25(exclusive)
+		##GVCFBlock25-26=minGQ=25(inclusive),maxGQ=26(exclusive)
+		##GVCFBlock26-27=minGQ=26(inclusive),maxGQ=27(exclusive)
+		##GVCFBlock27-28=minGQ=27(inclusive),maxGQ=28(exclusive)
+		##GVCFBlock28-29=minGQ=28(inclusive),maxGQ=29(exclusive)
+		##GVCFBlock29-30=minGQ=29(inclusive),maxGQ=30(exclusive)
+		##GVCFBlock3-4=minGQ=3(inclusive),maxGQ=4(exclusive)
+		##GVCFBlock30-31=minGQ=30(inclusive),maxGQ=31(exclusive)
+		##GVCFBlock31-32=minGQ=31(inclusive),maxGQ=32(exclusive)
+		##GVCFBlock32-33=minGQ=32(inclusive),maxGQ=33(exclusive)
+		##GVCFBlock33-34=minGQ=33(inclusive),maxGQ=34(exclusive)
+		##GVCFBlock34-35=minGQ=34(inclusive),maxGQ=35(exclusive)
+		##GVCFBlock35-36=minGQ=35(inclusive),maxGQ=36(exclusive)
+		##GVCFBlock36-37=minGQ=36(inclusive),maxGQ=37(exclusive)
+		##GVCFBlock37-38=minGQ=37(inclusive),maxGQ=38(exclusive)
+		##GVCFBlock38-39=minGQ=38(inclusive),maxGQ=39(exclusive)
+		##GVCFBlock39-40=minGQ=39(inclusive),maxGQ=40(exclusive)
+		##GVCFBlock4-5=minGQ=4(inclusive),maxGQ=5(exclusive)
+		##GVCFBlock40-41=minGQ=40(inclusive),maxGQ=41(exclusive)
+		##GVCFBlock41-42=minGQ=41(inclusive),maxGQ=42(exclusive)
+		##GVCFBlock42-43=minGQ=42(inclusive),maxGQ=43(exclusive)
+		##GVCFBlock43-44=minGQ=43(inclusive),maxGQ=44(exclusive)
+		##GVCFBlock44-45=minGQ=44(inclusive),maxGQ=45(exclusive)
+		##GVCFBlock45-46=minGQ=45(inclusive),maxGQ=46(exclusive)
+		##GVCFBlock46-47=minGQ=46(inclusive),maxGQ=47(exclusive)
+		##GVCFBlock47-48=minGQ=47(inclusive),maxGQ=48(exclusive)
+		##GVCFBlock48-49=minGQ=48(inclusive),maxGQ=49(exclusive)
+		##GVCFBlock49-50=minGQ=49(inclusive),maxGQ=50(exclusive)
+		##GVCFBlock5-6=minGQ=5(inclusive),maxGQ=6(exclusive)
+		##GVCFBlock50-51=minGQ=50(inclusive),maxGQ=51(exclusive)
+		##GVCFBlock51-52=minGQ=51(inclusive),maxGQ=52(exclusive)
+		##GVCFBlock52-53=minGQ=52(inclusive),maxGQ=53(exclusive)
+		##GVCFBlock53-54=minGQ=53(inclusive),maxGQ=54(exclusive)
+		##GVCFBlock54-55=minGQ=54(inclusive),maxGQ=55(exclusive)
+		##GVCFBlock55-56=minGQ=55(inclusive),maxGQ=56(exclusive)
+		##GVCFBlock56-57=minGQ=56(inclusive),maxGQ=57(exclusive)
+		##GVCFBlock57-58=minGQ=57(inclusive),maxGQ=58(exclusive)
+		##GVCFBlock58-59=minGQ=58(inclusive),maxGQ=59(exclusive)
+		##GVCFBlock59-60=minGQ=59(inclusive),maxGQ=60(exclusive)
+		##GVCFBlock6-7=minGQ=6(inclusive),maxGQ=7(exclusive)
+		##GVCFBlock60-70=minGQ=60(inclusive),maxGQ=70(exclusive)
+		##GVCFBlock7-8=minGQ=7(inclusive),maxGQ=8(exclusive)
+		##GVCFBlock70-80=minGQ=70(inclusive),maxGQ=80(exclusive)
+		##GVCFBlock8-9=minGQ=8(inclusive),maxGQ=9(exclusive)
+		##GVCFBlock80-90=minGQ=80(inclusive),maxGQ=90(exclusive)
+		##GVCFBlock9-10=minGQ=9(inclusive),maxGQ=10(exclusive)
+		##GVCFBlock90-99=minGQ=90(inclusive),maxGQ=99(exclusive)
+		##GVCFBlock99-100=minGQ=99(inclusive),maxGQ=100(exclusive)
+		##INFO=<ID=AS_InbreedingCoeff,Number=A,Type=Float,Description="allele specific heterozygosity as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation; relate to inbreeding coefficient">
+		##INFO=<ID=AS_QD,Number=A,Type=Float,Description="Allele-specific Variant Confidence/Quality by Depth">
+		##INFO=<ID=AS_RAW_BaseQRankSum,Number=1,Type=String,Description="raw data for allele specific rank sum test of base qualities">
+		##INFO=<ID=AS_RAW_MQ,Number=1,Type=String,Description="Allele-specfic raw data for RMS Mapping Quality">
+		##INFO=<ID=AS_RAW_MQRankSum,Number=1,Type=String,Description="Allele-specfic raw data for Mapping Quality Rank Sum">
+		##INFO=<ID=AS_RAW_ReadPosRankSum,Number=1,Type=String,Description="allele specific raw data for rank sum test of read position bias">
+		##INFO=<ID=AS_SB_TABLE,Number=1,Type=String,Description="Allele-specific forward/reverse read counts for strand bias tests">
+		##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt Vs. Ref base qualities">
+		##INFO=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth; some reads may have been filtered">
+		##INFO=<ID=DS,Number=0,Type=Flag,Description="Were any of the samples downsampled?">
+		##INFO=<ID=END,Number=1,Type=Integer,Description="Stop position of the interval">
+		##INFO=<ID=ExcessHet,Number=1,Type=Float,Description="Phred-scaled p-value for exact test of excess heterozygosity">
+		##INFO=<ID=InbreedingCoeff,Number=1,Type=Float,Description="Inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation">
+		##INFO=<ID=MLEAC,Number=A,Type=Integer,Description="Maximum likelihood expectation (MLE) for the allele counts (not necessarily the same as the AC), for each ALT allele, in the same order as listed">
+		##INFO=<ID=MLEAF,Number=A,Type=Float,Description="Maximum likelihood expectation (MLE) for the allele frequency (not necessarily the same as the AF), for each ALT allele, in the same order as listed">
+		##INFO=<ID=MQ,Number=1,Type=Float,Description="RMS Mapping Quality">
+		##INFO=<ID=MQRankSum,Number=1,Type=Float,Description="Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities">
+		##INFO=<ID=NDA,Number=1,Type=Integer,Description="Number of alternate alleles discovered (but not necessarily genotyped) at this site">
+		##INFO=<ID=RAW_MQ,Number=1,Type=Float,Description="Raw data for RMS Mapping Quality">
+		##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias">
+		##contig=<ID=chr1,length=249250621>
+		##contig=<ID=chr2,length=243199373>
+		##contig=<ID=chr3,length=198022430>
+		##contig=<ID=chr4,length=191154276>
+		##contig=<ID=chr5,length=180915260>
+		##contig=<ID=chr6,length=171115067>
+		##contig=<ID=chr7,length=159138663>
+		##contig=<ID=chr8,length=146364022>
+		##contig=<ID=chr9,length=141213431>
+		##contig=<ID=chr10,length=135534747>
+		##contig=<ID=chr11,length=135006516>
+		##contig=<ID=chr12,length=133851895>
+		##contig=<ID=chr13,length=115169878>
+		##contig=<ID=chr14,length=107349540>
+		##contig=<ID=chr15,length=102531392>
+		##contig=<ID=chr16,length=90354753>
+		##contig=<ID=chr17,length=81195210>
+		##contig=<ID=chr18,length=78077248>
+		##contig=<ID=chr19,length=59128983>
+		##contig=<ID=chr20,length=63025520>
+		##contig=<ID=chr21,length=48129895>
+		##contig=<ID=chr22,length=51304566>
+		##contig=<ID=chrM,length=16571>
+		##contig=<ID=chrX,length=155270560>
+		##contig=<ID=chrY,length=59373566>
+		##source=HaplotypeCaller
+		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA19240chr2122
+		chr21	9452821	.	T	<NON_REF>	.	.	END=9452821	GT:DP:GQ:MIN_DP:PL	0/0:7:12:7:0,12,180
+		chr21	9452822	.	T	<NON_REF>	.	.	END=9452826	GT:DP:GQ:MIN_DP:PL	0/0:7:9:7:0,9,135
+		chr21	9452827	.	A	<NON_REF>	.	.	END=9452831	GT:DP:GQ:MIN_DP:PL	0/0:8:12:8:0,12,180
+		chr21	9452832	.	TATC	T,<NON_REF>	76.73	.	AS_RAW_BaseQRankSum=|1.5,1|NaN;AS_RAW_MQ=11797.00|5840.00|0.00;AS_RAW_MQRankSum=|-1.4,1|NaN;AS_RAW_ReadPosRankSum=|1.0,1|NaN;AS_SB_TABLE=0,4|0,3|0,0;BaseQRankSum=1.579;DP=8;ExcessHet=3.0103;MLEAC=1,0;MLEAF=0.500,0.00;MQRankSum=-1.368;NDA=2;RAW_MQ=20038.00;ReadPosRankSum=1.006	GT:AD:GQ:PL:SB	0/1:4,3,0:99:114,0,159,126,168,294:0,4,0,3
+		chr21	9452836	.	A	<NON_REF>	.	.	END=9452836	GT:DP:GQ:MIN_DP:PL	0/0:7:0:7:0,0,28
+		chr21	9452837	.	T	<NON_REF>	.	.	END=9452838	GT:DP:GQ:MIN_DP:PL	0/0:7:21:7:0,21,296
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	MIN_DP	PGT	PID	PL	SB	AS_InbreedingCoeff	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_SB_TABLE	BaseQRankSum	totalcoverage	DS	ExcessHet	InbreedingCoeff	MLEAC	MLEAF	MQ	MQRankSum	NDA	RAW_MQ	ReadPosRankSum
+		chr21	9452820	9452821	snp	T	.	.	.	.	T	T	r	0	0;0			7	12	7			0,12,180																				
+		chr21	9452821	9452826	ref	5	.	.	.	.	5	5	r	0	0;0			7	9	7			0,9,135																				
+		chr21	9452826	9452831	ref	5	.	.	.	.	5	5	r	0	0;0			8	12	8			0,12,180																				
+		chr21	9452832	9452835	del	ATC		.	76.73	.	ATC		t	0	0;1	4	3		99				114,0,159,126,168,294	0,4,0,3			|1.5,1|NaN	11797.00|5840.00|0.00	|-1.4,1|NaN	|1.0,1|NaN	0,4|0,3|0,0	1.579	8		3.0103		1	0.500		-1.368	2	20038.00	1.006
+		chr21	9452835	9452836	snp	A	.	.	.	.	A	A	r	0	0;0			7	0	7			0,0,28																				
+		chr21	9452836	9452838	ref	2	.	.	.	.	2	2	r	0	0;0			7	21	7			0,21,296																				
+	}]\n
+	cg vcf2tsv tmp/temp.vcf tmp/temp.tsv
+	cg select -overwrite 1 -rc 1 tmp/temp.tsv tmp/temp2.tsv
+	exec diff tmp/temp2.tsv tmp/expected.tsv
+} {}
+
 test vcf2tsv {gvcf GVCF} {
 	cg vcf2tsv -split 0 data/gatkh.gvcf tmp/test.tsv
 	cg tsvdiff tmp/test.tsv data/gatkh-expected.tsv
@@ -276,7 +474,7 @@ test vcf2tsv {gvcf BP_RESOLUTION} {
 } {}
 
 test vcf2tsv {gvcf BP_RESOLUTION} {
-	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 data/varall-gatkh-bwa-sample1.gvcf.gz tmp/test.vcf
+	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 data/varall-gatkh-bwa-sample1.gvcf tmp/test.vcf
 	cg vcf2tsv tmp/test.vcf tmp/test.tsv
 	cg tsvdiff tmp/test.tsv data/varall-gatkh-bwa-sample1.tsv
 } {}

@@ -547,15 +547,15 @@ void process_line_split(FILE *fo,DStringArray *linea,int excludename,int exclude
 		l2 = altallele->size;
 		pos--; /* vcf 1 based */
 		/* if ((l2 == 0 || *curalt != '<') && (l2 < 2 || (curalt[1] != '<'))) */
-		if (*curref == *curalt) {
-			/* remove base before simple indel */
+		/* remove extra bases at end (from other overlapping alleles); do first to keep left aligned */
+		while (l1 > 0 && l2 > 0 && curref[l1-1] == curalt[l2-1]) {
+			l1--; l2--;
+		}
+		while (*curref == *curalt && l1 > 0 && l2 > 0) {
+			/* remove same base before indels */
 			pos++;
 			curref++; l1--;
 			curalt++; l2--;
-		}
-		/* remove extra bases at end (from other overlapping alleles) */
-		while (l1 > 0 && l2 > 0 && curref[l1-1] == curalt[l2-1]) {
-			l1--; l2--;
 		}
 		altvar->ref = curref; altvar->refsize = l1;
 		altvar->alt = curalt; altvar->altsize = l2; altvar->buffer = NULL;
