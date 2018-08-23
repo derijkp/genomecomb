@@ -1226,4 +1226,8 @@ test select "select allways make / to float (integer division is unexpected)" {
 a	0.5
 b	0.5}
 
+test select "-compressionlevel" {
+	exec cg select -compressionlevel 1 -s - data/expected-test1000glow.vcf2tsv tmp/result.tsv.lz4
+} {}
+
 testsummarize
