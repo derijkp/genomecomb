@@ -1027,7 +1027,7 @@ test gene_annot {no refseq} {
 	}
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		test	1600	1601	del	N	{}	RNA;CDSFRAME	testgene;cdstestgene	+test:exon1+300:n.300del;+cdstest:exon1+300:c.300del:p.X101Xfs*?
+		test	1600	1601	del	N	{}	RNA;CDSFRAME	testgene;cdstestgene	+test:exon1+101:n.101del;+cdstest:exon1+101:c.101del:p.X101Xfs*?
 	}
 	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
@@ -1052,7 +1052,7 @@ test reg_annot {check for diff size in paste error} {
 	exec cg annotate tmp/vars1.tsv tmp/temp.tsv tmp/reg_annot.tsv
 } {*file */vars.tsv.annot_annot has less lines than other files in paste*} error match
 
-test reg_annot {bug fix, chromosome not in reference} {
+test reg_annot {bug fix, hang chromosome not in reference (do not match Ns when moving del pos)} {
 	write_tab tmp/vars.tsv {
 		chromosome	begin	end	type	ref	alt
 		6_qbl_hap6	1191644	1191645	del	T
