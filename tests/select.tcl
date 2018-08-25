@@ -1195,7 +1195,6 @@ test select "select -n" {
 	write_tab tmp/test.tsv {
 		chromsome begin end zyg-gatk-rdsbwa-sample1 zyg-sam-rdsbwa-sample1 zyg-gatk-rdsbwa-sample2 zyg-sam-rdsbwa-sample2
 		10	1000	1001	t	m	r	t
-		gatk-rdsbwa-test1	3
 	}
 	exec cg select -n tmp/test.tsv
 } {sample1
@@ -1206,7 +1205,6 @@ test select "select -a" {
 	write_tab tmp/test.tsv {
 		chromsome begin end zyg-gatk-rdsbwa-sample1 zyg-sam-rdsbwa-sample1 zyg-gatk-rdsbwa-sample2 zyg-sam-rdsbwa-sample2
 		10	1000	1001	t	m	r	t
-		gatk-rdsbwa-test1	3
 	}
 	exec cg select -a tmp/test.tsv
 } {gatk-rdsbwa-sample1
@@ -1229,5 +1227,43 @@ b	0.5}
 test select "-compressionlevel" {
 	exec cg select -compressionlevel 1 -s - data/expected-test1000glow.vcf2tsv tmp/result.tsv.lz4
 } {}
+
+test select "same() on diff analyses" {
+	write_tab tmp/test.tsv {
+		chromsome begin end sequenced-gatk-rdsbwa-sample2	alleleSeq1-gatk-rdsbwa-sample2	alleleSeq2-gatk-rdsbwa-sample2	sequenced-gatk-rdsbwa-sample1	alleleSeq1-gatk-rdsbwa-sample1	alleleSeq2-gatk-rdsbwa-sample1
+		10	1000	10001	v	A	T	v	A	T
+		10	1001	10002	r	A	A	v	A	T
+		10	1001	10002	r	A	A	v	A	A
+	}
+	exec cg select -g all -q {same("gatk-rdsbwa-sample1","gatk-rdsbwa-sample2")} tmp/test.tsv
+} {all	count
+all	2}
+
+test select "sm() on diff analyses" {
+	write_tab tmp/test.tsv {
+		chromsome begin end sequenced-gatk-rdsbwa-sample2	alleleSeq1-gatk-rdsbwa-sample2	alleleSeq2-gatk-rdsbwa-sample2	sequenced-gatk-rdsbwa-sample1	alleleSeq1-gatk-rdsbwa-sample1	alleleSeq2-gatk-rdsbwa-sample1
+		10	1000	10001	v	A	T	v	A	T
+		10	1001	10002	r	A	A	v	A	T
+		10	1001	10002	r	A	A	v	A	A
+	}
+	exec cg select -g all -q {sm("gatk-rdsbwa-sample1","gatk-rdsbwa-sample2")} tmp/test.tsv
+} {all	count
+all	1}
+
+test select "compare() on diff analyses" {
+	write_tab tmp/test.tsv {
+		chromsome begin end sequenced-gatk-rdsbwa-sample2	alleleSeq1-gatk-rdsbwa-sample2	alleleSeq2-gatk-rdsbwa-sample2	sequenced-gatk-rdsbwa-sample1	alleleSeq1-gatk-rdsbwa-sample1	alleleSeq2-gatk-rdsbwa-sample1
+		10	1000	10001	v	A	T	v	A	T
+		10	1001	10002	r	A	A	v	A	T
+		10	1001	10002	r	A	A	v	A	A
+		10	1001	10002	u	A	A	v	A	A
+		10	1000	10001	v	A	T	v	T	T
+	}
+	exec cg select -g comp -f {comp=compare("gatk-rdsbwa-sample1","gatk-rdsbwa-sample2")} tmp/test.tsv
+} {comp	count
+df	2
+mm	1
+sm	1
+un	1}
 
 testsummarize

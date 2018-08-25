@@ -152,6 +152,17 @@ proc cg_missing_sampleinfo {filename} {
 	puts [join [list_lremove $infosamples $samples] \n]
 }
 
+proc cg_missing_analysisinfo {filename} {
+	set sampleinfofile [tsv_select_sampleinfo_setfile [tsv_select_sampleinfo_findfile $filename]]
+	set samples [split [cg select -a $filename] \n]
+	set infosamples [lrange [split [cg select -f id $sampleinfofile] \n] 0 end]
+	puts "missing in sampleinfo file $sampleinfofile"
+	puts [join [list_lremove $samples $infosamples] \n]
+	puts ""
+	puts "missing in file $filename"
+	puts [join [list_lremove $infosamples $samples] \n]
+}
+
 proc tsv_select_fieldpresent {field header} {
 	global calccols
 	if {$field eq "ROW" || $field in $header || [info exists calccols($field)]} {return 1}

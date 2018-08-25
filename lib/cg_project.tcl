@@ -25,7 +25,7 @@ proc testmultitarget {target names args} {
 	file delete $target.temp
 	if {[file exists $target]} {
 		# test if existing target is already ok
-		set done [cg select -n $target]
+		set done [cg select -a $target]
 		foreach name $done {
 			set break 0
 			foreach pattern $args {
@@ -183,7 +183,7 @@ proc project {args} {
 		-vars {names data} -code {
 			puts "Checking $target"
 			if {[file exists $target.temp]} {
-				set done [cg select -n $target.temp]
+				set done [cg select -a $target.temp]
 			} else {
 				set done {}
 			}
@@ -222,7 +222,7 @@ proc project {args} {
 		-vars {names data} -code {
 			puts "Checking $target"
 			if {[file exists $target.temp]} {
-				set done [cg select -n $target.temp]
+				set done [cg select -a $target.temp]
 			} else {
 				set done {}
 			}
@@ -288,7 +288,7 @@ proc project {args} {
 		-vars {names data} -code {
 			puts "Checking $target"
 			if {[file exists $target.temp]} {
-				set done [cg select -n $target.temp]
+				set done [cg select -a $target.temp]
 			} else {
 				set done {}
 			}

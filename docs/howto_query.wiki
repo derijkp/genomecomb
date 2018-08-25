@@ -61,7 +61,7 @@ cg select -a annot_compar-yri_chr2122.tsv.lz4
 }}}
 
 How many analyses are there: The | (pipe symbol) sends the results from
-select -n to wc (wordcount, using the -l option it only counts lines):
+select -a to wc (wordcount, using the -l option it only counts lines):
 {{{
 cg select -a annot_compar-yri_chr2122.tsv.lz4 | wc -l
 }}}

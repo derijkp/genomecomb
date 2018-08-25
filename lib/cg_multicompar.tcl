@@ -34,7 +34,7 @@ proc cg_multicompar {args} {
 	set compar_file_root [gzroot $compar_file]
 	unset -nocomplain a
 	if {[file exists $compar_file]} {
-		foreach name [cg select -n $compar_file] {
+		foreach name [cg select -a $compar_file] {
 			set a($name) $compar_file
 		}
 	}
@@ -63,8 +63,8 @@ proc cg_multicompar {args} {
 					set a($name) $file
 				}
 			}
-		} elseif {[llength [cg select -n $dir]]} {
-			set samples [cg select -n $dir]
+		} elseif {[llength [cg select -a $dir]]} {
+			set samples [cg select -a $dir]
 			set file $dir
 			lappend files $file
 			foreach name $samples {

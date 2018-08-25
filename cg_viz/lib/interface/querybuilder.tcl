@@ -315,7 +315,7 @@ mainw method querybuilder_add {command {data {}} {join and}} {
 		}
 		$object.compare option select Comparison [privatevar $object compare(type)] [privatevar $object compare(types)]
 		set compare(type) [lindex $compare(types) [lsearch [list_subindex $compare(types) 0] $command]]
-		set compare(samples) [cg select -n $tdata(file)]
+		set compare(samples) [cg select -a $tdata(file)]
 		$object.compare option listbox Sample1 [privatevar $object compare(selsamples)] [privatevar $object compare(samples)] -selectmode multiple -filtervariable compare_filter
 		update idletasks
 		set compare(selsamples) [samples $fields]

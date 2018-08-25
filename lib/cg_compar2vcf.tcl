@@ -5,10 +5,10 @@ proc cg_compar2vcf {args} {
 	if {[llength $args] > 0} {
 		set filename [lindex $args 0]
 		set f [gzopen $filename]
-		set samples [cg select -n $filename] 
+		set samples [cg select -a $filename]
 	} else {
 		set f stdin
-		set samples [cg select -n stdin] 
+		set samples [cg select -a stdin]
 	}
 	if {[llength $args] > 1} {
 		set outfile [lindex $args 1]

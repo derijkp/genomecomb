@@ -751,6 +751,24 @@ test multicompar {targets only} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
+test multicompar {different analyses} {
+	test_cleantmp
+	write_tab tmp/var1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg-gatk-sample1	alleleSeq1-gatk-sample1	alleleSeq2-gatk-sample1	score-gatk-sample1
+		chr1	100	100	ins	{}	C	t	{}	C	30
+	}
+	write_tab tmp/var2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg-sam-sample1	alleleSeq1-sam-sample1	alleleSeq2-sam-sample1	score-sam-sample1
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	zyg-gatk-sample1	alleleSeq1-gatk-sample1	alleleSeq2-gatk-sample1	score-gatk-sample1	zyg-sam-sample1	alleleSeq1-sam-sample1	alleleSeq2-sam-sample1	score-sam-sample1
+		1	100	100	ins	{}	C	t	{}	C	30	?	?	?	?
+	}
+	catch {file delete tmp/temp.tsv}
+	cg multicompar -split 1 tmp/temp.tsv tmp/var1.tsv tmp/var2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
 test_cleantmp
 
 set ::env(PATH) $keeppath

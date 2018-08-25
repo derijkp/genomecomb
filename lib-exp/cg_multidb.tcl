@@ -89,8 +89,8 @@ proc multidb_getfileinfo {dirs aVar datafilesVar genofieldsVar compar_dir} {
 					set a(file,$name) $file
 				}
 			}
-		} elseif {[file exists $dir] && [llength [cg select -n $dir]]} {
-			set samples [cg select -n $dir]
+		} elseif {[file exists $dir] && [llength [cg select -a $dir]]} {
+			set samples [cg select -a $dir]
 			set file $dir
 			lappend datafiles $file
 			foreach name $samples {

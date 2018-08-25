@@ -117,7 +117,7 @@ mainw method summarybuilder_add {command {join and}} {
 		}
 		$object.compare option select Comparison [privatevar $object compare(type)] [privatevar $object compare(types)]
 		set compare(type) [lindex $compare(types) 0]
-		set compare(samples) [cg select -n $tdata(file)]
+		set compare(samples) [cg select -a $tdata(file)]
 		$object.compare option listbox Sample1 [privatevar $object compare(selsamples)] [privatevar $object compare(samples)] -selectmode multiple
 		$object.compare add go Go "$object summarybuilder_insert \"\[lindex \[getprivate $object compare(type) \] 0\]\(\[join \[getprivate $object compare(selsamples) \] ,\]\)\" $join" default
 	} elseif {$command in {min max lmin lmax avg}} {

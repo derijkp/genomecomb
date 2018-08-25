@@ -297,16 +297,16 @@ aavg($quality) to calulated the average quality over all analyses in a line.
 The special variable "analysis" will be available within the arguments.
 
 ==== comparing samples ====
-; compare(samplename1,samplename2, ...): compares the variant in the given samples, and returns one of:
-sm (variant with the same genotype in all given samples, with all sequenced)
+; compare(analysisname1,analysisname2, ...): compares the variant in the given analyses, and returns one of:
+sm (variant with the same genotype in all given analyses, with all sequenced)
 df (different: variant in some, reference in other, with all sequenced)
 mm (mismatch; variant in all, but different genotypes, with all sequenced)
-un (unsequenced in some samples, variant in one of the others)
-; same(sample1,sample2, ...): same: all samples have the same genotype (does not have to be a variant) (all sequenced)
-; sm(sample1,sample2, ...): same: variant with the same genotype in all given samples (all sequenced)
-; df(sample1,sample2, ...): different: variant in some, reference in other (all sequenced)
-; mm(sample1,sample2, ...): mismatch; variant in all, but different genotypes (all sequenced)
-; un(sample1,sample2, ...): unsequenced in some samples, variant in one of the others
+un (unsequenced in some analyses, variant in one of the others)
+; same(analysis1,analysis2, ...): same: all analyses have the same genotype (does not have to be a variant) (all sequenced)
+; sm(analysis1,analysis2, ...): same: variant with the same genotype in all given analyses (all sequenced)
+; df(analysis1,analysis2, ...): different: variant in some, reference in other (all sequenced)
+; mm(analysis1,analysis2, ...): mismatch; variant in all, but different genotypes (all sequenced)
+; un(analysis1,analysis2, ...): unsequenced in some analyses, variant in one of the others
 
 === Vectors ===
 Several functions and operators deal with vectors, fields containing

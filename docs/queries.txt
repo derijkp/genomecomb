@@ -12,10 +12,12 @@ cg select -h $comparfile | grep impact
 
 # which samples are present in the file (cg select -n)
 cg select -n $comparfile | less
+# which analyses are present in the file (cg select -a)
+cg select -a $comparfile | less
 # gatk only
-cg select -n $comparfile | grep gatk
+cg select -a $comparfile | grep gatk
 # how many gatk only
-cg select -n $comparfile | grep gatk | wc -l
+cg select -a $comparfile | grep gatk | wc -l
 
 # fields
 # ------

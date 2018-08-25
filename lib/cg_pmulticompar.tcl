@@ -459,7 +459,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 			}
 		} else {
 			if {[file exists $dir]} {
-				set filesamples [cg select -n $dir]
+				set filesamples [cg select -a $dir]
 			} else {
 				set filesamples {}
 			}

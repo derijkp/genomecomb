@@ -222,7 +222,7 @@ proc process_multicompar_job {args} {
 		job sv_multicompar -optional 1 -deps $svfiles -targets {$target} -code {
 			puts "Checking $target"
 			if {[file exists $target.temp]} {
-				set done [cg select -n $target.temp]
+				set done [cg select -a $target.temp]
 			} else {
 				set done {}
 			}
@@ -266,7 +266,7 @@ proc process_multicompar_job {args} {
 		job cgsv_multicompar -optional 1 -deps $files -targets {$target} -code {
 			puts "Checking $target"
 			if {[file exists $target.temp]} {
-				set done [cg select -n $target.temp]
+				set done [cg select -a $target.temp]
 			} else {
 				set done {}
 			}
@@ -308,7 +308,7 @@ proc process_multicompar_job {args} {
 		job cgcnv_multicompar -optional 1 -deps $files -targets {compar/cgcnv-${experiment}.tsv.lz4} -code {
 			puts "Checking $target"
 			if {[file exists $target.temp]} {
-				set done [cg select -n $target.temp]
+				set done [cg select -a $target.temp]
 			} else {
 				set done {}
 			}
