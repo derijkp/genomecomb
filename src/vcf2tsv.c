@@ -26,7 +26,7 @@ In other words, for biallelic sites the ordering is: AA,AB,BB;
 for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.
 */
 
-typedef struct altvar {
+typedef struct AltVar {
 	DString *type;
 	int begin;
 	int end;
@@ -36,6 +36,7 @@ typedef struct altvar {
 	int altsize;
 	DString *buffer;
 	int curallele;
+	int refout;
 } AltVar;
 
 typedef struct OBufferBucket {
@@ -197,9 +198,12 @@ void changetoupper(DString *ds) {
 	}
 }
 
-void printallele(DString *bufferstring,int size,char *string,int limit) {
+void printallele(DString *bufferstring,int size,char *string,int limit,int refout) {
 	if (size == 0) {
 		DStringAppendS(bufferstring,"\t",1);
+	} else if (refout) {
+		DStringAppendS(bufferstring,"\t",1);
+		DStringAppendS(bufferstring,string,1);
 	} else if (string == NULL || (limit > 0 && size >= limit)) {
 		DStringPrintf(bufferstring,"\t%d", size);
 	} else {
@@ -514,12 +518,12 @@ void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int exclu
 	DStringArrayDestroy(alts);
 }
 
-int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int excludefilter,DString *genotypelist) {
+int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int excludefilter,DString *genotypelist,int refout) {
 	DStringArray *lineformat,*alts;
 	DString *svlens=NULL,*svtype=NULL;
 	char *cursvlen=NULL;
 	char zyg;
-	int l1,l2,len,numalleles,curallele,curpos,pos,i,igeno,isample,svend=-1,svlen=0;
+	int l1,l2,len,numalleles,curallele,chrpos,curpos,pos,i,igeno,isample,svend=-1,svlen=0,snpfound;
 	/* determine type, ref, alt, ... for different alleles */
 	lineformat = DStringArrayFromChar(a_format(linea)->string,':');
 	/* set genos [lrange $line 9 end] */
@@ -577,6 +581,9 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 		}
 	}
 	/* determine alt alleles (type, begin, etc ..., store in altvars) */
+	snpfound = 0;
+	chrpos = atoi(a_pos(linea)->string);
+	chrpos--; /* vcf 1 based */
 	for (curallele = 0 ; curallele < numalleles; curallele++) {
 		DString *altallele = DStringArrayGet(alts,curallele);
 		AltVar *altvar = altvars+curallele;
@@ -587,12 +594,11 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 		if (cursvlen != NULL)  {
 			svlen = atoi(cursvlen); while (*cursvlen != ',' && *cursvlen != '\0') cursvlen++;
 		}
-		pos = atoi(a_pos(linea)->string);
 		curref = ref->string;
+		pos = chrpos;
 		l1 = ref->size;
 		curalt = altallele->string;
 		l2 = altallele->size;
-		pos--; /* vcf 1 based */
 		/* if ((l2 == 0 || *curalt != '<') && (l2 < 2 || (curalt[1] != '<'))) */
 		/* remove first base at start if equal (vcf start base for indels) */
 		if (*curref == *curalt && l1 > 0 && l2 > 0) {
@@ -613,22 +619,49 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 		}
 		altvar->ref = curref; altvar->refsize = l1;
 		altvar->alt = curalt; altvar->altsize = l2; altvar->buffer = NULL;
+		altvar->refout = 0;
 		if (*curalt == '<' && strcmp(curalt+1,"NON_REF>") == 0) {
-			altvar->type = reftype;
-			altvar->begin = pos;
-			altvar->end = pos+l1;
-			altvar->altsize = 1;
-			altvar->alt[0] = '.';
-			if (svend != -1) {
-				altvar->end = svend;
-				altvar->refsize = svend - altvar->begin;
-				if (altvar->refsize != 1) {altvar->ref = NULL;}
+			AltVar *temp = altvars;
+			if (numalleles > 1) {
+				if (refout) {
+					altvar->refout = 1;
+					int count = numalleles-1;
+					while(count--) {
+						if (temp->begin == chrpos && temp->end == chrpos+1) {
+							/* don't use if overlapping snp exists */
+							altvar->refout = -1; break;
+						}
+						temp++;
+					}
+				} else {
+					altvar->refout = -1;
+				}
+				altvar->type = snptype;
+				altvar->begin = pos;
+				altvar->end = pos+1;
+				altvar->altsize = 1;
+				altvar->alt[0] = '.';
+			} else {
+				altvar->type = reftype;
+				altvar->begin = pos;
+				altvar->end = pos+l1;
+				altvar->altsize = 1;
+				altvar->alt[0] = '.';
+				if (svend != -1) {
+					altvar->end = svend;
+					altvar->refsize = svend - altvar->begin;
+					if (altvar->refsize != 1) {altvar->ref = NULL;}
+				}
+				if (altvar->type == reftype && altvar->end - altvar->begin == 1) {
+					altvar->type = snptype;
+				}
 			}
 		} else if ((l2 == 0 || *curalt != '<') && svtype == NULL) {
 			if (l1 == 1 && l2 == 1) {
 				altvar->type = snptype;
 				altvar->begin = pos;
 				altvar->end = pos + 1;
+				if (pos < snpfound) {snpfound = pos;}
 			} else if (l1 == 0 && l2 != 0) {
 				altvar->type = instype;
 				altvar->begin = pos;
@@ -722,12 +755,8 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 		int ADpos = -1;
 		altvar = altvars+curpos;
 		curallele = altvar->curallele;
-		if (altvar->altsize == 1 && altvar->alt[0] == '.') {
-			if (curallele > 1) continue;
-			if (altvar->type == reftype && altvar->end - altvar->begin == 1) {
-				altvar->type = snptype;
-			}
-		}
+		/* "ref" allele is not print4ed out	if refout == -1 */
+		if (altvar->refout == -1) continue;
 		NODPRINT("==== Print variant info to buffer ====")
 		bufferbucket = obuffer_getbucket(obuffer);
 		bufferbucket->begin = altvar->begin;
@@ -738,14 +767,24 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 		DStringPrintf(bufferstring,"%s\t%d\t%d\t", a_chrom(linea)->string, altvar->begin, altvar->end);
 		bufferbucket->typepos = bufferstring->size;
 		DStringAppendS(bufferstring,altvar->type->string,altvar->type->size);
-		printallele(bufferstring,altvar->refsize,altvar->ref,20);
-		printallele(bufferstring,altvar->altsize,altvar->alt,0);
+		if (altvar->refout) {
+			DStringAppendS(bufferstring,"\t",1);
+			DStringAppendS(bufferstring,altvar->ref,1);
+			DStringAppendS(bufferstring,"\t.",2);
+		} else {
+			printallele(bufferstring,altvar->refsize,altvar->ref,20,0);
+			printallele(bufferstring,altvar->altsize,altvar->alt,0,0);
+		}
 		if (!excludename) {
 			DStringAppendS(bufferstring,"\t",1);
 			DStringAppendS(bufferstring,a_id(linea)->string,a_id(linea)->size);
 		}
 		DStringAppendS(bufferstring,"\t",1);
-		DStringAppendS(bufferstring,a_qual(linea)->string,a_qual(linea)->size);
+		if (altvar->refout) {
+			DStringAppendS(bufferstring,".",1);
+		} else {
+			DStringAppendS(bufferstring,a_qual(linea)->string,a_qual(linea)->size);
+		}
 		if (!excludefilter) {
 			DStringAppendS(bufferstring,"\t",1);
 			DStringAppendS(bufferstring,a_filter(linea)->string,a_filter(linea)->size);
@@ -802,20 +841,20 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 					} else {
 						a1 = atol(genotypestring);
 						if (a1 == 0) {
-							printallele(bufferstring,altvar->refsize,altvar->ref,20);
+							printallele(bufferstring,altvar->refsize,altvar->ref,20,altvar->refout);
 							DStringAppendS(genotypelist,"0",1);
 						} else if (a1 == curallele) {
-							printallele(bufferstring,altvar->altsize,altvar->alt,0);
+							printallele(bufferstring,altvar->altsize,altvar->alt,0,altvar->refout);
 							DStringAppendS(genotypelist,"1",1);
 						} else {
 							AltVar *temp = altvars+a1-1;
 							if ((temp->begin >= altvar->end && temp->end != altvar->begin) || (temp->end <= altvar->begin && temp->begin != altvar->end)) {
 								/* if this genotype is not overlapping with current alt (e.g. an insertion is located after a snp), this position is reference */
 								a1 = 0;
-								printallele(bufferstring,altvar->refsize,altvar->ref,20);
+								printallele(bufferstring,altvar->refsize,altvar->ref,20,altvar->refout);
 								DStringAppendS(genotypelist,"0",1);
 							} else if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
-								printallele(bufferstring,temp->altsize,temp->alt,0);
+								printallele(bufferstring,temp->altsize,temp->alt,0,altvar->refout);
 								DStringAppendS(genotypelist,"2",1);
 							} else {
 								DStringAppendS(bufferstring,"\t@",2);
@@ -842,20 +881,20 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 					} else {
 						a2 = atol(genotypecur);
 						if (a2 == 0) {
-							printallele(bufferstring,altvar->refsize,altvar->ref,20);
+							printallele(bufferstring,altvar->refsize,altvar->ref,20,altvar->refout);
 							DStringAppendS(genotypelist,"0",1);
 						} else if (a2 == curallele) {
-							printallele(bufferstring,altvar->altsize,altvar->alt,0);
+							printallele(bufferstring,altvar->altsize,altvar->alt,0,altvar->refout);
 							DStringAppendS(genotypelist,"1",1);
 						} else {
 							AltVar *temp = altvars+a2-1;
 							if ((temp->begin >= altvar->end && temp->end != altvar->begin) || (temp->end <= altvar->begin && temp->begin != altvar->end)) {
 								/* if this genotype is not overlapping with current alt (e.g. an insertion is located after a snp), this position is reference */
 								a2 = 0;
-								printallele(bufferstring,altvar->refsize,altvar->ref,20);
+								printallele(bufferstring,altvar->refsize,altvar->ref,20,altvar->refout);
 								DStringAppendS(genotypelist,"0",1);
 							} else if (temp->type == altvar->type && temp->begin == altvar->begin && temp->end == altvar->end) {
-								printallele(bufferstring,temp->altsize,temp->alt,0);
+								printallele(bufferstring,temp->altsize,temp->alt,0,altvar->refout);
 								DStringAppendS(genotypelist,"2",1);
 							} else {
 								DStringAppendS(bufferstring,"\t@",2);
@@ -992,8 +1031,7 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 	}
 	DStringArrayDestroy(lineformat);
 	DStringArrayDestroy(alts);
-	pos = atoi(a_pos(linea)->string);
-	return(pos - 1);
+	return(chrpos);
 }
 
 void process_print_buffer(FILE *fo,OBuffer *obuffer,int limit) {
@@ -1032,7 +1070,7 @@ int main(int argc, char *argv[]) {
 	DString *genotypelist=DStringNew(), *prevchr = DStringNew();
 	altvars = NULL;
 	int *order = NULL;
-	int split,read,i,j,maxtab, min, excludefilter = 0, excludename = 0, infopos = 0;
+	int split,refout,read,i,j,maxtab, min, excludefilter = 0, excludename = 0, infopos = 0;
 	line=NULL; string=NULL; temp=NULL;
 	reftype=DStringNewFromChar("ref");
 	snptype=DStringNewFromChar("snp"); deltype=DStringNewFromChar("del"); instype=DStringNewFromChar("ins"); subtype=DStringNewFromChar("sub");
@@ -1117,6 +1155,11 @@ int main(int argc, char *argv[]) {
 			if (*cur == '\0') break;
 			start = ++cur;
 		}
+	}
+	if (argc >= 7) {
+		refout = atoi(argv[6]);
+	} else {
+		refout = 0;
 	}
 	fprintf(fo,"#filetype\ttsv/varfile\n");
 	fprintf(fo,"#fileversion\t%s\n",FILEVERSION);
@@ -1269,7 +1312,7 @@ int main(int argc, char *argv[]) {
 				process_print_buffer(fo,obuffer,2147483647);
 				DStringCopy(prevchr,a_chrom(linea));
 			}
-			pos = process_line_split(obuffer,linea,excludename,excludefilter,genotypelist);
+			pos = process_line_split(obuffer,linea,excludename,excludefilter,genotypelist,refout);
 			process_print_buffer(fo,obuffer,pos);
 		} else {
 			process_line_unsplit(fo,linea,excludename,excludefilter);

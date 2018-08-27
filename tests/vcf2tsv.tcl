@@ -511,6 +511,43 @@ test vcf2tsv {vcf2tsv -sort 0 testcases} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {vcf2tsv -refout 1 gatkh} {
+	write_vcf tmp/test.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      SAMPLE
+		chr21	42775286	.	T	<NON_REF>	.	.	.	GT:AD:DP:GQ:PL	0/0:7,0:7:18:0,18,270
+		chr21	42775287	.	C	CGAGCT,<NON_REF>	63.73	.	ReadPosRankSum=1.027	GT:AD:GQ:PL:SB	0/1:307,26,0:99:101,0,12932,1041,13014,14055:169,138,7,19
+		chr21	42775288	.	A	<NON_REF>	.	.	.	GT:AD:DP:GQ:PL	0/0:7,0:7:18:0,18,270
+		chr21	42775359	.	A	<NON_REF>	.	.	.	GT:AD:DP:GQ:PL	0/0:5,0:5:12:0,12,180
+		chr21	42775360	.	TGTTTAA	T,<NON_REF>	0	.	RAW_MQ=70729.00	GT:AD:GQ:PL:SB	0/0:29,0,0:87:0,87,1242,87,1242,1242:18,11,0,0
+		chr21	42775361	.	G	<NON_REF>	.	.	.	GT:AD:DP:GQ:PL	0/0:5,0:5:12:0,12,180		
+		chr21	42775362	.	CT	C,CG,CTTTTT,<NON_REF>	244.73	.	AS_RAW_BaseQRankSum=|1.0,1|0.2,1|-0.1,1|NaN;AS_RAW_MQ=68049.00|21600.00|6736.00|8321.00|0.00;AS_RAW_MQRankSum=|0.6,1|-4.3,1|-3.4,1|NaN;AS_RAW_ReadPosRankSum=|-0.4,1|0.6,1|0.2,1|NaN;AS_SB_TABLE=4,15|3,3|0,4|0,4|0,0;BaseQRankSum=0.664;DP=55;ExcessHet=3.0103;MLEAC=0,1,0,0;MLEAF=0.00,0.500,0.00,0.00;MQRankSum=-3.036;NDA=4;RAW_MQ=181910.00;ReadPosRankSum=0.173	GT:AD:GQ:PL:SB	0/2:19,6,4,4,0:2:280,235,731,0,343,848,2,351,843,1047,355,719,889,943,1245:4,15,3,11
+		chr21	42775364	.	C	<NON_REF>	.	.	.	GT:AD:DP:GQ:PL	0/0:5,0:5:12:0,12,180		
+		chr21	42775365	.	TA	T,CA,TAC,<NON_REF>	500.00	.	AS_RAW_BaseQRankSum=|1.0,1|0.2,1|-0.1,1|NaN;AS_RAW_MQ=68049.00|21600.00|6736.00|8321.00|0.00;AS_RAW_MQRankSum=|0.6,1|-4.3,1|-3.4,1|NaN;AS_RAW_ReadPosRankSum=|-0.4,1|0.6,1|0.2,1|NaN;AS_SB_TABLE=4,15|3,3|0,4|0,4|0,0;BaseQRankSum=0.664;DP=55;ExcessHet=3.0103;MLEAC=0,1,0,0;MLEAF=0.00,0.500,0.00,0.00;MQRankSum=-3.036;NDA=4;RAW_MQ=181910.00;ReadPosRankSum=0.173	GT:AD:GQ:PL:SB	0/2:19,6,4,4,0:2:280,235,731,0,343,848,2,351,843,1047,355,719,889,943,1245:4,15,3,11
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	TE	genoqual	coverage	haploqual	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+		chr21	42775285	42775286	snp	T	.	.	.	.	T	T	r	0	0;0	7	0		18	7							
+		chr21	42775286	42775287	snp	C	.	.	.	.	C	C	r	0	0;0	307	0		99								
+		chr21	42775287	42775287	ins		GAGCT	.	63.73	.		GAGCT	t	0	0;1	307	26		99								
+		chr21	42775287	42775288	snp	A	.	.	.	.	A	A	r	0	0;0	7	0		18	7							
+		chr21	42775358	42775359	snp	A	.	.	.	.	A	A	r	0	0;0	5	0		12	5							
+		chr21	42775359	42775360	snp	T	.	.	.	.	T	T	r	0	0;0	29	0		87								
+		chr21	42775360	42775361	snp	G	.	.	.	.	G	G	r	0	0;0	5	0		12	5							
+		chr21	42775360	42775366	del	GTTTAA		.	0	.	GTTTAA	GTTTAA	r	0	0;0	29	0		87								
+		chr21	42775361	42775362	snp	C	.	.	.	.	C	C	r	0	0;0	19	0		2				55				
+		chr21	42775362	42775362	ins		TTTT	.	244.73	.			r	0	0;0	19	4		2				55				
+		chr21	42775362	42775363	del	T		.	244.73	.	T	@	o	0	0;2	19	6		2				55				
+		chr21	42775362	42775363	snp	T	G	.	244.73	.	T	G	t	0	0;1	19	4		2				55				
+		chr21	42775363	42775364	snp	C	.	.	.	.	C	C	r	0	0;0	5	0		12	5							
+		chr21	42775364	42775365	snp	T	C	.	500.00	.	T	C	t	0	0;1	19	4		2				55				
+		chr21	42775365	42775366	del	A		.	500.00	.	A	A	r	0	0;0	19	6		2				55				
+		chr21	42775366	42775366	ins		C	.	500.00	.			r	0	0;0	19	4		2				55				
+	}]\n
+	cg vcf2tsv -refout 1 tmp/test.vcf tmp/result.tsv
+	cg select -overwrite 1 -rc 1 tmp/result.tsv tmp/cresult.tsv
+	exec diff tmp/cresult.tsv tmp/expected.tsv
+} {}
+
 test vcf2tsv {vcf2tsv -sort 0 all vcf files} {
 	foreach file [glob data/*vcf] {
 		cg vcf2tsv -split 1 -sort 0 $file tmp/test.tsv
