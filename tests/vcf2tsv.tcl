@@ -479,6 +479,46 @@ test vcf2tsv {gvcf BP_RESOLUTION} {
 	cg tsvdiff tmp/test.tsv data/varall-gatkh-bwa-sample1.tsv
 } {}
 
+test vcf2tsv {vcf2tsv -split 1 -sort 0 ins and del} {
+	exec cg vcf2tsv -split 0 -sort 0 data/test2.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test2.vcf2tsv
+} {}
+
+test vcf2tsv {vcf2tsv -sort 0 gatkh} {
+	file copy data/varall-gatkh-bwa-sample2.gvcf tmp
+	cg vcf2tsv -sort 0 tmp/varall-gatkh-bwa-sample2.gvcf tmp/result.tsv
+	cg checksort tmp/result.tsv
+} {}
+
+test vcf2tsv {vcf2tsv -sort 0 testcases} {
+	write_vcf tmp/test.gvcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      SAMPLE
+		chrtest	1	.	T	<NON_REF>	.	.	.	GT:AD:DP:GQ:PL	0/0:7,0:7:18:0,18,270
+		chrtest	2	.	C	T,<NON_REF>	71.03	.	AS_RAW_BaseQRankSum=||;AS_RAW_MQ=0.00|8002.00|0.00;AS_RAW_MQRankSum=||;AS_RAW_ReadPosRankSum=||;AS_SB_TABLE=0,0|2,2|0,0;DP=4;ExcessHet=3.0103;MLEAC=2,0;MLEAF=1.00,0.00;NDA=2;RAW_MQ=8002.00	GT:AD:GQ:PL:SB	1/1:0,4,0:12:99,12,0,99,12,99:0,0,2,2
+		chrtest	3	.	CTG	C,<NON_REF>	871.73	.	AS_RAW_BaseQRankSum=|0.1,1|NaN;AS_RAW_MQ=96745.00|73763.00|0.00;AS_RAW_MQRankSum=|-1.8,1|NaN;AS_RAW_ReadPosRankSum=|-1.1,1|NaN;AS_SB_TABLE=25,3|23,1|0,0;BaseQRankSum=0.159;DP=53;ExcessHet=3.0103;MLEAC=1,0;MLEAF=0.500,0.00;MQRankSum=-1.711;NDA=2;RAW_MQ=173757.00;ReadPosRankSum=-1.084	GT:AD:GQ:PL:SB	0/1:28,24,0:99:909,0,1086,993,1159,2152:25,3,23,1
+		chrtest	4	.	A	G,<NON_REF>	71.03	.	AS_RAW_BaseQRankSum=||;AS_RAW_MQ=0.00|8002.00|0.00;AS_RAW_MQRankSum=||;AS_RAW_ReadPosRankSum=||;AS_SB_TABLE=0,0|2,2|0,0;DP=4;ExcessHet=3.0103;MLEAC=2,0;MLEAF=1.00,0.00;NDA=2;RAW_MQ=8002.00	GT:AD:GQ:PL:SB	1/1:0,4,0:12:99,12,0,99,12,99:0,0,2,2
+		chrtest	5	.	TTTTTAA	T,<NON_REF>	0	.	RAW_MQ=70729.00	GT:AD:GQ:PL:SB	0/0:29,0,0:87:0,87,1242,87,1242,1242:18,11,0,0
+		chrtest	6	.	C	T,CGCT,<NON_REF>	362.73	.	AS_RAW_BaseQRankSum=|-0.2,1|0.2,1|NaN;AS_RAW_MQ=97200.00|54000.00|39600.00|0.00;AS_RAW_MQRankSum=|0.0,1|0.0,1|NaN;AS_RAW_ReadPosRankSum=|-0.9,1|-0.3,1|NaN;AS_SB_TABLE=16,11|9,6|4,7|0,0;BaseQRankSum=0.036;DP=55;ExcessHet=3.0103;MLEAC=1,0,0;MLEAF=0.500,0.00,0.00;MQRankSum=0.000;NDA=3;RAW_MQ=198000.00;ReadPosRankSum=-0.677	GT:AD:GQ:PL:SB	0/1:27,15,11,0:46:400,0,918,46,481,1238,507,968,1154,1592:16,11,13,13
+		chrtest	7	.	G	A,<NON_REF>	71.03	.	AS_RAW_BaseQRankSum=||;AS_RAW_MQ=0.00|8002.00|0.00;AS_RAW_MQRankSum=||;AS_RAW_ReadPosRankSum=||;AS_SB_TABLE=0,0|2,2|0,0;DP=4;ExcessHet=3.0103;MLEAC=2,0;MLEAF=1.00,0.00;NDA=2;RAW_MQ=8002.00	GT:AD:GQ:PL:SB	1/1:0,4,0:12:99,12,0,99,12,99:0,0,2,2
+		chrtest	8	.	A	ATG,G,<NON_REF>	0.75	.	AS_RAW_BaseQRankSum=|-0.6,1|0.6,1|NaN;AS_RAW_MQ=49754.00|2329.00|1600.00|0.00;AS_RAW_MQRankSum=|-2.1,1|-1.2,1|NaN;AS_RAW_ReadPosRankSum=|-0.2,1|0.8,1|NaN;AS_SB_TABLE=17,1|0,2|0,1|0,0;BaseQRankSum=-0.102;DP=21;ExcessHet=3.0103;MLEAC=1,0,0;MLEAF=0.500,0.00,0.00;MQRankSum=-2.304;NDA=3;RAW_MQ=53683.00;ReadPosRankSum=0.252	GT:AD:GQ:PL:SB	0/1:18,2,1,0:30:30,0,750,42,714,795,84,756,798,840:17,1,0,3
+		chrtest	9	.	CT	C,CTTTT,CTTTTT,<NON_REF>	244.73	.	AS_RAW_BaseQRankSum=|1.0,1|0.2,1|-0.1,1|NaN;AS_RAW_MQ=68049.00|21600.00|6736.00|8321.00|0.00;AS_RAW_MQRankSum=|0.6,1|-4.3,1|-3.4,1|NaN;AS_RAW_ReadPosRankSum=|-0.4,1|0.6,1|0.2,1|NaN;AS_SB_TABLE=4,15|3,3|0,4|0,4|0,0;BaseQRankSum=0.664;DP=55;ExcessHet=3.0103;MLEAC=0,1,0,0;MLEAF=0.00,0.500,0.00,0.00;MQRankSum=-3.036;NDA=4;RAW_MQ=181910.00;ReadPosRankSum=0.173	GT:AD:GQ:PL:SB	0/2:19,6,4,4,0:2:280,235,731,0,343,848,2,351,843,1047,355,719,889,943,1245:4,15,3,11
+		chrtest	10	.	G	C,T,<NON_REF>	0	.	AS_RAW_BaseQRankSum=|-0.4,1|-1.6,1|NaN;AS_RAW_MQ=186624.00|8036.00|16068.00|0.00;AS_RAW_MQRankSum=|-1.3,1|-1.2,1|NaN;AS_RAW_ReadPosRankSum=|0.4,1|1.0,1|NaN;AS_SB_TABLE=59,95|3,5|3,12|0,0;BaseQRankSum=-1.454;DP=177;ExcessHet=3.0103;MLEAC=0,0,0;MLEAF=0.00,0.00,0.00;MQRankSum=-1.587;NDA=3;RAW_MQ=210728.00;ReadPosRankSum=1.021	GT:AD:GQ:PL:SB	0/0:154,8,15,0:26:0,225,5596,26,5095,5275,466,5583,5334,5810:59,95,6,17
+		chrtest	11	.	GAAAAAAAA	G,GAA,GAAA,GAAAAAA,GAAAAAAA,GAAAAAAAAA,<NON_REF>	239.73	.	AS_RAW_BaseQRankSum=|2.2,1|2.2,1|-0.4,1|1.2,1|1.3,1|0.4,1|NaN;AS_RAW_MQ=16767.00|11114.00|4886.00|2316.00|13634.00|10378.00|7297.00|0.00;AS_RAW_MQRankSum=|-2.9,1|-2.5,1|-3.1,1|-1.1,1|-1.8,1|-0.7,1|NaN;AS_RAW_ReadPosRankSum=|0.9,1|0.2,1|1.8,1|0.5,1|0.4,1|0.6,1|NaN;AS_SB_TABLE=2,6|5,7|1,5|1,3|2,6|4,4|1,3|0,0;BaseQRankSum=1.884;DP=99;ExcessHet=3.0103;MLEAC=1,0,0,0,0,0,0;MLEAF=0.500,0.00,0.00,0.00,0.00,0.00,0.00;MQRankSum=-2.735;NDA=7;RAW_MQ=117810.00;ReadPosRankSum=1.009	GT:AD:GQ:PL:SB	0/1:8,12,6,4,8,8,4,0:99:277,0,1968,105,1521,1837,176,1445,1654,1786,132,460,565,636,742,136,145,250,321,356,420,280,233,338,408,258,214,528,433,1284,1388,1457,880,578,660,1605:2,6,14,28
+		chrtest	12	.	CCTGCTGTGACAGTTCCCTGCATGCAGGGCAGGAGTGTGTGCTTCTTCCCAGCAAAGGCAGAGTCAGGGCCTACAGAAACTGTGCCCACAGCCTAT	C,TCTGCTGTGACAGTTCCCTGCATGCAGGGCAGGAGTGTGTGCTTCTTCCCAGCAAAGGCAGAGTCAGGGCCTACAGAAACTGTGCCCACAGCCTAT,CAGTGATGGGGTCTGCTGTGACAGTTCCCTGCATGCAGGGCAGGAGTGTGTGCTTCTTCCCAGCAAAGGCAGAGTCAGGGCCTACAGAAACTGTGCCCACAGCCTAT,<NON_REF>	4.59	.	AS_RAW_BaseQRankSum=|-1.2,1|-1.9,1|NaN|NaN;AS_RAW_MQ=39710.00|6329.00|5200.00|0.00|0.00;AS_RAW_MQRankSum=|-1.8,1|-0.5,1|NaN|NaN;AS_RAW_ReadPosRankSum=|-2.3,1|0.5,1|NaN|NaN;AS_SB_TABLE=4,9|3,1|1,1|0,0|0,0;BaseQRankSum=-1.884;DP=25;ExcessHet=3.0103;MLEAC=0,1,0,0;MLEAF=0.00,0.500,0.00,0.00;MQRankSum=-1.661;NDA=4;RAW_MQ=70064.00;ReadPosRankSum=-1.493	GT:AD:GQ:PL:SB	0/2:13,4,2,0,0:9:39,9,889,0,538,662,39,645,570,674,96,781,627,695,851:4,9,4,2
+	}
+	cg vcf2tsv tmp/test.gvcf tmp/expected.tsv
+	cg vcf2tsv -sort 0 tmp/test.gvcf tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test vcf2tsv {vcf2tsv -sort 0 all vcf files} {
+	foreach file [glob data/*vcf] {
+		cg vcf2tsv -split 1 -sort 0 $file tmp/test.tsv
+		cg vcf2tsv -split 1 $file tmp/expected.tsv
+		exec diff tmp/test.tsv tmp/expected.tsv
+	}
+} {}
+
 test vcfcat {vcfcat basic} {
 	write_vcf tmp/temp1.vcf {
 		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003

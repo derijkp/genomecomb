@@ -63,7 +63,7 @@ proc cg_vcf2tsv {args} {
 	# putsvars pipe
 	set error [catch $pipe msg opt]
 	if {$error} {
-		puts stderr [list set ::errorCode $::errorCode \; set msg $msg \; set opt $opt]
+		# puts stderr [list set ::errorCode $::errorCode \; set msg $msg \; set opt $opt]
 		exiterror "error converting vcf file: $msg"
 	}
 }
