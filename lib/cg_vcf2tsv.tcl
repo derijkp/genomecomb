@@ -67,6 +67,8 @@ proc cg_vcf2tsv {args} {
 	# putsvars pipe
 	set error [catch $pipe msg opt]
 	if {$error} {
+		if {$::errorCode eq "NONE"} return
+		if {[string match {CHILDKILLED * SIGPIPE *} $::errorCode]} return
 		# puts stderr [list set ::errorCode $::errorCode \; set msg $msg \; set opt $opt]
 		exiterror "error converting vcf file: $msg"
 	}

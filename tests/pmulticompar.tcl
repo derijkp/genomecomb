@@ -447,15 +447,15 @@ test pmulticompar$testname {basic reannot varall split gz} {
 
 test pmulticompar$testname {basic reannot varall split gvcf} {
 	test_cleantmp
-	file copy data/varall-gatkh-bwa-sample1.gvcf.gz tmp
-	file copy data/varall-gatkh-bwa-sample2.gvcf.gz tmp
-	exec cg vcf2tsv tmp/varall-gatkh-bwa-sample1.gvcf.gz | cg select -q {$genoqual >= 10} | cg regjoin > tmp/sreg-gatkh-bwa-sample1.tsv
-	exec cg vcf2tsv tmp/varall-gatkh-bwa-sample2.gvcf.gz | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-gatkh-bwa-sample2.tsv
-	cg gatk_index tmp/varall-gatkh-bwa-sample1.gvcf.gz tmp/varall-gatkh-bwa-sample2.gvcf.gz
-	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample1.gvcf.gz tmp/var-gatkh-bwa-sample1.vcf.gz
-	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample2.gvcf.gz tmp/var-gatkh-bwa-sample2.vcf.gz
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf.gz tmp/var-gatkh-bwa-sample1.tsv.lz4
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf.gz tmp/var-gatkh-bwa-sample2.tsv.lz4
+	file copy data/varall-gatkh-bwa-sample1.gvcf tmp
+	file copy data/varall-gatkh-bwa-sample2.gvcf tmp
+	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample1.gvcf | cg select -q {$genoqual >= 10} | cg regjoin > tmp/sreg-gatkh-bwa-sample1.tsv
+	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample2.gvcf | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-gatkh-bwa-sample2.tsv
+	cg gatk_index tmp/varall-gatkh-bwa-sample1.gvcf tmp/varall-gatkh-bwa-sample2.gvcf
+	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample1.gvcf tmp/var-gatkh-bwa-sample1.vcf
+	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample2.gvcf tmp/var-gatkh-bwa-sample2.vcf
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.lz4
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.lz4
 	file delete tmp/result.tsv
 	cg pmulticompar {*}$::jobopts -split 1 tmp/result.tsv tmp/var-gatkh-bwa-sample1.tsv.lz4 tmp/var-gatkh-bwa-sample2.tsv.lz4
 	exec diff tmp/result.tsv data/expected-gatkh-pmulticompar.tsv

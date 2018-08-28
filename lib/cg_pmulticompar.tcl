@@ -652,8 +652,8 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 			puts $o [join $newheader \t]
 			close $o
 			if {[file extension [gzroot $varallfile]] eq ".gvcf"} {
-				# puts [list cg vcf2tsv $varallfile | ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
-				exec cg vcf2tsv $varallfile | multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs >> $target.temp
+				# puts [list cg vcf2tsv -refout 1 -sort 0 $varallfile | ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
+				exec cg vcf2tsv -refout 1 -sort 0 $varallfile | multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs >> $target.temp
 			} elseif {$varallfile ne "" || $allfound || (![llength $oldbcolannot] && ![llength $coverageRefScorefiles])} {
 				# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
 				exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs >> $target.temp
