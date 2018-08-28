@@ -66,6 +66,7 @@ static char *typelist;
 static int *order = NULL;
 static int numalleles,altvarsmax;
 static int linenr,svendpos,svlenpos,svtypepos,chr2pos;
+static int ADpos = -1, DPpos = -1;
 
 #define a_chrom(array) (DStringArrayGet(array,0))
 #define a_pos(array) (DStringArrayGet(array,1))
@@ -962,9 +963,29 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 					}
 					for (i = 1 ; i < formatfields->size; i++) {
 						if (order[i] <= 0 || order[i] >= genoa->size) {
-							DStringAppendS(bufferstring,"\t",1);
-							if (formatfieldsnumber->string[i] == 'R') {
+							if (i == DPpos && ADpos != -1 && order[ADpos] != -1) {
+								DString *value;
+								char *cur, *end;
+								int dp = 0;
+								value = DStringArrayGet(genoa,order[ADpos]);
+								cur = value->string; end = value->string + value->size;
+								while (cur < end) {
+									dp += atoi(cur);
+									while (cur++) {
+										if (*cur == ',') {
+											cur++;
+											break;
+										} else if (cur >= end) {
+											break;
+										}
+									}
+								}
+								DStringPrintf(bufferstring,"\t%d",dp);
+							} else {
 								DStringAppendS(bufferstring,"\t",1);
+								if (formatfieldsnumber->string[i] == 'R') {
+									DStringAppendS(bufferstring,"\t",1);
+								}
 							}
 						} else if (formatfieldsnumber->string[i] == 'R') {
 							DString result, *value;
@@ -1209,6 +1230,8 @@ int main(int argc, char *argv[]) {
 			DString *ds;
 			id = extractID(DStringArrayGet(format,i),id);
 			if (strcmp(id->string,"GT") == 0) continue;
+			if (strcmp(id->string,"DP") == 0) {DPpos = i;}
+			if (strcmp(id->string,"AD") == 0) {ADpos = i;}
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
 			if (ds->size == 0) {continue;}
