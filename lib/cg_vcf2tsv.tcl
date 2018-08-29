@@ -18,6 +18,7 @@ proc cg_vcf2tsv {args} {
 	set typelist ". AD R RPA R AC A AF A"
 	set collapse 0
 	set removefields {}
+	set keepfields *
 	cg_options vcf2tsv args {
 		-s - -split {
 			if {$value eq "ori"} {
@@ -43,9 +44,12 @@ proc cg_vcf2tsv {args} {
 		-t - -typelist {
 			set typelist $value
 		}
+		-keepfields {
+			set keepfields $value
+		}
 	} {infile outfile} 0 2
 	if {[info exists infile]} {
-		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields $refout]
+		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields $refout $keepfields]
 	} else {
 		set pipe [list exec vcf2tsv $split $typelist - - $removefields $refout]
 	}

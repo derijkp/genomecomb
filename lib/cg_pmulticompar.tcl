@@ -412,7 +412,38 @@ proc multicompar_tcl_addvars {sample target split allvarsfile samplevarsfile sre
 	close $o; catch {close $allvars} ; catch {close $orivars}; catch {close $sreg}
 }
 
-proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}} {erroronduplicates 0} {skipincomplete 0}} {
+proc pmulticompar_job {args} {
+	set regonly 0
+	set split 1
+	set erroronduplicates 0
+	set targetvarsfile {}
+	set skipincomplete 1
+	set optkeepfields *
+	cg_options pmulticompar args {
+		-r - -reannotregonly {
+			putslog "Reannot reg only"
+			set regonly $value
+		}
+		-s - -split {
+			set split $value
+		}
+		-e - -erroronduplicates {
+			set erroronduplicates $value
+		}
+		-t - -targetvarsfile {
+			set targetvarsfile $value
+		}
+		-i - -skipincomplete {
+			set skipincomplete $value
+		}
+		-keepfields {
+			set optkeepfields $value
+		}
+		-m - -maxopenfiles {
+			set ::maxopenfiles [expr {$value - 4}]
+		}
+	} compar_file 1
+	set dirs $args
 # putsvars compar_file dirs regonly split targetvarsfile erroronduplicates
 	if {[jobfileexists $compar_file]} {
 		set dirs [list $compar_file {*}$dirs]
@@ -528,7 +559,6 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 	set files $allfiles
 	if {$targetvarsfile ne ""} {lappend files $targetvarsfile}
 	multi_merge_job $workdir/vars.tsv $files -split $split -force 1
-
 	# 
 	# add extra var lines to each sample file to get all vars in vars.tsv
 	set pastefiles [list $workdir/vars.tsv]
@@ -563,8 +593,11 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 		lappend deps {*}[jobglob $sampledir/coverage*/*-$sample.bcol]
 		lappend deps {*}[jobglob $sampledir/coverage*/*-$sample.tsv]
 		lappend deps {*}[jobglob $sampledir/reg_*-$sample.tsv]
-		job multicompar_addvars-$sample -force 1 -deps $deps -targets {$target} \
-		  -vars {allvarsfile samplevarsfile sregfile varallfile sample split sampledir} -code {
+		job multicompar_addvars-$sample -force 1 -deps $deps -targets {
+			$target
+		} -vars {
+			allvarsfile samplevarsfile sregfile varallfile sample split sampledir optkeepfields
+		} -code {
 			set allvarsfile [gzfile $allvarsfile]
 			set samplevarsfile [gzfile $samplevarsfile]
 			# if the file does not exist, the following will make it empty
@@ -588,6 +621,9 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 				set keepfields [list_lremove $keepfields $mergefields]
 			}
 			set keepfields [list_remove $keepfields sequenced zyg alleleSeq1 alleleSeq2]
+			if {$optkeepfields ne "*"} {
+				set keepfields [list_common $keepfields $optkeepfields]
+			}
 			set keepposs [list_cor $header $keepfields]
 			if {$seqpos == -1} {
 				lappend reannotheader sequenced-$sample
@@ -653,7 +689,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 			close $o
 			if {[file extension [gzroot $varallfile]] eq ".gvcf"} {
 				# puts [list cg vcf2tsv -refout 1 -sort 0 $varallfile | ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
-				exec cg vcf2tsv -refout 1 -sort 0 $varallfile | multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs >> $target.temp
+				exec cg vcf2tsv -refout 1 -sort 0 -keepfields $keepfields $varallfile | multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs >> $target.temp
 			} elseif {$varallfile ne "" || $allfound || (![llength $oldbcolannot] && ![llength $coverageRefScorefiles])} {
 				# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
 				exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs >> $target.temp
@@ -701,34 +737,7 @@ proc pmulticompar_job {compar_file dirs {regonly 0} {split 1} {targetvarsfile {}
 
 proc cg_pmulticompar {args} {
 	set args [job_init {*}$args]
-	set regonly 0
-	set split 1
-	set erroronduplicates 0
-	set targetvarsfile {}
-	set skipincomplete 1
-	cg_options pmulticompar args {
-		-r - -reannotregonly {
-			putslog "Reannot reg only"
-			set regonly $value
-		}
-		-s - -split {
-			set split $value
-		}
-		-e - -erroronduplicates {
-			set erroronduplicates $value
-		}
-		-t - -targetvarsfile {
-			set targetvarsfile $value
-		}
-		-i - -skipincomplete {
-			set skipincomplete $value
-		}
-		-m - -maxopenfiles {
-			set ::maxopenfiles [expr {$value - 4}]
-		}
-	} compar_file 1
-	set dirs $args
-	pmulticompar_job $compar_file $dirs $regonly $split $targetvarsfile $erroronduplicates $skipincomplete
+	pmulticompar_job {*}$args
 	job_wait
 }
 

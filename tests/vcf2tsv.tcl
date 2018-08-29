@@ -237,6 +237,34 @@ test vcf2tsv {cg_vcf2tsv -removefields only info, ref} {
 	exec diff tmp/temp2.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {cg_vcf2tsv -keepfields} {
+	write_vcf tmp/temp.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+		20	14370	rs6054257	ttaa	t	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	quality	alleleSeq1-NA00001	alleleSeq2-NA00001	zyg-NA00001	phased-NA00001	genotypes-NA00001	alleledepth_ref-NA00001	alleledepth-NA00001	genoqual-NA00001	alleleSeq1-NA00002	alleleSeq2-NA00002	zyg-NA00002	phased-NA00002	genotypes-NA00002	alleledepth_ref-NA00002	alleledepth-NA00002	genoqual-NA00002	alleleSeq1-NA00003	alleleSeq2-NA00003	zyg-NA00003	phased-NA00003	genotypes-NA00003	alleledepth_ref-NA00003	alleledepth-NA00003	genoqual-NA00003	totalcoverage
+		20	14370	14373	del	TAA	{}	29	TAA	TAA	r	1	0,0	{}	{}	48	{}	TAA	t	1	1,0	{}	{}	48	{}	{}	m	0	1;1	{}	{}	43	14
+	}
+	cg vcf2tsv -split 1 -keepfields {genoqual alleledepth} tmp/temp.vcf tmp/temp.tsv
+	cg select -rc 1 tmp/temp.tsv tmp/temp2.tsv
+	exec diff tmp/temp2.tsv tmp/expected.tsv
+} {}
+
+test vcf2tsv {cg_vcf2tsv -keepfields including name filter and info field} {
+	write_vcf tmp/temp.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
+		20	14370	rs6054257	ttaa	t	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	name quality	filter	alleleSeq1-NA00001	alleleSeq2-NA00001	zyg-NA00001	phased-NA00001	genotypes-NA00001	alleledepth_ref-NA00001	alleledepth-NA00001	genoqual-NA00001	alleleSeq1-NA00002	alleleSeq2-NA00002	zyg-NA00002	phased-NA00002	genotypes-NA00002	alleledepth_ref-NA00002	alleledepth-NA00002	genoqual-NA00002	alleleSeq1-NA00003	alleleSeq2-NA00003	zyg-NA00003	phased-NA00003	genotypes-NA00003	alleledepth_ref-NA00003	alleledepth-NA00003	genoqual-NA00003	totalcoverage	Hapmap2
+		20	14370	14373	del	TAA	{}	rs6054257	29	PASS	TAA	TAA	r	1	0,0	{}	{}	48	{}	TAA	t	1	1,0	{}	{}	48	{}	{}	m	0	1;1	{}	{}	43	14	1
+	}
+	cg vcf2tsv -split 1 -keepfields {name filter genoqual alleledepth totalcoverage Hapmap2} tmp/temp.vcf tmp/temp.tsv
+	cg select -rc 1 tmp/temp.tsv tmp/temp2.tsv
+	exec diff tmp/temp2.tsv tmp/expected.tsv
+} {}
+
 test vcf2tsv {vcf2tsv extraalleles} {
 	exec cg vcf2tsv -split 1 data/extraalleles.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test_extraalleles.vcf2tsv

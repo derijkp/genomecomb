@@ -11,6 +11,7 @@ proc process_multicompar_job {args} {
 	set addtargets 0
 	set threads 1
 	set distrreg 0
+	set keepfields *
 	cg_options process_multicompar args {
 		-dbdir {
 			set dbdir $value
@@ -56,6 +57,9 @@ proc process_multicompar_job {args} {
 		}
 		-distrreg {
 			set distrreg $value
+		}
+		-keepfields {
+			set keepfields $value
 		}
 		-c - -cleanup {
 			set cleanup $value
@@ -174,7 +178,8 @@ proc process_multicompar_job {args} {
 			putslog "Samples to add: $stilltodo"
 			putslog "Starting multicompar"
 			set compar_file [gzroot $compar_file].lz4
-			pmulticompar_job $compar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
+			# pmulticompar_job $compar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
+			pmulticompar_job -reannotregonly 0 -split $split -targetvarsfile $targetvarsfile -erroronduplicates 0 -skipincomplete $skipincomplete -keepfields $keepfields $compar_file {*}$stilltodo
 		} else {
 			putslog "skipping multicompar (no update needed)"
 		}

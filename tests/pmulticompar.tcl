@@ -461,6 +461,28 @@ test pmulticompar$testname {basic reannot varall split gvcf} {
 	exec diff tmp/result.tsv data/expected-gatkh-pmulticompar.tsv
 } {} 
 
+test pmulticompar$testname {basic reannot varall split gvcf, -keepfields} {
+	test_cleantmp
+	file copy data/varall-gatkh-bwa-sample1.gvcf tmp
+	file copy data/varall-gatkh-bwa-sample2.gvcf tmp
+	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample1.gvcf | cg select -q {$genoqual >= 10} | cg regjoin > tmp/sreg-gatkh-bwa-sample1.tsv
+	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample2.gvcf | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-gatkh-bwa-sample2.tsv
+	cg gatk_index tmp/varall-gatkh-bwa-sample1.gvcf tmp/varall-gatkh-bwa-sample2.gvcf
+	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample1.gvcf tmp/var-gatkh-bwa-sample1.vcf
+	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample2.gvcf tmp/var-gatkh-bwa-sample2.vcf
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.lz4
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.lz4
+	file delete tmp/result.tsv
+	cg pmulticompar {*}$::jobopts -split 1 -keepfields {quality coverage alleledepth_ref alleledepth genoqual PL} tmp/result.tsv tmp/var-gatkh-bwa-sample1.tsv.lz4 tmp/var-gatkh-bwa-sample2.tsv.lz4
+	cg tsvdiff tmp/result.tsv data/expected-gatkh-pmulticompar.tsv
+} {diff tmp/result.tsv data/expected-gatkh-pmulticompar.tsv
+header diff
+<extrafields:
+---
+>extrafields: name-gatkh-bwa-sample1 filter-gatkh-bwa-sample1 phased-gatkh-bwa-sample1 genotypes-gatkh-bwa-sample1 PGT-gatkh-bwa-sample1 PID-gatkh-bwa-sample1 RGQ-gatkh-bwa-sample1 SB-gatkh-bwa-sample1 allelecount-gatkh-bwa-sample1 frequency-gatkh-bwa-sample1 totalallelecount-gatkh-bwa-sample1 AS_BaseQRankSum-gatkh-bwa-sample1 AS_FS-gatkh-bwa-sample1 AS_InbreedingCoeff-gatkh-bwa-sample1 AS_MQ-gatkh-bwa-sample1 AS_MQRankSum-gatkh-bwa-sample1 AS_QD-gatkh-bwa-sample1 AS_RAW_BaseQRankSum-gatkh-bwa-sample1 AS_RAW_MQ-gatkh-bwa-sample1 AS_RAW_MQRankSum-gatkh-bwa-sample1 AS_RAW_ReadPosRankSum-gatkh-bwa-sample1 AS_ReadPosRankSum-gatkh-bwa-sample1 AS_SB_TABLE-gatkh-bwa-sample1 AS_SOR-gatkh-bwa-sample1 BaseQRankSum-gatkh-bwa-sample1 ClippingRankSum-gatkh-bwa-sample1 totalcoverage-gatkh-bwa-sample1 DS-gatkh-bwa-sample1 ExcessHet-gatkh-bwa-sample1 FS-gatkh-bwa-sample1 InbreedingCoeff-gatkh-bwa-sample1 MLEAC-gatkh-bwa-sample1 MLEAF-gatkh-bwa-sample1 MQ-gatkh-bwa-sample1 MQRankSum-gatkh-bwa-sample1 NDA-gatkh-bwa-sample1 QD-gatkh-bwa-sample1 RAW_MQ-gatkh-bwa-sample1 ReadPosRankSum-gatkh-bwa-sample1 SOR-gatkh-bwa-sample1 name-gatkh-bwa-sample2 filter-gatkh-bwa-sample2 phased-gatkh-bwa-sample2 genotypes-gatkh-bwa-sample2 PGT-gatkh-bwa-sample2 PID-gatkh-bwa-sample2 RGQ-gatkh-bwa-sample2 SB-gatkh-bwa-sample2 allelecount-gatkh-bwa-sample2 frequency-gatkh-bwa-sample2 totalallelecount-gatkh-bwa-sample2 AS_BaseQRankSum-gatkh-bwa-sample2 AS_FS-gatkh-bwa-sample2 AS_InbreedingCoeff-gatkh-bwa-sample2 AS_MQ-gatkh-bwa-sample2 AS_MQRankSum-gatkh-bwa-sample2 AS_QD-gatkh-bwa-sample2 AS_RAW_BaseQRankSum-gatkh-bwa-sample2 AS_RAW_MQ-gatkh-bwa-sample2 AS_RAW_MQRankSum-gatkh-bwa-sample2 AS_RAW_ReadPosRankSum-gatkh-bwa-sample2 AS_ReadPosRankSum-gatkh-bwa-sample2 AS_SB_TABLE-gatkh-bwa-sample2 AS_SOR-gatkh-bwa-sample2 BaseQRankSum-gatkh-bwa-sample2 ClippingRankSum-gatkh-bwa-sample2 totalcoverage-gatkh-bwa-sample2 DS-gatkh-bwa-sample2 ExcessHet-gatkh-bwa-sample2 FS-gatkh-bwa-sample2 InbreedingCoeff-gatkh-bwa-sample2 MLEAC-gatkh-bwa-sample2 MLEAF-gatkh-bwa-sample2 MQ-gatkh-bwa-sample2 MQRankSum-gatkh-bwa-sample2 NDA-gatkh-bwa-sample2 QD-gatkh-bwa-sample2 RAW_MQ-gatkh-bwa-sample2 ReadPosRankSum-gatkh-bwa-sample2 SOR-gatkh-bwa-sample2
+
+child process exited abnormally} error
+
 test pmulticompar$testname {sort empty bug split} {
 	test_cleantmp
 	# this gave an incorrectly sorted file

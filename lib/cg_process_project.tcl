@@ -24,6 +24,7 @@ proc process_project_job {args} {
 	set distrreg 0
 	set threads 2
 	set keepsams 0
+	set keepfields *
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -95,6 +96,9 @@ proc process_project_job {args} {
 		-targetvarsfile {
 			set targetvarsfile [file_absolute $value]
 			if {$targetvarsfile ne "" && ![jobfileexists $value]} {error "targetvarsfile $targetvarsfile does not exists"}
+		}
+		-keepfields {
+			set keepfields $value
 		}
 		-r - -reports {
 			set reports $value
@@ -244,6 +248,7 @@ proc process_project_job {args} {
 		-skipincomplete 1 -targetvarsfile $targetvarsfile \
 		-varfiles $todo(var) -svfiles $todo(sv) \
 		-threads $threads -distrreg $distrreg \
+		-keepfields $keepfields \
 		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir
 	if {[llength $reports]} {
 		proces_reportscombine_job $destdir/reports {*}$todo(reports)

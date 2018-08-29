@@ -1085,7 +1085,7 @@ void process_print_buffer(FILE *fo,OBuffer *obuffer,int limit) {
 }
 
 int main(int argc, char *argv[]) {
-	Hash_table *conv_formata, *donefields;
+	Hash_table *conv_formata, *donefields, *keepfields = NULL;
 	FILE *fd = NULL,*fo = NULL;
 	DStringArray *headerfields, *linea;
 	DString *genotypelist=DStringNew(), *prevchr = DStringNew();
@@ -1182,6 +1182,32 @@ int main(int argc, char *argv[]) {
 	} else {
 		refout = 0;
 	}
+	if (argc >= 8) {
+		char *start = argv[7];
+		char *cur = argv[7];
+		if (*start == '*') {
+			keepfields = NULL;
+		} else {
+			excludefilter = 1; excludename = 1;
+			keepfields = hash_init();
+			while (1) {
+				int len;
+				while (*cur != ' ' && *cur != '\0') {
+					cur++;
+				}
+				len = cur-start;
+				if (len == 6 && strncmp(start,"filter",6) == 0) {
+					excludefilter = 0;
+				} else if (len == 4 && strncmp(start,"name",4) == 0) {
+					excludename = 0;
+				} else {
+					dstring_hash_set(keepfields,DStringNewFromCharS(start,len),(void *)DStringNew());
+				}
+				if (*cur == '\0') break;
+				start = ++cur;
+			}
+		}
+	}
 	fprintf(fo,"#filetype\ttsv/varfile\n");
 	fprintf(fo,"#fileversion\t%s\n",FILEVERSION);
 	fprintf(fo,"#split\t%d\n",split);
@@ -1235,6 +1261,10 @@ int main(int argc, char *argv[]) {
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
 			if (ds->size == 0) {continue;}
+			if (keepfields != NULL) {
+				DString *kds = (DString *)dstring_hash_get(keepfields,ds);
+				if (kds == NULL) {continue;}
+			}
 			dstring_hash_set(donefields,DStringDup(ds),(void *)"");
 			DStringArrayAppend(formatfields,id->string,id->size);
 			num->string[0] = extractNumber(DStringArrayGet(format,i));
@@ -1277,6 +1307,10 @@ int main(int argc, char *argv[]) {
 		} else {
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
+			if (keepfields != NULL) {
+				DString *kds = (DString *)dstring_hash_get(keepfields,ds);
+				if (kds == NULL) {continue;}
+			}
 			if (ds->size == 0) {
 				continue;
 			} else if (split && id->size == 3 && strncmp(id->string,"END",3) == 0) {
