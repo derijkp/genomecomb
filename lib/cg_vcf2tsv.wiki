@@ -81,6 +81,9 @@ can be a (space separated) list of fieldnames and how to handle them.
 (This will only be applied if the given field is specified as Number=.)
 The default typelist is ". AD R RPA R AC A AF A", including some fields
 which are commonly defined this way.
+; -keepfields fieldlist: Besides the obligatory fields, include only the fields
+in fieldlist (space separated) in the output. Default is to use all fields
+present in the file (*)
 
 == Category ==
 Format Conversion

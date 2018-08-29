@@ -111,6 +111,10 @@ you want to affect the distribution).
 If you have to process many samples with relatively short indivual runtimes, you can set this
 to 1 to run each sample in one job, thus reducing the job managment overhead.
 ; -distrreg 0/1: distribute analysis over regions (per chromosome)
+; -keepfields fieldlist: Besides the obligatory fields, include only the
+fields in fieldlist (space separated) in the multicompar file. Default is
+to use all fields present in the file (*). All fields will still be used
+in the per sample output.
 
 This command can be distributed on a cluster or using multiple cores with
 [[joboptions|job options]] (more info with cg help joboptions)
