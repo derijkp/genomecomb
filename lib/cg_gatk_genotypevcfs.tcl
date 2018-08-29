@@ -1,4 +1,4 @@
-proc cg_gatk_gatk_genotypevcfs args {
+proc cg_gatk_genotypevcfs args {
 	upvar job_logdir job_logdir
 	set distrreg chr
 	set dbdir {}
@@ -8,9 +8,9 @@ proc cg_gatk_gatk_genotypevcfs args {
 	set vqsr {}
 	set newqual true
 	set gatkres {}
-	set cmdline [list cg gatk_gatk_genotypevcfs {*}$args]
+	set cmdline [list cg gatk_genotypevcfs {*}$args]
 	set opts {}
-	cg_options gatk_gatk_genotypevcfs args {
+	cg_options gatk_genotypevcfs args {
 		-dbdir {
 			set dbdir $value
 		}

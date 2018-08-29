@@ -502,7 +502,7 @@ test vcf2tsv {gvcf BP_RESOLUTION} {
 } {}
 
 test vcf2tsv {gvcf BP_RESOLUTION} {
-	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 data/varall-gatkh-bwa-sample1.gvcf tmp/test.vcf
+	cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 data/varall-gatkh-bwa-sample1.gvcf tmp/test.vcf
 	cg vcf2tsv tmp/test.vcf tmp/test.tsv
 	cg tsvdiff tmp/test.tsv data/varall-gatkh-bwa-sample1.tsv
 } {}

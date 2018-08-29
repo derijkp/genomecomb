@@ -452,8 +452,8 @@ test pmulticompar$testname {basic reannot varall split gvcf} {
 	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample1.gvcf | cg select -q {$genoqual >= 10} | cg regjoin > tmp/sreg-gatkh-bwa-sample1.tsv
 	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample2.gvcf | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-gatkh-bwa-sample2.tsv
 	cg gatk_index tmp/varall-gatkh-bwa-sample1.gvcf tmp/varall-gatkh-bwa-sample2.gvcf
-	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample1.gvcf tmp/var-gatkh-bwa-sample1.vcf
-	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample2.gvcf tmp/var-gatkh-bwa-sample2.vcf
+	cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample1.gvcf tmp/var-gatkh-bwa-sample1.vcf
+	cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample2.gvcf tmp/var-gatkh-bwa-sample2.vcf
 	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.lz4
 	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.lz4
 	file delete tmp/result.tsv
@@ -468,8 +468,8 @@ test pmulticompar$testname {basic reannot varall split gvcf, -keepfields} {
 	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample1.gvcf | cg select -q {$genoqual >= 10} | cg regjoin > tmp/sreg-gatkh-bwa-sample1.tsv
 	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample2.gvcf | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-gatkh-bwa-sample2.tsv
 	cg gatk_index tmp/varall-gatkh-bwa-sample1.gvcf tmp/varall-gatkh-bwa-sample2.gvcf
-	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample1.gvcf tmp/var-gatkh-bwa-sample1.vcf
-	cg gatk_gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample2.gvcf tmp/var-gatkh-bwa-sample2.vcf
+	cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample1.gvcf tmp/var-gatkh-bwa-sample1.vcf
+	cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample2.gvcf tmp/var-gatkh-bwa-sample2.vcf
 	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.lz4
 	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.lz4
 	file delete tmp/result.tsv
