@@ -362,6 +362,7 @@ set auto_index(tsv_select_sampleinfo_wildcard) [list source [file join $dir cg_s
 set auto_index(tsv_select_sampleinfo) [list source [file join $dir cg_select.tcl]]
 set auto_index(tsv_select_sampleinfo_long) [list source [file join $dir cg_select.tcl]]
 set auto_index(cg_missing_sampleinfo) [list source [file join $dir cg_select.tcl]]
+set auto_index(cg_missing_analysisinfo) [list source [file join $dir cg_select.tcl]]
 set auto_index(tsv_select_fieldpresent) [list source [file join $dir cg_select.tcl]]
 set auto_index(tsv_select_compare) [list source [file join $dir cg_select.tcl]]
 set auto_index(tsv_select_zyg) [list source [file join $dir cg_select.tcl]]
