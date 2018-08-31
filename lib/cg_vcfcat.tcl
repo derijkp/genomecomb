@@ -1,12 +1,16 @@
 proc cg_vcfcat {args} {
 	set index 0
 	set o stdout
+	set threads 1
 	cg_options catvcf args {
 		-o {
 			set outfile $value
 		}
 		-i {
 			set index $value
+		}
+		-threads {
+			set threads $value
 		}
 	} {} 1 ... {
 		concatenate vcf files that must have the same basic header:
@@ -17,7 +21,7 @@ proc cg_vcfcat {args} {
 	}
 	if {[info exist outfile]} {
 		if {[file extension $outfile] eq ".gz"} {
-			set o [open "| bgzip -c > $outfile.temp" w]
+			set o [open "| bgzip -c -@ $threads > $outfile.temp" w]
 		} else {
 			set compress [compresspipe $outfile]
 			if {$compress ne ""} {

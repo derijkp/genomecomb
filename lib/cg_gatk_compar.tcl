@@ -8,6 +8,7 @@ proc gatk_compar_job args {
 	set vqsr {}
 	set newqual true
 	set gatkres {}
+	set threads 1
 	set cmdline [list cg gatk_compar {*}$args]
 	cg_options gatk_compar args {
 		-dbdir {
@@ -37,6 +38,9 @@ proc gatk_compar_job args {
 		}
 		-usecombinegvcfs {
 			set usecombinegvcfs $value
+		}
+		-threads {
+			set threads $value
 		}
 	} {resultvcf} 2 ... {
 		combines gvcfs into joint variant called vcf using gatk tools
@@ -179,12 +183,12 @@ proc gatk_compar_job args {
 			lappend vcffiles $resultvcf.$region
 		}
 		set deps $vcffiles ; lappend deps $samplemapfile
-		job gatkbp_combine-$name -deps $deps -targets {$resultvcf} \
+		job gatkbp_combine-$name -deps $deps -cores $threads -targets {$resultvcf} \
 		 -rmtargets $deps \
-		 -vars {vcffiles resultvcf} \
+		 -vars {vcffiles resultvcf threads} \
 		 -code {
 			set tempfile $resultvcf.temp[file extension $resultvcf]
-			cg_vcfcat -o $tempfile {*}$vcffiles
+			cg_vcfcat -threads $threads -o $tempfile {*}$vcffiles
 			file rename $tempfile $resultvcf
 			file delete {*}$deps
 		}
