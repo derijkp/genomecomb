@@ -6,18 +6,21 @@ proc defcompressionlevel {args} {
 	}
 }
 
-proc compress {file {ext .lz4}} {
+proc compress {file {ext .lz4} {threads 1}} {
 	set file [file_absolute $file]
 	if {[file exists $file$ext]} {file delete $file$ext}
+	set defcompressionlevel [defcompressionlevel]
 	if {[inlist {.rz} $ext]} {
 		exec razip $file
 	} elseif {[inlist {.lz4} $ext]} {
-		exec lz4c -q -[defcompressionlevel] -c $file > $file.lz4.temp
+		exec lz4c -q -$defcompressionlevel -c $file > $file.lz4.temp
 		file rename -force $file.lz4.temp $file.lz4
 	} elseif {[inlist {.gz} $ext]} {
-		exec gzip $file
+		if {$defcompressionlevel > 9} {set defcompressionlevel 9}
+		if {$defcompressionlevel < 1} {set defcompressionlevel 1}
+		exec gzip -$defcompressionlevel $file
 	} elseif {[inlist {.bgz} $ext]} {
-		exec bgzip $file
+		exec bgzip -@ $threads $file
 	} elseif {[inlist {.bz2} $ext]} {
 		exec bzip2 $file
 	} else {
@@ -181,11 +184,14 @@ proc gzcat {filename} {
 	}
 }
 
-proc compresspipe {target {compression 9}} {
+proc compresspipe {target {compressionlevel -1} {threads 1}} {
 	switch [file extension $target] {
 		.rz {return "| razip -c"}
-		.lz4 {return "| lz4c -q -[defcompressionlevel] -B5 -c -$compression"}
-		.gz - .bgz {return "| bgzip -c"}
+		.lz4 {
+			if {$compressionlevel == -1} {set compressionlevel [defcompressionlevel]}
+			return "| lz4c -q -$compressionlevel] -B5 -c"
+		}
+		.gz - .bgz {return "| bgzip -c -@ $threads"}
 		.bz2 {return "| bzip2 -c"}
 		default {return {}}
 	}
