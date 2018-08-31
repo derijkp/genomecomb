@@ -8,6 +8,7 @@ source bcol.tcl
 source cg2tsv.tcl
 source clip.tcl
 source convert.tcl
+source fastq.tcl
 source genome_seq.tcl
 source primercheck.tcl
 source libext.tcl

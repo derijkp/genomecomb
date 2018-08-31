@@ -27,7 +27,9 @@ all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$
      ../bin$(ARCH)/samcat$(EXEEXT) \
      ../bin$(ARCH)/sam_amplicons_count$(EXEEXT) \
      ../bin$(ARCH)/varsfile$(EXEEXT) \
-     ../bin$(ARCH)/sam2tsv$(EXEEXT) ../bin$(ARCH)/tsv2sam$(EXEEXT)
+     ../bin$(ARCH)/sam2tsv$(EXEEXT) ../bin$(ARCH)/tsv2sam$(EXEEXT) \
+     ../bin$(ARCH)/splitfastq$(EXEEXT) \
+     ../bin$(ARCH)/countlines$(EXEEXT)
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -143,3 +145,8 @@ clean:
 ../bin$(ARCH)/varsfile$(EXEEXT): varsfile.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
 	$(GCC) varsfile.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/varsfile$(EXEEXT) $(LIBZ)
 
+../bin$(ARCH)/splitfastq$(EXEEXT): splitfastq.c $(TOOLS)
+	$(GCC) splitfastq.c tools.c $(CFLAGS) -o ../bin$(ARCH)/splitfastq$(EXEEXT)
+
+../bin$(ARCH)/countlines$(EXEEXT): countlines.c $(TOOLS)
+	$(GCC) countlines.c tools.c $(CFLAGS) -o ../bin$(ARCH)/countlines$(EXEEXT)

@@ -1,0 +1,32 @@
+= fastq_split =
+
+== Format ==
+cg fastq_split file ...
+
+== Summary ==
+split a (large) fastq file in multiple smaller ones
+
+== Description ==
+cg fastq_split will split a (large) fastq file in several smaller fastq files.
+You can either specify the target number of sequences per output file (-numseq option),
+or the target number of files you want to generate (-parts option).
+
+The command supports parrallel processing using the [[joboptions]]. The
+first part (splitting up the file) cannot be parralelized, and can only be
+run as a separated job on a cluster using the -parts option. (Using
+-numseq, the first part is always run directly, because the command cannot
+know up front how many parts will be generated, and thus not submit the
+follow up compression jobs
+
+== Arguments ==
+; **infile** ...: fastq file to split
+; **outtemplate** ...: template for filenames that will be generated
+
+== Options ==
+; **-numseq number**: number of sequences to store per output file
+; **-parts number**: number of output files to generate (this option has preference)
+; **-maxparts number**: maximum number of parts that will be generated (if numseq is small, last part will contain all remaining sequenced)
+; **-threads number**: number of threads to use to compress the output files (bgzip -@)
+
+== Category ==
+Compression
