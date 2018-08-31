@@ -95,6 +95,10 @@ the subtasks thus, that the number of files open at the same time stays
 below this number. With this option, the maximum number of open files can
 be set manually (if the program e.g. does not deduce the proper limit, or
 you want to affect the distribution).
+; -force 0/1: pmulticompar creates a lot of temporary files (in the .index
+dir). Even if some of these exist their recreation is forced by default
+(for safety). If a pmulticompar was interupted, you can use -force 0 to
+reuse the temp files already used instead of recreating them.
 
 This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
 

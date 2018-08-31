@@ -8,7 +8,6 @@ proc multi_merge_job {varsfile files args} {
 	set workdir $varsfile.index/paste
 	file mkdir $varsfile.index/paste
 	upvar job_logdir job_logdir
-	set force 0
 	set optional 0
 	set split 1
 	set force 1
@@ -413,12 +412,14 @@ proc multicompar_tcl_addvars {sample target split allvarsfile samplevarsfile sre
 }
 
 proc pmulticompar_job {args} {
+	set cmdline [list cg pmulticompar {*}$args]
 	set regonly 0
 	set split 1
 	set erroronduplicates 0
 	set targetvarsfile {}
 	set skipincomplete 1
 	set optkeepfields *
+	set force 1
 	cg_options pmulticompar args {
 		-r - -reannotregonly {
 			putslog "Reannot reg only"
@@ -439,12 +440,17 @@ proc pmulticompar_job {args} {
 		-keepfields {
 			set optkeepfields $value
 		}
+		-force {
+			set force $value
+		}
 		-m - -maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
 		}
 	} compar_file 1
 	set dirs $args
 # putsvars compar_file dirs regonly split targetvarsfile erroronduplicates
+	job_logfile [file dir $compar_file]/pmulticompar-[file tail $compar_file] [file dir $compar_file] $cmdline \
+		{*}[versions dbdir lz4 os]
 	if {[jobfileexists $compar_file]} {
 		set dirs [list $compar_file {*}$dirs]
 	}
@@ -558,7 +564,7 @@ proc pmulticompar_job {args} {
 	# for calculating the varlines needed, we can treat targetvarsfile as just another variant file
 	set files $allfiles
 	if {$targetvarsfile ne ""} {lappend files $targetvarsfile}
-	multi_merge_job $workdir/vars.tsv $files -split $split -force 1
+	multi_merge_job $workdir/vars.tsv $files -split $split -force $force
 	# 
 	# add extra var lines to each sample file to get all vars in vars.tsv
 	set pastefiles [list $workdir/vars.tsv]
@@ -593,7 +599,7 @@ proc pmulticompar_job {args} {
 		lappend deps {*}[jobglob $sampledir/coverage*/*-$sample.bcol]
 		lappend deps {*}[jobglob $sampledir/coverage*/*-$sample.tsv]
 		lappend deps {*}[jobglob $sampledir/reg_*-$sample.tsv]
-		job multicompar_addvars-$sample -force 1 -deps $deps -targets {
+		job multicompar_addvars-$sample -force $force -deps $deps -targets {
 			$target
 		} -vars {
 			allvarsfile samplevarsfile sregfile varallfile sample split sampledir optkeepfields
@@ -703,7 +709,7 @@ proc pmulticompar_job {args} {
 		# add targetvarsfile annotation
 		set target $workdir/targets_annot.tsv
 		lappend pastefiles $target
-		job multicompar_targets -force 1 -deps {$allvarsfile $targetvarsfile} -targets {$target} \
+		job multicompar_targets -force $force -deps {$allvarsfile $targetvarsfile} -targets {$target} \
 		  -vars {allvarsfile targetvarsfile split} -code {
 			set targetsfield [lindex [split [file root [file tail $targetvarsfile]] -] end]
 			set f [gzopen $targetvarsfile]

@@ -41,6 +41,7 @@ proc cg_multicompar {args} {
 	set files {}
 	foreach dir $dirs {
 		set dir [file_absolute $dir]
+		putslog "Adding $dir"
 		if {[file isdir $dir]} {
 			# a directory is given, look for the variant file(s)
 			set name [file tail $dir]
