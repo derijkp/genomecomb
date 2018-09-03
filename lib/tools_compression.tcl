@@ -189,7 +189,7 @@ proc compresspipe {target {compressionlevel -1} {threads 1}} {
 		.rz {return "| razip -c"}
 		.lz4 {
 			if {$compressionlevel == -1} {set compressionlevel [defcompressionlevel]}
-			return "| lz4c -q -$compressionlevel] -B5 -c"
+			return "| lz4c -q -$compressionlevel -B5 -c"
 		}
 		.gz - .bgz {return "| bgzip -c -@ $threads"}
 		.bz2 {return "| bzip2 -c"}
