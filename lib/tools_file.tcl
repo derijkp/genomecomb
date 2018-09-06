@@ -259,6 +259,10 @@ proc mklink {src dest {absolute 0}} {
 	}
 }
 
+proc cg_mklink {src dest {absolute 0}} {
+	mklink $src $dest $absolute
+}
+
 # same as mklink, but add proper extension to dest if src is compressed (and dest does not have already the correct compression extension)
 proc gzmklink {src dest} {
 	set src [gzfile $src]
