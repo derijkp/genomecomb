@@ -11,9 +11,11 @@ proc cg_checktsv {file} {
 	set prev [list_sub $line $poss]
 	set len [llength $header]
 	set linenr 0
+	set error 0
 	while 1 {
 		if {[llength $line] != $len} {
-			puts "line $linenr is of wrong length: [llength $line] iso $len\t$line"
+			puts stderr "line $linenr is of wrong length: [llength $line] iso $len\t$line"
+			set error 1
 		}
 		if {[eof $f]} break
 		set line [split [gets $f] \t]
@@ -22,9 +24,11 @@ proc cg_checktsv {file} {
 		incr linenr
 		set cur [list_sub $line $poss]
 		if {[list $prev $cur] ne [ssort -natural [list $prev $cur]]} {
-			puts "line $linenr is sorted wrong:\t$line"
+			puts stderr "line $linenr is sorted wrong:\t$line"
+			set error 1
 		}
 		set prev $cur
 	}
 	close $f
+	if {$error} {error "checking tsv file $file conncluded with errors"}
 }

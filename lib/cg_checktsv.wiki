@@ -1,7 +1,7 @@
 = checktsv =
 
 == Format ==
-cg checktsv file ...
+cg checktsv file
 
 == Summary ==
 Checks the given tsv file for errors
