@@ -113,6 +113,25 @@ test svmulticompar {sv trans, diff chr} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
+test svmulticompar {bugcheck wrong length (incorrectly added 2 in output)} {
+	test_cleantmp
+	write_file tmp/s1.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	zyg	phased	genotypes	filter	genoqual	PL	PR	SR	IMPRECISE	CIPOS	CIEND	CIGAR	MATEID	EVENT	HOMLEN	HOMSEQ	SVINSLEN	SVINSSEQ	LEFT_SVINSSEQ	RIGHT_SVINSSEQ	INV3	INV5	BND_DEPTH	MATE_BND_DEPTH	JUNCTION_QUAL
+	}]
+	write_file tmp/s2.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	zyg	phased	genotypes	filter	genoqual	PL	PR	SR	IMPRECISE	CIPOS	CIEND	CIGAR	MATEID	EVENT	HOMLEN	HOMSEQ	SVINSLEN	SVINSSEQ	LEFT_SVINSSEQ	RIGHT_SVINSSEQ	INV3	INV5	BND_DEPTH	MATE_BND_DEPTH	JUNCTION_QUAL
+		chr21	22781178	22781332	inv	154	i	694	154	i	t	0	0;1	PASS	694	744,0,999	42,11	57,16		0,1	-1,0				1	T						1			
+	}]
+	write_file tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	lbegin-s1	lend-s1	lalt-s1	quality-s1	alleleSeq1-s1	alleleSeq2-s1	zyg-s1	phased-s1	genotypes-s1	filter-s1	genoqual-s1	PL-s1	PR-s1	SR-s1	IMPRECISE-s1	CIPOS-s1	CIEND-s1	CIGAR-s1	MATEID-s1	EVENT-s1	HOMLEN-s1	HOMSEQ-s1	SVINSLEN-s1	SVINSSEQ-s1	LEFT_SVINSSEQ-s1	RIGHT_SVINSSEQ-s1	INV3-s1	INV5-s1	BND_DEPTH-s1	MATE_BND_DEPTH-s1	JUNCTION_QUAL-s1	lbegin-s2	lend-s2	lalt-s2	quality-s2	alleleSeq1-s2	alleleSeq2-s2	zyg-s2	phased-s2	genotypes-s2	filter-s2	genoqual-s2	PL-s2	PR-s2	SR-s2	IMPRECISE-s2	CIPOS-s2	CIEND-s2	CIGAR-s2	MATEID-s2	EVENT-s2	HOMLEN-s2	HOMSEQ-s2	SVINSLEN-s2	SVINSSEQ-s2	LEFT_SVINSSEQ-s2	RIGHT_SVINSSEQ-s2	INV3-s2	INV5-s2	BND_DEPTH-s2	MATE_BND_DEPTH-s2	JUNCTION_QUAL-s2
+		21	22781178	22781332	inv	154	i																																22781178	22781332	i	694	154	i	t	0	0;1	PASS	694	744,0,999	42,11	57,16		0,1	-1,0				1	T						1			
+	}]
+	file delete tmp/result.tsv
+	cg svmulticompar tmp/result.tsv tmp/s1.tsv tmp/s2.tsv
+	cg checktsv tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {} 
+
 test_cleantmp
 
 set ::env(PATH) $keeppath

@@ -256,12 +256,12 @@ proc svmulticompar_getlist {f1 line1Var f2 line2Var maxmargin} {
 		}
 	}
 	if {$return == 1} {
-		lappend linea 1
+		# lappend linea 1
 		set list [list $line1]
 		set line1 [svgetline $f1]
 		return $list
 	} elseif {$return == 2} {
-		lappend line2 2
+		# lappend line2 2
 		set list [list $line2]
 		set line2 [svgetline $f2]
 		return $list
@@ -462,7 +462,7 @@ proc cg_svmulticompar {args} {
 		set done [list_regsub -all {^start1-} $done {}]
 	}
 	foreach file $files {
-		set name [lindex [split [file tail [file root $file]] -] end]
+		set name [file_rootname $file]
 		if {[inlist $done $name]} {
 			putslog "Skipping $file: $name already present"
 		} else {
