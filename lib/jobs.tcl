@@ -549,7 +549,7 @@ proc job_finddeps {job deps targetvarsVar targetvarslist idsVar timeVar timefile
 		}
 		if {![llength $files]} {
 			if {!$opt} {
-				error "missing dependency $pattern"
+				error "missing dependency \"$pattern\""
 			} else {
 				job_lognf $job "missing optional dependency $pattern"
 				lappend finaldeps {}
