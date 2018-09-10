@@ -53,8 +53,8 @@ proc map_minimap2_job {args} {
 	if {![info exists job_logdir]} {
 		job_logdir $result.index/log_jobs
 	}
-	job_logfile $resultdir/map_minmap2_[file tail $result] $resultdir \
-		[list cg map_minmap2_ {*}$keepargs] \
+	job_logfile $resultdir/map_minimap2_[file tail $result] $resultdir \
+		[list cg map_minimap2_ {*}$keepargs] \
 		{*}[versions minimap2]
 	#
 	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
@@ -92,9 +92,12 @@ proc map_minimap2_job {args} {
 			}
 		}
 	} else {
+		if {[expr {[llength $files]%2}]} {
+			error "minimap2 needs even number of files for paired analysis"
+		}
 		foreach {file1 file2} $files {
 			set name [file root [file tail $file1]]
-			set target $resultbase-$name.sam
+			set target $result.index/$name.sam
 			lappend samfiles $target
 			set analysisinfo [gzroot $target].analysisinfo
 			lappend asamfiles $analysisinfo

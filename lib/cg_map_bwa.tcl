@@ -85,6 +85,9 @@ proc map_bwa_job {args} {
 			}
 		}
 	} else {
+		if {[expr {[llength $files]%2}]} {
+			error "bwa needs even number of files for paired analysis"
+		}
 		foreach {file1 file2} $files {
 			set name [file root [file tail $file1]]
 			set target $resultbase-$name.sam
