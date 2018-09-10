@@ -1,6 +1,7 @@
 proc sv_sniffles_job {args} {
 	upvar job_logdir job_logdir
-	set pre ""
+	set cmdline "[list cd [pwd]] \; [list cg sv_sniffles {*}$args]"
+	set refseq {}
 	set opts {}
 	set split 1
 	set regionfile {}
@@ -8,14 +9,11 @@ proc sv_sniffles_job {args} {
 	set cleanup 1
 	set regmincoverage 3
 	set resultfiles 0
-	set rootname {}
 	set skips {}
 	set min_support 2
 	set min_seq_size 300
+	set resultfile {}
 	cg_options sv_sniffles args {
-		-pre {
-			set pre $value
-		}
 		-split {
 			set split $value
 		}
@@ -27,9 +25,6 @@ proc sv_sniffles_job {args} {
 		}
 		-resultfiles {
 			set resultfiles $value
-		}
-		-rootname {
-			set rootname $value
 		}
 		-skip {
 			lappend skips -skip $value
@@ -47,44 +42,36 @@ proc sv_sniffles_job {args} {
 			if {[regexp {^-..} $key]} {set key -$key}
 			lappend opts $key $value
 		}
-	} {bamfile refseq}
+	} {bamfile resultfile} 1 2
 	set bamfile [file_absolute $bamfile]
-	set refseq [file_absolute $refseq]
-	set destdir [file dir $bamfile]
-	set file [file tail $bamfile]
-	if {$rootname eq ""} {
-		set root sniffles-[file_rootname $file]
+	set refseq [refseq $refseq]
+	if {$resultfile eq ""} {
+		set root sniffles-[file_rootname $bamfile]
+		set resultfile [file dir $bamfile]/sv-$root.tsv.lz4
 	} else {
-		set root $rootname
+		set root [file_rootname $resultfile]
 	}
+	set destdir [file dir $resultfile]
+	set resultanalysisinfo [gzroot $resultfile].analysisinfo
 	# resultfiles
-	set svfile ${pre}sv-$root.tsv
-	set resultlist [list $destdir/$svfile.lz4]
+	set resultlist [list $resultfile $resultanalysisinfo]
 	if {$resultfiles} {
 		return $resultlist
 	}
 	# logfile
-	set cmdline [list cg sv_sniffles]
-	foreach option {
-		split pre maxdist
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline {*}$opts $bamfile $refseq
-	job_logfile $destdir/sv_sniffles_[file tail $bamfile] $destdir $cmdline \
+	job_logfile $destdir/sv_sniffles_[file tail $resultfile] $destdir $cmdline \
 		{*}[versions sniffles gnusort8 lz4 os]
 	# start
 	## Produce sniffles SNP calls
 	set keeppwd [pwd]
 	cd $destdir
-	job ${pre}sv-$root.vcf {*}$skips -mem 1G -cores $threads \
-	-skip [list $svfile $svfile.analysisinfo] \
+	set vcffile [file root [gzroot $resultfile]].vcf
+	job sv_sniffles-$root.vcf {*}$skips -mem 1G -cores $threads \
+	-skip [list $resultfile $resultanalysisinfo] \
 	-deps {
-		$file $refseq $file.bai
+		$bamfile $refseq $bamfile.bai
 	} -targets {
-		${pre}sv-$root.vcf ${pre}sv-$root.vcf.analysisinfo
+		$vcffile $vcffile.analysisinfo
 	} -vars {
 		sniffles opts regionfile refseq threads root min_support min_seq_size
 	} -code {
@@ -95,19 +82,17 @@ proc sv_sniffles_job {args} {
 		file rename -force $target.temp $target
 	}
 	# 
-	job ${pre}sv-sniffles2tsv-$root {*}$skips -deps {
-		${pre}sv-$root.vcf
+	job $sv_sniffles-vcf2tsv-$root {*}$skips -deps {
+		$vcffile
 	} -targets {
-		$svfile.lz4 $svfile.analysisinfo
+		$resultfile $resultanalysisinfo
 	} -vars {
 		sample split
 	} -code {
 		analysisinfo_write $dep $target
-		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.lz4
-		file rename -force $target.temp.lz4 $target
+		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp[gzext $target]
+		file rename -force $target.temp[gzext $target] $target
 	}
-	# lz4_job $svfile -i 1
-	lz4index_job {*}$skips $svfile.lz4
 	# cleanup
 	cd $keeppwd
 	return $resultlist

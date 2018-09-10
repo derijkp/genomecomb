@@ -2,8 +2,8 @@ proc sv_job {args} {
 	global appdir
 	upvar job_logdir job_logdir
 	set method cg
+	set refseq {}
 	set distrreg chr
-	set pre ""
 	set opts {}
 	set split 1
 	set deps {}
@@ -12,18 +12,19 @@ proc sv_job {args} {
 	set regmincoverage 3
 	set opts {}
 	set cmdline [list cg sv $args]
+	set resultfile {}
 	cg_options sv args {
 		-method {
 			set method $value
+		}
+		-refseq {
+			set refseq $value
 		}
 		-regionfile {
 			set regionfile $value
 		}
 		-regmincoverage {
 			set regmincoverage $value
-		}
-		-pre {
-			set pre $value
 		}
 		-split {
 			set split $value
@@ -43,15 +44,10 @@ proc sv_job {args} {
 		default {
 			lappend opts $key $value
 		}
-	} {bamfile refseq}
+	} {bamfile resultfile} 1 2
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	set destdir [file dir $bamfile]
-	if {[info exists regionfile]} {
-		set regionfile [file_absolute $regionfile]
-	} else {
-		set regionfile [bam2reg_job -mincoverage $regmincoverage $bamfile]
-	}
 	# logfile
 	job_logfile $destdir/sv_{$method}_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
@@ -59,20 +55,27 @@ proc sv_job {args} {
 	catch {sv_${method}_job} temp
 	if {[regexp {with options:(.*)} $temp temp temp]} {
 		if {![inlist [split $temp ,] -regionfile]} {
-			putslog "sv_$method does not support distrreg"
-			return [sv_${method}_job {*}$opts -pre $pre \
-				-split $split -threads $threads -cleanup $cleanup $bamfile $refseq]
+			putslog "sv_$method does not support -regionfile, so cannot be run distributed, -distrreg and -regionfile ignored"
+			return [sv_${method}_job {*}$opts \
+				-split $split -threads $threads -cleanup $cleanup \
+				-refseq $refseq $bamfile $resultfile]
 		}
+	}
+	# get or create regionfile
+	if {[info exists regionfile]} {
+		set regionfile [file_absolute $regionfile]
+	} else {
+		set regionfile [bam2reg_job -mincoverage $regmincoverage $bamfile]
 	}
 	# run
 	if {$distrreg in {0 {}}} {
-		sv_${method}_job {*}$opts -regionfile $regionfile -pre $pre \
-			-split $split -threads $threads -cleanup $cleanup $bamfile $refseq
+		sv_${method}_job {*}$opts -regionfile $regionfile \
+			-split $split -threads $threads -cleanup $cleanup	-refseq $refseq $bamfile $resultfile
 	} else {
 		# check what the resultfiles are for the method
 		set resultfiles [sv_${method}_job -resultfiles 1 {*}$opts \
-			-regionfile $regionfile -pre $pre \
-			-split $split $bamfile $refseq]
+			-regionfile $regionfile \
+			-split $split	-refseq $refseq $bamfile $resultfile]
 		set skips [list -skip $resultfiles]
 		# if {[jobtargetexists $resultfiles [list $refseq $bamfile $regionfile]]} return
 		foreach {svfile} $resultfiles break

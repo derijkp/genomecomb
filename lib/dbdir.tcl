@@ -25,3 +25,16 @@ proc dbdir {args} {
 proc dbdir_ref dbdir {
 	file tail $dbdir
 }
+
+proc refseq {{refseq {}}} {
+	if {$refseq eq ""} {
+		set pattern [dbdir]
+	} else {
+		set pattern $refseq
+	}
+	set refseq [lindex [gzfiles $pattern $pattern/genome_*.ifas] 0]
+	if {![file exists $refseq]} {
+		error "refseq not found ($pattern)"
+	}
+	return [file_absolute $refseq]
+}

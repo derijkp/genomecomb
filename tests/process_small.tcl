@@ -360,26 +360,6 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	}
 } {}
 
-test process_small {process_project ont} {
-	cd $::bigtestdir
-	set dest tmp/ont
-	file delete -force tmp/ont
-	file mkdir tmp/ont
-	cg project_addsample tmp/ont NA12878 {*}[glob /data/nanopore/NA12878-nanopore-wgs/part*.fastq*]
-	cg process_project {*}$::dopts -distrreg 1 -split 1 \
-	  -dbdir /complgen/refseq/hg19 -reports {-fastqc predictgender fastqstats} \
-	  -clip 0 -aligner ngmlr -removeduplicates 0 -realign 0 -svcallers sniffles -varcallers {} \
-	  tmp/ont >& tmp/ont.log
-	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
-		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
-		-x *.analysisinfo -x *.png -x *.vcf \
-		tmp/ont expected/ont
-	foreach file1 [glob tmp/ont/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
-		regsub ^tmp $file1 expected file2
-		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
-	}
-} {}
-
 if 0 {
 
 test process_small {annotate refseqbuild/hg19} {

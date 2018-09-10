@@ -793,12 +793,12 @@ proc process_sample_job {args} {
 		} else {
 			set regionfile $amplicons
 		}
-		switch {$varcaller} {
-			gatk {set extraopts [list -dt $dt]}
-			sam {set extraopts [list -dt $dt]}
-			default {set extraopts {}}
-		}
 		foreach varcaller $varcallers {
+			switch {$varcaller} {
+				gatk {set extraopts [list -dt $dt]}
+				sam {set extraopts [list -dt $dt]}
+				default {set extraopts {}}
+			}
 			if {![auto_load var_${varcaller}_job]} {
 				error "varcaller $varcaller not supported"
 			}
@@ -806,10 +806,13 @@ proc process_sample_job {args} {
 			lappend todo(var) var-$varcaller-$bambase.tsv
 		}
 		foreach svcaller $svcallers {
+			switch {$svcallers} {
+				default {set extraopts {}}
+			}
 			if {![auto_load sv_${svcaller}_job]} {
 				error "svcaller $svcaller not supported"
 			}
-			lappend cleanupdeps {*}[sv_job -method ${svcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
+			lappend cleanupdeps {*}[sv_job -method ${svcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup -refseq $refseq $cleanedbam]
 			lappend todo(sv) sv-$svcaller-$bambase.tsv
 		}
 	}

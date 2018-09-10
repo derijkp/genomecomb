@@ -113,30 +113,34 @@ proc version {item {minversion {}}} {
 				set _versions($item) [string trim $temp]
 			}
 			default {
-				if {![catch {exec $item --version} temp]} {
-				} elseif {![catch {exec $item -version} temp]} {
-				} elseif {![catch {exec $item -h} temp]} {
-				} elseif {![catch {exec $item -V} temp]} {
-				} elseif {![catch {exec $item -v} temp]} {
+				if {[auto_load version_$item]} {
+					set _versions($item) [version_$item]
 				} else {
-					catch {exec $item} temp
-				}
-				set line1 [lindex [split $temp \n] 0]
-				if {[regexp {^couldn't execute} $line1 temp]} {
-					set _versions($item) ?
-				} elseif {[regexp {[0-9.]+-?[abr][0-9]+$} $line1 temp]} {
-					set _versions($item) $temp
-				} elseif {[regexp {[0-9.]+[0-9]$} $line1 temp]} {
-					set _versions($item) $temp
-				} elseif {[regexp {([0-9]+[0-9.a-zA-Z]*)} $line1 temp temp]} {
-					set _versions($item) $temp
-				} elseif {[regsub {^[^0-9\n]+} $temp {} temp]} {
-					set temp [lindex [split [string trim $temp] \n] 0]
-					set _versions($item) $temp
-				} else {
-					regsub {^.*[Vv]ersion:? } $temp {} temp
-					set temp [lindex [split [string trim $temp] \n] 0]
-					set _versions($item) $temp
+					if {![catch {exec $item --version} temp]} {
+					} elseif {![catch {exec $item -version} temp]} {
+					} elseif {![catch {exec $item -h} temp]} {
+					} elseif {![catch {exec $item -V} temp]} {
+					} elseif {![catch {exec $item -v} temp]} {
+					} else {
+						catch {exec $item} temp
+					}
+					set line1 [lindex [split $temp \n] 0]
+					if {[regexp {^couldn't execute} $line1 temp]} {
+						set _versions($item) ?
+					} elseif {[regexp {[0-9.]+-?[abr][0-9]+$} $line1 temp]} {
+						set _versions($item) $temp
+					} elseif {[regexp {[0-9.]+[0-9]$} $line1 temp]} {
+						set _versions($item) $temp
+					} elseif {[regexp {([0-9]+[0-9.a-zA-Z]*)} $line1 temp temp]} {
+						set _versions($item) $temp
+					} elseif {[regsub {^[^0-9\n]+} $temp {} temp]} {
+						set temp [lindex [split [string trim $temp] \n] 0]
+						set _versions($item) $temp
+					} else {
+						regsub {^.*[Vv]ersion:? } $temp {} temp
+						set temp [lindex [split [string trim $temp] \n] 0]
+						set _versions($item) $temp
+					}
 				}
 			}
 		}
