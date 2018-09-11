@@ -63,7 +63,7 @@ proc map_bowtie2_job {args} {
 		}
 		set temptarget [filetemp $target]
 		if {$paired} {
-			if {[expr {[llength $files]%2}]} {
+			if {[expr {[llength $deps]%2}]} {
 				error "bowtie2 needs even number of files for paired analysis"
 			}
 			set files1 {}
