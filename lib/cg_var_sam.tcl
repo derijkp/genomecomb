@@ -70,7 +70,7 @@ proc var_sam_job {args} {
 		}
 	} {bamfile refseq}
 	set bamfile [file_absolute $bamfile]
-	set refseq [file_absolute $refseq]
+	set refseq [refseq $refseq]
 	set destdir [file dir $bamfile]
 	if {$rootname eq ""} {
 		set root sam-[file_rootname $bamfile]

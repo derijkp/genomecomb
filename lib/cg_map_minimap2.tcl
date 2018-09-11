@@ -47,7 +47,7 @@ proc map_minimap2_job {args} {
 	if {$paired && $preset eq ""} {set preset sr} else {set preset map-ont}
 	set files [list $fastqfile1 {*}$args]
 	set result [file_absolute $result]
-	set refseq [file_absolute $refseq]
+	set refseq [refseq $refseq]
 	set resultdir [file dir $result]
 	file mkdir $result.index
 	if {![info exists job_logdir]} {

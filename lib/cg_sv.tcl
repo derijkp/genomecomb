@@ -46,7 +46,7 @@ proc sv_job {args} {
 		}
 	} {bamfile resultfile} 1 2
 	set bamfile [file_absolute $bamfile]
-	set refseq [file_absolute $refseq]
+	set refseq [refseq $refseq]
 	set destdir [file dir $bamfile]
 	# logfile
 	job_logfile $destdir/sv_{$method}_[file tail $bamfile] $destdir $cmdline \

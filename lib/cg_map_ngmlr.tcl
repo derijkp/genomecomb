@@ -54,7 +54,7 @@ proc map_ngmlr_job {args} {
 	if {$preset eq ""} {set preset ont}
 	set files [list $fastqfile1 {*}$args]
 	set result [file_absolute $result]
-	set refseq [file_absolute $refseq]
+	set refseq [refseq $refseq]
 	set resultdir [file dir $result]
 	file mkdir $result.index
 	if {![info exists job_logdir]} {

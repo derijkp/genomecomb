@@ -18,7 +18,7 @@ proc realign_abra_job {args} {
 	}
 	set bamfile [file_absolute $bamfile]
 	set resultbamfile [file_absolute $resultbamfile]
-	set refseq [file_absolute $refseq]
+	set refseq [refseq $refseq]
 	if {[file isdir $refseq]} {
 		set refseq [lindex [glob $refseq/genome_*.ifas] 0]
 	}

@@ -67,7 +67,7 @@ proc var_freebayes_job {args} {
 		call variants using freebayes
 	}
 	set bamfile [file_absolute $bamfile]
-	set refseq [file_absolute $refseq]
+	set refseq [refseq $refseq]
 	set destdir [file dir $bamfile]
 	set file [file tail $bamfile]
 	if {$rootname eq ""} {
