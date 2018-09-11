@@ -5,8 +5,9 @@ proc minimap2refseq_job {refseq preset} {
 	set tail [file tail $refseq]
 	if {[jobtargetexists [list $minimap2refseq] $refseq]} return
 	job minimap2_2refseq-[file tail $refseq] -deps {$refseq} -targets {$minimap2refseq} -vars {preset} -code {
-		if {[catch {exec -ignorestderr minimap2 -x $preset -d $target.temp $dep} e]} {
-			error $e
+		set temp [catch_exec minimap2 -x $preset -d $target.temp $dep]
+		if {[regexp {loaded/built the index for 0 target sequence\(s\)} $temp]} {
+			error "could not properly index $dep: contains no sequences"
 		}
 		file rename $target.temp $target
 	}

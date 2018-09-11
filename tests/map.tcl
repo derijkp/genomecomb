@@ -57,6 +57,13 @@ test map_minimap2 {map_minimap2 paired} {
 	exec diff tmp/ali.sam tmp/expected.sam
 } {}
 
+test map_minimap2 {error dir as refseq} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
+	file mkdir tmp/ref
+	cg map_minimap2 -paired 1 tmp/ali.bam tmp/ref NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+} {could not properly index /home/peter/dev/genomecomb/tests/tmp/ref: contains no sequences} error
+
 test map_ngmlr {map_ngmlr basic} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
