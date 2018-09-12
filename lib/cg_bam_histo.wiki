@@ -1,0 +1,25 @@
+= bam_histo =
+
+== Format ==
+cg bam_histo ?options? regionfile bamfile ?intervals?
+
+== Summary ==
+create a report with coverage data of given regions in a bam file
+
+== Description ==
+bam_histo creates a report with the coverage for the region(s) of interest given in regionfile.
+The report is a tsv file with a line for each region in the region file.
+Each line will show the number of bases with a coverage (sequencing depth) in the given intervals.
+It will also show the size of the region and the average, minimum and maximum depth
+
+
+== Arguments ==
+; **regionfile**: region file: tab separated file describing region of interest. Must contain fields: chr, begin, end & name
+; **bamfile**: bam file for which a coverage report should be generated
+; **intervals**: list (space sperated) of numbers defining the intervals used
+
+== Options ==
+; **-n namecol (-namecol)**: fieldname (in the region file) to use as name for each row in the result
+
+== Category ==
+Report

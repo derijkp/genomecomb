@@ -1,10 +1,11 @@
 proc cg_bam_histo {args} {
 	set pos 0
+	set intervals {1 5 10 20 50 100 200 500 1000}
 	cg_options bam_histo args {
 		-n - -namecol {
 			set namecol $value
 		}
-	} {regionfile bamfile intervals}
+	} {regionfile bamfile intervals} 2 3
 	set chrs [bam_chrs $bamfile]
 	if {[regexp ^chr [lindex $chrs 0]]} {set pre chr} else {set pre {}}
 	foreach bamchr $chrs {
