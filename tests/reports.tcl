@@ -15,6 +15,18 @@ test reports {hsmetrics} {
 	exec diff tmp/result.hsmetrics.nocomments genomecomb.testdata/expected/bam_histo-NA19240chr2122.hsmetrics
 } {}
 
+test reports {coverage_report} {
+	test_cleantmp
+	cg select -f {chromosome=chr_clip($chromosome) begin end info} data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
+	set regionfile tmp/regfile.tsv
+	mklink genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam tmp/test.bam
+	mklink genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam.bai tmp/test.bam.bai
+	set bamfile tmp/test.bam
+	set intervals {1 5 10 20 50 100 200 500 1000}
+	cg coverage_report $regionfile $bamfile
+	exec diff tmp/test.histo genomecomb.testdata/expected/bam_histo-NA19240_smallpartchr2122.tsv
+} {}
+
 test reports {report_vars} {
 	mklink data/annot_compar-exomes_yri_parts.tsv tmp/vars.tsv
 	cg report_vars -stack 1 -v 2 -sample gatk-rdsbwa-NA19238chr2122 \

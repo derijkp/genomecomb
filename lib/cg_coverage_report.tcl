@@ -22,7 +22,7 @@ proc cg_coverage_report {args} {
 			set suffix $value
 		}
 	} {regionfile bamfile} 1
-	swet bams [list $bamfile {*}$args]
+	set bams [list $bamfile {*}$args]
 	foreach b $bams {
 		bam2covstats_job $b $regionfile $suffix
 	}
