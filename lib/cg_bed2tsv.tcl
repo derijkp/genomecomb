@@ -18,7 +18,7 @@ proc cg_bed2tsv {args} {
 	}
 	if {[llength $args] > 1} {
 		set outfile [lindex $args 1]
-		set o [open $outfile w]
+		set o [wgzopen $outfile]
 	} else {
 		set o stdout
 	}

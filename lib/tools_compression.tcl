@@ -28,6 +28,14 @@ proc compress {file {ext .lz4} {threads 1}} {
 	}
 }
 
+proc wgzopen {file {compressionlevel -1} {threads 1}} {
+	if {![gziscompressed $file]} {
+		return [open $file w]
+	} else {
+		return [open "[compresspipe $file $compressionlevel $threads] > $file" w]
+	}
+}
+
 proc gzopen {file {pos -1}} {
 	if {![file exists $file]} {
 		exiterror "Error: couldn't open \"$file\": no such file or directory"
