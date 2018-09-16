@@ -1,10 +1,18 @@
+proc version_sniffles {} {
+	set version ?
+	set exe [exec which sniffles]
+	if {![catch {file link $exe} exe]} {
+		regsub {^sniffles-} [file tail $exe] {} version
+	}
+	return $version
+}
+
 proc sv_sniffles_job {args} {
 	upvar job_logdir job_logdir
 	set cmdline "[list cd [pwd]] \; [list cg sv_sniffles {*}$args]"
 	set refseq {}
 	set opts {}
 	set split 1
-	set regionfile {}
 	set threads 2
 	set cleanup 1
 	set regmincoverage 3
@@ -14,6 +22,9 @@ proc sv_sniffles_job {args} {
 	set min_seq_size 300
 	set resultfile {}
 	cg_options sv_sniffles args {
+		-refseq {
+			set refseq $value
+		}
 		-split {
 			set split $value
 		}
@@ -38,9 +49,8 @@ proc sv_sniffles_job {args} {
 		-min_seq_size {
 			set min_seq_size $value
 		}
-		default {
-			if {[regexp {^-..} $key]} {set key -$key}
-			lappend opts $key $value
+		-snifflesopts {
+			lappend opts {*}$value
 		}
 	} {bamfile resultfile} 1 2
 	set bamfile [file_absolute $bamfile]
@@ -66,14 +76,14 @@ proc sv_sniffles_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set vcffile [file root [gzroot $resultfile]].vcf
-	job sv_sniffles-$root.vcf {*}$skips -mem 1G -cores $threads \
+	job sv_$root.vcf {*}$skips -mem 1G -cores $threads \
 	-skip [list $resultfile $resultanalysisinfo] \
 	-deps {
 		$bamfile $refseq $bamfile.bai
 	} -targets {
 		$vcffile $vcffile.analysisinfo
 	} -vars {
-		sniffles opts regionfile refseq threads root min_support min_seq_size
+		sniffles opts refseq threads root min_support min_seq_size
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller sniffles varcaller_version [version sniffles] varcaller_cg_version [version genomecomb]
 		exec sniffles {*}$opts --threads $threads --genotype \
@@ -82,7 +92,7 @@ proc sv_sniffles_job {args} {
 		file rename -force $target.temp $target
 	}
 	# 
-	job $sv_sniffles-vcf2tsv-$root {*}$skips -deps {
+	job sv_vcf2tsv-$root {*}$skips -deps {
 		$vcffile
 	} -targets {
 		$resultfile $resultanalysisinfo
