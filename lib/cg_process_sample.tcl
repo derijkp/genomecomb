@@ -806,7 +806,7 @@ proc process_sample_job {args} {
 			lappend todo(var) var-$varcaller-$bambase.tsv
 		}
 		foreach svcaller $svcallers {
-			switch {$svcallers} {
+			switch {$svcaller} {
 				default {set extraopts {}}
 			}
 			if {![auto_load sv_${svcaller}_job]} {
