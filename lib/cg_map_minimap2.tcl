@@ -23,6 +23,7 @@ proc map_minimap2_job {args} {
 	set skips {}
 	set keepsams 0
 	set threads 2
+	set mem 10G
 	cg_options map_minimap2 args {
 		-paired - -p {
 			set paired $value
@@ -41,6 +42,9 @@ proc map_minimap2_job {args} {
 		}
 		-threads - -t {
 			set threads $value
+		}
+		-mem {
+			set mem $value
 		}
 	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome using minimap2
@@ -73,7 +77,7 @@ proc map_minimap2_job {args} {
 			set target $result.index/$name.sam
 			lappend samfiles $target
 			set analysisinfo [gzroot $target].analysisinfo
-			job minimap2-$sample-$name -mem 5G -cores $threads -deps {
+			job minimap2-$sample-$name -mem $mem -cores $threads -deps {
 				$minimap2refseq $file
 			} -targets {
 				$target $analysisinfo
@@ -102,7 +106,7 @@ proc map_minimap2_job {args} {
 			lappend samfiles $target
 			set analysisinfo [gzroot $target].analysisinfo
 			lappend asamfiles $analysisinfo
-			job minimap2-$sample-$name -mem 5G -cores $threads -deps {
+			job minimap2-$sample-$name -mem $mem -cores $threads -deps {
 				$minimap2refseq $file1 $file2
 			} -targets {
 				$target $analysisinfo
