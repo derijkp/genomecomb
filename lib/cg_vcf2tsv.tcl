@@ -19,6 +19,7 @@ proc cg_vcf2tsv {args} {
 	set collapse 0
 	set removefields {}
 	set keepfields *
+	set locerror error
 	cg_options vcf2tsv args {
 		-s - -split {
 			if {$value eq "ori"} {
@@ -44,12 +45,16 @@ proc cg_vcf2tsv {args} {
 		-t - -typelist {
 			set typelist $value
 		}
+		-locerror {
+			if {$locerror ni "error keep correct"} {error "wrong value $value for -locerror, should be one of: error keep correct"}
+			set locerror $value
+		}
 		-keepfields {
 			set keepfields $value
 		}
 	} {infile outfile} 0 2
 	if {[info exists infile]} {
-		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields $refout $keepfields]
+		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields $refout $keepfields $locerror]
 	} else {
 		set pipe [list exec vcf2tsv $split $typelist - - $removefields $refout]
 	}

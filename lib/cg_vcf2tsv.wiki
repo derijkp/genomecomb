@@ -84,6 +84,12 @@ which are commonly defined this way.
 ; -keepfields fieldlist: Besides the obligatory fields, include only the fields
 in fieldlist (space separated) in the output. Default is to use all fields
 present in the file (*)
+; -locerror error/keep/correct: some vcfs contain locations that would be
+incorrect (lead to problems for annotation etc.) in a tsv (e.g. end <
+begin). By default vcf will stop with an error on these (**error**). Use
+**keep** produce a tsv file with this wrong entry without error, while
+**correct** will produce a tsv file where this error is corrected (end
+changed to = begin).
 
 == Category ==
 Format Conversion

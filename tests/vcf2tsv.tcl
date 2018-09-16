@@ -602,6 +602,60 @@ test vcf2tsv {calc DP from AD if not present} {
 	exec diff tmp/cresult.tsv tmp/expected.tsv
 } {}
 
+
+test vcf2tsv {sv with end < begin} {
+	file_write tmp/test.vcf [deindent {
+		##fileformat=VCFv4.2
+		##source=Sniffles
+		##fileDate=20180915
+		##contig=<ID=chr3,length=198022430>
+		##ALT=<ID=DEL,Description="Deletion">
+		##ALT=<ID=DUP,Description="Duplication">
+		##ALT=<ID=INV,Description="Inversion">
+		##ALT=<ID=INVDUP,Description="InvertedDUP with unknown boundaries">
+		##ALT=<ID=TRA,Description="Translocation">
+		##ALT=<ID=INS,Description="Insertion">
+		##INFO=<ID=CHR2,Number=1,Type=String,Description="Chromosome for END coordinate in case of a translocation">
+		##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the structural variant">
+		##INFO=<ID=MAPQ,Number=1,Type=Integer,Description="Median mapping quality of paired-ends">
+		##INFO=<ID=RE,Number=1,Type=Integer,Description="read support">
+		##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">
+		##INFO=<ID=PRECISE,Number=0,Type=Flag,Description="Precise structural variation">
+		##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Length of the SV">
+		##INFO=<ID=SVMETHOD,Number=1,Type=String,Description="Type of approach used to detect SV">
+		##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+		##INFO=<ID=STD_quant_start,Number=A,Type=Integer,Description="STD of the start breakpoints across the reads.">
+		##INFO=<ID=STD_quant_stop,Number=A,Type=Integer,Description="STD of the stop breakpoints across the reads.">
+		##INFO=<ID=Kurtosis_quant_start,Number=A,Type=Integer,Description="Kurtosis value of the start breakpoints accross the reads.">
+		##INFO=<ID=Kurtosis_quant_stop,Number=A,Type=Integer,Description="Kurtosis value of the stop breakpoints accross the reads.">
+		##INFO=<ID=SUPTYPE,Number=1,Type=String,Description="Type by which the variant is supported.(SR,ALN)">
+		##INFO=<ID=SUPTYPE,Number=1,Type=String,Description="Type by which the variant is supported.(SR,ALN)">
+		##INFO=<ID=STRANDS,Number=A,Type=String,Description="Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)">
+		##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency.">
+		##INFO=<ID=ZMW,Number=A,Type=Integer,Description="Number of ZMWs (Pacbio) supporting SV.">
+		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+		##FORMAT=<ID=DR,Number=1,Type=Integer,Description="# high-quality reference reads">
+		##FORMAT=<ID=DV,Number=1,Type=Integer,Description="# high-quality variant reads">
+		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	test
+		chr3	184156712	22375	N	<INS>	.	UNRESOLVED	IMPRECISE;SVMETHOD=Snifflesv1.0.8;CHR2=chr3;END=184156710;STD_quant_start=3.987480;STD_quant_stop=491.614280;Kurtosis_quant_start=-1.349856;Kurtosis_quant_stop=-1.173662;SVTYPE=INS;SUPTYPE=AL,SR;SVLEN=999999999;STRANDS=+-;RE=17;AF=1	GT:DR:DV	1/1:0:17
+	}]\n
+	set result {}
+	lappend result [catch {
+		cg vcf2tsv tmp/test.vcf tmp/result1.tsv
+	} msg] $msg
+	lappend result [catch {
+		cg vcf2tsv -locerror test tmp/test.vcf tmp/result1.tsv
+	} msg] $msg
+	cg vcf2tsv -locerror keep tmp/test.vcf tmp/result2.tsv
+	lappend result [cg select -rc 1 -f {begin end} tmp/result2.tsv]
+	cg vcf2tsv -locerror correct tmp/test.vcf tmp/result3.tsv
+	lappend result [cg select -rc 1 -f {begin end} tmp/result3.tsv]
+	set result
+} {1 {END position 184156710 < begin 184156712
+error converting vcf file: child process exited abnormally} 0 {} {begin	end
+184156712	184156710} {begin	end
+184156712	184156712}}
+
 test vcfcat {vcfcat basic} {
 	write_vcf tmp/temp1.vcf {
 		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003

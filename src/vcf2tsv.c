@@ -519,7 +519,7 @@ void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int exclu
 	DStringArrayDestroy(alts);
 }
 
-int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int excludefilter,DString *genotypelist,int refout) {
+int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int excludefilter,DString *genotypelist,int refout,char locerror) {
 	DStringArray *lineformat,*alts;
 	DString *svlens=NULL,*svtype=NULL;
 	char *cursvlen=NULL;
@@ -649,6 +649,14 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 				altvar->altsize = 1;
 				altvar->alt[0] = '.';
 				if (svend != -1) {
+					if (svend < pos) {
+						if (locerror == 'e') {
+							fprintf(stderr,"END position %d < begin %d\n",svend,pos);
+							exit(1);
+						} else if (locerror == 'c') {
+							svend = pos;
+						}
+					}
 					altvar->end = svend;
 					altvar->refsize = svend - altvar->begin;
 					if (altvar->refsize != 1) {altvar->ref = NULL;}
@@ -684,6 +692,14 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 			}
 			altvar->begin = pos;
 			if (svend != -1) {
+				if (svend < pos) {
+					if (locerror == 'e') {
+						fprintf(stderr,"END position %d < begin %d\n",svend,pos);
+						exit(1);
+					} else if (locerror == 'c') {
+						svend = pos;
+					}
+				}
 				altvar->end = svend;
 				altvar->refsize = svend - pos;
 			} else {
@@ -1089,6 +1105,7 @@ int main(int argc, char *argv[]) {
 	FILE *fd = NULL,*fo = NULL;
 	DStringArray *headerfields, *linea;
 	DString *genotypelist=DStringNew(), *prevchr = DStringNew();
+	char locerror = 'e';
 	altvars = NULL;
 	int *order = NULL;
 	int split,refout,read,i,j,maxtab, min, excludefilter = 0, excludename = 0, infopos = 0;
@@ -1207,6 +1224,11 @@ int main(int argc, char *argv[]) {
 				start = ++cur;
 			}
 		}
+	}
+	if (argc >= 9) {
+		locerror = argv[8][0];
+	} else {
+		locerror = 'e';
 	}
 	fprintf(fo,"#filetype\ttsv/varfile\n");
 	fprintf(fo,"#fileversion\t%s\n",FILEVERSION);
@@ -1369,7 +1391,7 @@ int main(int argc, char *argv[]) {
 				process_print_buffer(fo,obuffer,2147483647);
 				DStringCopy(prevchr,a_chrom(linea));
 			}
-			pos = process_line_split(obuffer,linea,excludename,excludefilter,genotypelist,refout);
+			pos = process_line_split(obuffer,linea,excludename,excludefilter,genotypelist,refout,locerror);
 			process_print_buffer(fo,obuffer,pos);
 		} else {
 			process_line_unsplit(fo,linea,excludename,excludefilter);
