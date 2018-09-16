@@ -3,7 +3,7 @@ proc realign_abra_job {args} {
 	set skips {}
 	set regionfile {}
 	set threads 2
-	cg_options map_minimap2 args {
+	cg_options realign_abra args {
 		-skips {
 			set skips $value
 		}
