@@ -1,20 +1,41 @@
 proc bwarefseq_job {refseq} {
 	upvar job_logdir job_logdir
 	set bwarefseq $refseq.bwa/[file tail $refseq]
-	if {[file exists $bwarefseq]} {return $bwarefseq}
+	set bwarefseqfa [file root $bwarefseq].fa
+	if {[file exists $bwarefseqfa]} {return $bwarefseqfa}
 	set tail [file tail $refseq]
-	set targets [list $refseq.bwa $refseq.bwa/$tail]
+	set targets [list $refseq.bwa $refseq.bwa/$tail $refseq.bwa/$tail.fai]
 	foreach ext {amb ann bwt pac sa} {lappend targets $refseq.bwa/$tail.$ext}
 	if {[jobtargetexists $targets $refseq]} return
 	job bwa2refseq-[file tail $refseq] -deps {$refseq} -targets $targets -code {
 		file delete -force $target.temp
 		file mkdir $target.temp
 		mklink $dep $target.temp/[file tail $dep]
+		if {![file exists $dep.fai]} {
+			exec samtools faidx $dep
+		}
+		mklink $dep.fai $target.temp/[file tail $dep].fai
 		exec bwa index $target.temp/[file tail $dep] 2>@ stderr
 		file delete -force $target
 		file rename $target.temp $target
 	}
-	return $bwarefseq
+	# with .fa as extension
+	set deps [jobglob $refseq.bwa/*.ifas*]
+	set targets {}
+	foreach file $deps {
+		if {[file extension $file] eq ".ifas"} {
+			lappend targets [file root $file].fa
+		} else {
+			if {![regsub {\.ifas\.([^.]+)$} $file {.fa.\1} nfile]} {error "could not convert name of $file"}
+			lappend targets $nfile
+		}
+	}
+	job bwa2refseq_fa-[file tail $refseq] -deps $deps -targets $targets -code {
+		foreach file $deps nfile $targets {
+			mklink $file $nfile
+		}
+	}
+	return $bwarefseqfa
 }
 
 proc map_bwa_job {args} {
