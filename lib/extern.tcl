@@ -32,6 +32,63 @@ proc findpicard {} {
 	return $picard
 }
 
+proc findjava {jar} {
+	if {![info exists javavcmd($jar)]} {
+		if {![catch {exec java -XX:ParallelGCThreads=1 -jar $jar} msg]
+			|| ![regexp {Unsupported major.minor version} $msg]} {
+			set javavcmd($jar) java
+		} elseif {![catch {exec java1.8 -XX:ParallelGCThreads=1 -jar $jar} msg2]
+			|| ![regexp {Unsupported major.minor version} $msg2]} {
+			set javavcmd($jar) java1.8
+		} elseif {![catch {exec java1.7 -XX:ParallelGCThreads=1 -jar $jar} msg2]
+			|| ![regexp {Unsupported major.minor version} $msg2]} {
+			set javavcmd($jar) java1.7
+		} else {
+			error "Cannot determine java version for $jar:\n$msg"
+		}
+	}
+	return $javavcmd($jar)
+}
+
+proc execjar {args} {
+	set java java
+	set mem 1G
+	set javaopts ""
+	set finishedpattern {}
+	set pos 0
+	foreach {key value} $args {
+		if {$key eq "-mem"} {
+			set mem $value
+			incr pos 2
+		} elseif {$key eq "-javaopts"} {
+			set javaopts $value
+			incr pos 2
+		} elseif {$key eq "-finishedpattern"} {
+			set mem $value
+			incr pos 2
+		} else {
+			break
+		}
+	}
+	lappend javaopts -Xms$mem -Xmx$mem -XX:ParallelGCThreads=1
+	set args [lrange $args $pos end]
+	set cmd [list_pop args 0]
+	set jar [findjar $cmd [string toupper $cmd]]
+	set java [findjava $jar]
+	set error [catch {
+		exec $java {*}$javaopts -jar $jar {*}$args
+	} msg opt]
+	if {$error} {
+		if {$::errorCode ne "NONE"} {
+			if {$finishedpattern eq "" || ![regexp $finishedpattern $msg]} {
+				dict unset opt -level
+				return -options $opt $msg
+			}
+		}
+	}
+	return ""
+}
+
 proc gatkexec {args} {
 	if {[lindex $args 0] eq "-finishedpattern"} {
 		# hack: If the given (regexp) pattern is present in the output, ignore errors
