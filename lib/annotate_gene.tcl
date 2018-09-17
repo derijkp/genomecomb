@@ -616,8 +616,10 @@ proc annotategene_one_del {loc} {
 		if {!$complement} {
 			set gend [lindex $eline 1]
 			while {$snpend < $gend} {
-				set from [genome_get $genomef $chr $snppos [expr {$snppos+1}] 0 1]
-				set dest [genome_get $genomef $chr [expr {$snpend+1}] [expr {$snpend+2}] 0 1]
+				if {[catch {
+					set from [genome_get $genomef $chr $snppos [expr {$snppos+1}] 0 1]
+					set dest [genome_get $genomef $chr [expr {$snpend+1}] [expr {$snpend+2}] 0 1]
+				}]} break
 				if {$from ne $dest} break
 				if {$from eq "N"} break
 				incr snppos; incr snpend
@@ -626,8 +628,10 @@ proc annotategene_one_del {loc} {
 			# for complement towards 3' is going back
 			set gbegin [lindex $sline 0]
 			while {$snppos > $gbegin} {
-				set from [genome_get $genomef $chr [expr {$snppos-1}] $snppos 0 1]
-				set dest [genome_get $genomef $chr $snpend [expr {$snpend+1}] 0 1]
+				if {[catch {
+					set from [genome_get $genomef $chr [expr {$snppos-1}] $snppos 0 1]
+					set dest [genome_get $genomef $chr $snpend [expr {$snpend+1}] 0 1]
+				}]} break
 				if {$from ne $dest} break
 				if {$from eq "N"} break
 				incr snppos -1; incr snpend -1
