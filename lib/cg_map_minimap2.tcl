@@ -91,7 +91,8 @@ proc map_minimap2_job {args} {
 				foreach {key value} $readgroupdata {
 					lappend rg "$key:$value"
 				}
-				exec minimap2 -a -x $preset -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] \
+				exec minimap2 -a -x $preset -t $threads --MD \
+					-R @RG\\tID:$sample\\t[join $rg \\t] \
 					$minimap2refseq $fastq > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
 			}
@@ -120,7 +121,8 @@ proc map_minimap2_job {args} {
 				foreach {key value} $readgroupdata {
 					lappend rg "$key:$value"
 				}
-				exec minimap2 -a -x $preset -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] \
+				exec minimap2 -a -x $preset -t $threads --MD \
+					-R @RG\\tID:$sample\\t[join $rg \\t] \
 					$minimap2refseq $fastq1 $fastq2 > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
 			}
