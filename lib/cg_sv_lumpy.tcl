@@ -83,12 +83,13 @@ proc sv_lumpy_job {args} {
 	} -targets {
 		$vcffile $vcffile.analysisinfo
 	} -vars {
-		resultfile vcffile lumpy opts gatkrefseq threads root
+		resultfile vcffile lumpy opts refseq threads root
 	} -code {
 		analysisinfo_write $dep $vcffile sample $root varcaller lumpy varcaller_version [version lumpy] varcaller_cg_version [version genomecomb]
 		catch_exec lumpyexpress {*}$opts \
 			-B $dep \
 			-T [scratchdir] \
+			-R $refseq \
 			-o $vcffile.temp.vcf
 		file rename -force $vcffile.temp.vcf $vcffile
 	}
