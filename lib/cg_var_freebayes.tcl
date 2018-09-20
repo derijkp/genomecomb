@@ -105,11 +105,11 @@ proc var_freebayes_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set deps [list $file $refseq $file.bai {*}$deps]
-	job ${pre}varall-$root {*}$skips -mem 5G -cores $threads -deps $deps -targets {
+	job ${pre}varall-$root {*}$skips -mem 5G -deps $deps -targets {
 		${pre}varall-$root.vcf
 		${pre}varall-$root.vcf.analysisinfo
 	} -skip [list $varallfile $varallfile.analysisinfo] -vars {
-		opts regionfile refseq threads root
+		opts regionfile refseq root
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller freebayes varcaller_version [version freebayes] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		if {$regionfile ne ""} {
