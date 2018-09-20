@@ -26,6 +26,8 @@ proc var_distrreg_job {args} {
 		-distrreg {
 			if {$value in {1 chr chromosome 0}} {
 				set distrreg $value
+			} elseif {[isint $value]} {
+				set distrreg $value
 			} elseif {[file exists $value]} {
 				set distrreg [file_absolute $value]
 			} else {
