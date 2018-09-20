@@ -37,7 +37,7 @@ set env(SCRATCHDIR) [file dir [tempdir]]
 source $appdir/lib/file.tcl ; pwd
 
 proc test_cleantmp {} {
-	foreach file [glob -nocomplain $::testdir/tmp/*] {
+	foreach file [list_remove [glob -nocomplain $::testdir/tmp/* $::testdir/tmp/.*] $::testdir/tmp/.. $::testdir/tmp/.] {
 		catch {file attributes $file -permissions ugo+xw}
 		catch {file delete -force $file}
 	}
