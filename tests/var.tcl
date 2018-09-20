@@ -37,6 +37,18 @@ chr21	1047
 chr22	156
 total	1203}
 
+test var {var_distrreg gatk sequencedgenome (part)} {
+	test_cleantmp
+	file copy data/bwa.bam data/bwa.bam.bai tmp
+	cg select -q {$chromosome regexp "chr2."} $::refseqdir/hg19/extra/reg_hg19_sequencedgenome.tsv.lz4 tmp/distrreg.tsv
+	cg var_distrreg -stack 1 -method gatk -distrreg tmp/distrreg.tsv tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
+	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv.lz4
+	string_change [cg covered tmp/sreg-gatk-bwa.tsv.lz4] [list \n\n \n]
+} {chromosome	bases
+chr21	1047
+chr22	156
+total	1203}
+
 test var {var_distrreg gatk result exists already} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp

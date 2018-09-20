@@ -177,17 +177,6 @@ chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v			41	u	1;2
 chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
 }} 
 
-test distr2chr {header} {
-	test_cleantmp
-	exec distr2chr tmp/distrvars1- 0 1 < data/vars1.sft
-	list [lsort -dict [glob tmp/*]] [file_read tmp/distrvars1-chr1]
-} {{tmp/distrvars1-chr1 tmp/distrvars1-chr2} {chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
-chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
-chr1	4099	4100	snp	C	T	T	T	47	v	T	T	35	v	1,2
-chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v			41	u	1;2
-chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
-}} 
-
 test distr2chr {many} {
 	test_cleantmp
 	exec distr2chr tmp/distrvars1- 0 < data/manychr.tsv
@@ -208,6 +197,53 @@ test distr2chr {many} {
 } {{} 81 {chr2	2
 chr2	2-2
 }} 
+
+test distr2chr {reglist} {
+	test_cleantmp
+	exec distr2chr tmp/distrvars1- 0 < data/vars1.sft
+	list [lsort -dict [glob tmp/*]] [file_read tmp/distrvars1-chr1]
+} {{tmp/distrvars1-chr1 tmp/distrvars1-chr2 tmp/distrvars1-chromosome} {chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
+chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
+chr1	4099	4100	snp	C	T	T	T	47	v	T	T	35	v	1,2
+chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v			41	u	1;2
+chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
+}} 
+
+test distrreg {basic} {
+	test_cleantmp
+	exec distrreg tmp/distrvars1- {} 1 \
+		{chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2} \
+		0 1 2 < data/vars1.sft
+	list [lsort -dict [glob tmp/*]] \
+		[file_read tmp/distrvars1-chr1-1000-5000] \
+		[file_read tmp/distrvars1-chr1-5000-10000] \
+		[lindex [cg select -g all tmp/distrvars1-chr1-10000-20000] end] \
+		[lindex [cg select -g all tmp/distrvars1-chr2] end]
+} {{tmp/distrvars1-chr1-1000-5000 tmp/distrvars1-chr1-5000-10000 tmp/distrvars1-chr1-10000-20000 tmp/distrvars1-chr2} {chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	sequenced-sample2	list
+chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
+chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
+chr1	4099	4100	snp	C	T	T	T	47	v	T	T	35	v	1,2
+} {chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	sequenced-sample2	list
+chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v			41	u	1;2
+chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
+} 0 9} 
+
+test distrreg {no header} {
+	test_cleantmp
+	exec distrreg tmp/distrvars1- .bed 0 \
+		{chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2} \
+		0 1 2 < data/vars1.sft
+	list [lsort -dict [glob tmp/*]] \
+		[file_read tmp/distrvars1-chr1-1000-5000.bed] \
+		[file_read tmp/distrvars1-chr1-5000-10000.bed] \
+		[lindex [exec wc -l tmp/distrvars1-chr1-10000-20000.bed] 0] \
+		[lindex [exec wc -l  tmp/distrvars1-chr2.bed] 0]
+} {{tmp/distrvars1-chr1-1000-5000.bed tmp/distrvars1-chr1-5000-10000.bed tmp/distrvars1-chr1-10000-20000.bed tmp/distrvars1-chr2.bed} {chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
+chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
+chr1	4099	4100	snp	C	T	T	T	47	v	T	T	35	v	1,2
+} {chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v			41	u	1;2
+chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
+} 0 9} 
 
 test file_absolute {relative path} {
 	cd /tmp

@@ -23,6 +23,15 @@ proc var_distrreg_job {args} {
 		-regmincoverage {
 			set regmincoverage $value
 		}
+		-distrreg {
+			if {$value in {1 chr chromosome 0}} {
+				set distrreg $value
+			} elseif {[file exists $value]} {
+				set distrreg [file_absolute $value]
+			} else {
+				error "unknown value $value for -distrreg, must be a (region) file or one of: chr or 1, 0"
+			}
+		}
 		-pre {
 			set pre $value
 		}
@@ -34,12 +43,6 @@ proc var_distrreg_job {args} {
 		}
 		-cleanup {
 			set cleanup $value
-		}
-		-distrreg {
-			if {$value ni {1 chr chromosome 0}} {
-				error "unknown value $value for -distrreg, must be one of: chr or 1, 0"
-			}
-			set distrreg $value
 		}
 		default {
 			lappend opts $key $value
@@ -76,26 +79,22 @@ proc var_distrreg_job {args} {
 		cd $destdir
 		set indexdir [gzroot $varallfile].index
 		file mkdir $indexdir
-		set chromosomes [distrreg_regs $distrreg $refseq]
+		set regions [distrreg_regs $distrreg $refseq]
 		set basename [gzroot [file tail $varallfile]]
 		set regfiles {}
-		foreach chromosome $chromosomes {
-			lappend regfiles $indexdir/$basename-$chromosome.bed
+		foreach region $regions {
+			lappend regfiles $indexdir/$basename-$region.bed
 		}
 		job [gzroot $varallfile]-distrreg-beds {*}$skips -deps {
 			$regionfile
 		} -targets $regfiles -vars {
-			regionfile chromosomes appdir basename indexdir
+			regionfile regions appdir basename indexdir
 		} -code {
-			cg select -f {chromosome begin end} $regionfile | $appdir/bin/distr2chr $indexdir/$basename-
-			foreach chromosome $chromosomes {
-				if {[file exists $indexdir/$basename-$chromosome]} {
-					file rename -force $indexdir/$basename-$chromosome $indexdir/$basename-$chromosome.bed
-				} else {
-					file_write $indexdir/$basename-$chromosome.bed ""
-				}
-			}
-			file delete $indexdir/$basename-chromosome
+			set header [cg select -h $regionfile]
+			set poss [tsv_basicfields $header 3]
+			set header [list_sub $header $poss]
+			# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $indexdir/$basename- \'$regions\' 0 1 2"
+			cg select -f $header $regionfile | $appdir/bin/distrreg $indexdir/$basename- .bed 0 $regions 0 1 2
 		}
 		set todo {}
 		# Produce variant calls
@@ -103,8 +102,8 @@ proc var_distrreg_job {args} {
 		mklink $bamfile $ibam
 		mklink $bamfile.bai $ibam.bai
 		defcompressionlevel 1
-		foreach chromosome $chromosomes regfile $regfiles {
-			lappend todo [var_${method}_job {*}$opts {*}$skips -rootname $root-$chromosome -regionfile $regfile \
+		foreach region $regions regfile $regfiles {
+			lappend todo [var_${method}_job {*}$opts {*}$skips -rootname $root-$region -regionfile $regfile \
 				-split $split -threads $threads -cleanup $cleanup $ibam $refseq]
 		}
 		defcompressionlevel 9
