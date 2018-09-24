@@ -91,12 +91,14 @@ bwarefseq_job genome_${build}.ifas
 # you can explicitely download info on a database using:
 # cg download_ucscinfo resultfile ${build} dbname
 
+
+
 # collapse regions
 foreach db {
 	cytoBand evofold microsat oreganno rmsk simpleRepeat targetScanS tfbsConsSites 
 	tRNAs wgRna vistaEnhancers gad
 	phastConsElements46way phastConsElements46wayPlacental phastConsElements46wayPrimates
-	phastConsElements100way
+	phastConsElements100way wgEncodeDacMapabilityConsensusExcludable
 } {
 	job reg_${build}_$db -targets {
 		reg_${build}_${db}.tsv
