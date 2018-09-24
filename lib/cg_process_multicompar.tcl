@@ -167,9 +167,9 @@ proc process_multicompar_job {args} {
 				if {[file exists $compar_file]} {file rename -force $compar_file $compar_file.old}
 				break
 			}
-			set sample [file_sample $varfile]
-			if {![inlist $done $sample]} {
-				putslog "Still todo: $sample"
+			set analysis [file_analysis $varfile]
+			if {![inlist $done $analysis]} {
+				putslog "Still todo: $analysis"
 				lappend stilltodo $varfile
 			}
 		}
@@ -198,9 +198,9 @@ proc process_multicompar_job {args} {
 		putslog "Starting multisreg"
 		set regfiles {}
 		foreach varfile $varfiles {
-			set sample [file_sample $varfile]
-			set name [lindex [split $sample -] end]
-			set file $sampledir/$name/sreg-$sample.tsv
+			set analysis [file_analysis $varfile]
+			set name [lindex [split $analysis -] end]
+			set file $sampledir/$name/sreg-$analysis.tsv
 			if {![jobfileexists $file]} {
 				if {!$skipincomplete} {
 					error "file $file not found"
