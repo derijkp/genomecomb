@@ -35,7 +35,7 @@ FILE *openreg(char **regions, char *prefix, char *postfix, int printheader, DStr
 			} else if (step == 2) {
 				if (region[size] == '\0' || region[size] == ' ') break;
 				*end2 = atoi(region+size+1);
-				if (end2 < start2) {
+				if (*end2 < *start2) {
 					fprintf(stderr,"error parsing region: end %d < begin %d\n",*end2,*start2);
 					exit(EXIT_FAILURE);
 				}
