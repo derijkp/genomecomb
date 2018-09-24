@@ -152,7 +152,7 @@ proc var_freebayes_job {args} {
 		root pre
 	} -code {
 		analysisinfo_write $dep $target varcaller_mincoverage 5 varcaller_minquality 30 varcaller_cg_version [version genomecomb]
-		cg select -q {$alt ne "." && $alleleSeq1 ne "." &&$genoqual >= 10 && $totalcoverage > 4} \
+		cg select -q {$zyg ne "r" && $genoqual >= 10 && $totalcoverage > 4} \
 		-f {
 			chromosome begin end type ref alt quality alleleSeq1 alleleSeq2 
 			{sequenced=if($genoqual < 30 || $totalcoverage < 5,"u",if($zyg eq "r","r","v"))}
