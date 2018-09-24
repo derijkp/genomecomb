@@ -6,8 +6,7 @@
 
 proc svopen {file side {name {}}} {
 	if {$name eq ""} {
-		set name [file root [file tail $file]]
-		regsub {^[^-]*-} $name {} name
+		set name [file_rootname $file]
 	}
 	set fh [gzopen $file]
 	set header [tsv_open $fh]
@@ -324,8 +323,7 @@ proc svmulticompar {args} {
 
 	set locfields {chromosome begin end type ref alt}
 	if {![file exists $svfile1]} {
-		set name [file root [file tail $svfile2]]
-		regsub {^[^-]*-} $name {} name
+		set name [file_rootname $svfile2]
 		catch {svclose $f} ; catch {close $o}
 		set f [svopen $svfile2 1]
 		foreach {fh side poss makeref makealt newheader} $f break
@@ -355,8 +353,7 @@ proc svmulticompar {args} {
 	set line1 [svgetline $f1]
 	#
 	# open add file
-	set name [file root [file tail $svfile2]]
-	regsub {^[^-]*-} $name {} name
+	set name [file_rootname $svfile2]
 	catch {svclose $f2}
 	set f2 [svopen $svfile2 2 $name]
 	foreach {fh2 side2 poss2 makeref2 makealt2 header2} $f2 break
