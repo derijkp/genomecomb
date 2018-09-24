@@ -86,7 +86,7 @@ proc sv_sniffles_job {args} {
 		sniffles opts refseq threads root min_support min_seq_size
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller sniffles varcaller_version [version sniffles] varcaller_cg_version [version genomecomb]
-		exec sniffles {*}$opts --threads $threads --genotype \
+		exec sniffles {*}$opts --threads $threads --genotype --skip_parameter_estimation \
 			--min_support $min_support --min_seq_size $min_seq_size \
 			-m $dep -v $target.temp 2>@ stderr >@ stdout
 		file rename -force $target.temp $target
