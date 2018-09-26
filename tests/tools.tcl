@@ -2,6 +2,10 @@ package require Extral
 catch {tk appname test}
 
 set bigtestdir /data/genomecomb.testdata
+set smalltestdir /data/genomecomb.smalltestdata
+if {![info exists refseqdir]} {
+	set refseqdir /data/genomecomb.smalltestdata/refseqtest
+}
 
 package require pkgtools
 namespace import -force pkgtools::*
@@ -28,7 +32,6 @@ proc checkdiff args {
 set keeppath $::env(PATH)
 set script [info script] ; if {$script eq ""} {set script ./t}
 set testdir [file dir [file normalize $script]]
-set refseqdir $testdir/genomecomb.testdata/refseqtest
 set appdir [file dir [file dir [file normalize $script]]]
 source $appdir/lib/file.tcl
 append ::env(PATH) [pathsep]$appdir/bin

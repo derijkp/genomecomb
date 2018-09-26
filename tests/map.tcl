@@ -48,6 +48,9 @@ test map_bowtie2 {map_bowtie2 basic} {
 #} {}
 
 test map_minimap2 {map_minimap2 paired} {
+	if {![file exists $::refseqdir/hg19/genome_hg19.ifas.minimap2.sr]} {
+		error "minimap2 sr index not made"
+	}
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	cg map_minimap2 -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]

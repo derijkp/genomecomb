@@ -23,7 +23,7 @@ chr7	127480532  127481699  Neg4  0  -}
 test bed2tsv {bed2tsv compress} {
 	exec cg bed2tsv data/sample.bed tmp/test.tsv.lz4
 	cg unzip tmp/test.tsv.lz4
-	file_read tmp/test.tsv.lz4
+	file_read tmp/test.tsv
 } {#browser position chr7:127471196-127495720
 #browser hide all
 #track name="ColorByStrandDemo" description="Color by strand demonstration" visibility=2 colorByStrand="255,0,0 0,0,255"
@@ -36,7 +36,8 @@ chr7	127475864  127477031  Neg1  0  -
 chr7	127477031  127478198  Neg2  0  -
 chr7	127478198  127479365  Neg3  0  -
 chr7	127479365  127480532  Pos5  0  +
-chr7	127480532  127481699  Neg4  0  -}
+chr7	127480532  127481699  Neg4  0  -
+}
 
 test_cleantmp
 

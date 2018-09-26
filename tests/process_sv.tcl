@@ -36,7 +36,7 @@ if 0 {
 # =====
 
 test process_sv {process_project ont} {
-	cd $::bigtestdir
+	cd $::smalltestdir
 	set dest tmp/ont
 	file delete -force tmp/ont
 	file mkdir tmp/ont
@@ -49,20 +49,26 @@ test process_sv {process_project ont} {
 		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.analysisinfo -x *.png -x *.vcf \
 		tmp/ont expected/ont
+	set errors {}
 	foreach file1 [glob tmp/ont/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
+		if {[catch {
+			checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
+		} msg]} {
+			lappend errors $file1 $msg
+		}
 	}
+	join $errors \n
 } {}
 
 test process_sv {manta} {
-	cd $::bigtestdir
+	cd $::smalltestdir
 	file delete -force tmp/sv_chr21part
 	file mkdir tmp/sv_chr21part
 	cg project_addsample tmp/sv_chr21part ERR194146_30x_NA12877 {*}[glob ori/sv/ERR194146_30x_NA12877-chr21part_*]
 	cg project_addsample tmp/sv_chr21part ERR194147_30x_NA12878 {*}[glob ori/sv/ERR194147_30x_NA12878-chr21part_*]
-	mklink /data/genomecomb.testdata/ori/sv/map-dsbwa-ERR194146_30x_NA12877-chr21part.bam tmp/sv_chr21part/samples/ERR194146_30x_NA12877/map-dsbwa-ERR194146_30x_NA12877-chr21part.bam
-	mklink /data/genomecomb.testdata/ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv_chr21part/samples/ERR194147_30x_NA12878/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+	mklink $::smalltestdir/ori/sv/map-dsbwa-ERR194146_30x_NA12877-chr21part.bam tmp/sv_chr21part/samples/ERR194146_30x_NA12877/map-dsbwa-ERR194146_30x_NA12877-chr21part.bam
+	mklink $::smalltestdir/ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv_chr21part/samples/ERR194147_30x_NA12878/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	cg process_project {*}$::dopts \
 	  -varcallers gatk \
 	  -svcallers manta -distrreg 1 -split 1 \

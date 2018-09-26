@@ -560,8 +560,7 @@ test gene_annot {hgvs - extra tests} {
 	exec diff tmp/annot_results.tsv tmp/expected.tsv
 } {}
 
-test gene_annot {variant error  end > end chromosome} {
-
+test gene_annot {variant error end > end chromosome} {
 	write_tab tmp/vars.tsv {
 		chromosome	begin	end	type	ref	alt
 		Un_gl000220	117831	161803	del	43972	{}
@@ -608,13 +607,11 @@ test gene_annot {variant error  end > end chromosome} {
 		chrUn_gl000220	155996	156152	+	RNA5-8SN4	ref	NR_146120	0	586	156152	156152	1	155996,	156152,	RNA5-8SN4	unk	unk	-1,		
 		chrUn_gl000220	158122	158214	+	AL592188.7	ens	ENST00000581141	0	586	158214	158214	1	158122,	158214,	ENSG00000265830	none	none	-1,		
 	}]
-	write_tab tmp/expected.tsv {
+	file_write tmp/expected.tsv [deindent {
 		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
-		chr1	1000	2000	del	1000	{}	GENEDEL;GENEDEL	testgene;cdstestgene	testgene:del;cdstestgene:del
-	}
+		Un_gl000220	117831	161803	del	43972		RNAEND;RNAEND;RNAEND;RNAEND;RNAEND;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL;GENEDEL	FP671120.1;LOC100507412;RNA45SN5;RNA5-8S5;RNA28SN5;RNA28S5;JN872559;JN872556;MIR6724-1;JA668106;AL592188.1;JB158072;JB074932;AL592188.6;AL592188.5;RNA18SN5;FP236383.2;FP671120.4;RNA5-8SN5;RNA5-8S5;RNA5-8SN4	+ENST00000623664.1_1:intron3+17278_down+35553:n.614-3773_38041del;+uc011mfs.2:intron2+17278_down+35107:n.625-3773_38052del;+NR_046235:exon1+12409_down+43023:n.12409_56380del;+uc022brd.2:exon1+12409_down+5651:n.12409_19164del;+NR_003287:exon1+4485_down+43386:n.4485_48456del;RNA28S5:del;JN872559:del;JN872556:del;MIR6724-1:del;JA668106:del;AL592188.1:del;JB158072:del;JB074932:del;AL592188.6:del;AL592188.5:del;RNA18SN5:del;FP236383.2:del;FP671120.4:del;RNA5-8SN5:del;RNA5-8S5:del;RNA5-8SN4:del
+	}]\n
 	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
-
-# 	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv $::refseqdir/hg19/gene_hg19_intGene.tsv.lz4
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {} 
 
