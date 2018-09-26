@@ -585,7 +585,7 @@ test job "missing dep, -optional 0 $testname" {
 	cd $::testdir
 	set result
 } {error trying to run job jobmissing:
-missing dependency missing.txt} error
+missing dependency "missing.txt"} error
 
 test job "missing dep, -optional 0 -skipjoberrors 1 $testname" {
 	test_cleantmp
@@ -922,7 +922,7 @@ test job "no -targets, dep not found, not optional $testname" {
 	cd $::testdir
 	set result
 } {error trying to run job testnotarget:
-missing dependency dep.txt} error
+missing dependency "dep.txt"} error
 
 test job "no -checkcompressed 1 (default), dep $testname" {
 	cd $::testdir
@@ -957,7 +957,7 @@ test job "no -checkcompressed 0, dep $testname" {
 	cd $::testdir
 	set result
 } {error trying to run job testcheckcompressed:
-missing dependency dep.txt} error
+missing dependency "dep.txt"} error
 
 test job "no -checkcompressed 1 (default), targets $testname" {
 	cd $::testdir
@@ -1013,7 +1013,7 @@ test job "rmtargets1 $testname" {
 	job_wait
 	gridwait
 	set temp [file_read log_jobs/data2.log]
-	set result [list [lsort -dict [glob *]] [regexp {missing dependency data1.txt} $temp]]
+	set result [list [lsort -dict [glob *]] [regexp {missing dependency "data1.txt"} $temp]]
 	cd $::testdir
 	set result
 } {{log.*.finished log_jobs} 1} match
@@ -1040,7 +1040,7 @@ test job "rmtargets2 $testname" {
 	job_wait
 	gridwait
 	set temp [file_read log_jobs/data3.log]
-	set result [list [lsort -dict [glob *]] [regexp {missing dependency data1.txt} $temp]]
+	set result [list [lsort -dict [glob *]] [regexp {missing dependency "data1.txt"} $temp]]
 	cd $::testdir
 	set result
 } {{data2.txt log.*.finished log_jobs} 1} match
