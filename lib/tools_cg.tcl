@@ -5,7 +5,7 @@
 #
 
 proc cg {cmd args} {
-	# puts "cg $args"
+	# puts "cg $cmd $args"
 	catch_exec cg $cmd {*}$args
 }
 
