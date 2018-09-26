@@ -4,9 +4,9 @@ proc bwarefseq_job {refseq} {
 	set bwarefseqfa [file root $bwarefseq].fa
 	if {[file exists $bwarefseqfa]} {return $bwarefseqfa}
 	set tail [file tail $refseq]
-	set targets [list $refseq.bwa $refseq.bwa/$tail $refseq.bwa/$tail.fai]
-	foreach ext {amb ann bwt pac sa} {lappend targets $refseq.bwa/$tail.$ext}
-	if {[jobtargetexists $targets $refseq]} return
+	set targets [list $refseq.bwa $bwarefseqfa $bwarefseqfa.fai]
+	foreach ext {amb ann bwt pac sa} {lappend targets $bwarefseqfa.$ext}
+	if {[jobtargetexists $targets $refseq]} {return $bwarefseqfa}
 	job bwa2refseq-[file tail $refseq] -deps {$refseq} -targets $targets -code {
 		file delete -force $target.temp
 		file mkdir $target.temp
