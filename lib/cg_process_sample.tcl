@@ -753,9 +753,10 @@ proc process_sample_job {args} {
 			set bamfile $sampledir/map-${aligner}-$sample.bam
 			# quality and adapter clipping
 			if {$clip} {
-				set files [fastq_clipadapters_job $fastqfiles -adapterfile $adapterfile -paired $paired \
+				set files [fastq_clipadapters_job -adapterfile $adapterfile -paired $paired \
 					-skips [list -skip [list $bamfile $bamfile.analysisinfo] -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
-					-removeskew $removeskew]
+					-removeskew $removeskew \
+					{*}$fastqfiles]
 				lappend cleanupfiles {*}$files
 				foreach file $files {
 					lappend cleanupfiles [gzroot $file].analysisinfo

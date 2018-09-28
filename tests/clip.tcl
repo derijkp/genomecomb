@@ -10,6 +10,40 @@ if 0 {
 	exec igv tmp/temp.bam &
 }
 
+test fastq_clipadaptors {fastq_clipadaptors single} {
+	file copy -force {*}[glob data/seq_R1.fq.gz] tmp/
+	cg fastq_clipadaptors tmp/seq_R1.fq.gz
+	# nothing is actually clipped here, so there should be no difference
+	cg tsvdiff tmp/seq_R1.fq.gz tmp/fastq.clipped/seq_R1.clipped.fastq
+} {}
+
+test fastq_clipadaptors {fastq_clipadaptors paired} {
+	file copy -force {*}[glob data/seq_R*.fq.gz] tmp/
+	cg fastq_clipadaptors -paired 1 tmp/seq_R1.fq.gz tmp/seq_R2.fq.gz
+	# nothing is actually clipped here, so there should be no difference
+	cg tsvdiff tmp/seq_R1.fq.gz tmp/fastq.clipped/seq_R1.clipped.fastq
+	cg tsvdiff tmp/seq_R2.fq.gz tmp/fastq.clipped/seq_R2.clipped.fastq
+} {}
+
+test fastq_clipadaptors {fastq_clipadaptors paired, multiple fastqs} {
+	cg fastq_split -parts 4 data/seq_R1.fq.gz tmp/seq_R1.fq.gz
+	cg fastq_split -parts 4 data/seq_R2.fq.gz tmp/seq_R2.fq.gz
+	cg fastq_clipadaptors -paired 1 {*}[glob tmp/*.fq.gz]
+	# nothing is actually clipped here, so there should be no difference
+	foreach file [glob tmp/*.fq.gz] {
+		cg tsvdiff $file tmp/fastq.clipped/[file root [file tail [gzroot $file]]].clipped.fastq
+	}
+} {}
+
+test fastq_clipadaptors {fastq_clipadaptors single} {
+	file copy {*}[glob data/seq_R*.fq.gz] tmp/
+	set numseq 25
+	cg fastq_split -parts 4 tmp/seq_R1.fq.gz tmp/split/seq_R1.fq.gz
+	checksplitoutput $numseq
+	lsort -dict [glob tmp/split/*]
+} {tmp/split/p1_seq_R1.fq.gz tmp/split/p2_seq_R1.fq.gz tmp/split/p3_seq_R1.fq.gz tmp/split/p4_seq_R1.fq.gz}
+
+
 test sam_clipamplicons {basic} {
 	write_sam tmp/temp.sam {
 		chr1	100	20M	20	chr1	121	20M	20

@@ -141,7 +141,9 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff fastqc adapterfile pai
 		if {![llength $files]} continue
 		if $clip { 
 			#clip_adapters
-			set files_clipped [fastq_clipadapters_job $files -adapterfile $adapterfile -paired $paired]
+			set files_clipped [fastq_clipadapters_job \
+				-adapterfile $adapterfile -paired $paired \
+				{*}$files]
 			#tophat
 			tophat_job $sample $files_clipped $libtype $dir $bowtie_index 
 		} else {

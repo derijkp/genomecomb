@@ -162,9 +162,10 @@ proc process_illumina {args} {
 			# do not do any of preliminaries if end product is already there
 			set bamfile map-sbwa-$sample.bam
 			# quality and adapter clipping
-			set files [fastq_clipadapters_job $fastqfiles \
+			set files [fastq_clipadapters_job \
 				-adapterfile $adapterfile -paired $paired \
-				-skips [list -skip [list $bamfile $bamfile.analysisinfo] -skip [list $resultbamfile $resultbamfile.analysisinfo]]]
+				-skips [list -skip [list $bamfile $bamfile.analysisinfo] -skip [list $resultbamfile $resultbamfile.analysisinfo]]] \
+				{*}$fastqfiles
 			lappend cleanupfiles {*}$files [file dir [lindex $files 0]]
 			# map using bwa
 			map_bwa_job -paired $paired -skips [list -skip [list $resultbamfile $resultbamfile.analysisinfo]] $bamfile $refseq $sample {*}$files
