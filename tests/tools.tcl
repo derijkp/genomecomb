@@ -7,6 +7,12 @@ if {![info exists refseqdir]} {
 	set refseqdir /data/genomecomb.smalltestdata/refseqtest
 }
 
+if {[info exists argv]} {
+	set dopts $argv
+} else {
+	set dopts {--stack 1 --verbose 2}
+}
+
 package require pkgtools
 namespace import -force pkgtools::*
 package require Extral

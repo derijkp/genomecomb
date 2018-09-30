@@ -4,11 +4,7 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 set keepdir [pwd]
-if {[llength [get argv ""]]} {
-	set dopts [get argv ""]
-} else {
-	set dopts {--stack 1 --verbose 2}
-}
+
 set test_cleantmp 0
 
 test sv {sniffles} {
@@ -50,7 +46,7 @@ test sv {lumpy} {
 	file mkdir tmp/sv-lumpy
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-lumpy/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-lumpy/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
-	exec cg sv_lumpy {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-lumpy/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+	cg sv_lumpy {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-lumpy/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	cg tsvdiff -x *.tbi tmp/sv-lumpy expected/sv-lumpy
 } {}
 
@@ -60,7 +56,7 @@ test sv {gridss} {
 	file mkdir tmp/sv-gridss
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
-	exec cg sv_gridss {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+	cg sv_gridss {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	cg tsvdiff -x *.xml -x svLocusGraphStats.tsv -x *.tbi tmp/sv-gridss expected/sv-gridss
 } {}
 

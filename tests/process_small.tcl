@@ -4,11 +4,7 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 set keepdir [pwd]
-if {[llength [get argv ""]]} {
-	set dopts [get argv ""]
-} else {
-	set dopts {--stack 1 --verbose 2}
-}
+
 set test_cleantmp 0
 
 # tests
