@@ -83,7 +83,7 @@ proc map_ngmlr_job {args} {
 		set target $result.index/$name.sam
 		lappend samfiles $target
 		set analysisinfo [gzroot $target].analysisinfo
-		job ngmlr-$sample-$name -mem $mem -cores $threads -deps [list $ngmlr_refseq $file {*}$refdeps] \
+		job ngmlr-$sample-$name -mem [job_mempercore $mem $threads] -cores $threads -deps [list $ngmlr_refseq $file {*}$refdeps] \
 		-targets {
 			$target $analysisinfo
 		} -vars {

@@ -31,7 +31,7 @@ proc realign_gatk_job {args} {
 	}
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set dict [file root $gatkrefseq].dict
-	job realign_gatk-[file tail $resultbamfile] -mem 10G -cores [expr {1+$threads}] \
+	job realign_gatk-[file tail $resultbamfile] -mem [job_mempercore 10G [expr {1+$threads}]] -cores [expr {1+$threads}] \
 	-deps {$bamfile ($$bamfile.bai) $dict $gatkrefseq $refseq $regionfile} \
 	-targets {$resultbamfile $resultbamfile.bai} {*}$skips \
 	-vars {gatkrefseq refseq gatk bamfile regionfile threads} -code {

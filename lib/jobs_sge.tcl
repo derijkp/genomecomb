@@ -50,6 +50,10 @@ proc job_process_sge_submit {job runfile args} {
 				set priority $value
 			}
 			-cores {
+				# we will use a PE named local, which must be present/made on the cluster
+				# -l slots=$value mentioned in http://www.softpanorama.org/HPC/Grid_engine/Reference/qsub.shtml
+				# would be easier, but does not seem to work (if there is any PE defined?)
+				# lappend hard -l slots=$value
 				if {![info exists cgjob_distr(no_local_pe)]} {
 					set cgjob_distr(no_local_pe) [catch {exec qconf -sp local}]
 				}

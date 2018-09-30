@@ -77,7 +77,7 @@ proc map_minimap2_job {args} {
 			set target $result.index/$name.sam
 			lappend samfiles $target
 			set analysisinfo [gzroot $target].analysisinfo
-			job minimap2-$sample-$name -mem $mem -cores $threads -deps {
+			job minimap2-$sample-$name -mem [job_mempercore $mem $threads] -cores $threads -deps {
 				$minimap2refseq $file
 			} -targets {
 				$target $analysisinfo
@@ -107,7 +107,7 @@ proc map_minimap2_job {args} {
 			lappend samfiles $target
 			set analysisinfo [gzroot $target].analysisinfo
 			lappend asamfiles $analysisinfo
-			job minimap2-$sample-$name -mem $mem -cores $threads -deps {
+			job minimap2-$sample-$name -mem [job_mempercore $mem $threads] -cores $threads -deps {
 				$minimap2refseq $file1 $file2
 			} -targets {
 				$target $analysisinfo

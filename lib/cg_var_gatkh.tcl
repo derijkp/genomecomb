@@ -123,7 +123,7 @@ proc var_gatkh_job {args} {
 	set resultgvcf $varallfile.gz
 	set resultname $varallfile
 	set deps [list $file $gatkrefseq $file.bai {*}$deps]
-	job $resultname {*}$skips -mem 5G -cores $threads -deps $deps -targets {
+	job $resultname {*}$skips -mem [job_mempercore 5G $threads] -cores $threads -deps $deps -targets {
 		$resultgvcf $resultgvcf.tbi $varallfile.analysisinfo
 	} -vars {
 		opts regionfile gatkrefseq refseq threads root ERC resultgvcf

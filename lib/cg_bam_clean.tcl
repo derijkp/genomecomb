@@ -73,7 +73,7 @@ proc bam_clean_job {args} {
 	}
 	if {$removeduplicates eq "picard"} {
 		list_pop skips 0; list_pop skips 0;
-		job bamremdup-$root -mem 7G -cores 2 -deps {$dir/$pre-$root.bam} \
+		job bamremdup-$root -mem [job_mempercore 10G 2] -cores 2 -deps {$dir/$pre-$root.bam} \
 		-targets {$dir/$pre-d$root.bam $dir/$pre-d$root.bam.analysisinfo} \
 		-vars {sample} {*}$skips -code {
 			analysisinfo_write $dep $target removeduplicates picard removeduplicates_version [version picard]
@@ -119,7 +119,7 @@ proc bam_clean_job {args} {
 				file rename -force $target.temp $target
 			}
 		} else {
-			job bamrealign-$root -mem 10G -cores 2 -deps $deps \
+			job bamrealign-$root -mem [job_mempercore 10G 2] -cores 2 -deps $deps \
 			-targets {$dir/$pre-r$root.bam $dir/$pre-r$root.bam.analysisinfo} \
 			-vars {gatkrefseq refseq gatk realignopts regionfile} {*}$skips -code {
 				analysisinfo_write $dep $target realign gatk realign_version [version gatk3]

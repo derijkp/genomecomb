@@ -152,7 +152,7 @@ proc var_gatk_job {args} {
 	cd $destdir
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set deps [list $file $gatkrefseq $file.bai {*}$deps]
-	job ${pre}varall-$root {*}$skips -mem 5G -cores $threads \
+	job ${pre}varall-$root {*}$skips -mem [job_mempercore 5G $threads] -cores $threads \
 	-deps $deps \
 	-targets {${pre}varall-$root.vcf ${pre}varall-$root.vcf.analysisinfo} \
 	-skip [list $varallfile $varallfile.analysisinfo] \

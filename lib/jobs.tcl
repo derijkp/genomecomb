@@ -1270,4 +1270,17 @@ proc job_curargs {} {
 	return $temp
 }
 
+proc job_mempercore {mem threads} {
+	if {[regexp {^([0-9]+)(.*)$} $mem temp memnum memunits]} {
+		if {$memunits eq "G"} {
+			set scale 1000.0
+			set memunits M
+		} else {
+			set scale 1.0
+		}
+		set mem [expr {int(ceil($memnum * $scale /$threads))}]$memunits
+	}
+	return $mem
+}
+
 job_init

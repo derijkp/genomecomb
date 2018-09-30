@@ -89,7 +89,7 @@ proc map_bwa_job {args} {
 			lappend samfiles $target
 			set analysisinfo [gzroot $target].analysisinfo
 			lappend asamfiles $analysisinfo
-			job bwa-$sample-$name -mem 5G -cores $threads \
+			job bwa-$sample-$name -mem [job_mempercore 5G $threads] -cores $threads \
 			-deps [list $bwarefseq $file] \
 			-targets {$target $analysisinfo} \
 			-vars {readgroupdata sample paired threads} \
@@ -115,7 +115,7 @@ proc map_bwa_job {args} {
 			lappend samfiles $target
 			set analysisinfo [gzroot $target].analysisinfo
 			lappend asamfiles $analysisinfo
-			job bwa-$sample-$name -mem 5G -cores $threads \
+			job bwa-$sample-$name -mem [job_mempercore 5G $threads] -cores $threads \
 			-deps [list $bwarefseq $file1 $file2] \
 			-targets {$target $analysisinfo} \
 			-vars {readgroupdata sample paired threads} \
