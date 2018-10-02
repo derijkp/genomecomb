@@ -50,6 +50,16 @@ test sv {lumpy} {
 	cg tsvdiff -x *.tbi tmp/sv-lumpy expected/sv-lumpy
 } {}
 
+test sv {lumpy error} {
+	cd $::smalltestdir
+	file delete -force tmp/tmp
+	file mkdir tmp/tmp
+	file_write tmp/tmp/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam {}
+	file_write tmp/tmp/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai {}
+	cg sv_lumpy {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/tmp/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+	set result {}
+} {*: ==: unary operator expected*} error match
+
 test sv {gridss} {
 	cd $::smalltestdir
 	file delete -force tmp/sv-gridss
@@ -57,7 +67,7 @@ test sv {gridss} {
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
 	cg sv_gridss {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
-	cg tsvdiff -x *.xml -x svLocusGraphStats.tsv -x *.tbi tmp/sv-gridss expected/sv-gridss
+	cg tsvdiff -x *.idx -x *.tbi -x *.*_metrics -x *.pdf tmp/sv-gridss expected/sv-gridss
 } {}
 
 testsummarize

@@ -90,7 +90,7 @@ proc sv_lumpy_job {args} {
 			-B $dep \
 			-T [scratchdir] \
 			-R $refseq \
-			-o $vcffile.temp.vcf
+			-o $vcffile.temp.vcf 2>@ stderr >@ stdout
 		file rename -force $vcffile.temp.vcf $vcffile
 	}
 	# 

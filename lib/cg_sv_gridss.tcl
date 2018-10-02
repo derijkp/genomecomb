@@ -76,23 +76,23 @@ proc sv_gridss_job {args} {
 	if {[llength $blacklist]} {
 		lappend opts BLACKLIST=\"[lindex $blacklist 0]\"
 	}
-	job sv_gridss-$root.vcf {*}$skips -mem [expr {1*$threads}]G -cores $threads \
+	job sv_gridss-$root.vcf {*}$skips -mem [expr {8+1*$threads}]G -cores $threads \
 	-skip [list $resultfile $resultfile.analysisinfo] \
 	-deps {
 		$bamfile $bwarefseq $bamfileindex $bwarefseq.fai
 	} -targets {
-		$resultfile.gridssrun $vcffile $resultfile.gridssrun.analysisinfo
+		$vcffile $vcffile.analysisinfo
 	} -vars {
 		resultfile workdir bamfile vcffile gridss opts bwarefseq threads root
 	} -code {
-		analysisinfo_write $dep $resultfile.gridssrun sample $root varcaller gridss varcaller_version [version gridss] varcaller_cg_version [version genomecomb]
+		analysisinfo_write $dep $vcffile sample $root varcaller gridss varcaller_version [version gridss] varcaller_cg_version [version genomecomb]
 		# -Dreference_fasta is only required for CRAM input files
 		# -Dgridss.gridss.output_to_temp_file=true allows GRIDSS to continue where it left off without data errors due to truncated files
 		# -Dsamjdk.create_index=true is required for multi-threaded operation
 		# -Dsamjdk.use_async_io allow for async read/write on background threads which improves BAM I/O performancce
 		set jar [findjar gridss GRIDSS]
 		set java [findjava $jar]
-		set mem 8G
+		set mem [expr {8+1*$threads}]G
 		set error [catch {
 			exec $java -Xms1G -Xmx$mem -XX:ParallelGCThreads=1 \
 				-Dreference_fasta=$bwarefseq \
@@ -123,15 +123,14 @@ proc sv_gridss_job {args} {
 	}
 	# 
 	job sv-gridss-vcf2tsv-$root {*}$skips -deps {
-		$resultfile.gridssrun
-		$resultfile.gridssrun/results/variants/diploidSV.vcf.gz
+		$resultfile.gridssrun/results.vcf
 	} -targets {
 		$resultfile $resultanalysisinfo
 	} -vars {
 		sample split resultfile
 	} -code {
 		analysisinfo_write $dep $target
-		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $resultfile.gridssrun/results/variants/diploidSV.vcf.gz $target.temp[gzext $target]
+		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $resultfile.gridssrun/results.vcf $target.temp[gzext $target]
 		file rename -force $target.temp[gzext $target] $target
 	}
 	# cleanup
