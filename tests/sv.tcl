@@ -18,6 +18,29 @@ test sv {sniffles} {
 		tmp/sv-sniffles expected/sv-sniffles
 } {}
 
+# samtools view -b /data/projects/promethion-pub.data/pubminion/NA12878-nanopore-wgs/bwa-mem_NA12878_25FC.bam chr19:19000000-22000000 chr21:21000000-26000000 > ori/ont/bwa-mem_NA12878_25FC_part19_21.bam
+test sv {sniffles2 NA12878} {
+	cd $::smalltestdir
+	file delete -force tmp/sv-sniffles2
+	file mkdir tmp/sv-sniffles2
+	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam
+	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam.bai tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam.bai
+	cg sv_sniffles {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam
+	cg tsvdiff -x *.tbi \
+		tmp/sv-sniffles2 expected/sv-sniffles2
+} {}
+
+test sv {npinv} {
+	cd $::smalltestdir
+	file delete -force tmp/sv-npinv
+	file mkdir tmp/sv-npinv
+	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
+	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam.bai tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam.bai
+	cg sv_npinv {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
+	cg tsvdiff -x *.tbi \
+		tmp/sv-npinv expected/sv-npinv
+} {}
+
 test sv {manta} {
 	cd $::smalltestdir
 	file delete -force tmp/sv-manta
