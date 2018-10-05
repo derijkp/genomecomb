@@ -158,5 +158,13 @@ chr21	1018
 chr22	142
 total	1160}
 
+test var {var_strelka basic} {
+	test_cleantmp
+	file copy data/bwa.bam data/bwa.bam.bai tmp
+	cg var_strelka -stack 1 -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
+	cg tsvdiff tmp/var-strelka-bwa.tsv.lz4 data/var-strelka-bwa.tsv.lz4
+	cg tsvdiff tmp/varall-strelka-bwa.gvcf.gz data/varall-strelka-bwa.gvcf.gz
+} {}
+
 testsummarize
 
