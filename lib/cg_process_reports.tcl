@@ -47,7 +47,7 @@ proc process_reports_job {args} {
 	job_logfile $sampledir/process_reports_$sample $sampledir $cmdline \
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 picard java gnusort8 lz4 os]
 	# start
-	set bamfiles [jobglob $sampledir/*.bam]
+	set bamfiles [lsort -dict [jobglob $sampledir/*.bam]]
 	set ampliconsfile [ampliconsfile $sampledir $ref]
 	file mkdir $sampledir/reports
 	foreach bamfile $bamfiles {
@@ -179,7 +179,9 @@ proc process_reports_job {args} {
 	}
 	if {[inlist $reports predictgender]} {
 		set target $sampledir/reports/report_predictgender-$sample.tsv
-		job predictgender-$sample -optional 1 -deps {$sampledir/map-*.bam ($sampledir/var-*.tsv)} -vars {dbdir sampledir} -targets {$target} -code {
+		set bamfile [lindex $bamfiles 0]
+		set varfile [jobglob $sampledir/var-*[file_rootname $bamfile].tsv]
+		job predictgender-[file_rootname $bamfile] -optional 1 -deps {$bamfile ($varfile)} -vars {dbdir sampledir} -targets {$target} -code {
 			cg predictgender -dbdir $dbdir $sampledir $target
 		}
 	}
