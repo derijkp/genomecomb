@@ -32,9 +32,12 @@ proc findpicard {} {
 	return $picard
 }
 
-proc findjava {jar} {
+proc findjava {jar {version {}}} {
 	if {![info exists javavcmd($jar)]} {
-		if {![catch {exec java -XX:ParallelGCThreads=1 -jar $jar} msg]
+		if {![catch {exec java$version -XX:ParallelGCThreads=1 -jar $jar} msg]
+			|| ![regexp {Unsupported major.minor version} $msg]} {
+			set javavcmd($jar) java$version
+		} elseif {![catch {exec java -XX:ParallelGCThreads=1 -jar $jar} msg]
 			|| ![regexp {Unsupported major.minor version} $msg]} {
 			set javavcmd($jar) java
 		} elseif {![catch {exec java1.8 -XX:ParallelGCThreads=1 -jar $jar} msg2]
@@ -56,12 +59,16 @@ proc execjar {args} {
 	set javaopts ""
 	set finishedpattern {}
 	set pos 0
+	set javaversion {}
 	foreach {key value} $args {
 		if {$key eq "-mem"} {
 			set mem $value
 			incr pos 2
 		} elseif {$key eq "-javaopts"} {
 			set javaopts $value
+			incr pos 2
+		} elseif {$key eq "-javaversion"} {
+			set javaversion $value
 			incr pos 2
 		} elseif {$key eq "-finishedpattern"} {
 			set mem $value
@@ -74,7 +81,7 @@ proc execjar {args} {
 	set args [lrange $args $pos end]
 	set cmd [list_pop args 0]
 	set jar [findjar $cmd [string toupper $cmd]]
-	set java [findjava $jar]
+	set java [findjava $jar $javaversion]
 	set error [catch {
 		exec $java {*}$javaopts -jar $jar {*}$args
 	} msg opt]
