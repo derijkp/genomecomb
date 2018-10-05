@@ -2,7 +2,6 @@ proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} 
 	upvar job_logdir job_logdir
 	job $job {*}$skips -deps {$varallfile} -targets {$resultfile} -vars {mincoverage mingenoqual} -code {
 		set temp [filetemp $target]
-		file_write $temp "# regions selected from [gzroot $dep]: \$genoqual >= $mingenoqual && \$coverage >= $mincoverage\n"
 		exec cg vcf2tsv $dep \
 			| cg select -q [subst {
 				\$genoqual >= $mingenoqual && \$coverage >= $mincoverage && \$type ne "ins"
