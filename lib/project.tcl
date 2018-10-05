@@ -66,3 +66,27 @@ proc projectinfo {dir args} {
 	infofile_write $projectinfofile $infod
 	return $infod
 }
+
+proc testmultitarget {target files} {
+	file delete $target.temp
+	if {[file exists $target]} {
+		# test if existing target is already ok
+		set ok 1
+		set done [cg select -a $target]
+		foreach testfile $files {
+			if {![file exists $testfile] || [file mtime $target] < [file mtime $testfile]} {
+				putslog "$testfile is newer than $target"
+				set ok 0
+			}
+			set name [file_rootname $testfile]
+			if {$name ni $done} {
+				putslog "name $name not found in $target yet ($testfile)"
+				set ok 0
+			}
+		}
+		if {!$ok} {
+			putslog "$target has to be remade, renaming to $target.old"
+			file rename -force $target $target.old
+		}
+	}
+}
