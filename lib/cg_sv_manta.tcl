@@ -1,6 +1,6 @@
 proc version_manta {} {
 	set version ?
-	set mantadir [searchpath MANTADIR manta bin/configManta.py]
+	set mantadir [searchpath MANTADIR manta manta*]
 	set help [catch_exec $mantadir/bin/configManta.py -h]
 	regexp {Version: ([^\n]*)} $help temp version
 	return $version
@@ -91,7 +91,7 @@ proc sv_manta_job {args} {
 	} -vars {
 		resultfile manta opts gatkrefseq threads root
 	} -code {
-		set mantadir [searchpath MANTADIR manta bin/configManta.py]
+		set mantadir [searchpath MANTADIR manta manta*]
 		analysisinfo_write $dep $resultfile.mantarun sample $root varcaller manta varcaller_version [version manta] varcaller_cg_version [version genomecomb]
 		exec $mantadir/bin/configManta.py {*}$opts \
 			--bam $dep \

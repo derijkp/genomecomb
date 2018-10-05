@@ -90,14 +90,14 @@ proc sv_npinv_job {args} {
 		vcffile opts root min max
 	} -code {
 		analysisinfo_write $dep $vcffile sample $root varcaller npinv varcaller_version [version npinv] varcaller_cg_version [version genomecomb]
-		execjar npInv {*}$opts \
+		execjar -javaversion 1.8 npInv {*}$opts \
 			--input $dep \
 			--output $vcffile.temp \
 			--min $min -max $max
 		file rename -force $vcffile.temp $vcffile
 	}
 	# 
-	job sv-npinv-vcf2tsv-$root {*}$skips -deps {
+	job sv_npinv-vcf2tsv-$root {*}$skips -deps {
 		$vcffile $vcffile.analysisinfo
 	} -targets {
 		$resultfile $resultanalysisinfo
