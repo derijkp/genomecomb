@@ -166,5 +166,13 @@ test var {var_strelka basic} {
 	cg tsvdiff tmp/varall-strelka-bwa.gvcf.gz data/varall-strelka-bwa.gvcf.gz
 } {}
 
+test var {var_distrreg strelka} {
+	test_cleantmp
+	file copy data/bwa.bam data/bwa.bam.bai tmp
+	cg var_distrreg {*}$::dopts -d 2 -mincoverage 5 -distrreg 1 -method strelka -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
+	cg tsvdiff tmp/var-strelka-bwa.tsv.lz4 data/var-strelka-bwa.tsv.lz4
+	cg tsvdiff tmp/varall-strelka-bwa.gvcf.gz data/varall-strelka-bwa.gvcf.gz
+} {}
+
 testsummarize
 

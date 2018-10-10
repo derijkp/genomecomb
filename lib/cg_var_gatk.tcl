@@ -27,22 +27,31 @@ proc annotvar_clusters_job {args} {
 		find clusters of variants
 	}
 	set root [file_rootname $file]
-	set afile [gzroot $resultfile].analysisinfo
-	job annotvar-clusters-$root {*}$skips -skip [list [gzroot $resultfile] $afile] -deps {
+	set afile [gzroot $file].analysisinfo
+	set aresultfile [gzroot $resultfile].analysisinfo
+	job annotvar-clusters-$root {*}$skips -skip [list [gzroot $resultfile] $aresultfile] -deps {
 		$file
 	} -targets {
 		reg_cluster-$root.tsv.lz4 reg_cluster-$root.tsv.lz4.lz4i
 	} -code {
-		cg clusterregions < $dep > $target.temp
-		cg_lz4 $target.temp
-		file rename -force $target.temp.lz4 $target
-		cg_lz4index $target
+		if {[file size $dep]} {
+			cg clusterregions < $dep > $target.temp
+			cg_lz4 $target.temp
+			file rename -force $target.temp.lz4 $target
+			cg_lz4index $target
+		} else {
+			file_write $target ""
+		}
 	}
-	job annotvar-annotclusters-$root {*}$skips -deps {$file reg_cluster-$root.tsv.lz4} \
-	-targets {$resultfile $afile} \
+	job annotvar-annotclusters-$root {*}$skips -deps {$file $afile reg_cluster-$root.tsv.lz4} \
+	-targets {$resultfile $aresultfile} \
 	-code {
-		cg annotate -stack 1 -v 2 -analysisinfo 0 $dep $target {*}[list_remove [lrange $deps 1 end] {}] 2>@ stderr >@ stdout
 		analysisinfo_write $dep $target
+		if {[file size $dep]} {
+			cg annotate -stack 1 -v 2 -analysisinfo 0 $dep $target {*}[list_remove [lrange $deps 2 end] {}] 2>@ stderr >@ stdout
+		} else {
+			file_write $target ""
+		}
 	}
 }
 

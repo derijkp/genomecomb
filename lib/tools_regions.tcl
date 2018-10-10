@@ -43,7 +43,7 @@ proc reg_compare {loc1 loc2} {
 }
 
 proc tempbed {regionfile {reffile {}}} {
-	if {[file extension $regionfile] eq ".bed"} {
+	if {[file extension [gzroot $regionfile]] eq ".bed"} {
 		set bedfile $regionfile
 	} elseif {$reffile eq ""} {
 		set bedfile [file root [tempfile]].bed

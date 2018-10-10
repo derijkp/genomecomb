@@ -51,6 +51,7 @@ proc cg_cat {args} {
 	set comments {}
 	set files {}
 	foreach file $args {
+		if {[file size $file] == 0} continue
 		set f [gzopen $file]
 		set header [tsv_open $f comment]
 		if {-1 in [list_cor $header $fields]} {

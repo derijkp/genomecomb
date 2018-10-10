@@ -9,14 +9,18 @@ proc sreg_strelka_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25
 	upvar job_logdir job_logdir
 	job $job {*}$skips -deps {$varallfile} -targets {$resultfile} -vars {mincoverage mingenoqual} -code {
 		set temp [filetemp $target]
-		exec cg vcf2tsv $dep \
-			| cg select -q [subst {
-				\$genoqual >= $mingenoqual && \$coverage >= $mincoverage && \$type ne "ins"
-			}] -f {chromosome begin end} \
-			| cg regjoin {*}[compresspipe $target] > $temp
-		file rename -force $temp $target
-		if {[file extension $target] eq ".lz4"} {
-			exec lz4index $target
+		if {![file size $dep]} {
+			file_write $target ""
+		} else {
+			exec cg vcf2tsv $dep \
+				| cg select -q [subst {
+					def(\$genoqual,0) >= $mingenoqual && def(\$coverage,0) >= $mincoverage && \$type ne "ins"
+				}] -f {chromosome begin end} \
+				| cg regjoin {*}[compresspipe $target] > $temp
+			file rename -force $temp $target
+			if {[file extension $target] eq ".lz4"} {
+				exec lz4index $target
+			}
 		}
 	}
 }
@@ -104,7 +108,7 @@ proc var_strelka_job {args} {
 	set varfile ${pre}var-$root.tsv
 	set sregfile ${pre}sreg-$root.tsv
 	set varallfile ${pre}varall-$root.gvcf
-	set resultlist [list $destdir/$varfile.lz4 $destdir/$sregfile.lz4 $destdir/$varallfile.lz4 $destdir/reg_cluster-$root.tsv.lz4]
+	set resultlist [list $destdir/$varfile.lz4 $destdir/$sregfile.lz4 $destdir/$varallfile.gz $destdir/reg_cluster-$root.tsv.lz4]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -124,35 +128,58 @@ proc var_strelka_job {args} {
 	set resultgvcf $varallfile
 	set resultname $varallfile
 	set resultvcf [file root [gzroot $varfile]].vcf
-	job ${pre}varall-$root {*}$skips -mem [job_mempercore 5G $threads] -cores $threads \
-	 -skip [list $varallfile $varallfile.analysisinfo] \
-	 -deps [list $bamfile $refseq $bamfile.bai {*}$deps] -targets {
-		$resultgvcf.gz $resultgvcf.gz.tbi $resultgvcf.analysisinfo $resultvcf.gz $resultvcf.gz.tbi
+	job ${pre}varall-$root {*}$skips -mem [job_mempercore 5G $threads] -cores $threads -skip [list \
+		$varallfile $varallfile.analysisinfo \
+	] -deps [list \
+		$bamfile $refseq $bamfile.bai {*}$deps \
+	] -targets {
+		$resultgvcf.gz $resultgvcf.gz.tbi $resultgvcf.analysisinfo
+		$resultvcf.gz $resultvcf.gz.tbi $resultvcf.analysisinfo
 	} -vars {
 		bamfile resultgvcf resultvcf opts regionfile refseq threads root refseq varfile
 	} -code {
 		analysisinfo_write $bamfile $resultgvcf.gz sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		analysisinfo_write $bamfile $resultvcf.gz sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		set zerosize 0
 		if {$regionfile ne ""} {
+			set regionfile [gzfile $regionfile]
 			set bedfile [tempbed $regionfile $refseq]
-			exec bgzip $bedfile
-			exec tabix -p bed $bedfile.gz
-			set bedfile $bedfile.gz
-			lappend opts --callRegions=$bedfile
+			if {[file size $bedfile] == 0} {
+				set zerosize 1
+			} else {
+				if {[file extension $bedfile] ne ".gz"} {
+					exec bgzip $bedfile
+					set bedfile $bedfile.gz
+				}
+				exec tabix -f -p bed $bedfile
+				lappend opts --callRegions=$bedfile
+			}
 		}
-		set strelkadir [searchpath STRELKAADIR strelka strelka*]
-		exec $strelkadir/bin/configureStrelkaGermlineWorkflow.py {*}$opts \
-			--bam $dep \
-			--referenceFasta $refseq \
-			--runDir $varfile.strelkarun
-		catch_exec $varfile.strelkarun/runWorkflow.py -m local -j $threads
-		file rename -force $varfile.strelkarun/results/variants/genome.S1.vcf.gz $resultgvcf.gz
-		file rename -force $varfile.strelkarun/results/variants/genome.S1.vcf.gz.tbi $resultgvcf.gz.tbi
-		file rename -force $varfile.strelkarun/results/variants/variants.vcf.gz $resultvcf.gz
-		file rename -force $varfile.strelkarun/results/variants/variants.vcf.gz.tbi $resultvcf.gz.tbi
-		file delete -force $varfile.strelkarun
+		if {!$zerosize} {
+			file delete -force $varfile.strelkarun
+			file mkdir $varfile.strelkarun
+			set strelkadir [searchpath STRELKAADIR strelka strelka*]
+			exec $strelkadir/bin/configureStrelkaGermlineWorkflow.py {*}$opts \
+				--bam $dep \
+				--referenceFasta $refseq \
+				--runDir $varfile.strelkarun
+			catch_exec $varfile.strelkarun/runWorkflow.py -m local -j $threads
+			file rename -force $varfile.strelkarun/results/variants/genome.S1.vcf.gz $resultgvcf.gz
+			file rename -force $varfile.strelkarun/results/variants/genome.S1.vcf.gz.tbi $resultgvcf.gz.tbi
+			file rename -force $varfile.strelkarun/results/variants/variants.vcf.gz $resultvcf.gz
+			file rename -force $varfile.strelkarun/results/variants/variants.vcf.gz.tbi $resultvcf.gz.tbi
+			file delete -force $varfile.strelkarun
+		} else {
+			putslog "empty regionfile -> write empty $resultgvcf.gz"
+			file_write $resultgvcf.gz ""
+			file_write $resultgvcf.gz.tbi ""
+			file_write $resultgvcf.analysisinfo ""
+			file_write $resultvcf.gz ""
+			file_write $resultvcf.gz.tbi ""
+			file_write $resultvcf.analysisinfo ""
+		}
 	}
-	job ${pre}gvcf2tsv-$root {*}$skips -deps {
+	job ${pre}vcf2tsv-$root {*}$skips -deps {
 		$resultvcf.gz $resultvcf.analysisinfo
 	} -targets {
 		${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo
@@ -163,12 +190,16 @@ proc var_strelka_job {args} {
 	} -code {
 		analysisinfo_write $dep $target varcaller_mincoverage $mincoverage varcaller_mingenoqual $mingenoqual varcaller_cg_version [version genomecomb]
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
-		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
-		lappend fields [subst {zyg=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u",\$zyg)}]
+		lappend fields [subst {sequenced=if(def(\$genoqual,0) < $mingenoqual || def(\$coverage,0) < $mincoverage,"u","v")}]
+		lappend fields [subst {zyg=if(def(\$genoqual,0) < $mingenoqual || def(\$coverage,0) < $mincoverage,"u",\$zyg)}]
 		lappend fields *
-		exec cg vcf2tsv -split $split -removefields {
-			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
-		} $resultvcf.gz | cg select -f $fields > ${pre}uvar-$root.tsv.temp
+		if {[file size $resultvcf.gz]} {
+			exec cg vcf2tsv -split $split -removefields {
+				name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
+			} $resultvcf.gz | cg select -f $fields > ${pre}uvar-$root.tsv.temp
+		} else {
+			file_write ${pre}uvar-$root.tsv.temp ""
+		}
 		file rename -force ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
 	}
 	# annotvar_clusters_job works using jobs
