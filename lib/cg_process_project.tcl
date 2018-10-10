@@ -1,4 +1,5 @@
 proc process_project_job {args} {
+	set cmdline "[list cd [pwd]] \; [list cg process_project {*}$args]"
 	set dbdir {}
 	set dbfiles {}
 	set minfastqreads 0
@@ -148,17 +149,8 @@ proc process_project_job {args} {
 	set dbdir [dbdir $dbdir]
 	# logfile
 	# -------
-	set cmdline [list cg process_project]
-	foreach option {
-		ori dbdir refdir aligner realign varcallers svcallers split dbfile dbfiles paired adapterfile conv_nextseq reports cleanup jobsample maxopenfiles samBQ amplicons extra_reports_mastr
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline $destdir $dbdir
 	job_logfile $destdir/process_project_[file tail $destdir] $destdir $cmdline \
-		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 biobambam picard java gnusort8 lz4 os]
+		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa samtools gatk gatk3 biobambam picard java gnusort8 lz4 os]
 	# start
 	# -----
 	##in case of nextseq500 data - generate fastqs & distribute data
