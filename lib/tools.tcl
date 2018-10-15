@@ -304,3 +304,28 @@ proc unquote {string} {
 	}
 	return $string
 }
+
+proc catchexpr {expr {default {}}} {
+	if {![catch {uplevel expr $expr} result]} {
+		return $result
+	} else {
+		return $default
+	}
+}
+
+proc catchformat {format value {default {}}} {
+	if {![catch {format $format $value} result]} {
+		return $result
+	} else {
+		return $default
+	}
+}
+
+proc catchdef {cmd errorvalue} {
+	if {[catch {uplevel $cmd} result]} {
+		return $errorvalue
+	} else {
+		return $result
+	}
+}
+

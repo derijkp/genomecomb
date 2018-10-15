@@ -374,14 +374,6 @@ proc tsv_select_if {arguments header neededfieldsVar} {
 	return $result
 }
 
-proc catchdef {cmd errorvalue} {
-	if {[catch {uplevel $cmd} result]} {
-		return $errorvalue
-	} else {
-		return $result
-	}
-}
-
 proc tsv_select_catch {arguments header neededfieldsVar} {
 	upvar $neededfieldsVar neededfields
 	set len [llength $arguments]

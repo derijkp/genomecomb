@@ -69,4 +69,29 @@ test reports {process_reports no targetfile} {
 	if {[llength [split [string trim $e] \n]] > 2} {error "too many differences in fastqc_report.html"}
 } {}
 
+test reports {process_reportscombine} {
+	mkdir tmp/samples/ERR194147_30x_NA12878
+	file copy data/reports tmp/samples/ERR194147_30x_NA12878
+	mkdir tmp/samples/test/reports
+	foreach file {
+		report_fastq_fw-ERR194147_30x_NA12878.tsv
+		report_fastq_rev-ERR194147_30x_NA12878.tsv		
+	} {
+		regsub ERR194147_30x_NA12878 $file test newfile
+		set c [file_read data/reports/$file]
+		regsub -all ERR194147_30x_NA12878 $c test c
+		file_write tmp/samples/test/reports/$newfile $c
+	}
+	cg select -overwrite 1 -f {depth ontarget {offtarget=int(0.9*$offtarget)}} data/reports/histodepth-rdsbwa-ERR194147_30x_NA12878.tsv tmp/samples/test/reports/histodepth-rdsbwa-test.tsv
+	cg process_reportscombine {*}$::dopts -overwrite 1 -dbdir $::refseqdir/hg19 tmp/combinereports tmp/samples/ERR194147_30x_NA12878/reports tmp/samples/test/reports
+	exec diff -r tmp/combinereports data/expected-combinereports
+} {}
+
+test reports {process_reportscombine} {
+	cd $::smalltestdir
+	file delete -force tmp/combinereports
+	cg process_reportscombine {*}$::dopts tmp/combinereports {*}[glob expected/exomes_yri_mx2/samples/* tmp/genomes_yri_mx2/samples/NA19240ilmx2/reports] expected/exomes_yri_mx2/samples/NA19240mx2/reports
+	cg tsvdiff tmp/combinereports expected/combinereports
+} {}
+
 testsummarize
