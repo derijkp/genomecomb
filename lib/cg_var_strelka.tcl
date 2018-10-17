@@ -14,7 +14,7 @@ proc sreg_strelka_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25
 		} else {
 			exec cg vcf2tsv $dep \
 				| cg select -q [subst {
-					def(\$genoqual,0) >= $mingenoqual && def(\$coverage,0) >= $mincoverage && \$type ne "ins"
+					(def(\$genoqual,0) >= $mingenoqual || def(\$GQX,0) >= $mingenoqual) && def(\$coverage,0) >= $mincoverage && \$type ne "ins"
 				}] -f {chromosome begin end} \
 				| cg regjoin {*}[compresspipe $target] > $temp
 			file rename -force $temp $target
