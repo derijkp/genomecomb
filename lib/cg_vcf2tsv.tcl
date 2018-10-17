@@ -37,6 +37,8 @@ proc cg_vcf2tsv {args} {
 			set sort [true $value]
 		}
 		-refout {
+			# deletions and insertians start with a reference base
+			# output a ref allele for this (if not overlapping a snp)
 			set refout $value
 		}
 		-r - -removefields {
@@ -54,6 +56,7 @@ proc cg_vcf2tsv {args} {
 		}
 	} {infile outfile} 0 2
 	if {[info exists infile]} {
+		# puts [list vcf2tsv $split $typelist $infile tmp/out.tsv $removefields $refout $keepfields $locerror]
 		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields $refout $keepfields $locerror]
 	} else {
 		set pipe [list exec vcf2tsv $split $typelist - - $removefields $refout]

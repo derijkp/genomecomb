@@ -41,23 +41,6 @@ chr7	127480532  127481699  Neg4  0  -
 
 test_cleantmp
 
-test vcf2tsv {vcf2tsv} {
-	exec cg vcf2tsv data/test1000glow.vcf tmp/temp.tsv
-	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
-} {}
-
-test vcf2tsv {vcf2tsv} {
-	file copy -force data/vars1.vcf tmp/vars1.vcf
-	exec cg vcf2tsv -split 1 tmp/vars1.vcf tmp/temp.tsv
-	exec cg checktsv tmp/temp.tsv
-	cg splitalleles data/expected-vars1-var_annot.sft tmp/expected.tsv
-	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
-} {diff tmp/temp.tsv tmp/expected.tsv
-header diff
-<extrafields: name quality filter zyg-sample1 phased-sample1 genotypes-sample1 zyg-sample2 phased-sample2 genotypes-sample2 totalcoverage allelecount totalallelecount
----
->extrafields: sequenced-sample1 sequenced-sample2 annot_name annot_freq*} match error
-
 test splitalleles {splitalleles} {
 	write_tab tmp/test.tsv {
 		chromosome begin end type ref alt freq-sample

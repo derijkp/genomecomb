@@ -174,6 +174,44 @@ proc write_sam {file data} {
 	exec gnusort8 -t \t -N -s -k3,3 -k4,4 -k1,1 $tempfile >> $file
 }
 
+proc write_vcf {file data {extracomment {}} {extrainfo {}}} {
+	set data [split [string trim $data] \n]
+	set f [open $file w]
+	if {$extrainfo ne ""} {
+		regsub -all {\n\t*} [string trim $extrainfo] "\n\t\t" temp
+		set extrainfo \n\t\t$temp
+	}
+	puts $f [deindent [subst {
+		##fileformat=VCFv4.0
+		##fileDate=20090805
+		##source=myImputationProgramV3.1
+		##reference=1000GenomesPilot-NCBI36
+		##phasing=partial
+		##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
+		##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+		##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
+		##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele">
+		##INFO=<ID=DB,Number=0,Type=Flag,Description="dbSNP membership, build 129">
+		##INFO=<ID=H2,Number=0,Type=Flag,Description="HapMap2 membership">$extrainfo
+		##FILTER=<ID=q10,Description="Quality below 10">
+		##FILTER=<ID=s50,Description="Less than 50% of samples have data">
+		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+		##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+		##FORMAT=<ID=TE,Number=A,Type=Integer,Description="test for alt alleles in the order listed">
+		##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+		##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+		##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
+	}]]
+	if {$extracomment ne ""} {puts -nonewline $f $extracomment}
+	set header [lindex $data 0]
+	set data [lrange $data 1 end]
+	puts $f \#[join $header \t]
+	foreach line $data {
+		puts $f [join $line \t]
+	}
+	close $f
+}
+
 proc diffanalysisinfo {file1 file2} {
 	set file1 [lindex [glob $file1] 0]
 	set file2 [lindex [glob $file2] 0]

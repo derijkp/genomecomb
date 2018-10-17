@@ -24,6 +24,7 @@ source multiselect.tcl
 source tsv.tcl
 source val.tcl
 source varia.tcl
+source vcf.tcl
 source vcf2tsv.tcl
 source map.tcl
 source var.tcl

@@ -146,6 +146,20 @@ chr21	1018
 chr22	142
 total	1160}
 
+test var {var_gatkh -ERC GVCF} {
+	test_cleantmp
+	file copy data/bwa.bam data/bwa.bam.bai tmp
+	# use low quality settings because test bwa.bam has low coverage
+	cg var_gatkh -stack 1 -mincoverage 5 -mingenoqual 12 -ERC GVCF tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
+	cg select -overwrite 1 -rf MIN_DP tmp/var-gatkh-bwa.tsv.lz4 tmp/test.tsv.lz4
+	cg tsvdiff tmp/test.tsv.lz4 data/var-gatkh-bwa.tsv.lz4
+	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.bgvcf.gz
+	string_change [cg covered tmp/sreg-gatkh-bwa.tsv.lz4] [list \n\n \n]
+} {chromosome	bases
+chr21	1000
+chr22	148
+total	1148}
+
 test var {var_distrreg gatkh} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
@@ -162,15 +176,19 @@ test var {var_strelka basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var_strelka -stack 1 -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-strelka-bwa.tsv.lz4 data/var-strelka-bwa.tsv.lz4
+	cg tsvdiff tmp/var-strelka-bwa.tsv.lz4 data/var-strelka-bwa.tsv
 	cg tsvdiff tmp/varall-strelka-bwa.gvcf.gz data/varall-strelka-bwa.gvcf.gz
-} {}
+	string_change [cg covered tmp/sreg-strelka-bwa.tsv.lz4] [list \n\n \n]
+} {chromosome	bases
+chr21	610
+chr22	81
+total	691}
 
 test var {var_distrreg strelka} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var_distrreg {*}$::dopts -d 2 -mincoverage 5 -distrreg 1 -method strelka -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-strelka-bwa.tsv.lz4 data/var-strelka-bwa.tsv.lz4
+	cg tsvdiff tmp/var-strelka-bwa.tsv.lz4 data/var-strelka-bwa.tsv
 	cg tsvdiff tmp/varall-strelka-bwa.gvcf.gz data/varall-strelka-bwa.gvcf.gz
 } {}
 

@@ -621,7 +621,7 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 		altvar->ref = curref; altvar->refsize = l1;
 		altvar->alt = curalt; altvar->altsize = l2; altvar->buffer = NULL;
 		altvar->refout = 0;
-		if (*curalt == '<' && strcmp(curalt+1,"NON_REF>") == 0) {
+		if (*curalt == '.' || (*curalt == '<' && strcmp(curalt+1,"NON_REF>") == 0)) {
 			AltVar *temp = altvars;
 			if (numalleles > 1) {
 				if (refout) {
@@ -1223,6 +1223,7 @@ int main(int argc, char *argv[]) {
 				if (*cur == '\0') break;
 				start = ++cur;
 			}
+			dstring_hash_set(keepfields,DStringNewFromCharS("END",3),(void *)DStringNew());
 		}
 	}
 	if (argc >= 9) {

@@ -4,39 +4,22 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
-proc write_vcf {file data {extracomment {}}} {
-	set data [split [string trim $data] \n]
-	set f [open $file w]
-	puts $f [deindent {
-		##fileformat=VCFv4.0
-		##fileDate=20090805
-		##source=myImputationProgramV3.1
-		##reference=1000GenomesPilot-NCBI36
-		##phasing=partial
-		##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">
-		##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
-		##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
-		##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele">
-		##INFO=<ID=DB,Number=0,Type=Flag,Description="dbSNP membership, build 129">
-		##INFO=<ID=H2,Number=0,Type=Flag,Description="HapMap2 membership">
-		##FILTER=<ID=q10,Description="Quality below 10">
-		##FILTER=<ID=s50,Description="Less than 50% of samples have data">
-		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
-		##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
-		##FORMAT=<ID=TE,Number=A,Type=Integer,Description="test for alt alleles in the order listed">
-		##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
-		##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
-		##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
-	}]
-	if {$extracomment ne ""} {puts -nonewline $f $extracomment}
-	set header [lindex $data 0]
-	set data [lrange $data 1 end]
-	puts $f \#[join $header \t]
-	foreach line $data {
-		puts $f [join $line \t]
-	}
-	close $f
-}
+test vcf2tsv {vcf2tsv} {
+	exec cg vcf2tsv data/test1000glow.vcf tmp/temp.tsv
+	exec diff tmp/temp.tsv data/expected-test1000glow.vcf2tsv
+} {}
+
+test vcf2tsv {vcf2tsv} {
+	file copy -force data/vars1.vcf tmp/vars1.vcf
+	exec cg vcf2tsv -split 1 tmp/vars1.vcf tmp/temp.tsv
+	exec cg checktsv tmp/temp.tsv
+	cg splitalleles data/expected-vars1-var_annot.sft tmp/expected.tsv
+	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
+} {diff tmp/temp.tsv tmp/expected.tsv
+header diff
+<extrafields: name quality filter zyg-sample1 phased-sample1 genotypes-sample1 zyg-sample2 phased-sample2 genotypes-sample2 totalcoverage allelecount totalallelecount
+---
+>extrafields: sequenced-sample1 sequenced-sample2 annot_name annot_freq*} match error
 
 test vcf2tsv {vcf2tsv -split 0} {
 	exec cg vcf2tsv -split 0 data/test.vcf tmp/temp.tsv
@@ -344,6 +327,27 @@ test vcf2tsv {AD 0} {
 } {}
 
 test vcf2tsv {blocked gvcf} {
+	write_vcf tmp/test.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      SAMPLE
+		chr21	42775286	.	T	<NON_REF>	.	.	END=42775359	GT:AD:DP:GQ:PL	0/0:7,0:7:18:0,18,270
+		chr21	42775360	.	TGTTTAA	T,<NON_REF>	0	.	RAW_MQ=70729.00	GT:AD:GQ:PL:SB	0/0:29,0,0:87:0,87,1242,87,1242,1242:18,11,0,0
+		chr21	42775361	.	G	<NON_REF>	.	.	END=42775362	GT:AD:DP:GQ:PL	0/0:5,0:5:12:0,12,180		
+	} {} {
+		##INFO=<ID=END,Number=1,Type=Integer,Description="Stop position of the interval">
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	TE	genoqual	coverage	haploqual	NS	totalcoverage	frequency	Ancestralallele	dbsnp	Hapmap2
+		chr21	42775285	42775359	ref	74	.	.	.	.	74	74	r	0	0;0	7	0		18	7							
+		chr21	42775359	42775360	snp	T	.	.	.	.	T	T	r	0	0;0	29	0		87	29							
+		chr21	42775360	42775362	ref	2	.	.	.	.	2	2	r	0	0;0	5	0		12	5							
+		chr21	42775360	42775366	del	GTTTAA		.	0	.	GTTTAA	GTTTAA	r	0	0;0	29	0		87	29							
+	}]\n
+	cg vcf2tsv -refout 1 tmp/test.vcf tmp/result.tsv
+	cg select -overwrite 1 -rc 1 tmp/result.tsv tmp/cresult.tsv
+	exec diff tmp/cresult.tsv tmp/expected.tsv
+} {}
+
+test vcf2tsv {blocked gvcf} {
 	file_write tmp/temp.vcf [deindent {
 		##fileformat=VCFv4.2
 		##ALT=<ID=NON_REF,Description="Represents any possible alternative allele at this location">
@@ -501,7 +505,7 @@ test vcf2tsv {gvcf BP_RESOLUTION} {
 	cg tsvdiff tmp/test.tsv data/gatkh_bp-expected.tsv
 } {}
 
-test vcf2tsv {gvcf BP_RESOLUTION} {
+test vcf2tsv {converted from gvcf BP_RESOLUTION} {
 	cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 data/varall-gatkh-bwa-sample1.gvcf tmp/test.vcf
 	cg vcf2tsv tmp/test.vcf tmp/test.tsv
 	cg tsvdiff tmp/test.tsv data/varall-gatkh-bwa-sample1.tsv
@@ -655,42 +659,5 @@ test vcf2tsv {sv with end < begin} {
 error converting vcf file: child process exited abnormally} 0 {} {begin	end
 184156712	184156710} {begin	end
 184156712	184156712}}
-
-test vcfcat {vcfcat basic} {
-	write_vcf tmp/temp1.vcf {
-		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
-		20	14370	rs6054257	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
-	}
-	write_vcf tmp/temp2.vcf {
-		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
-		21	14380	x	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
-	}
-	write_vcf tmp/expected.vcf {
-		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
-		20	14370	rs6054257	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
-		21	14380	x	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
-	}
-	cg vcfcat tmp/temp1.vcf tmp/temp2.vcf > tmp/temp3.vcf
-	exec diff tmp/temp3.vcf tmp/expected.vcf
-} {}
-
-test vcfcat {vcfcat -o} {
-	write_vcf tmp/temp1.vcf {
-		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
-		20	14370	rs6054257	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
-	}
-	write_vcf tmp/temp2.vcf {
-		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
-		21	14380	x	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
-	}
-	write_vcf tmp/expected.vcf {
-		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      NA00001        NA00002        NA00003
-		20	14370	rs6054257	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
-		21	14380	x	g	a	29	PASS	NS=3;DP=14;AF=0.5;DB;H2	GT:GQ:DP:HQ	0|0:48:1:51,51	1|0:48:8:51,51	1/1:43:5:.,.
-	}
-	cg vcfcat -o tmp/temp3.vcf.gz tmp/temp1.vcf tmp/temp2.vcf
-	exec gunzip tmp/temp3.vcf.gz
-	exec diff tmp/temp3.vcf tmp/expected.vcf
-} {}
 
 testsummarize

@@ -223,31 +223,43 @@ int main(int argc, char *argv[]) {
 		} else {
 			comp = varcompare(allvars->var,orivars->var,split);
 		}
-		/* comp is -1/1 for same loc/type, but different allele, -2/-2 for different loc/type */
+		/* comp is -1/1 for same loc/type, but different allele, -2/2 for different loc/type */
 		if (comp > 0) {
 			fprintf(stderr,"internal error: all variants should be in the (allvar) variant file, so this should not happen");
 			exit(EXIT_FAILURE);
 		} else if (comp == 0) {
 			/* allvar variant found in orivars->var, output this */
 			orivarmatch(orivars, orikeepposs, orikeepsize, orid);
-
-
 		} else if (varallfile[0] != '\0') {
+			int refmatch = 0;
 			/* var is not in varfile, check in varall for adding data, sreg for u */
 			/* find next varall, first pos match for snp, full loc for other */
 			while (!varallvars->error) {
 				/* find varallvar with same start */
 				comp = DStringLocCompare(allvars->var->chr,varallvars->var->chr);
 				if (comp == 0) {
+					/* if varall hit is a ref, overlap of begin with the ref region is enough */
+					/* ref should never overlap a variant */
+					if (
+						allvars->var->start >= varallvars->var->start
+						&& allvars->var->start < varallvars->var->end
+						&& varallvars->var->type->size == 3 && varallvars->var->type->string[0] == 'r' && varallvars->var->type->string[1] == 'e' && varallvars->var->type->string[2] == 'f'
+					) {
+						refmatch = 1;
+						break;
+					}
 					comp = (allvars->var->start - varallvars->var->start);
 				}
 				if (comp < 0) break;
 				if (comp == 0) {
-					if (varallvars->var->type->size != 3 || varallvars->var->type->string[0] != 's' || varallvars->var->type->string[1] != 'n' || varallvars->var->type->string[2] != 'p') {
-						/* for something other than a SNP in the varall, we need a full location match to stop */
-						if (allvars->var->end == varallvars->var->end && DStringCompare(allvars->var->type,varallvars->var->type) == 0) break;
-					} else {
-						break; /* use only start match if snp */
+					/* check if we can use the match (chromosome and start) */
+					if (varallvars->var->type->size == 3 && varallvars->var->type->string[0] == 's' && varallvars->var->type->string[1] == 'n' && varallvars->var->type->string[2] == 'p') {
+						/* for a snp in varall matching only start is enough */
+						/* because we use the info at start for indels iun allvars */
+						break;
+					} else if (allvars->var->end == varallvars->var->end && DStringCompare(allvars->var->type,varallvars->var->type) == 0) {
+						/* a full match is also good to stop */
+						break;
 					}
 				}
 				varfile_next(varallvars,1);
@@ -266,8 +278,8 @@ int main(int argc, char *argv[]) {
 			} else {
 				out_seq = ds_q;
 			}
+			if (refmatch) {out_seq = ds_r;}
 			if (comp < 0) {
-
 				/* not in varall, -> unsequenced */
 				/* if out_seq was not set based on sreg, set to u */
 				match = 0;
@@ -365,8 +377,8 @@ int main(int argc, char *argv[]) {
 						out_zyg = ds_u; out_a1 = ds_q; out_a2 = ds_q;
 					}
 				}
-NODPRINT("%d %d vs %d %d\n",allvars->var->start,allvars->var->end,orid->start,orid->end)
-NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvars->var->ref->string, out_seq->string,out_zyg->string,out_a1->string,out_a2->string)
+				NODPRINT("%d %d vs %d %d\n",allvars->var->start,allvars->var->end,orid->start,orid->end)
+				NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvars->var->ref->string, out_seq->string,out_zyg->string,out_a1->string,out_a2->string)
 				if (out_seq == ds_r && allvars->var->start < orid->end && allvars->var->end > orid->start && (DStringLocCompare(allvars->var->chr,orid->chr) == 0)) {
 					/* overlapping a deletion */
 					if (out_a1 == ds_q || out_a1 == ds_u || DStringCompare(out_a1,varallvars->var->ref) == 0) {

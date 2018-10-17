@@ -72,6 +72,47 @@ proc multicompartest {num} {
 set testname _direct
 set jobopts {}
 
+# test parts
+# ----------
+test pmulticompar {multicompar_addvars basic} {
+
+	test_cleantmp
+	write_tab tmp/varall-sample.tsv {
+		chromosome begin end type ref alt	genoqual coverage
+		1	5	20	ref	15	.	20	15
+		1	20	21	snp	C	T	21	16
+		1	21	25	ref	15	.	23	17
+	}
+	write_tab tmp/var-sample.tsv {
+		chromosome begin end type ref alt	genoqual coverage
+		1	20	21	snp	C	T	21	16
+	}
+	write_tab tmp/allvars.tsv {
+		chromosome begin end type ref alt
+		1	9	10	snp	A	G
+		1	15	16	snp	A	A
+		1	20	21	snp	C	T
+		1	30	31	snp	C	C
+	}
+	set sregfile {}
+	set split 1
+	set allvarsfile tmp/allvars.tsv
+	set samplevarsfile tmp/var-sample.tsv
+	set sregfile {}
+	set varallfile tmp/varall-sample.tsv
+	set numbcolannot 0 ; set bcolannot {}
+	set numregfiles 0 ; set regfiles {}
+	set keepposs {6 7}
+	# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.tsv]
+	exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs
+
+} {r	20	15
+r	20	15
+v	21	16
+u	?	?}
+
+# test for different jobopts
+# --------------------------
 foreach {testname jobopts} $tests {
 
 test pmulticompar$testname {basic} {
@@ -459,6 +500,32 @@ test pmulticompar$testname {basic reannot varall split gvcf} {
 	file delete tmp/result.tsv
 	cg pmulticompar {*}$::jobopts -split 1 tmp/result.tsv tmp/var-gatkh-bwa-sample1.tsv.lz4 tmp/var-gatkh-bwa-sample2.tsv.lz4
 	exec diff tmp/result.tsv data/expected-gatkh-pmulticompar.tsv
+} {} 
+
+test pmulticompar$testname {basic reannot varall split gvcf and bgvcf} {
+	test_cleantmp
+	file copy data/varall-gatkh-bwa-sample1.gvcf tmp
+	file copy data/varall-gatkh-bwa-sample2.gvcf tmp
+	file copy data/varall-gatkh-bwa.bgvcf tmp/varall-gatkh-bwa-sample3.gvcf
+	file copy data/varall-strelka-bwa.gvcf.gz tmp/varall-strelka-bwa-sample4.gvcf.gz
+	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample1.gvcf | cg select -q {$genoqual >= 10} | cg regjoin > tmp/sreg-gatkh-bwa-sample1.tsv
+	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample2.gvcf | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-gatkh-bwa-sample2.tsv
+	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample3.gvcf | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-gatkh-bwa-sample3.tsv
+	exec cg vcf2tsv -refout 1 tmp/varall-strelka-bwa-sample4.gvcf.gz | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-strelka-bwa-sample4.tsv
+	# cg gatk_index tmp/varall-gatkh-bwa-sample3.gvcf
+	# cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample3.gvcf tmp/var-gatkh-bwa-sample3.vcf
+	file copy -force data/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.vcf
+	file copy -force data/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.vcf
+	file copy -force data/var-gatkh-bwa-sample3.vcf tmp/var-gatkh-bwa-sample3.vcf
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.lz4
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.lz4
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample3.vcf tmp/var-gatkh-bwa-sample3.tsv.lz4
+	file copy data/var-strelka-bwa.tsv tmp/var-strelka-bwa-sample4.tsv
+	file delete tmp/result.tsv
+	cg pmulticompar {*}$::jobopts -split 1 tmp/result.tsv \
+		tmp/var-gatkh-bwa-sample1.tsv.lz4 tmp/var-gatkh-bwa-sample2.tsv.lz4 \
+		tmp/var-gatkh-bwa-sample3.tsv.lz4  tmp/var-strelka-bwa-sample4.tsv
+	exec diff tmp/result.tsv data/expected-blocked-pmulticompar.tsv
 } {} 
 
 test pmulticompar$testname {basic reannot varall split gvcf, -keepfields} {
