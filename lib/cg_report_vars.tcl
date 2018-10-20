@@ -18,10 +18,10 @@ proc cg_report_vars {args} {
 	set header [cg select -h $varfile]
 	if {"coverage" in $header && "quality" in $header} {
 		set usehq 1
-		lappend fields {hq=if($coverage >= 20 and $quality >= 50,1,0)}
+		lappend fields {hq=if(def($coverage,0) >= 20 and def($quality,0) >= 50,1,0)}
 	} elseif {"coverage-$sample" in $header && "quality-$sample" in $header} {
 		set usehq 1
-		lappend fields "hq=if(\$coverage-$sample >= 20 and \$quality-$sample >= 50,1,0)"
+		lappend fields "hq=if(def(\$coverage-$sample,0) >= 20 and def(\$quality-$sample,0) >= 50,1,0)"
 	} else {
 		set usehq 0
 		lappend fields {hq=0}
