@@ -100,8 +100,8 @@ test svmulticompar {sv repeated del} {
 	}
 	write_tab tmp/expected.tsv {
 		chromosome	begin	end	type	ref	alt	lbegin-s1	lend-s1	lalt-s1	lbegin-s2	lend-s2	lalt-s2	name-s2
-		1	5727767	5728301	del	534	{}	5727767	5728301	{}	5727767	5728301	{}	1
 		1	5727767	5728301	del	534	{}	{}	{}	{}	5727767	5728301	{}	2
+		1	5727767	5728301	del	534	{}	5727767	5728301	{}	5727767	5728301	{}	1
 	}
 	file delete tmp/temp.tsv
 	cg svmulticompar -overlap 80 tmp/temp.tsv tmp/s1.tsv tmp/s2.tsv
@@ -144,6 +144,21 @@ test svmulticompar {bugcheck wrong length (incorrectly added 2 in output)} {
 	cg svmulticompar tmp/result.tsv tmp/s1.tsv tmp/s2.tsv
 	cg checktsv tmp/result.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
+} {} 
+
+test svmulticompar {bugcheck sort error} {
+	test_cleantmp
+	file_write tmp/s1.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	zyg	phased	genotypes	filter	genoqual	PL	PR	SR	IMPRECISE	CIPOS	CIEND	CIGAR	MATEID	EVENT	HOMLEN	HOMSEQ	SVINSLEN	SVINSSEQ	LEFT_SVINSSEQ	RIGHT_SVINSSEQ	INV3	INV5	BND_DEPTH	MATE_BND_DEPTH	JUNCTION_QUAL
+		chr2	16750000	16750000	bnd		]CHR20:43204700]G	166		]CHR19:43204700]G	t	0	0;1	PASS	166	216,0,955	35,4	39,10					MantaBND:1312:0:6:0:0:0:1				1	G					71	53	
+	}]\n
+	file_write tmp/s2.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	zyg	phased	genotypes	filter	genoqual	PL	PR	SR	IMPRECISE	CIPOS	CIEND	CIGAR	MATEID	EVENT	HOMLEN	HOMSEQ	SVINSLEN	SVINSSEQ	LEFT_SVINSSEQ	RIGHT_SVINSSEQ	INV3	INV5	BND_DEPTH	MATE_BND_DEPTH	JUNCTION_QUAL
+		chr2	16750000	16750000	bnd		[CHR20:57210257[GG	200		[CHR20:57210257[GG	t	0	0;1	PASS	200	250,0,911	49,3	28,9					MantaBND:1209:0:2:0:0:0:1				1	G					35	43	
+	}]\n
+	file delete tmp/result.tsv
+	cg svmulticompar tmp/result.tsv tmp/s1.tsv tmp/s2.tsv
+	cg checksort tmp/result.tsv
 } {} 
 
 test_cleantmp

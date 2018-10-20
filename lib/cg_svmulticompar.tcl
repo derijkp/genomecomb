@@ -409,24 +409,24 @@ proc svmulticompar {args} {
 		foreach type [lsort [array names typesa]] {
 			if {![info exists todo($type,1)]} {
 				foreach l2 $todo($type,2) {
-					lappend list [svmulticompar_out {} $l2 $dummy1 $dummy2]
+					lappend list [join [svmulticompar_out {} $l2 $dummy1 $dummy2] \t]
 				}
 			} elseif {![info exists todo($type,2)]} {
 				foreach l1 $todo($type,1) {
-					lappend list [svmulticompar_out $l1 {} $dummy1 $dummy2]
+					lappend list [join [svmulticompar_out $l1 {} $dummy1 $dummy2] \t]
 				}
 			} else {
 				# foreach {list1 list2} [list $todo($type,1) $todo($type,2)] break
 				set plist [svmulticompar_groupdists $todo($type,1) $todo($type,2) $dummy1 $dummy2 $margin $lmargin $overlap]
-				lappend list {*}$plist
+				foreach el $plist {
+					lappend list [join $el \t]
+				}
 			}
 		}
 		if {[llength $list] > 1} {
 			set list [ssort -natural $list]
 		}
-		foreach temp $list {
-			puts $o [join $temp \t]
-		}
+		puts $o [join $list \n]
 	}
 
 	flush $o
