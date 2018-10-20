@@ -26,6 +26,12 @@ proc job_distribute {type} {
 	job_process_${target}_init
 }
 
+proc job_force_get {{def {}}} {
+	global cgjob
+	if {$def eq ""} {return $cgjob(force)}
+	if {![info exists cgjob(forceset)]} {return $def} else {return $::cgjob(force)}
+}
+
 proc job_args {jobargs} {
 	global cgjob
 	upvar job_logdir job_logdir
@@ -72,6 +78,7 @@ proc job_args {jobargs} {
 		switch -- $key {
 			-f - -force - --force {
 				set cgjob(force) [lindex $jobargs $pos]
+				set cgjob(forceset) 1
 				incr pos
 			}
 			-d - -distribute - --distribute {

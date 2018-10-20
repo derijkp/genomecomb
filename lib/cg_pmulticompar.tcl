@@ -419,7 +419,7 @@ proc pmulticompar_job {args} {
 	set targetvarsfile {}
 	set skipincomplete 1
 	set optkeepfields *
-	set force 1
+	set force [job_force_get 1]
 	cg_options pmulticompar args {
 		-r - -reannotregonly {
 			putslog "Reannot reg only"
@@ -439,9 +439,6 @@ proc pmulticompar_job {args} {
 		}
 		-keepfields {
 			set optkeepfields $value
-		}
-		-force {
-			set force $value
 		}
 		-m - -maxopenfiles {
 			set ::maxopenfiles [expr {$value - 4}]
