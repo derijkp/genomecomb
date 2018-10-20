@@ -159,7 +159,7 @@ proc sv_job {args} {
 			}
 			incr pos
 		}
-		cleanup_job cleanup-var_distrreg_[file tail $bamfile] $indexdir $resultfiles
+		cleanup_job cleanup-sv_${method}_[file tail $bamfile] $indexdir $resultfiles
 		cd $keeppwd
 		return $resultfiles
 	}
