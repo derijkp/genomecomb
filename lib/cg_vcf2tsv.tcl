@@ -20,6 +20,7 @@ proc cg_vcf2tsv {args} {
 	set removefields {}
 	set keepfields *
 	set locerror error
+	set skiprefindels 0
 	cg_options vcf2tsv args {
 		-s - -split {
 			if {$value eq "ori"} {
@@ -54,10 +55,16 @@ proc cg_vcf2tsv {args} {
 		-keepfields {
 			set keepfields $value
 		}
+		-skiprefindels {
+			# sam varall sometimes contains long ref (alt =.) indicated as INDEL
+			# they overlap with "snp" refs, causing less good results when used as a varall
+			# this option to remove these
+			set skiprefindels $value
+		}
 	} {infile outfile} 0 2
 	if {[info exists infile]} {
-		# puts [list vcf2tsv $split $typelist $infile tmp/out.tsv $removefields $refout $keepfields $locerror]
-		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields $refout $keepfields $locerror]
+		# puts [list vcf2tsv $split $typelist $infile tmp/out.tsv $removefields $refout $keepfields $locerror $skiprefindels]
+		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields $refout $keepfields $locerror $skiprefindels]
 	} else {
 		set pipe [list exec vcf2tsv $split $typelist - - $removefields $refout]
 	}

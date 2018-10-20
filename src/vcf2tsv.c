@@ -519,7 +519,7 @@ void process_line_unsplit(FILE *fo,DStringArray *linea,int excludename,int exclu
 	DStringArrayDestroy(alts);
 }
 
-int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int excludefilter,DString *genotypelist,int refout,char locerror) {
+int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int excludefilter,DString *genotypelist,int refout,char locerror,int skiprefindels) {
 	DStringArray *lineformat,*alts;
 	DString *svlens=NULL,*svtype=NULL;
 	char *cursvlen=NULL;
@@ -642,6 +642,12 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 				altvar->end = pos+1;
 				altvar->altsize = 1;
 				altvar->alt[0] = '.';
+			} else if (skiprefindels && l1 != 1) {
+				/* sam varall sometimes contains ref INDEL (alt =.)
+				   they overlap with "snp" refs, causing less good results when used as a varall
+				   this option to remove these
+				*/
+				altvar->refout = -1;
 			} else {
 				altvar->type = reftype;
 				altvar->begin = pos;
@@ -772,7 +778,7 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 		int ADpos = -1;
 		altvar = altvars+curpos;
 		curallele = altvar->curallele;
-		/* "ref" allele is not print4ed out	if refout == -1 */
+		/* "ref" allele is not printed out	if refout == -1 */
 		if (altvar->refout == -1) continue;
 		NODPRINT("==== Print variant info to buffer ====")
 		bufferbucket = obuffer_getbucket(obuffer);
@@ -1108,7 +1114,7 @@ int main(int argc, char *argv[]) {
 	char locerror = 'e';
 	altvars = NULL;
 	int *order = NULL;
-	int split,refout,read,i,j,maxtab, min, excludefilter = 0, excludename = 0, infopos = 0;
+	int split,refout,read,i,j,maxtab, min, excludefilter = 0, excludename = 0, infopos = 0, skiprefindels = 0;
 	line=NULL; string=NULL; temp=NULL;
 	reftype=DStringNewFromChar("ref");
 	snptype=DStringNewFromChar("snp"); deltype=DStringNewFromChar("del"); instype=DStringNewFromChar("ins"); subtype=DStringNewFromChar("sub");
@@ -1126,7 +1132,7 @@ int main(int argc, char *argv[]) {
 	obuffer = createbuffer(obuffer,1);
 	line = DStringNew();
 	if (argc < 2) {
-		fprintf(stderr,"Format is: vcf2tsv split typelist ?infile? ?outfile? ?removefields?\n");
+		fprintf(stderr,"Format is: vcf2tsv split typelist ?infile? ?outfile? ?removefields? ?refout? ?keepfields? ?locerror? ?skiprefindels?\n");
 		exit(EXIT_FAILURE);
 	}
 	split = atoi(argv[1]);
@@ -1230,6 +1236,11 @@ int main(int argc, char *argv[]) {
 		locerror = argv[8][0];
 	} else {
 		locerror = 'e';
+	}
+	if (argc >= 10) {
+		skiprefindels = atoi(argv[9]);
+	} else {
+		skiprefindels = 0;
 	}
 	fprintf(fo,"#filetype\ttsv/varfile\n");
 	fprintf(fo,"#fileversion\t%s\n",FILEVERSION);
@@ -1392,7 +1403,7 @@ int main(int argc, char *argv[]) {
 				process_print_buffer(fo,obuffer,2147483647);
 				DStringCopy(prevchr,a_chrom(linea));
 			}
-			pos = process_line_split(obuffer,linea,excludename,excludefilter,genotypelist,refout,locerror);
+			pos = process_line_split(obuffer,linea,excludename,excludefilter,genotypelist,refout,locerror,skiprefindels);
 			process_print_buffer(fo,obuffer,pos);
 		} else {
 			process_line_unsplit(fo,linea,excludename,excludefilter);
