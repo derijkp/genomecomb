@@ -353,11 +353,17 @@ proc report_fastc_perposqual {dir files} {
 			lappend base $value
 		}
 		set medians [list_subindex $table [list_find $header Median]]
-		set max [lmath_max $medians]
-		if {$max > $maxy} {set maxy $max}
+		if {![catch {
+			set max [lmath_max $medians]
+		}]} {
+			if {$max > $maxy} {set maxy $max}
+		}
 		set p10 [list_subindex $table [list_find $header {10th Percentile}]]
-		set max [lmath_max $p10]
-		if {$max > $maxy} {set maxy $max}
+		if {![catch {
+			set max [lmath_max $p10]
+		}]} {
+			if {$max > $maxy} {set maxy $max}
+		}
 		lappend qdata [plotly_element $name line \
 			line \{[subst {color: $color}]\} \
 			x \[[join $base ,]\] y \[[join $medians ,]\]
@@ -861,7 +867,7 @@ proc proces_reportscombine_job {args} {
 				lappend line $sample
 				lappend line [pgetsum data $sample,fastq-stats,fw_numreads $sample,fastq-stats,rev_numreads]
 				set data($sample,numbases) [pgetsum data $sample,fastq-stats,fw_total_bases $sample,fastq-stats,rev_total_bases]
-				lappend line [expr {$data($sample,numbases)/1000000.0}]
+				lappend line [catchdef {expr {$data($sample,numbases)/1000000.0}} ""]
 				lappend line [pget data $sample,pct_pf_unique_reads]
 				foreach field {
 					fw_qual_mean fw_qual_stdev rev_qual_mean rev_qual_stdev
@@ -991,7 +997,7 @@ proc proces_reportscombine_job {args} {
 				sample alignment varcaller vars qvars qvars-refcoding qvars-zyg-m qvars-zyg-t qvars-TiTv-ratio
 			}]
 			foreach vcaller $vcallers {
-				set sample [lindex $alignment end]
+				set sample [lindex $vcaller end]
 				set line [list_reverse $vcaller]
 				set vcaller [join $vcaller -]
 				foreach field {vars qvars qvars_refcoding qvars_zyg_m qvars_zyg_t} {
