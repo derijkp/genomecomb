@@ -803,7 +803,7 @@ proc process_sample_job {args} {
 			if {![auto_load var_${varcaller}_job]} {
 				error "varcaller $varcaller not supported"
 			}
-			lappend cleanupdeps {*}[var_distrreg_job -method ${varcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
+			lappend cleanupdeps {*}[var_job -method ${varcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
 			lappend todo(var) var-$varcaller-$bambase.tsv
 		}
 		foreach svcaller $svcallers {

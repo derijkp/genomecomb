@@ -5,7 +5,7 @@ proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} 
 		exec cg vcf2tsv $dep \
 			| cg select -q [subst {
 				\$genoqual >= $mingenoqual && \$coverage >= $mincoverage && \$type ne "ins"
-			}] -f {chromosome begin end} \
+			}] -f {chromosome begin end} -s - \
 			| cg regjoin {*}[compresspipe $target] > $temp
 		file rename $temp $target
 		if {[file extension $target] eq ".lz4"} {

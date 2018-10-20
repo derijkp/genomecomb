@@ -1,4 +1,4 @@
-proc var_distrreg_job {args} {
+proc var_job {args} {
 	global appdir
 	upvar job_logdir job_logdir
 	set method gatk
@@ -12,8 +12,8 @@ proc var_distrreg_job {args} {
 	set cleanup 1
 	set regmincoverage 3
 	set opts {}
-	set cmdline [list cg var_distrreg $args]
-	cg_options var_distrreg args {
+	set cmdline [list cg var $args]
+	cg_options var args {
 		-method {
 			set method $value
 		}
@@ -59,7 +59,7 @@ proc var_distrreg_job {args} {
 		set regionfile [bam2reg_job -mincoverage $regmincoverage $bamfile]
 	}
 	# logfile
-	job_logfile $destdir/var_distrreg_[file tail $bamfile] $destdir $cmdline \
+	job_logfile $destdir/var_${method}_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
 	# run
 	if {$distrreg in {0 {}}} {
@@ -148,14 +148,14 @@ proc var_distrreg_job {args} {
 			}
 			incr pos
 		}
-		cleanup_job cleanup-var_distrreg_[file tail $bamfile] $indexdir $resultfiles
+		cleanup_job cleanup-var_${method}_[file tail $bamfile] $indexdir $resultfiles
 		cd $keeppwd
 		return $resultfiles
 	}
 }
 
-proc cg_var_distrreg {args} {
+proc cg_var {args} {
 	set args [job_init {*}$args]
-	var_distrreg_job {*}$args
+	var_job {*}$args
 	job_wait
 }
