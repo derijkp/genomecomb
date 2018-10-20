@@ -16,7 +16,7 @@ proc job_getinfo {{value {}}} {
 			unset -nocomplain cgjob(buffer,$job)
 		}
 		set ::job_getinfo $value
-		set result [list $cgjob_getinfo(deps) $cgjob_getinfo(targets)]
+		set result [list [list_remove [list_remdup $cgjob_getinfo(deps)] {}] [list_remove [list_remdup $cgjob_getinfo(targets)] {}]]
 		unset cgjob_getinfo
 		return $result
 	} else {
