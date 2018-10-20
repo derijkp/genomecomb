@@ -32,8 +32,10 @@ test process {process_illumina exomes yri} {
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
 	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri >& tmp/exomes_yri.log
 	# check vs expected
-	checkdiff -y --suppress-common-lines tmp/exomes_yri/samples/NA19238/map-dsbwa-NA19238.bam.dupmetrics expected/exomes_yri/samples/NA19238/map-dsbwa-NA19238.bam.dupmetrics | grep -v "Started on"
-	checkdiff -qr -x *log_jobs -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri expected/exomes_yri
+	set result {}
+	lappend result [checkdiff -y --suppress-common-lines tmp/exomes_yri/samples/NA19238/map-dsbwa-NA19238.bam.dupmetrics expected/exomes_yri/samples/NA19238/map-dsbwa-NA19238.bam.dupmetrics | grep -v "Started on"]
+	lappend result [checkdiff -qr -x *log_jobs -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri expected/exomes_yri]
+	join [list_remove $result {}] \n
 } {}
 
 test process {process_illumina exomes yri} {
@@ -43,8 +45,10 @@ test process {process_illumina exomes yri} {
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
 	cg process_illumina --stack 1 --verbose 2 -split 1 -dbdir /data/genomecomb.testdata/refseqtest/hg19 tmp/exomes_yrit 2>@ stderr >@ stdout
 	# check vs expected
-	checkdiff -y --suppress-common-lines tmp/exomes_yrit/samples/NA19238/map-dsbwa-NA19238.bam.dupmetrics expected/exomes_yri/samples/NA19238/map-dsbwa-NA19238.bam.dupmetrics | grep -v "Started on"
-	checkdiff -qr -x *log_jobs -x *_fastqc -x *bam.dupmetrics tmp/exomes_yrit expected/exomes_yri
+	set result {}
+	lappend result [checkdiff -y --suppress-common-lines tmp/exomes_yrit/samples/NA19238/map-dsbwa-NA19238.bam.dupmetrics expected/exomes_yri/samples/NA19238/map-dsbwa-NA19238.bam.dupmetrics | grep -v "Started on"]
+	lappend result [checkdiff -qr -x *log_jobs -x *_fastqc -x *bam.dupmetrics tmp/exomes_yrit expected/exomes_yri]
+	join [list_remove $result {}] \n
 } {}
 
 if 0 {
@@ -63,9 +67,11 @@ test process {process_sample genome yri} {
 	mklink ori/genomes_yritrio.start/samples/testNA19240cg.ori $dest/samples/testNA19240cg/ori
 	cg process_sample --stack 1 --verbose 2 -split 1 -dbdir $ref $dest/samples/testNA19240cg 2>@ stderr >@ stdout
 	# check vs expected
-	checkdiff -y --suppress-common-lines tmp/genomes_yri_one/samples/testNA19240cg/summary-testNA19240cg.txt expected/genomes_yri/samples/testNA19240cg/summary-testNA19240cg.txt | grep -v "finished.*finished"
-	checkdiff -qr -x log_jobs -x summary-testNA19240cg.txt tmp/genomes_yri_one/samples/testNA19240cg expected/genomes_yri/samples/testNA19240cg
+	set result {}
+	lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_one/samples/testNA19240cg/summary-testNA19240cg.txt expected/genomes_yri/samples/testNA19240cg/summary-testNA19240cg.txt | grep -v "finished.*finished"]
+	lappend result [checkdiff -qr -x log_jobs -x summary-testNA19240cg.txt tmp/genomes_yri_one/samples/testNA19240cg expected/genomes_yri/samples/testNA19240cg]
 	# file_write tmp/temp $e
+	join [list_remove $result {}] \n
 } {}
 
 test process {genomes yri } {
@@ -88,12 +94,14 @@ test process {genomes yri } {
 	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/genomes_yri
 	cg process_project --stack 1 --verbose 2 -split 1 -dbdir refseqtest/hg19 $dest 2>@ stderr >@ stdout
 	# check vs expected
+	set result {}
 	foreach cgsample {testNA19238cg testNA19239cg testNA19240cg} {
-		checkdiff -y --suppress-common-lines tmp/genomes_yri/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"
+		lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"]
 	}
-	checkdiff -y --suppress-common-lines tmp/genomes_yri/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics expected/genomes_yri/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics | grep -v "Started on"
-	checkdiff -qr -x *log_jobs -x *_fastqc -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri expected/genomes_yri
+	lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics expected/genomes_yri/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics | grep -v "Started on"]
+	lappend result [checkdiff -qr -x *log_jobs -x *_fastqc -x summary-* -x *dupmetrics -x colinfo tmp/genomes_yri expected/genomes_yri]
 	# file_write tmp/temp $e
+	join [list_remove $result {}] \n
 } {}
 
 cd $keepdir

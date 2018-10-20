@@ -48,13 +48,15 @@ test process {mastr mastr_116068_116083} {
 	# no output while running
 	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr tmp/mastr_116068_116083 refseqtest/hg19
 	# check vs expected
-	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *hsmetrics -x colinfo -x *.index -x *.lz4i  \
+	set result {}
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *hsmetrics -x colinfo -x *.index -x *.lz4i  \
 		-x mastr_116068_116083.html -x *.finished \
-		tmp/mastr_116068_116083 expected/mastr_116068_116083
-	checkdiff -y --suppress-common-lines tmp/mastr_116068_116083/mastr_116068_116083.html expected/mastr_116068_116083/mastr_116068_116083.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}
+		tmp/mastr_116068_116083 expected/mastr_116068_116083]
+	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_116068_116083/mastr_116068_116083.html expected/mastr_116068_116083/mastr_116068_116083.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}]
 	foreach sample [dirglob tmp/mastr_116068_116083 ceph*] {
-		checkdiff -y --suppress-common-lines tmp/mastr_116068_116083/$sample/crsbwa-$sample.hsmetrics expected/mastr_116068_116083/$sample/crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"
+		lappend result [checkdiff -y --suppress-common-lines tmp/mastr_116068_116083/$sample/crsbwa-$sample.hsmetrics expected/mastr_116068_116083/$sample/crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"]
 	}
+	join [list_remove $result {}] \n
 } {}
 
 test process {process_illumina exomes yri chr2122} {
@@ -78,15 +80,17 @@ test process {process_illumina exomes yri chr2122} {
 	  -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
 	  -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
 	# check vs expected
-	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
+	set result {}
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
 		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index \
-		tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122
-	checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"
+		tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122]
+	lappend result [checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"]
 	foreach file1 [glob tmp/exomes_yri_chr2122/compar/info_analysis.tsv tmp/exomes_yri_chr2122/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os}
+		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os}]
 	}
-	checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"
+	lappend result [checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"]
+	join [list_remove $result {}] \n
 } {}
 
 test process {process_project exomes_gatkh_yri_chr2122 (haplotypecaller)} {
@@ -103,16 +107,18 @@ test process {process_project exomes_gatkh_yri_chr2122 (haplotypecaller)} {
 	cg process_project {*}$::dopts -split 1 -varcallers {gatkh freebayes} \
 		-dbdir refseqtest/hg19 $testdir >& $testdir.log
 	# check vs expected
-	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
+	set result {}
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
 		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png \
-		tmp/exomes_gatkh_yri_chr2122 expected/exomes_gatkh_yri_chr2122
-	diffanalysisinfo tmp/exomes_gatkh_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo expected/exomes_gatkh_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo
+		tmp/exomes_gatkh_yri_chr2122 expected/exomes_gatkh_yri_chr2122]
+	lappend result [diffanalysisinfo tmp/exomes_gatkh_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo expected/exomes_gatkh_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo]
 	checkdiff -y --suppress-common-lines tmp/exomes_gatkh_yri_chr2122/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_gatkh_yri_chr2122/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2
 	foreach file1 [glob tmp/exomes_gatkh_yri_chr2122/compar/info_analysis.tsv tmp/exomes_gatkh_yri_chr2122/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}
+		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
 	}
+	join [list_remove $result {}] \n
 } {}
 
 test process {genomes yri chr2122} {
@@ -125,15 +131,17 @@ test process {genomes yri chr2122} {
 	cg project_addsample tmp/genomes_yri_chr2122 testNA19240chr21il {*}[glob ori/genomes_yri_chr2122.start/samples/testNA19240chr21il.ori/*.fq.gz]
 	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/genomes_yri_chr2122 2>@ stderr >@ stdout
 	# check vs expected
-	cg tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
+	set result {}
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
 		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
-		tmp/genomes_yri_chr2122 expected/genomes_yri_chr2122
-	checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics expected/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics | grep -v "Started on"
+		tmp/genomes_yri_chr2122 expected/genomes_yri_chr2122]
+	lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics expected/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics | grep -v "Started on"]
 	foreach file1 [glob tmp/genomes_yri_chr2122/compar/info_analysis.tsv tmp/genomes_yri_chr2122/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
-		checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os}
+		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os}]
 	}
 	# file_write temp $e
+	join [list_remove $result {}] \n
 } {}
 
 cd $keepdir
