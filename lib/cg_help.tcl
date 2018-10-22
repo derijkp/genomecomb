@@ -17,8 +17,10 @@ proc help_get {action} {
 		set help [file_read $::appdir/docs/$action.wiki]
 	} elseif {[auto_load helptext_$action]} {
 		set help [helptext_$action]
+	} elseif {[auto_load ${action}_job]} {
+		catch {set help [${action}_job -h]} e
 	} elseif {[auto_load cg_$action]} {
-		catch {set help [exec cg $action -h]} e
+		catch {set help [cg_$action -h]} e
 	}
 	if {![info exists help]} {
 		set msg "Unknown help topic \"$action\", known topics are:\n\n"
