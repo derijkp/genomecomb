@@ -299,14 +299,14 @@ test process_small {process_project mixed_yri_mx2} {
 	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
 	  tmp/mixed_yri_mx2 >& tmp/mixed_yri_mx2.log
 	# check vs expected
-	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
-		checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"
-	}
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
 		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.analysisinfo -x *.png \
 		tmp/mixed_yri_mx2 expected/mixed_yri_mx2]
+	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
+		lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"]
+	}
 	lappend result [diffanalysisinfo tmp/mixed_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/mixed_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
 	lappend result [checkdiff -y --suppress-common-lines tmp/mixed_yri_mx2/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/mixed_yri_mx2/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
