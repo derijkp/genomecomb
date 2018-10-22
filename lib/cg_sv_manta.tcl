@@ -45,7 +45,9 @@ proc sv_manta_job {args} {
 			if {[regexp {^-..} $key]} {set key -$key}
 			lappend opts $key $value
 		}
-	} {bamfile resultfile} 1 2
+	} {bamfile resultfile} 1 2 {
+		run SV calls using manta
+	}
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
 	if {$resultfile eq ""} {
@@ -87,7 +89,7 @@ proc sv_manta_job {args} {
 	-deps {
 		$bamfile $refseq $bamfileindex $refseq.fai
 	} -targets {
-		$resultfile.mantarun $resultfile.mantarun/results/variants/diploidSV.vcf.gz $resultfile.mantarun.analysisinfo
+		$resultfile.mantarun/results/variants/diploidSV.vcf.gz $resultfile.mantarun.analysisinfo
 	} -vars {
 		resultfile manta opts gatkrefseq threads root
 	} -code {
@@ -102,14 +104,13 @@ proc sv_manta_job {args} {
 	}
 	# 
 	job sv-manta-vcf2tsv-$root {*}$skips -deps {
-		$resultfile.mantarun
 		$resultfile.mantarun/results/variants/diploidSV.vcf.gz
 	} -targets {
 		$resultfile $resultanalysisinfo
 	} -vars {
 		sample split resultfile
 	} -code {
-		analysisinfo_write $dep $target
+		analysisinfo_write $resultfile.mantarun $target
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $resultfile.mantarun/results/variants/diploidSV.vcf.gz $target.temp[gzext $target]
 		file rename -force $target.temp[gzext $target] $target
 	}
