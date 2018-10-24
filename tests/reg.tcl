@@ -216,6 +216,41 @@ test multireg {. in name compressed} {
 1	50	60	1	0
 }
 
+test multireg {give error if there are overlapping ranges in file} {
+	file_write tmp/sreg1.tsv [deindent {
+		chromosome	begin	end
+		chr9	90017364	90017384
+		chr9	90017467	90017468
+		chr9	90017470	90017472
+		chr9	90017474	90017476
+		chr9	90017478	90017480
+	}]
+	file_write tmp/sreg2.tsv [deindent {
+		chromosome	begin	end
+		chr9	90017435	90017486
+		chr9	90017467	90017468
+		chr9	90017471	90017472
+		chr9	90017475	90017476
+		chr9	90017478	90017481
+	}]
+	cg multireg tmp/result.tsv tmp/sreg1.tsv tmp/sreg2.tsv
+} {*File (*) contains overlapping region(s) (correct this first using "cg regjoin")
+region chr9:90017435-90017486 overlaps chr9:90017467-90017468*} error match
+
+test multireg {bugfix: check if overlapping ranges in file} {
+	file_write tmp/sreg1.tsv [deindent {
+		chromosome	begin	end
+		chr1	10039	10042
+		chr1	10043	10050
+	}]
+	file_write tmp/sreg2.tsv [deindent {
+		chromosome	begin	end
+		chr1	10023	10024
+		chr1	10025	10026
+	}]
+	cg multireg tmp/result.tsv tmp/sreg1.tsv tmp/sreg2.tsv
+} {}
+
 test regsubtract {basic} {
 	exec cg regsubtract data/reg1.tsv data/reg2.tsv
 } {chromosome	begin	end

@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
 	int numtodo, numfiles;
 	DString *curchr=DStringNew(),*nextchr=DStringNew();
 	DString *maxchr = DStringNew();
-	int curpos=-1,nextpos=-1,anymatch=0, comp;
+	int curpos=-1,nextpos=-1,anymatch=0, comp, prevstart, prevend;
 	unsigned int numfields;
 	register unsigned int i,pos;
 
@@ -129,14 +129,35 @@ int main(int argc, char *argv[]) {
 			if (comp < 0 || (comp == 0 && regfile->end <= curpos)) {
 				regfile->error = gz_DStringGetTab(regfile->line,regfile->f,regfile->max,regfile->result,1,&numfields);
 				if (!regfile->error) {
+					prevstart = regfile->start; prevend = regfile->end;
 					regfile->chr = regfile->result->data+regfile->varpos.chr;
 					sscanf(regfile->result->data[regfile->varpos.start].string,"%d",&(regfile->start));
 					sscanf(regfile->result->data[regfile->varpos.end].string,"%d",&(regfile->end));
-				}
-				comp = DStringLocCompare(regfile->chr,curchr);
-				if (comp < 0) {
-					fprintf(stderr,"File (%s) is not correctly sorted (sort correctly using \"cg select -s -\")\n",regfile->file);
-					exit(1);
+					comp = DStringLocCompare(regfile->chr,curchr);
+					if (comp < 0 || (comp == 0 && (
+						(regfile->start < prevstart)
+						|| ((regfile->start <= prevstart) && (regfile->end < prevend))
+					))) {
+						fprintf(stderr,"File (%s) is not correctly sorted (sort correctly using \"cg select -s -\")\n",regfile->file);
+						fprintf(stderr,"%*.*s:%d-%d came before %*.*s:%d-%d\n",
+							regfile->chr->size,regfile->chr->size,regfile->chr->string,
+							regfile->start,regfile->end,
+							curchr->size,curchr->size,curchr->string,
+							prevstart,prevend
+						);
+						exit(1);
+					} else if (comp == 0 && prevend > regfile->start) {
+						fprintf(stderr,"File (%s) contains overlapping region(s) (correct this first using \"cg regjoin\")\n",regfile->file);
+						fprintf(stderr,"region %*.*s:%d-%d overlaps %*.*s:%d-%d\n",
+							regfile->chr->size,regfile->chr->size,regfile->chr->string,
+							prevstart,prevend,
+							regfile->chr->size,regfile->chr->size,regfile->chr->string,
+							regfile->start,regfile->end
+						);
+						exit(1);
+					}
+				} else {
+					comp = DStringLocCompare(regfile->chr,curchr);
 				}
 			}
 			if (comp == 0) {
@@ -149,7 +170,13 @@ int main(int argc, char *argv[]) {
 				if (regfile->start > curpos) {
 					if (regfile->start < nextpos) {nextpos = regfile->start;}
 				} else if (regfile->end < curpos) {
-					fprintf(stderr,"File (%s) is not correctly sorted (sort correctly using \"cg select -s -\")\n",regfile->file);
+					fprintf(stderr,"Something wrong with sorting/overlap, file (%s) \n",regfile->file);
+					fprintf(stderr,"%*.*s:%d-%d came before %*.*s:%d\n",
+						regfile->chr->size,regfile->chr->size,regfile->chr->string,
+						regfile->start,regfile->end,
+						curchr->size,curchr->size,curchr->string,
+						curpos
+					);
 					exit(1);
 				} else if (regfile->end > curpos) {
 					/* no need to check end: curpos should not be anle to past end*/
