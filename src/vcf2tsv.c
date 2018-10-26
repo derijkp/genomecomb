@@ -1404,7 +1404,7 @@ int main(int argc, char *argv[]) {
 				DStringCopy(prevchr,a_chrom(linea));
 			}
 			pos = process_line_split(obuffer,linea,excludename,excludefilter,genotypelist,refout,locerror,skiprefindels);
-			process_print_buffer(fo,obuffer,pos);
+			process_print_buffer(fo,obuffer,pos-1);
 		} else {
 			process_line_unsplit(fo,linea,excludename,excludefilter);
 		}

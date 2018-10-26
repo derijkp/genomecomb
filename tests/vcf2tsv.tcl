@@ -543,6 +543,22 @@ test vcf2tsv {vcf2tsv -sort 0 testcases} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test vcf2tsv {vcf2tsv -sort 0 split vcf} {
+	write_vcf tmp/test.gvcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      SAMPLE
+		chrtest	1	.	T	<NON_REF>	.	.	.	GT:AD:DP:GQ:PL	0/0:7,0:7:18:0,18,270
+		chrtest	2	.	C	T,<NON_REF>	71.03	.	AS_RAW_BaseQRankSum=||;AS_RAW_MQ=0.00|8002.00|0.00;AS_RAW_MQRankSum=||;AS_RAW_ReadPosRankSum=||;AS_SB_TABLE=0,0|2,2|0,0;DP=4;ExcessHet=3.0103;MLEAC=2,0;MLEAF=1.00,0.00;NDA=2;RAW_MQ=8002.00	GT:AD:GQ:PL:SB	1/1:0,4,0:12:99,12,0,99,12,99:0,0,2,2
+		chrtest	2	.	C	CT,<NON_REF>	71.04	.	AS_RAW_BaseQRankSum=||;AS_RAW_MQ=0.00|8002.00|0.00;AS_RAW_MQRankSum=||;AS_RAW_ReadPosRankSum=||;AS_SB_TABLE=0,0|2,2|0,0;DP=4;ExcessHet=3.0103;MLEAC=2,0;MLEAF=1.00,0.00;NDA=2;RAW_MQ=8002.00	GT:AD:GQ:PL:SB	1/1:0,4,0:12:99,12,0,99,12,99:0,0,2,2
+		chrtest	2	.	CTG	C,<NON_REF>	871.73	.	AS_RAW_BaseQRankSum=|0.1,1|NaN;AS_RAW_MQ=96745.00|73763.00|0.00;AS_RAW_MQRankSum=|-1.8,1|NaN;AS_RAW_ReadPosRankSum=|-1.1,1|NaN;AS_SB_TABLE=25,3|23,1|0,0;BaseQRankSum=0.159;DP=53;ExcessHet=3.0103;MLEAC=1,0;MLEAF=0.500,0.00;MQRankSum=-1.711;NDA=2;RAW_MQ=173757.00;ReadPosRankSum=-1.084	GT:AD:GQ:PL:SB	0/1:28,24,0:99:909,0,1086,993,1159,2152:25,3,23,1
+		chrtest	2	.	A	G,<NON_REF>	71.03	.	AS_RAW_BaseQRankSum=||;AS_RAW_MQ=0.00|8002.00|0.00;AS_RAW_MQRankSum=||;AS_RAW_ReadPosRankSum=||;AS_SB_TABLE=0,0|2,2|0,0;DP=4;ExcessHet=3.0103;MLEAC=2,0;MLEAF=1.00,0.00;NDA=2;RAW_MQ=8002.00	GT:AD:GQ:PL:SB	1/1:0,4,0:12:99,12,0,99,12,99:0,0,2,2
+		chrtest	3	.	T	A,<NON_REF>	80.01	.	AS_RAW_BaseQRankSum=||;AS_RAW_MQ=0.00|8002.00|0.00;AS_RAW_MQRankSum=||;AS_RAW_ReadPosRankSum=||;AS_SB_TABLE=0,0|2,2|0,0;DP=4;ExcessHet=3.0103;MLEAC=2,0;MLEAF=1.00,0.00;NDA=2;RAW_MQ=8002.00	GT:AD:GQ:PL:SB	1/1:0,4,0:12:99,12,0,99,12,99:0,0,2,2
+		chrtest	5	.	TTTTTAA	T,<NON_REF>	0	.	RAW_MQ=70729.00	GT:AD:GQ:PL:SB	0/0:29,0,0:87:0,87,1242,87,1242,1242:18,11,0,0
+	}
+	cg vcf2tsv tmp/test.gvcf tmp/expected.tsv
+	cg vcf2tsv -sort 0 tmp/test.gvcf tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test vcf2tsv {vcf2tsv -refout 1 gatkh} {
 	write_vcf tmp/test.vcf {
 		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      SAMPLE
