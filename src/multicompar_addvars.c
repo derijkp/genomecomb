@@ -278,7 +278,7 @@ int main(int argc, char *argv[]) {
 			} else {
 				out_seq = ds_q;
 			}
-			if (refmatch) {out_seq = ds_r;}
+			if (refmatch && out_seq == ds_q) {out_seq = ds_r;}
 			if (comp < 0) {
 				/* not in varall, -> unsequenced */
 				/* if out_seq was not set based on sreg, set to u */

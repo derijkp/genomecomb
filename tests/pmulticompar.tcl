@@ -74,8 +74,8 @@ set jobopts {}
 
 # test parts
 # ----------
-test pmulticompar {multicompar_addvars basic} {
 
+test pmulticompar {multicompar_addvars basic} {
 	test_cleantmp
 	write_tab tmp/varall-sample.tsv {
 		chromosome begin end type ref alt	genoqual coverage
@@ -105,11 +105,42 @@ test pmulticompar {multicompar_addvars basic} {
 	set keepposs {6 7}
 	# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.tsv]
 	exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs
-
 } {r	20	15
 r	20	15
 v	21	16
 u	?	?}
+
+test pmulticompar {multicompar_addvars bgvcf} {
+	test_cleantmp
+	file copy data/varall-strelka-bwa.gvcf.gz tmp/varall-sample.gvcf.gz
+	exec cg vcf2tsv -refout 1 tmp/varall-sample.gvcf.gz | cg select -q {$genoqual >= 10 || $GQX >= 10}  | cg regjoin > tmp/sreg-sample.tsv
+	cg select -overwrite 1 -q {$begin >= 42775179 and $begin <= 42775523} data/var-strelka-bwa.tsv tmp/var-sample.tsv
+	exec cg vcf2tsv -refout 1 tmp/varall-sample.gvcf.gz | cg select -q {$genoqual >= 10 || $GQX >= 10}  | cg regjoin > tmp/sreg-sample.tsv
+	file_write tmp/allvars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		21	42775179	42775180	snp	C	T
+		21	42775303	42775304	snp	G	C
+		21	42775359	42775360	snp	T	C
+		21	42775473	42775474	snp	C	T
+		21	42775523	42775524	snp	G	T
+	}]\n
+	set sregfile tmp/sreg-sample.tsv
+	set split 1
+	set allvarsfile tmp/allvars.tsv
+	set samplevarsfile tmp/var-sample.tsv
+	set sregfile tmp/sreg-sample.tsv
+	set varallfile tmp/varall-sample.gvcf.gz
+	set numbcolannot 0 ; set bcolannot {}
+	set numregfiles 0 ; set regfiles {}
+	set keepposs {14 15 16}
+	# exec cg vcf2tsv -refout 1 -sort 0 $varallfile $varallfile.tsv
+	# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile.tsv $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.tsv]
+	exec cg vcf2tsv -refout 1 -sort 0 $varallfile | multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs
+} {v	m	T	T	15	0	6
+r	r	G	G		18	8
+u	u	?	?		7	4
+v	t	C	T	12	6	5
+v	t	G	T	13	6	5}
 
 # test for different jobopts
 # --------------------------
@@ -511,7 +542,7 @@ test pmulticompar$testname {basic reannot varall split gvcf and bgvcf} {
 	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample1.gvcf | cg select -q {$genoqual >= 10} | cg regjoin > tmp/sreg-gatkh-bwa-sample1.tsv
 	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample2.gvcf | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-gatkh-bwa-sample2.tsv
 	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample3.gvcf | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-gatkh-bwa-sample3.tsv
-	exec cg vcf2tsv -refout 1 tmp/varall-strelka-bwa-sample4.gvcf.gz | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-strelka-bwa-sample4.tsv
+	exec cg vcf2tsv -refout 1 tmp/varall-strelka-bwa-sample4.gvcf.gz | cg select -q {$genoqual >= 10 || $GQX >= 10}  | cg regjoin > tmp/sreg-strelka-bwa-sample4.tsv
 	# cg gatk_index tmp/varall-gatkh-bwa-sample3.gvcf
 	# cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample3.gvcf tmp/var-gatkh-bwa-sample3.vcf
 	file copy -force data/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.vcf
