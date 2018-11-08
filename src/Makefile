@@ -30,6 +30,7 @@ all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$
      ../bin$(ARCH)/sam2tsv$(EXEEXT) ../bin$(ARCH)/tsv2sam$(EXEEXT) \
      ../bin$(ARCH)/splitfastq$(EXEEXT) \
      ../bin$(ARCH)/countlines$(EXEEXT) \
+     ../bin$(ARCH)/csv2tsv$(EXEEXT) \
      ../bin$(ARCH)/distrreg$(EXEEXT)
 
 clean:
@@ -130,6 +131,9 @@ clean:
 
 ../bin$(ARCH)/tsv2bed$(EXEEXT): tsv2bed.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
 	$(GCC) tsv2bed.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/tsv2bed$(EXEEXT) $(LIBZ)
+
+../bin$(ARCH)/csv2tsv$(EXEEXT): csv2tsv.c $(TOOLS)
+	$(GCC) csv2tsv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/csv2tsv$(EXEEXT)
 
 ../bin$(ARCH)/samcat$(EXEEXT): samcat.c $(TOOLS)
 	$(GCC) samcat.c tools.c $(CFLAGS) -o ../bin$(ARCH)/samcat$(EXEEXT)

@@ -841,4 +841,54 @@ test format {tsvjoin} {
 	cg tsvdiff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test cdv2tsv {cdv2tsv} {
+	file_write tmp/temp.tsv [deindent {
+		a,b,c
+		1,2,3
+		a1,"b 2","c 3"
+		"A 1",B2,"C 3"
+		short,"a bit longer","very
+		long indeed"
+		4,5,6
+	}]\n
+	file_write tmp/exepected.tsv [deindent {
+		a	b	c
+		1	2	3
+		a1	b 2	c 3
+		A 1	B2	C 3
+		short	a bit longer	very\nlong indeed
+		4	5	6
+	}]\n
+	cg csv2tsv tmp/temp.tsv tmp/result.tsv
+	exec diff tmp/result.tsv tmp/exepected.tsv
+} {}
+
+test cdv2tsv {cdv2tsv long} {
+	catch {close $o1} ; catch {close $o2}
+	set o1 [open tmp/temp.tsv w]
+	set o2 [open tmp/expected.tsv w]
+	for {set i 0} {$i < 10000} {incr i} {
+		puts $o1 [deindent {
+			a,b,c
+			1,2,3
+			a1,"b 2","c 3"
+			"A 1",B2,"C 3"
+			short,"a bit	longer","very
+			long indeed"
+			4,5,6
+		}]
+		puts $o2 [deindent {
+			a	b	c
+			1	2	3
+			a1	b 2	c 3
+			A 1	B2	C 3
+			short	a bit\tlonger	very\nlong indeed
+			4	5	6
+		}]
+	}
+	close $o1 ; close $o2
+	time {cg csv2tsv tmp/temp.tsv tmp/result.tsv}
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 testsummarize

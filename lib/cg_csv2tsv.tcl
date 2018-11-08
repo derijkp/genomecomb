@@ -18,19 +18,14 @@ proc cg_csv2tsv {args} {
 	} else {
 		set f stdin
 	}
+	set cmd [list | csv2tsv]
 	if {$tsvfile ne ""} {
-		set o [open $tsvfile w]
+		lappend cmd > $tsvfile
 	} else {
-		set o stdout
+		lappend cmd >@ stdout
 	}
-	while {![eof $f]} {
-		set line [gets $f]
-		if {[string index $line 0] eq "\#"} {
-			puts $o $line
-		} else {
-			puts $o [join [csv_split $line] \t]
-		}
-	}
+	set o [open $cmd w]
+	fcopy $f $o
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {gzclose $f}}
 }
