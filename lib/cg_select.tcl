@@ -1246,14 +1246,19 @@ proc tsv_hcheader {f keepcommentsVar headerVar} {
 	upvar $headerVar header
 	if {[catch {
 		# this does not work on a stream
-		seek $f [expr {-[string length [join $header \t]] - 1}] current
+		if {[info exists ::keepfpos($f)]} {
+			seek $f $::keepfpos($f) start
+		} else {
+			seek $f [expr {-[string length [join $header \t]] - 1}] current
+		}
 	}]} {
 		# this has to be explicitely supported downstream, only tsv_select does this!
 		set ::filebuffer($f) [list [join $header \t]]
 	}
 	set temp [split [string trimright $keepcomments] \n]
 	set header [split [string range [list_pop temp] 1 end] \t]
-	set keepcomments [join $temp \n]\n
+	set keepcomments [join $temp \n]
+	if {$keepcomments ne ""} {append keepcomments \n}
 }
 
 proc cg_select {args} {
@@ -1268,6 +1273,7 @@ proc cg_select {args} {
 	set samples {} ; set sortsamples 0
 	set overwrite 0
 	set pos 0
+	set showheader 0
 	cg_options select args {
 		-q {
 			set query $value
@@ -1344,15 +1350,17 @@ proc cg_select {args} {
 			exit 0
 		}
 		-h - -header {
-			if {$value eq ""} {
-				set header [tsv_open stdin]
-			} else {
-				set f [gzopen $value]
-				set header [tsv_open $f]
-				gzclose $f
-			}
-			puts stdout [join $header \n]
-			exit 0
+			set showheader 1
+			break
+#			if {$value eq ""} {
+#				set header [tsv_open stdin]
+#			} else {
+#				set f [gzopen $value]
+#				set header [tsv_open $f]
+#				gzclose $f
+#			}
+#			puts stdout [join $header \n]
+#			exit 0
 		}
 		-samplingskip {
 			set samplingskip $value
@@ -1363,6 +1371,9 @@ proc cg_select {args} {
 		-overwrite {
 			set overwrite $value
 		}
+	}
+	if {$showheader} {
+		set args [lrange $args 1 end]
 	}
 	if {[llength $groupcols] && ![llength $group]} {
 		error "cannot use -gc option without -g option"
@@ -1447,6 +1458,12 @@ proc cg_select {args} {
 		}
 	} else {
 		set header [tsv_open $f keepcomments]
+	}
+	if {$showheader} {
+		puts $out [join $header \n]
+		if {$f ne "stdin"} {catch {gzclose $f}}
+		if {$out ne "stdout"} {catch {close $out}}
+		exit 0
 	}
 	if {$removecomment} {set keepcomments ""}
 	set neededfields {}

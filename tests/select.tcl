@@ -157,6 +157,25 @@ test select "-f calculated if$dboptt" {
 chr1	4000	4001	<4
 chr2	4000	4001	>=4}
 
+test select "-hc 1$dboptt" {
+	global dbopt
+	file_write tmp/temp.tsv [deindent {
+		#a	b
+		1	2
+	}]
+	file delete tmp/result.tsv
+	cg select {*}$dbopt -h tmp/temp.tsv >> tmp/result.tsv
+	cg select {*}$dbopt -hc 1 -h tmp/temp.tsv >> tmp/result.tsv
+	cg select {*}$dbopt -hc 1 -f a tmp/temp.tsv >> tmp/result.tsv
+	file_read tmp/result.tsv
+} {1
+2
+a
+b
+a
+1
+}
+
 test select "keep header info and format rtg: -hc$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -hc 1 -s position data/rtgsnps.tsv tmp/temp.tsv

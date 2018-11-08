@@ -47,9 +47,11 @@ proc tsv_open {f {commentVar {}} {lineVar {}}} {
 	} else {
 		set vcf 0
 	}
+	set fpos 0
 	while {![eof $f]} {
 		while {![string length $line]} {
 			lappend comment \#
+			set fpos [tell $f]
 			if {[gets $f line] == -1} break
 		}
 		set fchar [string index $line 0]
@@ -65,8 +67,10 @@ proc tsv_open {f {commentVar {}} {lineVar {}}} {
 			}
 		}
 		lappend comment $line
+		set fpos [tell $f]
 		set line [gets $f]
 	}
+	set ::keepfpos($f) $fpos
 	fconfigure $f -buffering $buffering
 	set fchar [string index $line 0]
 	if {[inlist {# >} $fchar]} {
