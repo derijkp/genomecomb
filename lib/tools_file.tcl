@@ -222,7 +222,15 @@ proc hardcopy {args} {
 
 # create soft link (dest points to src) using relative path (unless absolute == 1)
 # allow links to non-exusting files
-proc mklink {src dest {absolute 0}} {
+proc mklink {args} {
+	set absolute 0
+	cg_options mklink args {
+		-absolute {
+			set absolute $value
+		}
+	} {src dest absolute} 2 3 {
+		make a soflink (dest points to src)
+	}
 	set src [file_absolute $src]
 	set keepsrc $src
 	set dest [file_absolute $dest]
@@ -259,8 +267,8 @@ proc mklink {src dest {absolute 0}} {
 	}
 }
 
-proc cg_mklink {src dest {absolute 0}} {
-	mklink $src $dest $absolute
+proc cg_mklink {args} {
+	mklink {*}$args
 }
 
 # same as mklink, but add proper extension to dest if src is compressed (and dest does not have already the correct compression extension)
@@ -275,7 +283,7 @@ proc gzmklink {src dest} {
 	}
 }
 
-proc mklink_job {dep target} {
+proc mklink_asjob {dep target} {
 	upvar job_logdir job_logdir
 	job mklink-$target -checkcompressed 0 -deps {$dep} -targets {$target} -code {
 		mklink $dep $target

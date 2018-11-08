@@ -55,7 +55,7 @@ proc targetfile_job {sampledir {dbdir {}}} {
 		}
 		if {[jobfileexists $take2]} {
 			set take2 [find_link $take2 1]
-			mklink_job $take2 $targetfile
+			mklink_asjob $take2 $targetfile
 			return $targetfile
 		}
 	}
