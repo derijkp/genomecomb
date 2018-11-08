@@ -88,6 +88,9 @@ proc cg_liftover {args} {
 		set f stdin
 	}
 	set header [tsv_open $f comment]
+	if {[lsearch $header {}] != -1} {
+		error "file ($varfile) has empty fieldname"
+	}
 	set cinfo [comment2dict $comment]
 	if {![info exists split]} {
 		if {[dict exists $cinfo split]} {

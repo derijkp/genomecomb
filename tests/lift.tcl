@@ -260,6 +260,16 @@ test liftover {bugcheck} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test liftover {tab at end of ori file (1 line)} {
+	file_write tmp/temp.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	
+		8	39000000	43000000	del	4000000	
+	}]
+	file delete tmp/lifted.tsv
+	cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	file_read tmp/lifted.tsv
+} {file (tmp/temp.tsv) has empty fieldname} error
+
 test liftsample {basic} {
 	test_cleantmp
 	file mkdir tmp/sample
