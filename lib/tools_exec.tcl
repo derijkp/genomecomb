@@ -33,6 +33,18 @@ proc catch_exec {args} {
 	return $msg
 }
 
+proc catchchildkilled_exec {args} {
+	if {[catch {
+		exec {*}$args
+	} msg opt]} {
+		if {$::errorCode ne "NONE" && ![string match {CHILDKILLED * SIGPIPE *} $::errorCode]} {
+			dict unset opt -level
+			return -options $opt $msg
+		}
+	}
+	return $msg
+}
+
 proc progress {cmd args} {
 	if {![llength [info commands winfo]]} {
 		global progresslevel

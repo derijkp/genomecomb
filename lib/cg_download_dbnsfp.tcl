@@ -12,6 +12,8 @@ proc cg_download_dbnsfp {args} {
 		MetaSVM_score MetaSVM_pred
 		MetaLR_score MetaLR_pred
 		SIFT_score SIFT_pred
+		REVEL_score REVEL_rankscore
+		VEST3_score VEST3_rankscore
 		LRT_score LRT_pred
 		MutationTaster_score MutationTaster_pred
 		M-CAP_score M-CAP_pred
@@ -71,6 +73,10 @@ proc cg_download_dbnsfp {args} {
 	set header [split [string range [gets $f] 1 end] \t]
 	close $f
 	set nh [list_regsub {\([^)]*\)} $header {}]
+	set notpresent [list_lremove $usefields $header]
+	if {[llength $notpresent]} {
+		puts "fields missing in file [file tail [lindex $files 0]]:$notpresent"
+	}
 	set usefields [list_common $usefields $header]
 	set fields {}
 	if {$basebuild eq $build} {
@@ -116,7 +122,7 @@ proc cg_download_dbnsfp {args} {
 	cg select -s - $tempdir/var_hg19_dbnsfp.tsv.temp $tempresult
 	putslog "move result to target"
 	# move dbNSFPzip files to target
-	file_write [gzroot $resultfile].opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred MetaSVM_score MetaSVM_pred MetaLR_score MetaLR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score GERP_NR GERP_RS MetaLR_score MetaLR_pred SiPhy_29way_pi SiPhy_29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
+	file_write [gzroot $resultfile].opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred MetaSVM_score MetaSVM_pred MetaLR_score MetaLR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score REVEL_score VEST3_score GERP_NR GERP_RS MetaLR_score MetaLR_pred SiPhy_29way_pi SiPhy_29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
 	# lz4 already handled in last select
 	file rename -force $tempresult $resultfile
 	if {!$keep} {file delete -force $tempdir}

@@ -8,7 +8,8 @@ proc cg_download_ucscinfo {args} {
 	file mkdir $temp
 	# do documentation
 	# ----------------
-	set version	[timestamp]
+	set timestamp [timestamp]
+	set version	$timestamp
 	set lastupdated	?
 	if {![file exists $temp/$dbname.html]} {
 		puts "Downloading $dbname.html ....."
@@ -46,7 +47,7 @@ dbname	$dbname
 version	$version
 lastupdated	$lastupdated
 source	http://genome.ucsc.edu/cgi-bin/hgTrackUi?db=$build&g=$dbname
-time	[timestamp]
+time	$timestamp
 
 [string trim $c]
 

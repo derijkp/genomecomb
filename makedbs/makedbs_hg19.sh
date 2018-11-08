@@ -13,17 +13,17 @@ set gencodeversion 28
 set 1000g3url ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
 set 1000g3readmeurl ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
 set 1000g3build hg19
-set clinvarurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20180128.vcf.gz
-set clinvarpapuurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20180128_papu.vcf.gz
+set clinvarurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20180930.vcf.gz
+set clinvarpapuurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20180930_papu.vcf.gz
 set kaviarurl http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-hg19-trim.vcf.tar
 set kaviarbuild hg19
 set evsurl http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
 set evsbuild hg19
 set exacurl ftp://ftp.broadinstitute.org/pub/ExAC_release/release1/ExAC.r1.sites.vep.vcf.gz
 set exacbuild hg19
-set caddurl http://krishna.gs.washington.edu/download/CADD/v1.3/whole_genome_SNVs.tsv.gz
+set caddurl http://krishna.gs.washington.edu/download/CADD/v1.4/GRCh37/whole_genome_SNVs.tsv.gz
 set caddbuild hg19
-set gnomadversion 2.0.2
+set gnomadversion 2.1
 set gnomadbaseurl https://storage.googleapis.com/gnomad-public/release/$gnomadversion/vcf
 set gnomadexurl $gnomadbaseurl/exomes/gnomad.exomes.r$gnomadversion.sites.vcf.bgz
 set dbnsfpurl ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv3.5a.zip
@@ -53,7 +53,7 @@ job_logdir log_jobs
 
 # readme
 set c [file_read $genomecombdir/docs/dbdir_README.txt]
-regsub {version: [0-9.]+} $c "version: 0.98.7\ntime: [lindex [timestamp] 0]" c
+regsub {version: [0-9.]+} $c "version: 0.99\ntime: [lindex [timestamp] 0]" c
 file_write README_dbdir.txt $c
 
 # download genome
@@ -176,6 +176,7 @@ job 1000g3 -targets {
 		cg download_1000g3 $target.$1000g3build.lz4 $1000g3url $1000g3readmeurl
 		liftover_refdb $target.$1000g3build.lz4 $target $dest $1000g3build $build
 	}
+	cg lz4index $target
 	cplinked $target extra/var_${build}_1000g3.tsv.lz4
 	cplinked $target.lz4i extra/var_${build}_1000g3.tsv.lz4.lz4i
 	file_write extra/var_${build}_1000g3.tsv.opt "fields\t{EUR_AF AMR_AF EAS_AF SAS_AF AFR_AF}\n"
@@ -615,7 +616,7 @@ foreach {targetname url file} {
 		file rename -force reg_hg19_exome_$targetname.tsv.lz4.lz4i $fulltarget.lz4.lz4i
 		file delete -force $fulltarget.temp
 		if {$targetname eq "SeqCap_EZ_v3"} {
-			mklink $fulltarget [file dit $fulltarget]/reg_hg19_exome_seqcapv3.tsv
+			mklink $fulltarget.lz4 [file dit $fulltarget]/reg_hg19_exome_seqcapv3.tsv.lz4
 		}
 	}
 }
@@ -690,6 +691,8 @@ job var_${build}_gnomad-info -targets {
 		All data here are released for the benefit of the wider biomedical
 		community, without restriction on use - see the terms of use here.
 
+		More information on realeas 2.1 at https://macarthurlab.org/2018/10/17/gnomad-v2-1/
+
 		== Category ==
 		Annotation
 	}]]
@@ -698,13 +701,53 @@ job var_${build}_gnomad-info -targets {
 # multidownload does not work
 # wgetfiles $url $tempdir
 
-set fields {chromosome begin end type ref alt}
-set nh $fields
-lappend fields {max_freqp=if($AF_POPMAX eq ".","-",format("%.3f",100.0*$AF_POPMAX))}
-lappend nh max_freqp
-foreach {name field} {afr AFR amr AMR asj ASJ eas EAS fin FIN nfe NFE oth OTH male Male female Female} {
-	lappend fields "${name}_freqp=if(\$AN_$field < 8, \"-\", format(\"%.3f\",(100.0 * \$AC_$field)/\$AN_$field))"
-	lappend nh ${name}_freqp
+proc gnomadfields {file} {
+	set tempfile [tempfile]
+	catchchildkilled_exec zcat $file | head -10000 | cg vcf2tsv -split 1 > $tempfile
+	set header [cg select -header $tempfile]
+	set fields {chromosome begin end type ref alt}
+	lappend fields {max_freqp=if(isnum($AF_popmax),format("%.3f",100.0*$AF_popmax),"-")}
+	lappend fields {controls_max_freqp=if(isnum($controls_AF_popmax),format("%.3f",100.0*$controls_AF_popmax),"-")}
+	lappend fields {non_neuro_max_freqp=if(isnum($non_neuro_AF_popmax),format("%.3f",100.0*$non_neuro_AF_popmax),"-")}
+	lappend nh max_freqp
+	foreach population {
+		afr amr asj eas fin nfe sas oth nfe_nwe nfe_seu nfe_est nfe_bgr nfe_swe
+		male female
+	} {
+		if {![inlist $header AN_$population]} continue
+		lappend fields "${population}_freqp=if(def(\$AN_$population,0) < 8, \"-\", format(\"%.3f\",(100.0 * \$AC_$population)/\$AN_$population))"
+		if {[inlist $header controls_AN_$population]} {
+			lappend fields "controls_${population}_freqp=if(def(\$controls_AN_$population,0) < 8, \"-\", format(\"%.3f\",(100.0 * \$controls_AC_$population)/\$controls_AN_$population))"
+		}
+		if {[inlist $header controls_AN_${population}_male]} {
+			lappend fields "controls_${population}_male_freqp=if(def(\$controls_AN_${population}_male,0) < 8, \"-\", format(\"%.3f\",(100.0 * \$controls_AC_${population}_male)/\$controls_AN_${population}_male))"
+		}
+		if {[inlist $header controls_AN_${population}_female]} {
+			lappend fields "controls_${population}_female_freqp=if(def(\$controls_AN_${population}_female,0) < 8, \"-\", format(\"%.3f\",(100.0 * \$controls_AC_${population}_female)/\$controls_AN_${population}_female))"
+		}
+		if {[inlist $header non_neuro_AN_$population]} {
+			lappend fields "non_neuro_${population}_freqp=if(def(\$non_neuro_AN_$population,0) < 8, \"-\", format(\"%.3f\",(100.0 * \$non_neuro_AC_$population)/\$non_neuro_AN_$population))"
+		}
+		if {[inlist $header faf95_${population}]} {
+			lappend fields [subst {faf95_${population}_freqp=if(isnum(\$faf95_${population}), format(\"%.3f\",(100.0 * \$faf95_${population})),"-")}]
+		}
+		if {[inlist $header controls_faf95_${population}]} {
+			lappend fields [subst {controls_faf95_${population}_freqp=if(isnum(\$controls_faf95_${population}), format(\"%.3f\",(100.0 * \$controls_faf95_${population})),"-")}]
+		}
+		if {[inlist $header non_neuro_faf95_${population}]} {
+			lappend fields [subst {non_neuro_faf95_${population}_freqp=if(isnum(\$non_neuro_faf95_${population}), format(\"%.3f\",(100.0 * \$non_neuro_faf95_${population})),"-")}]
+		}
+		if {[inlist $header faf99_${population}]} {
+			lappend fields [subst {faf99_${population}_freqp=if(isnum(\$faf99_${population}), format(\"%.3f\",(100.0 * \$faf99_${population})),"-")}]
+		}
+		if {[inlist $header controls_faf99_${population}]} {
+			lappend fields [subst {controls_faf99_${population}_freqp=if(isnum(\$controls_faf99_${population}), format(\"%.3f\",(100.0 * \$controls_faf99_${population})),"-")}]
+		}
+		if {[inlist $header non_neuro_faf99_${population}]} {
+			lappend fields [subst {non_neuro_faf99_${population}_freqp=if(isnum(\$non_neuro_faf99_${population}), format(\"%.3f\",(100.0 * \$non_neuro_faf99_${population})),"-")}]
+		}
+	}
+	return $fields
 }
 
 set deps {}
@@ -717,13 +760,14 @@ foreach chromosome {
 	lappend deps $target
 	job var_${build}_gnomad-$chromosome -targets {
 		$target
-	} -skip {$finaltarget} -vars {tempdir gnomadbaseurl vcf fields dest db build} -code {
+	} -skip {$finaltarget} -vars {tempdir gnomadbaseurl vcf dest db build} -code {
 		if {![file exists $tempdir/$vcf]} {
 			putslog "Downloading $vcf"
 			wgetfile $gnomadbaseurl/genomes/$vcf $tempdir/$vcf
 		}
+		set fields [gnomadfields $tempdir/$vcf]
 		putslog "Converting $vcf"
-		cg vcf2tsv -split 1 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles | lz4c > $target.temp
+		cg vcf2tsv -split 1 -sort 0 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles | lz4c > $target.temp
 		file rename $target.temp $target
 	}
 }
@@ -731,11 +775,12 @@ foreach chromosome {
 job var_${build}_gnomad-final -deps $deps -targets {
 	$finaltarget
 	var_${build}_gnomad.tsv.opt
-} -vars {tempdir fields dest db build} -code {
+} -vars {tempdir dest db build} -code {
 	exec cg cat {*}$deps | lz4c -9 > $tempdir/result.tsv.lz4
 	file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
 	file rename -force $tempdir/result.tsv.lz4 var_${build}_gnomad.tsv.lz4
 	cg lz4index var_${build}_gnomad.tsv.lz4
+	cg index var_${build}_gnomad.tsv.lz4
 	# file delete -force $tempdir
 }
 
@@ -743,16 +788,18 @@ set target var_${build}_gnomadex.tsv.lz4
 job var_${build}_gnomad_exomes -targets {
 	$target
 	var_${build}_gnomadex.tsv.opt
-} -vars {gnomadexurl tempdir fields dest db build} -code {
+} -vars {gnomadexurl tempdir dest db build} -code {
 	file_write var_${build}_gnomadex.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
 	set tempdir $target.temp
 	file mkdir $tempdir
 	set vcf [file tail $gnomadexurl]
 	wgetfile $gnomadexurl $tempdir/$vcf
 	putslog "Converting $vcf"
-	cg vcf2tsv -split 1 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles | lz4c > $tempdir/[file tail $target]
+	set fields [gnomadfields $tempdir/$vcf]
+	cg vcf2tsv -split 1 -sort 0 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles | lz4c > $tempdir/[file tail $target]
 	file rename $tempdir/[file tail $target] $target
 	cg lz4index $target
+	cg index $target
 	file delete -force $tempdir
 }
 
@@ -831,7 +878,7 @@ job reg_${build}_cadd -targets {
 		}
 		exec cg select -s - $tempdir/collapsed${build}.tsv.lz4 | cg bcol make --stack 1 --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
 	} else {
-		cg select -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
+		cg select -hc 1 -rc 1 -f {{chrom=$Chr} {begin = $Pos - 1} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
 			| cg collapsealleles \
 			| cg bcol make --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
 	}
@@ -844,8 +891,10 @@ job reg_${build}_cadd -targets {
 job_wait
 
 # todo
+# cp -al /complgen/refseq/hg19/gatkres /complgen/refseqnew/hg19
 # cd /complgen/refseq/backup/hg19/extra
-# cp reg_hg19_conserved.tsv reg_hg19_consnoncoding.tsv reg_hg19_refgene.tsv /complgen/refseq/hg19/extra
-# cp reg_hg19_exome_SureSelectV4.tsv reg_hg19_exome_targetseq.tsv /complgen/refseq/hg19/extra/
-# rs genome_hg19* /complgen/refseq/hg19/extra
-
+# cp reg_hg19_conserved.tsv* reg_hg19_consnoncoding.tsv* /complgen/refseqnew/hg19/extra
+# cp reg_hg19_exome_SureSelect*.tsv* /complgen/refseqnew/hg19/extra/
+# rs genome_hg19* /complgen/refseqnew/hg19/extra
+# cd /complgen/refseqnew/hg19
+# ln -s ../hg19-local/* .
