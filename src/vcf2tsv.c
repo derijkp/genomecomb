@@ -985,7 +985,9 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 					}
 					for (i = 1 ; i < formatfields->size; i++) {
 						if (order[i] <= 0 || order[i] >= genoa->size) {
+							/* field is not given */
 							if (i == DPpos && ADpos != -1 && order[ADpos] != -1) {
+								/* if depth is not given, get depth from AD field: sum af all alleles counts */
 								DString *value;
 								char *cur, *end;
 								int dp = 0;
@@ -1275,11 +1277,13 @@ int main(int argc, char *argv[]) {
 		samples = DStringArrayNew(0);
 	}
 	if (header->size >= 9) {
+		int fieldpos = 0;
 		NODPRINT("==== Parsing format ====")
 		formatfields = DStringArrayNew(10);
 		DStringArrayAppend(formatfields,"GT",2);
 		formatfieldsnumber = DStringNew();
 		DStringAppendS(formatfieldsnumber,"G",1);
+		fieldpos++;
 		headerfields = DStringArrayNew(10);
 		DStringArrayAppend(headerfields,"alleleSeq1",10);
 		DStringArrayAppend(headerfields,"alleleSeq2",10);
@@ -1290,8 +1294,8 @@ int main(int argc, char *argv[]) {
 			DString *ds;
 			id = extractID(DStringArrayGet(format,i),id);
 			if (strcmp(id->string,"GT") == 0) continue;
-			if (strcmp(id->string,"DP") == 0) {DPpos = i;}
-			if (strcmp(id->string,"AD") == 0) {ADpos = i;}
+			if (strcmp(id->string,"DP") == 0) {DPpos = fieldpos;}
+			if (strcmp(id->string,"AD") == 0) {ADpos = fieldpos;}
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
 			if (ds->size == 0) {continue;}
@@ -1301,6 +1305,7 @@ int main(int argc, char *argv[]) {
 			}
 			dstring_hash_set(donefields,DStringDup(ds),(void *)"");
 			DStringArrayAppend(formatfields,id->string,id->size);
+			fieldpos++;
 			num->string[0] = extractNumber(DStringArrayGet(format,i));
 			num->string[0] = numberfromid(id,num->string[0],typelist);
 			DStringAppendS(formatfieldsnumber,num->string,1);
