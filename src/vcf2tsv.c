@@ -66,7 +66,7 @@ static char *typelist;
 static int *order = NULL;
 static int numalleles,altvarsmax;
 static int linenr,svendpos,svlenpos,svtypepos,chr2pos;
-static int ADpos = -1, DPpos = -1;
+static int ADpos = -1, DPpos = -1, GQpos = -1, GQXpos = -1;
 
 #define a_chrom(array) (DStringArrayGet(array,0))
 #define a_pos(array) (DStringArrayGet(array,1))
@@ -775,7 +775,7 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 		OBufferBucket *bufferbucket;
 		DString *bufferstring;
 		AltVar *altvar;
-		int ADpos = -1;
+		int ADpos = -1, GQXpos = -1;
 		altvar = altvars+curpos;
 		curallele = altvar->curallele;
 		/* "ref" allele is not printed out	if refout == -1 */
@@ -820,6 +820,8 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 				order[i] = DStringArraySearch(lineformat,string->string,string->size);
 				if (string->size == 2 && string->string[0] == 'A' && string->string[1] == 'D') {
 					ADpos = i;
+				} else if (string->size == 3 && string->string[0] == 'G' && string->string[1] == 'Q' && string->string[2] == 'X') {
+					GQXpos = i;
 				}
 			}
 			NODPRINT("==== Process genos ====")
@@ -1005,6 +1007,12 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 									}
 								}
 								DStringPrintf(bufferstring,"\t%d",dp);
+							} else if (i == GQpos && GQXpos != -1 && order[GQXpos] != -1) {
+								/* if GQ (genoqual) is not given, get it from GQX */
+								DString *value;
+								value = DStringArrayGet(genoa,order[GQXpos]);
+								DStringAppendS(bufferstring,"\t",1);
+								DStringAppendS(bufferstring,value->string,value->size);
 							} else {
 								DStringAppendS(bufferstring,"\t",1);
 								if (formatfieldsnumber->string[i] == 'R') {
@@ -1296,6 +1304,8 @@ int main(int argc, char *argv[]) {
 			if (strcmp(id->string,"GT") == 0) continue;
 			if (strcmp(id->string,"DP") == 0) {DPpos = fieldpos;}
 			if (strcmp(id->string,"AD") == 0) {ADpos = fieldpos;}
+			if (strcmp(id->string,"GQX") == 0) {GQXpos = fieldpos;}
+			if (strcmp(id->string,"GQ") == 0) {GQpos = fieldpos;}
 			ds = (DString *)dstring_hash_get(conv_formata,id);
 			if (ds == NULL) {ds = id;}
 			if (ds->size == 0) {continue;}
