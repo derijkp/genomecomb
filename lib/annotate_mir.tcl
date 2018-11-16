@@ -148,7 +148,7 @@ proc annotatemir_dbopen {dbfile genecol transcriptcol {extracols {}}} {
 		if {![isint $dbstart] || ![isint $dbend]} continue
 		break
 	}
-	set dbobj [dict create df $df dposs $dposs fdbline $fdbline prevdbloc [lrange $fdbline 0 2] geneobjpos $geneobjpos extracols $extracols]
+	set dbobj [dict create df $df dbfile $dbfile dposs $dposs fdbline $fdbline prevdbloc [lrange $fdbline 0 2] geneobjpos $geneobjpos extracols $extracols]
 	return $dbobj
 }
 
@@ -190,6 +190,7 @@ proc annotatemir_dbgetlist {dbobjVar dblistVar chr start end {upstreamsize 2000}
 		if {[eof $df]} break
 		set dbloc [lrange $fdbline 0 2]
 		if {[lloc_compare $prevdbloc $dbloc] > 0} {
+			set dbfile [dict get $dbobj dbfile]
 			error "Cannot annotate because the database file ($dbfile) is not correctly sorted (sort correctly using \"cg select -s -\")"
 		}
 		set prevdbloc $dbloc
