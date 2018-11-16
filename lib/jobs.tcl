@@ -873,7 +873,9 @@ proc time_seconds {diff} {
 }
 
 proc job_parse_log {job {totalduration {0 0}}} {
-	set starttime {} ; set endtime {} ; set duration {} ; set currentrun "" ; set currentsubmittime ""; set time_seconds ""
+	set submittime {} ; set starttime {} ; set endtime {} ; set duration {}
+	set currentrun {} ; set currentsubmittime {}; set currentstarttime {} ; set currentstatus {}
+	set time_seconds ""
 	set status submitted
 	set logdata [split [file_read $job.log] \n]
 	set failed 0
@@ -881,24 +883,26 @@ proc job_parse_log {job {totalduration {0 0}}} {
 	set tail .*
 	foreach line $logdata {
 		if {[regexp {^([0-9:. -]+)[ \t]-+ submitted .* \(run (.*)\) --} $line temp currentsubmittime currentrun]} {
-			set status submitted
-			set starttime {} ; set endtime {}
-		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail} on (.*)($|:)}] $line temp starttime host]} {
-			set run $currentrun
-			set submittime $currentsubmittime
-			set status running
-			set endtime {}
-		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail}($|:)}] $line temp starttime]} {
-			set run $currentrun
-			set submittime $currentsubmittime
-			set status running
-			set endtime {}
+			set currentstatus submitted
+		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail} on (.*)($|:)}] $line temp currentstarttime currenthost]} {
+			set currentstatus running
+		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]starting ${tail}($|:)}] $line temp currentstarttime]} {
+			set currentstatus running
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} finished($|:)}] $line temp endtime]} {
+			set run $currentrun
+			set submittime $currentsubmittime
+			set starttime $currentstarttime
 			set status finished
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]${tail} failed($|:)}] $line temp endtime]} {
+			set run $currentrun
+			set submittime $currentsubmittime
+			set starttime $currentstarttime
 			set status error
 			set failed 1
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t]job ${tail} failed($|:)}] $line temp endtime]} {
+			set run $currentrun
+			set submittime $currentsubmittime
+			set starttime $currentstarttime
 			set status error
 			set failed 1
 		} elseif {[regexp [subst -nocommands -nobackslashes {([0-9:. -]+)[ \t>-]+job ${tail} skipped($|:)}] $line temp skiptime]} {
@@ -913,7 +917,9 @@ proc job_parse_log {job {totalduration {0 0}}} {
 		}
 	}
 	if {![info exists run]} {set run $currentrun}
-	if {![info exists submittime]} {set submittime $currentsubmittime}
+	if {$status eq ""} {set status $currentstatus}
+	if {$submittime eq ""} {set submittime $currentsubmittime}
+	if {$starttime eq ""} {set submittime $currentstarttime}
 	if {$run eq ""} {
 		set run [clock format [file mtime $job.log] -format "%Y-%m-%d_%H-%M-%S"]
 	}
