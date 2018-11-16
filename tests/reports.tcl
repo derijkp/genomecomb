@@ -64,15 +64,15 @@ test reports {process_reports no targetfile} {
 	file rename -force tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html.temp tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html
 	cg tsvdiff -q 1 -x fastqc_report.html tmp/test_reportsnotarget/NA19240mx2/reports expected/test_reportsnotarget/NA19240mx2/reports
 	set e [checkdiff -y --suppress-common-lines tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html expected/test_reportsnotarget/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html]
-	if {[llength [split [string trim $e] \n]] > 2} {error "too many differences in fastqc_report.html"}
+	if {[llength [split [string trim $e] \n]] > 3} {error "too many differences in fastqc_report.html"}
 	set e [checkdiff -y --suppress-common-lines tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html expected/test_reportsnotarget/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html]
-	if {[llength [split [string trim $e] \n]] > 2} {error "too many differences in fastqc_report.html"}
+	if {[llength [split [string trim $e] \n]] > 3} {error "too many differences in fastqc_report.html"}
 } {}
 
 test reports {process_reportscombine} {
-	mkdir tmp/samples/ERR194147_30x_NA12878
+	file mkdir tmp/samples/ERR194147_30x_NA12878
 	file copy data/reports tmp/samples/ERR194147_30x_NA12878
-	mkdir tmp/samples/test/reports
+	file mkdir tmp/samples/test/reports
 	foreach file {
 		report_fastq_fw-ERR194147_30x_NA12878.tsv
 		report_fastq_rev-ERR194147_30x_NA12878.tsv		

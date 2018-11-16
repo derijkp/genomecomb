@@ -93,6 +93,34 @@ test process {process_illumina exomes yri chr2122} {
 	join [list_remove $result {}] \n
 } {}
 
+test process {process_project exomes_gatkh_strelka_yri_chr2122 (haplotypecaller + strelka)} {
+	cd $::bigtestdir
+	set testdir tmp/exomes_gatkh_strelka_yri_chr2122
+	set src ori/exomes_yri_chr2122.start/
+	file delete -force $testdir
+	file mkdir $testdir/samples
+	foreach sample {
+		NA19238chr2122  NA19239chr2122  NA19240chr2122
+	} {
+		cg project_addsample $testdir $sample {*}[glob $src/samples/$sample/fastq/*]
+	}
+	cg process_project {*}$::dopts -split 1 -varcallers {gatkh strelka} \
+		-dbdir refseqtest/hg19 $testdir >& $testdir.log
+	# check vs expected
+	set result {}
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
+		-x *.analysisinfo -x *.png \
+		tmp/exomes_gatkh_strelka_yri_chr2122 expected/exomes_gatkh_strelka_yri_chr2122]
+	lappend result [diffanalysisinfo tmp/exomes_gatkh_strelka_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo expected/exomes_gatkh_strelka_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo]
+	checkdiff -y --suppress-common-lines tmp/exomes_gatkh_strelka_yri_chr2122/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_gatkh_strelka_yri_chr2122/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2
+	foreach file1 [glob tmp/exomes_gatkh_strelka_yri_chr2122/compar/info_analysis.tsv tmp/exomes_gatkh_strelka_yri_chr2122/samples/*/info_analysis.tsv] {
+		regsub ^tmp $file1 expected file2
+		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+	}
+	join [list_remove $result {}] \n
+} {}
+
 test process {process_project exomes_gatkh_yri_chr2122 (haplotypecaller)} {
 	cd $::bigtestdir
 	set testdir tmp/exomes_gatkh_yri_chr2122
