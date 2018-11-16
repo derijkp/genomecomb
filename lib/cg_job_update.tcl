@@ -85,7 +85,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		set addcores 0
 		if {$header eq "job jobid status submittime starttime endtime duration targets msg run"} {
 			set addseconds 1
-		} elseif {$header ne "job jobid status submittime starttime endtime duration time_seconds targets msg run"} {
+		} elseif {$header eq "job jobid status submittime starttime endtime duration time_seconds targets msg run"} {
 			set addcores 1
 		} elseif {$header ne $expectedheader} {
 			error "error in format of logfile $oldlogfile"
@@ -135,7 +135,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 	set addseconds 0
 	if {$header eq "job jobid status submittime starttime endtime duration targets msg run"} {
 		set addseconds 1
-	} elseif {$header ne "job jobid status submittime starttime endtime duration time_seconds targets msg run"} {
+	} elseif {$header eq "job jobid status submittime starttime endtime duration time_seconds targets msg run"} {
 		set addcores 1
 	} elseif {$header ne $expectedheader} {
 		close $o ; close $f
