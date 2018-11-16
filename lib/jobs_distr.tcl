@@ -39,7 +39,7 @@ proc job_status_distr {job {jobloginfo {}}} {
 	}
 	foreach {status starttime endtime run duration totalduration} $jobloginfo break
 	if {$status ni {submitted running}} {return $status}
-	if {[info exists cgjob(pid)] && [catch {exec ps $cgjob(pid)}]} {return error}
+	if {![info exists cgjob(pid)] || [catch {exec ps $cgjob(pid)}]} {return error}
 	if {$status eq "submitted"} {return $status}
 	if {![catch {file_read $job.pid} pid] && ![catch {exec ps $pid}]} {
 		return running
@@ -180,6 +180,6 @@ proc job_process_distr_wait {} {
 	unset -nocomplain cgjob_exit
 	update
 	if {[file exists $cgjob(logfile).running]} {
-		job_update $cgjob(logfile).running $cgjob(cleanup) 1 $cgjob(removeold)
+		job_update $cgjob(logfile).running $cgjob(cleanup) 1 $cgjob(removeold) 1
 	}
 }

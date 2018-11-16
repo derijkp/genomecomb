@@ -51,7 +51,7 @@ proc correct_time_ms {timeVar} {
 # running: still running, can be updated
 # finished: after completely successful run
 # error: some jobs had errors
-proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
+proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} {
 	global cgjob
 	if {![file exists $logfile]} {
 		puts stderr "logfile $logfile not found, checking for finished logfile"
@@ -121,6 +121,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 		}
 		puts $o $line
 	}
+	if {$rundone} {unset -nocomplain cgjob(pid)}
 	if {[isint $cgjob(distribute)]} {
 		if {$cgjob(distribute) <= 1} {
 			set target direct
@@ -184,7 +185,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0}} {
 			set endcode [timescan $endtime]
 			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 			set time_seconds [timebetween_inseconds $starttime $endtime]
-		} elseif {$starttime eq "" || $endtime eq "" | $duration eq "" | $force} {
+		}
+		if {$starttime eq "" || $endtime eq "" | $duration eq "" | $force} {
 			if {[job_file_exists $job.log]} {
 				set jobloginfo [job_parse_log $job $totalduration]
 				foreach {status starttime endtime run duration totalduration submittime time_seconds} $jobloginfo break
