@@ -36,6 +36,18 @@ test reports {report_vars} {
 	exec diff tmp/report_vars.tsv data/report_vars.tsv
 } {}
 
+test reports {report_vars error} {
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		1	100	101	snp	A	T
+	}]\n
+	cg report_vars -stack 1 -v 2 -sample gatk-rdsbwa-NA19238chr2122 \
+		-targetfile $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
+		-refcodingfile $::refseqdir/hg19/extra/reg_hg19_refcoding.tsv.lz4 \
+		tmp/vars.tsv tmp/report_vars.tsv
+	regexp {vars_titv	0.0} [file_read tmp/report_vars.tsv]
+} 1
+
 test reports {process_reports} {
 	cd $::smalltestdir
 	file delete -force tmp/test_reports

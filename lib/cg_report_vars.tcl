@@ -85,7 +85,8 @@ proc cg_report_vars {args} {
 
 	set vars 0 ; set qvars 0 ; set qvars_target 0; set qvars_refcoding 0
 	set vars_snp 0 ; set qvars_snp 0 ; set qvars_target_snp 0; set qvars_refcoding_snp 0
-	unset -nocomplain titva ; unset -nocomplain qtitva
+	set titva(i) 0 ; set titva(v) 0
+	set qtitva(i) 0 ; set qtitva(v) 0
 	unset -nocomplain typea ; unset -nocomplain typea
 	unset -nocomplain zyga ; unset -nocomplain qzyga
 	foreach line [lrange [split [string trim $temp] \n] 1 end] {
@@ -101,13 +102,13 @@ proc cg_report_vars {args} {
 				incr qvars_refcoding $count
 				if {$type eq "snp"} {incr qvars_refcoding_snp $count}
 			}
-			if {![info exists qtitva($titv)]} {set qtitva($titv) $count} else {incr qtitva($titv) $count}
+			incr qtitva($titv) $count
 			if {![info exists qzyga($zyg)]} {set qzyga($zyg) $count} else {incr qzyga($zyg) $count}
 			if {![info exists qtypea($type)]} {set qtypea($type) $count} else {incr qtypea($type) $count}
 		}
 		incr vars $count
 		if {$type eq "snp"} {incr vars_snp $count}
-		if {![info exists titva($titv)]} {set titva($titv) $count} else {incr titva($titv) $count}
+		incr titva($titv) $count
 		if {![info exists zyga($zyg)]} {set zyga($zyg) $count} else {incr zyga($zyg) $count}
 		if {![info exists typea($type)]} {set typea($type) $count} else {incr typea($type) $count}
 	}
@@ -134,13 +135,13 @@ proc cg_report_vars {args} {
 	printvarinfo $f $sample vars_zyg_ zyga
 	printvarinfo $f $sample vars_type_ typea
 	printvarinfo $f $sample vars_titv_ titva
-	if {[isint [get titva(v) {}]] && $titva(v) != 0 && [isint $titva(i)]} {
+	if {$titva(v) != 0} {
 		puts $f $sample\tgenomecomb\tvars_titv\t[format %.1f [expr double ($titva(i))/$titva(v)]]
 	}
 	printvarinfo $f $sample qvars_zyg_ qzyga
 	printvarinfo $f $sample qvars_type_ qtypea
 	printvarinfo $f $sample qvars_titv_ qtitva
-	if {[isint [get qtitva(v) {}]] && $qtitva(v) != 0 && [isint $qtitva(i)]} {
+	if {$qtitva(v) != 0} {
 		puts $f $sample\tgenomecomb\tqvars_titv\t[format %.1f [expr double ($qtitva(i))/$qtitva(v)]]
 	}
 	close $f
