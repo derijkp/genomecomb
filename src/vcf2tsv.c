@@ -56,7 +56,7 @@ typedef struct OBuffer {
 static OBuffer *obuffer = NULL;
 static AltVar *altvars;
 static DString *line, *string, *temp;
-static DString *reftype,*snptype, *deltype, *instype, *subtype, *duptype, *invtype, *cnvtype, *transtype;
+static DString *reftype,*snptype, *deltype, *instype, *subtype, *duptype, *invtype, *cnvtype, *transtype, *bndtype;
 static DString *geno, *outinfo, *formatfieldsnumber, *infofieldsnumber;
 static DStringArray *header, *format, *info, *samples;
 static DStringArray *formatfields , *infofields;
@@ -65,7 +65,7 @@ static DString *num;
 static char *typelist;
 static int *order = NULL;
 static int numalleles,altvarsmax;
-static int linenr,svendpos,svlenpos,svtypepos,chr2pos;
+static int linenr,svendpos,svlenpos,svtypepos,chr2pos,strandspos=-1;
 static int ADpos = -1, DPpos = -1, GQpos = -1, GQXpos = -1;
 
 #define a_chrom(array) (DStringArrayGet(array,0))
@@ -589,6 +589,7 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 		DString *altallele = DStringArrayGet(alts,curallele);
 		AltVar *altvar = altvars+curallele;
 		char *curref, *curalt;
+		int firstremoved = 0;
 		/* in vcf genotypes alt alleles number from 1 (0 is ref)*/
 		altvar->curallele = curallele + 1;
 		/* determine type for this altallele */
@@ -606,6 +607,7 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 			pos++;
 			curref++; l1--;
 			curalt++; l2--;
+			firstremoved = 1;
 		}
 		/* remove extra bases at end (from other overlapping alleles); do first to keep left aligned */
 		while (l1 > 0 && l2 > 0 && curref[l1-1] == curalt[l2-1]) {
@@ -744,23 +746,62 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 				if (cursize > 3 && (curchr[0] == 'c' || curchr[0] == 'C') && curchr[1] == 'h' && curchr[2] == 'r') {
 					curchr += 3; cursize -= 3;
 				}
-				DStringPrintf(altvar->buffer,"[%*.*s:%d[",cursize,cursize,curchr,svend-1);
+				if (strandspos != -1) {
+					/*
+					------A------|-----B----- chr1
+					------C------|-----D----- chr2
+					AD +-	t[p[	piece extending to the right of p is joined after t
+					AC ++	t]p]	reverse comp piece extending left of p is joined after t
+					CB -+	]p]t	piece extending to the left of p is joined before t
+					BD --	[p[t	reverse comp piece extending right of p is joined before t
+					*/
+					char *s = outinfo[strandspos].string;
+					if (s[0] == '+') {
+						if (s[1] == '-') {
+							DStringPrintf(altvar->buffer,".[%*.*s:%d[",cursize,cursize,curchr,svend-1);
+						} else {
+							DStringPrintf(altvar->buffer,".]%*.*s:%d]",cursize,cursize,curchr,svend-1);
+						}
+					} else {
+						if (s[1] == '+') {
+							DStringPrintf(altvar->buffer,"]%*.*s:%d].",cursize,cursize,curchr,svend-1);
+						} else {
+							DStringPrintf(altvar->buffer,"[%*.*s:%d[.",cursize,cursize,curchr,svend-1);
+						}
+					}
+				} else {
+					DStringPrintf(altvar->buffer,"[%*.*s:%d[",cursize,cursize,curchr,svend-1);
+				}
 				altvar->altsize = altvar->buffer->size;
 				altvar->alt = altvar->buffer->string;
 			} else if (svtype != NULL) {
-				char *pos;
-				for (i=0 ; i < svtype->size ; i++) {svtype->string[i] = tolower(svtype->string[i]);}
-				altvar->type = svtype;
+				char *pos,dir = 'r';
+				if (svtype->size == 3 && strncmp(svtype->string,"BND",3) == 0) {
+					altvar->type = bndtype;
+				} else {
+					for (i=0 ; i < svtype->size ; i++) {svtype->string[i] = tolower(svtype->string[i]);}
+					altvar->type = svtype;
+				}
 				pos = strchr(altvar->alt,'[');
+				if (pos == NULL) {
+					pos = strchr(altvar->alt,']');
+					dir = 'l';
+				}
 				if (pos != NULL) {
-					int size, loc;
+					int size, loc, sizeleft;
 					pos = strchr(altvar->alt,':');
 					size = pos-altvar->alt;
-					loc = atoi(pos+1)-1;
+					loc = atoi(pos+1);
+					if (dir == 'r') {loc--;}
 					if (altvar->buffer == NULL) {altvar->buffer = DStringNew();}
 					pos++;
 					while(*pos >= 48 && *pos <= 57) pos++;
-					DStringPrintf(altvar->buffer,"%*.*s:%d%s",size,size,altvar->alt,loc,pos);
+					sizeleft = altvar->altsize - (pos - altvar->alt);
+					if (firstremoved) {
+						DStringPrintf(altvar->buffer,".%*.*s:%d%*.*s",size,size,altvar->alt,loc,sizeleft,sizeleft,pos);
+					} else {
+						DStringPrintf(altvar->buffer,"%*.*s:%d%*.*s.",size,size,altvar->alt,loc,sizeleft,sizeleft,pos);
+					}
 					altvar->altsize = altvar->buffer->size;
 					altvar->alt = altvar->buffer->string;
 				} else {
@@ -1129,6 +1170,7 @@ int main(int argc, char *argv[]) {
 	reftype=DStringNewFromChar("ref");
 	snptype=DStringNewFromChar("snp"); deltype=DStringNewFromChar("del"); instype=DStringNewFromChar("ins"); subtype=DStringNewFromChar("sub");
 	duptype=DStringNewFromChar("dup"); invtype=DStringNewFromChar("inv"); cnvtype=DStringNewFromChar("cnv"); transtype=DStringNewFromChar("trans");
+	bndtype=DStringNewFromChar("bnd");
 	geno = NULL; outinfo = NULL; formatfieldsnumber=NULL; infofieldsnumber=NULL;
 	header=NULL; format=NULL; info=NULL; samples=NULL;
 	formatfields=NULL ; headerfields=NULL; infofields=NULL; linea=NULL;
@@ -1377,7 +1419,9 @@ int main(int argc, char *argv[]) {
 				}
 				svtypepos = infopos;
 			} else {
-				if (id->size == 4 && strncmp(id->string,"CHR2",5) == 0) {
+				if (id->size == 7 && strncmp(id->string,"STRANDS",6) == 0) {
+					strandspos = i;
+				} else if (id->size == 4 && strncmp(id->string,"CHR2",5) == 0) {
 					chr2pos = i;
 				}
 				if (dstring_hash_get(donefields,ds) == NULL) {
