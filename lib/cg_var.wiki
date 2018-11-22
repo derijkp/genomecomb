@@ -1,0 +1,46 @@
+= Var =
+
+== Format ==
+cg var ?options? bamfile refseq
+
+== Summary ==
+generic command to call variants based on the alignment in bamfile.
+
+== Description ==
+The command can be used to call variants using different methods. The
+methods are implemented in separate commands such as cg var_gatk; The
+method indicated using the -method option will be actually used. option.
+The result will consist of several files with names derived from the bam
+file name: If the bamfile has a name of the form
+map-alignmethod-sample.bam, the result files will consist of file with
+names like these (depending on the varcaller used):
+varall-varcaller-alignmethod-sample.tsv.lz4
+var-varcaller-alignmethod-sample.tsv.lz4
+sreg-varcaller-alignmethod-sample.tsv.lz4
+
+cg var can distribute variant calling by analysing separate
+regions in parallel and combining the results (-distrreg option).
+This command can be distributed on a cluster or using multiple cores with
+[[joboptions|job options]] (more info with cg help joboptions)
+
+== Arguments ==
+; bamfile: alignment on which to call variants
+; refseq: genomic reference sequence (must be the one used for the alignment)
+
+== Options ==
+; -method varcaller: use the given method (**varcaller**) to call
+variants. Default varcaller is gatk for the GATK unified genotype caller.
+Other possible values are: gatkh (Haplotype caller), strelka, sam,
+freebayes
+; -regionfile regionfile: only call variants in the region(s) given in regionfile
+; -regmincoverage mincoverage: If no regionfile is given, variants will be called only in regions with
+a coverage of at least **mincoverage** (default 3)
+; -distrreg: distribute regions for parallel processing (default chr).
+Possible options are 0 (no distribution), chr (or 1) (distribution per
+chromosome), file name (the regions in the file will be used for subjobs)
+; -split 1/0: indicate if in the datafiles, multiple alternative genotypes are split over different lines (default 1)
+; -t number (-threads): number of threads used by each job (if the method supports threads)
+; -cleanup 0/1: Use 0 to no cleanup some of the temporary files (vcf, delvar, ...)
+
+== Category ==
+Variants

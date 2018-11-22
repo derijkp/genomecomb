@@ -53,5 +53,5 @@ cg process_sv GS27657-FS3-L01 NA19238cg /complgen/refseq/hg19
 }}}
 
 == Category ==
-Structural variants
+Variants
 

@@ -51,4 +51,4 @@ the content of this will be used in the targets column instead of a 1.
 Use 0 for giving alternatives alleles on the same line, separated by comma in the alt field
 
 == Category ==
-Compare
+Variants

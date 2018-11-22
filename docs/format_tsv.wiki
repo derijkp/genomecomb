@@ -87,16 +87,17 @@ between different callers
 
 genomecomb has 2 options to deal with the presence of multiple alternative
 alleles on the same position:
+; split: Each alternative allele is on a seperate line. e.g. A to G,C
+variant (multialleic notation) is split into an A to G and an A to C variant.
+While [[cg_select]] can select based on lists in fields (as in multiallelic mode), 
+split mode makes querying and selection of variants much easier.
+Split mode is the default.
 ; multiallelic: one line per position and type. All alternative alleles
 are in one line in the variant file. The alt field contains a list
 (separated by commas) of alternative alleles. If any of the other fields
 contains values specific to an allele (e.g. frequency of the allele in a population),
 this field will contain a comma separated list with values in the order as the
 alt alleles list
-; split: Each alternative allele is on a seperate line. e.g. A to G,C
-variant (multialleic notation) is split into an A to G and an A to C variant.
-While [[cg_select]] can select based on lists in fields (as in multiallelic mode), 
-split mode makes querying and selection of variants much easier.
 
 === sequenced field ===
 The sequenced field indicates sequenig status of the variant in the sample. The following codes
@@ -128,11 +129,32 @@ It is possible to have an assigned zyg other than u (e.g. t) even when the seque
 meaning that the variant caller could make a zygosity estimate/prediction, but the variant 
 call is not of enough quality to consider it sequenced.
 
+== Structural variants ==
+Structural variants use basically the same format as small variants, but
+are usually in separate files because they are compared and queried
+differently. The only difference is in the extra types (inv, trans, bnd)
+and different alt notations for these types.
+For an inversion (inv) the alternative genotype (alt) is indicated by an "i".
+Translocations (trans) and breakends (bnd) are indicated by a position on
+the breakpoint ( zero length location like for an insertion). The 
+alt is indicated by the following patterns, where **chr:pos** gives the location
+the variant location is linked to. (AS for insertions, pos here points to
+a location between bases) **s** can be pesent to indicate inserted bases
+in the breakpoint:
+* .s[chr:pos[	The sequence starting after **chr:pos** is added after the variant location
+* .s]chr:pos]	The (reverse complement of) sequence before **chr:pos** is joined after the variant location
+* ]chr:pos]s.	The sequence starting after **chr:pos** is added before the variant location
+* [chr:pos[s.	The (reverse complement of) sequence after **chr:pos** is joined before the variant location
+
 == multicompar file ==
 In a multicompar file, data for different samples is present in one file,
 so they can be compared. Fields that are specific to a sample have the
 samplename added to the fieldname separated by a dash, e.g. the zygosity
 of a variant in sample1 can be found in the column named zyg-sample1.
+The same sample can be analysed using different methods (aligners, 
+variant callers). This is indicated using fieldname-methods-sample. (The
+methods-sample part is called the anlysis.)
+
 A small example multicompar variant file with two samples would contain the following fields
 ; chromosome: chromosome name.
 ; begin: start of the region (half-open coordinates). 
@@ -140,16 +162,16 @@ A small example multicompar variant file with two samples would contain the foll
 ; type: type of variation: snp, ins, del, sub are recognised
 ; ref: reference sequence
 ; alt: alternative allele(s).
-; sequenced-sample1:  sequencing status of sample1
-; zyg-sample1: zygosity of sample1
-; quality-sample1: variant quality in sample1
-; alleleSeq1-sample1: genotype of variant at one allele in sample1
-; alleleSeq2-sample1: genotype of variant at other allele in sample1
-; sequenced-sample2:  sequencing status of sample2
-; zyg-sample2: zygosity of sample2
-; quality-sample2: variant quality in sample2
-; alleleSeq1-sample2: genotype of variant at one allele in sample2
-; alleleSeq2-sample2: genotype of variant at other allele in sample2
+; sequenced-gatkh-rdsbwa-sample1:  sequencing status of sample1, based on the gatk haplotypecaller (gatkh) on a cleaned bwa alignment
+; zyg-gatkh-rdsbwa-sample1: zygosity of sample1
+; quality-gatkh-rdsbwa-sample1: variant quality in sample1
+; alleleSeq1-gatkh-rdsbwa-sample1: genotype of variant at one allele in sample1
+; alleleSeq2-gatkh-rdsbwa-sample1: genotype of variant at other allele in sample1
+; sequenced-gatkh-rdsbwa-sample2:  sequencing status of sample2
+; zyg-gatkh-rdsbwa-sample2: zygosity of sample2
+; quality-gatkh-rdsbwa-sample2: variant quality in sample2
+; alleleSeq1-gatkh-rdsbwa-sample2: genotype of variant at one allele in sample2
+; alleleSeq2-gatkh-rdsbwa-sample2: genotype of variant at other allele in sample2
 
 == tab based bioinformatics formats ==
 Some formats used in bioinformatics contain data in a tab separated format where the header 

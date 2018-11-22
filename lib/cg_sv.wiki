@@ -1,0 +1,45 @@
+= Var =
+
+== Format ==
+cg sv ?options? bamfile ?resultfile?
+
+== Summary ==
+generic command to call structural variants based on the alignment in bamfile.
+
+== Description ==
+The command can be used to call structural variants using different
+methods. The methods are implemented in separate commands such as cg
+sv_manta; The -method options determines which one is used. The
+**resultfile** is a tsv file containing the called structural variants. If
+""resultfile** is not given, a file name will be derived from the bam file
+name: If the bamfile has a name of the form map-alignmethod-sample.bam,
+the result file will will be var-svcaller-alignmethod-sample.tsv.lz4.
+Other result files may also be created, depending on the method used.
+
+cg sv can distribute structural variant calling by analysing separate
+regions in parallel and combining the results (-distrreg option).
+This command can be distributed on a cluster or using multiple cores with
+[[joboptions|job options]] (more info with cg help joboptions)
+
+== Arguments ==
+; bamfile: alignment on which to call variants
+; resultfile: filename of the resulting structural variant calls
+
+== Options ==
+; -method svcaller: use the given method (**svcaller**) to call
+structural variants. Default svcaller is manta.
+Possible values are: manta, lumpy sniffles, npinv, cg, gridds
+; -refseq refseq: genomic reference sequence
+; -regionfile regionfile: only call variants in the region(s) given in regionfile
+; -regmincoverage mincoverage: If no regionfile is given, variants will be called only in regions with
+a coverage of at least **mincoverage** (default 3)
+; -distrreg: distribute regions for parallel processing (default chr).
+Possible options are 0 (no distribution), chr (or 1) (distribution per
+chromosome), file name (the regions in the file will be used for subjobs)
+; -split 1/0: indicate if in the datafiles, multiple alternative genotypes are split over different lines (default 1)
+; -t number (-threads): number of threads used by each job (if the method supports threads)
+; -cleanup 0/1: Use 0 to no cleanup some of the temporary files (vcf, delvar, ...)
+
+== Category ==
+Variants
+

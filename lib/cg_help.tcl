@@ -330,7 +330,7 @@ proc helptext_overview {} {
 	}
 	unset -nocomplain a(Depricated)
 	set categories [array names a]
-	set pre {Process Query Analysis Regions Annotation Validation tsv Conversion {Format Conversion} Compare Structural Report Info}
+	set pre {Process Query Analysis Regions Annotation Validation Variants tsv Conversion {Format Conversion} Report Info}
 	array set preorder {
 		Process {process_project}
 		Query {select viz multiselect groupby}

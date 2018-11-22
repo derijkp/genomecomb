@@ -46,4 +46,4 @@ Some options can also be given as words after the argument
 ; **regonly**: if the regonly option is used, only region data (sequenced) will be updated
 ; **skipincomplete**: go on even if data for some samples is not complete (skipping samples which are e.g. missing coverage data for some of the chromosomes)
 == Category ==
-Compare
+Variants
