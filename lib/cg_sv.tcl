@@ -1,7 +1,7 @@
 proc sv_job {args} {
 	global appdir
 	upvar job_logdir job_logdir
-	set method cg
+	set method manta
 	set refseq {}
 	set distrreg chr
 	set opts {}
