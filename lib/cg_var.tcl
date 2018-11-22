@@ -49,7 +49,7 @@ proc var_job {args} {
 		default {
 			lappend opts $key $value
 		}
-	} {bamfile refseq}
+	} {bamfile refseq} 2 2
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	set destdir [file dir $bamfile]
