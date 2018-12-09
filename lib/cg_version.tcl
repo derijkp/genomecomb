@@ -13,6 +13,9 @@ proc version {item {minversion {}}} {
 			genomecomb {
 				set _versions($item) $::genomecomb::version.$::genomecomb::patchlevel
 			}
+			fileformat {
+				set _versions($item) 0.99
+			}
 			dbdir {
 				if {![catch {dbdir} dbdir] && [file exists $dbdir/README.txt]} {
 					set temp [file_read $dbdir/README.txt]

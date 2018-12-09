@@ -523,7 +523,7 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 	DStringArray *lineformat,*alts;
 	DString *svlens=NULL,*svtype=NULL;
 	char *cursvlen=NULL;
-	char zyg;
+	char *zyg;
 	int l1,l2,len,numalleles,curallele,chrpos,curpos,pos,i,igeno,isample,svend=-1,svlen=0,snpfound;
 	/* determine type, ref, alt, ... for different alleles */
 	lineformat = DStringArrayFromChar(a_format(linea)->string,':');
@@ -969,28 +969,28 @@ int process_line_split(OBuffer *obuffer,DStringArray *linea,int excludename,int 
 						}
 					}
 					if (a1 < 0 || a2 < 0) {
-						zyg = '?';
+						zyg = "?";
 					} else if (a1 == curallele) {
 						if (a2 == a1) {
-							zyg = 'm';
+							zyg = "m";
 						} else if (a2 > 0) {
-							zyg = 'c';
+							zyg = "c";
 						} else {
-							zyg = 't';
+							zyg = "t";
 						}
 					} else if (a2 == curallele) {
 						if (a1 > 0) {
-							zyg = 'c';
+							zyg = "c";
 						} else {
-							zyg = 't';
+							zyg = "t";
 						}
 					} else if (a1 > 0 || a2 > 0) {
-						zyg = 'o';
+						zyg = "o";
 					} else {
-						zyg = 'r';
+						zyg = "r";
 					}
 					DStringAppendS(bufferstring,"\t",1);
-					DStringAppendS(bufferstring,&zyg,1);
+					DStringAppendS(bufferstring,zyg,1);
 					DStringAppendS(bufferstring,"\t",1);
 					if (phased) {
 						DStringAppendS(bufferstring,"1",1);
@@ -1159,9 +1159,10 @@ void process_print_buffer(FILE *fo,OBuffer *obuffer,int limit) {
 
 int main(int argc, char *argv[]) {
 	Hash_table *conv_formata, *donefields, *keepfields = NULL;
-	FILE *fd = NULL,*fo = NULL;
+	FILE *fd = NULL, *fo = NULL, *fh = NULL;
 	DStringArray *headerfields, *linea;
-	DString *genotypelist=DStringNew(), *prevchr = DStringNew();
+	DString *genotypelist=DStringNew(), *prevchr = DStringNew(),*dsbuffer = DStringNew();
+	char *tempfile = NULL;
 	char locerror = 'e';
 	altvars = NULL;
 	int *order = NULL;
@@ -1294,15 +1295,26 @@ int main(int argc, char *argv[]) {
 	} else {
 		skiprefindels = 0;
 	}
+	if (argc >= 11) {
+		tempfile = argv[10];
+	} else {
+		exit(1);
+	}
+	/* prepare file for making header */
+	fh = fopen64_or_die(tempfile,"w");
+	fprintf(fh,"%s\n",line->string);
+/*
 	fprintf(fo,"#filetype\ttsv/varfile\n");
 	fprintf(fo,"#fileversion\t%s\n",FILEVERSION);
 	fprintf(fo,"#split\t%d\n",split);
 	fprintf(fo,"#info\ttsv converted from vcf, original comments follow\n");
+*/
 	info = DStringArrayNew(10);
 	format = DStringArrayNew(10);
 	while ((read = DStringGetLine(line, fd)) != -1) {
 		linenr++;
-		fprintf(fo,"%s\n",line->string);
+		/* fprintf(fo,"%s\n",line->string); */
+		fprintf(fh,"%s\n",line->string);
 		if (line->string[0] == '#') {
 			if (line->string[1] == '#') {
 				if (line->size > 9 && strncmp("FORMAT=",line->string+2,7) == 0) {
@@ -1316,6 +1328,9 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
+	fclose(fh);
+	DStringPrintf(dsbuffer,"cg vcfheader2tsv -showheader 0 %s",tempfile);
+	system(dsbuffer->string);
 	fprintf(fo,"# ----\n");
 	fprintf(fo,"chromosome\tbegin\tend\ttype\tref\talt");
 	if (!excludename) fprintf(fo,"\tname");

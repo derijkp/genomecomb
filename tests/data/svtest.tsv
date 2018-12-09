@@ -1,40 +1,57 @@
 #filetype	tsv/varfile
-#fileversion	0.10.0
+#fileversion	0.99
 #split	1
-#info	tsv converted from vcf, original comments follow
-##fileDate=20100501
-##reference=1000GenomesPilot-NCBI36
-##assembly=ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/sv/breakpoint_assemblies.fasta
-##INFO=<ID=BKPTID,Number=-1,Type=String,Description="ID of the assembled alternate allele in the assembly file">
-##INFO=<ID=CIEND,Number=2,Type=Integer,Description="Confidence interval around END for imprecise variants">
-##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval around POS for imprecise variants">
-##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">
-##INFO=<ID=CHR2,Number=1,Type=String,Description="Chromosome for END coordinate in case of a translocation">
-##INFO=<ID=HOMLEN,Number=-1,Type=Integer,Description="Length of base pair identical micro-homology at event breakpoints">
-##INFO=<ID=HOMSEQ,Number=-1,Type=String,Description="Sequence of base pair identical micro-homology at event breakpoints">
-##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">
-##INFO=<ID=MEINFO,Number=4,Type=String,Description="Mobile element info of the form NAME,START,END,POLARITY">
-##INFO=<ID=SVLEN,Number=-1,Type=Integer,Description="Difference in length between REF and ALT alleles">
-##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
-##INFO=<ID=STRANDS,Number=.,Type=String,Description="Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)">
-##ALT=<ID=DEL,Description="Deletion">
-##ALT=<ID=DEL:ME:ALU,Description="Deletion of ALU element">
-##ALT=<ID=DEL:ME:L1,Description="Deletion of L1 element">
-##ALT=<ID=DUP,Description="Duplication">
-##ALT=<ID=DUP:TANDEM,Description="Tandem Duplication">
-##ALT=<ID=INS,Description="Insertion of novel sequence">
-##ALT=<ID=INS:ME:ALU,Description="Insertion of ALU element">
-##ALT=<ID=INS:ME:L1,Description="Insertion of L1 element">
-##ALT=<ID=INV,Description="Inversion">
-##ALT=<ID=CNV,Description="Copy number variable region">
-##ALT=<ID=TRA,Description="Translocation">
-##FORMAT=<ID=GT,Number=1,Type=Integer,Description="Genotype">
-##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype quality">
-##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy number genotype for imprecise events">
-##FORMAT=<ID=CNQ,Number=1,Type=Float,Description="Copy number genotype quality for imprecise events">
-##FORMAT=<ID=DR,Number=1,Type=Integer,Description="# high-quality reference reads">
-##FORMAT=<ID=DV,Number=1,Type=Integer,Description="# high-quality variant reads">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001
+#info	tsv converted from vcf
+#numsamples	1
+#samplename	NA00001
+#fields	table
+#fields	field	number	type	description
+#fields	chromosome	1	String	Chromosome/Contig
+#fields	begin	1	Integer	Begin of feature (0 based - half open)
+#fields	end	1	Integer	End of feature (0 based - half open)
+#fields	type	1	String	Type of feature (snp,del,ins,...)
+#fields	ref	1	String	Reference sequence, can be a number for large features
+#fields	alt	1	String	Alternative sequence, can be a number for large features
+#fields	name	1	String	name of feature
+#fields	quality	1	Float	Quality score of feature
+#fields	filter	1	String	Filter value
+#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype
+#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype
+#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced
+#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)
+#fields	genotypes	H	Integer	Genotypes
+#fields	genoqual	1	Float	Genotype quality
+#fields	CN	1	Integer	Copy number genotype for imprecise events
+#fields	CNQ	1	Float	Copy number genotype quality for imprecise events
+#fields	DR	1	Integer	# high-quality reference reads
+#fields	DV	1	Integer	# high-quality variant reads
+#fields	BKPTID	-1	String	ID of the assembled alternate allele in the assembly file
+#fields	CIEND	2	Integer	Confidence interval around END for imprecise variants
+#fields	CIPOS	2	Integer	Confidence interval around POS for imprecise variants
+#fields	CHR2	1	String	Chromosome for END coordinate in case of a translocation
+#fields	HOMLEN	-1	Integer	Length of base pair identical micro-homology at event breakpoints
+#fields	HOMSEQ	-1	String	Sequence of base pair identical micro-homology at event breakpoints
+#fields	IMPRECISE	0	Flag	Imprecise structural variation
+#fields	MEINFO	4	String	Mobile element info of the form NAME,START,END,POLARITY
+#fields	STRANDS	.	String	Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)
+#vcf_assembly	ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/sv/breakpoint_assemblies.fasta
+#ALT	table
+#ALT	ID	Description
+#ALT	DEL	Deletion
+#ALT	DEL:ME:ALU	Deletion of ALU element
+#ALT	DEL:ME:L1	Deletion of L1 element
+#ALT	DUP	Duplication
+#ALT	DUP:TANDEM	Tandem Duplication
+#ALT	INS	Insertion of novel sequence
+#ALT	INS:ME:ALU	Insertion of ALU element
+#ALT	INS:ME:L1	Insertion of L1 element
+#ALT	INV	Inversion
+#ALT	CNV	Copy number variable region
+#ALT	TRA	Translocation
+#vcf_fileformat	VCFv4.0
+#vcf_fileDate	20100501
+#vcf_reference	1000GenomesPilot-NCBI36
 # ----
 chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	genoqual	CN	CNQ	DR	DV	BKPTID	CIEND	CIPOS	CHR2	HOMLEN	HOMSEQ	IMPRECISE	MEINFO	STRANDS
 1	2827694	2827708	del	14		.	.	PASS	14		t	0	0;1	13.9									1	G			

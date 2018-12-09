@@ -109,7 +109,7 @@ test vcf2tsv {vcf2tsv ins and del} {
 test vcf2tsv {vcf2tsv ins and del -typelist .} {
 	exec cg vcf2tsv -typelist . -s 1 data/test2.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
-} {27,28c27,28
+} {46,47c46,47
 < 20	1110695	1110696	snp	A	G	rs6040355	67	PASS	G	T	c	1	1,2	21	6	23,27	T	G	c	1	2,1	2	0	18,2	T	T	o	0	2;2	35	4		2	10	0.333,0.667	T	1	
 < 20	1110695	1110696	snp	A	T	rs6040355	67	PASS	G	T	c	1	2,1	21	6	23,27	T	G	c	1	1,2	2	0	18,2	T	T	m	0	1;1	35	4		2	10	0.333,0.667	T	1	
 ---
@@ -567,5 +567,15 @@ test vcf2tsv {sv with end < begin} {
 error converting vcf file: child process exited abnormally} 0 {} {begin	end
 184156712	184156710} {begin	end
 184156712	184156712}}
+
+test vcf2tsv {vcfheader2tsv vs vcf2tsv} {
+	foreach file [glob data/*.vcf] {
+		exec cg vcfheader2tsv $file tmp/tempheader.tsv
+		exec cg vcf2tsv $file tmp/temp.tsv
+		exec cg select -overwrite 1 -header tmp/tempheader.tsv tmp/header.header
+		exec cg select -overwrite 1 -header tmp/temp.tsv tmp/temp.header
+		exec diff tmp/header.header tmp/temp.header
+	}
+} {}
 
 testsummarize

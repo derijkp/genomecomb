@@ -62,11 +62,12 @@ proc cg_vcf2tsv {args} {
 			set skiprefindels $value
 		}
 	} {infile outfile} 0 2
+	set tempfile [tempfile]
 	if {[info exists infile]} {
-		# puts [list vcf2tsv $split $typelist $infile tmp/out.tsv $removefields $refout $keepfields $locerror $skiprefindels]
-		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields $refout $keepfields $locerror $skiprefindels]
+		# puts [list vcf2tsv $split $typelist $infile - $removefields $refout $keepfields $locerror $skiprefindels $tempfile > tmp/out.tsv]
+		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields $refout $keepfields $locerror $skiprefindels $tempfile]
 	} else {
-		set pipe [list exec vcf2tsv $split $typelist - - $removefields $refout]
+		set pipe [list exec vcf2tsv $split $typelist - - $removefields $refout $keepfields $locerror $skiprefindels $tempfile]
 	}
 	if {$sort} {
 		lappend pipe | cg select -s -
