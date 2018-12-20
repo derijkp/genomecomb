@@ -190,7 +190,9 @@ proc process_reports_job {args} {
 	if {[inlist $reports fastqc] && [llength $fastqfiles]} {
 		foreach deps [list $fastqfiles_fw $fastqfiles_rev] dir {fw rev} {
 			set target $sampledir/reports/fastqc_$dir-$sample.fastqc
-			job reports_fastqc-$dir-$sample -deps $deps -targets {$target} -code {
+			job reports_fastqc-$dir-$sample -deps $deps -targets {
+				$target $sampledir/reports/fastqc_$dir-$sample.fastqc/fastqc_data.txt
+			} -code {
 				file mkdir $target.temp
 				set gzcat [gzcat [lindex $deps 0]]
 				exec -ignorestderr {*}$gzcat {*}$deps | fastqc -o $target.temp stdin
