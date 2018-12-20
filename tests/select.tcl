@@ -1285,4 +1285,49 @@ mm	1
 sm	1
 un	1}
 
+test select "ROW with sort" {
+	file_write tmp/test.tsv [deindent {
+		key	value
+		b	1
+		a	2
+		c	3
+	}]\n
+	exec cg select -sh /dev/null -f ROW -s key tmp/test.tsv
+} {1
+0
+2}
+
+test select "ROW with sort and query" {
+	file_write tmp/test.tsv [deindent {
+		key	value
+		b	1
+		a	2
+		c	3
+	}]\n
+	exec cg select -sh /dev/null -f ROW -q {$key ne "b"} -s key tmp/test.tsv
+} {1
+2}
+
+test select "ROW in calc field with sort and query" {
+	file_write tmp/test.tsv [deindent {
+		key	value
+		b	1
+		a	2
+		c	3
+	}]\n
+	exec cg select -sh /dev/null -f {{test=$ROW/10.0}} -q {$key ne "b"} -s key tmp/test.tsv
+} {0.1
+0.2}
+
+test select "ROW in query with sort and query" {
+	file_write tmp/test.tsv [deindent {
+		key	value
+		b	1
+		a	2
+		c	3
+	}]\n
+	exec cg select -sh /dev/null -f ROW -q {$ROW != 0} -s key tmp/test.tsv
+} {1
+2}
+
 testsummarize

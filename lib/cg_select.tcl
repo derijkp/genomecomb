@@ -552,13 +552,6 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 	set qposs {}
 	set rfields {}
 	foreach field $qfields {
-		if {$field eq "ROW"} {
-			lappend rfields ROW
-#			lappend qposs {}
-#			# empty for code will output ROW directly later
-			lappend qposs ROW
-			continue
-		}
 		set pos [string first = $field]
 		if {$pos != -1} {
 			set fieldname [string trim [string range $field 0 [expr {$pos-1}]]]
@@ -596,15 +589,23 @@ proc tsv_select_expandfields {header qfields qpossVar} {
 			if {[inlist $rfields $field]} continue
 			set pos [lsearch $header $field]
 			if {$pos == -1} {
-				set value [tsv_select_sampleinfo $field $header]
-				if {[string first - $field] != -1} {
-					lappend rfields $field
-					lappend qposs [list code \"$value\"]
-				} elseif {[inlist $header sample]} {
-					lappend rfields $field
-					lappend qposs [list directcode "tsv_select_sampleinfo_long \"$field\" \$sample"]
+				if {$field eq "ROW"} {
+					lappend rfields ROW
+		#			lappend qposs {}
+		#			# empty for code will output ROW directly later
+					lappend qposs ROW
+					continue
 				} else {
-					error "field \"$field\" not present"
+					set value [tsv_select_sampleinfo $field $header]
+					if {[string first - $field] != -1} {
+						lappend rfields $field
+						lappend qposs [list code \"$value\"]
+					} elseif {[inlist $header sample]} {
+						lappend rfields $field
+						lappend qposs [list directcode "tsv_select_sampleinfo_long \"$field\" \$sample"]
+					} else {
+						error "field \"$field\" not present"
+					}
 				}
 			} else {
 				lappend rfields $field
@@ -1274,6 +1275,8 @@ proc cg_select {args} {
 	set overwrite 0
 	set pos 0
 	set showheader 0
+	set usesort 0
+	set useaddrow 0
 	cg_options select args {
 		-q {
 			set query $value
@@ -1305,8 +1308,10 @@ proc cg_select {args} {
 		-samples {set samples $value; set sortsamples 0}
 		-ssamples {set samples $value; set sortsamples 1}
 		-rf {
-			set qfields $value
-			set inverse 1
+			if {$value ne ""} {
+				set qfields $value
+				set inverse 1
+			}
 		}
 		-g {set group $value}
 		-db {set db $value}
@@ -1469,36 +1474,10 @@ proc cg_select {args} {
 	set neededfields {}
 	set sort ""
 	set cut ""
-	set tsv_funcnum 1
-	if {!$inverse} {
-		if {[llength $samples] && ![llength $qfields]} {
-			set qfields $header
-		}
-		set qfields [tsv_select_expandfields $header $qfields qposs]
-	} else {
-		set qfields [tsv_select_removefields $header $qfields qposs]
-	}
-	if {[llength $samples]} {
-		# only the given samples will be included
-		if {![llength $qfields]} {set qfields $header}
-		set keepposs {}
-		lappend keepposs {*}[list_remove [list_cor $qfields {id sample}] -1]
-		lappend keepposs {*}[list_remove [tsv_basicfields $qfields 6 0] -1]
-		foreach sample $samples {
-			lappend keepposs {*}[list_find -glob $qfields *-$sample]
-		}
-		lappend keepposs {*}[list_find -regexp $qfields {^[^-]*$}]
-		set keepposs [list_remdup $keepposs]
-		if {!$sortsamples} {
-			set keepposs [lsort -integer $keepposs]
-		}
-		set qfields [list_sub $qfields $keepposs]
-		set qposs [list_sub $qposs $keepposs]
-	}
-	if {![file exists $index]} {set index {}}
-	if {[llength $qfields] == [llength $header]} {set index {}}
 	if {[llength $sortfields] && $group eq ""} {
+		set usesort 1
 		set reverse 0
+		lappend header ROW
 		set index {}
 		if {$sortfields eq "-"} {
 			set poss [list_sub [tsv_basicfields $header 6 0] -exclude 4]
@@ -1524,6 +1503,35 @@ proc cg_select {args} {
 			}
 		}
 	}
+	set tsv_funcnum 1
+	if {!$inverse} {
+		if {[llength $samples] && ![llength $qfields]} {
+			set qfields $header
+		}
+		set qfields [tsv_select_expandfields $header $qfields qposs]
+		if {$usesort && [inlist $qfields ROW]} {set useaddrow 1}
+	} else {
+		set qfields [tsv_select_removefields $header $qfields qposs]
+	}
+	if {[llength $samples]} {
+		# only the given samples will be included
+		if {![llength $qfields]} {set qfields $header}
+		set keepposs {}
+		lappend keepposs {*}[list_remove [list_cor $qfields {id sample}] -1]
+		lappend keepposs {*}[list_remove [tsv_basicfields $qfields 6 0] -1]
+		foreach sample $samples {
+			lappend keepposs {*}[list_find -glob $qfields *-$sample]
+		}
+		lappend keepposs {*}[list_find -regexp $qfields {^[^-]*$}]
+		set keepposs [list_remdup $keepposs]
+		if {!$sortsamples} {
+			set keepposs [lsort -integer $keepposs]
+		}
+		set qfields [list_sub $qfields $keepposs]
+		set qposs [list_sub $qposs $keepposs]
+	}
+	if {![file exists $index]} {set index {}}
+	if {[llength $qfields] == [llength $header]} {set index {}}
 	set query [string trim $query]
 	set pipe {}
 	if {$sort ne ""} {
@@ -1551,8 +1559,14 @@ proc cg_select {args} {
 			if {[isint $el]} {
 				lappend outcols $el
 			} elseif {$el eq "ROW"} {
-				# empty instead of code or int will directly output ROW
-				lappend outcols {}
+				if {$usesort} {
+					# when sorting ROW filed will be added before
+					lappend outcols ROW
+					set useaddrow 1
+				} else {
+					# empty instead of code or int will directly output ROW
+					lappend outcols {}
+				}
 			} elseif {$el eq ""} {
 				error "field $rfield not present"
 			} elseif {[info exists calccols($rfield)]} {
@@ -1603,7 +1617,9 @@ proc cg_select {args} {
 		set neededfields [list_remdup $neededfields]
 		# see what we need of calculated fields
 		set calcfieldsquery [list_lremove $neededfields $header]
-		set calcfieldsquery [list_remove $calcfieldsquery ROW]
+		if {!$usesort} {
+			set calcfieldsquery [list_remove $calcfieldsquery ROW]
+		}
 		set neededfields [list_lremove $neededfields $calcfieldsquery]
 		set prequery {}
 		foreach field $calcfieldsquery {
@@ -1625,6 +1641,9 @@ proc cg_select {args} {
 			}
 		}
 		set neededcols [list_cor $header $neededfields]
+		if {$usesort && "ROW" in $neededfields} {
+			set useaddrow 1
+		}
 		if {$index eq ""} {
 			append tclcode [subst {
 				proc tsv_selectc_query {$neededfields} {
@@ -1669,6 +1688,9 @@ proc cg_select {args} {
 		}
 		set tclcode [string_change $tclcode [list @neededfields@ $neededfields @neededfieldsvals@ \$\{[join $neededfields \}\ \$\{]\}]]
 	}
+	if {$useaddrow} {
+		set pipe [list addrow {tee tmp/tee} {*}$pipe]
+	}
 # file_write /tmp/temp.txt $tclcode\n
 	if {[string length $tclcode] > 2000} {
 		set tempfile [tempfile]
@@ -1682,9 +1704,11 @@ proc cg_select {args} {
 #putslog -------------pipe-------------------
 #putslog pipe:[join $pipe " | "]
 #putslog ------------------------------------
+
 	if {$qfields ne ""} {
 		set nh [list_sub $qfields -exclude [list_find -glob $qfields -*]]
 	} else {
+		if {$usesort && [lindex $header end] eq "ROW"} {set header [lrange $header 0 end-1]}
 		set nh $header
 	}
 	if {$group ne ""} {

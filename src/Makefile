@@ -30,6 +30,7 @@ all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$
      ../bin$(ARCH)/sam2tsv$(EXEEXT) ../bin$(ARCH)/tsv2sam$(EXEEXT) \
      ../bin$(ARCH)/splitfastq$(EXEEXT) \
      ../bin$(ARCH)/countlines$(EXEEXT) \
+     ../bin$(ARCH)/addrow$(EXEEXT) \
      ../bin$(ARCH)/csv2tsv$(EXEEXT) \
      ../bin$(ARCH)/distrreg$(EXEEXT)
 
@@ -155,6 +156,9 @@ clean:
 
 ../bin$(ARCH)/countlines$(EXEEXT): countlines.c $(TOOLS)
 	$(GCC) countlines.c tools.c $(CFLAGS) -o ../bin$(ARCH)/countlines$(EXEEXT)
+
+../bin$(ARCH)/addrow$(EXEEXT): addrow.c $(TOOLS)
+	$(GCC) addrow.c tools.c $(CFLAGS) -o ../bin$(ARCH)/addrow$(EXEEXT)
 
 ../bin$(ARCH)/distrreg$(EXEEXT): distrreg.c $(TOOLS) $(GZTOOLS)
 	$(GCC) distrreg.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/distrreg$(EXEEXT) $(LIBZ)
