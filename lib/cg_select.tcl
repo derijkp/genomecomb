@@ -1331,7 +1331,12 @@ proc cg_select {args} {
 		-hf {set oldheader [list file $value]}
 		-hp {set oldheader [list parameter $value]}
 		-s {set sortfields $value}
-		-sr {set sortfields -$value}
+		-sr {
+			set sortfields {}
+			foreach field $value {
+				lappend sortfields -$field
+			}
+		}
 		-n {
 			if {$value eq ""} {
 				set header [tsv_open stdin]
@@ -1483,24 +1488,30 @@ proc cg_select {args} {
 			set poss [list_sub [tsv_basicfields $header 6 0] -exclude 4]
 			set poss [list_remove $poss -1]
 		} else {
-			if {[string index $sortfields 0] eq "-"} {
-				set reverse 1
-				set sortfields [string range $sortfields 1 end]
+			set poss {}
+			set reverse {}
+			foreach field $sortfields {
+				if {[string index $field 0] eq "-"} {
+					lappend reverse 1
+					lappend poss [lsearch $header [string range $field 1 end]]
+				} else {
+					lappend reverse 0
+					lappend poss [lsearch $header $field]
+				}
 			}
-			set poss [list_cor $header $sortfields]
 		}
 		if {[lsearch $poss -1] != -1} {error "fields [join [list_sub $sortfields [list_find $poss -1]] ,] not found"}
 		if {[llength $poss]} {
 			set poss [lmath_calc $poss + 1]
 			set keys {}
-			foreach pos $poss {
-				lappend keys $pos,$pos
+			foreach pos $poss r $reverse {
+				if {$r} {
+					lappend keys ${pos},${pos}Nr
+				} else {
+					lappend keys $pos,${pos}N
+				}
 			}
-			if {!$reverse} {
-				set sort "gnusort8 -T \"[scratchdir]\" -t \\t -N -s -k[join $keys " -k"]"
-			} else {
-				set sort "gnusort8 -T \"[scratchdir]\" -t \\t -N -s -r -k[join $keys " -k"]"
-			}
+			set sort "gnusort8 -T \"[scratchdir]\" -t \\t -s -k[join $keys " -k"]"
 		}
 	}
 	set tsv_funcnum 1

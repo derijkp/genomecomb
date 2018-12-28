@@ -1330,4 +1330,58 @@ test select "ROW in query with sort and query" {
 } {1
 2}
 
+test select "cg select -s {a -b}" {
+	file_write tmp/test.tsv [deindent {
+		a	b
+		1	1
+		1	2
+		2	3
+		2	4
+	}]\n
+	exec cg select -sh /dev/null -s {a -b} tmp/test.tsv
+} {1	2
+1	1
+2	4
+2	3}
+
+test select "cg select -s {-a b}" {
+	file_write tmp/test.tsv [deindent {
+		a	b
+		1	1
+		1	2
+		2	3
+		2	4
+	}]\n
+	exec cg select -stack 1 -sh /dev/null -s {-a b} tmp/test.tsv
+} {2	3
+2	4
+1	1
+1	2}
+
+test select "cg select -s {-a b}" {
+	file_write tmp/test.tsv [deindent {
+		a	b
+		1	1
+		1	2
+		2	3
+		2	4
+	}]\n
+	exec cg select -stack 1 -sh /dev/null -s {-a b} tmp/test.tsv
+} {2	3
+2	4
+1	1
+1	2}
+
+test select "cg select -s bug fix reverse sort" {
+	file_write tmp/test.tsv [deindent {
+		a
+		10
+		99856
+		9939162
+	}]\n
+	exec cg select -stack 1 -sh /dev/null -s {-a} tmp/test.tsv
+} {9939162
+99856
+10}
+
 testsummarize
