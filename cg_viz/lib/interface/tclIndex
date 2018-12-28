@@ -29,6 +29,7 @@ set auto_index(::Class::mainw,,m,querybuilder_functions_type) [list source [file
 set auto_index(::Class::mainw,,m,querybuilder_functions) [list source [file join $dir querybuilder.tcl]]
 set auto_index(::Class::mainw,,m,querybuilder_fieldsreset) [list source [file join $dir querybuilder.tcl]]
 set auto_index(::Class::mainw,,m,querybuilder) [list source [file join $dir querybuilder.tcl]]
+set auto_index(sortdialog) [list source [file join $dir sortdialog.tcl]]
 set auto_index(::Class::mainw,,m,summarybuilder_fillvalues) [list source [file join $dir summary_builder.tcl]]
 set auto_index(::Class::mainw,,m,summarybuilder_browsefield) [list source [file join $dir summary_builder.tcl]]
 set auto_index(::Class::mainw,,m,summarybuilder_browsevalue) [list source [file join $dir summary_builder.tcl]]

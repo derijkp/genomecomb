@@ -39,7 +39,7 @@ proc _table_tsv_get {object row col args} {
 			set tdata(numcache) 0
 		}
 		set cor $tdata(fieldscor)
-		if {$tdata(query) eq ""} {
+		if {$tdata(query) eq "" && $tdata(sort) eq ""} {
 			set filepos [bcol_get $lineindex $row $row]
 			if {$tdata(compressed)} {
 				set f [gzopen $tdata(file) $filepos]
@@ -95,6 +95,15 @@ table_tsv method queryprogress {args} {
 	progress set [lindex $args 0]
 }
 
+table_tsv method sort {args} {
+	private $object tdata
+	if {![llength $args]} {
+		return $tdata(sort)
+	}
+	set tdata(sort) [lindex $args 0]
+	$object query $tdata(query)
+}
+
 table_tsv method query {args} {
 	private $object tdata
 	if {![llength $args]} {
@@ -102,10 +111,16 @@ table_tsv method query {args} {
 	}
 	set query [lindex $args 0]
 	set tdata(query) $query
+	if {[llength $args] > 1} {
+		set sort [lindex $args 1]
+		set tdata(sort) $sort
+	} else {
+		set sort $tdata(sort)
+	}
 	if {[get tdata(query_results) ""] ne ""} {
 		bcol_close $tdata(query_results)
 	}
-	if {$tdata(query) eq ""} {
+	if {$tdata(query) eq "" && $tdata(sort) eq ""} {
 		set tdata(query_results) {}
 		set tdata(len) $tdata(tlen)
 		$object reset
@@ -113,7 +128,7 @@ table_tsv method query {args} {
 		return
 	}
 	progress start {70 30}
-	putslog "Doing query $query"
+	putslog "Doing query $query\nsort $sort"
 	regsub -all \n $query { } query
 	if {![info exists tdata(sqlbackend_db)]} {
 		if {[info exists tdata(size)]} {
@@ -141,14 +156,15 @@ table_tsv method query {args} {
 		}
 		if {![info exists numlines]} {
 			progress message "Running query, please be patient (no progress shown)"
-			exec cg select -overwrite 1 -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv
+			exec cg select -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv
 		} else {
 			set step [expr {$numlines/10}]
 			if {$step > 50000} {set step 50000} elseif {$step < 1} {set step 1}
 			progress start $numlines "Running query" "Running query"
 			set ::bgerror {}
+			# puts [list cg select -v $step -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv]
 			Extral::bgexec -progresscommand [list $object queryprogress] -no_error_redir -channelvar [privatevar $object bgexechandle] \
-				cg select -v $step -overwrite 1 -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
+				cg select -v $step -overwrite 1 -s $sort -q $query -f $fieldopt $tdata(file) $tdata(indexdir)/query_results.tsv 2>@1
 			if {$::bgerror ne ""} {error $::bgerror}
 			progress stop
 		}
@@ -483,6 +499,7 @@ table_tsv method open {file parent} {
 	set tdata(fields) $tdata(tfields)
 	set tdata(qfields) $tdata(tfields)
 	set tdata(fieldscor) {}
+	set tdata(sort) {}
 	set tdata(f) [open $file]
 	tsv_select_sampleinfo_setfile [tsv_select_sampleinfo_findfile $file]
 	if {![file exists $tdata(indexdir)/query_results.bcol]} {

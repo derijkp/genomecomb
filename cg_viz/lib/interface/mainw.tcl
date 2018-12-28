@@ -66,36 +66,40 @@ mainw method init args {
 	label $object.buttons.label1 \
 		-text Tableinfo
 	grid $object.buttons.label1 -row 0 -column 0 -sticky nesw
+	button $object.buttons.sort \
+		-text "Sort"
+	grid $object.buttons.sort -row 0 -column 1 -sticky nesw
 	button $object.buttons.button1 \
 		-text Fields
-	grid $object.buttons.button1 -row 0 -column 1 -sticky nesw
+	grid $object.buttons.button1 -row 0 -column 2 -sticky nesw
 	button $object.buttons.qquery \
 		-text "EasyQuery"
-	grid $object.buttons.qquery -row 0 -column 2 -sticky nesw
+	grid $object.buttons.qquery -row 0 -column 3 -sticky nesw
 	button $object.buttons.querybuilder \
 		-text Query
-	grid $object.buttons.querybuilder -row 0 -column 3 -sticky nesw
+	grid $object.buttons.querybuilder -row 0 -column 4 -sticky nesw
 	Classy::Entry $object.buttons.query \
 		-combo 20 \
 		-width 4
-	grid $object.buttons.query -row 0 -column 4 -sticky nesw
+	grid $object.buttons.query -row 0 -column 5 -sticky nesw
 	Classy::OptionMenu $object.buttons.view  \
 		-list {data
 summary
 summarygraph
 graph}
-	grid $object.buttons.view -row 0 -column 5 -sticky nesw
+	grid $object.buttons.view -row 0 -column 6 -sticky nesw
 	button $object.buttons.settings \
 		-text Summaries
-	grid $object.buttons.settings -row 0 -column 6 -sticky nesw
+	grid $object.buttons.settings -row 0 -column 7 -sticky nesw
 	grid columnconfigure $object.buttons 0 -uniform {}
 	grid columnconfigure $object.buttons 1 -uniform {}
 	grid columnconfigure $object.buttons 2 -uniform {}
 	grid columnconfigure $object.buttons 3 -uniform {}
-	grid columnconfigure $object.buttons 4 -uniform {} -weight 1
-	grid columnconfigure $object.buttons 5 -uniform {}
+	grid columnconfigure $object.buttons 4 -uniform {}
+	grid columnconfigure $object.buttons 5 -uniform {} -weight 1
 	grid columnconfigure $object.buttons 6 -uniform {}
 	grid columnconfigure $object.buttons 7 -uniform {}
+	grid columnconfigure $object.buttons 8 -uniform {}
 	grid rowconfigure $object.buttons 0 -uniform {}
 	grid rowconfigure $object.buttons 1 -uniform {}
 	grid rowconfigure $object.buttons 2 -uniform {}
@@ -141,6 +145,8 @@ $object start
 		-command "$object.canvas.data yview"
 	$object.canvas.sh configure \
 		-command "$object.canvas.data xview"
+	$object.buttons.sort configure \
+		-command [varsubst object {$object sort}]
 	$object.buttons.query configure \
 		-command [varsubst object {$object query}]
 	$object.buttons.qquery configure \
@@ -362,6 +368,25 @@ mainw method save {args} {
 proc commify {num {sep ,}} {
     while {[regsub {^([-+]?\d+)(\d\d\d)} $num "\\1$sep\\2" num]} {}
     return $num
+}
+
+mainw method sort {args} {
+	set tb $object.tb
+	if {![llength $args]} {
+		# dialog
+		set fields [$tb tfields]
+		set sort [$tb sort]
+		set w $object.sortdialog
+		catch {destroy $w}
+		sortdialog $w
+		$w sort $sort
+		$w tfields $fields
+		$w configure -command [list $object sort]
+		
+	} else {
+		set sort [lindex $args 0]
+		$tb sort $sort
+	}
 }
 
 mainw method query {args} {
