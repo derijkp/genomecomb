@@ -3,6 +3,7 @@
 exec cg source "$0" "$@"
 
 set build hg19
+set defaultdest /complgen/refseqnew
 
 # settings
 set mirbasegenome hsa
@@ -33,7 +34,7 @@ set dbnsfpbuild hg38
 if {![info exists argv]} {set argv {}}
 set argv [job_init {*}$argv]
 foreach {dest webcache} $argv break
-if {![info exists dest]} {set dest /complgen/refseqnew}
+if {![info exists dest]} {set dest $defaultdest}
 if {![info exists webcache]} {set webcache $dest/webcache}
 if {[info exists webcache]} {set env(webcache) $webcache}
 set dest [file_absolute $dest]
