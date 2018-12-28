@@ -20,8 +20,8 @@
 #fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant
 #fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)
 #fields	genotypes	H	Integer	Genotypes
-#fields	alleledepth_ref	R	Integer	Allelic depths for the ref and alt alleles in the order listed
-#fields	alleledepth	R	Integer	Allelic depths for the ref and alt alleles in the order listed
+#fields	alleledepth_ref	1	Integer	Allelic depths for the ref and alt alleles in the order listed
+#fields	alleledepth	A	Integer	Allelic depths for the ref and alt alleles in the order listed
 #fields	TE	A	Integer	test for alt alleles in the order listed
 #fields	genoqual	1	Integer	Genotype Quality
 #fields	coverage	1	Integer	Read Depth
