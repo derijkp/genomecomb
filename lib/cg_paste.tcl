@@ -54,7 +54,7 @@ proc tsv_paste_job {outputfile files args} {
 		set pos 0
 		set newtodo {}
 		while {$pos < $len} {
-			set target $workdir/paste.temp$num
+			set target $workdir/paste.temp$num.lz4
 			incr num
 			lappend newtodo $target
 			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
@@ -62,8 +62,10 @@ proc tsv_paste_job {outputfile files args} {
 			job paste-[file tail $target] -optional $optional -deps $deps -force $forcepaste -targets {$target} -vars {delete} -code {
 				# puts [list ../bin/tsv_paste {*}$deps]
 				if {[llength $deps] > 1} {
-					exec tsv_paste {*}$deps > $target.temp 2>@ stderr
+					exec tsv_paste {*}$deps | lz4c -c -1 > $target.temp 2>@ stderr
 					if {$delete} {file delete {*}$deps}
+				} elseif {[file extension $dep] ne ".lz4"} {
+					exec lz4c -c -1 $dep > $target.temp
 				} elseif {!$delete} {
 					mklink $dep $target.temp
 				} else {

@@ -133,6 +133,7 @@ int main(int argc, char *argv[]) {
 	DStringSetS(ds_c,"c",1); DStringSetS(ds_at,"@",1);
 	i = 1;
 	split = atoi(argv[i++]);
+	fprintf(stdout,"%s\n",argv[i++]);
 	allvarsfile = argv[i++];
 	orivarsfile = argv[i++];
 	sregfile = argv[i++];

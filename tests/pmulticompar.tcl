@@ -104,8 +104,9 @@ test pmulticompar {multicompar_addvars basic} {
 	set numregfiles 0 ; set regfiles {}
 	set keepposs {6 7}
 	# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.tsv]
-	exec multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs
-} {r	20	15
+	exec multicompar_addvars $split [join {zyg genoqual coverage} \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs
+} {zyg	genoqual	coverage
+r	20	15
 r	20	15
 v	21	16
 u	?	?}
@@ -134,9 +135,10 @@ test pmulticompar {multicompar_addvars bgvcf} {
 	set numregfiles 0 ; set regfiles {}
 	set keepposs {14 15 16}
 	# exec cg vcf2tsv -refout 1 -sort 0 $varallfile $varallfile.tsv
-	# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile.tsv $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.tsv]
-	exec cg vcf2tsv -refout 1 -sort 0 $varallfile | multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.txt
+	# puts [list ../bin/multicompar_addvars $split x $allvarsfile $samplevarsfile $sregfile $varallfile.tsv $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.tsv]
+	exec cg vcf2tsv -refout 1 -sort 0 $varallfile | multicompar_addvars $split x $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.txt
 	file_write tmp/expected.txt [deindent {
+		x
 		v	m	T	T	15	0	6
 		r	r	G	G	18	18	8
 		u	u	?	?	7	7	4
