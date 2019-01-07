@@ -21,7 +21,7 @@
 
 int main(int argc, char *argv[]) {
 	DString *line = NULL;
-	unsigned int numfields, pos, cnt, row = 0;
+	unsigned int cnt, row = 0;
 	if ((argc != 1)) {
 		fprintf(stderr,"Format is: addrow\n");
 		exit(EXIT_FAILURE);
