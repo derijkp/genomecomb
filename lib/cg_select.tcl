@@ -1487,6 +1487,7 @@ proc cg_select {args} {
 		if {$sortfields eq "-"} {
 			set poss [list_sub [tsv_basicfields $header 6 0] -exclude 4]
 			set poss [list_remove $poss -1]
+			set reverse [list_fill [llength $poss] 0]
 		} else {
 			set poss {}
 			set reverse {}
