@@ -14,7 +14,7 @@ test sv {sniffles} {
 	mklink ori/sv/ont/map-sngmlr-NA12878.bam tmp/sv-sniffles/map-sngmlr-NA12878.bam
 	mklink ori/sv/ont/map-sngmlr-NA12878.bam.bai tmp/sv-sniffles/map-sngmlr-NA12878.bam.bai
 	cg sv_sniffles {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-sniffles/map-sngmlr-NA12878.bam
-	cg tsvdiff -x *.xml -x *.vcf -x svLocusGraphStats.tsv -x *.tbi \
+	cg tsvdiff -q 1 -x *.xml -x *.vcf -x svLocusGraphStats.tsv -x *.tbi \
 		tmp/sv-sniffles expected/sv-sniffles
 } {}
 
@@ -26,7 +26,7 @@ test sv {sniffles2 NA12878} {
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam.bai tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam.bai
 	cg sv_sniffles {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-sniffles2/bwa-mem_NA12878_25FC_part19_21.bam
-	cg tsvdiff -x *.tbi \
+	cg tsvdiff -q 1 -x *.tbi \
 		tmp/sv-sniffles2 expected/sv-sniffles2
 } {}
 
@@ -37,7 +37,7 @@ test sv {npinv} {
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
 	mklink ori/ont/bwa-mem_NA12878_25FC_part19_21.bam.bai tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam.bai
 	cg sv_npinv {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-npinv/bwa-mem_NA12878_25FC_part19_21.bam
-	cg tsvdiff -x *.tbi \
+	cg tsvdiff -q 1 -x *.tbi \
 		tmp/sv-npinv expected/sv-npinv
 } {}
 
@@ -48,7 +48,7 @@ test sv {manta} {
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
 	cg sv_manta {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
-	cg tsvdiff -x *.xml -x svLocusGraphStats.tsv -x *.tbi -x *.py -x *.py.* -x alignmentStatsSummary.txt \
+	cg tsvdiff -q 1 -x *.xml -x svLocusGraphStats.tsv -x *.tbi -x *.py -x *.py.* -x alignmentStatsSummary.txt \
 		tmp/sv-manta expected/sv-manta
 } {}
 
@@ -60,7 +60,7 @@ test sv {cg sv -method manta, giving resultfile} {
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
 	cg sv {*}$::dopts -method manta -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-manta/resultsv.tsv
 	cg zcat expected/sv-manta/sv-manta-dsbwa-ERR194147_30x_NA12878-chr21part.tsv.lz4 > tmp/sv-manta/expected.tsv
-	cg tsvdiff tmp/sv-manta/resultsv.tsv tmp/sv-manta/expected.tsv
+	cg tsvdiff -q 1 tmp/sv-manta/resultsv.tsv tmp/sv-manta/expected.tsv
 } {}
 
 test sv {lumpy} {
@@ -70,7 +70,7 @@ test sv {lumpy} {
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-lumpy/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-lumpy/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
 	cg sv_lumpy {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-lumpy/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
-	cg tsvdiff -x *.tbi tmp/sv-lumpy expected/sv-lumpy
+	cg tsvdiff -q 1 -x *.tbi tmp/sv-lumpy expected/sv-lumpy
 } {}
 
 test sv {lumpy error} {
@@ -90,7 +90,7 @@ test sv {gridss} {
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
 	cg sv_gridss {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
-	cg tsvdiff -x *.idx -x *.tbi -x *.*_metrics -x *.pdf tmp/sv-gridss expected/sv-gridss
+	cg tsvdiff -q 1 -brief 1 -x *.idx -x *.tbi -x *.*_metrics -x *.pdf tmp/sv-gridss expected/sv-gridss
 } {}
 
 testsummarize
