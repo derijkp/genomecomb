@@ -21,6 +21,7 @@ proc cg_vcf2tsv {args} {
 	set keepfields *
 	set locerror error
 	set skiprefindels 0
+	set meta {}
 	cg_options vcf2tsv args {
 		-s - -split {
 			if {$value eq "ori"} {
@@ -61,13 +62,16 @@ proc cg_vcf2tsv {args} {
 			# this option to remove these
 			set skiprefindels $value
 		}
+		-meta {
+			set meta $value
+		}
 	} {infile outfile} 0 2
 	set tempfile [tempfile]
 	if {[info exists infile]} {
-		# puts [list vcf2tsv $split $typelist $infile - $removefields $refout $keepfields $locerror $skiprefindels $tempfile > tmp/out.tsv]
-		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields $refout $keepfields $locerror $skiprefindels $tempfile]
+		# puts [list vcf2tsv $split $typelist $infile - $removefields $refout $keepfields $locerror $skiprefindels $tempfile $meta > tmp/out.tsv]
+		set pipe [list exec {*}[gzcat $infile] $infile | vcf2tsv $split $typelist - - $removefields $refout $keepfields $locerror $skiprefindels $tempfile $meta]
 	} else {
-		set pipe [list exec vcf2tsv $split $typelist - - $removefields $refout $keepfields $locerror $skiprefindels $tempfile]
+		set pipe [list exec vcf2tsv $split $typelist - - $removefields $refout $keepfields $locerror $skiprefindels $tempfile $meta]
 	}
 	if {$sort} {
 		lappend pipe | cg select -s -
@@ -90,7 +94,8 @@ proc cg_vcf2tsv {args} {
 		if {$::errorCode eq "NONE"} return
 		if {[string match {CHILDKILLED * SIGPIPE *} $::errorCode]} return
 		# puts stderr [list set ::errorCode $::errorCode \; set msg $msg \; set opt $opt]
-		exiterror "error converting vcf file: $msg"
+		dict unset opt -level
+		return -options $opt "error converting vcf file: $msg"
 	}
 }
 

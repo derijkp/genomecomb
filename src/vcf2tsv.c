@@ -1162,7 +1162,7 @@ int main(int argc, char *argv[]) {
 	FILE *fd = NULL, *fo = NULL, *fh = NULL;
 	DStringArray *headerfields, *linea;
 	DString *genotypelist=DStringNew(), *prevchr = DStringNew(),*dsbuffer = DStringNew();
-	char *tempfile = NULL;
+	char *tempfile = NULL, *meta = NULL;
 	char locerror = 'e';
 	altvars = NULL;
 	int *order = NULL;
@@ -1300,6 +1300,11 @@ int main(int argc, char *argv[]) {
 	} else {
 		exit(1);
 	}
+	if (argc >= 12) {
+		meta = argv[11];
+	} else {
+		exit(1);
+	}
 	/* prepare file for making header */
 	fh = fopen64_or_die(tempfile,"w");
 	fprintf(fh,"%s\n",line->string);
@@ -1329,7 +1334,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	fclose(fh);
-	DStringPrintf(dsbuffer,"cg vcfheader2tsv -showheader 0 %s",tempfile);
+	DStringPrintf(dsbuffer,"cg vcfheader2tsv -stack 1 -showheader 0 -meta '%s' '%s'",meta,tempfile);
 	system(dsbuffer->string);
 	fprintf(fo,"# ----\n");
 	fprintf(fo,"chromosome\tbegin\tend\ttype\tref\talt");

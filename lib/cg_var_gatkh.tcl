@@ -122,10 +122,10 @@ proc var_gatkh_job {args} {
 	set resultgvcf $varallfile.gz
 	set resultname $varallfile
 	set deps [list $file $gatkrefseq $file.bai {*}$deps]
-	job $resultname {*}$skips -mem [job_mempercore 5G $threads] -cores $threads -deps $deps -targets {
+	job $resultname {*}$skips -mem 15G -deps $deps -targets {
 		$resultgvcf $resultgvcf.tbi $varallfile.analysisinfo
 	} -vars {
-		opts regionfile gatkrefseq refseq threads root ERC resultgvcf
+		opts regionfile gatkrefseq refseq root ERC resultgvcf
 	} -code {
 		analysisinfo_write $dep $resultgvcf sample $root varcaller gatkh varcaller_version [version gatk] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		if {$regionfile ne ""} {
@@ -152,7 +152,7 @@ proc var_gatkh_job {args} {
 	} -targets {
 		${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo
 	} -vars {
-		sample split pre root gatkrefseq resultgvcf mincoverage mingenoqual
+		sample split pre root gatkrefseq resultgvcf mincoverage mingenoqual refseq
 	} -skip {
 		$varfile.lz4 $varfile.analysisinfo
 	} -code {
@@ -168,7 +168,7 @@ proc var_gatkh_job {args} {
 		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
 		lappend fields [subst {zyg=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u",\$zyg)}]
 		lappend fields *
-		exec cg vcf2tsv -split $split -removefields {
+		exec cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
 		} ${pre}uvar-$root.vcf | cg select -f $fields > ${pre}uvar-$root.tsv.temp
 		file rename -force ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv

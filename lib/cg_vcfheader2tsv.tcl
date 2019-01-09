@@ -69,7 +69,8 @@ proc cg_vcfheader2tsv {args} {
 	array set changefieldsa {fileformat vcf_fileformat}
 	set showheader 1
 	set split 1
-	cg_options vcf2tsv args {
+	set meta {}
+	cg_options vcfheader2tsv args {
 		-changefields {
 			array set changefieldsa $value
 		}
@@ -78,6 +79,9 @@ proc cg_vcfheader2tsv {args} {
 		}
 		-split {
 			set split $value
+		}
+		-meta {
+			set meta $value
 		}
 	} {infile outfile} 0 2
 	if {[info exists infile]} {
@@ -128,6 +132,9 @@ proc cg_vcfheader2tsv {args} {
 	puts $o "#fileversion\t[version fileformat]"
 	puts $o "#split\t$split"
 	puts $o "#info\ttsv converted from vcf"
+	foreach {key value} $meta {
+		puts $o "#$key\t$value"
+	}
 	# samples
 	set samples [lrange $header 9 end]
 	if {[llength $samples] == 1} {
@@ -178,8 +185,10 @@ proc cg_vcfheader2tsv {args} {
 		if {$number eq "R"} {
 			set temp $line
 			lset temp 0 ${field}_ref
+			lset temp 1 1
 			putsvcf2tsvheader $o $sheaderlen fields $temp
 			lappend headerfields ${field}_ref
+			lset line 1 A
 		}
 		putsvcf2tsvheader $o $sheaderlen fields $line
 		set donea($field) 1

@@ -184,7 +184,7 @@ proc var_strelka_job {args} {
 	} -targets {
 		${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo
 	} -vars {
-		pre root resultvcf sample split mincoverage mingenoqual type
+		pre root resultvcf sample split mincoverage mingenoqual type refseq
 	} -skip {
 		$varfile.lz4 $varfile.analysisinfo
 	} -code {
@@ -194,7 +194,7 @@ proc var_strelka_job {args} {
 		lappend fields [subst {zyg=if(def(\$genoqual,0) < $mingenoqual || def(\$coverage,0) < $mincoverage,"u",\$zyg)}]
 		lappend fields *
 		if {[file size $resultvcf.gz]} {
-			exec cg vcf2tsv -split $split -removefields {
+			exec cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {
 				name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
 			} $resultvcf.gz | cg select -f $fields > ${pre}uvar-$root.tsv.temp
 		} else {

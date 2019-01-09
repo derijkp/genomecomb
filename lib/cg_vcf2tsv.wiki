@@ -93,6 +93,7 @@ begin). By default vcf will stop with an error on these (**error**). Use
 **keep** produce a tsv file with this wrong entry without error, while
 **correct** will produce a tsv file where this error is corrected (end
 changed to = begin).
+; -meta: list of key value pairs that will be added to meta data in the comment lines
 
 == Category ==
 Format Conversion

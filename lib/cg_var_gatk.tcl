@@ -183,10 +183,10 @@ proc var_gatk_job {args} {
 	}
 	job ${pre}varall-gatk2tsv-$root {*}$skips -deps [list ${pre}varall-$root.vcf] \
 	-targets {$varallfile.lz4 $varallfile.analysisinfo} \
-	-vars {sample split} \
+	-vars {sample split refseq} \
 	-code {
 		analysisinfo_write $dep $target
-		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.lz4
+		cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.lz4
 		file rename -force $target.temp.lz4 $target
 	}
 	# lz4_job $varallfile -i 1
@@ -217,9 +217,9 @@ proc var_gatk_job {args} {
 	job ${pre}delvar-gatk2tsv-$root {*}$skips -deps [list ${pre}delvar-$root.vcf] \
 	-targets {${pre}delvar-$root.tsv} \
 	-skip [list $varfile $varfile.analysisinfo] \
-	-vars {sample split} \
+	-vars {sample split refseq} \
 	-code {
-		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp
+		cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp
 		cg select -overwrite 1 -q {
 			$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4
 			&& $zyg ni "r o"

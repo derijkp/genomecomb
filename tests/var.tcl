@@ -8,7 +8,7 @@ test var {var_gatk basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var_gatk -stack 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv.lz4
+	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv
 	string_change [cg covered tmp/sreg-gatk-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
 chr21	1047
@@ -19,7 +19,7 @@ test var {var distrreg gatk} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var -stack 1 -method gatk tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv.lz4
+	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv
 	string_change [cg covered tmp/sreg-gatk-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
 chr21	1047
@@ -30,7 +30,7 @@ test var {var distrreg gatk -d 3} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var -stack 1 -d 3 -method gatk tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv.lz4
+	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv
 	string_change [cg covered tmp/sreg-gatk-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
 chr21	1047
@@ -42,7 +42,7 @@ test var {var distrreg gatk sequencedgenome (part)} {
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg select -q {$chromosome regexp "chr2."} $::refseqdir/hg19/extra/reg_hg19_sequencedgenome.tsv.lz4 tmp/distrreg.tsv
 	cg var -stack 1 -method gatk -distrreg tmp/distrreg.tsv tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv.lz4
+	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv
 	string_change [cg covered tmp/sreg-gatk-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
 chr21	1047
@@ -53,7 +53,7 @@ test var {var distrreg gatk size} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var -stack 1 -method gatk -distrreg 30000000 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv.lz4
+	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv
 	string_change [cg covered tmp/sreg-gatk-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
 chr21	1047
@@ -80,7 +80,7 @@ test var {var_sam basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var_sam -stack 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-sam-bwa.tsv.lz4 data/var-sam-bwa.tsv.lz4
+	cg tsvdiff tmp/var-sam-bwa.tsv.lz4 data/var-sam-bwa.tsv
 	string_change [cg covered tmp/sreg-sam-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
 chr21	1047
@@ -91,7 +91,7 @@ test var {var distrreg sam} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var -stack 1 -method sam tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-sam-bwa.tsv.lz4 data/var-sam-bwa.tsv.lz4
+	cg tsvdiff tmp/var-sam-bwa.tsv.lz4 data/var-sam-bwa.tsv
 	string_change [cg covered tmp/sreg-sam-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
 chr21	1047
@@ -102,7 +102,7 @@ test var {var distrreg sam -d 3} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var -stack 1 -d 3 -method sam tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-sam-bwa.tsv.lz4 data/var-sam-bwa.tsv.lz4
+	cg tsvdiff tmp/var-sam-bwa.tsv.lz4 data/var-sam-bwa.tsv
 	string_change [cg covered tmp/sreg-sam-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
 chr21	1047
@@ -123,14 +123,14 @@ test var {var_freebayes basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var_freebayes -stack 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas 2> /dev/null
-	cg tsvdiff tmp/var-freebayes-bwa.tsv.lz4 data/var-freebayes-bwa.tsv.lz4
+	cg tsvdiff tmp/var-freebayes-bwa.tsv.lz4 data/var-freebayes-bwa.tsv
 } {}
 
 test var {var distrreg freebayes} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var -stack 1 -v 2 -method freebayes tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-freebayes-bwa.tsv.lz4 data/var-freebayes-bwa.tsv.lz4
+	cg tsvdiff tmp/var-freebayes-bwa.tsv.lz4 data/var-freebayes-bwa.tsv
 } {}
 
 test var {var_gatkh basic} {
@@ -138,7 +138,7 @@ test var {var_gatkh basic} {
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	# use low quality settings because test bwa.bam has low coverage
 	cg var_gatkh -stack 1 -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-gatkh-bwa.tsv.lz4 data/var-gatkh-bwa.tsv.lz4
+	cg tsvdiff tmp/var-gatkh-bwa.tsv.lz4 data/var-gatkh-bwa.tsv
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.gvcf.gz
 	string_change [cg covered tmp/sreg-gatkh-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
@@ -152,7 +152,7 @@ test var {var_gatkh -ERC GVCF} {
 	# use low quality settings because test bwa.bam has low coverage
 	cg var_gatkh -stack 1 -mincoverage 5 -mingenoqual 12 -ERC GVCF tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
 	cg select -overwrite 1 -rf MIN_DP tmp/var-gatkh-bwa.tsv.lz4 tmp/test.tsv.lz4
-	cg tsvdiff tmp/test.tsv.lz4 data/var-gatkh-bwa.tsv.lz4
+	cg tsvdiff tmp/test.tsv.lz4 data/var-gatkh-bwa.tsv
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.bgvcf
 	string_change [cg covered tmp/sreg-gatkh-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
@@ -164,7 +164,7 @@ test var {var distrreg gatkh} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var -stack 1 -cleanup 0 -distrreg 1 -method gatkh -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-gatkh-bwa.tsv.lz4 data/var-gatkh-bwa.tsv.lz4
+	cg tsvdiff tmp/var-gatkh-bwa.tsv.lz4 data/var-gatkh-bwa.tsv
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.gvcf.gz
 	string_change [cg covered tmp/sreg-gatkh-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
