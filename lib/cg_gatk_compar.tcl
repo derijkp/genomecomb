@@ -166,13 +166,12 @@ proc gatk_compar_job args {
 					--intervals $region >@ stdout 2>@stderr
 				#
 				# to vcf
-				gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g] GenotypeGVCFs \
+				gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g -Djava.io.tmpdir=[scratchdir]] GenotypeGVCFs \
 					-R $gatkrefseq \
 					-V gendb://$tempfile \
 					-O $resultvcf.$region.temp \
 					-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation \
 					--verbosity ERROR \
-					--TMP_DIR [scratchdir] \
 					-new-qual $newqual \
 					--only-output-calls-starting-in-intervals \
 					--intervals $region >@ stdout 2>@stderr

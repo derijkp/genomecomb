@@ -31,13 +31,12 @@ proc cg_gatk_genotypevcfs args {
 	set vcf [file_absolute $vcf]
 	set refseq [lindex [glob $dbdir/genome_*.ifas] 0]
 	set gatkrefseq [gatk_refseq_job $refseq]
-	gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g] GenotypeGVCFs \
+	gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g -Djava.io.tmpdir=[scratchdir]] GenotypeGVCFs \
 		-R $gatkrefseq \
 		-V $gvcf \
 		-O $vcf.temp[gzext $vcf] \
 		-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation \
 		--verbosity ERROR \
-		--TMP_DIR [scratchdir] \
 		-new-qual $newqual \
 		--create-output-variant-index true \
 		{*}$opts >@ stdout 2>@stderr
