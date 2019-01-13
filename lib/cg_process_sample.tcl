@@ -676,7 +676,7 @@ proc process_sample_job {args} {
 	if {![job_getinfo]} {
 		info_analysis_file $sampledir/info_analysis.tsv $sample \
 			{dbdir aligners varcallers svcallers realign paired samBQ adapterfile reports} \
-			{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatkjava biobambam picard java gnusort8 tabix lz4 os} \
+			{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk3 gatk gatkjava biobambam picard java gnusort8 tabix lz4 os} \
 			command [list cg process_sample {*}$keepargs]
 	}
 	# convert existing vcfs
