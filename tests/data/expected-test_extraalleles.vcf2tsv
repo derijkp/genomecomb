@@ -5,52 +5,52 @@
 #numsamples	1
 #samplename	NA19238chr2122
 #fields	table
-#fields	field	number	type	description
-#fields	chromosome	1	String	Chromosome/Contig
-#fields	begin	1	Integer	Begin of feature (0 based - half open)
-#fields	end	1	Integer	End of feature (0 based - half open)
-#fields	type	1	String	Type of feature (snp,del,ins,...)
-#fields	ref	1	String	Reference sequence, can be a number for large features
-#fields	alt	1	String	Alternative sequence, can be a number for large features
-#fields	name	1	String	name of feature
-#fields	quality	1	Float	Quality score of feature
-#fields	filter	1	String	Filter value
-#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype
-#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype
-#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced
-#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant
-#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)
-#fields	genotypes	H	Integer	Genotypes
-#fields	genoqual	1	Integer	Genotype Quality
-#fields	loglikelihood	3	Float	Likelihoods for RR,RA,AA genotypes (R=ref,A=alt)
-#fields	coverage	1	Integer	# high-quality bases
-#fields	DV	1	Integer	# high-quality non-reference bases
-#fields	SP	1	Integer	Phred-scaled strand bias P-value
-#fields	PL	G	Integer	List of Phred-scaled genotype likelihoods
-#fields	totalcoverage	1	Integer	Raw read depth
-#fields	DP4	4	Integer	# high-quality ref-forward bases, ref-reverse, alt-forward and alt-reverse bases
-#fields	MQ	1	Integer	Root-mean-square mapping quality of covering reads
-#fields	FQ	1	Float	Phred probability of all samples being the same
-#fields	AF1	1	Float	Max-likelihood estimate of the first ALT allele frequency (assuming HWE)
-#fields	AC1	1	Float	Max-likelihood estimate of the first ALT allele count (no HWE assumption)
-#fields	totalallelecount	1	Integer	Total number of alleles in called genotypes
-#fields	IS	2	Float	Maximum number of reads supporting an indel and fraction of indel reads
-#fields	allelecount	A	Integer	Allele count in genotypes for each ALT allele, in the same order as listed
-#fields	G3	3	Float	ML estimate of genotype frequencies
-#fields	HWE	1	Float	Chi^2 based HWE test P-value based on G3
-#fields	CLR	1	Integer	Log ratio of genotype likelihoods with and without the constraint
-#fields	UGT	1	String	The most probable unconstrained genotype configuration in the trio
-#fields	CGT	1	String	The most probable constrained genotype configuration in the trio
-#fields	PV4	4	Float	P-values for strand bias, baseQ bias, mapQ bias and tail distance bias
-#fields	INDEL	0	Flag	Indicates that the variant is an INDEL.
-#fields	PC2	2	Integer	Phred probability of the nonRef allele frequency in group1 samples being larger (,smaller) than in group2.
-#fields	PCHI2	1	Float	Posterior weighted chi^2 P-value for testing the association between group1 and group2 samples.
-#fields	QCHI2	1	Integer	Phred scaled PCHI2.
-#fields	PR	1	Integer	# permutations yielding a smaller PCHI2.
-#fields	QBD	1	Float	Quality by Depth: QUAL/#reads
-#fields	RPB	1	Float	Read Position Bias
-#fields	MDV	1	Integer	Maximum number of high-quality nonRef reads in samples
-#fields	VDB	1	Float	Variant Distance Bias (v2) for filtering splice-site artefacts in RNA-seq data. Note: this version may be broken.
+#fields	field	number	type	description	source
+#fields	chromosome	1	String	Chromosome/Contig	var
+#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+#fields	end	1	Integer	End of feature (0 based - half open)	var
+#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+#fields	ref	1	String	Reference sequence, can be a number for large features	var
+#fields	alt	1	String	Alternative sequence, can be a number for large features	var
+#fields	name	1	String	name of feature	var
+#fields	quality	1	Float	Quality score of feature	var
+#fields	filter	1	String	Filter value	var
+#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	geno
+#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno
+#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno
+#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)	geno
+#fields	genotypes	H	Integer	Genotypes	geno
+#fields	genoqual	1	Integer	Genotype Quality	format
+#fields	loglikelihood	3	Float	Likelihoods for RR,RA,AA genotypes (R=ref,A=alt)	format
+#fields	coverage	1	Integer	# high-quality bases	format
+#fields	DV	1	Integer	# high-quality non-reference bases	format
+#fields	SP	1	Integer	Phred-scaled strand bias P-value	format
+#fields	PL	G	Integer	List of Phred-scaled genotype likelihoods	format
+#fields	totalcoverage	1	Integer	Raw read depth	info
+#fields	DP4	4	Integer	# high-quality ref-forward bases, ref-reverse, alt-forward and alt-reverse bases	info
+#fields	MQ	1	Integer	Root-mean-square mapping quality of covering reads	info
+#fields	FQ	1	Float	Phred probability of all samples being the same	info
+#fields	AF1	1	Float	Max-likelihood estimate of the first ALT allele frequency (assuming HWE)	info
+#fields	AC1	1	Float	Max-likelihood estimate of the first ALT allele count (no HWE assumption)	info
+#fields	totalallelecount	1	Integer	Total number of alleles in called genotypes	info
+#fields	IS	2	Float	Maximum number of reads supporting an indel and fraction of indel reads	info
+#fields	allelecount	A	Integer	Allele count in genotypes for each ALT allele, in the same order as listed	info
+#fields	G3	3	Float	ML estimate of genotype frequencies	info
+#fields	HWE	1	Float	Chi^2 based HWE test P-value based on G3	info
+#fields	CLR	1	Integer	Log ratio of genotype likelihoods with and without the constraint	info
+#fields	UGT	1	String	The most probable unconstrained genotype configuration in the trio	info
+#fields	CGT	1	String	The most probable constrained genotype configuration in the trio	info
+#fields	PV4	4	Float	P-values for strand bias, baseQ bias, mapQ bias and tail distance bias	info
+#fields	INDEL	0	Flag	Indicates that the variant is an INDEL.	info
+#fields	PC2	2	Integer	Phred probability of the nonRef allele frequency in group1 samples being larger (,smaller) than in group2.	info
+#fields	PCHI2	1	Float	Posterior weighted chi^2 P-value for testing the association between group1 and group2 samples.	info
+#fields	QCHI2	1	Integer	Phred scaled PCHI2.	info
+#fields	PR	1	Integer	# permutations yielding a smaller PCHI2.	info
+#fields	QBD	1	Float	Quality by Depth: QUAL/#reads	info
+#fields	RPB	1	Float	Read Position Bias	info
+#fields	MDV	1	Integer	Maximum number of high-quality nonRef reads in samples	info
+#fields	VDB	1	Float	Variant Distance Bias (v2) for filtering splice-site artefacts in RNA-seq data. Note: this version may be broken.	info
 #contig	table
 #contig	ID	length
 #contig	chr1	249250621

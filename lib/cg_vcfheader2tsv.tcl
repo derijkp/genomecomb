@@ -4,7 +4,7 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-proc vcfheader2table {lines {sheader {}} {prekeys {}}} {
+proc vcfheader2table {lines {sheader {}} {prekeys {}} {extra {}}} {
 	set pos 0
 	unset -nocomplain a
 	foreach prekey $prekeys field $sheader {
@@ -14,6 +14,7 @@ proc vcfheader2table {lines {sheader {}} {prekeys {}}} {
 	set data {}
 	foreach line $lines {
 		set line [string trim $line <>]
+		if {$extra ne ""} {append line ,$extra}
 		set resultline [list_fill [llength $sheader] {}]
 		set pos 0
 		while 1 {
@@ -30,7 +31,7 @@ proc vcfheader2table {lines {sheader {}} {prekeys {}}} {
 					if {[string index $line [expr {$npos+1}]] != "\""} break
 					set tpos [expr {$npos+2}]
 				}
-				
+				incr npos
 			} else {
 				set npos [string first , $line $pos]
 				if {$npos == -1} {set npos [expr {[string length $line]}]}
@@ -149,31 +150,31 @@ proc cg_vcfheader2tsv {args} {
 	set headerfields {alleleSeq1 alleleSeq2 zyg phased genotypes}
 	# FORMAT fields
 	set lines [get a(FORMAT) ""]
-	foreach {fheader fdata prekeys} [vcfheader2table $lines {field number type description} {ID Number Type Description}] break
+	foreach {fheader fdata prekeys} [vcfheader2table $lines {field number type description source} {ID Number Type Description source} source=format] break
 	unset -nocomplain a(FORMAT)
 	# INFO fields
 	set lines [get a(INFO) ""]
-	foreach {sheader idata} [vcfheader2table $lines $fheader $prekeys] break
+	foreach {sheader idata} [vcfheader2table $lines $fheader $prekeys source=info] break
 	unset -nocomplain a(INFO)
 	# default fields
 	set sheaderlen [llength $sheader]
 	puts $o "#fields\ttable"
 	puts $o "#fields\t[join $sheader \t]"
-	putsvcf2tsvheader $o $sheaderlen fields {chromosome 1 String Chromosome/Contig}
-	putsvcf2tsvheader $o $sheaderlen fields {begin 1 Integer {Begin of feature (0 based - half open)}}
-	putsvcf2tsvheader $o $sheaderlen fields {end 1 Integer {End of feature (0 based - half open)}}
-	putsvcf2tsvheader $o $sheaderlen fields {type 1 String {Type of feature (snp,del,ins,...)}}
-	putsvcf2tsvheader $o $sheaderlen fields {ref 1 String {Reference sequence, can be a number for large features}}
-	putsvcf2tsvheader $o $sheaderlen fields {alt 1 String {Alternative sequence, can be a number for large features}}
-	putsvcf2tsvheader $o $sheaderlen fields {name 1 String {name of feature}}
-	putsvcf2tsvheader $o $sheaderlen fields {quality 1 Float {Quality score of feature}}
-	putsvcf2tsvheader $o $sheaderlen fields {filter 1 String {Filter value}}
-	putsvcf2tsvheader $o $sheaderlen fields {alleleSeq1 1 String {allele present on first chromosome/haplotype}}
-	putsvcf2tsvheader $o $sheaderlen fields {alleleSeq2 1 String {allele present on second chromosome/haplotype}}
-	putsvcf2tsvheader $o $sheaderlen fields {sequenced 1 String {sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced}}
-	putsvcf2tsvheader $o $sheaderlen fields {zyg 1 String {Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant}}
-	putsvcf2tsvheader $o $sheaderlen fields {phased 1 Integer {Phased status: 0 if not phased, other integer if phased (same as variants in phase)}}
-	putsvcf2tsvheader $o $sheaderlen fields {genotypes H Integer {Genotypes}}
+	putsvcf2tsvheader $o $sheaderlen fields {chromosome 1 String Chromosome/Contig var}
+	putsvcf2tsvheader $o $sheaderlen fields {begin 1 Integer {Begin of feature (0 based - half open)} var}
+	putsvcf2tsvheader $o $sheaderlen fields {end 1 Integer {End of feature (0 based - half open)} var}
+	putsvcf2tsvheader $o $sheaderlen fields {type 1 String {Type of feature (snp,del,ins,...)} var}
+	putsvcf2tsvheader $o $sheaderlen fields {ref 1 String {Reference sequence, can be a number for large features} var}
+	putsvcf2tsvheader $o $sheaderlen fields {alt 1 String {Alternative sequence, can be a number for large features} var}
+	putsvcf2tsvheader $o $sheaderlen fields {name 1 String {name of feature} var}
+	putsvcf2tsvheader $o $sheaderlen fields {quality 1 Float {Quality score of feature} var}
+	putsvcf2tsvheader $o $sheaderlen fields {filter 1 String {Filter value} var}
+	putsvcf2tsvheader $o $sheaderlen fields {alleleSeq1 1 String {allele present on first chromosome/haplotype} geno}
+	putsvcf2tsvheader $o $sheaderlen fields {alleleSeq2 1 String {allele present on second chromosome/haplotype} geno}
+	putsvcf2tsvheader $o $sheaderlen fields {sequenced 1 String {sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced} geno}
+	putsvcf2tsvheader $o $sheaderlen fields {zyg 1 String {Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant} geno}
+	putsvcf2tsvheader $o $sheaderlen fields {phased 1 Integer {Phased status: 0 if not phased, other integer if phased (same as variants in phase)} geno}
+	putsvcf2tsvheader $o $sheaderlen fields {genotypes H Integer {Genotypes} geno}
 	# print FORMAT fields
 	foreach line $fdata {
 		foreach {field number} $line break

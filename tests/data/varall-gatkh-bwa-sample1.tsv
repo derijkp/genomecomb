@@ -1,92 +1,119 @@
 #filetype	tsv/varfile
-#fileversion	0.10.0
+#fileversion	0.99
 #split	1
-#info	tsv converted from vcf, original comments follow
-##ALT=<ID=NON_REF,Description="Represents any possible alternative allele at this location">
-##FILTER=<ID=LowQual,Description="Low quality">
-##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
-##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth (reads with MQ=255 or with bad mates are filtered)">
-##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
-##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
-##FORMAT=<ID=PGT,Number=1,Type=String,Description="Physical phasing haplotype information, describing how the alternate alleles are phased in relation to one another">
-##FORMAT=<ID=PID,Number=1,Type=String,Description="Physical phasing ID information, where each unique ID within a given sample (but not across samples) connects records within a phasing group">
-##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification">
-##FORMAT=<ID=RGQ,Number=1,Type=Integer,Description="Unconditional reference genotype confidence, encoded as a phred quality -10*log10 p(genotype call is wrong)">
-##FORMAT=<ID=SB,Number=4,Type=Integer,Description="Per-sample component statistics which comprise the Fisher's Exact Test to detect strand bias.">
-##GATKCommandLine=<ID=GenotypeGVCFs,CommandLine="GenotypeGVCFs  --output /home/peter/dev/genomecomb/tests/tmp/test.vcf.temp --use-new-qual-calculator true --annotation-group StandardAnnotation --annotation-group StandardHCAnnotation --annotation-group AS_StandardAnnotation --variant /home/peter/dev/genomecomb/tests/data/varall-gatkh-bwa-sample1.gvcf --reference /data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa --create-output-variant-index true --TMP_DIR /tmp/scratchExtral.4879-UUWHTmYUXxAwZEeZdRWj --verbosity ERROR  --annotate-with-num-discovered-alleles false --heterozygosity 0.001 --indel-heterozygosity 1.25E-4 --heterozygosity-stdev 0.01 --standard-min-confidence-threshold-for-calling 10.0 --max-alternate-alleles 6 --max-genotype-count 1024 --sample-ploidy 2 --disable-tool-default-annotations false --only-output-calls-starting-in-intervals false --interval-set-rule UNION --interval-padding 0 --interval-exclusion-padding 0 --interval-merging-rule ALL --read-validation-stringency SILENT --seconds-between-progress-updates 10.0 --disable-sequence-dictionary-validation false --create-output-bam-index true --create-output-bam-md5 false --create-output-variant-md5 false --lenient false --add-output-sam-program-record true --add-output-vcf-command-line true --cloud-prefetch-buffer 40 --cloud-index-prefetch-buffer -1 --disable-bam-index-caching false --help false --version false --showHidden false --QUIET false --use-jdk-deflater false --use-jdk-inflater false --gcs-max-retries 20 --disable-tool-default-read-filters false",Version=4.0.3.0,Date="November 9, 2018 1:23:23 AM CET">
-##GATKCommandLine=<ID=HaplotypeCaller,CommandLine="HaplotypeCaller  --annotation-group StandardAnnotation --annotation-group StandardHCAnnotation --annotation-group AS_StandardAnnotation --emit-ref-confidence BP_RESOLUTION --annotate-with-num-discovered-alleles true --output varall-gatkh-bwa.gvcf.gz.temp.gz --intervals /tmp/tempExtral.5546-PBXNtzIEQYEVlwAoKhKg/_Extral_temp_1.bed --input /home/peter/dev/genomecomb/tests/tmp/bwa.bam --reference /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.fa  --disable-tool-default-annotations false --gvcf-gq-bands 1 --gvcf-gq-bands 2 --gvcf-gq-bands 3 --gvcf-gq-bands 4 --gvcf-gq-bands 5 --gvcf-gq-bands 6 --gvcf-gq-bands 7 --gvcf-gq-bands 8 --gvcf-gq-bands 9 --gvcf-gq-bands 10 --gvcf-gq-bands 11 --gvcf-gq-bands 12 --gvcf-gq-bands 13 --gvcf-gq-bands 14 --gvcf-gq-bands 15 --gvcf-gq-bands 16 --gvcf-gq-bands 17 --gvcf-gq-bands 18 --gvcf-gq-bands 19 --gvcf-gq-bands 20 --gvcf-gq-bands 21 --gvcf-gq-bands 22 --gvcf-gq-bands 23 --gvcf-gq-bands 24 --gvcf-gq-bands 25 --gvcf-gq-bands 26 --gvcf-gq-bands 27 --gvcf-gq-bands 28 --gvcf-gq-bands 29 --gvcf-gq-bands 30 --gvcf-gq-bands 31 --gvcf-gq-bands 32 --gvcf-gq-bands 33 --gvcf-gq-bands 34 --gvcf-gq-bands 35 --gvcf-gq-bands 36 --gvcf-gq-bands 37 --gvcf-gq-bands 38 --gvcf-gq-bands 39 --gvcf-gq-bands 40 --gvcf-gq-bands 41 --gvcf-gq-bands 42 --gvcf-gq-bands 43 --gvcf-gq-bands 44 --gvcf-gq-bands 45 --gvcf-gq-bands 46 --gvcf-gq-bands 47 --gvcf-gq-bands 48 --gvcf-gq-bands 49 --gvcf-gq-bands 50 --gvcf-gq-bands 51 --gvcf-gq-bands 52 --gvcf-gq-bands 53 --gvcf-gq-bands 54 --gvcf-gq-bands 55 --gvcf-gq-bands 56 --gvcf-gq-bands 57 --gvcf-gq-bands 58 --gvcf-gq-bands 59 --gvcf-gq-bands 60 --gvcf-gq-bands 70 --gvcf-gq-bands 80 --gvcf-gq-bands 90 --gvcf-gq-bands 99 --indel-size-to-eliminate-in-ref-model 10 --use-alleles-trigger false --disable-optimizations false --just-determine-active-regions false --dont-genotype false --dont-trim-active-regions false --max-disc-ar-extension 25 --max-gga-ar-extension 300 --padding-around-indels 150 --padding-around-snps 20 --kmer-size 10 --kmer-size 25 --dont-increase-kmer-sizes-for-cycles false --allow-non-unique-kmers-in-ref false --num-pruning-samples 1 --recover-dangling-heads false --do-not-recover-dangling-branches false --min-dangling-branch-length 4 --consensus false --max-num-haplotypes-in-population 128 --error-correct-kmers false --min-pruning 2 --debug-graph-transformations false --kmer-length-for-read-error-correction 25 --min-observations-for-kmer-to-be-solid 20 --likelihood-calculation-engine PairHMM --base-quality-score-threshold 18 --pair-hmm-gap-continuation-penalty 10 --pair-hmm-implementation FASTEST_AVAILABLE --pcr-indel-model CONSERVATIVE --phred-scaled-global-read-mismapping-rate 45 --native-pair-hmm-threads 4 --native-pair-hmm-use-double-precision false --debug false --use-filtered-reads-for-annotations false --bam-writer-type CALLED_HAPLOTYPES --dont-use-soft-clipped-bases false --capture-assembly-failure-bam false --error-correct-reads false --do-not-run-physical-phasing false --min-base-quality-score 10 --smith-waterman JAVA --use-new-qual-calculator false --heterozygosity 0.001 --indel-heterozygosity 1.25E-4 --heterozygosity-stdev 0.01 --standard-min-confidence-threshold-for-calling 10.0 --max-alternate-alleles 6 --max-genotype-count 1024 --sample-ploidy 2 --genotyping-mode DISCOVERY --contamination-fraction-to-filter 0.0 --output-mode EMIT_VARIANTS_ONLY --all-site-pls false --min-assembly-region-size 50 --max-assembly-region-size 300 --assembly-region-padding 100 --max-reads-per-alignment-start 50 --active-probability-threshold 0.002 --max-prob-propagation-distance 50 --interval-set-rule UNION --interval-padding 0 --interval-exclusion-padding 0 --interval-merging-rule ALL --read-validation-stringency SILENT --seconds-between-progress-updates 10.0 --disable-sequence-dictionary-validation false --create-output-bam-index true --create-output-bam-md5 false --create-output-variant-index true --create-output-variant-md5 false --lenient false --add-output-sam-program-record true --add-output-vcf-command-line true --cloud-prefetch-buffer 40 --cloud-index-prefetch-buffer -1 --disable-bam-index-caching false --help false --version false --showHidden false --verbosity INFO --QUIET false --use-jdk-deflater false --use-jdk-inflater false --gcs-max-retries 20 --disable-tool-default-read-filters false --minimum-mapping-quality 20",Version=4.0.3.0,Date="April 25, 2018 3:42:48 PM CEST">
-##INFO=<ID=AC,Number=A,Type=Integer,Description="Allele count in genotypes, for each ALT allele, in the same order as listed">
-##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency, for each ALT allele, in the same order as listed">
-##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
-##INFO=<ID=AS_BaseQRankSum,Number=A,Type=Float,Description="allele specific Z-score from Wilcoxon rank sum test of each Alt Vs. Ref base qualities">
-##INFO=<ID=AS_FS,Number=A,Type=Float,Description="allele specific phred-scaled p-value using Fisher's exact test to detect strand bias of each alt allele">
-##INFO=<ID=AS_InbreedingCoeff,Number=A,Type=Float,Description="allele specific heterozygosity as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation; relate to inbreeding coefficient">
-##INFO=<ID=AS_MQ,Number=A,Type=Float,Description="Allele-specific RMS Mapping Quality">
-##INFO=<ID=AS_MQRankSum,Number=A,Type=Float,Description="Allele-specific Mapping Quality Rank Sum">
-##INFO=<ID=AS_QD,Number=A,Type=Float,Description="Allele-specific Variant Confidence/Quality by Depth">
-##INFO=<ID=AS_RAW_BaseQRankSum,Number=1,Type=String,Description="raw data for allele specific rank sum test of base qualities">
-##INFO=<ID=AS_RAW_MQ,Number=1,Type=String,Description="Allele-specfic raw data for RMS Mapping Quality">
-##INFO=<ID=AS_RAW_MQRankSum,Number=1,Type=String,Description="Allele-specfic raw data for Mapping Quality Rank Sum">
-##INFO=<ID=AS_RAW_ReadPosRankSum,Number=1,Type=String,Description="allele specific raw data for rank sum test of read position bias">
-##INFO=<ID=AS_ReadPosRankSum,Number=A,Type=Float,Description="allele specific Z-score from Wilcoxon rank sum test of each Alt vs. Ref read position bias">
-##INFO=<ID=AS_SB_TABLE,Number=1,Type=String,Description="Allele-specific forward/reverse read counts for strand bias tests">
-##INFO=<ID=AS_SOR,Number=A,Type=Float,Description="Allele specific strand Odds Ratio of 2x|Alts| contingency table to detect allele specific strand bias">
-##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt Vs. Ref base qualities">
-##INFO=<ID=ClippingRankSum,Number=1,Type=Float,Description="Z-score From Wilcoxon rank sum test of Alt vs. Ref number of hard clipped bases">
-##INFO=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth; some reads may have been filtered">
-##INFO=<ID=DS,Number=0,Type=Flag,Description="Were any of the samples downsampled?">
-##INFO=<ID=ExcessHet,Number=1,Type=Float,Description="Phred-scaled p-value for exact test of excess heterozygosity">
-##INFO=<ID=FS,Number=1,Type=Float,Description="Phred-scaled p-value using Fisher's exact test to detect strand bias">
-##INFO=<ID=InbreedingCoeff,Number=1,Type=Float,Description="Inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation">
-##INFO=<ID=MLEAC,Number=A,Type=Integer,Description="Maximum likelihood expectation (MLE) for the allele counts (not necessarily the same as the AC), for each ALT allele, in the same order as listed">
-##INFO=<ID=MLEAF,Number=A,Type=Float,Description="Maximum likelihood expectation (MLE) for the allele frequency (not necessarily the same as the AF), for each ALT allele, in the same order as listed">
-##INFO=<ID=MQ,Number=1,Type=Float,Description="RMS Mapping Quality">
-##INFO=<ID=MQRankSum,Number=1,Type=Float,Description="Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities">
-##INFO=<ID=NDA,Number=1,Type=Integer,Description="Number of alternate alleles discovered (but not necessarily genotyped) at this site">
-##INFO=<ID=QD,Number=1,Type=Float,Description="Variant Confidence/Quality by Depth">
-##INFO=<ID=RAW_MQ,Number=1,Type=Float,Description="Raw data for RMS Mapping Quality">
-##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias">
-##INFO=<ID=SOR,Number=1,Type=Float,Description="Symmetric Odds Ratio of 2x2 contingency table to detect strand bias">
-##contig=<ID=chr1,length=249250621>
-##contig=<ID=chr2,length=243199373>
-##contig=<ID=chr3,length=198022430>
-##contig=<ID=chr4,length=191154276>
-##contig=<ID=chr5,length=180915260>
-##contig=<ID=chr6,length=171115067>
-##contig=<ID=chr7,length=159138663>
-##contig=<ID=chr8,length=146364022>
-##contig=<ID=chr9,length=141213431>
-##contig=<ID=chr10,length=135534747>
-##contig=<ID=chr11,length=135006516>
-##contig=<ID=chr12,length=133851895>
-##contig=<ID=chr13,length=115169878>
-##contig=<ID=chr14,length=107349540>
-##contig=<ID=chr15,length=102531392>
-##contig=<ID=chr16,length=90354753>
-##contig=<ID=chr17,length=81195210>
-##contig=<ID=chr18,length=78077248>
-##contig=<ID=chr19,length=59128983>
-##contig=<ID=chr20,length=63025520>
-##contig=<ID=chr21,length=48129895>
-##contig=<ID=chr22,length=51304566>
-##contig=<ID=chrM,length=16571>
-##contig=<ID=chrX,length=155270560>
-##contig=<ID=chrY,length=59373566>
-##source=GenotypeGVCFs
-##source=HaplotypeCaller
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA19240m
+#info	tsv converted from vcf
+#numsamples	1
+#samplename	NA19240m
+#fields	table
+#fields	field	number	type	description	source
+#fields	chromosome	1	String	Chromosome/Contig	var
+#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+#fields	end	1	Integer	End of feature (0 based - half open)	var
+#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+#fields	ref	1	String	Reference sequence, can be a number for large features	var
+#fields	alt	1	String	Alternative sequence, can be a number for large features	var
+#fields	name	1	String	name of feature	var
+#fields	quality	1	Float	Quality score of feature	var
+#fields	filter	1	String	Filter value	var
+#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	geno
+#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno
+#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno
+#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)	geno
+#fields	genotypes	H	Integer	Genotypes	geno
+#fields	alleledepth_ref	1	Integer	Allelic depths for the ref and alt alleles in the order listed	format
+#fields	alleledepth	A	Integer	Allelic depths for the ref and alt alleles in the order listed	format
+#fields	coverage	1	Integer	Approximate read depth (reads with MQ=255 or with bad mates are filtered)	format
+#fields	genoqual	1	Integer	Genotype Quality	format
+#fields	PGT	1	String	Physical phasing haplotype information, describing how the alternate alleles are phased in relation to one another	format
+#fields	PID	1	String	Physical phasing ID information, where each unique ID within a given sample (but not across samples) connects records within a phasing group	format
+#fields	PL	G	Integer	Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification	format
+#fields	RGQ	1	Integer	Unconditional reference genotype confidence, encoded as a phred quality -10*log10 p(genotype call is wrong)	format
+#fields	SB	4	Integer	Per-sample component statistics which comprise the Fisher's Exact Test to detect strand bias.	format
+#fields	allelecount	A	Integer	Allele count in genotypes, for each ALT allele, in the same order as listed	info
+#fields	frequency	A	Float	Allele Frequency, for each ALT allele, in the same order as listed	info
+#fields	totalallelecount	1	Integer	Total number of alleles in called genotypes	info
+#fields	AS_BaseQRankSum	A	Float	allele specific Z-score from Wilcoxon rank sum test of each Alt Vs. Ref base qualities	info
+#fields	AS_FS	A	Float	allele specific phred-scaled p-value using Fisher's exact test to detect strand bias of each alt allele	info
+#fields	AS_InbreedingCoeff	A	Float	allele specific heterozygosity as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation; relate to inbreeding coefficient	info
+#fields	AS_MQ	A	Float	Allele-specific RMS Mapping Quality	info
+#fields	AS_MQRankSum	A	Float	Allele-specific Mapping Quality Rank Sum	info
+#fields	AS_QD	A	Float	Allele-specific Variant Confidence/Quality by Depth	info
+#fields	AS_RAW_BaseQRankSum	1	String	raw data for allele specific rank sum test of base qualities	info
+#fields	AS_RAW_MQ	1	String	Allele-specfic raw data for RMS Mapping Quality	info
+#fields	AS_RAW_MQRankSum	1	String	Allele-specfic raw data for Mapping Quality Rank Sum	info
+#fields	AS_RAW_ReadPosRankSum	1	String	allele specific raw data for rank sum test of read position bias	info
+#fields	AS_ReadPosRankSum	A	Float	allele specific Z-score from Wilcoxon rank sum test of each Alt vs. Ref read position bias	info
+#fields	AS_SB_TABLE	1	String	Allele-specific forward/reverse read counts for strand bias tests	info
+#fields	AS_SOR	A	Float	Allele specific strand Odds Ratio of 2x|Alts| contingency table to detect allele specific strand bias	info
+#fields	BaseQRankSum	1	Float	Z-score from Wilcoxon rank sum test of Alt Vs. Ref base qualities	info
+#fields	ClippingRankSum	1	Float	Z-score From Wilcoxon rank sum test of Alt vs. Ref number of hard clipped bases	info
+#fields	totalcoverage	1	Integer	Approximate read depth; some reads may have been filtered	info
+#fields	DS	0	Flag	Were any of the samples downsampled?	info
+#fields	ExcessHet	1	Float	Phred-scaled p-value for exact test of excess heterozygosity	info
+#fields	FS	1	Float	Phred-scaled p-value using Fisher's exact test to detect strand bias	info
+#fields	InbreedingCoeff	1	Float	Inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation	info
+#fields	MLEAC	A	Integer	Maximum likelihood expectation (MLE) for the allele counts (not necessarily the same as the AC), for each ALT allele, in the same order as listed	info
+#fields	MLEAF	A	Float	Maximum likelihood expectation (MLE) for the allele frequency (not necessarily the same as the AF), for each ALT allele, in the same order as listed	info
+#fields	MQ	1	Float	RMS Mapping Quality	info
+#fields	MQRankSum	1	Float	Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities	info
+#fields	NDA	1	Integer	Number of alternate alleles discovered (but not necessarily genotyped) at this site	info
+#fields	QD	1	Float	Variant Confidence/Quality by Depth	info
+#fields	RAW_MQ	1	Float	Raw data for RMS Mapping Quality	info
+#fields	ReadPosRankSum	1	Float	Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias	info
+#fields	SOR	1	Float	Symmetric Odds Ratio of 2x2 contingency table to detect strand bias	info
+#contig	table
+#contig	ID	length
+#contig	chr1	249250621
+#contig	chr2	243199373
+#contig	chr3	198022430
+#contig	chr4	191154276
+#contig	chr5	180915260
+#contig	chr6	171115067
+#contig	chr7	159138663
+#contig	chr8	146364022
+#contig	chr9	141213431
+#contig	chr10	135534747
+#contig	chr11	135006516
+#contig	chr12	133851895
+#contig	chr13	115169878
+#contig	chr14	107349540
+#contig	chr15	102531392
+#contig	chr16	90354753
+#contig	chr17	81195210
+#contig	chr18	78077248
+#contig	chr19	59128983
+#contig	chr20	63025520
+#contig	chr21	48129895
+#contig	chr22	51304566
+#contig	chrM	16571
+#contig	chrX	155270560
+#contig	chrY	59373566
+#vcf_source	GenotypeGVCFs
+#vcf_source	HaplotypeCaller
+#ALT	table
+#ALT	ID	Description
+#ALT	NON_REF	Represents any possible alternative allele at this location
+#vcf_fileformat	VCFv4.2
+#GATKCommandLine	table
+#GATKCommandLine	ID	CommandLine	Version	Date
+#GATKCommandLine	GenotypeGVCFs	GenotypeGVCFs  --output /home/peter/dev/genomecomb/tests/tmp/test.vcf.temp --use-new-qual-calculator true --variant /home/peter/dev/genomecomb/tests/data/varall-gatkh-bwa-sample1.gvcf --reference /data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa --create-output-variant-index true --verbosity ERROR --annotation-group StandardAnnotation --annotation-group StandardHCAnnotation --annotation-group AS_StandardAnnotation  --include-non-variant-sites false --annotate-with-num-discovered-alleles false --heterozygosity 0.001 --indel-heterozygosity 1.25E-4 --heterozygosity-stdev 0.01 --standard-min-confidence-threshold-for-calling 10.0 --max-alternate-alleles 6 --max-genotype-count 1024 --sample-ploidy 2 --num-reference-samples-if-no-call 0 --only-output-calls-starting-in-intervals false --interval-set-rule UNION --interval-padding 0 --interval-exclusion-padding 0 --interval-merging-rule ALL --read-validation-stringency SILENT --seconds-between-progress-updates 10.0 --disable-sequence-dictionary-validation false --create-output-bam-index true --create-output-bam-md5 false --create-output-variant-md5 false --lenient false --add-output-sam-program-record true --add-output-vcf-command-line true --cloud-prefetch-buffer 40 --cloud-index-prefetch-buffer -1 --disable-bam-index-caching false --sites-only-vcf-output false --help false --version false --showHidden false --QUIET false --use-jdk-deflater false --use-jdk-inflater false --gcs-max-retries 20 --gcs-project-for-requester-pays  --disable-tool-default-read-filters false --disable-tool-default-annotations false --enable-all-annotations false	4.0.12.0	January 13, 2019 11:06:56 PM CET
+#GATKCommandLine	HaplotypeCaller	HaplotypeCaller  --annotation-group StandardAnnotation --annotation-group StandardHCAnnotation --annotation-group AS_StandardAnnotation --emit-ref-confidence BP_RESOLUTION --annotate-with-num-discovered-alleles true --output varall-gatkh-bwa.gvcf.gz.temp.gz --intervals /tmp/tempExtral.5546-PBXNtzIEQYEVlwAoKhKg/_Extral_temp_1.bed --input /home/peter/dev/genomecomb/tests/tmp/bwa.bam --reference /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.fa  --disable-tool-default-annotations false --gvcf-gq-bands 1 --gvcf-gq-bands 2 --gvcf-gq-bands 3 --gvcf-gq-bands 4 --gvcf-gq-bands 5 --gvcf-gq-bands 6 --gvcf-gq-bands 7 --gvcf-gq-bands 8 --gvcf-gq-bands 9 --gvcf-gq-bands 10 --gvcf-gq-bands 11 --gvcf-gq-bands 12 --gvcf-gq-bands 13 --gvcf-gq-bands 14 --gvcf-gq-bands 15 --gvcf-gq-bands 16 --gvcf-gq-bands 17 --gvcf-gq-bands 18 --gvcf-gq-bands 19 --gvcf-gq-bands 20 --gvcf-gq-bands 21 --gvcf-gq-bands 22 --gvcf-gq-bands 23 --gvcf-gq-bands 24 --gvcf-gq-bands 25 --gvcf-gq-bands 26 --gvcf-gq-bands 27 --gvcf-gq-bands 28 --gvcf-gq-bands 29 --gvcf-gq-bands 30 --gvcf-gq-bands 31 --gvcf-gq-bands 32 --gvcf-gq-bands 33 --gvcf-gq-bands 34 --gvcf-gq-bands 35 --gvcf-gq-bands 36 --gvcf-gq-bands 37 --gvcf-gq-bands 38 --gvcf-gq-bands 39 --gvcf-gq-bands 40 --gvcf-gq-bands 41 --gvcf-gq-bands 42 --gvcf-gq-bands 43 --gvcf-gq-bands 44 --gvcf-gq-bands 45 --gvcf-gq-bands 46 --gvcf-gq-bands 47 --gvcf-gq-bands 48 --gvcf-gq-bands 49 --gvcf-gq-bands 50 --gvcf-gq-bands 51 --gvcf-gq-bands 52 --gvcf-gq-bands 53 --gvcf-gq-bands 54 --gvcf-gq-bands 55 --gvcf-gq-bands 56 --gvcf-gq-bands 57 --gvcf-gq-bands 58 --gvcf-gq-bands 59 --gvcf-gq-bands 60 --gvcf-gq-bands 70 --gvcf-gq-bands 80 --gvcf-gq-bands 90 --gvcf-gq-bands 99 --indel-size-to-eliminate-in-ref-model 10 --use-alleles-trigger false --disable-optimizations false --just-determine-active-regions false --dont-genotype false --dont-trim-active-regions false --max-disc-ar-extension 25 --max-gga-ar-extension 300 --padding-around-indels 150 --padding-around-snps 20 --kmer-size 10 --kmer-size 25 --dont-increase-kmer-sizes-for-cycles false --allow-non-unique-kmers-in-ref false --num-pruning-samples 1 --recover-dangling-heads false --do-not-recover-dangling-branches false --min-dangling-branch-length 4 --consensus false --max-num-haplotypes-in-population 128 --error-correct-kmers false --min-pruning 2 --debug-graph-transformations false --kmer-length-for-read-error-correction 25 --min-observations-for-kmer-to-be-solid 20 --likelihood-calculation-engine PairHMM --base-quality-score-threshold 18 --pair-hmm-gap-continuation-penalty 10 --pair-hmm-implementation FASTEST_AVAILABLE --pcr-indel-model CONSERVATIVE --phred-scaled-global-read-mismapping-rate 45 --native-pair-hmm-threads 4 --native-pair-hmm-use-double-precision false --debug false --use-filtered-reads-for-annotations false --bam-writer-type CALLED_HAPLOTYPES --dont-use-soft-clipped-bases false --capture-assembly-failure-bam false --error-correct-reads false --do-not-run-physical-phasing false --min-base-quality-score 10 --smith-waterman JAVA --use-new-qual-calculator false --heterozygosity 0.001 --indel-heterozygosity 1.25E-4 --heterozygosity-stdev 0.01 --standard-min-confidence-threshold-for-calling 10.0 --max-alternate-alleles 6 --max-genotype-count 1024 --sample-ploidy 2 --genotyping-mode DISCOVERY --contamination-fraction-to-filter 0.0 --output-mode EMIT_VARIANTS_ONLY --all-site-pls false --min-assembly-region-size 50 --max-assembly-region-size 300 --assembly-region-padding 100 --max-reads-per-alignment-start 50 --active-probability-threshold 0.002 --max-prob-propagation-distance 50 --interval-set-rule UNION --interval-padding 0 --interval-exclusion-padding 0 --interval-merging-rule ALL --read-validation-stringency SILENT --seconds-between-progress-updates 10.0 --disable-sequence-dictionary-validation false --create-output-bam-index true --create-output-bam-md5 false --create-output-variant-index true --create-output-variant-md5 false --lenient false --add-output-sam-program-record true --add-output-vcf-command-line true --cloud-prefetch-buffer 40 --cloud-index-prefetch-buffer -1 --disable-bam-index-caching false --help false --version false --showHidden false --verbosity INFO --QUIET false --use-jdk-deflater false --use-jdk-inflater false --gcs-max-retries 20 --disable-tool-default-read-filters false --minimum-mapping-quality 20	4.0.3.0	April 25, 2018 3:42:48 PM CEST
+#FILTER	table
+#FILTER	ID	Description
+#FILTER	LowQual	Low quality
 # ----
 chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	PGT	PID	PL	RGQ	SB	allelecount	frequency	totalallelecount	AS_BaseQRankSum	AS_FS	AS_InbreedingCoeff	AS_MQ	AS_MQRankSum	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_ReadPosRankSum	AS_SB_TABLE	AS_SOR	BaseQRankSum	ClippingRankSum	totalcoverage	DS	ExcessHet	FS	InbreedingCoeff	MLEAC	MLEAF	MQ	MQRankSum	NDA	QD	RAW_MQ	ReadPosRankSum	SOR
-chr21	42735718	42735719	snp	G	A	.	125.60	.	G	A	t	0	0;1	4	4	8	99			133,0,104			1	0.500	2	1.100	0.000		60.00	0.000	15.70					-0.400		0.693	1.10	0.00	8		3.0103	0.000		1	0.500	60.00	0.00	2	15.70		-3.660e-01	0.693
-chr21	42775179	42775180	snp	C	T	.	155.92	.	T	T	m	0	1;1	0	5	5	15			170,15,0			2	1.00	2	nul	0.000		60.00	nul	31.18					nul		1.981			5		3.0103	0.000		2	1.00	60.00		2	31.18			1.981
-chr21	42775200	42775201	snp	C	T	.	157.92	.	T	T	m	0	1;1	1	7	5	17			172,17,0			2	1.00	2	nul	0.000		50.71	nul	19.74					nul		1.981			5		3.0103	0.000		2	1.00	60.00		2	19.74			1.981
-chr21	42775231	42775232	snp	C	T	.	383.06	.	T	C	t	0	1;0	7	25	53	99			400,100,918,102,0,1238			1	0.500	2	-0.200	0.000		46.48	0.000	2.88					-0.900		0.702	0.036		55		3.0103	2.323		1	0.500	60.00	0.00	3	7.23		-6.770e-01	0.404
-chr21	42775232	42775232	ins		GCT	.	383.06	.		GCT	t	0	0;1	7	21	53	99			400,100,918,102,0,1238			1	0.500	2	0.200	5.411		43.42	0.000	3.22					-0.300		1.118	0.036		55		3.0103	2.323		1	0.500	60.00	0.00	3	7.23		-6.770e-01	0.404
-chr21	42775249	42775250	snp	A	C	.	482.02	.	C	T	c	0	1;2	0	6	12	99			499,249,231,251,0,271			1	0.500	2	nul	0.000		50.99	nul	25.36					nul		1.329			12		3.0103	0.000		1	0.500	49.60		3	30.97			1.981
-chr21	42775249	42775250	snp	A	T	.	482.02	.	C	T	c	0	2;1	0	6	12	99			499,249,231,251,0,271			1	0.500	2	nul	0.000		48.16	nul	28.73					nul		2.303			12		3.0103	0.000		1	0.500	49.60		3	30.97			1.981
-chr21	42775289	42775290	snp	T	C	.	31.60	.	T	C	t	0	0;1	15	2	17	39			39,0,684			1	0.500	2	-1.900	0.000		50.99	-0.100	1.86					0.500		0.260	-1.891e+00		17		3.0103	0.000		1	0.500	52.04	-8.100e-02	2	1.86		0.522	0.260
-chr21	42775303	42775304	snp	G	C	.	32.60	.	G	C	t	0	0;1	15	2	17	40			40,0,684			1	0.500	2	-1.900	0.000		50.99	-0.100	1.92					0.500		0.260	-1.891e+00		17		3.0103	0.000		1	0.500	52.04	-8.100e-02	2	1.92		0.522	0.260
-chr21	42775359	42775360	snp	T	C	.	91.80	.	C	C	m	0	1;1	0	3	3	9			105,9,0			2	1.00	2	nul	0.000		29.14	nul	30.60					nul		1.179			3		3.0103	0.000		1	0.500	29.14		2	30.60			1.179
-chr21	42775374	42775375	snp	A	C	.	1537.03	.	C	C	m	0	1;1	0	38	38	99			1551,114,0			2	1.00	2	nul	0.000		39.31	nul	27.24					nul		2.303			38		3.0103	0.000		2	1.00	39.31		2	28.20			2.303
-chr21	42775437	42775437	ins		G	.	1096.64	.		G	t	0	0;1	32	34	66	99			1104,0,932			1	0.500	2	-0.100	1.262		62.19	2.700	16.62					-0.200		0.986	-9.800e-02		66		3.0103	1.262		1	0.500	61.14	2.71	2	16.62		-1.730e-01	0.986
-chr21	42775554	42775555	snp	A	G	.	73.28	.	G	G	m	0	1;1	0	2	2	6			85,6,0			2	1.00	2	nul	0.000		60.00	nul	25.00					nul		0.693			2		3.0103	0.000		1	0.500	60.00		2	29.56			2.303
+chr21	42735718	42735719	snp	G	A	.	125.60	.	G	A	t	0	0;1	4	4	8	99			133,0,104			1	0.500	2	1.100	0.000		60.00	0.000	15.70					-0.400		0.693	1.10	0.00	8		3.0103	0.000		1	0.500	60.00	0.00	2	15.70	28800.00	-3.660e-01	0.693
+chr21	42775179	42775180	snp	C	T	.	155.92	.	T	T	m	0	1;1	0	5	5	15			170,15,0			2	1.00	2	nul	0.000		60.00	nul	31.18					nul		1.981			5		3.0103	0.000		2	1.00	60.00		2	31.18	18000.00		1.981
+chr21	42775200	42775201	snp	C	T	.	157.92	.	T	T	m	0	1;1	1	7	5	17			172,17,0			2	1.00	2	nul	0.000		50.71	nul	19.74					nul		1.981			5		3.0103	0.000		2	1.00	60.00		2	19.74	18000.00		1.981
+chr21	42775231	42775232	snp	C	T	.	383.06	.	T	C	t	0	1;0	7	25	53	99			400,100,918,102,0,1238			1	0.500	2	-0.200	0.000		46.48	0.000	2.88					-0.900		0.702	0.036		55		3.0103	2.323		1	0.500	60.00	0.00	3	7.23	198000.00	-6.770e-01	0.404
+chr21	42775232	42775232	ins		GCT	.	383.06	.		GCT	t	0	0;1	7	21	53	99			400,100,918,102,0,1238			1	0.500	2	0.200	5.411		43.42	0.000	3.22					-0.300		1.118	0.036		55		3.0103	2.323		1	0.500	60.00	0.00	3	7.23	198000.00	-6.770e-01	0.404
+chr21	42775249	42775250	snp	A	C	.	482.02	.	C	T	c	0	1;2	0	6	12	99			499,249,231,251,0,271			1	0.500	2	nul	0.000		50.99	nul	25.36					nul		1.329			12		3.0103	0.000		1	0.500	49.60		3	30.97	29516.00		1.981
+chr21	42775249	42775250	snp	A	T	.	482.02	.	C	T	c	0	2;1	0	6	12	99			499,249,231,251,0,271			1	0.500	2	nul	0.000		48.16	nul	28.73					nul		2.303			12		3.0103	0.000		1	0.500	49.60		3	30.97	29516.00		1.981
+chr21	42775289	42775290	snp	T	C	.	31.60	.	T	C	t	0	0;1	15	2	17	39			39,0,684			1	0.500	2	-1.900	0.000		50.99	-0.100	1.86					0.500		0.260	-1.891e+00		17		3.0103	0.000		1	0.500	52.04	-8.100e-02	2	1.86	46039.00	0.522	0.260
+chr21	42775303	42775304	snp	G	C	.	32.60	.	G	C	t	0	0;1	15	2	17	40			40,0,684			1	0.500	2	-1.900	0.000		50.99	-0.100	1.92					0.500		0.260	-1.891e+00		17		3.0103	0.000		1	0.500	52.04	-8.100e-02	2	1.92	46039.00	0.522	0.260
+chr21	42775359	42775360	snp	T	C	.	91.80	.	C	C	m	0	1;1	0	3	3	9			105,9,0			2	1.00	2	nul	0.000		29.14	nul	30.60					nul		1.179			3		3.0103	0.000		1	0.500	29.14		2	30.60	2547.00		1.179
+chr21	42775374	42775375	snp	A	C	.	1537.03	.	C	C	m	0	1;1	0	38	38	99			1551,114,0			2	1.00	2	nul	0.000		39.31	nul	27.24					nul		2.303			38		3.0103	0.000		2	1.00	39.31		2	28.20	58717.00		2.303
+chr21	42775437	42775437	ins		G	.	1096.64	.		G	t	0	0;1	32	34	66	99			1104,0,932			1	0.500	2	-0.100	1.262		62.19	2.700	16.62					-0.200		0.986	-9.800e-02		66		3.0103	1.262		1	0.500	61.14	2.71	2	16.62	246700.00	-1.730e-01	0.986
+chr21	42775554	42775555	snp	A	G	.	73.28	.	G	G	m	0	1;1	0	2	2	6			85,6,0			2	1.00	2	nul	0.000		60.00	nul	25.00					nul		0.693			2		3.0103	0.000		1	0.500	60.00		2	29.56	7200.00		2.303

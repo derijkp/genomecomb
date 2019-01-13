@@ -5,36 +5,36 @@
 #numsamples	1
 #samplename	NA00001
 #fields	table
-#fields	field	number	type	description
-#fields	chromosome	1	String	Chromosome/Contig
-#fields	begin	1	Integer	Begin of feature (0 based - half open)
-#fields	end	1	Integer	End of feature (0 based - half open)
-#fields	type	1	String	Type of feature (snp,del,ins,...)
-#fields	ref	1	String	Reference sequence, can be a number for large features
-#fields	alt	1	String	Alternative sequence, can be a number for large features
-#fields	name	1	String	name of feature
-#fields	quality	1	Float	Quality score of feature
-#fields	filter	1	String	Filter value
-#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype
-#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype
-#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced
-#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant
-#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)
-#fields	genotypes	H	Integer	Genotypes
-#fields	genoqual	1	Float	Genotype quality
-#fields	CN	1	Integer	Copy number genotype for imprecise events
-#fields	CNQ	1	Float	Copy number genotype quality for imprecise events
-#fields	DR	1	Integer	# high-quality reference reads
-#fields	DV	1	Integer	# high-quality variant reads
-#fields	BKPTID	-1	String	ID of the assembled alternate allele in the assembly file
-#fields	CIEND	2	Integer	Confidence interval around END for imprecise variants
-#fields	CIPOS	2	Integer	Confidence interval around POS for imprecise variants
-#fields	CHR2	1	String	Chromosome for END coordinate in case of a translocation
-#fields	HOMLEN	-1	Integer	Length of base pair identical micro-homology at event breakpoints
-#fields	HOMSEQ	-1	String	Sequence of base pair identical micro-homology at event breakpoints
-#fields	IMPRECISE	0	Flag	Imprecise structural variation
-#fields	MEINFO	4	String	Mobile element info of the form NAME,START,END,POLARITY
-#fields	STRANDS	.	String	Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)
+#fields	field	number	type	description	source
+#fields	chromosome	1	String	Chromosome/Contig	var
+#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+#fields	end	1	Integer	End of feature (0 based - half open)	var
+#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+#fields	ref	1	String	Reference sequence, can be a number for large features	var
+#fields	alt	1	String	Alternative sequence, can be a number for large features	var
+#fields	name	1	String	name of feature	var
+#fields	quality	1	Float	Quality score of feature	var
+#fields	filter	1	String	Filter value	var
+#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	geno
+#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno
+#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno
+#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)	geno
+#fields	genotypes	H	Integer	Genotypes	geno
+#fields	genoqual	1	Float	Genotype quality	format
+#fields	CN	1	Integer	Copy number genotype for imprecise events	format
+#fields	CNQ	1	Float	Copy number genotype quality for imprecise events	format
+#fields	DR	1	Integer	# high-quality reference reads	format
+#fields	DV	1	Integer	# high-quality variant reads	format
+#fields	BKPTID	-1	String	ID of the assembled alternate allele in the assembly file	info
+#fields	CIEND	2	Integer	Confidence interval around END for imprecise variants	info
+#fields	CIPOS	2	Integer	Confidence interval around POS for imprecise variants	info
+#fields	CHR2	1	String	Chromosome for END coordinate in case of a translocation	info
+#fields	HOMLEN	-1	Integer	Length of base pair identical micro-homology at event breakpoints	info
+#fields	HOMSEQ	-1	String	Sequence of base pair identical micro-homology at event breakpoints	info
+#fields	IMPRECISE	0	Flag	Imprecise structural variation	info
+#fields	MEINFO	4	String	Mobile element info of the form NAME,START,END,POLARITY	info
+#fields	STRANDS	.	String	Strand orientation of the adjacency in BEDPE format (DEL:+-, DUP:-+, INV:++/--)	info
 #vcf_assembly	ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/sv/breakpoint_assemblies.fasta
 #ALT	table
 #ALT	ID	Description
