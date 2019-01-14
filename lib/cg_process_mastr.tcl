@@ -1,9 +1,12 @@
 
-proc make_alternative_compar_job {experiment {destdir {}}} {
+proc make_alternative_compar_job {experiment {destdir {}} {varcaller gatk}} {
 	upvar job_logdir job_logdir
 	if {$destdir eq ""} {set destdir [pwd]}
-	job altcompar-$experiment -deps {$destdir/compar/annot_compar-$experiment.tsv} \
-	-targets [list $destdir/compar/annot_compar_gatk-${experiment}.tsv.lz4 $destdir/compar/annot_compar_gatk-${experiment}_long.tsv.lz4] \
+	job altcompar-$experiment -deps {
+		$destdir/compar/annot_compar-$experiment.tsv
+	} -vars {
+		varcaller
+	} -targets [list $destdir/compar/annot_compar_${varcaller}-${experiment}.tsv.lz4 $destdir/compar/annot_compar_${varcaller}-${experiment}_long.tsv.lz4] \
 	-code {
 		set target1 [lindex $targets 0]
 		set target2 [lindex $targets 1]
@@ -12,7 +15,7 @@ proc make_alternative_compar_job {experiment {destdir {}}} {
 		set cfields [list_sub $cfields -exclude [list_find -regexp $cfields -sam-]]
 		set fields [list_common {chromosome begin end type ref alt amplicons dbnsfp_SIFT_score dbnsfp_Polyphen2_HDIV_score dbnsfp_Polyphen2_HDIV_pred dbnsfp_Polyphen2_HVAR_score dbnsfp_Polyphen2_HVAR_pred snp138_name 1000gCEU refGene_impact refGene_gene refGene_descr dbnsfp_MutationTaster_score dbnsfp_MutationTaster_pred} $cfields]
 		lappend fields *
-		lappend fields {log2_allele_ratio-gatk-crsbwa-*=if(llen(${alleledepth-gatk-crsbwa-*})>1, log10(lindex(${alleledepth-gatk-crsbwa-*},0))/log10(2) - log10(lindex(${alleledepth-gatk-crsbwa-*},1))/log10(2), 0)}
+		lappend fields [string_change {log2_allele_ratio-gatk-crsbwa-*=if(llen(${alleledepth-gatk-crsbwa-*})>1, log10(lindex(${alleledepth-gatk-crsbwa-*},0))/log10(2) - log10(lindex(${alleledepth-gatk-crsbwa-*},1))/log10(2), 0)} [list gatk $varcaller]]
 		set compress [compresspipe $target1]
 		set temp [filetemp_ext $target1]
 		exec cg select -rf {*-sam-*} $dep | cg select -f $fields {*}$compress > $temp
@@ -232,10 +235,10 @@ proc mastr_refseq_job {mastrdir dbdir useminigenome} {
 	return [list $mastrname $refseq $mastrdir/reg-$mastrname.map]
 }
 
-proc analysis_complete_job {experiment {destdir {}}} {
+proc analysis_complete_job {experiment {destdir {}} {varcaller gatk}} {
 	upvar job_logdir job_logdir
 	if {$destdir eq ""} {set destdir [pwd]}
-	job analysis_complete-$experiment -deps [list $destdir/coverage_${experiment}_avg.tsv $destdir/coverage_${experiment}_frac_above_20.tsv $destdir/compar/annot_compar_gatk-${experiment}_long.tsv $destdir/${experiment}.html] \
+	job analysis_complete-$experiment -deps [list $destdir/coverage_${experiment}_avg.tsv $destdir/coverage_${experiment}_frac_above_20.tsv $destdir/compar/annot_compar_${varcaller}-${experiment}_long.tsv $destdir/${experiment}.html] \
 	-targets {$destdir/analysis_complete} -vars destdir -code {
 		file delete $destdir/analysis_running
 		exec touch $target

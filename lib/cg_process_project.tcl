@@ -20,7 +20,7 @@ proc process_project_job {args} {
 	set dt {}
 	set removeduplicates {}
 	set amplicons {}
-	set extra_reports_mastr 0
+	set extra_reports_mastr {}
 	set jobsample 0
 	set distrreg 0
 	set threads 2
@@ -120,6 +120,7 @@ proc process_project_job {args} {
 			set conv_nextseq $value
 		}
 		-extra_reports_mastr {
+			if {$value eq "1"} {set value gatk}
 			set extra_reports_mastr $value
 		}
 		-jobsample {
@@ -248,8 +249,8 @@ proc process_project_job {args} {
 			mklink $destdir/reports/report_hsmetrics-${experimentname}.tsv $destdir/${experimentname}_hsmetrics_report.tsv
 		}
 	}
-	if {$extra_reports_mastr} {
-		make_alternative_compar_job $experiment $destdir
+	if {$extra_reports_mastr ne ""} {
+		make_alternative_compar_job $experiment $destdir $extra_reports_mastr
 		set histofiles {}
 		foreach dir $todo(reports) {
 			set list [jobglob $dir/*.histo]
@@ -257,7 +258,7 @@ proc process_project_job {args} {
 		}
 		generate_coverage_report_job $experiment $amplicons $histofiles $destdir
 		generate_html_report_job $experiment $destdir
-		analysis_complete_job $experiment $destdir
+		analysis_complete_job $experiment $destdir $extra_reports_mastr
 	}
 	list $todo(var)
 }
