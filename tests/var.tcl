@@ -142,9 +142,9 @@ test var {var_gatkh basic} {
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.gvcf.gz
 	string_change [cg covered tmp/sreg-gatkh-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
-chr21	1018
+chr21	1019
 chr22	142
-total	1160}
+total	1161}
 
 test var {var_gatkh -ERC GVCF} {
 	test_cleantmp
@@ -156,9 +156,9 @@ test var {var_gatkh -ERC GVCF} {
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.bgvcf
 	string_change [cg covered tmp/sreg-gatkh-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
-chr21	1000
+chr21	1001
 chr22	148
-total	1148}
+total	1149}
 
 test var {var distrreg gatkh} {
 	test_cleantmp
@@ -168,9 +168,9 @@ test var {var distrreg gatkh} {
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.gvcf.gz
 	string_change [cg covered tmp/sreg-gatkh-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
-chr21	1018
+chr21	1019
 chr22	142
-total	1160}
+total	1161}
 
 test var {var_strelka basic} {
 	test_cleantmp
