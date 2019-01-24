@@ -105,6 +105,7 @@ proc process_illumina {args} {
 		}
 	}
 	lappend cmdline $destdir $dbdir
+	upvar job_logdir job_logdir
 	job_logfile $destdir/process_illumina_[file tail $destdir] $destdir $cmdline \
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 biobambam picard java gnusort8 lz4 os]
 	# start

@@ -341,6 +341,7 @@ proc cg_annotate_job {args} {
 	}
 	lappend cmdline $orifile $resultfile
 	set tempbasefile [indexdir_file $resultfile vars.tsv ok]
+	upvar job_logdir job_logdir
 	job_logfile [file dir $tempbasefile]/annotate_[file tail $resultfile] [file dir $tempbasefile] $cmdline \
 		{*}[versions dbdir lz4 os]
 	# logdir

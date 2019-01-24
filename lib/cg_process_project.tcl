@@ -150,6 +150,7 @@ proc process_project_job {args} {
 	set dbdir [dbdir $dbdir]
 	# logfile
 	# -------
+	upvar job_logdir job_logdir
 	job_logfile $destdir/process_project_[file tail $destdir] $destdir $cmdline \
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa samtools gatk gatk3 biobambam picard java gnusort8 lz4 os]
 	# start

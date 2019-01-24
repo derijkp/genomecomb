@@ -446,6 +446,7 @@ proc pmulticompar_job {args} {
 	} compar_file 1
 	set dirs $args
 # putsvars compar_file dirs regonly split targetvarsfile erroronduplicates
+	upvar job_logdir job_logdir
 	job_logfile [file dir $compar_file]/pmulticompar-[file tail $compar_file] [file dir $compar_file] $cmdline \
 		{*}[versions dbdir lz4 os]
 	if {[jobfileexists $compar_file]} {

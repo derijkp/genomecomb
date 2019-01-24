@@ -89,6 +89,7 @@ proc process_multicompar_job {args} {
 		}
 	}
 	lappend cmdline $destdir
+	upvar job_logdir job_logdir
 	job_logfile $destdir/process_multicompar_[file tail $destdir] $destdir $cmdline \
 		{*}[versions dbdir gnusort8 lz4 os]
 	# analysis info

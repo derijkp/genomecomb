@@ -656,6 +656,7 @@ proc process_sample_job {args} {
 		}
 	}
 	lappend cmdline $sampledir
+	upvar job_logdir job_logdir
 	job_logfile $sampledir/process_sample_[file tail $sampledir] $sampledir $cmdline \
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 biobambam picard java gnusort8 lz4 os]
 	# check if ori is a cg dir, if so use process_sample_cgi_job

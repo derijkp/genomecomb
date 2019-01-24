@@ -57,6 +57,8 @@ job_logfile logfile ?basedir? ?cmdline? ?key value? ...
 You can only have one logfile for a run, which is set by the first call to job_logfile.
 Calling job_logfile a second time will not change this. (The -logfile option in job_init
 will override a subsequent call to job_logfile)
+job_logfile also sets the variable job_logdir (if it does not exist yet) to
+[file dir $logdir]/log_jobs
 
 == job_logdir ==
 The job log directory is a directory where per job output, job scripts,
