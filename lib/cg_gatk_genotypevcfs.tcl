@@ -31,6 +31,10 @@ proc cg_gatk_genotypevcfs args {
 	set vcf [file_absolute $vcf]
 	set refseq [lindex [glob $dbdir/genome_*.ifas] 0]
 	set gatkrefseq [gatk_refseq_job $refseq]
+	if {[file extension $gvcf] eq ".gz" && ![file exists $gvcf.tbi]} {
+		puts stderr "Making index for $gvcf"
+		exec tabix -p vcf $gvcf
+	}
 	gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g -Djava.io.tmpdir=[scratchdir]] GenotypeGVCFs \
 		-R $gatkrefseq \
 		-V $gvcf \
