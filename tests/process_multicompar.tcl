@@ -201,7 +201,7 @@ test process_project$testname {limited process_project} {
 	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
 	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
 	file copy data/sreg-annot2.sft tmp/samples/annot2/sreg-annot2.tsv
-	cg process_project -v 2 --stack 1 {*}$::jobopts -dbdir $::refseqdir/hg19 -split 0 tmp >@ stdout 2>@ stderr
+	cg process_project -v 2 --stack 1 {*}$::jobopts -dbdir $::refseqdir/hg19 -split 0 tmp
 	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
 	cg unzip tmp/compar/compar-tmp.tsv.lz4
 	cg unzip tmp/compar/sreg-tmp.tsv.lz4
