@@ -42,6 +42,39 @@ test process_small {process_project mastr_mx2} {
 	join [list_remove $result {}] \n
 } {}
 
+test process_small {process_project mastr_mx2_gatkh} {
+	cd $::smalltestdir
+	file delete -force tmp/mastr_mx2_gatkh
+	file mkdir tmp/mastr_mx2_gatkh/samples
+	foreach sample [glob ori/mastr_mx2.start/samples/*] {
+		set sdest tmp/mastr_mx2_gatkh/samples/[string range [file tail $sample] 0 end-3]/fastq
+		file mkdir $sdest
+		foreach file [glob -nocomplain $sample/ori/*] {
+			file copy $file $sdest
+		}
+	}
+	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2_gatkh/samplicons-wgs2.tsv
+	# file copy ori/mastr_mx2_gatkh/demultiplex_stats.tsv tmp/mastr_mx2_gatkh
+	# if you want to see output while running
+	cg process_project {*}$::dopts -split 1 -reports -predictgender \
+		-minfastqreads 10 -amplicons tmp/mastr_mx2_gatkh/samplicons-wgs2.tsv -extra_reports_mastr 1 \
+		-varcallers {gatkh} -extra_reports_mastr gatkh \
+		tmp/mastr_mx2_gatkh $::refseqdir/hg19 >& tmp/mastr_mx2_gatkh.log
+	# check vs expected
+	set result {}
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
+		-x colinfo -x mastr_mx2_gatkh.html -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png \
+		-x *.analysisinfo -x *.png \
+		tmp/mastr_mx2_gatkh expected/mastr_mx2_gatkh]
+	lappend result [diffanalysisinfo tmp/mastr_mx2_gatkh/compar/annot_compar-mastr_mx2_gatkh.tsv.analysisinfo expected/mastr_mx2_gatkh/compar/annot_compar-mastr_mx2_gatkh.tsv.analysisinfo]
+	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
+		lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_gatkh/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics expected/mastr_mx2_gatkh/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"]
+	}
+	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_gatkh/mastr_mx2_gatkh.html expected/mastr_mx2_gatkh/mastr_mx2_gatkh.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
+	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_gatkh/compar/info_analysis.tsv expected/mastr_mx2_gatkh/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+	join [list_remove $result {}] \n
+} {}
+
 #test process_small {process_project mastr_mx2 space in name} {
 #	cd $::smalltestdir
 #	set mastrdir {tmp/mastr_mx2 space}
