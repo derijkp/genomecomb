@@ -386,7 +386,7 @@ proc cg_tsv2vcf {args} {
 	} {infile outfile} 0 2
 	set refseq [refseq $refseq $dbdir]
 	if {[info exists infile]} {
-		set f [open $infile]
+		set f [gzopen $infile]
 	} else {
 		set f stdin
 	}

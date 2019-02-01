@@ -194,4 +194,10 @@ test tsv2vcf {old conversion} {
 	exec diff tmp/temp.vcf data/convertedvcf_old.vcf
 } {}
 
+test tsv2vcf {compressed} {
+	exec cg lz4 < data/convertedvcf_old.tsv > tmp/temp.tsv.lz4
+	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv.lz4 tmp/temp.vcf
+	exec diff tmp/temp.vcf data/convertedvcf_old.vcf
+} {}
+
 testsummarize
