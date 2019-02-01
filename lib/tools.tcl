@@ -140,15 +140,24 @@ proc listsamples {header {pattern {}}} {
 
 # listanalyses returns the list of analyses, defined as the part after the first - in the fieldname
 # e.g. gatk-rdsbwa-sample2 for zyg-gatk-rdsbwa-sample2
-proc listanalyses {header {pattern {}}} {
+proc listanalyses {header {pattern {}} {analysisfieldsVar {}}} {
+	if {$analysisfieldsVar ne ""} {
+		upvar $analysisfieldsVar analysisfields
+		set analysisfields {}
+		set useanalysisfields 1
+	} else {
+		set useanalysisfields 0
+	}
 	set names {}
 	foreach col $header {
 		set pos [string first - $col]
 		if {$pos != -1} {
-			incr pos
-			set name [string range $col $pos end]
+			set name [string range $col [expr {$pos+1}] end]
 			if {$pattern eq "" || [string match $pattern $name]} {
 				lappend names $name
+				if {$useanalysisfields} {
+					lappend analysisfields [string range $col 0 [expr {$pos-1}]]
+				}
 			}
 		}
 	}

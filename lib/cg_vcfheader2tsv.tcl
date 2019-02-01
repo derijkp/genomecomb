@@ -59,43 +59,15 @@ proc vcfheader2table {lines {sheader {}} {prekeys {}} {extra {}}} {
 	list $sheader $data $prekeys
 }
 
-proc putsvcf2tsvheader {o sheaderlen table line} {
+proc vcf2tsvheader_line {sheaderlen table line} {
 	if {[llength $line] < $sheaderlen} {
 		lappend line {*}[list_fill [expr {$sheaderlen - [llength $line]}] {}]
 	}
-	puts $o "#$table\t[join $line \t]"
+	return "#$table\t[join $line \t]"
 }
 
-proc cg_vcfheader2tsv {args} {
-	array set changefieldsa {fileformat vcf_fileformat}
-	set showheader 1
-	set split 1
-	set meta {}
-	cg_options vcfheader2tsv args {
-		-changefields {
-			array set changefieldsa $value
-		}
-		-showheader {
-			set showheader 0
-		}
-		-split {
-			set split $value
-		}
-		-meta {
-			set meta $value
-		}
-	} {infile outfile} 0 2
-	if {[info exists infile]} {
-		set f [gzopen $infile]
-	} else {
-		set f stdin
-	}
-	if {[info exists outfile]} {
-		set o [open $outfile w]
-	} else {
-		set o stdout
-	}
-
+proc vcf2tsvheader {vcfheader header split meta typelist {nheaderVar {}}} {
+	if {$nheaderVar ne ""} {upvar $nheaderVar nheader}
 	array set conv_formata {
 		AD alleledepth
 		GT genotype
@@ -113,37 +85,33 @@ proc cg_vcfheader2tsv {args} {
 		DB dbsnp
 		H2 Hapmap2
 	}
+	array set number_conv [lrange $typelist 1 end]
 	# read data in array a
 	unset -nocomplain a
 	unset -nocomplain donea
-	while 1 {
-		if {[gets $f line] == -1} break
-		if {[string range $line 0 1] ne "##"} break
+	foreach line $vcfheader {
 		if {[regexp {##([^=]+)=(.*)$} $line temp key value]} {
 			lappend a($key)	$value
 		} else {
 			lappend a(comments)	$value
 		}
 	}
-	if {[string index $line 0] eq "#"} {
-		set header [string range $line 1 end]
-	}
-	close $f
+	set result {}
 	# start printing
-	puts $o "#filetype\ttsv/varfile"
-	puts $o "#fileversion\t[version fileformat]"
-	puts $o "#split\t$split"
-	puts $o "#info\ttsv converted from vcf"
+	lappend result "#filetype\ttsv/varfile"
+	lappend result "#fileversion\t[version fileformat]"
+	lappend result "#split\t$split"
+	lappend result "#info\ttsv converted from vcf"
 	foreach {key value} $meta {
-		puts $o "#$key\t$value"
+		lappend result "#$key\t$value"
 	}
 	# samples
 	set samples [lrange $header 9 end]
 	if {[llength $samples] == 1} {
-		puts $o "#numsamples\t1"
-		puts $o "#samplename\t[lindex $samples 0]"
+		lappend result "#numsamples\t1"
+		lappend result "#samplename\t[lindex $samples 0]"
 	} else {
-		puts $o "#numsamples\t[llength $samples]"
+		lappend result "#numsamples\t[llength $samples]"
 	}
 	#
 	set nheader {chromosome begin end type ref alt name quality filter}
@@ -159,27 +127,31 @@ proc cg_vcfheader2tsv {args} {
 	unset -nocomplain a(INFO)
 	# default fields
 	set sheaderlen [llength $sheader]
-	puts $o "#fields\ttable"
-	puts $o "#fields\t[join $sheader \t]"
-	putsvcf2tsvheader $o $sheaderlen fields {chromosome 1 String Chromosome/Contig var}
-	putsvcf2tsvheader $o $sheaderlen fields {begin 1 Integer {Begin of feature (0 based - half open)} var}
-	putsvcf2tsvheader $o $sheaderlen fields {end 1 Integer {End of feature (0 based - half open)} var}
-	putsvcf2tsvheader $o $sheaderlen fields {type 1 String {Type of feature (snp,del,ins,...)} var}
-	putsvcf2tsvheader $o $sheaderlen fields {ref 1 String {Reference sequence, can be a number for large features} var}
-	putsvcf2tsvheader $o $sheaderlen fields {alt 1 String {Alternative sequence, can be a number for large features} var}
-	putsvcf2tsvheader $o $sheaderlen fields {name 1 String {name of feature} var}
-	putsvcf2tsvheader $o $sheaderlen fields {quality 1 Float {Quality score of feature} var}
-	putsvcf2tsvheader $o $sheaderlen fields {filter 1 String {Filter value} var}
-	putsvcf2tsvheader $o $sheaderlen fields {alleleSeq1 1 String {allele present on first chromosome/haplotype} geno}
-	putsvcf2tsvheader $o $sheaderlen fields {alleleSeq2 1 String {allele present on second chromosome/haplotype} geno}
-	putsvcf2tsvheader $o $sheaderlen fields {sequenced 1 String {sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced} geno}
-	putsvcf2tsvheader $o $sheaderlen fields {zyg 1 String {Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant} geno}
-	putsvcf2tsvheader $o $sheaderlen fields {phased 1 Integer {Phased status: 0 if not phased, other integer if phased} geno}
-	putsvcf2tsvheader $o $sheaderlen fields {genotypes H Integer {Genotypes} geno}
+	lappend result "#fields\ttable"
+	lappend result "#fields\t[join $sheader \t]"
+	lappend result [vcf2tsvheader_line $sheaderlen fields {chromosome 1 String Chromosome/Contig var}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {begin 1 Integer {Begin of feature (0 based - half open)} var}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {end 1 Integer {End of feature (0 based - half open)} var}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {type 1 String {Type of feature (snp,del,ins,...)} var}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {ref 1 String {Reference sequence, can be a number for large features} var}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {alt 1 String {Alternative sequence, can be a number for large features} var}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {name 1 String {name of feature} var}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {quality 1 Float {Quality score of feature} var}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {filter 1 String {Filter value} var}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {alleleSeq1 1 String {allele present on first chromosome/haplotype} geno}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {alleleSeq2 1 String {allele present on second chromosome/haplotype} geno}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {sequenced 1 String {sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced} geno}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {zyg 1 String {Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant} geno}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {phased 1 Integer {Phased status: 0 if not phased, other integer if phased} geno}]
+	lappend result [vcf2tsvheader_line $sheaderlen fields {genotypes H Integer {Genotypes} geno}]
 	# print FORMAT fields
 	foreach line $fdata {
 		foreach {field number} $line break
 		if {[inlist {GT} $field]} continue
+		if {[info exists number_conv($field)]} {
+			set number $number_conv($field)
+			lset line 1 $number
+		}
 		if {[info exists conv_formata($field)]} {
 			set field $conv_formata($field)
 			lset line 0 $field
@@ -188,11 +160,13 @@ proc cg_vcfheader2tsv {args} {
 			set temp $line
 			lset temp 0 ${field}_ref
 			lset temp 1 1
-			putsvcf2tsvheader $o $sheaderlen fields $temp
+			lset temp 3 "reference only value of: [lindex $temp 3]"
+			lset line 3 "alleles only values of: [lindex $line 3]"
+			lappend result [vcf2tsvheader_line $sheaderlen fields $temp]
 			lappend headerfields ${field}_ref
 			lset line 1 A
 		}
-		putsvcf2tsvheader $o $sheaderlen fields $line
+		lappend result [vcf2tsvheader_line $sheaderlen fields $line]
 		set donea($field) 1
 		lappend headerfields $field
 	}
@@ -208,16 +182,34 @@ proc cg_vcfheader2tsv {args} {
 	}
 	# print info fields
 	foreach line $idata {
-		set field [lindex $line 0]
+		foreach {field number} $line break
 		if {[inlist {END SVLEN SVTYPE} $field]} continue
+		if {[info exists number_conv($field)]} {
+			set number $number_conv($field)
+			lset line 1 $number
+		}
 		if {$field eq "DP"} {
 			set field totalcoverage
 		} elseif {[info exists conv_formata($field)]} {
 			set field $conv_formata($field)
 		}
+		if {$number eq "R"} {
+			set temp $line
+			if {[info exists donea(${field}_ref)]} {
+				lset temp 0 info_${field}_ref
+			} else {
+				lset temp 0 ${field}_ref
+			}
+			lset temp 1 1
+			lset temp 3 "reference only value of: [lindex $temp 3]"
+			lset line 3 "alleles only values of: [lindex $line 3]"
+			lappend result [vcf2tsvheader_line $sheaderlen fields $temp]
+			lappend nheader ${field}_ref
+			lset line 1 A
+		}
 		if {[info exists donea($field)]} {set field info_$field}
 		lset line 0 $field
-		putsvcf2tsvheader $o $sheaderlen fields $line
+		lappend result [vcf2tsvheader_line $sheaderlen fields $line]
 		lappend nheader $field
 	}
 	# other data in vcf header
@@ -226,17 +218,65 @@ proc cg_vcfheader2tsv {args} {
 		set lines $a($field)
 		if {[string index [lindex $lines 0] 0] ne "<"} {
 			foreach line $a($field) {
-				puts $o \#vcf_$field\t$line
+				lappend result \#vcf_$field\t$line
 			}
 			continue
 		}
 		foreach {sheader data} [vcfheader2table $lines] break
-		puts $o \#$field\ttable
-		puts $o \#$field\t[join $sheader \t]
+		lappend result \#$field\ttable
+		lappend result \#$field\t[join $sheader \t]
 		foreach line $data {
-			puts $o "\#$field\t[join $line \t]"
+			lappend result "\#$field\t[join $line \t]"
 		}
 	}
+	return $result
+}
+
+proc cg_vcfheader2tsv {args} {
+	array set changefieldsa {fileformat vcf_fileformat}
+	set typelist ". AD R RPA R AC A AF A"
+	set showheader 1
+	set split 1
+	set meta {}
+	cg_options vcfheader2tsv args {
+		-changefields {
+			array set changefieldsa $value
+		}
+		-showheader {
+			set showheader 0
+		}
+		-split {
+			set split $value
+		}
+		-meta {
+			set meta $value
+		}
+		-typelist {
+			set typelist $value
+		}
+	} {infile outfile} 0 2
+	if {[info exists infile]} {
+		set f [gzopen $infile]
+	} else {
+		set f stdin
+	}
+	if {[info exists outfile]} {
+		set o [open $outfile w]
+	} else {
+		set o stdout
+	}
+	#
+	set vcfheader {}
+	while 1 {
+		if {[gets $f line] == -1} break
+		if {[string range $line 0 1] ne "##"} break
+		lappend vcfheader $line
+	}
+	if {[string index $line 0] eq "#"} {
+		set header [string range $line 1 end]
+	}
+	close $f
+	puts $o [join [vcf2tsvheader $vcfheader $header $split $meta $typelist nheader] \n]
 	if {$showheader} {
 		puts $o [join $nheader \t]
 	}

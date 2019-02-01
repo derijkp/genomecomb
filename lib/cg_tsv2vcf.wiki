@@ -1,0 +1,34 @@
+= tsv2vcf =
+
+== Format ==
+cg tsv2vcf ?options? ?infile? ?outfile?
+
+== Summary ==
+Converts data in genomecomb tab-separated variant format ([[tsv]]) to vcf.
+
+== Description ==
+cg tsv2vcf converts a genomecomb tab-separated variant file ([[tsv]]) to a vcf.
+If metadata is present in the tsv file (in the genomecomb metadata
+format), it will be used for creating the vcf header. If the metadata is not present,
+A number of default descriptions for the fieldnames are used to create the
+header (these are based on the gatk(h), samtools, etc. variantcallers)
+The commands needs the genomic reference sequence, which can be given
+directly using the -refseq option or indirectly using -dbdir.
+
+== Arguments ==
+; infile: file to be converted, if not given, uses stdin. File may be compressed.
+; outfile: write results to outfile, if not given, uses stdout
+
+== Options ==
+; -split 0/1: tsv files usually have all variants on separate lines. 
+cg tsv2vcf will by default merge variants that start at the same position
+(as usual in the vcf format). Using -split 1, will put these on
+separate lines as well
+; -refseq refseq: genomic reference sequence
+; -dbdir dbdir: dbdir containing reference genomes databases, used to find the genomic reference
+; -sample samplename: For single sample tsv files (not multicoompar) the
+samplename that will be used in the vcf file can be given using this option.
+If not given, it will try to find the samplename in the file (metadata), or base it on the filename
+
+== Category ==
+Format Conversion

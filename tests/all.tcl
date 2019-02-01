@@ -26,6 +26,7 @@ source val.tcl
 source varia.tcl
 source vcf.tcl
 source vcf2tsv.tcl
+source tsv2vcf.tcl
 source map.tcl
 source var.tcl
 source job.tcl

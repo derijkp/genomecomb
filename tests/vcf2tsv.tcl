@@ -578,4 +578,13 @@ test vcf2tsv {vcfheader2tsv vs vcf2tsv} {
 	}
 } {}
 
+test vcf2tsv {output various varcallers} {
+	foreach file [glob data/var-*-bwa-test.vcf] {
+		puts $file
+		cg vcf2tsv -split 1 $file tmp/test.tsv
+		cg tsvdiff tmp/test.tsv [file root $file].tsv
+		exec diff tmp/test.tsv [file root $file].tsv
+	}
+} {}
+
 testsummarize

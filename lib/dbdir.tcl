@@ -26,9 +26,15 @@ proc dbdir_ref dbdir {
 	file tail $dbdir
 }
 
-proc refseq {{refseq {}}} {
+proc refseq {{refseq {}} {dbdir {}}} {
 	if {$refseq eq ""} {
-		set pattern [dbdir]
+		if {$dbdir ne ""} {
+			set pattern $dbdir
+		} elseif {[catch {
+			set pattern [dbdir]
+		} msg]} {
+			error "refseq not defined, specify using the -refseq option. Alternatively you can also specify dbdir use options e.g. (-dbdir if supported) or environment variable GENOMECOMB_DBDIR to set"
+		}
 	} else {
 		set pattern $refseq
 	}

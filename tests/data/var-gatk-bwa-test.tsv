@@ -1,0 +1,158 @@
+#filetype	tsv/varfile
+#fileversion	0.99
+#split	1
+#info	tsv converted from vcf
+#numsamples	1
+#samplename	NA19240m
+#fields	table
+#fields	field	number	type	description	source
+#fields	chromosome	1	String	Chromosome/Contig	var
+#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+#fields	end	1	Integer	End of feature (0 based - half open)	var
+#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+#fields	ref	1	String	Reference sequence, can be a number for large features	var
+#fields	alt	1	String	Alternative sequence, can be a number for large features	var
+#fields	name	1	String	name of feature	var
+#fields	quality	1	Float	Quality score of feature	var
+#fields	filter	1	String	Filter value	var
+#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	geno
+#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno
+#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno
+#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)	geno
+#fields	genotypes	H	Integer	Genotypes	geno
+#fields	alleledepth_ref	1	Integer	reference only value of: Allelic depths for the ref and alt alleles in the order listed	format
+#fields	alleledepth	A	Integer	alleles only values of: Allelic depths for the ref and alt alleles in the order listed	format
+#fields	coverage	1	Integer	Approximate read depth (reads with MQ=255 or with bad mates are filtered)	format
+#fields	genoqual	1	Integer	Genotype Quality	format
+#fields	PL	G	Integer	Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification	format
+#fields	allelecount	A	Integer	Allele count in genotypes, for each ALT allele, in the same order as listed	info
+#fields	frequency	A	Float	Allele Frequency, for each ALT allele, in the same order as listed	info
+#fields	totalallelecount	1	Integer	Total number of alleles in called genotypes	info
+#fields	BaseQRankSum	1	Float	Z-score from Wilcoxon rank sum test of Alt Vs. Ref base qualities	info
+#fields	totalcoverage	1	Integer	Approximate read depth; some reads may have been filtered	info
+#fields	DS	0	Flag	Were any of the samples downsampled?	info
+#fields	Dels	1	Float	Fraction of Reads Containing Spanning Deletions	info
+#fields	ExcessHet	1	Float	Phred-scaled p-value for exact test of excess heterozygosity	info
+#fields	FS	1	Float	Phred-scaled p-value using Fisher's exact test to detect strand bias	info
+#fields	HaplotypeScore	1	Float	Consistency of the site with at most two segregating haplotypes	info
+#fields	InbreedingCoeff	1	Float	Inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation	info
+#fields	MLEAC	A	Integer	Maximum likelihood expectation (MLE) for the allele counts (not necessarily the same as the AC), for each ALT allele, in the same order as listed	info
+#fields	MLEAF	A	Float	Maximum likelihood expectation (MLE) for the allele frequency (not necessarily the same as the AF), for each ALT allele, in the same order as listed	info
+#fields	MQ	1	Float	RMS Mapping Quality	info
+#fields	MQ0	1	Integer	Total Mapping Quality Zero Reads	info
+#fields	MQRankSum	1	Float	Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities	info
+#fields	NDA	1	Integer	Number of alternate alleles discovered (but not necessarily genotyped) at this site	info
+#fields	QD	1	Float	Variant Confidence/Quality by Depth	info
+#fields	RPA_ref	1	Integer	reference only value of: Number of times tandem repeat unit is repeated, for each allele (including reference)	info
+#fields	RPA	A	Integer	alleles only values of: Number of times tandem repeat unit is repeated, for each allele (including reference)	info
+#fields	RU	1	String	Tandem repeat unit (bases)	info
+#fields	ReadPosRankSum	1	Float	Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias	info
+#fields	SOR	1	Float	Symmetric Odds Ratio of 2x2 contingency table to detect strand bias	info
+#fields	STR	0	Flag	Variant is a short tandem repeat	info
+#contig	table
+#contig	ID	length	assembly
+#contig	chr1	249250621	hg19
+#contig	chr1_gl000191_random	106433	hg19
+#contig	chr1_gl000192_random	547496	hg19
+#contig	chr2	243199373	hg19
+#contig	chr3	198022430	hg19
+#contig	chr4	191154276	hg19
+#contig	chr4_gl000193_random	189789	hg19
+#contig	chr4_gl000194_random	191469	hg19
+#contig	chr5	180915260	hg19
+#contig	chr6	171115067	hg19
+#contig	chr7	159138663	hg19
+#contig	chr7_gl000195_random	182896	hg19
+#contig	chr8	146364022	hg19
+#contig	chr8_gl000196_random	38914	hg19
+#contig	chr8_gl000197_random	37175	hg19
+#contig	chr9	141213431	hg19
+#contig	chr9_gl000198_random	90085	hg19
+#contig	chr9_gl000199_random	169874	hg19
+#contig	chr9_gl000200_random	187035	hg19
+#contig	chr9_gl000201_random	36148	hg19
+#contig	chr10	135534747	hg19
+#contig	chr11	135006516	hg19
+#contig	chr11_gl000202_random	40103	hg19
+#contig	chr12	133851895	hg19
+#contig	chr13	115169878	hg19
+#contig	chr14	107349540	hg19
+#contig	chr15	102531392	hg19
+#contig	chr16	90354753	hg19
+#contig	chr17	81195210	hg19
+#contig	chr17_gl000203_random	37498	hg19
+#contig	chr17_gl000204_random	81310	hg19
+#contig	chr17_gl000205_random	174588	hg19
+#contig	chr17_gl000206_random	41001	hg19
+#contig	chr18	78077248	hg19
+#contig	chr18_gl000207_random	4262	hg19
+#contig	chr19	59128983	hg19
+#contig	chr19_gl000208_random	92689	hg19
+#contig	chr19_gl000209_random	159169	hg19
+#contig	chr20	63025520	hg19
+#contig	chr21	48129895	hg19
+#contig	chr21_gl000210_random	27682	hg19
+#contig	chr22	51304566	hg19
+#contig	chrM	16571	hg19
+#contig	chrUn_gl000211	166566	hg19
+#contig	chrUn_gl000212	186858	hg19
+#contig	chrUn_gl000213	164239	hg19
+#contig	chrUn_gl000214	137718	hg19
+#contig	chrUn_gl000215	172545	hg19
+#contig	chrUn_gl000216	172294	hg19
+#contig	chrUn_gl000217	172149	hg19
+#contig	chrUn_gl000218	161147	hg19
+#contig	chrUn_gl000219	179198	hg19
+#contig	chrUn_gl000220	161802	hg19
+#contig	chrUn_gl000221	155397	hg19
+#contig	chrUn_gl000222	186861	hg19
+#contig	chrUn_gl000223	180455	hg19
+#contig	chrUn_gl000224	179693	hg19
+#contig	chrUn_gl000225	211173	hg19
+#contig	chrUn_gl000226	15008	hg19
+#contig	chrUn_gl000227	128374	hg19
+#contig	chrUn_gl000228	129120	hg19
+#contig	chrUn_gl000229	19913	hg19
+#contig	chrUn_gl000230	43691	hg19
+#contig	chrUn_gl000231	27386	hg19
+#contig	chrUn_gl000232	40652	hg19
+#contig	chrUn_gl000233	45941	hg19
+#contig	chrUn_gl000234	40531	hg19
+#contig	chrUn_gl000235	34474	hg19
+#contig	chrUn_gl000236	41934	hg19
+#contig	chrUn_gl000237	45867	hg19
+#contig	chrUn_gl000238	39939	hg19
+#contig	chrUn_gl000239	33824	hg19
+#contig	chrUn_gl000240	41933	hg19
+#contig	chrUn_gl000241	42152	hg19
+#contig	chrUn_gl000242	43523	hg19
+#contig	chrUn_gl000243	43341	hg19
+#contig	chrUn_gl000244	39929	hg19
+#contig	chrUn_gl000245	36651	hg19
+#contig	chrUn_gl000246	38154	hg19
+#contig	chrUn_gl000247	36422	hg19
+#contig	chrUn_gl000248	39786	hg19
+#contig	chrUn_gl000249	38502	hg19
+#contig	chrX	155270560	hg19
+#contig	chrY	59373566	hg19
+#GATKCommandLine.UnifiedGenotyper	table
+#GATKCommandLine.UnifiedGenotyper	ID	Version	Date	Epoch	CommandLineOptions
+#GATKCommandLine.UnifiedGenotyper	UnifiedGenotyper	3.8-1-0-gf15c1c3ef	Tue Jan 29 13:31:43 CET 2019	1548765103982	analysis_type=UnifiedGenotyper input_file=[bwa.bam] showFullBamList=false read_buffer_size=null read_filter=[] disable_read_filter=[] intervals=null excludeIntervals=null interval_set_rule=UNION interval_merging=ALL interval_padding=0 reference_sequence=/data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa nonDeterministicRandomSeed=false disableDithering=false maxRuntime=-1 maxRuntimeUnits=MINUTES downsampling_type=BY_SAMPLE downsample_to_fraction=null downsample_to_coverage=1000 baq=OFF baqGapOpenPenalty=40.0 refactor_NDN_cigar_string=false fix_misencoded_quality_scores=false allow_potentially_misencoded_quality_scores=false useOriginalQualities=false defaultBaseQualities=-1 performanceLog=null BQSR=null quantize_quals=0 static_quantized_quals=null round_down_quantized=false disable_indel_quals=false emit_original_quals=false preserve_qscores_less_than=6 globalQScorePrior=-1.0 secondsBetweenProgressUpdates=10 validation_strictness=SILENT remove_program_records=false keep_program_records=false sample_rename_mapping_file=null unsafe=null use_jdk_deflater=false use_jdk_inflater=false disable_auto_index_creation_and_locking_when_reading_rods=false no_cmdline_in_header=false sites_only=false never_trim_vcf_format_field=false bcf=false bam_compression=null simplifyBAM=false disable_bam_indexing=false generate_md5=false num_threads=1 num_cpu_threads_per_data_thread=1 num_io_threads=0 monitorThreadEfficiency=false num_bam_file_handles=null read_group_black_list=null pedigree=[] pedigreeString=[] pedigreeValidationType=STRICT allow_intervals_with_unindexed_bam=false generateShadowBCF=false variant_index_type=DYNAMIC_SEEK variant_index_parameter=-1 reference_window_stop=0 phone_home= gatk_key=null tag=NA logging_level=INFO log_to_file=null help=false version=false genotype_likelihoods_model=SNP pcr_error_rate=1.0E-4 computeSLOD=false pair_hmm_implementation=LOGLESS_CACHING min_base_quality_score=17 max_deletion_fraction=0.05 min_indel_count_for_genotyping=5 min_indel_fraction_per_sample=0.25 indelGapContinuationPenalty=10 indelGapOpenPenalty=45 indelHaplotypeSize=80 indelDebug=false ignoreSNPAlleles=false allReadsSP=false ignoreLaneInfo=false reference_sample_calls=(RodBinding name= source=UNBOUND) reference_sample_name=null min_quality_score=1 max_quality_score=40 site_quality_prior=20 min_power_threshold_for_calling=0.95 annotateNDA=true useNewAFCalculator=false heterozygosity=0.001 indel_heterozygosity=1.25E-4 heterozygosity_stdev=0.01 standard_min_confidence_threshold_for_calling=10.0 standard_min_confidence_threshold_for_emitting=30.0 max_alternate_alleles=6 max_genotype_count=1024 max_num_PL_values=100 input_prior=[] sample_ploidy=2 genotyping_mode=DISCOVERY alleles=(RodBinding name= source=UNBOUND) contamination_fraction_to_filter=0.0 contamination_fraction_per_sample_file=null p_nonref_model=null exactcallslog=null output_mode=EMIT_VARIANTS_ONLY allSitePLs=false dbsnp=(RodBinding name= source=UNBOUND) comp=[] out=/home/peter/dev/genomecomb/tests/tmp/delvar-gatk-bwa.vcf.temp onlyEmitSamples=[] debug_file=null metrics_file=null annotation=[] excludeAnnotation=[] filter_reads_with_N_cigar=false filter_mismatching_base_and_quals=false filter_bases_not_stored=false
+#vcf_fileformat	VCFv4.2
+#FILTER	table
+#FILTER	ID	Description
+#FILTER	LowQual	Low quality
+#vcf_reference	file:///data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa
+# ----
+chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	PL	allelecount	frequency	totalallelecount	BaseQRankSum	totalcoverage	DS	Dels	ExcessHet	FS	HaplotypeScore	InbreedingCoeff	MLEAC	MLEAF	MQ	MQ0	MQRankSum	NDA	QD	RPA_ref	RPA	RU	ReadPosRankSum	SOR	STR
+chr21	42735718	42735719	snp	G	A	.	103.77	.	G	A	t	0	0;1	4	4	8	99	132,0,100	1	0.500	2	-1.006	8		0.00	3.0103	0.000	0.0000		1	0.500	60.00	0	0.000	1	12.97				-0.697	0.693	
+chr21	42749188	42749189	snp	A	G	.	11.83	.	G	G	m	0	1;1	0	1	1	3	38,3,0	2	1.00	2		1		0.00	3.0103	0.000	0.0000		2	1.00	60.00	0		1	11.83					1.609	
+chr21	42751658	42751659	snp	A	G	.	12.77	.	G	G	m	0	1;1	0	1	1	3	39,3,0	2	1.00	2		1		0.00	3.0103	0.000	0.0000		2	1.00	60.00	0		1	12.77					1.609	
+chr21	42752337	42752338	snp	A	G	.	14.68	.	G	G	m	0	1;1	0	1	1	3	41,3,0	2	1.00	2		1		0.00	3.0103	0.000	0.0000		2	1.00	60.00	0		1	14.68					1.609	
+chr21	42752356	42752357	snp	C	A	.	18.59	.	A	A	m	0	1;1	0	2	2	3	45,3,0	2	1.00	2		2		0.00	3.0103	0.000	0.0000		2	1.00	60.00	0		1	9.30					0.693	
+chr21	42762271	42762272	snp	T	C	.	12.77	.	C	C	m	0	1;1	0	1	1	3	39,3,0	2	1.00	2		1		0.00	3.0103	0.000	0.0000		2	1.00	60.00	0		1	12.77					1.609	
+chr21	42775179	42775180	snp	C	T	.	173.90	.	T	T	m	0	1;1	0	6	6	15	202,15,0	2	1.00	2		6		0.00	3.0103	0.000	0.9999		2	1.00	60.00	0		1	28.98					2.303	
+chr21	42775554	42775555	snp	A	G	.	79.28	.	G	G	m	0	1;1	0	3	3	9	107,9,0	2	1.00	2		3		0.00	3.0103	0.000	0.0000		2	1.00	60.00	0		1	26.43					2.833	
+chr21	42780199	42780200	snp	A	G	.	15.65	.	G	G	m	0	1;1	0	1	1	3	42,3,0	2	1.00	2		1		0.00	3.0103	0.000	0.0000		2	1.00	60.00	0		1	15.65					1.609	
+chr22	41923650	41923651	snp	T	C	.	15.65	.	C	C	m	0	1;1	0	1	1	3	42,3,0	2	1.00	2		1		0.00	3.0103	0.000	0.0000		2	1.00	60.00	0		1	15.65					1.609	
