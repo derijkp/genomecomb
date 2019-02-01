@@ -9,7 +9,7 @@ The command will also sort the tsv appropriately.
 
 == Description ==
 cg vcf2tsv converts a vcf file to a tab-separated variant file ([[tsv]]).
-The header section of the vcf is included as comments in the tsv file. The
+The header section of the vcf is converted to the genomecomb header conventions in the tsv file. The
 fields describing the variant (chromosome, begin, end, type, ref, alt) are
 in the normal genomecomb conventions. The fields ID and QUAL in the vcf
 file are in the tsv as "name" and "quality" respectively. If genotype data
@@ -24,9 +24,10 @@ as a name, except for the following (common) fields that get a longer
 ; GT: genotype
 ; DP in INFO: totalcoverage (Total Depth, counting all reads)
 ; DP in FORMAT: coverage (Read Depth, counting only filtered reads used for calling, and only from one sample)
-; FT: filter
+; FT: gfilter
 ; GL: loglikelihood (three floating point log10-scaled likelihoods for AA,AB,BB genotypes where A=ref and B=alt; not applicable if site is not biallelic)
 ; GQ: genoqual (genotype quality, encoded as a phred quality -10log_10p(genotype call is wrong))
+; PS: phaseset (integer indicating the haplotype set the phased genotype belongs to)
 ; HQ: haploqual (haplotype qualities, two phred qualities comma separated)
 ; AN: totalallelecount (total number of alleles in called genotypes)
 ; AC: allelecount (allele count in genotypes, for each alt allele, in the same order as listed)

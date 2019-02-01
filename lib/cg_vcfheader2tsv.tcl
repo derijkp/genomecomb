@@ -100,11 +100,12 @@ proc cg_vcfheader2tsv {args} {
 		AD alleledepth
 		GT genotype
 		DP coverage
-		FT filter
+		FT gfilter
 		GL loglikelihood
 		GQ genoqual
 		HQ haploqual
 		AN totalallelecount
+		PS phaseset
 
 		AC allelecount
 		AF frequency
@@ -173,7 +174,7 @@ proc cg_vcfheader2tsv {args} {
 	putsvcf2tsvheader $o $sheaderlen fields {alleleSeq2 1 String {allele present on second chromosome/haplotype} geno}
 	putsvcf2tsvheader $o $sheaderlen fields {sequenced 1 String {sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced} geno}
 	putsvcf2tsvheader $o $sheaderlen fields {zyg 1 String {Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant} geno}
-	putsvcf2tsvheader $o $sheaderlen fields {phased 1 Integer {Phased status: 0 if not phased, other integer if phased (same as variants in phase)} geno}
+	putsvcf2tsvheader $o $sheaderlen fields {phased 1 Integer {Phased status: 0 if not phased, other integer if phased} geno}
 	putsvcf2tsvheader $o $sheaderlen fields {genotypes H Integer {Genotypes} geno}
 	# print FORMAT fields
 	foreach line $fdata {

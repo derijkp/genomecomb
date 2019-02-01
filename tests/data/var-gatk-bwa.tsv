@@ -6,50 +6,51 @@
 #numsamples	1
 #samplename	NA19240m
 #fields	table
-#fields	field	number	type	description
-#fields	chromosome	1	String	Chromosome/Contig
-#fields	begin	1	Integer	Begin of feature (0 based - half open)
-#fields	end	1	Integer	End of feature (0 based - half open)
-#fields	type	1	String	Type of feature (snp,del,ins,...)
-#fields	ref	1	String	Reference sequence, can be a number for large features
-#fields	alt	1	String	Alternative sequence, can be a number for large features
-#fields	name	1	String	name of feature
-#fields	quality	1	Float	Quality score of feature
-#fields	filter	1	String	Filter value
-#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype
-#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype
-#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced
-#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant
-#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)
-#fields	genotypes	H	Integer	Genotypes
-#fields	alleledepth_ref	1	Integer	Allelic depths for the ref and alt alleles in the order listed
-#fields	alleledepth	A	Integer	Allelic depths for the ref and alt alleles in the order listed
-#fields	coverage	1	Integer	Approximate read depth (reads with MQ=255 or with bad mates are filtered)
-#fields	genoqual	1	Integer	Genotype Quality
-#fields	PL	G	Integer	Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification
-#fields	allelecount	A	Integer	Allele count in genotypes, for each ALT allele, in the same order as listed
-#fields	frequency	A	Float	Allele Frequency, for each ALT allele, in the same order as listed
-#fields	totalallelecount	1	Integer	Total number of alleles in called genotypes
-#fields	BaseQRankSum	1	Float	Z-score from Wilcoxon rank sum test of Alt Vs. Ref base qualities
-#fields	totalcoverage	1	Integer	Approximate read depth; some reads may have been filtered
-#fields	DS	0	Flag	Were any of the samples downsampled?
-#fields	Dels	1	Float	Fraction of Reads Containing Spanning Deletions
-#fields	ExcessHet	1	Float	Phred-scaled p-value for exact test of excess heterozygosity
-#fields	FS	1	Float	Phred-scaled p-value using Fisher's exact test to detect strand bias
-#fields	HaplotypeScore	1	Float	Consistency of the site with at most two segregating haplotypes
-#fields	InbreedingCoeff	1	Float	Inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation
-#fields	MLEAC	A	Integer	Maximum likelihood expectation (MLE) for the allele counts (not necessarily the same as the AC), for each ALT allele, in the same order as listed
-#fields	MLEAF	A	Float	Maximum likelihood expectation (MLE) for the allele frequency (not necessarily the same as the AF), for each ALT allele, in the same order as listed
-#fields	MQ	1	Float	RMS Mapping Quality
-#fields	MQ0	1	Integer	Total Mapping Quality Zero Reads
-#fields	MQRankSum	1	Float	Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities
-#fields	NDA	1	Integer	Number of alternate alleles discovered (but not necessarily genotyped) at this site
-#fields	QD	1	Float	Variant Confidence/Quality by Depth
-#fields	RPA	.	Integer	Number of times tandem repeat unit is repeated, for each allele (including reference)
-#fields	RU	1	String	Tandem repeat unit (bases)
-#fields	ReadPosRankSum	1	Float	Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias
-#fields	SOR	1	Float	Symmetric Odds Ratio of 2x2 contingency table to detect strand bias
-#fields	STR	0	Flag	Variant is a short tandem repeat
+#fields	field	number	type	description	source
+#fields	chromosome	1	String	Chromosome/Contig	var
+#fields	begin	1	Integer	Begin of feature (0 based - half open)	var
+#fields	end	1	Integer	End of feature (0 based - half open)	var
+#fields	type	1	String	Type of feature (snp,del,ins,...)	var
+#fields	ref	1	String	Reference sequence, can be a number for large features	var
+#fields	alt	1	String	Alternative sequence, can be a number for large features	var
+#fields	name	1	String	name of feature	var
+#fields	quality	1	Float	Quality score of feature	var
+#fields	filter	1	String	Filter value	var
+#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype	geno
+#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno
+#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno
+#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased	geno
+#fields	genotypes	H	Integer	Genotypes	geno
+#fields	alleledepth_ref	1	Integer	reference only value of: Allelic depths for the ref and alt alleles in the order listed	format
+#fields	alleledepth	A	Integer	alleles only values of: Allelic depths for the ref and alt alleles in the order listed	format
+#fields	coverage	1	Integer	Approximate read depth (reads with MQ=255 or with bad mates are filtered)	format
+#fields	genoqual	1	Integer	Genotype Quality	format
+#fields	PL	G	Integer	Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification	format
+#fields	allelecount	A	Integer	Allele count in genotypes, for each ALT allele, in the same order as listed	info
+#fields	frequency	A	Float	Allele Frequency, for each ALT allele, in the same order as listed	info
+#fields	totalallelecount	1	Integer	Total number of alleles in called genotypes	info
+#fields	BaseQRankSum	1	Float	Z-score from Wilcoxon rank sum test of Alt Vs. Ref base qualities	info
+#fields	totalcoverage	1	Integer	Approximate read depth; some reads may have been filtered	info
+#fields	DS	0	Flag	Were any of the samples downsampled?	info
+#fields	Dels	1	Float	Fraction of Reads Containing Spanning Deletions	info
+#fields	ExcessHet	1	Float	Phred-scaled p-value for exact test of excess heterozygosity	info
+#fields	FS	1	Float	Phred-scaled p-value using Fisher's exact test to detect strand bias	info
+#fields	HaplotypeScore	1	Float	Consistency of the site with at most two segregating haplotypes	info
+#fields	InbreedingCoeff	1	Float	Inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation	info
+#fields	MLEAC	A	Integer	Maximum likelihood expectation (MLE) for the allele counts (not necessarily the same as the AC), for each ALT allele, in the same order as listed	info
+#fields	MLEAF	A	Float	Maximum likelihood expectation (MLE) for the allele frequency (not necessarily the same as the AF), for each ALT allele, in the same order as listed	info
+#fields	MQ	1	Float	RMS Mapping Quality	info
+#fields	MQ0	1	Integer	Total Mapping Quality Zero Reads	info
+#fields	MQRankSum	1	Float	Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities	info
+#fields	NDA	1	Integer	Number of alternate alleles discovered (but not necessarily genotyped) at this site	info
+#fields	QD	1	Float	Variant Confidence/Quality by Depth	info
+#fields	RPA_ref	1	Integer	reference only value of: Number of times tandem repeat unit is repeated, for each allele (including reference)	info
+#fields	RPA	A	Integer	alleles only values of: Number of times tandem repeat unit is repeated, for each allele (including reference)	info
+#fields	RU	1	String	Tandem repeat unit (bases)	info
+#fields	ReadPosRankSum	1	Float	Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias	info
+#fields	SOR	1	Float	Symmetric Odds Ratio of 2x2 contingency table to detect strand bias	info
+#fields	STR	0	Flag	Variant is a short tandem repeat	info
 #contig	table
 #contig	ID	length	assembly
 #contig	chr1	249250621	hg19
@@ -137,8 +138,8 @@
 #contig	chrX	155270560	hg19
 #contig	chrY	59373566	hg19
 #GATKCommandLine.UnifiedGenotyper	table
-#GATKCommandLine.UnifiedGenotyper	ID	Version	Date	,Epoch	CommandLineOptions
-#GATKCommandLine.UnifiedGenotyper	UnifiedGenotyper	3.7-0-gcfedb67	Sun Dec 09 18:00:40 CET 2018	1544374840281	analysis_type=UnifiedGenotyper input_file=[/home/peter/dev/genomecomb/tests/tmp/bwa.bam] showFullBamList=false read_buffer_size=null read_filter=[] disable_read_filter=[] intervals=[/tmp/tempExtral.834-UYCPaWGiPZbOzicMtAMG/_Extral_temp_1.bed] excludeIntervals=null interval_set_rule=UNION interval_merging=ALL interval_padding=0 reference_sequence=/data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa nonDeterministicRandomSeed=false disableDithering=false maxRuntime=-1 maxRuntimeUnits=MINUTES downsampling_type=BY_SAMPLE downsample_to_fraction=null downsample_to_coverage=1000 baq=OFF baqGapOpenPenalty=40.0 refactor_NDN_cigar_string=false fix_misencoded_quality_scores=false allow_potentially_misencoded_quality_scores=false useOriginalQualities=false defaultBaseQualities=-1 performanceLog=null BQSR=null quantize_quals=0 static_quantized_quals=null round_down_quantized=false disable_indel_quals=false emit_original_quals=false preserve_qscores_less_than=6 globalQScorePrior=-1.0 secondsBetweenProgressUpdates=10 validation_strictness=SILENT remove_program_records=false keep_program_records=false sample_rename_mapping_file=null unsafe=null disable_auto_index_creation_and_locking_when_reading_rods=false no_cmdline_in_header=false sites_only=false never_trim_vcf_format_field=false bcf=false bam_compression=null simplifyBAM=false disable_bam_indexing=false generate_md5=false num_threads=1 num_cpu_threads_per_data_thread=2 num_io_threads=0 monitorThreadEfficiency=false num_bam_file_handles=null read_group_black_list=null pedigree=[] pedigreeString=[] pedigreeValidationType=STRICT allow_intervals_with_unindexed_bam=false generateShadowBCF=false variant_index_type=DYNAMIC_SEEK variant_index_parameter=-1 reference_window_stop=0 phone_home= gatk_key=null tag=NA logging_level=INFO log_to_file=null help=false version=false genotype_likelihoods_model=SNP pcr_error_rate=1.0E-4 computeSLOD=false pair_hmm_implementation=LOGLESS_CACHING min_base_quality_score=17 max_deletion_fraction=0.05 min_indel_count_for_genotyping=5 min_indel_fraction_per_sample=0.25 indelGapContinuationPenalty=10 indelGapOpenPenalty=45 indelHaplotypeSize=80 indelDebug=false ignoreSNPAlleles=false allReadsSP=false ignoreLaneInfo=false reference_sample_calls=(RodBinding name= source=UNBOUND) reference_sample_name=null min_quality_score=1 max_quality_score=40 site_quality_prior=20 min_power_threshold_for_calling=0.95 annotateNDA=true useNewAFCalculator=false heterozygosity=0.001 indel_heterozygosity=1.25E-4 heterozygosity_stdev=0.01 standard_min_confidence_threshold_for_calling=10.0 standard_min_confidence_threshold_for_emitting=30.0 max_alternate_alleles=6 max_genotype_count=1024 max_num_PL_values=100 input_prior=[] sample_ploidy=2 genotyping_mode=DISCOVERY alleles=(RodBinding name= source=UNBOUND) contamination_fraction_to_filter=0.0 contamination_fraction_per_sample_file=null p_nonref_model=null exactcallslog=null output_mode=EMIT_ALL_CONFIDENT_SITES allSitePLs=false dbsnp=(RodBinding name= source=UNBOUND) comp=[] out=/home/peter/dev/genomecomb/tests/tmp/varall-gatk-bwa.vcf.temp onlyEmitSamples=[] debug_file=null metrics_file=null annotation=[] excludeAnnotation=[] filter_reads_with_N_cigar=false filter_mismatching_base_and_quals=false filter_bases_not_stored=false
+#GATKCommandLine.UnifiedGenotyper	ID	Version	Date	Epoch	CommandLineOptions
+#GATKCommandLine.UnifiedGenotyper	UnifiedGenotyper	3.8-1-0-gf15c1c3ef	Thu Jan 31 12:03:38 CET 2019	1548932618229	analysis_type=UnifiedGenotyper input_file=[/home/peter/dev/genomecomb/tests/tmp/bwa.bam] showFullBamList=false read_buffer_size=null read_filter=[] disable_read_filter=[] intervals=[/tmp/tempExtral.23622-PXlfYCJedylZKZRNBxTV/_Extral_temp_1.bed] excludeIntervals=null interval_set_rule=UNION interval_merging=ALL interval_padding=0 reference_sequence=/data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.fa nonDeterministicRandomSeed=false disableDithering=false maxRuntime=-1 maxRuntimeUnits=MINUTES downsampling_type=BY_SAMPLE downsample_to_fraction=null downsample_to_coverage=1000 baq=OFF baqGapOpenPenalty=40.0 refactor_NDN_cigar_string=false fix_misencoded_quality_scores=false allow_potentially_misencoded_quality_scores=false useOriginalQualities=false defaultBaseQualities=-1 performanceLog=null BQSR=null quantize_quals=0 static_quantized_quals=null round_down_quantized=false disable_indel_quals=false emit_original_quals=false preserve_qscores_less_than=6 globalQScorePrior=-1.0 secondsBetweenProgressUpdates=10 validation_strictness=SILENT remove_program_records=false keep_program_records=false sample_rename_mapping_file=null unsafe=null use_jdk_deflater=false use_jdk_inflater=false disable_auto_index_creation_and_locking_when_reading_rods=false no_cmdline_in_header=false sites_only=false never_trim_vcf_format_field=false bcf=false bam_compression=null simplifyBAM=false disable_bam_indexing=false generate_md5=false num_threads=1 num_cpu_threads_per_data_thread=2 num_io_threads=0 monitorThreadEfficiency=false num_bam_file_handles=null read_group_black_list=null pedigree=[] pedigreeString=[] pedigreeValidationType=STRICT allow_intervals_with_unindexed_bam=false generateShadowBCF=false variant_index_type=DYNAMIC_SEEK variant_index_parameter=-1 reference_window_stop=0 phone_home= gatk_key=null tag=NA logging_level=INFO log_to_file=null help=false version=false genotype_likelihoods_model=SNP pcr_error_rate=1.0E-4 computeSLOD=false pair_hmm_implementation=LOGLESS_CACHING min_base_quality_score=17 max_deletion_fraction=0.05 min_indel_count_for_genotyping=5 min_indel_fraction_per_sample=0.25 indelGapContinuationPenalty=10 indelGapOpenPenalty=45 indelHaplotypeSize=80 indelDebug=false ignoreSNPAlleles=false allReadsSP=false ignoreLaneInfo=false reference_sample_calls=(RodBinding name= source=UNBOUND) reference_sample_name=null min_quality_score=1 max_quality_score=40 site_quality_prior=20 min_power_threshold_for_calling=0.95 annotateNDA=true useNewAFCalculator=false heterozygosity=0.001 indel_heterozygosity=1.25E-4 heterozygosity_stdev=0.01 standard_min_confidence_threshold_for_calling=10.0 standard_min_confidence_threshold_for_emitting=30.0 max_alternate_alleles=6 max_genotype_count=1024 max_num_PL_values=100 input_prior=[] sample_ploidy=2 genotyping_mode=DISCOVERY alleles=(RodBinding name= source=UNBOUND) contamination_fraction_to_filter=0.0 contamination_fraction_per_sample_file=null p_nonref_model=null exactcallslog=null output_mode=EMIT_ALL_CONFIDENT_SITES allSitePLs=false dbsnp=(RodBinding name= source=UNBOUND) comp=[] out=/home/peter/dev/genomecomb/tests/tmp/varall-gatk-bwa.vcf.temp onlyEmitSamples=[] debug_file=null metrics_file=null annotation=[] excludeAnnotation=[] filter_reads_with_N_cigar=false filter_mismatching_base_and_quals=false filter_bases_not_stored=false
 #vcf_fileformat	VCFv4.2
 #FILTER	table
 #FILTER	ID	Description

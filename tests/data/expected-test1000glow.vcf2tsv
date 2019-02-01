@@ -18,14 +18,15 @@
 #fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno
 #fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno
 #fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno
-#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)	geno
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased	geno
 #fields	genotypes	H	Integer	Genotypes	geno
-#fields	alleledepth	.	Integer	Allelic depths for the ref and alt alleles in the order listed	format
+#fields	alleledepth_ref	1	Integer	reference only value of: Allelic depths for the ref and alt alleles in the order listed	format
+#fields	alleledepth	A	Integer	alleles only values of: Allelic depths for the ref and alt alleles in the order listed	format
 #fields	coverage	1	Integer	Read Depth (only filtered reads used for calling)	format
 #fields	genoqual	1	Float	Genotype Quality	format
 #fields	PL	3	Float	Normalized, Phred-scaled likelihoods for AA,AB,BB genotypes where A=ref and B=alt; not applicable if site is not biallelic	format
-#fields	allelecount	.	Integer	Allele count in genotypes, for each ALT allele, in the same order as listed	info
-#fields	frequency	.	Float	Allele Frequency, for each ALT allele, in the same order as listed	info
+#fields	allelecount	A	Integer	Allele count in genotypes, for each ALT allele, in the same order as listed	info
+#fields	frequency	A	Float	Allele Frequency, for each ALT allele, in the same order as listed	info
 #fields	totalallelecount	1	Integer	Total number of alleles in called genotypes	info
 #fields	BaseQRankSum	1	Float	Phred-scaled p-value From Wilcoxon Rank Sum Test of Alt Vs. Ref base qualities	info
 #fields	BaseQRankSumZ	1	Float	Z-score From Wilcoxon Rank Sum Test of Alt Vs. Ref base qualities	info

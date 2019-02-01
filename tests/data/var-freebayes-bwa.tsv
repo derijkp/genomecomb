@@ -20,7 +20,7 @@
 #fields	alleleSeq2	1	String	allele present on second chromosome/haplotype
 #fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced
 #fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant
-#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased
 #fields	genotypes	H	Integer	Genotypes
 #fields	genoqual	1	Float	Genotype Quality, the Phred-scaled marginal (or unconditional) probability of the called genotype
 #fields	loglikelihood	G	Float	Genotype Likelihood, log10-scaled likelihoods of the data given the called genotype for each possible genotype generated from the reference and alternate alleles given the sample ploidy

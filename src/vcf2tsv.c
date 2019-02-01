@@ -1219,9 +1219,10 @@ int main(int argc, char *argv[]) {
 	dstring_hash_set(conv_formata,DStringNewFromChar("AD"),(void *)DStringNewFromChar("alleledepth"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("GT"),(void *)DStringNewFromChar("genotype"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("DP"),(void *)DStringNewFromChar("coverage"));
-	dstring_hash_set(conv_formata,DStringNewFromChar("FT"),(void *)DStringNewFromChar("filter"));
+	dstring_hash_set(conv_formata,DStringNewFromChar("FT"),(void *)DStringNewFromChar("gfilter"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("GL"),(void *)DStringNewFromChar("loglikelihood"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("GQ"),(void *)DStringNewFromChar("genoqual"));
+	dstring_hash_set(conv_formata,DStringNewFromChar("PS"),(void *)DStringNewFromChar("phaseset"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("HQ"),(void *)DStringNewFromChar("haploqual"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("AN"),(void *)DStringNewFromChar("totalallelecount"));
 	dstring_hash_set(conv_formata,DStringNewFromChar("AC"),(void *)DStringNewFromChar("allelecount"));
@@ -1334,7 +1335,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	fclose(fh);
-	DStringPrintf(dsbuffer,"cg vcfheader2tsv -stack 1 -showheader 0 -meta '%s' '%s'",meta,tempfile);
+	DStringPrintf(dsbuffer,"cg vcfheader2tsv -stack 1 -typelist '%s' -showheader 0 -meta '%s' '%s'",typelist,meta,tempfile);
 	system(dsbuffer->string);
 	fprintf(fo,"# ----\n");
 	fprintf(fo,"chromosome\tbegin\tend\ttype\tref\talt");
@@ -1444,6 +1445,8 @@ int main(int argc, char *argv[]) {
 				} else if (id->size == 4 && strncmp(id->string,"CHR2",5) == 0) {
 					chr2pos = i;
 				}
+				num->string[0] = extractNumber(DStringArrayGet(info,i));
+				num->string[0] = numberfromid(id,num->string[0],typelist);
 				if (dstring_hash_get(donefields,ds) == NULL) {
 					if (num->string[0] == 'R') {
 						fprintf(fo,"\t%*.*s_ref",ds->size,ds->size,ds->string);

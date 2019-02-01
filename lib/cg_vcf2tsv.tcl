@@ -108,11 +108,12 @@ proc vcf2tsv_header {f {samplesVar {}} {commentVar {}} {formatfieldsVar {}} {inf
 		AD alleledepth
 		GT genotype
 		DP coverage
-		FT filter
+		FT gfilter
 		GL loglikelihood
 		GQ genoqual
 		HQ haploqual
 		AN totalallelecount
+		PS phaseset
 
 		AC allelecount
 		AF frequency

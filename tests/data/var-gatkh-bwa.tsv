@@ -20,7 +20,7 @@
 #fields	alleleSeq2	1	String	allele present on second chromosome/haplotype	geno
 #fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced	geno
 #fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant	geno
-#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased (same as variants in phase)	geno
+#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased	geno
 #fields	genotypes	H	Integer	Genotypes	geno
 #fields	alleledepth_ref	1	Integer	Allelic depths for the ref and alt alleles in the order listed	format
 #fields	alleledepth	A	Integer	Allelic depths for the ref and alt alleles in the order listed	format
@@ -29,7 +29,7 @@
 #fields	PGT	1	String	Physical phasing haplotype information, describing how the alternate alleles are phased in relation to one another	format
 #fields	PID	1	String	Physical phasing ID information, where each unique ID within a given sample (but not across samples) connects records within a phasing group	format
 #fields	PL	G	Integer	Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification	format
-#fields	PS	1	Integer	Phasing set (typically the position of the first variant in the set)	format
+#fields	phaseset	1	Integer	Phasing set (typically the position of the first variant in the set)	format
 #fields	RGQ	1	Integer	Unconditional reference genotype confidence, encoded as a phred quality -10*log10 p(genotype call is wrong)	format
 #fields	SB	4	Integer	Per-sample component statistics which comprise the Fisher's Exact Test to detect strand bias.	format
 #fields	allelecount	A	Integer	Allele count in genotypes, for each ALT allele, in the same order as listed	info
@@ -163,7 +163,7 @@
 #FILTER	ID	Description
 #FILTER	LowQual	Low quality
 # ----
-chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	name	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	PGT	PID	PL	PS	RGQ	SB	AS_BaseQRankSum	AS_FS	AS_InbreedingCoeff	AS_MQ	AS_MQRankSum	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_ReadPosRankSum	AS_SB_TABLE	AS_SOR	BaseQRankSum	totalcoverage	DS	FS	MQ	MQRankSum	QD	RAW_MQandDP	ReadPosRankSum	SOR	cluster
+chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	name	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	PGT	PID	PL	phaseset	RGQ	SB	AS_BaseQRankSum	AS_FS	AS_InbreedingCoeff	AS_MQ	AS_MQRankSum	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_ReadPosRankSum	AS_SB_TABLE	AS_SOR	BaseQRankSum	totalcoverage	DS	FS	MQ	MQRankSum	QD	RAW_MQandDP	ReadPosRankSum	SOR	cluster
 chr21	42735718	42735719	snp	G	A	104.77	G	A	v	t	.	0	0;1	4	4	8	99			133,0,104				1.100	0.000		60.00	0.000	13.10					-0.700		0.693	1.10	8		0.000	60.00	0.00	13.10		-6.970e-01	0.693	
 chr21	42775179	42775180	snp	C	T	141.90	T	T	v	m	.	0	1;1	0	5	5	15			170,15,0				nul	0.000		60.00	nul	28.38					nul		1.981		5		0.000	60.00		28.38			1.981	
 chr21	42775554	42775555	snp	A	G	57.74	G	G	u	u	.	0	1;1	0	2	2	6			85,6,0				nul	0.000		60.00	nul	28.87					nul		0.693		2		0.000	60.00		28.87			2.303	

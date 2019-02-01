@@ -2,8 +2,13 @@
 # the next line restarts using wish \
 exec cg source "$0" ${1+"$@"}
 
-proc findfield {fields pattern} {
-	lindex $fields [lsearch -glob $fields $pattern]
+proc findfield {fields pattern args} {
+	set args [list $pattern {*}$args]
+	foreach pattern $args {
+		set pos [lsearch -glob $fields $pattern]
+		if {$pos != -1} break
+	}
+	lindex $fields $pos
 }
 
 proc cg_homwes {args} {
@@ -136,7 +141,7 @@ proc cg_homwes {args} {
 		} else {
 			error "Could not find alleleSeq1 field for sample $sample in header (checked alleleSeq1-$caller1$sample, alleleSeq1-$sample, alleleSeq1)"
 		}
-		set field [findfield $header filter$postfix]
+		set field [findfield $header gfilter$postfix filter$postfix]
 		if {$field ne ""} {
 			lappend query "\$$field in {. PASS Pass pass}"
 		} elseif {$postfix ne ""} {
@@ -147,7 +152,7 @@ proc cg_homwes {args} {
 				puts "warning: field \"filter$postfix\" is missing"
 			}
 		} else {
-			puts "warning: field \"filter$postfix\" is missing"
+			puts "warning: field \"(g)filter$postfix\" is missing"
 		}
 		set field [findfield $header genoqual$postfix]
 		if {$field ne ""} {

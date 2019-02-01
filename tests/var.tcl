@@ -8,7 +8,8 @@ test var {var_gatk basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	cg var_gatk -stack 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas
-	cg tsvdiff tmp/var-gatk-bwa.tsv.lz4 data/var-gatk-bwa.tsv
+	cg unzip tmp/var-gatk-bwa.tsv.lz4 
+	exec diff -I {#GATKCommandLine.UnifiedGenotyper} tmp/var-gatk-bwa.tsv data/var-gatk-bwa.tsv
 	string_change [cg covered tmp/sreg-gatk-bwa.tsv.lz4] [list \n\n \n]
 } {chromosome	bases
 chr21	1047
