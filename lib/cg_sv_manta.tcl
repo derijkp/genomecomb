@@ -113,6 +113,8 @@ proc sv_manta_job {args} {
 		analysisinfo_write $resultfile.mantarun $target
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $resultfile.mantarun/results/variants/diploidSV.vcf.gz $target.temp[gzext $target]
 		file rename -force $target.temp[gzext $target] $target
+		hardlink $resultfile.mantarun/results/variants/diploidSV.vcf.gz [file root [gzroot $target]].vcf.gz
+		hardlink $resultfile.mantarun/results/variants/diploidSV.vcf.gz.tbi [file root [gzroot $target]].vcf.gz.tbi
 	}
 	# cleanup
 	return $resultlist
