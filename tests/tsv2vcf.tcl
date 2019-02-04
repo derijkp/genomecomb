@@ -200,4 +200,21 @@ test tsv2vcf {compressed} {
 	exec diff tmp/temp.vcf data/convertedvcf_old.vcf
 } {}
 
+test tsv2vcf {same variant twice in tsv (e.g. after liftover)} {
+	file_write tmp/temp.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	name	quality	filter	alleleSeq1	alleleSeq2	zyg	phased	genotypes	alleledepth_ref	alleledepth	coverage	genoqual	PGT	PID	PL	RGQ	SB	allelecount	frequency	totalallelecount	AS_BaseQRankSum	AS_FS	AS_InbreedingCoeff	AS_MQ	AS_MQRankSum	AS_QD	AS_RAW_BaseQRankSum	AS_RAW_MQ	AS_RAW_MQRankSum	AS_RAW_ReadPosRankSum	AS_ReadPosRankSum	AS_SB_TABLE	AS_SOR	BaseQRankSum	ClippingRankSum	totalcoverage	DS	ExcessHet	FS	InbreedingCoeff	MLEAC	MLEAF	MQ	MQRankSum	NDA	QD	RAW_MQ	ReadPosRankSum	SOR
+		chr21	42735718	42735719	snp	G	A	.	125.60	.	G	A	t	0	0;1	4	4	8	99			133,0,104			1	0.500	2	1.100	0.000		60.00	0.000	15.70					-0.400		0.693	1.10	0.00	8		3.0103	0.000		1	0.500	60.00	0.00	2	15.70		-3.660e-01	0.693
+		chr21	42735718	42735719	snp	G	A	.	100.00	.	A	A	m	0	1;1	4	4	8	80			99,0,98			1	0.500	2	1.200	0.000		60.00	0.000	15.80					-0.500		0.793	1.20	0.10	8		3.1103	0.100		1	0.500	70.00	0.00	2	15.80		-3.760e-01	0.793
+		chr21	42735718	42735719	snp	G	A	.	101.00	.	A	G	t	0	1;0	4	4	8	80			99,0,98			1	0.500	2	1.200	0.000		60.00	0.000	15.80					-0.500		0.793	1.20	0.10	8		3.1103	0.100		1	0.500	70.00	0.00	2	15.80		-3.760e-01	0.793
+		chr21	42735718	42735719	snp	G	C	.	99.60	.	G	C	t	0	0;1	4	4	8	99			133,0,104			1	0.500	2	1.100	0.000		60.00	0.000	15.70					-0.400		0.693	1.10	0.00	8		3.0103	0.000		1	0.500	60.00	0.00	2	15.70		-3.660e-01	0.693
+	}]\n
+	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv tmp/temp.vcf
+	# catchstderr_exec gatk ValidateVariants -R $::refseqdir/hg19/genome_hg19.fa -V tmp/temp.vcf --validation-type-to-exclude ALL
+	exec tail -4 tmp/temp.vcf
+} {#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	temp
+chr21	42735719	.	G	A,C	125.60	.	AC=1,1;AF=0.500,0.500;AN=2;AS_BaseQRankSum=1.100,1.100;AS_FS=0.000,0.000;AS_MQ=60.00,60.00;AS_MQRankSum=0.000,0.000;AS_QD=15.70,15.70;AS_ReadPosRankSum=-0.400,-0.400;AS_SOR=0.693,0.693;BaseQRankSum=1.10;ClippingRankSum=0.00;DP=8;ExcessHet=3.0103;FS=0.000;MLEAC=1,1;MLEAF=0.500,0.500;MQ=60.00;MQRankSum=0.00;NDA=2;QD=15.70;ReadPosRankSum=-3.660e-01;SOR=0.693	GT:AD:DP:GQ:PL	0/2:4,4,4:8:99:133,0,104
+chr21	42735719	.	G	A	101.00	.	AC=1;AF=0.500;AN=2;AS_BaseQRankSum=1.200;AS_FS=0.000;AS_MQ=60.00;AS_MQRankSum=0.000;AS_QD=15.80;AS_ReadPosRankSum=-0.500;AS_SOR=0.793;BaseQRankSum=1.20;ClippingRankSum=0.10;DP=8;ExcessHet=3.1103;FS=0.100;MLEAC=1;MLEAF=0.500;MQ=70.00;MQRankSum=0.00;NDA=2;QD=15.80;ReadPosRankSum=-3.760e-01;SOR=0.793	GT:AD:DP:GQ:PL	1/0:4,4:8:80:99,0,98
+chr21	42735719	.	G	A	100.00	.	AC=1;AF=0.500;AN=2;AS_BaseQRankSum=1.200;AS_FS=0.000;AS_MQ=60.00;AS_MQRankSum=0.000;AS_QD=15.80;AS_ReadPosRankSum=-0.500;AS_SOR=0.793;BaseQRankSum=1.20;ClippingRankSum=0.10;DP=8;ExcessHet=3.1103;FS=0.100;MLEAC=1;MLEAF=0.500;MQ=70.00;MQRankSum=0.00;NDA=2;QD=15.80;ReadPosRankSum=-3.760e-01;SOR=0.793	GT:AD:DP:GQ:PL	1/1:4,4:8:80:99,0,98}
+
+
 testsummarize

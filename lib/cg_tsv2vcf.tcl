@@ -220,10 +220,25 @@ proc tsv2vcf_outputheaderfield {o key aVar} {
 proc tsv2vcf_printlines {lines infofields infoposs infoflags infonumbers analyses formataVar} {
 	# position format fields
 	upvar $formataVar formata
+# putsvars lines infofields infoposs infoflags infonumbers analyses
+# puts [list array set formata [array get formata]]
 	# [llength $lines] == 1
 	set resultline {}
 	set vars [list_subindex $lines 0]
 	set lines [list_subindex $lines 1]
+	set refalts [list_subindex $vars 3 4]
+	set alts [list_subindex $refalts 1]
+	set rdup [list_remdup $refalts]
+	set extra {}
+	if {[llength $rdup] < [llength $refalts]} {
+		set cor [list_cor $rdup $refalts]
+		set poss [list_find $cor -1]
+		foreach pos [list_reverse $poss] {
+			set var [list_pop vars $pos]
+			set line [list_pop lines $pos]
+			lappend extra [tsv2vcf_printlines [list [list $var $line]] $infofields $infoposs $infoflags $infonumbers $analyses formata]
+		}
+	}
 	foreach {chromosome chrpos id fref falt fqual ffilter fref falt} [lindex $vars 0] break
 	#
 	# ref and alt
@@ -362,6 +377,9 @@ proc tsv2vcf_printlines {lines infofields infoposs infoflags infonumbers analyse
 		} else {
 			append resultline \t$gt
 		}
+	}
+	foreach line $extra {
+		append resultline \n$line
 	}
 	return $resultline
 }
@@ -562,6 +580,7 @@ proc cg_tsv2vcf {args} {
 	unset -nocomplain analysesa
 	foreach analysis $analyses {
 		set formata(keyposs,$analysis) [list]
+		set formata(fields,$analysis) [list]
 		foreach key {alleleSeq1 alleleSeq2 genotypes sequenced zyg phased} {
 			lappend formata(keyposs,$analysis) [get keyposa($key,$analysis) -1]
 		}
