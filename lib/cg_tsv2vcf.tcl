@@ -150,21 +150,21 @@ proc tsv2vcf_getvar {line poss keyposaVar genomef} {
 		}
 		if {$begin != 0} {
 			set pos $begin
-			set oref [genome_get $genomef $chromosome [expr {$begin - 1}] $end]
+			set oref [string toupper [genome_get $genomef $chromosome [expr {$begin - 1}] $end]]
 			set oalt $oref$oalt
 		} else {
 			set pos 1
-			set oref [genome_get $genomef $chromosome 0 1]
+			set oref [string toupper [genome_get $genomef $chromosome 0 1]]
 			set oalt $oalt$oref
 		}
 	} elseif {$type eq "del"} {
 		set pos $begin
 		if {$begin != 0} {
-			set oref [genome_get $genomef $chromosome [expr {$begin - 1}] $end]
+			set oref [string toupper [genome_get $genomef $chromosome [expr {$begin - 1}] $end]]
 			set oalt [string index $oref 0]
 		} else {
 			set pos 1
-			set oref [genome_get $genomef $chromosome $begin [expr {$end + 1}]]
+			set oref [string toupper [genome_get $genomef $chromosome $begin [expr {$end + 1}]]]
 			set oalt [string index $oref end]
 		}
 	} elseif {$type eq "sub"} {
@@ -174,7 +174,7 @@ proc tsv2vcf_getvar {line poss keyposaVar genomef} {
 			set oalt $alt
 		}
 		set pos $begin
-		set oref [genome_get $genomef $chromosome [expr {$begin-1}] $end]
+		set oref [string toupper [genome_get $genomef $chromosome [expr {$begin-1}] $end]]
 		if {[isint $alt]} {
 			set oalt [string index $oref 0]<$alt>
 		} else {
@@ -218,6 +218,7 @@ proc tsv2vcf_outputheaderfield {o key aVar} {
 }
 
 proc tsv2vcf_printlines {lines infofields infoposs infoflags infonumbers analyses formataVar} {
+	#
 	# position format fields
 	upvar $formataVar formata
 # putsvars lines infofields infoposs infoflags infonumbers analyses
