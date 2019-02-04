@@ -343,4 +343,41 @@ test liftsample {basic} {
 	exec diff -r tmp/liftedsample tmp/esample
 } {}
 
+test liftover {liftchain2tsv} {
+	file_write tmp/xx1Toxx2.over.chain [deindent {
+		chain 24611930 chr1 249250621 + 206072707 206332221 chr1 248956422 - 42687778 42947276 254
+		33374	0	21
+		6406	0	1
+		95162	1	0
+		39481	2	0
+		4456	0	1
+		25212	55	16
+		10374	0	1
+		1898	0	2
+		43093
+		
+		chain 19082683 chr1 249250621 + 143342816 143544525 chr14_GL000009v2_random 201709 + 0 201709 318
+		201709
+	}]\n
+	cg liftchain2tsv tmp/xx1Toxx2.over.chain tmp/xx1Toxx2.over.tsv
+	file_write tmp/expected.tsv [deindent {
+		#filetype	tsv/liftover
+		#fileversion	0.10.0
+		#ref	xx1toxx
+		#destref	
+		chromosome	begin	end	strand	destchromosome	destbegin	destend	deststrand
+		1	143342816	143544525	+	14_GL000009v2_random	0	201709	+
+		1	206072707	206106081	+	1	206235270	206268644	-
+		1	206106081	206112487	+	1	206228843	206235249	-
+		1	206112487	206207649	+	1	206133680	206228842	-
+		1	206207650	206247131	+	1	206094199	206133680	-
+		1	206247133	206251589	+	1	206089743	206094199	-
+		1	206251589	206276801	+	1	206064530	206089742	-
+		1	206276856	206287230	+	1	206054140	206064514	-
+		1	206287230	206289128	+	1	206052241	206054139	-
+		1	206289128	206332221	+	1	206009146	206052239	-
+	}]\n
+	exec diff tmp/xx1Toxx2.over.tsv tmp/expected.tsv
+} {}
+
 testsummarize

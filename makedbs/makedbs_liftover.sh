@@ -25,7 +25,8 @@ job_logdir log_jobs
 # get chain files
 foreach {base src} {hg18ToHg19 hg18 hg18ToHg38 hg18 hg19ToHg18 hg19 hg38ToHg19 hg38 hg19ToHg38 hg19} {
 	job getchain-$base -vars {src base} -targets {$base.over.chain} -code {
-		wgetfile http://hgdownload.soe.ucsc.edu/goldenPath/$src/liftOver/$base.over.chain.gz
+		# wgetfile http://hgdownload.soe.ucsc.edu/goldenPath/$src/liftOver/$base.over.chain.gz
+		wgetfile http://hgdownload.cse.ucsc.edu/goldenpath/$src/liftOver/$base.over.chain.gz
 	}
 }
 

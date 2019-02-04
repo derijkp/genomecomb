@@ -49,7 +49,7 @@ proc cg_liftchain2tsv {args} {
 		if {[eof $f]} break
 		foreach {temp score tname tsize tstrand tstart tend qname qsize qstrand qstart qend id} $line break
 		set tname [chr_clip $tname]
-		set qname [chr_clip $tname]
+		set qname [chr_clip $qname]
 		if {$temp ne "chain"} {error "error in chain format: expected chain at start of: $line"}
 		if {$tstrand eq "-"} {
 			error "error: did not expect negative strand in header for reference sequence"
