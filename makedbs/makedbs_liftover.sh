@@ -37,6 +37,10 @@ foreach base {hg18ToHg19 hg18ToHg38 hg19ToHg18 hg38ToHg19 hg19ToHg38} {
 		cg liftchain2tsv $dep $target.temp
 		file rename -force $target.temp $target
 	}
+	job liftchain2tsv-chr_$base -deps {$base.over.chain} -targets {chr_$base.over.tsv} -code {
+		cg liftchain2tsv -chrprefix chr $dep $target.temp
+		file rename -force $target.temp $target
+	}
 }
 
 # lift refchanges hg18Tohg19
@@ -53,4 +57,5 @@ foreach {base src dest} {
 		cg liftfindchanges {*}$deps > $target.temp
 		file rename -force $target.temp $target
 	}
+	mklink $base.over.refchanges.tsv chr_$base.over.refchanges.tsv
 }

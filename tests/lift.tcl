@@ -26,6 +26,17 @@ test liftover {basic liftover with correctvariants} {
 	exec diff tmp/temp.tsv.unmapped data/expected-var_lift-hg18tohg19.tsv.unmapped
 } {}
 
+test liftover {basic liftover with correctvariants, chr prefix} {
+	test_cleantmp
+	exec cg liftover data/var_lift.tsv tmp/temp.tsv /complgen/refseq/liftover/chr_hg18ToHg19.over.tsv
+	cg select -f {{chromosome="chr$chromosome"} *} data/expected-var_lift-hg18tohg19.tsv tmp/expected-var_lift-hg18tohg19.tsv
+	exec diff tmp/temp.tsv tmp/expected-var_lift-hg18tohg19.tsv
+} {6c6
+< #liftover	/complgen/refseq/liftover/chr_hg18ToHg19.over.tsv
+---
+> #liftover	/complgen/refseq/liftover/hg18ToHg19.over.tsv
+child process exited abnormally} error
+
 test liftover {half pipe} {
 	test_cleantmp
 	exec cg liftover --stack 1 data/var_lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv > tmp/temp.tsv
@@ -269,6 +280,23 @@ test liftover {tab at end of ori file (1 line)} {
 	cg liftover tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
 	file_read tmp/lifted.tsv
 } {file (tmp/temp.tsv) has empty fieldname} error
+
+test liftover {chr prefix} {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		chromosome	begin	end	type	reference	alt	zyg	alleleSeq1	alleleSeq2	totalScore1	totalScore2	xRef	geneId	mrnaAcc	proteinAcc	symbol	orientation	component	componentIndex	hasCodingRegion	impact	nucleotidePos	proteinPos	annotationRefSequence	sampleSequence	genomeRefSequence	pfam	refcons	cluster	coverage	refscore
+		chr9	189398	189399	snp	T	C	m	C	C	45	45	dbsnp.83:rs478887	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	{}	5	-316
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	reference	alt	zyg	alleleSeq1	alleleSeq2	totalScore1	totalScore2	xRef	geneId	mrnaAcc	proteinAcc	symbol	orientation	component	componentIndex	hasCodingRegion	impact	nucleotidePos	proteinPos	annotationRefSequence	sampleSequence	genomeRefSequence	pfam	refcons	cluster	coverage	refscore	hg18_chromosome	hg18_begin	hg18_end	hg18_ref
+		chr9	199398	199399	snp	C	T	r	C	C	45	45	dbsnp.83:rs478887																		5	-316	chr9	189398	189399	T
+	}]\n
+	file delete tmp/lifted.tsv
+	exec cg liftover -split 1 tmp/temp.tsv tmp/lifted.tsv /complgen/refseq/liftover/chr_hg18ToHg19.over.tsv
+	# remove comments to compare
+	cg select -rc 1 tmp/lifted.tsv tmp/result.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
 test liftsample {basic} {
 	test_cleantmp

@@ -17,7 +17,7 @@ available in resultfile.unmapped.
 ; **sampledir**: file in sft format (with variant data)
 ; **resultdir**: resulting converted file
 ; **liftoverfile**: liftover file guiding the conversion,
-e.g. hg18/hg18ToHg19.over.tsv to convert from hg18 to hg19, and hg19/hg19ToHg18.over.tsv to convert from hg19 to hg18
+e.g. hg18ToHg19.over.tsv to convert from hg18 to hg19, and hg19ToHg18.over.tsv to convert from hg19 to hg18
 
 == Category ==
 Conversion

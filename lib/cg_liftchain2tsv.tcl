@@ -6,12 +6,16 @@
 
 proc cg_liftchain2tsv {args} {
 	global scriptname action
+	set chrprefix {}
 	cg_options liftchain2tsv args {
 		-ref {
 			set ref $value
 		}
 		-destref {
 			set destref $value
+		}
+		-chrprefix {
+			set chrprefix $value
 		}
 	} {srcfile destfile} 2 2
 	if {![info exists ref] || ![info exists destref]} {
@@ -58,7 +62,7 @@ proc cg_liftchain2tsv {args} {
 			while 1 {
 				if {[gets $f line] == -1} break
 				foreach {size dt dq} $line break
-				puts $o [join [list $tname $tstart [expr {$tstart+$size}] $tstrand $qname $qstart [expr {$qstart+$size}] $qstrand] \t]
+				puts $o [join [list $chrprefix$tname $tstart [expr {$tstart+$size}] $tstrand $chrprefix$qname $qstart [expr {$qstart+$size}] $qstrand] \t]
 				if {[llength $line] == 1} {
 					break
 				}
@@ -71,7 +75,7 @@ proc cg_liftchain2tsv {args} {
 			while 1 {
 				if {[gets $f line] == -1} break
 				foreach {size dt dq} $line break
-				puts $o [join [list $tname $tstart [expr {$tstart+$size}] $tstrand $qname [expr {$qrend-$size}] $qrend $qstrand] \t]
+				puts $o [join [list $chrprefix$tname $tstart [expr {$tstart+$size}] $tstrand $chrprefix$qname [expr {$qrend-$size}] $qrend $qstrand] \t]
 				if {[llength $line] == 1} {
 					break
 				}
