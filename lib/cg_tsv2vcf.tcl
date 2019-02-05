@@ -660,5 +660,6 @@ proc cg_tsv2vcf {args} {
 			lappend allelelista([expr {$pos+1}]) [list $var $line]
 		}
 	}
-
+	if {$o ne "stdout"} {catch {close $o}}
+	if {$f ne "stdin"} {catch {gzclose $f}}
 }
