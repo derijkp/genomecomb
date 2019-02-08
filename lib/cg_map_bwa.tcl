@@ -1,5 +1,6 @@
 proc bwarefseq_job {refseq} {
 	upvar job_logdir job_logdir
+	set refseq [file_absolute $refseq]
 	set bwarefseq $refseq.bwa/[file tail $refseq]
 	set bwarefseqfa [file root $bwarefseq].fa
 	if {[file exists $bwarefseqfa]} {return $bwarefseqfa}
@@ -20,8 +21,15 @@ proc bwarefseq_job {refseq} {
 		}
 		mklink $dep.fai $target.temp/[file tail $dep].fai
 		exec bwa index $target.temp/[file tail $dep] 2>@ stderr
-		file delete -force $target
-		file rename $target.temp $target
+		set targetdir [file dir $target]
+		foreach file [glob $target.temp/*] {
+			file delete $targetdir/[file tail $file]
+			file rename $file $targetdir/[file tail $file]
+		}
+		file delete -force $target $target.fai
+		mklink $dep $target
+		mklink $dep.fai $target.fai
+		file delete $target.temp
 	}
 	# with .fa as extension
 	job bwa2refseq_fa-[file tail $refseq] -deps $targets -targets $fatargets -vars {
