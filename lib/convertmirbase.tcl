@@ -34,8 +34,8 @@ proc convertmirbase_findloop {resultline mirnas seq structs} {
 	} elseif {[llength $mirnas] == 1} {
 		list_foreach {b e} $mirnas break
 		if {$e > $loopend && $b < $loopbegin} {
-			log "[lindex $resultline 4]: loop overlaps mirna, shifted"
-			if {[expr {$b-$start}] < [expr {[lindex $resultline 2]-$e}]} {
+			putslog "[lindex $resultline 4]: loop overlaps mirna, shifted"
+			if {[expr {$b-$loopbegin}] < [expr {[lindex $resultline 2]-$e}]} {
 				set loopbegin $e ; set loopend [expr {$e+4}]
 			} else {
 				set loopbegin [expr {$b-4}] ; set loopend $b
@@ -87,13 +87,12 @@ proc convertmirbase {gff3file resultfile genomefile {structfile {}}} {
 		}
 		close $f
 	}
-
 	catch {close $f}
 	set f [open $gff3file]
+	set id {}
 	set result {}
 	set resultline {}
 	set mirnas {}
-	set curname {}
 	while {![eof $f]} {
 		set line [gets $f]
 		if {[string index $line 0] eq "#"} continue
@@ -102,6 +101,7 @@ proc convertmirbase {gff3file resultfile genomefile {structfile {}}} {
 		incr begin -1
 		if {![llength $line] || $type eq "miRNA_primary_transcript"} {
 			if {[llength $resultline]} {
+				# add previuous to results
 				if {$seq ne ""} {
 					set resultline [convertmirbase_findloop $resultline $mirnas $seq $structs]
 					lappend result $resultline
@@ -109,8 +109,12 @@ proc convertmirbase {gff3file resultfile genomefile {structfile {}}} {
 				set mirnas {}
 			}
 			if {![llength $line]} continue
-			regexp {Name=([^;\n]+)} $attr temp name
-			if {![regexp {Name=([^;\n]+)} $attr temp name]} continue
+			if {![regexp {Name=([^;\n]+)} $attr temp name]} {
+				error "Could not get name from $line"
+			}
+			if {![regexp {ID=([^;\n]+)} $attr temp id]} {
+				error "Could not get id from $line"
+			}
 			if {[catch {
 				set seq [string toupper [genome_get $gf $chr $begin $end]]
 			} msg]} {
@@ -118,12 +122,20 @@ proc convertmirbase {gff3file resultfile genomefile {structfile {}}} {
 				set seq {}
 			}
 			set resultline [list $chr $begin $end $strand $name {} {} {} {} {} {}]
-			set curname $name
 		} elseif {$type eq "miRNA"} {
+			if {![regexp {Derives_from=([^;\n]+)} $attr temp fromid]} {
+				error "Could not get Derives_from from $line"
+			}
+			if {$fromid ne $id} {
+				if {![string match ${fromid}_* $id]} {
+					error "miRNA ($line) does not derive from $id: $resultline"
+				} else {
+					puts "warning: approx match for miRNA ($line) derive from $id: $resultline"
+				}
+			}
 			lappend mirnas [list $begin $end]
 		}
 	}
-
 	close $f
 	set result [lsort -integer -index 1 $result]
 	set result [lsort -dict -index 0 $result]

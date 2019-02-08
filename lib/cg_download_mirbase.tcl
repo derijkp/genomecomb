@@ -22,6 +22,7 @@ time	[timestamp]
 }]]
 	exec cat $resultfile.info.temp >> [gzroot $resultfile].info
 	file delete $resultfile.info.temp
+	file delete $structfile
 	cg unzip $structfile.gz
 	convertmirbase $gff3file $resultfile $genomefile $structfile
 	file delete -force $resultfile.index
