@@ -133,6 +133,22 @@ test compression {lz4 -i} {
 	list [lsort -dict [glob tmp/test*]] $c1 $c2
 } {{tmp/test1.txt.lz4 tmp/test1.txt.lz4.lz4i tmp/test2.txt.lz4 tmp/test2.txt.lz4.lz4i} a b}
 
+test compression {cg zcat lz4 -p} {
+	list [exec cg zcat data/var_hg19_partofsnp135.tsv.lz4 | head -c 20] [exec cg zcat -p 1 data/var_hg19_partofsnp135.tsv.lz4 | head -c 20]
+} {{chrom	start	end	type} {hrom	start	end	type	}}
+
+test compression {cg zcat uncompressed -p} {
+	exec cg zcat -p 1 data/vars2.tsv |  head -1
+} {hromosome	begin	end	type	ref	alt}
+
+test compression {cg zcat gz -p} {
+	list [exec cg zcat data/seq_R2.fq.gz | head -1] [exec cg zcat -p 1 data/seq_R2.fq.gz | head -1]
+} {@SRR792091.9203/2 SRR792091.9203/2}
+
+test compression {cg zcat -p 1 file does not exist} {
+	exec cg zcat -p 1 data/imaginary.tsv.lz4
+} {file data/imaginary.tsv.lz4 does not exist} error
+
 test cg_options {basic} {
 	set args {-opt o 1 2 3 4}
 	cg_options test args {

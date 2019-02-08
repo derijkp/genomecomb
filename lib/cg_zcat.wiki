@@ -17,5 +17,10 @@ may be mixed.
 == Arguments ==
 ; **file** ...: file to be sent to stdout
 
+== Options ==
+; -p position (-pos): start output at the given position (byte). 
+This will be fast for formats supporting random access (lz4, rz). 
+For others the entire file will be decompressed and skipped up to the given position.
+
 == Category ==
 Compression

@@ -183,12 +183,38 @@ proc gzarraynames {aVar pattern} {
 }
 
 proc gzcat {filename} {
+	if {![file exists $filename]} {error "file $filename does not exist"}
 	switch [file extension $filename] {
 		.rz {return "razip -d -c"}
 		.lz4 {return "lz4c -q -d -c"}
 		.gz - .bgz {return zcat}
 		.bz2 {return bzcat}
 		default {return cat}
+	}
+}
+
+proc gzcatra {filename {pos 0}} {
+	if {![file exists $filename]} {error "file $filename does not exist"}
+	if {$pos == 0} {
+		list {*}[gzcat $filename] $filename
+	} else {
+		switch [file extension $filename] {
+			.rz {
+				return [list razip -d -c -b $pos $file]
+			}
+			.lz4 {
+				return [list lz4ra $filename $pos]
+			}
+			.gz - .bgz {
+				return [list zcat $filename | tail -c +[expr {$pos + 1}]]
+			}
+			.bz2 {
+				return [list bzcat $filename | tail -c +[expr {$pos + 1}]]
+			}
+			default {
+				return [list tail -c +[expr {$pos + 1}] $filename]
+			}
+		}
 	}
 }
 
