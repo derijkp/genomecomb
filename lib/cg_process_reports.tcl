@@ -16,12 +16,16 @@ proc reports_expand {reports} {
 proc process_reports_job {args} {
 	set reports basic
 	set dbdir {}
+	set resultbamfile {}
 	cg_options process_reports args {
 		-dbdir {
 			set dbdir $value
 		}
 		-r - -reports {
 			set reports $value
+		}
+		-resultbamfile {
+			set resultbamfile [file_absolute $value]
 		}
 	} {sampledir dbdir reports} 1 3 {
 		Calculates a number of statistics on a sample in the reports subdir
@@ -47,7 +51,12 @@ proc process_reports_job {args} {
 	job_logfile $sampledir/process_reports_$sample $sampledir $cmdline \
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 picard java gnusort8 lz4 os]
 	# start
-	set bamfiles [lsort -dict [jobglob $sampledir/*.bam]]
+	if {$resultbamfile eq ""} {
+		set bamfiles [lsort -dict [jobglob $sampledir/*.bam]]
+		set resultbamfile [lindex $bamfiles end]
+	} else {
+		set bamfiles [list_remdup [list $resultbamfile {*}[lsort -dict [jobglob $sampledir/*.bam]]]]
+	}
 	set ampliconsfile [ampliconsfile $sampledir $ref]
 	file mkdir $sampledir/reports
 	foreach bamfile $bamfiles {
@@ -179,10 +188,9 @@ proc process_reports_job {args} {
 	}
 	if {[inlist $reports predictgender]} {
 		set target $sampledir/reports/report_predictgender-$sample.tsv
-		set bamfile [lindex $bamfiles 0]
-		set varfile [jobglob $sampledir/var-*[file_rootname $bamfile].tsv]
-		job predictgender-[file_rootname $bamfile] -optional 1 -deps {$bamfile ($varfile)} -vars {dbdir sampledir} -targets {$target} -code {
-			cg predictgender -dbdir $dbdir $sampledir $target
+		set varfile [jobglob $sampledir/var-*[file_rootname $resultbamfile].tsv]
+		job predictgender-[file_rootname $resultbamfile] -optional 1 -deps {$resultbamfile ($varfile)} -vars {resultbamfile dbdir sampledir} -targets {$target} -code {
+			cg predictgender -dbdir $dbdir $resultbamfile $target
 		}
 	}
 	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]

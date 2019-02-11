@@ -212,7 +212,7 @@ proc process_illumina {args} {
 		}
 		# calculate reports
 		if {[llength $reports]} {
-			process_reports_job $sampledir/$sample $dbdir $reports
+			process_reports_job -resultbamfile $resultbamfile $sampledir/$sample $dbdir $reports
 			lappend reportstodo $sampledir/$sample/reports
 		}
 	}
