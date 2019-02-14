@@ -1468,13 +1468,15 @@ int main(int argc, char *argv[]) {
 	}
 	fprintf(fo,"\n");
 	maxtab = 9+samples->size;
-	min = 8+samples->size;
+	min = 9+samples->size;
 	outinfo =  (DString *)malloc(infofields->size*sizeof(DString));
 	linea = DStringArrayNew(maxtab+2);
 	NODPRINT("==== Parsing data ====")
 	while ((read = DStringGetTab(line,fd,maxtab,linea,1,NULL)) != -1) {
 		if (linea->size < min) {
-			fprintf(stderr,"not enough fields in line %s\n",line->string);
+			fprintf(stderr,"not enough fields in line:\n");
+			DStringArrayPuts(linea,"\t",stderr);
+			fprintf(stderr,"\n");
 			exit(1);
 		}
 		linenr++;

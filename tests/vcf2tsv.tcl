@@ -587,4 +587,16 @@ test vcf2tsv {output various varcallers} {
 	}
 } {}
 
+test vcf2tsv {vcf2tsv error not enough fields in line} {
+	write_vcf tmp/test.vcf {
+		CHROM POS     ID        REF ALT    QUAL FILTER INFO                              FORMAT      SAMPLE
+		chrtest	10	.	CTG	C	10	.	.	GT	0/1
+		chrtest	20	.	CTGA	CT	20	.	.	GT
+		chrtest	30	.	A	ATG,G	30	.	.	GT	0/1
+	}
+	cg vcf2tsv tmp/test.vcf | cg select -rc 1 > tmp/result.tsv
+} {not enough fields in line:
+chrtest	20	.	CTGA	CT	20	.	.	GT
+*} error match
+
 testsummarize

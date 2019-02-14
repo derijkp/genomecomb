@@ -104,6 +104,18 @@ void DStringputs(DString *string,FILE *f) {
 	}
 }
 
+void DStringArrayPuts(DStringArray *array,char *join,FILE *f) {
+	char *cur;
+	int size=strlen(join),pos=0,count;
+	if (array->size == 0) return;
+	DStringputs(array->data+0,f);
+	for(pos = 1; pos < array->size ; pos++) {
+		cur = join; count = size;
+		while(count--) {putc_unlocked(*cur++,f);}
+		DStringputs(array->data+pos,f);
+	}
+}
+
 void charputs(char *cur,int size,FILE *f) {
 	if (size > 0) {
 		while(size--) {putc_unlocked(*cur++,stdout);}

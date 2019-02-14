@@ -53,6 +53,7 @@ void DStringSetS(DString *dstring, char *string,int size);
 void DStringPrintf(DString *dstring, char *format, ...);
 void DStringCopy(DString *dest, DString *src);
 void DStringputs(DString *string,FILE *f);
+void DStringArrayPuts(DStringArray *array,char *join,FILE *f);
 void charputs(char *cur,int size,FILE *f);
 int DStringCompare(DString *a, DString *b);
 int DStringLocCompare(DString *a, DString *b);
