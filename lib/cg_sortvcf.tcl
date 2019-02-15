@@ -35,11 +35,7 @@ proc cg_sortvcf {args} {
 	}
 	puts $o [join $c \n]
 	puts $o \#$header
-#	set fs [open "| gnusort8 -T \"[scratchdir]\" -t \\t -s -N >@ $o" w]
-#	fconfigure $fs -blocking 0
-#	fcopy $f $fs
-	exec gnusort8 -T [scratchdir] -N -s <@ $f >@ $o 2>@ stderr
-	flush $o
+	chanexec $f $o "gnusort8 -T \"[scratchdir]\" -t \\t -s -N"
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {gzclose $f}}
 }

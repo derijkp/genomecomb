@@ -78,4 +78,42 @@ test sortvcf {sortvcf basic} {
 	exec diff tmp/sorted.vcf tmp/expected.vcf
 } {}
 
+test sortvcf {sortvcf compressed} {
+	file_write tmp/temp.vcf [deindent {
+		##fileformat=VCFv4.0
+		##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+		##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+		##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+		##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+		##contig=<ID=chrM,length=16571>
+		##contig=<ID=chr1,length=249250621>
+		##contig=<ID=chr2,length=243199373>
+		##contig=<ID=chr3,length=198022430>
+		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001
+		M	17330	.	T	A	3	q10	DP=11	GT:GQ:DP	0|0:49:3
+		1	1110696	rs6040355	A	G,T	67	PASS	DP=10	GT:GQ:DP	1|2:21:6
+		2	1230237	.	T	.	47	PASS	DP=13	GT:GQ:DP	0|0:54:7
+	}]\n
+	file_write tmp/expected.vcf [deindent {
+		##fileformat=VCFv4.0
+		##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+		##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+		##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+		##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+		##contig=<ID=chr1,length=249250621>
+		##contig=<ID=chr2,length=243199373>
+		##contig=<ID=chr3,length=198022430>
+		##contig=<ID=chrM,length=16571>
+		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA00001
+		1	1110696	rs6040355	A	G,T	67	PASS	DP=10	GT:GQ:DP	1|2:21:6
+		2	1230237	.	T	.	47	PASS	DP=13	GT:GQ:DP	0|0:54:7
+		M	17330	.	T	A	3	q10	DP=11	GT:GQ:DP	0|0:49:3
+	}]\n
+	exec cg sortvcf -stack 1 tmp/temp.vcf tmp/sorted.vcf.gz
+	exec gunzip tmp/sorted.vcf.gz
+	exec diff tmp/sorted.vcf tmp/expected.vcf
+} {}
+
 testsummarize
