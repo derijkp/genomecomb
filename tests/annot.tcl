@@ -735,6 +735,44 @@ test bcol_annot {only chr1} {
 	exec diff tmp/annot_test.tsv tmp/expected.tsv
 } {} 
 
+test bcol_annot {wrongly sorted var file} {
+	file_write tmp/test.tsv [deindent {
+		chromosome	begin	end
+		chr1	8	9
+		chr10	9	10
+		chr2	19	20
+	}]\n
+	file_write tmp/score.tsv [deindent {
+		chromosome	pos	score
+		chr1	8	1
+		chr2	19	2
+		chr10	9	3
+	}]\n
+	exec cg bcol make -p pos -c chromosome tmp/bcol_score.bcol score < tmp/score.tsv
+	exec cg annotate tmp/test.tsv tmp/annot_test.tsv tmp/bcol_score.bcol
+} {File (*/test.tsv.index/vars.tsv) is not correctly sorted (sort correctly using "cg select -s -")
+chr10:9-10:: came before chr2:19-20::
+*} error match
+
+test bcol_annot {wrongly sorted bcol annot file} {
+	file_write tmp/test.tsv [deindent {
+		chromosome	begin	end
+		chr1	8	9
+		chr2	19	20
+		chr10	9	10
+	}]\n
+	file_write tmp/score.tsv [deindent {
+		chromosome	pos	score
+		chr1	8	1
+		chr10	9	3
+		chr2	19	2
+	}]\n
+	exec cg bcol make -p pos -c chromosome tmp/bcol_score.bcol score < tmp/score.tsv
+	exec cg annotate tmp/test.tsv tmp/annot_test.tsv tmp/bcol_score.bcol
+} {File (*/bcol_score.bcol) is not correctly sorted:
+chromosome 10 came before 2
+*} error match
+
 test bcol_annot {only chr2} {
 	test_cleantmp
 	cg select -q {$chromosome eq "chr2"} data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv

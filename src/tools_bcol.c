@@ -839,7 +839,14 @@ BCol *bcol_open(char *bcolfile) {
 			if (i == 0) {
 				result->table[i].pos = 0;
 			} else {
+				int comp;
 				result->table[i].pos = result->table[i-1].pos + result->table[i-1].end  - result->table[i-1].begin;
+				comp = DStringLocCompare(result->table[i].chr,result->table[i-1].chr);
+				if (comp < 0) {
+					fprintf(stderr,"File (%s) is not correctly sorted:\n",bcolfile);
+					fprintf(stderr,"chromosome %s came before %s\n",result->table[i-1].chr->string,result->table[i].chr->string);
+					exit(1);
+				}
 			}
 			i++;
 		}
