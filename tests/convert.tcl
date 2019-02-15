@@ -891,4 +891,66 @@ test cdv2tsv {cdv2tsv long} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test fasta2tsv {fasta2tsv} {
+	file_write tmp/test.fasta [deindent {
+		>name1
+		AAG
+		AAAA
+		>name 2
+		ACAAAAAAA
+	}]\n
+	cg fasta2tsv tmp/test.fasta
+} {id	sequence
+name1	AAGAAAA
+name 2	ACAAAAAAA
+}
+
+test fasta2tsv {fasta2tsv to outfile} {
+	file_write tmp/test.fasta [deindent {
+		>name1
+		AAG
+		AAAA
+		>name 2
+		ACAAAAAAA
+	}]\n
+	cg fasta2tsv tmp/test.fasta tmp/out.tsv
+	file_read tmp/out.tsv
+} {id	sequence
+name1	AAGAAAA
+name 2	ACAAAAAAA
+}
+
+test fasta2tsv {fasta2tsv multiple infiles} {
+	file_write tmp/test.fasta [deindent {
+		>name1
+		AAG
+		AAAA
+		>name 2
+		ACAAAAAAA
+	}]\n
+	cg fasta2tsv tmp/test.fasta tmp/test.fasta tmp/out.tsv
+	file_read tmp/out.tsv
+} {id	sequence
+name1	AAGAAAA
+name 2	ACAAAAAAA
+name1	AAGAAAA
+name 2	ACAAAAAAA
+}
+
+test fasta2tsv {fasta2tsv multiple infiles to stdout} {
+	file_write tmp/test.fasta [deindent {
+		>name1
+		AAG
+		AAAA
+		>name 2
+		ACAAAAAAA
+	}]\n
+	cg fasta2tsv tmp/test.fasta tmp/test.fasta -
+} {id	sequence
+name1	AAGAAAA
+name 2	ACAAAAAAA
+name1	AAGAAAA
+name 2	ACAAAAAAA
+}
+
 testsummarize
