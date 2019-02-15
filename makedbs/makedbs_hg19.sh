@@ -22,7 +22,8 @@ set evsurl http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protei
 set evsbuild hg19
 set exacurl ftp://ftp.broadinstitute.org/pub/ExAC_release/release1/ExAC.r1.sites.vep.vcf.gz
 set exacbuild hg19
-set caddurl http://krishna.gs.washington.edu/download/CADD/v1.4/GRCh37/whole_genome_SNVs.tsv.gz
+set caddversion 1.4
+set caddurl http://krishna.gs.washington.edu/download/CADD/v$caddversion/GRCh37/whole_genome_SNVs.tsv.gz
 set caddbuild hg19
 set gnomadversion 2.1
 set gnomadbaseurl https://storage.googleapis.com/gnomad-public/release/$gnomadversion/vcf
@@ -826,7 +827,7 @@ job reg_${build}_cadd -targets {
 	var_${build}_cadd.bcol.bin.lz4
 	var_${build}_cadd.bcol.bin.lz4.lz4i
 	var_${build}_cadd.bcol.info
-} -vars {dest db build caddurl caddbuild} -code {
+} -vars {dest db build caddurl caddbuild caddversion} -code {
 	set tempdir $target.temp
 	file mkdir $tempdir
 	set tail [file tail $caddurl]
@@ -835,7 +836,7 @@ job reg_${build}_cadd -targets {
 		
 		== Download info ==
 		dbname	cadd
-		version	1.3
+		version	$caddversion
 		citation	Kircher M, Witten DM, Jain P, O'Roak BJ, Cooper GM, Shendure J. A general framework for estimating the relative pathogenicity of human genetic variants. Nat Genet. 2014 Feb 2. doi:10.1038/ng.2892 PubMed PMID:24487276
 		license	non-commercial
 		source	$caddurl
@@ -880,7 +881,7 @@ job reg_${build}_cadd -targets {
 		exec cg select -s - $tempdir/collapsed${build}.tsv.lz4 | cg bcol make --stack 1 --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
 	} else {
 		cg select -hc 1 -rc 1 -f {{chrom=$Chr} {begin = $Pos - 1} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
-			| cg collapsealleles \
+			| cg collapsealleles | cg select -s {chrom begin} \
 			| cg bcol make --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
 	}
 	file rename -force $tempdir/var_${build}_cadd.bcol.bin.lz4 var_${build}_cadd.bcol.bin.lz4
