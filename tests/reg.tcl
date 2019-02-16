@@ -4,6 +4,45 @@ exec tclsh "$0" "$@"
 
 source tools.tcl
 
+proc multiregtest {num} {
+	set start 10
+	set files {}
+	for {set i 1} {$i <= $num} {incr i} {
+		lappend files tmp/sreg$i.tsv
+		set f [open tmp/sreg$i.tsv w]
+		puts $f chromosome\tbegin\tend
+		set pos $start
+		for {set j 1} {$j <= 5} {incr j} {
+			puts $f 1\t$pos\t[expr {$pos+10}]
+			incr pos 10
+		}
+		close $f
+		incr start 5
+	}
+	set f [open tmp/expected.tsv w]
+	set header {chromosome begin end}
+	for {set i 1} {$i <= $num} {incr i} {
+		lappend header sreg$i
+	}
+	puts $f [join $header \t]
+	set max [expr {$num*5+50}]
+	for {set start 10} {$start <= $max} {incr start 5} {
+		set line [list 1 $start [expr {$start+5}]]
+		for {set i 1} {$i <= $num} {incr i} {
+			set istart [expr {10 + ($i-1)*5}]
+			set iend [expr {$istart + 50}]
+			if {$start >= $istart && $start < $iend} {
+				lappend line 1
+			} else {
+				lappend line 0
+			}
+		}
+		puts $f [join $line \t]
+	}
+	close $f
+	return $files
+}
+
 test multireg {basic} {
 	file delete tmp/temp.tsv
 	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg2.tsv
@@ -108,45 +147,6 @@ test multireg {sort error 3 in database file} {
 	exec cg multireg tmp/temp.tsv data/vars_sorterror3.sft
 } {*File (*data/vars_sorterror3.sft) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
-proc multiregtest {num} {
-	set start 10
-	set files {}
-	for {set i 1} {$i <= $num} {incr i} {
-		lappend files tmp/sreg$i.tsv
-		set f [open tmp/sreg$i.tsv w]
-		puts $f chromosome\tbegin\tend
-		set pos $start
-		for {set j 1} {$j <= 5} {incr j} {
-			puts $f 1\t$pos\t[expr {$pos+10}]
-			incr pos 10
-		}
-		close $f
-		incr start 5
-	}
-	set f [open tmp/expected.tsv w]
-	set header {chromosome begin end}
-	for {set i 1} {$i <= $num} {incr i} {
-		lappend header sreg$i
-	}
-	puts $f [join $header \t]
-	set max [expr {$num*5+50}]
-	for {set start 10} {$start <= $max} {incr start 5} {
-		set line [list 1 $start [expr {$start+5}]]
-		for {set i 1} {$i <= $num} {incr i} {
-			set istart [expr {10 + ($i-1)*5}]
-			set iend [expr {$istart + 50}]
-			if {$start >= $istart && $start < $iend} {
-				lappend line 1
-			} else {
-				lappend line 0
-			}
-		}
-		puts $f [join $line \t]
-	}
-	close $f
-	return $files
-}
-
 test multireg {10 files} {
 	set files [multiregtest 10]
 	file delete tmp/temp.tsv
@@ -167,6 +167,30 @@ test multireg {5 files 8 distribute 1 reg one not reg (maxopenfiles)} {
 	# 8 maximum open files means 4 files can be processed at the same time
 	# (-4 because stdout, etc. also count as "open files")
 	exec cg multireg -m 8 tmp/temp.tsv {*}$files
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test multireg {5 files 8 distribute 1 reg one not reg (maxopenfiles) -limireg} {
+	set files [multiregtest 5]
+	file delete tmp/temp.tsv
+	# 8 maximum open files means 4 files can be processed at the same time
+	# (-4 because stdout, etc. also count as "open files")
+	file_write tmp/regfile.tsv [deindent {
+		chromosome	begin	end
+		1	30	50
+		1	70	100
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	sreg1	sreg2	sreg3	sreg4	sreg5
+		1	30	35	1	1	1	1	1
+		1	35	40	1	1	1	1	1
+		1	40	45	1	1	1	1	1
+		1	45	50	1	1	1	1	1
+		1	70	75	0	0	0	1	1
+		1	75	80	0	0	0	0	1
+		1	80	100	0	0	0	0	0
+	}]\n
+	exec cg multireg -m 8 -limitreg tmp/regfile.tsv tmp/temp.tsv {*}$files
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 
