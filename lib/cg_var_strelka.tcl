@@ -195,7 +195,7 @@ proc var_strelka_job {args} {
 		lappend fields *
 		if {[file size $resultvcf.gz]} {
 			exec cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {
-				name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
+				name AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
 			} $resultvcf.gz | cg select -f $fields > ${pre}uvar-$root.tsv.temp
 		} else {
 			file_write ${pre}uvar-$root.tsv.temp ""

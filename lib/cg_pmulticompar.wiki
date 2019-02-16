@@ -73,28 +73,29 @@ directory is given, all files in it of the format var-<sample>.tsv (or
 fannotvar-<sample>.tsv) will be added as variant files.
 
 == Options ==
-; **-r 0/1** (--reannotregonly): Also do reannotation, but only region data (sreg) will be updated
-; **-t variantfile** (--targetvarsfile): All variants in **variantfile** will be in the final multicompar, even if
+; -r 0/1 (--reannotregonly): Also do reannotation, but only region data (sreg) will be updated
+; -t variantfile (--targetvarsfile): All variants in **variantfile** will be in the final multicompar, even if
 they are not present in any of the samples. 
 A column will be added to indicate for each variant if it was in the targetvarsfile. The name of the 
 column will be the part of the filename after the last dash. If **variantfile** contains a "name" column, 
 the content of this will be used in the targets column instead of a 1.
-; **-s 0/1** (-split --split): if 1 (default), multiple alternative alleles will be on a separate lines, treated mostly as a separate variant
+; -s 0/1 (-split --split): if 1 (default), multiple alternative alleles will be on a separate lines, treated mostly as a separate variant
 Use 0 for giving alternatives alleles on the same line, separated by comma in the alt field
-; **-e 0/1** (--erroronduplicates): if 1, an error is given if one of the samples to be added is
+; -e 0/1 (--erroronduplicates): if 1, an error is given if one of the samples to be added is
 alread present in the multicompar file. The default (0) is to skip these.
-; **-i 0/1** (--skipincomplete): if set to 0, pmulticompar will stop
+; -i 0/1 (--skipincomplete): if set to 0, pmulticompar will stop
 with an error if no sreg or varall file is found for a sample. If 1 (default), it will
 give a warning, but continue making the multicompar file (incomplete for this sample)
 ; -keepfields fieldlist: Besides the obligatory fields, include only the fields
 in fieldlist (space separated) in the resulting multicompar. Default is to use all fields
 present in the file (*)
-; **-m maxopenfiles** (-maxopenfiles): The number of files that a program
+; -m maxopenfiles (-maxopenfiles): The number of files that a program
 can keep open at the same time is limited. pmulticompar will distribute
 the subtasks thus, that the number of files open at the same time stays
 below this number. With this option, the maximum number of open files can
 be set manually (if the program e.g. does not deduce the proper limit, or
 you want to affect the distribution).
+; -limitreg regionfile: limit the processing to only variants overlapping the regions given in **regionfile**
 ; -force 0/1: pmulticompar creates a lot of temporary files (in the .index
 dir). Even if some of these exist their recreation is forced by default
 (for safety). If a pmulticompar was interupted, you can use -force 0 to

@@ -11,10 +11,12 @@ proc multi_merge_job {varsfile files args} {
 	set optional 0
 	set split 1
 	set force 1
+	set limitreg {}
 	foreach {k v} $args {
 		switch $k {
 			-split {set split $v}
 			-force {set force $v}
+			-limitreg {set limitreg $v}
 			default {error "Unkown option $k"}
 		}
 	}
@@ -23,9 +25,23 @@ proc multi_merge_job {varsfile files args} {
 	if {$maxfiles < 2} {set maxfiles 2}
 	set len [llength $files]
 	if {$len <= $maxfiles} {
+		# merge in one go
 		set target $varsfile
-		job multi_merge-[file tail $varsfile] -force $force -deps $files -targets {$target} -vars {split} -code {
+		job multi_merge-[file tail $varsfile] -force $force -deps $files -targets {
+			$target
+		} -vars {
+			split limitreg
+		} -code {
 			# puts [list ../bin/multi_merge $split {*}$deps]
+			if {$limitreg ne ""} {
+				set templist {}
+				foreach file $deps {
+					set tempfile [tempfile]
+					lappend templist $tempfile
+					exec cg regselect $file $limitreg > $tempfile
+				}
+				set deps $templist
+			}
 			exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
 			file rename -force $target.temp $target
 		}
@@ -37,8 +53,13 @@ proc multi_merge_job {varsfile files args} {
 	set num 1
 	while 1 {
 		if {$len <= $maxfiles} {
+			# final merge (we have less than maxfiles files to merge left)
 			set target $varsfile
-			job multi_merge-[file tail $varsfile] -optional $optional -force $force -deps $todo -targets {$target} -vars {split delete workdir} -code {
+			job multi_merge-[file tail $varsfile] -optional $optional -force $force -deps $todo -targets {
+				$target
+			} -vars {
+				split delete workdir limitreg
+			} -code {
 				# puts [list ../bin/multi_merge $split {*}$deps]
 				exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
@@ -49,19 +70,38 @@ proc multi_merge_job {varsfile files args} {
 		set pos 0
 		set newtodo {}
 		while {$pos < $len} {
+			# go over sets (size maxfiles) and merge to temporary files that will be merged in the final merge
 			set target $workdir/paste.temp$num
 			incr num
 			lappend newtodo $target
 			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
 			incr pos $maxfiles
-			job multi_merge-[file tail $target] -optional $optional -force $force -deps $deps -targets {$target} -vars {split delete} -code {
+			job multi_merge-[file tail $target] -optional $optional -force $force -deps $deps -targets {
+				$target
+			} -vars {
+				split delete limitreg
+			} -code {
 				set deps [gzfile_multi $deps]
 				if {[llength $deps] > 1} {
 					# puts [list ../bin/multi_merge $split {*}$deps]
+					if {!$delete && $limitreg ne ""} {
+						set templist {}
+						foreach file $deps {
+							set tempfile [tempfile]
+							lappend templist $tempfile
+							exec cg regselect $file $limitreg > $tempfile
+						}
+						set deps $templist
+					}
 					exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
 					if {$delete} {file delete {*}$deps}
 				} elseif {!$delete} {
-					mklink $dep $target.temp
+					# one file left, does not have to be merged
+					if {$limitreg ne ""} {
+						exec cg regselect $dep $limitreg > $target.temp
+					} else {
+						mklink $dep $target.temp
+					}
 				} else {
 					file rename -force $dep $target.temp
 				}
@@ -420,6 +460,7 @@ proc pmulticompar_job {args} {
 	set skipincomplete 1
 	set optkeepfields *
 	set force [job_force_get 1]
+	set limitreg {}
 	cg_options pmulticompar args {
 		-r - -reannotregonly {
 			putslog "Reannot reg only"
@@ -436,6 +477,9 @@ proc pmulticompar_job {args} {
 		}
 		-i - -skipincomplete {
 			set skipincomplete $value
+		}
+		-limitreg {
+			set limitreg $value
 		}
 		-keepfields {
 			set optkeepfields $value
@@ -562,7 +606,7 @@ proc pmulticompar_job {args} {
 	# for calculating the varlines needed, we can treat targetvarsfile as just another variant file
 	set files $allfiles
 	if {$targetvarsfile ne ""} {lappend files $targetvarsfile}
-	multi_merge_job $workdir/vars.tsv $files -split $split -force $force
+	multi_merge_job $workdir/vars.tsv $files -limitreg $limitreg -split $split -force $force
 	# 
 	# add extra var lines to each sample file to get all vars in vars.tsv
 	set pastefiles [list $workdir/vars.tsv]
@@ -689,7 +733,7 @@ proc pmulticompar_job {args} {
 				lappend newheader ${field}-$sample
 			}
 			if {[file extension [gzroot $varallfile]] eq ".gvcf"} {
-				# puts [list cg vcf2tsv -refout 1 -sort 0 $varallfile | ../bin/multicompar_addvars $split [join $newheader \t]$allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
+				# puts [list cg vcf2tsv -refout 1 -sort 0 -keepfields $keepfields $varallfile | ../bin/multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
 				exec cg vcf2tsv -refout 1 -sort 0 -keepfields $keepfields $varallfile | multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs | lz4c -c -1 > $target.temp.lz4
 				file rename -force $target.temp.lz4 $target
 			} elseif {$varallfile ne "" || $allfound || (![llength $oldbcolannot] && ![llength $coverageRefScorefiles])} {

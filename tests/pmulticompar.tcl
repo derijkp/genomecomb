@@ -133,7 +133,7 @@ test pmulticompar {multicompar_addvars bgvcf} {
 	set varallfile tmp/varall-sample.gvcf.gz
 	set numbcolannot 0 ; set bcolannot {}
 	set numregfiles 0 ; set regfiles {}
-	set keepposs {14 15 16}
+	set keepposs {15 16 17}
 	# exec cg vcf2tsv -refout 1 -sort 0 $varallfile $varallfile.tsv
 	# puts [list ../bin/multicompar_addvars $split x $allvarsfile $samplevarsfile $sregfile $varallfile.tsv $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.tsv]
 	exec cg vcf2tsv -refout 1 -sort 0 $varallfile | multicompar_addvars $split x $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.txt
@@ -1540,6 +1540,37 @@ test pmulticompar$testname {unsplit, target with alt .} {
 	}
 	catch {file delete tmp/temp.tsv}
 	cg pmulticompar {*}$::jobopts -split 0 -t tmp/targets.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar$testname {basic -limitreg} {
+	test_cleantmp
+	file copy data/var_annot.sft tmp/var-annot1.tsv
+	file copy data/var_annot2.sft tmp/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/sreg-annot2.tsv
+	catch {file delete tmp/temp.tsv}
+	# make tmp/varall-annot1.tsv
+	cg select -f {* sequenced="v"} data/var_annot.sft tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr2 4009 4010 snp C C C C teste 0.0 r} \t]
+	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
+	# make tmp/varall-annot2.tsv
+	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
+	set f [open tmp/temp.tsv a]
+	puts $f [join {chr1 4050 4060 snp G G G G test3e 0.3 r} \t]
+	close $f
+	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
+	catch {file delete tmp/temp.tsv}
+	file_write tmp/limit_reg.tsv [deindent {
+		chromosome	begin	end
+		1	200	5000
+		2	5000	6000
+	}]\n
+	exec cg regselect data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/limit_reg.tsv > tmp/expected.tsv
+	cg pmulticompar {*}$::jobopts -split 0 -limitreg tmp/limit_reg.tsv tmp/temp.tsv tmp/var-annot1.tsv tmp/var-annot2.tsv
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
