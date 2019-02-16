@@ -12,6 +12,7 @@ proc process_multicompar_job {args} {
 	set threads 1
 	set distrreg 0
 	set keepfields *
+	set limitreg {}
 	cg_options process_multicompar args {
 		-dbdir {
 			set dbdir $value
@@ -60,6 +61,9 @@ proc process_multicompar_job {args} {
 		}
 		-keepfields {
 			set keepfields $value
+		}
+		-limitreg {
+			set limitreg $value
 		}
 		-c - -cleanup {
 			set cleanup $value
@@ -180,7 +184,7 @@ proc process_multicompar_job {args} {
 			putslog "Starting multicompar"
 			set compar_file [gzroot $compar_file].lz4
 			# pmulticompar_job $compar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
-			pmulticompar_job -reannotregonly 0 -split $split -targetvarsfile $targetvarsfile -erroronduplicates 0 -skipincomplete $skipincomplete -keepfields $keepfields $compar_file {*}$stilltodo
+			pmulticompar_job -reannotregonly 0 -split $split -limitreg $limitreg -targetvarsfile $targetvarsfile -erroronduplicates 0 -skipincomplete $skipincomplete -keepfields $keepfields $compar_file {*}$stilltodo
 		} else {
 			putslog "skipping multicompar (no update needed)"
 		}
@@ -212,7 +216,8 @@ proc process_multicompar_job {args} {
 			}
 			lappend regfiles $file
 		}
-		multireg_job compar/sreg-$experiment.tsv.lz4 $regfiles
+		multireg_job compar/sreg-$experiment.tsv.lz4 $regfiles $limitreg
+
 	}
 	#
 	# sv

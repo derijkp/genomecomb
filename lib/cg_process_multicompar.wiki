@@ -51,6 +51,9 @@ quotes. You can still use * as a wildcard, as cg will resolve the wildcards itse
 ; -keepfields fieldlist: Besides the obligatory fields, include only the fields
 in fieldlist (space separated) in the output multicompar. Default is to use all fields
 present in the file (*)
+; -limitreg regionfile: limit the variants and region multicompar files to
+the regions given in **regionfile**. (Other results, such as structural
+variants are not limited (yet))
 
 This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
 
