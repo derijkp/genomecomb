@@ -49,7 +49,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 				foreach file $deps {
 					set tempfile [tempfile]
 					lappend templist $tempfile
-					exec cg regselect $file $limitreg > $tempfile
+					exec cg regselect -o $tempfile $file $limitreg
 				}
 				set deps $templist
 			}
@@ -120,7 +120,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 						foreach file $deps {
 							set tempfile $tempdir/[file tail $file]
 							lappend templist $tempfile
-							exec cg regselect $file $limitreg > $tempfile
+							exec cg regselect -o $tempfile $file $limitreg
 						}
 						set deps $templist
 					}
@@ -141,7 +141,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 					partisreg delete limitreg
 				} -code {
 					if {$limitreg ne ""} {
-						exec cg regselect $dep $limitreg > $target.temp
+						exec cg regselect -o $target.temp $dep $limitreg
 					} elseif {$delete} {
 						file rename $dep $target.temp
 					} else {
