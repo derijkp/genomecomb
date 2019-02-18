@@ -65,7 +65,7 @@ typedef struct lz4res {
 
 char *lz4_findindex(char *filename);
 unsigned LZ4IO_readLE32 (const void* s);
-LZ4res *lz4open(FILE* finput,FILE *indexfile);
+LZ4res *lz4open(FILE* finput,FILE *indexfile,char *file);
 int lz4_readblock(LZ4res *res, unsigned int startblock);
 void lz4close(LZ4res *res);
 void lz4index_write(FILE *findex,off_t pos);

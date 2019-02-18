@@ -31,7 +31,7 @@ if (read < (start+size) || strncmp(buffer+start,test,size) != 0 || (buffer[start
 } \
 }
 
-LZ4res *lz4open(FILE* finput,FILE *findex) {
+LZ4res *lz4open(FILE* finput,FILE *findex,char *file) {
 	LZ4res *res = malloc(sizeof(LZ4res));
 	unsigned char MNstore[MAGICNUMBER_SIZE];
 	unsigned magicNumber;
@@ -47,11 +47,14 @@ LZ4res *lz4open(FILE* finput,FILE *findex) {
 	READ(finput,MAGICNUMBER_SIZE,&MNstore,"empty file")
 	magicNumber = LZ4IO_readLE32(MNstore);   /* Little Endian format */
 	if (magicNumber == LEGACY_MAGICNUMBER) {
-		ERROR("Unsupported file format, legacy lz4 format not supported");
+		if (file != NULL) fprintf(stderr,"file %s ",file);
+		ERROR("unsupported format, legacy lz4 format not supported");
 	} else if (magicNumber == LZ4IO_SKIPPABLE0) {
-		ERROR("Unsupported file format, start with skippable frame not supported");
+		if (file != NULL) fprintf(stderr,"file %s ",file);
+		ERROR("unsupported format, start with skippable frame not supported");
 	} else if (magicNumber != LZ4IO_MAGICNUMBER) {
-		ERROR("Unsupported file format, not lz4");
+		if (file != NULL) fprintf(stderr,"file %s ",file);
+		ERROR("unsupported format, not lz4");
 	}
 	res->usize = 0;
 	res->indexbsize = 0;
@@ -271,7 +274,7 @@ LZ4res *lz4_openfile(char *file, int useindex) {
 	} else {
 		findex = NULL;
 	}
-	res = lz4open(finput,findex);
+	res = lz4open(finput,findex,file);
 	return(res);
 }
 
