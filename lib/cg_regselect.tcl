@@ -1,4 +1,4 @@
-proc regselect {regfile1 regfile2 {near -1}} {
+proc regselect {regfile1 regfile2 {near -1} {o stdout}} {
 	global cache
 	# catch {close $f1}
 	# catch {close $f2}
@@ -14,14 +14,20 @@ proc regselect {regfile1 regfile2 {near -1}} {
 	}
 	# puts [list reg_select {*}$poss1 $regfile2 {*}$poss2 $near]
 	set cat [gzcat $regfile1]
-	exec {*}$cat $regfile1 | reg_select {*}$poss1 $regfile2 {*}$poss2 $near >@ stdout 2>@ stderr
+	exec {*}$cat $regfile1 | reg_select {*}$poss1 $regfile2 {*}$poss2 $near >@ $o 2>@ stderr
 }
 
 proc cg_regselect {args} {
-	if {([llength $args] < 1) || ([llength $args] > 3)} {
-		errorformat regselect
-	}
-	foreach {region_file1 region_file2 near} $args break
+	set o stdout
+	set near -1
+	cg_options reports_vars args {
+		-o {
+			set o [wgzopen $value]
+		}
+		-near {
+			set near $value
+		}
+	} {region_file1 region_file2 near} 2 3
 	if {$near eq ""} {set near -1}
-	regselect $region_file1 $region_file2 $near
+	regselect $region_file1 $region_file2 $near $o
 }

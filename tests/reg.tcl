@@ -665,6 +665,20 @@ test regselect {basic} {
 	exec diff tmp/temp2.tsv tmp/tempexpected.tsv
 } {}
 
+test regselect {regselect -o} {
+	exec cg regselect -o tmp/temp.tsv data/vars1.sft data/reg_annot.sft
+	exec cg select -rf {list} tmp/temp.tsv tmp/temp2.tsv
+	exec cg select -q {$regtest != ""} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} ../tests/data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
+	exec diff tmp/temp2.tsv tmp/tempexpected.tsv
+} {}
+
+test regselect {regselect -o compressed} {
+	exec cg regselect -o tmp/temp.tsv.lz4 data/vars1.sft data/reg_annot.sft
+	exec cg select -rf {list} tmp/temp.tsv.lz4 tmp/temp2.tsv
+	exec cg select -q {$regtest != ""} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} ../tests/data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
+	exec diff tmp/temp2.tsv tmp/tempexpected.tsv
+} {}
+
 test regselect {basic2} {
 	exec cg regselect data/vars1.sft data/reg_annot.sft > tmp/temp.tsv
 	exec cg select -f {chromosome begin end type} tmp/temp.tsv
