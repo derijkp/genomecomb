@@ -644,10 +644,15 @@ proc pmulticompar_job {args} {
 		job multicompar_addvars-$sample -force $force -deps $deps -targets {
 			$target
 		} -vars {
-			allvarsfile samplevarsfile sregfile varallfile sample split sampledir optkeepfields
+			allvarsfile samplevarsfile sregfile varallfile sample split sampledir optkeepfields limitreg
 		} -code {
 			set allvarsfile [gzfile $allvarsfile]
 			set samplevarsfile [gzfile $samplevarsfile]
+			if {$limitreg ne ""} {
+				set tempfile [tempdir]/[gzroot [file tail $samplevarsfile]]
+				cg regselect $samplevarsfile $limitreg > $tempfile
+				set samplevarsfile $tempfile
+			}
 			# if the file does not exist, the following will make it empty
 			set sregfile [lindex [gzfiles $sregfile] 0]
 			set varallfile [lindex [gzfiles $varallfile] 0]

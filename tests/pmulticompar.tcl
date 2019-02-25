@@ -1574,6 +1574,75 @@ test pmulticompar$testname {basic -limitreg} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
+test pmulticompar$testname {basic reannot varall split gvcf and bgvcf -limitreg} {
+	test_cleantmp
+	file copy data/varall-gatkh-bwa-sample1.gvcf tmp
+	file copy data/varall-gatkh-bwa-sample2.gvcf tmp
+	file copy data/varall-gatkh-bwa.bgvcf tmp/varall-gatkh-bwa-sample3.gvcf
+	file copy data/varall-strelka-bwa.gvcf.gz tmp/varall-strelka-bwa-sample4.gvcf.gz
+	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample1.gvcf | cg select -q {$genoqual >= 10} | cg regjoin > tmp/sreg-gatkh-bwa-sample1.tsv
+	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample2.gvcf | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-gatkh-bwa-sample2.tsv
+	exec cg vcf2tsv -refout 1 tmp/varall-gatkh-bwa-sample3.gvcf | cg select -q {$genoqual >= 10}  | cg regjoin > tmp/sreg-gatkh-bwa-sample3.tsv
+	exec cg vcf2tsv -refout 1 tmp/varall-strelka-bwa-sample4.gvcf.gz | cg select -q {$genoqual >= 10 || $GQX >= 10}  | cg regjoin > tmp/sreg-strelka-bwa-sample4.tsv
+	# cg gatk_index tmp/varall-gatkh-bwa-sample3.gvcf
+	# cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample3.gvcf tmp/var-gatkh-bwa-sample3.vcf
+	file copy -force data/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.vcf
+	file copy -force data/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.vcf
+	file copy -force data/var-gatkh-bwa-sample3.vcf tmp/var-gatkh-bwa-sample3.vcf
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.lz4
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.lz4
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample3.vcf tmp/var-gatkh-bwa-sample3.tsv.lz4
+	file copy data/var-strelka-bwa.tsv tmp/var-strelka-bwa-sample4.tsv
+	file_write tmp/limitreg.tsv [deindent {
+		chromosome	begin	end
+		21	42754300	42775232
+		22	41923480	41923488
+	}]
+	file delete tmp/result.tsv
+	cg pmulticompar {*}$::jobopts -split 1 -limitreg tmp/limitreg.tsv tmp/result.tsv \
+		tmp/var-gatkh-bwa-sample1.tsv.lz4 tmp/var-gatkh-bwa-sample2.tsv.lz4 \
+		tmp/var-gatkh-bwa-sample3.tsv.lz4  tmp/var-strelka-bwa-sample4.tsv
+	cg regselect data/expected-blocked-pmulticompar.tsv tmp/limitreg.tsv > tmp/expected.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {} 
+
+test pmulticompar$testname {bug check -limitreg missing allvars} {
+	test_cleantmp
+	write_tab tmp/sreg-sample1.tsv {
+		chromosome	begin	end
+		chr1	50	200
+		chr2	50	200
+	}
+	file copy tmp/sreg-sample1.tsv tmp/sreg-sample2.tsv
+	write_tab tmp/var-sample1.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2
+		chr1	100	100	ins	{}	C	t	{}	C
+		chr1	151	152	snp	A	T	t	A	T
+		chr1	160	162	del	NN	{}	m	{}	{}
+		chr2	150	151	snp	G	C	m	C	C
+		chr2	151	152	snp	G	C	m	C	C
+	}
+	write_tab tmp/var-sample2.tsv {
+		chromosome	begin	end	type	ref	alt	zyg	alleleSeq1	alleleSeq2
+		chr1	150	152	del	GT	{}	t	GT	{}
+		chr1	160	161	snp	A	C	t	A	C
+		chr1	160	161	snp	A	T	t	A	T
+	}
+	write_tab tmp/limitreg.tsv {
+		chromosome	begin	end
+		chr1	90	101
+		chr2	151	250
+	}
+	write_tab tmp/expected.tsv {
+		chromosome	begin	end	type	ref	alt	sequenced-sample1	zyg-sample1	alleleSeq1-sample1	alleleSeq2-sample1	sequenced-sample2	zyg-sample2	alleleSeq1-sample2	alleleSeq2-sample2
+		1	100	100	ins	{}	C	v	t	{}	C	r	r	{}	{}
+		2	151	152	snp	G	C	v	m	C	C	r	r	G	G
+	}
+	catch {file delete tmp/temp.tsv}
+	cg pmulticompar {*}$::jobopts -split 1 -limitreg tmp/limitreg.tsv tmp/temp.tsv tmp/var-sample1.tsv tmp/var-sample2.tsv
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {} 
+
 }
 
 test_cleantmp

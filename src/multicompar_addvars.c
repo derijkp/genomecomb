@@ -223,15 +223,9 @@ int main(int argc, char *argv[]) {
 			comp = -2;
 		} else {
 			comp = varcompare(allvars->var,orivars->var,split);
-			while (comp > 0) {
-				varfile_next(orivars,1);
-				if (!orivars->error) {comp = -2 ; break;}
-				comp = varcompare(allvars->var,orivars->var,split);
-			}
 		}
 		/* comp is -1/1 for same loc/type, but different allele, -2/2 for different loc/type */
 		if (comp > 0) {
-			/* doesnt happen any more (while above) */
 			fprintf(stderr,"internal error: all variants should be in the (allvar) variant file, so this should not happen");
 			exit(EXIT_FAILURE);
 		} else if (comp == 0) {
