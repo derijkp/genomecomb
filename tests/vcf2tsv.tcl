@@ -109,7 +109,11 @@ test vcf2tsv {vcf2tsv ins and del} {
 test vcf2tsv {vcf2tsv ins and del -typelist .} {
 	exec cg vcf2tsv -typelist . -s 1 data/test2.vcf tmp/temp.tsv
 	exec diff tmp/temp.tsv data/expected-test2s.vcf2tsv
-} {46,47c46,47
+} {28c28
+< #fields	frequency	.	Float	Allele Frequency	info
+---
+> #fields	frequency	A	Float	Allele Frequency	info
+46,47c46,47
 < 20	1110695	1110696	snp	A	G	rs6040355	67	PASS	G	T	c	1	1,2	21	6	23,27	T	G	c	1	2,1	2	0	18,2	T	T	o	0	2;2	35	4		2	10	0.333,0.667	T	1	
 < 20	1110695	1110696	snp	A	T	rs6040355	67	PASS	G	T	c	1	2,1	21	6	23,27	T	G	c	1	1,2	2	0	18,2	T	T	m	0	1;1	35	4		2	10	0.333,0.667	T	1	
 ---

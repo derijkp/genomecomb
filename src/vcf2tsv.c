@@ -1467,8 +1467,13 @@ int main(int argc, char *argv[]) {
 		DStringAppendS(infofieldsnumber,num->string,1);
 	}
 	fprintf(fo,"\n");
-	maxtab = 9+samples->size;
-	min = 9+samples->size;
+	if (samples->size) {
+		maxtab = 9+samples->size;
+		min = 9+samples->size;
+	} else {
+		maxtab = 8;
+		min = 8;
+	}
 	outinfo =  (DString *)malloc(infofields->size*sizeof(DString));
 	linea = DStringArrayNew(maxtab+2);
 	NODPRINT("==== Parsing data ====")
