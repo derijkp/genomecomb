@@ -5,12 +5,12 @@ EXEEXT?=
 # CFLAGS=-D_FILE_OFFSET_BITS=64 -Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
 CFLAGS:=-D_FILE_OFFSET_BITS=64 -Wall -O2 -I~/dev/genomecomb/src ${CFLAGS}
 TOOLS= tools.c tools.h debug.h
-GZTOOLS_C= lz4.c lz4tools.c razf.c gztools.c
-GZTOOLS= $(GZTOOLS_C) gztools.h razf.h lz4.h lz4tools.h debug.h
+GZTOOLS_C= lz4.c lz4tools.c razf.c gztools.c zstdtools.c
+GZTOOLS= $(GZTOOLS_C) gztools.h razf.h lz4.h lz4tools.h debug.h zstdtools.h
 TOOLS_VAR= tools_var.c tools_var.h
 HASHTOOLS=hash.h hash.c
-BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h lz4.c lz4.h lz4tools.c lz4tools.h xxhash.c xxhash.h
-LIBZ=-Wl,-Bstatic -lz -Wl,-Bdynamic
+BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h lz4.c lz4.h lz4tools.c lz4tools.h zstdtools.c zstdtools.h xxhash.c xxhash.h
+LIBZ=-Wl,-Bstatic -lz -lzstd -Wl,-Bdynamic
 
 all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$(ARCH)/map2sv$(EXEEXT) ../bin$(ARCH)/addcols$(EXEEXT) \
      ../bin$(ARCH)/reg_subtract$(EXEEXT) ../bin$(ARCH)/reg_join$(EXEEXT) ../bin$(ARCH)/covered$(EXEEXT) ../bin$(ARCH)/getregions$(EXEEXT) \

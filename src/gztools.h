@@ -13,6 +13,7 @@
 #include <limits.h>
 #include "tools.h"
 #include "lz4tools.h"
+#include "zstdtools.h"
 #include "razf.h"
 #include "debug.h"
 
@@ -21,12 +22,14 @@
 #define GZ 3
 #define RZ 4
 #define IN 5
+#define ZSTD 6
 
 typedef struct GZFILE {
 	char *filename;
 	int type;
 	FILE *fun;
 	LZ4res *lz4;
+	ZSTDres *zstd;
 	RAZF *rz;
 } GZFILE;
 

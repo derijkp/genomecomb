@@ -31,6 +31,10 @@ GZFILE *gz_open(char *filename) {
 			if (*(--cur) == 'z' && *(--cur) == 'l' && *(--cur) == '.') {
 				type = LZ4;
 			}
+		} else if (len >= 4 && *cur == 't') {
+			if (*(--cur) == 's' && *(--cur) == 'z' && *(--cur) == '.') {
+				type = ZSTD;
+			}
 		} else if (*cur == 'z') {
 			cur--;
 			if (*(cur) == 'g' && *(--cur) == '.') {
@@ -47,6 +51,8 @@ GZFILE *gz_open(char *filename) {
 		result->fun = fopen64_or_die(filename,"r");
 	} else if (type == LZ4) {
 		result->lz4 = lz4_openfile(filename,0);
+	} else if (type == ZSTD) {
+		result->zstd = zstd_openfile(filename);
 	} else if (type == RZ || type == GZ) {
 		result->rz = razf_open(filename, "r");
 	}
@@ -60,6 +66,8 @@ void gz_seek(GZFILE *f, int64_t pos, int where) {
 		fseeko(f->fun, pos, where);
 	} else if (type == LZ4) {
 		lz4_seek(f->lz4, pos, where);
+	} else if (type == ZSTD) {
+		zstd_seek(f->zstd, pos, where);
 	} else if (type == RZ || type == GZ) {
 		razf_seek(f->rz, pos, where);
 	}
@@ -79,6 +87,8 @@ int gz_read(GZFILE *f,void *data,uint64_t size) {
 		return(size-(count+1));
 	} else if (type == LZ4) {
 		return(lz4_read(f->lz4, data, size));
+	} else if (type == ZSTD) {
+		return(zstd_read(f->zstd, data, size));
 	} else {
 		return(razf_read(f->rz, data, size));
 	}
@@ -90,6 +100,8 @@ int gz_get(GZFILE *f) {
 		return(getc_unlocked(f->fun));
 	} else if (type == LZ4) {
 		return(lz4_get(f->lz4));
+	} else if (type == ZSTD) {
+		return(zstd_get(f->zstd));
 	} else {
 		char c;
 		if (!razf_read(f->rz, (void *)(&c), 1)) {return EOF;}
@@ -105,6 +117,8 @@ void gz_close(GZFILE *f) {
 		fclose(f->fun);
 	} else if (type == LZ4) {
 		lz4_close(f->lz4);
+	} else if (type == ZSTD) {
+		zstd_close(f->zstd);
 	} else if (type == RZ || type == GZ) {
 		razf_close(f->rz);
 	}
@@ -148,6 +162,21 @@ int gz_DStringGetLine(DString *linePtr,	GZFILE *f1) {
 		LZ4res *lz4 = f1->lz4;
 		register int c;
 		while ((c=lz4_get(lz4))!=EOF) {
+			if (c == '\n') break;
+			*cur++=c;
+			cnt++;
+			if (cur == buf_end) {
+				buf=realloc(buf,bsz*2);
+				cur=buf+bsz;
+				bsz*=2;
+				buf_end=buf+bsz;
+			}
+		}
+		if (c == EOF && cnt == 0) {cnt = -1;}
+	} else if (type == ZSTD) {
+		ZSTDres *zstd = f1->zstd;
+		register int c;
+		while ((c=zstd_get(zstd))!=EOF) {
 			if (c == '\n') break;
 			*cur++=c;
 			cnt++;
@@ -240,6 +269,7 @@ int gz_DStringGetTab(DString *linePtr,	GZFILE *f1, int maxtab, DStringArray *res
 	ssize_t size = 0;
 	FILE *f = f1->fun;
 	LZ4res *lz4 = f1->lz4;
+	ZSTDres *zstd = f1->zstd;
 	RAZF *rz = f1->rz;
 	int type = f1->type;
 NODPRINT("maxtab=%d result->memsize=%d",maxtab,result->memsize)
@@ -256,6 +286,8 @@ NODPRINT("maxtab=%d result->memsize=%d",maxtab,result->memsize)
 			c = getc_unlocked(f);
 		} else if (type == LZ4) {
 			c = lz4_get(lz4);
+		} else if (type == ZSTD) {
+			c = zstd_get(zstd);
 		} else {
 			char tc;
 			if (!razf_read(rz, (void *)(&tc), 1)) {c = EOF;} else {c = (int)tc;}
