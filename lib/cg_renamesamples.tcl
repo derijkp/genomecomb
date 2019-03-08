@@ -78,7 +78,7 @@ proc renamesamples_file {file changes} {
 			fcopy $f $o
 			close $o
 			gzclose $f
-			if {$gzext ne ""} {compress $newbasefile$ext.temp $gzext}
+			if {$gzext ne ""} {compress $newbasefile$ext.temp $newbasefile$ext.temp$gzext 0 0}
 			file delete $file
 			file_rename $newbasefile$ext.temp$gzext $newfile
 			catch {file delete $newbasefile$ext.temp}

@@ -1,85 +1,17 @@
+proc index_lz4 {file} {
+	exec lz4index $file
+}
+
+proc compress_lz4 {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize 5} args} {
+	# putsvars file destfile index keep threads compressionlevel blocksize
+	set cmd [list lz4c -q -$compressionlevel -B$blocksize -c]
+	compress_template $file $destfile lz4 $cmd $index $keep
+}
+
 proc cg_lz4 args {
-	set keep {}
-	set compressionlevel [defcompressionlevel]
-	set blocksize 5
-	set index 0
-	set outputfile {}
-	cg_options lz4 args {
-		-k - -keep {
-			set keep $value
-		}
-		-c - -compressionlevel {
-			set compressionlevel $value
-		}
-		-b - -blocksize {
-			set blocksize $value
-		}
-		-i - -index {
-			set index $value
-		}
-		-o - -outputfile {
-			set outputfile $value
-			if {$keep eq ""} {set keep 1}
-		}
-	}
-	if {$keep eq ""} {set keep 0}
-	if {$outputfile ne "" && [llength $args] > 1} {
-		error "option -o can only be used for compressing one file"
-	}
-	if {![llength $args]} {
-		exec lz4c -q -$compressionlevel -B$blocksize -c <@ stdin >@ stdout 2>@ stderr
-		return
-	}
-	foreach file $args {
-		set ext [file extension $file]
-		if {$outputfile eq ""} {
-			set result [file root $file].lz4
-		} else {
-			set result $outputfile
-		}
-		set temp [filetemp $result]
-		switch $ext {
-			.gz {
-				putslog "lz4 $file"
-				set temp2 [filetemp $result]
-				exec gunzip -d -c $file > $temp2
-				exec lz4c -q -$compressionlevel -B$blocksize -c $temp2 > $temp
-			}
-			.rz {
-				putslog "lz4 $file"
-				set temp2 [filetemp $result]
-				exec razip -d -c $file > $temp2
-				exec lz4c -q -$compressionlevel -B$blocksize -c $temp2 > $temp
-			}
-			.lz4 {
-				putslog "$file already lz4"
-				continue
-			}
-			.bz2 {
-				putslog "lz4c $file"
-				set temp2 [filetemp $result]
-				exec bzcat $file > $temp2
-				exec lz4c -q -$compressionlevel -B$blocksize -c $temp2 > $temp
-			}
-			.lz4i {
-				putslog "not compressing lz4 index file $file"
-			}
-			default {
-				if {$outputfile eq ""} {
-					set result $file.lz4
-				} else {
-					set result $outputfile
-				}
-				putslog "lz4c $file"
-				exec lz4c -q -$compressionlevel -B$blocksize -c $file > $temp
-			}
-		}
-		if {$index} {exec lz4index $temp}
-		if {$index} {file rename -force $temp.lz4i $result.lz4i}
-		if {[info exists temp2]} {file delete $temp2}
-		file rename -force $temp $result
-		if {!$keep} {file delete $file}
-	}
+	set args [job_init {*}$args]
+	cg_compress_job -method lz4 {*}$args
+	job_wait
 }
 
 proc cg_lz4index {args} {

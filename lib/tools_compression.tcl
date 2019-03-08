@@ -6,25 +6,55 @@ proc defcompressionlevel {args} {
 	}
 }
 
-proc compress {file {ext .lz4} {threads 1}} {
-	set file [file_absolute $file]
-	if {[file exists $file$ext]} {file delete $file$ext}
-	set defcompressionlevel [defcompressionlevel]
-	if {[inlist {.rz} $ext]} {
-		exec razip $file
-	} elseif {[inlist {.lz4} $ext]} {
-		exec lz4c -q -$defcompressionlevel -c $file > $file.lz4.temp
-		file rename -force $file.lz4.temp $file.lz4
-	} elseif {[inlist {.gz} $ext]} {
-		if {$defcompressionlevel > 9} {set defcompressionlevel 9}
-		if {$defcompressionlevel < 1} {set defcompressionlevel 1}
-		exec gzip -$defcompressionlevel $file
-	} elseif {[inlist {.bgz} $ext]} {
-		exec bgzip -@ $threads $file
-	} elseif {[inlist {.bz2} $ext]} {
-		exec bzip2 $file
+proc compress {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize 5} args} {
+	# putsvars file destfile index keep compressionlevel blocksize args
+	set ext [file extension $destfile]
+	set method [string range $ext 1 end]
+	if {$compressionlevel eq ""} {set compressionlevel [defcompressionlevel]}
+	if {[auto_load compress_$method]} {
+		compress_$method $file $destfile $index $keep $threads $compressionlevel $blocksize
+	} elseif {[gziscompressed $file]} {
+		set temp [filetemp $destfile]
+		exec {*}[gzcat $file] $file > $temp
+		file rename -force $temp $destfile
+		if {!$keep} {file delete $file}
+	} elseif {$keep} {
+		set temp [filetemp $destfile]
+		file copy $file $temp
+		file rename -force $temp $destfile
 	} else {
-		error "Unknown extension $ext"
+		file rename -force $file $destfile
+	}
+}
+
+proc compress_template {file destfile method cmd {index 1} {keep 1}} {
+	# putsvars file destfile index keep compressionlevel blocksize args
+	if {$destfile eq ""} {set destfile $file.$method}
+	if {$file eq "-"} {
+		if {$destfile eq "-"} {
+			exec {*}$cmd <@ stdin >@ stdout 2>@ stderr
+		} else {
+			set temp [filetemp $destfile]
+			exec {*}$cmd <@ stdin > $temp 2>@ stderr
+		}
+	} elseif {[gziscompressed $file]} {
+		if {$destfile eq "-"} {
+			exec {*}[gzcat $file] | {*}$cmd >@ stdout
+		} else {
+			set temp [filetemp $destfile]
+			exec {*}[gzcat $file] $file | {*}$cmd > $temp
+		}
+		if {!$keep} {file delete $file}
+	} else {
+		set temp [filetemp $destfile]
+		exec {*}$cmd $file > $temp
+		if {!$keep} {file delete $file}
+	}
+	if {$destfile ne "-"} {
+		file rename -force $temp $destfile
+		if {$index} {
+			catch {index_$method $destfile}
+		}
 	}
 }
 
@@ -93,6 +123,7 @@ proc gzcatch {cmd} {
 }
 
 array set ::gzexts {
+	.zst zst
 	.rz razip
 	.lz4 lz4
 	.gz gzip

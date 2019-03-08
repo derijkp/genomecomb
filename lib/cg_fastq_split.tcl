@@ -66,7 +66,7 @@ proc fastq_split_job {args} {
 			} -vars {
 				file ext threads
 			} -code {
-				compress $file $ext $threads
+				compress $file $file$ext 1 0 $threads
 				file rename $file$ext $target
 			}
 		}

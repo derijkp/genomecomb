@@ -8,8 +8,11 @@ proc job_file_mtime {file} {
 	return $a(mtime)
 }
 
-proc job_distribute {type} {
+proc job_distribute {{type {}}} {
 	global cgjob
+	if {$type eq ""} {
+		return $cgjob(distribute)
+	}
 	set cgjob(distribute) $type
 	if {[isint $cgjob(distribute)]} {
 		if {$cgjob(distribute) <= 1} {
