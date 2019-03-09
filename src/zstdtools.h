@@ -1,3 +1,6 @@
+#ifndef ZSTDTOOLS_H_LOADED
+#define ZSTDTOOLS_H_LOADED 1
+
 #define _FILE_OFFSET_BITS 64
 #define _LARGEFILE64_SOURCE 1
 
@@ -39,6 +42,7 @@ typedef struct zstdres {
 	unsigned long long contentsize;
 	unsigned long long framepos;
 	unsigned long long int inframepos;
+	unsigned long long framefilepos;
 	unsigned int frameread;
 	char *buffer;
 	unsigned int buffersize;
@@ -80,3 +84,5 @@ int zstd_seek(ZSTDres *res, uint64_t pos, int where);
 int zstd_read(ZSTDres *res, void *data, uint64_t size);
 int zstd_get(ZSTDres *res);
 #define zstd_close(res) zstdclose(res)
+
+#endif

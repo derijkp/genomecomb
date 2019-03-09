@@ -1,6 +1,7 @@
 
 #include "tools.h"
 #include "razf.h"
+#include "zstdtools.h"
 #include "lz4tools.h"
 
 typedef struct BCol_table {
@@ -26,6 +27,7 @@ typedef struct BCol {
 	int tablepos;
 	unsigned char *buffer;
 	int buffersize;
+	ZSTDres *zst;
 	LZ4res *lz4;
 	RAZF *rz;
 	FILE *f;

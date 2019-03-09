@@ -1,4 +1,5 @@
 #include "zstdtools.h"
+
 FILE *fopen64_or_die(char *filename,char *mode);
 
 uint32_t ZSTDIO_readLE24 (const void* s) {
@@ -46,6 +47,7 @@ int zstd_readheader(ZSTDres *res) {
 	}
 	res->framepos = res->framepos + res->contentsize;
 	res->frameread = 0;
+	res->framefilepos = ftell(res->finput);
 	error = fread(res->buffer, 1, ZSTD_FRAMEHEADERSIZE_MIN, res->finput);
 	if (error == 0 && feof(res->finput)) return(0);
 	if (error != ZSTD_FRAMEHEADERSIZE_MIN) ERROR("error in file: incomplete zstd frame header");
@@ -139,7 +141,6 @@ debug_printprogress(res,"readframe");
 		exit(1);
 	}
 	NODPRINT("numdecompressed: %d",numdecompressed);
-	res->currentpos += res->contentsize;
 	return(1);
 }
 
@@ -169,7 +170,6 @@ debug_printprogress(res,"skipframe");
 		}
 		res->inframepos = 0;
 		res->frameread = 0;
-		res->currentpos += res->contentsize;
 	}
 	return(1);
 }
@@ -357,8 +357,20 @@ int zstd_read(ZSTDres *res, void *data, uint64_t size) {
 	uint64_t read;
 	unsigned int skip, writesize;
 	skip = res->currentpos - res->framepos;
-	while (1) {
+	if (res->contentsize == 0) {
+		while (res->contentsize == 0) {
+			zstd_skipframe(res);
+			zstd_readheader(res);
+		}
 		zstd_readframe(res);
+	} else if (!res->frameread) {
+		zstd_readframe(res);
+	} else if (skip >= res->contentsize) {
+		zstd_readheader(res);
+		zstd_readframe(res);
+	}
+	while (1) {
+		if (size == 0) break;
 		writebuffer = res->outbuffer + skip;
 		writesize = res->contentsize - skip;
 		skip = 0;
@@ -369,6 +381,14 @@ int zstd_read(ZSTDres *res, void *data, uint64_t size) {
 		}
 		memcpy(dest,writebuffer,writesize);
 		dest += writesize;
+		if (size == 0) break;
+		zstd_readheader(res);
+		while (res->contentsize == 0) {
+			zstd_skipframe(res);
+			zstd_readheader(res);
+		}
+		if (feof(res->finput)) break;
+		zstd_readframe(res);
 	}
 	read = (dest - (char *)data);
 	res->currentpos += read;

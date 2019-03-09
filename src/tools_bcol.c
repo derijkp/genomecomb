@@ -568,7 +568,9 @@ int bcol_printtext(FILE *f,int reverse,int isunsigned,char type,unsigned char *b
 }
 
 void bcol_close(BCol *bcol) {
-	if (bcol->lz4 != NULL) {
+	if (bcol->zst != NULL) {
+		zstd_close(bcol->zst);
+	} else if (bcol->lz4 != NULL) {
 		lz4_close(bcol->lz4);
 	} else if (bcol->rz != NULL) {
 		razf_close(bcol->rz);
@@ -593,6 +595,7 @@ int read_unlocked(FILE *f,unsigned char *buffer,int size) {
 
 /* reads data from bcol, from position start to end (included): positions given in objects, so no need to * typesize */
 int bcol_getbin(BCol *fbcol,uint64_t start,uint64_t end) {
+	ZSTDres *zst = fbcol->zst;
 	LZ4res *lz4 = fbcol->lz4;
 	RAZF *rz = fbcol->rz;
 	FILE *f = fbcol->f;
@@ -605,6 +608,10 @@ int bcol_getbin(BCol *fbcol,uint64_t start,uint64_t end) {
 	start = (start-fbcol->start)*fbcol->typesize;
 	if (start < 0) {
 		c = 0;
+	}
+	if (zst != NULL) {
+		zstd_seek(zst, start, SEEK_SET);
+		c = zstd_read(zst, fbcol->buffer, rsize);
 	} else if (lz4 != NULL) {
 		lz4_seek(lz4, start, SEEK_SET);
 		c = lz4_read(lz4, fbcol->buffer, rsize);
@@ -658,11 +665,14 @@ int bcol_getbinloc(BCol *bcol,DString *chromosome, uint64_t start,uint64_t end) 
 }
 
 int bcol_readbin(BCol *fbcol,int rsize,unsigned char *buffer) {
+	ZSTDres *zst = fbcol->zst;
 	LZ4res *lz4 = fbcol->lz4;
 	RAZF *rz = fbcol->rz;
 	FILE *f = fbcol->f;
 	int c;
-	if (lz4 != NULL) {
+	if (zst != NULL) {
+		c = zstd_read(zst, buffer, rsize);
+	} else if (lz4 != NULL) {
 		c = lz4_read(lz4, buffer, rsize);
 	} else if (rz != NULL) {
 		c = razf_read(rz, buffer, rsize);
@@ -772,6 +782,9 @@ int bcol_readdouble(BCol *fbcol,long double *result) {
 		bcol_CopyNumber(buffer, &dvalue, sizeof(double), fbcol->reverse);
 		*result = (long double)dvalue;
 		break;
+	default:
+		fprintf(stderr,"error: unknown bcol type %c\n",fbcol->type);
+		exit(1);
 	}
 	return 1;
 }
@@ -862,13 +875,17 @@ BCol *bcol_open(char *bcolfile) {
 	sprintf(result->file+len,".bin");
 	result->f = fopen64(result->file, "r");
 	if (result->f == NULL) {
-		sprintf(result->file+len,".bin.lz4");
-		result->lz4 = lz4_openfile(result->file,0);
-		if (result->lz4 == NULL) {
-			sprintf(result->file+len,".bin.rz");
-			result->rz = razf_open(result->file, "r");
-		} else {
-			result->rz = NULL;
+		sprintf(result->file+len,".bin.zst");
+		result->zst = zstd_openfile(result->file);
+		if (result->zst == NULL) {
+			sprintf(result->file+len,".bin.lz4");
+			result->lz4 = lz4_openfile(result->file,0);
+			if (result->lz4 == NULL) {
+				sprintf(result->file+len,".bin.rz");
+				result->rz = razf_open(result->file, "r");
+			} else {
+				result->rz = NULL;
+			}
 		}
 	}
 	switch (result->type) {

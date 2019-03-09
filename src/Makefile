@@ -1,15 +1,18 @@
 # ARCH should be defined by caller
-ARCH?=
-GCC?=gcc
-EXEEXT?=
-# CFLAGS=-D_FILE_OFFSET_BITS=64 -Wall -DDEBUG=1 -g -I~/dev/genomecomb/src
-CFLAGS:=-D_FILE_OFFSET_BITS=64 -Wall -O2 -I~/dev/genomecomb/src ${CFLAGS}
-TOOLS= tools.c tools.h debug.h
-GZTOOLS_C= lz4.c lz4tools.c razf.c gztools.c zstdtools.c
-GZTOOLS= $(GZTOOLS_C) gztools.h razf.h lz4.h lz4tools.h debug.h zstdtools.h
-TOOLS_VAR= tools_var.c tools_var.h
-HASHTOOLS=hash.h hash.c
-BCOL_TOOLS=tools_bcol.c tools_bcol.h razf.c razf.h lz4.c lz4.h lz4tools.c lz4tools.h zstdtools.c zstdtools.h xxhash.c xxhash.h
+ARCH ?=
+arch ?= x86_64
+COPT ?= -O2
+GCC ?= gcc
+ZSTDDIR ?= $(HOME)/build/bin-$(arch)/zstd-1.3.8
+EXEEXT ?=
+CFLAGS := -D_FILE_OFFSET_BITS=64 -Wall $(COPT) -I~/dev/genomecomb/src ${CFLAGS} -I$(ZSTDDIR)/lib -L$(ZSTDDIR)/lib
+TOOLS = tools.c tools.h debug.h
+GZTOOLS_C = lz4.c lz4tools.c razf.c gztools.c zstdtools.c
+GZTOOLS = $(GZTOOLS_C) gztools.h razf.h lz4.h lz4tools.h debug.h zstdtools.h
+TOOLS_VAR = tools_var.c tools_var.h
+HASHTOOLS = hash.h hash.c
+BCOL_TOOLS_C = tools_bcol.c xxhash.c
+BCOL_TOOLS = $(BCOL_TOOLS_C) tools_bcol.h xxhash.h
 LIBZ=-Wl,-Bstatic -lz -lzstd -Wl,-Bdynamic
 
 all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$(ARCH)/map2sv$(EXEEXT) ../bin$(ARCH)/addcols$(EXEEXT) \
@@ -61,11 +64,12 @@ clean:
 ../bin$(ARCH)/getregions$(EXEEXT): getregions.c $(TOOLS)
 	$(GCC) getregions.c tools.c $(CFLAGS) -o ../bin$(ARCH)/getregions$(EXEEXT)
 
+# getregionsbcol one does not use/need bcoltools/compression
 ../bin$(ARCH)/getregionsbcol$(EXEEXT): getregionsbcol.c $(TOOLS)
 	$(GCC) getregionsbcol.c tools.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol$(EXEEXT)
 
-../bin$(ARCH)/getregionsbcol2$(EXEEXT): getregionsbcol2.c $(TOOLS)
-	$(GCC) getregionsbcol2.c tools.c tools_bcol.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol2$(EXEEXT) $(LIBZ)
+../bin$(ARCH)/getregionsbcol2$(EXEEXT): getregionsbcol2.c $(TOOLS) $(BCOL_TOOLS) $(GZTOOLS)
+	$(GCC) getregionsbcol2.c tools.c $(BCOL_TOOLS_C) $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/getregionsbcol2$(EXEEXT) $(LIBZ)
 
 ../bin$(ARCH)/reg_annot$(EXEEXT): reg_annot.c $(TOOLS)
 	$(GCC) reg_annot.c tools.c $(CFLAGS) -o ../bin$(ARCH)/reg_annot$(EXEEXT)
@@ -85,14 +89,14 @@ clean:
 ../bin$(ARCH)/bcol_indexfile_all$(EXEEXT): bcol_indexfile_all.c $(TOOLS) $(HASHTOOLS)
 	$(GCC) bcol_indexfile_all.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_indexfile_all$(EXEEXT)
 
-../bin$(ARCH)/bcol_make$(EXEEXT): bcol_make.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
-	$(GCC) bcol_make.c tools.c tools_bcol.c hash.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make$(EXEEXT) $(LIBZ)
+../bin$(ARCH)/bcol_make$(EXEEXT): bcol_make.c $(TOOLS) $(BCOL_TOOLS) $(GZTOOLS) $(HASHTOOLS)
+	$(GCC) bcol_make.c tools.c $(BCOL_TOOLS_C) $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/bcol_make$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/bcol_make_multi$(EXEEXT): bcol_make_multi.c $(TOOLS) $(BCOL_TOOLS) $(HASHTOOLS)
-	$(GCC) bcol_make_multi.c tools.c tools_bcol.c hash.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_make_multi$(EXEEXT) $(LIBZ)
+../bin$(ARCH)/bcol_make_multi$(EXEEXT): bcol_make_multi.c $(TOOLS) $(BCOL_TOOLS) $(GZTOOLS) $(HASHTOOLS)
+	$(GCC) bcol_make_multi.c tools.c $(BCOL_TOOLS_C) $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/bcol_make_multi$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/bcol_annot$(EXEEXT): bcol_annot.c $(TOOLS) $(BCOL_TOOLS)
-	$(GCC) bcol_annot.c tools.c tools_bcol.c razf.c lz4.c lz4tools.c xxhash.c $(CFLAGS) -o ../bin$(ARCH)/bcol_annot$(EXEEXT) $(LIBZ)
+../bin$(ARCH)/bcol_annot$(EXEEXT): bcol_annot.c $(TOOLS) $(BCOL_TOOLS) $(GZTOOLS)
+	$(GCC) bcol_annot.c tools.c $(BCOL_TOOLS_C) $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/bcol_annot$(EXEEXT) $(LIBZ)
 
 ../bin$(ARCH)/test$(EXEEXT): test.c tools.c
 	$(GCC) test.c tools.c $(CFLAGS) -o ../bin$(ARCH)/test$(EXEEXT)
@@ -115,8 +119,8 @@ clean:
 ../bin$(ARCH)/multi_join$(EXEEXT): multi_join.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
 	$(GCC) multi_join.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multi_join$(EXEEXT) $(LIBZ)
 
-../bin$(ARCH)/multicompar_addvars$(EXEEXT): multicompar_addvars.c $(TOOLS) $(GZTOOLS) $(BCOL_TOOLS) $(TOOLS_VAR)
-	$(GCC) multicompar_addvars.c tools.c tools_bcol.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multicompar_addvars$(EXEEXT) $(LIBZ)
+../bin$(ARCH)/multicompar_addvars$(EXEEXT): multicompar_addvars.c $(TOOLS) $(BCOL_TOOLS) $(GZTOOLS) $(TOOLS_VAR)
+	$(GCC) multicompar_addvars.c tools.c tools_var.c $(BCOL_TOOLS_C) $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multicompar_addvars$(EXEEXT) $(LIBZ)
 
 ../bin$(ARCH)/multidb_join$(EXEEXT): multidb_join.c $(TOOLS) $(TOOLS_VAR) $(GZTOOLS)
 	$(GCC) multidb_join.c tools.c tools_var.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/multidb_join$(EXEEXT) $(LIBZ)

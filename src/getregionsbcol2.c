@@ -21,10 +21,10 @@ int main(int argc, char *argv[]) {
 	BCol *bcol;
 	BCol_table *table;
 	DString *chr = NULL;
-	long double value,cutoff;
+	long double value=0,cutoff=0;
 	uint64_t togo;
 	int tablepos = 0,tablesize;
-	int above,shift,pos,accept;
+	int above=0,shift,pos=0,accept;
 	int status,begin=0,error;
 	if ((argc != 5)) {
 		fprintf(stderr,"Format is: getregions bcolfile cutoff above shift");
