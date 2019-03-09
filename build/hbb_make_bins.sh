@@ -5,6 +5,7 @@
 # -b|-bits|--bits: 32 for 32 bits build (default 64)
 # -d|-builddir|--builddir: top directory to build external software in (default ~/build/bin-$arch)
 # -c|-clean|--clean: 1 to do "make clean" before building (default), use 0 to not run make clean
+# -d|-debug|--debug: 1 to make binaries with debug info (-g) 0
 
 # The Holy build box environment requires docker, make sure it is installed
 # e.g. on ubuntu and derivatives
@@ -28,8 +29,12 @@ source "${dir}/start_hbb.sh"
 # ===============
 
 clean=1
+strip=1
+debug=1
 while [[ "$#" -gt 0 ]]; do case $1 in
 	-c|-clean|--clean) clean="$2"; shift;;
+	-s|-strip|--strip) strip="$2"; shift;;
+	-d|-debug|--debug) debug="$2"; shift;;
 	*) echo "Unknown parameter: $1"; exit 1;;
 esac; shift; done
 
@@ -69,9 +74,16 @@ cd /io/src
 if [ "$clean" = 1 ] ; then
 	make clean
 fi
-ZSTDDIR=../zstd-ori/zstd-1.3.8$ARCH
-ZSTDLIB=$ZSTDDIR/lib
-ZSTDPROG=$ZSTDDIR/programs
-CPATH="/build/zstd-1.3.8/lib:/build/zstd-1.3.8/lib/decompress/:/build/zstd-1.3.8/programs:$CPATH" LIBRARY_PATH="/build/zstd-1.3.8/lib:$LIBRARY_PATH" make
+
+if [ "$debug" = 1 ] ; then
+	COPT="-g" CPATH="/build/zstd-1.3.8/lib:$CPATH" LIBRARY_PATH="/build/zstd-1.3.8/lib:$LIBRARY_PATH" make
+else
+	CPATH="/build/zstd-1.3.8/lib:$CPATH" LIBRARY_PATH="/build/zstd-1.3.8/lib:$LIBRARY_PATH" make
+fi
+# CPATH="/build/zstd-1.3.8/lib:/build/zstd-1.3.8/lib/decompress/:/build/zstd-1.3.8/programs:$CPATH" LIBRARY_PATH="/build/zstd-1.3.8/lib:$LIBRARY_PATH" make
+
+if [ "$strip" = 1 ] && [ "$debug" != 1 ] ; then
+	strip /io/bin$ARCH/*
+fi
 
 echo "Finished building genomecomb binaries"

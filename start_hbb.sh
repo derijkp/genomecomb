@@ -98,13 +98,11 @@ if [ "$1" = "stage2" ] ; then
 	useradd build --uid $uid --gid $gid
 	# usermod -a -G wheel build
 	echo "build ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-build
-	# (re)start script for stage 3: running the actual code
-	sudo -u build bash /io/$file "stage3" ${@:2}
+	sudo -u build /io/$file "stage3" ${@:2}
 	exit
 fi
 
-# stage 3: run the actual script (first do some settings)
-
+# don't use yuminstall earlier, because it needs sudo
 function yuminstall {
 	echo "yuminstall $1"
 	if ! rpm --quiet --query "$1"; then
@@ -112,16 +110,11 @@ function yuminstall {
 	fi
 }
 
+
+# stage 3: run the actual script (first do some settings)
+
 file=$2
 if [ $(basename "$file") = "start_hbb.sh" ] ; then
-	# install yuminstall in .bashrc so it will be available in the new shell started here
-	mkdir -p /home/build
-	echo 'function yuminstall {
-		echo "yuminstall $1"
-		if ! rpm --quiet --query "$1"; then
-			sudo yum install -y "$1"
-		fi
-	}' >> /home/build/.bashrc
 	# if run as start_hbb.sh directly, show a shell
 	echo "shell sstarted by start_hbb.sh"
 	bash
