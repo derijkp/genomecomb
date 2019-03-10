@@ -6,6 +6,7 @@ proc wgetfile {url {resultfile {}} {force 0}} {
 	file delete -force $resultfile.temp
 	set tail [file tail $url]
 	set webcache [get ::env(webcache)]
+	file mkdir $webcache
 	regsub -all {[:/]} $url _ temp
 	set webcachename $webcache/$temp
 	if {$webcache ne "" && [file exists $webcachename]} {
@@ -44,6 +45,7 @@ proc wgetfiles {url resultdir {force 0}} {
 	if {!$force && [file exists $resultdir]} {return $resultdir}
 	set tail [file tail $resultdir]
 	set webcache [get ::env(webcache)]
+	file mkdir $webcache
 	set webcachename $webcache/$tail
 	if {$webcache ne "" && [file exists $webcachename]} {
 		putslog "Getting from webcache: $tail"
