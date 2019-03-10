@@ -6,7 +6,7 @@ proc cg_versions {args} {
 		returns the (current) versions of the given programs as a tsv file
 	}
 	if {![llength $args]} {
-		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard plink primer3 java R gnusort8 tabix lz4 os}
+		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard plink primer3 java R gnusort8 tabix zst os}
 	}
 	puts "item\tversion"
 	foreach item $args {

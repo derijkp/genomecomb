@@ -39,7 +39,7 @@ job genome_${build}_cindex -deps {genome_${build}.ifas} -targets {genome_${build
 }
 
 job reg_${build}_sequencedgenome -vars {build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv} -code {
-	exec cg calcsequencedgenome --stack 1 $dep | lz4c -12 > $target.temp
+	exec cg calcsequencedgenome --stack 1 $dep {*}[compresspipe $target 12] > $target.temp
 	file rename -force $target.temp $target
 }
 
@@ -284,8 +284,8 @@ foreach {jobname resultname infosrc tables} {
 			file rename -force $tempdir/reg_${build}_$resultname.tsv.temp $tempdir/reg_${build}_$resultname.tsv
 		}
 		cg bcol make --compress 9 -t iu -p begin -e end -c chromosome $tempdir/bcol_${build}_$resultname.bcol score < $tempdir/reg_${build}_$resultname.tsv
-		file rename -force $tempdir/bcol_${build}_$resultname.bcol.bin.lz4 bcol_${build}_$resultname.bcol.bin.lz4
-		file rename -force $tempdir/bcol_${build}_$resultname.bcol.bin.lz4.lz4i bcol_${build}_$resultname.bcol.bin.lz4.lz4i
+		file rename -force $tempdir/bcol_${build}_$resultname.bcol.bin.zst bcol_${build}_$resultname.bcol.bin.zst
+		file rename -force $tempdir/bcol_${build}_$resultname.bcol.bin.zst.zsti bcol_${build}_$resultname.bcol.bin.zst.zsti
 		file rename -force $tempdir/bcol_${build}_$resultname.bcol bcol_${build}_$resultname.bcol
 		file delete -force $tempdir
 	}
@@ -339,8 +339,8 @@ job var_${build}_dbnsfp -targets {extra/var_${build}_dbnsfp.tsv extra/var_${buil
 
 # compress
 foreach file [jobglob *.tsv] {
-	job lz4_${build}_[file tail $file] -deps {$file} -targets {$file.lz4} -vars {dest build} -code {
-		cg lz4 -c 12 -i 1 $dep
+	job zst_${build}_[file tail $file] -deps {$file} -targets {$file.zst} -vars {dest build} -code {
+		cg zst -c 12 -i 1 $dep
 	}
 }
 

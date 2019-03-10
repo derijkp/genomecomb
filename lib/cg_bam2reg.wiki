@@ -13,7 +13,7 @@ Extract regions with a minimum coverage from a bam file.
 ; mincoverage: minimum coverage
 ; outfile: result file containing the regions with coverage >= mincoverage. 
 If not given, a filename of the form sreg-cov<mincoverage>-<bamfilerootname>.tsv
-will be used. If the -compress 1 option is given, it will be compressed using lz4
+will be used. If the -compress 1 option is given, it will be compressed using zst
 
 == Options ==
 ; -mincoverage mincoverage: mincoverage given as an option instead of a parameter

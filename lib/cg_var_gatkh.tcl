@@ -8,9 +8,7 @@ proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} 
 			}] -f {chromosome begin end} -s - \
 			| cg regjoin {*}[compresspipe $target] > $temp
 		file rename $temp $target
-		if {[file extension $target] eq ".lz4"} {
-			exec lz4index $target
-		}
+		cg_zindex $target
 	}
 }
 
@@ -91,7 +89,7 @@ proc var_gatkh_job {args} {
 	set varfile ${pre}var-$root.tsv
 	set sregfile ${pre}sreg-$root.tsv
 	set varallfile ${pre}varall-$root.gvcf
-	set resultlist [list $destdir/$varfile.lz4 $destdir/$sregfile.lz4 $destdir/$varallfile.gz $destdir/reg_cluster-$root.tsv.lz4]
+	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.gz $destdir/reg_cluster-$root.tsv.zst]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -112,7 +110,7 @@ proc var_gatkh_job {args} {
 	}
 	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_gatkh_[file tail $bamfile] $destdir $cmdline \
-		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
+		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# start
 	## Produce gatkh SNP calls
 	set keeppwd [pwd]
@@ -154,7 +152,7 @@ proc var_gatkh_job {args} {
 	} -vars {
 		sample split pre root gatkrefseq resultgvcf mincoverage mingenoqual refseq
 	} -skip {
-		$varfile.lz4 $varfile.analysisinfo
+		$varfile.zst $varfile.analysisinfo
 	} -code {
 		analysisinfo_write $dep $target varcaller_mincoverage $mincoverage varcaller_mingenoqual $mingenoqual varcaller_cg_version [version genomecomb]
 		gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} GenotypeGVCFs \
@@ -174,9 +172,9 @@ proc var_gatkh_job {args} {
 		file rename -force ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile.lz4
+	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile.zst
 	# make sreg
-	sreg_gatkh_job ${pre}sreg-$root $varallfile $sregfile.lz4 $mincoverage $mingenoqual $skips
+	sreg_gatkh_job ${pre}sreg-$root $varallfile $sregfile.zst $mincoverage $mingenoqual $skips
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \

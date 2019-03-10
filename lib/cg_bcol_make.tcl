@@ -136,8 +136,8 @@ proc cg_bcol_make {args} {
 	}
 	set tempfile [filetemp $bcolfile]
 	if {$compress} {
-		set compresspipe [compresspipe .lz4 $compress]
-		set tempbinfile $tempfile.bin.lz4
+		set compresspipe [compresspipe .zst $compress]
+		set tempbinfile $tempfile.bin.zst
 	} else {
 		set compresspipe ""
 		set tempbinfile $tempfile.bin
@@ -161,9 +161,9 @@ proc cg_bcol_make {args} {
 		close $f
 	}
 	if {$compress} {
-		exec lz4index $tempbinfile
-		file rename -force $tempbinfile $bcolfile.bin.lz4
-		file rename -force $tempbinfile.lz4i $bcolfile.bin.lz4.lz4i
+		exec zstdindex $tempbinfile
+		file rename -force $tempbinfile $bcolfile.bin.zst
+		file rename -force $tempbinfile.zsti $bcolfile.bin.zst.zsti
 	} else {
 		file rename -force $tempbinfile $bcolfile.bin
 	}

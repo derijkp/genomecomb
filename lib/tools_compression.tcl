@@ -6,11 +6,20 @@ proc defcompressionlevel {args} {
 	}
 }
 
-proc compress {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize 5} args} {
+proc compressblocksize {method {def 1}} {
+	if {[auto_load compressblocksize_$method]} {
+		return [compressblocksize_$method]
+	} else {
+		return $def
+	}
+}
+
+proc compress {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize {}} args} {
 	# putsvars file destfile index keep compressionlevel blocksize args
 	set ext [file extension $destfile]
 	set method [string range $ext 1 end]
 	if {$compressionlevel eq ""} {set compressionlevel [defcompressionlevel]}
+	if {$blocksize eq ""} {set blocksize [compressblocksize $method 5]}
 	if {[auto_load compress_$method]} {
 		compress_$method $file $destfile $index $keep $threads $compressionlevel $blocksize
 	} elseif {[gziscompressed $file]} {
@@ -20,7 +29,7 @@ proc compress {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlev
 		if {!$keep} {file delete $file}
 	} elseif {$keep} {
 		set temp [filetemp $destfile]
-		file copy $file $temp
+		file copy -force $file $temp
 		file rename -force $temp $destfile
 	} else {
 		file rename -force $file $destfile
@@ -28,7 +37,7 @@ proc compress {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlev
 }
 
 proc compress_template {file destfile method cmd {index 1} {keep 1}} {
-	# putsvars file destfile index keep compressionlevel blocksize args
+	# putsvars file destfile index keep
 	if {$destfile eq ""} {set destfile $file.$method}
 	if {$file eq "-"} {
 		if {$destfile eq "-"} {
@@ -77,6 +86,12 @@ proc gzopen {file {pos -1}} {
 			set f [open "| razip -d -c [list $file]"]
 		} else {
 			set f [open "| razip -d -c -b $pos [list $file]"]
+		}
+	} elseif {[inlist {.zst} $ext]} {
+		if {$pos == -1} {
+			set f [open "| zstd-mt -k -d -c [list $file]"]
+		} else {
+			set f [open "| zstdra [list $file] $pos"]
 		}
 	} elseif {[inlist {.lz4} $ext]} {
 		if {$pos == -1} {
@@ -162,7 +177,7 @@ proc gziscompressed filename {
 
 proc gzexists {filename {checkcompressed 1}} {
 	if {$checkcompressed} {
-		expr {[file exists $filename] || [file exists $filename.rz] || [file exists $filename.lz4] || [file exists $filename.gz] ||[file exists $filename.bgz] || [file exists $filename.bz2]}
+		expr {[file exists $filename] || [file exists $filename.zst] || [file exists $filename.rz] || [file exists $filename.lz4] || [file exists $filename.gz] ||[file exists $filename.bgz] || [file exists $filename.bz2]}
 	} else {
 		file exists $filename
 	}
@@ -171,7 +186,7 @@ proc gzexists {filename {checkcompressed 1}} {
 proc gzfile {args} {
 	foreach filename $args {
 		if {$filename eq ""} {return {}}
-		if {![catch {glob $filename $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
+		if {![catch {glob $filename $filename.zst $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
 			return [lindex $list 0]
 		}
 	}
@@ -181,7 +196,7 @@ proc gzfile {args} {
 proc gzfile_multi {filelist} {
 	set result {}
 	foreach filename $filelist {
-		if {![catch {glob $filename $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
+		if {![catch {glob $filename $filename.zst $filename.rz $filename.lz4 $filename.bgz $filename.gz $filename.bz2} list]} {
 			lappend result [lindex $list 0]
 		} else {
 			lappend result $filename
@@ -192,7 +207,7 @@ proc gzfile_multi {filelist} {
 
 proc gzfiles {args} {
 	foreach filename $args {
-		if {![catch {glob $filename $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
+		if {![catch {glob $filename $filename.zst $filename.lz4 $filename.rz $filename.bgz $filename.gz $filename.bz2} list]} {
 			foreach file $list {
 				set root [gzroot $file]
 				if {[info exists a($root)]} continue
@@ -209,13 +224,14 @@ proc gzfiles {args} {
 
 proc gzarraynames {aVar pattern} {
 	upvar $aVar a
-	set result [lsort [list_remdup [list_concat [array names a $pattern] [array names a $pattern.rz] [array names a $pattern.lz4] [array names a $pattern.gz] [array names a $pattern.bgz] [array names a $pattern.bz2]]]]
+	set result [lsort [list_remdup [list_concat [array names a $pattern.zst] [array names a $pattern] [array names a $pattern.zst] [array names a $pattern.zst] [array names a $pattern.rz] [array names a $pattern.lz4] [array names a $pattern.gz] [array names a $pattern.bgz] [array names a $pattern.bz2]]]]
 	return $result
 }
 
 proc gzcat {filename} {
 	if {![file exists $filename]} {error "file $filename does not exist"}
 	switch [file extension $filename] {
+		.zst {return "zstd-mt -k -q -d -c"}
 		.rz {return "razip -d -c"}
 		.lz4 {return "lz4c -q -d -c"}
 		.gz - .bgz {return zcat}
@@ -230,6 +246,9 @@ proc gzcatra {filename {pos 0}} {
 		list {*}[gzcat $filename] $filename
 	} else {
 		switch [file extension $filename] {
+			.zst {
+				return [list zstdra $filename $pos]
+			}
 			.rz {
 				return [list razip -d -c -b $pos $file]
 			}
@@ -249,11 +268,26 @@ proc gzcatra {filename {pos 0}} {
 	}
 }
 
+
+proc compresscmd {target {threads 1} {compressionlevel {}} {blocksize {}}} {
+	set method [string range [file extension $target] 1 end]
+	if {$blocksize eq ""} {set blocksize [compressblocksize $method 5]}
+	if {[auto_load compresscmd_$method]} {
+		compresscmd_$method $threads $compressionlevel $blocksize
+	} else {
+		error "compression $method not supported"
+	}
+}
+
 proc compresspipe {target {compressionlevel -1} {threads 1}} {
 	switch [file extension $target] {
 		.rz {return "| razip -c"}
+		.zst {
+			if {$compressionlevel == -1 || $compressionlevel == ""} {set compressionlevel [defcompressionlevel]}
+			return "| zstd-mt -k -q -$compressionlevel -b 0.5 -T $threads -c"
+		}
 		.lz4 {
-			if {$compressionlevel == -1} {set compressionlevel [defcompressionlevel]}
+			if {$compressionlevel == -1 || $compressionlevel == ""} {set compressionlevel [defcompressionlevel]}
 			return "| lz4c -q -$compressionlevel -B5 -c"
 		}
 		.gz - .bgz {return "| bgzip -c -@ $threads"}
@@ -265,6 +299,12 @@ proc compresspipe {target {compressionlevel -1} {threads 1}} {
 proc gztemp {filename} {
 	set ext [file extension $filename]
 	switch $ext {
+		.zst {
+			set tempfile [scratchfile get]
+			exec zstd-mt -k -q -d -c $filename > $tempfile
+			set ::gztemp_files($tempfile) 1
+			return $tempfile
+		}
 		.gz {
 			set tempfile [scratchfile get]
 			exec gunzip -d -c $filename > $tempfile
@@ -310,11 +350,9 @@ proc decompress {file args} {
 	} else {
 		set resultfile [file root $file]
 	}
-	if {[file extension $file] eq ".lz4"} {
-		set error [catch {exec lz4c -q -d $file > $resultfile.temp} result]
-	} else {
-		set error [catch {exec zcat $file > $resultfile.temp} result]
-	}
+	set error [catch {
+		exec {*}[gzcat $file] $file > $resultfile.temp
+	} result]
 	if $error {
 		if {![regexp "decompression OK, trailing garbage ignored" $result] && ![regexp {Successfully decoded} $result]} {
 			error $result
@@ -378,6 +416,33 @@ proc lz4index_job {args} {
 	job lz4index-$file {*}$skips -checkcompressed 0 -deps {$file} -targets {$file.lz4i} -code {
 		if {![file exists $dep]} {error "error indexing: file $dep does not exist"}
 		cg_lz4index $dep
+	}
+}
+
+proc zst_job {file args} {
+	upvar job_logdir job_logdir
+	set deps [jobglob $file]
+	set defcompressionlevel [defcompressionlevel]
+	job zst-$file -checkcompressed 0 -deps $deps -targets {$file.zst} -rmtargets {$file} -vars {
+		args defcompressionlevel
+	} -code {
+		defcompressionlevel $defcompressionlevel
+		if {![file exists $dep]} {error "error compressing: file $dep does not exist"}
+		cg_zst -keep 0 {*}$args $dep
+	}
+}
+
+proc zstindex_job {args} {
+	upvar job_logdir job_logdir
+	set skips {}
+	cg_options zstindex args {
+		-skip {
+			lappend skips -skip $value
+		}
+	} {file} 1
+	job zstindex-$file {*}$skips -checkcompressed 0 -deps {$file} -targets {$file.zsti} -code {
+		if {![file exists $dep]} {error "error indexing: file $dep does not exist"}
+		cg_zstindex $dep
 	}
 }
 

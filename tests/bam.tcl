@@ -69,8 +69,8 @@ test depth_histo {depth_histo no regfile} {
 
 test depth_histo {depth_histo compressed regfile} {
 	test_cleantmp
-	exec lz4c -c data/reg_hg19_smallpartexome.tsv > tmp/regfile.tsv.lz4
-	set regionfile tmp/regfile.tsv.lz4
+	compress data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv.zst
+	set regionfile tmp/regfile.tsv.zst
 	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
 	set max 1000
 	cg depth_histo -max $max $bamfile $regionfile > tmp/result.tsv
@@ -124,7 +124,7 @@ total	1468411}
 
 test cg_regextract {--filtered 1 -q 1 -Q 0} {
 	test_cleantmp
-	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/regfile.tsv
+	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst tmp/regfile.tsv
 	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
 	# TARGET_TERRITORY 2126556
 	# PCT_TARGET_BASES_20X	0.56393
@@ -142,7 +142,7 @@ test cg_regextract {--filtered 1 -q 1 -Q 0} {
 
 test cg_regextract {-q 20 -Q 20} {
 	test_cleantmp
-	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/regfile.tsv
+	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst tmp/regfile.tsv
 	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
 	# TARGET_TERRITORY 2126556
 	# PCT_TARGET_BASES_20X	0.56393
@@ -185,7 +185,7 @@ test cg_bam2reg {small sam -min 2} {
 		chr2	100	50M	50	chr2	100	50M	50
 	}
 	cg bam2reg -mincoverage 2 tmp/temp.sam
-	exec cg zcat tmp/sreg-cov2-temp.tsv.lz4
+	exec cg zcat tmp/sreg-cov2-temp.tsv.zst
 } {chromosome	begin	end
 chr1	101	119
 chr1	120	140
@@ -216,7 +216,7 @@ test cg_bam2reg {small sam 2} {
 		chr2	100	50M	50	chr2	100	50M	50
 	}
 	cg bam2reg tmp/temp.sam 2
-	exec cg zcat tmp/sreg-cov2-temp.tsv.lz4
+	exec cg zcat tmp/sreg-cov2-temp.tsv.zst
 } {chromosome	begin	end
 chr1	101	119
 chr1	120	140

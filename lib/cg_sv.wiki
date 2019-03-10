@@ -13,7 +13,7 @@ sv_manta; The -method options determines which one is used. The
 **resultfile** is a tsv file containing the called structural variants. If
 ""resultfile** is not given, a file name will be derived from the bam file
 name: If the bamfile has a name of the form map-alignmethod-sample.bam,
-the result file will will be var-svcaller-alignmethod-sample.tsv.lz4.
+the result file will will be var-svcaller-alignmethod-sample.tsv.zst.
 Other result files may also be created, depending on the method used.
 
 cg sv can distribute structural variant calling by analysing separate

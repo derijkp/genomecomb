@@ -10,7 +10,7 @@ view a (possibly compressed) file using the pager less.
 This conveniance function allows you to view files with the pager less
 using the same command regardless of compression. The file is decompressed
 if needed (i.e. when it has the appropriate extension indicating one of
-the supported algorithms (lz4, gz, bgz, rz, bz2).
+the supported algorithms (zst, lz4, gz, bgz, rz, bz2).
 
 == Arguments ==
 ; **file** ...: file to be view

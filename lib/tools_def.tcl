@@ -75,8 +75,8 @@ proc targetfile_job {sampledir {dbdir {}}} {
 	}
 	set ampliconsfile [ampliconsfile $sampledir]
 	if {[jobfileexists $ampliconsfile]} {
-		job reports_amplicons2targetfile -deps {$ampliconsfile} -targets {$targetfile.lz4} -vars {sample dbdir ref} -code {
-			cg regcollapse $dep | cg lz4 > $target
+		job reports_amplicons2targetfile -deps {$ampliconsfile} -targets {$targetfile.zst} -vars {sample dbdir ref} -code {
+			cg regcollapse $dep | cg zst > $target
 		}
 		return $targetfile
 	}

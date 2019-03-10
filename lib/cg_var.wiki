@@ -14,9 +14,9 @@ The result will consist of several files with names derived from the bam
 file name: If the bamfile has a name of the form
 map-alignmethod-sample.bam, the result files will consist of file with
 names like these (depending on the varcaller used):
-varall-varcaller-alignmethod-sample.tsv.lz4
-var-varcaller-alignmethod-sample.tsv.lz4
-sreg-varcaller-alignmethod-sample.tsv.lz4
+varall-varcaller-alignmethod-sample.tsv.zst
+var-varcaller-alignmethod-sample.tsv.zst
+sreg-varcaller-alignmethod-sample.tsv.zst
 
 cg var can distribute variant calling by analysing separate
 regions in parallel and combining the results (-distrreg option).

@@ -111,12 +111,7 @@ proc cg_download_clinvar {args} {
 		# collapse
 		cg collapsealleles $tsvfile > $tempresult.temp2
 	}
-	if {[file extension $resultfile] eq ".lz4"} {
-		cg_lz4 $tempresult.temp2
-		file rename -force $tempresult.temp2.lz4 $resultfile
-	} else {
-		file rename -force $tempresult.temp2 $resultfile
-	}
+	compress $tempresult.temp2 $resultfile
 	if {!$keep} {file delete -force $tempdir}
 }
 

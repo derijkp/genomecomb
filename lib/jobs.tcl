@@ -429,7 +429,7 @@ proc job_finddep {pattern idsVar timeVar timefileVar checkcompressed {regexppatt
 	}
 	foreach file $list {
 		if {[info exists cgjob_rm($file)]} continue
-		if {[file extension $file] in {.rz .lz4 .gz bgz .bz2} && [info exists filesa([file root $file])]} {
+		if {[gziscompressed $file] && [info exists filesa([file root $file])]} {
 			continue
 		}
 		set filesa($file) 1
@@ -443,7 +443,7 @@ proc job_finddep {pattern idsVar timeVar timefileVar checkcompressed {regexppatt
 	}
 	foreach file $filelist {
 		if {[info exists cgjob_rm($file)]} continue
-		if {[file extension $file] in {.rz .lz4 .gz bgz .bz2} && [info exists filesa([file root $file])]} {
+		if {[gziscompressed $file] && [info exists filesa([file root $file])]} {
 			continue
 		}
 # do not remove job, we want to keep the dependency chain intact,
@@ -493,7 +493,7 @@ proc job_findregexpdep {pattern idsVar timeVar timefileVar checkcompressed} {
 	}
 	foreach file $list {
 		if {[info exists cgjob_rm($file)]} continue
-		if {[file extension $file] in {.rz .lz4 .gz bgz .bz2} && [info exists filesa([file root $file])]} {
+		if {[gziscompressed $file] && [info exists filesa([file root $file])]} {
 			continue
 		}
 		if {[regexp ^$pattern\$ $file]} {
@@ -510,10 +510,10 @@ proc job_findregexpdep {pattern idsVar timeVar timefileVar checkcompressed} {
 	}
 	foreach file $filelist {
 		if {[info exists cgjob_rm($file)]} continue
-		if {[file extension $file] in {.rz .lz4 .gz bgz .bz2} && [info exists filesa([file root $file])]} {
+		if {[gziscompressed $file] && [info exists filesa([file root $file])]} {
 			continue
 		}
-		if {![regexp ^[file_absolute $pattern](\.gz|\.rz|\.lz4|\.bz2|\.bgz)?\$ $file]} continue
+		if {![regexp ^[file_absolute $pattern](\.gz|\.rz|\.zst\.lz4|\.bz2|\.bgz)?\$ $file]} continue
 # do not remove job, we want to keep the dependency chain intact,
 # even if one job stops prematurely
 #		if {![job_running $cgjob_id($file)]} {

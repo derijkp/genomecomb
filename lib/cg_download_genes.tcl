@@ -60,10 +60,6 @@ proc cg_download_genes {args} {
 	# move to results
 	putslog "move results to $resultfile and [gzroot $resultfile].info"
 	file rename -force $ucscfile.info [gzroot $resultfile].info
-	if {[file extension $resultfile] eq ".lz4"} {
-		cg_lz4index $temp/$resulttail
-		file rename -force $temp/$resulttail.lz4i $resultfile.lz4i
-	}
-	file rename -force $temp/$resulttail $resultfile
+	compress $temp/$resulttail $resultfile
 	file delete -force $temp
 }

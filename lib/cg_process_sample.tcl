@@ -110,7 +110,7 @@ proc process_sample_cgi_job {workdir split} {
 				lappend tomergebins $target.bin
 				job cg_coverage-cg-$sample-$outfield-$chr-$sample -deps $file \
 				   -vars {sample chr field posfield} \
-				   -skip [list $finaltarget $finaltarget.bin.lz4 $finaltarget.bin.lz4.lz4i] \
+				   -skip [list $finaltarget $finaltarget.bin.zst $finaltarget.bin.zst.zsti] \
 				   -targets {$target $target.bin} -code {
 					# make coverage files
 					set file $dep
@@ -121,10 +121,10 @@ proc process_sample_cgi_job {workdir split} {
 			    -vars {tomerge tomergebins finaltarget} \
 			    -deps [list {*}$tomerge {*}$tomergebins] \
 			    -rmtargets [list {*}$tomerge {*}$tomergebins] \
-			    -targets {$finaltarget $finaltarget.bin.lz4 $finaltarget.bin.lz4.lz4i} -code {
+			    -targets {$finaltarget $finaltarget.bin.zst $finaltarget.bin.zst.zsti} -code {
 				cg cat -c f {*}$tomerge > $finaltarget.temp
 				exec cat {*}$tomergebins > $finaltarget.bin.temp
-				cg_lz4 -keep 0 -i 1 -o $finaltarget.bin.lz4 $finaltarget.bin.temp
+				cg_zst -keep 0 -i 1 -o $finaltarget.bin.zst $finaltarget.bin.temp
 				file delete $finaltarget.bin.temp
 				file rename $finaltarget.temp $finaltarget
 				file delete {*}$deps
@@ -201,18 +201,18 @@ proc process_sample_cgi_job {workdir split} {
 #	}
 	# only if reg file exists, otherwise extract from svar (next)
 	job cg_sreg-cg-cg-$sample -optional 1 -deps {ori/ASM/reg-*-ASM*.tsv} \
-	-targets {sreg-cg-cg-$sample.tsv.lz4} -code {
+	-targets {sreg-cg-cg-$sample.tsv.zst} -code {
 		set regfile [gzfile $dep]
 		putslog "Sort region file ($regfile)"
-		cg select -s "chromosome begin end" $regfile $target.temp.lz4
-		file rename -force $target.temp.lz4 $target
+		cg select -s "chromosome begin end" $regfile $target.temp.zst
+		file rename -force $target.temp.zst $target
 	}
 	job cg_regfromsvar-$sample -optional 1 -deps {svar-$sample.tsv} \
-	-targets {sreg-cg-cg-$sample.tsv.lz4} -code {
+	-targets {sreg-cg-cg-$sample.tsv.zst} -code {
 		set svarfile $dep
 		putslog "Extract $target from $svarfile"
 		cg select -q {$varType != "no-call" && $varType != "no-ref"} -f "chromosome begin end" $svarfile $target.temp
-		exec cg regjoin $target.temp {*}[compresspipe .lz4 9] > $target.temp2
+		exec cg regjoin $target.temp {*}[compresspipe .zst 9] > $target.temp2
 		file rename -force $target.temp2 $target
 		file delete $target.temp
 	}
@@ -279,10 +279,10 @@ proc process_sample_cgi_job {workdir split} {
 		file rename -force $tempfile $target
 	}
 	# multiarch
-	job reg_cluster-$sample -optional 1 -deps {annotvar-$sample.tsv} -targets {reg_cluster-$sample.tsv.lz4} -code {
+	job reg_cluster-$sample -optional 1 -deps {annotvar-$sample.tsv} -targets {reg_cluster-$sample.tsv.zst} -code {
 		cg clusterregions < $dep > $target.temp
-		cg_lz4 $target.temp
-		file rename -force $target.temp.lz4 $target
+		cg_zst $target.temp
+		file rename -force $target.temp.zst $target
 	}
 	job reg_ns-$sample -optional 1 -deps {annotvar-$sample.tsv} -targets {reg_ns-$sample.tsv} -code {
 		putslog "Find regions with N's for $dep"
@@ -299,7 +299,7 @@ proc process_sample_cgi_job {workdir split} {
 	}
 	job cg_var-cg-cg-$sample -optional 1 \
 	-deps {annotvar-$sample.tsv (reg_refcons-$sample.tsv) (reg_cluster-$sample.tsv) (coverage-cg-$sample/bcol_coverage-$sample.tsv) (coverage-cg-$sample/bcol_refscore-$sample.tsv)} \
-	-targets {var-cg-cg-$sample.tsv.lz4 var-cg-cg-$sample.tsv.analysisinfo} -vars {sample} -code {
+	-targets {var-cg-cg-$sample.tsv.zst var-cg-cg-$sample.tsv.analysisinfo} -vars {sample} -code {
 		set cgi_version ?
 		set cgi_reference ?
 		if {[file exists info.txt]} {
@@ -318,11 +318,11 @@ proc process_sample_cgi_job {workdir split} {
 		cg annotate -analysisinfo 0 $dep $tempfile {*}[list_remove [lrange $deps 1 end] {}]
 		analysisinfo_write $dep $target sample cg-cg-$sample aligner cgi aligner_version $cgi_version varcaller cgi varcaller_version $cgi_version reference $reference
 		file rename $tempfile $target
-		file rename $tempfile.lz4i $target.lz4i
+		file rename $tempfile.zsti $target.zsti
 		file delete -force [gzroot $tempfile].index
 		file delete -force [gzroot $dep].index
 	}
-	job reg_covered-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv.lz4} -targets {reg-$sample.covered} -code {
+	job reg_covered-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv.zst} -targets {reg-$sample.covered} -code {
 		putslog "Genomic coverage of sequenced regions"
 		cg covered $dep > $target.temp
 		file rename -force $target.temp $target
@@ -338,14 +338,14 @@ proc process_sample_cgi_job {workdir split} {
 		set temp2 [filetemp $target2]
 		cg regsubtract $dep1 $dep2 > $temp1
 		cg covered $temp1 > $temp2
-		cg_lz4 -keep 0 -i 1 -o $target1.lz4 $temp1
+		cg_zst -keep 0 -i 1 -o $target1.zst $temp1
 		file rename -force $temp2 $target2
 	}
 	job cg_filteredns-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv reg_ns-$sample.tsv} \
-	-targets {filtered/filteredns-$sample.tsv.lz4} -code {
+	-targets {filtered/filteredns-$sample.tsv.zst} -code {
 		putslog "Coverage of ns region"
 		cg regsubtract $dep1 $dep2 > $target.temp
-		cg_lz4 -keep 0 -i 1 -o $target $target.temp
+		cg_zst -keep 0 -i 1 -o $target $target.temp
 	}
 	job cg_filteredns_covered-$sample -optional 1 -deps {filtered/filteredns-$sample.tsv} \
 	-targets {covered/filteredns-$sample.covered} -code {
@@ -355,10 +355,10 @@ proc process_sample_cgi_job {workdir split} {
 		file rename -force $temp $target
 	}
 	job cg_filteredlowscore-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv reg_lowscore-$sample.tsv} \
-	-targets {filtered/filteredlowscore-$sample.tsv.lz4} -code {
+	-targets {filtered/filteredlowscore-$sample.tsv.zst} -code {
 		set temp [filetemp $target]
 		cg regsubtract $dep1 $dep2 > $temp
-		cg_lz4 -keep 0 -i 1 -o $target $temp
+		cg_zst -keep 0 -i 1 -o $target $temp
 	}
 	job cg_filteredlowscore_covered-$sample -optional 1 -deps {filtered/filteredlowscore-$sample.tsv} \
 	-targets {covered/filteredlowscore-$sample.covered} -code {
@@ -372,11 +372,11 @@ proc process_sample_cgi_job {workdir split} {
 		file rename -force $target.temp $target
 	}
 	job cg_filteredcluster-$sample -optional 1 -deps {sreg-cg-cg-$sample.tsv reg_cluster-$sample.tsv} \
-	-targets {filtered/filteredcluster-$sample.tsv.lz4} -code {
+	-targets {filtered/filteredcluster-$sample.tsv.zst} -code {
 		putslog "Coverage of clusters region"
 		set temp [filetemp $target]
 		cg regsubtract $dep1 $dep2 > $temp
-		cg_lz4 -keep 0 -i 1 -o $target $temp
+		cg_zst -keep 0 -i 1 -o $target $temp
 	}
 	job cg_filteredcluster_covered-$sample -optional 1 -deps {filtered/filteredcluster-$sample.tsv} \
 	-targets {covered/filteredcluster-$sample.covered} -code {
@@ -658,7 +658,7 @@ proc process_sample_job {args} {
 	lappend cmdline $sampledir
 	upvar job_logdir job_logdir
 	job_logfile $sampledir/process_sample_[file tail $sampledir] $sampledir $cmdline \
-		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 biobambam picard java gnusort8 lz4 os]
+		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 biobambam picard java gnusort8 zst os]
 	# check if ori is a cg dir, if so use process_sample_cgi_job
 	# ----------------------------------------------------------
 	if {![job_getinfo] && [jobglob $sampledir/ori/ASM/var-*-ASM*.tsv] ne ""} {
@@ -666,7 +666,7 @@ proc process_sample_job {args} {
 		# -------------
 		info_analysis_file $sampledir/info_analysis.tsv $sample \
 			{dbdir reports} \
-			{genomecomb dbdir gnusort8 tabix lz4 os} \
+			{genomecomb dbdir gnusort8 tabix zst os} \
 			command [list cg process_sample {*}$keepargs]
 		process_sample_cgi_job $sampledir $split
 		lappend todo(var) var-cg-cg-$sample.tsv
@@ -677,7 +677,7 @@ proc process_sample_job {args} {
 	if {![job_getinfo]} {
 		info_analysis_file $sampledir/info_analysis.tsv $sample \
 			{dbdir aligners varcallers svcallers realign paired samBQ adapterfile reports} \
-			{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk3 gatk gatkjava biobambam picard java gnusort8 tabix lz4 os} \
+			{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk3 gatk gatkjava biobambam picard java gnusort8 tabix zst os} \
 			command [list cg process_sample {*}$keepargs]
 	}
 	# convert existing vcfs

@@ -16,9 +16,9 @@ test makeprimers {basic} {
 test makeprimers {basic freqp} {
 	cg cplinked $::refseqdir/hg18 tmp
 	file delete {*}[glob tmp/hg18/var_hg18_snp*]
-	cg select -f {chrom start end type ref alt name {freqp=catch($freq * 100.0,$freq)} avHetSE strand molType valid func weight exceptions submitterCount submitters alleleFreqCount alleles alleleNs alleleFreqs bitfields} data/var_hg18_partofsnp130.tsv.lz4 tmp/hg18/var_hg18_snp130.tsv.lz4
-	cg lz4index tmp/hg18/var_hg18_snp130.tsv.lz4
-	cg maketabix tmp/hg18/var_hg18_snp130.tsv.lz4
+	cg select -f {chrom start end type ref alt name {freqp=catch($freq * 100.0,$freq)} avHetSE strand molType valid func weight exceptions submitterCount submitters alleleFreqCount alleles alleleNs alleleFreqs bitfields} data/var_hg18_partofsnp130.tsv.zst tmp/hg18/var_hg18_snp130.tsv.zst
+	cg zstindex tmp/hg18/var_hg18_snp130.tsv.zst
+	cg maketabix tmp/hg18/var_hg18_snp130.tsv.zst
 	exec cg makeregions data/testvars.tsv 200 > tmp/valregs.tsv
 	exec cg makeprimers tmp/valregs.tsv 600 500 tmp/hg18 > tmp/primersvalregs.tsv
 	exec diff tmp/primersvalregs.tsv data/makeprimers-results.tsv
@@ -33,9 +33,9 @@ test makeprimers {basic with minfreq} {
 test makeprimers {basic with minfreq freqp} {
 	cg cplinked $::refseqdir/hg18 tmp
 	file delete {*}[glob tmp/hg18/var_hg18_snp*]
-	cg select -f {chrom start end type ref alt name {freqp=catch($freq * 100.0,$freq)} avHetSE strand molType valid func weight exceptions submitterCount submitters alleleFreqCount alleles alleleNs alleleFreqs bitfields} data/var_hg18_partofsnp130.tsv.lz4 tmp/hg18/var_hg18_snp130.tsv.lz4
-	cg lz4index tmp/hg18/var_hg18_snp130.tsv.lz4
-	cg maketabix tmp/hg18/var_hg18_snp130.tsv.lz4
+	cg select -f {chrom start end type ref alt name {freqp=catch($freq * 100.0,$freq)} avHetSE strand molType valid func weight exceptions submitterCount submitters alleleFreqCount alleles alleleNs alleleFreqs bitfields} data/var_hg18_partofsnp130.tsv.zst tmp/hg18/var_hg18_snp130.tsv.zst
+	cg zstindex tmp/hg18/var_hg18_snp130.tsv.zst
+	cg maketabix tmp/hg18/var_hg18_snp130.tsv.zst
 	exec cg makeregions data/testvars.tsv 200 > tmp/valregs.tsv
 	exec cg makeprimers tmp/valregs.tsv 600 500 tmp/hg18 0.5 > tmp/primersvalregs.tsv
 	exec diff tmp/primersvalregs.tsv data/makeprimers-results2.tsv

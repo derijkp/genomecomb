@@ -318,15 +318,16 @@ int zstd_seek(ZSTDres *res, uint64_t pos, int where) {
 		startblock = pos/res->framesize;
 		NODPRINT("indexpos: %llu",(long long unsigned int)(res->indexstart + 8*startblock));
 		fseeko(res->findex,res->indexstart + 8*startblock,SEEK_SET);
+		filepos = zstdindex_read(res->findex);
+		NODPRINT("filepos: %llu",(long long unsigned int)filepos);
+		/* fprintf(stderr,"seek: pos=%zu startblock=%llu filepos=%llu\n",pos,startblock,filepos);fflush(stderr); */
+		fseeko(res->finput,filepos,SEEK_SET);
 		res->inframepos = 0;
 		res->frameread = 0;
 		res->contentsize = 0;
-		res->currentpos = 0;
 		res->framepos = startblock * res->framesize;
-		filepos = zstdindex_read(res->findex);
-		NODPRINT("filepos: %llu",(long long unsigned int)filepos);
-		fseeko(res->finput,filepos,SEEK_SET);
 		zstd_readheader(res);
+		res->currentpos = pos;
 		return(1);
 	} else {
 		/* find block by skipping */

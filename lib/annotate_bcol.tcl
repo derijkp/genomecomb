@@ -24,7 +24,7 @@ proc annotatebcol {file dbfile name annotfile} {
 	if {[gziscompressed $file]} {
 		error "bcol_annot not supported for compressed files"
 	}
-	# puts "bcol_annot $file {*}$poss -1 -1 $dbfile -1"
+	# puts [list bcol_annot $file {*}$poss -1 -1 $dbfile -1]
 	if {[catch {
 		exec bcol_annot $file {*}$poss -1 -1 $dbfile -1 >> $annotfile.temp 2>@ stderr
 	} error]} {

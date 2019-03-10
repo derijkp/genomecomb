@@ -59,7 +59,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 			# puts [list ../bin/multireg {*}$todo]
 			exec multireg {*}$todo {*}$compress > $temp 2>@ stderr
 			file rename -force $temp $target
-			if {$compress ne ""} {cg_lz4index $target}
+			if {$compress ne ""} {cg_zindex $target}
 		}
 		return
 	}
@@ -91,7 +91,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 				} else {
 					file rename -force $temp $target
 				}
-				if {$compress ne ""} {cg_lz4index $target}
+				if {$compress ne ""} {cg_zindex $target}
 				if {$delete} {file delete {*}$deps}
 				file delete $workdir
 			}
@@ -104,7 +104,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 			set deps [lrange $todo $pos [expr {$pos+$maxfiles-1}]]
 			set partisreg [lrange $todoisreg $pos [expr {$pos+$maxfiles-1}]]
 			if {[llength $deps] > 1} {
-				set target $workdir/multireg.temp$num.lz4
+				set target $workdir/multireg.temp$num.zst
 				incr num
 				lappend newtodo $target
 				lappend newisreg 1
@@ -126,8 +126,9 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 					}
 					set todo [list_merge $deps $partisreg]
 					# puts [list ../bin/multireg {*}$todo]
-					exec multireg {*}$todo | lz4c -c -1 > $target.temp.lz4 2>@ stderr
-					file rename -force $target.temp.lz4 $target
+					set temp [filetemp $target]
+					exec multireg {*}$todo {*}[compresspipe $target -1] > $temp 2>@ stderr
+					file rename -force $temp $target
 					if {$delete} {file delete {*}$deps}
 				}
 			} else {

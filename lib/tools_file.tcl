@@ -66,13 +66,18 @@ proc scratchfile {{action {get}} {type file}} {
 	}
 }
 
-proc filetemp {file {write 1}} {
-	if {![file exists $file.temp]} {
-		set result $file.temp
+proc filetemp {file {write 1} {ext 0}} {
+	if {$ext} {
+		set ext [file extension $file]
+	} else {
+		set ext ""
+	}
+	if {![file exists $file.temp$ext]} {
+		set result $file.temp$ext
 	} else {
 		set num 2
-		while {[file exists $file.temp$num]} {incr num}
-		set result $file.temp$num
+		while {[file exists $file.temp.$num$ext]} {incr num}
+		set result $file.temp.$num$ext
 	}
 	if {$write} {file_write $result {}}
 	return $result

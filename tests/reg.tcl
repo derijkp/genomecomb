@@ -52,9 +52,9 @@ test multireg {basic} {
 test multireg {basic compressed} {
 	file delete tmp/temp.tsv
 	file copy data/reg1.tsv data/reg2.tsv tmp
-	cg lz4 {*}[glob tmp/*.tsv]
+	cg zst {*}[glob tmp/*.tsv]
 	file delete tmp/temp.tsv
-	exec cg multireg tmp/temp.tsv tmp/reg1.tsv.lz4 tmp/reg2.tsv.lz4
+	exec cg multireg tmp/temp.tsv tmp/reg1.tsv.zst tmp/reg2.tsv.zst
 	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg2.sft
 } {}
 
@@ -72,8 +72,8 @@ test multireg {(try to add) add existing} {
 
 test multireg {(try to add) add existing compressed} {
 	exec cg multireg tmp/temp.tsv data/reg1.tsv data/reg2.tsv
-	exec lz4c -q -c data/reg1.tsv > tmp/reg1.tsv.lz4
-	exec cg multireg tmp/temp.tsv tmp/reg1.tsv.lz4
+	compress data/reg1.tsv tmp/reg1.tsv.zst
+	exec cg multireg tmp/temp.tsv tmp/reg1.tsv.zst
 	exec diff tmp/temp.tsv data/expected-multireg-reg1-reg2.sft
 } {}
 
@@ -232,8 +232,8 @@ test multireg {. in name} {
 test multireg {. in name compressed} {
 	file delete tmp/temp.tsv
 	file copy data/regempty.tsv tmp/reg.empty.tsv
-	cg lz4 tmp/reg.empty.tsv
-	exec cg multireg tmp/temp.tsv data/reg1b.tsv tmp/reg.empty.tsv.lz4
+	cg zst tmp/reg.empty.tsv
+	exec cg multireg tmp/temp.tsv data/reg1b.tsv tmp/reg.empty.tsv.zst
 	file_read tmp/temp.tsv
 } {chromosome	begin	end	reg1b	reg.empty
 1	10	20	1	0
@@ -288,9 +288,9 @@ Y	1000	1010
 Y	1900	2000}
 
 test regsubtract {compressed} {
-	cg lz4 -o tmp/reg1.tsv.lz4 data/reg1.tsv
-	cg lz4 -o tmp/reg2.tsv.lz4 data/reg2.tsv
-	exec cg regsubtract tmp/reg1.tsv.lz4 tmp/reg2.tsv.lz4
+	cg zst -o tmp/reg1.tsv.zst data/reg1.tsv
+	cg zst -o tmp/reg2.tsv.zst data/reg2.tsv
+	exec cg regsubtract tmp/reg1.tsv.zst tmp/reg2.tsv.zst
 } {chromosome	begin	end
 1	10	15
 1	55	60
@@ -483,9 +483,9 @@ X	90	200
 Y	1000	2000}
 
 test regjoin {compressed} {
-	cg lz4 -o tmp/reg1.tsv.lz4 data/reg1.tsv
-	cg lz4 -o tmp/reg2.tsv.lz4 data/reg2.tsv
-	exec cg regjoin tmp/reg1.tsv.lz4 tmp/reg2.tsv.lz4
+	cg zst -o tmp/reg1.tsv.zst data/reg1.tsv
+	cg zst -o tmp/reg2.tsv.zst data/reg2.tsv
+	exec cg regjoin tmp/reg1.tsv.zst tmp/reg2.tsv.zst
 } {chromosome	begin	end
 1	10	25
 1	45	60
@@ -673,8 +673,8 @@ test regselect {regselect -o} {
 } {}
 
 test regselect {regselect -o compressed} {
-	exec cg regselect -o tmp/temp.tsv.lz4 data/vars1.sft data/reg_annot.sft
-	exec cg select -rf {list} tmp/temp.tsv.lz4 tmp/temp2.tsv
+	exec cg regselect -o tmp/temp.tsv.zst data/vars1.sft data/reg_annot.sft
+	exec cg select -rf {list} tmp/temp.tsv.zst tmp/temp2.tsv
 	exec cg select -q {$regtest != ""} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} ../tests/data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
 	exec diff tmp/temp2.tsv tmp/tempexpected.tsv
 } {}

@@ -21,8 +21,8 @@ chr7	127479365  127480532  Pos5  0  +
 chr7	127480532  127481699  Neg4  0  -}
 
 test bed2tsv {bed2tsv compress} {
-	exec cg bed2tsv data/sample.bed tmp/test.tsv.lz4
-	cg unzip tmp/test.tsv.lz4
+	exec cg bed2tsv data/sample.bed tmp/test.tsv.zst
+	cg unzip tmp/test.tsv.zst
 	file_read tmp/test.tsv
 } {#browser position chr7:127471196-127495720
 #browser hide all
@@ -718,10 +718,10 @@ test renamesamples {basic} {
 	test_genomecombdir
 	file copy tmp/test/compar/compar-test.tsv tmp/test/compar/annot_compar-test.tsv
 	cg razip tmp/test/compar/compar-test.tsv
-	cg lz4 tmp/test/samples/sample1/var-sample1.tsv
+	cg zst tmp/test/samples/sample1/var-sample1.tsv
 	cg renamesamples tmp/test sample1 new1 sample2 new2 sample3 new3
 	lsort -dict [glob tmp/test/* tmp/test/*/* tmp/test/*/*/*]
-} {tmp/test/compar tmp/test/compar/annot_compar-test.tsv tmp/test/compar/compar-test.tsv.index tmp/test/compar/compar-test.tsv.index/multicompar tmp/test/compar/compar-test.tsv.rz tmp/test/samples tmp/test/samples/new1 tmp/test/samples/new1/sreg-new1.tsv tmp/test/samples/new1/var-new1.tsv.lz4 tmp/test/samples/new2 tmp/test/samples/new2/sreg-new2.tsv tmp/test/samples/new2/var-new2.tsv tmp/test/samples/new3 tmp/test/samples/new3/prevar-new3.tsv tmp/test/samples/new3/sreg-new3.tsv tmp/test/samples/new3/var-new3.tsv}
+} {tmp/test/compar tmp/test/compar/annot_compar-test.tsv tmp/test/compar/compar-test.tsv.index tmp/test/compar/compar-test.tsv.index/multicompar tmp/test/compar/compar-test.tsv.rz tmp/test/samples tmp/test/samples/new1 tmp/test/samples/new1/sreg-new1.tsv tmp/test/samples/new1/var-new1.tsv.zst tmp/test/samples/new2 tmp/test/samples/new2/sreg-new2.tsv tmp/test/samples/new2/var-new2.tsv tmp/test/samples/new3 tmp/test/samples/new3/prevar-new3.tsv tmp/test/samples/new3/sreg-new3.tsv tmp/test/samples/new3/var-new3.tsv}
 
 test tsv2bed {basic} {
 	write_tab tmp/test.tsv {

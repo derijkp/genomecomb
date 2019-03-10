@@ -6,7 +6,7 @@ proc make_alternative_compar_job {experiment {destdir {}} {varcaller gatk}} {
 		$destdir/compar/annot_compar-$experiment.tsv
 	} -vars {
 		varcaller
-	} -targets [list $destdir/compar/annot_compar_${varcaller}-${experiment}.tsv.lz4 $destdir/compar/annot_compar_${varcaller}-${experiment}_long.tsv.lz4] \
+	} -targets [list $destdir/compar/annot_compar_${varcaller}-${experiment}.tsv.zst $destdir/compar/annot_compar_${varcaller}-${experiment}_long.tsv.zst] \
 	-code {
 		set target1 [lindex $targets 0]
 		set target2 [lindex $targets 1]
@@ -29,7 +29,7 @@ proc make_alternative_compar_job {experiment {destdir {}} {varcaller gatk}} {
 			exec cg long $target1 {*}$compress > $temp
 		}
 		file rename -force $temp $target2
-		if {$compress ne ""} {cg_lz4index $target}
+		if {$compress ne ""} {cg_zindex $target}
 	}
 }
 
@@ -378,7 +378,7 @@ proc process_mastr_job {args} {
 	lappend cmdline $mastrdir $destdir $dbdir
 	upvar job_logdir job_logdir
 	job_logfile $destdir/process_mastr_[file tail $destdir] $destdir $cmdline \
-		{*}[versions fastqc dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 biobambam picard java gnusort8 lz4 os]
+		{*}[versions fastqc dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 biobambam picard java gnusort8 zst os]
 	# start mastr analysis
 	set keeppwd [pwd]
 	cd $destdir
@@ -509,11 +509,11 @@ proc process_mastr_job {args} {
 			job remapsam-varall-$name -deps {reg_varall-sam-rs${aligner}-$name.tsv $mapfile} -targets {varall-sam-rs${aligner}-$name.tsv} -code {
 				cg remap $dep1 $dep2 $target
 			}
-			lz4_job varall-sam-rs${aligner}-$name.tsv -i 1
+			zst_job varall-sam-rs${aligner}-$name.tsv -i 1
 			job remapsam-var-$name -deps {reg_var-sam-rs${aligner}-$name.tsv $mapfile} -targets {var-sam-rs${aligner}-$name.tsv} -code {
 				cg remap $dep1 $dep2 $target
 			}
-			sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv.lz4
+			sreg_sam_job sreg-sam-rs${aligner}-$name varall-sam-rs${aligner}-$name.tsv sreg-sam-rs${aligner}-$name.tsv.zst
 		} else {
 			var_sam_job -pre $pre -regionfile $mastrdir/reg-inner-$mastrname.bed -split $split -BQ $samBQ $cleanbam $refseq
 		}
@@ -524,11 +524,11 @@ proc process_mastr_job {args} {
 			job remapgatk-varall-$name -deps {reg_varall-gatk-rs${aligner}-$name.tsv $mapfile} -targets {varall-gatk-rs${aligner}-$name.tsv} -code {
 				cg remap $dep1 $dep2 $target
 			}
-			lz4_job varall-gatk-rs${aligner}-$name.tsv -i 1
+			zst_job varall-gatk-rs${aligner}-$name.tsv -i 1
 			job remapgatk-var-$name -deps {reg_var-gatk-rs${aligner}-$name.tsv $mapfile} -targets {var-gatk-rs${aligner}-$name.tsv} -code {
 				cg remap $dep1 $dep2 $target
 			}
-			sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv.lz4
+			sreg_gatk_job sreg-gatk-rs${aligner}-$name varall-gatk-rs${aligner}-$name.tsv sreg-gatk-rs${aligner}-$name.tsv.zst
 		} else {
 			# gatk variant calling on map-rs${aligner}
 			var_gatk_job -pre $pre -dt NONE -regionfile $mastrdir/reg-inner-$mastrname.bed -split $split $cleanbam $refseq

@@ -6,11 +6,7 @@ proc sreg_sam_job {job varallfile resultfile {skips {}}} {
 		cg select -overwrite 1 -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
 		file_write $temp2 "# regions selected from [gzroot $dep]: \$quality >= 30 && \$totalcoverage >= 5\n"
 		cg regjoin $temp >> $temp2
-		if {[file extension $target] eq ".lz4"} {
-			cg_lz4 -keep 0 -i 1 -o $target $temp2
-		} else {
-			file rename -force $temp2 $target
-		}
+		compress $temp2 $target 1 0
 		file delete $temp
 	}
 }
@@ -81,7 +77,7 @@ proc var_sam_job {args} {
 	set varfile ${pre}var-$root.tsv
 	set sregfile ${pre}sreg-$root.tsv
 	set varallfile ${pre}varall-$root.tsv
-	set resultlist [list $destdir/$varfile.lz4 $destdir/$sregfile.lz4 $destdir/$varallfile.lz4 $destdir/reg_cluster-$root.tsv.lz4]
+	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.zst $destdir/reg_cluster-$root.tsv.zst]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -101,7 +97,7 @@ proc var_sam_job {args} {
 	}
 	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_sam_[file tail $bamfile] $destdir $cmdline \
-		{*}[versions bwa bowtie2 samtools picard java gnusort8 lz4 os]
+		{*}[versions bwa bowtie2 samtools picard java gnusort8 zst os]
 	set file [file tail $bamfile]
 	# start
 	set keeppwd [pwd]
@@ -132,13 +128,13 @@ proc var_sam_job {args} {
 		file rename -force $target.temp $target
 	}
 	job ${pre}varall-sam2tsv-$root {*}$skips -deps {${pre}varall-$root.vcf} \
-	-targets {${pre}varall-$root.tsv.lz4 ${pre}varall-$root.tsv.analysisinfo} -vars {split refseq} -code {
+	-targets {${pre}varall-$root.tsv.zst ${pre}varall-$root.tsv.analysisinfo} -vars {split refseq} -code {
 		analysisinfo_write $dep $target
-		cg vcf2tsv -skiprefindels 1 -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} $dep $target.temp.lz4
-		file rename -force $target.temp.lz4 $target
+		cg vcf2tsv -skiprefindels 1 -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} $dep $target.temp.zst
+		file rename -force $target.temp.zst $target
 	}
-	# lz4_job ${pre}varall-$root.tsv -i 1
-	lz4index_job {*}$skips ${pre}varall-$root.tsv.lz4
+	# zst_job ${pre}varall-$root.tsv -i 1
+	zstindex_job {*}$skips ${pre}varall-$root.tsv.zst
 	job ${pre}var-$root {*}$skips -deps {${pre}varall-$root.tsv} \
 	-targets {${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo} \
 	-skip [list ${pre}var-$root.tsv ${pre}var-$root.tsv.analysisinfo] -vars {root pre} \
@@ -156,9 +152,9 @@ proc var_sam_job {args} {
 		file rename -force $target.temp $target
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv ${pre}var-$root.tsv.lz4
+	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv ${pre}var-$root.tsv.zst
 	# find regions
-	sreg_sam_job ${pre}sreg-$root ${pre}varall-$root.tsv ${pre}sreg-$root.tsv.lz4 $skips
+	sreg_sam_job ${pre}sreg-$root ${pre}varall-$root.tsv ${pre}sreg-$root.tsv.zst $skips
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \

@@ -59,7 +59,7 @@ proc sv_npinv_job {args} {
 	set bamfile [file_absolute $bamfile]
 	if {$resultfile eq ""} {
 		set root npinv-[file_rootname $bamfile]
-		set resultfile [file dir $bamfile]/sv-$root.tsv.lz4
+		set resultfile [file dir $bamfile]/sv-$root.tsv.zst
 	} else {
 		set root [file_rootname $resultfile]
 	}
@@ -73,7 +73,7 @@ proc sv_npinv_job {args} {
 	}
 	# logfile
 	job_logfile $destdir/sv_npinv_[file tail $resultfile] $destdir $cmdline \
-		{*}[versions npinv gnusort8 lz4 os]
+		{*}[versions npinv gnusort8 zst os]
 	# start
 	## Produce npinv sv calls
 	if {[file extension $bamfile] eq ".cram"} {

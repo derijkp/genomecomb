@@ -6,7 +6,7 @@ source tools.tcl
 
 test reports {hsmetrics} {
 	test_cleantmp
-	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/regfile.tsv
+	cg select -q {$chromosome in "chr21 chr22"} $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst tmp/regfile.tsv
 	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
 	set regionfile tmp/regfile.tsv
 	set resultfile tmp/result.hsmetrics
@@ -30,8 +30,8 @@ test reports {coverage_report} {
 test reports {report_vars} {
 	mklink data/annot_compar-exomes_yri_parts.tsv tmp/vars.tsv
 	cg report_vars -stack 1 -v 2 -sample gatk-rdsbwa-NA19238chr2122 \
-		-targetfile $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
-		-refcodingfile $::refseqdir/hg19/extra/reg_hg19_refcoding.tsv.lz4 \
+		-targetfile $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst \
+		-refcodingfile $::refseqdir/hg19/extra/reg_hg19_refcoding.tsv.zst \
 		tmp/vars.tsv tmp/report_vars.tsv
 	exec diff tmp/report_vars.tsv data/report_vars.tsv
 } {}
@@ -42,8 +42,8 @@ test reports {report_vars error} {
 		1	100	101	snp	A	T
 	}]\n
 	cg report_vars -stack 1 -v 2 -sample gatk-rdsbwa-NA19238chr2122 \
-		-targetfile $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
-		-refcodingfile $::refseqdir/hg19/extra/reg_hg19_refcoding.tsv.lz4 \
+		-targetfile $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst \
+		-refcodingfile $::refseqdir/hg19/extra/reg_hg19_refcoding.tsv.zst \
 		tmp/vars.tsv tmp/report_vars.tsv
 	regexp {vars_titv	0.0} [file_read tmp/report_vars.tsv]
 } 1
@@ -54,7 +54,7 @@ test reports {process_reports} {
 	file mkdir tmp/test_reports/NA19240mx2
 	file copy {*}[glob expected/exomes_yri_mx2/samples/NA19240mx2/*] tmp/test_reports/NA19240mx2
 	file delete -force tmp/test_reports/NA19240mx2/reports
-	mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/test_reports/NA19240mx2/reg_hg19_targets.tsv.lz4
+	mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst tmp/test_reports/NA19240mx2/reg_hg19_targets.tsv.zst
 	cg process_reports -stack 1 -v 0 tmp/test_reports/NA19240mx2 refseqtest/hg19 2>@ stderr >@ stdout
 	cg tsvdiff -q 1 -x fastqc_report.html -x *.png tmp/test_reports/NA19240mx2/reports expected/exomes_yri_mx2/samples/NA19240mx2/reports
 	set e [checkdiff -y --suppress-common-lines tmp/test_reports/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html expected/exomes_yri_mx2/samples/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html]
@@ -68,7 +68,7 @@ test reports {process_reports no targetfile} {
 	file delete -force tmp/test_reportsnotarget
 	file mkdir tmp/test_reportsnotarget/NA19240mx2
 	file copy {*}[glob expected/exomes_yri_mx2/samples/NA19240mx2/*] tmp/test_reportsnotarget/NA19240mx2
-	file delete -force tmp/test_reportsnotarget/NA19240mx2/reports tmp/test_reportsnotarget/NA19240mx2/reg_hg19_targets.tsv.lz4
+	file delete -force tmp/test_reportsnotarget/NA19240mx2/reports tmp/test_reportsnotarget/NA19240mx2/reg_hg19_targets.tsv.zst
 	cg process_reports -stack 1 -v 0 tmp/test_reportsnotarget/NA19240mx2 refseqtest/hg19 2>@ stderr >@ stdout
 	file_regsub > >\n tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html.temp
 	file rename -force tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html.temp tmp/test_reportsnotarget/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html
@@ -100,9 +100,9 @@ test reports {process_reportscombine} {
 		if {![string match [deindent {
 			diff -r tmp/combinereports/report-combinereports.html data/expected-combinereports/report-combinereports.html
 			305c305
-			< The full "sequenced genome" region in */reg_hg19_sequencedgenome.tsv.lz4 was used as target region for calulations in the table
+			< The full "sequenced genome" region in */reg_hg19_sequencedgenome.tsv.zst was used as target region for calulations in the table
 			---
-			> The full "sequenced genome" region in */reg_hg19_sequencedgenome.tsv.lz4 was used as target region for calulations in the table
+			> The full "sequenced genome" region in */reg_hg19_sequencedgenome.tsv.zst was used as target region for calulations in the table
 			child process exited abnormally
 			}] $msg]} {
 				error $msg

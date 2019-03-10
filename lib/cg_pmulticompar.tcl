@@ -249,7 +249,7 @@ proc multicompar_tcl_addvars {sample target split allvarsfile samplevarsfile sre
 		set sreg ""
 	}
 	#
-	catch {close $o} ; set o [open "| lz4c -c -1 > $target" w]
+	catch {close $o} ; set o [open "[compresspipe $target 1 1] > $target" w]
 	set newheader [list sequenced-$sample]
 	if {$orizygpos != -1} {lappend newheader zyg-$sample}
 	if {$oria1pos != -1} {lappend newheader alleleSeq1-$sample}
@@ -492,7 +492,7 @@ proc pmulticompar_job {args} {
 # putsvars compar_file dirs regonly split targetvarsfile erroronduplicates
 	upvar job_logdir job_logdir
 	job_logfile [file dir $compar_file]/pmulticompar-[file tail $compar_file] [file dir $compar_file] $cmdline \
-		{*}[versions dbdir lz4 os]
+		{*}[versions dbdir zst os]
 	if {[jobfileexists $compar_file]} {
 		set dirs [list $compar_file {*}$dirs]
 	}
@@ -623,7 +623,7 @@ proc pmulticompar_job {args} {
 				set varallfile $sampledir/varall-$sample.tsv
 			}
 		}
-		set target $workdir/avars-$sample.tsv.lz4
+		set target $workdir/avars-$sample.tsv.zst
 		lappend pastefiles $target
 		if {![jobfileexists $sregfile] && ![jobfileexists $varallfile]} {
 			set msg "no sorted region file ($sregfile) or varallfile ($varallfile) found: not properly processed sample"
@@ -739,12 +739,14 @@ proc pmulticompar_job {args} {
 			}
 			if {[file extension [gzroot $varallfile]] eq ".gvcf"} {
 				# puts [list cg vcf2tsv -refout 1 -sort 0 -keepfields $keepfields $varallfile | ../bin/multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
-				exec cg vcf2tsv -refout 1 -sort 0 -keepfields $keepfields $varallfile | multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs | lz4c -c -1 > $target.temp.lz4
-				file rename -force $target.temp.lz4 $target
+				set temp [filetemp $target 1 1]
+				exec cg vcf2tsv -refout 1 -sort 0 -keepfields $keepfields $varallfile | multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs {*}[compresspipe $target 1 1] > $temp
+				file rename -force $temp $target
 			} elseif {$varallfile ne "" || $allfound || (![llength $oldbcolannot] && ![llength $coverageRefScorefiles])} {
 				# puts [list ../bin/multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
-				exec multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs | lz4c -c -1 > $target.temp.lz4
-				file rename -force $target.temp.lz4 $target
+				set temp [filetemp $target 1 1]
+				exec multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs {*}[compresspipe $target 1 1] > $temp
+				file rename -force $temp $target
 			} else {
 				multicompar_tcl_addvars $sample $target.temp $split $allvarsfile $samplevarsfile $sregfile $varallfile $bcolannot $oldbcolannot $regfiles $coverageRefScorefiles $keepfields
 				file rename -force $target.temp $target

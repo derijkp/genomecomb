@@ -324,14 +324,3 @@ proc cg_tsvdiff args {
 	}
 	if {$errors} {exit 1}
 }
-
-if 0 {
-set file1 tmp/mastr_120477_MT_private/ceph1347_02_36640/sreg-gatk-crsbwa-ceph1347_02_36640.tsv.lz4
-set file2 expected/mastr_120477_MT_private/ceph1347_02_36640/sreg-gatk-crsbwa-ceph1347_02_36640.tsv
-cg tsvdiff tmp/mastr_120477_MT_private/ceph1347_02_36640/sreg-gatk-crsbwa-ceph1347_02_36640.tsv.lz4 expected/mastr_120477_MT_private/ceph1347_02_36640/sreg-gatk-crsbwa-ceph1347_02_36640.tsv
-
-set dir1 tmp/mastr_120477_MT_private/ceph1347_02_36640
-set dir2 expected/mastr_120477_MT_private/ceph1347_02_36640
-
-
-}

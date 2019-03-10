@@ -32,18 +32,18 @@ proc annotvar_clusters_job {args} {
 	job annotvar-clusters-$root {*}$skips -skip [list [gzroot $resultfile] $aresultfile] -deps {
 		$file
 	} -targets {
-		reg_cluster-$root.tsv.lz4 reg_cluster-$root.tsv.lz4.lz4i
+		reg_cluster-$root.tsv.zst reg_cluster-$root.tsv.zst.zsti
 	} -code {
 		if {[file size $dep]} {
 			cg clusterregions < $dep > $target.temp
-			cg_lz4 $target.temp
-			file rename -force $target.temp.lz4 $target
-			cg_lz4index $target
+			cg_zst $target.temp
+			file rename -force $target.temp.zst $target
+			cg_zstindex $target
 		} else {
 			file_write $target ""
 		}
 	}
-	job annotvar-annotclusters-$root {*}$skips -deps {$file $afile reg_cluster-$root.tsv.lz4} \
+	job annotvar-annotclusters-$root {*}$skips -deps {$file $afile reg_cluster-$root.tsv.zst} \
 	-targets {$resultfile $aresultfile} \
 	-code {
 		analysisinfo_write $dep $target
@@ -63,8 +63,8 @@ proc sreg_gatk_job {job varallfile resultfile {skips {}}} {
 		cg select -overwrite 1 -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
 		file_write $temp2 "# regions selected from [gzroot $dep]: \$quality >= 30 && \$totalcoverage >= 5\n"
 		cg regjoin $temp >> $temp2
-		if {[file extension $target] eq ".lz4"} {
-			cg_lz4 -keep 0 -i 1 -o $target $temp2
+		if {[file extension $target] eq ".zst"} {
+			cg_zst -keep 0 -i 1 -o $target $temp2
 		} else {
 			file rename $temp2 $target
 		}
@@ -133,7 +133,7 @@ proc var_gatk_job {args} {
 	set varfile ${pre}var-$root.tsv
 	set sregfile ${pre}sreg-$root.tsv
 	set varallfile ${pre}varall-$root.tsv
-	set resultlist [list $destdir/$varfile.lz4 $destdir/$sregfile.lz4 $destdir/$varallfile.lz4 $destdir/reg_cluster-$root.tsv.lz4]
+	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.zst $destdir/reg_cluster-$root.tsv.zst]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -154,7 +154,7 @@ proc var_gatk_job {args} {
 	}
 	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_gatk_[file tail $bamfile] $destdir $cmdline \
-		{*}[versions bwa bowtie2 samtools gatk gatk3 picard java gnusort8 lz4 os]
+		{*}[versions bwa bowtie2 samtools gatk gatk3 picard java gnusort8 zst os]
 	# start
 	## Produce gatk SNP calls
 	set keeppwd [pwd]
@@ -182,15 +182,15 @@ proc var_gatk_job {args} {
 		# file delete $target.temp
 	}
 	job ${pre}varall-gatk2tsv-$root {*}$skips -deps [list ${pre}varall-$root.vcf] \
-	-targets {$varallfile.lz4 $varallfile.analysisinfo} \
+	-targets {$varallfile.zst $varallfile.analysisinfo} \
 	-vars {sample split refseq} \
 	-code {
 		analysisinfo_write $dep $target
-		cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.lz4
-		file rename -force $target.temp.lz4 $target
+		cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.zst
+		file rename -force $target.temp.zst $target
 	}
-	# lz4_job $varallfile -i 1
-	lz4index_job {*}$skips $varallfile.lz4
+	# zst_job $varallfile -i 1
+	zstindex_job {*}$skips $varallfile.zst
 	# predict deletions separately, because gatk will not predict snps in a region where a deletion
 	# was predicted in the varall
 	# not using threads, as these cause (sporadic) errors (https://gatkforums.broadinstitute.org/gatk/discussion/3141/unifiedgenotyper-error-somehow-the-requested-coordinate-is-not-covered-by-the-read)
@@ -252,9 +252,9 @@ proc var_gatk_job {args} {
 		file delete $target.temp2
 	}
 	# annotvar_clusters_job works using jobs
-	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile.lz4
+	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile.zst
 	# make sreg
-	sreg_gatk_job ${pre}sreg-$root $varallfile $sregfile.lz4 $skips
+	sreg_gatk_job ${pre}sreg-$root $varallfile $sregfile.zst $skips
 	## filter SNPs (according to seqanswers exome guide)
 	# java -d64 -Xms512m -Xmx4g -jar $gatk -R $reference -T VariantFiltration -B:variant,VCF snp.vcf.recalibrated -o $outprefix.snp.filtered.vcf --clusterWindowSize 10 --filterExpression "MQ0 >= 4 && ((MQ0 / (1.0 * DP)) > 0.1)" --filterName "HARD_TO_VALIDATE" --filterExpression "DP < 5 " --filterName "LowCoverage" --filterExpression "QUAL < 30.0 " --filterName "VeryLowQual" --filterExpression "QUAL > 30.0 && QUAL < 50.0 " --filterName "LowQual" --filterExpression "QD < 1.5 " --filterName "LowQD" --filterExpression "SB > -10.0 " --filterName "StrandBias"
 	# cleanup

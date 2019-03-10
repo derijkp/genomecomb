@@ -30,7 +30,7 @@ test process_small {process_project mastr_mx2} {
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
-		-x colinfo -x mastr_mx2.html -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png \
+		-x colinfo -x mastr_mx2.html -x *.zsti -x *.finished -x info_analysis.tsv -x *.png \
 		-x *.analysisinfo -x *.png \
 		tmp/mastr_mx2 expected/mastr_mx2]
 	lappend result [diffanalysisinfo tmp/mastr_mx2/compar/annot_compar-mastr_mx2.tsv.analysisinfo expected/mastr_mx2/compar/annot_compar-mastr_mx2.tsv.analysisinfo]
@@ -63,7 +63,7 @@ test process_small {process_project mastr_mx2_gatkh} {
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
-		-x colinfo -x mastr_mx2_gatkh.html -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png \
+		-x colinfo -x mastr_mx2_gatkh.html -x *.zsti -x *.finished -x info_analysis.tsv -x *.png \
 		-x *.analysisinfo -x *.png \
 		tmp/mastr_mx2_gatkh expected/mastr_mx2_gatkh]
 	lappend result [diffanalysisinfo tmp/mastr_mx2_gatkh/compar/annot_compar-mastr_mx2_gatkh.tsv.analysisinfo expected/mastr_mx2_gatkh/compar/annot_compar-mastr_mx2_gatkh.tsv.analysisinfo]
@@ -97,7 +97,7 @@ test process_small {process_project mastr_mx2_gatkh} {
 #	# check vs expected
 #	set result {}
 #	lappend result [tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
-#		-x colinfo -x "mastr_mx2 space.html" -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png \
+#		-x colinfo -x "mastr_mx2 space.html" -x *.zsti -x *.finished -x info_analysis.tsv -x *.png \
 #		-x *.analysisinfo \
 #		$mastrdir $expected
 #	lappend result [diffanalysisinfo $mastrdir/compar/annot_compar-*.tsv.analysisinfo $expected/compar/annot_compar-*.tsv.analysisinfo]
@@ -127,7 +127,7 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
-		-x colinfo -x mastr_mx2_js1.html -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png \
+		-x colinfo -x mastr_mx2_js1.html -x *.zsti -x *.finished -x info_analysis.tsv -x *.png \
 		-x *.analysisinfo -x *.png \
 		tmp/mastr_mx2_js1 expected/mastr_mx2_js1]
 	lappend result [diffanalysisinfo tmp/mastr_mx2_js1/compar/annot_compar-*.tsv.analysisinfo expected/mastr_mx2_js1/compar/annot_compar-*.tsv.analysisinfo]
@@ -157,7 +157,7 @@ test process_small {process_sample one_exome_yri_mx2} {
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.finished -x info_analysis.tsv -x *.png \
 		-x *.analysisinfo -x *.png \
 		tmp/one_exome_yri_mx2/samples/NA19240mx2 expected/one_exome_yri_mx2/samples/NA19240mx2]
 	lappend result [checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics expected/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT" | grep -v bammarkduplicates2]
@@ -181,7 +181,7 @@ test process_small {process_project exomes_yri_mx2} {
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.finished -x *.index -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png \
 		tmp/exomes_yri_mx2 expected/exomes_yri_mx2]
 	lappend result [diffanalysisinfo tmp/exomes_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/exomes_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
@@ -209,7 +209,7 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.finished -x *.index -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png \
 		tmp/exomesfb_yri_mx2 expected/exomesfb_yri_mx2]
 	lappend result [diffanalysisinfo tmp/exomesfb_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/exomesfb_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
@@ -237,7 +237,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.finished -x *.index -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.tbi \
 		tmp/exomes_gatkh_yri_mx2 expected/exomes_gatkh_yri_mx2]
 	lappend result [diffanalysisinfo tmp/exomes_gatkh_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/exomes_gatkh_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
@@ -302,7 +302,7 @@ test process_small {process_project genomes_yri_mx2} {
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
-		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index -x info_analysis.tsv \
+		-x *dupmetrics -x colinfo -x *.zsti -x info_analysis.tsv -x *.finished -x *.index -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png \
 		tmp/genomes_yri_mx2 expected/genomes_yri_mx2]
 	lappend result [diffanalysisinfo tmp/genomes_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/genomes_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
@@ -324,17 +324,17 @@ test process_small {process_project mixed_yri_mx2} {
 	file mkdir tmp/mixed_yri_mx2
 	cg project_addsample tmp/mixed_yri_mx2 cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
 	cg project_addsample tmp/mixed_yri_mx2 gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2 exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4  tmp/mixed_yri_mx2 exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
+	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst tmp/mixed_yri_mx2 exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
+	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst  tmp/mixed_yri_mx2 exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
 	cg process_project {*}$::dopts -split 1 \
 	  -dbdir /complgen/refseq/hg19 \
-	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
-	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
+	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.zst \
+	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.zst \
 	  tmp/mixed_yri_mx2 >& tmp/mixed_yri_mx2.log
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
-		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
+		-x *dupmetrics -x colinfo -x *.zsti -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.analysisinfo -x *.png \
 		tmp/mixed_yri_mx2 expected/mixed_yri_mx2]
 	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
@@ -356,17 +356,17 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	file mkdir tmp/mixed_yri_mx2_distrreg
 	cg project_addsample tmp/mixed_yri_mx2_distrreg cgNA19240mx2 ori/mixed_yri_mx2/cgNA19240mx2
 	cg project_addsample tmp/mixed_yri_mx2_distrreg gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2_distrreg exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
-	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2_distrreg exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
+	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst tmp/mixed_yri_mx2_distrreg exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
+	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst tmp/mixed_yri_mx2_distrreg exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
 	cg process_project {*}$::dopts -distrreg 1 -split 1 \
 	  -dbdir /complgen/refseq/hg19 \
-	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
-	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
+	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.zst \
+	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.zst \
 	  tmp/mixed_yri_mx2_distrreg >& tmp/mixed_yri_mx2_distrreg.log
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
-		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
+		-x *dupmetrics -x colinfo -x *.zsti -x info_analysis.tsv -x *.finished -x *.index \
 		-x *.analysisinfo -x *.png \
 		tmp/mixed_yri_mx2_distrreg expected/mixed_yri_mx2_distrreg]
 	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {

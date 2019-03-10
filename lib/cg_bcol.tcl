@@ -131,7 +131,7 @@ proc bcol_open {indexfile {ra 0}} {
 		dict set tablechr $chromosome $line
 	}
 	dict set result tablechr $tablechr
-	set binfile [lindex [glob -nocomplain $indexfile.bin [file root $indexfile].bin $indexfile.bin.lz4 [file root $indexfile].bin.lz4 $indexfile.bin.rz [file root $indexfile].bin.rz] 0]
+	set binfile [lindex [glob -nocomplain $indexfile.bin [file root $indexfile].bin $indexfile.bin.zst [file root $indexfile].bin.zst $indexfile.bin.lz4 [file root $indexfile].bin.lz4 $indexfile.bin.rz [file root $indexfile].bin.rz] 0]
 	if {$binfile eq ""} {set binfile [lindex [gzfiles $indexfile.bin [file root $indexfile].bin] 0]}
 	if {$binfile eq ""} {exiterror "binfile $indexfile.bin not found"}
 	dict set result binfile $binfile
@@ -141,6 +141,8 @@ proc bcol_open {indexfile {ra 0}} {
 		fconfigure $fi -encoding binary -translation binary
 		dict set result fi $fi
 	} elseif {$ra || $ext eq ".lz4"} {
+		dict set result fi {}
+	} elseif {$ra || $ext eq ".zst"} {
 		dict set result fi {}
 	} else {
 		set tempfile [gztemp $binfile]
@@ -411,7 +413,7 @@ proc cg_bcol_update {newbcol oldbcol args} {
 			}
 		}
 	}
-	cg_lz4 -c 9 $newbinfile
+	cg_zst -c 9 $newbinfile
 }
 
 proc cg_bcol_get {args} {

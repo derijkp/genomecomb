@@ -51,7 +51,7 @@ proc sv_lumpy_job {args} {
 	set refseq [refseq $refseq]
 	if {$resultfile eq ""} {
 		set root lumpy-[file_rootname $bamfile]
-		set resultfile [file dir $bamfile]/sv-$root.tsv.lz4
+		set resultfile [file dir $bamfile]/sv-$root.tsv.zst
 	} else {
 		set root [file_rootname $resultfile]
 	}
@@ -67,7 +67,7 @@ proc sv_lumpy_job {args} {
 	}
 	# logfile
 	job_logfile $destdir/sv_lumpy_[file tail $resultfile] $destdir $cmdline \
-		{*}[versions lumpy gnusort8 lz4 os]
+		{*}[versions lumpy gnusort8 zst os]
 	# start
 	set gatkrefseq [gatk_refseq_job $refseq]
 	## Produce lumpy sv calls

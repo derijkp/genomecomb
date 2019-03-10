@@ -756,6 +756,10 @@ graphwidget method loadregion {name} {
 			set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
 			set data($name,fpos) $fpos
 			set f [gzopen $data($name,file) $fpos]
+		} elseif {$ext eq ".zst"} {
+			set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
+			set data($name,fpos) $fpos
+			set f [gzopen $data($name,file) $fpos]
 		} else {
 			set fpos [expr {round([::$index index [expr {($start-$data($name,findex))/10000}]])}]
 			set data($name,fpos) $fpos

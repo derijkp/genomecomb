@@ -83,29 +83,18 @@ proc tsv_index_open {file field {uncompress 0}} {
 	set file [file_absolute $file]
 	if {[info exists cache(tsv_index,$file,$field,step)]} return
 	set ext [file extension $file]
-	if {$ext eq ".gz" || $ext eq ".rz" || $ext eq ".lz4" || $ext eq ".bgz"} {set uncompress 1}
+	if {$ext eq ".gz" || $ext eq ".rz" || $ext eq ".zst" || $ext eq ".lz4" || $ext eq ".bgz"} {set uncompress 1}
 	set root [gzroot $file]
 	set workfile $file
 	set uncompressed 0
 	set remove 0
-	if {[inlist {.rz .gz .bgz} $ext]} {
+	if {[inlist {.rz .gz .bgz .lz4 .zst} $ext]} {
 		if {$uncompress} {
 			set workfile [scratchfile]
 			putslog "temporarily uncompressing $file to $workfile"
 			file delete -force $workfile.temp
 			file delete -force $workfile
-			gunzip $file $workfile.temp
-			file rename -force $workfile.temp $workfile
-			set uncompressed 1
-			set remove 1
-		}
-	} elseif {[inlist {.lz4} $ext]} {
-		if {$uncompress} {
-			set workfile [scratchfile]
-			putslog "temporarily uncompressing $file to $workfile"
-			file delete -force $workfile.temp
-			file delete -force $workfile
-			exec lz4c -q -d $file $workfile.temp
+			exec [gzcat $file] $file > $workfile.temp
 			file rename -force $workfile.temp $workfile
 			set uncompressed 1
 			set remove 1

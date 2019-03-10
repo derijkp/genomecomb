@@ -1165,8 +1165,8 @@ test1	3}
 
 test select "-f compressed$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -f "num text" data/table.tsv tmp/temp.lz4
-	cg lz4cat tmp/temp.lz4
+	exec cg select {*}$dbopt -f "num text" data/table.tsv tmp/temp.zst
+	cg zcat tmp/temp.zst
 } {num	text
 4	a
 10	b
@@ -1175,8 +1175,8 @@ test select "-f compressed$dboptt" {
 
 test select "-q compressed$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -q {$num <= 4} data/table.tsv tmp/temp.lz4
-	cg lz4cat tmp/temp.lz4
+	exec cg select {*}$dbopt -q {$num <= 4} data/table.tsv tmp/temp.zst
+	cg zcat tmp/temp.zst
 } {num	text	mixed	other
 4	a	a4	aaaa
 2	c	a2	cc}
@@ -1244,7 +1244,7 @@ a	0.5
 b	0.5}
 
 test select "-compressionlevel" {
-	exec cg select -compressionlevel 1 -s - data/expected-test1000glow.vcf2tsv tmp/result.tsv.lz4
+	exec cg select -compressionlevel 1 -s - data/expected-test1000glow.vcf2tsv tmp/result.tsv.zst
 } {}
 
 test select "same() on diff analyses" {

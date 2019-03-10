@@ -114,13 +114,7 @@ proc cg_download_exac {args} {
 	}]]
 	file rename -force $tempresult.opt [gzroot $resultfile].opt
 	file rename -force $tempresult.info [gzroot $resultfile].info
-	if {[file extension $resultfile] eq ".lz4"} {
-		cg_lz4 -i 1 $tempresult
-		file rename -force $tempresult.lz4 $resultfile
-		file rename -force $tempresult.lz4.lz4i $resultfile.lz4i
-	} else {
-		file rename -force $tempresult $resultfile
-	}
+	compress $tempresult.temp2 $resultfile
 	if {!$keep} {file delete -force $tempdir}
 }
 

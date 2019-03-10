@@ -57,7 +57,7 @@ proc sv_sniffles_job {args} {
 	set refseq [refseq $refseq]
 	if {$resultfile eq ""} {
 		set root sniffles-[file_rootname $bamfile]
-		set resultfile [file dir $bamfile]/sv-$root.tsv.lz4
+		set resultfile [file dir $bamfile]/sv-$root.tsv.zst
 	} else {
 		set root [file_rootname $resultfile]
 	}
@@ -70,7 +70,7 @@ proc sv_sniffles_job {args} {
 	}
 	# logfile
 	job_logfile $destdir/sv_sniffles_[file tail $resultfile] $destdir $cmdline \
-		{*}[versions sniffles gnusort8 lz4 os]
+		{*}[versions sniffles gnusort8 zst os]
 	# start
 	## Produce sniffles SNP calls
 	set keeppwd [pwd]

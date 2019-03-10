@@ -1,5 +1,9 @@
+proc compresscmd_bz2 {{threads 1} {compressionlevel {}} {blocksize 5}} {
+	list bzip2 -q -$compressionlevel -c
+}
+
 proc compress_bz2 {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize 5} args} {
-	set cmd [list bzip2 -q -$compressionlevel -c]
+	set cmd [compresscmd_bz2 $threads $compressionlevel $blocksize]
 	compress_template $file $destfile bz2 $cmd $index $keep
 }
 

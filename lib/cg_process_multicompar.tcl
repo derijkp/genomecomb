@@ -95,12 +95,12 @@ proc process_multicompar_job {args} {
 	lappend cmdline $destdir
 	upvar job_logdir job_logdir
 	job_logfile $destdir/process_multicompar_[file tail $destdir] $destdir $cmdline \
-		{*}[versions dbdir gnusort8 lz4 os]
+		{*}[versions dbdir gnusort8 zst os]
 	# analysis info
 	# -------------
 	info_analysis_file $destdir/compar/info_analysis.tsv {} \
 		{dbdir split dbfiles targetvarsfile ::maxopenfiles} \
-		{genomecomb dbdir gnusort8 lz4 os} \
+		{genomecomb dbdir gnusort8 zst os} \
 		command [list cg process_multicompar {*}$keepargs]
 
 	# get files todo
@@ -182,7 +182,7 @@ proc process_multicompar_job {args} {
 		if {[llength $stilltodo]} {
 			putslog "Samples to add: $stilltodo"
 			putslog "Starting multicompar"
-			set compar_file [gzroot $compar_file].lz4
+			set compar_file [gzroot $compar_file].zst
 			# pmulticompar_job $compar_file $stilltodo 0 $split $targetvarsfile 0 $skipincomplete
 			pmulticompar_job -reannotregonly 0 -split $split -limitreg $limitreg -targetvarsfile $targetvarsfile -erroronduplicates 0 -skipincomplete $skipincomplete -keepfields $keepfields $compar_file {*}$stilltodo
 		} else {
@@ -191,7 +191,7 @@ proc process_multicompar_job {args} {
 		# annotate multicompar
 		# --------------------
 		putslog "Starting annotation"
-		cg_annotate_job -distrreg $distrreg $compar_file compar/annot_compar-$experiment.tsv.lz4 $dbdir {*}$dbfiles
+		cg_annotate_job -distrreg $distrreg $compar_file compar/annot_compar-$experiment.tsv.zst $dbdir {*}$dbfiles
 		job indexannotcompar-$experiment \
 		-deps {compar/annot_compar-$experiment.tsv} \
 		-targets {compar/annot_compar-$experiment.tsv.index/info.tsv} -vars dbdir -code {
@@ -216,7 +216,7 @@ proc process_multicompar_job {args} {
 			}
 			lappend regfiles $file
 		}
-		multireg_job compar/sreg-$experiment.tsv.lz4 $regfiles $limitreg
+		multireg_job compar/sreg-$experiment.tsv.zst $regfiles $limitreg
 
 	}
 	#
@@ -226,7 +226,7 @@ proc process_multicompar_job {args} {
 		putslog "No qualifying svfiles: not making sv compar"
 	} else {
 		putslog "Starting sv"
-		set svcompar_file compar/sv-${experiment}.tsv.lz4
+		set svcompar_file compar/sv-${experiment}.tsv.zst
 		set target $svcompar_file
 		testmultitarget $target $svfiles
 		job sv_multicompar -optional 1 -deps $svfiles -targets {$target} -code {
@@ -249,13 +249,13 @@ proc process_multicompar_job {args} {
 			if {[llength $todo]} {
 				cg svmulticompar -overlap 40 $target.temp {*}$todo
 			}
-			cg_lz4 $target.temp
-			file rename -force $target.temp.lz4 $target
+			cg_zst $target.temp
+			file rename -force $target.temp.zst $target
 		}
 		# annotate svmulticompar
 		# --------------------
 		putslog "Starting annotation"
-		cg_annotate_job -distrreg $distrreg $svcompar_file compar/annot_sv-$experiment.tsv.lz4 $dbdir {*}$dbfiles
+		cg_annotate_job -distrreg $distrreg $svcompar_file compar/annot_sv-$experiment.tsv.zst $dbdir {*}$dbfiles
 		job indexannotcompar-$experiment -deps {
 			compar/annot_sv-$experiment.tsv
 		} -targets {
@@ -270,7 +270,7 @@ proc process_multicompar_job {args} {
 	putslog "Starting cgsv"
 	set files [jobglob $sampledir/*/cgsv-*.tsv]
 	if {[llength $files]} {
-		set target compar/cgsv-${experiment}.tsv.lz4
+		set target compar/cgsv-${experiment}.tsv.zst
 		testmultitarget $target $files
 		job cgsv_multicompar -optional 1 -deps $files -targets {$target} -code {
 			puts "Checking $target"
@@ -292,16 +292,16 @@ proc process_multicompar_job {args} {
 			if {[llength $todo]} {
 				cg svmulticompar $target.temp {*}$todo
 			}
-			cg_lz4 $target.temp
-			file rename -force $target.temp.lz4 $target
+			cg_zst $target.temp
+			file rename -force $target.temp.zst $target
 		}
 		job cgsv_annotate -optional 1 \
 		-deps {compar/cgsv-$experiment.tsv} \
-		-targets {compar/annot_cgsv-$experiment.tsv.lz4} -vars {refseqdir build} -code {
+		-targets {compar/annot_cgsv-$experiment.tsv.zst} -vars {refseqdir build} -code {
 			cg annotate $dep $target $refseqdir/$build
 		}
 		job cgsv_annotate_index -optional 1 \
-		-deps {compar/annot_cgsv-$experiment.tsv.lz4} \
+		-deps {compar/annot_cgsv-$experiment.tsv.zst} \
 		-targets {compar/annot_cgsv-$experiment.tsv.index/info.tsv} -code {
 			cg index $dep
 		}
@@ -311,10 +311,10 @@ proc process_multicompar_job {args} {
 	putslog "Starting cgcnv"
 	set files [jobglob $sampledir/*/cgcnv-*.tsv]
 	if {[llength $files]} {
-		set target compar/cgcnv-${experiment}.tsv.lz4
+		set target compar/cgcnv-${experiment}.tsv.zst
 		set names [list_regsub {.*/cgcnv-(.*)\.tsv.*} $files {\1}]
 		testmultitarget $target $files
-		job cgcnv_multicompar -optional 1 -deps $files -targets {compar/cgcnv-${experiment}.tsv.lz4} -code {
+		job cgcnv_multicompar -optional 1 -deps $files -targets {compar/cgcnv-${experiment}.tsv.zst} -code {
 			puts "Checking $target"
 			if {[file exists $target.temp]} {
 				set done [cg select -a $target.temp]
@@ -334,16 +334,16 @@ proc process_multicompar_job {args} {
 			if {[llength $todo]} {
 				cg svmulticompar $target.temp {*}$todo
 			}
-			cg_lz4 $target.temp
-			file rename -force $target.temp.lz4 $target
+			cg_zst $target.temp
+			file rename -force $target.temp.zst $target
 		}
 		job cgcnv_annotate -optional 1 \
-		-deps {compar/cgcnv-$experiment.tsv.lz4} \
-		-targets {compar/annot_cgcnv-$experiment.tsv.lz4} -vars {refseqdir build} -code {
+		-deps {compar/cgcnv-$experiment.tsv.zst} \
+		-targets {compar/annot_cgcnv-$experiment.tsv.zst} -vars {refseqdir build} -code {
 			cg annotate $dep $target $refseqdir/$build
 		}
 		job cgcnv_annotate_index -optional 1 \
-		-deps {compar/annot_cgcnv-$experiment.tsv.lz4} \
+		-deps {compar/annot_cgcnv-$experiment.tsv.zst} \
 		-targets {compar/annot_cgcnv-$experiment.tsv.index/info.tsv} -code {
 			cg index -colinfo $dep
 		}

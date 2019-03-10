@@ -47,7 +47,7 @@ proc sv_gridss_job {args} {
 	set refseq [refseq $refseq]
 	if {$resultfile eq ""} {
 		set root gridss-[file_rootname $bamfile]
-		set resultfile [file dir $bamfile]/sv-$root.tsv.lz4
+		set resultfile [file dir $bamfile]/sv-$root.tsv.zst
 	} else {
 		set root [file_rootname $resultfile]
 	}
@@ -60,7 +60,7 @@ proc sv_gridss_job {args} {
 	}
 	# logfile
 	job_logfile $destdir/sv_gridss_[file tail $resultfile] $destdir $cmdline \
-		{*}[versions gridss gnusort8 lz4 os]
+		{*}[versions gridss gnusort8 zst os]
 	# start
 	set bwarefseq [bwarefseq_job $refseq]
 	## Produce gridss sv calls
@@ -162,13 +162,13 @@ simpleEventType <- function(gr) {
              "DUP")))))
 }
 # using the example in the GRIDSS /example directory
-vcf <- readVcf("/data/genomecomb.testdata/tmp/sv-gridss/sv-gridss-dsbwa-ERR194147_30x_NA12878-chr21part.tsv.lz4.gridssrun/results.vcf", "hg19")
+vcf <- readVcf("/data/genomecomb.testdata/tmp/sv-gridss/sv-gridss-dsbwa-ERR194147_30x_NA12878-chr21part.tsv.zst.gridssrun/results.vcf", "hg19")
 gr <- breakpointRanges(vcf)
 svtype <- simpleEventType(gr)
 info(vcf)$SIMPLE_TYPE <- NA_character_
 #info(vcf[gr$vcfId])$SIMPLE_TYPE <- svtype
 info(vcf[gr$vcfId])$SVTYPE <- svtype
 info(vcf[gr$vcfId])$SVLEN <- gr$svLen
-writeVcf(vcf, "/data/genomecomb.testdata/tmp/sv-gridss/sv-gridss-dsbwa-ERR194147_30x_NA12878-chr21part.tsv.lz4.gridssrun/results-annot.vcf")
+writeVcf(vcf, "/data/genomecomb.testdata/tmp/sv-gridss/sv-gridss-dsbwa-ERR194147_30x_NA12878-chr21part.tsv.zst.gridssrun/results-annot.vcf")
 
 }

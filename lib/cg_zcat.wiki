@@ -11,7 +11,7 @@ This conveniance function works like zcat, taking a number of files and
 outputting there contents (concatenated) to stdout. If the file has an
 extension indicating it is compressed, it will be decompressed before
 piping to stdout. In contrast to zcat, cg zcat supports more types of
-compression (lz4, gz, bgz, rz, bz2), and files of different compression
+compression (zst, lz4, gz, bgz, rz, bz2), and files of different compression
 may be mixed.
 
 == Arguments ==
@@ -19,7 +19,7 @@ may be mixed.
 
 == Options ==
 ; -p position (-pos): start output at the given position (byte). 
-This will be fast for formats supporting random access (lz4, rz). 
+This will be fast for formats supporting random access (zst, lz4, rz). 
 For others the entire file will be decompressed and skipped up to the given position.
 
 == Category ==

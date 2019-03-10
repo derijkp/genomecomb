@@ -86,7 +86,7 @@ proc gatk_compar_job args {
 		}
 	}
 	set resultvcf [file_absolute $resultvcf]
-	set resulttsv [file root [gzroot $resultvcf]].tsv.lz4
+	set resulttsv [file root [gzroot $resultvcf]].tsv.zst
 	set name [file root [file tail [gzroot $resultvcf]]]
 	job_logdir [file dir $resultvcf]/log_jobs
 	job_logfile [file dir $resultvcf]/gatk_compar_$name [file dir $resultvcf] $cmdline \

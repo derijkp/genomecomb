@@ -64,34 +64,34 @@ type (depending on source data):
 ; map-rdsbwa-sample1.bam: bam file created by aligning the reads of sample1
 to the reference genome in dbdir using bwa. The bam file has been sorted
 (s), duplicate marked (d), and realigned (r).
-; var-gatk-rdsbwa-sample1.tsv.lz4: a (compressed) [[format_tsv|tsv]] variant file that contains
+; var-gatk-rdsbwa-sample1.tsv.zst: a (compressed) [[format_tsv|tsv]] variant file that contains
 variants called by gatk based on map-rdsbwa-sample1.bam. 
-; sreg-gatk-rdsbwa-sample1.tsv.lz4: A region file with all regions that can be
+; sreg-gatk-rdsbwa-sample1.tsv.zst: A region file with all regions that can be
 considered sequenced using the same methods and quality measures as
-var-gatk-rdsbwa-sample1.tsv.lz4. Any position in those regions that is not in
+var-gatk-rdsbwa-sample1.tsv.zst. Any position in those regions that is not in
 the variant file can be called reference with the same reliability as the
 variant calls.
-; varall-gatk-rdsbwa-sample1.tsv.lz4: variant file containing variant calls by gatk for all
+; varall-gatk-rdsbwa-sample1.tsv.zst: variant file containing variant calls by gatk for all
 positions with >= 5 coverage (also reference called positions). This file
 is used to create the sreg files, and to update data in making multicompar 
 files later.
-; reg_cluster-gatk-rdsbwa-S0489.tsv.lz4: regions with many clustered variants (which are less reliable)
+; reg_cluster-gatk-rdsbwa-S0489.tsv.zst: regions with many clustered variants (which are less reliable)
 ; bcolall: directory containing whole genome coverage, refscore, ... data in the form of [[bcol]] files.
 These files can be used to create the sreg files, and to update data in making multicompar 
 files later. (In older project dirs, this directory may be called
 coverage-cg-* and contain old style formatted bcol files)
-; sv-manta-rdsbwa-sample.tsv.lz4: structural variant calls by manta
-; cgsv-sample.tsv.lz4: Complete Genomics structural variants
-; cgcnv-sample.tsv.lz4: Complete Genomics CNV data
+; sv-manta-rdsbwa-sample.tsv.zst: structural variant calls by manta
+; cgsv-sample.tsv.zst: Complete Genomics structural variants
+; cgcnv-sample.tsv.zst: Complete Genomics CNV data
 
 The result files from samtools variant calling on the same bamfile
-(map-rdsbwa-sample1.bam), are named var-sam-rdsbwa-sample1.tsv.lz4,
-sreg-sam-rdsbwa-sample1.tsv.lz4, varall-sam-rdsbwa-sample1.tsv.lz4,
-reg_cluster-sam-rdsbwa-S0489.tsv.lz4
+(map-rdsbwa-sample1.bam), are named var-sam-rdsbwa-sample1.tsv.zst,
+sreg-sam-rdsbwa-sample1.tsv.zst, varall-sam-rdsbwa-sample1.tsv.zst,
+reg_cluster-sam-rdsbwa-S0489.tsv.zst
 
 For Complete Genomics alignment and variant calling the files
-are named var-cg-cg-sample1.tsv.lz4,
-sreg-cg-cg-sample1.tsv.lz4, reg_cluster-cg-cg-S0489.tsv.lz4
+are named var-cg-cg-sample1.tsv.zst,
+sreg-cg-cg-sample1.tsv.zst, reg_cluster-cg-cg-S0489.tsv.zst
 
 The sampledir may contain precalculated data data from other pipelines.
 If these are in the correct format, they will be integrated in the
@@ -101,15 +101,15 @@ variants included in the multicompar.
 == compar dir ==
 The subdirectory compar contains comparisons of all samples, e.g.:
 
-; annot_compar-projectname.tsv.lz4: multicompar file containing information for
+; annot_compar-projectname.tsv.zst: multicompar file containing information for
 all variants in all samples (and all methods). If a variant is not present
 in one of the samples, the information at the position of the variant will
 be completed (is the position sequenced or not, coverage, ...) The file is
 also annotated with all databases in dbdir (impact on genes, regions of
 interest, known variant data)
-; sreg-projectname.tsv.lz4: sequenced region multicompar file containing for all
+; sreg-projectname.tsv.zst: sequenced region multicompar file containing for all
 regions whether they are sequenced (1) or nor (0) for each sample.
-; annot_sv-projectname.tsv.lz4: multicompar structural variant file containing
+; annot_sv-projectname.tsv.zst: multicompar structural variant file containing
 information for all structural variants in all samples (and all methods).
 This file is made differently from the small vrariants file: Structural
 variant comparison uses approximate matching: Inversion and deletions are

@@ -201,7 +201,7 @@ proc cg_process_rnaseq {args} {
 	lappend cmdline $destdir $libtype $bowtie_index $gff
 	upvar job_logdir job_logdir
 	job_logfile $destdir/process_rnaseq_[file tail $destdir] $destdir $cmdline \
-		{*}[versions dbdir fastqc bowtie2 samtools gatk picard java gnusort8 lz4 os]
+		{*}[versions dbdir fastqc bowtie2 samtools gatk picard java gnusort8 zst os]
 	#get required arguments
 	process_rnaseq_job $destdir $libtype $bowtie_index $gff $fastqc $adapterfile $paired
 	job_wait

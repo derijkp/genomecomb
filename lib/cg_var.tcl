@@ -60,7 +60,7 @@ proc var_job {args} {
 	}
 	# logfile
 	job_logfile $destdir/var_${method}_[file tail $bamfile] $destdir $cmdline \
-		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 lz4 os]
+		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# run
 	if {$distrreg in {0 {}}} {
 		var_${method}_job {*}$opts -regionfile $regionfile -pre $pre \
@@ -135,13 +135,14 @@ proc var_job {args} {
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
 					cg vcfcat -i 1 -o $target {*}[jobglob {*}$list]
 				} else {
-					cg cat -c f {*}[jobglob {*}$list] | cg lz4 -c 9 > $target.temp
+					cg cat -c f {*}[jobglob {*}$list] {*}[compresspipe $target 9] > $target.temp
 					file rename $target.temp $target
-					cg_lz4index $target
+					cg_zindex $target
 				}
 				foreach file $list {
 					file delete $file
 					if {[file extension $file] eq ".lz4"} {file delete $file.lz4i}
+					if {[file extension $file] eq ".zst"} {file delete $file.zsti}
 					file delete -force [gzroot $file].index
 					file delete [gzroot $file].analysisinfo
 				}

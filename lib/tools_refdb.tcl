@@ -10,6 +10,6 @@ proc liftover_refdb {old new dest dbbuild build} {
 	if {[file exists $root.opt]} {
 		file rename $root.opt $newroot.opt
 	}
-	file delete $old $old.lz4i
+	file delete $old $old.zsti
 	file delete $root.info
 }

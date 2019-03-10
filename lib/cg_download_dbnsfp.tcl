@@ -123,7 +123,7 @@ proc cg_download_dbnsfp {args} {
 	putslog "move result to target"
 	# move dbNSFPzip files to target
 	file_write [gzroot $resultfile].opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred MetaSVM_score MetaSVM_pred MetaLR_score MetaLR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score REVEL_score VEST3_score GERP_NR GERP_RS MetaLR_score MetaLR_pred SiPhy_29way_pi SiPhy_29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
-	# lz4 already handled in last select
+	# zst already handled in last select
 	file rename -force $tempresult $resultfile
 	if {!$keep} {file delete -force $tempdir}
 }

@@ -49,7 +49,7 @@ test process {mastr mastr_116068_116083} {
 	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr tmp/mastr_116068_116083 refseqtest/hg19
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *hsmetrics -x colinfo -x *.index -x *.lz4i  \
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *hsmetrics -x colinfo -x *.index -x *.zsti -x *.lz4i  \
 		-x mastr_116068_116083.html -x *.finished \
 		tmp/mastr_116068_116083 expected/mastr_116068_116083]
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_116068_116083/mastr_116068_116083.html expected/mastr_116068_116083/mastr_116068_116083.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20}]
@@ -77,12 +77,12 @@ test process {process_illumina exomes yri chr2122} {
 	}
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
 	cg process_project --stack 1 --verbose 2 {*}$::dopts \
-	  -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 \
+	  -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst \
 	  -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x *.index \
 		tmp/exomes_yri_chr2122 expected/exomes_yri_chr2122]
 	lappend result [checkdiff -y --suppress-common-lines tmp/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics expected/exomes_yri_chr2122/samples/NA19238chr2122/map-dsbwa-NA19238chr2122.bam.dupmetrics | grep -v "Started on"]
 	foreach file1 [glob tmp/exomes_yri_chr2122/compar/info_analysis.tsv tmp/exomes_yri_chr2122/samples/*/info_analysis.tsv] {
@@ -109,7 +109,7 @@ test process {process_project exomes_gatkh_strelka_yri_chr2122 (haplotypecaller 
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png \
 		tmp/exomes_gatkh_strelka_yri_chr2122 expected/exomes_gatkh_strelka_yri_chr2122]
 	lappend result [diffanalysisinfo tmp/exomes_gatkh_strelka_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo expected/exomes_gatkh_strelka_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo]
@@ -137,7 +137,7 @@ test process {process_project exomes_gatkh_yri_chr2122 (haplotypecaller)} {
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
-		-x *bam.dupmetrics -x info_analysis.tsv -x *.lz4i -x *.finished -x *.index -x info_analysis.tsv \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.finished -x *.index -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png \
 		tmp/exomes_gatkh_yri_chr2122 expected/exomes_gatkh_yri_chr2122]
 	lappend result [diffanalysisinfo tmp/exomes_gatkh_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo expected/exomes_gatkh_yri_chr2122/compar/annot_compar-*.tsv.analysisinfo]
@@ -161,7 +161,7 @@ test process {genomes yri chr2122} {
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
-		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
+		-x *dupmetrics -x colinfo -x *.zsti -x info_analysis.tsv -x *.finished -x *.index \
 		tmp/genomes_yri_chr2122 expected/genomes_yri_chr2122]
 	lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics expected/genomes_yri_chr2122/samples/testNA19240chr21il/map-dsbwa-testNA19240chr21il.bam.dupmetrics | grep -v "Started on"]
 	foreach file1 [glob tmp/genomes_yri_chr2122/compar/info_analysis.tsv tmp/genomes_yri_chr2122/samples/*/info_analysis.tsv] {

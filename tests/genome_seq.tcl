@@ -32,9 +32,9 @@ test genome_seq {outfile} {
 test genome_seq {-f 0.002 -n 0.4 freqp} {
 	cg cplinked $::refseqdir/hg19 tmp
 	file delete {*}[glob tmp/hg19/var_hg19_snp135.*]
-	file copy data/var_hg19_partofsnp135.tsv.lz4 tmp/hg19/var_hg19_snp135.tsv.lz4
-	cg lz4index tmp/hg19/var_hg19_snp135.tsv.lz4
-	cg maketabix tmp/hg19/var_hg19_snp135.tsv.lz4
+	file copy data/var_hg19_partofsnp135.tsv.zst tmp/hg19/var_hg19_snp135.tsv.zst
+	cg zstindex tmp/hg19/var_hg19_snp135.tsv.zst
+	cg maketabix tmp/hg19/var_hg19_snp135.tsv.zst
 	exec cg genome_seq -i name -f 0.002 -n 0.4 data/reg_genome_seq.tsv tmp/hg19 > tmp/temp.fas
 	exec diff tmp/temp.fas data/expected-reg_genome_seq_f0.002n0.4.fas
 } {} 
@@ -42,9 +42,9 @@ test genome_seq {-f 0.002 -n 0.4 freqp} {
 test genome_seq {-f 0.002 -n 0.4 freqp} {
 	cg cplinked $::refseqdir/hg19 tmp
 	file delete {*}[glob tmp/hg19/var_hg19_snp135.*]
-	cg select -f {chrom start end type ref alt name {freqp=catch($freq * 100.0,$freq)}} data/var_hg19_partofsnp135.tsv.lz4 tmp/hg19/var_hg19_snp135.tsv.lz4
-	cg lz4index tmp/hg19/var_hg19_snp135.tsv.lz4
-	cg maketabix tmp/hg19/var_hg19_snp135.tsv.lz4
+	cg select -f {chrom start end type ref alt name {freqp=catch($freq * 100.0,$freq)}} data/var_hg19_partofsnp135.tsv.zst tmp/hg19/var_hg19_snp135.tsv.zst
+	cg zstindex tmp/hg19/var_hg19_snp135.tsv.zst
+	cg maketabix tmp/hg19/var_hg19_snp135.tsv.zst
 	exec cg genome_seq -i name -f 0.002 -n 0.4 data/reg_genome_seq.tsv tmp/hg19 > tmp/temp.fas
 	exec diff tmp/temp.fas data/expected-reg_genome_seq_f0.002n0.4.fas
 } {} 
@@ -52,9 +52,9 @@ test genome_seq {-f 0.002 -n 0.4 freqp} {
 test genome_seq {no freq or freqp error} {
 	cg cplinked $::refseqdir/hg19 tmp
 	file delete {*}[glob tmp/hg19/var_hg19_snp135.*]
-	cg select -f {chrom start end type ref alt name} data/var_hg19_partofsnp135.tsv.lz4 tmp/hg19/var_hg19_snp135.tsv.lz4
-	cg lz4index tmp/hg19/var_hg19_snp135.tsv.lz4
-	cg maketabix tmp/hg19/var_hg19_snp135.tsv.lz4
+	cg select -f {chrom start end type ref alt name} data/var_hg19_partofsnp135.tsv.zst tmp/hg19/var_hg19_snp135.tsv.zst
+	cg zstindex tmp/hg19/var_hg19_snp135.tsv.zst
+	cg maketabix tmp/hg19/var_hg19_snp135.tsv.zst
 	exec cg genome_seq -i name -f 0.002 -n 0.4 data/reg_genome_seq.tsv tmp/hg19 > tmp/temp.fas
 	exec diff tmp/temp.fas data/expected-reg_genome_seq_f0.002n0.4.fas
 } {file *tmp/hg19/var_hg19_snp135.tsv.gz has no freq or freqp field} match error

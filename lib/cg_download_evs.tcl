@@ -120,13 +120,7 @@ more information on http://evs.gs.washington.edu/EVS/
 }]]
 	#
 	putslog "move results to $resultfile"
-	if {[file extension $resultfile] eq ".lz4"} {
-		cg_lz4 -i 1 $tempresult.temp2
-		file rename -force $tempresult.temp2.lz4 $resultfile
-		file rename -force $tempresult.temp2.lz4.lz4i $resultfile.lz4i
-	} else {
-		file rename -force $tempresult.temp2 $resultfile
-	}
+	compress $tempresult.temp2 $resultfile
 	cd $keeppwd
 	file delete -force $tempdir
 }

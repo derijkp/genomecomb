@@ -32,7 +32,7 @@ job_logdir log_jobs
 job genome_${build} -vars build -targets {genome_${build}.ifas extra/reg_${build}_fullgenome.tsv} -code {
 	cg downloadgenome ${build} genome_${build}.ifas
 	file rename -force reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
-	cg lz4 -i 1 extra/reg_${build}_fullgenome.tsv
+	cg zst -i 1 extra/reg_${build}_fullgenome.tsv
 }
 
 set ifasfile genome_${build}.ifas
@@ -41,7 +41,7 @@ job genome_${build}_cindex -deps {$ifasfile} -targets {genome_${build}.ssa} -cod
 }
 
 job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv} -code {
-	exec cg calcsequencedgenome --stack 1 $dep | lz4c -12 > $target.temp
+	exec cg calcsequencedgenome --stack 1 $dep {*}[compresspipe $target 12] > $target.temp
 	file rename -force $target.temp $target
 }
 
@@ -56,24 +56,30 @@ bwarefseq_job genome_${build}.ifas
 foreach db {
 	cytoBandIdeo rmsk simpleRepeat 
 } {
-	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {dest build db} -code {
+	job reg_${build}_$db -targets {
+		reg_${build}_${db}.tsv
+	} -vars {dest build db} -code {
+		set target [gzroot $target].zst
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regcollapse $target.ucsc > $target.temp
-		file rename -force $target.ucsc.info [gzroot $target].lz4
-		file rename -force $target.temp $target
 		file delete $target.ucsc
+		file rename -force $target.ucsc.info [gzroot $target].info
+		compress $target.temp $target
 	}
 }
 
 # join regions
 foreach db {
 } {
-	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {dest build db} -code {
+	job reg_${build}_$db -targets {
+		reg_${build}_${db}.tsv
+	} -vars {dest build db} -code {
+		set target [gzroot $target].zst
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regjoin $target.ucsc > $target.temp
 		file delete $target.ucsc
 		file rename -force $target.ucsc.info [gzroot $target].info
-		file rename -force $target.temp $target
+		compress $target.temp $target
 	}
 }
 
@@ -170,8 +176,8 @@ catch {
 
 # compress
 foreach file [jobglob *.tsv] {
-	job lz4_${build}_[file tail $file] -deps {$file} -targets {$file.lz4} -vars {dest build} -code {
-		cg lz4 -c 12 -i 1 $dep
+	job zst_${build}_[file tail $file] -deps {$file} -targets {$file.zst} -vars {dest build} -code {
+		cg zst -c 12 -i 1 $dep
 	}
 }
 

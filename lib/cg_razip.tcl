@@ -1,6 +1,10 @@
+proc compresscmd_rz {{threads 1} {compressionlevel {}} {blocksize 5}} {
+	list razip -c
+}
+
 proc compress_rz {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize 5} args} {
 	# putsvars file destfile index keep threads compressionlevel blocksize
-	set cmd [list razip -c]
+	set cmd [compresscmd_rz $threads $compressionlevel $blocksize]
 	compress_template $file $destfile rz $cmd $index $keep
 }
 

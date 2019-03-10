@@ -49,7 +49,7 @@ proc process_reports_job {args} {
 	}
 	lappend cmdline $sampledir $dbdir
 	job_logfile $sampledir/process_reports_$sample $sampledir $cmdline \
-		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 picard java gnusort8 lz4 os]
+		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 picard java gnusort8 zst os]
 	# start
 	if {$resultbamfile eq ""} {
 		set bamfiles [lsort -dict [jobglob $sampledir/*.bam]]

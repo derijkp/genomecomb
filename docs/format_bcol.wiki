@@ -7,8 +7,8 @@ of the genome and use this for annotation.
 
 The bcol format consists of two files, one in a text format
 describing the bcol data (bcolfile.bcol) and one containing the actual 
-binary data (bcolfile.bcol.bin.lz4). There may be a (third) index file 
-(bcolfile.bcol.bin.lz4i) for faster random access to the compressed binary data.
+binary data (bcolfile.bcol.bin.zst). There may be a (third) index file 
+(bcolfile.bcol.bin.zsti) for faster random access to the compressed binary data.
 bcol files can be created based on a tab-separated file ([[tsv]]) file using the
 command [[cg_bcol_make|cg bcol make]]. 
 
@@ -68,10 +68,10 @@ each position for the bases A, C, T and G respectively.
 ; c: 8 bit integer (1 byte or character)
 The integer types can have an u appended for unsigned types
 
-== bcolfile.bcol.bin.lz4 ==
-bcolfile.bcol.bin.lz4 is the (compressed) binary file containing the
+== bcolfile.bcol.bin.zst ==
+bcolfile.bcol.bin.zst is the (compressed) binary file containing the
 actual data, a lz3 compressed continuous stream of values in the given
 binary type. The uncompressed binary file (bcolfile.bcol.bin) is also
-recognized, but by default the binaries are compressed. A lz4 index file
-bcolfile.bcol.bin.lz4.lz4i may also exists to speed up random access to
+recognized, but by default the binaries are compressed. A zst index file
+bcolfile.bcol.bin.zst.zsti may also exists to speed up random access to
 the compressed binary.

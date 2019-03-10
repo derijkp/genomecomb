@@ -238,7 +238,7 @@ proc cg_annotate_job {args} {
 	set resultname [file tail $resultfile]
 	foreach testfile $args {
 		if {[file isdir $testfile]} {
-			lappend dbfiles {*}[ssort -natural [glob -nocomplain $testfile/var_*.tsv $testfile/var_*.tsv.lz4 $testfile/gene_*.tsv $testfile/gene_*.tsv.lz4 $testfile/mir_*.tsv $testfile/mir_*.tsv.lz4 $testfile/reg_*.tsv $testfile/reg_*.tsv.lz4 $testfile/*.bcol $testfile/bcol_*.tsv]]
+			lappend dbfiles {*}[ssort -natural [gzfiles $testfile/var_*.tsv $testfile/gene_*.tsv $testfile/mir_*.tsv $testfile/reg_*.tsv $testfile/*.bcol]]
 		} elseif {![file exists $testfile]} {
 			set testfile [gzfile $testfile]
 			if {![file exists $testfile]} {
@@ -343,7 +343,7 @@ proc cg_annotate_job {args} {
 	set tempbasefile [indexdir_file $resultfile vars.tsv ok]
 	upvar job_logdir job_logdir
 	job_logfile [file dir $tempbasefile]/annotate_[file tail $resultfile] [file dir $tempbasefile] $cmdline \
-		{*}[versions dbdir lz4 os]
+		{*}[versions dbdir zstd os]
 	# logdir
 	job_logdir $tempbasefile.log_jobs
 	# if nothing to add, copy orifile
@@ -519,7 +519,7 @@ proc cg_annotate_job {args} {
 			exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
 			file delete $temp2
 			file rename -force $temp $resultfile
-			if {$compress ne ""} {cg_lz4index $resultfile}
+			if {$compress ne ""} {cg_zstindex $resultfile}
 		} else {
 			set f [gzopen $orifile]
 			set header [tsv_open $f]
@@ -536,7 +536,7 @@ proc cg_annotate_job {args} {
 				exec tsv_paste $orifile {*}$afiles {*}$compress > $temp
 			}
 			file rename -force $temp $resultfile
-			if {$compress ne ""} {cg_lz4index $resultfile}
+			if {$compress ne ""} {cg_zstindex $resultfile}
 		}
 		if {[llength $afiles]} {file delete {*}$afiles}
 	}

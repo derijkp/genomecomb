@@ -52,7 +52,7 @@ proc sv_manta_job {args} {
 	set refseq [refseq $refseq]
 	if {$resultfile eq ""} {
 		set root manta-[file_rootname $bamfile]
-		set resultfile [file dir $bamfile]/sv-$root.tsv.lz4
+		set resultfile [file dir $bamfile]/sv-$root.tsv.zst
 	} else {
 		set root [file_rootname $resultfile]
 	}
@@ -75,7 +75,7 @@ proc sv_manta_job {args} {
 	}
 	# logfile
 	job_logfile $destdir/sv_manta_[file tail $resultfile] $destdir $cmdline \
-		{*}[versions manta gnusort8 lz4 os]
+		{*}[versions manta gnusort8 zst os]
 	# start
 	set gatkrefseq [gatk_refseq_job $refseq]
 	## Produce manta sv calls

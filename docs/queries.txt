@@ -2,11 +2,11 @@
 # ----
 
 # use a variable for brevity and for easily changing the file
-comparfile=annot_compar-exomes_yri_chr2122.tsv.lz4
-sregfile=sreg-exomes_yri_chr2122.tsv.lz4
+comparfile=annot_compar-exomes_yri_chr2122.tsv.zst
+sregfile=sreg-exomes_yri_chr2122.tsv.zst
 
 # which fields are present in the file (cg select -h)
-cg select -h annot_compar-exomes_yri_chr2122.tsv.lz4 | less
+cg select -h annot_compar-exomes_yri_chr2122.tsv.zst | less
 # You can use $comparfile instead of the filename, show only fields with impact
 cg select -h $comparfile | grep impact
 
@@ -102,9 +102,9 @@ cg select -f 'chromosome begin end type ref alt simpleRepeat microsat genomicSup
 cg select -g 'sample {}' -gc 'sequenced {v r u} avg(coverage)' $comparfile
 
 # make hqzyg using wildcards in calculated column
-cg select -f 'chromosome begin end type ref alt {hqzyg-*=if(def($coverage-*,0) >= 20 and def($quality-*,0) >= 50,$zyg-*,"u")}' compar/annot_compar-exomes_yri_chr2122.tsv.lz4 | cg select -g sample -gc 'hqzyg {} count'
+cg select -f 'chromosome begin end type ref alt {hqzyg-*=if(def($coverage-*,0) >= 20 and def($quality-*,0) >= 50,$zyg-*,"u")}' compar/annot_compar-exomes_yri_chr2122.tsv.zst | cg select -g sample -gc 'hqzyg {} count'
 # compare to zyg
-cg select -g sample -gc 'zyg {} count' compar/annot_compar-exomes_yri_chr2122.tsv.lz4
+cg select -g sample -gc 'zyg {} count' compar/annot_compar-exomes_yri_chr2122.tsv.zst
 
 # multireg queries
 # ----------------
@@ -119,11 +119,11 @@ cg covered reg2.tsv
 # what is covered
 cg select -q '$sreg-gatk-rdsbwa-NA19238chr2122 == 1' $sregfile reg-NA19238chr2122.tsv
 # subtract from refcoding
-cg regsubtract /complgen/refseq/hg19/extra/reg_hg19_refcoding.tsv.lz4 reg-NA19238chr2122.tsv > missing.tsv
+cg regsubtract /complgen/refseq/hg19/extra/reg_hg19_refcoding.tsv.zst reg-NA19238chr2122.tsv > missing.tsv
 # check covered
 cg covered missing.tsv
 # recalculate missing, but only for chr 21 and 22
-cg regsubtract /complgen/refseq/hg19/extra/reg_hg19_refcoding.tsv.lz4 reg-NA19238chr2122.tsv | cg select -q '$chromosome in "21 22"' > missing.tsv
+cg regsubtract /complgen/refseq/hg19/extra/reg_hg19_refcoding.tsv.zst reg-NA19238chr2122.tsv | cg select -q '$chromosome in "21 22"' > missing.tsv
 
 # covered in at least 2 using -g and calculated column size to immediately calculate covered region
 cg select -q 'scount($sreg == 1 and $sample regexp "^gatk") >= 2' -f '{size=$end - $begin}' -g all -gc 'sum(size)' $sregfile
@@ -134,7 +134,7 @@ cg select -f '{size= $end - $begin}' -g 'sample {gatk-*} sreg 1' -gc 'sum(size)'
 # ----------
 
 # annotate these missing regions
-cg annotate missing.tsv annot_missing.tsv /complgen/refseq/hg19/reg_*.tsv.lz4 /complgen/refseq/hg19/gene_*.tsv.lz4
+cg annotate missing.tsv annot_missing.tsv /complgen/refseq/hg19/reg_*.tsv.zst /complgen/refseq/hg19/gene_*.tsv.zst
 
 # Validation
 # ----------

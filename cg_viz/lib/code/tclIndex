@@ -6,12 +6,12 @@
 # element name is the name of a command and the value is
 # a script that loads the command.
 
-set auto_index(main) [list source [file join $dir Main.tcl]]
 set auto_index(tsv_split) [list source [file join $dir display_chr.tcl]]
 set auto_index(findticks) [list source [file join $dir display_chr.tcl]]
 set auto_index(easyquery_grid) [list source [file join $dir easyquery.tcl]]
 set auto_index(easyquery_q) [list source [file join $dir easyquery.tcl]]
 set auto_index(query_tool) [list source [file join $dir functions.tcl]]
+set auto_index(main) [list source [file join $dir Main.tcl]]
 set auto_index(plugin_addbutton) [list source [file join $dir plugins.tcl]]
 set auto_index(loadplugins) [list source [file join $dir plugins.tcl]]
 set auto_index(_table_monetdb_get) [list source [file join $dir table_monetdb.tcl]]

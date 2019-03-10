@@ -25,11 +25,29 @@ test reg_annot {compressed} {
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
 } {} 
 
+test reg_annot {compressed zst} {
+	file copy data/vars1.sft tmp/vars1.sft
+	file copy -force data/reg_annot.sft data/reg_annot.sft.opt tmp
+	exec cg zst tmp/reg_annot.sft
+	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.sft.zst
+	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
+	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
+} {} 
+
 test reg_annot {2 compressed} {
 	file copy data/vars1.sft tmp/vars1.sft
 	file copy -force tmp/vars1.sft data/reg_annot.sft data/reg_annot.sft.opt tmp
 	exec cg razip tmp/reg_annot.sft tmp/vars1.sft
 	exec cg annotate tmp/vars1.sft.rz tmp/temp.sft tmp/reg_annot.sft.rz
+	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
+	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
+} {}
+
+test reg_annot {2 compressed zst} {
+	file copy data/vars1.sft tmp/vars1.sft
+	file copy -force tmp/vars1.sft data/reg_annot.sft data/reg_annot.sft.opt tmp
+	exec cg zst tmp/reg_annot.sft tmp/vars1.sft
+	exec cg annotate tmp/vars1.sft.zst tmp/temp.sft tmp/reg_annot.sft.zst
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
 } {}
@@ -135,17 +153,17 @@ test var_annot {basic multi} {
 	exec diff tmp/temp.sft data/expected-vars1-var_annot-multi.sft
 } {} 
 
-test var_annot {lz4, opt, links} {
+test var_annot {zst, opt, links} {
 	test_cleantmp
 	file mkdir tmp
 	cg select -f {chromosome begin end type ref alt} data/vars1.sft tmp/vars.sft
-	exec lz4c -q -c data/var_annot.sft > tmp/var_annot.sft.lz4
+	compress data/var_annot.sft tmp/var_annot.sft.zst
 	file_write tmp/var_annot.sft.opt "fields\t{name freq alt}\n"
 	cd tmp
-	mklink var_annot.sft.lz4 var_annot.tsv.lz4
+	mklink var_annot.sft.zst var_annot.tsv.zst
 	mklink var_annot.sft.opt var_annot.tsv.opt
 	cd ..
-	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/var_annot.tsv.lz4
+	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/var_annot.tsv.zst
 	exec diff tmp/temp.sft data/expected-vars1-var_annot-multi.sft
 } {} 
 
@@ -294,10 +312,10 @@ test var_annot {sort error 5 in database file} {
 	exec cg annotate tmp/vars_annottest.sft tmp/temp.sft tmp/var_annot.sft
 } {*File (*) is not correctly sorted (sort correctly using "cg select -s -")*} error match
 
-test var_annot {lz4} {
+test var_annot {zst} {
 	file copy data/vars1.sft tmp/vars1.sft
-	exec lz4c -q -c data/var_annot.sft > tmp/var_annot.sft.lz4
-	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/var_annot.sft.lz4
+	compress data/var_annot.sft tmp/var_annot.sft.zst
+	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/var_annot.sft.zst
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-var_annot.sft
 } {} 
@@ -720,7 +738,7 @@ test bcol_annot {basic compressed bcol} {
 test bcol_annot {basic uncompressed bcol} {
 	test_cleantmp
 	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
-	cg unzip {*}[glob tmp/*.rz tmp/*.lz4]
+	cg unzip {*}[glob tmp/*.rz tmp/*.lz4 tmp/*.zst]
 	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
 	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv

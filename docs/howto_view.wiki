@@ -17,7 +17,7 @@ Alternatively you could also copy it from the expected dir (or adapt the path):
 == Startup ==
 Start up [[cg_viz]] using
 {{{
-cg viz tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.lz4
+cg viz tmp/mixed_yri_mx2/compar/annot_compar-mixed_yri_mx2.tsv.zst
 }}}
 This opens the annotated combined variant file (fomrmat described in [[tsv]])
 using cg viz, allowing you to browse through the table (even if it is

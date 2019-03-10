@@ -1,10 +1,18 @@
+proc compressblocksize_lz4 {} {
+	return 5
+}
+
 proc index_lz4 {file} {
 	exec lz4index $file
 }
 
+proc compresscmd_lz4 {{threads 1} {compressionlevel {}} {blocksize 5}} {
+	list lz4c -q -$compressionlevel -B$blocksize -c
+}
+
 proc compress_lz4 {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize 5} args} {
 	# putsvars file destfile index keep threads compressionlevel blocksize
-	set cmd [list lz4c -q -$compressionlevel -B$blocksize -c]
+	set cmd [compresscmd_lz4 $threads $compressionlevel $blocksize]
 	compress_template $file $destfile lz4 $cmd $index $keep
 }
 

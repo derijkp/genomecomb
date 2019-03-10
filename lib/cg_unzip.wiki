@@ -8,7 +8,7 @@ Decompresses
 
 == Description ==
 cg unzip will decompress the files given. Input files can be in any of the supported
-compression formats (lz4, gz, bgz, bz2, rz).
+compression formats (zst, lz4, gz, bgz, bz2, rz).
 
 == Options ==
 -k 0/1 (-keep): keep the compressed version of the file

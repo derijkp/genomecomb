@@ -41,6 +41,21 @@ test bcol_make {basic} {
 ---
 > coverage}
 
+test bcol_make {basic old format (lz4)} {
+	test_cleantmp
+	exec cg bcol make -c {} -p {} tmp/temp.bcol coverage < data/cov.tsv
+	compress tmp/temp.bcol.bin.zst tmp/temp.bcol.bin.lz4 1 0
+	file delete tmp/temp.bcol.bin.zst.zsti
+	exec cg bcol table -s 0 tmp/temp.bcol 0 | cg select -f value > tmp/temp.test
+	exec cg select -f coverage data/cov.tsv tmp/temp.test2
+	catch {exec diff tmp/temp.test tmp/temp.test2} e
+	regsub {child process exited abnormally} $e {} e
+	string trim $e
+} {1c1
+< value
+---
+> coverage}
+
 test bcol_make {wide} {
 	test_cleantmp
 	cg select -f {coverage} data/cov.tsv tmp/cov.tsv

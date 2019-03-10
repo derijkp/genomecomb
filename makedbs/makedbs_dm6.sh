@@ -55,8 +55,8 @@ job genome_${build}_cindex -deps {$ifasfile} -targets {genome_${build}.ssa} -cod
 # make bwa version of genome
 bwarefseq_job genome_${build}.ifas
 
-job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv.lz4} -code {
-	exec cg calcsequencedgenome --stack 1 $dep | lz4c -12 > $target.temp
+job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv.zst} -code {
+	exec cg calcsequencedgenome --stack 1 $dep {*}[compresspipe $target 12] > $target.temp
 	file rename -force $target.temp $target
 }
 
@@ -66,9 +66,9 @@ job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas}
 
 # collapse regions
 foreach db $dbs_reg_collapse {
-	job reg_${build}_$db -targets {reg_${build}_${db}.tsv.lz4} -vars {dest build db} -code {
+	job reg_${build}_$db -targets {reg_${build}_${db}.tsv.zst} -vars {dest build db} -code {
 		cg download_ucsc $target.ucsc ${build} $db
-		cg regcollapse $target.ucsc | lz4c -12 > $target.temp
+		cg regcollapse $target.ucsc {*}[compresspipe $target 12] > $target.temp
 		file rename -force $target.ucsc.info [file root $target].info
 		file rename -force $target.temp $target
 		file delete $target.ucsc
@@ -77,9 +77,9 @@ foreach db $dbs_reg_collapse {
 
 # join regions
 foreach db $dbs_reg_join {
-	job reg_${build}_$db -targets {reg_${build}_${db}.tsv.lz4} -vars {dest build db} -code {
+	job reg_${build}_$db -targets {reg_${build}_${db}.tsv.zst} -vars {dest build db} -code {
 		cg download_ucsc $target.ucsc ${build} $db
-		cg regjoin $target.ucsc | lz4c -12 > $target.temp
+		cg regjoin $target.ucsc {*}[compresspipe $target 12] > $target.temp
 		file delete $target.ucsc
 		file rename -force $target.ucsc.info [file root $target].info
 		file rename -force $target.temp $target
@@ -88,8 +88,8 @@ foreach db $dbs_reg_join {
 
 # other databases
 foreach db $dbs_other {
-	job other_${build}_$db -vars {dest build db} -targets {other_${build}_${db}.tsv.lz4} -code {
-		cg download_ucsc other_${build}_${db}.tsv.lz4 ${build} $db
+	job other_${build}_$db -vars {dest build db} -targets {other_${build}_${db}.tsv.zst} -code {
+		cg download_ucsc other_${build}_${db}.tsv.zst ${build} $db
 	}
 }
 
@@ -101,9 +101,9 @@ foreach db $dbs_tabix {
 
 # var dbs
 foreach db $dbs_var {
-	job $db -targets {var_${build}_${db}.tsv.lz4} -vars {dest build db} -code {
+	job $db -targets {var_${build}_${db}.tsv.zst} -vars {dest build db} -code {
 		cg download_ucsc $target.temp $build $db
-		exec cg select -f {chrom start end type ref alt name freq} $target.temp | lz4c -12 > $target.temp2
+		exec cg select -f {chrom start end type ref alt name freq} $target.temp {*}[compresspipe $target 12] > $target.temp2
 		file rename -force $target.temp2 $target
 		file delete $target.tmp
 	}
@@ -118,8 +118,8 @@ foreach db $dbs_gene {
 	set dbname [file tail $db]
 	set dir [file dir $db]
 	set target $dir/gene_${build}_${dbname}.tsv
-	lappend genesets $target.lz4
-	job gene_${build}_$dbname -targets {$target.lz4 $target.gz.tbi $target.gz} -vars {dest build dbname} -code {
+	lappend genesets $target.zst
+	job gene_${build}_$dbname -targets {$target.zst $target.gz.tbi $target.gz} -vars {dest build dbname} -code {
 		file delete $target
 		cg download_genes $target $build $dbname
 	        cg maketabix $target
@@ -130,28 +130,26 @@ foreach db $dbs_gene {
 set target gene_${build}_intGene.tsv
 job gene_${build}_intGene \
 -deps $genesets \
--targets {$target.lz4 $target.gz $target.gz.tbi} -vars {dest build db} -code {
-	cg intgene --stack 1 --verbose 2 {*}$deps | lz4c -12 > $target.temp
+-targets {$target.zst $target.gz $target.gz.tbi} -vars {dest build db} -code {
+	cg intgene --stack 1 --verbose 2 {*}$deps {*}[compresspipe $target 12] > $target.temp
 	file rename -force $target.temp $target
 	cg maketabix $target
 	cg index $target
 }
 
 # homopolymer
-job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv.lz4 reg_${build}_homopolymer.tsv.opt reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi} -vars {dest build db} -code {
-	cg extracthomopolymers genome_${build}.ifas | lz4c -12 > $target.temp
+job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv.zst reg_${build}_homopolymer.tsv.opt reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi} -vars {dest build db} -code {
+	cg extracthomopolymers genome_${build}.ifas {*}[compresspipe $target 12] > $target.temp
 	file rename -force $target.temp $target
         cg maketabix $target
 	file_write $target2 "fields\t{base size}\n"
 }
 
 # mirbase
-job mir_${build}_mirbase -targets {mir_${build}_mirbase$mirbaserelease.tsv.lz4 mir_${build}_mirbase$mirbaserelease.tsv.info} -vars {mirbasegenome mirbaserelease dest build db} -code {
+job mir_${build}_mirbase -targets {mir_${build}_mirbase$mirbaserelease.tsv.zst mir_${build}_mirbase$mirbaserelease.tsv.info} -vars {mirbasegenome mirbaserelease dest build db} -code {
 	set resultfile mir_${build}_mirbase$mirbaserelease.tsv
 	cg download_mirbase $resultfile.temp $mirbasegenome $mirbaserelease
-	cg lz4 $resultfile.temp
-	file rename -force $resultfile.temp.info $resultfile.info
-	file rename -force $resultfile.temp.lz4 $resultfile.lz4
+	compress $resultfile.temp $resultfile.zst
 }
 
 job extragenome -deps {genome_${build}.ifas genome_${build}.ifas.index genome_${build}.ssa} -vars build \

@@ -230,7 +230,7 @@ test pmulticompar$testname {basic split reannot} {
 	exec diff tmp/temp.sft data/expected-multicompar-split-reannot.sft
 } {} 
 
-test pmulticompar$testname {basic split reannot lz4} {
+test pmulticompar$testname {basic split reannot zst} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft > tmp/var-sample1.tsv
 	cg splitalleles data/var_annot2.sft > tmp/var-sample2.tsv
@@ -239,8 +239,8 @@ test pmulticompar$testname {basic split reannot lz4} {
 	file copy data/sreg-annot1.sft tmp/sreg-sample1.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-sample2.tsv
 	file copy data/sreg-annot2.sft tmp/sreg-sample3.tsv
-	cg lz4 {*}[glob tmp/*]
-	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv.lz4 tmp/var-sample2.tsv.lz4 tmp/var-sample3.tsv.lz4
+	cg zst {*}[glob tmp/*]
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-sample1.tsv.zst tmp/var-sample2.tsv.zst tmp/var-sample3.tsv.zst
 	exec diff tmp/temp.tsv data/expected-multicompar-split-reannot.sft
 } {} 
 
@@ -353,7 +353,7 @@ test pmulticompar$testname {basic reannot varall} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar$testname {basic reannot varall lz4 compressed} {
+test pmulticompar$testname {basic reannot varall zst compressed} {
 	test_cleantmp
 	file copy data/var_annot.sft tmp/var-annot1.tsv
 	file copy data/var_annot2.sft tmp/var-annot2.tsv
@@ -374,9 +374,9 @@ test pmulticompar$testname {basic reannot varall lz4 compressed} {
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
 	catch {file delete tmp/temp.tsv}
-	cg lz4 {*}[glob tmp/*]
+	cg zst {*}[glob tmp/*]
 	mklink data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
-	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv tmp/var-annot1.tsv.lz4 tmp/var-annot2.tsv.lz4
+	cg pmulticompar {*}$::jobopts -split 0 tmp/temp.tsv tmp/var-annot1.tsv.zst tmp/var-annot2.tsv.zst
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
@@ -436,7 +436,7 @@ test pmulticompar$testname {basic reannot varall split} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
-test pmulticompar$testname {basic reannot varall split lz4} {
+test pmulticompar$testname {basic reannot varall split zst} {
 	test_cleantmp
 	cg splitalleles data/var_annot.sft tmp/var-annot1.tsv
 	cg splitalleles data/var_annot2.sft tmp/var-annot2.tsv
@@ -459,9 +459,9 @@ test pmulticompar$testname {basic reannot varall split lz4} {
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot2.tsv
 	file delete tmp/temp.tsv
-	cg lz4 {*}[glob tmp/*]
+	cg zst {*}[glob tmp/*]
 	cg splitalleles data/expected-pmulticompar_reannot_varall-var_annotvar_annot2.tsv tmp/expected.tsv
-	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-annot1.tsv.lz4 tmp/var-annot2.tsv.lz4
+	cg pmulticompar {*}$::jobopts -split 1 tmp/temp.tsv tmp/var-annot1.tsv.zst tmp/var-annot2.tsv.zst
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {} 
 
@@ -532,10 +532,10 @@ test pmulticompar$testname {basic reannot varall split gvcf} {
 	cg gatk_index tmp/varall-gatkh-bwa-sample1.gvcf tmp/varall-gatkh-bwa-sample2.gvcf
 	cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample1.gvcf tmp/var-gatkh-bwa-sample1.vcf
 	cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample2.gvcf tmp/var-gatkh-bwa-sample2.vcf
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.lz4
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.lz4
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.zst
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.zst
 	file delete tmp/result.tsv
-	cg pmulticompar {*}$::jobopts -split 1 tmp/result.tsv tmp/var-gatkh-bwa-sample1.tsv.lz4 tmp/var-gatkh-bwa-sample2.tsv.lz4
+	cg pmulticompar {*}$::jobopts -split 1 tmp/result.tsv tmp/var-gatkh-bwa-sample1.tsv.zst tmp/var-gatkh-bwa-sample2.tsv.zst
 	exec diff tmp/result.tsv data/expected-gatkh-pmulticompar.tsv
 } {} 
 
@@ -554,14 +554,14 @@ test pmulticompar$testname {basic reannot varall split gvcf and bgvcf} {
 	file copy -force data/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.vcf
 	file copy -force data/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.vcf
 	file copy -force data/var-gatkh-bwa-sample3.vcf tmp/var-gatkh-bwa-sample3.vcf
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.lz4
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.lz4
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample3.vcf tmp/var-gatkh-bwa-sample3.tsv.lz4
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.zst
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.zst
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample3.vcf tmp/var-gatkh-bwa-sample3.tsv.zst
 	file copy data/var-strelka-bwa.tsv tmp/var-strelka-bwa-sample4.tsv
 	file delete tmp/result.tsv
 	cg pmulticompar {*}$::jobopts -split 1 tmp/result.tsv \
-		tmp/var-gatkh-bwa-sample1.tsv.lz4 tmp/var-gatkh-bwa-sample2.tsv.lz4 \
-		tmp/var-gatkh-bwa-sample3.tsv.lz4  tmp/var-strelka-bwa-sample4.tsv
+		tmp/var-gatkh-bwa-sample1.tsv.zst tmp/var-gatkh-bwa-sample2.tsv.zst \
+		tmp/var-gatkh-bwa-sample3.tsv.zst  tmp/var-strelka-bwa-sample4.tsv
 	exec diff tmp/result.tsv data/expected-blocked-pmulticompar.tsv
 } {} 
 
@@ -574,10 +574,10 @@ test pmulticompar$testname {basic reannot varall split gvcf, -keepfields} {
 	cg gatk_index tmp/varall-gatkh-bwa-sample1.gvcf tmp/varall-gatkh-bwa-sample2.gvcf
 	cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample1.gvcf tmp/var-gatkh-bwa-sample1.vcf
 	cg gatk_genotypevcfs -dbdir $::refseqdir/hg19 tmp/varall-gatkh-bwa-sample2.gvcf tmp/var-gatkh-bwa-sample2.vcf
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.lz4
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.lz4
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.zst
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.zst
 	file delete tmp/result.tsv
-	cg pmulticompar {*}$::jobopts -split 1 -keepfields {quality coverage alleledepth_ref alleledepth genoqual PL} tmp/result.tsv tmp/var-gatkh-bwa-sample1.tsv.lz4 tmp/var-gatkh-bwa-sample2.tsv.lz4
+	cg pmulticompar {*}$::jobopts -split 1 -keepfields {quality coverage alleledepth_ref alleledepth genoqual PL} tmp/result.tsv tmp/var-gatkh-bwa-sample1.tsv.zst tmp/var-gatkh-bwa-sample2.tsv.zst
 	cg tsvdiff tmp/result.tsv data/expected-gatkh-pmulticompar.tsv
 } {diff tmp/result.tsv data/expected-gatkh-pmulticompar.tsv
 header diff
@@ -1589,9 +1589,9 @@ test pmulticompar$testname {basic reannot varall split gvcf and bgvcf -limitreg}
 	file copy -force data/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.vcf
 	file copy -force data/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.vcf
 	file copy -force data/var-gatkh-bwa-sample3.vcf tmp/var-gatkh-bwa-sample3.vcf
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.lz4
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.lz4
-	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample3.vcf tmp/var-gatkh-bwa-sample3.tsv.lz4
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample1.vcf tmp/var-gatkh-bwa-sample1.tsv.zst
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample2.vcf tmp/var-gatkh-bwa-sample2.tsv.zst
+	cg vcf2tsv -split 1 tmp/var-gatkh-bwa-sample3.vcf tmp/var-gatkh-bwa-sample3.tsv.zst
 	file copy data/var-strelka-bwa.tsv tmp/var-strelka-bwa-sample4.tsv
 	file_write tmp/limitreg.tsv [deindent {
 		chromosome	begin	end
@@ -1600,8 +1600,8 @@ test pmulticompar$testname {basic reannot varall split gvcf and bgvcf -limitreg}
 	}]
 	file delete tmp/result.tsv
 	cg pmulticompar {*}$::jobopts -split 1 -limitreg tmp/limitreg.tsv tmp/result.tsv \
-		tmp/var-gatkh-bwa-sample1.tsv.lz4 tmp/var-gatkh-bwa-sample2.tsv.lz4 \
-		tmp/var-gatkh-bwa-sample3.tsv.lz4  tmp/var-strelka-bwa-sample4.tsv
+		tmp/var-gatkh-bwa-sample1.tsv.zst tmp/var-gatkh-bwa-sample2.tsv.zst \
+		tmp/var-gatkh-bwa-sample3.tsv.zst  tmp/var-strelka-bwa-sample4.tsv
 	cg regselect data/expected-blocked-pmulticompar.tsv tmp/limitreg.tsv > tmp/expected.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {} 

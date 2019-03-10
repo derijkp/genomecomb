@@ -105,50 +105,6 @@ test oargs {args option} {
 	list $a $b $args
 } {1 2 {-c 3}}
 
-test compression {lz4} {
-	test_cleantmp
-	file_write tmp/test1.txt a
-	file_write tmp/test2.txt b
-	cg lz4 {*}[glob tmp/test*.txt]
-	catch {exec lz4c -d tmp/test1.txt.lz4 2> /dev/null} c1
-	catch {exec lz4c -d tmp/test2.txt.lz4 2> /dev/null} c2
-	list [lsort -dict [glob tmp/test*]] $c1 $c2
-} {{tmp/test1.txt.lz4 tmp/test2.txt.lz4} a b}
-
-test compression {lz4 -o} {
-	test_cleantmp
-	file_write tmp/test1.txt a
-	cg lz4 -o tmp/out.lz4 tmp/test1.txt
-	catch {exec lz4c -d tmp/out.lz4 2> /dev/null} c1
-	list [lsort -dict [glob tmp/out*]] $c1
-} {tmp/out.lz4 a}
-
-test compression {lz4 -i} {
-	test_cleantmp
-	file_write tmp/test1.txt a
-	file_write tmp/test2.txt b
-	cg lz4 -i 1 {*}[glob tmp/test*.txt]
-	catch {exec lz4c -d tmp/test1.txt.lz4 2> /dev/null} c1
-	catch {exec lz4c -d tmp/test2.txt.lz4 2> /dev/null} c2
-	list [lsort -dict [glob tmp/test*]] $c1 $c2
-} {{tmp/test1.txt.lz4 tmp/test1.txt.lz4.lz4i tmp/test2.txt.lz4 tmp/test2.txt.lz4.lz4i} a b}
-
-test compression {cg zcat lz4 -p} {
-	list [exec cg zcat data/var_hg19_partofsnp135.tsv.lz4 | head -c 20] [exec cg zcat -p 1 data/var_hg19_partofsnp135.tsv.lz4 | head -c 20]
-} {{chrom	start	end	type} {hrom	start	end	type	}}
-
-test compression {cg zcat uncompressed -p} {
-	exec cg zcat -p 1 data/vars2.tsv |  head -1
-} {hromosome	begin	end	type	ref	alt}
-
-test compression {cg zcat gz -p} {
-	list [exec cg zcat data/seq_R2.fq.gz | head -1] [exec cg zcat -p 1 data/seq_R2.fq.gz | head -1]
-} {@SRR792091.9203/2 SRR792091.9203/2}
-
-test compression {cg zcat -p 1 file does not exist} {
-	exec cg zcat -p 1 data/imaginary.tsv.lz4
-} {file data/imaginary.tsv.lz4 does not exist} error
-
 test cg_options {basic} {
 	set args {-opt o 1 2 3 4}
 	cg_options test args {
@@ -250,15 +206,15 @@ test tsvdiff {basic} {
 		chr1	1	2
 		chr2	1	2
 	}
-	cg lz4 tmp/file1.tsv
+	cg zst tmp/file1.tsv
 	write_tab tmp/file2.tsv {
 		chromosome	begin	end	test
 		chr1	1	2	t1
 		chr2	2	3	t2
 		chr3	3	4	t3
 	}
-	cg tsvdiff tmp/file1.tsv.lz4 tmp/file2.tsv
-} {diff tmp/file1.tsv.lz4 tmp/file2.tsv
+	cg tsvdiff tmp/file1.tsv.zst tmp/file2.tsv
+} {diff tmp/file1.tsv.zst tmp/file2.tsv
 header diff
 <extrafields: 
 ---
@@ -282,7 +238,7 @@ test tsvdiff {dir} {
 	}
 	file copy -force tmp/d1/file1.tsv tmp/d1/same.tsv
 	file_write tmp/d1/only1 ""
-	# cg lz4 tmp/d1/file1.tsv
+	# cg zst tmp/d1/file1.tsv
 	write_tab tmp/d2/file1.tsv {
 		chromosome	begin	end	test
 		chr1	1	2	t1

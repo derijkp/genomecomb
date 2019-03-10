@@ -161,7 +161,7 @@ to a final goal.
 if e.g. an existing files needs to be adapted.
 ; -checkcompressed 0/1: dependencies (and targets) are normally
 searched regardless of compression status (e.g. either test.tsv as
-test.tsv.lz4 will match test.tsv). Use this option for the job 
+test.tsv.zst will match test.tsv). Use this option for the job 
 specifically targetting compression
 ; -foreach pattern: A separate job will be started for each dependency matching the pattern.
 This can also be handled (more flexibly) using jobglob and a foreach loop

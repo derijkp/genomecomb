@@ -2,11 +2,11 @@ proc cg_compress_job args {
 	set cmdline [list cg compress {*}$args]
 	set keep {}
 	set compressionlevel [defcompressionlevel]
-	set blocksize 5
+	set blocksize {}
 	set index 0
 	set threads 1
 	set outputfile {}
-	set method lz4
+	set method zst
 	cg_options compress args {
 		-o - -outputfile {
 			set outputfile $value
@@ -32,6 +32,7 @@ proc cg_compress_job args {
 		}
 	}
 	if {$keep eq ""} {set keep 0}
+	if {$blocksize eq ""} {set blocksize [compressblocksize $method 1]}
 	if {$outputfile ne "" && [llength $args] > 1} {
 		error "option -o can only be used for compressing one file"
 	}
@@ -48,7 +49,7 @@ proc cg_compress_job args {
 	}
 	foreach file $args {
 		if {$outputfile eq ""} {
-			set target [file root $file].$method
+			set target [gzroot $file].$method
 		} else {
 			set target $outputfile
 		}

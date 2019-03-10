@@ -27,7 +27,7 @@ proc bam2reg_job {args} {
 	}
 	if {![info exists target]} {
 		set target $dir/sreg-cov$mincoverage-$root.tsv
-		if {$compress} {append target .lz4}
+		if {$compress} {append target .zst}
 	}
 	if {![info exists job_logdir]} {
 		job_logdir $target.log_jobs
@@ -43,7 +43,7 @@ proc bam2reg_job {args} {
 		set temptarget [filetemp $target]
 		exec cg regextract -min $mincoverage $dep {*}$compress > $temptarget
 		file rename -force $temptarget $target
-		if {[file extension $target] eq ".lz4"} {cg_lz4index $target}
+		if {[file extension $target] eq ".zst"} {cg_zstindex $target}
 	}
 	return $target
 }

@@ -82,6 +82,9 @@ proc version {item {minversion {}}} {
 				catch {exec lz4c -v} temp
 				regexp { v([0-9.]+)} $temp temp _versions($item)
 			}
+			zst {
+				set temp _versions($item) [zstversion]
+			}
 			dot {
 				catch {exec dot -V} temp
 				regsub {^[^0-9]*} $temp {} temp
@@ -163,7 +166,7 @@ proc version {item {minversion {}}} {
 
 proc versions {args} {
 	if {![llength $args]} {
-		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard plink primer3 java tcl R gnusort8 tabix lz4 os}
+		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard plink primer3 java tcl R gnusort8 tabix zst os}
 	}
 	set result {}
 	foreach item $args {
@@ -189,7 +192,7 @@ proc cg_versions {args} {
 		returns the (current) versions of the given programs as a tsv file
 	}
 	if {![llength $args]} {
-		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard plink primer3 java R gnusort8 tabix lz4 os}
+		set args {genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk biobambam picard plink primer3 java R gnusort8 tabix zst os}
 	}
 	puts "item\tversion"
 	foreach item $args {
