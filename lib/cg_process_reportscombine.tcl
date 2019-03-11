@@ -527,7 +527,7 @@ proc report_fastc_chart {dir files id title pattern xfield yfield} {
 	}]
 }
 
-proc proces_reportscombine_job {args} {
+proc process_reportscombine_job {args} {
 	upvar job_logdir job_logdir
 	set overwrite 0
 	set dbdir {}
@@ -1176,7 +1176,7 @@ proc proces_reportscombine_job {args} {
 
 proc cg_process_reportscombine {args} {
 	set args [job_init {*}$args]
-	proces_reportscombine_job {*}$args
+	process_reportscombine_job {*}$args
 	job_wait
 }
 

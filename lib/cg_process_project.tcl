@@ -245,7 +245,7 @@ proc process_project_job {args} {
 		-keepfields $keepfields \
 		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir
 	if {[llength $reports]} {
-		proces_reportscombine_job $destdir/reports {*}$todo(reports)
+		process_reportscombine_job $destdir/reports {*}$todo(reports)
 		if {[jobfileexists $destdir/reports/report_hsmetrics-${experimentname}.tsv]} {
 			mklink $destdir/reports/report_hsmetrics-${experimentname}.tsv $destdir/${experimentname}_hsmetrics_report.tsv
 		}

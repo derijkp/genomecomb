@@ -221,7 +221,7 @@ proc process_illumina {args} {
 	set todo [list_remdup $todo]
 	process_multicompar_job -experiment $experiment -skipincomplete 1 -split $split -dbfiles $dbfiles $destdir $dbdir $todo
 	if {[llength $reports]} {
-		proces_reportscombine_job $destdir/reports {*}$reportstodo
+		process_reportscombine_job $destdir/reports {*}$reportstodo
 		if {[jobfileexists $destdir/reports/report_hsmetrics-${experimentname}.tsv]} {
 			mklink $destdir/reports/report_hsmetrics-${experimentname}.tsv $destdir/${experimentname}_hsmetrics_report.tsv
 		}
