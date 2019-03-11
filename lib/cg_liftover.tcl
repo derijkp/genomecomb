@@ -404,6 +404,6 @@ proc cg_liftover {args} {
 	# rename result, cleanup
 	#
 	if {$tempunmapped ne ""} {
-		compress $tempunmapped $unmappedfile
+		compress $tempunmapped $unmappedfile 1 0
 	}
 }

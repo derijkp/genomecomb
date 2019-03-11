@@ -41,6 +41,7 @@ proc annotvar_clusters_job {args} {
 			cg_zstindex $target
 		} else {
 			file_write $target ""
+			file_write $target.zsti ""
 		}
 	}
 	job annotvar-annotclusters-$root {*}$skips -deps {$file $afile reg_cluster-$root.tsv.zst} \

@@ -1197,7 +1197,7 @@ test pmulticompar$testname {20 samples, -m 5} {
 	set files [multicompartest 20]
 	cg pmulticompar {*}$::jobopts -m 5 -split 1 tmp/temp.tsv {*}$files 2>@ stderr >@ stdout
 	exec diff tmp/temp.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test pmulticompar$testname {split reannot, multiallelic, bcol, sreg,zyg, check ref indels, overlapping snp} {
 	test_cleantmp

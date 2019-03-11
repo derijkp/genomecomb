@@ -30,7 +30,7 @@ source "${dir}/start_hbb.sh"
 
 clean=1
 strip=1
-debug=1
+debug=0
 while [[ "$#" -gt 0 ]]; do case $1 in
 	-c|-clean|--clean) clean="$2"; shift;;
 	-s|-strip|--strip) strip="$2"; shift;;
@@ -80,7 +80,6 @@ if [ "$debug" = 1 ] ; then
 else
 	CPATH="/build/zstd-1.3.8/lib:$CPATH" LIBRARY_PATH="/build/zstd-1.3.8/lib:$LIBRARY_PATH" make
 fi
-# CPATH="/build/zstd-1.3.8/lib:/build/zstd-1.3.8/lib/decompress/:/build/zstd-1.3.8/programs:$CPATH" LIBRARY_PATH="/build/zstd-1.3.8/lib:$LIBRARY_PATH" make
 
 if [ "$strip" = 1 ] && [ "$debug" != 1 ] ; then
 	strip /io/bin$ARCH/*

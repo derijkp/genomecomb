@@ -64,7 +64,7 @@ proc tsv_paste_job {outputfile files args} {
 				if {[llength $deps] > 1} {
 					exec tsv_paste {*}$deps {*}[compresspipe $target 1] > $target.temp 2>@ stderr
 					if {$delete} {file delete {*}$deps}
-				} elseif {[file extension $dep] ne ".lz4"} {
+				} elseif {[file extension $dep] ne ".zst"} {
 					exec {*}[compresscmd $target 1 1] $dep > $target.temp
 				} elseif {!$delete} {
 					mklink $dep $target.temp

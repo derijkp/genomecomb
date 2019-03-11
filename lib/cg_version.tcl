@@ -83,7 +83,7 @@ proc version {item {minversion {}}} {
 				regexp { v([0-9.]+)} $temp temp _versions($item)
 			}
 			zst {
-				set temp _versions($item) [zstversion]
+				set _versions($item) [zstversion]
 			}
 			dot {
 				catch {exec dot -V} temp

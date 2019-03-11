@@ -748,8 +748,9 @@ proc pmulticompar_job {args} {
 				exec multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs {*}[compresspipe $target 1 1] > $temp
 				file rename -force $temp $target
 			} else {
-				multicompar_tcl_addvars $sample $target.temp $split $allvarsfile $samplevarsfile $sregfile $varallfile $bcolannot $oldbcolannot $regfiles $coverageRefScorefiles $keepfields
-				file rename -force $target.temp $target
+				set temp [filetemp $target 1 1]
+				multicompar_tcl_addvars $sample $temp $split $allvarsfile $samplevarsfile $sregfile $varallfile $bcolannot $oldbcolannot $regfiles $coverageRefScorefiles $keepfields
+				file rename -force $temp $target
 			}
 		}
 	}

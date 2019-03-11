@@ -10,7 +10,7 @@ test query {query 1} {
 	exec cg select -q {
 		$refGene_impact ~/CDS|UTR/ || $knownGene_impact ~/CDS|UTR/ || $ensGene_impact ~/CDS|UTR/
 		|| $acembly_impact ~/CDS|UTR/ || $genscan_impact ~/CDS|UTR/
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query1.tsv.zst
 } {}
 
@@ -18,13 +18,13 @@ test query {query 2} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		count($*_impact, ~/CDS|UTR/) > 0
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query1.tsv.zst
 } {}
 
 test query {query 3} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
-	exec cg select -q {$type=="ins" && def($coverage-testNA19240chr2122cg,0)>=20} annottestcompar.tsv.rz temp.tsv
+	exec cg select -q {$type=="ins" && def($coverage-testNA19240chr2122cg,0)>=20} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query3.tsv.zst
 } {}
 
@@ -32,13 +32,13 @@ test query {query 4} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q { $type=="snp" && $impact == "MISSENSE" } \
 		-f {chromosome begin end} \
-		annottestcompar.tsv.rz temp.tsv
+		annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query4.tsv.zst
 } {}
 
 test query {query 5} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
-	exec cg select -h	annottestcompar.tsv.rz > temp.tsv
+	exec cg select -h	annottestcompar.tsv.zst > temp.tsv
 	cg tsvdiff temp.tsv answers/query5.tsv.zst
 } {}
 
@@ -46,7 +46,7 @@ test query {query 6 region} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		$chromosome == "22" && $begin < 16434940 && $end > 16054739
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query6.tsv.zst
 } {}
 
@@ -54,7 +54,7 @@ test query {query 6 region 2} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		region("22:16054739-16434940")
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query6.tsv.zst
 } {}
 
@@ -62,7 +62,7 @@ test query {query 6 region 3} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		region(22:16054739:16434940)
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query6.tsv.zst
 } {}
 
@@ -70,7 +70,7 @@ test query {query 6 region 4} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		region("chr22",16054739,16434940)
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query6.tsv.zst
 } {}
 
@@ -78,7 +78,7 @@ test query {query regions} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		region("chr22:16054739-16434940",21,9415561,9417128)
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query6.tsv.zst
 } {diff temp.tsv answers/query6.tsv.zst
 header
@@ -93,7 +93,7 @@ test query {query 7} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		sm(testNA19239chr2122cg, testNA19240chr2122cg)
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query7.tsv.zst
 } {}
 
@@ -101,7 +101,7 @@ test query {query 8} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		same(testNA19239chr2122cg, testNA19240chr2122cg)
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query8.tsv.zst
 } {}
 
@@ -109,7 +109,7 @@ test query {query 9} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		mm(testNA19239chr2122cg, testNA19240chr2122cg)
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query9.tsv.zst
 } {}
 
@@ -118,7 +118,7 @@ test query {query 10} {
 	exec cg select -q {
 		$type == "snp" 
 		&& $simpleRepeat == "" && $microsat == "" && $genomicSuperDups == "" 
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query10.tsv.zst
 } {}
 
@@ -127,7 +127,7 @@ test query {query 11} {
 	exec cg select -q {
 		$sequenced-testNA19239chr2122cg == "v"
 		&& $sequenced-testNA19240chr2122cg == "v"
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query11.tsv.zst
 } {}
 
@@ -135,7 +135,7 @@ test query {query 12} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		count($sequenced-*, == "v")  == 2
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query12.tsv.zst
 } {}
 
@@ -147,7 +147,7 @@ test query {query 13} {
 		&& $coverage-testNA19239chr2122cg >= 20 
 		&& $coverage-testNA19239chr2122cg <= 100
 		&& $cluster-testNA19239chr2122cg == ""
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query13.tsv.zst
 } {}
 
@@ -159,7 +159,7 @@ test query {query 14} {
 		&& count($coverage-*, <20) == 0
 		&& count($coverage-*, > 100) == 0
 		&& count($cluster-*, != "") == 0
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query14.tsv.zst
 } {}
 
@@ -167,7 +167,7 @@ test query {query 15} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		count($*_impact, ~/CDS|UTR/) > 0
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query15.tsv.zst
 } {}
 
@@ -175,7 +175,7 @@ test query {query 16} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		$ensGene_impact ~ /CDS/
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query16.tsv.zst
 } {}
 
@@ -183,7 +183,7 @@ test query {query 17} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		counthasone($ensGene_impact, == "CDSMIS") > 0
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query17.tsv.zst
 } {}
 
@@ -191,7 +191,7 @@ test query {query 18} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		counthasone($*_impact, ~ /CDS/) > 0
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query18.tsv.zst
 } {}
 
@@ -199,7 +199,7 @@ test query {query 19} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -q {
 		counthasall($*_impact, ~ /CDS/) > 0
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query19.tsv.zst
 } {}
 
@@ -207,7 +207,7 @@ test query {query 20} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -f "chromosome begin end refGene_impact" -q {
 		oneof($refGene_impact, "CDSMIS", "CDSINS") > 0
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query20.tsv.zst
 } {}
 
@@ -215,7 +215,7 @@ test query {query 20 2} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -f "chromosome begin end refGene_impact" -q {
 		$refGene_impact in {"CDSMIS" "CDSINS"}
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query20.tsv.zst
 } {}
 
@@ -223,7 +223,7 @@ test query {query 21 combine} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -f "chromosome begin end 1000gCEU 1000glow" -q {
 		count(lmax($1000gCEU),lmax($1000glow), > 0.98) > 0
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query21.tsv.zst
 } {}
 
@@ -231,7 +231,7 @@ test query {query 22} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
 		hasone($refGene_impact, "==", "CDSMIS") || hasone($knownGene_impact, "==", "CDSMIS")
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query22.tsv.zst
 } {}
 
@@ -239,7 +239,7 @@ test query {query 22 b} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
 		contains($refGene_impact, "CDSMIS") || ($knownGene_impact contains "CDSMIS")
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query22.tsv.zst
 } {}
 
@@ -247,7 +247,7 @@ test query {query 22 c} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
 		hasone($refGene_impact, == "CDSMIS") || hasone($knownGene_impact, == "CDSMIS")
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query22.tsv.zst
 } {}
 
@@ -255,7 +255,7 @@ test query {query 22 d} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
 		lone($refGene_impact @== "CDSMIS") || lone($knownGene_impact @== "CDSMIS")
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query22.tsv.zst
 } {}
 
@@ -263,13 +263,13 @@ test query {query 23 b} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv
 	exec cg select -f "chromosome begin end refGene_impact knownGene_impact" -q {
 		shares($refGene_impact, "CDSMIS CDSINS") && ($knownGene_impact shares "CDSMIS CDSINS")
-	} annottestcompar.tsv.rz temp.tsv
+	} annottestcompar.tsv.zst temp.tsv
 	cg tsvdiff temp.tsv answers/query23.tsv.zst
 } {}
 
 test query {liftover} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv temp2.tsv
-	exec cg liftover annottestcompar.tsv.rz temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
+	exec cg liftover annottestcompar.tsv.zst temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
 	cg select -q {$ROW < 100} temp.tsv temp2.tsv
 	cg tsvdiff temp2.tsv answers/liftover.tsv.zst
 } {}

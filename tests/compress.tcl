@@ -33,7 +33,12 @@ test compression {lz4 -i} {
 } {{tmp/test1.txt.lz4 tmp/test1.txt.lz4.lz4i tmp/test2.txt.lz4 tmp/test2.txt.lz4.lz4i} a b}
 
 test compression {cg zcat lz4 -p} {
-	list [exec cg zcat data/var_hg19_partofsnp135.tsv.lz4 | head -c 20] [exec cg zcat -p 1 data/var_hg19_partofsnp135.tsv.lz4 | head -c 20]
+	compress data/var_hg19_partofsnp135.tsv.zst tmp/var_hg19_partofsnp135.tsv.lz4
+	list [exec cg zcat tmp/var_hg19_partofsnp135.tsv.lz4 | head -c 20] [exec cg zcat -p 1 tmp/var_hg19_partofsnp135.tsv.lz4 | head -c 20]
+} {{chrom	start	end	type} {hrom	start	end	type	}}
+
+test compression {cg zcat zst -p} {
+	list [exec cg zcat data/var_hg19_partofsnp135.tsv.zst | head -c 20] [exec cg zcat -p 1 data/var_hg19_partofsnp135.tsv.zst | head -c 20]
 } {{chrom	start	end	type} {hrom	start	end	type	}}
 
 test compression {cg zcat uncompressed -p} {

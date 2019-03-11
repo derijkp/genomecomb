@@ -241,7 +241,7 @@ proc cg_maketabix {args} {
 	foreach file $args {
 		set ext [file extension $file]
 		if {$ext ne ".gz"} {
-			cg_bgzip -k 1 $file
+			cg_bgzip -k 1 -o [gzroot $file].gz $file
 			set file [gzroot $file].gz
 		}
 		if {[file exists $file.tbi]} {

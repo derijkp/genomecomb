@@ -9,7 +9,7 @@ set keepdir [pwd]
 test homwes {basic} {
 	file delete -force $::smalltestdir/tmp/homwes
 	file mkdir $::smalltestdir/tmp/homwes
-	set varfile $::smalltestdir/ori/annot_compar-yri_exome_test.tsv.zst
+	set varfile [gzfile $::smalltestdir/ori/annot_compar-yri_exome_test.tsv]
 	set dbdir $::smalltestdir/refseqtest/hg19
 	cg homwes --stack 1 -dbdir $dbdir $varfile NA19240 $::smalltestdir/tmp/homwes/homwes-out.tsv
 	cg tsvdiff -q 1 -x *.log $::smalltestdir/tmp/homwes $::smalltestdir/expected/yri_exome.homwes-out
@@ -18,7 +18,7 @@ test homwes {basic} {
 test homwes {samples empty -> multiple samples} {
 	file delete -force $::smalltestdir/tmp/homwes_multi
 	file mkdir $::smalltestdir/tmp/homwes_multi
-	set varfile $::smalltestdir/ori/annot_compar-yri_exome_test.tsv.zst
+	set varfile [gzfile $::smalltestdir/ori/annot_compar-yri_exome_test.tsv]
 	set dbdir $::smalltestdir/refseqtest/hg19
 	cg homwes --stack 1 -dbdir $dbdir $varfile {} $::smalltestdir/tmp/homwes_multi/homwes-out.tsv
 	cg tsvdiff -q 1 -x *.log -x log_jobs $::smalltestdir/tmp/homwes_multi $::smalltestdir/expected/homwes_multi
@@ -27,11 +27,12 @@ test homwes {samples empty -> multiple samples} {
 test homwes {sample not given -> multiple samples} {
 	file delete -force $::smalltestdir/tmp/homwes_multi
 	file mkdir $::smalltestdir/tmp/homwes_multi
-	mklink $::smalltestdir/ori/annot_compar-yri_exome_test.tsv.zst $::smalltestdir/tmp/homwes_multi/annot_compar-yri_exome_test.tsv.zst
-	set varfile $::smalltestdir/tmp/homwes_multi/annot_compar-yri_exome_test.tsv.zst
+	set srcfile [gzfile $::smalltestdir/ori/annot_compar-yri_exome_test.tsv]
+	set varfile $::smalltestdir/tmp/homwes_multi/annot_compar-yri_exome_test.tsv[file extension $srcfile]
+	mklink $srcfile $varfile
 	set dbdir $::smalltestdir/refseqtest/hg19
 	cg homwes --stack 1 -dbdir $dbdir $varfile {} $::smalltestdir/tmp/homwes_multi/homwes-out.tsv
-	file delete $::smalltestdir/tmp/homwes_multi/annot_compar-yri_exome_test.tsv.zst
+	file delete $varfile
 	cg tsvdiff -q 1 -x *.log -x log_jobs -x .pversion $::smalltestdir/tmp/homwes_multi $::smalltestdir/expected/homwes_multi
 } {}
 
