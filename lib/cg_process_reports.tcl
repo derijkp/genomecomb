@@ -179,9 +179,10 @@ proc process_reports_job {args} {
 			set target $sampledir/reports/$bamroot.histo
 			job reports_histo-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2 $dep1.bai} -targets {$target} -vars {bamroot bamfile} -code {
 				set tempfile [filetemp $target]
-				set regionfile [filetemp $target]
-				cg regcollapse $dep2 > $regionfile
-				cg bam_histo $regionfile $dep {1 5 10 20 50 100 200 500 1000} > $tempfile
+				set tempregionfile [filetemp $target]
+				cg regcollapse $dep2 > $tempregionfile
+				cg bam_histo $tempregionfile $dep {1 5 10 20 50 100 200 500 1000} > $tempfile
+				file delete $tempregionfile
 				file rename -force $tempfile $target
 			}
 		}
