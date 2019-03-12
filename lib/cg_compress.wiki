@@ -1,0 +1,30 @@
+= compress =
+
+== Format ==
+cg compress ?options? file ...
+
+== Summary ==
+Compresses files using a choice of methods
+
+== Description ==
+The given files are compressed, and the original uncompressed files
+are removed (by default). Files already compressed using another method,
+are recompressed.
+
+== Options ==
+supports options:
+; -m method (--method): method used to compress: zst, lz4, gz, bgz, rz (default is zst)
+; -k 0/1 (--keep): keep the original uncompressed file if 1 (default 0)
+; -c number (--compressionlevel): number indicating compression level, where smaller numbers indicates faster compression (default and meaningfull values depends on method)
+; -b number (--blocksize): number indicating the blocksize in Kb (default depends on the method)
+; -i 0/1 (--index): also create an index file (if applicable)
+; -t number (--threads): use **number** of threads for compression (if supported by the method)
+; -o filename (--outputfile): The compressed file will be written to **filename**. 
+If the --keep option is not explicitely given, using -o will change the "default" for -k to 1.
+
+supports job options:
+; **-d x**: distribute subjobs of command over x processes
+; **-d sge**: use grid engine to distribute subjobs
+
+== Category ==
+Compression

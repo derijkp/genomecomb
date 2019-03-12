@@ -32,7 +32,6 @@ proc cg_compress_job args {
 		}
 	}
 	if {$keep eq ""} {set keep 0}
-	if {$blocksize eq ""} {set blocksize [compressblocksize $method 1]}
 	if {$outputfile ne "" && [llength $args] > 1} {
 		error "option -o can only be used for compressing one file"
 	}

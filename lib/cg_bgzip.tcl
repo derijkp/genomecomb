@@ -1,8 +1,8 @@
-proc compresscmd_bgz {{threads 1} {compressionlevel {}} {blocksize 5}} {
+proc compresscmd_bgz {{threads 1} {compressionlevel {}} {blocksize {}}} {
 	list bgzip -@ $threads -c
 }
 
-proc compress_bgz {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize 5} args} {
+proc compress_bgz {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize {}} args} {
 	# putsvars file destfile index keep threads compressionlevel blocksize
 	set cmd [compresscmd_bgz $threads $compressionlevel $blocksize]
 	compress_template $file $destfile bgz $cmd $index $keep

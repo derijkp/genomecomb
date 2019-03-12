@@ -1,16 +1,27 @@
-proc compressblocksize_lz4 {} {
-	return 5
-}
-
 proc index_lz4 {file} {
 	exec lz4index $file
 }
 
 proc compresscmd_lz4 {{threads 1} {compressionlevel {}} {blocksize 5}} {
+	if {$blocksize eq ""} {
+		set blocksize 5
+	} elseif {$blocksize < 4} {
+		error "blocksize $blocksize not supported"
+	} elseif {$blocksize >= 16048} {
+		set blocksize 7
+	} elseif {$blocksize >= 1024} {
+		set blocksize 7
+	} elseif {$blocksize >= 1024} {
+		set blocksize 6
+	} elseif {$blocksize >= 256} {
+		set blocksize 5
+	} elseif {$blocksize >= 64} {
+		set blocksize 4
+	}
 	list lz4 -q -$compressionlevel -B$blocksize -c
 }
 
-proc compress_lz4 {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize 5} args} {
+proc compress_lz4 {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize {}} args} {
 	# putsvars file destfile index keep threads compressionlevel blocksize
 	set cmd [compresscmd_lz4 $threads $compressionlevel $blocksize]
 	compress_template $file $destfile lz4 $cmd $index $keep

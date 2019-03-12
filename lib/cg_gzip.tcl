@@ -1,10 +1,10 @@
-proc compresscmd_gz {{threads 1} {compressionlevel 6} {blocksize 5}} {
+proc compresscmd_gz {{threads 1} {compressionlevel 6} {blocksize {}}} {
 	if {$compressionlevel < 1} {set compressionlevel 1}
 	if {$compressionlevel > 9} {set compressionlevel 9}
 	list gzip -$compressionlevel -c
 }
 
-proc compress_gz {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize 5} args} {
+proc compress_gz {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize {}} args} {
 	# putsvars file destfile index keep threads compressionlevel blocksize
 	set cmd [compresscmd_gz $threads $compressionlevel $blocksize]
 	compress_template $file $destfile gz $cmd $index $keep

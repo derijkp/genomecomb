@@ -19,7 +19,7 @@ supports options:
 ; -c number (--compressionlevel): number between 1 and 12 indicating compression level, where 1 = fast compression, 9 = high compression (default 9)
 At high compression (9), compression level and speed is similar to gzip, but decompression is still an 
 order of magnitude faster
-; -b number (--blocksize): number indicating the blocksize where: 4 = 64KB, 5 = 256KB, 6 = 1MB, 7 = 4MB (default 5)
+; -b number (--blocksize): number indicating the blocksize in Kb (default 512)
 ; -i 0/1 (--index): also create an zst index file
 ; -o filename (--outputfile): The compressed file will be written to **filename**. 
 If the --keep option is not explicitely given, using -o will change the "default" for -k to 1.

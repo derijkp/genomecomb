@@ -6,20 +6,11 @@ proc defcompressionlevel {args} {
 	}
 }
 
-proc compressblocksize {method {def 1}} {
-	if {[auto_load compressblocksize_$method]} {
-		return [compressblocksize_$method]
-	} else {
-		return $def
-	}
-}
-
 proc compress {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize {}} args} {
 	# putsvars file destfile index keep compressionlevel blocksize args
 	set ext [file extension $destfile]
 	set method [string range $ext 1 end]
 	if {$compressionlevel eq ""} {set compressionlevel [defcompressionlevel]}
-	if {$blocksize eq ""} {set blocksize [compressblocksize $method 5]}
 	if {[auto_load compress_$method]} {
 		compress_$method $file $destfile $index $keep $threads $compressionlevel $blocksize
 	} elseif {[gziscompressed $file]} {
@@ -99,11 +90,17 @@ proc gzopen {file {pos -1}} {
 		} else {
 			set f [open "| lz4ra [list $file] $pos"]
 		}
-	} elseif {[inlist {.bgz .gz} $ext]} {
+	} elseif {[inlist {.gz} $ext]} {
 		if {$pos == -1} {
 			set f [open "| zcat [list $file]"]
 		} else {
-			error "positioning not supported in (b)gz files"
+			error "positioning not supported in gz files"
+		}
+	} elseif {[inlist {.bgz} $ext]} {
+		if {$pos == -1} {
+			set f [open "| zcat [list $file]"]
+		} else {
+			set f [open "| bgzip -d -c -b $pos [list $file]"]
 		}
 	} elseif {[inlist {.bz2} $ext]} {
 		if {$pos == -1} {
@@ -255,8 +252,11 @@ proc gzcatra {filename {pos 0}} {
 			.lz4 {
 				return [list lz4ra $filename $pos]
 			}
-			.gz - .bgz {
+			.gz {
 				return [list zcat $filename | tail -c +[expr {$pos + 1}]]
+			}
+			.bgz {
+				return [list bgzip -d -c -b $pos $filename]
 			}
 			.bz2 {
 				return [list bzcat $filename | tail -c +[expr {$pos + 1}]]
@@ -271,7 +271,6 @@ proc gzcatra {filename {pos 0}} {
 
 proc compresscmd {target {threads 1} {compressionlevel {}} {blocksize {}}} {
 	set method [string range [file extension $target] 1 end]
-	if {$blocksize eq ""} {set blocksize [compressblocksize $method 5]}
 	if {[auto_load compresscmd_$method]} {
 		compresscmd_$method $threads $compressionlevel $blocksize
 	} else {

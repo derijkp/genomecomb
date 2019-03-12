@@ -2,11 +2,10 @@ proc index_zst {file} {
 	exec zstdindex $file
 }
 
-proc compressblocksize_zst {} {
-	return 0.5
-}
-
-proc compresscmd_zst {{threads 1} {compressionlevel {}} {blocksize 0.5}} {
+proc compresscmd_zst {{threads 1} {compressionlevel {}} {blocksize 512}} {
+	if {$compressionlevel eq ""} {set compressionlevel [defcompressionlevel]}
+	if {$blocksize eq ""} {set blocksize 512}
+	set blocksize [expr {$blocksize/1024.0}]
 	list zstd-mt -k -q -$compressionlevel -b $blocksize -T $threads -c
 }
 
@@ -14,7 +13,7 @@ proc decompresscmd_zst {{threads 1}} {
 	list zstd-mt -k -q -d -T $threads -c
 }
 
-proc compress_zst {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize 5} args} {
+proc compress_zst {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize {}} args} {
 	# putsvars file destfile index keep threads compressionlevel blocksize
 	set cmd [compresscmd_zst $threads $compressionlevel $blocksize]
 	compress_template $file $destfile zst $cmd $index $keep
