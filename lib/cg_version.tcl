@@ -79,7 +79,7 @@ proc version {item {minversion {}}} {
 				regexp {release ([^)]+)} $temp temp _versions($item)
 			}
 			lz4 {
-				catch {exec lz4c -v} temp
+				catch {exec lz4 -v} temp
 				regexp { v([0-9.]+)} $temp temp _versions($item)
 			}
 			zst {

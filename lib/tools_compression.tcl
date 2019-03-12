@@ -95,7 +95,7 @@ proc gzopen {file {pos -1}} {
 		}
 	} elseif {[inlist {.lz4} $ext]} {
 		if {$pos == -1} {
-			set f [open "| lz4c -d -c [list $file]"]
+			set f [open "| lz4 -d -c [list $file]"]
 		} else {
 			set f [open "| lz4ra [list $file] $pos"]
 		}
@@ -233,7 +233,7 @@ proc gzcat {filename} {
 	switch [file extension $filename] {
 		.zst {return "zstd-mt -k -q -d -c"}
 		.rz {return "razip -d -c"}
-		.lz4 {return "lz4c -q -d -c"}
+		.lz4 {return "lz4 -q -d -c"}
 		.gz - .bgz {return zcat}
 		.bz2 {return bzcat}
 		default {return cat}
@@ -288,7 +288,7 @@ proc compresspipe {target {compressionlevel -1} {threads 1}} {
 		}
 		.lz4 {
 			if {$compressionlevel == -1 || $compressionlevel == ""} {set compressionlevel [defcompressionlevel]}
-			return "| lz4c -q -$compressionlevel -B5 -c"
+			return "| lz4 -q -$compressionlevel -B5 -c"
 		}
 		.gz - .bgz {return "| bgzip -c -@ $threads"}
 		.bz2 {return "| bzip2 -c"}
@@ -319,7 +319,7 @@ proc gztemp {filename} {
 		}
 		.lz4 {
 			set tempfile [scratchfile get]
-			exec lz4c -q -d -c $filename > $tempfile
+			exec lz4 -q -d -c $filename > $tempfile
 			set ::gztemp_files($tempfile) 1
 			return $tempfile
 		}

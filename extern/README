@@ -1,6 +1,6 @@
 This directory contains binaries of some externally developed tools, that 
 are available under various open source licenses.
-The binaries have been cross-compiled to an older glibc (2.2.2) to avoid
+The binaries have been compiled on Holy-build-box using an older glibc to avoid
 compatibility problems with some older installations.
 Some of the original README/LICENSE files have been included under 
 a program_docs directory.

@@ -7,7 +7,7 @@ proc index_lz4 {file} {
 }
 
 proc compresscmd_lz4 {{threads 1} {compressionlevel {}} {blocksize 5}} {
-	list lz4c -q -$compressionlevel -B$blocksize -c
+	list lz4 -q -$compressionlevel -B$blocksize -c
 }
 
 proc compress_lz4 {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize 5} args} {
@@ -30,10 +30,10 @@ proc cg_lz4index {args} {
 
 proc cg_lz4cat {args} {
 	if {![llength $args]} {
-		exec lz4c -q -d -c <@ stdin >@ stdout
+		exec lz4 -q -d -c <@ stdin >@ stdout
 	} else {
 		foreach file $args {
-			exec lz4c -q -d -c $file >@ stdout
+			exec lz4 -q -d -c $file >@ stdout
 		}
 	}
 }
@@ -51,14 +51,14 @@ proc cg_lz4ra {args} {
 
 proc cg_lz4less {args} {
 	if {![llength $args]} {
-		set f [open "| lz4c -d -c | less" w]
+		set f [open "| lz4 -d -c | less" w]
 		fconfigure stdin -translation binary
 		fconfigure $f -translation binary
 		fcopy stdin $f
 		close $f
 	} else {
 		foreach file $args {
-			set f [open "| lz4c -d -c $file | less" w]
+			set f [open "| lz4 -d -c $file | less" w]
 			close $f
 		}
 	}
@@ -67,7 +67,7 @@ proc cg_lz4less {args} {
 proc lz4version {{minversion {}}} {
 	global lz4version
 	if {![info exists lz4version]} {
-		catch {exec lz4c -h} temp
+		catch {exec lz4 -h} temp
 		regexp { 32-bits ([^, \n\t]+)[, \n\t]} $temp temp lz4version
 		if {[string index $lz4version 0] eq "v"} {set lz4version [string range $lz4version  1 end]}
 	}

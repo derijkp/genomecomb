@@ -605,8 +605,8 @@ job reg_${build}_cadd -targets {
 		if {![file exists $tempdir/collapsed${build}.tsv.zst]} {
 			if {![file exists $tempdir/collapsed.tsv.zst]} {
 				cg select --stack 1 -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {end=$Pos} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
-					| cg collapsealleles --stack 1 {*}[compresspipe .zst 1] > $tempdir/collapsed.tsv.lz4.temp | lz4c > $tempdir/collapsed.tsv.temp
-				file rename $tempdir/collapsed.tsv.temp $tempdir/collapsed.tsv.zst
+					| cg collapsealleles --stack 1 {*}[compresspipe .zst 1] > $tempdir/collapsed.tsv.zst.temp
+				file rename $tempdir/collapsed.tsv.zst.temp $tempdir/collapsed.tsv.zst
 			}
 			cg liftover --stack 1 -split 0 -s 0 $tempdir/collapsed.tsv.zst ../liftover/${caddbuild}To${build}.over.tsv {*}[compresspipe .zst] > $tempdir/collapsed${build}.tsv.temp
 			file rename $tempdir/collapsed${build}.tsv.temp $tempdir/collapsed${build}.tsv.zst
