@@ -1060,4 +1060,14 @@ int checksortreg(DString *prevchromosome,int *prevstart,int *prevend,DString *ch
 	}
 }
 
+int fileexists(const char * filename) {
+	/* try to open file to read */
+	FILE *file = fopen(filename, "r");
+	if (file) {
+		fclose(file);
+		return 1;
+	}
+	return 0;
+}
+
 #endif

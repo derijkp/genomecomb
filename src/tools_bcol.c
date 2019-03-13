@@ -876,7 +876,17 @@ BCol *bcol_open(char *bcolfile) {
 	result->f = fopen64(result->file, "r");
 	if (result->f == NULL) {
 		sprintf(result->file+len,".bin.zst");
-		result->zst = zstd_openfile(result->file);
+		if (fileexists(result->file)) {
+			result->zst = zstd_openfile(result->file);
+		} else {
+			sprintf(result->file+len,".bin.lz4");
+			if (fileexists(result->file)) {
+				result->lz4 = lz4_openfile(result->file,0);
+			} else {
+				sprintf(result->file+len,".bin.rz");
+				result->rz = razf_open(result->file, "r");
+			}
+		}
 		if (result->zst == NULL) {
 			sprintf(result->file+len,".bin.lz4");
 			result->lz4 = lz4_openfile(result->file,0);
@@ -886,6 +896,11 @@ BCol *bcol_open(char *bcolfile) {
 			} else {
 				result->rz = NULL;
 			}
+		}
+		if (result->zst == NULL && result->lz4 == NULL && result->rz == NULL) {
+			sprintf(result->file+len,".zst");
+			fprintf(stderr,"bcol bin file not found: %s",result->file);
+			exit(1);
 		}
 	}
 	switch (result->type) {

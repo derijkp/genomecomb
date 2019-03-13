@@ -719,6 +719,16 @@ test bcol_annot {basic} {
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
 } {} 
 
+test bcol_annot {basic old (lz4)} {
+	test_cleantmp
+	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
+	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
+	cg lz4 -i 1 tmp/bcol_coverage.tsv.bin.zst
+	file delete tmp/bcol_coverage.tsv.bin.zst.zsti
+	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
+	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
+} {} 
+
 test bcol_annot {header error} {
 	test_cleantmp
 	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
