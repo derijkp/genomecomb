@@ -59,7 +59,7 @@ test sv {cg sv -method manta, giving resultfile} {
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
 	cg sv {*}$::dopts -method manta -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-manta/resultsv.tsv
-	cg zcat expected/sv-manta/sv-manta-dsbwa-ERR194147_30x_NA12878-chr21part.tsv.lz4 > tmp/sv-manta/expected.tsv
+	cg zcat expected/sv-manta/sv-manta-dsbwa-ERR194147_30x_NA12878-chr21part.tsv.zst > tmp/sv-manta/expected.tsv
 	cg tsvdiff -q 1 tmp/sv-manta/resultsv.tsv tmp/sv-manta/expected.tsv
 } {}
 
