@@ -9,8 +9,6 @@ if 0 {
 	set file oldcmt71_compar.tsv.old
 }
 
-package require BioTcl
-
 proc cg_correctvariants_alts {type list gref} {
 	set list [list_remdup $list]
 	set alts [list_remove $list - ? N $gref {}]

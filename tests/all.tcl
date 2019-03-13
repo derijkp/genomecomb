@@ -17,6 +17,7 @@ source lift.tcl
 source mirannot.tcl
 source misc.tcl
 source reg.tcl
+source seq.tcl
 source remap.tcl
 source select.tcl
 source select_group.tcl

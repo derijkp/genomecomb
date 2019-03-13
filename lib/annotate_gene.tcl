@@ -4,8 +4,6 @@
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-package require BioTcl
-
 proc annot_init {} {
 	global impact_list impact_score impact_loc annotate_type2impact
 	set impact_list {

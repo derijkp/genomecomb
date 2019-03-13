@@ -1,5 +1,3 @@
-package require BioTcl
-
 proc liftover_correctline {line ref altpos alts sposs slist} {
 	if {$altpos != -1} {lset line $altpos [join $alts ,]}
 	foreach {a1pos a2pos seqpos zygpos} $sposs {a1 a2 seq zyg} $slist {

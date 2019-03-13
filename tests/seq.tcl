@@ -1,0 +1,40 @@
+#!/bin/sh
+# the next line restarts using wish \
+exec tclsh "$0" "$@"
+
+source tools.tcl
+
+test complement {simple} {
+	seq_complement cga
+} tcg
+
+test complement {case} {
+	seq_complement atgctATGCT
+} AGCATagcat
+
+test complement {dna ambiguity} {
+	seq_complement atgcrykmshdbv
+} bvhdskmrygcat
+
+test translate {large} {
+	seq_translate atguuu
+} MF
+
+test translate {large} {
+	seq_translate atggaagaaatactttttcttttcaaagatgaagagaaggcaagggagtttgaggaaagtctacatagcacaggtgcaaaaacaagacgcacaggcacagccgtaataaccgcaggtttaaaagacgaggaaattctctacctcctttctgaaatggacgaaaacacattaaaggacctaaaagtttatcagggggaagttggtaacgattgcgaaaatatagtgaaggcgatttccaaggcagaacccgttacgaacttaatagacaaggtcatataccacagcctcgggaacatatttatagacactaaaaccctgtttcatcctatcgttgacgttaaagaaaaaagagttaaagcttttgaagcactctgcagaccgcctataaagatcgttgacctgataaacatggggaagagcacctccgaattttccgaaaacttctgcaggtacatggctttaaaaaatgccagaaagtttctaaaagaagacatgtggcttttcttgaacttccacccgcggttcttgagggaacccttgaaggtctttggagattttatctctaccctttacatgcacgacgtaagtccaaggcaggtagtagtggaattaacagagtacgaagagcttgaaataagtgctgtaaagagtctgatttcctttctgaagagcgaaggggtgaagattgcacttgacgacgtaggttcgggatattccgggctattctacctttcggaactaggacccgacatcataaagatagacatggagttgataagggatattcacaagcacagtatgaagaaagttatagtgaattacctcataaggctcgcccacgagaacaacataaaagtcgtttcagaaggtgttgagaccttggaggagttaaaaacggtgctttacatgggaacggactttgtgcagggatttatattttctaaacctcttgaaaacccgaatttagaggaattgaacgagaaaattgaaaagataatctctcaatctttgacgtga
+} MEEILFLFKDEEKAREFEESLHSTGAKTRRTGTAVITAGLKDEEILYLLSEMDENTLKDLKVYQGEVGNDCENIVKAISKAEPVTNLIDKVIYHSLGNIFIDTKTLFHPIVDVKEKRVKAFEALCRPPIKIVDLINMGKSTSEFSENFCRYMALKNARKFLKEDMWLFLNFHPRFLREPLKVFGDFISTLYMHDVSPRQVVVELTEYEELEISAVKSLISFLKSEGVKIALDDVGSGYSGLFYLSELGPDIIKIDMELIRDIHKHSMKKVIVNYLIRLAHENNIKVVSEGVETLEELKTVLYMGTDFVQGFIFSKPLENPNLEELNEKIEKIISQSLTs
+
+test translate {all} {
+	set seq ""
+	foreach b1 {u c a g} {
+		foreach b2 {u c a g} {
+			foreach b3 {u c a g} {
+				append seq $b1$b2$b3
+			}
+		}
+	}
+	seq_translate $seq
+} FFLLSSSSYYssCCsWLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG
+
+testsummarize
+

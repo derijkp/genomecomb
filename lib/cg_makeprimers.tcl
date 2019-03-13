@@ -7,8 +7,6 @@
 package require cindex
 catch {package require dbi}
 package require dbi_sqlite3
-package require BioTcl
-setlog {}
 
 set temperature 65
 set extraseq 1000
@@ -678,9 +676,6 @@ proc makeprimers {regionfile dbdir maxsize prefsize db {minfreq -1} {numthreads 
 	set cachedir [indexdir_filewrite $regionfile makeprimers_cache]
 	set threads $numthreads
 	file mkdir $cachedir
-	catch {e destroy}
-	catch {rename e {}}
-	EmblFile new e
 	puts $o [join {remark label sequence modification scale purification project pair species chromosome cyto target contig pos temperature mg} \t]
 	set f [gzopen $regionfile]
 	set header [tsv_open $f]

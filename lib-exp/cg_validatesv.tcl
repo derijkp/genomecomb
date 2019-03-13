@@ -7,7 +7,6 @@ package require dict
 package require cindex
 catch {package require dbi}
 package require dbi_sqlite3
-package require BioTcl
 
 
 #######################################################

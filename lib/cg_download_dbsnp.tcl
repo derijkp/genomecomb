@@ -10,8 +10,6 @@ if 0 {
 	set dbname snp130
 }
 
-package require BioTcl
-
 proc download_dbsnp_convline {line} {
 	foreach {chr begin end class ref observed name alleleFreqs} $line break
 	set rest [lrange $line 8 end]

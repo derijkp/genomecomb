@@ -25,3 +25,11 @@ proc seq_gc {seq {window {}}} {
 	}
 }
 
+proc seq_complement {seq} {
+	string_change [string_reverse $seq] {
+		a t  t a  g c  c g
+		A T  T A  G C  C G
+		r y  y r  m k  k m  s s  h d  b v  v b  d h
+		R Y  Y R  M K  K M  S S  H D  B V  V B  D H
+	}
+}

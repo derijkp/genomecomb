@@ -1,5 +1,3 @@
-package require BioTcl
-
 proc cg_liftfindchanges {args} {
 	if {([llength $args] != 3)} {
 		exiterror "format is: cg liftfindchanges srcgenome destgenome liftoverfile"
