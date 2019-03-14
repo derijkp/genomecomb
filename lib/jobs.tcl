@@ -804,7 +804,8 @@ proc job_logclose {job args} {
 proc job_logfile_set {logfile {dir {}} {cmdline {}} args} {
 	global cgjob
 	upvar job_logdir job_logdir
-	if {![info exists job_logdir]} {job_logdir [file dir $logfile]/log_jobs}
+	# allways set logdir next to logfile
+	job_logdir [file dir $logfile]/log_jobs
 	if {$dir eq ""} {set dir [file dir $logfile]}
 	set time [string_change [timestamp] {" " _ : - . -}]
 	set cgjob(logfile) [file_absolute $logfile].$time

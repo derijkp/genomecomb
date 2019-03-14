@@ -113,6 +113,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 	set tempresult [filetemp $logfile]
 	set f [open $tempfile]
 	set o [open $tempresult w]
+	# copy comments
 	while 1 {
 		if {[gets $f line] == -1} break
 		if {[string index $line 0] ne {#}} break

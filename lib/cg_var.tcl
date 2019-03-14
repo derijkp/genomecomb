@@ -1,6 +1,7 @@
 proc var_job {args} {
-	global appdir
 	upvar job_logdir job_logdir
+	set cmdline "[list cd [pwd]] \; [list cg var {*}$args]"
+	global appdir
 	set method gatk
 	set distrreg chr
 	set pre ""
@@ -12,7 +13,6 @@ proc var_job {args} {
 	set cleanup 1
 	set regmincoverage 3
 	set opts {}
-	set cmdline [list cg var $args]
 	cg_options var args {
 		-method {
 			set method $value
