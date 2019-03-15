@@ -187,7 +187,9 @@ proc var_gatk_job {args} {
 	-vars {sample split refseq} \
 	-code {
 		analysisinfo_write $dep $target
-		cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.zst
+		cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {
+			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
+		} $dep $target.temp.zst
 		file rename -force $target.temp.zst $target
 	}
 	# zst_job $varallfile -i 1
@@ -220,21 +222,21 @@ proc var_gatk_job {args} {
 	-skip [list $varfile $varfile.analysisinfo] \
 	-vars {sample split refseq} \
 	-code {
-		cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp
-		cg select -overwrite 1 -q {
+		set temp [filetemp_ext $target]
+		exec cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {
+			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
+		} $dep | cg select -overwrite 1 -q {
 			$alt ne "." && $alleleSeq1 ne "." &&$quality >= 10 && $totalcoverage > 4
 			&& $zyg ni "r o"
-		} \
-		-f {
+		} -f {
 			chromosome begin end type ref alt quality alleleSeq1 alleleSeq2 
 			{sequenced=if($quality < 30 || $totalcoverage < 5,"u","v")}
 			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 			*
-		} $target.temp $target.temp2
-		file rename -force $target.temp2 $target
-		file delete $target.temp
+		} - $temp
+		file rename -force $temp $target
 	}
-	job ${pre}uvar-$root {*}$skips -deps {$varallfile ${pre}delvar-$root.tsv} \
+	job ${pre}uvar-$root {*}$skips -deps {$varallfile.zst ${pre}delvar-$root.tsv} \
 	-targets {${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo} \
 	-skip [list $varfile $varfile.analysisinfo] -vars {root pre} \
 	-code {

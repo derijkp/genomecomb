@@ -124,7 +124,7 @@ proc var_job {args} {
 			}
 			set analysisinfo [lindex $ainfolist 0]
 			lappend deps {*}$ainfolist
-			job $resultfile  {*}$skips -deps $list -rmtargets $list -targets {
+			job $resultfile  {*}$skips -deps $deps -rmtargets $list -targets {
 				$resultfile
 			} -vars {
 				analysisinfo list
