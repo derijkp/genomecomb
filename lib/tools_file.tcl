@@ -122,7 +122,8 @@ proc maxopenfiles {{force 0}} {
 }
 
 proc file_add {file args} {
-	set o [open $file a]
+	file mkdir [file dir $file]
+	set o [open $file a+]
 	foreach arg $args {
 		puts $o $arg
 	}
