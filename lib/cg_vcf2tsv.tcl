@@ -44,17 +44,17 @@ proc cg_vcf2tsv {args} {
 			set refout $value
 		}
 		-r - -removefields {
-			set removefields $value
+			set removefields [string trim $value]
 		}
 		-t - -typelist {
-			set typelist $value
+			set typelist [string trim $value]
 		}
 		-locerror {
 			if {$locerror ni "error keep correct"} {error "wrong value $value for -locerror, should be one of: error keep correct"}
 			set locerror $value
 		}
 		-keepfields {
-			set keepfields $value
+			set keepfields [string trim $value]
 		}
 		-skiprefindels {
 			# sam varall sometimes contains long ref (alt =.) indicated as INDEL
