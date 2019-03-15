@@ -2,8 +2,8 @@ proc index_zst {file} {
 	exec zstdindex $file
 }
 
-proc compresscmd_zst {{threads 1} {compressionlevel {}} {blocksize 512}} {
-	if {$compressionlevel eq ""} {set compressionlevel [defcompressionlevel]}
+proc compresscmd_zst {{threads 1} {compressionlevel {}} {blocksize {}}} {
+	set compressionlevel [compressionlevel $compressionlevel 8 1 22]
 	if {$blocksize eq ""} {set blocksize 512}
 	set blocksize [expr {$blocksize/1024.0}]
 	list zstd-mt -k -q -$compressionlevel -b $blocksize -T $threads -c

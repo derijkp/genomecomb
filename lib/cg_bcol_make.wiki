@@ -41,7 +41,7 @@ using the -m and -l options.
 ; **-n chromosomename** (--chromosomename): if no chromosomecol is present (no -c), this name will be given as chromosome (default is empty)
 ; **-p poscol**: name of the column that contains the positions
 ; **-e endcol**: name of the column that contains the the end positions (in case of regions, this cannot be used with -m)
-; **-co compressionlevel** (--compress): compression level used (default 9): 1 is very fast; 9 is slow, but compresses better, 0 can be used for no compression
+; **-co compressionlevel** (--compress): compression level used (default 8): 1 is very fast; 8 is slower, but compresses better, 0 can be used for no compression
 ; **-l multilist** (--multilist): a comma separated list with the names of all columns, 
 e.g. A,C,G,T for variant annotation. This option must be given together with the next option (-m)
 ; **-m multicol** (--multicol): name of the column containing a list of names the values will be

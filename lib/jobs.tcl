@@ -1228,7 +1228,9 @@ proc job {jobname args} {
 	}
 	set eptargets [job_expandvarslist $ptargets 1]
 	set newcode {}
-	append newcode [list defcompressionlevel [defcompressionlevel]]\n
+	if {[info exists ::defcompressionlevel]} {
+		append newcode [list ::defcompressionlevel $::defcompressionlevel]\n
+	}
 	foreach var $vars {
 		append newcode [list set $var [uplevel get $var]]\n
 	}

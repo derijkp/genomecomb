@@ -1,4 +1,5 @@
 proc compresscmd_bz2 {{threads 1} {compressionlevel {}} {blocksize {}}} {
+	set compressionlevel [compressionlevel $compressionlevel 9 1 9]
 	list bzip2 -q -$compressionlevel -c
 }
 

@@ -1,6 +1,5 @@
-proc compresscmd_gz {{threads 1} {compressionlevel 6} {blocksize {}}} {
-	if {$compressionlevel < 1} {set compressionlevel 1}
-	if {$compressionlevel > 9} {set compressionlevel 9}
+proc compresscmd_gz {{threads 1} {compressionlevel {}} {blocksize {}}} {
+	set compressionlevel [compressionlevel $compressionlevel 6 1 9]
 	list gzip -$compressionlevel -c
 }
 

@@ -1,9 +1,26 @@
-proc defcompressionlevel {args} {
-	if {![llength $args]} {
-		return [get ::defcompressionlevel 9]
+proc setdefcompressionlevel {level} {
+	set ::defcompressionlevel $level
+}
+
+proc defcompressionlevel {{default 8}} {
+	if {[info exists ::defcompressionlevel]} {
+		return $::defcompressionlevel
 	} else {
-		set ::defcompressionlevel [lindex $args 0]
+		return $default
 	}
+}
+
+proc compressionlevel {{compressionlevel {}} {default 8} {min 1} {max 9}} {
+	if {$compressionlevel eq ""} {
+		if {[info exists ::defcompressionlevel]} {
+			set compressionlevel $::defcompressionlevel
+		} else {
+			set compressionlevel $default
+		}
+	}
+	if {$compressionlevel < $min} {return $min}
+	if {$compressionlevel > $max} {return $max}
+	return $compressionlevel
 }
 
 proc compress {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize {}} args} {

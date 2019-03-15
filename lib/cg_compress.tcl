@@ -1,7 +1,7 @@
 proc cg_compress_job args {
 	set cmdline [list cg compress {*}$args]
 	set keep {}
-	set compressionlevel [defcompressionlevel]
+	set compressionlevel {}
 	set blocksize {}
 	set index 0
 	set threads 1

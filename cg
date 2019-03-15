@@ -59,7 +59,7 @@ proc parse_generic_args {subcmd argslist} {
 				error "$value is not 0 or 1, the only accepted values for --stack"
 			}
 		} elseif {$key in "--compressionlevel -compressionlevel"} {
-			defcompressionlevel $value
+			setdefcompressionlevel $value
 			lappend remove $pos [expr {$pos + 1}]
 		} else {
 			break

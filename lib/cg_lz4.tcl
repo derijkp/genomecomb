@@ -3,6 +3,7 @@ proc index_lz4 {file} {
 }
 
 proc compresscmd_lz4 {{threads 1} {compressionlevel {}} {blocksize 5}} {
+	set compressionlevel [compressionlevel $compressionlevel 9 1 9]
 	if {$blocksize eq ""} {
 		set blocksize 5
 	} elseif {$blocksize < 4} {
