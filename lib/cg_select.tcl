@@ -1396,8 +1396,8 @@ proc cg_select {args} {
 	regsub -all {\n#[^\n]*} $query {} query
 	regsub -all {\n|\t} $query { } query
 	set query [string trim $query]
-#puts stderr [list qfields=$qfields query=$query]
-	if {[llength $args] > 0} {
+	# puts stderr [list qfields=$qfields query=$query args=$args]
+	if {[llength $args] > 0 && [lindex $args 0] ne "-"} {
 		set filename [lindex $args 0]
 		set index [indexdir_file $filename cols]
 		catch {close $f}
@@ -1412,7 +1412,7 @@ proc cg_select {args} {
 			error "cannot use -db option from stdin, you need to query from a file"
 		}
 	}
-	if {[llength $args] > 1} {
+	if {[llength $args] > 1 && [lindex $args 1] ne "-"} {
 		set outfile [lindex $args 1]
 		if {!$overwrite && [file exists $outfile]} {error "error: output file $outfile already exists"}
 		set compress [compresspipe $outfile]

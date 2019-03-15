@@ -46,6 +46,7 @@ proc cg_options {cmd argsVar def {parameters {}} {minargs {}} {maxargs ...} {sum
 			incr pos
 			set value \[lindex \$$argsVar \$pos\]
 			incr pos
+			if {\$key eq "-"} break
 			regsub {^--} \$key - key
 			switch -- \$key {
 				$def
