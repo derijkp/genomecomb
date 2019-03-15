@@ -19,6 +19,26 @@ package require Extral
 
 set test_cleantmp 1
 
+# pkgtools::testleak 100
+
+set keeppath $::env(PATH)
+set script [info script] ; if {$script eq ""} {set script ./t}
+set appdir [file dir [file dir [file normalize $script]]]
+
+lappend auto_path $appdir/lib $appdir/lib-exp
+source $appdir/lib/file.tcl ; pwd
+package require genomecomb
+genomecombenv
+
+# append ::env(PATH) [pathsep]$appdir/bin
+# set env(SCRATCHDIR) [file dir [tempdir]]
+# source $appdir/lib/file.tcl ; pwd
+# lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
+
+
+set testdir [file dir [file normalize $script]]
+
+
 proc test {args} {
 	if {[get ::test_cleantmp 1]} {test_cleantmp}
 	catch {job_init}
@@ -45,18 +65,6 @@ proc checkdiff args {
 		return ""
 	}
 }
-
-# pkgtools::testleak 100
-
-set keeppath $::env(PATH)
-set script [info script] ; if {$script eq ""} {set script ./t}
-set testdir [file dir [file normalize $script]]
-set appdir [file dir [file dir [file normalize $script]]]
-source $appdir/lib/file.tcl
-append ::env(PATH) [pathsep]$appdir/bin
-# putsvars ::env(PATH)
-set env(SCRATCHDIR) [file dir [tempdir]]
-source $appdir/lib/file.tcl ; pwd
 
 proc test_cleantmp {} {
 	foreach file [list_remove [glob -nocomplain $::testdir/tmp/* $::testdir/tmp/.*] $::testdir/tmp/.. $::testdir/tmp/.] {
@@ -364,8 +372,6 @@ proc diffanalysisinfo {file1 file2} {
 	if {$len != 3 && $len != 1} {return "error comparing $file1 and $file2: $temp"}
 	return ""
 }
-
-lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
 
 # remove tmp if it is a unexisting link
 if {![file exists tmp]} {catch {file delete tmp}}

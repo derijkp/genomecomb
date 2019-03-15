@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using wish \
-exec cg source "$0" "$@"
+exec tclsh "$0" "$@"
 
 source tools.tcl
 

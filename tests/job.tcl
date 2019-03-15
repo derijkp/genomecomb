@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using wish \
-exec cg source "$0" "$@"
+exec tclsh "$0" "$@"
 
 if {![info exists argv]} {set argv {}}
 set pos [lsearch $argv -d]
