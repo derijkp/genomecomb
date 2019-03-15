@@ -24,26 +24,40 @@ set test_cleantmp 1
 set keeppath $::env(PATH)
 set script [info script] ; if {$script eq ""} {set script ./t}
 set appdir [file dir [file dir [file normalize $script]]]
+if {![info exists basetestdir]} {
+	# set basetestdir [file dir [file normalize $script]]
+	set basetestdir [file dir $appdir]/tests_genomecomb
+}
+file mkdir $basetestdir
+cd $basetestdir
+set testdir $basetestdir
+
+puts "Using as testdir: $basetestdir"
+
+if {![file exists $basetestdir/data]} {
+	exec ln -sf $appdir/tests/data .
+}
+if {![file exists $basetestdir/tmp]} {
+	file mkdir $basetestdir/tmp
+}
 
 lappend auto_path $appdir/lib $appdir/lib-exp
 source $appdir/lib/file.tcl ; pwd
 package require genomecomb
 genomecombenv
 
-# append ::env(PATH) [pathsep]$appdir/bin
-# set env(SCRATCHDIR) [file dir [tempdir]]
-# source $appdir/lib/file.tcl ; pwd
-# lappend auto_path $appdir/lib $appdir/lib-exp $appdir/libext
-
-
-set testdir [file dir [file normalize $script]]
-
-
 proc test {args} {
+	set testname [join [lrange $args 0 1] __]
+	set testname [string_change $testname {{ } _ : _ / _ \\ _ \; _}]
+	set ::testdir $::basetestdir/$testname
+	file mkdir $::testdir
+	file mkdir $::testdir/tmp
+	cd $::testdir
+	exec ln -sf $::appdir/tests/data .
 	if {[get ::test_cleantmp 1]} {test_cleantmp}
 	catch {job_init}
 	pkgtools::test {*}$args
-	cd $::testdir
+	cd $::basetestdir
 	return {}
 }
 
