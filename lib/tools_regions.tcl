@@ -54,3 +54,16 @@ proc tempbed {regionfile {reffile {}}} {
 	}
 	return $bedfile
 }
+
+proc reg_isempty {file} {
+	if {$file eq ""} {return 0}
+	if {[file extension $file] eq ".bed"} {
+		if {[file size $file] == 0} {return 1} else {return 0}
+	} else {
+		set f [gzopen $file]
+		set header [tsv_open $f]
+		set isempty [eof $f]
+		gzclose $f
+		return $isempty
+	}
+}

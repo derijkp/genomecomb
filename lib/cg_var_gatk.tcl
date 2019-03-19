@@ -177,18 +177,26 @@ proc var_gatk_job {args} {
 		gatk opts regionfile gatkrefseq refseq threads root
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller gatk varcaller_version [version gatk3] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
-		if {$regionfile ne ""} {
-			set bedfile [tempbed $regionfile $refseq]
-			lappend opts -L $bedfile
+		set emptyreg [reg_isempty $regionfile]
+		set cache [file dir $target]/cache_var_gatk_[file tail $refseq].temp]
+		if {$emptyreg && [file exists $cache]} {
+			file copy $cache $target
+		} else {
+			if {$regionfile ne ""} {
+				set bedfile [tempbed $regionfile $refseq]
+				lappend opts -L $bedfile
+			}
+			gatk3exec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} UnifiedGenotyper \
+				{*}$opts -nct $threads -R $dep2 -I $dep -o $target.temp \
+				-stand_call_conf 10.0 -dcov 1000 \
+				--annotateNDA \
+				-glm SNP --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr >@ stdout
+			file rename -force $target.temp $target
+			catch {file delete $target.temp.idx}
+			if {$emptyreg && ![file exists $cache]} {
+				file copy $target $cache
+			}
 		}
-		gatk3exec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} UnifiedGenotyper \
-			{*}$opts -nct $threads -R $dep2 -I $dep -o $target.temp \
-			-stand_call_conf 10.0 -dcov 1000 \
-			--annotateNDA \
-			-glm SNP --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr >@ stdout
-		file rename -force $target.temp $target
-		catch {file delete $target.temp.idx}
-		# file delete $target.temp
 	}
 	job ${pre}varall-gatk2tsv-$root {*}$skips -deps {
 		${pre}varall-$root.vcf
@@ -217,18 +225,26 @@ proc var_gatk_job {args} {
 	} -vars {
 		gatk opts regionfile gatkrefseq refseq
 	} -code {
-		if {$regionfile ne ""} {
-			set bedfile [tempbed $regionfile $refseq]
-			lappend opts -L $bedfile
+		set emptyreg [reg_isempty $regionfile]
+		set cache [file dir $target]/cache_var_gatk_[file tail $refseq].temp
+		if {$emptyreg && [file exists $cache]} {
+			file copy $cache $target
+		} else {
+			if {$regionfile ne ""} {
+				set bedfile [tempbed $regionfile $refseq]
+				lappend opts -L $bedfile
+			}
+			gatk3exec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} UnifiedGenotyper \
+				{*}$opts -R $dep2 -I $dep -o $target.temp \
+				-stand_call_conf 10.0 -dcov 1000 \
+				--annotateNDA \
+				-glm INDEL 2>@ stderr >@ stdout
+			file rename -force $target.temp $target
+			catch {file delete $target.temp.idx}
+			if {$emptyreg && ![file exists $cache]} {
+				file copy $target $cache
+			}
 		}
-		gatk3exec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} UnifiedGenotyper \
-			{*}$opts -R $dep2 -I $dep -o $target.temp \
-			-stand_call_conf 10.0 -dcov 1000 \
-			--annotateNDA \
-			-glm INDEL 2>@ stderr >@ stdout
-		file rename -force $target.temp $target
-		catch {file delete $target.temp.idx}
-		# file delete $target.temp
 	}
 	job ${pre}delvar-gatk2tsv-$root {*}$skips -deps {
 		${pre}delvar-$root.vcf

@@ -130,24 +130,35 @@ proc var_gatkh_job {args} {
 		opts regionfile gatkrefseq refseq root ERC varallfile
 	} -code {
 		analysisinfo_write $dep $varallfile sample $root varcaller gatkh varcaller_version [version gatk] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
-		if {$regionfile ne ""} {
-			set bedfile [tempbed $regionfile $refseq]
-			lappend opts -L $bedfile
+		set emptyreg [reg_isempty $regionfile]
+		set cache [file dir $target]/cache_var_gatkh_[file tail $refseq].temp
+		if {$emptyreg && [file exists $cache]} {
+			file copy $cache $target
+			file copy $cache.tbi.temp $target.tbi
+		} else {
+			if {$regionfile ne ""} {
+				set bedfile [tempbed $regionfile $refseq]
+				lappend opts -L $bedfile
+			}
+			# -finishedpattern is a hack to catch an error that sometimes seems to happen, after fully processing the data
+			# Do not use redirect to stdout/stderr, as the code needs the output to check if actual analysis was finished
+			gatkexec -finishedpattern {HaplotypeCaller done\. Elapsed time} {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} HaplotypeCaller \
+				{*}$opts -R $gatkrefseq \
+				-I $dep \
+				-O $varallfile.temp.gz \
+				--annotate-with-num-discovered-alleles \
+				-ERC $ERC \
+				-G StandardAnnotation \
+				-G StandardHCAnnotation \
+				-G AS_StandardAnnotation
+			file rename -force $varallfile.temp.gz $varallfile.gz
+			file rename -force $varallfile.temp.gz.tbi $varallfile.gz.tbi
+			# file delete $varallfile.temp
+			if {$emptyreg && ![file exists $cache]} {
+				file copy $target $cache
+				file copy $target.tbi $cache.tbi.temp
+			}
 		}
-		# -finishedpattern is a hack to catch an error that sometimes seems to happen, after fully processing the data
-		# Do not use redirect to stdout/stderr, as the code needs the output to check if actual analysis was finished
-		gatkexec -finishedpattern {HaplotypeCaller done\. Elapsed time} {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} HaplotypeCaller \
-			{*}$opts -R $gatkrefseq \
-			-I $dep \
-			-O $varallfile.temp.gz \
-			--annotate-with-num-discovered-alleles \
-			-ERC $ERC \
-			-G StandardAnnotation \
-			-G StandardHCAnnotation \
-			-G AS_StandardAnnotation
-		file rename -force $varallfile.temp.gz $varallfile.gz
-		file rename -force $varallfile.temp.gz.tbi $varallfile.gz.tbi
-		# file delete $varallfile.temp
 	}
 	job ${pre}gvcf2tsv-$root {*}$skips -deps {
 		$varallfile.gz $gatkrefseq

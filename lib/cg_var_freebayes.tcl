@@ -113,22 +113,32 @@ proc var_freebayes_job {args} {
 		opts regionfile refseq root
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller freebayes varcaller_version [version freebayes] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
-		if {$regionfile ne ""} {
-			set regionfilesize [file size $regionfile]
-			if {$regionfilesize != 0} {
-				set bedfile [tempbed $regionfile $refseq]
-			} else {
-				set bedfile [tempfile].bed
-				set temp [exec samtools view -H $dep]
-				regexp "\tSN:(\[^ \t\]+)\t" $temp temp chr
-				file_write $bedfile $chr\t0\t1\n
+		set emptyreg [reg_isempty $regionfile]
+		set cache [file dir $target]/cache_var_freebayes_[file tail $refseq].temp
+		if {$emptyreg && [file exists $cache]} {
+			file copy $cache $target
+		} else {
+			if {$regionfile ne ""} {
+				set regionfilesize [file size $regionfile]
+				if {!$emptyreg} {
+					set bedfile [tempbed $regionfile $refseq]
+				} else {
+					set bedfile [tempfile].bed
+					set temp [exec samtools view -H $dep]
+					regexp "\tSN:(\[^ \t\]+)\t" $temp temp chr
+					file_write $bedfile $chr\t0\t1\n
+				}
+				lappend opts -t $bedfile
 			}
-			lappend opts -t $bedfile
+			exec freebayes {*}$opts \
+				--genotype-qualities --report-monomorphic --exclude-unobserved-genotypes \
+				-f $refseq $dep > $target.temp 2>@ stderr
+			file rename -force $target.temp $target
+			catch {file delete $target.temp.idx}
+			if {$emptyreg && ![file exists $cache]} {
+				file copy $target $cache
+			}
 		}
-		exec freebayes {*}$opts \
-			--genotype-qualities --report-monomorphic --exclude-unobserved-genotypes \
-			-f $refseq $dep > $target.temp 2>@ stderr
-		file rename -force $target.temp $target
 	}
 	job ${pre}varall-freebayes2tsv-$root {*}$skips -deps {
 		${pre}varall-$root.vcf

@@ -119,19 +119,28 @@ proc var_sam_job {args} {
 		refseq opts BQ regionfile root
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
-		if {$regionfile ne ""} {
-			set bedfile [tempbed $regionfile $refseq]
-			lappend opts -l $bedfile
-		}
-		if {[catch {version samtools 1}]} {
-			exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
+		set emptyreg [reg_isempty $regionfile]
+		set cache [file dir $target]/cache_var_gatk_[file tail $refseq].temp
+		if {$emptyreg && [file exists $cache]} {
+			file copy $cache $target
 		} else {
-			# bcftools -v for variant only
-			# -t DP: Number of high-quality bases (per sample)
-			# -t SP: Phred-scaled strand bias P-value
-			exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call -c - > $target.temp 2>@ stderr
+			if {$regionfile ne ""} {
+				set bedfile [tempbed $regionfile $refseq]
+				lappend opts -l $bedfile
+			}
+			if {[catch {version samtools 1}]} {
+				exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
+			} else {
+				# bcftools -v for variant only
+				# -t DP: Number of high-quality bases (per sample)
+				# -t SP: Phred-scaled strand bias P-value
+				exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call -c - > $target.temp 2>@ stderr
+			}
+			file rename -force $target.temp $target
+			if {$emptyreg && ![file exists $cache]} {
+				file copy $target $cache
+			}
 		}
-		file rename -force $target.temp $target
 	}
 	job ${pre}varall-sam2tsv-$root {*}$skips -deps {
 		${pre}varall-$root.vcf
