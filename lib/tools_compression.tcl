@@ -89,6 +89,15 @@ proc gzopen {file {pos -1}} {
 	}
 	set file [file_absolute $file]
 	set ext [file extension $file]
+	if {[file size $file] == 0} {
+		# we sometimes make empty files with compression extension
+		# avoid these giving errors
+		set f [open $file]
+		if {$pos != -1} {
+			seek $f $pos
+		}
+		return $f
+	}
 	if {[inlist {.rz} $ext]} {
 		if {$pos == -1} {
 			set f [open "| razip -d -c [list $file]"]

@@ -114,28 +114,20 @@ proc var_job {args} {
 		foreach resultfile $resultfiles {
 			set list [list_subindex $todo $pos]
 			set deps $list
-			set ainfolist {}
-			foreach el $list {
-				set analysisinfo [lindex [jobglob [gzroot $el].analysisinfo]]
-				if {$analysisinfo ne ""} {
-					lappend ainfolist $analysisinfo
-				}
-				
-			}
-			set analysisinfo [lindex $ainfolist 0]
-			lappend deps {*}$ainfolist
 			job $resultfile  {*}$skips -deps $deps -rmtargets $list -targets {
 				$resultfile
 			} -vars {
-				analysisinfo list
+				list
 			} -code {
-				if {[llength $analysisinfo]} {
+				set analysisinfo [gzroot $dep].analysisinfo
+				if {[file exists $analysisinfo]} {
 					file copy -force $analysisinfo [gzroot $target].analysisinfo
+					exec touch [gzroot $target].analysisinfo
 				}
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
 					cg vcfcat -i 1 -o $target {*}[jobglob {*}$list]
 				} else {
-					cg cat -c f {*}[jobglob {*}$list] {*}[compresspipe $target 9] > $target.temp
+					cg cat -c f {*}[jobglob {*}$list] {*}[compresspipe $target] > $target.temp
 					file rename $target.temp $target
 					cg_zindex $target
 				}

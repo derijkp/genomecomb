@@ -1,6 +1,10 @@
 proc sreg_freebayes_job {job varallfile resultfile {skips {}}} {
 	upvar job_logdir job_logdir
-	job $job {*}$skips -deps {$varallfile} -targets {$resultfile} -code {
+	job $job {*}$skips -deps {
+		$varallfile
+	} -targets {
+		$resultfile
+	} -code {
 		set temp [filetemp $target]
 		set temp2 [filetemp $target]
 		cg select -overwrite 1 -q {$genoqual >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
@@ -65,7 +69,7 @@ proc var_freebayes_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
 	set destdir [file dir $bamfile]
-	set file [file tail $bamfile]
+	set bamtail [file tail $bamfile]
 	if {$rootname eq ""} {
 		set root freebayes-[file_rootname $bamfile]
 	} else {
@@ -94,17 +98,18 @@ proc var_freebayes_job {args} {
 		}
 	}
 	lappend cmdline {*}$opts $bamfile $refseq
-	job_logfile $destdir/var_freebayes_[file tail $bamfile] $destdir $cmdline \
+	job_logfile $destdir/var_freebayes_$bamtail $destdir $cmdline \
 		{*}[versions bwa samtools freebayes picard java gnusort8 zst os]
 	# start
 	## Produce freebayes SNP calls
 	set keeppwd [pwd]
 	cd $destdir
-	set deps [list $file $refseq $file.bai {*}$deps]
+	set deps [list $bamtail $refseq $bamtail.bai {*}$deps]
 	job ${pre}varall-$root {*}$skips -mem 5G -deps $deps -targets {
 		${pre}varall-$root.vcf
-		${pre}varall-$root.vcf.analysisinfo
-	} -skip [list $varallfile $varallfile.analysisinfo] -vars {
+	} -skip {
+		$varallfile
+	} -vars {
 		opts regionfile refseq root
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller freebayes varcaller_version [version freebayes] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
@@ -129,7 +134,6 @@ proc var_freebayes_job {args} {
 		${pre}varall-$root.vcf
 	} -targets {
 		$varallfile.zst
-		$varallfile.analysisinfo
 	} -vars {sample split refseq} \
 	-code {
 		analysisinfo_write $dep $target
@@ -143,8 +147,9 @@ proc var_freebayes_job {args} {
 		$varallfile
 	} -targets {
 		${pre}uvar-$root.tsv
-		${pre}uvar-$root.tsv.analysisinfo
-	} -skip [list $varfile $varfile.analysisinfo] -vars {
+	} -skip {
+		$varfile
+	} -vars {
 		root pre
 	} -code {
 		analysisinfo_write $dep $target varcaller_mincoverage 5 varcaller_minquality 30 varcaller_cg_version [version genomecomb]
@@ -165,8 +170,8 @@ proc var_freebayes_job {args} {
 	sreg_freebayes_job ${pre}sreg-$root $varallfile $sregfile.zst $skips
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index ${pre}uvar-$root.tsv.analysisinfo \
-			${pre}varall-$root.vcf ${pre}varall-$root.vcf.analysisinfo \
+			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index \
+			${pre}varall-$root.vcf \
 		]
 		set cleanupdeps [list $varfile $varallfile]
 		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps

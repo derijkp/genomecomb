@@ -7,7 +7,13 @@ proc version_strelka {} {
 
 proc sreg_strelka_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} {skips {}}} {
 	upvar job_logdir job_logdir
-	job $job {*}$skips -deps {$varallfile} -targets {$resultfile} -vars {mincoverage mingenoqual} -code {
+	job $job {*}$skips -deps {
+		$varallfile
+	} -targets {
+		$resultfile 
+	} -vars {
+		mincoverage mingenoqual
+	} -code {
 		set temp [filetemp $target]
 		if {![file size $dep]} {
 			file_write $target ""
@@ -86,9 +92,9 @@ proc var_strelka_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [refseq $refseq]
 	set destdir [file dir $bamfile]
-	set file [file tail $bamfile]
+	set bamtail [file tail $bamfile]
 	if {$rootname eq ""} {
-		set root strelka-[file_rootname $file]
+		set root strelka-[file_rootname $bamtail]
 	} else {
 		set root $rootname
 	}
@@ -126,18 +132,17 @@ proc var_strelka_job {args} {
 	set resultgvcf $varallfile
 	set resultname $varallfile
 	set resultvcf [file root [gzroot $varfile]].vcf
-	job ${pre}varall-$root {*}$skips -mem [job_mempercore 5G $threads] -cores $threads -skip [list \
-		$varallfile $varallfile.analysisinfo \
-	] -deps [list \
+	job ${pre}varall-$root {*}$skips -mem [job_mempercore 5G $threads] -cores $threads -skip {
+		$varallfile $varfile $varfile.analysisinfo
+	} -deps [list \
 		$bamfile $refseq $bamfile.bai {*}$deps \
 	] -targets {
-		$resultgvcf.gz $resultgvcf.gz.tbi $resultgvcf.analysisinfo
-		$resultvcf.gz $resultvcf.gz.tbi $resultvcf.analysisinfo
+		$resultgvcf.gz $resultgvcf.gz.tbi
+		$resultvcf.gz $resultvcf.gz.tbi
 	} -vars {
 		bamfile resultgvcf resultvcf opts regionfile refseq threads root refseq varfile
 	} -code {
 		analysisinfo_write $bamfile $resultgvcf.gz sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
-		analysisinfo_write $bamfile $resultvcf.gz sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set zerosize 0
 		if {$regionfile ne ""} {
 			set regionfile [gzfile $regionfile]
@@ -176,15 +181,16 @@ proc var_strelka_job {args} {
 			file_write $resultvcf.gz.tbi ""
 			file_write $resultvcf.analysisinfo ""
 		}
+		analysisinfo_write $bamfile $resultvcf.gz sample $root varcaller strelka varcaller_version [version strelka] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 	}
 	job ${pre}vcf2tsv-$root {*}$skips -deps {
-		$resultvcf.gz $resultvcf.analysisinfo
+		$resultvcf.gz
 	} -targets {
-		${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo
+		${pre}uvar-$root.tsv
 	} -vars {
 		pre root resultvcf sample split mincoverage mingenoqual type refseq
 	} -skip {
-		$varfile.zst $varfile.analysisinfo
+		$varfile
 	} -code {
 		analysisinfo_write $dep $target varcaller_mincoverage $mincoverage varcaller_mingenoqual $mingenoqual varcaller_cg_version [version genomecomb]
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}

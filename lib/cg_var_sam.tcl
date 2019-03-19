@@ -1,6 +1,10 @@
 proc sreg_sam_job {job varallfile resultfile {skips {}}} {
 	upvar job_logdir job_logdir
-	job $job {*}$skips -deps {$varallfile} -targets {$resultfile} -code {
+	job $job {*}$skips -deps {
+		$varallfile
+	} -targets {
+		$resultfile
+	} -code {
 		set temp [filetemp $target]
 		set temp2 [filetemp $target]
 		cg select -overwrite 1 -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
@@ -98,7 +102,7 @@ proc var_sam_job {args} {
 	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_sam_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools picard java gnusort8 zst os]
-	set file [file tail $bamfile]
+	set bamtail [file tail $bamfile]
 	# start
 	set keeppwd [pwd]
 	cd $destdir
@@ -106,12 +110,14 @@ proc var_sam_job {args} {
 	job ${pre}var_sam_faidx {*}$skips -deps {$refseq} -targets {$refseq.fai} -code {
 		exec samtools faidx $dep
 	}
-	set deps [list $file $refseq $refseq.fai {*}$deps]
-	job ${pre}varall-$root {*}$skips -deps $deps \
-	  -targets {${pre}varall-$root.vcf ${pre}varall-$root.vcf.analysisinfo} \
-	  -skip [list ${pre}varall-$root.tsv ${pre}varall-$root.tsv.analysisinfo] \
-	  -vars {refseq opts BQ regionfile root} \
-	  -code {
+	set deps [list $bamtail $refseq $refseq.fai {*}$deps]
+	job ${pre}varall-$root {*}$skips -deps $deps -targets {
+		${pre}varall-$root.vcf
+	} -skip {
+		${pre}varall-$root.tsv 
+	} -vars {
+		refseq opts BQ regionfile root
+	} -code {
 		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		if {$regionfile ne ""} {
 			set bedfile [tempbed $regionfile $refseq]
@@ -127,18 +133,28 @@ proc var_sam_job {args} {
 		}
 		file rename -force $target.temp $target
 	}
-	job ${pre}varall-sam2tsv-$root {*}$skips -deps {${pre}varall-$root.vcf} \
-	-targets {${pre}varall-$root.tsv.zst ${pre}varall-$root.tsv.analysisinfo} -vars {split refseq} -code {
+	job ${pre}varall-sam2tsv-$root {*}$skips -deps {
+		${pre}varall-$root.vcf
+	} -targets {
+		${pre}varall-$root.tsv.zst
+	} -vars {
+		split refseq
+	} -code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -skiprefindels 1 -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} $dep $target.temp.zst
 		file rename -force $target.temp.zst $target
 	}
 	# zst_job ${pre}varall-$root.tsv -i 1
 	zstindex_job {*}$skips ${pre}varall-$root.tsv.zst
-	job ${pre}var-$root {*}$skips -deps {${pre}varall-$root.tsv} \
-	-targets {${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo} \
-	-skip [list ${pre}var-$root.tsv ${pre}var-$root.tsv.analysisinfo] -vars {root pre} \
-	-code {
+	job ${pre}var-$root {*}$skips -deps {
+		${pre}varall-$root.tsv
+	} -targets {
+		${pre}uvar-$root.tsv
+	} -skip {
+		${pre}var-$root.tsv ${pre}var-$root.tsv.analysisinfo
+	} -vars {
+		root pre
+	} -code {
 		analysisinfo_write $dep $target varcaller_mincoverage 5 varcaller_minquality 30 varcaller_cg_version [version genomecomb]
 		cg select -q {
 			$alt ne "." && $alleleSeq1 ne "." && $quality >= 10 && $totalcoverage > 4
@@ -158,8 +174,8 @@ proc var_sam_job {args} {
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index ${pre}uvar-$root.tsv.analysisinfo \
-			${pre}varall-$root.vcf ${pre}varall-$root.vcf.analysisinfo \
+			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index \
+			${pre}varall-$root.vcf \
 			${pre}varall-$root.vcf.idx \
 		]
 		set cleanupdeps [list ${pre}var-$root.tsv ${pre}varall-$root.tsv]

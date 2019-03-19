@@ -1,6 +1,12 @@
 proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} {skips {}}} {
 	upvar job_logdir job_logdir
-	job $job {*}$skips -deps {$varallfile} -targets {$resultfile} -vars {mincoverage mingenoqual} -code {
+	job $job {*}$skips -deps {
+		$varallfile
+	} -targets {
+		$resultfile
+	} -vars {
+		mincoverage mingenoqual
+	} -code {
 		set temp [filetemp $target]
 		exec cg vcf2tsv $dep \
 			| cg select -q [subst {
@@ -79,9 +85,9 @@ proc var_gatkh_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	set destdir [file dir $bamfile]
-	set file [file tail $bamfile]
+	set bamtail [file tail $bamfile]
 	if {$rootname eq ""} {
-		set root gatkh-[file_rootname $file]
+		set root gatkh-[file_rootname $bamtail]
 	} else {
 		set root $rootname
 	}
@@ -109,23 +115,21 @@ proc var_gatkh_job {args} {
 		}
 	}
 	lappend cmdline {*}$opts $bamfile $refseq
-	job_logfile $destdir/var_gatkh_[file tail $bamfile] $destdir $cmdline \
+	job_logfile $destdir/var_gatkh_$bamtail $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# start
 	## Produce gatkh SNP calls
 	set keeppwd [pwd]
 	cd $destdir
 	set gatkrefseq [gatk_refseq_job $refseq]
-	set dep $file
-	set resultgvcf $varallfile.gz
-	set resultname $varallfile
-	set deps [list $file $gatkrefseq $file.bai {*}$deps]
-	job $resultname {*}$skips -mem 15G -deps $deps -targets {
-		$resultgvcf $resultgvcf.tbi $varallfile.analysisinfo
+	set dep $bamtail
+	set deps [list $bamtail $gatkrefseq $bamtail.bai {*}$deps]
+	job $varallfile {*}$skips -mem 15G -deps $deps -targets {
+		$varallfile.gz $varallfile.gz.tbi
 	} -vars {
-		opts regionfile gatkrefseq refseq root ERC resultgvcf
+		opts regionfile gatkrefseq refseq root ERC varallfile
 	} -code {
-		analysisinfo_write $dep $resultgvcf sample $root varcaller gatkh varcaller_version [version gatk] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
+		analysisinfo_write $dep $varallfile sample $root varcaller gatkh varcaller_version [version gatk] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		if {$regionfile ne ""} {
 			set bedfile [tempbed $regionfile $refseq]
 			lappend opts -L $bedfile
@@ -135,29 +139,29 @@ proc var_gatkh_job {args} {
 		gatkexec -finishedpattern {HaplotypeCaller done\. Elapsed time} {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} HaplotypeCaller \
 			{*}$opts -R $gatkrefseq \
 			-I $dep \
-			-O $resultgvcf.temp.gz \
+			-O $varallfile.temp.gz \
 			--annotate-with-num-discovered-alleles \
 			-ERC $ERC \
 			-G StandardAnnotation \
 			-G StandardHCAnnotation \
 			-G AS_StandardAnnotation
-		file rename -force $resultgvcf.temp.gz $resultgvcf
-		file rename -force $resultgvcf.temp.gz.tbi $resultgvcf.tbi
-		# file delete $resultgvcf.temp
+		file rename -force $varallfile.temp.gz $varallfile.gz
+		file rename -force $varallfile.temp.gz.tbi $varallfile.gz.tbi
+		# file delete $varallfile.temp
 	}
 	job ${pre}gvcf2tsv-$root {*}$skips -deps {
-		$resultgvcf $gatkrefseq
+		$varallfile.gz $gatkrefseq
 	} -targets {
-		${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.analysisinfo
+		${pre}uvar-$root.tsv
 	} -vars {
-		sample split pre root gatkrefseq resultgvcf mincoverage mingenoqual refseq
+		sample split pre root gatkrefseq varallfile mincoverage mingenoqual refseq
 	} -skip {
-		$varfile.zst $varfile.analysisinfo
+		$varfile.zst
 	} -code {
 		analysisinfo_write $dep $target varcaller_mincoverage $mincoverage varcaller_mingenoqual $mingenoqual varcaller_cg_version [version genomecomb]
 		gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} GenotypeGVCFs \
 			-R $gatkrefseq \
-			-V $resultgvcf \
+			-V $varallfile.gz \
 			-O ${pre}uvar-$root.temp.vcf \
 			-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
 		catch {file delete ${pre}uvar-$root.temp.vcf.idx}
@@ -181,7 +185,7 @@ proc var_gatkh_job {args} {
 			${pre}var-$root.vcf \
 			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index
 		]
-		set cleanupdeps [list $varfile $resultgvcf]
+		set cleanupdeps [list $varfile $varallfile.gz]
 		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
 	}
 	cd $keeppwd
