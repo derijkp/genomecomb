@@ -2,51 +2,56 @@
 # the next line restarts using wish \
 exec cg source "$0" "$@"
 
-source analysis.tcl
-source annot.tcl
-source bcol.tcl
-source cg2tsv.tcl
-source clip.tcl
-source convert.tcl
-source compress.tcl
-source fastq.tcl
-source genome_seq.tcl
-source primercheck.tcl
-source libext.tcl
-source lift.tcl
-source mirannot.tcl
-source misc.tcl
-source reg.tcl
-source seq.tcl
-source remap.tcl
-source select.tcl
-source select_group.tcl
-source select_saggregates.tcl
-source multiselect.tcl
-source tsv.tcl
-source val.tcl
-source varia.tcl
-source vcf.tcl
-source vcf2tsv.tcl
-source tsv2vcf.tcl
-source map.tcl
-source var.tcl
-source job.tcl
-source compar.tcl
-source nanopore.tcl
-source svmulticompar.tcl
-source sv.tcl
-source pmulticompar.tcl
-source process_multicompar.tcl
+proc runtests file {
+	cd $::appdir/tests
+	uplevel source $file
+}
+
+runtests analysis.tcl
+runtests annot.tcl
+runtests bcol.tcl
+runtests cg2tsv.tcl
+runtests clip.tcl
+runtests convert.tcl
+runtests compress.tcl
+runtests fastq.tcl
+runtests genome_seq.tcl
+runtests primercheck.tcl
+runtests libext.tcl
+runtests lift.tcl
+runtests mirannot.tcl
+runtests misc.tcl
+runtests reg.tcl
+runtests seq.tcl
+runtests remap.tcl
+runtests select.tcl
+runtests select_group.tcl
+runtests select_saggregates.tcl
+runtests multiselect.tcl
+runtests tsv.tcl
+runtests val.tcl
+runtests varia.tcl
+runtests vcf.tcl
+runtests vcf2tsv.tcl
+runtests tsv2vcf.tcl
+runtests map.tcl
+runtests var.tcl
+runtests job.tcl
+runtests compar.tcl
+runtests nanopore.tcl
+runtests svmulticompar.tcl
+runtests sv.tcl
+runtests pmulticompar.tcl
+runtests process_multicompar.tcl
 
 # next ones take longer, use larger data in genomecomb.testdata
-source queries.tcl
-source reports.tcl
-source bam.tcl
-source homwes.tcl
+runtests queries.tcl
+runtests reports.tcl
+runtests bam.tcl
+runtests homwes.tcl
 
 # long time, run separately
-# source process.tcl
+# runtests process.tcl
 
 # not really used
-# source mselect.tcl
+# runtests mselect.tcl
