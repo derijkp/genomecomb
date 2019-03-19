@@ -145,21 +145,6 @@ if [ $all = 1 ] || [ ! -f /io/extern$ARCH/gnusort8 ] ; then
 	strip /io/extern$ARCH/gnusort8
 fi
 
-# pigz
-# ----
-if [ $all = 1 ] || [ ! -f /io/extern$ARCH/pigz ] ; then
-	download https://github.com/madler/pigz/archive/v2.4.tar.gz pigz-2.4.tar.gz
-	cd /build/pigz-2.4
-	if [ ! -f Makefile.ori ] ; then
-		cp Makefile Makefile.ori
-	fi
-	grep -v 'LDFLAGS=' Makefile.ori > Makefile
-	make clean
-	make
-	cp pigz /io/extern$ARCH
-	strip /io/extern$ARCH/pigz
-fi
-
 # bzlib, used by htslib
 # ---------------------
 if [ ! -f "/build/lib/libbz2.a" ] ; then
