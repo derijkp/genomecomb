@@ -65,8 +65,8 @@ proc var_sam_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
-		default {
-			lappend opts $key $value
+		-opts {
+			set opts $value
 		}
 	} {bamfile refseq}
 	set bamfile [file_absolute $bamfile]

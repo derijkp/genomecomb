@@ -60,8 +60,8 @@ proc var_freebayes_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
-		default {
-			lappend opts $key $value
+		-opts {
+			set opts $value
 		}
 	} {bamfile refseq} 2 2 {
 		call variants using freebayes

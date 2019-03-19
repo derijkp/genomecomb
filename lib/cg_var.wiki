@@ -41,6 +41,7 @@ chromosome), file name (the regions in the file will be used for subjobs)
 ; -split 1/0: indicate if in the datafiles, multiple alternative genotypes are split over different lines (default 1)
 ; -t number (-threads): number of threads used by each job (if the method supports threads)
 ; -cleanup 0/1: Use 0 to no cleanup some of the temporary files (vcf, delvar, ...)
+; -opt options: These options are passed through to the underlying variant caller (default is empty)
 
 == Category ==
 Variants
