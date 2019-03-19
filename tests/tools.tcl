@@ -46,10 +46,14 @@ source $appdir/lib/file.tcl ; pwd
 package require genomecomb
 genomecombenv
 
-proc test {args} {
+proc testdir {args} {
 	set testname [join [lrange $args 0 1] __]
-	set testname [string_change $testname {{ } _ : _ / _ \\ _ \; _}]
-	set ::testdir $::basetestdir/$testname
+	set testname [string_change $testname {{ } _ : _ / _ \\ _ \; _ * _ ? _ \} _ \{ _ \n _ \t _ \[ _ \] _}]
+	return $::basetestdir/$testname
+}
+
+proc test {args} {
+	set ::testdir [testdir {*}$args]
 	file mkdir $::testdir
 	file mkdir $::testdir/tmp
 	cd $::testdir
@@ -57,7 +61,8 @@ proc test {args} {
 	if {[get ::test_cleantmp 1]} {test_cleantmp}
 	catch {job_init}
 	pkgtools::test {*}$args
-	cd $::basetestdir
+	set ::testdir $::appdir/tests
+	cd $::appdir/tests
 	return {}
 }
 

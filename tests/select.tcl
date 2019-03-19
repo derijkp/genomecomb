@@ -11,7 +11,7 @@ set dboptt ""
 proc selecttests {} {
 global dbopt
 set dboptt " $::dbopt"
-
+if 0 {
 test select "-f$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -f "num text" data/table.tsv
@@ -573,12 +573,12 @@ test select "-q error on non number <$dboptt" {
 
 test select "error missing quote$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -q {$regtest != "aa} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} ../tests/data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
+	exec cg select {*}$dbopt -q {$regtest != "aa} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
 } {error: incomplete quoted expression: "aa} error
 
 test select "error missing quote empty$dboptt" {
 	global dbopt
-	exec cg select {*}$dbopt -q {$regtest != "} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} ../tests/data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
+	exec cg select {*}$dbopt -q {$regtest != "} -f {chromosome begin end type ref alt alleleSeq1-sample1 alleleSeq2-sample1 coverage-sample1 sequenced-sample1 alleleSeq1-sample2 alleleSeq2-sample2 coverage-sample2 sequenced-sample2} data/expected-vars1-reg_annot.sft tmp/tempexpected.tsv
 } {error: incomplete quoted expression: "} error
 
 test select "brokentable$dboptt" {
@@ -964,7 +964,7 @@ test select "long with * in -f" {
 	exec cg select {*}$dbopt -f {*} tmp/temp.tsv
 } {sample	id	freq
 sample1	1	0.4}
-
+}
 
 test select "long with sampleinfo in -f with *" {
 	global dbopt

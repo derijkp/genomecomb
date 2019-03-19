@@ -83,15 +83,15 @@ test sv {lumpy error} {
 	set result {}
 } {*: ==: unary operator expected*} error match
 
-test sv {gridss} {
-	cd $::smalltestdir
-	file delete -force tmp/sv-gridss
-	file mkdir tmp/sv-gridss
-	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
-	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
-	cg sv_gridss {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
-	cg tsvdiff -q 1 -brief 1 -x *.idx -x *.tbi -x *.*_metrics -x *.pdf tmp/sv-gridss expected/sv-gridss
-} {}
+#test sv {gridss} {
+#	cd $::smalltestdir
+#	file delete -force tmp/sv-gridss
+#	file mkdir tmp/sv-gridss
+#	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+#	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
+#	cg sv_gridss {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-gridss/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+#	cg tsvdiff -q 1 -brief 1 -x *.idx -x *.tbi -x *.*_metrics -x *.pdf tmp/sv-gridss expected/sv-gridss
+#} {}
 
 testsummarize
 

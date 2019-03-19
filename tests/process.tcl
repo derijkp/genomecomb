@@ -44,7 +44,7 @@ test process {mastr mastr_116068_116083} {
 	file copy -force ori/wgs2.mastr/amplicons-wgs2.tsv tmp/wgs2.mastr
 	# file copy ori/mastr_116068_116083/demultiplex_stats.tsv tmp/mastr_116068_116083
 	# if you want to see output while running
-	 cg process_mastr --stack 1 --verbose 2 {*}$::dopts -split 1 tmp/wgs2.mastr tmp/mastr_116068_116083 refseqtest/hg19 2>@ stderr >@ stdout
+	 cg process_mastr {*}$::dopts -split 1 tmp/wgs2.mastr tmp/mastr_116068_116083 refseqtest/hg19 2>@ stderr >@ stdout
 	# no output while running
 	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr tmp/mastr_116068_116083 refseqtest/hg19
 	# check vs expected
@@ -76,7 +76,7 @@ test process {process_illumina exomes yri chr2122} {
 		exec touch {*}[glob tmp/exomes_yri_chr2122/samples/*/map-*.bam*]
 	}
 	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
-	cg process_project --stack 1 --verbose 2 {*}$::dopts \
+	cg process_project {*}$::dopts \
 	  -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst \
 	  -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
 	# check vs expected
@@ -157,7 +157,7 @@ test process {genomes yri chr2122} {
 	cg project_addsample tmp/genomes_yri_chr2122 testNA19239chr2122cg ori/genomes_yri_chr2122.start/samples/testNA19239chr2122cg.ori
 	cg project_addsample tmp/genomes_yri_chr2122 testNA19240chr2122cg ori/genomes_yri_chr2122.start/samples/testNA19240chr2122cg.ori
 	cg project_addsample tmp/genomes_yri_chr2122 testNA19240chr21il {*}[glob ori/genomes_yri_chr2122.start/samples/testNA19240chr21il.ori/*.fq.gz]
-	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/genomes_yri_chr2122 2>@ stderr >@ stdout
+	cg process_project {*}$::dopts -split 1 -dbdir refseqtest/hg19 tmp/genomes_yri_chr2122 2>@ stderr >@ stdout
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
