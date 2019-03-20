@@ -133,7 +133,7 @@ test pmulticompar {multicompar_addvars bgvcf} {
 	set varallfile tmp/varall-sample.gvcf.gz
 	set numbcolannot 0 ; set bcolannot {}
 	set numregfiles 0 ; set regfiles {}
-	set keepposs {15 16 17}
+	set keepposs {14 15 16}
 	# exec cg vcf2tsv -refout 1 -sort 0 $varallfile $varallfile.tsv
 	# puts [list ../bin/multicompar_addvars $split x $allvarsfile $samplevarsfile $sregfile $varallfile.tsv $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.tsv]
 	exec cg vcf2tsv -refout 1 -sort 0 $varallfile | multicompar_addvars $split x $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.txt

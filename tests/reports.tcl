@@ -7,24 +7,24 @@ source tools.tcl
 test reports {hsmetrics} {
 	test_cleantmp
 	cg select -q {$chromosome in "chr21 chr22"} [gzfile $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv] tmp/regfile.tsv
-	set bamfile genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam
+	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
 	set regionfile tmp/regfile.tsv
 	set resultfile tmp/result.hsmetrics
 	cg hsmetrics $bamfile $regionfile $resultfile 2> /dev/null
 	cg select -rc 1 tmp/result.hsmetrics tmp/result.hsmetrics.nocomments
-	exec diff tmp/result.hsmetrics.nocomments genomecomb.testdata/expected/bam_histo-NA19240chr2122.hsmetrics
+	exec diff tmp/result.hsmetrics.nocomments $::smalltestdir/expected/bam_histo-NA19240chr2122.hsmetrics
 } {}
 
 test reports {coverage_report} {
 	test_cleantmp
 	cg select -f {chromosome=chr_clip($chromosome) begin end info} data/reg_hg19_smallpartexome.tsv tmp/regfile.tsv
 	set regionfile tmp/regfile.tsv
-	mklink genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam tmp/test.bam
-	mklink genomecomb.testdata/ori/test-map-rdsbwa-NA19240chr2122.bam.bai tmp/test.bam.bai
+	mklink $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam tmp/test.bam
+	mklink $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam.bai tmp/test.bam.bai
 	set bamfile tmp/test.bam
 	set intervals {1 5 10 20 50 100 200 500 1000}
 	cg coverage_report $regionfile $bamfile
-	exec diff tmp/test.histo genomecomb.testdata/expected/bam_histo-NA19240_smallpartchr2122.tsv
+	exec diff tmp/test.histo $::smalltestdir/expected/bam_histo-NA19240_smallpartchr2122.tsv
 } {}
 
 test reports {report_vars} {
@@ -57,10 +57,10 @@ test reports {process_reports} {
 	mklink refseqtest/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/test_reports/NA19240mx2/reg_hg19_targets.tsv.lz4
 	cg process_reports -stack 1 -v 0 tmp/test_reports/NA19240mx2 refseqtest/hg19 2>@ stderr >@ stdout
 	set result [tsvdiff -q 1 -x fastqc_report.html -x *.png \
-		tmp/test_reports/NA19240mx2/reports expected/exomes_yri_mx2/samples/NA19240mx2/reports]
-	set e [checkdiff -y --suppress-common-lines tmp/test_reports/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html expected/exomes_yri_mx2/samples/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html]
+		tmp/test_reports expected/test_reports]
+	set e [checkdiff -y --suppress-common-lines tmp/test_reports/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html expected/test_reports/NA19240mx2/reports/fastqc_fw-NA19240mx2.fastqc/fastqc_report.html]
 	if {[llength [split [string trim $e] \n]] > 2} {append result "too many differences in fastqc_report.html\n"}
-	set e [checkdiff -y --suppress-common-lines tmp/test_reports/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html expected/exomes_yri_mx2/samples/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html]
+	set e [checkdiff -y --suppress-common-lines tmp/test_reports/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html expected/test_reports/NA19240mx2/reports/fastqc_rev-NA19240mx2.fastqc/fastqc_report.html]
 	if {[llength [split [string trim $e] \n]] > 2} {append result "too many differences in fastqc_report.html\n"}
 	set result
 } {}
@@ -117,7 +117,7 @@ test reports {process_reportscombine} {
 test reports {process_reportscombine 2} {
 	cd $::smalltestdir
 	file delete -force tmp/combinereports
-	cg process_reportscombine {*}$::dopts tmp/combinereports {*}[lsort -dict [glob expected/exomes_yri_mx2/samples/* tmp/genomes_yri_mx2/samples/NA19240ilmx2/reports]] expected/exomes_yri_mx2/samples/NA19240mx2/reports
+	cg process_reportscombine {*}$::dopts tmp/combinereports {*}[lsort -dict [glob expected/exomes_yri_mx2/samples/* tmp/genomes_yri_mx2/samples/NA19240ilmx2/reports]] expected/test_reports
 	cg tsvdiff -q 1 tmp/combinereports expected/combinereports
 } {}
 
