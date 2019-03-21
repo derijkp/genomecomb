@@ -1384,4 +1384,16 @@ test select "cg select -s bug fix reverse sort" {
 99856
 10}
 
+test select "-fo 1$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	v-sample1	n-sample1	freq-sample2	v-sample2 n-sample2	freq-sample3	v-sample3	n-sample3	annot
+		1	0.4	s1	n1	0.8	s2	n2	1.0	s3	n3	a
+	}
+	exec cg select {*}$dbopt -fo 1 -f {id calc=1 freq-* n-*} tmp/temp.tsv
+} {id	freq-sample1	n-sample1	freq-sample2	n-sample2	freq-sample3	n-sample3	calc
+1	0.4	n1	0.8	n2	1.0	n3	1}
+
+
 testsummarize

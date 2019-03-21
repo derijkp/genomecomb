@@ -1277,6 +1277,7 @@ proc cg_select {args} {
 	set showheader 0
 	set usesort 0
 	set useaddrow 0
+	set fieldorder 0
 	cg_options select args {
 		-q {
 			set query $value
@@ -1305,6 +1306,7 @@ proc cg_select {args} {
 			set query [join $query " || "]
 		}
 		-f {set qfields $value}
+		-fo {set fieldorder $value}
 		-samples {set samples $value; set sortsamples 0}
 		-ssamples {set samples $value; set sortsamples 1}
 		-rf {
@@ -1541,6 +1543,13 @@ proc cg_select {args} {
 		}
 		set qfields [list_sub $qfields $keepposs]
 		set qposs [list_sub $qposs $keepposs]
+	}
+	if {[true $fieldorder] && [llength $qfields]} {
+		# Keep original field order
+		set common [list_common $header $qfields]
+		set keepposs [list_cor $qfields $common]
+		set qfields [list_concat [list_sub $qfields $keepposs] [list_sub $qfields -exclude $keepposs]]
+		set qposs [list_concat [list_sub $qposs $keepposs] [list_sub $qposs -exclude $keepposs]]
 	}
 	if {![file exists $index]} {set index {}}
 	if {[llength $qfields] == [llength $header]} {set index {}}

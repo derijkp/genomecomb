@@ -18,6 +18,7 @@ indicating compression (e.g. .zst), the output file will be compressed using the
 
 == Options ==
 ; -f fields: list of fields to be written to result. Can contain wildcards or new calculated fields (see further)
+; -fo 0/1: if using the -f option, keep the field order from the original file (usefull when e.g. using wildcards)
 ; -q query: only lines fullfilling conditions in query will be written to outfile (see further)
 ; -qf queryfile: only lines fullfilling conditions in queryfile will be written to outfile (see further)
 ; -rf removefields: write all, except given fields to result.
@@ -66,6 +67,10 @@ cg select -f '
 An asterix (wildcard) can be used to indicated several
 fields matching a pattern. If a field with wildcards is prefixed with a
 minus, all fields not matching the pattern will be added.
+When using a wildcard, by default all matching fields will be added
+at that position. You can use the "-fo 1" option to keep the original
+field order (e.g. to keep them ordered per sample when using something
+like zyg-* coverage-* ...)
 
 A field starting with fieldname=formula will add a **calculated field:
 a field with the given fieldname for which the value will be calculated
