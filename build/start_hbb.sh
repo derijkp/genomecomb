@@ -121,7 +121,19 @@ if [ $(basename "$file") = "start_hbb.sh" ] ; then
 		if ! rpm --quiet --query "$1"; then
 			sudo yum install -y "$1"
 		fi
-	}' >> /home/build/.bashrc
+	}
+	if [ "$3" = '32' ] ; then
+		ARCH='-ix86'
+		arch=ix86
+		bits=32
+	else
+		ARCH=''
+		arch=x86_64
+		bits=64
+	fi
+	uid=$4;
+	gid=$5;
+	' >> /home/build/.bashrc
 	# if run as start_hbb.sh directly, show a shell
 	echo "shell sstarted by start_hbb.sh"
 	bash
