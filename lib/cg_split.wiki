@@ -1,7 +1,7 @@
 = split =
 
 == Format ==
-cg split ?options? file field prefix ?postfix?
+cg split ?options? file prefix ?postfix?
 
 == Summary ==
 split a tab separated file in multiple tab separated files based on the content of a (usually chromosome) field.
@@ -17,8 +17,7 @@ This can also be more generally used to split based on any field using the -f op
 ; **postfix** ...: part of filenames to be generated after the field value
 
 == Options ==
-; **-f**: force overwrite of ref if different from genome sequence in **dbdir**, instead of giving error
-; **field**: name of field upon which rows will be separated (default is chromosome field)
+; **-f field**: name of field upon which rows will be separated (default is chromosome field)
 
 == Category ==
 tsv

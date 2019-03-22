@@ -24,7 +24,7 @@ proc cg_split {args} {
 		set value [lindex [split $line \t] $pos]
 		if {$chrclip} {set value [chr_clip $value]}
 		if {![info exists a($value)]} {
-			set o [open $prefix$value$postfix w]
+			set o [wgzopen $prefix$value$postfix w]
 			puts -nonewline $o $comment
 			puts $o [join $header \t]
 			set a($value) $o
@@ -33,6 +33,6 @@ proc cg_split {args} {
 	}
 	gzclose $f
 	foreach value [array names a] {
-		close $a($value)
+		gzclose $a($value)
 	}
 }
