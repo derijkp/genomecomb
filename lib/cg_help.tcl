@@ -311,6 +311,14 @@ proc helptext_overview {} {
 		if --stack is set to 1, a full stack trace is shown on error (which may be useful to solve 
 		errors caused by bugs in the program)
 		
+		Many commands will transparantly compress a result file if it has an extension 
+		indicating this (.zst, .gz, ...). Following options are for this case:
+		; -compressionlevel number: number indicating the level of compression (1 for fast 
+		compression, higher numbers for better but slower compression) used when resultfiles
+		are to be compressed
+		; -compressionthreads number: Use **number** threads (default 1) to compress the result 
+		file (if the result needs to be compressed, and the compression method supports threads)
+		
 		== Available subcommands ==
 	}]] \n
 	unset -nocomplain a

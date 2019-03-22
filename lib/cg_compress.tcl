@@ -4,7 +4,7 @@ proc cg_compress_job args {
 	set compressionlevel {}
 	set blocksize {}
 	set index 0
-	set threads 1
+	set threads {}
 	set outputfile {}
 	set method zst
 	cg_options compress args {

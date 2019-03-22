@@ -41,7 +41,7 @@ proc fastq_split_job {args} {
 		for {set part 1} {$part <= $parts} {incr part} {
 			lappend files $outdir/p${part}_$outfile.temp
 		}
-		job fastq_split-[file tail $infile] -cores $threads -deps {
+		job fastq_split-[file tail $infile] -deps {
 			$infile
 		} -targets $files -vars {
 			infile outdir outfile parts
@@ -93,7 +93,7 @@ proc cg_fastq_split.tcl {args} {
 	set infile -
 	set numseq 1000000
 	set partslimit 4294967296
-	set threads 1
+	set threads {}
 	cg_options fastq_split args {
 		-numseq {
 			set numseq $value

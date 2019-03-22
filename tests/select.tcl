@@ -1173,6 +1173,16 @@ test select "-f compressed$dboptt" {
 2	c
 100	d}
 
+test select "-f compressed with -compressionthreads option$dboptt" {
+	global dbopt
+	exec cg select -compressionthreads 2 {*}$dbopt -overwrite 1 -f "num text" data/table.tsv tmp/temp.zst
+	cg zcat tmp/temp.zst
+} {num	text
+4	a
+10	b
+2	c
+100	d}
+
 test select "-q compressed$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -q {$num <= 4} data/table.tsv tmp/temp.zst

@@ -11,7 +11,7 @@ proc defcompressionlevel {{default 8}} {
 }
 
 proc compressionlevel {{compressionlevel {}} {default 8} {min 1} {max 9}} {
-	if {$compressionlevel eq ""} {
+	if {$compressionlevel in {{} -1}} {
 		if {[info exists ::defcompressionlevel]} {
 			set compressionlevel $::defcompressionlevel
 		} else {
@@ -23,7 +23,30 @@ proc compressionlevel {{compressionlevel {}} {default 8} {min 1} {max 9}} {
 	return $compressionlevel
 }
 
-proc compress {file {destfile {}} {index 1} {keep 1} {threads 1} {compressionlevel {}} {blocksize {}} args} {
+proc setdefcompressionthreads {level} {
+	set ::defcompressionthreads $level
+}
+
+proc defcompressionthreads {{default 1}} {
+	if {[info exists ::defcompressionthreads]} {
+		return $::defcompressionthreads
+	} else {
+		return $default
+	}
+}
+
+proc compressionthreads {{compressionthreads {}} {default 1}} {
+	if {![isint $compressionthreads] || $compressionthreads < 1} {
+		if {[info exists ::defcompressionthreads]} {
+			set compressionthreads $::defcompressionthreads
+		} else {
+			set compressionthreads $default
+		}
+	}
+	return $compressionthreads
+}
+
+proc compress {file {destfile {}} {index 1} {keep 1} {threads {}} {compressionlevel {}} {blocksize {}} args} {
 	# putsvars file destfile index keep compressionlevel blocksize args
 	set ext [file extension $destfile]
 	set method [string range $ext 1 end]
@@ -75,7 +98,7 @@ proc compress_template {file destfile method cmd {index 1} {keep 1}} {
 	}
 }
 
-proc wgzopen {file {compressionlevel -1} {threads 1}} {
+proc wgzopen {file {compressionlevel -1} {threads {}}} {
 	if {![gziscompressed $file]} {
 		return [open $file w]
 	} else {
@@ -295,7 +318,7 @@ proc gzcatra {filename {pos 0}} {
 }
 
 
-proc compresscmd {target {threads 1} {compressionlevel {}} {blocksize {}}} {
+proc compresscmd {target {threads {}} {compressionlevel {}} {blocksize {}}} {
 	set method [string range [file extension $target] 1 end]
 	if {[auto_load compresscmd_$method]} {
 		compresscmd_$method $threads $compressionlevel $blocksize
@@ -304,21 +327,14 @@ proc compresscmd {target {threads 1} {compressionlevel {}} {blocksize {}}} {
 	}
 }
 
-proc compresspipe {target {compressionlevel -1} {threads 1}} {
-	switch [file extension $target] {
-		.rz {return "| razip -c"}
-		.zst {
-			if {$compressionlevel == -1 || $compressionlevel == ""} {set compressionlevel [defcompressionlevel]}
-			return "| zstd-mt -k -q -$compressionlevel -b 0.5 -T $threads -c"
-		}
-		.lz4 {
-			if {$compressionlevel == -1 || $compressionlevel == ""} {set compressionlevel [defcompressionlevel]}
-			return "| lz4 -q -$compressionlevel -B5 -c"
-		}
-		.gz - .bgz {return "| bgzip -c -@ $threads"}
-		.bz2 {return "| bzip2 -c"}
-		default {return {}}
-	}
+proc compresspipe {target {compressionlevel {}} {threads {}} {blocksize {}}} {
+	if {![catch {
+		compresscmd [file extension $target] $threads $compressionlevel $blocksize
+	} compresscmd]} {
+		return "| $compresscmd"
+	} else {
+		return {}
+	} 
 }
 
 proc gztemp {filename} {
