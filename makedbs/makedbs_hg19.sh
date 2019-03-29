@@ -28,6 +28,8 @@ set caddbuild hg19
 set gnomadversion 2.1
 set gnomadbaseurl https://storage.googleapis.com/gnomad-public/release/$gnomadversion/vcf
 set gnomadexurl $gnomadbaseurl/exomes/gnomad.exomes.r$gnomadversion.sites.vcf.bgz
+set ccrversion 2.20180420
+set ccrurl https://s3.us-east-2.amazonaws.com/ccrs/ccrs/ccrs.autosomes.v${ccrversion}.bed.gz
 set dbnsfpurl ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv3.5a.zip
 set dbnsfpbuild hg38
 
@@ -647,6 +649,44 @@ foreach file [glob genome_*] {
 		mklink $file extra/[file tail $file]
 	}
 }
+
+# ccr
+# ---
+job ccr -deps {
+} -vars {
+	build ccrversion ccrurl
+} -targets {
+	reg_${build}_ccr.tsv
+} -code {
+	file_write $target.info [subst [deindent {
+		= CCR (constrained coding regions) =
+		
+		== Download info ==
+		dbname	ccr
+		version	$ccrversion
+		citation	Havrilla, J.M., Pedersen, B.S., Layer, R.M. & Quinlan, A.R. A map of constrained coding regions in the human genome. Nature Genetics (2018). doi:10.1038/s41588-018-0294-6
+		license	cite
+		source	$ccrurl
+		time	[timestamp]
+		
+		== Description ==
+		
+		More info on https://github.com/quinlan-lab/ccrhtml
+		and in https://www.nature.com/articles/s41588-018-0294-6
+		
+		== Category ==
+		Annotation
+	}]]
+	file_write $target.opt "fields\t{ccr_pct}\n"
+	file mkdir $target.temp
+	set tail [file tail $ccrurl]
+	wgetfile $ccrurl $target.temp/$tail
+	cg select -s - -overwrite 1 -hc 1 -f {chrom start end {ccr_pct=format("%.2f",$ccr_pct)} *} $target.temp/$tail $target.temp.zst
+	file rename -force $target.temp.zst $target.zst
+	cg zstindex $target.zst
+	file delete -force $target.temp
+}
+
 
 # gnomad
 # ------
