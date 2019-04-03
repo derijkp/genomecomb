@@ -1,7 +1,7 @@
 proc cg_bam2fastq {args} {
 	set pos 0
 	set method biobambam
-	set sortmethod biobambam
+	set sortmethod samtools
 	set namesort 1
 	set fastqfile2 {}
 	set singlefile [scratchfile]
