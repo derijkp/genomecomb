@@ -22,8 +22,8 @@ set evsbuild hg19
 set exacurl ftp://ftp.broadinstitute.org/pub/ExAC_release/release1/ExAC.r1.sites.vep.vcf.gz
 set exacbuild hg19
 set caddversion 1.5
-set caddurl http://krishna.gs.washington.edu/download/CADD/v$caddversion/whole_genome_SNVs.tsv.gz
-set caddbuild hg19
+set caddurl http://krishna.gs.washington.edu/download/CADD/v$caddversion/GRCh38/whole_genome_SNVs.tsv.gz
+set caddbuild hg38
 set dbnsfpurl ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv3.5a.zip
 set dbnsfpbuild hg38
 
@@ -614,7 +614,7 @@ job reg_${build}_cadd -targets {
 		}
 		exec cg select -s - $tempdir/collapsed${build}.tsv.zst | cg bcol make --stack 1 --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
 	} else {
-		cg select -hc 1 -rc 1 -f {{chrom=$Chr} {begin = $Pos - 1} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
+		cg select -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
 			| cg collapsealleles | cg select -s {chrom begin} \
 			| cg bcol make --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
 	}
