@@ -1743,8 +1743,8 @@ proc cg_select {args} {
 	}
 	if {![llength $pipe]} {
 		if {[info exists ::filebuffer($f)]} {
-			foreach line $::filebuffer($in) {
-				puts $o $line
+			foreach line $::filebuffer($f) {
+				puts $out $line
 			}
 			unset ::filebuffer($f)
 		}
