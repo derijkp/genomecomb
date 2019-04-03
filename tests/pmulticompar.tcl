@@ -133,17 +133,18 @@ test pmulticompar {multicompar_addvars bgvcf} {
 	set varallfile tmp/varall-sample.gvcf.gz
 	set numbcolannot 0 ; set bcolannot {}
 	set numregfiles 0 ; set regfiles {}
+	# get: genoqual GQX coverage
 	set keepposs {14 15 16}
 	# exec cg vcf2tsv -refout 1 -sort 0 $varallfile $varallfile.tsv
 	# puts [list ../bin/multicompar_addvars $split x $allvarsfile $samplevarsfile $sregfile $varallfile.tsv $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.tsv]
 	exec cg vcf2tsv -refout 1 -sort 0 $varallfile | multicompar_addvars $split x $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.txt
 	file_write tmp/expected.txt [deindent {
 		x
-		v	m	T	T	15	0	6
-		r	r	G	G	18	18	8
+		v	m	T	T	15	15	6
+		r	r	G	G	15	15	7
 		u	u	?	?	7	7	4
-		v	t	C	T	12	6	5
-		v	t	G	T	13	6	5
+		v	t	C	T	12	0	5
+		v	t	G	T	13	0	5
 	}]\n
 	exec diff tmp/result.txt tmp/expected.txt
 } {}
@@ -563,7 +564,7 @@ test pmulticompar$testname {basic reannot varall split gvcf and bgvcf} {
 		tmp/var-gatkh-bwa-sample1.tsv.zst tmp/var-gatkh-bwa-sample2.tsv.zst \
 		tmp/var-gatkh-bwa-sample3.tsv.zst  tmp/var-strelka-bwa-sample4.tsv
 	exec diff tmp/result.tsv data/expected-blocked-pmulticompar.tsv
-} {} 
+} {}
 
 test pmulticompar$testname {basic reannot varall split gvcf, -keepfields} {
 	test_cleantmp
@@ -1604,7 +1605,7 @@ test pmulticompar$testname {basic reannot varall split gvcf and bgvcf -limitreg}
 		tmp/var-gatkh-bwa-sample3.tsv.zst  tmp/var-strelka-bwa-sample4.tsv
 	cg regselect data/expected-blocked-pmulticompar.tsv tmp/limitreg.tsv > tmp/expected.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test pmulticompar$testname {bug check -limitreg missing allvars} {
 	test_cleantmp

@@ -44,13 +44,11 @@ proc var_strelka_job {args} {
 	set mingenoqual 25
 	set resultfiles 0
 	set rootname {}
+	set datatype {}
 	set skips {}
 	cg_options var_strelka args {
 		-L - -deps {
 			lappend deps $value
-		}
-		-exome {
-			set exome $value
 		}
 		-regionfile {
 			set regionfile $value
@@ -82,6 +80,9 @@ proc var_strelka_job {args} {
 		-rootname {
 			set rootname $value
 		}
+		-datatype {
+			set datatype $value
+		}
 		-skip {
 			lappend skips -skip $value
 		}
@@ -98,15 +99,19 @@ proc var_strelka_job {args} {
 	} else {
 		set root $rootname
 	}
-	if {![info exists exome]} {
-		if {[file exists [gzfile $destdir/reg_targets-*.tsv]]} {
-			set exome 1
+	if {$datatype eq ""} {
+		if {[file exists [ampliconsfile $destdir]]} {
+			set datatype targeted
+		} elseif {[file exists [targetfile $destdir]]} {
+			set datatype exome
 		} else {
-			set exome 0
+			set datatype genome
 		}
 	}
-	if {$exome} {
+	if {$datatype eq "exome"} {
 		lappend opts --exome
+	} elseif {$datatype eq "amplicons"} {
+		lappend opts --targeted
 	}
 	# resultfiles
 	set varfile ${pre}var-$root.tsv
@@ -159,19 +164,24 @@ proc var_strelka_job {args} {
 			}
 		}
 		if {!$zerosize} {
-			file delete -force $varfile.strelkarun
-			file mkdir $varfile.strelkarun
+			set strelkarun [scratchdir]/strelkarun
+			file delete -force $strelkarun
+			file mkdir $strelkarun
 			set strelkadir [searchpath STRELKAADIR strelka strelka*]
 			exec $strelkadir/bin/configureStrelkaGermlineWorkflow.py {*}$opts \
 				--bam $dep \
 				--referenceFasta $refseq \
-				--runDir $varfile.strelkarun
-			catch_exec $varfile.strelkarun/runWorkflow.py -m local -j $threads
-			file rename -force $varfile.strelkarun/results/variants/genome.S1.vcf.gz $resultgvcf.gz
-			file rename -force $varfile.strelkarun/results/variants/genome.S1.vcf.gz.tbi $resultgvcf.gz.tbi
-			file rename -force $varfile.strelkarun/results/variants/variants.vcf.gz $resultvcf.gz
-			file rename -force $varfile.strelkarun/results/variants/variants.vcf.gz.tbi $resultvcf.gz.tbi
-			file delete -force $varfile.strelkarun
+				--runDir $strelkarun
+			if {$threads == 1} {
+				catch_exec $strelkarun/runWorkflow.py -m local -j 1
+			} else {
+				catch_exec $strelkarun/runWorkflow.py -m local -j $threads
+			}
+			file rename -force $strelkarun/results/variants/genome.S1.vcf.gz $resultgvcf.gz
+			file rename -force $strelkarun/results/variants/genome.S1.vcf.gz.tbi $resultgvcf.gz.tbi
+			file rename -force $strelkarun/results/variants/variants.vcf.gz $resultvcf.gz
+			file rename -force $strelkarun/results/variants/variants.vcf.gz.tbi $resultvcf.gz.tbi
+			file delete -force $strelkarun
 		} else {
 			putslog "empty regionfile -> write empty $resultgvcf.gz"
 			file_write $resultgvcf.gz ""

@@ -62,6 +62,9 @@ proc var_sam_job {args} {
 		-rootname {
 			set rootname $value
 		}
+		-datatype {
+			# not actually used
+		}
 		-skip {
 			lappend skips -skip $value
 		}

@@ -12,6 +12,7 @@ proc var_job {args} {
 	set threads 2
 	set cleanup 1
 	set regmincoverage 3
+	set datatype {}
 	set opts {}
 	set var_opts {}
 	cg_options var args {
@@ -47,6 +48,9 @@ proc var_job {args} {
 		-cleanup {
 			set cleanup $value
 		}
+		-datatype {
+			set datatype $value
+		}
 		-opts {
 			set opts $value
 		}
@@ -67,12 +71,13 @@ proc var_job {args} {
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# run
 	if {$distrreg in {0 {}}} {
-		var_${method}_job {*}$var_opts -opts $opts -regionfile $regionfile -pre $pre \
+		var_${method}_job {*}$var_opts -opts $opts -datatype $datatype -regionfile $regionfile -pre $pre \
 			-split $split -threads $threads -cleanup $cleanup $bamfile $refseq
 	} else {
 		# check what the resultfiles are for the method
 		set resultfiles [var_${method}_job -resultfiles 1 {*}$var_opts -opts $opts \
 			-regionfile $regionfile -pre $pre \
+			-datatype $datatype \
 			-split $split $bamfile $refseq]
 		set skips [list -skip $resultfiles]
 		# if {[jobtargetexists $resultfiles [list $refseq $bamfile $regionfile]]} return
@@ -109,7 +114,9 @@ proc var_job {args} {
 		mklink $bamfile.bai $ibam.bai
 		defcompressionlevel 1
 		foreach region $regions regfile $regfiles {
-			lappend todo [var_${method}_job {*}$var_opts -opts $opts {*}$skips -rootname $root-$region -regionfile $regfile \
+			lappend todo [var_${method}_job {*}$var_opts -opts $opts {*}$skips \
+				-datatype $datatype \
+				-rootname $root-$region -regionfile $regfile \
 				-split $split -threads $threads -cleanup $cleanup $ibam $refseq]
 		}
 		defcompressionlevel 9

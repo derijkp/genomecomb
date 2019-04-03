@@ -26,6 +26,7 @@ proc process_project_job {args} {
 	set threads 2
 	set keepsams 0
 	set keepfields *
+	set datatype {}
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -130,6 +131,9 @@ proc process_project_job {args} {
 		-keepsams {
 			set keepsams $value
 		}
+		-datatype {
+			set datatype $value
+		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set dbdir [file_absolute $dbdir]
@@ -196,7 +200,7 @@ proc process_project_job {args} {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		if {!$jobsample} {
-			process_sample_job -todoVar todo -clip $clip \
+			process_sample_job -todoVar todo -clip $clip -datatype $datatype \
 				-aligner $aligner -realign $realign -varcallers $varcallers -svcallers $svcallers \
 				-dbdir $dbdir -split $split -paired $paired \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -209,7 +213,7 @@ proc process_project_job {args} {
 			job_getinfo 1
 			set verbose [logverbose]
 			set ::deps {} ; set ::targets {}
-			process_sample_job -todoVar todo -clip $clip \
+			process_sample_job -todoVar todo -clip $clip -datatype $datatype \
 				-aligner $aligner -realign $realign --varcallers $varcallers -svcallers $svcallers \
 				-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -222,9 +226,9 @@ proc process_project_job {args} {
 			job process_sample-$sample -deps $deps -targets $targets -vars {
 				clip aligner realign varcallers svcallers dbdir split paired
 				adapterfile reports samBQ cleanup  removeduplicates amplicons
-				removeskew dt targetfile minfastqreads dir keepsams
+				removeskew dt targetfile minfastqreads dir keepsams datatype
 			} -code {
-				cg process_sample -stack 1 -v 2 -clip $clip \
+				cg process_sample -stack 1 -v 2 -clip $clip -datatype $datatype \
 					-aligner $aligner -realign $realign -varcallers $varcallers -svcallers $svcallers \
 					-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams \
 					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \

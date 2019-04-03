@@ -475,6 +475,7 @@ proc process_sample_job {args} {
 	set threads 2
 	set distrreg 0
 	set keepsams 0
+	set datatype {}
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -552,6 +553,9 @@ proc process_sample_job {args} {
 		-keepsams {
 			set keepsams $value
 		}
+		-datatype {
+			set datatype $value
+		}
 	} {} 1 2
 	if {[llength $args] == 1} {
 		foreach {sampledir} $args break
@@ -607,10 +611,12 @@ proc process_sample_job {args} {
 	if {$temp ne ""} {
 		if {$amplicons ne ""} {puts stderr "Not overwriting existing ampliconsfile $temp"}
 		set amplicons $temp
+		if {$datatype eq ""} {set datatype amplicons}
 	} elseif {$amplicons ne ""} {
 		set temp [lindex [split [file root [gzroot [file tail $amplicons]]] -] end]
 		mklink $amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv 1
 		set amplicons $sampledir/reg_${ref}_amplicons-$temp.tsv
+		if {$datatype eq ""} {set datatype amplicons}
 	}
 	if {![catch {file link $amplicons} link]} {
 		set ampliconsname [file tail $link]
@@ -631,10 +637,12 @@ proc process_sample_job {args} {
 	if {$temp ne ""} {
 		if {$amplicons ne ""} {puts stderr "Not overwriting existing targetfile $temp"}
 		set targetfile $temp
+		if {$datatype eq ""} {set datatype exome}
 	} elseif {$targetfile ne ""} {
 		set temp [lindex [split [file root [gzroot [file tail $targetfile]]] -] end]
 		mklink $targetfile $sampledir/reg_${ref}_targets-$temp.tsv[gzext $targetfile] 1
 		set targetfile $sampledir/reg_${ref}_targets-$temp.tsv[gzext $targetfile]
+		if {$datatype eq ""} {set datatype exome}
 	}
 	# check projectinfo
 	projectinfo $sampledir dbdir {split 1}
@@ -804,7 +812,7 @@ proc process_sample_job {args} {
 			if {![auto_load var_${varcaller}_job]} {
 				error "varcaller $varcaller not supported"
 			}
-			lappend cleanupdeps {*}[var_job -method ${varcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
+			lappend cleanupdeps {*}[var_job -method ${varcaller} -distrreg $distrreg -datatype $datatype -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup $cleanedbam $refseq]
 			lappend todo(var) var-$varcaller-$bambase.tsv
 		}
 		foreach svcaller $svcallers {

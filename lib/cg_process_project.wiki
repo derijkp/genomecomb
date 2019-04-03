@@ -115,6 +115,10 @@ to 1 to run each sample in one job, thus reducing the job managment overhead.
 fields in fieldlist (space separated) in the multicompar file. Default is
 to use all fields present in the file (*). All fields will still be used
 in the per sample output.
+; -datatype datatype: Some variant callers (strelka) need to know the type
+of data (genome, exome or amplicons) for analysis. You can specify it
+using this option. If not given, it is deduced from acompanying region
+files (reg_*_amplicons.tsv for ampicons or reg_*_amplicons.tsv for exome)
 
 This command can be distributed on a cluster or using multiple cores with
 [[joboptions|job options]] (more info with cg help joboptions)
