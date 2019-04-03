@@ -4,7 +4,7 @@ array set bcol_typea {c,mx  127 s,mx  32767 i,mx  2147483647 w,mx  9223372036854
 proc cg_bcol_make {args} {
 	global bcol_typea
 	set type iu
-	set compress 9
+	set compress 8
 	set chrompos -1
 	set chromosomename {}
 	set defaultvalue 0
