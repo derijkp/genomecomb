@@ -7,20 +7,22 @@ cg zst ?options? file ...
 Compresses files using zstd
 
 == Description ==
-The given files are compressed using zstd, and the original uncompressed files
-are removed (by default). Files already compressed using another method,
-are recompressed using zstd. zstd is a fast compression method, it compresses
-and decompresses an order of magnitude faster than gzip, while also
-providing better compression.
+The given files are compressed using zstd, and the original uncompressed
+files are removed (by default). Files already compressed using another
+method, are recompressed using zstd. zstd is a fast compression method, at
+the default compression level (8), it compresses and decompresses an order
+of magnitude faster than gzip, while also providing substantially better
+compression. At the highest compression levels, zstd can rival bzip2/xz
+for compression, though it will then be substantially slower at
+compression (than gzip). Decompression is allways fast.
 
 == Options ==
 supports options:
 ; -k 0/1 (--keep): keep the original uncompressed file if 1 (default 0)
-; -c number (--compressionlevel): number between 1 and 12 indicating compression level, where 1 = fast compression, 9 = high compression (default 9)
-At high compression (9), compression level and speed is similar to gzip, but decompression is still an 
-order of magnitude faster
+; -c number (--compressionlevel): number between 1 and 22 indicating compression level, where 1 = fast compression, 22 = high compression (default 8)
 ; -b number (--blocksize): number indicating the blocksize in Kb (default 512)
 ; -i 0/1 (--index): also create an zst index file
+; -t number (--threads); number of threads used to compress
 ; -o filename (--outputfile): The compressed file will be written to **filename**. 
 If the --keep option is not explicitely given, using -o will change the "default" for -k to 1.
 
