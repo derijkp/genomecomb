@@ -2,6 +2,8 @@
 # the next line restarts using wish \
 exec cg source "$0" "$@"
 
+set script [info script] ; if {$script eq ""} {set script ./t}
+set appdir [file dir [file dir [file normalize $script]]]
 proc runtests file {
 	cd $::appdir/tests
 	uplevel source $file
