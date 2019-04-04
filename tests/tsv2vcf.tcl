@@ -109,11 +109,13 @@ test tsv2vcf {gatkh results} {
 	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##GATKCommandLine\|##samplename\|##source=\|##split\|##info} > tmp/temp.vcf
 	exec grep -v {##GATKCommandLine\|##source=} data/var-gatkh-bwa-test.vcf > tmp/expected.vcf
 	exec diff tmp/temp.vcf tmp/expected.vcf
-} {1a2
-> ##ALT=<ID=NON_REF,Description="Represents any possible alternative allele at this location">
-44d44
-< ##ALT=<ID=NON_REF,Description="Represents any possible alternative allele at this location">
-child process exited abnormally} error
+} {} {}
+
+test tsv2vcf {gatkh results check quotes} {
+	exec cg vcf2tsv data/var-gatkh-bwa-test.vcf tmp/temp.tsv
+	exec cg tsv2vcf -dbdir $::refseqdir/hg19 tmp/temp.tsv | grep -v {##samplename\|##split\|##info} > tmp/temp.vcf
+	exec diff tmp/temp.vcf data/var-gatkh-bwa-test.vcf
+} {}
 
 test tsv2vcf {gatkh results,no metadata} {
 	exec cg vcf2tsv data/var-gatkh-bwa-test.vcf tmp/temp.tsv.temp
