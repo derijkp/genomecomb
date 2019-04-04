@@ -8,14 +8,14 @@ proc bio_geneticcodetable {{code {}}} {
 		return ::bio::transl_table_$code
 	} else {
 		if {$clen == 0} {
-			set file $::genomecombdir/res/geneticcodes/1_Standard.txt
+			set file $::appdir/res/geneticcodes/1_Standard.txt
 			set num 1
 		} else {
 			if [isint $code] {
-				set file [lindex [glob $::genomecombdir/res/geneticcodes/${code}_*.txt] 0]
+				set file [lindex [glob $::appdir/res/geneticcodes/${code}_*.txt] 0]
 				set num $code
 			} else {
-				set file [lindex [glob $::genomecombdir/res/geneticcodes/*_$code.txt] 0]
+				set file [lindex [glob $::appdir/res/geneticcodes/*_$code.txt] 0]
 				regexp {[0-9]+} $file num
 			}
 		}
