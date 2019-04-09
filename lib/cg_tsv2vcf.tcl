@@ -202,7 +202,7 @@ proc tsv2vcf_outputheaderfield {o key aVar} {
 		foreach line [lrange $value 2 end] {
 			set list {}
 			foreach field $tfields v $line {
-				if {$field eq "Description"} {
+				if {[string first " " $v] != -1} {
 					lappend list $field=\"$v\"
 				} else {
 					lappend list $field=$v
