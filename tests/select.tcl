@@ -1405,5 +1405,26 @@ test select "-fo 1$dboptt" {
 } {id	freq-sample1	n-sample1	freq-sample2	n-sample2	freq-sample3	n-sample3	calc
 1	0.4	n1	0.8	n2	1.0	n3	1}
 
+test select "scount in calc bug" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	seq-sample1	seq-sample2	seq-sample3	seq-sample4
+		1	v	r	v	v
+	}
+	exec cg select {*}$dbopt -f {id {test=100.0*scount($seq == "v")/scount($seq in "v r")}} tmp/temp.tsv
+} {id	test
+1	75.0}
+
+test select "acount in calc bug" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	seq-sample1	seq-sample2	seq-sample3	seq-sample4
+		1	v	r	v	v
+	}
+	exec cg select {*}$dbopt -f {id {test=100.0*acount($seq == "v")/acount($seq in "v r")}} tmp/temp.tsv
+} {id	test
+1	75.0}
 
 testsummarize

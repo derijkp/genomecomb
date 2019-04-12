@@ -105,7 +105,7 @@ proc tsv_select_scount {arguments header neededfieldsVar} {
 	if {![llength $result]} {
 		error "error in scount: all samples are missing one or more needed fields \([join $missing ,]\)"
 	}
-	return [join $result " + "]
+	return ([join $result " + "])
 }
 
 proc tsv_select_spercent {arguments header neededfieldsVar} {
@@ -185,7 +185,7 @@ proc tsv_select_acount {arguments header neededfieldsVar} {
 	if {![llength $result]} {
 		error "error in acount: all analyses are missing one or more needed fields \([join $missing ,]\)"
 	}
-	return [join $result " + "]
+	return ([join $result " + "])
 }
 
 proc tsv_select_apercent {arguments header neededfieldsVar} {
