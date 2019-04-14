@@ -316,4 +316,13 @@ bz2 281 bgz 294 sample.bed - tmp/test.bgz
 bz2 281 bz2 281 sample.bed - tmp/test.bz2
 }
 
+test gzopen {zst} {
+	test_cleantmp
+	cg zst -o tmp/temp.tsv.zst data/annot_compar-exomes_yri_parts.tsv
+	set f [gzopen tmp/temp.tsv.zst]
+	set line [gets $f]
+	gzclose $f
+	llength $line
+} 173
+
 testsummarize

@@ -11,6 +11,14 @@ test exportplink {basic} {
 	exec diff tmp/temp.tped data/expected-vars3.tped
 } {}
 
+test exportplink {compressed} {
+	test_cleantmp
+	cg zst -o tmp/vars3.tsv.zst data/vars3.sft
+	exec cg exportplink tmp/vars3.tsv.zst tmp/temp
+	exec diff tmp/temp.tfam.pre data/expected-vars3.tfam.pre
+	exec diff tmp/temp.tped data/expected-vars3.tped
+} {}
+
 test exportplink {del} {
 	test_cleantmp
 	set c [file_read data/vars3.sft]

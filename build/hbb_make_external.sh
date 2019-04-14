@@ -96,6 +96,10 @@ fi
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/zstd-mt ] ; then
 	download https://github.com/mcmilk/zstdmt/archive/0.6.tar.gz zstdmt-0.6.tar.gz
 	cd /build/zstdmt-0.6/programs
+	if [ ! -f main.c.orig ] ; then
+		cp main.c main.c.ori
+	fi
+	cp /io/extern-src/zstdmt_main.c main.c
 	make clean
 	make loadsource
 	make zstd-mt
