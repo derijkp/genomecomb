@@ -494,6 +494,30 @@ test	chromosome	begin	end	test2
 t	chr3	1000	1100	t2
 }}
 
+test tsv_split {split compressed sorted} {
+	test_cleantmp
+	exec cg split -s 1 data/reg4.tsv tmp/split- .tsv.zst
+	exec cg zcat tmp/split-3.tsv.zst > tmp/split-3.tsv
+	list [lsort -dict [glob tmp/*]] [file_read tmp/split-3.tsv]
+} {{tmp/split-1.tsv.zst tmp/split-2.tsv.zst tmp/split-3.tsv tmp/split-3.tsv.zst tmp/split-M.tsv.zst tmp/split-X.tsv.zst tmp/split-Y.tsv.zst} {## header
+##
+test	chromosome	begin	end	test2
+t	chr3	1000	1100	t2
+}}
+
+test tsv_split {split compressed sorted partly done} {
+	test_cleantmp
+	exec cg split -s 1 data/reg4.tsv tmp/split- .tsv.zst
+	file delete tmp/split-2.tsv.zst
+	exec cg split -s 1 data/reg4.tsv tmp/split- .tsv.zst 2> /dev/null
+	exec cg zcat tmp/split-3.tsv.zst > tmp/split-3.tsv
+	list [lsort -dict [glob tmp/*]] [file_read tmp/split-3.tsv]
+} {{tmp/split-1.tsv.zst tmp/split-2.tsv.zst tmp/split-3.tsv tmp/split-3.tsv.zst tmp/split-M.tsv.zst tmp/split-X.tsv.zst tmp/split-Y.tsv.zst} {## header
+##
+test	chromosome	begin	end	test2
+t	chr3	1000	1100	t2
+}}
+
 test tsv_split {split stdin} {
 	test_cleantmp
 	exec cat data/reg4.tsv | cg split -- - tmp/split- .tsv

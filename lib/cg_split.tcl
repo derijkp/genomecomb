@@ -1,8 +1,12 @@
 proc cg_split {args} {
 	set postfix {}
+	set sorted 0
 	cg_options split args {
 		-f {
 			set field $value
+		}
+		-s {
+			set sorted $value
 		}
 	} {file prefix postfix} 2 3
 	if {$file ne "-"} {
@@ -20,19 +24,44 @@ proc cg_split {args} {
 		set chrclip 1
 		if {$pos == -1} {error "no chromosome field was found in the file"}
 	}
+	set skip 0
 	while {[gets $f line] >= 0} {
 		set value [lindex [split $line \t] $pos]
 		if {$chrclip} {set value [chr_clip $value]}
 		if {![info exists a($value)]} {
-			set o [wgzopen $prefix$value$postfix w]
-			puts -nonewline $o $comment
-			puts $o [join $header \t]
-			set a($value) $o
+			if {$sorted} {
+				if {[info exists prevvalue] && !$skip} {
+					gzclose $a($prevvalue)
+					file rename $prefix$prevvalue$postfix.temp[gzext $postfix] $prefix$prevvalue$postfix
+				}
+				if {[file exists $prefix$value$postfix]} {
+					puts stderr "File $prefix$value$postfix exists, skipping"
+					set skip 1
+				} else {
+					set skip 0
+				}
+				set prevvalue $value
+			}
+			if {!$skip} {
+				set o [wgzopen $prefix$value$postfix.temp[gzext $postfix] w]
+				puts -nonewline $o $comment
+				puts $o [join $header \t]
+				set a($value) $o
+			}
 		}
+		if {$skip} continue
 		puts $a($value) $line
 	}
-	gzclose $f
-	foreach value [array names a] {
-		gzclose $a($value)
+	if {$sorted} {
+		if {[info exists prevvalue] && !$skip} {
+			gzclose $a($prevvalue)
+			file rename $prefix$prevvalue$postfix.temp[gzext $postfix] $prefix$prevvalue$postfix
+		}
+	} else {
+		foreach value [array names a] {
+			gzclose $a($value)
+			file rename $prefix$value$postfix.temp[gzext $postfix] $prefix$value$postfix
+		}
 	}
+	gzclose $f
 }
