@@ -66,8 +66,8 @@ PATH=/build/bin:$PATH
 
 # Compile
 cd /io
-mkdir -p linux-x86_64
-cd linux-x86_64
+mkdir -p linux-$arch
+cd linux-$arch
 ../build/version.tcl
 if [ "$clean" = 1 ] ; then
 	make distclean || true
