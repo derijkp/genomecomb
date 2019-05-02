@@ -953,4 +953,44 @@ name1	AAGAAAA
 name 2	ACAAAAAAA
 }
 
+test tsv2fasta {tsv2fasta} {
+	file_write tmp/test.tsv [deindent {
+		id	sequence
+		name1	AAGAAAA
+		name 2	ACAAAAAAA
+	}]\n
+	cg tsv2fasta tmp/test.tsv
+} {>name1
+AAGAAAA
+>name 2
+ACAAAAAAA
+}
+
+test tsv2fasta {tsv2fasta to outfile} {
+	file_write tmp/test.tsv [deindent {
+		id	sequence
+		name1	AAGAAAA
+		name 2	ACAAAAAAA
+	}]\n
+	cg tsv2fasta tmp/test.tsv tmp/out.fasta
+	file_read tmp/out.fasta
+} {>name1
+AAGAAAA
+>name 2
+ACAAAAAAA
+}
+
+test tsv2fasta {tsv2fasta stdin} {
+	file_write tmp/test.tsv [deindent {
+		id	sequence
+		name1	AAGAAAA
+		name 2	ACAAAAAAA
+	}]\n
+	exec cg tsv2fasta < tmp/test.tsv
+} {>name1
+AAGAAAA
+>name 2
+ACAAAAAAA
+}
+
 testsummarize
