@@ -313,7 +313,7 @@ int main(int argc, char *argv[]) {
 					/* match of varall, also type, start by using varall seq and zyg (as if match = 3) */
 					/* change out_seq later based on data if match == 2 */
 					if (varallvars->varpos.seq != -1) {
-						/* the value of out_seq i later compared directly to ds_*, so need to set here */
+						/* the value of out_seq is later compared directly to ds_*, so need to set here */
 						if (varallvars->result->data[varallvars->varpos.seq].size == 1) {
 							if (varallvars->result->data[varallvars->varpos.seq].string[0] == 'u') {
 								/* varall is u, so out_seq too */
