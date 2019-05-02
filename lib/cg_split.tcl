@@ -43,7 +43,7 @@ proc cg_split {args} {
 				set prevvalue $value
 			}
 			if {!$skip} {
-				set o [wgzopen $prefix$value$postfix.temp[gzext $postfix] w]
+				set o [wgzopen $prefix$value$postfix.temp[gzext $postfix]]
 				puts -nonewline $o $comment
 				puts $o [join $header \t]
 				set a($value) $o

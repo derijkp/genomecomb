@@ -17,7 +17,7 @@ proc cg_fasta2tsv {args} {
 	if {$outfile ne "-"} {
 		if {[file exists $outfile]} {error "file exists: $outfile"}
 		set tempfile $outfile.temp[file extension $outfile]
-		set o [wgzopen $tempfile w]
+		set o [wgzopen $tempfile]
 	} else {
 		set o stdout
 	}
