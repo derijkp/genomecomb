@@ -31,6 +31,17 @@ proc cg_download_genome {args} {
 		putslog "Converting and indexing"
 		exec zcat {*}$files | cg genome_indexfasta $tail
 		file rename -force {*}[glob $tail*] ..
+	} elseif {!$alt && ![catch {
+		exec wget --tries=45 ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/analysisSet/$build.analysisSet.chroms.tar.gz
+	} msg]} {
+		exec tar xvzf $build.analysisSet.chroms.tar.gz
+		set files [ssort -natural [glob $build.analysisSet.chroms/*.fa]]
+		if {!$alt} {
+			set files [list_sub $files -exclude [list_find -regexp $files _hap]]
+		}
+		putslog "Converting and indexing"
+		exec cat {*}$files | cg genome_indexfasta $tail
+		file rename -force {*}[glob $tail*] ..
 	} elseif {![catch {
 		wgetfiles ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr*.fa.gz goldenPath-$build-chromosomes
 		if {![llength [glob goldenPath-$build-chromosomes/*.fa.gz]]} {error "Could not download $build chromosomes"}

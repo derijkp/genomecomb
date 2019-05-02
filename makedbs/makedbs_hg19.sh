@@ -9,13 +9,13 @@ set defaultdest /complgen/refseqnew
 set mirbasegenome hsa
 set mirbaserelease 20
 set mirbasebuild hg19
-set dbsnpversion 150
+set dbsnpversion 151
 set gencodeversion 28
 set 1000g3url ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
 set 1000g3readmeurl ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/README_phase3_callset_20150220
 set 1000g3build hg19
-set clinvarurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20180930.vcf.gz
-set clinvarpapuurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20180930_papu.vcf.gz
+set clinvarurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20190408.vcf.gz
+set clinvarpapuurl ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20190408_papu.vcf.gz
 set kaviarurl http://s3-us-west-2.amazonaws.com/kaviar-160204-public/Kaviar-160204-Public-hg19-trim.vcf.tar
 set kaviarbuild hg19
 set evsurl http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.protein-hgvs-update.snps_indels.vcf.tar.gz
@@ -25,13 +25,29 @@ set exacbuild hg19
 set caddversion 1.4
 set caddurl http://krishna.gs.washington.edu/download/CADD/v$caddversion/GRCh37/whole_genome_SNVs.tsv.gz
 set caddbuild hg19
-set gnomadversion 2.1
+set gnomadversion 2.1.1
 set gnomadbaseurl https://storage.googleapis.com/gnomad-public/release/$gnomadversion/vcf
 set gnomadexurl $gnomadbaseurl/exomes/gnomad.exomes.r$gnomadversion.sites.vcf.bgz
+set gnomadlof https://storage.googleapis.com/gnomad-public/release/2.1.1/constraint/gnomad.v2.1.1.lof_metrics.by_gene.txt.bgz
+set gnomadbuild hg19
 set ccrversion 2.20180420
 set ccrurl https://s3.us-east-2.amazonaws.com/ccrs/ccrs/ccrs.autosomes.v${ccrversion}.bed.gz
+set ccrbuild hg19
 set dbnsfpurl ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv3.5a.zip
 set dbnsfpbuild hg38
+set regionsdb_collapse {
+	cytoBand evofold microsat oreganno rmsk simpleRepeat targetScanS tfbsConsSites 
+	tRNAs wgRna vistaEnhancers gad
+	phastConsElements46way phastConsElements46wayPlacental phastConsElements46wayPrimates
+	phastConsElements100way wgEncodeDacMapabilityConsensusExcludable
+}
+set regionsdb_join {
+	chainSelf dgvMerged genomicSuperDups
+}
+set genesdb_list [list \
+	refGene ensGene knownGene wgEncodeGencodeBasicV${gencodeversion}lift37 wgEncodeGencodeCompV${gencodeversion}lift37 \
+	genscan acembly lincRNAsTranscripts \
+]
 
 # arguments
 if {![info exists argv]} {set argv {}}
@@ -91,6 +107,35 @@ job reg_${build}_sequencedgenome -deps {
 # make bwa version of genome
 bwarefseq_job genome_${build}.ifas
 
+# make ngmlr version of genome
+ngmlr_refseq_job genome_${build}.ifas ont
+
+job extragenome -deps {
+	genome_${build}.ifas
+	genome_${build}.ifas.index
+	genome_${build}.ssa
+} -vars build -targets {
+	extra/genome_${build}.ifas extra/genome_${build}.ifas.fai extra/genome_${build}.ifas.index
+	genome_${build}.fa genome_${build}.fa.fai genome_${build}.fa.index
+	extra/genome_${build}.ssa
+} -code {
+	mklink genome_${build}.ifas extra/genome_${build}.ifas
+	mklink genome_${build}.ifas.fai extra/genome_${build}.ifas.fai
+	mklink genome_${build}.ifas.index extra/genome_${build}.ifas.index 
+	mklink genome_${build}.ifas genome_${build}.fa
+	mklink genome_${build}.ifas.fai genome_${build}.fa.fai
+	mklink genome_${build}.ifas.index genome_${build}.fa.index 
+	mklink genome_${build}.ssa extra/genome_${build}.ssa
+}
+
+# genome in extra
+foreach file [glob genome_*] {
+	catch {
+		file delete extra/[file tail $file]
+		mklink $file extra/[file tail $file]
+	}
+}
+
 # region databases (ucsc)
 # you can explicitely download info on a database using:
 # cg download_ucscinfo resultfile ${build} dbname
@@ -98,12 +143,7 @@ bwarefseq_job genome_${build}.ifas
 
 
 # collapse regions
-foreach db {
-	cytoBand evofold microsat oreganno rmsk simpleRepeat targetScanS tfbsConsSites 
-	tRNAs wgRna vistaEnhancers gad
-	phastConsElements46way phastConsElements46wayPlacental phastConsElements46wayPrimates
-	phastConsElements100way wgEncodeDacMapabilityConsensusExcludable
-} {
+foreach db $regionsdb_collapse {
 	job reg_${build}_$db -targets {
 		reg_${build}_${db}.tsv
 	} -vars {dest build db} -code {
@@ -117,9 +157,7 @@ foreach db {
 }
 
 # join regions
-foreach db {
-	chainSelf dgvMerged genomicSuperDups
-} {
+foreach db $regionsdb_join {
 	job reg_${build}_$db -targets {
 		reg_${build}_${db}.tsv
 	} -vars {dest build db} -code {
@@ -219,25 +257,28 @@ job clinvar -targets {
 	cg zindex $target
 }
 
-job kaviar -targets {
-	var_${build}_kaviar.tsv
-} -vars {dest build kaviarurl kaviarbuild} -code {
-	set target [gzroot $target].zst
-	if {$kaviarbuild eq $build} {
-		cg download_kaviar $target $kaviarurl
-	} else {
-		cg download_kaviar $target.$kaviarbuild.zst $kaviarurl
-		liftover_refdb $target.$kaviarbuild.zst $target $dest $kaviarbuild $build
+if {[info exists kaviarurl]} {
+	job kaviar -targets {
+		var_${build}_kaviar.tsv
+	} -vars {dest build kaviarurl kaviarbuild} -code {
+		set target [gzroot $target].zst
+		if {$kaviarbuild eq $build} {
+			cg download_kaviar $target $kaviarurl
+		} else {
+			cg download_kaviar $target.$kaviarbuild.zst $kaviarurl
+			liftover_refdb $target.$kaviarbuild.zst $target $dest $kaviarbuild $build
+		}
 	}
 }
 
 # genes
-foreach db [list \
-	refGene ensGene knownGene wgEncodeGencodeBasicV${gencodeversion}lift37 wgEncodeGencodeCompV${gencodeversion}lift37 \
-	genscan acembly lincRNAsTranscripts \
-] {
+foreach db $genesdb_list {
 	if {$db eq "wgEncodeGencodeCompV19"} {
 		set dbname gencode
+	} elseif {$db eq "wgEncodeGencodeBasicV${gencodeversion}"} {
+		set dbname gencode
+	} elseif {$db eq "wgEncodeGencodeCompV${gencodeversion}"} {
+		set dbname cgencode
 	} elseif {$db eq "wgEncodeGencodeBasicV${gencodeversion}lift37"} {
 		set dbname gencode
 	} elseif {$db eq "wgEncodeGencodeCompV${gencodeversion}lift37"} {
@@ -275,7 +316,7 @@ job gene_${build}_intGene -deps {
 	$target.gz.tbi
 } -vars {dest build db} -code {
 	set target [gzroot $target].zst
-	cg intgene {*}$deps {*}[compresspipe $target] > $target.temp
+	cg intgene {*}$deps {*}[compresspipe $target 12] > $target.temp
 	file rename -force $target.temp $target
 	cg maketabix $target
 	cg zindex $target
@@ -412,7 +453,7 @@ job reg_${build}_homopolymer -deps {
 	reg_${build}_homopolymer.tsv.opt
 } -vars {dest build db} -code {
 	set target reg_${build}_homopolymer.tsv.zst
-	file_write $target.opt "fields\t{base size}\n"
+	file_write [gzroot $target].opt "fields\t{base size}\n"
 	cg extracthomopolymers genome_${build}.ifas {*}[compresspipe $target 12] > $target.temp
 	file rename -force $target.temp $target
         cg maketabix $target
@@ -444,7 +485,7 @@ job var_${build}_evs -targets {
 }
 
 # exac
-job reg_${build}_exac -targets {
+job var_${build}_exac -targets {
 	extra/var_${build}_exac.tsv
 	extra/var_${build}_exac.tsv.opt
 	extra/var_${build}_exac.tsv.info
@@ -624,32 +665,6 @@ job var_${build}_dbnsfp -targets {
 	cg download_dbnsfp $target $build $dbnsfpurl $dbnsfpbuild
 }
 
-job extragenome -deps {
-	genome_${build}.ifas
-	genome_${build}.ifas.index
-	genome_${build}.ssa
-} -vars build -targets {
-	extra/genome_${build}.ifas extra/genome_${build}.ifas.fai extra/genome_${build}.ifas.index
-	genome_${build}.fa genome_${build}.fa.fai genome_${build}.fa.index
-	extra/genome_${build}.ssa
-} -code {
-	mklink genome_${build}.ifas extra/genome_${build}.ifas
-	mklink genome_${build}.ifas.fai extra/genome_${build}.ifas.fai
-	mklink genome_${build}.ifas.index extra/genome_${build}.ifas.index 
-	mklink genome_${build}.ifas genome_${build}.fa
-	mklink genome_${build}.ifas.fai genome_${build}.fa.fai
-	mklink genome_${build}.ifas.index genome_${build}.fa.index 
-	mklink genome_${build}.ssa extra/genome_${build}.ssa
-}
-
-# genome in extra
-foreach file [glob genome_*] {
-	catch {
-		file delete extra/[file tail $file]
-		mklink $file extra/[file tail $file]
-	}
-}
-
 # ccr
 # ---
 job ccr -deps {
@@ -687,12 +702,57 @@ job ccr -deps {
 	file delete -force $target.temp
 }
 
+# gnomad lof
+# ----------
+job ccr -deps {
+} -vars {
+	build ccrversion gnomadlof
+} -targets {
+	reg_${build}_lofgnomad.tsv
+} -code {
+	file_write $target.info [subst [deindent {
+		= lofgnomad (loss of function tolerence) =
+		
+		== Download info ==
+		dbname	lofgnomad
+		version	$gnomadversion
+		citation	Lek M., Karczewski K., Exome Aggregation Consortium. Analysis of protein-coding genetic variation in 60,706 humans. Nature volume 536, pages 285-291 (2016)
+		license	cite
+		source	$gnomadlof
+		time	[timestamp]
+		
+		== Description ==
+		
+		The probability of being loss-of-function (LoF) intolerant (pLI) separates
+		genes of sufficient length into LoF intolerant (pLI >= 0.9, n=3,230) or
+		LoF tolerant (pLI <= 0.1, n=10,374) categories
+
+		More info on https://gnomad.broadinstitute.org/faq
+		and in https://www.nature.com/articles/nature19057
+		
+		== Category ==
+		Annotation
+	}]]
+	file_write $target.opt "fields\tpLI\n"
+	file mkdir $target.temp
+	set tail [file tail $gnomadlof]
+	wgetfile $gnomadlof $target.temp/$tail
+	cg select -overwrite 1 -f {chromosome {begin=$start_position} {end=$end_position} pLI exac_pLI gene *} $target.temp/$tail $target.temp/temp.tsv
+	cg select -overwrite 1 -s - $target.temp/temp.tsv $target.temp/temp2.tsv
+	cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp2.zst
+	file rename -force $target.temp2.zst $target.zst
+	cg zstindex $target.zst
+	file delete -force $target.temp
+}
+
+
 
 # gnomad
 # ------
 set finaltarget var_${build}_gnomad.tsv.zst
 set tempdir $finaltarget.temp
 file mkdir $tempdir
+
 job var_${build}_gnomad-info -targets {
 	var_${build}_gnomad.tsv.info
 } -vars {dest db build gnomadversion gnomadbaseurl} -code {
@@ -781,57 +841,127 @@ proc gnomadfields {file} {
 	return $fields
 }
 
-set deps {}
-foreach chromosome {
-	1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X
-} {
-	puts chr$chromosome
-	set vcf gnomad.genomes.r$gnomadversion.sites.chr$chromosome.vcf.bgz
-	set target $tempdir/result$chromosome.tsv.zst
-	lappend deps $target
-	job var_${build}_gnomad-$chromosome -targets {
-		$target
-	} -skip {$finaltarget} -vars {tempdir gnomadbaseurl vcf dest db build} -code {
-		if {![file exists $tempdir/$vcf]} {
-			putslog "Downloading $vcf"
-			wgetfile $gnomadbaseurl/genomes/$vcf $tempdir/$vcf
-		}
-		set fields [gnomadfields $tempdir/$vcf]
-		putslog "Converting $vcf"
-		cg vcf2tsv -split 1 -sort 0 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles {*}[compresspipe $target 12] > $target.temp
-		file rename $target.temp $target
-	}
-}
 
-job var_${build}_gnomad-final -deps $deps -targets {
-	$finaltarget
-	var_${build}_gnomad.tsv.opt
-} -vars {tempdir dest db build finaltarget} -code {
-	file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
-	exec cg cat {*}$deps {*}[compresspipe $finaltarget 12] > $tempdir/result.tsv.temp
-	file rename -force $tempdir/result.tsv.temp $finaltarget
-	cg zindex $finaltarget
-	cg index $finaltarget
-	# file delete -force $tempdir
+if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}_gnomad.tsv.zst]} {
+	mklink $dest/$gnomadbuild/var_${gnomadbuild}_gnomad.tsv.zst $tempdir/result.tsv.temp.zst
+	job var_${build}_gnomad-final -deps {
+		$tempdir/result.tsv.temp.zst
+	} -targets {
+		$finaltarget
+		var_${build}_gnomad.tsv.opt
+	} -vars {tempdir dest db build finaltarget gnomadbuild} -code {
+		file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
+		file rename [gzroot $finaltarget].info $tempdir/result.tsv.temp.info
+		liftover_refdb $tempdir/result.tsv.temp.zst $finaltarget $dest $gnomadbuild $build 0
+		cg zindex $finaltarget
+		cg index $finaltarget
+		# file delete -force $tempdir
+	}
+} else {
+
+	set deps {}
+	foreach chromosome {
+		1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X
+	} {
+		puts chr$chromosome
+		set vcf gnomad.genomes.r$gnomadversion.sites.$chromosome.vcf.bgz
+		set target $tempdir/result$chromosome.tsv.zst
+		lappend deps $target
+		job var_${build}_gnomad-$chromosome -targets {
+			$target
+		} -skip {$finaltarget} -vars {tempdir gnomadbaseurl vcf dest db build} -code {
+			if {![file exists $tempdir/$vcf]} {
+				putslog "Downloading $vcf"
+				wgetfile $gnomadbaseurl/genomes/$vcf $tempdir/$vcf
+			}
+			set fields [gnomadfields $tempdir/$vcf]
+			putslog "Converting $vcf"
+			cg vcf2tsv -split 1 -sort 0 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles {*}[compresspipe $target 12] > $target.temp
+			file rename $target.temp $target
+		}
+	}
+
+	job var_${build}_gnomad-final -deps $deps -targets {
+		$finaltarget
+		var_${build}_gnomad.tsv.opt
+	} -vars {tempdir dest db build finaltarget gnomadbuild} -code {
+		file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
+		exec cg cat {*}$deps {*}[compresspipe $finaltarget 12] > $tempdir/result.tsv.temp.zst
+		if {$gnomadbuild eq $build} {
+			file rename -force $tempdir/result.tsv.temp.zst $finaltarget
+		} else {
+			file rename [gzroot $finaltarget].info $tempdir/result.tsv.temp.info
+			liftover_refdb $tempdir/result.tsv.temp.zst $finaltarget $dest $gnomadbuild $build
+		}
+		cg zindex $finaltarget
+		cg index $finaltarget
+		# file delete -force $tempdir
+	}
+	
+	job var_${build}_gnomad-final -deps $deps -targets {
+		$finaltarget
+		var_${build}_gnomad.tsv.opt
+	} -vars {tempdir dest db build finaltarget gnomadbuild} -code {
+		file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
+		exec cg cat {*}$deps {*}[compresspipe $finaltarget 12] > $tempdir/result.tsv.temp.zst
+		if {$gnomadbuild eq $build} {
+			file rename -force $tempdir/result.tsv.temp.zst $finaltarget
+		} else {
+			file rename [gzroot $finaltarget].info $tempdir/result.tsv.temp.info
+			liftover_refdb $tempdir/result.tsv.temp.zst $finaltarget $dest $gnomadbuild $build 0
+		}
+		cg zindex $finaltarget
+		cg index $finaltarget
+		# file delete -force $tempdir
+	}
+	
 }
 
 set target var_${build}_gnomadex.tsv.zst
-job var_${build}_gnomad_exomes -targets {
-	$target
-	var_${build}_gnomadex.tsv.opt
-} -vars {gnomadexurl tempdir dest db build} -code {
-	file_write var_${build}_gnomadex.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
-	set tempdir $target.temp
-	file mkdir $tempdir
-	set vcf [file tail $gnomadexurl]
-	wgetfile $gnomadexurl $tempdir/$vcf
-	putslog "Converting $vcf"
-	set fields [gnomadfields $tempdir/$vcf]
-	cg vcf2tsv -split 1 -sort 0 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles {*}[compresspipe $target 12] > $tempdir/[file tail $target]
-	file rename $tempdir/[file tail $target] $target
-	cg zindex $target
-	cg index $target
-	file delete -force $tempdir
+if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}_gnomadex.tsv.zst]} {
+	job var_${build}_gnomad_exomes -deps {
+		$dest/$gnomadbuild/var_${gnomadbuild}_gnomadex.tsv.zst
+	} -targets {
+		$target
+		var_${build}_gnomadex.tsv.opt
+	} -vars {gnomadexurl tempdir dest db build gnomadbuild} -code {
+		set tempdir $target.temp
+		file mkdir $tempdir
+		file_write $tempdir/result.tsv.temp.opt "fields\t{max_freqp nfe_freqp}\n"
+		mklink $dep $tempdir/result.tsv.temp.zst
+		liftover_refdb $tempdir/result.tsv.temp.zst $target $dest $gnomadbuild $build 0
+		cg zindex $target
+		cg index $target
+		file delete -force $tempdir
+		catch {file delete $target.temp2}
+		catch {file delete [gzroot $target].unmapped.zst.temp}
+		foreach file [glob -nocomplain [gzroot $target].unmapped*] {
+			file rename $file extra/[file tail $file]
+		}
+	}
+} else {
+	job var_${build}_gnomad_exomes -targets {
+		$target
+		var_${build}_gnomadex.tsv.opt
+	} -vars {gnomadexurl tempdir dest db build gnomadbuild} -code {
+		file_write var_${build}_gnomadex.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
+		set tempdir $target.temp
+		file mkdir $tempdir
+		set vcf [file tail $gnomadexurl]
+		wgetfile $gnomadexurl $tempdir/$vcf
+		putslog "Converting $vcf"
+		set fields [gnomadfields $tempdir/$vcf]
+		cg vcf2tsv -split 1 -sort 0 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles {*}[compresspipe $target 12] > $tempdir/[file tail $target]
+		if {$gnomadbuild eq $build} {
+			file rename $tempdir/[file tail $target] $target
+		} else {
+			file rename var_${build}_gnomadex.tsv.opt $tempdir/result.tsv.temp.info
+			liftover_refdb $tempdir/[file tail $target] $target $dest $gnomadbuild $build
+		}
+		cg zindex $target
+		cg index $target
+		file delete -force $tempdir
+	}
 }
 
 job var_${build}_extragnomad-final -deps {

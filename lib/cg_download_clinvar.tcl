@@ -64,11 +64,11 @@ proc cg_download_clinvar {args} {
 	set f [open $tsvfile]
 	set header [tsv_open $f comment]
 	close $f
-	if {$build eq "hg19" && ![regexp reference=GRCh37 $comment]} {
-		error "$url is from a different reference genome version"
+	if {$build eq "hg19" && ![regexp reference.GRCh37 $comment]} {
+		error "$url is from a different reference genome version than $build"
 	}
-	if {$build eq "hg38" && ![regexp reference=GRCh38 $comment]} {
-		error "$url is from a different reference genome version"
+	if {$build eq "hg38" && ![regexp reference.GRCh38 $comment]} {
+		error "$url is from a different reference genome version than $build"
 	}
 	# link properly to alleles
 	set f [open $tsvfile]

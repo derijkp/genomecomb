@@ -11,6 +11,10 @@ proc cg_download_ucscinfo {args} {
 	set timestamp [timestamp]
 	set version	$timestamp
 	set lastupdated	?
+	if {[file exists $temp/$dbname.html]} {
+		set c [file_read $temp/$dbname.html]
+		if {[regexp {HGERROR-START} $c]} {file delete $temp/$dbname.html}
+	}
 	if {![file exists $temp/$dbname.html]} {
 		puts "Downloading $dbname.html ....."
 		wgetfile http://genome.ucsc.edu/cgi-bin/hgTrackUi?db=$build&g=$dbname $temp/$dbname.html
@@ -62,10 +66,11 @@ proc cg_download_ucsc {args} {
 	set continue 1
 	cg_options download_ucsc args {
 		-c {set continue $value}
-	} {resultfile build dbname} 3 3 {
+	} {resultfile build dbname dbnameinfo} 3 4 {
 		download data from UCSC table dbname as a tsv file
 	}
-	if {[file isfile $resultfile]} {
+	if {![info exists dbnameinfo]} {set dbnameinfo $dbname}
+	if {[file isfile $resultfile] && [file isfile $resultfile.info]} {
 		if {$continue} {
 			putslog "'$resultfile' already exists: skipping download"
 			return
@@ -78,7 +83,7 @@ proc cg_download_ucsc {args} {
 	file mkdir $temp
 	# download documentation
 	# ----------------
-	cg_download_ucscinfo [gzroot $resultfile].info $build $dbname
+	cg_download_ucscinfo [gzroot $resultfile].info $build $dbnameinfo
 	#
 	# download data
 	set single 1

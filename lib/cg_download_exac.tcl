@@ -114,7 +114,7 @@ proc cg_download_exac {args} {
 	}]]
 	file rename -force $tempresult.opt [gzroot $resultfile].opt
 	file rename -force $tempresult.info [gzroot $resultfile].info
-	compress $tempresult.temp2 $resultfile
+	compress $tempresult $resultfile
 	if {!$keep} {file delete -force $tempdir}
 }
 

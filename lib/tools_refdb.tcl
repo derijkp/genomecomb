@@ -1,7 +1,11 @@
-proc liftover_refdb {old new dest dbbuild build} {
+proc liftover_refdb {old new dest dbbuild build {split 1}} {
 	set root [gzroot $old]
 	set newroot [gzroot $new]
-	cg liftover -split 0 $old $new ${dest}/liftover/${dbbuild}To${build}.over.tsv
+	set liftoverfile ${dest}/liftover/${dbbuild}To${build}.over.tsv
+	if {![file exists $liftoverfile]} {
+		set liftoverfile ${dest}/liftover/${dbbuild}To[string toupper [string index $build 0]][string range $build 1 end].over.tsv
+	}
+	cg liftover -split $split $old $new $liftoverfile
 	if {[file exists $root.info]} {
 		set c [file_read $root.info]
 		regsub citation $c "liftover\t${dbbuild}to${build}\ncitation" c
