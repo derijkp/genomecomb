@@ -114,9 +114,24 @@ u	?	?}
 test pmulticompar {multicompar_addvars bgvcf} {
 	test_cleantmp
 	file copy data/varall-strelka-bwa.gvcf.gz tmp/varall-sample.gvcf.gz
-	exec cg vcf2tsv -refout 1 tmp/varall-sample.gvcf.gz | cg select -q {$genoqual >= 10 || $GQX >= 10}  | cg regjoin > tmp/sreg-sample.tsv
 	cg select -overwrite 1 -q {$begin >= 42775179 and $begin <= 42775523} data/var-strelka-bwa.tsv tmp/var-sample.tsv
-	exec cg vcf2tsv -refout 1 tmp/varall-sample.gvcf.gz | cg select -q {$genoqual >= 10 || $GQX >= 10}  | cg regjoin > tmp/sreg-sample.tsv
+	# exec cg vcf2tsv -refout 1 tmp/varall-sample.gvcf.gz | cg select -q {$genoqual >= 10 || $GQX >= 10}  | cg regjoin > tmp/sreg-sample.tsv
+	# make manual with one region changed to check if it properly makes a u of 42775303	42775304	snp
+	file_write tmp/sreg-sample.tsv [deindent {
+		chromosome	begin	end
+		chr21	42735564	42735794
+		chr21	42754329	42754330
+		chr21	42770876	42770912
+		chr21	42770926	42770945
+		chr21	42775174	42775300
+		chr21	42775473	42775474
+		chr21	42775523	42775554
+		chr21	42778778	42778784
+		chr21	42779842	42780099
+		chr22	41923366	41923387
+		chr22	41923388	41923448
+	}]\n
+
 	file_write tmp/allvars.tsv [deindent {
 		chromosome	begin	end	type	ref	alt
 		21	42775179	42775180	snp	C	T
@@ -141,7 +156,7 @@ test pmulticompar {multicompar_addvars bgvcf} {
 	file_write tmp/expected.txt [deindent {
 		x
 		v	m	T	T	15	15	6
-		r	r	G	G	15	15	7
+		u	r	G	G	15	15	7
 		u	u	?	?	7	7	4
 		v	t	C	T	12	0	5
 		v	t	G	T	13	0	5
