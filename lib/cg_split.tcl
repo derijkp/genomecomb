@@ -2,10 +2,10 @@ proc cg_split {args} {
 	set postfix {}
 	set sorted 0
 	cg_options split args {
-		-f {
+		-f - -field {
 			set field $value
 		}
-		-s {
+		-s - -sorted {
 			set sorted $value
 		}
 	} {file prefix postfix} 2 3

@@ -17,8 +17,8 @@ This can also be more generally used to split based on any field using the -f op
 ; **postfix** ...: part of filenames to be generated after the field value
 
 == Options ==
-; **-f field**: name of field upon which rows will be separated (default is chromosome field)
-; **-s 0/1**: can be 1 if the file is sorted on **field**, allows working more efficiently: 
+; -f field (-field): name of field upon which rows will be separated (default is chromosome field)
+; -s 0/1 (-sorted): can be 1 if the file is sorted on **field**, allows working more efficiently: 
 files are closed immediatly on change, existing files are not remade
 
 == Category ==
