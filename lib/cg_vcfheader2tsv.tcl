@@ -274,8 +274,10 @@ proc cg_vcfheader2tsv {args} {
 	}
 	if {[string index $line 0] eq "#"} {
 		set header [string range $line 1 end]
+	} else {
+		error "line with fieldnames missing from vcf"
 	}
-	close $f
+	gzclose $f
 	puts $o [join [vcf2tsvheader $vcfheader $header $split $meta $typelist nheader] \n]
 	if {$showheader} {
 		puts $o [join $nheader \t]
