@@ -571,7 +571,7 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 					set fieldused _$fieldused
 				}
 				lappend groupname \$\{$fieldused\}
-				if {[llength $filter]} {
+				if {[llength $filter] && $filter ne "*"} {
 					if {[string first * $filter] == -1} {
 						lappend rowquery "\[inlist \{$filter\} \$\{$fieldused\}\]"
 					} else {
@@ -659,7 +659,7 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 					set fieldused _$fieldused
 				}
 				lappend col \$\{$fieldused\}
-				if {[llength $filter]} {
+				if {[llength $filter] && $filter ne "*"} {
 					if {[string first * $filter] == -1} {
 						lappend colquery "\[inlist \{$filter\} \$\{$fieldused\}\]"
 					} else {
@@ -667,7 +667,7 @@ proc tsv_select_group {header query qposs qfields group groupcols neededfields s
 						foreach temp $filter {
 							lappend tempcolquery "\[string match \{$temp\} \$\{$fieldused\}\]"
 						}
-						lappend colquery [join $colquery " || "]
+						lappend colquery [join $tempcolquery " || "]
 					}
 				}
 			} elseif {![catch {tsv_select_sampleinfo $field-$sample $header} value] || ![catch {tsv_select_sampleinfo $field $header} value]} {

@@ -1264,4 +1264,41 @@ test select_group {group with analysis in -gc} {
 } {all	count-gatk-bwa-sample1-A	count-gatk-bwa-sample1-B	count-sam-bwa-sample1-B
 all	1	1	2}
 
+test select_group {group 3 bugcheck} {
+	write_tab tmp/temp.tsv {
+		year	id	A	B	C
+		1	1	1	1	0
+		2	2	1	0	0
+ 		3	3	1	1	1
+	}
+	exec cg select -g year -gc {A * B * C * count} tmp/temp.tsv
+} {year	count-1-1-1	count-1-1-0	count-1-0-0
+1	0	1	0
+2	0	0	1
+3	1	0	0}
+
+test select_group {group 3 bugcheck filter with * in colquery} {
+	write_tab tmp/temp.tsv {
+		year	A
+		1	1
+		2	A1
+ 		3	A2
+	}
+	exec cg select -g year -gc {A A* count} tmp/temp.tsv
+} {year	count-A1	count-A2
+2	1	0
+3	0	1}
+
+test select_group {group 3 bugcheck filter with * in rowquery} {
+	write_tab tmp/temp.tsv {
+		year	A
+		1	1
+		2	A1
+ 		3	A2
+	}
+	exec cg select -g {A A*} tmp/temp.tsv
+} {A	count
+A1	1
+A2	1}
+
 testsummarize
