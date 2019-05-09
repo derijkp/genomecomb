@@ -129,4 +129,5 @@ chr1	869932	869933	snp	T	C	downstream	+NM_152486e:down+1:c.*529T>C
 chr1	869933	869934	snp	G	C	downstream	+NM_152486e:down+2:c.*530G>C	
 chr1	871931	871932	snp	G	C	downstream	+NM_152486e:down+2000:c.*2528G>C	
 chr1	871931	871933	del	2		downstream	+NM_152486e:down+2000_2001:c.*2528_*2529del	
+chr1	871932	871932	ins		G			
 chr1	871932	871933	snp	G	C			

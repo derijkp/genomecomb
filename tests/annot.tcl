@@ -9,7 +9,7 @@ test reg_annot {basic} {
 	exec cg annotate tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
-} {} 
+} {}
 
 test reg_annot {error file does not exists} {
 	file copy data/vars1.sft tmp/vars1.sft
@@ -23,7 +23,7 @@ test reg_annot {compressed} {
 	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.sft.rz
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
-} {} 
+} {}
 
 test reg_annot {compressed zst} {
 	file copy data/vars1.sft tmp/vars1.sft
@@ -32,7 +32,7 @@ test reg_annot {compressed zst} {
 	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/reg_annot.sft.zst
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-reg_annot.sft
-} {} 
+} {}
 
 test reg_annot {2 compressed} {
 	file copy data/vars1.sft tmp/vars1.sft
@@ -59,14 +59,14 @@ test reg_annot {basic, multiple fields} {
 	file_write tmp/reg_annot.sft.opt "fields\t{type begin end}\n"
 	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/reg_annot.sft
 	exec diff tmp/temp.sft data/expected-vars1-reg_annot-multi.sft
-} {} 
+} {}
 
 test reg_annot {near} {
 	file copy data/vars1.sft tmp/vars1.sft
 	exec cg annotate -near 1000 tmp/vars1.sft tmp/temp.sft data/reg_annot.sft
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected_near-vars1-reg_annot.sft
-} {} 
+} {}
 
 test reg_annot {near indels} {
 	file copy data/vars1.sft tmp/vars1.sft
@@ -126,14 +126,14 @@ test reg_annot {bug fix deal with duplicate field in opt} {
 	file_write tmp/reg_annot.sft.opt "fields\t{type begin end begin}\n"
 	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/reg_annot.sft
 	exec diff tmp/temp.sft data/expected-vars1-reg_annot-multi.sft
-} {} 
+} {}
 
 test var_annot {basic} {
 	file copy data/vars1.sft tmp/vars1.sft
 	exec cg annotate tmp/vars1.sft tmp/temp.sft data/var_annot.sft
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-var_annot.sft
-} {} 
+} {}
 
 test var_annot {basic splitvar} {
 	file copy data/vars1.sft tmp/vars1.sft
@@ -142,7 +142,7 @@ test var_annot {basic splitvar} {
 	exec cg select -rf {list} tmp/temp.tsv tmp/temp2.tsv
 	exec cg splitalleles data/expected-vars1-var_annot.sft > tmp/expected.tsv
 	exec diff tmp/temp2.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test var_annot {basic multi} {
 	file mkdir tmp
@@ -151,7 +151,7 @@ test var_annot {basic multi} {
 	file_write tmp/var_annot.sft.opt "fields\t{name freq alt}\n"
 	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/var_annot.sft
 	exec diff tmp/temp.sft data/expected-vars1-var_annot-multi.sft
-} {} 
+} {}
 
 test var_annot {zst, opt, links} {
 	test_cleantmp
@@ -165,7 +165,7 @@ test var_annot {zst, opt, links} {
 	cd ..
 	exec cg annotate tmp/vars.sft tmp/temp.sft tmp/var_annot.tsv.zst
 	exec diff tmp/temp.sft data/expected-vars1-var_annot-multi.sft
-} {} 
+} {}
 
 test var_annot {different types on same pos} {
 	file copy data/vars2.tsv tmp/vars2.tsv
@@ -211,7 +211,7 @@ test var_annot {multi alt split, one value in vardb} {
 		chr1 4001 4002 snp A C test2 0.2 C
 		chr1 4001 4002 snp A G test2 0.2 G
 	}
-} {} 
+} {}
 
 test var_annot {multi alt split, one value in vardb (split)} {
 	file mkdir tmp
@@ -318,7 +318,7 @@ test var_annot {zst} {
 	exec cg annotate tmp/vars1.sft tmp/temp.sft tmp/var_annot.sft.zst
 	exec cg select -rf {list} tmp/temp.sft tmp/temp2.sft
 	exec diff tmp/temp2.sft data/expected-vars1-var_annot.sft
-} {} 
+} {}
 
 test var_annot {skip var_ annots if no alt field} {
 	file mkdir tmp
@@ -430,7 +430,7 @@ test gene_annot {gene exon deletion} {
 	}
 	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test gene_annot {gene exon deletion with no type given} {
 	write_tab tmp/vars.tsv {
@@ -447,7 +447,7 @@ test gene_annot {gene exon deletion with no type given} {
 	}
 	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test gene_annot {gene and coding gene deletion} {
 	write_tab tmp/vars.tsv {
@@ -465,7 +465,7 @@ test gene_annot {gene and coding gene deletion} {
 	}
 	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test gene_annot {gene, extra comments} {
 	file_write tmp/temp2.sft "# a comment\n# another comment\n"
@@ -501,7 +501,8 @@ test gene_annot {hgvs + strand gene coding} {
 		unset -nocomplain adata ; array set adata $geneobj
 		# join $adata(ftlist) \n
 	}
-	cg select -s - data/annot_gene_tests_fw_coding.tsv tmp/sannot_gene_tests.tsv
+	cg select -overwrite 1 -s - data/annot_gene_tests_fw_coding.tsv tmp/sannot_gene_tests.tsv
+	file delete tmp/annot_results.tsv
 	cg annotate -dbdir $::refseqdir/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
 	set errors {}
 	foreach line [split [cg select -sh /dev/null -q {$test_impact ne $expected_impact or $test_descr ne $expected_descr} tmp/annot_results.tsv] \n] {
@@ -517,7 +518,7 @@ test gene_annot {hgvs + strand gene non-coding} {
 		chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames
 		chr1 850983 869932 NM_152486n + 591 851184 851184 14 850983,851164,855397,856281,861014,864282,864517,866386,867378,867652,867801,868495,868940,869150,869832, 851043,851256,855579,856332,861139,864372,864703,866549,867494,867731,868301,868620,869051,869824,869932, 0 SAMD11 cmpl cmpl -1,0,0,2,2,1,1,1,2,1,2,1,0,0,0,
 	}
-	cg select -s - data/annot_gene_tests_fw_noncoding.tsv tmp/sannot_gene_tests.tsv
+	cg select -overwrite -s - data/annot_gene_tests_fw_noncoding.tsv tmp/sannot_gene_tests.tsv
 	file delete tmp/annot_results.tsv
 	cg annotate -dbdir $::refseqdir/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
 	set errors {}
@@ -631,7 +632,7 @@ test gene_annot {variant error end > end chromosome} {
 	}]\n
 	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test reg_annot {basic, extra comments} {
 	file_write tmp/temp2.sft "# a comment\n"
@@ -681,7 +682,7 @@ test reg_annot {-replace y dbfile older} {
 	exec cg annotate -near 1000 -replace y tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
 	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
 	split [cg select -f regtest tmp/temp3.sft] \n
-} {regtest reg1 reg1 reg1 reg1 {} {} {} {} reg3 reg3 {} {} {} {}} 
+} {regtest reg1 reg1 reg1 reg1 {} {}{} {}reg3 reg3 {} {}{} {}} 
 
 test reg_annot {-replace a} {
 	file copy -force data/vars1.sft tmp/vars1.sft
@@ -693,7 +694,7 @@ test reg_annot {-replace a} {
 	exec cg annotate -near 1000 -replace a tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
 	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
 	exec diff tmp/temp3.sft data/expected_near-vars1-reg_annot.sft
-} {} 
+} {}
 
 test reg_annot {-replace n} {
 	file copy data/vars1.sft tmp/vars1.sft
@@ -701,7 +702,7 @@ test reg_annot {-replace n} {
 	exec cg annotate -near 1000 -replace n tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
 	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
 	split [cg select -f regtest tmp/temp3.sft] \n
-} {regtest reg1 reg1 reg1 reg1 {} {} {} {} reg3 reg3 {} {} {} {}} 
+} {regtest reg1 reg1 reg1 reg1 {} {}{} {}reg3 reg3 {} {}{} {}} 
 
 test reg_annot {-replace e} {
 	file copy data/vars1.sft tmp/vars1.sft
@@ -717,7 +718,7 @@ test bcol_annot {basic} {
 	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
 	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
-} {} 
+} {}
 
 test bcol_annot {basic old (lz4)} {
 	test_cleantmp
@@ -727,7 +728,7 @@ test bcol_annot {basic old (lz4)} {
 	file delete tmp/bcol_coverage.tsv.bin.zst.zsti
 	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
-} {} 
+} {}
 
 test bcol_annot {header error} {
 	test_cleantmp
@@ -743,7 +744,7 @@ test bcol_annot {basic compressed bcol} {
 	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
 	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
-} {} 
+} {}
 
 test bcol_annot {basic uncompressed bcol} {
 	test_cleantmp
@@ -752,7 +753,7 @@ test bcol_annot {basic uncompressed bcol} {
 	file copy data/bcol_annot-test.tsv tmp/bcol_annot-test.tsv
 	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv data/expected-bcol_annot-test.tsv
-} {} 
+} {}
 
 test bcol_annot {only chr1} {
 	test_cleantmp
@@ -761,7 +762,7 @@ test bcol_annot {only chr1} {
 	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
 	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test bcol_annot {wrongly sorted var file} {
 	file_write tmp/test.tsv [deindent {
@@ -808,7 +809,7 @@ test bcol_annot {only chr2} {
 	exec cg bcol make -p pos -c chromosome tmp/bcol_coverage.tsv coverage < data/cov.tsv
 	exec cg annotate tmp/bcol_annot-test.tsv tmp/annot_test.tsv tmp/bcol_coverage.tsv
 	exec diff tmp/annot_test.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test bcol_annot {added chr3} {
 	test_cleantmp
@@ -850,7 +851,7 @@ test var_annot {basic from vcf} {
 	cg splitalleles data/expected-vars1-var_annot.sft tmp/expected.sft.temp
 	exec cg select -rc 1 -f $fields tmp/expected.sft.temp tmp/expected.sft
 	exec diff tmp/annot2.sft tmp/expected.sft
-} {} 
+} {}
 
 test reg_annot {ins at end of reg} {
 	test_cleantmp
@@ -882,7 +883,7 @@ test reg_annot {ins at end of reg} {
 	}
 	exec cg annotate tmp/vars.tsv tmp/result.tsv tmp/reg_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test reg_annot {comments} {
 	test_cleantmp
@@ -902,7 +903,7 @@ test reg_annot {comments} {
 	}
 	exec cg annotate tmp/vars.tsv tmp/result.tsv tmp/reg_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test bcol_var_annot {basic} {
 	test_cleantmp
@@ -1127,7 +1128,7 @@ test gene_annot {multiple dbs} {
 	}
 	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv tmp/reg_rtest.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
-} {} 
+} {}
 
 test reg_annot {bugcheck overwrite of .temp src} {
 	file copy data/vars1.sft tmp/vars1.tsv.temp
@@ -1152,7 +1153,44 @@ test gene_annot {no refseq} {
 	}
 	exec cg annotate -dbdir $::refseqdir/hg18 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
 	exec diff tmp/result.tsv tmp/expected.tsv
-} {} 
+} {}
+
+test gene_annot {end of chromosome} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		M	16571	16571	ins	{}	A
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		M	15998	16570	+	x	15998	15998	1	15998,	16570,
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		M	16571	16571	ins		A	downstream	x	+:down+1_2:n.573_574insA
+	}]\n
+	file delete tmp/result.tsv
+	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test gene_annot {near end of chromosome} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		M	16570	16570	ins	{}	A
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		M	15998	16569	+	x	15998	15998	1	15998,	16569,
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		M	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
+	}]\n
+	file delete tmp/result.tsv
+	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	cg_annotate_job -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
 
 test reg_annot {check for diff size in paste error} {
 	write_tab tmp/vars1.tsv {

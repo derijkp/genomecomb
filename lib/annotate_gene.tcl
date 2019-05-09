@@ -501,7 +501,12 @@ proc annotategene_one_ins {loc} {
 			set gend [lindex $eline 1]
 			while {$snpend <= $gend} {
 				set from [string index $alt 0]
-				set dest [genome_get $genomef $chr $snpend [expr {$snpend+1}] 0 1]
+				if {[catch {
+					set dest [genome_get $genomef $chr $snpend [expr {$snpend+1}] 0 1]
+				} error]} {
+					if {[string match {trying to get sequence beyond end of chromosome*} $error]} break
+					error $error
+				}
 				if {$from ne $dest} break
 				incr snppos; incr snpend
 				set alt [string range $alt 1 end][string index $alt 0]
