@@ -165,6 +165,16 @@ proc genome_close {f} {
 	unset genomefasta($f)
 }
 
+proc genome_chrsize {f chr} {
+	global genomefasta
+	set fastaindex $genomefasta($f)
+	set chr [chr_clip $chr]
+	if {[catch {dict get $fastaindex $chr} temp]} {
+		set temp [dict get $fastaindex $chr]
+	}
+	lindex $temp end
+}
+
 proc genome_get {f chr start end {correctend 0} {unknownchr 0}} {
 	global genomefasta
 	if {$end < $start} {error "end ($end) is smaller than start ($start)"}
