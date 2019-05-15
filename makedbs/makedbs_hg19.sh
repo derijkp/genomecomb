@@ -6,6 +6,13 @@ set build hg19
 set defaultdest /complgen/refseqnew
 
 # settings
+set genomeurl {}
+set par {chromosome	begin	end	name
+X	60001	2699520	PAR1
+X	154931044	155260560	PAR2
+Y	10001	2649520	PAR1
+Y	59034050	59363566	PAR2
+}
 set mirbasegenome hsa
 set mirbaserelease 20
 set mirbasebuild hg19
@@ -82,7 +89,7 @@ job genome_${build} -targets {
 	genome_${build}.ifas.fai
 	extra/reg_${build}_fullgenome.tsv
 } -vars build -code {
-	cg download_genome -alt 0 genome_${build}.ifas ${build} 2>@ stderr
+	cg download_genome -alt 0 -url $genomeurl genome_${build}.ifas ${build} 2>@ stderr
 	file rename -force reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
 	cg zst -i 1 extra/reg_${build}_fullgenome.tsv
 }
@@ -381,12 +388,7 @@ job reg_exome_intGene -deps {
 	cg zindex $target
 }
 
-file_write extra/reg_${build}_pseudoautosomal.tsv {chromosome	begin	end	name
-X	60001	2699520	PAR1
-X	154931044	155260560	PAR2
-Y	10001	2649520	PAR1
-Y	59034050	59363566	PAR2
-}
+file_write extra/reg_${build}_pseudoautosomal.tsv $par
 
 job reg_${build}_phenotype -deps {
 	extra/reg_${build}_genes.tsv
@@ -855,7 +857,10 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 		liftover_refdb $tempdir/result.tsv.temp.zst $finaltarget $dest $gnomadbuild $build 0
 		cg zindex $finaltarget
 		cg index $finaltarget
-		# file delete -force $tempdir
+		file delete -force $tempdir
+		foreach file [glob -nocomplain [gzroot $finaltarget].unmapped*] {
+			file rename $file extra/[file tail $file]
+		}
 	}
 } else {
 
