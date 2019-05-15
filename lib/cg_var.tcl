@@ -137,6 +137,10 @@ proc var_job {args} {
 				}
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
 					cg vcfcat -i 1 -o $target {*}[jobglob {*}$list]
+				} elseif {[lindex [split [file tail $target] -_] 0] eq "sreg"} {
+					cg cat -c f {*}[jobglob {*}$list] | cg regjoin {*}[compresspipe $target] > $target.temp
+					file rename $target.temp $target
+					cg_zindex $target
 				} else {
 					cg cat -c f {*}[jobglob {*}$list] {*}[compresspipe $target] > $target.temp
 					file rename $target.temp $target
