@@ -251,7 +251,7 @@ proc process_reports_job {args} {
 		}
 	}
 	if {[inlist $reports vars]} {
-		set refcodingfile $dbdir/extra/reg_hg19_refcoding.tsv
+		set refcodingfile [gzfile $dbdir/extra/reg_*_refcoding.tsv]
 		foreach varfile [jobglob $sampledir/var-*.tsv] {
 			set sample [file root [file tail [gzroot $varfile]]]
 			regsub ^var- $sample {} sample
