@@ -518,7 +518,7 @@ test gene_annot {hgvs + strand gene non-coding} {
 		chromosome start end name strand bin cdsStart cdsEnd exonCount exonStarts exonEnds id name2 cdsStartStat cdsEndStat exonFrames
 		chr1 850983 869932 NM_152486n + 591 851184 851184 14 850983,851164,855397,856281,861014,864282,864517,866386,867378,867652,867801,868495,868940,869150,869832, 851043,851256,855579,856332,861139,864372,864703,866549,867494,867731,868301,868620,869051,869824,869932, 0 SAMD11 cmpl cmpl -1,0,0,2,2,1,1,1,2,1,2,1,0,0,0,
 	}
-	cg select -overwrite -s - data/annot_gene_tests_fw_noncoding.tsv tmp/sannot_gene_tests.tsv
+	cg select -overwrite 1 -s - data/annot_gene_tests_fw_noncoding.tsv tmp/sannot_gene_tests.tsv
 	file delete tmp/annot_results.tsv
 	cg annotate -dbdir $::refseqdir/hg18 tmp/sannot_gene_tests.tsv tmp/annot_results.tsv tmp/gene_part_test.tsv
 	set errors {}
@@ -682,7 +682,7 @@ test reg_annot {-replace y dbfile older} {
 	exec cg annotate -near 1000 -replace y tmp/temp.sft tmp/temp2.sft tmp/reg_annot.tsv
 	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
 	split [cg select -f regtest tmp/temp3.sft] \n
-} {regtest reg1 reg1 reg1 reg1 {} {}{} {}reg3 reg3 {} {}{} {}} 
+} {regtest reg1 reg1 reg1 reg1 {} {} {} {} reg3 reg3 {} {} {} {}} 
 
 test reg_annot {-replace a} {
 	file copy -force data/vars1.sft tmp/vars1.sft
@@ -702,7 +702,7 @@ test reg_annot {-replace n} {
 	exec cg annotate -near 1000 -replace n tmp/temp.sft tmp/temp2.sft data/reg_annot.sft
 	exec cg select -rf {list} tmp/temp2.sft tmp/temp3.sft
 	split [cg select -f regtest tmp/temp3.sft] \n
-} {regtest reg1 reg1 reg1 reg1 {} {}{} {}reg3 reg3 {} {}{} {}} 
+} {regtest reg1 reg1 reg1 reg1 {} {} {} {} reg3 reg3 {} {} {} {}} 
 
 test reg_annot {-replace e} {
 	file copy data/vars1.sft tmp/vars1.sft
