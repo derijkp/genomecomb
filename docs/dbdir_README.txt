@@ -1,6 +1,6 @@
 Reference and annotation databases for genomecomb
 =================================================
-version: 0.98.7
+version: 0.100.0
 
 This directory contains reference and annotation databases for genomecomb. 
 It is meant to used as the "refdb" directory in many of the genomecomb commands.

@@ -79,7 +79,7 @@ job_logdir log_jobs
 
 # readme
 set c [file_read $genomecombdir/docs/dbdir_README.txt]
-regsub {version: [0-9.]+} $c "version: 0.99\ntime: [lindex [timestamp] 0]" c
+regsub {version: [0-9.]+} $c "version: 0.100.0\ntime: [lindex [timestamp] 0]" c
 file_write README_dbdir.txt $c
 
 # download genome
@@ -578,6 +578,96 @@ job var_${build}_dbnsfp -targets {
 	cg download_dbnsfp $target $build $dbnsfpurl $dbnsfpbuild
 }
 
+# ccr
+# ---
+job ccr -deps {
+} -vars {
+	build ccrversion ccrurl ccrbuild dest
+} -targets {
+	reg_${build}_ccr.tsv
+} -code {
+	file_write $target.info [subst [deindent {
+		= CCR (constrained coding regions) =
+		
+		== Download info ==
+		dbname	ccr
+		version	$ccrversion
+		citation	Havrilla, J.M., Pedersen, B.S., Layer, R.M. & Quinlan, A.R. A map of constrained coding regions in the human genome. Nature Genetics (2018). doi:10.1038/s41588-018-0294-6
+		license	cite
+		source	$ccrurl
+		time	[timestamp]
+		
+		== Description ==
+		
+		More info on https://github.com/quinlan-lab/ccrhtml
+		and in https://www.nature.com/articles/s41588-018-0294-6
+		
+		== Category ==
+		Annotation
+	}]]
+	file_write $target.opt "fields\t{ccr_pct}\n"
+	file mkdir $target.temp
+	set tail [file tail $ccrurl]
+	wgetfile $ccrurl $target.temp/$tail
+	if {$build ne $ccrbuild} {
+		cg select -s - -overwrite 1 -hc 1 -f {chrom start end {ccr_pct=format("%.2f",$ccr_pct)} *} $target.temp/$tail $target.$ccrbuild.temp
+		liftover_refdb $target.$ccrbuild.temp $target.zst $dest $ccrbuild $build
+	} else {
+		cg select -s - -overwrite 1 -hc 1 -f {chrom start end {ccr_pct=format("%.2f",$ccr_pct)} *} $target.temp/$tail $target.temp.zst
+		file rename -force $target.temp.zst $target.zst
+	}
+	cg zstindex $target.zst
+	file delete -force $target.temp
+}
+
+# gnomad lof
+# ----------
+job lofgnomad -deps {
+} -vars {
+	build gnomadlof gnomadbuild gnomadversion dest
+} -targets {
+	reg_${build}_lofgnomad.tsv
+} -code {
+	file_write $target.info [subst [deindent {
+		= lofgnomad (loss of function tolerence) =
+		
+		== Download info ==
+		dbname	lofgnomad
+		version	$gnomadversion
+		citation	Lek M., Karczewski K., Exome Aggregation Consortium. Analysis of protein-coding genetic variation in 60,706 humans. Nature volume 536, pages 285-291 (2016)
+		license	cite
+		source	$gnomadlof
+		time	[timestamp]
+		
+		== Description ==
+		
+		The probability of being loss-of-function (LoF) intolerant (pLI) separates
+		genes of sufficient length into LoF intolerant (pLI >= 0.9, n=3,230) or
+		LoF tolerant (pLI <= 0.1, n=10,374) categories
+
+		More info on https://gnomad.broadinstitute.org/faq
+		and in https://www.nature.com/articles/nature19057
+		
+		== Category ==
+		Annotation
+	}]]
+	file_write $target.opt "fields\tpLI\n"
+	file mkdir $target.temp
+	set tail [file tail $gnomadlof]
+	wgetfile $gnomadlof $target.temp/$tail
+	cg select -overwrite 1 -f {chromosome {begin=$start_position} {end=$end_position} pLI exac_pLI gene *} $target.temp/$tail $target.temp/temp.tsv
+	cg select -overwrite 1 -s - $target.temp/temp.tsv $target.temp/temp2.tsv
+	if {$build ne $gnomadbuild} {
+		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp/temp3.tsv
+		liftover_refdb $target.temp/temp3.tsv $target.zst $dest $gnomadbuild $build
+	} else {
+		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp2.zst
+		file rename -force $target.temp2.zst $target.zst
+	}
+	cg zstindex $target.zst
+	file delete -force $target.temp
+}
+
 # gnomad
 # ------
 set finaltarget var_${build}_gnomad.tsv.zst
@@ -879,6 +969,33 @@ job reg_${build}_cadd -targets {
 	file rename -force $tempdir/var_${build}_cadd.bcol.bin.zst.zsti var_${build}_cadd.bcol.bin.zst.zsti
 	file rename -force $tempdir/var_${build}_cadd.bcol var_${build}_cadd.bcol
 	file delete -force $tempdir
+}
+
+# geneHancerRegElements and geneHancerClusteredInteractions cannot be
+# downloaded (yet?) via ftp, did this manually (tablebrowser)
+# process if available in $defaultdest
+if {[file exists $defaultdest/geneHancerRegElements_${build}.tsv.gz]} {
+	set target reg_${build}_geneHancerRegElements.tsv.zst
+	file_write [gzroot $target].opt "fields\t{score elementType evidenceSources}\n"
+	cg_download_ucscinfo [gzroot $target].info $build geneHancerRegElements
+	cg select -overwrite 1 -hc 1 -f {chromosome=$chrom begin=$chromStart end=$chromEnd name score elementType eliteness evidenceSources} $defaultdest/geneHancerRegElements_${build}.tsv.gz $target.temp
+	cg regcollapse $target.temp | cg zst > $target.temp2.zst
+	file rename $target.temp2.zst $target
+	file delete $target.temp
+}
+
+if {[file exists $defaultdest/geneHancerClusteredInteractions_${build}.tsv.gz]} {
+	set target extra/reg_${build}_geneHancerClusteredInteractions.tsv.zst
+	cg_download_ucscinfo [gzroot $target].info $build geneHancerClusteredInteractions
+	cg select -overwrite 1 -hc 1 -f {
+		chromosome=$geneHancerChrom begin=$geneHancerStart end=$geneHancerEnd geneHancerIdentifier
+		score interactionscore=$value geneAssociationMethods
+		geneChrom geneStart geneEnd geneName geneStrand name
+	} $defaultdest/geneHancerClusteredInteractions_${build}.tsv.gz $target.temp
+	cg select -overwrite 1 -s - $target.temp $target.temp2
+	cg regcollapse $target.temp2 | cg zst > $target.temp3.zst
+	file rename $target.temp3.zst $target
+	file delete $target.temp $target.temp2
 }
 
 job_wait

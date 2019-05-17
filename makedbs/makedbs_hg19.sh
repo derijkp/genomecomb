@@ -80,7 +80,7 @@ job_logdir log_jobs
 
 # readme
 set c [file_read $genomecombdir/docs/dbdir_README.txt]
-regsub {version: [0-9.]+} $c "version: 0.99\ntime: [lindex [timestamp] 0]" c
+regsub {version: [0-9.]+} $c "version: 0.100.0\ntime: [lindex [timestamp] 0]" c
 file_write README_dbdir.txt $c
 
 # download genome
@@ -146,8 +146,6 @@ foreach file [glob genome_*] {
 # region databases (ucsc)
 # you can explicitely download info on a database using:
 # cg download_ucscinfo resultfile ${build} dbname
-
-
 
 # collapse regions
 foreach db $regionsdb_collapse {
@@ -575,14 +573,16 @@ foreach {jobname resultname infosrc tables} {
 
 # DNase Clusters and Txn Factor ChIP
 job enc_RegDnaseClustered -targets {
-	reg_${build}_wgEncodeRegDnaseClusteredV3.tsv
-	reg_${build}_wgEncodeRegDnaseClusteredV3.tsv.info
+	reg_${build}_wgEncodeRegDnaseClustered.tsv
+	reg_${build}_wgEncodeRegDnaseClustered.tsv.info
 } -vars {dest build} -code {
 	cg download_ucsc $target.ucsc $build wgEncodeRegDnaseClusteredV3
-	cg regcollapse $target.ucsc > $target.temp
-	file rename -force $target.ucsc.info [gzroot $target].info
+	cg download_ucscinfo $target.ucsc.info $build wgEncodeRegDnaseClustered
+	cg regcollapse $target.ucsc | cg zst > $target.temp
+	file rename -force $target.ucsc.info $target.info
 	file rename -force $target.temp $target
 	file delete $target.ucsc
+	cg zst -i 1 $target
 }
 
 job enc_RegTfbsClustered -targets {
@@ -590,10 +590,11 @@ job enc_RegTfbsClustered -targets {
 } -vars {dest build} -code {
 	cg download_ucsc $target.ucsc ${build} wgEncodeRegTfbsClusteredV3
 	cg select -s - -f {chrom	start	end	name	score} $target.ucsc $target.temp
-	cg regcollapse $target.temp > $target.temp2
+	cg regcollapse $target.temp | cg zst > $target.temp2
 	file rename -force $target.temp2 $target
-	file rename -force $target.ucsc.info [gzroot $target].info
+	file rename -force $target.ucsc.info $target.info
 	file delete -force $target.ucsc $target.temp
+	cg zst -i 1 $target
 }
 
 # link local data in dir
@@ -671,7 +672,7 @@ job var_${build}_dbnsfp -targets {
 # ---
 job ccr -deps {
 } -vars {
-	build ccrversion ccrurl
+	build ccrversion ccrurl ccrbuild dest
 } -targets {
 	reg_${build}_ccr.tsv
 } -code {
@@ -698,17 +699,22 @@ job ccr -deps {
 	file mkdir $target.temp
 	set tail [file tail $ccrurl]
 	wgetfile $ccrurl $target.temp/$tail
-	cg select -s - -overwrite 1 -hc 1 -f {chrom start end {ccr_pct=format("%.2f",$ccr_pct)} *} $target.temp/$tail $target.temp.zst
-	file rename -force $target.temp.zst $target.zst
+	if {$build ne $ccrbuild} {
+		cg select -s - -overwrite 1 -hc 1 -f {chrom start end {ccr_pct=format("%.2f",$ccr_pct)} *} $target.temp/$tail $target.$ccrbuild.temp
+		liftover_refdb $target.$ccrbuild.temp $target.zst $dest $ccrbuild $build
+	} else {
+		cg select -s - -overwrite 1 -hc 1 -f {chrom start end {ccr_pct=format("%.2f",$ccr_pct)} *} $target.temp/$tail $target.temp.zst
+		file rename -force $target.temp.zst $target.zst
+	}
 	cg zstindex $target.zst
 	file delete -force $target.temp
 }
 
 # gnomad lof
 # ----------
-job ccr -deps {
+job lofgnomad -deps {
 } -vars {
-	build ccrversion gnomadlof
+	build gnomadlof gnomadbuild gnomadversion dest
 } -targets {
 	reg_${build}_lofgnomad.tsv
 } -code {
@@ -741,13 +747,16 @@ job ccr -deps {
 	wgetfile $gnomadlof $target.temp/$tail
 	cg select -overwrite 1 -f {chromosome {begin=$start_position} {end=$end_position} pLI exac_pLI gene *} $target.temp/$tail $target.temp/temp.tsv
 	cg select -overwrite 1 -s - $target.temp/temp.tsv $target.temp/temp2.tsv
-	cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp2.zst
-	file rename -force $target.temp2.zst $target.zst
+	if {$build ne $gnomadbuild} {
+		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp/temp3.tsv
+		liftover_refdb $target.temp/temp3.tsv $target.zst $dest $gnomadbuild $build
+	} else {
+		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp2.zst
+		file rename -force $target.temp2.zst $target.zst
+	}
 	cg zstindex $target.zst
 	file delete -force $target.temp
 }
-
-
 
 # gnomad
 # ------
@@ -1052,6 +1061,32 @@ job reg_${build}_cadd -targets {
 	file rename -force $tempdir/var_${build}_cadd.bcol.bin.zst.zsti var_${build}_cadd.bcol.bin.zst.zsti
 	file rename -force $tempdir/var_${build}_cadd.bcol var_${build}_cadd.bcol
 	file delete -force $tempdir
+}
+
+# geneHancerRegElements and geneHancerClusteredInteractions cannot be
+# downloaded (yet?) via ftp, did this manually (tablebrowser)
+# process if available in $defaultdest
+if {[file exists $defaultdest/geneHancerRegElements_${build}.tsv.gz]} {
+	set target reg_${build}_geneHancerRegElements.tsv.zst
+	file_write [gzroot $target].opt "fields\t{score elementType evidenceSources}\n"
+	cg_download_ucscinfo [gzroot $target].info $build geneHancerRegElements
+	cg select -overwrite 1 -hc 1 -f {chromosome=$chrom begin=$chromStart end=$chromEnd name score elementType eliteness evidenceSources} $defaultdest/geneHancerRegElements_${build}.tsv.gz $target.temp
+	cg regcollapse $target.temp | cg zst > $target.temp2.zst
+	file rename $target.temp2.zst $target
+	file delete $target.temp
+}
+if {[file exists $defaultdest/geneHancerClusteredInteractions_${build}.tsv.gz]} {
+	set target extra/reg_${build}_geneHancerClusteredInteractions.tsv.zst
+	cg_download_ucscinfo [gzroot $target].info $build geneHancerClusteredInteractions
+	cg select -overwrite 1 -hc 1 -f {
+		chromosome=$geneHancerChrom begin=$geneHancerStart end=$geneHancerEnd geneHancerIdentifier
+		score interactionscore=$value geneAssociationMethods
+		geneChrom geneStart geneEnd geneName geneStrand name
+	} $defaultdest/geneHancerClusteredInteractions_${build}.tsv.gz $target.temp
+	cg select -overwrite 1 -s - $target.temp $target.temp2
+	cg regcollapse $target.temp2 | cg zst > $target.temp3.zst
+	file rename $target.temp3.zst $target
+	file delete $target.temp $target.temp2
 }
 
 job_wait
