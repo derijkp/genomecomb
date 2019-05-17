@@ -148,11 +148,11 @@
 #contig	chrUn_gl000249	38502
 #contig	chrX	155270560
 #contig	chrY	59373566
-#vcf_source	GenotypeGVCFs
-#vcf_source	HaplotypeCaller
 #ALT	table
 #ALT	ID	Description
 #ALT	NON_REF	Represents any possible alternative allele at this location
+#vcf_source	GenotypeGVCFs
+#vcf_source	HaplotypeCaller
 #vcf_fileformat	VCFv4.2
 #GATKCommandLine	table
 #GATKCommandLine	ID	CommandLine	Version	Date

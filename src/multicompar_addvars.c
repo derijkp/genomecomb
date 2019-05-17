@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
 			/* allvar variant found in orivars->var, output this */
 			orivarmatch(orivars, orikeepposs, orikeepsize, orid);
 		} else if (varallfile[0] != '\0') {
-			int refmatch = 0;
+			int refmatch = 0,insreg=-1;
 			/* var is not in varfile, check in varall for adding data, sreg for u */
 			/* find next varall, first pos match for snp, full loc for other */
 			while (!varallvars->error) {
@@ -272,29 +272,30 @@ int main(int argc, char *argv[]) {
 			if (sreg != NULL) {
 				/* search if in sreg sequenced region or not */
 				if (inregion(allvars->var,sreg)) {
-					out_seq = ds_r;
+					insreg = 1;
 				} else {
-					out_seq = ds_u;
+					insreg = 0;
 				}
 			} else {
-				out_seq = ds_q;
+				insreg = -1;
 			}
-			if (refmatch && out_seq == ds_q) {out_seq = ds_r;}
 			if (comp < 0) {
-				/* not in varall, -> unsequenced */
+				/* not in varall, -> unsequenced, unless overruled by sreg */
 				/* if out_seq was not set based on sreg, set to u */
 				match = 0;
-				if (out_seq == ds_q) {out_seq = ds_u;}
 				if (allvars->var->start < orid->end && allvars->var->end > orid->start && (DStringLocCompare(allvars->var->chr,orid->chr) == 0)) {
 					/* overlapping a deletion */
+					out_seq = ds_r;
 					out_zyg = ds_o;
 					if (orid->zyg == 2) {out_a1 = ds_at;} else {out_a1 = allvars->var->ref;}
 					if (orid->zyg >= 1) {out_a2 = ds_at;} else {out_a2 = allvars->var->ref;}
-				} else if (out_seq == ds_r) {
+				} else if (refmatch || insreg == 1) {
+					out_seq = ds_r;
 					out_zyg = ds_r;
 					out_a1 = allvars->var->ref;
 					out_a2 = allvars->var->ref;
 				} else {
+					out_seq = ds_u;
 					out_zyg = ds_u;
 					out_a1 = ds_q; out_a2 = ds_q;
 				}
@@ -328,8 +329,8 @@ int main(int argc, char *argv[]) {
 						} else {
 							out_seq = varallvars->result->data + varallvars->varpos.seq;
 						}
-					} else if (out_seq == ds_q) {
-						/* if out_seq was not set based on sreg, set to r if varall (different allele) does not have u state */
+					} else {
+						/* no info on varall seq (different allele), so set r */
 						out_seq = ds_r;
 					}
 					if (varallvars->varpos.a1 != -1) {
@@ -345,38 +346,33 @@ int main(int argc, char *argv[]) {
 					} else {
 						/* partial match in varall, same location/type, but different allele */
 						/* match == 2, only for split */
-						if (out_seq == ds_u) {
-							/* varall is u, so keep out_seq */
-						} else if (DStringCompare(out_a1,allvars->result->data + allvars->varpos.alt) != 0
-							&& DStringCompare(out_a1,ds_q) != 0
-							&& DStringCompare(out_a2,allvars->result->data + allvars->varpos.alt) != 0
-							&& DStringCompare(out_a2,ds_q) != 0
-							) {
-								out_seq = ds_r;
-						} else if (out_seq == ds_q) {
-							/* if out_seq was not set based on sreg, set to r if varall (different allele) does not have u state */
-							out_seq = ds_r;
-						}
+						out_seq = ds_r;
+						/* We do not have a full match, so if the alleles are not ref, zyg should be o */
 						if (DStringCompare(out_a1,allvars->result->data+allvars->varpos.ref) != 0) {
 							out_zyg = ds_o;
 						} else if (DStringCompare(out_a2,allvars->result->data+allvars->varpos.ref) != 0) {
 							out_zyg = ds_o;
-						} else if (out_zyg == ds_q) {
+						} else {
 							out_zyg = ds_r;
 						}
 						if (out_seq == ds_u)	{out_zyg = ds_u;} /* temp */
 					}
 				} else {
-					/* no match in varall, different end or type  */
-					if (out_seq == ds_r) {
+					/* no var match in varall, different end or type or refmatch */
+					if (refmatch || insreg == 1) {
+						out_seq = ds_r;
 						out_zyg = ds_r;
 						out_a1 = allvars->var->ref;
 						out_a2 = allvars->var->ref;
-					} else if (out_seq == ds_u) {
-						out_zyg = ds_u; out_a1 = ds_q; out_a2 = ds_q;
 					} else {
+						out_seq = ds_u;
 						out_zyg = ds_u; out_a1 = ds_q; out_a2 = ds_q;
 					}
+				}
+				/* sreg allways overrules if present */
+				if (insreg == 0) {
+					/* if unsequenced according to sreg, set out_seq to u */
+					out_seq = ds_u;
 				}
 				NODPRINT("%d %d vs %d %d\n",allvars->var->start,allvars->var->end,orid->start,orid->end)
 				NODPRINT("ref: %s seq: %s zyg: %s a1: %s a2: %s\n",varallvars->var->ref->string, out_seq->string,out_zyg->string,out_a1->string,out_a2->string)

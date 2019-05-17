@@ -103,7 +103,7 @@ test pmulticompar {multicompar_addvars basic} {
 	set numbcolannot 0 ; set bcolannot {}
 	set numregfiles 0 ; set regfiles {}
 	set keepposs {6 7}
-	# puts [list ../bin/multicompar_addvars $split $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs > tmp/result.tsv]
+	# puts [list ../bin/multicompar_addvars $split [join {zyg genoqual coverage} \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
 	exec multicompar_addvars $split [join {zyg genoqual coverage} \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs
 } {zyg	genoqual	coverage
 r	20	15
@@ -131,7 +131,6 @@ test pmulticompar {multicompar_addvars bgvcf} {
 		chr22	41923366	41923387
 		chr22	41923388	41923448
 	}]\n
-
 	file_write tmp/allvars.tsv [deindent {
 		chromosome	begin	end	type	ref	alt
 		21	42775179	42775180	snp	C	T
@@ -157,7 +156,7 @@ test pmulticompar {multicompar_addvars bgvcf} {
 		x
 		v	m	T	T	15	15	6
 		u	r	G	G	15	15	7
-		u	u	?	?	7	7	4
+		u	r	T	T	7	7	4
 		v	t	C	T	12	0	5
 		v	t	G	T	13	0	5
 	}]\n
@@ -356,7 +355,6 @@ test pmulticompar$testname {basic reannot varall} {
 	puts $f [join {chr2 4010 4011 snp A G G C test7e 0.1 u} \t]
 	close $f
 	cg select -s - tmp/temp.tsv tmp/varall-annot1.tsv
-	mklink data/expected-multicompar_reannot_varall-var_annotvar_annot2.sft tmp/expected.tsv
 	# make tmp/varall-annot2.tsv
 	cg select -overwrite 1 -f {* sequenced="v"} data/var_annot2.sft tmp/temp.tsv
 	set f [open tmp/temp.tsv a]
@@ -577,7 +575,7 @@ test pmulticompar$testname {basic reannot varall split gvcf and bgvcf} {
 	file delete tmp/result.tsv
 	cg pmulticompar {*}$::jobopts -split 1 tmp/result.tsv \
 		tmp/var-gatkh-bwa-sample1.tsv.zst tmp/var-gatkh-bwa-sample2.tsv.zst \
-		tmp/var-gatkh-bwa-sample3.tsv.zst  tmp/var-strelka-bwa-sample4.tsv
+		tmp/var-gatkh-bwa-sample3.tsv.zst tmp/var-strelka-bwa-sample4.tsv
 	exec diff tmp/result.tsv data/expected-blocked-pmulticompar.tsv
 } {}
 
