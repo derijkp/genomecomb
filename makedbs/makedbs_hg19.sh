@@ -578,11 +578,11 @@ job enc_RegDnaseClustered -targets {
 } -vars {dest build} -code {
 	cg download_ucsc $target.ucsc $build wgEncodeRegDnaseClusteredV3
 	cg download_ucscinfo $target.ucsc.info $build wgEncodeRegDnaseClustered
-	cg regcollapse $target.ucsc | cg zst > $target.temp
+	cg regcollapse $target.ucsc | cg zst > $target.temp.zst
 	file rename -force $target.ucsc.info $target.info
-	file rename -force $target.temp $target
+	file rename -force $target.temp.zst $target.zst
 	file delete $target.ucsc
-	cg zst -i 1 $target
+	cg zstindex $target.zst
 }
 
 job enc_RegTfbsClustered -targets {
@@ -590,11 +590,11 @@ job enc_RegTfbsClustered -targets {
 } -vars {dest build} -code {
 	cg download_ucsc $target.ucsc ${build} wgEncodeRegTfbsClusteredV3
 	cg select -s - -f {chrom	start	end	name	score} $target.ucsc $target.temp
-	cg regcollapse $target.temp | cg zst > $target.temp2
-	file rename -force $target.temp2 $target
+	cg regcollapse $target.temp | cg zst > $target.temp2.zst
+	file rename -force $target.temp2.zst $target.zst
 	file rename -force $target.ucsc.info $target.info
 	file delete -force $target.ucsc $target.temp
-	cg zst -i 1 $target
+	cg zstindex $target.zst
 }
 
 # link local data in dir
