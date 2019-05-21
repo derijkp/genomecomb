@@ -1,6 +1,6 @@
 proc cg_bam2fastq {args} {
 	set pos 0
-	set method biobambam
+	set method sam
 	set sortmethod samtools
 	set namesort 1
 	set fastqfile2 {}
@@ -39,9 +39,12 @@ proc cg_bam2fastq {args} {
 	set fastqfile1 [file_absolute $fastqfile1]
 	set fastqfile2 [file_absolute $fastqfile2]
 	set destdir [file dir $fastqfile1]
+	if {$sortmethod eq "collate" && $method ni "sam samtools"} {
+		error "sortmethod collate only supported for samtools"
+	}
 	# Aligning the generated fastq files may give problems/biases if the bam is sorted on position
 	# Sorting based on name should avoid this
-	if {$namesort} {
+	if {$namesort && !($method in "sam samtools" && $sortmethod eq "collate")} {
 		putslog "Sorting bam file on name"
 		set tempbam [file root [scratchfile]].bam
 		bam_sort -sort name -method $sortmethod $bamfile $tempbam
@@ -68,11 +71,12 @@ proc cg_bam2fastq {args} {
 			picard SamToFastq I=$tempbam F=$fastqfile1.temp VALIDATION_STRINGENCY=SILENT >@ stdout
 		}
 		putslog $msg
-	} elseif {$method eq "sam"} {
-		putslog "Using samtools to convert bam to fastq (mate pairs are not always kept synced!)"
-		# just a try; this does not always keep mate pairs synced, so not very reliable
-		exec samtools view -uf64 $tempbam | samtools bam2fq - > $fastqfile1.temp
-		exec samtools view -uf128 $tempbam | samtools bam2fq - > $fastqfile2.temp
+	} elseif {$method in "sam samtools" && $sortmethod eq "collate"} {
+		putslog "Using samtools to convert bam to fastq"
+		catch_exec samtools sort -n $tempbam | samtools fastq -1 $fastqfile1.temp -2 $fastqfile2.temp -0 /dev/null -s $singlefile -n -N -F 0x900 -
+	} elseif {$method in "sam samtools"} {
+		putslog "Using samtools to convert bam to fastq"
+		catch_exec samtools fastq -1 $fastqfile1.temp -2 $fastqfile2.temp -0 /dev/null -s $singlefile -n -N -F 0x900 $tempbam
 	} else {
 		error "unknown method \"$method\", must be picard or sam"
 	}
