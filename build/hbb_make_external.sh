@@ -260,8 +260,9 @@ fi
 if [ $all = 1 ] || [ ! -f /build/lib/libmaus2.a ] ; then
 	# also a library, needs -fPIC, so compile as lib
 	source /hbb_shlib/activate
-	download https://github.com/gt1/libmaus2/archive/2.0.349-release-20170704123913.tar.gz libmaus2-2.0.349-release-20170704123913.tar.gz
-	cd /build/libmaus2-2.0.349-release-20170704123913
+	# download https://github.com/gt1/libmaus2/archive/2.0.349-release-20170704123913.tar.gz libmaus2-2.0.349-release-20170704123913.tar.gz
+	download https://gitlab.com/german.tischler/libmaus2/-/archive/2.0.611-release-20190408112550/libmaus2-2.0.611-release-20190408112550.tar.gz libmaus2-2.0.611-release-20190408112550.tar.gz
+	cd /build/libmaus2-2.0.611-release-20190408112550
 	make distclean
 	env CFLAGS="$STATICLIB_CFLAGS -I/build/include" LDFLAGS="$LDFLAGS -L/build/lib" \
 		./configure --prefix=/build --disable-shared --enable-static
@@ -273,8 +274,9 @@ fi
 # biobambam
 # ---------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/bamsort ] ; then
-	download https://github.com/gt1/biobambam2/archive/2.0.73-release-20170620145717.tar.gz biobambam2-2.0.73-release-20170620145717.tar.gz
-	cd /build/biobambam2-2.0.73-release-20170620145717
+	# download https://github.com/gt1/biobambam2/archive/2.0.73-release-20170620145717.tar.gz biobambam2-2.0.73-release-20170620145717.tar.gz
+	download https://gitlab.com/german.tischler/biobambam2/-/archive/2.0.95-release-20190320141403/biobambam2-2.0.95-release-20190320141403.tar.gz biobambam2-2.0.95-release-20190320141403.tar.gz
+	cd /build/biobambam2-2.0.95-release-20190320141403
 	make distclean
 	./configure --prefix=/build --with-libmaus2=/build
 	make
