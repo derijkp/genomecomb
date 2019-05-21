@@ -58,7 +58,7 @@ proc bam_sort {args} {
 		file rename -force $tempresult $resultfile
 	} else {	
 		set opts {}
-		if {$method eq "name"} {
+		if {$sort eq "name"} {
 			lappend opts -n
 		}
 		if {[catch {version samtools 1}]} {
