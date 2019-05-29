@@ -979,7 +979,7 @@ if {[file exists $defaultdest/geneHancerRegElements_${build}.tsv.gz]} {
 	file_write [gzroot $target].opt "fields\t{score elementType evidenceSources}\n"
 	cg_download_ucscinfo [gzroot $target].info $build geneHancerRegElements
 	cg select -overwrite 1 -hc 1 -f {chromosome=$chrom begin=$chromStart end=$chromEnd name score elementType eliteness evidenceSources} $defaultdest/geneHancerRegElements_${build}.tsv.gz $target.temp
-	cg regcollapse $target.temp | cg zst > $target.temp2.zst
+	exec cg select -s - $target.temp | cg regcollapse | cg zst > $target.temp2.zst
 	file rename $target.temp2.zst $target
 	file delete $target.temp
 }
@@ -993,7 +993,7 @@ if {[file exists $defaultdest/geneHancerClusteredInteractions_${build}.tsv.gz]} 
 		geneChrom geneStart geneEnd geneName geneStrand name
 	} $defaultdest/geneHancerClusteredInteractions_${build}.tsv.gz $target.temp
 	cg select -overwrite 1 -s - $target.temp $target.temp2
-	cg regcollapse $target.temp2 | cg zst > $target.temp3.zst
+	exec cg select -s - $target.temp | cg regcollapse | cg zst > $target.temp3.zst
 	file rename $target.temp3.zst $target
 	file delete $target.temp $target.temp2
 }
