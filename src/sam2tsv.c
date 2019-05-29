@@ -77,6 +77,50 @@ int cigar_refsize(Cigar *cigar) {
 	return result;
 }
 
+int cigar_clipleft(Cigar *cigar) {
+	int *num = cigar->num;
+	char *action = cigar->action;
+	if (*action == 'H') {
+		action++;
+		num++;
+	}
+	if (*action == 'S') {
+		return *num;
+	} else {
+		return 0;
+	}
+}
+
+int cigar_clipright(Cigar *cigar) {
+	int count = cigar->size;
+	int *num = cigar->num+count-1;
+	char *action = cigar->action+count-1;
+	if (*action == 'H') {
+		action--;
+		num--;
+	}
+	if (*action == 'S') {
+		return *num;
+	} else {
+		return 0;
+	}
+}
+
+int cigar_qsize(Cigar *cigar) {
+	int count = cigar->size;
+	int *num = cigar->num;
+	char *action = cigar->action;
+	int result = 0;
+	while(count--) {
+		if (*action == 'M' || *action == 'I' || *action == 'S' || *action == '=' || *action == 'X') {
+			result += *num;
+		}
+		action++;
+		num++;
+	}
+	return result;
+}
+
 int parse_cigar(Cigar *cigar,char *string) {
 	if (cigar->memsize == 0) {
 		cigar->size = 0;
@@ -105,7 +149,7 @@ int main(int argc, char *argv[]) {
 	size_t read;
 	unsigned int curpos=0, flag;
 	unsigned int numfields,pos1;
-	int start1,end1;
+	int start,end;
 	char *cur;
 	if ((argc != 1)) {
 		fprintf(stderr,"Format is: sam2tsv\n");
@@ -126,30 +170,36 @@ int main(int argc, char *argv[]) {
 	}
 	/* init amplicons */
 	DStringSplitTab(line1,10,result1,0,&numfields);
-	fprintf(stdout,"qname\trefname\tbegin\tend\tstrand\tmapquality\tref2\tbegin2\tstrand2\ttlen");
+	fprintf(stdout,"qname\trefname\tbegin\tend\tstrand\tmapquality\tqstart\tqend\tref2\tbegin2\tstrand2\ttlen");
 	fprintf(stdout,"\tpair\tproperpair\tunmapped\tmateunmapped\tread\tsecondary\tqcfail\tduplicate\tsupplementary");
 	fprintf(stdout,"\tcigar\tseqlen\tseq\tquality\tother\n");
 	while (1) {
 		pos1++;
 		sscanf(result1->data[1].string,"%d",&(flag));
-		sscanf(result1->data[3].string,"%d",&start1);
+		sscanf(result1->data[3].string,"%d",&start);
 		parse_cigar(&cigar,result1->data[5].string);
-		start1--;
-		end1 = start1 + cigar_refsize(&cigar);
+		start--;
+		end = start + cigar_refsize(&cigar);
 		/* print result */
 		DStringputs(result1->data+0,stdout);
 		fputc('\t',stdout);
 		DStringputs(result1->data+2,stdout);
-		fprintf(stdout,"\t%d\t%d",start1,end1);
+		fprintf(stdout,"\t%d\t%d",start,end);
 		fputc('\t',stdout);
 		if (flag & BAM_FREVERSE) {fputc('-',stdout);} else {fputc('+',stdout);}
 		fputc('\t',stdout);
 		DStringputs(result1->data+4,stdout); /* mapq */
 		fputc('\t',stdout);
+		fprintf(stdout,"%d",cigar_clipleft(&cigar)); /* qstart */
+		fputc('\t',stdout);
+		end = result1->data[9].size - cigar_clipright(&cigar);
+		fprintf(stdout,"%d",end); /* qend */
+		fputc('\t',stdout);
 		DStringputs(result1->data+6,stdout); /* rnext */
 		fputc('\t',stdout);
-		sscanf(result1->data[7].string,"%d",&start1);
-		fprintf(stdout,"%d",start1-1); /* begin2 */
+		sscanf(result1->data[7].string,"%d",&start);
+		start--;
+		fprintf(stdout,"%d",start); /* begin2 */
 		fputc('\t',stdout);
 		if (flag & BAM_FMREVERSE) {fputc('-',stdout);} else {fputc('+',stdout);}
 		fputc('\t',stdout);
