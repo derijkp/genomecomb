@@ -328,7 +328,7 @@ test process_small {process_project mixed_yri_mx2} {
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2 exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
 	cg process_project {*}$::dopts -split 1 \
 	  -dbdir /complgen/refseq/hg19 \
-	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
+	  -dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
 	  tmp/mixed_yri_mx2 >& tmp/mixed_yri_mx2.log
 	# check vs expected
 	set result {}
@@ -359,7 +359,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2_distrreg exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
 	cg process_project {*}$::dopts -distrreg 1 -split 1 \
 	  -dbdir /complgen/refseq/hg19 \
-	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
+	  -dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
 	  tmp/mixed_yri_mx2_distrreg >& tmp/mixed_yri_mx2_distrreg.log
 	# check vs expected
 	set result {}
