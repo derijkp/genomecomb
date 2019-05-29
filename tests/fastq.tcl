@@ -85,4 +85,16 @@ test fastq_split {fastq_split -parts 3} {
 	lsort -dict [glob tmp/split/*]
 } {tmp/split/p1_seq_R1.fq.gz tmp/split/p2_seq_R1.fq.gz tmp/split/p3_seq_R1.fq.gz}
 
+test fastq2tsv {fastq2tsv} {
+	cg fastq2tsv data/seq_R1.fq.gz tmp/test.tsv
+} {}
+
+test fastq2tsv {fastq2tsv} {
+	file delete tmp/test.tsv
+	cg fastq2tsv data/seq_R1.fq.gz tmp/test.tsv
+	file delete tmp/test.fq.gz
+	cg tsv2fastq tmp/test.tsv tmp/test.fq.gz
+	diff data/seq_R1.fq.gz tmp/test.fq.gz
+} {}
+
 testsummarize
