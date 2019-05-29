@@ -38,6 +38,7 @@ proc bam_sort {args} {
 	set method samtools
 	set sort coordinate
 	set inputformat bam
+	set threads 1
 	cg_options bam_sort args {
 		-method {
 			if {$value ni {biobambam samtools}} {error "bamsort: unsupported -method $value"}
@@ -49,6 +50,9 @@ proc bam_sort {args} {
 		}
 		-inputformat {
 			set inputformat $value
+		}
+		-threads {
+			set threads $value
 		}
 	} {sourcefile resultfile}
 	if {$method eq "biobambam"} {
@@ -72,10 +76,12 @@ proc bam_sort {args} {
 				file rename -force $resultfile.temp $resultfile
 			}
 		} else {
-			if {[catch {exec samtools sort {*}$opts -T [scratchfile] $sourcefile > $resultfile.temp 2>@ stdout} msg]} {
+			set oformat [string toupper [string range [file extension $resultfile] 1 end]]
+			if {[catch {exec samtools sort {*}$opts --threads $threads -T [scratchfile] \
+				-O $oformat -o $resultfile.temp[file extension $resultfile] $sourcefile 2>@ stderr} msg]} {
 				error $msg
 			}
-			file rename -force $resultfile.temp $resultfile
+			file rename -force $resultfile.temp[file extension $resultfile] $resultfile
 		}
 	}
 }
