@@ -267,7 +267,7 @@ proc job_process_par_onepass {} {
 		file_write $runfile $cmd
 		file attributes $runfile -permissions u+x
 		# submit job
-		set ids [list_remove $ids {}]
+		set ids [list_remove [list_remdup $ids] {}]
 		set jobnum [job_process_par_submit $job $runfile -deps $ids {*}$submitopts]
 		job_log $job "-------------------- submitted $jobname ($jobnum <- $ids) (run $currentrun) --------------------"
 		job_logfile_add $job $jobnum submitted $targets $cores "" $submittime
