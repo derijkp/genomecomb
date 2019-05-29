@@ -28,6 +28,7 @@ proc cg_compress_job args {
 			set blocksize $value
 		}
 		-m - -method {
+			if {$value eq "gzip"} {set value gz}
 			set method $value
 		}
 	}
