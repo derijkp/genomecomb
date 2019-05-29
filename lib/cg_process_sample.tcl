@@ -743,9 +743,9 @@ proc process_sample_job {args} {
 				set base $sampledir/fastq/[file tail [file root $file]]
 				set target $base-R1.fastq.gz
 				set target2 $base-R2.fastq.gz
-				job bam2fastq-[file tail $file] -deps {$file} \
-				-targets {$target $target2} -code {
-					cg bam2fastq $dep $target.temp.gz $target2.temp.gz
+				job bam2fastq-[file tail $file] -deps {$file} -cores $threads \
+				-targets {$target $target2} -vars {threads} -code {
+					cg bam2fastq -threads $threads $dep $target.temp.gz $target2.temp.gz
 					file rename -force $target.temp.gz $target
 					file rename -force $target2.temp.gz $target2
 				}

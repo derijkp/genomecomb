@@ -1,12 +1,13 @@
 proc cg_bam2fastq {args} {
 	set pos 0
 	set method sam
-	set sortmethod samtools
+	set sortmethod collate
 	set namesort 1
 	set fastqfile2 {}
 	set singlefile [scratchfile]
 	set unmatchedfile [scratchfile]
 	set unmatchedfile2 [scratchfile]
+	set threads 1
 	cg_options bam2fastq args {
 		-m - -method {
 			set method $value
@@ -25,6 +26,9 @@ proc cg_bam2fastq {args} {
 		}
 		-u2 - -unmatched2 {
 			set unmatchedfile2 $value
+		}
+		-threads {
+			set threads $value
 		}
 	} {bamfile fastqfile1 fastqfile2} 2 3
 	set compress 0
@@ -47,55 +51,57 @@ proc cg_bam2fastq {args} {
 	if {$namesort && !($method in "sam samtools" && $sortmethod eq "collate")} {
 		putslog "Sorting bam file on name"
 		set tempbam [file root [scratchfile]].bam
-		bam_sort -sort name -method $sortmethod $bamfile $tempbam
+		bam_sort -threads $threads -sort name -method $sortmethod $bamfile $tempbam
 	} else {
 		set tempbam $bamfile
 	}
+	set tempfastq1 $fastqfile1.temp[gzext $fastqfile1]
+	set tempfastq2 $fastqfile2.temp[gzext $fastqfile2]
 	if {$method eq "biobambam"} {
 		putslog "Using biobambam to convert bam to fastq"
 		if {$fastqfile2 ne ""} {
-			biobambam bamtofastq filename=$tempbam F=$fastqfile1.temp F2=$fastqfile2.temp S=$singlefile O=$unmatchedfile O2=$unmatchedfile2 collate=1 exclude=SECONDARY T=[scratchfile] gz=$compress
+			biobambam bamtofastq filename=$tempbam F=$tempfastq1 F2=$tempfastq2 S=$singlefile O=$unmatchedfile O2=$unmatchedfile2 collate=1 exclude=SECONDARY T=[scratchfile] gz=$compress
 		} else {
-			biobambam bamtofastq filename=$tempbam F=$fastqfile1.temp S=$singlefile O=$unmatchedfile collate=0 exclude=SECONDARY T=[scratchfile] gz=$compress
+			biobambam bamtofastq filename=$tempbam F=$tempfastq1 S=$singlefile O=$unmatchedfile collate=0 exclude=SECONDARY T=[scratchfile] gz=$compress
 		}
 	} elseif {$method eq "picard"} {
 		putslog "Using picard to convert bam to fastq"
 		if {$fastqfile2 ne ""} {
 			set picard [findpicard]
 			if {[catch {
-				exec samtools view -hf 0x2 $tempbam | java -jar $picard/SamToFastq.jar I=/dev/stdin F=$fastqfile1.temp F2=$fastqfile2.temp VALIDATION_STRINGENCY=SILENT
+				exec samtools view -hf 0x2 $tempbam | java -jar $picard/SamToFastq.jar I=/dev/stdin F=$tempfastq1 F2=$tempfastq2 VALIDATION_STRINGENCY=SILENT
 			} msg] && ![regexp "done. Elapsed time:" $msg]} {
 				error $msg
 			}
 		} else {
-			picard SamToFastq I=$tempbam F=$fastqfile1.temp VALIDATION_STRINGENCY=SILENT >@ stdout
+			picard SamToFastq I=$tempbam F=$tempfastq1 VALIDATION_STRINGENCY=SILENT >@ stdout
 		}
 		putslog $msg
 	} elseif {$method in "sam samtools" && $sortmethod eq "collate"} {
 		putslog "Using samtools to convert bam to fastq"
-		catch_exec samtools sort -n $tempbam | samtools fastq -1 $fastqfile1.temp -2 $fastqfile2.temp -0 /dev/null -s $singlefile -n -N -F 0x900 -
+		catch_exec samtools collate -u -O $tempbam | samtools fastq -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 -
 	} elseif {$method in "sam samtools"} {
 		putslog "Using samtools to convert bam to fastq"
-		catch_exec samtools fastq -1 $fastqfile1.temp -2 $fastqfile2.temp -0 /dev/null -s $singlefile -n -N -F 0x900 $tempbam
+		catch_exec samtools fastq -1 $tempfastq1 -2 $tempfastq2 -0 /dev/null -s $singlefile -n -N -F 0x900 $tempbam
 	} else {
 		error "unknown method \"$method\", must be picard or sam"
 	}
-	if {$compress && $method ne "biobambam"} {
-		exec gzip $fastqfile1.temp
-		file rename -force $fastqfile1.temp.gz $fastqfile1.gz
+	if {$compress && $method ni "biobambam"} {
+		exec gzip $tempfastq1
+		file rename -force $tempfastq1.gz $fastqfile1.gz
 		if {$fastqfile2 ne ""} {
-			exec gzip $fastqfile2.temp
-			file rename -force $fastqfile2.temp.gz $fastqfile2.gz
+			exec gzip $tempfastq2
+			file rename -force $tempfastq2.gz $fastqfile2.gz
 		}
 	} elseif {$compress} {
-		file rename -force $fastqfile1.temp $fastqfile1.gz
+		file rename -force $tempfastq1 $fastqfile1.gz
 		if {$fastqfile2 ne ""} {
-			file rename -force $fastqfile2.temp $fastqfile2.gz
+			file rename -force $tempfastq2 $fastqfile2.gz
 		}
 	} else {
-		file rename -force $fastqfile1.temp $fastqfile1
+		file rename -force $tempfastq1 $fastqfile1
 		if {$fastqfile2 ne ""} {
-			file rename -force $fastqfile2.temp $fastqfile2
+			file rename -force $tempfastq2 $fastqfile2
 		}
 	}
 	if {$tempbam ne $bamfile} {file delete $tempbam}

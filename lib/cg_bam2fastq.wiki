@@ -15,7 +15,12 @@ prepared first (ao. sorted by name to avoid the problems caused by position sort
 
 == Options ==
 ; -m biobambam/picard/sam (--method): which method is used underneath (default = biobambam)
-; -namesort 0/1: sort (based on name) before converting; this may avoid biases during (re)alignment because of position based sort (default = 1)
+; -namesort 0/1: sort (based on name) before converting; this should be
+done to avoid biases during (re)alignment because of position based sort
+(default = 1). Set to 0 if the source bamfile is already namesorted.
+; -sortmethod biobambam/samtools/collate: method used to (name)sort the bam file. Default is collate,
+which is the fastest (by not doing full name sorting, but it is sufficient for
+this purpose). collate as sortmethod can only be used with th sam bam2fastq method 
 ; -single file (-s): file to write single reads
 ; -unmatched file (-u): file to write unmatched first reads from pair
 ; -unmatched2 file (-u2): file to write unmatched second reads from pair
