@@ -91,6 +91,7 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 }
 
 proc cg_annotatedb_info {dbfile {near -1}} {
+	if {[catch {
 	if {[file exists [gzroot $dbfile].opt]} {
 		set a [dict create {*}[file_read [gzroot $dbfile].opt]]
 	} else {
@@ -192,6 +193,9 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 	dict set a basicfields $poss
 	if {![dict exists $a fields]} {
 		dict set a fields [dict get $a name]
+	}
+	} msg]} {
+		error "error getting info from $dbfile: $msg"
 	}
 	return $a
 }
