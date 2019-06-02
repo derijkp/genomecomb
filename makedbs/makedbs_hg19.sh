@@ -1064,29 +1064,44 @@ job reg_${build}_cadd -targets {
 }
 
 # geneHancerRegElements and geneHancerClusteredInteractions cannot be
-# downloaded (yet?) via ftp, did this manually (tablebrowser)
-# process if available in $defaultdest
-if {[file exists $defaultdest/geneHancerRegElements_${build}.tsv.gz]} {
+# downloaded (yet?) from UCSC via ftp, did this manually (tablebrowser)
+# process if available in $defaultdest/downloads
+if {[file exists $defaultdest/downloads/geneHancerRegElements_${build}.tsv.gz]} {
 	set target reg_${build}_geneHancerRegElements.tsv.zst
 	file_write [gzroot $target].opt "fields\t{score elementType evidenceSources}\n"
 	cg_download_ucscinfo [gzroot $target].info $build geneHancerRegElements
-	cg select -overwrite 1 -hc 1 -f {chromosome=$chrom begin=$chromStart end=$chromEnd name score elementType eliteness evidenceSources} $defaultdest/geneHancerRegElements_${build}.tsv.gz $target.temp
+	cg select -overwrite 1 -hc 1 -f {chromosome=$chrom begin=$chromStart end=$chromEnd name score elementType eliteness evidenceSources} $defaultdest/downloads/geneHancerRegElements_${build}.tsv.gz $target.temp
 	exec cg select -s - $target.temp | cg regcollapse | cg zst > $target.temp2.zst
 	file rename $target.temp2.zst $target
 	file delete $target.temp
 }
-if {[file exists $defaultdest/geneHancerClusteredInteractions_${build}.tsv.gz]} {
+if {[file exists $defaultdest/downloads/geneHancerClusteredInteractions_${build}.tsv.gz]} {
 	set target extra/reg_${build}_geneHancerClusteredInteractions.tsv.zst
 	cg_download_ucscinfo [gzroot $target].info $build geneHancerClusteredInteractions
 	cg select -overwrite 1 -hc 1 -f {
 		chromosome=$geneHancerChrom begin=$geneHancerStart end=$geneHancerEnd geneHancerIdentifier
 		score interactionscore=$value geneAssociationMethods
 		geneChrom geneStart geneEnd geneName geneStrand name
-	} $defaultdest/geneHancerClusteredInteractions_${build}.tsv.gz $target.temp
+	} $defaultdest/downloads/geneHancerClusteredInteractions_${build}.tsv.gz $target.temp
 	cg select -overwrite 1 -s - $target.temp $target.temp2
 	exec cg select -s - $target.temp | cg regcollapse | cg zst > $target.temp3.zst
 	file rename $target.temp3.zst $target
 	file delete $target.temp $target.temp2
+}
+
+# There does not seem to be an easily accessible source for exome target regions on the net
+# copy the ones collected in $defaultdest/downloads to extra, or lift if needed
+foreach file [glob $defaultdest/downloads/reg_*_exome_*.zst] {
+	puts "Transfering $file"
+	set tail [file tail $file]
+	set filebuild [lindex [split $tail _] 1]
+	hardcopy $file extra/
+	catch {hardcopy $file.zsti extra/}
+	if {$filebuild ne $build} {
+		set newtail [join [lreplace [split $tail _] 1 1 $build] _]
+		file delete extra/$newtail
+		liftover_refdb extra/$tail extra/$newtail $dest $filebuild $build
+	}
 }
 
 job_wait
