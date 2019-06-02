@@ -380,7 +380,9 @@ proc cg_liftover {args} {
 	if {$sort} {
 		catch {close $o}
 		# sort result
-		set sortfields [list_sub $header [list_remove [lrange $fposs 0 5] -1]]
+		set defsortpos [lrange $fposs 0 5]
+		# set defsortpos [list_sub [lrange $fposs 0 5] -exclude 4]
+		set sortfields [list_sub $header [list_remove $defsortpos -1]]
 		lappend sortfields ${oldrefname}_chromosome ${oldrefname}_begin ${oldrefname}_end ${oldrefname}_ref
 		set fields [list_union [list_sub $newheader [list_remove $fposs -1]] $newheader]
 		if {$resultfile ne "-"} {

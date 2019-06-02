@@ -408,4 +408,15 @@ test liftover {liftchain2tsv} {
 	exec diff tmp/xx1Toxx2.over.tsv tmp/expected.tsv
 } {}
 
+test sort {problem gottenafter liftover} {
+	file_write tmp/test.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		1	42233666	42233669	del		
+		1	42233666	42233669	del	TTT	
+	}]\n
+	file delete tmp/lift.tsv
+	cg liftover tmp/test.tsv tmp/lift.tsv /complgen/refseq/liftover/hg18ToHg19.over.tsv
+	cg checksort tmp/lift.tsv
+} {}
+
 testsummarize
