@@ -215,14 +215,14 @@ proc file_link {linkname linkdest} {
 # copy recursively with permissions and dates using hardlinks
 proc hardlink {args} {
 	if {[llength $args] < 2} {error "wrong # args: should be \"hardlink src ... dest\""}
-	exec cp -al {*}$args
+	exec cp -alf {*}$args
 }
 
 # copy recursively with permissions and dates using hardlinks, but if that does not work, copy normally
 proc hardcopy {args} {
 	if {[llength $args] < 2} {error "wrong # args: should be \"hardcopy src ... dest\""}
 	if {[catch {hardlink {*}$args}]} {
-		exec cp -a {*}$args
+		exec cp -af {*}$args
 	}
 }
 
