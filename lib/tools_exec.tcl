@@ -1,13 +1,18 @@
 proc chanexec {in out pipe} {
-	set o [open "|\ $pipe\ >@\ $out 2>@\ stderr" w]
+	if {$pipe eq ""} {
+		set o $out
+	} else {
+		set o [open [list | {*}$pipe >@ $out 2>@ stderr] w]
+	}
 	if {[info exists ::filebuffer($in)]} {
 		foreach line $::filebuffer($in) {
 			puts $o $line
 		}
 		unset ::filebuffer($in)
 	}
-	fcopy $in $o
+	catch_fileaccess {fcopy $in $o} $in $o
 	if {$in ne "stdin"} {catch {gzclose $in}}
+	# if {$o ne "stdout"} {catch {close $o}}
 	catch {close $o}
 	if {$out ne "stdout"} {catch {close $out}}
 }
@@ -31,6 +36,18 @@ proc catch_exec {args} {
 		}
 	}
 	return $msg
+}
+
+proc catch_fileaccess {cmd args} {
+	if {[catch {uplevel $cmd} error]} {
+		foreach f $args {
+			if {$f in "stdin stdout stderr"} continue
+			if {[catch {gzclose $f} msg]} {
+				append error "\nerror closing $f: $msg"
+			}
+		}
+		error $error
+	}
 }
 
 proc catchchildkilled_exec {args} {
