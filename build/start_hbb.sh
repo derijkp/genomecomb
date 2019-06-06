@@ -1,7 +1,7 @@
 # This script is meant to be sourced in a Holy build box build script to start the HBB docker
 # it interprets the options:
 # -b|-bits|--bits: 32 for 32 bits build (default 64)
-# -d|-builddir|--builddir: top directory to build in (default ~/build/tcl$arch)
+# -d|-builddir|--builddir: top directory to build in (default ~/build/bin-$arch)
 # and presents all options (excluding -bbuilddir) to the program in the docker
 
 # you can use the following to use in the build script

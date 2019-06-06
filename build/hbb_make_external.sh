@@ -51,6 +51,7 @@ set -x
 # ------------------
 yuminstall git
 yuminstall wget
+yuminstall xz
 
 for dir in lib include bin share ; do
 	echo $dir
@@ -74,6 +75,8 @@ function download {
     ext=${filename##*.}
     if [ "$ext" = "bz2" ] ; then
         tar xvjf $filename
+    elif [ "$ext" = "xz" ] ; then
+        tar xvJf $filename
     else
         tar xvzf $filename
     fi
@@ -136,8 +139,8 @@ fi
 # gnusort8
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/gnusort8 ] ; then
-	download https://ftp.gnu.org/gnu/coreutils/coreutils-8.9.tar.gz
-	cd /build/coreutils-8.9
+	download https://ftp.gnu.org/gnu/coreutils/coreutils-8.31.tar.xz
+	cd /build/coreutils-8.31
 	if [ ! -f src/sort.c.orig ] ; then
 		cp src/sort.c src/sort.c.orig
 	fi
