@@ -88,8 +88,8 @@ proc map_bowtie2_job {args} {
 	-code {
 		puts "making $target"
 		analysisinfo_write $dep $target
-		catch {exec samtools view -S -h -b -o $resultbase.ubam $resultbase.sam >@ stdout 2>@ stderr}
-		catch {bam_sort $resultbase.ubam $target.temp}
+		catch_exec samtools view -S -h -b -o $resultbase.ubam $resultbase.sam >@ stdout 2>@ stderr
+		bam_sort $resultbase.ubam $target.temp
 		file rename -force $target.temp $target
 		file delete $resultbase.ubam $resultbase.ubam.analysisinfo
 		file delete $resultbase.sam $resultbase.sam.analysisinfo
