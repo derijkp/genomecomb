@@ -1019,17 +1019,51 @@ test sam2tsv {sam2tsv cases} {
 		#@SQ	SN:chr2	LN:243199373
 		#@RG	ID:NA19240m	SM:NA19240m	PL:illumina	PU:NA19240m	LB:solexa-123
 		#@PG	ID:bwa	PN:bwa	VN:0.7.15-r1140	CL:bwa mem -t 2 -M -R @RG\tID:NA19240m\tSM:NA19240m\tPL:illumina\tPU:NA19240m\tLB:solexa-123 /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.ifas.bwa/genome_hg19.ifas /home/peter/dev/genomecomb/tests/tmp/seq_1.fastq /home/peter/dev/genomecomb/tests/tmp/seq_2.fastq
-		qname	refname	begin	end	strand	mapquality	qstart	qend	ref2	begin2	strand2	tlen	pair	properpair	unmapped	mateunmapped	read	secondary	qcfail	duplicate	supplementary	cigar	seqlen	seq	quality	other
-		r001	chr1	6	22	+	30	0	17	=	36	-	39	1	1	0	0	1	0	0	0	0	8M2I4M1D3M	17	TTAGATAAAGGATACTG	*	RG\tID:NA19240m\tSM:NA19240m\tPL:illumina\tPU:NA19240m\tLB:solexa-123 /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.ifas.bwa/genome_hg19.ifas /home/peter/dev/genomecomb/tests/tmp/seq_1.fastq /home/peter/dev/genomecomb/tests/tmp/seq_2.fastq
-		r002	chr1	8	18	+	30	3	14	*	-1	+	0	0	0	0	0	0	0	0	0	0	3S6M1P1I4M	14	AAAAGATAAGGATA	*	
-		r003	chr1	8	14	+	30	5	11	*	-1	+	0	0	0	0	0	0	0	0	0	0	5S6M	11	GCCTAAGCTAA	*	SA:Z:chr1,29,-,6H5M,17,0;
-		r004	chr1	15	40	+	30	0	11	*	-1	+	0	0	0	0	0	0	0	0	0	0	6M14N5M	11	ATAGCTTCAGC	*	
-		r003	chr1	28	33	-	17	0	5	*	-1	+	0	0	0	0	0	0	0	0	0	1	6H5M	5	TAGGC	*	SA:Z:chr1,9,+,5S6M,30,1;
-		r001	chr1	36	45	-	30	0	9	=	6	+	-39	1	1	0	0	2	0	0	0	0	9M	9	CAGCGGCAT	*	NM:i:1
-		r005	chr1	99	103	+	30	2	8	*	-1	-	12	1	1	0	0	1	0	0	0	0	4H2S2M2I2M4S2H	12	GATAAAGGATAG	*	
+		chromosome	begin	end	strand	qname	qstart	qend	mapquality	ref2	begin2	strand2	tlen	pair	properpair	unmapped	mateunmapped	read	secondary	qcfail	duplicate	supplementary	cigar	seqlen	seq	quality	other
+		chr1	6	22	+	r001	0	17	30	=	36	-	39	1	1	0	0	1	0	0	0	0	8M2I4M1D3M	17	TTAGATAAAGGATACTG	*	RG\tID:NA19240m\tSM:NA19240m\tPL:illumina\tPU:NA19240m\tLB:solexa-123 /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.ifas.bwa/genome_hg19.ifas /home/peter/dev/genomecomb/tests/tmp/seq_1.fastq /home/peter/dev/genomecomb/tests/tmp/seq_2.fastq
+		chr1	8	18	+	r002	3	14	30	*	-1	+	0	0	0	0	0	0	0	0	0	0	3S6M1P1I4M	14	AAAAGATAAGGATA	*	
+		chr1	8	14	+	r003	5	11	30	*	-1	+	0	0	0	0	0	0	0	0	0	0	5S6M	11	GCCTAAGCTAA	*	SA:Z:chr1,29,-,6H5M,17,0;
+		chr1	15	40	+	r004	0	11	30	*	-1	+	0	0	0	0	0	0	0	0	0	0	6M14N5M	11	ATAGCTTCAGC	*	
+		chr1	28	33	-	r003	0	5	17	*	-1	+	0	0	0	0	0	0	0	0	0	1	6H5M	5	TAGGC	*	SA:Z:chr1,9,+,5S6M,30,1;
+		chr1	36	45	-	r001	0	9	30	=	6	+	-39	1	1	0	0	2	0	0	0	0	9M	9	CAGCGGCAT	*	NM:i:1
+		chr1	99	103	+	r005	2	8	30	*	-1	-	12	1	1	0	0	1	0	0	0	0	4H2S2M2I2M4S2H	12	GATAAAGGATAG	*	
 	}]\n
 	cg sam2tsv tmp/test.sam tmp/test.tsv
 	exec diff tmp/test.tsv tmp/expected.tsv
+} {}
+
+test sam2tsv {tsv2sam cases} {
+	file_write tmp/test.tsv [deindent {
+		#@HD	VN:1.3	SO:coordinate
+		#@SQ	SN:chr1	LN:249250621
+		#@SQ	SN:chr2	LN:243199373
+		#@RG	ID:NA19240m	SM:NA19240m	PL:illumina	PU:NA19240m	LB:solexa-123
+		#@PG	ID:bwa	PN:bwa	VN:0.7.15-r1140	CL:bwa mem -t 2 -M -R @RG\tID:NA19240m\tSM:NA19240m\tPL:illumina\tPU:NA19240m\tLB:solexa-123 /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.ifas.bwa/genome_hg19.ifas /home/peter/dev/genomecomb/tests/tmp/seq_1.fastq /home/peter/dev/genomecomb/tests/tmp/seq_2.fastq
+		chromosome	begin	end	strand	qname	qstart	qend	mapquality	ref2	begin2	strand2	tlen	pair	properpair	unmapped	mateunmapped	read	secondary	qcfail	duplicate	supplementary	cigar	seqlen	seq	quality	other
+		chr1	6	22	+	r001	0	17	30	=	36	-	39	1	1	0	0	1	0	0	0	0	8M2I4M1D3M	17	TTAGATAAAGGATACTG	*	
+		chr1	8	18	+	r002	3	14	30	*	-1	+	0	0	0	0	0	0	0	0	0	0	3S6M1P1I4M	14	AAAAGATAAGGATA	*	
+		chr1	8	14	+	r003	5	11	30	*	-1	+	0	0	0	0	0	0	0	0	0	0	5S6M	11	GCCTAAGCTAA	*	SA:Z:chr1,29,-,6H5M,17,0;
+		chr1	15	40	+	r004	0	11	30	*	-1	+	0	0	0	0	0	0	0	0	0	0	6M14N5M	11	ATAGCTTCAGC	*	
+		chr1	28	33	-	r003	0	5	17	*	-1	+	0	0	0	0	0	0	0	0	0	1	6H5M	5	TAGGC	*	SA:Z:chr1,9,+,5S6M,30,1;
+		chr1	36	45	-	r001	0	9	30	=	6	+	-39	1	1	0	0	2	0	0	0	0	9M	9	CAGCGGCAT	*	NM:i:1
+		chr1	99	103	+	r005	2	8	30	*	-1	-	12	1	1	0	0	1	0	0	0	0	4H2S2M2I2M4S2H	12	GATAAAGGATAG	*	
+	}]\n
+	file_write tmp/expected.sam [deindent {
+		@HD	VN:1.3	SO:coordinate
+		@SQ	SN:chr1	LN:249250621
+		@SQ	SN:chr2	LN:243199373
+		@RG	ID:NA19240m	SM:NA19240m	PL:illumina	PU:NA19240m	LB:solexa-123
+		@PG	ID:bwa	PN:bwa	VN:0.7.15-r1140	CL:bwa mem -t 2 -M -R @RG\tID:NA19240m\tSM:NA19240m\tPL:illumina\tPU:NA19240m\tLB:solexa-123 /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.ifas.bwa/genome_hg19.ifas /home/peter/dev/genomecomb/tests/tmp/seq_1.fastq /home/peter/dev/genomecomb/tests/tmp/seq_2.fastq
+		r001	99	chr1	7	30	8M2I4M1D3M	=	37	39	TTAGATAAAGGATACTG	*
+		r002	0	chr1	9	30	3S6M1P1I4M	*	0	0	AAAAGATAAGGATA	*
+		r003	0	chr1	9	30	5S6M	*	0	0	GCCTAAGCTAA	*	SA:Z:chr1,29,-,6H5M,17,0;
+		r004	0	chr1	16	30	6M14N5M	*	0	0	ATAGCTTCAGC	*
+		r003	2064	chr1	29	17	6H5M	*	0	0	TAGGC	*	SA:Z:chr1,9,+,5S6M,30,1;
+		r001	147	chr1	37	30	9M	=	7	-39	CAGCGGCAT	*	NM:i:1
+		r005	99	chr1	100	30	4H2S2M2I2M4S2H	*	0	12	GATAAAGGATAG	*
+	}]\n
+	cg tsv2sam tmp/test.tsv tmp/test.sam
+	exec diff  tmp/test.sam tmp/expected.sam
 } {}
 
 testsummarize

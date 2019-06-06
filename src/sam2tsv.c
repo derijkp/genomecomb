@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
 	}
 	/* init amplicons */
 	DStringSplitTab(line1,10,result1,0,&numfields);
-	fprintf(stdout,"qname\trefname\tbegin\tend\tstrand\tmapquality\tqstart\tqend\tref2\tbegin2\tstrand2\ttlen");
+	fprintf(stdout,"chromosome\tbegin\tend\tstrand\tqname\tqstart\tqend\tmapquality\tref2\tbegin2\tstrand2\ttlen");
 	fprintf(stdout,"\tpair\tproperpair\tunmapped\tmateunmapped\tread\tsecondary\tqcfail\tduplicate\tsupplementary");
 	fprintf(stdout,"\tcigar\tseqlen\tseq\tquality\tother\n");
 	while (1) {
@@ -181,19 +181,19 @@ int main(int argc, char *argv[]) {
 		start--;
 		end = start + cigar_refsize(&cigar);
 		/* print result */
-		DStringputs(result1->data+0,stdout);
-		fputc('\t',stdout);
-		DStringputs(result1->data+2,stdout);
+		DStringputs(result1->data+2,stdout); /* chromosome/refname */
 		fprintf(stdout,"\t%d\t%d",start,end);
 		fputc('\t',stdout);
 		if (flag & BAM_FREVERSE) {fputc('-',stdout);} else {fputc('+',stdout);}
 		fputc('\t',stdout);
-		DStringputs(result1->data+4,stdout); /* mapq */
+		DStringputs(result1->data+0,stdout); /* qname */
 		fputc('\t',stdout);
 		fprintf(stdout,"%d",cigar_clipleft(&cigar)); /* qstart */
 		fputc('\t',stdout);
 		end = result1->data[9].size - cigar_clipright(&cigar);
 		fprintf(stdout,"%d",end); /* qend */
+		fputc('\t',stdout);
+		DStringputs(result1->data+4,stdout); /* mapq */
 		fputc('\t',stdout);
 		DStringputs(result1->data+6,stdout); /* rnext */
 		fputc('\t',stdout);

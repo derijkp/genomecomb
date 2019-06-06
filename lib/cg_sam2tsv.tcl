@@ -6,7 +6,7 @@ proc cg_sam2tsv {args} {
 	} {samfile outfile} 0
 	if {$samfile eq "-"} {
 		set pipe {}
-	} elseif {[file extension $samfile] eq ".bam"} {
+	} elseif {[file extension $samfile] in ".bam .cram"} {
 		set pipe [list samtools view -h $samfile \|]
 	} else {
 		set pipe [list {*}[gzcat $samfile] $samfile \|]

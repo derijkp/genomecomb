@@ -73,11 +73,11 @@ test map_ngmlr {map_ngmlr basic} {
 	cg map_ngmlr -stack 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# using samtools merge may result in differently (although still correctly) ordered bam each run
 	# so first check if sorted correctly (only chromosome and start)
-	cg sam2tsv tmp/ali.bam | cg select -f {qname chromosome=$refname begin e=$end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
+	cg sam2tsv tmp/ali.bam | cg select -f {qname chromosome begin e=$end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
 	cg checktsv tmp/ali.tsv
 	# now check contents (compare sorted)
-	cg sam2tsv tmp/ali.bam | cg select -s {refname begin end qname} -f {qname refname begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
-	cg sam2tsv data/ngmlr.bam | cg select -s {refname begin end qname} -f {qname refname begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/expected.tsv
+	cg sam2tsv tmp/ali.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
+	cg sam2tsv data/ngmlr.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/expected.tsv
 	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
 } {}
 
@@ -90,11 +90,11 @@ test map_ngmlr {map_ngmlr 7 files -m 2} {
 	cg map_ngmlr -stack 1 -maxopenfiles 2 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# using samtools merge may result in differently (although still correctly) ordered bam each run
 	# so first check if sorted correctly (only chromosome and start)
-	cg sam2tsv tmp/ali.bam | cg select -f {qname chromosome=$refname begin e=$end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
+	cg sam2tsv tmp/ali.bam | cg select -f {qname chromosome begin e=$end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
 	cg checktsv tmp/ali.tsv
 	# now check contents (compare sorted)
-	cg sam2tsv tmp/ali.bam | cg select -s {refname begin end qname} -f {qname refname begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} | uniq > tmp/ali.tsv
-	cg sam2tsv data/ngmlr.bam | cg select -s {refname begin end qname} -f {qname refname begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/expected.tsv
+	cg sam2tsv tmp/ali.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} | uniq > tmp/ali.tsv
+	cg sam2tsv data/ngmlr.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/expected.tsv
 	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
 	lindex [cg sam2tsv tmp/ali.bam | cg select -g all] end
 } {700}
@@ -108,11 +108,11 @@ test map_ngmlr {map_ngmlr 4 files -m 2} {
 	cg map_ngmlr -stack 1 -maxopenfiles 2 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# using samtools merge may result in differently (although still correctly) ordered bam each run
 	# so first check if sorted correctly (only chromosome and start)
-	cg sam2tsv tmp/ali.bam | cg select -f {qname chromosome=$refname begin e=$end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
+	cg sam2tsv tmp/ali.bam | cg select -f {qname chromosome begin e=$end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
 	cg checktsv tmp/ali.tsv
 	# now check contents (compare sorted)
-	cg sam2tsv tmp/ali.bam | cg select -s {refname begin end qname} -f {qname refname begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} | uniq > tmp/ali.tsv
-	cg sam2tsv data/ngmlr.bam | cg select -s {refname begin end qname} -f {qname refname begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/expected.tsv
+	cg sam2tsv tmp/ali.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} | uniq > tmp/ali.tsv
+	cg sam2tsv data/ngmlr.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/expected.tsv
 	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
 	lindex [cg sam2tsv tmp/ali.bam | cg select -g all] end
 } {400}

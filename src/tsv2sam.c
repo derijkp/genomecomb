@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
 	unsigned int curpos=0, flag, header_numfields;
 	unsigned int numfields,pos1, count, max, i;
 	int pos;
-	char *fields[] = {"qname","refname","begin","end","strand","mapquality","ref2","begin2","strand2","tlen","pair","properpair","unmapped","mateunmapped","read","secondary","qcfail","duplicate","supplementary","cigar","seqlen","seq","quality","other"};
+	char *fields[] = {"qname","chromosome","begin","end","strand","mapquality","ref2","begin2","strand2","tlen","pair","properpair","unmapped","mateunmapped","read","secondary","qcfail","duplicate","supplementary","cigar","seqlen","seq","quality","other"};
 	int poss[24];
 	char *cur;
 	if ((argc != 1)) {
