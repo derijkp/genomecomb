@@ -94,7 +94,9 @@ test fastq2tsv {fastq2tsv} {
 	cg fastq2tsv data/seq_R1.fq.gz tmp/test.tsv
 	file delete tmp/test.fq.gz
 	cg tsv2fastq tmp/test.tsv tmp/test.fq.gz
-	diff data/seq_R1.fq.gz tmp/test.fq.gz
+	cg zcat data/seq_R1.fq.gz > tmp/seq_R1.fq
+	cg zcat tmp/test.fq.gz > tmp/test.fq
+	exec diff tmp/seq_R1.fq tmp/test.fq
 } {}
 
 testsummarize
