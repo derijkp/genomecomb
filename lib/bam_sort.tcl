@@ -3,6 +3,7 @@ proc bam_sort_job {args} {
 	set method samtools
 	set sort coordinate
 	set inputformat bam
+	set threads 1
 	set skips {}
 	cg_options bam_sort args {
 		-method {
@@ -16,19 +17,27 @@ proc bam_sort_job {args} {
 		-inputformat {
 			set inputformat $value
 		}
+		-threads {
+			set threads $value
+		}
 		-skip {
 			lappend skips -skip $value
 		}
 	} {sourcefile resultfile}
 	set analysisinfo [gzroot $resultfile].analysisinfo
-	job bamsort-[file tail $resultfile] -deps {$sourcefile} -targets {$resultfile $analysisinfo} \
-	-vars {method sort inputformat} {*}$skips -code {
+	job bamsort-[file tail $resultfile] -deps {
+		$sourcefile
+	} -targets {
+		$resultfile $analysisinfo
+	} -vars {
+		method sort inputformat threads
+	} {*}$skips -cores $threads -code {
 		analysisinfo_write $dep $target bamsort $method bamsort_version [version $method]
 		file delete $target.temp
 		if {$method eq "alreadysorted"} {
 			hardlink $dep $target
 		} else {
-			bam_sort -method $method -sort $sort -inputformat $inputformat $dep $target.temp
+			bam_sort -method $method -sort $sort -threads $threads -inputformat $inputformat $dep $target.temp
 			file rename -force $target.temp $target
 		}
 	}
@@ -77,6 +86,12 @@ proc bam_sort {args} {
 			}
 		} else {
 			set oformat [string toupper [string range [file extension $resultfile] 1 end]]
+			if {$oformat ni "BAM CRAM SAM"} {
+				set oformat [string toupper [string range [file extension [file root $resultfile]] 1 end]]
+			}
+			if {$oformat ni "BAM CRAM SAM"} {
+				set oformat BAM
+			}
 			if {[catch {exec samtools sort {*}$opts --threads $threads -T [scratchfile] \
 				-O $oformat -o $resultfile.temp[file extension $resultfile] $sourcefile 2>@ stderr} msg]} {
 				error $msg
