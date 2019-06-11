@@ -19,6 +19,7 @@ the filename job_$name.out will be used
 to the given errorfile. By default, the filename job_$name.err will be
 used
 ; -name name: specify name to job (default generated based on the command)
+; -run run: specify the run name for the job (default generated based on the command)
 ; -dqueue value: (only for sge) Use this option if you want to run on another queue than the default all.q
 ; -deps ids: job will only run when the jobs in ids (a comma separated list of job ids)
 
