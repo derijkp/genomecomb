@@ -252,4 +252,20 @@ chr22	51229714	51229749
 chr22	51229752	51229787
 chr22	51237064	51237741}
 
+test cg_bamreorder {basic genomecomb} {
+	file_write tmp/ref.fai [deindent {
+		chr22	51304566	2832165523	51304566	51304567
+		chr21_gl000210_random	27682	2832137827	27682	27683
+		chr21	48129895	2784007886	48129895	48129896
+	}]
+	file delete tmp/result.bam  tmp/result.bam.bai
+	catch_exec cg bamreorder data/bwa.bam tmp/result.bam tmp/ref
+	list [exec md5sum tmp/result.bam] [exec samtools view -H tmp/result.bam]
+} {{7bcf2370e55bb6f10a9794b9e76fc567  tmp/result.bam} {@HD	VN:1.3	SO:coordinate
+@SQ	SN:chr22	LN:51304566
+@SQ	SN:chr21_gl000210_random	LN:27682
+@SQ	SN:chr21	LN:48129895
+@RG	ID:NA19240m	SM:NA19240m	PL:illumina	PU:NA19240m	LB:solexa-123
+@PG	ID:bwa	PN:bwa	VN:0.7.15-r1140	CL:bwa mem -t 2 -M -R @RG\tID:NA19240m\tSM:NA19240m\tPL:illumina\tPU:NA19240m\tLB:solexa-123 /home/peter/dev/genomecomb/tests/genomecomb.testdata/refseqtest/hg19/genome_hg19.ifas.bwa/genome_hg19.ifas /home/peter/dev/genomecomb/tests/tmp/seq_1.fastq /home/peter/dev/genomecomb/tests/tmp/seq_2.fastq}}
+
 testsummarize
