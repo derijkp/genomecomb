@@ -146,6 +146,37 @@ proc file_regsub {exp subSpec file resultfile} {
 	close $f
 }
 
+set sam_header {
+	@HD	VN:1.4	GO:none	SO:coordinate
+	@SQ	SN:chr1	LN:249250621
+	@SQ	SN:chr2	LN:243199373
+	@SQ	SN:chr3	LN:198022430
+	@SQ	SN:chr4	LN:191154276
+	@SQ	SN:chr5	LN:180915260
+	@SQ	SN:chr6	LN:171115067
+	@SQ	SN:chr7	LN:159138663
+	@SQ	SN:chr8	LN:146364022
+	@SQ	SN:chr9	LN:141213431
+	@SQ	SN:chr10	LN:135534747
+	@SQ	SN:chr11	LN:135006516
+	@SQ	SN:chr12	LN:133851895
+	@SQ	SN:chr13	LN:115169878
+	@SQ	SN:chr14	LN:107349540
+	@SQ	SN:chr15	LN:102531392
+	@SQ	SN:chr16	LN:90354753
+	@SQ	SN:chr17	LN:81195210
+	@SQ	SN:chr18	LN:78077248
+	@SQ	SN:chr19	LN:59128983
+	@SQ	SN:chr20	LN:63025520
+	@SQ	SN:chr21	LN:48129895
+	@SQ	SN:chr22	LN:51304566
+	@SQ	SN:chrM	LN:16571
+	@SQ	SN:chrX	LN:155270560
+	@SQ	SN:chrY	LN:59373566
+	@RG	ID:sample1	PL:illumina	PU:sample1	LB:solexa-123	SM:sample1
+	@PG	ID:GATK	IndelRealigner	VN:2.4-9-g532efad	CL:knownAlleles=[] targetIntervals=test.intervals LODThresholdForCleaning=5.0 consensusDeterminationModel=USE_READS entropyThreshold=0.15 maxReadsInMemory=150000 maxIsizeForMovement=3000 maxPositionalMoveAllowed=200 maxConsensuses=30 maxReadsForConsensuses=120 maxReadsForRealignment=20000 noOriginalAlignmentTags=false nWayOut=null generate_nWayOut_md5s=false check_early=false noPGTag=false keepPGTags=false indelsFileForDebugging=null statisticsFileForDebugging=null SNPsFileForDebugging=null
+}
+
 proc write_sam {file data} {
 	# creates a sam file based on data
 	# sequences are all one base (given in data or A) and qualities are all -
@@ -163,53 +194,33 @@ proc write_sam {file data} {
 			set size1 [string length $seq1]
 		}
 		set qual1 [string_fill - $size1]
-		if {[isint $seq2]} {
-			set size2 $seq2
-			set seq2 [string_fill $base $size2]
+		if {$seq2 ne ""} {
+			if {[isint $seq2]} {
+				set size2 $seq2
+				set seq2 [string_fill $base $size2]
+			} else {
+				set size2 [string length $seq2]
+			}
+			set qual2 [string_fill - $size2]
+			if {$chr2 eq $chr1} {set c2 =} else {set c2 $chr2}
+			set tlen [expr {$pos2+$size2-$pos1}]
+			set flags 99
 		} else {
-			set size2 [string length $seq2]
+			set c2 *
+			set pos2 0
+			set tlen 0
+			set flags 16
 		}
-		set qual2 [string_fill - $size2]
-		if {$chr2 eq $chr1} {set c2 =} else {set c2 $chr2}
-		puts $o [join [list A$num 99 $chr1 $pos1 60 $cigar1 $c2 $pos2 [expr {$pos2+$size2-$pos1}] $seq1 $qual1 RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25] \t]
-		if {$chr2 eq $chr1} {set c1 =} else {set c1 $chr1}
-		puts $o [join [list A$num 147 $chr2 $pos2 60 $cigar2 $c1 $pos1 -[expr {$pos2+$size2-$pos1}] $seq2 $qual2 RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25] \t]
+		puts $o [join [list A$num $flags $chr1 $pos1 60 $cigar1 $c2 $pos2 $tlen $seq1 $qual1 RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25] \t]
+		if {$seq2 ne ""} {
+			if {$chr2 eq $chr1} {set c1 =} else {set c1 $chr1}
+			puts $o [join [list A$num 147 $chr2 $pos2 60 $cigar2 $c1 $pos1 -[expr {$pos2+$size2-$pos1}] $seq2 $qual2 RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25] \t]
+		}
 		incr num
 	}
 	close $o
 	set o [open $file w]
-	foreach line [split [string trim {
-		@HD	VN:1.4	GO:none	SO:coordinate
-		@SQ	SN:chr1	LN:249250621
-		@SQ	SN:chr2	LN:243199373
-		@SQ	SN:chr3	LN:198022430
-		@SQ	SN:chr4	LN:191154276
-		@SQ	SN:chr5	LN:180915260
-		@SQ	SN:chr6	LN:171115067
-		@SQ	SN:chr7	LN:159138663
-		@SQ	SN:chr8	LN:146364022
-		@SQ	SN:chr9	LN:141213431
-		@SQ	SN:chr10	LN:135534747
-		@SQ	SN:chr11	LN:135006516
-		@SQ	SN:chr12	LN:133851895
-		@SQ	SN:chr13	LN:115169878
-		@SQ	SN:chr14	LN:107349540
-		@SQ	SN:chr15	LN:102531392
-		@SQ	SN:chr16	LN:90354753
-		@SQ	SN:chr17	LN:81195210
-		@SQ	SN:chr18	LN:78077248
-		@SQ	SN:chr19	LN:59128983
-		@SQ	SN:chr20	LN:63025520
-		@SQ	SN:chr21	LN:48129895
-		@SQ	SN:chr22	LN:51304566
-		@SQ	SN:chrM	LN:16571
-		@SQ	SN:chrX	LN:155270560
-		@SQ	SN:chrY	LN:59373566
-		@RG	ID:sample1	PL:illumina	PU:sample1	LB:solexa-123	SM:sample1
-		@PG	ID:GATK IndelRealigner	VN:2.4-9-g532efad	{CL:knownAlleles=[] targetIntervals=test.intervals LODThresholdForCleaning=5.0 consensusDeterminationModel=USE_READS entropyThreshold=0.15 maxReadsInMemory=150000 maxIsizeForMovement=3000 maxPositionalMoveAllowed=200 maxConsensuses=30 maxReadsForConsensuses=120 maxReadsForRealignment=20000 noOriginalAlignmentTags=false nWayOut=null generate_nWayOut_md5s=false check_early=false noPGTag=false keepPGTags=false indelsFileForDebugging=null statisticsFileForDebugging=null SNPsFileForDebugging=null}
-	}] \n] {
-		puts $o [join $line \t]
-	}
+	puts $o [deindent $::sam_header]
 	close $o
 	exec gnusort8 -t \t -N -s -k3,3 -k4,4 -k1,1 $tempfile >> $file
 }

@@ -1,5 +1,4 @@
 proc sam_catmerge_job {args} {
-	upvar job_logdir job_logdir
 	set threads 1
 	set force 0
 	set deletesams 0
@@ -7,13 +6,12 @@ proc sam_catmerge_job {args} {
 	set index 1
 	set skips {}
 	set sort coordinates
-	set outputformat BAM
 	cg_options sam_catmerge args {
 		-name {
 			set name $value
 		}
 		-sort {
-			if {$value ni "coordinates names c n"} {error "-sort must be coordinates or names"}
+			if {$value ni "coordinates names nosort c n"} {error "-sort must be coordinates, names or nosort"}
 			set sort $value
 		}
 		-index {
@@ -33,8 +31,9 @@ proc sam_catmerge_job {args} {
 		}
 		-outputformat {
 			switch $value {
-				BAM - bam {set outputformat BAM}
-				SAM - sam {set outputformat SAM}
+				BAM - bam {set outputformat bam}
+				SAM - sam {set outputformat sam}
+				CRAM - cram {set outputformat cram}
 				default {error "unknown outputformat $value"}
 			}
 		}
@@ -49,6 +48,20 @@ proc sam_catmerge_job {args} {
 		set name sam_catmerge-[file tail $resultfile]
 	}
 	set resultfile [file_absolute $resultfile]
+	if {![info exists outputformat]} {
+		if {[file extension $resultfile] eq ".sam"} {
+			set outputformat sam
+			set index 0
+		} else {
+			set outputformat bam
+		}
+	}
+	# job_logdir
+	upvar job_logdir job_logdir
+	if {![info exists job_logdir]} {
+		job_logdir $resultfile.log_jobs
+	}
+	# run
 	if {[string index $sort 0] eq "n"} {set sortopt "-n"} else {set sortopt ""}
 	if {$deletesams} {
 		set rmfiles $samfiles
@@ -62,13 +75,23 @@ proc sam_catmerge_job {args} {
 	-targets {
 		$resultfile $resultfile.analysisinfo
 	} {*}$skips -vars {
-		threads sortopt rmfiles outputformat
+		threads sort sortopt rmfiles outputformat
 	} -code {
 		puts "making $target"
-		analysisinfo_write $dep $target
+		analysisinfo_write $dep $target cat_merge [version genomecomb]
 		if {[catch {
 			# exec samcat {*}$deps | bamsort SO=coordinate tmpfile=[scratchfile] index=1 indexfilename=$target.bai inputformat=sam > $target.temp 2>@ stderr
-			exec samcat {*}$deps | samtools sort {*}$sortopt --threads $threads -T [scratchfile] -O $outputformat -o $target.temp 2>@ stderr
+			if {$sort eq "nosort"} {
+				if {$outputformat eq "bam"} {
+					exec samcat {*}$deps | samtools view --threads $threads -b -o $target.temp - 2>@ stderr
+				} elseif {$outputformat eq "cram"} {
+					exec samcat {*}$deps | samtools view --threads $threads -c -o $target.temp - 2>@ stderr
+				} else {
+					exec samcat {*}$deps > $target.temp 2>@ stderr
+				}
+			} else {
+				exec samcat {*}$deps | samtools sort {*}$sortopt --threads $threads -T [scratchfile] -O $outputformat -o $target.temp 2>@ stderr
+			}
 		} msg]} {
 			error $msg
 		}
