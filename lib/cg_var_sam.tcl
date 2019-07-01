@@ -29,6 +29,7 @@ proc var_sam_job {args} {
 	set resultfiles 0
 	set rootname {}
 	set skips {}
+	set callmethod c
 	cg_options var_sam args {
 		-l - deps {
 			lappend deps $value
@@ -39,6 +40,12 @@ proc var_sam_job {args} {
 		}
 		-regmincoverage {
 			set regmincoverage $value
+		}
+		-callmethod {
+			set callmethod [string index $value 0]
+			if {$callmethod ni "c m"} {
+				error "callmethod must be one of: c (consensus) or m (multiallelic)"
+			}
 		}
 		-pre {
 			set pre $value
@@ -114,12 +121,12 @@ proc var_sam_job {args} {
 		exec samtools faidx $dep
 	}
 	set deps [list $bamtail $refseq $refseq.fai {*}$deps]
-	job ${pre}varall-$root {*}$skips -deps $deps -targets {
+	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -targets {
 		${pre}varall-$root.vcf
 	} -skip {
 		${pre}varall-$root.tsv 
 	} -vars {
-		refseq opts BQ regionfile root
+		refseq opts BQ regionfile root threads callmethod
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
@@ -137,7 +144,7 @@ proc var_sam_job {args} {
 				# bcftools -v for variant only
 				# -t DP: Number of high-quality bases (per sample)
 				# -t SP: Phred-scaled strand bias P-value
-				exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call -c - > $target.temp 2>@ stderr
+				exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call --threads $threads -$callmethod - > $target.temp 2>@ stderr
 			}
 			file rename -force $target.temp $target
 			if {$emptyreg && ![file exists $cache]} {
