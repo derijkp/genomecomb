@@ -37,9 +37,10 @@ if {[info commands genomecomb::pwd.ori] eq ""} {
 	rename pwd genomecomb::pwd.ori
 }
 proc cd {path} {
-	set ::genomecomb::cwd [file_absolute $path]
-	genomecomb::cd.ori $::genomecomb::cwd
-	set ::env(PWD) $::genomecomb::cwd
+	set path [file_absolute $path]
+	genomecomb::cd.ori $path
+	set ::genomecomb::cwd $path
+	set ::env(PWD) $path
 }
 
 proc pwd {} {
