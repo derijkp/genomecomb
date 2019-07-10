@@ -102,6 +102,7 @@ proc gatkexec {args} {
 		# This hack was added because haplotype caller sometimes fails with an error after
 		# completely processing the data and producing a compete gvcf (probably in cleanup)
 		# Using this these errors are ignored (if the analysis complete pattern is encountered)
+		# and there is no "ERROR" or "EXCEPTION" in the output
 		set finishedpattern [lindex $args 1]
 		set args [lrange $args 2 end]
 	} else {
@@ -154,7 +155,7 @@ proc gatkexec {args} {
 	}
 	if {$error} {
 		if {$::errorCode ne "NONE"} {
-			if {$finishedpattern eq "" || ![regexp $finishedpattern $msg]} {
+			if {$finishedpattern eq "" || ![regexp $finishedpattern $msg] || [regexp ERROR $msg] || [regexp EXCEPTION $msg]} {
 				dict unset opt -level
 				return -options $opt $msg
 			}

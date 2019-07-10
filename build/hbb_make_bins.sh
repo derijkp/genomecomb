@@ -59,6 +59,9 @@ set -x
 cd /build
 if [ ! -f /build/zstd-1.3.8/lib/libzstd.a ] ; then
 	source /hbb_shlib/activate
+	CFLAGS="-g -O2 -fPIC -fvisibility=hidden -I/hbb_shlib/include"
+	CXXFLAGS="-g -O2 -fPIC -fvisibility=hidden -I/hbb_shlib/include"
+	SHLIB_CFLAGS="-g -O2 -fPIC -fvisibility=hidden -I/hbb_shlib/include"
 	curl -O -L https://github.com/facebook/zstd/releases/download/v1.3.8/zstd-1.3.8.tar.gz
 	tar xvzf zstd-1.3.8.tar.gz
 	cd zstd-1.3.8

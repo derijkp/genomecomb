@@ -1,5 +1,5 @@
 proc cg_bamreorder {args} {
-	set method samtools
+	set method genomecomb
 	set threads 1
 	cg_options bam_sort args {
 		-method {

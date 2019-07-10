@@ -1,21 +1,5 @@
-proc sreg_sam_job {job varallfile resultfile {skips {}}} {
-	upvar job_logdir job_logdir
-	job $job {*}$skips -deps {
-		$varallfile
-	} -targets {
-		$resultfile
-	} -code {
-		set temp [filetemp $target]
-		set temp2 [filetemp $target]
-		cg select -overwrite 1 -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
-		file_write $temp2 "# regions selected from [gzroot $dep]: \$quality >= 30 && \$totalcoverage >= 5\n"
-		cg regjoin $temp >> $temp2
-		compress $temp2 $target 1 0
-		file delete $temp
-	}
-}
-
-proc var_sam_job {args} {
+# identical to var_sam, but
+proc var_bcf_job {args} {
 	upvar job_logdir job_logdir
 	set pre ""
 	set opts {}
@@ -29,8 +13,8 @@ proc var_sam_job {args} {
 	set resultfiles 0
 	set rootname {}
 	set skips {}
-	set callmethod c
-	cg_options var_sam args {
+	set callmethod m
+	cg_options var_bcf args {
 		-l - deps {
 			lappend deps $value
 		}
@@ -83,7 +67,7 @@ proc var_sam_job {args} {
 	set refseq [refseq $refseq]
 	set destdir [file dir $bamfile]
 	if {$rootname eq ""} {
-		set root sam-[file_rootname $bamfile]
+		set root bcf-[file_rootname $bamfile]
 	} else {
 		set root $rootname
 	}
@@ -101,7 +85,7 @@ proc var_sam_job {args} {
 		set regionfile [bam2reg_job {*}$skips -mincoverage $regmincoverage $bamfile]
 	}
 	# logfile
-	set cmdline [list cg var_sam]
+	set cmdline [list cg var_bcf]
 	foreach option {
 		split deps bed pre BQ regionfile regmincoverage
 	} {
@@ -110,14 +94,14 @@ proc var_sam_job {args} {
 		}
 	}
 	lappend cmdline {*}$opts $bamfile $refseq
-	job_logfile $destdir/var_sam_[file tail $bamfile] $destdir $cmdline \
+	job_logfile $destdir/var_bcf_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools picard java gnusort8 zst os]
 	set bamtail [file tail $bamfile]
 	# start
 	set keeppwd [pwd]
 	cd $destdir
 	# make sure reference sequence is indexed
-	job ${pre}var_sam_faidx {*}$skips -deps {$refseq} -targets {$refseq.fai} -code {
+	job ${pre}var_bcf_faidx {*}$skips -deps {$refseq} -targets {$refseq.fai} -code {
 		exec samtools faidx $dep
 	}
 	set deps [list $bamtail $refseq $refseq.fai {*}$deps]
@@ -139,7 +123,7 @@ proc var_sam_job {args} {
 				lappend opts -l $bedfile
 			}
 			if {[catch {version samtools 1}]} {
-				exec samtools mpileup -uDS -Q $BQ -f $refseq {*}$opts $dep 2>@ stderr | bcftools view -cg - > $target.temp 2>@ stderr
+				error "bcftools calling needs samtools v > 1"
 			} else {
 				# bcftools -v for variant only
 				# -t DP: Number of high-quality bases (per sample)
@@ -152,7 +136,7 @@ proc var_sam_job {args} {
 			}
 		}
 	}
-	job ${pre}varall-sam2tsv-$root {*}$skips -deps {
+	job ${pre}varall-bcf2tsv-$root {*}$skips -deps {
 		${pre}varall-$root.vcf
 	} -targets {
 		${pre}varall-$root.tsv.zst
@@ -204,8 +188,8 @@ proc var_sam_job {args} {
 	return $resultlist
 }
 
-proc cg_var_sam {args} {
+proc cg_var_bcf {args} {
 	set args [job_init {*}$args]
-	var_sam_job {*}$args
+	var_bcf_job {*}$args
 	job_wait
 }
