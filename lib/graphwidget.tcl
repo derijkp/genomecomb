@@ -118,7 +118,7 @@ graphwidget method paste {} {
 
 graphwidget method start {} {
 	private $object region
-	array set region {xrange {1000 9000} xrangeextra 1000 ymin -2 ymax 600}
+	array set region {xrange {0 10000} xrangeextra 0 ymin -2 ymax 600}
 	Classy::todo $object redraw
 }
 
@@ -195,6 +195,7 @@ graphwidget method defsettings {file args} {
 	set graphd(nan) -50
 	set graphd(line) 0
 	set graphd(yshift) 0
+	set graphd(xshift) 0
 	array set graphd $args
 	set poss [tsv_basicfields $header 3 0]
 	set wfield ""
@@ -247,6 +248,7 @@ graphwidget method opendialog {{file {}}} {
 	$object.open option check "Line" graphd(line) ""
 	$object.open option numentry "Nan" graphd(nan)
 	$object.open option numentry "Y shift" graphd(yshift)
+	$object.open option numentry "X shift" graphd(xshift)
 	$object.open option entry "Chromosome" graphd(chr)
 	$object.open add do Do [list $object open $file] default
 }
@@ -301,6 +303,7 @@ graphwidget method open {file} {
 	set data($name,elements) $elements
 	set data($name,x2field) $graphd(x2field)
 	set data($name,yshift) $graphd(yshift)
+	set data($name,xshift) $graphd(xshift)
 	set data($name,nan) $graphd(nan)
 	set data($name,poss) $poss
 	# create index
@@ -596,6 +599,17 @@ graphwidget method shift {name {yshift 1}} {
 	set data($name,yshift) $yshift
 }
 
+graphwidget method xshift {name {xshift 1}} {
+	private $object data
+	if {![info exists data($name,xshift)]} {
+		set data($name,xshift) 0
+	}
+	set size [expr {$xshift-$data($name,xshift)}]
+	set xv [$object.g element cget $name -xdata]
+	$xv expr {$xv + $size}
+	set data($name,xshift) $xshift
+}
+
 graphwidget method reconf {args} {
 	private $object data conf
 	set name $conf(entry)
@@ -616,6 +630,7 @@ graphwidget method confcurrent {args} {
 	set conf(color) $data($name,color)
 	set conf(fields) $data($name,header)
 	set conf(yshift) $data($name,yshift)
+	set conf(xshift) $data($name,xshift)
 	lappend conf(fields) ""
 	set conf(Y) [lindex $data($name,elements) 1]
 	set conf(W) [lindex $data($name,elements) 2]
@@ -639,6 +654,8 @@ graphwidget method elconf {name} {
 		-command "$object reconf"
 	$object.conf option numentry "Y shift" [privatevar $object conf(yshift)] \
 		-command "$object shift \[getprivate $object conf(entry)\]"
+	$object.conf option numentry "X shift" [privatevar $object conf(xshift)] \
+		-command "$object xshift \[getprivate $object conf(entry)\]"
 	$object.conf option select "Y" [privatevar $object conf(Y)] [privatevar $object conf(fields)] \
 		-command "$object changefields Y"
 	$object.conf option select "Weight" [privatevar $object conf(W)] [privatevar $object conf(fields)] \
@@ -694,6 +711,11 @@ graphwidget method loadregion {name} {
 	set vnum $data($name,vnum)
 	set poss $data($name,poss)
 	set index ::$object.$vnum.i
+	if {$data($name,xshift) != 0} {
+		set start [expr {$start - $data($name,xshift)}]
+		set end [expr {$end - $data($name,xshift)}]
+putsvars start end
+	}
 	$object.progress configure -message "Loading $name"
 	if {$data($name,x2field) ne ""} {
 #		while {![eof $f]} {
@@ -818,6 +840,10 @@ graphwidget method loadregion {name} {
 	if {[get data($name,yshift) 0] != 0} {
 		set yv [$object.g element cget $name -ydata]
 		$yv expr {$yv + $data($name,yshift)}
+	}
+	if {[get data($name,xshift) 0] != 0} {
+		set xv [$object.g element cget $name -xdata]
+		$xv expr {$xv + $data($name,xshift)}
 	}
 	puts "Finished loading $name"
 	$object.progress configure -message "Finished loading $name"
