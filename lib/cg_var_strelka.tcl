@@ -1,3 +1,7 @@
+proc var_strelka_tools {} {
+	return {strelka}
+}
+
 proc version_strelka {} {
 	set version ?
 	set strelkadir [searchpath STRELKAADIR strelka strelka*]

@@ -1,3 +1,7 @@
+proc var_gatkh_tools {} {
+	return {gatkh}
+}
+
 proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} {skips {}}} {
 	upvar job_logdir job_logdir
 	job $job {*}$skips -deps {

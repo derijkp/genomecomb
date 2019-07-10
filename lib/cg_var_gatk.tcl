@@ -1,3 +1,7 @@
+proc var_gatk_tools {} {
+	return {gatk}
+}
+
 proc gatk_refseq_job refseq {
 	upvar job_logdir job_logdir
 	set nrefseq [file root $refseq].fa

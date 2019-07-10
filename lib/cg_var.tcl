@@ -61,14 +61,17 @@ proc var_job {args} {
 	set bamfile [file_absolute $bamfile]
 	set refseq [file_absolute $refseq]
 	set destdir [file dir $bamfile]
+	# logfile
+	set tools {gatk picard java gnusort8 zst os}
+	catch {lappend tools {*}[var_${method}_tools]}
+	set tools [list_remdup $tools]
+	job_logfile $destdir/var_${method}_[file tail $bamfile] $destdir $cmdline \
+		{*}[versions {*}$tools]
 	if {$regionfile ne ""} {
 		set regionfile [file_absolute $regionfile]
 	} else {
 		set regionfile [bam2reg_job -mincoverage $regmincoverage $bamfile]
 	}
-	# logfile
-	job_logfile $destdir/var_${method}_[file tail $bamfile] $destdir $cmdline \
-		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# run
 	if {$distrreg in {0 {}}} {
 		var_${method}_job {*}$var_opts -opts $opts -datatype $datatype -regionfile $regionfile -pre $pre \

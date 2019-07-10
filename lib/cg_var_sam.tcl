@@ -1,3 +1,7 @@
+proc var_sam_tools {} {
+	return {samtools bcftools}
+}
+
 proc sreg_sam_job {job varallfile resultfile {skips {}}} {
 	upvar job_logdir job_logdir
 	job $job {*}$skips -deps {
@@ -111,7 +115,7 @@ proc var_sam_job {args} {
 	}
 	lappend cmdline {*}$opts $bamfile $refseq
 	job_logfile $destdir/var_sam_[file tail $bamfile] $destdir $cmdline \
-		{*}[versions bwa bowtie2 samtools picard java gnusort8 zst os]
+		{*}[versions bwa bowtie2 samtools bcftools picard java gnusort8 zst os]
 	set bamtail [file tail $bamfile]
 	# start
 	set keeppwd [pwd]

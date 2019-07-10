@@ -1,3 +1,7 @@
+proc var_sam_tools {} {
+	return {freebayes}
+}
+
 proc sreg_freebayes_job {job varallfile resultfile {skips {}}} {
 	upvar job_logdir job_logdir
 	job $job {*}$skips -deps {
