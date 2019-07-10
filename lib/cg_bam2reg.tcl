@@ -2,12 +2,27 @@ proc bam2reg_job {args} {
 	upvar job_logdir job_logdir
 	set compress 1
 	set skips {}
+	set distrreg 0
 	cg_options bam2reg args {
 		-mincoverage {
 			set mincov $value
 		}
 		-compress {
 			set compress $value
+		}
+		-distrreg {
+			if {$value in {1 chr chromosome 0}} {
+				set distrreg $value
+			} elseif {[isint $value]} {
+				set distrreg $value
+			} elseif {[file exists $value]} {
+				set distrreg [file_absolute $value]
+			} else {
+				error "unknown value $value for -distrreg, must be a (region) file or one of: chr or 1, 0"
+			}
+		}
+		-refseq {
+			set refseq $value
 		}
 		-skip {
 			lappend skips -skip $value
@@ -32,18 +47,58 @@ proc bam2reg_job {args} {
 	if {![info exists job_logdir]} {
 		job_logdir $target.log_jobs
 	}
-	job cov$mincoverage-$root -optional 1 {*}$skips -deps {
-		$bamfile
-	} -targets {
-		$target
-	} -vars {
-		mincoverage
-	} -code {
-		set compress [compresspipe $target]
-		set temptarget [filetemp $target]
-		exec cg regextract -min $mincoverage $dep {*}$compress > $temptarget
-		file rename -force $temptarget $target
-		if {[file extension $target] eq ".zst"} {cg_zstindex $target}
+	if {$distrreg in {0 {}}} {
+		job cov$mincoverage-$root -optional 1 {*}$skips -deps {
+			$bamfile
+		} -targets {
+			$target
+		} -vars {
+			mincoverage
+		} -code {
+			set compress [compresspipe $target]
+			set temptarget [filetemp $target]
+			exec cg regextract -min $mincoverage $dep {*}$compress > $temptarget
+			file rename -force $temptarget $target
+			if {[file extension $target] eq ".zst"} {cg_zstindex $target}
+		}
+	} else {
+		if {![info exists refseq]} {
+			error "-distrreg cannot be used without giving a refseq using the -refseq option"
+		}
+		set regions [distrreg_regs $distrreg $refseq]
+		file mkdir $target.index
+		set todo {}
+		foreach region $regions {
+			set subtarget $target.index/sreg-cov$mincoverage-$root-$region.tsv.zst
+			lappend todo $subtarget
+			job cov$mincoverage-$root-$region -optional 1 {*}$skips -skip $target -deps {
+				$bamfile
+			} -targets {
+				$subtarget
+			} -vars {
+				bamfile mincoverage subtarget region
+			} -code {
+				set bamheader [exec samtools view -H $bamfile]
+				set chr [lindex [split $region :-] 0]
+				if {![regexp \tSN:$chr\t $bamheader]} {
+					file_write $target ""
+				} else {
+					set compress [compresspipe $subtarget 1]
+					set temptarget [filetemp $subtarget]
+					exec cg regextract -stack 1 -region $region -min $mincoverage $bamfile {*}$compress > $temptarget
+					file rename -force $temptarget $subtarget
+				}
+			}
+		}
+		job cov$mincoverage-$root-merge -optional 1 {*}$skips -deps $todo -targets {
+			$target
+		} -vars {
+		} -code {
+			set compress [compresspipe $target]
+			cg cat -c 0 {*}$deps {*}$compress > $target.temp
+			file rename $target.temp $target
+			if {[file extension $target] eq ".zst"} {cg_zstindex $target}
+		}
 	}
 	return $target
 }

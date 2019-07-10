@@ -781,7 +781,10 @@ proc process_sample_job {args} {
 				-skips [list -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
 				$bamfile $refseq $sample {*}$files
 			# extract regions with coverage >= 5 (for cleaning)
-			set cov5reg [bam2reg_job -mincoverage 5 -skip [list $resultbamfile $resultbamfile.analysisinfo] $sampledir/map-${aligner}-$sample.bam]
+			set cov5reg [bam2reg_job -mincoverage 5 \
+				-distrreg $distrreg -refseq $refseq \
+				-skip [list $resultbamfile $resultbamfile.analysisinfo] \
+				$sampledir/map-${aligner}-$sample.bam]
 			# clean bamfile (mark duplicates, realign)
 			# bam is already sorted, just add the s
 			set cleanbam [bam_clean_job -sort 2 \
@@ -795,9 +798,9 @@ proc process_sample_job {args} {
 	foreach cleanedbam $cleanedbams {
 		set bambase [file_rootname $cleanedbam]
 		# make 5x coverage regfile from cleanedbam
-		set cov5reg [bam2reg_job -mincoverage 5 $cleanedbam]
+		set cov5reg [bam2reg_job -mincoverage 5 -distrreg $distrreg -refseq $refseq $cleanedbam]
 		# make 20x coverage regfile
-		set cov20reg [bam2reg_job -mincoverage 20 -compress 1 $cleanedbam]
+		set cov20reg [bam2reg_job -mincoverage 20 -compress 1 -distrreg $distrreg -refseq $refseq $cleanedbam]
 		if {$amplicons eq ""} {
 			set regionfile $cov5reg
 		} else {

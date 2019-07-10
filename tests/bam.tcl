@@ -252,6 +252,23 @@ chr2	59	69
 chr2	99	149
 }
 
+test cg_bam2reg {small bam -min 2 distrreg} {
+	write_sam tmp/temp.sam {
+		chr1	100	20M	20	chr1	121	20M	20
+		chr1	102	4S2M2I12M	20	chr1	111	30M	30
+		chr2	50	20M	20	chr2	60	20M	20
+		chr2	100	50M	50	chr2	100	50M	50
+	}
+	exec samtools view -b tmp/temp.sam > tmp/temp.bam
+	exec samtools index tmp/temp.bam
+	cg bam2reg -distrreg chr -refseq $::refseqdir/hg19/genome_hg19.ifas -mincoverage 2 tmp/temp.bam
+	exec cg zcat tmp/sreg-cov2-temp.tsv.zst
+} {chromosome	begin	end
+chr1	101	119
+chr1	120	140
+chr2	59	69
+chr2	99	149}
+
 test cg_bam2reg {basic} {
 	mklink $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam tmp/test.bam
 	cg bam2reg -stack 1 -mincoverage 20 tmp/test.bam tmp/result.tsv
@@ -292,7 +309,7 @@ test cg_sam_catmerge {basic cg_sam_catmerge} {
 		chr2	50	20M	20	chr2	60	20M	20
 		chr2	100	50M	50	chr2	100	50M	50
 	}
-	write_file tmp/expected.sam [deindent $::sam_header]\n[deindent {
+	file_write tmp/expected.sam [deindent $::sam_header]\n[deindent {
 		A4	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A1	99	chr1	102	60	4S2M2I12M	=	111	39	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A2	99	chr1	107	60	20M	=	112	25	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
@@ -305,7 +322,7 @@ test cg_sam_catmerge {basic cg_sam_catmerge} {
 		A1	147	chr2	60	60	20M	=	50	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A2	99	chr2	100	60	50M	=	100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A2	147	chr2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
-	}]
+	}]\n
 	cg sam_catmerge -stack 1 tmp/result.sam tmp/temp1.sam tmp/temp2.sam
 	exec diff tmp/result.sam tmp/expected.sam
 } {1c1
@@ -315,43 +332,43 @@ test cg_sam_catmerge {basic cg_sam_catmerge} {
 child process exited abnormally} error
 
 test cg_sam_catmerge {cg_sam_catmerge nosort} {
-	write_file tmp/temp1.sam [deindent $::sam_header]\n[deindent {
+	file_write tmp/temp1.sam [deindent $::sam_header]\n[deindent {
 		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A4	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
-	}]
+	}]\n
 	write_sam tmp/temp2.sam {
 		chr2	50	20M	20	chr2	60	20M	20
 		chr2	100	50M	50	chr2	100	50M	50
 	}
-	write_file tmp/expected.sam [deindent $::sam_header]\n[deindent {
+	file_write tmp/expected.sam [deindent $::sam_header]\n[deindent {
 		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A4	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A1	99	chr2	50	60	20M	=	60	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A1	147	chr2	60	60	20M	=	50	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A2	99	chr2	100	60	50M	=	100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A2	147	chr2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
-	}]
+	}]\n
 	cg sam_catmerge -stack 1 -sort nosort tmp/result.sam tmp/temp1.sam tmp/temp2.sam
 	exec diff tmp/result.sam tmp/expected.sam
 } {}
 
 test cg_sam_catmerge {cg_sam_catmerge nosort bam} {
-	write_file tmp/temp1.sam [deindent $::sam_header]\n[deindent {
+	file_write tmp/temp1.sam [deindent $::sam_header]\n[deindent {
 		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A4	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
-	}]
+	}]\n
 	write_sam tmp/temp2.sam {
 		chr2	50	20M	20	chr2	60	20M	20
 		chr2	100	50M	50	chr2	100	50M	50
 	}
-	write_file tmp/expected.sam [deindent $::sam_header]\n[deindent {
+	file_write tmp/expected.sam [deindent $::sam_header]\n[deindent {
 		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A4	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A1	99	chr2	50	60	20M	=	60	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A1	147	chr2	60	60	20M	=	50	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A2	99	chr2	100	60	50M	=	100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A2	147	chr2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
-	}]
+	}]\n
 	cg sam_catmerge -stack 1 -sort nosort -index 0 tmp/result.bam tmp/temp1.sam tmp/temp2.sam
 	exec samtools view -h tmp/result.bam -o tmp/result.sam
 	exec diff tmp/result.sam tmp/expected.sam

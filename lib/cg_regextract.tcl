@@ -9,6 +9,7 @@ proc cg_regextract {args} {
 	set posfields {offset pos position begin start}
 	set above 0; set shift {}
 	set filtered 0
+	set region {}
 	# can no longer use -d$cutoff in newer samtools:
 	# this can cause the depth to be wrong on positions with coverage below cutoff
 	set depthcuttoff 1000000
@@ -27,6 +28,10 @@ proc cg_regextract {args} {
 			set filtered 1
 			if {![info exists q]} {set q 20}
 			if {![info exists Q]} {set Q 20}
+		}
+		-region {
+			regsub {^([^-]+)-([0-9]+)-([0-9]+)$} $value {\1:\2-\3} value
+			set region $value
 		}
 	} {} 1
 	if {[info exists min]} {
@@ -56,6 +61,7 @@ proc cg_regextract {args} {
 			if {$ext in ".bam .sam"} {set useshift -1} else {set useshift 0}
 		}
 		if {$ext eq ".bcol"} {
+			if {$region ne ""} {error "option -region only supported for bam and sam files"}
 			set bcol [bcol_open $file]
 			if {[dict get $bcol version] == 0} {
 				set chr [lindex [file root [split [gzroot $file] -]] 1]
@@ -82,6 +88,10 @@ proc cg_regextract {args} {
 		} elseif {$ext in ".bam .sam"} {
 			set chrcol 0
 			set poscol 1
+			if {$region ne ""} {
+				if {$ext ne ".bam"} {error "option -region only supported for bam files"}
+				lappend samtoolsargs -r $region
+			}
 			if {!$filtered} {
 				set valuecol 2
 				catch_exec samtools depth -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
@@ -90,6 +100,7 @@ proc cg_regextract {args} {
 				catch_exec samtools mpileup --ignore-overlaps -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
 			}
 		} else {
+			if {$region ne ""} {error "option -region only supported for bam and sam files"}
 			set f [gzopen $file]
 			set header [tsv_open $f]
 			catch {gzclose $f}

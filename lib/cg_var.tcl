@@ -70,7 +70,7 @@ proc var_job {args} {
 	if {$regionfile ne ""} {
 		set regionfile [file_absolute $regionfile]
 	} else {
-		set regionfile [bam2reg_job -mincoverage $regmincoverage $bamfile]
+		set regionfile [bam2reg_job -mincoverage $regmincoverage -distrreg $distrreg -refseq $refseq $bamfile]
 	}
 	# run
 	if {$distrreg in {0 {}}} {

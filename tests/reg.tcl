@@ -469,6 +469,28 @@ chr1	24	26
 chr1	27	30
 chr1	39	41}
 
+test cg_regextract {bam} {
+	file copy data/bwa.bam tmp/bwa.bam
+	exec samtools index tmp/bwa.bam
+	exec cg regextract --verbose 0 -qfields coverage -shift -1 -min 8 tmp/bwa.bam
+} {chromosome	begin	end
+chr21	42735714	42735716
+chr21	42735718	42735719
+chr21	42735723	42735741
+chr21	42775213	42775220
+chr21	42775232	42775235
+chr21	42775291	42775313
+chr21	42779907	42779919
+chr21	42779986	42780044
+chr22	41923406	41923413}
+
+test cg_regextract {bam -region} {
+	file copy data/bwa.bam tmp/bwa.bam
+	exec samtools index tmp/bwa.bam
+	exec cg regextract --verbose 0 -region chr22 -qfields coverage -shift -1 -min 8 tmp/bwa.bam
+} {chromosome	begin	end
+chr22	41923406	41923413}
+
 test regjoin {basic} {
 	exec cg regjoin data/reg1.tsv data/reg2.tsv
 } {chromosome	begin	end
