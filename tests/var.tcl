@@ -70,7 +70,10 @@ test var {var distrreg gatk result exists already} {
 		tmp/var-gatk-bwa.tsv.zst tmp/var-gatk-bwa.tsv.zst.zsti tmp/var-gatk-bwa.tsv.analysisinfo
 		tmp/sreg-gatk-bwa.tsv.zst tmp/sreg-gatk-bwa.tsv.zst.zsti tmp/sreg-gatk-bwa.tsv.analysisinfo
 		tmp/reg_cluster-gatk-bwa.tsv.zst
-	} {file_write $file {}}
+	} {
+		after 100
+		file_write $file {}
+	}
 	cg var {*}$::dopts -v 2 -distrreg chr -method gatk tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
 	catch {exec grep "targets already completed or running" tmp/logerror} temp
 	if {$temp eq ""} {error "not skipped"}
