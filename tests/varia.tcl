@@ -291,4 +291,38 @@ test link {find_link} {
 	find_link tmp/3.txt 1
 } {*tmp/2.txt} match
 
+test error {catch exec testerror 1 1 1} {
+	# args to data/testerror.sh: writestdout writestderr exit_with_error
+	exec data/testerror.sh 1 1 1
+} {written to stdout
+written to stderr} error
+
+test error {catch exec testerror 1 1 0 (catch sees error if output to stderr, even if no error exit)} {
+	# args to data/testerror.sh: writestdout writestderr exit_with_error
+	exec data/testerror.sh 1 1 0
+} {written to stdout
+written to stderr} error
+
+test error {catch exec testerror 0 0 1 (allways error on error exit} {
+	# args to data/testerror.sh: writestdout writestderr exit_with_error
+	exec data/testerror.sh 0 0 1
+} {child process exited abnormally} error
+
+test error {catch_exec testerror 1 1 1} {
+	# args to data/testerror.sh: writestdout writestderr exit_with_error
+	catch_exec data/testerror.sh 1 1 1
+} {written to stdout
+written to stderr} error
+
+test error {catch_exec testerror 1 1 0 (catch_exec only sees error if exit error} {
+	# args to data/testerror.sh: writestdout writestderr exit_with_error
+	catch_exec data/testerror.sh 1 1 0
+} {written to stdout
+written to stderr}
+
+test error {catch_exec testerror 0 0 1 (allways error on error exit)} {
+	# args to data/testerror.sh: writestdout writestderr exit_with_error
+	catch_exec data/testerror.sh 0 0 1
+} {child process exited abnormally} error
+
 testsummarize

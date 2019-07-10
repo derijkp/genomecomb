@@ -66,7 +66,7 @@ proc bam_sort {args} {
 	} {sourcefile resultfile}
 	if {$method eq "biobambam"} {
 		set tempresult [filetemp $resultfile]
-		catchstderr_exec bamsort I=$sourcefile inputformat=$inputformat SO=$sort tmpfile=[scratchfile] index=1 indexfilename=$tempresult.bai O=$tempresult
+		catch_exec bamsort I=$sourcefile inputformat=$inputformat SO=$sort tmpfile=[scratchfile] index=1 indexfilename=$tempresult.bai O=$tempresult
 		file rename -force $tempresult.bai $resultfile.bai
 		file rename -force $tempresult $resultfile
 	} else {	

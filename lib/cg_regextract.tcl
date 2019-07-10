@@ -84,10 +84,10 @@ proc cg_regextract {args} {
 			set poscol 1
 			if {!$filtered} {
 				set valuecol 2
-				catchstderr_exec samtools depth -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
+				catch_exec samtools depth -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
 			} else {
 				set valuecol 3
-				catchstderr_exec samtools mpileup --ignore-overlaps -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
+				catch_exec samtools mpileup --ignore-overlaps -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
 			}
 		} else {
 			set f [gzopen $file]

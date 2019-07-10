@@ -21,7 +21,7 @@ proc searchpath {envvar args} {
 
 proc picard {cmd args} {
 	set picard [findpicard]
-	catchstderr_exec java -XX:ParallelGCThreads=1 -jar $picard/$cmd.jar {*}$args
+	catch_exec java -XX:ParallelGCThreads=1 -jar $picard/$cmd.jar {*}$args
 }
 
 proc findpicard {} {

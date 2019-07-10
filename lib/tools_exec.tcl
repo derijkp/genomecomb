@@ -17,15 +17,6 @@ proc chanexec {in out pipe} {
 	if {$out ne "stdout"} {catch {close $out}}
 }
 
-proc catchstderr_exec {args} {
-	if {[catch {
-		exec {*}$args 2>@1
-	} msg]} {
-		error $msg
-	}
-	return $msg
-}
-
 proc catch_exec {args} {
 	if {[catch {
 		exec {*}$args
