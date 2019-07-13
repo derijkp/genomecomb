@@ -39,6 +39,10 @@ e (default) - give an error
 y - replace them with new annotation if dbfile is newer,
 n - keep the old annotation,
 a - allways replace them with new information
+; -distrreg: distribute regions for parallel processing.
+Possible options are 0 (no distribution), chr (or 1) (distribution per
+chromosome), a number (distribution ino regions of this size) ,file name
+(the regions in the file will be used for subjobs)
 
 == database types ==
 ; **reg**: regions file that must at least contain the columns chromosome,start,end. 

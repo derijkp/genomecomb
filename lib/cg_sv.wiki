@@ -35,7 +35,8 @@ Possible values are: manta, lumpy sniffles, npinv, cg, gridds
 a coverage of at least **mincoverage** (default 3)
 ; -distrreg: distribute regions for parallel processing (default chr).
 Possible options are 0 (no distribution), chr (or 1) (distribution per
-chromosome), file name (the regions in the file will be used for subjobs)
+chromosome), a number (distribution ino regions of this size) ,file name
+(the regions in the file will be used for subjobs)
 ; -split 1/0: indicate if in the datafiles, multiple alternative genotypes are split over different lines (default 1)
 ; -t number (-threads): number of threads used by each job (if the method supports threads)
 ; -cleanup 0/1: Use 0 to no cleanup some of the temporary files (vcf, delvar, ...)

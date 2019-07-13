@@ -54,6 +54,10 @@ present in the file (*)
 ; -limitreg regionfile: limit the variants and region multicompar files to
 the regions given in **regionfile**. (Other results, such as structural
 variants are not limited (yet))
+; -distrreg: annotation will be distributed in regions for parallel processing.
+Possible options are 0 (no distribution), chr (or 1) (distribution per
+chromosome), a number (distribution ino regions of this size) ,file name
+(the regions in the file will be used for subjobs)
 
 This command can be distributed on a cluster or using multiple with [[joboptions|job options]] (more info with cg help joboptions)
 

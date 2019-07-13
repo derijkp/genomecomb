@@ -110,7 +110,10 @@ you want to affect the distribution).
 ; -jobsample 0/1: By default (0) the processing of each sample is split in many separate jobs.
 If you have to process many samples with relatively short indivual runtimes, you can set this
 to 1 to run each sample in one job, thus reducing the job managment overhead.
-; -distrreg 0/1: distribute analysis over regions (per chromosome)
+; -distrreg: distribute regions for parallel processing.
+Possible options are 0 (no distribution), chr (or 1) (distribution per
+chromosome), a number (distribution ino regions of this size) ,file name
+(the regions in the file will be used for subjobs)
 ; -keepfields fieldlist: Besides the obligatory fields, include only the
 fields in fieldlist (space separated) in the multicompar file. Default is
 to use all fields present in the file (*). All fields will still be used
