@@ -77,6 +77,14 @@ proc tcl::mathfunc::llength {args} {
 	return $result
 }
 
+proc tcl::mathfunc::lsort {args} {
+	set result {}
+	foreach value $args {
+		lappend result {*}[split $value ";, "]
+	}
+	join [ssort -n $result] ,
+}
+
 proc tcl::mathfunc::vector {args} {
 	join $args ,
 }
