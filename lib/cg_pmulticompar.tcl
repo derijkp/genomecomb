@@ -38,7 +38,11 @@ proc multi_merge_job {varsfile files args} {
 				foreach file $deps {
 					set tempfile [tempfile]
 					lappend templist $tempfile
-					exec cg regselect $file $limitreg > $tempfile
+					if {[catch {
+						exec cg regselect $file $limitreg > $tempfile
+					} msg]} {
+						error "error selection region $limitreg from file $file: $msg"
+					}
 				}
 				set deps $templist
 			}
@@ -89,7 +93,11 @@ proc multi_merge_job {varsfile files args} {
 						foreach file $deps {
 							set tempfile [tempfile]
 							lappend templist $tempfile
-							exec cg regselect $file $limitreg > $tempfile
+							if {[catch {
+								exec cg regselect $file $limitreg > $tempfile
+							} msg]} {
+								error "error selection region $limitreg from file $file: $msg"
+							}
 						}
 						set deps $templist
 					}
