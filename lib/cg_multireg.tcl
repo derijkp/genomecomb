@@ -47,7 +47,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 			if {$limitreg ne ""} {
 				set templist {}
 				foreach file $deps {
-					set tempfile [tempfile]
+					set tempfile [tempdir]/[file tail $file]
 					lappend templist $tempfile
 					exec cg regselect -o $tempfile $file $limitreg
 				}
@@ -58,7 +58,15 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 			set temp [filetemp_ext $target]
 			# puts [list ../bin/multireg {*}$todo]
 			exec multireg {*}$todo {*}$compress > $temp 2>@ stderr
-			file rename -force $temp $target
+			if {$limitreg ne ""} {
+				set temp2 [filetemp_ext $target]
+				set l [file root [file tail [gzroot $limitreg]]]
+				cg select -overwrite 1 -f [list_remove [cg select -h $temp] $l] -q "\$$l == 1" $temp $temp2
+				file rename -force $temp2 $target
+				file delete $temp
+			} else {
+				file rename -force $temp $target
+			}
 			if {$compress ne ""} {cg_zindex $target}
 		}
 		return

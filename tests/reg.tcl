@@ -170,9 +170,30 @@ test multireg {5 files 8 distribute 1 reg one not reg (maxopenfiles)} {
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
 
-test multireg {5 files 8 distribute 1 reg one not reg (maxopenfiles) -limireg} {
+test multireg {-limireg} {
 	set files [multiregtest 5]
 	file delete tmp/temp.tsv
+	file_write tmp/regfile.tsv [deindent {
+		chromosome	begin	end
+		1	30	50
+		1	70	100
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	sreg1	sreg2	sreg3	sreg4	sreg5
+		1	30	35	1	1	1	1	1
+		1	35	40	1	1	1	1	1
+		1	40	45	1	1	1	1	1
+		1	45	50	1	1	1	1	1
+		1	70	75	0	0	0	1	1
+		1	75	80	0	0	0	0	1
+		1	80	100	0	0	0	0	0
+	}]\n
+	exec cg multireg -limitreg tmp/regfile.tsv tmp/temp.tsv {*}$files
+	exec diff tmp/temp.tsv tmp/expected.tsv
+} {}
+
+test multireg {5 files 8 distribute 1 reg one not reg (maxopenfiles) -limireg} {
+	set files [multiregtest 5]
 	# 8 maximum open files means 4 files can be processed at the same time
 	# (-4 because stdout, etc. also count as "open files")
 	file_write tmp/regfile.tsv [deindent {
@@ -190,6 +211,7 @@ test multireg {5 files 8 distribute 1 reg one not reg (maxopenfiles) -limireg} {
 		1	75	80	0	0	0	0	1
 		1	80	100	0	0	0	0	0
 	}]\n
+	file delete tmp/temp.tsv
 	exec cg multireg -m 8 -limitreg tmp/regfile.tsv tmp/temp.tsv {*}$files
 	exec diff tmp/temp.tsv tmp/expected.tsv
 } {}
