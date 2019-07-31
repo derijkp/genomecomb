@@ -50,15 +50,37 @@ command:
 cg job_update logfile
 }}}
 
+=== local distribtion ===
 Using **-d number** starts up to **number** jobs in separate processes
 managed by the submitting command. The submitting command must keep
 running untill all jobs are finished. it will output some progress, but
 you can get more info by updating and checking the log file.
 
+=== grid engine distribution ===
 Using "**-d sge**" the submitting command will submit all jobs to the Grid
 Engine as grid engine jobs with proper dependencies between the jobs. The
 program itself will stop when all jobs are submitted. You can check
 progress/errors by updating and checking the logfile.
+
+Some tools request multiple cores/slots for one job on a grid engine cluster
+using the parallel environment (pe) local (using -pe local <nr of slots> -R y).
+This will only work if the pe local is properly defined (it often is, by convention, 
+but not by default). If no pe local is defined, multiple slots are not requested
+and nodes may be overloaded. if the local pe is defined, but not in a way that allows
+for this, jobs may not run. The following settings (create with "qconf -ap local"
+or modify with "qconf -mp local") work on our cluster
+pe_name            local
+slots              9999999
+user_lists         NONE
+xuser_lists        NONE
+start_proc_args    /bin/true
+stop_proc_args     /bin/true
+allocation_rule    $pe_slots
+control_slaves     TRUE
+job_is_first_task  TRUE
+urgency_slots      min
+accounting_summary FALSE
+
 
 == Options ==
 List of all options supported by job enabled commands:
