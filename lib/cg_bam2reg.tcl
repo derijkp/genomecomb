@@ -47,9 +47,10 @@ proc bam2reg_job {args} {
 	if {![info exists job_logdir]} {
 		job_logdir $target.log_jobs
 	}
+	bam_index_job $bamfile
 	if {$distrreg in {0 {}}} {
 		job cov$mincoverage-$root -optional 1 {*}$skips -deps {
-			$bamfile
+			$bamfile ($bamfile.bai)
 		} -targets {
 			$target
 		} -vars {
@@ -72,7 +73,7 @@ proc bam2reg_job {args} {
 			set subtarget $target.index/sreg-cov$mincoverage-$root-$region.tsv.zst
 			lappend todo $subtarget
 			job cov$mincoverage-$root-$region -optional 1 {*}$skips -skip $target -deps {
-				$bamfile
+				$bamfile ($bamfile.bai)
 			} -targets {
 				$subtarget
 			} -vars {
