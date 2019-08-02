@@ -45,13 +45,25 @@ proc long {file resultfile splitlines {pre {}} {lines {}}} {
 
 proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}}} {
 	global errors
+	set tempdir [tempdir]
+	if {[file extension $file1] in ".bam .sam"}  {
+		file mkdir $tempdir/conv
+		set temp $tempdir/conv/[file tail $file1]
+		cg sam2tsv $file1 $temp
+		set file1 $temp
+	}
+	if {[file extension $file2] in ".bam .sam"}  {
+		file mkdir $tempdir/conv
+		set temp $tempdir/conv/[file tail $file2]
+		cg sam2tsv $file2 $temp
+		set file2 $temp
+	}
 	set f1 [gzopen $file1]
 	set header1 [tsv_open $f1 comment1]
 	catch {close $f1}
 	set f2 [gzopen $file2]
 	set header2 [tsv_open $f2 comment2]
 	catch {close $f2}
-	set tempdir [tempdir]
 	set temp1 $tempdir/[file tail $file1]
 	set temp2 $tempdir/[file tail $file2]
 	if {$temp2 eq $temp1} {append temp2 -b}
