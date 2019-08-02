@@ -113,6 +113,10 @@ proc tcl::mathfunc::lmode args {
 	join [mode [concat_vect $args]] ,
 }
 
+proc tcl::mathfunc::lsort args {
+	join [::lsort -dict [concat_vect $args]] ,
+}
+
 proc tcl::mathfunc::vfunc {args} {
 	set function [lindex $args 0]
 	set temp {}

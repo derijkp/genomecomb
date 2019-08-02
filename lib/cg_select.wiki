@@ -333,6 +333,7 @@ The following functions allow use of vectors in queries
 ; lmedian(vector, ...): the median of the vector. Non numeric values are ignored. If no numeric value is present in the vectors, NaN (not a number) will be returned; any comparison with NaN is false.
 ; lmode(vector, ...): the mode (element that is most abundant) of the vector. The result can be a new vector (if multiple values occur at the same count)
 ; llen(vector): number of elements in the vector (also **llength**)
+; lsort(vector): the sorted vector (uses natural sort)
 ; vector(value1,value2, ...): creates a vector from a number of values. If some elements are vectors themselves, they will be concatenated
 ; lindex(vector, position): the value of the element at the given **position** in the list. The first element is at position 0!
 ; lrange(vector, start, end): the a sublist of vector from element at position **start** up to and including the element at **end**. The first element is at position 0!
