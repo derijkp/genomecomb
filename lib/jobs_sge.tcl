@@ -58,7 +58,7 @@ proc job_process_sge_submit {job runfile args} {
 					set cgjob_distr(no_local_pe) [catch {exec qconf -sp local}]
 				}
 				if {!$cgjob_distr(no_local_pe)} {
-					lappend hard -pe local $value
+					lappend hard -pe local $value -R y
 				}
 				incr pos 2
 			}
