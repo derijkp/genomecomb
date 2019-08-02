@@ -54,11 +54,11 @@ the sample is not processed.
 ; -aligner aligner: use the given aligner for mapping to the reference genome (default bwa)
 ; -realign value: If **value** is 0, realignment will not be performed, 
 use 1 for (default) realignment with gatk, or srma for alignment with srma
-; -removeduplicates 0/1/picard: By default duplicates will be removed (1) using bammarkduplicates2
-(from biobambam2) except for amplicon sequencing. With this option you can
-specifically request or turn of duplicate removal (overruling the
-default). If you want to use large amounts of memory, you can still use picard
-for removing duplicates (third option)
+; -removeduplicates 0/1/picard/biobambam: By default duplicates will be
+removed (marked actually) using samtools except for amplicon sequencing.
+With this option you can specifically request or turn of duplicate removal
+(overruling the default). If you want to use large amounts of memory, you
+can still use picard for removing duplicates (third option)
 ; -amplicons ampliconfile: This option turns on amplicon sequencing
 analysis (see further) using the amplicons defained in **ampliconfile**
 ; -varcallers varcallers (-v): (space separated) list of variant callers to be used (default "gatk sam")

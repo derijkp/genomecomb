@@ -24,6 +24,7 @@ proc map_minimap2_job {args} {
 	set keepsams 0
 	set threads 2
 	set mem 10G
+	set fixmate 1
 	cg_options map_minimap2 args {
 		-paired - -p {
 			set paired $value
@@ -33,6 +34,9 @@ proc map_minimap2_job {args} {
 		}
 		-readgroupdata {
 			set readgroupdata $value
+		}
+		-fixmate {
+			set fixmate $value
 		}
 		-keepsams {
 			set keepsams [true $value]
@@ -98,6 +102,9 @@ proc map_minimap2_job {args} {
 			}
 		}
 	} else {
+		if {$fixmate} {
+			set fixmate "| samtools fixmate -m -O sam - -"
+		}
 		if {[expr {[llength $files]%2}]} {
 			error "minimap2 needs even number of files for paired analysis"
 		}
@@ -112,7 +119,7 @@ proc map_minimap2_job {args} {
 			} -targets {
 				$target $analysisinfo
 			} -vars {
-				threads preset readgroupdata sample
+				threads preset readgroupdata sample fixmate
 			} -skip [list $resultbase.bam] {*}$skips -code {
 				puts "making $target"
 				foreach {minimap2refseq fastq1 fastq2} $deps break
@@ -123,7 +130,7 @@ proc map_minimap2_job {args} {
 				}
 				exec minimap2 -a -x $preset -t $threads --MD \
 					-R @RG\\tID:$sample\\t[join $rg \\t] \
-					$minimap2refseq $fastq1 $fastq2 > $target.temp 2>@ stderr
+					$minimap2refseq $fastq1 $fastq2 {*}$fixmate > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
 			}
 		}

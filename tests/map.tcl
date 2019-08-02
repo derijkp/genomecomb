@@ -9,9 +9,8 @@ test map_bwa {map_bwa basic} {
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	cg map_bwa -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
-	exec samtools view tmp/ali.bam > tmp/ali.sam
-	exec samtools view data/bwa.bam > tmp/expected.sam
-	exec diff tmp/ali.sam tmp/expected.sam
+	exec samtools view -h tmp/ali.bam > tmp/ali.sam
+	exec diff -I {@PG	ID:bwa	PN:bwa} tmp/ali.sam data/bwa.sam
 } {}
 
 test map_bwa {map_bwa multiple} {
@@ -24,9 +23,8 @@ test map_bwa {map_bwa multiple} {
 	file_write tmp/seq2_R2.fq [join [lrange $temp 200 end] \n]\n
 	cg map_bwa -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq]]
 	# chr21:42730799-42762826
-	exec samtools view tmp/ali.bam > tmp/ali.sam
-	exec samtools view data/bwa.bam > tmp/expected.sam
-	exec diff tmp/ali.sam tmp/expected.sam
+	exec samtools view -h tmp/ali.bam > tmp/ali.sam
+	exec diff -I {@PG	ID:bwa	PN:bwa} tmp/ali.sam data/bwa.sam
 } {}
 
 test map_bowtie2 {map_bowtie2 basic} {
@@ -55,9 +53,8 @@ test map_minimap2 {map_minimap2 paired} {
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	cg map_minimap2 -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
-	exec samtools view tmp/ali.bam > tmp/ali.sam
-	exec samtools view data/minimap2-p.bam > tmp/expected.sam
-	exec diff tmp/ali.sam tmp/expected.sam
+	exec samtools view -h tmp/ali.bam > tmp/ali.sam
+	exec diff -I {@PG	ID:minimap2	PN:minimap2} tmp/ali.sam data/minimap2-p.sam
 } {}
 
 test map_minimap2 {error dir as refseq} {
@@ -118,18 +115,123 @@ test map_ngmlr {map_ngmlr 4 files -m 2} {
 } {400}
 
 test realign {realign_gatk basic} {
-	file copy data/bwa.bam tmp/bwa.bam
+	exec samtools view -b data/bwa.sam > tmp/bwa.bam
 	cg realign_gatk -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19
 	exec samtools view tmp/ratest.bam > tmp/ratest.sam
-	exec samtools view data/ratest-gatk.bam > tmp/ratest-gatk.sam
-	exec diff tmp/ratest.sam tmp/ratest-gatk.sam
+	exec diff tmp/ratest.sam data/ratest-gatk.sam
 } {}
 
 test realign {realign_abra basic} {
-	cg realign_abra -stack 1 data/bwa.bam tmp/ratest.bam $::refseqdir/hg19
+	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	cg realign_abra -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19
 	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
-	cg sam2tsv data/ratest-abra.bam tmp/expected.tsv
+	cg sam2tsv data/ratest-abra.sam tmp/expected.tsv
 	exec diff tmp/ratest.tsv tmp/expected.tsv
 } {}
+
+test markdup {bam_markduplicates picard} {
+	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	cg bam_markduplicates -method picard tmp/sbwa.bam tmp/result.bam
+	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+} {diff tmp/result.tsv tmp/sbwa.tsv
+header
+  qname	chromosome	begin	end	duplicate
+124c124
+< SRR792091.1631779	chr21	42775454	42775552	1
+---
+> SRR792091.1631779	chr21	42775454	42775552	0
+127c127
+< SRR792091.1631779	chr21	42775529	42775629	1
+---
+> SRR792091.1631779	chr21	42775529	42775629	0
+148c148
+< SRR792091.1611898	chr21	42779842	42779942	1
+---
+> SRR792091.1611898	chr21	42779842	42779942	0
+156c156
+< SRR792091.1611898	chr21	42779960	42780060	1
+---
+> SRR792091.1611898	chr21	42779960	42780060	0
+187c187
+< SRR792091.108442	chr22	41923318	41923413	1
+---
+> SRR792091.108442	chr22	41923318	41923413	0
+191c191
+< SRR792091.108442	chr22	41923366	41923466	1
+---
+> SRR792091.108442	chr22	41923366	41923466	0
+child process exited abnormally} error
+
+test markdup {bam_markduplicates samtools} {
+	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	cg bam_markduplicates -method samtools tmp/sbwa.bam tmp/result.bam
+	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+} {diff tmp/result.tsv tmp/sbwa.tsv
+header
+  qname	chromosome	begin	end	duplicate
+124c124
+< SRR792091.1631779	chr21	42775454	42775552	1
+---
+> SRR792091.1631779	chr21	42775454	42775552	0
+127c127
+< SRR792091.1631779	chr21	42775529	42775629	1
+---
+> SRR792091.1631779	chr21	42775529	42775629	0
+148c148
+< SRR792091.1611898	chr21	42779842	42779942	1
+---
+> SRR792091.1611898	chr21	42779842	42779942	0
+156c156
+< SRR792091.1611898	chr21	42779960	42780060	1
+---
+> SRR792091.1611898	chr21	42779960	42780060	0
+187c187
+< SRR792091.108442	chr22	41923318	41923413	1
+---
+> SRR792091.108442	chr22	41923318	41923413	0
+191c191
+< SRR792091.108442	chr22	41923366	41923466	1
+---
+> SRR792091.108442	chr22	41923366	41923466	0
+child process exited abnormally} error
+
+test markdup {bam_markduplicates biobambam} {
+	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	cg bam_markduplicates -method biobambam tmp/sbwa.bam tmp/result.bam
+	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+} {diff tmp/result.tsv tmp/sbwa.tsv
+header
+  qname	chromosome	begin	end	duplicate
+124c124
+< SRR792091.1631779	chr21	42775454	42775552	1
+---
+> SRR792091.1631779	chr21	42775454	42775552	0
+127c127
+< SRR792091.1631779	chr21	42775529	42775629	1
+---
+> SRR792091.1631779	chr21	42775529	42775629	0
+148c148
+< SRR792091.1611898	chr21	42779842	42779942	1
+---
+> SRR792091.1611898	chr21	42779842	42779942	0
+156c156
+< SRR792091.1611898	chr21	42779960	42780060	1
+---
+> SRR792091.1611898	chr21	42779960	42780060	0
+187c187
+< SRR792091.108442	chr22	41923318	41923413	1
+---
+> SRR792091.108442	chr22	41923318	41923413	0
+191c191
+< SRR792091.108442	chr22	41923366	41923466	1
+---
+> SRR792091.108442	chr22	41923366	41923466	0
+child process exited abnormally} error
 
 testsummarize

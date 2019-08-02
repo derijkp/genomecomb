@@ -18,12 +18,16 @@ proc map_bowtie2_job {args} {
 	set pre {}
 	set skips {}
 	set threads 2
+	set fixmate 1
 	cg_options map_bowtie2 args {
 		-paired {
 			set paired $value
 		}
 		-readgroupdata {
 			set readgroupdata $value
+		}
+		-fixmate {
+			set fixmate $value
 		}
 		-threads {
 			set threads $value
@@ -88,7 +92,7 @@ proc map_bowtie2_job {args} {
 	-code {
 		puts "making $target"
 		analysisinfo_write $dep $target
-		catch_exec samtools view -S -h -b -o $resultbase.ubam $resultbase.sam >@ stdout 2>@ stderr
+		catch_exec samtools fixmate -O bam $resultbase.sam $resultbase.ubam >@ stdout 2>@ stderr
 		bam_sort $resultbase.ubam $target.temp
 		file rename -force $target.temp $target
 		file delete $resultbase.ubam $resultbase.ubam.analysisinfo

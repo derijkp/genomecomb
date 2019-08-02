@@ -52,12 +52,16 @@ proc map_bwa_job {args} {
 	set skips {}
 	set threads 2
 	set keepsams 0
+	set fixmate 1
 	cg_options map_bwa args {
 		-paired - -p {
 			set paired $value
 		}
 		-readgroupdata {
 			set readgroupdata $value
+		}
+		-fixmate {
+			set fixmate $value
 		}
 		-pre {
 			set pre $value
@@ -112,6 +116,9 @@ proc map_bwa_job {args} {
 			}
 		}
 	} else {
+		if {$fixmate} {
+			set fixmate "| samtools fixmate -m -O sam - -"
+		}
 		if {[expr {[llength $files]%2}]} {
 			error "bwa needs even number of files for paired analysis"
 		}
@@ -124,7 +131,7 @@ proc map_bwa_job {args} {
 			job bwa-$sample-$name -mem [job_mempercore 5G $threads] -cores $threads \
 			-deps [list $bwarefseq $file1 $file2] \
 			-targets {$target $analysisinfo} \
-			-vars {readgroupdata sample paired threads} \
+			-vars {readgroupdata sample paired threads fixmate} \
 			-skip [list $resultbase.bam] {*}$skips -code {
 				puts "making $target"
 				foreach {bwarefseq fastq1 fastq2} $deps break
@@ -133,7 +140,7 @@ proc map_bwa_job {args} {
 				foreach {key value} $readgroupdata {
 					lappend rg "$key:$value"
 				}
-				exec bwa mem -t $threads -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq1 $fastq2 > $target.temp 2>@ stderr
+				exec bwa mem -t $threads -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq1 $fastq2 {*}$fixmate > $target.temp 2>@ stderr
 				file rename -force $target.temp $target
 				file delete bwa1.fastq bwa2.fastq
 			}

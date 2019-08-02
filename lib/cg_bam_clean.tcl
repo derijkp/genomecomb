@@ -45,7 +45,7 @@ proc bam_clean_job {args} {
 		set temproot s$temproot
 		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.analysisinfo]
 	}
-	if {$removeduplicates} {
+	if {$removeduplicates ne "0"} {
 		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
 		set temproot d$temproot
 		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.analysisinfo]
@@ -71,27 +71,9 @@ proc bam_clean_job {args} {
 		}
 		set root s$root
 	}
-	if {$removeduplicates eq "picard"} {
+	if {$removeduplicates ne "0"} {
 		list_pop skips 0; list_pop skips 0;
-		job bamremdup-$root -mem [job_mempercore 10G 2] -cores 2 -deps {$dir/$pre-$root.bam} \
-		-targets {$dir/$pre-d$root.bam $dir/$pre-d$root.bam.analysisinfo} \
-		-vars {sample} {*}$skips -code {
-			analysisinfo_write $dep $target removeduplicates picard removeduplicates_version [version picard]
-			puts "removing duplicates"
-			file mkdir [scratchdir]/picard
-			picard MarkDuplicates	I=$dep	O=$target.temp METRICS_FILE=$target.dupmetrics TMP_DIR=[scratchdir]/picard 2>@ stderr >@ stdout
-			file rename -force $target.temp $target
-		}
-		set root d$root
-	} elseif {$removeduplicates} {
-		list_pop skips 0; list_pop skips 0;
-		job bamremdup-$root -deps {$dir/$pre-$root.bam} \
-		-targets {$dir/$pre-d$root.bam $dir/$pre-d$root.bam.analysisinfo} \
-		-vars {sample} {*}$skips -code {
-			analysisinfo_write $dep $target removeduplicates biobambam removeduplicates_version [version biobambam]
-			biobambam bammarkduplicates2 I=$dep	O=$target.temp M=$target.dupmetrics rmdup=0 markthreads=1 tmpfile=[scratchfile] 2>@ stderr >@ stdout
-			file rename -force $target.temp $target
-		}
+		bam_markduplicates_job {*}$skips $dir/$pre-$root.bam $dir/$pre-d$root.bam
 		set root d$root
 	}
 	# index intermediate result

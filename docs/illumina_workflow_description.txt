@@ -2,9 +2,9 @@ Analysis was performed in-house with a standardized pipeline integrated in
 genomecomb (1) The pipeline used fastq-mcf (2) for adapter clipping. Reads
 were then aligned using bwa mem (3) and the resulting sam file converted
 to bam using samtools (4). Bam files were sorted and duplicates were
-removed using biobambam bammarkduplicates2 (5). Realignment in the
-neighborhood of indels was performed with GATK (6). Variants were called
-at all positions with a totalcoverage >= 5 using both GATK (6) and
+removed using samtools markdup (4). Realignment in the
+neighborhood of indels was performed with GATK (5). Variants were called
+at all positions with a totalcoverage >= 5 using both GATK (5) and
 samtools (4). At this initial stage positions with a coverage < 5 or a
 quality score < 30 were considered unsequenced. The resulting variant sets of
 different individuals were combined and annotated using genomecomb (1).
@@ -13,18 +13,17 @@ different individuals were combined and annotated using genomecomb (1).
 (2) fastq-mcf version 1.1.2-537, Erik Aronesty (2011). ea-utils : "Command-line tools for processing biological sequencing data"; Expression Analysis, Durham, NC http://code.google.com/p/ea-utils
 (3) bwa version 0.7.15-r1140, Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform. Bioinformatics, 25:1754-60. [PMID: 19451168] 
 (4) samtools version 1.6, Li H.*, Handsaker B.*, Wysoker A., Fennell T., Ruan J., Homer N., Marth G., Abecasis G., Durbin R. and 1000 Genome Project Data Processing Subgroup (2009) The Sequence alignment/map (SAM) format and SAMtools. Bioinformatics, 25, 2078-9. [PMID: 19505943] 
-(5) biobambam 2.0.73, Tischler G., Leonard S. (2013) Biobambam: Tools for read pair collation based algorithms on BAM files. Source Code for Biology and Medicine 9(1)
-(6) GATK version 3.8-1-0-gf15c1c3ef, DePristo M, Banks E, Poplin R, Garimella K, Maguire J, Hartl C, Philippakis A, del Angel G, Rivas MA, Hanna M, McKenna A, Fennell T, Kernytsky A, Sivachenko A, Cibulskis K, Gabriel S, Altshuler D, Daly M (2011) A framework for variation discovery and genotyping using next-generation DNA sequencing data.  NATURE GENETICS 43:491-498 [PMID: 21478889]
+(5) GATK version 3.8-1-0-gf15c1c3ef, DePristo M, Banks E, Poplin R, Garimella K, Maguire J, Hartl C, Philippakis A, del Angel G, Rivas MA, Hanna M, McKenna A, Fennell T, Kernytsky A, Sivachenko A, Cibulskis K, Gabriel S, Altshuler D, Daly M (2011) A framework for variation discovery and genotyping using next-generation DNA sequencing data.  NATURE GENETICS 43:491-498 [PMID: 21478889]
 
 Amplicon sequencing
 -------------------
 Analysis was performed in-house with a standardized pipeline integrated in
 genomecomb (1) The pipeline used fastq-mcf (2) for adapter clipping. Reads
 were then aligned using bwa mem (3) and the resulting sam file converted
-to bam using samtools (4). bam files were sorted using biobambam (5).
-Realignment in the neighborhood of indels was performed with GATK (6).
+to bam using samtools (4). bam files were sorted using samtools sort (4).
+Realignment in the neighborhood of indels was performed with GATK (5).
 Amplicon primers were clipped using genomecomb (1). Variants were called
-at all positions with a totalcoverage >= 5 using both GATK (6) and
+at all positions with a totalcoverage >= 5 using both GATK (5) and
 samtools (4). At this initial stage positions with a coverage < 5 or a
 score < 30 were considered unsequenced. The resulting variant sets of
 different individuals were combined and annotated and filtered using
