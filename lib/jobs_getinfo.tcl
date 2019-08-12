@@ -100,7 +100,7 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars 
 			set doskip 0
 			foreach skip $fskip {
 				set skip [job_targetsreplace $skip $targetvars]
-				if {[llength $skip] && [job_checktargets $job $skip $time $timefile $checkcompressed running]} {
+				if {[llength $skip] && [job_checktargets $job $skip 1 $time $timefile $checkcompressed running]} {
 					set doskip 1
 					break
 				}
@@ -116,7 +116,7 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars 
 		if {$ftargets ne ""} {
 			set targets [job_targetsreplace $ftargets $targetvars]
 			set newtargets 0
-			if {$jobforce || ![job_checktargets $job $targets $time $timefile $checkcompressed targetsrunning]} {
+			if {$jobforce || ![job_checktargets $job $targets 0 $time $timefile $checkcompressed targetsrunning]} {
 				set newtargets 1
 			}
 		} else {

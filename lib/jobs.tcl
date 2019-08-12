@@ -640,9 +640,10 @@ proc job_targetsreplace {list targetvars} {
 	return $result
 }
 
-proc job_checktarget {job target time timefile checkcompressed {newidsVar {}}} {
+proc job_checktarget {job target skiptarget time timefile checkcompressed {newidsVar {}}} {
 	if {$target eq ""} {return 1}
 	global cgjob_id
+	if {$skiptarget} {set skiptext skip} else {set skiptext ""}
 	if {$newidsVar ne ""} {
 		upvar $newidsVar newids
 	}
@@ -661,40 +662,44 @@ proc job_checktarget {job target time timefile checkcompressed {newidsVar {}}} {
 			}
 		}
 		if {$time eq "now"} {
-			job_lognf $job "target older than dep $timefile (renaming to .old): $target"
-			# foreach file $files {
-			# 	job_backup $file 1
-			# }
-			foreach file $files {
-				file rename -force $file $file.old
+			if {!$skiptarget} {
+				job_lognf $job "target older than dep $timefile (renaming to .old): $target"
+				# foreach file $files {
+				# 	job_backup $file 1
+				# }
+				foreach file $files {
+					file rename -force $file $file.old
+				}
+			} else {
+				job_lognf $job "skiptarget older than dep $timefile: $target"
 			}
 			return 0
 		} elseif {$time eq "force"} {
-			job_lognf $job "target overwrite (force): $target"
+			job_lognf $job "${skiptext}target overwrite (force): $target"
 			unset -nocomplain cgjob_id($target)
 			return 1
 		} else {		
-			job_lognf $job "target ok: $target"
+			job_lognf $job "${skiptext}target ok: $target"
 			unset -nocomplain cgjob_id($target)
 			return 1
 		}
 	} elseif {[info exists cgjob_id($target)] && $cgjob_id($target) != "q"} {
-		job_lognf $job "target already submitted/running (id $cgjob_id($target)): $target "
+		job_lognf $job "${skiptext}target already submitted/running (id $cgjob_id($target)): $target "
 		set newids $cgjob_id($target)
 		return 2
 	}
-	job_lognf $job "target missing: $target"
+	job_lognf $job "${skiptext}target missing: $target"
 	return 0
 }
 
-proc job_checktargets {job targets time timefile checkcompressed {runningVar {}}} {
+proc job_checktargets {job targets skiptarget time timefile checkcompressed {runningVar {}}} {
 	if {$runningVar ne ""} {
 		upvar $runningVar running
 		set running {}
 	}
 	set ok 1
 	foreach target $targets {
-		set check [job_checktarget $job $target $time $timefile $checkcompressed]
+		set check [job_checktarget $job $target $skiptarget $time $timefile $checkcompressed]
 		if {!$check} {
 			set ok 0
 		}

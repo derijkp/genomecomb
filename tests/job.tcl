@@ -857,6 +857,24 @@ test job "-skip: sone deps do not exist" {
 	set result
 } {log.*.finished result.txt} match
 
+test job "-skip: sone deps are newer -> do not move skiptarget to .old" {
+	cd $::testdir
+	test_cleantmp
+	cd $::testdir/tmp
+	test_job_init -skipjoberrors 0
+	file_write dep.txt dep
+	file_write skipresult.txt result
+	file mtime dep.txt [expr {[file mtime skipresult.txt]+1}]
+	job step1 -deps {dep.txt} -targets result.txt -skip {skipresult.txt skipresult2.txt} -code {
+		file_write result.txt test
+	}
+	job_wait
+	gridwait
+	set result [glob skipresult.txt*]
+	cd $::testdir
+	set result
+} {skipresult.txt}
+
 test job "jobtestnojobs $testname" {
 	cd $::testdir
 	test_cleantmp

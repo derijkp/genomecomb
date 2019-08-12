@@ -235,7 +235,7 @@ proc job_process_parstatus {} {
 			set newtargets 0
 			set time 0
 			set timefile {}
-			if {!$jobforce && ![job_checktargets $job $targets $time $timefile $checkcompressed targetsrunning]} {
+			if {!$jobforce && ![job_checktargets $job $targets 0 $time $timefile $checkcompressed targetsrunning]} {
 				set newtargets 1
 			}
 		} else {

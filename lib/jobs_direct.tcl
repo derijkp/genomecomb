@@ -125,7 +125,7 @@ proc job_process_direct {} {
 			set doskip 0
 			foreach skip $fskip {
 				set skip [job_targetsreplace $skip $targetvars]
-				if {[llength $skip] && [job_checktargets $job $skip $time $timefile $checkcompressed running]} {
+				if {[llength $skip] && [job_checktargets $job $skip 1 $time $timefile $checkcompressed running]} {
 					set doskip 1
 					break
 				}
@@ -142,7 +142,7 @@ proc job_process_direct {} {
 		set run 0
 		if {$ftargets ne ""} {
 			set targets [job_targetsreplace $ftargets $targetvars]
-			if {!$jobforce && ![job_checktargets $job $targets $time $timefile $checkcompressed running]} {
+			if {!$jobforce && ![job_checktargets $job $targets 0 $time $timefile $checkcompressed running]} {
 				set run 1
 			}
 		} else {

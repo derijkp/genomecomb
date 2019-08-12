@@ -191,7 +191,7 @@ proc job_process_par_onepass {} {
 			set doskip 0
 			foreach skip $fskip {
 				set skip [job_targetsreplace $skip $targetvars]
-				if {[llength $skip] && [job_checktargets $job $skip $time $timefile $checkcompressed running]} {
+				if {[llength $skip] && [job_checktargets $job $skip 1 $time $timefile $checkcompressed running]} {
 					set doskip 1
 					break
 				}
@@ -208,7 +208,7 @@ proc job_process_par_onepass {} {
 			set targets [job_targetsreplace $ftargets $targetvars]
 			file_write $job.targets $targets
 			set newtargets 0
-			if {$jobforce || ![job_checktargets $job $targets $time $timefile $checkcompressed targetsrunning]} {
+			if {$jobforce || ![job_checktargets $job $targets 0 $time $timefile $checkcompressed targetsrunning]} {
 				set newtargets 1
 			}
 		} else {
