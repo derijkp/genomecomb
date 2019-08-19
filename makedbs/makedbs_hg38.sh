@@ -718,8 +718,12 @@ proc gnomadfields {file} {
 	set header [cg select -header $tempfile]
 	set fields {chromosome begin end type ref alt}
 	lappend fields {max_freqp=if(isnum($AF_popmax),format("%.3f",100.0*$AF_popmax),"-")}
+	# homfreqp is percentage of sindividuals that are homozygous -> so should divide count by (AN_popmax/2), do this by *200.0 instead of *100.0
+	lappend fields {max_homfreqp=if(isnum($nhomalt_popmax),format("%.3f",200.0*$nhomalt_popmax/$AN_popmax),"-")}
 	lappend fields {controls_max_freqp=if(isnum($controls_AF_popmax),format("%.3f",100.0*$controls_AF_popmax),"-")}
+	lappend fields {controls_max_homfreqp=if(isnum($controls_nhomalt_popmax),format("%.3f",200.0*$controls_nhomalt_popmax/$controls_AN_popmax),"-")}
 	lappend fields {non_neuro_max_freqp=if(isnum($non_neuro_AF_popmax),format("%.3f",100.0*$non_neuro_AF_popmax),"-")}
+	lappend fields {non_neuro_max_homfreqp=if(isnum($non_neuro_nhomalt_popmax),format("%.3f",200.0*$non_neuro_nhomalt_popmax/$non_neuro_AN_popmax),"-")}
 	lappend nh max_freqp
 	foreach population {
 		afr amr asj eas fin nfe sas oth nfe_nwe nfe_seu nfe_est nfe_bgr nfe_swe
@@ -727,6 +731,10 @@ proc gnomadfields {file} {
 	} {
 		if {![inlist $header AN_$population]} continue
 		lappend fields "${population}_freqp=if(def(\$AN_$population,0) < 8, \"-\", format(\"%.3f\",(100.0 * \$AC_$population)/\$AN_$population))"
+		lappend fields "${population}_homfreqp=if(def(\$AN_$population,0) < 8, \"-\", format(\"%.3f\",(200.0 * \$nhomalt_$population)/\$AN_$population))"
+		if {[inlist $header controls_AN_$population]} {
+			lappend fields "controls_${population}_homfreqp=if(def(\$controls_AN_$population,0) < 8, \"-\", format(\"%.3f\",(200.0 * \$controls_nhomalt_$population)/\$controls_AN_$population))"
+		}
 		if {[inlist $header controls_AN_$population]} {
 			lappend fields "controls_${population}_freqp=if(def(\$controls_AN_$population,0) < 8, \"-\", format(\"%.3f\",(100.0 * \$controls_AC_$population)/\$controls_AN_$population))"
 		}
@@ -895,7 +903,7 @@ job var_${build}_extragnomad-final -deps {
 	extra/var_${build}_gnomad.tsv.opt
 	extra/var_${build}_gnomadex.tsv.opt
 } -vars {build} -code {
-	file_write extra/var_${build}_gnomad.tsv.opt "fields\t{afr_freqp amr_freqp asj_freqp eas_freqp fin_freqp oth_freqp male_freqp female_freqp}\n"
+	file_write extra/var_${build}_gnomad.tsv.opt "fields\t{max_homfreqp controls_max_homfreqp afr_freqp amr_freqp asj_freqp eas_freqp fin_freqp oth_freqp male_freqp female_freqp}\n"
 	mklink var_${build}_gnomad.tsv.zst extra/var_${build}_gnomad.tsv.zst
 	file_write extra/var_${build}_gnomadex.tsv.opt "fields\t{afr_freqp amr_freqp asj_freqp eas_freqp fin_freqp oth_freqp male_freqp female_freqp}\n"
 	mklink var_${build}_gnomadex.tsv.zst extra/var_${build}_gnomadex.tsv.zst
