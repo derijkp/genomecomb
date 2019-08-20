@@ -2,16 +2,20 @@ proc var_sam_tools {} {
 	return {samtools bcftools}
 }
 
-proc sreg_sam_job {job varallfile resultfile {skips {}}} {
+proc sreg_sam_job {job varallfile resultfile {mincoverage 5} {minqual 30} {skips {}}} {
 	upvar job_logdir job_logdir
 	job $job {*}$skips -deps {
 		$varallfile
 	} -targets {
 		$resultfile
+	} -vars {
+		mincoverage minqual 
 	} -code {
 		set temp [filetemp $target]
 		set temp2 [filetemp $target]
-		cg select -overwrite 1 -q {$quality >= 30 && $totalcoverage >= 5 && $type ne "ins"} -f {chromosome begin end} $dep $temp
+		cg select -overwrite 1 -q [subst {
+			\$quality >= $minqual && \$totalcoverage >= $mincoverage && \$type ne "ins"
+		}] -f {chromosome begin end} $dep $temp
 		file_write $temp2 "# regions selected from [gzroot $dep]: \$quality >= 30 && \$totalcoverage >= 5\n"
 		cg regjoin $temp >> $temp2
 		compress $temp2 $target 1 0
@@ -193,7 +197,7 @@ proc var_sam_job {args} {
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv ${pre}var-$root.tsv.zst
 	# find regions
-	sreg_sam_job ${pre}sreg-$root ${pre}varall-$root.tsv ${pre}sreg-$root.tsv.zst $skips
+	sreg_sam_job ${pre}sreg-$root ${pre}varall-$root.tsv ${pre}sreg-$root.tsv.zst 5 30 $skips
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \

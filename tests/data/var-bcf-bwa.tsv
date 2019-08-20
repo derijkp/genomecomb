@@ -25,6 +25,8 @@
 #fields	PL	G	Integer	List of Phred-scaled genotype likelihoods	format	
 #fields	coverage	1	Integer	Number of high-quality bases	format	
 #fields	SP	1	Integer	Phred-scaled strand bias P-value	format	
+#fields	genoqual	1	Integer	Phred-scaled Genotype Quality	format	
+#fields	GP	G	Float	Phred-scaled genotype posterior probabilities	format	
 #fields	INDEL	0	Flag	Indicates that the variant is an INDEL.	info	
 #fields	IDV	1	Integer	Maximum number of reads supporting an indel	info	
 #fields	IMF	1	Float	Maximum fraction of reads supporting an indel	info	
@@ -128,19 +130,19 @@
 #contig	chrUn_gl000249	38502
 #contig	chrX	155270560
 #contig	chrY	59373566
-#vcf_samtoolsVersion	1.9+htslib-1.9
 #vcf_bcftools_callVersion	1.9+htslib-1.9
 #ALT	table
 #ALT	ID	Description
 #ALT	*	Represents allele(s) other than observed.
-#vcf_samtoolsCommand	samtools mpileup --uncompressed -t DP,SP --min-BQ 0 --fasta-ref /data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -l /tmp/tempExtral.9696-UEEEGAnFUrJINWyPYwNy/_Extral_temp_1.bed /home/peter/dev/genomecomb/tests/tmp/bwa.bam
 #vcf_fileformat	VCFv4.2
-#vcf_bcftools_callCommand	call --threads 2 -m -; Date=Tue Jul  2 11:16:40 2019
+#vcf_bcftools_callCommand	call --format-fields GQ,GP -m --threads 2; Date=Mon Aug 19 18:27:35 2019
+#vcf_bcftoolsVersion	1.9+htslib-1.9
 #FILTER	table
 #FILTER	ID	Description
 #FILTER	PASS	All filters passed
 #vcf_reference	file:///data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas
+#vcf_bcftoolsCommand	mpileup -Ou --fasta-ref /data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas -a DP,SP --count-orphans --max-depth 1000 --min-BQ 0 -T /tmp/tempExtral.30648-HcAKnWCtJvLxHOdCtDtV/_Extral_temp_1.bed /home/peter/dev/genomecomb/tests/tmp/bwa.bam
 # ----
-chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	PL	coverage	SP	IDV	IMF	totalcoverage	VDB	RPB	MQB	BQB	MQSB	SGB	MQ0F	ICB	HOB	DP4	MQ	cluster
-chr21	42735718	42735719	snp	G	A	46.3581	G	A	v	t	0	0;1	79,0,104	8	0			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	1	0.5	2,2,2,2	60	
-chr21	42775179	42775180	snp	C	T	106	T	T	v	m	0	1;1	136,18,0	6	0			6	0.177551				1	-0.616816	0			0,0,5,1	60	
+chromosome	begin	end	type	ref	alt	quality	alleleSeq1	alleleSeq2	sequenced	zyg	phased	genotypes	PL	coverage	SP	genoqual	GP	IDV	IMF	totalcoverage	VDB	RPB	MQB	BQB	MQSB	SGB	MQ0F	ICB	HOB	DP4	MQ	cluster
+chr21	42735718	42735719	snp	G	A	46.3581	G	A	v	t	0	0;1	79,0,104	8	0	81	81,0,107			8	0.879194	0.62023	0.992367	0.868321	0.992367	-0.556411	0	1	0.5	2,2,2,2	60	
+chr21	42775179	42775180	snp	C	T	106	T	T	v	m	0	1;1	136,18,0	6	0	127	-2.14748e+09,-2.14748e+09,0			6	0.177551				1	-0.616816	0			0,0,5,1	60	

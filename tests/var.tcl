@@ -94,13 +94,13 @@ total	1203}
 test var {var_bcf basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
-	cg var_bcf {*}$::dopts tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
+	cg var_bcf {*}$::dopts -mincoverage 5 -minqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
 	cg tsvdiff tmp/var-bcf-bwa.tsv.zst data/var-bcf-bwa.tsv
 	string_change [cg covered tmp/sreg-bcf-bwa.tsv.zst] [list \n\n \n]
 } {chromosome	bases
-chr21	1045
+chr21	1049
 chr22	156
-total	1201}
+total	1205}
 
 test var {var distrreg sam} {
 	test_cleantmp

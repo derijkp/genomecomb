@@ -14,6 +14,8 @@ proc var_bcf_job {args} {
 	set cleanup 1
 	set regmincoverage 3
 	set threads 2
+	set mincoverage 5
+	set minqual 30
 	set resultfiles 0
 	set rootname {}
 	set skips {}
@@ -43,6 +45,12 @@ proc var_bcf_job {args} {
 		}
 		-BQ {
 			set BQ $value
+		}
+		-mincoverage {
+			set mincoverage $value
+		}
+		-minqual {
+			set minqual $value
 		}
 		-threads {
 			set threads $value
@@ -79,7 +87,7 @@ proc var_bcf_job {args} {
 	set varfile ${pre}var-$root.tsv
 	set sregfile ${pre}sreg-$root.tsv
 	set varallfile ${pre}varall-$root.tsv
-	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.zst $destdir/reg_cluster-$root.tsv.zst]
+	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.gz $destdir/reg_cluster-$root.tsv.zst]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -110,11 +118,9 @@ proc var_bcf_job {args} {
 	}
 	set deps [list $bamtail $refseq $refseq.fai {*}$deps]
 	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -targets {
-		${pre}varall-$root.vcf
-	} -skip {
-		${pre}varall-$root.tsv 
+		${pre}varall-$root.tsv.zst
 	} -vars {
-		refseq opts BQ regionfile root threads callmethod
+		refseq opts BQ regionfile root threads callmethod split
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
@@ -124,7 +130,7 @@ proc var_bcf_job {args} {
 		} else {
 			if {$regionfile ne ""} {
 				set bedfile [tempbed $regionfile $refseq]
-				lappend opts -l $bedfile
+				lappend opts -T $bedfile
 			}
 			if {[catch {version samtools 1}]} {
 				error "bcftools calling needs samtools v > 1"
@@ -132,7 +138,19 @@ proc var_bcf_job {args} {
 				# bcftools -v for variant only
 				# -t DP: Number of high-quality bases (per sample)
 				# -t SP: Phred-scaled strand bias P-value
-				exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call --threads $threads -$callmethod - > $target.temp 2>@ stderr
+				# exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call --threads $threads -$callmethod - > $target.temp 2>@ stderr
+				exec bcftools mpileup -Ou --fasta-ref $refseq \
+					 -a "DP,SP" --count-orphans --max-depth 1000 --min-BQ $BQ \
+					{*}$opts $dep 2>@ stderr \
+					| bcftools call \
+						--format-fields GQ,GP \
+						-$callmethod \
+						--threads $threads \
+					| cg vcf2tsv -skiprefindels 1 \
+						-split $split \
+						-meta [list refseq [file tail $refseq]] \
+						-removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} \
+					{*}[compresspipe $target] > $target.temp 2>@ stderr
 			}
 			file rename -force $target.temp $target
 			if {$emptyreg && ![file exists $cache]} {
@@ -140,18 +158,6 @@ proc var_bcf_job {args} {
 			}
 		}
 	}
-	job ${pre}varall-bcf2tsv-$root {*}$skips -deps {
-		${pre}varall-$root.vcf
-	} -targets {
-		${pre}varall-$root.tsv.zst
-	} -vars {
-		split refseq
-	} -code {
-		analysisinfo_write $dep $target
-		cg vcf2tsv -skiprefindels 1 -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} $dep $target.temp.zst
-		file rename -force $target.temp.zst $target
-	}
-	# zst_job ${pre}varall-$root.tsv -i 1
 	zstindex_job {*}$skips ${pre}varall-$root.tsv.zst
 	job ${pre}var-$root {*}$skips -deps {
 		${pre}varall-$root.tsv
@@ -173,11 +179,11 @@ proc var_bcf_job {args} {
 			*
 		} $dep $target.temp
 		file rename -force $target.temp $target
-	}
+ 	}
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv ${pre}var-$root.tsv.zst
 	# find regions
-	sreg_sam_job ${pre}sreg-$root ${pre}varall-$root.tsv ${pre}sreg-$root.tsv.zst $skips
+	sreg_sam_job ${pre}sreg-$root $varallfile $sregfile.zst $mincoverage $minqual $skips
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \

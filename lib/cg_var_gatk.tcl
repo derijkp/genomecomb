@@ -38,7 +38,7 @@ proc annotvar_clusters_job {args} {
 	} -code {
 		analysisinfo_write $dep $target
 		if {[file size $dep]} {
-			cg clusterregions < $dep {*}[compresspipe .zst] > $target.temp.zst
+			exec {*}[gzcat $dep] $dep | cg clusterregions {*}[compresspipe .zst] > $target.temp.zst
 			file rename -force $target.temp.zst $target
 			cg_zstindex $target
 		} else {
