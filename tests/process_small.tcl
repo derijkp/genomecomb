@@ -160,7 +160,7 @@ test process_small {process_sample one_exome_yri_mx2} {
 		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		tmp/one_exome_yri_mx2/samples/NA19240mx2 expected/one_exome_yri_mx2/samples/NA19240mx2]
-	lappend result [checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics expected/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT" | grep -v bammarkduplicates2]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics expected/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT" | grep -v bammarkduplicates2]
 	lappend result [checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv expected/one_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
 	join [list_remove $result {}] \n
 } {}
@@ -185,7 +185,7 @@ test process_small {process_project exomes_yri_mx2} {
 		-x *.analysisinfo -x *.png -x *.submitting \
 		tmp/exomes_yri_mx2 expected/exomes_yri_mx2]
 	lappend result [diffanalysisinfo tmp/exomes_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/exomes_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
-	lappend result [checkdiff -y --suppress-common-lines tmp/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/exomes_yri_mx2/compar/info_analysis.tsv tmp/exomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
@@ -213,7 +213,7 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 		-x *.analysisinfo -x *.png -x *.submitting \
 		tmp/exomesfb_yri_mx2 expected/exomesfb_yri_mx2]
 	lappend result [diffanalysisinfo tmp/exomesfb_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/exomesfb_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
-	lappend result [checkdiff -y --suppress-common-lines tmp/exomesfb_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomesfb_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/exomesfb_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomesfb_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/exomesfb_yri_mx2/compar/info_analysis.tsv tmp/exomesfb_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
@@ -241,7 +241,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 		-x *.analysisinfo -x *.png -x *.submitting -x *.tbi \
 		tmp/exomes_gatkh_yri_mx2 expected/exomes_gatkh_yri_mx2]
 	lappend result [diffanalysisinfo tmp/exomes_gatkh_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/exomes_gatkh_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
-	lappend result [checkdiff -y --suppress-common-lines tmp/exomes_gatkh_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_gatkh_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/exomes_gatkh_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_gatkh_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/exomes_gatkh_yri_mx2/compar/info_analysis.tsv tmp/exomes_gatkh_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
@@ -309,7 +309,7 @@ test process_small {process_project genomes_yri_mx2} {
 	foreach cgsample {NA19238cgmx2 NA19239cgmx2 NA19240cgmx2} {
 		lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"]
 	}
-	lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics expected/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics expected/genomes_yri_mx2/samples/NA19240ilmx2/map-dsbwa-NA19240ilmx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb|Linux}]
@@ -340,7 +340,7 @@ test process_small {process_project mixed_yri_mx2} {
 		lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"]
 	}
 	lappend result [diffanalysisinfo tmp/mixed_yri_mx2/compar/annot_compar-*.tsv.analysisinfo expected/mixed_yri_mx2/compar/annot_compar-*.tsv.analysisinfo]
-	lappend result [checkdiff -y --suppress-common-lines tmp/mixed_yri_mx2/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/mixed_yri_mx2/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/mixed_yri_mx2/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/mixed_yri_mx2/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
@@ -371,7 +371,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 		lappend result [checkdiff -y --suppress-common-lines tmp/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt expected/genomes_yri_mx2/samples/$cgsample/summary-$cgsample.txt | grep -v "finished.*finished"]
 	}
 	lappend result [diffanalysisinfo tmp/mixed_yri_mx2_distrreg/compar/annot_compar-*.tsv.analysisinfo expected/mixed_yri_mx2_distrreg/compar/annot_compar-*.tsv.analysisinfo]
-	lappend result [checkdiff -y --suppress-common-lines tmp/mixed_yri_mx2_distrreg/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/mixed_yri_mx2_distrreg/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/mixed_yri_mx2_distrreg/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics expected/mixed_yri_mx2_distrreg/samples/gilNA19240mx2/map-dsbwa-gilNA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2]
 	foreach file1 [glob tmp/genomes_yri_mx2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
 		regsub ^tmp $file1 expected file2
 		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
