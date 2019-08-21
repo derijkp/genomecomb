@@ -87,7 +87,7 @@ proc var_bcf_job {args} {
 	set varfile ${pre}var-$root.tsv
 	set sregfile ${pre}sreg-$root.tsv
 	set varallfile ${pre}varall-$root.tsv
-	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.gz $destdir/reg_cluster-$root.tsv.zst]
+	set resultlist [list $destdir/$varfile.zst $destdir/$sregfile.zst $destdir/$varallfile.zst $destdir/reg_cluster-$root.tsv.zst]
 	if {$resultfiles} {
 		return $resultlist
 	}
