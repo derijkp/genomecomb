@@ -26,8 +26,10 @@ source "${dir}/start_hbb.sh"
 # ===============
 
 all=1
+extra=1
 while [[ "$#" -gt 0 ]]; do case $1 in
 	-a|-all|--all) all="$2"; shift;;
+	-e|-extra|--extra) extra="$2"; shift;;
 	*) echo "Unknown parameter: $1"; exit 1;;
 esac; shift; done
 
@@ -258,6 +260,42 @@ if [ $all = 1 ] || [ ! -f /io/extern$ARCH/bwa ] ; then
 	strip /io/extern$ARCH/bwa
 fi
 
+# ea-utils
+# --------
+if [ $all = 1 ] || [ ! -f /io/extern$ARCH ] ; then
+	cd /build
+	wget -c https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/ea-utils/ea-utils.1.1.2-537.tar.gz
+	tar xvzf ea-utils.1.1.2-537.tar.gz
+	cd /build/ea-utils.1.1.2-537
+	if [ ! -f Makefile.ori ] ; then 
+		cp Makefile Makefile.ori
+	fi
+	if [ ! -f fastq-lib.cpp.ori ] ; then 
+		cp fastq-lib.cpp fastq-lib.cpp.ori
+	fi
+	if [ ! -f fastq-mcf.c.ori ] ; then 
+		cp fastq-mcf.c fastq-mcf.c.ori
+	fi
+	cp /io/extern-src/ea-utils-changes/*.c .
+	cp /io/extern-src/ea-utils-changes/Makefile .
+	make clean
+	make fastq-mcf
+	make fastq-stats
+	dest=/io/extern$ARCH/ea-utils
+	mkdir $dest || true
+	cp fastq-mcf fastq-stats $dest
+	strip $dest/fastq-mcf $dest/fastq-stats
+	cp /io/extern-src/ea-utils-changes/README $dest
+	cd /io/extern
+	ln -sf ea-utils/fastq-* .
+fi
+
+echo "Finished building external binaries"
+
+# Extra
+# =====
+# download and install tools, which are not by default distributed with genomecomb
+if [ $extra = 1 ] ; then
 # libmaus (used by biobambam)
 # ---------------------------
 if [ $all = 1 ] || [ ! -f /build/lib/libmaus2.a ] ; then
@@ -293,34 +331,38 @@ if [ $all = 1 ] || [ ! -f /io/extern$ARCH/bamsort ] ; then
 	
 fi
 
-# ea-utils
+# minimap2
 # --------
-if [ $all = 1 ] || [ ! -f /io/extern$ARCH ] ; then
-	cd /build
-	wget -c https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/ea-utils/ea-utils.1.1.2-537.tar.gz
-	tar xvzf ea-utils.1.1.2-537.tar.gz
-	cd /build/ea-utils.1.1.2-537
-	if [ ! -f Makefile.ori ] ; then 
-		cp Makefile Makefile.ori
-	fi
-	if [ ! -f fastq-lib.cpp.ori ] ; then 
-		cp fastq-lib.cpp fastq-lib.cpp.ori
-	fi
-	if [ ! -f fastq-mcf.c.ori ] ; then 
-		cp fastq-mcf.c fastq-mcf.c.ori
-	fi
-	cp /io/extern-src/ea-utils-changes/*.c .
-	cp /io/extern-src/ea-utils-changes/Makefile .
-	make clean
-	make fastq-mcf
-	make fastq-stats
-	dest=/io/extern$ARCH/ea-utils
-	mkdir $dest || true
-	cp fastq-mcf fastq-stats $dest
-	strip $dest/fastq-mcf $dest/fastq-stats
-	cp /io/extern-src/ea-utils-changes/README $dest
+if [ $all = 1 ] || [ ! -f /io/extern$ARCH/minimap2 ] ; then
 	cd /io/extern
-	ln -sf ea-utils/fastq-* .
+	wget https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-2.17_x64-linux.tar.bz2
+	tar xvjf minimap2-2.17_x64-linux.tar.bz2
+	rm minimap2-2.17_x64-linux.tar.bz2
+	ln -sf minimap2-2.17_x64-linux/minimap2 minimap2
 fi
 
-echo "Finished building external binaries"
+# sniffles
+# --------
+if [ $all = 1 ] || [ ! -f /io/extern$ARCH/snifles ] ; then
+	yuminstall cmake
+	# yuminstall openmpi
+	yuminstall gcc-c++
+	# sniffles
+	# --------
+	snifflesversion=1.0.11
+	download https://github.com/fritzsedlazeck/Sniffles/archive/$snifflesversion.tar.gz
+	mv $snifflesversion.tar.gz sniffles-$snifflesversion.tar.gz
+	cd /build/Sniffles-$snifflesversion
+	rm -rf /build/Sniffles-$snifflesversion/build
+	mkdir /build/Sniffles-$snifflesversion/build
+	cd /build/Sniffles-$snifflesversion/build
+	cmake ..
+	make
+	cp ../bin/sniffles-core-$snifflesversion/sniffles /io/extern$ARCH/sniffles-$snifflesversion
+	cd /io/extern$ARCH
+	ln -sf sniffles-$snifflesversion sniffles
+fi
+
+echo "Finished building extra external binaries"
+
+fi # end of extra
