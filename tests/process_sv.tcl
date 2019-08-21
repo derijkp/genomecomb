@@ -53,6 +53,28 @@ test process_sv {process_project ont} {
 	join [list_remove $result {}] \n
 } {}
 
+test process_sv {process_project ont_minimap2} {
+	cd $::smalltestdir
+	set dest tmp/ont_minimap2
+	file delete -force tmp/ont_minimap2
+	file mkdir tmp/ont_minimap2
+	cg project_addsample tmp/ont_minimap2 NA12878 {*}[glob /data/nanopore/NA12878-nanopore-wgs/part*.fastq*]
+	cg process_project {*}$::dopts -distrreg 1 -split 1 \
+	  -dbdir /complgen/refseq/hg19 -reports {-fastqc predictgender fastqstats} \
+	  -clip 0 -paired 0 -aligner minimap2 -removeduplicates 0 -realign 0 -svcallers sniffles -varcallers {} \
+	  tmp/ont_minimap2 >& tmp/ont_minimap2.log
+	set result {}
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
+		-x *dupmetrics -x colinfo -x *.lz4i -x info_analysis.tsv -x *.finished -x *.index \
+		-x *.analysisinfo -x *.png -x *.vcf \
+		tmp/ont_minimap2 expected/ont_minimap2]
+	foreach file1 [glob tmp/ont_minimap2/compar/info_analysis.tsv tmp/genomes_yri_mx2/samples/*/info_analysis.tsv] {
+		regsub ^tmp $file1 expected file2
+		lappend result [checkdiff -y --suppress-common-lines $file1 $file2 | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+	}
+	join [list_remove $result {}] \n
+} {}
+
 test process_sv {manta} {
 	cd $::smalltestdir
 	file delete -force tmp/sv_chr21part
