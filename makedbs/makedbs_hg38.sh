@@ -806,7 +806,7 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 			}
 			set fields [gnomadfields $tempdir/$vcf]
 			putslog "Converting $vcf"
-			cg vcf2tsv -split 1 -sort 0 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles {*}[compresspipe $target 12] > $target.temp
+			cg vcf2tsv -split 1 -sort 0 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles {*}[compresspipe $target 1] > $target.temp
 			file rename $target.temp $target
 		}
 	}
@@ -816,27 +816,11 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 		var_${build}_gnomad.tsv.opt
 	} -vars {tempdir dest db build finaltarget gnomadbuild} -code {
 		file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
-		exec cg cat {*}$deps {*}[compresspipe $finaltarget 12] > $tempdir/result.tsv.temp.zst
 		if {$gnomadbuild eq $build} {
+			exec cg cat {*}$deps {*}[compresspipe $finaltarget 12] > $tempdir/result.tsv.temp.zst
 			file rename -force $tempdir/result.tsv.temp.zst $finaltarget
 		} else {
-			file rename [gzroot $finaltarget].info $tempdir/result.tsv.temp.info
-			liftover_refdb $tempdir/result.tsv.temp.zst $finaltarget $dest $gnomadbuild $build
-		}
-		cg zindex $finaltarget
-		cg index $finaltarget
-		# file delete -force $tempdir
-	}
-	
-	job var_${build}_gnomad-final -deps $deps -targets {
-		$finaltarget
-		var_${build}_gnomad.tsv.opt
-	} -vars {tempdir dest db build finaltarget gnomadbuild} -code {
-		file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
-		exec cg cat {*}$deps {*}[compresspipe $finaltarget 12] > $tempdir/result.tsv.temp.zst
-		if {$gnomadbuild eq $build} {
-			file rename -force $tempdir/result.tsv.temp.zst $finaltarget
-		} else {
+			exec cg cat {*}$deps {*}[compresspipe $finaltarget 1] > $tempdir/result.tsv.temp.zst
 			file rename [gzroot $finaltarget].info $tempdir/result.tsv.temp.info
 			liftover_refdb $tempdir/result.tsv.temp.zst $finaltarget $dest $gnomadbuild $build 0
 		}
@@ -844,7 +828,7 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 		cg index $finaltarget
 		# file delete -force $tempdir
 	}
-	
+
 }
 
 set target var_${build}_gnomadex.tsv.zst
@@ -886,7 +870,7 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 			file rename $tempdir/[file tail $target] $target
 		} else {
 			file rename var_${build}_gnomadex.tsv.opt $tempdir/result.tsv.temp.info
-			liftover_refdb $tempdir/[file tail $target] $target $dest $gnomadbuild $build
+			liftover_refdb $tempdir/[file tail $target] $target $dest $gnomadbuild $build 0
 		}
 		cg zindex $target
 		cg index $target
