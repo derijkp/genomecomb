@@ -130,7 +130,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 		}
 		if (o == NULL || (comp > 0) || ((comp == 0) && (end1 <= start2 && start1 != start2))) {
 			fprintf(stderr,"variants outside of distrreg regions:\n%s\n",line1->string);
-			exit(EXIT_FAILURE);
+			/* exit(EXIT_FAILURE); */
 		} else {
 			NODPRINT("overlap")
 			fprintf(o,"%s\n",line1->string);
