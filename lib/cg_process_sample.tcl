@@ -793,6 +793,16 @@ proc process_sample_job {args} {
 				 $sampledir/map-${aligner}-$sample.bam $refseq $sample]
 			lappend cleanedbams $cleanbam
 		}
+	} else {
+		# check if result bam file exists (without fastq), and use that if so
+		foreach aligner $aligners {
+			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.bam
+			if {[file exists $resultbamfile]} {
+				lappend cleanedbams $resultbamfile
+			} else {
+				putslog "no fastqs for $sample and file $resultbamfile does not exist"
+			}
+		}
 	}
 	# varcaller from bams
 	foreach cleanedbam $cleanedbams {
