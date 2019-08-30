@@ -117,7 +117,7 @@ proc var_bcf_job {args} {
 		exec samtools faidx $dep
 	}
 	set deps [list $bamtail $refseq $refseq.fai {*}$deps]
-	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -targets {
+	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -mem 5G -targets {
 		${pre}varall-$root.tsv.zst
 	} -vars {
 		refseq opts BQ regionfile root threads callmethod split
