@@ -28,18 +28,6 @@ proc bam_sort_rseq_job {bam} {
 	}	
 }
 
-proc bam_index_job {bam} { 
-	upvar job_logdir job_logdir
-	if {[file extension $bam] eq ".sam"} return
-	set pre [lindex [split $bam -] 0]
-	set root [file_rootname $bam]
-	set dir [file dir $bam]
-	job bamindex-$pre-$root -deps [list $bam] -targets [list $bam.bai] -code {
-		exec samtools index $dep >@ stdout 2>@ stderr
-		puts "making $target"
-	}
-}
-
 proc htseqcount_job {bam gff order stranded mode} {
 	upvar job_logdir job_logdir
 	set pre count
