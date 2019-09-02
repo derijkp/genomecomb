@@ -1107,6 +1107,31 @@ test bcol_var_annot {--precision} {
 	exec diff tmp/results.tsv tmp/expected.tsv
 } {}
 
+test bcol_var_annot {bug fix overlapping variant but earlier, pos 0,-1} {
+	test_cleantmp
+	write_tab tmp/annot.tsv {
+		chromosome	begin	end	type	alt	score
+		chr1	100	101	snp	A,G	0.421,0.9
+	}
+	cg bcol make --precision 2 -t f --multicol alt --multilist A,C,T,G -p begin -c chromosome tmp/var_annot.bcol score < tmp/annot.tsv
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		1	-1	-1	bnd		.[CHR6:10000[
+		1	0	0	bnd		.[CHR6:10000[
+		1	90	110	del	20	
+	}]\n
+	exec cg annotate tmp/vars.tsv tmp/results.tsv tmp/var_annot.bcol
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	annot
+		1	-1	-1	bnd		.[CHR6:10000[	0
+		1	0	0	bnd		.[CHR6:10000[	0
+		1	90	110	del	20		0
+	}]\n
+	exec diff tmp/results.tsv tmp/expected.tsv
+} {}
+
+
+
 test gene_annot {multiple dbs} {
 	write_tab tmp/vars.tsv {
 		chromosome	begin	end	type	ref	alt
@@ -1167,6 +1192,45 @@ test gene_annot {end of chromosome} {
 	file_write tmp/expected.tsv [deindent {
 		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
 		M	16571	16571	ins		A	downstream	x	+:down+1_2:n.573_574insA
+	}]\n
+	file delete tmp/result.tsv
+	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+
+test gene_annot {bnd} {
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		5	7685	7685	bnd		.[CHRY:11324332[
+	}]\n
+	file_write tmp/gene_test.tsv [deindent {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
+		5	6025	6107	+	x	known	x			6025	6025	1	6025,	6107,					2
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		5	7685	7685	bnd		.[CHRY:11324332[	downstream	x	+x:down+1578_1579:n.1660_1661ins.[CHRY:11324332[
+	}]\n
+	file delete tmp/result.tsv
+	exec cg annotate -stack 1 -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
+test gene_annot {bnd pos 0, -1} {
+	file_write tmp/vars.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		5	-1	-1	bnd		.[CHR6:10000[
+		5	0	0	bnd		.[CHR6:10000[
+	}]\n
+	file_write tmp/gene_test.tsv [deindent {
+		chrom	start	end	strand	geneid	source	name	score	bin	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds	name2	cdsStartStat	cdsEndStat	exonFrames	ROW
+		5	1025	1107	+	x	known	x			1025	1025	1	1025,	1107,					2
+	}]\n
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		5	-1	-1	bnd		.[CHR6:10000[	upstream	x	+x:up-1027_-1026:n.-1027_-1026ins.[CHR6:10000[
+		5	0	0	bnd		.[CHR6:10000[	upstream	x	+x:up-1026_-1025:n.-1026_-1025ins.[CHR6:10000[
 	}]\n
 	file delete tmp/result.tsv
 	exec cg annotate -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv

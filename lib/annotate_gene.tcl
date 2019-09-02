@@ -165,7 +165,7 @@ proc annotatevar_gene_makegeneobj {genomef dbline dposs {upstreamsize 2000}} {
 	# where element: exon$nr or intron$nr or pre (for variants before RNA)
 	set ftlist {}
 	if {!$complement} {set type upstream} else  {set type downstream}
-	lappend ftlist [list 0 [expr {$dstart-1}] $type]
+	lappend ftlist [list -2 [expr {$dstart-1}] $type]
 	set prev -1
 	if {$cds} {set type UTR} else {set type RNA}
 	set intronnr 0; set exonnr 0
@@ -423,6 +423,7 @@ proc annotategene_rpos {line snppos} {
 
 proc annotategene_element {line snppos} {
 	global adata
+	if {$line eq "pre"} {return [list pre ]}
 	set complement $adata(complement)
 	foreach {gbegin gend eltype element rnabegin rnaend cdsbegin cdsend} $line break
 	if {[info exists adata($element)]} {
@@ -1160,7 +1161,7 @@ proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 }
 
 proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcriptcol {}} {upstreamsize 2000} {onlychr {}}} {
-# putsvars file genomefile dbfile name annotfile genecol transcriptcol upstreamsize
+# putsvars file genomefile dbfile name annotfile genecol transcriptcol upstreamsize onlychr
 	global genomef
 
 	annot_init
