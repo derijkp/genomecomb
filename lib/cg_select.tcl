@@ -1308,6 +1308,10 @@ proc cg_select {args} {
 		-f {set qfields $value}
 		-fo {set fieldorder $value}
 		-samples {set samples $value; set sortsamples 0}
+		-samplesfile {
+			set samples [split [file_read $value] \n]
+			set sortsamples 0
+		}
 		-ssamples {set samples $value; set sortsamples 1}
 		-rf {
 			if {$value ne ""} {

@@ -24,6 +24,7 @@ indicating compression (e.g. .zst), the output file will be compressed using the
 ; -rf removefields: write all, except given fields to result.
 ; -samples samples: Only the given list of samples (space separated) will be included in the output.
 All non-sample related fields (those without a -) will be included. The sample nnames may contain wildcards (*)
+; -samplesfile file: same as the -samples option, but the samples are given in a file (one sample per line, no header)
 ; -ssamples samples: same as -samples, but the order of fields in the file will be changed, so that samples are sorted as in the parameter
 ; -s sortfields: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
 If a sort field is prepended with an -, the sort will be reversed for that field.

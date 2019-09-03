@@ -1104,6 +1104,30 @@ test select "-samples$dboptt" {
 } {id	freq-sample2	v-sample2	freq-sample3	v-sample3	annot
 1	0.8	s2	1.0	s3	a}
 
+test select "-samplesfile$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	v-sample1	freq-sample2	v-sample2	freq-sample3	v-sample3	annot
+		1	0.4	s1	0.8	s2	1.0	s3	a
+	}
+	file_write tmp/samples.lst "sample2\nsample3\n"
+	exec cg select {*}$dbopt -samplesfile tmp/samples.lst tmp/temp.tsv
+} {id	freq-sample2	v-sample2	freq-sample3	v-sample3	annot
+1	0.8	s2	1.0	s3	a}
+
+test select "-samplesfile pattern$dboptt" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	freq-sample1	v-sample1	freq-sample2	v-sample2	freq-sample20	v-sample20	annot
+		1	0.4	s1	0.8	s2	1.0	s3	a
+	}
+	file_write tmp/samples.lst "sample2*\n"
+	exec cg select {*}$dbopt -samplesfile tmp/samples.lst tmp/temp.tsv
+} {id	freq-sample2	v-sample2	freq-sample20	v-sample20	annot
+1	0.8	s2	1.0	s3	a}
+
 test select "-ssamples$dboptt" {
 	global dbopt
 	test_cleantmp
