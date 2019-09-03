@@ -10,6 +10,7 @@ proc var_bcf_job {args} {
 	set split 1
 	set deps {}
 	set regionfile {}
+	set BAQ 1
 	set BQ 0
 	set cleanup 1
 	set regmincoverage 3
@@ -45,6 +46,9 @@ proc var_bcf_job {args} {
 		}
 		-BQ {
 			set BQ $value
+		}
+		-BAQ {
+			set BAQ $value
 		}
 		-mincoverage {
 			set mincoverage $value
@@ -120,7 +124,7 @@ proc var_bcf_job {args} {
 	job ${pre}varall-$root {*}$skips -deps $deps -cores $threads -mem 5G -targets {
 		${pre}varall-$root.tsv.zst
 	} -vars {
-		refseq opts BQ regionfile root threads callmethod split
+		refseq opts BQ BAQ regionfile root threads callmethod split
 	} -code {
 		analysisinfo_write $dep $target sample $root varcaller samtools varcaller_version [version samtools] varcaller_cg_version [version genomecomb] varcaller_region [filename $regionfile]
 		set emptyreg [reg_isempty $regionfile]
@@ -131,6 +135,9 @@ proc var_bcf_job {args} {
 			if {$regionfile ne ""} {
 				set bedfile [tempbed $regionfile $refseq]
 				lappend opts -T $bedfile
+			}
+			if {![true $BAQ]} {
+				lappend opts --no-BAQ
 			}
 			if {[catch {version samtools 1}]} {
 				error "bcftools calling needs samtools v > 1"
