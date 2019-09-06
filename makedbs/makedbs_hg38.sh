@@ -841,7 +841,7 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 	} -vars {gnomadexurl tempdir dest db build gnomadbuild} -code {
 		set tempdir $target.temp
 		file mkdir $tempdir
-		file_write $tempdir/result.tsv.temp.opt "fields\t{max_freqp nfe_freqp}\n"
+		file_write [gzroot $target].opt "fields\t{max_freqp nfe_freqp}\n"
 		mklink $dep $tempdir/result.tsv.temp.zst
 		liftover_refdb $tempdir/result.tsv.temp.zst $target $dest $gnomadbuild $build 0
 		cg zindex $target

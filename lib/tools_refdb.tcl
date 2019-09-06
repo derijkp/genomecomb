@@ -1,4 +1,4 @@
-proc liftover_refdb {old new dest dbbuild build {split 1}} {
+proc liftover_refdb {old new dest dbbuild build {split 1} {unmappeddir extra}} {
 	set root [gzroot $old]
 	set newroot [gzroot $new]
 	set liftoverfile ${dest}/liftover/${dbbuild}To${build}.over.tsv
@@ -16,4 +16,14 @@ proc liftover_refdb {old new dest dbbuild build {split 1}} {
 	}
 	file delete $old $old.zsti
 	file delete $root.info
+	if {$unmappeddir ne "" && [file exists $unmappeddir]} {
+		liftover_move_unmapped $new $unmappeddir
+	}
+}
+
+proc liftover_move_unmapped {target targetdir} {
+	set unmapped [gzroot $target].unmapped[gzext $target]
+	foreach file [glob $unmapped $unmapped.*] {
+		file rename -force $file $targetdir/[file tail $file]
+	}
 }
