@@ -1,0 +1,89 @@
+= homwes =
+
+== Format ==
+cg compound ?options? variantfile ?resultfile?
+
+== Summary ==
+finds potential compound heterozygosity in a variantfile
+
+== Description ==
+This command helps in finding potential compound heterozygosity in a variantfile:
+It searches for 2 (or more) variants (limited by given criteria) affecting
+the same trasncript/gene in one sample or analysis. The command does not
+take into account phasing (yet): Even if both variants are in cis they
+will be reported.
+
+The input is a [[format_tsv|variant file]] [[cg_annotate|annotated]] with gene information.
+First a secundary result file (named <resultfile_base>-genelist.tsv) is generated that
+contains a list of all genes/transcripts affected by multiple variants and
+the samples in which multiple variants affect the gene.
+
+The final result file is a variant file containing only variants involved in a compound
+interaction. The following extra fields are added: 
+; transcripts: shows the transcripts that are affected by multiple variants (including this one)
+; compound-<sample>: is given for each analysis/sample: If the variant is
+in a compound in this sample, the field gives the number of variants
+affecting the same transcript in this sample. It is empty if the variant
+is not in a compound with other variants in this sample.
+
+=== impact ===
+By default, only variants causing a coding missense (CDSMIS) or higher
+in the transcript are counted. Higher here means further down in the gene
+impacts list given in [[cg_annotate|annotated]]).
+
+The required impact on the transcript can be changed using the -impact
+option. It accepts a (comma separated) list of impacts. You can also use
+wildcards (e.g. CDS*) or > to select multiple impacts, e.g. ">=CDSMIS"
+
+=== Criteria ===
+Not all variants are counted towards a compound hit in a sample. variants must fulfill a number of
+quality criteria (in the analysis). By default the criteria used are
+simply that a variant genotype must be called in the sample:
+{{{
+$sequenced == "v"
+}}}
+You can change these criteria using the **-criteria** option to e.g. only count high(er)
+quality variants:
+{{{
+$sequenced == "v" and $quality >= 50 and $coverage >= 20
+}}}
+
+Notice that field names can be used witout the analysis suffix, e.g.
+$sequenced instead of $sequenced-gatkh-bwa-sample1. For these the analysis
+specific fields will be used. Using the -per option, you can sselect to
+search for compound variants per sample instead of per analysis. In that
+case, the field names without the sample suffix sshould be used, e.g.
+{{{
+$sequenced-gatkh-bwa == "v"
+}}}
+This allows you to use different analyses of the same sample in the criteria, 
+e.g. only select variants called in both gatkh and strelka
+{{{
+$sequenced-gatkh-bwa == "v" and $sequenced-strelka-bwa == "v"
+}}}
+
+== Arguments ==
+; **variantfile**: tab separated or vcf file containing variants
+; **resultfile**: file to which the results will be saved
+
+== Options ==
+; -geneset geneset: A variantfile can have annotations of different gene
+sets. **geneset** is the base name of the gene annotation, e.g. when it is
+"refGene", the field "refGene_descr" will be used to extract the transcipt
+names, "refGene_gene" for the gene name and "refGene_impact" for the
+filtering.
+; -impact impacts: **impacts** defines which impact a variant must have omn the transcripts to count.
+Possible values are described in the impact section of the description. default: ">=CDSMIS"
+; -criteria variantcriteria: criteria used to select variants
+Possible values are described in the criteria section of the description. default: "$sequenced == "v""
+; -per analysis/sample: By default the compound variants are searched per analysis, meaning you will get e.g.
+compound-gatkh-bwa-sample1, compound-strelka-bwa-sample1, compound-gatkh-bwa-sample2, ...
+If set to **sample**, compounds will be search per sample.
+; -samples samples: a space-separated list of samples, only look in samples given by this parameter
+; -analyses analyses: a space-separated list of analyses, only look in analyses given by this parameter
+; -dbdir: directory with reference databases;
+        this is needed if the annotcomparfile is not annotated (e.g. a vcf file)
+
+== Category ==
+Analysis
+

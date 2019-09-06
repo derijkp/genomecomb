@@ -84,7 +84,7 @@ proc tsv_select_saggr_detokenize {tokens header neededfieldsVar missingVar} {
 			lappend missing $field
 			return -code continue
 		}
-		error $code1
+		error $code
 	}
 	return $code
 		
