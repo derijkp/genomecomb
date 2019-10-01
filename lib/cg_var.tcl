@@ -126,7 +126,7 @@ proc var_job {args} {
 		# concatenate results
 		set pos 0
 		foreach resultfile $resultfiles {
-			set list [list_subindex $todo $pos]
+			set list [ssort -natural [list_subindex $todo $pos]]
 			set deps $list
 			job $resultfile  {*}$skips -deps $deps -rmtargets $list -targets {
 				$resultfile
