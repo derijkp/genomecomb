@@ -347,6 +347,9 @@ job reg_refcoding -deps {
 } -targets {
 	extra/reg_${build}_refcoding.tsv
 } -code {
+	mkdbs_write_info $target Regions {
+		Coding regions extracted from refGene
+	} source $dep
 	set target [gzroot $target].zst
 	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
 	file rename -force $target.temp $target
@@ -358,6 +361,9 @@ job reg_exome_refGene -deps {
 } -targets {
 	extra/reg_${build}_exome_refGene.tsv
 } -code {
+	mkdbs_write_info $target Regions {
+		Exome regions (CDS, UTR and RNA) extracted from refGene
+	} source $dep
 	set target [gzroot $target].zst
 	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
 	file rename -force $target.temp $target
@@ -369,6 +375,9 @@ job reg_intcoding -deps {
 } -targets {
 	extra/reg_${build}_intcoding.tsv
 } -code {
+	mkdbs_write_info $target Regions {
+		Coding regions extracted from intGene
+	} source $dep
 	set target [gzroot $target].zst
 	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
 	file rename -force $target.temp $target
@@ -380,6 +389,9 @@ job reg_exome_intGene -deps {
 } -targets {
 	extra/reg_${build}_exome_intGene.tsv
 } -code {
+	mkdbs_write_info $target Regions {
+		Exome regions (CDS, UTR and RNA) extracted from intGene
+	} source $dep
 	set target [gzroot $target].zst
 	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
 	file rename -force $target.temp $target
