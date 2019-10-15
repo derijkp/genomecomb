@@ -1,4 +1,4 @@
-= homwes =
+= compound =
 
 == Format ==
 cg compound ?options? variantfile ?resultfile?

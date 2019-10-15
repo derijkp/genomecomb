@@ -11,7 +11,7 @@ proc cg_compound {args} {
 	set impact {>=CDSMIS}
 	set limitsamples {}
 	set resultfile {}
-	cg_options homwes args {
+	cg_options compound args {
 		-per {
 			if {$value ni "sample analysis"} {error "unknown value $value for -per, must be one of: sample analysis"}
 			set per $value

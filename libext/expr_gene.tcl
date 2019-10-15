@@ -39,8 +39,12 @@ proc tcl::mathfunc::transcripts {genes impacts descrs filter format} {
 	}
 	foreach gene $genes descr $descrs impact $impacts {
 		if {[::llength $filter] && $impact ni $filter} continue
-		if {![regexp {^[+-]([^:]+):} $descr temp transcript]} {
-			error "[lindex $args 0] has wrong format (should be a x_descr field)"
+		if {[regexp {^[+-]([^:]+):} $descr temp transcript]} {
+			# ok
+		} elseif {[regexp {^[+-]?([^:]+):} $descr temp transcript]} {
+			# alt ok
+		} else {
+			error "$descr has wrong format (should be a x_descr field)"
 		}
 		if {$gene eq "" || $format eq "t"} {
 			lappend result $transcript
