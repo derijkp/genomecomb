@@ -99,7 +99,7 @@ proc tsv_select_makecol {name code {arg @neededfield@} {prequery {}}} {
 						regexp {tcl::mathfunc::([^"]*)} \$e temp temp
 						error "unknown function \$temp"
 					}
-					default {error \$e}
+					default {return -code error -errorinfo \$::errorInfo \$e}
 				}
 			}
 			return \$e
