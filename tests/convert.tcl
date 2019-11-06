@@ -994,7 +994,18 @@ ACAAAAAAA
 }
 
 test sam2tsv {sam2tsv} {
+	exec samtools view -h data/bwa.bam > tmp/bwa.sam
+	cg sam2tsv tmp/bwa.sam tmp/bwa.tsv
+	exec diff tmp/bwa.tsv data/bwa.tsv
+} {}
+
+test sam2tsv {sam2tsv handles bam} {
 	cg sam2tsv data/bwa.bam tmp/bwa.tsv
+	exec diff tmp/bwa.tsv data/bwa.tsv
+} {}
+
+test bam2tsv {bam2tsv} {
+	cg bam2tsv data/bwa.bam tmp/bwa.tsv
 	exec diff tmp/bwa.tsv data/bwa.tsv
 } {}
 
