@@ -32,11 +32,13 @@ set exacbuild hg19
 set caddversion 1.5
 set caddurl http://krishna.gs.washington.edu/download/CADD/v$caddversion/GRCh38/whole_genome_SNVs.tsv.gz
 set caddbuild hg38
-set gnomadversion 2.1.1
+set gnomadbuild hg38
+set gnomadversion 3.0
 set gnomadbaseurl https://storage.googleapis.com/gnomad-public/release/$gnomadversion/vcf
-set gnomadexurl $gnomadbaseurl/exomes/gnomad.exomes.r$gnomadversion.sites.vcf.bgz
-set gnomadlof https://storage.googleapis.com/gnomad-public/release/2.1.1/constraint/gnomad.v2.1.1.lof_metrics.by_gene.txt.bgz
-set gnomadbuild hg19
+set gnomadexbuild hg19
+set gnomadexversion 2.1.1
+set gnomadexurl $gnomadbaseurl/exomes/gnomad.exomes.r$gnomadexversion.sites.vcf.bgz
+set gnomadlof https://storage.googleapis.com/gnomad-public/release/$gnomadexversion/constraint/gnomad.v$gnomadversion.lof_metrics.by_gene.txt.bgz
 set ccrversion 2.20180420
 set ccrurl https://s3.us-east-2.amazonaws.com/ccrs/ccrs/ccrs.autosomes.v${ccrversion}.bed.gz
 set ccrbuild hg19
@@ -636,7 +638,7 @@ job ccr -deps {
 # ----------
 job lofgnomad -deps {
 } -vars {
-	build gnomadlof gnomadbuild gnomadversion dest
+	build gnomadlof gnomadexbuild gnomadexversion dest
 } -targets {
 	reg_${build}_lofgnomad.tsv
 } -code {
@@ -645,7 +647,7 @@ job lofgnomad -deps {
 		
 		== Download info ==
 		dbname	lofgnomad
-		version	$gnomadversion
+		version	$gnomadexversion
 		citation	Lek M., Karczewski K., Exome Aggregation Consortium. Analysis of protein-coding genetic variation in 60,706 humans. Nature volume 536, pages 285-291 (2016)
 		license	cite
 		source	$gnomadlof
@@ -669,9 +671,9 @@ job lofgnomad -deps {
 	wgetfile $gnomadlof $target.temp/$tail
 	cg select -overwrite 1 -f {chromosome {begin=$start_position} {end=$end_position} pLI exac_pLI gene *} $target.temp/$tail $target.temp/temp.tsv
 	cg select -overwrite 1 -s - $target.temp/temp.tsv $target.temp/temp2.tsv
-	if {$build ne $gnomadbuild} {
+	if {$build ne $gnomadexbuild} {
 		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp/temp3.tsv
-		liftover_refdb $target.temp/temp3.tsv $target.zst $dest $gnomadbuild $build
+		liftover_refdb $target.temp/temp3.tsv $target.zst $dest $gnomadexbuild $build
 	} else {
 		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp2.zst
 		file rename -force $target.temp2.zst $target.zst
@@ -729,14 +731,7 @@ proc gnomadfields {file} {
 	catchchildkilled_exec zcat $file | head -10000 | cg vcf2tsv -split 1 > $tempfile
 	set header [cg select -header $tempfile]
 	set fields {chromosome begin end type ref alt}
-	lappend fields {max_freqp=if(isnum($AF_popmax),format("%.3f",100.0*$AF_popmax),"-")}
 	# homfreqp is percentage of sindividuals that are homozygous -> so should divide count by (AN_popmax/2), do this by *200.0 instead of *100.0
-	lappend fields {max_homfreqp=if(isnum($nhomalt_popmax),format("%.3f",200.0*$nhomalt_popmax/$AN_popmax),"-")}
-	lappend fields {controls_max_freqp=if(isnum($controls_AF_popmax),format("%.3f",100.0*$controls_AF_popmax),"-")}
-	lappend fields {controls_max_homfreqp=if(isnum($controls_nhomalt_popmax),format("%.3f",200.0*$controls_nhomalt_popmax/$controls_AN_popmax),"-")}
-	lappend fields {non_neuro_max_freqp=if(isnum($non_neuro_AF_popmax),format("%.3f",100.0*$non_neuro_AF_popmax),"-")}
-	lappend fields {non_neuro_max_homfreqp=if(isnum($non_neuro_nhomalt_popmax),format("%.3f",200.0*$non_neuro_nhomalt_popmax/$non_neuro_AN_popmax),"-")}
-	lappend nh max_freqp
 	foreach population {
 		afr amr asj eas fin nfe sas oth nfe_nwe nfe_seu nfe_est nfe_bgr nfe_swe
 		male female
@@ -778,6 +773,9 @@ proc gnomadfields {file} {
 			lappend fields [subst {non_neuro_faf99_${population}_freqp=if(isnum(\$non_neuro_faf99_${population}), format(\"%.3f\",(100.0 * \$non_neuro_faf99_${population})),"-")}]
 		}
 	}
+	set maxpops {afr amr eas nfe sas}
+	lappend fields "max_freqp=lmaxd(\$[join $maxpops {_freqp,$}]_freqp,\"-\")"
+	lappend fields "max_homfreqp=lmaxd(\$[join $maxpops {_homfreqp,$}]_homfreqp,\"-\")"
 	return $fields
 }
 
@@ -806,7 +804,7 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 		1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X
 	} {
 		puts chr$chromosome
-		set vcf gnomad.genomes.r$gnomadversion.sites.$chromosome.vcf.bgz
+		set vcf gnomad.genomes.r$gnomadversion.sites.chr$chromosome.vcf.bgz
 		set target $tempdir/result$chromosome.tsv.zst
 		lappend deps $target
 		job var_${build}_gnomad-$chromosome -targets {
@@ -844,18 +842,18 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 }
 
 set target var_${build}_gnomadex.tsv.zst
-if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}_gnomadex.tsv.zst]} {
+if {$gnomadexbuild ne $build && [file exists $dest/$gnomadexbuild/var_${gnomadexbuild}_gnomadex.tsv.zst]} {
 	job var_${build}_gnomad_exomes -deps {
-		$dest/$gnomadbuild/var_${gnomadbuild}_gnomadex.tsv.zst
+		$dest/$gnomadexbuild/var_${gnomadexbuild}_gnomadex.tsv.zst
 	} -targets {
 		$target
 		var_${build}_gnomadex.tsv.opt
-	} -vars {gnomadexurl tempdir dest db build gnomadbuild} -code {
+	} -vars {gnomadexurl tempdir dest db build gnomadexbuild} -code {
 		set tempdir $target.temp
 		file mkdir $tempdir
 		file_write [gzroot $target].opt "fields\t{max_freqp nfe_freqp}\n"
 		mklink $dep $tempdir/result.tsv.temp.zst
-		liftover_refdb $tempdir/result.tsv.temp.zst $target $dest $gnomadbuild $build 0
+		liftover_refdb $tempdir/result.tsv.temp.zst $target $dest $gnomadexbuild $build 0
 		cg zindex $target
 		cg index $target
 		file delete -force $tempdir
@@ -869,7 +867,7 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 	job var_${build}_gnomad_exomes -targets {
 		$target
 		var_${build}_gnomadex.tsv.opt
-	} -vars {gnomadexurl tempdir dest db build gnomadbuild} -code {
+	} -vars {gnomadexurl tempdir dest db build gnomadexbuild} -code {
 		file_write var_${build}_gnomadex.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
 		set tempdir $target.temp
 		file mkdir $tempdir
@@ -1002,8 +1000,74 @@ if {[file exists $defaultdest/downloads/geneHancerClusteredInteractions_${build}
 	file delete $target.temp $target.temp2
 }
 
+# exome target regions 
 # There does not seem to be an easily accessible source for exome target regions on the net
-# copy the ones collected in $defaultdest/downloads to extra, or lift if needed
+# here we collect the ones we can (others will copied from collected downloads after this)
+# not done (same as truseq):	exome_truseqrapid_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/downloads/productfiles/truseq/truseq-exome-targeted-regions-manifest-v1-2-bed.zip
+foreach {build targetname url file} {
+	hg19 targetseq http://tools.invitrogen.com/content/sfs/manuals/TargetSeq_exome_named_targets_hg19.bed {}
+	hg19 nextera https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions.bed {}
+	hg19 nexteraexp https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_expandedexome_targetedregions.bed {}
+	hg19 nextera_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions_v1.2.bed {}
+	hg19 truseq_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/downloads/productfiles/truseq/truseq-rapid-exome-targeted-regions-manifest-v1-2-bed.zip {}
+	hg19 SeqCap_EZ_v2 https://sftp.rch.cm/diagnostics/sequencing/nimblegen_annotations/ez_exome_v2/SeqCapEZ_Exome_v2.0_Design_Annotation_files.zip Design_Annotation_files/Target_Regions/SeqCap_EZ_Exome_v2.bed
+	hg19 SeqCap_EZ_v3 https://sftp.rch.cm/diagnostics/sequencing/literature/nimblegen/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip SeqCapEZ_Exome_v3.0_Design_Annotation_files/SeqCap_EZ_Exome_v3_hg19_capture_targets.bed
+	hg19 VCRome_V2_1 https://sftp.rch.cm/diagnostics/sequencing/nimblegen_annotations/ez_hgsc_vcrome/VCRome_2.1_design_files.zip VCRome_2_1_hg19_capture_targets.bed
+	hg38 twistcore https://twistbioscience.com/sites/default/files/resources/2019-06/Twist_Exome_Target_hg38.bed
+	hg38 twistrefseq https://twistbioscience.com/sites/default/files/resources/2019-09/Twist_Exome_RefSeq_targets_hg38.bed
+} {
+	job reg_exome_$targetname -targets {
+		extra/reg_hg19_exome_$targetname.tsv
+	} -vars {targetname url file dest build} -code {
+		cd ${dest}/${build}
+		set fulltarget [file_absolute $target]
+		file delete -force $fulltarget.temp
+		file mkdir $fulltarget.temp
+		cd $fulltarget.temp
+		if {[file extension $url] eq ".zip"} {
+			wgetfile $url temp.zip
+			exec unzip temp.zip
+			file delete temp.zip
+			if {$file eq ""} {
+				set file [lindex [glob *] 0]
+			}
+			set f [open $file]
+			set o [open temp.bed w]
+			set line [gets $f]
+			puts $o $line
+			while {[gets $f line] != -1} {
+				if {![isint [lindex $line 1]]} break
+				puts $o $line
+			}
+			close $o
+			close $f
+		} else {
+			wgetfile $url temp.bed
+		}
+		cg bed2tsv temp.bed u$targetname.tsv
+		cg select -s {chromosome begin end} u$targetname.tsv s$targetname.tsv
+		cg regcollapse -o reg_hg19_exome_$targetname.tsv s$targetname.tsv
+		compress reg_hg19_exome_$targetname.tsv reg_hg19_exome_$targetname.tsv.zst
+		file delete temp.bed s$targetname.tsv u$targetname.tsv
+		file delete -force $fulltarget.temp
+		if {$targetname eq "SeqCap_EZ_v3"} {
+			mklink $fulltarget.zst [file dit $fulltarget]/reg_hg19_exome_seqcapv3.tsv.zst
+		}
+	}
+}
+
+cd ${dest}/${build}
+job reg_exome_twistfull -deps {
+	extra/reg_${build}_exome_twistcore.tsv extra/reg_hg19_exome_twistrefseq.tsv
+} -targets {
+	extra/reg_${build}_exome_twistfull.tsv
+} -vars {targetname url file dest build} -code {
+	set fulltarget [file_absolute $target].zst
+	exec cg cat {*}$dep | cg select -s - | cg regcollapse {*}[compresspipe $fulltarget] > $fulltarget.temp
+	file rename $fulltarget.temp $fulltarget
+}
+
+# copy exome target regions collected in $defaultdest/downloads to extra, or lift if needed
 foreach file [glob $defaultdest/downloads/reg_*_exome_*.zst] {
 	puts "Transfering $file"
 	set tail [file tail $file]

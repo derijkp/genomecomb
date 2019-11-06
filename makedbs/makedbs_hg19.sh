@@ -618,57 +618,6 @@ foreach file [glob -nocomplain ../${build}-local/*] {
 }
 
 # extra dir
-# exome target regions 
-# not done (same as truseq):	exome_truseqrapid_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/downloads/productfiles/truseq/truseq-exome-targeted-regions-manifest-v1-2-bed.zip
-foreach {targetname url file} {
-	targetseq http://tools.invitrogen.com/content/sfs/manuals/TargetSeq_exome_named_targets_hg19.bed {}
-	nextera https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions.bed {}
-	nexteraexp https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_expandedexome_targetedregions.bed {}
-	nextera_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions_v1.2.bed {}
-	truseq_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/downloads/productfiles/truseq/truseq-rapid-exome-targeted-regions-manifest-v1-2-bed.zip {}
-	SeqCap_EZ_v2 https://sftp.rch.cm/diagnostics/sequencing/nimblegen_annotations/ez_exome_v2/SeqCapEZ_Exome_v2.0_Design_Annotation_files.zip Design_Annotation_files/Target_Regions/SeqCap_EZ_Exome_v2.bed
-	SeqCap_EZ_v3 https://sftp.rch.cm/diagnostics/sequencing/literature/nimblegen/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip SeqCapEZ_Exome_v3.0_Design_Annotation_files/SeqCap_EZ_Exome_v3_hg19_capture_targets.bed
-	VCRome_V2_1 https://sftp.rch.cm/diagnostics/sequencing/nimblegen_annotations/ez_hgsc_vcrome/VCRome_2.1_design_files.zip VCRome_2_1_hg19_capture_targets.bed
-} {
-	job reg_exome_$targetname -targets {
-		extra/reg_hg19_exome_$targetname.tsv
-	} -vars {targetname url file dest build} -code {
-		cd ${dest}/${build}
-		set fulltarget [file_absolute $target]
-		file delete -force $fulltarget.temp
-		file mkdir $fulltarget.temp
-		cd $fulltarget.temp
-		if {[file extension $url] eq ".zip"} {
-			wgetfile $url temp.zip
-			exec unzip temp.zip
-			file delete temp.zip
-			if {$file eq ""} {
-				set file [lindex [glob *] 0]
-			}
-			set f [open $file]
-			set o [open temp.bed w]
-			set line [gets $f]
-			puts $o $line
-			while {[gets $f line] != -1} {
-				if {![isint [lindex $line 1]]} break
-				puts $o $line
-			}
-			close $o
-			close $f
-		} else {
-			wgetfile $url temp.bed
-		}
-		cg bed2tsv temp.bed u$targetname.tsv
-		cg select -s {chromosome begin end} u$targetname.tsv s$targetname.tsv
-		cg regcollapse -o reg_hg19_exome_$targetname.tsv s$targetname.tsv
-		compress reg_hg19_exome_$targetname.tsv reg_hg19_exome_$targetname.tsv.zst
-		file delete temp.bed s$targetname.tsv u$targetname.tsv
-		file delete -force $fulltarget.temp
-		if {$targetname eq "SeqCap_EZ_v3"} {
-			mklink $fulltarget.zst [file dit $fulltarget]/reg_hg19_exome_seqcapv3.tsv.zst
-		}
-	}
-}
 cd ${dest}/${build}
 
 # dbNSFP
@@ -1110,8 +1059,78 @@ if {[file exists $defaultdest/downloads/geneHancerClusteredInteractions_${build}
 	file delete $target.temp $target.temp2
 }
 
+# exome target regions 
 # There does not seem to be an easily accessible source for exome target regions on the net
-# copy the ones collected in $defaultdest/downloads to extra, or lift if needed
+# here we collect the ones we can (others will copied from collected downloads after this)
+# not done (same as truseq):	exome_truseqrapid_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/downloads/productfiles/truseq/truseq-exome-targeted-regions-manifest-v1-2-bed.zip
+foreach {targetname url file} {
+	targetseq http://tools.invitrogen.com/content/sfs/manuals/TargetSeq_exome_named_targets_hg19.bed {}
+	nextera https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions.bed {}
+	nexteraexp https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_expandedexome_targetedregions.bed {}
+	nextera_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/samplepreps_nextera/nexterarapidcapture/nexterarapidcapture_exome_targetedregions_v1.2.bed {}
+	truseq_v1_2 https://support.illumina.com/content/dam/illumina-support/documents/downloads/productfiles/truseq/truseq-rapid-exome-targeted-regions-manifest-v1-2-bed.zip {}
+	SeqCap_EZ_v2 https://sftp.rch.cm/diagnostics/sequencing/nimblegen_annotations/ez_exome_v2/SeqCapEZ_Exome_v2.0_Design_Annotation_files.zip Design_Annotation_files/Target_Regions/SeqCap_EZ_Exome_v2.bed
+	SeqCap_EZ_v3 https://sftp.rch.cm/diagnostics/sequencing/literature/nimblegen/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip SeqCapEZ_Exome_v3.0_Design_Annotation_files/SeqCap_EZ_Exome_v3_hg19_capture_targets.bed
+	VCRome_V2_1 https://sftp.rch.cm/diagnostics/sequencing/nimblegen_annotations/ez_hgsc_vcrome/VCRome_2.1_design_files.zip VCRome_2_1_hg19_capture_targets.bed
+	twistcore https://twistbioscience.com/sites/default/files/resources/2018-09/Twist_Exome_Target_hg19.bed {}
+	twistrefseq https://twistbioscience.com/sites/default/files/resources/2019-09/Twist_Exome_RefSeq_targets_hg19_0.bed {}
+
+} {
+	job reg_exome_$targetname -targets {
+		extra/reg_hg19_exome_$targetname.tsv
+	} -vars {targetname url file dest build} -code {
+		cd ${dest}/${build}
+		set fulltarget [file_absolute $target]
+		file delete -force $fulltarget.temp
+		file mkdir $fulltarget.temp
+		cd $fulltarget.temp
+		if {[file extension $url] eq ".zip"} {
+			wgetfile $url temp.zip
+			exec unzip temp.zip
+			file delete temp.zip
+			if {$file eq ""} {
+				set file [lindex [glob *] 0]
+			}
+			set f [open $file]
+			set o [open temp.bed w]
+			set line [gets $f]
+			puts $o $line
+			while {[gets $f line] != -1} {
+				if {![isint [lindex $line 1]]} break
+				puts $o $line
+			}
+			close $o
+			close $f
+		} else {
+			wgetfile $url temp.bed
+		}
+		cg bed2tsv temp.bed u$targetname.tsv
+		cg select -s {chromosome begin end} u$targetname.tsv s$targetname.tsv
+		cg regcollapse -o reg_hg19_exome_$targetname.tsv s$targetname.tsv
+		compress reg_hg19_exome_$targetname.tsv reg_hg19_exome_$targetname.tsv.zst
+		file delete temp.bed s$targetname.tsv u$targetname.tsv
+		file rename reg_hg19_exome_$targetname.tsv.zst $fulltarget.zst
+		cd ${dest}/${build}
+		file delete -force $fulltarget.temp
+		if {$targetname eq "SeqCap_EZ_v3"} {
+			mklink $fulltarget.zst [file dit $fulltarget]/reg_hg19_exome_seqcapv3.tsv.zst
+		}
+	}
+}
+
+# combine twist core and refseq
+cd ${dest}/${build}
+job reg_exome_twistfull -deps {
+	extra/reg_${build}_exome_twistcore.tsv extra/reg_hg19_exome_twistrefseq.tsv
+} -targets {
+	extra/reg_${build}_exome_twistfull.tsv
+} -vars {targetname url file dest build} -code {
+	set fulltarget [file_absolute $target].zst
+	exec cg cat {*}$dep | cg select -s - | cg regcollapse {*}[compresspipe $fulltarget] > $fulltarget.temp
+	file rename $fulltarget.temp $fulltarget
+}
+
+# copy exome target regions collected in $defaultdest/downloads to extra, or lift if needed
 foreach file [glob $defaultdest/downloads/reg_*_exome_*.zst] {
 	puts "Transfering $file"
 	set tail [file tail $file]
