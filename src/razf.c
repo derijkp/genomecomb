@@ -287,7 +287,7 @@ int razf_write(RAZF* rz, const void *data, int size){
 #define COMMENT      0x10 /* bit 4 set: file comment present */
 #define RESERVED     0xE0 /* bits 5..7: reserved */
 
-static int _read_gz_header(unsigned char *data, int size, int *extra_off, int *extra_len){
+static int _read_gz_header(unsigned char *data, unsigned int size, int *extra_off, int *extra_len){
 	int method, flags, n, len;
 	if(size < 2) return 0;
 	if(data[0] != 0x1f || data[1] != 0x8b) return 0;

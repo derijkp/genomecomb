@@ -21,7 +21,7 @@ FILE *openreg(char **regions, char *prefix, char *postfix, int printheader, DStr
 	FILE *o = NULL;
 	DString *buffer = DStringNew();
 	char *region = *regions;
-	int size = 0, step = 1;
+	unsigned int size = 0, step = 1;
 	if (*region == '\0') return(NULL);
 	*chromosome2 = DStringNew();
 	*start2 = 0 ; *end2 = INT_MAX;

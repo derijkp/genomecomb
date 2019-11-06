@@ -46,7 +46,8 @@ genomecomb_tsv_select_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int arg
 	DStringArray *array = NULL;
 	DString *line = NULL;
 	ssize_t read;
-	int maxtab=0,objc,show,i,error,verbose = 0,sampling=0;
+	unsigned int maxtab=0;
+	int objc,show,i,error,verbose = 0,sampling=0;
 	unsigned int line_nr=0;
 	uint64_t totalread = 0,next = 4294967296LL;
 	if ((argc < 4)||(argc > 6)) {
@@ -228,7 +229,8 @@ int
 genomecomb_nat_compare_ObjCmd (ClientData clientData,	Tcl_Interp *interp, int argc, Tcl_Obj *CONST argv[])
 {
 	char *loc1=NULL,*loc2;
-	int loc1len,loc2len,result;
+	int loc1len,loc2len;
+	int result;
 	if ((argc < 3)||(argc > 3)) {
 		Tcl_WrongNumArgs(interp, 1, argv, "string1 string2");
 		return TCL_ERROR;

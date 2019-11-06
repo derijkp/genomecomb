@@ -583,7 +583,7 @@ void bcol_close(BCol *bcol) {
 	free(bcol);
 }
 
-int read_unlocked(FILE *f,unsigned char *buffer,int size) {
+int read_unlocked(FILE *f,unsigned char *buffer,unsigned int size) {
 	int count = size,c;
 	while (count--) {
 		c = getc_unlocked(f);
