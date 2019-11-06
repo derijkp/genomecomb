@@ -99,7 +99,9 @@ proc compress_template {file destfile method cmd {index 1} {keep 1}} {
 }
 
 proc wgzopen {file {compressionlevel -1} {threads {}}} {
-	if {![gziscompressed $file]} {
+	if {$file eq "-"} {
+		return stdout
+	} elseif {![gziscompressed $file]} {
 		return [open $file w]
 	} else {
 		return [open "[compresspipe $file $compressionlevel $threads] > $file" w]

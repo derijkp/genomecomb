@@ -19,6 +19,11 @@ proc dbdir {args} {
 		error "dbdir $dbdir does not exist, use options e.g. (-dbdir) or environment variable GENOMECOMB_DBDIR to change"
 	}
 	set dbdir [file_absolute $dbdir]
+	# set REF_PATH for cram files
+	if {![info exists ::env(REF_PATH)]} {
+		set refseq [lindex [gzfiles $dbdir/genome_*.ifas] 0]
+		set ::env(REF_PATH) $refseq.forcram
+	}
 	return $dbdir
 }
 
@@ -43,4 +48,11 @@ proc refseq {{refseq {}} {dbdir {}}} {
 		error "refseq not found ($pattern)"
 	}
 	return [file_absolute $refseq]
+}
+
+proc refcram {{dbdir {}}} {
+	if {[info exists ::env(REF_PATH)]} {return $::env(REF_PATH)}
+	set dbdir [dbdir $dbdir]
+	set refseq [lindex [gzfiles $dbdir/genome_*.ifas] 0]
+	set ::env(REF_PATH) $refseq.forcram
 }

@@ -1,0 +1,20 @@
+= Bam2sam =
+
+== Format ==
+cg bam2sam ?options? bamfile ?samfile?
+
+== Summary ==
+convert bam (or cram) to sam, sorting chromosomes into natural sort order.
+
+== Description ==
+
+== Arguments ==
+; bamfile: bam file to analyse
+; samfile: resultfile, if not given or -, send results to stdout
+
+== Options ==
+; -sortchr 0/1: default 1 sorts chromosomes in output to natural sort (used in most genomecomb tools)
+if 0, the sort does not happen, and bam2sam simply calls samtools view to do the conversion
+
+== Category ==
+Format Conversion
