@@ -1043,7 +1043,22 @@ test sam2tsv {sam2tsv cases} {
 	exec diff tmp/test.tsv tmp/expected.tsv
 } {}
 
-test sam2tsv {tsv2sam cases} {
+test tsv2sam {tsv2sam} {
+	exec samtools view -h data/bwa.bam > tmp/expected.sam
+	cg sam2tsv tmp/expected.sam tmp/bwa.tsv
+	cg tsv2sam tmp/bwa.tsv tmp/bwa.sam
+	exec diff tmp/bwa.sam tmp/expected.sam
+} {}
+
+test tsv2bam {tsv2bam} {
+	exec samtools view -h data/bwa.bam > tmp/expected.sam
+	cg sam2tsv tmp/expected.sam tmp/bwa.tsv
+	cg tsv2bam tmp/bwa.tsv tmp/bwa.bam
+	exec samtools view -h tmp/bwa.bam > tmp/bwa.sam
+	exec diff tmp/bwa.sam tmp/expected.sam
+} {}
+
+test tsv2sam {tsv2sam cases} {
 	file_write tmp/test.tsv [deindent {
 		#@HD	VN:1.3	SO:coordinate
 		#@SQ	SN:chr1	LN:249250621
@@ -1075,6 +1090,9 @@ test sam2tsv {tsv2sam cases} {
 	}]\n
 	cg tsv2sam tmp/test.tsv tmp/test.sam
 	exec diff  tmp/test.sam tmp/expected.sam
+	cg tsv2sam tmp/test.tsv tmp/test.bam
+	exec samtools view -h tmp/test.bam > tmp/test2.sam
+	exec diff tmp/test2.sam tmp/expected.sam
 } {}
 
 testsummarize
