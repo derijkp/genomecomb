@@ -17,7 +17,7 @@ proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} 
 				\$genoqual >= $mingenoqual && \$coverage >= $mincoverage && \$type ne "ins"
 			}] -f {chromosome begin end} -s - \
 			| cg regjoin {*}[compresspipe $target] > $temp
-		file rename $temp $target
+		file rename -force $temp $target
 		cg_zindex $target
 	}
 }
