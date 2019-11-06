@@ -75,6 +75,52 @@ proc chrindexseek {file f chr} {
 	}
 }
 
+proc chrgzopen {file chr chrfield headerVar} {
+	upvar $headerVar header
+	set f [gzopen $file]
+	set header [tsv_open $f]
+	set chrpos [lsearch $header $chrfield]
+	if {$chrpos == -1} {
+		return $f
+	}
+	set root [gzroot $file]
+	file mkdir $root.index
+	set indexfile [indexdir_file $file chrindex ok]
+	if {!$ok} {
+		set compressed [gziscompressed $file]
+		if {$compressed} {
+			gzclose $f
+			set tempfile [tempfile]
+			cg zcat $file > $tempfile
+			set f [gzopen $tempfile]
+		}
+		set prevchr {}
+		set list {}
+		set o [open $indexfile w]
+		while {![eof $f]} {
+			set pos [tell $f]
+			set line [gets $f]
+			set chr [chr_clip [lindex $line $chrpos]]
+			if {$chr ne $prevchr} {
+				puts $o $chr\t$pos
+				set prevchr $chr
+			}
+		}
+		gzclose $f
+		close $o
+	}
+	set trfchrpos [split [string trim [file_read $indexfile]] \n\t]
+	set chr [chr_clip $chr]
+	if {[catch {set fpos [dict get $trfchrpos $chr]}]} {
+		set f [gzopen $file]
+		set header [tsv_open $f]
+		return $f
+	} else {
+		set f [gzopen $file $fpos]
+		return $f
+	}
+}
+
 proc ifcatch {command varName args} {
 	upvar $varName result
 	set error [uplevel [list catch $command $varName]]

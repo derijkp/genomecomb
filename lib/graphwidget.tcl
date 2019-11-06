@@ -61,6 +61,8 @@ graphwidget method init {args} {
 	pack $object.b.print -side left
 	button $object.b.check -text "Check" -command [list $object checkfile]
 	pack $object.b.check -side left
+	button $object.b.zoomout -text "Zoom out" -command [list $object zoomout]
+	pack $object.b.zoomout -side left
 	button $object.b.cmd -text "Cmd" -command {Classy::cmd}
 	pack $object.b.cmd -side left
 	Classy::Entry $object.b.xrange -width 20 -label xrange -orient horizontal \
@@ -174,7 +176,7 @@ graphwidget method gradientstyle {basecolor} {
 	return $style
 }
 
-graphwidget method defsettings {file} {
+graphwidget method defsettings {file args} {
 	global graphd
 	private $object region
 	if {![file exists $file]} {error "$file does not exist"}
@@ -186,46 +188,51 @@ graphwidget method defsettings {file} {
 		set line [split [gets $f] \t]
 		catch {gzclose $f}
 	}
-	set poss [tsv_basicfields $header 6 0]
 	set graphd(file) [file_absolute $file]
 	set graphd(header) $header
 	lappend graphd(header) {} {} {}
 	set graphd(do) 0
 	set graphd(nan) -50
-	foreach {graphd(xfield) graphd(yfield) graphd(wfield)} $header break
-	set num 0
-	foreach field {chrfield xfield yfield typefield reffield altfield} {
-		set $field [lindex $header [lindex $poss $num]]
-		incr num
-		set graphd($field) [get $field]
-	}
-	if {$chrfield ne ""} {
-		if {![info exists data(chr)]} {
-			set data(chr) [lindex $line [lindex $poss 0]]
-		}
-		set graphd(chr) $data(chr)
+	set graphd(line) 0
+	set graphd(yshift) 0
+	array set graphd $args
+	set poss [tsv_basicfields $header 3 0]
+	set wfield ""
+	foreach {chrfield xfield x2field} [list_sub $header $poss] break
+	set todoheader [list_sub $header -exclude $poss]
+	if {$xfield ne "" && $x2field ne ""} {
+		set graphd(x2field) $x2field
 	} else {
-		if {![regexp -- {-(chr[^-]+)-} [file tail $file] temp graphd(chr)]} {
-			if {![info exists data(chr)]} {
-				set data(chr) [lindex $line [lindex $poss 0]]
-			}
-			set graphd(chr) $data(chr)
-		}
+		set graphd(x2field) ""
 	}
-	set graphd(region) 0
+	set pos [lindex [list_remove [list_cor $todoheader {y score value v}] -1] 0]
+	if {$pos eq ""} {
+		if {$xfield eq ""} {
+			set xfield [list_pop todoheader 0]
+		}
+		set pos 0
+	}
+	if {$x2field eq ""} {
+		set yfield [list_pop todoheader 0]
+	}
+	if {[get graphd(chr) ""] ne ""} {
+		# already have chr, do nothing
+	} elseif {$chrfield ne ""} {
+		set chrpos [lsearch $header $chrfield]
+		set graphd(chr) [lindex $line $chrpos]
+	} else {
+		set graphd(chr) ""
+		regexp -- {-(chr[^-]+)-} [file tail $file] temp graphd(chr)
+	}
 	if {$xfield eq "end1" && [lsearch $header dist] != -1} {
-		set graphd(yfield) dist
-		set graphd(wfield) "weight1"
+		set yfield dist
+		set wfield "weight1"
 	} elseif {[lsearch $header quality] != -1} {
-		set graphd(yfield) quality
+		set yfield quality
 	} elseif {[lsearch $header coverage] != -1} {
-		set graphd(yfield) coverage
-	} else {
-		set graphd(region) 1
+		set yfield coverage
 	}
-	if {$graphd(region) == 1} {
-		set graphd(wfield) ""
-	}
+	foreach {graphd(chrfield) graphd(xfield) graphd(yfield) graphd(wfield)} [list $chrfield $xfield $yfield $wfield] break
 }
 
 graphwidget method opendialog {{file {}}} {
@@ -234,10 +241,12 @@ graphwidget method opendialog {{file {}}} {
 	$object defsettings $file
 	Classy::Dialog $object.open -title "Open file $file"
 	$object.open option select "X" graphd(xfield) graphd(header)
+	$object.open option select "X2" graphd(x2field) graphd(header)
 	$object.open option select "Y" graphd(yfield) graphd(header)
 	$object.open option select "Weight" graphd(wfield) graphd(header)
-	$object.open option check "Regions" graphd(region) ""
-	$object.open option entry "Nan" graphd(nan)
+	$object.open option check "Line" graphd(line) ""
+	$object.open option numentry "Nan" graphd(nan)
+	$object.open option numentry "Y shift" graphd(yshift)
 	$object.open option entry "Chromosome" graphd(chr)
 	$object.open add do Do [list $object open $file] default
 }
@@ -255,24 +264,24 @@ graphwidget method open {file} {
 	if {![file exists $file]} {error "$file does not exist"}
 	puts "Loading $file"
 	set vnum [incr data(vnum)]
-	foreach field {x y w i} {
+	foreach field {x y w i x2} {
 		vector create ::$object.$vnum.$field
 	}
-	set elements [list $graphd(xfield) $graphd(yfield) $graphd(wfield)]
 	set indexname [gzroot $file].$graphd(xfield)_index
 	set name [file root [file tail [gzroot $file]]]
 	if {[file extension $file] eq ".bcol"} {
 		set bcol [bcol_open $file]
 		set data($name,bcol) $bcol
 		set header {pos value}
-		set graphd(region) 0
+		set graphd(x2field) ""
+		set graphd(line) 0
 	} else {
 		unset -nocomplain data($name,bcol)
 		set f [gzopen $file]
 		set header [tsv_open $f]
 		gzclose $f
 	}
-	set showregion $graphd(region)
+	set elements [list $graphd(xfield) $graphd(yfield) $graphd(wfield) $graphd(x2field)]
 	set poss {}
 	foreach el $elements {
 		lappend poss [lsearch $header $el]
@@ -290,11 +299,14 @@ graphwidget method open {file} {
 	set data($name,file) [file_absolute $file]
 	set data($name,header) $header
 	set data($name,elements) $elements
-	set data($name,region) $graphd(region)
+	set data($name,x2field) $graphd(x2field)
+	set data($name,yshift) $graphd(yshift)
 	set data($name,nan) $graphd(nan)
 	set data($name,poss) $poss
 	# create index
-	if {$graphd(region)} {
+	set showregion 0
+	if {$graphd(x2field) ne ""} {
+		set showregion 1
 		$object loadregtype $file $name
 	} elseif {[info exists data($name,bcol)]} {
 		set data($name,xmin) [bcol_first $bcol]
@@ -341,8 +353,13 @@ graphwidget method open {file} {
 	set style [$object gradientstyle $basecolor]
 	set color [get colors(${basecolor}0) $basecolor]
 	$object.g element configure $name -linewidth 0 -fill $color -outlinewidth 1 -pixels 1 -symbol circle
-	$object.g element configure $name -linewidth 0 -outline $color -outlinewidth 1 -pixels 2 -symbol plus \
-		-styles $style
+	if {$graphd(line)} {
+		$object.g element configure $name -linewidth 1 -color $color -outline $color -outlinewidth 1 -pixels 2 -symbol {} \
+			-styles $style
+	} else {
+		$object.g element configure $name -linewidth 0 -color $color -outline $color -outlinewidth 1 -pixels 2 -symbol plus \
+			-styles $style
+	}
 	if {$showregion} {
 		$object.g element configure $name -linewidth 10 -trace decreasing
 	}
@@ -443,7 +460,7 @@ graphwidget method redraw {args} {
 	$w axis configure y -min $region(ymin) -max $region(ymax)
 	if {[inlist $args force]} {
 		foreach name $data(entries) {
-			if {$data($name,region)} continue
+			if {$data($name,x2field) ne ""} continue
 			set data($name,lstart) 0
 			set data($name,lend) 0
 		}
@@ -568,15 +585,15 @@ proc gradient {rgb factor {window .}} {
 	return $rgb
 }
 
-graphwidget method shift {name {shift 1}} {
+graphwidget method shift {name {yshift 1}} {
 	private $object data
-	if {![info exists data($name,shift)]} {
-		set data($name,shift) 0
+	if {![info exists data($name,yshift)]} {
+		set data($name,yshift) 0
 	}
-	set size [expr {$shift-$data($name,shift)}]
+	set size [expr {$yshift-$data($name,yshift)}]
 	set yv [$object.g element cget $name -ydata]
 	$yv expr {$yv + $size}
-	set data($name,shift) $shift
+	set data($name,yshift) $yshift
 }
 
 graphwidget method reconf {args} {
@@ -598,6 +615,7 @@ graphwidget method confcurrent {args} {
 	set conf(linewidth) [$object.g element cget $name -linewidth]
 	set conf(color) $data($name,color)
 	set conf(fields) $data($name,header)
+	set conf(yshift) $data($name,yshift)
 	lappend conf(fields) ""
 	set conf(Y) [lindex $data($name,elements) 1]
 	set conf(W) [lindex $data($name,elements) 2]
@@ -648,7 +666,7 @@ graphwidget method changefields {what args} {
 graphwidget method delelement {name} {
 	private $object data
 	set vnum $data($name,vnum)
-	foreach field {x y w region i} {
+	foreach field {x y w x2 region i} {
 		catch {vector destroy ::$object.$vnum.$field}
 	}
 	$object.g element	delete $name
@@ -677,7 +695,7 @@ graphwidget method loadregion {name} {
 	set poss $data($name,poss)
 	set index ::$object.$vnum.i
 	$object.progress configure -message "Loading $name"
-	if {$data($name,region)} {
+	if {$data($name,x2field) ne ""} {
 #		while {![eof $f]} {
 #			set line [split [gets $f] \t]
 #			if {![llength $line]} continue
@@ -797,9 +815,9 @@ graphwidget method loadregion {name} {
 	}
 	set data($name,lstart) $start
 	set data($name,lend) $end
-	if {[get data($name,shift) 0] != 0} {
+	if {[get data($name,yshift) 0] != 0} {
 		set yv [$object.g element cget $name -ydata]
-		$yv expr {$yv + $data($name,shift)}
+		$yv expr {$yv + $data($name,yshift)}
 	}
 	puts "Finished loading $name"
 	$object.progress configure -message "Finished loading $name"
@@ -812,10 +830,7 @@ graphwidget method loadregtype {file name} {
 	set poss $data($name,poss)
 	set chr [chr_clip $data($name,chr)]
 	set chrpos [lsearch $data($name,header) $data($name,chrfield)]
-	set f [gzopen $file]
-	set header [tsv_open $f]
-	chrindexseek $file $f $chr
-	list_pop poss
+	set f [chrgzopen $file $chr $data($name,chrfield) header]
 	lappend poss $chrpos
 	set index ::$object.$vnum.i
 	::$object.$vnum.x set {}
@@ -825,15 +840,16 @@ graphwidget method loadregtype {file name} {
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} continue
-		foreach {begin endw cchr} [list_sub $line $poss] break
+		foreach {begin y weight endw cchr} [list_sub $line $poss] break
+		if {![isdouble $y]} {set y 1}
 		set cchr [chr_clip $cchr]
 		if {$cchr ne $chr} break
 		if {$begin < $xmin} {set xmin $begin}
 		if {$endw > $xmax} {set xmax $endw}
 		::$object.$vnum.x append $endw
 		::$object.$vnum.x append $begin
-		::$object.$vnum.y append 1
-		::$object.$vnum.y append 1
+		::$object.$vnum.y append $y
+		::$object.$vnum.y append $y
 	}
 	gzclose $f
 	update
@@ -857,7 +873,7 @@ graphwidget method reload {} {
 		foreach name $data(entries) {
 			set vnum $data($name,vnum)
 			set index ::$object.$vnum.y
-			if {$data($name,region)} continue
+			if {$data($name,x2field) ne ""} continue
 			$object loadregion $name
 			if {[get region(cancel) 0]} {
 				puts "Loading canceled"
@@ -1137,5 +1153,18 @@ graphwidget method point {x y} {
 	lappend points $line
 	$ptable.editor configure -variable [privatevar $object points]
 	$ptable.editor autosize
+}
+
+graphwidget method zoomout {args} {
+	private $object data region
+	set w $object.g
+	set ymin [::$object.ends.y index 0]
+	set ymax [::$object.ends.y index 1]
+	$w axis configure y -min $ymin -max $ymax
+	set xmin [::$object.ends.x index 0]
+	set xmax [::$object.ends.x index 1]
+	$w axis configure x -min $xmin -max $xmax
+	$object _setvars
+	Classy::todo $object reload
 }
 
