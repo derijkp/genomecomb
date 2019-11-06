@@ -76,6 +76,8 @@ proc cg_bamreorder {args} {
 			picard CreateSequenceDictionary R=$nref O=$nref.dict
 		}
 		picard ReorderSam R=$nref I=$tempsrc O=$dest.temp2 ALLOW_INCOMPLETE_DICT_CONCORDANCE=true VALIDATION_STRINGENCY=LENIENT 2>@ stderr >@ stdout
+		if {$nref ne $ref} {file delete $nref}
+		exec samtools index $dest.temp2
 		file delete $dest.temp  $dest.temp.bai
 		file rename $dest.temp2 $dest
 		file rename $dest.temp2.bai $dest.bai
