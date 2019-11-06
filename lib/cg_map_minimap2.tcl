@@ -95,9 +95,17 @@ proc map_minimap2_job {args} {
 				foreach {key value} $readgroupdata {
 					lappend rg "$key:$value"
 				}
-				exec minimap2 -a -x $preset -t $threads --MD \
-					-R @RG\\tID:$sample\\t[join $rg \\t] \
-					$minimap2refseq $fastq > $target.temp 2>@ stderr
+				if {[catch {
+					exec minimap2 -a -x $preset -t $threads --MD \
+						-R @RG\\tID:$sample\\t[join $rg \\t] \
+						$minimap2refseq $fastq > $target.temp
+				} msg]} {
+					if {[regexp ERROR: $msg]} {
+						puts stderr $msg
+						error $msg
+					}
+				}
+				puts stderr $msg
 				file rename -force $target.temp $target
 			}
 		}
@@ -128,9 +136,17 @@ proc map_minimap2_job {args} {
 				foreach {key value} $readgroupdata {
 					lappend rg "$key:$value"
 				}
-				exec minimap2 -a -x $preset -t $threads --MD \
-					-R @RG\\tID:$sample\\t[join $rg \\t] \
-					$minimap2refseq $fastq1 $fastq2 {*}$fixmate > $target.temp 2>@ stderr
+				if {[catch {
+					exec minimap2 -a -x $preset -t $threads --MD \
+						-R @RG\\tID:$sample\\t[join $rg \\t] \
+						$minimap2refseq $fastq1 $fastq2 {*}$fixmate > $target.temp
+				} msg]} {
+					if {[regexp ERROR: $msg]} {
+						puts stderr $msg
+						error $msg
+					}
+				}
+				puts stderr $msg
 				file rename -force $target.temp $target
 			}
 		}

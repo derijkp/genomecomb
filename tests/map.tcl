@@ -38,7 +38,7 @@ test map_bowtie2 {map_bowtie2 basic} {
 #test map_minimap2 {map_minimap2 basic} {
 #	test_cleantmp
 #	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
-#	cg map_minimap2 -stack 1 -preset sr tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+#	cg map_minimap2 -stack 1 -paired 0 -preset sr tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 #	# chr21:42730799-42762826
 #	exec samtools view tmp/ali.bam > tmp/ali.sam
 #	exec samtools view data/minimap2.bam > tmp/expected.sam
@@ -63,6 +63,13 @@ test map_minimap2 {error dir as refseq} {
 	file mkdir tmp/ref
 	cg map_minimap2 -paired 1 tmp/ali.bam tmp/ref NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 } {could not properly index */tmp/ref: contains no sequences} error match
+
+test map_minimap2 {error missing fastq} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
+	mklink tmp/doesnotexists.fq tmp/bla.fq
+	cg map_minimap2 -stack 1 -paired 0 -preset sr tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m tmp/bla.fq
+} {*ERROR: failed to open file 'tmp/bla.fq'*} match error
 
 test map_ngmlr {map_ngmlr basic} {
 	test_cleantmp
