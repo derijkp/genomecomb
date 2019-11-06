@@ -780,16 +780,11 @@ proc process_sample_job {args} {
 			map_${aligner}_job -paired $paired -threads $threads -keepsams $keepsams \
 				-skips [list -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
 				$bamfile $refseq $sample {*}$files
-			# extract regions with coverage >= 5 (for cleaning)
-			set cov5reg [bam2reg_job -mincoverage 5 \
-				-distrreg $distrreg -refseq $refseq \
-				-skip [list $resultbamfile $resultbamfile.analysisinfo] \
-				$sampledir/map-${aligner}-$sample.bam]
 			# clean bamfile (mark duplicates, realign)
 			# bam is already sorted, just add the s
 			set cleanbam [bam_clean_job -sort 2 \
 				-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
-				-regionfile $cov5reg -threads $threads -cleanup $cleanup \
+				-regionfile 5 -threads $threads -cleanup $cleanup \
 				 $sampledir/map-${aligner}-$sample.bam $refseq $sample]
 			lappend cleanedbams $cleanbam
 		}

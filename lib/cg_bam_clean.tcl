@@ -82,6 +82,14 @@ proc bam_clean_job {args} {
 		puts "making $target"
 	}
 	if {$realign ne "0"} {
+		if {[isint $regionfile]} {
+			# extract regions with coverage >= $regionfile (for cleaning)
+			set regionfile [bam2reg_job -mincoverage $regionfile \
+				-distrreg $distrreg -refseq $refseq \
+				-skip [list $resultbamfile $resultbamfile.analysisinfo] \
+				$sampledir/map-${aligner}-$sample.bam]
+		}
+
 		list_pop skips 0; list_pop skips 0;
 		# realign around indels
 		set deps [list $dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict $gatkrefseq $refseq {*}$realigndeps]
