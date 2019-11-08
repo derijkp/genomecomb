@@ -1665,6 +1665,7 @@ proc cg_select {args} {
 				}
 			}
 		}
+		set neededfields [list_remdup $neededfields]
 		set neededcols [list_cor $header $neededfields]
 		if {$usesort && "ROW" in $neededfields} {
 			set useaddrow 1

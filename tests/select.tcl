@@ -1027,7 +1027,7 @@ test select "long format with sampleinfo in calc $dboptt" {
 	global dbopt
 	test_cleantmp
 	write_tab tmp/temp.tsv {
-		sample id	freq
+		sample	id	freq
 		sample1	1	0.4
 		sample2	1	0.8
 		sample3	1	1.0
