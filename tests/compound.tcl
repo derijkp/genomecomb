@@ -79,5 +79,21 @@ test compound {basic} {
 	}
 } {}
 
+test compound {error on wrong -samples} {
+	write_tab tmp/atest.tsv {
+		chromosome	begin	end	type	ref	alt	var	sequenced-a1-sample1	quality-a1-sample1	coverage-a1-sample1	sequenced-a1-sample2	quality-a1-sample2	coverage-a1-sample2	sequenced-a2-sample2	quality-a2-sample2	coverage-a2-sample2	test_impact	test_gene	test_descr
+		chr1	11600	11601	snp	C	A	v1	v	40	20	v	15	20	v	15	20	CDSMIS	cdsgene1	+cds1:exon1+101:c.101C>A:p.P34H
+	}
+	exec cg compound -stack 1 -v 2 -samples {sample1 wrongsample} -criteria {$sequenced-a1 eq "v"} -geneset test tmp/atest.tsv tmp/result.tsv
+} {some samples given in -samples are not in the file */atest.tsv: wrongsample*} error match
+
+test compound {error on wrong -analyses} {
+	write_tab tmp/atest.tsv {
+		chromosome	begin	end	type	ref	alt	var	sequenced-a1-sample1	quality-a1-sample1	coverage-a1-sample1	sequenced-a1-sample2	quality-a1-sample2	coverage-a1-sample2	sequenced-a2-sample2	quality-a2-sample2	coverage-a2-sample2	test_impact	test_gene	test_descr
+		chr1	11600	11601	snp	C	A	v1	v	40	20	v	15	20	v	15	20	CDSMIS	cdsgene1	+cds1:exon1+101:c.101C>A:p.P34H
+	}
+	exec cg compound -stack 1 -v 2 -analyses {a1-wrongsample a1-sample1} -criteria {$sequenced-a1 eq "v"} -geneset test tmp/atest.tsv tmp/result.tsv
+} {some samples given in -analyses are not in the file */atest.tsv: a1-wrongsample*} error match
+
 testsummarize
 

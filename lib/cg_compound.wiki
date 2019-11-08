@@ -50,9 +50,11 @@ $sequenced == "v" and $quality >= 50 and $coverage >= 20
 
 Notice that field names can be used witout the analysis suffix, e.g.
 $sequenced instead of $sequenced-gatkh-bwa-sample1. For these the analysis
-specific fields will be used. Using the -per option, you can sselect to
-search for compound variants per sample instead of per analysis. In that
-case, the field names without the sample suffix sshould be used, e.g.
+specific fields will be used. 
+
+Using the -per option, you can select to search for compound variants 
+per sample instead of per analysis. In that case, the field names without 
+the sample suffix should be used, e.g.
 {{{
 $sequenced-gatkh-bwa == "v"
 }}}
@@ -61,6 +63,7 @@ e.g. only select variants called in both gatkh and strelka
 {{{
 $sequenced-gatkh-bwa == "v" and $sequenced-strelka-bwa == "v"
 }}}
+When doing per sample analysis, the -criteria argument must be provided.
 
 == Arguments ==
 ; **variantfile**: tab separated or vcf file containing variants
@@ -80,7 +83,9 @@ Possible values are described in the criteria section of the description. defaul
 compound-gatkh-bwa-sample1, compound-strelka-bwa-sample1, compound-gatkh-bwa-sample2, ...
 If set to **sample**, compounds will be search per sample.
 ; -samples samples: a space-separated list of samples, only look in samples given by this parameter
+If given, -per sample analysis is used. if you give -per analysis, an error is returned
 ; -analyses analyses: a space-separated list of analyses, only look in analyses given by this parameter
+If analyses is given, -per analysis is used. if you explicitely specify -per sample, an error is returned
 ; -dbdir: directory with reference databases;
         this is needed if the annotcomparfile is not annotated (e.g. a vcf file)
 

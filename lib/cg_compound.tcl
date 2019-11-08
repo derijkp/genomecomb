@@ -3,11 +3,11 @@
 exec cg source "$0" ${1+"$@"}
 
 proc cg_compound {args} {
-	set per analysis
+	set per {}
+	set persample 0
+	set peranalysis 0
 	set geneset refGene
-	set criteria {
-		$sequenced == "v"
-	}
+	set criteria {}
 	set impact {>=CDSMIS}
 	set limitsamples {}
 	set resultfile {}
@@ -25,13 +25,28 @@ proc cg_compound {args} {
 		-impact {
 			set impact [string trim $value]
 		}
-		-samples - -analyses {
+		-samples {
+			set persample 1
+			set limitsamples [list_remdup $value]
+		}
+		-analyses {
+			set peranalysis 1
 			set limitsamples [list_remdup $value]
 		}
 		-dbdir {
 			set dbdir $value
 		}
 	} {varfile resultfile} 1 2
+	if {$per eq ""} {
+		if {$persample} {
+			if {$peranalysis} {
+				error "cannot give both -samples and analyses option"
+			}
+			set per sample
+		} else {
+			set per analysis
+		}
+	}
 	set varfile [file_absolute $varfile]
 	if {$resultfile eq ""} {
 		set resultfile [file root $varfile]-compound.tsv
@@ -39,6 +54,13 @@ proc cg_compound {args} {
 	set resultfile [file_absolute $resultfile]
 	set resultgenelist [file root [gzroot $resultfile]]-genelist.tsv
 	set tempfile [tempfile]
+	if {$criteria eq ""} {
+		if {$per eq "analysis"} {
+			set criteria {$sequenced == "v"}
+		} else {
+			error "for analysis per sample, -criteria must be specified"
+		}
+	}
 	# putsvars tempfile per criteria geneset impact limitsamples varfile resultfile resultgenelist
 
 	#
@@ -55,6 +77,9 @@ proc cg_compound {args} {
 		set samples [listsamples $header]
 		if {[llength $limitsamples]} {
 			set samples [list_common $limitsamples $samples]
+			if {[llength $samples] != [llength $limitsamples]} {
+				error "some samples given in -samples are not in the file $varfile: [list_remove $limitsamples $samples]"
+			}
 		}
 		foreach sample $samples {
 			set temp [tsv_select_replacevars $tokens $header $sample]
@@ -69,6 +94,9 @@ proc cg_compound {args} {
 		set samples [listanalyses $header]
 		if {[llength $limitsamples]} {
 			set samples [list_common $limitsamples $samples]
+			if {[llength $samples] != [llength $limitsamples]} {
+				error "some analysis given in -analyses are not in the file $varfile: [list_remove $limitsamples $samples]"
+			}
 		}
 		foreach sample $samples {
 			set temp [tsv_select_replacevars $tokens $header $sample]
@@ -76,6 +104,7 @@ proc cg_compound {args} {
 			lappend fields "hqv-$sample=if($code,1,0)"
 		}
 		lappend fields "transcripts=transcripts(\"$geneset\",\"$impact\")"
+		# cg select -overwrite 1 -f $fields $varfile $tempfile
 		cg select -overwrite 1 -f $fields -q {
 			acount($hqv == 1) > 0
 		} $varfile $tempfile
@@ -179,3 +208,5 @@ proc cg_compound {args} {
 	file rename -force $tempresultfile $resultfile
 
 }
+
+
