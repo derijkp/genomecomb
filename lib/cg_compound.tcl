@@ -95,7 +95,7 @@ proc cg_compound {args} {
 		if {[llength $limitsamples]} {
 			set samples [list_common $limitsamples $samples]
 			if {[llength $samples] != [llength $limitsamples]} {
-				error "some analysis given in -analyses are not in the file $varfile: [list_remove $limitsamples $samples]"
+				error "some analyses given in -analyses are not in the file $varfile: [list_remove $limitsamples $samples]"
 			}
 		}
 		foreach sample $samples {

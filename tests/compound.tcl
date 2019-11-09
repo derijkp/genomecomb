@@ -93,7 +93,7 @@ test compound {error on wrong -analyses} {
 		chr1	11600	11601	snp	C	A	v1	v	40	20	v	15	20	v	15	20	CDSMIS	cdsgene1	+cds1:exon1+101:c.101C>A:p.P34H
 	}
 	exec cg compound -stack 1 -v 2 -analyses {a1-wrongsample a1-sample1} -criteria {$sequenced-a1 eq "v"} -geneset test tmp/atest.tsv tmp/result.tsv
-} {some samples given in -analyses are not in the file */atest.tsv: a1-wrongsample*} error match
+} {some analyses given in -analyses are not in the file */atest.tsv: a1-wrongsample*} error match
 
 testsummarize
 
