@@ -34,7 +34,7 @@ proc wgetfile {url {resultfile {}} {force 0}} {
 			file delete $resultfile.temp
 			return {}
 		}
-		if {$webcache ne ""} {
+		if {$webcache ne "" && [file exists $webcache]} {
 			if {[catch {hardlink $resultfile.temp $webcachename.temp}]} {
 				file copy $resultfile.temp $webcachename.temp
 			}
