@@ -259,7 +259,6 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 #		file mkdir tmp/exomes_yri_mx2/samples/$sample/fastq
 #		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_yri_mx2/samples/$sample/fastq
 #	}
-#	# cg process_illumina -d 2 -split 1 -dbdir $::refseqdir/hg19 tests/yri_exome
 #	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir $::refseqdir/hg19 tmp/exomes_yri_mx2 >& tmp/exomes_yri_mx2.log
 #	# check vs expected
 #	checkdiff -y --suppress-common-lines tmp/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2

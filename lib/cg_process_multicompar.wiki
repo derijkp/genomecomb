@@ -24,7 +24,7 @@ samples, each sample in a sub directory. The proc will search for fastq
 files in dir/samplename/fastq/
 ; **dbdir**: directory containing reference data (genome sequence,
 annotation, ...). dbdir can also be given in a projectinfo.tsv file in the
-project directory. process_illumina called with the dbdir parameter will
+project directory. process_project called with the dbdir parameter will
 create the projectinfo.tsv file.
 
 == Options ==

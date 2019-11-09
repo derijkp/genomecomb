@@ -46,7 +46,6 @@ test process {mastr mastr_116068_116083} {
 	# if you want to see output while running
 	 cg process_mastr {*}$::dopts -split 1 tmp/wgs2.mastr tmp/mastr_116068_116083 refseqtest/hg19 2>@ stderr >@ stdout
 	# no output while running
-	# cg process_mastr --stack 1 --verbose 2 -split 1 tmp/wgs2.mastr tmp/mastr_116068_116083 refseqtest/hg19
 	# check vs expected
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *hsmetrics -x colinfo -x *.index -x *.zsti -x *.lz4i  \
@@ -59,7 +58,7 @@ test process {mastr mastr_116068_116083} {
 	join [list_remove $result {}] \n
 } {}
 
-test process {process_illumina exomes yri chr2122} {
+test process {process_project illumina exomes yri chr2122} {
 	cd $::bigtestdir
 	file delete -force tmp/exomes_yri_chr2122
 	file mkdir tmp/exomes_yri_chr2122/samples
@@ -75,7 +74,6 @@ test process {process_illumina exomes yri chr2122} {
 		}
 		exec touch {*}[glob tmp/exomes_yri_chr2122/samples/*/map-*.bam*]
 	}
-	# cg process_illumina --stack 1 --verbose 2 -d 2 -split 1 -dbdir refseqtest/hg19 tests/yri_exome
 	cg process_project {*}$::dopts \
 	  -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.zst \
 	  -split 1 -dbdir refseqtest/hg19 tmp/exomes_yri_chr2122 2>@ stderr >@ stdout
