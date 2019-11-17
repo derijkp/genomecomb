@@ -3,7 +3,7 @@ ARCH ?=
 arch ?= x86_64
 COPT ?= -O2
 GCC ?= gcc
-ZSTDDIR ?= $(HOME)/build/bin-$(arch)/zstd-1.3.8
+ZSTDDIR ?= $(HOME)/build/bin-$(arch)/zstd-1.4.4
 EXEEXT ?=
 CFLAGS := -D_FILE_OFFSET_BITS=64 -Wall $(COPT) -I~/dev/genomecomb/src ${CFLAGS} -I$(ZSTDDIR)/lib -L$(ZSTDDIR)/lib
 TOOLS = tools.c tools.h debug.h

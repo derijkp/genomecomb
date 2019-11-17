@@ -69,6 +69,9 @@ typedef struct zstdres {
 	if (fread(var, 1, size, f) != size) ERROR(errormsg);\
 }
 
+/* already defined in tools.h */
+/* FILE *fopen64_or_die(char *filename,char *mode); */
+
 char *zstd_findindex(char *filename);
 unsigned ZSTDIO_readLE32 (const void* s);
 ZSTDres *zstdopen(FILE* finput,FILE *indexfile);

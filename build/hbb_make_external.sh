@@ -87,11 +87,13 @@ function download {
 # zstd (for lib)
 # --------------
 cd /build
-if [ ! -f "/build/zstd-1.4.2/lib/libzstd.a" ] ; then
+if [ ! -f "/build/zstd-1.4.4/lib/libzstd.a" ] ; then
 	source /hbb_shlib/activate
-	wget -c https://github.com/facebook/zstd/releases/download/v1.4.2/zstd-1.4.2.tar.gz
-	tar xvzf zstd-1.4.2.tar.gz
-	cd /build/zstd-1.4.2
+	wget -c https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz
+	tar xvzf zstd-1.4.4.tar.gz
+	cd /build/zstd-1.4.4
+	make
+	cd /build/zstd-1.4.4/contrib/seekable_format/examples
 	make
 	source /hbb_exe/activate
 fi

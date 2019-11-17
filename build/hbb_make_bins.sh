@@ -57,14 +57,14 @@ set -x
 # Deps
 # ----
 cd /build
-if [ ! -f /build/zstd-1.3.8/lib/libzstd.a ] ; then
+if [ ! -f /build/zstd-1.4.4/lib/libzstd.a ] ; then
 	source /hbb_shlib/activate
 	CFLAGS="-g -O2 -fPIC -fvisibility=hidden -I/hbb_shlib/include"
 	CXXFLAGS="-g -O2 -fPIC -fvisibility=hidden -I/hbb_shlib/include"
 	SHLIB_CFLAGS="-g -O2 -fPIC -fvisibility=hidden -I/hbb_shlib/include"
-	curl -O -L https://github.com/facebook/zstd/releases/download/v1.3.8/zstd-1.3.8.tar.gz
-	tar xvzf zstd-1.3.8.tar.gz
-	cd zstd-1.3.8
+	curl -O -L https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz
+	tar xvzf zstd-1.4.4.tar.gz
+	cd zstd-1.4.4
 	make
 	source /hbb_exe/activate
 fi
@@ -79,9 +79,9 @@ if [ "$clean" = 1 ] ; then
 fi
 
 if [ "$debug" = 1 ] ; then
-	COPT="-g" CPATH="/build/zstd-1.3.8/lib:$CPATH" LIBRARY_PATH="/build/zstd-1.3.8/lib:$LIBRARY_PATH" make
+	COPT="-g" CPATH="/build/zstd-1.4.4/lib:$CPATH" LIBRARY_PATH="/build/zstd-1.4.4/lib:$LIBRARY_PATH" make
 else
-	CPATH="/build/zstd-1.3.8/lib:$CPATH" LIBRARY_PATH="/build/zstd-1.3.8/lib:$LIBRARY_PATH" make
+	CPATH="/build/zstd-1.4.4/lib:$CPATH" LIBRARY_PATH="/build/zstd-1.4.4/lib:$LIBRARY_PATH" make
 fi
 
 if [ "$strip" = 1 ] && [ "$debug" != 1 ] ; then
