@@ -56,7 +56,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 			set compress [compresspipe $target]
 			set todo [list_merge $deps $isreg]
 			set temp [filetemp_ext $target]
-			# puts [list ../bin/multireg {*}$todo]
+			# puts stderr [list ../bin/multireg {*}$todo]
 			exec multireg {*}$todo {*}$compress > $temp 2>@ stderr
 			if {$limitreg ne ""} {
 				set temp2 [filetemp_ext $target]

@@ -751,7 +751,7 @@ proc pmulticompar_job {args} {
 				exec cg vcf2tsv -refout 1 -sort 0 -keepfields $keepfields $varallfile | multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs {*}[compresspipe $target 1 1] > $temp
 				file rename -force $temp $target
 			} elseif {$varallfile ne "" || $allfound || (![llength $oldbcolannot] && ![llength $coverageRefScorefiles])} {
-				# puts [list ../bin/multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
+				# puts stderr [list ../bin/multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
 				set temp [filetemp $target 1 1]
 				exec multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs {*}[compresspipe $target 1 1] > $temp
 				file rename -force $temp $target
@@ -785,7 +785,7 @@ proc pmulticompar_job {args} {
 			set keeppos [lsearch $header name]
 			if {$keeppos == -1} {set keeppos {}}
 			file_write $target.temp $targetsfield\n
-			# puts [list ../bin/var_annot $allvarsfile 0 1 2 3 5 $targetvarsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos]
+			# puts stderr [list ../bin/var_annot $allvarsfile 0 1 2 3 5 $targetvarsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos]
 			exec var_annot $allvarsfile 0 1 2 3 5 $targetvarsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos >> $target.temp 2>@ stderr
 			file rename -force $target.temp $target
 		}
