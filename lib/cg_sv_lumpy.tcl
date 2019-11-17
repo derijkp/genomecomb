@@ -71,11 +71,7 @@ proc sv_lumpy_job {args} {
 	# start
 	set gatkrefseq [gatk_refseq_job $refseq]
 	## Produce lumpy sv calls
-	if {[file extension $bamfile] eq ".cram"} {
- 		set bamfileindex $bamfile.crai
-	} else {
-		set bamfileindex $bamfile.bai
-	}
+	set bamfileindex $bamfile.[indexext $bamfile]
 	job sv_lumpy-$root.vcf {*}$skips -mem [expr {1*$threads}]G -cores $threads \
 	-skip [list $resultfile $resultfile.analysisinfo] \
 	-deps {

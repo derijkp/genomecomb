@@ -130,7 +130,8 @@ proc var_gatkh_job {args} {
 	cd $destdir
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set dep $bamtail
-	set deps [list $bamtail $gatkrefseq $bamtail.bai {*}$deps]
+	set bamtailindex $bamtail.[indexext $bamtail]
+	set deps [list $bamtail $gatkrefseq $bamtailindex {*}$deps]
 	job $varallfile {*}$skips -mem 15G -deps $deps -targets {
 		$varallfile.gz $varallfile.gz.tbi
 	} -vars {

@@ -8,6 +8,8 @@ proc bam_clean_job {args} {
 	set cleanup 1
 	set regionfile {}
 	set threads 2
+	set aliformat bam
+	set distrreg 0
 	cg_options process_sample args {
 		-sort {set sort $value}
 		-removeduplicates {set removeduplicates $value}
@@ -21,12 +23,18 @@ proc bam_clean_job {args} {
 		}
 		-cleanup {set cleanup $value}
 		-regionfile {set regionfile $value}
+		-aliformat {set aliformat $value}
+		-distrreg {
+			set distrreg $value
+		}
 	} {bamfile refseq sample}
-	if {$regionfile ne ""} {
-		lappend realigndeps $regionfile
-	}
 	if {[llength $args]} {
 		array set opt $args
+	}
+	if {$aliformat eq "cram"} {
+		set extindex crai
+	} else {
+		set extindex bai
 	}
 	upvar job_logdir job_logdir
 	set dir [file dir $bamfile]
@@ -41,62 +49,65 @@ proc bam_clean_job {args} {
 	set cleanuplist {}
 	set temproot $root
 	if {$sort} {
-		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
+		lappend cleanuplist $dir/$pre-$temproot.$aliformat $dir/$pre-$temproot.$aliformat.$extindex
 		set temproot s$temproot
-		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.analysisinfo]
+		lappend skips -skip [list $dir/$pre-$temproot.$aliformat $dir/$pre-$temproot.$aliformat.analysisinfo]
 	}
 	if {$removeduplicates ne "0"} {
-		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
+		lappend cleanuplist $dir/$pre-$temproot.$aliformat $dir/$pre-$temproot.$aliformat.$extindex
 		set temproot d$temproot
-		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.analysisinfo]
+		lappend skips -skip [list $dir/$pre-$temproot.$aliformat $dir/$pre-$temproot.$aliformat.analysisinfo]
 	}
 	if {$realign ne "0"} {
-		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
+		if {$aliformat eq "cram"} {error "realign not supported for cram"}
+		lappend cleanuplist $dir/$pre-$temproot.$aliformat $dir/$pre-$temproot.$aliformat.$extindex
 		set temproot r$temproot
-		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.analysisinfo]
+		lappend skips -skip [list $dir/$pre-$temproot.$aliformat $dir/$pre-$temproot.$aliformat.analysisinfo]
 	}
 	if {$clipamplicons ne ""} {
-		lappend cleanuplist $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.bai
+		lappend cleanuplist $dir/$pre-$temproot.$aliformat $dir/$pre-$temproot.$aliformat.$extindex
 		set temproot c$temproot
-		lappend skips -skip [list $dir/$pre-$temproot.bam $dir/$pre-$temproot.bam.analysisinfo]
+		lappend skips -skip [list $dir/$pre-$temproot.$aliformat $dir/$pre-$temproot.$aliformat.analysisinfo]
 	}
 	# start jobs
 	# sort using default
 	if {$sort} {
 		list_pop skips 0; list_pop skips 0
 		if {$sort == 2} {
-			bam_sort_job -method alreadysorted {*}$skips $bamfile $dir/$pre-s$root.bam
+			bam_sort_job -method alreadysorted {*}$skips $bamfile $dir/$pre-s$root.$aliformat
 		} else {
-			bam_sort_job {*}$skips $bamfile $dir/$pre-s$root.bam
+			bam_sort_job {*}$skips $bamfile $dir/$pre-s$root.$aliformat
 		}
 		set root s$root
 	}
 	if {$removeduplicates ne "0"} {
 		list_pop skips 0; list_pop skips 0;
-		bam_markduplicates_job {*}$skips $dir/$pre-$root.bam $dir/$pre-d$root.bam
+		bam_markduplicates_job {*}$skips $dir/$pre-$root.$aliformat $dir/$pre-d$root.$aliformat
 		set root d$root
 	}
 	# index intermediate result
-	job bamindex-$pre-$root -optional 1 -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-$root.bam.bai} {*}$skips -code {
+	job bamindex-$pre-$root -optional 1 -deps {$dir/$pre-$root.$aliformat} -targets {$dir/$pre-$root.$aliformat.$extindex} {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}
 	if {$realign ne "0"} {
 		if {[isint $regionfile]} {
 			# extract regions with coverage >= $regionfile (for cleaning)
-			set regionfile [bam2reg_job -mincoverage $regionfile \
+			set regionfile [bam2reg_job -mincoverage $regionfile {*}$skips \
 				-distrreg $distrreg -refseq $refseq \
-				-skip [list $resultbamfile $resultbamfile.analysisinfo] \
-				$sampledir/map-${aligner}-$sample.bam]
+				$bamfile]
 		}
 
 		list_pop skips 0; list_pop skips 0;
 		# realign around indels
-		set deps [list $dir/$pre-$root.bam $dir/$pre-$root.bam.bai $dict $gatkrefseq $refseq {*}$realigndeps]
+		set deps [list $dir/$pre-$root.$aliformat $dir/$pre-$root.$aliformat.$extindex $dict $gatkrefseq $refseq {*}$realigndeps]
+		if {$regionfile ne ""} {
+			lappend deps $regionfile
+		}
 		if {$realign eq "srma"} {
 			set srma [srma]
 			job bamrealign-$root -deps $deps \
-			-targets {$dir/$pre-r$root.bam $dir/$pre-r$root.bam.analysisinfo} \
+			-targets {$dir/$pre-r$root.$aliformat $dir/$pre-r$root.$aliformat.analysisinfo} \
 			-vars {gatkrefseq refseq srma pre realignopts regionfile} {*}$skips -code {
 				analysisinfo_write $dep $target realign srma realign_version [version srma]
 				if {$regionfile ne ""} {
@@ -104,13 +115,13 @@ proc bam_clean_job {args} {
 					lappend realignopts RANGES=$bedfile
 				}
 				exec java -XX:ParallelGCThreads=1 -jar $srma I=$dep O=$target.temp R=$gatkrefseq {*}$realignopts 2>@ stderr >@ stdout
-				catch {file rename -force $target.temp.bai $target.bai}
+				catch {file rename -force $target.temp.$extindex $target.$extindex}
 				catch {file delete $target.intervals}
 				file rename -force $target.temp $target
 			}
 		} else {
 			job bamrealign-$root -mem [job_mempercore 10G 2] -cores 2 -deps $deps \
-			-targets {$dir/$pre-r$root.bam $dir/$pre-r$root.bam.analysisinfo} \
+			-targets {$dir/$pre-r$root.$aliformat $dir/$pre-r$root.$aliformat.analysisinfo} \
 			-vars {gatkrefseq refseq gatk realignopts regionfile} {*}$skips -code {
 				analysisinfo_write $dep $target realign gatk realign_version [version gatk3]
 				if {$regionfile ne ""} {
@@ -127,13 +138,14 @@ proc bam_clean_job {args} {
 				gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} IndelRealigner -R $gatkrefseq \
 					-targetIntervals $target.intervals -I $dep \
 					-o $target.temp {*}$extra 2>@ stderr >@ stdout
-				catch {file rename -force $target.temp.bai $target.bai}
+				catch {file rename -force $target.temp.$extindex $target.$extindex}
 				catch {file delete $target.intervals}
 				file rename -force $target.temp $target
 			}
 		}
 		set root r$root
-		job bamrealign_index-$root -optional 1 -deps {$dir/$pre-$root.bam} {*}$skips -targets {$dir/$pre-$root.bam.bai} -code {
+putsvars bamrealignindex root
+		job bamrealign_index-$root -optional 1 -deps {$dir/$pre-$root.$aliformat} {*}$skips -targets {$dir/$pre-$root.$aliformat.$extindex} -code {
 			exec samtools index $dep >@ stdout 2>@ stderr
 			puts "making $target"
 		}
@@ -141,23 +153,23 @@ proc bam_clean_job {args} {
 	if {$clipamplicons ne ""} {
 		list_pop skips 0; list_pop skips 0;
 		job bamclean_clipamplicons-$root -deps {
-			$dir/$pre-$root.bam $clipamplicons
+			$dir/$pre-$root.$aliformat $clipamplicons
 		} -targets {
-			$dir/$pre-c$root.bam $dir/$pre-c$root.bam.analysisinfo
+			$dir/$pre-c$root.$aliformat $dir/$pre-c$root.$aliformat.analysisinfo
 		} {*}$skips -vars {clipamplicons} -code {
 			analysisinfo_write $dep $target clipamplicons genomecomb clipamplicons_version [version genomecomb] clipampliconsfile [filename $clipamplicons]
 			cg sam_clipamplicons $dep2 $dep $target.temp
 			file rename $target.temp $target
 		}
 		set root c$root
-		job bamclean_clipamplicons_index-$root -optional 1 -deps {$dir/$pre-$root.bam} -targets {$dir/$pre-$root.bam.bai} -code {
+		job bamclean_clipamplicons_index-$root -optional 1 -deps {$dir/$pre-$root.$aliformat} -targets {$dir/$pre-$root.$aliformat.$extindex} -code {
 			exec samtools index $dep >@ stdout 2>@ stderr
 			puts "making $target"
 		}
 	}
 	if {$cleanup} {
-		cleanup_job bamclean_remtemp-$root $cleanuplist [list $dir/$pre-$root.bam]
+		cleanup_job bamclean_remtemp-$root $cleanuplist [list $dir/$pre-$root.$aliformat]
 	}
-	return $dir/$pre-$root.bam
+	return $dir/$pre-$root.$aliformat
 }
 

@@ -476,6 +476,7 @@ proc process_sample_job {args} {
 	set distrreg 0
 	set keepsams 0
 	set datatype {}
+	set aliformat bam
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -555,6 +556,9 @@ proc process_sample_job {args} {
 		}
 		-datatype {
 			set datatype $value
+		}
+		-aliformat {
+			set aliformat [string tolower $value]
 		}
 	} {} 1 2
 	if {[llength $args] == 1} {
@@ -639,9 +643,17 @@ proc process_sample_job {args} {
 		set targetfile $temp
 		if {$datatype eq ""} {set datatype exome}
 	} elseif {$targetfile ne ""} {
-		set temp [lindex [split [file root [gzroot [file tail $targetfile]]] -] end]
-		mklink $targetfile $sampledir/reg_${ref}_targets-$temp.tsv[gzext $targetfile] 1
-		set targetfile $sampledir/reg_${ref}_targets-$temp.tsv[gzext $targetfile]
+		set tail [gzroot [file tail $targetfile]]
+		if {[string match reg_${ref}targets*.tsv $tail] 
+			|| [string match reg_targets*.tsv $tail] 
+			|| [string match reg_*_targets*.tsv $tail]} {
+			set filename [file tail $targetfile]
+		} else {
+			set temp [lindex [split [file root $tail] -] end]
+			set filename reg_${ref}_targets-$temp.tsv[gzext $targetfile]
+		}
+		mklink $targetfile $sampledir/$filename 1
+		set targetfile $sampledir/$filename
 		if {$datatype eq ""} {set datatype exome}
 	}
 	# check projectinfo
@@ -738,7 +750,7 @@ proc process_sample_job {args} {
 			}
 		} else {
 			# check if there are bam files in ori to extract fastq from
-			set files [ssort -natural [jobglob $sampledir/ori/*.bam]]
+			set files [ssort -natural [jobglob $sampledir/ori/*.bam $sampledir/ori/*.cram]]
 			foreach file $files {
 				set base $sampledir/fastq/[file tail [file root $file]]
 				set target $base-R1.fastq.gz
@@ -758,8 +770,8 @@ proc process_sample_job {args} {
 	if {[llength $fastqfiles]} {
 		foreach aligner $aligners {
 			# do not do any of preliminaries if end product is already there
-			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.bam
-			set bamfile $sampledir/map-${aligner}-$sample.bam
+			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
+			set bamfile $sampledir/map-${aligner}-$sample.$aliformat
 			# quality and adapter clipping
 			if {$clip} {
 				set files [fastq_clipadapters_job -adapterfile $adapterfile -paired $paired \
@@ -777,21 +789,22 @@ proc process_sample_job {args} {
 			}
 			#
 			# map using ${aligner}
-			map_${aligner}_job -paired $paired -threads $threads -keepsams $keepsams \
+			set bamfile [map_${aligner}_job -paired $paired -threads $threads \
+				-keepsams $keepsams -aliformat $aliformat \
 				-skips [list -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
-				$bamfile $refseq $sample {*}$files
+				$bamfile $refseq $sample {*}$files]
 			# clean bamfile (mark duplicates, realign)
 			# bam is already sorted, just add the s
-			set cleanbam [bam_clean_job -sort 2 \
+			set cleanbam [bam_clean_job -sort 2 -aliformat $aliformat -distrreg $distrreg\
 				-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
 				-regionfile 5 -threads $threads -cleanup $cleanup \
-				 $sampledir/map-${aligner}-$sample.bam $refseq $sample]
+				 $bamfile $refseq $sample]
 			lappend cleanedbams $cleanbam
 		}
 	} else {
 		# check if result bam file exists (without fastq), and use that if so
 		foreach aligner $aligners {
-			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.bam
+			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 			if {[file exists $resultbamfile]} {
 				lappend cleanedbams $resultbamfile
 			} else {

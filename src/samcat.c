@@ -18,15 +18,22 @@ int main(int argc, char *argv[]) {
 	int pos;
 	register int c, first = 1;
 	if ((argc < 1)) {
-		fprintf(stderr,"Format is: samcat samfile1 ...");
+		fprintf(stderr,"Format is: samcat ?-header header? samfile1 ...");
 		exit(EXIT_FAILURE);
 	}
-	f = fopen64_or_die(argv[1],"r");
-	while ((c=getc_unlocked(f))!=EOF) {
-		putc_unlocked(c,stdout);
+	if (strlen(argv[1]) == 7 && strncmp(argv[1],"-header",7) == 0) {
+		if (strlen(argv[2]) > 0) {
+			fprintf(stdout,"%s\n",argv[2]);
+		}
+		pos = 3;
+	} else {
+		f = fopen64_or_die(argv[1],"r");
+		while ((c=getc_unlocked(f))!=EOF) {
+			putc_unlocked(c,stdout);
+		}
+		fclose(f);
+		pos = 2;
 	}
-	fclose(f);
-	pos = 2;
 	while (pos < argc) {
 		f = fopen64_or_die(argv[pos++],"r");
 		while ((c=getc_unlocked(f))!=EOF) {

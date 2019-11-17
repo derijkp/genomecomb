@@ -58,10 +58,10 @@ proc cg_regextract {args} {
 		putslog "Processing $file"
 		set ext [file extension $file]
 		if {$shift ne ""} {set useshift $shift} else {
-			if {$ext in ".bam .sam"} {set useshift -1} else {set useshift 0}
+			if {$ext in ".bam .cram .sam"} {set useshift -1} else {set useshift 0}
 		}
 		if {$ext eq ".bcol"} {
-			if {$region ne ""} {error "option -region only supported for bam and sam files"}
+			if {$region ne ""} {error "option -region only supported for bam, cram and sam files"}
 			set bcol [bcol_open $file]
 			if {[dict get $bcol version] == 0} {
 				set chr [lindex [file root [split [gzroot $file] -]] 1]
@@ -85,11 +85,11 @@ proc cg_regextract {args} {
 				# puts "getregionsbcol2 $file $cutoff $above $useshift"
 				exec getregionsbcol2 $file $cutoff $above $useshift >@ $o
 			}
-		} elseif {$ext in ".bam .sam"} {
+		} elseif {$ext in ".bam .cram .sam"} {
 			set chrcol 0
 			set poscol 1
 			if {$region ne ""} {
-				if {$ext ne ".bam"} {error "option -region only supported for bam files"}
+				if {$ext ni ".bam .cram"} {error "option -region only supported for bam or cram files"}
 				lappend samtoolsargs -r $region
 			}
 			if {!$filtered} {
@@ -100,7 +100,7 @@ proc cg_regextract {args} {
 				catch_exec samtools mpileup --ignore-overlaps -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
 			}
 		} else {
-			if {$region ne ""} {error "option -region only supported for bam and sam files"}
+			if {$region ne ""} {error "option -region only supported for bam, cram and sam files"}
 			set f [gzopen $file]
 			set header [tsv_open $f]
 			catch {gzclose $f}

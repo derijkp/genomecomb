@@ -25,6 +25,7 @@ proc map_minimap2_job {args} {
 	set threads 2
 	set mem 10G
 	set fixmate 1
+	set aliformat bam
 	cg_options map_minimap2 args {
 		-paired - -p {
 			set paired $value
@@ -49,6 +50,9 @@ proc map_minimap2_job {args} {
 		}
 		-mem {
 			set mem $value
+		}
+		-aliformat {
+			set aliformat $value
 		}
 	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome using minimap2
@@ -151,7 +155,8 @@ proc map_minimap2_job {args} {
 			}
 		}
 	}
-	sam_catmerge_job -skips $skips -name minimap2_2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
+	sam_catmerge_job -skips $skips -name minimap2_2bam-$sample -aliformat $aliformat \
+		-deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
 }
 
 proc cg_map_minimap2 {args} {

@@ -103,6 +103,14 @@ job genome_${build}_cindex -deps {
 	cg make_genomecindex $dep
 }
 
+job genome_${build}_forcram -deps {
+	genome_${build}.ifas
+} -targets {
+	genome_${build}.ifas.forcram
+} -code {
+	cg fasta2cramref $dep $target
+}
+
 job reg_${build}_sequencedgenome -deps {
 	genome_${build}.ifas
 } -targets {

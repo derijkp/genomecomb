@@ -113,8 +113,9 @@ proc var_job {args} {
 		set todo {}
 		# Produce variant calls
 		set ibam $indexdir/[file tail $bamfile]
+		set indexext [indexext $bamfile]
 		mklink $bamfile $ibam
-		mklink $bamfile.bai $ibam.bai
+		mklink $bamfile.$indexext $ibam.$indexext
 		defcompressionlevel 1
 		foreach region $regions regfile $regfiles {
 			lappend todo [var_${method}_job {*}$var_opts -opts $opts {*}$skips \

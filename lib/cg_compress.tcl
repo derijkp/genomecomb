@@ -53,7 +53,7 @@ proc cg_compress_job args {
 		} else {
 			set target $outputfile
 		}
-		if {[job_distribute] eq "0"} {
+		if {[job_distribute] eq "0" || $file eq "-"} {
 			compress_$method $file $target $index $keep $threads $compressionlevel $blocksize
 		} else {
 			job $method-$file -deps {$file} -targets {$target} -vars {method file keep index threads compressionlevel blocksize} -code {

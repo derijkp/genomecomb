@@ -79,11 +79,7 @@ proc sv_manta_job {args} {
 	# start
 	set gatkrefseq [gatk_refseq_job $refseq]
 	## Produce manta sv calls
-	if {[file extension $bamfile] eq ".cram"} {
- 		set bamfileindex $bamfile.crai
-	} else {
-		set bamfileindex $bamfile.bai
-	}
+	set bamfileindex $bamfile.[indexext $bamfile]
 	job sv_manta-$root.vcf {*}$skips -mem [expr {1*$threads}]G -cores $threads \
 	-skip [list $resultfile $resultfile.analysisinfo] \
 	-deps {

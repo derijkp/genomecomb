@@ -76,11 +76,7 @@ proc sv_npinv_job {args} {
 		{*}[versions npinv gnusort8 zst os]
 	# start
 	## Produce npinv sv calls
-	if {[file extension $bamfile] eq ".cram"} {
- 		set bamfileindex $bamfile.crai
-	} else {
-		set bamfileindex $bamfile.bai
-	}
+	set bamfileindex $bamfile.[indexext $bamfile]
 	job sv_npinv-$root.vcf {*}$skips -mem 5G -skip [list $resultfile $resultfile.analysisinfo] \
 	-deps {
 		$bamfile $bamfileindex

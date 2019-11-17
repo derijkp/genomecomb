@@ -18,7 +18,9 @@ proc bam_markduplicates_job {args} {
 	if {$method eq "1"} {set method samtools}
 	set tail [file tail $src]
 	putslog "removing duplicates $tail"
+	set oformat [string range [file extension $dest] 1 end]
 	if {$method eq "picard"} {
+		if {$oformat eq "cram"} {error "cram output not supported by bam_markduplicates using picard method"}
 		job bamremdup-$tail -mem [job_mempercore 10G 2] -cores 2 -deps {
 			$src
 		} -targets {
@@ -31,6 +33,7 @@ proc bam_markduplicates_job {args} {
 			file rename -force $target.temp $target
 		}
 	} elseif {$method eq "biobambam"} {
+		if {$oformat eq "cram"} {error "cram output not supported by bam_markduplicates using biobambam method"}
 		job bamremdup-$tail -deps {
 			$src
 		} -targets {
@@ -45,9 +48,9 @@ proc bam_markduplicates_job {args} {
 			$src
 		} -targets {
 			$dest $dest.analysisinfo
-		} -vars {} {*}$skips -code {
+		} -vars {oformat} {*}$skips -code {
 			analysisinfo_write $dep $target removeduplicates samtools removeduplicates_version [version samtools]
-			exec samtools markdup -l 500 $dep	$target.temp 2>@ stderr >@ stdout
+			exec samtools markdup --output-fmt $oformat -l 500 $dep	$target.temp 2>@ stderr >@ stdout
 			file rename -force $target.temp $target
 		}
 	}

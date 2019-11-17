@@ -26,9 +26,10 @@ proc realign_abra_job {args} {
 		job_logdir $resultbamfile.log_jobs
 	}
 	set abra [findjar abra]
+	set indexext [indexext $resultbamfile]
 	job realign_abra-[file tail $resultbamfile] -cores $threads \
 	-deps {$bamfile $refseq ($regionfile)} \
-	-targets {$resultbamfile $resultbamfile.bai} {*}$skips \
+	-targets {$resultbamfile $resultbamfile.$indexext} {*}$skips \
 	-vars {abra bamfile refseq regionfile threads} -code {
 		if {$regionfile eq "" || ![file exists $regionfile]} {
 			putslog "making regionfile"
@@ -36,7 +37,7 @@ proc realign_abra_job {args} {
 			cg bam2reg $bamfile 3 $regionfile
 		}
 		putslog "making $target"
-		if {![file exists $bamfile.bai]} {exec samtools index $bamfile}
+		if {![file exists $bamfile.[indexext $bamfile]]} {exec samtools index $bamfile}
 		if {[file extension $regionfile] ne ".bed"} {
 			set tempfile [tempfile]
 			cg tsv2bed $regionfile $tempfile
@@ -48,7 +49,7 @@ proc realign_abra_job {args} {
 			error $msg
 		}
 		exec samtools index $target.temp.bam
-		file rename -force $target.temp.bam.bai $target.bai
+		file rename -force $target.temp.bam.[indexext $target] $target.[indexext $target]
 		file rename -force $target.temp.bam $target
 	}
 }

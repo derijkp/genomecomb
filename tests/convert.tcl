@@ -1095,4 +1095,21 @@ test tsv2sam {tsv2sam cases} {
 	exec diff tmp/test2.sam tmp/expected.sam
 } {}
 
+test fasta2cramref {cg_fasta2cramref} {
+	set o [open tmp/src.fas w]
+	puts $o ">r1"
+	puts $o "GCCAGCGCAA\nGCCAGCGCAA\nTGGTGGGAGTGAGATGGTG"
+	puts $o ">r2"
+	puts $o "CAGACATGGACCCTGGCTCCTCCAGTTCTCTGGATCCCTCACTGG"
+	close $o
+	cg fasta2cramref tmp/src.fas tmp/forcram
+	list [lsort -dict [glob tmp/forcram/*]] \
+		[file_read tmp/forcram/288894134ca536ab42862c6bc10abe50] \
+		[file_read tmp/forcram/9ae0d1e948e7f87aa96f9e1bc6cfe86b] \
+		[file_read tmp/forcram/mapping.tsv]
+} {{tmp/forcram/9ae0d1e948e7f87aa96f9e1bc6cfe86b tmp/forcram/288894134ca536ab42862c6bc10abe50 tmp/forcram/mapping.tsv} GCCAGCGCAAGCCAGCGCAATGGTGGGAGTGAGATGGTG CAGACATGGACCCTGGCTCCTCCAGTTCTCTGGATCCCTCACTGG {reffile	chromosome	md5	size
+src.fas	r1	288894134ca536ab42862c6bc10abe50	39
+src.fas	r2	9ae0d1e948e7f87aa96f9e1bc6cfe86b	45
+}}
+
 testsummarize

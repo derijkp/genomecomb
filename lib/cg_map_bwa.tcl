@@ -53,6 +53,7 @@ proc map_bwa_job {args} {
 	set threads 2
 	set keepsams 0
 	set fixmate 1
+	set aliformat {}
 	cg_options map_bwa args {
 		-paired - -p {
 			set paired $value
@@ -75,9 +76,13 @@ proc map_bwa_job {args} {
 		-threads - -t {
 			set threads $value
 		}
+		-aliformat {
+			set aliformat $value
+		}
 	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome using bwa-mem
 	}
+	if {$aliformat eq ""} {set aliformat [string range [file extension $result] 1 end]}
 	set files [list $fastqfile1 {*}$args]
 	if {![info exists job_logdir]} {
 		job_logdir [file dir $result]/log_jobs
@@ -87,6 +92,7 @@ proc map_bwa_job {args} {
 		array set a $readgroupdata
 	}
 	set readgroupdata [array get a]
+	dbdir [file dir $refseq]
 	set bwarefseq [bwarefseq_job $refseq]
 	set resultbase [file root $result]
 	set samfiles {}
@@ -146,7 +152,8 @@ proc map_bwa_job {args} {
 			}
 		}
 	}
-	sam_catmerge_job -skips $skips -name bwa2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
+	sam_catmerge_job -skips $skips -name bwa2bam-$sample -aliformat $aliformat \
+		-deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
 }
 
 proc cg_map_bwa {args} {

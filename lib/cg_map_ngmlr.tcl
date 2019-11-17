@@ -27,6 +27,7 @@ proc map_ngmlr_job {args} {
 	set keepsams 0
 	set threads 2
 	set mem 5G
+	set aliformat bam
 	cg_options map_ngmlr args {
 		-x - -preset - -p {
 			set preset $value
@@ -51,6 +52,9 @@ proc map_ngmlr_job {args} {
 		}
 		-m - -maxopenfiles {
 			set ::maxopenfiles $value
+		}
+		-aliformat {
+			set aliformat $value
 		}
 	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome using ngmlr
@@ -100,7 +104,8 @@ proc map_ngmlr_job {args} {
 			file rename -force $target.temp $target
 		}
 	}
-	sam_catmerge_job -skips $skips -name ngmlr_sort2bam-$sample -deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
+	sam_catmerge_job -skips $skips -name ngmlr_sort2bam-$sample -aliformat $aliformat \
+		-deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
 }
 
 proc cg_map_ngmlr {args} {

@@ -27,6 +27,7 @@ proc process_project_job {args} {
 	set keepsams 0
 	set keepfields *
 	set datatype {}
+	set aliformat bam
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -134,29 +135,40 @@ proc process_project_job {args} {
 		-datatype {
 			set datatype $value
 		}
+		-aliformat {
+			set aliformat $value
+		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
-	set dbdir [file_absolute $dbdir]
 	set adapterfile [adapterfile $adapterfile]
 	set experimentname [file tail $destdir]
-	if {$amplicons ne ""} {
-		if {$removeduplicates eq ""} {set removeduplicates 0}
-		if {$removeskew eq ""} {set removeskew 0}
-		if {$dt eq ""} {set dt NONE}
-		list_addnew dbfiles $amplicons
-	} else {
-		if {$removeduplicates eq ""} {set removeduplicates 1}
-		if {$removeskew eq ""} {set removeskew 1}
-		if {$dt eq ""} {set dt BY_SAMPLE}
-	}
 	# check projectinfo
 	projectinfo $destdir dbdir {split 1}
 	set dbdir [dbdir $dbdir]
+	set ref [file tail $dbdir]
 	# logfile
 	# -------
 	upvar job_logdir job_logdir
 	job_logfile $destdir/process_project_[file tail $destdir] $destdir $cmdline \
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa samtools gatk gatk3 picard java gnusort8 zst os]
+	# amplicons settings
+	# ------------------
+	if {$amplicons ne ""} {
+		if {$removeduplicates eq ""} {set removeduplicates 0}
+		if {$removeskew eq ""} {set removeskew 0}
+		if {$dt eq ""} {set dt NONE}
+		list_addnew dbfiles $amplicons
+		if {$targetfile eq ""} {
+			set targetfile $destdir/reg_${ref}_targets.tsv
+			job reports_amplicons2targetfile -deps {$amplicons} -targets {$targetfile.zst} -vars {sample dbdir ref} -code {
+				cg regcollapse $dep | cg zst > $target
+			}
+		}
+	} else {
+		if {$removeduplicates eq ""} {set removeduplicates 1}
+		if {$removeskew eq ""} {set removeskew 1}
+		if {$dt eq ""} {set dt BY_SAMPLE}
+	}
 	# start
 	# -----
 	##in case of nextseq500 data - generate fastqs & distribute data
@@ -200,7 +212,7 @@ proc process_project_job {args} {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		if {!$jobsample} {
-			process_sample_job -todoVar todo -clip $clip -datatype $datatype \
+			process_sample_job -todoVar todo -clip $clip -datatype $datatype -aliformat $aliformat \
 				-aligner $aligner -realign $realign -varcallers $varcallers -svcallers $svcallers \
 				-dbdir $dbdir -split $split -paired $paired \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
@@ -225,7 +237,7 @@ proc process_project_job {args} {
 			# run the actual job with deps and targets found
 			job process_sample-$sample -deps $deps -targets $targets -vars {
 				clip aligner realign varcallers svcallers dbdir split paired
-				adapterfile reports samBQ cleanup  removeduplicates amplicons
+				adapterfile reports samBQ cleanup removeduplicates amplicons
 				removeskew dt targetfile minfastqreads dir keepsams datatype
 			} -code {
 				cg process_sample -stack 1 -v 2 -clip $clip -datatype $datatype \

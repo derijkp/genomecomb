@@ -347,3 +347,16 @@ proc file_rootname {file} {
 	if {$root ne ""} {return $root}
 	return $base
 }
+
+proc indexext {file} {
+	set ext [file extension $file]
+	if {$ext eq ".bam"} {
+		return bai
+	} elseif {$ext eq ".cram"} {
+		return crai
+	} elseif {$ext in ".fas .fa"} {
+		return fai
+	} else {
+		return index
+	}
+}

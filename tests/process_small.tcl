@@ -24,7 +24,7 @@ test process_small {process_project mastr_mx2} {
 	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2/samplicons-wgs2.tsv
 	# file copy ori/mastr_mx2/demultiplex_stats.tsv tmp/mastr_mx2
 	# if you want to see output while running
-	cg process_project {*}$::dopts -split 1 -reports -predictgender \
+	exec cg process_project {*}$::dopts -split 1 -reports -predictgender \
 		-minfastqreads 10 -amplicons tmp/mastr_mx2/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 		tmp/mastr_mx2 $::refseqdir/hg19 >& tmp/mastr_mx2.log
 	# check vs expected
@@ -72,6 +72,39 @@ test process_small {process_project mastr_mx2_gatkh} {
 	}
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_gatkh/mastr_mx2_gatkh.html expected/mastr_mx2_gatkh/mastr_mx2_gatkh.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_gatkh/compar/info_analysis.tsv expected/mastr_mx2_gatkh/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+	join [list_remove $result {}] \n
+} {}
+
+test process_small {process_project mastr_mx2 cram gatkh and strelka} {
+	cd $::smalltestdir
+	file delete -force tmp/mastr_mx2_cram
+	file mkdir tmp/mastr_mx2_cram/samples
+	foreach sample [glob ori/mastr_mx2.start/samples/*] {
+		set sdest tmp/mastr_mx2_cram/samples/[string range [file tail $sample] 0 end-3]/fastq
+		file mkdir $sdest
+		foreach file [glob -nocomplain $sample/ori/*] {
+			file copy $file $sdest
+		}
+	}
+	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2_cram/samplicons-wgs2.tsv
+	# file copy ori/mastr_mx2_cram/demultiplex_stats.tsv tmp/mastr_mx2_cram
+	# if you want to see output while running
+	cg process_project {*}$::dopts -split 1 -reports -predictgender \
+		-minfastqreads 10 -amplicons tmp/mastr_mx2_cram/samplicons-wgs2.tsv -extra_reports_mastr 1 \
+		-realign 0 -varcallers {gatkh strelka} -aliformat cram -extra_reports_mastr gatkh \
+		tmp/mastr_mx2_cram $::refseqdir/hg19 >& tmp/mastr_mx2_cram.log
+	# check vs expected
+	set result {}
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.cram -x *.bai -x *.index -x fastqc_report.html \
+		-x colinfo -x mastr_mx2_cram.html -x *.zsti -x *.lz4i -x *.tbi -x *.finished -x info_analysis.tsv \
+		-x *.analysisinfo -x *.png -x *.submitting \
+		tmp/mastr_mx2_cram expected/mastr_mx2_cram]
+	lappend result [diffanalysisinfo tmp/mastr_mx2_cram/compar/annot_compar-mastr_mx2_cram.tsv.analysisinfo expected/mastr_mx2_cram/compar/annot_compar-mastr_mx2_cram.tsv.analysisinfo]
+	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
+		lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_cram/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics expected/mastr_mx2_cram/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"]
+	}
+	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_cram/mastr_mx2_cram.html expected/mastr_mx2_cram/mastr_mx2_cram.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
+	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_cram/compar/info_analysis.tsv expected/mastr_mx2_cram/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
 	join [list_remove $result {}] \n
 } {}
 

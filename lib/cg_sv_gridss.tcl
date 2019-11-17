@@ -64,11 +64,7 @@ proc sv_gridss_job {args} {
 	# start
 	set bwarefseq [bwarefseq_job $refseq]
 	## Produce gridss sv calls
-	if {[file extension $bamfile] eq ".cram"} {
- 		set bamfileindex $bamfile.crai
-	} else {
-		set bamfileindex $bamfile.bai
-	}
+	set bamfileindex $bamfile.[indexext $bamfile]
 	set workdir $resultfile.gridssrun
 	file mkdir $resultfile.gridssrun
 	set vcffile $resultfile.gridssrun/results.vcf

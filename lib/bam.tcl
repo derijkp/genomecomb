@@ -15,17 +15,9 @@ proc bam_index_job {args} {
 	if {[file extension $bam] eq ".sam"} return
 	set pre [lindex [split $bam -] 0]
 	set root [file_rootname $bam]
-	set dir [file dir $bam]
-	set ext [file extension $bam]
-	if {$ext eq ".cram"} {
-		job cramindex-$pre-$root -deps [list $bam] -targets [list $bam.crai] -code {
-			exec samtools index $dep >@ stdout 2>@ stderr
-			puts "making $target"
-		}
-	} else {
-		job bamindex-$pre-$root -deps [list $bam] -targets [list $bam.bai] -code {
-			exec samtools index $dep >@ stdout 2>@ stderr
-			puts "making $target"
-		}
+	set bamindex $bam.[indexext $bam]
+	job [indexext $bam]index-$pre-$root {*}$skips -deps [list $bam] -targets [list $bamindex] -code {
+		exec samtools index $dep >@ stdout 2>@ stderr
+		puts "making $target"
 	}
 }

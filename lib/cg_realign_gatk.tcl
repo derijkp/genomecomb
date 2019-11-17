@@ -31,13 +31,14 @@ proc realign_gatk_job {args} {
 	}
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set dict [file root $gatkrefseq].dict
+	set indexect [indexext $resultbamfile]
 	job realign_gatk-[file tail $resultbamfile] -mem [job_mempercore 10G [expr {1+$threads}]] -cores [expr {1+$threads}] \
-	-deps {$bamfile ($$bamfile.bai) $dict $gatkrefseq $refseq $regionfile} \
-	-targets {$resultbamfile $resultbamfile.bai} {*}$skips \
+	-deps {$bamfile ($bamfile.indexext) $dict $gatkrefseq $refseq $regionfile} \
+	-targets {$resultbamfile $resultbamfile.$indexect} {*}$skips \
 	-vars {gatkrefseq refseq gatk bamfile regionfile threads} -code {
 		putslog "making $target"
 		analysisinfo_write $dep $target realign gatk realign_version [version gatk3]
-		if {![file exists $bamfile.bai]} {exec samtools index $bamfile}
+		if {![file exists $bamfile.[indexext $bamfile]]} {exec samtools index $bamfile}
 		set bedfile [tempbed $regionfile $refseq]
 		lappend realignopts -L $bedfile
 		gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stdout >@ stdout
@@ -50,7 +51,7 @@ proc realign_gatk_job {args} {
 		gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} IndelRealigner -R $gatkrefseq \
 			-targetIntervals $target.intervals -I $dep \
 			-o $target.temp {*}$extra 2>@ stdout >@ stdout
-		catch {file rename -force $target.temp.bai $target.bai}
+		catch {file rename -force $target.temp.[indexext $target] $target.[indexext $target]}
 		catch {file delete $target.intervals}
 		file rename -force $target.temp $target
 	}

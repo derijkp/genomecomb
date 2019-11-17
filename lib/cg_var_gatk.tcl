@@ -173,7 +173,8 @@ proc var_gatk_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set gatkrefseq [gatk_refseq_job $refseq]
-	set deps [list $bamtail $gatkrefseq $bamtail.bai {*}$deps]
+	set bamtailindex $bamtail.[indexext $bamtail]
+	set deps [list $bamtail $gatkrefseq $bamtailindex {*}$deps]
 	job ${pre}varall-$root {*}$skips -mem [job_mempercore 5G $threads] -cores $threads \
 	-deps $deps -targets {
 		${pre}varall-$root.vcf

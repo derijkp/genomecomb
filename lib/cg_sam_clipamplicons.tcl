@@ -12,7 +12,7 @@ proc cg_sam_clipamplicons {args} {
 	if {[inlist $poss -1]} {
 		error "error in amplicons file: missing fields: [list_sub {chromosome begin end outer_begin outer_end} [list_find $poss -1]]"
 	}
-	if {[file extension $file] eq ".bam"} {
+	if {[file extension $file] in ".bam .cram"} {
 		set pipe [list samtools view -h $file]
 	} else {
 		set pipe [list {*}[gzcat $file] $file]
@@ -20,7 +20,10 @@ proc cg_sam_clipamplicons {args} {
 	lappend pipe \| sam_clipamplicons $ampliconsfile {*}$poss
 	if {[file extension $outfile] eq ".bam" 
 		|| ([file extension $outfile] eq ".temp" && [file extension [file root $outfile]] eq ".bam")} {
-		lappend pipe \| samtools view -Shb - > $outfile
+		lappend pipe \| samtools view -hb - > $outfile
+	} elseif {[file extension $outfile] eq ".cram" 
+		|| ([file extension $outfile] eq ".temp" && [file extension [file root $outfile]] eq ".cram")} {
+		lappend pipe \| samtools view -h -C -T $::env(REFSEQ) - > $outfile
 	} else {
 		lappend pipe > $outfile
 	}

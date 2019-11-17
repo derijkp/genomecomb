@@ -78,9 +78,9 @@ proc cg_bamreorder {args} {
 		picard ReorderSam R=$nref I=$tempsrc O=$dest.temp2 ALLOW_INCOMPLETE_DICT_CONCORDANCE=true VALIDATION_STRINGENCY=LENIENT 2>@ stderr >@ stdout
 		if {$nref ne $ref} {file delete $nref}
 		exec samtools index $dest.temp2
-		file delete $dest.temp  $dest.temp.bai
+		file delete $dest.temp  $dest.temp.[indexext $dest]
 		file rename $dest.temp2 $dest
-		file rename $dest.temp2.bai $dest.bai
+		file rename $dest.temp2.[indexext $dest] $dest.[indexext $dest]
 	} else {
 		# new bamheader
 		unset -nocomplain chrsa
@@ -138,6 +138,6 @@ proc cg_bamreorder {args} {
 		close $o
 		exec samtools index $dest.temp
 		file rename -force $dest.temp $dest
-		file rename -force $dest.temp.bai $dest.bai
+		file rename -force $dest.temp.[indexext $dest] $dest.[indexext $dest]
 	}
 }

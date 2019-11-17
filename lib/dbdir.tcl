@@ -20,10 +20,8 @@ proc dbdir {args} {
 	}
 	set dbdir [file_absolute $dbdir]
 	# set REF_PATH for cram files
-	if {![info exists ::env(REF_PATH)]} {
-		set refseq [lindex [gzfiles $dbdir/genome_*.ifas] 0]
-		set ::env(REF_PATH) $refseq.forcram
-	}
+	set ::env(REFSEQ) [lindex [gzfiles $dbdir/genome_*.ifas] 0]
+	set ::env(REF_PATH) $::env(REFSEQ).forcram
 	return $dbdir
 }
 

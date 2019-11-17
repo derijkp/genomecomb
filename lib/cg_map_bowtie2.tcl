@@ -39,6 +39,11 @@ proc map_bowtie2_job {args} {
 		-skips {
 			set skips $value
 		}
+		-aliformat {
+			# currently ignored
+			if {$value ne "bam"} {puts stderr "map_bowtie2 ignores aliformat, bam will always be made"}
+			set aliformat $value
+		}
 	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome using bowtie2
 	}
@@ -98,7 +103,8 @@ proc map_bowtie2_job {args} {
 		file delete $resultbase.ubam $resultbase.ubam.analysisinfo
 		file delete $resultbase.sam $resultbase.sam.analysisinfo
 	}
-	job bowtie2_index-$sample -deps {$result} -targets {$result.bai} {*}$skips -code {
+	set indexext [indexext $result]
+	job bowtie2_index-$sample -deps {$result} -targets {$result.$indexext} {*}$skips -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}

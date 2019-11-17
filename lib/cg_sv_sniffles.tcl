@@ -76,10 +76,11 @@ proc sv_sniffles_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set vcffile [file root [gzroot $resultfile]].vcf
+	set bamfileindex $bamfile.[indexext $bamfile]
 	job sv_$root.vcf {*}$skips -mem [job_mempercore 1G $threads] -cores $threads \
 	-skip [list $resultfile $resultanalysisinfo] \
 	-deps {
-		$bamfile $refseq $bamfile.bai
+		$bamfile $refseq $bamfileindex
 	} -targets {
 		$vcffile $vcffile.analysisinfo
 	} -vars {

@@ -27,6 +27,18 @@ test map_bwa {map_bwa multiple} {
 	exec diff -I {@PG	ID:bwa	PN:bwa} tmp/ali.sam data/bwa.sam
 } {}
 
+test map_bwa {map_bwa cram} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
+	cg map_bwa -stack 1 -paired 1 tmp/ali.cram $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+	# chr21:42730799-42762826
+	exec samtools view -h tmp/ali.cram > tmp/ali.sam
+	cg sam2tsv tmp/ali.sam tmp/ali.sam.tsv
+	cg sam2tsv data/bwa.sam tmp/bwa.sam.tsv
+	cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv
+	exec diff -I {@PG	ID:bwa	PN:bwa} tmp/ali.sam data/bwa.sam
+} {}
+
 test map_bowtie2 {map_bowtie2 basic} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
@@ -69,7 +81,7 @@ test map_minimap2 {error missing fastq} {
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	mklink tmp/doesnotexists.fq tmp/bla.fq
 	cg map_minimap2 -stack 1 -paired 0 -preset sr tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m tmp/bla.fq
-} {*ERROR: failed to open file 'tmp/bla.fq'*} match error
+} {*ERROR: failed to open file *tmp/bla.fq*} match error
 
 test map_ngmlr {map_ngmlr basic} {
 	test_cleantmp

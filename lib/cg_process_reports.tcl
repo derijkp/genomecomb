@@ -130,7 +130,8 @@ proc process_reports_job {args} {
 			set dep2 $targetfile
 			set target $sampledir/reports/histodepth-$bamroot.tsv
 			set target2 $sampledir/reports/report_histodepth-$bamroot.tsv
-			job reports_histodepth-[file tail $bamfile] -optional 1 -deps {$dep1 ($dep2) $dep1.bai} -targets {$target $target2} -vars {bamroot bamfile} -code {
+			set indexext [indexext $bamfile]
+			job reports_histodepth-[file tail $bamfile] -optional 1 -deps {$dep1 ($dep2) $dep1.$indexext} -targets {$target $target2} -vars {bamroot bamfile} -code {
 				set targettemp [filetemp $target]
 				if {![file exists $dep2]} {
 					set targetfile {}
@@ -177,7 +178,8 @@ proc process_reports_job {args} {
 			set dep1 $bamfile
 			set dep2 $ampliconsfile
 			set target $sampledir/reports/$bamroot.histo
-			job reports_histo-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2 $dep1.bai} -targets {$target} -vars {bamroot bamfile} -code {
+			set indexext [indexext $bamfile]
+			job reports_histo-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2 $dep1.$indexext} -targets {$target} -vars {bamroot bamfile} -code {
 				set tempfile [filetemp $target]
 				set tempregionfile [filetemp $target]
 				cg regcollapse $dep2 > $tempregionfile

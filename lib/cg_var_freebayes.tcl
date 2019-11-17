@@ -111,7 +111,8 @@ proc var_freebayes_job {args} {
 	## Produce freebayes SNP calls
 	set keeppwd [pwd]
 	cd $destdir
-	set deps [list $bamtail $refseq $bamtail.bai {*}$deps]
+	set bamtailindex $bamtail.[indexext $bamtail]
+	set deps [list $bamtail $refseq $bamtailindex {*}$deps]
 	job ${pre}varall-$root {*}$skips -mem 5G -deps $deps -targets {
 		${pre}varall-$root.vcf
 	} -skip {

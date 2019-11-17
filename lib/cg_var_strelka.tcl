@@ -141,10 +141,11 @@ proc var_strelka_job {args} {
 	set resultgvcf $varallfile
 	set resultname $varallfile
 	set resultvcf [file root [gzroot $varfile]].vcf
+	set bamfileindex $bamfile.[indexext $bamfile]
 	job ${pre}varall-$root {*}$skips -mem [job_mempercore 5G $threads] -cores $threads -skip {
 		$varallfile $varfile $varfile.analysisinfo
 	} -deps [list \
-		$bamfile $refseq $bamfile.bai {*}$deps \
+		$bamfile $refseq $bamfileindex {*}$deps \
 	] -targets {
 		$resultgvcf.gz $resultgvcf.gz.tbi
 		$resultvcf.gz $resultvcf.gz.tbi
