@@ -60,7 +60,7 @@ proc targetfile_job {sampledir {dbdir {}}} {
 		}
 	}
 	if {[jobfileexists $capturefile]} {
-		set targetfile $sampledir/reg_targets-.tsv
+		set targetfile $sampledir/reg_${ref}_targets.tsv
 		job reports_targetfile -deps {$capturefile} -targets {$targetfile} -vars {sample dbdir ref} -code {
 			set capture [string trim [file_read $dep]]
 			set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
