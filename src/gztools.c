@@ -336,7 +336,7 @@ NODPRINT("maxtab=%d result->memsize=%d",maxtab,result->memsize)
 		return -1;
 	}
 	/* fill rest of tab separated elements in array */
-	while (count <= maxtab) {
+	while (count < maxtab) {
 		result->data[count++].size = size;
 	}
 	/* make array */
@@ -344,7 +344,7 @@ NODPRINT("maxtab=%d result->memsize=%d",maxtab,result->memsize)
 	register int prevsize;
 	count = 0;
 	prevsize = 0;
-	while (count <= maxtab) {
+	while (count < maxtab) {
 		int pos = result->data[count].size;
 		result->data[count].size = result->data[count].size-prevsize;
 		result->data[count].string = linePtr->string + prevsize;
