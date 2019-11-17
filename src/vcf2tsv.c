@@ -1324,9 +1324,9 @@ int main(int argc, char *argv[]) {
 		if (line->string[0] == '#') {
 			if (line->string[1] == '#') {
 				if (line->size > 9 && strncmp("FORMAT=",line->string+2,7) == 0) {
-					DStringArrayAppend(format,line->string+9,-1);
+					DStringArrayAppend(format,line->string+9,strlen(line->string+9));
 				} else if (line->size > 7 && strncmp("INFO=",line->string+2,5) == 0) {
-					DStringArrayAppend(info,line->string+7,-1);
+					DStringArrayAppend(info,line->string+7,strlen(line->string+7));
 				}
 			} else {
 				header = DStringArrayFromCharM(line->string+1,"\t");

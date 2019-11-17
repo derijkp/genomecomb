@@ -52,8 +52,8 @@ void DStringDestroy(DString *dstring) {
 	free(dstring);
 }
 
-void DStringSetSize(DString *dstring, unsigned int size) {
-	unsigned int ssize = dstring->size;
+void DStringSetSize(DString *dstring, int size) {
+	int ssize = dstring->size;
 	if (ssize > size) {ssize = size;}
 	size++;
 	if (dstring->memsize < size) {
@@ -75,13 +75,13 @@ void DStringSetSize(DString *dstring, unsigned int size) {
 }
 
 void DStringSet(DString *dstring, char *string) {
-	unsigned int size = strlen(string);
+	int size = strlen(string);
 	DStringSetSize(dstring,size);
 	strncpy(dstring->string,string,size+1);
 	dstring->size = size;
 }
 
-void DStringSetS(DString *dstring, char *string,unsigned int size) {
+void DStringSetS(DString *dstring, char *string, int size) {
 	DStringSetSize(dstring,size);
 	strncpy(dstring->string,string,size+1);
 	dstring->string[size] = '\0';
@@ -96,7 +96,7 @@ void DStringCopy(DString *dest, DString *src) {
 
 void DStringputs(DString *string,FILE *f) {
 	char *cur;
-	unsigned int size;
+	int size;
 	cur = string->string;
 	size = string->size;
 	if (size > 0) {
@@ -106,7 +106,7 @@ void DStringputs(DString *string,FILE *f) {
 
 void DStringArrayPuts(DStringArray *array,char *join,FILE *f) {
 	char *cur;
-	unsigned int size=strlen(join),pos=0,count;
+	int size=strlen(join),pos=0,count;
 	if (array->size == 0) return;
 	DStringputs(array->data+0,f);
 	for(pos = 1; pos < array->size ; pos++) {
@@ -116,7 +116,7 @@ void DStringArrayPuts(DStringArray *array,char *join,FILE *f) {
 	}
 }
 
-void charputs(char *cur,unsigned int size,FILE *f) {
+void charputs(char *cur, int size,FILE *f) {
 	if (size > 0) {
 		while(size--) {putc_unlocked(*cur++,stdout);}
 	}
@@ -124,7 +124,7 @@ void charputs(char *cur,unsigned int size,FILE *f) {
 
 void DStringPrintf(DString *dstring, char *format, ...) {
 	va_list args;
-	unsigned int size;
+	int size;
 	va_start(args, format);
 	size = vsnprintf(NULL,0, format, args);
 	va_end(args);
@@ -141,7 +141,7 @@ DString *DStringNewFromChar(char *string) {
 	return dstring;
 }
 
-DString *DStringNewFromCharS(char *string,unsigned int size) {
+DString *DStringNewFromCharS(char *string, int size) {
 	DString *dstring = DStringNew();
 	DStringSetS(dstring,string,size);
 	return dstring;
@@ -155,7 +155,7 @@ DString *DStringDup(DString *dstring) {
 
 DString *DStringNewFromInt(int i) {
 	DString *dstring = DStringNew();
-	unsigned int size=snprintf(NULL,0,"%d",i);
+	int size=snprintf(NULL,0,"%d",i);
 	DStringSetSize(dstring,size);
 	sprintf(dstring->string,"%d",i);
 	return dstring;
@@ -430,14 +430,14 @@ char *Loc_ChrString(DString *ds) {
 }
 
 void DStringAppend(DString *dstring, char *string) {
-	unsigned int size = strlen(string);
+	int size = strlen(string);
 	int nsize = dstring->size + size;
 	DStringSetSize(dstring,nsize);
 	strncpy(dstring->string+dstring->size,string,size+1);
 	dstring->size = nsize;
 }
 
-void DStringAppendS(DString *dstring, char *string,unsigned int size) {
+void DStringAppendS(DString *dstring, char *string, int size) {
 	int nsize = dstring->size + size;
 	DStringSetSize(dstring,nsize);
 	strncpy(dstring->string+dstring->size,string,size+1);
@@ -488,7 +488,7 @@ void SkipLine(FILE *f1) {
 	}
 }
 
-void InitBuffer(Buffer *buffer,unsigned int size) {
+void InitBuffer(Buffer *buffer, int size) {
 	buffer->memsize = size;
 	buffer->data = (char *)malloc(size+1);
 	buffer->pos = buffer->data;
@@ -542,7 +542,7 @@ NODPRINT("read buffer %d",buffer->size);
 	return size;
 }
 
-DStringArray *DStringArrayNew(unsigned int size) {
+DStringArray *DStringArrayNew(int size) {
 	DStringArray *dstringarray;
 	int i;
 	dstringarray = (DStringArray *)malloc(1*sizeof(DStringArray));
@@ -556,7 +556,7 @@ DStringArray *DStringArrayNew(unsigned int size) {
 	return dstringarray;
 }
 
-DStringArray *DStringArrayAppend(DStringArray *dstringarray,char *string,unsigned int size) {
+DStringArray *DStringArrayAppend(DStringArray *dstringarray,char *string,int size) {
 	if (dstringarray->size == dstringarray->memsize) {
 		DString *temp = NULL;
 		int oldmemsize = dstringarray->memsize,i;
@@ -637,7 +637,7 @@ DStringArray *DStringArrayRange(DStringArray *dstringarray,int start, int end) {
 	return result;	
 }
 
-DStringArray *DStringArraySet(DStringArray *dstringarray,int pos,char *string,unsigned int size) {
+DStringArray *DStringArraySet(DStringArray *dstringarray,int pos,char *string,int size) {
 	int i;
 	if (pos >= dstringarray->memsize) {
 		dstringarray->memsize = pos+1;
@@ -654,7 +654,7 @@ DStringArray *DStringArraySet(DStringArray *dstringarray,int pos,char *string,un
 	return dstringarray;
 }
 
-int DStringArraySearch(DStringArray *dstringarray,char *string,unsigned int size) {
+int DStringArraySearch(DStringArray *dstringarray,char *string,int size) {
 	DString *astring;
 	int i;
 	for (i = 0; i < dstringarray->size ; i++) {

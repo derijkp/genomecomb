@@ -15,22 +15,22 @@
 #define DStringArrayGet(dstringarray,pos) (dstringarray->data+pos)
 
 typedef struct DString {
-	unsigned int memsize;
-	unsigned int size;
+	int memsize;
+	int size;
 	char *string;
 	char staticspace[DSTRING_STATICLEN];
 } DString;
 
 typedef struct DStringArray {
 	DString *data;
-	unsigned int size;
-	unsigned int memsize;
+	int size;
+	int memsize;
 	DString *datablock;
 } DStringArray;
 
 typedef struct Buffer {
-	unsigned int memsize;
-	unsigned int size;
+	int memsize;
+	int size;
 	char *data;
 	char *pos;
 } Buffer;
@@ -41,38 +41,38 @@ typedef struct Buffer {
 void DStringInit(DString *dstring);
 DString *DStringNew();
 DString *DStringNewFromChar(char *string);
-DString *DStringNewFromCharS(char *string,unsigned int size);
+DString *DStringNewFromCharS(char *string, int size);
 DString *DStringNewFromInt(int i);
 DString *DStringEmtpy();
 DString *DStringDup(DString *dstring);
 void DStringDestroy(DString *dstring);
 void DStringClear(DString *dstring);
-void DStringSetSize(DString *dstring, unsigned int size);
+void DStringSetSize(DString *dstring, int size);
 void DStringSet(DString *dstring, char *string);
-void DStringSetS(DString *dstring, char *string, unsigned int size);
+void DStringSetS(DString *dstring, char *string, int size);
 void DStringPrintf(DString *dstring, char *format, ...);
 void DStringCopy(DString *dest, DString *src);
 void DStringputs(DString *string,FILE *f);
 void DStringArrayPuts(DStringArray *array,char *join,FILE *f);
-void charputs(char *cur,unsigned int size,FILE *f);
+void charputs(char *cur, int size,FILE *f);
 int DStringCompare(DString *a, DString *b);
 int DStringLocCompare(DString *a, DString *b);
 char *Loc_ChrString(DString *ds);
 void DStringAppend(DString *dstring, char *string);
-void DStringAppendS(DString *dstring, char *string,unsigned int size);
+void DStringAppendS(DString *dstring, char *string, int size);
 int DStringGetLine(DString *dstring,	FILE *f1);
 void SkipLine(FILE *f1);
 
-void InitBuffer(Buffer *buffer,unsigned int size);
+void InitBuffer(Buffer *buffer, int size);
 void DelBuffer(Buffer *buffer);
 int DStringGetLine_b(DString *linePtr,	FILE *f1,Buffer *buffer);
 
-DStringArray *DStringArrayNew(unsigned int size);
+DStringArray *DStringArrayNew( int size);
 DStringArray *DStringArrayFromChar(char *string,char sep);
 DStringArray *DStringArrayFromCharM(char *string,char *seps);
-DStringArray *DStringArrayAppend(DStringArray *dstringarray,char *string,unsigned int size);
-DStringArray *DStringArraySet(DStringArray *dstringarray,int pos,char *string,unsigned int size);
-int DStringArraySearch(DStringArray *dstringarray,char *string,unsigned int size);
+DStringArray *DStringArrayAppend(DStringArray *dstringarray,char *string, int size);
+DStringArray *DStringArraySet(DStringArray *dstringarray,int pos,char *string, int size);
+int DStringArraySearch(DStringArray *dstringarray,char *string, int size);
 DStringArray *DStringArrayRange(DStringArray *dstringarray,int start, int end);
 #define DStringArrayGet(dstringarray,pos) (dstringarray->data+pos)
 void DStringArrayDestroy(DStringArray *dstringarray);
