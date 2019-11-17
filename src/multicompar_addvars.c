@@ -157,12 +157,12 @@ int main(int argc, char *argv[]) {
 		pos = atoi(argv[i++]);
 		fieldannotlist[pos].type = 'r';
 		regf = OpenVarfile(argv[i++],1);
-		varfile_next(regf,1);
 		fieldannotlist[pos].regf = regf;
 		fieldannotlist[pos].regfieldpos = atoi(argv[i++]);
 		if (fieldannotlist[pos].regfieldpos > regf->max) {
 			regf->max = fieldannotlist[pos].regfieldpos;
 		}
+		varfile_next(regf,1);
 	}
 	orikeepposs = (int *)malloc(orikeepsize*sizeof(int));
 	/* orivarfile */
