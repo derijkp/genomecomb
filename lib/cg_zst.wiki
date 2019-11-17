@@ -1,7 +1,7 @@
 = zst =
 
 == Format ==
-cg zst ?options? file ...
+cg zst ?options? ?file? ...
 
 == Summary ==
 Compresses files using zstd
@@ -9,12 +9,15 @@ Compresses files using zstd
 == Description ==
 The given files are compressed using zstd, and the original uncompressed
 files are removed (by default). Files already compressed using another
-method, are recompressed using zstd. zstd is a fast compression method, at
-the default compression level (8), it compresses and decompresses an order
-of magnitude faster than gzip, while also providing substantially better
-compression. At the highest compression levels, zstd can rival bzip2/xz
-for compression, though it will then be substantially slower at
-compression (than gzip). Decompression is allways fast.
+method, are recompressed using zstd. If no files are given, data from
+stadin is compressed and output to stdout
+
+zstd is a fast compression method, at the default compression level (8),
+it compresses and decompresses an order of magnitude faster than gzip,
+while also providing substantially better compression. At the highest
+compression levels, zstd can rival bzip2/xz for compression, though it
+will then be substantially slower at compression (than gzip).
+Decompression is allways fast.
 
 == Options ==
 supports options:
