@@ -143,8 +143,8 @@ clean:
 ../bin$(ARCH)/samcat$(EXEEXT): samcat.c $(TOOLS)
 	$(GCC) samcat.c tools.c $(CFLAGS) -o ../bin$(ARCH)/samcat$(EXEEXT)
 
-../bin$(ARCH)/sam2tsv$(EXEEXT): sam2tsv.c $(TOOLS)
-	$(GCC) sam2tsv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/sam2tsv$(EXEEXT)
+../bin$(ARCH)/sam2tsv$(EXEEXT): sam2tsv.c $(TOOLS) $(HASHTOOLS)
+	$(GCC) sam2tsv.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/sam2tsv$(EXEEXT)
 
 ../bin$(ARCH)/tsv2sam$(EXEEXT): tsv2sam.c $(TOOLS)
 	$(GCC) tsv2sam.c tools.c $(CFLAGS) -o ../bin$(ARCH)/tsv2sam$(EXEEXT)

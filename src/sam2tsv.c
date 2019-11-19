@@ -15,6 +15,7 @@
 #include <limits.h>
 #include "tools.h"
 #include "gztools.h"
+#include "hash.h"
 #include "debug.h"
 
 inline int min ( int a, int b ) { return a < b ? a : b; }
@@ -142,18 +143,68 @@ int parse_cigar(Cigar *cigar,char *string) {
 }
 
 int main(int argc, char *argv[]) {
+	Hash_table *hashtable;
 	FILE *f1=stdin;
 	Cigar cigar;
 	DStringArray *result1=NULL;
-	DString *line1 = NULL,*linekeep = NULL;
+	DStringArray *fieldsa=NULL;
+	DString *line1 = NULL,*linekeep = NULL, *header = NULL;
 	size_t read;
 	unsigned int curpos=0, flag;
 	unsigned int numfields,pos1;
-	int start,end;
-	char *cur;
-	if ((argc != 1)) {
-		fprintf(stderr,"Format is: sam2tsv\n");
+	int start,end,fpos,contig=0;
+	char *fields = NULL, *cur,*keep;
+	if (argc < 1) {
+		fprintf(stderr,"Format is: sam2tsv ?field? ...\n");
 		exit(EXIT_FAILURE);
+	}
+	/* fields data */
+	fprintf(stdout,"#filetype tsv/samfile\n#fileversion	0.99\n#fields	table\n#fields	field	number	type	description\n#fields	chromosome	1	String	Chromosome/Contig\n#fields	begin	1	Integer	Begin of feature (0 based - half open)\n#fields	end	1	Integer	End of feature (0 based - half open)\n#fields	type	1	String	Type of feature (snp,del,ins,...)\n#fields	ref	1	String	Reference sequence, can be a number for large features\n#fields	alt	1	String	Alternative sequence, can be a number for large features\n#fields	name	1	String	name of feature\n#fields	quality	1	Float	Quality score of feature\n#fields	filter	1	String	Filter value\n#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype\n#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype\n#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced\n#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant\n#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased\n#fields	genotypes	H	Integer	Genotypes\n#fields	alleledepth_ref	1	Integer	Allelic depths for the ref allele\n#fields	alleledepth	A	Integer	Allelic depths for the alt alleles in the order listed\n#fields	frequency	A	Float	Allele Frequency\n");
+	header = DStringNewFromChar("chromosome\tbegin\tend\tstrand\tqname\tqstart\tqend\tmapquality\tref2\tbegin2\tstrand2\ttlen\tpair\tproperpair\tunmapped\tmateunmapped\tread\tsecondary\tqcfail\tduplicate\tsupplementary\tcigar\tseqlen\tseq\tquality\tother");
+	if (argc == 1) {
+		hashtable = NULL;
+		fpos = 0;
+	} else {
+		char *field,*type,*descr,*typestring;
+		int descrsize,i,size;
+		hashtable = hash_init_size(500);
+		/* intentionally not using 0, so dstring_hash_get can return NULL if not present */
+		fpos=1;
+		cur = fields;
+		i = 2;
+		while (i <= argc) {
+			cur = argv[i-1];
+			field = cur;
+			while (*cur != '\0' && *cur != ':' && *cur != ' ') cur++;
+			if (*cur != '\0') cur++;
+			type = cur;
+			while (*cur != '\0' && *cur != ':' && *cur != ' ') cur++;
+			if (*cur != '\0') cur++;
+			descr = cur;
+			while (*cur != '\0' && *cur != ':') cur++;
+			descrsize = cur - descr;
+			if (*cur != '\0') cur++;
+			dstring_hash_set(hashtable,DStringNewFromCharS(field,type-field-1),(void *)(long int)fpos++);
+			if (*type == 'i') {
+				typestring = "Integer";
+			} else if (*type == 'Z') {
+				typestring = "String";
+			} else if (*type == 'f') {
+				typestring = "Float";
+			} else {
+				typestring = "String";
+			}
+			size = (type-field-1);
+			fprintf(stdout,"#fields\t%*.*s\t1\t%s\t%*.*s\n",
+				size,size,field,
+				typestring,
+				descrsize,descrsize,descr);
+			DStringAppend(header,"\t");
+			DStringAppendS(header,field,type-field-1);
+			i++;
+		}
+		fieldsa = DStringArrayNew(fpos+1);
+
 	}
 	/* allocate */
 	cigar.memsize = 0;
@@ -170,10 +221,12 @@ int main(int argc, char *argv[]) {
 	}
 	/* init amplicons */
 	DStringSplitTab(line1,10,result1,0,&numfields);
-	fprintf(stdout,"chromosome\tbegin\tend\tstrand\tqname\tqstart\tqend\tmapquality\tref2\tbegin2\tstrand2\ttlen");
-	fprintf(stdout,"\tpair\tproperpair\tunmapped\tmateunmapped\tread\tsecondary\tqcfail\tduplicate\tsupplementary");
-	fprintf(stdout,"\tcigar\tseqlen\tseq\tquality\tother\n");
+	DStringAppend(header,"\n");
+	DStringputs(header,stdout);
 	while (1) {
+		DString *key = DStringNew();
+		char *field;
+		int i,other;
 		pos1++;
 		sscanf(result1->data[1].string,"%d",&(flag));
 		sscanf(result1->data[3].string,"%d",&start);
@@ -232,9 +285,50 @@ int main(int argc, char *argv[]) {
 		DStringputs(result1->data+10,stdout); /* qual */
 		fputc('\t',stdout);
 		cur=result1->data[11].string;
+		i = 1;
+		while (i <= fpos) {
+			DStringSetS(fieldsa->data+i,"",0);
+			i++;
+		}
+		keep = cur;
+		other = 0;
 		while (*cur != '\0') {
-			if (*cur == '\t') {fputc(' ',stdout);} else {fputc(*cur,stdout);}
-			cur++;
+			char *value;
+			void *v = NULL;
+			field = cur;
+			while (*cur != ':' && *cur != '\0') cur++;
+			DStringSetS(key,field,cur-field);
+			if (hashtable != NULL) {
+				v = dstring_hash_get(hashtable,key);
+				/* skip type */
+				if (*cur != '\0') cur++;
+				while (*cur != ':' && *cur != '\0') cur++;
+				if (*cur != '\0') cur++;
+			}
+			/* process value */
+			if (v != NULL) {
+				i = (int)(long int)v;
+				value = cur;
+				while (*cur != '\t' && *cur != '\0') cur++;
+				DStringSetS(fieldsa->data + i,value,cur-value);
+				if (*cur != '\0') cur++;
+			} else {
+				if (other) fputc(' ',stdout);
+				other = 1;
+				cur = keep;
+				while (*cur != '\t' && *cur != '\0') {
+					fputc(*cur,stdout);
+					cur++;
+				}
+				if (*cur != '\0') cur++;
+			}
+			keep = cur;
+		}
+		i = 1;
+		while (i <= fpos) {
+			fputc('\t',stdout);
+			DStringputs(fieldsa->data + i,stdout); /* qual */
+			i++;
 		}
 		fputc('\n',stdout);
 		if (DStringGetTab(line1,f1,10,result1,0,&numfields)) break;

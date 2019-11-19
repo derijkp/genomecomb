@@ -1,0 +1,26 @@
+= sam2tsv =
+
+== Format ==
+cg sam2tsv ?options? ?infile? ?outfile?
+
+== Summary ==
+Converts data in sam format to [[tsv]] format. The original sam header is
+included in the comments. Extra fields in the sam file are kept as
+field:type:value, but put together as a list in a column named other.
+Optionally the values for some extra fields can be split into different
+columns using the -fields option.
+
+== Arguments ==
+; **infile**: file to be converted, if not given, uses stdin. File may be compressed.
+; **outfile**: write results to outfile, if not given, uses stdout
+
+== Options ==
+; -f fields: list of fields to go in separate columns. The list can eiter
+contain just the fieldname, in which case type and description are taken
+from a number of known fields. If the field is unknown, type will be
+String(Z) and desciption empty. You can also specify type and field in the
+list as field:type:description where type is in the sam format (i,Z,..)
+; -addfield field: add one field to fields; this option can be given multiple times.
+
+== Category ==
+Format Conversion

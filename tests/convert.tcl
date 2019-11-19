@@ -999,6 +999,12 @@ test sam2tsv {sam2tsv} {
 	exec diff tmp/bwa.tsv data/bwa.tsv
 } {}
 
+test sam2tsv {sam2tsv split extra fields} {
+	exec samtools view -h data/bwa.bam > tmp/bwa.sam
+	cg sam2tsv -fields {NM MD AS XS RG} tmp/bwa.sam tmp/bwa.tsv
+	exec diff tmp/bwa.tsv data/bwa_splitextra.tsv
+} {}
+
 test sam2tsv {sam2tsv handles bam} {
 	cg sam2tsv data/bwa.bam tmp/bwa.tsv
 	exec diff tmp/bwa.tsv data/bwa.tsv
@@ -1025,6 +1031,28 @@ test sam2tsv {sam2tsv cases} {
 		r005	99	chr1	100	30	4H2S2M2I2M4S2H	*	0	12	GATAAAGGATAG	*
 	}]\n
 	file_write tmp/expected.tsv [deindent {
+		#filetype tsv/samfile
+		#fileversion	0.99
+		#fields	table
+		#fields	field	number	type	description
+		#fields	chromosome	1	String	Chromosome/Contig
+		#fields	begin	1	Integer	Begin of feature (0 based - half open)
+		#fields	end	1	Integer	End of feature (0 based - half open)
+		#fields	type	1	String	Type of feature (snp,del,ins,...)
+		#fields	ref	1	String	Reference sequence, can be a number for large features
+		#fields	alt	1	String	Alternative sequence, can be a number for large features
+		#fields	name	1	String	name of feature
+		#fields	quality	1	Float	Quality score of feature
+		#fields	filter	1	String	Filter value
+		#fields	alleleSeq1	1	String	allele present on first chromosome/haplotype
+		#fields	alleleSeq2	1	String	allele present on second chromosome/haplotype
+		#fields	sequenced	1	String	sequenced status: v = variant, r = reference (i.e. not this variant), u = unsequenced
+		#fields	zyg	1	String	Zygosity status: m = homozygous, t = heterozygous, r = reference, o = other variant, c = compound, i.e. genotype has this variant and other variant
+		#fields	phased	1	Integer	Phased status: 0 if not phased, other integer if phased
+		#fields	genotypes	H	Integer	Genotypes
+		#fields	alleledepth_ref	1	Integer	Allelic depths for the ref allele
+		#fields	alleledepth	A	Integer	Allelic depths for the alt alleles in the order listed
+		#fields	frequency	A	Float	Allele Frequency
 		#@HD	VN:1.3	SO:coordinate
 		#@SQ	SN:chr1	LN:249250621
 		#@SQ	SN:chr2	LN:243199373

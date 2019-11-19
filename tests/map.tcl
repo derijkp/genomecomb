@@ -33,11 +33,13 @@ test map_bwa {map_bwa cram} {
 	cg map_bwa -stack 1 -paired 1 tmp/ali.cram $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
 	exec samtools view -h tmp/ali.cram > tmp/ali.sam
-	cg sam2tsv tmp/ali.sam tmp/ali.sam.tsv
-	cg sam2tsv data/bwa.sam tmp/bwa.sam.tsv
+	cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam tmp/ali.sam.tsv
+	cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam tmp/bwa.sam.tsv
 	cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv
-	exec diff -I {@PG	ID:bwa	PN:bwa} tmp/ali.sam data/bwa.sam
-} {}
+	catch {
+		exec diff -I {@PG	ID:bwa	PN:bwa} tmp/ali.sam data/bwa.sam
+	}
+} 0
 
 test map_bowtie2 {map_bowtie2 basic} {
 	test_cleantmp
@@ -66,8 +68,10 @@ test map_minimap2 {map_minimap2 paired} {
 	cg map_minimap2 -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
 	exec samtools view -h tmp/ali.bam > tmp/ali.sam
-	exec diff -I {@PG	ID:minimap2	PN:minimap2} tmp/ali.sam data/minimap2-p.sam
-} {}
+	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms de rl} tmp/ali.sam tmp/ali.tsv
+	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms de rl} data/minimap2-p.sam tmp/expected.tsv
+	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
+} 0
 
 test map_minimap2 {error dir as refseq} {
 	test_cleantmp
