@@ -584,7 +584,7 @@ test select "error missing quote empty$dboptt" {
 test select "brokentable$dboptt" {
 	global dbopt
 	exec cg select {*}$dbopt -q {$other == "cc"} data/brokentable.tsv
-} {wrong number of fields for line} regexp error
+} {*not enough fields (3 where at least 4 are needed) for line*} match error
 
 test select "-q use calculated column from -f$dboptt" {
 	global dbopt

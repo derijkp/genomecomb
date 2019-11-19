@@ -270,7 +270,7 @@ test query {query 23 b} {
 test query {liftover} {
 	cd $::smalltestdir/testqueries ; file delete temp.tsv temp2.tsv
 	exec cg liftover annottestcompar.tsv.zst temp.tsv /complgen/refseq/liftover/hg18ToHg19.over.chain
-	cg select -q {$ROW < 100} temp.tsv temp2.tsv
+	cg select -overwrite 1 -q {$ROW < 100} temp.tsv temp2.tsv
 	cg tsvdiff temp2.tsv answers/liftover.tsv.zst
 } {}
 
