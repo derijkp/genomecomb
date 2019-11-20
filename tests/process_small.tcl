@@ -91,7 +91,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 	# if you want to see output while running
 	cg process_project {*}$::dopts -split 1 -reports -predictgender \
 		-minfastqreads 10 -amplicons tmp/mastr_mx2_cram/samplicons-wgs2.tsv -extra_reports_mastr 1 \
-		-realign 0 -varcallers {gatkh strelka} -aliformat cram -extra_reports_mastr gatkh \
+		-varcallers {gatkh strelka} -aliformat cram -extra_reports_mastr gatkh \
 		tmp/mastr_mx2_cram $::refseqdir/hg19 >& tmp/mastr_mx2_cram.log
 	# check vs expected
 	set result {}

@@ -59,7 +59,6 @@ proc bam_clean_job {args} {
 		lappend skips -skip [list $dir/$pre-$temproot.$aliformat $dir/$pre-$temproot.$aliformat.analysisinfo]
 	}
 	if {$realign ne "0"} {
-		if {$aliformat eq "cram"} {error "realign not supported for cram"}
 		lappend cleanuplist $dir/$pre-$temproot.$aliformat $dir/$pre-$temproot.$aliformat.$extindex
 		set temproot r$temproot
 		lappend skips -skip [list $dir/$pre-$temproot.$aliformat $dir/$pre-$temproot.$aliformat.analysisinfo]
@@ -122,13 +121,20 @@ proc bam_clean_job {args} {
 		} else {
 			job bamrealign-$root -mem [job_mempercore 10G 2] -cores 2 -deps $deps \
 			-targets {$dir/$pre-r$root.$aliformat $dir/$pre-r$root.$aliformat.analysisinfo} \
-			-vars {gatkrefseq refseq gatk realignopts regionfile} {*}$skips -code {
+			-vars {gatkrefseq refseq gatk realignopts regionfile aliformat} {*}$skips -code {
 				analysisinfo_write $dep $target realign gatk realign_version [version gatk3]
 				if {$regionfile ne ""} {
 					set bedfile [tempbed $regionfile $refseq]
 					lappend realignopts -L $bedfile
 				}
-				gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
+				if {$aliformat eq "cram"} {
+					set tempfile [tempfile].bam
+					exec samtools view -b -u $dep -o $tempfile
+					exec samtools index $tempfile
+					set dep $tempfile
+				}
+				gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} RealignerTargetCreator \
+					-R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stderr >@ stdout
 				if {[loc_compare [version gatk3] 2.7] >= 0} {
 					set extra {--filter_bases_not_stored}
 				} else {
@@ -138,13 +144,17 @@ proc bam_clean_job {args} {
 				gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} IndelRealigner -R $gatkrefseq \
 					-targetIntervals $target.intervals -I $dep \
 					-o $target.temp {*}$extra 2>@ stderr >@ stdout
-				catch {file rename -force $target.temp.$extindex $target.$extindex}
-				catch {file delete $target.intervals}
+				if {$aliformat eq "cram"} {
+					file rename $target.temp $target.temp.bam
+					exec samtools view -C $target.temp.bam -T $::env(REFSEQ) -o $target.temp
+					file delete $target.temp.bam
+					file delete $tempfile
+				}
+				# catch {file delete $target.intervals}
 				file rename -force $target.temp $target
 			}
 		}
 		set root r$root
-putsvars bamrealignindex root
 		job bamrealign_index-$root -optional 1 -deps {$dir/$pre-$root.$aliformat} {*}$skips -targets {$dir/$pre-$root.$aliformat.$extindex} -code {
 			exec samtools index $dep >@ stdout 2>@ stderr
 			puts "making $target"
