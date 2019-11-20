@@ -21,7 +21,7 @@ proc cg_indexcol {args} {
 				select -v -$step -f $fields -sh $histofile.temph $file $histofile.temp
 			progress stop
 			progress next "Sorting (no progress shown)"
-			exec gnusort8 -N $histofile.temp | uniq > $histofile.temp2
+			exec gnusort8 -B $histofile.temp | uniq > $histofile.temp2
 			progress next "Sorting finished"
 			progress stop
 			file delete $histofile.temp $histofile.temph
@@ -159,7 +159,7 @@ proc cg_index {args} {
 			gzclose $f
 			foreach o $os {close $o}
 			foreach field $header {
-				exec gnusort8 -N $colsdir/$field.col | uniq -c | gnusort8 -n > $colsdir/$field.col.histo
+				exec gnusort8 -B $colsdir/$field.col | uniq -c | gnusort8 -n > $colsdir/$field.col.histo
 			}
 		}
 	}

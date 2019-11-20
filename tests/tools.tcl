@@ -222,7 +222,7 @@ proc write_sam {file data} {
 	set o [open $file w]
 	puts $o [deindent $::sam_header]
 	close $o
-	exec gnusort8 -t \t -N -s -k3,3 -k4,4 -k1,1 $tempfile >> $file
+	exec gnusort8 -t \t -B -s -k3,3 -k4,4 -k1,1 $tempfile >> $file
 }
 
 proc write_vcf {file data {extracomment {}} {extrainfo {}}} {

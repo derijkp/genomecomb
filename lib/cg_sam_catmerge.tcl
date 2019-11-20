@@ -130,7 +130,7 @@ proc sam_catmerge_job {args} {
 				set header [sam_header_addm5 $header]
 				set o [open "| samtools view -h --threads $threads -C -T $::env(REFSEQ) > $target.temp -" w]
 				puts $o [string trim $header]
-				exec samcat -header {} {*}$deps | gnusort8 -T [scratchdir] -t \t -s -k3,3N -k4,4N --parallel $threads >@ $o
+				exec samcat -header {} {*}$deps | gnusort8 -T [scratchdir] -t \t -s -k3,3B -k4,4B --parallel $threads >@ $o
 				close $o
 			} else {
 				exec samcat {*}$deps | samtools sort {*}$sortopt --threads $threads -T [scratchfile] -O $outputformat -o $target.temp 2>@ stderr

@@ -35,7 +35,7 @@ proc cg_sortvcf {args} {
 	}
 	puts $o [join $c \n]
 	puts $o \#$header
-	chanexec $f $o "gnusort8 -T \"[scratchdir]\" -t \\t -s -N"
+	chanexec $f $o "gnusort8 -T \"[scratchdir]\" -t \\t -s -B"
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {gzclose $f}}
 }

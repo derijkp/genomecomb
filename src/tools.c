@@ -192,7 +192,8 @@ int naturalcompare (char const *a, char const *b,int alen,int blen) {
 			if (!blen || *right == '\0') {return secondaryDiff;} else {break;}
 		}
 		if (!blen || *right == '\0') {break;}
-		if (diff != 0) {	
+		if (diff != 0) {
+			if (*left == '*') {return -1;} else if (*right == '*') {return 1;}
 			/* only sort on case if no other diff -> keep secondaryDiff for case diff */
 			if (isupper(UCHAR(*left)) && islower(UCHAR(*right))) {
 				diff = tolower(*left) - *right;

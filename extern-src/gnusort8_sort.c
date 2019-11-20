@@ -225,6 +225,7 @@ struct keyfield
   bool natural;			/* Flag for natural comparison.  Handle
                                    strings including digits with optional decimal
                                    point, but no exponential notation. */
+  bool naturalbio;			/* same as natural, but * sorts last. */
   bool traditional_used;	/* Traditional key option format is used. */
   struct keyfield *next;	/* Next keyfield to try. */
 };
@@ -452,6 +453,7 @@ Ordering options:\n\
       fputs (_("\
   -n, --numeric-sort          compare according to string numerical value\n\
   -N, --natural-sort          compare according to combined string-numerical value in natural way\n\
+  -B, --naturalbio-sort       compare according to combined string-numerical value in natural way, but * is sorted last (e.g. for sorting sam files)\n\
   -R, --random-sort           shuffle, but group identical keys.  See shuf(1)\n\
       --random-source=FILE    get random bytes from FILE\n\
   -r, --reverse               reverse the result of comparisons\n\
@@ -551,7 +553,7 @@ enum
   PARALLEL_OPTION
 };
 
-static char const short_options[] = "-bcCdfghik:mMnNo:rRsS:t:T:uVy:z";
+static char const short_options[] = "-bcCdfghik:mMnNBo:rRsS:t:T:uVy:z";
 
 static struct option const long_options[] =
 {
@@ -569,6 +571,7 @@ static struct option const long_options[] =
   {"month-sort", no_argument, NULL, 'M'},
   {"numeric-sort", no_argument, NULL, 'n'},
   {"natural-sort", no_argument, NULL, 'N'},
+  {"naturalbio-sort", no_argument, NULL, 'B'},
   {"human-numeric-sort", no_argument, NULL, 'h'},
   {"version-sort", no_argument, NULL, 'V'},
   {"random-sort", no_argument, NULL, 'R'},
@@ -613,6 +616,7 @@ static char const check_types[] =
   _st_("month",           'M') \
   _st_("numeric",         'n') \
   _st_("natural",         'N') \
+  _st_("naturalbio",      'B') \
   _st_("random",          'R') \
   _st_("version",         'V')
 
@@ -2226,6 +2230,180 @@ naturalcompare (char const *a, char const *b)
 	return 0;
 }
 
+/* 
+    "naturalbio" sort order: deals with mixed alphabetic and numbers, but sorts * last
+ */
+#define UCHAR(c) ((unsigned char) (c))
+#define NATDIGIT(c) (isdigit(UCHAR(*(c))))
+static int
+naturalcomparebio (char const *a, char const *b)
+{
+	int diff, zeros, digitleft,digitright;
+	int secondaryDiff = 0,prezero,invert,comparedigits;
+	char *left=NULL,*right=NULL,*keep=NULL;
+	while (blanks[to_uchar (*a)])
+	  a++;
+	while (blanks[to_uchar (*b)])
+	  b++;
+	left = (char *)a;
+	right = (char *)b;
+/* fprintf(stdout,"%s <> %s\n",a,b);fflush(stdout); */
+	while (1) {
+		diff = *left - *right;
+		if (*left == '\0') {
+			if (*right == '\0') {return secondaryDiff;} else {break;}
+		}
+		if (*right == '\0') {break;}
+		if (*left != *right) {
+			if (*left == '*') {return 1;} else if (*right == '*') {return -1;}
+			if (diff) {	
+				/* only sort on case if no other diff -> keep secondaryDiff for case diff */
+				if (isupper(UCHAR(*left)) && islower(UCHAR(*right))) {
+					diff = tolower(*left) - *right;
+					if (diff) {
+						break;
+					} else if (secondaryDiff == 0) {
+						secondaryDiff = -1;
+					}
+				} else if (isupper(UCHAR(*right)) && islower(UCHAR(*left))) {
+					diff = *left - tolower(UCHAR(*right));
+					if (diff) {
+						break;
+					} else if (secondaryDiff == 0) {
+						secondaryDiff = 1;
+					}
+				} else if (*right == '+') {
+					if (*left == '-') {
+						if (NATDIGIT(left+1) && NATDIGIT(right+1)) {return -1;} else {return 1;}
+					} else if (NATDIGIT(right+1) && NATDIGIT(left)) {
+						secondaryDiff = -1;
+						right++;
+						continue;
+					}
+				} else if (*left == '+') {
+					if (*right == '-') {
+						if (NATDIGIT(left+1) && NATDIGIT(right+1)) {return 1;} else {return -1;}
+					} else if (NATDIGIT(left+1) && NATDIGIT(right)) {
+						secondaryDiff = 1;
+						left++;
+						continue;
+					}
+				} else {
+					break;
+				}
+			}
+		}
+		left++;
+		right++;
+	}
+	digitright = NATDIGIT(right);
+	digitleft = NATDIGIT(left);
+	if (*left == '-') {
+		if (digitright) {
+			return -1;
+		} else {
+			return(*left - *right);
+		}
+	} else if (*right == '-' && digitleft) {
+		if (digitleft) {
+			return 1;
+		} else {
+			return(*left - *right);
+		}
+	}
+/* fprintf(stdout,"digit %s <> %s: %d, %d\n",left,right,digitleft,digitright);fflush(stdout); */
+
+	comparedigits = 1;
+	if (!digitright) {
+		if (!digitleft || (right == b) || !NATDIGIT(right-1)) {comparedigits = 0;}
+	}
+	if (!digitleft) {
+		if ((left == a) || !NATDIGIT(left-1)) {comparedigits = 0;}
+	}
+
+	if (!comparedigits) {
+		if (diff == 0) {return secondaryDiff;} else {return diff;}
+	}
+	/*
+	 * There are decimal numbers embedded in the two
+	 * strings.  Compare them as numbers, rather than
+	 * strings.  If one number has more leading zeros than
+	 * the other, the number with more leading zeros sorts
+	 * later, but only as a secondary choice.
+	 */
+	keep = left;
+	prezero = 1;
+	while (--keep > a) {
+		if (!NATDIGIT(keep)) break;
+		if (*keep != '0') prezero = 0;
+	}
+	if (*keep == '.') {
+		while (--keep > a) {
+			if (!NATDIGIT(keep)) break;
+		}
+		if (*keep == '-') {
+			invert = -1;
+		} else {
+			invert = 1;
+		}
+		if (diff == 0) {return invert*secondaryDiff;} else {return invert*diff;}
+	} else {
+		if (*keep == '-') {
+			invert = -1;
+		} else {
+			if (NATDIGIT(keep) && (*keep != '0')) {prezero = 0;}
+			invert = 1;
+		}
+		if (prezero) {
+			if (*left == '0') {
+				secondaryDiff = 1;
+				while (*left == '0') {
+					left++;
+				}
+			} else if (*right == '0') {
+				secondaryDiff = -1;
+				while (*right == '0') {
+					right++;
+				}
+			}
+		}
+		/*
+		 * The code below compares the numbers in the two
+		 * strings without ever converting them to integers.  It
+		 * does this by first comparing the lengths of the
+		 * numbers and then comparing the digit values.
+		 */
+		diff = 0;
+		while (1) {
+			if (diff == 0) {
+				diff = *left - *right;
+			}
+			if (!NATDIGIT(right)) {
+				if (NATDIGIT(left)) {
+					return invert;
+				} else {
+					/*
+					 * The two numbers have the same length. See
+					 * if their values are different.
+					 */
+	
+					if (diff != 0) {
+						return invert*diff;
+					} else {
+						return invert*secondaryDiff;
+					}
+				}
+			} else if (!NATDIGIT(left)) {
+				return -1*invert;
+			}
+			right++;
+			left++;
+		}
+	}
+	fprintf(stderr,"shouldnt get here\n"); exit(1);
+	return 0;
+}
+
 /* Return an integer in 1..12 of the month name MONTH.
    Return 0 if the name in S is not recognized.  */
 
@@ -2564,6 +2742,7 @@ default_key_compare (struct keyfield const *key)
             || key->skipeblanks
             || key_numeric (key)
             || key->natural
+            || key->naturalbio
             || key->month
             || key->version
             || key->random
@@ -2680,6 +2859,7 @@ key_warnings (struct keyfield const *gkey, bool gkey_only)
       ugkey.month &= !key->month;
       ugkey.numeric &= !key->numeric;
       ugkey.natural &= !key->natural;
+      ugkey.naturalbio &= !key->naturalbio;
       ugkey.general_numeric &= !key->general_numeric;
       ugkey.human_numeric &= !key->human_numeric;
       ugkey.random &= !key->random;
@@ -2739,7 +2919,7 @@ keycompare (struct line const *a, struct line const *b)
       size_t lenb = limb - textb;
 
       if (hard_LC_COLLATE || key_numeric (key)
-          || key->month || key->random || key->version || key->natural)
+          || key->month || key->random || key->version || key->natural || key->naturalbio)
         {
           char *ta;
           char *tb;
@@ -2790,9 +2970,12 @@ keycompare (struct line const *a, struct line const *b)
               tb = textb; tlenb = lenb; endb = tb[tlenb]; tb[tlenb] = '\0';
             }
 
-          if (key->numeric)
+          if (key->numeric) {
             diff = numcompare (ta, tb);
-          else if (key->natural) {
+          } else if (key->naturalbio) {
+            diff = naturalcomparebio(ta, tb);
+            /* fprintf(stderr,"%s\t%s\t%d\n",ta,tb,diff);fflush(stderr); */
+          } else if (key->natural) {
             diff = naturalcompare (ta, tb);
             /* fprintf(stderr,"%s\t%s\t%d\n",ta,tb,diff);fflush(stderr); */
           } else if (key->general_numeric)
@@ -4250,7 +4433,7 @@ check_ordering_compatibility (void)
 
   for (key = keylist; key; key = key->next)
     if (1 < (key->numeric + key->general_numeric + key->human_numeric
-             + key->month + (key->version | key->natural | key->random | !!key->ignore)))
+             + key->month + (key->version | key->natural | key->naturalbio | key->random | !!key->ignore)))
       {
         /* The following is too big, but guaranteed to be "big enough".  */
         char opts[sizeof short_options];
@@ -4354,6 +4537,9 @@ set_ordering (char const *s, struct keyfield *key, enum blanktype blanktype)
           break;
         case 'N':
           key->natural = true;
+          break;
+        case 'B':
+          key->naturalbio = true;
           break;
         case 'R':
           key->random = true;
@@ -4592,7 +4778,8 @@ main (int argc, char **argv)
         case 'i':
         case 'M':
         case 'n':
-        case 'N':
+        case 'N': /* natural compare */
+        case 'B':
         case 'r':
         case 'R':
         case 'V':
@@ -4843,6 +5030,7 @@ main (int argc, char **argv)
           key->human_numeric = gkey.human_numeric;
           key->version = gkey.version;
           key->natural = gkey.natural;
+          key->naturalbio = gkey.naturalbio;
           key->random = gkey.random;
           key->reverse = gkey.reverse;
         }

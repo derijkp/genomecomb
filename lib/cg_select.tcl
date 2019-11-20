@@ -1513,9 +1513,9 @@ proc cg_select {args} {
 			set keys {}
 			foreach pos $poss r $reverse {
 				if {$r} {
-					lappend keys ${pos},${pos}Nr
+					lappend keys ${pos},${pos}Br
 				} else {
-					lappend keys $pos,${pos}N
+					lappend keys $pos,${pos}B
 				}
 			}
 			set sort "gnusort8 -T \"[scratchdir]\" -t \\t -s -k[join $keys " -k"]"
