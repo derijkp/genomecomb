@@ -52,10 +52,10 @@ proc process_reports_job {args} {
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 picard java gnusort8 zst os]
 	# start
 	if {$resultbamfile eq ""} {
-		set bamfiles [lsort -dict [jobglob $sampledir/*.bam]]
+		set bamfiles [lsort -dict [jobglob $sampledir/*.bam $sampledir/*.cram]]
 		set resultbamfile [lindex $bamfiles end]
 	} else {
-		set bamfiles [list_remdup [list $resultbamfile {*}[lsort -dict [jobglob $sampledir/*.bam]]]]
+		set bamfiles [list_remdup [list $resultbamfile {*}[lsort -dict [jobglob $sampledir/*.bam $sampledir/*.cram]]]]
 	}
 	set ampliconsfile [ampliconsfile $sampledir $ref]
 	file mkdir $sampledir/reports
@@ -179,7 +179,9 @@ proc process_reports_job {args} {
 			set dep2 $ampliconsfile
 			set target $sampledir/reports/$bamroot.histo
 			set indexext [indexext $bamfile]
-			job reports_histo-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2 $dep1.$indexext} -targets {$target} -vars {bamroot bamfile} -code {
+			job reports_histo-[file tail $bamfile] -optional 1 -deps {
+				$dep1 $dep2 $dep1.$indexext
+			} -targets {$target} -vars {bamroot bamfile} -code {
 				set tempfile [filetemp $target]
 				set tempregionfile [filetemp $target]
 				cg regcollapse $dep2 > $tempregionfile

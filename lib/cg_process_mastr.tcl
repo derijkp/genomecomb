@@ -45,9 +45,15 @@ proc analysis_complete_job {experiment {destdir {}} {varcaller gatk}} {
 
 proc generate_coverage_report_job {experiment regfile histofiles {destdir {}}} {
 	upvar job_logdir job_logdir
+	if {![llength $histofiles]} {
+		puts stderr "cannot generate_coverage_report: no histofiles"
+		# return
+	}
 	if {$destdir eq ""} {set destdir [pwd]}
-	job coverage_report-$experiment -deps [list $regfile {*}$histofiles] \
-	-targets [list $destdir/coverage_${experiment}_avg.tsv $destdir/coverage_${experiment}_frac_above_20.tsv ] -code {
+	job coverage_report-$experiment -deps [list $regfile {*}$histofiles] -targets {
+		$destdir/coverage_${experiment}_avg.tsv
+		$destdir/coverage_${experiment}_frac_above_20.tsv
+	} -code {
 		set regfile [tempfile]
 		cg regcollapse $dep1 > $regfile
 		set oheader {name chr begin end}

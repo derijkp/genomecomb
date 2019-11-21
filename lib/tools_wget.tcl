@@ -5,12 +5,11 @@ proc wgetfile {url {resultfile {}} {force 0}} {
 	if {!$force && [file exists $resultfile]} {return $resultfile}
 	file delete -force $resultfile.temp
 	set tail [file tail $url]
-	if {[info exists ::env(webcache)]} {
+	if {[info exists ::env(webcache)] && [file exists $::env(webcache)]} {
 		set webcache $::env(webcache)
 	} else {
-		set webcache [tempdir]/webcache
+		set webcache {}
 	}
-	file mkdir $webcache
 	regsub -all {[:/]} $url _ temp
 	set webcachename $webcache/$temp
 	if {$webcache ne "" && [file exists $webcachename]} {

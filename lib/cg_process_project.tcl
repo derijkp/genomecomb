@@ -1,4 +1,5 @@
 proc process_project_job {args} {
+	upvar job_logdir job_logdir
 	set cmdline "[list cd [pwd]] \; [list cg process_project {*}$args]"
 	set dbdir {}
 	set dbfiles {}
@@ -148,7 +149,6 @@ proc process_project_job {args} {
 	set ref [file tail $dbdir]
 	# logfile
 	# -------
-	upvar job_logdir job_logdir
 	job_logfile $destdir/process_project_[file tail $destdir] $destdir $cmdline \
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa samtools gatk gatk3 picard java gnusort8 zst os]
 	# amplicons settings

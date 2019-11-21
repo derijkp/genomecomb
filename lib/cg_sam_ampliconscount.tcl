@@ -13,7 +13,7 @@ proc cg_sam_ampliconscount {args} {
 		error "error in amplicons file: missing fields: [list_sub {chromosome begin end outer_begin outer_end} [list_find $poss -1]]"
 	}
 	lappend poss [lsearch $header name]
-	if {[file extension $file] eq ".bam"} {
+	if {[file extension $file] in ".bam .cram"} {
 		set pipe [list samtools view -h $file]
 	} else {
 		set pipe [list {*}[gzcat $file] $file]

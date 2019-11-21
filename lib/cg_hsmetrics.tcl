@@ -94,7 +94,18 @@ proc cg_hsmetrics {args} {
 	}
 	set temp [tempfile]
 	set temptarget [filetemp $resultfile]
-	picard CalculateHsMetrics BAIT_INTERVALS=$bait_intervals TARGET_INTERVALS=$target_intervals I=$bamfile O=$temp
+	# picard CalculateHsMetrics BAIT_INTERVALS=$bait_intervals TARGET_INTERVALS=$target_intervals I=$bamfile O=$temp
+	if {[file extension $bamfile] eq ".cram"} {
+		set gatkrefseq [gatk_refseq $::env(REFSEQ)]
+		picard CollectHsMetrics BAIT_INTERVALS=$bait_intervals \
+			TARGET_INTERVALS=$target_intervals \
+			R=$gatkrefseq \
+			I=$bamfile O=$temp
+	} else {
+		picard CollectHsMetrics BAIT_INTERVALS=$bait_intervals \
+			TARGET_INTERVALS=$target_intervals \
+			I=$bamfile O=$temp
+	}
 	cg select -overwrite 1 -f [list sample=\"$sample\" *] $temp $temptarget
 	file rename -force $temptarget $resultfile
 	file delete $target_intervals

@@ -20,6 +20,24 @@ proc gatk_refseq_job refseq {
 	return $nrefseq
 }
 
+proc gatk_refseq refseq {
+	upvar job_logdir job_logdir
+	set nrefseq [file root $refseq].fa
+	if {![file exists $nrefseq] && $refseq ne $nrefseq} {
+		mklink $refseq $nrefseq
+	}
+	if {![file exists $nrefseq.fai]} {
+		exec samtools faidx $dep
+	}
+	set dict [file root $nrefseq].dict
+	if {![file exists $dict]} {
+		file delete $target.temp
+		picard CreateSequenceDictionary R= $nrefseq O= $target.temp 2>@ stderr >@ stdout
+		file rename -force $target.temp $target
+	}
+	return $nrefseq
+}
+
 proc annotvar_clusters_job {args} {
 	upvar job_logdir job_logdir
 	set skips {}

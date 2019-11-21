@@ -89,7 +89,8 @@ proc fastqc_readtable {file pattern {headerVar {}}} {
 	return $result
 }
 
-set report_css {
+proc report_css {} {
+return {
 <style>
 /* ------------------------------------------
   Reset ?
@@ -333,6 +334,7 @@ table th.sort-up:before {
 * html .clearfix { height: 1%; } /* IE6 */
 *:first-child + html .clearfix { min-height: 1%; } /* IE7 */
 </style>
+}
 }
 
 proc report_fastc_perposqual {dir files} {
@@ -738,7 +740,7 @@ proc process_reportscombine_job {args} {
 				<h1 class="title"><PAGETITLE></h1>
 			}]] [list \
 				<PAGETITLE> "NGS reports exp $experimentname" \
-				<REPORT_CSS> $::report_css \
+				<REPORT_CSS> [report_css]\
 			]]
 			#
 			# gather depth data
