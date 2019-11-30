@@ -82,7 +82,7 @@ proc version {item {minversion {}}} {
 				catch {exec lz4 -v} temp
 				regexp { v([0-9.]+)} $temp temp _versions($item)
 			}
-			zst {
+			zst - zstd {
 				set _versions($item) [zstversion]
 			}
 			dot {
@@ -136,6 +136,8 @@ proc version {item {minversion {}}} {
 					} elseif {[regexp {[0-9.]+-?[abr][0-9]+$} $line1 temp]} {
 						set _versions($item) $temp
 					} elseif {[regexp {[0-9.]+[0-9]$} $line1 temp]} {
+						set _versions($item) $temp
+					} elseif {[regexp {([0-9.]+\.[0-9]*)} $line1 temp]} {
 						set _versions($item) $temp
 					} elseif {[regexp {([0-9]+[0-9.a-zA-Z]*)} $line1 temp temp]} {
 						set _versions($item) $temp
