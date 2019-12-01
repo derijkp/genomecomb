@@ -95,15 +95,21 @@ proc cg_hsmetrics {args} {
 	set temp [tempfile]
 	set temptarget [filetemp $resultfile]
 	# picard CalculateHsMetrics BAIT_INTERVALS=$bait_intervals TARGET_INTERVALS=$target_intervals I=$bamfile O=$temp
+	# filtering has changed with CollectHsMetrics:
+	# add MINIMUM_MAPPING_QUALITY MINIMUM_BASE_QUALITY CLIP_OVERLAPPING_READS for compat with older data
 	if {[file extension $bamfile] eq ".cram"} {
 		set gatkrefseq [gatk_refseq $::env(REFSEQ)]
 		picard CollectHsMetrics BAIT_INTERVALS=$bait_intervals \
 			TARGET_INTERVALS=$target_intervals \
+			MINIMUM_MAPPING_QUALITY=1 MINIMUM_BASE_QUALITY=1 \
+			CLIP_OVERLAPPING_READS=false \
 			R=$gatkrefseq \
 			I=$bamfile O=$temp
 	} else {
 		picard CollectHsMetrics BAIT_INTERVALS=$bait_intervals \
 			TARGET_INTERVALS=$target_intervals \
+			MINIMUM_MAPPING_QUALITY=1 MINIMUM_BASE_QUALITY=1 \
+			CLIP_OVERLAPPING_READS=false \
 			I=$bamfile O=$temp
 	}
 	cg select -overwrite 1 -f [list sample=\"$sample\" *] $temp $temptarget

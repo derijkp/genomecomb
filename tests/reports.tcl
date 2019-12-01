@@ -10,9 +10,9 @@ test reports {hsmetrics} {
 	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam
 	set regionfile tmp/regfile.tsv
 	set resultfile tmp/result.hsmetrics
-	cg hsmetrics $bamfile $regionfile $resultfile 2> /dev/null
-	cg select -rc 1 tmp/result.hsmetrics tmp/result.hsmetrics.nocomments
-	exec diff tmp/result.hsmetrics.nocomments $::smalltestdir/expected/bam_histo-NA19240chr2122.hsmetrics
+	cg hsmetrics $bamfile $regionfile $resultfile
+	cg select -overwrite 1 -rc 1 tmp/result.hsmetrics tmp/result.hsmetrics.nocomments
+	exec diff tmp/result.hsmetrics.nocomments data/bam_histo-NA19240chr2122.hsmetrics
 } {}
 
 test reports {coverage_report} {
