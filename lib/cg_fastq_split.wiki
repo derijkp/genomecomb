@@ -36,4 +36,4 @@ and thus not submit the follow up compression jobs
 ; **-threads number**: number of threads to use to compress the output files (bgzip -@)
 
 == Category ==
-Compression
+Conversion
