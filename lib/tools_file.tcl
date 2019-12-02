@@ -360,3 +360,13 @@ proc indexext {file} {
 		return index
 	}
 }
+
+proc ext2format {file {default {}} {supported {}}} {
+	if {$default ne ""} {
+		lappend supported $default
+	}
+	if {$file eq "-"} {return $default}
+	set format [string tolower [string range [file extension $file] 1 end]]
+	if {$format ni $supported} {error "format $format unsupoorted, must be one of: $supported"}
+	return $format
+}

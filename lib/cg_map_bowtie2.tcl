@@ -98,7 +98,7 @@ proc map_bowtie2_job {args} {
 		puts "making $target"
 		analysisinfo_write $dep $target
 		catch_exec samtools fixmate -O bam $resultbase.sam $resultbase.ubam >@ stdout 2>@ stderr
-		bam_sort $resultbase.ubam $target.temp
+		cg_bam_sort $resultbase.ubam $target.temp
 		file rename -force $target.temp $target
 		file delete $resultbase.ubam $resultbase.ubam.analysisinfo
 		file delete $resultbase.sam $resultbase.sam.analysisinfo

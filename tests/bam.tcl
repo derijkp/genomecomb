@@ -428,4 +428,62 @@ test cg_bam2sam {basic -sortchr 0} {
 	exec diff tmp/result.sam tmp/temp.sam
 } {}
 
+test bam_sort {bam_sort basic} {
+	test_cleantmp
+	exec samtools sort -n -o tmp/test.bam data/bwa.bam
+	cg bam_sort tmp/test.bam tmp/sorted.bam
+	exec diff tmp/sorted.bam data/bwa.bam
+} {}
+
+test bam_sort {bam_sort pipe} {
+	test_cleantmp
+	exec samtools sort -n -o tmp/test.bam data/bwa.bam
+	cg bam_sort < tmp/test.bam > tmp/sorted.bam
+	exec diff tmp/sorted.bam data/bwa.bam
+} {}
+
+test bam_sort {bam_sort pipe sam} {
+	test_cleantmp
+	exec samtools view -h data/bwa.bam > tmp/expected.sam
+	exec samtools sort -n data/bwa.bam | samtools view -h > tmp/test.sam
+	cg bam_sort -inputformat sam -outputformat sam < tmp/test.sam > tmp/sorted.sam
+	cg tsvdiff tmp/sorted.sam tmp/expected.sam
+} {}
+
+test bam_sort {bam_sort -method biobambam} {
+	test_cleantmp
+	exec samtools sort -n -o tmp/test.bam data/bwa.bam
+	cg bam_sort -method biobambam tmp/test.bam tmp/sorted.bam
+	cg tsvdiff tmp/sorted.bam data/bwa.bam
+} {}
+
+test bam_sort {bam_sort -method biobambam pipe} {
+	test_cleantmp
+	exec samtools sort -n data/bwa.bam > tmp/test.bam
+	cg bam_sort -method biobambam < tmp/test.bam > tmp/sorted.bam
+	cg tsvdiff tmp/sorted.bam data/bwa.bam
+} {}
+
+test bam_sort {bam_sort -method biobambam sam} {
+	test_cleantmp
+	exec samtools view -h data/bwa.bam > tmp/expected.sam
+	exec samtools sort -n data/bwa.bam | samtools view -h > tmp/test.sam
+	cg bam_sort -inputformat sam -outputformat sam -method biobambam tmp/test.sam tmp/sorted.sam
+	cg tsvdiff tmp/sorted.sam tmp/expected.sam
+} {}
+
+test bam_sort {bam_sort -sort name} {
+	test_cleantmp
+	exec samtools sort -n -o tmp/expected.bam data/bwa.bam
+	cg bam_sort -sort name data/bwa.bam tmp/sorted.bam
+	exec diff tmp/sorted.bam tmp/expected.bam
+} {}
+
+test bam_sort {bam_sort -method biobambam -sort name} {
+	test_cleantmp
+	exec samtools sort -n -o tmp/expected.bam data/bwa.bam
+	cg bam_sort -method biobambam -sort name data/bwa.bam tmp/sorted.bam
+	cg tsvdiff tmp/sorted.bam tmp/expected.bam
+} {}
+
 testsummarize

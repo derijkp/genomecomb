@@ -3,7 +3,7 @@ proc bam_markduplicates_job {args} {
 	set method samtools
 	set threads 1
 	set skips {}
-	cg_options bam_sort args {
+	cg_options bam_markduplicates args {
 		-method {
 			if {$value ni {1 picard biobambam samtools sam}} {error "bam_markduplicates: unsupported -method $value"}
 			set method $value

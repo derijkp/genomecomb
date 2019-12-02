@@ -1,7 +1,7 @@
 proc cg_bamreorder {args} {
 	set method genomecomb
 	set threads 1
-	cg_options bam_sort args {
+	cg_options bamreorder args {
 		-method {
 			if {$value ni {picard genomecomb}} {error "bamreorder: unsupported -method $value"}
 			set method $value

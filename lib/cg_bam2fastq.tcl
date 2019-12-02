@@ -51,7 +51,7 @@ proc cg_bam2fastq {args} {
 	if {$namesort && !($method in "sam samtools" && $sortmethod eq "collate")} {
 		putslog "Sorting bam file on name"
 		set tempbam [file root [scratchfile]].bam
-		bam_sort -threads $threads -sort name -method $sortmethod $bamfile $tempbam
+		cg_bam_sort -threads $threads -sort name -method $sortmethod $bamfile $tempbam
 	} else {
 		set tempbam $bamfile
 	}
