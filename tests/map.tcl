@@ -151,13 +151,7 @@ test realign {realign_abra basic} {
 	catch {exec diff tmp/ratest.tsv tmp/expected.tsv}
 } 0
 
-test markdup {bam_markduplicates picard} {
-	exec samtools sort data/bwa.sam > tmp/sbwa.bam
-	cg bam_markduplicates -method picard tmp/sbwa.bam tmp/result.bam
-	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
-	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
-	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
-} {diff tmp/result.tsv tmp/sbwa.tsv
+set expectederror {diff tmp/result.tsv tmp/sbwa.tsv
 header
   qname	chromosome	begin	end	duplicate
 124c124
@@ -184,7 +178,15 @@ header
 < SRR792091.108442	chr22	41923366	41923466	1
 ---
 > SRR792091.108442	chr22	41923366	41923466	0
-child process exited abnormally} error
+child process exited abnormally}
+
+test markdup {bam_markduplicates picard} {
+	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	cg bam_markduplicates -method picard tmp/sbwa.bam tmp/result.bam
+	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+} $expectederror error
 
 test markdup {bam_markduplicates samtools} {
 	exec samtools sort data/bwa.sam > tmp/sbwa.bam
@@ -192,34 +194,15 @@ test markdup {bam_markduplicates samtools} {
 	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
 	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
 	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
-} {diff tmp/result.tsv tmp/sbwa.tsv
-header
-  qname	chromosome	begin	end	duplicate
-124c124
-< SRR792091.1631779	chr21	42775454	42775552	1
----
-> SRR792091.1631779	chr21	42775454	42775552	0
-127c127
-< SRR792091.1631779	chr21	42775529	42775629	1
----
-> SRR792091.1631779	chr21	42775529	42775629	0
-148c148
-< SRR792091.1611898	chr21	42779842	42779942	1
----
-> SRR792091.1611898	chr21	42779842	42779942	0
-156c156
-< SRR792091.1611898	chr21	42779960	42780060	1
----
-> SRR792091.1611898	chr21	42779960	42780060	0
-187c187
-< SRR792091.108442	chr22	41923318	41923413	1
----
-> SRR792091.108442	chr22	41923318	41923413	0
-191c191
-< SRR792091.108442	chr22	41923366	41923466	1
----
-> SRR792091.108442	chr22	41923366	41923466	0
-child process exited abnormally} error
+} $expectederror error
+
+test markdup {bam_markduplicates samtools pipe} {
+	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	cg bam_markduplicates -method samtools < tmp/sbwa.bam > tmp/result.bam
+	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+} $expectederror error
 
 test markdup {bam_markduplicates biobambam} {
 	exec samtools sort data/bwa.sam > tmp/sbwa.bam
@@ -227,33 +210,6 @@ test markdup {bam_markduplicates biobambam} {
 	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
 	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
 	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
-} {diff tmp/result.tsv tmp/sbwa.tsv
-header
-  qname	chromosome	begin	end	duplicate
-124c124
-< SRR792091.1631779	chr21	42775454	42775552	1
----
-> SRR792091.1631779	chr21	42775454	42775552	0
-127c127
-< SRR792091.1631779	chr21	42775529	42775629	1
----
-> SRR792091.1631779	chr21	42775529	42775629	0
-148c148
-< SRR792091.1611898	chr21	42779842	42779942	1
----
-> SRR792091.1611898	chr21	42779842	42779942	0
-156c156
-< SRR792091.1611898	chr21	42779960	42780060	1
----
-> SRR792091.1611898	chr21	42779960	42780060	0
-187c187
-< SRR792091.108442	chr22	41923318	41923413	1
----
-> SRR792091.108442	chr22	41923318	41923413	0
-191c191
-< SRR792091.108442	chr22	41923366	41923466	1
----
-> SRR792091.108442	chr22	41923366	41923466	0
-child process exited abnormally} error
+} $expectederror error
 
 testsummarize
