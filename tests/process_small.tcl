@@ -29,14 +29,11 @@ test process_small {process_project mastr_mx2} {
 		tmp/mastr_mx2 $::refseqdir/hg19 >& tmp/mastr_mx2.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.index -x fastqc_report.html \
 		-x colinfo -x mastr_mx2.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		tmp/mastr_mx2 expected/mastr_mx2]
 	lappend result [diffanalysisinfo tmp/mastr_mx2/compar/annot_compar-mastr_mx2.tsv.analysisinfo expected/mastr_mx2/compar/annot_compar-mastr_mx2.tsv.analysisinfo]
-	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
-		lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics expected/mastr_mx2/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"]
-	}
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2/mastr_mx2.html expected/mastr_mx2/mastr_mx2.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2/compar/info_analysis.tsv expected/mastr_mx2/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
 	join [list_remove $result {}] \n
@@ -62,14 +59,11 @@ test process_small {process_project mastr_mx2_gatkh} {
 		tmp/mastr_mx2_gatkh $::refseqdir/hg19 >& tmp/mastr_mx2_gatkh.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.index -x fastqc_report.html \
 		-x colinfo -x mastr_mx2_gatkh.html -x *.zsti -x *.lz4i -x *.tbi -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		tmp/mastr_mx2_gatkh expected/mastr_mx2_gatkh]
 	lappend result [diffanalysisinfo tmp/mastr_mx2_gatkh/compar/annot_compar-mastr_mx2_gatkh.tsv.analysisinfo expected/mastr_mx2_gatkh/compar/annot_compar-mastr_mx2_gatkh.tsv.analysisinfo]
-	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
-		lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_gatkh/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics expected/mastr_mx2_gatkh/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"]
-	}
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_gatkh/mastr_mx2_gatkh.html expected/mastr_mx2_gatkh/mastr_mx2_gatkh.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_gatkh/compar/info_analysis.tsv expected/mastr_mx2_gatkh/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
 	join [list_remove $result {}] \n
@@ -95,14 +89,11 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 		tmp/mastr_mx2_cram $::refseqdir/hg19 >& tmp/mastr_mx2_cram.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.cram -x *.bai -x *.index -x fastqc_report.html \
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.cram -x *.bai -x *.index -x fastqc_report.html \
 		-x colinfo -x mastr_mx2_cram.html -x *.zsti -x *.lz4i -x *.tbi -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		tmp/mastr_mx2_cram expected/mastr_mx2_cram]
 	lappend result [diffanalysisinfo tmp/mastr_mx2_cram/compar/annot_compar-mastr_mx2_cram.tsv.analysisinfo expected/mastr_mx2_cram/compar/annot_compar-mastr_mx2_cram.tsv.analysisinfo]
-	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
-		lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_cram/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics expected/mastr_mx2_cram/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"]
-	}
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_cram/mastr_mx2_cram.html expected/mastr_mx2_cram/mastr_mx2_cram.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_cram/compar/info_analysis.tsv expected/mastr_mx2_cram/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
 	join [list_remove $result {}] \n
@@ -129,14 +120,11 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 #		$mastrdir $::refseqdir/hg19 >& tmp/mastr_mx2_space.log
 #	# check vs expected
 #	set result {}
-#	lappend result [tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
+#	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.index -x fastqc_report.html \
 #		-x colinfo -x "mastr_mx2 space.html" -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv -x *.png -x *.submitting \
 #		-x *.analysisinfo \
 #		$mastrdir $expected
 #	lappend result [diffanalysisinfo $mastrdir/compar/annot_compar-*.tsv.analysisinfo $expected/compar/annot_compar-*.tsv.analysisinfo]
-#	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
-#		lappend result [checkdiff -y --suppress-common-lines $mastrdir/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics $expected/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"]
-#	}
 #	lappend result [checkdiff -y --suppress-common-lines "$mastrdir/mastr_mx2 space.html" "$expected/mastr_mx2 space.html" | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
 #	lappend result [checkdiff -y --suppress-common-lines $mastrdir/compar/info_analysis.tsv $expected/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
 #	join [list_remove $result {}] \n
@@ -159,14 +147,11 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 		tmp/mastr_mx2_js1 $::refseqdir/hg19 >& tmp/mastr_mx2_js1.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *hsmetrics -x *.bam -x *.bai -x *.index -x fastqc_report.html \
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.index -x fastqc_report.html \
 		-x colinfo -x mastr_mx2_js1.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		tmp/mastr_mx2_js1 expected/mastr_mx2_js1]
 	lappend result [diffanalysisinfo tmp/mastr_mx2_js1/compar/annot_compar-*.tsv.analysisinfo expected/mastr_mx2_js1/compar/annot_compar-*.tsv.analysisinfo]
-	foreach sample {blanco2_8485 ceph1333_02_34_7220 ceph1347_02_34_7149 ceph1347_02_34_8446} {
-		lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_js1/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics expected/mastr_mx2_js1/samples/$sample/reports/hsmetrics-crsbwa-$sample.hsmetrics | grep -v -E "Started on|net.sf.picard.analysis.directed.CalculateHsMetrics BAIT_INT"]
-	}
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_js1/mastr_mx2_js1.html expected/mastr_mx2_js1/mastr_mx2_js1.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2_js1/compar/info_analysis.tsv expected/mastr_mx2_js1/compar/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
 	join [list_remove $result {}] \n
