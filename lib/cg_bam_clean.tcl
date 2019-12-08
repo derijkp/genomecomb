@@ -115,7 +115,6 @@ proc bam_clean_job {args} {
 				}
 				exec java -XX:ParallelGCThreads=1 -jar $srma I=$dep O=$target.temp R=$gatkrefseq {*}$realignopts 2>@ stderr >@ stdout
 				catch {file rename -force $target.temp.$extindex $target.$extindex}
-				catch {file delete $target.intervals}
 				file rename -force $target.temp $target
 			}
 		} else {
@@ -150,7 +149,7 @@ proc bam_clean_job {args} {
 					file delete $target.temp.bam
 					file delete $tempfile
 				}
-				# catch {file delete $target.intervals}
+				catch {file delete $target.intervals}
 				file rename -force $target.temp $target
 			}
 		}
