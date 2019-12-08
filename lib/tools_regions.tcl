@@ -46,10 +46,10 @@ proc tempbed {regionfile {reffile {}}} {
 	if {[file extension [gzroot $regionfile]] eq ".bed"} {
 		set bedfile $regionfile
 	} elseif {$reffile eq ""} {
-		set bedfile [file root [tempfile]].bed
+		set bedfile [tempfile].bed
 		tsv2bed $regionfile $bedfile
 	} else {
-		set bedfile [file root [tempfile]].bed
+		set bedfile [tempfile].bed
 		gatkworkaround_tsv2bed $regionfile $reffile $bedfile
 	}
 	return $bedfile
