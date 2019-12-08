@@ -147,7 +147,7 @@ proc sv_job {args} {
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
 					cg vcfcat -i 1 -o $target {*}[jobglob {*}$list]
 				} else {
-					cg cat -c f {*}[jobglob {*}$list] {*}[compresspipe $target] > $target.temp
+					cg cat -c f {*}[lsort -dict [jobglob {*}$list]] {*}[compresspipe $target] > $target.temp
 					file rename $target.temp $target
 					cg_zindex $target
 				}
