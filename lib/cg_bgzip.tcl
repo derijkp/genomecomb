@@ -1,6 +1,7 @@
 proc compresscmd_bgz {{threads {}} {compressionlevel {}} {blocksize {}}} {
 	set threads [compressionthreads $threads]
-	list bgzip -@ $threads -c
+	set compressionlevel [compressionlevel $compressionlevel 9 0 9]
+	list bgzip -l $compressionlevel -@ $threads -c
 }
 
 proc compress_bgz {file {destfile {}} {index 1} {keep 1} {threads {}} {compressionlevel {}} {blocksize {}} args} {

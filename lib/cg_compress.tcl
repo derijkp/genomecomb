@@ -10,7 +10,6 @@ proc cg_compress_job args {
 	cg_options compress args {
 		-o - -outputfile {
 			set outputfile $value
-			if {$keep eq ""} {set keep 1}
 		}
 		-k - -keep {
 			set keep $value
@@ -32,6 +31,7 @@ proc cg_compress_job args {
 			set method $value
 		}
 	}
+	if {$outputfile ne "" && $keep eq ""} {set keep 1}
 	if {$keep eq ""} {set keep 0}
 	if {$outputfile ne "" && [llength $args] > 1} {
 		error "option -o can only be used for compressing one file"

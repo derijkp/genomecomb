@@ -26,8 +26,11 @@ supports options:
 ; -b number (--blocksize): number indicating the blocksize in Kb (default 512)
 ; -i 0/1 (--index): also create an zst index file
 ; -t number (--threads); number of threads used to compress
-; -o filename (--outputfile): The compressed file will be written to **filename**. 
-If the --keep option is not explicitely given, using -o will change the "default" for -k to 1.
+; -o filename (--outputfile): The compressed file will be written to **filename**.
+This option can only be given if there is only one file given to be
+compressed. You can send the compressed output to stdout by giving - for
+filename.
+Unless the -keep option is explicitely given, using -o will change the "default" for -k to 1.
 
 == Category ==
 Compression
