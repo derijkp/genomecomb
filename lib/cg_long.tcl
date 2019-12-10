@@ -157,10 +157,10 @@ proc cg_long {args} {
 	}
 	if {$o ne "stdout"} {
 		close $o
-		file rename -force $tempoutfile $outfile
+		file rename -force -- $tempoutfile $outfile
 	}
 	if {$norm} {
-		file rename -force $tempsampledatafile $outfile.sampledata.tsv
+		file rename -force -- $tempsampledatafile $outfile.sampledata.tsv
 	}
 	if {$f ne "stdout"} {gzclose $f}
 }

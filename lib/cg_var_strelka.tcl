@@ -27,7 +27,7 @@ proc sreg_strelka_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25
 					(def(\$genoqual,0) >= $mingenoqual || def(\$GQX,0) >= $mingenoqual) && def(\$coverage,0) >= $mincoverage && \$type ne "ins"
 				}] -f {chromosome begin end} \
 				| cg regjoin {*}[compresspipe $target] > $temp
-			file rename -force $temp $target
+			file rename -force -- $temp $target
 			cg_zindex $target
 		}
 	}
@@ -182,10 +182,10 @@ proc var_strelka_job {args} {
 			} else {
 				catch_exec $strelkarun/runWorkflow.py -m local -j $threads
 			}
-			file rename -force $strelkarun/results/variants/genome.S1.vcf.gz $resultgvcf.gz
-			file rename -force $strelkarun/results/variants/genome.S1.vcf.gz.tbi $resultgvcf.gz.tbi
-			file rename -force $strelkarun/results/variants/variants.vcf.gz $resultvcf.gz
-			file rename -force $strelkarun/results/variants/variants.vcf.gz.tbi $resultvcf.gz.tbi
+			file rename -force -- $strelkarun/results/variants/genome.S1.vcf.gz $resultgvcf.gz
+			file rename -force -- $strelkarun/results/variants/genome.S1.vcf.gz.tbi $resultgvcf.gz.tbi
+			file rename -force -- $strelkarun/results/variants/variants.vcf.gz $resultvcf.gz
+			file rename -force -- $strelkarun/results/variants/variants.vcf.gz.tbi $resultvcf.gz.tbi
 			file delete -force $strelkarun
 		} else {
 			putslog "empty regionfile -> write empty $resultgvcf.gz"
@@ -219,7 +219,7 @@ proc var_strelka_job {args} {
 		} else {
 			file_write ${pre}uvar-$root.tsv.temp ""
 		}
-		file rename -force ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
+		file rename -force -- ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
 	}
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile.zst

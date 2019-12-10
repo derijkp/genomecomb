@@ -74,7 +74,7 @@ proc fastq_split_job {args} {
 		foreach file $files {
 			set target [file root $file]
 			job fastq_split_rename-[file tail $file] -deps {$file} -targets {[file root $file]} -code {
-				file rename $dep $target
+				file rename -- $dep $target
 			}
 			lappend result $target
 		}
@@ -131,7 +131,7 @@ proc cg_fastq_split.tcl {args} {
 			} else {
 				set o [open $out.temp w]
 			}
-			file rename $out.temp $out
+			file rename -- $out.temp $out
 			incr part
 			set count $numseq
 		}

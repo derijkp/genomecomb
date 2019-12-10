@@ -54,7 +54,7 @@ proc tsv_index {xfield file} {
 	puts $o $xmax
 	puts $o [join $index \n]
 	close $o
-	file rename -force $indexname.temp $indexname
+	file rename -force -- $indexname.temp $indexname
 	if {[info exists tempfile]} {
 		file delete $tempfile
 	}
@@ -95,7 +95,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 			file delete -force $workfile.temp
 			file delete -force $workfile
 			exec [gzcat $file] $file > $workfile.temp
-			file rename -force $workfile.temp $workfile
+			file rename -force -- $workfile.temp $workfile
 			set uncompressed 1
 			set remove 1
 		}
@@ -106,7 +106,7 @@ proc tsv_index_open {file field {uncompress 0}} {
 	if {![file exists $indexname]} {
 		tsv_index $field $workfile
 		if {$workfile ne $file} {
-			file rename -force [gzroot $workfile].${field}_index $indexname
+			file rename -force -- [gzroot $workfile].${field}_index $indexname
 		}
 	}
 	set o [open $indexname]

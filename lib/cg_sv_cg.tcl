@@ -69,7 +69,7 @@ proc map2sv {files prefix} {
 				puts "doing: $file"
 				set cat [gzcat $file]
 				exec {*}$cat $file | $appdir/bin/map2sv $num | $appdir/bin/distr2chr $scratchprefix$root-
-				file rename -force {*}[glob $scratchprefix$root-*] $scratchdir
+				file rename -force -- {*}[glob $scratchprefix$root-*] $scratchdir
 			}
 			incr num
 		}
@@ -96,7 +96,7 @@ proc map2sv {files prefix} {
 			puts $f [join {chromosome bin strand1 start1 end1 weight1 numl type chr2 strand2 start2 end2 weight2 numr dist num fnum side} \t]
 			close $f
 			exec cat {*}$a($chr) | gnusort8 -T $scratchdir/tmp -t \t -n -s -k5 >> $rfile.temp
-			file rename -force $rfile.temp $rfile
+			file rename -force -- $rfile.temp $rfile
 		}
 		file delete -force $scratchdir/tmp {*}$files
 	}
@@ -181,7 +181,7 @@ proc bam2sv {bamfile prefix} {
 			close $o($chr)
 			cg select -s {chromosome start1 end1 chr2 start2 end2} $prefix-$chr1-paired.tsv.temp $prefix-$chr1-paired.tsv.temp2
 			file delete $prefix-$chr1-paired.tsv.temp
-			file rename -force $prefix-$chr1-paired.tsv.temp2 $prefix-$chr1-paired.tsv
+			file rename -force -- $prefix-$chr1-paired.tsv.temp2 $prefix-$chr1-paired.tsv
 		}
 		catch {close $f}
 	}
@@ -282,7 +282,7 @@ proc svinfo {pairfile} {
 	puts $o min25\t$min25
 	puts $o max25\t$max25
 	close $o
-	file rename -force [gzroot $pairfile].numinfo.temp [gzroot $pairfile].numinfo
+	file rename -force -- [gzroot $pairfile].numinfo.temp [gzroot $pairfile].numinfo
 	putslog "Made svinfo $pairfile.numinfo"
 }
 
@@ -313,8 +313,8 @@ proc svhisto {pairfile} {
 	}
 	puts $f $total
 	close $f
-	catch {file rename -force $out $out.old}
-	file rename -force $out.temp $out
+	catch {file rename -force -- $out $out.old}
+	file rename -force -- $out.temp $out
 	# draw histo
 	set tempfile [tempfile]
 	file_write $tempfile [subst -nocommands {
@@ -1931,8 +1931,8 @@ proc svfind {pairfile trffile} {
 	close $o
 	catch {close $f}
 	catch {file delete $outfile.old}
-	catch {file rename -force $outfile $outfile.old}
-	file rename -force $outfile.temp $outfile
+	catch {file rename -force -- $outfile $outfile.old}
+	file rename -force -- $outfile.temp $outfile
 	putslog "Made svfind $outfile"
 
 }

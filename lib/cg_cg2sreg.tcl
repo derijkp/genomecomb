@@ -13,6 +13,6 @@ proc cg_cg2sreg {args} {
 		cg select -q {$varType != "no-call" && $varType != "no-ref"} -f "chromosome begin end" -s "chromosome begin end" $file $outfile.temp
 	}
 	cg regjoin $outfile.temp > $outfile.temp2
-	file rename -force $outfile.temp2 $outfile
+	file rename -force -- $outfile.temp2 $outfile
 	file delete $outfile.temp
 }

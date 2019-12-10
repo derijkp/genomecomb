@@ -96,7 +96,7 @@ proc cg_colvalue {args} {
 	# finish
 	if {$o ne "stdout"} {
 		close $o
-		file rename -force $tempoutfile $outfile
+		file rename -force -- $tempoutfile $outfile
 	}
 	gzclose $f
 }

@@ -138,7 +138,7 @@ proc sam_catmerge_job {args} {
 		} msg]} {
 			error $msg
 		}
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 		foreach dep $rmfiles {
 			file delete $dep
 		}

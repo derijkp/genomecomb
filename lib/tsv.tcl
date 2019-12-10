@@ -224,7 +224,7 @@ proc tsv_varsfile {tsvfile {varsfile {}}} {
 		file_write $varsfile.temp $comment
 		gzclose $f
 		exec varsfile $tsvfile >> $varsfile.temp
-		file rename -force $varsfile.temp $varsfile
+		file rename -force -- $varsfile.temp $varsfile
 	}
 	return $varsfile
 }

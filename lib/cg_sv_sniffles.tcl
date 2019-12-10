@@ -90,7 +90,7 @@ proc sv_sniffles_job {args} {
 		exec sniffles {*}$opts --threads $threads --genotype --skip_parameter_estimation \
 			--min_support $min_support --min_seq_size $min_seq_size \
 			-m $dep -v $target.temp 2>@ stderr >@ stdout
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	# 
 	job sv_vcf2tsv-$root {*}$skips -deps {
@@ -102,7 +102,7 @@ proc sv_sniffles_job {args} {
 	} -code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -locerror correct -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp[gzext $target]
-		file rename -force $target.temp[gzext $target] $target
+		file rename -force -- $target.temp[gzext $target] $target
 	}
 	# cleanup
 	cd $keeppwd

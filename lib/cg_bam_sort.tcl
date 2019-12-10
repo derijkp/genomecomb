@@ -38,7 +38,7 @@ proc bam_sort_job {args} {
 			hardlink $dep $target
 		} else {
 			bam_sort -method $method -sort $sort -threads $threads -inputformat $inputformat $dep $target.temp
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 		}
 	}
 }
@@ -107,8 +107,8 @@ proc cg_bam_sort {args} {
 		}
 		catch_exec bamsort inputformat=$inputformat SO=$sort tmpfile=[scratchfile] {*}$opts {*}$optsio
 		if {[info exists tempresult]} {
-			catch {file rename -force $tempresult.bai $resultfile.bai}
-			file rename -force $tempresult $resultfile
+			catch {file rename -force -- $tempresult.bai $resultfile.bai}
+			file rename -force -- $tempresult $resultfile
 		}
 	} else {	
 		set opts {} ; set optsio {}
@@ -135,7 +135,7 @@ proc cg_bam_sort {args} {
 			error $msg
 		}
 		if {[info exists tempresult]} {
-			file rename -force $tempresult $resultfile
+			file rename -force -- $tempresult $resultfile
 		}
 	}
 }

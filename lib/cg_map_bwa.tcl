@@ -24,7 +24,7 @@ proc bwarefseq_job {refseq} {
 		set targetdir [file dir $target]
 		foreach file [glob $target.temp/*] {
 			file delete $targetdir/[file tail $file]
-			file rename $file $targetdir/[file tail $file]
+			file rename -- $file $targetdir/[file tail $file]
 		}
 		file delete -force $target $target.fai
 		mklink $dep $target
@@ -118,7 +118,7 @@ proc map_bwa_job {args} {
 					lappend rg "$key:$value"
 				}
 				exec bwa mem -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq > $target.temp 2>@ stderr
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 			}
 		}
 	} else {
@@ -147,7 +147,7 @@ proc map_bwa_job {args} {
 					lappend rg "$key:$value"
 				}
 				exec bwa mem -t $threads -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq1 $fastq2 {*}$fixmate > $target.temp 2>@ stderr
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 				file delete bwa1.fastq bwa2.fastq
 			}
 		}

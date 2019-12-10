@@ -338,7 +338,7 @@ proc jobtargetexists {args} {
 		if {($checkdepexists && ![llength $files]) || $time in "now force" || $time > $targettime} {
 #			job_log targetexists-[file tail $target] "one of targets older than dep $timefile (renaming to .old): $targets"
 #			foreach target $targets {
-#				file rename -force $target $target.old
+#				file rename -force -- $target $target.old
 #			}
 			return 0
 		}
@@ -668,7 +668,7 @@ proc job_checktarget {job target skiptarget time timefile checkcompressed {newid
 				# 	job_backup $file 1
 				# }
 				foreach file $files {
-					file rename -force $file $file.old
+					file rename -force -- $file $file.old
 				}
 			} else {
 				job_lognf $job "skiptarget older than dep $timefile: $target"
@@ -998,7 +998,7 @@ proc job_backup {file {rename 0}} {
 		incr num
 	}
 	if {$rename} {
-		file rename -force $file $file.old$num
+		file rename -force -- $file $file.old$num
 	} else {
 		file copy $file $file.old$num
 	}
@@ -1073,7 +1073,7 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 		if {$ok} {
 			file_add $job.log "[job_timestamp]\t$jobname finished\n"
 			file_write $job.finished [job_timestamp]\n
-			catch {file rename -force $job.err $job.msgs}
+			catch {file rename -force -- $job.err $job.msgs}
 			catch {file delete $job.pid}
 		} else {
 			file_add $job.log "[job_timestamp]\tjob $jobname failed\n"

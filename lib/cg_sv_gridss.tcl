@@ -127,7 +127,7 @@ proc sv_gridss_job {args} {
 	} -code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -split $split -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $resultfile.gridssrun/results.vcf $target.temp[gzext $target]
-		file rename -force $target.temp[gzext $target] $target
+		file rename -force -- $target.temp[gzext $target] $target
 	}
 	# cleanup
 	return $resultlist

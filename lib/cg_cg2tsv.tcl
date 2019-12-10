@@ -383,7 +383,7 @@ proc annot_annotvar {source outfile todo {dir {}}} {
 	list_foreach {field value regfile} $wtodo {
 		annot_region_close $regfile
 	}
-	file rename -force $outfile.temp $outfile
+	file rename -force -- $outfile.temp $outfile
 
 }
 

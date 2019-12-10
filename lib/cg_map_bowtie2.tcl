@@ -6,7 +6,7 @@ proc bowtie2refseq_job {refseq} {
 		file mkdir $refseq.bowtie2.temp
 		mklink $refseq $refseq.bowtie2.temp/[file tail $refseq]
 		exec bowtie2-build $refseq $refseq.bowtie2.temp/[file tail $refseq]
-		file rename -force $refseq.bowtie2.temp $refseq.bowtie2
+		file rename -force -- $refseq.bowtie2.temp $refseq.bowtie2
 	}
 	return $bowtie2refseq
 }
@@ -89,7 +89,7 @@ proc map_bowtie2_job {args} {
 			--rg-id "$sample" {*}$rg \
 			-S $temptarget >@ stdout 2>@ stderr
 		}
-		file rename -force $temptarget $target
+		file rename -force -- $temptarget $target
 	}
 	set analysisinfo [gzroot $result].analysisinfo
 	job bowtie2_bam-$sample -deps {$resultbase.sam} \
@@ -99,7 +99,7 @@ proc map_bowtie2_job {args} {
 		analysisinfo_write $dep $target
 		catch_exec samtools fixmate -O bam $resultbase.sam $resultbase.ubam >@ stdout 2>@ stderr
 		cg_bam_sort $resultbase.ubam $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 		file delete $resultbase.ubam $resultbase.ubam.analysisinfo
 		file delete $resultbase.sam $resultbase.sam.analysisinfo
 	}

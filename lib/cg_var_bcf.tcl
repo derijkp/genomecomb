@@ -159,7 +159,7 @@ proc var_bcf_job {args} {
 						-removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} \
 					{*}[compresspipe $target] > $target.temp 2>@ stderr
 			}
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 			if {$emptyreg && ![file exists $cache]} {
 				file copy $target $cache
 			}
@@ -185,7 +185,7 @@ proc var_bcf_job {args} {
 			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 			*
 		} $dep $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
  	}
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv ${pre}var-$root.tsv.zst

@@ -8,14 +8,14 @@ proc samtools_sort {args} {
 			error $msg
 		}
 		if {[file exists $resultfile.temp.bam]} {
-			file rename -force $resultfile.temp.bam $resultfile
+			file rename -force -- $resultfile.temp.bam $resultfile
 		} else {
-			file rename -force $resultfile.temp $resultfile
+			file rename -force -- $resultfile.temp $resultfile
 		}
 	} else {
 		if {[catch {exec samtools sort {*}$args $bamfile > $resultfile.temp 2>@ stdout} msg]} {
 			error $msg
 		}
-		file rename -force $resultfile.temp $resultfile
+		file rename -force -- $resultfile.temp $resultfile
 	}
 }

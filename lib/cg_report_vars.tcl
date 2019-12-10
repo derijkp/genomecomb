@@ -145,6 +145,6 @@ proc cg_report_vars {args} {
 		puts $f $sample\tgenomecomb\tqvars_titv\t[format %.1f [expr double ($qtitva(i))/$qtitva(v)]]
 	}
 	close $f
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 
 }

@@ -58,7 +58,7 @@ proc cg_download_clinvar {args} {
 		cg vcf2tsv -split ori -typelist ". CAF R" $tempdir/$paputail $tsvfile-papu.temp
 		cg cat -c f $tsvfile.temp $tsvfile.temp $tsvfile-papu.temp | cg select -s - > $tsvfile
 	} else {
-		file rename $tsvfile.temp $tsvfile
+		file rename -- $tsvfile.temp $tsvfile
 	}
 	# check version
 	set f [open $tsvfile]

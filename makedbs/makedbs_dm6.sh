@@ -44,7 +44,7 @@ job_logdir log_jobs
 # download genome
 job genome_${build} -vars build -targets {genome_${build}.ifas genome_${build}.ifas.fai extra/reg_${build}_fullgenome.tsv} -code {
 	cg download_genome --stack 1 --verbose 2 genome_${build}.ifas ${build}
-	file rename -force reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
+	file rename -force -- reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
 }
 
 set ifasfile genome_${build}.ifas
@@ -57,7 +57,7 @@ bwarefseq_job genome_${build}.ifas
 
 job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv.zst} -code {
 	exec cg calcsequencedgenome --stack 1 $dep {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 }
 
 # region databases (ucsc)
@@ -69,8 +69,8 @@ foreach db $dbs_reg_collapse {
 	job reg_${build}_$db -targets {reg_${build}_${db}.tsv.zst} -vars {dest build db} -code {
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regcollapse $target.ucsc {*}[compresspipe $target 12] > $target.temp
-		file rename -force $target.ucsc.info [file root $target].info
-		file rename -force $target.temp $target
+		file rename -force -- $target.ucsc.info [file root $target].info
+		file rename -force -- $target.temp $target
 		file delete $target.ucsc
 	}
 }
@@ -81,8 +81,8 @@ foreach db $dbs_reg_join {
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regjoin $target.ucsc {*}[compresspipe $target 12] > $target.temp
 		file delete $target.ucsc
-		file rename -force $target.ucsc.info [file root $target].info
-		file rename -force $target.temp $target
+		file rename -force -- $target.ucsc.info [file root $target].info
+		file rename -force -- $target.temp $target
 	}
 }
 
@@ -104,7 +104,7 @@ foreach db $dbs_var {
 	job $db -targets {var_${build}_${db}.tsv.zst} -vars {dest build db} -code {
 		cg download_ucsc $target.temp $build $db
 		exec cg select -f {chrom start end type ref alt name freq} $target.temp {*}[compresspipe $target 12] > $target.temp2
-		file rename -force $target.temp2 $target
+		file rename -force -- $target.temp2 $target
 		file delete $target.tmp
 	}
 	job maketabix_${build}_$db -deps {var_${build}_${db}.tsv} -targets {var_${build}_${db}.tsv.gz.tbi var_${build}_${db}.tsv.gz} -vars {dest build db} -code {
@@ -132,7 +132,7 @@ job gene_${build}_intGene \
 -deps $genesets \
 -targets {$target.zst $target.gz $target.gz.tbi} -vars {dest build db} -code {
 	cg intgene --stack 1 --verbose 2 {*}$deps {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 	cg maketabix $target
 	cg index $target
 }
@@ -140,7 +140,7 @@ job gene_${build}_intGene \
 # homopolymer
 job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv.zst reg_${build}_homopolymer.tsv.opt reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi} -vars {dest build db} -code {
 	cg extracthomopolymers genome_${build}.ifas {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
         cg maketabix $target
 	file_write $target2 "fields\t{base size}\n"
 }

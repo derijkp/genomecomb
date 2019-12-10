@@ -50,7 +50,7 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 					Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
 						bcol_indexfile_all $file $indexfile.temp $indexfile.bin.temp {*}$poss $indexdir/colinfo.temp/ $header 2>@1
 					catch {file delete -force $indexdir/colinfo}
-					file rename -force $indexdir/colinfo.temp/ $indexdir/colinfo
+					file rename -force -- $indexdir/colinfo.temp/ $indexdir/colinfo
 				}]} {
 					Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
 						bcol_indexfile $file $indexfile.temp $indexfile.bin.temp {*}$poss 2>@1
@@ -59,8 +59,8 @@ proc bcol_indexlines {file indexfile {colinfo 0}} {
 				Extral::bgexec -progresscommand bcol_progress -no_error_redir -channelvar bgexechandle \
 					bcol_indexfile $file $indexfile.temp $indexfile.bin.temp {*}$poss 2>@1
 			}
-			file rename -force $indexfile.bin.temp $indexfile.bin
-			file rename -force $indexfile.temp $indexfile
+			file rename -force -- $indexfile.bin.temp $indexfile.bin
+			file rename -force -- $indexfile.temp $indexfile
 			progress stop
 		}
 		if {$compressed} {

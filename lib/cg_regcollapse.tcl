@@ -115,7 +115,7 @@ proc collapseoverlap {{infile stdin} {resultfile stdout} {scorefield score} {num
 	close $f
 	if {$resultfile ne "stdout"} {
 		close $o
-		file rename -force $resultfile.temp $resultfile
+		file rename -force -- $resultfile.temp $resultfile
 		putslog "Finished $resultfile"
 	}
 }

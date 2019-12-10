@@ -59,7 +59,7 @@ proc bam2reg_job {args} {
 			set compress [compresspipe $target]
 			set temptarget [filetemp $target]
 			exec cg regextract -min $mincoverage $dep {*}$compress > $temptarget
-			file rename -force $temptarget $target
+			file rename -force -- $temptarget $target
 			if {[file extension $target] eq ".zst"} {cg_zstindex $target}
 		}
 	} else {
@@ -87,7 +87,7 @@ proc bam2reg_job {args} {
 					set compress [compresspipe $subtarget 1]
 					set temptarget [filetemp $subtarget]
 					exec cg regextract -stack 1 -region $region -min $mincoverage $bamfile {*}$compress > $temptarget
-					file rename -force $temptarget $subtarget
+					file rename -force -- $temptarget $subtarget
 				}
 			}
 		}
@@ -97,7 +97,7 @@ proc bam2reg_job {args} {
 		} -code {
 			set compress [compresspipe $target]
 			cg cat -c 0 {*}$deps {*}$compress > $target.temp
-			file rename $target.temp $target
+			file rename -- $target.temp $target
 			if {[file extension $target] eq ".zst"} {cg_zstindex $target}
 		}
 	}

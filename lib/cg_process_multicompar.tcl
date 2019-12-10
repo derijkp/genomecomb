@@ -169,7 +169,7 @@ proc process_multicompar_job {args} {
 			if {![file exists $varfile] || [file mtime $varfile] > $mtime} {
 				putslog "redo all: $varfile is newer than $compar_file"
 				set stilltodo $varfiles
-				if {[file exists $compar_file]} {file rename -force $compar_file $compar_file.old}
+				if {[file exists $compar_file]} {file rename -force -- $compar_file $compar_file.old}
 				break
 			}
 			set analysis [file_analysis $varfile]
@@ -250,7 +250,7 @@ proc process_multicompar_job {args} {
 				cg svmulticompar -overlap 40 $target.temp {*}$todo
 			}
 			cg_zst $target.temp
-			file rename -force $target.temp.zst $target
+			file rename -force -- $target.temp.zst $target
 		}
 		# annotate svmulticompar
 		# --------------------
@@ -293,7 +293,7 @@ proc process_multicompar_job {args} {
 				cg svmulticompar $target.temp {*}$todo
 			}
 			cg_zst $target.temp
-			file rename -force $target.temp.zst $target
+			file rename -force -- $target.temp.zst $target
 		}
 		job cgsv_annotate -optional 1 \
 		-deps {compar/cgsv-$experiment.tsv} \
@@ -335,7 +335,7 @@ proc process_multicompar_job {args} {
 				cg svmulticompar $target.temp {*}$todo
 			}
 			cg_zst $target.temp
-			file rename -force $target.temp.zst $target
+			file rename -force -- $target.temp.zst $target
 		}
 		job cgcnv_annotate -optional 1 \
 		-deps {compar/cgcnv-$experiment.tsv.zst} \

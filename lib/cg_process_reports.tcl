@@ -68,7 +68,7 @@ proc process_reports_job {args} {
 			set target2 $sampledir/reports/report_flagstat_alignments-$bamroot.tsv
 			job reports_flagstat_alignments-[file tail $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
 				exec samtools flagstat $dep > $target.temp
-				file rename -force -force $target.temp $target
+				file rename -force -- -force $target.temp $target
 				set o [open $target2.temp w]
 				puts $o [join {sample source parameter value value_qcfail} \t]
 				set f [open $target]
@@ -78,7 +78,7 @@ proc process_reports_job {args} {
 				}
 				close $f
 				close $o
-				file rename -force $target2.temp $target2
+				file rename -force -- $target2.temp $target2
 			}
 		}
 		if {[inlist $reports flagstat_reads]} {
@@ -91,7 +91,7 @@ proc process_reports_job {args} {
 				} msg]} {
 					if {$msg ne "\[bam_header_read\] EOF marker is absent. The input is probably truncated."} {error $msg}
 				}
-				file rename -force -force $target.temp $target
+				file rename -force -- -force $target.temp $target
 				set o [open $target2.temp w]
 				puts $o [join {sample source parameter value value_qcfail} \t]
 				set f [open $target]
@@ -101,7 +101,7 @@ proc process_reports_job {args} {
 				}
 				close $f
 				close $o
-				file rename -force $target2.temp $target2
+				file rename -force -- $target2.temp $target2
 			}
 		}
 		if {[inlist $reports hsmetrics] && [jobfileexists $targetfile]} {
@@ -122,7 +122,7 @@ proc process_reports_job {args} {
 					puts $o "$bamroot\thsmetrics\t$key\t$value"
 				}
 				close $o
-				file rename -force $target2temp $target2
+				file rename -force -- $target2temp $target2
 			}
 		}
 		if {[inlist $reports histodepth]} {
@@ -141,7 +141,7 @@ proc process_reports_job {args} {
 					set tottarget [lindex [cg covered $targetfile] end]
 				}
 				cg depth_histo -max 1000 -q 0 -Q 0 $dep1 $targetfile > $targettemp
-				file rename -force $targettemp $target
+				file rename -force -- $targettemp $target
 				set c [split [string trim [file_read $target]] \n]
 				set header [split [list_shift c] \t]
 				if {$header ne "depth ontarget offtarget"} {
@@ -171,7 +171,7 @@ proc process_reports_job {args} {
 				append out \n
 				set target2temp [filetemp $target2]
 				file_write $target2temp $out
-				file rename -force $target2temp $target2
+				file rename -force -- $target2temp $target2
 			}
 		}
 		if {[inlist $reports histo] && $ampliconsfile ne ""} {
@@ -187,7 +187,7 @@ proc process_reports_job {args} {
 				cg regcollapse $dep2 > $tempregionfile
 				cg bam_histo $tempregionfile $dep {1 5 10 20 50 100 200 500 1000} > $tempfile
 				file delete $tempregionfile
-				file rename -force $tempfile $target
+				file rename -force -- $tempfile $target
 			}
 		}
 	}
@@ -210,11 +210,11 @@ proc process_reports_job {args} {
 				set gzcat [gzcat [lindex $deps 0]]
 				exec -ignorestderr {*}$gzcat {*}$deps | fastqc -o $target.temp stdin
 				exec unzip -o $target.temp/stdin_fastqc.zip -d $target.temp
-				file rename -force {*}[glob $target.temp/stdin_fastqc/*] $target.temp
+				file rename -force -- {*}[glob $target.temp/stdin_fastqc/*] $target.temp
 				file delete $target.temp/stdin_fastqc
 				file delete $target.temp/stdin_fastqc.zip
 				file delete $target.temp/stdin_fastqc.html
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 			}
 		}
 	}
@@ -250,7 +250,7 @@ proc process_reports_job {args} {
 				close $f
 				puts $o [join [list $sample fastq-stats ${dir}_dups $dups] \t]
 				close $o
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 			}
 		}
 	}
@@ -286,7 +286,7 @@ proc process_reports_job {args} {
 					puts $f $sample\tgenomecomb\tcovered_$chr\t$cov
 				}
 				close $f
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 			}
 		}
 	}

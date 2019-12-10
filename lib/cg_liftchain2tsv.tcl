@@ -90,7 +90,7 @@ proc cg_liftchain2tsv {args} {
 	if {$destfile ne ""} {
 		close $o
 		cg select -s - $destfile.temp $destfile.temp2
-		file rename -force $destfile.temp2 $destfile
+		file rename -force -- $destfile.temp2 $destfile
 		file delete $destfile.temp
 	}
 }

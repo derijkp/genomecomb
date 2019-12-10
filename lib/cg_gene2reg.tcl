@@ -56,7 +56,7 @@ proc cg_gene2reg {args} {
 	}
 	if {$o ne "stdout"} {
 		close $o
-		file rename -force $outfile.temp $outfile
+		file rename -force -- $outfile.temp $outfile
 	}
 	if {$f ne "stdout"} {gzclose $f}
 }

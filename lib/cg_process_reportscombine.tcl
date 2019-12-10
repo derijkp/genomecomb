@@ -573,7 +573,7 @@ proc process_reportscombine_job {args} {
 			file mkdir [file dir $target]
 			cg cat -c 0 {*}$deps > $target.temp
 			cg select -rc 1 $target.temp $target.temp2
-			file rename -force $target.temp2 $target
+			file rename -force -- $target.temp2 $target
 			file delete $target.temp
 			mklink $target $target2
 		}
@@ -629,7 +629,7 @@ proc process_reportscombine_job {args} {
 			file mkdir [file dir $target]
 			cg cat -m -c 0 {*}[lsort -dict $reports] > $target.temp
 			cg select -rc 1 $target.temp $target.temp2
-			file rename -force $target.temp2 $target
+			file rename -force -- $target.temp2 $target
 			file delete $target.temp
 			# make report_summarytable
 			unset -nocomplain data
@@ -707,7 +707,7 @@ proc process_reportscombine_job {args} {
 				puts $o [join $resultline \t]
 			}
 			close $o
-			file rename -force $target2.temp $target2
+			file rename -force -- $target2.temp $target2
 			# make html report
 			# ----------------
 

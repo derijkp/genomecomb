@@ -49,7 +49,7 @@ proc rtg2annotvar {file {outfile {}}} {
 	}
 	close $o
 	gzclose $f
-	file rename -force $outfile.temp $outfile
+	file rename -force -- $outfile.temp $outfile
 }
 
 proc cg_rtg2sft {args} {
@@ -107,18 +107,18 @@ proc process_rtgsample {dir destdir {force 0}} {
 		putslog "Create annotated varfile annotvar-$name.tsv from $varfile"
 		if {$force || ![file exists uannotvar-$name.tsv]} {
 			rtg2annotvar $varfile uannotvar-$name.tsv.temp
-			file rename -force uannotvar-$name.tsv.temp uannotvar-$name.tsv
+			file rename -force -- uannotvar-$name.tsv.temp uannotvar-$name.tsv
 		}
 		putslog "Sorting"
 		cg select -s "chromosome begin end" uannotvar-$name.tsv > annotvar-$name.tsv.temp
 		file delete uannotvar-$name.tsv
-		file rename -force annotvar-$name.tsv.temp annotvar-$name.tsv
+		file rename -force -- annotvar-$name.tsv.temp annotvar-$name.tsv
 	}
 	# sample specific filters
 	if {$force || ![file exists reg_cluster-$name.tsv]} {
 		putslog "Find cluster regions for annotvar-$name.tsv"
 		cg clusterregions < annotvar-$name.tsv > temp.tsv
-		file rename -force temp.tsv reg_cluster-$name.tsv
+		file rename -force -- temp.tsv reg_cluster-$name.tsv
 	}
 	if {$force || ![file exists fannotvar-$name.tsv]} {
 		# add filterdata to annotvar
@@ -155,7 +155,7 @@ proc process_rtgsample {dir destdir {force 0}} {
 			fcopy $f $o
 			close $o
 			exec bgzip $allposfile.temp
-			file rename -force $allposfile.temp.gz $allposfile.gz
+			file rename -force -- $allposfile.temp.gz $allposfile.gz
 		}
 	}
 	if {$force || ![file exists sreg-$name.tsv]} {
@@ -176,7 +176,7 @@ proc process_rtgsample {dir destdir {force 0}} {
 			set cat [gzcat $file]
 			exec {*}$cat $file | getregions $chr $poscol $coveragecol 9 1 -1 >> sreg-$name.tsv.temp
 		}
-		file rename -force sreg-$name.tsv.temp sreg-$name.tsv
+		file rename -force -- sreg-$name.tsv.temp sreg-$name.tsv
 	}
 	cd $keepdir
 }
@@ -241,29 +241,29 @@ proc rtgregions {cgdir comparfile rtgdir} {
 	if {![file exists $cgdir/reg_rtgnotsame-$cgsample.tsv]} {
 		putslog "$cgdir/reg_rtgnotsame-$cgsample.tsv"
 		cg select -f {chromosome begin end} -q "!same($cgsample,$rtgsample)" $comparfile $cgdir/reg_rtgnotsame-$cgsample.tsv.temp
-		file rename -force $cgdir/reg_rtgnotsame-$cgsample.tsv.temp $cgdir/reg_rtgnotsame-$cgsample.tsv
+		file rename -force -- $cgdir/reg_rtgnotsame-$cgsample.tsv.temp $cgdir/reg_rtgnotsame-$cgsample.tsv
 	}
 	if {![file exists $cgdir/reg_posrtg-$cgsample.tsv]} {
 		putslog "$cgdir/reg_posrtg-$cgsample.tsv"
 		cg regsubtract $rtgdir/sreg-$rtgsample.tsv $cgdir/reg_rtgnotsame-$cgsample.tsv > $cgdir/reg_posrtg-$cgsample.tsv.temp
-		file rename -force $cgdir/reg_posrtg-$cgsample.tsv.temp $cgdir/reg_posrtg-$cgsample.tsv
+		file rename -force -- $cgdir/reg_posrtg-$cgsample.tsv.temp $cgdir/reg_posrtg-$cgsample.tsv
 	}
 	# make filter for cg by removing good poss in rtg
 	if {![file exists $cgdir/reg_rtg-$cgsample.tsv]} {
 		putslog "$cgdir/reg_rtg-$cgsample.tsv"
 		cg regsubtract $cgdir/sreg-$cgsample.tsv $cgdir/reg_posrtg-$cgsample.tsv > $cgdir/reg_rtg-$cgsample.tsv.temp
-		file rename -force $cgdir/reg_rtg-$cgsample.tsv.temp $cgdir/reg_rtg-$cgsample.tsv
+		file rename -force -- $cgdir/reg_rtg-$cgsample.tsv.temp $cgdir/reg_rtg-$cgsample.tsv
 	}
 	# how much remains after filter
 	if {![file exists $cgdir/filteredrtg-$cgsample.tsv]} {
 		putslog "$cgdir/filteredrtg-$cgsample.tsv"
 		cg regsubtract $cgdir/sreg-$cgsample.tsv $cgdir/reg_rtg-$cgsample.tsv > $cgdir/filteredrtg-$cgsample.tsv.temp
-		file rename -force $cgdir/filteredrtg-$cgsample.tsv.temp $cgdir/filteredrtg-$cgsample.tsv
+		file rename -force -- $cgdir/filteredrtg-$cgsample.tsv.temp $cgdir/filteredrtg-$cgsample.tsv
 	}
 	if {![file exists $cgdir/filteredrtg-$cgsample.covered]} {
 		putslog "$cgdir/filteredrtg-$cgsample.covered"
 		cg covered $cgdir/filteredrtg-$cgsample.tsv > $cgdir/filteredrtg-$cgsample.covered.temp
-		file rename -force $cgdir/filteredrtg-$cgsample.covered.temp $cgdir/filteredrtg-$cgsample.covered
+		file rename -force -- $cgdir/filteredrtg-$cgsample.covered.temp $cgdir/filteredrtg-$cgsample.covered
 	}
 }
 

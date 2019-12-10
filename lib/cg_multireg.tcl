@@ -62,10 +62,10 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 				set temp2 [filetemp_ext $target]
 				set l [file root [file tail [gzroot $limitreg]]]
 				cg select -overwrite 1 -f [list_remove [cg select -h $temp] $l] -q "\$$l == 1" $temp $temp2
-				file rename -force $temp2 $target
+				file rename -force -- $temp2 $target
 				file delete $temp
 			} else {
-				file rename -force $temp $target
+				file rename -force -- $temp $target
 			}
 			if {$compress ne ""} {cg_zindex $target}
 		}
@@ -95,9 +95,9 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 					set temp2 [filetemp_ext $target]
 					set l [file root [file tail [gzroot $limitreg]]]
 					cg select -overwrite 1 -f [list_remove [cg select -h $temp] $l] -q "\$$l == 1" $temp $temp2
-					file rename -force $temp2 $target
+					file rename -force -- $temp2 $target
 				} else {
-					file rename -force $temp $target
+					file rename -force -- $temp $target
 				}
 				if {$compress ne ""} {cg_zindex $target}
 				if {$delete} {file delete {*}$deps}
@@ -136,7 +136,7 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 					# puts [list ../bin/multireg {*}$todo]
 					set temp [filetemp $target]
 					exec multireg {*}$todo {*}[compresspipe $target -1] > $temp 2>@ stderr
-					file rename -force $temp $target
+					file rename -force -- $temp $target
 					if {$delete} {file delete {*}$deps}
 				}
 			} else {
@@ -152,11 +152,11 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 					if {$limitreg ne ""} {
 						exec cg regselect -o $target.temp $dep $limitreg
 					} elseif {$delete} {
-						file rename $dep $target.temp
+						file rename -- $dep $target.temp
 					} else {
 						mklink $dep $target.temp
 					}
-					file rename -force $target.temp $target
+					file rename -force -- $target.temp $target
 				}
 			}
 			incr pos $maxfiles

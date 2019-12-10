@@ -23,8 +23,8 @@ proc bam_sort_rseq_job {bam} {
 		file delete $target2.temp.bam
 		samtools_sort $dep $target1.temp
 		samtools_sort -n $dep $target2.temp
-		file rename -force $target1.temp.bam $target1
-		file rename -force $target2.temp.bam $target2
+		file rename -force -- $target1.temp.bam $target1
+		file rename -force -- $target2.temp.bam $target2
 	}	
 }
 
@@ -38,7 +38,7 @@ proc htseqcount_job {bam gff order stranded mode} {
 		#use -q quiet option? or redirect
 		exec echo "id\t$pre-$root" > $target.temp
 		exec htseq-count --quiet --format=bam --order=$order --stranded=$stranded --mode=$mode $dep $gff >> $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 }
 
@@ -50,7 +50,7 @@ proc make_count_table_job {dir experiment samples} {
 		exec paste {*}$deps > $target.temp1
 		##keep 1st id column, remove empty ids, remove __no_feature __ambiguous __too_low_aQual __not_aligned __alignment_not_unique
 		cg select -q {$id != "" && regexp($id,"^\[^_\]+") } -f {id *-*} $target.temp1 $target.temp2
-		file rename -force $target.temp2 $target
+		file rename -force -- $target.temp2 $target
 		file delete $target.temp1
 	}
 }

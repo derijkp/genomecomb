@@ -21,8 +21,8 @@ proc cg_homwes_compare args {
 #	set args [lrange $args $pos end]
 	cg_options homwes_compare args {
 	} {resultfile} 2
-	if {[file exists $resultfile]} {file rename -force $resultfile $resultfile.old}
-	if {[file exists $resultfile.summary.tsv]} {file rename -force $resultfile.summary.tsv $resultfile.summary.tsv.old}
+	if {[file exists $resultfile]} {file rename -force -- $resultfile $resultfile.old}
+	if {[file exists $resultfile.summary.tsv]} {file rename -force -- $resultfile.summary.tsv $resultfile.summary.tsv.old}
 	cg multireg $resultfile {*}$args
 	set o [open $resultfile.summary.tsv w]
 	puts $o [join {name snps numregions covered common sensitivity specificity fp fn fpvscovered fnvsrefcovered} \t]

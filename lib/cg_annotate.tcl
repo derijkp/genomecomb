@@ -34,7 +34,7 @@ proc annotatereg {file dbfile name annotfile near dbinfo} {
 	} else {
 		exec reg_annot $file {*}$poss $dbfile {*}$dbposs $near {*}$dataposs >> $annotfile.temp 2>@ stderr
 	}
-	file rename -force $annotfile.temp $annotfile
+	file rename -force -- $annotfile.temp $annotfile
 
 }
 
@@ -87,7 +87,7 @@ proc annotatevar {file dbfile name annotfile dbinfo} {
 		# puts [list ../bin/var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos $notfound {*}$dataposs]
 		exec var_annot $file {*}$poss $type1pos $alt1pos $dbfile {*}$dbposs $type2pos $alt2pos $notfound {*}$dataposs >> $annotfile.temp 2>@ stderr
 	}
-	file rename -force $annotfile.temp $annotfile
+	file rename -force -- $annotfile.temp $annotfile
 }
 
 proc cg_annotatedb_info {dbfile {near -1}} {
@@ -287,7 +287,7 @@ proc cg_annotate_job {args} {
 			putslog "Skipping annotation to $resultfile: already made"
 			return
 		}
-		file rename -force $resultfile $resultfile.old
+		file rename -force -- $resultfile $resultfile.old
 	} else {
 		set checkresult 0
 		set resultheader {}
@@ -359,7 +359,7 @@ proc cg_annotate_job {args} {
 			} else {
 				file copy $dep $target.temp
 			}
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 		}
 		return
 	}
@@ -442,7 +442,7 @@ proc cg_annotate_job {args} {
 				job annot-$resultname-[file tail $dbfile] -deps $todo -targets {$target} -vars {} -code {
 					set temp [filetemp $target]
 					cg cat -c 0 {*}$deps > $temp
-					file rename $temp $target
+					file rename -- $temp $target
 				}
 			}
 		} elseif {$dbtype eq "mir"} {
@@ -493,7 +493,7 @@ proc cg_annotate_job {args} {
 			job annot-$resultname-[file tail $dbfile] -deps {$usefile $dbfile} -targets {$target} -vars {dbfile name dbinfo near} -code {
 				set outfields [dict get $dbinfo outfields]
 				annotatereg $dep $dbfile $name $target.temp $near $dbinfo
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 			}
 		}
 	}
@@ -522,7 +522,7 @@ proc cg_annotate_job {args} {
 			set temp [filetemp_ext $resultfile]
 			exec tsv_paste $temp2 {*}$afiles {*}$compress > $temp
 			file delete $temp2
-			file rename -force $temp $resultfile
+			file rename -force -- $temp $resultfile
 			if {$compress ne ""} {cg_zstindex $resultfile}
 		} else {
 			set f [gzopen $orifile]
@@ -539,7 +539,7 @@ proc cg_annotate_job {args} {
 				set temp [filetemp_ext $resultfile]
 				exec tsv_paste $orifile {*}$afiles {*}$compress > $temp
 			}
-			file rename -force $temp $resultfile
+			file rename -force -- $temp $resultfile
 			if {$compress ne ""} {cg_zstindex $resultfile}
 		}
 		if {[llength $afiles]} {file delete {*}$afiles}

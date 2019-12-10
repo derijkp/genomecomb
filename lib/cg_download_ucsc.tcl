@@ -58,7 +58,7 @@ time	$timestamp
 == Category ==
 Annotation
 }]]
-	file rename -force $temp/$dbname.info $resultfile
+	file rename -force -- $temp/$dbname.info $resultfile
 	file delete -force $temp
 }
 

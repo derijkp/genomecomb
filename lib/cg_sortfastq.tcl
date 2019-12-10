@@ -7,6 +7,6 @@ proc cg_sortfastq {args} {
 		exec {*}[gzcat $infile] $infile | paste - - - - | gnusort8 -T [scratchdir] -t \t -V -s -k 1,1 | tr {\t} {\n} >@ stdout
 	} else {
 		exec {*}[gzcat $infile] $infile | paste - - - - | gnusort8 -T [scratchdir] -t \t -V -s -k 1,1 | tr {\t} {\n} {*}[compresspipe $outfile] > $outfile.temp
-		file rename -force $outfile.temp $outfile
+		file rename -force -- $outfile.temp $outfile
 	}
 }

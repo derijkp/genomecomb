@@ -80,7 +80,7 @@ proc cg_homwes {args} {
 		cg vcf2tsv -split 0 $annotcomparfile $tsvfile.temp 2>@ stderr
 		putslog "annotating $tsvfile"
 		cg annotate $tsvfile.temp $tsvfile.temp2 {*}[gzfiles $dbdir/reg_*_microsat.tsv $dbdir/reg_*_simpleRepeat.tsv]
-		file rename -force $tsvfile.temp2 $tsvfile
+		file rename -force -- $tsvfile.temp2 $tsvfile
 		file delete $tsvfile.temp
 		set usefile $tsvfile
 	} elseif {[llength [list_common [cg select -h $annotcomparfile] {microsat simpleRepeat}]] != 2} {
@@ -90,7 +90,7 @@ proc cg_homwes {args} {
 		set tsvfile $workdir/[file root [file tail $annotcomparfile]].tsv
 		putslog "annotating $tsvfile"
 		cg annotate $annotcomparfile $tsvfile.temp2 {*}[gzfiles $dbdir/reg_*_microsat.tsv $dbdir/reg_*_simpleRepeat.tsv]
-		file rename -force $tsvfile.temp2 $tsvfile
+		file rename -force -- $tsvfile.temp2 $tsvfile
 		file delete $tsvfile.temp
 		set usefile $tsvfile
 	} else {
@@ -246,14 +246,14 @@ proc cg_homwes {args} {
 		}
 		close $o
 		close $f
-		file rename -force $sworkbase-hom.tsv $resultfilebase-$sample.tsv
+		file rename -force -- $sworkbase-hom.tsv $resultfilebase-$sample.tsv
 		lappend resultfiles $resultfilebase-$sample.tsv
 	}
 	if {[llength $samples] == 1} {
-		file rename -force $resultfilebase-$sample.tsv $resultfile
+		file rename -force -- $resultfilebase-$sample.tsv $resultfile
 	} else {
 		putslog "Making $resultfile"
 		cg multireg $resultfile.temp {*}$resultfiles
-		file rename -force $resultfile.temp $resultfile
+		file rename -force -- $resultfile.temp $resultfile
 	}
 }

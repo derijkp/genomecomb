@@ -44,5 +44,5 @@ proc cg_gatk_genotypevcfs args {
 		-new-qual $newqual \
 		--create-output-variant-index true \
 		{*}$opts >@ stdout 2>@stderr
-	file rename $vcf.temp[gzext $vcf] $vcf
+	file rename -- $vcf.temp[gzext $vcf] $vcf
 }

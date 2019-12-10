@@ -87,7 +87,7 @@ proc sv_lumpy_job {args} {
 			-T [scratchdir] \
 			-R $refseq \
 			-o $vcffile.temp.vcf 2>@ stderr >@ stdout
-		file rename -force $vcffile.temp.vcf $vcffile
+		file rename -force -- $vcffile.temp.vcf $vcffile
 	}
 	# 
 	job sv-lumpy-vcf2tsv-$root {*}$skips -deps {
@@ -101,7 +101,7 @@ proc sv_lumpy_job {args} {
 		cg vcf2tsv -split $split -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
 		} $vcffile $target.temp[gzext $target]
-		file rename -force $target.temp[gzext $target] $target
+		file rename -force -- $target.temp[gzext $target] $target
 	}
 	# cleanup
 	return $resultlist

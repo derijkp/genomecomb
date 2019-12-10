@@ -24,7 +24,7 @@ proc cg_download_genome {args} {
 		set source $url
 		wgetfile $source
 		cg_fas2ifas [file tail $source] $tail
-		file rename -force $tail $tail.index ..
+		file rename -force -- $tail $tail.index ..
 	} elseif {[llength $chromosomes]} {
 		set source ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr*.fa.gz
 		set files {}
@@ -39,7 +39,7 @@ proc cg_download_genome {args} {
 		}
 		putslog "Converting and indexing"
 		exec zcat {*}$files | cg genome_indexfasta $tail
-		file rename -force {*}[glob $tail*] ..
+		file rename -force -- {*}[glob $tail*] ..
 	} elseif {!$alt && ![catch {
 		set source ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/analysisSet/$build.analysisSet.chroms.tar.gz
 		wgetfile $source 
@@ -52,7 +52,7 @@ proc cg_download_genome {args} {
 		}
 		putslog "Converting and indexing"
 		exec cat {*}$files | cg genome_indexfasta $tail
-		file rename -force {*}[glob $tail*] ..
+		file rename -force -- {*}[glob $tail*] ..
 		file delete $build.analysisSet.chroms.tar.gz
 	} elseif {![catch {
 		set source ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/chromosomes/chr*.fa.gz
@@ -65,12 +65,12 @@ proc cg_download_genome {args} {
 		}
 		putslog "Converting and indexing"
 		exec zcat {*}$files | cg genome_indexfasta $tail
-		file rename -force {*}[glob $tail*] ..
+		file rename -force -- {*}[glob $tail*] ..
 	} else {
 		set source ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/bigZips/$build.fa.gz
 		wgetfile $source
 		cg_fas2ifas $build.fa.gz $tail
-		file rename -force $tail $tail.index ..
+		file rename -force -- $tail $tail.index ..
 	}
 	puts "genome downloaded from $source"
 	file_write $result.info [subst [deindent {
@@ -105,6 +105,6 @@ proc cg_download_genome {args} {
 		puts $o $chromosome\t0\t$len
 	}
 	close $o
-	file rename -force $rfile.temp $rfile
+	file rename -force -- $rfile.temp $rfile
 	cd $keepdir
 }

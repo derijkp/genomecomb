@@ -125,7 +125,7 @@ proc gatk_compar_job args {
 				-O $resultvcf.temp[file extension $resultvcf] \
 				-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
 			file delete $combinedgvcf
-			file rename $resultvcf.temp[file extension $resultvcf] $resultvcf
+			file rename -- $resultvcf.temp[file extension $resultvcf] $resultvcf
 		}
 	} else {
 		set regions [distrreg_regs $distrreg $refseq]
@@ -176,7 +176,7 @@ proc gatk_compar_job args {
 					--only-output-calls-starting-in-intervals \
 					--intervals $region >@ stdout 2>@stderr
 				file delete -force $tempfile
-				file rename $resultvcf.$region.temp $resultvcf.$region
+				file rename -- $resultvcf.$region.temp $resultvcf.$region
 				file delete $resultvcf.$region.temp.idx
 			}
 			lappend vcffiles $resultvcf.$region
@@ -188,7 +188,7 @@ proc gatk_compar_job args {
 		 -code {
 			set tempfile $resultvcf.temp[file extension $resultvcf]
 			cg_vcfcat -threads $threads -o $tempfile {*}$vcffiles
-			file rename $tempfile $resultvcf
+			file rename -- $tempfile $resultvcf
 			file delete {*}$deps
 		}
 	}

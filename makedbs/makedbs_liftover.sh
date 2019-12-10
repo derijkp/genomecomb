@@ -35,11 +35,11 @@ foreach {base src} {hg18ToHg19 hg18 hg18ToHg38 hg18 hg19ToHg18 hg19 hg38ToHg19 h
 foreach base {hg18ToHg19 hg18ToHg38 hg19ToHg18 hg38ToHg19 hg19ToHg38} {
 	job liftchain2tsv-$base -deps {$base.over.chain} -targets {$base.over.tsv} -code {
 		cg liftchain2tsv $dep $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	job liftchain2tsv-chr_$base -deps {$base.over.chain} -targets {chr_$base.over.tsv} -code {
 		cg liftchain2tsv -chrprefix chr $dep $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 }
 
@@ -55,7 +55,7 @@ foreach {base src dest} {
 	-deps {../$src/genome_$src.ifas ../$dest/genome_$dest.ifas $base.over.tsv} \
 	-targets {$base.over.refchanges.tsv} -code {
 		cg liftfindchanges {*}$deps > $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	mklink $base.over.refchanges.tsv chr_$base.over.refchanges.tsv
 }

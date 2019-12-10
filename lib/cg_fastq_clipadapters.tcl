@@ -56,7 +56,7 @@ proc fastq_clipadapters_job {args} {
 				analysisinfo_write $dep $target clipping fastq-mcf clipping_version [version fastq-mcf] clipping_cg_version [version genomecomb]
 				set tempout1 [filetemp $target]
 				exec fastq-mcf -k $removeskew -a $adapterfile $dep | gzip --fast > $tempout1 2>@ stderr
-				file rename -force $tempout1 $target
+				file rename -force -- $tempout1 $target
 			}
 		}
 	} else {
@@ -82,8 +82,8 @@ proc fastq_clipadapters_job {args} {
 				exec gzip --fast -c $tempfile2 > $tempout2
 				file delete $tempfile1
 				file delete $tempfile2
-				file rename -force $tempout1 $target
-				file rename -force $tempout2 $target2
+				file rename -force -- $tempout1 $target
+				file rename -force -- $tempout2 $target2
 			}
 		}
 	}

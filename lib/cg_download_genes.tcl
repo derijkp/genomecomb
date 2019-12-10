@@ -59,7 +59,7 @@ proc cg_download_genes {args} {
 	}
 	# move to results
 	putslog "move results to $resultfile and [gzroot $resultfile].info"
-	file rename -force $ucscfile.info [gzroot $resultfile].info
+	file rename -force -- $ucscfile.info [gzroot $resultfile].info
 	compress $temp/$resulttail $resultfile
 	file delete -force $temp
 }

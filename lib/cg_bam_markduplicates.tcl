@@ -83,7 +83,7 @@ proc cg_bam_markduplicates {args} {
 			METRICS_FILE=$resultfile.dupmetrics TMP_DIR=[scratchdir]/picard \
 			{*}$opts {*}$optsio 2>@ stderr
 		if {[file exists $tempresult]} {
-			file rename -force $tempresult $resultfile
+			file rename -force -- $tempresult $resultfile
 		} else {
 			file copy $tempresult >@ stdout
 		}
@@ -107,7 +107,7 @@ proc cg_bam_markduplicates {args} {
 		biobambam bammarkduplicates2 M=$resultfile.dupmetrics rmdup=0 markthreads=1 tmpfile=[scratchfile] \
 			{*}$opts {*}$optsio 2>@ stderr
 		if {$resultfile ne "-"} {
-			file rename -force $tempresult $resultfile
+			file rename -force -- $tempresult $resultfile
 		}
 	} else {
 		analysisinfo_write $sourcefile $resultfile removeduplicates samtools removeduplicates_version [version samtools]
@@ -128,14 +128,7 @@ proc cg_bam_markduplicates {args} {
 		exec samtools markdup --output-fmt $outputformat -l 500 \
 			{*}$opts $sourcefile $tempresult {*}$optsio 2>@ stderr
 		if {$resultfile ne "-"} {
-			file rename -force $tempresult $resultfile
+			file rename -force -- $tempresult $resultfile
 		}
 	}
 }
-
-#proc cg_bam_markduplicates {args} {
-#	set args [job_init {*}$args]
-#	set result [bam_markduplicates_job {*}$args]
-#	job_wait
-#	return $result
-#}

@@ -61,7 +61,7 @@ proc make_remap {file genome resultfile} {
 	
 	close $o
 	catch {exec cg select -s {name begin end}  $resultfile.temp $resultfile.temp2}
-	file rename -force $resultfile.temp2 $resultfile
+	file rename -force -- $resultfile.temp2 $resultfile
 	file delete $resultfile.temp
 }
 
@@ -115,6 +115,6 @@ proc cg_remap {file remapfile resultfile} {
 	gzclose $f ; gzclose $fr
 	cg select -s - $resultfile.temp $resultfile.temp2
 	file delete $resultfile.temp
-	file rename -force $resultfile.temp.unmapped $resultfile.unmapped
-	file rename -force $resultfile.temp2 $resultfile
+	file rename -force -- $resultfile.temp.unmapped $resultfile.unmapped
+	file rename -force -- $resultfile.temp2 $resultfile
 }

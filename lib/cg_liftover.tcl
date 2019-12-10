@@ -388,7 +388,7 @@ proc cg_liftover {args} {
 		if {$resultfile ne "-"} {
 			set tempresult [filetemp_ext $resultfile]
 			cg select -overwrite 1 -f $fields -s $sortfields $tempout $tempresult
-			file rename -force $tempresult $resultfile
+			file rename -force -- $tempresult $resultfile
 			cg_zindex $resultfile
 			file delete -force $tempout
 		} else {

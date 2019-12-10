@@ -31,7 +31,7 @@ job_logdir log_jobs
 # download genome
 job genome_${build} -vars build -targets {genome_${build}.ifas genome_${build}.ifas.fai extra/reg_${build}_fullgenome.tsv} -code {
 	cg download_genome genome_${build}.ifas ${build}
-	file rename -force reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
+	file rename -force -- reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
 }
 
 job genome_${build}_cindex -deps {genome_${build}.ifas} -targets {genome_${build}.ssa} -code {
@@ -40,7 +40,7 @@ job genome_${build}_cindex -deps {genome_${build}.ifas} -targets {genome_${build
 
 job reg_${build}_sequencedgenome -vars {build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv} -code {
 	exec cg calcsequencedgenome --stack 1 $dep {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 }
 
 # region databases (ucsc)
@@ -56,8 +56,8 @@ foreach db {
 	job reg_${build}_$db -targets {reg_${build}_${db}.tsv} -vars {build db} -code {
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regcollapse $target.ucsc > $target.temp
-		file rename -force $target.ucsc.info $target.info
-		file rename -force $target.temp $target
+		file rename -force -- $target.ucsc.info $target.info
+		file rename -force -- $target.temp $target
 		file delete $target.ucsc
 	}
 }
@@ -70,8 +70,8 @@ foreach db {
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regjoin $target.ucsc > $target.temp
 		file delete $target.ucsc
-		file rename -force $target.ucsc.info $target.info
-		file rename -force $target.temp $target
+		file rename -force -- $target.ucsc.info $target.info
+		file rename -force -- $target.temp $target
 	}
 }
 
@@ -91,8 +91,8 @@ job reg_${build}_gwasCatalog -vars {build} -deps {ucsc_${build}_gwasCatalog.tsv}
 		-nh {chrom start end name score pubMedID dbsnp bin author pubDate journal title initSample replSample region genes riskAllele riskAlFreq pValueDesc orOrBeta ci95 platform cnv} \
 		$target.ucsc $target.temp
 	cg regcollapse $target.temp > $target.temp2
-	file rename -force $target.ucsc.info $target.info
-	file rename -force $target.temp2 $target
+	file rename -force -- $target.ucsc.info $target.info
+	file rename -force -- $target.temp2 $target
 	file delete $target.temp
 	file delete $target.ucsc
 }
@@ -180,7 +180,7 @@ job gene_${build}_intGene \
 -deps {gene_${build}_refGene.tsv extra/gene_${build}_gencode.tsv extra/gene_${build}_ensGene.tsv extra/gene_${build}_knownGene.tsv} \
 -targets {$target $target.gz $target.gz.tbi} -vars {dest build db} -code {
 	cg intgene {*}$deps > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 	cg maketabix $target
 	cg index $target
 }
@@ -189,7 +189,7 @@ job reg_${build}_genes -targets {extra/reg_${build}_genes.tsv} \
 -deps {gene_${build}_refGene.tsv extra/gene_${build}_ensGene.tsv extra/gene_${build}_knownGene.tsv extra/gene_${build}_gencode.tsv extra/gene_${build}_gencodea.tsv} \
 -code {
 	exec cg cat -fields {chrom start end geneid} {*}$deps | cg select -s {chrom start end geneid} | cg regcollapse > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 }
 
 job reg_refcoding \
@@ -197,13 +197,13 @@ job reg_refcoding \
 -targets {extra/reg_${build}_refcoding.tsv} \
 -code {
 	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 }
 
 # homopolymer
 job reg_${build}_homopolymer -deps {genome_${build}.ifas} -targets {reg_${build}_homopolymer.tsv reg_${build}_homopolymer.tsv.gz reg_${build}_homopolymer.tsv.gz.tbi reg_${build}_homopolymer.tsv.opt} -vars {dest build db} -code {
 	cg extracthomopolymers genome_${build}.ifas > reg_${build}_homopolymer.tsv.temp
-	file rename -force reg_${build}_homopolymer.tsv.temp reg_${build}_homopolymer.tsv
+	file rename -force -- reg_${build}_homopolymer.tsv.temp reg_${build}_homopolymer.tsv
         cg maketabix reg_${build}_homopolymer.tsv
 	file_write reg_${build}_homopolymer.tsv.opt "fields\t{base size}\n"
 }
@@ -254,7 +254,7 @@ job enc_transcription_info -targets {reg_${build}_wgEncodeCaltechRnaSeq.tsv.info
 		== Description ==
 	}]]]]
 	file_write $target.temp2 $c
-	file rename -force $target.temp2 $target
+	file rename -force -- $target.temp2 $target
 	file delete $target.temp
 }
 
@@ -281,12 +281,12 @@ foreach {jobname resultname infosrc tables} {
 		}
 		if {![file exists $tempdir/reg_${build}_$resultname.tsv]} {
 			cg regcollapse -o $tempdir/reg_${build}_$resultname.tsv.temp {*}$todo
-			file rename -force $tempdir/reg_${build}_$resultname.tsv.temp $tempdir/reg_${build}_$resultname.tsv
+			file rename -force -- $tempdir/reg_${build}_$resultname.tsv.temp $tempdir/reg_${build}_$resultname.tsv
 		}
 		cg bcol make --compress 9 -t iu -p begin -e end -c chromosome $tempdir/bcol_${build}_$resultname.bcol score < $tempdir/reg_${build}_$resultname.tsv
-		file rename -force $tempdir/bcol_${build}_$resultname.bcol.bin.zst bcol_${build}_$resultname.bcol.bin.zst
-		file rename -force $tempdir/bcol_${build}_$resultname.bcol.bin.zst.zsti bcol_${build}_$resultname.bcol.bin.zst.zsti
-		file rename -force $tempdir/bcol_${build}_$resultname.bcol bcol_${build}_$resultname.bcol
+		file rename -force -- $tempdir/bcol_${build}_$resultname.bcol.bin.zst bcol_${build}_$resultname.bcol.bin.zst
+		file rename -force -- $tempdir/bcol_${build}_$resultname.bcol.bin.zst.zsti bcol_${build}_$resultname.bcol.bin.zst.zsti
+		file rename -force -- $tempdir/bcol_${build}_$resultname.bcol bcol_${build}_$resultname.bcol
 		file delete -force $tempdir
 	}
 	# make info file
@@ -302,7 +302,7 @@ num contains the number of cell lines for which the score is >= 10
 == Description ==
 		}]]]]
 		file_write $target.temp2 $c
-		file rename -force $target.temp2 $target
+		file rename -force -- $target.temp2 $target
 		file delete $target.temp
 	}
 }
@@ -311,7 +311,7 @@ num contains the number of cell lines for which the score is >= 10
 job enc_RegDnaseClustered -targets {reg_${build}_wgEncodeRegDnaseClustered.tsv reg_${build}_wgEncodeRegDnaseClustered.info} -vars {dest build} -code {
 	cg download_ucsc $target.ucsc $build wgEncodeRegDnaseClusteredV3
 	cg regcollapse $target.ucsc > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 	file delete $target.ucsc
 	cg download_ucscinfo $target.info ${build} wgEncodeRegDnaseClusteredV3
 }
@@ -320,8 +320,8 @@ job enc_RegTfbsClustered -targets {reg_${build}_wgEncodeRegTfbsClustered.tsv reg
 	cg download_ucsc $target.ucsc ${build} wgEncodeRegTfbsClustered
 	cg select -s - -f {chrom	start	end	name	score} $target.ucsc $target.temp
 	cg regcollapse $target.temp > $target.temp2
-	file rename -force $target.temp2 $target
-	file rename -force $target.ucsc.info $target.info
+	file rename -force -- $target.temp2 $target
+	file rename -force -- $target.ucsc.info $target.info
 	file delete -force $target.ucsc $target.temp
 }
 

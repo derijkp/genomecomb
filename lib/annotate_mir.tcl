@@ -532,5 +532,5 @@ proc annotatemir {file genomefile dbfile name resultfile {genecol name} {transcr
 		mirvas_draw_close $mo
 	}
 	close $o; gzclose $f
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 }

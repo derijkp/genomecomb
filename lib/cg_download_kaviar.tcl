@@ -52,9 +52,9 @@ proc cg_download_kaviar {args} {
 	puts $o ""
 	close $o
 	exec cat $readme >> $tempdir/info
-	file rename $tempdir/info [gzroot $resultfile].info
+	file rename -- $tempdir/info [gzroot $resultfile].info
 	#
 	putslog "move result to target"
-	file rename -force $tempdir/$rtail.temp2[file extension $resultfile] $resultfile
+	file rename -force -- $tempdir/$rtail.temp2[file extension $resultfile] $resultfile
 	if {!$keep} {file delete -force $tempdir}
 }

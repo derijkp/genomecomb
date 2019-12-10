@@ -59,7 +59,7 @@ proc cg_checksum {args} {
 			if {![file size $checksumfile.temp]} {
 				file_write $checksumfile.temp "FAILED: $result\n"
 			}
-			file rename -force $checksumfile.temp $checksumfile
+			file rename -force -- $checksumfile.temp $checksumfile
 			puts "$checksumfile written"
 		}
 		# grep returns error if nothing is found

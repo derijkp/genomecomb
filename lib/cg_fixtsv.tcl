@@ -33,6 +33,6 @@ proc cg_fixtsv {file outfile} {
 	}
 	gzclose $f
 	close $o
-	if {[file exists $outfile]} {catch {file rename $outfile $outfile.old}}
-	file rename -force $outfile.temp $outfile
+	if {[file exists $outfile]} {catch {file rename -- $outfile $outfile.old}}
+	file rename -force -- $outfile.temp $outfile
 }

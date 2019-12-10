@@ -17,5 +17,5 @@ proc info_analysis_file {resultfile sample parameters versions args} {
 			file rename $resultfile $resultfile.[file_timestamp $resultfile]
 		}
 	}
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 }

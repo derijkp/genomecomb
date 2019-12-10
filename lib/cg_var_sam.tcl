@@ -154,7 +154,7 @@ proc var_sam_job {args} {
 				# -t SP: Phred-scaled strand bias P-value
 				exec samtools mpileup --uncompressed -t DP,SP --min-BQ $BQ --fasta-ref $refseq {*}$opts $dep 2>@ stderr | bcftools call --threads $threads -$callmethod - > $target.temp 2>@ stderr
 			}
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 			if {$emptyreg && ![file exists $cache]} {
 				file copy $target $cache
 			}
@@ -169,7 +169,7 @@ proc var_sam_job {args} {
 	} -code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -skiprefindels 1 -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA INDEL G3 HWE CLR UGT CGT PCHI2 QCHI2 PR} $dep $target.temp.zst
-		file rename -force $target.temp.zst $target
+		file rename -force -- $target.temp.zst $target
 	}
 	# zst_job ${pre}varall-$root.tsv -i 1
 	zstindex_job {*}$skips ${pre}varall-$root.tsv.zst
@@ -192,7 +192,7 @@ proc var_sam_job {args} {
 			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 			*
 		} $dep $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv ${pre}var-$root.tsv.zst

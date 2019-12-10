@@ -25,7 +25,7 @@ proc cg_indexcol {args} {
 			progress next "Sorting finished"
 			progress stop
 			file delete $histofile.temp $histofile.temph
-			file rename $histofile.temp2 $histofile
+			file rename -- $histofile.temp2 $histofile
 		} else {
 			progress start $samplingnum "Sampling data"  "Sampling $file to show example values for fields, please be patient"
 			catch {update idletasks}
@@ -68,7 +68,7 @@ proc cg_indexcol {args} {
 			if {$haslists} {lappend result {present! lists}}
 			lappend result {...}
 			file_write $histofile.temp [join $result \n]
-			file rename -force $histofile.temp $histofile
+			file rename -force -- $histofile.temp $histofile
 			progress stop
 		}
 		progress next

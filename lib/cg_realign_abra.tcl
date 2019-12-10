@@ -49,8 +49,8 @@ proc realign_abra_job {args} {
 			error $msg
 		}
 		exec samtools index $target.temp.bam
-		file rename -force $target.temp.bam.[indexext $target] $target.[indexext $target]
-		file rename -force $target.temp.bam $target
+		file rename -force -- $target.temp.bam.[indexext $target] $target.[indexext $target]
+		file rename -force -- $target.temp.bam $target
 	}
 }
 

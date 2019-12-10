@@ -38,7 +38,7 @@ proc multidb_merge_job {varsfile files {split 1}} {
 		job multi_merge-$multi_merge_num -deps [list $file1 $file2] -vars split -targets {$varsfile.$multi_merge_num} -code {
 			set temptarget [filetemp $target]
 			exec multi_merge $split $dep1 $dep2 > $temptarget
-			file rename -force $temptarget $target
+			file rename -force -- $temptarget $target
 		}
 		lappend newfiles $varsfile.$multi_merge_num
 	}
@@ -50,7 +50,7 @@ proc multidb_merge_job {varsfile files {split 1}} {
 	} else {
 		incr multi_merge_num
 		job multi_merge-$multi_merge_num -deps $newfiles -vars split -targets {$varsfile} -code {
-			file rename -force $dep1 $target
+			file rename -force -- $dep1 $target
 		}
 	}
 	
@@ -304,17 +304,17 @@ proc multidb_job {args} {
 		foreach t $targets {lappend temptargets $t.temp}
 		exec multidb_join [lindex $deps 0] $len $split {*}$temptargets $varidstart
 		foreach t $targets {
-			file rename -force $t.temp $t
+			file rename -force -- $t.temp $t
 		}
-		file rename $compar_dir/vars.tsv.new.temp.maxid $compar_dir/vars.tsv.new.maxid
-		file rename $compar_dir/vars.tsv.new.temp.count $compar_dir/vars.tsv.new.count
-		file rename $compar_dir/vars.tsv.insert.temp.count $compar_dir/vars.tsv.insert.count
-		file rename $compar_dir/geno.tsv.insert.temp.count $compar_dir/geno.tsv.insert.count
+		file rename -- $compar_dir/vars.tsv.new.temp.maxid $compar_dir/vars.tsv.new.maxid
+		file rename -- $compar_dir/vars.tsv.new.temp.count $compar_dir/vars.tsv.new.count
+		file rename -- $compar_dir/vars.tsv.insert.temp.count $compar_dir/vars.tsv.insert.count
+		file rename -- $compar_dir/geno.tsv.insert.temp.count $compar_dir/geno.tsv.insert.count
 	}
 	job multidb_annot -deps {$compar_dir/vars.tsv.insert} -vars {compar_dir dbdir} -targets {$compar_dir/annot.tsv.insert} -code {
 		cg annotate -multidb 1 $compar_dir/vars.tsv.insert $compar_dir/annot.tsv.insert.temp \
 			$dbdir {*}[glob -nocomplain $dbdir/extra/var_*_evs.tsv $dbdir/extra/var_*_dbnsfp.tsv]
-		file rename $compar_dir/annot.tsv.insert.temp $compar_dir/annot.tsv.insert
+		file rename -- $compar_dir/annot.tsv.insert.temp $compar_dir/annot.tsv.insert
 		file copy -force $compar_dir/vars.tsv.insert.count $compar_dir/annot.tsv.insert.count
 	}
 }

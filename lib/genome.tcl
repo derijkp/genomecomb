@@ -54,8 +54,8 @@ proc cg_fas2ifas {srcfile destfile} {
  		close $oi
 		close $o
 		close $f
-		file rename -force $destfile.temp2 $destfile
-		file rename -force $destfile.index.temp2 $destfile.index
+		file rename -force -- $destfile.temp2 $destfile
+		file rename -force -- $destfile.index.temp2 $destfile.index
 		file delete $destfile.temp
 	} else {
 		set oi [open $destfile.index.temp w]
@@ -138,7 +138,7 @@ proc genome_makefastaindex {fastafile} {
 	}
 	close $oi
 	close $f
-	file rename -force $fastafile.index.temp $fastafile.index
+	file rename -force -- $fastafile.index.temp $fastafile.index
 }
 
 proc genome_open {file} {
@@ -310,7 +310,7 @@ proc cg_make_genomecindex {ifasfile} {
 			set o [cindex create $seq]
 			puts "saving index $result"
 			cindex save $o $result.temp
-			file rename -force $result.temp.ssa $result.ssa
+			file rename -force -- $result.temp.ssa $result.ssa
 		} else {
 			puts "skipping $chr: already made"
 			time {gets $f}

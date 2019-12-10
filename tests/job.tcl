@@ -117,7 +117,7 @@ proc jobtest {args} {
 			set calc [join [lrange $line 1 end] +]
 			puts $o $calc=[expr $calc]
 			close $o
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 			lappend targets $target
 		}
 		close $f
@@ -147,7 +147,7 @@ proc jobtest {args} {
 			set calc [join [lrange $line 1 end] +]
 			puts $o "p $calc=[expr $calc]"
 			close $o
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 			lappend targets $target
 		}
 		close $f
@@ -163,18 +163,18 @@ proc jobtest {args} {
 		}
 		file copy $dep $target.temp
 		exec echo 2 >> $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	job allp2.txt -vars header -deps {^$destdir/sumpattern2-(.*)\.txt$} -targets {$destdir/allp2.txt} -code {
 		after 500
 		file_write $target.temp $header\n
 		exec cat {*}$deps >> $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	job allp.txt -vars header -deps {^$destdir/sumpattern-(.*)\.txt$} -targets {$destdir/allp.txt} -code {
 		file_write $target.temp $header\n
 		exec cat {*}$deps >> $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	job test -foreach {^$srcdir/cgdat(.*)\.tsv$} -targets {$destdir/test.txt} -code {
 		exec wc $dep > $target
@@ -188,7 +188,7 @@ proc jobtest {args} {
 		}
 		file copy $dep $target.temp
 		exec echo 2 >> $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	job error_all.txt -optional 1 -deps {$srcdir/notpresent.txt} -targets {$destdir/all.txt} -code {
 		error "This should not be executed, as the dependencies are not fullfilled, the other target is used"
@@ -207,14 +207,14 @@ proc jobtest {args} {
 	job all.txt -vars header -deps {^$destdir/sum-(.*)\.txt$} -targets {$destdir/all.txt} -code {
 		file_write $target.temp $header\n
 		exec cat {*}[lsort -dict $deps] >> $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	set keepdir [pwd]
 	cd $destdir
 	job all2.txt -vars header -deps {^sum2-(.*)\.txt$} -targets {all2.txt} -code {
 		file_write $target.temp $header\n
 		exec cat {*}[lsort -dict $deps] >> $target.temp
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	cd $keepdir
 }

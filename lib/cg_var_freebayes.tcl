@@ -141,7 +141,7 @@ proc var_freebayes_job {args} {
 			exec freebayes {*}$opts \
 				--genotype-qualities --report-monomorphic --exclude-unobserved-genotypes \
 				-f $refseq $dep > $target.temp 2>@ stderr
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 			catch {file delete $target.temp.idx}
 			if {$emptyreg && ![file exists $cache]} {
 				file copy $target $cache
@@ -156,7 +156,7 @@ proc var_freebayes_job {args} {
 	-code {
 		analysisinfo_write $dep $target
 		cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR} $dep $target.temp.zst
-		file rename -force $target.temp.zst $target
+		file rename -force -- $target.temp.zst $target
 	}
 	# zst_job $varallfile -i 1
 	zstindex_job $varallfile.zst
@@ -179,7 +179,7 @@ proc var_freebayes_job {args} {
 			*
 		} $dep $target.temp
 		cg select -s - $target.temp $target.temp2
-		file rename -force $target.temp2 $target
+		file rename -force -- $target.temp2 $target
 		file delete $target.temp
 	}
 	# annotvar_clusters_job works using jobs

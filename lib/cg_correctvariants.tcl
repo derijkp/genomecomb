@@ -230,7 +230,7 @@ proc cg_correctvariants {args} {
 	gzclose $f
 	putslog "removed $countdoubles doubles"
 	putslog "corrected $countcorrected refs"
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 }
 
 proc cg_updatevarfile {args} {

@@ -291,8 +291,8 @@ proc multicompar_reannot {compar_file {force 0} {regonly 0} {skipincomplete 0} {
 			annot_rtg_close $samplea(dir,$sample)
 		}
 	}
-	file rename -force $compar_file $compar_file.old
-	file rename -force $compar_file.temp $compar_file
+	file rename -force -- $compar_file $compar_file.old
+	file rename -force -- $compar_file.temp $compar_file
 	return $samples
 }
 

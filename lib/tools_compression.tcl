@@ -56,14 +56,14 @@ proc compress {file {destfile {}} {index 1} {keep 1} {threads {}} {compressionle
 	} elseif {[gziscompressed $file]} {
 		set temp [filetemp $destfile]
 		exec {*}[gzcat $file] $file > $temp
-		file rename -force $temp $destfile
+		file rename -force -- $temp $destfile
 		if {!$keep} {file delete $file}
 	} elseif {$keep} {
 		set temp [filetemp $destfile]
 		file copy -force $file $temp
-		file rename -force $temp $destfile
+		file rename -force -- $temp $destfile
 	} else {
-		file rename -force $file $destfile
+		file rename -force -- $file $destfile
 	}
 }
 
@@ -91,7 +91,7 @@ proc compress_template {file destfile method cmd {index 1} {keep 1}} {
 		if {!$keep} {file delete $file}
 	}
 	if {$destfile ne "-"} {
-		file rename -force $temp $destfile
+		file rename -force -- $temp $destfile
 		if {$index} {
 			catch {index_$method $destfile}
 		}
@@ -402,7 +402,7 @@ proc decompress {file args} {
 			error $result
 		}
 	}
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 	if {![llength $args]} {
 		file delete $file
 	}
@@ -421,7 +421,7 @@ proc gunzip {file args} {
 			error $result
 		}
 	}
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 	if {![llength $args]} {
 		file delete $file
 	}

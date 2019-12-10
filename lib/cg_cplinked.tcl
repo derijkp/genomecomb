@@ -71,7 +71,7 @@ proc cplinked_file {file destfile {absolute 0}} {
 				incr num
 			}
 			puts "destfile $destfile exists, renamed to $renamefile$num"
-			file rename -force $destfile $renamefile$num
+			file rename -force -- $destfile $renamefile$num
 		}
 	}
 	if {!$absolute} {

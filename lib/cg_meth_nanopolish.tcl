@@ -81,7 +81,7 @@ proc meth_nanopolish_job {args} {
 				set seqsdone [llength [split [cg select -g read_name $target.temp.zst] \n]]
 				if {$seqsdone == 0} {error $msg}
 			}
-			file rename $target.temp.zst $target
+			file rename -- $target.temp.zst $target
 		}
 	}
 	set target $smethfile
@@ -91,7 +91,7 @@ proc meth_nanopolish_job {args} {
 	} -skip {$target} -code {
 		analysisinfo_write $dep $target smeth_nanopolish_cg_version [version genomecomb]
 		cg cat -c 0 {*}$deps | cg select -s - | cg zst > $target.temp
-		file rename $target.temp $target
+		file rename -- $target.temp $target
 	}
 
 	set root [file root [file tail [gzroot $resultfile]]]
@@ -151,7 +151,7 @@ proc meth_nanopolish_job {args} {
 		}
 		gzclose $o
 		gzclose $f
-		file rename $temptarget $target
+		file rename -- $temptarget $target
 	}
 
 	return [list $resultfile $smethfile]

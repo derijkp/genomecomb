@@ -9,6 +9,6 @@ proc cg_download_mart {file dataset config attributes} {
 	set header [list_change $attributes {hgnc_symbol gene}]
 	cg select -nh $header $file.temp $file.temp2
 	cg select -q {$gene ne ""} $file.temp2 $file.temp3[file extension $file]
-	file rename -force $file.temp3[file extension $file] $file
+	file rename -force -- $file.temp3[file extension $file] $file
 	file delete $file.temp $file.temp2
 }

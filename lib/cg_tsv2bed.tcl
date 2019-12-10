@@ -26,7 +26,7 @@ proc gatkworkaround_tsv2bed {reg refseq target} {
 	}
 	close $o
 	gzclose $f
-	file rename -force $temptarget $target
+	file rename -force -- $temptarget $target
 }
 
 # job, removes when end=begin, clips chromosome

@@ -9,7 +9,7 @@ proc minimap2refseq_job {refseq preset} {
 		if {[regexp {loaded/built the index for 0 target sequence\(s\)} $temp]} {
 			error "could not properly index $dep: contains no sequences"
 		}
-		file rename $target.temp $target
+		file rename -- $target.temp $target
 	}
 	return $minimap2refseq
 }
@@ -110,7 +110,7 @@ proc map_minimap2_job {args} {
 					}
 				}
 				puts stderr $msg
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 			}
 		}
 	} else {
@@ -151,7 +151,7 @@ proc map_minimap2_job {args} {
 					}
 				}
 				puts stderr $msg
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 			}
 		}
 	}

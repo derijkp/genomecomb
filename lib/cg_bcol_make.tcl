@@ -162,10 +162,10 @@ proc cg_bcol_make {args} {
 	}
 	if {$compress} {
 		exec zstdindex $tempbinfile
-		file rename -force $tempbinfile $bcolfile.bin.zst
-		file rename -force $tempbinfile.zsti $bcolfile.bin.zst.zsti
+		file rename -force -- $tempbinfile $bcolfile.bin.zst
+		file rename -force -- $tempbinfile.zsti $bcolfile.bin.zst.zsti
 	} else {
-		file rename -force $tempbinfile $bcolfile.bin
+		file rename -force -- $tempbinfile $bcolfile.bin
 	}
-	file rename -force $tempfile $bcolfile
+	file rename -force -- $tempfile $bcolfile
 }

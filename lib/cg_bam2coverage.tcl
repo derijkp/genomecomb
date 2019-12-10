@@ -22,7 +22,7 @@ proc cg_bam2coverage {bamfile destprefix} {
 		lset c end [join $line \t]
 		file_write $file [join $c \n]
 	}
-	file rename -force {*}[glob $destprefix.temp/$prefix*.bcol*] $dir
+	file rename -force -- {*}[glob $destprefix.temp/$prefix*.bcol*] $dir
 	file delete $destprefix.temp
 	file_write $destprefix.FINISHED ""
 }

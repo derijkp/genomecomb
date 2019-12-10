@@ -12,7 +12,7 @@ proc liftover_refdb {old new dest dbbuild build {split 1} {unmappeddir extra}} {
 		file_write $newroot.info $c
 	}
 	if {[file exists $root.opt]} {
-		file rename $root.opt $newroot.opt
+		file rename -- $root.opt $newroot.opt
 	}
 	file delete $old $old.zsti
 	file delete $root.info
@@ -24,6 +24,6 @@ proc liftover_refdb {old new dest dbbuild build {split 1} {unmappeddir extra}} {
 proc liftover_move_unmapped {target targetdir} {
 	set unmapped [gzroot $target].unmapped[gzext $target]
 	foreach file [glob $unmapped $unmapped.*] {
-		file rename -force $file $targetdir/[file tail $file]
+		file rename -force -- $file $targetdir/[file tail $file]
 	}
 }

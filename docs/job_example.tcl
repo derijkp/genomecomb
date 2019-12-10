@@ -49,7 +49,7 @@ proc main args {
 			}
 			close $f
 			# rename tempfile when finished (atomic operation)
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 		}
 	}
 	# separate jobs for each file following a pattern
@@ -57,7 +57,7 @@ proc main args {
 	job sum -foreach {^numbers-(.*).txt$} -targets {sum-\1.txt} -code {
 		set list [file_read $dep]
 		file_write $target.temp [lmath_sum $list]\n
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	job error_nonexistingdep.txt -deps {nonexistingdep.txt} -targets {error_nonexistingdep.txt} -code {
 		# this depends on nonexistingdep.txt, since it does not exist, this will not be run
@@ -69,9 +69,9 @@ proc main args {
 			set total [expr {$total + [file_read $dep]}]
 		}
 		file_write $target.temp $total\n
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 		file_write $target2.temp "job using $num files finished\n"
-		file rename -force $target2.temp $target2
+		file rename -force -- $target2.temp $target2
 	}
 }
 

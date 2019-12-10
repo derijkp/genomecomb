@@ -94,7 +94,7 @@ proc cg_multicompar {args} {
 	job_logdir $workdir/log_jobs
 	set multi_merge_num 0
 	if {[file exists $compar_file]} {
-		file rename -force $compar_file $compar_file.old
+		file rename -force -- $compar_file $compar_file.old
 		set allfiles [list_concat $compar_file.old $files]
 	} else {
 		set allfiles $files
@@ -172,7 +172,7 @@ proc cg_multicompar {args} {
 		set tempfile [filetemp $target]
 		file_write $tempfile [join $reannotheader \t]\n
 		exec multi_join $dep1 $len $split >> $tempfile
-		file rename -force $tempfile $target
+		file rename -force -- $tempfile $target
 	}
 	if {$reannot} {
 		job multicompar_reannot -deps {$compar_file_root} -vars {regonly} -targets {$compar_file_root $compar_file_root.reannot} -code {

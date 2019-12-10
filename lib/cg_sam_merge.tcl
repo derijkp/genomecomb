@@ -49,7 +49,7 @@ proc sam_merge_job {args} {
 				$target
 			} -vars {threads} -code {
 				exec samtools merge -t $threads $target.temp {*}$deps
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 			}
 		} else {
 			catch {file delete {*}[glob -nocomplain $workdir/paste.temp*]}
@@ -64,7 +64,7 @@ proc sam_merge_job {args} {
 						$target
 					} -vars {delete workdir threads} -code {
 						exec samtools merge -t $threads $target.temp {*}$deps
-						file rename -force $target.temp $target
+						file rename -force -- $target.temp $target
 						if {$delete} {file delete {*}$deps}
 					}
 					break
@@ -90,7 +90,7 @@ proc sam_merge_job {args} {
 						} else {
 							file rename $dep $target.temp
 						}
-						file rename -force $target.temp $target
+						file rename -force -- $target.temp $target
 					}
 				}
 				set delete 1

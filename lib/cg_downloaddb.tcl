@@ -104,7 +104,7 @@ proc downloaddb {path build dbname} {
 	set fields [list_common {chrom chromosome begin start end stop name score strand thickStart thickEnd itemRgb blockCount blockSizes blockStarts} $header]
 	lappend fields {*}[list_lremove $header $fields]
 	cg select -s - -f $fields $temp/u_$dbname.tsv $temp/su_$dbname.tsv
-	file rename -force $temp/su_$dbname.tsv $filename
+	file rename -force -- $temp/su_$dbname.tsv $filename
 	puts "----------------------------------------------------"
 }
 

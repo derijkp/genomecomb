@@ -70,8 +70,8 @@ proc cg_convsolid {args} {
 			putslog "convert to $target1/csfasta from $file"
 			exec convertFromXSQ.sh -c $file -o $target1/csfasta >> log
 		}
-		file rename -force {*}[glob $target1/csfasta/*/*/*] $target1/csfasta
-		file delete -force $target1/csfasta/Libraries
+		file rename -force -- {*}[glob $target1/csfasta/*/*/*] $target1/csfasta
+		file delete -force -- $target1/csfasta/Libraries
 		file_write $target1/csfasta/finished ""
 	}
 

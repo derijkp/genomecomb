@@ -69,7 +69,7 @@ proc cg_multiselect {args} {
 		set tempfile [tempfile]
 		cg multicompar -split $split $tempfile {*}$resultfiles
 		if {$outfile ne ""} {
-			file rename $tempfile $outfile
+			file rename -- $tempfile $outfile
 		} else {
 			set f [open $tempfile]
 			fcopy $f stdout

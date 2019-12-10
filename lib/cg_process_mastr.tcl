@@ -19,7 +19,7 @@ proc make_alternative_compar_job {experiment {destdir {}} {varcaller gatk}} {
 		set compress [compresspipe $target1]
 		set temp [filetemp_ext $target1]
 		exec cg select -rf {*-sam-*} $dep | cg select -f $fields {*}$compress > $temp
-		file rename -force $temp $target1
+		file rename -force -- $temp $target1
 		##depivot compar file
 		set compress [compresspipe $target2]
 		set temp [filetemp_ext $target2]
@@ -28,7 +28,7 @@ proc make_alternative_compar_job {experiment {destdir {}} {varcaller gatk}} {
 		} else {
 			exec cg long $target1 {*}$compress > $temp
 		}
-		file rename -force $temp $target2
+		file rename -force -- $temp $target2
 		if {$compress ne ""} {cg_zindex $target}
 	}
 }
@@ -125,7 +125,7 @@ proc generate_html_report_job {experiment {destdir {}}} {
 		set chartjs $::appdir/res/displayChartHistogram.js
 		set cmd [string_change {library(rmarkdown); library(stringr); mastrdir="@destdir@"; local_jsapi="@chartjs@"; mastr <- str_replace(mastrdir,".*/([^/]*)","\\1"); render("@rmd@", output_file=paste(mastr,"html.temp",sep="."), output_dir = mastrdir)} [list @destdir@ $destdir @rmd@ $rmd @chartjs@ $chartjs]]
 		exec [findR] -e $cmd >@ stdout 2>@ stderr
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 		file delete $destdir/compar/summary-compar-${experiment}.tsv
 		cd $keepdir
 	}

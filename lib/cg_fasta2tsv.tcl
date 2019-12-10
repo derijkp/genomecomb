@@ -45,7 +45,7 @@ proc cg_fasta2tsv {args} {
 	}
 	if {$o ne "stdout"} {
 		gzclose $o
-		file rename $tempfile $outfile
+		file rename -- $tempfile $outfile
 	} else {
 		# do this, otherwise does not out output last \n when run e.g. from exec
 		puts ""

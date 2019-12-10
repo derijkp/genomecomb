@@ -30,7 +30,7 @@ proc annotatebcol {file dbfile name annotfile} {
 	} error]} {
 		if {$error ne "child killed: write on pipe with no readers"} {error $error}
 	}
-	file rename -force $annotfile.temp $annotfile
+	file rename -force -- $annotfile.temp $annotfile
 }
 
 proc annotatebcolvar {file dbfile name annotfile} {
@@ -64,6 +64,6 @@ proc annotatebcolvar {file dbfile name annotfile} {
 	} error]} {
 		if {$error ne "child killed: write on pipe with no readers"} {error $error}
 	}
-	file rename -force $annotfile.temp $annotfile
+	file rename -force -- $annotfile.temp $annotfile
 }
 

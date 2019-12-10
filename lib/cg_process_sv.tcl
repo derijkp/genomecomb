@@ -17,7 +17,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 
 	if {$force || ![file exists $dir/sv/${name}_map2sv_sort_FINISHED]} {
 		cg map2sv $cgdir $dir/sv.temp/$name >@ stdout
-		file rename -force {*}[glob $dir/sv.temp/*] $dir/sv
+		file rename -force -- {*}[glob $dir/sv.temp/*] $dir/sv
 		file delete $dir/sv.temp
 	}
 	set resultfiles {}
@@ -46,10 +46,10 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 	job svfind-[file tail $dir] -deps $resultfiles -targets {$dir/sv/svall-$name.tsv $dir/sv-$name.tsv} -vars {dbdir dir} -code {
 		set temptarget [filetemp $target]
 		cg cat {*}[lsort -dict $deps] > $temptarget
-		file rename -force $temptarget $target
+		file rename -force -- $temptarget $target
 		set temptarget [filetemp $target2]
 		cg select -overwrite 1 -q {$problems eq "" and $quality > 2} $target $temptarget
-		file rename -force $temptarget $target2
+		file rename -force -- $temptarget $target2
 		putslog "Done: finished finding sv in $dir"
 	}
 	cd $keepdir

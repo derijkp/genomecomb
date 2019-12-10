@@ -43,11 +43,11 @@ proc multidb_dir_import {compar_dir} {
 		set count1 [file_read $compar_dir/analysis.tsv.count]
 		set count2 [file_read $compar_dir/analysis.tsv.insert.count]
 		file_write $compar_dir/analysis.tsv.temp.count [expr {$count1 + $count2}]
-		file rename -force $compar_dir/analysis.tsv.temp $compar_dir/analysis.tsv
-		file rename -force $compar_dir/analysis.tsv.temp.count $compar_dir/analysis.tsv.count
-		file rename -force $compar_dir/analysis.tsv.insert.maxid $compar_dir/analysis.tsv.maxid
-		file rename -force $compar_dir/analysis.tsv.insert $compar_dir/old
-		file rename -force $compar_dir/analysis.tsv.insert.count $compar_dir/old
+		file rename -force -- $compar_dir/analysis.tsv.temp $compar_dir/analysis.tsv
+		file rename -force -- $compar_dir/analysis.tsv.temp.count $compar_dir/analysis.tsv.count
+		file rename -force -- $compar_dir/analysis.tsv.insert.maxid $compar_dir/analysis.tsv.maxid
+		file rename -force -- $compar_dir/analysis.tsv.insert $compar_dir/old
+		file rename -force -- $compar_dir/analysis.tsv.insert.count $compar_dir/old
 	}
 	if {[file exists $compar_dir/geno.tsv.insert]} {
 		puts "Importing geno.tsv.insert"
@@ -56,25 +56,25 @@ proc multidb_dir_import {compar_dir} {
 			set count1 [file_read $compar_dir/geno.tsv.count]
 			set count2 [file_read $compar_dir/geno.tsv.insert.count]
 			file_write $compar_dir/geno.tsv.temp.count [expr {$count1 + $count2}]
-			file rename -force $compar_dir/geno.tsv.temp $compar_dir/geno.tsv
-			file rename -force $compar_dir/geno.tsv.temp.count $compar_dir/geno.tsv.count
+			file rename -force -- $compar_dir/geno.tsv.temp $compar_dir/geno.tsv
+			file rename -force -- $compar_dir/geno.tsv.temp.count $compar_dir/geno.tsv.count
 		} else {
 			file copy -force $compar_dir/geno.tsv.insert $compar_dir/geno.tsv
 			file copy -force $compar_dir/geno.tsv.insert.count $compar_dir/geno.tsv.count
 		}
-		file rename -force $compar_dir/geno.tsv.insert $compar_dir/old
-		file rename -force $compar_dir/geno.tsv.insert.count $compar_dir/old
+		file rename -force -- $compar_dir/geno.tsv.insert $compar_dir/old
+		file rename -force -- $compar_dir/geno.tsv.insert.count $compar_dir/old
 	}
 	if {[file exists $compar_dir/vars.tsv.new]} {
 		puts "Importing geno.tsv.insert"
-		file rename -force $compar_dir/vars.tsv $compar_dir/old
-		file rename -force $compar_dir/vars.tsv.count $compar_dir/old
-		file rename -force $compar_dir/vars.tsv.maxid $compar_dir/old
-		file rename -force $compar_dir/vars.tsv.new $compar_dir/vars.tsv
-		file rename -force $compar_dir/vars.tsv.new.count $compar_dir/vars.tsv.count
-		file rename -force $compar_dir/vars.tsv.new.maxid $compar_dir/vars.tsv.maxid
-		file rename -force $compar_dir/vars.tsv.insert $compar_dir/old
-		file rename -force $compar_dir/vars.tsv.insert.count $compar_dir/old
+		file rename -force -- $compar_dir/vars.tsv $compar_dir/old
+		file rename -force -- $compar_dir/vars.tsv.count $compar_dir/old
+		file rename -force -- $compar_dir/vars.tsv.maxid $compar_dir/old
+		file rename -force -- $compar_dir/vars.tsv.new $compar_dir/vars.tsv
+		file rename -force -- $compar_dir/vars.tsv.new.count $compar_dir/vars.tsv.count
+		file rename -force -- $compar_dir/vars.tsv.new.maxid $compar_dir/vars.tsv.maxid
+		file rename -force -- $compar_dir/vars.tsv.insert $compar_dir/old
+		file rename -force -- $compar_dir/vars.tsv.insert.count $compar_dir/old
 	}
 }
 

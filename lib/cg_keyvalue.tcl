@@ -79,7 +79,7 @@ proc cg_keyvalue {args} {
 	# finish
 	if {$o ne "stdout"} {
 		close $o
-		file rename -force $tempoutfile $outfile
+		file rename -force -- $tempoutfile $outfile
 	}
 	if {$f ne "stdout"} {gzclose $f}
 }

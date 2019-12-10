@@ -90,7 +90,7 @@ proc sv_npinv_job {args} {
 			--input $dep \
 			--output $vcffile.temp \
 			--min $min -max $max
-		file rename -force $vcffile.temp $vcffile
+		file rename -force -- $vcffile.temp $vcffile
 	}
 	# 
 	job sv_npinv-vcf2tsv-$root {*}$skips -deps {
@@ -104,7 +104,7 @@ proc sv_npinv_job {args} {
 		cg vcf2tsv -split $split -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
 		} $dep $target.temp[gzext $target]
-		file rename -force $target.temp[gzext $target] $target
+		file rename -force -- $target.temp[gzext $target] $target
 	}
 	# cleanup
 	return $resultlist

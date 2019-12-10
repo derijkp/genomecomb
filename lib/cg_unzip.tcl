@@ -16,7 +16,7 @@ proc cg_unzip args {
 		set tempfile [filetemp $target]
 		if {!$force && [file exists $target]} {error "uncompressed file $target already exists"}
 		exec {*}[gzcat $file] $file > $tempfile
-		file rename -force $tempfile $target
+		file rename -force -- $tempfile $target
 		if {!$keep} {file delete $file}
 	}
 }

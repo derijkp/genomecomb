@@ -37,10 +37,10 @@ proc wgetfile {url {resultfile {}} {force 0}} {
 			if {[catch {hardlink $resultfile.temp $webcachename.temp}]} {
 				file copy $resultfile.temp $webcachename.temp
 			}
-			file rename $webcachename.temp $webcachename
+			file rename -- $webcachename.temp $webcachename
 		}
 	}
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 	return $resultfile
 }
 
@@ -77,10 +77,10 @@ proc wgetfiles {url resultdir {force 0}} {
 			if {[catch {hardlink $resultdir.temp $webcachename.temp}]} {
 				file copy $resultdir.temp $webcachename.temp
 			}
-			file rename $webcachename.temp $webcachename
+			file rename -- $webcachename.temp $webcachename
 		}
 	}
-	file rename -force $resultdir.temp $resultdir
+	file rename -force -- $resultdir.temp $resultdir
 	return $resultdir
 }
 

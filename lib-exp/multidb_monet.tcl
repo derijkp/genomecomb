@@ -168,15 +168,15 @@ proc multidb_monet_import {compar_dir database} {
 	file mkdir $compar_dir/old
 	# set file $compar_dir/vars.tsv.insert
 	multidb_monet_importtable $compar_dir $database var $compar_dir/vars.tsv.insert
-	file rename -force $compar_dir/vars.tsv.insert $compar_dir/old
-	file rename -force $compar_dir/vars.tsv.insert.count $compar_dir/old
-	file rename -force $compar_dir/vars.tsv.new $compar_dir/vars.tsv
-	file rename -force $compar_dir/vars.tsv.new.count $compar_dir/vars.tsv.count
-	file rename -force $compar_dir/vars.tsv.new.maxid $compar_dir/vars.tsv.maxid
+	file rename -force -- $compar_dir/vars.tsv.insert $compar_dir/old
+	file rename -force -- $compar_dir/vars.tsv.insert.count $compar_dir/old
+	file rename -force -- $compar_dir/vars.tsv.new $compar_dir/vars.tsv
+	file rename -force -- $compar_dir/vars.tsv.new.count $compar_dir/vars.tsv.count
+	file rename -force -- $compar_dir/vars.tsv.new.maxid $compar_dir/vars.tsv.maxid
 	multidb_monet_importtable $compar_dir $database analysis $compar_dir/analysis.tsv.insert
-	file rename -force $compar_dir/analysis.tsv.insert $compar_dir/old
-	file rename -force $compar_dir/analysis.tsv.insert.count $compar_dir/old
+	file rename -force -- $compar_dir/analysis.tsv.insert $compar_dir/old
+	file rename -force -- $compar_dir/analysis.tsv.insert.count $compar_dir/old
 	multidb_monet_importtable $compar_dir $database geno $compar_dir/geno.tsv.insert
-	file rename -force $compar_dir/geno.tsv.insert $compar_dir/old
-	file rename -force $compar_dir/geno.tsv.insert.count $compar_dir/old
+	file rename -force -- $compar_dir/geno.tsv.insert $compar_dir/old
+	file rename -force -- $compar_dir/geno.tsv.insert.count $compar_dir/old
 }

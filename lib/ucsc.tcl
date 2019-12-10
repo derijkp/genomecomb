@@ -139,7 +139,7 @@ proc ucscwiggle2reg {ucsc_file resultfile {precision 1} {formula {}} {addnum {}}
 		putsresult $o $chrom $pbegin $cur $pvalue $pnum
 	}
 	catch {gzclose $f}; catch {gzclose $b}; catch {close $o}
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 }
 
 proc cg_ucscwiggle2reg {args} {
@@ -195,7 +195,7 @@ proc ucscwb2reg {file resultfile {precision 1} {formula {}} {addnum {}}} {
 	set wbfile [ucsc_wibfile $wbfile $dir]
 	if {![file exists $wbfile.bedgraph]} {
 		exec bigWigToBedGraph $wbfile $wbfile.bedgraph.temp
-		file rename -force $wbfile.bedgraph.temp $wbfile.bedgraph
+		file rename -force -- $wbfile.bedgraph.temp $wbfile.bedgraph
 	}
 	set f [gzopen $wbfile.bedgraph]
 	set o [open $resultfile.temp w]
@@ -227,7 +227,7 @@ proc ucscwb2reg {file resultfile {precision 1} {formula {}} {addnum {}}} {
 		putsresult $o $chrom $pbegin $pend $pvalue $pnum
 	}
 	catch {gzclose $f}; catch {close $o}
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 }
 
 proc cg_ucscwb2reg {args} {

@@ -23,7 +23,7 @@ proc cg_fasta2cramref {args} {
 		if {[string index $line 0] eq ">" || [eof $f]} {
 			close $o
 			set md5 [lindex [exec md5sum $outdir/temp] 0]
-			file rename -force $outdir/temp $outdir/$md5
+			file rename -force -- $outdir/temp $outdir/$md5
 			puts $oinfo [join [list $tail $id $md5 [file size $outdir/$md5]] \t]
 			if {[eof $f]} break
 			puts [string range $line 1 end]

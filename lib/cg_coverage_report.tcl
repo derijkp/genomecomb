@@ -11,7 +11,7 @@ proc bam2covstats_job {bamfile regionfile {suffix {}}} {
 	job make_histo-$root -deps {$bamfile $bamfile.$indexext $regionfile} -targets {$dir/$root.histo${suffix}} -vars {regionfile} -code {
 		set tempfile [filetemp $target]
 		cg bam_histo $regionfile $dep {1 5 10 20 50 100 200 500 1000} > $tempfile
-		file rename -force $tempfile $target
+		file rename -force -- $tempfile $target
 	}
 }
 

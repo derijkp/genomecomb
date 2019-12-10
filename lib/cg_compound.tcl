@@ -128,7 +128,7 @@ proc cg_compound {args} {
 	} -gc {
 		hqv 1 count
 	} $tempfile | cg select -sh /dev/null -q {$count-1 > 1} {*}[compresspipe $resultgenelist] > $resultgenelist.temp
-	file rename -force $resultgenelist.temp $resultgenelist
+	file rename -force -- $resultgenelist.temp $resultgenelist
 
 	#
 	# parse $resultgenelist for info on coumpounds
@@ -205,7 +205,7 @@ proc cg_compound {args} {
 	}
 	close $o
 	close $f
-	file rename -force $tempresultfile $resultfile
+	file rename -force -- $tempresultfile $resultfile
 
 }
 

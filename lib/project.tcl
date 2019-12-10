@@ -21,7 +21,7 @@ proc infofile_write {file data} {
 		puts $o $key\t$value
 	}
 	close $o
-	file rename -force $file.temp $file
+	file rename -force -- $file.temp $file
 }
 
 # initialize variables (from) projectinfo.tsv file
@@ -86,7 +86,7 @@ proc testmultitarget {target files} {
 		}
 		if {!$ok} {
 			putslog "$target has to be remade, renaming to $target.old"
-			file rename -force $target $target.old
+			file rename -force -- $target $target.old
 		}
 	}
 }

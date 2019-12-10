@@ -34,7 +34,7 @@ proc cg_download_exac {args} {
 		}
 		lappend nheader filter
 		cg vcf2tsv -split 1 -sort 0 $tempdir/$tail | cg select -f $nheader > $tsvfile.temp
-		file rename -force $tsvfile.temp $tsvfile
+		file rename -force -- $tsvfile.temp $tsvfile
 	}
 	cg select -s - $tsvfile | cg collapsealleles > $tempresult
 	# opt
@@ -112,8 +112,8 @@ proc cg_download_exac {args} {
 		
 		more information on http://exac.broadinstitute.org/about
 	}]]
-	file rename -force $tempresult.opt [gzroot $resultfile].opt
-	file rename -force $tempresult.info [gzroot $resultfile].info
+	file rename -force -- $tempresult.opt [gzroot $resultfile].opt
+	file rename -force -- $tempresult.info [gzroot $resultfile].info
 	compress $tempresult $resultfile
 	if {!$keep} {file delete -force $tempdir}
 }

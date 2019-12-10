@@ -1425,6 +1425,6 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 	}
 	close $genomef
 	close $o; gzclose $f;	gzclose $df
-	file rename -force $annotfile.temp $annotfile
+	file rename -force -- $annotfile.temp $annotfile
 
 }

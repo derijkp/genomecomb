@@ -101,7 +101,7 @@ proc map_ngmlr_job {args} {
 				lappend rg "$key:$value"
 			}
 			exec ngmlr -x $preset -t $threads -r $ngmlr_refseq -q $fastq > $target.temp 2>@ stderr
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 		}
 	}
 	sam_catmerge_job -skips $skips -name ngmlr_sort2bam-$sample -aliformat $aliformat \

@@ -83,9 +83,9 @@ proc gatk_vqsr_job args {
 			-tranche 100.0 -tranche 99.9 -tranche 99.0 -tranche 90.0 \
 			--max-gaussians 4 \
 			>@ stdout 2>@stderr
-			file rename $resultvcf.indel.recal.temp $resultvcf.indel.recal
-			file rename $resultvcf.indel.recal.temp.idx $resultvcf.indel.recal.idx
-			file rename $resultvcf.indel.tranches.temp $resultvcf.indel.tranches
+			file rename -- $resultvcf.indel.recal.temp $resultvcf.indel.recal
+			file rename -- $resultvcf.indel.recal.temp.idx $resultvcf.indel.recal.idx
+			file rename -- $resultvcf.indel.tranches.temp $resultvcf.indel.tranches
 	}
 	# gatk_IndexFeatureFile_job $resultvcf.indel.recal
 	# apply indel model
@@ -105,7 +105,7 @@ proc gatk_vqsr_job args {
 			--tranches-file $resultvcf.indel.tranches \
 			-mode INDEL \
 			>@ stdout 2>@stderr
-			file rename $rawvcf.indelscalibrated.temp $rawvcf.indelscalibrated
+			file rename -- $rawvcf.indelscalibrated.temp $rawvcf.indelscalibrated
 	}
 	#
 	# build snp model
@@ -126,9 +126,9 @@ proc gatk_vqsr_job args {
 			-mode SNP \
 			-tranche 100.0 -tranche 99.9 -tranche 99.0 -tranche 90.0 \
 			>@ stdout 2>@stderr
-		file rename $resultvcf.snp.recal.temp $resultvcf.snp.recal
-		file rename $resultvcf.snp.recal.temp.idx $resultvcf.snp.recal.idx
-		file rename $resultvcf.snp.tranches.temp $resultvcf.snp.tranches
+		file rename -- $resultvcf.snp.recal.temp $resultvcf.snp.recal
+		file rename -- $resultvcf.snp.recal.temp.idx $resultvcf.snp.recal.idx
+		file rename -- $resultvcf.snp.tranches.temp $resultvcf.snp.tranches
 	}
 	# gatk_IndexFeatureFile_job $resultvcf.snp.recal
 	# apply snp model
@@ -148,7 +148,7 @@ proc gatk_vqsr_job args {
 			--tranches-file $resultvcf.snp.tranches \
 			-mode SNP \
 			>@ stdout 2>@stderr
-		file rename $resultvcf.temp[file extension $resultvcf] $resultvcf
+		file rename -- $resultvcf.temp[file extension $resultvcf] $resultvcf
 	}
 }
 

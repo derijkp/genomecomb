@@ -59,8 +59,8 @@ proc liftsample_job {args} {
 				} else {
 					cg liftover -split $split $file $target.temp $liftoverfile 2>@ stderr
 				}
-				file rename -force $target.temp $target
-				catch {file rename -force $target.temp.unmapped $target.unmapped}
+				file rename -force -- $target.temp $target
+				catch {file rename -force -- $target.temp.unmapped $target.unmapped}
 			}
 		}
 	}
@@ -77,8 +77,8 @@ proc liftsample_job {args} {
 			} else {
 				putslog "converting region $file"
 				cg liftregion $file $target.temp $liftoverfile
-				file rename -force $target.temp $target
-				catch {file rename -force $target.temp.unmapped $target.unmapped}
+				file rename -force -- $target.temp $target
+				catch {file rename -force -- $target.temp.unmapped $target.unmapped}
 			}
 		}
 	}
@@ -95,8 +95,8 @@ proc liftsample_job {args} {
 			} else {
 				putslog "converting $file"
 				cg liftover $file $target.temp $liftoverfile 2>@ stderr
-				file rename -force $target.temp $target
-				catch {file rename -force $target.temp.unmapped $target.unmapped}
+				file rename -force -- $target.temp $target
+				catch {file rename -force -- $target.temp.unmapped $target.unmapped}
 			}
 		}
 	}

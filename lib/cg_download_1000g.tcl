@@ -34,7 +34,7 @@ proc cg_download_1000g3 {args} {
 	puts $o ""
 	close $o
 	exec cat $readme >> $tempdir/result.info
-	file rename -force $tempdir/result.info [gzroot $resultfile].info
+	file rename -force -- $tempdir/result.info [gzroot $resultfile].info
 	
 	# data
 	wgetfile $url $tempdir/$tail
@@ -49,9 +49,9 @@ proc cg_download_1000g3 {args} {
 			error "error converting $tempdir/$base.vcf.gz:\n$msg"
 		}
 	}
-	file rename -force $tempdir/$base.tsv.temp $tempdir/$base.tsv
+	file rename -force -- $tempdir/$base.tsv.temp $tempdir/$base.tsv
 	cg select -s - -f $fields $tempdir/$base.tsv $tempdir/result.tsv.temp[file extension $resultfile]
-	file rename -force $tempdir/result.tsv.temp[file extension $resultfile] $resultfile
+	file rename -force -- $tempdir/result.tsv.temp[file extension $resultfile] $resultfile
 	file delete -force $resultfile.temp
 }
 
@@ -75,9 +75,9 @@ proc cg_download_1000glow {args} {
 	# catch {exec wget -c --tries=45 --directory-prefix=$tempdir/ ftp://ftp.ncbi.nlm.nih.gov/1000genomes/ftp/release/20110521/ALL.wgs.phase1_release_v2.20101123.snps_indels_sv.sites.vcf.gz >@stdout 2>@stderr} errmsg
 	catch {exec wget -c --tries=45 --directory-prefix=$tempdir/ $url >@stdout 2>@stderr} errmsg
 	cg vcf2tsv $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.vcf.gz $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv.temp
-	file rename -force $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv.temp $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv
+	file rename -force -- $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv.temp $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv
 	cg select -s - -f {chromosome begin end type ref alt {freq=format("%.2f",double($allelecount)/$totalallelecount)} quality filter totalallelecount AMR_AF ASN_AF AFR_AF EUR_AF} $tempdir/ALL.wgs.phase1_release_v3.20101123.snps_indels_sv.sites.tsv $resultfile.temp
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 	file delete -force $tempdir
 }
 
@@ -139,7 +139,7 @@ proc cg_download_1000g {args} {
 		gzclose $f
 		puts "Sorting $resultfile"
 		cg select -s {chrom start end type alt} $tempdir/var_${build}_1000g$pop.tsv $tempdir/result.tsv.temp
-		file rename -force $tempdir/result.tsv.temp $resultfile
+		file rename -force -- $tempdir/result.tsv.temp $resultfile
 	}
 	file delete -force $tempdir
 }

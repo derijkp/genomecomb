@@ -91,7 +91,7 @@ job genome_${build} -targets {
 	extra/reg_${build}_fullgenome.tsv
 } -vars build -code {
 	cg download_genome -alt 0 -url $genomeurl genome_${build}.ifas ${build} 2>@ stderr
-	file rename -force reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
+	file rename -force -- reg_genome_${build}.tsv extra/reg_${build}_fullgenome.tsv
 	cg zst -i 1 extra/reg_${build}_fullgenome.tsv
 }
 
@@ -117,7 +117,7 @@ job reg_${build}_sequencedgenome -deps {
 	extra/reg_${build}_sequencedgenome.tsv.zst
 } -vars {dest build} -code {
 	exec cg calcsequencedgenome --stack 1 $dep {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 }
 
 # make bwa version of genome
@@ -164,7 +164,7 @@ foreach db $regionsdb_collapse {
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regcollapse $target.ucsc > $target.temp
 		file delete $target.ucsc
-		file rename -force $target.ucsc.info [gzroot $target].info
+		file rename -force -- $target.ucsc.info [gzroot $target].info
 		compress $target.temp $target
 	}
 }
@@ -178,7 +178,7 @@ foreach db $regionsdb_join {
 		cg download_ucsc $target.ucsc ${build} $db
 		cg regjoin $target.ucsc > $target.temp
 		file delete $target.ucsc
-		file rename -force $target.ucsc.info [gzroot $target].info
+		file rename -force -- $target.ucsc.info [gzroot $target].info
 		compress $target.temp $target
 	}
 }
@@ -195,7 +195,7 @@ job reg_${build}_gwasCatalog -targets {
 	cg regcollapse $target.temp > $target.temp2
 	file delete $target.temp
 	file delete $target.ucsc
-	file rename -force $target.ucsc.info [gzroot $target].info
+	file rename -force -- $target.ucsc.info [gzroot $target].info
 	compress $target.temp2 $target
 }
 
@@ -329,7 +329,7 @@ job gene_${build}_intGene -deps {
 } -vars {dest build db} -code {
 	set target [gzroot $target].zst
 	cg intgene {*}$deps {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 	cg maketabix $target
 	cg zindex $target
 	cg index $target
@@ -344,7 +344,7 @@ job reg_${build}_genes -deps {
 } -code {
 	set target [gzroot $target].zst
 	exec cg cat -fields {chrom start end geneid} {*}$deps | cg select -s {chrom start end geneid} -f {chrom {start=$start - 2000} {end=$end + 2000} geneid} | cg regcollapse {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 	cg zindex $target
 }
 
@@ -358,7 +358,7 @@ job reg_refcoding -deps {
 	} source $dep
 	set target [gzroot $target].zst
 	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 	cg zindex $target
 }
 
@@ -372,7 +372,7 @@ job reg_exome_refGene -deps {
 	} source $dep
 	set target [gzroot $target].zst
 	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 	cg zindex $target
 }
 
@@ -386,7 +386,7 @@ job reg_intcoding -deps {
 	} source $dep
 	set target [gzroot $target].zst
 	cg gene2reg $dep | cg select -q {$type eq "CDS"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 	cg zindex $target
 }
 
@@ -400,7 +400,7 @@ job reg_exome_intGene -deps {
 	} source $dep
 	set target [gzroot $target].zst
 	cg gene2reg $dep | cg select -q {$type in "CDS UTR RNA"} | cg select -s - | cg regjoin {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
 	cg zindex $target
 }
 
@@ -451,8 +451,8 @@ job reg_${build}_go -deps {
 #		cg download_biograph $target2.zst $id $genefile
 #		cg geneannot2reg $dep $target2.zst $target.temp
 #		cg zst -i 1 $target.temp
-#		file rename -force $target.temp.zst [gzroot $target].zst
-#		file rename -force $target.temp.zst.zsti [gzroot $target].zst.zsti
+#		file rename -force -- $target.temp.zst [gzroot $target].zst
+#		file rename -force -- $target.temp.zst.zsti [gzroot $target].zst.zsti
 #		set temp "gene ranking\n============\ngene ranking for $disease\n\nThe following scores will be given to variants in genes that"
 #		append temp "0: are directly linked to the disease in the ensembl gene database or in the clinvar database\n"
 #		append temp "1: have a known relation to the disease in biograph (can be association, etc.)\n"
@@ -473,7 +473,7 @@ job reg_${build}_homopolymer -deps {
 	set target reg_${build}_homopolymer.tsv.zst
 	file_write [gzroot $target].opt "fields\t{base size}\n"
 	cg extracthomopolymers genome_${build}.ifas {*}[compresspipe $target 12] > $target.temp
-	file rename -force $target.temp $target
+	file rename -force -- $target.temp $target
         cg maketabix $target
 }
 
@@ -543,12 +543,12 @@ foreach {jobname resultname infosrc tables} {
 		}
 		if {![file exists $tempdir/reg_${build}_$resultname.tsv]} {
 			cg regcollapse -o $tempdir/reg_${build}_$resultname.tsv.temp {*}$todo
-			file rename -force $tempdir/reg_${build}_$resultname.tsv.temp $tempdir/reg_${build}_$resultname.tsv
+			file rename -force -- $tempdir/reg_${build}_$resultname.tsv.temp $tempdir/reg_${build}_$resultname.tsv
 		}
 		cg bcol make --compress 9 -t iu -p begin -e end -c chromosome $tempdir/bcol_${build}_$resultname.bcol score < $tempdir/reg_${build}_$resultname.tsv
-		file rename -force $tempdir/bcol_${build}_$resultname.bcol.bin.zst bcol_${build}_$resultname.bcol.bin.zst
-		file rename -force $tempdir/bcol_${build}_$resultname.bcol.bin.zst.zsti bcol_${build}_$resultname.bcol.bin.zst.zsti
-		file rename -force $tempdir/bcol_${build}_$resultname.bcol bcol_${build}_$resultname.bcol
+		file rename -force -- $tempdir/bcol_${build}_$resultname.bcol.bin.zst bcol_${build}_$resultname.bcol.bin.zst
+		file rename -force -- $tempdir/bcol_${build}_$resultname.bcol.bin.zst.zsti bcol_${build}_$resultname.bcol.bin.zst.zsti
+		file rename -force -- $tempdir/bcol_${build}_$resultname.bcol bcol_${build}_$resultname.bcol
 		file delete -force $tempdir
 	}
 	# make info file
@@ -564,7 +564,7 @@ foreach {jobname resultname infosrc tables} {
 			== Description ==
 		}]]]]
 		file_write $target.temp2 $c
-		file rename -force $target.temp2 $target
+		file rename -force -- $target.temp2 $target
 		file delete $target.temp
 	}
 }
@@ -576,8 +576,8 @@ job enc_RegDnaseClustered -targets {
 } -vars {dest build} -code {
 	cg download_ucsc $target.ucsc $build wgEncodeRegDnaseClustered
 	cg regcollapse $target.ucsc > $target.temp
-	file rename -force $target.ucsc.info [gzroot $target].info
-	file rename -force $target.temp $target
+	file rename -force -- $target.ucsc.info [gzroot $target].info
+	file rename -force -- $target.temp $target
 	file delete $target.ucsc
 }
 
@@ -636,7 +636,7 @@ job ccr -deps {
 		liftover_refdb $target.$ccrbuild.temp $target.zst $dest $ccrbuild $build
 	} else {
 		cg select -s - -overwrite 1 -hc 1 -f {chrom start end {ccr_pct=format("%.2f",$ccr_pct)} *} $target.temp/$tail $target.temp.zst
-		file rename -force $target.temp.zst $target.zst
+		file rename -force -- $target.temp.zst $target.zst
 	}
 	cg zstindex $target.zst
 	file delete -force $target.temp
@@ -684,7 +684,7 @@ job lofgnomad -deps {
 		liftover_refdb $target.temp/temp3.tsv $target.zst $dest $gnomadexbuild $build
 	} else {
 		cg select -overwrite 1 -rf {start_position end_position} $target.temp/temp2.tsv $target.temp2.zst
-		file rename -force $target.temp2.zst $target.zst
+		file rename -force -- $target.temp2.zst $target.zst
 	}
 	cg zstindex $target.zst
 	file delete -force $target.temp
@@ -796,13 +796,13 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 		var_${build}_gnomad.tsv.opt
 	} -vars {tempdir dest db build finaltarget gnomadbuild} -code {
 		file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
-		file rename [gzroot $finaltarget].info $tempdir/result.tsv.temp.info
+		file rename -- [gzroot $finaltarget].info $tempdir/result.tsv.temp.info
 		liftover_refdb $tempdir/result.tsv.temp.zst $finaltarget $dest $gnomadbuild $build 0
 		cg zindex $finaltarget
 		cg index $finaltarget
 		file delete -force $tempdir
 		foreach file [glob -nocomplain [gzroot $finaltarget].unmapped*] {
-			file rename $file extra/[file tail $file]
+			file rename -- $file extra/[file tail $file]
 		}
 	}
 } else {
@@ -825,7 +825,7 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 			set fields [gnomadfields $tempdir/$vcf]
 			putslog "Converting $vcf"
 			cg vcf2tsv -split 1 -sort 0 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles {*}[compresspipe $target 1] > $target.temp
-			file rename $target.temp $target
+			file rename -- $target.temp $target
 		}
 	}
 
@@ -836,10 +836,10 @@ if {$gnomadbuild ne $build && [file exists $dest/$gnomadbuild/var_${gnomadbuild}
 		file_write var_${build}_gnomad.tsv.opt "fields\t{max_freqp nfe_freqp}\n"
 		if {$gnomadbuild eq $build} {
 			exec cg cat {*}$deps {*}[compresspipe $finaltarget 12] > $tempdir/result.tsv.temp.zst
-			file rename -force $tempdir/result.tsv.temp.zst $finaltarget
+			file rename -force -- $tempdir/result.tsv.temp.zst $finaltarget
 		} else {
 			exec cg cat {*}$deps {*}[compresspipe $finaltarget 1] > $tempdir/result.tsv.temp.zst
-			file rename [gzroot $finaltarget].info $tempdir/result.tsv.temp.info
+			file rename -- [gzroot $finaltarget].info $tempdir/result.tsv.temp.info
 			liftover_refdb $tempdir/result.tsv.temp.zst $finaltarget $dest $gnomadbuild $build 0
 		}
 		cg zindex $finaltarget
@@ -868,7 +868,7 @@ if {$gnomadexbuild ne $build && [file exists $dest/$gnomadexbuild/var_${gnomadex
 		catch {file delete $target.temp2}
 		catch {file delete [gzroot $target].unmapped.zst.temp}
 		foreach file [glob -nocomplain [gzroot $target].unmapped*] {
-			file rename $file extra/[file tail $file]
+			file rename -- $file extra/[file tail $file]
 		}
 	}
 } else {
@@ -885,9 +885,9 @@ if {$gnomadexbuild ne $build && [file exists $dest/$gnomadexbuild/var_${gnomadex
 		set fields [gnomadfields $tempdir/$vcf]
 		cg vcf2tsv -split 1 -sort 0 $tempdir/$vcf | cg select --stack 1 -rc 1 -f $fields | cg collapsealleles {*}[compresspipe $target 12] > $tempdir/[file tail $target]
 		if {$gnomadbuild eq $build} {
-			file rename $tempdir/[file tail $target] $target
+			file rename -- $tempdir/[file tail $target] $target
 		} else {
-			file rename var_${build}_gnomadex.tsv.opt $tempdir/result.tsv.temp.info
+			file rename -- var_${build}_gnomadex.tsv.opt $tempdir/result.tsv.temp.info
 			liftover_refdb $tempdir/[file tail $target] $target $dest $gnomadbuild $build 0
 		}
 		cg zindex $target
@@ -963,10 +963,10 @@ job reg_${build}_cadd -targets {
 			if {![file exists $tempdir/collapsed.tsv.zst]} {
 				cg select --stack 1 -hc 1 -rc 1 -f {{chrom=$Chrom} {begin = $Pos - 1} {end=$Pos} {ref=$Ref} {alt=$Alt} {score=$PHRED}} $tempdir/$tail \
 					| cg collapsealleles --stack 1 {*}[compresspipe .zst 1] > $tempdir/collapsed.tsv.zst.temp
-				file rename $tempdir/collapsed.tsv.zst.temp $tempdir/collapsed.tsv.zst
+				file rename -- $tempdir/collapsed.tsv.zst.temp $tempdir/collapsed.tsv.zst
 			}
 			cg liftover --stack 1 -split 0 -s 0 $tempdir/collapsed.tsv.zst ../liftover/${caddbuild}To${build}.over.tsv {*}[compresspipe .zst] > $tempdir/collapsed${build}.tsv.temp
-			file rename $tempdir/collapsed${build}.tsv.temp $tempdir/collapsed${build}.tsv.zst
+			file rename -- $tempdir/collapsed${build}.tsv.temp $tempdir/collapsed${build}.tsv.zst
 			file delete $tempdir/collapsed.tsv.zst
 		}
 		exec cg select -s - $tempdir/collapsed${build}.tsv.zst | cg bcol make --stack 1 --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
@@ -975,9 +975,9 @@ job reg_${build}_cadd -targets {
 			| cg collapsealleles | cg select -s {chrom begin} \
 			| cg bcol make --precision 3 --compress 9 -t f --multicol alt --multilist A,C,T,G -p begin -c chrom $tempdir/var_${build}_cadd.bcol score
 	}
-	file rename -force $tempdir/var_${build}_cadd.bcol.bin.zst var_${build}_cadd.bcol.bin.zst
-	file rename -force $tempdir/var_${build}_cadd.bcol.bin.zst.zsti var_${build}_cadd.bcol.bin.zst.zsti
-	file rename -force $tempdir/var_${build}_cadd.bcol var_${build}_cadd.bcol
+	file rename -force -- $tempdir/var_${build}_cadd.bcol.bin.zst var_${build}_cadd.bcol.bin.zst
+	file rename -force -- $tempdir/var_${build}_cadd.bcol.bin.zst.zsti var_${build}_cadd.bcol.bin.zst.zsti
+	file rename -force -- $tempdir/var_${build}_cadd.bcol var_${build}_cadd.bcol
 	file delete -force $tempdir
 }
 
@@ -990,7 +990,7 @@ if {[file exists $defaultdest/downloads/geneHancerRegElements_${build}.tsv.gz]} 
 	cg_download_ucscinfo [gzroot $target].info $build geneHancerRegElements
 	cg select -overwrite 1 -hc 1 -f {chromosome=$chrom begin=$chromStart end=$chromEnd name score elementType eliteness evidenceSources} $defaultdest/downloads/geneHancerRegElements_${build}.tsv.gz $target.temp
 	exec cg select -s - $target.temp | cg regcollapse | cg zst > $target.temp2.zst
-	file rename $target.temp2.zst $target
+	file rename -- $target.temp2.zst $target
 	file delete $target.temp
 }
 
@@ -1004,7 +1004,7 @@ if {[file exists $defaultdest/downloads/geneHancerClusteredInteractions_${build}
 	} $defaultdest/downloads/geneHancerClusteredInteractions_${build}.tsv.gz $target.temp
 	cg select -overwrite 1 -s - $target.temp $target.temp2
 	exec cg select -s - $target.temp | cg regcollapse | cg zst > $target.temp3.zst
-	file rename $target.temp3.zst $target
+	file rename -- $target.temp3.zst $target
 	file delete $target.temp $target.temp2
 }
 
@@ -1072,7 +1072,7 @@ job reg_exome_twistfull -deps {
 } -vars {targetname url file dest build} -code {
 	set fulltarget [file_absolute $target].zst
 	exec cg cat {*}$dep | cg select -s - | cg regcollapse {*}[compresspipe $fulltarget] > $fulltarget.temp
-	file rename $fulltarget.temp $fulltarget
+	file rename -- $fulltarget.temp $fulltarget
 }
 
 # copy exome target regions collected in $defaultdest/downloads to extra, or lift if needed

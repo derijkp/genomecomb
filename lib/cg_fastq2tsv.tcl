@@ -85,7 +85,7 @@ proc cg_fastq2tsv {args} {
 		}
 		if {$outfile ne "-"} {
 			close $o
-			file rename -force $outfile.temp $outfile
+			file rename -force -- $outfile.temp $outfile
 		}
 	}
 }

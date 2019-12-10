@@ -17,7 +17,7 @@ proc sreg_gatkh_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25} 
 				\$genoqual >= $mingenoqual && \$coverage >= $mincoverage && \$type ne "ins"
 			}] -f {chromosome begin end} -s - \
 			| cg regjoin {*}[compresspipe $target] > $temp
-		file rename -force $temp $target
+		file rename -force -- $temp $target
 		cg_zindex $target
 	}
 }
@@ -159,8 +159,8 @@ proc var_gatkh_job {args} {
 				-G StandardAnnotation \
 				-G StandardHCAnnotation \
 				-G AS_StandardAnnotation
-			file rename -force $varallfile.temp.gz $varallfile.gz
-			file rename -force $varallfile.temp.gz.tbi $varallfile.gz.tbi
+			file rename -force -- $varallfile.temp.gz $varallfile.gz
+			file rename -force -- $varallfile.temp.gz.tbi $varallfile.gz.tbi
 			# file delete $varallfile.temp
 			if {$emptyreg && ![file exists $cache]} {
 				file copy $target $cache
@@ -184,7 +184,7 @@ proc var_gatkh_job {args} {
 			-O ${pre}uvar-$root.temp.vcf \
 			-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation
 		catch {file delete ${pre}uvar-$root.temp.vcf.idx}
-		file rename -force ${pre}uvar-$root.temp.vcf ${pre}uvar-$root.vcf
+		file rename -force -- ${pre}uvar-$root.temp.vcf ${pre}uvar-$root.vcf
 		set fields {chromosome begin end type ref alt quality alleleSeq1 alleleSeq2}
 		lappend fields [subst {sequenced=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u","v")}]
 		lappend fields [subst {zyg=if(\$genoqual < $mingenoqual || \$coverage < $mincoverage,"u",\$zyg)}]
@@ -192,7 +192,7 @@ proc var_gatkh_job {args} {
 		exec cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
 		} ${pre}uvar-$root.vcf | cg select -f $fields > ${pre}uvar-$root.tsv.temp
-		file rename -force ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
+		file rename -force -- ${pre}uvar-$root.tsv.temp ${pre}uvar-$root.tsv
 	}
 	# annotvar_clusters_job works using jobs
 	annotvar_clusters_job {*}$skips ${pre}uvar-$root.tsv $varfile.zst

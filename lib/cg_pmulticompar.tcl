@@ -47,7 +47,7 @@ proc multi_merge_job {varsfile files args} {
 				set deps $templist
 			}
 			exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 		}
 		return
 	}
@@ -66,7 +66,7 @@ proc multi_merge_job {varsfile files args} {
 			} -code {
 				# puts [list ../bin/multi_merge $split {*}$deps]
 				exec multi_merge $split {*}$deps > $target.temp 2>@ stderr
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 				if {$delete} {file delete {*}$deps}
 			}
 			break
@@ -111,9 +111,9 @@ proc multi_merge_job {varsfile files args} {
 						mklink $dep $target.temp
 					}
 				} else {
-					file rename -force $dep $target.temp
+					file rename -force -- $dep $target.temp
 				}
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 			}
 		}
 		set delete 1
@@ -606,7 +606,7 @@ proc pmulticompar_job {args} {
 		set deps [list_remove $deps {}]
 		if {[llength $deps]} {
 			cg cat -c 0 -m 1 {*}$deps > $target.temp
-			file rename $target.temp $target
+			file rename -- $target.temp $target
 		} else {
 			file_write $target ""
 		}
@@ -749,16 +749,16 @@ proc pmulticompar_job {args} {
 				# puts [list cg vcf2tsv -refout 1 -sort 0 -keepfields $keepfields $varallfile | ../bin/multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
 				set temp [filetemp $target 1 1]
 				exec cg vcf2tsv -refout 1 -sort 0 -keepfields $keepfields $varallfile | multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile - $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs {*}[compresspipe $target 1 1] > $temp
-				file rename -force $temp $target
+				file rename -force -- $temp $target
 			} elseif {$varallfile ne "" || $allfound || (![llength $oldbcolannot] && ![llength $coverageRefScorefiles])} {
 				# puts stderr [list ../bin/multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs]
 				set temp [filetemp $target 1 1]
 				exec multicompar_addvars $split [join $newheader \t] $allvarsfile $samplevarsfile $sregfile $varallfile $numbcolannot $numregfiles {*}$bcolannot {*}$regfiles {*}$keepposs {*}[compresspipe $target 1 1] > $temp
-				file rename -force $temp $target
+				file rename -force -- $temp $target
 			} else {
 				set temp [filetemp $target 1 1]
 				multicompar_tcl_addvars $sample $temp $split $allvarsfile $samplevarsfile $sregfile $varallfile $bcolannot $oldbcolannot $regfiles $coverageRefScorefiles $keepfields
-				file rename -force $temp $target
+				file rename -force -- $temp $target
 			}
 		}
 	}
@@ -787,7 +787,7 @@ proc pmulticompar_job {args} {
 			file_write $target.temp $targetsfield\n
 			# puts stderr [list ../bin/var_annot $allvarsfile 0 1 2 3 5 $targetvarsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos]
 			exec var_annot $allvarsfile 0 1 2 3 5 $targetvarsfile {*}$dbposs $type2pos $alt2pos "" {*}$keeppos >> $target.temp 2>@ stderr
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 		}
 	}
 	#

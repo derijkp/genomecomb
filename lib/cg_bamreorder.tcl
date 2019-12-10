@@ -79,8 +79,8 @@ proc cg_bamreorder {args} {
 		if {$nref ne $ref} {file delete $nref}
 		exec samtools index $dest.temp2
 		file delete $dest.temp  $dest.temp.[indexext $dest]
-		file rename $dest.temp2 $dest
-		file rename $dest.temp2.[indexext $dest] $dest.[indexext $dest]
+		file rename -- $dest.temp2 $dest
+		file rename -- $dest.temp2.[indexext $dest] $dest.[indexext $dest]
 	} else {
 		# new bamheader
 		unset -nocomplain chrsa
@@ -137,7 +137,7 @@ proc cg_bamreorder {args} {
 		}
 		close $o
 		exec samtools index $dest.temp
-		file rename -force $dest.temp $dest
-		file rename -force $dest.temp.[indexext $dest] $dest.[indexext $dest]
+		file rename -force -- $dest.temp $dest
+		file rename -force -- $dest.temp.[indexext $dest] $dest.[indexext $dest]
 	}
 }

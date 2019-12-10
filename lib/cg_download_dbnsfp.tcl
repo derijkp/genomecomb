@@ -65,7 +65,7 @@ proc cg_download_dbnsfp {args} {
 	puts $o "== Description from Readme =="
 	close $o
 	exec cat $readme >> $tempdir/info
-	file rename -force $tempdir/info [gzroot $resultfile].info
+	file rename -force -- $tempdir/info [gzroot $resultfile].info
 	file copy -force $tempdir/LICENSE.txt [gzroot $resultfile].license
 	# data
 	set files [ssort -natural [glob $tempdir/dbNSFP*_variant.chr*]]
@@ -114,7 +114,7 @@ proc cg_download_dbnsfp {args} {
 			chromosome begin end type {ref=lindex($ref,0)} alt *
 		} $file.tsv.temp3 $file.tsv.temp4
 		file delete $file.tsv.temp3
-		file rename -force $file.tsv.temp4 $file.tsv
+		file rename -force -- $file.tsv.temp4 $file.tsv
 	}
 	putslog "joining files"
 	cg cat -c 0 {*}$todo > $tempdir/var_hg19_dbnsfp.tsv.temp
@@ -124,7 +124,7 @@ proc cg_download_dbnsfp {args} {
 	# move dbNSFPzip files to target
 	file_write [gzroot $resultfile].opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred MetaSVM_score MetaSVM_pred MetaLR_score MetaLR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score REVEL_score VEST3_score GERP_NR GERP_RS MetaLR_score MetaLR_pred SiPhy_29way_pi SiPhy_29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
 	# zst already handled in last select
-	file rename -force $tempresult $resultfile
+	file rename -force -- $tempresult $resultfile
 	if {!$keep} {file delete -force $tempdir}
 }
 

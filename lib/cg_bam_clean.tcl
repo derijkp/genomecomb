@@ -114,8 +114,8 @@ proc bam_clean_job {args} {
 					lappend realignopts RANGES=$bedfile
 				}
 				exec java -XX:ParallelGCThreads=1 -jar $srma I=$dep O=$target.temp R=$gatkrefseq {*}$realignopts 2>@ stderr >@ stdout
-				catch {file rename -force $target.temp.$extindex $target.$extindex}
-				file rename -force $target.temp $target
+				catch {file rename -force -- $target.temp.$extindex $target.$extindex}
+				file rename -force -- $target.temp $target
 			}
 		} else {
 			job bamrealign-$root -mem [job_mempercore 10G 2] -cores 2 -deps $deps \
@@ -144,13 +144,13 @@ proc bam_clean_job {args} {
 					-targetIntervals $target.intervals -I $dep \
 					-o $target.temp {*}$extra 2>@ stderr >@ stdout
 				if {$aliformat eq "cram"} {
-					file rename $target.temp $target.temp.bam
+					file rename -- $target.temp $target.temp.bam
 					exec samtools view -C $target.temp.bam -T $::env(REFSEQ) -o $target.temp
 					file delete $target.temp.bam
 					file delete $tempfile
 				}
 				catch {file delete $target.intervals}
-				file rename -force $target.temp $target
+				file rename -force -- $target.temp $target
 			}
 		}
 		set root r$root
@@ -168,7 +168,7 @@ proc bam_clean_job {args} {
 		} {*}$skips -vars {clipamplicons} -code {
 			analysisinfo_write $dep $target clipamplicons genomecomb clipamplicons_version [version genomecomb] clipampliconsfile [filename $clipamplicons]
 			cg sam_clipamplicons $dep2 $dep $target.temp
-			file rename $target.temp $target
+			file rename -- $target.temp $target
 		}
 		set root c$root
 		job bamclean_clipamplicons_index-$root -optional 1 -deps {$dir/$pre-$root.$aliformat} -targets {$dir/$pre-$root.$aliformat.$extindex} -code {

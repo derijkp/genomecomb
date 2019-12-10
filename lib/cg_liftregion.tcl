@@ -141,7 +141,7 @@ proc cg_liftregion {args} {
 	#
 	# rename result, cleanup
 	#
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 	file delete $tempfile $tempfile2
-	file rename -force $unmappedfile.temp $unmappedfile
+	file rename -force -- $unmappedfile.temp $unmappedfile
 }

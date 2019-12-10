@@ -15,7 +15,7 @@ proc gatk_refseq_job refseq {
 	job gatkrefseq-[file tail $nrefseq] -deps {$nrefseq} -targets {$dict} -vars {nrefseq} -code {
 		file delete $target.temp
 		picard CreateSequenceDictionary R= $nrefseq O= $target.temp 2>@ stderr >@ stdout
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	return $nrefseq
 }
@@ -33,7 +33,7 @@ proc gatk_refseq refseq {
 	if {![file exists $dict]} {
 		file delete $target.temp
 		picard CreateSequenceDictionary R= $nrefseq O= $target.temp 2>@ stderr >@ stdout
-		file rename -force $target.temp $target
+		file rename -force -- $target.temp $target
 	}
 	return $nrefseq
 }
@@ -57,7 +57,7 @@ proc annotvar_clusters_job {args} {
 		analysisinfo_write $dep $target
 		if {[file size $dep]} {
 			exec {*}[gzcat $dep] $dep | cg clusterregions {*}[compresspipe .zst] > $target.temp.zst
-			file rename -force $target.temp.zst $target
+			file rename -force -- $target.temp.zst $target
 			cg_zstindex $target
 		} else {
 			file_write $target ""
@@ -216,7 +216,7 @@ proc var_gatk_job {args} {
 				-stand_call_conf 10.0 -dcov 1000 \
 				--annotateNDA \
 				-glm SNP --output_mode EMIT_ALL_CONFIDENT_SITES 2>@ stderr >@ stdout
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 			catch {file delete $target.temp.idx}
 			if {$emptyreg && ![file exists $cache]} {
 				file copy $target $cache
@@ -234,7 +234,7 @@ proc var_gatk_job {args} {
 		cg vcf2tsv -split $split -meta [list refseq [file tail $refseq]] -removefields {
 			name filter AN AC AF AA ExcessHet InbreedingCoeff MLEAC MLEAF NDA RPA RU STR
 		} $dep $target.temp.zst
-		file rename -force $target.temp.zst $target
+		file rename -force -- $target.temp.zst $target
 	}
 	# zst_job $varallfile -i 1
 	zstindex_job {*}$skips $varallfile.zst
@@ -264,7 +264,7 @@ proc var_gatk_job {args} {
 				-stand_call_conf 10.0 -dcov 1000 \
 				--annotateNDA \
 				-glm INDEL 2>@ stderr >@ stdout
-			file rename -force $target.temp $target
+			file rename -force -- $target.temp $target
 			catch {file delete $target.temp.idx}
 			if {$emptyreg && ![file exists $cache]} {
 				file copy $target $cache
@@ -292,7 +292,7 @@ proc var_gatk_job {args} {
 			{zyg=if($quality < 30 || $totalcoverage < 5,"u",$zyg)}
 			*
 		} - $temp
-		file rename -force $temp $target
+		file rename -force -- $temp $target
 	}
 	job ${pre}uvar-$root {*}$skips -deps {
 		$varallfile.zst ${pre}delvar-$root.tsv
@@ -313,7 +313,7 @@ proc var_gatk_job {args} {
 		} $dep $target.temp
 		cg cat -c f $target.temp $dep2 > $target.temp2
 		cg select -overwrite 1 -s - $target.temp2 $target.temp3
-		file rename -force $target.temp3 $target
+		file rename -force -- $target.temp3 $target
 		file delete $target.temp
 		file delete $target.temp2
 	}

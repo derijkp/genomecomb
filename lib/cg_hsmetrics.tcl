@@ -19,7 +19,7 @@ proc make_hsmetrics_report_job {destdir files {optional 1}} {
 	job calc_hsmetrics-$experiment -optional $optional -deps $files -targets {$destdir/${experiment}_hsmetrics_report.tsv} -code {
 		cg cat -c 0 {*}$deps > $target.temp
 		cg select -rc 1 $target.temp $target.temp2
-		file rename -force $target.temp2 $target
+		file rename -force -- $target.temp2 $target
 		file delete $target.temp
 	}
 }
@@ -50,7 +50,7 @@ proc hsmetrics_tsv2interval {regionfile bamfile resultfile} {
 	set bamheader [split [exec samtools view -H $bamfile] \n]
 	file_write $resultfile.temp [join [list_sub $bamheader [list_find -regexp $bamheader ^@SQ]] \n]\n
 	cg select -sh /dev/null -f $fields $tsvfile >> $resultfile.temp
-	file rename -force $resultfile.temp $resultfile
+	file rename -force -- $resultfile.temp $resultfile
 	file delete $resultfile.temp.pre
 }
 
@@ -79,7 +79,7 @@ proc cg_hsmetrics {args} {
 		}
 		puts $f $sample\t$bait[join $temp \t]
 		close $f
-		file rename -force $resultfile.temp $resultfile
+		file rename -force -- $resultfile.temp $resultfile
 		return
 	}
 	set target_intervals [tempdir]/[file root [file tail [gzroot $targetfile]]].intervals
@@ -113,6 +113,6 @@ proc cg_hsmetrics {args} {
 			I=$bamfile O=$temp
 	}
 	cg select -overwrite 1 -f [list sample=\"$sample\" *] $temp $temptarget
-	file rename -force $temptarget $resultfile
+	file rename -force -- $temptarget $resultfile
 	file delete $target_intervals
 }

@@ -234,7 +234,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 	}
 	close $o
 	close $f
-	# file rename -force $logfile $logfile.old
+	# file rename -force -- $logfile $logfile.old
 	if {$endstatus eq "running"} {
 		set result [file root $logfile].running
 	} elseif {$endstatus eq "error"} {
@@ -243,7 +243,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 		set result [file root $logfile].finished
 	}
 	file delete -force $tempfile
-	file rename -force $tempresult $result
+	file rename -force -- $tempresult $result
 	if {$cleanup eq "allways" || ($cleanup eq "success" && $endstatus eq "finished")} {
 		job_cleanlogs $result
 	}
