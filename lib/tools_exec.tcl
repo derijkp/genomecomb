@@ -18,12 +18,14 @@ proc chanexec {in out pipe} {
 }
 
 proc catch_exec {args} {
-	if {[catch {
+	set error [catch {
 		exec {*}$args
-	} msg opt]} {
+	} msg opt]
+	if {$error} {
 		if {$::errorCode ne "NONE"} {
 			dict unset opt -level
-			return -options $opt $msg
+			set errorInfo "$msg\n    while executing\n$args"
+			return -code $error -errorcode $::errorCode -errorinfo $errorInfo $msg
 		}
 	}
 	return $msg

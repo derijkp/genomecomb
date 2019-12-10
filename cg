@@ -84,7 +84,7 @@ if {[auto_load cg_$action]} {
 			puts stderr $msg
 			exit 1
 		} else {
-			puts stderr "$::errorInfo"
+			puts stderr "$::errorInfo\n    invoked from within\ncg $action [list {*}$args]\n"
 			exit 1
 		}
 	}
