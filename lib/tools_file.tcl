@@ -370,3 +370,17 @@ proc ext2format {file {default {}} {supported {}}} {
 	if {$format ni $supported && [llength $supported]} {error "format $format unsupported, must be one of: $supported"}
 	return $format
 }
+
+proc file2stdout {file} {
+	set f [open $file]
+	fconfigure $f -translation binary -encoding binary
+	fconfigure stdout -translation binary -encoding binary
+	fcopy $f stdout
+	close $f
+}
+
+proc copybinary {f o} {
+	fconfigure $o -encoding binary -translation binary
+	fconfigure $f -encoding binary -translation binary
+	fcopy $f $o
+}
