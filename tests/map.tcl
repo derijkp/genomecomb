@@ -188,6 +188,14 @@ test markdup {bam_markduplicates picard} {
 	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
 } $expectederror error
 
+test markdup {bam_markduplicates picard pipe} {
+	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	exec cg bam_markduplicates -stack 1 -method picard < tmp/sbwa.bam > tmp/result.bam
+	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+} $expectederror error
+
 test markdup {bam_markduplicates samtools} {
 	exec samtools sort data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method samtools tmp/sbwa.bam tmp/result.bam
@@ -204,9 +212,33 @@ test markdup {bam_markduplicates samtools pipe} {
 	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
 } $expectederror error
 
+test markdup {bam_markduplicates samtools pipe -compressionlevel} {
+	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	cg bam_markduplicates -method samtools -compressionlevel 1 < tmp/sbwa.bam > tmp/result.bam
+	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+} $expectederror error
+
+test markdup {bam_markduplicates samtools pipe to cram} {
+	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	cg bam_markduplicates -method samtools -outputformat cram -refseq $::refseqdir/hg19 < tmp/sbwa.bam > tmp/result.cram
+	exec samtools view -h tmp/result.cram -T [refseq $::refseqdir/hg19] | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+} $expectederror error
+
 test markdup {bam_markduplicates biobambam} {
 	exec samtools sort data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method biobambam tmp/sbwa.bam tmp/result.bam
+	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+} $expectederror error
+
+test markdup {bam_markduplicates biobambam pipe} {
+	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	cg bam_markduplicates -method biobambam < tmp/sbwa.bam > tmp/result.bam
 	exec samtools view -h tmp/result.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
 	exec samtools view -h tmp/sbwa.bam | cg sam2tsv | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
 	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv

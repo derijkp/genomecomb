@@ -38,7 +38,7 @@ proc cg_bam_markduplicates {args} {
 	set sourcefile -
 	set resultfile -
 	set threads 1
-	set skips {}
+	set refseq {}
 	cg_options bam_markduplicates args {
 		-method {
 			if {$value ni {1 picard biobambam samtools sam}} {error "bam_markduplicates: unsupported -method $value"}
@@ -50,6 +50,9 @@ proc cg_bam_markduplicates {args} {
 		-outputformat - -of {
 			set outputformat $value
 		}
+		-refseq {
+			set refseq $value
+		}
 		-threads {
 			set threads $value
 		}
@@ -58,34 +61,35 @@ proc cg_bam_markduplicates {args} {
 	if {$outputformat eq "-"} {set outputformat [ext2format $resultfile bam {bam cram sam}]}
 	if {$method eq "1"} {set method samtools}
 	set tail [file tail $sourcefile]
-	putslog "removing duplicates $tail"
 	if {$method eq "picard"} {
 		if {$outputformat eq "cram"} {error "cram output not supported by bam_markduplicates using picard method"}
 		analysisinfo_write $sourcefile $resultfile removeduplicates picard removeduplicates_version [version picard]
-		puts "removing duplicates"
 		set scratchdir [scratchdir]/picard
 		file mkdir $scratchdir
 		set opts {}
 		set optsio {}
 		lappend opts COMPRESSION_LEVEL=[defcompressionlevel 5]
 		if {$sourcefile eq "-"} {
-			set o [open $scratchdir/source.$format w]
-			fconfigure $o -translation binary
-			fcopy stdin $o
-			set sourcefile $scratchdir/source.$format
+			set newsourcefile $scratchdir/source.$inputformat
+			set o [open $newsourcefile w]
+			copybinary stdin $o
+			close $o
+			set sourcefile $newsourcefile
 		}
 		if {$resultfile eq "-"} {
-			set tempresult [tempfile]
+			set tempresult [tempfile].$outputformat
+			set metricsfile [tempfile]
 		} else {
 			set tempresult [filetemp $resultfile 0 1]
+			set metricsfile $resultfile.dupmetrics
 		}
 		picard MarkDuplicates	I=$sourcefile	O=$tempresult \
-			METRICS_FILE=$resultfile.dupmetrics TMP_DIR=[scratchdir]/picard \
-			{*}$opts {*}$optsio 2>@ stderr
-		if {[file exists $tempresult]} {
+			METRICS_FILE=$metricsfile TMP_DIR=[scratchdir]/picard \
+			{*}$opts {*}$optsio
+		if {$resultfile ne "-"} {
 			file rename -force -- $tempresult $resultfile
 		} else {
-			file copy $tempresult >@ stdout
+			file2stdout $tempresult
 		}
 	} elseif {$method eq "biobambam"} {
 		if {$outputformat eq "cram"} {error "cram output not supported by bam_markduplicates using biobambam method"}
@@ -104,6 +108,7 @@ proc cg_bam_markduplicates {args} {
 		} else {
 			lappend opts I=$sourcefile
 		}
+		lappend opts level=[defcompressionlevel -1]
 		biobambam bammarkduplicates2 M=$resultfile.dupmetrics rmdup=0 markthreads=1 tmpfile=[scratchfile] \
 			{*}$opts {*}$optsio 2>@ stderr
 		if {$resultfile ne "-"} {
@@ -113,7 +118,14 @@ proc cg_bam_markduplicates {args} {
 		analysisinfo_write $sourcefile $resultfile removeduplicates samtools removeduplicates_version [version samtools]
 		set opts {} ; set optsio {}
 		set compressionlevel [defcompressionlevel -1]
-		if {$compressionlevel != -1} {lappend opts --output-fmt-option level=$compressionlevel}
+		set outputfmtoption {}
+		if {$outputformat eq "cram"} {
+			lappend outputfmtoption reference=[refseq $refseq]
+		}
+		if {$compressionlevel != -1} {lappend outputfmtoption level=$compressionlevel}
+		if {$outputfmtoption ne ""} {
+			lappend opts --output-fmt-option [join $outputfmtoption ,]
+		}
 		if {$resultfile ne "-"} {
 			set tempresult [filetemp $resultfile 0 1]
 		} else {
@@ -123,7 +135,7 @@ proc cg_bam_markduplicates {args} {
 		if {$sourcefile eq "-"} {
 			lappend optsio <@ stdin
 		}
-		puts stderr [list samtools markdup --output-fmt $outputformat -l 500 \
+		# puts stderr [list samtools markdup --output-fmt $outputformat -l 500 \
 			{*}$opts $sourcefile $tempresult {*}$optsio]
 		exec samtools markdup --output-fmt $outputformat -l 500 \
 			{*}$opts $sourcefile $tempresult {*}$optsio 2>@ stderr
