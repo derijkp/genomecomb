@@ -64,8 +64,6 @@ proc parse_generic_args {subcmd argslist} {
 		} elseif {$key in "--compressionthreads -compressionthreads"} {
 			setdefcompressionthreads $value
 			lappend remove $pos [expr {$pos + 1}]
-		} else {
-			break
 		}
 		incr pos 2
 	}
