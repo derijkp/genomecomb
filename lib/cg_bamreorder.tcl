@@ -132,6 +132,8 @@ proc cg_bamreorder {args} {
 		puts $o [join $newheader \n]
 		foreach chr $todo {
 			set f [open [list | samtools view -@ $threads $src $chr]]
+			fconfigure $f -encoding binary -translation binary
+			fconfigure $o -encoding binary -translation binary
 			fcopy $f $o
 			close $f
 		}
