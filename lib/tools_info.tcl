@@ -1,15 +1,30 @@
 proc analysisinfo_write {dep target args} {
+	if {$dep eq "-" && [info exists ::env(PIPE_FILE)]} {
+		set dep $::env(PIPE_FILE)
+	}
+	if {$target eq "-"} {
+		if {[info exists ::env(PIPE_FILE)]} {
+			set target $::env(PIPE_FILE)
+		} else {
+			return
+		}
+	}
 	file mkdir [file dir $target]
 	set dep [gzroot $dep]
 	set target [gzroot $target]
 	if {![llength $args]} {
-		if {[file exists $dep.analysisinfo]} {
+		if {[file exists $dep.analysisinfo] && $dep ne $target} {
 			file copy -force $dep.analysisinfo $target.analysisinfo
 		}
 		return
 	}
 	if {[file exists $dep.analysisinfo]} {
-		set f [open $dep.analysisinfo]
+		if {$dep eq $target} {
+			file rename -force -- $dep.analysisinfo $dep.analysisinfo.old
+			set f [open $dep.analysisinfo.old]
+		} else {
+			set f [open $dep.analysisinfo]
+		}
 		set fields [tsv_open $f]
 		foreach {field value} $args {
 			if {$field eq "sample"} {
