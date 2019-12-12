@@ -143,7 +143,14 @@ test realign {realign_gatk basic} {
 	catch {exec diff tmp/ratest.sam data/ratest-gatk.sam}
 } 0
 
-test realign {realign_gatk basic pipe} {
+test realign {realign_gatk pipe} {
+	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	cg realign method gatk -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
+	exec samtools view tmp/ratest.bam > tmp/ratest.sam
+	catch {exec diff tmp/ratest.sam data/ratest-gatk.sam}
+} 0
+
+test realign {realign -method gatk pipe} {
 	exec samtools view -b data/bwa.sam > tmp/bwa.bam
 	cg realign_gatk -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
 	exec samtools view tmp/ratest.bam > tmp/ratest.sam
