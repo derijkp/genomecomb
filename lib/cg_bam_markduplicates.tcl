@@ -96,7 +96,6 @@ proc cg_bam_markduplicates {args} {
 		analysisinfo_write $sourcefile $resultfile removeduplicates biobambam removeduplicates_version [version biobambam]
 		set opts {}
 		set optsio {}
-		lappend opts level=[defcompressionlevel -1]
 		if {$resultfile eq "-"} {
 			lappend optsio >@ stdout
 		} else {
