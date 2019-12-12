@@ -166,6 +166,22 @@ test realign {realign_abra pipe} {
 	catch {exec diff tmp/ratest.tsv tmp/expected.tsv}
 } 0
 
+test realign {realign_srma basic} {
+	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	cg realign_srma -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19
+	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
+	cg sam2tsv data/ratest-srma.sam tmp/expected.tsv
+	catch {exec diff tmp/ratest.tsv tmp/expected.tsv}
+} 0
+
+test realign {realign_srma pipe} {
+	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	cg realign_srma -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
+	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
+	cg sam2tsv data/ratest-srma.sam tmp/expected.tsv
+	catch {exec diff tmp/ratest.tsv tmp/expected.tsv}
+} 0
+
 set expectederror {diff tmp/result.tsv tmp/sbwa.tsv
 header
   qname	chromosome	begin	end	duplicate
