@@ -1,66 +1,94 @@
-proc realign_gatk_job {args} {
-	upvar job_logdir job_logdir
-	set skips {}
+proc cg_realign_gatk {args} {
 	set regionfile {}
 	set threads 2
+	set refseq {}
+	set bamfile -
+	set sourcefile -
+	set resultfile -
+	set inputformat -
+	set outputformat -
 	cg_options realign_gatk args {
-		-skips {
-			set skips $value
-		}
 		-regionfile {
 			set regionfile $value
+		}
+		-refseq {
+			set refseq $value
+		}
+		-inputformat - -if {
+			set inputformat $value
+		}
+		-outputformat - -of {
+			set outputformat $value
 		}
 		-threads - -t {
 			set threads $value
 		}
-	} {bamfile resultbamfile refseq} 3 3 {
+	} {sourcefile resultfile refseq} 0 3 {
 		realign around indels using gatk
 	}
-	set bamfile [file_absolute $bamfile]
-	set resultbamfile [file_absolute $resultbamfile]
+	if {$inputformat eq "-"} {set inputformat [ext2format $sourcefile bam {bam cram sam}]}
+	if {$outputformat eq "-"} {set outputformat [ext2format $resultfile bam {bam cram sam}]}
 	set refseq [refseq $refseq]
-	if {[file isdir $refseq]} {
-		set refseq [lindex [glob $refseq/genome_*.ifas] 0]
+	set gatkrefseq [gatk_refseq $refseq]
+	set dict [file root $gatkrefseq].dict
+	if {$sourcefile eq "-"} {
+		set tempfile [tempfile].bam
+		exec samtools view -b -u -o $tempfile <@ stdin
+		exec samtools index $tempfile
+		set sourcefile $tempfile
+	} elseif {$inputformat ne "bam"} {
+		set tempfile [tempfile].bam
+		exec samtools view -b -u $sourcefile -o $tempfile
+		analysisinfo_write $sourcefile $tempfile
+		set sourcefile $tempfile
 	}
-	if {![info exists job_logdir]} {
-		job_logdir $resultbamfile.log_jobs
+	if {$resultfile eq "-"} {
+		set tempresult [tempfile]
+	} else {
+		set tempresult [filetemp $resultfile 0 1]
 	}
 	if {$regionfile eq ""} {
-		set cov3reg [bam2reg_job -mincoverage 3 $bamfile]
-		set regionfile $cov3reg
+		set regionfile [cg_bam2reg -mincoverage 3 $sourcefile]
 	}
-	set gatkrefseq [gatk_refseq_job $refseq]
-	set dict [file root $gatkrefseq].dict
-	set indexect [indexext $resultbamfile]
-	job realign_gatk-[file tail $resultbamfile] -mem [job_mempercore 10G [expr {1+$threads}]] -cores [expr {1+$threads}] \
-	-deps {$bamfile ($bamfile.indexext) $dict $gatkrefseq $refseq $regionfile} \
-	-targets {$resultbamfile $resultbamfile.$indexect} {*}$skips \
-	-vars {gatkrefseq refseq gatk bamfile regionfile threads} -code {
-		putslog "making $target"
-		analysisinfo_write $dep $target realign gatk realign_version [version gatk3]
-		if {![file exists $bamfile.[indexext $bamfile]]} {exec samtools index $bamfile}
+	putslog "making $resultfile"
+	analysisinfo_write $sourcefile $resultfile realign gatk realign_version [version gatk3]
+	if {![file exists $sourcefile.[indexext $sourcefile]]} {exec samtools index $sourcefile}
+	if {$regionfile ne ""} {
 		set bedfile [tempbed $regionfile $refseq]
 		lappend realignopts -L $bedfile
-		gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} RealignerTargetCreator -R $gatkrefseq -I $dep -o $target.intervals {*}$realignopts 2>@ stdout >@ stdout
-		if {[loc_compare [version gatk3] 2.7] >= 0} {
-			set extra {--filter_bases_not_stored}
-		} else {
-			set extra {}
-		}
-		lappend extra --filter_mismatching_base_and_quals
-		gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} IndelRealigner -R $gatkrefseq \
-			-targetIntervals $target.intervals -I $dep \
-			-o $target.temp {*}$extra 2>@ stdout >@ stdout
-		catch {file rename -force $target.temp.[indexext $target] $target.[indexext $target]}
-		catch {file delete $target.intervals}
-		file rename -force $target.temp $target
 	}
-}
-
-proc cg_realign_gatk {args} {
-	set args [job_init {*}$args]
-	unset job_logdir
-	set result [realign_gatk_job {*}$args]
-	job_wait
-	return $result
+	gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} RealignerTargetCreator \
+		-R $gatkrefseq -I $sourcefile -o $tempresult.intervals {*}$realignopts
+	if {[loc_compare [version gatk3] 2.7] >= 0} {
+		set extra {--filter_bases_not_stored}
+	} else {
+		set extra {}
+	}
+	lappend extra --filter_mismatching_base_and_quals
+	if {$resultfile eq "-"} {
+		set compressionlevel 0
+	} else {
+		set compressionlevel [defcompressionlevel 5]
+	}
+	gatk3exec {-XX:ParallelGCThreads=1 -Xms512m -Xmx8g} IndelRealigner -R $gatkrefseq \
+		-targetIntervals $tempresult.intervals -I $sourcefile --bam_compression $compressionlevel \
+		-o $tempresult {*}$extra
+	catch {file delete -- $tempresult.intervals}
+	if {$outputformat eq "cram"} {
+		file rename $tempresult $tempresult.bam
+		exec samtools view -C $tempresult.bam -T $::env(REFSEQ) -o $tempresult
+		file delete $tempresult.bam
+		file delete $tempfile
+		if {$resultfile eq "-"} {
+			file2stdout $tempresult
+		} else {
+			catch {file rename -force -- $tempresult.[indexext $tempresult] $tempresult.[indexext $tempresult]}
+			file rename -force -- $tempresult $resultfile
+		}
+	} elseif {$resultfile eq "-"} {
+		file2stdout $tempresult
+	} else {
+		catch {file rename -force -- $tempresult.[indexext $tempresult] $tempresult.[indexext $tempresult]}
+		file rename -force -- $tempresult $resultfile
+	}
 }

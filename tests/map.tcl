@@ -143,9 +143,24 @@ test realign {realign_gatk basic} {
 	catch {exec diff tmp/ratest.sam data/ratest-gatk.sam}
 } 0
 
+test realign {realign_gatk basic pipe} {
+	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	cg realign_gatk -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
+	exec samtools view tmp/ratest.bam > tmp/ratest.sam
+	catch {exec diff tmp/ratest.sam data/ratest-gatk.sam}
+} 0
+
 test realign {realign_abra basic} {
 	exec samtools view -b data/bwa.sam > tmp/bwa.bam
 	cg realign_abra -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19
+	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
+	cg sam2tsv data/ratest-abra.sam tmp/expected.tsv
+	catch {exec diff tmp/ratest.tsv tmp/expected.tsv}
+} 0
+
+test realign {realign_abra pipe} {
+	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	cg realign_abra -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
 	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
 	cg sam2tsv data/ratest-abra.sam tmp/expected.tsv
 	catch {exec diff tmp/ratest.tsv tmp/expected.tsv}

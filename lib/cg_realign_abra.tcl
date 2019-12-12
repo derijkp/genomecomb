@@ -1,63 +1,72 @@
-proc realign_abra_job {args} {
+proc cg_realign_abra {args} {
 	upvar job_logdir job_logdir
-	set skips {}
 	set regionfile {}
 	set threads 2
+	set refseq {}
+	set bamfile -
+	set sourcefile -
+	set resultfile -
+	set inputformat -
+	set outputformat -
 	cg_options realign_abra args {
-		-skips {
-			set skips $value
-		}
 		-regionfile {
 			set regionfile $value
+		}
+		-refseq {
+			set refseq $value
+		}
+		-inputformat - -if {
+			set inputformat $value
+		}
+		-outputformat - -of {
+			set outputformat $value
 		}
 		-threads - -t {
 			set threads $value
 		}
-	} {bamfile resultbamfile refseq} 3 3 {
+	} {sourcefile resultfile refseq} 0 3 {
 		realign around indels using abra
 	}
-	set bamfile [file_absolute $bamfile]
-	set resultbamfile [file_absolute $resultbamfile]
+	if {$inputformat eq "-"} {set inputformat [ext2format $sourcefile bam {bam sam}]}
+	if {$outputformat eq "-"} {set outputformat [ext2format $resultfile bam {bam sam}]}
 	set refseq [refseq $refseq]
-	if {[file isdir $refseq]} {
-		set refseq [lindex [glob $refseq/genome_*.ifas] 0]
-	}
-	if {![info exists job_logdir]} {
-		job_logdir $resultbamfile.log_jobs
-	}
 	set abra [findjar abra]
-	set indexext [indexext $resultbamfile]
-	job realign_abra-[file tail $resultbamfile] -cores $threads \
-	-deps {$bamfile $refseq ($regionfile)} \
-	-targets {$resultbamfile $resultbamfile.$indexext} {*}$skips \
-	-vars {abra bamfile refseq regionfile threads} -code {
-		if {$regionfile eq "" || ![file exists $regionfile]} {
-			putslog "making regionfile"
-			set regionfile [tempfile]
-			cg bam2reg $bamfile 3 $regionfile
-		}
-		putslog "making $target"
-		if {![file exists $bamfile.[indexext $bamfile]]} {exec samtools index $bamfile}
-		if {[file extension $regionfile] ne ".bed"} {
-			set tempfile [tempfile]
-			cg tsv2bed $regionfile $tempfile
-			set regionfile $tempfile
-		}
-		if {[catch {
-			exec java -Xmx4G -XX:ParallelGCThreads=1 -jar $abra --in $bamfile --out $target.temp.bam --ref $refseq --targets $regionfile --threads $threads --working [scratchdir] > $target.log 2>@ stdout 1>@ stdout
-		} msg]} {
-			error $msg
-		}
-		exec samtools index $target.temp.bam
-		file rename -force -- $target.temp.bam.[indexext $target] $target.[indexext $target]
-		file rename -force -- $target.temp.bam $target
+	if {$sourcefile eq "-"} {
+		set tempfile [tempfile].bam
+		exec samtools view -b -u -o $tempfile <@ stdin
+		exec samtools index $tempfile
+		set sourcefile $tempfile
+	} elseif {$inputformat ne "bam"} {
+		set tempfile [tempfile].bam
+		exec samtools view -b -u $sourcefile -o $tempfile
+		analysisinfo_write $sourcefile $tempfile
+		set sourcefile $tempfile
 	}
-}
-
-proc cg_realign_abra {args} {
-	set args [job_init {*}$args]
-	unset job_logdir
-	set result [realign_abra_job {*}$args]
-	job_wait
-	return $result
+	if {$resultfile eq "-"} {
+		set tempresult [tempfile]
+	} else {
+		set tempresult [filetemp $resultfile 0 1]
+	}
+	set indexext [indexext $resultfile]
+	if {$regionfile eq "" || ![file exists $regionfile]} {
+		putslog "making regionfile"
+		set regionfile [cg_bam2reg -mincoverage 3 $sourcefile]
+	}
+	putslog "making $resultfile"
+	analysisinfo_write $sourcefile $resultfile realign abra realign_version [version abra]
+	if {![file exists $sourcefile.[indexext $sourcefile]]} {exec samtools index $sourcefile}
+	if {$regionfile ne ""} {
+		set regionfile [tempbed $regionfile $refseq]
+	}
+	set workingdir [scratchdir]/work
+	file mkdir $workingdir
+	# puts stderr [list java -Xmx4G -XX:ParallelGCThreads=1 -jar $abra --in $sourcefile --out $tempresult \
+			--ref $refseq --targets $regionfile --threads $threads --working $workingdir]
+	catch_exec java -Xmx4G -XX:ParallelGCThreads=1 -jar $abra --in $sourcefile --out $resultfile.temp.bam \
+			--ref $refseq --targets $regionfile --threads $threads --working $workingdir
+	if {$resultfile eq "-"} {
+		file2stdout $tempresult
+	} else {
+		file rename -force -- $tempresult $resultfile
+	}
 }
