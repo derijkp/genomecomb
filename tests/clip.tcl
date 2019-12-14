@@ -123,6 +123,78 @@ test sam_clipamplicons {basic 2} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+proc checksam {file testfile {refseq {}}} {
+	if {[file extension $file] eq ".bam"} {
+		set tempfile [tempfile]
+		exec samtools view -h $file > $tempfile
+		set file $tempfile
+	} elseif {[file extension $file] eq ".cram"} {
+		set refseq [refseq $refseq]
+		set tempfile [tempfile]
+		exec samtools view -h -T $refseq $file > $tempfile
+		set file $tempfile
+	}
+	cg select -sh /dev/null -f {qname flag rname pos seq qual} $file > tmp/result.tsv
+	exec diff tmp/result.tsv $testfile
+}
+
+test sam_clipamplicons {pipes and formats} {
+	write_sam tmp/temp.sam {
+		chr1	85	20M	20	chr1	100	20M	20	W
+		chr1	99	20M	20	chr1	120	15M	15	A
+		chr1	110	25M	25	chr1	122	20M	20	A
+		chr1	100	20M	20	chr1	120	20M	20	A
+		chr1	101	20M	20	chr1	119	20M	20	A
+		chr1	120	20M	20	chr1	140	20M	20	C
+		chr1	120	40M	40	chr1	125	35M	35	C
+		chr1	130	20M	20	chr1	150	20M	20	T
+		chr1	160	20M	20	chr1	200	20M	20	G
+	}
+	write_tab tmp/samplicons.tsv {
+		chromosome outer_begin begin end outer_end
+		chr1 99 109 129 139
+		chr1 119 129 149 159
+		chr1 129 139 159 169
+	}
+	write_tab tmp/expected.tsv {
+		A1	99	chr1	85	NNNNNNNNNNNNNNNNNNNN	!!!!!!!!!!!!!!!!!!!!
+		A2	99	chr1	99	NNNNNNNNNNNAAAAAAAAA	!!!!!!!!!!!---------
+		A1	147	chr1	100	NNNNNNNNNNWWWWWWWWWW	!!!!!!!!!!----------
+		A4	99	chr1	100	NNNNNNNNNNAAAAAAAAAA	!!!!!!!!!!----------
+		A5	99	chr1	101	NNNNNNNNNAAAAAAAAAAA	!!!!!!!!!-----------
+		A3	99	chr1	110	AAAAAAAAAAAAAAAAAAAANNNNN	--------------------!!!!!
+		A5	147	chr1	119	AAAAAAAAAAANNNNNNNNN	-----------!!!!!!!!!
+		A2	147	chr1	120	AAAAAAAAAANNNNN	----------!!!!!
+		A4	147	chr1	120	AAAAAAAAAANNNNNNNNNN	----------!!!!!!!!!!
+		A6	99	chr1	120	NNNNNNNNNNCCCCCCCCCC	!!!!!!!!!!----------
+		A7	99	chr1	120	NNNNNNNNNNCCCCCCCCCCCCCCCCCCCCNNNNNNNNNN	!!!!!!!!!!--------------------!!!!!!!!!!
+		A3	147	chr1	122	AAAAAAAANNNNNNNNNNNN	--------!!!!!!!!!!!!
+		A7	147	chr1	125	NNNNNCCCCCCCCCCCCCCCCCCCCNNNNNNNNNN	!!!!!--------------------!!!!!!!!!!
+		A8	99	chr1	130	NNNNNNNNNNTTTTTTTTTT	!!!!!!!!!!----------
+		A6	147	chr1	140	CCCCCCCCCCNNNNNNNNNN	----------!!!!!!!!!!
+		A8	147	chr1	150	TTTTTTTTTTNNNNNNNNNN	----------!!!!!!!!!!
+		A9	99	chr1	160	GGGGGGGGGGGGGGGGGGGG	--------------------
+		A9	147	chr1	200	GGGGGGGGGGGGGGGGGGGG	--------------------
+	}
+	cg sam_clipamplicons tmp/samplicons.tsv < tmp/temp.sam > tmp/out.sam
+	checksam tmp/out.sam tmp/expected.tsv
+	# bam input and output
+	exec samtools view -b tmp/temp.sam > tmp/temp.bam
+	cg sam_clipamplicons tmp/samplicons.tsv tmp/temp.bam tmp/out.bam
+	checksam tmp/out.bam tmp/expected.tsv
+	# cram in and output via pipe
+	exec samtools view -h -C -T [refseq $::refseqdir/hg19] tmp/temp.sam > tmp/temp.cram
+	cg sam_clipamplicons -refseq $::refseqdir/hg19 tmp/samplicons.tsv tmp/temp.cram tmp/outd.cram
+	checksam tmp/outd.cram tmp/expected.tsv $::refseqdir/hg19
+	if {[lindex [exec md5sum tmp/outd.cram] 0] ne "bdc02252d7546b8d64b15dbc1fac7e03"} {error "error creating cram"}
+	cg sam_clipamplicons -refseq $::refseqdir/hg19 -inputformat cram -outputformat cram tmp/samplicons.tsv < tmp/temp.cram > tmp/out.cram
+	checksam tmp/out.cram tmp/expected.tsv $::refseqdir/hg19
+	if {[lindex [exec md5sum tmp/out.cram] 0] ne "bdc02252d7546b8d64b15dbc1fac7e03"} {error "error creating cram in pipe"}
+	cg sam_clipamplicons -refseq $::refseqdir/hg19 tmp/samplicons.tsv tmp/temp.sam tmp/outsd.cram
+	checksam tmp/outsd.cram tmp/expected.tsv $::refseqdir/hg19
+	if {[lindex [exec md5sum tmp/outsd.cram] 0] ne "b4ccaf2e339f5c95f134fa4b72d9e497"} {error "error creating cram direct from sam"}
+} {}
+
 test sam_clipamplicons {skip chromosome in amplicons} {
 	write_sam tmp/temp.sam {
 		chr2	50	20M	20	chr2	60	20M	20

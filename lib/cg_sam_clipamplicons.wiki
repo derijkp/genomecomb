@@ -1,17 +1,35 @@
 = sam_clipamplicons =
 
 == Format ==
-cg sam_clipamplicons ampliconsfile file outfile
+cg sam_clipamplicons ?options? ampliconsfile ?sourcefile? ?resultfile?
 
 == Summary ==
-Clip primers from aligned sequences in a sam file (by changing bases to N and quality to 0) given a set of target amplicons
+Clip primers from aligned sequences in a sam file (by changing bases to N
+and quality to 0) given a set of target amplicons.
 
 == Description ==
+cg sam_clipamplicons clips primers from aligned sequences in a sam file (by changing bases to N
+and quality to 0) given a set of target amplicons.
+
+sourcefile can be in sam, bam or cram format. (in case of cram, the
+-refseq option must be given). The format is deduced from the file
+extension. If sourcefile is not given or "-", the input data is taken from
+stdin. In this case, it must be in sam format, unless the option
+-inputformat is used to specify another input format.
+
+resultfile can also be in sam, bam or cram format. When sent to stdout
+(resultfile absent or "-") the format defaults to sam, unless changed
+using the -outputformat option.
 
 == Arguments ==
-; **ampliconsfile**: tab delimited file containing targets with at least following columns: chromosome begin end
-; **file**: directory containing reference genomes and variation data
-; **outfile**: directory containing reference genomes and variation data
+; ampliconsfile: tab delimited file containing targets with at least following columns: chromosome begin end
+; sourcefile: source sam file
+; resultfile: resulting sam file with clipping
+
+== Options ==
+; -refseq refseq: genomic reference sequence
+; -if sam/bam/cram (-inputformat): format of input
+; -of sam/bam/cram (-outputformat): format of output
 
 == Category ==
 Conversion

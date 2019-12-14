@@ -174,7 +174,7 @@ set sam_header {
 	@SQ	SN:chrX	LN:155270560
 	@SQ	SN:chrY	LN:59373566
 	@RG	ID:sample1	PL:illumina	PU:sample1	LB:solexa-123	SM:sample1
-	@PG	ID:GATK	IndelRealigner	VN:2.4-9-g532efad	CL:knownAlleles=[] targetIntervals=test.intervals LODThresholdForCleaning=5.0 consensusDeterminationModel=USE_READS entropyThreshold=0.15 maxReadsInMemory=150000 maxIsizeForMovement=3000 maxPositionalMoveAllowed=200 maxConsensuses=30 maxReadsForConsensuses=120 maxReadsForRealignment=20000 noOriginalAlignmentTags=false nWayOut=null generate_nWayOut_md5s=false check_early=false noPGTag=false keepPGTags=false indelsFileForDebugging=null statisticsFileForDebugging=null SNPsFileForDebugging=null
+	@PG	ID:GATK IndelRealigner	VN:2.4-9-g532efad	CL:knownAlleles=[] targetIntervals=test.intervals LODThresholdForCleaning=5.0 consensusDeterminationModel=USE_READS entropyThreshold=0.15 maxReadsInMemory=150000 maxIsizeForMovement=3000 maxPositionalMoveAllowed=200 maxConsensuses=30 maxReadsForConsensuses=120 maxReadsForRealignment=20000 noOriginalAlignmentTags=false nWayOut=null generate_nWayOut_md5s=false check_early=false noPGTag=false keepPGTags=false indelsFileForDebugging=null statisticsFileForDebugging=null SNPsFileForDebugging=null
 }
 
 proc write_sam {file data} {
@@ -211,10 +211,10 @@ proc write_sam {file data} {
 			set tlen 0
 			set flags 16
 		}
-		puts $o [join [list A$num $flags $chr1 $pos1 60 $cigar1 $c2 $pos2 $tlen $seq1 $qual1 RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25] \t]
+		puts $o [join [list A$num $flags $chr1 $pos1 60 $cigar1 $c2 $pos2 $tlen $seq1 $qual1 RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25] \t]
 		if {$seq2 ne ""} {
 			if {$chr2 eq $chr1} {set c1 =} else {set c1 $chr1}
-			puts $o [join [list A$num 147 $chr2 $pos2 60 $cigar2 $c1 $pos1 -[expr {$pos2+$size2-$pos1}] $seq2 $qual2 RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25] \t]
+			puts $o [join [list A$num 147 $chr2 $pos2 60 $cigar2 $c1 $pos1 -[expr {$pos2+$size2-$pos1}] $seq2 $qual2 RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25] \t]
 		}
 		incr num
 	}
