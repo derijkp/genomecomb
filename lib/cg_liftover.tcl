@@ -61,19 +61,19 @@ proc cg_liftover {args} {
 	set lline [list_sub [split [gets $fl] \t] $lposs]
 	set fromloc [lrange $lline 0 2]
 	foreach {srcchromosome srcbegin srcend srcstrand destchromosome destbegin destend deststrand} $lline break
-	if {-1 in $lposs} {exiterror "error in liftoverfile ($liftoverfile): wrong header"}
+	if {-1 in $lposs} {error "error in liftoverfile ($liftoverfile): wrong header"}
 	#
 	# open refchanges
 	if {$correctvariants} {
 		set refchangesfile [file root $liftoverfile].refchanges.tsv
 		set refchangesfile [gzfiles $refchangesfile]
 		if {$refchangesfile eq ""} {
-			exiterror "option correctvariants is 1, but could not find the needed refchanges file \"[file root $liftoverfile].refchanges.tsv\"\nThis can be generated using the command:\ncg liftfindchanges srcgenome.ifas destgenome.ifas $liftoverfile > $refchangesfile"
+			error "option correctvariants is 1, but could not find the needed refchanges file \"[file root $liftoverfile].refchanges.tsv\"\nThis can be generated using the command:\ncg liftfindchanges srcgenome.ifas destgenome.ifas $liftoverfile > $refchangesfile"
 		}
 		set fc [gzopen $refchangesfile]
 		set cheader [tsv_open $fc]
 		if {$cheader ne "chromosome begin end ref destchromosome destbegin destend destref destcomplement"} {
-			exiterror "incorrect header for refchangesfile $refchangesfile"
+			error "incorrect header for refchangesfile $refchangesfile"
 		}
 		# clist will gather potential overlapping refchanges
 		set clist {}
@@ -99,7 +99,7 @@ proc cg_liftover {args} {
 	} else {
 		if {[dict exists $cinfo split]} {
 			if {[dict get $cinfo split] ne $split} {
-				exiterror "option -split $split was given, but file $varfile is indicated as [dict get $cinfo split]"
+				error "option -split $split was given, but file $varfile is indicated as [dict get $cinfo split]"
 			}
 		}
 	}

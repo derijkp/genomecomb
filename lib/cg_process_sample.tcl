@@ -96,7 +96,7 @@ proc process_sample_cgi_job {workdir split} {
 			if {$offsetpos != -1}  break
 		}
 		if {$offsetpos == -1} {
-			exiterror "No position/offset field found in $file"
+			error "No position/offset field found in $file"
 		}
 		foreach field $fields {
 			if {$field eq "uniqueSequenceCoverage"} {set outfield coverage} else {set outfield $field}

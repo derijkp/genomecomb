@@ -133,7 +133,7 @@ proc bcol_open {indexfile {ra 0}} {
 	dict set result tablechr $tablechr
 	set binfile [lindex [glob -nocomplain $indexfile.bin [file root $indexfile].bin $indexfile.bin.zst [file root $indexfile].bin.zst $indexfile.bin.lz4 [file root $indexfile].bin.lz4 $indexfile.bin.rz [file root $indexfile].bin.rz] 0]
 	if {$binfile eq ""} {set binfile [lindex [gzfiles $indexfile.bin [file root $indexfile].bin] 0]}
-	if {$binfile eq ""} {exiterror "binfile $indexfile.bin not found"}
+	if {$binfile eq ""} {error "binfile $indexfile.bin not found"}
 	dict set result binfile $binfile
 	set ext [file extension $binfile]
 	if {![gziscompressed $binfile]} {
@@ -457,7 +457,7 @@ proc cg_bcol_table {args} {
 
 proc cg_bcol_size {args} {
 	if {[llength $args] != 1} {
-		exiterror "wrong # args: should be \"cg bcol size file\""
+		error "wrong # args: should be \"cg bcol size file\""
 	}
 	foreach indexfile $args break
 	set bcol [bcol_open $indexfile]
@@ -596,7 +596,7 @@ proc cg_bcol {cmd args} {
 		set list [info commands cg_bcol_*]
 		lappend list {*}[array names ::auto_index cg_bcol_*]
 		set list [list_regsub ^cg_bcol_ [list_remdup $list] {}]
-		exiterror "cg bcol has no subcommand $cmd, must be one of: [join $list ,]"
+		error "cg bcol has no subcommand $cmd, must be one of: [join $list ,]"
 	}
 	cg_bcol_$cmd {*}$args
 }

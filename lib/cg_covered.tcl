@@ -24,7 +24,7 @@ proc cg_covered args {
 		lset poss 0 $pos
 	}
 	if {[lsearch $poss -1] != -1} {
-		exiterror "header error: some fields (or alternatives) not found"
+		error "header error: some fields (or alternatives) not found"
 	}
 	chanexec $f stdout "covered $poss"
 }

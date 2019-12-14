@@ -27,7 +27,7 @@ proc rmlinked {src} {
 
 proc cg_rmlinked {args} {
 	if {[llength $args] < 1} {
-		exiterror {wrong # args: should be "cg rmlinked dir ..."}
+		error {wrong # args: should be "cg rmlinked dir ..."}
 	}
 	foreach {src} $args {
 		rmlinked $src

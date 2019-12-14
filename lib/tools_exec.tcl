@@ -123,11 +123,6 @@ proc progress {cmd args} {
 	}
 }
 
-proc exiterror errormessage {
-	puts stderr $errormessage
-	exit 1
-}
-
 proc reload {} {
 	global appdir
 	foreach file [glob $appdir/lib/*.tcl $appdir/lib-exp/*.tcl] {

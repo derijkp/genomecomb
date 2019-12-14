@@ -1,6 +1,6 @@
 proc cg_liftfindchanges {args} {
 	if {([llength $args] != 3)} {
-		exiterror "format is: cg liftfindchanges srcgenome destgenome liftoverfile"
+		error "format is: cg liftfindchanges srcgenome destgenome liftoverfile"
 	}
 	foreach {srcgenome destgenome liftoverfile} $args break
 	set gs [genome_open $srcgenome]
@@ -26,7 +26,7 @@ proc cg_liftfindchanges {args} {
 		} msg]} {
 			continue
 		}
-		if {$strand ne "+"} {exiterror "source strand should allways be +"}
+		if {$strand ne "+"} {error "source strand should allways be +"}
 		if {$deststrand eq "-"} {
 			set rev 1
 			set dseq [seq_complement $dseq]

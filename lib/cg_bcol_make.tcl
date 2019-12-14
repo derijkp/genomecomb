@@ -55,13 +55,13 @@ proc cg_bcol_make {args} {
 		set max $bcol_typea($type,mx)
 		set min $bcol_typea($type,mn)
 	} elseif {![inlist {c s i w cu su iu wu f d} $type]} {
-		exiterror "error: type $type not supported (must be one of: c s i w cu su iu wu f d)"
+		error "error: type $type not supported (must be one of: c s i w cu su iu wu f d)"
 	}
 	if {[info exists max]} {
 		if {$defaultvalue > $max} {
-			exiterror "default value $v too large for type $type"
+			error "default value $v too large for type $type"
 		} elseif {$defaultvalue < $min} {
-			exiterror "default value $v too small for type $type"
+			error "default value $v too small for type $type"
 		}
 	}
 	set btype [string index $type 0]
@@ -75,7 +75,7 @@ proc cg_bcol_make {args} {
 		set poss [tsv_basicfields $header 3 0]
 		set colpos [lsearch $header $valuecolumn]
 		if {$colpos == -1} {
-			exiterror "error: valuecolumn $valuecolumn not found"
+			error "error: valuecolumn $valuecolumn not found"
 		}
 		if {![info exists offsetcol]} {
 			set offsetpos [lindex $poss 1]
@@ -84,7 +84,7 @@ proc cg_bcol_make {args} {
 		} else {
 			set offsetpos [lsearch $header $offsetcol]
 			if {$offsetpos == -1} {
-				exiterror "error: pos column $offsetcol not found"
+				error "error: pos column $offsetcol not found"
 			}
 		}
 		if {![info exists endcol]} {
@@ -96,7 +96,7 @@ proc cg_bcol_make {args} {
 			if {$multicol ne ""} {error "Cannit use -e (endcol) with -m (multicol)"}
 			set endpos [lsearch $header $endcol]
 			if {$endpos == -1} {
-				exiterror "error: pos column $endcol not found"
+				error "error: pos column $endcol not found"
 			}
 		}
 		if {![info exists chromosomecol]} {
@@ -108,13 +108,13 @@ proc cg_bcol_make {args} {
 				set chrompos [lsearch $header $chromosomecol]
 			}
 			if {$chrompos == -1} {
-				exiterror "error: chromosome column $chromosomecol not found"
+				error "error: chromosome column $chromosomecol not found"
 			}
 		}
 		if {$multicol ne ""} {
 			set multipos [lsearch $header $multicol]
 			if {$multipos == -1} {
-				exiterror "error: multicolumn $multicol not found"
+				error "error: multicolumn $multicol not found"
 			}
 		}
 	} else {

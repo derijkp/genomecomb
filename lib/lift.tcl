@@ -12,7 +12,7 @@ proc openliftoverfile {liftoverfile {headerVar {}} {oldrefVar {}} {newrefVar {}}
 	set f [gzopen $liftoverfile]
 	set header [tsv_open $f comment]
 	if {$header ne {chromosome begin end strand destchromosome destbegin destend deststrand}} {
-		exiterror "header of file $liftoverfile should be: chromosome begin end strand destchromosome destbegin destend deststrand"
+		error "header of file $liftoverfile should be: chromosome begin end strand destchromosome destbegin destend deststrand"
 	}
 	set cinfo [comment2dict $comment]
 	if {[dict exists $cinfo ref]} {

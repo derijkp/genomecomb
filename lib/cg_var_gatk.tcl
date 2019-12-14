@@ -4,6 +4,7 @@ proc var_gatk_tools {} {
 
 proc gatk_refseq_job refseq {
 	upvar job_logdir job_logdir
+	if {$refseq eq ""} {error "no refseq (refseq is empty)"}
 	set nrefseq [file root $refseq].fa
 	if {![file exists $nrefseq] && $refseq ne $nrefseq} {
 		mklink $refseq $nrefseq

@@ -110,7 +110,7 @@ proc wgzopen {file {compressionlevel -1} {threads {}}} {
 
 proc gzopen {file {pos -1}} {
 	if {![file exists $file]} {
-		exiterror "Error: couldn't open \"$file\": no such file or directory"
+		error "Error: couldn't open \"$file\": no such file or directory"
 	}
 	set file [file_absolute $file]
 	set ext [file extension $file]

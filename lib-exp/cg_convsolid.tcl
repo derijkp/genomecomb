@@ -5,7 +5,7 @@
 #	unset -nocomplain ::projectsamples
 #	set args [cgmake_args {*}$args]
 #	if {[llength $args] != 1} {
-#		exiterror "wrong # args: should be cg convsolid ?options? projectfile"
+#		error "wrong # args: should be cg convsolid ?options? projectfile"
 #	}
 #	foreach {projectfile} $args break
 #	set projectfile [file_absolute $projectfile]
@@ -17,7 +17,7 @@ proc cg_convsolid {args} {
 	global projectfile
 	unset -nocomplain projectsamples
 	if {[llength $args] != 1} {
-		exiterror "wrong # args: should be cg convsolid ?options? projectfile"
+		error "wrong # args: should be cg convsolid ?options? projectfile"
 	}
 	foreach {projectfile} $args break
 	set projectfile [file_absolute $projectfile]
