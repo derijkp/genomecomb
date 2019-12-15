@@ -27,21 +27,12 @@ proc cg_realign_abra {args} {
 	} {sourcefile resultfile refseq} 0 3 {
 		realign around indels using abra
 	}
+	analysisinfo_write $sourcefile $resultfile realign abra realign_version [version abra]
 	if {$inputformat eq "-"} {set inputformat [ext2format $sourcefile bam {bam sam}]}
 	if {$outputformat eq "-"} {set outputformat [ext2format $resultfile bam {bam sam}]}
 	set refseq [refseq $refseq]
 	set abra [findjar abra]
-	if {$sourcefile eq "-"} {
-		set tempfile [tempfile].bam
-		exec samtools view -b -u -o $tempfile <@ stdin
-		exec samtools index $tempfile
-		set sourcefile $tempfile
-	} elseif {$inputformat ne "bam"} {
-		set tempfile [tempfile].bam
-		exec samtools view -b -u $sourcefile -o $tempfile
-		analysisinfo_write $sourcefile $tempfile
-		set sourcefile $tempfile
-	}
+	set sourcefile [tempbam $sourcefile $inputformat $refseq]
 	if {$resultfile eq "-"} {
 		set tempresult [tempfile]
 	} else {
@@ -53,7 +44,6 @@ proc cg_realign_abra {args} {
 		set regionfile [cg_bam2reg -mincoverage 3 $sourcefile]
 	}
 	putslog "making $resultfile"
-	analysisinfo_write $sourcefile $resultfile realign abra realign_version [version abra]
 	if {![file exists $sourcefile.[indexext $sourcefile]]} {exec samtools index $sourcefile}
 	if {$regionfile ne ""} {
 		set regionfile [tempbed $regionfile $refseq]
@@ -62,7 +52,7 @@ proc cg_realign_abra {args} {
 	file mkdir $workingdir
 	# puts stderr [list java -Xmx4G -XX:ParallelGCThreads=1 -jar $abra --in $sourcefile --out $tempresult \
 			--ref $refseq --targets $regionfile --threads $threads --working $workingdir]
-	catch_exec java -Xmx4G -XX:ParallelGCThreads=1 -jar $abra --in $sourcefile --out $resultfile.temp.bam \
+	catch_exec java -Xmx4G -XX:ParallelGCThreads=1 -jar $abra --in $sourcefile --out $tempresult \
 			--ref $refseq --targets $regionfile --threads $threads --working $workingdir
 	if {$resultfile eq "-"} {
 		file2stdout $tempresult

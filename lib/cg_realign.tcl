@@ -10,6 +10,7 @@ proc cg_realign {args} {
 	set outputformat -
 	cg_options realign_gatk args {
 		-method {
+			if {$value eq "1"} {set value gatk}
 			set method $value
 		}
 		-regionfile {
@@ -33,7 +34,7 @@ proc cg_realign {args} {
 	if {$inputformat eq "-"} {set inputformat [ext2format $sourcefile bam {bam cram sam}]}
 	if {$outputformat eq "-"} {set outputformat [ext2format $resultfile bam {bam cram sam}]}
 	set refseq [refseq $refseq]
-	cg_realign_${method} -regionfile $-regionfile -refseq $refseq \
+	cg_realign_${method} -regionfile $regionfile -refseq $refseq \
 		-inputformat $inputformat -outputformat $outputformat -threads $threads \
 		$sourcefile $resultfile
 }

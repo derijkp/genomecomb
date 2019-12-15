@@ -384,3 +384,59 @@ proc copybinary {f o} {
 	fconfigure $f -encoding binary -translation binary
 	fcopy $f $o
 }
+
+proc tempbam {sourcefile {inputformat {}} {refseq {}}} {
+	if {$inputformat eq ""} {
+		set inputformat [ext2format $sourcefile bam {bam cram sam}]
+	}
+	set pipe [pipe2bam $sourcefile $inputformat $refseq]
+	if {$sourcefile eq "-"} {
+		set tempfile [tempfile].bam
+		if {$inputformat eq "bam"} {
+			stdin2file $tempfile
+		} else {
+			catch_exec {*}[pipe2bam $sourcefile $inputformat $refseq] -o $tempfile <@ stdin
+		}
+		exec samtools index $tempfile
+		set sourcefile $tempfile
+	} elseif {$inputformat ne "bam"} {
+		set tempfile [tempfile].bam
+		if {[gziscompressed $inputformat]} {
+			exec {*}[gzcat $inputformat 0] $sourcefile | samtools view -b -u -o $tempfile
+		} else {
+			exec samtools view -b -u $sourcefile -o $tempfile
+		}
+		set sourcefile $tempfile
+	}
+	return $sourcefile
+}
+
+proc pipe2bam {sourcefile {inputformat {}} {refseq {}}} {
+	set pipe {}
+	if {$inputformat eq ""} {
+		set inputformat [ext2format $sourcefile bam {bam cram sam}]
+	}
+	if {$sourcefile ne "-"} {
+		lappend pipe cat $sourcefile
+	}
+	if {[gziscompressed $inputformat]} {
+		lappend pipe {*}[gzcat $inputformat 0]
+	}
+	set inputformat [gzroot $inputformat]
+	if {$inputformat eq "bam"} {
+		return $pipe
+	} elseif {$inputformat eq "cram"} {
+		if {[llength $pipe]} {lappend pipe |}
+		lappend pipe samtools view -b -u -T [refseq $refseq] -o $tempfile
+	} elseif {$inputformat eq "sam"} {
+		if {[llength $pipe]} {lappend pipe |}
+		lappend pipe samtools view -b -u
+	} elseif {$inputformat eq "tsv"} {
+		if {[llength $pipe]} {lappend pipe |}
+		lappend pipe cg tsv2sam | samtools view -b -u
+	} else {
+		error "cannot convert format $inputformat to bam"
+	}
+	return $pipe
+}
+
