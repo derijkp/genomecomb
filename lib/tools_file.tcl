@@ -444,7 +444,7 @@ proc pipe2bam {sourcefile {inputformat {}} {refseq {}}} {
 		return $pipe
 	} elseif {$inputformat eq "cram"} {
 		if {[llength $pipe]} {lappend pipe |}
-		lappend pipe samtools view -b -u -T [refseq $refseq] -o $tempfile
+		lappend pipe samtools view -b -u -T [refseq $refseq]
 	} elseif {$inputformat eq "sam"} {
 		if {[llength $pipe]} {lappend pipe |}
 		lappend pipe samtools view -b -u
