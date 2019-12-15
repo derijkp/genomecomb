@@ -1467,4 +1467,18 @@ test select "acount in calc bug" {
 } {id	test
 1	75.0}
 
+test select "not enough fields" {
+	global dbopt
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	seq
+		1	v
+		a
+	}
+	exec cg select {*}$dbopt -f {id seq} tmp/temp.tsv
+} {id	seq
+1	v
+not enough fields (1 where at least 2 are needed) for line 1 (without comments): a
+} error
+
 testsummarize

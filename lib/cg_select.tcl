@@ -1727,9 +1727,9 @@ proc cg_select {args} {
 		#putsvars tclcode
 		lappend pipe [list cg exec $tclcode]
 	}
-# puts -------------pipe-------------------
-# puts pipe:[join $pipe " | "]
-# puts ------------------------------------
+# puts stderr -------------pipe-------------------
+# puts stderr pipe:[join $pipe " | "]
+# puts stderr ------------------------------------
 
 	if {$qfields ne ""} {
 		set nh [list_sub $qfields -exclude [list_find -glob $qfields -*]]

@@ -11,10 +11,11 @@ proc chanexec {in out pipe} {
 		unset ::filebuffer($in)
 	}
 	catch_fileaccess {fcopy $in $o} $in $o
-	if {$in ne "stdin"} {catch {gzclose $in}}
-	# if {$o ne "stdout"} {catch {close $o}}
-	catch {close $o}
-	if {$out ne "stdout"} {catch {close $out}}
+	if {$in ne "stdin"} {gzclose $in}
+	# gzclose would catch error "child process exited abnormally", which would cause us to miss errors in the pipe
+	# we only want to do this for input (interupted decompression)
+	# gzcloseout only removes the "child process exited abnormally" from the error, but propagates the exit error
+	if {$o ne "stdout"} {gzcloseout $o}
 }
 
 proc catch_exec {args} {
@@ -32,14 +33,19 @@ proc catch_exec {args} {
 }
 
 proc catch_fileaccess {cmd args} {
-	if {[catch {uplevel $cmd} error]} {
+	set error [catch {uplevel $cmd} msg]
+	if {$error} {
+		set keeperrorCode $::errorCode
+		set keeperrorInfo $::errorInfo
 		foreach f $args {
 			if {$f in "stdin stdout stderr"} continue
 			if {[catch {gzclose $f} msg]} {
 				append error "\nerror closing $f: $msg"
 			}
 		}
-		error $error
+		set ::errorCode $keeperrorCode
+		set ::errorInfo $keeperrorInfo
+		error $msg
 	}
 }
 

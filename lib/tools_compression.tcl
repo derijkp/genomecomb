@@ -178,6 +178,14 @@ proc gzclose {f} {
 	}
 }
 
+proc gzcloseout {f} {
+	if {$f in {stdin stdout}} return
+	if {[catch {close $f} error]} {
+		regsub "\n?child process exited abnormally\$" $error {} error
+		error $error
+	}
+}
+
 proc gzcatch {cmd} {
 	if {[catch {uplevel $cmd} error]} {
 		if {$error eq "child killed: write on pipe with no readers"} return
