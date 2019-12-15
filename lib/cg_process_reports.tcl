@@ -68,7 +68,7 @@ proc process_reports_job {args} {
 			set target2 $sampledir/reports/report_flagstat_alignments-$bamroot.tsv
 			job reports_flagstat_alignments-[file tail $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
 				exec samtools flagstat $dep > $target.temp
-				file rename -force -- -force $target.temp $target
+				file rename -force -- $target.temp $target
 				set o [open $target2.temp w]
 				puts $o [join {sample source parameter value value_qcfail} \t]
 				set f [open $target]
@@ -91,7 +91,7 @@ proc process_reports_job {args} {
 				} msg]} {
 					if {$msg ne "\[bam_header_read\] EOF marker is absent. The input is probably truncated."} {error $msg}
 				}
-				file rename -force -- -force $target.temp $target
+				file rename -force $target.temp $target
 				set o [open $target2.temp w]
 				puts $o [join {sample source parameter value value_qcfail} \t]
 				set f [open $target]
