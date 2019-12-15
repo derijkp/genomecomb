@@ -5,6 +5,7 @@ proc bam_sort_job {args} {
 	set inputformat bam
 	set threads 1
 	set skips {}
+	set refseq {}
 	cg_options bam_sort args {
 		-method {
 			if {$value ni {biobambam samtools alreadysorted}} {error "bamsort: unsupported -method $value"}
@@ -19,6 +20,9 @@ proc bam_sort_job {args} {
 		}
 		-threads {
 			set threads $value
+		}
+		-refseq {
+			set refseq $value
 		}
 		-skip {
 			lappend skips -skip $value
@@ -36,7 +40,7 @@ proc bam_sort_job {args} {
 		if {$method eq "alreadysorted"} {
 			hardlink $dep $target
 		} else {
-			bam_sort -method $method -sort $sort -threads $threads -inputformat $inputformat $dep $target.temp
+			bam_sort -method $method -sort $sort -threads $threads -refseq $refseq -inputformat $inputformat $dep $target.temp
 			file rename -force -- $target.temp $target
 		}
 	}
@@ -50,6 +54,7 @@ proc cg_bam_sort {args} {
 	set threads 1
 	set sourcefile -
 	set resultfile -
+	set refseq {}
 	cg_options bam_sort args {
 		-method {
 			if {$value eq "1"} {set value samtools}
@@ -68,6 +73,9 @@ proc cg_bam_sort {args} {
 		}
 		-threads {
 			set threads $value
+		}
+		-refseq {
+			set refseq $value
 		}
 	} {sourcefile resultfile} 0 2 {
 		sort a bamfile
@@ -128,6 +136,9 @@ proc cg_bam_sort {args} {
 			lappend opts $sourcefile
 		} else {
 			lappend optsio <@ stdin
+		}
+		if {$outputformat eq "cram"} {
+			lappend opts --output-fmt-option reference=[refseq $refseq]
 		}
 		if {[catch {exec samtools sort --threads $threads -T [scratchfile] \
 			-O [string toupper $outputformat] \

@@ -450,6 +450,15 @@ test bam_sort {bam_sort pipe sam} {
 	cg tsvdiff tmp/sorted.sam tmp/expected.sam
 } {}
 
+test bam_sort {bam_sort to cram} {
+	test_cleantmp
+	exec samtools sort -n -o tmp/test.bam data/bwa.bam
+	cg bam_sort -refseq $::refseqdir/hg19 tmp/test.bam tmp/sorted.cram
+	exec cg sam2tsv tmp/sorted.cram | cg select -f {qname chromosome begin end duplicate} > tmp/sorted.tsv
+	exec cg sam2tsv data/bwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/bwa.tsv
+	cg tsvdiff tmp/sorted.tsv tmp/bwa.tsv
+} {}
+
 test bam_sort {bam_sort -method biobambam} {
 	test_cleantmp
 	exec samtools sort -n -o tmp/test.bam data/bwa.bam

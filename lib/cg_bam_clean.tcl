@@ -125,7 +125,7 @@ proc bam_clean_job {args} {
 			if {[llength $pipe]} {lappend pipe |}
 			lappend pipe cg bam_sort -stack $stack -method $sort \
 				-inputformat $inputformat -outputformat $curoutputformat \
-				-compressionlevel $compressionlevel -threads $threads
+				-compressionlevel $compressionlevel -threads $threads -refseq $refseq
 		}
 	}
 	if {$removeduplicates ne "0"} {
@@ -140,7 +140,7 @@ proc bam_clean_job {args} {
 		if {[llength $pipe]} {lappend pipe |}
 		lappend pipe cg bam_markduplicates -stack $stack -method $removeduplicates \
 			-inputformat $inputformat -outputformat $curoutputformat \
-			-compressionlevel $compressionlevel -threads $threads
+			-compressionlevel $compressionlevel -threads $threads -refseq $refseq
 	}
 	if {$realign ne "0"} {
 		if {$regionfile eq ""} {set regionfile 3}
@@ -174,7 +174,7 @@ proc bam_clean_job {args} {
 		}
 		if {[llength $pipe]} {lappend pipe |}
 		lappend pipe cg sam_clipamplicons -stack $stack \
-			-inputformat $inputformat -outputformat $curoutputformat \
+			-inputformat $inputformat -outputformat $curoutputformat -refseq $refseq \
 			-compressionlevel $compressionlevel \
 			$clipamplicons
 	}

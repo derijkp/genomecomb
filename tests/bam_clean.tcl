@@ -121,15 +121,15 @@ test markdup {bam_markduplicates biobambam pipe} {
 	exec cg tsvdiff tmp/result.bam data/dsbwa.sam
 } {}
 
-test markdup {bam_clean} {
+test bam_clean {bam_clean} {
 	test_cleantmp
 	file copy -force -- data/bwa.sam tmp/bwa.sam
 	cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 -sort 1 -removeduplicates 1 -realign 1 tmp/bwa.sam
 	set c [string trim [file_read tmp/rdsbwa.bam.analysisinfo]]
-	if {$c ne [string trim [deindent {
-		removeduplicates	removeduplicates_version	realign	realign_version
-		samtools	1.9 (using htslib 1.9)	gatk	3.7-0-gcfedb67
-	}]]} {
+	if {![string match [string trim [deindent {
+		bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
+		samtools	1.9 (using htslib 1.9)	samtools	1.9 (using htslib 1.9)	gatk	*
+	}]] $c]} {
 		error "error in analysisinfo"
 	}
 	exec cg sam2tsv tmp/rdsbwa.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
