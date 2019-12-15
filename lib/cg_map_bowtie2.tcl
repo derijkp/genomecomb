@@ -96,11 +96,13 @@ proc map_bowtie2_job {args} {
 	-targets {$result $analysisinfo} -vars {resultbase} {*}$skips \
 	-code {
 		puts "making $target"
-		analysisinfo_write $dep $target
-		catch_exec samtools fixmate -O bam $resultbase.sam $resultbase.ubam >@ stdout 2>@ stderr
-		cg_bam_sort $resultbase.ubam $target.temp
-		file rename -force -- $target.temp $target
-		file delete $resultbase.ubam $resultbase.ubam.analysisinfo
+		analysisinfo_write $dep $target fixmate samtools fixmate_version [version samtools]
+		set tempfixmate [filetemp $target 1 1]
+		set tempresult [filetemp $target 1 1]
+		catch_exec samtools fixmate -O bam $resultbase.sam $tempfixmate
+		cg_bam_sort $tempfixmate $tempresult
+		file rename -force -- $tempresult $target
+		file delete $tempfixmate $tempfixmate.analysisinfo
 		file delete $resultbase.sam $resultbase.sam.analysisinfo
 	}
 	set indexext [indexext $result]
