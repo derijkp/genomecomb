@@ -341,11 +341,20 @@ proc file2refname {file} {
 	return $tail
 }
 
-proc file_rootname {file} {
+proc file_rootname {file {preVar {}}} {
+	if {$preVar ne ""} {
+		upvar $preVar pre
+	}
 	set base [file root [gzroot [file tail $file]]]
-	set root [join [lrange [split $base -] 1 end] -]
-	if {$root ne ""} {return $root}
-	return $base
+	set split [split $base -]
+	set root [join [lrange $split 1 end] -]
+	if {$root ne ""} {
+		set pre [lindex $split 0]-
+		return $root
+	} else {
+		set pre {}
+		return $base
+	}
 }
 
 proc indexext {file} {
@@ -368,7 +377,7 @@ proc ext2format {file {default {}} {supported {}}} {
 	if {$file eq "-"} {return $default}
 	set format [string tolower [string range [file extension [gzroot $file]] 1 end]]
 	if {$format ni $supported && [llength $supported]} {error "format $format unsupported, must be one of: $supported"}
-	return $format
+	return $format[gzext $file]
 }
 
 proc file2stdout {file} {
@@ -377,6 +386,14 @@ proc file2stdout {file} {
 	fconfigure stdout -translation binary -encoding binary
 	fcopy $f stdout
 	close $f
+}
+
+proc stdin2file {file} {
+	set o [open $file w]
+	fconfigure $o -translation binary -encoding binary
+	fconfigure stdin -translation binary -encoding binary
+	fcopy stdin $o
+	close $o
 }
 
 proc copybinary {f o} {

@@ -32,7 +32,6 @@ proc bam_sort_job {args} {
 	} -vars {
 		method sort inputformat threads
 	} {*}$skips -cores $threads -code {
-		analysisinfo_write $dep $target bamsort $method bamsort_version [version $method]
 		file delete $target.temp
 		if {$method eq "alreadysorted"} {
 			hardlink $dep $target
@@ -53,6 +52,7 @@ proc cg_bam_sort {args} {
 	set resultfile -
 	cg_options bam_sort args {
 		-method {
+			if {$value eq "1"} {set value samtools}
 			if {$value ni {biobambam samtools}} {error "bamsort: unsupported -method $value"}
 			set method $value
 		}
@@ -74,6 +74,7 @@ proc cg_bam_sort {args} {
 	}
 	if {$inputformat eq "-"} {set inputformat [ext2format $sourcefile bam {bam cram sam}]}
 	if {$outputformat eq "-"} {set outputformat [ext2format $resultfile bam {bam cram sam}]}
+	analysisinfo_write $sourcefile $resultfile bamsort $method bamsort_version [version $method]
 	if {$method eq "biobambam"} {
 		set opts {}
 		set optsio {}

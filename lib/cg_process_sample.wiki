@@ -69,7 +69,7 @@ analysis (see further) using the amplicons defained in **ampliconfile**
 want some made, give these as a space separated list. Possible reports are:
 flagstat_reads flagstat_alignments fastqc histodepth vars hsmetrics covered
 ; -samBQ number: only for samtools; minimum base quality for a base to be considered (samtools --min-BQ option)
-; -distrreg: distribute regions for parallel processing.
+; -distrreg regions: distribute regions for parallel processing.
 Possible options are 0 (no distribution), chr (or 1) (distribution per
 chromosome), a number (distribution ino regions of this size) ,file name
 (the regions in the file will be used for subjobs)

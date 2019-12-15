@@ -41,7 +41,8 @@ proc cg_bam_markduplicates {args} {
 	set refseq {}
 	cg_options bam_markduplicates args {
 		-method {
-			if {$value ni {1 picard biobambam samtools sam}} {error "bam_markduplicates: unsupported -method $value"}
+			if {$value eq "1"} {set value samtools}
+			if {$value ni {picard biobambam samtools sam}} {error "bam_markduplicates: unsupported -method $value"}
 			set method $value
 		}
 		-inputformat - -if {
@@ -59,7 +60,6 @@ proc cg_bam_markduplicates {args} {
 	} {sourcefile resultfile} 0 2
 	if {$inputformat eq "-"} {set inputformat [ext2format $sourcefile bam {bam cram sam}]}
 	if {$outputformat eq "-"} {set outputformat [ext2format $resultfile bam {bam cram sam}]}
-	if {$method eq "1"} {set method samtools}
 	set tail [file tail $sourcefile]
 	if {$method eq "picard"} {
 		if {$outputformat eq "cram"} {error "cram output not supported by bam_markduplicates using picard method"}
@@ -136,7 +136,7 @@ proc cg_bam_markduplicates {args} {
 		}
 		# puts stderr [list samtools markdup --output-fmt $outputformat -l 500 \
 			{*}$opts $sourcefile $tempresult {*}$optsio]
-		exec samtools markdup --output-fmt $outputformat -l 500 \
+		catch_exec samtools markdup --output-fmt $outputformat -l 500 \
 			{*}$opts $sourcefile $tempresult {*}$optsio 2>@ stderr
 		if {$resultfile ne "-"} {
 			file rename -force -- $tempresult $resultfile

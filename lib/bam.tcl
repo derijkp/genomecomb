@@ -16,7 +16,7 @@ proc bam_index_job {args} {
 	set pre [lindex [split $bam -] 0]
 	set root [file_rootname $bam]
 	set bamindex $bam.[indexext $bam]
-	job [indexext $bam]index-$pre-$root {*}$skips -deps [list $bam] -targets [list $bamindex] -code {
+	job bamindex-[file tail $pre-$root] {*}$skips -optional 1 -deps [list $bam] -targets [list $bamindex] -code {
 		exec samtools index $dep >@ stdout 2>@ stderr
 		puts "making $target"
 	}

@@ -795,10 +795,10 @@ proc process_sample_job {args} {
 				$bamfile $refseq $sample {*}$files]
 			# clean bamfile (mark duplicates, realign)
 			# bam is already sorted, just add the s
-			set cleanbam [bam_clean_job -sort 2 -aliformat $aliformat -distrreg $distrreg\
+			set cleanbam [bam_clean_job -sort 2 -outputformat $aliformat -distrreg $distrreg \
 				-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
-				-regionfile 5 -threads $threads -cleanup $cleanup \
-				 $bamfile $refseq $sample]
+				-regionfile 5 -refseq $refseq -threads $threads \
+				 $bamfile]
 			lappend cleanedbams $cleanbam
 		}
 	} else {

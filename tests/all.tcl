@@ -36,6 +36,7 @@ runtests varia.tcl
 runtests vcf.tcl
 runtests vcf2tsv.tcl
 runtests tsv2vcf.tcl
+runtests bam_clean.tcl
 runtests map.tcl
 runtests var.tcl
 runtests job.tcl
