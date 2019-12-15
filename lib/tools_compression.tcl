@@ -277,8 +277,8 @@ proc gzarraynames {aVar pattern} {
 	return $result
 }
 
-proc gzcat {filename} {
-	if {![file exists $filename]} {error "file $filename does not exist"}
+proc gzcat {filename {checkexists 1}} {
+	if {$checkexists && ![file exists $filename]} {error "file $filename does not exist"}
 	switch [file extension $filename] {
 		.zst {return "zstd-mt -k -q -d -c"}
 		.rz {return "razip -d -c"}
@@ -289,8 +289,8 @@ proc gzcat {filename} {
 	}
 }
 
-proc gzcatra {filename {pos 0}} {
-	if {![file exists $filename]} {error "file $filename does not exist"}
+proc gzcatra {filename {pos 0} {checkexists 1}} {
+	if {$checkexists && ![file exists $filename]} {error "file $filename does not exist"}
 	if {$pos == 0} {
 		list {*}[gzcat $filename] $filename
 	} else {
