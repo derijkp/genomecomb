@@ -325,4 +325,11 @@ test error {catch_exec testerror 0 0 1 (allways error on error exit)} {
 	catch_exec data/testerror.sh 0 0 1
 } {child process exited abnormally} error
 
+test error {catch catch_exec testerror 1 1 1} {
+	# args to data/testerror.sh: writestdout writestderr exit_with_error
+	set error [catch {
+		catch_exec data/testerror.sh 1 1 1
+	} msg]
+} 1
+
 testsummarize
