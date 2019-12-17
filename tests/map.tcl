@@ -43,9 +43,10 @@ test map_bowtie2 {map_bowtie2 basic} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	cg map_bowtie2 -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
-	exec samtools view tmp/ali.bam > tmp/ali.sam
-	exec samtools view data/bowtie2.bam > tmp/expected.sam
-} {}
+	exec samtools view tmp/ali.bam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} | cg select -rf {MC MQ} > tmp/ali.tsv
+	exec samtools view data/bowtie2.bam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} | cg select -rf {MC MQ} > tmp/expected.tsv
+	catch {cg tsvdiff tmp/ali.tsv tmp/expected.tsv}
+} 0
 
 #test map_minimap2 {map_minimap2 basic} {
 #	test_cleantmp
