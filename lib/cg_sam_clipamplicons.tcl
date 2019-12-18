@@ -19,7 +19,7 @@ proc cg_sam_clipamplicons {args} {
 	}
 	if {$inputformat eq "-"} {set inputformat [ext2format $sourcefile sam {bam cram sam}]}
 	if {$outputformat eq "-"} {set outputformat [ext2format $resultfile sam {bam cram sam}]}
-	analysisinfo_write $sourcefile $resultfile clipamplicons genomecomb clipampliconsfile [file tail $ampliconsfile]
+	analysisinfo_write $sourcefile $resultfile clipamplicons genomecomb clipamplicons_version [version genomecomb] clipampliconsfile [file tail $ampliconsfile]
 	set compressionlevel [defcompressionlevel 5]
 	set f [open $ampliconsfile]
 	set header [tsv_open $f]
