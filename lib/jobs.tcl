@@ -785,6 +785,12 @@ proc job_log {job args} {
 	flush $f
 }
 
+proc job_getfromlog {job key} {
+	set c [file_read $job.log]
+	set line [lindex [regexp -all -inline "$key: \[^\\n\]+" $c] end]
+	return [string range $line [expr {[string length $key]+1}] end]
+}
+
 # log to buffer only, only go to output at job_log
 # but can be cleared before output using job_logclear 
 proc job_lognf {job args} {
@@ -1072,9 +1078,12 @@ proc job_generate_code {job pwd adeps targetvars targets ptargets checkcompresse
 		}
 		if {$ok} {
 			file_add $job.log "[job_timestamp]\t$jobname finished\n"
-			file_write $job.finished [job_timestamp]\n
-			catch {file rename -force -- $job.err $job.msgs}
 			catch {file delete $job.pid}
+			catch {file delete $job.jobid}
+			set o [open $job.err a]
+			puts $o "\nfinished [job_timestamp]"
+			close $o
+			catch {file rename -force -- $job.err $job.finished}
 		} else {
 			file_add $job.log "[job_timestamp]\tjob $jobname failed\n"
 			error $errormsg

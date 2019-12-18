@@ -120,24 +120,9 @@ proc job_process_par_onepass {} {
 		# check if job is already running, if so, mark targets with jobid
 		set jobnum [job_process_par_jobid $job]
 		if {[isint $jobnum]} {
-			if {[job_file_exists $job.targets]} {
-				set temptargets [file_read $job.targets]
-			} else {
-				set temptargets {}
-			}
-			if {[job_file_exists $job.rmtargets]} {
-				set temprmtargets [file_read $job.rmtargets]
-			} else {
-				set temprmtargets {}
-			}
-			if {![job_file_exists $job.ptargets]} {
-				error "job $job ($jobnum) seems to be running, but there is no $job.ptargets"
-			}
-			if {[job_file_exists $job.ptargets]} {
-				set tempptargets [file_read $job.ptargets]
-			} else {
-				set tempptargets {}
-			}
+			set temptargets [job_getfromlog $job cgjobinfo_targets]
+			set temprmtargets [job_getfromlog $job cgjobinfo_rmtargets]
+			set tempptargets [job_getfromlog $job cgjobinfo_ptargets]
 			job_process_par_marktargets $temptargets $tempptargets $temprmtargets $jobnum
 			job_log $job "job $jobname is already running, skip"
 			job_logfile_add $job $jobnum running $ftargets $cores
@@ -181,7 +166,7 @@ proc job_process_par_onepass {} {
 				}
 			}
 		}
-		file_write $job.deps $adeps
+		job_log $job "cgjobinfo_deps: [list $adeps]"
 		set targetvars $ftargetvars
 		lappend targetvars {*}$newtargetvars
 		if {$jobforce} {job_log $job "forcing $jobname"}
@@ -206,25 +191,25 @@ proc job_process_par_onepass {} {
 		# check targets, if already done or running, skip
 		if {$ftargets ne ""} {
 			set targets [job_targetsreplace $ftargets $targetvars]
-			file_write $job.targets $targets
+			job_log $job "cgjobinfo_targets: [list $targets]"
 			set newtargets 0
 			if {$jobforce || ![job_checktargets $job $targets 0 $time $timefile $checkcompressed targetsrunning]} {
 				set newtargets 1
 			}
 		} else {
 			set targets {}
-			file_write $job.targets {}
+			job_log $job "cgjobinfo_targets: {}"
 			set targetsrunning {}
 			set newtargets 1
 		}
 		if {$frmtargets ne ""} {
 			set rmtargets [job_targetsreplace $frmtargets $targetvars]
-			file_write $job.rmtargets $rmtargets
+			job_log $job "cgjobinfo_rmtargets: [list $rmtargets]"
 		} else {
 			set rmtargets {}
 		}
 		set ptargets [job_targetsreplace $fptargets $targetvars]
-		file_write $job.ptargets $ptargets
+		job_log $job "cgjobinfo_ptargets: [list $ptargets]"
 		if {[llength $ptargets] && ![llength [job_findptargets $ptargets $checkcompressed]]} {
 			set newtargets 1
 		}
@@ -273,6 +258,7 @@ proc job_process_par_onepass {} {
 		job_logfile_add $job $jobnum submitted $targets $cores "" $submittime
 		job_logclose $job
 		file_write $job.jobid $jobnum
+		job_log $job "cgjobinfo_jobid: [list $jobid]"
 		job_process_par_marktargets $targets $ptargets $rmtargets $jobnum
 		set cgjob_running($job) $jobnum
 	}

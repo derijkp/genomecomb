@@ -42,24 +42,9 @@ proc job_process_getinfo {jobid jobname job_logdir pwd deps foreach ftargetvars 
 		# check if job is already running, if so, mark targets with jobid
 		set jobnum [job_process_par_jobid $job]
 		if {[isint $jobnum]} {
-			if {[job_file_exists $job.targets]} {
-				set temptargets [file_read $job.targets]
-			} else {
-				set temptargets {}
-			}
-			if {[job_file_exists $job.rmtargets]} {
-				set temprmtargets [file_read $job.rmtargets]
-			} else {
-				set temprmtargets {}
-			}
-			if {![job_file_exists $job.ptargets]} {
-				error "job $job ($jobnum) seems to be running, but there is no $job.ptargets"
-			}
-			if {[job_file_exists $job.ptargets]} {
-				set tempptargets [file_read $job.ptargets]
-			} else {
-				set tempptargets {}
-			}
+			set temptargets [job_getfromlog $job cgjobinfo_targets]
+			set temprmtargets [job_getfromlog $job cgjobinfo_rmtargets]
+			set tempptargets [job_getfromlog $job cgjobinfo_ptargets]
 			job_process_par_marktargets $temptargets $tempptargets $temprmtargets $jobnum
 			job_log $job "job $jobname is already running, skip"
 			job_logfile_add $job $jobnum running $ftargets $cores
