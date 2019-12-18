@@ -102,12 +102,7 @@ proc job_process_sge_submit {job runfile args} {
 	}
 	set name "[file tail $job] $job"
 	set prefix [file tail [get cgjob(prefix) "j"]]
-	regsub -all {[^A-Za-z0-9_.-]} $name __ name
-	regsub -all {[^A-Za-z0-9_.-]} $prefix __ prefix
-	set name ${prefix}#$name
-	if {[string length $name] > 200} {
-		set name [string range $name 0 100]....[string range $name end-100 end]
-	}
+	set name [sge_safename $name $prefix]
 	set dir [file dir $job]
 	catch {file delete $job.finished}
 	catch {file delete $job.out}
@@ -116,6 +111,18 @@ proc job_process_sge_submit {job runfile args} {
 	regexp {[0-9]+} $jnum jobnum
 	lappend cgjob(alljobids) $jobnum
 	return $jobnum
+}
+
+proc sge_safename {name {prefix {}}} {
+	regsub -all {[^A-Za-z0-9_.-]} $name __ name
+	if {$prefix ne ""} {
+		regsub -all {[^A-Za-z0-9_.-]} $prefix __ prefix
+		set name ${prefix}#$name
+	}
+	if {[string length $name] > 200} {
+		set name [string range $name 0 100]....[string range $name end-100 end]
+	}
+	return $name
 }
 
 if 0 {
@@ -133,8 +140,7 @@ proc job_process_sge_wait {} {
 	set priority [get cgjob(priority) 0]
 	job_logfile_par_close
 	set logfile $cgjob(logfile).running
-	set name [file tail $logfile]
-	regsub -all {[^A-Za-z0-9_.-]} $name __ name
+	set name [sge_safename [file tail $logfile]]
 	set runfile $logfile.update
 	set outfile $logfile.update.out
 	set errfile $logfile.update.err

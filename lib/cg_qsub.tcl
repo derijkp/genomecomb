@@ -52,11 +52,7 @@ proc cg_qsub {args} {
 	if {![info exists run]} {
 		set run $command.[lindex $args 0].[string_change [lindex [split [timestamp] :] 0] {" " _ : - . -}]
 	}
-	set jobname $run#$jobname
-	set jobname [string_change $jobname [list { } _ / __ \\ __ : _ > _ * _ ' _ ( _ ) _ , _ / __ \n __ * _ ? _]]
-	if {[string length $jobname] > 200} {
-		set jobname [string range $jobname 0 100]....[string range $jobname end-100 end]
-	}
+	set jobname [sge_safename $jobname $run]
 	set tasknum {}
 	if {[info exists ra([list $jobname $tasknum])]} {
 		puts "Job $jobname.$tasknum is running, skipping"
