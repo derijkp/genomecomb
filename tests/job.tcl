@@ -8,11 +8,15 @@ if {$pos != -1} {
 	set distribute [lindex $argv [incr pos]]
 	if {$distribute eq "direct"} {
 		set tests {
-			"direct" {uplevel job_init -skipjoberrors 1 {*}$args}
+			"direct" {uplevel job_init -skipjoberrors 1 {*}\$args}
 		}
-	} else {
+	} elseif {$distribute eq "direct"} {
 		set tests [subst {
 			"-d $distribute" {uplevel job_init -d $distribute {*}\$args}
+		}]
+	} else {
+		set tests [subst {
+			"-d sge" {uplevel job_init -d sge {*}\$args}
 		}]
 	}
 } else {
@@ -1378,6 +1382,28 @@ test job "-cores 2 $testname" {
 } {cores
 1
 2
+}
+
+if {$testname eq "-d sge"} {
+	test job ", in name $testname" {
+		cd $::testdir
+		test_cleantmp
+		cd $::testdir/tmp
+		test_job_init -skipjoberrors 0
+		file_write test1.txt test1\n
+		job jobmissing -optional 1 -deps {missing.txt} -targets {test3.txt} -code {
+			file_write $target missing\n
+		}
+		job job1 -deps {test1.txt} -targets {test2.txt} -code {
+			set c [file_read $dep]
+			file_write $target ${c}test2\n
+		}
+		job_wait
+		gridwait
+		set result [list [lsort -dict [glob *]] [file_read test2.txt]]
+		cd $::testdir
+		set result
+	} {Cannot submit job to sge: it has a comma in the output file *job1.out, which grid engine sometimes has problems with} match error
 }
 
 # end of block
