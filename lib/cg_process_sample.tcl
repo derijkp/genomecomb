@@ -789,8 +789,14 @@ proc process_sample_job {args} {
 			}
 			#
 			# map using ${aligner}
-			set bamfile [map_${aligner}_job -paired $paired -threads $threads \
-				-keepsams $keepsams -aliformat $aliformat \
+			set opts {}
+			if {[regexp {^(.*)_([^_]+)$} $aligner tmp aliprog alipreset]} {
+				lappend opts -preset $alipreset
+			} else {
+				set aliprog $aligner
+			}
+			set bamfile [map_${aliprog}_job -paired $paired -threads $threads \
+				-keepsams $keepsams -aliformat $aliformat {*}$opts \
 				-skips [list -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
 				$bamfile $refseq $sample {*}$files]
 			# clean bamfile (mark duplicates, realign)

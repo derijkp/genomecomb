@@ -31,6 +31,7 @@ proc map_minimap2_job {args} {
 			set paired $value
 		}
 		-x - -preset - -p {
+			if {$value eq "splicehq"} {set value splice:hq}
 			set preset $value
 		}
 		-readgroupdata {
@@ -57,7 +58,9 @@ proc map_minimap2_job {args} {
 	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome using minimap2
 	}
-	if {$paired && $preset eq ""} {set preset sr} else {set preset map-ont}
+	if {$preset eq ""} {
+		if {$paired} {set preset sr} else {set preset map-ont}
+	}
 	set files [list $fastqfile1 {*}$args]
 	set result [file_absolute $result]
 	set refseq [refseq $refseq]
