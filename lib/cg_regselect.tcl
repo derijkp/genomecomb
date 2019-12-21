@@ -20,14 +20,14 @@ proc regselect {regfile1 regfile2 {near -1} {o stdout}} {
 proc cg_regselect {args} {
 	set o stdout
 	set near -1
-	cg_options reports_vars args {
+	cg_options regselect args {
 		-o {
 			set o [wgzopen $value]
 		}
 		-near {
 			set near $value
 		}
-	} {region_file1 region_file2 near} 2 3
+	} {file region_select_file near} 2 3
 	if {$near eq ""} {set near -1}
-	regselect $region_file1 $region_file2 $near $o
+	regselect $file $region_select_file $near $o
 }

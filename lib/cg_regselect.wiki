@@ -1,20 +1,20 @@
 = Regselect =
 
 == Format ==
-cg regselect region_file1 region_file2 ?near?
+cg regselect file region_select_file ?near?
 
 == Summary ==
-select all regions or variants in region_file1 that overlap with regions in region_file2
+select all regions or variants in file that overlap with regions in region_select_file
 
 == Description ==
 Regions files are tab separated files that contain regions using the columns 
 chromosome, begin, end. Regions must be sorted.
-regselect selects all regions or variants in region_file1 that overlap with regions in 
-region_file2. The resulting regions files is written to stdout.
+regselect selects all regions or variants in file that overlap with regions in 
+region_select_file. The resulting regions files is written to stdout.
 
 == Arguments ==
-; region_file1: regions file
-; region_file2: selection regions file
+; file: regions file
+; region_select_file: selection regions file
 ; near: if present, must be a number. Selection regions will be extended (to both sides)
 with the given amount of bases.
 
