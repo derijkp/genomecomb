@@ -102,6 +102,8 @@ proc bam_clean_job {args} {
 	}
 	# make pipe
 	set stack [get ::stacktraceonerror 0]
+	set deps {}
+	lappend deps $sourcefile
 	set pipe {}
 	set optsio {}
 	if {$inputcompressed eq ""} {
@@ -150,6 +152,7 @@ proc bam_clean_job {args} {
 				-distrreg $distrreg -refseq $refseq \
 				$sourcefile]
 		}
+		lappend deps $regionfile
 		incr curstep
 		if {$curstep != $steps} {
 			set curoutputformat bam
@@ -185,9 +188,7 @@ proc bam_clean_job {args} {
 	} else {
 		set rmtargets {}
 	}
-	job bamclean-$root -deps {
-		$sourcefile
-	} -targets {
+	job bamclean-$root -deps $deps -targets {
 		$resultfile
 	} -rmtargets $rmtargets -vars {
 		pipe sourcefile resultfile keep
