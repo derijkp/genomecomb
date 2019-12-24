@@ -34,7 +34,7 @@ proc var_gatkh_job {args} {
 	set threads 2
 	set cleanup 1
 	set regmincoverage 3
-	set ERC BP_RESOLUTION
+	set ERC GVCF
 	set mincoverage 8
 	set mingenoqual 25
 	set resultfiles 0
