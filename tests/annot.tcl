@@ -843,6 +843,27 @@ test bcol_annot {--precision} {
 	exec diff tmp/results.tsv tmp/expected.tsv
 } {}
 
+test bcol_annot {bugfix sv} {
+	file_write tmp/test.tsv [deindent {
+		chromosome	begin	end	type	ref	alt
+		1	9999	9999	bnd		]CHR4:100000].
+		1	10000	10000	bnd		]CHR10:200000].
+		1	40001	249279748	inv	249229747	i
+	}]\n
+	exec cg annotate tmp/test.tsv tmp/annot_test.tsv $::refseqdir/hg19/bcol_hg19_wgEncodeCaltechRnaSeq.bcol
+
+	file_write tmp/score.tsv [deindent {
+		chromosome	pos	score
+		chr1	8	1
+		chr2	19	2
+		chr10	9	3
+	}]\n
+	exec cg bcol make -p pos -c chromosome tmp/bcol_score.bcol score < tmp/score.tsv
+	exec cg annotate tmp/test.tsv tmp/annot_test.tsv tmp/bcol_score.bcol
+} {File (*/test.tsv.index/vars.tsv) is not correctly sorted (sort correctly using "cg select -s -")
+chr10:9-10:: came before chr2:19-20::
+*} error match
+
 test var_annot {basic from vcf} {
 	file copy data/vars1.vcf tmp/vars1.vcf
 	exec cg annotate tmp/vars1.vcf tmp/annot.sft data/var_annot.sft
