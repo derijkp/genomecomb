@@ -771,7 +771,7 @@ proc process_sample_job {args} {
 		foreach aligner $aligners {
 			# do not do any of preliminaries if end product is already there
 			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
-			set bamfile $sampledir/map-${aligner}-$sample.$aliformat
+			set bamfile $sampledir/map-${aligner}-$sample.bam
 			# quality and adapter clipping
 			if {$clip} {
 				set files [fastq_clipadapters_job -adapterfile $adapterfile -paired $paired \
@@ -795,12 +795,15 @@ proc process_sample_job {args} {
 			} else {
 				set aliprog $aligner
 			}
+			set keeplevel [defcompressionlevel]
+			defcompressionlevel 0
 			set bamfile [map_${aliprog}_job -paired $paired -threads $threads \
-				-keepsams $keepsams -aliformat $aliformat {*}$opts \
+				-keepsams $keepsams {*}$opts \
 				-skips [list -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
 				$bamfile $refseq $sample {*}$files]
+			defcompressionlevel $keeplevel
 			# clean bamfile (mark duplicates, realign)
-			# bam is already sorted, just add the s
+			# bam is already sorted, just add the s (-sort 2)
 			set cleanbam [bam_clean_job -sort 2 -outputformat $aliformat -distrreg $distrreg \
 				-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
 				-regionfile 5 -refseq $refseq -threads $threads \

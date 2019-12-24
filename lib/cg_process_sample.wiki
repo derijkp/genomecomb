@@ -52,6 +52,7 @@ the sample is not processed.
 ; -adapterfile file: Use **file** for possible adapter sequences
 ; -removeskew num: -k parameter for sequence clipping using fastq-mcf: sKew percentage-less-than causing cycle removal
 ; -aligner aligner: use the given aligner for mapping to the reference genome (default bwa)
+; -aliformat format: format of the (final) alignment (map) file, this is by default bam, but can be set to cram
 ; -realign value: If **value** is 0, realignment will not be performed, 
 use 1 for (default) realignment with gatk, or srma for alignment with srma
 ; -removeduplicates 0/1/picard/biobambam: By default duplicates will be
