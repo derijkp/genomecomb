@@ -75,7 +75,6 @@ proc cg_realign_gatk {args} {
 		file rename $tempresult $tempresult.bam
 		exec samtools view -C $tempresult.bam -T $::env(REFSEQ) -o $tempresult
 		file delete $tempresult.bam
-		file delete $tempfile
 		if {$resultfile eq "-"} {
 			file2stdout $tempresult
 		} else {
