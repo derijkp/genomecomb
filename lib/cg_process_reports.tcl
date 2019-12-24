@@ -194,7 +194,8 @@ proc process_reports_job {args} {
 	if {[inlist $reports predictgender]} {
 		set target $sampledir/reports/report_predictgender-$sample.tsv
 		set varfile [jobglob $sampledir/var-*[file_rootname $resultbamfile].tsv]
-		job predictgender-[file_rootname $resultbamfile] -optional 1 -deps {$resultbamfile ($varfile)} -vars {resultbamfile dbdir sampledir} -targets {$target} -code {
+		set indexfile $resultbamfile.[indexext $resultbamfile]
+		job predictgender-[file_rootname $resultbamfile] -optional 1 -deps {$resultbamfile $indexfile ($varfile)} -vars {resultbamfile dbdir sampledir} -targets {$target} -code {
 			cg predictgender -dbdir $dbdir $resultbamfile $target
 		}
 	}
