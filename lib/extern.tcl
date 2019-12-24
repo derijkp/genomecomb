@@ -31,7 +31,10 @@ proc picard {cmd args} {
 proc findpicard {} {
 	global picard
 	if {![info exists picard]} {
-		set picard [searchpath PICARD picard picard*]
+		set picard [searchpath PICARD picard2 picard*]
+		if {$picard eq ""} {
+			set picard [searchpath PICARD picard picard*]
+		}
 	}
 	return $picard
 }
