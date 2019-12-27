@@ -8,7 +8,9 @@ proc cg_sortvcf {args} {
 	set split 0
 	set refseq {}
 	set dbdir {}
+	set threads 1
 	cg_options vcf2tsv args {
+		-threads {set threads $value}
 	} {infile outfile} 0 2 {
 		sort a vcf file, chromosome will be in natural sort order
 	}
@@ -35,7 +37,7 @@ proc cg_sortvcf {args} {
 	}
 	puts $o [join $c \n]
 	puts $o \#$header
-	chanexec $f $o "gnusort8 -T \"[scratchdir]\" -t \\t -s -B"
+	chanexec $f $o "gnusort8 --parallel $threads -T \"[scratchdir]\" -t \\t -s -B"
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {gzclose $f}}
 }
