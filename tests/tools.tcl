@@ -403,6 +403,14 @@ proc diffanalysisinfo {file1 file2} {
 	return ""
 }
 
+proc cramdiff {file1 file2} {
+	set temp1 tmp/[file root [file tail $file1]].tsv
+	set temp2 tmp/[file root [file tail $file2]].tsv
+	exec cg sam2tsv $file1 | cg select -f {qname chromosome begin end duplicate} > $temp1
+	exec cg sam2tsv $file2 | cg select -f {qname chromosome begin end duplicate} > $temp2
+	cg tsvdiff $temp1 $temp2
+}
+
 # remove tmp if it is a unexisting link
 if {![file exists tmp]} {catch {file delete tmp}}
 file mkdir tmp

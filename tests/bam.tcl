@@ -325,11 +325,7 @@ test cg_sam_catmerge {basic cg_sam_catmerge} {
 	}]\n
 	cg sam_catmerge -stack 1 tmp/result.sam tmp/temp1.sam tmp/temp2.sam
 	exec diff tmp/result.sam tmp/expected.sam
-} {1c1
-< @HD	VN:1.4	SO:coordinate
----
-> @HD	VN:1.4	GO:none	SO:coordinate
-child process exited abnormally} error
+} {}
 
 test cg_sam_catmerge {cg_sam_catmerge nosort} {
 	file_write tmp/temp1.sam [deindent $::sam_header]\n[deindent {
@@ -350,6 +346,48 @@ test cg_sam_catmerge {cg_sam_catmerge nosort} {
 	}]\n
 	cg sam_catmerge -stack 1 -sort nosort tmp/result.sam tmp/temp1.sam tmp/temp2.sam
 	exec diff tmp/result.sam tmp/expected.sam
+} {}
+
+test cg_sam_catmerge {cg_sam_catmerge to cram} {
+	file_write tmp/temp1.sam [deindent $::sam_header]\n[deindent {
+		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	write_sam tmp/temp2.sam {
+		chr2	50	20M	20	chr2	60	20M	20
+		chr2	100	50M	50	chr2	100	50M	50
+	}
+	file_write tmp/expected.sam [deindent $::sam_header]\n[deindent {
+		A4	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	99	chr2	50	60	20M	=	60	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	147	chr2	60	60	20M	=	50	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	99	chr2	100	60	50M	=	100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	147	chr2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	cg sam_catmerge -stack 1 -refseq $::refseqdir/hg19/genome_hg19.ifas tmp/result.cram tmp/temp1.sam tmp/temp2.sam
+	cramdiff tmp/result.cram tmp/expected.sam
+} {}
+
+test cg_sam_catmerge {cg_sam_catmerge to compressed sam} {
+	file_write tmp/temp1.sam [deindent $::sam_header]\n[deindent {
+		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	write_sam tmp/temp2.sam {
+		chr2	50	20M	20	chr2	60	20M	20
+		chr2	100	50M	50	chr2	100	50M	50
+	}
+	file_write tmp/expected.sam [deindent $::sam_header]\n[deindent {
+		A4	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	99	chr2	50	60	20M	=	60	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	147	chr2	60	60	20M	=	50	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	99	chr2	100	60	50M	=	100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	147	chr2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	cg sam_catmerge -stack 1 tmp/result.sam.zst tmp/temp1.sam tmp/temp2.sam
+	cramdiff tmp/result.sam.zst tmp/expected.sam
 } {}
 
 test cg_sam_catmerge {cg_sam_catmerge nosort bam} {
@@ -454,9 +492,7 @@ test bam_sort {bam_sort to cram} {
 	test_cleantmp
 	exec samtools sort -n -o tmp/test.bam data/bwa.bam
 	cg bam_sort -refseq $::refseqdir/hg19 tmp/test.bam tmp/sorted.cram
-	exec cg sam2tsv tmp/sorted.cram | cg select -f {qname chromosome begin end duplicate} > tmp/sorted.tsv
-	exec cg sam2tsv data/bwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/bwa.tsv
-	cg tsvdiff tmp/sorted.tsv tmp/bwa.tsv
+	cramdiff tmp/sorted.cram data/bwa.sam
 } {}
 
 test bam_sort {bam_sort -method biobambam} {

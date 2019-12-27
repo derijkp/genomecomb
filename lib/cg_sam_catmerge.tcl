@@ -1,5 +1,6 @@
-proc sam_header_addm5 header {
+proc sam_header_addm5 {header {refseq {}}} {
 	if {![regexp {M5:} $header]} {
+		dbdir $refseq
 		if {![file exists [get ::env(REF_PATH) /complgen/refseq]/mapping.tsv]} {
 			error "Could not find reference md5 mapping file (for cram): specify dbdir, reference or use REF_PATH"
 		}
@@ -41,6 +42,8 @@ proc sam_catmerge_job {args} {
 	set index 1
 	set skips {}
 	set sort coordinates
+	set outputformat ""
+	set refseq ""
 	cg_options sam_catmerge args {
 		-name {
 			set name $value
@@ -65,12 +68,10 @@ proc sam_catmerge_job {args} {
 			set optional $value
 		}
 		-outputformat - -aliformat {
-			switch $value {
-				BAM - bam {set outputformat bam}
-				SAM - sam {set outputformat sam}
-				CRAM - cram {set outputformat cram}
-				default {error "unknown outputformat $value"}
-			}
+			set outputformat $value
+		}
+		-refseq {
+			set refseq [refseq $value]
 		}
 		-skips {
 			set skips $value
@@ -83,14 +84,8 @@ proc sam_catmerge_job {args} {
 		set name sam_catmerge-[file tail $resultfile]
 	}
 	set resultfile [file_absolute $resultfile]
-	if {![info exists outputformat]} {
-		if {[file extension $resultfile] eq ".sam"} {
-			set outputformat sam
-			set index 0
-		} else {
-			set outputformat bam
-		}
-	}
+	set outputformat [ext2format $resultfile bam {bam cram sam}]
+	if {$outputformat eq "sam"} {set index 0}
 	# job_logdir
 	upvar job_logdir job_logdir
 	if {![info exists job_logdir]} {
@@ -104,13 +99,14 @@ proc sam_catmerge_job {args} {
 	} else {
 		set rmfiles {}
 	}
+	set analysisinfofile [gzroot $resultfile].analysisinfo
 	job $name -optional $optional -force $force -cores $threads \
 	-deps $samfiles \
 	-rmtargets $rmfiles \
 	-targets {
-		$resultfile $resultfile.analysisinfo
+		$resultfile $analysisinfofile
 	} {*}$skips -vars {
-		threads sort sortopt rmfiles outputformat
+		threads sort sortopt rmfiles outputformat refseq
 	} -code {
 		puts "making $target"
 		analysisinfo_write $dep $target cat_merge [version genomecomb]
@@ -120,20 +116,26 @@ proc sam_catmerge_job {args} {
 					exec samcat {*}$deps | samtools view --threads $threads -b -o $target.temp - 2>@ stderr
 				} elseif {$outputformat eq "cram"} {
 					set header [exec samtools view -H [lindex $deps 0]]
-					set header [sam_header_addm5 $header]
-					exec samcat -header $header {*}$deps | samtools view -h --threads $threads -C -T $::env(REFSEQ) -o $target.temp - 2>@ stderr
+					set header [sam_header_addm5 $header $refseq]
+					exec samcat -header $header {*}$deps | samtools view -h --threads $threads -C -T $refseq -o $target.temp - 2>@ stderr
 				} else {
 					exec samcat {*}$deps > $target.temp 2>@ stderr
 				}
-			} elseif {$outputformat eq "cram"} {
-				set header [exec samtools view -H [lindex $deps 0]]
-				set header [sam_header_addm5 $header]
-				set o [open "| samtools view -h --threads $threads -C -T $::env(REFSEQ) > $target.temp -" w]
-				puts $o [string trim $header]
-				exec samcat -header {} {*}$deps | gnusort8 -T [scratchdir] -t \t -s -k3,3B -k4,4B --parallel $threads >@ $o
-				close $o
 			} else {
-				exec samcat {*}$deps | samtools sort {*}$sortopt --threads $threads -T [scratchfile] -O $outputformat -o $target.temp 2>@ stderr
+				set header [exec samtools view -H [lindex $deps 0]]
+				if {$outputformat eq "cram"} {
+					set header [sam_header_addm5 $header $refseq]
+					set o [open "| samtools view -h --threads $threads -C -T $refseq > $target.temp -" w]
+				} elseif {$outputformat eq "bam"} {
+					set o [open "| samtools view -h --threads $threads > $target.temp -" w]
+				} elseif {[gziscompressed $target]} {
+					set o [open "[compresspipe $target] > $target.temp -" w]
+				} else {
+					set o [open $target.temp w]
+				}
+				puts $o [string trim $header]
+				exec samcat -header {} {*}$deps | gnusort8 --parallel $threads -T [scratchdir] -t \t -s -k3,3B -k4,4B --parallel $threads >@ $o
+				close $o
 			}
 		} msg]} {
 			error $msg
