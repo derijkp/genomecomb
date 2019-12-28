@@ -244,27 +244,27 @@ test distrreg {chr1_} {
 		{chr1-1-100 chr1-100-200 chr1_ chr2} \
 		0 1 2 < tmp/test.tsv
 	file delete tmp/test.tsv
-	set files [glob tmp/*]
+	set files [lsort -dict [glob tmp/*]]
 	set result $files\n
 	foreach file $files {
 		append result \#$file\n[file_read $file]
 	}
 	set result
-} {tmp/distrvars1-chr1_ tmp/distrvars1-chr1-100-200 tmp/distrvars1-chr2 tmp/distrvars1-chr1-1-100
-#tmp/distrvars1-chr1_
-chromosome	begin	end	name
-chr1_random1	90	91	c11-90
-chr1_random2	99	100	c12-99
-#tmp/distrvars1-chr1-100-200
-chromosome	begin	end	name
-chr1	180	181	c1-180
-#tmp/distrvars1-chr2
-chromosome	begin	end	name
-chr2	1000	1001	c2-1000
+} {tmp/distrvars1-chr1-1-100 tmp/distrvars1-chr1-100-200 tmp/distrvars1-chr1_ tmp/distrvars1-chr2
 #tmp/distrvars1-chr1-1-100
 chromosome	begin	end	name
 chr1	2	3	c1-2
 chr1	80	81	c1-80
+#tmp/distrvars1-chr1-100-200
+chromosome	begin	end	name
+chr1	180	181	c1-180
+#tmp/distrvars1-chr1_
+chromosome	begin	end	name
+chr1_random1	90	91	c11-90
+chr1_random2	99	100	c12-99
+#tmp/distrvars1-chr2
+chromosome	begin	end	name
+chr2	1000	1001	c2-1000
 } 
 
 test distrreg {no header} {

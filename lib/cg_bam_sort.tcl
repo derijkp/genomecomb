@@ -80,9 +80,10 @@ proc cg_bam_sort {args} {
 	} {sourcefile resultfile} 0 2 {
 		sort a bamfile
 	}
+	analysisinfo_write $sourcefile $resultfile bamsort $method bamsort_version [version $method]
 	if {$inputformat eq "-"} {set inputformat [ext2format $sourcefile bam {bam cram sam}]}
 	if {$outputformat eq "-"} {set outputformat [ext2format $resultfile bam {bam cram sam}]}
-	analysisinfo_write $sourcefile $resultfile bamsort $method bamsort_version [version $method]
+	set inputformat [gzroot $inputformat]
 	if {$method eq "biobambam"} {
 		set opts {}
 		set optsio {}

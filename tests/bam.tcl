@@ -324,7 +324,7 @@ test cg_sam_catmerge {basic cg_sam_catmerge} {
 		A2	147	chr2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 	}]\n
 	cg sam_catmerge -stack 1 tmp/result.sam tmp/temp1.sam tmp/temp2.sam
-	exec diff tmp/result.sam tmp/expected.sam
+	exec diff -I {@HD	} tmp/result.sam tmp/expected.sam
 } {}
 
 test cg_sam_catmerge {cg_sam_catmerge nosort} {

@@ -130,7 +130,7 @@ test bam_clean {bam_clean} {
 		bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
 		samtools	1.9 (using htslib 1.9)	samtools	1.9 (using htslib 1.9)	gatk	*
 	}]] $c]} {
-		error "error in analysisinfo"
+		error "error in analysisinfo:\n$c"
 	}
 	exec cg sam2tsv tmp/rdsbwa.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
 	exec cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv

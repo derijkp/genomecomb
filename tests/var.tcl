@@ -159,11 +159,11 @@ test var {var distrreg freebayes} {
 	cg tsvdiff tmp/var-freebayes-bwa.tsv.zst data/var-freebayes-bwa.tsv
 } {}
 
-test var {var_gatkh basic} {
+test var {var_gatkh -ERC BP_RESOLUTION} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	# use low quality settings because test bwa.bam has low coverage
-	cg var_gatkh {*}$::dopts -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
+	cg var_gatkh {*}$::dopts -mincoverage 5 -mingenoqual 12 -ERC BP_RESOLUTION tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
 	cg tsvdiff tmp/var-gatkh-bwa.tsv.zst data/var-gatkh-bwa.tsv
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.gvcf.gz
 	string_change [cg covered tmp/sreg-gatkh-bwa.tsv.zst] [list \n\n \n]
@@ -172,11 +172,11 @@ chr21	1019
 chr22	142
 total	1161}
 
-test var {var_gatkh -ERC GVCF} {
+test var {var_gatkh basic} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
 	# use low quality settings because test bwa.bam has low coverage
-	cg var_gatkh {*}$::dopts -mincoverage 5 -mingenoqual 12 -ERC GVCF tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
+	cg var_gatkh {*}$::dopts -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
 	cg select -overwrite 1 -rf MIN_DP tmp/var-gatkh-bwa.tsv.zst tmp/test.tsv.zst
 	cg tsvdiff tmp/test.tsv.zst data/var-gatkh-bwa.tsv
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.bgvcf
@@ -189,7 +189,7 @@ total	1149}
 test var {var distrreg gatkh} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
-	cg var {*}$::dopts -cleanup 0 -distrreg 1 -method gatkh -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
+	cg var {*}$::dopts -ERC BP_RESOLUTION -cleanup 0 -distrreg 1 -method gatkh -mincoverage 5 -mingenoqual 12 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
 	cg tsvdiff tmp/var-gatkh-bwa.tsv.zst data/var-gatkh-bwa.tsv
 	cg tsvdiff tmp/varall-gatkh-bwa.gvcf.gz data/varall-gatkh-bwa.gvcf.gz
 	string_change [cg covered tmp/sreg-gatkh-bwa.tsv.zst] [list \n\n \n]
