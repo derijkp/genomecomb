@@ -50,7 +50,7 @@ proc bam_clean_job {args} {
 			lappend skips -skip $value
 		}
 	} {sourcefile resultfile} 1 2
-	set inputformat [ext2format $sourcefile bam {bam cram sam}]
+	set inputformat [gzroot [ext2format $sourcefile bam {bam cram sam}]]
 	set inputcompressed [gzext $sourcefile]
 	if {$resultfile ne ""} {
 		if {$outputformat ne ""} {error "cannot use -outputformat option when resultfile is specified"}

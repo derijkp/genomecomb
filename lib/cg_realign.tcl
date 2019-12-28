@@ -32,6 +32,7 @@ proc cg_realign {args} {
 		realign around indels using gatk
 	}
 	if {$inputformat eq "-"} {set inputformat [ext2format $sourcefile bam {bam cram sam}]}
+	set inputformat [gzroot $inputformat]
 	if {$outputformat eq "-"} {set outputformat [ext2format $resultfile bam {bam cram sam}]}
 	set refseq [refseq $refseq]
 	cg_realign_${method} -regionfile $regionfile -refseq $refseq \

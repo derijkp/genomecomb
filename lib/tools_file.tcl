@@ -377,7 +377,7 @@ proc ext2format {file {default {}} {supported {}}} {
 	if {$file eq "-"} {return $default}
 	set format [string tolower [string range [file extension [gzroot $file]] 1 end]]
 	if {$format ni $supported && [llength $supported]} {error "format $format unsupported, must be one of: $supported"}
-	return $format
+	return $format[gzext $file]
 }
 
 proc file2stdout {file} {

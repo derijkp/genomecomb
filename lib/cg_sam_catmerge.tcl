@@ -85,6 +85,7 @@ proc sam_catmerge_job {args} {
 	}
 	set resultfile [file_absolute $resultfile]
 	set outputformat [ext2format $resultfile bam {bam cram sam}]
+	set outputformat [gzroot $outputformat]
 	if {$outputformat eq "sam"} {set index 0}
 	# job_logdir
 	upvar job_logdir job_logdir
