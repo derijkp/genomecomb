@@ -152,7 +152,7 @@ proc map_bwa_job {args} {
 			}
 		}
 	}
-	sam_catmerge_job -skips $skips -name bwa2bam-$sample -aliformat $aliformat \
+	sam_catmerge_job -skips $skips -name bwa2bam-$sample -outputformat $aliformat -refseq $refseq \
 		-deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
 }
 

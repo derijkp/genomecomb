@@ -116,6 +116,7 @@ proc sam_catmerge_job {args} {
 				if {$outputformat eq "bam"} {
 					exec samcat {*}$deps | samtools view --threads $threads -b -o $target.temp - 2>@ stderr
 				} elseif {$outputformat eq "cram"} {
+					set refseq [refseq $refseq]
 					set header [exec samtools view -H [lindex $deps 0]]
 					set header [sam_header_addm5 $header $refseq]
 					exec samcat -header $header {*}$deps | samtools view -h --threads $threads -C -T $refseq -o $target.temp - 2>@ stderr
@@ -124,13 +125,19 @@ proc sam_catmerge_job {args} {
 				}
 			} else {
 				set header [exec samtools view -H [lindex $deps 0]]
+				if {[regexp @HD $header]} {
+					regsub {@HD[^\n]+} $header "@HD	VN:1.6	SO:coordinate" header
+				} else {
+					set header "@HD	VN:1.6	SO:coordinate\n$header"
+				}
 				if {$outputformat eq "cram"} {
+					set refseq [refseq $refseq]
 					set header [sam_header_addm5 $header $refseq]
-					set o [open "| samtools view -h --threads $threads -C -T $refseq > $target.temp -" w]
+					set o [open "| samtools view -h --threads $threads -C -T $refseq -o $target.temp -" w]
 				} elseif {$outputformat eq "bam"} {
-					set o [open "| samtools view -h --threads $threads > $target.temp -" w]
+					set o [open "| samtools view -h --threads $threads -b -o $target.temp -" w]
 				} elseif {[gziscompressed $target]} {
-					set o [open "[compresspipe $target] > $target.temp -" w]
+					set o [open "[compresspipe $target] > $target.temp" w]
 				} else {
 					set o [open $target.temp w]
 				}
