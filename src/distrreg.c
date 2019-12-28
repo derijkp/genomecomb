@@ -110,6 +110,9 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 		checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,end1,"stdin");
 		comp = DStringLocCompare(chromosome2, chromosome1);
+		if (comp != 0 && chromosome2->string[chromosome2->size-1] == '_' && chromosome2->size <= chromosome1->size) {
+			if (strncmp(chromosome2->string,chromosome1->string,chromosome2->size) == 0) {comp = 0;}
+		}
 		while (o != NULL && ((comp < 0) || ((comp == 0) && (end2 <= start1)))) {
 			fclose(o);
 			o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2);
@@ -119,12 +122,18 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 				break;
 			}
 			comp = DStringLocCompare(chromosome2, chromosomekeep);
+			if (comp != 0 && chromosome2->string[chromosome2->size-1] == '_' && chromosome2->size <= chromosomekeep->size) {
+				if (strncmp(chromosome2->string,chromosomekeep->string,chromosome2->size) == 0) {comp = 0;}
+			}
 			if (comp < 0 || (comp == 0 && (start2 < prevstart2 || (start2 == prevstart2 && end2 < prevend2)))) {
 				fprintf(stderr,"Cannot distrreg because the reglist is not correctly sorted (%s:%d-%d > %s:%d-%d)",chromosomekeep->string, prevstart2,prevend2,chromosome2->string, start2,end2);
 				exit(1);
 			}
 			prevstart2 = start2; prevend2 = end2;
 			comp = DStringLocCompare(chromosome2, chromosome1);
+			if (comp != 0 && chromosome2->string[chromosome2->size-1] == '_' && chromosome2->size <= chromosome1->size) {
+				if (strncmp(chromosome2->string,chromosome1->string,chromosome2->size) == 0) {comp = 0;}
+			}
 			if (chromosomekeep != NULL) DStringDestroy(chromosomekeep);
 			chromosomekeep = chromosome2;
 		}

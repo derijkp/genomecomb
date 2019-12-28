@@ -35,10 +35,13 @@ freebayes
 ; -regionfile regionfile: only call variants in the region(s) given in regionfile
 ; -regmincoverage mincoverage: If no regionfile is given, variants will be called only in regions with
 a coverage of at least **mincoverage** (default 3)
-; -distrreg: distribute regions for parallel processing.
-Possible options are 0 (no distribution), chr (or 1) (distribution per
-chromosome), a number (distribution ino regions of this size) ,file name
-(the regions in the file will be used for subjobs)
+; -distrreg: distribute regions for parallel processing (default s50000000).
+Possible options are 0 (no distribution) or 1 (default distribution),
+schr or schromosome (each chromosome processed separately),
+chr or chromosome (each chromosome processed separately, except the unsorted, etc. with a _ in the name that will be combined),
+a number (distribution into regions of this size) ,
+a number preceded by an s (distribution into contiguous sequenced regions, where regions are combined as long as they are smaller than the given size) ,
+or a file name (the regions in the file will be used for distribution)
 ; -datatype datatype: Some variant callers (strelka) need to know the type
 of data (genome, exome or amplicons) for analysis. You can specify it
 using this option. If not given, it is deduced from acompanying region

@@ -422,7 +422,7 @@ proc cg_annotate_job {args} {
 					annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize
 				}
 			} else {
-				set chromosomes [exec cut -f 1 $genomefile.fai]
+				set chromosomes [distrreg_regs chr $genomefile]
 				set todo {}
 				foreach chromosome $chromosomes {
 					lappend todo $target.$chromosome

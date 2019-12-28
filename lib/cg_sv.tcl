@@ -36,15 +36,7 @@ proc sv_job {args} {
 			set cleanup $value
 		}
 		-distrreg {
-			if {$value in {1 chr chromosome 0}} {
-				set distrreg $value
-			} elseif {[isint $value]} {
-				set distrreg $value
-			} elseif {[file exists $value]} {
-				set distrreg [file_absolute $value]
-			} else {
-				error "unknown value $value for -distrreg, must be a (region) file or one of: chr or 1, 0"
-			}
+			set distrreg [distrreg_checkvalue $value]
 		}
 		default {
 			lappend opts $key $value

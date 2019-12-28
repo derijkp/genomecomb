@@ -30,7 +30,7 @@ total	1203}
 test var {var distrreg gatk -d 3} {
 	test_cleantmp
 	file copy data/bwa.bam data/bwa.bam.bai tmp
-	cg var {*}$::dopts -d 3 -method gatk -distrreg 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
+	exec cg var {*}$::dopts -d 3 -method gatk -distrreg 1 tmp/bwa.bam $::refseqdir/hg19/genome_hg19.ifas > tmp/log 2> tmp/logerror
 	cg tsvdiff tmp/var-gatk-bwa.tsv.zst data/var-gatk-bwa.tsv
 	string_change [cg covered tmp/sreg-gatk-bwa.tsv.zst] [list \n\n \n]
 } {chromosome	bases
