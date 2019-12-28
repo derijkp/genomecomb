@@ -158,6 +158,11 @@ proc genomecombenv {} {
 		set externdir $genomecombdir/extern
 		set bindir $genomecombdir/bin
 	}
+	# Setting LANG to "C" tells all unix tools (e.g. sort) to consider only basic ASCII characters and disable UTF-8 multibyte match
+	# This can improve performance substantially
+	set env(LANG) C
+	set env(LC_ALL) C
+	# add to paths
 	set env(PATH) $bindir[pathsep]$externdir[pathsep]$genomecombdir[pathsep]$env(PATH)
 	if {[info exists env(LD_LIBRARY_PATH)]} {
 		set env(LD_LIBRARY_PATH) $::externdir/lib:$env(LD_LIBRARY_PATH)
