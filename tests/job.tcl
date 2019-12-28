@@ -549,7 +549,7 @@ test3
 } {error3
 }} match
 
-test job "missing dep, -optional 1 $testname" {
+test job "missing dep -optional 1 $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
@@ -571,7 +571,7 @@ test job "missing dep, -optional 1 $testname" {
 test2
 }} match
 
-test job "missing dep, -optional 0 $testname" {
+test job "missing dep -optional 0 $testname" {
 	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init -skipjoberrors 0
@@ -591,7 +591,7 @@ test job "missing dep, -optional 0 $testname" {
 } {error trying to run job jobmissing:
 missing dependency "missing.txt"} error
 
-test job "missing dep, -optional 0 -skipjoberrors 1 $testname" {
+test job "missing dep -optional 0 -skipjoberrors 1 $testname" {
 	test_cleantmp
 	cd $::testdir/tmp
 	test_job_init -skipjoberrors 1
@@ -915,7 +915,7 @@ test job "no -targets $testname" {
 	set result
 } {dep.txt log.*.finished result.txt} match
 
-test job "no -targets, dep not found $testname" {
+test job "no -targets dep not found $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
@@ -930,7 +930,7 @@ test job "no -targets, dep not found $testname" {
 	set result
 } {log.*.finished} match
 
-test job "no -targets, dep not found, not optional $testname" {
+test job "no -targets dep not found not optional $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
@@ -946,7 +946,7 @@ test job "no -targets, dep not found, not optional $testname" {
 } {error trying to run job testnotarget:
 missing dependency "dep.txt"} error
 
-test job "no -checkcompressed 1 (default), dep $testname" {
+test job "no -checkcompressed 1 (default) dep $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
@@ -963,7 +963,7 @@ test job "no -checkcompressed 1 (default), dep $testname" {
 	set result
 } {dep.txt.rz log.*.finished result.txt} match
 
-test job "no -checkcompressed 0, dep $testname" {
+test job "no -checkcompressed 0 dep $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
@@ -981,7 +981,7 @@ test job "no -checkcompressed 0, dep $testname" {
 } {error trying to run job testcheckcompressed:
 missing dependency "dep.txt"} error
 
-test job "no -checkcompressed 1 (default), targets $testname" {
+test job "no -checkcompressed 1 (default) targets $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
@@ -1000,7 +1000,7 @@ test job "no -checkcompressed 1 (default), targets $testname" {
 	set result
 } {dep.txt log.*.finished target.txt.rz} match
 
-test job "no -checkcompressed 1 (default), dep $testname" {
+test job "no -checkcompressed 1 (default) dep $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp
@@ -1161,7 +1161,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets $testname" {
 	set result
 } {data.txt.rz log.*.finished} match
 
-test job "rmtargets and -checkcompressed 0 on previous targets, write one first $testname" {
+test job "rmtargets and -checkcompressed 0 on previous targets write one first $testname" {
 	cd $::testdir
 	test_cleantmp
 	cd $::testdir/tmp

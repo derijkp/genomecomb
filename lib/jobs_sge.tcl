@@ -107,6 +107,9 @@ proc job_process_sge_submit {job runfile args} {
 	catch {file delete $job.finished}
 	catch {file delete $job.out}
 	catch {file delete $job.err}
+	if {[regexp , $job]} {
+		error "Cannot submit job to sge: it has a comma in the output file $job.out, which grid engine sometimes has problems with"
+	}
 	set jnum [exec qsub -N j$name -q $dqueue -o $job.out -e $job.err -p $priority {*}$options $runfile]
 	regexp {[0-9]+} $jnum jobnum
 	lappend cgjob(alljobids) $jobnum
