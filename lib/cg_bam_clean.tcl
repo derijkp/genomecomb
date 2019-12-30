@@ -1,21 +1,92 @@
-proc convert_pipe {inputformat outputformat {refseq {}}} {
-	if {$inputformat eq $outputformat} {return {}}
-	set cmd {}
-	if {$inputformat in "sam bam cram" && $outputformat in "sam bam cram"} {
-		set compressionlevel [defcompressionlevel 5]
-		set cmd [list samtools view -h --output-fmt-option level=$compressionlevel]
-		if {$outputformat eq "bam"} {
-			lappend cmd -b
-		} elseif {$outputformat eq "cram"} {
-			lappend cmd -C
+proc convert_pipe {infile outfile args} {
+	set refseq {}
+	set supportedin {}
+	set supportedout {}
+	set defaultin {}
+	set defaultout {}
+	set addpipe 0
+	foreach {key value} $args {
+		switch $key {
+			-refseq {
+				set refseq $value
+			}
+			-optio {
+				upvar $value optio
+			}
+			-supportedin {
+				set supportedin $value
+			}
+			-supportedout {
+				set supportedout $value
+			}
+			-defaultin {
+				set defaultin $value
+			}
+			-defaultout {
+				set defaultout $value
+			}
+			-addpipe {
+				set addpipe $value
+			}
 		}
-		if {$inputformat eq "cram" || $outputformat eq "cram"} {
-			lappend cmd -T [refseq $refseq]
+	}
+	if {$defaultin eq ""} {set defaultin [lindex $supportedin 0]}
+	if {$defaultout eq ""} {set defaultout [lindex $supportedout 0]}
+	set ingzroot [gzroot $infile]
+	set informat [string tolower [string range [file extension $ingzroot] 1 end]]
+	if {$informat eq ""} {set informat $defaultin}
+	if {[llength $supportedin] && $informat ni $supportedin} {error "input format $informat unsupported, must be one of: $supportedin"}
+	set inbase [file root $ingzroot]
+	set outgzroot [gzroot $outfile]
+	set outformat [string tolower [string range [file extension $outgzroot] 1 end]]
+	if {$outformat eq ""} {set outformat $defaultout}
+	if {[llength $supportedout] && $outformat ni $supportedout} {error "output format $outformat unsupported, must be one of: $supportedout"}
+	set outbase [file root $outgzroot]
+	set pipe {}
+	set infiledone 0
+	set decompress [gzcat $infile 0]
+	if {$decompress ne "cat"} {
+		if {$inbase eq "-"} {
+			lappend pipe {*}$decompress
+		} else {
+			lappend pipe {*}$decompress $infile
+		}
+	}
+	if {$informat eq $outformat} {
+	} elseif {$informat in "sam bam cram" && $outformat in "sam bam cram"} {
+		if {[llength $pipe]} {lappend pipe |}
+		set compressionlevel [defcompressionlevel 5]
+		lappend pipe samtools view -h --output-fmt-option level=$compressionlevel
+		if {$outformat eq "bam"} {
+			lappend pipe -b
+		} elseif {$outformat eq "cram"} {
+			lappend pipe -C
+		}
+		if {$informat eq "cram" || $outformat eq "cram"} {
+			lappend pipe -T [refseq $refseq]
+		}
+		if {$inbase ne "-" && !$infiledone} {
+			lappend pipe $infile
+			set infiledone 1
 		}
 	} else {
-		error "convert_pipe does not support conversion of $inputformat to $outputformat"
+		error "convert_pipe does not support conversion of $informat to $outformat"
 	}
-	return $cmd
+	if {$inbase ne "-" && !$infiledone} {
+		lappend optio < $infile
+	}
+	set compress [compresspipe $outfile]
+	if {$compress ne ""} {
+		if {[llength $pipe]} {lappend pipe |}
+		lappend pipe {*}[lrange $compress 1 end]
+	}
+	if {$addpipe && $pipe ne "" && $ingzroot eq "-"} {
+		list_unshift pipe |
+	}
+	if {$outbase ne "-"} {
+		lappend optio > $outfile
+	}
+	return $pipe
 }
 
 proc bam_clean_job {args} {
@@ -96,7 +167,7 @@ proc bam_clean_job {args} {
 			job bamclean-$root -deps {$sourcefile} -targets {$resultfile} -vars {
 				inputformat outputformat refseq
 			} -code {
-				exec {*}[convert_pipe $inputformat $outputformat $refseq] < $dep > $target
+				exec {*}[convert_pipe -.$inputformat -.$outputformat -refseq $refseq] < $dep > $target
 			}
 		}
 	}
