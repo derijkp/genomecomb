@@ -17,7 +17,7 @@
 #include "debug.h"
 
 
-FILE *openreg(char **regions, char *prefix, char *postfix, int printheader, DString *header, DString **chromosome2, int *start2, int *end2) {
+FILE *openreg(char **regions, char *prefix, char *postfix, int printheader, DString *header, DString **chromosome2, int *start2, int *end2, char *opencmd) {
 	FILE *o = NULL;
 	DString *buffer = DStringNew();
 	char *region = *regions;
@@ -50,12 +50,20 @@ FILE *openreg(char **regions, char *prefix, char *postfix, int printheader, DStr
 		}
 		size++;
 	}
+	if (opencmd != NULL) {
+		DStringAppend(buffer,opencmd);
+		DStringAppendS(buffer," > ",3);
+	}
 	DStringAppend(buffer,prefix);
 	DStringAppendS(buffer,*regions,size);
 	DStringAppend(buffer,postfix);
 	if (region[size] == ' ') size++;
 	*regions = region + size;
-	o = fopen64_or_die(buffer->string,"a");
+	if (opencmd == NULL) {
+		o = fopen64_or_die(buffer->string,"a");
+	} else {
+		o = popen(buffer->string,"w");
+	}
 	if (printheader) fprintf(o,"%s\n",header->string);
 	return(o);
 }
@@ -66,13 +74,13 @@ int main(int argc, char *argv[]) {
 	DString *header;
 	DString *line1 = NULL;
 	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
-	char *prefix, *postfix, *regions;
+	char *prefix, *postfix, *regions,*opencmd=NULL;
 	int comp,chr1pos,start1pos,end1pos,max1,printheader = 1;
 	unsigned int numfields1,numfields,pos1;
 	int start1,end1,start2,end2;
 	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
-	if ((argc != 8)) {
-		fprintf(stderr,"Format is: distrreg prefix postfix printheader regions chrpos startpos endpos");
+	if (argc != 8 && argc != 9) {
+		fprintf(stderr,"Format is: distrreg prefix postfix printheader regions chrpos startpos endpos ?opencmd?");
 		exit(EXIT_FAILURE);
 	}
 	f1 = stdin;
@@ -83,6 +91,7 @@ int main(int argc, char *argv[]) {
 	chr1pos = atoi(argv[5]);
 	start1pos = atoi(argv[6]);
 	end1pos = atoi(argv[7]);
+	if (argc == 9) opencmd = argv[8];
 	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
 	/* allocate */
 	line1 = DStringNew();
@@ -93,7 +102,7 @@ int main(int argc, char *argv[]) {
 	/* start */
 	header = DStringNew();
 	skip_header(f1,header,&numfields1,&pos1);
-	o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2);
+	o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2,opencmd);
 	if (o == NULL) {
 		fprintf(stderr,"no regions given");
 		exit(EXIT_FAILURE);
@@ -114,8 +123,8 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 			if (strncmp(chromosome2->string,chromosome1->string,chromosome2->size) == 0) {comp = 0;}
 		}
 		while (o != NULL && ((comp < 0) || ((comp == 0) && (end2 <= start1)))) {
-			fclose(o);
-			o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2);
+			if (opencmd == NULL) {fclose(o);} else {pclose(o);}
+			o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2,opencmd);
 			if (o == NULL) {
 				chromosome2 = NULL;
 				comp = -1;
@@ -148,8 +157,8 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 	if (chromosomekeep != NULL) DStringDestroy(chromosomekeep);
 	fclose(f1);
 	while (o != NULL) {
-		fclose(o);
-		o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2);
+		if (opencmd == NULL) {fclose(o);} else {pclose(o);}
+		o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2,opencmd);
 	}
 	if (line1) {DStringDestroy(line1);}
 	if (result1) {DStringArrayDestroy(result1);}
