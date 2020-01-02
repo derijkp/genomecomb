@@ -40,13 +40,17 @@ proc bam_sort_job {args} {
 		if {$method eq "alreadysorted"} {
 			hardlink $dep $target
 		} else {
-			bam_sort -method $method -sort $sort -threads $threads -refseq $refseq -inputformat $inputformat $dep $target.temp
+			cg bam_sort -method $method -sort $sort -threads $threads -refseq $refseq -inputformat $inputformat $dep $target.temp
 			file rename -force -- $target.temp $target
 		}
 	}
 }
 
 proc cg_bam_sort {args} {
+	cg_sam_sort {*}$args
+}
+
+proc cg_sam_sort {args} {
 	set method samtools
 	set sort coordinate
 	set inputformat -
@@ -58,7 +62,7 @@ proc cg_bam_sort {args} {
 	cg_options bam_sort args {
 		-method {
 			if {$value eq "1"} {set value samtools}
-			if {$value ni {biobambam samtools}} {error "bamsort: unsupported -method $value"}
+			if {$value ni {biobambam samtools gnusort}} {error "bamsort: unsupported -method $value"}
 			set method $value
 		}
 		-sort {
@@ -120,7 +124,7 @@ proc cg_bam_sort {args} {
 			catch {file rename -force -- $tempresult.bai $resultfile.bai}
 			file rename -force -- $tempresult $resultfile
 		}
-	} else {	
+	} elseif {$method eq "samtools"} {	
 		set opts {} ; set optsio {}
 		if {$sort eq "name"} {
 			lappend opts -n
@@ -150,5 +154,62 @@ proc cg_bam_sort {args} {
 		if {[info exists tempresult]} {
 			file rename -force -- $tempresult $resultfile
 		}
+	} else {
+		set pipe {}
+		set optio {}
+		if {$inputformat eq "sam" && $outputformat eq "sam" && $sourcefile eq "-" && $resultfile eq "-"} {
+			cg__sam_sort_gnusort $sort $threads $refseq
+			return
+		}
+		if {$sourcefile eq "-"} {set sourcefile $sourcefile.$inputformat}
+		if {$resultfile eq "-"} {set resultfile $sourcefile.$outputformat}
+		set inpipe [convert_pipe $sourcefile -.sam -refseq $refseq -optio optio]
+		set outpipe [convert_pipe -.sam $resultfile -refseq $refseq -optio optio]
+		set pipe {}
+		if {$inpipe ne ""} {
+			lappend pipe {*}$inpipe
+		}
+		if {[llength $pipe]} {lappend pipe |}
+		lappend pipe cg _sam_sort_gnusort $sort $threads $refseq
+		if {$outpipe ne ""} {
+			if {[llength $pipe]} {lappend pipe |}
+			lappend pipe {*}$outpipe
+		}
+		lappend pipe {*}$optio
+		exec {*}$pipe
 	}
 }
+
+proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}}} {
+	set header {}
+	set sq {}
+	while {[gets stdin line] != -1} {
+		if {[string index $line 0] ne "@"} break
+		if {[regexp ^@HD $line]} {
+			append header "@HD	VN:1.6	SO:coordinate\n"
+		} elseif {[regexp ^@SQ $line]} {
+			lappend sq $line
+		} elseif {[llength $sq]} {
+			append header [join [ssort -natural $sq] \n]\n
+			set sq {}
+		} else {
+			append header $line\n
+		}
+	}
+	if {[llength $sq]} {
+		append header [join [ssort -natural $sq] \n]\n
+	}
+	if {$refseq ne ""} {
+		set header [sam_header_addm5 $header $refseq]
+	}
+	puts -nonewline stdout $header
+	if {$sort eq "coordinate"} {
+		set o [open "| gnusort8 --buffer-size=500M --parallel $threads -T [scratchdir] -t \\t -s -k3,3B -k4,4B" w]
+	} else {
+		set o [open "| gnusort8 --buffer-size=500M --parallel $threads -T [scratchdir] -t \\t -s -k1,1B 2>@ stderr" w]
+	}
+	puts $o $line
+	fcopy stdin $o
+	close $o
+}
+
