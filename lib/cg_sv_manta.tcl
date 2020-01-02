@@ -19,6 +19,7 @@ proc sv_manta_job {args} {
 	set rootname {}
 	set skips {}
 	set resultfile {}
+	set regionfile {}
 	cg_options sv_manta args {
 		-refseq {
 			set refseq $value
@@ -40,6 +41,9 @@ proc sv_manta_job {args} {
 		}
 		-skip {
 			lappend skips -skip $value
+		}
+		-regionfile {
+			set regionfile $value
 		}
 		default {
 			if {[regexp {^-..} $key]} {set key -$key}
@@ -87,10 +91,16 @@ proc sv_manta_job {args} {
 	} -targets {
 		$resultfile.mantarun/results/variants/diploidSV.vcf.gz $resultfile.mantarun.analysisinfo
 	} -vars {
-		resultfile manta opts gatkrefseq threads root
+		resultfile manta opts gatkrefseq threads root regionfile
 	} -code {
 		set mantadir [searchpath MANTADIR manta manta*]
 		analysisinfo_write $dep $resultfile.mantarun sample $root varcaller manta varcaller_version [version manta] varcaller_cg_version [version genomecomb]
+		if {$regionfile ne ""} {
+			set tempbed [tempbed $regionfile]
+			cg_bgzip -k 1 -o $tempbed.gz $tempbed
+			exec tabix -p bed $tempbed.gz
+			lappend opts --callRegions $tempbed.gz
+		}
 		exec $mantadir/bin/configManta.py {*}$opts \
 			--bam $dep \
 			--referenceFasta $gatkrefseq \
