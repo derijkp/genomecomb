@@ -92,9 +92,9 @@ if [ ! -f "/build/zstd-1.4.4/lib/libzstd.a" ] ; then
 	wget -c https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz
 	tar xvzf zstd-1.4.4.tar.gz
 	cd /build/zstd-1.4.4
-	make
+	CFLAGS="-O3 -fPIC" make
 	cd /build/zstd-1.4.4/contrib/seekable_format/examples
-	make
+	CFLAGS="-O3 -fPIC" make
 	source /hbb_exe/activate
 fi
 
