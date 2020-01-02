@@ -142,7 +142,7 @@ proc sam_catmerge_job {args} {
 					set o [open $target.temp w]
 				}
 				puts $o [string trim $header]
-				exec samcat -header {} {*}$deps | gnusort8 --parallel $threads -T [scratchdir] -t \t -s -k3,3B -k4,4B --parallel $threads >@ $o
+				exec samcat -header {} {*}$deps | gnusort8 --parallel $threads -T [scratchdir] -t \t -s -k3,3B -k4,4B >@ $o
 				close $o
 			}
 		} msg]} {
