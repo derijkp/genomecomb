@@ -5,6 +5,7 @@ proc fastq_clipadapters_job {args} {
 	set adapterfile {}
 	set paired 1
 	set removeskew 1
+	set compress gz
 	cg_options fastq_clipadapters args {
 		-adapterfile {
 			set adapterfile $value
@@ -20,6 +21,9 @@ proc fastq_clipadapters_job {args} {
 		}
 		-removeskew {
 			set removeskew $value
+		}
+		-compress {
+			set compress $value
 		}
 	} {fastqfile} 1 ... {
 		Use fastq-mcf to clip adaptors from fastqs, results are in a dir
@@ -37,7 +41,13 @@ proc fastq_clipadapters_job {args} {
 	foreach file $fastqfiles {
 		set file [file_absolute [gzroot $file]]
 		set root [file root $file]
-		lappend resultfastqs $resultdir/[file tail $root].clipped.fastq.gz
+		if {$compress eq "gz"} {
+			lappend resultfastqs $resultdir/[file tail $root].clipped.fastq.gz
+		} elseif {$compress eq "zst"} {
+			lappend resultfastqs $resultdir/[file tail $root].clipped.fastq.zst
+		} else {
+			lappend resultfastqs $resultdir/[file tail $root].clipped.fastq
+		}
 		lappend resultanalysisinfo $resultdir/[file tail [gzroot $root]].clipped.fastq.analysisinfo
 	}
 	# paired files need to be clipped together!
@@ -50,12 +60,19 @@ proc fastq_clipadapters_job {args} {
 			} -targets {
 				$target $a1
 			} -vars {
-				resultfastqs adapterfile paired removeskew ::analysisinfo
+				resultfastqs adapterfile paired removeskew ::analysisinfo compress
 			} -code {
 				file mkdir [file dir $target]
 				analysisinfo_write $dep $target clipping fastq-mcf clipping_version [version fastq-mcf] clipping_cg_version [version genomecomb]
 				set tempout1 [filetemp $target]
-				exec fastq-mcf -k $removeskew -a $adapterfile $dep | gzip --fast > $tempout1 2>@ stderr
+				if {$compress eq "gz"} {
+					set compresspipe "| gzip --fast"
+				} elseif {$compress eq "zst"} {
+					set compresspipe "| cg zst -compressionlevel 1"
+				} else {
+					set compresspipe ""
+				}
+				exec fastq-mcf -k $removeskew -a $adapterfile $dep {*}$compresspipe > $tempout1 2>@ stderr
 				file rename -force -- $tempout1 $target
 			}
 		}
@@ -67,7 +84,7 @@ proc fastq_clipadapters_job {args} {
 			} -targets {
 				$target $target2 $a1 $a2
 			} -vars {
-				resultfastqs adapterfile paired removeskew ::analysisinfo
+				resultfastqs adapterfile paired removeskew ::analysisinfo compress
 			} -code {
 				file mkdir [file dir $target]
 				file mkdir [file dir $target2]
@@ -78,12 +95,22 @@ proc fastq_clipadapters_job {args} {
 				set tempout1 [filetemp $target]
 				set tempout2 [filetemp $target2]
 				exec fastq-mcf -k $removeskew -a -o $tempfile1 -o $tempfile2 $adapterfile $dep $dep2 2>@ stderr
-				exec gzip --fast -c $tempfile1 > $tempout1
-				exec gzip --fast -c $tempfile2 > $tempout2
-				file delete $tempfile1
-				file delete $tempfile2
-				file rename -force -- $tempout1 $target
-				file rename -force -- $tempout2 $target2
+				if {$compress eq "gz"} {
+					exec gzip --fast -c $tempfile1 > $tempout1
+					exec gzip --fast -c $tempfile2 > $tempout2
+					file delete $tempfile1
+					file delete $tempfile2
+					file rename -force -- $tempout1 $target
+					file rename -force -- $tempout2 $target2
+				} elseif {$compress eq "zst"} {
+					exec cg zst -k 0 -compressionlevel 1 -o $tempout1 $tempfile1
+					exec cg zst -k 0 -compressionlevel 1 -o $tempout2 $tempfile2
+					file rename -force -- $tempout1 $target
+					file rename -force -- $tempout2 $target2
+				} else {
+					file rename -force -- $tempfile1 $target
+					file rename -force -- $tempfile2 $target2
+				}
 			}
 		}
 	}
