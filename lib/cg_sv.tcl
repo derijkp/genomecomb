@@ -3,7 +3,7 @@ proc sv_job {args} {
 	upvar job_logdir job_logdir
 	set method manta
 	set refseq {}
-	set distrreg chr
+	set distrreg 1
 	set opts {}
 	set split 1
 	set deps {}
@@ -49,21 +49,22 @@ proc sv_job {args} {
 	job_logfile $destdir/sv_{$method}_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# check if regionfile is supported
-	catch {sv_${method}_job} temp
-	if {[regexp {with options:(.*)} $temp temp temp]} {
-		if {![inlist [split $temp ,] -regionfile]} {
-			putslog "sv_$method does not support -regionfile, so cannot be run distributed, -distrreg and -regionfile ignored"
-			return [sv_${method}_job {*}$opts \
-				-split $split -threads $threads -cleanup $cleanup \
-				-refseq $refseq $bamfile $resultfile]
-		}
-	}
-	# get or create regionfile
-	if {[info exists regionfile]} {
-		set regionfile [file_absolute $regionfile]
+	if {[regexp {with options:(.*)} $temp temp temp] && ![inlist [split $temp ,] -regionfile]} {
+		set regionfile_supported 0
 	} else {
-		set regionfile [bam2reg_job -mincoverage $regmincoverage $bamfile]
+		set regionfile_supported 1
 	}
+	if {
+		($distrreg in {0 {}} && ![info exists regionfile])
+		|| ([catch {sv_${method}_job} temp] && [regexp {with options:(.*)} $temp temp temp] && ![inlist [split $temp ,] -regionfile])
+	} {
+		if {[info exists regionfile] || $distrreg ni {0 {}}} {
+			putslog "sv_$method does not support -regionfile, so cannot be run distributed, -distrreg and -regionfile ignored"
+		}
+		return [sv_${method}_job {*}$opts \
+			-split $split -threads $threads -cleanup $cleanup \
+			-refseq $refseq $bamfile $resultfile]
+	}			
 	# run
 	if {$distrreg in {0 {}}} {
 		sv_${method}_job {*}$opts -regionfile $regionfile \
@@ -71,10 +72,8 @@ proc sv_job {args} {
 	} else {
 		# check what the resultfiles are for the method
 		set resultfiles [sv_${method}_job -resultfiles 1 {*}$opts \
-			-regionfile $regionfile \
 			-split $split	-refseq $refseq $bamfile $resultfile]
 		set skips [list -skip $resultfiles]
-		# if {[jobtargetexists $resultfiles [list $refseq $bamfile $regionfile]]} return
 		foreach {svfile} $resultfiles break
 		set file [file tail $bamfile]
 		set root [file_rootname $varfile]
@@ -90,16 +89,22 @@ proc sv_job {args} {
 		foreach region $regions {
 			lappend regfiles $indexdir/$basename-$region.bed
 		}
-		job [gzroot $varallfile]-distrreg-beds {*}$skips -deps {
-			$regionfile
-		} -targets $regfiles -vars {
-			regionfile regions appdir basename indexdir
-		} -code {
-			set header [cg select -h $regionfile]
-			set poss [tsv_basicfields $header 3]
-			set header [list_sub $header $poss]
-			# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $indexdir/$basename- \'$regions\' 0 1 2"
-			cg select -f $header $regionfile | $appdir/bin/distrreg $indexdir/$basename- .bed 0 $regions 0 1 2
+		if {[info exists regionfile]} {
+			job [gzroot $varallfile]-distrreg-beds {*}$skips -deps {
+				$regionfile
+			} -targets $regfiles -vars {
+				regionfile regions appdir basename indexdir
+			} -code {
+				set header [cg select -h $regionfile]
+				set poss [tsv_basicfields $header 3]
+				set header [list_sub $header $poss]
+				# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $indexdir/$basename- \'$regions\' 0 1 2"
+				cg select -f $header $regionfile | $appdir/bin/distrreg $indexdir/$basename- .bed 0 $regions 0 1 2
+			}
+		} else {
+			foreach region $regions {
+				file_write $indexdir/$basename-$region.tsv chromosome\tbegin\tend\n[join [split $region _-] \t]\n
+			}
 		}
 		set todo {}
 		# Produce variant calls
