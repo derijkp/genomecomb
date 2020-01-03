@@ -380,6 +380,14 @@ proc ext2format {file {default {}} {supported {}}} {
 	return $format[gzext $file]
 }
 
+proc file_root {file} {
+	file root [gzroot $file]
+}
+
+proc file_ext {file} {
+	return [file extension [gzroot $file]][gzext $file]
+}
+
 proc file2stdout {file} {
 	set f [open $file]
 	fconfigure $f -translation binary -encoding binary
