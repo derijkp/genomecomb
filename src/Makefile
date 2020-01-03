@@ -9,6 +9,8 @@ CFLAGS := -D_FILE_OFFSET_BITS=64 -Wall $(COPT) -I~/dev/genomecomb/src ${CFLAGS} 
 TOOLS = tools.c tools.h debug.h
 GZTOOLS_C = lz4.c lz4tools.c razf.c gztools.c zstdtools.c
 GZTOOLS = $(GZTOOLS_C) gztools.h razf.h lz4.h lz4tools.h debug.h zstdtools.h
+GZPOPEN_C = gzpopen.c
+GZPOPEN = $(GZPOPEN_C) gzpopen.h
 TOOLS_VAR = tools_var.c tools_var.h
 HASHTOOLS = hash.h hash.c
 BCOL_TOOLS_C = tools_bcol.c xxhash.c
@@ -140,8 +142,8 @@ clean:
 ../bin$(ARCH)/csv2tsv$(EXEEXT): csv2tsv.c $(TOOLS)
 	$(GCC) csv2tsv.c tools.c $(CFLAGS) -o ../bin$(ARCH)/csv2tsv$(EXEEXT)
 
-../bin$(ARCH)/samcat$(EXEEXT): samcat.c $(TOOLS)
-	$(GCC) samcat.c tools.c $(CFLAGS) -o ../bin$(ARCH)/samcat$(EXEEXT)
+../bin$(ARCH)/samcat$(EXEEXT): samcat.c $(TOOLS) $(GZPOPEN)
+	$(GCC) samcat.c tools.c $(GZPOPEN_C) $(CFLAGS) -o ../bin$(ARCH)/samcat$(EXEEXT)
 
 ../bin$(ARCH)/sam2tsv$(EXEEXT): sam2tsv.c $(TOOLS) $(HASHTOOLS)
 	$(GCC) sam2tsv.c tools.c hash.c $(CFLAGS) -o ../bin$(ARCH)/sam2tsv$(EXEEXT)

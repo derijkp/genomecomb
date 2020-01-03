@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tools.h"
+#include "gzpopen.h"
 
 int main(int argc, char *argv[]) {
 	FILE *f = NULL;
@@ -27,15 +28,15 @@ int main(int argc, char *argv[]) {
 		}
 		pos = 3;
 	} else {
-		f = fopen64_or_die(argv[1],"r");
+		f = gz_popen(argv[1]);
 		while ((c=getc_unlocked(f))!=EOF) {
 			putc_unlocked(c,stdout);
 		}
-		fclose(f);
+		gz_pclose(f);
 		pos = 2;
 	}
 	while (pos < argc) {
-		f = fopen64_or_die(argv[pos++],"r");
+		f = gz_popen(argv[pos++]);
 		while ((c=getc_unlocked(f))!=EOF) {
 			if (first) {
 				if (c != '@') break;
@@ -47,7 +48,7 @@ int main(int argc, char *argv[]) {
 		while ((c=getc_unlocked(f))!=EOF) {
 			putc_unlocked(c,stdout);
 		}
-		fclose(f);
+		gz_pclose(f);
 	}
 	exit(EXIT_SUCCESS);
 }

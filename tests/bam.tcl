@@ -348,6 +348,29 @@ test cg_sam_catmerge {cg_sam_catmerge nosort} {
 	exec diff tmp/result.sam tmp/expected.sam
 } {}
 
+test cg_sam_catmerge {cg_sam_catmerge nosort compressed sams} {
+	file_write tmp/temp1.sam [deindent $::sam_header]\n[deindent {
+		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	write_sam tmp/temp2.sam {
+		chr2	50	20M	20	chr2	60	20M	20
+		chr2	100	50M	50	chr2	100	50M	50
+	}
+	file_write tmp/expected.sam [deindent $::sam_header]\n[deindent {
+		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A4	99	chr1	100	60	20M	=	121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	99	chr2	50	60	20M	=	60	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	147	chr2	60	60	20M	=	50	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	99	chr2	100	60	50M	=	100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	147	chr2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	cg zst tmp/temp1.sam
+	cg zst tmp/temp2.sam
+	cg sam_catmerge -stack 1 -sort nosort tmp/result.sam tmp/temp1.sam.zst tmp/temp2.sam.zst
+	exec diff tmp/result.sam tmp/expected.sam
+} {}
+
 test cg_sam_catmerge {cg_sam_catmerge to cram} {
 	file_write tmp/temp1.sam [deindent $::sam_header]\n[deindent {
 		A4	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
