@@ -18,8 +18,8 @@ int main(int argc, char *argv[]) {
 	FILE *f = NULL;
 	int pos;
 	register int c, first = 1;
-	if ((argc < 1)) {
-		fprintf(stderr,"Format is: samcat ?-header header? samfile1 ...");
+	if ((argc <= 1)) {
+		fprintf(stderr,"Format is: samcat ?-header header? samfile1 ...\n");
 		exit(EXIT_FAILURE);
 	}
 	if (strlen(argv[1]) == 7 && strncmp(argv[1],"-header",7) == 0) {
