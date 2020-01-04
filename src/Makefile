@@ -37,7 +37,8 @@ all: ../bin$(ARCH)/map2besthit$(EXEEXT) ../bin$(ARCH)/distr2chr$(EXEEXT) ../bin$
      ../bin$(ARCH)/countlines$(EXEEXT) \
      ../bin$(ARCH)/addrow$(EXEEXT) \
      ../bin$(ARCH)/csv2tsv$(EXEEXT) \
-     ../bin$(ARCH)/distrreg$(EXEEXT)
+     ../bin$(ARCH)/distrreg$(EXEEXT) \
+     ../bin$(ARCH)/mergesorted$(EXEEXT)
 
 clean:
 	rm -f ../bin$(ARCH)/*
@@ -166,6 +167,8 @@ clean:
 ../bin$(ARCH)/addrow$(EXEEXT): addrow.c $(TOOLS)
 	$(GCC) addrow.c tools.c $(CFLAGS) -o ../bin$(ARCH)/addrow$(EXEEXT)
 
-../bin$(ARCH)/distrreg$(EXEEXT): distrreg.c $(TOOLS) $(GZTOOLS)
-	$(GCC) distrreg.c tools.c $(GZTOOLS_C) $(CFLAGS) -o ../bin$(ARCH)/distrreg$(EXEEXT) $(LIBZ)
+../bin$(ARCH)/distrreg$(EXEEXT): distrreg.c $(TOOLS)
+	$(GCC) distrreg.c tools.c $(CFLAGS) -o ../bin$(ARCH)/distrreg$(EXEEXT)
 
+../bin$(ARCH)/mergesorted$(EXEEXT): mergesorted.c $(TOOLS) $(GZPOPEN)
+	$(GCC) mergesorted.c tools.c $(GZPOPEN_C) $(CFLAGS) -o ../bin$(ARCH)/mergesorted$(EXEEXT)

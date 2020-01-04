@@ -323,7 +323,8 @@ test cg_sam_catmerge {basic cg_sam_catmerge} {
 		A2	99	chr2	100	60	50M	=	100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		A2	147	chr2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 	}]\n
-	cg sam_catmerge -stack 1 tmp/result.sam tmp/temp1.sam tmp/temp2.sam
+	file delete tmp/result.sam
+	cg sam_catmerge -stack 1 -v 2 tmp/result.sam tmp/temp1.sam tmp/temp2.sam
 	exec diff -I {@HD	} tmp/result.sam tmp/expected.sam
 } {}
 
@@ -433,6 +434,80 @@ test cg_sam_catmerge {cg_sam_catmerge nosort bam} {
 	cg sam_catmerge -stack 1 -sort nosort -index 0 tmp/result.bam tmp/temp1.sam tmp/temp2.sam
 	exec samtools view -h tmp/result.bam -o tmp/result.sam
 	exec diff tmp/result.sam tmp/expected.sam
+} {}
+
+test cg_sam_catmerge {-sort merge -distrreg 1} {
+	write_sam tmp/utemp1.sam {
+		chr1	1000107	20M	20	chr1	1000112	20M	20
+		chr1	1000100	20M	20	chr1	1000121	20M	20
+		chr2	1000100	50M	50	chr2	1000100	50M	50
+	}
+	cg sam_sort tmp/utemp1.sam tmp/temp1.sam
+	write_sam tmp/utemp2.sam {
+		chr1	1000102	4S2M2I12M	20	chr1	1000111	30M	30
+		chr1	1000108	20M	20	chr1	1000113	20M	20
+		chr2	1000050	20M	20	chr2	1000060	20M	20
+	}
+	cg sam_sort tmp/utemp2.sam tmp/temp2.sam
+	file_write tmp/expected-chr1.sam [deindent $::sam_header]\n[deindent {
+		A2	99	chr1	1000100	60	20M	=	1000121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	99	chr1	1000102	60	4S2M2I12M	=	1000111	39	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	99	chr1	1000107	60	20M	=	1000112	25	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	99	chr1	1000108	60	20M	=	1000113	25	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	147	chr1	1000111	60	30M	=	1000102	-39	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	147	chr1	1000112	60	20M	=	1000107	-25	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	147	chr1	1000113	60	20M	=	1000108	-25	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	147	chr1	1000121	60	20M	=	1000100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	file_write tmp/expected-chr2.sam [deindent $::sam_header]\n[deindent {
+		A3	99	chr2	1000050	60	20M	=	1000060	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A3	147	chr2	1000060	60	20M	=	1000050	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A3	99	chr2	1000100	60	50M	=	1000100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A3	147	chr2	1000100	60	50M	=	1000100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	cg sam_catmerge -stack 1 -sort coordinates -distrreg 1 \
+		-refseq $::refseqdir/hg19/genome_hg19.ifas \
+		tmp/result.sam tmp/temp1.sam tmp/temp2.sam
+	exec diff -I {@HD	} tmp/result-chr1-10000-29878082.sam tmp/expected-chr1.sam
+	exec diff -I {@HD	} tmp/result-chr2-10000-33141692.sam tmp/expected-chr2.sam
+} {}
+
+test cg_sam_catmerge {-sort merge -distrreg 1 .sam.zst} {
+	write_sam tmp/utemp1.sam {
+		chr1	1000107	20M	20	chr1	1000112	20M	20
+		chr1	1000100	20M	20	chr1	1000121	20M	20
+		chr2	1000100	50M	50	chr2	1000100	50M	50
+	}
+	cg sam_sort tmp/utemp1.sam tmp/temp1.sam
+	write_sam tmp/utemp2.sam {
+		chr1	1000102	4S2M2I12M	20	chr1	1000111	30M	30
+		chr1	1000108	20M	20	chr1	1000113	20M	20
+		chr2	1000050	20M	20	chr2	1000060	20M	20
+	}
+	cg sam_sort tmp/utemp2.sam tmp/temp2.sam
+	file_write tmp/expected-chr1.sam [deindent $::sam_header]\n[deindent {
+		A2	99	chr1	1000100	60	20M	=	1000121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	99	chr1	1000102	60	4S2M2I12M	=	1000111	39	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	99	chr1	1000107	60	20M	=	1000112	25	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	99	chr1	1000108	60	20M	=	1000113	25	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	147	chr1	1000111	60	30M	=	1000102	-39	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A1	147	chr1	1000112	60	20M	=	1000107	-25	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	147	chr1	1000113	60	20M	=	1000108	-25	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A2	147	chr1	1000121	60	20M	=	1000100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	file_write tmp/expected-chr2.sam [deindent $::sam_header]\n[deindent {
+		A3	99	chr2	1000050	60	20M	=	1000060	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A3	147	chr2	1000060	60	20M	=	1000050	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A3	99	chr2	1000100	60	50M	=	1000100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		A3	147	chr2	1000100	60	50M	=	1000100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+	}]\n
+	cg sam_catmerge -stack 1 -sort coordinates -distrreg 1 \
+		-refseq $::refseqdir/hg19/genome_hg19.ifas \
+		tmp/result.sam.zst tmp/temp1.sam tmp/temp2.sam
+	cg zcat tmp/result-chr1-10000-29878082.sam.zst > tmp/test-chr1.sam
+	cg zcat tmp/result-chr2-10000-33141692.sam.zst > tmp/test-chr2.sam
+	exec diff -I {@HD	} tmp/test-chr1.sam tmp/expected-chr1.sam
+	exec diff -I {@HD	} tmp/test-chr2.sam tmp/expected-chr2.sam
 } {}
 
 test cg_bam2sam {basic sortchr} {

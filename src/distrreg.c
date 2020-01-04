@@ -12,8 +12,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include "tools.h"
-#include "gztools.h"
 #include "debug.h"
 
 
@@ -50,37 +50,37 @@ FILE *openreg(char **regions, char *prefix, char *postfix, int printheader, DStr
 		}
 		size++;
 	}
-	if (opencmd != NULL) {
+	if (opencmd != NULL && opencmd[0] != '\0') {
 		DStringAppend(buffer,opencmd);
-		DStringAppendS(buffer," > ",3);
+		DStringAppendS(buffer," ",1);
 	}
 	DStringAppend(buffer,prefix);
 	DStringAppendS(buffer,*regions,size);
 	DStringAppend(buffer,postfix);
 	if (region[size] == ' ') size++;
 	*regions = region + size;
-	if (opencmd == NULL) {
-		o = fopen64_or_die(buffer->string,"a");
+	if (opencmd == NULL || opencmd[0] == '\0') {
+		o = fopen64_or_die(buffer->string,"w");
 	} else {
 		o = popen(buffer->string,"w");
 	}
-	if (printheader) fprintf(o,"%s\n",header->string);
+	if (printheader && header->size) fprintf(o,"%s",header->string);
 	return(o);
 }
 
 int main(int argc, char *argv[]) {
 	FILE *f1,*o;
 	DStringArray *result1=NULL;
-	DString *header;
-	DString *line1 = NULL;
+	DString *header = DStringNew();
+	DString *line1 = DStringNew();
 	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
-	char *prefix, *postfix, *regions,*opencmd=NULL;
-	int comp,chr1pos,start1pos,end1pos,max1,printheader = 1;
-	unsigned int numfields1,numfields,pos1;
+	char *prefix, *postfix, *regions,*opencmd=NULL,commentchar;
+	int comp,chr1pos,start1pos,end1pos,max1,printheader = 1,read,headerline;
+	unsigned int numfields,pos1;
 	int start1,end1,start2,end2;
 	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
-	if (argc != 8 && argc != 9) {
-		fprintf(stderr,"Format is: distrreg prefix postfix printheader regions chrpos startpos endpos ?opencmd?");
+	if (argc != 10 && argc != 11) {
+		fprintf(stderr,"Format is: distrreg prefix postfix printheader regions chrpos startpos endpos headerline commentchar ?opencmd?");
 		exit(EXIT_FAILURE);
 	}
 	f1 = stdin;
@@ -91,26 +91,39 @@ int main(int argc, char *argv[]) {
 	chr1pos = atoi(argv[5]);
 	start1pos = atoi(argv[6]);
 	end1pos = atoi(argv[7]);
-	if (argc == 9) opencmd = argv[8];
+	headerline = atoi(argv[8]);
+	commentchar = argv[9][0];
+	if (argc == 11) opencmd = argv[10];
 	max1 = chr1pos ; if (start1pos > max1) {max1 = start1pos;} ; if (end1pos > max1) {max1 = end1pos;} ;
 	/* allocate */
-	line1 = DStringNew();
 	curchromosome = DStringEmtpy();
 	chromosome2 = DStringNew();
 	/* we add 2 to max because we need to have the column itself, and an extra space for the remainder */
 	result1 = DStringArrayNew(max1+2);
 	/* start */
 	header = DStringNew();
-	skip_header(f1,header,&numfields1,&pos1);
+	read = DStringGetLine(line1, f1);
+	while (read != -1) {
+		if (line1->size > 0 && line1->string[0] != commentchar) break;
+		DStringAppendS(header,line1->string,line1->size);
+		DStringAppendS(header,"\n",1);
+		read = DStringGetLine(line1, f1);
+	}
+	if (headerline) {
+		DStringAppendS(header,line1->string,line1->size);
+		DStringAppendS(header,"\n",1);
+		read = DStringGetTab(line1,f1,max1,result1,0,&numfields);
+	} else if (read != -1) {
+		DStringSplitTab(line1,	max1, result1, 0, NULL);
+	}
 	o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2,opencmd);
 	if (o == NULL) {
 		fprintf(stderr,"no regions given");
 		exit(EXIT_FAILURE);
 	}
 	chromosomekeep = chromosome2;
-	while (!DStringGetTab(line1,f1,max1,result1,0,&numfields)) {
+	if (read != -1) do {
 		pos1++;
-		check_numfieldserror(numfields,numfields1,line1,"stdin",&pos1);
 		chromosome1 = result1->data+chr1pos;
 		sscanf(result1->data[start1pos].string,"%d",&start1);
 		sscanf(result1->data[end1pos].string,"%d",&end1);
@@ -153,7 +166,7 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 			NODPRINT("overlap")
 			fprintf(o,"%s\n",line1->string);
 		}
-	}
+	} while (!DStringGetTab(line1,f1,max1,result1,0,&numfields));
 	if (chromosomekeep != NULL) DStringDestroy(chromosomekeep);
 	fclose(f1);
 	while (o != NULL) {
@@ -164,4 +177,3 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 	if (result1) {DStringArrayDestroy(result1);}
 	exit(EXIT_SUCCESS);
 }
-

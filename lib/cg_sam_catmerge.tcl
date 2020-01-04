@@ -39,17 +39,17 @@ proc sam_catmerge_job {args} {
 	set force 0
 	set deletesams 0
 	set optional 0
-	set index 1
+	set index 0
 	set skips {}
 	set sort coordinates
-	set outputformat ""
+	set distrreg 0
 	set refseq ""
 	cg_options sam_catmerge args {
 		-name {
 			set name $value
 		}
 		-sort {
-			if {$value ni "coordinates names nosort c n"} {error "-sort must be coordinates, names or nosort"}
+			if {$value ni "coordinates c nosort merge"} {error "-sort must be coordinates, nosort or merge"}
 			set sort $value
 		}
 		-index {
@@ -67,14 +67,17 @@ proc sam_catmerge_job {args} {
 		-optional {
 			set optional $value
 		}
-		-outputformat - -aliformat {
-			set outputformat $value
-		}
 		-refseq {
 			set refseq [refseq $value]
 		}
+		-distrreg {
+			set distrreg $value
+		}
 		-skips {
 			set skips $value
+		}
+		-skip {
+			lappend skips -skip $value
 		}
 	} {resultfile samfile} 1 ... {
 		merge sam files by concatenating (no problem with max open files) and then sorting them
@@ -93,7 +96,6 @@ proc sam_catmerge_job {args} {
 		job_logdir $resultfile.log_jobs
 	}
 	# run
-	if {[string index $sort 0] eq "n"} {set sortopt "-n"} else {set sortopt ""}
 	if {$deletesams} {
 		set rmfiles $samfiles
 		foreach file $samfiles {lappend rmfiles [gzroot $file].analysisinfo}
@@ -101,54 +103,103 @@ proc sam_catmerge_job {args} {
 		set rmfiles {}
 	}
 	set analysisinfofile [gzroot $resultfile].analysisinfo
-	job $name -optional $optional -force $force -cores $threads \
+	if {$distrreg in {0 {}}} {
+		set regions {}
+		set targets [list $resultfile $analysisinfofile]
+		set regresults [list $resultfile]
+	} else {
+		set regions [distrreg_regs $distrreg $refseq]
+		set basename [file_root $resultfile]
+		set regresults {}
+		foreach region $regions {
+			lappend regresults [file_root $resultfile]-$region[file_ext $resultfile]
+		}
+		set targets $regresults
+		lappend targets [gzroot [lindex $regresults 0]].analysisinfo
+	}
+	job $name -optional $optional -force $force -cores $threads {*}$skips \
 	-deps $samfiles \
 	-rmtargets $rmfiles \
-	-targets {
-		$resultfile $analysisinfofile
-	} {*}$skips -vars {
-		threads sort sortopt rmfiles outputformat refseq
+	-targets $targets -vars {
+		threads sort rmfiles outputformat refseq regresults distrreg resultfile regions
 	} -code {
-		puts "making $target"
+		puts "making $target ..."
 		analysisinfo_write $dep $target cat_merge [version genomecomb]
-		if {[catch {
-			if {$sort eq "nosort"} {
-				if {$outputformat eq "bam"} {
-					exec samcat {*}$deps | samtools view --threads $threads -b -o $target.temp - 2>@ stderr
-				} elseif {$outputformat eq "cram"} {
-					set refseq [refseq $refseq]
-					set header [exec samtools view -H [lindex $deps 0]]
-					set header [sam_header_addm5 $header $refseq]
-					exec samcat -header $header {*}$deps | samtools view -h --threads $threads -C -T $refseq -o $target.temp - 2>@ stderr
+		if {$sort eq "nosort"} {
+			set pipe {}
+			set opencmd {}
+			if {$outputformat eq "bam"} {
+				set incmd [list samcat {*}$deps]
+				set outcmd [list samtools view --threads $threads -b - >]
+			} elseif {$outputformat eq "cram"} {
+				set refseq [refseq $refseq]
+				set header [exec samtools view -H [lindex $deps 0]]
+				set header [sam_header_addm5 $header $refseq]
+				set incmd [list samcat -header $header {*}$deps]
+				set outcmd [list samtools view -h --threads $threads -C -T $refseq - < ]
+			} elseif {[gziscompressed $target]} {
+				set incmd [list samcat {*}$deps]
+				set outcmd [list {*}[lrange [compresspipe $target] 1 end] >]
+			} else {
+				set incmd [list samcat {*}$deps]
+				set outcmd {}
+			}
+			if {![llength $regions]} {
+				if {[llength $outcmd]} {set outcmd [list | {*}$outcmd]} else {set outcmd >}
+				exec {*}$incmd {*}$outcmd $target.temp 2>@ stderr
+			} else {
+				exec {*}$incmd | distrreg [file_root $resultfile] [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
+			}
+		} else {
+			set header [exec samtools view -H [lindex $deps 0]]
+			set headerlines [llength [split $header \n]]
+			if {[regexp @HD $header]} {
+				regsub {@HD[^\n]+} $header "@HD	VN:1.6	SO:coordinate" header
+			} else {
+				set header "@HD	VN:1.6	SO:coordinate\n$header"
+			}
+			if {$outputformat eq "cram"} {
+				set refseq [refseq $refseq]
+				set header [sam_header_addm5 $header $refseq]
+				set outcmd [list samtools view -h --threads $threads -C -T $refseq - >]
+			} elseif {$outputformat eq "bam"} {
+				set outcmd [list samtools view -h --threads $threads -b - >]
+			} elseif {[gziscompressed $target]} {
+				set outcmd [list {*}[lrange [compresspipe $target] 1 end] >]
+			} else {
+				set outcmd {}
+			}
+			set sortopts {}
+			if {$sort eq "merge" && [llength $deps] < [expr {[maxopenfiles]-2}]} {
+				if {![llength $regions]} {
+					if {[llength $outcmd]} {set outcmd [list | {*}$outcmd]} else {set outcmd >}
+					exec mergesorted @ 0 $header {2 3} {*}$deps \
+						{*}$outcmd $target.temp
 				} else {
-					exec samcat {*}$deps > $target.temp 2>@ stderr
+					exec mergesorted @ 0 $header {2 3} {*}$deps \
+						| distrreg [file_root $resultfile]- [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
+						exec cat temp | distrreg [file_root $resultfile]- [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
 				}
 			} else {
-				set header [exec samtools view -H [lindex $deps 0]]
-				if {[regexp @HD $header]} {
-					regsub {@HD[^\n]+} $header "@HD	VN:1.6	SO:coordinate" header
+				if {![llength $regions]} {
+					if {[llength $outcmd]} {set outcmd [list | {*}$outcmd]} else {set outcmd >}
+					exec samcat -header $header {*}$deps \
+						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] -t \t -s -k3,3B -k4,4B \
+						{*}$outcmd $target.temp
 				} else {
-					set header "@HD	VN:1.6	SO:coordinate\n$header"
+					exec samcat -header $header {*}$deps \
+						| gnusort8 --header-lines $headerlines --parallel $threads -T [scratchdir] -t \t -s -k3,3B -k4,4B \
+						| distrreg [file_root $resultfile]- [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
 				}
-				if {$outputformat eq "cram"} {
-					set refseq [refseq $refseq]
-					set header [sam_header_addm5 $header $refseq]
-					set o [open "| samtools view -h --threads $threads -C -T $refseq -o $target.temp -" w]
-				} elseif {$outputformat eq "bam"} {
-					set o [open "| samtools view -h --threads $threads -b -o $target.temp -" w]
-				} elseif {[gziscompressed $target]} {
-					set o [open "[compresspipe $target] > $target.temp" w]
-				} else {
-					set o [open $target.temp w]
-				}
-				puts $o [string trim $header]
-				exec samcat -header {} {*}$deps | gnusort8 --parallel $threads -T [scratchdir] -t \t -s -k3,3B -k4,4B >@ $o
-				close $o
 			}
-		} msg]} {
-			error $msg
 		}
-		file rename -force -- $target.temp $target
+		if {$regresults eq ""} {
+			file rename -force -- $target.temp $target
+		} else {
+			foreach regresult $regresults {
+				file rename -force -- $regresult.temp $regresult
+			}
+		}
 		foreach dep $rmfiles {
 			file delete $dep
 		}
@@ -164,7 +215,7 @@ proc sam_catmerge_job {args} {
 		}
 		
 	}
-	return $resultfile
+	return $regresults
 }
 
 proc cg_sam_catmerge {args} {
