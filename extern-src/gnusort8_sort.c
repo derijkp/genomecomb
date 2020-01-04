@@ -29,6 +29,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <assert.h>
+#include <stdio.h>
 #include "system.h"
 #include "argmatch.h"
 #include "die.h"
@@ -307,6 +308,8 @@ static struct month monthtab[] =
 /* During the merge phase, the number of files to merge at once. */
 #define NMERGE_DEFAULT 16
 
+#define HEADERLINES_DEFAULT 0
+
 /* Minimum size for a merge or check buffer.  */
 #define MIN_MERGE_BUFFER_SIZE (2 + sizeof (struct line))
 
@@ -373,6 +376,8 @@ static bool debug;
 /* Maximum number of files to merge in one go.  If more than this
    number are present, temp files will be used. */
 static unsigned int nmerge = NMERGE_DEFAULT;
+
+static unsigned int headerlines = HEADERLINES_DEFAULT;
 
 /* Output an error to stderr and exit using async-signal-safe routines.
    This can be used safely from signal handlers,
@@ -475,6 +480,10 @@ Other options:\n\
                             for more use temp files\n\
 "), stdout);
       fputs (_("\
+      --header-lines=HEADERLINES   dont sort the first HEADERLINES lines;\n\
+                            This is a quick hack that will only work on stdin\n\
+"), stdout);
+      fputs (_("\
   -c, --check, --check=diagnose-first  check for sorted input; do not sort\n\
   -C, --check=quiet, --check=silent  like -c, but do not report first bad line\
 \n\
@@ -548,6 +557,7 @@ enum
   DEBUG_PROGRAM_OPTION,
   FILES0_FROM_OPTION,
   NMERGE_OPTION,
+  HEADERLINES_OPTION,
   RANDOM_SOURCE_OPTION,
   SORT_OPTION,
   PARALLEL_OPTION
@@ -581,6 +591,7 @@ static struct option const long_options[] =
   {"reverse", no_argument, NULL, 'r'},
   {"stable", no_argument, NULL, 's'},
   {"batch-size", required_argument, NULL, NMERGE_OPTION},
+  {"header-lines", required_argument, NULL, HEADERLINES_OPTION},
   {"buffer-size", required_argument, NULL, 'S'},
   {"field-separator", required_argument, NULL, 't'},
   {"temporary-directory", required_argument, NULL, 'T'},
@@ -4876,6 +4887,10 @@ main (int argc, char **argv)
           specify_nmerge (oi, c, optarg);
           break;
 
+        case HEADERLINES_OPTION:
+          headerlines = atoi(optarg);
+          break;
+
         case 'o':
           if (outfile && !STREQ (outfile, optarg))
             die (SORT_FAILURE, 0, _("multiple output files specified"));
@@ -5085,6 +5100,20 @@ main (int argc, char **argv)
       char const *tmp_dir = getenv ("TMPDIR");
       add_temp_dir (tmp_dir ? tmp_dir : DEFAULT_TMPDIR);
     }
+
+  if (headerlines != 0) {
+	register int	c;
+	if (nfiles != 0) {
+		fprintf(stderr,"-header-lines only works when run on stdin\n");
+		exit(1);
+	}
+	while ((c=getc(stdin))!=EOF) {
+		putc(c,stdout);
+		if (c == '\n' && !--headerlines) {
+			break;
+		}
+	}
+  }
 
   if (nfiles == 0)
     {

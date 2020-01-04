@@ -233,7 +233,7 @@ test distrreg {basic with compression} {
 	test_cleantmp
 	exec distrreg tmp/distrvars1- .zst 1 \
 		{chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2} \
-		0 1 2 {zstd-mt -k -q -8 -b 0.5 -T 1 -c} < data/vars1.sft
+		0 1 2 {zstd-mt -k -q -8 -b 0.5 -T 1 -c > } < data/vars1.sft
 	list [lsort -dict [glob tmp/*]] \
 		[exec cg zcat tmp/distrvars1-chr1-1000-5000.zst] \
 		[exec cg zcat tmp/distrvars1-chr1-5000-10000.zst] \
@@ -334,5 +334,32 @@ test distrreg_regs {s100000000} {
 test distrreg_regs {s100000000} {
 	distrreg_regs 100000000 $::refseqdir/hg19
 } {chr1-0-100000000 chr1-100000000-200000000 chr1-200000000-249250621 chr1_ chr2-0-100000000 chr2-100000000-200000000 chr2-200000000-243199373 chr3-0-100000000 chr3-100000000-198022430 chr4-0-100000000 chr4-100000000-191154276 chr4_ chr5-0-100000000 chr5-100000000-180915260 chr6-0-100000000 chr6-100000000-171115067 chr7-0-100000000 chr7-100000000-159138663 chr7_ chr8-0-100000000 chr8-100000000-146364022 chr8_ chr9-0-100000000 chr9-100000000-141213431 chr9_ chr10-0-100000000 chr10-100000000-135534747 chr11-0-100000000 chr11-100000000-135006516 chr11_ chr12-0-100000000 chr12-100000000-133851895 chr13-0-100000000 chr13-100000000-115169878 chr14-0-100000000 chr14-100000000-107349540 chr15-0-100000000 chr15-100000000-102531392 chr16-0-90354753 chr17-0-81195210 chr17_ chr18-0-78077248 chr18_ chr19-0-59128983 chr19_ chr20-0-63025520 chr21-0-48129895 chr21_ chr22-0-51304566 chrM-0-16571 chrUn_ chrX-0-100000000 chrX-100000000-155270560 chrY-0-59373566}
+
+test gnusort {basic -N} {
+	file_write tmp/text "chr10\nchr9\nchr8\nchr2\nchr1\n"
+	exec gnusort8 -N tmp/text
+} {chr1
+chr2
+chr8
+chr9
+chr10}
+
+test gnusort {-N --header-lines 1} {
+	file_write tmp/text "chr10\nchr9\nchr8\nchr2\nchr1\n"
+	exec gnusort8 -N --header-lines 1 < tmp/text
+} {chr10
+chr1
+chr2
+chr8
+chr9}
+
+test gnusort {-N --header-lines 2} {
+	file_write tmp/text "chr10\nchr9\nchr8\nchr2\nchr1\n"
+	exec gnusort8 -N --header-lines 2 < tmp/text
+} {chr10
+chr9
+chr1
+chr2
+chr8}
 
 testsummarize
