@@ -35,6 +35,8 @@ proc sam_header_addm5 {header {refseq {}}} {
 }
 
 proc sam_catmerge_job {args} {
+	# job_logdir
+	upvar job_logdir job_logdir
 	set threads 1
 	set force 0
 	set deletesams 0
@@ -90,8 +92,6 @@ proc sam_catmerge_job {args} {
 	set outputformat [ext2format $resultfile bam {bam cram sam}]
 	set outputformat [gzroot $outputformat]
 	if {$outputformat eq "sam"} {set index 0}
-	# job_logdir
-	upvar job_logdir job_logdir
 	if {![info exists job_logdir]} {
 		job_logdir $resultfile.log_jobs
 	}
@@ -151,25 +151,30 @@ proc sam_catmerge_job {args} {
 				exec {*}$incmd | distrreg [file_root $resultfile] [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
 			}
 		} else {
-			set header [exec samtools view -H [lindex $deps 0]]
+			set testsam [lindex $deps 0]
+			if {[gziscompressed $testsam]} {
+				set header [exec cg zcat $testsam | samtools view -H]
+			} else {
+				set header [exec samtools view -H $testsam]
+			}
 			set headerlines [llength [split $header \n]]
 			if {[regexp @HD $header]} {
 				regsub {@HD[^\n]+} $header "@HD	VN:1.6	SO:coordinate" header
 			} else {
 				set header "@HD	VN:1.6	SO:coordinate\n$header"
 			}
+			set compressionlevel [defcompressionlevel 5]
 			if {$outputformat eq "cram"} {
 				set refseq [refseq $refseq]
 				set header [sam_header_addm5 $header $refseq]
-				set outcmd [list samtools view -h --threads $threads -C -T $refseq - >]
+				set outcmd [list samtools view -h --threads $threads -C -T $refseq --output-fmt-option level=$compressionlevel - >]
 			} elseif {$outputformat eq "bam"} {
-				set outcmd [list samtools view -h --threads $threads -b - >]
+				set outcmd [list samtools view -h --threads $threads --output-fmt-option level=$compressionlevel -b - >]
 			} elseif {[gziscompressed $target]} {
 				set outcmd [list {*}[lrange [compresspipe $target] 1 end] >]
 			} else {
 				set outcmd {}
 			}
-			set sortopts {}
 			if {$sort eq "merge" && [llength $deps] < [expr {[maxopenfiles]-2}]} {
 				if {![llength $regions]} {
 					if {[llength $outcmd]} {set outcmd [list | {*}$outcmd]} else {set outcmd >}
@@ -178,7 +183,6 @@ proc sam_catmerge_job {args} {
 				} else {
 					exec mergesorted @ 0 $header {2 3} {*}$deps \
 						| distrreg [file_root $resultfile]- [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
-						exec cat temp | distrreg [file_root $resultfile]- [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd 2>@ stderr
 				}
 			} else {
 				if {![llength $regions]} {
