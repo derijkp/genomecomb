@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 		numpos++;
 	}
 	if (header[0] != '\0') {
-		fprintf(stdout,"%s",header);
+		fprintf(stdout,"%s\n",header);
 		printheader = 0;
 	} else {
 		printheader = 1;
