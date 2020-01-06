@@ -192,6 +192,7 @@ proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}}} {
 		} elseif {[llength $sq]} {
 			append header [join [ssort -natural $sq] \n]\n
 			set sq {}
+			append header $line\n
 		} else {
 			append header $line\n
 		}
