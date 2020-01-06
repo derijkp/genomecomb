@@ -21,3 +21,11 @@ proc bam_index_job {args} {
 		puts "making $target"
 	}
 }
+
+proc sam_empty file {
+	if {[catch {exec samtools view $file | head -1} test]} {
+		return 0
+	} else {
+		return 1
+	}
+}
