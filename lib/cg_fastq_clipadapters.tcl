@@ -19,6 +19,9 @@ proc fastq_clipadapters_job {args} {
 		-skips {
 			set skips $value
 		}
+		-skip {
+			lappend skips -skip $value
+		}
 		-removeskew {
 			set removeskew $value
 		}
