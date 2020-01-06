@@ -99,8 +99,8 @@ proc var_job {args} {
 			set header [cg select -h $regionfile]
 			set poss [tsv_basicfields $header 3]
 			set header [list_sub $header $poss]
-			# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $indexdir/$basename- \'$regions\' 0 1 2"
-			cg select -f $header $regionfile | $appdir/bin/distrreg $indexdir/$basename- .bed 0 $regions 0 1 2
+			# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $indexdir/$basename- \'$regions\' 0 1 2 1 \#"
+			cg select -f $header $regionfile | $appdir/bin/distrreg $indexdir/$basename- .bed 0 $regions 0 1 2 1 \#
 		}
 		set todo {}
 		# Produce variant calls

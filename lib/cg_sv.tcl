@@ -76,21 +76,21 @@ proc sv_job {args} {
 		set skips [list -skip $resultfiles]
 		foreach {svfile} $resultfiles break
 		set file [file tail $bamfile]
-		set root [file_rootname $varfile]
+		set root [file_rootname $file]
 		# start
 		## Create sequencing region files
 		set keeppwd [pwd]
 		cd $destdir
-		set indexdir [gzroot $varallfile].index
+		set indexdir [gzroot $resultfile].index
 		file mkdir $indexdir
 		set regions [distrreg_regs $distrreg $refseq]
-		set basename [gzroot [file tail $varallfile]]
+		set basename [file_root $resultfile]
 		set regfiles {}
 		foreach region $regions {
 			lappend regfiles $indexdir/$basename-$region.bed
 		}
 		if {[info exists regionfile]} {
-			job [gzroot $varallfile]-distrreg-beds {*}$skips -deps {
+			job [gzroot $resultfile]-distrreg-beds {*}$skips -deps {
 				$regionfile
 			} -targets $regfiles -vars {
 				regionfile regions appdir basename indexdir
@@ -98,8 +98,8 @@ proc sv_job {args} {
 				set header [cg select -h $regionfile]
 				set poss [tsv_basicfields $header 3]
 				set header [list_sub $header $poss]
-				# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $indexdir/$basename- \'$regions\' 0 1 2"
-				cg select -f $header $regionfile | $appdir/bin/distrreg $indexdir/$basename- .bed 0 $regions 0 1 2
+				# puts "cg select -f \'$header\' $regionfile | $appdir/bin/distrreg $indexdir/$basename- \'$regions\' 0 1 2 1 \#"
+				cg select -f $header $regionfile | $appdir/bin/distrreg $indexdir/$basename- .bed 0 $regions 0 1 2 1 \#
 			}
 		} else {
 			foreach region $regions {
