@@ -144,7 +144,10 @@ proc job_args {jobargs} {
 				job_logfile $logfile
 				job_logdir [file_absolute [file dir $logfile]/log_jobs]
 			}
-			-- break
+			-- {
+				lappend newargs --
+				break
+			}
 			default {
 				lappend newargs $key
 			}
