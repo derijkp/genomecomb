@@ -1,3 +1,16 @@
+proc methods_bam_sort {args} {
+	set cmd bam_sort
+	set supportedmethods {samtools biobambam gnusort}
+	if {[llength $args]} {
+		set value [lindex $args 0]
+		if {$value eq "1"} {set value [lindex $supportedmethods 0]}
+		if {$value ni $supportedmethods} {error "$cmd: unsupported -method $value"}
+		return $value
+	} else {
+		return $supportedmethods
+	}
+}
+
 proc bam_sort_job {args} {
 	upvar job_logdir job_logdir
 	set method samtools
@@ -8,8 +21,7 @@ proc bam_sort_job {args} {
 	set refseq {}
 	cg_options bam_sort args {
 		-method {
-			if {$value ni {biobambam samtools alreadysorted}} {error "bamsort: unsupported -method $value"}
-			set method $value
+			set method [methods_bam_sort $value]
 		}
 		-sort {
 			if {$value ni {coordinate name hash}} {error "bamsort: unsupported -sort $value"}
@@ -61,9 +73,7 @@ proc cg_sam_sort {args} {
 	set refseq {}
 	cg_options bam_sort args {
 		-method {
-			if {$value eq "1"} {set value samtools}
-			if {$value ni {biobambam samtools gnusort}} {error "bamsort: unsupported -method $value"}
-			set method $value
+			set method [methods_bam_sort $value]
 		}
 		-sort {
 			if {$value ni {coordinate name hash}} {error "bamsort: unsupported -sort $value"}

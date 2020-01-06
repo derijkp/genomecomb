@@ -1,3 +1,16 @@
+proc methods_bam_markduplicates {args} {
+	set cmd bam_markduplicates
+	set supportedmethods {picard biobambam samtools sam}
+	if {[llength $args]} {
+		set value [lindex $args 0]
+		if {$value eq "1"} {set value [lindex $supportedmethods 0]}
+		if {$value ni $supportedmethods} {error "$cmd: unsupported -method $value"}
+		return $value
+	} else {
+		return $supportedmethods
+	}
+}
+
 proc bam_markduplicates_job {args} {
 	upvar job_logdir job_logdir
 	set method samtools
@@ -5,8 +18,7 @@ proc bam_markduplicates_job {args} {
 	set skips {}
 	cg_options bam_markduplicates args {
 		-method {
-			if {$value ni {1 picard biobambam samtools sam}} {error "bam_markduplicates: unsupported -method $value"}
-			set method $value
+			set method [methods_bam_markduplicates $value]
 		}
 		-skip {
 			lappend skips -skip $value
@@ -41,9 +53,7 @@ proc cg_bam_markduplicates {args} {
 	set refseq {}
 	cg_options bam_markduplicates args {
 		-method {
-			if {$value eq "1"} {set value samtools}
-			if {$value ni {picard biobambam samtools sam}} {error "bam_markduplicates: unsupported -method $value"}
-			set method $value
+			set method [methods_bam_markduplicates $value]
 		}
 		-inputformat - -if {
 			set inputformat $value

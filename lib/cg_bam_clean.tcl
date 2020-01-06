@@ -68,6 +68,7 @@ proc bam_clean_job {args} {
 			if {$resultfile eq $sourcefile} {
 				return $resultfile
 			} else {
+				analysisinfo_write $dep $target bamclean genomecomb bamclean_version [version genomecomb]
 				job bamclean-$root -deps {$sourcefile} -targets {$resultfile} -code {
 					hardcopy $dep $target
 				}
@@ -76,6 +77,7 @@ proc bam_clean_job {args} {
 			job bamclean-$root -deps {$sourcefile} -targets {$resultfile} -vars {
 				inputformat outputformat refseq
 			} -code {
+				analysisinfo_write $dep $target bamclean genomecomb bamclean_version [version genomecomb]
 				if {[file size $dep] > 0} {
 					exec {*}[convert_pipe -.$inputformat -.$outputformat -refseq $refseq] < $dep > $target
 				} else {
@@ -83,12 +85,14 @@ proc bam_clean_job {args} {
 				}
 			}
 		}
+		return $resultfile
 	}
 	# make pipe
 	set stack [get ::stacktraceonerror 0]
 	set deps {}
 	lappend deps $sourcefile
 	set pipe {}
+	set addanalysisinfo [list bamclean genomecomb bamclean_version [version genomecomb]]
 	set optsio {}
 	if {$inputcompressed eq ""} {
 		lappend optsio < $sourcefile
@@ -109,6 +113,8 @@ proc bam_clean_job {args} {
 				set compressionlevel [defcompressionlevel 5]
 			}
 			if {[llength $pipe]} {lappend pipe |}
+			set sortm [methods_bam_sort $sort]
+			lappend addanalysisinfo bamsort $sortm bamsort_version [version $sortm]
 			lappend pipe cg bam_sort -stack $stack -method $sort \
 				-inputformat $inputformat -outputformat $curoutputformat \
 				-compressionlevel $compressionlevel -threads $threads -refseq $refseq
@@ -124,6 +130,8 @@ proc bam_clean_job {args} {
 			set compressionlevel [defcompressionlevel 5]
 		}
 		if {[llength $pipe]} {lappend pipe |}
+		set removeduplicatesm [methods_bam_markduplicates $removeduplicates]
+		lappend addanalysisinfo removeduplicates $removeduplicatesm removeduplicates_version [version $removeduplicatesm]
 		lappend pipe cg bam_markduplicates -stack $stack -method $removeduplicates \
 			-inputformat $inputformat -outputformat $curoutputformat \
 			-compressionlevel $compressionlevel -threads $threads -refseq $refseq
@@ -146,6 +154,9 @@ proc bam_clean_job {args} {
 			set compressionlevel [defcompressionlevel 5]
 		}
 		if {[llength $pipe]} {lappend pipe |}
+		set realign [methods_realign $realign]
+		if {$realign eq "gatk"} {set realignm gatk3} else {set realignm $realign}
+		lappend addanalysisinfo realign $realign realign_version [version $realignm]
 		lappend pipe cg realign -stack $stack -method $realign -regionfile $regionfile -refseq $refseq \
 			-inputformat $inputformat -outputformat $curoutputformat \
 			-compressionlevel $compressionlevel -threads $threads
@@ -160,6 +171,7 @@ proc bam_clean_job {args} {
 			set compressionlevel [defcompressionlevel 5]
 		}
 		if {[llength $pipe]} {lappend pipe |}
+		lappend addanalysisinfo clipamplicons genomecomb clipamplicons_version [version genomecomb] clipampliconsfile [file tail $clipamplicons]
 		lappend pipe cg sam_clipamplicons -stack $stack \
 			-inputformat $inputformat -outputformat $curoutputformat -refseq $refseq \
 			-compressionlevel $compressionlevel \
@@ -175,13 +187,15 @@ proc bam_clean_job {args} {
 	job bamclean-$root -deps $deps -targets {
 		$resultfile
 	} -rmtargets $rmtargets -vars {
-		pipe sourcefile resultfile keep
+		pipe sourcefile resultfile keep addanalysisinfo
 	} -code {
-		analysisinfo_pipe_file $dep $target
+		# analysisinfo_pipe_file $dep $target
+eputsvars addanalysisinfo
+		analysisinfo_write $dep $target {*}$addanalysisinfo
 		if {![sam_empty $dep]} {
 			catch_exec {*}$pipe
 			file rename -force -- $resultfile.temp $resultfile
-			analysisinfo_pipe_stop
+			# analysisinfo_pipe_stop
 		} else {
 			hardcopy $dep $resultfile
 		}

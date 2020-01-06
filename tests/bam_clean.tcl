@@ -127,8 +127,8 @@ test bam_clean {bam_clean} {
 	cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 -sort 1 -removeduplicates 1 -realign 1 tmp/bwa.sam
 	set c [string trim [file_read tmp/rdsbwa.bam.analysisinfo]]
 	if {![string match [string trim [deindent {
-		bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
-		samtools	1.9 (using htslib 1.9)	samtools	1.9 (using htslib 1.9)	gatk	*
+		bamclean	bamclean_version	bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
+		genomecomb	0.100.1	samtools	1.9 (using htslib 1.9)	picard	2.21.3-SNAPSHOT	gatk	3.8-1-0-gf15c1c3ef
 	}]] $c]} {
 		error "error in analysisinfo:\n$c"
 	}

@@ -1,3 +1,20 @@
+proc methods_realign {args} {
+	set cmd realign
+	set supportedmethods [list gatk]
+	set start [expr {[string length cg_${cmd}] + 1}]
+	foreach name [array names ::auto_index cg_${cmd}_*] {
+		list_addnew supportedmethods [string range $name $start end]
+	}
+	if {[llength $args]} {
+		set value [lindex $args 0]
+		if {$value eq "1"} {set value [lindex $supportedmethods 0]}
+		if {$value ni $supportedmethods} {error "$cmd: unsupported -method $value"}
+		return $value
+	} else {
+		return $supportedmethods
+	}
+}
+
 proc cg_realign {args} {
 	set method gatk
 	set regionfile {}
@@ -10,8 +27,7 @@ proc cg_realign {args} {
 	set outputformat -
 	cg_options realign_gatk args {
 		-method {
-			if {$value eq "1"} {set value gatk}
-			set method $value
+			set method [methods_realign $value]
 		}
 		-regionfile {
 			set regionfile $value

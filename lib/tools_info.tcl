@@ -1,24 +1,7 @@
-proc analysisinfo_pipe_file {dep target args} {
-	analysisinfo_write $dep $target {*}$args
-	set ::env(ANALYSISINFO_PIPE_FILE) $target
-}
-
-proc analysisinfo_pipe_stop {} {
-	file delete $::env(ANALYSISINFO_PIPE_FILE).analysisinfo.old
-	unset ::env(ANALYSISINFO_PIPE_FILE)
-}
-
 proc analysisinfo_write {dep target args} {
 	global env
-	if {$dep eq "-" && [info exists env(ANALYSISINFO_PIPE_FILE)]} {
-		set dep $env(ANALYSISINFO_PIPE_FILE)
-	}
-	if {$target eq "-"} {
-		if {[info exists env(ANALYSISINFO_PIPE_FILE)]} {
-			set target $env(ANALYSISINFO_PIPE_FILE)
-		} else {
-			return
-		}
+	if {[file root $dep] eq "-" || [file_root $target] eq "-"} {
+		return
 	}
 	file mkdir [file dir $target]
 	set dep [gzroot $dep]
