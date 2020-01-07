@@ -1529,7 +1529,8 @@ proc cg_select {args} {
 		set qfields [tsv_select_expandfields $header $qfields qposs]
 		if {$usesort && [inlist $qfields ROW]} {set useaddrow 1}
 	} else {
-		set qfields [tsv_select_removefields $header $qfields qposs]
+		if {$usesort} {set temp [list_remove $header ROW]} else {set temp $header}
+		set qfields [tsv_select_removefields $temp $qfields qposs]
 	}
 	if {[llength $samples]} {
 		# only the given samples will be included
@@ -1728,7 +1729,7 @@ proc cg_select {args} {
 		lappend pipe [list cg exec $tclcode]
 	}
 # puts stderr -------------pipe-------------------
-# puts stderr pipe:[join $pipe " | "]
+# puts stderr "pipe: [join $pipe " | "]"
 # puts stderr ------------------------------------
 
 	if {$qfields ne ""} {

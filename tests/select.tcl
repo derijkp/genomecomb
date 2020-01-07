@@ -1481,4 +1481,16 @@ test select "not enough fields" {
 not enough fields (1 where at least 2 are needed) for line 1 (without comments): a
 } error
 
+test select "bugfix -s and -rf not enough fields" {
+	test_cleantmp
+	write_tab tmp/temp.tsv {
+		id	seq
+		1	a
+		2	b
+	}
+	exec cg select -s {id} -rf seq tmp/temp.tsv
+} {id
+1
+2}
+
 testsummarize
