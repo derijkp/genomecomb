@@ -20,11 +20,12 @@ proc searchpath {envvar args} {
 }
 
 proc picard {cmd args} {
+	set maxmem 4G
 	set picard [findpicard]
 	if {[file exists $picard/$cmd.jar]} {
-		catch_exec java -XX:ParallelGCThreads=1 -jar $picard/$cmd.jar {*}$args
+		catch_exec java -Xms1G -Xmx${maxmem} -Djava.io.tmpdir=[scratchdir]] -XX:ParallelGCThreads=1 -jar $picard/$cmd.jar {*}$args
 	} else {
-		catch_exec java -XX:ParallelGCThreads=1 -jar $picard/picard.jar $cmd {*}$args
+		catch_exec java -Xms1G -Xmx${maxmem} -Djava.io.tmpdir=[scratchdir]] -XX:ParallelGCThreads=1 -jar $picard/picard.jar $cmd {*}$args
 	}
 }
 
