@@ -792,7 +792,7 @@ test mergesorted {basic} {
 		chromosome	name	begin	other
 		chr1	t6	2000	c
 	}]\n
-	exec mergesorted \# 1 {0 2} tmp/vars1.tsv tmp/vars2.tsv tmp/vars3.tsv
+	exec mergesorted \# 1 {} {0 2} tmp/vars1.tsv tmp/vars2.tsv tmp/vars3.tsv
 } {# varcomment
 chromosome	name	begin	other
 chr1	t6	2000	c
@@ -824,7 +824,7 @@ test mergesorted {no header line, coments with @} {
 		chr1	t6	2000	c
 		chr2	t5	4100	b
 	}]\n
-	exec mergesorted @ 0 {0 2} tmp/vars1.tsv tmp/vars2.tsv tmp/vars3.tsv
+	exec mergesorted @ 0 {} {0 2} tmp/vars1.tsv tmp/vars2.tsv tmp/vars3.tsv
 } {@ varcomment
 @ varcomment 1
 chr1	t6	2000	c
@@ -833,6 +833,32 @@ chr1	t1	4000	a
 chr1	t4	4050	b
 chr1	t2	4100	a
 chr2	t3	4050	a
+chr2	t5	4100	b}
+
+test mergesorted {header} {
+	file_write tmp/vars1.tsv [deindent {
+		# varcomment
+		chromosome	name	begin	other
+		chr1	t1	4000	a
+	}]\n
+	file_write tmp/vars2.tsv [deindent {
+		# varcomment
+		chromosome	name	begin	other
+		chr1	t4	3000	b
+		chr1	t4	4050	b
+		chr2	t5	4100	b
+	}]\n
+	file_write tmp/vars3.tsv [deindent {
+		# varcomment
+		chromosome	name	begin	other
+		chr1	t6	2000	c
+	}]\n
+	exec mergesorted \# 1 {chr	n	b	o} {0 2} tmp/vars1.tsv tmp/vars2.tsv tmp/vars3.tsv
+} {chr	n	b	o
+chr1	t6	2000	c
+chr1	t4	3000	b
+chr1	t1	4000	a
+chr1	t4	4050	b
 chr2	t5	4100	b}
 
 testsummarize
