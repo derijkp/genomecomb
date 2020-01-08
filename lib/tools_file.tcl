@@ -68,7 +68,7 @@ proc scratchfile {{action {get}} {type file}} {
 
 proc filetemp {file {write 1} {ext 0}} {
 	if {$ext} {
-		set ext [file extension $file]
+		set ext [file_ext $file]
 	} else {
 		set ext ""
 	}
