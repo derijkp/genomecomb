@@ -1,4 +1,4 @@
-proc bwarefseq_job {refseq} {
+proc refseq_bwa_job {refseq} {
 	upvar job_logdir job_logdir
 	set refseq [file_absolute $refseq]
 	set bwarefseq $refseq.bwa/[file tail $refseq]
@@ -44,122 +44,74 @@ proc bwarefseq_job {refseq} {
 	return $bwarefseqfa
 }
 
-proc map_bwa_job {args} {
+proc cg_refseq_bwa args {
+	set args [job_init {*}$args]
+	set return [refseq_bwa_job {*}$args]
+	job_wait
+	return $return
+}
+
+proc refseq_bwa {refseq} {
 	upvar job_logdir job_logdir
+	set refseq [file_absolute $refseq]
+	set bwarefseq $refseq.bwa/[file tail $refseq]
+	set bwarefseqfa [file root $bwarefseq].fa
+	if {![file exists $bwarefseqfa]} {
+		error "The bwa version of the refseq does not exist (should be at $bwarefseqfa)
+You can create it using:
+cg refseq_bwa \'$refseq\'"
+	}
+	return $bwarefseqfa
+}
+
+proc cg_map_bwa {args} {
 	set paired 1
 	set readgroupdata {}
-	set pre {}
-	set skips {}
 	set threads 2
-	set keepsams 0
 	set fixmate 1
-	set aliformat {}
 	cg_options map_bwa args {
 		-paired - -p {
 			set paired $value
 		}
+		-x - -preset - -p {
+			# not used
+		}		
 		-readgroupdata {
 			set readgroupdata $value
 		}
 		-fixmate {
 			set fixmate $value
 		}
-		-pre {
-			set pre $value
-		}
-		-skips {
-			set skips $value
-		}
-		-keepsams {
-			set keepsams $value
-		}
 		-threads - -t {
 			set threads $value
 		}
-		-aliformat {
-			set aliformat $value
-		}
-	} {result refseq sample fastqfile1} 4 ... {
+	} {result refseq sample fastqfile1 fastqfile2} 4 5 {
 		align reads in fastq files to a reference genome using bwa-mem
 	}
-	if {$aliformat eq ""} {set aliformat [string range [file extension $result] 1 end]}
-	set files [list $fastqfile1 {*}$args]
-	if {![info exists job_logdir]} {
-		job_logdir [file dir $result]/log_jobs
-	}
-	array set a [list PL illumina LB solexa-123 PU $sample SM $sample]
-	if {$readgroupdata ne ""} {
-		array set a $readgroupdata
-	}
-	set readgroupdata [array get a]
+	set readgroupdata [map_readgroupdata $readgroupdata $sample]
+	set refseq [refseq $refseq]
 	dbdir [file dir $refseq]
-	set bwarefseq [bwarefseq_job $refseq]
-	set resultbase [file root $result]
-	set samfiles {}
-	set asamfiles {}
-	set num 1
+	set bwarefseq [refseq_bwa $refseq]
+	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
+	putslog "making $result"
+	analysisinfo_write $fastqfile1 $result aligner bwa aligner_version [version bwa] reference [file2refname $bwarefseq] aligner_paired $paired
 	if {!$paired} {
-		foreach file $files {
-			set name [file root [file tail $file]]
-			set target $resultbase-$name.sam
-			lappend samfiles $target
-			set analysisinfo [gzroot $target].analysisinfo
-			lappend asamfiles $analysisinfo
-			job bwa-$sample-$name -mem [job_mempercore 5G $threads] -cores $threads \
-			-deps [list $bwarefseq $file] \
-			-targets {$target $analysisinfo} \
-			-vars {readgroupdata sample paired threads} \
-			-skip [list $resultbase.bam] {*}$skips -code {
-				puts "making $target"
-				foreach {bwarefseq fastq} $deps break
-				analysisinfo_write $fastq $target aligner bwa aligner_version [version bwa] reference [file2refname $bwarefseq] aligner_paired 0
-				set rg {}
-				foreach {key value} $readgroupdata {
-					lappend rg "$key:$value"
-				}
-				exec bwa mem -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq > $target.temp 2>@ stderr
-				file rename -force -- $target.temp $target
-			}
+		set rg {}
+		foreach {key value} $readgroupdata {
+			lappend rg "$key:$value"
 		}
+		exec bwa mem -t $threads -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastqfile1 {*}$outpipe 2>@ stderr
 	} else {
 		if {$fixmate} {
 			set fixmate "| samtools fixmate -m -O sam - -"
 		}
-		if {[expr {[llength $files]%2}]} {
-			error "bwa needs even number of files for paired analysis"
+		if {![info exists fastqfile2]} {
+			error "bwa needs 2 files for paired analysis"
 		}
-		foreach {file1 file2} $files {
-			set name [file root [file tail $file1]]
-			set target $resultbase-$name.sam
-			lappend samfiles $target
-			set analysisinfo [gzroot $target].analysisinfo
-			lappend asamfiles $analysisinfo
-			job bwa-$sample-$name -mem [job_mempercore 5G $threads] -cores $threads \
-			-deps [list $bwarefseq $file1 $file2] \
-			-targets {$target $analysisinfo} \
-			-vars {readgroupdata sample paired threads fixmate} \
-			-skip [list $resultbase.bam] {*}$skips -code {
-				puts "making $target"
-				foreach {bwarefseq fastq1 fastq2} $deps break
-				analysisinfo_write $fastq1 $target aligner bwa aligner_version [version bwa] reference [file2refname $bwarefseq] aligner_paired 1
-				set rg {}
-				foreach {key value} $readgroupdata {
-					lappend rg "$key:$value"
-				}
-				exec bwa mem -t $threads -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastq1 $fastq2 {*}$fixmate > $target.temp 2>@ stderr
-				file rename -force -- $target.temp $target
-				file delete bwa1.fastq bwa2.fastq
-			}
+		set rg {}
+		foreach {key value} $readgroupdata {
+			lappend rg "$key:$value"
 		}
+		exec bwa mem -t $threads -M -R @RG\\tID:$sample\\t[join $rg \\t] $bwarefseq $fastqfile1 $fastqfile2 {*}$fixmate {*}$outpipe 2>@ stderr
 	}
-	sam_catmerge_job -skips $skips -name bwa2bam-$sample -outputformat $aliformat -refseq $refseq \
-		-deletesams [string is false $keepsams] -threads $threads $result {*}$samfiles
-}
-
-proc cg_map_bwa {args} {
-	set args [job_init {*}$args]
-	unset job_logdir
-	set return [map_bwa_job {*}$args]
-	job_wait
-	return $return
 }

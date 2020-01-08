@@ -10,22 +10,55 @@ test map_bwa {map_bwa basic} {
 	cg map_bwa -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
 	exec samtools view -h tmp/ali.bam > tmp/ali.sam
-	catch {exec diff -I {@PG	ID:bwa	PN:bwa} tmp/ali.sam data/bwa.sam}
+	cg sam_sort -sort name data/bwa.sam data/expected.sam
+	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam data/expected.sam}
 } 0
 
-test map_bwa {map_bwa multiple} {
+test map_bwa {map_bwa -paired 0} {
 	test_cleantmp
-	set temp [split [string trim [exec zcat data/seq_R1.fq.gz]] \n]
-	file_write tmp/seq1_R1.fq [join [lrange $temp 0 199] \n]\n
-	file_write tmp/seq2_R1.fq [join [lrange $temp 200 end] \n]\n
-	set temp [split [string trim [exec zcat data/seq_R2.fq.gz]] \n]
-	file_write tmp/seq1_R2.fq [join [lrange $temp 0 199] \n]\n
-	file_write tmp/seq2_R2.fq [join [lrange $temp 200 end] \n]\n
-	cg map_bwa -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq]]
+	file copy data/seq_R1.fq.gz tmp
+	cg map_bwa -stack 1 -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+	set expectdfile data/bwa.sam
+	set otherfields {AS XS MQ MC ms MD RG NM XA YS YT}
+	set removefields {MC MQ YS YT XS read ms mapquality mateunmapped ref2	begin2	strand2	tlen	pair	properpair}
+	exec samtools view tmp/ali.bam | cg sam2tsv -fields $otherfields \
+		| cg select -s {chromosome begin end} -rf $removefields > tmp/ali.tsv
+	exec samtools view $expectdfile | cg sam2tsv -fields $otherfields \
+		| cg select -s {chromosome begin end} -q {$read == 1} -rf $removefields > tmp/expected.tsv
+	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
+} 0
+
+test map_bwa {map_bwa to stdout} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
+	cg map_bwa -stack 1 -paired 1 -compressionlevel 1 -.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]] > tmp/ali.bam
 	# chr21:42730799-42762826
 	exec samtools view -h tmp/ali.bam > tmp/ali.sam
-	catch {exec diff -I {@PG	ID:bwa	PN:bwa} tmp/ali.sam data/bwa.sam}
+	cg sam_sort -sort name data/bwa.sam data/expected.sam
+	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam data/expected.sam}
 } 0
+
+test map_bwa {map_bwa refseq error} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
+	mklink $::refseqdir/hg19/genome_hg19.ifas tmp/genome_hg19.ifas
+	cg map_bwa -stack 1 -paired 1 tmp/ali.bam tmp/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+} {The bwa version of the refseq does not exist (should be at */tmp/genome_hg19.ifas.bwa/genome_hg19.fa)
+You can create it using:
+cg refseq_bwa *genome_hg19.ifas*} match error
+
+# This one takes to long to run every time
+#test map_bwa {map_bwa cg refseq_bwa} {
+#	test_cleantmp
+#	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
+#	mklink $::refseqdir/hg19/genome_hg19.ifas tmp/genome_hg19.ifas
+#	cg refseq_bwa tmp/genome_hg19.ifas
+#	cg map_bwa -stack 1 -paired 1 tmp/ali.bam tmp/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+#	exec samtools view -h tmp/ali.bam > tmp/ali.sam
+#	cg sam_sort -sort name data/bwa.sam data/expected.sam
+#	file delete -force [glob tmp/genome_hg19.ifas*]
+#	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam data/expected.sam}
+#} 0
 
 test map_bwa {map_bwa cram} {
 	test_cleantmp
@@ -33,7 +66,7 @@ test map_bwa {map_bwa cram} {
 	cg map_bwa -stack 1 -paired 1 tmp/ali.cram $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
 	dbdir $::refseqdir/hg19
-	exec samtools view -h tmp/ali.cram > tmp/ali.sam
+	exec samtools sort -O sam tmp/ali.cram > tmp/ali.sam
 	cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam tmp/ali.sam.tsv
 	cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam tmp/bwa.sam.tsv
 	catch {cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv}
@@ -43,9 +76,24 @@ test map_bowtie2 {map_bowtie2 basic} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	cg map_bowtie2 -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
-	exec samtools view tmp/ali.bam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} | cg select -rf {MC MQ} > tmp/ali.tsv
-	exec samtools view data/bowtie2.bam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} | cg select -rf {MC MQ} > tmp/expected.tsv
+	exec samtools view tmp/ali.bam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} | cg select -s {chromosome begin end} -rf {MC MQ} > tmp/ali.tsv
+	exec samtools view data/bowtie2.sam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} | cg select -s {chromosome begin end} -rf {MC MQ} > tmp/expected.tsv
 	catch {cg tsvdiff tmp/ali.tsv tmp/expected.tsv}
+} 0
+
+test map_bowtie2 {map_bowtie2 -paired 0} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz tmp
+	cg map_bowtie2 -stack 1 -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+	set expectdfile data/bowtie2.sam
+	set otherfields {AS XS MC MQ YS YT RG NM XA s1 s2 cm de rl ms}
+	set removefields {AS XS MC MQ YS YT RG NM XA s1 s2 cm de rl read ms mapquality mateunmapped ref2 begin2 strand2 tlen pair properpair}
+	exec samtools view tmp/ali.bam | cg sam2tsv -fields $otherfields \
+		| cg select -f {chromosome	begin	end	strand {qname="[string range $qname 0 end-2]"} *} \
+		| cg select -s {chromosome begin end} -rf $removefields > tmp/ali.tsv
+	exec samtools view $expectdfile | cg sam2tsv -fields $otherfields \
+		| cg select -s {chromosome begin end} -q {$read == 1} -rf $removefields > tmp/expected.tsv
+	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
 } 0
 
 #test map_minimap2 {map_minimap2 basic} {
@@ -67,18 +115,42 @@ test map_minimap2 {map_minimap2 paired} {
 	cg map_minimap2 -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
 	exec samtools view -h tmp/ali.bam > tmp/ali.sam
-	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms de rl} tmp/ali.sam tmp/ali.tsv
-	cg select -rf {de rl} tmp/ali.tsv tmp/alis.tsv
+	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms de rl} tmp/ali.sam \
+		| cg select -s - -rf {de rl ROW} > tmp/alis.tsv
 	cg sam2tsv -fields {RG NM AS nn tp cm s1 s2 MD MQ MC ms} data/minimap2-p.sam tmp/expected.tsv
 	catch {cg tsvdiff tmp/alis.tsv tmp/expected.tsv}
 } 0
+
+test map_minimap2 {map_minimap2 -paired 0} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz tmp
+	cg map_minimap2 -stack 1 -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+	set otherfields {AS XS MC MQ YS YT XS s1 s2 cm de rl ms}
+	set removefields {AS XS MC MQ YS YT XS s1 s2 cm de rl read ms mapquality mateunmapped ref2 begin2 strand2 tlen pair properpair}
+	exec samtools view tmp/ali.bam | cg sam2tsv -fields $otherfields \
+		| cg select -f {chromosome	begin	end	strand {qname="[string range $qname 0 end-2]"} *} \
+		| cg select -s {chromosome begin end} -rf $removefields > tmp/ali.tsv
+	exec samtools view data/minimap2-p.sam | cg sam2tsv -fields $otherfields \
+		| cg select -s {chromosome begin end} -q {$read == 1} -rf $removefields > tmp/expected.tsv
+	# we have one slight difference in alignment for unpaired alignement!
+	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
+} {diff tmp/ali.tsv tmp/expected.tsv
+header
+  chromosome	begin	end	strand	qname	qstart	qend	unmapped	secondary	qcfail	duplicate	supplementary	cigar	seqlen	seq	quality	other	XS
+25c25
+< chr21	42752084	42752180	-	SRR792091.1603286	0	95	0	0	0	0	0	91M1D4M5S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:1 nn:i:0 tp:A:P MD:Z:91^T4	
+---
+> chr21	42752084	42752175	-	SRR792091.1603286	0	91	0	0	0	0	0	91M9S	100	CCACGTCATTCTGAGGTTCGGATCTGGCAGCCGCTCCTCTCACTTCCTCGGTTCCTTCTCCTCTTCCTCAAGTCACCCCCACAGTGACCACCAGCACCAC	@<??@::CCCCC<(B@@@DCDDBACA<B@BBBAD@DCDDDCADBBDDFFHHA2HGGEDAHGGGIIIIIIIIHF@)IIIIHFIIIGHGHFFHHDBD:F@?@	RG:Z:NA19240m NM:i:0 nn:i:0 tp:A:P MD:Z:91	
+child process exited abnormally} error
 
 test map_minimap2 {error dir as refseq} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	file mkdir tmp/ref
 	cg map_minimap2 -paired 1 tmp/ali.bam tmp/ref NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
-} {could not properly index */tmp/ref: contains no sequences} error match
+} {The minimap2 version for preset sr of the refseq does not exist (should be at *tmp/ref.minimap2.sr)
+You can create it using:
+cg refseq_minimap2 '*tmp/ref' sr} error match
 
 test map_minimap2 {error missing fastq} {
 	test_cleantmp
@@ -89,25 +161,24 @@ test map_minimap2 {error missing fastq} {
 
 test map_ngmlr {map_ngmlr basic} {
 	test_cleantmp
-	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
-	cg map_ngmlr -stack 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+	cg zcat data/seq_R1.fq.gz data/seq_R2.fq.gz | cg bgzip > tmp/seq.fq.gz
+	cg map_ngmlr -stack 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m tmp/seq.fq.gz
 	# using samtools merge may result in differently (although still correctly) ordered bam each run
 	# so first check if sorted correctly (only chromosome and start)
 	cg sam2tsv tmp/ali.bam | cg select -f {qname chromosome begin e=$end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
-	cg checktsv tmp/ali.tsv
 	# now check contents (compare sorted)
 	cg sam2tsv tmp/ali.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
 	cg sam2tsv data/ngmlr.bam | cg select -s {chromosome begin end qname} -f {qname chromosome begin end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/expected.tsv
 	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
 } {}
 
-test map_ngmlr {map_ngmlr 7 files -m 2} {
+test map_ngmlr {map -method ngmlr 7 files -m 2} {
 	test_cleantmp
 	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
 	for {set i 3} {$i < 8} {incr i} {
 		file copy data/seq_R1.fq.gz tmp/seq_R$i.fq.gz
 	}
-	cg map_ngmlr -stack 1 -maxopenfiles 2 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+	cg map -method ngmlr -stack 1 -maxopenfiles 2 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
 	# using samtools merge may result in differently (although still correctly) ordered bam each run
 	# so first check if sorted correctly (only chromosome and start)
 	cg sam2tsv tmp/ali.bam | cg select -f {qname chromosome begin e=$end strand mapquality ref2 begin2 strand2 tlen unmapped mateunmapped read secondary qcfail duplicate supplementary cigar seqlen seq quality} > tmp/ali.tsv
@@ -136,5 +207,42 @@ test map_ngmlr {map_ngmlr 4 files -m 2} {
 	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
 	lindex [cg sam2tsv tmp/ali.bam | cg select -g all] end
 } {400}
+
+test map {map -method bwa basic} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
+	cg map -method bwa -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+	# chr21:42730799-42762826
+	exec samtools view -h tmp/ali.bam > tmp/ali.sam
+	cg sam_sort -sort coordinate data/bwa.sam data/expected.sam
+	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam data/expected.sam}
+} 0
+
+test map {map -method bwa -paired 0} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz tmp
+	cg map -method bwa -stack 1 -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
+	exec samtools view tmp/ali.bam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA YS YT} \
+		| cg select -s {chromosome begin end} \
+		-rf {MC MQ YS YT XS read ms mapquality mateunmapped ref2	begin2	strand2	tlen	pair	properpair} > tmp/ali.tsv
+	exec samtools view data/bwa.sam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA YS YT} \
+		| cg select -s {chromosome begin end} -q {$read == 1} \
+		-rf {MC MQ YS YT XS read ms mapquality mateunmapped ref2	begin2	strand2	tlen	pair	properpair} > tmp/expected.tsv
+	catch {cg tsvdiff tmp/ali.tsv tmp/expected.tsv}
+} 0
+
+test map {map -method bwa multiple} {
+	test_cleantmp
+	set temp [split [string trim [exec zcat data/seq_R1.fq.gz]] \n]
+	file_write tmp/seq1_R1.fq [join [lrange $temp 0 199] \n]\n
+	file_write tmp/seq2_R1.fq [join [lrange $temp 200 end] \n]\n
+	set temp [split [string trim [exec zcat data/seq_R2.fq.gz]] \n]
+	file_write tmp/seq1_R2.fq [join [lrange $temp 0 199] \n]\n
+	file_write tmp/seq2_R2.fq [join [lrange $temp 200 end] \n]\n
+	cg map -method bwa -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq]]
+	# chr21:42730799-42762826
+	exec samtools view -h tmp/ali.bam > tmp/ali.sam
+	catch {exec diff -I {@PG	ID:bwa	PN:bwa} tmp/ali.sam data/bwa.sam}
+} 0
 
 testsummarize

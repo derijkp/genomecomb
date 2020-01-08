@@ -46,7 +46,15 @@ job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas}
 }
 
 # make bwa version of genome
-bwarefseq_job genome_${build}.ifas
+refseq_bwa_job genome_${build}.ifas
+
+# make ngmlr version of genome
+refseq_ngmlr_job genome_${build}.ifas ont
+
+# make minimap2 versions of genome
+refseq_minimap2_job genome_${build}.ifas sr
+refseq_minimap2_job genome_${build}.ifas map-ont
+refseq_minimap2_job genome_${build}.ifas splice:hq
 
 # region databases (ucsc)
 # you can explicitely download info on a database using:

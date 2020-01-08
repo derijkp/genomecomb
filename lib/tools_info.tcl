@@ -1,3 +1,7 @@
+proc analysisinfo_file {file} {
+	return [gzroot $file].analysisinfo
+}
+
 proc analysisinfo_write {dep target args} {
 	global env
 	if {[file root $dep] eq "-" || [file_root $target] eq "-"} {
@@ -6,18 +10,20 @@ proc analysisinfo_write {dep target args} {
 	file mkdir [file dir $target]
 	set dep [gzroot $dep]
 	set target [gzroot $target]
+	set depanalysisinfo [analysisinfo_file $dep]
+	set targetanalysisinfo [analysisinfo_file $target]
 	if {![llength $args]} {
-		if {[file exists $dep.analysisinfo] && $dep ne $target} {
-			file copy -force $dep.analysisinfo $target.analysisinfo
+		if {[file exists $depanalysisinfo] && $dep ne $target} {
+			file copy -force $depanalysisinfo $targetanalysisinfo
 		}
 		return
 	}
-	if {[file exists $dep.analysisinfo]} {
+	if {[file exists $depanalysisinfo]} {
 		if {$dep eq $target} {
-			file rename -force -- $dep.analysisinfo $dep.analysisinfo.old
-			set f [open $dep.analysisinfo.old]
+			file rename -force -- $depanalysisinfo $depanalysisinfo.old
+			set f [open $depanalysisinfo.old]
 		} else {
-			set f [open $dep.analysisinfo]
+			set f [open $depanalysisinfo]
 		}
 		set fields [tsv_open $f]
 		foreach {field value} $args {
@@ -27,7 +33,7 @@ proc analysisinfo_write {dep target args} {
 				lappend fields $field
 			}
 		}
-		set o [open $target.analysisinfo w]
+		set o [open $targetanalysisinfo w]
 		puts $o [join $fields \t]
 		while {[gets $f line] != -1} {
 			set values [split $line \t]
@@ -59,8 +65,13 @@ proc analysisinfo_write {dep target args} {
 			lappend values $value
 		}
 	}
-	set o [open $target.analysisinfo w]
+	set o [open $targetanalysisinfo w]
 	puts $o [join $fields \t]
 	puts $o [join $values \t]
 	close $o
+}
+
+proc result_rename {src target} {
+	file rename -force -- $src $target
+	catch {file rename -force -- [analysisinfo_file $src] [analysisinfo_file $target]}
 }

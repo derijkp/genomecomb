@@ -121,10 +121,15 @@ job reg_${build}_sequencedgenome -deps {
 }
 
 # make bwa version of genome
-bwarefseq_job genome_${build}.ifas
+refseq_bwa_job genome_${build}.ifas
 
 # make ngmlr version of genome
-ngmlr_refseq_job genome_${build}.ifas ont
+refseq_ngmlr_job genome_${build}.ifas ont
+
+# make minimap2 versions of genome
+refseq_minimap2_job genome_${build}.ifas sr
+refseq_minimap2_job genome_${build}.ifas map-ont
+refseq_minimap2_job genome_${build}.ifas splice:hq
 
 job extragenome -deps {
 	genome_${build}.ifas

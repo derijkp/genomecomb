@@ -62,7 +62,7 @@ proc sv_gridss_job {args} {
 	job_logfile $destdir/sv_gridss_[file tail $resultfile] $destdir $cmdline \
 		{*}[versions gridss gnusort8 zst os]
 	# start
-	set bwarefseq [bwarefseq_job $refseq]
+	set bwarefseq [refseq_bwa_job $refseq]
 	## Produce gridss sv calls
 	set bamfileindex $bamfile.[indexext $bamfile]
 	set workdir $resultfile.gridssrun

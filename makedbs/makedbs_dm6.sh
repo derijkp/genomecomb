@@ -53,7 +53,15 @@ job genome_${build}_cindex -deps {$ifasfile} -targets {genome_${build}.ssa} -cod
 }
 
 # make bwa version of genome
-bwarefseq_job genome_${build}.ifas
+refseq_bwa_job genome_${build}.ifas
+
+## make ngmlr version of genome
+#refseq_ngmlr_job genome_${build}.ifas ont
+#
+## make minimap2 versions of genome
+#refseq_minimap2_job genome_${build}.ifas sr
+#refseq_minimap2_job genome_${build}.ifas map-ont
+#refseq_minimap2_job genome_${build}.ifas splice:hq
 
 job reg_${build}_sequencedgenome -vars {dest build} -deps {genome_${build}.ifas} -targets {extra/reg_${build}_sequencedgenome.tsv.zst} -code {
 	exec cg calcsequencedgenome --stack 1 $dep {*}[compresspipe $target 12] > $target.temp
