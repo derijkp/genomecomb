@@ -189,13 +189,10 @@ proc bam_clean_job {args} {
 	} -rmtargets $rmtargets -vars {
 		pipe sourcefile resultfile keep addanalysisinfo
 	} -code {
-		# analysisinfo_pipe_file $dep $target
-eputsvars addanalysisinfo
 		analysisinfo_write $dep $target {*}$addanalysisinfo
 		if {![sam_empty $dep]} {
 			catch_exec {*}$pipe
 			file rename -force -- $resultfile.temp $resultfile
-			# analysisinfo_pipe_stop
 		} else {
 			hardcopy $dep $resultfile
 		}
