@@ -720,7 +720,7 @@ test renamesamples {basic} {
 	cg razip tmp/test/compar/compar-test.tsv
 	cg zst tmp/test/samples/sample1/var-sample1.tsv
 	cg renamesamples tmp/test sample1 new1 sample2 new2 sample3 new3
-	lsort -dict [glob tmp/test/* tmp/test/*/* tmp/test/*/*/*]
+	bsort [glob tmp/test/* tmp/test/*/* tmp/test/*/*/*]
 } {tmp/test/compar tmp/test/compar/annot_compar-test.tsv tmp/test/compar/compar-test.tsv.index tmp/test/compar/compar-test.tsv.index/multicompar tmp/test/compar/compar-test.tsv.rz tmp/test/samples tmp/test/samples/new1 tmp/test/samples/new1/sreg-new1.tsv tmp/test/samples/new1/var-new1.tsv.zst tmp/test/samples/new2 tmp/test/samples/new2/sreg-new2.tsv tmp/test/samples/new2/var-new2.tsv tmp/test/samples/new3 tmp/test/samples/new3/prevar-new3.tsv tmp/test/samples/new3/sreg-new3.tsv tmp/test/samples/new3/var-new3.tsv}
 
 test tsv2bed {basic} {
@@ -1131,7 +1131,7 @@ test fasta2cramref {cg_fasta2cramref} {
 	puts $o "CAGACATGGACCCTGGCTCCTCCAGTTCTCTGGATCCCTCACTGG"
 	close $o
 	cg fasta2cramref tmp/src.fas tmp/forcram
-	list [lsort -dict [glob tmp/forcram/*]] \
+	list [bsort [glob tmp/forcram/*]] \
 		[file_read tmp/forcram/288894134ca536ab42862c6bc10abe50] \
 		[file_read tmp/forcram/9ae0d1e948e7f87aa96f9e1bc6cfe86b] \
 		[file_read tmp/forcram/mapping.tsv]

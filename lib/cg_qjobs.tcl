@@ -29,7 +29,7 @@ proc cg_qjobs {args} {
 		}
 		lappend result $resultline
 	}
-	set result [lsort -dictionary -index 0 $result]
+	set result [bsort -index 0 $result]
 	puts [join {id tasks state submissiontime starttime priority JAT_prio owner queue slots run runversion name} \t]
 	foreach line $result {
 		puts [join [lrange $line 1 end] \t]

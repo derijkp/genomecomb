@@ -82,7 +82,7 @@ proc tcl::mathfunc::lsort {args} {
 	foreach value $args {
 		lappend result {*}[split $value ";, "]
 	}
-	join [ssort -n $result] ,
+	join [bsort $result] ,
 }
 
 proc tcl::mathfunc::vector {args} {
@@ -122,7 +122,7 @@ proc tcl::mathfunc::lmode args {
 }
 
 proc tcl::mathfunc::lsort args {
-	join [::lsort -dict [concat_vect $args]] ,
+	join [::bsort [concat_vect $args]] ,
 }
 
 proc tcl::mathfunc::vfunc {args} {

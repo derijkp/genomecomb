@@ -37,7 +37,7 @@ proc downloaddb {path build dbname} {
 	if {![file exists $temp/$dbname.txt.gz]} {
 		set single 0
 		wgetfiles ftp://hgdownload.cse.ucsc.edu/goldenPath/$build/database/chr*_$dbname.txt.gz $temp
-		set files [ssort -natural [glob -nocomplain $temp/chr*_$dbname.txt.gz]]
+		set files [bsort [glob -nocomplain $temp/chr*_$dbname.txt.gz]]
 		if {![llength $files]} {
 			error "Could not download $dbname.txt.gz"
 		}

@@ -199,7 +199,7 @@ scrolledgraph method sort {sortcol} {
 	} else {
 		set list [$sortv range 0 $lastpos]
 	}
-	set slist [ssort -natural $list]
+	set slist [bsort $list]
 	if {$list eq $slist} return
 	set neworder [list_cor $list $slist]
 	set others {}
@@ -342,7 +342,7 @@ scrolledgraph method addscatter {table xcol ycol datacols} {
 	set header [list_shift table]
 	set xpos [lsearch $header $xcol]
 	set ypos [lsearch $header $ycol]
-	# set table [ssort -natural -index $xpos $table]
+	# set table [bsort -index $xpos $table]
 	# x
 	set xs [list_subindex $table $xpos]
 	vector create ::$object.x

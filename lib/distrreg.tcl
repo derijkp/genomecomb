@@ -24,7 +24,7 @@ proc distrreg_regs {regfile refseq} {
 			regsub {_.*$} $chr _ chr
 			set a($chr) 1
 		}
-		return [ssort -natural [array names a]]
+		return [bsort [array names a]]
 	} elseif {$regfile in "schr schromosome"} {
 		return [join [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai] " "]
 	}

@@ -35,7 +35,7 @@ proc help_get {action} {
 
 proc help_actions {} {
 	global appdir
-	set files [ssort -natural [list_concat [dirglob $appdir/lib/ cg_*.wiki] [dirglob $appdir/lib-exp/ cg_*.wiki]]]
+	set files [bsort [list_concat [dirglob $appdir/lib/ cg_*.wiki] [dirglob $appdir/lib-exp/ cg_*.wiki]]]
 	set list {}
 	foreach file $files {
 		set action [string range [file root [file tail $file]] 3 end]
@@ -46,7 +46,7 @@ proc help_actions {} {
 
 proc help_docs {} {
 	global appdir
-	set files [ssort -natural [dirglob $appdir/docs/ *.wiki]]
+	set files [bsort [dirglob $appdir/docs/ *.wiki]]
 	set list {}
 	foreach file $files {
 		set action [string range [file root [file tail $file]] 0 end]

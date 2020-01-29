@@ -49,7 +49,7 @@ proc cg_download_phenotype {args} {
 	gzclose $f
 	set o [open $tempdir/phenotype.tsv w]
 	puts $o "gene\tphenotype_description"
-	foreach gene [lsort -dict [array names a]] {
+	foreach gene [bsort [array names a]] {
 		foreach pheno $a($gene) {
 			puts $o $gene\t$pheno
 		}

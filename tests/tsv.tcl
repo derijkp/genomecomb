@@ -476,7 +476,7 @@ test indexdir_cache {tsv_count invalid cache that cannot be overwritten in sib i
 test tsv_split {split} {
 	test_cleantmp
 	exec cg split data/reg4.tsv tmp/split- .tsv
-	list [lsort -dict [glob tmp/*]] [file_read tmp/split-3.tsv]
+	list [bsort [glob tmp/*]] [file_read tmp/split-3.tsv]
 } {{tmp/split-1.tsv tmp/split-2.tsv tmp/split-3.tsv tmp/split-M.tsv tmp/split-X.tsv tmp/split-Y.tsv} {## header
 ##
 test	chromosome	begin	end	test2
@@ -487,7 +487,7 @@ test tsv_split {split compressed} {
 	test_cleantmp
 	exec cg split data/reg4.tsv tmp/split- .tsv.zst
 	exec cg zcat tmp/split-3.tsv.zst > tmp/split-3.tsv
-	list [lsort -dict [glob tmp/*]] [file_read tmp/split-3.tsv]
+	list [bsort [glob tmp/*]] [file_read tmp/split-3.tsv]
 } {{tmp/split-1.tsv.zst tmp/split-2.tsv.zst tmp/split-3.tsv tmp/split-3.tsv.zst tmp/split-M.tsv.zst tmp/split-X.tsv.zst tmp/split-Y.tsv.zst} {## header
 ##
 test	chromosome	begin	end	test2
@@ -498,7 +498,7 @@ test tsv_split {split compressed sorted} {
 	test_cleantmp
 	exec cg split -s 1 data/reg4.tsv tmp/split- .tsv.zst
 	exec cg zcat tmp/split-3.tsv.zst > tmp/split-3.tsv
-	list [lsort -dict [glob tmp/*]] [file_read tmp/split-3.tsv]
+	list [bsort [glob tmp/*]] [file_read tmp/split-3.tsv]
 } {{tmp/split-1.tsv.zst tmp/split-2.tsv.zst tmp/split-3.tsv tmp/split-3.tsv.zst tmp/split-M.tsv.zst tmp/split-X.tsv.zst tmp/split-Y.tsv.zst} {## header
 ##
 test	chromosome	begin	end	test2
@@ -511,7 +511,7 @@ test tsv_split {split compressed sorted partly done} {
 	file delete tmp/split-2.tsv.zst
 	exec cg split -s 1 data/reg4.tsv tmp/split- .tsv.zst 2> /dev/null
 	exec cg zcat tmp/split-3.tsv.zst > tmp/split-3.tsv
-	list [lsort -dict [glob tmp/*]] [file_read tmp/split-3.tsv]
+	list [bsort [glob tmp/*]] [file_read tmp/split-3.tsv]
 } {{tmp/split-1.tsv.zst tmp/split-2.tsv.zst tmp/split-3.tsv tmp/split-3.tsv.zst tmp/split-M.tsv.zst tmp/split-X.tsv.zst tmp/split-Y.tsv.zst} {## header
 ##
 test	chromosome	begin	end	test2
@@ -521,7 +521,7 @@ t	chr3	1000	1100	t2
 test tsv_split {split stdin} {
 	test_cleantmp
 	exec cat data/reg4.tsv | cg split -- - tmp/split- .tsv
-	list [lsort -dict [glob tmp/*]] [file_read tmp/split-3.tsv]
+	list [bsort [glob tmp/*]] [file_read tmp/split-3.tsv]
 } {{tmp/split-1.tsv tmp/split-2.tsv tmp/split-3.tsv tmp/split-M.tsv tmp/split-X.tsv tmp/split-Y.tsv} {## header
 ##
 test	chromosome	begin	end	test2
@@ -681,7 +681,7 @@ test tsv_paste {7 files > maxopenfiles -o} {
 	set files [makepastetest 7]
 	exec cg paste -m 5 -o tmp/result.tsv {*}$files >@ stdout 2>@ stderr
 	exec diff tmp/result.tsv tmp/expected.tsv
-	lsort -dict [glob tmp/*]
+	bsort [glob tmp/*]
 } {tmp/expected.tsv tmp/result.tsv tmp/result.tsv.index tmp/sample1.tsv tmp/sample2.tsv tmp/sample3.tsv tmp/sample4.tsv tmp/sample5.tsv tmp/sample6.tsv tmp/vars1.tsv}
 
 test tsv_paste {8 files > maxopenfiles -o} {

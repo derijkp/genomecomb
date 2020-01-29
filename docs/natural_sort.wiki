@@ -1,0 +1,46 @@
+= natural sort =
+
+Most software uses an ASCII or lexical sort. This often results in an order that is
+unexpected by most people, e.g. chr11 sorted before chr2. 
+A natural sort interprets strings with embedded numbers in a way that
+seems more natural to most people (e.g. chr1,chr2,chr11)
+
+All sorting in genomecomb uses a natural sort that can sort both strings and numbers as
+well as combinations of these. This sorting is very important because most
+of the genomecomb tools process large files without loading them into
+memory by going over them line by line. This is only possible if they are properly sorted.
+
+There is no standard, well defined way to do a natural sort.
+While the chr2,chr11 case is obvious, there are quite a few less clear
+cases with multiple possible ways to handle them. Files sorted using
+another natural sort algorithm might run into these.
+Below I descibe how the genomecomb handles natural sort.
+
+* Strings are sorted alphabetically (based largely on ASCII order), not taking into account case
+except as a secondary measure (if the strings are the same except for case), e.g. A,a,MRNA,mRNA,mrna
+(Differences from ASCII: * sorts first, + sorts after the digits)
+
+* Numbers are sorted according to their numerical value; they sort before strings, except strings
+starting with whitespace or an asterix (*). (The asterix
+because it gets sam files to sort as expected without further processing.)
+
+* Elements are recognized as a number if they conform to the
+number pattern (up to -10.10e-10) at the start of the element or after
+whitespace. Genomecomb takes into account negative, decimal and scientific
+notation for sorting.
+
+* Embedded numbers are numbers that are not at the start of an element
+(e.g. chr1,chr2,chr10). Embedded numbers are also sorted according to
+numerical value, but only based on the integer part (i.e if present -,e,+
+are considered part of the string in this case). e.g. in chr-1 we do not
+interpret the - as a minus, giving us the following sort: chr-1,chr-2,chr-10
+
+* Even if numbers have string elements AFTER them, they will be interpreted
+as full numbers, e.g. 0.1g,0.10g,0.2g
+
+* If the number part is equal, furter sorting is based on the string
+part after it (alphabetical), e.g. -2,-1a,-1b
+
+* The string part after a number can contain embedded numbers (e.g. -2,-1a,-1a2,-1a10).
+Everything after the number at the start will be interpreted as a string with potential
+embedded numbers, even if it would be a number on its own (-2,-1-1,-1-2,-1-10)

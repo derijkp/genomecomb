@@ -210,14 +210,14 @@ proc jobtest {args} {
 	}
 	job all.txt -vars header -deps {^$destdir/sum-(.*)\.txt$} -targets {$destdir/all.txt} -code {
 		file_write $target.temp $header\n
-		exec cat {*}[lsort -dict $deps] >> $target.temp
+		exec cat {*}[bsort $deps] >> $target.temp
 		file rename -force -- $target.temp $target
 	}
 	set keepdir [pwd]
 	cd $destdir
 	job all2.txt -vars header -deps {^sum2-(.*)\.txt$} -targets {all2.txt} -code {
 		file_write $target.temp $header\n
-		exec cat {*}[lsort -dict $deps] >> $target.temp
+		exec cat {*}[bsort $deps] >> $target.temp
 		file rename -force -- $target.temp $target
 	}
 	cd $keepdir
@@ -330,7 +330,7 @@ test job "basic chain $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read test3.txt]]
+	set result [list [bsort [glob *]] [file_read test3.txt]]
 	cd $::testdir
 	set result
 } {{log.*.finished test1.txt test2.txt test3.txt} {test1
@@ -351,7 +351,7 @@ test job "foreach $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read rtest1.txt]]
+	set result [list [bsort [glob *]] [file_read rtest1.txt]]
 	cd $::testdir
 	set result
 } {{log.*.finished rtest1.txt rtest2.txt test1.txt test2.txt} {rtest1
@@ -376,7 +376,7 @@ test job "chained foreach $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read final1.txt]]
+	set result [list [bsort [glob *]] [file_read final1.txt]]
 	cd $::testdir
 	set result
 } {{final1.txt log.*.finished rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
@@ -401,7 +401,7 @@ test job "chained foreach with glob match $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read final1.txt]]
+	set result [list [bsort [glob *]] [file_read final1.txt]]
 	cd $::testdir
 	set result
 } {{final1.txt log.*.finished rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
@@ -430,7 +430,7 @@ test job "chained jobglob $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read final1.txt]]
+	set result [list [bsort [glob *]] [file_read final1.txt]]
 	cd $::testdir
 	set result
 } {{final1.txt log.*.finished rtest1.txt rtest2.txt test1.txt test2.txt} {frtest1
@@ -460,7 +460,7 @@ test job "chained jobglob spaces in name $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read {final 1.txt}]]
+	set result [list [bsort [glob *]] [file_read {final 1.txt}]]
 	cd $::testdir
 	set result
 } {{{final 1.txt} log.*.finished {rtest 1.txt} {rtest 2.txt} {test 1.txt} {test 2.txt}} {frtest1
@@ -485,7 +485,7 @@ test job "basic chain --force 0 $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read test3.txt]]
+	set result [list [bsort [glob *]] [file_read test3.txt]]
 	cd $::testdir
 	set result
 } {{log.*.finished test1.txt test2.txt test3.txt} {error3
@@ -510,7 +510,7 @@ test job "basic chain --force 1 $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read test2.txt] [file_read test3.txt]]
+	set result [list [bsort [glob *]] [file_read test2.txt] [file_read test3.txt]]
 	cd $::testdir
 	set result
 } {{log.*.finished test1.txt test2.txt test3.txt} {test1
@@ -540,7 +540,7 @@ test job "time chain $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read test2.txt] [file_read test3.txt] [file_read test3.txt.old]]
+	set result [list [bsort [glob *]] [file_read test2.txt] [file_read test3.txt] [file_read test3.txt.old]]
 	cd $::testdir
 	set result
 } {{log.*.finished test1.txt test2.txt test3.txt test3.txt.old} {error2
@@ -564,7 +564,7 @@ test job "missing dep -optional 1 $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read test2.txt]]
+	set result [list [bsort [glob *]] [file_read test2.txt]]
 	cd $::testdir
 	set result
 } {{log.*.finished test1.txt test2.txt} {test1
@@ -585,7 +585,7 @@ test job "missing dep -optional 0 $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read test2.txt]]
+	set result [list [bsort [glob *]] [file_read test2.txt]]
 	cd $::testdir
 	set result
 } {error trying to run job jobmissing:
@@ -605,7 +605,7 @@ test job "missing dep -optional 0 -skipjoberrors 1 $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read test2.txt]]
+	set result [list [bsort [glob *]] [file_read test2.txt]]
 	cd $::testdir
 	set result
 } {{log.*.finished test1.txt test2.txt} {test1
@@ -621,7 +621,7 @@ test job "basic jobtest $testname" {
 	job_wait
 	gridwait
 	set result [list \
-		[lsort -dict [glob test/*]] \
+		[bsort [glob test/*]] \
 		[glob test/log_jobs/all.txt.log] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
@@ -646,7 +646,7 @@ test job "basic status $testname" {
 	job_wait
 	gridwait
 	set result [list \
-		[lsort -dict [glob test/*]] \
+		[bsort [glob test/*]] \
 		[glob test/log_jobs/all.txt.log] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
@@ -678,7 +678,7 @@ test job "--force 0 $testname" {
 	job_wait
 	gridwait
 	set result [list \
-		[lsort -dict [glob test/*]] \
+		[bsort [glob test/*]] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
 	]
@@ -704,7 +704,7 @@ test job "--force 1 $testname" {
 	job_wait
 	gridwait
 	set result [list \
-		[lsort -dict [glob test/*]] \
+		[bsort [glob test/*]] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
 	]
@@ -733,7 +733,7 @@ test job "time $testname" {
 	job_wait
 	gridwait
 	set result [list \
-		[lsort -dict [glob test/*]] \
+		[bsort [glob test/*]] \
 		[file_read test/all.txt] \
 		[file_read test/sum2-test3.txt] \
 	]
@@ -757,7 +757,7 @@ test job "-skip: not present $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {log.*.finished result.txt} match
@@ -773,7 +773,7 @@ test job "-skip: only one present $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {log.*.finished result.txt skip1.txt} match
@@ -790,7 +790,7 @@ test job "-skip: all present $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {log.*.finished skip1.txt skip2.txt} match
@@ -805,7 +805,7 @@ test job "-skip -skip: none present $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {log.*.finished result.txt} match
@@ -821,7 +821,7 @@ test job "-skip -skip: one present $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {log.*.finished skip2.txt} match
@@ -840,7 +840,7 @@ test job "-skip: chain $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {log.*.finished result.txt} match
@@ -856,7 +856,7 @@ test job "-skip: sone deps do not exist" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {log.*.finished result.txt} match
@@ -910,7 +910,7 @@ test job "no -targets $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {dep.txt log.*.finished result.txt} match
@@ -925,7 +925,7 @@ test job "no -targets dep not found $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {log.*.finished} match
@@ -940,7 +940,7 @@ test job "no -targets dep not found not optional $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {error trying to run job testnotarget:
@@ -958,7 +958,7 @@ test job "no -checkcompressed 1 (default) dep $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {dep.txt.rz log.*.finished result.txt} match
@@ -975,7 +975,7 @@ test job "no -checkcompressed 0 dep $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {error trying to run job testcheckcompressed:
@@ -995,7 +995,7 @@ test job "no -checkcompressed 1 (default) targets $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {dep.txt log.*.finished target.txt.rz} match
@@ -1014,7 +1014,7 @@ test job "no -checkcompressed 1 (default) dep $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {dep.txt log.*.finished result.txt target.txt target.txt.rz} match
@@ -1035,7 +1035,7 @@ test job "rmtargets1 $testname" {
 	job_wait
 	gridwait
 	set temp [file_read log_jobs/data2.log]
-	set result [list [lsort -dict [glob *]] [regexp {missing dependency "data1.txt"} $temp]]
+	set result [list [bsort [glob *]] [regexp {missing dependency "data1.txt"} $temp]]
 	cd $::testdir
 	set result
 } {{log.*.finished log_jobs} 1} match
@@ -1062,7 +1062,7 @@ test job "rmtargets2 $testname" {
 	job_wait
 	gridwait
 	set temp [file_read log_jobs/data3.log]
-	set result [list [lsort -dict [glob *]] [regexp {missing dependency "data1.txt"} $temp]]
+	set result [list [bsort [glob *]] [regexp {missing dependency "data1.txt"} $temp]]
 	cd $::testdir
 	set result
 } {{data2.txt log.*.finished log_jobs} 1} match
@@ -1085,7 +1085,7 @@ test job "do not run if deps not done $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]]]
+	set result [list [bsort [glob *]]]
 	cd $::testdir
 	set result
 } {{data1.txt log.*.error log_jobs}} match
@@ -1108,7 +1108,7 @@ test job "rmtargets with gzip $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read result.txt]]
+	set result [list [bsort [glob *]] [file_read result.txt]]
 	cd $::testdir
 	set result
 } {{data.txt.gz log.*.finished result.txt} test1} match
@@ -1133,7 +1133,7 @@ test job "rmtargets with gzip exists $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read result.txt]]
+	set result [list [bsort [glob *]] [file_read result.txt]]
 	cd $::testdir
 	set result
 } {{data.txt.gz log.*.finished result.txt} testpre} match
@@ -1156,7 +1156,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets $testname" {
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {data.txt.rz log.*.finished} match
@@ -1181,7 +1181,7 @@ test job "rmtargets and -checkcompressed 0 on previous targets write one first $
 	}
 	job_wait
 	gridwait
-	set result [lsort -dict [glob *]]
+	set result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {data.txt.rz log.*.finished} match
@@ -1206,7 +1206,7 @@ test job "rmtargets afterwards with gzip exists $testname" {
 	}
 	job_wait
 	gridwait
-	set result [list [lsort -dict [glob *]] [file_read result.txt]]
+	set result [list [bsort [glob *]] [file_read result.txt]]
 	cd $::testdir
 	set result
 } {{data.txt.gz log.*.finished result.txt} testpre} match
@@ -1316,7 +1316,7 @@ test job "basic chain rerun $testname" {
 	gridwait
 	after 10
 	set result {}
-	lappend result [lsort -dict [glob *]]
+	lappend result [bsort [glob *]]
 	test_job_init
 	job job1 -deps {test1.txt} -targets {test2.txt} -code {
 		set c [file_read $dep]
@@ -1328,7 +1328,7 @@ test job "basic chain rerun $testname" {
 	}
 	job_wait
 	gridwait
-	lappend result [lsort -dict [glob *]]
+	lappend result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {{log.*.error log_jobs test1.txt test2.txt} {log.*.error log.*.finished test1.txt test2.txt test3.txt}} match
@@ -1350,7 +1350,7 @@ test job "job_update -r 1 $testname" {
 	gridwait
 	after 10
 	set result {}
-	lappend result [lsort -dict [glob *]]
+	lappend result [bsort [glob *]]
 	file delete -force log_jobs
 	test_job_init
 	job job1 -deps {test1.txt} -targets {test2.txt} -code {
@@ -1364,7 +1364,7 @@ test job "job_update -r 1 $testname" {
 	job_wait
 	gridwait
 	cg job_update -r 1 [lindex [glob log.*.finished] 0]
-	lappend result [lsort -dict [glob *]]
+	lappend result [bsort [glob *]]
 	cd $::testdir
 	set result
 } {{log.*.error log_jobs test1.txt test2.txt} {log.*.finished test1.txt test2.txt test3.txt}} match
@@ -1400,7 +1400,7 @@ if {$testname eq "-d sge"} {
 		}
 		job_wait
 		gridwait
-		set result [list [lsort -dict [glob *]] [file_read test2.txt]]
+		set result [list [bsort [glob *]] [file_read test2.txt]]
 		cd $::testdir
 		set result
 	} {Cannot submit job to sge: it has a comma in the output file *job1.out, which grid engine sometimes has problems with} match error

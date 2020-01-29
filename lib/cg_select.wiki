@@ -26,7 +26,7 @@ indicating compression (e.g. .zst), the output file will be compressed using the
 All non-sample related fields (those without a -) will be included. The sample nnames may contain wildcards (*)
 ; -samplesfile file: same as the -samples option, but the samples are given in a file (one sample per line, no header)
 ; -ssamples samples: same as -samples, but the order of fields in the file will be changed, so that samples are sorted as in the parameter
-; -s sortfields: sort on given fields (uses natural sort, so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
+; -s sortfields: sort on given fields using [[natural_sort|natural sort]], so that e.g. 'chr1 chr2 chr10' will be sorted correctly)
 If a sort field is prepended with an -, the sort will be reversed for that field.
 If **sortfields** is "-", the default sort fields will be used (chromosome,begin,end,type,alt).
 This will also accept name variations of the fields, such as chrom instead of chromosome.

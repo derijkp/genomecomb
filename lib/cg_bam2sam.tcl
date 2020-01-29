@@ -38,7 +38,7 @@ proc cg_bam2sam {args} {
 			set line [lindex $header $pos]
 			if {![regexp ^@SQ $line]} break
 		}
-		set list [ssort -n $list]
+		set list [bsort $list]
 		puts $o [join $list \n]
 		set len [llength $header]
 		while {$pos < $len} {

@@ -1272,10 +1272,10 @@ test select_group {group 3 bugcheck} {
  		3	3	1	1	1
 	}
 	exec cg select -g year -gc {A * B * C * count} tmp/temp.tsv
-} {year	count-1-1-1	count-1-1-0	count-1-0-0
+} {year	count-1-0-0	count-1-1-0	count-1-1-1
 1	0	1	0
-2	0	0	1
-3	1	0	0}
+2	1	0	0
+3	0	0	1}
 
 test select_group {group 3 bugcheck filter with * in colquery} {
 	write_tab tmp/temp.tsv {

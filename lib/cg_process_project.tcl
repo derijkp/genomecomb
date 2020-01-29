@@ -199,7 +199,7 @@ proc process_project_job {args} {
 			set a($sample) 1
 		}
 	}
-	set samples [ssort -natural [array names a]]
+	set samples [bsort [array names a]]
 	set poss [list_find -regexp $samples -]
 	if {[llength $poss]} {
 		error "- is not allowed in sample names. The following sample name(s) have a -: [list_sub $samples $poss]"

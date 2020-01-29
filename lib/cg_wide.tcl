@@ -73,7 +73,7 @@ proc cg_wide {args} {
 		close $f
 		set tempfile $file
 	}
-	set samples [lsort -dict [array names a]]
+	set samples [bsort [array names a]]
 	# sort ?
 	if {$sort} {
 		putslog "Sorting"

@@ -11,7 +11,7 @@ proc searchpath {envvar args} {
 		foreach pattern $args {
 			foreach dir $dirlist {
 				if {![catch {glob $dir/$pattern} dirs]} {
-					return [lindex [lsort -dict $dirs] end]
+					return [lindex [bsort $dirs] end]
 				}
 			}
 		}

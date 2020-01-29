@@ -129,7 +129,7 @@ proc test_genomecombdir {} {
 	file copy data/sreg-annot1.sft $samplesdir/sample1/sreg-sample1.tsv
 	file copy data/sreg-annot2.sft $samplesdir/sample2/sreg-sample2.tsv
 	file copy data/sreg-annot2.sft $samplesdir/sample3/sreg-sample3.tsv
-	cg multicompar -reannot -split 1 $expdir/compar/compar-test.tsv {*}[lsort -dict [glob $samplesdir/*/var-*.tsv]]
+	cg multicompar -reannot -split 1 $expdir/compar/compar-test.tsv {*}[bsort [glob $samplesdir/*/var-*.tsv]]
 	file delete $expdir/compar/compar-test.tsv.reannot
 	file delete $expdir/compar/compar-test.tsv.old
 	# exec diff $expdir/compar/compar-test.tsv data/expected-multicompar-split-reannot.sft
@@ -222,7 +222,7 @@ proc write_sam {file data} {
 	set o [open $file w]
 	puts $o [deindent $::sam_header]
 	close $o
-	exec gnusort8 -t \t -B -s -k3,3 -k4,4 -k1,1 $tempfile >> $file
+	exec gnusort8 -t \t -N -s -k3,3 -k4,4 -k1,1 $tempfile >> $file
 }
 
 proc write_vcf {file data {extracomment {}} {extrainfo {}}} {

@@ -115,7 +115,7 @@ proc basecaller_albacore_job {args} {
 		foreach sourcedir $sourcedirs {
 			set sourcename [file tail $sourcedir]
 			# find subdirs
-			set dirs [lsort -dict [dirglob $sourcedir fast5/*]]
+			set dirs [bsort [dirglob $sourcedir fast5/*]]
 			file mkdir $resultdir
 			file_write $resultdir/info.txt "source\t$sourcedir\nsubdirs\t[llength $dirs]\n"
 			foreach dir $dirs {
@@ -183,7 +183,7 @@ proc basecaller_albacore_job {args} {
 	# old method of selecting 1 directory and finding all the *.fast5
 	} else {
 		# find fast5 files
-		set files [lsort -dict [dirglob $sourcedir *.fast5]]
+		set files [bsort [dirglob $sourcedir *.fast5]]
 		set len [llength $files]
 		if {$len == 0} {error "no fast5 files found (use -subdirs?)"}
 		file mkdir $resultdir

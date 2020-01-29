@@ -54,7 +54,7 @@ proc cg_predictgender {args} {
 	}
 	if {[file isdir $bamfile]} {
 		set dir $bamfile
-		set bamfile [lindex [lsort -dict [glob -nocomplain $dir/map-*.bam $dir/map-*.cram]] 0]
+		set bamfile [lindex [bsort [glob -nocomplain $dir/map-*.bam $dir/map-*.cram]] 0]
 		set sample [file tail $dir]
 	} else {
 		set dir [file dir $bamfile]

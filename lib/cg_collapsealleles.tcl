@@ -72,14 +72,14 @@ proc cg_collapsealleles {args} {
 						set cur [list_sub $cur [list_cor $alts $altsd]]
 					} elseif {$duplicates eq "+"} {
 						set list [list_subindex $cur $mpos]
-						set slist [lsort -dict -decreasing $list]
+						set slist [bsort -decreasing $list]
 						set cor [list_cor $list $slist]
 						set cur [list_sub $cur $cor]
 						set alts [list_sub $alts $cor]
 						set cur [list_sub $cur [list_cor $alts $altsd]]
 					} elseif {$duplicates eq "-"} {
 						set list [list_subindex $cur $mpos]
-						set slist [lsort -dict $list]
+						set slist [bsort $list]
 						set cor [list_cor $list $slist]
 						set cur [list_sub $cur $cor]
 						set alts [list_sub $alts $cor]

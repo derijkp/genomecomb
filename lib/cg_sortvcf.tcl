@@ -27,7 +27,7 @@ proc cg_sortvcf {args} {
 	set header [tsv_open $f comment]
 	set c [split [string range $comment 0 end-2] \n]
 	set poss [list_find -regexp $c {^##contig=}]
-	set neworder [ssort -natural [list_sub $c $poss]] 
+	set neworder [bsort [list_sub $c $poss]] 
 	set c [list_sub $c -exclude $poss]
 	set insert [lindex $poss 0]
 	if {$insert == [llength $c]} {
@@ -37,7 +37,7 @@ proc cg_sortvcf {args} {
 	}
 	puts $o [join $c \n]
 	puts $o \#$header
-	chanexec $f $o "gnusort8 --parallel $threads -T \"[scratchdir]\" -t \\t -s -B"
+	chanexec $f $o "gnusort8 --parallel $threads -T \"[scratchdir]\" -t \\t -s -N"
 	if {$o ne "stdout"} {catch {close $o}}
 	if {$f ne "stdin"} {catch {gzclose $f}}
 }

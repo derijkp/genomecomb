@@ -426,9 +426,9 @@ proc job_finddep {pattern idsVar timeVar timefileVar checkcompressed {regexppatt
 	}
 	unset -nocomplain filesa
 	if {$checkcompressed} {
-		set list [lsort -dict [gzfiles $pattern]]
+		set list [bsort [gzfiles $pattern]]
 	} else {
-		set list [lsort -dict [checkfiles $pattern]]
+		set list [bsort [checkfiles $pattern]]
 	}
 	foreach file $list {
 		if {[info exists cgjob_rm($file)]} continue
@@ -490,9 +490,9 @@ proc job_findregexpdep {pattern idsVar timeVar timefileVar checkcompressed} {
 	unset -nocomplain filesa
 	# check file system
 	if {$checkcompressed} {
-		set list [lsort -dict [gzfiles $glob]]
+		set list [bsort [gzfiles $glob]]
 	} else {
-		set list [lsort -dict [checkfiles $glob]]
+		set list [bsort [checkfiles $glob]]
 	}
 	foreach file $list {
 		if {[info exists cgjob_rm($file)]} continue
@@ -727,7 +727,7 @@ proc job_findptargets {ptargets checkcompressed} {
 			} else {
 				set list [checkfiles $glob]
 			}
-			foreach file [lsort -dict $list] {
+			foreach file [bsort $list] {
 				if {[regexp ^$pattern\$ $file]} {
 					lappend files $file
 					lappend ids {}
@@ -735,9 +735,9 @@ proc job_findptargets {ptargets checkcompressed} {
 			}
 		} else {
 			if {$checkcompressed} {
-				set files [lsort -dict [gzfiles $pattern]]
+				set files [bsort [gzfiles $pattern]]
 			} else {
-				set files [lsort -dict [checkfiles $pattern]]
+				set files [bsort [checkfiles $pattern]]
 			}
 		}
 		lappend targets {*}$files

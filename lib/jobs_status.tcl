@@ -91,9 +91,9 @@ proc patternglob {pattern checkcompressed} {
 		set glob [regexp2glob $pattern]
 		set files {}
 		if {$checkcompressed} {
-			set list [lsort -dict [gzfiles $glob]]
+			set list [bsort [gzfiles $glob]]
 		} else {
-			set list [lsort -dict [glob $glob]]
+			set list [bsort [glob $glob]]
 		}
 		foreach file $list {
 			if {[regexp ^$pattern\$ $file]} {
@@ -103,9 +103,9 @@ proc patternglob {pattern checkcompressed} {
 	} else {
 		set pattern [file_absolute $pattern]
 		if {$checkcompressed} {
-			set files [lsort -dict [gzfiles $pattern]]
+			set files [bsort [gzfiles $pattern]]
 		} else {
-			set files [lsort -dict [glob $pattern]]
+			set files [bsort [glob $pattern]]
 		}
 	}
 	return $files

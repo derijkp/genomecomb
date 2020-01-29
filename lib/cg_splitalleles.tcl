@@ -69,7 +69,7 @@ proc cg_splitalleles {args} {
 			}
 			# foreach all $alleles {puts $o "$all [lrange $a($all) 0 8]"}
 		}
-		foreach alt [ssort -natural $alleles] {
+		foreach alt [bsort $alleles] {
 			set line $a($alt)
 			foreach {a1pos a2pos seqpos zygpos} $sposs {
 				set a1 [lindex $line $a1pos]
@@ -90,7 +90,7 @@ proc cg_splitalleles {args} {
 			}
 			set a($alt) $line
 		}
-		foreach allele [ssort -natural $alleles] {
+		foreach allele [bsort $alleles] {
 			puts $o [join $a($allele) \t]
 		}
 	}

@@ -77,7 +77,7 @@ proc zstversion {{minversion {}}} {
 		if {[string index $zstversion 0] eq "v"} {set zstversion [string range $zstversion  1 end]}
 	}
 	if {$minversion ne ""} {
-		if {[lindex [ssort -natural [list $minversion $zstversion]] 0] ne "$minversion"} {
+		if {[lindex [bsort [list $minversion $zstversion]] 0] ne "$minversion"} {
 			error "zst version ($zstversion) smaller than $minversion"
 		}
 	}

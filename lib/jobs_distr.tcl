@@ -51,7 +51,7 @@ proc job_status_distr {job {jobloginfo {}}} {
 proc job_process_distr_jobmanager {} {
 	global cgjob cgjob_distr cgjob_distr_running cgjob_exit cgjob_distr_queue
 	after cancel job_process_distr_jobmanager
-	foreach jobnum [ssort -natural [array names cgjob_distr_running]] {
+	foreach jobnum [bsort [array names cgjob_distr_running]] {
 		# job_running_distr checks whether the job is running
 		# if it is not, it will (a.o.) clear the entry in cgjob_distr_running
 		job_running_distr $jobnum

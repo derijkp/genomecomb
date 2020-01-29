@@ -68,7 +68,7 @@ proc cg_download_dbnsfp {args} {
 	file rename -force -- $tempdir/info [gzroot $resultfile].info
 	file copy -force $tempdir/LICENSE.txt [gzroot $resultfile].license
 	# data
-	set files [ssort -natural [glob $tempdir/dbNSFP*_variant.chr*]]
+	set files [bsort [glob $tempdir/dbNSFP*_variant.chr*]]
 	set f [open [lindex $files 0]]
 	set header [split [string range [gets $f] 1 end] \t]
 	close $f

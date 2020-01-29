@@ -23,7 +23,7 @@ proc cg_download_evs {args} {
 	foreach file [glob *.vcf] {
 		cg vcf2tsv $file [file root $file].tsv
 	}
-	set files [lsort -dict [glob ESP6500SI-*.snps_indels.tsv]]
+	set files [bsort [glob ESP6500SI-*.snps_indels.tsv]]
 	if {[llength $files] != 24} {error "not enough files found"}
 	putslog "Concatenating files"
 	cg cat {*}$files > $tempresult.temp

@@ -117,7 +117,7 @@ test reports {process_reportscombine} {
 test reports {process_reportscombine 2} {
 	cd $::smalltestdir
 	file delete -force tmp/combinereports
-	cg process_reportscombine {*}$::dopts tmp/combinereports {*}[lsort -dict [glob expected/exomes_yri_mx2/samples/* tmp/genomes_yri_mx2/samples/NA19240ilmx2/reports]] expected/test_reports
+	cg process_reportscombine {*}$::dopts tmp/combinereports {*}[bsort [glob expected/exomes_yri_mx2/samples/* tmp/genomes_yri_mx2/samples/NA19240ilmx2/reports]] expected/test_reports
 	cg tsvdiff -q 1 tmp/combinereports expected/combinereports
 } {}
 

@@ -159,7 +159,7 @@ proc version {item {minversion {}}} {
 		}
 	}
 	if {$minversion ne ""} {
-		if {[lindex [ssort -natural [list $minversion $_versions($item)]] 0] ne "$minversion"} {
+		if {[lindex [bsort [list $minversion $_versions($item)]] 0] ne "$minversion"} {
 			error "$item version ($_versions($item)) smaller than $minversion"
 		}
 	}

@@ -424,7 +424,7 @@ proc svmulticompar {args} {
 			}
 		}
 		if {[llength $list] > 1} {
-			set list [ssort -natural $list]
+			set list [bsort $list]
 		}
 		puts $o [join $list \n]
 	}

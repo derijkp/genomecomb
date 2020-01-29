@@ -5,7 +5,7 @@
 proc tophat_job {sample files libtype outdir bowtie_index} {
 	upvar job_logdir job_logdir
 	set targets {}
-	set files [ssort -natural $files]
+	set files [bsort $files]
 	set target map-tophat-${sample}.bam
 	job tophat-$sample -deps $files -targets {$target} -vars {libtype bowtie_index outdir}  -code {
 		exec tophat  -p 8 -o $outdir --library-type $libtype $bowtie_index $dep1 $dep2 >@ stdout 2>@ stderr
@@ -115,7 +115,7 @@ proc process_rnaseq_job {destdir libtype bowtie_index gff fastqc adapterfile pai
 	foreach file [dirglob $destdir */fastq] {
 		lappend samples [file dir $file]
 	}
-	set samples [ssort -natural $samples]
+	set samples [bsort $samples]
 	set todo {}
 	foreach sample $samples {
 		puts $sample

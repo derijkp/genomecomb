@@ -138,7 +138,7 @@ proc convertmirbase {gff3file resultfile genomefile {structfile {}}} {
 	}
 	close $f
 	set result [lsort -integer -index 1 $result]
-	set result [lsort -dict -index 0 $result]
+	set result [bsort -index 0 $result]
 	set o [open $resultfile.temp w]
 	puts $o [join {chromosome begin end strand name mature1start mature1end loopstart loopend mature2start mature2end} \t]
 	foreach resultline $result {

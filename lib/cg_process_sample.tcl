@@ -57,17 +57,17 @@ proc process_sample_cgi_job {workdir split} {
 		foreach file $files {
 			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] 1]]
 		}
-		set chromosomes [ssort -natural [list_remdup $chromosomes]]
+		set chromosomes [bsort [list_remdup $chromosomes]]
 	} else {
 		set files [jobglob $workdir/coverage/coverage*.tsv]
 		foreach file $files {
 			lappend chromosomes [chr_clip [lindex [split [file tail $file] -] end-1]]
 		}
-		set chromosomes [ssort -natural [list_remdup $chromosomes]]
+		set chromosomes [bsort [list_remdup $chromosomes]]
 	}
 	# start from CGI data
 	# convert overage files to bcol first (will be used to add coverage and refscore to vars)
-	set files [ssort -natural [glob -nocomplain ori/ASM/REF/coverage*-chr*-*]]
+	set files [bsort [glob -nocomplain ori/ASM/REF/coverage*-chr*-*]]
 	if {[llength $files]} {
 		# this will only work if ori/ASM/REF/coverage*-chr* already exist from the start
 		# maybe later make more flexible
@@ -578,7 +578,7 @@ proc process_sample_job {args} {
 	set sample [file tail $sampledir]
 	#
 	if {$minfastqreads > 0} {
-		set files [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+		set files [bsort [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
 		if {![llength $files]} {return {}}
 		set file [lindex $files 0]
 		set f [gzopen $file]
@@ -733,11 +733,11 @@ proc process_sample_job {args} {
 	# allways sort
 	append resultbamprefix s
 	# find fastq files in fastq dir
-	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+	set fastqfiles [bsort [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
 	if {![llength $fastqfiles]} {
 		file mkdir $sampledir/fastq
 		# if there are none in the fastq dir, check ori dir
-		set fastqfiles [ssort -natural [jobglob $sampledir/ori/*.fastq.gz $sampledir/ori/*.fastq $sampledir/ori/*.fq.gz $sampledir/ori/*.fq]]
+		set fastqfiles [bsort [jobglob $sampledir/ori/*.fastq.gz $sampledir/ori/*.fastq $sampledir/ori/*.fq.gz $sampledir/ori/*.fq]]
 		if {[llength $fastqfiles]} {
 			set targets {}
 			foreach file $fastqfiles {
@@ -750,7 +750,7 @@ proc process_sample_job {args} {
 			}
 		} else {
 			# check if there are bam files in ori to extract fastq from
-			set files [ssort -natural [jobglob $sampledir/ori/*.bam $sampledir/ori/*.cram]]
+			set files [bsort [jobglob $sampledir/ori/*.bam $sampledir/ori/*.cram]]
 			foreach file $files {
 				set base $sampledir/fastq/[file tail [file root $file]]
 				set target $base-R1.fastq.gz
@@ -763,7 +763,7 @@ proc process_sample_job {args} {
 				}
 			}
 		}
-		set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+		set fastqfiles [bsort [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
 	} 
 	# create bam from fastq files (if found)
 	set cleanedbams {}

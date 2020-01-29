@@ -91,6 +91,7 @@ int parse_pos(char *arg, int **rresult, int *rnum);
 int get_region(FILE *f1, DString *line, int chr1pos, int start1pos, int end1pos, int max1, DString **chromosome1, int *start1, int *end1);
 void skip_header(FILE *f1, DString *linePtr,unsigned int *numfields,unsigned int *pos);
 
+/* return -1 if a < b, +1 if a > b, 0 if a ==b */
 int naturalcompare (char const *a, char const *b,int alen,int blen);
 int loccompare (char const *a, char const *b,int alen,int blen);
 

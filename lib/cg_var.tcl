@@ -119,7 +119,7 @@ proc var_job {args} {
 		# concatenate results
 		set pos 0
 		foreach resultfile $resultfiles {
-			set list [lsort -dict [list_subindex $todo $pos]]
+			set list [bsort [list_subindex $todo $pos]]
 			set deps $list
 			job $resultfile  {*}$skips -deps $deps -rmtargets $list -targets {
 				$resultfile
@@ -131,16 +131,16 @@ proc var_job {args} {
 					file copy -force $analysisinfo [gzroot $target].analysisinfo
 					exec touch [gzroot $target].analysisinfo
 				}
-				# using lsort -dict instead of ssort -natural because
+				# using bsort instead of bsort because
 				# files are xxx-100 -> would sort reverse of what we want because of the -
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
-					cg vcfcat -i 1 -o $target {*}[lsort -dict [jobglob {*}$list]]
+					cg vcfcat -i 1 -o $target {*}[bsort [jobglob {*}$list]]
 				} elseif {[lindex [split [file tail $target] -_] 0] eq "sreg"} {
-					cg cat -c f {*}[lsort -dict [jobglob {*}$list]] | cg regjoin {*}[compresspipe $target] > $target.temp
+					cg cat -c f {*}[bsort [jobglob {*}$list]] | cg regjoin {*}[compresspipe $target] > $target.temp
 					file rename $target.temp $target
 					cg_zindex $target
 				} else {
-					cg cat -c f {*}[lsort -dict [jobglob {*}$list]] {*}[compresspipe $target] > $target.temp
+					cg cat -c f {*}[bsort [jobglob {*}$list]] {*}[compresspipe $target] > $target.temp
 					file rename $target.temp $target
 					cg_zindex $target
 				}

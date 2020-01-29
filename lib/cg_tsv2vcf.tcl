@@ -601,7 +601,7 @@ proc cg_tsv2vcf {args} {
 	foreach key {vcf_fileformat {} { ----} fields filetype fileversion numsamples} {
 		unset -nocomplain a($key)
 	}
-	foreach field [lsort -dict [array names a vcf_*]] {
+	foreach field [bsort [array names a vcf_*]] {
 		puts $o "##[string range $field 4 end]=[lindex $a($field) 0]"
 		unset a($field)
 	}
@@ -647,7 +647,7 @@ proc cg_tsv2vcf {args} {
 			if {$pos == -1} break
 			puts $o [tsv2vcf_printlines [list [list $var $line]] $infofields $infoposs $infoflags $infonumbers $analyses formata]
 		} else {
-			foreach p [ssort -natural [array names allelelista]] {
+			foreach p [bsort [array names allelelista]] {
 				if {$print || $p < $pos} {
 					set lines $allelelista($p)
 					puts $o [tsv2vcf_printlines $lines $infofields $infoposs $infoflags $infonumbers $analyses formata]

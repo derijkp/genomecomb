@@ -242,7 +242,7 @@ proc cg_annotate_job {args} {
 	set resultname [file tail $resultfile]
 	foreach testfile $args {
 		if {[file isdir $testfile]} {
-			lappend dbfiles {*}[ssort -natural [gzfiles $testfile/var_*.tsv $testfile/gene_*.tsv $testfile/mir_*.tsv $testfile/reg_*.tsv $testfile/*.bcol]]
+			lappend dbfiles {*}[bsort [gzfiles $testfile/var_*.tsv $testfile/gene_*.tsv $testfile/mir_*.tsv $testfile/reg_*.tsv $testfile/*.bcol]]
 		} elseif {![file exists $testfile]} {
 			set testfile [gzfile $testfile]
 			if {![file exists $testfile]} {

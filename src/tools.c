@@ -1,3 +1,5 @@
+/* #define DEBUG 1 */
+
 #ifndef TOOLS_LOADED
 #define TOOLS_LOADED 1
 
@@ -164,13 +166,322 @@ DString *DStringNewFromInt(int i) {
 /* 
     "natural" sort order: deals with mixed alphabetic and numbers
  */
+
+#define NM_NOTINNUM -1
+#define NM_NOTNUM 0
+#define NM_DIGIT 1
+#define NM_MINUS 1
+#define NM_DECIMAL 2
+#define NM_PLUS 3
+#define NM_E 4
+
+#define LOC_UNKOWN -1
+#define LOC_NONUM 0
+#define LOC_SIMPLE 1
+#define LOC_BEFORE 2
+#define LOC_SIGN 3
+#define LOC_SIGNNUM 4
+#define LOC_DECIMAL 5
+#define LOC_DECIMALNUM 6
+#define LOC_E 7
+#define LOC_ESIGN 8
+#define LOC_ENUM 9
+
 #define UCHAR(c) ((unsigned char) (c))
-#define NATDIGIT(c) (isdigit(UCHAR(*(c))))
-#define blank(char) (char == ' ' || char == '\t')
-int naturalcompare (char const *a, char const *b,int alen,int blen) {
-	int diff, digitleft,digitright;
-	int secondaryDiff = 0,prezero,invert,comparedigits,prevdigit=0;
-	char *left=NULL,*right=NULL,*keep=NULL;
+/*#define NATDIGIT(c) (isdigit(UCHAR(*(c))))*/
+#define NATDIGIT(c) (*(c) > 47 && *(c)<58)
+#define ISNUMBER(c) ((*(c) == '-')?NM_MINUS \
+	:(*(c) == '.')?NM_DECIMAL \
+	:(*(c) == '+')?NM_PLUS \
+	:(*(c) == '.')?NM_DECIMAL \
+	:(*(c) == 'e' || *(c) == 'E')?NM_E \
+	:(*(c) > 47 && *(c)<58)?NM_DIGIT \
+	:0)
+#define BLANK(char) (*(char) == ' ' || *(char) == '\t' || *(char) == '\n')
+
+/* 
+	returns the start of the complete number, or NULL if there is someting (double e, etc.) preventing a complex number
+*/
+char *naturalcompare_numbercontext_before(char const *a, char *left, int *invert, int *context) {
+	char *cur, *start;
+	int digits;
+	if (left == a) {return left;}
+	cur = left - 1;
+	digits = 0;
+	while (cur >= a && NATDIGIT(cur)) {cur--; digits++;}
+	/* if cur < a, number starts at the beginning with a digit -> no further context */
+	*context = LOC_UNKOWN;
+	if (cur < a) {
+		if (digits) {
+			*context = LOC_SIGNNUM;
+		} else {
+			*context = LOC_BEFORE;
+		}
+		return(cur+1);
+	}
+	start = cur+1;
+	if (*cur == '-' || *cur == '+') {
+		if (*cur == '-') {*invert = 1;}
+		if (cur == a || BLANK(cur-1)) {
+			if (digits) {
+				*context = LOC_SIGNNUM;
+			} else {
+				*context = LOC_SIGN;
+			}
+			return cur;
+		} else if (*(cur-1) == 'e' || *(cur-1) == 'E') {
+			cur--;
+			if (cur == a || BLANK(cur)) {
+				*context = LOC_SIMPLE;
+				return start;
+			} else if (digits) {
+				*context = LOC_ENUM;
+			} else {
+				*context = LOC_ESIGN;
+			}
+			cur--; digits = 0;
+			while (cur >= a && NATDIGIT(cur)) {cur--; digits++;}
+			if (!digits) {*context = LOC_SIMPLE; return start;}
+			if (cur < a) {return (char *)a;}
+		} else {
+			*context = LOC_SIMPLE;
+			return start;
+		}
+	} else if (*cur == 'e' || *cur == 'E') {
+		if (cur == a || BLANK(cur)) {
+			*context = LOC_SIMPLE;
+			return start;
+		} else if (digits) {
+			*context = LOC_ENUM;
+		} else {
+			*context = LOC_E;
+		}
+		cur--; digits = 0;
+		while (cur >= a && NATDIGIT(cur)) {cur--; digits++;}
+		if (!digits) {*context = LOC_SIMPLE; return start;}
+		if (cur < a) {return (char *)a;}
+	}
+	if (*cur == '.') {
+		if (*context == LOC_UNKOWN) {
+			if (digits) {
+				*context = LOC_DECIMALNUM;
+			} else {
+				*context = LOC_DECIMAL;
+			}
+			if (cur == a) {return cur;}
+		} else if (!digits) {
+			*context = LOC_SIMPLE;
+			return start;
+		}
+		cur--; digits = 0;
+		while (cur >= a && NATDIGIT(cur)) {cur--; digits++;}
+		if (!digits) {*context = LOC_SIMPLE; return start;}
+		if (cur < a) {return cur+1;}
+	}
+	if (*cur == '-' || *cur == '+') {
+		if (*cur == '-') {*invert = 1;}
+		if (*context == LOC_UNKOWN) {
+			if (digits) {
+				*context = LOC_SIGNNUM;
+			} else {
+				*context = LOC_SIGN;
+			}
+			if (cur == a) {return cur;}
+		} else if (!digits) {
+			*context = LOC_SIMPLE;
+			return start;
+		}
+		cur--;
+	}
+	if (*context == LOC_UNKOWN) {*context = LOC_SIGNNUM;}
+	if (cur < a) {return cur+1;}
+	if (BLANK(cur)) {return cur+1;}
+	*context = LOC_SIMPLE;
+	return start;
+}
+
+char *naturalcompare_numbercontext_after(char *cur, int curlen, char *start, int nmleft, int *context) {
+	if (*context == LOC_BEFORE) {
+		if (!curlen || BLANK(cur)) {
+			*context = LOC_NONUM; return cur-1;
+		}
+		if (*cur == '-' || *cur == '+') {
+			*context = LOC_SIGN;
+			cur++; curlen--;
+			if (!curlen || BLANK(cur) || !NATDIGIT(cur)) {
+				*context = LOC_NONUM; return cur-1;
+			}
+		} else if (!NATDIGIT(cur)) {
+			*context = LOC_NONUM; return cur-1;
+		}
+		*context = LOC_SIGNNUM;
+	}
+	if (*context == LOC_SIGN) {
+		if (!curlen || BLANK(cur) || !NATDIGIT(cur)) {
+			*context = LOC_NONUM; return cur-1;
+		}
+		*context = LOC_SIGNNUM;
+	}
+	if (*context == LOC_SIGNNUM) {
+		while (curlen && NATDIGIT(cur)) {cur++; curlen--;}
+		if (!curlen || BLANK(cur)) {return cur;}
+		if (*cur == '.') {
+			cur++; curlen--;
+			if (!curlen || BLANK(cur) || !NATDIGIT(cur)) {
+				return cur;
+			}
+			*context = LOC_DECIMALNUM;
+		} else if (*cur == 'e' || *cur == 'E') {
+			cur++; curlen--;
+			*context = LOC_E;
+		}
+	}
+	if (*context == LOC_DECIMAL) {
+		if (!curlen || BLANK(cur) || !NATDIGIT(cur)) {
+			*context = LOC_SIGNNUM; return cur;
+		}
+		*context = LOC_DECIMALNUM;
+	}
+	if (*context == LOC_DECIMALNUM) {
+		while (curlen && NATDIGIT(cur)) {cur++; curlen--;}
+		if (!curlen || BLANK(cur)) {return cur;}
+		if (*cur == 'e' || *cur == 'E') {
+			cur++; curlen--;
+			*context = LOC_E;
+		} else {
+			return cur;
+		}
+	}
+	if (*context == LOC_E) {
+		if (*cur == '-' || *cur == '+') {
+			cur++; curlen--;
+		}
+		if (curlen <= 0 || !NATDIGIT(cur)) {
+			*context = LOC_DECIMALNUM; return cur;
+		}
+		*context = LOC_ENUM;
+	}
+	if (*context == LOC_ESIGN) {
+		if (!curlen || BLANK(cur) || !NATDIGIT(cur)) {
+			*context = LOC_DECIMALNUM; return cur;
+		}
+		*context = LOC_ENUM;
+	}
+	while (curlen && NATDIGIT(cur)) {cur++; curlen--;}
+	if (!curlen || BLANK(cur)) {return cur;}
+	return cur;
+}
+
+int naturalcompare_atof(char *a,char *b) {
+	double da = atof(a);
+	double db = atof(b);
+	 DPRINT("atof %s vs %s: %f, %f",a,b,da,db);
+	if (da < db) {
+		return -1;
+	} else if (da > db) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+/*
+	set list [list { } ! \" \# $ % & \' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : \; < = > ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z \[ \\ \] ^ _ ` a b c d e f g h i j k l m n o p q r s t u v w x y z \{ | \} ~]
+	set rlist [list { } * ! \" \# $ % & \' ( ) , - . / 0 1 2 3 4 5 6 7 8 9 + : \; < = > ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z \[ \\ \] ^ _ ` a b c d e f g h i j k l m n o p q r s t u v w x y z \{ | \} ~]
+	set cor [lmath_calc [list_cor $rlist $list] + 32]
+	set temp [list_concat [list_fill 32 0 1] $cor]
+	join $temp ,
+*/
+
+/*
+	changes in order from ascii
+	* sorts before everything except control+space, then -
+	+ sorts after everything
+	letters sort last (except +), as A a B b ...
+	numbers sort just before letters, after all other chars (except +)
+*/
+
+const int char_reorder[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,34,35,36,37,38,39,40,41,42,33,57,43,44,45,46,47,48,49,50,51,52,53,54,55,56,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126};
+
+int naturalcompare_diff(int left,int right) {
+	if (left == right) {
+		return 0;
+	} else {
+		if (left < 127) {left = char_reorder[left];}
+		if (right < 127) {right = char_reorder[right];}
+		return left - right;
+	}
+}
+
+/*
+int naturalcompare_diff(int left,int right) {
+	if (left == right) {
+		return 0;
+	} else {
+		if (left == '+') {
+			if (right < 58) {return 1;} else {return -1;}
+		}
+		if (right == '+') {
+			if (left < 58) {return -1;} else {return 1;}
+		}
+		if (left == '*') {
+			if (right > 32) {return -1;} else {return 1;}
+		}
+		if (right == '*') {
+			if (left > 32) {return 1;} else {return -1;}
+		}
+		return left - right;
+	}
+}
+*/
+
+/*
+ * The code below compares the numbers in the two
+ * strings without ever converting them to numbers.  It
+ * does this by first comparing the number of digits after the diff
+ * if they are the same, diff determines result.
+ */
+int naturalcompare_simplenum(char *left,int alen,char *right, int blen,int diff, int secondaryDiff, int invert) {
+	 DPRINT("  compare_simplenum: %s vs %s    diff=%d invert=%d secondaryDiff=%d", left, right, diff,invert,secondaryDiff);
+	while (alen && blen) {
+		if (!NATDIGIT(left)) {
+			if (!NATDIGIT(right)) {
+				if (!invert) {return (diff<0)?-1:1;} else {return (diff<0)?1:-1;}
+			} else {
+				if (!invert) {return -1;} else {return 1;}
+			}
+		} else if (!NATDIGIT(right)) {
+			if (!invert) {return 1;} else {return -1;}
+		}
+		if (diff == 0) {
+			diff = naturalcompare_diff(*left,*right);
+		}
+		left++; right++; alen--; blen--;
+	}
+	if (!alen || !NATDIGIT(left)) {
+		if (!blen || !NATDIGIT(right)) {
+			if (diff == 0) {diff = secondaryDiff;}
+			if (!invert) {return (diff<0)?-1:1;} else {return (diff<0)?1:-1;}
+		} else {
+			if (!invert) {return -1;} else {return 1;}
+		}
+	} else if (!blen || !NATDIGIT(right)) {
+		/* a at end of digits already tested in previous */
+		if (!invert) {return 1;} else {return -1;}
+	}
+	if (diff == 0) {diff = secondaryDiff;}
+	if (!invert) {return (diff<0)?-1:1;} else {return (diff<0)?1:-1;}
+	
+}
+
+/* 
+    "natural" sort order: deals with mixed alphabetic and numbers
+    returns 0 if equal, -1 if a < b and 1 if a > b
+ */
+int naturalcompare(char const *a, char const *b,int alen,int blen) {
+	int diff, nmleft,nmright,result,simplenum,context,contextleft,contextright;
+	int secondaryDiff = 0,invert=0;
+	char *left=NULL,*right=NULL,*start=NULL,*rstart=NULL;
 	if (a == NULL) {
 		if (b == NULL) {
 			return 0;
@@ -180,20 +491,18 @@ int naturalcompare (char const *a, char const *b,int alen,int blen) {
 	} else if (b == NULL) {
 		return -1;
 	}
-	while (alen && blank(*a)) {a++; alen--;}
-	while (blen && blank(*b)) {b++; blen--;}
 	left = (char *)a;
 	right = (char *)b;
-	/* fprintf(stdout,"---------- %s <> %s ----------\n",a,b);fflush(stdout); */
+	 DPRINT("---------- naturalcompare {%s} vs {%s} ----------",a,b);
+	/* find the first difference (not case) */
 	while (1) {
-		diff = *left - *right;
-		/* fprintf(stdout,"diff %c <> %c: %d\n", *left, *right, diff);fflush(stdout); */
+		diff = naturalcompare_diff(*left,*right);
+		 DPRINT("diff %c vs %c: %d", *left, *right, diff);
 		if (!alen || *left == '\0') {
 			if (!blen || *right == '\0') {return secondaryDiff;} else {break;}
 		}
 		if (!blen || *right == '\0') {break;}
 		if (diff != 0) {
-			if (*left == '*') {return -1;} else if (*right == '*') {return 1;}
 			/* only sort on case if no other diff -> keep secondaryDiff for case diff */
 			if (isupper(UCHAR(*left)) && islower(UCHAR(*right))) {
 				diff = tolower(*left) - *right;
@@ -217,158 +526,176 @@ int naturalcompare (char const *a, char const *b,int alen,int blen) {
 		right++; blen--;
 	}
 	if (diff == 0) {return secondaryDiff;}
-	if (left == a) {
-		prevdigit = 0;
-	} else {
-		/* previous is the same for left and right! */
-		prevdigit = NATDIGIT(right-1);
+	nmleft = ISNUMBER(left);
+	nmright = ISNUMBER(right);
+	if (!nmleft && !nmright) {
+		/* for sure no number involved, lexical sort */
+		return (diff<0)?-1:1;
 	}
-	digitright = blen && NATDIGIT(right);
-	digitleft = alen && NATDIGIT(left);
-	/* fprintf(stdout,"%c <> %c    digit %d <> %d    diff %d\n", *left, *right, digitleft, digitright, diff);fflush(stdout); */
-	if (*right == '+') {
-		if (*left == '-') {
-			if (NATDIGIT(left+1) && NATDIGIT(right+1)) {return -1;} else {return 1;}
-		} else if (digitleft) {
-			if (prevdigit) {return 1;}
-			right++; blen--;
-			digitright = blen && NATDIGIT(right);
-			if (!digitright) {
-				return (diff<0)?-1:1;
-			}
-			if (secondaryDiff == 0) {secondaryDiff = -1;}
-		} else {
-			return (diff<0)?-1:1;
-		}
-	} else if (*left == '+') {
-		if (*right == '-') {
-			if (NATDIGIT(right+1) && NATDIGIT(left+1)) {return 1;} else {return -1;}
-		} else if (digitright) {
-			if (prevdigit) {return 1;}
-			left++; alen--;
-			digitleft = alen && NATDIGIT(left);
-			if (!digitleft) {
-				return (diff<0)?-1:1;
-			}
-			if (secondaryDiff == 0) {secondaryDiff = 1;}
-		} else {
-			return (diff<0)?-1:1;
-		}
-	} else if (*left == '-') {
-		if (digitright) {
-			if (!prevdigit) {
-				return -1;
-			} else {
-				return 1;
-			}
-		} else {
-			return ((*left - *right)<0)?-1:1;
-		}
-	} else if (*right == '-' && digitleft) {
-		if (digitleft) {
-			if (!prevdigit) {
-				return 1;
-			} else {
-				return -1;
-			}
-		} else {
-			return ((*left - *right)<0)?-1:1;
-		}
-	}
-	/* fprintf(stdout,"digit %s <> %s: %d, %d\n",left,right,digitleft,digitright);fflush(stdout); */
-
-	comparedigits = 1;
-	if (!digitright) {
-		if (!digitleft || (right == b) || !NATDIGIT(right-1)) {comparedigits = 0;}
-	}
-	if (!digitleft) {
-		if ((left == a) || !NATDIGIT(left-1)) {comparedigits = 0;}
-	}
-
-	if (!comparedigits) {
-		if (diff == 0) {return secondaryDiff;} else {return (diff<0)?-1:1;}
-	}
-	/*
-	 * There are decimal numbers embedded in the two
-	 * strings.  Compare them as numbers, rather than
-	 * strings.  If one number has more leading zeros than
-	 * the other, the number with more leading zeros sorts
-	 * later, but only as a secondary choice.
+	/* 
+		(potential) number comparison
+		-----------------------------
 	 */
-	/* first take steps back (keep) to check for -0.0 */
-	keep = left;
-	prezero = 1;
-	while (keep > a) {
-		keep--;
-		if (!NATDIGIT(keep)) break;
-		if (*keep != '0') prezero = 0;
-	}
-	if (*keep == '.') {
-		while (keep > a) {
-			keep--;
-			if (!NATDIGIT(keep)) break;
-		}
-		if (*keep == '-') {
-			invert = -1;
-		} else {
-			invert = 1;
-		}
-		if (diff == 0) {return invert*secondaryDiff;} else {return invert*diff;}
-	} else {
-		if (*keep == '-') {
-			invert = -1;
-		} else {
-			if (NATDIGIT(keep) && (*keep != '0')) {prezero = 0;}
-			invert = 1;
-		}
-		if (prezero) {
-			if (*left == '0') {
-				secondaryDiff = 1;
-				while (*left == '0') {
-					left++; alen--;
-				}
-			} else if (*right == '0') {
-				secondaryDiff = -1;
-				while (*right == '0') {
-					right++; blen--;
-				}
-			}
-		}
-		/*
-		 * The code below compares the numbers in the two
-		 * strings without ever converting them to integers.  It
-		 * does this by first comparing the lengths of the
-		 * numbers and then comparing the digit values.
-		 */
-		diff = 0;
-		while (1) {
-			if (diff == 0) {
-				diff = *left - *right;
-			}
-			if (!blen || !NATDIGIT(right)) {
-				if (alen && NATDIGIT(left)) {
-					return invert;
-				} else {
-					/*
-					 * The two numbers have the same length. See
-					 * if their values are different.
-					 */
+	 DPRINT("compare number: %s vs %s    digit %d vs %d    diff %d", left, right, nmleft, nmright, diff);
+	/* move back to start of number to get context */
 	
-					if (diff != 0) {
-						return invert*diff;
-					} else {
-						return invert*secondaryDiff;
-					}
+	start = left;
+	simplenum = 0; /* becomes 1 if there is something (double e, etc.) preventing a special number interpretation */
+	if (start == a || BLANK(start-1)) {
+		/* diff at start of number, no need to parse before */
+		/* The following must sort before numbers */
+		/* empty or blank allways sorts first */
+		if (!alen || BLANK(left)) {return -1;}
+		if (!blen || BLANK(right)) {return 1;}
+		/* Next '*' sorts */
+		if (*left == '*') {return -1;}
+		if (*right == '*') {return 1;}
+		context = LOC_BEFORE;
+	} else {
+		/* check for context before diff */
+		start = naturalcompare_numbercontext_before(a,start,&invert,&context);
+	 	DPRINT("checked before: %s context=%d invert=%d",start,context,invert);
+		if (context <= LOC_SIMPLE) {simplenum = 1;}
+	}
+	rstart = (char *)b+(start-a);
+	if (!simplenum) {
+		/* check for special number after diff */
+		contextleft = context;
+		contextright = context;
+		if (context == LOC_ENUM || context == LOC_ESIGN || context == LOC_SIGN || context == LOC_DECIMAL) {
+			/* we can stop at these combination -> no furter number */
+			if (nmleft != NM_DIGIT) {nmleft = 0;}
+			if (nmright != NM_DIGIT) {nmright = 0;}
+		}
+		naturalcompare_numbercontext_after(left, alen, start, nmleft, &contextleft);
+ 		DPRINT("checked left after: %s left=%s contextleft=%d",start,left,contextleft);
+		naturalcompare_numbercontext_after(right, blen, rstart, nmright, &contextright);
+	 	DPRINT("checked right after: %s right=%s contextright=%d",rstart,right,contextright);
+		/* sort numbers before the rest */
+		if (contextleft > LOC_SIGN && contextright < LOC_SIGNNUM) {
+			return -1;
+		} else if (contextright > LOC_SIGN && contextleft < LOC_SIGNNUM) {
+			return 1;
+		}
+
+		if (contextleft == LOC_NONUM || contextright == LOC_NONUM) {
+			return (diff<0)?-1:1;
+		}
+		if ((nmleft || nmright) && !simplenum && (contextleft == LOC_ENUM || contextright == LOC_ENUM)) {
+			/* diff is on the e of scientific notation -> compare via conversion to numbers using atof */
+			result = naturalcompare_atof(start,rstart);
+			if (result == 0) {
+				int leftsc = (contextleft == LOC_ENUM);
+				int rightsc = (contextright == LOC_ENUM);
+				if (leftsc && !rightsc) {
+					diff = 1;
+				} else if (!leftsc && rightsc) {
+					diff = -1;
+				} else if (*start == '+' && *rstart != '+') {
+					diff = 1;
+				} else if (*start != '+' && *rstart == '+') {
+					diff = -1;
 				}
-			} else if (!alen || !NATDIGIT(left)) {
-				return -1*invert;
+				if (!invert) {return (diff<0)?-1:1;} else {return (diff<0)?1:-1;}
+			} else {
+				return result;
 			}
-			right++; blen--;
-			left++; alen--;
+		}
+		/* another few corner cases where the diff is not actually in the number anymore */
+		if ((nmleft == NM_E || context == LOC_E || context == LOC_ESIGN) && contextleft != LOC_ENUM) {nmleft = 0;}
+		if ((nmright == NM_E || context == LOC_E || context == LOC_ESIGN) && contextright != LOC_ENUM) {nmright = 0;}
+		/* nmleft and nmright could have been changed to indicate diff is not really in a number */
+		if (!nmleft && !nmright) {return (diff<0)?-1:1;}
+	}
+	if (simplenum) {
+		 DPRINT("simpelnum - context %d diff=%d nmleft=%d nmright=%d", context,diff,nmleft,nmright);
+		/* simplenum indicates we have embedded numbers */
+		/* so we will just compare size of integer */
+		/* we will not take into account invert, decimal */
+		invert = 0;
+		if ((left == a || !NATDIGIT(left-1)) && (nmleft != NM_DIGIT || nmright != NM_DIGIT)) {
+			return (diff<0)?-1:1;
+		} else {
+			return naturalcompare_simplenum(left,alen,right,blen,diff,secondaryDiff,invert);
+		}
+	} else {
+		 DPRINT("specialnum - invert %d - context %d", invert, context);
+		/* special cases, +, -, . at diff */
+		/* if not scientific notation (checked before) we can only have - or + at diff if at start */
+		/* - always smaller */
+		if (start == left) {
+			 DPRINT("specialnum start: %s vs %s    diff %d", left, right, diff);
+			/* difference is at start of number */
+			if (*left == '-') {
+				return -1;
+			} else if (*right == '-') {
+				return 1;
+			} else if (*left == '+') {
+				left++ ; alen--;
+				if (alen == 0) {return 1;}
+				result=naturalcompare(left,right,alen,blen);
+				if (result == 0) {
+					return 1;
+				} else {
+					return result;
+				}
+			} else if (*right == '+') {
+				right++ ; blen--;
+				if (blen == 0) {return -1;}
+				result=naturalcompare(left,right,alen,blen);
+				if (result == 0) {
+					return -1;
+				} else {
+					return result;
+				}
+			} else if (*left == '.') {
+				if (nmright == NM_DIGIT) {
+					/* if the decimal point is in the dif and the other is a number, 
+					   diff works, as . < number */
+					if (!invert) {return (diff<0)?-1:1;} else {return (diff<0)?1:-1;}
+				} else {
+					/* if left is . its number is longer, and left > right */
+					if (!invert) {return 1;} else {return -1;}
+				}
+			} else if (*right == '.') {
+				if (nmleft == NM_DIGIT) {
+					/* if the decimal point is in the dif and the other is a number, 
+					   diff works, as . < number */
+					if (!invert) {return (diff<0)?-1:1;} else {return (diff<0)?1:-1;}
+				} else {
+					/* if right is . its number is longer, and left < right */
+					if (!invert) {return -1;} else {return 1;}
+				}
+			} else if (nmleft != NM_DIGIT || nmright != NM_DIGIT) {
+				/* if one not a digit, diff decides (both not digit was tested earlier) */
+				if (!invert) {return (diff<0)?-1:1;} else {return (diff<0)?1:-1;}
+			} else {
+				return naturalcompare_simplenum(left,alen,right,blen,diff,secondaryDiff,invert);
+			}
+		} else {
+			 DPRINT("specialnum: %s vs %s  context=%d nmleft=%d nmright=%d diff %d", left, right, context, nmleft, nmright, diff);
+			if (context < LOC_SIGNNUM) {
+				if (nmleft != NM_DIGIT || nmright != NM_DIGIT) {
+					/* like at start; if we are not yet in a number, use diff */
+					return (diff<0)?-1:1;
+				}
+			} else {
+				if (!nmleft) {
+					if (!invert) {return -1;} else {return 1;}
+				}
+				if (!nmright) {
+					if (!invert) {return 1;} else {return -1;}
+				}
+			}
+			if (context == LOC_DECIMAL || context == LOC_DECIMALNUM) {
+				/* after the decimal point, first diff decides */
+				if (!invert) {return (diff<0)?-1:1;} else {return (diff<0)?1:-1;}
+			}
+			return naturalcompare_simplenum(left,alen,right,blen,diff,secondaryDiff,invert);
 		}
 	}
-	fprintf(stderr,"shouldnt get here\n"); exit(1);
-	return 0;
+	fprintf(stderr,"internal error,we should not get here");
+	exit(1);
 }
 
 int DStringCompare(DString *a, DString *b) {
@@ -1072,3 +1399,4 @@ int fileexists(const char * filename) {
 }
 
 #endif
+

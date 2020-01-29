@@ -128,7 +128,7 @@ proc cg_report_vars {args} {
 	}
 	proc printvarinfo {f sample name varVar} {
 		upvar $varVar var
-		foreach temp [lsort -dict [list_remove [array names var] {}]] {
+		foreach temp [bsort [list_remove [array names var] {}]] {
 			puts $f $sample\tgenomecomb\t$name$temp\t$var($temp)
 		}
 	}

@@ -19,7 +19,7 @@ proc reghisto {regfile} {
 	close $v
 	unset -nocomplain tota
 	set o stdout
-	set names [ssort -natural [array names a]]
+	set names [bsort [array names a]]
 	foreach name $names {
 		foreach {chr len} [split $name ,] break
 		puts $o $chr\t$len\t$a($name)
@@ -29,7 +29,7 @@ proc reghisto {regfile} {
 			incr tota($len) $a($name)
 		}
 	}
-	set names [ssort -natural [array names tota]]
+	set names [bsort [array names tota]]
 	set tot 0
 	foreach len $names {
 		puts $o total\t$len\t$tota($len)

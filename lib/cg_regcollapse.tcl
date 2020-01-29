@@ -9,7 +9,7 @@ package require Extral
 proc collapseoverlap_join {cur scorepos {numpos -1}} {
 	if {[llength $cur] == 1} {return [lindex $cur 0]}
 	if {$scorepos != -1} {
-		set cur [ssort -natural -decreasing -index $scorepos $cur]
+		set cur [bsort -decreasing -index $scorepos $cur]
 	}
 	set result {}
 	set len [llength [lindex $cur 0]]
@@ -20,7 +20,7 @@ proc collapseoverlap_join {cur scorepos {numpos -1}} {
 			lappend result [format %0.f [lmath_sum [list_subindex $cur $i]]]
 		} else {
 			set temp [list_subindex $cur $i]
-			set nodup [lsort -dict [list_remdup $temp]]
+			set nodup [bsort [list_remdup $temp]]
 			if {[llength $nodup] < 2} {
 				lappend result $nodup
 			} else {

@@ -12,7 +12,7 @@ test download {download_ucsc} {
 
 test download {download_genes} {
 	cg download_genes tmp/gene_hg19_refGene.tsv hg19 refGene
-	exec md5sum {*}[lsort -dict [glob tmp/*tsv tmp/*tsv.gz tmp/*tsv.info]]
+	exec md5sum {*}[bsort [glob tmp/*tsv tmp/*tsv.gz tmp/*tsv.info]]
 } {2085883d03f3c2e6bb2319bd76ed89cd  tmp/gene_hg19_refGene.tsv
 56b08c46b4aef22ca9f332954e9ad598  tmp/gene_hg19_refGene.tsv.gz
 5c103f26a531d7e5b4ca34b51319c96d  tmp/gene_hg19_refGene.tsv.info}

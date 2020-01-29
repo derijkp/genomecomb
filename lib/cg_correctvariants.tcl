@@ -95,7 +95,7 @@ proc cg_correctvariants {args} {
 				foreach as [list_subindex $lines 5] {
 					lappend alts {*}[split $as ,]
 				}
-				lset line 5 [join [lsort -dict [list_remdup $alts]] ,]
+				lset line 5 [join [bsort [list_remdup $alts]] ,]
 				set lines [list $line]
 			}
 		}

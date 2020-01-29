@@ -172,3 +172,7 @@ clean:
 
 ../bin$(ARCH)/mergesorted$(EXEEXT): mergesorted.c $(TOOLS) $(GZPOPEN)
 	$(GCC) mergesorted.c tools.c $(GZPOPEN_C) $(CFLAGS) -o ../bin$(ARCH)/mergesorted$(EXEEXT)
+
+../bin$(ARCH)/test_naturalcompare$(EXEEXT): test_naturalcompare.c tools.c
+	echo "test test_naturalcompare"
+	$(GCC) test_naturalcompare.c tools.c $(CFLAGS) -o ../bin$(ARCH)/test_naturalcompare$(EXEEXT)

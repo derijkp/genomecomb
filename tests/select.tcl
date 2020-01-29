@@ -1416,11 +1416,11 @@ test select "cg select -s with *" {
 		a20
 	}]\n
 	exec cg select -stack 1 -sh /dev/null -s field tmp/test.tsv
-} {a
+} {*
+a
 a2
 a10
-a20
-*}
+a20}
 
 test select "cg select -s bug fix reverse sort" {
 	file_write tmp/test.tsv [deindent {

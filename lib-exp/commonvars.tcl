@@ -36,7 +36,7 @@ proc cg_commonvars args {
 		set groupsa($sampledir) $group,$family
 		lappend famsa($group) $family
 	}
-	set groups [ssort -natural [array names famsa]]
+	set groups [bsort [array names famsa]]
 	#
 	foreach sample $gsamples {
 		if {[info exists groupsa($sample)]} {

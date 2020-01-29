@@ -11,7 +11,7 @@ test compression {lz4} {
 	cg lz4 {*}[glob tmp/test*.txt]
 	catch {exec lz4c -d tmp/test1.txt.lz4 2> /dev/null} c1
 	catch {exec lz4c -d tmp/test2.txt.lz4 2> /dev/null} c2
-	list [lsort -dict [glob tmp/test*]] $c1 $c2
+	list [bsort [glob tmp/test*]] $c1 $c2
 } {{tmp/test1.txt.lz4 tmp/test2.txt.lz4} a b}
 
 test compression {lz4 -o} {
@@ -19,7 +19,7 @@ test compression {lz4 -o} {
 	file_write tmp/test1.txt a
 	cg lz4 -o tmp/out.lz4 tmp/test1.txt
 	catch {exec lz4c -d tmp/out.lz4 2> /dev/null} c1
-	list [lsort -dict [glob tmp/out*]] $c1
+	list [bsort [glob tmp/out*]] $c1
 } {tmp/out.lz4 a}
 
 test compression {lz4 -i} {
@@ -29,7 +29,7 @@ test compression {lz4 -i} {
 	cg lz4 -i 1 {*}[glob tmp/test*.txt]
 	catch {exec lz4c -d tmp/test1.txt.lz4 2> /dev/null} c1
 	catch {exec lz4c -d tmp/test2.txt.lz4 2> /dev/null} c2
-	list [lsort -dict [glob tmp/test*]] $c1 $c2
+	list [bsort [glob tmp/test*]] $c1 $c2
 } {{tmp/test1.txt.lz4 tmp/test1.txt.lz4.lz4i tmp/test2.txt.lz4 tmp/test2.txt.lz4.lz4i} a b}
 
 test compression {cg zcat lz4 -p} {
@@ -68,7 +68,7 @@ test compress {basic combinations} {
 				}
 				append result [list $startmethod [file size $src] $method]
 				cg $method -stack 1 $src
-				append result " [file size tmp/test.$method] $file - [lsort -dict [glob tmp/*]]\n"
+				append result " [file size tmp/test.$method] $file - [bsort [glob tmp/*]]\n"
 				cg zcat tmp/test.$method > tmp/test.res
 				exec diff tmp/test.res data/$file
 			}
@@ -135,7 +135,7 @@ test compress {basic combinations -keep 1 -index 1} {
 				}
 				append result [list $startmethod [file size $src] $method]
 				cg $method -keep 1 -index 1 $src
-				append result " [file size tmp/test.$method] $file - [lsort -dict [glob tmp/*]]\n"
+				append result " [file size tmp/test.$method] $file - [bsort [glob tmp/*]]\n"
 				cg zcat tmp/test.$method > tmp/test.res
 				exec diff tmp/test.res data/$file
 			}
@@ -293,7 +293,7 @@ test compress {compress command} {
 				append result [list $startmethod [file size $src] $method]
 				set destfile tmp/test.$method
 				compress $src $destfile 0 0 1 1
-				append result " [file size $destfile] $file - [lsort -dict [glob tmp/*]]\n"
+				append result " [file size $destfile] $file - [bsort [glob tmp/*]]\n"
 				cg zcat $destfile > tmp/test.res
 				exec diff tmp/test.res data/$file
 			}

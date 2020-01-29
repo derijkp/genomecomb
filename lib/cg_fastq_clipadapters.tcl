@@ -33,7 +33,7 @@ proc fastq_clipadapters_job {args} {
 		given by -resultdir or named fastq.clipped in the same dir as the (first) fastq
 	}
 	set fastqfiles [list $fastqfile {*}$args]
-	set fastqfiles [ssort -natural $fastqfiles]
+	set fastqfiles [bsort $fastqfiles]
 	set adapterfile [adapterfile $adapterfile]
 	if {$resultdir eq ""} {
 		set resultdir [file dir [lindex $fastqfiles 0]]/fastq.clipped

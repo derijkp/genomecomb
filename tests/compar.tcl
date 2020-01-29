@@ -15,7 +15,7 @@ test nat_compare {chr1 1} {
 
 test nat_compare {test-100 test-1-1} {
 	nat_compare test-100 test-1-1
-} -1
+} 1
 
 test nat_compare {-100 -1} {
 	nat_compare -100 -1
@@ -27,7 +27,7 @@ test nat_compare {{a -100} {a -1}} {
 
 test nat_compare {a-100 a-1} {
 	nat_compare a-100 a-1
-} -1
+} 1
 
 test nat_compare {+1 -1} {
 	nat_compare +1 -1
@@ -48,8 +48,8 @@ test nat_compare {a aa} {
 test nat_compare {multiple} {
 	set error {}
 	foreach {a b result} {
-		+	-	-1
-		-	+	1
+		+	-	1
+		-	+	-1
 		+1	1	1
 		-1	1	-1
 		-1	2	-1
@@ -110,6 +110,14 @@ test loc_compare {chr2 chr1} {
 
 test loc_compare {{chr2 10} {chr2 2}} {
 	loc_compare {chr2 10} {chr2 2}
+} 1
+
+test loc_compare {{a-2 2} {a-1 10}} {
+	loc_compare {a-1 10} {a-2 2}
+} -1
+
+test loc_compare {{{a -2} 2} {{a -1} 10}} {
+	loc_compare {{a -1} 10} {{a -2} 2}
 } 1
 
 test multicompar {basic} {

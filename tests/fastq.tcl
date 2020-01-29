@@ -27,7 +27,7 @@ test fastq_split {fastq_split basic} {
 	set numseq 50
 	cg fastq_split -numseq $numseq tmp/seq_R1.fq.gz tmp/split/seq_R1.fq.gz
 	checksplitoutput $numseq
-	lsort -dict [glob tmp/split/*]
+	bsort [glob tmp/split/*]
 } {tmp/split/p1_seq_R1.fq.gz tmp/split/p2_seq_R1.fq.gz}
 
 test fastq_split {fastq_split remainder -numseq 40} {
@@ -35,7 +35,7 @@ test fastq_split {fastq_split remainder -numseq 40} {
 	set numseq 40
 	cg fastq_split -numseq $numseq tmp/seq_R1.fq.gz tmp/split/seq_R1.fq.gz
 	checksplitoutput $numseq
-	lsort -dict [glob tmp/split/*]
+	bsort [glob tmp/split/*]
 } {tmp/split/p1_seq_R1.fq.gz tmp/split/p2_seq_R1.fq.gz tmp/split/p3_seq_R1.fq.gz}
 
 test fastq_split {fastq_split remainder -numseq 33} {
@@ -43,7 +43,7 @@ test fastq_split {fastq_split remainder -numseq 33} {
 	set numseq 40
 	cg fastq_split -numseq $numseq tmp/seq_R1.fq.gz tmp/split/seq_R1.fq.gz
 	checksplitoutput $numseq
-	lsort -dict [glob tmp/split/*]
+	bsort [glob tmp/split/*]
 } {tmp/split/p1_seq_R1.fq.gz tmp/split/p2_seq_R1.fq.gz tmp/split/p3_seq_R1.fq.gz}
 
 test fastq_split {fastq_split -numseq 99} {
@@ -51,7 +51,7 @@ test fastq_split {fastq_split -numseq 99} {
 	set numseq 99
 	cg fastq_split -numseq $numseq tmp/seq_R1.fq.gz tmp/split/seq_R1.fq.gz
 	checksplitoutput $numseq
-	lsort -dict [glob tmp/split/*]
+	bsort [glob tmp/split/*]
 } {tmp/split/p1_seq_R1.fq.gz tmp/split/p2_seq_R1.fq.gz}
 
 test fastq_split {fastq_split -numseq 25} {
@@ -59,7 +59,7 @@ test fastq_split {fastq_split -numseq 25} {
 	set numseq 25
 	cg fastq_split -numseq $numseq tmp/seq_R1.fq.gz tmp/split/seq_R1.fq.gz
 	checksplitoutput $numseq
-	lsort -dict [glob tmp/split/*]
+	bsort [glob tmp/split/*]
 } {tmp/split/p1_seq_R1.fq.gz tmp/split/p2_seq_R1.fq.gz tmp/split/p3_seq_R1.fq.gz tmp/split/p4_seq_R1.fq.gz}
 
 test fastq_split {fastq_split -maxparts} {
@@ -67,7 +67,7 @@ test fastq_split {fastq_split -maxparts} {
 	set numseq 25
 	cg fastq_split -numseq $numseq -maxparts 2 tmp/seq_R1.fq.gz tmp/split/seq_R1.fq.gz
 	checksplitoutput 25 2
-	lsort -dict [glob tmp/split/*]
+	bsort [glob tmp/split/*]
 } {tmp/split/p1_seq_R1.fq.gz tmp/split/p2_seq_R1.fq.gz}
 
 test fastq_split {fastq_split -parts 4} {
@@ -75,14 +75,14 @@ test fastq_split {fastq_split -parts 4} {
 	set numseq 25
 	cg fastq_split -parts 4 tmp/seq_R1.fq.gz tmp/split/seq_R1.fq.gz
 	checksplitoutput $numseq
-	lsort -dict [glob tmp/split/*]
+	bsort [glob tmp/split/*]
 } {tmp/split/p1_seq_R1.fq.gz tmp/split/p2_seq_R1.fq.gz tmp/split/p3_seq_R1.fq.gz tmp/split/p4_seq_R1.fq.gz}
 
 test fastq_split {fastq_split -parts 3} {
 	file copy {*}[glob data/seq_R*.fq.gz] tmp/
 	exec cg fastq_split -parts 3 tmp/seq_R1.fq.gz tmp/split/seq_R1.fq.gz >@ stdout
 	checksplitoutput 33 3
-	lsort -dict [glob tmp/split/*]
+	bsort [glob tmp/split/*]
 } {tmp/split/p1_seq_R1.fq.gz tmp/split/p2_seq_R1.fq.gz tmp/split/p3_seq_R1.fq.gz}
 
 test fastq2tsv {fastq2tsv} {

@@ -1,7 +1,7 @@
 proc pget {var args} {
 	upvar $var data
 	foreach field $args {
-		set name [lindex [lsort -dict [array names data $field]] 0]
+		set name [lindex [bsort [array names data $field]] 0]
 		if {$name ne ""} {
 			return $data($name)
 		}
@@ -608,9 +608,9 @@ proc process_reportscombine_job {args} {
 			lappend fastqcfiles {*}[jobglob $dir/fastqc_*.fastqc/fastqc_data.txt $dir/reports/fastqc_*.fastqc/fastqc_data.txt]
 		}
 	}
-	set reports [lsort -dict [list_remdup $reports]]
-	set histofiles [lsort -dict [list_remdup $histofiles]]
-	set fastqcfiles [lsort -dict [list_remdup $fastqcfiles]]
+	set reports [bsort [list_remdup $reports]]
+	set histofiles [bsort [list_remdup $histofiles]]
+	set fastqcfiles [bsort [list_remdup $fastqcfiles]]
 	set deps [list_concat $reports $histofiles $fastqcfiles]
 	if {[llength $deps]} {
 		set target $destdir/report_stats-${experimentname}.tsv
@@ -627,7 +627,7 @@ proc process_reportscombine_job {args} {
 			# make report_stats
 			# -----------------
 			file mkdir [file dir $target]
-			cg cat -m -c 0 {*}[lsort -dict $reports] > $target.temp
+			cg cat -m -c 0 {*}[bsort $reports] > $target.temp
 			cg select -rc 1 $target.temp $target.temp2
 			file rename -force -- $target.temp2 $target
 			file delete $target.temp
@@ -652,7 +652,7 @@ proc process_reportscombine_job {args} {
 				targetbases	pct_target_bases_2X pct_target_bases_10X pct_target_bases_20X pct_target_bases_30X
 				covered_total qvars qvars_target qvars_refcoding
 			} \t]
-			set analyses [ssort -natural [array names analysesa]]
+			set analyses [bsort [array names analysesa]]
 			foreach analysis $analyses {
 				# only report for "endpoints" analysis (data of partial will be included in endpoints)
 				if {[regexp {^cov5-} $analysis]} continue
@@ -761,7 +761,7 @@ proc process_reportscombine_job {args} {
 			}
 			set experiments [list_remove [array names expa] ""]
 			unset -nocomplain deptha
-			foreach file [lsort -dict $histofiles] {
+			foreach file [bsort $histofiles] {
 				set analysis [file_analysis $file]
 				set f [open $file]
 				set header [tsv_open $f]
@@ -824,7 +824,7 @@ proc process_reportscombine_job {args} {
 			# gather analysis data
 			# --------------------
 			set samples [list_regsub -all {.*-} $analyses {}]
-			set samples [lsort -dict [list_remdup $samples]]
+			set samples [bsort [list_remdup $samples]]
 			set alignments {}
 			foreach temp [array names data *,histodepth,offtarget_bases_20X] {
 				regsub ,histodepth,offtarget_bases_20X\$ $temp {} temp
@@ -834,13 +834,13 @@ proc process_reportscombine_job {args} {
 				regsub {,flagstat_reads,in total$} $temp {} temp
 				lappend alignments [split $temp -]
 			}
-			set alignments [lsort -dict -index end [list_remdup $alignments]]
+			set alignments [bsort -index end [list_remdup $alignments]]
 			set vcallers {}
 			foreach temp [array names data *,qvars] {
 				regsub ,genomecomb,qvars\$ $temp {} temp
 				lappend vcallers [split $temp -]
 			}
-			set vcallers [lsort -dict -index end [lsort -dict [list_remdup $vcallers]]]
+			set vcallers [bsort -index end [bsort [list_remdup $vcallers]]]
 			#
 			# intro
 			# -----
@@ -1037,7 +1037,7 @@ proc process_reportscombine_job {args} {
 			puts $o "\n<div class = \"nobreak\">\n<h2>Number of on-target bases with given depth</h2>"
 			puts $o {<div id="depthontarget" class="nobreak" style="height: 400px; width: 100%"></div>}
 			set depthdata {}
-			foreach name [lsort -dict [array names deptha]] {
+			foreach name [bsort [array names deptha]] {
 				set xs [lrange [list_subindex $deptha($name) 0] 1 end]
 				set ys [lrange [list_subindex $deptha($name) 1] 1 end]
 				lappend depthdata [plotly_element $name line \
@@ -1073,7 +1073,7 @@ proc process_reportscombine_job {args} {
 			puts $o "\n<div class = \"nobreak\">\n<h2>Number of off-target bases with given depth</h2>"
 			puts $o {<div id="depthofftarget" class="nobreak" style="height: 400px; width: 100%"><svg></svg></div>}
 			set depthdata {}
-			foreach name [lsort -dict [array names deptha]] {
+			foreach name [bsort [array names deptha]] {
 				set xs [lrange [list_subindex $deptha($name) 0] 1 end]
 				set ys [lrange [list_subindex $deptha($name) 2] 1 end]
 				lappend depthdata [plotly_element $name line \

@@ -72,7 +72,7 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 	}
 	# get data from old log files
 	set logroot [file root [file root $logfile]]
-	set oldlogfiles [lsort -dict [glob -nocomplain $logroot.*.finished $logroot.*.running $logroot.*.error $logroot.*.submitting]]
+	set oldlogfiles [bsort [glob -nocomplain $logroot.*.finished $logroot.*.running $logroot.*.error $logroot.*.submitting]]
 	set pos [lsearch $oldlogfiles $logfile]
 	incr pos -1
 	set oldlogfiles [lrange $oldlogfiles 0 $pos]
@@ -277,7 +277,7 @@ proc cg_job_update args {
 			set force $value
 		}
 	}
-	foreach logfile [lsort -dict -decreasing $args] {
+	foreach logfile [bsort -decreasing $args] {
 		if {[file extension $logfile] in ".running .finished .error .submitting"} break
 	}
 	set logfile [file_absolute $logfile]

@@ -90,14 +90,14 @@ test genome_seq {split} {
 	exec cg genome_seq -g 50 -s 1 -i name data/reg_genome_seq.tsv $::refseqdir/hg19 tmp/
 	exec diff tmp/r1.fas data/expected-reg_genome_seq-1.fas
 	exec diff tmp/r9.fas data/expected-reg_genome_seq-9.fas
-	lsort -dict [glob tmp/*.fas]
+	bsort [glob tmp/*.fas]
 } {tmp/r1.fas tmp/r2.fas tmp/r3.fas tmp/r4.fas tmp/r5.fas tmp/r6.fas tmp/r7.fas tmp/r8.fas tmp/r9.fas tmp/r10.fas tmp/r11.fas tmp/r12.fas tmp/r13.fas tmp/r14.fas tmp/r15.fas tmp/r16.fas tmp/r17.fas} 
 
 test genome_seq {gcsplit split} {
 	exec cg genome_seq -g 50 -s 1 -gs 60 -i name data/reg_genome_seq.tsv $::refseqdir/hg19 tmp/temp.fas
 	exec diff tmp/temp-lowgc/r1.fas data/expected-reg_genome_seq-1.fas
 	exec diff tmp/temp-highgc/r9.fas data/expected-reg_genome_seq-9.fas
-	list [lsort -dict [glob tmp/temp-lowgc/*.fas]] [lsort -dict [glob tmp/temp-highgc/*.fas]]
+	list [bsort [glob tmp/temp-lowgc/*.fas]] [bsort [glob tmp/temp-highgc/*.fas]]
 } {{tmp/temp-lowgc/r1.fas tmp/temp-lowgc/r2.fas tmp/temp-lowgc/r4.fas tmp/temp-lowgc/r5.fas tmp/temp-lowgc/r6.fas tmp/temp-lowgc/r7.fas tmp/temp-lowgc/r8.fas tmp/temp-lowgc/r10.fas tmp/temp-lowgc/r11.fas tmp/temp-lowgc/r15.fas tmp/temp-lowgc/r16.fas} {tmp/temp-highgc/r3.fas tmp/temp-highgc/r9.fas tmp/temp-highgc/r12.fas tmp/temp-highgc/r13.fas tmp/temp-highgc/r14.fas tmp/temp-highgc/r17.fas}} 
 
 test genome_seq {bugfix gcval error: -n 0.01 -p Common -r "N" -i "name" -gs 65 -gd 0} {

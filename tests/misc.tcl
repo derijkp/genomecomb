@@ -16,7 +16,7 @@ proc misc_testfiles {} {
 
 proc dirinfo {dir} {
 	set result {}
-	foreach file [lsort -dict [glob -nocomplain $dir/*]] {
+	foreach file [bsort [glob -nocomplain $dir/*]] {
 		if {[catch {file link $file} link]} {set link -}
 		if {[file isdir $file]} {
 			set data [list dir [dirinfo $file]]
@@ -170,7 +170,7 @@ test mklink {nklink time} {
 test distr2chr {basic} {
 	test_cleantmp
 	exec distr2chr tmp/distrvars1- 0 < data/vars1.sft
-	list [lsort -dict [glob tmp/*]] [file_read tmp/distrvars1-chr1]
+	list [bsort [glob tmp/*]] [file_read tmp/distrvars1-chr1]
 } {{tmp/distrvars1-chr1 tmp/distrvars1-chr2 tmp/distrvars1-chromosome} {chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
 chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
 chr1	4099	4100	snp	C	T	T	T	47	v	T	T	35	v	1,2
@@ -202,7 +202,7 @@ chr2	2-2
 test distr2chr {reglist} {
 	test_cleantmp
 	exec distr2chr tmp/distrvars1- 0 < data/vars1.sft
-	list [lsort -dict [glob tmp/*]] [file_read tmp/distrvars1-chr1]
+	list [bsort [glob tmp/*]] [file_read tmp/distrvars1-chr1]
 } {{tmp/distrvars1-chr1 tmp/distrvars1-chr2 tmp/distrvars1-chromosome} {chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
 chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
 chr1	4099	4100	snp	C	T	T	T	47	v	T	T	35	v	1,2
@@ -215,7 +215,7 @@ test distrreg {basic} {
 	exec distrreg tmp/distrvars1- {} 1 \
 		{chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2} \
 		0 1 2 1 \# < data/vars1.sft
-	list [lsort -dict [glob tmp/*]] \
+	list [bsort [glob tmp/*]] \
 		[file_read tmp/distrvars1-chr1-1000-5000] \
 		[file_read tmp/distrvars1-chr1-5000-10000] \
 		[lindex [cg select -g all tmp/distrvars1-chr1-10000-20000] end] \
@@ -236,7 +236,7 @@ test distrreg {basic with compression} {
 	exec distrreg tmp/distrvars1- .zst 1 \
 		{chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2} \
 		0 1 2 1 \# {zstd-mt -k -q -8 -b 0.5 -T 1 -c > } < tmp/vars1.sft
-	list [lsort -dict [glob tmp/*]] \
+	list [bsort [glob tmp/*]] \
 		[exec cg zcat tmp/distrvars1-chr1-1000-5000.zst] \
 		[exec cg zcat tmp/distrvars1-chr1-5000-10000.zst] \
 		[lindex [cg select -g all tmp/distrvars1-chr1-10000-20000.zst] end] \
@@ -265,7 +265,7 @@ test distrreg {chr1_} {
 		{chr1-1-100 chr1-100-200 chr1_ chr2} \
 		0 1 2 1 \# < tmp/test.tsv
 	file delete tmp/test.tsv
-	set files [lsort -dict [glob tmp/*]]
+	set files [bsort [glob tmp/*]]
 	set result $files\n
 	foreach file $files {
 		append result \#$file\n[file_read $file]
@@ -286,14 +286,14 @@ chr1_random2	99	100	c12-99
 #tmp/distrvars1-chr2
 chromosome	begin	end	name
 chr2	1000	1001	c2-1000
-} 
+}
 
 test distrreg {no header} {
 	test_cleantmp
 	exec distrreg tmp/distrvars1- .bed 0 \
 		{chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2} \
 		0 1 2 1 \# < data/vars1.sft
-	list [lsort -dict [glob tmp/*]] \
+	list [bsort [glob tmp/*]] \
 		[file_read tmp/distrvars1-chr1-1000-5000.bed] \
 		[file_read tmp/distrvars1-chr1-5000-10000.bed] \
 		[lindex [exec wc -l tmp/distrvars1-chr1-10000-20000.bed] 0] \

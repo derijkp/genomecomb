@@ -143,8 +143,8 @@ proc cg_compound {args} {
 		set transcripta($transcript) 1
 		set a($transcript,$sample) $num
 	}
-	# set samples [lsort -dict [array names samplea]]
-	set transcripts [lsort -dict [array names transcripta]]
+	# set samples [bsort [array names samplea]]
+	set transcripts [bsort [array names transcripta]]
 
 	#
 	# write $resultfile

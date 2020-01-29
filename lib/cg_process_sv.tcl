@@ -23,7 +23,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 	set resultfiles {}
 	cd $dir/sv
 	set files [gzfiles $name-*-paired.tsv]
-	foreach file [ssort -natural $files] {
+	foreach file [bsort $files] {
 		set root [file root [gzroot $file]]
 		job svindex-$root -deps {$file} -targets {$root.tsv.end1_index} -code {
 			puts "Indexing $dep"
@@ -45,7 +45,7 @@ proc process_sv {cgdir dir dbdir {force 0}} {
 	}
 	job svfind-[file tail $dir] -deps $resultfiles -targets {$dir/sv/svall-$name.tsv $dir/sv-$name.tsv} -vars {dbdir dir} -code {
 		set temptarget [filetemp $target]
-		cg cat {*}[lsort -dict $deps] > $temptarget
+		cg cat {*}[bsort $deps] > $temptarget
 		file rename -force -- $temptarget $target
 		set temptarget [filetemp $target2]
 		cg select -overwrite 1 -q {$problems eq "" and $quality > 2} $target $temptarget

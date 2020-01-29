@@ -46,7 +46,7 @@ proc cg_cat {args} {
 		fcopy $f stdout
 		exit 0
 	}
-	if {$sort} {set args [lsort -dict $args]}
+	if {$sort} {set args [bsort $args]}
 	set headers {}
 	set comments {}
 	set files {}

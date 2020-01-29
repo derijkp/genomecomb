@@ -597,7 +597,7 @@ proc pmulticompar_job {args} {
 	}
 	# analysisinfo
 	set deps {}
-	foreach file [lsort -dict $files] {
+	foreach file [bsort $files] {
 		lappend deps "([gzroot $file].analysisinfo)"
 	}
 	set target [gzroot $compar_file].analysisinfo

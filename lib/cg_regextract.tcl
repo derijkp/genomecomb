@@ -51,7 +51,7 @@ proc cg_regextract {args} {
 	if {[info exists Q]} {lappend samtoolsargs -Q $Q}
 	if {$aa} {lappend samtoolsargs -aa}
 	set files $args
-	set files [lsort -dict $files]
+	set files [bsort $files]
 	set o stdout
 	puts $o "chromosome\tbegin\tend"
 	foreach file $files {

@@ -482,7 +482,7 @@ mainw method querybuilder_functions_type {type} {
 		foreach type [array names select_functions] {
 			lappend temp {*}$select_functions($type)
 		}
-		set temp [lsort -dict $temp]
+		set temp [bsort $temp]
 	} else {
 		set temp $select_functions($type)
 	}

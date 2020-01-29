@@ -200,7 +200,7 @@ proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}}} {
 		} elseif {[regexp ^@SQ $line]} {
 			lappend sq $line
 		} elseif {[llength $sq]} {
-			append header [join [ssort -natural $sq] \n]\n
+			append header [join [bsort $sq] \n]\n
 			set sq {}
 			append header $line\n
 		} else {
@@ -208,16 +208,16 @@ proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}}} {
 		}
 	}
 	if {[llength $sq]} {
-		append header [join [ssort -natural $sq] \n]\n
+		append header [join [bsort $sq] \n]\n
 	}
 	if {$refseq ne ""} {
 		set header [sam_header_addm5 $header $refseq]
 	}
 	puts -nonewline stdout $header
 	if {$sort eq "coordinate"} {
-		set o [open "| gnusort8 --buffer-size=500M --parallel $threads -T [scratchdir] -t \\t -s -k3,3B -k4,4B" w]
+		set o [open "| gnusort8 --buffer-size=500M --parallel $threads -T [scratchdir] -t \\t -s -k3,3N -k4,4N" w]
 	} else {
-		set o [open "| gnusort8 --buffer-size=500M --parallel $threads -T [scratchdir] -t \\t -s -k1,1B 2>@ stderr" w]
+		set o [open "| gnusort8 --buffer-size=500M --parallel $threads -T [scratchdir] -t \\t -s -k1,1N 2>@ stderr" w]
 	}
 	puts $o $line
 	fcopy stdin $o

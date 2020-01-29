@@ -313,7 +313,7 @@ proc cg_liftover {args} {
 				set uend [expr {$destend - $begin + $srcbegin}]
 				set ubegin [expr {$destend - $end + $srcbegin}]
 				set ref [seq_complement $ref]
-				set alts [lsort -dict [seq_complement $alts]]
+				set alts [bsort [seq_complement $alts]]
 				if {$correctvariants} {
 					if {$refpos != -1} {lset line $refpos $ref}
 					if {$altpos != -1} {lset line $altpos [join $alts ,]}
@@ -346,7 +346,7 @@ proc cg_liftover {args} {
 					if {!$split} {
 						set alts [list_remove $alts $newref]
 						lappend alts $ref
-						set alts [lsort -dict $alts]
+						set alts [bsort $alts]
 						puts $o [join [liftover_correctline $line $newref $altpos $alts $sposs $slist] \t]
 					} else {
 						if {[llength $alts] > 1} {error "file has multiple alternative alleles (but should be split)"}

@@ -393,7 +393,7 @@ proc cg_bcol_update {newbcol oldbcol args} {
 	puts $o "\# type $type"
 	puts $o "\# default $default"
 	puts $o "chromosome\tbegin\tend"
-	set args [ssort -natural [list $oldbcol {*}$args]]
+	set args [bsort [list $oldbcol {*}$args]]
 	foreach file $args {
 		set bcol [bcol_open $file 1]
 		set table [dict get $bcol table]

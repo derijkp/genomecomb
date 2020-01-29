@@ -52,10 +52,10 @@ proc process_reports_job {args} {
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 picard java gnusort8 zst os]
 	# start
 	if {$resultbamfile eq ""} {
-		set bamfiles [lsort -dict [jobglob $sampledir/*.bam $sampledir/*.cram]]
+		set bamfiles [bsort [jobglob $sampledir/*.bam $sampledir/*.cram]]
 		set resultbamfile [lindex $bamfiles end]
 	} else {
-		set bamfiles [list_remdup [list $resultbamfile {*}[lsort -dict [jobglob $sampledir/*.bam $sampledir/*.cram]]]]
+		set bamfiles [list_remdup [list $resultbamfile {*}[bsort [jobglob $sampledir/*.bam $sampledir/*.cram]]]]
 	}
 	set ampliconsfile [ampliconsfile $sampledir $ref]
 	file mkdir $sampledir/reports
@@ -168,7 +168,7 @@ proc process_reports_job {args} {
 				if {$tottarget} {
 					append out "$bamroot\thistodepth\ttargetbases\t$tottarget\n"
 				}
-				append out [join [ssort -natural $result] \n]
+				append out [join [bsort $result] \n]
 				append out \n
 				set target2temp [filetemp $target2]
 				file_write $target2temp $out
@@ -200,7 +200,7 @@ proc process_reports_job {args} {
 			cg predictgender -dbdir $dbdir $resultbamfile $target
 		}
 	}
-	set fastqfiles [ssort -natural [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
+	set fastqfiles [bsort [jobglob $sampledir/fastq/*.fastq.gz $sampledir/fastq/*.fastq $sampledir/fastq/*.fq.gz $sampledir/fastq/*.fq]]
 	set fastqfiles_fw [list_unmerge $fastqfiles 1 fastqfiles_rev]
 	if {[inlist $reports fastqc] && [llength $fastqfiles]} {
 		foreach deps [list $fastqfiles_fw $fastqfiles_rev] dir {fw rev} {

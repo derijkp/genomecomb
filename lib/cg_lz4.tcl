@@ -84,7 +84,7 @@ proc lz4version {{minversion {}}} {
 		if {[string index $lz4version 0] eq "v"} {set lz4version [string range $lz4version  1 end]}
 	}
 	if {$minversion ne ""} {
-		if {[lindex [ssort -natural [list $minversion $lz4version]] 0] ne "$minversion"} {
+		if {[lindex [bsort [list $minversion $lz4version]] 0] ne "$minversion"} {
 			error "lz4 version ($lz4version) smaller than $minversion"
 		}
 	}

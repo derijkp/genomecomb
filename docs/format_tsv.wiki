@@ -40,15 +40,13 @@ and "1" type of notation for chromosome, meaning that "chr1 1 2" is considered t
 same region as "1 1 2".
 
 Most genomecomb tools expect region files to be **sorted** on chromosome, begin, end 
-(and files created by genomecomb are usually sorted).
+using a [[natural_sort|natural sort]] for chromosome names (.i.e sorted 
+alphabetically, but with embedded numbers interpreted as numbers, 
+e.g. chr1,chr2,chr11). 
+Most of the files created by genomecomb are already properly sorted; 
 You can sort files using the -s option of [[cg_select]]. 
 Use -s - to sort using the default expected sort order:
 {{{cg select -s - file sortedfile}}}
-For chromosome names, a natural sort is (to be) used. 
-This sorts strings alphabetically except that multi-digit numbers are
-ordered as a single character, meaning that chr11 will come (as expected
-by most humans) after chr2 instead of before (as the typically used
-lexical sort would do)
 
 If the normal chromosome, begin, end fields are not present, the following 
 alternative fieldnames are also recognized:

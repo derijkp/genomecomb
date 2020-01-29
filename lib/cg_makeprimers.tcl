@@ -219,7 +219,7 @@ proc cindex_searchgenome {db pseq {add 0} {nummax {}}} {
 	if {![info exists cindex_genome]} {
 		putslog "loading genome database"
 		set cindex_genome {}
-		set files [ssort -natural [glob $db/*]]
+		set files [bsort [glob $db/*]]
 		if {![llength $files]} {error "no files found in $db"}
 		foreach file $files {
 			set file [file root $file]
