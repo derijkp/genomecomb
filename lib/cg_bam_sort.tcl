@@ -4,7 +4,7 @@ proc methods_bam_sort {args} {
 	if {[llength $args]} {
 		set value [lindex $args 0]
 		if {$value eq "1"} {set value [lindex $supportedmethods 0]}
-		if {$value ni $supportedmethods} {error "$cmd: unsupported -method $value"}
+		if {$value ni $supportedmethods} {error "$cmd: unsupported -method $value, must be one of samtools,biobambam,gnusort"}
 		return $value
 	} else {
 		return $supportedmethods
@@ -76,7 +76,7 @@ proc cg_sam_sort {args} {
 			set method [methods_bam_sort $value]
 		}
 		-sort {
-			if {$value ni {coordinate name hash}} {error "bamsort: unsupported -sort $value"}
+			if {$value ni {coordinate name hash}} {error "bamsort: unsupported -sort $value, must be one of: coordinate,name,hash"}
 			set sort $value
 		}
 		-inputformat - -if {
@@ -190,13 +190,20 @@ proc cg_sam_sort {args} {
 	}
 }
 
-proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}}} {
+proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}} {addm5 0}} {
+	if {$sort eq "name"} {
+		set sort queryname
+	} elseif {$sort ne "coordinate"} {
+		error "cg__sam_sort_gnusort only supports coordinate or name sort"
+	}
 	set header {}
 	set sq {}
+	set hddone 0
 	while {[gets stdin line] != -1} {
 		if {[string index $line 0] ne "@"} break
 		if {[regexp ^@HD $line]} {
-			append header "@HD	VN:1.6	SO:coordinate\n"
+			append header "@HD	VN:1.6	SO:$sort\n"
+			set hddone 1
 		} elseif {[regexp ^@SQ $line]} {
 			lappend sq $line
 		} elseif {[llength $sq]} {
@@ -207,10 +214,13 @@ proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}}} {
 			append header $line\n
 		}
 	}
+	if {!$hddone} {
+		set header "@HD	VN:1.6	SO:$sort\n$header"
+	}
 	if {[llength $sq]} {
 		append header [join [bsort $sq] \n]\n
 	}
-	if {$refseq ne ""} {
+	if {$addm5} {
 		set header [sam_header_addm5 $header $refseq]
 	}
 	puts -nonewline stdout $header

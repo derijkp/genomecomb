@@ -600,6 +600,13 @@ test bam_sort {bam_sort -method biobambam} {
 	cg tsvdiff tmp/sorted.bam data/bwa.bam
 } {}
 
+test bam_sort {bam_sort -method gnusort} {
+	test_cleantmp
+	exec samtools sort -n -o tmp/test.bam data/bwa.bam
+	cg bam_sort -method gnusort tmp/test.bam tmp/sorted.bam
+	cg tsvdiff tmp/sorted.bam data/bwa.bam
+} {}
+
 test bam_sort {bam_sort -method biobambam pipe} {
 	test_cleantmp
 	exec samtools sort -n data/bwa.bam > tmp/test.bam
@@ -628,5 +635,17 @@ test bam_sort {bam_sort -method biobambam -sort name} {
 	cg bam_sort -method biobambam -sort name data/bwa.bam tmp/sorted.bam
 	cg tsvdiff tmp/sorted.bam tmp/expected.bam
 } {}
+
+test bam_sort {(internal) cg _sam_sort_gnusort, without @HD line} {
+	test_cleantmp
+	exec samtools sort -o tmp/expected.sam data/bwa.bam
+	exec samtools sort -n -O sam data/bwa.bam | grep -v @HD > tmp/namesorted.sam
+	exec cg _sam_sort_gnusort coordinate < tmp/namesorted.sam > tmp/sorted.sam
+	exec diff tmp/sorted.sam tmp/expected.sam
+} {1c1
+< @HD	VN:1.6	SO:coordinate
+---
+> @HD	VN:1.3	SO:coordinate
+child process exited abnormally} error
 
 testsummarize
