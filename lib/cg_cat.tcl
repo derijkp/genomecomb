@@ -95,15 +95,16 @@ proc cg_cat {args} {
 			}
 		}
 	}
-	if {$namefield ne ""} {
-		lappend header $namefield
-	}
 	if {[llength $comments]} {
 		puts [join $comments \n]
 	}
-	puts [join $header \t]
 	set defcor [list_cor $header $header]
 	set lh [llength $header]
+	if {$namefield ne ""} {
+		puts [join $header \t]\t$namefield
+	} else {
+		puts [join $header \t]
+	}
 	foreach testheader $headers file $args {
 		set fname [file tail $file]
 		set f [gzopen $file]
@@ -122,7 +123,15 @@ proc cg_cat {args} {
 			# merge
 			set cor [list_cor $testheader $header]
 			if {$cor eq $defcor && [llength $testheader] == $lh} {
-				fcopy $f stdout
+				if {$namefield ne ""} {
+					while {![eof $f]} {
+						set line [gets $f]
+						if {$line eq ""} continue
+						puts $line\t$fname
+					}
+				} else {
+					fcopy $f stdout
+				}
 			} else {
 				while {![eof $f]} {
 					set line [split [gets $f] \t]

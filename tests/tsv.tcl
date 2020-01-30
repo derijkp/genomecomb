@@ -224,22 +224,22 @@ t	1	10	20
 t	1	50	60	}
 
 test tsv_cat {two diff header -m, -n -c 0} {
-	cg cat -n file -c 0 -m data/reg2.tsv data/reg1b.tsv
+	cg cat -n file -c 0 -m 1 data/reg2.tsv data/reg1b.tsv
 } {# comments added
 #
 test	chromosome	begin	end	test2	file
-t	1	15	25	t2		reg2.tsv
-t	1	45	55	t2		reg2.tsv
-t	2	150	160	t2		reg2.tsv
-t	2	170	180	t2		reg2.tsv
-t	2	300	400	t2		reg2.tsv
-t	2	400	500	t2		reg2.tsv
-t	3	1000	1100	t2		reg2.tsv
-t	M	10	25	t2		reg2.tsv
-t	X	90	200	t2		reg2.tsv
-t	Y	1010	1900	t2		reg2.tsv
-t	1	10	20			reg1b.tsv
-t	1	50	60			reg1b.tsv}
+t	1	15	25	t2	reg2.tsv
+t	1	45	55	t2	reg2.tsv
+t	2	150	160	t2	reg2.tsv
+t	2	170	180	t2	reg2.tsv
+t	2	300	400	t2	reg2.tsv
+t	2	400	500	t2	reg2.tsv
+t	3	1000	1100	t2	reg2.tsv
+t	M	10	25	t2	reg2.tsv
+t	X	90	200	t2	reg2.tsv
+t	Y	1010	1900	t2	reg2.tsv
+t	1	10	20		reg1b.tsv
+t	1	50	60		reg1b.tsv}
 
 test tsv_cat {two diff header -m} {
 	cg cat -m data/reg1.tsv data/reg2.tsv
@@ -306,6 +306,34 @@ chromosome	begin	end	test
 1	50	60	t
 1	15	25	t
 1	45	55	t}
+
+test tsv_cat {-n file} {
+	write_tab tmp/reg1.tsv {
+		chromosome	begin	end
+		1	15	25
+	}
+	write_tab tmp/reg2.tsv {
+		chromosome	begin	end
+		1	45	55
+	}
+	exec cg cat -n file -c 0 tmp/reg1.tsv tmp/reg2.tsv
+} {chromosome	begin	end	file
+1	15	25	reg1.tsv
+1	45	55	reg2.tsv}
+
+test tsv_cat {-m 1 -n file} {
+	write_tab tmp/reg1.tsv {
+		chromosome	test begin	end
+		1	test	15	25
+	}
+	write_tab tmp/reg2.tsv {
+		chromosome	begin	end
+		1	45	55
+	}
+	exec cg cat -m 1 -n file -c 0 tmp/reg1.tsv tmp/reg2.tsv
+} {chromosome	test	begin	end	file
+1	test	15	25	reg1.tsv
+1		45	55	reg2.tsv}
 
 set ::env(PATH) $keeppath
 
