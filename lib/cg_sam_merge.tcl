@@ -5,6 +5,7 @@ proc sam_merge_job {args} {
 	set deletesams 0
 	set optional 0
 	set index 1
+	set sortopts {}
 	cg_options sam_merge args {
 		-index {
 			set index $value
@@ -17,6 +18,9 @@ proc sam_merge_job {args} {
 		}
 		-force {
 			set force $value
+		}
+		-sort {
+			if {$value eq "name"} {set sortopts -n} else {set sortopts {}}
 		}
 		-optional {
 			set optional $value
@@ -47,8 +51,8 @@ proc sam_merge_job {args} {
 			set target $outputfile
 			job $name -optional $optional -force $force -deps $samfiles -targets {
 				$target
-			} -vars {threads} -code {
-				exec samtools merge -t $threads $target.temp {*}$deps
+			} -vars {threads sortopts} -code {
+				exec samtools merge {*}$sortopts -t $threads $target.temp {*}$deps
 				file rename -force -- $target.temp $target
 			}
 		} else {
@@ -62,8 +66,8 @@ proc sam_merge_job {args} {
 					job paste-$name -optional $optional -force $force -cores $threads \
 					-deps $todo -targets {
 						$target
-					} -vars {delete workdir threads} -code {
-						exec samtools merge -t $threads $target.temp {*}$deps
+					} -vars {delete workdir threads sortopts} -code {
+						exec samtools merge {*}$sortopts -t $threads $target.temp {*}$deps
 						file rename -force -- $target.temp $target
 						if {$delete} {file delete {*}$deps}
 					}
@@ -80,10 +84,10 @@ proc sam_merge_job {args} {
 					job ${name}-$num -optional $optional -force $force \
 					-deps $deps -targets {
 						$target
-					} -vars {delete threads} -code {
+					} -vars {delete threads sortopts} -code {
 						# puts [list ../bin/tsv_paste {*}$deps]
 						if {[llength $deps] > 1} {
-							exec samtools merge -t $threads $target.temp {*}$deps
+							exec samtools merge {*}$sortopts -t $threads $target.temp {*}$deps
 							if {$delete} {file delete {*}$deps}
 						} elseif {!$delete} {
 							mklink $dep $target.temp
