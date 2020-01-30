@@ -87,8 +87,8 @@ test process_sv {manta} {
 	  -varcallers gatk \
 	  -svcallers manta -distrreg 1 -split 1 \
 	  -dbdir /complgen/refseq/hg19 \
-	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
-	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.lz4 \
+	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.zst \
+	  -dbfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv.zst \
 	  tmp/sv_chr21part >& tmp/sv_chr21part.log
 	set result {}
 	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *_fastqc -x summary-* -x fastqc_report.html \
