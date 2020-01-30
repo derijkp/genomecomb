@@ -158,7 +158,8 @@ proc var_gatkh_job {args} {
 				-ERC $ERC \
 				-G StandardAnnotation \
 				-G StandardHCAnnotation \
-				-G AS_StandardAnnotation
+				-G AS_StandardAnnotation \
+				--max-reads-per-alignment-start 0
 			file rename -force -- $varallfile.temp.gz $varallfile.gz
 			file rename -force -- $varallfile.temp.gz.tbi $varallfile.gz.tbi
 			# file delete $varallfile.temp
