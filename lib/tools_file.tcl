@@ -84,17 +84,7 @@ proc filetemp {file {write 1} {ext 0}} {
 }
 
 proc filetemp_ext {file {write 1}} {
-	set ext [file extension $file]
-	if {![isgzext $ext]} {set ext {}}
-	if {![file exists $file.temp$ext]} {
-		set result $file.temp$ext
-	} else {
-		set num 2
-		while {[file exists $file.temp$num$ext]} {incr num}
-		set result $file.temp$num$ext
-	}
-	if {$write} {file_write $result {}}
-	return $result
+	filetemp $file $write 1
 }
 
 proc maxopenfiles {{force 0}} {
