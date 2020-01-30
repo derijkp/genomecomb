@@ -18,6 +18,8 @@ proc chanexec {in out pipe} {
 	if {$o ne "stdout"} {gzcloseout $o}
 }
 
+# catch_exec does exec "catching" errors caused by output to stderr
+# it only generates an error if the cmd returns an error exit code.
 proc catch_exec {args} {
 	set error [catch {
 		exec {*}$args
