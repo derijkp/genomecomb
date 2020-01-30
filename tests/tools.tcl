@@ -53,6 +53,23 @@ proc testdir {args} {
 }
 
 proc test {args} {
+	set numargs [llength $args]
+	if {$numargs == 0} {
+		set ::testdir $::appdir/tests
+		cd $::appdir/tests
+		puts "testdir set back to [pwd]"
+		return
+	} elseif {$numargs == 2 || ($numargs == 3 && [string trim [lindex $args 2]] eq "")} {
+		set ::testdir [testdir {*}$args]
+		file mkdir $::testdir
+		file mkdir $::testdir/tmp
+		puts "testdir set to [pwd]"
+		cd $::testdir
+		return
+	} elseif {$numargs < 4} {
+		error "wrong # parameters, format is : test group description script expected ..."
+		group description script expected args
+	}
 	set ::testdir [testdir {*}$args]
 	file mkdir $::testdir
 	file mkdir $::testdir/tmp
