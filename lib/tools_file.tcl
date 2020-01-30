@@ -463,10 +463,18 @@ proc convert_pipe {infile outfile args} {
 	set defaultout {}
 	set addpipe 0
 	set endpipe 0
+	set threads {}
+	set compressionlevel {}
 	foreach {key value} $args {
 		switch $key {
 			-refseq {
 				set refseq $value
+			}
+			-threads {
+				set threads $value
+			}
+			-compressionlevel {
+				set compressionlevel $value
 			}
 			-optio {
 				upvar $value optio
@@ -517,8 +525,13 @@ proc convert_pipe {infile outfile args} {
 	if {$informat eq $outformat} {
 	} elseif {$informat in "sam bam cram" && $outformat in "sam bam cram"} {
 		if {[llength $pipe]} {lappend pipe |}
-		set compressionlevel [defcompressionlevel 5]
+		if {$compressionlevel eq ""} {
+			set compressionlevel [defcompressionlevel 5]
+		}
 		lappend pipe samtools view -h --output-fmt-option level=$compressionlevel
+		if {$threads ne ""} {
+			lappend pipe --threads $threads
+		}
 		if {$outformat eq "bam"} {
 			lappend pipe -b
 		} elseif {$outformat eq "cram"} {
