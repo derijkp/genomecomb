@@ -92,7 +92,8 @@ proc cg_tsvjoin {args} {
 			if {$type in "f r"} {
 				puts $o $defline1\t[join [list_sub $line2 -exclude $poss2] \t]
 			}
-			set line2 [split [gets $f2] \t]
+			if {[gets $f2 line] == -1} {set c -1 ; break}
+			set line2 [split $line2 \t]
 			set id2 [list_sub $line2 $poss2]
 			if {[loc_compare $previd2 $id2] > 0} {
 				error "file $file2 not properly sorted on $idfields2 ($previd2 comes before $id2)"
