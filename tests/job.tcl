@@ -296,6 +296,10 @@ foreach {testname initcode} $tests {
 # start of block
 
 if {$testname eq "-d sge"} {
+	if {![get testsge 0]} {
+		puts "skipping sge tests because testsge is not set (default), set testsge 1 or give testsge as a parameter to all.tcl to run"
+		continue
+	}
 	if {[catch {exec qstat}]} {
 		puts "Cannot test sge option (missing qstat; grid engine not installed?)"
 		continue
