@@ -126,7 +126,11 @@ proc gatkexec {args} {
 				set gatk(command) gatk
 			}
 			catch {exec $gatk(command) HaplotypeCaller --version} msg
-			if {[regexp {GATK.*Version:(.*)} $msg temp version]} {
+			if {[regexp {GATK.*Version:(.+)} $msg temp version]} {
+				set gatk(usecommand) 1
+				set gatk(version) $version
+				set ::gatkjava java
+			} elseif {[regexp {Version:([^\n]+).*GATK} $msg temp version]} {
 				set gatk(usecommand) 1
 				set gatk(version) $version
 				set ::gatkjava java
