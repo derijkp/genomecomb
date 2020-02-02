@@ -387,7 +387,8 @@ int naturalcompare_atof(char *a,char *b) {
 
 /*
 	set list [list { } ! \" \# $ % & \' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : \; < = > ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z \[ \\ \] ^ _ ` a b c d e f g h i j k l m n o p q r s t u v w x y z \{ | \} ~]
-	set rlist [list { } * ! \" \# $ % & \' ( ) , - . / 0 1 2 3 4 5 6 7 8 9 + : \; < = > ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z \[ \\ \] ^ _ ` a b c d e f g h i j k l m n o p q r s t u v w x y z \{ | \} ~]
+	set rlist [list { } ! \" \# $ % & \' ( ) , - . / 0 1 2 3 4 5 6 7 8 9 + : \; < = > ? @ A a B b C c D d E e F f G g H h I i J j K k L l M m N n O o P p Q q R r S s T t U u V v W w X x Y y Z z \[ \\ \] ^ _ ` \{ | \} ~ *]
+
 	set cor [lmath_calc [list_cor $rlist $list] + 32]
 	set temp [list_concat [list_fill 32 0 1] $cor]
 	join $temp ,
@@ -395,13 +396,12 @@ int naturalcompare_atof(char *a,char *b) {
 
 /*
 	changes in order from ascii
-	* sorts before everything except control+space, then -
-	+ sorts after everything
-	letters sort last (except +), as A a B b ...
-	numbers sort just before letters, after all other chars (except +)
+	* sorts after everything except control+space, then -
+	+ sorts after numbers
+	letters sort as as A a B b ...
+	chars between upper and lowercase letters moved to after letters
 */
-
-const int char_reorder[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,34,35,36,37,38,39,40,41,42,33,57,43,44,45,46,47,48,49,50,51,52,53,54,55,56,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126};
+const int char_reorder[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,126,56,42,43,44,45,46,47,48,49,50,51,52,53,54,55,57,58,59,60,61,62,63,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,117,118,119,120,121,65,67,69,71,73,75,77,79,81,83,85,87,89,91,93,95,97,99,101,103,105,107,109,111,113,115,122,123,124,125};
 
 int naturalcompare_diff(int left,int right) {
 	if (left == right) {
@@ -412,28 +412,6 @@ int naturalcompare_diff(int left,int right) {
 		return left - right;
 	}
 }
-
-/*
-int naturalcompare_diff(int left,int right) {
-	if (left == right) {
-		return 0;
-	} else {
-		if (left == '+') {
-			if (right < 58) {return 1;} else {return -1;}
-		}
-		if (right == '+') {
-			if (left < 58) {return -1;} else {return 1;}
-		}
-		if (left == '*') {
-			if (right > 32) {return -1;} else {return 1;}
-		}
-		if (right == '*') {
-			if (left > 32) {return 1;} else {return -1;}
-		}
-		return left - right;
-	}
-}
-*/
 
 /*
  * The code below compares the numbers in the two
@@ -504,20 +482,11 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 		if (!blen || *right == '\0') {break;}
 		if (diff != 0) {
 			/* only sort on case if no other diff -> keep secondaryDiff for case diff */
-			if (isupper(UCHAR(*left)) && islower(UCHAR(*right))) {
-				diff = tolower(*left) - *right;
-				if (diff) {
-					break;
-				} else if (secondaryDiff == 0) {
-					secondaryDiff = -1;
-				}
-			} else if (isupper(UCHAR(*right)) && islower(UCHAR(*left))) {
-				diff = *left - tolower(UCHAR(*right));
-				if (diff) {
-					break;
-				} else if (secondaryDiff == 0) {
-					secondaryDiff = 1;
-				}
+			/* remember: in naturalcompare_diff (reordered) upper and lower case are 1 apart */
+			if (diff == -1 && islower(UCHAR(*right))) {
+				secondaryDiff = -1;
+			} else if (diff == 1 && islower(UCHAR(*left))) {
+				secondaryDiff = 1;
 			} else {
 				break;
 			}
@@ -547,9 +516,6 @@ int naturalcompare(char const *a, char const *b,int alen,int blen) {
 		/* empty or blank allways sorts first */
 		if (!alen || BLANK(left)) {return -1;}
 		if (!blen || BLANK(right)) {return 1;}
-		/* Next '*' sorts */
-		if (*left == '*') {return -1;}
-		if (*right == '*') {return 1;}
 		context = LOC_BEFORE;
 	} else {
 		/* check for context before diff */

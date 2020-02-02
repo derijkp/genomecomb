@@ -254,6 +254,13 @@ proc help {action {format 1}} {
 			set indent 2
 			set mode l
 			append collect $line\n
+		} elseif {[regexp {^\** } $line]} {
+			# ; terms : definitions
+			help_formatw $foutput $collect $width $mode $indent $format
+			set collect {}
+			set indent 4
+			set mode l
+			append collect "-[string range $line 2 end]\n"
 		} elseif {$line eq "\{\{\{"} {
 			# {{{literal}}}
 			help_formatw $foutput $collect $width $mode $indent $format

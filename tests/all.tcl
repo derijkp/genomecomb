@@ -4,6 +4,12 @@ exec cg source "$0" "$@"
 
 set script [info script] ; if {$script eq ""} {set script ./t}
 set appdir [file dir [file dir [file normalize $script]]]
+if {[inlist $argv testsge]} {
+	puts stderr "testing sge"
+	set testsge 1
+} else {
+	set testsge 0
+}
 proc runtests file {
 	cd $::appdir/tests
 	uplevel source $file
@@ -33,6 +39,7 @@ runtests multiselect.tcl
 runtests tsv.tcl
 runtests val.tcl
 runtests varia.tcl
+runtests bsort.tcl
 runtests vcf.tcl
 runtests vcf2tsv.tcl
 runtests tsv2vcf.tcl
