@@ -117,7 +117,7 @@ proc process_project_job {args} {
 			set threads $value
 		}
 		-distrreg {
-			set distrreg $value
+			set distrreg [distrreg_checkvalue $value]
 		}
 		-conv_nextseq {
 			set conv_nextseq $value

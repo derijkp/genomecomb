@@ -15,7 +15,7 @@ proc gatk_compar_job args {
 			set dbdir $value
 		}
 		-distrreg {
-			set distrreg $value
+			set distrreg [distrreg_checkvalue $value]
 		}
 		-maxmem {
 			set maxmem $value

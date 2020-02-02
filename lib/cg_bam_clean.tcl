@@ -23,7 +23,7 @@ proc bam_clean_job {args} {
 		-regionfile {set regionfile $value}
 		-outputformat {set outputformat $value}
 		-distrreg {
-			set distrreg $value
+			set distrreg [distrreg_checkvalue $value]
 		}
 		-keep {set keep $value}
 		-skip {

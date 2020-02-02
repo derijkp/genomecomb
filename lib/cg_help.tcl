@@ -258,7 +258,7 @@ proc help {action {format 1}} {
 			# ; terms : definitions
 			help_formatw $foutput $collect $width $mode $indent $format
 			set collect {}
-			set indent 4
+			set indent 5
 			set mode l
 			append collect "-[string range $line 2 end]\n"
 		} elseif {$line eq "\{\{\{"} {

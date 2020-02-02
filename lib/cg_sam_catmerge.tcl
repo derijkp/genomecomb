@@ -73,7 +73,7 @@ proc sam_catmerge_job {args} {
 			set refseq [refseq $value]
 		}
 		-distrreg {
-			set distrreg $value
+			set distrreg [distrreg_checkvalue $value]
 		}
 		-skips {
 			set skips $value
@@ -103,12 +103,11 @@ proc sam_catmerge_job {args} {
 		set rmfiles {}
 	}
 	set analysisinfofile [gzroot $resultfile].analysisinfo
-	if {$distrreg in {0 {}}} {
-		set regions {}
+	set regions [distrreg_regs $distrreg $refseq]
+	if {![llength $regions]} {
 		set targets [list $resultfile $analysisinfofile]
 		set regresults [list $resultfile]
 	} else {
-		set regions [distrreg_regs $distrreg $refseq]
 		set basename [file_root $resultfile]
 		set regresults {}
 		foreach region $regions {

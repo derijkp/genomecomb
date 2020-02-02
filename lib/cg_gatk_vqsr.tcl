@@ -1,6 +1,5 @@
 proc gatk_vqsr_job args {
 	upvar job_logdir job_logdir
-	set distrreg chr
 	set dbdir {}
 	set usecombinegvcfs 0
 	set batchsize 50

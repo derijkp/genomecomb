@@ -544,7 +544,7 @@ proc process_sample_job {args} {
 			set threads $value
 		}
 		-distrreg {
-			set distrreg $value
+			set distrreg [distrreg_checkvalue $value]
 		}
 		-c - -cleanup {
 			set cleanup $value

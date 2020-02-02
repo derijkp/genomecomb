@@ -111,10 +111,15 @@ you want to affect the distribution).
 ; -jobsample 0/1: By default (0) the processing of each sample is split in many separate jobs.
 If you have to process many samples with relatively short indivual runtimes, you can set this
 to 1 to run each sample in one job, thus reducing the job managment overhead.
-; -distrreg: distribute regions for parallel processing.
-Possible options are 0 (no distribution), chr (or 1) (distribution per
-chromosome), a number (distribution ino regions of this size) ,file name
-(the regions in the file will be used for subjobs)
+; -distrreg: distribute regions for parallel processing. Possible options are
+** 0: no distribution (also empty)
+** 1: default distribution
+** schr or schromosome: each chromosome processed separately
+** chr or chromosome: each chromosome processed separately, except the unsorted, etc. with a _ in the name that will be combined),
+** a number: distribution into regions of this size
+** a number preceded by an s: distribution into contiguous sequenced regions, where regions are combined as long as they are smaller than the given size
+** a file name: the regions in the file will be used for distribution
+
 ; -keepfields fieldlist: Besides the obligatory fields, include only the
 fields in fieldlist (space separated) in the multicompar file. Default is
 to use all fields present in the file (*). All fields will still be used
@@ -128,7 +133,7 @@ This command can be distributed on a cluster or using multiple cores with
 [[joboptions|job options]] (more info with cg help joboptions)
 The option -distrreg can be used to allow a greater distribution by
 doing some analyses (variantcalling, annotations) split by region
-(chromosomes) and combinfing the results
+(chromosomes) and combining the results
 
 == Dependencies ==
 Some of the programs needed in this workflow are not distributed with genomecomb. 

@@ -1,5 +1,7 @@
 proc distrreg_checkvalue {value} {
-	if {$value in {1 chr chromosome 0}} {
+	if {$value in {{0} {}}} {
+		return 0
+	} elseif {$value in {chr chromosome 1 schr}} {
 		return $value
 	} elseif {[isint $value]} {
 		return $value
@@ -8,14 +10,17 @@ proc distrreg_checkvalue {value} {
 	} elseif {[file exists $value]} {
 		return [file_absolute $value]
 	} else {
-		error "unknown value $value for -distrreg, must be a (region) file or one of: chr, chromosome, schr, schromosome, 1 or 0, a number or a number preceded by an s"
+		error "unknown value $value for -distrreg, must be an existing (region) file or one of: chr, chromosome, schr, schromosome, 1 or 0, a number or a number preceded by an s"
 	}
 }
 
 proc distrreg_regs {regfile refseq} {
+	if {$regfile eq "" || $regfile eq "0"} {
+		return {}
+	}
 	set refseq [refseq $refseq]
 	if {$regfile eq "1"} {
-		set regfile s50000000
+		set regfile chr
 	}
 	if {$regfile in "chr chromosome 1"} {
 		set chromosomes [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai]

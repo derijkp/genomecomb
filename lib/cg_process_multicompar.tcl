@@ -57,7 +57,7 @@ proc process_multicompar_job {args} {
 			# not used yet
 		}
 		-distrreg {
-			set distrreg $value
+			set distrreg [distrreg_checkvalue $value]
 		}
 		-keepfields {
 			set keepfields $value

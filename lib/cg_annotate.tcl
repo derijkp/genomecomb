@@ -232,7 +232,7 @@ proc cg_annotate_job {args} {
 			set analysisinfo $value
 		}
 		-distrreg {
-			set distrreg $value
+			set distrreg [distrreg_checkvalue $value]
 		}
 	} {orifile resultfile} 3
 	set dbdir [file_absolute $dbdir]
@@ -422,7 +422,7 @@ proc cg_annotate_job {args} {
 					annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize
 				}
 			} else {
-				set chromosomes [distrreg_regs chr $genomefile]
+				set chromosomes [distrreg_regs $distrreg $genomefile]
 				set todo {}
 				foreach chromosome $chromosomes {
 					lappend todo $target.$chromosome

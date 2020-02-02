@@ -19,10 +19,14 @@ will be used. If the -compress 1 option is given, it will be compressed using zs
 ; -mincoverage mincoverage: mincoverage given as an option instead of a parameter
 ; -compress 0/1: Compress the output file (or not) if no outfile is given.
 If outfile is given, the extension of the file name will determine compression.
-; -distrreg: distribute regions for parallel processing.
-Possible options are 0 (no distribution), chr (or 1) (distribution per
-chromosome), a number (distribution ino regions of this size) ,file name
-(the regions in the file will be used for subjobs)
+; -distrreg: distribute regions for parallel processing. Possible options are
+** 0: no distribution (also empty)
+** 1: default distribution
+** schr or schromosome: each chromosome processed separately
+** chr or chromosome: each chromosome processed separately, except the unsorted, etc. with a _ in the name that will be combined),
+** a number: distribution into regions of this size
+** a number preceded by an s: distribution into contiguous sequenced regions, where regions are combined as long as they are smaller than the given size
+** a file name: the regions in the file will be used for distribution
 ; -refseq refseq: The -distrreg option requires a genome reference sequence, which
 must be given using this option
 ; -skip skipfile: Do not run if skipfile exists
