@@ -29,7 +29,7 @@ proc meth_nanopolish_job {args} {
 	set refseq [refseq $refseq]
 	if {$resultfile eq ""} {
 		set root nanopolish-[file_rootname $bamtail]
-		set resultfile meth-$root.tsv.zst
+		set resultfile [file dir $bamfile]/meth-$root.tsv.zst
 	} else {
 		set resultfile [file_absolute $resultfile]
 	}
