@@ -46,13 +46,12 @@ proc sv_job {args} {
 	set refseq [refseq $refseq]
 	set destdir [file dir $bamfile]
 	# logfile
-	job_logfile $destdir/sv_{$method}_[file tail $bamfile] $destdir $cmdline \
+	job_logfile $destdir/sv_${method}_[file tail $bamfile] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# check if regionfile is supported
+	catch {sv_${method}_job} temp
 	if {[regexp {with options:(.*)} $temp temp temp] && ![inlist [split $temp ,] -regionfile]} {
-		set regionfile_supported 0
-	} else {
-		set regionfile_supported 1
+		set distrreg 0
 	}
 	if {
 		($distrreg in {0 {}} && ![info exists regionfile])
