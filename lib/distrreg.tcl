@@ -1,6 +1,8 @@
-proc distrreg_checkvalue {value} {
+proc distrreg_checkvalue {value {default s50000000}} {
 	if {$value in {{0} {}}} {
 		return 0
+	} elseif {$value eq "1"} {
+		return $default
 	} elseif {$value in {chr chromosome 1 schr}} {
 		return $value
 	} elseif {[isint $value]} {
