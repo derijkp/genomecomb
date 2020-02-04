@@ -4,7 +4,7 @@ proc analysisinfo_file {file} {
 
 proc analysisinfo_write {dep target args} {
 	global env
-	if {[file root $dep] eq "-" || [file_root $target] eq "-"} {
+	if {[file_root $dep] eq "-" || [file_root $target] eq "-"} {
 		return
 	}
 	file mkdir [file dir $target]
