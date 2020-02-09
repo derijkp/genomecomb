@@ -140,7 +140,7 @@ if [ $(basename "$file") = "start_hbb.sh" ] ; then
 	exit
 fi
 
-# if sourced in antoher script, continue executing this other script
+# if sourced in another script, continue executing this other script
 if [ "$3" = '32' ] ; then
 	ARCH='-ix86'
 	arch=ix86
