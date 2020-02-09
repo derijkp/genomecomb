@@ -889,4 +889,43 @@ chr1	t1	4000	a
 chr1	t4	4050	b
 chr2	t5	4100	b}
 
+test mergesorted {basic} {
+	file_write tmp/reg1.tsv [deindent {
+		chromosome	begin	end	test
+		1	10	20	a1
+		1	90	100	b1
+		2	10	20	c1
+		10	40	50	d1
+	}]\n
+	file_write tmp/reg2.tsv [deindent {
+		chromosome	begin	end	test
+		1	8	9	a2
+		1	40	41	b2
+		5	42	43	c2
+		10	51	51	d2
+	}]\n
+	cg mergesorted tmp/reg1.tsv tmp/reg2.tsv
+} {chromosome	begin	end	test
+1	8	9	a2
+1	10	20	a1
+1	40	41	b2
+1	90	100	b1
+2	10	20	c1
+5	42	43	c2
+10	40	50	d1
+10	51	51	d2}
+
+test mergesorted {sort error} {
+	file_write tmp/reg1.tsv [deindent {
+		chromosome	begin	end	test
+		1	90	100	b1
+		1	10	20	a1
+	}]\n
+	file_write tmp/reg2.tsv [deindent {
+		chromosome	begin	end	test
+		1	8	9	a2
+	}]\n
+	cg mergesorted tmp/reg1.tsv tmp/reg2.tsv
+} {} error
+
 testsummarize
