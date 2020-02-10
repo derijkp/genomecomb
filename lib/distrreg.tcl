@@ -24,6 +24,40 @@ proc distrreg_regs {regfile refseq} {
 	if {$regfile eq "1"} {
 		set regfile chr
 	}
+	if {[regexp {^s([0-9]+)$} $regfile temp regsize]} {
+		set sequencedfile [gzfile [file dir $refseq]/extra/reg_*_sequencedgenome.tsv]
+		if {![file exists $sequencedfile]} {
+			putslog "sequencedfile not found ($sequencedfile), using distrreg chr"
+			set regfile chr
+		} else {
+			unset -nocomplain donea
+			set result {}
+			set list [split [string trim [cg select -sh /dev/null -f {chromosome begin end} $sequencedfile]] \n]
+			foreach {cchr cbegin cend} [list_pop list 0] break
+			set csize [expr {$cend-$cbegin}]
+			list_foreach {chr begin end} $list {
+				set size [expr {$end-$begin}]
+				if {$chr ne $cchr || [expr {$csize + $size}] > $regsize} {
+					if {[regexp {^[^_]*_} $cchr base]} {
+						if {![info exists donea($base)]} {
+							lappend result $base
+							set donea($base) 1
+						}
+					} else {
+						lappend result $cchr-$cbegin-$cend
+					}
+					set cchr $chr
+					set cbegin $begin
+					set cend $end
+				} else {
+					set cend $end
+				}
+				set csize [expr {$cend-$cbegin}]
+			}
+			lappend result $cchr-$cbegin-$cend
+			return $result
+		}
+	}
 	if {$regfile in "chr chromosome 1"} {
 		set chromosomes [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai]
 		unset -nocomplain a
@@ -34,38 +68,6 @@ proc distrreg_regs {regfile refseq} {
 		return [bsort [array names a]]
 	} elseif {$regfile in "schr schromosome"} {
 		return [join [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai] " "]
-	}
-	if {[regexp {^s([0-9]+)$} $regfile temp regsize]} {
-		set sequencedfile [gzfile [file dir $refseq]/extra/reg_*_sequencedgenome.tsv]
-		if {![file exists $sequencedfile]} {
-			error "sequencedfile not found ($sequencedfile)"
-		}
-		unset -nocomplain donea
-		set result {}
-		set list [split [string trim [cg select -sh /dev/null -f {chromosome begin end} $sequencedfile]] \n]
-		foreach {cchr cbegin cend} [list_pop list 0] break
-		set csize [expr {$cend-$cbegin}]
-		list_foreach {chr begin end} $list {
-			set size [expr {$end-$begin}]
-			if {$chr ne $cchr || [expr {$csize + $size}] > $regsize} {
-				if {[regexp {^[^_]*_} $cchr base]} {
-					if {![info exists donea($base)]} {
-						lappend result $base
-						set donea($base) 1
-					}
-				} else {
-					lappend result $cchr-$cbegin-$cend
-				}
-				set cchr $chr
-				set cbegin $begin
-				set cend $end
-			} else {
-				set cend $end
-			}
-			set csize [expr {$cend-$cbegin}]
-		}
-		lappend result $cchr-$cbegin-$cend
-		return $result
 	} elseif {[isint $regfile]} {
 		set regsize $regfile
 		unset -nocomplain donea
