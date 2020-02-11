@@ -198,10 +198,7 @@ proc bam_clean_job {args} {
 		}
 		if {!$keep} {file delete $sourcefile $sourcefile.[indexext $sourcefile]}
 	}
-	job bamclean_index-$root -optional 1 {*}$skips -deps {$resultfile} -targets {$resultfileindex} -code {
-		putslog "making $target"
-		exec samtools index $dep >@ stdout 2>@ stderr
-	}
+	bam_index_job {*}$skips $resultfile
 	return $resultfile
 }
 

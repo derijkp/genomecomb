@@ -7,18 +7,22 @@ proc bam_chrs {bamfile} {
 proc bam_index_job {args} {
 	upvar job_logdir job_logdir
 	set skips {}
+	set optional 1
 	cg_options bam_index args {
 		-skip {
 			lappend skips -skip $value
+		}
+		-optional {
+			set optional $value
 		}
 	} {bam} 1 1
 	if {[file extension $bam] eq ".sam"} return
 	set pre [lindex [split $bam -] 0]
 	set root [file_rootname $bam]
 	set bamindex $bam.[indexext $bam]
-	job bamindex-[file tail $pre-$root] {*}$skips -optional 1 -deps [list $bam] -targets [list $bamindex] -code {
-		exec samtools index $dep >@ stdout 2>@ stderr
+	job bamindex-[file tail $pre-$root] {*}$skips -optional $optional -deps [list $bam] -targets [list $bamindex] -code {
 		puts "making $target"
+		exec samtools index $dep >@ stdout 2>@ stderr
 	}
 }
 
