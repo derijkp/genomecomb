@@ -113,8 +113,8 @@ proc sv_job {args} {
 		mklink $bamfile.$indexext $ibam.$indexext
 		defcompressionlevel 1
 		foreach region $regions regfile $regfiles {
-			lappend todo [var_${method}_job {*}$opts {*}$skips -rootname $root-$region -regionfile $regfile \
-				-split $split -threads $threads -cleanup $cleanup $ibam $refseq]
+			lappend todo [sv_${method}_job {*}$opts {*}$skips -rootname $root-$region -regionfile $regfile \
+				-split $split -threads $threads -cleanup $cleanup -refseq $refseq $ibam]
 		}
 		defcompressionlevel 9
 		# concatenate results
