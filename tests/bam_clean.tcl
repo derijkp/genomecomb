@@ -148,4 +148,51 @@ header
 > SRR792091.1611898	chr21	42779960	42780060	1
 child process exited abnormally} error
 
+test bam_clean {bam_clean to cram} {
+	test_cleantmp
+	file copy -force -- data/bwa.sam tmp/bwa.sam
+	cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 \
+		-sort 1 -removeduplicates 1 -realign 1 \
+		-outputformat cram tmp/bwa.sam
+	set c [string trim [file_read tmp/rdsbwa.cram.analysisinfo]]
+	if {![string match [string trim [deindent {
+		bamclean	bamclean_version	bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
+		genomecomb	0.100.1	samtools	1.9 (using htslib 1.9)	picard	2.21.3-SNAPSHOT	gatk	3.8-1-0-gf15c1c3ef
+	}]] $c]} {
+		error "error in analysisinfo:\n$c"
+	}
+	exec samtools index tmp/rdsbwa.cram
+	if {![file exists tmp/rdsbwa.cram.crai]} {
+		error "could not index tmp/rdsbwa.cram"
+	}
+	exec cg sam2tsv tmp/rdsbwa.cram | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
+	exec cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/sbwa.tsv
+	exec cg tsvdiff tmp/result.tsv tmp/sbwa.tsv
+} {diff tmp/result.tsv tmp/sbwa.tsv
+header
+  qname	chromosome	begin	end	duplicate
+147d146
+< SRR792091.1611898	chr21	42779842	42779942	1
+148a148
+> SRR792091.1611898	chr21	42779842	42779942	1
+155d154
+< SRR792091.1611898	chr21	42779960	42780060	1
+156a156
+> SRR792091.1611898	chr21	42779960	42780060	1
+child process exited abnormally} error
+
+test bam_clean {bam_clean to cram} {
+	test_cleantmp
+	file copy -force -- data/bwa.sam tmp/bwa.sam
+	cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 \
+		tmp/bwa.sam tmp/bwa.cram
+	exec samtools index tmp/bwa.cram
+	if {![file exists tmp/bwa.cram.crai]} {
+		error "could not index tmp/rdsbwa.cram"
+	}
+	exec cg sam2tsv -fields {AS XS MQ MC ms MD NM RG} tmp/bwa.cram | cg select -rf other > tmp/result.tsv
+	exec cg sam2tsv -fields {AS XS MQ MC ms MD NM RG} data/bwa.sam | cg select -rf other > tmp/expected.tsv
+	exec cg tsvdiff tmp/result.tsv tmp/expected.tsv
+} {}
+
 testsummarize

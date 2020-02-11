@@ -74,4 +74,5 @@ proc analysisinfo_write {dep target args} {
 proc result_rename {src target} {
 	file rename -force -- $src $target
 	catch {file rename -force -- [analysisinfo_file $src] [analysisinfo_file $target]}
+	catch {file rename -force -- $src.[indexext $dest] $dest.[indexext $dest]}
 }

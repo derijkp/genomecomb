@@ -178,7 +178,6 @@ proc bam_clean_job {args} {
 			$clipamplicons
 	}
 	lappend pipe {*}$optsio > $resultfile.temp
-	set resultfileindex $resultfile.[indexext $resultfile]
 	if {!$keep} {
 		set rmtargets [list $sourcefile $sourcefile.[indexext $sourcefile]]
 	} else {
@@ -192,7 +191,7 @@ proc bam_clean_job {args} {
 		analysisinfo_write $dep $target {*}$addanalysisinfo
 		if {![sam_empty $dep]} {
 			catch_exec {*}$pipe
-			file rename -force -- $resultfile.temp $resultfile
+			result_rename $resultfile.temp $resultfile
 		} else {
 			hardcopy $dep $resultfile
 		}
