@@ -111,11 +111,7 @@ proc sam_merge_job {args} {
 		
 	}
 	if {$index} {	
-		set indexfile $outputfile.[indexext $outputfile]
-		job $name-index -optional $optional -force $force -deps {$outputfile} -targets {$indexfile} -code {
-			exec samtools index $dep
-		}
-		
+		bam_index_job -optional $optional -force $force $outputfile
 	}
 }
 
