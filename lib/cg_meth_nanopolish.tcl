@@ -1,8 +1,57 @@
+proc cg_meth_nanopolish_freqs {dep target {callthreshold 2.5}} {
+	analysisinfo_write $dep $target meth_nanopolish_cg_version [version genomecomb]
+	catch {close $o} ; catch {close $f}
+	set f [gzopen $dep]
+	set header [tsv_open $f]
+	if {$header ne "chromosome strand start end read_name log_lik_ratio log_lik_methylated log_lik_unmethylated num_calling_strands num_motifs sequence"} {
+		error "wrong header in file $dep"
+	}
+	set o [wgzopen $target]
+	puts $o [join {chromosome start end num_motifs_in_group called_sites called_sites_methylated methylated_frequency group_sequence} \t]
+	set curloc {}
+	set num_reads 0
+	set called_sites 0
+	set called_sites_methylated 0
+	while 1 {
+		set read [gets $f line]
+		set line [split $line \t]
+		set loc [list_sub $line {0 2 3}]
+		if {$loc ne $curloc} {
+			if {$curloc ne ""} {
+				incr end
+				if {$called_sites > 0} {
+					set methylated_frequency [expr {1.0*$called_sites_methylated/$called_sites}]
+				} else {
+					set methylated_frequency 0.0
+				}
+				puts $o [join [list $chromosome $begin $end \
+					$num_motifs $called_sites $called_sites_methylated \
+					[format %.3f $methylated_frequency] $sequence] \t]
+			}
+			set num_reads 0
+			set called_sites 0
+			set called_sites_methylated 0
+			set curloc $loc
+		}
+		if {$read == -1} break
+		foreach {chromosome strand begin end read_name log_lik_ratio log_lik_methylated log_lik_unmethylated num_calling_strands num_motifs sequence} $line break
+	        # Skip ambiguous call
+		if {abs($log_lik_ratio) < $callthreshold} continue
+		incr numreads
+		incr called_sites $num_motifs
+		if {$log_lik_ratio > 0} {
+			incr called_sites_methylated $num_motifs
+		}
+	}
+	gzclose $o
+	gzclose $f
+}
+
 proc meth_nanopolish_job {args} {
 	# putslog [list meth_nanopolish_job {*}$args]
-	set cmdline "[list cd [pwd]] \; [list cg meth_nanopolish {*}$args]"
 	global appdir
 	upvar job_logdir job_logdir
+	set cmdline "[list cd [pwd]] \; [list cg meth_nanopolish {*}$args]"
 	set refseq {}
 	set skips {}
 	set resultfile {}
@@ -75,13 +124,17 @@ proc meth_nanopolish_job {args} {
 			set error [catch {
 				exec nanopolish call-methylation -r $tempdir/[file tail $fastqfile] \
 					-b $bamfile -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst
-			} msg]
+			} msg opt]
 			if {$error} {
-				if {![file exists $target.temp.zst]} {error $msg}
-				set seqsdone [llength [split [cg select -g read_name $target.temp.zst] \n]]
-				if {$seqsdone == 0} {error $msg}
+				if {$::errorCode ne "NONE"} {
+					dict unset opt -level
+					set errorInfo "$msg\n    while executing\nnanopolish call-methylation -r $tempdir/[file tail $fastqfile] -b $bamfile -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst"
+					return -code $error -errorcode $::errorCode -errorinfo $errorInfo $msg
+				} else {
+					puts stderr $msg
+				}
 			}
-			file rename -- $target.temp.zst $target
+			result_rename $target.temp.zst $target
 		}
 	}
 	set target $smethfile
@@ -104,56 +157,10 @@ proc meth_nanopolish_job {args} {
 	} -vars {
 		callthreshold
 	} -code {
-		analysisinfo_write $dep $target meth_nanopolish_cg_version [version genomecomb]
-		catch {close $o} ; catch {close $f}
-		set f [gzopen $dep]
-		set header [tsv_open $f]
-		if {$header ne "chromosome strand start end read_name log_lik_ratio log_lik_methylated log_lik_unmethylated num_calling_strands num_motifs sequence"} {
-			error "wrong header in file $dep"
-		}
-		set temptarget $target.temp[file extension $target]
-		set o [wgzopen $temptarget]
-		puts $o [join {chromosome start end num_motifs_in_group called_sites called_sites_methylated methylated_frequency group_sequence} \t]
-		set curloc {}
-		set num_reads 0
-		set called_sites 0
-		set called_sites_methylated 0
-		while 1 {
-			set read [gets $f line]
-			set line [split $line \t]
-			set loc [list_sub $line {0 2 3}]
-			if {$loc ne $curloc} {
-				if {$curloc ne ""} {
-					incr end
-					if {$called_sites > 0} {
-						set methylated_frequency [expr {1.0*$called_sites_methylated/$called_sites}]
-					} else {
-						set methylated_frequency 0.0
-					}
-					puts $o [join [list $chromosome $begin $end \
-						$num_motifs $called_sites $called_sites_methylated \
-						[format %.3f $methylated_frequency] $sequence] \t]
-				}
-				set num_reads 0
-				set called_sites 0
-				set called_sites_methylated 0
-				set curloc $loc
-			}
-			if {$read == -1} break
-			foreach {chromosome strand begin end read_name log_lik_ratio log_lik_methylated log_lik_unmethylated num_calling_strands num_motifs sequence} $line break
-		        # Skip ambiguous call
-			if {abs($log_lik_ratio) < $callthreshold} continue
-			incr numreads
-			incr called_sites $num_motifs
-			if {$log_lik_ratio > 0} {
-				incr called_sites_methylated $num_motifs
-			}
-		}
-		gzclose $o
-		gzclose $f
-		file rename -- $temptarget $target
+		set tempresult [filetemp_ext $target]
+		cg_meth_nanopolish_freqs $dep $tempresult $callthreshold
+		result_rename $tempresult $target
 	}
-
 	return [list $resultfile $smethfile]
 }
 
