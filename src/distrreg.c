@@ -28,7 +28,11 @@ FILE *openreg(char **regions, char *prefix, char *postfix, int printheader, DStr
 	while(1) {
 		if (region[size] == '\0' || region[size] == ' ' || region[size] == ':' || region[size] == '-') {
 			if (step == 1) {
-				DStringSetS(*chromosome2,region,size);
+				if (size >= 9 && strncmp(region+size-9,"unaligned",9) == 0) {
+					DStringSetS(*chromosome2,"*",1);
+				} else {
+					DStringSetS(*chromosome2,region,size);
+				}
 				if (region[size] == '\0' || region[size] == ' ') break;
 				*start2 = atoi(region+size+1);
 				step = 2;
@@ -63,9 +67,27 @@ FILE *openreg(char **regions, char *prefix, char *postfix, int printheader, DStr
 		o = fopen64_or_die(buffer->string,"w");
 	} else {
 		o = popen(buffer->string,"w");
+		if (o == NULL) {
+			fprintf(stderr,"error opening to command pipe: %s\n",buffer->string);
+			exit(1);
+		}
 	}
 	if (printheader && header->size) fprintf(o,"%s",header->string);
 	return(o);
+}
+
+void closereg(FILE *o,char *opencmd) {
+	int status;
+	if (o == NULL) {return;}
+	if (opencmd == NULL) {
+		fclose(o);
+	} else {
+		status = pclose(o);
+		if (status != 0)	{
+			fprintf(stderr,"error closing command pipe: %s\n",opencmd);
+			exit(1);
+		}
+	}
 }
 
 int main(int argc, char *argv[]) {
@@ -131,12 +153,14 @@ NODPRINT("%d\t%s\t%d\t%d",1,Loc_ChrString(chromosome1),start1,end1)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(chromosome2),start2,end2)
 NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 		checksortreg(curchromosome,&prevstart1,&prevend1,chromosome1,start1,end1,"stdin");
-		comp = DStringLocCompare(chromosome2, chromosome1);
-		if (comp != 0 && chromosome2->string[chromosome2->size-1] == '_' && chromosome2->size <= chromosome1->size) {
-			if (strncmp(chromosome2->string,chromosome1->string,chromosome2->size) == 0) {comp = 0;}
+		if (o != NULL) {
+			comp = DStringLocCompare(chromosome2, chromosome1);
+			if (comp != 0 && chromosome2->string[chromosome2->size-1] == '_' && chromosome2->size <= chromosome1->size) {
+				if (strncmp(chromosome2->string,chromosome1->string,chromosome2->size) == 0) {comp = 0;}
+			}
 		}
 		while (o != NULL && ((comp < 0) || ((comp == 0) && (end2 <= start1)))) {
-			if (opencmd == NULL) {fclose(o);} else {pclose(o);}
+			closereg(o,opencmd);
 			o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2,opencmd);
 			if (o == NULL) {
 				chromosome2 = NULL;
@@ -170,9 +194,10 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 	if (chromosomekeep != NULL) DStringDestroy(chromosomekeep);
 	fclose(f1);
 	while (o != NULL) {
-		if (opencmd == NULL) {fclose(o);} else {pclose(o);}
+		closereg(o,opencmd);
 		o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2,opencmd);
 	}
+	closereg(o,opencmd);
 	if (line1) {DStringDestroy(line1);}
 	if (result1) {DStringArrayDestroy(result1);}
 	exit(EXIT_SUCCESS);

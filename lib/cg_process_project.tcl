@@ -29,6 +29,7 @@ proc process_project_job {args} {
 	set keepfields *
 	set datatype {}
 	set aliformat bam
+	set samplesdir samples
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -139,6 +140,9 @@ proc process_project_job {args} {
 		-aliformat {
 			set aliformat $value
 		}
+		-samplesdir {
+			set samplesdir $value
+		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
 	set adapterfile [adapterfile $adapterfile]
@@ -180,8 +184,8 @@ proc process_project_job {args} {
 	set samples {}
 	set experiment [file tail $destdir]
 	unset -nocomplain a
-	if {[file exists $destdir/samples]} {
-		set sampledir $destdir/samples
+	if {[file exists $destdir/$samplesdir]} {
+		set sampledir $destdir/$samplesdir
 		foreach dir [jobglob $sampledir/*] {
 			set sample [file tail $dir]
 			if {[regexp {[- ]} $sample]} {

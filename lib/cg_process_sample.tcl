@@ -462,8 +462,6 @@ proc process_sample_job {args} {
 	set svcallers {}
 	set realign 1
 	set cleanup 1
-	set cleanupfiles {}
-	set cleanupdeps {}
 	set paired 1
 	set samBQ 0
 	set adapterfile {}
@@ -767,48 +765,125 @@ proc process_sample_job {args} {
 	} 
 	# create bam from fastq files (if found)
 	set cleanedbams {}
-	if {[llength $fastqfiles]} {
+	set processlist {}
+	if {$paired} {
+		foreach {fastq1 fastq2} $fastqfiles {
+			lappend processlist [list $fastq1 $fastq2]
+		}
+	} else {
+		foreach {fastq} $fastqfiles {
+			lappend processlist [list $fastq]
+		}
+	}
+
+	if {[llength $processlist]} {
+		set skips {}
+		set skipsresult {}
 		foreach aligner $aligners {
 			# do not do any of preliminaries if end product is already there
 			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 			set bamfile $sampledir/map-${aligner}-$sample.bam
-			# quality and adapter clipping
+			lappend skips $bamfile $bamfile.analysisinfo
+			lappend skipsresult $resultbamfile $resultbamfile.analysisinfo
+		}
+		unset -nocomplain partsa
+		foreach pfastqfiles $processlist {
+			set files $pfastqfiles
+			set cleanupfiles {}
+			set cleanupdeps {}
+			foreach aligner $aligners {
+				set bamfile $sampledir/map-${aligner}-$sample.bam
+				set target $bamfile.index/[file_root [file tail [lindex $files 0]]].sam.zst
+				lappend cleanupdeps $bamfile.index/[file root [gzroot [file tail [lindex $pfastqfiles 0]]]].sam.zst
+			}
 			if {$clip} {
 				set files [fastq_clipadapters_job -adapterfile $adapterfile -paired $paired \
-					-skips [list -skip [list $bamfile $bamfile.analysisinfo] -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
+					-skip $skips -skip $skipsresult -skip $cleanupdeps \
 					-removeskew $removeskew \
-					{*}$fastqfiles]
+					{*}$files]
 				lappend cleanupfiles {*}$files
 				foreach file $files {
 					lappend cleanupfiles [gzroot $file].analysisinfo
 				}
 				lappend cleanupfiles [file dir [lindex $files 0]]
-				lappend cleanupdeps $resultbamfile
-			} else {
-				set files $fastqfiles
 			}
-			#
-			# map using ${aligner}
-			set opts {}
-			if {[regexp {^(.*)_([^_]+)$} $aligner tmp aliprog alipreset]} {
-				lappend opts -preset $alipreset
-			} else {
-				set aliprog $aligner
+			foreach aligner $aligners {
+				# do not do any of preliminaries if end product is already there
+				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
+				set bamfile $sampledir/map-${aligner}-$sample.bam
+				file mkdir $bamfile.index
+				set target $bamfile.index/[file_root [file tail [lindex $pfastqfiles 0]]].sam.zst
+				lappend partsa($aligner) $target
+				# map using ${aligner}
+				set opts {}
+				if {[regexp {^(.*)_([^_]+)$} $aligner tmp aliprog alipreset]} {
+					lappend opts -preset $alipreset
+				} else {
+					set aliprog $aligner
+				}
+				map_job -method $aliprog {*}$opts -threads $threads \
+					-skip $skipsresult \
+					-paired $paired \
+					-sort coordinate \
+					-compressionlevel 1 \
+					$target $refseq $sample {*}$files
 			}
-			set keeplevel [defcompressionlevel]
-			defcompressionlevel 0
-			set bamfile [map_${aliprog}_job -paired $paired -threads $threads \
-				-keepsams $keepsams {*}$opts \
-				-skips [list -skip [list $resultbamfile $resultbamfile.analysisinfo]] \
-				$bamfile $refseq $sample {*}$files]
-			defcompressionlevel $keeplevel
+			if {$cleanup} {
+				# clean up no longer needed intermediate files
+				cleanup_job cleanupclipped-[file tail $target] $cleanupfiles $cleanupdeps
+			}
+		}
+		set cleanupdeps {}
+		foreach aligner $aligners {
+			# do not do any of preliminaries if end product is already there
+			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
+			set bamfile $sampledir/map-${aligner}-$sample.bam
+			if {$distrreg in {0 ""}} {
+				set tempbamfile $bamfile
+			} else {
+				file mkdir $bamfile.index
+				set tempbamfile $bamfile.index/map-${aligner}-$sample.bam
+			}
+			set compressionlevel [defcompressionlevel 5]
+			setdefcompressionlevel 1
+			if {$distrreg != 0 && [isint $distrreg]} {set udistrreg s$distrreg} else {set udistrreg $distrreg}
+			set bamfiles [sam_catmerge_job \
+				-skip [list $bamfile $bamfile.analysisinfo] \
+				-skip [list $resultbamfile $resultbamfile.analysisinfo] \
+				-name mergesams-$aligner-$sample -refseq $refseq \
+				-sort coordinate -mergesort 1 \
+				-distrreg $udistrreg \
+				-deletesams [string is false $keepsams] -threads $threads \
+				$tempbamfile {*}$partsa($aligner)]
+			setdefcompressionlevel $compressionlevel
+			
 			# clean bamfile (mark duplicates, realign)
 			# bam is already sorted, just add the s (-sort 2)
-			set cleanbam [bam_clean_job -sort 2 -outputformat $aliformat -distrreg $distrreg \
-				-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
-				-regionfile 5 -refseq $refseq -threads $threads \
-				 $bamfile]
-			lappend cleanedbams $cleanbam
+			if {[llength $bamfiles] == 1} {
+				set cleanbam [bam_clean_job -sort 2 -outputformat $aliformat -distrreg $distrreg \
+					-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
+					-regionfile 5 -refseq $refseq -threads $threads \
+					 $bamfile]
+				lappend cleanedbams $cleanbam
+			} else {
+				set cleanbams {}
+				set compressionlevel [defcompressionlevel 5]
+				setdefcompressionlevel 1
+				foreach bam $bamfiles {
+					lappend cleanbams [bam_clean_job -sort 2 -outputformat $aliformat -distrreg $distrreg \
+						-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
+						-regionfile 5 -refseq $refseq -threads $threads \
+						 $bam]
+				}
+				setdefcompressionlevel $compressionlevel
+				sam_catmerge_job \
+					-skip [list $resultbamfile $resultbamfile.analysisinfo] \
+					-name merge2bam-$aligner-$sample -refseq $refseq \
+					-sort nosort \
+					-deletesams [string is false $keepsams] -threads $threads \
+					$resultbamfile {*}$cleanbams
+				lappend cleanedbams $resultbamfile
+			}
 		}
 	} else {
 		# check if result bam file exists (without fastq), and use that if so
@@ -855,10 +930,6 @@ proc process_sample_job {args} {
 			lappend cleanupdeps {*}[sv_job -method ${svcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup -refseq $refseq $cleanedbam]
 			lappend todo(sv) sv-$svcaller-$bambase.tsv
 		}
-	}
-	if {$cleanup} {
-		# clean up no longer needed intermediate files
-		cleanup_job cleanupsample-$sample $cleanupfiles $cleanupdeps
 	}
 	#calculate reports
 	if {[llength $reports]} {

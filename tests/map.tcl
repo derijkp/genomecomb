@@ -10,8 +10,8 @@ test map_bwa {map_bwa basic} {
 	cg map_bwa -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]]
 	# chr21:42730799-42762826
 	exec samtools view -h tmp/ali.bam > tmp/ali.sam
-	cg sam_sort -sort name data/bwa.sam data/expected.sam
-	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam data/expected.sam}
+	cg sam_sort -sort name data/bwa.sam tmp/expected.sam
+	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam tmp/expected.sam}
 } 0
 
 test map_bwa {map_bwa -paired 0} {
@@ -26,7 +26,7 @@ test map_bwa {map_bwa -paired 0} {
 	exec samtools view $expectdfile | cg sam2tsv -fields $otherfields \
 		| cg select -s {chromosome begin end} -q {$read == 1} -rf $removefields > tmp/expected.tsv
 	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
-} 0
+} {}
 
 test map_bwa {map_bwa to stdout} {
 	test_cleantmp
@@ -34,8 +34,8 @@ test map_bwa {map_bwa to stdout} {
 	cg map_bwa -stack 1 -paired 1 -compressionlevel 1 -.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]] > tmp/ali.bam
 	# chr21:42730799-42762826
 	exec samtools view -h tmp/ali.bam > tmp/ali.sam
-	cg sam_sort -sort name data/bwa.sam data/expected.sam
-	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam data/expected.sam}
+	cg sam_sort -sort name data/bwa.sam tmp/expected.sam
+	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam tmp/expected.sam}
 } 0
 
 test map_bwa {map_bwa refseq error} {
@@ -55,9 +55,9 @@ cg refseq_bwa *genome_hg19.ifas*} match error
 #	cg refseq_bwa tmp/genome_hg19.ifas
 #	cg map_bwa -stack 1 -paired 1 tmp/ali.bam tmp/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]]
 #	exec samtools view -h tmp/ali.bam > tmp/ali.sam
-#	cg sam_sort -sort name data/bwa.sam data/expected.sam
+#	cg sam_sort -sort name data/bwa.sam tmp/expected.sam
 #	file delete -force [glob tmp/genome_hg19.ifas*]
-#	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam data/expected.sam}
+#	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam tmp/expected.sam}
 #} 0
 
 test map_bwa {map_bwa cram} {
@@ -70,6 +70,42 @@ test map_bwa {map_bwa cram} {
 	cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam tmp/ali.sam.tsv
 	cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam tmp/bwa.sam.tsv
 	catch {cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv}
+} 0
+
+test map {map -method bwa basic} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
+	cg map -stack 1 -method bwa -sort coordinate -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]]
+	exec samtools view -h tmp/ali.bam > tmp/ali.sam
+	cg sam_sort -sort coordinate data/bwa.sam tmp/expected.sam
+	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam tmp/expected.sam}
+} 0
+
+test map {map -method bwa -paired 0} {
+	test_cleantmp
+	file copy data/seq_R1.fq.gz tmp
+	cg map -method bwa -stack 1 -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq.gz]]
+	exec samtools view tmp/ali.bam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA YS YT} \
+		| cg select -s {chromosome begin end} \
+		-rf {MC MQ YS YT XS read ms mapquality mateunmapped ref2	begin2	strand2	tlen	pair	properpair} > tmp/ali.tsv
+	exec samtools view data/bwa.sam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA YS YT} \
+		| cg select -s {chromosome begin end} -q {$read == 1} \
+		-rf {MC MQ YS YT XS read ms mapquality mateunmapped ref2	begin2	strand2	tlen	pair	properpair} > tmp/expected.tsv
+	catch {cg tsvdiff tmp/ali.tsv tmp/expected.tsv}
+} 0
+
+test map {map -method bwa multiple} {
+	test_cleantmp
+	set temp [split [string trim [exec zcat data/seq_R1.fq.gz]] \n]
+	file_write tmp/seq1_R1.fq [join [lrange $temp 0 199] \n]\n
+	file_write tmp/seq2_R1.fq [join [lrange $temp 200 end] \n]\n
+	set temp [split [string trim [exec zcat data/seq_R2.fq.gz]] \n]
+	file_write tmp/seq1_R2.fq [join [lrange $temp 0 199] \n]\n
+	file_write tmp/seq2_R2.fq [join [lrange $temp 200 end] \n]\n
+	cg map -method bwa -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[bsort [glob tmp/*.fq]]
+	# chr21:42730799-42762826
+	exec samtools view -h tmp/ali.bam > tmp/ali.sam
+	catch {exec diff -I {@PG	ID:bwa	PN:bwa} tmp/ali.sam data/bwa.sam}
 } 0
 
 test map_bowtie2 {map_bowtie2 basic} {
@@ -93,7 +129,7 @@ test map_bowtie2 {map_bowtie2 -paired 0} {
 		| cg select -s {chromosome begin end} -rf $removefields > tmp/ali.tsv
 	exec samtools view $expectdfile | cg sam2tsv -fields $otherfields \
 		| cg select -s {chromosome begin end} -q {$read == 1} -rf $removefields > tmp/expected.tsv
-	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
+	catch {cg tsvdiff tmp/ali.tsv tmp/expected.tsv}
 } 0
 
 #test map_minimap2 {map_minimap2 basic} {
@@ -207,42 +243,5 @@ test map_ngmlr {map_ngmlr 4 files -m 2} {
 	cg tsvdiff tmp/ali.tsv tmp/expected.tsv
 	lindex [cg sam2tsv tmp/ali.bam | cg select -g all] end
 } {400}
-
-test map {map -method bwa basic} {
-	test_cleantmp
-	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp
-	cg map -method bwa -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
-	# chr21:42730799-42762826
-	exec samtools view -h tmp/ali.bam > tmp/ali.sam
-	cg sam_sort -sort coordinate data/bwa.sam data/expected.sam
-	catch {exec diff -I {@PG	ID:bwa	PN:bwa} -I {@HD	} tmp/ali.sam data/expected.sam}
-} 0
-
-test map {map -method bwa -paired 0} {
-	test_cleantmp
-	file copy data/seq_R1.fq.gz tmp
-	cg map -method bwa -stack 1 -paired 0 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq.gz]]
-	exec samtools view tmp/ali.bam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA YS YT} \
-		| cg select -s {chromosome begin end} \
-		-rf {MC MQ YS YT XS read ms mapquality mateunmapped ref2	begin2	strand2	tlen	pair	properpair} > tmp/ali.tsv
-	exec samtools view data/bwa.sam | cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA YS YT} \
-		| cg select -s {chromosome begin end} -q {$read == 1} \
-		-rf {MC MQ YS YT XS read ms mapquality mateunmapped ref2	begin2	strand2	tlen	pair	properpair} > tmp/expected.tsv
-	catch {cg tsvdiff tmp/ali.tsv tmp/expected.tsv}
-} 0
-
-test map {map -method bwa multiple} {
-	test_cleantmp
-	set temp [split [string trim [exec zcat data/seq_R1.fq.gz]] \n]
-	file_write tmp/seq1_R1.fq [join [lrange $temp 0 199] \n]\n
-	file_write tmp/seq2_R1.fq [join [lrange $temp 200 end] \n]\n
-	set temp [split [string trim [exec zcat data/seq_R2.fq.gz]] \n]
-	file_write tmp/seq1_R2.fq [join [lrange $temp 0 199] \n]\n
-	file_write tmp/seq2_R2.fq [join [lrange $temp 200 end] \n]\n
-	cg map -method bwa -stack 1 -paired 1 tmp/ali.bam $::refseqdir/hg19/genome_hg19.ifas NA19240m {*}[lsort -dict [glob tmp/*.fq]]
-	# chr21:42730799-42762826
-	exec samtools view -h tmp/ali.bam > tmp/ali.sam
-	catch {exec diff -I {@PG	ID:bwa	PN:bwa} tmp/ali.sam data/bwa.sam}
-} 0
 
 testsummarize

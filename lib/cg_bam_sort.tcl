@@ -225,7 +225,7 @@ proc cg__sam_sort_gnusort {{sort coordinate} {threads 1} {refseq {}} {addm5 0}} 
 	}
 	puts -nonewline stdout $header
 	if {$sort eq "coordinate"} {
-		set o [open "| gnusort8 --buffer-size=500M --parallel $threads -T [scratchdir] -t \\t -s -k3,3N -k4,4N" w]
+		set o [open "| gnusort8 --buffer-size=500M --parallel $threads -T [scratchdir] -t \\t -s -k3,3N -k4,4N -k1,1N -k2,2N" w]
 	} else {
 		set o [open "| gnusort8 --buffer-size=500M --parallel $threads -T [scratchdir] -t \\t -s -k1,1N 2>@ stderr" w]
 	}

@@ -72,7 +72,7 @@ proc cg_sam2tsv {args} {
 	set fields {}
 	cg_options sam2tsv args {
 		-informat {set informat $value}
-		-fields {
+		-f - -fields {
 			set fields {}
 			foreach el $value {
 				set split [split $el :]
@@ -85,7 +85,7 @@ proc cg_sam2tsv {args} {
 				lappend fields $el
 			}
 		}
-		-addfields {
+		-a - -addfields {
 			lappend fields $value
 		}
 	} {samfile outfile} 0
