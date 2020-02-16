@@ -871,13 +871,13 @@ proc process_sample_job {args} {
 				setdefcompressionlevel 1
 				foreach bam $bamfiles {
 					lappend cleanbams [bam_clean_job -sort 2 -outputformat $aliformat -distrreg $distrreg \
+						-skip [list $resultbamfile $resultbamfile.analysisinfo] \
 						-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
 						-regionfile 5 -refseq $refseq -threads $threads \
 						 $bam]
 				}
 				setdefcompressionlevel $compressionlevel
 				sam_catmerge_job \
-					-skip [list $resultbamfile $resultbamfile.analysisinfo] \
 					-name merge2bam-$aligner-$sample -refseq $refseq \
 					-sort nosort \
 					-deletesams [string is false $keepsams] -threads $threads \

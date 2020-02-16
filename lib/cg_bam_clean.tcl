@@ -69,12 +69,12 @@ proc bam_clean_job {args} {
 				return $resultfile
 			} else {
 				analysisinfo_write $dep $target bamclean genomecomb bamclean_version [version genomecomb]
-				job bamclean-$root -deps {$sourcefile} -targets {$resultfile} -code {
+				job bamclean-$root {*}$skips -deps {$sourcefile} -targets {$resultfile} -code {
 					hardcopy $dep $target
 				}
 			}
 		} else {
-			job bamclean-$root -deps {$sourcefile} -targets {$resultfile} -vars {
+			job bamclean-$root {*}$skips -deps {$sourcefile} -targets {$resultfile} -vars {
 				inputformat outputformat refseq
 			} -code {
 				analysisinfo_write $dep $target bamclean genomecomb bamclean_version [version genomecomb]
@@ -183,7 +183,7 @@ proc bam_clean_job {args} {
 	} else {
 		set rmtargets {}
 	}
-	job bamclean-$root -deps $deps -targets {
+	job bamclean-$root {*}$skips -deps $deps -targets {
 		$resultfile
 	} -rmtargets $rmtargets -vars {
 		pipe sourcefile resultfile keep addanalysisinfo
