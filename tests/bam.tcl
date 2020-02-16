@@ -559,7 +559,7 @@ test cg_sam_catmerge {-mergesort 1 -distrreg 1 .sam 4 files} {
 	exec diff -I {@HD	} tmp/result-chr2.sam tmp/expected-chr2.sam
 } {}
 
-test cg_sam_catmerge {-mergesort 1 -maxopenfiles 2 .sam 4 files } {
+test cg_sam_catmerge {-mergesort 1 -maxopenfiles 2 .sam 5 files } {
 	write_sam tmp/utemp1.sam {
 		chr1	1000107	20M	20	chr1	1000112	20M	20
 		chr2	1000100	50M	50	chr2	1000100	50M	50
@@ -578,6 +578,10 @@ test cg_sam_catmerge {-mergesort 1 -maxopenfiles 2 .sam 4 files } {
 		chr2	1000050	20M	20	chr2	1000060	20M	20
 	} D
 	cg sam_sort tmp/utemp4.sam tmp/temp4.sam
+	write_sam tmp/utemp5.sam {
+		chr2	1000050	20M	20	chr2	1000060	20M	20
+	} E
+	cg sam_sort tmp/utemp5.sam tmp/temp5.sam
 	file_write tmp/expected.sam [deindent $::sam_header]\n[deindent {
 		C1	99	chr1	1000100	60	20M	=	1000121	41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		B1	99	chr1	1000102	60	4S2M2I12M	=	1000111	39	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
@@ -588,14 +592,16 @@ test cg_sam_catmerge {-mergesort 1 -maxopenfiles 2 .sam 4 files } {
 		B2	147	chr1	1000113	60	20M	=	1000108	-25	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		C1	147	chr1	1000121	60	20M	=	1000100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		D1	99	chr2	1000050	60	20M	=	1000060	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		E1	99	chr2	1000050	60	20M	=	1000060	30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		D1	147	chr2	1000060	60	20M	=	1000050	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
+		E1	147	chr2	1000060	60	20M	=	1000050	-30	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		A2	99	chr2	1000100	60	50M	=	1000100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		A2	147	chr2	1000100	60	50M	=	1000100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 	}]\n
 	file delete tmp/result.sam
-	cg sam_catmerge -stack 1 -mergesort 1 -maxopenfiles 2 \
+	cg sam_catmerge -stack 1 -mergesort 1 -maxopenfiles 2 -deletesams 1 \
 		-refseq $::refseqdir/hg19/genome_hg19.ifas \
-		tmp/result.sam tmp/temp1.sam tmp/temp2.sam tmp/temp3.sam tmp/temp4.sam
+		tmp/result.sam tmp/temp1.sam tmp/temp2.sam tmp/temp3.sam tmp/temp4.sam tmp/temp5.sam
 	exec diff -I {@HD	} tmp/result.sam tmp/expected.sam
 } {}
 

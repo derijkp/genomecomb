@@ -200,10 +200,13 @@ proc sam_catmerge_job {args} {
 								if {$delete} {file delete {*}$part}
 								file rename -force -- $parttarget.temp.zst $parttarget
 							} elseif {!$delete} {
-								set parttarget $workdir/paste.temp$num[gzext $dep]
-								mklink $dep $parttarget
+								set part [lindex $part 0]
+								set parttarget $workdir/paste.temp$num[gzext $part]
+								mklink $part $parttarget
 							} else {
-								file rename $dep $parttarget.temp$num[gzext $dep]
+								set parttarget $workdir/paste.temp$num[gzext $part]
+								set part [lindex $part 0]
+								file rename $part $parttarget
 							}
 							lappend newtodo $parttarget
 						}
