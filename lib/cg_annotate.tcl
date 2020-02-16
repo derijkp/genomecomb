@@ -201,6 +201,7 @@ proc cg_annotatedb_info {dbfile {near -1}} {
 }
 
 proc cg_annotate_job {args} {
+	upvar job_logdir job_logdir
 	set near -1
 	set dbdir {}
 	set replace e
@@ -345,7 +346,6 @@ proc cg_annotate_job {args} {
 	}
 	lappend cmdline $orifile $resultfile
 	set tempbasefile [indexdir_file $resultfile vars.tsv ok]
-	upvar job_logdir job_logdir
 	job_logfile [file dir $tempbasefile]/annotate_[file tail $resultfile] [file dir $tempbasefile] $cmdline \
 		{*}[versions dbdir zstd os]
 	# logdir
@@ -422,7 +422,7 @@ proc cg_annotate_job {args} {
 					annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize
 				}
 			} else {
-				set chromosomes [distrreg_regs $distrreg $genomefile]
+				set chromosomes [distrreg_regs chr $genomefile]
 				set todo {}
 				foreach chromosome $chromosomes {
 					lappend todo $target.$chromosome

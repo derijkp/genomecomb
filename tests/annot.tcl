@@ -1274,6 +1274,27 @@ test gene_annot {near end of chromosome} {
 	exec diff tmp/result.tsv tmp/expected.tsv
 } {}
 
+test gene_annot {-distrreg chr with gene in 1_random} {
+	write_tab tmp/vars.tsv {
+		chromosome	begin	end	type	ref	alt
+		1	16570	16570	ins	{}	A
+		1_random	16570	16570	ins	{}	A
+	}
+	write_tab tmp/gene_test.tsv {
+		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
+		1	15998	16569	+	x	15998	15998	1	15998,	16569,
+		1_random	15998	16569	+	x	15998	15998	1	15998,	16569,
+	}
+	file_write tmp/expected.tsv [deindent {
+		chromosome	begin	end	type	ref	alt	test_impact	test_gene	test_descr
+		1	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
+		1_random	16570	16570	ins		A	downstream	x	+:down+1_2:n.572_573insA
+	}]\n
+	file delete -force tmp/result.tsv tmp/result.tsv.index
+	exec cg annotate -distrreg 1 -dbdir $::refseqdir/hg19 tmp/vars.tsv tmp/result.tsv tmp/gene_test.tsv
+	exec diff tmp/result.tsv tmp/expected.tsv
+} {}
+
 test reg_annot {check for diff size in paste error} {
 	write_tab tmp/vars1.tsv {
 		chromosome	begin	end	type	ref	alt

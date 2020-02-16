@@ -1160,8 +1160,8 @@ proc open_genefile {df dpossVar {genecol {}} {transcriptcol {}}} {
 	return $header
 }
 
-proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcriptcol {}} {upstreamsize 2000} {onlychr {}}} {
-# putsvars file genomefile dbfile name annotfile genecol transcriptcol upstreamsize onlychr
+proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcriptcol {}} {upstreamsize 2000} {limitregion {}}} {
+# putsvars file genomefile dbfile name annotfile genecol transcriptcol upstreamsize limitregion
 	global genomef
 
 	annot_init
@@ -1222,6 +1222,8 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 	set counter 0
 	set prevloc ""
 	set prevdbloc ""
+	foreach {limitchr limitstart limitend} {{} {} {}} break
+	foreach {limitchr limitstart limitend} [split $limitregion :-] break
 	while {![eof $f]} {
 		set line [split [gets $f] \t]
 		if {![llength $line]} {
@@ -1230,8 +1232,8 @@ proc annotategene {file genomefile dbfile name annotfile {genecol {}} {transcrip
 		}
 		set loc [list_sub $line $poss]
 		foreach {chr start end type ref alt} $loc break
-		if {$onlychr ne ""} {
-			set comp [chr_compare $chr $onlychr]
+		if {$limitregion ne ""} {
+			set comp [distr_chr_compare $chr $start $limitchr $limitstart $limitend]
 			if {$comp > 0} break
 			if {$comp != 0} continue
 		}

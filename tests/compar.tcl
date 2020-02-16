@@ -120,6 +120,16 @@ test loc_compare {{{a -2} 2} {{a -1} 10}} {
 	loc_compare {{a -1} 10} {{a -2} 2}
 } 1
 
+test loc_compare {distr_chr_compare} {
+	set result {}
+	lappend result [expr {[distr_chr_compare chr1 10 chr1 1 5] != 1}]
+	lappend result [expr {[distr_chr_compare chr1 10 chr1 5 10] != 1}]
+	lappend result [expr {[distr_chr_compare chr1 10 chr1 9 19] != 0}]
+	lappend result [expr {[distr_chr_compare chr1 10 chr1 10 20] != 0}]
+	lappend result [expr {[distr_chr_compare chr1 10 chr1 11 20] != -1}]
+	list_remove $result 0
+} {}
+
 test multicompar {basic} {
 	test_cleantmp
 	cg multicompar -split 0 tmp/temp.sft data/var_annot.sft data/var_annot2.sft

@@ -13,6 +13,20 @@ proc chr_compare {chr1 chr2} {
 	loc_compare $chr1 $chr2
 }
 
+proc distr_chr_compare {chr1 start limitchr limitstart limitend} {
+	set comp [loc_compare $chr1 $limitchr]
+	if {
+		$comp == 0 
+		|| ([string index $limitchr end] != "_") && [string match [chr_clip $limitchr]* [chr_clip $chr1]]
+	} {
+		if {$limitstart eq ""} {return 0}
+		if {$start < $limitstart} {return -1}
+		if {$start < $limitend} {return 0}
+		return 1
+	}
+	return $comp
+}
+
 proc lloc_compare {loc1 loc2} {
 	loc_compare [join $loc1 " "] [join $loc2 " "]
 }
