@@ -129,7 +129,7 @@ proc meth_nanopolish_job {args} {
 				if {$::errorCode ne "NONE"} {
 					dict unset opt -level
 					set errorInfo "$msg\n    while executing\nnanopolish call-methylation -r $tempdir/[file tail $fastqfile] -b $bamfile -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst"
-					return -code $error -errorcode $::errorCode -errorinfo $errorInfo $msg
+					return -code $error -errorcode $::errorCode -errorinfo $::errorInfo $msg
 				} else {
 					puts stderr $msg
 				}
