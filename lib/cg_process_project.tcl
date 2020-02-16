@@ -112,7 +112,7 @@ proc process_project_job {args} {
 			set cleanup $value
 		}
 		-m - -maxopenfiles {
-			set ::maxopenfiles [expr {$value - 4}]
+			maxopenfiles [expr {$value - 4}]
 		}
 		-threads {
 			set threads $value

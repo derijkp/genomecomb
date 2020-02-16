@@ -548,7 +548,7 @@ proc process_sample_job {args} {
 			set cleanup $value
 		}
 		-m - -maxopenfiles {
-			set ::maxopenfiles [expr {$value - 4}]
+			maxopenfiles [expr {$value - 4}]
 		}
 		-keepsams {
 			set keepsams $value

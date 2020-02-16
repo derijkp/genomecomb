@@ -17,7 +17,6 @@ proc tsv_paste_job {outputfile files args} {
 	file mkdir $workdir
 	job_logdir $workdir/log_jobs
 	set maxfiles [maxopenfiles]
-	if {$maxfiles < 2} {set maxfiles 2}
 	set len [llength $files]
 	if {$len <= $maxfiles} {
 		set target $outputfile
@@ -87,7 +86,7 @@ proc cg_paste {args} {
 			set outputfile $value
 		}
 		-m - -maxopenfiles {
-			set ::maxopenfiles $value
+			maxopenfiles $value
 		}
 	} {} 1
 	if {[info exists outputfile]} {

@@ -22,7 +22,6 @@ proc multi_merge_job {varsfile files args} {
 	}
 	set varsfile [file_absolute $varsfile]
 	set maxfiles [maxopenfiles]
-	if {$maxfiles < 2} {set maxfiles 2}
 	set len [llength $files]
 	if {$len <= $maxfiles} {
 		# merge in one go
@@ -493,7 +492,7 @@ proc pmulticompar_job {args} {
 			set optkeepfields $value
 		}
 		-m - -maxopenfiles {
-			set ::maxopenfiles [expr {$value - 4}]
+			maxopenfiles [expr {$value - 4}]
 		}
 	} compar_file 1
 	set dirs $args

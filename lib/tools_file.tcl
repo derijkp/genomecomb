@@ -87,28 +87,37 @@ proc filetemp_ext {file {write 1}} {
 	filetemp $file $write 1
 }
 
-proc maxopenfiles {{force 0}} {
+proc maxopenfiles {args} {
 	global maxopenfiles
-	if {$force} {unset -nocomplain maxopenfiles}
-	if {[info exists maxopenfiles]} {
-		if {$force} {
+	if {[llength $args]} {
+		set value [lindex $args 0]
+		if {[isint $value]} {
+			set maxopenfiles $value
+			if {$maxopenfiles < 2} {set maxopenfiles 2}
+			return $value
+		} elseif {$value eq ""} {
 			unset -nocomplain maxopenfiles
 		} else {
-			return $maxopenfiles
+			error "wrong value $value for maxopenfiles: must be an integer"
 		}
+	}
+	if {[info exists maxopenfiles] && [isint $maxopenfiles]} {
+		return $maxopenfiles
 	}
 	if {[file exists /proc/self/limits]} {
 		set c [file_read /proc/self/limits]
 		if {[regexp {Max open files  *([0-9]+)} $c temp maxopenfiles]} {
 			incr maxopenfiles -10
-			return [max $maxopenfiles 10]
+			set maxopenfiles [max $maxopenfiles 10]
+			return $maxopenfiles
 		}
 	}
-	if {![catch {exec sh -c {ulimit -n}} temp] && [isint $temp]} {
-		set maxopenfiles [expr {$temp - 10}]
-		return [max $maxopenfiles 10]
+	if {![info exists maxopenfiles] && ![catch {exec sh -c {ulimit -n}} temp] && [isint $temp]} {
+		set maxopenfiles [max [expr {$temp - 10}] 10]
+		return $maxopenfiles
 	}
-	return 1000
+	set maxopenfiles 1000
+	return $maxopenfiles
 }
 
 proc file_add {file args} {

@@ -29,7 +29,7 @@ proc sam_merge_job {args} {
 			set name $value
 		}
 		-m - -maxopenfiles {
-			set ::maxopenfiles $value
+			maxopenfiles $value
 		}
 	} {outputfile samfile} 1 ... {
 		merge sam files using samtools merge

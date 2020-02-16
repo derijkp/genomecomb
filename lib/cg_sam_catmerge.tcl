@@ -172,8 +172,7 @@ proc sam_catmerge_job {args} {
 					if {[llength $outcmd]} {lappend outcmd >}
 					set finaloutcmd [list | distrreg [file_root $resultfile]- [file_ext $resultfile].temp 1 $regions 2 3 3 0 @ $outcmd]
 				}
-				if {$maxopenfiles eq ""} {set maxopenfiles [maxopenfiles]}
-				if {$maxopenfiles < 2} {set maxopenfiles 2}
+				set maxopenfiles [maxopenfiles $maxopenfiles]
 				set len [llength $deps]
 				if {$len <= $maxopenfiles} {
 					exec mergesorted @ 0 $header $sortopt {*}$deps {*}$finaloutcmd

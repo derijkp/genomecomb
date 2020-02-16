@@ -12,7 +12,6 @@ proc multireg_job {compar_file regfiles {limitreg {}}} {
 	set compar_file [file_absolute $compar_file]
 	job_logdir [gzroot $compar_file].index/log_jobs
 	set maxfiles [maxopenfiles]
-	if {$maxfiles < 2} {set maxfiles 2}
 	set fieldsneeded {}
 	set files {}
 	set todo {}
@@ -173,7 +172,7 @@ proc cg_multireg {args} {
 	set limitreg {}
 	cg_options multireg args {
 		-m - -maxopenfiles {
-			set ::maxopenfiles [expr {$value - 4}]
+			maxopenfiles [expr {$value - 4}]
 		}
 		-limitreg {
 			set limitreg $value

@@ -69,7 +69,7 @@ proc process_multicompar_job {args} {
 			set cleanup $value
 		}
 		-m - -maxopenfiles {
-			set ::maxopenfiles [expr {$value - 4}]
+			maxopenfiles [expr {$value - 4}]
 		}
 	} {destdir dbdir} 1
 	set dbfiles [list_remove [list_remdup $dbfiles] {}]
