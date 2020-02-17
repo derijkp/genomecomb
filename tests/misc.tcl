@@ -347,6 +347,44 @@ chr1	4099	4100	snp	C	T	T	T	47	v	T	T	35	v	1,2
 chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
 } 0 9} 
 
+test distrreg {cg distrreg} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	cg distrreg -stack 1 tmp/vars1.tsv tmp/distrvars1- .tsv {chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2}
+	list [bsort [glob tmp/*]] \
+		[file_read tmp/distrvars1-chr1-1000-5000.tsv] \
+		[file_read tmp/distrvars1-chr1-5000-10000.tsv] \
+		[lindex [cg select -g all tmp/distrvars1-chr1-10000-20000.tsv] end] \
+		[lindex [cg select -g all tmp/distrvars1-chr2.tsv] end]
+} {{tmp/distrvars1-chr1-1000-5000.tsv tmp/distrvars1-chr1-5000-10000.tsv tmp/distrvars1-chr1-10000-20000.tsv tmp/distrvars1-chr2.tsv tmp/vars1.tsv} {chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	sequenced-sample2	list
+chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
+chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
+chr1	4099	4100	snp	C	T	T	T	47	v	T	T	35	v	1,2
+} {chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	sequenced-sample2	list
+chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v			41	u	1;2
+chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
+} 0 9} 
+
+test distrreg {distrreg_job} {
+	test_cleantmp
+	file copy data/vars1.sft tmp/vars1.tsv
+	job_init
+	set results [distrreg_job tmp/vars1.tsv tmp/distrvars1- .tsv {chr1-1000-5000 chr1-5000-10000 chr1-10000-20000 chr2}]
+	job_wait
+	list [bsort $results] \
+		[file_read tmp/distrvars1-chr1-1000-5000.tsv] \
+		[file_read tmp/distrvars1-chr1-5000-10000.tsv] \
+		[lindex [cg select -g all tmp/distrvars1-chr1-10000-20000.tsv] end] \
+		[lindex [cg select -g all tmp/distrvars1-chr2.tsv] end]
+} {{tmp/distrvars1-chr1-1000-5000.tsv tmp/distrvars1-chr1-5000-10000.tsv tmp/distrvars1-chr1-10000-20000.tsv tmp/distrvars1-chr2.tsv} {chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	sequenced-sample2	list
+chr1	4000	4001	snp	G	A	A	G	1	v	A	G	0	v	4
+chr1	4001	4002	snp	A	G,C	G	G	1	v	G	G	0	v	1;2,3;4
+chr1	4099	4100	snp	C	T	T	T	47	v	T	T	35	v	1,2
+} {chromosome	begin	end	type	ref	alt	alleleSeq1-sample1	alleleSeq2-sample1	coverage-sample1	sequenced-sample1	alleleSeq1-sample2	alleleSeq2-sample2	coverage-sample2	sequenced-sample2	list
+chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v			41	u	1;2
+chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
+} 0 9} 
+
 test file_absolute {relative path} {
 	cd /tmp
 	file_absolute abc
