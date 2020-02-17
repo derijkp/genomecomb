@@ -35,7 +35,7 @@ proc sreg_strelka_job {job varallfile resultfile {mincoverage 8} {mingenoqual 25
 
 proc var_strelka_job {args} {
 	upvar job_logdir job_logdir
-	set cmdline "[list cd [pwd]] \; [list cg sv_manta {*}$args]"
+	set cmdline "[list cd [pwd]] \; [list cg var_strelka {*}$args]"
 	set pre ""
 	set opts {}
 	set split 1
