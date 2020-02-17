@@ -422,12 +422,15 @@ proc cg_annotate_job {args} {
 					annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize
 				}
 			} else {
-				set chromosomes [distrreg_regs chr $genomefile]
+				if {![info exists distrsrcs]} {
+					set chromosomes [distrreg_regs chr $genomefile]
+					set distrsrcs [distrreg_job -refseq $genomefile $usefile $usefile.part .tsv $chromosomes]
+				}
 				set todo {}
-				foreach chromosome $chromosomes {
+				foreach chromosome $chromosomes src $distrsrcs {
 					lappend todo $target.$chromosome
 					job annot-$resultname-$chromosome-[file tail $dbfile] -deps {
-						$usefile $genomefile $dbfile
+						$src $genomefile $dbfile
 					} -targets {
 						$target.$chromosome
 					} -vars {
@@ -435,8 +438,8 @@ proc cg_annotate_job {args} {
 					} -code {
 						set genecol [dict_get_default $dbinfo genecol {}]
 						set transcriptcol [dict_get_default $dbinfo transcriptcol {}]
-						# putsvars dep genomefile dbfile name target genecol transcriptcol upstreamsize
-						annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize $chromosome
+						# putsvars dep genomefile dbfile name target genecol transcriptcol upstreamsize chromosome
+						annotategene $dep $genomefile $dbfile $name $target $genecol $transcriptcol $upstreamsize
 					}
 				}
 				job annot-$resultname-[file tail $dbfile] -deps $todo -targets {$target} -vars {} -code {
