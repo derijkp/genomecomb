@@ -48,6 +48,21 @@ proc refseq {{refseq {}} {dbdir {}}} {
 	return [file_absolute $refseq]
 }
 
+proc ref_chrsize {refseq chr} {
+	global genomecomb_chrsizea
+	if {![info exists genomecomb_chrsizea]} {
+		list_foreach {tchr size} [split [string trim [cg select -sh /dev/null -hp {chromosome size} -f {chromosome size} $refseq.fai]] \n] {
+			set genomecomb_chrsizea([chr_clip $tchr]) [list $tchr $size]
+		}
+	}
+	set cchr [chr_clip $chr]
+	if {[info exists genomecomb_chrsizea($cchr)]} {
+		return [lindex $genomecomb_chrsizea($cchr) end]
+	} else {
+		return 536870912
+	}
+}
+
 proc refcram {{dbdir {}}} {
 	if {[info exists ::env(REF_PATH)]} {return $::env(REF_PATH)}
 	set dbdir [dbdir $dbdir]

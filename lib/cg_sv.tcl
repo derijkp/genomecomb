@@ -3,7 +3,7 @@ proc sv_job {args} {
 	upvar job_logdir job_logdir
 	set method manta
 	set refseq {}
-	set distrreg 1
+	set distrreg 0
 	set opts {}
 	set split 1
 	set deps {}
@@ -102,19 +102,20 @@ proc sv_job {args} {
 			}
 		} else {
 			foreach region $regions {
-				file_write $indexdir/$basename-$region.tsv chromosome\tbegin\tend\n[join [split $region _-] \t]\n
+				distrreg_reg2bed $indexdir/$basename-$region.bed $region $refseq
 			}
 		}
-		set todo {}
 		# Produce variant calls
 		set ibam $indexdir/[file tail $bamfile]
 		set indexext [indexext $bamfile]
 		mklink $bamfile $ibam
 		mklink $bamfile.$indexext $ibam.$indexext
 		defcompressionlevel 1
+		set todo {}
 		foreach region $regions regfile $regfiles {
-			lappend todo [sv_${method}_job {*}$opts {*}$skips -rootname $root-$region -regionfile $regfile \
-				-split $split -threads $threads -cleanup $cleanup -refseq $refseq $ibam]
+			set target [file root $ibam]-$region.tsv.zst
+			lappend todo [sv_${method}_job {*}$opts {*}$skips -regionfile $regfile \
+				-split $split -threads $threads -cleanup $cleanup -refseq $refseq $ibam $target]
 		}
 		defcompressionlevel 9
 		# concatenate results
@@ -157,7 +158,7 @@ proc sv_job {args} {
 			}
 			incr pos
 		}
-		cleanup_job cleanup-sv_${method}_[file tail $bamfile] $indexdir $resultfiles
+		cleanup_job cleanup-sv_${method}_[file tail $bamfile] [list {*}$regfiles $indexdir] $resultfiles
 		cd $keeppwd
 		return $resultfiles
 	}

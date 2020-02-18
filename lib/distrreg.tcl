@@ -16,6 +16,51 @@ proc distrreg_checkvalue {value {default s50000000}} {
 	}
 }
 
+proc distrreg_reg2loc {region {refseq {}}} {
+	foreach {chr begin end} [split $region _-] break
+	if {$begin eq ""} {set begin 0}
+	if {$refseq eq ""} {
+		if {$end eq ""} {set end 536870912}
+	} elseif {$end eq ""} {
+		set end [ref_chrsize $refseq $chr]
+	}
+	list $chr $begin $end
+}
+
+proc distrreg_reg2bed {bedfile region {refseq {}}} {
+	set o [open $bedfile w]
+	foreach {chr begin end} [split $region -] break
+	if {$region eq "unaligned"} {
+		close $o
+		return $bedfile
+	}
+	if {[isint $begin] && [isint $end]} {
+		puts $o $chr\t$begin\t$end
+		close $o
+		return $bedfile
+	}
+	global genomecomb_chrsizea
+	if {![info exists genomecomb_chrsizea]} {
+		list_foreach {tchr size} [split [string trim [cg select -sh /dev/null -hp {chromosome size} -f {chromosome size} $refseq.fai]] \n] {
+			set genomecomb_chrsizea([chr_clip $tchr]) [list $tchr $size]
+		}
+	}
+	set cchr [chr_clip $chr]
+	if {[info exists genomecomb_chrsizea($cchr)]} {
+		foreach {chr size} $genomecomb_chrsizea($cchr) break
+		puts $o $chr\t0\t$size
+	} elseif {[string index $chr end] eq "_"} {
+		foreach tchr [array names genomecomb_chrsizea [chr_clip $chr]*] {
+			foreach {chr size} $genomecomb_chrsizea($tchr) break
+			puts $o $chr\t0\t$size
+		}
+	} else {
+		puts $o $chr\t0\t536870912
+	}
+	close $o
+	return $bedfile
+}
+
 proc distrreg_addunaligned {regs} {
 	set last [lindex $regs end]
 	set pre {}
