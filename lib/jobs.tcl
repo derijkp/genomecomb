@@ -402,6 +402,25 @@ if 0 {
 	regexp $p abxxcdcdef
 }
 
+proc cgjob_files {cgjob_idVar pattern {checkcompressed 0}} {
+	upvar $cgjob_idVar cgjob_id
+	set filelist {}
+	regsub -all {([^A-Za-z0-9*])} $pattern {\\\1} rpattern
+	if {$checkcompressed} {
+		set list [array names cgjob_id $pattern*]
+		set regexppattern ^[string_change $rpattern {* [^/]*}](\.zst|\.gz|\.rz|\.lz4|\.bgz|\.bz2|)\$
+	} else {
+		set list [array names cgjob_id $pattern]
+		set regexppattern ^[string_change $rpattern {* [^/]*}]\$
+	}
+	foreach file $list {
+		if {[regexp $regexppattern $file]} {
+			lappend filelist $file
+		}
+	}
+	return $filelist
+}
+
 proc job_finddep {pattern idsVar timeVar timefileVar checkcompressed {regexppatternVar {}}} {
 	global cgjob_id cgjob_ptargets cgjob_rm
 #puts *****************
@@ -439,11 +458,7 @@ proc job_finddep {pattern idsVar timeVar timefileVar checkcompressed {regexppatt
 		lappend ids {}
 		maxfiletime $file time timefile
 	}
-	if {$checkcompressed} {
-		set filelist [gzarraynames cgjob_id $pattern]
-	} else {
-		set filelist [array names cgjob_id $pattern]
-	}
+	set filelist [cgjob_files cgjob_id $pattern $checkcompressed]
 	foreach file $filelist {
 		if {[info exists cgjob_rm($file)]} continue
 		if {[gziscompressed $file] && [info exists filesa([file root $file])]} {

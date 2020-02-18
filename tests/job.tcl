@@ -1468,6 +1468,16 @@ test job_getinfo {job_getinfo skipped} {
 	list $deps $targets
 } {{} {}}
 
+test cgjob_files {basic} {
+	array set cgjob_id {abc.tsv 1 abc.tsvx 1 abc.ts 1}
+	cgjob_files cgjob_id a*.tsv
+} abc.tsv
+
+test cgjob_files {basic} {
+	array set cgjob_id {abc.tsv 1 ab/c.tsv 1}
+	cgjob_files cgjob_id a*.tsv
+} abc.tsv
+
 set ::env(PATH) $keeppath
 
 cd $keepdir
