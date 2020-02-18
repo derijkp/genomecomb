@@ -53,8 +53,9 @@ proc sv_gridss_job {args} {
 	}
 	set resultanalysisinfo [gzroot $resultfile].analysisinfo
 	set destdir [file dir $resultfile]
+	set vcffile [file root [gzroot $resultfile]].vcf
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo]
+	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -67,7 +68,6 @@ proc sv_gridss_job {args} {
 	set bamfileindex $bamfile.[indexext $bamfile]
 	set workdir $resultfile.gridssrun
 	file mkdir $resultfile.gridssrun
-	set vcffile $resultfile.gridssrun/results.vcf
 	set blacklist [glob -nocomplain [file dir $refseq]/reg_*_wgEncodeDacMapabilityConsensusExcludable.tsv*]
 	if {[llength $blacklist]} {
 		lappend opts BLACKLIST=\"[lindex $blacklist 0]\"

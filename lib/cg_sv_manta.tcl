@@ -73,7 +73,8 @@ proc sv_manta_job {args} {
 		lappend opts --exome
 	}
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo]
+	set vcffile [file root [gzroot $resultfile]].vcf
+	set resultlist [list $resultfile $resultanalysisinfo $vcffile.gz]
 	if {$resultfiles} {
 		return $resultlist
 	}

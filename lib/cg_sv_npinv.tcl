@@ -65,9 +65,9 @@ proc sv_npinv_job {args} {
 	}
 	set resultanalysisinfo [gzroot $resultfile].analysisinfo
 	set destdir [file dir $resultfile]
-	set vcffile [file root [gzfile $resultfile]].vcf
+	set vcffile [file root [gzroot $resultfile]].vcf
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo]
+	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
 	if {$resultfiles} {
 		return $resultlist
 	}

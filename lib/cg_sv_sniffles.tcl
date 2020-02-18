@@ -63,8 +63,9 @@ proc sv_sniffles_job {args} {
 	}
 	set destdir [file dir $resultfile]
 	set resultanalysisinfo [gzroot $resultfile].analysisinfo
+	set vcffile [file root [gzroot $resultfile]].vcf
 	# resultfiles
-	set resultlist [list $resultfile $resultanalysisinfo]
+	set resultlist [list $resultfile $resultanalysisinfo $vcffile]
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -75,7 +76,6 @@ proc sv_sniffles_job {args} {
 	## Produce sniffles SNP calls
 	set keeppwd [pwd]
 	cd $destdir
-	set vcffile [file root [gzroot $resultfile]].vcf
 	set bamfileindex $bamfile.[indexext $bamfile]
 	job sv_$root.vcf {*}$skips -mem [job_mempercore 1G $threads] -cores $threads \
 	-skip [list $resultfile $resultanalysisinfo] \

@@ -73,7 +73,7 @@ proc sv_job {args} {
 		set resultfiles [sv_${method}_job -resultfiles 1 {*}$opts \
 			-split $split	-refseq $refseq $bamfile $resultfile]
 		set skips [list -skip $resultfiles]
-		foreach {svfile} $resultfiles break
+		foreach {resultfile resultanalysisfile resultvcffile} $resultfiles break
 		set file [file tail $bamfile]
 		set root [file_rootname $file]
 		# start
@@ -83,7 +83,7 @@ proc sv_job {args} {
 		set indexdir [gzroot $resultfile].index
 		file mkdir $indexdir
 		set regions [distrreg_regs $distrreg $refseq]
-		set basename [file_root $resultfile]
+		set basename [file_root [file tail $resultfile]]
 		set regfiles {}
 		foreach region $regions {
 			lappend regfiles $indexdir/$basename-$region.bed
