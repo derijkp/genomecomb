@@ -175,7 +175,8 @@ proc sam_catmerge_job {args} {
 				set maxopenfiles [maxopenfiles $maxopenfiles]
 				set len [llength $deps]
 				if {$len <= $maxopenfiles} {
-					exec mergesorted @ 0 $header $sortopt {*}$deps {*}$finaloutcmd
+					exec cg mergesorted -headerline 0 -commentchar @ -sortpos $sortopt \
+						{*}$deps {*}$finaloutcmd
 				} else {
 					set workdir [scratchdir]/merge
 					file delete -force $workdir
@@ -194,7 +195,8 @@ proc sam_catmerge_job {args} {
 							# puts [list ../bin/tsv_paste {*}$deps]
 							if {[llength $part] > 1} {
 								set parttarget $workdir/paste.temp$num.zst
-								exec mergesorted @ 0 $header $sortopt {*}$part | cg zst -compressionlevel 1 > $parttarget.temp.zst
+								exec cg mergesorted -commentchar @ -headerline 0 -header $header -sortpos $sortopt \
+									{*}$part | cg zst -compressionlevel 1 > $parttarget.temp.zst
 								# exec samtools merge {*}$sortopt -t $threads $parttarget.temp {*}$part
 								if {$delete} {file delete {*}$part}
 								file rename -force -- $parttarget.temp.zst $parttarget
@@ -213,7 +215,8 @@ proc sam_catmerge_job {args} {
 						set todo $newtodo
 						set len [llength $todo]
 					}
-					exec mergesorted @ 0 $header $sortopt {*}$todo {*}$finaloutcmd
+					exec cg mergesorted -commentchar @ -headerline 0 -header $header -sortpos $sortopt \
+						{*}$todo {*}$finaloutcmd
 					if {$delete} {file delete {*}$todo}
 				}
 			}

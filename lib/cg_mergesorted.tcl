@@ -4,9 +4,25 @@ proc cg_mergesorted {args} {
 	set maxopenfiles {}
 	set sortfields {}
 	set addcomment 1
-	cg_options sam_catmerge args {
+	set commentchar \#
+	set headerline 1
+	set header {}
+	set sortposs {}
+	cg_options mergesorted args {
 		-sortfields {
 			set sortfields $value
+		}
+		-commentchar {
+			set commentchar $value
+		}
+		-headerline {
+			set headerline $value
+		}
+		-header {
+			set header $value
+		}
+		-sortpos {
+			set sortposs $value
 		}
 		-c - -comments {
 			set addcomment $value
@@ -19,28 +35,40 @@ proc cg_mergesorted {args} {
 		fcopy $f stdout
 		exit 0
 	}
+	if {!$headerline && ![llength $sortposs]} {
+		error "if -headerline is 0, -sortposs must be given"
+	}
 	set headers {}
 	set comments {}
 	set files {}
-	foreach file $args {
-		if {[file size $file] == 0} continue
-		set f [gzopen $file]
-		set theader [tsv_open $f comment]
-		if {![info exists header]} {
-			set header $theader
-			if {![llength $sortfields]} {
-				set poss [tsv_basicfields $header 6 0]
-				set poss [list_remove $poss -1]
-			} else {
-				set poss [list_cor $header $sortfields]
-				if {-1 in $poss} {
-					error "some sortfields not found: [join [list_sub $sortfields [list_find $poss -1]] ,]"
-				}
-			}
-		} elseif {$theader ne $header} {
-			error "mismatched headers in files"
-		}
-		gzclose $f
+	if {[llength $sortposs]} {
+		set poss $sortposs
+	} else {
+		set poss {}
 	}
-	exec mergesorted \# 1 {} $poss {*}$args >@ stdout 2>@stderr
+	if {$headerline} {
+		foreach file $args {
+			if {[file size $file] == 0} continue
+			set f [gzopen $file]
+			set theader [tsv_open $f comment]
+			if {![info exists header]} {
+				set header $theader
+				if {![llength $poss]} {
+					if {![llength $sortfields]} {
+						set poss [tsv_basicfields $header 6 0]
+						set poss [list_remove $poss -1]
+					} else {
+						set poss [list_cor $header $sortfields]
+						if {-1 in $poss} {
+							error "some sortfields not found: [join [list_sub $sortfields [list_find $poss -1]] ,]"
+						}
+					}
+				}
+			} elseif {$theader ne $header} {
+				error "mismatched headers in files"
+			}
+			gzclose $f
+		}
+	}
+	exec mergesorted $commentchar $headerline $header $poss {*}$args >@ stdout 2>@stderr
 }
