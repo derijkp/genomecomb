@@ -31,7 +31,11 @@ FILE *openreg(char **regions, char *prefix, char *postfix, int printheader, DStr
 				if (size >= 9 && strncmp(region+size-9,"unaligned",9) == 0) {
 					DStringSetS(*chromosome2,"*",1);
 				} else {
-					DStringSetS(*chromosome2,region,size);
+					if ((region[0] == 'C' || region[0] == 'c') && (region[1] == 'H' || region[1] == 'h') && (region[2] == 'R' || region[2] == 'r')) {
+						DStringSetS(*chromosome2,region+3,size-3);
+					} else {
+						DStringSetS(*chromosome2,region,size);
+					}
 				}
 				if (region[size] == '\0' || region[size] == ' ') break;
 				*start2 = atoi(region+size+1);
@@ -95,7 +99,7 @@ int main(int argc, char *argv[]) {
 	DStringArray *result1=NULL;
 	DString *header = DStringNew();
 	DString *line1 = DStringNew();
-	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL;
+	DString *chromosome1 = NULL,*chromosome2 = NULL,*curchromosome = NULL,*chromosomekeep = NULL, *buffer=DStringNew();
 	char *prefix, *postfix, *regions,*opencmd=NULL,commentchar;
 	int comp,chr1pos,start1pos,end1pos,max1,printheader = 1,read,headerline;
 	unsigned int numfields,pos1;
@@ -147,6 +151,10 @@ int main(int argc, char *argv[]) {
 	if (read != -1) do {
 		pos1++;
 		chromosome1 = result1->data+chr1pos;
+		if (chromosome1->size > 3 && (chromosome1->string[0] == 'C' || chromosome1->string[0] == 'c') && (chromosome1->string[1] == 'H' || chromosome1->string[1] == 'h') && (chromosome1->string[2] == 'R' || chromosome1->string[2] == 'r')) {
+			DStringSetS(buffer,chromosome1->string+3,chromosome1->size-3);
+			chromosome1 = buffer;
+		}
 		sscanf(result1->data[start1pos].string,"%d",&start1);
 		sscanf(result1->data[end1pos].string,"%d",&end1);
 NODPRINT("%d\t%s\t%d\t%d",1,Loc_ChrString(chromosome1),start1,end1)

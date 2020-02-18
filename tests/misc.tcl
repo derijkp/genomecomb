@@ -385,6 +385,46 @@ chr1	5000	5010	del	AGCGTGGCAA		AGCGTGGCAA		32	v			41	u	1;2
 chr1	5020	5021	snp	G	C	G	C	54	v	G	G	52	r	3
 } 0 9} 
 
+test distrreg {cg distrreg chr1 vs 1} {
+	test_cleantmp
+	file_write tmp/vars1.tsv [deindent {
+		chromosome	begin	end	name
+		1	10	20	a
+		1_random	20	30	b
+		1_random2	20	30	b
+		2	30	40	c
+	}]\n
+	cg distrreg -stack 1 tmp/vars1.tsv tmp/distrvars1- .tsv {chr1 chr1_ chr2}
+	list [bsort [glob tmp/*]] \
+		[file_read tmp/distrvars1-chr1.tsv] \
+		[file_read tmp/distrvars1-chr1_.tsv]
+} {{tmp/distrvars1-chr1.tsv tmp/distrvars1-chr1_.tsv tmp/distrvars1-chr2.tsv tmp/vars1.tsv} {chromosome	begin	end	name
+1	10	20	a
+} {chromosome	begin	end	name
+1_random	20	30	b
+1_random2	20	30	b
+}}
+
+test distrreg {cg distrreg 1 vs chr1} {
+	test_cleantmp
+	file_write tmp/vars1.tsv [deindent {
+		chromosome	begin	end	name
+		chr1	10	20	a
+		chr1_random	20	30	b
+		chr1_random2	20	30	b
+		chr2	30	40	c
+	}]\n
+	cg distrreg -stack 1 tmp/vars1.tsv tmp/distrvars1- .tsv {1 1_ 2}
+	list [bsort [glob tmp/*]] \
+		[file_read tmp/distrvars1-1.tsv] \
+		[file_read tmp/distrvars1-1_.tsv]
+} {{tmp/distrvars1-1.tsv tmp/distrvars1-1_.tsv tmp/distrvars1-2.tsv tmp/vars1.tsv} {chromosome	begin	end	name
+chr1	10	20	a
+} {chromosome	begin	end	name
+chr1_random	20	30	b
+chr1_random2	20	30	b
+}}
+
 test file_absolute {relative path} {
 	cd /tmp
 	file_absolute abc

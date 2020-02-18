@@ -694,6 +694,26 @@ int loccompare (char const *a, char const *b,int alen,int blen) {
 	return naturalcompare(a,b,alen,blen);
 }
 
+int chrmatch (char const *a, char const *b,int alen,int blen) {
+	if (alen >= 3) {
+		if ((a[0] == 'C' || a[0] == 'c') && (a[1] == 'H' || a[1] == 'h') && (a[2] == 'R' || a[2] == 'r')) {
+			a += 3; alen -= 3;
+			if (alen && a[0] == '-') {
+				a++; alen--;
+			}
+		}
+	}
+	if (blen >= 3) {
+		if ((b[0] == 'C' || b[0] == 'c') && (b[1] == 'H' || b[1] == 'h') && (b[2] == 'R' || b[2] == 'r')) {
+			b += 3; blen -= 3;
+			if (blen && b[0] == '-') {
+				b++; blen--;
+			}
+		}
+	}
+	return naturalcompare(a,b,alen,blen);
+}
+
 int DStringLocCompare(DString *a, DString *b) {
 	if (a == b) {return 0;}
 	if (a == NULL) {
