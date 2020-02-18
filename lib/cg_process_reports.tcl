@@ -280,12 +280,14 @@ proc process_reports_job {args} {
 			regsub ^sreg- $sample {} sample
 			set target $sampledir/reports/report_covered-$sample.tsv
 			job reports_covered-$sample -deps {$dep} -targets {$target} -vars sample -code {
-				set temp [split [exec cg covered $dep] \n]
 				set f [open $target.temp w]
 				puts $f [join {sample source parameter value} \t]
-				foreach line [lrange $temp 1 end] {
-					foreach {chr cov} $line break
-					puts $f $sample\tgenomecomb\tcovered_$chr\t$cov
+				if {[file size $dep] != 0} {
+					set temp [split [exec cg covered $dep] \n]
+					foreach line [lrange $temp 1 end] {
+						foreach {chr cov} $line break
+						puts $f $sample\tgenomecomb\tcovered_$chr\t$cov
+					}
 				}
 				close $f
 				file rename -force -- $target.temp $target
