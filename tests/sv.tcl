@@ -104,6 +104,31 @@ test sv {cg sv -method manta, giving resultfile} {
 	cg zcat expected/sv-manta/sv-manta-dsbwa-ERR194147_30x_NA12878-chr21part.tsv.zst > tmp/sv-manta/expected.tsv
 	cg tsvdiff -q 1 tmp/sv-manta/resultsv.tsv tmp/sv-manta/expected.tsv
 } {}
+95989695 microseconds per iteration
+
+# -distrreg is not actually used, because the -regionfile option in sv_manta is actually disabled (for now)
+# because it causes too much problems, and is slower
+test sv {cg sv -method manta -distreg 1} {
+	cd $::smalltestdir
+	file delete -force tmp/sv-manta
+	file mkdir tmp/sv-manta
+	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
+	exec cg sv -method manta -distrreg 1 {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+	cg tsvdiff -q 1 -x *.xml -x svLocusGraphStats.tsv -x *.tbi -x *.py -x *.py.* -x alignmentStatsSummary.txt \
+		tmp/sv-manta expected/sv-manta
+} {}
+
+#test sv {cg sv -method manta -distreg 1 -d 2} {
+#	cd $::smalltestdir
+#	file delete -force tmp/sv-manta
+#	file mkdir tmp/sv-manta
+#	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+#	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
+#	exec cg sv -d 2 -method manta -distrreg 1 {*}$::dopts -refseq $::smalltestdir/refseqtest/hg19 tmp/sv-manta/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+#	cg tsvdiff -q 1 -x *.xml -x svLocusGraphStats.tsv -x *.tbi -x *.py -x *.py.* -x alignmentStatsSummary.txt \
+#		tmp/sv-manta expected/sv-manta
+#} {}
 
 test sv {lumpy} {
 	cd $::smalltestdir

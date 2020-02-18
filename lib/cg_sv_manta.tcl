@@ -19,6 +19,7 @@ proc sv_manta_job {args} {
 	set rootname {}
 	set skips {}
 	set resultfile {}
+	# regionfile option is actually removed (for now) because it causes too much problems, and is slower
 	set regionfile {}
 	cg_options sv_manta args {
 		-refseq {
@@ -42,12 +43,11 @@ proc sv_manta_job {args} {
 		-skip {
 			lappend skips -skip $value
 		}
-		-regionfile {
-			set regionfile $value
-		}
 		default {
-			if {[regexp {^-..} $key]} {set key -$key}
-			lappend opts $key $value
+			if {$key ne "-region"} {
+				if {[regexp {^-..} $key]} {set key -$key}
+				lappend opts $key $value
+			}
 		}
 	} {bamfile resultfile} 1 2 {
 		run SV calls using manta
@@ -88,7 +88,7 @@ proc sv_manta_job {args} {
 	job sv_manta-$root.vcf {*}$skips -mem [expr {1*$threads}]G -cores $threads \
 	-skip [list $resultfile $resultfile.analysisinfo] \
 	-deps {
-		$bamfile $refseq $bamfileindex $refseq.fai
+		$bamfile $refseq $bamfileindex $refseq.fai ($regionfile)
 	} -targets {
 		$resultfile.mantarun/results/variants/diploidSV.vcf.gz $resultfile.mantarun.analysisinfo
 	} -vars {
@@ -102,6 +102,7 @@ proc sv_manta_job {args} {
 			exec tabix -p bed $tempbed.gz
 			lappend opts --callRegions $tempbed.gz
 		}
+		if {[file exists $resultfile.mantarun]} {file delete -force $resultfile.mantarun}
 		exec $mantadir/bin/configManta.py {*}$opts \
 			--bam $dep \
 			--referenceFasta $gatkrefseq \
