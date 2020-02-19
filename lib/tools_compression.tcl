@@ -165,6 +165,7 @@ proc gzopen {file {pos -1}} {
 			seek $f $pos
 		}
 	}
+	set ::genomecomb_gzopen_info($f) $file
 	return $f
 }
 
@@ -174,7 +175,7 @@ proc gzclose {f} {
 		if {$error eq "child process exited abnormally"} return
 		if {$error eq "child killed: write on pipe with no readers"} return
 		if {[regexp {Successfully decoded [0-9]+ bytes} $error]} return
-		error $error
+		error "error closing file [get ::genomecomb_gzopen_info($f) ""]:$error"
 	}
 }
 
