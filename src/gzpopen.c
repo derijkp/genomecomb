@@ -45,21 +45,25 @@ FILE *gz_popen(char *filename) {
 	if (type == IN) {
 		return stdin;
 	} else if (type == UNCOMPRESSED) {
-		return fopen64_or_die(filename,"r");
+		result = fopen64_or_die(filename,"r");
 	} else if (type == LZ4) {
 		DStringSet(buffer,"lz4 -q -d -c ");
 		DStringAppend(buffer,filename);
-		return popen(buffer->string,"r");
+		result = popen(buffer->string,"r");
 	} else if (type == ZSTD) {
 		DStringSet(buffer,"zstd-mt -T 1 -k -q -d -c ");
 		DStringAppend(buffer,filename);
-		return popen(buffer->string,"r");
+		result = popen(buffer->string,"r");
 	} else if (type == RZ || type == GZ) {
 		DStringSet(buffer,"zcat ");
 		DStringAppend(buffer,filename);
-		return popen(buffer->string,"r");
+		result = popen(buffer->string,"r");
 	} else {
-		return fopen64_or_die(filename,"r");
+		result = fopen64_or_die(filename,"r");
+	}
+	if (result == NULL) {
+		fprintf(stderr,"Could not open file %s using popen (%s): %s\n",filename,buffer->string,strerror(errno));
+		exit(1);
 	}
 	return result;
 }

@@ -928,4 +928,58 @@ test mergesorted {sort error} {
 	cg mergesorted tmp/reg1.tsv tmp/reg2.tsv
 } {} error
 
+test mergesorted {short} {
+	file_write tmp/reg1.tsv [deindent {
+		chromosome	begin	end	test
+		1	10	20	a1
+		1	90	100	b1
+	}]\n
+	file_write tmp/reg2.tsv [deindent {
+		chromosome	begin	end	test
+		1	8	9	a2
+	}]\n
+	cg mergesorted tmp/reg1.tsv tmp/reg2.tsv
+} {chromosome	begin	end	test
+1	8	9	a2
+1	10	20	a1
+1	90	100	b1}
+
+test mergesorted {compressed (gz_popen test)} {
+	file_write tmp/reg1.tsv [deindent {
+		chromosome	begin	end	test
+		1	10	20	a1
+		1	90	100	b1
+	}]\n
+	file_write tmp/reg2.tsv [deindent {
+		chromosome	begin	end	test
+		1	8	9	a2
+	}]\n
+	cg zst tmp/reg1.tsv
+	cg mergesorted tmp/reg1.tsv.zst tmp/reg2.tsv
+} {chromosome	begin	end	test
+1	8	9	a2
+1	10	20	a1
+1	90	100	b1}
+
+test mergesorted {error in gz_popen test} {
+	file_write tmp/reg1.tsv.zst [deindent {
+		chromosome	begin	end	test
+		1	10	20	a1
+		1	90	100	b1
+	}]\n
+	file_write tmp/reg2.tsv [deindent {
+		chromosome	begin	end	test
+		1	8	9	a2
+	}]\n
+	cg mergesorted tmp/reg1.tsv.zst tmp/reg2.tsv
+} {error in tsv_open: could not read first line of file *tmp/reg1.tsv.zst} match error
+
+test mergesorted {error file does not exist} {
+	file_write tmp/reg2.tsv [deindent {
+		chromosome	begin	end	test
+		1	8	9	a2
+	}]\n
+	cg mergesorted tmp/reg1.tsv.zst tmp/reg2.tsv
+} {could not read "tmp/reg1.tsv.zst": no such file or directory} error
+
 testsummarize
