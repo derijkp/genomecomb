@@ -51,24 +51,25 @@ proc cg_mergesorted {args} {
 			if {[file size $file] == 0} continue
 			set f [gzopen $file]
 			set theader [tsv_open $f comment]
-			if {![info exists header]} {
-				set header $theader
+			if {![info exists fileheader]} {
+				set fileheader $theader
 				if {![llength $poss]} {
 					if {![llength $sortfields]} {
-						set poss [tsv_basicfields $header 6 0]
+						set poss [tsv_basicfields $fileheader 6 0]
 						set poss [list_remove $poss -1]
 					} else {
-						set poss [list_cor $header $sortfields]
+						set poss [list_cor $fileheader $sortfields]
 						if {-1 in $poss} {
 							error "some sortfields not found: [join [list_sub $sortfields [list_find $poss -1]] ,]"
 						}
 					}
 				}
-			} elseif {$theader ne $header} {
+			} elseif {$theader ne $fileheader} {
 				error "mismatched headers in files"
 			}
 			gzclose $f
 		}
 	}
+	# puts stderr [list mergesorted $commentchar $headerline $header $poss {*}$args]
 	exec mergesorted $commentchar $headerline $header $poss {*}$args >@ stdout 2>@stderr
 }
