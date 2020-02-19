@@ -89,20 +89,32 @@ proc distrreg_regs {regfile refseq} {
 			set result {}
 			set list [split [string trim [cg select -sh /dev/null -f {chromosome begin end} $sequencedfile]] \n]
 			foreach {cchr cbegin cend} [list_pop list 0] break
+			set cbegin 0
+			set cmax [ref_chrsize $refseq $cchr]
 			set csize [expr {$cend-$cbegin}]
 			list_foreach {chr begin end} $list {
 				set size [expr {$end-$begin}]
-				if {$chr ne $cchr || [expr {$csize + $size}] > $regsize} {
+				if {$chr ne $cchr} {
 					if {[regexp {^[^_]*_} $cchr base]} {
 						if {![info exists donea($base)]} {
 							lappend result $base
 							set donea($base) 1
 						}
 					} else {
-						lappend result $cchr-$cbegin-$cend
+						lappend result $cchr-$cbegin-$cmax
+						set cmax [ref_chrsize $refseq $chr]
 					}
 					set cchr $chr
-					set cbegin $begin
+					set cbegin 0
+					set cend $end
+					set cmax [ref_chrsize $refseq $cchr]
+				} elseif {[regexp {^[^_]*_} $cchr base]} {
+					# do not add anything if chr1_*
+				} elseif {[expr {$csize + $size}] > $regsize} {
+					set mid [expr {($cend + $begin)/2}]
+					lappend result $cchr-$cbegin-$mid
+					set cchr $chr
+					set cbegin $mid
 					set cend $end
 				} else {
 					set cend $end
