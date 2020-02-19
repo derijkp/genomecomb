@@ -17,7 +17,9 @@ proc tsv_open {f {commentVar {}} {lineVar {}}} {
 	fconfigure $f -buffering line
 	set split 1
 	if {![info exists line]} {
-		set line [gets $f]
+		if {[gets $f line] == -1} {
+			error "error in tsv_open: could not read first line of file [get ::genomecomb_gzopen_info($f) ""]"
+		}
 	}
 	if {[regexp {^@HD[\t]VN} $line]} {
 		# sam file
