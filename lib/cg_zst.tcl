@@ -35,10 +35,10 @@ proc cg_zstindex {args} {
 
 proc cg_zstcat {args} {
 	if {![llength $args]} {
-		exec zstd-mt -k -q -d -c <@ stdin >@ stdout
+		exec zstd-mt -T 1 -k -q -d -c <@ stdin >@ stdout
 	} else {
 		foreach file $args {
-			exec zstd-mt -k -q -d -c $file >@ stdout
+			exec zstd-mt -T 1 -k -q -d -c $file >@ stdout
 		}
 	}
 }
@@ -56,14 +56,14 @@ proc cg_zstra {args} {
 
 proc cg_zstless {args} {
 	if {![llength $args]} {
-		set f [open "| zstd-mt -k -q -d -c | less" w]
+		set f [open "| zstd-mt -T 1 -k -q -d -c | less" w]
 		fconfigure stdin -translation binary
 		fconfigure $f -translation binary
 		fcopy stdin $f
 		close $f
 	} else {
 		foreach file $args {
-			set f [open "| zstd-mt -k -q -d -c $file | less" w]
+			set f [open "| zstd-mt -T 1 -k -q -d -c $file | less" w]
 			close $f
 		}
 	}

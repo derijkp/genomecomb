@@ -131,7 +131,7 @@ proc gzopen {file {pos -1}} {
 		}
 	} elseif {[inlist {.zst} $ext]} {
 		if {$pos == -1} {
-			set f [open "| zstd-mt -k -d -c [list $file]"]
+			set f [open "| zstd-mt -T 1 -k -d -c [list $file]"]
 		} else {
 			set f [open "| zstdra [list $file] $pos"]
 		}
@@ -288,7 +288,7 @@ proc gzarraynames {aVar pattern} {
 proc gzcat {filename {checkexists 1}} {
 	if {$checkexists && ![file exists $filename]} {error "file $filename does not exist"}
 	switch [file extension $filename] {
-		.zst {return "zstd-mt -k -q -d -c"}
+		.zst {return "zstd-mt -T 1 -k -q -d -c"}
 		.rz {return "razip -d -c"}
 		.lz4 {return "lz4 -q -d -c"}
 		.gz - .bgz {return zcat}
@@ -353,7 +353,7 @@ proc gztemp {filename} {
 	switch $ext {
 		.zst {
 			set tempfile [scratchfile get]
-			exec zstd-mt -k -q -d -c $filename > $tempfile
+			exec zstd-mt -T 1 -k -q -d -c $filename > $tempfile
 			set ::gztemp_files($tempfile) 1
 			return $tempfile
 		}

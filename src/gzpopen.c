@@ -51,7 +51,7 @@ FILE *gz_popen(char *filename) {
 		DStringAppend(buffer,filename);
 		return popen(buffer->string,"r");
 	} else if (type == ZSTD) {
-		DStringSet(buffer,"zstd-mt -k -q -d -c ");
+		DStringSet(buffer,"zstd-mt -T 1 -k -q -d -c ");
 		DStringAppend(buffer,filename);
 		return popen(buffer->string,"r");
 	} else if (type == RZ || type == GZ) {

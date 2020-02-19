@@ -34,7 +34,7 @@ FILE *sam_popen(char *filename) {
 			}
 		} else if (len >= 4 && *cur == 't') {
 			if (*(--cur) == 's' && *(--cur) == 'z' && *(--cur) == '.') {
-				DStringAppend(buffer,"zstd-mt -k -q -d -c ");
+				DStringAppend(buffer,"zstd-mt -T 1 -k -q -d -c ");
 				DStringAppend(buffer,filename);
 				keepcur = --cur; len -= 4;
 			} else {
