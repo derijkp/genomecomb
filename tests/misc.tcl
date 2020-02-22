@@ -425,6 +425,18 @@ chr1_random	20	30	b
 chr1_random2	20	30	b
 }}
 
+test distrreg {missing chr} {
+	test_cleantmp
+	file_write tmp/vars1.tsv [deindent {
+		chromosome	begin	end	name
+		chr1	10	20	a
+		chr1x	20	30	b
+		chr2	30	40	c
+	}]\n
+	cg distrreg -stack 1 tmp/vars1.tsv tmp/distrvars1- .tsv {1 2}
+} {*variants outside of distrreg regions:
+chr1x	20	30	b*} error match
+
 test file_absolute {relative path} {
 	cd /tmp
 	file_absolute abc

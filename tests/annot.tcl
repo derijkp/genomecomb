@@ -1300,12 +1300,14 @@ test gene_annot {-distrreg chr with variants outside of distrreg regions} {
 	write_tab tmp/vars.tsv {
 		chromosome	begin	end	type	ref	alt
 		1	16570	16570	ins	{}	A
-		1_random	16570	16570	ins	{}	A
+		1x	16570	16570	ins	{}	A
+		2	16570	16570	ins	{}	A
 	}
 	write_tab tmp/gene_test.tsv {
 		chrom	start	end	strand	geneid	cdsStart	cdsEnd	exonCount	exonStarts	exonEnds
 		1	15998	16569	+	x	15998	15998	1	15998,	16569,
-		1_random	15998	16569	+	x	15998	15998	1	15998,	16569,
+		1x	15998	16569	+	x	15998	15998	1	15998,	16569,
+		2	15998	16569	+	x	15998	15998	1	15998,	16569,
 	}
 	file delete -force tmp/result.tsv tmp/result.tsv.index
 	exec cg annotate -stack 1 -distrreg 1 -dbdir $::refseqdir/hg19 \
