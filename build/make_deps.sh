@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script builds the genomecomb binaries using the Holy build box environment
+# This script builds external tools which are by default distributed with genomecomb using the Holy build box environment
 # options:
 # -b|-bits|--bits: 32 for 32 bits build (default 64)
 # -d|-builddir|--builddir: top directory to build external software in (default ~/build/bin-$arch)
@@ -293,78 +293,3 @@ if [ $all = 1 ] || [ ! -f /io/extern$ARCH ] ; then
 fi
 
 echo "Finished building external binaries"
-
-# Extra
-# =====
-# download and install tools, which are not by default distributed with genomecomb
-if [ $extra = 1 ] ; then
-# libmaus (used by biobambam)
-# ---------------------------
-if [ $all = 1 ] || [ ! -f /build/lib/libmaus2.a ] ; then
-	# also a library, needs -fPIC, so compile as lib
-	source /hbb_shlib/activate
-	# download https://github.com/gt1/libmaus2/archive/2.0.349-release-20170704123913.tar.gz libmaus2-2.0.349-release-20170704123913.tar.gz
-	download https://gitlab.com/german.tischler/libmaus2/-/archive/2.0.611-release-20190408112550/libmaus2-2.0.611-release-20190408112550.tar.gz libmaus2-2.0.611-release-20190408112550.tar.gz
-	cd /build/libmaus2-2.0.611-release-20190408112550
-	make distclean
-	env CFLAGS="$STATICLIB_CFLAGS -I/build/include" LDFLAGS="$LDFLAGS -L/build/lib" \
-		./configure --prefix=/build --disable-shared --enable-static
-	make
-	make install
-	source /hbb_exe/activate
-fi
-
-# biobambam
-# ---------
-if [ $all = 1 ] || [ ! -f /io/extern$ARCH/bamsort ] ; then
-	# download https://github.com/gt1/biobambam2/archive/2.0.73-release-20170620145717.tar.gz biobambam2-2.0.73-release-20170620145717.tar.gz
-	download https://gitlab.com/german.tischler/biobambam2/-/archive/2.0.95-release-20190320141403/biobambam2-2.0.95-release-20190320141403.tar.gz biobambam2-2.0.95-release-20190320141403.tar.gz
-	cd /build/biobambam2-2.0.95-release-20190320141403
-	make distclean
-	./configure --prefix=/build --with-libmaus2=/build
-	make
-	dest=/io/extern$ARCH/biobambam2
-	mkdir $dest
-	cp src/bammarkduplicates2 src/bamsort src/bamtofastq $dest
-	strip $dest/bammarkduplicates2 $dest/bamsort $dest/bamtofastq
-	cp README.md COPYING $dest
-	cd /io/extern
-	ln -sf biobambam2/bam* .
-	
-fi
-
-# minimap2
-# --------
-if [ $all = 1 ] || [ ! -f /io/extern$ARCH/minimap2 ] ; then
-	cd /io/extern
-	wget https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-2.17_x64-linux.tar.bz2
-	tar xvjf minimap2-2.17_x64-linux.tar.bz2
-	rm minimap2-2.17_x64-linux.tar.bz2
-	ln -sf minimap2-2.17_x64-linux/minimap2 minimap2
-fi
-
-# sniffles
-# --------
-if [ $all = 1 ] || [ ! -f /io/extern$ARCH/snifles ] ; then
-	yuminstall cmake
-	# yuminstall openmpi
-	yuminstall gcc-c++
-	# sniffles
-	# --------
-	snifflesversion=1.0.11
-	download https://github.com/fritzsedlazeck/Sniffles/archive/$snifflesversion.tar.gz
-	mv $snifflesversion.tar.gz sniffles-$snifflesversion.tar.gz
-	cd /build/Sniffles-$snifflesversion
-	rm -rf /build/Sniffles-$snifflesversion/build
-	mkdir /build/Sniffles-$snifflesversion/build
-	cd /build/Sniffles-$snifflesversion/build
-	cmake ..
-	make
-	cp ../bin/sniffles-core-$snifflesversion/sniffles /io/extern$ARCH/sniffles-$snifflesversion
-	cd /io/extern$ARCH
-	ln -sf sniffles-$snifflesversion sniffles
-fi
-
-echo "Finished building extra external binaries"
-
-fi # end of extra
