@@ -106,6 +106,7 @@ proc cg_cat {args} {
 		puts [join $header \t]
 	}
 	foreach testheader $headers file $args {
+		if {[file size $file] == 0} continue
 		set fname [file tail $file]
 		set f [gzopen $file]
 		set testheader [tsv_open $f]
