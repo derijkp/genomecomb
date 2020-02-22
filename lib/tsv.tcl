@@ -18,7 +18,7 @@ proc tsv_open {f {commentVar {}} {lineVar {}}} {
 	set split 1
 	if {![info exists line]} {
 		if {[gets $f line] == -1} {
-			error "error in tsv_open: could not read first line of file [get ::genomecomb_gzopen_info($f) ""]"
+			return {}
 		}
 	}
 	if {[regexp {^@HD[\t]VN} $line]} {
@@ -257,6 +257,8 @@ proc tsv_convert2var {file headerVar {commentVar {}}} {
 proc header {file} {
 	set f [gzopen $file]
 	set header [tsv_open $f]
-	gzclose $f
+	if {[catch {gzclose $f} msg]} {
+		error "error reading header of file $file: $msg"
+	}
 	return $header
 }

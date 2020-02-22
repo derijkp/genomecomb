@@ -49,8 +49,7 @@ proc cg_mergesorted {args} {
 	if {$headerline} {
 		foreach file $args {
 			if {[file size $file] == 0} continue
-			set f [gzopen $file]
-			set theader [tsv_open $f comment]
+			set theader [header $file]
 			if {![info exists fileheader]} {
 				set fileheader $theader
 				if {![llength $poss]} {
@@ -67,7 +66,6 @@ proc cg_mergesorted {args} {
 			} elseif {$theader ne $fileheader} {
 				error "mismatched headers in files"
 			}
-			gzclose $f
 		}
 	}
 	# puts stderr [list mergesorted $commentchar $headerline $header $poss {*}$args]

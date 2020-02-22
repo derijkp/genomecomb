@@ -915,19 +915,6 @@ test mergesorted {basic} {
 10	40	50	d1
 10	51	51	d2}
 
-test mergesorted {sort error} {
-	file_write tmp/reg1.tsv [deindent {
-		chromosome	begin	end	test
-		1	90	100	b1
-		1	10	20	a1
-	}]\n
-	file_write tmp/reg2.tsv [deindent {
-		chromosome	begin	end	test
-		1	8	9	a2
-	}]\n
-	cg mergesorted tmp/reg1.tsv tmp/reg2.tsv
-} {} error
-
 test mergesorted {short} {
 	file_write tmp/reg1.tsv [deindent {
 		chromosome	begin	end	test
@@ -972,7 +959,7 @@ test mergesorted {error in gz_popen test} {
 		1	8	9	a2
 	}]\n
 	cg mergesorted tmp/reg1.tsv.zst tmp/reg2.tsv
-} {error in tsv_open: could not read first line of file *tmp/reg1.tsv.zst} match error
+} {error reading header of file tmp/reg1.tsv.zst: error closing file */reg1.tsv.zst: child process exited abnormally} match error
 
 test mergesorted {error file does not exist} {
 	file_write tmp/reg2.tsv [deindent {
