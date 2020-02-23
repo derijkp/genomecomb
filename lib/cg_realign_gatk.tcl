@@ -73,7 +73,7 @@ proc cg_realign_gatk {args} {
 	putslog "realign: output"
 	if {$outputformat eq "cram"} {
 		file rename $tempresult $tempresult.bam
-		exec samtools view -C $tempresult.bam -T $::env(REFSEQ) -o $tempresult
+		exec samtools view -C $tempresult.bam -T $refseq -o $tempresult
 		file delete $tempresult.bam
 		if {$resultfile eq "-"} {
 			file2stdout $tempresult
