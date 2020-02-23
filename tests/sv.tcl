@@ -80,19 +80,19 @@ test sv {manta} {
 		tmp/sv-manta expected/sv-manta
 } {}
 
-test sv {manta -regionfile} {
-	cd $::smalltestdir
-	file delete -force tmp/sv-manta-r
-	file mkdir tmp/sv-manta-r
-	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-manta-r/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
-	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-manta-r/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
-	file_write tmp/sv-manta-r/region.tsv "chromosome\tbegin\tend\nchr21\t21960600\t24444700\n"
-	exec cg sv_manta {*}$::dopts -regionfile tmp/sv-manta-r/region.tsv \
-		-refseq $::smalltestdir/refseqtest/hg19 \
-		tmp/sv-manta-r/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam >@ stdout 2>@ stderr
-	cg tsvdiff -q 1 -x *.xml -x svLocusGraphStats.tsv -x *.tbi -x *.py -x *.py.* -x alignmentStatsSummary.txt \
-		tmp/sv-manta-r expected/sv-manta-r
-} {}
+#test sv {manta -regionfile} {
+#	cd $::smalltestdir
+#	file delete -force tmp/sv-manta-r
+#	file mkdir tmp/sv-manta-r
+#	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam tmp/sv-manta-r/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+#	mklink ori/sv/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai tmp/sv-manta-r/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam.bai
+#	file_write tmp/sv-manta-r/region.tsv "chromosome\tbegin\tend\nchr21\t21960600\t24444700\n"
+#	exec cg sv_manta {*}$::dopts -regionfile tmp/sv-manta-r/region.tsv \
+#		-refseq $::smalltestdir/refseqtest/hg19 \
+#		tmp/sv-manta-r/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam >@ stdout 2>@ stderr
+#	cg tsvdiff -q 1 -x *.xml -x svLocusGraphStats.tsv -x *.tbi -x *.py -x *.py.* -x alignmentStatsSummary.txt \
+#		tmp/sv-manta-r expected/sv-manta-r
+#} {}
 
 test sv {cg sv -method manta, giving resultfile} {
 	cd $::smalltestdir
@@ -104,7 +104,6 @@ test sv {cg sv -method manta, giving resultfile} {
 	cg zcat expected/sv-manta/sv-manta-dsbwa-ERR194147_30x_NA12878-chr21part.tsv.zst > tmp/sv-manta/expected.tsv
 	cg tsvdiff -q 1 tmp/sv-manta/resultsv.tsv tmp/sv-manta/expected.tsv
 } {}
-95989695 microseconds per iteration
 
 # -distrreg is not actually used, because the -regionfile option in sv_manta is actually disabled (for now)
 # because it causes too much problems, and is slower
