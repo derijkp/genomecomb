@@ -473,8 +473,8 @@ test cg_sam_catmerge {-mergesort 1 -distrreg 1 with unaligned} {
 	cg sam_catmerge -stack 1 -mergesort 1 -distrreg 1 \
 		-refseq $::refseqdir/hg19/genome_hg19.ifas \
 		tmp/result.sam tmp/temp1.sam tmp/temp2.sam
-	exec diff -I {@HD	} tmp/result-chr1-10000-29878082.sam tmp/expected-chr1.sam
-	exec diff -I {@HD	} tmp/result-chr2-10000-33141692.sam tmp/expected-chr2.sam
+	exec diff -I {@HD	} tmp/result-chr1-0-29953082.sam tmp/expected-chr1.sam
+	exec diff -I {@HD	} tmp/result-chr2-0-33142192.sam tmp/expected-chr2.sam
 	exec diff -I {@HD	} tmp/result-unaligned.sam tmp/expected-unaligned.sam
 } {}
 
@@ -510,8 +510,8 @@ test cg_sam_catmerge {-mergesort 1 -distrreg 1 .sam.zst} {
 	cg sam_catmerge -stack 1 -sort coordinate -mergesort 1 -distrreg 1 \
 		-refseq $::refseqdir/hg19/genome_hg19.ifas \
 		tmp/result.sam.zst tmp/temp1.sam tmp/temp2.sam
-	cg zcat tmp/result-chr1-10000-29878082.sam.zst > tmp/test-chr1.sam
-	cg zcat tmp/result-chr2-10000-33141692.sam.zst > tmp/test-chr2.sam
+	cg zcat tmp/result-chr1-0-29878082.sam.zst > tmp/test-chr1.sam
+	cg zcat tmp/result-chr2-0-33141692.sam.zst > tmp/test-chr2.sam
 	exec diff -I {@HD	} tmp/test-chr1.sam tmp/expected-chr1.sam
 	exec diff -I {@HD	} tmp/test-chr2.sam tmp/expected-chr2.sam
 } {}
