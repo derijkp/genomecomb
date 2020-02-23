@@ -45,6 +45,9 @@ proc refseq {{refseq {}} {dbdir {}}} {
 	if {![file exists $refseq]} {
 		error "refseq not found ($pattern)"
 	}
+	# set REF_PATH for cram files
+	set ::env(REFSEQ) $refseq
+	set ::env(REF_PATH) $::env(REFSEQ).forcram
 	return [file_absolute $refseq]
 }
 
