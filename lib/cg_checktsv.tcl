@@ -24,11 +24,11 @@ proc cg_checktsv {file} {
 		incr linenr
 		set cur [list_sub $line $poss]
 		if {[list $prev $cur] ne [bsort [list $prev $cur]]} {
-			puts stderr "line $linenr is sorted wrong:\t$line"
+			puts stderr "line $linenr is sorted wrong:\t$line (prev = $prev)"
 			set error 1
 		}
 		set prev $cur
 	}
 	close $f
-	if {$error} {error "checking tsv file $file conncluded with errors"}
+	if {$error} {error "checking tsv file $file concluded with errors"}
 }
