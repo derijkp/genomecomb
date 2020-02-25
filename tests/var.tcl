@@ -218,5 +218,43 @@ test var {var distrreg strelka} {
 	cg tsvdiff tmp/varall-strelka-bwa.gvcf.gz data/varall-strelka-bwa.gvcf.gz
 } {}
 
+test var {var_longshot basic} {
+	cd $::smalltestdir
+	file delete -force tmp/longshot
+	file mkdir tmp/longshot
+	foreach file [glob ori/longshot_example_data/*] {
+		mklink $file tmp/longshot/[file tail $file]
+	}
+	cg var_longshot {*}$::dopts tmp/longshot/pacbio_reads_30x.bam tmp/longshot/genome.fa
+	cg vcf2tsv tmp/longshot/ground_truth_variants.vcf tmp/longshot/ground_truth_variants.tsv
+	cg multicompar tmp/longshot/compar.tsv tmp/longshot/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot/ground_truth_variants.tsv
+	cg tsvdiff -x *.log -x *.finished tmp/longshot expected/longshot
+	cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot/compar.tsv
+} {zyg-longshot-pacbio_reads_30x	zyg-ground_truth_variants	count
+?	m	2
+?	t	9
+m	m	228
+t	?	1
+t	t	475}
+
+test var {var_longshot distrreg} {
+	cd $::smalltestdir
+	file delete -force tmp/longshot_d
+	file mkdir tmp/longshot_d
+	foreach file [glob ori/longshot_example_data/*] {
+		mklink $file tmp/longshot_d/[file tail $file]
+	}
+	cg var -method longshot -distrreg 1 {*}$::dopts tmp/longshot_d/pacbio_reads_30x.bam tmp/longshot_d/genome.fa
+	cg vcf2tsv tmp/longshot_d/ground_truth_variants.vcf tmp/longshot_d/ground_truth_variants.tsv
+	cg multicompar tmp/longshot_d/compar.tsv tmp/longshot_d/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_d/ground_truth_variants.tsv
+	cg tsvdiff -brief 1 -x *.log -x *.finished tmp/longshot_d expected/longshot_d
+	cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot_d/compar.tsv
+} {zyg-longshot-pacbio_reads_30x	zyg-ground_truth_variants	count
+?	m	2
+?	t	9
+m	m	228
+t	?	1
+t	t	475}
+
 testsummarize
 
