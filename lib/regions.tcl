@@ -60,3 +60,22 @@ proc findregionfile {file} {
 	regsub {^[^-]*-} $tail {} tail
 	return [file dir $file]/sreg-$tail
 }
+
+proc samregion {region {refseq {}} {full 0}} {
+	if {$region eq ""} {return $region}
+	set split [split $region :-]
+	foreach {chr begin end} {{} {} {}} break
+	foreach {chr begin end} $split break
+	if {!$full && ($begin eq "" || $end eq "")} {
+		if {$begin ne "" || $end ne ""} {
+			error "incorrect region:, must be either chr or chr:begin-end"
+		}
+		return $chr
+	}
+	if {$begin eq ""} {set begin 1} else {incr begin}
+	if {$end eq ""} {
+		set refseq [refseq $refseq]
+		set end [ref_chrsize $refseq $region]
+	}
+	return $chr:$begin-$end
+}

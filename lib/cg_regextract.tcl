@@ -30,7 +30,6 @@ proc cg_regextract {args} {
 			if {![info exists Q]} {set Q 20}
 		}
 		-region {
-			regsub {^([^-]+)-([0-9]+)-([0-9]+)$} $value {\1:\2-\3} value
 			set region $value
 		}
 	} {} 1
@@ -90,7 +89,7 @@ proc cg_regextract {args} {
 			set poscol 1
 			if {$region ne ""} {
 				if {$ext ni ".bam .cram"} {error "option -region only supported for bam or cram files"}
-				lappend samtoolsargs -r $region
+				lappend samtoolsargs -r [samregion $region]
 			}
 			if {!$filtered} {
 				set valuecol 2

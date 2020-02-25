@@ -48,6 +48,6 @@ element.
 calculating depth. Low quality filtering in this option is achieved by setting -q and -Q at 20, unless
 you specifically define other values for these options. (default 0)
 ; -all 0/1: (only for bams and crams) Return all regions (<= max), including regions with no given coverage (unused reference sequences)
-
+; -region region: limit command to the given region in the form "chr" or "chr:begin-end" in half-open coordinates: begin and end start from 0 and end is not included
 == Category ==
 Regions
