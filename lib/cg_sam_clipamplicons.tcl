@@ -52,7 +52,7 @@ proc cg_sam_clipamplicons {args} {
 	}
 	if {[llength $pipe]} {lappend pipe |}
 	lappend pipe sam_clipamplicons $ampliconsfile {*}$poss
-	set outcmd [convert_pipe -.$inputformat -.$outputformat -refseq $refseq]
+	set outcmd [convert_pipe -.sam -.$outputformat -refseq $refseq]
 	if {$outcmd ne ""} {
 		lappend pipe | {*}$outcmd
 	}

@@ -124,7 +124,16 @@ test sam_clipamplicons {basic 2} {
 } {}
 
 proc checksam {file testfile {refseq {}}} {
-	if {[file extension $file] eq ".bam"} {
+	set ext [file extension $file]
+	set error [catch {exec samtools index $file} msg]
+	if {$ext eq ".sam" && (!$error || ![regexp "is in a format that cannot be usefully indexed" $msg])} {
+		error "$file is not a sam file"
+	} elseif {$ext eq ".bam" && ![file exists $file.bai]} {
+		error "$file is not a bam file"
+	} elseif {$ext eq ".cram" && ![file exists $file.crai]} {
+		error "$file is not a cram file"
+	}
+	if {$ext eq ".bam"} {
 		set tempfile [tempfile]
 		exec samtools view -h $file > $tempfile
 		set file $tempfile
@@ -181,6 +190,8 @@ test sam_clipamplicons {pipes and formats} {
 	# bam input and output
 	exec samtools view -b tmp/temp.sam > tmp/temp.bam
 	cg sam_clipamplicons tmp/samplicons.tsv tmp/temp.bam tmp/out.bam
+	checksam tmp/out.bam tmp/expected.tsv
+	cg sam_clipamplicons -outputformat bam tmp/samplicons.tsv tmp/temp.bam > tmp/out.bam
 	checksam tmp/out.bam tmp/expected.tsv
 	# cram in and output via pipe
 	exec samtools view -h -C -T [refseq $::refseqdir/hg19] tmp/temp.sam > tmp/temp.cram
