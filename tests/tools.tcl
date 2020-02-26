@@ -96,7 +96,7 @@ proc checkdiff args {
 	set err [catch {exec diff {*}$args} e]
 	if {$err && $e ne {child process exited abnormally}} {
 		set pos 0; foreach v $args {if {[string index $v 0] ne "-"} break; incr pos}
-		return "Files differ: [lrange $args $pos [expr {$pos+1}]]\n$e"
+		return "Files differ: [lrange $args $pos [expr {$pos+1}]]\n"
 	} else {
 		return ""
 	}
@@ -416,7 +416,7 @@ proc diffanalysisinfo {file1 file2} {
 	set file2 [lindex [glob $file2] 0]
 	catch {exec cg tsvdiff -t xl $file1 $file2 | grep -v _version} temp
 	set len [llength [split $temp \n]]
-	if {$len != 3 && $len != 1} {return "error comparing $file1 and $file2: $temp"}
+	if {$len != 3 && $len != 1} {return "files differ: $file1 $file2"}
 	return ""
 }
 

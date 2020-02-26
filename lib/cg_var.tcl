@@ -155,11 +155,14 @@ proc var_job {args} {
 			job $resultfile  {*}$skips -deps $deps -rmtargets $list -targets {
 				$resultfile
 			} -vars {
-				list
+				list regionfile method bamfile
 			} -code {
 				set analysisinfo [gzroot $dep].analysisinfo
 				if {[file exists $analysisinfo]} {
-					file copy -force $analysisinfo [gzroot $target].analysisinfo
+					set root $method-[file_rootname [file tail $bamfile]]
+					analysisinfo_copy $analysisinfo [gzroot $target].analysisinfo \
+						[list varcaller_region [file tail $regionfile] \
+						sample $root]
 					exec touch [gzroot $target].analysisinfo
 				}
 				# using bsort because

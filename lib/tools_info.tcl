@@ -71,6 +71,28 @@ proc analysisinfo_write {dep target args} {
 	close $o
 }
 
+proc analysisinfo_copy {src dest {changes {}}} {
+	if {![llength $changes]} {
+		file copy $src $dest
+	} else {
+		set c [string trim [file_read $src]]
+		set c [split $c \n]
+		if {[llength $c] > 2} {
+			error "can only change 1 line analysisinfo file: $src contains [expr {[llength $c]-1}]"
+		}
+		set header [split [lindex $c 0] \t]
+		set data [split [lindex $c 1] \t]
+		foreach {key value} $changes {
+			set pos [lsearch $header $key]
+			if {$pos == -1} {
+				error "can not change analysisinfo file $src: field $key not present"
+			}
+			lset data $pos $value
+		}
+		file_write $dest [join $header \t]\n[join $data \t]\n
+	}
+}
+
 proc result_rename {src target} {
 	file rename -force -- $src $target
 	catch {file rename -force -- [analysisinfo_file $src] [analysisinfo_file $target]}
