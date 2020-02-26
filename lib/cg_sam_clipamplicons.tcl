@@ -52,10 +52,9 @@ proc cg_sam_clipamplicons {args} {
 	}
 	if {[llength $pipe]} {lappend pipe |}
 	lappend pipe sam_clipamplicons $ampliconsfile {*}$poss
-	if {$outputformat eq "bam"} {
-		lappend pipe | samtools view -hb --output-fmt-option level=$compressionlevel
-	} elseif {$outputformat eq "cram"} {
-		lappend pipe | samtools view -h -C -T [refseq $refseq]
+	set outcmd [convert_pipe -.$inputformat -.$outputformat -refseq $refseq]
+	if {$outcmd ne ""} {
+		lappend pipe | {*}$outcmd
 	}
 	if {[llength $optsio]} {lappend pipe {*}$optsio}
 	if {$resultfile ne "-"} {

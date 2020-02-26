@@ -186,14 +186,19 @@ proc bam_clean_job {args} {
 	job bamclean-$root {*}$skips -deps $deps -targets {
 		$resultfile
 	} -rmtargets $rmtargets -vars {
-		pipe sourcefile resultfile keep addanalysisinfo
+		pipe sourcefile resultfile keep addanalysisinfo inputformat outputformat refseq
 	} -code {
 		analysisinfo_write $dep $target {*}$addanalysisinfo
 		if {![sam_empty $dep]} {
 			catch_exec {*}$pipe
 			result_rename $resultfile.temp $resultfile
 		} else {
-			hardcopy $dep $resultfile
+			if {$outputformat eq $inputformat} {
+				hardcopy $dep $resultfile
+			} else {
+				exec {*}[convert_pipe $dep -.$outputformat -refseq $refseq] > $resultfile.temp
+				result_rename $resultfile.temp $resultfile
+			}
 		}
 		if {!$keep} {file delete $sourcefile $sourcefile.[indexext $sourcefile]}
 	}
