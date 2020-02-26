@@ -779,12 +779,13 @@ proc process_sample_job {args} {
 	if {[llength $processlist]} {
 		set skips {}
 		set skipsresult {}
+		# make skips for clipping (do not do any of preliminaries if end product is already there)
+		# clipped fastqs are used for all aligners for all aligners!
 		foreach aligner $aligners {
-			# do not do any of preliminaries if end product is already there
 			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 			set bamfile $sampledir/map-${aligner}-$sample.bam
-			lappend skips $bamfile $bamfile.analysisinfo
-			lappend skipsresult $resultbamfile $resultbamfile.analysisinfo
+			lappend skips $bamfile [analysisinfo_file $bamfile]
+			lappend skipsresult $resultbamfile [analysisinfo_file $resultbamfile]
 		}
 		unset -nocomplain partsa
 		foreach pfastqfiles $processlist {
@@ -801,13 +802,13 @@ proc process_sample_job {args} {
 					-skip $skips -skip $skipsresult -skip $cleanupdeps \
 					-removeskew $removeskew \
 					{*}$files]
-				lappend cleanupfiles {*}$files
 				foreach file $files {
-					lappend cleanupfiles [gzroot $file].analysisinfo
+					lappend cleanupfiles $file [analysisinfo_file $file]
 				}
 				lappend cleanupfiles [file dir [lindex $files 0]]
 			}
 			foreach aligner $aligners {
+				# alignment per fastq per aligner
 				# do not do any of preliminaries if end product is already there
 				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 				set bamfile $sampledir/map-${aligner}-$sample.bam
@@ -822,6 +823,7 @@ proc process_sample_job {args} {
 					set aliprog $aligner
 				}
 				map_job -method $aliprog {*}$opts -threads $threads \
+					-skip $skips \
 					-skip $skipsresult \
 					-paired $paired \
 					-sort coordinate \
@@ -835,6 +837,8 @@ proc process_sample_job {args} {
 		}
 		set cleanupdeps {}
 		foreach aligner $aligners {
+			# mergesort sams from individual fastq files
+			# and distribute again over if -distrreg i set (for distributed cleaning)
 			# do not do any of preliminaries if end product is already there
 			set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 			set bamfile $sampledir/map-${aligner}-$sample.bam
