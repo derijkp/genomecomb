@@ -172,6 +172,7 @@ proc job_process_direct {} {
 		}
 		if {$joberror ne ""} {
 			job_logfile_add $job . error $ftargets $cores $joberror $submittime
+			job_log $job
 			error $joberror
 		}
 		job_log $job "-------------------- running $jobname --------------------"

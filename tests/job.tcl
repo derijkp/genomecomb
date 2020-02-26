@@ -1478,6 +1478,27 @@ test cgjob_files {basic} {
 	cgjob_files cgjob_id a*.tsv
 } abc.tsv
 
+test job {dont give error on missing dependency if skiptarget exists} {
+	file delete dep.txt
+	file_write result.txt test
+	job_init
+	job test -skip result.txt -deps {dep.txt} -targets preresult.txt -code {
+		file_write $target test2
+	}
+	file_read result.txt
+} {test}
+
+test job {inf missing dep and target} {
+	job_init
+	logverbose 2
+	file delete dep.txt result.txt
+	job test -deps {dep.txt} -targets result.txt -code {
+		file_write $target test2
+	}
+	file_read result.txt
+} {error trying to run job test:
+missing dependency "dep.txt"} error
+
 set ::env(PATH) $keeppath
 
 cd $keepdir
