@@ -2,6 +2,14 @@ proc var_longshot_tools {} {
 	return {longshot}
 }
 
+proc version_longshot {} {
+	set version ?
+	catch {exec longshot -V} version
+	set version [string trim $version]
+	regsub {Longshot *} $version {} version
+	return $version
+}
+
 proc var_longshot_job {args} {
 	# putslog [list var_longshot_job {*}$args]
 	global appdir
