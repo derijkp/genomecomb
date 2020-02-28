@@ -84,9 +84,7 @@ proc analysisinfo_copy {src dest {changes {}}} {
 		set data [split [lindex $c 1] \t]
 		foreach {key value} $changes {
 			set pos [lsearch $header $key]
-			if {$pos == -1} {
-				error "can not change analysisinfo file $src: field $key not present"
-			}
+			if {$pos == -1} continue
 			lset data $pos $value
 		}
 		file_write $dest [join $header \t]\n[join $data \t]\n
