@@ -194,7 +194,7 @@ proc var_bcf_job {args} {
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index \
+			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index/vars.tsv ${pre}uvar-$root.tsv.index \
 			${pre}varall-$root.vcf \
 			${pre}varall-$root.vcf.idx \
 		]

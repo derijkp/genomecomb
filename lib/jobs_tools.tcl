@@ -1,21 +1,32 @@
-proc cleanup_job {name rmtargets args} {
+proc cleanup_job {args} {
 	upvar job_logdir job_logdir
+	set forcedirs 0
+	cg_options cleanup_job args {
+		-forcedirs {
+			set forcedirs $value
+		}
+	} {name rmtargets} 2
 	set todo 0
 	foreach temp $rmtargets {
 		if {[jobfileexists $temp]} {set todo 1}
-		set analysisinfo [gzroot $temp].analysisinfo
+		set analysisinfo [analysisinfo_file $temp]
 		if {[jobfileexists $analysisinfo]} {
 			set todo 1
 			lappend rmtargets $analysisinfo
+		}
+		set indexfile [index_file $temp]
+		if {[jobfileexists $indexfile]} {
+			set todo 1
+			lappend rmtargets $indexfile
 		}
 	}
 	if {!$todo} return
 	set num 1
 	foreach deps $args {
-		job cleanup-$name-deps$num -optional 1 -deps [list {*}$deps] -vars {rmtargets} \
+		job cleanup-$name-deps$num -optional 1 -deps [list {*}$deps] -vars {rmtargets forcedirs} \
 		-rmtargets $rmtargets -code {
 			foreach file $rmtargets {
-				if {[file isdir $file]} {
+				if {!$forcedirs && [file isdir $file]} {
 					if {![llength [glob -nocomplain $file/*]]} {
 						catch {file delete -force $file}
 					}

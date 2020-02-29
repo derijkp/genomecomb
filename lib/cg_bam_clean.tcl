@@ -136,6 +136,7 @@ proc bam_clean_job {args} {
 			-inputformat $inputformat -outputformat $curoutputformat \
 			-compressionlevel $compressionlevel -threads $threads -refseq $refseq
 	}
+	set cleanuplist {}
 	if {$realign ne "0"} {
 		if {$regionfile eq ""} {set regionfile 3}
 		if {[isint $regionfile]} {
@@ -143,6 +144,7 @@ proc bam_clean_job {args} {
 			set regionfile [bam2reg_job -mincoverage $regionfile {*}$skips \
 				-refseq $refseq \
 				$sourcefile]
+			lappend cleanuplist $regionfile [index_file $regionfile] [analysisinfo_file $regionfile]
 		}
 		lappend deps $regionfile
 		incr curstep
@@ -186,7 +188,7 @@ proc bam_clean_job {args} {
 	job bamclean-$root {*}$skips -deps $deps -targets {
 		$resultfile
 	} -rmtargets $rmtargets -vars {
-		pipe sourcefile resultfile keep addanalysisinfo inputformat outputformat refseq
+		pipe sourcefile resultfile keep addanalysisinfo inputformat outputformat refseq cleanuplist
 	} -code {
 		analysisinfo_write $dep $target {*}$addanalysisinfo
 		if {![sam_empty $dep]} {
@@ -200,7 +202,8 @@ proc bam_clean_job {args} {
 				result_rename $resultfile.temp $resultfile
 			}
 		}
-		if {!$keep} {file delete $sourcefile $sourcefile.[indexext $sourcefile]}
+		if {!$keep} {file delete $sourcefile [index_file $sourcefile] [analysisinfo_file $sourcefile]}
+		if {[llength $cleanuplist]} {file delete {*}$cleanuplist}
 	}
 	bam_index_job {*}$skips $resultfile
 	return $resultfile

@@ -152,6 +152,7 @@ proc var_job {args} {
 			if {$resultfile eq ""} continue
 			set list [bsort [list_subindex $todo $pos]]
 			set deps $list
+eputsvars resultfile list
 			job $resultfile  {*}$skips -deps $deps -rmtargets $list -targets {
 				$resultfile
 			} -vars {
@@ -185,9 +186,13 @@ proc var_job {args} {
 					file delete -force [gzroot $file].index
 					file delete [gzroot $file].analysisinfo
 				}
+				set tempdir [file dir $file]
+				if {![llength [glob -nocomplain $tempdir/*]]} {
+					file delete $tempdir
+				}
 			}
 		}
-		cleanup_job cleanup-var_${method}_[file tail $bamfile] $indexdir $resultfiles
+		cleanup_job -forcedirs 1 cleanup-var_${method}_[file tail $varfile] $indexdir $resultfiles
 		cd $keeppwd
 		return $resultfiles
 	}

@@ -91,6 +91,10 @@ proc bam2reg_job {args} {
 			cg cat -c 0 {*}$deps {*}$compress > $target.temp
 			file rename -- $target.temp $target
 			if {[file extension $target] eq ".zst"} {cg_zstindex $target}
+			foreach file $dep {
+				file delete $file [analysisinfo_file $dep] [index_file $dep]
+			}
+			catch {file delete [file dir $file]}
 		}
 	}
 	return $target

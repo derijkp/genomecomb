@@ -29,9 +29,10 @@ test process_small {process_project mastr_mx2} {
 		tmp/mastr_mx2 $::refseqdir/hg19 >& tmp/mastr_mx2.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x *.index -x fastqc_report.html \
+	lappend result [tsvdiff -q 1 -x *.bam -x *.bai -x fastqc_report.html \
 		-x colinfo -x mastr_mx2.html -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
+		-x *log_jobs -x *.index \
 		tmp/mastr_mx2 expected/mastr_mx2]
 	lappend result [diffanalysisinfo tmp/mastr_mx2/compar/annot_compar-mastr_mx2.tsv.analysisinfo expected/mastr_mx2/compar/annot_compar-mastr_mx2.tsv.analysisinfo]
 	lappend result [checkdiff -y --suppress-common-lines tmp/mastr_mx2/mastr_mx2.html expected/mastr_mx2/mastr_mx2.html | grep -v -E {HistogramID|htmlwidget-|^<!|^<h2>20|meta charset|script.src *=}]
@@ -89,7 +90,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 		tmp/mastr_mx2_cram $::refseqdir/hg19 >& tmp/mastr_mx2_cram.log
 	# check vs expected
 	set result {}
-	lappend result [tsvdiff -q 1 -x *log_jobs -x *.cram -x *.bai -x *.index -x fastqc_report.html \
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.cram -x *.crai -x *.bai -x *.index -x fastqc_report.html \
 		-x colinfo -x mastr_mx2_cram.html -x *.zsti -x *.lz4i -x *.tbi -x *.finished -x info_analysis.tsv \
 		-x *.analysisinfo -x *.png -x *.submitting \
 		tmp/mastr_mx2_cram expected/mastr_mx2_cram]
@@ -180,6 +181,32 @@ test process_small {process_sample one_exome_yri_mx2} {
 		tmp/one_exome_yri_mx2/samples/NA19240mx2 expected/one_exome_yri_mx2/samples/NA19240mx2]
 	# lappend result [checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics expected/one_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT" | grep -v bammarkduplicates2]
 	lappend result [checkdiff -y --suppress-common-lines tmp/one_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv expected/one_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
+	join [list_remove $result {}] \n
+} {}
+
+test process_small {process_sample one_d_exome_yri_mx2 distrreg} {
+	cd $::smalltestdir
+	file delete -force tmp/one_d_exome_yri_mx2
+	file mkdir tmp/one_d_exome_yri_mx2/samples
+	foreach sample {
+		 NA19240mx2
+	} {
+		file mkdir tmp/one_d_exome_yri_mx2/samples/$sample/fastq
+		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/one_d_exome_yri_mx2/samples/$sample/fastq
+		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/one_d_exome_yri_mx2/samples/$sample/reg_hg19_targets.tsv
+	}
+	cg process_sample {*}$::dopts -split 1 \
+		-dbdir $::refseqdir/hg19 -distrreg 1 \
+		tmp/one_d_exome_yri_mx2/samples/NA19240mx2 >& tmp/one_d_exome_yri_mx2.log
+	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir $::refseqdir/hg19 tmp/one_d_exome_yri_mx2/samples/NA19240mx2 | less -S
+	# check vs expected
+	set result {}
+	lappend result [tsvdiff -q 1 -x *log_jobs -x *.bam -x *.bai -x colinfo -x fastqc_report.html \
+		-x *bam.dupmetrics -x info_analysis.tsv -x *.zsti -x *.lz4i -x *.finished -x info_analysis.tsv \
+		-x *.analysisinfo -x *.png -x *.submitting \
+		tmp/one_d_exome_yri_mx2/samples/NA19240mx2 expected/one_d_exome_yri_mx2/samples/NA19240mx2]
+	# lappend result [checkdiff -y --suppress-common-lines tmp/one_d_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics expected/one_d_exome_yri_mx2/samples/NA19240mx2/map-dsbwa-NA19240mx2.bam.dupmetrics | grep -v "Started on" | grep -v "net.sf.picard.sam.MarkDuplicates INPUT" | grep -v bammarkduplicates2]
+	lappend result [checkdiff -y --suppress-common-lines tmp/one_d_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv expected/one_d_exome_yri_mx2/samples/NA19240mx2/info_analysis.tsv | grep -v -E {version_os|param_adapterfile|param_targetvarsfile|param_dbfiles|command|version_genomecomb}]
 	join [list_remove $result {}] \n
 } {}
 

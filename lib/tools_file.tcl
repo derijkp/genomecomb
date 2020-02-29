@@ -356,16 +356,33 @@ proc file_rootname {file {preVar {}}} {
 	}
 }
 
+array set genomecomb_indexmap {
+	.zst zsti
+	.lz4 lz4i
+	.bam bai
+	.cram crai
+	.fa fai
+	.fas fai
+	.ifas fai
+}
+
 proc indexext {file} {
+	global genomecomb_indexmap
 	set ext [file extension $file]
-	if {$ext eq ".bam"} {
-		return bai
-	} elseif {$ext eq ".cram"} {
-		return crai
-	} elseif {$ext in ".fas .fa"} {
-		return fai
-	} else {
+	if {![info exists genomecomb_indexmap($ext)]} {
 		return index
+	} else {
+		return $genomecomb_indexmap($ext)
+	}
+}
+
+proc index_file filename {
+	global genomecomb_indexmap
+	set ext [file extension $filename]
+	if {![info exists genomecomb_indexmap($ext)]} {
+		return {}
+	} else {
+		return $filename.$genomecomb_indexmap($ext)
 	}
 }
 

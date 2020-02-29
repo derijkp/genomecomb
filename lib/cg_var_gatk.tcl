@@ -327,7 +327,7 @@ proc var_gatk_job {args} {
 	# cleanup
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index \
+			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index/var.tsv ${pre}uvar-$root.tsv.index \
 			${pre}varall-$root.vcf ${pre}delvar-$root.vcf ${pre}delvar-$root.tsv \
 		]
 		set cleanupdeps [list $varfile $varallfile]

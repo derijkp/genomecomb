@@ -72,7 +72,11 @@ proc sam_catmerge_job {args} {
 
 	if {$deletesams} {
 		set rmfiles $samfiles
-		foreach file $samfiles {lappend rmfiles [gzroot $file].analysisinfo}
+		foreach file $samfiles {
+			lappend rmfiles $file [index_file $file] [analysisinfo_file $file]
+		}
+		lappend rmfiles $resultfile.index
+		set rmfiles [list_remove $rmfiles {}]
 	} else {
 		set rmfiles {}
 	}
@@ -228,7 +232,7 @@ proc sam_catmerge_job {args} {
 				result_rename $regresult.temp $regresult
 			}
 		}
-		foreach rmfile $rmfiles {file delete $rmfile}
+		foreach rmfile $rmfiles {file delete -force $rmfile}
 	}
 	if {$index} {
 		bam_index_job {*}$skips -optional $optional $resultfile
