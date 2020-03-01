@@ -1,8 +1,11 @@
 proc version_sniffles {} {
 	set version ?
-	set exe [exec which sniffles]
-	if {![catch {file link $exe} exe]} {
-		regsub {^sniffles-} [file tail $exe] {} version
+	catch {exec sniffles} msg
+	if {![regexp {Version: *([^\n]+)} $msg temp version]} {
+		set exe [exec which sniffles]
+		if {![catch {file link $exe} exe]} {
+			regsub {^sniffles-} [file tail $exe] {} version
+		}
 	}
 	return $version
 }
