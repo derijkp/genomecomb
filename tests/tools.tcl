@@ -85,6 +85,7 @@ proc test {args} {
 
 proc tsvdiff {args} {
 	if {[catch {cg tsvdiff {*}$args} result]} {
+		regsub "child process exited abnormally\n?" $result {} result
 		return $result
 	} else {
 		return ""
