@@ -68,8 +68,8 @@ proc bam_clean_job {args} {
 			if {$resultfile eq $sourcefile} {
 				return $resultfile
 			} else {
-				analysisinfo_write $dep $target bamclean genomecomb bamclean_version [version genomecomb]
 				job bamclean-$root {*}$skips -deps {$sourcefile} -targets {$resultfile} -code {
+					analysisinfo_write $dep $target bamclean genomecomb bamclean_version [version genomecomb]
 					hardcopy $dep $target
 				}
 			}
@@ -181,14 +181,14 @@ proc bam_clean_job {args} {
 	}
 	lappend pipe {*}$optsio > $resultfile.temp
 	if {!$keep} {
-		set rmtargets [list $sourcefile $sourcefile.[indexext $sourcefile]]
+		set rmtargets [list {*}$cleanuplist $sourcefile [index_file $sourcefile] [analysisinfo_file $sourcefile]]
 	} else {
-		set rmtargets {}
+		set rmtargets $cleanuplist
 	}
 	job bamclean-$root {*}$skips -deps $deps -targets {
 		$resultfile
 	} -rmtargets $rmtargets -vars {
-		pipe sourcefile resultfile keep addanalysisinfo inputformat outputformat refseq cleanuplist
+		pipe sourcefile resultfile keep addanalysisinfo inputformat outputformat refseq rmtargets
 	} -code {
 		analysisinfo_write $dep $target {*}$addanalysisinfo
 		if {![sam_empty $dep]} {
@@ -202,8 +202,7 @@ proc bam_clean_job {args} {
 				result_rename $resultfile.temp $resultfile
 			}
 		}
-		if {!$keep} {file delete $sourcefile [index_file $sourcefile] [analysisinfo_file $sourcefile]}
-		if {[llength $cleanuplist]} {file delete {*}$cleanuplist}
+		if {[llength $rmtargets]} {file delete {*}$rmtargets}
 	}
 	bam_index_job {*}$skips $resultfile
 	return $resultfile
