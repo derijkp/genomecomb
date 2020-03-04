@@ -23,12 +23,12 @@ proc methods_map {args} {
 	}
 }
 
-proc map_mem {method {mem {}}} {
+proc map_mem {method {mem {}} {threads 1}} {
 	if {[auto_load map_mem_$method]} {
 		return [map_mem_$method $mem $threads]
 	}
 	if {$mem eq ""} {set mem 5G}
-	return $mem
+	job_mempercore $mem $threads
 }
 
 proc map_job {args} {
@@ -121,7 +121,7 @@ proc map_job {args} {
 		set analysisinfo [analysisinfo_file $result]
 		set file [lindex $files 0]
 		job map_${method}-[file tail $result] {*}$skips \
-			-mem [job_mempercore [map_mem $method $mem] $threads] -cores $threads \
+			-mem [map_mem $method $mem $threads] -cores $threads \
 		-deps [list {*}$files $refseq] -targets {
 			$result $analysisinfo
 		} -vars {
@@ -156,7 +156,7 @@ proc map_job {args} {
 			lappend samfiles $target
 			set analysisinfo [analysisinfo_file $target]
 			lappend asamfiles $analysisinfo
-			job map_${method}-$sample-$name -mem [job_mempercore [map_mem $method $mem] $threads] -cores $threads \
+			job map_${method}-$sample-$name -mem [map_mem $method $mem $threads] -cores $threads \
 			-skip [list $resultbase.bam] {*}$skips \
 			-deps {
 				$refseq $file
