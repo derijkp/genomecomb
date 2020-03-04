@@ -258,18 +258,14 @@ proc process_project_job {args} {
 	set todo(var) [list_remdup $todo(var)]
 	set todo(sv) [list_remdup $todo(sv)]
 	set todo(reports) [list_remdup $todo(reports)]
+	if {![llength $reports]} {set todo(reports) {}}
 	process_multicompar_job -experiment $experiment \
 		-skipincomplete 1 -targetvarsfile $targetvarsfile \
 		-varfiles $todo(var) -svfiles $todo(sv) \
 		-threads $threads -distrreg $distrreg \
 		-keepfields $keepfields \
-		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir
-	if {[llength $reports]} {
-		process_reportscombine_job $destdir/reports {*}$todo(reports)
-		if {[jobfileexists $destdir/reports/report_hsmetrics-${experimentname}.tsv]} {
-			mklink $destdir/reports/report_hsmetrics-${experimentname}.tsv $destdir/${experimentname}_hsmetrics_report.tsv
-		}
-	}
+		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir \
+		-reports $todo(reports)
 	if {$extra_reports_mastr ne ""} {
 		make_alternative_compar_job $experiment $destdir $extra_reports_mastr
 		set histofiles {}

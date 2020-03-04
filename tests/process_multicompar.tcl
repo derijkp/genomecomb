@@ -251,6 +251,28 @@ test process_project$testname {process_multicompar} {
 
 }
 
+test process_multicompar$testname {process_multicompar with reports} {
+	test_cleantmp
+	file mkdir tmp/samples/annot1
+	file mkdir tmp/samples/annot2
+	cg select -f {* zyg=zyg("")} data/var_annot.sft tmp/samples/annot1/var-annot1.tsv
+	cg select -f {* zyg=zyg("")} data/var_annot2.sft tmp/samples/annot2/var-annot2.tsv
+	file copy data/sreg-annot1.sft tmp/samples/annot1/sreg-annot1.tsv
+	file copy data/sreg-annot2.sft tmp/samples/annot2/sreg-annot2.tsv
+	file mkdir tmp/samples/annot1/reports
+	file mkdir tmp/samples/annot2/reports
+	file copy data/reports/report_fastq_fw-ERR194147_30x_NA12878.tsv tmp/samples/annot1/reports/report_fastq_fw-annot1.tsv
+	file copy data/reports/report_fastq_fw-ERR194147_30x_NA12878.tsv tmp/samples/annot2/reports/report_fastq_fw-annot2.tsv
+	#
+	cg process_multicompar {*}$::jobopts -reports 1 -dbdir $::refseqdir/hg19 -split 0 tmp
+	reorder data/expected-multicompar_reannot-var_annotvar_annot2.sft tmp/expected.tsv
+	cg zst tmp/expected.tsv
+	file copy data/expected-sreg-multicompar.tsv tmp/expected-sreg.tsv
+	cg zst tmp/expected-sreg.tsv
+	exec diff tmp/compar/compar-tmp.tsv.zst tmp/expected.tsv.zst
+	exec diff tmp/compar/sreg-tmp.tsv.zst tmp/expected-sreg.tsv.zst
+} {}
+
 test_cleantmp
 
 set ::env(PATH) $keeppath

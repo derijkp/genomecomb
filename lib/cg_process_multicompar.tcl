@@ -13,6 +13,7 @@ proc process_multicompar_job {args} {
 	set distrreg 0
 	set keepfields *
 	set limitreg {}
+	set reports 1
 	cg_options process_multicompar args {
 		-dbdir {
 			set dbdir $value
@@ -64,6 +65,9 @@ proc process_multicompar_job {args} {
 		}
 		-limitreg {
 			set limitreg $value
+		}
+		-reports {
+			set reports $value
 		}
 		-c - -cleanup {
 			set cleanup $value
@@ -346,6 +350,19 @@ proc process_multicompar_job {args} {
 		-deps {compar/annot_cgcnv-$experiment.tsv.zst} \
 		-targets {compar/annot_cgcnv-$experiment.tsv.index/info.tsv} -code {
 			cg index -colinfo $dep
+		}
+	}
+	# reports
+	# -------
+	if {$reports eq "1"} {
+		set reports [bsort [jobglob ${sampledir}/*/reports]]
+	}
+	if {[llength $reports]} {
+		process_reportscombine_job -dbdir $dbdir $destdir/reports {*}$reports
+		foreach file [jobglob $destdir/reports/report_hsmetrics-*.tsv] {
+			if {![regexp {report_hsmetrics-(.*)\.tsv} [file tail $file] temp experimentname]} continue
+			set destfile $destdir/${experimentname}_hsmetrics_report.tsv
+			mklink $file $destdir/${experimentname}_hsmetrics_report.tsv
 		}
 	}
 	cd $keeppwd
