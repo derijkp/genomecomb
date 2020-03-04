@@ -537,7 +537,6 @@ proc convert_pipe {infile outfile args} {
 	set outformat [string tolower [string range [file extension $outgzroot] 1 end]]
 	if {$outformat eq ""} {set outformat $defaultout}
 	if {[llength $supportedout] && $outformat ni $supportedout} {error "output format $outformat unsupported, must be one of: $supportedout"}
-	set outbase [file root $outgzroot]
 	set pipe {}
 	set infiledone 0
 	set decompress [gzcat $infile 0]
@@ -584,6 +583,7 @@ proc convert_pipe {infile outfile args} {
 	if {$addpipe && $pipe ne "" && $inbase eq "-"} {
 		list_unshift pipe |
 	}
+	set outbase [file root [file tail $outgzroot]]
 	if {$endpipe} {
 		if {$outbase ne "-"} {
 			lappend pipe > $outfile
