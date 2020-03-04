@@ -86,7 +86,7 @@ proc map2sv {files prefix} {
 				puts "$rfile exists"
 				continue
 			} else {
-				puts "Making $rfile"
+				putslog "Making $rfile"
 			}
 #			file mkdir [file dir $file]/tmp
 #			if {[file extension $file] eq ".tsv"} continue

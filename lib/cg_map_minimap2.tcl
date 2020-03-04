@@ -81,7 +81,7 @@ proc cg_map_minimap2 {args} {
 	set outpipe [convert_pipe -.sam $result -endpipe 1 -refseq $refseq]
 	analysisinfo_write $fastqfile1 $result aligner minimap2 aligner_version [version minimap2] reference [file2refname $minimap2refseq] aligner_paired $paired
 	if {!$paired} {
-		puts "making $result"
+		putslog "making $result"
 		set rg {}
 		foreach {key value} $readgroupdata {
 			lappend rg "$key:$value"
@@ -104,7 +104,7 @@ proc cg_map_minimap2 {args} {
 		if {[expr {[llength $files]%2}]} {
 			error "minimap2 needs even number of files for paired analysis"
 		}
-		puts "making $result"
+		putslog "making $result"
 		set rg {}
 		foreach {key value} $readgroupdata {
 			lappend rg "$key:$value"
