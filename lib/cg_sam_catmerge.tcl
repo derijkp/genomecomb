@@ -80,7 +80,7 @@ proc sam_catmerge_job {args} {
 	} else {
 		set rmfiles {}
 	}
-	set analysisinfofile [gzroot $resultfile].analysisinfo
+	set analysisinfofile [analysisinfo_file $resultfile]
 	set regions [distrreg_regs $distrreg $refseq]
 	if {![llength $regions]} {
 		set targets [list $resultfile $analysisinfofile]
