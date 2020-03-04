@@ -61,6 +61,56 @@ proc distrreg_reg2bed {bedfile region {refseq {}}} {
 	return $bedfile
 }
 
+proc maxint args {
+	set max [lindex $args 0]
+	foreach num $args {
+		if {$num > $max} {set max $num}
+	}
+	return $max
+}
+
+proc distrreg_use {distrreg {defdistrreg chr} {maxdistrreg {}}} {
+	if {$distrreg == 0 || $maxdistrreg == 0} {
+		return 0
+	} elseif {$distrreg == 1} {
+		return $defdistrreg
+	} elseif {$distrreg eq "schr" || $maxdistrreg eq "schr"} {
+		return schr
+	} elseif {$distrreg eq "chr"} {
+		return $distrreg
+		if {$maxdistrreg eq "chr"} {
+			return $maxdistrreg
+		} else {
+			return $distrreg
+		}
+	} elseif {[isint $distrreg]} {
+		if {$maxdistrreg in "0 schr chr"} {
+			return $maxdistrreg
+		} elseif {[regexp {^s([0-9]+)$} $maxdistrreg temp maxnum]} {
+			return s[maxint $maxnum $distrreg]
+		} elseif {[isint $maxdistrreg]} {
+			return [maxint $distrreg $maxdistrreg]
+		} else {
+			return $distrreg
+		}
+	} elseif {[regexp {^s([0-9]+)$} $distrreg temp num]} {
+		if {$maxdistrreg in "0 schr chr"} {
+			return $maxdistrreg
+		} elseif {[regexp {^s([0-9]+)$} $maxdistrreg temp maxnum]} {
+			return s[maxint $maxnum $num]
+		} else {
+			return $distrreg
+		}
+	} else {
+		# filename
+		if {$maxdistrreg ne ""} {
+			return $maxdistrreg
+		} else {
+			return $distrreg
+		}
+	}
+}
+
 proc distrreg_addunaligned {regs} {
 	set last [lindex $regs end]
 	set pre {}

@@ -851,7 +851,7 @@ proc process_sample_job {args} {
 			}
 			set compressionlevel [defcompressionlevel 5]
 			setdefcompressionlevel 1
-			if {$distrreg != 0 && [isint $distrreg]} {set udistrreg s$distrreg} else {set udistrreg $distrreg}
+			set udistrreg [distrreg_use $distrreg chr chr]
 			set bamfiles [sam_catmerge_job \
 				-skip [list $bamfile $bamfile.analysisinfo] \
 				-skip [list $resultbamfile $resultbamfile.analysisinfo] \
