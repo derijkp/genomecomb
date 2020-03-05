@@ -6,6 +6,7 @@ proc cleanup_job {args} {
 			set forcedirs $value
 		}
 	} {name rmtargets} 2
+	set rmtargets [list_remove $rmtargets {}]
 	set todo 0
 	foreach temp $rmtargets {
 		if {[jobfileexists $temp]} {set todo 1}
@@ -23,6 +24,7 @@ proc cleanup_job {args} {
 	if {!$todo} return
 	set num 1
 	foreach deps $args {
+		set deps [list_remove $deps {}]
 		job cleanup-$name-deps$num -optional 1 -deps [list {*}$deps] -vars {rmtargets forcedirs} \
 		-rmtargets $rmtargets -code {
 			foreach file $rmtargets {
