@@ -10,6 +10,9 @@ set test_cleantmp 0
 # tests
 # =====
 
+# gatk is not deterministic with threads, so no threads for testing and comparing to previous runs
+lappend dopts -threads 1
+
 test process_small {process_project mastr_mx2} {
 	cd $::smalltestdir
 	file delete -force tmp/mastr_mx2
