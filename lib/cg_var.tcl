@@ -152,7 +152,6 @@ proc var_job {args} {
 			if {$resultfile eq ""} continue
 			set list [bsort [list_subindex $todo $pos]]
 			set deps $list
-eputsvars resultfile list
 			job $resultfile  {*}$skips -deps $deps -rmtargets $list -targets {
 				$resultfile
 			} -vars {
