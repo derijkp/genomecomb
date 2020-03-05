@@ -61,7 +61,7 @@ proc findregionfile {file} {
 	return [file dir $file]/sreg-$tail
 }
 
-proc samregion {region {refseq {}} {full 0}} {
+proc samregions {region {refseq {}} {full 0}} {
 	if {$region eq ""} {return $region}
 	set split [split $region :-]
 	foreach {chr begin end} {{} {} {}} break
@@ -70,12 +70,33 @@ proc samregion {region {refseq {}} {full 0}} {
 		if {$begin ne "" || $end ne ""} {
 			error "incorrect region:, must be either chr or chr:begin-end"
 		}
-		return $chr
+		if {[regexp _$ $chr]} {
+			set chromosomes [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai]
+			set result {}
+			foreach tchr $chromosomes {
+				if {[regexp ^$chr $tchr]} {
+				lappend result $tchr
+				}
+			}
+			return $result
+		} else {
+			return [list $chr]
+		}
+	}
+	if {[regexp _$ $chr]} {
+		set chromosomes [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai]
+		set result {}
+		foreach tchr $chromosomes {
+			if {[regexp ^$chr $tchr]} {
+			lappend result $tchr:1-[ref_chrsize $refseq $tchr]
+			}
+		}
+		return $result
 	}
 	if {$begin eq ""} {set begin 1} else {incr begin}
 	if {$end eq ""} {
 		set refseq [refseq $refseq]
 		set end [ref_chrsize $refseq $region]
 	}
-	return $chr:$begin-$end
+	return [list $chr:$begin-$end]
 }

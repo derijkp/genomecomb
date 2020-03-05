@@ -106,14 +106,26 @@ proc var_longshot_job {args} {
 		if {$tech eq "ont"} {
 			lappend opts --strand_bias_pvalue_cutoff 0.01
 		}
-		if {$region ne ""} {
-			lappend opts --region [samregion $region $refseq]
-		}
 		analysisinfo_write $dep $varfile sample $root varcaller longshot varcaller_version [version longshot] varcaller_cg_version [version genomecomb] varcaller_region $region
-		catch_exec longshot {*}$opts \
-			--bam $dep \
-			--ref $refseq \
-			--out [gzroot $vcffile].temp
+		set regions [samregions $region $refseq]
+		if {[llength $regions] > 1} {
+			set todo {}
+			foreach region $regions {
+				set tempfile [tempfile].vcf
+				catch_exec longshot --region $region \
+					--bam $dep \
+					--ref $refseq \
+					--out $tempfile
+				lappend todo $tempfile
+				exec cg vcfcat {*}$todo > [gzroot $vcffile].temp
+			}
+		} else {
+			if {[llength $regions]} {lappend opts --region [lindex $regions 0]}
+			catch_exec longshot {*}$opts \
+				--bam $dep \
+				--ref $refseq \
+				--out [gzroot $vcffile].temp
+		}
 		exec gzip [gzroot $vcffile].temp
 		file rename -force -- [gzroot $vcffile].temp.gz $vcffile
 		cg vcf2tsv -split $split $vcffile $varfile

@@ -14,6 +14,7 @@ proc cg_regextract {args} {
 	# this can cause the depth to be wrong on positions with coverage below cutoff
 	set depthcuttoff 1000000
 	set aa 0
+	set refseq {}
 	cg_options regextract args {
 		-min {set min $value}
 		-max {set max $value}
@@ -31,6 +32,9 @@ proc cg_regextract {args} {
 		}
 		-region {
 			set region $value
+		}
+		-refseq {
+			set refseq $value
 		}
 	} {} 1
 	if {[info exists min]} {
@@ -89,14 +93,21 @@ proc cg_regextract {args} {
 			set poscol 1
 			if {$region ne ""} {
 				if {$ext ni ".bam .cram"} {error "option -region only supported for bam or cram files"}
-				lappend samtoolsargs -r [samregion $region]
 			}
-			if {!$filtered} {
-				set valuecol 2
-				catch_exec samtools depth -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
-			} else {
-				set valuecol 3
-				catch_exec samtools mpileup --ignore-overlaps -d$depthcutoff {*}$samtoolsargs $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
+			set regions [samregions $region $refseq]
+			if {![llength $regions]} {set regions {{}}}
+			foreach region $regions {
+				set opts $samtoolsargs
+				if {$region ne ""} {
+					lappend opts -r $region
+				}
+				if {!$filtered} {
+					set valuecol 2
+					catch_exec samtools depth -d$depthcutoff {*}$opts $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
+				} else {
+					set valuecol 3
+					catch_exec samtools mpileup --ignore-overlaps -d$depthcutoff {*}$opts $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
+				}
 			}
 		} else {
 			if {$region ne ""} {error "option -region only supported for bam, cram and sam files"}
