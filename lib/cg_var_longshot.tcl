@@ -98,7 +98,7 @@ proc var_longshot_job {args} {
 	set dep $bamtail
 	set bamtailindex $bamtail.[indexext $bamtail]
 	set deps [list $bamtail $refseq $bamtailindex {*}$deps]
-	job longshot-[file tail $varfile] {*}$skips -mem 15G -deps $deps -targets {
+	job longshot-[file tail $varfile] {*}$skips -mem 8G -deps $deps -targets {
 		$varfile $vcffile
 	} -vars {
 		vcffile region refseq root varfile split tech opts region
@@ -137,7 +137,7 @@ proc var_longshot_job {args} {
 	} -targets {
 		$sregfile
 	} -vars {
-		bamfile varfile refseq sregfile region mincoverage
+		bamfile varfile refseq sregfile region mincoverage refseq
 	} -code {
 		set compress [compresspipe $sregfile 1]
 		set temptarget [filetemp $sregfile]
@@ -145,7 +145,7 @@ proc var_longshot_job {args} {
 		if {$region ne ""} {
 			lappend opts -region $region
 		}
-		exec cg regextract -stack 1 {*}$opts -min $mincoverage $bamfile {*}$compress > $temptarget
+		exec cg regextract -stack 1 {*}$opts -refseq $refseq -min $mincoverage $bamfile {*}$compress > $temptarget
 		file rename -force -- $temptarget $sregfile
 		cg_zindex $sregfile
 	}
