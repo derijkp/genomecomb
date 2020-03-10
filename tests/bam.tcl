@@ -115,6 +115,49 @@ test bam2fastq {bam2fastq -sortmethod collate gz} {
 	exec diff --brief tmp/sout_2.fq tmp/expected2.fq
 } {}
 
+test cg_regextract {regextract basic} {
+	test_cleantmp
+	set bamfile data/bwa.sam
+	cg regextract -min 2 $bamfile > tmp/reg-cov20.tsv 2>@ stderr
+	string_change [cg covered tmp/reg-cov20.tsv] [list \n\n \n]
+} {chromosome	bases
+chr21	3376
+chr22	1017
+total	4393}
+
+test cg_regextract {regextract -region} {
+	test_cleantmp
+	exec samtools view -h -b data/bwa.sam > tmp/bwa.bam
+	exec samtools index tmp/bwa.bam
+	set bamfile tmp/bwa.bam
+	cg regextract -min 2 -region chr22 $bamfile > tmp/reg-cov20.tsv 2>@ stderr
+	string_change [cg covered tmp/reg-cov20.tsv] [list \n\n \n]
+} {chromosome	bases
+chr22	1017
+total	1017}
+
+test cg_regextract {regextract -region chr21_random1} {
+	test_cleantmp
+	set c [file_read data/bwa.sam]
+	set c [string_change $c {chr21 chr21_random1 chr22 chr21_random2}]
+	file_write tmp/bwa.sam $c
+	exec samtools view -h -b tmp/bwa.sam > tmp/bwa.bam
+	exec samtools index tmp/bwa.bam
+	set bamfile tmp/bwa.bam
+	# dummy reference sequence, only needed here for the fai
+	file_write tmp/ref.fas ""
+	file_write tmp/ref.fas.fai [deindent {
+		chr21_random1	48129895	2784007886	48129895	48129896
+		chr21_random2	51304566	2832165523	51304566	51304567
+		chr22	51304566	2832165523	51304566	51304567
+	}]
+	cg regextract -min 2 -refseq tmp/ref.fas -region chr21_ $bamfile > tmp/reg-cov20.tsv 2>@ stderr
+	string_change [cg covered tmp/reg-cov20.tsv] [list \n\n \n]
+} {chromosome	bases
+chr21_random1	3376
+chr21_random2	1017
+total	4393}
+
 test cg_regextract {regextract} {
 	test_cleantmp
 	set bamfile $::smalltestdir/ori/test-map-rdsbwa-NA19240chr2122.bam

@@ -101,12 +101,20 @@ proc cg_regextract {args} {
 				if {$region ne ""} {
 					lappend opts -r $region
 				}
-				if {!$filtered} {
-					set valuecol 2
-					catch_exec samtools depth -d$depthcutoff {*}$opts $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
-				} else {
-					set valuecol 3
-					catch_exec samtools mpileup --ignore-overlaps -d$depthcutoff {*}$opts $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
+				if {[catch {
+					if {!$filtered} {
+						set valuecol 2
+						catch_exec samtools depth -d$depthcutoff {*}$opts $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
+					} else {
+						set valuecol 3
+						catch_exec samtools mpileup --ignore-overlaps -d$depthcutoff {*}$opts $file | getregions "unkown" $chrcol $poscol $valuecol $cutoff $above $useshift 0 >@ $o
+					}
+				} msg]} {
+					if {$region ne "" && [regexp "samtools depth: can't parse region \"$region\"" $msg]} {
+						putslog "warning: $msg"
+					} else {
+						error $msg
+					}
 				}
 			}
 		} else {
