@@ -10,6 +10,40 @@ proc version_longshot {} {
 	return $version
 }
 
+proc longshot_empty_vcf {vcffile} {
+	set o [open $vcffile w]
+	puts $o [deindent {
+		##fileformat=VCFv4.2
+		##source=Longshot v0.4.0
+		##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth of reads passing MAPQ filter">
+		##INFO=<ID=AC,Number=R,Type=Integer,Description="Number of Observations of Each Allele">
+		##INFO=<ID=AM,Number=1,Type=Integer,Description="Number of Ambiguous Allele Observations">
+		##INFO=<ID=MC,Number=1,Type=Integer,Description="Minimum Error Correction (MEC) for this single variant">
+		##INFO=<ID=MF,Number=1,Type=Float,Description="Minimum Error Correction (MEC) Fraction for this variant.">
+		##INFO=<ID=MB,Number=1,Type=Float,Description="Minimum Error Correction (MEC) Fraction for this variant's haplotype block.">
+		##INFO=<ID=AQ,Number=1,Type=Float,Description="Mean Allele Quality value (PHRED-scaled).">
+		##INFO=<ID=GM,Number=1,Type=Integer,Description="Phased genotype matches unphased genotype (boolean).">
+		##INFO=<ID=DA,Number=1,Type=Integer,Description="Total Depth of reads at any MAPQ (but passing samtools filter 0xF00).">
+		##INFO=<ID=MQ10,Number=1,Type=Float,Description="Fraction of reads (passing 0xF00) with MAPQ>=10.">
+		##INFO=<ID=MQ20,Number=1,Type=Float,Description="Fraction of reads (passing 0xF00) with MAPQ>=20.">
+		##INFO=<ID=MQ30,Number=1,Type=Float,Description="Fraction of reads (passing 0xF00) with MAPQ>=30.">
+		##INFO=<ID=MQ40,Number=1,Type=Float,Description="Fraction of reads (passing 0xF00) with MAPQ>=40.">
+		##INFO=<ID=MQ50,Number=1,Type=Float,Description="Fraction of reads (passing 0xF00) with MAPQ>=50.">
+		##INFO=<ID=PH,Number=G,Type=Integer,Description="PHRED-scaled Probabilities of Phased Genotypes">
+		##INFO=<ID=SC,Number=1,Type=String,Description="Reference Sequence in 21-bp window around variant.">
+		##FILTER=<ID=dn,Description="In a dense cluster of variants">
+		##FILTER=<ID=dp,Description="Exceeds maximum depth">
+		##FILTER=<ID=sb,Description="Allelic strand bias">
+		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+		##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">
+		##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase Set">
+		##FORMAT=<ID=UG,Number=1,Type=String,Description="Unphased Genotype (pre-haplotype-assembly)">
+		##FORMAT=<ID=UQ,Number=1,Type=Float,Description="Unphased Genotype Quality (pre-haplotype-assembly)">
+		#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE
+	}]
+	close $o
+}
+
 proc var_longshot_job {args} {
 	# putslog [list var_longshot_job {*}$args]
 	global appdir
@@ -28,6 +62,7 @@ proc var_longshot_job {args} {
 	set skips {}
 	set tech ont
 	set opts {}
+	set hap_bam_prefix {}
 	cg_options var_longshot args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -63,6 +98,9 @@ proc var_longshot_job {args} {
 		-tech {
 			if {$value ni "ont pacbio"} {error "-tech $value not supported, must be one of: ont pacbio"}
 			set tech $value
+		}
+		-hap_bam_prefix {
+			set hap_bam_prefix $value
 		}
 		-opts {
 			set opts $value
@@ -101,7 +139,7 @@ proc var_longshot_job {args} {
 	job longshot-[file tail $varfile] {*}$skips -mem 8G -deps $deps -targets {
 		$varfile $vcffile
 	} -vars {
-		vcffile region refseq root varfile split tech opts region
+		vcffile region refseq root varfile split tech opts region hap_bam_prefix
 	} -code {
 		if {$tech eq "ont"} {
 			lappend opts --strand_bias_pvalue_cutoff 0.01
@@ -112,24 +150,56 @@ proc var_longshot_job {args} {
 			set todo {}
 			foreach region $regions {
 				set tempfile [tempfile].vcf
-				catch_exec longshot --region $region \
+				if {[catch {
+					catch_exec longshot --region $region -F \
+						--bam $dep \
+						--ref $refseq \
+						--out $tempfile
+				} msg]} {
+					if {[regexp "^error: Chromosome name for region is not in BAM file" $msg]} {
+						putslog "longshot warning: Chromosome name ($region) for region is not in BAM file, writing empty"
+						longshot_empty_vcf $tempfile
+					} else {
+						error $msg
+					}
+				}
+				if {![file exists $tempfile] && [regexp {0 potential variants identified.} $msg]} {
+					longshot_empty_vcf $tempfile
+				}
+				lappend todo $tempfile
+			}
+			exec cg vcfcat {*}$todo > [gzroot $vcffile].temp
+		} else {
+			if {$hap_bam_prefix ne ""} {
+				lappend opts --hap_bam_prefix $hap_bam_prefix
+			}
+			if {[llength $regions]} {lappend opts --region [lindex $regions 0]}
+			set tempfile [gzroot $vcffile].temp
+			if {[catch {
+				catch_exec longshot {*}$opts -F \
 					--bam $dep \
 					--ref $refseq \
 					--out $tempfile
-				lappend todo $tempfile
-				exec cg vcfcat {*}$todo > [gzroot $vcffile].temp
+			} msg]} {
+				if {[regexp "^error: Chromosome name for region is not in BAM file" $msg]} {
+					putslog "longshot warning: Chromosome name ($region) for region is not in BAM file, writing empty"
+					longshot_empty_vcf $tempfile
+				} else {
+					error $msg
+				}
 			}
-		} else {
-			if {[llength $regions]} {lappend opts --region [lindex $regions 0]}
-			catch_exec longshot {*}$opts \
-				--bam $dep \
-				--ref $refseq \
-				--out [gzroot $vcffile].temp
+			if {![file exists $tempfile] && [regexp {0 potential variants identified.} $msg]} {
+				longshot_empty_vcf $tempfile
+			}
 		}
 		exec gzip [gzroot $vcffile].temp
 		file rename -force -- [gzroot $vcffile].temp.gz $vcffile
-		cg vcf2tsv -split $split $vcffile $varfile
-		cg_zindex $varfile
+		if {[file size $vcffile] == 0} {
+			file_write $varfile ""
+		} else {
+			cg vcf2tsv -split $split $vcffile $varfile
+			cg_zindex $varfile
+		}
 	}
 	# make sreg
 	job longshot-sreg-[file tail $varfile] {*}$skips -deps {
