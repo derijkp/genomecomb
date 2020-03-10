@@ -115,26 +115,26 @@ conda config --add channels bioconda
 conda config --add channels conda-forge
 conda init bash
 . ~/.bash_profile
-# longshot
-# --------
+# lumpy
+# -----
 cd /build
 
-conda create -y -n longshot
-conda activate longshot
-conda install -y longshot=0.4.0
+conda create -y -n lumpy
+conda activate lumpy
+conda install -y lumpy-sv=0.2.13
 
-rm longshot.tar.gz || true
-conda pack -n longshot -o longshot.tar.gz
-mkdir longshot-0.4.0
-cd longshot-0.4.0
-tar xvzf ../longshot.tar.gz
-rm ../longshot.tar.gz
+rm lumpy.tar.gz || true
+conda pack -n lumpy -o lumpy.tar.gz
+mkdir lumpy-0.2.13
+cd lumpy-0.2.13
+tar xvzf ../lumpy.tar.gz
+rm ../lumpy.tar.gz
 cd /build
-tar cvzf longshot-0.4.0.tar.gz longshot-0.4.0
-cp -ra longshot-0.4.0 /io/extra$ARCH
+tar cvzf lumpy-0.2.13.tar.gz lumpy-0.2.13
+cp -ra lumpy-0.2.13 /io/extra$ARCH
 cd /io/extra$ARCH/
-ln -sf longshot-0.4.0/bin/longshot longshot
+ln -sf lumpy-0.2.13/bin/lumpy lumpy
 
 conda deactivate
 
-echo "Finished building longshot"
+echo "Finished building lumpy"
