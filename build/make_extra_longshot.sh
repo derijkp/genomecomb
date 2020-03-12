@@ -119,21 +119,23 @@ conda init bash
 # --------
 cd /build
 
+version=0.4.0
+
 conda create -y -n longshot
 conda activate longshot
-conda install -y longshot=0.4.0
+conda install -y longshot=$version
 
 rm longshot.tar.gz || true
 conda pack -n longshot -o longshot.tar.gz
-mkdir longshot-0.4.0
-cd longshot-0.4.0
+mkdir longshot-$version
+cd longshot-$version
 tar xvzf ../longshot.tar.gz
 rm ../longshot.tar.gz
 cd /build
-tar cvzf longshot-0.4.0.tar.gz longshot-0.4.0
-cp -ra longshot-0.4.0 /io/extra$ARCH
+tar cvzf longshot-$version.tar.gz longshot-$version
+cp -ra longshot-$version /io/extra$ARCH
 cd /io/extra$ARCH/
-ln -sf longshot-0.4.0/bin/longshot longshot
+ln -sf longshot-$version/bin/longshot longshot
 
 conda deactivate
 

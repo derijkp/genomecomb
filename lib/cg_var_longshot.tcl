@@ -100,7 +100,7 @@ proc var_longshot_job {args} {
 			set tech $value
 		}
 		-hap_bam_prefix {
-			set hap_bam_prefix $value
+			set hap_bam_prefix [file_absolute $value]
 		}
 		-opts {
 			set opts $value
