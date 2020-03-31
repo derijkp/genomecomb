@@ -18,10 +18,10 @@ int main(int argc, char *argv[]) {
 	DString line;
 	char curchr[1000], *linepos = NULL, *scanpos = NULL;
 	ssize_t read;
-	int chrcol,poscol,valuecol,above,shift,maxcol,pos,prev=0,value,cutoff,accept,header;
+	int chrcol,poscol,valuecol,min,max,shift,maxcol,pos,prev=0,value,accept,header;
 	int status,begin=0,count;
 	if ((argc != 9)) {
-		fprintf(stderr,"Format is: getregions chromosome chrpos poscol valuecol cutoff above shift header");
+		fprintf(stderr,"Format is: getregions chromosome chrpos poscol valuecol min max shift header");
 		exit(EXIT_FAILURE);
 	}
 	DStringInit(&line);
@@ -29,11 +29,15 @@ int main(int argc, char *argv[]) {
 	chrcol = atoi(argv[2]);
 	poscol = atoi(argv[3]);
 	valuecol = atoi(argv[4]);
-	cutoff = atoi(argv[5]);
-	above = atoi(argv[6]);
+	min = atoi(argv[5]);
+	if (argv[6][0] == '\0') {
+		max = 2147483647;
+	} else {
+		max = atoi(argv[6]);
+	}
 	shift = atoi(argv[7]);
 	header = atoi(argv[8]);
-	pos = 0 - shift;
+	pos = 0;
 	maxcol = poscol;
 	if (valuecol > maxcol) {maxcol = valuecol;}
 	if (chrcol > maxcol) {maxcol = chrcol;}
@@ -82,7 +86,7 @@ NODPRINT("%s\n",linepos)
 			linepos++;
 		}
 		if (count > maxcol) {
-			accept = ((above && (value > cutoff)) || (!above && (value < cutoff)));
+			accept = (value >= min && value <= max);
 			if (status) {
 				if ((prev != pos) || !accept) {
 					fprintf(stdout,"%s\t%d\t%d\n", curchr, begin+shift, prev+shift);

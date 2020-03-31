@@ -16,25 +16,30 @@
 #include "tools_bcol.h"
 #include "debug.h"
 
+#define DBL_MAX      1.79769313486231470e+308
 
 int main(int argc, char *argv[]) {
 	BCol *bcol;
 	BCol_table *table;
 	DString *chr = NULL;
-	long double value=0,cutoff=0;
+	long double value=0,min=0,max=DBL_MAX;
 	uint64_t togo;
 	int tablepos = 0,tablesize;
-	int above=0,shift,pos=0,accept;
+	int shift,pos=0,accept;
 	int status,begin=0,error;
 	if ((argc != 5)) {
-		fprintf(stderr,"Format is: getregions bcolfile cutoff above shift");
+		fprintf(stderr,"Format is: getregions bcolfile min max shift");
 		exit(EXIT_FAILURE);
 	}
 	bcol = bcol_open(argv[1]);
 	table = bcol->table;
 	tablesize = bcol->tablesize;
-	cutoff = atoll(argv[2]);
-	above = atoi(argv[3]);
+	min = atoll(argv[2]);
+	if (argv[3][0] == '\0') {
+		max = DBL_MAX;
+	} else {
+		max = atoll(argv[3]);
+	}
 	shift = atoi(argv[4]);
 	begin = -1;
 	status = 0;
@@ -54,7 +59,7 @@ int main(int argc, char *argv[]) {
 		error = bcol_readdouble(bcol,&value);
 		NODPRINT("%d -> %Lf",pos,value)
 		if (error == 0) break;
-		accept = ((above && (value > cutoff)) || (!above && (value < cutoff)));
+		accept = (value >= min && value <= max);
 		if (status) {
 			if (!accept) {
 				fprintf(stdout,"%*.*s\t%d\t%d\n", chr->size, chr->size, chr->string, begin, pos);

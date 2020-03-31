@@ -437,19 +437,19 @@ test covered {name error} {
 } {header error: some fields (or alternatives) not found} error
 
 test getregions {above} {
-	exec getregions < data/coverage-chr1.tsv chr1 -1 0 1 10 1 0 1
+	exec getregions < data/coverage-chr1.tsv chr1 -1 0 1 11 {} 0 1
 } {chr1	25	27
 chr1	28	31
 chr1	40	42}
 
 test getregions {below} {
-	exec getregions < data/coverage-chr1.tsv chr1 -1 0 1 10 0 0 1
+	exec getregions < data/coverage-chr1.tsv chr1 -1 0 1 0 9 0 1
 } {chr1	20	24
 chr1	27	28
 chr1	42	43}
 
 test getregions {shift} {
-	exec getregions < data/coverage-chr1.tsv chr1 -1 0 1 10 1 -1 1
+	exec getregions < data/coverage-chr1.tsv chr1 -1 0 1 11 {} -1 1
 } {chr1	24	26
 chr1	27	30
 chr1	39	41}
@@ -461,7 +461,7 @@ chr1	20	24
 chr1	27	28
 chr1	42	43}
 
-test cg_regextract {above} {
+test cg_regextract {-min} {
 	exec cg regextract --verbose 0 -qfields coverage -min 10 -shift 0 data/coverage-chr1.tsv
 } {chromosome	begin	end
 chr1	24	27
@@ -477,12 +477,17 @@ chr1	40	42
 chr2	24	27
 chr2	28	30}
 
-test cg_regextract {below} {
+test cg_regextract {-max} {
 	exec cg regextract --verbose 0 -qfields coverage -shift 0 -max 10 data/coverage-chr1.tsv
 } {chromosome	begin	end
 chr1	20	25
 chr1	27	28
 chr1	42	43}
+
+test cg_regextract {-min and -max} {
+	exec cg regextract --verbose 0 -qfields coverage -shift 0 -min 10 -max 12 data/coverage-chr1.tsv
+} {chromosome	begin	end
+chr1	24	26}
 
 test cg_regextract {shift} {
 	exec cg regextract --verbose 0 -qfields coverage -shift -1 -min 11 data/coverage-chr1.tsv

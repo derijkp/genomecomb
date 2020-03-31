@@ -174,7 +174,7 @@ proc process_rtgsample {dir destdir {force 0}} {
 			set poscol [lsearch $header position]
 			set coveragecol [lsearch $header coverage]
 			set cat [gzcat $file]
-			exec {*}$cat $file | getregions $chr $poscol $coveragecol 9 1 -1 >> sreg-$name.tsv.temp
+			exec {*}$cat $file | getregions $chr $poscol $coveragecol 10 {} -1 >> sreg-$name.tsv.temp
 		}
 		file rename -force -- sreg-$name.tsv.temp sreg-$name.tsv
 	}

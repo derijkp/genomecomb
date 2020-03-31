@@ -280,20 +280,26 @@ NODPRINT("%d,%d,%d,%d -> %" PRId64 "",buffer[0],buffer[1],buffer[2],buffer[3],va
 	return 1;
 }
 
+#define DBL_MAX      1.79769313486231470e+308
+
 int main(int argc, char *argv[]) {
 	char *format,*chr;
-	long double value,cutoff;
-	int above,shift,pos,accept;
+	long double value,min,max;
+	int shift,pos,accept;
 	int status,begin=0,start,error;
 	if ((argc != 7)) {
-		fprintf(stderr,"Format is: getregions chromosome format start cutoff above shift");
+		fprintf(stderr,"Format is: getregions chromosome format start min max shift");
 		exit(EXIT_FAILURE);
 	}
 	chr = argv[1];
 	format = argv[2];
 	start = atoi(argv[3]);
-	cutoff = atoll(argv[4]);
-	above = atoi(argv[5]);
+	min = atoll(argv[4]);
+	if (argv[5][0] == '\0') {
+		max = DBL_MAX;
+	} else {
+		max = atoll(argv[5]);
+	}
 	shift = atoi(argv[6]);
 	pos = start - shift;
 	begin = -1;
@@ -302,7 +308,7 @@ int main(int argc, char *argv[]) {
 		error = bcol_read(format,&value);
 NODPRINT("%d -> %Lf",pos,value)
 		if (error == 0) break;
-		accept = ((above && (value > cutoff)) || (!above && (value < cutoff)));
+		accept = (value >= min && value <= max);
 		if (status) {
 			if (!accept) {
 				fprintf(stdout,"%s\t%d\t%d\n", chr, begin+shift, pos+shift);
