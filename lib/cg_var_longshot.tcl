@@ -56,6 +56,7 @@ proc var_longshot_job {args} {
 	set threads 2
 	set cleanup 1
 	set mincoverage 8
+	set maxcov {}
 	set mingenoqual 25
 	set resultfiles 0
 	set rootname {}
@@ -85,6 +86,9 @@ proc var_longshot_job {args} {
 		}
 		-mincoverage {
 			set mincoverage $value
+		}
+		-maxcoverage {
+			set maxcov $value
 		}
 		-resultfiles {
 			set resultfiles $value
@@ -139,10 +143,13 @@ proc var_longshot_job {args} {
 	job longshot-[file tail $varfile] {*}$skips -mem 8G -deps $deps -targets {
 		$varfile $vcffile
 	} -vars {
-		vcffile region refseq root varfile split tech opts region hap_bam_prefix
+		vcffile region refseq root varfile split tech opts region hap_bam_prefix maxcov
 	} -code {
 		if {$tech eq "ont"} {
 			lappend opts --strand_bias_pvalue_cutoff 0.01
+		}
+		if {$maxcov ne ""} {
+			lappend opts --max_cov $maxcov
 		}
 		analysisinfo_write $dep $varfile sample $root varcaller longshot varcaller_version [version longshot] varcaller_cg_version [version genomecomb] varcaller_region $region
 		set regions [samregions $region $refseq]
@@ -152,6 +159,7 @@ proc var_longshot_job {args} {
 				set tempfile [tempfile].vcf
 				if {[catch {
 					catch_exec longshot --region $region -F \
+						--min_cov $mincoverage \
 						--bam $dep \
 						--ref $refseq \
 						--out $tempfile
@@ -207,7 +215,7 @@ proc var_longshot_job {args} {
 	} -targets {
 		$sregfile
 	} -vars {
-		bamfile varfile refseq sregfile region mincoverage refseq
+		bamfile varfile refseq sregfile region mincoverage refseq maxcov
 	} -code {
 		set compress [compresspipe $sregfile 1]
 		set temptarget [filetemp $sregfile]
