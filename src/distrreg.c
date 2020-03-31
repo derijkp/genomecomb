@@ -80,6 +80,30 @@ FILE *openreg(char **regions, char *prefix, char *postfix, int printheader, DStr
 	return(o);
 }
 
+FILE *openother(char *other, char *opencmd, char *prefix, char *postfix, int printheader, DString *header) {
+	FILE *o = NULL;
+	if (*other == '\0') {return NULL;}
+	DString *buffer = DStringNew();
+	if (opencmd != NULL && opencmd[0] != '\0') {
+		DStringAppend(buffer,opencmd);
+		DStringAppendS(buffer," ",1);
+	}
+	DStringAppend(buffer,prefix);
+	DStringAppend(buffer,other);
+	DStringAppend(buffer,postfix);
+	if (opencmd == NULL || opencmd[0] == '\0') {
+		o = fopen64_or_die(buffer->string,"w");
+	} else {
+		o = popen(buffer->string,"w");
+		if (o == NULL) {
+			fprintf(stderr,"error opening to command pipe: %s\n",buffer->string);
+			exit(1);
+		}
+	}
+	if (printheader && header->size) fprintf(o,"%s",header->string);
+	return(o);
+}
+
 void closereg(FILE *o,char *opencmd) {
 	int status;
 	if (o == NULL) {return;}
@@ -95,7 +119,7 @@ void closereg(FILE *o,char *opencmd) {
 }
 
 int main(int argc, char *argv[]) {
-	FILE *f1,*o;
+	FILE *f1,*o,*oother=NULL;
 	DStringArray *result1=NULL;
 	DString *header = DStringNew();
 	DString *line1 = DStringNew();
@@ -105,8 +129,8 @@ int main(int argc, char *argv[]) {
 	unsigned int numfields,pos1;
 	int start1,end1,start2,end2;
 	int prevstart1 = -1,prevend1 = -1,prevstart2 = -1,prevend2 = -1;
-	if (argc != 10 && argc != 11) {
-		fprintf(stderr,"Format is: distrreg prefix postfix printheader regions chrpos startpos endpos headerline commentchar ?opencmd?");
+	if (argc < 10 || argc > 12) {
+		fprintf(stderr,"Format is: distrreg prefix postfix printheader regions chrpos startpos endpos headerline commentchar ?opencmd? ?other?");
 		exit(EXIT_FAILURE);
 	}
 	f1 = stdin;
@@ -141,6 +165,9 @@ int main(int argc, char *argv[]) {
 		read = DStringGetTab(line1,f1,max1,result1,0,&numfields);
 	} else if (read != -1) {
 		DStringSplitTab(line1,	max1, result1, 0, NULL);
+	}
+	if (argc == 12 && argv[11][0] != '\0') {
+		oother = openother(argv[11], opencmd, prefix, postfix, printheader, header);
 	}
 	o = openreg(&regions,prefix,postfix,printheader,header,&chromosome2,&start2,&end2,opencmd);
 	if (o == NULL) {
@@ -192,7 +219,11 @@ NODPRINT("%d\t%s\t%d\t%d",2,Loc_ChrString(curchromosome),start2,end2)
 			chromosomekeep = chromosome2;
 		}
 		if (o == NULL || (comp > 0) || ((comp == 0) && (end1 <= start2 && start1 != start2))) {
-			fprintf(stderr,"variants outside of distrreg regions:\n%s\n",line1->string);
+			if (oother != NULL) {
+				fprintf(oother,"%s\n",line1->string);
+			} else {
+				fprintf(stderr,"variants outside of distrreg regions:\n%s\n",line1->string);
+			}
 			/* exit(EXIT_FAILURE); */
 		} else {
 			NODPRINT("overlap")

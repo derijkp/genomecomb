@@ -435,7 +435,21 @@ test distrreg {missing chr} {
 	}]\n
 	cg distrreg -stack 1 tmp/vars1.tsv tmp/distrvars1- .tsv {1 2}
 } {*variants outside of distrreg regions:
-chr1x	20	30	b*} error match
+chr1x	20	30	b*} match
+
+test distrreg {-other} {
+	test_cleantmp
+	file_write tmp/vars1.tsv [deindent {
+		chromosome	begin	end	name
+		chr1	10	20	a
+		chr1x	20	30	b
+		chr2	30	40	c
+	}]\n
+	cg distrreg -stack 1 -other other tmp/vars1.tsv tmp/distrvars1- .tsv {1 2}
+	file_read tmp/distrvars1-other.tsv
+} {chromosome	begin	end	name
+chr1x	20	30	b
+}
 
 test file_absolute {relative path} {
 	cd /tmp

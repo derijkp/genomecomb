@@ -71,6 +71,7 @@ proc samregions {region {refseq {}} {full 0}} {
 			error "incorrect region:, must be either chr or chr:begin-end"
 		}
 		if {[regexp _$ $chr]} {
+			set refseq [refseq $refseq]
 			set chromosomes [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai]
 			set result {}
 			foreach tchr $chromosomes {
@@ -99,4 +100,12 @@ proc samregions {region {refseq {}} {full 0}} {
 		set end [ref_chrsize $refseq $region]
 	}
 	return [list $chr:$begin-$end]
+}
+
+proc samregion {region {refseq {}} {full 0}} {
+	set regions [samregions $region $refseq $full]
+	if {[llength $regions] != 1} {
+		error "error getting samregion from $region: matches [llength $regions] regions iso 1"
+	}
+	lindex $regions 0
 }

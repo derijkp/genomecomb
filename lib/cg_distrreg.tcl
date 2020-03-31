@@ -5,12 +5,16 @@ proc distrreg_job {args} {
 	set addcomment 1
 	set refseq {}
 	set threads 1
+	set other {}
 	cg_options distrreg args {
 		-refseq {
 			set refseq $value
 		}
 		-threads {
 			set threads $value
+		}
+		-other {
+			set other $value
 		}
 	} {file resultprefix resultsuffix regions} 4 4 {
 		distribute (sorted) tsv files into multiple files per region
@@ -20,9 +24,9 @@ proc distrreg_job {args} {
 		lappend targets $resultprefix$region$resultsuffix
 	}
 	job distrreg-[file tail $file] -deps {$file} -targets $targets -vars {
-		refseq threads file resultprefix resultsuffix regions
+		refseq threads file resultprefix resultsuffix regions other
 	} -code {
-		cg_distrreg -refseq $refseq -threads $threads $file $resultprefix $resultsuffix $regions
+		cg_distrreg -refseq $refseq -threads $threads -other $other $file $resultprefix $resultsuffix $regions
 	}
 	return $targets
 }
@@ -34,12 +38,16 @@ proc cg_distrreg {args} {
 	set addcomment 1
 	set refseq {}
 	set threads 1
+	set other {}
 	cg_options distrreg args {
 		-refseq {
 			set refseq $value
 		}
 		-threads {
 			set threads $value
+		}
+		-other {
+			set other $value
 		}
 	} {file resultprefix resultsuffix regions} 4 4 {
 		distribute (sorted) tsv files into multiple files per region
@@ -49,10 +57,12 @@ proc cg_distrreg {args} {
 	gzclose $f
 	set poss [tsv_basicfields $header 3]
 	set incmd [convert_pipe $file -.tsv -refseq $refseq -threads $threads]
-	set outcmd [convert_pipe $file $resultprefix$resultsuffix -refseq $refseq -threads $threads]
+	set outcmd [convert_pipe -.tsv $resultprefix$resultsuffix -refseq $refseq -threads $threads]
 	if {$incmd eq ""} {
-		exec distrreg $resultprefix $resultsuffix 1 $regions {*}$poss 1 \# $outcmd < $file
+		# puts [list distrreg $resultprefix $resultsuffix 1 $regions {*}$poss 1 \# $outcmd < $file]
+		catch_exec distrreg $resultprefix $resultsuffix 1 $regions {*}$poss 1 \# $outcmd $other < $file 2>@ stderr
 	} else {
-		exec $incmd | distrreg $resultprefix $resultsuffix 1 $regions {*}$poss 1 \# $outcmd
+		# puts [list {*}$incmd | distrreg $resultprefix $resultsuffix 1 $regions {*}$poss 1 \# $outcmd $other]
+		catch_exec {*}$incmd | distrreg $resultprefix $resultsuffix 1 $regions {*}$poss 1 \# $outcmd $other 2>@ stderr
 	}
 }

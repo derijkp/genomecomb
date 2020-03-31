@@ -111,17 +111,19 @@ proc distrreg_use {distrreg {defdistrreg chr} {maxdistrreg {}}} {
 	}
 }
 
-proc distrreg_addunaligned {regs} {
-	set last [lindex $regs end]
-	set pre {}
-	while {[bsort [list $last ${pre}unaligned]] ne [list $last ${pre}unaligned]} {
-		append pre z
+proc distrreg_addunaligned {regs {addunaligned 1}} {
+	if {$addunaligned} {
+		set last [lindex $regs end]
+		set pre {}
+		while {[bsort [list $last ${pre}unaligned]] ne [list $last ${pre}unaligned]} {
+			append pre z
+		}
+		lappend regs ${pre}unaligned
 	}
-	lappend regs ${pre}unaligned
 	return $regs
 }
 
-proc distrreg_regs {regfile refseq} {
+proc distrreg_regs {regfile refseq {addunaligned 1}} {
 	if {$regfile eq "" || $regfile eq "0"} {
 		return {}
 	}
@@ -172,7 +174,7 @@ proc distrreg_regs {regfile refseq} {
 				set csize [expr {$cend-$cbegin}]
 			}
 			lappend result $cchr-$cbegin-$cend
-			set result [distrreg_addunaligned $result]
+			set result [distrreg_addunaligned $result $addunaligned]
 			return $result
 		}
 	}
@@ -183,9 +185,9 @@ proc distrreg_regs {regfile refseq} {
 			regsub {_.*$} $chr _ chr
 			set a($chr) 1
 		}
-		return [distrreg_addunaligned [bsort [array names a]]]
+		return [distrreg_addunaligned [bsort [array names a]] $addunaligned]
 	} elseif {$regfile in "schr schromosome"} {
-		return [distrreg_addunaligned [join [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai] " "]]
+		return [distrreg_addunaligned [join [cg select -sh /dev/null -hp {chromosome size p1 p2} -f chromosome $refseq.fai] " "] $addunaligned]
 	} elseif {[isint $regfile]} {
 		set regsize $regfile
 		unset -nocomplain donea
@@ -204,7 +206,7 @@ proc distrreg_regs {regfile refseq} {
 				lappend result $chr-$pos-$end
 			}
 		}
-		set result [distrreg_addunaligned $result]
+		set result [distrreg_addunaligned $result $addunaligned]
 		return $result
 	}
 	set f [gzopen $regfile]
@@ -214,6 +216,6 @@ proc distrreg_regs {regfile refseq} {
 	while {[gets $f line] != -1} {
 		lappend result [join [list_sub [split $line \t] $poss] -]
 	}
-	set result [distrreg_addunaligned $result]
+	set result [distrreg_addunaligned $result $addunaligned]
 	return $result
 }
