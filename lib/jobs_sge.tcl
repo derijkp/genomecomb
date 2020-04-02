@@ -1,7 +1,7 @@
 proc job_process_sge_init {} {
 	# we will use par (parallel) code with some specifics for sge
 	if {[info commands job_process_par] eq ""} {auto_load job_process_par}
-	set ::cgjob(alljobids) {}
+	set ::cgjob(endjobids) {}
 	set ::job_method_info {}
 	interp alias {} job_process {} job_process_par
 	interp alias {} job_running {} job_running_sge
@@ -35,6 +35,8 @@ proc job_process_sge_submit {job runfile args} {
 	set soft {}
 	set hard {}
 	set priority [get cgjob(priority) 0]
+	set cores 1
+	set mem {}
 	set pos 0
 	set dqueue [get cgjob(dqueue) all.q]
 	foreach {opt value} $args {
@@ -43,6 +45,7 @@ proc job_process_sge_submit {job runfile args} {
 				set value [list_remove $value {}]
 				if {[llength $value]} {
 					lappend options -hold_jid [join $value ,]
+					set cgjob(endjobids) [list_lremove $cgjob(endjobids) $value]
 				}
 				incr pos 2
 			}
@@ -54,11 +57,12 @@ proc job_process_sge_submit {job runfile args} {
 				# -l slots=$value mentioned in http://www.softpanorama.org/HPC/Grid_engine/Reference/qsub.shtml
 				# would be easier, but does not seem to work (if there is any PE defined?)
 				# lappend hard -l slots=$value
+				set cores $value
 				if {![info exists cgjob_distr(no_local_pe)]} {
 					set cgjob_distr(no_local_pe) [catch {exec qconf -sp local}]
 				}
 				if {!$cgjob_distr(no_local_pe)} {
-					lappend hard -pe local $value -R y
+					lappend hard -pe local $cores -R y
 				}
 				incr pos 2
 			}
@@ -79,7 +83,7 @@ proc job_process_sge_submit {job runfile args} {
 				incr pos 2
 			}
 			-mem {
-				lappend hard -l mem_free=$value
+				set mem $value
 				incr pos 2
 			}
 			-dqueue {
@@ -93,6 +97,9 @@ proc job_process_sge_submit {job runfile args} {
 				break
 			}
 		}
+	}
+	if {$mem ne ""} {
+		lappend hard -l mem_free=[job_mempercore $mem $cores]
 	}
 	if {[llength $soft]} {
 		lappend options -soft {*}$soft
@@ -110,9 +117,10 @@ proc job_process_sge_submit {job runfile args} {
 	if {[regexp , $job]} {
 		error "Cannot submit job to sge: it has a comma in the output file $job.out, which grid engine sometimes has problems with"
 	}
+	putslog "sge_submit: [list qsub -N j$name -q $dqueue -o $job.out -e $job.err -p $priority {*}$options $runfile]"
 	set jnum [exec qsub -N j$name -q $dqueue -o $job.out -e $job.err -p $priority {*}$options $runfile]
 	regexp {[0-9]+} $jnum jobnum
-	lappend cgjob(alljobids) $jobnum
+	lappend cgjob(endjobids) $jobnum
 	return $jobnum
 }
 
@@ -162,8 +170,8 @@ proc job_process_sge_wait {} {
 	file_write $runfile $cmd
 	file attributes $runfile -permissions u+x
 	set options {}
-	if {[llength $cgjob(alljobids)]} {
-		lappend options -hold_jid [join $cgjob(alljobids) ,]
+	if {[llength $cgjob(endjobids)]} {
+		lappend options -hold_jid [join $cgjob(endjobids) ,]
 	}
 	exec qsub -N j$name -q [get cgjob(dqueue) all.q] -o $outfile -e $errfile -p $priority {*}$options $runfile
 }

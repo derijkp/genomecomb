@@ -80,7 +80,7 @@ proc sv_sniffles_job {args} {
 	set keeppwd [pwd]
 	cd $destdir
 	set bamfileindex $bamfile.[indexext $bamfile]
-	job sv_$root.vcf {*}$skips -mem [job_mempercore 1G $threads] -cores $threads \
+	job sv_$root.vcf {*}$skips -mem 1G -cores $threads \
 	-skip [list $resultfile $resultanalysisinfo] \
 	-deps {
 		$bamfile $refseq $bamfileindex

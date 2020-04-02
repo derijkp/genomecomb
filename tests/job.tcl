@@ -7,17 +7,23 @@ set pos [lsearch $argv -d]
 if {$pos != -1} {
 	set distribute [lindex $argv [incr pos]]
 	if {$distribute eq "direct"} {
+		puts "testing direct only"
 		set tests {
 			"direct" {uplevel job_init -skipjoberrors 1 {*}\$args}
 		}
-	} elseif {$distribute eq "direct"} {
+	} elseif {[string is int $distribute]} {
+		puts "testing -d $distribute only"
 		set tests [subst {
 			"-d $distribute" {uplevel job_init -d $distribute {*}\$args}
 		}]
-	} else {
+	} elseif {$distribute eq "sge"} {
+		puts "testing -d sge only"
+		set testsge 1
 		set tests [subst {
 			"-d sge" {uplevel job_init -d sge {*}\$args}
 		}]
+	} else {
+		error "unknown option -d $distribute"
 	}
 } else {
 	set tests {

@@ -182,9 +182,9 @@ are submitted in one go with dependencies between them given to the cluster mana
 after the ptargets job is finished.)
 ; -io io: give value > 1 if job is heavy on io (in sge, translates to (soft) job options: -l io=$value) 
 ; -cores numcores: give value > 1 if job uses more than 1 core (on sge hard option: "-pe local $value" if local pe is defined)
-If using multiple cores, other requirements (such as memory) are per core! (so e.g. -cores 4 -mem 2G 
-will require 8G of memory to be free on a node)
-; -mem memorysize: indication of memory needed (on sge (hard): -l mem_free=$value)
+If using multiple cores, other requirements on sge are per core!
+For memory (-mem) this conversion will be done by the system, and you must give the total required memory (for the job)
+; -mem memorysize: indication of memory needed (on sge (hard): -l mem_free=$value, where value is corrected based on -cores)
 ; -hard hardlimits: on sge: extra options passed on as hard limits
 ; -soft softlimits: on sge: extra options passed on as soft limits
 

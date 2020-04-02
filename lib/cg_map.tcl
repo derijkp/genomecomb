@@ -28,7 +28,7 @@ proc map_mem {method {mem {}} {threads 1}} {
 		return [map_mem_$method $mem $threads]
 	}
 	if {$mem eq ""} {set mem 5G}
-	job_mempercore $mem $threads
+	return $mem
 }
 
 proc map_job {args} {
@@ -192,7 +192,7 @@ proc map_job {args} {
 			lappend samfiles $target
 			set analysisinfo [gzroot $target].analysisinfo
 			lappend asamfiles $analysisinfo
-			job map_${method}-$sample-$name -mem [job_mempercore 5G $threads] -cores $threads \
+			job map_${method}-$sample-$name -mem [map_mem $method $mem $threads] -cores $threads \
 			-skip [list $resultbase.bam] {*}$skips \
 			-deps {
 				$refseq $file1 $file2

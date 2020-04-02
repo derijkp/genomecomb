@@ -35,7 +35,7 @@ cg refseq_minimap2 \'$refseq\' $preset"
 
 proc map_mem_minimap2 {mem threads} {
 	if {$mem eq ""} {set mem 10G}
-	job_mempercore $mem $threads
+	return $mem
 }
 
 proc cg_map_minimap2 {args} {

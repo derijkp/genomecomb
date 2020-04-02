@@ -194,7 +194,7 @@ proc var_gatk_job {args} {
 	set gatkrefseq [gatk_refseq_job $refseq]
 	set bamtailindex $bamtail.[indexext $bamtail]
 	set deps [list $bamtail $gatkrefseq $bamtailindex {*}$deps]
-	job ${pre}varall-$root {*}$skips -mem [job_mempercore 5G $threads] -cores $threads \
+	job ${pre}varall-$root {*}$skips -mem 5G -cores $threads \
 	-deps $deps -targets {
 		${pre}varall-$root.vcf
 	} -skip {

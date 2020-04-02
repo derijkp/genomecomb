@@ -107,7 +107,7 @@ proc gatk_compar_job args {
 			lappend filesarg --variant $file
 			lappend deps $file $file.tbi
 		}
-		job gatkbp_combine-$name -mem [expr {$maxmem + 4}]g -cores 1 \
+		job gatkbp_combine-$name -mem [expr {$maxmem + 4}]G -cores 1 \
 		 -deps $deps \
 		 -targets {$resultvcf} \
 		 -vars {region gatkrefseq resultvcf samplemapfile maxmem filesarg} \
@@ -147,7 +147,7 @@ proc gatk_compar_job args {
 		# run
 		set vcffiles {}
 		foreach region $regions {
-			job gatkbp_combine-$name-$region -mem [expr {$maxmem + 4}]g -cores 1 \
+			job gatkbp_combine-$name-$region -mem [expr {$maxmem + 4}]G -cores 1 \
 			 -skip $resultvcf \
 			 -deps $deps \
 			 -targets {$resultvcf.$region} \

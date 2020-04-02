@@ -1323,7 +1323,7 @@ proc job_curargs {} {
 
 proc job_mempercore {mem threads} {
 	if {[regexp {^([0-9]+)(.*)$} $mem temp memnum memunits]} {
-		if {$memunits eq "G"} {
+		if {$memunits eq "G" || $memunits eq "g"} {
 			set scale 1000.0
 			set memunits M
 		} else {
