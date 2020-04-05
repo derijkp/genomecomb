@@ -875,7 +875,7 @@ proc process_sample_job {args} {
 				set compressionlevel [defcompressionlevel 5]
 				setdefcompressionlevel 1
 				foreach bam $bamfiles {
-					lappend cleanbams [bam_clean_job -sort 2 -outputformat $aliformat -distrreg $distrreg \
+					lappend cleanbams [bam_clean_job -sort 2 -outputformat sam.zst -distrreg $distrreg \
 						-skip [list $resultbamfile $resultbamfile.analysisinfo] \
 						-removeduplicates $removeduplicates -clipamplicons $amplicons -realign $realign \
 						-regionfile 5 -refseq $refseq -threads $threads \
