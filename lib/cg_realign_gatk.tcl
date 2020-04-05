@@ -71,20 +71,24 @@ proc cg_realign_gatk {args} {
 		-o $tempresult {*}$extra
 	catch {file delete -- $tempresult.intervals}
 	putslog "realign: output"
-	if {$outputformat eq "cram"} {
-		file rename $tempresult $tempresult.bam
-		exec samtools view -C $tempresult.bam -T $refseq -o $tempresult
-		file delete $tempresult.bam
+	if {$outputformat eq "bam"} {
 		if {$resultfile eq "-"} {
 			file2stdout $tempresult
 		} else {
 			catch {file rename -force -- $tempresult.[indexext $tempresult] $tempresult.[indexext $tempresult]}
-			file rename -force -- $tempresult $resultfile
+			result_rename $tempresult $resultfile
 		}
-	} elseif {$resultfile eq "-"} {
-		file2stdout $tempresult
 	} else {
-		catch {file rename -force -- $tempresult.[indexext $tempresult] $tempresult.[indexext $tempresult]}
-		file rename -force -- $tempresult $resultfile
+		file rename $tempresult $tempresult.bam
+		exec {*}[convert_pipe $tempresult.bam $resultfile.$outputformat -refseq $refseq -endpipe 1]
+		if {$resultfile ne "-"} {
+			result_rename $resultfile.$outputformat $resultfile
+		}
+#		if {$resultfile eq "-"} {
+#			exec {*}[convert_pipe $tempresult.bam -.$outputformat -refseq $refseq] >@ stdout
+#		} else {
+#			exec {*}[convert_pipe $tempresult.bam -.$outputformat -refseq $refseq] > $resultfile.temp
+#			result_rename $resultfile.temp $resultfile
+#		}
 	}
 }
