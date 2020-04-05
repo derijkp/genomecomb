@@ -16,7 +16,7 @@ proc bam_index_job {args} {
 			set optional $value
 		}
 	} {bam} 1 1
-	if {[file extension $bam] eq ".sam"} return
+	if {[file extension [gzroot $bam]] eq ".sam"} return
 	set pre [lindex [split $bam -] 0]
 	set root [file_rootname $bam]
 	set bamindex $bam.[indexext $bam]
