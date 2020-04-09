@@ -1,10 +1,17 @@
 proc sam_header_addm5 {header {refseq {}}} {
 	if {![regexp {M5:} $header]} {
 		dbdir $refseq
-		if {![file exists [get ::env(REF_PATH) /complgen/refseq]/mapping.tsv]} {
+		set mappingfile $refseq.forcram/mapping.tsv
+		if {![file exists $mappingfile]} {
+			set mappingfile [glob -nocomplain [get ::env(REF_PATH) /complgen/refseq]/genome*.forcram/mapping.tsv]
+		}
+		if {![file exists $mappingfile]} {
+			set mappingfile [get ::env(REF_PATH) /complgen/refseq]/mapping.tsv
+		}
+		if {![file exists $mappingfile]} {
 			error "Could not find reference md5 mapping file (for cram): specify dbdir, reference or use REF_PATH"
 		}
-		set temp [file_read $::env(REF_PATH)/mapping.tsv]
+		set temp [file_read $mappingfile]
 		foreach line [split $temp \n] {
 			set line [split $line \t]
 			if {[llength $line] < 2} continue
@@ -20,7 +27,7 @@ proc sam_header_addm5 {header {refseq {}}} {
 				if {![info exists a($name)]} {
 					set name chr$name
 					if {![info exists a($name)]} {
-						error "no md5 mapping found for sequence $name in $::env(REF_PATH)/mapping.tsv"
+						error "no md5 mapping found for sequence $name in $mappingfile"
 					}
 				}
 				append line "\tM5:$a($name)"
