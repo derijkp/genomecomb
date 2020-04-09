@@ -199,6 +199,11 @@ proc var_longshot_job {args} {
 			if {![file exists $tempfile] && [regexp {0 potential variants identified.} $msg]} {
 				longshot_empty_vcf $tempfile
 			}
+			if {$hap_bam_prefix ne ""} {
+				foreach file [glob [file root $dep]*.bam] {
+					exec samtools index $file
+				}
+			}
 		}
 		exec gzip [gzroot $vcffile].temp
 		file rename -force -- [gzroot $vcffile].temp.gz $vcffile
