@@ -215,8 +215,15 @@ proc cg_homwes {args} {
 		}
 		close $o
 		putslog "Run homozygosity mapping"
-		exec plink --tfile $sworkbase --out $sworkbase --make-bed
-		exec plink --bfile $sworkbase --out $sworkbase --homozyg-window-snp $homozygwindowsnp  --homozyg-window-het $allowedheterozygous --homozyg-window-threshold 0.05 --homozyg-window-missing 10 --homozyg-snp 10  --homozyg-density $homozygdensity  --homozyg-gap $homozyggap --homozyg-group
+		if {![catch {version plink 1.9}]} {
+			set extraopts1 {--allow-extra-chr}
+			set extraopts2 {--homozyg group --allow-extra-chr}
+		} else {
+			set extraopts1 {}
+			set extraopts2 {--homozyg-group}
+		}
+		exec plink --tfile $sworkbase --out $sworkbase --make-bed {*}$extraopts1
+		exec plink --bfile $sworkbase --out $sworkbase --homozyg-window-snp $homozygwindowsnp  --homozyg-window-het $allowedheterozygous --homozyg-window-threshold 0.05 --homozyg-window-missing 10 --homozyg-snp 10  --homozyg-density $homozygdensity  --homozyg-gap $homozyggap {*}$extraopts2
 		# exec plink --tfile ${sworkbase} --missing
 		
 		putslog "Create result $resultfile"
