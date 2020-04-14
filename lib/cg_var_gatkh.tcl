@@ -141,8 +141,8 @@ proc var_gatkh_job {args} {
 		set emptyreg [reg_isempty $regionfile]
 		set cache [file dir $target]/cache_var_gatkh_[file tail $refseq].temp
 		if {$emptyreg && [file exists $cache]} {
-			file copy $cache $target
-			file copy $cache.tbi.temp $target.tbi
+			file copy -force $cache $target
+			file copy -force $cache.tbi.temp $target.tbi
 		} else {
 			if {$regionfile ne ""} {
 				set bedfile [tempbed $regionfile $refseq]
@@ -164,8 +164,8 @@ proc var_gatkh_job {args} {
 			file rename -force -- $varallfile.temp.gz.tbi $varallfile.gz.tbi
 			# file delete $varallfile.temp
 			if {$emptyreg && ![file exists $cache]} {
-				file copy $target $cache
-				file copy $target.tbi $cache.tbi.temp
+				file copy -force $target $cache
+				file copy -force $target.tbi $cache.tbi.temp
 			}
 		}
 	}
