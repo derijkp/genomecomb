@@ -143,7 +143,7 @@ proc var_longshot_job {args} {
 	job longshot-[file tail $varfile] {*}$skips -mem 8G -deps $deps -targets {
 		$varfile $vcffile
 	} -vars {
-		vcffile region refseq root varfile split tech opts region hap_bam_prefix maxcov
+		vcffile region refseq root varfile split tech opts region hap_bam_prefix maxcov mincoverage
 	} -code {
 		if {$tech eq "ont"} {
 			lappend opts --strand_bias_pvalue_cutoff 0.01
