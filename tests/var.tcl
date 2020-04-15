@@ -222,7 +222,7 @@ test var {var_longshot basic} {
 	cd $::smalltestdir
 	file delete -force tmp/longshot
 	file mkdir tmp/longshot
-	foreach file [glob ori/longshot_example_data/*] {
+	foreach file [glob ori/longshot_example_data/pacbio_reads_30x.bam* ori/longshot_example_data/genome.fa* ori/longshot_example_data/ground_truth_variants.*] {
 		mklink $file tmp/longshot/[file tail $file]
 	}
 	cg var_longshot {*}$::dopts tmp/longshot/pacbio_reads_30x.bam tmp/longshot/genome.fa
@@ -241,7 +241,7 @@ test var {var_longshot distrreg} {
 	cd $::smalltestdir
 	file delete -force tmp/longshot_d
 	file mkdir tmp/longshot_d
-	foreach file [glob ori/longshot_example_data/*] {
+	foreach file [glob ori/longshot_example_data/pacbio_reads_30x.bam* ori/longshot_example_data/genome.fa* ori/longshot_example_data/ground_truth_variants.*] {
 		mklink $file tmp/longshot_d/[file tail $file]
 	}
 	cg var -method longshot -distrreg 1 {*}$::dopts tmp/longshot_d/pacbio_reads_30x.bam tmp/longshot_d/genome.fa
@@ -276,7 +276,7 @@ test var {var_longshot distrreg with contig1_ and empty contig and contig not in
 	#
 	cg var -method longshot -distrreg 1 {*}$::dopts tmp/longshot_d2/pacbio_reads_30x.bam tmp/longshot_d2/genome.fa
 	cg multicompar tmp/longshot_d2/compar.tsv tmp/longshot_d2/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_d2/ground_truth_variants.tsv
-	cg tsvdiff -brief 1 -x *.log -x *.finished tmp/longshot_d2 expected/longshot_d2
+	cg tsvdiff -brief 1 -x *.log -x *.bai -x *.finished tmp/longshot_d2 expected/longshot_d2
 	cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot_d2/compar.tsv
 } {zyg-longshot-pacbio_reads_30x	zyg-ground_truth_variants	count
 ?	m	2

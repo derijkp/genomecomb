@@ -69,7 +69,7 @@ test process_sample {map bwa distrreg mutiple fastq -maxfastqdistr 2} {
 	splitfastqs data/seq_R1.fq.gz tmp/NA19240m/fastq/seq _R1.fq 20
 	splitfastqs data/seq_R2.fq.gz tmp/NA19240m/fastq/seq _R2.fq 20
 	file delete tmp/NA19240m/map-rdsbwa-NA19240m.bam
-	cg process_sample -stack 1 -v 2 -clip 0 -maxfastqdistr 2 -aligners bwa -varcallers {} -distrreg chr -varcallers {} -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >@ stdout 2>@ stderr
+	cg process_sample -stack 1 -clip 0 -maxfastqdistr 2 -aligners bwa -varcallers {} -distrreg chr -varcallers {} -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >@ stdout 2>@ stderr
 	# chr21:42730799-42762826
 	exec samtools sort -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/ali.sam.tsv

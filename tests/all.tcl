@@ -61,6 +61,9 @@ runtests reports.tcl
 runtests bam.tcl
 runtests homwes.tcl
 
+puts "all tests finished"
+testsummarize
+
 # long time, run separately
 # runtests process.tcl
 

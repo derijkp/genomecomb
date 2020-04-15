@@ -181,7 +181,7 @@ header
 > SRR792091.1611898	chr21	42779960	42780060	1
 child process exited abnormally} error
 
-test bam_clean {bam_clean to cram} {
+test bam_clean {bam_clean to cram 2} {
 	test_cleantmp
 	file copy -force -- data/bwa.sam tmp/bwa.sam
 	cg bam_clean -stack 1 -keep 1 -refseq $::refseqdir/hg19 \
