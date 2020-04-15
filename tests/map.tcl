@@ -244,30 +244,4 @@ test map_ngmlr {map_ngmlr 4 files -m 2} {
 	lindex [cg sam2tsv tmp/ali.bam | cg select -g all] end
 } {400}
 
-test process_sample {map bwa distrreg cram} {
-	test_cleantmp
-	file mkdir tmp/NA19240m/fastq
-	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
-	cg process_sample -aligners bwa -removeduplicates 0 -aliformat cram -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
-	# chr21:42730799-42762826
-	dbdir $::refseqdir/hg19
-	exec samtools sort -O sam tmp/NA19240m/map-rsbwa-NA19240m.cram > tmp/ali.sam
-	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -s {chromosome begin end qname} > tmp/ali.sam.tsv
-	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam | cg select -s {chromosome begin end qname} > tmp/bwa.sam.tsv
-	catch {cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv}
-} 0
-
-test process_sample {map bwa distrreg cram} {
-	test_cleantmp
-	file mkdir tmp/NA19240m/fastq
-	file copy data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
-	cg process_sample -aligners bwa -aliformat cram -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
-	# chr21:42730799-42762826
-	dbdir $::refseqdir/hg19
-	exec samtools sort -O sam tmp/NA19240m/map-rdsbwa-NA19240m.cram > tmp/ali.sam
-	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf {duplicate other} -s {chromosome begin end qname} > tmp/ali.sam.tsv
-	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam | cg select -rf {duplicate other} -s {chromosome begin end qname} > tmp/bwa.sam.tsv
-	catch {cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv}
-} 0
-
 testsummarize

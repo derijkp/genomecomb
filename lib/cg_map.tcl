@@ -47,6 +47,7 @@ proc map_job {args} {
 	set method bwa
 	set mem {}
 	set compressionlevel {}
+	set joinfastqs 0
 	cg_options map args {
 		-method {
 			set method [methods_map $value]
@@ -89,13 +90,16 @@ proc map_job {args} {
 		-mem {
 			set mem $value
 		}
+		-joinfastqs {
+			set joinfastqs [true $value]
+		}
 		-compressionlevel {
 			set compressionlevel $value
 		}
 	} {result refseq sample fastqfile1} 4 ... {
 		align reads in fastq files to a reference genome
 	}
-	set files [list $fastqfile1 {*}$args]
+	set fastqfiles [list $fastqfile1 {*}$args]
 	set result [file_absolute $result]
 	set refseq [refseq $refseq]
 	set resultdir [file dir $result]
@@ -117,33 +121,64 @@ proc map_job {args} {
 	set samfiles {}
 	set asamfiles {}
 	set num 1
-	if {($paired && [llength $files] == 2) || (!$paired && [llength $files] == 1)} {
+	if {($paired && [llength $fastqfiles] == 2) || (!$paired && [llength $fastqfiles] == 1) || $joinfastqs} {
 		set analysisinfo [analysisinfo_file $result]
-		set file [lindex $files 0]
+		set file [lindex $fastqfiles 0]
 		job map_${method}-[file tail $result] {*}$skips \
 			-mem [map_mem $method $mem $threads] -cores $threads \
-		-deps [list {*}$files $refseq] -targets {
+		-deps [list {*}$fastqfiles $refseq] -targets {
 			$result $analysisinfo
 		} -vars {
-			result method sort preset sample readgroupdata fixmate paired threads refseq files compressionlevel
+			result method sort preset sample readgroupdata fixmate paired threads refseq fastqfiles compressionlevel joinfastqs compress
 		} -code {
+			set cleanupfiles {}
+			if {$joinfastqs} {
+				set tempfastq1 [tempfile].fastq.gz
+				if {!$paired} {
+					if {[llength $fastqfiles] > 1} {
+						set tempfile [tempfile]
+						exec cg zcat {*}$fastqfiles | gzip --fast > $tempfastq1
+						set fastqfiles $tempfastq1
+						lappend cleanupfiles $tempfastq1
+					}
+				} elseif {[llength $fastqfiles] > 2} {
+					set tempfastq2 [tempfile].fastq.gz
+					set deps1 {}
+					set deps2 {}
+					foreach {dep1 dep2} $fastqfiles {
+						lappend deps1 $dep1
+						lappend deps2 $dep2
+					}
+					set compresspipe "| gzip --fast"
+					file mkdir [file dir $target]
+					analysisinfo_write $dep1 $tempfastq1
+					exec cg zcat {*}$deps1 {*}$compresspipe > $tempfastq1 2>@ stderr
+					analysisinfo_write $dep2 $tempfastq2
+					exec cg zcat {*}$deps2 {*}$compresspipe > $tempfastq2 2>@ stderr
+					set fastqfiles [list $tempfastq1 $tempfastq2]
+					lappend cleanupfiles $tempfastq1 $tempfastq2
+				}
+			}
 			set tempfile [filetemp_ext $result]
 			if {$sort eq "nosort"} {
 				catch_exec cg map_${method} -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
 					-threads $threads \
-					$tempfile $refseq $sample {*}$files
+					$tempfile $refseq $sample {*}$fastqfiles
 			} else {
-				analysisinfo_write [lindex $files 0] $result aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
+				analysisinfo_write [lindex $fastqfiles 0] $result aligner $method aligner_version [version $method] reference [file2refname $refseq] aligner_paired $paired aligner_sort gnusort aligner_sort_version [version gnusort8]
 				if {[file_ext $result] eq ".cram"} {set addm5 1} else {set addm5 0}
 				catch_exec cg map_${method} -paired $paired	-preset $preset \
 					-readgroupdata $readgroupdata -fixmate $fixmate \
 					-threads $threads \
-					-.sam $refseq $sample {*}$files \
+					-.sam $refseq $sample {*}$fastqfiles \
 					| cg _sam_sort_gnusort $sort $threads $refseq $addm5 \
 					{*}[convert_pipe -.sam $tempfile -compressionlevel $compressionlevel -refseq $refseq -threads $threads -endpipe 1]
 			}
 			result_rename $tempfile $result
+			foreach file $cleanupfiles {
+				file delete $file
+			}
 		}
 		return $result
 	}

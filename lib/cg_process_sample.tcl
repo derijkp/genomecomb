@@ -476,6 +476,7 @@ proc process_sample_job {args} {
 	set keepsams 0
 	set datatype {}
 	set aliformat bam
+	set maxfastqdistr {}
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -558,6 +559,9 @@ proc process_sample_job {args} {
 		}
 		-aliformat {
 			set aliformat [string tolower $value]
+		}
+		-maxfastqdistr {
+			set maxfastqdistr $value
 		}
 	} {} 1 2
 	if {[llength $args] == 1} {
@@ -766,16 +770,29 @@ proc process_sample_job {args} {
 	# create bam from fastq files (if found)
 	set cleanedbams {}
 	set processlist {}
-	if {$paired} {
-		foreach {fastq1 fastq2} $fastqfiles {
-			lappend processlist [list $fastq1 $fastq2]
+	if {[isint $maxfastqdistr]} {
+		set len [llength $fastqfiles]
+		if {$paired} {
+			set perbatch [expr {($len + $maxfastqdistr -1)/$maxfastqdistr}]
+			if {[expr {$perbatch%2}]} {incr perbatch}
+		} else {
+			set perbatch [expr {($len + $maxfastqdistr -1)/$maxfastqdistr}]
+		}
+		set pos 0
+		for {set pos 0} {$pos < $len} {incr pos $perbatch} {
+			lappend processlist [lrange $fastqfiles $pos [expr {$pos + $perbatch - 1}]]
 		}
 	} else {
-		foreach {fastq} $fastqfiles {
-			lappend processlist [list $fastq]
+		if {$paired} {
+			foreach {fastq1 fastq2} $fastqfiles {
+				lappend processlist [list $fastq1 $fastq2]
+			}
+		} else {
+			foreach {fastq} $fastqfiles {
+				lappend processlist [list $fastq]
+			}
 		}
 	}
-
 	if {[llength $processlist]} {
 		set skips {}
 		set skipsresult {}
@@ -792,11 +809,16 @@ proc process_sample_job {args} {
 			set files $pfastqfiles
 			set cleanupfiles {}
 			set cleanupdeps {}
+			if {[llength $pfastqfiles] > 1} {
+				set pbase [file_root [file tail [lindex $pfastqfiles 0]]]__[file_root [file tail [lindex $pfastqfiles end]]]
+			} else {
+				set pbase [file_root [file tail [lindex $pfastqfiles 0]]]
+			}
 			foreach aligner $aligners {
 				set bamfile $sampledir/map-${aligner}-$sample.bam
 				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 				set target $resultbamfile.index/[file_root [file tail [lindex $files 0]]].sam.zst
-				lappend cleanupdeps $resultbamfile.index/[file root [gzroot [file tail [lindex $pfastqfiles 0]]]].sam.zst
+				lappend cleanupdeps $resultbamfile.index/$pbase.sam.zst
 			}
 			if {$clip} {
 				set files [fastq_clipadapters_job -adapterfile $adapterfile -paired $paired \
@@ -814,7 +836,7 @@ proc process_sample_job {args} {
 				set resultbamfile $sampledir/map-${resultbamprefix}${aligner}-$sample.$aliformat
 				set bamfile $sampledir/map-${aligner}-$sample.bam
 				file mkdir $resultbamfile.index
-				set target $resultbamfile.index/[file_root [file tail [lindex $pfastqfiles 0]]].sam.zst
+				set target $resultbamfile.index/$pbase.sam.zst
 				lappend partsa($aligner) $target
 				# map using ${aligner}
 				set opts {}
@@ -825,6 +847,7 @@ proc process_sample_job {args} {
 				}
 				map_job -method $aliprog {*}$opts -threads $threads \
 					-skip $skips \
+					-joinfastqs 1 \
 					-skip $skipsresult \
 					-paired $paired \
 					-sort coordinate \
@@ -885,6 +908,7 @@ proc process_sample_job {args} {
 				sam_catmerge_job \
 					-name merge2bam-$aligner-$sample -refseq $refseq \
 					-sort nosort \
+					-index 1 \
 					-deletesams [string is false $keepsams] -threads $threads \
 					$resultbamfile {*}$cleanbams
 				lappend cleanedbams $resultbamfile

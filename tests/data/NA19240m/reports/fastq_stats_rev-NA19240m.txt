@@ -1,0 +1,27 @@
+reads	100
+len	100
+len mean	98.4200
+len stdev	6.8963
+len min	56
+phred	33
+window-size	100
+cycle-max	35
+dups	3
+%dup	3.0000
+unique-dup seq	3
+min dup count	2
+dup seq 	1	1	TCCATGCCTTCTCTCTGCAACCACAGGCCTTGGGC
+dup seq 	2	1	AGGGATGGGATGAGGATGGCCTGGGTACAGACTCC
+dup seq 	3	1	ATACAAATTTGGGAGTAGGACTAGTAAACAATGCT
+dup mean	2.0000
+dup stddev	0.0000
+qual min	7
+qual max	41
+qual mean	36.8569
+qual stdev	4.8006
+%A	24.8571
+%C	26.7429
+%G	27.5429
+%T	20.8571
+%N	0.0000
+total bases	9842

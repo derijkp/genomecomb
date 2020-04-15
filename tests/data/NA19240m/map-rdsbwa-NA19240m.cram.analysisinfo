@@ -1,0 +1,2 @@
+clipping	clipping_version	clipping_cg_version	aligner	aligner_version	reference	aligner_paired	aligner_sort	aligner_sort_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort	bamclean	bamclean_version	removeduplicates	removeduplicates_version	realign	realign_version	sammerge	sammerge_version	sammerge_sort	sammerge_mergesort
+fastq-mcf	1.1.2-537 adapted	0.100.1	bwa	0.7.15-r1140	hg19	1	gnusort	8.31	genomecomb	0.100.1	coordinate	1	genomecomb	0.100.1	picard	2.21.3-SNAPSHOT	gatk	3.8-1-0-gf15c1c3ef	genomecomb	0.100.1	nosort	0

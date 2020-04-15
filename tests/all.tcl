@@ -53,6 +53,7 @@ runtests svmulticompar.tcl
 runtests sv.tcl
 runtests pmulticompar.tcl
 runtests process_multicompar.tcl
+runtests process_local.tcl
 
 # next ones take longer, use larger data in genomecomb.testdata
 runtests queries.tcl

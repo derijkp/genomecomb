@@ -1,0 +1,28 @@
+sample	source	parameter	value
+NA19240m	genomecomb	command	cg process_sample -threads 1 -aligners bwa -aliformat cram -distrreg chr -dbdir /data/genomecomb.smalltestdata/refseqtest/hg19/genome_hg19.ifas tmp/NA19240m
+NA19240m	genomecomb	param_dbdir	/data/genomecomb.smalltestdata/refseqtest/hg19
+NA19240m	genomecomb	param_aligners	bwa
+NA19240m	genomecomb	param_varcallers	gatk sam
+NA19240m	genomecomb	param_svcallers	
+NA19240m	genomecomb	param_realign	1
+NA19240m	genomecomb	param_paired	1
+NA19240m	genomecomb	param_samBQ	0
+NA19240m	genomecomb	param_adapterfile	
+NA19240m	genomecomb	param_reports	fastqstats fastqc flagstat_reads histodepth hsmetrics vars covered histo predictgender basic
+NA19240m	genomecomb	version_genomecomb	0.100.1
+NA19240m	genomecomb	version_dbdir	0.11
+NA19240m	genomecomb	version_fastqc	0.11.5
+NA19240m	genomecomb	version_fastq-stats	1.1.2-537 adapted
+NA19240m	genomecomb	version_fastq-mcf	1.1.2-537 adapted
+NA19240m	genomecomb	version_bwa	0.7.15-r1140
+NA19240m	genomecomb	version_bowtie2	2.1.0
+NA19240m	genomecomb	version_samtools	1.9 (using htslib 1.9)
+NA19240m	genomecomb	version_gatk3	3.8-1-0-gf15c1c3ef
+NA19240m	genomecomb	version_gatk	4.0.12.0
+NA19240m	genomecomb	version_gatkjava	openjdk version "1.8.0_242", OpenJDK Runtime Environment (build 1.8.0_242-8u242-b08-0ubuntu3~18.04-b08), OpenJDK 64-Bit Server VM (build 25.242-b08, mixed mode)
+NA19240m	genomecomb	version_picard	2.21.3-SNAPSHOT
+NA19240m	genomecomb	version_java	openjdk version "1.8.0_242", OpenJDK Runtime Environment (build 1.8.0_242-8u242-b08-0ubuntu3~18.04-b08), OpenJDK 64-Bit Server VM (build 25.242-b08, mixed mode)
+NA19240m	genomecomb	version_gnusort8	8.31
+NA19240m	genomecomb	version_tabix	1.9
+NA19240m	genomecomb	version_zst	1.4.4
+NA19240m	genomecomb	version_os	5.3.0-42-generic Linux x86_64 #34~18.04.1-Ubuntu SMP Fri Feb 28 13:42:26 UTC 2020
