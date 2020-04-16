@@ -185,7 +185,7 @@ proc map_job {args} {
 	set indexdir [gzroot $result].index
 	file mkdir $indexdir
 	if {!$paired} {
-		foreach file $files {
+		foreach file $fastqfiles {
 			set name [file root [file tail $file]]
 			set target $resultbase-$name.sam.zst
 			lappend samfiles $target
@@ -218,10 +218,10 @@ proc map_job {args} {
 			}
 		}
 	} else {
-		if {[expr {[llength $files]%2}]} {
+		if {[expr {[llength $fastqfiles]%2}]} {
 			error "mapping needs even number of files for paired analysis"
 		}
-		foreach {file1 file2} $files {
+		foreach {file1 file2} $fastqfiles {
 			set name [file tail [file_root $file1]]
 			set target $indexdir/[file_root [file tail $result]]-$name.sam.zst
 			lappend samfiles $target
