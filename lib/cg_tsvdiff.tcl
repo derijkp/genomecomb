@@ -46,13 +46,13 @@ proc long {file resultfile splitlines {pre {}} {lines {}}} {
 proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffprog {lines {}} {sort {}}} {
 	global errors
 	set tempdir [tempdir]
-	if {[file extension $file1] in ".bam .sam"}  {
+	if {[file extension $file1] in ".bam .sam .cram"}  {
 		file mkdir $tempdir/conv
 		set temp $tempdir/conv/[file tail $file1]
 		cg sam2tsv $file1 $temp
 		set file1 $temp
 	}
-	if {[file extension $file2] in ".bam .sam"}  {
+	if {[file extension $file2] in ".bam .sam .cram"}  {
 		file mkdir $tempdir/conv
 		set temp $tempdir/conv/[file tail $file2]
 		cg sam2tsv $file2 $temp
@@ -76,7 +76,7 @@ proc tsvdiff_file {file1 file2 rcomments type fields diffopts splitlines diffpro
 	}
 	set common [list_common $h1 $h2]
 	set error {}
-	if {$sort eq "1"} {
+	if {$sort eq "1"} {data/NA19240m/map-rdsbwa-NA19240m.cram
 		set sort $common
 	}
 	set temp1_pre ""
