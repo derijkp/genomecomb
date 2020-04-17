@@ -126,7 +126,12 @@ test sam_clipamplicons {basic 2} {
 proc checksam {file testfile {refseq {}}} {
 	set ext [file extension $file]
 	set error [catch {exec samtools index $file} msg]
-	if {$ext eq ".sam" && (!$error || ![regexp "is in a format that cannot be usefully indexed" $msg])} {
+	if {$ext eq ".sam" && (!$error 
+		|| (
+			![regexp "is in a format that cannot be usefully indexed" $msg]
+			&& ![regexp "SAM file .* not BGZF compressed" $msg]
+		)
+	)} {
 		error "$file is not a sam file"
 	} elseif {$ext eq ".bam" && ![file exists $file.bai]} {
 		error "$file is not a bam file"
@@ -135,12 +140,12 @@ proc checksam {file testfile {refseq {}}} {
 	}
 	if {$ext eq ".bam"} {
 		set tempfile [tempfile]
-		exec samtools view -h $file > $tempfile
+		exec samtools view --no-PG -h $file > $tempfile
 		set file $tempfile
 	} elseif {[file extension $file] eq ".cram"} {
 		set refseq [refseq $refseq]
 		set tempfile [tempfile]
-		exec samtools view -h -T $refseq $file > $tempfile
+		exec samtools view --no-PG -h -T $refseq $file > $tempfile
 		set file $tempfile
 	}
 	cg select -sh /dev/null -f {qname flag rname pos seq qual} $file > tmp/result.tsv
@@ -188,22 +193,22 @@ test sam_clipamplicons {pipes and formats} {
 	cg sam_clipamplicons tmp/samplicons.tsv < tmp/temp.sam > tmp/out.sam
 	checksam tmp/out.sam tmp/expected.tsv
 	# bam input and output
-	exec samtools view -b tmp/temp.sam > tmp/temp.bam
+	exec samtools view --no-PG -b tmp/temp.sam > tmp/temp.bam
 	cg sam_clipamplicons tmp/samplicons.tsv tmp/temp.bam tmp/out.bam
 	checksam tmp/out.bam tmp/expected.tsv
 	cg sam_clipamplicons -outputformat bam tmp/samplicons.tsv tmp/temp.bam > tmp/out.bam
 	checksam tmp/out.bam tmp/expected.tsv
 	# cram in and output via pipe
-	exec samtools view -h -C -T [refseq $::refseqdir/hg19] tmp/temp.sam > tmp/temp.cram
+	exec samtools view --no-PG -h -C -T [refseq $::refseqdir/hg19] tmp/temp.sam > tmp/temp.cram
 	cg sam_clipamplicons -refseq $::refseqdir/hg19 tmp/samplicons.tsv tmp/temp.cram tmp/outd.cram
 	checksam tmp/outd.cram tmp/expected.tsv $::refseqdir/hg19
-	if {[lindex [exec md5sum tmp/outd.cram] 0] ne "bdc02252d7546b8d64b15dbc1fac7e03"} {error "error creating cram"}
+	if {[lindex [exec md5sum tmp/outd.cram] 0] ne "c4bb008c3fd42249ec95f50488fc5807"} {error "error creating cram"}
 	cg sam_clipamplicons -refseq $::refseqdir/hg19 -inputformat cram -outputformat cram tmp/samplicons.tsv < tmp/temp.cram > tmp/out.cram
 	checksam tmp/out.cram tmp/expected.tsv $::refseqdir/hg19
-	if {[lindex [exec md5sum tmp/out.cram] 0] ne "bdc02252d7546b8d64b15dbc1fac7e03"} {error "error creating cram in pipe"}
+	if {[lindex [exec md5sum tmp/out.cram] 0] ne "c4bb008c3fd42249ec95f50488fc5807"} {error "error creating cram in pipe"}
 	cg sam_clipamplicons -refseq $::refseqdir/hg19 tmp/samplicons.tsv tmp/temp.sam tmp/outsd.cram
 	checksam tmp/outsd.cram tmp/expected.tsv $::refseqdir/hg19
-	if {[lindex [exec md5sum tmp/outsd.cram] 0] ne "b4ccaf2e339f5c95f134fa4b72d9e497"} {error "error creating cram direct from sam"}
+	if {[lindex [exec md5sum tmp/outsd.cram] 0] ne "32cb96153c77cdde28b03b615e362091"} {error "error creating cram direct from sam"}
 } {}
 
 test sam_clipamplicons {skip chromosome in amplicons} {

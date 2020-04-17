@@ -14,15 +14,15 @@ if 0 {
 	cd /data/genomes
 	rs peterdr@crema:/complgen3/peterdr/projects/pubgenomes_tests.data/platinum/samples/ERR194147_30x_NA12878/map-dsbwa-ERR194147_30x_NA12878.bam .
 	# create illumina test data (from platinum pubgenomes originally)
-	samtools view -hb /data/genomes/map-dsbwa-ERR194147_30x_NA12878.bam chr21 > /data/genomes/map-dsbwa-ERR194147_30x_NA12878-chr21.bam
+	samtools view --no-PG -hb /data/genomes/map-dsbwa-ERR194147_30x_NA12878.bam chr21 > /data/genomes/map-dsbwa-ERR194147_30x_NA12878-chr21.bam
 	samtools index /data/genomes/map-dsbwa-ERR194147_30x_NA12878-chr21.bam
-	samtools view -hb /data/genomes/map-dsbwa-ERR194147_30x_NA12878-chr21.bam chr21:21800000-25100000 > /data/genomes/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
+	samtools view --no-PG -hb /data/genomes/map-dsbwa-ERR194147_30x_NA12878-chr21.bam chr21:21800000-25100000 > /data/genomes/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	samtools index /data/genomes/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam
 	cg bam2fastq /data/genomes/map-dsbwa-ERR194147_30x_NA12878-chr21part.bam /data/genomes/ERR194147_30x_NA12878-chr21part_1.fq.gz /data/genomes/ERR194147_30x_NA12878-chr21part_2.fq.gz
 
 	rs peterdr@crema:/complgen3/peterdr/projects/pubgenomes_tests.data/platinum/samples/ERR194146_30x_NA12877/map-dsbwa-ERR194146_30x_NA12877.bam* .
 	# create illumina test data (from platinum pubgenomes originally)
-	samtools view -hb /data/genomes/map-dsbwa-ERR194146_30x_NA12877.bam chr21:21800000-25100000 > /data/genomes/map-dsbwa-ERR194146_30x_NA12877-chr21part.bam
+	samtools view --no-PG -hb /data/genomes/map-dsbwa-ERR194146_30x_NA12877.bam chr21:21800000-25100000 > /data/genomes/map-dsbwa-ERR194146_30x_NA12877-chr21part.bam
 	samtools index /data/genomes/map-dsbwa-ERR194146_30x_NA12877-chr21part.bam
 	cg bam2fastq /data/genomes/map-dsbwa-ERR194146_30x_NA12877-chr21part.bam /data/genomes/ERR194146_30x_NA12877-chr21part_1.fq.gz /data/genomes/ERR194146_30x_NA12877-chr21part_2.fq.gz
 

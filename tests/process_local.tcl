@@ -31,7 +31,8 @@ test process_sample {bwa distrreg cram} {
 	file copy -force data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
 	cg process_sample -threads 1 -aligners bwa -aliformat cram -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
 	# chr21:42730799-42762826
-	cg tsvdiff -x fastq -x info_analysis.tsv -x *.submitting -x fastqc* -x *.index -x log_jobs tmp/NA19240m data/NA19240m
+	cg tsvdiff -q 1 -x fastq -x *.crai -x *.zsti -x info_analysis.tsv -x *.submitting -x fastqc* -x *.index -x log_jobs tmp/NA19240m data/NA19240m
+	cg tsvdiff tmp/NA19240m/map-rdsbwa-NA19240m.cram data/NA19240m/map-rdsbwa-NA19240m.cram
 } {}
 
 test process_sample {bwa distrreg -removeduplicates 0 cram} {
@@ -41,7 +42,7 @@ test process_sample {bwa distrreg -removeduplicates 0 cram} {
 	cg process_sample -aligners bwa -varcallers {} -removeduplicates 0 -aliformat cram -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
 	# chr21:42730799-42762826
 	dbdir $::refseqdir/hg19
-	exec samtools sort -O sam tmp/NA19240m/map-rsbwa-NA19240m.cram > tmp/ali.sam
+	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rsbwa-NA19240m.cram > tmp/ali.sam
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -s {chromosome begin end qname} > tmp/ali.sam.tsv
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam | cg select -s {chromosome begin end qname} > tmp/bwa.sam.tsv
 	catch {cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv}
@@ -56,7 +57,7 @@ test process_sample {map bwa distrreg mutiple fastq} {
 	file delete tmp/NA19240m/map-rdsbwa-NA19240m.bam
 	cg process_sample -clip 0 -aligners bwa -varcallers {} -distrreg chr -varcallers {} -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >@ stdout 2>@ stderr
 	# chr21:42730799-42762826
-	exec samtools sort -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
+	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/ali.sam.tsv
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/bwa.sam.tsv
 	catch {cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv}
@@ -71,7 +72,7 @@ test process_sample {map bwa distrreg mutiple fastq -maxfastqdistr 2} {
 	file delete tmp/NA19240m/map-rdsbwa-NA19240m.bam
 	cg process_sample -stack 1 -clip 0 -maxfastqdistr 2 -aligners bwa -varcallers {} -distrreg chr -varcallers {} -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >@ stdout 2>@ stderr
 	# chr21:42730799-42762826
-	exec samtools sort -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
+	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/ali.sam.tsv
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/bwa.sam.tsv
 	catch {cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv}

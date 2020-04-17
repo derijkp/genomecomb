@@ -17,7 +17,7 @@ proc cg_bamreorder {args} {
 	set refchrs [list_subindex $index 0]
 	set reflens [list_subindex $index 3]
 	# check bam file to see if we need to rename some contigs
-	set bamheader [exec samtools view -H $src]
+	set bamheader [exec samtools view --no-PG -H $src]
 	if {$method eq "picard"} {
 		set bamchrs {}
 		set bamlens {}
@@ -128,10 +128,10 @@ proc cg_bamreorder {args} {
 			
 		}
 		lappend newheader {*}$post
-		set o [open [list | samtools view -b - > $dest.temp] w]
+		set o [open [list | samtools view --no-PG -b - > $dest.temp] w]
 		puts $o [join $newheader \n]
 		foreach chr $todo {
-			set f [open [list | samtools view -@ $threads $src $chr]]
+			set f [open [list | samtools view --no-PG -@ $threads $src $chr]]
 			fconfigure $f -encoding binary -translation binary
 			fconfigure $o -encoding binary -translation binary
 			fcopy $f $o

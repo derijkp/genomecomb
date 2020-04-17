@@ -15,7 +15,7 @@ NA19240m	genomecomb	pg_yncount	0.0000
 NA19240m	genomecomb	pg_yxratio	?
 NA19240m	genomecomb	pg_pcthqheterozygous	?
 NA19240m	genomecomb	pg_yxnratio	?
-NA19240m	genomecomb	pg_xcov	-NaN
-NA19240m	genomecomb	pg_ycov	-NaN
+NA19240m	genomecomb	pg_xcov	0.0
+NA19240m	genomecomb	pg_ycov	0.0
 NA19240m	genomecomb	pg_yxcovratio	?
 NA19240m	genomecomb	predgender	u

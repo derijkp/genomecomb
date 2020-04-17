@@ -53,10 +53,10 @@ FILE *sam_popen(char *filename) {
 		if (len >= 4 && *cur == 'm') {
 			if (*(--cur) == 'a' && *(--cur) == 'b' && *(--cur) == '.') {
 				if (buffer->size == 0) {
-					DStringAppend(buffer,"samtools view -h ");
+					DStringAppend(buffer,"samtools view --no-PG -h ");
 					DStringAppend(buffer,filename);
 				} else {
-					DStringAppend(buffer,"| samtools view -h ");
+					DStringAppend(buffer,"| samtools view --no-PG -h ");
 				}
 				keepcur = --cur;
 			} else {

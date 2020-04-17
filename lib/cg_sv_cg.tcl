@@ -114,7 +114,7 @@ proc bam2sv {bamfile prefix} {
 			close $o($chr)
 		}
 		catch {close $f}
-		set f [open "| [list samtools view $bamfile]"]
+		set f [open "| [list samtools view --no-PG $bamfile]"]
 		# numl,numr,num,bin not directly useful here
 		set numl ""; set numr ""; set num "" ; set bin ""; set side ""
 		unset -nocomplain todo

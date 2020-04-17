@@ -34,9 +34,9 @@ proc cg_sam_clipamplicons {args} {
 	if {$inputformat in "bam cram"} {
 		if {$sourcefile eq "-"} {
 			lappend optsio <@ stdin
-			lappend pipe samtools view -h
+			lappend pipe samtools view --no-PG -h
 		} else {
-			lappend pipe samtools view -h $sourcefile
+			lappend pipe samtools view --no-PG -h $sourcefile
 		}
 		if {$inputformat eq "cram"} {
 			lappend pipe -T [refseq $refseq]

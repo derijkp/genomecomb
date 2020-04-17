@@ -71,7 +71,7 @@ proc bam2reg_job {args} {
 			} -vars {
 				bamfile mincoverage subtarget region
 			} -code {
-				set bamheader [exec samtools view -H $bamfile]
+				set bamheader [exec samtools view --no-PG -H $bamfile]
 				set chr [lindex [split $region :-] 0]
 				if {![regexp \tSN:$chr\t $bamheader]} {
 					file_write $target ""

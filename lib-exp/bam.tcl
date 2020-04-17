@@ -29,7 +29,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 	file rename -force -- $temptarget $samfile
 	# read header
 	if {[catch {
-		set header [exec samtools view -S -H $samfile 2> /dev/null]
+		set header [exec samtools view --no-PG -S -H $samfile 2> /dev/null]
 	} error]} {
 		if {$error ne {[samopen] SAM header is present: 25 sequences.}} {error $error}
 	}
@@ -53,7 +53,7 @@ proc cg_map2bam {readfile mapfile reffile outfile} {
 	foreach chr $chrs {
 		set temptarget [filetemp $outfile-chr$chr.bam]
 		if {[catch {
-			exec samtools view -S -h -b -o $temptarget $scratchbase-chr$chr.sam
+			exec samtools view --no-PG -S -h -b -o $temptarget $scratchbase-chr$chr.sam
 		} error]} {
 			if {$error ne {[samopen] SAM header is present: 25 sequences.}} {error $error}
 		}

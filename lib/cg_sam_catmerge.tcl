@@ -110,9 +110,9 @@ proc sam_catmerge_job {args} {
 			}
 		}
 		if {[gziscompressed $testsam]} {
-			set header [exec cg zcat $testsam | samtools view -H]
+			set header [exec cg zcat $testsam | samtools view --no-PG -H]
 		} else {
-			set header [exec samtools view -H $testsam]
+			set header [exec samtools view --no-PG -H $testsam]
 		}
 		if {[file_ext $resultfile] eq ".cram"} {
 			set refseq [refseq $refseq]

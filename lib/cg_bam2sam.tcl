@@ -18,13 +18,13 @@ proc cg_bam2sam {args} {
 	}
 	if {!$sortchr} {
 		if {$samfile eq "-"} {
-			exec samtools view -h $bamfile >@ stdout
+			exec samtools view --no-PG -h $bamfile >@ stdout
 		} else {
-			exec samtools view -h $bamfile {*}[compresspipe $samfile] > $samfile
+			exec samtools view --no-PG -h $bamfile {*}[compresspipe $samfile] > $samfile
 		}
 	} else {
 		set o [wgzopen $samfile]
-		set header [split [exec samtools view -H $bamfile] \n]
+		set header [split [exec samtools view --no-PG -H $bamfile] \n]
 		set pos 0
 		foreach line $header {
 			if {[regexp ^@SQ $line]} break
@@ -53,7 +53,7 @@ proc cg_bam2sam {args} {
 			if {![regexp {\tSN:([^\t]+)\t} $line temp chr]} {
 				error "format error in SQ line: $line"
 			}
-			exec samtools view $bamfile $chr >@ $o
+			exec samtools view --no-PG $bamfile $chr >@ $o
 		}
 		gzclose $o
 	}

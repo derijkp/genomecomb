@@ -103,7 +103,7 @@ fi
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/zstd-mt ] ; then
 	download https://github.com/mcmilk/zstdmt/archive/0.6.tar.gz zstdmt-0.6.tar.gz
 	cd /build/zstdmt-0.6/programs
-	if [ ! -f main.c.orig ] ; then
+	if [ ! -f main.c.ori ] ; then
 		cp main.c main.c.ori
 	fi
 	cp /io/extern-src/zstdmt_main.c main.c
@@ -205,7 +205,7 @@ fi
 # htslib (tabix, bgzip, lib for samtools)
 # ---------------------------------------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/tabix ] || [ ! -f /io/extern$ARCH/bgzip ] || [ ! -f /build/lib/libhts.a ] ; then
-	htsversion=1.9
+	htsversion=1.10.2
 	# also a library, needs -fPIC, so compile as lib
 	source /hbb_shlib/activate
 	download https://github.com/samtools/htslib/releases/download/$htsversion/htslib-$htsversion.tar.bz2
@@ -226,7 +226,7 @@ fi
 # samtools
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/samtools ] ; then
-	samversion=1.9
+	samversion=1.10
 	download https://github.com/samtools/samtools/releases/download/$samversion/samtools-$samversion.tar.bz2
 	cd /build/samtools-$samversion
 	make distclean
@@ -240,7 +240,7 @@ fi
 # bcftools
 # --------
 if [ $all = 1 ] || [ ! -f /io/extern$ARCH/bcftools ] ; then
-	bcfversion=1.9
+	bcfversion=1.10.2
 	download https://github.com/samtools/bcftools/releases/download/$bcfversion/bcftools-$bcfversion.tar.bz2
 	cd /build/bcftools-$bcfversion
 	make distclean

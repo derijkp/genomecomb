@@ -1,7 +1,16 @@
 proc bam_chrs {bamfile} {
-	set bamheader [exec samtools view -H $bamfile]
+	set bamheader [exec samtools view --no-PG -H $bamfile]
 	list_unmerge [regexp -all -inline {SN:([^\t]+)} $bamheader] 1 result
 	return $result
+}
+
+proc bam_index {args} {
+	foreach file $args {
+		set ext [file extension $file]
+		if {$ext in ".bam .cram" || ($ext eq ".gz" && [file extension [file root $file]] eq ".sam")} {
+			exec samtools index $file >@ stdout 2>@ stderr
+		}
+	}
 }
 
 proc bam_index_job {args} {
@@ -27,7 +36,7 @@ proc bam_index_job {args} {
 }
 
 proc sam_empty file {
-	if {[catch {exec samtools view $file | head -1} test]} {
+	if {[catch {exec samtools view --no-PG $file | head -1} test]} {
 		return 0
 	} else {
 		return 1

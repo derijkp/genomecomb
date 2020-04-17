@@ -443,9 +443,9 @@ proc tempbam {sourcefile {inputformat {}} {refseq {}}} {
 	} elseif {$inputformat ne "bam"} {
 		set tempfile [tempfile].bam
 		if {[gziscompressed $inputformat]} {
-			exec {*}[gzcat $inputformat 0] $sourcefile | samtools view -b -u -o $tempfile
+			exec {*}[gzcat $inputformat 0] $sourcefile | samtools view --no-PG -b -u -o $tempfile
 		} else {
-			exec samtools view -b -u $sourcefile -o $tempfile
+			exec samtools view --no-PG -b -u $sourcefile -o $tempfile
 		}
 		set sourcefile $tempfile
 	}
@@ -468,13 +468,13 @@ proc pipe2bam {sourcefile {inputformat {}} {refseq {}}} {
 		return $pipe
 	} elseif {$inputformat eq "cram"} {
 		if {[llength $pipe]} {lappend pipe |}
-		lappend pipe samtools view -b -u -T [refseq $refseq]
+		lappend pipe samtools view --no-PG -b -u -T [refseq $refseq]
 	} elseif {$inputformat eq "sam"} {
 		if {[llength $pipe]} {lappend pipe |}
-		lappend pipe samtools view -b -u
+		lappend pipe samtools view --no-PG -b -u
 	} elseif {$inputformat eq "tsv"} {
 		if {[llength $pipe]} {lappend pipe |}
-		lappend pipe cg tsv2sam | samtools view -b -u
+		lappend pipe cg tsv2sam | samtools view --no-PG -b -u
 	} else {
 		error "cannot convert format $inputformat to bam"
 	}
@@ -553,8 +553,8 @@ proc convert_pipe {infile outfile args} {
 		if {$compressionlevel eq ""} {
 			set compressionlevel [defcompressionlevel 5]
 		}
-		lappend pipe samtools view -h --output-fmt-option level=$compressionlevel
-		if {$threads ne ""} {
+		lappend pipe samtools view --no-PG -h --output-fmt-option level=$compressionlevel
+		if {$threads ne "" && [version samtools] ne "1.10 (using htslib 1.10)"} {
 			lappend pipe --threads $threads
 		}
 		if {$outformat eq "bam"} {

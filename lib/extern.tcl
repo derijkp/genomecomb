@@ -126,18 +126,18 @@ proc gatkexec {args} {
 				set gatk(command) gatk
 			}
 			catch {exec $gatk(command) HaplotypeCaller --version} msg
-			if {[regexp {GATK.*Version:(.+)} $msg temp version]} {
-				set gatk(usecommand) 1
-				set gatk(version) $version
-				set ::gatkjava java
-			} elseif {[regexp {Version:([^\n]+).*GATK} $msg temp version]} {
+			if {
+				[regexp {The Genome Analysis Toolkit \(GATK\) v([^\n]+)} $msg temp version]
+				|| [regexp {GATK.*Version:(.+)} $msg temp version]
+				|| [regexp {Version:([^\n]+).*GATK} $msg temp version]
+			} {
 				set gatk(usecommand) 1
 				set gatk(version) $version
 				set ::gatkjava java
 			} elseif {[info exists ::env(GATK)]} {
 				error "gatk command given in env var GATK gives following unexpected result when trying to get version:\n$msg"
 			}
-		} 
+		}
 		if {![info exists gatk(version)]} {
 			set gatk(command) 0
 			set gatk(jar) [searchpath GATK gatk GenomeAnalysisTK*]/GenomeAnalysisTK.jar
@@ -216,7 +216,7 @@ proc gatk_IndexFeatureFile_job {file {name {}}} {
 	} -vars {
 		file
 	} -code {
-		gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms1g -Xmx4g] IndexFeatureFile -F $file
+		cg_gatk_index $file
 	}
 	return $target
 }

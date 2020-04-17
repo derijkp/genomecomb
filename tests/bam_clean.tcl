@@ -5,28 +5,28 @@ exec tclsh "$0" "$@"
 source tools.tcl
 
 test realign {realign_gatk basic} {
-	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
 	cg realign_gatk -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19
-	exec samtools view tmp/ratest.bam > tmp/ratest.sam
+	exec samtools view --no-PG tmp/ratest.bam > tmp/ratest.sam
 	catch {exec diff tmp/ratest.sam data/ratest-gatk.sam}
 } 0
 
 test realign {realign_gatk pipe} {
-	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
 	cg realign_gatk -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
-	exec samtools view tmp/ratest.bam > tmp/ratest.sam
+	exec samtools view --no-PG tmp/ratest.bam > tmp/ratest.sam
 	catch {exec diff tmp/ratest.sam data/ratest-gatk.sam}
 } 0
 
 test realign {realign -method gatk pipe} {
-	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
 	cg realign -method gatk -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
-	exec samtools view tmp/ratest.bam > tmp/ratest.sam
+	exec samtools view --no-PG tmp/ratest.bam > tmp/ratest.sam
 	catch {exec diff tmp/ratest.sam data/ratest-gatk.sam}
 } 0
 
 test realign {realign_abra basic} {
-	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
 	cg realign_abra -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19
 	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
 	cg sam2tsv data/ratest-abra.sam tmp/expected.tsv
@@ -34,7 +34,7 @@ test realign {realign_abra basic} {
 } 0
 
 test realign {realign_abra pipe} {
-	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
 	cg realign_abra -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
 	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
 	cg sam2tsv data/ratest-abra.sam tmp/expected.tsv
@@ -51,7 +51,7 @@ test realign {realign_abra from compressed sam} {
 } 0
 
 test realign {realign_srma basic} {
-	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
 	cg realign_srma -stack 1 tmp/bwa.bam tmp/ratest.bam $::refseqdir/hg19
 	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
 	cg sam2tsv data/ratest-srma.sam tmp/expected.tsv
@@ -59,7 +59,7 @@ test realign {realign_srma basic} {
 } 0
 
 test realign {realign_srma pipe} {
-	exec samtools view -b data/bwa.sam > tmp/bwa.bam
+	exec samtools view --no-PG -b data/bwa.sam > tmp/bwa.bam
 	cg realign_srma -stack 1 -refseq $::refseqdir/hg19 < tmp/bwa.bam > tmp/ratest.bam
 	cg sam2tsv tmp/ratest.bam tmp/ratest.tsv
 	cg sam2tsv data/ratest-srma.sam tmp/expected.tsv
@@ -67,7 +67,7 @@ test realign {realign_srma pipe} {
 } 0
 
 test markdup {bam_markduplicates picard} {
-	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method picard tmp/sbwa.bam tmp/result.bam
 	exec cg sam2tsv tmp/result.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
 	exec cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/dsbwa.tsv
@@ -75,7 +75,7 @@ test markdup {bam_markduplicates picard} {
 } 0
 
 test markdup {bam_markduplicates picard pipe} {
-	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	exec cg bam_markduplicates -stack 1 -method picard < tmp/sbwa.bam > tmp/result.bam
 	exec cg sam2tsv tmp/result.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
 	exec cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/dsbwa.tsv
@@ -83,40 +83,40 @@ test markdup {bam_markduplicates picard pipe} {
 } 0
 
 test markdup {bam_markduplicates samtools} {
-	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method samtools tmp/sbwa.bam tmp/result.bam
 	exec cg tsvdiff tmp/result.bam data/dsbwa.sam
 } {}
 
 test markdup {bam_markduplicates samtools pipe} {
-	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method samtools < tmp/sbwa.bam > tmp/result.bam
 	exec cg tsvdiff tmp/result.bam data/dsbwa.sam
 } {}
 
 test markdup {bam_markduplicates samtools pipe -compressionlevel} {
-	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method samtools -compressionlevel 1 < tmp/sbwa.bam > tmp/result.bam
 	exec cg tsvdiff tmp/result.bam data/dsbwa.sam
 } {}
 
 test markdup {bam_markduplicates samtools pipe to cram} {
-	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method samtools -outputformat cram -refseq $::refseqdir/hg19 < tmp/sbwa.bam > tmp/result.cram
-	exec samtools view -h -b -T [refseq $::refseqdir/hg19] tmp/result.cram > tmp/result.bam
+	exec samtools view --no-PG -h -b -T [refseq $::refseqdir/hg19] tmp/result.cram > tmp/result.bam
 	exec cg sam2tsv tmp/result.bam | cg select -f {qname chromosome begin end duplicate} > tmp/result.tsv
 	exec cg sam2tsv data/dsbwa.sam | cg select -f {qname chromosome begin end duplicate} > tmp/dsbwa.tsv
 	catch {exec cg tsvdiff tmp/result.tsv tmp/dsbwa.tsv}
 } 0
 
 test markdup {bam_markduplicates biobambam} {
-	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method biobambam tmp/sbwa.bam tmp/result.bam
 	exec cg tsvdiff tmp/result.bam data/dsbwa.sam
 } {}
 
 test markdup {bam_markduplicates biobambam pipe} {
-	exec samtools sort data/bwa.sam > tmp/sbwa.bam
+	exec samtools sort --no-PG data/bwa.sam > tmp/sbwa.bam
 	cg bam_markduplicates -method biobambam < tmp/sbwa.bam > tmp/result.bam
 	exec cg tsvdiff tmp/result.bam data/dsbwa.sam
 } {}
@@ -128,7 +128,7 @@ test bam_clean {bam_clean} {
 	set c [string trim [file_read tmp/rdsbwa.bam.analysisinfo]]
 	if {![string match [string trim [deindent {
 		bamclean	bamclean_version	bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
-		genomecomb	0.100.1	samtools	1.9 (using htslib 1.9)	picard	2.21.3-SNAPSHOT	gatk	3.8-1-0-gf15c1c3ef
+		genomecomb	0.100.1	samtools	1.10 (using htslib 1.10)	picard	2.21.3-SNAPSHOT	gatk	3.8-1-0-gf15c1c3ef
 	}]] $c]} {
 		error "error in analysisinfo:\n$c"
 	}
@@ -157,7 +157,7 @@ test bam_clean {bam_clean to cram} {
 	set c [string trim [file_read tmp/rdsbwa.cram.analysisinfo]]
 	if {![string match [string trim [deindent {
 		bamclean	bamclean_version	bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
-		genomecomb	0.100.1	samtools	1.9 (using htslib 1.9)	picard	2.21.3-SNAPSHOT	gatk	3.8-1-0-gf15c1c3ef
+		genomecomb	0.100.1	samtools	1.10 (using htslib 1.10)	picard	2.21.3-SNAPSHOT	gatk	3.8-1-0-gf15c1c3ef
 	}]] $c]} {
 		error "error in analysisinfo:\n$c"
 	}

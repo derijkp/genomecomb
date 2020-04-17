@@ -130,9 +130,9 @@ proc cg_predictgender {args} {
 	} else {
 		set yxcovratio [expr {double($ycov)/$xcov}]
 	}
-	set refcount [exec samtools view -q 20 -c $bamfile $refreg]
-	set xcount [exec samtools view -q 20 -c $bamfile $xreg]
-	set ycount [exec samtools view -q 20 -c $bamfile $yreg]
+	set refcount [exec samtools view --no-PG -q 20 -c $bamfile $refreg]
+	set xcount [exec samtools view --no-PG -q 20 -c $bamfile $xreg]
+	set ycount [exec samtools view --no-PG -q 20 -c $bamfile $yreg]
 	set refncount [expr {$refcount/double($refsize)}]
 	if {$xsize != 0} {
 		set xncount [expr {$xcount/double($xsize)}]

@@ -19,7 +19,7 @@ proc cg_tsv2sam {args} {
 	}
 	lappend pipe tsv2sam
 	if {$outformat eq "bam"} {
-		lappend pipe \| samtools view -h -b
+		lappend pipe \| samtools view --no-PG -h -b --no-PG
 	}
 	if {$samfile eq "-"} {
 		lappend pipe >@ stdout

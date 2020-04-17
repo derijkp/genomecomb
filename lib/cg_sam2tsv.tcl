@@ -96,9 +96,9 @@ proc cg_sam2tsv {args} {
 	}
 	if {$informat eq "bam"} {
 		if {$samfile eq "-"} {
-			set pipe [list samtools view -h \| sam2tsv {*}$fields <@ stdin]
+			set pipe [list samtools view --no-PG -h \| sam2tsv {*}$fields <@ stdin]
 		} else {
-			set pipe [list samtools view -h $samfile \| sam2tsv {*}$fields]
+			set pipe [list samtools view --no-PG -h $samfile \| sam2tsv {*}$fields]
 		}
 	} elseif {$samfile eq "-"} {
 		set pipe [list sam2tsv {*}$fields <@ stdin]

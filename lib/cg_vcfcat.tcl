@@ -59,9 +59,7 @@ proc cg_vcfcat {args} {
 	if {[info exists outfile]} {
 		file rename -force -- $outfile.temp $outfile
 		if {$index} {
-			gatkexec {-XX:ParallelGCThreads=1 -d64 -Xms512m -Xmx4g} IndexFeatureFile \
-				-F $outfile \
-				2>@ stderr >@ stdout
+			cg_gatk_index $outfile
 		}
 	}
 }

@@ -87,7 +87,7 @@ proc process_reports_job {args} {
 			set target2 $sampledir/reports/report_flagstat_reads-$bamroot.tsv
 			job reports_flagstat_reads-[file tail $bamfile] -deps {$dep} -targets {$target $target2} -vars {bamroot} -code {
 				if {[catch {
-					exec samtools view -F 256 -h -b $dep | samtools flagstat - > $target.temp
+					exec samtools view --no-PG -F 256 -h -b $dep | samtools flagstat - > $target.temp
 				} msg]} {
 					if {$msg ne "\[bam_header_read\] EOF marker is absent. The input is probably truncated."} {error $msg}
 				}

@@ -110,7 +110,7 @@ proc cg_sam_sort {args} {
 			lappend optsio <@ stdin
 		}
 		if {$outputformat eq "sam"} {
-			lappend optsio level=0 \| samtools view -h
+			lappend optsio level=0 \| samtools view --no-PG -h
 			if {$resultfile ne "-"} {
 				set tempresult [filetemp $resultfile]
 				lappend optsio > $tempresult
@@ -155,7 +155,7 @@ proc cg_sam_sort {args} {
 		if {$outputformat eq "cram"} {
 			lappend opts --output-fmt-option reference=[refseq $refseq]
 		}
-		if {[catch {exec samtools sort --threads $threads -T [scratchfile] \
+		if {[catch {exec samtools sort --no-PG --threads $threads -T [scratchfile] \
 			-O [string toupper $outputformat] \
 			 {*}$opts {*}$optsio 2>@ stderr
 		} msg]} {

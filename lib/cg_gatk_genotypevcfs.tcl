@@ -34,13 +34,19 @@ proc cg_gatk_genotypevcfs args {
 		puts stderr "Making index for $gvcf"
 		exec tabix -p vcf $gvcf
 	}
+	set opts {}
+	if {[catch {version gatk 4.1.0.0}]} {
+		lappend opts -new-qual $newqual
+	} else {
+		lappend opts --allow-old-rms-mapping-quality-annotation-data
+	}
 	gatkexec [list -XX:ParallelGCThreads=1 -d64 -Xms${maxmem}g -Xmx${maxmem}g -Djava.io.tmpdir=[scratchdir]] GenotypeGVCFs \
 		-R $gatkrefseq \
 		-V $gvcf \
 		-O $vcf.temp[gzext $vcf] \
+		{*}$opts \
 		-G StandardAnnotation -G StandardHCAnnotation -G AS_StandardAnnotation \
 		--verbosity ERROR \
-		-new-qual $newqual \
 		--create-output-variant-index true \
 		{*}$opts >@ stdout 2>@stderr
 	file rename -- $vcf.temp[gzext $vcf] $vcf

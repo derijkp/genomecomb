@@ -127,7 +127,7 @@ total	4393}
 
 test cg_regextract {regextract -region} {
 	test_cleantmp
-	exec samtools view -h -b data/bwa.sam > tmp/bwa.bam
+	exec samtools view --no-PG -h -b data/bwa.sam > tmp/bwa.bam
 	exec samtools index tmp/bwa.bam
 	set bamfile tmp/bwa.bam
 	cg regextract -min 2 -region chr22 $bamfile > tmp/reg-cov20.tsv 2>@ stderr
@@ -141,7 +141,7 @@ test cg_regextract {regextract -region chr21_random1} {
 	set c [file_read data/bwa.sam]
 	set c [string_change $c {chr21 chr21_random1 chr22 chr21_random2}]
 	file_write tmp/bwa.sam $c
-	exec samtools view -h -b tmp/bwa.sam > tmp/bwa.bam
+	exec samtools view --no-PG -h -b tmp/bwa.sam > tmp/bwa.bam
 	exec samtools index tmp/bwa.bam
 	set bamfile tmp/bwa.bam
 	# dummy reference sequence, only needed here for the fai
@@ -311,7 +311,7 @@ test cg_bam2reg {small bam -min 2 distrreg} {
 		chr2	50	20M	20	chr2	60	20M	20
 		chr2	100	50M	50	chr2	100	50M	50
 	}
-	exec samtools view -b tmp/temp.sam > tmp/temp.bam
+	exec samtools view --no-PG -b tmp/temp.sam > tmp/temp.bam
 	exec samtools index tmp/temp.bam
 	cg bam2reg -distrreg chr -refseq $::refseqdir/hg19/genome_hg19.ifas -mincoverage 2 tmp/temp.bam
 	exec cg zcat tmp/sreg-cov2-temp.tsv.zst
@@ -342,7 +342,7 @@ test cg_bamreorder {basic genomecomb} {
 	}]
 	file delete tmp/result.bam  tmp/result.bam.bai
 	catch_exec cg bamreorder data/bwa.bam tmp/result.bam tmp/ref
-	list [exec md5sum tmp/result.bam] [exec samtools view -H tmp/result.bam]
+	list [exec md5sum tmp/result.bam] [exec samtools view --no-PG -H tmp/result.bam]
 } {{7bcf2370e55bb6f10a9794b9e76fc567  tmp/result.bam} {@HD	VN:1.3	SO:coordinate
 @SQ	SN:chr22	LN:51304566
 @SQ	SN:chr21_gl000210_random	LN:27682
@@ -484,7 +484,7 @@ test cg_sam_catmerge {cg_sam_catmerge nosort bam} {
 		A2	147	chr2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 	}]\n
 	cg sam_catmerge -stack 1 -sort nosort -index 0 tmp/result.bam tmp/temp1.sam tmp/temp2.sam
-	exec samtools view -h tmp/result.bam -o tmp/result.sam
+	exec samtools view --no-PG -h tmp/result.bam -o tmp/result.sam
 	exec diff tmp/result.sam tmp/expected.sam
 } {}
 
@@ -686,7 +686,7 @@ test cg_bam2sam {basic sortchr} {
 		A4	99	chr2	100	60	50M	=	100	50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 		A4	147	chr2	100	60	50M	=	100	-50	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	--------------------------------------------------	RG:Z:sample1	MQ:i:60	AS:i:241	XS:i:25
 	}]\n
-	exec samtools view -b -1 tmp/temp.sam > tmp/temp.bam
+	exec samtools view --no-PG -b -1 tmp/temp.sam > tmp/temp.bam
 	exec cg bam2sam tmp/temp.bam tmp/result.sam >@ stdout 2>@ stderr
 	exec diff tmp/result.sam tmp/expected.sam
 } {}
@@ -706,87 +706,87 @@ test cg_bam2sam {basic -sortchr 0} {
 		A2	147	chr1	111	60	30M	=	102	-39	AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA	------------------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 		A1	147	chr1	121	60	20M	=	100	-41	AAAAAAAAAAAAAAAAAAAA	--------------------	RG:Z:sample1	NM:i:4	MQ:i:60	AS:i:241	XS:i:25
 	}]\n
-	exec samtools view -b -1 tmp/temp.sam > tmp/temp.bam
+	exec samtools view --no-PG -b -1 tmp/temp.sam > tmp/temp.bam
 	exec cg bam2sam -sortchr 0 tmp/temp.bam > tmp/result.sam
 	exec diff tmp/result.sam tmp/temp.sam
 } {}
 
 test bam_sort {bam_sort basic} {
 	test_cleantmp
-	exec samtools sort -n -o tmp/test.bam data/bwa.bam
+	exec samtools sort --no-PG -n -o tmp/test.bam data/bwa.bam
 	cg bam_sort tmp/test.bam tmp/sorted.bam
 	exec diff tmp/sorted.bam data/bwa.bam
 } {}
 
 test bam_sort {bam_sort pipe} {
 	test_cleantmp
-	exec samtools sort -n -o tmp/test.bam data/bwa.bam
+	exec samtools sort --no-PG -n -o tmp/test.bam data/bwa.bam
 	cg bam_sort < tmp/test.bam > tmp/sorted.bam
 	exec diff tmp/sorted.bam data/bwa.bam
 } {}
 
 test bam_sort {bam_sort pipe sam} {
 	test_cleantmp
-	exec samtools view -h data/bwa.bam > tmp/expected.sam
-	exec samtools sort -n data/bwa.bam | samtools view -h > tmp/test.sam
+	exec samtools view --no-PG -h data/bwa.bam > tmp/expected.sam
+	exec samtools sort --no-PG -n data/bwa.bam | samtools view --no-PG -h > tmp/test.sam
 	cg bam_sort -inputformat sam -outputformat sam < tmp/test.sam > tmp/sorted.sam
 	cg tsvdiff tmp/sorted.sam tmp/expected.sam
 } {}
 
 test bam_sort {bam_sort to cram} {
 	test_cleantmp
-	exec samtools sort -n -o tmp/test.bam data/bwa.bam
+	exec samtools sort --no-PG -n -o tmp/test.bam data/bwa.bam
 	cg bam_sort -refseq $::refseqdir/hg19 tmp/test.bam tmp/sorted.cram
 	cramdiff tmp/sorted.cram data/bwa.sam
 } {}
 
 test bam_sort {bam_sort -method biobambam} {
 	test_cleantmp
-	exec samtools sort -n -o tmp/test.bam data/bwa.bam
+	exec samtools sort --no-PG -n -o tmp/test.bam data/bwa.bam
 	cg bam_sort -method biobambam tmp/test.bam tmp/sorted.bam
 	cg tsvdiff tmp/sorted.bam data/bwa.bam
 } {}
 
 test bam_sort {bam_sort -method gnusort} {
 	test_cleantmp
-	exec samtools sort -n -o tmp/test.bam data/bwa.bam
+	exec samtools sort --no-PG -n -o tmp/test.bam data/bwa.bam
 	cg bam_sort -method gnusort tmp/test.bam tmp/sorted.bam
 	cg tsvdiff tmp/sorted.bam data/bwa.bam
 } {}
 
 test bam_sort {bam_sort -method biobambam pipe} {
 	test_cleantmp
-	exec samtools sort -n data/bwa.bam > tmp/test.bam
+	exec samtools sort --no-PG -n data/bwa.bam > tmp/test.bam
 	cg bam_sort -method biobambam < tmp/test.bam > tmp/sorted.bam
 	cg tsvdiff tmp/sorted.bam data/bwa.bam
 } {}
 
 test bam_sort {bam_sort -method biobambam sam} {
 	test_cleantmp
-	exec samtools view -h data/bwa.bam > tmp/expected.sam
-	exec samtools sort -n data/bwa.bam | samtools view -h > tmp/test.sam
+	exec samtools view --no-PG -h data/bwa.bam > tmp/expected.sam
+	exec samtools sort --no-PG -n data/bwa.bam | samtools view --no-PG -h > tmp/test.sam
 	cg bam_sort -inputformat sam -outputformat sam -method biobambam tmp/test.sam tmp/sorted.sam
 	cg tsvdiff tmp/sorted.sam tmp/expected.sam
 } {}
 
 test bam_sort {bam_sort -sort name} {
 	test_cleantmp
-	exec samtools sort -n -o tmp/expected.bam data/bwa.bam
+	exec samtools sort --no-PG -n -o tmp/expected.bam data/bwa.bam
 	cg bam_sort -sort name data/bwa.bam tmp/sorted.bam
 	exec diff tmp/sorted.bam tmp/expected.bam
 } {}
 
 test bam_sort {bam_sort -method biobambam -sort name} {
 	test_cleantmp
-	exec samtools sort -n -o tmp/expected.bam data/bwa.bam
+	exec samtools sort --no-PG -n -o tmp/expected.bam data/bwa.bam
 	cg bam_sort -method biobambam -sort name data/bwa.bam tmp/sorted.bam
 	cg tsvdiff tmp/sorted.bam tmp/expected.bam
 } {}
 
 test bam_sort {(internal) cg _sam_sort_gnusort, without @HD line} {
 	test_cleantmp
-	exec samtools sort -o tmp/expected.sam data/bwa.bam
-	exec samtools sort -n -O sam data/bwa.bam | grep -v @HD > tmp/namesorted.sam
+	exec samtools sort --no-PG -o tmp/expected.sam data/bwa.bam
+	exec samtools sort --no-PG -n -O sam data/bwa.bam | grep -v @HD > tmp/namesorted.sam
 	exec cg _sam_sort_gnusort coordinate < tmp/namesorted.sam > tmp/sorted.sam
 	exec diff tmp/sorted.sam tmp/expected.sam
 } {1c1

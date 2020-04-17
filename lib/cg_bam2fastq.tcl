@@ -69,7 +69,7 @@ proc cg_bam2fastq {args} {
 		if {$fastqfile2 ne ""} {
 			set picard [findpicard]
 			if {[catch {
-				exec samtools view -hf 0x2 $tempbam | java -jar $picard/SamToFastq.jar I=/dev/stdin F=$tempfastq1 F2=$tempfastq2 VALIDATION_STRINGENCY=SILENT
+				exec samtools view --no-PG -hf 0x2 $tempbam | java -jar $picard/SamToFastq.jar I=/dev/stdin F=$tempfastq1 F2=$tempfastq2 VALIDATION_STRINGENCY=SILENT
 			} msg] && ![regexp "done. Elapsed time:" $msg]} {
 				error $msg
 			}

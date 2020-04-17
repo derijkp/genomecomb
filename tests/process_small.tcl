@@ -12,6 +12,7 @@ set test_cleantmp 0
 
 # gatk is not deterministic with threads, so no threads for testing and comparing to previous runs
 lappend dopts -threads 1
+set runopts {-stack 1}
 
 test process_small {process_project mastr_mx2} {
 	cd $::smalltestdir
@@ -27,7 +28,7 @@ test process_small {process_project mastr_mx2} {
 	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2/samplicons-wgs2.tsv
 	# file copy ori/mastr_mx2/demultiplex_stats.tsv tmp/mastr_mx2
 	# if you want to see output while running
-	exec cg process_project {*}$::dopts -split 1 -reports -predictgender \
+	exec cg process_project {*}$::runopts {*}$::dopts -split 1 -reports -predictgender \
 		-minfastqreads 10 -amplicons tmp/mastr_mx2/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 		tmp/mastr_mx2 $::refseqdir/hg19 >& tmp/mastr_mx2.log
 	# check vs expected
@@ -57,7 +58,7 @@ test process_small {process_project mastr_mx2_gatkh} {
 	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2_gatkh/samplicons-wgs2.tsv
 	# file copy ori/mastr_mx2_gatkh/demultiplex_stats.tsv tmp/mastr_mx2_gatkh
 	# if you want to see output while running
-	cg process_project {*}$::dopts -split 1 -reports -predictgender \
+	cg process_project {*}$::runopts {*}$::dopts -split 1 -reports -predictgender \
 		-minfastqreads 10 -amplicons tmp/mastr_mx2_gatkh/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 		-varcallers {gatkh} -extra_reports_mastr gatkh \
 		tmp/mastr_mx2_gatkh $::refseqdir/hg19 >& tmp/mastr_mx2_gatkh.log
@@ -87,7 +88,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2_cram/samplicons-wgs2.tsv
 	# file copy ori/mastr_mx2_cram/demultiplex_stats.tsv tmp/mastr_mx2_cram
 	# if you want to see output while running
-	cg process_project {*}$::dopts -split 1 -reports -predictgender \
+	cg process_project {*}$::runopts {*}$::dopts -split 1 -reports -predictgender \
 		-minfastqreads 10 -amplicons tmp/mastr_mx2_cram/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 		-varcallers {gatkh strelka} -aliformat cram -extra_reports_mastr gatkh \
 		tmp/mastr_mx2_cram $::refseqdir/hg19 >& tmp/mastr_mx2_cram.log
@@ -119,7 +120,7 @@ test process_small {process_project mastr_mx2 cram gatkh and strelka} {
 #	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv $mastrdir/samplicons-wgs2.tsv
 #	# file copy ori/mastr_mx2/demultiplex_stats.tsv $mastrdir
 #	# if you want to see output while running
-#	cg process_project {*}$::dopts -split 1 \
+#	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 #		-minfastqreads 10 -amplicons $mastrdir/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 #		$mastrdir $::refseqdir/hg19 >& tmp/mastr_mx2_space.log
 #	# check vs expected
@@ -146,7 +147,7 @@ test process_small {process_project -jobsample 1 mastr_mx2_js1} {
 		}
 	}
 	file copy -force ori/wgs2.mastr/samplicons-wgs2.tsv tmp/mastr_mx2_js1/samplicons-wgs2.tsv
-	cg process_project {*}$::dopts -jobsample 1 -split 1 \
+	cg process_project {*}$::runopts {*}$::dopts -jobsample 1 -split 1 \
 		-minfastqreads 10 -amplicons tmp/mastr_mx2_js1/samplicons-wgs2.tsv -extra_reports_mastr 1 \
 		tmp/mastr_mx2_js1 $::refseqdir/hg19 >& tmp/mastr_mx2_js1.log
 	# check vs expected
@@ -172,7 +173,7 @@ test process_small {process_sample one_exome_yri_mx2} {
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/one_exome_yri_mx2/samples/$sample/fastq
 		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/one_exome_yri_mx2/samples/$sample/reg_hg19_targets.tsv
 	}
-	cg process_sample {*}$::dopts -split 1 \
+	cg process_sample {*}$::runopts {*}$::dopts -split 1 \
 		-dbdir $::refseqdir/hg19 \
 		tmp/one_exome_yri_mx2/samples/NA19240mx2 >& tmp/one_exome_yri_mx2.log
 	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir $::refseqdir/hg19 tmp/one_exome_yri_mx2/samples/NA19240mx2 | less -S
@@ -198,7 +199,7 @@ test process_small {process_sample one_d_exome_yri_mx2 distrreg} {
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/one_d_exome_yri_mx2/samples/$sample/fastq
 		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/one_d_exome_yri_mx2/samples/$sample/reg_hg19_targets.tsv
 	}
-	cg process_sample {*}$::dopts -split 1 \
+	cg process_sample {*}$::runopts {*}$::dopts -split 1 \
 		-dbdir $::refseqdir/hg19 -distrreg 1 \
 		tmp/one_d_exome_yri_mx2/samples/NA19240mx2 >& tmp/one_d_exome_yri_mx2.log
 	# cg process_sample --stack 1 --verbose 2 -d status -split 1 -dbdir $::refseqdir/hg19 tmp/one_d_exome_yri_mx2/samples/NA19240mx2 | less -S
@@ -224,7 +225,7 @@ test process_small {process_project exomes_yri_mx2} {
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_yri_mx2/samples/$sample/fastq
 		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/exomes_yri_mx2/samples/$sample/reg_hg19_targets.tsv
 	}
-	cg process_project {*}$::dopts -split 1 \
+	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-dbdir $::refseqdir/hg19 tmp/exomes_yri_mx2 >& tmp/exomes_yri_mx2.log
 	# check vs expected
 	set result {}
@@ -252,7 +253,7 @@ test process_small {process_project exomesfb_yri_mx2 (freebayes)} {
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomesfb_yri_mx2/samples/$sample/fastq
 		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/exomesfb_yri_mx2/samples/$sample/reg_hg19_targets.tsv
 	}
-	cg process_project {*}$::dopts -split 1 -varcallers {gatk freebayes} \
+	cg process_project {*}$::runopts {*}$::dopts -split 1 -varcallers {gatk freebayes} \
 		-dbdir $::refseqdir/hg19 tmp/exomesfb_yri_mx2 >& tmp/exomesfb_yri_mx2.log
 	# check vs expected
 	set result {}
@@ -280,7 +281,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_gatkh_yri_mx2/samples/$sample/fastq
 		mklink $::refseqdir/hg19/extra/reg_hg19_exome_SeqCap_EZ_v3.tsv tmp/exomes_gatkh_yri_mx2/samples/$sample/reg_hg19_targets.tsv
 	}
-	cg process_project {*}$::dopts -split 1 -varcallers {gatkh freebayes} \
+	cg process_project {*}$::runopts {*}$::dopts -split 1 -varcallers {gatkh freebayes} \
 		-dbdir $::refseqdir/hg19 tmp/exomes_gatkh_yri_mx2 >& tmp/exomes_gatkh_yri_mx2.log
 	# check vs expected
 	set result {}
@@ -307,7 +308,7 @@ test process_small {process_project exomes_gatkh_yri_mx2 (haplotypecaller)} {
 #		file mkdir tmp/exomes_yri_mx2/samples/$sample/fastq
 #		file copy {*}[glob ori/exomes_yri_mx2.start/samples/$sample/ori/*.fq.gz] tmp/exomes_yri_mx2/samples/$sample/fastq
 #	}
-#	cg process_project --stack 1 --verbose 2 {*}$::dopts -split 1 -dbdir $::refseqdir/hg19 tmp/exomes_yri_mx2 >& tmp/exomes_yri_mx2.log
+#	cg process_project --stack 1 --verbose 2 {*}$::runopts {*}$::dopts -split 1 -dbdir $::refseqdir/hg19 tmp/exomes_yri_mx2 >& tmp/exomes_yri_mx2.log
 #	# check vs expected
 #	checkdiff -y --suppress-common-lines tmp/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics expected/exomes_yri_mx2/samples/NA19238mx2/map-dsbwa-NA19238mx2.bam.dupmetrics | grep -v "Started on" | grep -v bammarkduplicates2
 #	checkdiff -qr -x *log_jobs -x *.bam -x *.bai -x colinfo -x *_fastqc -x *bam.dupmetrics tmp/exomes_yri_mx2 expected/exomes_yri_mx2
@@ -321,7 +322,7 @@ test process_small {process_sample one_genome_yri_mx2} {
 	file delete -force tmp/one_genome_yri_mx2
 	file mkdir tmp/one_genome_yri_mx2/samples/NA19240cgmx2
 	mklink ori/genomes_yri_mx2.start/samples/NA19240cgmx2/ori tmp/one_genome_yri_mx2/samples/NA19240cgmx2/ori
-	cg process_sample {*}$::dopts -split 1 \
+	cg process_sample {*}$::runopts {*}$::dopts -split 1 \
 		-dbdir $ref tmp/one_genome_yri_mx2/samples/NA19240cgmx2 >& tmp/one_genome_yri_mx2.log
 	# check vs expected
 	set result {}
@@ -344,7 +345,7 @@ test process_small {process_project genomes_yri_mx2} {
 		mklink ori/genomes_yri_mx2.start/samples/$sample/ori tmp/genomes_yri_mx2/samples/$sample/ori
 	}
 	# cg process_project --stack 1 --verbose 2 -d 2 -split 1 -dbdir /complgen/refseq/testdb2/hg19 tmp/genomes_yri_mx2
-	cg process_project {*}$::dopts -split 1 \
+	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 		-dbdir $::refseqdir/hg19 tmp/genomes_yri_mx2 >& tmp/genomes_yri_mx2.log
 	# check vs expected
 	set result {}
@@ -373,7 +374,7 @@ test process_small {process_project mixed_yri_mx2} {
 	cg project_addsample tmp/mixed_yri_mx2 gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2 exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2 exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
-	cg process_project {*}$::dopts -split 1 \
+	cg process_project {*}$::runopts {*}$::dopts -split 1 \
 	  -dbdir /complgen/refseq/hg19 \
 	  -dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
 	  tmp/mixed_yri_mx2 >& tmp/mixed_yri_mx2.log
@@ -404,7 +405,7 @@ test process_small {process_project -distrreg 1 mixed_yri_mx2_distrreg} {
 	cg project_addsample tmp/mixed_yri_mx2_distrreg gilNA19240mx2 {*}[glob ori/mixed_yri_mx2/gilNA19240mx2/*.fq.gz]
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2_distrreg exNA19239mx2 {*}[glob ori/mixed_yri_mx2/exNA19239mx2/*.fq.gz]
 	cg project_addsample -targetfile ori/mixed_yri_mx2/reg_hg19_exome_SeqCap_EZ_v3.tsv.lz4 tmp/mixed_yri_mx2_distrreg exNA19240mx2 ori/mixed_yri_mx2/exNA19240mx2
-	cg process_project {*}$::dopts -distrreg 1 -split 1 \
+	cg process_project {*}$::runopts {*}$::dopts -distrreg 1 -split 1 \
 	  -dbdir /complgen/refseq/hg19 \
 	  -dbfile [gzfile /complgen/refseq/hg19/extra/var_hg19_dbnsfp.tsv] \
 	  tmp/mixed_yri_mx2_distrreg >& tmp/mixed_yri_mx2_distrreg.log

@@ -47,7 +47,7 @@ proc hsmetrics_tsv2interval {regionfile bamfile resultfile} {
 	}
 	if {$pos != -1} {lappend fields "name=\$[lindex $header $pos]"} else {lappend fields {name="all"}}
 	#remove comment columns & add strand info - due to lack of correct strand info take + as default
-	set bamheader [split [exec samtools view -H $bamfile] \n]
+	set bamheader [split [exec samtools view --no-PG -H $bamfile] \n]
 	file_write $resultfile.temp [join [list_sub $bamheader [list_find -regexp $bamheader ^@SQ]] \n]\n
 	cg select -sh /dev/null -f $fields $tsvfile >> $resultfile.temp
 	file rename -force -- $resultfile.temp $resultfile

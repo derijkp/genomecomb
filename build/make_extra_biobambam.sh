@@ -51,7 +51,7 @@ set -x
 # ------------------
 yuminstall git
 yuminstall wget
-yuminstall xz
+#yuminstall xz
 
 for dir in lib include bin share ; do
 	echo $dir
