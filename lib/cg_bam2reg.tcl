@@ -40,6 +40,7 @@ proc bam2reg_job {args} {
 		job_logdir $target.log_jobs
 	}
 	bam_index_job {*}$skips $bamfile
+	analysisinfo_write $bamfile $target regextract genomecomb regextract_version [version genomecomb] regextrac_samtools [version samtools]
 	if {$distrreg in {0 {}}} {
 		job cov$mincoverage-$root -optional 1 {*}$skips -deps {
 			$bamfile ($bamfile.bai)
