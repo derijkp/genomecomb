@@ -32,7 +32,6 @@ test process_sample {bwa distrreg cram} {
 	cg process_sample -threads 1 -aligners bwa -aliformat cram -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
 	# chr21:42730799-42762826
 	cg tsvdiff -q 1 -x fastq -x *.crai -x *.zsti -x info_analysis.tsv -x *.submitting -x fastqc* -x *.index -x log_jobs tmp/NA19240m data/NA19240m
-	cg tsvdiff tmp/NA19240m/map-rdsbwa-NA19240m.cram data/NA19240m/map-rdsbwa-NA19240m.cram
 } {}
 
 test process_sample {bwa distrreg -removeduplicates 0 cram} {

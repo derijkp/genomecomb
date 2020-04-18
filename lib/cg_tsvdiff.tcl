@@ -310,7 +310,7 @@ proc cg_tsvdiff args {
 				}
 			}
 		} elseif {[regexp {^Files (.*) and (.*) differ$} $line temp file1 file2]} {
-			if {[file extension [gzroot $file1]] in ".tsv .sft .hsmetrics .vcf .gvcf"} {
+			if {[file extension [gzroot $file1]] in ".tsv .sft .hsmetrics .vcf .gvcf .sam .bam .cram"} {
 				if {$brief} {
 					tsvdiff_file_brief $file1 $file2 $rcomments $type $fields $diffopts $splitlines $diffprog $lines $sort
 				} else {
