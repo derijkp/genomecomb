@@ -25,6 +25,18 @@ proc splitfastqs {fastq1 pre1 post1 {perfile 20}} {
 	if {$lines == 0} {file delete $pre1${num}$post1}
 }
 
+test process_sample {bwa distrreg} {
+	test_cleantmp
+	file mkdir tmp/NA19240m/fastq
+	file copy -force data/seq_R1.fq.gz data/seq_R2.fq.gz tmp/NA19240m/fastq
+	cg process_sample -threads 1 -aligners bwa -distrreg chr -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m
+	# chr21:42730799-42762826
+	cg tsvdiff -q 1 -x fastq -x *.bam -x *.bai -x *.cram -x *.crai -x *.analysisinfo -x *.zsti -x info_analysis.tsv -x *.submitting -x fastqc* -x *.index -x log_jobs tmp/NA19240m data/NA19240m
+	cg sam2tsv tmp/NA19240m/map-rdsbwa-NA19240m.bam | cg select -rf other > tmp/temp.tsv
+	cg sam2tsv data/NA19240m/map-rdsbwa-NA19240m.cram | cg select -rf other > tmp/expected.tsv
+	cg tsvdiff tmp/temp.tsv tmp/expected.tsv
+} {}
+
 test process_sample {bwa distrreg cram} {
 	test_cleantmp
 	file mkdir tmp/NA19240m/fastq
@@ -70,6 +82,20 @@ test process_sample {map bwa distrreg mutiple fastq -maxfastqdistr 2} {
 	splitfastqs data/seq_R2.fq.gz tmp/NA19240m/fastq/seq _R2.fq 20
 	file delete tmp/NA19240m/map-rdsbwa-NA19240m.bam
 	cg process_sample -stack 1 -clip 0 -maxfastqdistr 2 -aligners bwa -varcallers {} -distrreg chr -varcallers {} -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp/NA19240m >@ stdout 2>@ stderr
+	# chr21:42730799-42762826
+	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
+	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/ali.sam.tsv
+	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/bwa.sam.tsv
+	catch {cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv}
+} 0
+
+test process_project {process_project bwa distrreg mutiple fastq -maxfastqdistr 2} {
+	test_cleantmp
+	file mkdir tmp/samples/NA19240m/fastq
+	# make split up fastq
+	splitfastqs data/seq_R1.fq.gz tmp/samples/NA19240m/fastq/seq _R1.fq 20
+	splitfastqs data/seq_R2.fq.gz tmp/samples/NA19240m/fastq/seq _R2.fq 20
+	cg process_project -stack 1 -clip 0 -maxfastqdistr 2 -aligners bwa -varcallers {} -distrreg chr -varcallers {} -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp >@ stdout 2>@ stderr
 	# chr21:42730799-42762826
 	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/ali.sam.tsv
