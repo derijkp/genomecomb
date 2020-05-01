@@ -19,6 +19,7 @@ proc cg_qjobs {args} {
 		}
 		set resultline $a(JB_job_number),$a(tasks)
 		if {[regexp {^j([^#]+)\.([0-9_-]+)\#} $a(JB_name) temp a(run) a(runversion)]} {
+		} elseif {[regexp {^j([^#]+)\.([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_[0-9][0-9-]+)\.\.\.\.} $a(JB_name) temp a(run) a(runversion)]} {
 		} elseif {[regexp {^j(.+)\.([0-9_-]+)$} [file root $a(JB_name)] temp a(run) a(runversion)]} {
 		} elseif {[regexp {^j([^.]+)\.([0-9_-]+)\.} $a(JB_name) temp a(run) a(runversion)]} {
 		} else {
