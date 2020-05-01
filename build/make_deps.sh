@@ -41,6 +41,7 @@ echo "Entering Holy Build Box environment"
 # Activate Holy Build Box environment.
 # Tk does not compile with these settings (X)
 # only use HBB for glibc compat, not static libs
+
 source /hbb_exe/activate
 
 # print all executed commands to the terminal
@@ -53,7 +54,7 @@ set -x
 # ------------------
 yuminstall git
 yuminstall wget
-yuminstall xz
+# yuminstall xz
 
 for dir in lib include bin share ; do
 	echo $dir
@@ -185,6 +186,7 @@ if [ ! -f "/build/lib/liblzma.a" ] ; then
   		./configure --prefix=/build --disable-shared --enable-static
 	make
 	make install
+	rm -f /build/lib/liblzma.so*
 	source /hbb_exe/activate
 fi
 
