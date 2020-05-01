@@ -39,9 +39,9 @@ esac; shift; done
 echo "Entering Holy Build Box environment"
 
 # Activate Holy Build Box environment.
-# Tk does not compile with these settings (X)
+# does not compile with these settings (X)
 # only use HBB for glibc compat, not static libs
-source /hbb_exe/activate
+# source /hbb_exe/activate
 
 # print all executed commands to the terminal
 set -x
@@ -58,7 +58,9 @@ yuminstall centos-release-scl
 sudo yum upgrade -y
 # sudo yum list all | grep devtoolset
 yuminstall devtoolset-8
-scl enable devtoolset-8 bash
+# use source instead of scl enable so it can run in a script
+# scl enable devtoolset-8 rh-python36 bash
+source /opt/rh/devtoolset-8/enable
 
 
 for dir in lib include bin share ; do
@@ -90,14 +92,15 @@ function download {
     fi
 }
 
-# zstd (for lib)
-# --------------
+# nanopolish
+# ----------
 cd /build
 rm -rf nanopolish.old
 mv nanopolish nanopolish.old
 git clone --recursive https://github.com/jts/nanopolish.git
 cd /build/nanopolish
-git checkout v0.11.3
+git checkout v0.13.2
+make clean
 make
 
 echo "Finished building nanopolish"
