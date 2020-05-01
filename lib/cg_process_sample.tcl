@@ -809,10 +809,23 @@ proc process_sample_job {args} {
 			set files $pfastqfiles
 			set cleanupfiles {}
 			set cleanupdeps {}
+			set pbase [file_root [file tail [lindex $pfastqfiles 0]]]
 			if {[llength $pfastqfiles] > 1} {
-				set pbase [file_root [file tail [lindex $pfastqfiles 0]]]__[file_root [file tail [lindex $pfastqfiles end]]]
-			} else {
-				set pbase [file_root [file tail [lindex $pfastqfiles 0]]]
+				set last [file_root [file tail [lindex $pfastqfiles end]]]
+				if {$last ne $pbase} {
+					set pos 0
+					string_foreach c1 $pbase c2 $last {
+						if {$c1 ne $c2} break
+						incr pos
+					}
+					incr pos -1
+					set size [string length $pbase]
+					set lastlen [string length $last]
+					# -2 for cnnector (__), -30 for extensions and prefix
+					set minpos [expr {$lastlen - (255-2-30-$size)}]
+					if {$minpos > $pos} {set pos $minpos}
+					append pbase __[string range $last $pos end]
+				}
 			}
 			foreach aligner $aligners {
 				set bamfile $sampledir/map-${aligner}-$sample.bam
