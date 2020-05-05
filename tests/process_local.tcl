@@ -97,7 +97,7 @@ test process_project {process_project bwa distrreg mutiple fastq -maxfastqdistr 
 	splitfastqs data/seq_R2.fq.gz tmp/samples/NA19240m/fastq/seq _R2.fq 20
 	cg process_project -stack 1 -clip 0 -maxfastqdistr 2 -aligners bwa -varcallers {} -distrreg chr -varcallers {} -dbdir $::refseqdir/hg19/genome_hg19.ifas tmp >@ stdout 2>@ stderr
 	# chr21:42730799-42762826
-	exec samtools sort --no-PG -O sam tmp/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
+	exec samtools sort --no-PG -O sam tmp/samples/NA19240m/map-rdsbwa-NA19240m.bam > tmp/ali.sam
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} tmp/ali.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/ali.sam.tsv
 	exec cg sam2tsv -fields {AS XS MQ MC ms MD RG NM XA} data/bwa.sam | cg select -rf {duplicate other properpair mapquality XS MQ} -s {chromosome begin end qname} > tmp/bwa.sam.tsv
 	catch {cg tsvdiff tmp/ali.sam.tsv tmp/bwa.sam.tsv}
