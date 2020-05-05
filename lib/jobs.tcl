@@ -957,8 +957,18 @@ proc job_parse_log {job {totalduration {0 0}}} {
 	if {$run eq ""} {
 		set run [clock format [file mtime $job.log] -format "%Y-%m-%d_%H-%M-%S"]
 	}
-	set startcode [timescan $starttime]
-	set endcode [timescan $endtime]
+	if {[catch {
+		set startcode [timescan $starttime]
+	}]} {
+		puts stderr "error parsing $job.log (starttime)"
+		set starttime ""
+	}
+	if {[catch {
+		set endcode [timescan $endtime]
+	}]} {
+		puts stderr "error parsing $job.log (endtime)"
+		set starttime ""
+	}
 	if {$starttime ne ""} {
 		if {$endtime ne ""} {
 			set extratime {}
