@@ -62,15 +62,6 @@ yuminstall devtoolset-8
 # scl enable devtoolset-8 rh-python36 bash
 source /opt/rh/devtoolset-8/enable
 
-
-for dir in lib include bin share ; do
-	echo $dir
-	mkdir /build/$dir || true
-	sudo rmdir /usr/local/$dir || true
-	sudo rm /usr/local/$dir || true
-	sudo ln -s /build/$dir /usr/local/$dir
-done
-
 function download {
     cd /build
     url=$1
