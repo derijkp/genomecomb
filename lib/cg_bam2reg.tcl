@@ -40,10 +40,11 @@ proc bam2reg_job {args} {
 		job_logdir $target.log_jobs
 	}
 	bam_index_job {*}$skips $bamfile
+	set bamindexfile [index_file $bamfile]
 	analysisinfo_write $bamfile $target regextract genomecomb regextract_version [version genomecomb] regextrac_samtools [version samtools]
 	if {$distrreg in {0 {}}} {
 		job cov$mincoverage-$root -optional 1 {*}$skips -deps {
-			$bamfile ($bamfile.bai)
+			$bamfile ($bamindexfile)
 		} -targets {
 			$target
 		} -vars {
@@ -66,7 +67,7 @@ proc bam2reg_job {args} {
 			set subtarget $target.index/sreg-cov$mincoverage-$root-$region.tsv.zst
 			lappend todo $subtarget
 			job cov$mincoverage-$root-$region -optional 1 {*}$skips -skip $target -deps {
-				$bamfile ($bamfile.bai)
+				$bamfile ($bamindexfile)
 			} -targets {
 				$subtarget
 			} -vars {
