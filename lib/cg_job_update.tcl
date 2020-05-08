@@ -166,8 +166,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 				set time_seconds [timebetween_inseconds $starttime $endtime]
 			}
 		}
-		set startcode [timescan $starttime]
-		set endcode [timescan $endtime]
+		set startcode [timescan starttime "Could not interpret starttime $starttime correctly in $logfile, line $line"]
+		set endcode [timescan endtime "Could not interpret endtime $endtime correctly in $logfile, line $line"]
 		if {$jobo eq "total"} {
 			puts $o [join [list total $jobid $endstatus $submittime $totalstarttime $totalendtime [timediff2duration $totalduration] [time_seconds $totalduration] $targets [job_cleanmsg $msg] $run {}] \t]
 			break
@@ -182,8 +182,8 @@ proc job_update {logfile {cleanup success} {force 0} {removeold 0} {rundone 0}} 
 			foreach {jobo jobid status submittime starttime endtime duration time_seconds targets msg run} $oldlogsa($jobo) break
 			correct_time_ms starttime
 			correct_time_ms endtime
-			set startcode [timescan $starttime]
-			set endcode [timescan $endtime]
+			set startcode [timescan starttime "Could not interpret starttime $starttime correctly in $logfile, line $line"]
+			set endcode [timescan endtime "Could not interpret endtime $endtime correctly in $logfile, line $line"]
 			set duration [timediff2duration [lmath_calc $endcode - $startcode]]
 			set time_seconds [timebetween_inseconds $starttime $endtime]
 		}

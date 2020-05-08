@@ -1,6 +1,17 @@
-proc timescan {time} {
+proc timescan {timeVar {warning {}}} {
+	upvar $timeVar time
 	if {$time eq ""} {return $time}
-	time_scan $time
+	if {$warning eq ""} {
+		return [time_scan $time]
+	} else {
+		if {[catch {
+			set code [time_scan $time]
+		} msg]} {
+			puts stderr "$warning: $msg"
+			set code {} ; set time {}
+		}
+		return $code
+	}
 }
 
 proc time_comp {time1 time2} {
