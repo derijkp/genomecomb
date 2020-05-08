@@ -147,12 +147,13 @@ proc var_job {args} {
 		defcompressionlevel 9
 		# concatenate results
 		set pos -1
+		set cleanupfiles {}
 		foreach resultfile $resultfiles {
 			incr pos
 			if {$resultfile eq ""} continue
 			set list [bsort [list_subindex $todo $pos]]
 			set deps $list
-			job $resultfile  {*}$skips -deps $deps -rmtargets $list -targets {
+			job var_combineresults-$resultfile {*}$skips -deps $deps -rmtargets $list -targets {
 				$resultfile
 			} -vars {
 				list regionfile method bamfile
@@ -178,20 +179,11 @@ proc var_job {args} {
 					file rename $target.temp $target
 					cg_zindex $target
 				}
-				foreach file $list {
-					file delete $file
-					if {[file extension $file] eq ".lz4"} {file delete $file.lz4i}
-					if {[file extension $file] eq ".zst"} {file delete $file.zsti}
-					file delete -force [gzroot $file].index
-					file delete [gzroot $file].analysisinfo
-				}
-				set tempdir [file dir $file]
-				if {![llength [glob -nocomplain $tempdir/*]]} {
-					file delete $tempdir
-				}
 			}
+			lappend cleanupfiles {*}$list
 		}
-		cleanup_job -forcedirs 1 cleanup-var_${method}_[file tail $varfile] $indexdir $resultfiles
+		lappend cleanupfiles $indexdir
+		cleanup_job -forcedirs 1 -delassociated 1 cleanup-var_${method}_[file tail $varfile] $cleanupfiles $resultfiles
 		cd $keeppwd
 		return $resultfiles
 	}
