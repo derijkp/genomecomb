@@ -57,6 +57,7 @@ proc meth_nanopolish_job {args} {
 	set resultfile {}
 	set basecaller {}
 	set callthreshold 2.5
+	set threads 1
 	cg_options meth_nanopolish args {
 		-callthreshold {
 			set callthreshold $value
@@ -66,6 +67,10 @@ proc meth_nanopolish_job {args} {
 		}
 		-skip {
 			lappend skips -skip $value
+		}
+		-threads {
+			# set threads $value
+			# ignore for now, multithreaded is not faster than singlethreaded
 		}
 		-opts {
 			set opts $value
@@ -90,7 +95,7 @@ proc meth_nanopolish_job {args} {
 	} else {
 		set smethfile [file dir $resultfile]/smeth-$tail
 	}
-	job_logfile $destdir/meth_nanopolish_$bamtail $destdir $cmdline \
+	job_logfile $destdir/meth_nanopolish_[file root $bamtail] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# start
 	set keeppwd [pwd]
@@ -108,12 +113,14 @@ proc meth_nanopolish_job {args} {
 		set root [file root [file tail [gzroot $fastqfile]]]
 		set target $resultfile.temp/$root.smeth.tsv.zst
 		lappend seqmethfiles $target
-		job seqmeth_nanopolish-[file tail $target] {*}$skips -deps {
-			$fastqfile $fast5file $refseq $bamfile
+		set bamfileindex [index_file $bamfile]
+		bam_index_job $bamfile
+		job seqmeth_nanopolish-[file tail $target] {*}$skips -cores $threads -deps {
+			$fastqfile $fast5file $refseq $bamfile ($bamfileindex)
 		} -targets {
 			$target
 		} -skip {$smethfile} -skip {$resultfile} -vars {
-			fastqfile fast5file refseq bamfile basecaller
+			fastqfile fast5file refseq bamfile basecaller threads bamfileindex
 		} -code {
 			analysisinfo_write $dep $target basecaller_version $basecaller meth_caller nanopolish meth_caller_version [version nanopolish]
 			set tempdir [tempdir]
@@ -122,7 +129,7 @@ proc meth_nanopolish_job {args} {
 			mklink $fast5file $tempdir/[file tail $fast5file]
 			catch_exec nanopolish index -d $tempdir $tempdir/[file tail $fastqfile]
 			set error [catch {
-				exec nanopolish call-methylation -r $tempdir/[file tail $fastqfile] \
+				exec nanopolish call-methylation -t $threads -r $tempdir/[file tail $fastqfile] \
 					-b $bamfile -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst
 			} msg opt]
 			if {$error} {
