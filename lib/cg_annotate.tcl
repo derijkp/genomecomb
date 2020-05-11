@@ -382,22 +382,7 @@ proc cg_annotate_job {args} {
 		if {[info exists namefield]} {set name $namefield}
 		if {!$ok} {
 			# if needed, create or update vars.tsv file in index to use in annotation (to avoid using the larger orifile)
-			job annot-createusefile-$resultname -deps {$orifile} -targets {$usefile} -vars {ok orifile usefile dbfiles} -code {
-				# usefile: smaller file with only variants used for actual annotation; 
-				# if orifile is small, a link to it is made.
-				# If it contains to many extra columns a cut down version is made
-				set f [gzopen $orifile]
-				set header [tsv_open $f]
-				catch {gzclose $f}
-				if {[gziscompressed $orifile] || [file dir $target] ne "$orifile.index" || ([llength $header] > 10 && [llength $dbfiles] >= 4)} {
-					tsv_varsfile $orifile $usefile
-					puts "Using varfile $usefile"
-				} else {
-					if {[file dir $target] eq "$orifile.index"} {
-						mklink $orifile $target
-					}
-				}
-			}
+			tsv_varsfile_job $orifile $usefile
 			set ok 1
 		}
 		set dbtype [dict get $dbinfo dbtype]
