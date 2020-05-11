@@ -1,7 +1,6 @@
 proc job_file_exists {file} {
-#	if {[file exists $file]} {return 1}
-#	if {[catch {file link $file}]} {return 0} else {return 1}
-	file exists $file
+	if {[file exists $file]} {return 1}
+	if {[catch {file link $file}]} {return 0} else {return 1}
 }
 
 proc job_file_mtime {file} {
