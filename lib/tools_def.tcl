@@ -69,7 +69,9 @@ proc targetfile_job {sampledir {dbdir {}}} {
 				set capture [get transa($capture) $capture]
 				set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
 			}
-			mklink $oritargetfile $target 1
+			if {[file exists $oritargetfile]} {
+				mklink $oritargetfile $target 1
+			}
 		}
 		return $targetfile
 	}
