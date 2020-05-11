@@ -46,10 +46,6 @@ proc cleanup_job {args} {
 					set analysisinfofile [analysisinfo_file $file]
 					if {[file exists $analysisinfofile]} {file delete -force $analysisinfofile}
 					if {[file exists [gzroot $file].index]} {file delete -force [gzroot $file].index}
-					set tempdir [file dir $file]
-					if {![llength [glob -nocomplain $tempdir/*]]} {
-						file delete $tempdir
-					}
 				}
 			}
 		}
