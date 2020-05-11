@@ -110,8 +110,15 @@ proc process_reports_job {args} {
 			set dep3 $bamfile.[indexext $bamfile]
 			set target $sampledir/reports/hsmetrics-$bamroot.hsmetrics
 			set target2 $sampledir/reports/report_hsmetrics-$bamroot.tsv
-			job reports_hsmetrics-[file tail $bamfile] -optional 1 -deps {$dep1 $dep2 $dep3} -targets {$target $target2} -vars {bamroot bamfile targetfile} -code {
-				cg_hsmetrics --sample $bamroot $dep1 $dep2 $target
+			job reports_hsmetrics-[file tail $bamfile] -optional 1 -deps {
+				$dep1 $dep2 $dep3
+			} -targets {
+				$target $target2
+			} -vars {
+				bamroot bamfile targetfile dbdir
+			} -code {
+				analysisinfo_write $dep $target hsmetrics_tool picard hsmetrics_version [version picard]
+				cg_hsmetrics -refseq $dbdir --sample $bamroot $dep1 $dep2 $target
 				set f [open $target]
 				set header [tsv_open $f]
 				set data [split [gets $f] \t]

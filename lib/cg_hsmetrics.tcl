@@ -55,12 +55,16 @@ proc hsmetrics_tsv2interval {regionfile bamfile resultfile} {
 }
 
 proc cg_hsmetrics {args} {
+	set refseq {}
 	cg_options hsmetrics args {
 		-s - -sample {
 			set sample $value
 		}
 		-b - -baitfile {
 			set baitfile $value
+		}
+		-refseq {
+			set refseq $value
 		}
 	} {bamfile targetfile resultfile} 3 3
 	if {![info exists sample]} {
@@ -98,7 +102,7 @@ proc cg_hsmetrics {args} {
 	# filtering has changed with CollectHsMetrics:
 	# add MINIMUM_MAPPING_QUALITY MINIMUM_BASE_QUALITY CLIP_OVERLAPPING_READS for compat with older data
 	if {[file extension $bamfile] eq ".cram"} {
-		set gatkrefseq [gatk_refseq $::env(REFSEQ)]
+		set gatkrefseq [gatk_refseq [refseq $refseq]]
 		picard CollectHsMetrics BAIT_INTERVALS=$bait_intervals \
 			TARGET_INTERVALS=$target_intervals \
 			MINIMUM_MAPPING_QUALITY=1 MINIMUM_BASE_QUALITY=1 \
