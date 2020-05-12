@@ -1,6 +1,6 @@
 proc methods_bam_markduplicates {args} {
 	set cmd bam_markduplicates
-	set supportedmethods {picard biobambam samtools sam}
+	set supportedmethods {samtools sam picard biobambam}
 	if {[llength $args]} {
 		set value [lindex $args 0]
 		if {$value eq "1"} {set value [lindex $supportedmethods 0]}
