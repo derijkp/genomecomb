@@ -44,7 +44,7 @@ proc targetfile_job {sampledir {dbdir {}}} {
 	}
 	# get targetfile (if possible) based on info_capture.tsv file (old system)
 	set capturefile $sampledir/info_capture.txt
-	if {![jobfileexists $capturefile]} {
+	if {![file exists $capturefile]} {
 		set targetfile $sampledir/reg_${ref}_targets.tsv
 		if {[file tail [file dir $sampledir]] eq "samples"} {
 			set take2 [file dir [file dir $sampledir]]/reg_${ref}_targets.tsv
@@ -59,21 +59,19 @@ proc targetfile_job {sampledir {dbdir {}}} {
 			return $targetfile
 		}
 	}
-	if {[jobfileexists $capturefile]} {
+	if {[file exists $capturefile]} {
 		set targetfile $sampledir/reg_${ref}_targets.tsv
-		job reports_targetfile -deps {$capturefile} -targets {$targetfile} -vars {sample dbdir ref} -code {
-			set capture [string trim [file_read $dep]]
-			set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
-			if {![file exists $oritargetfile]} {
-				array set transa {seqcapv3 SeqCap_EZ_v3 sure4 SureSelectV4 sure5 SureSelectV5 sure5utr SureSelectV5UTR}
-				set capture [get transa($capture) $capture]
-				set oritargetfile $dbdir/extra/reg_${ref}_exome_$capture.tsv
-			}
-			if {[file exists $oritargetfile]} {
-				mklink $oritargetfile $target 1
-			}
+		set capture [string trim [file_read $capturefile]]
+		set oritargetfile [gzfile $dbdir/extra/reg_${ref}_exome_$capture.tsv]
+		if {![file exists $oritargetfile]} {
+			array set transa {seqcapv3 SeqCap_EZ_v3 sure4 SureSelectV4 sure5 SureSelectV5 sure5utr SureSelectV5UTR}
+			set capture [get transa($capture) $capture]
+			set oritargetfile [gzfile $dbdir/extra/reg_${ref}_exome_$capture.tsv]
 		}
-		return $targetfile
+		if {[file exists $oritargetfile]} {
+			mklink $oritargetfile $targetfile 1
+			return $targetfile
+		}
 	}
 	set ampliconsfile [ampliconsfile $sampledir]
 	if {[jobfileexists $ampliconsfile]} {
@@ -82,6 +80,5 @@ proc targetfile_job {sampledir {dbdir {}}} {
 		}
 		return $targetfile
 	}
-	set targetfile [jobglob $sampledir/reg_${ref}_targets.tsv]
-	return {}
+	jobglob $sampledir/reg_${ref}_targets.tsv
 }
