@@ -69,8 +69,8 @@ proc targetfile_job {sampledir {dbdir {}}} {
 			set oritargetfile [gzfile $dbdir/extra/reg_${ref}_exome_$capture.tsv]
 		}
 		if {[file exists $oritargetfile]} {
-			mklink $oritargetfile $targetfile 1
-			return $targetfile
+			mklink $oritargetfile $targetfile[gzext $oritargetfile] 1
+			return $targetfile[gzext $oritargetfile]
 		}
 	}
 	set ampliconsfile [ampliconsfile $sampledir]
