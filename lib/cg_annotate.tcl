@@ -490,10 +490,13 @@ proc cg_annotate_job {args} {
 	} else {
 		set analysisinfofile {}
 	}
-	job annot-paste-$resultname -deps [list $orifile {*}$afiles] \
-	-targets {$resultfile $analysisinfofile} \
-	-vars {orifile afiles multidb replace newh resultfile analysisinfo} \
-	-code {
+	job annot-paste-$resultname -deps [list $orifile {*}$afiles] -targets {
+		$resultfile $analysisinfofile
+	} -rmtargets {
+		$usefile
+	} -vars {
+		orifile afiles multidb replace newh resultfile analysisinfo usefile
+	} -code {
 		if {$analysisinfo} {
 			analysisinfo_write $dep $target annotate_cg_version [version genomecomb]
 		}
@@ -531,6 +534,7 @@ proc cg_annotate_job {args} {
 			if {$compress ne ""} {cg_zstindex $resultfile}
 		}
 		if {[llength $afiles]} {file delete {*}$afiles}
+		file delete $usefile
 	}
 }
 

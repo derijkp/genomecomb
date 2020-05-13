@@ -188,7 +188,7 @@ proc var_freebayes_job {args} {
 	sreg_freebayes_job ${pre}sreg-$root $varallfile $sregfile.zst $skips
 	if {$cleanup} {
 		set cleanupfiles [list \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index/vars.tsv ${pre}uvar-$root.tsv.index \
+			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index \
 			${pre}varall-$root.vcf \
 		]
 		set cleanupdeps [list $varfile $varallfile]

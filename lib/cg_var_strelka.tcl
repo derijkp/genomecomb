@@ -229,7 +229,7 @@ proc var_strelka_job {args} {
 	if {$cleanup} {
 		set cleanupfiles [list \
 			${pre}var-$root.vcf \
-			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index/vars.tsv ${pre}uvar-$root.tsv.index
+			${pre}uvar-$root.tsv ${pre}uvar-$root.tsv.index
 		]
 		set cleanupdeps [list $varfile $resultgvcf.gz]
 		cleanup_job clean_${pre}var-$root $cleanupfiles $cleanupdeps
