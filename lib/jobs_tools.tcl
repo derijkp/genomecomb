@@ -42,10 +42,14 @@ proc cleanup_job {args} {
 				}
 				if {$delassociated} {
 					set indexfile [index_file $file]
-					if {[file exists $indexfile]} {file delete -force $indexfile}
+					if {[file exists $indexfile]} {
+						file delete -force $indexfile
+					}
 					set analysisinfofile [analysisinfo_file $file]
 					if {[file exists $analysisinfofile]} {file delete -force $analysisinfofile}
-					if {[file exists [gzroot $file].index]} {file delete -force [gzroot $file].index}
+					if {[file exists [gzroot $file].index] && ($forcedirs || $delassociated > 1)} {
+						file delete -force [gzroot $file].index
+					}
 				}
 			}
 		}
