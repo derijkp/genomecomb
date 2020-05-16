@@ -43,6 +43,8 @@ proc tcl::mathfunc::transcripts {genes impacts descrs filter format} {
 			# ok
 		} elseif {[regexp {^[+-]?([^:]+):} $descr temp transcript]} {
 			# alt ok
+		} elseif {[regexp {^[+-]?([^:]+)$} $descr temp transcript]} {
+			# only transcript given, no actual descr (e.g. with GENECOMP)
 		} else {
 			error "$descr has wrong format (should be a x_descr field)"
 		}
