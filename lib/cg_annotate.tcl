@@ -376,15 +376,15 @@ proc cg_annotate_job {args} {
 		set usefile [indexdir_file $orifile vars.tsv ok]
 	}
 	set afiles {}
+	if {!$ok && [llength $dbfilestodo]} {
+		# if needed, create or update vars.tsv file in index to use in annotation (to avoid using the larger orifile)
+		tsv_varsfile_job $orifile $usefile
+		set ok 1
+	}
 	foreach {dbfile dbinfo} $dbfilestodo {
 		putslog "Annotating using $dbfile"
 		set name [dict get $dbinfo name]
 		if {[info exists namefield]} {set name $namefield}
-		if {!$ok} {
-			# if needed, create or update vars.tsv file in index to use in annotation (to avoid using the larger orifile)
-			tsv_varsfile_job $orifile $usefile
-			set ok 1
-		}
 		set dbtype [dict get $dbinfo dbtype]
 		set target $tempbasefile.${name}_annot
 		lappend afiles $target
