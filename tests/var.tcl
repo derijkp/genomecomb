@@ -285,5 +285,34 @@ m	m	228
 t	?	1
 t	t	475}
 
+test var {var_longshot distrreg with -hap_bam_prefix option} {
+	cd $::smalltestdir
+	file delete -force tmp/longshot_hapbam
+	file mkdir tmp/longshot_hapbam
+	foreach file [glob ori/longshot_example_data/pacbio_reads_30x.bam* ori/longshot_example_data/genome.fa* ori/longshot_example_data/ground_truth_variants.*] {
+		mklink $file tmp/longshot_hapbam/[file tail $file]
+	}
+	cg var {*}$::dopts -method longshot -distrreg 1 -hap_bam 1 tmp/longshot_hapbam/pacbio_reads_30x.bam tmp/longshot_hapbam/genome.fa
+	cg vcf2tsv tmp/longshot_hapbam/ground_truth_variants.vcf tmp/longshot_hapbam/ground_truth_variants.tsv
+	cg multicompar tmp/longshot_hapbam/compar.tsv tmp/longshot_hapbam/var-longshot-pacbio_reads_30x.tsv.zst tmp/longshot_hapbam/ground_truth_variants.tsv
+	cg tsvdiff -brief 1 -x *.log -x *.finished tmp/longshot_hapbam expected/longshot_hapbam
+	set temp [split [string trim [exec cg sam2tsv tmp/longshot_hapbam/map-longshot-pacbio_reads_30x.hap1.bam | cg regjoin | cg  covered]] \n]
+	if {[list_subindex $temp 0] ne "chromosome contig1 contig2 contig3 {} total"} {
+		error "error in haplotyped bams"
+	}
+	set expected [string trim [deindent {
+		zyg-longshot-pacbio_reads_30x	zyg-ground_truth_variants	count
+		?	m	2
+		?	t	9
+		m	m	228
+		t	?	1
+		t	t	475
+	}]]
+	set result [exec cg select -g {zyg-longshot-pacbio_reads_30x * zyg-ground_truth_variants *} tmp/longshot_hapbam/compar.tsv]
+	if {$result ne $expected} {
+		error "wrong result"
+	}
+} {}
+
 testsummarize
 

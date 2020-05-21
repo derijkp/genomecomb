@@ -99,8 +99,8 @@ proc var_job {args} {
 		set root [file_rootname $varfile]
 		# start
 		## Create sequencing region files
-		set keeppwd [pwd]
-		cd $destdir
+#		set keeppwd [pwd]
+#		cd $destdir
 		set indexdir [gzroot $varfile].index
 		file mkdir $indexdir
 		set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
@@ -170,6 +170,12 @@ proc var_job {args} {
 				# files are xxx-100 -> would sort reverse of what we want because of the -
 				if {[file extension [gzroot $target]] in ".vcf .gvcf"} {
 					cg vcfcat -i 1 -o $target {*}[bsort [jobglob {*}$list]]
+				} elseif {[file extension [gzroot $target]] in ".bam"} {
+					cg sam_catmerge \
+						-sort nosort \
+						-index 1 \
+						-deletesams 1 \
+						$target {*}[bsort [jobglob {*}$list]]
 				} elseif {[lindex [split [file tail $target] -_] 0] eq "sreg"} {
 					cg cat -c f {*}[bsort [jobglob {*}$list]] | cg regjoin {*}[compresspipe $target] > $target.temp
 					file rename $target.temp $target
@@ -184,7 +190,7 @@ proc var_job {args} {
 		}
 		lappend cleanupfiles $indexdir
 		cleanup_job -forcedirs 1 -delassociated 1 cleanup-var_${method}_[file tail $varfile] $cleanupfiles $resultfiles
-		cd $keeppwd
+#		cd $keeppwd
 		return $resultfiles
 	}
 }

@@ -63,7 +63,8 @@ proc var_longshot_job {args} {
 	set skips {}
 	set tech ont
 	set opts {}
-	set hap_bam_prefix {}
+	set hap_bam 0
+	set index 1
 	cg_options var_longshot args {
 		-L - -deps {
 			lappend deps [file_absolute $value]
@@ -103,8 +104,11 @@ proc var_longshot_job {args} {
 			if {$value ni "ont pacbio"} {error "-tech $value not supported, must be one of: ont pacbio"}
 			set tech $value
 		}
-		-hap_bam_prefix {
-			set hap_bam_prefix [file_absolute $value]
+		-hap_bam {
+			set hap_bam [true $value]
+		}
+		-index {
+			set index [true $value]
 		}
 		-opts {
 			set opts $value
@@ -127,6 +131,10 @@ proc var_longshot_job {args} {
 	set sregfile ${pre}sreg-$root.tsv.zst
 	set vcffile [file root [gzroot $varfile]].vcf.gz
 	set resultlist [list $destdir/$varfile $destdir/$sregfile {} $destdir/$vcffile]
+	if {$hap_bam} {
+		set hap_base $destdir/${pre}map-$root
+		lappend resultlist $hap_base.hap1.bam $hap_base.hap2.bam $hap_base.unassigned.bam
+	}
 	if {$resultfiles} {
 		return $resultlist
 	}
@@ -143,7 +151,7 @@ proc var_longshot_job {args} {
 	job longshot-[file tail $varfile] {*}$skips -mem 8G -deps $deps -targets {
 		$varfile $vcffile
 	} -vars {
-		vcffile region refseq root varfile split tech opts region hap_bam_prefix maxcov mincoverage
+		vcffile region refseq root varfile split tech opts region hap_bam hap_base maxcov mincoverage index
 	} -code {
 		if {$tech eq "ont"} {
 			lappend opts --strand_bias_pvalue_cutoff 0.01
@@ -178,8 +186,8 @@ proc var_longshot_job {args} {
 			}
 			exec cg vcfcat {*}$todo > [gzroot $vcffile].temp
 		} else {
-			if {$hap_bam_prefix ne ""} {
-				lappend opts --hap_bam_prefix $hap_bam_prefix
+			if {$hap_bam} {
+				lappend opts --hap_bam_prefix $hap_base
 			}
 			if {[llength $regions]} {lappend opts --region [lindex $regions 0]}
 			set tempfile [gzroot $vcffile].temp
@@ -199,7 +207,7 @@ proc var_longshot_job {args} {
 			if {![file exists $tempfile] && [regexp {0 potential variants identified.} $msg]} {
 				longshot_empty_vcf $tempfile
 			}
-			if {$hap_bam_prefix ne ""} {
+			if {$hap_bam && $index} {
 				foreach file [glob [file root $dep]*.bam] {
 					exec samtools index $file
 				}
