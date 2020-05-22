@@ -131,9 +131,11 @@ proc var_longshot_job {args} {
 	set sregfile ${pre}sreg-$root.tsv.zst
 	set vcffile [file root [gzroot $varfile]].vcf.gz
 	set resultlist [list $destdir/$varfile $destdir/$sregfile {} $destdir/$vcffile]
+	set longshottargets [list $destdir/$varfile $destdir/$vcffile]
 	if {$hap_bam} {
 		set hap_base $destdir/${pre}map-$root
 		lappend resultlist $hap_base.hap1.bam $hap_base.hap2.bam $hap_base.unassigned.bam
+		lappend longshottargets $hap_base.hap1.bam $hap_base.hap2.bam $hap_base.unassigned.bam
 	}
 	if {$resultfiles} {
 		return $resultlist
@@ -148,9 +150,7 @@ proc var_longshot_job {args} {
 	set dep $bamtail
 	set bamtailindex $bamtail.[indexext $bamtail]
 	set deps [list $bamtail $refseq $bamtailindex {*}$deps]
-	job longshot-[file tail $varfile] {*}$skips -mem 8G -deps $deps -targets {
-		$varfile $vcffile
-	} -vars {
+	job longshot-[file tail $varfile] {*}$skips -mem 8G -deps $deps -targets $longshottargets -vars {
 		vcffile region refseq root varfile split tech opts region hap_bam hap_base maxcov mincoverage index
 	} -code {
 		if {$tech eq "ont"} {
