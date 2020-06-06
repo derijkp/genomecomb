@@ -235,6 +235,7 @@ proc process_reports_job {args} {
 				file delete $target.temp/stdin_fastqc
 				file delete $target.temp/stdin_fastqc.zip
 				file delete $target.temp/stdin_fastqc.html
+				if {[file exists $target]} {file delete -force $target}
 				file rename -force -- $target.temp $target
 			}
 		}
