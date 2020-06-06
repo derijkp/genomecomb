@@ -164,9 +164,13 @@ proc var_longshot_job {args} {
 		if {[llength $regions] > 1} {
 			set todo {}
 			foreach region $regions {
+				set runopts $opts
 				set tempfile [tempfile].vcf
+				if {$hap_bam} {
+					lappend runopts --hap_bam_prefix $tempfile
+				}
 				if {[catch {
-					catch_exec longshot --region $region -F \
+					catch_exec longshot {*}$runopts --region $region -F \
 						--min_cov $mincoverage \
 						--bam $dep \
 						--ref $refseq \
@@ -175,16 +179,31 @@ proc var_longshot_job {args} {
 					if {[regexp "^error: Chromosome name for region is not in BAM file" $msg]} {
 						putslog "longshot warning: Chromosome name ($region) for region is not in BAM file, writing empty"
 						longshot_empty_vcf $tempfile
+						exec samtools view -H -b $dep > $tempfile.hap1.bam
+						exec samtools view -H -b $dep > $tempfile.hap2.bam
+						exec samtools view -H -b $dep > $tempfile.unassigned.bam
 					} else {
 						error $msg
 					}
 				}
 				if {![file exists $tempfile] && [regexp {0 potential variants identified.} $msg]} {
 					longshot_empty_vcf $tempfile
+					exec samtools view -H -b $dep > $tempfile.hap1.bam
+					exec samtools view -H -b $dep > $tempfile.hap2.bam
+					exec samtools view -H -b $dep > $tempfile.unassigned.bam
 				}
 				lappend todo $tempfile
 			}
 			exec cg vcfcat {*}$todo > [gzroot $vcffile].temp
+			if {$hap_bam} {
+				foreach part {hap1 hap2 unassigned} {
+					set files {}
+					foreach file $todo {
+						lappend files $file.$part.bam
+					}
+					exec cg sam_catmerge -sort nosort $hap_base.$part.bam {*}$files
+				}
+			}
 		} else {
 			if {$hap_bam} {
 				lappend opts --hap_bam_prefix $hap_base
@@ -207,9 +226,16 @@ proc var_longshot_job {args} {
 			if {![file exists $tempfile] && [regexp {0 potential variants identified.} $msg]} {
 				longshot_empty_vcf $tempfile
 			}
-			if {$hap_bam && $index} {
-				foreach file [glob [file root $dep]*.bam] {
-					exec samtools index $file
+			if {$hap_bam} {
+				foreach file [list $hap_base.hap1.bam $hap_base.hap2.bam $hap_base.unassigned.bam] {
+					if {![file exists $file]} {
+						exec samtools view -H -b $dep > $file
+					}
+				}
+				if {$index} {
+					foreach file [glob [file root $dep]*.bam] {
+						exec samtools index $file
+					}
 				}
 			}
 		}
