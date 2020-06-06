@@ -598,3 +598,33 @@ proc convert_pipe {infile outfile args} {
 	return $pipe
 }
 
+proc tempramdir {size} {
+	set useablespace [expr {1024*[lindex [exec df /dev/shm] end-2]}]
+	if {$size > $useablespace} {
+		error "not enough space on /dev/shm"
+	}
+        if {![info exists ::Extral::tempramdir]} {
+                for {set i 0} {$i < 20} {incr i} {
+                        set testdir [file join /dev/shm tempExtral.[pid]-[Extral::randstring 20]]
+                        if {[file exists $testdir]} continue
+                        if {[catch {
+                                file mkdir $testdir
+				atexit add [list file delete -force $testdir]
+                                if {$::tcl_platform(platform) eq "unix"} {
+                                        file attributes $testdir -permissions 0700
+                                }
+                                set files [glob -nocomplain $testdir/*]
+                                if {[llength $files]} {
+                                        error "Very fishy: there are files in the temporary directory I just created"
+                                }
+                                set ::Extral::tempramdir $testdir
+                                set ::Extral::tempramnum 0
+                        }]} continue
+                        break
+                }
+        }
+        if {![info exists ::Extral::tempramdir]} {
+                error "couldn't create temporary ramdisk directory in [file nativename /dev/shm]"
+        }
+        return $::Extral::tempramdir
+}

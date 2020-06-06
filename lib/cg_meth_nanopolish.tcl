@@ -47,6 +47,157 @@ proc cg_meth_nanopolish_freqs {dep target {callthreshold 2.5}} {
 	gzclose $f
 }
 
+proc fastqs_mergename {fastqfiles} {
+	set pbase [file_root [file tail [lindex $fastqfiles 0]]]
+	if {[llength $fastqfiles] == 1} {
+		return $pbase
+	} else {
+		set last [file_root [file tail [lindex $fastqfiles end]]]
+		if {$last ne $pbase} {
+			set pos 0
+			string_foreach c1 $pbase c2 $last {
+				if {$c1 ne $c2} break
+				incr pos
+			}
+			set size [string length $pbase]
+			set lastlen [string length $last]
+			# -2 for cnnector (__), -30 for extensions and prefix
+			set minpos [expr {$lastlen - (255-2-30-$size)}]
+			if {$minpos > $pos} {set pos $minpos}
+			append pbase __[string range $last $pos end]
+		}
+		return $pbase
+	}
+}
+
+proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq skips basecaller callthreshold threads maxfastqdistr} {
+	# putslog [list meth_nanopolish_job {*}$args]
+	global appdir
+	upvar job_logdir job_logdir
+	file mkdir $resultfile.temp
+	set destdir [file dir $resultfile]
+	set tail [file tail $resultfile]
+	if {[regexp ^meth- $tail]} {
+		set smethfile [file dir $resultfile]/s$tail
+	} else {
+		set smethfile [file dir $resultfile]/smeth-$tail
+	}
+	# start
+	set fastqfiles [gzfiles $fastqdir/*.fastq $fastqdir/*.fq]
+	if {[file exists $fastqdir/info_basecaller.txt]} {
+		set basecaller [file_read $fastqdir/info_basecaller.txt]
+	}
+	set seqmethfiles {}
+	set processlist {}
+	if {[isint $maxfastqdistr]} {
+		set len [llength $fastqfiles]
+		set perbatch [expr {($len + $maxfastqdistr -1)/$maxfastqdistr}]
+		set pos 0
+		for {set pos 0} {$pos < $len} {incr pos $perbatch} {
+			lappend processlist [lrange $fastqfiles $pos [expr {$pos + $perbatch - 1}]]
+		}
+	} else {
+		foreach {fastq} $fastqfiles {
+			lappend processlist [list $fastq]
+		}
+	}
+	foreach fastqfiles $processlist {
+		set usefastqfiles {}
+		set fast5files {}
+		foreach fastqfile $fastqfiles {
+			set fast5file $fast5dir/[file root [file tail [gzroot $fastqfile]]].fast5
+			if {![jobfileexists $fast5file]} {
+				puts stderr "Could not find fast5 for $fastqfile, skipping"
+				continue
+			}
+			lappend fast5files $fast5file
+			lappend usefastqfiles $fastqfile
+		}
+		set root [fastqs_mergename $fastqfiles]
+		set target $resultfile.temp/$root.smeth.tsv.zst
+		lappend seqmethfiles $target
+		set bamfileindex [index_file $bamfile]
+		bam_index_job $bamfile
+		set deps [list {*}$usefastqfiles {*}$fast5files $refseq $bamfile ($bamfileindex)]
+		job seqmeth_nanopolish-[file tail $target] {*}$skips -cores $threads -deps $deps -targets {
+			$target
+		} -skip {$smethfile} -skip {$resultfile} -vars {
+			fastqfiles fast5files refseq bamfile basecaller threads bamfileindex
+		} -code {
+			analysisinfo_write $dep $target basecaller_version $basecaller meth_caller nanopolish meth_caller_version [version nanopolish]
+			set tempdir [tempdir]
+			if {[llength $fast5files] == 1 && [file exists /dev/shm]} {
+				# check if we can use ramdisk
+				set fastqfile [lindex $fastqfiles 0]
+				set fast5file [lindex $fast5files 0]
+				set size [expr {[file size $fast5file]+1.6*[file size $fastqfile]}]
+				# tempdir will only be changed if enough space was free on /dev/shm
+				catch {
+					set tempdir [tempramdir $size]
+				}
+			}
+			foreach file [glob -nocomplain $tempdir/*] {file delete $file}
+			exec cp -fL $fast5files $tempdir
+			if {[llength $fastqfiles] == 1} {
+				set fastqfile [lindex $fastqfiles 0]
+				exec cp -fL $fastqfile $tempdir
+				set fastqfile $tempdir/[file tail $fastqfile]
+			} else {
+				set fastqfile [tempfile].fastq.gz
+				exec cg zcat {*}$fastqfiles | gzip --fast > $fastqfile 2>@ stderr
+			}
+			set nanopolishprog [exec which nanopolish]
+			if {[file exists $nanopolishprog.plugins]} {
+				if {[get ::env(HDF5_PLUGIN_PATH) ""] ne ""} {
+					set ::env(HDF5_PLUGIN_PATH) $nanopolishprog.plugins:$::env(HDF5_PLUGIN_PATH)
+				} else {
+					set ::env(HDF5_PLUGIN_PATH) $nanopolishprog.plugins
+				}
+			}
+			catch_exec nanopolish index -d $tempdir $tempdir/[file tail $fastqfile]
+			set error [catch {
+				exec nanopolish call-methylation -t $threads -r $fastqfile \
+					-b $bamfile -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst 2>@ stderr
+			} msg opt]
+			if {$error} {
+				if {$::errorCode ne "NONE"} {
+					dict unset opt -level
+					set errorInfo "$msg\n    while executing\nnanopolish call-methylation -r $tempdir/[file tail $fastqfile] -b $bamfile -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst"
+					return -code $error -errorcode $::errorCode -errorinfo $::errorInfo $msg
+				} else {
+					puts stderr $msg
+				}
+			}
+			result_rename $target.temp.zst $target
+			file delete -force $tempdir
+		}
+	}
+	set target $smethfile
+	set root [file root [file tail [gzroot $smethfile]]]
+	job meth_nanopolish_smethfinal-$root {*}$skips -deps $seqmethfiles -targets {
+		$smethfile
+	} -skip {$target} -code {
+		analysisinfo_write $dep $target smeth_nanopolish_cg_version [version genomecomb]
+		cg cat -c 0 {*}$deps | cg select -s - | cg zst > $target.temp
+		file rename -- $target.temp $target
+	}
+	set root [file root [file tail [gzroot $resultfile]]]
+	set dep $smethfile
+	set target $resultfile
+	job meth_nanopolish_methfinal-$root {*}$skips -deps {
+		$dep
+	} -targets {
+		$target
+	} -vars {
+		callthreshold
+	} -code {
+		set tempresult [filetemp_ext $target]
+		cg_meth_nanopolish_freqs $dep $tempresult $callthreshold
+		result_rename $tempresult $target
+	}
+	return [list $resultfile $smethfile]
+}
+
 proc meth_nanopolish_job {args} {
 	# putslog [list meth_nanopolish_job {*}$args]
 	global appdir
@@ -58,19 +209,31 @@ proc meth_nanopolish_job {args} {
 	set basecaller {}
 	set callthreshold 2.5
 	set threads 1
+	set distrmethod fast5
+	set distrreg 5000000
+	set maxfastqdistr {}
 	cg_options meth_nanopolish args {
 		-callthreshold {
 			set callthreshold $value
 		}
-		-refseq {
+		-refseq {set maxfastqdistr {}
+
 			set refseq $value
 		}
 		-skip {
 			lappend skips -skip $value
 		}
 		-threads {
-			# set threads $value
-			# ignore for now, multithreaded is not faster than singlethreaded
+			set threads $value
+		}
+		-distrmethod {
+			set distrmethod $value
+		}
+		-distrreg {
+			set distrreg $value
+		}
+		-maxfastqdistr {
+			set maxfastqdistr $value
 		}
 		-opts {
 			set opts $value
@@ -88,13 +251,8 @@ proc meth_nanopolish_job {args} {
 		set resultfile [file_absolute $resultfile]
 	}
 	file mkdir $resultfile.temp
+	set fastqfile $resultfile.temp/merged-fastq.fastq.gz
 	set destdir [file dir $resultfile]
-	set tail [file tail $resultfile]
-	if {[regexp ^meth- $tail]} {
-		set smethfile [file dir $resultfile]/s$tail
-	} else {
-		set smethfile [file dir $resultfile]/smeth-$tail
-	}
 	job_logfile $destdir/meth_nanopolish_[file root $bamtail] $destdir $cmdline \
 		{*}[versions bwa bowtie2 samtools gatk picard java gnusort8 zst os]
 	# start
@@ -103,34 +261,51 @@ proc meth_nanopolish_job {args} {
 	if {[file exists $fastqdir/info_basecaller.txt]} {
 		set basecaller [file_read $fastqdir/info_basecaller.txt]
 	}
-	set seqmethfiles {}
-	foreach fastqfile $fastqfiles {
-		set fast5file $fast5dir/[file root [file tail [gzroot $fastqfile]]].fast5
-		if {![jobfileexists $fast5file]} {
-			puts stderr "Could not find fast5 for $fastqfile, skipping"
-			continue
+	set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
+	set bamfileindex [index_file $bamfile]
+	bam_index_job $bamfile
+	if {$distrmethod eq "fast5"} {
+		return [meth_nanopolish_distrfast5 $fast5dir $fastqdir $bamfile $resultfile $refseq $skips $basecaller $callthreshold $threads $maxfastqdistr]
+	}
+	set tail [file tail $resultfile]
+	if {[regexp ^meth- $tail]} {
+		set smethfile [file dir $resultfile]/s$tail
+	} else {
+		set smethfile [file dir $resultfile]/smeth-$tail
+	}
+	set deps [list {*}$fastqfiles $fast5dir]
+	job seqmeth_nanopolish_index-[file tail $bamfile] {*}$skips -cores $threads -deps $deps -targets {
+		$fastqfile $fastqfile.index $fastqfile.index.fai $fastqfile.index.gzi $fastqfile.index.readdb
+	} -skip {$smethfile} -skip {$resultfile} -vars {
+		fastqfiles fastqfile fast5dir
+	} -code {
+		if {[llength $fastqfiles] == 1} {
+			mklink [lindex $fastqfiles 0] $fastqfile
+		} else {
+			exec cg zcat {*}$fastqfiles | gzip --fast > $fastqfile
 		}
-		set root [file root [file tail [gzroot $fastqfile]]]
-		set target $resultfile.temp/$root.smeth.tsv.zst
+		catch_exec nanopolish index -d $fast5dir $fastqfile
+	}
+	foreach region $regions {
+		set target $resultfile.temp/$region.smeth.tsv.zst
 		lappend seqmethfiles $target
-		set bamfileindex [index_file $bamfile]
-		bam_index_job $bamfile
-		job seqmeth_nanopolish-[file tail $target] {*}$skips -cores $threads -deps {
-			$fastqfile $fast5file $refseq $bamfile ($bamfileindex)
+		job seqmeth_nanopolish-[file tail $target] {*}$skips -cores $threads -mem 4G -deps {
+			$fastqfile $fast5dir $refseq $bamfile ($bamfileindex)
 		} -targets {
 			$target
 		} -skip {$smethfile} -skip {$resultfile} -vars {
-			fastqfile fast5file refseq bamfile basecaller threads bamfileindex
+			region fastqfile fast5dir refseq bamfile basecaller threads bamfileindex threads
 		} -code {
 			analysisinfo_write $dep $target basecaller_version $basecaller meth_caller nanopolish meth_caller_version [version nanopolish]
 			set tempdir [tempdir]
 			foreach file [glob -nocomplain $tempdir/*] {file delete $file}
-			mklink $fastqfile $tempdir/[file tail $fastqfile]
-			mklink $fast5file $tempdir/[file tail $fast5file]
-			catch_exec nanopolish index -d $tempdir $tempdir/[file tail $fastqfile]
+			foreach {chr begin end} [split $region -] break
+			set nregion ${chr}:${begin}-${end}
 			set error [catch {
-				exec nanopolish call-methylation -t $threads -r $tempdir/[file tail $fastqfile] \
-					-b $bamfile -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst
+				exec nanopolish call-methylation -t $threads \
+					-r $fastqfile -b $bamfile -g $refseq \
+					-w $nregion \
+					 | cg zst --compressionlevel 1 > $target.temp.zst
 			} msg opt]
 			if {$error} {
 				if {$::errorCode ne "NONE"} {
