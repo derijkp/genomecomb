@@ -78,6 +78,9 @@ flagstat_reads flagstat_alignments fastqc histodepth vars hsmetrics covered
 ** a number: distribution into regions of this size
 ** a number preceded by an s: distribution into contiguous sequenced regions, where regions are combined as long as they are smaller than the given size
 ** a file name: the regions in the file will be used for distribution
+; -maxfastqdistr maxfastqdistr: if there are more than **maxfastqdistr** separate input fastqs, they will be merged 
+into **maxfastqdistr** fastqs for analysis: If there are many (small) fastqs, the overhead to 
+processes (alignment etc.) them separately (default, to distribute the load) can become too large.
 ; -datatype datatype: Some variant callers (strelka) need to know the type
 of data (genome, exome or amplicons) for analysis. You can specify it
 using this option. If not given, it is deduced from acompanying region
