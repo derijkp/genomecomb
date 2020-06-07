@@ -202,3 +202,4 @@ cd /build/vbz_compression-1.0.0/build
 make VERBOSE=1
 
 echo "Finished building vbz_compression"
+echo "binaries are in <builddir>/vbz_compression-1.0.0/build/bin"
