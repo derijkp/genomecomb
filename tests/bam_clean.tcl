@@ -128,7 +128,7 @@ test bam_clean {bam_clean} {
 	set c [string trim [file_read tmp/rdsbwa.bam.analysisinfo]]
 	if {![string match [string trim [deindent {
 		bamclean	bamclean_version	bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
-		genomecomb	0.100.1	samtools	1.10 (using htslib 1.10)	picard	2.21.3-SNAPSHOT	gatk	3.8-1-0-gf15c1c3ef
+		genomecomb	0.101.0	samtools	1.10 (using htslib 1.10)	picard	2.21.3-SNAPSHOT	gatk	3.8-1-0-gf15c1c3ef
 	}]] $c]} {
 		error "error in analysisinfo:\n$c"
 	}
@@ -157,7 +157,7 @@ test bam_clean {bam_clean to cram} {
 	set c [string trim [file_read tmp/rdsbwa.cram.analysisinfo]]
 	if {![string match [string trim [deindent {
 		bamclean	bamclean_version	bamsort	bamsort_version	removeduplicates	removeduplicates_version	realign	realign_version
-		genomecomb	0.100.1	samtools	1.10 (using htslib 1.10)	picard	2.21.3-SNAPSHOT	gatk	3.8-1-0-gf15c1c3ef
+		genomecomb	0.101.0	samtools	1.10 (using htslib 1.10)	picard	2.21.3-SNAPSHOT	gatk	3.8-1-0-gf15c1c3ef
 	}]] $c]} {
 		error "error in analysisinfo:\n$c"
 	}
