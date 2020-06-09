@@ -1140,4 +1140,25 @@ src.fas	r1	288894134ca536ab42862c6bc10abe50	39
 src.fas	r2	9ae0d1e948e7f87aa96f9e1bc6cfe86b	45
 }}
 
+test gff2tsv {basic} {
+	file_write tmp/test.gff [string trim [deindent {
+		##gff-version 3
+		chr1	source1	type1	1	100	.	+	.	ID=test1
+		chr1	source1	type1	1000	1100	.	+	.	ID=test1;Name=1
+		chr2	source1	type2	11874	14409	.	+	.	ID=test2;Name=test2;description=descr
+	}]]\n
+	file_write tmp/expected.tsv [string trim [deindent {
+		# -- sft converted from gff, original comments follow --
+		##gff-version 3
+		# ----
+		chromosome	type	begin	end	score	strand	source	phase	ID	Name	description
+		chr1	type1	0	100	.	+	source1	.	test1		
+		chr1	type1	999	1100	.	+	source1	.	test1	1	
+		chr2	type2	11873	14409	.	+	source1	.	test2	test2	descr
+	}]]\n
+	cg gff2tsv tmp/test.gff tmp/test.tsv
+	cg checktsv tmp/test.tsv
+	exec diff tmp/test.tsv tmp/expected.tsv
+} {}
+
 testsummarize

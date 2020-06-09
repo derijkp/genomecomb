@@ -34,8 +34,8 @@ proc cg_gff2tsv {args} {
 		if {[string index $line 0] ne "#"} break
 		append comment \n$line
 	}
-	append comment "\n# ----"
-	set nheader {chromosome type begin end strand source phase}
+	append comment "\n# ----\n"
+	set nheader {chromosome type begin end score strand source phase}
 	set next 100000; set num 0
 	set tempbase [tempfile]
 	set tempattr [tempfile]
@@ -45,19 +45,27 @@ proc cg_gff2tsv {args} {
 	set attrheader {}
 	set attrtemplate {}
  	unset -nocomplain attra
-	unset -nocomplain curchromosome
 	set num 0
-	while {![eof $f]} {
-		if {[string index $line 0] eq "#"} continue
-		set line [gets $f]
+	foreach key {chromosome type begin end score strand source phase} {
+		set transa($key) attr_$key
+	}
+	while 1 {
+		while {$line eq "" || [string index $line 0] eq "#"} {
+			if {[gets $f line] == -1} break
+		}
+		if {[eof $f]} break
 		set line [split $line \t]
 		if {![llength $line]} continue
 		foreach {chrom source type start end score strand phase attributes comments} $line break
 		incr start -1
-		set a [dict create {*}[string_change $attributes {; " " = " "}]]
-		puts $fb [join [list $chrom $type $start $end $strand $source $phase] \t]
+		set data [split [string_change $attributes {"; " ";"}] {;=}]
+		set a [dict create {*}$data]
+		puts $fb [join [list $chrom $type $start $end $score $strand $source $phase] \t]
 		set attrlist $attrtemplate
 		dict for {key value} $a {
+			if {[info exists transa($key)]} {
+				set key $transa($key)
+			}
 			if {![info exists attra($key)]} {
 				set attra($key) [llength $attrtemplate]
 				lappend attrheader $key
@@ -67,22 +75,34 @@ proc cg_gff2tsv {args} {
 				lset attrlist $attra($key) $value
 			}
 		}
-		puts $fa [join $attrlist \t]
-		if {$num >= $next} {putsprogress $curchromosome:$curbegin-$curend; incr next 100000}
+		puts $fa $attrlist
+		if {$num >= $next} {putsprogress $chrom:$start-$end; incr next 100000}
 		incr num
+		set line [gets $f]
 	}
 	catch {close $fb} ; catch {close $fa}
 
 	putsprogress "Assembling file"
+	set atrrsize [llength $attrheader]
 	puts -nonewline $o $comment
 	puts $o [join [list_concat $nheader $attrheader] \t]
 	set fb [open $tempbase]
 	set fa [open $tempattr]
+	unset -nocomplain atemplate
 	while 1 {
-		set linea [gets $fb]
-		set lineb [gets $fa]
+		set lineb [gets $fb]
+		set linea [gets $fa]
+		set len [llength $linea]
+		if {$len < $atrrsize} {
+			if {![info exists atemplate($len)]} {
+				set atemplate($len) [string_fill \t [expr {$atrrsize-$len}]]
+			}
+			set linea [join $linea \t]$atemplate($len)
+		} else {
+			set linea [join $linea \t]
+		}
 		if {[eof $fa]} break
-		puts $o $linea\t$lineb
+		puts $o $lineb\t$linea
 	}
 	catch {close $fb} ; catch {close $fa}
 	file delete $tempbase ; file delete $tempattr
