@@ -31,6 +31,7 @@ proc gatk_refseq refseq {
 		exec samtools faidx $dep
 	}
 	set dict [file root $nrefseq].dict
+	set target $dict
 	if {![file exists $dict]} {
 		file delete $target.temp
 		picard CreateSequenceDictionary R= $nrefseq O= $target.temp 2>@ stderr >@ stdout
