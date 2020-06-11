@@ -1716,7 +1716,8 @@ proc cg_select {args} {
 		set tclcode [string_change $tclcode [list @neededfields@ $neededfields @neededfieldsvals@ \$\{[join $neededfields \}\ \$\{]\}]]
 	}
 	if {$useaddrow} {
-		set pipe [list addrow {tee tmp/tee} {*}$pipe]
+		# set pipe [list addrow {tee /tmp/tee} {*}$pipe]
+		set pipe [list addrow {*}$pipe]
 	}
 # file_write /tmp/temp.txt $tclcode\n
 	if {[string length $tclcode] > 2000} {
