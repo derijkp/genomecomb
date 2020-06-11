@@ -1133,6 +1133,7 @@ proc job {jobname args} {
 	set pos 0
 	set foreach {}
 	set vars {}
+	set procs {}
 	set precode {}
 	set skiplist {}
 	set ptargets {}
@@ -1210,6 +1211,10 @@ proc job {jobname args} {
 				set vars [lindex $args $pos]
 				incr pos
 			}
+			-procs {
+				set procs [lindex $args $pos]
+				incr pos
+			}
 			-precode {
 				set precode [lindex $args $pos]
 				incr pos
@@ -1225,7 +1230,7 @@ proc job {jobname args} {
 			-- break
 			default {
 				if {[string index $key 0] eq "-"} {
-					error "unkown option $key for job, must be one of: -deps, -targets, -code, -vars, -foreach, -rmtargets, -skip, -ptargets, -direct, -io, -cores, -precode, -checkcompressed"
+					error "unkown option $key for job, must be one of: -deps, -targets, -code, -vars, -procs, -foreach, -rmtargets, -skip, -ptargets, -direct, -io, -cores, -precode, -checkcompressed"
 				}
 				break
 			}
@@ -1265,6 +1270,9 @@ proc job {jobname args} {
 	}
 	foreach var $vars {
 		append newcode [list set $var [uplevel get $var]]\n
+	}
+	foreach proc $procs {
+		append newcode [list proc $proc [info args $proc] [info body $proc]]\n
 	}
 	append newcode $code
 	if {[get ::job_getinfo 0]} {

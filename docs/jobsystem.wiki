@@ -135,6 +135,8 @@ a target of a previous job.
 **code** contains the code to be executed in the job. This code will run in a separate scope
 from the code outside the job. Variables set in it will not be visible to the caller
 and it does not see variables in the caller (though you can pass them using the -vars option).
+locally defined procs (i.e. not automatically called from the path) are also not visible, unless 
+passed with the -procs option
 It has a number of predefined variables:
 **deps** (contains the list of dependencies; in case you used wildcards,
 deps will contain the filenames, not the patterns), 
@@ -151,6 +153,7 @@ job supports following **options**:
 ; -targets targetlist: list of files that will be created by the job
 ; -code code: code to be executed in the job. 
 ; -vars varlist: a list of variables that must be passed on to the job.
+; -procs proclist: a list of procs that must be passed on to the job.
 ; -optional 0/1: By default (0) an error will be given if the job cannot run because of missing
 dependencies. Set -optional to 1 to indicate that this job is optional, and can be simply skipped
 if not all dependencies are available.
