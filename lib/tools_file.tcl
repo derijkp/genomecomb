@@ -226,7 +226,7 @@ proc hardcopy {args} {
 }
 
 # create soft link (dest points to src) using relative path (unless absolute == 1)
-# allow links to non-exusting files
+# allow links to non-existing files
 proc mklink {args} {
 	set absolute 0
 	cg_options mklink args {
