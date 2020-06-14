@@ -164,7 +164,7 @@ proc cg_correctvariants {args} {
 							lset line $seqpos $seq
 						}
 					}
-				} elseif {!$force} {
+				} elseif {!$force && ![regexp {^N+$} $gref]} {
 					error "different ref ($ref) for line (ref should be $gref):\n$line"
 				} else {
 					if {$force == 2} {
