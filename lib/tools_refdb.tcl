@@ -1,9 +1,9 @@
-proc liftover_refdb {old new dest dbbuild build {split 1} {unmappeddir extra}} {
+proc liftover_refdb {old new refdbbase dbbuild build {split 1} {unmappeddir extra}} {
 	set root [gzroot $old]
 	set newroot [gzroot $new]
-	set liftoverfile ${dest}/liftover/${dbbuild}To${build}.over.tsv
+	set liftoverfile ${refdbbase}/liftover/${dbbuild}To${build}.over.tsv
 	if {![file exists $liftoverfile]} {
-		set liftoverfile ${dest}/liftover/${dbbuild}To[string toupper [string index $build 0]][string range $build 1 end].over.tsv
+		set liftoverfile ${refdbbase}/liftover/${dbbuild}To[string toupper [string index $build 0]][string range $build 1 end].over.tsv
 	}
 	cg liftover -split $split $old $new $liftoverfile
 	if {[file exists $root.info]} {

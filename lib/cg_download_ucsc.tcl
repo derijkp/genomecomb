@@ -110,7 +110,7 @@ proc cg_download_ucsc {args} {
 		putslog "Skipping download $dbname.sql (already there)"
 	}
 	if {![file exists $temp/$sqlfile]} {
-		error $errmsg
+		error "could not download data for $dbname from UCSC"
 	}
 	# header
 	# ------

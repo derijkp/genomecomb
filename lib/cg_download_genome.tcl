@@ -84,7 +84,7 @@ proc cg_download_genome {args} {
 		time	[timestamp]
 		
 		== Description ==
-		The genome sequence is obtained from UCSC, and chromosome sorted according 
+		The genome sequence downloaded from source, and chromosome sorted according 
 		to a natural sort (for use in genomecomb)
 		
 		== Category ==

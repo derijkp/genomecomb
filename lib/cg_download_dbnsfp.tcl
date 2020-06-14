@@ -13,7 +13,7 @@ proc cg_download_dbnsfp {args} {
 		MetaLR_score MetaLR_pred
 		SIFT_score SIFT_pred
 		REVEL_score REVEL_rankscore
-		VEST3_score VEST3_rankscore
+		VEST4_score VEST4_rankscore
 		LRT_score LRT_pred
 		MutationTaster_score MutationTaster_pred
 		M-CAP_score M-CAP_pred
@@ -68,14 +68,14 @@ proc cg_download_dbnsfp {args} {
 	file rename -force -- $tempdir/info [gzroot $resultfile].info
 	file copy -force $tempdir/LICENSE.txt [gzroot $resultfile].license
 	# data
-	set files [bsort [glob $tempdir/dbNSFP*_variant.chr*]]
-	set f [open [lindex $files 0]]
+	set files [bsort [glob $tempdir/dbNSFP*_variant.chr*.gz]]
+	set f [gzopen [lindex $files 0]]
 	set header [split [string range [gets $f] 1 end] \t]
-	close $f
+	gzclose $f
 	set nh [list_regsub {\([^)]*\)} $header {}]
 	set notpresent [list_lremove $usefields $header]
 	if {[llength $notpresent]} {
-		puts "fields missing in file [file tail [lindex $files 0]]:$notpresent"
+		error "fields missing in file [file tail [lindex $files 0]]:$notpresent"
 	}
 	set usefields [list_common $usefields $header]
 	set fields {}
@@ -105,12 +105,12 @@ proc cg_download_dbnsfp {args} {
 		putslog $file
 		lappend todo $file.tsv
 		if {[file exists $file.tsv]} continue
-		cg select -hp $nh -f $fields -q $query $file $file.tsv.temp
-		cg select -s {chromosome end} $file.tsv.temp $file.tsv.temp2
+		cg select -overwrite 1 -hp $nh -f $fields -q $query $file $file.tsv.temp
+		cg select -overwrite 1 -s {chromosome end} $file.tsv.temp $file.tsv.temp2
 		file delete $file.tsv.temp
 		cg groupby {chromosome begin end type} $file.tsv.temp2 $file.tsv.temp3
 		file delete $file.tsv.temp2
-		cg select -f {
+		cg select -overwrite 1 -f {
 			chromosome begin end type {ref=lindex($ref,0)} alt *
 		} $file.tsv.temp3 $file.tsv.temp4
 		file delete $file.tsv.temp3
@@ -119,7 +119,7 @@ proc cg_download_dbnsfp {args} {
 	putslog "joining files"
 	cg cat -c 0 {*}$todo > $tempdir/var_hg19_dbnsfp.tsv.temp
 	set tempresult $tempdir/var_hg19_dbnsfp.tsv.temp2[file extension $resultfile]
-	cg select -s - $tempdir/var_hg19_dbnsfp.tsv.temp $tempresult
+	cg select -overwrite 1 -s - $tempdir/var_hg19_dbnsfp.tsv.temp $tempresult
 	putslog "move result to target"
 	# move dbNSFPzip files to target
 	file_write [gzroot $resultfile].opt "fields\t{SIFT_score Polyphen2_HDIV_score Polyphen2_HDIV_pred Polyphen2_HVAR_score Polyphen2_HVAR_pred MetaSVM_score MetaSVM_pred MetaLR_score MetaLR_pred LRT_score LRT_pred MutationTaster_score MutationTaster_pred FATHMM_score REVEL_score VEST3_score GERP_NR GERP_RS MetaLR_score MetaLR_pred SiPhy_29way_pi SiPhy_29way_logOdds LRT_Omega ESP_AA_AF ESP_EA_AF}"
