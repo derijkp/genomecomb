@@ -38,6 +38,18 @@ proc map_mem_minimap2 {mem threads} {
 	return $mem
 }
 
+# presets
+# map-pb : PacBio genomic reads
+# map-ont : Oxford Nanopore genomic reads
+# asm20 : PacBio CCS genomic reads
+# sr : short genomic paired-end reads
+# splice : spliced long reads (strand unknown)
+# splice : noisy Nanopore Direct RNA-seq
+# splice:hq : Final PacBio Iso-seq or traditional cDNA
+# asm5 : intra-species asm-to-asm alignment
+# va-pb : PacBio read overlap
+# va-ont : Nanopore read overlap
+
 proc cg_map_minimap2 {args} {
 	set paired 1
 	set keepargs $args
