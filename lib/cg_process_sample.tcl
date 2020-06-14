@@ -477,6 +477,7 @@ proc process_sample_job {args} {
 	set datatype {}
 	set aliformat bam
 	set maxfastqdistr {}
+	set hap_bam 0
 	cg_options process_sample args {
 		-oridir {
 			set oridir $value
@@ -562,6 +563,9 @@ proc process_sample_job {args} {
 		}
 		-maxfastqdistr {
 			set maxfastqdistr $value
+		}
+		-hap_bam {
+			set hap_bam $value
 		}
 	} {} 1 2
 	if {[llength $args] == 1} {
@@ -954,6 +958,7 @@ proc process_sample_job {args} {
 			switch {$varcaller} {
 				gatk {set extraopts [list -dt $dt]}
 				sam {set extraopts [list -dt $dt]}
+				longshot {set extraopts [list -hap_bam $hap_bam}
 				default {set extraopts {}}
 			}
 			if {![auto_load var_${varcaller}_job]} {

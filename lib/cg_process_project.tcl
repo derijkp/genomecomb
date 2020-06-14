@@ -31,6 +31,7 @@ proc process_project_job {args} {
 	set aliformat bam
 	set samplesdir samples
 	set maxfastqdistr {}
+	set hap_bam 0
 	cg_options process_project args {
 		-ori {
 			set oridir $value
@@ -146,6 +147,9 @@ proc process_project_job {args} {
 		}
 		-samplesdir {
 			set samplesdir $value
+		}
+		-hap_bam {
+			set hap_bam $value
 		}
 	} {destdir dbdir} 1 2
 	set destdir [file_absolute $destdir]
