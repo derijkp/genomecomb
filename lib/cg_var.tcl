@@ -103,6 +103,7 @@ proc var_job {args} {
 #		cd $destdir
 		set indexdir [gzroot $varfile].index
 		file mkdir $indexdir
+		job_cleanup_add $indexdir
 		set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
 		set basename [gzroot [file tail $varallfile]]
 		if {$supportsregionfile} {
@@ -188,7 +189,6 @@ proc var_job {args} {
 			}
 			lappend cleanupfiles {*}$list
 		}
-		lappend cleanupfiles $indexdir
 		cleanup_job -forcedirs 1 -delassociated 1 cleanup-var_${method}_[file tail $varfile] $cleanupfiles $resultfiles
 #		cd $keeppwd
 		return $resultfiles

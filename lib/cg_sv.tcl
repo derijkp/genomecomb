@@ -82,6 +82,7 @@ proc sv_job {args} {
 		cd $destdir
 		set indexdir [gzroot $resultfile].index
 		file mkdir $indexdir
+		job_cleanup_ifempty_add $indexdir
 		set regions [distrreg_regs $distrreg $refseq]
 		set basename [file_root [file tail $resultfile]]
 		set regfiles {}
@@ -158,7 +159,7 @@ proc sv_job {args} {
 			}
 			incr pos
 		}
-		cleanup_job cleanup-sv_${method}_[file tail $bamfile] [list {*}$regfiles $indexdir] $resultfiles
+		cleanup_job cleanup-sv_${method}_[file tail $bamfile] [list {*}$regfiles] $resultfiles
 		cd $keeppwd
 		return $resultfiles
 	}

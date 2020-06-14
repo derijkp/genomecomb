@@ -209,10 +209,9 @@ to also return 0 if a dep does not exist.
 
 == job_wait ==
 job_wait must be added at the end of the program. It will wait (if needed) for all jobs to finish.
-This does not actually do something for direct runs (jobs are executed directly) or on a cluster
-(sge submits jobs directly with the needed dependencies), but is required for the proper
-functioning of locally distributed processing using workers (-d number).
-Here it will manage the processes.
+Then it will cleanup temporary files and update the log file.
+On a cluster (sge) the program will actually finish; The final processing by job_wait is submitted as a job that
+will run after all other jobs are finished.
 
 {{{
 job_wait

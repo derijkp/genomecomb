@@ -1394,6 +1394,35 @@ test job "-cores 2 $testname" {
 2
 }
 
+test job "job_cleanup_add" {
+	test_job_init
+	job test -targets tmp/dep.txt -code {
+		file_write tmp/dep.txt test
+	}
+	job_cleanup_add tmp/dep.txt
+	job test -deps {tmp/dep.txt} -targets tmp/target.txt -code {
+		file_write tmp/target.txt [file_read $dep]_ok
+	}
+	job_wait ; gridwait
+	glob tmp/*.txt
+} {tmp/target.txt}
+
+test job "job_cleanup_ifempty_add" {
+	test_job_init
+	job test -targets {tmp/dep.txt tmp/tmp.dir tmp/tmp2.dir} -code {
+		file_write tmp/dep.txt test
+		file mkdir tmp/tmp.dir
+		file_write tmp/tmp.dir/test.txt test
+		file mkdir tmp/tmp2.dir
+	}
+	job_cleanup_ifempty_add tmp/tmp.dir tmp/tmp2.dir
+	job test -deps {tmp/dep.txt} -targets tmp/target.txt -code {
+		file_write tmp/target.txt [file_read $dep]_ok
+	}
+	job_wait ; gridwait
+	glob tmp/*.dir
+} {tmp/tmp.dir}
+
 if {$testname eq "-d sge"} {
 	test job ", in name $testname" {
 		cd $::testdir

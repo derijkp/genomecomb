@@ -238,5 +238,12 @@ proc job_logfile_direct_close {} {
 }
 
 proc job_process_direct_wait {} {
+	global cgjob
 	job_logfile_direct_close
+	foreach file $cgjob(cleanupfiles) {
+		catch {file delete -force $file}
+	}
+	foreach file $cgjob(cleanupifemptyfiles) {
+		catch {file delete $file}
+	}
 }

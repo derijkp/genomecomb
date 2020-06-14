@@ -167,6 +167,13 @@ proc job_process_sge_wait {} {
 	append cmd [list file delete -force $runfile]\n
 	append cmd [list file delete -force $outfile]\n
 	append cmd [list file delete -force $errfile]\n
+	append cmd [list foreach file $cgjob(cleanupfiles) {
+		catch {file delete -force $file}
+	}]
+	append cmd [list	foreach file $cgjob(cleanupifemptyfiles) {
+		catch {file delete $file}
+	}]
+
 	file_write $runfile $cmd
 	file attributes $runfile -permissions u+x
 	set options {}

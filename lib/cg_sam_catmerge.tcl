@@ -75,8 +75,8 @@ proc sam_catmerge_job {args} {
 		foreach file $samfiles {
 			lappend rmfiles $file [index_file $file] [analysisinfo_file $file]
 		}
-		lappend rmfiles $resultfile.index
 		set rmfiles [list_remove $rmfiles {}]
+		job_cleanup_ifempty_add $resultfile.index
 	} else {
 		set rmfiles {}
 	}

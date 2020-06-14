@@ -82,7 +82,5 @@ set argv [job_init {*}$argv]
 # run program that will submit/run jobs
 main {*}$argv
 
-# job_wait will wait (if needed) for all jobs to finish
-# this is currently only useful for local distributed processing using workers (-d number)
-# direct runs jobs directly, and sge submits jobs directly (with the needed dependencies)
+# job_wait will wait (if needed) for all jobs to finish, cleanup temporary files and update the log file
 job_wait

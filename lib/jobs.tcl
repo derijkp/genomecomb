@@ -1312,6 +1312,8 @@ proc job_init {args} {
 	set cgjob(totalduration) {0 0}
 	set cgjob(cleanup) success
 	set cgjob(removeold) 0
+	set cgjob(cleanupfiles) {}
+	set cgjob(cleanupifemptyfiles) {}
 	set job_logdir [file_absolute [pwd]/log_jobs]
 	interp alias {} job_process {} job_process_direct
 	interp alias {} job_running {} job_running_direct
@@ -1340,6 +1342,20 @@ proc job_mempercore {mem threads} {
 		set mem [expr {int(ceil($memnum * $scale /$threads))}]$memunits
 	}
 	return $mem
+}
+
+proc job_cleanup_ifempty_add {args} {
+	global cgjob
+	foreach file $args {
+		lappend cgjob(cleanupifemptyfiles) [file_absolute $file]
+	}
+}
+
+proc job_cleanup_add {args} {
+	global cgjob
+	foreach file $args {
+		lappend cgjob(cleanupfiles) [file_absolute $file]
+	}
 }
 
 job_init

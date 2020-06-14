@@ -182,4 +182,10 @@ proc job_process_distr_wait {} {
 	if {[file exists $cgjob(logfile).running]} {
 		job_update $cgjob(logfile).running $cgjob(cleanup) 1 $cgjob(removeold) 1
 	}
+	foreach file $cgjob(cleanupfiles) {
+		catch {file delete -force $file}
+	}
+	foreach file $cgjob(cleanupifemptyfiles) {
+		catch {file delete $file}
+	}
 }
