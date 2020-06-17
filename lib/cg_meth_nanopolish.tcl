@@ -74,6 +74,8 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 	# putslog [list meth_nanopolish_job {*}$args]
 	global appdir
 	upvar job_logdir job_logdir
+	# ignore nr threads, does not scale well enough with threads
+	set threads 1
 	file mkdir $resultfile.temp
 	set destdir [file dir $resultfile]
 	set tail [file tail $resultfile]
@@ -101,6 +103,28 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 			lappend processlist [list $fastq]
 		}
 	}
+	set bamfileindex [index_file $bamfile]
+	bam_index_job $bamfile
+	if {[info exists ::env(CG_FAST_SHAREDSTORAGE)]} {
+		set cachedir $::env(CG_FAST_SHAREDSTORAGE)/methcache
+		set bamcache $cachedir/[file tail $bamfile]
+		set bamcacheindex [index_file $bamcache]
+		putslog "meth_nanopolish using cached bam: $bamcache"
+		job meth_nanopolish_makecache-[file tail $bamfile] {*}$skips -skip {$smethfile} -skip {$resultfile} -deps {
+			$bamfile $bamfileindex
+		} -targets {
+			$bamcache $bamcacheindex
+		} -vars {
+			cachedir bamfileindex bamcacheindex
+		} -code {
+			catch {file mkdir $cachedir}
+			file copy $bamfileindex $bamcacheindex
+			file copy $dep $target.temp
+			file rename $target.temp $target
+		}
+	} else {
+		set bamcache $bamfile
+	}
 	foreach fastqfiles $processlist {
 		set usefastqfiles {}
 		set fast5files {}
@@ -116,13 +140,11 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		set root [fastqs_mergename $fastqfiles]
 		set target $resultfile.temp/$root.smeth.tsv.zst
 		lappend seqmethfiles $target
-		set bamfileindex [index_file $bamfile]
-		bam_index_job $bamfile
-		set deps [list {*}$usefastqfiles {*}$fast5files $refseq $bamfile ($bamfileindex)]
+		set deps [list {*}$usefastqfiles {*}$fast5files $refseq $bamcache ($bamfileindex)]
 		job seqmeth_nanopolish-[file tail $target] {*}$skips -cores $threads -deps $deps -targets {
 			$target
 		} -skip {$smethfile} -skip {$resultfile} -vars {
-			fastqfiles fast5files refseq bamfile basecaller threads bamfileindex
+			fastqfiles fast5files refseq bamfile bamcache basecaller threads bamfileindex
 		} -code {
 			analysisinfo_write $dep $target basecaller_version $basecaller meth_caller nanopolish meth_caller_version [version nanopolish]
 			set tempdir [tempdir]
@@ -157,12 +179,12 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 			catch_exec nanopolish index -d $tempdir $tempdir/[file tail $fastqfile]
 			set error [catch {
 				exec nanopolish call-methylation -t $threads -r $fastqfile \
-					-b $bamfile -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst 2>@ stderr
+					-b $bamcache -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst 2>@ stderr
 			} msg opt]
 			if {$error} {
 				if {$::errorCode ne "NONE"} {
 					dict unset opt -level
-					set errorInfo "$msg\n    while executing\nnanopolish call-methylation -r $tempdir/[file tail $fastqfile] -b $bamfile -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst"
+					set errorInfo "$msg\n    while executing\nnanopolish call-methylation -r $tempdir/[file tail $fastqfile] -b $bamcache -g $refseq | cg zst --compressionlevel 1 > $target.temp.zst"
 					return -code $error -errorcode $::errorCode -errorinfo $::errorInfo $msg
 				} else {
 					puts stderr $msg
@@ -176,10 +198,16 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 	set root [file root [file tail [gzroot $smethfile]]]
 	job meth_nanopolish_smethfinal-$root {*}$skips -deps $seqmethfiles -targets {
 		$smethfile
+	} -vars {
+		bamfile bamcache bamcacheindex
 	} -skip {$target} -code {
 		analysisinfo_write $dep $target smeth_nanopolish_cg_version [version genomecomb]
 		cg cat -c 0 {*}$deps | cg select -s - | cg zst > $target.temp
 		file rename -- $target.temp $target
+		if {$bamcache ne $bamfile} {
+			file delete -force [file dir $bamcache]
+			file delete -force [file dir $bamcacheindex]
+		}
 	}
 	set root [file root [file tail [gzroot $resultfile]]]
 	set dep $smethfile
