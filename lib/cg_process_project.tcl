@@ -9,6 +9,7 @@ proc process_project_job {args} {
 	set aligner bwa
 	set varcallers {gatk sam}
 	set svcallers {}
+	set methcallers {}
 	set realign 1
 	set cleanup 1
 	set paired 1
@@ -76,6 +77,9 @@ proc process_project_job {args} {
 		}
 		-svcallers {
 			set svcallers $value
+		}
+		-methcallers {
+			set methcallers $value
 		}
 		-s - -split {
 			set split $value
@@ -219,13 +223,15 @@ proc process_project_job {args} {
 	job_logdir $destdir/log_jobs
 	set todo(var) {}
 	set todo(sv) {}
+	set todo(meth) {}
 	set todo(reports) {}
 	foreach sample $samples {
 		putslog "Processing sample $sample"
 		set dir $sampledir/$sample
 		if {!$jobsample} {
 			process_sample_job -todoVar todo -clip $clip -datatype $datatype -aliformat $aliformat \
-				-aligner $aligner -realign $realign -varcallers $varcallers -svcallers $svcallers \
+				-aligner $aligner -realign $realign \
+				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 				-dbdir $dbdir -split $split -paired $paired --maxfastqdistr $maxfastqdistr \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
@@ -238,7 +244,8 @@ proc process_project_job {args} {
 			set verbose [logverbose]
 			set ::deps {} ; set ::targets {}
 			process_sample_job -todoVar todo -clip $clip -datatype $datatype \
-				-aligner $aligner -realign $realign --varcallers $varcallers -svcallers $svcallers \
+				-aligner $aligner -realign $realign \
+				-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 				-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
 				-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 				-removeduplicates $removeduplicates -amplicons $amplicons \
@@ -248,12 +255,13 @@ proc process_project_job {args} {
 			logverbose $verbose
 			# run the actual job with deps and targets found
 			job process_sample-$sample -deps $deps -targets $targets -vars {
-				clip aligner realign varcallers svcallers dbdir split paired
+				clip aligner realign varcallers svcallers methcallers dbdir split paired
 				adapterfile reports samBQ cleanup removeduplicates amplicons
 				removeskew dt targetfile minfastqreads dir keepsams datatype
 			} -code {
 				cg process_sample -stack 1 -v 2 -clip $clip -datatype $datatype \
-					-aligner $aligner -realign $realign -varcallers $varcallers -svcallers $svcallers \
+					-aligner $aligner -realign $realign \
+					-varcallers $varcallers -svcallers $svcallers -methcallers $methcallers \
 					-dbdir $dbdir -split $split -paired $paired -keepsams $keepsams --maxfastqdistr $maxfastqdistr \
 					-adapterfile $adapterfile -reports $reports -samBQ $samBQ -cleanup $cleanup \
 					-removeduplicates $removeduplicates -amplicons $amplicons \
@@ -265,11 +273,12 @@ proc process_project_job {args} {
 	job_logdir $destdir/log_jobs
 	set todo(var) [list_remdup $todo(var)]
 	set todo(sv) [list_remdup $todo(sv)]
+	set todo(meth) [list_remdup $todo(meth)]
 	set todo(reports) [list_remdup $todo(reports)]
 	if {![llength $reports]} {set todo(reports) {}}
 	process_multicompar_job -experiment $experiment \
 		-skipincomplete 1 -targetvarsfile $targetvarsfile \
-		-varfiles $todo(var) -svfiles $todo(sv) \
+		-varfiles $todo(var) -svfiles $todo(sv) -methfiles $todo(meth) \
 		-threads $threads -distrreg $distrreg \
 		-keepfields $keepfields \
 		-split $split -dbfiles $dbfiles -cleanup $cleanup $destdir $dbdir \

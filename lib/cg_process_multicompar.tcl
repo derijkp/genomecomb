@@ -50,6 +50,9 @@ proc process_multicompar_job {args} {
 		-svfiles {
 			set svfiles $value
 		}
+		-methfiles {
+			set methfiles $value
+		}
 		-experiment {
 			set experiment $value
 		}
@@ -148,6 +151,24 @@ proc process_multicompar_job {args} {
 			}
 		}
 		set svfiles $tempsvfiles
+	}
+	if {![info exists methfiles]} {
+		set methfiles [bsort [jobglob ${sampledir}/*/meth-*.tsv]]
+	} else {
+		set tempmethfiles {}
+		foreach methfile $methfiles {
+			if {![jobfileexists $methfile]} {
+				set temp [jobglob $sampledir/*/$methfile]
+				if {$temp eq ""} {
+					set temp [jobglob $methfile]
+				}
+				if {$temp eq ""} {error "methfile $methfile not found"}
+				lappend tempmethfiles {*}[bsort $temp]
+			} else {
+				lappend tempmethfiles $methfile
+			}
+		}
+		set methfiles $tempmethfiles
 	}
 	# set up job
 	job_logdir $destdir/log_jobs
@@ -264,6 +285,51 @@ proc process_multicompar_job {args} {
 			compar/annot_sv-$experiment.tsv
 		} -targets {
 			compar/annot_sv-$experiment.tsv.index/info.tsv
+		} -vars dbdir -code {
+			cg index -colinfo $dep
+		}
+	}
+	#
+	# meth
+	# ----
+	if {![llength $methfiles]} {
+		putslog "No qualifying methfiles: not making meth compar"
+	} else {
+		putslog "Starting meth"
+		set methcompar_file compar/meth-${experiment}.tsv.zst
+		set target $methcompar_file
+		testmultitarget $target $methfiles
+		job meth_multicompar -optional 1 -deps $methfiles -targets {$target} -code {
+			puts "Checking $target"
+			if {[file exists $target.temp]} {
+				set done [cg select -a $target.temp]
+			} else {
+				set done {}
+			}
+			set todo {}
+			foreach file $deps {
+				regexp {meth-(.*)\.tsv*} [file tail $file] temp name
+				if {![inlist $done $name]} {
+					lappend todo $file
+				}
+			}
+			if {[llength $done]} {
+				puts "Multimeth already present: $done"
+			}
+			if {[llength $todo]} {
+				cg multicompar $target.temp {*}$todo
+			}
+			cg_zst $target.temp
+			file rename -force -- $target.temp.zst $target
+		}
+		# annotate methmulticompar
+		# --------------------
+		putslog "Starting annotation"
+		cg_annotate_job -distrreg $distrreg $methcompar_file compar/annot_meth-$experiment.tsv.zst $dbdir {*}$dbfiles
+		job indexannotcompar-$experiment -deps {
+			compar/annot_meth-$experiment.tsv
+		} -targets {
+			compar/annot_meth-$experiment.tsv.index/info.tsv
 		} -vars dbdir -code {
 			cg index -colinfo $dep
 		}

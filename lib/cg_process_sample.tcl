@@ -453,6 +453,7 @@ proc process_sample_cgi_job {workdir split} {
 
 proc process_sample_job {args} {
 	upvar job_logdir job_logdir
+	set cmdline [list cg process_sample {*}$args]
 	set keepargs $args
 	set dbdir {}
 	set minfastqreads 0
@@ -460,6 +461,7 @@ proc process_sample_job {args} {
 	set aligners bwa
 	set varcallers {gatk sam}
 	set svcallers {}
+	set methcallers {}
 	set realign 1
 	set cleanup 1
 	set paired 1
@@ -512,6 +514,9 @@ proc process_sample_job {args} {
 		}
 		-svcallers {
 			set svcallers $value
+		}
+		-methcallers {
+			set methcallers $value
 		}
 		-s - -split {
 			set split $value
@@ -673,16 +678,6 @@ proc process_sample_job {args} {
 			mklink $oridir $sampledir/ori 1
 		}
 	}
-	# logfile
-	set cmdline [list cg process_sample]
-	foreach option {
-		oridir dbdir paired aligners realign removeduplicates amplicons varcallers svcallers split samBQ adapterfile reports cleanup maxopenfiles
-	} {
-		if {[info exists $option]} {
-			lappend cmdline -$option [get $option]
-		}
-	}
-	lappend cmdline $sampledir
 	job_logfile $sampledir/process_sample_[file tail $sampledir] $sampledir $cmdline \
 		{*}[versions dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk gatk3 picard java gnusort8 zst os]
 	# check if ori is a cg dir, if so use process_sample_cgi_job
@@ -702,7 +697,7 @@ proc process_sample_job {args} {
 	# -------------
 	if {![job_getinfo]} {
 		info_analysis_file $sampledir/info_analysis.tsv $sample \
-			{dbdir aligners varcallers svcallers realign paired samBQ adapterfile reports} \
+			{dbdir aligners varcallers svcallers methcallers realign paired samBQ adapterfile reports} \
 			{genomecomb dbdir fastqc fastq-stats fastq-mcf bwa bowtie2 samtools gatk3 gatk gatkjava picard java gnusort8 tabix zst os} \
 			command [list cg process_sample {*}$keepargs]
 	}
@@ -976,6 +971,20 @@ proc process_sample_job {args} {
 			}
 			lappend cleanupdeps {*}[sv_job -method ${svcaller} -distrreg $distrreg -regionfile $regionfile -split $split -threads $threads {*}$extraopts -cleanup $cleanup -refseq $refseq $cleanedbam]
 			lappend todo(sv) sv-$svcaller-$bambase.tsv
+		}
+		foreach methcaller $methcallers {
+			switch {$methcaller} {
+				default {set extraopts {}}
+			}
+			if {![auto_load meth_${methcaller}_job]} {
+				error "methcaller $methcaller not supported"
+			}
+			set fast5dir [file dir $cleanedbam]/fast5
+			set fastqdir [file dir $cleanedbam]/fastq
+			lappend cleanupdeps {*}[meth_${methcaller}_job \
+				-distrreg $distrreg -threads $threads {*}$extraopts -refseq $refseq \
+				$fast5dir $fastqdir $cleanedbam]
+			lappend todo(meth) meth-$methcaller-$bambase.tsv
 		}
 	}
 	#calculate reports
