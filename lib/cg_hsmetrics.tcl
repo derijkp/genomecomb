@@ -31,13 +31,15 @@ proc hsmetrics_tsv2interval {regionfile bamfile resultfile} {
 	} else {
 		set tsvfile $regionfile
 	}
+	set bamheader [split [exec samtools view --no-PG -H $bamfile] \n]
+	if {[regexp "@SQ\tSN:chr" $bamheader]} {set pre chr} else {set pre {}}
 	set f [gzopen $tsvfile]
 	set header [tsv_open $f]
 	gzclose $f
 	set poss [tsv_basicfields $header 3]
 	set fields {}
 	set ffields [list_sub $header $poss]
-	lappend fields "chromosome=\$[lindex $ffields 0]"
+	lappend fields "chromosome=\"$pre\[chr_clip \$[lindex $ffields 0]\]\""
 	lappend fields "begin=\$[lindex $ffields 1] + 1"
 	lappend fields "end=\$[lindex $ffields 2]"
 	lappend fields {strand="+"}
@@ -47,7 +49,6 @@ proc hsmetrics_tsv2interval {regionfile bamfile resultfile} {
 	}
 	if {$pos != -1} {lappend fields "name=\$[lindex $header $pos]"} else {lappend fields {name="all"}}
 	#remove comment columns & add strand info - due to lack of correct strand info take + as default
-	set bamheader [split [exec samtools view --no-PG -H $bamfile] \n]
 	file_write $resultfile.temp [join [list_sub $bamheader [list_find -regexp $bamheader ^@SQ]] \n]\n
 	cg select -sh /dev/null -f $fields $tsvfile >> $resultfile.temp
 	file rename -force -- $resultfile.temp $resultfile
