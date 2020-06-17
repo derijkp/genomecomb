@@ -99,8 +99,13 @@ proc compress_template {file destfile method cmd {index 1} {keep 1}} {
 }
 
 proc wgzopen {file {compressionlevel -1} {threads {}}} {
-	if {$file eq "-"} {
-		return stdout
+	set root [file root [gzroot $file]]
+	if {$root eq "-"} {
+		if {![gziscompressed $file]} {
+			return stdout
+		} else {
+			return [open "[compresspipe $file $compressionlevel $threads] >@ stdout" w]
+		}
 	} elseif {![gziscompressed $file]} {
 		return [open $file w]
 	} else {
@@ -109,57 +114,68 @@ proc wgzopen {file {compressionlevel -1} {threads {}}} {
 }
 
 proc gzopen {file {pos -1}} {
-	if {![file exists $file]} {
-		error "Error: couldn't open \"$file\": no such file or directory"
-	}
-	set file [file_absolute $file]
+	set root [file root [gzroot $file]]
 	set ext [file extension $file]
-	if {[file size $file] == 0} {
-		# we sometimes make empty files with compression extension
-		# avoid these giving errors
-		set f [open $file]
+	if {$root eq "-"} {
 		if {$pos != -1} {
-			seek $f $pos
+			error "cannot provide random access on stdin"
 		}
-		set ::genomecomb_gzopen_info($f) $file
-		return $f
+		set in "<@ stdin"
+	} else {
+		if {![file exists $file]} {
+			error "Error: couldn't open \"$file\": no such file or directory"
+		}
+		set file [file_absolute $file]
+		if {[file size $file] == 0} {
+			# we sometimes make empty files with compression extension
+			# avoid these giving errors
+			set f [open $file]
+			if {$pos != -1} {
+				seek $f $pos
+			}
+			set ::genomecomb_gzopen_info($f) $file
+			return $f
+		}
+		set in [list $file]
 	}
 	if {[inlist {.rz} $ext]} {
 		if {$pos == -1} {
-			set f [open "| razip -d -c [list $file]"]
+			set f [open "| razip -d -c $in"]
 		} else {
-			set f [open "| razip -d -c -b $pos [list $file]"]
+			set f [open "| razip -d -c -b $pos $in"]
 		}
 	} elseif {[inlist {.zst} $ext]} {
 		if {$pos == -1} {
-			set f [open "| zstd-mt -T 1 -k -d -c [list $file]"]
+			set f [open "| zstd-mt -T 1 -k -d -c $in"]
 		} else {
 			set f [open "| zstdra [list $file] $pos"]
 		}
 	} elseif {[inlist {.lz4} $ext]} {
 		if {$pos == -1} {
-			set f [open "| lz4 -d -c [list $file]"]
+			set f [open "| lz4 -d -c $in"]
 		} else {
 			set f [open "| lz4ra [list $file] $pos"]
 		}
 	} elseif {[inlist {.gz} $ext]} {
 		if {$pos == -1} {
-			set f [open "| zcat [list $file]"]
+			set f [open "| zcat $in"]
 		} else {
 			error "positioning not supported in gz files"
 		}
 	} elseif {[inlist {.bgz} $ext]} {
 		if {$pos == -1} {
-			set f [open "| zcat [list $file]"]
+			set f [open "| zcat $in"]
 		} else {
 			set f [open "| bgzip -d -c -b $pos [list $file]"]
 		}
 	} elseif {[inlist {.bz2} $ext]} {
 		if {$pos == -1} {
-			set f [open "| bzcat [list $file]"]
+			set f [open "| bzcat $in"]
 		} else {
 			error "positioning not supported in bz2 files"
 		}
+	} elseif {$root eq "-"} {
+		return stdin
 	} else {
 		set f [open $file]
 		if {$pos != -1} {
