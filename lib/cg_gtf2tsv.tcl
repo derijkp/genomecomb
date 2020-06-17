@@ -12,21 +12,16 @@ proc cg_gtf2sft {args} {
 }
 
 proc cg_gtf2tsv {args} {
-	if {([llength $args] < 0) || ([llength $args] > 2)} {
-		errorformat gtf2tsv
-	}
-	if {[llength $args] > 0} {
-		set filename [lindex $args 0]
-		set f [gzopen $filename]
-	} else {
-		set f stdin
-	}
-	if {[llength $args] > 1} {
-		set outfile [lindex $args 1]
-		set o [open $outfile w]
-	} else {
-		set o stdout
-	}
+	set filename -
+	set outfile -
+	set separate 0
+	cg_options gtf2tsv args {
+		-separate {
+			set separate $value
+		}
+	} {filename outfile} 0 2
+	set f [gzopen $filename]
+	set o [wgzopen $outfile w]
 
 	set comment {# -- sft converted from gtf, original comments follow --}
 	while {![eof $f]} {
@@ -35,7 +30,6 @@ proc cg_gtf2tsv {args} {
 		append comment \n$line
 	}
 	append comment "\n# ----"
-	set nheader {chromosome begin end name strand cdsStart cdsEnd exonCount exonStarts exonEnds source}
 	set next 100000; set num 0
 	set tempbase [tempfile]
 	set tempattr [tempfile]
@@ -45,103 +39,137 @@ proc cg_gtf2tsv {args} {
 	set attrheader {}
 	set attrtemplate {}
  	unset -nocomplain attra
-	unset -nocomplain curchromosome
-	set num 0
-	while 1 {
-		if {[string index $line 0] eq "#"} continue
-		set line [split $line \t]
-		set eof [eof $f]
-		if {!$eof} {
-			if {![llength $line]} continue
-			foreach {chrom source type start end score strand phase attributes comments} $line break
-			if {![inlist {exon CDS start_codon stop_codon 5UTR 3UTR inter inter_CNS intron_CNS} $type]} {
-				set line [gets $f]
-				continue
-			}
-			incr start -1
-			set a [dict create {*}[string_change $attributes {; " "}]]
-			set transcript [dict get $a transcript_id]
-		} else {
-			set transcript {}
-		}
-		if {![info exists curchromosome] || $transcript ne $curtranscript} {
-			# write previous to output
-			if {[info exists curchromosome]} {
-				if {$curstrand eq "-"} {
-					set curexonStarts [list_reverse $curexonStarts]
-					set curexonEnds [list_reverse $curexonEnds]
+	if {!$separate} {
+		set nheader {chromosome begin end name gene strand cdsStart cdsEnd exonCount exonStarts exonEnds source}
+		unset -nocomplain curchromosome
+		set num 0
+		while 1 {
+			if {[string index $line 0] eq "#"} continue
+			set line [split $line \t]
+			set eof [eof $f]
+			if {!$eof} {
+				if {![llength $line]} continue
+				foreach {chrom source type start end score strand phase attributes comments} $line break
+				if {![inlist {exon CDS start_codon stop_codon 5UTR 3UTR inter inter_CNS intron_CNS} $type]} {
+					set line [gets $f]
+					continue
 				}
-				puts $fb [join [list $curchromosome $curbegin $curend $curtranscript $curstrand \
-					$curcdsStart $curcdsEnd $curexonCount \
-					[join $curexonStarts ,] [join $curexonEnds ,] $cursource] \t]
-				set attrlist $attrtemplate
-				dict for {key value} $curattr {
-					if {![info exists attra($key)]} {
-						set attra($key) [llength $attrtemplate]
-						lappend attrheader $key
-						lappend attrtemplate {}
-						lappend attrlist $value
+				incr start -1
+				set a [dict create {*}[string_change $attributes {; " "}]]
+				set transcript [dict get $a transcript_id]
+				set gene [dict get $a gene_id]
+			} else {
+				set transcript {}
+				set gene {}
+			}
+			if {![info exists curchromosome] || $transcript ne $curtranscript} {
+				# write previous to output
+				if {[info exists curchromosome]} {
+					if {$curstrand eq "-"} {
+						set curexonStarts [list_reverse $curexonStarts]
+						set curexonEnds [list_reverse $curexonEnds]
+					}
+					puts $fb [join [list $curchromosome $curbegin $curend $curtranscript $curgene $curstrand \
+						$curcdsStart $curcdsEnd $curexonCount \
+						[join $curexonStarts ,] [join $curexonEnds ,] $cursource] \t]
+					set attrlist $attrtemplate
+					dict for {key value} $curattr {
+						if {![info exists attra($key)]} {
+							set attra($key) [llength $attrtemplate]
+							lappend attrheader $key
+							lappend attrtemplate {}
+							lappend attrlist $value
+						} else {
+							lset attrlist $attra($key) $value
+						}
+					}
+					puts $fa [join $attrlist \t]
+				}
+				if {$eof} break
+				# start next
+				set curtranscript $transcript
+				set curgene $gene
+				set curchromosome $chrom
+				set curbegin $start
+				set curend $end
+				set curstrand $strand
+				set curcdsStart {}
+				set curcdsEnd {}
+				set curexonCount 0
+				set curexonStarts {}
+				set curexonEnds {}
+				set cursource $source
+				set curscore {}
+				set curattr $a
+			}
+			if {$num >= $next} {putsprogress $curchromosome:$curbegin-$curend; incr next 100000}
+			incr num
+			switch $type {
+				exon {
+					lappend curexonStarts $start
+					lappend curexonEnds $end
+					lappend curscore $score
+					if {$start < $curbegin} {set curbegin $start}
+					if {$end > $curend} {set curend $end}
+					incr curexonCount
+				}
+				CDS {
+					if {$strand eq "+"} {
+						set curcdsStart $start
+						set curcdsEnd [expr {$end+3}]
 					} else {
-						lset attrlist $attra($key) $value
+						set curcdsStart [expr {$start-3}]
+						set curcdsEnd $end
+					}
+					if {$start < $curbegin} {set curbegin $start}
+					if {$end > $curend} {set curend $end}
+				}
+				start_codon {
+					if {$strand eq "+"} {
+						set curcdsStart $start
+					} else {
+						set curcdsEnd $end
 					}
 				}
-				puts $fa [join $attrlist \t]
+				stop_codon {
+					if {$strand eq "+"} {
+						set curcdsEnd $end
+					} else {
+						set curcdsStart $start
+					}
+				}
 			}
-			if {$eof} break
-			# start next
-			set curtranscript $transcript
-			set curchromosome $chrom
-			set curbegin $start
-			set curend $end
-			set curstrand $strand
-			set curcdsStart {}
-			set curcdsEnd {}
-			set curexonCount 0
-			set curexonStarts {}
-			set curexonEnds {}
-			set cursource $source
-			set curscore {}
-			set curattr $a
+			set curattr [dict merge $curattr $a]
+			set line [gets $f]
 		}
-		if {$num >= $next} {putsprogress $curchromosome:$curbegin-$curend; incr next 100000}
-		incr num
-		switch $type {
-			exon {
-				lappend curexonStarts $start
-				lappend curexonEnds $end
-				lappend curscore $score
-				if {$start < $curbegin} {set curbegin $start}
-				if {$end > $curend} {set curend $end}
-				incr curexonCount
-			}
-			CDS {
-				if {$strand eq "+"} {
-					set curcdsStart $start
-					set curcdsEnd [expr {$end+3}]
+	} else {
+		set nheader {chromosome begin end type transcript gene strand source comments}
+		set num 0
+		set curattr [dict create]
+		while 1 {
+			if {[string index $line 0] eq "#"} continue
+			set line [split $line \t]
+			if {![llength $line]} continue
+			foreach {chrom source type start end score strand phase attributes comments} $line break
+			incr start -1
+			set attributes [dict create {*}[string_change $attributes {; " "}]]
+			set transcript [dict get $attributes transcript_id]
+			set gene [dict get $attributes gene_id]
+			puts $fb [join [list $chrom $start $end $type $transcript $gene $strand $source $comments] \t]
+			set attrlist $attrtemplate
+			dict for {key value} $attributes {
+				if {![info exists attra($key)]} {
+					set attra($key) [llength $attrtemplate]
+					lappend attrheader $key
+					lappend attrtemplate {}
+					lappend attrlist $value
 				} else {
-					set curcdsStart [expr {$start-3}]
-					set curcdsEnd $end
-				}
-				if {$start < $curbegin} {set curbegin $start}
-				if {$end > $curend} {set curend $end}
-			}
-			start_codon {
-				if {$strand eq "+"} {
-					set curcdsStart $start
-				} else {
-					set curcdsEnd $end
+					lset attrlist $attra($key) $value
 				}
 			}
-			stop_codon {
-				if {$strand eq "+"} {
-					set curcdsEnd $end
-				} else {
-					set curcdsStart $start
-				}
-			}
+			puts $fa [join $attrlist \t]
+			if {[gets $f line] == -1} break
 		}
-		set curattr [dict merge $curattr $a]
-		set line [gets $f]
 	}
 	catch {close $fb} ; catch {close $fa}
 
