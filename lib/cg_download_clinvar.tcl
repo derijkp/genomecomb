@@ -108,6 +108,7 @@ proc cg_download_clinvar {args} {
 		# collapse
 		cg collapsealleles $tempresult.temp > $tempresult.temp2
 	} else {
+		close $f
 		# collapse
 		cg collapsealleles $tsvfile > $tempresult.temp2
 	}
