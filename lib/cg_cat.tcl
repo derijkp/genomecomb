@@ -44,6 +44,7 @@ proc cg_cat {args} {
 	if {[llength $args] == 1} {
 		set f [gzopen [lindex $args 0]]
 		fcopy $f stdout
+		gzclose $f
 		exit 0
 	}
 	if {$sort} {set args [bsort $args]}
