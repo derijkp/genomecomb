@@ -256,9 +256,9 @@ proc job_process_par_onepass {} {
 		set jobnum [job_process_par_submit $job $runfile -deps $ids {*}$submitopts]
 		job_log $job "-------------------- submitted $jobname ($jobnum <- $ids) (run $currentrun) --------------------"
 		job_logfile_add $job $jobnum submitted $targets $cores "" $submittime
-		job_logclose $job
 		file_write $job.jobid $jobnum
 		job_log $job "cgjobinfo_jobid: [list $jobid]"
+		job_logclose $job
 		job_process_par_marktargets $targets $ptargets $rmtargets $jobnum
 		set cgjob_running($job) $jobnum
 	}

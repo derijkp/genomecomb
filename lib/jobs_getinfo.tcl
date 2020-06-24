@@ -12,6 +12,7 @@ proc job_getinfo {{value {}}} {
 		foreach target [get cgjob_getinfo(ptargets) ""] {unset -nocomplain cgjob_ptargets($target)} 
 		foreach target [get cgjob_getinfo(rm) ""] {unset -nocomplain cgjob_rm($target)} 
 		foreach job [get cgjob_getinfo(jobs) ""] {
+			catch {close $cgjob(f,$job)}
 			unset -nocomplain cgjob(f,$job)
 			unset -nocomplain cgjob(buffer,$job)
 		}

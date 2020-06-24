@@ -11,6 +11,7 @@ proc infofile_read {file} {
 			dict set result $key $value
 		}
 	}
+	close $f
 	return $result
 }
 
