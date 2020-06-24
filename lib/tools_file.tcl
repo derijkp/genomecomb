@@ -599,7 +599,8 @@ proc convert_pipe {infile outfile args} {
 }
 
 proc tempramdir {size} {
-	set useablespace [expr {1024*[lindex [exec df /dev/shm] end-2]}]
+	# caclulate usable space in shared mem (keep 8G free for other)
+	set useablespace [expr {1024*[lindex [exec df /dev/shm] end-2] - 8598323200}]
 	if {$size > $useablespace} {
 		error "not enough space on /dev/shm"
 	}
