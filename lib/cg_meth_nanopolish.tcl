@@ -111,16 +111,18 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		set bamcacheindex [index_file $bamcache]
 		putslog "meth_nanopolish using cached bam: $bamcache"
 		job meth_nanopolish_makecache-[file tail $bamfile] {*}$skips -skip {$smethfile} -skip {$resultfile} -deps {
-			$bamfile $bamfileindex
+			$bamfile
 		} -targets {
-			$bamcache $bamcacheindex
+			$bamcache
 		} -vars {
 			cachedir bamfileindex bamcacheindex
 		} -code {
 			catch {file mkdir $cachedir}
 			file copy $bamfileindex $bamcacheindex
+			exec touch -h -d [clock format [file mtime $bamfileindex]] $bamcacheindex
 			file copy $dep $target.temp
 			file rename $target.temp $target
+			exec touch -h -d [clock format [file mtime $dep]] $target
 		}
 	} else {
 		set bamcache $bamfile
@@ -157,6 +159,7 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 				catch {
 					set tempdir [tempramdir $size]
 				}
+				file mkdir $tempdir
 			}
 			foreach file [glob -nocomplain $tempdir/*] {file delete $file}
 			exec cp -fL $fast5files $tempdir
@@ -205,8 +208,8 @@ proc meth_nanopolish_distrfast5 {fast5dir fastqdir bamfile resultfile refseq ski
 		cg cat -c 0 {*}$deps | cg select -s - | cg zst > $target.temp
 		file rename -- $target.temp $target
 		if {$bamcache ne $bamfile} {
-			file delete -force [file dir $bamcache]
-			file delete -force [file dir $bamcacheindex]
+			file delete -force $bamcache
+			file delete -force $bamcacheindex
 		}
 	}
 	set root [file root [file tail [gzroot $resultfile]]]
@@ -292,6 +295,7 @@ proc meth_nanopolish_job {args} {
 	set regions [list_remove [distrreg_regs $distrreg $refseq] unaligned]
 	set bamfileindex [index_file $bamfile]
 	bam_index_job $bamfile
+
 	if {$distrmethod eq "fast5"} {
 		return [meth_nanopolish_distrfast5 $fast5dir $fastqdir $bamfile $resultfile $refseq $skips $basecaller $callthreshold $threads $maxfastqdistr]
 	}
