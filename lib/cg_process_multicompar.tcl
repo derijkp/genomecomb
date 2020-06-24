@@ -48,10 +48,16 @@ proc process_multicompar_job {args} {
 			}
 		}
 		-svfiles {
-			set svfiles $value
+			set svfiles {}
+			foreach file $value {
+				lappend svfiles [file_absolute $file]
+			}
 		}
 		-methfiles {
-			set methfiles $value
+			set methfiles {}
+			foreach file $value {
+				lappend methfiles [file_absolute $file]
+			}
 		}
 		-experiment {
 			set experiment $value
