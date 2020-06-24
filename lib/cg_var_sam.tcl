@@ -140,7 +140,7 @@ proc var_sam_job {args} {
 		set emptyreg [reg_isempty $regionfile]
 		set cache [file dir $target]/cache_var_gatk_[file tail $refseq].temp
 		if {$emptyreg && [file exists $cache]} {
-			file copy -force $cache $target
+			copywithindex $cache $target $cache.tbi.temp $target.tbi
 		} else {
 			if {$regionfile ne ""} {
 				set bedfile [tempbed $regionfile $refseq]

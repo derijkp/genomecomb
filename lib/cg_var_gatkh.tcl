@@ -141,8 +141,7 @@ proc var_gatkh_job {args} {
 		set emptyreg [reg_isempty $regionfile]
 		set cache [file dir $target]/cache_var_gatkh_[file tail $refseq].temp
 		if {$emptyreg && [file exists $cache]} {
-			file copy -force $cache $target
-			file copy -force $cache.tbi.temp $target.tbi
+			copywithindex $cache $target $cache.tbi.temp $target.tbi
 		} else {
 			if {$regionfile ne ""} {
 				set bedfile [tempbed $regionfile $refseq]

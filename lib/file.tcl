@@ -57,3 +57,14 @@ proc pwd {} {
 proc pathsep {} {
 	if {$::tcl_platform(platform) eq "windows"} {return \;} else {return \:}
 }
+
+proc copywithindex {file target args} {
+	file copy -force $file $target
+	foreach {file2 target2} $args {
+		if {[file exists $file2]} {
+			file copy -force $file2 $target2
+		} elseif {[file extension $target2] eq ".tbi"} {
+			exec tabix -p vcf [file root $target2]
+		}
+	}	
+}
